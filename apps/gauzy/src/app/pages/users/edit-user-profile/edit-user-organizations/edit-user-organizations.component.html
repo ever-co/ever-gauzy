@@ -70,7 +70,7 @@
 	}
 </section>
 
-<!-- Add: a searchable checklist of the tenant's organizations the user is not in yet. -->
+<!-- Add: a searchable checklist of the organizations the signed-in user may add the user to, and they are not in yet. -->
 <ng-template #addDialog>
 	<nb-card class="assign-dialog" role="dialog" aria-labelledby="addOrganizationsDialogTitle">
 		<!-- nb-card projects only its header, body and footer in order: the search lives in the header. -->
@@ -119,7 +119,7 @@
 					/>
 				</label>
 				@if (!addLoading && addOptions.length) {
-					<button type="button" class="assign-dialog__link" (click)="toggleAllOptions()">
+					<button type="button" class="assign-dialog__link" [disabled]="saving" (click)="toggleAllOptions()">
 						{{ (allOptionsSelected ? 'USERS_PAGE.EDIT_USER.DESELECT_ALL' : 'USERS_PAGE.EDIT_USER.SELECT_ALL') | translate }}
 					</button>
 				}

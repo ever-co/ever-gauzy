@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, TemplateRef, ViewChild } from '@angular/core';
-import { IOrganization, IUserOrganization } from '@gauzy/contracts';
+import { IOrganization, IUser, IUserOrganization, RolesEnum } from '@gauzy/contracts';
 import { filter, tap, debounceTime } from 'rxjs/operators';
 import { Subject, firstValueFrom } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
@@ -25,15 +25,18 @@ export class EditUserOrganizationsComponent extends TranslationBaseComponent imp
 	/** The user the open add dialog was opened for: a later switch of user cannot redirect it. */
 	private _addForUserId: string | null = null;
 
-	/** Every organization of the tenant, as last read: the add dialog offers those the user is not in. */
+	/** The organizations the add dialog may offer, as last read: it offers those the user is not in. */
 	allOrganizations: IOrganization[] = [];
+	/** The user's inactive memberships, by organization: adding them to one of those reactivates it. */
+	inactiveMemberships = new Map<string, string>();
 	/** Whether the add dialog is reading the organizations it offers. */
 	addLoading = false;
 	addSearch = '';
 	addSelection = new Set<string>();
 	saving = false;
 
-	selectedUserId: string;
+	/** The user whose organizations are loaded: the add dialog opens and saves only for them. */
+	selectedUserId: string | null = null;
 	selectedUserName: string;
 	orgUserId: string;
 	userToRemove: any;
@@ -42,6 +45,8 @@ export class EditUserOrganizationsComponent extends TranslationBaseComponent imp
 	paramId: string;
 	organizations: IOrganization[] = [];
 	subject$: Subject<any> = new Subject();
+	/** Numbers each load of the list: only the latest one, for the page's current user, is applied. */
+	private _loadSeq = 0;
 
 	constructor(
 		public readonly translateService: TranslateService,
@@ -71,6 +76,11 @@ export class EditUserOrganizationsComponent extends TranslationBaseComponent imp
 				tap((params) => {
 					if (this.paramId && this.paramId !== params.id) {
 						this._addRef?.close();
+						// Another user: what is loaded is no longer theirs, and a load still on its way is dropped.
+						this._loadSeq++;
+						this.selectedUserId = null;
+						this.organizations = [];
+						this.inactiveMemberships = new Map();
 					}
 					this.paramId = params.id;
 				}),
@@ -80,7 +90,7 @@ export class EditUserOrganizationsComponent extends TranslationBaseComponent imp
 			.subscribe();
 	}
 
-	/** The tenant's organizations the user is not in yet: what the add dialog offers. */
+	/** The organizations the user is not in yet (or only inactively): what the add dialog offers. */
 	get availableOrganizations(): IOrganization[] {
 		const joined = new Set(this.organizations.map((organization) => organization.id));
 		return this.allOrganizations
@@ -113,7 +123,7 @@ export class EditUserOrganizationsComponent extends TranslationBaseComponent imp
 	 * organizations it offers.
 	 */
 	openAdd(): void {
-		if (this._addRef || this.loading || !this.selectedUserId) {
+		if (this._addRef || this.loading || !this.selectedUserId || this.selectedUserId !== this.paramId) {
 			return;
 		}
 		this.addSearch = '';
@@ -136,23 +146,33 @@ export class EditUserOrganizationsComponent extends TranslationBaseComponent imp
 		this.loadAddOptions(ref);
 	}
 
+	/** Whether the signed-in user is a tenant admin, whom the server lets manage memberships of every organization. */
+	private get isTenantAdmin(): boolean {
+		const role = this.store.user?.role?.name;
+		return role === RolesEnum.SUPER_ADMIN || role === RolesEnum.ADMIN;
+	}
+
 	/**
-	 * Reads the organizations the add dialog `ref` offers: the signed-in user's, through their memberships, as the
-	 * organizations page reads them (`GET /organization` refuses a query that names no organization). An answer for
-	 * a dialog since closed is dropped.
+	 * The organizations the signed-in user may add a user to, as the server decides it: a tenant admin, every
+	 * organization of the tenant (read through the tenant's memberships, since `GET /organization` refuses a query
+	 * that names no organization); anyone else, the organization they are signed in to.
 	 */
+	private async readManageableOrganizations(): Promise<IOrganization[]> {
+		if (!this.isTenantAdmin) {
+			const current = this.store.selectedOrganization;
+			return current?.id ? [current] : [];
+		}
+		const { tenantId } = this.store.user;
+		const { items } = await this.userOrganizationsService.getAll(['organization'], { tenantId });
+		return this.uniqueOrganizations(items);
+	}
+
+	/** Reads the organizations the add dialog `ref` offers. An answer for a dialog since closed is dropped. */
 	private async loadAddOptions(ref: NbDialogRef<void>): Promise<void> {
 		try {
-			const { tenantId } = this.store.user;
-			const { items } = await this.userOrganizationsService.getAll(['organization'], {
-				userId: this.store.userId,
-				tenantId
-			});
+			const organizations = await this.readManageableOrganizations();
 			if (this._addRef === ref) {
-				this.allOrganizations = this.uniqueOrganizations([
-					...items,
-					...this.organizations.map((organization) => ({ organization }))
-				]);
+				this.allOrganizations = organizations;
 			}
 		} catch (error) {
 			if (this._addRef === ref) {
@@ -210,29 +230,47 @@ export class EditUserOrganizationsComponent extends TranslationBaseComponent imp
 
 	/**
 	 * Adds the dialog's user to the ticked organizations, one after another, says so once, reloads the list and
-	 * closes that dialog. When one fails the dialog stays open, with the ticks the reload has not shown as joined.
+	 * closes that dialog. An organization the user has an inactive membership of has it reactivated rather than a
+	 * second one made. Each organization leaves the ticks as soon as it is added, so when a later one fails and the
+	 * dialog stays open, a retry sends only what is still to add.
 	 */
 	async addSelected(): Promise<void> {
 		const ids = [...this.addSelection];
 		const ref = this._addRef;
 		const userId = this._addForUserId;
-		if (!ids.length || this.saving || this.addLoading || !ref || !userId || userId !== this.selectedUserId) {
+		if (
+			!ids.length ||
+			this.saving ||
+			this.addLoading ||
+			!ref ||
+			!userId ||
+			userId !== this.selectedUserId ||
+			userId !== this.paramId
+		) {
 			return;
 		}
 		const { tenantId } = this.store.user;
 		this.saving = true;
 		try {
 			for (const organizationId of ids) {
-				// `isDefault: true` is the server's own default, which the add has always taken by leaving it out.
-				await firstValueFrom(
-					this.userOrganizationsService.create({
-						userId,
-						organizationId,
-						tenantId,
-						isActive: true,
-						isDefault: true
-					})
-				);
+				const inactive = this.inactiveMemberships.get(organizationId);
+				if (inactive) {
+					await this.userOrganizationsService.setUserAsActive(inactive);
+				} else {
+					// `isDefault: true` is the server's own default, which the add has always taken by leaving it out.
+					await firstValueFrom(
+						this.userOrganizationsService.create({
+							userId,
+							organizationId,
+							tenantId,
+							isActive: true,
+							isDefault: true
+						})
+					);
+				}
+				const remaining = new Set(this.addSelection);
+				remaining.delete(organizationId);
+				this.addSelection = remaining;
 			}
 			this.toastrService.success(
 				this.getTranslation('NOTES.ORGANIZATIONS.ADD_NEW_USER_TO_ORGANIZATION', {
@@ -319,31 +357,47 @@ export class EditUserOrganizationsComponent extends TranslationBaseComponent imp
 		}
 	}
 
+	/**
+	 * Reads the user's memberships and their name, and lists the organizations they are active in. Each load is
+	 * numbered: a load overtaken by a newer one, or by a move to another user, is dropped, and only the latest clears
+	 * the spinner.
+	 */
 	private async loadOrganizations() {
+		const seq = ++this._loadSeq;
+		const userId = this.paramId;
+		const isCurrent = () => seq === this._loadSeq && userId === this.paramId;
 		try {
 			const { tenantId } = this.store.user;
-			// Organizations are read through memberships, as the organizations page reads them: `GET /organization`
-			// refuses a query that names no organization ("organization must be an object").
-			const [{ items }, { items: mine }] = await Promise.all([
-				// The edited user's memberships: the organizations they are in.
-				this.userOrganizationsService.getAll(['user', 'organization'], { userId: this.paramId, tenantId }),
-				// The signed-in user's: the organizations they can add the user to.
-				this.userOrganizationsService.getAll(['organization'], { userId: this.store.userId, tenantId })
+			const [{ items }, user] = await Promise.all([
+				this.userOrganizationsService.getAll(['organization'], { userId, tenantId }),
+				// The name for the dialog and its message, whether or not the user is in any organization yet.
+				this.usersService.getUserById(userId).catch((): IUser | null => null)
 			]);
+			if (!isCurrent()) {
+				return;
+			}
 
-			// From the page address: a user in no organization yet has no membership to read it from, and can be added.
-			this.selectedUserId = this.paramId;
-			this.selectedUserName = items.find((membership) => membership.user)?.user?.name || '';
+			const active = items.filter((membership) => membership.isActive !== false);
+			const inactive = items.filter((membership) => membership.isActive === false);
 
-			this.organizations = this.uniqueOrganizations(items);
-			this.allOrganizations = this.uniqueOrganizations([...mine, ...items]);
+			this.selectedUserId = userId;
+			this.selectedUserName =
+				user?.name || [user?.firstName, user?.lastName].filter(Boolean).join(' ') || user?.email || '';
+			this.organizations = this.uniqueOrganizations(active);
+			this.inactiveMemberships = new Map(
+				inactive.map((membership) => [membership.organizationId, membership.id] as const)
+			);
 			const available = new Set(this.availableOrganizations.map((organization) => organization.id));
 			this.addSelection = new Set([...this.addSelection].filter((id) => available.has(id)));
 		} catch (error) {
-			console.error('Error while retrieving user organizations', error);
-			this.toastrService.danger(error);
+			if (isCurrent()) {
+				console.error('Error while retrieving user organizations', error);
+				this.toastrService.danger(error);
+			}
 		} finally {
-			this.loading = false;
+			if (seq === this._loadSeq) {
+				this.loading = false;
+			}
 		}
 	}
 
