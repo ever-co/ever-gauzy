@@ -12,29 +12,18 @@
 				{{ 'USERS_PAGE.EDIT_USER.ORGANIZATIONS_CAPTION' | translate }}
 			</span>
 		</div>
-		@if (!showAddCard) {
-			<button
-				type="button"
-				class="orgs__add-toggle"
-				nbButton
-				status="primary"
-				size="small"
-				(click)="showAddCard = true"
-			>
-				<nb-icon icon="plus-outline"></nb-icon>{{ 'USERS_PAGE.EDIT_USER.ADD_ORGANIZATION' | translate }}
-			</button>
-		}
+		<button
+			type="button"
+			class="orgs__add-toggle"
+			nbButton
+			status="primary"
+			size="small"
+			[disabled]="loading"
+			(click)="openAdd()"
+		>
+			<nb-icon icon="plus-outline"></nb-icon>{{ 'USERS_PAGE.EDIT_USER.ADD_ORGANIZATION' | translate }}
+		</button>
 	</header>
-
-	<!-- ── Add: pick organizations the user is not in yet ── -->
-	@if (showAddCard) {
-		<div class="orgs__add">
-			<ga-edit-user-organizations-mutation
-				(canceled)="cancel()"
-				(addOrg)="addOrg($event)"
-			></ga-edit-user-organizations-mutation>
-		</div>
-	}
 
 	<!-- ── The user's organizations ── -->
 	@if (organizations?.length) {
@@ -74,11 +63,153 @@
 		<div class="orgs__empty">
 			<span class="orgs__empty-badge"><nb-icon icon="briefcase-outline"></nb-icon></span>
 			<p class="orgs__empty-title">{{ 'USERS_PAGE.EDIT_USER.NO_ORGANIZATIONS' | translate }}</p>
-			@if (!showAddCard) {
-				<button type="button" nbButton status="primary" size="small" (click)="showAddCard = true">
-					<nb-icon icon="plus-outline"></nb-icon>{{ 'USERS_PAGE.EDIT_USER.ADD_ORGANIZATION' | translate }}
-				</button>
-			}
+			<button type="button" nbButton status="primary" size="small" (click)="openAdd()">
+				<nb-icon icon="plus-outline"></nb-icon>{{ 'USERS_PAGE.EDIT_USER.ADD_ORGANIZATION' | translate }}
+			</button>
 		</div>
 	}
 </section>
+
+<!-- Add: a searchable checklist of the tenant's organizations the user is not in yet. -->
+<ng-template #addDialog>
+	<nb-card class="assign-dialog" role="dialog" aria-labelledby="addOrganizationsDialogTitle">
+		<!-- nb-card projects only its header, body and footer in order: the search lives in the header. -->
+		<nb-card-header class="assign-dialog__header">
+			<div class="assign-dialog__head">
+				<span class="assign-dialog__icon" aria-hidden="true">
+					<nb-icon icon="briefcase-outline"></nb-icon>
+				</span>
+				<div class="assign-dialog__heading">
+					<h6 class="assign-dialog__title" id="addOrganizationsDialogTitle">
+						{{ 'USERS_PAGE.EDIT_USER.ADD_DIALOG_TITLE' | translate }}
+					</h6>
+					<span class="assign-dialog__subtitle">
+						{{ 'USERS_PAGE.EDIT_USER.ADD_DIALOG_SUBTITLE' | translate: { name: selectedUserName || '' } }}
+					</span>
+				</div>
+				<button
+					type="button"
+					class="assign-dialog__close"
+					nbButton
+					ghost
+					size="small"
+					status="basic"
+					[disabled]="saving"
+					[attr.aria-label]="'BUTTONS.CANCEL' | translate"
+					(click)="closeAdd()"
+				>
+					<nb-icon icon="close-outline"></nb-icon>
+				</button>
+			</div>
+
+			<div class="assign-dialog__toolbar">
+				<label class="assign-dialog__search">
+					<nb-icon icon="search-outline" aria-hidden="true"></nb-icon>
+					<input
+						nbInput
+						fullWidth
+						fieldSize="small"
+						type="search"
+						id="addOrganizationsSearch"
+						autocomplete="off"
+						[(ngModel)]="addSearch"
+						[disabled]="!availableOrganizations.length"
+						[placeholder]="'USERS_PAGE.EDIT_USER.SEARCH_ORGANIZATIONS' | translate"
+						[attr.aria-label]="'USERS_PAGE.EDIT_USER.SEARCH_ORGANIZATIONS' | translate"
+					/>
+				</label>
+				@if (addOptions.length) {
+					<button type="button" class="assign-dialog__link" (click)="toggleAllOptions()">
+						{{ (allOptionsSelected ? 'USERS_PAGE.EDIT_USER.DESELECT_ALL' : 'USERS_PAGE.EDIT_USER.SELECT_ALL') | translate }}
+					</button>
+				}
+			</div>
+		</nb-card-header>
+
+		<nb-card-body class="assign-dialog__body">
+			@if (!availableOrganizations.length) {
+				<div class="assign-dialog__empty">
+					<span class="orgs__empty-badge"><nb-icon icon="checkmark-circle-2-outline"></nb-icon></span>
+					<p class="assign-dialog__empty-text">{{ 'USERS_PAGE.EDIT_USER.ALL_ORGANIZATIONS_JOINED' | translate }}</p>
+				</div>
+			} @else if (!addOptions.length) {
+				<div class="assign-dialog__empty">
+					<nb-icon class="assign-dialog__empty-icon" icon="search-outline"></nb-icon>
+					<p class="assign-dialog__empty-text">{{ 'USERS_PAGE.EDIT_USER.NO_MATCHING_ORGANIZATIONS' | translate }}</p>
+				</div>
+			} @else {
+				<ul class="assign-dialog__list">
+					@for (organization of addOptions; track organization.id) {
+						<li>
+							<button
+								type="button"
+								class="assign-option"
+								[class.is-selected]="addSelection.has(organization.id)"
+								[attr.aria-pressed]="addSelection.has(organization.id)"
+								[disabled]="saving"
+								(click)="toggleOption(organization.id)"
+							>
+								<span class="assign-option__check" aria-hidden="true">
+									<nb-icon icon="checkmark-outline"></nb-icon>
+								</span>
+								<span class="orgs__logo">
+									@if (organization.imageUrl) {
+										<img [src]="organization.imageUrl" [alt]="organization.name" />
+									} @else {
+										<span aria-hidden="true">{{ initialsOf(organization.name) }}</span>
+									}
+								</span>
+								<span class="orgs__text">
+									<span class="assign-option__name">{{ organization.name }}</span>
+									@if (organization.officialName && organization.officialName !== organization.name) {
+										<span class="orgs__meta">{{ organization.officialName }}</span>
+									}
+								</span>
+							</button>
+						</li>
+					}
+				</ul>
+			}
+		</nb-card-body>
+
+		<nb-card-footer class="assign-dialog__footer">
+			<span class="assign-dialog__count">
+				@if (addSelection.size) {
+					{{ 'USERS_PAGE.EDIT_USER.SELECTED_COUNT' | translate: { count: addSelection.size } }}
+					<button type="button" class="assign-dialog__link" [disabled]="saving" (click)="clearSelection()">
+						{{ 'USERS_PAGE.EDIT_USER.CLEAR_SELECTION' | translate }}
+					</button>
+				}
+			</span>
+			<div class="assign-dialog__actions">
+				<button
+					type="button"
+					nbButton
+					outline
+					status="basic"
+					size="small"
+					[disabled]="saving"
+					(click)="closeAdd()"
+				>
+					{{ 'BUTTONS.CANCEL' | translate }}
+				</button>
+				<button
+					type="button"
+					class="assign-dialog__submit"
+					nbButton
+					status="primary"
+					size="small"
+					[disabled]="!addSelection.size || saving"
+					[nbSpinner]="saving"
+					nbSpinnerSize="tiny"
+					(click)="addSelected()"
+				>
+					<nb-icon icon="plus-outline"></nb-icon>{{ 'BUTTONS.ADD' | translate }}
+					@if (addSelection.size) {
+						<span class="assign-dialog__badge">{{ addSelection.size }}</span>
+					}
+				</button>
+			</div>
+		</nb-card-footer>
+	</nb-card>
+</ng-template>
