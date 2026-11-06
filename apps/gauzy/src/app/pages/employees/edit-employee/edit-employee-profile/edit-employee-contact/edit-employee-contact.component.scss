@@ -3,10 +3,12 @@
 
 // The employee's contacts, in the manner of Jira's and Hubstaff's member lists: a
 // header with count, caption, search and the primary action, then a real table -
-// quiet uppercase column headings, hairline rows, contact avatars and type lozenges. Every tint is a color-mix against `transparent`, so the same
-// rule reads on the light canvas and on the dark one.
+// quiet uppercase column headings, hairline rows, contact avatars and type lozenges. Every tint is a
+// color-mix against `transparent`, so the same rule reads on the light canvas and on the dark one.
 
-$radius: nb-theme(border-radius);
+// Theme tokens as CSS variables, as the Nebular guide asks; the elevated dialogs scale the base radius.
+$radius: var(--border-radius);
+$dialog-radius: calc(var(--border-radius) * 1.5);
 $hairline: 1px solid var(--gauzy-border-default-color);
 $columns: minmax(0, 1fr) 7rem 14rem 5rem;
 $columns-md: minmax(0, 1fr) 6.5rem 5rem;
@@ -173,7 +175,7 @@ $columns-md: minmax(0, 1fr) 6.5rem 5rem;
   line-height: 1rem;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: nb-theme(text-hint-color);
+  color: var(--text-hint-color);
 
   > [role='columnheader'] {
     min-width: 0;
@@ -197,7 +199,7 @@ $columns-md: minmax(0, 1fr) 6.5rem 5rem;
 }
 
 .avatar {
-  --avatar: #{nb-theme(color-primary-500)};
+  --avatar: var(--color-primary-500);
 
   flex: 0 0 auto;
   display: inline-flex;
@@ -243,7 +245,7 @@ $columns-md: minmax(0, 1fr) 6.5rem 5rem;
 
   &[href]:hover,
   &[href]:focus-visible {
-    color: nb-theme(text-primary-color);
+    color: var(--text-primary-color);
     text-decoration: underline;
   }
 }
@@ -312,7 +314,7 @@ $columns-md: minmax(0, 1fr) 6.5rem 5rem;
 
 // Type lozenge, as Jira draws its statuses: uppercase, tinted by tone.
 .lozenge {
-  --tone: #{nb-theme(text-hint-color)};
+  --tone: var(--text-hint-color);
 
   display: inline-block;
   max-width: 100%;
@@ -333,13 +335,13 @@ $columns-md: minmax(0, 1fr) 6.5rem 5rem;
     color: var(--gauzy-text-color-2);
   }
   &.tone-info {
-    --tone: #{nb-theme(color-info-500)};
+    --tone: var(--color-info-500);
   }
   &.tone-success {
-    --tone: #{nb-theme(color-success-500)};
+    --tone: var(--color-success-500);
   }
   &.tone-warning {
-    --tone: #{nb-theme(color-warning-500)};
+    --tone: var(--color-warning-500);
   }
 }
 
@@ -395,13 +397,13 @@ $columns-md: minmax(0, 1fr) 6.5rem 5rem;
   height: 3rem;
   margin-bottom: 0.25rem;
   border-radius: 50%;
-  background-color: color-mix(in srgb, nb-theme(color-primary-500) 14%, transparent);
+  background-color: color-mix(in srgb, var(--color-primary-500) 14%, transparent);
 
   nb-icon {
     width: 1.5rem;
     height: 1.5rem;
     font-size: 1.5rem;
-    color: nb-theme(text-primary-color);
+    color: var(--text-primary-color);
   }
 }
 
@@ -409,7 +411,7 @@ $columns-md: minmax(0, 1fr) 6.5rem 5rem;
   width: 2rem;
   height: 2rem;
   font-size: 2rem;
-  color: nb-theme(text-hint-color);
+  color: var(--text-hint-color);
 }
 
 .empty__title {
@@ -437,7 +439,7 @@ $columns-md: minmax(0, 1fr) 6.5rem 5rem;
   max-width: calc(100vw - 2rem);
   max-height: calc(100vh - 4rem);
   margin: 0;
-  border-radius: $radius;
+  border-radius: $dialog-radius;
   box-shadow: 0 1rem 2.5rem rgba(0, 0, 0, 0.35);
 }
 
@@ -466,13 +468,13 @@ $columns-md: minmax(0, 1fr) 6.5rem 5rem;
   width: 2.25rem;
   height: 2.25rem;
   border-radius: 50%;
-  background-color: color-mix(in srgb, nb-theme(color-primary-500) 16%, transparent);
+  background-color: color-mix(in srgb, var(--color-primary-500) 16%, transparent);
 
   nb-icon {
     width: 1.25rem;
     height: 1.25rem;
     font-size: 1.25rem;
-    color: nb-theme(text-primary-color);
+    color: var(--text-primary-color);
   }
 }
 
@@ -554,13 +556,13 @@ $columns-md: minmax(0, 1fr) 6.5rem 5rem;
   background: none;
   font-size: 0.75rem;
   font-weight: 600;
-  color: nb-theme(text-primary-color);
+  color: var(--text-primary-color);
   white-space: nowrap;
   cursor: pointer;
 
   &:hover:not(:disabled),
   &:focus-visible {
-    background-color: color-mix(in srgb, nb-theme(color-primary-500) 10%, transparent);
+    background-color: color-mix(in srgb, var(--color-primary-500) 10%, transparent);
   }
 
   &:disabled {
@@ -602,12 +604,12 @@ $columns-md: minmax(0, 1fr) 6.5rem 5rem;
   }
 
   &:focus-visible {
-    outline: 2px solid nb-theme(color-primary-500);
+    outline: 2px solid var(--color-primary-500);
     outline-offset: -2px;
   }
 
   &.is-selected {
-    background-color: color-mix(in srgb, nb-theme(color-primary-500) 10%, transparent);
+    background-color: color-mix(in srgb, var(--color-primary-500) 10%, transparent);
   }
 
   &:disabled {
@@ -629,7 +631,7 @@ $columns-md: minmax(0, 1fr) 6.5rem 5rem;
   justify-content: center;
   width: 1.125rem;
   height: 1.125rem;
-  border: 1.5px solid nb-theme(text-hint-color);
+  border: 1.5px solid var(--text-hint-color);
   border-radius: 0.25rem;
   transition:
     background-color 0.12s ease-in-out,
@@ -645,8 +647,8 @@ $columns-md: minmax(0, 1fr) 6.5rem 5rem;
   }
 
   .is-selected & {
-    border-color: nb-theme(color-primary-500);
-    background-color: nb-theme(color-primary-500);
+    border-color: var(--color-primary-500);
+    background-color: var(--color-primary-500);
 
     nb-icon {
       opacity: 1;
@@ -808,7 +810,7 @@ $columns-md: minmax(0, 1fr) 6.5rem 5rem;
   width: 28rem;
   max-width: calc(100vw - 2rem);
   margin: 0;
-  border-radius: $radius;
+  border-radius: $dialog-radius;
   box-shadow: 0 1rem 2.5rem rgba(0, 0, 0, 0.35);
 }
 
@@ -828,13 +830,13 @@ $columns-md: minmax(0, 1fr) 6.5rem 5rem;
   width: 2rem;
   height: 2rem;
   border-radius: 50%;
-  background-color: color-mix(in srgb, nb-theme(color-danger-500) 16%, transparent);
+  background-color: color-mix(in srgb, var(--color-danger-500) 16%, transparent);
 
   nb-icon {
     width: 1.125rem;
     height: 1.125rem;
     font-size: 1.125rem;
-    color: nb-theme(color-danger-500);
+    color: var(--color-danger-500);
   }
 }
 
