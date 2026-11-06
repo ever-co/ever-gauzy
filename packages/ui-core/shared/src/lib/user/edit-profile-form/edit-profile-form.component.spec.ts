@@ -1,11 +1,12 @@
 import { UntypedFormBuilder } from '@angular/forms';
+import { of, Subject } from 'rxjs';
 import { RolesEnum } from '@gauzy/contracts';
 import { EditProfileFormComponent } from './edit-profile-form.component';
 
 /**
- * The user edit page's Main tab (ngx-profile): a new photo shows at once and stays with the form, an admin's own
- * session is left alone when they change another user's photo, a save cannot be sent twice, and the role reads as a
- * label.
+ * The user edit page's Main tab (ngx-profile): a new photo shows at once and stays with the form (so a Save sends
+ * it), only the photo is sent with it, the signed-in user's session takes it only once saved and only for their own
+ * profile, a save cannot be sent twice (role lookup included), and the role reads as a label.
  */
 describe('EditProfileFormComponent', () => {
 	const ADMIN = { id: 'admin-1', imageId: 'admin-image', imageUrl: 'admin.png', email: 'admin@ever.co' };
@@ -25,6 +26,7 @@ describe('EditProfileFormComponent', () => {
 		component['_userService'] = { update };
 		component['_toastrService'] = { success: jest.fn(), error: jest.fn(), danger: jest.fn() };
 		component['_errorHandler'] = { handleError: jest.fn() };
+		component['_roleService'] = { getRoleByOptions: jest.fn(() => of({ id: 'role-1', name: 'EMPLOYEE' })) };
 		component.userSubmitted = { emit: jest.fn() } as any;
 		return { component, update };
 	};
@@ -52,6 +54,32 @@ describe('EditProfileFormComponent', () => {
 			expect(component['_store'].user.imageUrl).toBe('https://cdn/new.png');
 		});
 
+		it('sends only the photo, even where the role can change: a role picked in the form waits for Save', async () => {
+			const { component, update } = formFor({ id: 'user-2' });
+			component.allowRoleChange = true;
+			component.form.patchValue({ role: { name: 'ADMIN' } });
+
+			await component.updateImageAsset(IMAGE);
+
+			expect(update).toHaveBeenCalledWith('user-2', { imageId: 'image-2' });
+			expect(component['_roleService'].getRoleByOptions).not.toHaveBeenCalled();
+		});
+
+		it('when the photo cannot be saved: says so, keeps it in the form for Save, and leaves the session as it was', async () => {
+			const { component } = formFor(
+				undefined,
+				jest.fn(async () => {
+					throw new Error('500');
+				})
+			);
+
+			await component.updateImageAsset(IMAGE);
+
+			expect(component['_errorHandler'].handleError).toHaveBeenCalled();
+			expect(component['_store'].user).toEqual(ADMIN);
+			expect(component.form.get('imageId').value).toBe('image-2');
+		});
+
 		it('CONTROL: an admin editing themselves through the users page counts as their own profile', async () => {
 			const { component } = formFor({ id: 'admin-1' });
 
@@ -76,6 +104,52 @@ describe('EditProfileFormComponent', () => {
 			expect(update).toHaveBeenCalledTimes(1);
 			expect(update).toHaveBeenCalledWith('user-2', expect.objectContaining({ email: 'ann@ever.co' }));
 			expect(component.userSubmitted.emit).toHaveBeenCalledTimes(1);
+			expect(component.saving).toBe(false);
+		});
+
+		it('sends the photo shown with the rest', async () => {
+			const { component, update } = formFor({ id: 'user-2' });
+			component.form.patchValue({ imageId: 'image-2' });
+
+			await component.submitForm();
+
+			expect(update).toHaveBeenCalledWith('user-2', expect.objectContaining({ imageId: 'image-2' }));
+		});
+
+		it('where the role can change, sends once even when clicked again during the role lookup', async () => {
+			const role$ = new Subject<any>();
+			const { component, update } = formFor({ id: 'user-2' });
+			component.allowRoleChange = true;
+			component.form.patchValue({ role: { name: 'EMPLOYEE' } });
+			component['_roleService'].getRoleByOptions = jest.fn(() => role$);
+
+			const first = component.submitForm();
+			expect(component.saving).toBe(true);
+			await component.submitForm(); // a second click while the role is looked up
+			role$.next({ id: 'role-1', name: 'EMPLOYEE' });
+			role$.complete();
+			await first;
+
+			expect(update).toHaveBeenCalledTimes(1);
+			expect(update).toHaveBeenCalledWith(
+				'user-2',
+				expect.objectContaining({ role: { id: 'role-1', name: 'EMPLOYEE' } })
+			);
+			expect(component.saving).toBe(false);
+		});
+
+		it('reports a failed role lookup and frees the button', async () => {
+			const { component, update } = formFor({ id: 'user-2' });
+			component.allowRoleChange = true;
+			component.form.patchValue({ role: { name: 'EMPLOYEE' } });
+			component['_roleService'].getRoleByOptions = jest.fn(() => {
+				throw new Error('404');
+			});
+
+			await component.submitForm();
+
+			expect(update).not.toHaveBeenCalled();
+			expect(component['_errorHandler'].handleError).toHaveBeenCalled();
 			expect(component.saving).toBe(false);
 		});
 
