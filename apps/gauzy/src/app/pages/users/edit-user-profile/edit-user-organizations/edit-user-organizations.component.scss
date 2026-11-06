@@ -1,11 +1,12 @@
 @use 'var' as v;
 
 // The user's organizations, as the employee page lists projects and contacts: a header with count, caption and the
-// Add action, an inline add panel, then hairline rows with each organization's logo, name and remove action. Theme
-// tokens are read as CSS variables.
+// Add action (a checklist dialog, as the projects and contacts tabs assign), then hairline rows with each
+// organization's logo, name and remove action. Theme tokens are read as CSS variables.
 
 $radius: var(--border-radius);
 $hairline: 1px solid var(--gauzy-border-default-color);
+$dialog-radius: calc(var(--border-radius) * 1.5);
 
 :host {
   display: block;
@@ -72,13 +73,6 @@ $hairline: 1px solid var(--gauzy-border-default-color);
   font-size: 0.75rem;
   line-height: 1.125rem;
   color: var(--gauzy-text-color-2);
-}
-
-// -- Add --
-.orgs__add {
-  padding: 1rem 1.25rem;
-  border-bottom: $hairline;
-  background-color: color-mix(in srgb, var(--color-primary-500) 5%, transparent);
 }
 
 // -- Rows --
@@ -212,9 +206,322 @@ $hairline: 1px solid var(--gauzy-border-default-color);
   color: var(--gauzy-text-color-1);
 }
 
+// -- Add dialog --
+// Rendered in the dialog overlay, but declared in this template, so these rules still reach it. A checklist like the
+// projects and contacts tabs' assign dialogs: the search in the header, one row per organization, the count and
+// action in the footer; a step smaller than the page.
+.assign-dialog {
+  display: flex;
+  flex-direction: column;
+  width: 32rem;
+  max-width: calc(100vw - 2rem);
+  max-height: calc(100vh - 4rem);
+  margin: 0;
+  border-radius: $dialog-radius;
+  border: 1px solid var(--gauzy-border-default-color);
+  // The theme's own elevation (dark on the dark theme, soft on the light one) over its hairline shadow: the
+  // text colour this was mixed from is white on the dark theme, which lit the dialog with a glow.
+  box-shadow: var(--shadow), var(--gauzy-shadow);
+
+  .orgs__logo {
+    width: 1.875rem;
+    height: 1.875rem;
+    font-size: 0.6875rem;
+  }
+
+  .orgs__meta {
+    font-size: 0.6875rem;
+    line-height: 0.9375rem;
+  }
+}
+
+.assign-dialog__header {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  flex: 0 0 auto;
+  padding: 1.25rem 1.25rem 1rem;
+  border-bottom: $hairline;
+}
+
+.assign-dialog__head {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.875rem;
+  min-width: 0;
+}
+
+.assign-dialog__icon {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 50%;
+  background-color: color-mix(in srgb, var(--color-primary-500) 16%, transparent);
+
+  nb-icon {
+    width: 1.25rem;
+    height: 1.25rem;
+    font-size: 1.25rem;
+    color: var(--text-primary-color);
+  }
+}
+
+.assign-dialog__heading {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.assign-dialog__title {
+  margin: 0;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  line-height: 1.375rem;
+  color: var(--gauzy-text-color-1);
+  overflow-wrap: anywhere;
+}
+
+.assign-dialog__subtitle {
+  font-size: 0.75rem;
+  font-weight: 400;
+  line-height: 1.125rem;
+  color: var(--gauzy-text-color-2);
+  overflow-wrap: anywhere;
+}
+
+// Keeps its corner: the heading shrinks and wraps instead of running under it.
+.assign-dialog__close {
+  flex: 0 0 auto;
+  margin: -0.25rem -0.375rem 0 0;
+
+  nb-icon {
+    width: 1rem;
+    height: 1rem;
+    font-size: 1rem;
+  }
+}
+
+.assign-dialog__toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+.assign-dialog__search {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
+
+  nb-icon {
+    position: absolute;
+    inset-inline-start: 0.75rem;
+    width: 1rem;
+    height: 1rem;
+    font-size: 1rem;
+    color: var(--gauzy-text-color-2);
+    pointer-events: none;
+  }
+
+  input {
+    width: 100%;
+    max-width: none;
+    padding-inline-start: 2.25rem;
+    font-size: 0.8125rem;
+  }
+}
+
+// Text buttons: "Select all", "Clear".
+.assign-dialog__link {
+  flex: 0 0 auto;
+  padding: 0.25rem 0.375rem;
+  border: 0;
+  border-radius: 0.25rem;
+  background: none;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-primary-color);
+  white-space: nowrap;
+  cursor: pointer;
+
+  &:hover:not(:disabled),
+  &:focus-visible {
+    background-color: color-mix(in srgb, var(--color-primary-500) 10%, transparent);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: default;
+  }
+}
+
+.assign-dialog__body {
+  flex: 1 1 auto;
+  min-height: 12rem;
+  max-height: 24rem;
+  padding: 0.5rem;
+  overflow-y: auto;
+}
+
+.assign-dialog__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.assign-option {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.4375rem 0.875rem;
+  border: 0;
+  border-radius: 0.375rem;
+  background: none;
+  color: inherit;
+  text-align: start;
+  cursor: pointer;
+  transition: background-color 0.12s ease-in-out;
+
+  &:hover:not(:disabled) {
+    background-color: var(--gauzy-hover-tint);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-primary-500);
+    outline-offset: -2px;
+  }
+
+  &.is-selected {
+    background-color: color-mix(in srgb, var(--color-primary-500) 10%, transparent);
+  }
+
+  &:disabled {
+    cursor: default;
+    opacity: 0.6;
+  }
+}
+
+// The checkbox: an empty square, filled with the primary colour and a tick when picked.
+.assign-option__check {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.125rem;
+  height: 1.125rem;
+  border: 1.5px solid var(--text-hint-color);
+  border-radius: 0.25rem;
+  transition:
+    background-color 0.12s ease-in-out,
+    border-color 0.12s ease-in-out;
+
+  nb-icon {
+    width: 0.875rem;
+    height: 0.875rem;
+    font-size: 0.875rem;
+    color: var(--text-control-color);
+    opacity: 0;
+  }
+
+  .is-selected & {
+    border-color: var(--color-primary-500);
+    background-color: var(--color-primary-500);
+
+    nb-icon {
+      opacity: 1;
+    }
+  }
+}
+
+.assign-option__name {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  line-height: 1.125rem;
+  color: var(--gauzy-text-color-1);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.assign-dialog__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 11rem;
+  text-align: center;
+}
+
+.assign-dialog__empty-icon {
+  width: 2rem;
+  height: 2rem;
+  font-size: 2rem;
+  color: var(--text-hint-color);
+}
+
+.assign-dialog__empty-text {
+  max-width: 22rem;
+  margin: 0;
+  font-size: 0.75rem;
+  line-height: 1.125rem;
+  color: var(--gauzy-text-color-2);
+}
+
+.assign-dialog__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.875rem 1.25rem;
+  border-top: $hairline;
+}
+
+.assign-dialog__count {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--gauzy-text-color-1);
+}
+
+.assign-dialog__actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-inline-start: auto;
+}
+
+.assign-dialog__submit nb-icon {
+  margin-inline-end: 0.25rem;
+}
+
+.assign-dialog__badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.25rem;
+  height: 1.125rem;
+  margin-inline-start: 0.375rem;
+  padding: 0 0.3125rem;
+  border-radius: 999px;
+  background-color: color-mix(in srgb, var(--text-control-color) 25%, transparent);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
 @media only screen and (max-width: v.$break-md) {
   .orgs__header,
-  .orgs__add,
   .orgs__row {
     padding-inline: 1rem;
   }
