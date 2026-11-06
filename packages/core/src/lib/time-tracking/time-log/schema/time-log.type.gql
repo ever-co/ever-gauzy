@@ -502,6 +502,12 @@ input CreateManualTimeLogInput {
 	taskId: ID
 	"The client to attribute the work to."
 	organizationContactId: ID
+	"""
+	The team to attribute the work to. An organization that requires a team refuses an entry without one, unless the
+	employee has exactly one active team in the organization, which the entry is then filed under. Inactive, archived
+	or deleted teams do not count.
+	"""
+	organizationTeamId: ID
 	"What was worked on."
 	description: String
 	"Why the interval is being recorded by hand."

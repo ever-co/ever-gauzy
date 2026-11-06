@@ -39,7 +39,7 @@ export type MembersReadScope = { allowed: false } | { allowed: true; employeeIds
  * NULL. Strict equality would skip it and refuse a real manager or member. A fresh object is built per
  * query because TypeORM may transform a FindOperator's value in place.
  */
-const activeMembershipWhere = () => ({
+export const activeMembershipWhere = () => ({
 	isActive: Or(IsNull(), Equal(true)),
 	isArchived: Or(IsNull(), Equal(false))
 });
@@ -48,7 +48,7 @@ const activeMembershipWhere = () => ({
  * Where clause for the team or project a membership belongs to, which must itself still be in effect:
  * deleting, archiving or deactivating a team or project leaves its membership rows untouched.
  */
-const activeGroupWhere = () => ({ ...activeMembershipWhere(), deletedAt: IsNull() });
+export const activeGroupWhere = () => ({ ...activeMembershipWhere(), deletedAt: IsNull() });
 
 @Injectable()
 export class ManagedEmployeeService {

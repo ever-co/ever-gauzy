@@ -79,6 +79,7 @@ export interface ICreateManualTimeLogInput {
 	projectId?: Id;
 	taskId?: Id;
 	organizationContactId?: Id;
+	organizationTeamId?: Id;
 	description?: string;
 	reason?: string;
 	isBillable?: boolean;
@@ -91,7 +92,7 @@ export interface ICreateManualTimeLogInput {
  * the create's body stamps for itself — the delivered update carries neither a log type nor a source,
  * so a caller cannot restate them here either.
  */
-export interface IUpdateManualTimeLogInput extends ICreateManualTimeLogInput {
+export interface IUpdateManualTimeLogInput extends Omit<ICreateManualTimeLogInput, 'organizationTeamId'> {
 	id: Id;
 }
 

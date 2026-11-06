@@ -74,6 +74,12 @@ import { TypeOrmOrganizationContactRepository } from '../../organization-contact
 import { ManagedEmployeeService } from '../../employee/managed-employee.service';
 import { Organization } from '../../organization/organization.entity';
 import { TimeLog } from './time-log.entity';
+import {
+	IManualTimeEntry,
+	assertRequiredContext,
+	projectIdForEntry,
+	teamIdForEntry
+} from './organization-tracking-requirements';
 
 @Injectable()
 export class TimeLogService extends TenantAwareCrudService<TimeLog> {
@@ -1811,12 +1817,52 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 	}
 
 	/**
+	 * The manual entry as it is recorded under its organization's switches: the team and the project filled where they
+	 * can be (see `teamIdForEntry` and `projectIdForEntry`), and refused when a required field is still missing, unless
+	 * a tracker uploaded it. The employee is the one the time is for, so the team is theirs, not the caller's.
+	 *
+	 * @param request The entry as sent.
+	 * @param employee The employee the time is for, with their organization.
+	 * @param organizationId That employee's organization.
+	 * @param tenantId The caller's tenant.
+	 * @throws BadRequestException with the code TRACKING_FIELD_REQUIRED.
+	 */
+	private async withRequiredContext(
+		request: IManualTimeEntry,
+		employee: IEmployee,
+		organizationId: ID,
+		tenantId: ID
+	): Promise<IManualTimeInput> {
+		const { uploadedByTracker, ...sent } = request;
+		const requirements = employee.organization;
+		const trackedEmployee = { employeeId: employee.id, organizationId, tenantId };
+		const manager = this.typeOrmTimeLogRepository.manager;
+		const takesTaskProject = false;
+
+		const organizationTeamId = await teamIdForEntry(manager, trackedEmployee, sent, requirements);
+		const teamContext = { ...sent, organizationTeamId };
+		const projectId = await projectIdForEntry(
+			manager,
+			trackedEmployee,
+			teamContext,
+			requirements,
+			takesTaskProject
+		);
+		const entry = { ...teamContext, projectId };
+		const isTrackerUpload = uploadedByTracker === true;
+		if (!isTrackerUpload) {
+			assertRequiredContext(requirements, entry);
+		}
+		return entry;
+	}
+
+	/**
 	 * Adds a manual time log entry.
 	 *
 	 * @param request The input data for the manual time log.
 	 * @returns The created time log entry.
 	 */
-	async addManualTime(request: IManualTimeInput): Promise<ITimeLog> {
+	async addManualTime(request: IManualTimeEntry): Promise<ITimeLog> {
 		try {
 			const tenantId = RequestContext.currentTenantId();
 			const { employeeId, startedAt, stoppedAt } = request;
@@ -1852,6 +1898,8 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 				throw new BadRequestException('Please select valid Date, start time and end time');
 			}
 
+			const entry = await this.withRequiredContext(request, employee, organizationId, tenantId);
+
 			// Check for conflicts with existing time logs
 			const conflicts = await this.commandBus.execute(
 				new IGetConflictTimeLogCommand({
@@ -1883,7 +1931,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			// Create the new time log entry. The handler reads it back through this service, whose employee
 			// filter would not find a log written for a member the caller manages.
 			return await this.withoutEmployeeFilter(() =>
-				this.commandBus.execute(new TimeLogCreateCommand({ ...request, organizationId }))
+				this.commandBus.execute(new TimeLogCreateCommand({ ...entry, organizationId }))
 			);
 		} catch (error) {
 			// Never swallow the reason: a blanket message here hid a real database failure indefinitely.
