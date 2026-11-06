@@ -4568,7 +4568,16 @@
 			"ORGANIZATIONS_CAPTION": "Organizaciones a las que pertenece este usuario y en las que puede trabajar.",
 			"ADD_ORGANIZATION": "Añadir a una organización",
 			"NO_ORGANIZATIONS": "Este usuario aún no está en ninguna organización.",
-			"REMOVE_FROM_ORGANIZATION": "Quitar de la organización"
+			"REMOVE_FROM_ORGANIZATION": "Quitar de la organización",
+			"ADD_DIALOG_TITLE": "Añadir a organizaciones",
+			"ADD_DIALOG_SUBTITLE": "Elige las organizaciones a las que debe unirse {{ name }}.",
+			"SEARCH_ORGANIZATIONS": "Buscar organizaciones",
+			"SELECT_ALL": "Seleccionar todo",
+			"DESELECT_ALL": "Deseleccionar todo",
+			"SELECTED_COUNT": "{{ count }} seleccionadas",
+			"CLEAR_SELECTION": "Borrar",
+			"ALL_ORGANIZATIONS_JOINED": "Este usuario ya está en todas las organizaciones.",
+			"NO_MATCHING_ORGANIZATIONS": "No hay organizaciones que coincidan"
 		},
 		"REMOVE_USER": "'{{ name }}' fue removido.",
 		"ACTIVE": "Activo",

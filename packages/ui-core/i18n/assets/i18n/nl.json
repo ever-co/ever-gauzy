@@ -4566,7 +4566,16 @@
 			"ORGANIZATIONS_CAPTION": "Organisaties waartoe deze gebruiker behoort en waarin hij kan werken.",
 			"ADD_ORGANIZATION": "Aan organisatie toevoegen",
 			"NO_ORGANIZATIONS": "Deze gebruiker zit nog in geen enkele organisatie.",
-			"REMOVE_FROM_ORGANIZATION": "Uit organisatie verwijderen"
+			"REMOVE_FROM_ORGANIZATION": "Uit organisatie verwijderen",
+			"ADD_DIALOG_TITLE": "Aan organisaties toevoegen",
+			"ADD_DIALOG_SUBTITLE": "Kies de organisaties waar {{ name }} lid van moet worden.",
+			"SEARCH_ORGANIZATIONS": "Organisaties zoeken",
+			"SELECT_ALL": "Alles selecteren",
+			"DESELECT_ALL": "Alles deselecteren",
+			"SELECTED_COUNT": "{{ count }} geselecteerd",
+			"CLEAR_SELECTION": "Wissen",
+			"ALL_ORGANIZATIONS_JOINED": "Deze gebruiker zit al in alle organisaties.",
+			"NO_MATCHING_ORGANIZATIONS": "Geen overeenkomende organisaties"
 		},
 		"REMOVE_USER": "'{{ name }}' werd verwijderd",
 		"ACTIVE": "Actief",

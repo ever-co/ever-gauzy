@@ -4592,7 +4592,16 @@
 			"ORGANIZATIONS_CAPTION": "Организации, в которых состоит этот пользователь и может работать.",
 			"ADD_ORGANIZATION": "Добавить в организацию",
 			"NO_ORGANIZATIONS": "Этот пользователь пока не состоит ни в одной организации.",
-			"REMOVE_FROM_ORGANIZATION": "Убрать из организации"
+			"REMOVE_FROM_ORGANIZATION": "Убрать из организации",
+			"ADD_DIALOG_TITLE": "Добавить в организации",
+			"ADD_DIALOG_SUBTITLE": "Выберите организации, в которые должен войти {{ name }}.",
+			"SEARCH_ORGANIZATIONS": "Поиск организаций",
+			"SELECT_ALL": "Выбрать все",
+			"DESELECT_ALL": "Снять выбор",
+			"SELECTED_COUNT": "Выбрано: {{ count }}",
+			"CLEAR_SELECTION": "Очистить",
+			"ALL_ORGANIZATIONS_JOINED": "Этот пользователь уже состоит во всех организациях.",
+			"NO_MATCHING_ORGANIZATIONS": "Подходящих организаций нет"
 		},
 		"REMOVE_USER": "'{{ name }}' был удален",
 		"ACTIVE": "Активный",

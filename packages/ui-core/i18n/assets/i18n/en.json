@@ -5095,7 +5095,16 @@
 			"ORGANIZATIONS_CAPTION": "Organizations this user belongs to and can work in.",
 			"ADD_ORGANIZATION": "Add to organization",
 			"NO_ORGANIZATIONS": "This user is not in any organization yet.",
-			"REMOVE_FROM_ORGANIZATION": "Remove from organization"
+			"REMOVE_FROM_ORGANIZATION": "Remove from organization",
+			"ADD_DIALOG_TITLE": "Add to organizations",
+			"ADD_DIALOG_SUBTITLE": "Choose the organizations {{ name }} should join.",
+			"SEARCH_ORGANIZATIONS": "Search organizations",
+			"SELECT_ALL": "Select all",
+			"DESELECT_ALL": "Deselect all",
+			"SELECTED_COUNT": "{{ count }} selected",
+			"CLEAR_SELECTION": "Clear",
+			"ALL_ORGANIZATIONS_JOINED": "This user is already in every organization.",
+			"NO_MATCHING_ORGANIZATIONS": "No matching organizations"
 		},
 		"REMOVE_USER": "'{{ name }}' was removed",
 		"ACTIVE": "Active",

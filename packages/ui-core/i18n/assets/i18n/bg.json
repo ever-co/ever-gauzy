@@ -4618,7 +4618,16 @@
 			"ORGANIZATIONS_CAPTION": "Организации, към които принадлежи този потребител и в които може да работи.",
 			"ADD_ORGANIZATION": "Добавяне към организация",
 			"NO_ORGANIZATIONS": "Този потребител все още не е в никоя организация.",
-			"REMOVE_FROM_ORGANIZATION": "Премахване от организацията"
+			"REMOVE_FROM_ORGANIZATION": "Премахване от организацията",
+			"ADD_DIALOG_TITLE": "Добавяне към организации",
+			"ADD_DIALOG_SUBTITLE": "Изберете организациите, към които да се присъедини {{ name }}.",
+			"SEARCH_ORGANIZATIONS": "Търсене на организации",
+			"SELECT_ALL": "Избери всички",
+			"DESELECT_ALL": "Премахни избора",
+			"SELECTED_COUNT": "Избрани: {{ count }}",
+			"CLEAR_SELECTION": "Изчисти",
+			"ALL_ORGANIZATIONS_JOINED": "Този потребител вече е във всички организации.",
+			"NO_MATCHING_ORGANIZATIONS": "Няма съвпадащи организации"
 		},
 		"REMOVE_USER": "'{{ name }}' was removed",
 		"ACTIVE": "Активен",

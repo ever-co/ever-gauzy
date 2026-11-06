@@ -4585,7 +4585,16 @@
 			"ORGANIZATIONS_CAPTION": "ארגונים שהמשתמש הזה שייך אליהם ויכול לעבוד בהם.",
 			"ADD_ORGANIZATION": "הוספה לארגון",
 			"NO_ORGANIZATIONS": "המשתמש הזה עדיין אינו חבר באף ארגון.",
-			"REMOVE_FROM_ORGANIZATION": "הסרה מהארגון"
+			"REMOVE_FROM_ORGANIZATION": "הסרה מהארגון",
+			"ADD_DIALOG_TITLE": "הוספה לארגונים",
+			"ADD_DIALOG_SUBTITLE": "בחרו את הארגונים ש-{{ name }} יצטרף אליהם.",
+			"SEARCH_ORGANIZATIONS": "חיפוש ארגונים",
+			"SELECT_ALL": "בחירת הכול",
+			"DESELECT_ALL": "ביטול בחירת הכול",
+			"SELECTED_COUNT": "{{ count }} נבחרו",
+			"CLEAR_SELECTION": "ניקוי",
+			"ALL_ORGANIZATIONS_JOINED": "המשתמש הזה כבר נמצא בכל הארגונים.",
+			"NO_MATCHING_ORGANIZATIONS": "אין ארגונים תואמים"
 		},
 		"REMOVE_USER": "'{{ name }}' was removed",
 		"ACTIVE": "פעיל",

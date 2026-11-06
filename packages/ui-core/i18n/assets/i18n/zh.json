@@ -5098,7 +5098,16 @@
 			"ORGANIZATIONS_CAPTION": "该用户所属并可在其中工作的组织。",
 			"ADD_ORGANIZATION": "添加到组织",
 			"NO_ORGANIZATIONS": "该用户尚未加入任何组织。",
-			"REMOVE_FROM_ORGANIZATION": "从组织中移除"
+			"REMOVE_FROM_ORGANIZATION": "从组织中移除",
+			"ADD_DIALOG_TITLE": "添加到组织",
+			"ADD_DIALOG_SUBTITLE": "选择 {{ name }} 要加入的组织。",
+			"SEARCH_ORGANIZATIONS": "搜索组织",
+			"SELECT_ALL": "全选",
+			"DESELECT_ALL": "取消全选",
+			"SELECTED_COUNT": "已选择 {{ count }} 个",
+			"CLEAR_SELECTION": "清除",
+			"ALL_ORGANIZATIONS_JOINED": "该用户已在所有组织中。",
+			"NO_MATCHING_ORGANIZATIONS": "没有匹配的组织"
 		},
 		"REMOVE_USER": "\"{{ name }}\" 被移除了",
 		"ACTIVE": "活跃",
