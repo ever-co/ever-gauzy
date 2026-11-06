@@ -113,6 +113,59 @@ export class EditProfileFormComponent implements OnInit, OnDestroy {
 		return [firstName, lastName].filter(Boolean).join(' ') || email || '';
 	}
 
+	/** Whether the account is active (a user without the flag counts as active, as the app treats them). */
+	get isActiveAccount(): boolean {
+		return this.profile?.isActive !== false;
+	}
+
+	/** The interface language, for naming languages and formatting the local time. */
+	private get uiLanguage(): string {
+		return (typeof document !== 'undefined' && document.documentElement.lang) || 'en';
+	}
+
+	/** The preferred language by name ("English"), else its code; null when not set. */
+	get languageName(): string | null {
+		const code = this.profile?.preferredLanguage;
+		if (!code) {
+			return null;
+		}
+		try {
+			return new Intl.DisplayNames([this.uiLanguage], { type: 'language' }).of(code) || code;
+		} catch {
+			return code;
+		}
+	}
+
+	/** The user's time now, in their time zone and time format; null without a valid time zone. */
+	get localTime(): string | null {
+		const timeZone = this.profile?.timeZone;
+		if (!timeZone) {
+			return null;
+		}
+		try {
+			return new Intl.DateTimeFormat(this.uiLanguage, {
+				timeZone,
+				hour: '2-digit',
+				minute: '2-digit',
+				...(this.profile?.timeFormat ? { hour12: Number(this.profile.timeFormat) === 12 } : {})
+			}).format(new Date());
+		} catch {
+			return null;
+		}
+	}
+
+	/** The time format's i18n key; null when not set. */
+	get timeFormatKey(): string | null {
+		switch (Number(this.profile?.timeFormat)) {
+			case 12:
+				return 'USERS_PAGE.EDIT_USER.TIME_FORMAT_12';
+			case 24:
+				return 'USERS_PAGE.EDIT_USER.TIME_FORMAT_24';
+			default:
+				return null;
+		}
+	}
+
 	/** The role's label: translated for the roles with a USERS_PAGE.ROLE string, as named for any other. */
 	get roleLabel(): { key?: string; text: string } | null {
 		const name = this.role?.name;

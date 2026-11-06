@@ -195,8 +195,49 @@ $hairline: 1px solid var(--gauzy-border-default-color);
   color: var(--text-warning-color);
 }
 
+// Facts in titled groups: a quiet uppercase title, then hairline rows of term and value.
+.profile__group {
+  margin-top: 1.125rem;
+}
+
+.profile__group-title {
+  margin: 0 0 0.375rem;
+  font-size: 0.625rem;
+  font-weight: 600;
+  line-height: 0.875rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-hint-color);
+}
+
 .profile__facts {
-  margin: 1.125rem 0 0;
+  margin: 0;
+}
+
+// Active in green, inactive in red, each with its dot.
+.profile__status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  color: var(--text-success-color);
+
+  &::before {
+    content: '';
+    width: 0.4375rem;
+    height: 0.4375rem;
+    border-radius: 50%;
+    background-color: currentColor;
+  }
+}
+
+.profile__status--inactive {
+  color: var(--text-danger-color);
+}
+
+// A value the user has not set reads quieter than a real one.
+.profile__fact dd.profile__unset {
+  font-weight: 400;
+  color: var(--text-hint-color);
 }
 
 .profile__fact {

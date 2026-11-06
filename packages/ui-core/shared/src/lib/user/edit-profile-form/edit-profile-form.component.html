@@ -61,24 +61,82 @@
 		</header>
 
 		@if (profile) {
-			<dl class="profile__facts">
-				@if (profile.createdAt) {
+			<!-- Account: status and the record's dates -->
+			<section class="profile__group">
+				<h6 class="profile__group-title">{{ 'USERS_PAGE.EDIT_USER.GROUP_ACCOUNT' | translate }}</h6>
+				<dl class="profile__facts">
 					<div class="profile__fact">
-						<dt>{{ 'USERS_PAGE.EDIT_USER.MEMBER_SINCE' | translate }}</dt>
-						<dd>{{ profile.createdAt | date: 'mediumDate' }}</dd>
+						<dt>{{ 'USERS_PAGE.EDIT_USER.STATUS' | translate }}</dt>
+						<dd>
+							<span class="profile__status" [class.profile__status--inactive]="!isActiveAccount">
+								{{
+									(isActiveAccount ? 'USERS_PAGE.EDIT_USER.ACTIVE_STATUS' : 'USERS_PAGE.EDIT_USER.INACTIVE_STATUS')
+										| translate
+								}}
+							</span>
+						</dd>
 					</div>
-				}
-				<div class="profile__fact">
-					<dt>{{ 'USERS_PAGE.EDIT_USER.LAST_SIGN_IN' | translate }}</dt>
-					<dd>
-						{{
-							profile.lastLoginAt
-								? (profile.lastLoginAt | date: 'medium')
-								: ('USERS_PAGE.EDIT_USER.NEVER_SIGNED_IN' | translate)
-						}}
-					</dd>
-				</div>
-			</dl>
+					@if (profile.createdAt) {
+						<div class="profile__fact">
+							<dt>{{ 'USERS_PAGE.EDIT_USER.MEMBER_SINCE' | translate }}</dt>
+							<dd>{{ profile.createdAt | date: 'mediumDate' }}</dd>
+						</div>
+					}
+					@if (profile.updatedAt) {
+						<div class="profile__fact">
+							<dt>{{ 'USERS_PAGE.EDIT_USER.LAST_UPDATED' | translate }}</dt>
+							<dd>{{ profile.updatedAt | date: 'mediumDate' }}</dd>
+						</div>
+					}
+					<div class="profile__fact">
+						<dt>{{ 'USERS_PAGE.EDIT_USER.LAST_SIGN_IN' | translate }}</dt>
+						<dd>
+							{{
+								profile.lastLoginAt
+									? (profile.lastLoginAt | date: 'medium')
+									: ('USERS_PAGE.EDIT_USER.NEVER_SIGNED_IN' | translate)
+							}}
+						</dd>
+					</div>
+					@if (profile.emailVerifiedAt) {
+						<div class="profile__fact">
+							<dt>{{ 'USERS_PAGE.EDIT_USER.EMAIL_VERIFIED_ON' | translate }}</dt>
+							<dd>{{ profile.emailVerifiedAt | date: 'mediumDate' }}</dd>
+						</div>
+					}
+				</dl>
+			</section>
+
+			<!-- Language & time: how the app speaks and tells time to this user -->
+			<section class="profile__group">
+				<h6 class="profile__group-title">{{ 'USERS_PAGE.EDIT_USER.GROUP_LOCALE' | translate }}</h6>
+				<dl class="profile__facts">
+					<div class="profile__fact">
+						<dt>{{ 'USERS_PAGE.EDIT_USER.LANGUAGE' | translate }}</dt>
+						<dd [class.profile__unset]="!languageName">
+							{{ languageName || ('USERS_PAGE.EDIT_USER.NOT_SET' | translate) }}
+						</dd>
+					</div>
+					<div class="profile__fact">
+						<dt>{{ 'USERS_PAGE.EDIT_USER.TIME_ZONE' | translate }}</dt>
+						<dd [class.profile__unset]="!profile.timeZone">
+							{{ profile.timeZone || ('USERS_PAGE.EDIT_USER.NOT_SET' | translate) }}
+						</dd>
+					</div>
+					@if (localTime; as time) {
+						<div class="profile__fact">
+							<dt>{{ 'USERS_PAGE.EDIT_USER.LOCAL_TIME' | translate }}</dt>
+							<dd>{{ time }}</dd>
+						</div>
+					}
+					<div class="profile__fact">
+						<dt>{{ 'USERS_PAGE.EDIT_USER.TIME_FORMAT' | translate }}</dt>
+						<dd [class.profile__unset]="!timeFormatKey">
+							{{ (timeFormatKey || 'USERS_PAGE.EDIT_USER.NOT_SET') | translate }}
+						</dd>
+					</div>
+				</dl>
+			</section>
 		}
 	</section>
 
