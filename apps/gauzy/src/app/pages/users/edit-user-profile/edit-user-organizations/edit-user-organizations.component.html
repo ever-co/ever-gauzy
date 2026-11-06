@@ -1,62 +1,84 @@
-<nb-card
-  [nbSpinner]="loading"
-  nbSpinnerStatus="primary"
-  nbSpinnerSize="large"
-  >
-  <nb-card-header>
-    @if (!showAddCard) {
-      <button
-        (click)="showAddCard = !showAddCard"
-        nbButton
-        status="success"
-        class="float-right"
-        size="small"
-        >
-        <nb-icon icon="plus-outline"></nb-icon
-          >{{ 'BUTTONS.ADD' | translate }}
-        </button>
-      }
-      <div class="edit-user-organizations">
-        @if (showAddCard) {
-          <ga-edit-user-organizations-mutation
-            (canceled)="cancel()"
-            (addOrg)="addOrg($event)"
-          ></ga-edit-user-organizations-mutation>
-        }
-      </div>
-    </nb-card-header>
-    @if (organizations?.length) {
-      <nb-card-body>
-        <div class="mb-3">
-          <strong>
-            {{
-            'ORGANIZATIONS_PAGE.EDIT.USER_ORGANIZATIONS' | translate: {
-            name: selectedUserName
-          }
-          }}
-        </strong>
-      </div>
-      @for (organization of organizations; track organization) {
-        <nb-card class="organization">
-          <nb-card-body>
-            <img
-              [src]="organization.imageUrl"
-              alt="Smiley face"
-              height="40"
-              width="40"
-              class="organization-image"
-              />
-              <strong>{{ organization.name }}</strong>
-              <nb-actions class="float-right" e="medium">
-                <nb-action
-                  (click)="remove(organization.id)"
-                  class="d-inline pr-0"
-                  icon="close"
-                ></nb-action>
-              </nb-actions>
-            </nb-card-body>
-          </nb-card>
-        }
-      </nb-card-body>
-    }
-  </nb-card>
+<section class="orgs" [nbSpinner]="loading" nbSpinnerSize="small" nbSpinnerStatus="basic">
+	<!-- ── Header: title with count, caption and the Add action ── -->
+	<header class="orgs__header">
+		<div class="orgs__heading">
+			<h6 class="orgs__title">
+				{{ 'USERS_PAGE.EDIT_USER.USER_ORGANIZATIONS' | translate }}
+				@if (organizations?.length) {
+					<span class="orgs__count">{{ organizations.length }}</span>
+				}
+			</h6>
+			<span class="orgs__caption">
+				{{ 'USERS_PAGE.EDIT_USER.ORGANIZATIONS_CAPTION' | translate }}
+			</span>
+		</div>
+		@if (!showAddCard) {
+			<button
+				type="button"
+				class="orgs__add-toggle"
+				nbButton
+				status="primary"
+				size="small"
+				(click)="showAddCard = true"
+			>
+				<nb-icon icon="plus-outline"></nb-icon>{{ 'USERS_PAGE.EDIT_USER.ADD_ORGANIZATION' | translate }}
+			</button>
+		}
+	</header>
+
+	<!-- ── Add: pick organizations the user is not in yet ── -->
+	@if (showAddCard) {
+		<div class="orgs__add">
+			<ga-edit-user-organizations-mutation
+				(canceled)="cancel()"
+				(addOrg)="addOrg($event)"
+			></ga-edit-user-organizations-mutation>
+		</div>
+	}
+
+	<!-- ── The user's organizations ── -->
+	@if (organizations?.length) {
+		<ul class="orgs__list">
+			@for (organization of organizations; track organization.id) {
+				<li class="orgs__row">
+					<span class="orgs__logo">
+						@if (organization.imageUrl) {
+							<img [src]="organization.imageUrl" [alt]="organization.name" />
+						} @else {
+							<span aria-hidden="true">{{ initialsOf(organization.name) }}</span>
+						}
+					</span>
+					<span class="orgs__text">
+						<span class="orgs__name">{{ organization.name }}</span>
+						@if (organization.officialName && organization.officialName !== organization.name) {
+							<span class="orgs__meta">{{ organization.officialName }}</span>
+						}
+					</span>
+					<button
+						type="button"
+						class="orgs__remove"
+						nbButton
+						ghost
+						size="small"
+						status="danger"
+						[nbTooltip]="'USERS_PAGE.EDIT_USER.REMOVE_FROM_ORGANIZATION' | translate"
+						[attr.aria-label]="'USERS_PAGE.EDIT_USER.REMOVE_FROM_ORGANIZATION' | translate"
+						(click)="remove(organization.id)"
+					>
+						<nb-icon icon="trash-2-outline"></nb-icon>
+					</button>
+				</li>
+			}
+		</ul>
+	} @else if (!loading) {
+		<div class="orgs__empty">
+			<span class="orgs__empty-badge"><nb-icon icon="briefcase-outline"></nb-icon></span>
+			<p class="orgs__empty-title">{{ 'USERS_PAGE.EDIT_USER.NO_ORGANIZATIONS' | translate }}</p>
+			@if (!showAddCard) {
+				<button type="button" nbButton status="primary" size="small" (click)="showAddCard = true">
+					<nb-icon icon="plus-outline"></nb-icon>{{ 'USERS_PAGE.EDIT_USER.ADD_ORGANIZATION' | translate }}
+				</button>
+			}
+		</div>
+	}
+</section>

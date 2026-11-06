@@ -190,5 +190,17 @@ export class EditUserOrganizationsComponent extends TranslationBaseComponent imp
 		this.showAddCard = !this.showAddCard;
 	}
 
+	/** "Ever Technologies" -> "ET": the logo of an organization without a picture. */
+	initialsOf(name: string = ''): string {
+		return (
+			name
+				.split(/\s+/)
+				.filter(Boolean)
+				.slice(0, 2)
+				.map((part) => part[0].toUpperCase())
+				.join('') || '?'
+		);
+	}
+
 	ngOnDestroy() {}
 }
