@@ -691,6 +691,7 @@
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Standaardtarief",
+			"OWN_RATES_LOCKED": "Vraag een beheerder om je tarief te wijzigen.",
 			"EXPECTED_RATE": "Verwacht tarief",
 			"LIMITS": "Beperkingen",
 			"ERRORS": {
@@ -3303,6 +3304,7 @@
 				"SEARCH_INDEX_DEFINITIONS_VIEW": "Bekijken welke velden de zoekindex bevat en hoeveel elk weegt.",
 				"SEARCH_INDEX_DEFINITIONS_EDIT": "De velden in de zoekindex toevoegen, herwegen, deactiveren of verwijderen.",
 				"ORG_EMPLOYEES_EDIT": "Profielen, dienstverbandgegevens, tarieven en instellingen van werknemers wijzigen.",
+				"CHANGE_OWN_RATES": "Je eigen tarieven in je eigen werknemersprofiel wijzigen. Zonder deze rechten zie je je tarieven en vraag je een beheerder ze te wijzigen.",
 				"ORG_CANDIDATES_VIEW": "De kandidaten van de organisatie en hun profielen bekijken.",
 				"ORG_CANDIDATES_EDIT": "Kandidaten aanmaken, bewerken en verwijderen.",
 				"ORG_USERS_VIEW": "De gebruikers van de organisatie en hun rollen bekijken.",
@@ -3385,6 +3387,7 @@
 			"ORG_PROPOSAL_TEMPLATES_EDIT": "Maak/bewerk/verwijder sjablonen voor voorstellen",
 			"ORG_EMPLOYEES_VIEW": "Bekijk organisatiemedewerkers",
 			"ORG_EMPLOYEES_EDIT": "Maak/Bewerk/Verwijder Organisatiemedewerkers",
+			"CHANGE_OWN_RATES": "Eigen tarieven wijzigen",
 			"ORG_CANDIDATES_VIEW": "Bekijk kandidaten van de organisatie",
 			"ORG_CANDIDATES_EDIT": "Organisatiekandidaten maken/bewerken/verwijderen",
 			"ORG_USERS_VIEW": "Bekijk organisatiegebruikers",

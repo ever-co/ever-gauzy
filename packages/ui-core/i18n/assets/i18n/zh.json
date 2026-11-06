@@ -743,6 +743,7 @@
 		},
 		"RATES": {
 			"DEFAULT_RATE": "违约率",
+			"OWN_RATES_LOCKED": "请管理员更改你的费率。",
 			"EXPECTED_RATE": "预期利率",
 			"LIMITS": "限制",
 			"ERRORS": {
@@ -3806,6 +3807,7 @@
 				"SEARCH_INDEX_DEFINITIONS_VIEW": "查看搜索索引包含哪些字段以及每个字段的权重。",
 				"SEARCH_INDEX_DEFINITIONS_EDIT": "添加、调整权重、停用或移除搜索索引包含的字段。",
 				"ORG_EMPLOYEES_EDIT": "更改员工的个人资料、雇佣详情、费率和设置。",
+				"CHANGE_OWN_RATES": "在自己的员工资料中更改自己的费率。没有此权限时，你可以查看自己的费率，并请管理员更改。",
 				"ORG_CANDIDATES_VIEW": "查看组织的候选人及其个人资料。",
 				"ORG_CANDIDATES_EDIT": "创建、编辑和删除候选人。",
 				"ORG_USERS_VIEW": "查看组织的用户及其角色。",
@@ -3889,6 +3891,7 @@
 			"ORG_EMPLOYEES_ADD": "创建组织员工",
 			"ORG_EMPLOYEES_VIEW": "查看组织员工",
 			"ORG_EMPLOYEES_EDIT": "创建/编辑/删除组织员工",
+			"CHANGE_OWN_RATES": "更改自己的费率",
 			"ORG_EMPLOYEES_DELETE": "删除组织员工",
 			"ORG_CANDIDATES_VIEW": "查看组织候选人",
 			"ORG_CANDIDATES_EDIT": "创建/编辑/删除组织候选人",

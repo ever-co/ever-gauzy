@@ -39,6 +39,7 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.ORG_EMPLOYEES_ADD,
 			PermissionsEnum.ORG_EMPLOYEES_VIEW,
 			PermissionsEnum.ORG_EMPLOYEES_EDIT,
+			PermissionsEnum.CHANGE_OWN_RATES,
 			PermissionsEnum.ORG_EMPLOYEES_DELETE,
 			/** Employee CRUD Permissions End */
 			/** Member View Permissions Start */
@@ -499,6 +500,7 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.ORG_EMPLOYEES_ADD,
 			PermissionsEnum.ORG_EMPLOYEES_VIEW,
 			PermissionsEnum.ORG_EMPLOYEES_EDIT,
+			PermissionsEnum.CHANGE_OWN_RATES,
 			PermissionsEnum.ORG_EMPLOYEES_DELETE,
 			/** Employee CRUD Permissions End */
 			/** Member View Permissions Start */

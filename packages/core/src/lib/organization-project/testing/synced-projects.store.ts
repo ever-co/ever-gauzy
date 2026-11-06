@@ -111,6 +111,11 @@ export interface ISyncedProjectsStore {
 	metadata: EntityMetadata;
 	/** A fresh MikroORM context. */
 	em(): EntityManager;
+	/**
+	 * The body the API answers for what a read returned, through the platform's response interceptor. It is loaded
+	 * with the entities: class-transformer keeps their `@Exclude` marks in a module of the store's own registry.
+	 */
+	respond<T>(data: unknown): Promise<T>;
 	close(): Promise<void>;
 }
 
@@ -280,11 +285,19 @@ export async function openSyncedProjectsStore(options: ISyncedProjectsStoreOptio
 			const typeOrm = Object.create(service);
 			Object.defineProperty(typeOrm, 'ormType', { value: 'typeorm' });
 
+			const { TransformInterceptor } = require('../../core/interceptors/transform.interceptor');
+			const { lastValueFrom, of } = require('rxjs');
+			const interceptor = new TransformInterceptor();
+
 			store = {
 				mikroOrm: service,
 				typeOrm,
 				metadata: orm.getMetadata().get('OrganizationProject'),
 				em: () => orm.em.fork(),
+				respond: <T>(data: unknown): Promise<T> => {
+					const handler = { handle: () => of(data) };
+					return lastValueFrom(interceptor.intercept({} as never, handler));
+				},
 				close: async () => {
 					tenant.mockRestore();
 					await orm.close(true);
