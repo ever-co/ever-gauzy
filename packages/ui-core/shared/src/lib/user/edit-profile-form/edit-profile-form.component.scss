@@ -276,24 +276,30 @@ $hairline: 1px solid var(--gauzy-border-default-color);
 .profile__fields {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0 1.25rem;
+  gap: 0 1rem;
   align-content: start;
   flex: 1 1 auto;
   min-height: 0;
   overflow-y: auto;
-  padding: 1.25rem;
+  padding: 1rem 1.25rem 0.25rem;
 
   .form-group {
     min-width: 0;
-    margin-bottom: 1.125rem;
+    margin-bottom: 0.75rem;
+  }
+
+  // Label and field sit close, so each row reads as one unit.
+  ::ng-deep .label,
+  ::ng-deep label {
+    margin-bottom: 0.3125rem;
   }
 }
 
 // A group's title spans the row, with a hairline above every group but the first.
 .profile__legend {
   grid-column: 1 / -1;
-  margin: 0.5rem 0 0.875rem;
-  padding-top: 1.125rem;
+  margin: 0.25rem 0 0.625rem;
+  padding-top: 0.875rem;
   border-top: $hairline;
   font-size: 0.6875rem;
   font-weight: 600;
@@ -311,7 +317,7 @@ $hairline: 1px solid var(--gauzy-border-default-color);
 
 .profile__hint {
   grid-column: 1 / -1;
-  margin: -0.5rem 0 0.875rem;
+  margin: -0.375rem 0 0.625rem;
   font-size: 0.75rem;
   line-height: 1.125rem;
   color: var(--text-hint-color);
@@ -325,7 +331,7 @@ $hairline: 1px solid var(--gauzy-border-default-color);
   display: flex;
   justify-content: flex-end;
   gap: 0.75rem;
-  padding: 0.875rem 1.25rem;
+  padding: 0.75rem 1.25rem;
   border-top: $hairline;
 
   button {
@@ -354,10 +360,10 @@ $hairline: 1px solid var(--gauzy-border-default-color);
 
   .profile__fields {
     grid-template-columns: minmax(0, 1fr);
-    padding: 1rem;
+    padding: 0.875rem 1rem 0.25rem;
   }
 
   .profile__actions {
-    padding: 0.875rem 1rem;
+    padding: 0.75rem 1rem;
   }
 }
