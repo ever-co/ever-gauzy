@@ -124,4 +124,36 @@ describe('EditProfileFormComponent', () => {
 			expect(component.roleLabel).toBeNull();
 		});
 	});
+
+	describe('the identity panel facts', () => {
+		const withProfile = (profile: Record<string, unknown>) => {
+			const { component } = formFor();
+			component.profile = profile as any;
+			return component;
+		};
+
+		it('reads a user without the active flag, or with it set, as active; and one set inactive as inactive', () => {
+			expect(withProfile({}).isActiveAccount).toBe(true);
+			expect(withProfile({ isActive: true }).isActiveAccount).toBe(true);
+			expect(withProfile({ isActive: false }).isActiveAccount).toBe(false);
+		});
+
+		it('names the preferred language, and has none when it is not set', () => {
+			expect(withProfile({ preferredLanguage: 'fr' }).languageName).toBe('French');
+			expect(withProfile({}).languageName).toBeNull();
+		});
+
+		it('tells the user’s local time in their time zone and format, and none for a time zone it cannot read', () => {
+			expect(withProfile({ timeZone: 'Africa/Kinshasa', timeFormat: 24 }).localTime).toMatch(/^\d{2}:\d{2}$/);
+			expect(withProfile({ timeZone: 'Africa/Kinshasa', timeFormat: 12 }).localTime).toMatch(/AM|PM/i);
+			expect(withProfile({ timeZone: 'Not/AZone' }).localTime).toBeNull();
+			expect(withProfile({}).localTime).toBeNull();
+		});
+
+		it('labels the time format, and has none when it is not set', () => {
+			expect(withProfile({ timeFormat: 12 }).timeFormatKey).toBe('USERS_PAGE.EDIT_USER.TIME_FORMAT_12');
+			expect(withProfile({ timeFormat: 24 }).timeFormatKey).toBe('USERS_PAGE.EDIT_USER.TIME_FORMAT_24');
+			expect(withProfile({}).timeFormatKey).toBeNull();
+		});
+	});
 });
