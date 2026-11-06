@@ -72,6 +72,10 @@ export class EditProfileFormComponent implements OnInit, OnDestroy {
 	}
 	@Input() set allowRoleChange(value: boolean) {
 		this._allowRoleChange = value;
+		// Where the role can change, a Save needs one: an empty role must not be looked up and assigned.
+		const role = this.form?.get('role');
+		role?.setValidators(value ? [Validators.required] : []);
+		role?.updateValueAndValidity({ emitEvent: false });
 	}
 
 	@Output() userSubmitted = new EventEmitter<void>();
@@ -261,6 +265,8 @@ export class EditProfileFormComponent implements OnInit, OnDestroy {
 	 */
 	async updateImageAsset(image: IImageAsset) {
 		const isOwnProfile = this.isOwnProfile;
+		// The session the photo was saved for: a sign-out, or another user's sign-in, while it is saved must not get it.
+		const sessionUserId = this._store.userId;
 		this.avatarFailed = false;
 		this.form.patchValue({ imageId: image.id, imageUrl: image.fullUrl || image.url });
 
@@ -269,7 +275,7 @@ export class EditProfileFormComponent implements OnInit, OnDestroy {
 				this.selectedUser ? this.selectedUser.id : this._store.userId,
 				{ imageId: image.id }
 			);
-			if (isOwnProfile) {
+			if (isOwnProfile && sessionUserId && this._store.userId === sessionUserId && this._store.user) {
 				this._store.user = {
 					...this._store.user,
 					imageId: image.id,
@@ -283,7 +289,10 @@ export class EditProfileFormComponent implements OnInit, OnDestroy {
 	}
 
 	async submitForm() {
-		if (this.saving || this.form.invalid) {
+		const roleName = this.form.get('role').value?.name;
+		// The role field is required where it can change; checked here too, since a click can be dispatched at a
+		// disabled Save.
+		if (this.saving || this.form.invalid || (this.allowRoleChange && !roleName)) {
 			return;
 		}
 		const { timeFormat, timeZone } = this.form.value;
@@ -320,7 +329,7 @@ export class EditProfileFormComponent implements OnInit, OnDestroy {
 				const { tenantId } = this._store.user;
 				const role = await firstValueFrom(
 					this._roleService.getRoleByOptions({
-						name: this.form.get('role').value?.name,
+						name: roleName,
 						tenantId
 					})
 				);
