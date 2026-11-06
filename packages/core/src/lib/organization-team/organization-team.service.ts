@@ -115,7 +115,11 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 			/**
 			 * Find the organization team by ID with optional relations.
 			 */
-			const options = query['relations'] ? { relations: query['relations'] } : {};
+			// The relations with one query each (see findAll): the team detail with `members.employee.user` and
+			// `projects` came back as one row per (member × project) before the members' statistics even started.
+			const options = query['relations']
+				? { relations: query['relations'], relationLoadStrategy: 'query' as const }
+				: {};
 			const organizationTeam = await this.findOneByIdString(organizationTeamId, options);
 
 			/**
@@ -784,7 +788,12 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 						...(options.skip ? { skip: options.take * (options.skip - 1) } : {}),
 						...(options.take ? { take: options.take } : {}),
 						...(options.select ? { select: parseFindOptionsSelect(options.select) } : {}),
-						...(options.relations ? { relations: parseFindOptionsRelations(options.relations) } : {}),
+						// One query per relation rather than joins: the Teams app lists every team with `members`,
+						// `members.role`, `members.employee.user`, `projects` on every page, and joined those
+						// answered each team once per (member × project).
+						...(options.relations
+							? { relations: parseFindOptionsRelations(options.relations), relationLoadStrategy: 'query' as const }
+							: {}),
 						...(options.where ? { where: options.where } : {}),
 						...(options.order ? { order: options.order } : {}),
 						// A query builder adds `deletedAt IS NULL` to every read of a soft-deletable entity
