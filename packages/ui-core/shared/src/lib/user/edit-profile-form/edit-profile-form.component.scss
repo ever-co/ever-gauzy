@@ -35,7 +35,11 @@ $hairline: 1px solid var(--gauzy-border-default-color);
   border-radius: $radius;
 }
 
+// Stays in view while the form scrolls past it (the page frame lets the page, not the card, scroll).
 .profile__panel--identity {
+  position: sticky;
+  top: 1rem;
+  z-index: 1;
   flex: 0 1 min(20rem, 32%);
   align-self: flex-start;
   padding: 1.125rem 1.25rem;
@@ -294,7 +298,9 @@ $hairline: 1px solid var(--gauzy-border-default-color);
     flex-direction: column;
   }
 
+  // Stacked above the form, it scrolls with the page.
   .profile__panel--identity {
+    position: static;
     flex: 0 0 auto;
     align-self: stretch;
   }

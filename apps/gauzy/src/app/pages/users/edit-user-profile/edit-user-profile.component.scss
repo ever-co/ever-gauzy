@@ -114,9 +114,17 @@ $radius: var(--border-radius);
 }
 
 // -- Body: the tabs, then the active tab on the page's own surface --
+// The card grows with its content and the page scrolls: Nebular's `overflow: auto` on the card body (and a
+// clipping card) would make the body the scroll container, and the Main tab's sticky identity panel would then
+// never stick.
+.user-edit {
+  overflow: visible;
+}
+
 .body {
   padding: 1rem;
   background-color: var(--gauzy-card-2);
+  overflow: visible;
 }
 
 // Underline tabs, as Jira and Hubstaff draw them: icon and label on one line over a single hairline, the active
