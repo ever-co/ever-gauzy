@@ -139,8 +139,11 @@ exports.default = async function beforeBuild({ appDir, electronVersion, platform
 		'--network-timeout',
 		'600000'
 	];
-	// Another CPU than this machine's: every platform variant now, the target's kept below (see the header).
-	const cross = platform === process.platform && CPU[arch] !== undefined && arch !== process.arch;
+	// Another CPU than this machine's: every platform variant now, the target's kept below (see the header). electron-builder
+	// passes a Platform object (`nodeName` is Node's name for it) and an Arch name (`armv7l` is Node's `arm`).
+	const targetOs = typeof platform === 'string' ? platform : platform && platform.nodeName;
+	const targetCpu = CPU[arch];
+	const cross = targetOs === process.platform && targetCpu !== undefined && targetCpu !== process.arch;
 	if (cross) args.push('--ignore-platform');
 	const env = electronInstallEnv({ electronVersion, platform, arch });
 	const install = (extraArgs) => {
@@ -165,9 +168,9 @@ exports.default = async function beforeBuild({ appDir, electronVersion, platform
 		throw new Error(`Installing the production dependencies of ${appDir} failed (exit code ${status})`);
 	}
 	if (cross) {
-		const removed = prunePlatformPackages(path.join(appDir, 'node_modules'), { platform, cpu: CPU[arch] });
+		const removed = prunePlatformPackages(path.join(appDir, 'node_modules'), { platform: targetOs, cpu: targetCpu });
 		console.log(
-			`  • kept the ${platform}-${CPU[arch]} variants of platform packages, removed ${removed.length}: ${removed.join(', ') || 'none'}`
+			`  • kept the ${targetOs}-${targetCpu} variants of platform packages, removed ${removed.length}: ${removed.join(', ') || 'none'}`
 		);
 	}
 	// true: electron-builder goes on to rebuild the native modules of this tree for Electron, then packs it.

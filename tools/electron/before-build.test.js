@@ -106,6 +106,8 @@ test('an app directory that already has its node_modules installs nothing', asyn
 
 /** A CPU this machine is not: a build for it is a cross build wherever the test runs. */
 const OTHER = process.arch === 'arm64' ? 'x64' : 'arm64';
+/** What electron-builder hands the hook for this OS: a Platform object, whose `nodeName` is Node's name (`toString()` is its own). */
+const PLATFORM = { name: 'this-os', nodeName: process.platform, toString: () => 'this-os' };
 
 /** Writes one package into the app's node_modules (`dir` may be nested), as an install would. */
 function writePackage(dir, fields = {}) {
@@ -130,7 +132,7 @@ test('a build for another CPU installs every platform variant, then keeps only t
 		return { status: 0 };
 	};
 
-	assert.equal(await beforeBuild({ appDir, ...BUILD, arch: OTHER }), true);
+	assert.equal(await beforeBuild({ appDir, ...BUILD, platform: PLATFORM, arch: OTHER }), true);
 
 	assert.equal(calls.length, 1);
 	assert.ok(calls[0].args.includes('--ignore-platform'));
@@ -152,7 +154,7 @@ test('a build for this machine CPU installs as before and removes nothing', asyn
 		return { status: 0 };
 	};
 
-	assert.equal(await beforeBuild({ appDir, ...BUILD, arch: process.arch }), true);
+	assert.equal(await beforeBuild({ appDir, ...BUILD, platform: PLATFORM, arch: process.arch }), true);
 
 	assert.equal(calls[0].args.includes('--ignore-platform'), false);
 	assert.ok(installed(`@img/sharp-${process.platform}-${OTHER}`));
