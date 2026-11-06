@@ -27,6 +27,8 @@ const PLATFORM = { name: 'this-os', nodeName: process.platform, toString: () => 
 
 let root;
 let appDir;
+// The hook prefers the yarn that runs it (npm_execpath, under `yarn test`): unset, so it runs the yarn on PATH this file checked.
+let execPath;
 
 function writePackage(dir, manifest) {
 	fs.mkdirSync(dir, { recursive: true });
@@ -35,6 +37,8 @@ function writePackage(dir, manifest) {
 }
 
 beforeEach(() => {
+	execPath = process.env.npm_execpath;
+	delete process.env.npm_execpath;
 	root = fs.mkdtempSync(path.join(os.tmpdir(), 'before-build-yarn-'));
 	appDir = path.join(root, 'app');
 	writePackage(path.join(root, 'native-this'), { name: 'native-this', cpu: [process.arch] });
@@ -50,6 +54,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+	if (execPath !== undefined) process.env.npm_execpath = execPath;
 	mock.restoreAll();
 	fs.rmSync(root, { recursive: true, force: true });
 });
