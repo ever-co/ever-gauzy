@@ -252,7 +252,7 @@ export class EditEmployeeContactComponent extends TranslationBaseComponent imple
 	}
 
 	/**
-	 * Reads a page of the organization's contacts for the assign dialog, matching its search by name, and adds the
+	 * Reads a page of the contacts the employee can be assigned to, matching the dialog's search by name, and adds the
 	 * ones the employee does not have yet. `reset` starts again from the first page (on opening, or a new search).
 	 * A page made only of contacts the employee already has shows nothing new, so reading goes on until the list
 	 * holds a page's worth or the contacts run out.
@@ -273,9 +273,12 @@ export class EditEmployeeContactComponent extends TranslationBaseComponent imple
 		this.optionsLoading = true;
 		this.optionsFailed = false;
 		try {
-			const { items = [], total = 0 } = await this._organizationContactService.pagination({
-				where: { organizationId, tenantId, ...(term ? { name: term } : {}) },
-				order: { name: 'ASC' },
+			// The assignable list: id, name, picture and type, under ORG_EMPLOYEES_EDIT (as assigning is), ordered by
+			// name then id, so contacts sharing a name keep their place across pages.
+			const { items = [], total = 0 } = await this._organizationContactService.getAssignable({
+				organizationId,
+				tenantId,
+				...(term ? { name: term } : {}),
 				take: OPTIONS_PAGE_SIZE,
 				skip: this._optionsPage + 1
 			});
@@ -290,7 +293,7 @@ export class EditEmployeeContactComponent extends TranslationBaseComponent imple
 				...this.assignOptions,
 				...items
 					.filter((contact) => !assigned.has(contact.id) && !shown.has(contact.id))
-					.map((contact) => this.toRow(contact))
+					.map((contact) => this.toRow(contact as IOrganizationContact))
 			];
 		} catch (error) {
 			if (request === this._optionsRequest) {
@@ -538,7 +541,8 @@ export class EditEmployeeContactComponent extends TranslationBaseComponent imple
 					this._organizationContactService.pagination({
 						where: { organizationId, tenantId, members: [employeeId] },
 						relations: CONTACT_RELATIONS,
-						order: { name: 'ASC' },
+						// The id breaks ties between contacts sharing a name, so none crosses a page boundary twice.
+						order: { name: 'ASC', id: 'ASC' },
 						take: DETAILS_PAGE_SIZE,
 						skip: page + 1
 					})
