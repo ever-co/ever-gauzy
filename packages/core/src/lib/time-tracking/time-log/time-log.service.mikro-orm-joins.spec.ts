@@ -397,8 +397,10 @@ describe('TimeLogService.getTimeLogs joins what it loads, on MikroORM as on Type
 		expect(joins[0]).toEqual(expect.arrayContaining(['image_asset', 'time_slot']));
 	});
 
-	it('leaves the TypeORM statement as it was: the two relations it filters on, and nothing else', () => {
+	it('leaves the TypeORM statement lean: the employee it filters on, and the slot it requires with EXISTS', () => {
+		// The slots are no longer joined onto the log rows (every log came back once per slot, and once per
+		// slot × slot when `timeSlots` was also a relation); the one `time_slot` here is the EXISTS sub-query's.
 		expect(measured.typeOrm.joins).toHaveLength(1);
-		expect(measured.typeOrm.joins[0]).toEqual(['employee', 'time_slot_time_logs', 'time_slot']);
+		expect(measured.typeOrm.joins[0]).toEqual(['employee', 'time_slot']);
 	});
 });

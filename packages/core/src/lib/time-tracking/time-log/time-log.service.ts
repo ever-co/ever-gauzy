@@ -164,9 +164,11 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 				// Create a query builder for the TimeLog entity
 				const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
 
-				// Inner join with related entities (employee, timeSlots)
+				// Inner join with the employee. The time slots are NOT joined here: a log qualifies when it has a
+				// slot (in the activity range, if one is given), which `getFilterTimeLogQuery` asks with an EXISTS
+				// sub-query (see `requireTimeSlot`). Joined, the slots multiplied every log by its slot count — and
+				// by it again when the caller also asked for the `timeSlots` relation.
 				query.innerJoin(`${query.alias}.employee`, 'employee');
-				query.innerJoin(`${query.alias}.timeSlots`, 'timeSlots');
 
 				// Set up the find options for the query
 				query.setFindOptions({
@@ -1505,17 +1507,20 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		}
 
 		// Filters records based on the overall column, representing the activity level.
-		if (isNotEmpty(request.activityLevel)) {
-			/**
-			 * Activity Level should be 0-100%
-			 * Convert it into a 10-minute time slot by multiplying by 6
-			 */
-			const { activityLevel } = request;
+		/**
+		 * Activity Level should be 0-100%
+		 * Convert it into a 10-minute time slot by multiplying by 6
+		 */
+		const activityRange = isNotEmpty(request.activityLevel)
+			? { start: request.activityLevel.start * 6, end: request.activityLevel.end * 6 }
+			: undefined;
 
-			query.andWhere(p(`"timeSlots"."overall" BETWEEN :start AND :end`), {
-				start: activityLevel.start * 6,
-				end: activityLevel.end * 6
-			});
+		// The report queries join the slots (`timeSlots`) to read their activity figures, and are filtered on
+		// that join; a query that does not join them is filtered with an EXISTS sub-query instead.
+		const joinsTimeSlots = this.joinsTimeSlots(query);
+
+		if (activityRange && joinsTimeSlots) {
+			query.andWhere(p(`"timeSlots"."overall" BETWEEN :start AND :end`), activityRange);
 		}
 
 		// Filters records based on the source column.
@@ -1562,10 +1567,63 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 
 		query.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
 		query.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId });
-		query.andWhere(p(`"timeSlots"."tenantId" = :tenantId`), { tenantId });
-		query.andWhere(p(`"timeSlots"."organizationId" = :organizationId`), { organizationId });
+		if (joinsTimeSlots) {
+			query.andWhere(p(`"timeSlots"."tenantId" = :tenantId`), { tenantId });
+			query.andWhere(p(`"timeSlots"."organizationId" = :organizationId`), { organizationId });
+		} else {
+			this.requireTimeSlot(query, { tenantId, organizationId, ...activityRange });
+		}
 
 		return query;
+	}
+
+	/**
+	 * Whether the query joins the log's time slots under the `timeSlots` alias, as the report queries do to
+	 * read the slots' activity figures.
+	 *
+	 * @param query The time-log query.
+	 */
+	private joinsTimeSlots(query: SelectQueryBuilder<TimeLog>): boolean {
+		return (query.expressionMap?.joinAttributes ?? []).some((join) => join.alias?.name === 'timeSlots');
+	}
+
+	/**
+	 * Keeps the logs that have at least one time slot of the organization — and, given an activity range, one
+	 * whose activity lies in it — without joining the slots onto the log rows.
+	 *
+	 * `getTimeLogs` used to INNER JOIN the slots for this. When the caller also asked for the `timeSlots`
+	 * relation, TypeORM joined them a second time for the relation, and every log came back once per
+	 * (slot × slot): on production 120 logs became 21,291 rows, 1.6 s in PostgreSQL and a 24 MB sort, before the
+	 * API hydrated them (497 calls at 5.8 s mean, 35 s max). The EXISTS sub-query answers the same logs, once
+	 * each; the relation, when asked for, still carries every slot of the log, as it did.
+	 *
+	 * @param query The time-log query.
+	 * @param scope The organization the slots must belong to, and the activity range (`overall`, in seconds
+	 * of a ten-minute slot) one of them must lie in, if any.
+	 */
+	private requireTimeSlot(
+		query: SelectQueryBuilder<TimeLog>,
+		scope: { tenantId: ID; organizationId: ID; start?: number; end?: number }
+	): void {
+		const { tenantId, organizationId, start, end } = scope;
+		query.andWhere((qb: SelectQueryBuilder<TimeLog>) => {
+			const subQuery = qb
+				.subQuery()
+				.select('1')
+				.from(p('time_slot_time_logs'), p('slotLog'))
+				.innerJoin(p('time_slot'), p('slot'), p(`"slot"."id" = "slotLog"."timeSlotId"`))
+				.where(p(`"slotLog"."timeLogId" = "${query.alias}"."id"`))
+				.andWhere(p(`"slot"."deletedAt" IS NULL`))
+				.andWhere(p(`"slot"."tenantId" = :slotTenantId`), { slotTenantId: tenantId })
+				.andWhere(p(`"slot"."organizationId" = :slotOrganizationId`), { slotOrganizationId: organizationId });
+			if (start !== undefined && end !== undefined) {
+				subQuery.andWhere(p(`"slot"."overall" BETWEEN :slotActivityStart AND :slotActivityEnd`), {
+					slotActivityStart: start,
+					slotActivityEnd: end
+				});
+			}
+			return `EXISTS ${subQuery.getQuery()}`;
+		});
 	}
 
 	/**

@@ -256,10 +256,95 @@ async function resolveContext() {
 			vars.organizationId
 		]);
 		vars.projectId = proj.rows[0]?.id || '';
+		// The team with the most active members (what the Teams app reads on every page), unless TEAM_ID names one.
+		const team = await c.query(
+			`select t.id from organization_team t left join organization_team_employee m on m."organizationTeamId" = t.id
+			  where t."organizationId" = $1 and t."deletedAt" is null group by t.id order by count(m.id) desc, min(t."createdAt") limit 1`,
+			[vars.organizationId]
+		);
+		vars.teamId = env.TEAM_ID || team.rows[0]?.id || '';
 	} else {
 		vars.organizationId = env.ORGANIZATION_ID;
+		vars.teamId = env.TEAM_ID || '';
 	}
+	Object.assign(vars, dateRangeVars());
 	return { token, vars };
+}
+
+/**
+ * The date windows the Teams app sends with its reads: today (timer status, team detail statistics), the last 7
+ * days (timesheet) and the last 30 days (reports), all in UTC, as `{todayStart}` … `{monthStart}`.
+ */
+function dateRangeVars() {
+	const now = new Date();
+	const startOfDay = (d) => new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
+	const todayStart = startOfDay(now);
+	const todayEnd = new Date(todayStart.getTime() + 86_400_000 - 1);
+	const daysAgo = (n) => new Date(todayStart.getTime() - n * 86_400_000);
+	return {
+		todayStart: todayStart.toISOString(),
+		todayEnd: todayEnd.toISOString(),
+		weekStart: daysAgo(7).toISOString(),
+		monthStart: daysAgo(30).toISOString(),
+		timeZone: 'UTC'
+	};
+}
+
+/**
+ * Gives the bench employee the daily plans the Teams app reads on `GET /daily-plan/me` (SETUP_DAILY_PLANS=<n>, one
+ * plan per day back from today, each with up to three of the organization's tasks), when they have fewer than that.
+ * The demo seed creates none. Idempotent: counts the existing plans first.
+ */
+async function setupDailyPlans(ctx) {
+	const wanted = Number(env.SETUP_DAILY_PLANS || 0);
+	if (!wanted || !ctx.vars.teamId) return;
+	const { tenantId, organizationId, employeeId, teamId } = ctx.vars;
+	const headers = { authorization: `Bearer ${ctx.token}`, 'tenant-id': tenantId, 'organization-id': organizationId };
+	const existing = await request(
+		'GET',
+		`/daily-plan/me?where[organizationId]=${organizationId}&where[tenantId]=${tenantId}&where[organizationTeamId]=${teamId}`,
+		{ headers }
+	);
+	const have = existing.status < 300 ? JSON.parse(existing.body.toString()).total ?? 0 : 0;
+	if (have >= wanted) return;
+	const tasks = await request(
+		'GET',
+		`/tasks/pagination?where[organizationId]=${organizationId}&where[tenantId]=${tenantId}&take=30&skip=0`,
+		{ headers }
+	);
+	const taskIds = tasks.status < 300 ? (JSON.parse(tasks.body.toString()).items ?? []).map((t) => t.id) : [];
+	let created = 0;
+	for (let day = have; day < wanted; day++) {
+		const date = new Date(Date.parse(ctx.vars.todayStart) - day * 86_400_000).toISOString();
+		const taskId = taskIds[day % Math.max(taskIds.length, 1)];
+		const plan = await request('POST', '/daily-plan', {
+			headers,
+			body: {
+				tenantId,
+				organizationId,
+				employeeId,
+				organizationTeamId: teamId,
+				date,
+				workTimePlanned: 8,
+				status: 'open',
+				...(taskId ? { taskId } : {})
+			}
+		});
+		if (plan.status >= 300) {
+			console.warn(`  setup: daily plan for ${date.slice(0, 10)} refused: ${plan.status} ${plan.body?.toString().slice(0, 200)}`);
+			continue;
+		}
+		const planId = JSON.parse(plan.body.toString()).id;
+		for (const extra of [taskIds[(day + 1) % taskIds.length], taskIds[(day + 2) % taskIds.length]]) {
+			if (!extra || extra === taskId) continue;
+			await request('POST', `/daily-plan/${planId}/task`, {
+				headers,
+				body: { tenantId, organizationId, employeeId, taskId: extra }
+			});
+		}
+		created++;
+	}
+	console.log(`  setup: ${created} daily plan(s) created for the bench employee (had ${have}, wanted ${wanted})`);
 }
 
 async function runEndpoint(ep, ctx) {
@@ -350,8 +435,9 @@ async function main() {
 	const scenarios = JSON.parse(fs.readFileSync(scenarioFile, 'utf8'));
 	const ctx = await resolveContext();
 	console.log(
-		`[${LABEL}] base=${BASE} tenant=${ctx.vars.tenantId} org=${ctx.vars.organizationId} employee=${ctx.vars.employeeId} seq=${SEQ} c=${CONCURRENCY} d=${DURATION}s`
+		`[${LABEL}] base=${BASE} tenant=${ctx.vars.tenantId} org=${ctx.vars.organizationId} employee=${ctx.vars.employeeId} team=${ctx.vars.teamId} seq=${SEQ} c=${CONCURRENCY} d=${DURATION}s`
 	);
+	await setupDailyPlans(ctx);
 	const results = [];
 	for (const ep of scenarios.endpoints) {
 		if (ONLY && !ONLY.includes(ep.name)) continue;

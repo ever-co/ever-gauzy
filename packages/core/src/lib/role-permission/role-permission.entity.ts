@@ -17,6 +17,14 @@ import { MikroOrmRolePermissionRepository } from './repository/mikro-orm-role-pe
 @ColumnIndex('IDX_role_permission_unique', ['tenantId', 'roleId', 'permission'], {
 	unique: true
 })
+/**
+ * `TenantPermissionGuard` asks whether a TENANT holds any of a route's permissions, without a role
+ * (`checkRolePermission` without `includeRole`), on every cache miss. By tenant alone that COUNT walked
+ * every permission row of the tenant (17 million rows on production, 20–48 ms a call); with the
+ * permission in the index it touches one row per role. Created by
+ * `AddRolePermissionTenantPermissionIndex1791000004500` (CONCURRENTLY on Postgres).
+ */
+@ColumnIndex('IDX_role_permission_tenant_permission', ['tenantId', 'permission'])
 @MultiORMEntity('role_permission', { mikroOrmRepository: () => MikroOrmRolePermissionRepository })
 export class RolePermission extends TenantBaseEntity implements IRolePermission {
 

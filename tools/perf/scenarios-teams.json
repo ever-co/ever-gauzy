@@ -1,0 +1,43 @@
+{
+	"description": "The reads the Ever Teams web app sends on its main page and its timers, with the exact relations and query shapes of apps/web/core/services/client/api (ever-co/ever-teams, 2026-11-06). Placeholders: {tenantId} {organizationId} {employeeId} {teamId} {todayStart} {todayEnd} {weekStart} {monthStart} {timeZone}. SETUP_DAILY_PLANS=30 gives the bench employee plans first.",
+	"endpoints": [
+		{ "name": "user-me-teams", "path": "/user/me?relations[0]=role&relations[1]=tenant&includeEmployee=true" },
+		{
+			"name": "teams-list-members",
+			"path": "/organization-team?where[organizationId]={organizationId}&where[tenantId]={tenantId}&source=TEAMS&withLastWorkedTask=true&relations[]=members&relations[]=members.role&relations[]=members.employee&relations[]=members.employee.user&relations[]=createdByUser&relations[]=projects&relations[]=projects.customFields.repository"
+		},
+		{
+			"name": "team-detail-statistics",
+			"path": "/organization-team/{teamId}?organizationId={organizationId}&tenantId={tenantId}&withLastWorkedTask=true&startDate={todayStart}&endDate={todayEnd}&includeOrganizationTeamId=false&relations[]=members&relations[]=members.role&relations[]=members.employee&relations[]=members.employee.user&relations[]=createdByUser&relations[]=projects&relations[]=projects.customFields.repository"
+		},
+		{
+			"name": "tasks-team",
+			"path": "/tasks/team?relations[0]=tags&relations[1]=teams&relations[2]=members&relations[3]=members.user&relations[4]=parent&relations[5]=children&where[organizationId]={organizationId}&where[tenantId]={tenantId}&where[teams][0]={teamId}&take=100&skip=1&order[createdAt]=DESC&order[id]=DESC"
+		},
+		{
+			"name": "daily-plan-me",
+			"path": "/daily-plan/me?where[organizationId]={organizationId}&where[tenantId]={tenantId}&where[organizationTeamId]={teamId}&relations[0]=employee&relations[1]=tasks&relations[2]=employee.user&relations[3]=tasks.members&relations[4]=tasks.members.user"
+		},
+		{
+			"name": "daily-plan-team",
+			"path": "/daily-plan?where[organizationId]={organizationId}&where[tenantId]={tenantId}&where[organizationTeamId]={teamId}&relations[0]=tasks"
+		},
+		{
+			"name": "timer-status",
+			"path": "/timesheet/timer/status?tenantId={tenantId}&organizationId={organizationId}&todayStart={todayStart}&todayEnd={todayEnd}"
+		},
+		{
+			"name": "time-log-week",
+			"path": "/timesheet/time-log?tenantId={tenantId}&organizationId={organizationId}&startDate={weekStart}&endDate={todayEnd}&timeZone={timeZone}&relations[0]=project&relations[1]=task&relations[2]=organizationContact&relations[3]=employee.user&relations[4]=task.taskStatus&relations[5]=timesheet&employeeIds[0]={employeeId}"
+		},
+		{
+			"name": "time-log-month-slots",
+			"path": "/timesheet/time-log?tenantId={tenantId}&organizationId={organizationId}&startDate={monthStart}&endDate={todayEnd}&timeZone={timeZone}&relations[0]=project&relations[1]=task&relations[2]=employee.user&relations[3]=timeSlots&activityLevel[start]=0&activityLevel[end]=100&teamIds[0]={teamId}"
+		},
+		{
+			"name": "statistics-counts",
+			"path": "/timesheet/statistics/counts?organizationId={organizationId}&startDate={weekStart}&endDate={todayEnd}&timeZone={timeZone}&employeeIds[0]={employeeId}"
+		},
+		{ "name": "role-permissions-me", "path": "/role-permissions/me" }
+	]
+}
