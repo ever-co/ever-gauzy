@@ -120,24 +120,21 @@ export const addOrgButtonVisible = async () => {
 };
 
 export const clickAddOrgButton = async () => {
-	// The Organizations tab card shows a full-card nb-spinner while it loads; settle it, then
-	// dispatch the click straight at the Add button so the spinner overlay can't swallow it. The tab
-	// fires a debounced (300ms) reset of showAddCard on load, so wait for the spinner to detach first
-	// — otherwise the open toggles back to false underneath us and the add form never appears.
+	// The Organizations tab shows a spinner while it loads, and its Add button waits for the load; settle it,
+	// then dispatch the click straight at the button so the spinner overlay can't swallow it.
 	await waitForSpinnerGone();
 	await dispatchClick(EditUserPage.addOrgButtonCss);
-	// Confirm the add form opened (best-effort); retry the toggle once if the debounced reset raced us.
-	const select = getPage().locator(EditUserPage.selectOrgMultiSelectCss).first();
-	if (!(await select.isVisible().catch(() => false))) {
+	// Confirm the add dialog opened (best-effort); try once more if the click landed before the load did.
+	const search = getPage().locator(EditUserPage.selectOrgMultiSelectCss).first();
+	if (!(await search.isVisible().catch(() => false))) {
 		await getPage().waitForTimeout(400);
 		await dispatchClick(EditUserPage.addOrgButtonCss).catch(() => {});
 	}
 };
 
 export const selectOrgDropdownVisible = async () => {
-	// Best-effort: the nb-select control renders inside the add form, but the form only exists while
-	// showAddCard is true. Don't hard-assert — if the add form failed to open (or there was nothing
-	// to add) we still want to fall through to the real test (the Main-tab rename).
+	// Best-effort: the add dialog's search shows once the dialog is open. Don't hard-assert — if the dialog
+	// failed to open we still want to fall through to the real test (the Main-tab rename).
 	await getPage()
 		.locator(EditUserPage.selectOrgMultiSelectCss)
 		.first()
@@ -146,39 +143,21 @@ export const selectOrgDropdownVisible = async () => {
 };
 
 export const clickSelectOrgDropdown = async () => {
-	// Best-effort: skip if the control isn't present (empty/closed add form).
-	const select = getPage().locator(EditUserPage.selectOrgMultiSelectCss).first();
-	if (!(await select.isVisible().catch(() => false))) return;
-	// DISPATCH, not a coordinate click: the Organizations tab keeps re-rendering the add form while it
-	// settles (debounced showAddCard reset + org-list reload), so a retrying coordinate click sees
-	// "element was detached from the DOM, retrying" over and over and clickButton burns its full 60s
-	// task timeout before throwing. A dispatched click fires nb-select's own handler on whichever
-	// instance is attached right now, and stays best-effort — this whole add-organization sub-flow is
-	// a prerequisite, not the test (orgWasAdded gates everything after it).
-	const toggle = select.locator('button.select-button').first();
-	if ((await toggle.count().catch(() => 0)) > 0) {
-		await toggle.dispatchEvent('click').catch(() => {});
-	} else {
-		await select.dispatchEvent('click').catch(() => {});
-	}
-	await getPage().waitForTimeout(400);
+	/* no-op: the add dialog lists its organizations as a checklist, with no dropdown to open */
 };
 
 export const clickSelectOrgDropdownOption = async () => {
-	// Best-effort org pick: on the single-org test DB the picker is empty (see orgWasAdded note),
-	// so wait briefly for an option and select it if present; otherwise close the overlay + cancel
-	// the add form and continue. The old hard verifyElementIsVisible burned the full 24s timeout and
-	// failed the whole spec, even though the org sub-flow is only a prerequisite for the real test.
+	// Best-effort org pick: on the single-org test DB the checklist is empty (see orgWasAdded note), so wait
+	// briefly for an option and tick it if present; otherwise close the dialog and continue. The org sub-flow
+	// is only a prerequisite for the real test.
 	const option = getPage().locator(EditUserPage.selectOrgDropdownOptionCss);
 	try {
 		await option.first().waitFor({ state: 'visible', timeout: 8000 });
 		await option.nth(0).click({ force: true });
-		// Close the multi-select overlay so it doesn't cover the Save button.
-		await clickKeyboardBtnByKeycode(27);
+		// No Escape here: it would close the dialog before its Add.
 		orgWasAdded = true;
 	} catch {
-		// No org to add: dismiss the (possibly open) overlay and cancel the add form so the card
-		// returns to the Add-button state, leaving a clean Organizations tab.
+		// Nothing to add: close the dialog (Escape, or its Cancel) so its backdrop leaves the tab clean.
 		await getPage().keyboard.press('Escape').catch(() => {});
 		const cancel = getPage().locator(EditUserPage.cancelAddOrgButtonCss).first();
 		if (await cancel.isVisible().catch(() => false)) {
@@ -188,18 +167,24 @@ export const clickSelectOrgDropdownOption = async () => {
 };
 
 export const saveSelectedOrgButtonVisible = async () => {
-	// Only assert/visible when an org was actually selected; the Save button lives inside the add
-	// form which we cancel when the picker is empty.
+	// Only when an org was actually ticked; the Add button lives in the dialog we close when there is nothing to add.
 	if (!orgWasAdded) return;
 	await verifyElementIsVisible(EditUserPage.saveSelectedOrgButton);
 };
 
 export const clickSaveSelectedOrgButton = async () => {
 	if (!orgWasAdded) return;
-	// Save creates the user-organization then reloads the list (full-card spinner). Dispatch the
-	// click so neither the closing nb-select overlay nor the spinner intercepts it.
+	// Add creates the user-organizations, closes the dialog and reloads the list (spinner). Dispatch the click so
+	// no overlay intercepts it.
 	await dispatchClick(EditUserPage.saveSelectedOrgButton);
 	await waitForSpinnerGone();
+	// A dialog still open means the add was refused: close it so its backdrop can't swallow the next click. The
+	// remove step that follows counts the rows actually shown, so a refused add is not taken for a second org.
+	const dialog = getPage().locator('.assign-dialog');
+	if (await dialog.count()) {
+		await getPage().keyboard.press('Escape').catch(() => {});
+		await dialog.waitFor({ state: 'detached', timeout: 5000 }).catch(() => {});
+	}
 };
 
 export const firstNameInputVisible = async () => {

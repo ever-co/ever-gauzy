@@ -13,14 +13,13 @@ export const EditUserPage = {
 	addOrgButtonCss: 'button.orgs__add-toggle',
 	removeOrgButtonCss: 'button.orgs__remove',
 	confirmRemoveOrgButtonCss: 'nb-card-footer > button[status="danger"]',
-	// Org picker is an nb-select[multiple] inside ga-user-organizations-multi-select; the old exact
-	// class="select-button placeholder" no longer matches (nb-select adds appearance/status classes).
-	selectOrgMultiSelectCss: 'ga-user-organizations-multi-select nb-select',
-	selectOrgDropdownOptionCss: '.option-list nb-option',
-	// The add form's (edit-user-organizations-mutation) "Add" and "Cancel", in its actions bar. Cancel closes the
-	// add form when the org picker is empty.
-	saveSelectedOrgButton: '.add__actions > button.add__submit',
-	cancelAddOrgButtonCss: '.add__actions > button[status="basic"]',
+	// "Add to organization" opens the add dialog (in the overlay): a search (#addOrganizationsSearch) over a
+	// checklist of `button.assign-option` rows, with Cancel and Add in its footer. Cancel closes the dialog when
+	// there is nothing to add.
+	selectOrgMultiSelectCss: '#addOrganizationsSearch',
+	selectOrgDropdownOptionCss: '.assign-dialog button.assign-option',
+	saveSelectedOrgButton: '.assign-dialog button.assign-dialog__submit',
+	cancelAddOrgButtonCss: '.assign-dialog__actions > button[status="basic"]',
 	firstNameInputCss: '#firstName',
 	lastNameInputCss: '#lastName',
 	// Password fields are ngx-password-form-field; the rendered input carries the translated
