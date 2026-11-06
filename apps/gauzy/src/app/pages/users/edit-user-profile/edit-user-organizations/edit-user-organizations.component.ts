@@ -1,11 +1,11 @@
-import { Component, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
-import { IOrganization, IUserOrganizationCreateInput } from '@gauzy/contracts';
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, TemplateRef, ViewChild } from '@angular/core';
+import { IOrganization } from '@gauzy/contracts';
 import { filter, tap, debounceTime } from 'rxjs/operators';
 import { Subject, firstValueFrom } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { NbDialogService } from '@nebular/theme';
+import { NbDialogRef, NbDialogService } from '@nebular/theme';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import {
 	OrganizationsService,
@@ -25,7 +25,18 @@ import { DeleteConfirmationComponent } from '@gauzy/ui-core/shared';
     standalone: false
 })
 export class EditUserOrganizationsComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
-	showAddCard: boolean;
+	/** The add dialog: a searchable checklist of the organizations the user is not in yet. */
+	@ViewChild('addDialog', { static: true }) readonly addDialog: TemplateRef<void>;
+	private _addRef: NbDialogRef<void> | null = null;
+	/** The user the open add dialog was opened for: a later switch of user cannot redirect it. */
+	private _addForUserId: string | null = null;
+
+	/** Every organization of the tenant, as last read: the add dialog offers those the user is not in. */
+	allOrganizations: IOrganization[] = [];
+	addSearch = '';
+	addSelection = new Set<string>();
+	saving = false;
+
 	selectedUserId: string;
 	selectedUserName: string;
 	orgUserId: string;
@@ -55,7 +66,6 @@ export class EditUserOrganizationsComponent extends TranslationBaseComponent imp
 			.pipe(
 				debounceTime(300),
 				tap(() => (this.loading = true)),
-				tap(() => (this.showAddCard = false)),
 				tap(() => this.loadOrganizations()),
 				untilDestroyed(this)
 			)
@@ -63,23 +73,136 @@ export class EditUserOrganizationsComponent extends TranslationBaseComponent imp
 		this.route.parent.params
 			.pipe(
 				filter((params) => !!params),
-				tap((params) => (this.paramId = params.id)),
+				tap((params) => {
+					if (this.paramId && this.paramId !== params.id) {
+						this._addRef?.close();
+					}
+					this.paramId = params.id;
+				}),
 				tap(() => this.subject$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
 	}
 
-	async addOrg(user: IUserOrganizationCreateInput) {
-		if (user.isActive) {
-			await firstValueFrom(this.userOrganizationsService.create(user));
+	/** The tenant's organizations the user is not in yet: what the add dialog offers. */
+	get availableOrganizations(): IOrganization[] {
+		const joined = new Set(this.organizations.map((organization) => organization.id));
+		return this.allOrganizations
+			.filter((organization) => !joined.has(organization.id))
+			.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+	}
 
+	/** The add dialog's options matching its search, by name or official name. */
+	get addOptions(): IOrganization[] {
+		const term = this.addSearch.trim().toLowerCase();
+		const available = this.availableOrganizations;
+		if (!term) {
+			return available;
+		}
+		return available.filter((organization) =>
+			[organization.name, organization.officialName].some((value) => !!value && value.toLowerCase().includes(term))
+		);
+	}
+
+	/** Whether every option the search shows is ticked. */
+	get allOptionsSelected(): boolean {
+		const options = this.addOptions;
+		return options.length > 0 && options.every((organization) => this.addSelection.has(organization.id));
+	}
+
+	/** Opens the add dialog with nothing ticked, once the user's organizations are known. */
+	openAdd(): void {
+		if (this._addRef || this.loading || !this.selectedUserId) {
+			return;
+		}
+		this.addSearch = '';
+		this.addSelection = new Set();
+		const ref = this.dialogService.open(this.addDialog, {
+			closeOnBackdropClick: true,
+			closeOnEsc: true,
+			autoFocus: false
+		});
+		this._addRef = ref;
+		this._addForUserId = this.selectedUserId;
+		// Esc or the backdrop can close it while a save runs: forget it only if it is still the open one.
+		ref.onClose.subscribe(() => {
+			if (this._addRef === ref) {
+				this._addRef = null;
+				this._addForUserId = null;
+			}
+		});
+		// Ready to type: the search is where picking starts.
+		setTimeout(() => document.getElementById('addOrganizationsSearch')?.focus());
+	}
+
+	closeAdd(): void {
+		if (!this.saving) {
+			this._addRef?.close();
+		}
+	}
+
+	toggleOption(id: string): void {
+		const selection = new Set(this.addSelection);
+		if (selection.has(id)) {
+			selection.delete(id);
+		} else {
+			selection.add(id);
+		}
+		this.addSelection = selection;
+	}
+
+	/** Ticks every option the search shows, or unticks them when they all are. */
+	toggleAllOptions(): void {
+		const selection = new Set(this.addSelection);
+		const select = !this.allOptionsSelected;
+		this.addOptions.forEach((organization) =>
+			select ? selection.add(organization.id) : selection.delete(organization.id)
+		);
+		this.addSelection = selection;
+	}
+
+	clearSelection(): void {
+		this.addSelection = new Set();
+	}
+
+	/**
+	 * Adds the dialog's user to the ticked organizations, one after another, says so once, reloads the list and
+	 * closes that dialog. When one fails the dialog stays open, with the ticks the reload has not shown as joined.
+	 */
+	async addSelected(): Promise<void> {
+		const ids = [...this.addSelection];
+		const ref = this._addRef;
+		const userId = this._addForUserId;
+		if (!ids.length || this.saving || !ref || !userId || userId !== this.selectedUserId) {
+			return;
+		}
+		const { tenantId } = this.store.user;
+		this.saving = true;
+		try {
+			for (const organizationId of ids) {
+				// `isDefault: true` is the server's own default, which the add has always taken by leaving it out.
+				await firstValueFrom(
+					this.userOrganizationsService.create({
+						userId,
+						organizationId,
+						tenantId,
+						isActive: true,
+						isDefault: true
+					})
+				);
+			}
 			this.toastrService.success(
 				this.getTranslation('NOTES.ORGANIZATIONS.ADD_NEW_USER_TO_ORGANIZATION', {
 					username: this.selectedUserName,
 					orgname: this.getTranslation('ORGANIZATIONS_PAGE.EDIT.ADDED_TO_ORGANIZATION')
 				})
 			);
+			ref.close();
+		} catch (error) {
+			this.toastrService.danger(error);
+		} finally {
+			this.saving = false;
 			this.subject$.next(true);
 		}
 	}
@@ -178,16 +301,15 @@ export class EditUserOrganizationsComponent extends TranslationBaseComponent imp
 			const filtered = organizations.filter((a) => includedOrgs.filter((b) => b.organizationId === a.id).length);
 
 			this.organizations = filtered;
+			this.allOrganizations = organizations;
+			const available = new Set(this.availableOrganizations.map((organization) => organization.id));
+			this.addSelection = new Set([...this.addSelection].filter((id) => available.has(id)));
 		} catch (error) {
 			console.error('Error while retrieving user organizations', error);
 			this.toastrService.danger(error);
 		} finally {
 			this.loading = false;
 		}
-	}
-
-	cancel() {
-		this.showAddCard = !this.showAddCard;
 	}
 
 	/** "Ever Technologies" -> "ET": the logo of an organization without a picture. */
@@ -202,5 +324,8 @@ export class EditUserOrganizationsComponent extends TranslationBaseComponent imp
 		);
 	}
 
-	ngOnDestroy() {}
+	/** Leaving the tab with the add dialog open: close it rather than leave it on screen without its host. */
+	ngOnDestroy() {
+		this._addRef?.close();
+	}
 }
