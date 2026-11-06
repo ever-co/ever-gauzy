@@ -26,16 +26,18 @@
 						/>
 					</label>
 				}
-				<button
-					type="button"
-					class="contacts__assign-toggle"
-					nbButton
-					status="primary"
-					size="small"
-					(click)="openAssign()"
-				>
-					<nb-icon icon="plus-outline"></nb-icon>{{ T + '.ASSIGN' | translate }}
-				</button>
+				@if (canChangeContacts) {
+					<button
+						type="button"
+						class="contacts__assign-toggle"
+						nbButton
+						status="primary"
+						size="small"
+						(click)="openAssign()"
+					>
+						<nb-icon icon="plus-outline"></nb-icon>{{ T + '.ASSIGN' | translate }}
+					</button>
+				}
 			</div>
 		</header>
 
@@ -128,20 +130,22 @@
 										<nb-icon icon="external-link-outline"></nb-icon>
 									</a>
 								}
-								<button
-									type="button"
-									nbButton
-									ghost
-									size="small"
-									status="danger"
-									class="row-action row-action--remove"
-									[disabled]="!!removingId || saving || loading"
-									[nbTooltip]="T + '.REMOVE' | translate"
-									[attr.aria-label]="T + '.REMOVE' | translate"
-									(click)="remove(row)"
-								>
-									<nb-icon icon="person-remove-outline"></nb-icon>
-								</button>
+								@if (canChangeContacts) {
+									<button
+										type="button"
+										nbButton
+										ghost
+										size="small"
+										status="danger"
+										class="row-action row-action--remove"
+										[disabled]="!!removingId || saving || loading"
+										[nbTooltip]="T + '.REMOVE' | translate"
+										[attr.aria-label]="T + '.REMOVE' | translate"
+										(click)="remove(row)"
+									>
+										<nb-icon icon="person-remove-outline"></nb-icon>
+									</button>
+								}
 							</span>
 						</li>
 					}
@@ -166,9 +170,11 @@
 				<span class="empty__badge"><nb-icon icon="people-outline"></nb-icon></span>
 				<p class="empty__title">{{ T + '.EMPTY_TITLE' | translate }}</p>
 				<p class="empty__text">{{ T + '.EMPTY_TEXT' | translate }}</p>
-				<button type="button" nbButton status="primary" size="small" (click)="openAssign()">
-					<nb-icon icon="plus-outline"></nb-icon>{{ T + '.ASSIGN' | translate }}
-				</button>
+				@if (canChangeContacts) {
+					<button type="button" nbButton status="primary" size="small" (click)="openAssign()">
+						<nb-icon icon="plus-outline"></nb-icon>{{ T + '.ASSIGN' | translate }}
+					</button>
+				}
 			</div>
 		}
 	</section>

@@ -1,4 +1,5 @@
 import { Subject } from 'rxjs';
+import { PermissionsEnum } from '@gauzy/contracts';
 import { EditEmployeeContactComponent, IEmployeeContactRow } from './edit-employee-contact.component';
 
 const EMPLOYEE = { id: 'employee-1' };
@@ -459,5 +460,28 @@ describe('EditEmployeeContactComponent rows', () => {
 		const plain = rowOf({});
 		expect(plain.imageUrl).toBeUndefined();
 		expect(plain.initials).toBe('AC');
+	});
+});
+
+/**
+ * Choosing a contact (`GET /organization-contact/assignable`) and saving the change both take ORG_EMPLOYEES_EDIT, so
+ * the tab offers assign and remove only to its holders; others still see the employee's contacts.
+ */
+describe('EditEmployeeContactComponent assign and remove rights', () => {
+	const componentHolding = (permissions: PermissionsEnum[]) => {
+		const component = Object.create(EditEmployeeContactComponent.prototype) as EditEmployeeContactComponent &
+			Record<string, any>;
+		component['_store'] = { hasPermission: jest.fn((permission: PermissionsEnum) => permissions.includes(permission)) };
+		return component;
+	};
+
+	it('offers them to an employee editor', () => {
+		expect(componentHolding([PermissionsEnum.ORG_EMPLOYEES_EDIT]).canChangeContacts).toBe(true);
+	});
+
+	it('does not offer them to someone who may only view contacts or edit their profile', () => {
+		const viewer = componentHolding([PermissionsEnum.ORG_CONTACT_VIEW, PermissionsEnum.PROFILE_EDIT]);
+
+		expect(viewer.canChangeContacts).toBe(false);
 	});
 });

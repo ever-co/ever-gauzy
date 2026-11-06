@@ -177,6 +177,14 @@ export class EditEmployeeContactComponent extends TranslationBaseComponent imple
 		return nameOf(this.selectedEmployee);
 	}
 
+	/**
+	 * Whether the user may assign the employee to contacts or take them off one: choosing a contact
+	 * (`GET /organization-contact/assignable`) and saving the change both take ORG_EMPLOYEES_EDIT.
+	 */
+	get canChangeContacts(): boolean {
+		return this._store.hasPermission(PermissionsEnum.ORG_EMPLOYEES_EDIT);
+	}
+
 	/** Whether the user may open a contact's own page (the contacts routes ask the same). */
 	get canOpenContact(): boolean {
 		return this._store.hasAnyPermission(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_CONTACT_VIEW);

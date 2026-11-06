@@ -24,6 +24,7 @@ import { prepareSQLQuery as p } from './../database/database.helper';
 import { TypeOrmOrganizationContactRepository } from './repository/type-orm-organization-contact.repository';
 import { MikroOrmOrganizationContactRepository } from './repository/mikro-orm-organization-contact.repository';
 import { FavoriteService } from '../core/decorators';
+import { assertCurrentUserBelongsToOrganization } from '../user-organization/assert-organization-membership';
 
 @FavoriteService(BaseEntityEnum.OrganizationContact)
 @Injectable()
@@ -45,6 +46,7 @@ export class OrganizationContactService extends TenantAwareCrudService<Organizat
 	 * @param options The organization, an optional name to match (a case-insensitive substring), the page size
 	 * (`take`) and the page (`skip`, counted from 1).
 	 * @returns The page of contacts, and how many match in all.
+	 * @throws BadRequestException without an organization, ForbiddenException for one the caller may not reach.
 	 */
 	async findAssignable(options: {
 		organizationId: ID;
@@ -53,8 +55,11 @@ export class OrganizationContactService extends TenantAwareCrudService<Organizat
 		take?: number;
 		skip?: number;
 	}): Promise<IPagination<Pick<IOrganizationContact, 'id' | 'name' | 'imageUrl' | 'contactType'>>> {
-		const tenantId = RequestContext.currentTenantId() ?? options.tenantId;
 		const { organizationId } = options;
+		// The base DTO skips its organization check when the request carries `sentTo`, and a missing organization
+		// would drop the condition: refuse both before reading.
+		await assertCurrentUserBelongsToOrganization(this.typeOrmRepository.manager, organizationId);
+		const tenantId = RequestContext.currentTenantId() ?? options.tenantId;
 		const name = options.name?.trim();
 		const take = options.take || 30;
 		const offset = take * ((options.skip || 1) - 1);

@@ -4,7 +4,7 @@
  */
 import '../core/entities/internal';
 
-import { ExecutionContext, Logger } from '@nestjs/common';
+import { BadRequestException, ExecutionContext, ForbiddenException, Logger } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { EntityMetadata } from 'typeorm';
 import { ID, PermissionsEnum, RolesEnum } from '@gauzy/contracts';
@@ -105,9 +105,16 @@ describe('OrganizationContactService.findAssignable', () => {
 		return { qb, calls };
 	};
 
+	/** The membership lookup of `assertCurrentUserBelongsToOrganization`: the caller is a member. */
+	const manager = { count: jest.fn(async () => 1) };
+
 	beforeEach(() => {
 		jest.spyOn(RequestContext, 'currentRequestContext').mockReturnValue({} as any);
 		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT_ID as ID);
+		jest.spyOn(RequestContext, 'currentUserId').mockReturnValue('user-1' as ID);
+		jest.spyOn(RequestContext, 'hasRoles').mockReturnValue(false);
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORGANIZATION_ID as ID);
+		manager.count.mockClear();
 	});
 	afterEach(() => jest.restoreAllMocks());
 
@@ -115,7 +122,7 @@ describe('OrganizationContactService.findAssignable', () => {
 		beforeEach(() => jest.spyOn(CrudService.prototype, 'ormType', 'get').mockReturnValue(MultiORMEnum.TypeORM));
 
 		const serviceWith = (qb: unknown) =>
-			new OrganizationContactService({ metadata, createQueryBuilder: jest.fn(() => qb) } as any, {} as any);
+			new OrganizationContactService({ metadata, manager, createQueryBuilder: jest.fn(() => qb) } as any, {} as any);
 
 		it('selects the id, name, picture and type only, of the caller’s tenant and the organization', async () => {
 			const { qb, calls } = queryBuilderReturning([{ id: 'c-1', name: 'Acme' }], 1);
@@ -153,6 +160,25 @@ describe('OrganizationContactService.findAssignable', () => {
 			expect(calls.take).toEqual([[20]]);
 		});
 
+		it('refuses a request without an organization before reading', async () => {
+			const { qb } = queryBuilderReturning([], 0);
+
+			await expect(serviceWith(qb).findAssignable({ organizationId: undefined as unknown as ID })).rejects.toThrow(
+				BadRequestException
+			);
+			expect(qb.select).not.toHaveBeenCalled();
+		});
+
+		it("refuses an organization other than the caller's before reading", async () => {
+			const { qb } = queryBuilderReturning([], 0);
+			const otherOrganizationId = '3c1d2e4f-0000-4000-8000-0000000000b2';
+
+			await expect(serviceWith(qb).findAssignable({ organizationId: otherOrganizationId })).rejects.toThrow(
+				ForbiddenException
+			);
+			expect(qb.select).not.toHaveBeenCalled();
+		});
+
 		it('CONTROL: without a name, filters by tenant and organization only, from the first page of 30', async () => {
 			const { qb, calls } = queryBuilderReturning([], 0);
 
@@ -169,7 +195,7 @@ describe('OrganizationContactService.findAssignable', () => {
 
 		it('asks for the same fields, filter, order and page', async () => {
 			const findAndCount = jest.fn(async () => [[{ id: 'c-1', name: 'Acme' }], 1]);
-			const service = new OrganizationContactService({ metadata } as any, { findAndCount } as any);
+			const service = new OrganizationContactService({ metadata, manager } as any, { findAndCount } as any);
 			jest.spyOn(service as any, 'serialize').mockImplementation((entity) => entity);
 
 			const page = await service.findAssignable({
