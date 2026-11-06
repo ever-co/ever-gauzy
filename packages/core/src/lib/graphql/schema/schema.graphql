@@ -33665,7 +33665,11 @@ type Organization {
   """Whether a manually recorded time entry must carry a description."""
   requireDescription: Boolean!
 
-  """Whether a time entry must name a project."""
+  """
+  Whether a new time entry must name a project. The server checks timer starts and time recorded by hand, not stops
+  or edits of existing logs. It files an entry without one under its task's project, then its team's default project,
+  and refuses it otherwise, except what a client sends with source `DESKTOP` (the desktop timer and the agent).
+  """
   requireProject: Boolean!
 
   """Whether a time entry must name a task."""
@@ -33673,6 +33677,14 @@ type Organization {
 
   """Whether a time entry must name a client."""
   requireClient: Boolean!
+
+  """
+  Whether a new time entry must name a team. The server checks timer starts and time recorded by hand, not stops or
+  edits of existing logs. It files an entry without one under the employee's team when they have exactly one active
+  team in the organization (inactive, archived or deleted teams do not count), and refuses it otherwise, except what
+  a client sends with source `DESKTOP` (the desktop timer and the agent).
+  """
+  requireTeam: Boolean!
 
   """Whether the organization renders times on a 12- or a 24-hour clock."""
   timeFormat: Int!
@@ -43605,6 +43617,13 @@ input CreateManualTimeLogInput {
   """The client to attribute the work to."""
   organizationContactId: ID
 
+  """
+  The team to attribute the work to. An organization that requires a team refuses an entry without one, unless the
+  employee has exactly one active team in the organization, which the entry is then filed under. Inactive, archived
+  or deleted teams do not count.
+  """
+  organizationTeamId: ID
+
   """What was worked on."""
   description: String
 
@@ -44213,6 +44232,12 @@ input TimerToggleInput {
 
   """The tags to file the log under, by the tag identifiers' text form."""
   tags: [String!]
+
+  """
+  The member's current day, as `YYYY-MM-DD`. When the team requires a daily plan, an Ever Teams start
+  (`TEAMS`, `MOBILE`) needs a plan for that day. Ignored unless it is today somewhere.
+  """
+  planDay: String
 }
 
 """

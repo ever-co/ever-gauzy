@@ -196,7 +196,7 @@ describe('TimerService.startTimer when the team requires a daily plan', () => {
 		}
 	);
 
-	it("counts the day on each side of the server's, where a member far from UTC may already or still be", async () => {
+	it("without a named day, counts the day on each side of the server's, where a member far from UTC may already or still be", async () => {
 		plans = [{ organizationTeamId: TEAM, date: utcDay(1), tasks: [{ id: 'task-1' }] }];
 		await start(TimeLogSourceEnum.MOBILE);
 
@@ -204,6 +204,39 @@ describe('TimerService.startTimer when the team requires a daily plan', () => {
 		await start(TimeLogSourceEnum.MOBILE);
 
 		expect(execute.mock.calls.filter(([command]) => command instanceof TimeLogCreateCommand)).toHaveLength(2);
+	});
+
+	describe("when the client names the member's day", () => {
+		const startOnDay = (planDay: string) =>
+			service.startTimer({
+				source: TimeLogSourceEnum.TEAMS,
+				organizationTeamId: TEAM,
+				taskId: 'task-1',
+				planDay
+			});
+
+		it('starts on a plan for that day', async () => {
+			plans = [{ organizationTeamId: TEAM, date: utcDay(1), tasks: [{ id: 'task-1' }] }];
+
+			await startOnDay('2026-11-06');
+
+			expect(createdLog()).toBe(true);
+		});
+
+		it('refuses when the only plan is for the next day', async () => {
+			plans = [{ organizationTeamId: TEAM, date: utcDay(1), tasks: [{ id: 'task-1' }] }];
+
+			expect(await refusalCodeOf(startOnDay('2026-11-05'))).toBe(DAILY_PLAN_REQUIRED);
+			expect(createdLog()).toBe(false);
+		});
+
+		it('keeps the days around today for a day that is today nowhere', async () => {
+			plans = [{ organizationTeamId: TEAM, date: utcDay(1), tasks: [{ id: 'task-1' }] }];
+
+			await startOnDay('2026-11-08');
+
+			expect(createdLog()).toBe(true);
+		});
 	});
 
 	it('does not count a plan two days away', async () => {

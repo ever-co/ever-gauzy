@@ -3,7 +3,7 @@ import { chain, pluck } from 'underscore';
 import * as moment from 'moment';
 import { IReportDayGroupByEmployee, ITimeLog } from '@gauzy/contracts';
 import { GetTimeLogGroupByEmployeeCommand } from '../get-time-log-group-by-employee.command';
-import { calculateAverage, calculateAverageActivity } from './../../time-log.utils';
+import { calculateAverage, calculateAverageActivity, teamOfReportRow } from './../../time-log.utils';
 
 @CommandHandler(GetTimeLogGroupByEmployeeCommand)
 export class GetTimeLogGroupByEmployeeHandler implements ICommandHandler<GetTimeLogGroupByEmployeeCommand> {
@@ -13,7 +13,7 @@ export class GetTimeLogGroupByEmployeeHandler implements ICommandHandler<GetTime
 	 * @returns A Promise that resolves to the generated report grouped by employee.
 	 */
 	public async execute(command: GetTimeLogGroupByEmployeeCommand): Promise<IReportDayGroupByEmployee> {
-		const { timeLogs, timeZone = moment.tz.guess() } = command;
+		const { timeLogs, timeZone = moment.tz.guess(), statesTeam } = command;
 
 		const dailyLogs: any = chain(timeLogs)
 			.groupBy((log: ITimeLog) => log.employeeId)
@@ -33,7 +33,7 @@ export class GetTimeLogGroupByEmployeeHandler implements ICommandHandler<GetTime
 					.groupBy((log: ITimeLog) => moment.utc(log.startedAt).tz(timeZone).format('YYYY-MM-DD'))
 					.map((byDateLogs: ITimeLog[], date) => ({
 						date,
-						projectLogs: this.getGroupByProject(byDateLogs)
+						projectLogs: this.getGroupByProject(byDateLogs, statesTeam)
 					}))
 					.value();
 
@@ -52,9 +52,10 @@ export class GetTimeLogGroupByEmployeeHandler implements ICommandHandler<GetTime
 	/**
 	 * Groups time logs by employee and calculates average duration and activity for each project.
 	 * @param logs An array of time logs.
+	 * @param statesTeam Whether each task row states its log's team.
 	 * @returns An array containing logs grouped by employee with calculated averages.
 	 */
-	getGroupByProject(logs: ITimeLog[]) {
+	getGroupByProject(logs: ITimeLog[], statesTeam = false) {
 		const byProject = chain(logs)
 			.groupBy('projectId')
 			.map((timeLogs: ITimeLog[]) => {
@@ -75,7 +76,8 @@ export class GetTimeLogGroupByEmployeeHandler implements ICommandHandler<GetTime
 						? log.organizationContact
 						: project
 						? project.organizationContact
-						: null
+						: null,
+					...teamOfReportRow(log, statesTeam)
 				}));
 				return {
 					tasks,

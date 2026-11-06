@@ -398,6 +398,7 @@ export interface ITimerToggleInput
 	version?: string;
 	startedAt?: Date;
 	stoppedAt?: Date;
+	planDay?: string;
 }
 
 export interface IManualTimeInput extends IBasePerTenantAndOrganizationEntityModel {
@@ -424,6 +425,7 @@ export interface IGetTimeLogReportInput extends IGetTimeLogInput {
 	groupBy?: ReportGroupByFilter;
 	isEdited?: boolean;
 	billableOnly?: boolean;
+	includeTimeWithoutTeam?: boolean;
 }
 
 export interface IGetTimeLogConflictInput extends IBasePerTenantAndOrganizationEntityModel, IBaseRelationsEntityModel {
@@ -449,12 +451,24 @@ export interface IBulkActivitiesInput extends IBasePerTenantAndOrganizationEntit
 	activities: IActivity[];
 }
 
+/**
+ * One time log as a row of the daily report. `organizationTeamId` is stated only when the report includes the time
+ * logged without a team (`includeTimeWithoutTeam`), and is null for that time.
+ */
+export interface IReportDayTaskRow {
+	task?: ITask | null;
+	description?: string | null;
+	duration?: number;
+	client?: (Pick<IOrganizationContact, 'id' | 'name'> & { imageUrl?: string | null }) | null;
+	organizationTeamId?: ID | null;
+}
+
 export interface IReportDayGroupByDate {
 	date: string;
 	logs: {
-		project: IOrganizationProject;
+		project: IOrganizationProject | null;
 		employeeLogs: {
-			tasks: ITask[];
+			tasks: IReportDayTaskRow[];
 			employee: IEmployee;
 			sum: number;
 			activity: number;
@@ -480,9 +494,9 @@ export interface IAmountOwedReport {
 export interface IReportDayGroupByDate {
 	date: string;
 	logs: {
-		project: IOrganizationProject;
+		project: IOrganizationProject | null;
 		employeeLogs: {
-			tasks: ITask[];
+			tasks: IReportDayTaskRow[];
 			employee: IEmployee;
 			sum: number;
 			activity: number;
@@ -494,21 +508,21 @@ export interface IReportDayGroupByEmployee {
 	employee: IEmployee;
 	logs: {
 		date: string;
-		employeeLogs: {
+		projectLogs: {
 			sum: number;
 			activity: number;
-			project: IOrganizationProject;
-			tasks: ITask[];
+			project: IOrganizationProject | null;
+			tasks: IReportDayTaskRow[];
 		}[];
 	}[];
 }
 
 export interface IReportDayGroupByProject {
-	project: IOrganizationProject;
+	project: IOrganizationProject | null;
 	logs: {
 		date: string;
 		employeeLogs: {
-			tasks: ITask[];
+			tasks: IReportDayTaskRow[];
 			employee: IEmployee;
 			sum: number;
 			activity: number;
@@ -519,17 +533,17 @@ export interface IReportDayGroupByProject {
 export interface IReportDayGroupByClient {
 	client: IOrganizationContact;
 	logs: {
-		project: IOrganizationProject;
+		project: IOrganizationProject | null;
 		logs: {
 			date: string;
-			employeeLogs: {
-				tasks: ITask[];
+			projectLogs: {
+				tasks: IReportDayTaskRow[];
 				employee: IEmployee;
 				sum: number;
 				activity: number;
 			}[];
 		}[];
-	};
+	}[];
 }
 
 export type IReportDayData =
