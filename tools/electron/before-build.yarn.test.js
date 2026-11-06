@@ -17,6 +17,8 @@ const { afterEach, beforeEach, mock, test } = require('node:test');
 
 const { default: beforeBuild } = require('./before-build.js');
 
+// The repository's own Yarn declaration: with Corepack, a fixture without one could run another Yarn than the one checked here.
+const { packageManager } = require('../../package.json');
 const shell = process.platform === 'win32';
 const yarnVersion = spawnSync('yarn', ['--version'], { encoding: 'utf8', shell }).stdout || '';
 const skip = yarnVersion.startsWith('1.') ? false : 'yarn 1 is not on PATH';
@@ -46,6 +48,7 @@ beforeEach(() => {
 	writePackage(path.join(root, 'plain'), { name: 'plain' });
 	writePackage(appDir, {
 		name: 'app',
+		...(packageManager ? { packageManager } : {}),
 		dependencies: { plain: 'file:../plain' },
 		optionalDependencies: { 'native-this': 'file:../native-this', 'native-other': 'file:../native-other' }
 	});
