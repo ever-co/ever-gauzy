@@ -253,55 +253,30 @@ export class EditProfileFormComponent implements OnInit, OnDestroy {
 		this._toastrService.danger(error);
 	}
 
+	/**
+	 * Saves an uploaded photo on the user. The form shows it at once and keeps its id, so a Save sends it too, even
+	 * when this update fails. Only the photo is sent: a role picked in the form is not saved before its Save. The
+	 * signed-in user's session takes the photo only once it is saved, and only for their own profile (an admin
+	 * changing another user's photo used to put it on their own avatar).
+	 */
 	async updateImageAsset(image: IImageAsset) {
-		// The signed-in user's session carries their own photo: change it only when they edit their own profile.
-		// An admin changing another user's photo used to put that photo on their own avatar.
 		const isOwnProfile = this.isOwnProfile;
-		if (isOwnProfile) {
-			this._store.user = {
-				...this._store.user,
-				imageId: image.id
-			};
-		}
-		// Show the new photo now, and keep its id with the form so a save straight after keeps it.
 		this.avatarFailed = false;
 		this.form.patchValue({ imageId: image.id, imageUrl: image.fullUrl || image.url });
 
-		let request: IUserUpdateInput = {
-			imageId: image.id
-		};
-
-		if (this.allowRoleChange) {
-			const { tenantId } = this._store.user;
-			const role = await firstValueFrom(
-				this._roleService.getRoleByOptions({
-					name: this.form.get('role').value.name,
-					tenantId
-				})
-			);
-
-			request = {
-				...request,
-				role
-			};
-		}
-
 		try {
-			await this._userService
-				.update(this.selectedUser ? this.selectedUser.id : this._store.userId, request)
-				.then((res: IUser) => {
-					try {
-						if (res && isOwnProfile) {
-							this._store.user = {
-								...this._store.user,
-								imageUrl: res.imageUrl
-							} as IUser;
-						}
-						this._toastrService.success('TOASTR.MESSAGE.IMAGE_UPDATED');
-					} catch (error) {
-						console.log('Error while uploading profile avatar', error);
-					}
-				});
+			const res: IUser = await this._userService.update(
+				this.selectedUser ? this.selectedUser.id : this._store.userId,
+				{ imageId: image.id }
+			);
+			if (isOwnProfile) {
+				this._store.user = {
+					...this._store.user,
+					imageId: image.id,
+					imageUrl: res?.imageUrl || image.fullUrl || image.url
+				} as IUser;
+			}
+			this._toastrService.success('TOASTR.MESSAGE.IMAGE_UPDATED');
 		} catch (error) {
 			this._errorHandler.handleError(error);
 		}
@@ -312,7 +287,7 @@ export class EditProfileFormComponent implements OnInit, OnDestroy {
 			return;
 		}
 		const { timeFormat, timeZone } = this.form.value;
-		const { email, firstName, lastName, tags, preferredLanguage, password, phoneNumber } = this.form.value;
+		const { email, firstName, lastName, tags, preferredLanguage, password, phoneNumber, imageId } = this.form.value;
 
 		if (!EmailValidator.isValid(email, patterns.email)) {
 			this._toastrService.error('TOASTR.MESSAGE.EMAIL_SHOULD_BE_REAL');
@@ -326,7 +301,9 @@ export class EditProfileFormComponent implements OnInit, OnDestroy {
 			preferredLanguage,
 			timeZone,
 			timeFormat,
-			phoneNumber
+			phoneNumber,
+			// The photo shown: an upload whose own save failed is saved with the rest.
+			...(imageId ? { imageId } : {})
 		};
 
 		if (password) {
@@ -336,23 +313,24 @@ export class EditProfileFormComponent implements OnInit, OnDestroy {
 			};
 		}
 
-		if (this.allowRoleChange) {
-			const { tenantId } = this._store.user;
-			const role = await firstValueFrom(
-				this._roleService.getRoleByOptions({
-					name: this.form.get('role').value.name,
-					tenantId
-				})
-			);
-
-			request = {
-				...request,
-				role
-			};
-		}
-
+		// Set before the role lookup: a click while it runs must not send a second save.
 		this.saving = true;
 		try {
+			if (this.allowRoleChange) {
+				const { tenantId } = this._store.user;
+				const role = await firstValueFrom(
+					this._roleService.getRoleByOptions({
+						name: this.form.get('role').value?.name,
+						tenantId
+					})
+				);
+
+				request = {
+					...request,
+					role
+				};
+			}
+
 			await this._userService
 				.update(this.selectedUser ? this.selectedUser.id : this._store.userId, request)
 				.then(() => {

@@ -46,7 +46,8 @@
 						</span>
 					}
 					@if (profile) {
-						@if (profile.isEmailVerified || profile.emailVerifiedAt) {
+						<!-- `isEmailVerified`, not `emailVerifiedAt`: the server keeps the date out of its answers. -->
+						@if (profile.isEmailVerified) {
 							<span class="profile__chip profile__chip--success">
 								{{ 'USERS_PAGE.EDIT_USER.EMAIL_VERIFIED' | translate }}
 							</span>
@@ -98,12 +99,6 @@
 							}}
 						</dd>
 					</div>
-					@if (profile.emailVerifiedAt) {
-						<div class="profile__fact">
-							<dt>{{ 'USERS_PAGE.EDIT_USER.EMAIL_VERIFIED_ON' | translate }}</dt>
-							<dd>{{ profile.emailVerifiedAt | date: 'mediumDate' }}</dd>
-						</div>
-					}
 				</dl>
 			</section>
 
