@@ -1,7 +1,5 @@
 @if (!!user) {
-  <ngx-profile
-    [selectedUser]="user"
-    [allowRoleChange]="true"
-    (userSubmitted)="goBack()"
-  ></ngx-profile>
+	<ngx-profile [selectedUser]="user" [allowRoleChange]="true" (userSubmitted)="goBack()"></ngx-profile>
+} @else {
+	<div class="loading" [nbSpinner]="true" nbSpinnerSize="small" nbSpinnerStatus="basic"></div>
 }

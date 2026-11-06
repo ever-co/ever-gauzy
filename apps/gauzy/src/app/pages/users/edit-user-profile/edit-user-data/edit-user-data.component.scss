@@ -1,9 +1,9 @@
-@use 'themes' as *;
-
+// The Main tab: the profile form fills the tab; a spinner holds its place while the user loads.
 :host {
-    ngx-profile ::ng-deep {
-        nb-card {
-            border-radius: 0 nb-theme(border-radius) nb-theme(border-radius) nb-theme(border-radius);
-        }
-    }
+  display: flex;
+  flex-direction: column;
+}
+
+.loading {
+  min-height: 12rem;
 }
