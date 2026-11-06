@@ -58,7 +58,6 @@ export interface IUpdateSharedEntityInput {
 const SHARED_ENTITY_FILTERABLE = {
 	id: 'ID',
 	organizationId: 'ID',
-	token: 'STRING',
 	entity: 'STRING',
 	entityId: 'ID',
 	shareRules: 'JSON',
@@ -155,8 +154,7 @@ export class SharedEntityResolver {
 
 		return buildConnection<SharedEntity>({
 			// A share's token reads its record without signing in, so a row carries it only for the share's author
-			// or an organization administrator, as the REST list answers it. The tokens are dropped before the
-			// connection filters run, so a `token` filter can only match a token the caller may already read.
+			// or an organization administrator, as the REST list answers it. It is not a filter field.
 			rows: (items ?? []).map((share) => this.sharedEntityService.withTokenForManager(share)),
 			filterable: SHARED_ENTITY_FILTERABLE,
 			sortable: SHARED_ENTITY_SORTABLE,

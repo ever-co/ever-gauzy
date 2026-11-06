@@ -324,7 +324,6 @@ input InvoiceFilter {
 	alreadyPaid: DecimalFilter
 	amountDue: DecimalFilter
 	hasRemainingAmountInvoiced: BooleanFilter
-	token: StringFilter
 	paymentTermId: IDFilter
 	vendorId: IDFilter
 	fromOrganizationId: IDFilter

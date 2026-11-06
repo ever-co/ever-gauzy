@@ -25,7 +25,9 @@ export const CALLER_REFUSED_COLUMNS: Readonly<Record<string, readonly string[]>>
 		'mfaSecret'
 	],
 	CustomSmtp: ['password'],
-	WebhookSubscription: ['secret']
+	WebhookSubscription: ['secret'],
+	// A share's token reads the shared record without signing in
+	SharedEntity: ['token']
 };
 
 /**

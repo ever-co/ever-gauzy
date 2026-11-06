@@ -11,6 +11,7 @@ import {
 	DeleteResult
 } from 'typeorm';
 import {
+	assertCallerColumnsAllowed,
 	MultiORMEnum,
 	parseFindOptionsRelations,
 	parseFindOptionsSelect,
@@ -155,6 +156,7 @@ export class HelpCenterArticleService extends KnowledgeBaseCrudService<HelpCente
 		// Builds its own query, so the check in the CRUD read methods never runs: assert the
 		// sensitive-relation table on the client-supplied relations before anything is loaded.
 		this.assertRelationsPermitted(options);
+		assertCallerColumnsAllowed(this.typeOrmRepository?.metadata, options);
 
 		try {
 			const { where, filters } = options;
