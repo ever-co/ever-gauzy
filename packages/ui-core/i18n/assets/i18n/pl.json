@@ -2168,7 +2168,57 @@
 			"HR": "ZL",
 			"SETTINGS": "Ustawienia",
 			"GENERAL_SETTINGS": "Ustawienia ogólne",
-			"INTEGRATIONS": "Integracje"
+			"INTEGRATIONS": "Integracje",
+			"PROJECTS_TAB": {
+				"TITLE": "Projekty",
+				"CAPTION": "Projekty, których członkiem jest ten pracownik. Członkowie mogą rejestrować czas i pracować nad zadaniami projektu.",
+				"SEARCH": "Szukaj projektów",
+				"ASSIGN": "Przypisz projekty",
+				"ASSIGN_DIALOG_TITLE": "Przypisz do projektów",
+				"ASSIGN_DIALOG_SUBTITLE": "Wybierz projekty, do których ma dołączyć {{ employee }}. Będzie mógł rejestrować czas i pracować nad ich zadaniami.",
+				"ASSIGN_SEARCH": "Szukaj po nazwie, kluczu lub kliencie",
+				"SELECT_ALL": "Zaznacz wszystko",
+				"DESELECT_ALL": "Odznacz wszystko",
+				"SELECTED_COUNT": "Wybrano: {{ count }}",
+				"CLEAR_SELECTION": "Wyczyść",
+				"ASSIGN_SUBMIT": "Przypisz",
+				"ALL_ASSIGNED": "Ten pracownik jest już członkiem wszystkich projektów.",
+				"COLUMNS": {
+					"PROJECT": "Projekt",
+					"ROLE": "Rola",
+					"STATUS": "Status",
+					"MEMBERS": "Członkowie",
+					"BILLING": "Rozliczenie"
+				},
+				"ROLE_MANAGER": "Menedżer",
+				"ROLE_MEMBER": "Członek",
+				"STATUS": {
+					"OPEN": "Otwarty",
+					"IN_PROGRESS": "W toku",
+					"COMPLETED": "Ukończony",
+					"CANCELLED": "Anulowany",
+					"CUSTOM": "Niestandardowy"
+				},
+				"BILLING": {
+					"RATE": "Stawka godzinowa",
+					"FLAT_FEE": "Stała opłata",
+					"MILESTONES": "Kamienie milowe"
+				},
+				"PUBLIC": "Publiczny",
+				"PRIVATE": "Prywatny",
+				"QUICK_LOOK": "Szybki podgląd",
+				"OPEN_PROJECT": "Otwórz stronę projektu",
+				"REMOVE": "Usuń z projektu",
+				"REMOVE_TITLE": "Usuń z projektu",
+				"REMOVE_MESSAGE": "Usunąć {{ employee }} z {{ project }}? Nie będzie już można rejestrować w nim czasu.",
+				"REMOVE_HINT": "Możesz w każdej chwili ponownie przypisać go do tego projektu.",
+				"SHOWING": "{{ count }} z {{ total }} projektów",
+				"NO_MATCH": "Brak projektów pasujących do „{{ term }}”",
+				"NO_MATCH_PICKER": "Brak pasujących projektów",
+				"CLEAR_SEARCH": "Wyczyść wyszukiwanie",
+				"EMPTY_TITLE": "Brak projektów",
+				"EMPTY_TEXT": "Przypisz tego pracownika do projektu, aby mógł rejestrować czas i pracować nad jego zadaniami."
+			}
 		},
 		"ADD_EMPLOYEES": {
 			"STEP_1": "Krok 1",

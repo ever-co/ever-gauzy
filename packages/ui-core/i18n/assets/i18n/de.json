@@ -2169,7 +2169,57 @@
 			"HR": "hr",
 			"SETTINGS": "Einstellungen",
 			"GENERAL_SETTINGS": "Allgemeine Einstellungen",
-			"INTEGRATIONS": "Integrationen"
+			"INTEGRATIONS": "Integrationen",
+			"PROJECTS_TAB": {
+				"TITLE": "Projekte",
+				"CAPTION": "Projekte, in denen dieser Mitarbeiter Mitglied ist. Mitglieder können Zeit erfassen und an den Aufgaben des Projekts arbeiten.",
+				"SEARCH": "Projekte suchen",
+				"ASSIGN": "Projekte zuweisen",
+				"ASSIGN_DIALOG_TITLE": "Projekten zuweisen",
+				"ASSIGN_DIALOG_SUBTITLE": "Wählen Sie die Projekte, denen {{ employee }} beitreten soll. Danach kann Zeit erfasst und an den Aufgaben gearbeitet werden.",
+				"ASSIGN_SEARCH": "Nach Name, Schlüssel oder Kunde suchen",
+				"SELECT_ALL": "Alle auswählen",
+				"DESELECT_ALL": "Auswahl aufheben",
+				"SELECTED_COUNT": "{{ count }} ausgewählt",
+				"CLEAR_SELECTION": "Leeren",
+				"ASSIGN_SUBMIT": "Zuweisen",
+				"ALL_ASSIGNED": "Dieser Mitarbeiter ist bereits Mitglied aller Projekte.",
+				"COLUMNS": {
+					"PROJECT": "Projekt",
+					"ROLE": "Rolle",
+					"STATUS": "Status",
+					"MEMBERS": "Mitglieder",
+					"BILLING": "Abrechnung"
+				},
+				"ROLE_MANAGER": "Manager",
+				"ROLE_MEMBER": "Mitglied",
+				"STATUS": {
+					"OPEN": "Offen",
+					"IN_PROGRESS": "In Bearbeitung",
+					"COMPLETED": "Abgeschlossen",
+					"CANCELLED": "Abgebrochen",
+					"CUSTOM": "Benutzerdefiniert"
+				},
+				"BILLING": {
+					"RATE": "Stundensatz",
+					"FLAT_FEE": "Pauschale",
+					"MILESTONES": "Meilensteine"
+				},
+				"PUBLIC": "Öffentlich",
+				"PRIVATE": "Privat",
+				"QUICK_LOOK": "Schnellansicht",
+				"OPEN_PROJECT": "Projektseite öffnen",
+				"REMOVE": "Aus Projekt entfernen",
+				"REMOVE_TITLE": "Aus Projekt entfernen",
+				"REMOVE_MESSAGE": "{{ employee }} aus {{ project }} entfernen? Danach kann keine Zeit mehr darauf erfasst werden.",
+				"REMOVE_HINT": "Sie können ihn jederzeit wieder diesem Projekt zuweisen.",
+				"SHOWING": "{{ count }} von {{ total }} Projekten",
+				"NO_MATCH": "Keine Projekte passen zu „{{ term }}“",
+				"NO_MATCH_PICKER": "Keine passenden Projekte",
+				"CLEAR_SEARCH": "Suche zurücksetzen",
+				"EMPTY_TITLE": "Noch keine Projekte",
+				"EMPTY_TEXT": "Weisen Sie diesen Mitarbeiter einem Projekt zu, damit er Zeit erfassen und an dessen Aufgaben arbeiten kann."
+			}
 		},
 		"ADD_EMPLOYEES": {
 			"STEP_1": "Schritt 1",

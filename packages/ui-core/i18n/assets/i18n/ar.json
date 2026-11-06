@@ -2168,7 +2168,57 @@
 			"HR": "ساعة",
 			"SETTINGS": "الإعدادات",
 			"GENERAL_SETTINGS": "إعدادات عامة",
-			"INTEGRATIONS": "التكاملات"
+			"INTEGRATIONS": "التكاملات",
+			"PROJECTS_TAB": {
+				"TITLE": "المشاريع",
+				"CAPTION": "المشاريع التي ينتمي إليها هذا الموظف. يمكن للأعضاء تتبع الوقت والعمل على مهام المشروع.",
+				"SEARCH": "البحث في المشاريع",
+				"ASSIGN": "تعيين مشاريع",
+				"ASSIGN_DIALOG_TITLE": "التعيين في مشاريع",
+				"ASSIGN_DIALOG_SUBTITLE": "اختر المشاريع التي يجب أن ينضم إليها {{ employee }}. سيتمكن من تتبع الوقت والعمل على مهامها.",
+				"ASSIGN_SEARCH": "ابحث بالاسم أو الرمز أو العميل",
+				"SELECT_ALL": "تحديد الكل",
+				"DESELECT_ALL": "إلغاء تحديد الكل",
+				"SELECTED_COUNT": "تم تحديد {{ count }}",
+				"CLEAR_SELECTION": "مسح",
+				"ASSIGN_SUBMIT": "تعيين",
+				"ALL_ASSIGNED": "هذا الموظف عضو بالفعل في جميع المشاريع.",
+				"COLUMNS": {
+					"PROJECT": "المشروع",
+					"ROLE": "الدور",
+					"STATUS": "الحالة",
+					"MEMBERS": "الأعضاء",
+					"BILLING": "الفوترة"
+				},
+				"ROLE_MANAGER": "مدير",
+				"ROLE_MEMBER": "عضو",
+				"STATUS": {
+					"OPEN": "مفتوح",
+					"IN_PROGRESS": "قيد التنفيذ",
+					"COMPLETED": "مكتمل",
+					"CANCELLED": "ملغى",
+					"CUSTOM": "مخصص"
+				},
+				"BILLING": {
+					"RATE": "سعر بالساعة",
+					"FLAT_FEE": "رسوم ثابتة",
+					"MILESTONES": "مراحل"
+				},
+				"PUBLIC": "عام",
+				"PRIVATE": "خاص",
+				"QUICK_LOOK": "نظرة سريعة",
+				"OPEN_PROJECT": "فتح صفحة المشروع",
+				"REMOVE": "إزالة من المشروع",
+				"REMOVE_TITLE": "إزالة من المشروع",
+				"REMOVE_MESSAGE": "هل تريد إزالة {{ employee }} من {{ project }}؟ لن يتمكن بعد ذلك من تتبع الوقت عليه.",
+				"REMOVE_HINT": "يمكنك تعيينه في هذا المشروع مرة أخرى في أي وقت.",
+				"SHOWING": "عرض {{ count }} من {{ total }} مشروع",
+				"NO_MATCH": "لا توجد مشاريع تطابق «{{ term }}»",
+				"NO_MATCH_PICKER": "لا توجد مشاريع مطابقة",
+				"CLEAR_SEARCH": "مسح البحث",
+				"EMPTY_TITLE": "لا توجد مشاريع بعد",
+				"EMPTY_TEXT": "عيّن هذا الموظف في مشروع ليتمكن من تتبع الوقت والعمل على مهامه."
+			}
 		},
 		"ADD_EMPLOYEES": {
 			"STEP_1": "الخطوة 1",
