@@ -39,6 +39,7 @@
 		"@gauzy/plugin-tax": "^0.1.0",
 		"@gauzy/plugin-integration-activepieces": "^0.1.0",
 		"@gauzy/plugin-integration-asana": "^0.1.0",
+		"@gauzy/plugin-integration-linear": "^0.1.0",
 		"@gauzy/plugin-integration-ai": "^0.1.0",
 		"@gauzy/plugin-integration-github": "^0.1.0",
 		"@gauzy/plugin-integration-hubstaff": "^0.1.0",
