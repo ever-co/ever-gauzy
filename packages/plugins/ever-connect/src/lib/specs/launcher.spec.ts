@@ -468,6 +468,14 @@ describe('App Launcher routes', () => {
 			expect(everId.exchanges).toBe(2);
 		});
 
+		it('never reuses an answer once the Ever ID session it was read with ended', async () => {
+			expect((await get(`/apps?organizationId=${ORG}`)).body.meta.worksTotal).toBe(2);
+			everId.sid = null;
+			const after = await get(`/apps?organizationId=${ORG}`);
+			expect(after.body.signInAvailable).toBe(true);
+			expect(after.body.meta.worksTotal).toBe(0);
+		});
+
 		it('shows the Ever apps only, with the works section in error, when Ever Platform cannot answer (and tries again next time)', async () => {
 			platform.feedStatus = 503;
 			const failed = await get(`/apps?organizationId=${ORG}`);

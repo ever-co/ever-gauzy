@@ -55,15 +55,16 @@ export class EverConnectLauncherService {
 
 	/** `GET /api/ever-connect/launcher/apps?organizationId=` for an organization the person is a member of. */
 	async list(scope: OrganizationScope): Promise<LauncherAppsResponse> {
-		const key = `${scope.tenantId}|${scope.userId}|${scope.organizationId}`;
-		const cached = this.answers.get(key);
+		// An answer belongs to the Ever ID session it was read with: once that session ends, it is never reused.
+		const sid = await this.tokens.sessionOf(scope.userId);
+		const key = `${scope.tenantId}|${scope.userId}|${scope.organizationId}|${sid ?? ''}`;
+		const cached = sid ? this.answers.get(key) : undefined;
 		if (cached && cached.until > this.now()) {
 			return cached.value;
 		}
 		this.answers.delete(key);
 
 		const catalog = await this.reads.catalog();
-		const sid = await this.tokens.sessionOf(scope.userId);
 		if (!sid) {
 			return this.answer(mergeLauncherResponse({ catalog, current: `platform:${LAUNCHER_CURRENT}` }), true, null);
 		}
