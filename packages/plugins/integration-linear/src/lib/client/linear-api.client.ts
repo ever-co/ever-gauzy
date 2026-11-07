@@ -112,8 +112,13 @@ export class LinearApiError extends Error {
 	}
 
 	/** The token was refused: the connection needs a fresh token, or a person. */
+	/** The token was refused (401): the connection needs a person. A 403 is the resource's (the user lacks access to it), not the token's. */
 	get isUnauthorized(): boolean {
-		return this.status === 401 || this.status === 403;
+		return this.status === 401;
+	}
+
+	get isForbidden(): boolean {
+		return this.status === 403;
 	}
 
 	get isRateLimited(): boolean {
