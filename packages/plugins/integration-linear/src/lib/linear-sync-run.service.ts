@@ -25,6 +25,8 @@ export function emptyCounts(): LinearSyncCounts {
 
 /** A running import that made no progress for this long is abandoned (its process died): it no longer blocks a new one. */
 export const LINEAR_IMPORT_STALE_MS = 30 * 60 * 1000;
+/** Webhook runs (one per delivery) are kept this long; imports are kept. */
+export const LINEAR_WEBHOOK_RUN_RETENTION_MS = 7 * 24 * 60 * 60 * 1000;
 
 /** The runs (imports, webhook applications) of the connections: claimed, started, advanced, finished, listed. */
 @Injectable()
@@ -131,6 +133,12 @@ export class LinearSyncRunService extends TenantAwareCrudService<LinearSyncRun> 
 				lastError: outcome.error ? outcome.error.slice(0, 2000) : null
 			} as never
 		);
+		if (run.kind === LinearSyncRunKind.WEBHOOK) {
+			// One row per delivery on a busy workspace: the old ones go (the imports stay).
+			await this.typeOrmLinearSyncRunRepository
+				.delete({ integrationId: run.integrationId, kind: LinearSyncRunKind.WEBHOOK, createdAt: LessThan(new Date(Date.now() - LINEAR_WEBHOOK_RUN_RETENTION_MS)) })
+				.catch(() => undefined);
+		}
 	}
 
 	/** Counts of a run in progress: the heartbeat that keeps it live (a long import shows its progress). */

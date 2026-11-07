@@ -65,8 +65,14 @@ export class LinearOAuthStateService {
 		}
 		const key = `${CACHE_PREFIX}${nonce}`;
 		if (this.redis) {
-			// One operation: exactly one caller, on any replica, resolves a given nonce.
-			return this.parse(await this.redis.getDel(key));
+			// One operation: exactly one caller, on any replica, resolves a given nonce. A store that does not answer
+			// is an unusable state (the person starts again), never a 500.
+			try {
+				return this.parse(await this.redis.getDel(key));
+			} catch (error) {
+				this.logger.warn(`The connect state could not be read from Redis: ${(error as Error)?.message}`);
+				return null;
+			}
 		}
 		if (this.consuming.has(key)) {
 			return null;

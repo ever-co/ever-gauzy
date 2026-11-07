@@ -25,7 +25,7 @@ import { LinearMappingService } from './linear-mapping.service';
 import { LinearOAuthStateService } from './linear-oauth-state.service';
 import { LinearSyncRunService } from './linear-sync-run.service';
 import { LinearConnectionSummary, LinearTenantService } from './linear-tenant.service';
-import { LINEAR_CONFIG, LINEAR_NOT_CONFIGURED, LINEAR_OAUTH_AUTHORIZE_URL, LINEAR_OAUTH_SCOPES, LINEAR_ROUTE_PREFIX } from './linear.constants';
+import { LINEAR_CONFIG, LINEAR_NOT_CONFIGURED, LINEAR_NOT_CONNECTED, LINEAR_OAUTH_AUTHORIZE_URL, LINEAR_OAUTH_SCOPES, LINEAR_ROUTE_PREFIX } from './linear.constants';
 import { LinearSyncService } from './sync/linear-sync.service';
 import { DEFAULT_STATE_MAP, parseStateMap } from './sync/linear-issue.mapper';
 
@@ -81,8 +81,13 @@ export class LinearController {
 		}
 		const tenantId = RequestContext.currentTenantId() as ID;
 		const userId = RequestContext.currentUserId() as ID;
-		// The organization is the caller's (the DTO checked); the state binds the callback to it and to this tenant.
-		const state = await this.oauthState.create({ tenantId, organizationId: body.organizationId as ID, userId });
+		// The organization is the caller's (the DTO checked it, as an id or as an object); the state binds the
+		// callback to it and to this tenant.
+		const organizationId = (body.organizationId ?? (body as { organization?: { id?: ID } }).organization?.id) as ID | undefined;
+		if (!organizationId) {
+			throw new BadRequestException({ message: 'An organization is required', code: LINEAR_NOT_CONNECTED });
+		}
+		const state = await this.oauthState.create({ tenantId, organizationId, userId });
 		const params = new URLSearchParams({
 			client_id: this.config.clientId as string,
 			redirect_uri: this.config.redirectUrl as string,

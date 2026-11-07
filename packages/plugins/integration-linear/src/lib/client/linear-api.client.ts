@@ -293,6 +293,12 @@ export class LinearApiClient {
 		return data.issueUpdate.issue;
 	}
 
+	/** Archives an issue (the undo of a creation that could not be recorded). */
+	async archiveIssue(id: string): Promise<boolean> {
+		const data = await this.query<{ issueArchive: { success: boolean } }>('mutation($id: String!) { issueArchive(id: $id) { success } }', { id });
+		return !!data.issueArchive?.success;
+	}
+
 	async createIssue(input: LinearIssueCreateInput): Promise<LinearIssue> {
 		const data = await this.query<{ issueCreate: { success: boolean; issue: LinearIssue } }>(
 			`mutation($input: IssueCreateInput!) { issueCreate(input: $input) { success issue { ${ISSUE_FIELDS} } } }`,

@@ -76,6 +76,8 @@ export class LinearSyncService {
 	private readonly statesCache = new Map<string, { at: number; states: LinearWorkflowState[] }>();
 	/** The pushes of each task, one after the other (a create and a quick edit never race to create two issues). */
 	private readonly pushChains = new Map<string, Promise<void>>();
+	/** The applies of each issue, one after the other (an import and a webhook never create two tasks for one issue). */
+	private readonly issueChains = new Map<string, Promise<ApplyOutcome>>();
 
 	constructor(
 		private readonly commandBus: CommandBus,
@@ -247,8 +249,11 @@ export class LinearSyncService {
 	}
 
 	/**
-	 * Creates the issue of a task and its id map in one transaction, serialised per task across processes on
-	 * Postgres (an advisory lock) and checked again inside it, so two pushes never create two issues.
+	 * Creates the issue of a task and records its id map. The pushes of one task are already one after the other in
+	 * this process (`pushChains`); the issue is created outside any transaction (no pool connection held across the
+	 * call to Linear), and the map is written in a short transaction locked per task on Postgres that looks again:
+	 * when another process recorded a map meanwhile, the issue just created is archived again, so the task keeps
+	 * one issue.
 	 */
 	private async createIssueOnce(
 		holder: ClientHolder,
@@ -258,15 +263,15 @@ export class LinearSyncService {
 		title: string,
 		input: ReturnType<typeof issueUpdateOf>
 	): Promise<void> {
-		await this.dataSource.transaction(async (manager) => {
+		const issue = await this.call(holder, (client) => client.createIssue({ ...input, teamId: mapping.linearTeamId, title }));
+		const recorded = await this.dataSource.transaction(async (manager) => {
 			if (manager.connection.options.type === 'postgres') {
 				await manager.query('SELECT pg_advisory_xact_lock(hashtext($1))', [`integration-linear:task:${taskId}`]);
 			}
 			const existing = await manager.findOne(IntegrationMap, {
 				where: { entity: IntegrationEntity.ISSUE, gauzyId: taskId, integrationId: mapping.integrationId, ...scope } as never
 			});
-			if (existing) return;
-			const issue = await this.call(holder, (client) => client.createIssue({ ...input, teamId: mapping.linearTeamId, title }));
+			if (existing) return false;
 			await manager.save(
 				IntegrationMap,
 				Object.assign(new IntegrationMap(), {
@@ -277,7 +282,13 @@ export class LinearSyncService {
 					...scope
 				})
 			);
+			return true;
 		});
+		if (!recorded) {
+			await this.call(holder, (client) => client.archiveIssue(issue.id)).catch((caught: unknown) => {
+				this.logger.warn(`Issue ${issue.identifier} was created twice for task ${taskId} and could not be archived: ${this.describe(caught)}`);
+			});
+		}
 	}
 
 	// ---------------------------------------------------------------- one issue
@@ -330,11 +341,36 @@ export class LinearSyncService {
 	}
 
 	/**
+	 * One issue → one task, one apply at a time per issue: in this process the applies of an issue are chained,
+	 * and across processes on Postgres they wait for an advisory lock on the issue held while the platform's
+	 * id-map command runs (an import and a webhook, or two deliveries, never create two tasks for one issue).
+	 */
+	private applyIssue(context: ApplyContext, issue: LinearIssue): Promise<ApplyOutcome> {
+		const key = `${context.mapping.integrationId}:${issue.id}`;
+		const previous = this.issueChains.get(key) ?? Promise.resolve();
+		const next = previous
+			.catch(() => undefined)
+			.then(() =>
+				this.dataSource.transaction(async (manager) => {
+					if (manager.connection.options.type === 'postgres') {
+						await manager.query('SELECT pg_advisory_xact_lock(hashtext($1))', [`integration-linear:issue:${key}`]);
+					}
+					return this.applyIssueNow(context, issue);
+				})
+			)
+			.finally(() => {
+				if (this.issueChains.get(key) === next) this.issueChains.delete(key);
+			});
+		this.issueChains.set(key, next);
+		return next;
+	}
+
+	/**
 	 * One issue → one task: created once, updated after, by the platform's id map. A relation whose lookup did
 	 * not answer (the employee by e-mail, a label's tag) is left as the task has it; an empty value from Linear
 	 * clears it.
 	 */
-	private async applyIssue(context: ApplyContext, issue: LinearIssue): Promise<ApplyOutcome> {
+	private async applyIssueNow(context: ApplyContext, issue: LinearIssue): Promise<ApplyOutcome> {
 		const { scope, mapping } = context;
 		const integrationId = mapping.integrationId;
 		const existing = await this.integrationMapService
