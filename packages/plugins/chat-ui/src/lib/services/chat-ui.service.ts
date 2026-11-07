@@ -40,8 +40,11 @@ export type ChatThreadPage = IChatMessagePage & { root: IChatMessageWithRelation
 /** A followed thread's root, with how many of its replies I have not read. */
 export type ChatFollowedThread = IChatMessageWithRelations & { unreadReplies: number };
 
-/** A change to a message the page passes around: at least its id, with the fields that changed. */
-export type ChatMessagePatch = Partial<IChatMessageWithRelations> & { id: ID };
+/**
+ * A change to a message the page passes around: the id of the message it belongs to and the fields that changed.
+ * The id is optional in the contract (`IBaseEntityModel`), so a whole message the API answered is a patch too.
+ */
+export type ChatMessagePatch = Partial<IChatMessageWithRelations>;
 
 /** The fields of a message that its thread moves: the reply count, the last reply, whether I follow it. */
 export function threadFieldsOf(message: IChatMessageWithRelations): ChatMessagePatch {
