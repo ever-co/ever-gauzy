@@ -11,17 +11,7 @@ import { AsanaMappingService } from './asana-mapping.service';
 import { AsanaOAuthStateService } from './asana-oauth-state.service';
 import { AsanaSyncRunService } from './asana-sync-run.service';
 import { AsanaConnectionSummary, AsanaTenantService } from './asana-tenant.service';
-import {
-	ASANA_CONFIG,
-	ASANA_MAPPING_NOT_INBOUND,
-	ASANA_NOT_CONFIGURED,
-	ASANA_NOT_CONNECTED,
-	ASANA_OAUTH_AUTHORIZE_URL,
-	ASANA_ROUTE_PREFIX,
-	ASANA_TOKEN_REFUSED,
-	ASANA_UNAVAILABLE,
-	ASANA_WEBHOOK_NOT_REMOVED
-} from './asana.constants';
+import { ASANA_CONFIG, ASANA_MAPPING_NOT_INBOUND, ASANA_NOT_CONFIGURED, ASANA_NOT_CONNECTED, ASANA_OAUTH_AUTHORIZE_URL, ASANA_REQUEST_REFUSED, ASANA_ROUTE_PREFIX, ASANA_TOKEN_REFUSED, ASANA_UNAVAILABLE, ASANA_WEBHOOK_NOT_REMOVED, AsanaSettingName } from './asana.constants';
 import { AsanaSyncService } from './sync/asana-sync.service';
 import { parseSectionMap } from './sync/asana-task.mapper';
 
@@ -68,8 +58,12 @@ export class AsanaController {
 		} catch (error) {
 			if (error instanceof AsanaApiError) {
 				if (error.isUnauthorized) {
-					await this.tenants.setAttention(tenant, 'token_refused');
+					await this.tenants.setAttention(tenant, 'token_refused', this.tenants.settingsOf(tenant)[AsanaSettingName.ACCESS_TOKEN] ?? null);
 					throw new BadRequestException({ message: 'Asana refused the connection\'s token; connect again', code: ASANA_TOKEN_REFUSED });
+				}
+				// The user lacks access to that one resource, or it is gone: the request's refusal, not the connection's.
+				if (error.isForbidden || error.isNotFound) {
+					throw new BadRequestException({ message: `Asana refused the request: ${error.message}`, code: ASANA_REQUEST_REFUSED });
 				}
 				throw new BadGatewayException({ message: `Asana did not answer: ${error.message}`, code: ASANA_UNAVAILABLE });
 			}

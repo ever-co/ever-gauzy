@@ -148,14 +148,16 @@ export const plugins = resolvePluginLoadOrder([
 	 */
 	...(isAsanaEnabled(process.env, (message) => console.warn(message)) ? [IntegrationAsanaPlugin] : []),
 	/**
-	 * The Inbox — hosted only with the Ever Works integration or the notification email delivery, and only when
-	 * both are switched on. This process runs the integration's sync as often as the API does (whoever holds the
-	 * connection's lease), and the sync writes Ever Works inbox items into the Inbox through its writer; without
-	 * the Inbox here those items would wait for the API. The Inbox itself owns no queue or schedule.
+	 * The Inbox — hosted with what writes into it, and only when both are switched on: the Ever Works sync (this
+	 * process runs it as often as the API does, whoever holds the connection's lease, and it writes Ever Works inbox
+	 * items through the Inbox's writer), the notification delivery (its sweep reads the entries), and a task
+	 * integration whose scheduled import met a refused token (the notice to the person who connected is filed
+	 * through the same writer; without the Inbox here that notice would never be filed). It owns no queue or
+	 * schedule of its own.
 	 *
 	 * 🛑 Off unless `GAUZY_INBOX_ENABLED` is exactly `true` as well, so a worker is unchanged by default.
 	 */
-	...((everWorksEnabled || inboxDeliveryEnabled) && isInboxEnabled(process.env, (message) => console.warn(message)) ? [InboxPlugin] : []),
+	...((everWorksEnabled || inboxDeliveryEnabled || isAsanaEnabled(process.env)) && isInboxEnabled(process.env, (message) => console.warn(message)) ? [InboxPlugin] : []),
 	/**
 	 * Email delivery of the Inbox's notifications (immediate or digest per kind, the Inbox spec FR-10–FR-12): the
 	 * sweep that decides and sends runs here, on the worker's queue root, every minute.
