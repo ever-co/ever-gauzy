@@ -31,7 +31,7 @@
 - [x] **T14**. Task references: `KEY-number` + link detection (project keys from the task-views lane; links by task id until then), send-to-chat (`taskId`), create-task-from-message (ever-gauzy `feat/chat-task-references`: `mention` references resolved on send / edit through core's `resolveReferences`, `POST /chat/messages/:id/create-task`)
 - [x] **T15**. Files pane through `DocumentLink { entity: ChatMessage }`; attachment ownership check (ever-gauzy `feat/chat-files`: the sender's own FILE documents only, linked in the send transaction, `GET /chat/conversations/:id/files`)
 - [x] **T16**. Search definition in the search plugin; `/chat/search` with membership filter (ever-gauzy `feat/chat-search`: `CHAT_MESSAGE_INDEX` shipped by the search plugin, `GET /chat/search` filtered to the caller's memberships)
-- [ ] **T17**. GraphQL twins (gated schema) for the read routes; field-binding check entry
+- [x] **T17**. GraphQL twins (gated schema) for the read routes; field-binding check entry
 
 ## Phase 5 — Angular UI (lane G4, `packages/plugins/chat-ui`, PR 3)
 
