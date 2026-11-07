@@ -23,6 +23,7 @@ describe('Trello webhook checks', () => {
 		const id = '5f1a2b3c4d5e6f7a8b9c0d1e';
 		expect(cardIdOf({ type: 'updateCard', data: { card: { id } } })).toBe(id);
 		expect(cardIdOf({ type: 'createCard', data: { card: { id } } })).toBe(id);
+		expect(cardIdOf({ type: 'updateComment', data: { card: { id } } })).toBe(id);
 		expect(cardIdOf({ type: 'deleteCard', data: { card: { id } } })).toBeNull();
 		expect(cardIdOf({ type: 'updateList', data: { list: { id } } })).toBeNull();
 		expect(cardIdOf({ type: 'updateCard', data: { card: { id: 'nope' } } })).toBeNull();

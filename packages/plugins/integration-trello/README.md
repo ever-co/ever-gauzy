@@ -48,6 +48,13 @@ Off by default. The plugin is loaded only when `TRELLO_ENABLED=true` (exactly); 
   name matches), labels as tags. A card that could not be applied keeps the import position. A card two mapped
   boards share belongs to the mapping that imported it first. List and status names compare by key: case
   ignored, spaces as hyphens (`In Progress` is `in-progress`). `GET …/runs` lists the runs.
+- **Comments and attachments.** Behind every card brought in, its comments (Trello's `commentCard` actions)
+  become comments of the task — attributed to the employee the member is (by username, else by name), else kept
+  as the connecting user's, marked system and named after their member — and follow an edit in Trello; its
+  attachments become resource links of the task (the name, the address that opens it), reusing a link a person
+  already added with the same address. Both are kept once (the id map, entities `Comment` and `Attachment`). The
+  webhook delivers a comment added, edited or removed and a file attached as the card they belong to, which is
+  read again.
 - **Scheduled import.** Every five minutes the worker process (`apps/worker`, the one whose scheduler root is
   enabled) sweeps the mappings that bring cards in: one whose last import is older than
   `TRELLO_IMPORT_INTERVAL_MINUTES` (or that was never imported) is imported again, the changes since its position,

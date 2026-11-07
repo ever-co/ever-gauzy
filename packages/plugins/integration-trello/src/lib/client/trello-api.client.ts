@@ -49,6 +49,24 @@ export interface TrelloCard {
 	members: Array<Pick<TrelloMember, 'id' | 'username' | 'fullName'>>;
 }
 
+/** A comment on a card: Trello keeps it as a `commentCard` action, with the member who wrote it. */
+export interface TrelloCommentAction {
+	id: string;
+	type: string;
+	date: string;
+	data: { text?: string | null } | null;
+	memberCreator: Pick<TrelloMember, 'id' | 'username' | 'fullName'> | null;
+}
+
+/** A file or link on a card: the address that opens it. */
+export interface TrelloAttachment {
+	id: string;
+	name: string | null;
+	url: string | null;
+	date: string;
+	isUpload: boolean;
+}
+
 export interface TrelloCardUpdateInput {
 	name?: string;
 	desc?: string;
@@ -213,6 +231,23 @@ export class TrelloApiClient {
 			if (error instanceof TrelloApiError && error.isNotFound) return null;
 			throw error;
 		}
+	}
+
+	/** The comments of a card (its `commentCard` actions), oldest first; Trello answers the newest thousand. */
+	async comments(cardId: string): Promise<TrelloCommentAction[]> {
+		const actions = await this.call<TrelloCommentAction[]>('GET', `/cards/${encodeURIComponent(cardId)}/actions`, {
+			filter: 'commentCard',
+			limit: '1000',
+			fields: 'id,type,date,data',
+			memberCreator: 'true',
+			memberCreator_fields: MEMBER_FIELDS
+		});
+		return (actions ?? []).filter((action) => action?.type === 'commentCard').reverse();
+	}
+
+	/** The files and links of a card. */
+	async attachments(cardId: string): Promise<TrelloAttachment[]> {
+		return (await this.call<TrelloAttachment[]>('GET', `/cards/${encodeURIComponent(cardId)}/attachments`, { fields: 'id,name,url,date,isUpload' })) ?? [];
 	}
 
 	async updateCard(id: string, input: TrelloCardUpdateInput): Promise<TrelloCard> {

@@ -1,5 +1,5 @@
 import { TaskPriorityEnum, TaskStatusEnum } from '@gauzy/contracts';
-import { TrelloCard, TrelloCardUpdateInput, TrelloLabel, TrelloList } from '../client/trello-api.client';
+import { TrelloAttachment, TrelloCard, TrelloCardUpdateInput, TrelloCommentAction, TrelloLabel, TrelloList } from '../client/trello-api.client';
 
 /** The task status of a done or archived card, and of one in a list the map does not name. */
 export const TRELLO_COMPLETED_STATUS = TaskStatusEnum.COMPLETED;
@@ -153,4 +153,35 @@ export function trelloColorOf(color: string | null | undefined): string {
 		.toLowerCase()
 		.replace(/_(light|dark)$/, '');
 	return named[base] ?? '#6E7681';
+}
+
+/** The platform keeps a comment as HTML: the text's characters that would read as markup, escaped. */
+export function escapeHtml(value: string): string {
+	return value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+/**
+ * A comment's body as the platform keeps it (HTML): the member's words, one paragraph per line; and, when the member
+ * is nobody here (no employee matched by username or name), who wrote them, named first, so the comment is not read
+ * as the connecting person's. Empty for a comment without text.
+ */
+export function commentHtmlOf(action: Pick<TrelloCommentAction, 'data' | 'memberCreator'>, attributed: boolean): string {
+	const text = (action.data?.text ?? '').trim();
+	if (!text) return '';
+	const paragraphs = text
+		.split(/\r?\n+/)
+		.map((line) => line.trim())
+		.filter(Boolean)
+		.map((line) => `<p>${escapeHtml(line)}</p>`)
+		.join('');
+	if (attributed) return paragraphs;
+	const name = action.memberCreator?.fullName?.trim() || action.memberCreator?.username?.trim() || 'Someone';
+	return `<p><strong>${escapeHtml(name)}</strong> (Trello)</p>${paragraphs}`;
+}
+
+/** The link an attachment is kept as: its name and the address that opens it; null without an HTTP(S) address. */
+export function attachmentLinkOf(attachment: Pick<TrelloAttachment, 'name' | 'url'>): { title: string; url: string } | null {
+	const url = (attachment.url ?? '').trim();
+	if (!/^https?:\/\//i.test(url)) return null;
+	return { title: (attachment.name ?? '').trim().slice(0, 255) || url, url };
 }

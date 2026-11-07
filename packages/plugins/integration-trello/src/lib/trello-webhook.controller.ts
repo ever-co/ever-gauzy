@@ -33,7 +33,9 @@ const CARD_ACTIONS = new Set([
 	'updateCheckItemStateOnCard',
 	'addAttachmentToCard',
 	'deleteAttachmentFromCard',
-	'commentCard'
+	'commentCard',
+	'updateComment',
+	'deleteComment'
 ]);
 
 /**

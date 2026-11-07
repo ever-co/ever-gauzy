@@ -23,10 +23,16 @@ import { trelloSyncUser, runInTrelloContext } from '../trello-process';
 import { emptyCounts, TrelloSyncCounts, TrelloSyncRunService } from '../trello-sync-run.service';
 import { TrelloTenantService } from '../trello-tenant.service';
 import { TRELLO_APPLY_CONCURRENCY, TRELLO_CARDS_PAGE_SIZE, TRELLO_CONFIG, TRELLO_IMPORT_CLOCK_SKEW_MS, TrelloSettingName } from '../trello.constants';
+import { TrelloAuthor, TrelloCardDetailsService } from './trello-card-details.service';
 import { isChangedSince, knownStatusesOf, listForStatus, parseListMap, statusKey, taskFieldsOf, trelloColorOf, trelloUpdateOf } from './trello-card.mapper';
 
 /** What one card became. */
 type ApplyOutcome = 'created' | 'updated' | 'skipped';
+/** What one card became, and the platform task it is (none when skipped). */
+interface ApplyResult {
+	outcome: ApplyOutcome;
+	taskId: ID | null;
+}
 
 /** A connection's client. */
 interface ClientHolder {
@@ -49,11 +55,15 @@ interface ApplyContext extends ClientHolder {
 	/** The organization's employees (with their user), loaded once per run when a member is first matched. */
 	employees?: EmployeeLike[];
 	tagIdsByLabel: Map<string, ID | null>;
+	/** The user who connected: the comments nobody here wrote are theirs to own. */
+	connectedByUserId: ID | null;
+	/** What the details import brought in this run (comments, attachments as links): reported, not counted on the run. */
+	details: { comments: number; links: number };
 	counts: TrelloSyncCounts;
 }
 
 /** What a member is matched against: the user's e-mail (its local part is Trello's username) and name. */
-type EmployeeLike = { id?: ID; user?: { email?: string | null; firstName?: string | null; lastName?: string | null; name?: string | null } | null };
+type EmployeeLike = { id?: ID; userId?: ID | null; user?: { email?: string | null; firstName?: string | null; lastName?: string | null; name?: string | null } | null };
 
 const RATE_LIMIT_MAX_WAIT_MS = 60_000;
 /** How long a board's lists are kept for outbound pushes. */
@@ -89,6 +99,7 @@ export class TrelloSyncService {
 		private readonly employeeService: EmployeeService,
 		private readonly integrationMapService: IntegrationMapService,
 		private readonly integrationTenantSyncService: IntegrationTenantSyncService,
+		private readonly cardDetails: TrelloCardDetailsService,
 		@Inject(TRELLO_CONFIG) private readonly config: TrelloConfig
 	) {}
 
@@ -160,6 +171,7 @@ export class TrelloSyncService {
 					if (!page.nextBefore) break;
 					before = page.nextBefore;
 				}
+				this.reportDetails(context);
 			});
 			if (counts.failed > 0) {
 				error = `${counts.failed} card(s) could not be applied; the import position was kept so the next import reads them again.`;
@@ -209,6 +221,7 @@ export class TrelloSyncService {
 					}
 					await this.applyOne(context, card);
 				}
+				this.reportDetails(context);
 			});
 			if (counts.failed > 0) error = `${counts.failed} card(s) could not be applied.`;
 		} catch (caught) {
@@ -431,24 +444,30 @@ export class TrelloSyncService {
 			priorityIdsByName,
 			employeeIdsByMember: new Map(),
 			tagIdsByLabel: new Map(),
+			connectedByUserId: this.connectedByUserId(tenant),
+			details: { comments: 0, links: 0 },
 			counts
 		};
 	}
 
-	/** One card of a run: a failure counts and is logged; a refused token stops the run. */
+	/** One card of a run, then its comments and attachments: a failure counts and is logged; a refused token stops the run. */
 	private async applyOne(context: ApplyContext, card: TrelloCard): Promise<void> {
+		let taskId: ID | null = null;
 		try {
-			const outcome = await this.applyCard(context, card);
-			context.counts[outcome] += 1;
+			const result = await this.applyCard(context, card);
+			context.counts[result.outcome] += 1;
+			taskId = result.taskId;
 		} catch (caught) {
 			if (caught instanceof TrelloApiError) throw caught;
 			context.counts.failed += 1;
 			this.logger.warn(`Card ${card.id} could not be applied: ${this.describe(caught)}`);
 		}
+		// Behind the card itself: its comments and attachments, read apart (two calls), each kept once.
+		if (taskId) await this.cardDetails.apply(this.detailsContextOf(context), card, taskId);
 	}
 
 	/** One apply at a time per card: chained in the process, locked across processes (`lockedTransaction`), within the process's apply slots. */
-	private applyCard(context: ApplyContext, card: TrelloCard): Promise<ApplyOutcome> {
+	private applyCard(context: ApplyContext, card: TrelloCard): Promise<ApplyResult> {
 		const key = `${context.mapping.integrationId}:${card.id}`;
 		return this.serialized(key, () => this.withApplySlot(() => this.lockedTransaction([`integration-trello:card:${key}`], () => this.applyCardNow(context, card))));
 	}
@@ -457,7 +476,7 @@ export class TrelloSyncService {
 	 * One card → one platform task: created once, updated after, by the platform's id map. A relation whose lookup
 	 * did not answer (a member, a label) is left as the task has it; an empty value clears it.
 	 */
-	private async applyCardNow(context: ApplyContext, card: TrelloCard): Promise<ApplyOutcome> {
+	private async applyCardNow(context: ApplyContext, card: TrelloCard): Promise<ApplyResult> {
 		const { scope, mapping } = context;
 		const integrationId = mapping.integrationId;
 		const existing = await this.integrationMapService
@@ -469,7 +488,7 @@ export class TrelloSyncService {
 				.getRepository(Task)
 				.findOne({ where: { id: existing.gauzyId, tenantId: scope.tenantId } as never, select: { id: true, projectId: true } as never })
 				.catch(() => null);
-			if (owner?.projectId && owner.projectId !== mapping.projectId) return 'skipped';
+			if (owner?.projectId && owner.projectId !== mapping.projectId) return { outcome: 'skipped', taskId: null };
 		}
 		const fields = taskFieldsOf(card, context.listNames, context.listMap, context.knownStatuses);
 		const members = await this.membersOf(context, card.members ?? []);
@@ -487,8 +506,8 @@ export class TrelloSyncService {
 			...(members === undefined ? {} : { members }),
 			...(tags === undefined ? {} : { tags })
 		} as unknown as ITaskCreateInput | ITaskUpdateInput;
-		await this.commandBus.execute(new IntegrationMapSyncTaskCommand({ entity, sourceId: card.id, integrationId, ...scope }, false));
-		return existing ? 'updated' : 'created';
+		const map: IIntegrationMap = await this.commandBus.execute(new IntegrationMapSyncTaskCommand({ entity, sourceId: card.id, integrationId, ...scope }, false));
+		return { outcome: existing ? 'updated' : 'created', taskId: (map?.gauzyId as ID | undefined) ?? null };
 	}
 
 	/**
@@ -514,8 +533,35 @@ export class TrelloSyncService {
 		return ids.map((id) => ({ id }));
 	}
 
+	/** What the details import needs of a run: its scope, the connection's reads, the member matching, and the run's tallies. */
+	private detailsContextOf(context: ApplyContext) {
+		return {
+			scope: context.scope,
+			integrationId: context.mapping.integrationId,
+			connectedByUserId: context.connectedByUserId,
+			read: <T>(make: (client: TrelloApiClient) => Promise<T>) => this.call(context, make),
+			authorOf: async (member: { id: string; username: string; fullName: string } | null): Promise<TrelloAuthor | null> => {
+				if (!member?.id) return null;
+				const row = await this.findEmployeeRow(context, member).catch(() => null);
+				return row?.id ? { employeeId: row.id, userId: row.userId ?? null } : null;
+			},
+			details: context.details
+		};
+	}
+
+	/** One line per run about the details, when there were any (they are not counted on the run). */
+	private reportDetails(context: ApplyContext): void {
+		const { comments, links } = context.details;
+		if (comments || links) this.logger.log(`Mapping ${context.mapping.id}: ${comments} comment(s) and ${links} attachment link(s) brought in`);
+	}
+
 	/** The employee a Trello member is: the organization's employees are loaded once per run and matched in memory. */
 	private async findEmployee(context: ApplyContext, member: { username: string; fullName: string }): Promise<ID | null> {
+		return (await this.findEmployeeRow(context, member))?.id ?? null;
+	}
+
+	/** The employee row (with its user) a Trello member is, by the user's e-mail starting with the username, else the full name. */
+	private async findEmployeeRow(context: ApplyContext, member: { username: string; fullName: string }): Promise<EmployeeLike | null> {
 		if (!context.employees) {
 			const { items } = await this.employeeService.findAll({
 				where: { ...context.scope, isActive: true, isArchived: false },
@@ -529,7 +575,7 @@ export class TrelloSyncService {
 		const byEmail = username
 			? items.find((employee) => String(employee.user?.email ?? '').toLowerCase().split('@')[0] === username)
 			: undefined;
-		if (byEmail?.id) return byEmail.id;
+		if (byEmail?.id) return byEmail;
 		if (!fullName) return null;
 		const byName = items.find((employee) => {
 			const user = employee.user;
@@ -537,7 +583,7 @@ export class TrelloSyncService {
 			const named = String(user?.name ?? '').trim().toLowerCase().replace(/\s+/g, ' ');
 			return (joined && joined === fullName) || (named && named === fullName);
 		});
-		return byName?.id ?? null;
+		return byName?.id ? byName : null;
 	}
 
 	/** The task's tags for the card's labels: one per label, created once by the platform's label sync; `undefined` when a sync failed. */
