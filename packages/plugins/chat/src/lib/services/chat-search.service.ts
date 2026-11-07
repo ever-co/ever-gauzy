@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { DataSource, In, IsNull } from 'typeorm';
-import { ID, IChatSearchQuery, IChatSearchResult, SearchFilterOperator } from '@gauzy/contracts';
+import { IChatSearchQuery, IChatSearchResult, SearchFilterOperator } from '@gauzy/contracts';
 import { SearchService } from '@gauzy/plugin-search';
 import { CHAT_AGGREGATES, CHAT_MAX_PAGE_SIZE, CHAT_PAGE_SIZE } from '../chat.constants';
 import { ChatMember } from '../entities/chat-member.entity';
