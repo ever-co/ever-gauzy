@@ -1,0 +1,155 @@
+import { EmployeeNotificationTypeEnum, InboxDeliveryModeEnum } from '@gauzy/contracts';
+import {
+	decideEmailDelivery,
+	emailModeOf,
+	excerptOf,
+	inboxItemLinkOf,
+	instantOfLocal,
+	nextLocalDate,
+	isWithinWindow,
+	kindSwitchOf,
+	localClockOf,
+	minutesOfDay,
+	nextDigestAt,
+	preferencesOf,
+	retryDelayMs,
+	windowEndAfter
+} from './inbox-delivery-rules';
+
+/** A Saturday at 12:30 UTC: 14:30 in Sofia (UTC+2 in November), 04:30 in Los Angeles (UTC−8). */
+const NOW = new Date('2026-11-07T12:30:00.000Z');
+
+describe('the delivery clock', () => {
+	it("reads the person's clock in their time zone, and UTC for none or an unknown one", () => {
+		expect(localClockOf(NOW, 'Europe/Sofia')).toEqual({ date: '2026-11-07', hour: 14, minute: 30 });
+		expect(localClockOf(NOW, 'America/Los_Angeles')).toEqual({ date: '2026-11-07', hour: 4, minute: 30 });
+		expect(localClockOf(NOW, 'Not/AZone')).toEqual({ date: '2026-11-07', hour: 12, minute: 30 });
+		expect(localClockOf(NOW, null)).toEqual({ date: '2026-11-07', hour: 12, minute: 30 });
+	});
+
+	it('turns a local time back into an instant, across the date line too', () => {
+		expect(instantOfLocal('2026-11-07', 8, 0, 'Europe/Sofia').toISOString()).toBe('2026-11-07T06:00:00.000Z');
+		expect(instantOfLocal('2026-11-07', 8, 0, 'America/Los_Angeles').toISOString()).toBe('2026-11-07T16:00:00.000Z');
+		expect(instantOfLocal('2026-11-07', 23, 30, 'Pacific/Auckland').toISOString()).toBe('2026-11-07T10:30:00.000Z');
+		expect(instantOfLocal('2026-11-07', 0, 15, 'UTC').toISOString()).toBe('2026-11-07T00:15:00.000Z');
+		// The day the clocks go back in New York (01:30 happens twice): the instant is still that day's 08:00.
+		expect(instantOfLocal('2026-11-01', 8, 0, 'America/New_York').toISOString()).toBe('2026-11-01T13:00:00.000Z');
+		expect(nextLocalDate('2026-10-31')).toBe('2026-11-01');
+		expect(nextLocalDate('2026-12-31')).toBe('2027-01-01');
+	});
+
+	it('reads HH:mm as minutes of the day, and nothing else', () => {
+		expect(minutesOfDay('08:30')).toBe(510);
+		expect(minutesOfDay('8:05')).toBe(485);
+		expect(minutesOfDay('24:00')).toBeNull();
+		expect(minutesOfDay('noon')).toBeNull();
+		expect(minutesOfDay(930)).toBeNull();
+	});
+});
+
+describe('the do-not-disturb window', () => {
+	const night = { start: '22:00', end: '07:00' };
+	const office = { start: '09:00', end: '17:00' };
+	const at = (hour: number, minute = 0) => ({ date: '2026-11-07', hour, minute });
+
+	it('knows a window that spans midnight from one that does not', () => {
+		expect(isWithinWindow(at(23), night)).toBe(true);
+		expect(isWithinWindow(at(6, 59), night)).toBe(true);
+		expect(isWithinWindow(at(7), night)).toBe(false);
+		expect(isWithinWindow(at(12), night)).toBe(false);
+		expect(isWithinWindow(at(12), office)).toBe(true);
+		expect(isWithinWindow(at(17), office)).toBe(false);
+		expect(isWithinWindow(at(12), { start: '12:00', end: '12:00' })).toBe(false);
+		expect(isWithinWindow(at(12), { start: 'x', end: '13:00' })).toBe(false);
+		expect(isWithinWindow(at(12), null)).toBe(false);
+	});
+
+	it("ends at the window's end, today when it is still ahead and tomorrow otherwise", () => {
+		// Midnight in Sofia (22:00 UTC): the night window ends at 07:00 Sofia, 05:00 UTC, the same calendar day there.
+		expect(windowEndAfter(new Date('2026-11-07T22:00:00.000Z'), night, 'Europe/Sofia').toISOString()).toBe('2026-11-08T05:00:00.000Z');
+		// 14:30 in Sofia with the window's end at 07:00 already behind: tomorrow's.
+		expect(windowEndAfter(NOW, night, 'Europe/Sofia').toISOString()).toBe('2026-11-08T05:00:00.000Z');
+		// 12:30 UTC inside the office window: 17:00 UTC today.
+		expect(windowEndAfter(NOW, office, 'UTC').toISOString()).toBe('2026-11-07T17:00:00.000Z');
+	});
+});
+
+describe('the digest hour', () => {
+	it('is today when still ahead on the person\'s clock, else tomorrow, and 8 when the hour is not one', () => {
+		expect(nextDigestAt(NOW, 8, 'Europe/Sofia').toISOString()).toBe('2026-11-08T06:00:00.000Z');
+		expect(nextDigestAt(NOW, 15, 'Europe/Sofia').toISOString()).toBe('2026-11-07T13:00:00.000Z');
+		expect(nextDigestAt(NOW, 8, 'America/Los_Angeles').toISOString()).toBe('2026-11-07T16:00:00.000Z');
+		expect(nextDigestAt(NOW, 99, 'UTC').toISOString()).toBe('2026-11-08T08:00:00.000Z');
+	});
+
+	it('keeps the chosen hour across a daylight-saving change (the next calendar day, not 24 hours on)', () => {
+		// 09:00 EDT on 31 October 2026; the digest hour has passed; the clocks go back overnight: 08:00 EST is 13:00 UTC.
+		expect(nextDigestAt(new Date('2026-10-31T13:00:00.000Z'), 8, 'America/New_York').toISOString()).toBe('2026-11-01T13:00:00.000Z');
+		// 23:00 EDT on 31 October inside a 22:00–07:00 window: it ends at 07:00 EST, 12:00 UTC.
+		expect(windowEndAfter(new Date('2026-11-01T03:00:00.000Z'), { start: '22:00', end: '07:00' }, 'America/New_York').toISOString()).toBe('2026-11-01T12:00:00.000Z');
+	});
+});
+
+describe('the preferences', () => {
+	it('reads the preferences stored as an object or as JSON, and nothing from neither', () => {
+		expect(preferencesOf({ preferences: { email: 'digest' } })).toEqual({ email: 'digest' });
+		expect(preferencesOf({ preferences: '{"email":"off"}' })).toEqual({ email: 'off' });
+		expect(preferencesOf({ preferences: '{oops' })).toEqual({});
+		expect(preferencesOf(null)).toEqual({});
+	});
+
+	it("honours the kind's switch, with TaskUpdate in the preferences and unknown kinds on", () => {
+		expect(kindSwitchOf({ mention: false }, {}, EmployeeNotificationTypeEnum.MENTION)).toBe(false);
+		expect(kindSwitchOf({ mention: false }, {}, EmployeeNotificationTypeEnum.ASSIGNMENT)).toBe(true);
+		expect(kindSwitchOf({}, { taskUpdate: false }, EmployeeNotificationTypeEnum.TASK_UPDATE)).toBe(false);
+		expect(kindSwitchOf({}, {}, EmployeeNotificationTypeEnum.TASK_UPDATE)).toBe(true);
+		expect(kindSwitchOf(null, {}, 'Whatever')).toBe(true);
+	});
+
+	it("reads the kind's email mode, else the one for every kind, else immediate", () => {
+		expect(emailModeOf({}, EmployeeNotificationTypeEnum.MENTION)).toBe('immediate');
+		expect(emailModeOf({ email: false }, EmployeeNotificationTypeEnum.MENTION)).toBe('off');
+		expect(emailModeOf({ email: true }, EmployeeNotificationTypeEnum.MENTION)).toBe('immediate');
+		expect(emailModeOf({ email: 'digest' }, EmployeeNotificationTypeEnum.MENTION)).toBe('digest');
+		expect(emailModeOf({ email: 'digest', emailByType: { Mention: 'immediate' } }, EmployeeNotificationTypeEnum.MENTION)).toBe('immediate');
+		expect(emailModeOf({ email: 'digest', emailByType: { Mention: 'sometimes' as never } }, EmployeeNotificationTypeEnum.MENTION)).toBe('digest');
+	});
+});
+
+describe('decideEmailDelivery', () => {
+	it('sends at once by default, and nothing when the kind or its email is off', () => {
+		expect(decideEmailDelivery({ now: NOW, type: EmployeeNotificationTypeEnum.MENTION, setting: null })).toEqual({ mode: InboxDeliveryModeEnum.IMMEDIATE, dueAt: NOW, digestKey: null });
+		expect(decideEmailDelivery({ now: NOW, type: EmployeeNotificationTypeEnum.MENTION, setting: { mention: false } })).toEqual({ mode: InboxDeliveryModeEnum.NONE, dueAt: null, digestKey: null });
+		expect(decideEmailDelivery({ now: NOW, type: EmployeeNotificationTypeEnum.MENTION, setting: { preferences: { emailByType: { Mention: 'off' } } } })).toEqual({ mode: InboxDeliveryModeEnum.NONE, dueAt: null, digestKey: null });
+	});
+
+	it("places a digest kind at the person's next digest hour, keyed by that day", () => {
+		const decision = decideEmailDelivery({ now: NOW, type: EmployeeNotificationTypeEnum.COMMENT, setting: { preferences: { email: 'digest', digestHour: 8 } }, userTimeZone: 'Europe/Sofia' });
+		expect(decision).toEqual({ mode: InboxDeliveryModeEnum.DIGEST, dueAt: new Date('2026-11-08T06:00:00.000Z'), digestKey: '2026-11-08' });
+	});
+
+	it("holds an immediate email until the do-not-disturb window ends, in the window's own time zone", () => {
+		const sofia = decideEmailDelivery({ now: NOW, type: EmployeeNotificationTypeEnum.ASSIGNMENT, setting: { preferences: { dnd: { start: '12:00', end: '16:00' } } }, userTimeZone: 'Europe/Sofia' });
+		expect(sofia).toEqual({ mode: InboxDeliveryModeEnum.IMMEDIATE, dueAt: new Date('2026-11-07T14:00:00.000Z'), digestKey: null });
+		const utc = decideEmailDelivery({ now: NOW, type: EmployeeNotificationTypeEnum.ASSIGNMENT, setting: { preferences: { dnd: { start: '12:00', end: '16:00', timeZone: 'UTC' } } }, userTimeZone: 'Europe/Sofia' });
+		expect(utc.dueAt).toEqual(new Date('2026-11-07T16:00:00.000Z'));
+		const outside = decideEmailDelivery({ now: NOW, type: EmployeeNotificationTypeEnum.ASSIGNMENT, setting: { preferences: { dnd: { start: '22:00', end: '07:00' } } }, userTimeZone: 'Europe/Sofia' });
+		expect(outside.dueAt).toEqual(NOW);
+	});
+});
+
+describe('the attempts and the links', () => {
+	it('waits twice as long after each failed attempt, and gives up after the fifth', () => {
+		expect(retryDelayMs(1)).toBe(5 * 60_000);
+		expect(retryDelayMs(2)).toBe(10 * 60_000);
+		expect(retryDelayMs(4)).toBe(40 * 60_000);
+		expect(retryDelayMs(5)).toBeNull();
+	});
+
+	it('links the entry in the Inbox page, and cuts a body for a line', () => {
+		expect(inboxItemLinkOf('https://app.example.test/', 'i 1')).toBe('https://app.example.test/#/pages/inbox?item=i%201');
+		expect(excerptOf('<p>Hello</p>   <b>world</b>')).toBe('Hello world');
+		expect(excerptOf('x'.repeat(300)).length).toBe(280);
+		expect(excerptOf(null)).toBe('');
+	});
+});

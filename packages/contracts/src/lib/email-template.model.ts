@@ -49,7 +49,11 @@ export enum EmailTemplateEnum {
 	PAYMENT_RECEIPT = 'payment-receipt',
 	REJECT_CANDIDATE = 'reject-candidate',
 	ACCOUNT_DELETION_REQUEST = 'account-deletion-request',
-	ACCOUNT_DELETION_COMPLETED = 'account-deletion-completed'
+	ACCOUNT_DELETION_COMPLETED = 'account-deletion-completed',
+	/** One Inbox entry, sent at once (the Inbox spec, FR-10 / FR-12). */
+	INBOX_NOTIFICATION = 'inbox-notification',
+	/** The daily digest of an employee's unread Inbox entries. */
+	INBOX_DIGEST = 'inbox-digest'
 }
 
 export interface ICustomizeEmailTemplateFindInput extends IBasePerTenantAndOrganizationEntityModel {

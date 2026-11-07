@@ -36,7 +36,7 @@ import { IntegrationEverAsyncPlugin } from '@gauzy/plugin-integration-ever-async
 import { IntegrationEverWorksPlugin, isEverWorksEnabled } from '@gauzy/plugin-integration-ever-works';
 import { IntegrationLinearPlugin, isLinearEnabled } from '@gauzy/plugin-integration-linear';
 import { IntegrationAsanaPlugin, isAsanaEnabled } from '@gauzy/plugin-integration-asana';
-import { InboxEmailPlugin, InboxPlugin, isInboxEmailEnabled, isInboxEnabled } from '@gauzy/plugin-inbox';
+import { InboxDeliveryPlugin, InboxEmailPlugin, InboxPlugin, isInboxEmailEnabled, isInboxEnabled, isInboxNotificationEmailEnabled } from '@gauzy/plugin-inbox';
 import { isRealtimeEnabled, RealtimePlugin } from '@gauzy/plugin-realtime';
 
 import { ChatPlugin, isChatEnabled } from '@gauzy/plugin-chat';
@@ -148,6 +148,13 @@ export const plugins = [
 	// off it is not loaded at all (no route, no table, no transport: mail goes out over SMTP as before).
 	...(isInboxEnabled(process.env) && isInboxEmailEnabled(process.env, (message) => console.warn(message))
 		? [InboxEmailPlugin]
+		: []),
+
+	// Email delivery of the Inbox's notifications (immediate or digest per kind, the Inbox spec FR-10–FR-12). Only on
+	// top of the Inbox, and off unless GAUZY_INBOX_NOTIFICATION_EMAIL_ENABLED=true as well; the API owns the table, the
+	// worker runs the sweep.
+	...(isInboxEnabled(process.env) && isInboxNotificationEmailEnabled(process.env, (message) => console.warn(message))
+		? [InboxDeliveryPlugin]
 		: []),
 
 	// Email provider: Resend (plan 04 §5.2). Off unless EMAIL_PROVIDER_RESEND_ENABLED=true; when off it is not
