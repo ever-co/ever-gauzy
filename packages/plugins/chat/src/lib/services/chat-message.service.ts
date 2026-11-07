@@ -242,8 +242,9 @@ export class ChatMessageService {
 	}
 
 	/**
-	 * Marks a followed thread read for the caller: its unread replies go to zero (the conversation's own unread
-	 * state is untouched). A thread the caller does not follow, or a root the caller may not read, changes nothing.
+	 * Marks a followed thread read for the caller: its unread replies go to zero and the inbox notifications about
+	 * its replies are read too (the conversation's own unread state is untouched). A thread the caller does not
+	 * follow, or a root the caller may not read, changes nothing.
 	 */
 	async markThreadRead(caller: IChatCaller, rootMessageId: ID): Promise<IChatThreadReadResult> {
 		if (!caller.employeeId) return { updated: false };
@@ -251,7 +252,11 @@ export class ChatMessageService {
 		const result = await this.dataSource
 			.getRepository(ChatThreadFollow)
 			.update({ rootMessageId: root.id as ID, employeeId: caller.employeeId, tenantId: caller.tenantId }, { unreadReplies: 0, lastReadReplyAt: new Date() });
-		return { updated: (result.affected ?? 0) > 0 };
+		const updated = (result.affected ?? 0) > 0;
+		if (updated) {
+			void this.notifier.markThreadRead(root.id as ID, { tenantId: caller.tenantId, employeeId: caller.employeeId });
+		}
+		return { updated };
 	}
 
 	// ---------------------------------------------------------------- send / edit / delete

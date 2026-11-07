@@ -507,7 +507,8 @@ export class ChatConversationService {
 	async people(caller: IChatCaller): Promise<IChatPerson[]> {
 		if (!caller.organizationId) return [];
 		const employees = await this.dataSource.getRepository(Employee).find({
-			select: { id: true, userId: true, user: { id: true, firstName: true, lastName: true, name: true, imageUrl: true } } as never,
+			// `user.name` is built after the load (a virtual column), never selected.
+			select: { id: true, userId: true, user: { id: true, firstName: true, lastName: true, imageUrl: true } } as never,
 			where: { tenantId: caller.tenantId, organizationId: caller.organizationId, isActive: true, isArchived: false },
 			relations: { user: true },
 			take: CHAT_PEOPLE_MAX
