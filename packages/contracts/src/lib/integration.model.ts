@@ -151,6 +151,7 @@ export enum IntegrationEnum {
 	SIM = 'Sim',
 	PLANE = 'Plane',
 	LINEAR = 'Linear',
+	ASANA = 'Asana',
 	EVER_ASYNC = 'Ever_Async',
 	EVER_CONNECT = 'Ever_Connect',
 	/** Ever Works: two-way sync of tasks, teams, goals, missions, ideas, docs, agents and inbox. */

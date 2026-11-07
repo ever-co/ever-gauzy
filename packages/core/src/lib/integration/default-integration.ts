@@ -130,6 +130,15 @@ export const PROJECT_MANAGE_DEFAULT_INTEGRATIONS = [
 		provider: IntegrationEnum.LINEAR
 	},
 	{
+		name: IntegrationEnum.ASANA,
+		imgSrc: 'asana.svg',
+		isComingSoon: false,
+		integrationTypesMap: <string[]>[IntegrationTypeEnum.ALL_INTEGRATIONS, IntegrationTypeEnum.PROJECT_MANAGEMENT],
+		order: 14,
+		redirectUrl: sluggable(IntegrationEnum.ASANA),
+		provider: IntegrationEnum.ASANA
+	},
+	{
 		name: IntegrationEnum.EVER_ASYNC,
 		imgSrc: 'ever-async.svg',
 		isComingSoon: false,

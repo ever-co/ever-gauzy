@@ -1,0 +1,542 @@
+import { Inject, Injectable, Logger } from '@nestjs/common';
+import { CommandBus } from '@nestjs/cqrs';
+import { DataSource, In, IsNull } from 'typeorm';
+import { ID, IIntegrationMap, IIntegrationTenant, IntegrationEntity, isTaskSyncAllowed, ITaskCreateInput, ITaskUpdateInput } from '@gauzy/contracts';
+import {
+	EmployeeService,
+	IntegrationMap,
+	IntegrationMapService,
+	IntegrationMapSyncLabelCommand,
+	IntegrationMapSyncTaskCommand,
+	IntegrationTenantSyncService,
+	Task,
+	TaskPriority,
+	TaskStatus,
+	TaskUpdateCommand
+} from '@gauzy/core';
+import { AsanaApiClient, AsanaApiError, AsanaSection, AsanaTag, AsanaTask } from '../client/asana-api.client';
+import { AsanaSyncRun } from '../entities/asana-sync-run.entity';
+import { AsanaProjectMapping } from '../entities/asana-project-mapping.entity';
+import { AsanaConfig, asanaWebhookTargetOf } from '../asana-config';
+import { AsanaMappingService } from '../asana-mapping.service';
+import { asanaSyncUser, runInAsanaContext } from '../asana-process';
+import { emptyCounts, AsanaSyncCounts, AsanaSyncRunService } from '../asana-sync-run.service';
+import { AsanaTenantService } from '../asana-tenant.service';
+import { ASANA_CONFIG, ASANA_IMPORT_MAX_TASKS, ASANA_TASKS_PAGE_SIZE, AsanaSettingName } from '../asana.constants';
+import { asanaUpdateOf, parseSectionMap, sectionForStatus, taskFieldsOf, watermarkOf } from './asana-task.mapper';
+
+/** What one Asana task became. */
+type ApplyOutcome = 'created' | 'updated' | 'skipped';
+
+/** A connection's client, replaced once when Asana refused the token and a renewal worked. */
+interface ClientHolder {
+	tenant: IIntegrationTenant;
+	client: AsanaApiClient;
+	renewed: boolean;
+}
+
+/** The caches of one run: the statuses and priorities of the project, the employees by e-mail, the tags by Asana tag. */
+interface ApplyContext extends ClientHolder {
+	mapping: AsanaProjectMapping;
+	scope: { tenantId: ID; organizationId: ID };
+	sectionMap: Record<string, string>;
+	statusIdsByName: Map<string, ID>;
+	priorityIdsByName: Map<string, ID>;
+	employeeIdsByEmail: Map<string, ID | null>;
+	tagIdsByAsanaGid: Map<string, ID | null>;
+	/** Subtasks whose parent is linked once every task of the run is in. */
+	pendingParents: Array<{ taskId: ID; parentSourceId: string }>;
+	counts: AsanaSyncCounts;
+}
+
+const RATE_LIMIT_MAX_WAIT_MS = 60_000;
+/** How long a project's sections are kept for outbound pushes. */
+const SECTIONS_TTL_MS = 5 * 60 * 1000;
+
+const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
+
+/**
+ * The sync itself: an import of a mapped Asana project's tasks (every one, or those changed since the
+ * watermark), one task from a webhook, and a platform task's changes sent back. Inbound writes go through the
+ * platform's `IntegrationMapSyncTaskCommand` (one id map per Asana task, a task created once and updated after)
+ * with `triggeredEvent = false`, so nothing the sync writes is sent out again. Every call to Asana waits once
+ * for a rate limit, and renews the token once when Asana refused it.
+ */
+@Injectable()
+export class AsanaSyncService {
+	private readonly logger = new Logger(AsanaSyncService.name);
+	private readonly sectionsCache = new Map<string, { at: number; sections: AsanaSection[] }>();
+	/** The pushes of each platform task, one after the other. */
+	private readonly pushChains = new Map<string, Promise<void>>();
+	/** The applies of each Asana task, one after the other. */
+	private readonly applyChains = new Map<string, Promise<ApplyOutcome>>();
+
+	constructor(
+		private readonly commandBus: CommandBus,
+		private readonly tenants: AsanaTenantService,
+		private readonly mappings: AsanaMappingService,
+		private readonly runs: AsanaSyncRunService,
+		private readonly dataSource: DataSource,
+		private readonly employeeService: EmployeeService,
+		private readonly integrationMapService: IntegrationMapService,
+		private readonly integrationTenantSyncService: IntegrationTenantSyncService,
+		@Inject(ASANA_CONFIG) private readonly config: AsanaConfig
+	) {}
+
+	// ---------------------------------------------------------------- webhooks
+
+	/**
+	 * Registers Asana's webhook on the mapping's project (best effort: without a public address, or when Asana
+	 * refuses, the mapping syncs by imports). Asana calls the receiver with the handshake while this runs; the
+	 * receiver stores the secret on the mapping (`recordWebhookSecret`).
+	 */
+	async ensureWebhook(tenant: IIntegrationTenant, mapping: AsanaProjectMapping): Promise<void> {
+		const target = asanaWebhookTargetOf(this.config, mapping.id as string);
+		if (!target || mapping.webhookGid) return;
+		try {
+			const holder: ClientHolder = { tenant, client: await this.tenants.clientReady(tenant), renewed: false };
+			const webhook = await this.call(holder, (client) => client.createWebhook(mapping.asanaProjectGid, target));
+			// The handshake wrote the secret; the gid is written here (the secret stays as the handshake left it).
+			const current = await this.mappings.findAnyById(mapping.id as ID);
+			await this.mappings.recordWebhook(mapping, { gid: webhook.gid, secret: current?.webhookSecret ?? mapping.webhookSecret ?? null });
+		} catch (caught) {
+			this.logger.warn(`The Asana webhook of mapping ${mapping.id} could not be registered: ${this.describe(caught)}`);
+		}
+	}
+
+	/** Removes the mapping's webhook on Asana (best effort). */
+	async removeWebhook(tenant: IIntegrationTenant, mapping: AsanaProjectMapping): Promise<void> {
+		if (!mapping.webhookGid) return;
+		try {
+			const holder: ClientHolder = { tenant, client: await this.tenants.clientReady(tenant), renewed: false };
+			await this.call(holder, (client) => client.deleteWebhook(mapping.webhookGid as string));
+		} catch (caught) {
+			this.logger.warn(`The Asana webhook of mapping ${mapping.id} could not be removed: ${this.describe(caught)}`);
+		}
+	}
+
+	// ---------------------------------------------------------------- inbound: import
+
+	/**
+	 * Imports the mapping's tasks into a claimed run: every page of them (changed since the watermark unless
+	 * `full`), each one a task created or updated, subtasks linked to their parents at the end. The watermark
+	 * moves only when every task went through and every page was read. The run row is always finished.
+	 */
+	async importMapping(tenant: IIntegrationTenant, mapping: AsanaProjectMapping, run: AsanaSyncRun, options: { full?: boolean } = {}): Promise<void> {
+		const scope = { tenantId: tenant.tenantId as ID, organizationId: tenant.organizationId as ID };
+		const user = asanaSyncUser(scope, this.connectedByUserId(tenant) ?? run.requestedByUserId ?? null);
+		const counts = emptyCounts();
+		const since = options.full ? null : mapping.lastCursor ?? null;
+		let cursor: string | null = since;
+		let error: string | null = null;
+		let complete = false;
+		try {
+			await runInAsanaContext(user, async () => {
+				const context = await this.openContext(tenant, mapping, counts);
+				let offset: string | null = null;
+				let seen = 0;
+				for (;;) {
+					const page = await this.call(context, (client) => client.tasks(mapping.asanaProjectGid, { modifiedSince: since, offset, limit: ASANA_TASKS_PAGE_SIZE }));
+					for (const task of page.items) {
+						await this.applyOne(context, task);
+					}
+					cursor = watermarkOf(page.items, cursor);
+					seen += page.items.length;
+					await this.runs.progress(run, counts);
+					if (!page.nextOffset) {
+						complete = true;
+						break;
+					}
+					if (seen >= ASANA_IMPORT_MAX_TASKS) break;
+					offset = page.nextOffset;
+				}
+				await this.linkParents(context);
+			});
+			if (counts.failed > 0) {
+				error = `${counts.failed} task(s) could not be applied; the import position was kept so the next import reads them again.`;
+			} else if (!complete) {
+				error = `The import stopped at ${ASANA_IMPORT_MAX_TASKS} tasks; the import position was kept. Run it again to continue.`;
+			}
+		} catch (caught) {
+			error = this.describe(caught);
+			if (caught instanceof AsanaApiError && caught.isUnauthorized) {
+				await this.tenants.setAttention(tenant, 'token_refused');
+			}
+			this.logger.warn(`Import of mapping ${mapping.id} failed: ${error}`);
+		} finally {
+			try {
+				await this.mappings.recordImport(mapping, { cursor: error ? undefined : cursor, error });
+			} catch (caught) {
+				error = error ?? this.describe(caught);
+				this.logger.warn(`The import position of mapping ${mapping.id} could not be written: ${this.describe(caught)}`);
+			}
+			await this.runs.finish(run, { counts, cursor: error ? since : cursor, error }).catch((caught: unknown) => {
+				this.logger.warn(`Run ${run.id} could not be finished: ${this.describe(caught)}`);
+			});
+		}
+		if (!error) {
+			await this.integrationTenantSyncService
+				.recordSyncCompleted(tenant.id as ID, { tenantId: scope.tenantId, organizationId: scope.organizationId, counts: { task: counts.created + counts.updated } })
+				.catch((caught: unknown) => this.logger.warn(`The sync completion of ${tenant.id} could not be recorded: ${this.describe(caught)}`));
+		}
+	}
+
+	// ---------------------------------------------------------------- inbound: webhook
+
+	/**
+	 * Applies the tasks a webhook delivery named (read again from Asana: an event carries ids), through the
+	 * mapping's project. The import watermark is not touched. Answers how many were applied, or why not.
+	 */
+	async applyTasksFromWebhook(tenant: IIntegrationTenant, mapping: AsanaProjectMapping, taskGids: string[]): Promise<{ applied: number; error: string | null }> {
+		if (!taskGids.length || !mapping.syncEnabled || mapping.direction === 'outbound') return { applied: 0, error: null };
+		const scope = { tenantId: tenant.tenantId as ID, organizationId: tenant.organizationId as ID };
+		const run = await this.runs.startWebhookRun(tenant, mapping.id);
+		const counts = emptyCounts();
+		let error: string | null = null;
+		try {
+			await runInAsanaContext(asanaSyncUser(scope, this.connectedByUserId(tenant)), async () => {
+				const context = await this.openContext(tenant, mapping, counts);
+				for (const gid of taskGids) {
+					const task = await this.call(context, (client) => client.task(gid));
+					if (!task || !(task.memberships ?? []).some((membership) => membership?.project?.gid === mapping.asanaProjectGid)) {
+						counts.skipped += 1;
+						continue;
+					}
+					await this.applyOne(context, task);
+				}
+				await this.linkParents(context);
+			});
+			if (counts.failed > 0) error = `${counts.failed} task(s) could not be applied.`;
+		} catch (caught) {
+			error = this.describe(caught);
+			if (caught instanceof AsanaApiError && caught.isUnauthorized) {
+				await this.tenants.setAttention(tenant, 'token_refused');
+			}
+			this.logger.warn(`Webhook tasks of mapping ${mapping.id} failed: ${error}`);
+		} finally {
+			await this.runs.finish(run, { counts, cursor: mapping.lastCursor ?? null, error }).catch(() => undefined);
+		}
+		return { applied: counts.created + counts.updated, error };
+	}
+
+	// ---------------------------------------------------------------- outbound
+
+	/**
+	 * Sends a platform task's changes to its Asana task, or creates one when the project's mapping sends new
+	 * tasks out. The saved task is read again by id; the pushes of one task run one after the other. Never throws.
+	 */
+	pushTask(taskId: ID, tenantId: ID): Promise<void> {
+		const key = String(taskId);
+		const previous = this.pushChains.get(key) ?? Promise.resolve();
+		const next = previous
+			.catch(() => undefined)
+			.then(() => this.pushTaskNow(taskId, tenantId))
+			.catch((caught: unknown) => this.logger.warn(`Task ${taskId} could not be sent to Asana: ${this.describe(caught)}`))
+			.finally(() => {
+				if (this.pushChains.get(key) === next) this.pushChains.delete(key);
+			});
+		this.pushChains.set(key, next);
+		return next;
+	}
+
+	private async pushTaskNow(taskId: ID, tenantId: ID): Promise<void> {
+		const task = await this.dataSource.getRepository(Task).findOne({ where: { id: taskId, tenantId } as never });
+		if (!task?.projectId || !task.organizationId || !isTaskSyncAllowed(task, 'third-party')) return;
+		const scope = { tenantId, organizationId: task.organizationId as ID };
+		const mapping = await this.mappings.findOutboundForProject(scope, task.projectId as ID);
+		if (!mapping) return;
+		const tenant = await this.tenants.requireById(mapping.integrationId).catch(() => null);
+		if (!tenant) return;
+		const holder: ClientHolder = { tenant, client: await this.tenants.clientReady(tenant), renewed: false };
+		try {
+			const sectionMap = parseSectionMap(mapping.sectionMap);
+			const sections = await this.projectSections(holder, mapping.integrationId, mapping.asanaProjectGid);
+			const input = asanaUpdateOf(task);
+			const section = sectionForStatus(task.status, sectionMap, sections);
+			const existing = await this.findTaskMap(task.id as ID, mapping.integrationId, scope);
+			if (existing?.sourceId) {
+				await this.call(holder, (client) => client.updateTask(existing.sourceId, input));
+				if (section) await this.call(holder, (client) => client.moveToSection(section.gid, existing.sourceId));
+				return;
+			}
+			if (!input.name) return;
+			await this.createTaskOnce(holder, mapping, task.id as ID, scope, { ...input, name: input.name, projectGid: mapping.asanaProjectGid, sectionGid: section?.gid ?? null });
+		} catch (caught) {
+			if (caught instanceof AsanaApiError && caught.isUnauthorized) {
+				await this.tenants.setAttention(tenant, 'token_refused');
+			}
+			throw caught;
+		}
+	}
+
+	/**
+	 * Creates the Asana task of a platform task and records its id map: the task is created outside any
+	 * transaction, the map is written in a short transaction locked per task on Postgres that looks again; when
+	 * another process recorded a map meanwhile, the Asana task just created is completed and renamed as a
+	 * duplicate (Asana has no archive for tasks).
+	 */
+	private async createTaskOnce(
+		holder: ClientHolder,
+		mapping: AsanaProjectMapping,
+		taskId: ID,
+		scope: { tenantId: ID; organizationId: ID },
+		input: Parameters<AsanaApiClient['createTask']>[0]
+	): Promise<void> {
+		const created = await this.call(holder, (client) => client.createTask(input));
+		const recorded = await this.dataSource.transaction(async (manager) => {
+			if (manager.connection.options.type === 'postgres') {
+				await manager.query('SELECT pg_advisory_xact_lock(hashtext($1))', [`integration-asana:task:${taskId}`]);
+			}
+			const existing = await manager.findOne(IntegrationMap, {
+				where: { entity: IntegrationEntity.TASK, gauzyId: taskId, integrationId: mapping.integrationId, ...scope } as never
+			});
+			if (existing) return false;
+			await manager.save(
+				IntegrationMap,
+				Object.assign(new IntegrationMap(), { entity: IntegrationEntity.TASK, gauzyId: taskId, sourceId: created.gid, integrationId: mapping.integrationId, ...scope })
+			);
+			return true;
+		});
+		if (!recorded) {
+			await this.call(holder, (client) => client.updateTask(created.gid, { name: `[duplicate] ${created.name}`, completed: true })).catch((caught: unknown) => {
+				this.logger.warn(`Asana task ${created.gid} was created twice for task ${taskId} and could not be closed: ${this.describe(caught)}`);
+			});
+		}
+	}
+
+	// ---------------------------------------------------------------- one Asana task
+
+	private async openContext(tenant: IIntegrationTenant, mapping: AsanaProjectMapping, counts: AsanaSyncCounts): Promise<ApplyContext> {
+		const scope = { tenantId: tenant.tenantId as ID, organizationId: tenant.organizationId as ID };
+		const where = [{ ...scope, projectId: mapping.projectId }, { ...scope, projectId: IsNull() }];
+		const [statuses, priorities] = await Promise.all([
+			this.dataSource.getRepository(TaskStatus).find({ where: where as never }).catch(() => [] as TaskStatus[]),
+			this.dataSource.getRepository(TaskPriority).find({ where: where as never }).catch(() => [] as TaskPriority[])
+		]);
+		const statusIdsByName = new Map<string, ID>();
+		for (const status of [...statuses].sort((a, b) => (a.projectId ? 0 : 1) - (b.projectId ? 0 : 1))) {
+			const key = String(status.name ?? '').toLowerCase();
+			if (key && !statusIdsByName.has(key)) statusIdsByName.set(key, status.id as ID);
+		}
+		const priorityIdsByName = new Map<string, ID>();
+		for (const priority of [...priorities].sort((a, b) => (a.projectId ? 0 : 1) - (b.projectId ? 0 : 1))) {
+			const key = String(priority.name ?? '').toLowerCase();
+			if (key && !priorityIdsByName.has(key)) priorityIdsByName.set(key, priority.id as ID);
+		}
+		return {
+			tenant,
+			client: await this.tenants.clientReady(tenant),
+			renewed: false,
+			mapping,
+			scope,
+			sectionMap: parseSectionMap(mapping.sectionMap),
+			statusIdsByName,
+			priorityIdsByName,
+			employeeIdsByEmail: new Map(),
+			tagIdsByAsanaGid: new Map(),
+			pendingParents: [],
+			counts
+		};
+	}
+
+	/** One Asana task of a run: a failure counts and is logged; a refused token stops the run. */
+	private async applyOne(context: ApplyContext, task: AsanaTask): Promise<void> {
+		try {
+			const outcome = await this.applyTask(context, task);
+			context.counts[outcome] += 1;
+		} catch (caught) {
+			if (caught instanceof AsanaApiError) throw caught;
+			context.counts.failed += 1;
+			this.logger.warn(`Asana task ${task.gid} could not be applied: ${this.describe(caught)}`);
+		}
+	}
+
+	/** One apply at a time per Asana task: chained in the process, an advisory lock across processes on Postgres. */
+	private applyTask(context: ApplyContext, task: AsanaTask): Promise<ApplyOutcome> {
+		const key = `${context.mapping.integrationId}:${task.gid}`;
+		const previous = this.applyChains.get(key) ?? Promise.resolve();
+		const next = previous
+			.catch(() => undefined)
+			.then(() =>
+				this.dataSource.transaction(async (manager) => {
+					if (manager.connection.options.type === 'postgres') {
+						await manager.query('SELECT pg_advisory_xact_lock(hashtext($1))', [`integration-asana:task:${key}`]);
+					}
+					return this.applyTaskNow(context, task);
+				})
+			)
+			.finally(() => {
+				if (this.applyChains.get(key) === next) this.applyChains.delete(key);
+			});
+		this.applyChains.set(key, next);
+		return next;
+	}
+
+	/**
+	 * One Asana task → one platform task: created once, updated after, by the platform's id map. A relation whose
+	 * lookup did not answer (the assignee by e-mail, a tag) is left as the task has it; an empty value clears it.
+	 */
+	private async applyTaskNow(context: ApplyContext, task: AsanaTask): Promise<ApplyOutcome> {
+		const { scope, mapping } = context;
+		const integrationId = mapping.integrationId;
+		const existing = await this.integrationMapService
+			.findOneByWhereOptions({ entity: IntegrationEntity.TASK, sourceId: task.gid, integrationId, ...scope })
+			.catch(() => null);
+		// A section header is not a task.
+		if (task.resource_subtype === 'section') return 'skipped';
+		const fields = taskFieldsOf(task, mapping.asanaProjectGid, context.sectionMap, new Set(context.statusIdsByName.keys()));
+		const members = await this.membersOf(context, task.assignee?.email ?? null);
+		const tags = await this.tagsOf(context, task.tags ?? []);
+		const entity = {
+			...scope,
+			projectId: mapping.projectId,
+			title: fields.title,
+			description: fields.description,
+			status: fields.status,
+			taskStatusId: context.statusIdsByName.get(fields.status.toLowerCase()) ?? null,
+			priority: fields.priority ?? null,
+			taskPriorityId: fields.priority ? context.priorityIdsByName.get(fields.priority.toLowerCase()) ?? null : null,
+			dueDate: fields.dueDate,
+			...(members === undefined ? {} : { members }),
+			...(tags === undefined ? {} : { tags }),
+			...(task.parent?.gid ? {} : { parentId: null })
+		} as unknown as ITaskCreateInput | ITaskUpdateInput;
+		const map: IIntegrationMap = await this.commandBus.execute(new IntegrationMapSyncTaskCommand({ entity, sourceId: task.gid, integrationId, ...scope }, false));
+		if (task.parent?.gid && map?.gauzyId) {
+			context.pendingParents.push({ taskId: map.gauzyId as ID, parentSourceId: task.parent.gid });
+		}
+		return existing ? 'updated' : 'created';
+	}
+
+	/** Subtasks point at their parent's task once every task of the run is in. */
+	private async linkParents(context: ApplyContext): Promise<void> {
+		for (const pending of context.pendingParents.splice(0)) {
+			const parent = await this.integrationMapService
+				.findOneByWhereOptions({ entity: IntegrationEntity.TASK, sourceId: pending.parentSourceId, integrationId: context.mapping.integrationId, ...context.scope })
+				.catch(() => null);
+			if (!parent?.gauzyId || parent.gauzyId === pending.taskId) continue;
+			await this.commandBus
+				.execute(new TaskUpdateCommand(pending.taskId, { ...context.scope, parentId: parent.gauzyId as ID } as ITaskUpdateInput, false))
+				.catch((caught: unknown) => this.logger.warn(`Task ${pending.taskId} could not be linked to its parent: ${this.describe(caught)}`));
+		}
+	}
+
+	/** The task's members for the Asana assignee: by e-mail, nobody when there is none, `undefined` when the lookup failed. */
+	private async membersOf(context: ApplyContext, email: string | null): Promise<Array<{ id: ID }> | undefined> {
+		const key = email?.trim().toLowerCase();
+		if (!key) return [];
+		try {
+			if (!context.employeeIdsByEmail.has(key)) {
+				const { items } = await this.employeeService.findAll({
+					where: { ...context.scope, isActive: true, isArchived: false, user: { email: In([key, email as string]) } },
+					relations: { user: true },
+					take: 1
+				} as never);
+				context.employeeIdsByEmail.set(key, (items[0]?.id as ID | undefined) ?? null);
+			}
+		} catch (caught) {
+			this.logger.warn(`The employee of ${key} could not be looked up: ${this.describe(caught)}`);
+			return undefined;
+		}
+		const id = context.employeeIdsByEmail.get(key);
+		return id ? [{ id }] : [];
+	}
+
+	/** The task's tags for the Asana tags: one per tag, created once by the platform's label sync; `undefined` when a sync failed. */
+	private async tagsOf(context: ApplyContext, tags: AsanaTag[]): Promise<Array<{ id: ID }> | undefined> {
+		const ids: ID[] = [];
+		for (const tag of tags) {
+			if (!tag?.gid || !tag.name) continue;
+			if (!context.tagIdsByAsanaGid.has(tag.gid)) {
+				try {
+					const map: IIntegrationMap = await this.commandBus.execute(
+						new IntegrationMapSyncLabelCommand({
+							entity: { name: tag.name, color: asanaColorOf(tag.color), ...context.scope } as never,
+							sourceId: tag.gid,
+							integrationId: context.mapping.integrationId,
+							...context.scope
+						})
+					);
+					context.tagIdsByAsanaGid.set(tag.gid, (map?.gauzyId as ID | undefined) ?? null);
+				} catch (caught) {
+					this.logger.warn(`Tag ${tag.name} could not be synced: ${this.describe(caught)}`);
+					return undefined;
+				}
+			}
+			const id = context.tagIdsByAsanaGid.get(tag.gid);
+			if (id) ids.push(id);
+		}
+		return ids.map((id) => ({ id }));
+	}
+
+	// ---------------------------------------------------------------- helpers
+
+	private async findTaskMap(taskId: ID, integrationId: ID, scope: { tenantId: ID; organizationId: ID }): Promise<IIntegrationMap | null> {
+		return this.integrationMapService.findOneByWhereOptions({ entity: IntegrationEntity.TASK, gauzyId: taskId, integrationId, ...scope }).catch(() => null);
+	}
+
+	private async projectSections(holder: ClientHolder, integrationId: ID, projectGid: string): Promise<AsanaSection[]> {
+		const key = `${integrationId}:${projectGid}`;
+		const cached = this.sectionsCache.get(key);
+		if (cached && Date.now() - cached.at < SECTIONS_TTL_MS) return cached.sections;
+		const sections = await this.call(holder, (client) => client.sections(projectGid));
+		this.sectionsCache.set(key, { at: Date.now(), sections });
+		return sections;
+	}
+
+	/** One call to Asana: a rate limit waited out once, a refused token renewed once, then the call made again. */
+	private async call<T>(holder: ClientHolder, make: (client: AsanaApiClient) => Promise<T>): Promise<T> {
+		try {
+			return await make(holder.client);
+		} catch (caught) {
+			if (caught instanceof AsanaApiError && caught.isRateLimited) {
+				await sleep(Math.min(Math.max((caught.retryAfterSeconds ?? 5) * 1000, 1000), RATE_LIMIT_MAX_WAIT_MS));
+				return make(holder.client);
+			}
+			if (caught instanceof AsanaApiError && caught.isUnauthorized && !holder.renewed) {
+				holder.renewed = true;
+				const renewed = await this.tenants.refreshAccessToken(holder.tenant);
+				if (renewed) {
+					holder.client = renewed;
+					return make(holder.client);
+				}
+			}
+			throw caught;
+		}
+	}
+
+	private connectedByUserId(tenant: IIntegrationTenant): ID | null {
+		const value = this.tenants.settingsOf(tenant)[AsanaSettingName.CONNECTED_BY_USER_ID];
+		return value ? (value as ID) : null;
+	}
+
+	private describe(error: unknown): string {
+		return error instanceof Error ? `${error.name}: ${error.message}` : String(error);
+	}
+}
+
+/** Asana names its tag colours (`dark-pink`, `light-blue`, …); a hex the platform's tags take. */
+function asanaColorOf(color: string | null | undefined): string {
+	const named: Record<string, string> = {
+		'dark-pink': '#E8384F',
+		'dark-green': '#62D26F',
+		'dark-blue': '#4186E0',
+		'dark-red': '#E8384F',
+		'dark-teal': '#20AAEA',
+		'dark-brown': '#AA62E3',
+		'dark-orange': '#FD9A00',
+		'dark-purple': '#7A6FF0',
+		'dark-warm-gray': '#8DA3A6',
+		'light-pink': '#F9AAEF',
+		'light-green': '#B6E3B6',
+		'light-blue': '#9CC7FF',
+		'light-red': '#FFA6A6',
+		'light-teal': '#8EE8FD',
+		'light-yellow': '#FFE275',
+		'light-orange': '#FFC36E',
+		'light-purple': '#C8A9FF',
+		'light-warm-gray': '#D2D9DB',
+		none: '#6E7681'
+	};
+	return (color && named[color]) || '#6E7681';
+}

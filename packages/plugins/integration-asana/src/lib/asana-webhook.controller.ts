@@ -1,0 +1,110 @@
+import { BadRequestException, Controller, Header, Headers, HttpCode, HttpStatus, Logger, NotFoundException, Param, Post, Req, Res, UnauthorizedException } from '@nestjs/common';
+import { ApiExcludeController } from '@nestjs/swagger';
+import { createHmac, timingSafeEqual } from 'node:crypto';
+import { Request, Response } from 'express';
+import { isUUID } from 'class-validator';
+import { ID } from '@gauzy/contracts';
+import { Public } from '@gauzy/common';
+import { AsanaMappingService } from './asana-mapping.service';
+import { AsanaTenantService } from './asana-tenant.service';
+import { ASANA_ROUTE_PREFIX, ASANA_WEBHOOK_MAX_BYTES } from './asana.constants';
+import { AsanaSyncService } from './sync/asana-sync.service';
+
+type RawBodyRequest = Request & { rawBody?: Buffer };
+
+/** One event of an Asana delivery. */
+export interface AsanaWebhookEvent {
+	action: 'added' | 'changed' | 'removed' | 'deleted' | 'undeleted' | string;
+	resource?: { gid?: string; resource_type?: string; resource_subtype?: string } | null;
+	parent?: { gid?: string; resource_type?: string } | null;
+	created_at?: string;
+}
+
+/** Whether the delivery is what Asana signed: `X-Hook-Signature` is the hex HMAC-SHA256 of the raw body with the hook's secret. */
+export function isAsanaSignatureValid(secret: string, rawBody: Buffer, signature: string | undefined): boolean {
+	if (!signature || !/^[a-f0-9]{64}$/i.test(signature)) return false;
+	const expected = createHmac('sha256', secret).update(rawBody).digest('hex');
+	const given = Buffer.from(signature.toLowerCase(), 'hex');
+	const wanted = Buffer.from(expected, 'hex');
+	return given.length === wanted.length && timingSafeEqual(given, wanted);
+}
+
+/** The gids of the tasks a delivery's events concern (added, changed or undeleted), each once. */
+export function taskGidsOf(events: AsanaWebhookEvent[] | undefined): string[] {
+	const gids = new Set<string>();
+	for (const event of events ?? []) {
+		if (!event || !['added', 'changed', 'undeleted'].includes(event.action)) continue;
+		const gid = event.resource?.resource_type === 'task' ? event.resource.gid : null;
+		if (gid) gids.add(gid);
+	}
+	return [...gids];
+}
+
+/**
+ * `POST /integration/asana/webhook/:mappingId`: Asana's deliveries for one mapping's project. Public, so
+ * everything rests on the mapping named in the path and on Asana's own scheme: the first call is the handshake
+ * (`X-Hook-Secret`, answered back as the same header), which gives the mapping the secret every later delivery
+ * is signed with (`X-Hook-Signature`, the HMAC-SHA256 of the raw body). A delivery is acknowledged as soon as the
+ * signature checks (Asana waits a few seconds), then the tasks its events name are applied behind the response.
+ * Nothing in the payload picks the tenant: the mapping does.
+ */
+@ApiExcludeController()
+@Public()
+@Controller(`${ASANA_ROUTE_PREFIX}/webhook`)
+export class AsanaWebhookController {
+	private readonly logger = new Logger(AsanaWebhookController.name);
+
+	constructor(
+		private readonly mappings: AsanaMappingService,
+		private readonly tenants: AsanaTenantService,
+		private readonly sync: AsanaSyncService
+	) {}
+
+	@Post('/:mappingId')
+	@HttpCode(HttpStatus.OK)
+	@Header('Cache-Control', 'no-store')
+	async receive(
+		@Param('mappingId') mappingId: string,
+		@Req() request: RawBodyRequest,
+		@Res({ passthrough: true }) response: Response,
+		@Headers('x-hook-secret') hookSecret?: string,
+		@Headers('x-hook-signature') signature?: string
+	): Promise<{ accepted: boolean; queued: number }> {
+		if (!isUUID(mappingId)) throw new NotFoundException();
+		const mapping = await this.mappings.findAnyById(mappingId as ID);
+		if (!mapping) throw new NotFoundException();
+
+		// The handshake: Asana sends the secret once, when the webhook is created, and expects it echoed.
+		if (typeof hookSecret === 'string' && hookSecret.trim()) {
+			const secret = hookSecret.trim().slice(0, 255);
+			await this.mappings.recordWebhook(mapping, { gid: mapping.webhookGid ?? null, secret });
+			response.setHeader('X-Hook-Secret', secret);
+			return { accepted: true, queued: 0 };
+		}
+
+		const raw = request.rawBody;
+		if (!Buffer.isBuffer(raw) || raw.length === 0) throw new BadRequestException('The raw request body is required.');
+		if (raw.length > ASANA_WEBHOOK_MAX_BYTES) throw new BadRequestException('The webhook body is too large.');
+		if (!mapping.webhookSecret || !isAsanaSignatureValid(mapping.webhookSecret, raw, signature)) {
+			throw new UnauthorizedException('Invalid or missing Asana webhook signature.');
+		}
+		let payload: { events?: AsanaWebhookEvent[] };
+		try {
+			payload = JSON.parse(raw.toString('utf8'));
+		} catch {
+			throw new BadRequestException('The webhook body is not JSON.');
+		}
+		const taskGids = taskGidsOf(payload.events);
+		if (!taskGids.length) return { accepted: true, queued: 0 };
+
+		const tenant = await this.tenants.findAnyById(mapping.integrationId);
+		if (!tenant) return { accepted: true, queued: 0 };
+		// Answered now; applied behind the response.
+		setImmediate(() => {
+			this.sync.applyTasksFromWebhook(tenant, mapping, taskGids).catch((error: unknown) => {
+				this.logger.warn(`Webhook tasks of mapping ${mapping.id} could not be applied: ${error instanceof Error ? error.message : String(error)}`);
+			});
+		});
+		return { accepted: true, queued: taskGids.length };
+	}
+}

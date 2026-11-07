@@ -1,0 +1,61 @@
+# @gauzy/plugin-integration-asana
+
+The Asana integration of the Ever Gauzy Platform: an organization connects an Asana account with OAuth,
+maps Asana projects to platform projects, imports their tasks, keeps the name, notes, completion and due
+date in sync both ways (sections as statuses), and takes Asana's webhooks for live updates.
+
+Off by default. The plugin is loaded only when `ASANA_ENABLED=true` (exactly); off, it adds no route,
+no table (its migration is not registered) and makes no outbound request. Same layout as
+`@gauzy/plugin-integration-linear`.
+
+## Configuration
+
+| Variable | Purpose |
+| --- | --- |
+| `ASANA_ENABLED` | `true` loads the plugin. Any other value keeps it off (a value other than `true`/`false` is reported once). |
+| `ASANA_CLIENT_ID`, `ASANA_CLIENT_SECRET` | The OAuth application created in Asana (Developer console → Apps). |
+| `ASANA_REDIRECT_URL` | A redirect URL registered on the application. Default: `API_BASE_URL` + `/api/integration/asana/callback`. |
+| `ASANA_POST_INSTALL_URL` | Where the callback sends the person once connected. Default: `CLIENT_BASE_URL` + `/#/pages/integrations/asana`. |
+| `ASANA_WEBHOOK_BASE_URL` | The public address Asana delivers webhooks to (default `API_BASE_URL`); unset both, and no webhook is registered (imports still work). |
+| `ASANA_API_URL` | Asana's REST endpoint; only for a test double. |
+
+## How it works
+
+- **Connect.** `POST /integration/asana/install/state` answers a single-use `state` bound to the caller's
+  tenant and the organization, and the Asana authorize URL. The public callback consumes the state, exchanges
+  the code once, and writes an `integration_tenant` named `Asana` with the tokens and the Asana user in its
+  settings. Asana's access tokens last an hour: one about to expire is renewed with the refresh token before
+  use (one renewal at a time per connection), and once more when Asana refuses it. No route answers a token.
+- **Map.** `GET …/:integrationId/metadata` lists the workspaces; `GET …/workspaces/:workspaceGid/projects`
+  the projects of one; `GET …/projects/:projectGid/sections` the sections of one. `POST …/mappings` maps an
+  Asana project to a platform project with a `direction` (`inbound` by default, `outbound`, `both`) and an
+  optional `sectionMap` (section gid → task status name; a completed task is always the completed status, a
+  section named like one of the project's statuses becomes that status, anything else is open). One mapping
+  per Asana project; a platform project sends its tasks to at most one Asana project.
+- **Webhooks.** A mapping registers a webhook on its Asana project at `ASANA_WEBHOOK_BASE_URL` +
+  `/api/integration/asana/webhook/:mappingId` (best effort; `POST …/mappings/:mappingId/webhook` registers it
+  again). Asana's handshake (`X-Hook-Secret`) is echoed and the secret stored on the mapping; every later
+  delivery is checked (`X-Hook-Signature`, the HMAC-SHA256 of the raw body), acknowledged at once, and the
+  tasks its events name are read again from Asana and applied behind the response.
+- **Import.** `POST …/mappings/:mappingId/import` (`{ "full": true }` for every task, otherwise the ones
+  changed since the last import) runs behind the response, one import per mapping at a time. Each Asana task
+  becomes a task of the project once (the platform's id map, entity `TASK`), updated on later runs: name,
+  notes, status (completion and section), the project's status row of that name, a priority from a custom
+  field called Priority, due date, the assignee by e-mail, tags as tags, subtasks under their parent. A task
+  that could not be applied keeps the import position. `GET …/runs` lists the runs.
+- **Outbound.** When a mapping is `outbound` or `both`, a platform task created or changed updates its Asana
+  task (name, notes, completion by status, due date, and the section the status maps to) or creates one in
+  the Asana project. Tasks kept out of third-party sync are never sent; the sync's own inbound writes raise no
+  platform event, so nothing echoes.
+
+## Tables
+
+`integration_asana_project_mapping` and `integration_asana_sync_run`, created by the plugin's own migration
+(`1791000005000`), idempotent on PostgreSQL, MySQL and SQLite.
+
+## Build
+
+```bash
+yarn nx build plugin-integration-asana
+yarn nx test plugin-integration-asana
+```
