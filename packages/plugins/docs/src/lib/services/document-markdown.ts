@@ -259,13 +259,21 @@ export function documentToMarkdown(contentJson: unknown, options: IMarkdownOptio
 
 // ---------------------------------------------------------------- Markdown -> JSON
 
-function unescapeHtml(text: string): string {
-	return text
-		.replace(/&amp;/g, '&')
-		.replace(/&lt;/g, '<')
-		.replace(/&gt;/g, '>')
-		.replace(/&quot;/g, '"')
-		.replace(/&#39;/g, "'");
+const ENTITY = /&(?:#(\d{1,7})|#[xX]([0-9a-fA-F]{1,6})|(amp|lt|gt|quot|apos|nbsp));/g;
+const NAMED_ENTITIES: Readonly<Record<string, string>> = { amp: '&', lt: '<', gt: '>', quot: '"', apos: "'", nbsp: '\u00a0' };
+
+/**
+ * The text a token's entity references name, decoded once, in one pass: `&amp;lt;` is the literal `&lt;` and never `<`
+ * (a second pass would read the `&lt;` the first produced), and a numeric reference is its code point. The parser
+ * leaves references as written, so this is where the Markdown's own meaning of them is applied — to text, and to the
+ * destination, title and alternative text of a link or an image; never to a code span, which is literal.
+ */
+function decodeEntities(text: string): string {
+	return text.replace(ENTITY, (match: string, decimal: string | undefined, hex: string | undefined, name: string | undefined) => {
+		if (name) return NAMED_ENTITIES[name] ?? match;
+		const code = decimal ? Number.parseInt(decimal, 10) : Number.parseInt(hex as string, 16);
+		return Number.isFinite(code) && code > 0 && code <= 0x10ffff ? String.fromCodePoint(code) : match;
+	});
 }
 
 function withMark(nodes: IDocNode[], mark: IDocMark): IDocNode[] {
@@ -287,7 +295,7 @@ function inlineNodes(tokens: Tokens.Generic[] | undefined): IDocNode[] {
 		switch (token.type) {
 			case 'text':
 			case 'escape':
-				nodes.push(...textNode(unescapeHtml(String((token as Tokens.Text).text ?? ''))));
+				nodes.push(...textNode(decodeEntities(String((token as Tokens.Text).text ?? ''))));
 				break;
 			case 'html':
 				nodes.push(...textNode(String((token as Tokens.HTML).raw ?? '')));
@@ -302,18 +310,19 @@ function inlineNodes(tokens: Tokens.Generic[] | undefined): IDocNode[] {
 				nodes.push(...withMark(inlineNodes((token as Tokens.Del).tokens), { type: 'strike' }));
 				break;
 			case 'codespan':
-				nodes.push({ type: 'text', text: unescapeHtml(String((token as Tokens.Codespan).text ?? '')), marks: [{ type: 'code' }] });
+				// A code span is literal: the parser hands its text as written, references included.
+				nodes.push({ type: 'text', text: String((token as Tokens.Codespan).text ?? ''), marks: [{ type: 'code' }] });
 				break;
 			case 'link': {
 				const link = token as Tokens.Link;
-				const attrs: Record<string, unknown> = { href: link.href, target: '_blank', rel: 'noopener noreferrer nofollow' };
-				if (link.title) attrs['title'] = link.title;
+				const attrs: Record<string, unknown> = { href: decodeEntities(String(link.href ?? '')), target: '_blank', rel: 'noopener noreferrer nofollow' };
+				if (link.title) attrs['title'] = decodeEntities(link.title);
 				nodes.push(...withMark(inlineNodes(link.tokens), { type: 'link', attrs }));
 				break;
 			}
 			case 'image': {
 				const image = token as Tokens.Image;
-				nodes.push({ type: 'image', attrs: { src: image.href, alt: image.text || null, title: image.title || null } });
+				nodes.push({ type: 'image', attrs: { src: decodeEntities(String(image.href ?? '')), alt: image.text ? decodeEntities(image.text) : null, title: image.title ? decodeEntities(image.title) : null } });
 				break;
 			}
 			case 'br':
@@ -491,8 +500,10 @@ function unitsOf(node: IDocNode): string[] {
 
 /**
  * For each incoming key, the index of the stored unit it matches, else -1: a longest common subsequence while the
- * table fits (`maxCells`), otherwise an in-order match (each incoming key takes the next unmatched stored unit with
- * that key), which never allocates more than the inputs.
+ * table fits (`maxCells`), otherwise an in-order match — each incoming key takes the first unmatched stored unit with
+ * that key at or after the one last taken — through an index of the stored keys and a binary search over each key's
+ * positions, so a key that never matches costs one lookup rather than a scan of the tail: O((n + m) log n) in time
+ * and O(n + m) in memory, whatever the texts.
  */
 function matchUnits(stored: string[], incoming: string[], maxCells: number): number[] {
 	const n = stored.length;
@@ -500,14 +511,26 @@ function matchUnits(stored: string[], incoming: string[], maxCells: number): num
 	const matched = new Array<number>(m).fill(-1);
 	if (!n || !m) return matched;
 	if (n * m > maxCells) {
+		const positions = new Map<string, number[]>();
+		stored.forEach((key, index) => {
+			const list = positions.get(key);
+			if (list) list.push(index);
+			else positions.set(key, [index]);
+		});
 		let cursor = 0;
 		for (let j = 0; j < m; j += 1) {
-			for (let i = cursor; i < n; i += 1) {
-				if (stored[i] === incoming[j]) {
-					matched[j] = i;
-					cursor = i + 1;
-					break;
-				}
+			const list = positions.get(incoming[j]);
+			if (!list) continue;
+			let low = 0;
+			let high = list.length;
+			while (low < high) {
+				const mid = (low + high) >>> 1;
+				if (list[mid] < cursor) low = mid + 1;
+				else high = mid;
+			}
+			if (low < list.length) {
+				matched[j] = list[low];
+				cursor = list[low] + 1;
 			}
 		}
 		return matched;

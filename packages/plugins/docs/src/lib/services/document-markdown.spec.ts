@@ -144,6 +144,20 @@ describe('markdownToDocument', () => {
 		);
 		expect(markdownToDocument('')).toEqual({ type: 'doc', content: [{ type: 'paragraph' }] });
 	});
+
+	it('decodes entity references once — named and numeric, in text and in link and image attributes — and leaves a code span literal', () => {
+		const parsed = markdownToDocument('a &amp; b &amp;lt; &#39;q&#39; &#x41; `&lt;` ![t &amp; u](x.png "Tom &amp; Jerry") [l](https://x.test/?a=1&amp;b=2 "&#34;q&#34;")');
+		expect(parsed.content?.[0]).toEqual(
+			paragraph(
+				text("a & b &lt; 'q' A "),
+				text('&lt;', [{ type: 'code' }]),
+				text(' '),
+				{ type: 'image', attrs: { src: 'x.png', alt: 't & u', title: 'Tom & Jerry' } },
+				text(' '),
+				text('l', [{ type: 'link', attrs: { href: 'https://x.test/?a=1&b=2', target: '_blank', rel: 'noopener noreferrer nofollow', title: '"q"' } }])
+			)
+		);
+	});
 });
 
 describe('mergeMarkdownUpdate', () => {
@@ -195,6 +209,14 @@ describe('mergeMarkdownUpdate', () => {
 		expect(merge.keptBlocks).toBe(2);
 		expect(merge.contentJson.content?.[0]).toBe(stored.content?.[0]);
 		expect(merge.contentJson.content?.[2]).toBe(stored.content?.[2]);
+		// A key that never matches costs a lookup, and a repeated key takes the next unmatched unit of that key, in order.
+		const repeated: IDocNode = { type: 'doc', content: [paragraph(text('a')), paragraph(text('a')), paragraph(text('b'))] };
+		const second = mergeMarkdownUpdate(repeated, 'zzz\n\na\n\na\n\nb\n', { maxCells: 1 });
+		expect(second.changedBlocks).toBe(1);
+		expect(second.keptBlocks).toBe(3);
+		expect(second.contentJson.content?.[1]).toBe(repeated.content?.[0]);
+		expect(second.contentJson.content?.[2]).toBe(repeated.content?.[1]);
+		expect(second.contentJson.content?.[3]).toBe(repeated.content?.[2]);
 	});
 
 	it('keeps the attributes the Markdown cannot carry on an unchanged block', () => {

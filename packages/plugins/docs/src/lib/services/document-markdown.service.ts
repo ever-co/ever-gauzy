@@ -14,6 +14,8 @@ import { collectEmployeeMentionIds, collectFileIds, docOf, documentToMarkdown, I
 
 /** The most pages one subtree export takes. */
 export const DOCS_MARKDOWN_SUBTREE_MAX_PAGES = 500;
+/** The most asset bytes one subtree export holds in memory; a file past the budget keeps its API link. */
+export const DOCS_MARKDOWN_ASSETS_MAX_BYTES = 256 * 1024 * 1024;
 
 /** One page as Markdown, named for a download. */
 export interface IDocumentMarkdownExport {
@@ -70,8 +72,7 @@ export class DocumentMarkdownService {
 	 * caller may read at `<slug>.md` (or `<slug>/index.md` when it has children of its own) under its parent's folder,
 	 * links between the pages relative, the files they show under `assets/`.
 	 */
-	async writeSubtreeZip(id: ID, organizationId: ID | undefined, output: NodeJS.WritableStream): Promise<{ fileName: string; pages: number }> {
-		const root = await this.requirePage(id, organizationId);
+	async writeSubtreeZip(root: Document, organizationId: ID | undefined, output: NodeJS.WritableStream): Promise<{ fileName: string; pages: number }> {
 		const entries = await this.collectSubtree(root, organizationId);
 		const pathOf = new Map(entries.map((entry) => [String(entry.document.id), entry.path]));
 		// The files first: a link is rewritten to `assets/` only for a file that was read; the others keep the API's URL.
@@ -140,7 +141,8 @@ export class DocumentMarkdownService {
 		} as UpdateDocumentContentDTO;
 	}
 
-	private async requirePage(id: ID, organizationId?: ID): Promise<Document> {
+	/** The page the caller may read (the route's 404), as a page (409 `DOCS_NOT_A_PAGE` otherwise). */
+	async requirePage(id: ID, organizationId?: ID): Promise<Document> {
 		const document = await this.documents.findOneScoped(id, [], organizationId);
 		if (document.kind !== DocumentKindEnum.PAGE) {
 			throw new ConflictException({ message: 'Markdown applies to PAGE documents only', code: DOCS_NOT_A_PAGE });
@@ -196,14 +198,24 @@ export class DocumentMarkdownService {
 		return entries;
 	}
 
-	/** The files the pages show, read with the selected organization; one that cannot be read keeps its API link. */
+	/**
+	 * The files the pages show, read with the selected organization; one that cannot be read, or that would take the
+	 * export past its asset budget (`DOCS_MARKDOWN_ASSETS_MAX_BYTES`, held in memory until the zip is written), keeps
+	 * its API link.
+	 */
 	private async readAssets(entries: ISubtreeEntry[], organizationId?: ID): Promise<Map<string, { name: string; buffer: Buffer }>> {
 		const assets = new Map<string, { name: string; buffer: Buffer }>();
 		const ids = new Set<string>();
 		for (const entry of entries) for (const id of collectFileIds(docOf(entry.document.contentJson))) ids.add(id);
+		let totalBytes = 0;
 		for (const id of ids) {
 			try {
 				const file = await this.uploads.getRawFile(id as ID, organizationId);
+				if (totalBytes + file.buffer.length > DOCS_MARKDOWN_ASSETS_MAX_BYTES) {
+					this.logger.warn(`Markdown export: file ${id} was not added (the export's asset budget of ${DOCS_MARKDOWN_ASSETS_MAX_BYTES} bytes is reached)`);
+					continue;
+				}
+				totalBytes += file.buffer.length;
 				const extension = posix.extname(String(file.fileName ?? '')).toLowerCase().replace(/[^a-z0-9.]/g, '');
 				assets.set(id, { name: `${id}${extension}`, buffer: file.buffer });
 			} catch (error) {

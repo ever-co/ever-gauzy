@@ -57,7 +57,6 @@
 		"@types/node": "^26.6.5",
 		"@types/pdf-parse": "^1.1.5",
 		"@types/sanitize-html": "^2.16.2",
-		"@types/archiver": "^6.0.3",
 		"@types/turndown": "^5.0.6",
 		"typescript": "~6.0.3"
 	},

@@ -20,6 +20,7 @@ import { UpdateDocumentCommand } from '../commands/update-document.command';
 import { UpdateDocumentContentCommand } from '../commands/update-document-content.command';
 import { UpdateDocumentMarkdownDTO } from '../dto/update-document-markdown.dto';
 import { DocumentMarkdownService, IDocumentMarkdownUpdateResult } from '../services/document-markdown.service';
+import { markdownFileNameOf } from '../services/document-markdown';
 import {
 	BulkDocumentActionDTO,
 	CreateDocumentDTO,
@@ -200,6 +201,8 @@ export class DocumentController {
 	@ApiResponse({ status: HttpStatus.CONFLICT, description: 'Not a page.' })
 	@Permissions(PermissionsEnum.DOCS_READ)
 	@UseValidationPipe({ whitelist: true, transform: true })
+	// A subtree export reads up to 500 pages and the files they show in one request, as the bulk route fans out.
+	@Throttle(docsRateLimit(getDocsConfig().adminOpsRateLimit))
 	@Get('/:id/export/markdown')
 	public async exportMarkdown(
 		@Param('id', UUIDValidationPipe) id: ID,
@@ -210,12 +213,22 @@ export class DocumentController {
 		res.setHeader('X-Content-Type-Options', 'nosniff');
 		res.setHeader('Cache-Control', 'private, no-store');
 		if (subtree === 'true' || subtree === '1') {
-			// The page is read (and refused) before any byte of the zip goes out: a 404 or a 409 is still an answer.
-			const page = await this.markdown.exportPage(id, query?.organizationId);
-			const fileName = page.fileName.replace(/\.md$/, '.zip');
+			// The root is read (and refused) before any byte of the zip goes out — a 404 or a 409 is still an answer — and
+			// handed to the writer, so the zip is of the page that was checked rather than of a second read of it.
+			const root = await this.markdown.requirePage(id, query?.organizationId);
+			const fileName = markdownFileNameOf(root.name).replace(/\.md$/, '.zip');
 			res.setHeader('Content-Type', 'application/zip');
 			res.setHeader('Content-Disposition', `attachment; filename="${fileName}"; filename*=UTF-8''${encodeURIComponent(fileName)}`);
-			await this.markdown.writeSubtreeZip(id, query?.organizationId, res);
+			try {
+				await this.markdown.writeSubtreeZip(root, query?.organizationId, res);
+			} catch (error) {
+				// Nothing of the zip went out: the error answer must not travel under the zip's headers.
+				if (!res.headersSent) {
+					res.removeHeader('Content-Type');
+					res.removeHeader('Content-Disposition');
+				}
+				throw error;
+			}
 			return;
 		}
 		const page = await this.markdown.exportPage(id, query?.organizationId);

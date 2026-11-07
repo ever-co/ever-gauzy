@@ -79,7 +79,9 @@ Run `yarn nx build plugin-docs` to build the library.
   the page); `?subtree=true` answers the page and the pages under it the caller may read as a zip: `index.md` for the
   root, one file per page (`<slug>.md`, or `<slug>/index.md` when it has children) under its parent's folder, the
   links between the pages relative, the files the pages show (images and attachments served by the Documents API)
-  under `assets/`. Up to 500 pages; a page the caller may not read is left out with what is under it.
+  under `assets/`. Up to 500 pages, and up to 256 MB of files (a file past the budget keeps its API link); a page the
+  caller may not read is left out with what is under it. The route shares the bulk route's rate limit
+  (`GAUZY_DOCS_ADMIN_OPS_RATE_LIMIT`).
 - `PUT /plugins/docs/documents/:id/content/markdown` `{ markdown, expectedRevision? }` applies a Markdown text to a
   page: the text is read back into the canonical JSON, and only the blocks whose Markdown changed are replaced — a
   block whose Markdown is the same keeps its stored JSON, attributes the Markdown cannot carry and all (a longest
