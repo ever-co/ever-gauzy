@@ -124,6 +124,7 @@ export const chatSchemaExtensions = gql`
 		attachmentIds: [ID!]
 		nonce: String
 		appName: String
+		assistedBy: String
 		deletedAt: DateTime
 		createdAt: DateTime
 		updatedAt: DateTime

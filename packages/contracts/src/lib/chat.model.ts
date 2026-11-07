@@ -198,6 +198,8 @@ export interface IChatMessage extends IBasePerTenantAndOrganizationEntityModel {
 	nonce?: string | null;
 	/** The name of the integration that posted an APP message. */
 	appName?: string | null;
+	/** The assistant a person wrote this message with (an AI client posting in their name), shown beside it. */
+	assistedBy?: string | null;
 	deletedAt?: Date;
 }
 
@@ -272,6 +274,8 @@ export interface IChatMessageCreateInput {
 	mentionEmployeeIds?: ID[];
 	/** "Send to chat": the task to attach as a card. */
 	taskId?: ID;
+	/** The assistant the sender wrote this message with (an AI client posting in their name): shown beside it. */
+	assistedBy?: string;
 }
 
 export interface IChatMessageUpdateInput {

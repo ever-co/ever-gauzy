@@ -182,6 +182,12 @@ export class ChatMessageCreateDTO implements IChatMessageCreateInput {
 	@MaxLength(64)
 	nonce?: string;
 
+	@ApiPropertyOptional({ type: () => String, maxLength: 120, description: 'The assistant the sender wrote the message with (an AI client posting in their name).' })
+	@IsOptional()
+	@IsString()
+	@MaxLength(120)
+	assistedBy?: string;
+
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsUUID()

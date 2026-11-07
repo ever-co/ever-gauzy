@@ -69,4 +69,8 @@ export class ChatMessage extends TenantOrganizationBaseEntity {
 
 	@MultiORMColumn({ type: 'varchar', length: 120, nullable: true })
 	appName?: string | null;
+
+	/** The assistant the author wrote the message with (an AI client posting in their name). */
+	@MultiORMColumn({ type: 'varchar', length: 120, nullable: true })
+	assistedBy?: string | null;
 }

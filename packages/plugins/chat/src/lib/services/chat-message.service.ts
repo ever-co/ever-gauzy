@@ -348,6 +348,8 @@ export class ChatMessageService {
 						replyCount: 0,
 						attachmentIds: attachmentIds.length ? JSON.stringify(attachmentIds) : null,
 						nonce: input.nonce ?? null,
+						// Shown beside the message: the person wrote it with an assistant. Never changed by an edit.
+						assistedBy: input.assistedBy?.trim().slice(0, 120) || null,
 						tenantId: caller.tenantId,
 						organizationId: conversation.organizationId ?? caller.organizationId ?? undefined
 					})
