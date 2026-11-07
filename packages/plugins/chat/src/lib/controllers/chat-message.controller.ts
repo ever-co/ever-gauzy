@@ -4,9 +4,10 @@ import { FeatureFlag } from '@gauzy/common';
 import { FeatureEnum, ID, PermissionsEnum } from '@gauzy/contracts';
 import { FeatureFlagGuard, PermissionGuard, Permissions, TenantPermissionGuard, UseValidationPipe, UUIDValidationPipe } from '@gauzy/core';
 import { CHAT_ROUTE_PREFIX } from '../chat.constants';
-import { ChatMessagesQueryDTO, ChatMessageUpdateDTO, ChatRestoreReadDTO } from '../dto/chat.dto';
+import { ChatCreateTaskDTO, ChatMessagesQueryDTO, ChatMessageUpdateDTO, ChatRestoreReadDTO, ChatSearchQueryDTO } from '../dto/chat.dto';
 import { ChatAccessService } from '../services/chat-access.service';
 import { ChatMessageService } from '../services/chat-message.service';
+import { ChatSearchService } from '../services/chat-search.service';
 
 /**
  * `/api/chat/messages*`, `/api/chat/threads`, `/api/chat/read-all`, `/api/chat/read-restore`: one message, its thread
@@ -23,8 +24,17 @@ import { ChatMessageService } from '../services/chat-message.service';
 export class ChatMessageController {
 	constructor(
 		private readonly access: ChatAccessService,
-		private readonly messages: ChatMessageService
+		private readonly messages: ChatMessageService,
+		private readonly chatSearch: ChatSearchService
 	) {}
+
+	@Get('/search')
+	@Header('Cache-Control', 'no-store')
+	@UseValidationPipe({ whitelist: true, transform: true })
+	@ApiOperation({ summary: 'Search the messages of my conversations (one of them with conversationId): best match first, with relations.' })
+	search(@Query() query: ChatSearchQueryDTO) {
+		return this.chatSearch.search(this.access.caller(), query);
+	}
 
 	@Get('/threads')
 	@Header('Cache-Control', 'no-store')
@@ -82,6 +92,16 @@ export class ChatMessageController {
 	@ApiOperation({ summary: 'Delete my message (or any message with CHAT_MANAGE); a thread root stays as a tombstone.' })
 	remove(@Param('id', UUIDValidationPipe) id: ID) {
 		return this.messages.remove(this.access.caller(), id);
+	}
+
+	@Post('/messages/:id/create-task')
+	@Permissions(PermissionsEnum.CHAT_SEND)
+	@HttpCode(HttpStatus.CREATED)
+	@Header('Cache-Control', 'no-store')
+	@UseValidationPipe({ whitelist: true, transform: true })
+	@ApiOperation({ summary: 'Create a task from a message (its first line as the title unless one is given); the message keeps a reference to the task. Needs ORG_TASK_ADD too.' })
+	createTask(@Param('id', UUIDValidationPipe) id: ID, @Body() input: ChatCreateTaskDTO) {
+		return this.messages.createTask(this.access.caller(), id, input);
 	}
 
 	@Post('/messages/:id/pin')
