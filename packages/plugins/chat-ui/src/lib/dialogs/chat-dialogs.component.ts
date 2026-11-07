@@ -91,20 +91,20 @@ const DIALOG_STYLES = `
 				<p class="text">{{ 'CHAT.DIALOG.NEW_CHANNEL_TEXT' | translate }}</p>
 				<label class="field">
 					<span>{{ 'CHAT.DIALOG.CHANNEL_NAME' | translate }}</span>
-					<input nbInput fullWidth data-test="channel-name" [(ngModel)]="name" maxlength="80" autofocus />
+					<input nbInput fullWidth data-test="channel-name" [ngModel]="name()" (ngModelChange)="name.set($event)" maxlength="80" autofocus />
 				</label>
 				<label class="field">
 					<span>{{ 'CHAT.DIALOG.CHANNEL_TOPIC' | translate }}</span>
-					<input nbInput fullWidth data-test="channel-topic" [(ngModel)]="topic" maxlength="250" />
+					<input nbInput fullWidth data-test="channel-topic" [ngModel]="topic()" (ngModelChange)="topic.set($event)" maxlength="250" />
 				</label>
-				<nb-checkbox data-test="channel-private" [(ngModel)]="isPrivate">{{ 'CHAT.DIALOG.PRIVATE_CHANNEL' | translate }}</nb-checkbox>
+				<nb-checkbox data-test="channel-private" [checked]="isPrivate()" (checkedChange)="isPrivate.set($event)">{{ 'CHAT.DIALOG.PRIVATE_CHANNEL' | translate }}</nb-checkbox>
 				@if (error()) {
 					<p class="error" role="alert">{{ error() }}</p>
 				}
 			</nb-card-body>
 			<nb-card-footer class="footer">
 				<button nbButton ghost type="button" (click)="ref.close(null)">{{ 'CHAT.DIALOG.CANCEL' | translate }}</button>
-				<button nbButton status="primary" type="button" data-test="channel-create" [disabled]="!name.trim() || busy()" (click)="create()">
+				<button nbButton status="primary" type="button" data-test="channel-create" [disabled]="!canCreate()" (click)="create()">
 					{{ 'CHAT.DIALOG.CREATE' | translate }}
 				</button>
 			</nb-card-footer>
@@ -118,22 +118,23 @@ export class NewChannelDialogComponent {
 	private readonly translate = inject(TranslateService);
 	private readonly destroyRef = inject(DestroyRef);
 
-	protected name = '';
-	protected topic = '';
-	protected isPrivate = false;
+	protected readonly name = signal('');
+	protected readonly topic = signal('');
+	protected readonly isPrivate = signal(false);
 	protected readonly busy = signal(false);
 	protected readonly error = signal<string | null>(null);
+	protected readonly canCreate = computed(() => !!this.name().trim().replace(/^#/, '') && !this.busy());
 
 	protected create(): void {
-		const name = this.name.trim().replace(/^#/, '');
+		const name = this.name().trim().replace(/^#/, '');
 		if (!name || this.busy()) return;
 		this.busy.set(true);
 		this.error.set(null);
 		this.api
 			.createChannel({
 				name,
-				topic: this.topic.trim() || null,
-				visibility: this.isPrivate ? ChatVisibilityEnum.PRIVATE : ChatVisibilityEnum.PUBLIC
+				topic: this.topic().trim() || null,
+				visibility: this.isPrivate() ? ChatVisibilityEnum.PRIVATE : ChatVisibilityEnum.PUBLIC
 			})
 			.pipe(takeUntilDestroyed(this.destroyRef))
 			.subscribe({

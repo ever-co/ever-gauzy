@@ -85,12 +85,15 @@ function escapeRegExp(text: string): string {
 	return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
+/** The elements that load a remote URL on sight; the stored subset has none, and Angular's sanitizer keeps them. */
+const REMOTE_MEDIA_TAGS = /<\/?(img|picture|source|video|audio|track)\b[^>]*>/gi;
+
 /**
  * A body as safe HTML: the Markdown subset the API stores (paragraphs, emphasis, code, lists, quotes, links)
- * with the mention tokens as chips. The chips are put in before Markdown runs (plain HTML passes through it),
- * images are taken out (the subset has none, and an `<img>` would make every reader's browser fetch a URL of the
- * author's choosing), and the whole result goes through Angular's sanitizer, so nothing a member typed can
- * script the page.
+ * with the mention tokens as chips. The chips are put in before Markdown runs (plain HTML passes through it), the
+ * whole result goes through Angular's sanitizer, so nothing a member typed can script the page, and the media
+ * elements the sanitizer keeps (`img`, `picture`, `source`, `video`, `audio`, `track`) are taken out of its output:
+ * the subset has none, and any of them would make every reader's browser fetch a URL of the author's choosing.
  */
 export function renderBodyHtml(
 	body: string,
@@ -109,8 +112,10 @@ export function renderBodyHtml(
 			return `<span class="chat-mention chat-mention-me">@${part.label}</span>`;
 		})
 		.join('');
-	const html = (marked.parse(withChips, { async: false, gfm: true, breaks: true }) as string).replace(/<img\b[^>]*>/gi, '');
-	return sanitizer.sanitize(SecurityContext.HTML, html) ?? '';
+	const html = marked.parse(withChips, { async: false, gfm: true, breaks: true }) as string;
+	const safe = sanitizer.sanitize(SecurityContext.HTML, html) ?? '';
+	// After the sanitizer: its serializer encodes `<` inside attribute values, so a tag pattern is reliable here.
+	return safe.replace(REMOTE_MEDIA_TAGS, '');
 }
 
 /** The message an API refusal carries (a string, or the validation messages joined), or null when it has none. */
@@ -247,11 +252,17 @@ export function continuesGroup(previous: IChatMessage | undefined, message: ICha
 	return new Date(message.createdAt as Date).getTime() - new Date(previous.createdAt as Date).getTime() < 5 * 60 * 1000;
 }
 
-/** A fresh idempotency key for a send. */
+/** A fresh idempotency key for a send: a UUID (version 4), as the API's `nonce` contract asks. */
 export function newNonce(): string {
-	const api = globalThis.crypto as { randomUUID?: () => string } | undefined;
+	const api = globalThis.crypto as { randomUUID?: () => string; getRandomValues?: (array: Uint8Array) => Uint8Array } | undefined;
 	if (api?.randomUUID) return api.randomUUID();
-	return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+	const bytes = new Uint8Array(16);
+	if (api?.getRandomValues) api.getRandomValues(bytes);
+	else for (let at = 0; at < bytes.length; at += 1) bytes[at] = Math.floor(Math.random() * 256);
+	bytes[6] = (bytes[6] & 0x0f) | 0x40;
+	bytes[8] = (bytes[8] & 0x3f) | 0x80;
+	const hex = [...bytes].map((byte) => byte.toString(16).padStart(2, '0')).join('');
+	return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
 }
 
 /** Inserts the messages of a page into a list (by id, newest last), keeping the list ordered by time. */

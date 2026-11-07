@@ -11,7 +11,7 @@ import { CHAT_THREAD_POLL_MS } from '../../chat-ui.constants';
 import { apiErrorMessage, continuesGroup, mergeMessages, newNonce } from '../../chat-ui.helpers';
 import { ChatPeople } from '../../services/chat-people.service';
 import { ChatThreadPage, ChatUiService } from '../../services/chat-ui.service';
-import { ComposerSubmission, MessageComposerComponent } from '../message-composer/message-composer.component';
+import { clearDraft, ComposerSubmission, MessageComposerComponent } from '../message-composer/message-composer.component';
 import { MessageAction, MessageItemComponent } from '../message-item/message-item.component';
 
 /**
@@ -90,7 +90,7 @@ import { MessageAction, MessageItemComponent } from '../message-item/message-ite
 						[draftKey]="draftKey()"
 						[resetToken]="resetToken()"
 						(submitted)="onSubmit($event)"
-						(cancel)="editing.set(null)"
+						(editCancelled)="editing.set(null)"
 					></ngx-chat-message-composer>
 					<nb-checkbox class="also" data-test="also-send" [(ngModel)]="alsoInConversation">{{ 'CHAT.THREADS.ALSO_SEND' | translate }}</nb-checkbox>
 				</footer>
@@ -197,6 +197,7 @@ export class ThreadPaneComponent {
 				this.stopPolling();
 				this.editing.set(null);
 				this.loadingMore.set(false);
+				this.sending.set(false);
 				this.lastMarkedId = null;
 				this.reload();
 			});
@@ -363,7 +364,10 @@ export class ThreadPaneComponent {
 		request.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
 			next: (result) => {
 				if (!editing) this.api.notifyChanged();
-				if (!this.isCurrent(id)) return;
+				if (!this.isCurrent(id)) {
+					if (!editing) clearDraft(`thread:${id}`);
+					return;
+				}
 				this.sending.set(false);
 				this.resetToken.update((value) => value + 1);
 				if (editing) {

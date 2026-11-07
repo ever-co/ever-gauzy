@@ -11,6 +11,7 @@ import {
 	mentionQueryAt,
 	mergeMessages,
 	namesToTokens,
+	newNonce,
 	plainBody,
 	renderBodyHtml,
 	sortConversations,
@@ -87,11 +88,31 @@ describe('mention tokens', () => {
 		expect(html).not.toContain('<script');
 	});
 
-	it('leaves images out of a rendered body', () => {
+	it('leaves remote media out of a rendered body, after the sanitizer', () => {
 		const sanitizer = { sanitize: (_context: unknown, html: string) => html };
-		const html = renderBodyHtml('see ![x](https://example.test/p.gif) <img src="https://example.test/q.gif"> done', people, conversations, null, sanitizer);
-		expect(html).not.toContain('<img');
+		const html = renderBodyHtml(
+			'see ![x](https://example.test/p.gif) <img src="https://example.test/q.gif"> <video poster="https://example.test/v.png"><source src="https://example.test/v.mp4"></video> <audio src="https://example.test/a.mp3"></audio> done',
+			people,
+			conversations,
+			null,
+			sanitizer
+		);
+		expect(html).not.toMatch(/<(img|picture|source|video|audio|track)\b/);
 		expect(html).toContain('done');
+	});
+
+	it('makes a version-4 UUID nonce with or without randomUUID', () => {
+		const pattern = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
+		expect(newNonce()).toMatch(pattern);
+		const original = globalThis.crypto;
+		Object.defineProperty(globalThis, 'crypto', { value: { getRandomValues: (array: Uint8Array) => array.fill(7) }, configurable: true });
+		try {
+			expect(newNonce()).toMatch(pattern);
+			Object.defineProperty(globalThis, 'crypto', { value: undefined, configurable: true });
+			expect(newNonce()).toMatch(pattern);
+		} finally {
+			Object.defineProperty(globalThis, 'crypto', { value: original, configurable: true });
+		}
 	});
 
 	it('shows tokens as labels while writing and turns the labels back into tokens, each person kept apart', () => {

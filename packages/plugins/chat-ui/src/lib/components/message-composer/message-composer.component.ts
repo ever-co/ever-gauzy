@@ -17,6 +17,11 @@ export interface ComposerSubmission {
 /** The unsent text of each conversation and thread, kept while the page lives (a switch and back finds it again). */
 const DRAFTS = new Map<string, string>();
 
+/** Forgets the draft of a place (a send that landed after the person moved on). */
+export function clearDraft(draftKey: string): void {
+	DRAFTS.delete(draftKey);
+}
+
 /**
  * The text box of a conversation or a thread: Enter sends, Shift+Enter breaks the line, `@` opens the people
  * suggestions (arrows, Enter, Escape). In edit mode it starts with the message's text and offers Save / Cancel.
@@ -66,7 +71,7 @@ const DRAFTS = new Map<string, string>();
 				</span>
 				<span class="buttons">
 					@if (editing()) {
-						<button nbButton ghost size="tiny" type="button" data-test="composer-cancel" (click)="cancel.emit()">{{ 'CHAT.COMPOSER.CANCEL' | translate }}</button>
+						<button nbButton ghost size="tiny" type="button" data-test="composer-cancel" (click)="editCancelled.emit()">{{ 'CHAT.COMPOSER.CANCEL' | translate }}</button>
 					}
 					<button nbButton status="primary" size="tiny" type="button" data-test="composer-send" [disabled]="!canSend()" (click)="send()">
 						{{ (editing() ? 'CHAT.COMPOSER.SAVE' : 'CHAT.COMPOSER.SEND') | translate }}
@@ -152,7 +157,8 @@ export class MessageComposerComponent {
 	readonly resetToken = input(0);
 
 	readonly submitted = output<ComposerSubmission>();
-	readonly cancel = output<void>();
+	/** The person left edit mode without saving. */
+	readonly editCancelled = output<void>();
 
 	private readonly box = viewChild<ElementRef<HTMLTextAreaElement>>('box');
 
@@ -296,7 +302,7 @@ export class MessageComposerComponent {
 		}
 		if (event.key === 'Escape' && this.editing()) {
 			event.preventDefault();
-			this.cancel.emit();
+			this.editCancelled.emit();
 			return;
 		}
 		if (event.key === 'Enter' && !event.shiftKey && !event.isComposing) {

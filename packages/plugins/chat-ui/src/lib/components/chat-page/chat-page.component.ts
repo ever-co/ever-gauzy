@@ -161,6 +161,7 @@ const UNDO_MS = 55_000;
 												[isAdmin]="isAdmin()"
 												[untitled]="'CHAT.UNNAMED' | translate"
 												[highlightId]="highlightId()"
+												[patch]="rootPatch()"
 												(openThread)="openThread($event)"
 												(stateChanged)="onStateChanged(conversation.id, $event)"
 												(conversationChanged)="upsert($event)"
@@ -358,6 +359,8 @@ export class ChatPageComponent implements OnInit {
 	protected readonly notFound = signal(false);
 	protected readonly busy = signal(false);
 	protected readonly undoSnapshot = signal<string | null>(null);
+	/** The last thread root that changed (reply count, follow state): the open conversation applies it to its copy. */
+	protected readonly rootPatch = signal<IChatMessageWithRelations | null>(null);
 
 	/** `:conversationId`, `?thread=`, `?message=` and the route's view, as signals. */
 	protected readonly conversationId = toSignal(this.route.paramMap.pipe(map((params) => params.get('conversationId')), distinctUntilChanged()), { initialValue: null });
@@ -551,7 +554,8 @@ export class ChatPageComponent implements OnInit {
 		void this.router.navigate([CHAT_LINK]);
 	}
 
-	protected onRootChanged(_root: IChatMessageWithRelations): void {
+	protected onRootChanged(root: IChatMessageWithRelations): void {
+		this.rootPatch.set(root);
 		this.api.notifyChanged();
 	}
 

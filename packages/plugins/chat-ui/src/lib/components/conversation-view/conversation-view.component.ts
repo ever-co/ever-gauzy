@@ -31,7 +31,7 @@ import { CHAT_MESSAGES_POLL_MS } from '../../chat-ui.constants';
 import { apiErrorMessage, continuesGroup, conversationTitle, mergeMessages, newNonce } from '../../chat-ui.helpers';
 import { ChatPeople } from '../../services/chat-people.service';
 import { ChatEvents, ChatUiService, memberStateFromEvents } from '../../services/chat-ui.service';
-import { ComposerSubmission, MessageComposerComponent } from '../message-composer/message-composer.component';
+import { clearDraft, ComposerSubmission, MessageComposerComponent } from '../message-composer/message-composer.component';
 import { MessageAction, MessageItemComponent } from '../message-item/message-item.component';
 
 /** How close to the bottom (px) counts as "reading the latest", for auto-scroll and read-on-view. */
@@ -159,7 +159,7 @@ const NEAR_BOTTOM_PX = 80;
 						[draftKey]="draftKey()"
 						[resetToken]="resetToken()"
 						(submitted)="onSubmit($event)"
-						(cancel)="editing.set(null)"
+						(editCancelled)="editing.set(null)"
 					></ngx-chat-message-composer>
 				}
 			</footer>
@@ -270,6 +270,8 @@ export class ConversationViewComponent {
 	readonly untitled = input('Conversation');
 	/** A message to scroll to and highlight (a deep link): the page around it is shown, nothing is marked read. */
 	readonly highlightId = input<string | null>(null);
+	/** A message changed elsewhere on the page (a thread's root: reply count, follow state): the view's copy follows. */
+	readonly patch = input<IChatMessageWithRelations | null>(null);
 
 	readonly openThread = output<IChatMessageWithRelations>();
 	readonly stateChanged = output<IChatMemberState>();
@@ -318,10 +320,15 @@ export class ConversationViewComponent {
 					this.pinsOpen.set(false);
 					this.newBelow.set(false);
 					this.loadingOlder.set(false);
+					this.sending.set(false);
 					this.lastMarkedId = null;
 					this.reload();
 				}
 			});
+		});
+		effect(() => {
+			const message = this.patch();
+			if (message) untracked(() => this.replace(message));
 		});
 		this.destroyRef.onDestroy(() => this.stopPolling());
 	}
@@ -647,7 +654,11 @@ export class ConversationViewComponent {
 			.subscribe({
 				next: (result) => {
 					this.api.notifyChanged();
-					if (!this.isCurrent(id)) return;
+					if (!this.isCurrent(id)) {
+						// The message went out: the draft of that conversation is not to be sent again.
+						clearDraft(`conversation:${id}`);
+						return;
+					}
 					this.messages.set(mergeMessages(this.messages(), [result.message]));
 					this.sending.set(false);
 					this.resetToken.update((value) => value + 1);
