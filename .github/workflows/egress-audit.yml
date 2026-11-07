@@ -28,6 +28,11 @@ name: Egress audit
 #   entitlement_ladder  entitlement documents in grace, paused, issued in the future (refused) and
 #                   slightly ahead (accepted): the ladder follows, Gauzy's own routes answer the
 #                   same at every step, only the connection's documented calls are made
+#   positive_lookup the counterparty check and discoverability enabled against the mock platform:
+#                   a contact checked, the tax id saved, discoverability switched off; the only
+#                   calls beyond the connection's are the salt, the query and the identifier upload
+#                   and removal (hashes only), none before the consent
+#   control_lookup  positive_lookup without the mock platform must FAIL
 #   static-bundle   the built web app of the image names no Ever host the baseline does not have
 #
 # The static checks run on every pull request that touches code (no install but the harness):
@@ -349,6 +354,16 @@ jobs:
             run: entitlement_ladder
             dotenv: api-empty.env
             expect: 0
+          - mode: positive_lookup
+            run: positive_lookup
+            dotenv: api-empty.env
+            expect: 0
+          # positive_lookup without the mock platform must report a violation (exit 1).
+          - mode: control_lookup
+            run: positive_lookup
+            args: --no-mock
+            dotenv: api-empty.env
+            expect: 1
     steps:
       - name: Free disk space for the images
         run: |

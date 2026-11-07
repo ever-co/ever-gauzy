@@ -329,7 +329,7 @@ export class EverConnectLookupService implements IntegrationHandler, OnModuleIni
 				throw new ForbiddenException({
 					statusCode: 403,
 					code: 'entitlement_required',
-					message: "This organization's Ever Platform plan does not include checking contacts."
+					message: 'Checking contacts is not included for this organization on Ever Platform.'
 				});
 			}
 		}

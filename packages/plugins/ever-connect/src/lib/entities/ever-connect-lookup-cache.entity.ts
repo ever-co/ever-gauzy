@@ -3,9 +3,9 @@ import { PrimaryColumn } from 'typeorm';
 import { ColumnIndex, MultiORMColumn, MultiORMEntity, SkipExport } from '@gauzy/core';
 
 /**
- * Reserved for the counterparty check ("is this client or supplier on Ever Platform?"): salted
- * hashes and their answers, per organization, for a day (a negative answer for an hour). The check
- * is not available yet (its integration reads "coming soon"), so the table stays empty.
+ * The counterparty check ("is this client or supplier on Ever Platform?"): salted hashes and their
+ * answers, per organization, for a day (a negative answer for an hour). Never an identifier value;
+ * emptied for the organization when the integration is switched off.
  *
  * Created by the core `EverConnect` migration; never exported.
  */

@@ -19,7 +19,7 @@ import { createEverPlatformClient } from '../sdk';
 import { FakePlatform, INSTANCE_ID, testSigner } from './identity-harness';
 import { createCoreTables, insert, migrateUp, openTestDataSource, seedTenant, SeededTenant } from './test-db';
 
-export const LINK_ID = '01JNE7V9J03J6XQ2WN8H0Z8LNK';
+export const LINK_ID = '01JNE7V9J03J6XQ2WN8H0Z8XYZ';
 export const LOOKUP_ENV = { ENCRYPTION_KEY: 'lookup-spec-encryption-key-0123456789abcdef' };
 
 /** The two salts the stand-in publishes: version 1 (active), and version 2 once a rotation starts. */
@@ -130,14 +130,14 @@ export async function lookupHarness(
 	await store.updateConnection({ status: 'connected', platformInstanceId: INSTANCE_ID, connectedAt: clock.now() });
 	const integrationTenantId = await store.createLinkRecord(
 		{ tenantId: acme.tenantId, organizationId: acme.organizationId },
-		{ link_id: LINK_ID, ever_org_id: '01JNE7V9J03J6XQ2WN8H0Z8ORG', handle: 'acme' }
+		{ link_id: LINK_ID, ever_org_id: '01JNE7V9J03J6XQ2WN8H0Z8RGX', handle: 'acme' }
 	);
 	const link = await store.insertLink({
 		tenantId: acme.tenantId,
 		organizationId: acme.organizationId,
 		integrationTenantId,
 		linkId: LINK_ID,
-		everOrgId: '01JNE7V9J03J6XQ2WN8H0Z8ORG',
+		everOrgId: '01JNE7V9J03J6XQ2WN8H0Z8RGX',
 		everHandle: 'acme',
 		status: 'linked',
 		entitlementJwsEncrypted: null,

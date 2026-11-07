@@ -67,6 +67,44 @@
 		"WAITING_OPERATOR": "Waiting for the instance operator",
 		"OPERATOR_ONLY": "This integration acts for the whole installation: only its operator manages it."
 	},
+	"LOOKUP": {
+		"BUTTON": "Check on Ever Platform",
+		"TITLE": "Check this contact on Ever Platform",
+		"WHAT_IS_SENT": "Only salted hashes of what you enter leave this installation: the values themselves never do, and Ever Platform keeps none of them. Only organizations that chose to be discoverable can be found. Nothing is written back to the contact.",
+		"EMAIL": "E-mail",
+		"VAT": "VAT number",
+		"VAT_SUGGESTED": "Suggested from the contact's fiscal information. Check it before you send it.",
+		"REGISTRATION": "Registration number",
+		"COUNTRY": "Country (two letters)",
+		"CHECK": "Check",
+		"KIND": {
+			"vat": "VAT number",
+			"registration": "Registration number",
+			"email": "E-mail"
+		},
+		"NONE": "No discoverable organization found",
+		"OFFERS": "Offers:",
+		"FEATURE": {
+			"pay": "payments",
+			"invoice_exchange": "invoice exchange",
+			"listings": "listings"
+		},
+		"CANNOT_BE_CHECKED": {
+			"empty": "Cannot be checked: nothing to check.",
+			"no_country": "Cannot be checked: add the country (two letters) or the country prefix of the number.",
+			"no_at_sign": "Cannot be checked: this is not an e-mail address.",
+			"bad_domain": "Cannot be checked: the domain of this e-mail address is not valid."
+		},
+		"ERRORS": {
+			"rate_limited": "Too many checks. Try again in {{ seconds }} seconds.",
+			"integration_disabled": "Checking contacts on Ever Platform is not enabled for this organization.",
+			"entitlement_required": "Checking contacts is not included for this organization on Ever Platform.",
+			"generic": "The check failed. Please try again later."
+		},
+		"AUTO_CHECK": "Check a contact automatically when it is opened",
+		"AUTO_CHECK_HINT": "Off by default. When on, the e-mail of a contact is checked each time the contact is opened (the answer is kept for up to a day). It is part of what was enabled in app.ever.co.",
+		"AUTO_CHECK_FAILED": "The setting could not be saved. Please try again."
+	},
 	"STATE": {
 		"available": "Available",
 		"enabled": "Enabled",

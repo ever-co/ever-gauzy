@@ -1,6 +1,12 @@
 import { createHash } from 'node:crypto';
-import { INTEGRATIONS } from '../sdk';
-import { GAUZY_INTEGRATIONS, gauzyIntegration, offeredOn, sharedDefinition } from './integration-definitions';
+import { INTEGRATIONS, SCHEMAS } from '../sdk';
+import {
+	GAUZY_INTEGRATIONS,
+	gauzyIntegration,
+	offeredOn,
+	requiredFeature,
+	sharedDefinition
+} from './integration-definitions';
 
 /**
  * The scopes Gauzy shows (and app.ever.co consents to) are the definitions of the SDK's contracts
@@ -49,7 +55,7 @@ describe('integration definitions', () => {
 		}
 	);
 
-	it('only instance_url, stats_link and ever_id_login can be enabled in this release; lookup and discoverability are coming soon', () => {
+	it('only instance_url, stats_link and ever_id_login run without a handler; lookup and discoverability need theirs', () => {
 		expect(
 			GAUZY_INTEGRATIONS.filter((definition) => definition.available).map((definition) => definition.key)
 		).toEqual(['instance_url', 'stats_link', 'ever_id_login']);
@@ -69,6 +75,36 @@ describe('integration definitions', () => {
 		expect(offeredOn(gauzyIntegration('stats_link')!, true)).toBe(false);
 		expect(offeredOn(gauzyIntegration('stats_link')!, false)).toBe(true);
 		expect(offeredOn(gauzyIntegration('billing_link')!, false)).toBe(false);
+	});
+
+	/** The feature names of the pinned entitlement document (`ever.features`). */
+	const entitlementFeatures = (): string[] => {
+		const schema = SCHEMAS.entitlement as {
+			properties?: { ever?: { properties?: { features?: { properties?: Record<string, unknown> } } } };
+		};
+		return Object.keys(schema.properties?.ever?.properties?.features?.properties ?? {});
+	};
+
+	it.each(GAUZY_INTEGRATIONS.map((definition) => [definition.key] as const))(
+		'%s: the feature it needs is one the entitlement document carries (the gate names agree)',
+		(key) => {
+			const feature = requiredFeature(key);
+			if (feature !== null) {
+				expect(entitlementFeatures()).toContain(feature);
+			}
+		}
+	);
+
+	it('the counterparty check, discoverability and the marketplace keys are gated by lookup, discoverability and listings', () => {
+		expect(requiredFeature('counterparty_lookup')).toBe('lookup');
+		expect(requiredFeature('counterparty_discoverable')).toBe('discoverability');
+		expect(requiredFeature('provider_access')).toBe('listings');
+		expect(requiredFeature('marketplace_installs')).toBe('listings');
+	});
+
+	it('a gate name the entitlement document does not carry fails (control)', () => {
+		expect(entitlementFeatures().length).toBeGreaterThan(5);
+		expect(entitlementFeatures()).not.toContain('discoverable');
 	});
 
 	it('a changed scope without a new scope_version fails (control)', () => {
