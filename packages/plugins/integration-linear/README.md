@@ -58,7 +58,9 @@ for the `Issues` resource.
   author's e-mail, else kept as the connecting user's, marked system and named after their author; a reply goes
   under the comment it answers — and follows an edit in Linear; each attachment becomes a resource link of the task
   (the title, the address that opens it), reusing a link a person already added with the same address. Both are
-  kept once (the id map, entities `Comment` and `Attachment`). The webhook also takes a comment or attachment
+  kept once (the id map, entities `Comment` and `Attachment`), one run at a time per issue. A comment or attachment
+  that could not be kept counts as a failure of the run: the import position is kept, so the next import reads the
+  issue again; what an earlier run missed for good, `{ "full": true }` brings in. The webhook also takes a comment or attachment
   created or updated, as the issue it belongs to, which is read again.
 - **A refused token.** When Linear refuses the connection's token (a 401), the connection is marked — the page asks for
   a reconnect, the lookups answer `LINEAR_TOKEN_REFUSED`, the scheduled import leaves its mappings alone — and, with the

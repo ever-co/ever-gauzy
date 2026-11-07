@@ -58,7 +58,7 @@ interface ApplyContext extends ClientHolder {
 	/** The comment authors by e-mail, once per run. */
 	authorsByEmail: Map<string, LinearAuthor | null>;
 	/** What the details import brought in this run (comments, attachments as links): reported, not counted on the run. */
-	details: { comments: number; links: number };
+	details: { comments: number; links: number; failed: number };
 	counts: LinearSyncCounts;
 }
 
@@ -91,6 +91,7 @@ export class LinearSyncService {
 	private readonly pushChains = new Map<string, Promise<void>>();
 	/** The applies of each issue, one after the other (an import and a webhook never create two tasks for one issue). */
 	private readonly issueChains = new Map<string, Promise<ApplyResult>>();
+	private readonly detailsChains = new Map<string, Promise<void>>();
 
 	constructor(
 		private readonly commandBus: CommandBus,
@@ -393,7 +394,7 @@ export class LinearSyncService {
 			pendingParents: [],
 			connectedByUserId: this.connectedByUserId(tenant),
 			authorsByEmail: new Map(),
-			details: { comments: 0, links: 0 },
+			details: { comments: 0, links: 0, failed: 0 },
 			counts
 		};
 	}
@@ -410,8 +411,14 @@ export class LinearSyncService {
 			context.counts.failed += 1;
 			this.logger.warn(`Issue ${issue.identifier} (${issue.id}) could not be applied: ${this.describe(caught)}`);
 		}
-		// Behind the issue itself: its comments and attachments (they came with it), each kept once.
-		if (taskId) await this.issueDetails.apply(this.detailsContextOf(context), issue, taskId);
+		// Behind the issue itself: its comments and attachments (they came with it), kept one run at a time per issue
+		// under the issue's own lock: a webhook and an import that meet on one issue would otherwise both find no
+		// mapped comment and keep it twice.
+		if (taskId) {
+			const detailsContext = this.detailsContextOf(context);
+			const resolvedTaskId = taskId;
+			await this.serializedDetails(`${context.mapping.integrationId}:${issue.id}`, () => this.issueDetails.apply(detailsContext, issue, resolvedTaskId));
+		}
 	}
 
 	/** What the details import needs of a run: its scope and the run's own caches and tallies. */
@@ -425,10 +432,16 @@ export class LinearSyncService {
 		};
 	}
 
-	/** One line per run about the details, when there were any (they are not counted on the run). */
+	/**
+	 * One line per run about the details, when there were any; what could not be read or kept counts as a failure
+	 * of the run, so the import position is kept and the next import reads the task again.
+	 */
 	private reportDetails(context: ApplyContext): void {
-		const { comments, links } = context.details;
-		if (comments || links) this.logger.log(`Mapping ${context.mapping.id}: ${comments} comment(s) and ${links} attachment link(s) brought in`);
+		const { comments, links, failed } = context.details;
+		if (failed) context.counts.failed += failed;
+		if (comments || links || failed) {
+			this.logger.log(`Mapping ${context.mapping.id}: ${comments} comment(s) and ${links} attachment link(s) brought in, ${failed} not read or kept`);
+		}
 	}
 
 	/**
@@ -436,6 +449,19 @@ export class LinearSyncService {
 	 * and across processes on Postgres they wait for an advisory lock on the issue held while the platform's
 	 * id-map command runs (an import and a webhook, or two deliveries, never create two tasks for one issue).
 	 */
+	/** The details of one issue, one run at a time: chained in the process, locked across processes (the details service writes through its own repositories; the transaction is the mutex). */
+	private serializedDetails(key: string, work: () => Promise<void>): Promise<void> {
+		const previous = this.detailsChains.get(key) ?? Promise.resolve();
+		const next = previous
+			.catch(() => undefined)
+			.then(() => this.lockedTransaction([`integration-linear:issue-details:${key}`], () => work()))
+			.finally(() => {
+				if (this.detailsChains.get(key) === next) this.detailsChains.delete(key);
+			});
+		this.detailsChains.set(key, next);
+		return next;
+	}
+
 	private applyIssue(context: ApplyContext, issue: LinearIssue): Promise<ApplyResult> {
 		const key = `${context.mapping.integrationId}:${issue.id}`;
 		const previous = this.issueChains.get(key) ?? Promise.resolve();

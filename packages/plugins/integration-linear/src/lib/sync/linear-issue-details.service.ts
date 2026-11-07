@@ -19,7 +19,8 @@ export interface LinearDetailsContext {
 	/** The user who connected (the comments nobody here wrote are theirs to own). */
 	connectedByUserId: ID | null;
 	authorsByEmail: Map<string, LinearAuthor | null>;
-	details: { comments: number; links: number };
+	/** What the details import brought in, and what it could not keep (a failure of the run: the position is kept). */
+	details: { comments: number; links: number; failed: number };
 }
 
 /**
@@ -32,7 +33,9 @@ export interface LinearDetailsContext {
  * read again adds nothing twice. Written through the entities' repositories, as the platform's other integration
  * does: the comment API states the author as its caller, which here is the sync, not the person who wrote in Linear.
  *
- * A comment or attachment that could not be applied is reported and left for the next read of the issue.
+ * Written one run at a time per issue by the caller (under the issue's lock), so two runs that meet on one issue
+ * never both find no mapped comment and keep it twice. A comment or attachment that could not be kept is reported
+ * and counted as a failure of the run: the import position is then kept and the next import reads the issue again.
  */
 @Injectable()
 export class LinearIssueDetailsService {
@@ -51,14 +54,16 @@ export class LinearIssueDetailsService {
 			try {
 				await this.applyComment(context, comment, taskId);
 			} catch (caught) {
-				this.logger.warn(`Comment ${comment.id} of issue ${issue.identifier} could not be applied: ${this.describe(caught)}`);
+				context.details.failed += 1;
+				this.logger.warn(`Comment ${comment.id} of issue ${issue.identifier} could not be kept: ${this.describe(caught)}`);
 			}
 		}
 		for (const attachment of issue.attachments?.nodes ?? []) {
 			try {
 				await this.applyAttachment(context, attachment, taskId);
 			} catch (caught) {
-				this.logger.warn(`Attachment ${attachment.id} of issue ${issue.identifier} could not be applied: ${this.describe(caught)}`);
+				context.details.failed += 1;
+				this.logger.warn(`Attachment ${attachment.id} of issue ${issue.identifier} could not be kept: ${this.describe(caught)}`);
 			}
 		}
 	}

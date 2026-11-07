@@ -58,7 +58,7 @@ function details(options: { employees?: Array<{ id: string; userId: string | nul
 		const wanted = where.user.email.value as string[];
 		return { items: employees.filter((employee) => wanted.includes(employee.email)) };
 	});
-	const context: LinearDetailsContext = { scope, integrationId: 'int-1', connectedByUserId: 'user-owner', authorsByEmail: new Map(), details: { comments: 0, links: 0 } };
+	const context: LinearDetailsContext = { scope, integrationId: 'int-1', connectedByUserId: 'user-owner', authorsByEmail: new Map(), details: { comments: 0, links: 0, failed: 0 } };
 	const service = new LinearIssueDetailsService(dataSource, { execute } as unknown as CommandBus, integrationMapService, { findAll } as unknown as EmployeeService);
 	return { service, context, comments, links, execute, findAll };
 }
@@ -91,7 +91,7 @@ describe('LinearIssueDetailsService', () => {
 		const command = execute.mock.calls[0][0] as IntegrationMapSyncEntityCommand;
 		expect(command).toBeInstanceOf(IntegrationMapSyncEntityCommand);
 		expect(command.input).toMatchObject({ entity: IntegrationEntity.COMMENT, sourceId: 'cm-1', gauzyId: comments.rows[0]['id'], integrationId: 'int-1', ...scope });
-		expect(context.details).toEqual({ comments: 2, links: 0 });
+		expect(context.details).toEqual({ comments: 2, links: 0, failed: 0 });
 		// The author is looked up once per e-mail per run.
 		expect(findAll).toHaveBeenCalledTimes(1);
 	});
@@ -122,7 +122,7 @@ describe('LinearIssueDetailsService', () => {
 		expect(links.save).toHaveBeenCalledTimes(1);
 		expect(links.rows[1]).toMatchObject({ entity: BaseEntityEnum.Task, entityId: 'task-1', title: 'Design', url: 'https://www.figma.com/file/1', createdByUserId: 'user-owner' });
 		expect((execute.mock.calls[0][0] as IntegrationMapSyncEntityCommand).input).toMatchObject({ entity: IntegrationEntity.ATTACHMENT, sourceId: 'at-1' });
-		expect(context.details).toEqual({ comments: 0, links: 1 });
+		expect(context.details).toEqual({ comments: 0, links: 1, failed: 0 });
 
 		const retitled = details({ maps: [{ entity: IntegrationEntity.ATTACHMENT, sourceId: 'at-1', gauzyId: 'link-row-1' }] });
 		retitled.links.rows.push({ id: 'link-row-1', tenantId: 'tenant-1', title: 'Design', url: 'https://www.figma.com/file/1' });
@@ -130,12 +130,12 @@ describe('LinearIssueDetailsService', () => {
 		expect(retitled.links.update).toHaveBeenCalledWith({ id: 'link-row-1' }, { title: 'Design v2', url: 'https://www.figma.com/file/1' });
 	});
 
-	it('reports a comment that could not be kept and goes on with the rest', async () => {
+	it('counts a comment that could not be kept as a failure of the run and goes on with the rest', async () => {
 		const { service, context, comments } = details();
 		comments.save.mockRejectedValueOnce(new Error('connection lost'));
 		await service.apply(context, issue([comment(), comment({ id: 'cm-2', body: 'Second' })]), 'task-1');
 		expect(comments.rows).toHaveLength(1);
 		expect(comments.rows[0]).toMatchObject({ comment: '<p>Second</p>' });
-		expect(context.details.comments).toBe(1);
+		expect(context.details).toEqual({ comments: 1, links: 0, failed: 1 });
 	});
 });
