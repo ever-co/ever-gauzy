@@ -409,8 +409,13 @@ async function setupDailyPlans(ctx) {
  * counts the team's logs of the window first.
  */
 async function setupTimeLogs(ctx) {
-	const wanted = Number(env.SETUP_TIME_LOGS || 0);
-	if (!wanted || !ctx.vars.teamId) return;
+	// Short logs (one hour: six ten-minute slots) and long ones (three hours: eighteen slots, the shape of a tracked
+	// working block, which is what made the slot joins explode on production).
+	const plans = [
+		{ wanted: Number(env.SETUP_TIME_LOGS || 0), hours: 1, startHours: [9, 14], label: 'one-hour' },
+		{ wanted: Number(env.SETUP_LONG_TIME_LOGS || 0), hours: 3, startHours: [18, 0], label: 'three-hour' }
+	].filter((plan) => plan.wanted > 0);
+	if (!plans.length || !ctx.vars.teamId) return;
 	if (!ctx.employeeOfUser) {
 		throw new Error('SETUP_TIME_LOGS needs a sign-in with an employee record (the timer reads answer "my" logs)');
 	}
@@ -421,43 +426,47 @@ async function setupTimeLogs(ctx) {
 		`/timesheet/time-log?tenantId=${tenantId}&organizationId=${organizationId}&startDate=${ctx.vars.monthStart}&endDate=${ctx.vars.todayEnd}&employeeIds[0]=${employeeId}&teamIds[0]=${teamId}`,
 		{ headers }
 	);
-	const have = existing.status < 300 ? (JSON.parse(existing.body.toString()) ?? []).length : 0;
-	if (have >= wanted) return;
+	const logs = existing.status < 300 ? JSON.parse(existing.body.toString()) ?? [] : [];
 	const tasks = await request(
 		'GET',
 		`/tasks/pagination?where[organizationId]=${organizationId}&where[tenantId]=${tenantId}&take=10&skip=0`,
 		{ headers }
 	);
 	const taskIds = tasks.status < 300 ? (JSON.parse(tasks.body.toString()).items ?? []).map((t) => t.id) : [];
-	let created = 0;
-	for (let i = have; i < wanted; i++) {
-		// Two logs a day: 09:00–10:00 and 14:00–15:00 UTC, the day before yesterday first.
-		const day = new Date(Date.parse(ctx.vars.todayStart) - (1 + Math.floor(i / 2)) * 86_400_000);
-		const startedAt = new Date(day.getTime() + (i % 2 === 0 ? 9 : 14) * 3_600_000);
-		const log = await request('POST', '/timesheet/time-log', {
-			headers,
-			body: {
-				tenantId,
-				organizationId,
-				employeeId,
-				organizationTeamId: teamId,
-				...(projectId ? { projectId } : {}),
-				...(taskIds.length ? { taskId: taskIds[i % taskIds.length] } : {}),
-				startedAt: startedAt.toISOString(),
-				stoppedAt: new Date(startedAt.getTime() + 3_600_000).toISOString(),
-				logType: 'MANUAL',
-				source: 'TEAMS',
-				isBillable: true,
-				description: `bench log ${i + 1}`
+	for (const plan of plans) {
+		const lengthMs = plan.hours * 3_600_000;
+		const have = logs.filter((log) => Date.parse(log.stoppedAt) - Date.parse(log.startedAt) === lengthMs).length;
+		if (have >= plan.wanted) continue;
+		let created = 0;
+		for (let i = have; i < plan.wanted; i++) {
+			// Two logs a day at the plan's start hours, the day before yesterday first.
+			const day = new Date(Date.parse(ctx.vars.todayStart) - (1 + Math.floor(i / 2)) * 86_400_000);
+			const startedAt = new Date(day.getTime() + plan.startHours[i % 2] * 3_600_000);
+			const log = await request('POST', '/timesheet/time-log', {
+				headers,
+				body: {
+					tenantId,
+					organizationId,
+					employeeId,
+					organizationTeamId: teamId,
+					...(projectId ? { projectId } : {}),
+					...(taskIds.length ? { taskId: taskIds[i % taskIds.length] } : {}),
+					startedAt: startedAt.toISOString(),
+					stoppedAt: new Date(startedAt.getTime() + lengthMs).toISOString(),
+					logType: 'MANUAL',
+					source: 'TEAMS',
+					isBillable: true,
+					description: `bench ${plan.label} log ${i + 1}`
+				}
+			});
+			if (log.status >= 300) {
+				console.warn(`  setup: ${plan.label} log ${i + 1} refused: ${log.status} ${log.body?.toString().slice(0, 200)}`);
+				continue;
 			}
-		});
-		if (log.status >= 300) {
-			console.warn(`  setup: time log ${i + 1} refused: ${log.status} ${log.body?.toString().slice(0, 200)}`);
-			continue;
+			created++;
 		}
-		created++;
+		console.log(`  setup: ${created} ${plan.label} time log(s) created for the bench employee (had ${have}, wanted ${plan.wanted})`);
 	}
-	console.log(`  setup: ${created} time log(s) created for the bench employee (had ${have}, wanted ${wanted})`);
 }
 
 async function runEndpoint(ep, ctx) {
