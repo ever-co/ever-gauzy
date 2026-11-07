@@ -28,7 +28,7 @@ describe('TimerService.startTimer filing the log under the task project', () => 
 
 	const loggedProjectId = () => {
 		const create = execute.mock.calls.find(([command]) => command instanceof TimeLogCreateCommand)?.[0];
-		return (create as TimeLogCreateCommand).input.projectId;
+		return (create as TimeLogCreateCommand | undefined)?.input.projectId;
 	};
 
 	beforeEach(() => {
