@@ -1,8 +1,19 @@
-import { NotFoundException, UseGuards } from '@nestjs/common';
+import { BadRequestException, NotFoundException, UseGuards } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { Args, ID, Int, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { FeatureFlag } from '@gauzy/common';
-import { IAdvancedTaskFiltering, ID as Id, IPagination, ITask, PermissionsEnum } from '@gauzy/contracts';
+import {
+	IAdvancedTaskFiltering,
+	ID as Id,
+	IPagination,
+	ITask,
+	ITaskBulkUpdateInput,
+	ITaskBulkUpdateOutcome,
+	ITaskReferenceResolution,
+	ITaskUpdateInput as ITaskUpdateBody,
+	PermissionsEnum,
+	TaskBuiltInViewEnum
+} from '@gauzy/contracts';
 import {
 	ConnectionFilter,
 	ConnectionPageRequest,
@@ -24,6 +35,17 @@ import { Task } from './task.entity';
 import { TaskController } from './task.controller';
 import { TaskService } from './task.service';
 import { TaskCreateCommand, TaskUpdateCommand } from './commands';
+import { TaskViewsEnabledGuard } from './task-views-enabled';
+import { TASK_REFERENCES_MAX } from './task-reference';
+import { TASK_VIEW_PAGE_MAX } from './views/view-filters';
+
+/** The built-in view each value of the schema's `TaskBuiltInView` names (the route's keys carry dashes). */
+const BUILT_IN_VIEW_OF: Readonly<Record<string, TaskBuiltInViewEnum>> = {
+	mine: TaskBuiltInViewEnum.MINE,
+	thisWeek: TaskBuiltInViewEnum.THIS_WEEK,
+	overdue: TaskBuiltInViewEnum.OVERDUE,
+	dueSoon: TaskBuiltInViewEnum.DUE_SOON
+};
 
 /** The members `CreateTaskInput` declares in the schema. */
 export interface ICreateTaskInput {
@@ -490,6 +512,86 @@ export class TaskResolver {
 
 			throw error;
 		}
+	}
+
+	/**
+	 * The tasks of a built-in view, through the reader `GET /tasks/built-in/:key` calls, under its permission
+	 * and behind the task views switch (`TaskViewsEnabledGuard`, the route's own guard: not found where the
+	 * extensions are off). The schema's enum names the view, so a key the route would answer 404 for cannot be
+	 * asked; the reader answers at most 200 rows, soonest due first, within which the connection pages. The
+	 * organization is the argument's, else the credential's.
+	 */
+	@Query('builtInViewTasks')
+	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_TASK_VIEW)
+	@UseGuards(TaskViewsEnabledGuard)
+	async builtInViewTasks(
+		@Args('view', { type: () => String }) view: string,
+		@Args('organizationId', { type: () => ID, nullable: true }) organizationId?: Id,
+		@Args('timeZone', { type: () => String, nullable: true }) timeZone?: string,
+		@Args('filter') filter?: ConnectionFilter,
+		@Args('sort') sort?: ConnectionSortKey[],
+		@Args('page') page?: ConnectionPageRequest,
+		@Args('first', { type: () => Int, nullable: true }) first?: number,
+		@Args('after', { type: () => String, nullable: true }) after?: string,
+		@Args('last', { type: () => Int, nullable: true }) last?: number,
+		@Args('before', { type: () => String, nullable: true }) before?: string,
+		@Args('limit', { type: () => Int, nullable: true }) limit?: number,
+		@Args('offset', { type: () => Int, nullable: true }) offset?: number
+	): Promise<GraphqlConnection<Task>> {
+		const key = BUILT_IN_VIEW_OF[view];
+		if (!key) {
+			throw new NotFoundException(`No built-in view "${view}".`);
+		}
+		const answer = await this.taskService.findBuiltInView(key, {
+			...this.scopeOfTheCaller(),
+			...(organizationId ? { organizationId } : {}),
+			timeZone: timeZone ?? undefined,
+			take: TASK_VIEW_PAGE_MAX
+		});
+
+		return this.connection(this.rowsOf(answer), { filter, sort, page, first, after, last, before, limit, offset });
+	}
+
+	/**
+	 * `KEY-number` references resolved to tasks, through the method `POST /tasks/resolve-references` calls,
+	 * under its permission, its cap (the route's DTO refuses more than `TASK_REFERENCES_MAX`; GraphQL runs no
+	 * validator on its arguments, so the cap is stated here) and the task views switch. The organization is the
+	 * argument's, else the credential's.
+	 */
+	@Query('resolveTaskReferences')
+	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_TASK_VIEW)
+	@UseGuards(TaskViewsEnabledGuard)
+	async resolveTaskReferences(
+		@Args('references', { type: () => [String] }) references: string[],
+		@Args('organizationId', { type: () => ID, nullable: true }) organizationId?: Id
+	): Promise<ITaskReferenceResolution[]> {
+		if (!Array.isArray(references) || references.length > TASK_REFERENCES_MAX) {
+			throw new BadRequestException(`TASK_REFERENCES_LIMIT_EXCEEDED: at most ${TASK_REFERENCES_MAX} references in one request.`);
+		}
+
+		return await this.taskService.resolveReferences({
+			...this.scopeOfTheCaller(),
+			...(organizationId ? { organizationId } : {}),
+			references
+		});
+	}
+
+	/**
+	 * Changes many tasks in one request, through the method `POST /tasks/bulk-update` calls and the same
+	 * per-task command `updateTask` dispatches (activity, notifications and sync events per task), under the
+	 * route's permission and the task views switch. The cap, the two forms and their exclusion are the
+	 * service's rules (`BULK_LIMIT_EXCEEDED`, ...), stated once for both protocols.
+	 */
+	@Mutation('bulkUpdateTasks')
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TASK_EDIT)
+	@UseGuards(TaskViewsEnabledGuard)
+	async bulkUpdateTasks(@Args('input') input: ITaskBulkUpdateInput): Promise<ITaskBulkUpdateOutcome> {
+		const { organizationId, ...body } = input;
+
+		return await this.taskService.bulkUpdate(
+			{ ...this.scopeOfTheCaller(), ...(organizationId ? { organizationId } : {}), ...body },
+			(id, update) => this.commandBus.execute(new TaskUpdateCommand(id, update as ITaskUpdateBody))
+		);
 	}
 
 	/**

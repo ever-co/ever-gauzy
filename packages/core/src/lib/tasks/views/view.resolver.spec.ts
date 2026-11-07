@@ -7,7 +7,7 @@ import '../../core/entities/internal';
 
 import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { ExecutionContext, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ExecutionContext, NotFoundException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { buildSchema, printSchema } from 'graphql';
 import { FEATURE_METADATA, PERMISSIONS_METADATA } from '@gauzy/constants';
@@ -17,6 +17,7 @@ import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../../
 import { TaskViewController } from './view.controller';
 import { TaskViewResolver } from './view.resolver';
 import { TaskViewCreateCommand, TaskViewUpdateCommand } from './commands';
+import { TaskViewsEnabledGuard } from '../task-views-enabled';
 
 /**
  * The saved task filters over GraphQL.
@@ -66,14 +67,19 @@ function surfaces() {
 		countBy: jest.fn().mockResolvedValue(ROWS.length),
 		delete: jest.fn().mockResolvedValue({ affected: 1 }),
 		softRemove: jest.fn().mockResolvedValue({ ...ROWS[0], deletedAt: new Date('2026-04-01T10:00:00.000Z') }),
-		softRecover: jest.fn().mockResolvedValue(ROWS[0])
+		softRecover: jest.fn().mockResolvedValue(ROWS[0]),
+		setOrder: jest.fn().mockResolvedValue({ ...ROWS[0], manualOrder: [THEIRS, MINE], version: 2 })
 	};
 	const commandBus = { execute: jest.fn().mockResolvedValue(ROWS[0]) };
+	const viewTasks = {
+		tasksOf: jest.fn().mockResolvedValue({ items: [], nextCursor: null, total: 0, groups: null, groupBy: 'none', invalidFilters: [] })
+	};
 
 	return {
 		taskViewService,
 		commandBus,
-		resolver: new TaskViewResolver(taskViewService as never, commandBus as never)
+		viewTasks,
+		resolver: new TaskViewResolver(taskViewService as never, commandBus as never, viewTasks as never)
 	};
 }
 
@@ -160,19 +166,22 @@ const ROUTE_OF_FIELD: ReadonlyArray<readonly [string, string]> = [
 	['updateTaskView', 'update'],
 	['deleteTaskView', 'delete'],
 	['softDeleteTaskView', 'softRemove'],
-	['recoverTaskView', 'softRecover']
+	['recoverTaskView', 'softRecover'],
+	['taskViewTasks', 'tasksOf'],
+	['setTaskViewOrder', 'setOrder']
 ];
 
 describe('TaskViewResolver — the SDL declares the capabilities the REST routes serve', () => {
 	it('declares every read and every write of the delivered controller', () => {
-		expect(rootFields('Query')).toEqual(expect.arrayContaining(['taskViews', 'taskView', 'taskViewCount']));
+		expect(rootFields('Query')).toEqual(expect.arrayContaining(['taskViews', 'taskView', 'taskViewCount', 'taskViewTasks']));
 		expect(rootFields('Mutation')).toEqual(
 			expect.arrayContaining([
 				'createTaskView',
 				'updateTaskView',
 				'deleteTaskView',
 				'softDeleteTaskView',
-				'recoverTaskView'
+				'recoverTaskView',
+				'setTaskViewOrder'
 			])
 		);
 	});
@@ -200,11 +209,16 @@ describe('TaskViewResolver — the SDL declares the capabilities the REST routes
 		expect(body).toMatch(/properties: JSON/);
 	});
 
-	it('does not restate the tasks a view selects, which belong to the task resource', () => {
-		// The `/api/tasks/view/:id` route is the task controller's, and it is served as `tasksByView`
-		// there. A second field here would be a second surface for one reader.
+	it('does not restate the replay of the older document, and serves the FR-3 reader as its own field', () => {
+		// The `/api/tasks/view/:id` route replays `queryParams` and is the task controller's, served as
+		// `tasksByView` there; `/api/task-views/:id/tasks` reads the `filterOptions` tree with a keyset page
+		// and group counts, and is this controller's, served here.
 		expect(rootFields('Query')).toContain('tasksByView');
-		expect(rootFields('Query')).not.toContain('taskViewTasks');
+		expect(rootFields('Query')).toContain('taskViewTasks');
+		expect(printed).toMatch(
+			/type TaskViewTasksPage \{\s*items: \[Task!\]!\s*nextCursor: String\s*total: Int!\s*groups: \[TaskViewGroupCount!\]\s*groupBy: TaskViewGroupBy!\s*invalidFilters: \[TaskViewInvalidFilter!\]!\s*\}/
+		);
+		expect(printed).toMatch(/setTaskViewOrder\(id: ID!, input: TaskViewOrderInput!\): TaskView!/);
 	});
 });
 
@@ -310,6 +324,40 @@ describe('TaskViewResolver — one concept, two protocols, the same operations',
 		expect(await resolver.recoverTaskView(MINE)).toBe(ROWS[0]);
 		expect(taskViewService.softRecover).toHaveBeenCalledWith(MINE);
 	});
+
+	it('reads the tasks of a view through the FR-3 reader, with a null argument read as an absent one', async () => {
+		const { resolver, viewTasks } = surfaces();
+
+		const page = await resolver.taskViewTasks(MINE, null, { op: 'and', conditions: [] }, 'status', 'Europe/Sofia', null, 20, null);
+
+		expect(page.groupBy).toBe('none');
+		expect(viewTasks.tasksOf).toHaveBeenCalledWith(MINE, {
+			organizationId: undefined,
+			filter: { op: 'and', conditions: [] },
+			groupBy: 'status',
+			timeZone: 'Europe/Sofia',
+			cursor: undefined,
+			limit: 20,
+			relations: undefined
+		});
+	});
+
+	it('writes a manual order through the same service method the REST route calls, and refuses one past the cap', async () => {
+		const { resolver, taskViewService } = surfaces();
+
+		const written = await resolver.setTaskViewOrder(MINE, { organizationId: ORGANIZATION, taskIds: [THEIRS, MINE], expectedVersion: 1 });
+
+		expect((written as { manualOrder?: string[] }).manualOrder).toEqual([THEIRS, MINE]);
+		expect(taskViewService.setOrder).toHaveBeenCalledWith(MINE, { organizationId: ORGANIZATION, taskIds: [THEIRS, MINE], expectedVersion: 1 });
+		await expect(resolver.setTaskViewOrder(MINE, { taskIds: Array.from({ length: 5001 }, () => MINE) })).rejects.toBeInstanceOf(
+			BadRequestException
+		);
+	});
+
+	it('serves the two extension fields behind the task views switch, as their routes are', () => {
+		expect(guardsOfField('taskViewTasks')).toContain(TaskViewsEnabledGuard);
+		expect(guardsOfField('setTaskViewOrder')).toContain(TaskViewsEnabledGuard);
+	});
 });
 
 describe('TaskViewResolver — the guard stack is the controller’s and no permission is stated', () => {
@@ -329,21 +377,24 @@ describe('TaskViewResolver — the guard stack is the controller’s and no perm
 		}
 	});
 
-	it('states no permission on the class or on any field but the writes', () => {
+	it('states no permission on the class or on any field but the writes and the extension fields', () => {
 		expect(Reflect.getMetadata(PERMISSIONS_METADATA, TaskViewResolver)).toBeUndefined();
 		expect(Reflect.getMetadata(PERMISSIONS_METADATA, TaskViewController)).toBeUndefined();
 
 		// The writes state the task grants (GHSA-v79w-54p2-wmh5): `PermissionGuard` answers `true` to empty
 		// metadata, so any member of the tenant could write, retire or restore a view. The reads state none.
-		const edits = ['updateTaskView', 'deleteTaskView', 'softDeleteTaskView', 'recoverTaskView'];
+		// The extension routes state theirs: the FR-3 reader the view pair, the manual order the edit grant.
+		const edits = ['updateTaskView', 'deleteTaskView', 'softDeleteTaskView', 'recoverTaskView', 'setTaskViewOrder'];
 
 		for (const [field, handler] of ROUTE_OF_FIELD) {
 			const expected =
 				field === 'createTaskView'
 					? [PermissionsEnum.ORG_TASK_ADD]
-					: edits.includes(field)
-						? [PermissionsEnum.ORG_TASK_EDIT]
-						: undefined;
+					: field === 'taskViewTasks'
+						? [PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_TASK_VIEW]
+						: edits.includes(field)
+							? [PermissionsEnum.ORG_TASK_EDIT]
+							: undefined;
 
 			expect(permissionOfRoute(TaskViewController, handler)).toEqual(expected);
 			expect(permissionOfField(field)).toEqual(expected);
