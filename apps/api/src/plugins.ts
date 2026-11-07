@@ -36,6 +36,7 @@ import { IntegrationEverAsyncPlugin } from '@gauzy/plugin-integration-ever-async
 import { IntegrationEverWorksPlugin, isEverWorksEnabled } from '@gauzy/plugin-integration-ever-works';
 import { IntegrationLinearPlugin, isLinearEnabled } from '@gauzy/plugin-integration-linear';
 import { IntegrationAsanaPlugin, isAsanaEnabled } from '@gauzy/plugin-integration-asana';
+import { IntegrationTrelloPlugin, isTrelloEnabled } from '@gauzy/plugin-integration-trello';
 import { InboxEmailPlugin, InboxPlugin, isInboxEmailEnabled, isInboxEnabled } from '@gauzy/plugin-inbox';
 import { isRealtimeEnabled, RealtimePlugin } from '@gauzy/plugin-realtime';
 
@@ -126,6 +127,10 @@ export const plugins = [
 	// Asana integration (OAuth connect, project ↔ project mappings, task import, two-way sync with sections
 	// as statuses, webhooks). Off unless ASANA_ENABLED=true; when off it is not loaded at all.
 	...(isAsanaEnabled(process.env, (message) => console.warn(message)) ? [IntegrationAsanaPlugin] : []),
+
+	// Trello integration (key + token connect, board ↔ project mappings, card import, two-way sync with lists as
+	// statuses, webhooks). Off unless TRELLO_ENABLED=true; when off it is not loaded at all.
+	...(isTrelloEnabled(process.env, (message) => console.warn(message)) ? [IntegrationTrelloPlugin] : []),
 
 	// Inbox (questions, approvals, escalations and notices addressed to a user, each with its own state; the
 	// Ever Works integration feeds it through a source-handler registry). Off unless GAUZY_INBOX_ENABLED=true;
