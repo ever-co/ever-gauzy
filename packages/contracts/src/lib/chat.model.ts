@@ -97,7 +97,7 @@ export interface IChatConversation extends IBasePerTenantAndOrganizationEntityMo
 	position: number;
 	/** The organization's default channel (every employee is a member and cannot leave). */
 	isDefault: boolean;
-	archivedAt?: Date | null;
+	archivedAt?: Date;
 	createdByEmployeeId?: ID | null;
 	/** Messages posted to the conversation itself (thread replies not sent "also to the conversation" excluded). */
 	messageCount: number;
@@ -189,7 +189,7 @@ export interface IChatMessage extends IBasePerTenantAndOrganizationEntityModel {
 	nonce?: string | null;
 	/** The name of the integration that posted an APP message. */
 	appName?: string | null;
-	deletedAt?: Date | null;
+	deletedAt?: Date;
 }
 
 /** A message as the read API answers it. */

@@ -446,11 +446,11 @@ export class ChatConversationService {
 	}
 
 	/** Adds (or re-activates) members; silently skips unknown employees. */
-	private async addMembers(caller: IChatCaller, conversation: ChatConversation, employeeIds: readonly ID[], known?: Array<{ id: ID; userId: ID }>): Promise<void> {
+	private async addMembers(caller: IChatCaller, conversation: ChatConversation, employeeIds: readonly ID[], known?: Array<{ id?: ID; userId?: ID }>): Promise<void> {
 		const employees = known ?? (await this.employeesOfTenant(caller.tenantId, employeeIds));
 		if (!employees.length) return;
 		const repository = this.dataSource.getRepository(ChatMember);
-		const existing = await repository.find({ where: { conversationId: conversation.id as ID, employeeId: In(employees.map((employee) => employee.id)), tenantId: caller.tenantId } });
+		const existing = await repository.find({ where: { conversationId: conversation.id as ID, employeeId: In(employees.map((employee) => employee.id as ID)), tenantId: caller.tenantId } });
 		const byEmployee = new Map(existing.map((member) => [String(member.employeeId), member]));
 		const now = new Date();
 		for (const employee of employees) {
@@ -462,8 +462,8 @@ export class ChatConversationService {
 			await repository.save(
 				repository.create({
 					conversationId: conversation.id as ID,
-					employeeId: employee.id,
-					userId: employee.userId,
+					employeeId: employee.id as ID,
+					userId: employee.userId as ID,
 					role: ChatMemberRoleEnum.MEMBER,
 					notifyLevel: ChatNotifyLevelEnum.ALL,
 					isFavorite: false,

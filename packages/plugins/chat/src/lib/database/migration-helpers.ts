@@ -15,6 +15,11 @@ export function dialectOf(queryRunner: QueryRunner): ChatDialect {
 }
 
 /** Quotes an identifier for the dialect. */
+/** The n-th (1-based) bind parameter of the dialect. */
+export function param(dialect: ChatDialect, n: number): string {
+	return dialect === 'postgres' ? `$${n}` : '?';
+}
+
 export function q(dialect: ChatDialect, name: string): string {
 	return dialect === 'mysql' ? `\`${name}\`` : `"${name}"`;
 }

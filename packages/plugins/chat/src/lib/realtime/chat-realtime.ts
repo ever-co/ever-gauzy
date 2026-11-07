@@ -71,19 +71,19 @@ export class ChatRealtime implements OnModuleInit {
 
 	messageFact(
 		name: typeof CHAT_EVENT_NAMES.MESSAGE_CREATED | typeof CHAT_EVENT_NAMES.MESSAGE_UPDATED | typeof CHAT_EVENT_NAMES.MESSAGE_DELETED,
-		message: { id: ID; conversationId: ID; threadRootId?: ID | null; authorUserId?: ID | null; kind: string; tenantId?: ID; organizationId?: ID | null },
+		message: { id?: ID; conversationId: ID; threadRootId?: ID | null; authorUserId?: ID | null; kind: string; tenantId?: ID; organizationId?: ID | null },
 		recipientUserIds: readonly ID[]
 	): IChatRealtimeFact {
 		return {
 			name,
 			aggregateType: CHAT_AGGREGATES.MESSAGE,
-			aggregateId: message.id,
+			aggregateId: message.id as ID,
 			tenantId: message.tenantId as ID,
 			organizationId: message.organizationId ?? null,
 			recipientUserIds,
 			data: {
 				conversationId: message.conversationId,
-				messageId: message.id,
+				messageId: message.id as ID,
 				threadRootId: message.threadRootId ?? null,
 				authorUserId: message.authorUserId ?? null,
 				kind: message.kind
@@ -92,18 +92,18 @@ export class ChatRealtime implements OnModuleInit {
 	}
 
 	conversationFact(
-		conversation: { id: ID; tenantId?: ID; organizationId?: ID | null },
+		conversation: { id?: ID; tenantId?: ID; organizationId?: ID | null },
 		change: 'created' | 'updated' | 'archived' | 'members' | 'removed',
 		recipientUserIds: readonly ID[]
 	): IChatRealtimeFact {
 		return {
 			name: CHAT_EVENT_NAMES.CONVERSATION_CHANGED,
 			aggregateType: CHAT_AGGREGATES.CONVERSATION,
-			aggregateId: conversation.id,
+			aggregateId: conversation.id as ID,
 			tenantId: conversation.tenantId as ID,
 			organizationId: conversation.organizationId ?? null,
 			recipientUserIds,
-			data: { conversationId: conversation.id, change }
+			data: { conversationId: conversation.id as ID, change }
 		};
 	}
 
@@ -137,17 +137,17 @@ export class ChatRealtime implements OnModuleInit {
 	}
 
 	threadFact(
-		root: { id: ID; conversationId: ID; replyCount: number; tenantId?: ID; organizationId?: ID | null },
+		root: { id?: ID; conversationId: ID; replyCount: number; tenantId?: ID; organizationId?: ID | null },
 		recipientUserIds: readonly ID[]
 	): IChatRealtimeFact {
 		return {
 			name: CHAT_EVENT_NAMES.THREAD_CHANGED,
 			aggregateType: CHAT_AGGREGATES.THREAD,
-			aggregateId: root.id,
+			aggregateId: root.id as ID,
 			tenantId: root.tenantId as ID,
 			organizationId: root.organizationId ?? null,
 			recipientUserIds,
-			data: { rootMessageId: root.id, conversationId: root.conversationId, replyCount: root.replyCount }
+			data: { rootMessageId: root.id as ID, conversationId: root.conversationId, replyCount: root.replyCount }
 		};
 	}
 
