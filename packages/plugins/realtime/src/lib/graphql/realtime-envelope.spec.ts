@@ -1,4 +1,4 @@
-import { resolveRealtimeSelection, toRealtimeEnvelope, withoutRecipients } from './realtime-envelope';
+import { collaborationEventNames, collaborationReplayNames, resolveRealtimeSelection, toRealtimeEnvelope, withoutRecipients } from './realtime-envelope';
 
 describe('resolveRealtimeSelection', () => {
 	it('resolves exact names and one-segment prefixes within the collaboration catalogue', () => {
@@ -20,6 +20,22 @@ describe('resolveRealtimeSelection', () => {
 
 	it('covers everything with "*"', () => {
 		expect(resolveRealtimeSelection(['*']).length).toBe(11);
+	});
+
+	it('offers the chat and inbox names other plugins declared, and nothing of another family', () => {
+		const declared = ['chat_message.created', 'chat_member_state.changed', 'inbox_item.created', 'order.created', 'presence.changed'];
+		const offered = collaborationEventNames(declared);
+		expect(offered).toContain('chat_message.created');
+		expect(offered).toContain('inbox_item.created');
+		expect(offered).not.toContain('order.created');
+		expect(offered.length).toBe(11 + 3);
+		expect(resolveRealtimeSelection(['chat_message.*', 'inbox_item.*'], offered)).toEqual(['chat_message.created', 'inbox_item.created']);
+		expect(resolveRealtimeSelection(['order.*'], offered)).toEqual([]);
+		// The catch-up replays the durable ones only.
+		const replayed = collaborationReplayNames(declared);
+		expect(replayed).toContain('chat_message.created');
+		expect(replayed).not.toContain('presence.changed');
+		expect(replayed).not.toContain('typing.signalled');
 	});
 });
 

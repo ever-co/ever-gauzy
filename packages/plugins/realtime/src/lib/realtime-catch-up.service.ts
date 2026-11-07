@@ -1,9 +1,9 @@
 import { Injectable, Type } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
-import { IRealtimeCatchUp, IRealtimeCatchUpQuery, IRealtimeEventEnvelope, REALTIME_STREAMED_EVENTS } from '@gauzy/contracts';
-import { EventOutbox, EventOutboxService, RequestContext } from '@gauzy/core';
+import { IRealtimeCatchUp, IRealtimeCatchUpQuery, IRealtimeEventEnvelope } from '@gauzy/contracts';
+import { EventOutbox, EventOutboxService, RequestContext, SubscriptionCatalogue } from '@gauzy/core';
 import { REALTIME_CATCH_UP_DEFAULT, REALTIME_CATCH_UP_MAX } from './realtime.constants';
-import { withoutRecipients } from './graphql/realtime-envelope';
+import { collaborationReplayNames, withoutRecipients } from './graphql/realtime-envelope';
 
 /** The members of an outbox row the catch-up reads. */
 export type CatchUpRow = Pick<EventOutbox, 'eventId' | 'eventName' | 'aggregateType' | 'aggregateId' | 'createdAt' | 'sequence' | 'payload'>;
@@ -141,7 +141,9 @@ export class RealtimeCatchUpService {
 		const [oldest] = await outbox.listOutboxRowsSince({ limit: 1 });
 		const resync = !oldest || after < rowTime(oldest);
 
-		const rows = await outbox.listOutboxRowsSince({ eventNames: REALTIME_STREAMED_EVENTS, since: new Date(after), limit: read });
+		// The durable names of the collaboration families, the chat and inbox ones included when those plugins declared them.
+		const eventNames = collaborationReplayNames(this.find(SubscriptionCatalogue)?.names() ?? []);
+		const rows = await outbox.listOutboxRowsSince({ eventNames, since: new Date(after), limit: read });
 		return selectCatchUp(rows, userId ? String(userId) : null, query, { truncated: rows.length >= read, resync });
 	}
 

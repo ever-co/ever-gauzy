@@ -48,11 +48,39 @@ export const REALTIME_SIGNAL_EVENTS: readonly RealtimeEventName[] = [
 	REALTIME_EVENT_NAMES.TYPING_SIGNALLED
 ];
 
-/** Everything a subscriber may select. */
+/** Everything a subscriber may select of the channel's own events. */
 export const REALTIME_SUBSCRIBABLE_EVENTS: readonly RealtimeEventName[] = [
 	...REALTIME_STREAMED_EVENTS,
 	...REALTIME_SIGNAL_EVENTS
 ];
+
+/**
+ * The families (`<family>.<action>`) the collaboration channel carries: its own, and the ones the chat and
+ * inbox plugins declare when they are loaded. `Subscription.collaborationEvents` and the catch-up offer the
+ * declared names of these families and nothing else — the commerce streams, for one, stay out of reach of a
+ * `REALTIME_SUBSCRIBE` holder. Every event of these families is scoped or addressed: the stream decides each
+ * envelope against the subscriber's tenant, organization and user.
+ */
+export const REALTIME_COLLABORATION_FAMILIES: readonly string[] = [
+	'task',
+	'comment',
+	'mention',
+	'employee_notification',
+	'document',
+	'presence',
+	'typing',
+	'chat_message',
+	'chat_conversation',
+	'chat_member_state',
+	'chat_thread',
+	'inbox_item'
+];
+
+/** Whether an event name (`<family>.<action>`) belongs to one of the collaboration families. */
+export function isCollaborationEventName(name: string): boolean {
+	const dot = typeof name === 'string' ? name.indexOf('.') : -1;
+	return dot > 0 && REALTIME_COLLABORATION_FAMILIES.includes(name.slice(0, dot));
+}
 
 /** What happened to the record a change hint names. */
 export type RealtimeChangeAction = 'created' | 'updated' | 'deleted';

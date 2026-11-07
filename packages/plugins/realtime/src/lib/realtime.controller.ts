@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Header, HttpCode, HttpStatus, Post, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Header, HttpCode, HttpStatus, Optional, Post, Query, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import {
@@ -8,11 +8,11 @@ import {
 	IRealtimeTypingSignal,
 	PermissionsEnum,
 	REALTIME_MAX_TYPING_RECIPIENTS,
-	REALTIME_SIGNAL_EVENTS,
-	REALTIME_STREAMED_EVENTS
+	REALTIME_SIGNAL_EVENTS
 } from '@gauzy/contracts';
-import { PermissionGuard, Permissions, TenantPermissionGuard, UseValidationPipe } from '@gauzy/core';
+import { PermissionGuard, Permissions, SubscriptionCatalogue, TenantPermissionGuard, UseValidationPipe } from '@gauzy/core';
 import { RealtimeCatchUpQueryDTO, RealtimePresenceDTO, RealtimeTypingDTO } from './dto/realtime.dto';
+import { collaborationEventNames, collaborationReplayNames } from './graphql/realtime-envelope';
 import { RealtimeCatalogue } from './realtime-catalogue';
 import { RealtimeCatchUpService } from './realtime-catch-up.service';
 import { RealtimeSignalsService } from './realtime-signals.service';
@@ -32,18 +32,23 @@ export class RealtimeController {
 	constructor(
 		private readonly catalogue: RealtimeCatalogue,
 		private readonly signals: RealtimeSignalsService,
-		private readonly catchUp: RealtimeCatchUpService
+		private readonly catchUp: RealtimeCatchUpService,
+		@Optional() private readonly subscriptions?: SubscriptionCatalogue
 	) {}
 
 	@Get('/status')
 	@Header('Cache-Control', 'no-store')
 	@ApiOperation({ summary: 'Whether this process serves subscriptions, and the events a client may select.' })
 	status(): IRealtimeStatus {
+		// The same names the subscription offers and the catch-up replays: the channel's own, plus the chat and
+		// inbox names those plugins declared when they loaded.
+		const declared = this.subscriptions?.names() ?? [];
+		const signals = new Set<string>(REALTIME_SIGNAL_EVENTS);
 		return {
 			enabled: true,
 			subscriptions: this.catalogue.servesSubscriptions,
-			events: [...REALTIME_STREAMED_EVENTS],
-			signals: [...REALTIME_SIGNAL_EVENTS],
+			events: collaborationReplayNames(declared),
+			signals: collaborationEventNames(declared).filter((name) => signals.has(name)),
 			maxTypingRecipients: REALTIME_MAX_TYPING_RECIPIENTS
 		};
 	}
