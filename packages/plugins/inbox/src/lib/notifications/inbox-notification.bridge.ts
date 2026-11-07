@@ -1,6 +1,6 @@
 import { Injectable, Logger, OnModuleInit, Optional } from '@nestjs/common';
 import { EventsHandler, IEventHandler } from '@nestjs/cqrs';
-import { DataSource, In, MoreThanOrEqual } from 'typeorm';
+import { DataSource, In } from 'typeorm';
 import {
 	BaseEntityEnum,
 	EmployeeNotificationTypeEnum,
@@ -28,6 +28,7 @@ import {
 import { InboxItem } from '../entities/inbox-item.entity';
 import { InboxItemRecipient } from '../entities/inbox-item-recipient.entity';
 import { INBOX_MENTION_DEDUPE_WINDOW_MS } from '../inbox.constants';
+import { InboxNamedLocks } from '../email/database/named-locks';
 import { InboxSourceHandlerRegistry } from '../inbox-source-handler.registry';
 import { InboxService } from '../inbox.service';
 import { InboxItemFeed } from '../inbox-item-feed';
@@ -75,6 +76,26 @@ export function isDedupedNotification(notification: Pick<IEmployeeNotification, 
 }
 
 /** The notification type an item was filed for, read from the metadata the bridge wrote (a JSON document, or already parsed). */
+/** What `hasRecentTwin` asks for, in one place a test can read: the receiver, the window, the record, the kind, and not the notification itself. */
+export function recentTwinCriteriaOf(notification: Pick<IEmployeeNotification, 'id' | 'tenantId' | 'type' | 'entity' | 'entityId'>, userId: ID, now = Date.now()) {
+	return {
+		userId: String(userId),
+		tenantId: String(notification.tenantId),
+		since: new Date(now - INBOX_MENTION_DEDUPE_WINDOW_MS),
+		kind: InboxItemKindEnum.NOTIFICATION,
+		source: InboxItemSourceEnum.GAUZY,
+		entity: String(notification.entity),
+		entityId: String(notification.entityId),
+		externalId: String(notification.id),
+		type: String(notification.type)
+	};
+}
+
+/** The lock a mention's check-and-file runs under: one per receiver, record and kind. */
+export function twinLockNameOf(notification: Pick<IEmployeeNotification, 'tenantId' | 'type' | 'entity' | 'entityId'>, userId: ID): string {
+	return `notification-twin:${notification.tenantId}:${userId}:${notification.entity}:${notification.entityId}:${notification.type}`;
+}
+
 export function notificationTypeOf(metadata: unknown): string | null {
 	let parsed: unknown = metadata;
 	if (typeof metadata === 'string') {
@@ -104,6 +125,8 @@ export function notificationTypeOf(metadata: unknown): string | null {
 export class InboxNotificationBridge implements OnModuleInit, IInboxSourceHandler {
 	readonly source = InboxItemSourceEnum.GAUZY;
 	private readonly logger = new Logger(InboxNotificationBridge.name);
+	/** Serialises a mention's twin check and filing per receiver, record and kind, across the replicas. */
+	private readonly locks: InboxNamedLocks;
 
 	constructor(
 		private readonly dataSource: DataSource,
@@ -113,7 +136,9 @@ export class InboxNotificationBridge implements OnModuleInit, IInboxSourceHandle
 		@Optional() private readonly feed?: InboxItemFeed,
 		/** Tells the user's other clients about a mirrored change; absent in bare test wiring. */
 		@Optional() private readonly realtime?: InboxRealtime
-	) {}
+	) {
+		this.locks = new InboxNamedLocks(dataSource);
+	}
 
 	onModuleInit(): void {
 		if (!this.registry.get(this.source)) {
@@ -161,7 +186,9 @@ export class InboxNotificationBridge implements OnModuleInit, IInboxSourceHandle
 	/**
 	 * Files a notification that now exists as an inbox item of its receiver — unless it is a mention whose twin (the
 	 * same receiver, record and kind) was filed within the last ten minutes: then the entry that exists is the one to
-	 * look at, and the notification row stays what the Notifications tab reads.
+	 * look at, and the notification row stays what the Notifications tab reads. The check and the filing run under
+	 * one lock per receiver, record and kind, so two mentions filed at once (two replicas, or one receiver named
+	 * twice in a burst) cannot both find no twin.
 	 */
 	async fileNotification(notification: IEmployeeNotification): Promise<void> {
 		try {
@@ -170,43 +197,39 @@ export class InboxNotificationBridge implements OnModuleInit, IInboxSourceHandle
 			if (!input) {
 				return;
 			}
-			if (isDedupedNotification(notification) && (await this.hasRecentTwin(notification, userId as ID))) {
-				this.logger.debug(`Notification ${notification.id} is not filed: a ${notification.type} on ${notification.entity} ${notification.entityId} reached user ${userId} within the last ${INBOX_MENTION_DEDUPE_WINDOW_MS / 60_000} minutes`);
+			if (!isDedupedNotification(notification)) {
+				await this.inbox.upsertExternal(input);
 				return;
 			}
-			await this.inbox.upsertExternal(input);
+			await this.locks.run(twinLockNameOf(notification, userId as ID), async () => {
+				if (await this.hasRecentTwin(notification, userId as ID)) {
+					this.logger.debug(`Notification ${notification.id} is not filed: a ${notification.type} on ${notification.entity} ${notification.entityId} reached user ${userId} within the last ${INBOX_MENTION_DEDUPE_WINDOW_MS / 60_000} minutes`);
+					return;
+				}
+				await this.inbox.upsertExternal(input);
+			});
 		} catch (error) {
 			this.logger.warn(`Notification ${notification?.id} was not filed in the inbox: ${(error as Error)?.message}`);
 		}
 	}
 
 	/**
-	 * Whether an item of the same kind, on the same record, reached the user within the window: the user's recipient
-	 * rows of the window (few), then their items narrowed to the record, the type compared from the metadata.
+	 * Whether an item of the same kind, on the same record, reached the user within the window: one query over the
+	 * user's recipient rows of the window joined to their items on the record (no cap — a busy receiver's tenth
+	 * minute is as long as anyone's), the kind compared from the metadata, which the database cannot read.
 	 */
 	private async hasRecentTwin(notification: IEmployeeNotification, userId: ID, now = Date.now()): Promise<boolean> {
-		const since = new Date(now - INBOX_MENTION_DEDUPE_WINDOW_MS);
-		const recent = await this.dataSource.getRepository(InboxItemRecipient).find({
-			select: { inboxItemId: true },
-			where: { userId, tenantId: notification.tenantId, createdAt: MoreThanOrEqual(since) },
-			take: 200
-		} as never);
-		const itemIds = recent.map((row) => row.inboxItemId).filter(Boolean);
-		if (!itemIds.length) {
-			return false;
-		}
-		const items = await this.dataSource.getRepository(InboxItem).find({
-			select: { id: true, externalId: true, metadata: true },
-			where: {
-				id: In(itemIds),
-				tenantId: notification.tenantId,
-				kind: InboxItemKindEnum.NOTIFICATION,
-				source: InboxItemSourceEnum.GAUZY,
-				entity: notification.entity,
-				entityId: notification.entityId
-			}
-		} as never);
-		return items.some((item) => String(item.externalId ?? '') !== String(notification.id) && notificationTypeOf(item.metadata) === String(notification.type));
+		const criteria = recentTwinCriteriaOf(notification, userId, now);
+		const rows = (await this.dataSource
+			.getRepository(InboxItemRecipient)
+			.createQueryBuilder('recipient')
+			.innerJoin(InboxItem, 'item', 'item.id = recipient.inboxItemId AND item.tenantId = recipient.tenantId')
+			.select('item.metadata', 'metadata')
+			.where('recipient.userId = :userId AND recipient.tenantId = :tenantId AND recipient.createdAt >= :since', criteria)
+			.andWhere('item.kind = :kind AND item.source = :source AND item.entity = :entity AND item.entityId = :entityId')
+			.andWhere('(item.externalId IS NULL OR item.externalId != :externalId)')
+			.getRawMany()) as Array<{ metadata?: unknown }>;
+		return rows.some((row) => notificationTypeOf(row.metadata) === criteria.type);
 	}
 
 	/** The notification API changed read / archive state: the filed items' recipient rows follow. */
