@@ -1,0 +1,35 @@
+# Task Breakdown: Inbox
+
+**Feature ID**: `inbox`
+**Plan**: `./plan.md`
+**Status**: `In Progress` — T1–T8 in ever-co/ever-gauzy#11682
+**Last updated**: 2026-11-07
+
+---
+
+## Phase 1 — Contracts and core events
+
+- [x] **T1**. Contracts: `TASK_UPDATE` type, `Updated` action, `IEmployeeNotificationPreferences`, `NOTIFICATION` kind, `DONE` tab, `isDone`/`doneAt`, `INBOX_NOTIFICATION_EXTERNAL_SOURCE`
+- [x] **T2**. Core: `EmployeeNotificationCreatedEvent` / `EmployeeNotificationUpdatedEvent` published by `EmployeeNotificationService` (create, update, markAllAsRead); type transformer and title template for `TaskUpdate`
+- [x] **T3**. Core: follower fan-out (`entity-subscription/fan-out/`) on `CommentEvent` and `TaskEvent`, flag `GAUZY_NOTIFICATION_FANOUT_ENABLED`, specs
+
+## Phase 2 — Inbox plugin
+
+- [x] **T4**. Bridge `notifications/inbox-notification.bridge.ts`: file notifications as NOTIFICATION items; `GAUZY` source handler mirror; `EmployeeNotificationUpdatedEvent` mirror; spec
+- [x] **T5**. Done state: `doneAt` column (migration `1791000005200`), DTO, service (`setState`, tabs, `stateOf`), GraphQL schema
+- [x] **T6**. `inbox_item.state_changed` outbox event on state change and mark-all-read
+- [x] **T7**. README section; `.env.sample` flag
+- [x] **T8**. Module wiring (`CqrsModule`, bridge, handlers)
+
+## Phase 3 — Verification and UI
+
+- [ ] **T9**. CI green on #11682 (tsc, Jest, schema snapshot, field-binding check); fix forward
+- [ ] **T10**. Enable on dev: mention → NOTIFICATION item; read mirror both ways; follower comment notification with the flag on
+- [ ] **T11**. Angular `inbox-ui`: Done tab + action, NOTIFICATION rendering (opens the task/comment), counts
+- [ ] **T12**. Dedupe rule per spec FR-4 (10-minute window per recipient/target/kind) in the notification service
+
+## Phase 4 — Delivery (lane G10)
+
+- [ ] **T13**. Email immediate / digest (worker job, templates) honouring `preferences`
+- [ ] **T14**. Web push subscriptions (`web-push` dependency already present) and the push decision (no focused session)
+- [ ] **T15**. Settings page in the Angular app and Ever Teams for per-kind channels, DND, digest hour
