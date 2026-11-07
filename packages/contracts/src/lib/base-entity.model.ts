@@ -98,6 +98,8 @@ export enum ActorTypeEnum {
 export enum BaseEntityEnum {
 	Broadcast = 'Broadcast',
 	Candidate = 'Candidate',
+	ChatConversation = 'ChatConversation',
+	ChatMessage = 'ChatMessage',
 	Comment = 'Comment',
 	Contact = 'Contact',
 	Currency = 'Currency',

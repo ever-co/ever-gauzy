@@ -1,0 +1,27 @@
+import { Injectable } from '@nestjs/common';
+import { MikroOrmBaseEntityRepository } from '@gauzy/core';
+import type { ChatCategory } from './chat-category.entity';
+import type { ChatConversation } from './chat-conversation.entity';
+import type { ChatMember } from './chat-member.entity';
+import type { ChatMessage } from './chat-message.entity';
+import type { ChatThreadFollow } from './chat-thread-follow.entity';
+import type { ChatTaskReference } from './chat-task-reference.entity';
+
+/** The MikroORM repositories the entities name (the services themselves run on TypeORM's `DataSource`). */
+@Injectable()
+export class MikroOrmChatCategoryRepository extends MikroOrmBaseEntityRepository<ChatCategory> {}
+
+@Injectable()
+export class MikroOrmChatConversationRepository extends MikroOrmBaseEntityRepository<ChatConversation> {}
+
+@Injectable()
+export class MikroOrmChatMemberRepository extends MikroOrmBaseEntityRepository<ChatMember> {}
+
+@Injectable()
+export class MikroOrmChatMessageRepository extends MikroOrmBaseEntityRepository<ChatMessage> {}
+
+@Injectable()
+export class MikroOrmChatThreadFollowRepository extends MikroOrmBaseEntityRepository<ChatThreadFollow> {}
+
+@Injectable()
+export class MikroOrmChatTaskReferenceRepository extends MikroOrmBaseEntityRepository<ChatTaskReference> {}

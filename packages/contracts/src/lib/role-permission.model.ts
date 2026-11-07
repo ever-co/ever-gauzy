@@ -286,6 +286,12 @@ export enum PermissionsEnum {
 	DOCS_MANAGE = 'DOCS_MANAGE',
 	DOCS_REVIEW = 'DOCS_REVIEW',
 	DOCS_AI_IMPORT = 'DOCS_AI_IMPORT',
+	/** Chat (`@gauzy/plugin-chat`): read the conversations one is a member of. */
+	CHAT_VIEW = 'CHAT_VIEW',
+	/** Chat: post messages, create channels, start direct and group messages. */
+	CHAT_SEND = 'CHAT_SEND',
+	/** Chat: manage categories, any channel, and delete others' messages. */
+	CHAT_MANAGE = 'CHAT_MANAGE',
 	/** Documents Permissions End */
 	/**
 	 * Plugin Permissions

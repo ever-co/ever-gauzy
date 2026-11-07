@@ -1,0 +1,138 @@
+import { Body, Controller, Delete, Get, Header, HttpCode, HttpStatus, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { FeatureFlag } from '@gauzy/common';
+import { FeatureEnum, ID, PermissionsEnum } from '@gauzy/contracts';
+import { FeatureFlagGuard, PermissionGuard, Permissions, TenantPermissionGuard, UseValidationPipe, UUIDValidationPipe } from '@gauzy/core';
+import { CHAT_ROUTE_PREFIX } from '../chat.constants';
+import { ChatMessagesQueryDTO, ChatMessageUpdateDTO, ChatRestoreReadDTO } from '../dto/chat.dto';
+import { ChatAccessService } from '../services/chat-access.service';
+import { ChatMessageService } from '../services/chat-message.service';
+
+/**
+ * `/api/chat/messages*`, `/api/chat/threads`, `/api/chat/read-all`, `/api/chat/read-restore`: one message, its thread
+ * and the caller's bulk read state. Same guards and 404 semantics as the conversation routes: a write others see
+ * (editing, deleting, pinning, reacting) needs `CHAT_SEND`; the caller's own read and follow state needs `CHAT_VIEW`.
+ * The emoji of a reaction route arrives decoded by the framework: it is used as is.
+ */
+@ApiTags('Chat')
+@ApiBearerAuth()
+@UseGuards(TenantPermissionGuard, PermissionGuard, FeatureFlagGuard)
+@FeatureFlag(FeatureEnum.FEATURE_CHAT)
+@Permissions(PermissionsEnum.CHAT_VIEW)
+@Controller(CHAT_ROUTE_PREFIX)
+export class ChatMessageController {
+	constructor(
+		private readonly access: ChatAccessService,
+		private readonly messages: ChatMessageService
+	) {}
+
+	@Get('/threads')
+	@Header('Cache-Control', 'no-store')
+	@ApiOperation({ summary: 'The threads I follow, with unread reply counts.' })
+	threads() {
+		return this.messages.followedThreads(this.access.caller());
+	}
+
+	@Post('/read-all')
+	@HttpCode(HttpStatus.OK)
+	@Header('Cache-Control', 'no-store')
+	@ApiOperation({ summary: 'Mark every conversation of mine read; answers an undo handle valid for a minute.' })
+	readAll() {
+		return this.messages.readAll(this.access.employeeCaller());
+	}
+
+	@Post('/read-restore')
+	@HttpCode(HttpStatus.OK)
+	@UseValidationPipe({ whitelist: true })
+	@Header('Cache-Control', 'no-store')
+	@ApiOperation({ summary: 'Undo a mark-all-read within its minute.' })
+	restoreRead(@Body() body: ChatRestoreReadDTO) {
+		return this.messages.restoreRead(this.access.caller(), body.snapshotId);
+	}
+
+	@Get('/messages/:id/thread')
+	@UseValidationPipe({ transform: true, whitelist: true })
+	@Header('Cache-Control', 'no-store')
+	@ApiOperation({ summary: 'A thread: its root and its replies, oldest first.' })
+	thread(@Param('id', UUIDValidationPipe) id: ID, @Query() query: ChatMessagesQueryDTO) {
+		return this.messages.thread(this.access.caller(), id, query);
+	}
+
+	@Patch('/messages/:id')
+	@Permissions(PermissionsEnum.CHAT_SEND)
+	@UseValidationPipe({ whitelist: true })
+	@Header('Cache-Control', 'no-store')
+	@ApiOperation({ summary: 'Edit my message.' })
+	edit(@Param('id', UUIDValidationPipe) id: ID, @Body() body: ChatMessageUpdateDTO) {
+		return this.messages.edit(this.access.caller(), id, body);
+	}
+
+	@Delete('/messages/:id')
+	@Permissions(PermissionsEnum.CHAT_SEND)
+	@HttpCode(HttpStatus.OK)
+	@Header('Cache-Control', 'no-store')
+	@ApiOperation({ summary: 'Delete my message (or any message with CHAT_MANAGE); a thread root stays as a tombstone.' })
+	remove(@Param('id', UUIDValidationPipe) id: ID) {
+		return this.messages.remove(this.access.caller(), id);
+	}
+
+	@Post('/messages/:id/pin')
+	@Permissions(PermissionsEnum.CHAT_SEND)
+	@HttpCode(HttpStatus.OK)
+	@Header('Cache-Control', 'no-store')
+	@ApiOperation({ summary: 'Pin a message in its conversation.' })
+	pin(@Param('id', UUIDValidationPipe) id: ID) {
+		return this.messages.pin(this.access.caller(), id, true);
+	}
+
+	@Post('/messages/:id/unpin')
+	@Permissions(PermissionsEnum.CHAT_SEND)
+	@HttpCode(HttpStatus.OK)
+	@Header('Cache-Control', 'no-store')
+	@ApiOperation({ summary: 'Unpin a message.' })
+	unpin(@Param('id', UUIDValidationPipe) id: ID) {
+		return this.messages.pin(this.access.caller(), id, false);
+	}
+
+	@Post('/messages/:id/unread')
+	@HttpCode(HttpStatus.OK)
+	@Header('Cache-Control', 'no-store')
+	@ApiOperation({ summary: 'Mark the conversation unread from this message on.' })
+	unreadFrom(@Param('id', UUIDValidationPipe) id: ID) {
+		return this.messages.unreadFrom(this.access.employeeCaller(), id);
+	}
+
+	@Post('/messages/:id/follow')
+	@HttpCode(HttpStatus.OK)
+	@Header('Cache-Control', 'no-store')
+	@ApiOperation({ summary: 'Follow the thread this message roots.' })
+	follow(@Param('id', UUIDValidationPipe) id: ID) {
+		return this.messages.setFollow(this.access.employeeCaller(), id, true);
+	}
+
+	@Post('/messages/:id/unfollow')
+	@HttpCode(HttpStatus.OK)
+	@Header('Cache-Control', 'no-store')
+	@ApiOperation({ summary: 'Stop following a thread.' })
+	unfollow(@Param('id', UUIDValidationPipe) id: ID) {
+		return this.messages.setFollow(this.access.employeeCaller(), id, false);
+	}
+
+	@Post('/messages/:id/reactions/:emoji')
+	@Permissions(PermissionsEnum.CHAT_SEND)
+	@HttpCode(HttpStatus.OK)
+	@Header('Cache-Control', 'no-store')
+	@ApiOperation({ summary: 'React to a message with an emoji.' })
+	react(@Param('id', UUIDValidationPipe) id: ID, @Param('emoji') emoji: string) {
+		return this.messages.react(this.access.employeeCaller(), id, emoji ?? '', true);
+	}
+
+	@Delete('/messages/:id/reactions/:emoji')
+	@Permissions(PermissionsEnum.CHAT_SEND)
+	@HttpCode(HttpStatus.OK)
+	@Header('Cache-Control', 'no-store')
+	@ApiOperation({ summary: 'Take my reaction back.' })
+	unreact(@Param('id', UUIDValidationPipe) id: ID, @Param('emoji') emoji: string) {
+		return this.messages.react(this.access.employeeCaller(), id, emoji ?? '', false);
+	}
+}

@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { DeleteResult, FindOptionsWhere, SaveOptions, UpdateResult } from 'typeorm';
-import { ID, IReaction, IReactionCreateInput, IReactionUpdateInput } from '@gauzy/contracts';
+import { ID, IReaction, IReactionCreateInput, IReactionUpdateInput, ReactionEntityEnum } from '@gauzy/contracts';
 import { TenantAwareCrudService } from './../core/crud/tenant-aware-crud.service';
 import { IFindOneOptions } from '../core/crud/icrud.service';
 import { RequestContext } from '../core/context/request-context';
@@ -27,6 +27,11 @@ export class ReactionService extends TenantAwareCrudService<Reaction> {
 	 * @returns A Promise resolving to the created reaction, or void if the reaction was toggled (deleted).
 	 */
 	async create(input: IReactionCreateInput): Promise<IReaction> {
+		// A chat message's reactions are written through the chat API only, which checks the caller's membership of
+		// the conversation; the generic route knows nothing of that and refuses the kind.
+		if (String(input?.entity) === String(ReactionEntityEnum.ChatMessage)) {
+			throw new BadRequestException('Reactions to chat messages are managed through the chat API.');
+		}
 		try {
 			// Extract the tenantId from the input data or the current request context
 			const tenantId = RequestContext.currentTenantId() ?? input.tenantId;
