@@ -53,6 +53,7 @@ tenant switched off by hand stays off).
 | Route | What |
 | --- | --- |
 | `GET /categories` · `POST` · `PATCH /:id` · `DELETE /:id` | sidebar categories (`CHAT_MANAGE`) |
+| `GET /people` | the active employees of my organization with name and picture (what chat shows and suggests) |
 | `GET /conversations` | mine, with my state and the categories (creates the organization's `#general` on first use) |
 | `GET /conversations/browse` | public channels I am not in |
 | `POST /conversations` | create a channel |
@@ -66,7 +67,7 @@ tenant switched off by hand stays off).
 | `GET /conversations/:id/messages?before=&after=&around=&limit=` | messages, newest by default |
 | `GET /conversations/:id/pins` | pinned messages |
 | `POST /conversations/:id/messages` | send: `{ body, nonce?, replyToId?, threadRootId?, alsoInConversation?, attachmentIds?, mentionEmployeeIds?, taskId? }` |
-| `GET /messages/:id/thread` · `POST /:id/follow` · `/:id/unfollow` | threads |
+| `GET /messages/:id/thread` · `POST /:id/follow` · `/:id/unfollow` · `POST /:id/thread/read` | threads (read marks a followed thread's replies read) |
 | `PATCH /messages/:id` · `DELETE` · `POST /:id/pin` · `/:id/unpin` · `/:id/unread` | one message |
 | `POST` / `DELETE /messages/:id/reactions/:emoji` | reactions |
 | `GET /threads` · `POST /read-all` · `POST /read-restore { snapshotId }` | followed threads; mark all read with a one-minute undo |

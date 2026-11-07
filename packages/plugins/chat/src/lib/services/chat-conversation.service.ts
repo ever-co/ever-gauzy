@@ -18,11 +18,12 @@ import {
 	IChatMemberStateInput,
 	IChatMemberSummary,
 	IChatStates,
-	ID
+	ID,
+	IChatPerson
 } from '@gauzy/contracts';
 import { Employee } from '@gauzy/core';
 import { directKeyOf } from '../chat-direct-key';
-import { CHAT_MAX_STATES } from '../chat.constants';
+import { CHAT_MAX_STATES, CHAT_PEOPLE_MAX } from '../chat.constants';
 import { ChatCategory } from '../entities/chat-category.entity';
 import { ChatConversation } from '../entities/chat-conversation.entity';
 import { ChatMember } from '../entities/chat-member.entity';
@@ -496,6 +497,35 @@ export class ChatConversationService {
 
 	private requireManage(caller: IChatCaller): void {
 		if (!caller.canManage) throw new ForbiddenException('Managing chat categories needs CHAT_MANAGE.');
+	}
+
+	/**
+	 * The people chat shows: the active employees of the caller's organization with the name and picture a chat
+	 * user may see (no email, no rate, no settings). Every holder of `CHAT_VIEW` may read it, which the employee
+	 * routes of the platform do not allow: they need `ORG_EMPLOYEES_VIEW`, which an ordinary employee lacks.
+	 */
+	async people(caller: IChatCaller): Promise<IChatPerson[]> {
+		if (!caller.organizationId) return [];
+		const employees = await this.dataSource.getRepository(Employee).find({
+			// `user.name` is built after the load (a virtual column), never selected.
+			select: { id: true, userId: true, user: { id: true, firstName: true, lastName: true, imageUrl: true } } as never,
+			where: { tenantId: caller.tenantId, organizationId: caller.organizationId, isActive: true, isArchived: false },
+			relations: { user: true },
+			take: CHAT_PEOPLE_MAX
+		});
+		return employees
+			.filter((employee) => !!employee.userId)
+			.map((employee) => {
+				const user = employee.user as { firstName?: string | null; lastName?: string | null; name?: string | null; imageUrl?: string | null } | undefined;
+				const full = [user?.firstName, user?.lastName].filter((part) => !!part && String(part).trim()).join(' ');
+				return {
+					employeeId: employee.id as ID,
+					userId: employee.userId as ID,
+					name: full || user?.name || String(employee.id),
+					imageUrl: user?.imageUrl ?? null
+				};
+			})
+			.sort((a, b) => a.name.localeCompare(b.name));
 	}
 
 	/** The active employees of the tenant (and of one organization, when stated) among the ids. */

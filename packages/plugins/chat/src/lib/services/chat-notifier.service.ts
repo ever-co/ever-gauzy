@@ -154,6 +154,38 @@ export class ChatNotifierService {
 		}
 	}
 
+	/**
+	 * Marks the caller's notifications about the replies of one thread read (best effort): the message notifications
+	 * whose message is a reply to the root, and nothing else of the conversation.
+	 */
+	async markThreadRead(rootMessageId: ID, caller: { tenantId: ID; employeeId: ID }): Promise<number> {
+		try {
+			const textType = this.dataSource.options.type === 'mysql' ? 'CHAR(36)' : 'TEXT';
+			const replyIds = this.dataSource
+				.getRepository(ChatMessage)
+				.createQueryBuilder('reply')
+				.select(`CAST(reply.id AS ${textType})`)
+				.where('reply.threadRootId = :rootMessageId', { rootMessageId })
+				.andWhere('reply.tenantId = :tenantId', { tenantId: caller.tenantId });
+			const notifications = this.dataSource.getRepository(EmployeeNotification);
+			const unread = await notifications
+				.createQueryBuilder('notification')
+				.select('notification.id', 'id')
+				.where('notification.tenantId = :tenantId', { tenantId: caller.tenantId })
+				.andWhere('notification.receiverEmployeeId = :employeeId', { employeeId: caller.employeeId })
+				.andWhere('notification.isRead = :unread', { unread: false })
+				.andWhere(`notification.entity = :messageEntity AND notification.entityId IN (${replyIds.getQuery()})`, { messageEntity: BaseEntityEnum.ChatMessage })
+				.setParameters(replyIds.getParameters())
+				.getRawMany<{ id: ID }>();
+			if (!unread.length) return 0;
+			await notifications.update({ id: In(unread.map((row) => row.id)) }, { isRead: true, readAt: new Date() });
+			return unread.length;
+		} catch (error) {
+			this.logger.warn(`Chat notifications of thread ${rootMessageId} were not marked read: ${(error as Error)?.message}`);
+			return 0;
+		}
+	}
+
 	/** Marks every chat notification of the caller read (a mark-all-read; best effort). */
 	async markAllRead(caller: { tenantId: ID; employeeId: ID }): Promise<number> {
 		try {
