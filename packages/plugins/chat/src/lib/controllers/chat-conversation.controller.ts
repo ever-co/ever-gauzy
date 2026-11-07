@@ -43,6 +43,13 @@ export class ChatConversationController {
 
 	// ---------------------------------------------------------------- categories
 
+	@Get('/people')
+	@Header('Cache-Control', 'no-store')
+	@ApiOperation({ summary: 'The people chat shows: the active employees of my organization, with name and picture.' })
+	people() {
+		return this.conversations.people(this.access.caller());
+	}
+
 	@Get('/categories')
 	@Header('Cache-Control', 'no-store')
 	@ApiOperation({ summary: 'The sidebar categories channels are grouped under.' })

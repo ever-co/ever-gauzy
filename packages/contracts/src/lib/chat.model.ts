@@ -142,6 +142,14 @@ export interface IChatConversationWithState extends IChatConversation {
 	members?: IChatMemberSummary[];
 }
 
+/** A person chat shows: an active employee of the organization, with the name and picture any chat user may see. */
+export interface IChatPerson {
+	employeeId: ID;
+	userId: ID;
+	name: string;
+	imageUrl: string | null;
+}
+
 export interface IChatMemberSummary {
 	employeeId: ID;
 	userId: ID;
@@ -309,6 +317,11 @@ export interface IChatEvent {
 export interface IChatSendResult {
 	message: IChatMessageWithRelations;
 	events: IChatEvent[];
+}
+
+/** `POST /chat/messages/:id/thread/read`: whether a follow of the caller was marked read. */
+export interface IChatThreadReadResult {
+	updated: boolean;
 }
 
 export interface IChatReadAllResult {

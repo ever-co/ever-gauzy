@@ -58,6 +58,14 @@ export class ChatMessageController {
 		return this.messages.thread(this.access.caller(), id, query);
 	}
 
+	@Post('/messages/:id/thread/read')
+	@HttpCode(HttpStatus.OK)
+	@Header('Cache-Control', 'no-store')
+	@ApiOperation({ summary: 'Mark a thread I follow read (its unread replies go to zero).' })
+	markThreadRead(@Param('id', UUIDValidationPipe) id: ID) {
+		return this.messages.markThreadRead(this.access.caller(), id);
+	}
+
 	@Patch('/messages/:id')
 	@Permissions(PermissionsEnum.CHAT_SEND)
 	@UseValidationPipe({ whitelist: true })

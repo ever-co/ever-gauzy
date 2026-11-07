@@ -19,3 +19,6 @@ export const CHAT_READ_RESTORE_TTL_MS = 60 * 1000;
 
 /** The most conversations one caller's states answer carries (every membership, bounded). */
 export const CHAT_MAX_STATES = 2000;
+
+/** The most people `GET /chat/people` lists (an organization larger than this browses by search in a later slice). */
+export const CHAT_PEOPLE_MAX = 2000;

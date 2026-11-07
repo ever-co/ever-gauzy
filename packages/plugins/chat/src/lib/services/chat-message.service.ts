@@ -19,7 +19,8 @@ import {
 	IChatSendResult,
 	IChatTaskReference,
 	ID,
-	ReactionEntityEnum
+	ReactionEntityEnum,
+	IChatThreadReadResult
 } from '@gauzy/contracts';
 import { Reaction } from '@gauzy/core';
 import { mentionedEmployees, parseMentions } from '../chat-mentions';
@@ -238,6 +239,19 @@ export class ChatMessageService {
 		const unread = new Map(follows.map((follow) => [String(follow.rootMessageId), follow.unreadReplies ?? 0]));
 		const withRelations = await this.withRelations(caller, roots);
 		return withRelations.map((root) => ({ ...root, unreadReplies: unread.get(String(root.id)) ?? 0 }));
+	}
+
+	/**
+	 * Marks a followed thread read for the caller: its unread replies go to zero (the conversation's own unread
+	 * state is untouched). A thread the caller does not follow, or a root the caller may not read, changes nothing.
+	 */
+	async markThreadRead(caller: IChatCaller, rootMessageId: ID): Promise<IChatThreadReadResult> {
+		if (!caller.employeeId) return { updated: false };
+		const root = await this.messageForCaller(caller, rootMessageId);
+		const result = await this.dataSource
+			.getRepository(ChatThreadFollow)
+			.update({ rootMessageId: root.id as ID, employeeId: caller.employeeId, tenantId: caller.tenantId }, { unreadReplies: 0, lastReadReplyAt: new Date() });
+		return { updated: (result.affected ?? 0) > 0 };
 	}
 
 	// ---------------------------------------------------------------- send / edit / delete
