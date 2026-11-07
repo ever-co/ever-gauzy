@@ -317,7 +317,7 @@ function dateRangeVars() {
  */
 async function setupDailyPlans(ctx) {
 	const wanted = Number(env.SETUP_DAILY_PLANS || 0);
-	if (!wanted || !ctx.vars.teamId) return;
+	if (!wanted || !ctx.vars.teamId) return undefined;
 	const { tenantId, organizationId, employeeId, teamId } = ctx.vars;
 	// `/daily-plan/me` reads the plans of the SIGNED-IN user's employee; plans made for another employee would
 	// never be read by the benchmark.
@@ -397,9 +397,11 @@ async function setupDailyPlans(ctx) {
 	console.log(
 		`  setup: ${created} daily plan(s) created for the bench employee (had ${have}, wanted ${wanted}); ${tasksAssigned} task(s) assigned, ${assignmentsRefused} refused; ${plans.length} plan(s) read back${short ? `, ${short} still short of ${TASKS_PER_PLAN} tasks` : ''}`
 	);
-	if (plans.length < wanted || assignmentsRefused || short) {
+	const degraded = plans.length < wanted || assignmentsRefused > 0 || short > 0;
+	if (degraded) {
 		console.warn('  setup: the daily-plan benchmarks measure fewer plans or task relations than intended');
 	}
+	return { wanted, had: have, created, plans: plans.length, tasksAssigned, assignmentsRefused, short, degraded };
 }
 
 /**
@@ -415,7 +417,7 @@ async function setupTimeLogs(ctx) {
 		{ wanted: Number(env.SETUP_TIME_LOGS || 0), hours: 1, startHours: [9, 14], label: 'one-hour' },
 		{ wanted: Number(env.SETUP_LONG_TIME_LOGS || 0), hours: 3, startHours: [18, 0], label: 'three-hour' }
 	].filter((plan) => plan.wanted > 0);
-	if (!plans.length || !ctx.vars.teamId) return;
+	if (!plans.length || !ctx.vars.teamId) return undefined;
 	if (!ctx.employeeOfUser) {
 		throw new Error('SETUP_TIME_LOGS needs a sign-in with an employee record (the timer reads answer "my" logs)');
 	}
@@ -433,10 +435,14 @@ async function setupTimeLogs(ctx) {
 		{ headers }
 	);
 	const taskIds = tasks.status < 300 ? (JSON.parse(tasks.body.toString()).items ?? []).map((t) => t.id) : [];
+	const outcome = {};
 	for (const plan of plans) {
 		const lengthMs = plan.hours * 3_600_000;
 		const have = logs.filter((log) => Date.parse(log.stoppedAt) - Date.parse(log.startedAt) === lengthMs).length;
-		if (have >= plan.wanted) continue;
+		if (have >= plan.wanted) {
+			outcome[plan.label] = { wanted: plan.wanted, had: have, created: 0, degraded: false };
+			continue;
+		}
 		let created = 0;
 		for (let i = have; i < plan.wanted; i++) {
 			// Two logs a day at the plan's start hours, the day before yesterday first.
@@ -466,7 +472,9 @@ async function setupTimeLogs(ctx) {
 			created++;
 		}
 		console.log(`  setup: ${created} ${plan.label} time log(s) created for the bench employee (had ${have}, wanted ${plan.wanted})`);
+		outcome[plan.label] = { wanted: plan.wanted, had: have, created, degraded: have + created < plan.wanted };
 	}
+	return outcome;
 }
 
 async function runEndpoint(ep, ctx) {
@@ -559,8 +567,14 @@ async function main() {
 	console.log(
 		`[${LABEL}] base=${BASE} tenant=${ctx.vars.tenantId} org=${ctx.vars.organizationId} employee=${ctx.vars.employeeId} team=${ctx.vars.teamId} seq=${SEQ} c=${CONCURRENCY} d=${DURATION}s`
 	);
-	await setupDailyPlans(ctx);
-	await setupTimeLogs(ctx);
+	// What the setup achieved goes into the result file: a run on thinner data than intended is marked degraded, so a
+	// comparison never credits the code with what the data set did.
+	const setup = { dailyPlans: await setupDailyPlans(ctx), timeLogs: await setupTimeLogs(ctx) };
+	const degraded =
+		!!setup.dailyPlans?.degraded || Object.values(setup.timeLogs ?? {}).some((plan) => plan.degraded);
+	if (degraded) {
+		console.warn('  setup: INCOMPLETE — this run is marked degraded in the result file');
+	}
 	const results = [];
 	for (const ep of scenarios.endpoints) {
 		if (ONLY && !ONLY.includes(ep.name)) continue;
@@ -588,6 +602,8 @@ async function main() {
 					duration: DURATION,
 					at: new Date().toISOString(),
 					provenance: provenance(),
+					setup,
+					degraded,
 					results
 				},
 				null,

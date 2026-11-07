@@ -187,8 +187,10 @@ export class PublicTeamService {
 		taskRelations: string[] | undefined;
 	} {
 		const requested = relations ?? [];
-		const teamRelations = requested.filter((relation) => relation !== 'tasks' && !relation.startsWith('tasks.'));
-		const taskRelations = requested.includes('tasks')
+		const isTaskRelation = (relation: string) => relation === 'tasks' || relation.startsWith('tasks.');
+		const teamRelations = requested.filter((relation) => !isTaskRelation(relation));
+		// A nested task relation alone (`tasks.members` without `tasks`) asks for the tasks too, as a join would have.
+		const taskRelations = requested.some(isTaskRelation)
 			? requested.filter((relation) => relation.startsWith('tasks.')).map((relation) => relation.slice('tasks.'.length))
 			: undefined;
 		return { teamRelations, taskRelations };

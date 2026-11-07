@@ -187,5 +187,17 @@ describe('PublicTeamService.findOneByProfileLink — task assignees', () => {
 		await service.findOneByProfileLink({ profile_link: 'team-link', id: 'team-1' } as any, {} as any);
 		expect(findOneOrFail.mock.calls[0][0]).not.toHaveProperty('relationLoadStrategy');
 		expect(find).not.toHaveBeenCalled();
+
+		// A nested task relation alone asks for the tasks too, as a join would have loaded them.
+		find.mockClear();
+		const nested = await service.findOneByProfileLink({ profile_link: 'team-link', id: 'team-1' } as any, {
+			relations: ['tasks.members']
+		} as any);
+		expect(find).toHaveBeenCalledWith(expect.anything(), {
+			where: { teams: { id: 'team-1' } },
+			relations: { members: true },
+			relationLoadStrategy: 'query'
+		});
+		expect(nested.tasks).toEqual([{ id: 'task-1' }]);
 	});
 });
