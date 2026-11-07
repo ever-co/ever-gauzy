@@ -830,6 +830,12 @@ export class ChatMessageService {
 				.findOne({ select: { id: true }, where: { id: input.projectId, tenantId: caller.tenantId, organizationId } } as never);
 			if (!project) throw new NotFoundException('The project was not found');
 		}
+		if (input.organizationTeamId) {
+			const team = await this.dataSource
+				.getRepository<ObjectLiteral>('OrganizationTeam')
+				.findOne({ select: { id: true }, where: { id: input.organizationTeamId, tenantId: caller.tenantId, organizationId } } as never);
+			if (!team) throw new NotFoundException('The team was not found');
+		}
 		const title = (input.title ?? '').trim() || taskTitleOf(message.body);
 		if (!title) throw new BadRequestException('The message has no text to title the task with.');
 		const members = await this.assignees(caller.tenantId, organizationId, input.assigneeEmployeeIds ?? []);
@@ -838,6 +844,8 @@ export class ChatMessageService {
 				tenantId: caller.tenantId,
 				organizationId,
 				projectId: input.projectId ?? null,
+				// The team's lists show the task (the clients read a team's tasks through this relation).
+				teams: input.organizationTeamId ? [{ id: input.organizationTeamId }] : [],
 				title,
 				description: taskDescriptionOf(message.body),
 				status: TaskStatusEnum.OPEN,
