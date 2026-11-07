@@ -211,6 +211,12 @@ jobs:
         if: always()
         run: node tools/scripts/port-binding-check.mjs
 
+      # A plugin the API or worker image depends on but its Dockerfile does not copy stops the image build in
+      # `yarn install` ("Couldn't find package ... on the npm registry"), and no pull request check builds images.
+      - name: Image Dockerfiles copy every plugin the apps depend on
+        if: always()
+        run: node tools/scripts/docker-plugin-copy-check.mjs
+
       - name: Permission and feature contributions
         if: always()
         run: node tools/scripts/permission-contribution-check.mjs
