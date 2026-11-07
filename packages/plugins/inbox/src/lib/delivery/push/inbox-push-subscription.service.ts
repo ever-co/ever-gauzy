@@ -1,8 +1,8 @@
 import { createHash } from 'node:crypto';
-import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 import { ID, IInboxPushSubscription, IInboxPushSubscriptionInput } from '@gauzy/contracts';
-import { RequestContext } from '@gauzy/core';
+import { refusalForEndpointHost, RequestContext } from '@gauzy/core';
 import { InboxPushSubscription } from './inbox-push-subscription.entity';
 import { INBOX_PUSH_MAX_FAILURES, readInboxWebPushConfig } from './inbox-push.constants';
 
@@ -44,43 +44,86 @@ export class InboxPushSubscriptionService {
 		};
 	}
 
-	/** Registers the caller's device, or refreshes the one the endpoint names (new keys, failures cleared). */
+	/**
+	 * Registers the caller's device, or refreshes the one the endpoint names (new keys, failures cleared). The endpoint
+	 * is held to the platform's outbound-endpoint policy at once (`refusalForEndpointHost`: a literal private, loopback
+	 * or link-local address, a single-label or special-use host): the worker would refuse it before every push, and the
+	 * person is better told now. Two registrations of one device at once (two tabs) both answer the device: the one the
+	 * unique key refuses reads the row the other wrote and refreshes it.
+	 */
 	async register(input: IInboxPushSubscriptionInput): Promise<IInboxPushSubscription> {
 		const { tenantId, userId, organizationId, employeeId } = this.caller();
+		this.assertEndpointAllowed(input.endpoint);
 		const endpointHash = endpointHashOf(input.endpoint);
-		const expirationTime = typeof input.expirationTime === 'number' && input.expirationTime > 0 ? new Date(input.expirationTime) : null;
-		const userAgent = String(input.userAgent ?? '').trim().slice(0, 255) || null;
+		const values = {
+			endpoint: input.endpoint,
+			p256dh: input.keys.p256dh,
+			auth: input.keys.auth,
+			expirationTime: typeof input.expirationTime === 'number' && input.expirationTime > 0 ? new Date(input.expirationTime) : null,
+			userAgent: String(input.userAgent ?? '').trim().slice(0, 255) || null,
+			employeeId: employeeId ?? null
+		};
 		const existing = await this.repository.findOne({ where: { tenantId, userId, endpointHash } });
 		if (existing) {
-			await this.repository.update(
-				{ id: existing.id },
-				{
-					endpoint: input.endpoint,
-					p256dh: input.keys.p256dh,
-					auth: input.keys.auth,
-					expirationTime: expirationTime as never,
-					userAgent: userAgent as never,
-					employeeId: (employeeId ?? null) as never,
-					failures: 0
-				} as never
-			);
-			return (await this.repository.findOne({ where: { id: existing.id } })) as InboxPushSubscription;
+			return this.refresh(existing.id as ID, values);
 		}
-		return this.repository.save(
-			this.repository.create({
-				tenantId,
-				organizationId: organizationId ?? undefined,
-				userId,
-				employeeId: employeeId ?? undefined,
-				endpoint: input.endpoint,
-				endpointHash,
-				p256dh: input.keys.p256dh,
-				auth: input.keys.auth,
-				expirationTime: expirationTime ?? undefined,
-				userAgent: userAgent ?? undefined,
+		try {
+			return await this.repository.save(
+				this.repository.create({
+					tenantId,
+					organizationId: organizationId ?? undefined,
+					userId,
+					endpointHash,
+					...values,
+					employeeId: values.employeeId ?? undefined,
+					expirationTime: values.expirationTime ?? undefined,
+					userAgent: values.userAgent ?? undefined,
+					failures: 0
+				})
+			);
+		} catch (error) {
+			// The unique key refused: another request registered the same device meanwhile. Its row is this one's.
+			const written = await this.repository.findOne({ where: { tenantId, userId, endpointHash } });
+			if (!written) throw error;
+			return this.refresh(written.id as ID, values);
+		}
+	}
+
+	/** The device's row with the keys and the name it was registered with again, its failures over. */
+	private async refresh(
+		id: ID,
+		values: { endpoint: string; p256dh: string; auth: string; expirationTime: Date | null; userAgent: string | null; employeeId: ID | null }
+	): Promise<IInboxPushSubscription> {
+		await this.repository.update(
+			{ id },
+			{
+				endpoint: values.endpoint,
+				p256dh: values.p256dh,
+				auth: values.auth,
+				expirationTime: values.expirationTime as never,
+				userAgent: values.userAgent as never,
+				employeeId: values.employeeId as never,
 				failures: 0
-			})
+			} as never
 		);
+		return (await this.repository.findOne({ where: { id } })) as InboxPushSubscription;
+	}
+
+	/** The platform's outbound-endpoint policy, as text: what the worker would refuse before every push is refused now. */
+	private assertEndpointAllowed(endpoint: string): void {
+		let url: URL;
+		try {
+			url = new URL(endpoint);
+		} catch {
+			throw new BadRequestException('INBOX_PUSH_ENDPOINT_REFUSED: the push endpoint is not a URL.');
+		}
+		if (url.protocol !== 'https:') {
+			throw new BadRequestException('INBOX_PUSH_ENDPOINT_REFUSED: the push endpoint must be an https URL.');
+		}
+		const refusal = refusalForEndpointHost(url);
+		if (refusal) {
+			throw new BadRequestException(`INBOX_PUSH_ENDPOINT_REFUSED: ${refusal.replace('A webhook endpoint', 'A push endpoint')}`);
+		}
 	}
 
 	/** The caller's devices, newest first. */

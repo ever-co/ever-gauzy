@@ -15,7 +15,7 @@ import {
 	readInboxDeliveryBatch
 } from './inbox-delivery.constants';
 import { decideEmailDelivery, decidePushDelivery, excerptOf, inboxItemLinkOf, kindLabelOf, metadataOf, retryDelayMs } from './inbox-delivery-rules';
-import { InboxDeliveryPusher, InboxPushGoneError } from './push/inbox-delivery-pusher';
+import { InboxDeliveryPusher, InboxPushGoneError, InboxPushRefusedError } from './push/inbox-delivery-pusher';
 import { InboxPushSubscriptionService } from './push/inbox-push-subscription.service';
 import { INBOX_PUSH_FOCUSED_WINDOW_MS, INBOX_PUSH_NO_SUBSCRIPTION, INBOX_PUSH_SKIPPED_FOCUSED } from './push/inbox-push.constants';
 
@@ -252,9 +252,12 @@ export class InboxDeliveryService {
 	}
 
 	async sendImmediate(now: Date, batch: number): Promise<{ sent: number; failed: number }> {
-		const rows = await this.due(InboxDeliveryChannelEnum.EMAIL, InboxDeliveryModeEnum.IMMEDIATE, now, batch);
 		let sent = 0;
 		let failed = 0;
+		// A process on the push switch alone leaves the email rows to one on the email switch (a deferred or retried email is
+		// still an email): the rows wait, they are not sent by a channel the operator turned off.
+		if (!this.channels().includes(InboxDeliveryChannelEnum.EMAIL)) return { sent, failed };
+		const rows = await this.due(InboxDeliveryChannelEnum.EMAIL, InboxDeliveryModeEnum.IMMEDIATE, now, batch);
 		if (!rows.length) return { sent, failed };
 		const items = await this.itemsOf(rows.map((row) => row.inboxItemId));
 		for (const row of rows) {
@@ -282,6 +285,7 @@ export class InboxDeliveryService {
 	async sendDigests(now: Date, batch: number): Promise<{ sent: number; failed: number }> {
 		let sent = 0;
 		let failed = 0;
+		if (!this.channels().includes(InboxDeliveryChannelEnum.EMAIL)) return { sent, failed };
 		// The people first (a bounded set), then each person's whole due set: a digest is never a page of one.
 		const people = await this.duePeople(InboxDeliveryChannelEnum.EMAIL, InboxDeliveryModeEnum.DIGEST, now, batch);
 		if (!people.length) return { sent, failed };
@@ -325,8 +329,9 @@ export class InboxDeliveryService {
 	/**
 	 * Pushes the due rows to each of the person's devices (FR-13) — unless the person has an active, focused session,
 	 * when the row is closed as skipped: they are looking at the app, where the entry already is. A device the push
-	 * service no longer knows is removed; one that failed again is counted, and removed at the limit. The row is sent
-	 * once one device took it; it is tried again when every device refused, and closed when the person has none.
+	 * service no longer knows is removed, and so is one whose endpoint the outbound-endpoint policy refuses (it was
+	 * supplied, not issued by a push service); one that failed again is counted, and removed at the limit. The row is
+	 * sent once one device took it; it is tried again when every device refused, and closed when the person has none.
 	 */
 	async sendPushes(now: Date, batch: number): Promise<{ sent: number; skipped: number; failed: number }> {
 		const outcome = { sent: 0, skipped: 0, failed: 0 };
@@ -364,6 +369,11 @@ export class InboxDeliveryService {
 					await this.subscriptions.markUsed(device.id as ID, now);
 				} catch (error) {
 					if (error instanceof InboxPushGoneError) {
+						await this.subscriptions.gone(device.id as ID);
+						continue;
+					}
+					if (error instanceof InboxPushRefusedError) {
+						this.logger.warn(`Inbox delivery: device ${device.id} of user ${row.userId} removed, its endpoint is refused (${error.message})`);
 						await this.subscriptions.gone(device.id as ID);
 						continue;
 					}

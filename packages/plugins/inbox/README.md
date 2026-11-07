@@ -290,6 +290,11 @@ Inbox spec FR-13):
   when the row is closed as skipped: they are looking at the app, where the entry already is. A device the push service
   no longer knows (404 / 410) is removed; one that failed five times in a row is removed. `GAUZY_INBOX_VAPID_SUBJECT`
   names the sender (an `https:` URL or `mailto:`; the client's address by default).
+- **Where a push may go** is the platform's outbound-endpoint policy, the webhooks' (nothing that is not globally
+  routable: no private, loopback or link-local address, no single-label or special-use host): refused at registration
+  as text, resolved again before each push, and once more by the connection's own lookup; a device whose endpoint is
+  refused is removed. `GAUZY_WEBHOOK_ALLOW_PRIVATE_NETWORK=true` lifts the rule, as for webhooks. A process on the push
+  switch alone sends no email, whatever email rows are due: each channel is served under its own switch.
 
 The Angular app and Ever Teams register the browser (the service worker and the subscription) in their own lanes.
 

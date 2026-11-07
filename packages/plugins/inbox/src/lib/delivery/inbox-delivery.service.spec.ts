@@ -6,7 +6,7 @@ import { InboxDelivery } from './inbox-delivery.entity';
 import { InboxDeliveryContextUnavailableError } from './inbox-delivery-context';
 import { InboxDeliveryMailer } from './inbox-delivery-mailer';
 import { InboxDeliveryService } from './inbox-delivery.service';
-import { InboxPushGoneError } from './push/inbox-delivery-pusher';
+import { InboxPushGoneError, InboxPushRefusedError } from './push/inbox-delivery-pusher';
 import { INBOX_PUSH_NO_SUBSCRIPTION, INBOX_PUSH_SKIPPED_FOCUSED } from './push/inbox-push.constants';
 
 // The sweep serves the channels the switches name; the email tests run with email alone, the push tests add push.
@@ -43,6 +43,7 @@ function fixture(options: {
 	push?: boolean;
 	devices?: Record<string, Array<{ id: string; endpoint: string; p256dh: string; auth: string; failures?: number }>>;
 	gone?: string[];
+	refused?: string[];
 	pushFails?: boolean;
 	employees?: Record<string, { lastSeenAt: Date | null; isIdle: boolean }>;
 } = {}) {
@@ -108,6 +109,7 @@ function fixture(options: {
 		configured: () => true,
 		send: jest.fn(async (device: { id: string }, _payload: unknown) => {
 			if ((options.gone ?? []).includes(device.id)) throw new InboxPushGoneError(410);
+			if ((options.refused ?? []).includes(device.id)) throw new InboxPushRefusedError('A push endpoint must not resolve to a private, loopback or link-local network.');
 			if (options.pushFails) throw new Error('push service refused');
 		})
 	};
@@ -211,6 +213,42 @@ describe('InboxDeliveryService — web push (FR-13)', () => {
 		expect(await service.sendPushes(NOW, 200)).toEqual({ sent: 0, skipped: 1, failed: 0 });
 		expect(pusher.send).not.toHaveBeenCalled();
 		expect(delivery.update).toHaveBeenCalledWith({ id: expect.anything() }, { failedAt: NOW, lastError: INBOX_PUSH_SKIPPED_FOCUSED });
+	});
+
+	it('removes a device whose endpoint the policy refuses, and closes the row when no device is left', async () => {
+		const { service, subscriptions, delivery, pusher } = fixture({
+			push: true,
+			due: [pushRow('p1', 'u1', 'e1')],
+			items: [item('i-p1', '2026-11-07T12:00:00.000Z')],
+			devices: { u1: [device('d1')] },
+			refused: ['d1'],
+			employees: { e1: { lastSeenAt: null, isIdle: true } }
+		});
+		expect(await service.sendPushes(NOW, 200)).toEqual({ sent: 0, skipped: 0, failed: 1 });
+		expect(pusher.send).toHaveBeenCalledTimes(1);
+		expect(subscriptions.gone).toHaveBeenCalledWith('d1');
+		expect(subscriptions.recordFailure).not.toHaveBeenCalled();
+		expect(delivery.update).toHaveBeenCalledWith({ id: expect.anything() }, { failedAt: NOW, lastError: INBOX_PUSH_NO_SUBSCRIPTION });
+	});
+
+	it('sends no email from a process on the push switch alone, whatever email rows are due', async () => {
+		const email = process.env['GAUZY_INBOX_NOTIFICATION_EMAIL_ENABLED'];
+		delete process.env['GAUZY_INBOX_NOTIFICATION_EMAIL_ENABLED'];
+		try {
+			const { service, mailer, delivery } = fixture({
+				push: true,
+				due: [dueRow('m1', InboxDeliveryModeEnum.IMMEDIATE), dueRow('m2', InboxDeliveryModeEnum.DIGEST)],
+				items: [item('i-m1', '2026-11-07T12:00:00.000Z'), item('i-m2', '2026-11-07T11:00:00.000Z')],
+				users: { u1: user('u1') }
+			});
+			expect(await service.sendImmediate(NOW, 200)).toEqual({ sent: 0, failed: 0 });
+			expect(await service.sendDigests(NOW, 200)).toEqual({ sent: 0, failed: 0 });
+			expect(mailer.sendNotification).not.toHaveBeenCalled();
+			expect(mailer.sendDigest).not.toHaveBeenCalled();
+			expect(delivery.update).not.toHaveBeenCalled();
+		} finally {
+			process.env['GAUZY_INBOX_NOTIFICATION_EMAIL_ENABLED'] = email;
+		}
 	});
 
 	it('closes a row whose person has no device left, and tries again later one every device refused', async () => {
