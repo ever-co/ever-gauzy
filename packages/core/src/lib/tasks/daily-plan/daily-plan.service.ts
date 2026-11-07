@@ -6,7 +6,7 @@ import {
 	Injectable,
 	NotFoundException
 } from '@nestjs/common';
-import { DeleteResult, FindOptionsWhere, SelectQueryBuilder, UpdateResult } from 'typeorm';
+import { DeleteResult, FindOptionsRelations, FindOptionsWhere, SelectQueryBuilder, UpdateResult } from 'typeorm';
 import { isUUID } from 'class-validator';
 import * as moment from 'moment';
 import {
@@ -63,6 +63,38 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 	}
 
 	/**
+	 * How the relations of a plan list are loaded under TypeORM.
+	 *
+	 * Joined onto the plan rows (TypeORM's default), the relations the Teams app asks for on every list
+	 * (`employee.user`, `tasks.members.user`) multiply each plan by its tasks and each task by its members,
+	 * and a relation the query already joins for its own conditions (`tasks`) is joined a second time: on
+	 * production `GET /daily-plan/me` answered 49 plans as 2,033 joined rows, which the API then hydrated on
+	 * the event loop (1,348 calls at 1.7 s mean, 23 s max). Loaded with one query per relation instead, the
+	 * plans come back once each and every relation is filled in exactly as before.
+	 */
+	private static readonly RELATION_LOAD_STRATEGY: 'query' = 'query';
+
+	/**
+	 * The relations a plan list loads: the ones every list always loaded (`employee`, `tasks`) and the ones
+	 * the caller asks for, as one nested object. A deeper request (`employee.user`) keeps its depth.
+	 *
+	 * @param always - The relations the list loads whatever the caller asks.
+	 * @param requested - The caller's relations, as sent (`employee.user`) or already nested.
+	 */
+	private static listRelations(
+		always: Record<string, true>,
+		requested: string[] | FindOptionsRelations<DailyPlan> | undefined
+	): FindOptionsRelations<DailyPlan> {
+		const merged: Record<string, unknown> = { ...always };
+		for (const [relation, value] of Object.entries(parseFindOptionsRelations<DailyPlan>(requested) ?? {})) {
+			if (value) {
+				merged[relation] = value;
+			}
+		}
+		return merged as FindOptionsRelations<DailyPlan>;
+	}
+
+	/**
 	 * Create or update a DailyPlan. If the given day already has a DailyPlan,
 	 * update it with the provided task. Otherwise, create a new DailyPlan.
 	 *
@@ -114,8 +146,9 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 					tasks: task ? [task] : []
 				});
 				try {
-					await this.save(newPlan);
-					return newPlan;
+					// The saved plan, with its generated id: the object passed in is not given one, so a client that
+					// created a plan was answered one it could not address (add a task to, update, delete).
+					return (await this.save(newPlan)) ?? newPlan;
 				} catch (error) {
 					// Only one plan per employee, team and day can exist. When a concurrent request created
 					// it after the lookup above, this insert is refused and the task goes to that plan.
@@ -274,9 +307,15 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 					// Create the initial query
 					const query = this.typeOrmDailyPlanRepository.createQueryBuilder(this.tableName);
 
-					// Join related entities
-					query.leftJoin(`${query.alias}.employee`, 'employee');
-					query.leftJoin(`${query.alias}.tasks`, 'tasks');
+					const loadsRelations = isNotEmpty(options) && isNotEmpty(options.relations);
+
+					// Join related entities. Not when the relations are loaded with their own queries (see
+					// RELATION_LOAD_STRATEGY): a bare join on `tasks` still answered one plan row per task, and a
+					// condition on a relation gets its join from TypeORM itself.
+					if (!loadsRelations) {
+						query.leftJoin(`${query.alias}.employee`, 'employee');
+						query.leftJoin(`${query.alias}.tasks`, 'tasks');
+					}
 
 					// Apply optional find options if provided
 					query.setFindOptions({
@@ -284,10 +323,11 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 							isNotEmpty(options.where) && {
 								where: options.where
 							}),
-						...(isNotEmpty(options) &&
-							isNotEmpty(options.relations) && {
-								relations: parseFindOptionsRelations(options.relations)
-							})
+						...(loadsRelations && {
+							relations: parseFindOptionsRelations(options.relations),
+							// See RELATION_LOAD_STRATEGY: the relations are not joined onto the plan rows.
+							relationLoadStrategy: DailyPlanService.RELATION_LOAD_STRATEGY
+						})
 					});
 
 					query.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
@@ -372,13 +412,21 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 					// Create the initial query
 					const query = this.typeOrmDailyPlanRepository.createQueryBuilder(this.tableName);
 
-					// Join related entities
-					query.leftJoinAndSelect(`${query.alias}.employee`, 'employee');
-					query.leftJoinAndSelect(`${query.alias}.tasks`, 'tasks');
+					// Join related entities. `employee` and `tasks` are always answered: joined and selected here
+					// when the caller asks for nothing more, otherwise loaded with the caller's relations by their
+					// own queries (see RELATION_LOAD_STRATEGY), with no join at all — a caller's `tasks` on top of
+					// the join here made every plan row one per (task × task).
+					if (!isNotEmpty(relations)) {
+						query.leftJoinAndSelect(`${query.alias}.employee`, 'employee');
+						query.leftJoinAndSelect(`${query.alias}.tasks`, 'tasks');
+					}
 
 					query.setFindOptions({
 						where: isNotEmpty(where) && where,
-						relations: isNotEmpty(relations) && parseFindOptionsRelations(relations)
+						...(isNotEmpty(relations) && {
+							relations: DailyPlanService.listRelations({ employee: true, tasks: true }, relations),
+							relationLoadStrategy: DailyPlanService.RELATION_LOAD_STRATEGY
+						})
 					});
 
 					// Filter conditions
@@ -974,10 +1022,12 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 					// Initial query
 					const query = this.typeOrmDailyPlanRepository.createQueryBuilder(this.tableName);
 
-					// Joins
-					query.leftJoinAndSelect(`${query.alias}.employee`, 'employee');
-					query.leftJoinAndSelect(`${query.alias}.tasks`, 'tasks');
-					query.leftJoinAndSelect('employee.user', 'user');
+					// The employee, their user and the tasks of every plan, loaded with one query each rather than
+					// joined (see RELATION_LOAD_STRATEGY): the task join alone answered each plan once per task.
+					query.setFindOptions({
+						relations: { employee: { user: true }, tasks: true },
+						relationLoadStrategy: DailyPlanService.RELATION_LOAD_STRATEGY
+					});
 
 					// Conditions
 					query.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
