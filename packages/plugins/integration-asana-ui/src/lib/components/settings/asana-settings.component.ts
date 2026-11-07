@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, inject, OnInit, signal } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, inject, OnInit } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -48,6 +48,9 @@ interface MappingDraft {
  * mappings (add with a section → status map, change the direction or the switch, register the webhook again,
  * import now, remove), and the latest runs.
  */
+/** A mapping as the list shows it: the stored mapping and how many refused changes its row took (see `restore`). */
+type AsanaMappingRow = AsanaMapping & { rowVersion?: number };
+
 @Component({
 	selector: 'ngx-asana-settings',
 	changeDetection: ChangeDetectionStrategy.OnPush,
@@ -351,7 +354,7 @@ export class AsanaSettingsComponent implements OnInit {
 	workspaces: AsanaWorkspace[] = [];
 	asanaProjects: AsanaProject[] = [];
 	projects: IOrganizationProject[] = [];
-	mappings: AsanaMapping[] = [];
+	mappings: AsanaMappingRow[] = [];
 	runs: AsanaRun[] = [];
 	draft: MappingDraft = this.emptyDraft();
 	loading = true;
@@ -580,8 +583,6 @@ export class AsanaSettingsComponent implements OnInit {
 		void this.router.navigate([ASANA_LINK]);
 	}
 
-	/** How many refused changes each row took (see `restore`): local state, as a signal. */
-	private readonly rowVersions = signal<ReadonlyMap<string, number>>(new Map());
 
 	/** One request at a time: `apply` takes its answer; `revert` puts the page back when it was refused. */
 	private request<T>(request: Observable<T>, apply: (value: T) => void, revert?: () => void): void {
@@ -603,13 +604,13 @@ export class AsanaSettingsComponent implements OnInit {
 		});
 	}
 
-	private replace(updated: AsanaMapping): void {
-		this.mappings = this.mappings.map((mapping) => (mapping.id === updated.id ? updated : mapping));
+	private replace(updated: AsanaMapping, rowVersion?: number): void {
+		this.mappings = this.mappings.map((mapping) => (mapping.id === updated.id ? { ...updated, rowVersion: rowVersion ?? mapping.rowVersion } : mapping));
 	}
 
-	/** A row's identity for the list: its mapping, and how many refused changes it took (each one re-creates the row). */
-	rowKey(mapping: AsanaMapping): string {
-		return `${mapping.id}:${this.rowVersions().get(mapping.id) ?? 0}`;
+	/** A row's identity for the list: its mapping, and how many refused changes it took (each one re-creates the row); the count is the row's own. */
+	rowKey(mapping: AsanaMappingRow): string {
+		return `${mapping.id}:${mapping.rowVersion ?? 0}`;
 	}
 
 	/**
@@ -618,8 +619,8 @@ export class AsanaSettingsComponent implements OnInit {
 	 * instead, and the list re-creates the row with the stored values.
 	 */
 	private restore(mapping: AsanaMapping): void {
-		this.rowVersions.update((versions) => new Map(versions).set(mapping.id, (versions.get(mapping.id) ?? 0) + 1));
-		this.replace({ ...mapping });
+		const current = this.mappings.find((row) => row.id === mapping.id);
+		this.replace(mapping, (current?.rowVersion ?? 0) + 1);
 	}
 
 	private showError(error: unknown): void {
