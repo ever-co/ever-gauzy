@@ -24,14 +24,22 @@ const COLUMNS: readonly ColumnSpec[] = [
 	{ table: 'organization_project', name: 'taskKeyHistory', postgres: JSON_TYPE.postgres, sqlite: JSON_TYPE.sqlite, mysql: `${JSON_TYPE.mysql} NULL` }
 ];
 
-/** The index that makes a project key quick to resolve within an organization. */
-const KEY_INDEX = { name: 'IDX_organization_project_organization_task_key', table: 'organization_project', columns: ['organizationId', 'taskKey'] };
+/**
+ * The unique index that keeps a project key unique within an organization (and quick to resolve). Rows without a key
+ * are left out: a partial index on Postgres and SQLite; on MySQL a unique index already admits any number of NULLs.
+ */
+const KEY_INDEX = {
+	name: 'UQ_organization_project_organization_task_key',
+	table: 'organization_project',
+	columns: ['tenantId', 'organizationId', 'taskKey'],
+	where: `"taskKey" IS NOT NULL`
+};
 
 /**
  * Adds the columns of the task views extensions: `task_view.visibility` (`personal` / `shared`, null = shared),
  * `task_view.version` (bumped by every save, default 1), `task_view.manualOrder` (the task ids in manual order),
  * `organization_project.taskKey` (the key tasks are addressed by) and `organization_project.taskKeyHistory`
- * (former keys), plus an index on `(organizationId, taskKey)`.
+ * (former keys), plus a unique index on `(tenantId, organizationId, taskKey)` for rows that hold a key.
  *
  * Nothing is backfilled: views stay shared, projects keep resolving under the key derived from their name until a
  * manager sets one. Running `up` twice is harmless (`IF NOT EXISTS` on Postgres, column and index checks elsewhere),
@@ -90,10 +98,12 @@ export class AddTaskViewsAndProjectKeys1791000004700 implements MigrationInterfa
 		if (dialect === 'mysql') {
 			const table = await queryRunner.getTable(KEY_INDEX.table);
 			if (table?.indices.some((index) => index.name === KEY_INDEX.name)) return;
-			await queryRunner.query(`CREATE INDEX \`${KEY_INDEX.name}\` ON \`${KEY_INDEX.table}\` (${columns})`);
+			await queryRunner.query(`CREATE UNIQUE INDEX \`${KEY_INDEX.name}\` ON \`${KEY_INDEX.table}\` (${columns})`);
 			return;
 		}
-		await queryRunner.query(`CREATE INDEX IF NOT EXISTS ${quoted(dialect, KEY_INDEX.name)} ON ${quoted(dialect, KEY_INDEX.table)} (${columns})`);
+		await queryRunner.query(
+			`CREATE UNIQUE INDEX IF NOT EXISTS ${quoted(dialect, KEY_INDEX.name)} ON ${quoted(dialect, KEY_INDEX.table)} (${columns}) WHERE ${KEY_INDEX.where}`
+		);
 	}
 
 	public async down(queryRunner: QueryRunner): Promise<void> {

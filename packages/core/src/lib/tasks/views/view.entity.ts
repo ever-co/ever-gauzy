@@ -20,7 +20,7 @@ import {
 	OrganizationTeam,
 	TenantOrganizationBaseEntity
 } from '../../core/entities/internal';
-import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToOne } from '../../core/decorators/entity';
+import { ColumnIndex, JsonArrayColumn, MultiORMColumn, MultiORMEntity, MultiORMManyToOne } from '../../core/decorators/entity';
 import { MikroOrmTaskViewRepository } from './repository/mikro-orm-task-view.repository';
 
 @MultiORMEntity('task_view', { mikroOrmRepository: () => MikroOrmTaskViewRepository })
@@ -94,7 +94,7 @@ export class TaskView extends TenantOrganizationBaseEntity implements ITaskView 
 	@ApiPropertyOptional({ type: () => Array })
 	@IsOptional()
 	@IsArray()
-	@MultiORMColumn({ type: isPostgres() ? 'jsonb' : isMySQL() ? 'json' : 'text', nullable: true })
+	@JsonArrayColumn<ID>({ nullable: true })
 	manualOrder?: ID[];
 
 	/*

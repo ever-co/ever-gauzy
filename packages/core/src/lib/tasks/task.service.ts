@@ -89,7 +89,7 @@ import { IFindOneOptions } from '../core/crud/icrud.service';
 import { Task } from './task.entity';
 import { BulkUpdateRequestError, changesToUpdate, normalizeBulkUpdate } from './bulk-update';
 import { keysOfProject, parseTaskReference } from './task-reference';
-import { builtInViewWindow, relationsTreeOf } from './built-in-views';
+import { BUILT_IN_VIEW_DEFAULT_RELATIONS, BUILT_IN_VIEW_RELATIONS, builtInViewWindow, relationsTreeOf } from './built-in-views';
 import { TypeOrmOrganizationSprintTaskHistoryRepository } from './../organization-sprint/repository/type-orm-organization-sprint-task-history.repository';
 import { GetTaskByIdDTO } from './dto';
 import { prepareSQLQuery as p } from './../database/database.helper';
@@ -2518,7 +2518,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			throw error;
 		}
 		const tenantId = RequestContext.currentTenantId() ?? input.tenantId;
-		const organizationId = input.organizationId;
+		const organizationId = organizationIdOf(input);
 		const results: ITaskBulkUpdateResult[] = [];
 		for (const item of items) {
 			const taskId = String(item.taskId);
@@ -2557,7 +2557,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 	 */
 	async resolveReferences(input: ITaskReferenceResolveInput): Promise<ITaskReferenceResolution[]> {
 		const tenantId = RequestContext.currentTenantId() ?? input.tenantId;
-		const organizationId = input.organizationId;
+		const organizationId = organizationIdOf(input);
 		const projects = await this.typeOrmRepository.manager.find(OrganizationProject, {
 			where: { tenantId, organizationId },
 			select: { id: true, name: true, taskKey: true, taskKeyHistory: true }
@@ -2578,14 +2578,20 @@ export class TaskService extends TenantAwareCrudService<Task> {
 				continue;
 			}
 			const candidates = byKey.get(parts.key) ?? [];
-			let found: Task | null = null;
-			for (const project of candidates) {
-				found = await this.typeOrmRepository.findOne({
-					where: { tenantId, organizationId, projectId: project.id, number: parts.number },
-					select: { id: true, title: true, status: true, projectId: true }
-				});
-				if (found) break;
+			// Every project answering to the key is read: a derived key two projects share (`Gauzy`, `Gauzy Teams`),
+			// or a former key that is now another project's, must not open whichever task the store listed first.
+			const matches =
+				candidates.length === 0
+					? []
+					: await this.typeOrmRepository.find({
+							where: { tenantId, organizationId, projectId: In(candidates.map((project) => project.id)), number: parts.number },
+							select: { id: true, title: true, status: true, projectId: true }
+						});
+			if (matches.length > 1) {
+				resolutions.push({ reference, key: parts.key, number: parts.number, resolved: false, ambiguous: true });
+				continue;
 			}
+			const found = matches[0] ?? null;
 			if (!found) {
 				resolutions.push({ reference, key: parts.key, number: parts.number, resolved: false });
 				continue;
@@ -2617,7 +2623,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			return { items: [], total: 0 };
 		}
 		const tenantId = RequestContext.currentTenantId() ?? query.tenantId;
-		const organizationId = query.organizationId;
+		const organizationId = organizationIdOf(query);
 		const window = builtInViewWindow(key, new Date(), query.timeZone);
 		const where: FindOptionsWhere<Task> = {
 			tenantId,
@@ -2632,15 +2638,26 @@ export class TaskService extends TenantAwareCrudService<Task> {
 		} else if (window.dueDateTo) {
 			where.dueDate = LessThanOrEqual(window.dueDateTo);
 		}
-		if (window.openOnly) {
-			where.status = Not(In([TaskStatusEnum.DONE, TaskStatusEnum.COMPLETED, TaskStatusEnum.CANCELLED]));
-		}
+		// A task whose status is unset is still open: `NOT IN` alone would drop it (SQL `NOT IN` never matches NULL).
+		const closed = [TaskStatusEnum.DONE, TaskStatusEnum.COMPLETED, TaskStatusEnum.CANCELLED];
+		const wheres: FindOptionsWhere<Task>[] = window.openOnly
+			? [
+					{ ...where, status: Not(In(closed)) },
+					{ ...where, status: IsNull() }
+				]
+			: [where];
 		const take = Math.min(Math.max(Number(query.take) || 50, 1), 200);
 		const skip = Math.max(Number(query.skip) || 0, 0);
-		const requested = Array.isArray(query.relations) && query.relations.length > 0 ? query.relations : ['members', 'members.user', 'tags', 'project', 'taskStatus', 'taskPriority', 'taskSize'];
+		const requested = Array.isArray(query.relations) && query.relations.length > 0 ? query.relations : [...BUILT_IN_VIEW_DEFAULT_RELATIONS];
+		const refused = requested.filter((name) => !BUILT_IN_VIEW_RELATIONS.has(String(name)));
+		if (refused.length > 0) {
+			throw new BadRequestException(`RELATION_NOT_ALLOWED: a built-in view does not load ${refused.join(', ')}.`);
+		}
 		const relations = relationsTreeOf(requested) as FindOptionsRelations<Task>;
+		// The platform's sensitive-relation table applies here as on every other read (tracked time, for one).
+		this.assertRelationsPermitted({ relations });
 		const [items, total] = await this.typeOrmRepository.findAndCount({
-			where,
+			where: wheres,
 			relations,
 			order: { dueDate: 'ASC', createdAt: 'DESC' },
 			take,
@@ -2648,4 +2665,17 @@ export class TaskService extends TenantAwareCrudService<Task> {
 		});
 		return { items, total };
 	}
+}
+
+/**
+ * The organization a request names, in either form the base DTO accepts (`organizationId`, or `organization.id`,
+ * both checked against the caller's memberships by the DTO). Required: without one, a read scoped by the tenant
+ * alone would reach every organization of the tenant.
+ */
+function organizationIdOf(input: { organizationId?: ID; organization?: { id?: ID } | null }): ID {
+	const organizationId = input.organizationId ?? input.organization?.id;
+	if (!organizationId) {
+		throw new BadRequestException('ORGANIZATION_REQUIRED: state the organization of the request.');
+	}
+	return organizationId;
 }

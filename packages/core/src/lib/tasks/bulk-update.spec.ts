@@ -88,4 +88,10 @@ describe('relationsTreeOf', () => {
 			project: { organization: true }
 		});
 	});
+
+	it('refuses a segment that names the prototype and leaves shared objects alone', () => {
+		expect(() => relationsTreeOf(['__proto__.polluted'])).toThrow(/not a relation/);
+		expect(() => relationsTreeOf(['constructor.prototype.polluted'])).toThrow(/not a relation/);
+		expect(({} as Record<string, unknown>)['polluted']).toBeUndefined();
+	});
 });

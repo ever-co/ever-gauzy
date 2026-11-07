@@ -46,7 +46,7 @@ import {
 	ProjectStatusEnum,
 	TaskListTypeEnum
 } from '@gauzy/contracts';
-import { isMySQL, isPostgres } from '@gauzy/config';
+import { isMySQL } from '@gauzy/config';
 import {
 	Activity,
 	Employee,
@@ -74,6 +74,7 @@ import {
 import {
 	ColumnIndex,
 	EmbeddedColumn,
+	JsonArrayColumn,
 	MultiORMColumn,
 	MultiORMEntity,
 	MultiORMManyToMany,
@@ -165,7 +166,7 @@ export class OrganizationProject
 	@ApiPropertyOptional({ type: () => Array })
 	@IsOptional()
 	@IsArray()
-	@MultiORMColumn({ type: isPostgres() ? 'jsonb' : isMySQL() ? 'json' : 'text', nullable: true })
+	@JsonArrayColumn<string>({ nullable: true })
 	taskKeyHistory?: string[] | null;
 
 	@ApiPropertyOptional({ type: () => String })

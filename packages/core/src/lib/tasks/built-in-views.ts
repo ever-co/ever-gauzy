@@ -102,23 +102,52 @@ export function builtInViewWindow(key: TaskBuiltInViewEnum, now: Date, timeZone 
 	}
 }
 
-/** Dotted relation names (`members.user`) as the nested object the repository takes. */
+/** The relations a built-in view may load: what a task list shows, never tracked time or billing. */
+export const BUILT_IN_VIEW_RELATIONS: ReadonlySet<string> = new Set([
+	'members',
+	'members.user',
+	'tags',
+	'project',
+	'organizationSprint',
+	'parent',
+	'teams',
+	'modules',
+	'taskStatus',
+	'taskPriority',
+	'taskSize',
+	'taskType'
+]);
+
+/** What a built-in view loads when the caller names nothing. */
+export const BUILT_IN_VIEW_DEFAULT_RELATIONS: readonly string[] = ['members', 'members.user', 'tags', 'project', 'taskStatus', 'taskPriority', 'taskSize'];
+
+/** Segments that would reach an object's prototype rather than a relation. */
+const FORBIDDEN_SEGMENTS = new Set(['__proto__', 'constructor', 'prototype']);
+
+/**
+ * Dotted relation names (`members.user`) as the nested object the repository takes. The tree is built from
+ * prototype-less objects and a segment that names the prototype is refused, so a crafted name cannot change
+ * shared object state.
+ */
 export function relationsTreeOf(names: readonly string[]): Record<string, unknown> {
-	const tree: Record<string, unknown> = {};
+	const tree: Record<string, unknown> = Object.create(null);
 	for (const name of names) {
 		const parts = String(name)
 			.split('.')
 			.map((part) => part.trim())
 			.filter(Boolean);
+		if (parts.some((part) => FORBIDDEN_SEGMENTS.has(part))) {
+			throw new Error(`RELATION_NOT_ALLOWED: "${name}" is not a relation.`);
+		}
 		let node = tree;
 		parts.forEach((part, index) => {
 			const isLeaf = index === parts.length - 1;
-			const current = node[part];
+			const current = Object.prototype.hasOwnProperty.call(node, part) ? node[part] : undefined;
 			if (isLeaf) {
 				if (current === undefined) node[part] = true;
 				return;
 			}
-			if (typeof current !== 'object' || current === null) node[part] = {};
+			if (typeof current !== 'object' || current === null) node[part] = Object.create(null);
 			node = node[part] as Record<string, unknown>;
 		});
 	}

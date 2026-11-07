@@ -198,6 +198,12 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 			return project;
 		} catch (error) {
 			// Handle errors and return an appropriate error response
+			if (error instanceof ConflictException) {
+				throw error;
+			}
+			if (isProjectKeyConflict(error)) {
+				throw new ConflictException('PROJECT_KEY_TAKEN: another project of the organization holds that key.');
+			}
 			throw new HttpException(`Failed to create organization project: ${error.message}`, HttpStatus.BAD_REQUEST);
 		}
 	}
@@ -288,6 +294,12 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 			return updatedProject;
 		} catch (error) {
 			// Handle errors and return an appropriate error response
+			if (error instanceof ConflictException) {
+				throw error;
+			}
+			if (isProjectKeyConflict(error)) {
+				throw new ConflictException('PROJECT_KEY_TAKEN: another project of the organization holds that key.');
+			}
 			throw new HttpException(`Failed to update organization project: ${error.message}`, HttpStatus.BAD_REQUEST);
 		}
 	}
@@ -1085,4 +1097,17 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 			);
 		}
 	}
+}
+
+/**
+ * Whether a save was refused by the unique index on the project key (two concurrent saves that both found the key
+ * free): Postgres `23505`, MySQL `ER_DUP_ENTRY`, SQLite's constraint error, each naming the index or the column.
+ */
+export function isProjectKeyConflict(error: unknown): boolean {
+	const candidate = error as { code?: string | number; message?: string; driverError?: { code?: string | number; message?: string } } | null;
+	const codes = [candidate?.code, candidate?.driverError?.code].map((code) => String(code ?? ''));
+	const message = `${candidate?.message ?? ''} ${candidate?.driverError?.message ?? ''}`;
+	const isUniqueViolation =
+		codes.includes('23505') || codes.includes('ER_DUP_ENTRY') || codes.includes('1062') || codes.some((code) => code.startsWith('SQLITE_CONSTRAINT'));
+	return isUniqueViolation && /UQ_organization_project_organization_task_key|taskKey/i.test(message);
 }

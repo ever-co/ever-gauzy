@@ -249,6 +249,8 @@ export interface ITaskReferenceResolution {
 	key: string;
 	number: number;
 	resolved: boolean;
+	/** More than one project answers to the key with that number: refused rather than guessed. */
+	ambiguous?: boolean;
 	taskId?: ID;
 	projectId?: ID;
 	title?: string;
