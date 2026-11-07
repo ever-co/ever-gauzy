@@ -1,4 +1,4 @@
-import { isTrelloConfigured, readTrelloConfig, trelloWebhooksEnabled, trelloWebhookTargetOf } from './trello-config';
+import { isTrelloConfigured, readTrelloConfig, trelloImportIntervalOf, trelloWebhooksEnabled, trelloWebhookTargetOf } from './trello-config';
 
 describe('readTrelloConfig', () => {
 	it('derives the return page and the webhook target from the platform URLs', () => {
@@ -14,6 +14,16 @@ describe('readTrelloConfig', () => {
 		expect(trelloWebhooksEnabled(config)).toBe(true);
 		expect(trelloWebhookTargetOf(config, 'm-1')).toBe('https://api.example.com/api/integration/trello/webhook/m-1');
 		expect(isTrelloConfigured(config)).toBe(true);
+	});
+
+	it('reads the import interval as whole minutes, 0 switching the scheduled import off, and keeps the default otherwise', () => {
+		const warn = jest.fn();
+		expect(readTrelloConfig({}).importIntervalMinutes).toBe(15);
+		expect(readTrelloConfig({ TRELLO_IMPORT_INTERVAL_MINUTES: ' 30 ' }).importIntervalMinutes).toBe(30);
+		expect(readTrelloConfig({ TRELLO_IMPORT_INTERVAL_MINUTES: '0' }).importIntervalMinutes).toBe(0);
+		expect(trelloImportIntervalOf('1.5', warn)).toBe(15);
+		expect(trelloImportIntervalOf('-5', warn)).toBe(15);
+		expect(warn).toHaveBeenCalledTimes(2);
 	});
 
 	it('prefers the explicit URLs, refuses unusable ones, and registers no webhook without a secret or a public address', () => {

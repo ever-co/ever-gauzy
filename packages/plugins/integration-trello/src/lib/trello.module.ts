@@ -26,6 +26,7 @@ import { TRELLO_CONFIG } from './trello.constants';
 import { TrelloLifecycle } from './trello.lifecycle';
 import { TrelloEventSubscriber } from './sync/trello-event.subscriber';
 import { TrelloSyncService } from './sync/trello-sync.service';
+import { TrelloImportSweepService } from './maintenance/trello-import-sweep.service';
 
 /** Every table the plugin owns (its migration creates them). */
 export const TRELLO_ENTITIES = [TrelloBoardMapping, TrelloSyncRun];
@@ -60,6 +61,7 @@ export const TRELLO_ENTITIES = [TrelloBoardMapping, TrelloSyncRun];
 		TrelloMappingService,
 		TrelloSyncRunService,
 		TrelloSyncService,
+		TrelloImportSweepService,
 		TrelloEventSubscriber,
 		TypeOrmTrelloBoardMappingRepository,
 		MikroOrmTrelloBoardMappingRepository,
@@ -73,6 +75,6 @@ export const TRELLO_ENTITIES = [TrelloBoardMapping, TrelloSyncRun];
 			}
 		}
 	],
-	exports: [TrelloCatalogService, TrelloTenantService, TrelloMappingService, TrelloSyncService, TRELLO_CONFIG]
+	exports: [TrelloCatalogService, TrelloTenantService, TrelloMappingService, TrelloSyncService, TrelloImportSweepService, TRELLO_CONFIG]
 })
 export class TrelloModule {}

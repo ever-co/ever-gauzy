@@ -1,4 +1,4 @@
-import { TRELLO_API_URL, TRELLO_DEFAULT_APP_NAME, TRELLO_ROUTE_PREFIX } from './trello.constants';
+import { TRELLO_API_URL, TRELLO_IMPORT_INTERVAL_MINUTES_DEFAULT, TRELLO_DEFAULT_APP_NAME, TRELLO_ROUTE_PREFIX } from './trello.constants';
 
 /** What the operator configured for the Trello integration. */
 export interface TrelloConfig {
@@ -21,6 +21,12 @@ export interface TrelloConfig {
 	 * `/api/integration/trello/webhook/:mappingId`. `null` = no webhooks are registered.
 	 */
 	webhookBaseUrl: string | null;
+	/**
+	 * How many minutes apart the worker imports the changes of each inbound mapping (`TRELLO_IMPORT_INTERVAL_MINUTES`,
+	 * {@link TRELLO_IMPORT_INTERVAL_MINUTES_DEFAULT} by default); `0` switches the scheduled import off. A mapping with a live webhook
+	 * (`webhookId`) is swept every fourth interval instead.
+	 */
+	importIntervalMinutes: number;
 	/** Trello's REST endpoint (`TRELLO_API_URL`, for a test double); the public one by default. */
 	apiUrl: string;
 }
@@ -61,8 +67,20 @@ export function readTrelloConfig(
 		appName: env['TRELLO_APP_NAME']?.trim() || TRELLO_DEFAULT_APP_NAME,
 		returnUrl,
 		webhookBaseUrl,
-		apiUrl: normaliseTrelloUrl(env['TRELLO_API_URL'], 'TRELLO_API_URL', warn) ?? TRELLO_API_URL
+		apiUrl: normaliseTrelloUrl(env['TRELLO_API_URL'], 'TRELLO_API_URL', warn) ?? TRELLO_API_URL,
+		importIntervalMinutes: trelloImportIntervalOf(env['TRELLO_IMPORT_INTERVAL_MINUTES'], warn)
 	};
+}
+
+/** A whole number of minutes (`0` = off); unset is the default, anything else is reported once and the default is used. */
+export function trelloImportIntervalOf(raw: string | undefined, warn: (message: string) => void): number {
+	const value = raw?.trim();
+	if (!value) return TRELLO_IMPORT_INTERVAL_MINUTES_DEFAULT;
+	if (!/^\d+$/.test(value)) {
+		warn(`TRELLO_IMPORT_INTERVAL_MINUTES is not a whole number of minutes; the default (${TRELLO_IMPORT_INTERVAL_MINUTES_DEFAULT}) is used.`);
+		return TRELLO_IMPORT_INTERVAL_MINUTES_DEFAULT;
+	}
+	return Number(value);
 }
 
 /** Whether a person can connect: the application's key and the page Trello returns to are known. */

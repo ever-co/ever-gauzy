@@ -18,6 +18,7 @@ Off by default. The plugin is loaded only when `TRELLO_ENABLED=true` (exactly); 
 | `TRELLO_APP_NAME` | The name Trello shows on its authorize page. Default: `Ever Gauzy`. |
 | `TRELLO_RETURN_URL` | The page Trello sends the person back to with the token. Default: `CLIENT_BASE_URL` + `/#/pages/integrations/trello`. |
 | `TRELLO_WEBHOOK_BASE_URL` | The public address Trello delivers webhooks to (default `API_BASE_URL`). |
+| `TRELLO_IMPORT_INTERVAL_MINUTES` | How many minutes apart the worker imports the changes of each inbound mapping (default `15`; `0` switches the scheduled import off). A mapping with a live webhook (`webhookId`) is swept every fourth interval instead. |
 | `TRELLO_API_URL` | Trello's REST endpoint; only for a test double. |
 
 ## How it works
@@ -47,6 +48,13 @@ Off by default. The plugin is loaded only when `TRELLO_ENABLED=true` (exactly); 
   name matches), labels as tags. A card that could not be applied keeps the import position. A card two mapped
   boards share belongs to the mapping that imported it first. List and status names compare by key: case
   ignored, spaces as hyphens (`In Progress` is `in-progress`). `GET …/runs` lists the runs.
+- **Scheduled import.** Every five minutes the worker process (`apps/worker`, the one whose scheduler root is
+  enabled) sweeps the mappings that bring cards in: one whose last import is older than
+  `TRELLO_IMPORT_INTERVAL_MINUTES` (or that was never imported) is imported again, the changes since its position,
+  the longest waiting first and at most fifty per sweep. A mapping with a live webhook (`webhookId`) is swept every fourth interval instead, a reconcile
+  against deliveries that were missed. The sweep takes the same claim "import now" takes (one import per mapping
+  at a time), opens each tenant's own request context, and leaves a connection whose token was refused to the
+  person who must reconnect it. Registered only where a queue root exists; `0` switches it off.
 - **Outbound.** When a mapping is `outbound` or `both`, a platform task created or changed updates its card (name,
   description, due date, done by status, and the list the status maps to) or creates one in that list (else the
   board's first). Tasks kept out of third-party sync are never sent; the sync's own inbound writes raise no

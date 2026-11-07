@@ -1,7 +1,10 @@
 import { ApplicationPluginConfig } from '@gauzy/common';
 import { GauzyCorePlugin as Plugin, IOnPluginBootstrap, IOnPluginDestroy } from '@gauzy/plugin';
+import { isSchedulerQueueRootEnabled } from '@gauzy/scheduler';
 import { CreateIntegrationTrelloTables1791000005100 } from './database/migrations/1791000005100-CreateIntegrationTrelloTables';
 import { TRELLO_ENTITIES, TrelloModule } from './trello.module';
+import { readTrelloConfig } from './trello-config';
+import { TrelloMaintenanceModule } from './maintenance/trello-maintenance.module';
 
 /** The plugin's migrations, oldest first (ordered with the platform's by their timestamps). */
 export const TRELLO_MIGRATIONS = [CreateIntegrationTrelloTables1791000005100];
@@ -16,7 +19,10 @@ export const TRELLO_MIGRATIONS = [CreateIntegrationTrelloTables1791000005100];
  * outbound request.
  */
 @Plugin({
-	imports: [TrelloModule],
+	// The scheduled import travels on a queue, so it is registered only where a queue root exists (the worker
+	// process, or an API with `REDIS_ENABLED`); an operator switches it off with `TRELLO_IMPORT_INTERVAL_MINUTES=0`.
+	// Without it the integration is whole: webhooks and "import now" need no schedule.
+	imports: [TrelloModule, ...(isSchedulerQueueRootEnabled() && readTrelloConfig(process.env).importIntervalMinutes > 0 ? [TrelloMaintenanceModule] : [])],
 	entities: [...TRELLO_ENTITIES],
 	migrations: [...TRELLO_MIGRATIONS],
 	configuration: (config: ApplicationPluginConfig) => config

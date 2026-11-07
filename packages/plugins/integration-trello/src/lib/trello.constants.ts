@@ -43,6 +43,19 @@ export const TRELLO_CARDS_PAGE_SIZE = 1000;
 /** How many applies may hold a transaction (and its pool connection) at once in one process. */
 export const TRELLO_APPLY_CONCURRENCY = 4;
 
+/** The queue the scheduled import sweep travels on, the schedule that asks for it, and the queue job it runs as. */
+export const TRELLO_QUEUE_NAME = 'integration-trello';
+export const TRELLO_IMPORT_SWEEP_SCHEDULE = 'integration-trello-import-sweep';
+export const TRELLO_IMPORT_SWEEP_JOB = 'integration-trello.import-due';
+/** The default of `TRELLO_IMPORT_INTERVAL_MINUTES`: how many minutes apart a mapping's changes are imported. */
+export const TRELLO_IMPORT_INTERVAL_MINUTES_DEFAULT = 15;
+/** How many mappings one sweep imports at most (the longest waiting first; the rest wait for the next sweep). */
+export const TRELLO_IMPORT_SWEEP_BATCH = 50;
+/** A mapping with a live webhook is swept this many intervals apart: a reconcile of missed deliveries, not a second feed. */
+export const TRELLO_IMPORT_WEBHOOK_STRIDE = 4;
+/** A mapping counts as due this long before its interval is up, so one imported right after a sweep does not slip a whole sweep. */
+export const TRELLO_IMPORT_SWEEP_SLACK_MS = 60_000;
+
 /** Error codes the routes answer with (`{ message, code }`). */
 export const TRELLO_NOT_CONFIGURED = 'TRELLO_NOT_CONFIGURED';
 export const TRELLO_NOT_CONNECTED = 'TRELLO_NOT_CONNECTED';
