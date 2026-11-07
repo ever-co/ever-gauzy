@@ -40,14 +40,17 @@ export class GauzyLogoComponent implements AfterViewInit, OnInit, OnDestroy {
 	private tenantLogoFailed = false;
 
 	get hasTenantLogo(): boolean {
-		return !!this.tenantLogo && this.tenantLogo !== DEFAULT_SVG && !this.tenantLogoFailed;
+		const logo = (this.tenantLogo || '').replace(/^\/+/, '');
+		return !!logo && logo !== DEFAULT_SVG && !this.tenantLogoFailed;
 	}
 
 	get tenantInitials(): string {
 		const words = (this.tenantName || '').trim().split(/\s+/).filter(Boolean);
-		if (!words.length) return '';
-		const letters = words.length > 1 ? words[0][0] + words[1][0] : words[0].slice(0, 1);
-		return letters.toUpperCase();
+		return words
+			.slice(0, 2)
+			.map((word) => Array.from(word)[0])
+			.join('')
+			.toUpperCase();
 	}
 
 	onTenantLogoError(): void {
