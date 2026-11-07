@@ -317,7 +317,12 @@ function dateRangeVars() {
  */
 async function setupDailyPlans(ctx) {
 	const wanted = Number(env.SETUP_DAILY_PLANS || 0);
-	if (!wanted || !ctx.vars.teamId) return undefined;
+	if (!wanted) return undefined;
+	// A requested setup that cannot start is still reported, so the run is marked degraded rather than complete.
+	if (!ctx.vars.teamId) {
+		console.warn('  setup: no team resolved, daily plans not created');
+		return { wanted, had: 0, created: 0, plans: 0, degraded: true, reason: 'teamId unavailable' };
+	}
 	const { tenantId, organizationId, employeeId, teamId } = ctx.vars;
 	// `/daily-plan/me` reads the plans of the SIGNED-IN user's employee; plans made for another employee would
 	// never be read by the benchmark.
@@ -417,7 +422,13 @@ async function setupTimeLogs(ctx) {
 		{ wanted: Number(env.SETUP_TIME_LOGS || 0), hours: 1, startHours: [9, 14], label: 'one-hour' },
 		{ wanted: Number(env.SETUP_LONG_TIME_LOGS || 0), hours: 3, startHours: [18, 0], label: 'three-hour' }
 	].filter((plan) => plan.wanted > 0);
-	if (!plans.length || !ctx.vars.teamId) return undefined;
+	if (!plans.length) return undefined;
+	if (!ctx.vars.teamId) {
+		console.warn('  setup: no team resolved, time logs not created');
+		return Object.fromEntries(
+			plans.map((plan) => [plan.label, { wanted: plan.wanted, had: 0, created: 0, degraded: true, reason: 'teamId unavailable' }])
+		);
+	}
 	if (!ctx.employeeOfUser) {
 		throw new Error('SETUP_TIME_LOGS needs a sign-in with an employee record (the timer reads answer "my" logs)');
 	}
