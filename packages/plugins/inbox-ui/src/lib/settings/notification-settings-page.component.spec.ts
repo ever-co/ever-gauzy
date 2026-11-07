@@ -1,3 +1,4 @@
+import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { of, Subject, throwError } from 'rxjs';
@@ -19,7 +20,7 @@ describe('InboxNotificationSettingsPageComponent', () => {
 			providers: [
 				{ provide: InboxNotificationSettingsService, useValue: api },
 				{ provide: ToastrService, useValue: toastr },
-				{ provide: TranslateService, useValue: { currentLang: 'en', instant: (key: string) => key, get: (key: string) => of(key), onLangChange: of(), onTranslationChange: of(), onDefaultLangChange: of() } },
+				{ provide: TranslateService, useValue: { currentLang: 'en', getCurrentLang: () => 'en', instant: (key: string) => key, translate: (key: string) => signal(key), get: (key: string) => of(key), onLangChange: of(), onTranslationChange: of(), onDefaultLangChange: of() } },
 				{
 					provide: Store,
 					useValue: {

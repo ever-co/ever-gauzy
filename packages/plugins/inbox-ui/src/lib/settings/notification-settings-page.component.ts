@@ -141,7 +141,7 @@ export class InboxNotificationSettingsPageComponent implements OnInit {
 	}
 
 	hourLabel(hour: number): string {
-		return hourLabelOf(hour, this.translate.currentLang);
+		return hourLabelOf(hour, this.translate.getCurrentLang());
 	}
 
 	setKind(key: NotificationSettingKey, isOn: boolean): void {
