@@ -369,6 +369,7 @@ async function setupDailyPlans(ctx) {
 	const TASKS_PER_PLAN = 3;
 	let tasksAssigned = 0;
 	let assignmentsRefused = 0;
+	let short = 0;
 	const readBack = await request(
 		'GET',
 		`/daily-plan/me?where[organizationId]=${organizationId}&where[tenantId]=${tenantId}&where[organizationTeamId]=${teamId}&relations[0]=tasks`,
@@ -391,12 +392,12 @@ async function setupDailyPlans(ctx) {
 			held.add(taskId);
 			tasksAssigned++;
 		}
+		if (held.size < TASKS_PER_PLAN) short++;
 	}
-	const short = plans.filter((plan) => (plan.tasks?.length ?? 0) + TASKS_PER_PLAN < TASKS_PER_PLAN).length;
 	console.log(
 		`  setup: ${created} daily plan(s) created for the bench employee (had ${have}, wanted ${wanted}); ${tasksAssigned} task(s) assigned, ${assignmentsRefused} refused; ${plans.length} plan(s) read back${short ? `, ${short} still short of ${TASKS_PER_PLAN} tasks` : ''}`
 	);
-	if (plans.length < wanted || assignmentsRefused) {
+	if (plans.length < wanted || assignmentsRefused || short) {
 		console.warn('  setup: the daily-plan benchmarks measure fewer plans or task relations than intended');
 	}
 }

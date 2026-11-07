@@ -130,22 +130,28 @@ export class PublicTeamService {
 			where: {
 				public: true,
 				...params
-			},
-			...(options.relations
-				? {
-						relations: parseFindOptionsRelations(options.relations),
-						// One query per relation rather than joins: the Teams app asks for `tasks`, `tasks.members`,
-						// `tasks.teams`, `tasks.tags`, `members`, `members.employee.user` on every public team page, and
-						// joined onto one another those multiplied the team into one row per (task × assignee × tag ×
-						// team member) — thousands of wide rows for a team of 113 tasks and 11 members, 2.4–10 s on
-						// production for a 400 KB answer. The `select` above still applies to each relation.
-						relationLoadStrategy: 'query' as const
-				  }
-				: {})
+			}
 		};
+
+		// One query per relation rather than joins: the Teams app asks for `tasks`, `tasks.members`, `tasks.teams`,
+		// `tasks.tags`, `members`, `members.employee.user` on every public team page, and joined onto one another those
+		// multiplied the team into one row per (task × assignee × tag × team member) — thousands of wide rows for a
+		// team of 113 tasks and 11 members, 2.4–10 s on production for a 400 KB answer. The team's own relations load
+		// with `relationLoadStrategy: 'query'` (the `select` above still applies to each); the tasks are read from
+		// their own side (`loadPublicTasks`), because a team's `tasks` is the inverse side of the many-to-many and
+		// TypeORM's query strategy answers an inverse side empty.
+		const { teamRelations, taskRelations } = PublicTeamService.splitTaskRelations(options.relations);
+		if (teamRelations.length > 0) {
+			findOptions.relations = parseFindOptionsRelations(teamRelations);
+			findOptions.relationLoadStrategy = 'query';
+		}
 
 		try {
 			const team = await this.typeOrmOrganizationTeamRepository.findOneOrFail(findOptions);
+
+			if (taskRelations) {
+				team.tasks = await this.loadPublicTasks(team.id, taskRelations);
+			}
 
 			if (team.tasks) {
 				team.tasks = team.tasks.filter(isPubliclyVisibleTask);
@@ -168,6 +174,39 @@ export class PublicTeamService {
 		} catch (error) {
 			throw new NotFoundException('Organization team not found');
 		}
+	}
+
+	/**
+	 * The requested relations, split into the team's own and the tasks': `tasks` and everything under it
+	 * (`tasks.members` → `members`), or `undefined` when the tasks are not asked for.
+	 *
+	 * @param relations - The relations the request names, if any.
+	 */
+	private static splitTaskRelations(relations: string[] | undefined): {
+		teamRelations: string[];
+		taskRelations: string[] | undefined;
+	} {
+		const requested = relations ?? [];
+		const teamRelations = requested.filter((relation) => relation !== 'tasks' && !relation.startsWith('tasks.'));
+		const taskRelations = requested.includes('tasks')
+			? requested.filter((relation) => relation.startsWith('tasks.')).map((relation) => relation.slice('tasks.'.length))
+			: undefined;
+		return { teamRelations, taskRelations };
+	}
+
+	/**
+	 * The tasks of a team with the relations asked for under `tasks`, read from the task's side: `members`, `teams`
+	 * and `tags` are owned there (`@JoinTable`), where the query strategy answers them.
+	 *
+	 * @param teamId - The team.
+	 * @param relations - The relations under `tasks`, as sent (`members.user`).
+	 */
+	private async loadPublicTasks(teamId: string, relations: string[]): Promise<ITask[]> {
+		return (await this.typeOrmOrganizationTeamRepository.manager.find(Task, {
+			where: { teams: { id: teamId } },
+			...(relations.length > 0 ? { relations: parseFindOptionsRelations(relations) } : {}),
+			relationLoadStrategy: 'query'
+		})) as ITask[];
 	}
 
 	/**

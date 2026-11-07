@@ -83,8 +83,12 @@ describe('PublicTeamService.findOneByProfileLink — task assignees', () => {
 
 	/** The service over a team the repository answers as given. */
 	const read = async (team: Record<string, unknown>) => {
+		// The team's tasks are read from their own side (`manager.find(Task, { where: { teams: { id } } })`).
 		const service = new PublicTeamService(
-			{ findOneOrFail: jest.fn(async () => team) } as any,
+			{
+				findOneOrFail: jest.fn(async () => team),
+				manager: { find: jest.fn(async () => structuredClone(team.tasks ?? [])) }
+			} as any,
 			{} as any,
 			{} as any
 		);
@@ -146,30 +150,42 @@ describe('PublicTeamService.findOneByProfileLink — task assignees', () => {
 		expect(FINANCIAL_FIELDS.filter((field) => field in assignee)).toEqual(fields);
 	});
 
-	it('answers a team without tasks, and a task without members, as they are', async () => {
-		await expect(read({ id: 'team-1' })).resolves.toEqual({ id: 'team-1' });
+	it('answers a team without tasks (an empty list, as the relation is asked for), and a task without members, as they are', async () => {
+		await expect(read({ id: 'team-1' })).resolves.toEqual({ id: 'team-1', tasks: [] });
 
 		const team = await read({ id: 'team-1', tasks: [{ id: 'task-1' }, { id: 'task-2', members: [] }] });
 		expect(team.tasks).toEqual([{ id: 'task-1' }, { id: 'task-2', members: [] }]);
 	});
 
-	it('loads the requested relations with one query per relation, not joined onto the team row', async () => {
+	it('loads the team’s relations with one query each, and the tasks with theirs from the task’s side', async () => {
 		const findOneOrFail = jest.fn(async (_options: Record<string, unknown>) => ({ id: 'team-1' }));
-		const service = new PublicTeamService({ findOneOrFail } as any, {} as any, {} as any);
+		const find = jest.fn(async (_entity: unknown, _options: Record<string, unknown>) => [{ id: 'task-1' }]);
+		const service = new PublicTeamService({ findOneOrFail, manager: { find } } as any, {} as any, {} as any);
 
-		await service.findOneByProfileLink({ profile_link: 'team-link', id: 'team-1' } as any, {
-			relations: ['tasks', 'tasks.members', 'members', 'members.employee.user']
+		const team = await service.findOneByProfileLink({ profile_link: 'team-link', id: 'team-1' } as any, {
+			relations: ['tasks', 'tasks.members', 'tasks.members.user', 'members', 'members.employee.user']
 		} as any);
 
 		expect(findOneOrFail).toHaveBeenCalledWith(
 			expect.objectContaining({
-				relations: { tasks: { members: true }, members: { employee: { user: true } } },
+				relations: { members: { employee: { user: true } } },
 				relationLoadStrategy: 'query'
 			})
 		);
+		expect(findOneOrFail.mock.calls[0][0].relations).not.toHaveProperty('tasks');
+		// A team's `tasks` is the inverse side of the many-to-many, which the query strategy answers empty: the
+		// tasks are read from their own side, where `members`, `teams` and `tags` are owned.
+		expect(find).toHaveBeenCalledWith(expect.anything(), {
+			where: { teams: { id: 'team-1' } },
+			relations: { members: { user: true } },
+			relationLoadStrategy: 'query'
+		});
+		expect(team.tasks).toEqual([{ id: 'task-1' }]);
 
 		findOneOrFail.mockClear();
+		find.mockClear();
 		await service.findOneByProfileLink({ profile_link: 'team-link', id: 'team-1' } as any, {} as any);
 		expect(findOneOrFail.mock.calls[0][0]).not.toHaveProperty('relationLoadStrategy');
+		expect(find).not.toHaveBeenCalled();
 	});
 });

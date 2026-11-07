@@ -34,9 +34,13 @@ type PlanSummary = {
 type Measured = {
 	mine: { items: PlanSummary[]; total: number; statements: string[] };
 	minePage: { items: PlanSummary[]; total: number };
+	mineHoldingTask: { items: PlanSummary[]; total: number; statements: string[] };
+	mineHoldingTaskPage: { items: PlanSummary[]; total: number };
 	team: { items: PlanSummary[]; total: number; statements: string[] };
 	teamPlain: { items: PlanSummary[]; total: number };
+	teamPage: { items: PlanSummary[]; total: number };
 	byTask: { items: PlanSummary[]; total: number; statements: string[] };
+	byTaskPage: { items: PlanSummary[]; total: number };
 };
 
 const summarize = (plan: any): PlanSummary => ({
@@ -189,9 +193,24 @@ async function measure(): Promise<Measured> {
 			measured.minePage = await read(() =>
 				service.getMyPlans({ where, relations: TEAMS_RELATIONS, take: 1, skip: 2 } as any)
 			);
+			// A condition on a relation (the plans holding T2) with the relations requested: TypeORM joins the
+			// task for the condition, the relations still load by their own queries.
+			const holdingTask = { ...where, tasks: { id: TASKS[1] } };
+			measured.mineHoldingTask = await read(() =>
+				service.getMyPlans({ where: holdingTask, relations: TEAMS_RELATIONS } as any)
+			);
+			measured.mineHoldingTaskPage = await read(() =>
+				service.getMyPlans({ where: holdingTask, relations: TEAMS_RELATIONS, take: 1, skip: 1 } as any)
+			);
 			measured.team = await read(() => service.getTeamDailyPlans({ where, relations: ['tasks'] } as any));
 			measured.teamPlain = await read(() => service.getTeamDailyPlans({ where } as any));
+			measured.teamPage = await read(() =>
+				service.getTeamDailyPlans({ where, relations: TEAMS_RELATIONS, take: 2, skip: 2 } as any)
+			);
 			measured.byTask = await read(() => service.getDailyPlansByTask({ where } as any, TASKS[1]));
+			measured.byTaskPage = await read(() =>
+				service.getDailyPlansByTask({ where, take: 1, skip: 2 } as any, TASKS[1])
+			);
 		});
 	} finally {
 		jest.restoreAllMocks();
@@ -276,6 +295,38 @@ describe('DailyPlanService lists on SQLite — relations loaded per query', () =
 		expect(measured.byTask.total).toBe(2);
 		expect(measured.byTask.items.map(({ id, owner, tasks }) => [id, owner, tasks.map((task) => task.id)]).sort()).toEqual([
 			[PLANS[0], 'Ada', [TASKS[0], TASKS[1]]],
+			[PLANS[1], 'Ada', [TASKS[1], TASKS[2]]]
+		]);
+	});
+
+	it('filters my plans on a task they hold, once each, with the relations filled in — and pages them', () => {
+		expect(measured.mineHoldingTask.total).toBe(2);
+		expect(measured.mineHoldingTask.items.map(({ id, tasks }) => [id, tasks.map((task) => task.id)]).sort()).toEqual(
+			[
+				[PLANS[0], [TASKS[0], TASKS[1]]],
+				[PLANS[1], [TASKS[1], TASKS[2]]]
+			]
+		);
+		expect(measured.mineHoldingTask.items.every(({ owner }) => owner === 'Ada')).toBe(true);
+		// The condition on `tasks` gets its one join from TypeORM; the assignees are never joined onto the plans.
+		expect(
+			measured.mineHoldingTask.statements.filter((sql) => /FROM "daily_plan"/.test(sql) && /JOIN "task_employee"/.test(sql))
+		).toEqual([]);
+
+		expect(measured.mineHoldingTaskPage.total).toBe(2);
+		expect(measured.mineHoldingTaskPage.items.map(({ id, owner, tasks }) => [id, owner, tasks.length])).toEqual([
+			[PLANS[0], 'Ada', 2]
+		]);
+	});
+
+	it('pages the team’s plans and the plans of a task with the relations filled in and the full totals', () => {
+		expect(measured.teamPage.total).toBe(3);
+		expect(measured.teamPage.items.map(({ id, owner, tasks }) => [id, owner, tasks.map((task) => task.id)])).toEqual([
+			[PLANS[1], 'Ada', [TASKS[1], TASKS[2]]]
+		]);
+
+		expect(measured.byTaskPage.total).toBe(2);
+		expect(measured.byTaskPage.items.map(({ id, owner, tasks }) => [id, owner, tasks.map((task) => task.id)])).toEqual([
 			[PLANS[1], 'Ada', [TASKS[1], TASKS[2]]]
 		]);
 	});
