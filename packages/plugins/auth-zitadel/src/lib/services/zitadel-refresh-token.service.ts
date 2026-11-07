@@ -298,6 +298,11 @@ export class ZitadelRefreshTokenService implements EverIdSessionTokensPort, OnMo
 				await this.sessions.update({ sid, isActive: true }, { everRefreshTokenEncrypted: sealed });
 			}
 		}
+		if (!(await this.keptRow(sid))) {
+			// The session ended while the refresh was in flight: its token is never used.
+			this.accessTokens.delete(sid);
+			return null;
+		}
 		const fresh: SessionAccessToken = {
 			token,
 			usableUntil: this.nowSeconds() + (Number(body['expires_in']) || 0) - TOKEN_EXPIRY_MARGIN_S,

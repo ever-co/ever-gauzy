@@ -293,6 +293,24 @@ describe('Ever ID refresh token kept for the App Launcher (HTTP, against a mock 
 			expect(await t.refreshTokens.exchange(sid, PLATFORM)).toBeNull();
 		});
 
+		it('discards a refresh that was in flight when the session ended: nothing exchanged, nothing held', async () => {
+			const { sid } = await linkedSignIn('person-logout-in-flight');
+			const release = deferred();
+			const arrived = deferred();
+			t.issuer.refreshHolds = [{ when: 'after', until: release.promise, arrived: arrived.resolve }];
+
+			const answer = t.refreshTokens.exchange(sid, PLATFORM);
+			await arrived.promise;
+			await t.sessions.endSessions(sid);
+			release.resolve();
+
+			expect(await answer).toBeNull();
+			expect(
+				t.issuer.tokenRequests.filter((request) => request.grantType.includes('token-exchange'))
+			).toHaveLength(0);
+			expect(t.refreshTokens.cachedAccessTokens).toBe(0);
+		});
+
 		it('reports a refused exchange with a code only', async () => {
 			const { sid } = await linkedSignIn('person-exchange-refused');
 			t.issuer.exchangeError = { status: 400, error: 'invalid_target' };
