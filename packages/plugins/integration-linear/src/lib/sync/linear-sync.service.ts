@@ -1,7 +1,8 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
+import { createHash } from 'node:crypto';
 import { CommandBus } from '@nestjs/cqrs';
-import { DataSource, In, IsNull } from 'typeorm';
-import { ID, IIntegrationMap, IIntegrationTenant, IntegrationEntity, isTaskSyncAllowed, ITaskCreateInput, ITaskUpdateInput } from '@gauzy/contracts';
+import { DataSource, EntityManager, In, IsNull } from 'typeorm';
+import { ID, IIntegrationMap, IIntegrationTenant, IntegrationEntity, isTaskSyncAllowed, ITag, ITaskCreateInput, ITaskUpdateInput } from '@gauzy/contracts';
 import {
 	EmployeeService,
 	IntegrationMap,
@@ -255,6 +256,35 @@ export class LinearSyncService {
 	 * when another process recorded a map meanwhile, the issue just created is archived again, so the task keeps
 	 * one issue.
 	 */
+	/**
+	 * Runs `work` in a transaction that holds a cross-process lock on each key: an advisory lock on Postgres, a named
+	 * lock on MySQL / MariaDB (held by the transaction's own session and released with it); SQLite serializes writers.
+	 * The statements are parameterized: a key is a bind value, never part of the SQL.
+	 */
+	private lockedTransaction<T>(keys: readonly string[], work: (manager: EntityManager) => Promise<T>): Promise<T> {
+		return this.dataSource.transaction(async (manager) => {
+			const dialect = manager.connection.options.type;
+			const named: string[] = [];
+			try {
+				for (const key of keys) {
+					if (dialect === 'postgres') {
+						await manager.query('SELECT pg_advisory_xact_lock(hashtext($1))', [key]);
+					} else if (dialect === 'mysql' || dialect === 'mariadb') {
+						const name = createHash('sha1').update(key).digest('hex');
+						const rows = (await manager.query('SELECT GET_LOCK(?, 30) AS got', [name])) as Array<{ got?: unknown }>;
+						if (Number(rows?.[0]?.got) !== 1) throw new Error(`The lock ${key} could not be taken within 30 s`);
+						named.push(name);
+					}
+				}
+				return await work(manager);
+			} finally {
+				for (const name of named.reverse()) {
+					await manager.query('SELECT RELEASE_LOCK(?)', [name]).catch(() => undefined);
+				}
+			}
+		});
+	}
+
 	private async createIssueOnce(
 		holder: ClientHolder,
 		mapping: LinearTeamMapping,
@@ -264,10 +294,7 @@ export class LinearSyncService {
 		input: ReturnType<typeof issueUpdateOf>
 	): Promise<void> {
 		const issue = await this.call(holder, (client) => client.createIssue({ ...input, teamId: mapping.linearTeamId, title }));
-		const recorded = await this.dataSource.transaction(async (manager) => {
-			if (manager.connection.options.type === 'postgres') {
-				await manager.query('SELECT pg_advisory_xact_lock(hashtext($1))', [`integration-linear:task:${taskId}`]);
-			}
+		const recorded = await this.lockedTransaction([`integration-linear:task:${taskId}`], async (manager) => {
 			const existing = await manager.findOne(IntegrationMap, {
 				where: { entity: IntegrationEntity.ISSUE, gauzyId: taskId, integrationId: mapping.integrationId, ...scope } as never
 			});
@@ -350,14 +377,7 @@ export class LinearSyncService {
 		const previous = this.issueChains.get(key) ?? Promise.resolve();
 		const next = previous
 			.catch(() => undefined)
-			.then(() =>
-				this.dataSource.transaction(async (manager) => {
-					if (manager.connection.options.type === 'postgres') {
-						await manager.query('SELECT pg_advisory_xact_lock(hashtext($1))', [`integration-linear:issue:${key}`]);
-					}
-					return this.applyIssueNow(context, issue);
-				})
-			)
+			.then(() => this.lockedTransaction([`integration-linear:issue:${key}`], () => this.applyIssueNow(context, issue)))
 			.finally(() => {
 				if (this.issueChains.get(key) === next) this.issueChains.delete(key);
 			});
@@ -453,7 +473,8 @@ export class LinearSyncService {
 			if (!label?.id || !label.name) continue;
 			if (!context.tagIdsByLabelId.has(label.id)) {
 				try {
-					const map: IIntegrationMap = await this.commandBus.execute(
+					// The label sync answers the tag itself (created once, updated after), not its id map.
+					const tag: ITag = await this.commandBus.execute(
 						new IntegrationMapSyncLabelCommand({
 							entity: { name: label.name, color: label.color || '#6E7681', ...context.scope } as never,
 							sourceId: label.id,
@@ -461,7 +482,7 @@ export class LinearSyncService {
 							...context.scope
 						})
 					);
-					context.tagIdsByLabelId.set(label.id, (map?.gauzyId as ID | undefined) ?? null);
+					context.tagIdsByLabelId.set(label.id, (tag?.id as ID | undefined) ?? null);
 				} catch (caught) {
 					this.logger.warn(`Label ${label.name} could not be synced: ${new ResolutionFailed('label', caught).message}`);
 					return undefined;

@@ -1,4 +1,5 @@
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { DataSource, EntityManager } from 'typeorm';
 import { ID, IIntegrationTenant } from '@gauzy/contracts';
 import { OrganizationProjectService, TenantAwareCrudService } from '@gauzy/core';
 import {
@@ -7,7 +8,8 @@ import {
 	MikroOrmLinearTeamMappingRepository,
 	TypeOrmLinearTeamMappingRepository
 } from './entities/linear-team-mapping.entity';
-import { LINEAR_MAPPING_EXISTS, LINEAR_PROJECT_NOT_FOUND, LINEAR_PROJECT_OUTBOUND_TAKEN } from './linear.constants';
+import { LinearSyncRun } from './entities/linear-sync-run.entity';
+import { LINEAR_MAPPING_EXISTS, LINEAR_MAPPING_PROJECT_FIXED, LINEAR_PROJECT_NOT_FOUND, LINEAR_PROJECT_OUTBOUND_TAKEN } from './linear.constants';
 import { serializeStateMap } from './sync/linear-issue.mapper';
 
 export interface LinearMappingInput {
@@ -20,13 +22,22 @@ export interface LinearMappingInput {
 	syncEnabled?: boolean;
 }
 
+/** Whether a write failed on a unique index: Postgres 23505, MySQL / MariaDB ER_DUP_ENTRY (1062), SQLite's constraint code. */
+export function isUniqueViolation(error: unknown): boolean {
+	const failure = error as { code?: unknown; errno?: unknown; driverError?: { code?: unknown; errno?: unknown } } | null;
+	const code = String(failure?.code ?? failure?.driverError?.code ?? '');
+	const errno = Number(failure?.errno ?? failure?.driverError?.errno ?? 0);
+	return code === '23505' || code === 'ER_DUP_ENTRY' || errno === 1062 || code === 'SQLITE_CONSTRAINT' || code === 'SQLITE_CONSTRAINT_UNIQUE';
+}
+
 /** The team ↔ project mappings of the connections, scoped to the caller's tenant. */
 @Injectable()
 export class LinearMappingService extends TenantAwareCrudService<LinearTeamMapping> {
 	constructor(
 		readonly typeOrmLinearTeamMappingRepository: TypeOrmLinearTeamMappingRepository,
 		readonly mikroOrmLinearTeamMappingRepository: MikroOrmLinearTeamMappingRepository,
-		private readonly organizationProjectService: OrganizationProjectService
+		private readonly organizationProjectService: OrganizationProjectService,
+		private readonly dataSource: DataSource
 	) {
 		super(typeOrmLinearTeamMappingRepository, mikroOrmLinearTeamMappingRepository);
 	}
@@ -49,47 +60,88 @@ export class LinearMappingService extends TenantAwareCrudService<LinearTeamMappi
 		return mapping;
 	}
 
-	/** Creates a mapping: the project must be the organization's, the team not mapped yet. */
+	/**
+	 * Creates a mapping: the project must be the organization's, the team not mapped yet, the project not already
+	 * sending its tasks elsewhere. The checks and the write run in one transaction that admits one writer per
+	 * connection at a time (an advisory lock on Postgres, the connection's mappings locked on MySQL / MariaDB; SQLite
+	 * serializes writers), and a unique-index violation that still gets through answers the same 409.
+	 */
 	async createMapping(tenant: IIntegrationTenant, input: LinearMappingInput): Promise<LinearTeamMapping> {
 		await this.requireProject(tenant, input.projectId);
-		const existing = await this.findOneByOptions({
-			where: { integrationId: tenant.id as ID, linearTeamId: input.linearTeamId, tenantId: tenant.tenantId as ID }
-		}).catch(() => null);
-		if (existing) {
-			throw new ConflictException({ message: 'This Linear team is mapped already', code: LINEAR_MAPPING_EXISTS, mappingId: existing.id });
+		const scope = { tenantId: tenant.tenantId as ID, organizationId: tenant.organizationId as ID };
+		const direction = input.direction ?? LinearSyncDirection.INBOUND;
+		const where = { integrationId: tenant.id as ID, linearTeamId: input.linearTeamId, tenantId: scope.tenantId };
+		try {
+			return await this.dataSource.transaction(async (manager) => {
+				await this.lockMappingsOf(manager, tenant);
+				const existing = await manager.findOne(LinearTeamMapping, { where: where as never });
+				if (existing) throw this.mappedAlready(existing.id as ID);
+				await this.assertOutboundFree(tenant, input.projectId, direction, null, manager);
+				const mapping = Object.assign(new LinearTeamMapping(), {
+					integrationId: tenant.id as ID,
+					...scope,
+					linearTeamId: input.linearTeamId,
+					linearTeamKey: input.linearTeamKey ?? null,
+					linearTeamName: input.linearTeamName ?? null,
+					projectId: input.projectId,
+					direction,
+					stateMap: serializeStateMap(input.stateMap),
+					syncEnabled: input.syncEnabled ?? true
+				});
+				return manager.save(LinearTeamMapping, mapping);
+			});
+		} catch (error) {
+			if (!isUniqueViolation(error)) throw error;
+			// The violation aborted the transaction (Postgres): the raced row is read outside it, once it rolled back.
+			const raced = await this.typeOrmLinearTeamMappingRepository.findOne({ where: where as never }).catch(() => null);
+			throw raced ? this.mappedAlready(raced.id as ID) : error;
 		}
-		await this.assertOutboundFree(tenant, input.projectId, input.direction ?? LinearSyncDirection.INBOUND, null);
-		return this.create({
-			integrationId: tenant.id as ID,
-			tenantId: tenant.tenantId as ID,
-			organizationId: tenant.organizationId as ID,
-			linearTeamId: input.linearTeamId,
-			linearTeamKey: input.linearTeamKey ?? null,
-			linearTeamName: input.linearTeamName ?? null,
-			projectId: input.projectId,
-			direction: input.direction ?? LinearSyncDirection.INBOUND,
-			stateMap: serializeStateMap(input.stateMap),
-			syncEnabled: input.syncEnabled ?? true
-		} as never);
 	}
 
-	/** Changes a mapping's project, direction, state map or switch. */
+	private mappedAlready(mappingId: ID): ConflictException {
+		return new ConflictException({ message: 'This Linear team is mapped already', code: LINEAR_MAPPING_EXISTS, mappingId });
+	}
+
+	/** One writer of a connection's mappings at a time within the transaction (see `createMapping`). */
+	private async lockMappingsOf(manager: EntityManager, tenant: IIntegrationTenant): Promise<void> {
+		const dialect = manager.connection.options.type;
+		if (dialect === 'postgres') {
+			await manager.query('SELECT pg_advisory_xact_lock(hashtext($1))', [`integration-linear:mappings:${tenant.id}`]);
+		} else if (dialect === 'mysql' || dialect === 'mariadb') {
+			await manager.find(LinearTeamMapping, { where: { integrationId: tenant.id as ID, tenantId: tenant.tenantId as ID } as never, lock: { mode: 'pessimistic_write' } });
+		}
+	}
+
+	/**
+	 * Changes a mapping's project, direction, state map or switch: the mapping is read again under the same lock as
+	 * a creation, so the outbound check sees the latest row and two changes cannot both pass it. A mapping that has
+	 * imported or taken a webhook keeps its project (its tasks' id maps point into that project): remove it and map
+	 * the team again instead.
+	 */
 	async updateMapping(tenant: IIntegrationTenant, mappingId: ID, input: Partial<LinearMappingInput>): Promise<LinearTeamMapping> {
-		const mapping = await this.requireOne(tenant, mappingId);
-		const patch: Partial<LinearTeamMapping> = {};
-		if (input.projectId && input.projectId !== mapping.projectId) {
-			await this.requireProject(tenant, input.projectId);
-			patch.projectId = input.projectId;
-		}
-		if (input.direction) patch.direction = input.direction;
-		await this.assertOutboundFree(tenant, patch.projectId ?? mapping.projectId, patch.direction ?? mapping.direction, mapping.id);
-		if (input.stateMap !== undefined) patch.stateMap = serializeStateMap(input.stateMap);
-		if (input.syncEnabled !== undefined) patch.syncEnabled = input.syncEnabled;
-		if (input.linearTeamKey !== undefined) patch.linearTeamKey = input.linearTeamKey;
-		if (input.linearTeamName !== undefined) patch.linearTeamName = input.linearTeamName;
-		if (Object.keys(patch).length) {
-			await this.typeOrmLinearTeamMappingRepository.update({ id: mapping.id, tenantId: tenant.tenantId as ID }, patch as never);
-		}
+		await this.requireOne(tenant, mappingId);
+		if (input.projectId) await this.requireProject(tenant, input.projectId);
+		await this.dataSource.transaction(async (manager) => {
+			await this.lockMappingsOf(manager, tenant);
+			const mapping = await manager.findOne(LinearTeamMapping, { where: { id: mappingId, integrationId: tenant.id as ID, tenantId: tenant.tenantId as ID } as never });
+			if (!mapping) throw new NotFoundException({ message: 'The mapping was not found' });
+			const patch: Partial<LinearTeamMapping> = {};
+			if (input.projectId && input.projectId !== mapping.projectId) {
+				const runs = await manager.count(LinearSyncRun, { where: { mappingId: mapping.id, tenantId: tenant.tenantId as ID } as never });
+				if (runs > 0) {
+					throw new ConflictException({ message: 'A mapping that has synced keeps its project; remove it and map the team again', code: LINEAR_MAPPING_PROJECT_FIXED, mappingId });
+				}
+				patch.projectId = input.projectId;
+			}
+			if (input.direction) patch.direction = input.direction;
+			if (input.stateMap !== undefined) patch.stateMap = serializeStateMap(input.stateMap);
+			if (input.syncEnabled !== undefined) patch.syncEnabled = input.syncEnabled;
+			if (input.linearTeamKey !== undefined) patch.linearTeamKey = input.linearTeamKey;
+			if (input.linearTeamName !== undefined) patch.linearTeamName = input.linearTeamName;
+			if (!Object.keys(patch).length) return;
+			await this.assertOutboundFree(tenant, patch.projectId ?? mapping.projectId, patch.direction ?? mapping.direction, mapping.id, manager);
+			await manager.update(LinearTeamMapping, { id: mapping.id, tenantId: tenant.tenantId as ID }, patch as never);
+		});
 		return this.requireOne(tenant, mappingId);
 	}
 
@@ -130,10 +182,10 @@ export class LinearMappingService extends TenantAwareCrudService<LinearTeamMappi
 	 * A project sends its tasks to at most one Linear team: a second `outbound` / `both` mapping of the same
 	 * project is refused (409), so a task's push always uses the team that owns its issue.
 	 */
-	private async assertOutboundFree(tenant: IIntegrationTenant, projectId: ID, direction: LinearSyncDirection, exceptMappingId: ID | null): Promise<void> {
+	private async assertOutboundFree(tenant: IIntegrationTenant, projectId: ID, direction: LinearSyncDirection, exceptMappingId: ID | null, manager: EntityManager): Promise<void> {
 		if (direction === LinearSyncDirection.INBOUND) return;
-		const others = await this.typeOrmLinearTeamMappingRepository.find({
-			where: { projectId, tenantId: tenant.tenantId as ID, organizationId: tenant.organizationId as ID }
+		const others = await manager.find(LinearTeamMapping, {
+			where: { projectId, tenantId: tenant.tenantId as ID, organizationId: tenant.organizationId as ID } as never
 		});
 		const taken = others.find((other) => other.id !== exceptMappingId && other.direction !== LinearSyncDirection.INBOUND);
 		if (taken) {
