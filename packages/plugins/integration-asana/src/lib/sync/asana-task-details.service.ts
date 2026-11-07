@@ -21,7 +21,14 @@ export interface AsanaDetailsContext {
 	/** A read of Asana with the run's rate-limit waits and token renewal. */
 	read<T>(make: (client: AsanaApiClient) => Promise<T>): Promise<T>;
 	authorsByEmail: Map<string, AsanaAuthor | null>;
-	details: { comments: number; links: number };
+	/** What the details import brought in, and what it could not read or keep (a failure of the run: the position is kept). */
+	details: { comments: number; links: number; failed: number };
+}
+
+/** A task's details as read from Asana, before anything is written. */
+export interface AsanaTaskDetails {
+	stories: AsanaStory[];
+	attachments: AsanaAttachment[];
 }
 
 /**
@@ -34,8 +41,11 @@ export interface AsanaDetailsContext {
  * through the entities' repositories, as the platform's other integration does: the comment API states the
  * author as its caller, which here is the sync, not the person who wrote in Asana.
  *
- * A comment or attachment that could not be applied is reported and left for the next read of the task; a refused
- * token stops the run, as it does for the tasks.
+ * The reads ({@link collect}) and the writes ({@link apply}) are apart: the caller reads with no lock held and
+ * writes one run at a time per task, so two runs that meet on one task (a webhook and an import) never both find
+ * no mapped comment and keep it twice. A comment or attachment that could not be read or kept is reported and
+ * counted as a failure of the run — the import position is then kept and the next import reads the task again;
+ * a refusal of one resource (403, 404) is not counted, a retry changes nothing. A refused token stops the run.
  */
 @Injectable()
 export class AsanaTaskDetailsService {
@@ -48,27 +58,42 @@ export class AsanaTaskDetailsService {
 		private readonly employeeService: EmployeeService
 	) {}
 
-	/** The comments and attachments of one task, each once. */
-	async apply(context: AsanaDetailsContext, task: AsanaTask, taskId: ID): Promise<void> {
-		await this.applyComments(context, task, taskId);
-		await this.applyAttachments(context, task, taskId);
+	/** Reads the task's comments and attachments (two calls); what could not be read is counted and left empty. */
+	async collect(context: AsanaDetailsContext, task: AsanaTask): Promise<AsanaTaskDetails> {
+		return {
+			stories: await this.readPart(context, task, 'comments', (client) => client.stories(task.gid)),
+			attachments: await this.readPart(context, task, 'attachments', (client) => client.attachments(task.gid))
+		};
 	}
 
-	private async applyComments(context: AsanaDetailsContext, task: AsanaTask, taskId: ID): Promise<void> {
-		let stories: AsanaStory[];
-		try {
-			stories = await context.read((client) => client.stories(task.gid));
-		} catch (caught) {
-			if (caught instanceof AsanaApiError && caught.isUnauthorized) throw caught;
-			this.logger.warn(`The comments of Asana task ${task.gid} could not be read: ${this.describe(caught)}`);
-			return;
-		}
-		for (const story of stories) {
+	/** Keeps what was read, each once. */
+	async apply(context: AsanaDetailsContext, task: AsanaTask, details: AsanaTaskDetails, taskId: ID): Promise<void> {
+		for (const story of details.stories) {
 			try {
 				await this.applyStory(context, story, taskId);
 			} catch (caught) {
-				this.logger.warn(`Comment ${story.gid} of Asana task ${task.gid} could not be applied: ${this.describe(caught)}`);
+				context.details.failed += 1;
+				this.logger.warn(`Comment ${story.gid} of Asana task ${task.gid} could not be kept: ${this.describe(caught)}`);
 			}
+		}
+		for (const attachment of details.attachments) {
+			try {
+				await this.applyAttachment(context, attachment, taskId);
+			} catch (caught) {
+				context.details.failed += 1;
+				this.logger.warn(`Attachment ${attachment.gid} of Asana task ${task.gid} could not be kept: ${this.describe(caught)}`);
+			}
+		}
+	}
+
+	private async readPart<T>(context: AsanaDetailsContext, task: AsanaTask, what: string, make: (client: AsanaApiClient) => Promise<T[]>): Promise<T[]> {
+		try {
+			return await context.read(make);
+		} catch (caught) {
+			if (caught instanceof AsanaApiError && caught.isUnauthorized) throw caught;
+			if (!(caught instanceof AsanaApiError && (caught.isForbidden || caught.isNotFound))) context.details.failed += 1;
+			this.logger.warn(`The ${what} of Asana task ${task.gid} could not be read: ${this.describe(caught)}`);
+			return [];
 		}
 	}
 
@@ -105,24 +130,6 @@ export class AsanaTaskDetailsService {
 			new IntegrationMapSyncEntityCommand({ gauzyId: saved.id as ID, integrationId, sourceId: story.gid, entity: IntegrationEntity.COMMENT, ...scope })
 		);
 		context.details.comments += 1;
-	}
-
-	private async applyAttachments(context: AsanaDetailsContext, task: AsanaTask, taskId: ID): Promise<void> {
-		let attachments: AsanaAttachment[];
-		try {
-			attachments = await context.read((client) => client.attachments(task.gid));
-		} catch (caught) {
-			if (caught instanceof AsanaApiError && caught.isUnauthorized) throw caught;
-			this.logger.warn(`The attachments of Asana task ${task.gid} could not be read: ${this.describe(caught)}`);
-			return;
-		}
-		for (const attachment of attachments) {
-			try {
-				await this.applyAttachment(context, attachment, taskId);
-			} catch (caught) {
-				this.logger.warn(`Attachment ${attachment.gid} of Asana task ${task.gid} could not be applied: ${this.describe(caught)}`);
-			}
-		}
 	}
 
 	private async applyAttachment(context: AsanaDetailsContext, attachment: AsanaAttachment, taskId: ID): Promise<void> {

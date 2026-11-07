@@ -54,7 +54,10 @@ no table (its migration is not registered) and makes no outbound request. Same l
   `comment_added`) become comments of the task — attributed to the employee whose user has the author's e-mail,
   else kept as the connecting user's, marked system and named after their author — and follow an edit in Asana;
   its attachments become resource links of the task (the name, the address that opens it), reusing a link a person
-  already added with the same address. Both are kept once (the id map, entities `Comment` and `Attachment`).
+  already added with the same address. Both are kept once (the id map, entities `Comment` and `Attachment`), one
+  run at a time per task. A comment or attachment that could not be read or kept counts as a failure of the run:
+  the import position is kept, so the next import reads the task again; a refusal of one resource (403, 404) is
+  not retried. What an earlier run missed for good, `{ "full": true }` brings in.
   The webhook also delivers a comment added or edited and a file attached, as the task they belong to; a mapping
   whose webhook was registered before this filter existed gets it with `POST …/mappings/:mappingId/webhook`.
 - **A refused token.** When Asana refuses the connection's token (a 401), the connection is marked — the page asks for
