@@ -36,7 +36,7 @@ export interface IRealtimeHintInput {
 
 /** The hint a task event becomes. */
 export function taskHint(
-	task: { id: ID; tenantId?: ID; organizationId?: ID | null; projectId?: ID | null },
+	task: { id?: ID; tenantId?: ID; organizationId?: ID | null; projectId?: ID | null } | null | undefined,
 	action: RealtimeChangeAction,
 	actorUserId: ID | null
 ): IRealtimeHintInput | null {
@@ -133,7 +133,7 @@ export function notificationHint(
 
 /** The hint a document event becomes (always `document.updated`; the action says what happened). */
 export function documentHint(
-	document: { id: ID; tenantId?: ID; organizationId?: ID | null },
+	document: { id?: ID; tenantId?: ID; organizationId?: ID | null } | null | undefined,
 	action: RealtimeChangeAction,
 	actorUserId: ID | null
 ): IRealtimeHintInput | null {

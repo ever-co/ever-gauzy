@@ -431,9 +431,9 @@ export class CommentService extends TenantAwareCrudService<Comment> {
 	private async commentForEvent(id: ID): Promise<ICommentEventComment | null> {
 		try {
 			const comment = await super.findOneByIdString(id);
-			return comment
+			return comment?.id
 				? {
-						id: comment.id,
+						id: comment.id as ID,
 						entity: comment.entity,
 						entityId: comment.entityId,
 						parentId: comment.parentId ?? null,
