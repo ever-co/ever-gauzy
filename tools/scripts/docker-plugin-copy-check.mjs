@@ -51,18 +51,51 @@ function stages(text) {
 }
 
 /**
+ * A stage's instructions, one string each. A line ending in `\` continues on the next one, and comment lines,
+ * inside a continuation too, are dropped, as Docker does.
+ */
+function instructions(stage) {
+	const out = [];
+	let current = '';
+	for (const raw of stage.split(/\r?\n/)) {
+		const line = raw.trim();
+		if (line.startsWith('#')) continue;
+		const continued = line.endsWith('\\');
+		const part = continued ? line.slice(0, -1).trim() : line;
+		current = current ? `${current} ${part}` : part;
+		if (!continued) {
+			if (current) out.push(current);
+			current = '';
+		}
+	}
+	if (current) out.push(current);
+	return out;
+}
+
+/**
  * The source paths of a stage's active `COPY` instructions, without `./`. A commented-out `COPY`, or a path named
  * in a comment or a `RUN` argument, copies nothing and does not count. Flags (`--chown=...`, `--from=...`) are
- * skipped and the last argument is the destination.
+ * skipped, both the shell form and the JSON form (`COPY ["src", "dest"]`) are read, and the last argument is the
+ * destination.
  */
 export function copiedSources(stage) {
 	const out = new Set();
-	for (const raw of stage.split(/\r?\n/)) {
-		const line = raw.trim();
-		const match = /^COPY\s+(.+)$/i.exec(line);
+	for (const instruction of instructions(stage)) {
+		const match = /^COPY\s+(.+)$/i.exec(instruction);
 		if (!match) continue;
-		const args = match[1].split(/\s+/).filter((a) => !a.startsWith('--'));
-		for (const src of args.slice(0, -1)) out.add(src.replace(/^\.\//, ''));
+		const args = match[1].replace(/^(?:--\S+\s+)*/, '').trim();
+		let paths = [];
+		if (args.startsWith('[')) {
+			try {
+				const parsed = JSON.parse(args);
+				if (Array.isArray(parsed)) paths = parsed.map(String);
+			} catch {
+				paths = [];
+			}
+		} else {
+			paths = args.split(/\s+/);
+		}
+		for (const src of paths.slice(0, -1)) out.add(src.replace(/^\.\//, ''));
 	}
 	return out;
 }
@@ -104,7 +137,19 @@ function selfTest() {
 			1
 		],
 		['the path in a RUN argument', head + 'RUN cat packages/plugins/a/package.json\n', 1],
-		['the app manifest only in a comment', 'FROM node AS deps\n# apps/api/package.json\n', 1]
+		['the app manifest only in a comment', 'FROM node AS deps\n# apps/api/package.json\n', 1],
+		[
+			'a copy continued over lines, with a comment inside',
+			head +
+				'COPY --chown=node:node \\\n  # a comment\n  packages/plugins/a/package.json \\\n  ./packages/plugins/a/\n',
+			0
+		],
+		['a copy in JSON form', head + 'COPY ["packages/plugins/a/package.json", "./packages/plugins/a/"]\n', 0],
+		[
+			'a JSON-form copy of another plugin',
+			head + 'COPY ["packages/plugins/b/package.json", "./packages/plugins/b/"]\n',
+			1
+		]
 	];
 	let failed = 0;
 	for (const [name, text, want] of cases) {
