@@ -28,7 +28,7 @@ docs/specs/
 | Chat (channels, direct messages, threads, mentions, reactions, task cards) | [`features/chat/`](features/chat/spec.md) | Phase 1 merged (#11683, #11686); Angular UI in review (#11687) | `GAUZY_CHAT_ENABLED` |
 | Inbox (unified notifications, triage, preferences, push) | [`features/inbox/`](features/inbox/spec.md) | Unified inbox merged (#11682); email/push/settings open | `GAUZY_INBOX_ENABLED` |
 | Docs collaboration (spaces, live co-editing, notifications, Markdown export and API editing) | [`features/docs-collaboration/`](features/docs-collaboration/spec.md) | Draft | `GAUZY_DOCS_COLLAB_ENABLED` |
-| Tasks: saved views, bulk actions, keyboard-first lists | [`features/task-views-and-bulk-actions/`](features/task-views-and-bulk-actions/spec.md) | Draft | `GAUZY_TASK_VIEWS_ENABLED` |
+| Tasks: saved views, bulk actions, keyboard-first lists | [`features/task-views-and-bulk-actions/`](features/task-views-and-bulk-actions/spec.md) | Phase 1 in review ([#11688](https://github.com/ever-co/ever-gauzy/pull/11688)) — [`plan`](features/task-views-and-bulk-actions/plan.md) · [`tasks`](features/task-views-and-bulk-actions/tasks.md) | `GAUZY_TASK_VIEWS_ENABLED` |
 | Integrations: Asana, Linear, Trello (import and sync) | [`features/integrations-asana-linear-trello/`](features/integrations-asana-linear-trello/spec.md) | Draft | per-integration tenant setting |
 | Chat incoming webhooks (bots and automation posts) | [`features/chat-incoming-webhooks/`](features/chat-incoming-webhooks/spec.md) | Draft | `GAUZY_CHAT_WEBHOOKS_ENABLED` |
 | MCP tools for chat, docs and inbox | [`features/mcp-collaboration-tools/`](features/mcp-collaboration-tools/spec.md) | Draft | MCP server config |
