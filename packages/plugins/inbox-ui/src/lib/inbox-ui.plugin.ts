@@ -3,7 +3,7 @@ import { Routes } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { PermissionsEnum } from '@gauzy/contracts';
 import { defineDeclarativePlugin, PluginRouteInput, PluginUiDefinition } from '@gauzy/plugin-ui';
-import { NavigationBuilderService, NavMenuBuilderService, PermissionsGuard } from '@gauzy/ui-core/core';
+import { AuthStrategy, NavigationBuilderService, NavMenuBuilderService, PermissionsGuard } from '@gauzy/ui-core/core';
 import {
 	INBOX_HEADER_ACTION_ID,
 	INBOX_LINK,
@@ -25,6 +25,7 @@ import {
 import { InboxHeaderBadgeComponent } from './components/inbox-header-badge/inbox-header-badge.component';
 import { InboxAvailabilityService } from './services/inbox-availability.service';
 import { InboxEmailAvailabilityService } from './services/inbox-email-availability.service';
+import { InboxWebPushService } from './services/inbox-web-push.service';
 import en from '../i18n/en.json';
 
 /** The page and "My mailbox" (standalone, each loaded on first visit). */
@@ -259,5 +260,9 @@ export const InboxUiPlugin: PluginUiDefinition = {
 		injector.get(NavMenuBuilderService).addNavMenuItems([INBOX_NOTIFICATION_SETTINGS_NAV_ITEM] as never, INBOX_SETTINGS_NAV_SECTION_ID);
 		registerInboxEntryPoints(injector);
 		registerInboxSettingsEntryPoints(injector);
+		// A sign-out ends this browser's inbox notifications (a shared browser).
+		const push = injector.get(InboxWebPushService);
+		// Optional: a shell without the auth strategy (none today) simply has nothing to end.
+		injector.get(AuthStrategy, null)?.logout$.subscribe(() => void push.forgetThisBrowser());
 	}
 };

@@ -40,8 +40,11 @@ export class InboxWebPushService {
 		if (Notification.permission === 'denied') return 'blocked';
 		const subscription = await this.subscription().catch(() => null);
 		if (subscription && Notification.permission === 'granted') {
-			await this.register(subscription).catch(() => undefined);
-			return 'on';
+			// A failed re-registration shows off: switching on sets the device up again.
+			return this.register(subscription).then(
+				() => 'on' as const,
+				() => 'off' as const
+			);
 		}
 		return 'off';
 	}
@@ -97,6 +100,21 @@ export class InboxWebPushService {
 				userAgent: navigator.userAgent.slice(0, 255)
 			})
 		);
+	}
+
+	/**
+	 * The session ended on this browser (a sign-out): the browser unsubscribes, so the next person on a shared browser
+	 * receives nothing of the previous account; the push service then refuses the platform's next push, and the
+	 * platform drops the device. Never throws.
+	 */
+	async forgetThisBrowser(): Promise<void> {
+		try {
+			if (!supportsWebPush()) return;
+			const subscription = await this.subscription();
+			await subscription?.unsubscribe();
+		} catch {
+			// Nothing to undo.
+		}
 	}
 
 	/** A path of the app, against its base (the app may be served below the site's root). */
