@@ -271,6 +271,8 @@ export enum PermissionsEnum {
 	INBOX_MAILBOX_MANAGE = 'INBOX_MAILBOX_MANAGE',
 	/** Read the items of every shared mailbox of the organization (shared-mailbox administrators). */
 	INBOX_MAILBOX_READ_ALL = 'INBOX_MAILBOX_READ_ALL',
+	/** Open the real-time channel (`@gauzy/plugin-realtime`): the collaboration event stream, presence and typing. */
+	REALTIME_SUBSCRIBE = 'REALTIME_SUBSCRIBE',
 	/** Inbox Permissions End */
 	/** AI Chat Permissions Start */
 	AI_CHAT_ACCESS = 'AI_CHAT_ACCESS',

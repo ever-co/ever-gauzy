@@ -1,0 +1,56 @@
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
+import { ArrayMaxSize, ArrayMinSize, IsArray, IsEnum, IsInt, IsOptional, IsUUID, Max, Min } from 'class-validator';
+import {
+	ID,
+	IRealtimeCatchUpQuery,
+	IRealtimePresenceInput,
+	IRealtimeTypingInput,
+	REALTIME_MAX_TYPING_RECIPIENTS,
+	RealtimePresenceStatus
+} from '@gauzy/contracts';
+import { REALTIME_CATCH_UP_MAX } from '../realtime.constants';
+
+/** Body of `POST /realtime/presence`. */
+export class RealtimePresenceDTO implements IRealtimePresenceInput {
+	@ApiProperty({ enum: RealtimePresenceStatus })
+	@IsEnum(RealtimePresenceStatus)
+	status!: RealtimePresenceStatus;
+}
+
+/** Body of `POST /realtime/typing`. */
+export class RealtimeTypingDTO implements IRealtimeTypingInput {
+	@ApiProperty({ type: () => String })
+	@IsUUID()
+	conversationId!: ID;
+
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsUUID()
+	threadRootId?: ID;
+
+	@ApiProperty({ type: () => [String], description: 'The users to tell; at most 50.' })
+	@IsArray()
+	@ArrayMinSize(1)
+	@ArrayMaxSize(REALTIME_MAX_TYPING_RECIPIENTS)
+	@IsUUID('all', { each: true })
+	recipientUserIds!: ID[];
+}
+
+/** Query of `GET /realtime/events`. */
+export class RealtimeCatchUpQueryDTO implements IRealtimeCatchUpQuery {
+	@ApiPropertyOptional({ type: () => Number, description: 'Epoch ms of the newest event already applied.' })
+	@IsOptional()
+	@Type(() => Number)
+	@IsInt()
+	@Min(0)
+	after?: number;
+
+	@ApiPropertyOptional({ type: () => Number, minimum: 1, maximum: REALTIME_CATCH_UP_MAX })
+	@IsOptional()
+	@Type(() => Number)
+	@IsInt()
+	@Min(1)
+	@Max(REALTIME_CATCH_UP_MAX)
+	limit?: number;
+}

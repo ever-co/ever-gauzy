@@ -85,6 +85,7 @@ export * from './lib/equipment-sharing.model';
 export * from './lib/equipment.model';
 export * from './lib/estimate-email.model';
 export * from './lib/event-outbox.model';
+export * from './lib/realtime.model';
 export * from './lib/event-type.model';
 export * from './lib/expense-category.model';
 export * from './lib/expense.model';
