@@ -24,10 +24,16 @@ import { linearSyncUser, runInLinearContext } from '../linear-process';
 import { emptyCounts, LinearSyncCounts, LinearSyncRunService } from '../linear-sync-run.service';
 import { LinearTenantService } from '../linear-tenant.service';
 import { LINEAR_CONFIG, LINEAR_IMPORT_CLOCK_SKEW_MS, LINEAR_IMPORT_MAX_ISSUES, LINEAR_ISSUES_PAGE_SIZE, LinearSettingName } from '../linear.constants';
+import { LinearAuthor, LinearIssueDetailsService } from './linear-issue-details.service';
 import { issueUpdateOf, parseStateMap, taskFieldsOf } from './linear-issue.mapper';
 
 /** What one issue became. */
 type ApplyOutcome = 'created' | 'updated' | 'skipped';
+/** What one issue became, and the platform task it is (none when skipped). */
+interface ApplyResult {
+	outcome: ApplyOutcome;
+	taskId: ID | null;
+}
 
 /** A connection's client, replaced once when Linear refused the token and a renewal worked. */
 interface ClientHolder {
@@ -47,6 +53,12 @@ interface ApplyContext extends ClientHolder {
 	tagIdsByLabelId: Map<string, ID | null>;
 	/** Children whose parent is linked once every issue of the run is in. */
 	pendingParents: Array<{ taskId: ID; parentSourceId: string }>;
+	/** The user who connected: the comments nobody here wrote are theirs to own. */
+	connectedByUserId: ID | null;
+	/** The comment authors by e-mail, once per run. */
+	authorsByEmail: Map<string, LinearAuthor | null>;
+	/** What the details import brought in this run (comments, attachments as links): reported, not counted on the run. */
+	details: { comments: number; links: number };
 	counts: LinearSyncCounts;
 }
 
@@ -78,7 +90,7 @@ export class LinearSyncService {
 	/** The pushes of each task, one after the other (a create and a quick edit never race to create two issues). */
 	private readonly pushChains = new Map<string, Promise<void>>();
 	/** The applies of each issue, one after the other (an import and a webhook never create two tasks for one issue). */
-	private readonly issueChains = new Map<string, Promise<ApplyOutcome>>();
+	private readonly issueChains = new Map<string, Promise<ApplyResult>>();
 
 	constructor(
 		private readonly commandBus: CommandBus,
@@ -89,6 +101,7 @@ export class LinearSyncService {
 		private readonly employeeService: EmployeeService,
 		private readonly integrationMapService: IntegrationMapService,
 		private readonly integrationTenantSyncService: IntegrationTenantSyncService,
+		private readonly issueDetails: LinearIssueDetailsService,
 		@Inject(LINEAR_CONFIG) private readonly config: LinearConfig
 	) {}
 
@@ -133,6 +146,7 @@ export class LinearSyncService {
 					after = page.pageInfo.endCursor;
 				}
 				await this.linkParents(context);
+				this.reportDetails(context);
 			});
 			if (counts.failed > 0) {
 				error = `${counts.failed} issue(s) could not be applied; the import position was kept so the next import reads them again.`;
@@ -172,8 +186,19 @@ export class LinearSyncService {
 	 * about the older ones, and a delivery that was lost is read by the next import. Answers whether it was
 	 * applied, or why not.
 	 */
-	async applyIssueFromWebhook(tenant: IIntegrationTenant, issueId: string, linearTeamId: string): Promise<{ applied: boolean; error: string | null }> {
-		const mapping = await this.mappings.findInboundForTeam(tenant.id as ID, linearTeamId);
+	async applyIssueFromWebhook(tenant: IIntegrationTenant, issueId: string, linearTeamId: string | null): Promise<{ applied: boolean; error: string | null }> {
+		// A comment's or attachment's delivery may not say the team: the issue is read first to learn it.
+		let teamId = linearTeamId;
+		if (!teamId) {
+			try {
+				const client = await this.tenants.clientReady(tenant);
+				teamId = (await client.issue(issueId))?.team?.id ?? null;
+			} catch (caught) {
+				return { applied: false, error: this.describe(caught) };
+			}
+			if (!teamId) return { applied: false, error: null };
+		}
+		const mapping = await this.mappings.findInboundForTeam(tenant.id as ID, teamId);
 		if (!mapping) return { applied: false, error: null };
 		const scope = { tenantId: tenant.tenantId as ID, organizationId: tenant.organizationId as ID };
 		const run = await this.runs.startWebhookRun(tenant, mapping.id);
@@ -187,8 +212,9 @@ export class LinearSyncService {
 					counts.skipped += 1;
 					return;
 				}
-				counts[await this.applyIssue(context, issue)] += 1;
+				await this.applyOne(context, issue);
 				await this.linkParents(context);
+				this.reportDetails(context);
 			});
 		} catch (caught) {
 			error = this.describe(caught);
@@ -365,20 +391,44 @@ export class LinearSyncService {
 			employeeIdsByEmail: new Map(),
 			tagIdsByLabelId: new Map(),
 			pendingParents: [],
+			connectedByUserId: this.connectedByUserId(tenant),
+			authorsByEmail: new Map(),
+			details: { comments: 0, links: 0 },
 			counts
 		};
 	}
 
-	/** One issue of an import: a failure counts and is logged (the watermark is then kept by the caller); a refused token stops the run. */
+	/** One issue of a run, then its comments and attachments: a failure counts and is logged; a refused token stops the run. */
 	private async applyOne(context: ApplyContext, issue: LinearIssue): Promise<void> {
+		let taskId: ID | null = null;
 		try {
-			const outcome = await this.applyIssue(context, issue);
-			context.counts[outcome] += 1;
+			const result = await this.applyIssue(context, issue);
+			context.counts[result.outcome] += 1;
+			taskId = result.taskId;
 		} catch (caught) {
 			if (caught instanceof LinearApiError) throw caught;
 			context.counts.failed += 1;
 			this.logger.warn(`Issue ${issue.identifier} (${issue.id}) could not be applied: ${this.describe(caught)}`);
 		}
+		// Behind the issue itself: its comments and attachments (they came with it), each kept once.
+		if (taskId) await this.issueDetails.apply(this.detailsContextOf(context), issue, taskId);
+	}
+
+	/** What the details import needs of a run: its scope and the run's own caches and tallies. */
+	private detailsContextOf(context: ApplyContext) {
+		return {
+			scope: context.scope,
+			integrationId: context.mapping.integrationId,
+			connectedByUserId: context.connectedByUserId,
+			authorsByEmail: context.authorsByEmail,
+			details: context.details
+		};
+	}
+
+	/** One line per run about the details, when there were any (they are not counted on the run). */
+	private reportDetails(context: ApplyContext): void {
+		const { comments, links } = context.details;
+		if (comments || links) this.logger.log(`Mapping ${context.mapping.id}: ${comments} comment(s) and ${links} attachment link(s) brought in`);
 	}
 
 	/**
@@ -386,7 +436,7 @@ export class LinearSyncService {
 	 * and across processes on Postgres they wait for an advisory lock on the issue held while the platform's
 	 * id-map command runs (an import and a webhook, or two deliveries, never create two tasks for one issue).
 	 */
-	private applyIssue(context: ApplyContext, issue: LinearIssue): Promise<ApplyOutcome> {
+	private applyIssue(context: ApplyContext, issue: LinearIssue): Promise<ApplyResult> {
 		const key = `${context.mapping.integrationId}:${issue.id}`;
 		const previous = this.issueChains.get(key) ?? Promise.resolve();
 		const next = previous
@@ -404,14 +454,14 @@ export class LinearSyncService {
 	 * not answer (the employee by e-mail, a label's tag) is left as the task has it; an empty value from Linear
 	 * clears it.
 	 */
-	private async applyIssueNow(context: ApplyContext, issue: LinearIssue): Promise<ApplyOutcome> {
+	private async applyIssueNow(context: ApplyContext, issue: LinearIssue): Promise<ApplyResult> {
 		const { scope, mapping } = context;
 		const integrationId = mapping.integrationId;
 		const existing = await this.integrationMapService
 			.findOneByWhereOptions({ entity: IntegrationEntity.ISSUE, sourceId: issue.id, integrationId, ...scope })
 			.catch(() => null);
 		// An archived issue that never became a task stays out; one that did keeps its task as it was.
-		if (issue.archivedAt) return 'skipped';
+		if (issue.archivedAt) return { outcome: 'skipped', taskId: null };
 		const fields = taskFieldsOf(issue, context.stateMap);
 		const members = await this.membersOf(context, issue.assignee?.email ?? null);
 		const tags = await this.tagsOf(context, issue.labels?.nodes ?? []);
@@ -437,7 +487,7 @@ export class LinearSyncService {
 		if (issue.parent?.id && map?.gauzyId) {
 			context.pendingParents.push({ taskId: map.gauzyId as ID, parentSourceId: issue.parent.id });
 		}
-		return existing ? 'updated' : 'created';
+		return { outcome: existing ? 'updated' : 'created', taskId: (map?.gauzyId as ID | undefined) ?? null };
 	}
 
 	/** Sub-issues point at their parent's task once every issue of the run is in (a parent may come later in the pages). */
