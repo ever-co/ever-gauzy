@@ -11,6 +11,8 @@ import { AsanaSyncService } from '../sync/asana-sync.service';
 
 /** What one sweep did. */
 export interface AsanaImportSweepOutcome {
+	/** The refused connections whose notice was filed again (the Inbox had not taken it yet). */
+	attention: number;
 	/** The mappings that were due (those of a connection that is gone or waits for a person are not counted). */
 	due: number;
 	/** The imports that ran (each is a run of its mapping, like one a person asked for). */
@@ -58,7 +60,9 @@ export class AsanaImportSweepService {
 
 	/** Imports every mapping that is due, the longest waiting first, and says what happened. */
 	async run(now = new Date()): Promise<AsanaImportSweepOutcome> {
-		const outcome: AsanaImportSweepOutcome = { due: 0, imported: 0, skipped: 0, failed: 0 };
+		const outcome: AsanaImportSweepOutcome = { attention: 0, due: 0, imported: 0, skipped: 0, failed: 0 };
+		// First, and whatever the mappings: the notices the Inbox has not taken yet.
+		outcome.attention = await this.retryAttention();
 		if (this.config.importIntervalMinutes <= 0) return outcome;
 		const due = waitingFirst(await this.findDue(now));
 		const batch = (await this.withConnections(due)).slice(0, ASANA_IMPORT_SWEEP_BATCH);
@@ -96,6 +100,23 @@ export class AsanaImportSweepService {
 	 * The mappings with their connection, in the same order, without those of a connection that is gone (its mappings go
 	 * with it) or that waits for a person (an attention reason: a refused token). Each connection is read once.
 	 */
+	/**
+	 * Files again the notice of every refused connection whose filing did not get through, whatever its mappings
+	 * (none, outbound, switched off, imported a moment ago): the retry waits for no import, only for the sweep.
+	 */
+	private async retryAttention(): Promise<number> {
+		let filed = 0;
+		for (const tenant of await this.tenants.findRefusedUnfiled()) {
+			try {
+				await this.tenants.ensureAttentionFiled(tenant);
+				filed += 1;
+			} catch (error) {
+				this.logger.warn(`The attention of connection ${tenant.id} could not be filed from the sweep: ${error instanceof Error ? error.message : String(error)}`);
+			}
+		}
+		return filed;
+	}
+
 	private async withConnections(mappings: AsanaProjectMapping[]): Promise<Array<{ tenant: IIntegrationTenant; mapping: AsanaProjectMapping }>> {
 		const connections = new Map<string, IIntegrationTenant | null>();
 		const result: Array<{ tenant: IIntegrationTenant; mapping: AsanaProjectMapping }> = [];

@@ -6,6 +6,7 @@ import { RolePermissionModule } from '../../role-permission/role-permission.modu
 import { TaskView } from './view.entity';
 import { CommandHandlers } from './commands/handlers';
 import { TaskViewService } from './view.service';
+import { TaskViewTasksService } from './view-tasks.service';
 import { TaskViewController } from './view.controller';
 import { TypeOrmTaskViewRepository } from './repository/type-orm-task-view.repository';
 import { MikroOrmTaskViewRepository } from './repository/mikro-orm-task-view.repository';
@@ -27,6 +28,8 @@ import { TaskViewResolver } from './view.resolver';
 	],
 	providers: [
 		TaskViewService,
+		// The tasks of a view: the filter tree, the cursor page and the group counts (FR-3).
+		TaskViewTasksService,
 		// The GraphQL view of the same resource: declared here because a resolver can only inject
 		// services its own module can reach, and this module is what reaches them.
 		TaskViewResolver,
@@ -35,6 +38,6 @@ import { TaskViewResolver } from './view.resolver';
 		...CommandHandlers
 	],
 	controllers: [TaskViewController],
-	exports: [TaskViewService, CqrsModule, TypeOrmTaskViewRepository, MikroOrmTaskViewRepository]
+	exports: [TaskViewService, TaskViewTasksService, CqrsModule, TypeOrmTaskViewRepository, MikroOrmTaskViewRepository]
 })
 export class TaskViewModule {}

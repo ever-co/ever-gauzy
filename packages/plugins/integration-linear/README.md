@@ -17,10 +17,12 @@ no table (its migration is not registered) and makes no outbound request.
 | `LINEAR_REDIRECT_URL` | The callback registered on the application. Default: `API_BASE_URL` + `/api/integration/linear/callback`. |
 | `LINEAR_POST_INSTALL_URL` | Where the callback sends the person once connected. Default: `CLIENT_BASE_URL` + `/#/pages/integrations/linear`. |
 | `LINEAR_WEBHOOK_SECRET` | The application's webhook signing secret. Without it webhooks are refused (imports still work). |
+| `LINEAR_IMPORT_INTERVAL_MINUTES` | How many minutes apart the worker imports the changes of each inbound mapping (default `15`; `0` switches the scheduled import off — the sweep still files the refused-token notices the Inbox has not taken). When the application has a webhook secret (`LINEAR_WEBHOOK_SECRET`) every mapping is reconciled every fourth interval instead (`60` minutes at the default), to pick up deliveries that were missed. The worker sweeps every five minutes, so a due time shorter than five minutes behaves as five. |
 | `LINEAR_API_URL` | Linear's GraphQL endpoint; only for a test double. |
 
 The webhook URL to register on the application is `API_BASE_URL` + `/api/integration/linear/webhook`,
-for the `Issues` resource.
+for the `Issues`, `Comments` and `Attachments` resources — Linear subscribes each resource separately, and
+without the last two a comment or an attachment reaches Gauzy only with the scheduled reconciliation.
 
 ## How it works
 
@@ -52,6 +54,26 @@ for the `Issues` resource.
   workspace whose mapping of the team syncs inbound. A delivery (`Linear-Delivery`) is remembered once every
   connection applied it, so a retry does nothing; one that failed is not, and the next import reads the issue
   again (a webhook never moves the import position).
+- **Comments and attachments.** They come with every issue read (the latest fifty comments, the first twenty-five
+  attachments): each comment becomes a comment of the task — attributed to the employee whose user has the
+  author's e-mail, else kept as the connecting user's, marked system and named after their author; a reply goes
+  under the comment it answers — and follows an edit in Linear; each attachment becomes a resource link of the task
+  (the title, the address that opens it), reusing a link a person already added with the same address. Both are
+  kept once (the id map, entities `Comment` and `Attachment`), one run at a time per issue. A comment or attachment
+  that could not be kept counts as a failure of the run: the import position is kept, so the next import reads the
+  issue again; what an earlier run missed for good, `{ "full": true }` brings in. The webhook also takes a comment or attachment
+  created or updated, as the issue it belongs to, which is read again.
+- **A refused token.** When Linear refuses the connection's token (a 401), the connection is marked — the page asks for
+  a reconnect, the lookups answer `LINEAR_TOKEN_REFUSED`, the scheduled import leaves its mappings alone — and, with the
+  Inbox plugin loaded, the person who connected gets a high-priority Inbox notice (one per connection; resolved when a
+  renewed token works or someone connects again).
+- **Scheduled import.** Every five minutes the worker process (`apps/worker`, the one whose scheduler root is
+  enabled) sweeps the mappings that bring issues in: one whose last import is older than
+  `LINEAR_IMPORT_INTERVAL_MINUTES` (or that was never imported) is imported again, the changes since its position,
+  the longest waiting first and at most fifty per sweep. When the application has a webhook secret (`LINEAR_WEBHOOK_SECRET`) every mapping is reconciled every fourth interval instead (`60` minutes at the default), a reconcile
+  against deliveries that were missed. The sweep takes the same claim "import now" takes (one import per mapping
+  at a time), opens each tenant's own request context, and leaves a connection whose token was refused to the
+  person who must reconnect it. Registered only where a queue root exists; `0` switches it off.
 - **Outbound.** When a project's mapping is `outbound` or `both` (one such mapping per project), a task created
   or changed on the platform updates its issue (state by the mapping, title, description, priority, due date) or
   creates one in the team; the saved task is read again by id, and the pushes of one task run one after the other.

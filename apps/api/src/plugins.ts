@@ -37,7 +37,15 @@ import { IntegrationEverWorksPlugin, isEverWorksEnabled } from '@gauzy/plugin-in
 import { IntegrationLinearPlugin, isLinearEnabled } from '@gauzy/plugin-integration-linear';
 import { IntegrationAsanaPlugin, isAsanaEnabled } from '@gauzy/plugin-integration-asana';
 import { IntegrationTrelloPlugin, isTrelloEnabled } from '@gauzy/plugin-integration-trello';
-import { InboxEmailPlugin, InboxPlugin, isInboxEmailEnabled, isInboxEnabled } from '@gauzy/plugin-inbox';
+import {
+	InboxDeliveryPlugin,
+	InboxEmailPlugin,
+	InboxPlugin,
+	isInboxEmailEnabled,
+	isInboxEnabled,
+	isInboxNotificationEmailEnabled,
+	isInboxWebPushEnabled
+} from '@gauzy/plugin-inbox';
 import { isRealtimeEnabled, RealtimePlugin } from '@gauzy/plugin-realtime';
 
 import { ChatPlugin, isChatEnabled } from '@gauzy/plugin-chat';
@@ -153,6 +161,16 @@ export const plugins = [
 	// off it is not loaded at all (no route, no table, no transport: mail goes out over SMTP as before).
 	...(isInboxEnabled(process.env) && isInboxEmailEnabled(process.env, (message) => console.warn(message))
 		? [InboxEmailPlugin]
+		: []),
+
+	// Delivery of the Inbox's notifications beyond the app (the Inbox spec FR-10–FR-13): emails (immediate or digest
+	// per kind) under GAUZY_INBOX_NOTIFICATION_EMAIL_ENABLED, web push to the person's devices (their subscriptions
+	// and routes) under GAUZY_INBOX_WEB_PUSH_ENABLED. Only on top of the Inbox, and off unless one of the two is
+	// exactly true; the API owns the tables and the push routes, the worker runs the sweep.
+	...(isInboxEnabled(process.env) &&
+	(isInboxNotificationEmailEnabled(process.env, (message) => console.warn(message)) ||
+		isInboxWebPushEnabled(process.env, (message) => console.warn(message)))
+		? [InboxDeliveryPlugin]
 		: []),
 
 	// Email provider: Resend (plan 04 §5.2). Off unless EMAIL_PROVIDER_RESEND_ENABLED=true; when off it is not
