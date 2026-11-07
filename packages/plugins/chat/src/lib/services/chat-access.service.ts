@@ -51,10 +51,14 @@ export class ChatAccessService {
 		return caller as IChatCaller & { employeeId: ID };
 	}
 
-	/** A conversation of the caller's tenant, or not found. */
-	async conversation(tenantId: ID, id: ID): Promise<ChatConversation> {
+	/**
+	 * A conversation of the caller's tenant — and of the caller's organization, when the request is scoped to one
+	 * and the conversation belongs to one — or not found. The platform's organization boundary applies to every
+	 * lookup, so an employee of one organization never joins or reads another organization's channel.
+	 */
+	async conversation(tenantId: ID, id: ID, organizationId: ID | null = null): Promise<ChatConversation> {
 		const conversation = await this.dataSource.getRepository(ChatConversation).findOne({ where: { id, tenantId } });
-		if (!conversation) {
+		if (!conversation || (organizationId && conversation.organizationId && String(conversation.organizationId) !== String(organizationId))) {
 			throw new NotFoundException('The requested record was not found');
 		}
 		return conversation;
@@ -73,7 +77,7 @@ export class ChatAccessService {
 	 * not in (to manage it); a direct or group conversation is its members' only.
 	 */
 	async requireMember(conversationId: ID, caller: IChatCaller): Promise<{ conversation: ChatConversation; member: ChatMember | null }> {
-		const conversation = await this.conversation(caller.tenantId, conversationId);
+		const conversation = await this.conversation(caller.tenantId, conversationId, caller.organizationId);
 		const member = await this.membership(conversationId, caller);
 		if (!member && !(caller.canManage && conversation.kind === 'channel')) {
 			throw new NotFoundException('The requested record was not found');

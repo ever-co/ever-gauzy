@@ -22,8 +22,10 @@ import { ChatMessageService } from '../services/chat-message.service';
 
 /**
  * `/api/chat/categories*`, `/api/chat/conversations*`, `/api/chat/direct`: the conversations of the caller. Every
- * route needs a signed-in user of the tenant with `CHAT_VIEW` (writes `CHAT_SEND`, management `CHAT_MANAGE` or a
- * manager role on the conversation) and the `FEATURE_CHAT` toggle of the tenant. A conversation the caller is not
+ * route needs a signed-in user of the tenant with `CHAT_VIEW` and the `FEATURE_CHAT` toggle of the tenant. A write
+ * that others see (creating, joining, leaving, sending, membership) needs `CHAT_SEND` as well; the caller's own
+ * state (read position, notify level, favourite) is theirs with `CHAT_VIEW`; categories and any conversation's
+ * management need `CHAT_MANAGE` or a manager role on the conversation. A conversation the caller is not
  * a member of answers 404. Answers are `Cache-Control: no-store`.
  */
 @ApiTags('Chat')
@@ -149,6 +151,7 @@ export class ChatConversationController {
 	}
 
 	@Post('/conversations/:id/join')
+	@Permissions(PermissionsEnum.CHAT_SEND)
 	@HttpCode(HttpStatus.OK)
 	@Header('Cache-Control', 'no-store')
 	@ApiOperation({ summary: 'Join a public channel.' })
@@ -157,6 +160,7 @@ export class ChatConversationController {
 	}
 
 	@Post('/conversations/:id/leave')
+	@Permissions(PermissionsEnum.CHAT_SEND)
 	@HttpCode(HttpStatus.OK)
 	@Header('Cache-Control', 'no-store')
 	@ApiOperation({ summary: 'Leave a channel or a group (not the default channel, not a direct conversation).' })

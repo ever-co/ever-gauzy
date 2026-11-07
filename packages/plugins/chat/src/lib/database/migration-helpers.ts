@@ -64,9 +64,9 @@ export interface IndexSpec {
 	columns: string[];
 	unique?: boolean;
 	/**
-	 * A partial-index predicate per dialect family (`postgres` and `sqlite` support it). MySQL has no
-	 * partial indexes: a unique index with a predicate is created there as a plain index, and the rule
-	 * it states is kept by the service's row lock instead.
+	 * A partial-index predicate per dialect family (`postgres` and `sqlite` support it). MySQL has no partial
+	 * indexes: the index is created there without the predicate, and stays UNIQUE — the predicates used here
+	 * only exclude NULL keys, which a MySQL unique index admits any number of.
 	 */
 	where?: { postgres: string; sqlite: string };
 }
@@ -77,7 +77,7 @@ export async function createIndexIfMissing(queryRunner: QueryRunner, table: stri
 	const dialect = dialectOf(queryRunner);
 	const columns = spec.columns.map((column) => q(dialect, column)).join(', ');
 	const partial = dialect !== 'mysql' && spec.where ? ` WHERE ${spec.where[dialect]}` : '';
-	const unique = spec.unique && (dialect !== 'mysql' || !spec.where) ? 'UNIQUE ' : '';
+	const unique = spec.unique ? 'UNIQUE ' : '';
 	try {
 		await queryRunner.query(
 			`CREATE ${unique}INDEX ${q(dialect, spec.name)} ON ${q(dialect, table)} (${columns})${partial}`

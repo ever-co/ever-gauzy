@@ -10,7 +10,9 @@ import { ChatMessageService } from '../services/chat-message.service';
 
 /**
  * `/api/chat/messages*`, `/api/chat/threads`, `/api/chat/read-all`, `/api/chat/read-restore`: one message, its thread
- * and the caller's bulk read state. Same guards and 404 semantics as the conversation routes.
+ * and the caller's bulk read state. Same guards and 404 semantics as the conversation routes: a write others see
+ * (editing, deleting, pinning, reacting) needs `CHAT_SEND`; the caller's own read and follow state needs `CHAT_VIEW`.
+ * The emoji of a reaction route arrives decoded by the framework: it is used as is.
  */
 @ApiTags('Chat')
 @ApiBearerAuth()
@@ -66,6 +68,7 @@ export class ChatMessageController {
 	}
 
 	@Delete('/messages/:id')
+	@Permissions(PermissionsEnum.CHAT_SEND)
 	@HttpCode(HttpStatus.OK)
 	@Header('Cache-Control', 'no-store')
 	@ApiOperation({ summary: 'Delete my message (or any message with CHAT_MANAGE); a thread root stays as a tombstone.' })
@@ -74,6 +77,7 @@ export class ChatMessageController {
 	}
 
 	@Post('/messages/:id/pin')
+	@Permissions(PermissionsEnum.CHAT_SEND)
 	@HttpCode(HttpStatus.OK)
 	@Header('Cache-Control', 'no-store')
 	@ApiOperation({ summary: 'Pin a message in its conversation.' })
@@ -82,6 +86,7 @@ export class ChatMessageController {
 	}
 
 	@Post('/messages/:id/unpin')
+	@Permissions(PermissionsEnum.CHAT_SEND)
 	@HttpCode(HttpStatus.OK)
 	@Header('Cache-Control', 'no-store')
 	@ApiOperation({ summary: 'Unpin a message.' })
@@ -114,18 +119,20 @@ export class ChatMessageController {
 	}
 
 	@Post('/messages/:id/reactions/:emoji')
+	@Permissions(PermissionsEnum.CHAT_SEND)
 	@HttpCode(HttpStatus.OK)
 	@Header('Cache-Control', 'no-store')
 	@ApiOperation({ summary: 'React to a message with an emoji.' })
 	react(@Param('id', UUIDValidationPipe) id: ID, @Param('emoji') emoji: string) {
-		return this.messages.react(this.access.employeeCaller(), id, decodeURIComponent(emoji ?? ''), true);
+		return this.messages.react(this.access.employeeCaller(), id, emoji ?? '', true);
 	}
 
 	@Delete('/messages/:id/reactions/:emoji')
+	@Permissions(PermissionsEnum.CHAT_SEND)
 	@HttpCode(HttpStatus.OK)
 	@Header('Cache-Control', 'no-store')
 	@ApiOperation({ summary: 'Take my reaction back.' })
 	unreact(@Param('id', UUIDValidationPipe) id: ID, @Param('emoji') emoji: string) {
-		return this.messages.react(this.access.employeeCaller(), id, decodeURIComponent(emoji ?? ''), false);
+		return this.messages.react(this.access.employeeCaller(), id, emoji ?? '', false);
 	}
 }

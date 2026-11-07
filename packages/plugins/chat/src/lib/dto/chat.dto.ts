@@ -291,8 +291,8 @@ export class ChatCreateTaskDTO implements IChatCreateTaskInput {
 }
 
 export class ChatRestoreReadDTO {
-	@ApiProperty({ type: () => String })
+	@ApiProperty({ type: () => String, description: 'The undo handle a mark-all-read answered (opaque).' })
 	@IsString()
-	@MaxLength(64)
+	@MaxLength(200_000)
 	snapshotId!: string;
 }

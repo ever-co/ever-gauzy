@@ -1,5 +1,5 @@
 import { BadRequestException, ForbiddenException, Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { DataSource, In, IsNull, Not } from 'typeorm';
+import { DataSource, EntityManager, In, IsNull, Not } from 'typeorm';
 import {
 	CHAT_DEFAULT_CHANNEL_NAME,
 	CHAT_GROUP_MAX_MEMBERS,
@@ -193,11 +193,13 @@ export class ChatConversationService {
 					withDeleted: true
 			  })
 			: [];
-		const conversationOfRoot = new Map(roots.map((root) => [String(root.id), root.conversationId]));
+		// A thread of a conversation the caller left is not theirs to follow any more.
+		const mine = new Set(members.map((member) => String(member.conversationId)));
+		const conversationOfRoot = new Map(roots.filter((root) => mine.has(String(root.conversationId))).map((root) => [String(root.id), root.conversationId]));
 		return {
 			states: members.map((member) => memberState(member, { messageCount: counts.get(String(member.conversationId)) ?? 0 })),
 			threads: follows
-				.filter((follow) => (follow.unreadReplies ?? 0) > 0)
+				.filter((follow) => (follow.unreadReplies ?? 0) > 0 && conversationOfRoot.has(String(follow.rootMessageId)))
 				.map((follow) => ({
 					rootMessageId: follow.rootMessageId,
 					conversationId: conversationOfRoot.get(String(follow.rootMessageId)) as ID,
@@ -263,9 +265,13 @@ export class ChatConversationService {
 		}
 		if (input.topic !== undefined) conversation.topic = input.topic?.trim() || null;
 		if (input.visibility) conversation.visibility = input.visibility;
-		if (input.categoryId !== undefined) conversation.categoryId = (input.categoryId ?? undefined) as ID | undefined;
 		if (typeof input.position === 'number') conversation.position = input.position;
 		await this.dataSource.getRepository(ChatConversation).save(conversation);
+		if (input.categoryId !== undefined) {
+			// A cleared category is written as NULL: `save` leaves an undefined member untouched.
+			await this.dataSource.getRepository(ChatConversation).update({ id: conversation.id as ID }, { categoryId: (input.categoryId ?? null) as never });
+			conversation.categoryId = (input.categoryId ?? undefined) as ID | undefined;
+		}
 		const members = await this.access.members(caller.tenantId, id);
 		const events = [await this.realtime.publish(this.realtime.conversationFact(conversation, 'updated', members.map((member) => member.userId)))];
 		return { conversation: await this.get(caller, id), events };
@@ -274,8 +280,9 @@ export class ChatConversationService {
 	async archive(caller: IChatCaller, id: ID, archived: boolean): Promise<{ conversation: IChatConversationWithState; events: IChatEvent[] }> {
 		const { conversation } = await this.access.requireManager(id, caller);
 		if (conversation.isDefault) throw new BadRequestException('The default channel cannot be archived.');
-		conversation.archivedAt = archived ? (conversation.archivedAt ?? new Date()) : undefined;
-		await this.dataSource.getRepository(ChatConversation).save(conversation);
+		const archivedAt = archived ? (conversation.archivedAt ?? new Date()) : null;
+		await this.dataSource.getRepository(ChatConversation).update({ id: conversation.id as ID }, { archivedAt: archivedAt as never });
+		conversation.archivedAt = archivedAt ?? undefined;
 		const members = await this.access.members(caller.tenantId, id);
 		const events = [
 			await this.realtime.publish(this.realtime.conversationFact(conversation, archived ? 'archived' : 'updated', members.map((member) => member.userId)))
@@ -290,20 +297,40 @@ export class ChatConversationService {
 		const ids = [...new Set([caller.employeeId, ...employeeIds].map(String))];
 		if (ids.length < 2) throw new BadRequestException('Name at least one other employee.');
 		if (ids.length > CHAT_GROUP_MAX_MEMBERS) throw new BadRequestException(`A group holds at most ${CHAT_GROUP_MAX_MEMBERS} people.`);
-		const employees = await this.employeesOfTenant(caller.tenantId, ids as ID[]);
+		const employees = await this.employeesOfTenant(caller.tenantId, ids as ID[], caller.organizationId);
 		if (employees.length !== ids.length) throw new NotFoundException('One of the employees was not found.');
 		const directKey = directKeyOf(employees.map((employee) => employee.userId));
 		const repository = this.dataSource.getRepository(ChatConversation);
 		const existing = await repository.findOne({ where: { tenantId: caller.tenantId, directKey } });
 		if (existing) {
-			// A member who left (a group) is back in it.
+			// A member who left a group of their own accord is back in it. A group whose membership a manager changed
+			// (someone added or removed) no longer carries a key, so a removed member cannot find their way back here.
 			await this.dataSource
 				.getRepository(ChatMember)
 				.update({ conversationId: existing.id as ID, employeeId: caller.employeeId, tenantId: caller.tenantId }, { leftAt: null as never });
 			return { conversation: await this.get(caller, existing.id as ID), created: false, events: [] };
 		}
 		const kind = ids.length === 2 ? ChatConversationKindEnum.DIRECT : ChatConversationKindEnum.GROUP;
-		const conversation = await this.dataSource.transaction(async (manager) => {
+		const conversation = await this.createDirect(caller, kind, directKey, employees).catch(async (error) => {
+			// Two first requests at once: the unique key let one in; the other answers the same conversation.
+			const winner = await repository.findOne({ where: { tenantId: caller.tenantId, directKey } });
+			if (!winner) throw error;
+			return winner;
+		});
+		if (String(conversation.createdByEmployeeId ?? '') !== String(caller.employeeId) || (conversation.createdAt && Date.now() - new Date(conversation.createdAt as Date).getTime() > 5_000)) {
+			return { conversation: await this.get(caller, conversation.id as ID), created: false, events: [] };
+		}
+		const events = [await this.realtime.publish(this.realtime.conversationFact(conversation, 'created', employees.map((employee) => employee.userId)))];
+		return { conversation: await this.get(caller, conversation.id as ID), created: true, events };
+	}
+
+	private createDirect(
+		caller: IChatCaller & { employeeId: ID },
+		kind: ChatConversationKindEnum,
+		directKey: string,
+		employees: Array<{ id: ID; userId: ID }>
+	): Promise<ChatConversation> {
+		return this.dataSource.transaction(async (manager) => {
 			const created = await manager.getRepository(ChatConversation).save(
 				manager.getRepository(ChatConversation).create({
 					kind,
@@ -336,14 +363,12 @@ export class ChatConversationService {
 			);
 			return created;
 		});
-		const events = [await this.realtime.publish(this.realtime.conversationFact(conversation, 'created', employees.map((employee) => employee.userId)))];
-		return { conversation: await this.get(caller, conversation.id as ID), created: true, events };
 	}
 
 	// ---------------------------------------------------------------- membership
 
 	async join(caller: IChatCaller & { employeeId: ID }, id: ID): Promise<{ conversation: IChatConversationWithState; events: IChatEvent[] }> {
-		const conversation = await this.access.conversation(caller.tenantId, id);
+		const conversation = await this.access.conversation(caller.tenantId, id, caller.organizationId);
 		if (conversation.kind !== ChatConversationKindEnum.CHANNEL || conversation.visibility !== ChatVisibilityEnum.PUBLIC || conversation.archivedAt) {
 			throw new NotFoundException('The requested record was not found');
 		}
@@ -357,6 +382,7 @@ export class ChatConversationService {
 		if (conversation.isDefault) throw new BadRequestException('The default channel cannot be left.');
 		if (conversation.kind === ChatConversationKindEnum.DIRECT) throw new BadRequestException('A direct conversation cannot be left.');
 		await this.dataSource.getRepository(ChatMember).update({ id: member.id }, { leftAt: new Date() });
+		await this.dropFollows(caller.tenantId, conversation.id as ID, caller.employeeId);
 		return { events: await this.membersChanged(caller, conversation) };
 	}
 
@@ -369,7 +395,23 @@ export class ChatConversationService {
 	async addMembersTo(caller: IChatCaller, id: ID, employeeIds: readonly ID[]): Promise<{ members: IChatMemberSummary[]; events: IChatEvent[] }> {
 		const { conversation } = await this.access.requireManager(id, caller);
 		if (conversation.kind === ChatConversationKindEnum.DIRECT) throw new BadRequestException('A direct conversation has exactly two members.');
-		await this.addMembers(caller, conversation, employeeIds);
+		const employees = await this.employeesOfTenant(caller.tenantId, employeeIds, conversation.organizationId ?? caller.organizationId ?? null);
+		if (conversation.kind === ChatConversationKindEnum.GROUP) {
+			const active = await this.access.members(caller.tenantId, id);
+			const activeIds = new Set(active.map((member) => String(member.employeeId)));
+			const joining = employees.filter((employee) => !activeIds.has(String(employee.id))).length;
+			if (active.length + joining > CHAT_GROUP_MAX_MEMBERS) {
+				throw new BadRequestException(`A group holds at most ${CHAT_GROUP_MAX_MEMBERS} people.`);
+			}
+		}
+		await this.dataSource.transaction(async (manager) => {
+			await this.addMembers(caller, conversation, employees.map((employee) => employee.id), employees, manager);
+			// A group whose membership changed is no longer "the conversation of these people": its key goes, so the
+			// original set resolves to a new group and a removed member cannot rejoin through it.
+			if (conversation.kind === ChatConversationKindEnum.GROUP && conversation.directKey) {
+				await manager.getRepository(ChatConversation).update({ id: conversation.id as ID }, { directKey: null as never });
+			}
+		});
 		return { members: await this.members(caller, id), events: await this.membersChanged(caller, conversation) };
 	}
 
@@ -382,6 +424,11 @@ export class ChatConversationService {
 		if (!member) throw new NotFoundException('The requested record was not found');
 		const removedUserId = member.userId;
 		await this.dataSource.getRepository(ChatMember).update({ id: member.id }, { leftAt: new Date() });
+		await this.dropFollows(caller.tenantId, conversation.id as ID, employeeId);
+		if (conversation.kind === ChatConversationKindEnum.GROUP && conversation.directKey) {
+			// The removed member must not find their way back through the participants' key (see addMembersTo).
+			await this.dataSource.getRepository(ChatConversation).update({ id: conversation.id as ID }, { directKey: null as never });
+		}
 		const events = await this.membersChanged(caller, conversation);
 		events.push(await this.realtime.publish(this.realtime.conversationFact(conversation, 'removed', [removedUserId])));
 		return { events };
@@ -390,42 +437,58 @@ export class ChatConversationService {
 	async setMemberState(caller: IChatCaller, id: ID, input: IChatMemberStateInput): Promise<{ state: IChatMemberState; events: IChatEvent[] }> {
 		const { conversation, member } = await this.access.requireMember(id, caller);
 		if (!member) throw new NotFoundException('The requested record was not found');
-		if (input.notifyLevel) member.notifyLevel = input.notifyLevel;
-		if (typeof input.isFavorite === 'boolean') member.isFavorite = input.isFavorite;
-		await this.dataSource.getRepository(ChatMember).save(member);
-		const events = [await this.realtime.publish(this.realtime.memberStateFact(member))];
-		return { state: memberState(member, conversation), events };
+		const patch: Partial<ChatMember> = {};
+		if (input.notifyLevel) patch.notifyLevel = input.notifyLevel;
+		if (typeof input.isFavorite === 'boolean') patch.isFavorite = input.isFavorite;
+		// The preference columns only: a message that arrived since the read must not have its counters written back.
+		if (Object.keys(patch).length) await this.dataSource.getRepository(ChatMember).update({ id: member.id }, patch as never);
+		const fresh = (await this.access.membership(id, caller)) ?? Object.assign(member, patch);
+		const events = [await this.realtime.publish(this.realtime.memberStateFact(fresh))];
+		return { state: memberState(fresh, conversation), events };
 	}
 
 	/** The organization's default channel, created on first use with every active employee as a member. */
 	async ensureDefaultChannel(caller: IChatCaller): Promise<ChatConversation | null> {
-		if (!caller.organizationId) return null;
+		const organizationId = caller.organizationId;
+		if (!organizationId) return null;
 		const repository = this.dataSource.getRepository(ChatConversation);
-		const existing = await repository.findOne({ where: { tenantId: caller.tenantId, organizationId: caller.organizationId, isDefault: true } });
-		if (existing) return existing;
+		// The default channel carries a key of its own under the unique (tenantId, directKey) index, so two first calls
+		// at once cannot both create one; a participants' key is a hash and never collides with it.
+		const directKey = `default:${organizationId}`;
+		const existing = await repository.findOne({ where: { tenantId: caller.tenantId, organizationId, isDefault: true } });
+		if (existing) {
+			// An employee hired after the channel was created belongs to it from their first visit.
+			if (caller.employeeId && !(await this.access.membership(existing.id as ID, caller))) {
+				await this.addMembers(caller, existing, [caller.employeeId]);
+			}
+			return existing;
+		}
 		try {
-			const created = await repository.save(
-				repository.create({
-					kind: ChatConversationKindEnum.CHANNEL,
-					name: CHAT_DEFAULT_CHANNEL_NAME,
-					visibility: ChatVisibilityEnum.PUBLIC,
-					position: 0,
-					isDefault: true,
-					messageCount: 0,
-					tenantId: caller.tenantId,
-					organizationId: caller.organizationId
-				})
-			);
-			const employees = await this.dataSource.getRepository(Employee).find({
-				select: { id: true, userId: true },
-				where: { tenantId: caller.tenantId, organizationId: caller.organizationId, isActive: true, isArchived: false }
+			return await this.dataSource.transaction(async (manager) => {
+				const created = await manager.getRepository(ChatConversation).save(
+					manager.getRepository(ChatConversation).create({
+						kind: ChatConversationKindEnum.CHANNEL,
+						name: CHAT_DEFAULT_CHANNEL_NAME,
+						visibility: ChatVisibilityEnum.PUBLIC,
+						position: 0,
+						isDefault: true,
+						messageCount: 0,
+						directKey,
+						tenantId: caller.tenantId,
+						organizationId
+					})
+				);
+				const employees = await manager.getRepository(Employee).find({
+					select: { id: true, userId: true },
+					where: { tenantId: caller.tenantId, organizationId, isActive: true, isArchived: false }
+				});
+				await this.addMembers(caller, created, employees.map((employee) => employee.id as ID), employees, manager);
+				return created;
 			});
-			await this.addMembers(caller, created, employees.map((employee) => employee.id as ID), employees);
-			return created;
 		} catch (error) {
-			// Two first calls at once: the other one created it.
+			// Two first calls at once: the other one created it (the unique key refused this one).
 			this.logger.warn(`The default channel was not created: ${(error as Error)?.message}`);
-			return repository.findOne({ where: { tenantId: caller.tenantId, organizationId: caller.organizationId, isDefault: true } });
+			return repository.findOne({ where: { tenantId: caller.tenantId, directKey } });
 		}
 	}
 
@@ -435,21 +498,28 @@ export class ChatConversationService {
 		if (!caller.canManage) throw new ForbiddenException('Managing chat categories needs CHAT_MANAGE.');
 	}
 
-	private async employeesOfTenant(tenantId: ID, employeeIds: readonly ID[]): Promise<Array<{ id: ID; userId: ID }>> {
+	/** The active employees of the tenant (and of one organization, when stated) among the ids. */
+	private async employeesOfTenant(tenantId: ID, employeeIds: readonly ID[], organizationId: ID | null = null): Promise<Array<{ id: ID; userId: ID }>> {
 		const ids = [...new Set(employeeIds.map(String))];
 		if (!ids.length) return [];
 		const employees = await this.dataSource.getRepository(Employee).find({
 			select: { id: true, userId: true },
-			where: { id: In(ids), tenantId, isActive: true, isArchived: false }
+			where: { id: In(ids), tenantId, ...(organizationId ? { organizationId } : {}), isActive: true, isArchived: false }
 		});
 		return employees.map((employee) => ({ id: employee.id as ID, userId: employee.userId }));
 	}
 
 	/** Adds (or re-activates) members; silently skips unknown employees. */
-	private async addMembers(caller: IChatCaller, conversation: ChatConversation, employeeIds: readonly ID[], known?: Array<{ id?: ID; userId?: ID }>): Promise<void> {
-		const employees = known ?? (await this.employeesOfTenant(caller.tenantId, employeeIds));
+	private async addMembers(
+		caller: IChatCaller,
+		conversation: ChatConversation,
+		employeeIds: readonly ID[],
+		known?: Array<{ id?: ID; userId?: ID }>,
+		manager?: EntityManager
+	): Promise<void> {
+		const employees = known ?? (await this.employeesOfTenant(caller.tenantId, employeeIds, conversation.organizationId ?? caller.organizationId ?? null));
 		if (!employees.length) return;
-		const repository = this.dataSource.getRepository(ChatMember);
+		const repository = (manager ?? this.dataSource).getRepository(ChatMember);
 		const existing = await repository.find({ where: { conversationId: conversation.id as ID, employeeId: In(employees.map((employee) => employee.id as ID)), tenantId: caller.tenantId } });
 		const byEmployee = new Map(existing.map((member) => [String(member.employeeId), member]));
 		const now = new Date();
@@ -476,6 +546,22 @@ export class ChatConversationService {
 				})
 			);
 		}
+	}
+
+	/** A member who left or was removed follows none of the conversation's threads any more. */
+	private async dropFollows(tenantId: ID, conversationId: ID, employeeId: ID): Promise<void> {
+		const roots = this.dataSource
+			.getRepository(ChatMessage)
+			.createQueryBuilder('m')
+			.select('m.id')
+			.where('m.conversationId = :conversationId');
+		await this.dataSource
+			.getRepository(ChatThreadFollow)
+			.createQueryBuilder()
+			.delete()
+			.where('employeeId = :employeeId AND tenantId = :tenantId', { employeeId, tenantId })
+			.andWhere(`rootMessageId IN (${roots.getQuery()})`, { conversationId })
+			.execute();
 	}
 
 	private async membersChanged(caller: IChatCaller, conversation: ChatConversation): Promise<IChatEvent[]> {

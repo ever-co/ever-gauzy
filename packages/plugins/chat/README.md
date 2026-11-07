@@ -5,7 +5,10 @@ group messages, threads, reactions, pins, @mentions, attachments and task cards.
 `docs/specs/features/chat/`.
 
 **Off by default.** The plugin is loaded only when `GAUZY_CHAT_ENABLED=true` (exactly), and its routes answer only
-for tenants whose `FEATURE_CHAT` toggle is on. Off, nothing changes: no route, no table, no role grant.
+for tenants whose `FEATURE_CHAT` toggle is on. Off, nothing changes: no route, no table. (The chat permissions sit
+in the platform's default role grants, like every plugin permission, so a tenant has them the day the plugin is
+turned on; with the plugin off they guard nothing.) The `FEATURE_CHAT` catalogue row is seeded by the plugin's own
+migration (`1791000006300`) on an existing installation, so Settings → Features shows the toggle.
 
 ## What it is built on
 

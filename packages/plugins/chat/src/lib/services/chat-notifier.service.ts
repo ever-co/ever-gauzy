@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { EventBus } from '@nestjs/cqrs';
-import { DataSource, In } from 'typeorm';
+import { Brackets, DataSource, In } from 'typeorm';
 import {
 	ActorTypeEnum,
 	BaseEntityEnum,
@@ -94,18 +94,27 @@ export class ChatNotifierService {
 		}
 	}
 
-	/** Tells the followers of a thread about a reply (never the author, never someone already mentioned). */
-	notifyThread(message: ChatMessage, conversation: ChatConversation, followerEmployeeIds: readonly ID[], mentioned: readonly ID[]): void {
+	/**
+	 * Tells the followers of a thread about a reply: the members of the conversation who follow it, by their notify
+	 * level (a muted or mentions-only member is not told), never the author, never someone already mentioned.
+	 */
+	notifyThread(message: ChatMessage, conversation: ChatConversation, followers: readonly ChatMember[], mentioned: readonly ID[]): void {
 		const authorName = authorDisplayName(RequestContext.currentUser());
-		for (const employeeId of followerEmployeeIds) {
-			if (String(employeeId) === String(message.authorEmployeeId ?? '')) continue;
+		for (const follower of followers) {
+			const employeeId = follower.employeeId;
+			if (!employeeId || String(employeeId) === String(message.authorEmployeeId ?? '')) continue;
+			if (follower.notifyLevel === ChatNotifyLevelEnum.MUTED || follower.notifyLevel === ChatNotifyLevelEnum.MENTIONS) continue;
 			if (mentioned.map(String).includes(String(employeeId))) continue;
 			this.publishMessageNotification(message, conversation, employeeId, authorName);
 		}
 	}
 
-	/** Marks the caller's chat notifications about a conversation read (best effort, through the notification rows). */
-	async markConversationRead(conversationId: ID, caller: { tenantId: ID; employeeId: ID }): Promise<number> {
+	/**
+	 * Marks the caller's chat notifications about a conversation read (best effort, through the notification rows):
+	 * the message notifications of the messages read (up to `upTo` when the read is partial), and — on a full read —
+	 * the mention notifications, which the mention service files against the conversation.
+	 */
+	async markConversationRead(conversationId: ID, caller: { tenantId: ID; employeeId: ID }, upTo?: Pick<ChatMessage, 'createdAt'> | null): Promise<number> {
 		try {
 			const messageIds = this.dataSource
 				.getRepository(ChatMessage)
@@ -113,22 +122,51 @@ export class ChatNotifierService {
 				.select('message.id')
 				.where('message.conversationId = :conversationId', { conversationId })
 				.andWhere('message.tenantId = :tenantId', { tenantId: caller.tenantId });
+			if (upTo?.createdAt) messageIds.andWhere('message.createdAt <= :upToAt', { upToAt: upTo.createdAt });
 			const notifications = this.dataSource.getRepository(EmployeeNotification);
-			const unread = await notifications
+			const query = notifications
 				.createQueryBuilder('notification')
 				.select('notification.id', 'id')
 				.where('notification.tenantId = :tenantId', { tenantId: caller.tenantId })
 				.andWhere('notification.receiverEmployeeId = :employeeId', { employeeId: caller.employeeId })
 				.andWhere('notification.isRead = :unread', { unread: false })
-				.andWhere('notification.entity = :entity', { entity: BaseEntityEnum.ChatMessage })
-				.andWhere(`notification.entityId IN (${messageIds.getQuery()})`)
-				.setParameters(messageIds.getParameters())
-				.getRawMany<{ id: ID }>();
+				.andWhere(
+					new Brackets((where) => {
+						where.where(`notification.entity = :messageEntity AND notification.entityId IN (${messageIds.getQuery()})`, { messageEntity: BaseEntityEnum.ChatMessage });
+						if (!upTo) {
+							where.orWhere('notification.entity = :conversationEntity AND notification.entityId = :conversationId', {
+								conversationEntity: BaseEntityEnum.ChatConversation,
+								conversationId
+							});
+						}
+					})
+				)
+				.setParameters(messageIds.getParameters());
+			const unread = await query.getRawMany<{ id: ID }>();
 			if (!unread.length) return 0;
 			await notifications.update({ id: In(unread.map((row) => row.id)) }, { isRead: true, readAt: new Date() });
 			return unread.length;
 		} catch (error) {
 			this.logger.warn(`Chat notifications of conversation ${conversationId} were not marked read: ${(error as Error)?.message}`);
+			return 0;
+		}
+	}
+
+	/** Marks every chat notification of the caller read (a mark-all-read; best effort). */
+	async markAllRead(caller: { tenantId: ID; employeeId: ID }): Promise<number> {
+		try {
+			const result = await this.dataSource.getRepository(EmployeeNotification).update(
+				{
+					tenantId: caller.tenantId,
+					receiverEmployeeId: caller.employeeId,
+					isRead: false,
+					entity: In([BaseEntityEnum.ChatMessage, BaseEntityEnum.ChatConversation])
+				},
+				{ isRead: true, readAt: new Date() }
+			);
+			return result.affected ?? 0;
+		} catch (error) {
+			this.logger.warn(`Chat notifications were not marked read: ${(error as Error)?.message}`);
 			return 0;
 		}
 	}
