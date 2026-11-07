@@ -48,11 +48,18 @@ function pluginDirs() {
 
 /** The plugin dependencies (`dependencies` and `peerDependencies`) of the plugin `name`, read from its package.json. */
 function pluginDepsOf(plugins) {
+	const cache = new Map();
 	return (name) => {
-		const pkg = JSON.parse(
-			readFileSync(join(ROOT, 'packages', 'plugins', plugins.get(name), 'package.json'), 'utf8')
-		);
-		return Object.keys({ ...pkg.dependencies, ...pkg.peerDependencies }).filter((n) => plugins.has(n));
+		if (!cache.has(name)) {
+			const dir = plugins.get(name);
+			if (!dir) throw new Error(`${name} is not a package under packages/plugins`);
+			const pkg = JSON.parse(readFileSync(join(ROOT, 'packages', 'plugins', dir, 'package.json'), 'utf8'));
+			cache.set(
+				name,
+				Object.keys({ ...pkg.dependencies, ...pkg.peerDependencies }).filter((n) => plugins.has(n))
+			);
+		}
+		return cache.get(name);
 	};
 }
 
@@ -242,15 +249,9 @@ if (process.argv.includes('--self-test')) {
 		const dockerfile = `.deploy/${app}/Dockerfile`;
 		const pkg = JSON.parse(readFileSync(join(ROOT, 'apps', app, 'package.json'), 'utf8'));
 		const direct = Object.keys({ ...pkg.dependencies, ...pkg.devDependencies }).filter((n) => plugins.has(n));
-		const deps = withPluginDeps(direct, pluginDepsOf(plugins));
-		const result = check(
-			readFileSync(join(ROOT, dockerfile), 'utf8'),
-			app,
-			deps,
-			plugins,
-			dockerfile,
-			pluginDepsOf(plugins)
-		);
+		const depsOf = pluginDepsOf(plugins);
+		const deps = withPluginDeps(direct, depsOf);
+		const result = check(readFileSync(join(ROOT, dockerfile), 'utf8'), app, deps, plugins, dockerfile, depsOf);
 		problems.push(...result.problems);
 		console.log(`${dockerfile}: ${deps.length} plugin dependencies, ${result.stages} dependency stage(s) checked`);
 	}
