@@ -166,6 +166,7 @@ export class AsanaTenantService {
 		// The connection this one replaces, if any: a refusal it carried is over once the new token is stored.
 		const replaced = await this.forOrganization(organizationId, tenantId);
 		const wasRefused = !!(replaced && this.settingsOf(replaced)[AsanaSettingName.ATTENTION_REASON]);
+		const previousUserId = (replaced && this.settingsOf(replaced)[AsanaSettingName.CONNECTED_BY_USER_ID]) || null;
 		const integration = await this.integrationTenantService['typeOrmRepository'].manager.findOne(Integration, { where: { name: ASANA_INTEGRATION_NAME } });
 		if (!integration) {
 			throw new NotFoundException({ message: 'The Asana integration is not in the catalogue', code: ASANA_NOT_CONNECTED });
@@ -194,7 +195,8 @@ export class AsanaTenantService {
 		if (!stored || this.settingsOf(stored)[AsanaSettingName.ACCESS_TOKEN] !== token.accessToken) {
 			throw new InternalServerErrorException({ message: 'The Asana connection could not be stored; connect again', code: ASANA_NOT_CONNECTED });
 		}
-		if (wasRefused) await this.fileAttention(stored, null);
+		// The notice went to whoever connected before: they hear of the resolution too, whoever reconnected.
+		if (wasRefused) await this.fileAttention(stored, null, previousUserId ? [previousUserId as ID] : []);
 		return stored;
 	}
 
@@ -224,12 +226,13 @@ export class AsanaTenantService {
 	 * Files (or resolves) the Inbox item about the connection and remembers that it got through; nothing without
 	 * the Inbox plugin or a connecting user. A filing that failed is tried again by the next {@link setAttention}.
 	 */
-	private async fileAttention(tenant: IIntegrationTenant, reason: string | null): Promise<void> {
+	private async fileAttention(tenant: IIntegrationTenant, reason: string | null, alsoUserIds: readonly ID[] = []): Promise<void> {
 		if (!this.inbox) return;
 		const userId = this.settingsOf(tenant)[AsanaSettingName.CONNECTED_BY_USER_ID];
-		if (!userId) return;
+		const recipients = [...new Set([userId, ...alsoUserIds].filter(Boolean).map(String))] as ID[];
+		if (!recipients.length) return;
 		try {
-			await this.inbox.upsertExternal(attentionItemOf({ id: tenant.id as ID, tenantId: tenant.tenantId as ID, organizationId: tenant.organizationId as ID }, reason, [userId as ID]));
+			await this.inbox.upsertExternal(attentionItemOf({ id: tenant.id as ID, tenantId: tenant.tenantId as ID, organizationId: tenant.organizationId as ID }, reason, recipients));
 			await this.writeSetting(tenant, AsanaSettingName.ATTENTION_NOTICE_AT, reason ? new Date().toISOString() : '');
 		} catch (error) {
 			this.logger.warn(`The attention of connection ${tenant.id} could not be filed in the Inbox: ${(error as Error).message}`);

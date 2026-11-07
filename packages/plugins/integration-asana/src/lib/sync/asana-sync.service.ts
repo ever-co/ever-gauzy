@@ -602,7 +602,11 @@ export class AsanaSyncService {
 	 */
 	private reportDetails(context: ApplyContext): void {
 		const { comments, links, failed } = context.details;
-		if (failed) context.counts.failed += failed;
+		if (failed) {
+			context.counts.failed += failed;
+			// Counted once: a second report on the same context would count them again.
+			context.details.failed = 0;
+		}
 		if (comments || links || failed) {
 			this.logger.log(`Mapping ${context.mapping.id}: ${comments} comment(s) and ${links} attachment link(s) brought in, ${failed} not read or kept`);
 		}

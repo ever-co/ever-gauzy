@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, inject, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, inject, OnInit, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -580,8 +580,8 @@ export class AsanaSettingsComponent implements OnInit {
 		void this.router.navigate([ASANA_LINK]);
 	}
 
-	/** How many refused changes each row took (see `restore`). */
-	private readonly rowVersions = new Map<string, number>();
+	/** How many refused changes each row took (see `restore`): local state, as a signal. */
+	private readonly rowVersions = signal<ReadonlyMap<string, number>>(new Map());
 
 	/** One request at a time: `apply` takes its answer; `revert` puts the page back when it was refused. */
 	private request<T>(request: Observable<T>, apply: (value: T) => void, revert?: () => void): void {
@@ -609,7 +609,7 @@ export class AsanaSettingsComponent implements OnInit {
 
 	/** A row's identity for the list: its mapping, and how many refused changes it took (each one re-creates the row). */
 	rowKey(mapping: AsanaMapping): string {
-		return `${mapping.id}:${this.rowVersions.get(mapping.id) ?? 0}`;
+		return `${mapping.id}:${this.rowVersions().get(mapping.id) ?? 0}`;
 	}
 
 	/**
@@ -618,7 +618,7 @@ export class AsanaSettingsComponent implements OnInit {
 	 * instead, and the list re-creates the row with the stored values.
 	 */
 	private restore(mapping: AsanaMapping): void {
-		this.rowVersions.set(mapping.id, (this.rowVersions.get(mapping.id) ?? 0) + 1);
+		this.rowVersions.update((versions) => new Map(versions).set(mapping.id, (versions.get(mapping.id) ?? 0) + 1));
 		this.replace({ ...mapping });
 	}
 
