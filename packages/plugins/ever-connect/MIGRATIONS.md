@@ -55,4 +55,4 @@ One row per idempotency key of a workspace creation (`idempotencyKey`, primary k
 
 ## `ever_connect_lookup_cache`
 
-Reserved for the counterparty check (not available in this release; the table stays empty): `tenantId`, `organizationId`, `kind`, `hash`, `saltVersion`, `result`, `expiresAt`; unique on (`organizationId`, `kind`, `hash`).
+The counterparty check's answers ("Check on Ever Platform" on a contact), per organization: `tenantId`, `organizationId`, `kind` (`vat`, `registration`, `email`), `hash` (the salted hash, never a value), `saltVersion`, `result` (the handle and features of a match as JSON; empty for "none found"), `expiresAt` (a match for a day, "none found" for an hour; expired rows are removed at the organization's next check); unique on (`organizationId`, `kind`, `hash`). Emptied for an organization when the integration is switched off.

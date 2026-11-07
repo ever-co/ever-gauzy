@@ -1,6 +1,6 @@
 import { Routes } from '@angular/router';
 import { PermissionsEnum } from '@gauzy/contracts';
-import { defineDeclarativePlugin, PluginRouteInput } from '@gauzy/plugin-ui';
+import { defineDeclarativePlugin, PageExtensionDefinition, PluginRouteInput } from '@gauzy/plugin-ui';
 import en from '../i18n/en.json';
 
 /** Path of the page, relative to `/pages/integrations` (the `redirectUrl` of the integration). */
@@ -59,15 +59,36 @@ export const EVER_CONNECT_PROVISION_ROUTE: PluginRouteInput = {
 	loadComponent: () => import('./provision/provision-confirm.component').then((m) => m.ProvisionConfirmComponent)
 };
 
+/** The slot of the contact page's header where a plugin may add an action for the contact. */
+export const CONTACT_VIEW_ACTIONS_SLOT = 'contact-view-actions';
+
 /**
- * Ever Platform UI plugin (`@gauzy/plugin-ever-connect-ui`): Integrations > Ever Platform, and the
- * confirmation page of a workspace created from Ever. The pages ask the API first; where the Ever
- * Platform module is not loaded (the default) they only say so.
+ * "Check on Ever Platform" on a contact, for people who may see integrations. It renders nothing
+ * unless the API says the counterparty check is enabled for the organization (and, where the Ever
+ * Platform module is not loaded, the API's 404 hides it).
+ */
+export const CHECK_ON_EVER_PLATFORM_EXTENSION: PageExtensionDefinition = {
+	id: 'ever-connect-check-on-ever-platform',
+	slotId: CONTACT_VIEW_ACTIONS_SLOT,
+	loadComponent: () =>
+		import('./components/check-on-ever-platform-button/check-on-ever-platform-button.component').then(
+			(m) => m.CheckOnEverPlatformButtonComponent
+		),
+	permissions: [PermissionsEnum.INTEGRATION_VIEW],
+	wrapper: 'none'
+};
+
+/**
+ * Ever Platform UI plugin (`@gauzy/plugin-ever-connect-ui`): Integrations > Ever Platform, the
+ * confirmation page of a workspace created from Ever, and "Check on Ever Platform" on a contact.
+ * The pages ask the API first; where the Ever Platform module is not loaded (the default) they only
+ * say so, and the contact page shows no button.
  */
 export const EverConnectUiPlugin = defineDeclarativePlugin('ever-connect', {
 	version: '0.1.0',
 	location: 'integrations-sections',
 	routes: [EVER_CONNECT_ROUTE, EVER_CONNECT_PROVISION_ROUTE],
+	extensions: [CHECK_ON_EVER_PLATFORM_EXTENSION],
 	permissionKeys: [PermissionsEnum.INTEGRATION_VIEW],
 	translationNamespace: 'EVER_CONNECT',
 	translations: { en }
