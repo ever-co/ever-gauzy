@@ -75,7 +75,7 @@ a parameter. Answers are `Cache-Control: no-store`.
   `&q=&projectId=&taskId=&agentEmployeeId=&cursor=&limit=`: my items, newest
   first, each with my state. A snoozed item stays hidden from the other tabs
   until its time; `snoozed` lists them meanwhile.
-- **`GET /items/counts`:** `{ unread, decisionsOpen, byMailbox }` (for the
+- **`GET /items/counts`:** `{ unread, decisionsOpen, emailUnread, byMailbox }` (for the
   header badge).
 - **`GET /items/:id`:** one of my items with my state. A holder of
   `INBOX_MAILBOX_READ_ALL` may also read the EMAIL items of a mailbox (P4) of

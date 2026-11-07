@@ -1368,6 +1368,20 @@ describe('TaskViewPageComponent', () => {
 			expect(pane()).not.toBeNull();
 		});
 
+		it('opens on the Comments tab, at the comment, when the URL names a comment (an Inbox link)', async () => {
+			queryParams$.next(convertToParamMap({ comment: ' c-9 ' }));
+			const page = create();
+			await settle();
+
+			expect(page.tab).toBe('comments');
+			expect(page.highlightCommentId).toBe('c-9');
+			expect(pane()).not.toBeNull();
+
+			// Another link, without the comment: the comment is no longer pointed at.
+			queryParams$.next(convertToParamMap({ tab: 'comments' }));
+			expect(page.highlightCommentId).toBeNull();
+		});
+
 		it('keeps the comments behind another tab, so a draft survives', async () => {
 			const page = create();
 			await settle();

@@ -130,17 +130,37 @@ describe('InboxPageComponent', () => {
 		expect(component.items()).toEqual([]);
 	});
 
+	it('keeps an item listed where the API keeps it: archived and marked done stays in Archived, done and snoozed stays in Done', () => {
+		api.counts.mockReturnValue(of({ unread: 1, decisionsOpen: 1, byMailbox: [] }));
+		const archived = item('a', { recipient: { isRead: true, isArchived: true, snoozedUntil: null } });
+		api.list.mockReturnValue(of({ items: [archived], nextCursor: null }));
+		const { component } = render();
+		component.selectTab('archived');
+		api.setState.mockReturnValue(of(item('a', { recipient: { isRead: true, isArchived: true, snoozedUntil: null, isDone: true } })));
+		component.changeState(component.items()[0], { isDone: true });
+		expect(component.items().map((entry) => entry.id)).toEqual(['a']);
+
+		const done = item('b', { recipient: { isRead: true, isArchived: false, snoozedUntil: null, isDone: true } });
+		api.list.mockReturnValue(of({ items: [done], nextCursor: null }));
+		component.selectTab('done');
+		const later = new Date(Date.now() + 3_600_000);
+		api.setState.mockReturnValue(of(item('b', { recipient: { isRead: true, isArchived: false, snoozedUntil: later, isDone: true } })));
+		component.changeState(component.items()[0], { snoozedUntil: later.toISOString() });
+		expect(component.items().map((entry) => entry.id)).toEqual(['b']);
+	});
+
 	it('shows my counts beside the tabs, and reads them again after a change', () => {
-		api.counts.mockReturnValue(of({ unread: 3, decisionsOpen: 2, byMailbox: [{ mailboxId: 'm', unread: 1 }] }));
+		// Two unread emails: one of a mailbox, one mirrored from a source (no mailbox) — the Email tab counts both.
+		api.counts.mockReturnValue(of({ unread: 3, decisionsOpen: 2, emailUnread: 2, byMailbox: [{ mailboxId: 'm', unread: 1 }] }));
 		api.list.mockReturnValue(of({ items: [], nextCursor: null }));
 		const { component, find, fixture } = render();
 		expect(find('count-all')?.textContent?.trim()).toBe('3');
 		expect(find('count-decisions')?.textContent?.trim()).toBe('2');
-		expect(find('count-email')?.textContent?.trim()).toBe('1');
+		expect(find('count-email')?.textContent?.trim()).toBe('2');
 		expect(find('count-snoozed')).toBeNull();
 		expect(find('count-done')).toBeNull();
 
-		api.counts.mockReturnValue(of({ unread: 0, decisionsOpen: 2, byMailbox: [] }));
+		api.counts.mockReturnValue(of({ unread: 0, decisionsOpen: 2, emailUnread: 0, byMailbox: [] }));
 		api.changed$.next();
 		fixture.detectChanges();
 		expect(find('count-all')).toBeNull();

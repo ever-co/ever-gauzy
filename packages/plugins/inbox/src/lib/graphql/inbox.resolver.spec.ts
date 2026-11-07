@@ -63,7 +63,7 @@ function setup() {
 	const answer = { id: ITEM_ID, recipient: { isRead: true } };
 	const inbox = {
 		list: jest.fn(async () => ({ items: [answer], nextCursor: null })),
-		counts: jest.fn(async () => ({ unread: 2, decisionsOpen: 1, byMailbox: [] })),
+		counts: jest.fn(async () => ({ unread: 2, decisionsOpen: 1, emailUnread: 0, byMailbox: [] })),
 		get: jest.fn(async () => answer),
 		setState: jest.fn(async () => answer),
 		reply: jest.fn(async () => answer),
@@ -152,7 +152,7 @@ describe('Inbox GraphQL mirror', () => {
 		);
 		await resolver.inboxItems(null, null, null);
 		expect(inbox.list).toHaveBeenLastCalledWith(expect.not.objectContaining({ cursor: expect.anything() }));
-		expect(await resolver.inboxItemCounts()).toEqual({ unread: 2, decisionsOpen: 1, byMailbox: [] });
+		expect(await resolver.inboxItemCounts()).toEqual({ unread: 2, decisionsOpen: 1, emailUnread: 0, byMailbox: [] });
 		expect(await resolver.inboxItem(ITEM_ID)).toMatchObject({ id: ITEM_ID });
 		expect(inbox.get).toHaveBeenCalledWith(ITEM_ID);
 	});

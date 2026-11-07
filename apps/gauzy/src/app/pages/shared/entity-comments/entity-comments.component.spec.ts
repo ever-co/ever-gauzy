@@ -170,6 +170,29 @@ describe('EntityCommentsComponent', () => {
 		expect(toastr.success).toHaveBeenCalledWith('CONTACTS_PAGE.NOTE_DELETED');
 	});
 
+	it('marks the comment it is pointed at, opens its thread when it is a reply, and scrolls to it', async () => {
+		const scrolled: string[] = [];
+		Element.prototype.scrollIntoView = function () {
+			scrolled.push(this.getAttribute('data-comment-id'));
+		} as never;
+		const fixture = await render({ highlightCommentId: 'reply' });
+		await new Promise((resolve) => setTimeout(resolve));
+		fixture.detectChanges();
+
+		expect(state(fixture).openThreadId).toBe('first');
+		expect(element(fixture).querySelector('.reply.highlighted')?.getAttribute('data-comment-id')).toBe('reply');
+		expect(scrolled).toEqual(['reply']);
+
+		// Another comment pointed at later: marked in turn; one the list does not hold changes nothing.
+		fixture.componentRef.setInput('highlightCommentId', 'second');
+		fixture.detectChanges();
+		await new Promise((resolve) => setTimeout(resolve));
+		expect(element(fixture).querySelector('.comment.highlighted')?.getAttribute('data-comment-id')).toBe('second');
+		fixture.componentRef.setInput('highlightCommentId', 'missing');
+		fixture.detectChanges();
+		expect(element(fixture).querySelector('.highlighted')).toBeNull();
+	});
+
 	it('gives each instance on a page its own box ids', async () => {
 		const first = await render();
 		const second = await render();

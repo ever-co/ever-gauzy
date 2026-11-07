@@ -49,7 +49,8 @@ The UI has no switch of its own. It follows the API:
   before its time), Done (what I marked done, to review; "Not done" brings
   an item back to the open tabs) and Archived. A tab shows my count beside
   its name where the API counts it: unread (All), open decisions, unread
-  email; the counts are read again after the page changes an item.
+  email (every email item, a mailbox's or mirrored from a source); the counts
+  are read again after the page changes an item.
 - **Platform notifications** filed in the Inbox (kind Notification: an
   assignment, a mention, a comment on a record I follow) open their task; a
   comment notification opens the task at the comment (`?comment=`).

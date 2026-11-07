@@ -33,6 +33,7 @@ import {
 	INBOX_UI_TABS,
 	InboxUiTab,
 	isSnoozed,
+	listedIn,
 	isTranslationKey,
 	isUnread,
 	replaceItem,
@@ -459,7 +460,8 @@ export class InboxPageComponent implements OnInit {
 				: tab === 'decisions'
 					? counts.decisionsOpen
 					: tab === 'email'
-						? (counts.byMailbox ?? []).reduce((sum, mailbox) => sum + (Number(mailbox.unread) || 0), 0)
+						? // Every unread email item (`emailUnread`); an older API answers the mailboxes' counts only.
+							(counts.emailUnread ?? (counts.byMailbox ?? []).reduce((sum, mailbox) => sum + (Number(mailbox.unread) || 0), 0))
 						: null;
 		return value && value > 0 ? value : null;
 	}
@@ -755,16 +757,13 @@ export class InboxPageComponent implements OnInit {
 		});
 	}
 
-	/** Whether an item no longer belongs to the list shown after a change of my state. */
-	private leavesList(change: IInboxRecipientStateInput, next: IInboxItemWithState): boolean {
-		const tab = this.tab();
-		// Done leaves the open tabs; brought back, it leaves the Done tab.
-		if (change.isDone !== undefined) return (tab === 'done') !== !!change.isDone;
-		if (change.isArchived !== undefined && (tab === 'archived') !== !!change.isArchived) return true;
-		if (change.snoozedUntil !== undefined && tab !== 'archived') {
-			// Snoozed leaves the open tabs; woken leaves the Snoozed tab.
-			return tab === 'snoozed' ? !isSnoozed(next) : isSnoozed(next);
-		}
+	/**
+	 * Whether an item no longer belongs to the list shown after a change of my state: the tab's own rule over the
+	 * state the API answered (`listedIn`, the API's rules — an archived item marked done stays in Archived, a done
+	 * item snoozed stays in Done), then the "unread only" filter.
+	 */
+	private leavesList(_change: IInboxRecipientStateInput, next: IInboxItemWithState): boolean {
+		if (!listedIn(this.tab(), next)) return true;
 		return this.unreadOnly() && !isUnread(next);
 	}
 

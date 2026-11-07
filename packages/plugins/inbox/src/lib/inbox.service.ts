@@ -230,9 +230,11 @@ export class InboxService implements IInboxItemWriter, IInboxRecipientActions {
 	 */
 	async counts(): Promise<IInboxItemCounts> {
 		const { tenantId, userId } = this.caller();
-		const [unread, decisionsOpen, mailboxes] = await Promise.all([
+		const [unread, decisionsOpen, emailUnread, mailboxes] = await Promise.all([
 			this.recipientItems(tenantId, userId, { tab: InboxTabEnum.ALL, unread: true }).getCount(),
 			this.recipientItems(tenantId, userId, { tab: InboxTabEnum.DECISIONS }).getCount(),
+			// Every unread email item, the ones of no mailbox included (a mirrored email of a source has none).
+			this.recipientItems(tenantId, userId, { tab: InboxTabEnum.EMAIL, unread: true }).getCount(),
 			this.recipientItems(tenantId, userId, { tab: InboxTabEnum.ALL, unread: true })
 				.select('item.mailboxId', 'mailboxId')
 				.addSelect('COUNT(*)', 'unread')
@@ -244,7 +246,7 @@ export class InboxService implements IInboxItemWriter, IInboxRecipientActions {
 			.map((row) => ({ mailboxId: row.mailboxId, unread: Number(row.unread) || 0 }))
 			.filter((row) => !!row.mailboxId && row.unread > 0)
 			.sort((a, b) => String(a.mailboxId).localeCompare(String(b.mailboxId)));
-		return { unread, decisionsOpen, byMailbox };
+		return { unread, decisionsOpen, emailUnread, byMailbox };
 	}
 
 	/**

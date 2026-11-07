@@ -24,7 +24,12 @@
 			@let entry = thread.entry;
 			@let open = openThreadId === entry.comment.id;
 			@let latest = thread.replies[thread.replies.length - 1];
-			<li class="comment" [class.has-thread]="open || thread.replies.length">
+			<li
+				class="comment"
+				[class.has-thread]="open || thread.replies.length"
+				[class.highlighted]="entry.comment.id === highlightCommentId"
+				[attr.data-comment-id]="entry.comment.id"
+			>
 				<!-- The avatar, with the thread's stem running down from it to the elbow into the card. -->
 				<div class="comment-gutter">
 					<ng-container *ngTemplateOutlet="authorAvatar; context: { $implicit: entry }"></ng-container>
@@ -75,7 +80,7 @@
 						@if (thread.replies.length) {
 						<ol class="replies">
 							@for (reply of thread.replies; track reply.comment.id) {
-							<li class="reply">
+							<li class="reply" [class.highlighted]="reply.comment.id === highlightCommentId" [attr.data-comment-id]="reply.comment.id">
 								<ng-container *ngTemplateOutlet="authorAvatar; context: { $implicit: reply, small: true }"></ng-container>
 								<div class="comment-main">
 									<ng-container *ngTemplateOutlet="message; context: { $implicit: reply }"></ng-container>

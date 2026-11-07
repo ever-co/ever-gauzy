@@ -147,7 +147,7 @@ export function linksOf(item: Pick<IInboxItem, 'taskId' | 'projectId' | 'agentEm
 	if (item.taskId) {
 		links.push(
 			item.entity === BaseEntityEnum.Comment && item.entityId
-				? { kind: 'comment', commands: [INBOX_TASK_LINK, item.taskId], queryParams: { comment: String(item.entityId) } }
+				? { kind: 'comment', commands: [INBOX_TASK_LINK, item.taskId], queryParams: { tab: 'comments', comment: String(item.entityId) } }
 				: { kind: 'task', commands: [INBOX_TASK_LINK, item.taskId] }
 		);
 	}
@@ -175,6 +175,24 @@ export function isSnoozed(item: Pick<IInboxItemWithState, 'recipient'>, now: Dat
 /** Whether the caller has the item done (`isDone` as the API answers it, else the time it was done). */
 export function isDone(item: Pick<IInboxItemWithState, 'recipient'>): boolean {
 	return !!item.recipient && (item.recipient.isDone ?? !!item.recipient.doneAt);
+}
+
+/**
+ * Whether a tab lists an item with my state as the API answered it — the API's own rules (`InboxService.recipientItems`):
+ * Archived lists what is archived, whatever else; Done lists what is done and not archived, snoozed or not; Snoozed
+ * lists what is snoozed, not archived and not done; the open tabs list the rest (snoozed items once their time has
+ * come). Notifications is not an item tab.
+ */
+export function listedIn(tab: InboxUiTab, item: Pick<IInboxItemWithState, 'recipient'>, now: Date = new Date()): boolean {
+	if (tab === 'notifications') return false;
+	const archived = isArchived(item);
+	if (tab === 'archived') return archived;
+	if (archived) return false;
+	const done = isDone(item);
+	if (tab === 'done') return done;
+	if (done) return false;
+	const snoozed = isSnoozed(item, now);
+	return tab === 'snoozed' ? snoozed : !snoozed;
 }
 
 /** Replaces an item of a list by its new version (same id), keeping the order. */

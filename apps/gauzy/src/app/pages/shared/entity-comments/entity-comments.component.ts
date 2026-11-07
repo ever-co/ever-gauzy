@@ -3,6 +3,7 @@ import {
 	Component,
 	EventEmitter,
 	HostListener,
+	ElementRef,
 	inject,
 	Input,
 	OnChanges,
@@ -163,6 +164,8 @@ export class EntityCommentsComponent implements OnChanges, OnDestroy {
 	@Input() newestFirst = false;
 	/** Whether the reader may post, reply and delete. */
 	@Input() canWrite = true;
+	/** A comment to show: marked, scrolled to, and its thread opened when it is a reply (an Inbox notification's link). */
+	@Input() highlightCommentId: ID | null = null;
 	/** What the comments are called; see {@link IEntityCommentsLabels}. */
 	@Input() set labels(labels: Partial<IEntityCommentsLabels> | null | undefined) {
 		this.text = { ...DEFAULT_ENTITY_COMMENTS_LABELS, ...(labels ?? {}) };
@@ -195,6 +198,7 @@ export class EntityCommentsComponent implements OnChanges, OnDestroy {
 	protected imageUrls = new Map<ID, IImageUrls | null>();
 
 	private readonly _commentService = inject(CommentService);
+	private readonly _host = inject<ElementRef<HTMLElement>>(ElementRef);
 	private readonly _store = inject(Store);
 	private readonly _toastr = inject(ToastrService);
 	private readonly _translate = inject(TranslateService);
@@ -225,7 +229,27 @@ export class EntityCommentsComponent implements OnChanges, OnDestroy {
 			this.clearImages('reply');
 			this.threads = loading([]);
 			void this.load();
+		} else if (changes['highlightCommentId']) {
+			this.reveal();
 		}
+	}
+
+	/**
+	 * Shows the comment the page points at, once the list holds it: a reply's thread is opened, and the comment is
+	 * scrolled into view after it is drawn. Nothing happens for a comment the list does not hold.
+	 */
+	private reveal(): void {
+		const id = this.highlightCommentId;
+		if (!id || this.threads.loading) return;
+		const thread = this.threads.value.find(
+			(candidate) => candidate.entry.comment.id === id || candidate.replies.some((reply) => reply.comment.id === id)
+		);
+		if (!thread) return;
+		if (thread.entry.comment.id !== id) this.openThreadId = thread.entry.comment.id;
+		setTimeout(() => {
+			const element = this._host.nativeElement.querySelector<HTMLElement>(`[data-comment-id="${CSS.escape(String(id))}"]`);
+			element?.scrollIntoView?.({ block: 'center', behavior: 'smooth' });
+		});
 	}
 
 	ngOnDestroy(): void {
@@ -245,6 +269,7 @@ export class EntityCommentsComponent implements OnChanges, OnDestroy {
 			this.threads = loaded(threads);
 			this.countChange.emit(items.length);
 			void this.lookUpImages(threads);
+			this.reveal();
 		} catch {
 			if (sequence !== this._sequence) return;
 			// A failed read shows a retry, never "no comments" or a stale list.
