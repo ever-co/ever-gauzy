@@ -54,7 +54,9 @@ export const LINEAR_ENTITIES = [LinearTeamMapping, LinearSyncRun];
 		OrganizationProjectModule,
 		EmployeeModule
 	],
-	controllers: [LinearController, LinearAuthorizationController, LinearWebhookController],
+	// The callback and the webhook before the id routes: registered after, `GET /callback` would be taken by
+	// `GET /:integrationId` (and refused by its guard and its UUID check).
+	controllers: [LinearAuthorizationController, LinearWebhookController, LinearController],
 	providers: [
 		LinearCatalogService,
 		LinearLifecycle,
