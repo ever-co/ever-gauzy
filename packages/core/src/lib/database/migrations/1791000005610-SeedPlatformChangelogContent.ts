@@ -1,0 +1,154 @@
+import { MigrationInterface, QueryRunner } from 'typeorm';
+import * as chalk from 'chalk';
+import { v4 as uuidV4 } from 'uuid';
+import { DatabaseTypeEnum } from '@gauzy/config';
+
+/** [platform, icon, title, isoDate, content, learnMoreUrl] */
+type PlatformChangelogRow = readonly [string, string, string, string, string, string];
+
+/**
+ * Adds the starter What's New entries of the other Ever products that read the `changelog` table: Ever Teams
+ * (whose API shares Gauzy's database), Ever Works and Ever Platform. Runs after `AddChangelogPlatform`, which
+ * gives every row its product.
+ *
+ * Fresh installs get the same entries from `platform-changelog-templates.ts` in `@gauzy/plugin-changelog`; this
+ * migration carries a frozen snapshot for databases seeded before it existed, as compact tuples so it stays
+ * frozen while the template evolves.
+ *
+ * Additive only: an entry is inserted when its product has no entry of that title yet, so a rerun, or an entry the
+ * operator already wrote by hand, is left alone, and nothing is ever deleted. `down` removes nothing either: once
+ * live, the operator may have edited these rows in Settings > What's New.
+ */
+export class SeedPlatformChangelogContent1791000005610 implements MigrationInterface {
+	name = 'SeedPlatformChangelogContent1791000005610';
+
+	private readonly entries: readonly PlatformChangelogRow[] = [
+		// prettier-ignore
+		['ever-teams', 'gift-outline', "What's new and About", '2026-11-08T00:00:00.000Z', 'Open the gift icon in the header to catch up on Ever Teams updates, and the new About page to see which version of the app and the API you are on.', 'https://ever.team'],
+		// prettier-ignore
+		['ever-teams', 'color-palette-outline', 'A lighter, cleaner look', '2026-10-17T00:00:00.000Z', 'A compact header and sidebar, one consistent dark mode and tidier inputs and buttons across the whole app.', 'https://ever.team'],
+		// prettier-ignore
+		['ever-teams', 'bar-chart-outline', 'Weekly time report', '2026-10-12T00:00:00.000Z', "Group the Time & Activity report by week to see every member's tracked time day by day in one table.", 'https://docs.ever.team'],
+		// prettier-ignore
+		['ever-teams', 'people-outline', 'See who is online', '2026-10-12T00:00:00.000Z', 'Team cards show teammates as online while they are active in the app, even when they are not tracking time.', ''],
+		// prettier-ignore
+		['ever-teams', 'clock-outline', "Today's time per task", '2026-10-12T00:00:00.000Z', "A member's card on the team page shows which tasks today's tracked time went to, not just the total.", ''],
+		// prettier-ignore
+		['ever-teams', 'list-outline', 'Daily plans keep your order', '2026-10-12T00:00:00.000Z', 'Drag the tasks of a daily plan into the order you want to work on them, and the order is kept.', ''],
+		// prettier-ignore
+		['ever-teams', 'message-square-outline', 'Timesheet rejection reasons', '2026-10-12T00:00:00.000Z', 'When a manager rejects a timesheet, the reason they give is saved and shown to the team member.', ''],
+		// prettier-ignore
+		['ever-teams', 'log-in-outline', 'Sign in with Ever ID', '2026-10-02T00:00:00.000Z', 'Use one Ever ID account to sign in to Ever Teams and the other Ever apps.', 'https://ever.co'],
+		// prettier-ignore
+		['ever-works', 'download-outline', 'Install apps from apps.ever.co', '2026-11-07T00:00:00.000Z', 'Organization owners can ask for a Works plugin on apps.ever.co; your platform admins see the request in the app and approve the install.', 'https://ever.works'],
+		// prettier-ignore
+		['ever-works', 'flash-outline', 'The latest AI models', '2026-11-05T00:00:00.000Z', "Direct AI providers, OpenRouter and Vercel AI Gateway now default to each vendor's current models, with reasoning effort settings for the newest model families.", 'https://ever.works'],
+		// prettier-ignore
+		['ever-works', 'cube-outline', 'Build on an open-source app', '2026-11-05T00:00:00.000Z', 'A new Mission template starts your project from an existing open-source app instead of an empty repository.', 'https://ever.works'],
+		// prettier-ignore
+		['ever-works', 'log-in-outline', 'Connect to Ever Platform', '2026-11-03T00:00:00.000Z', 'Connect your Ever Works installation to Ever Platform and let your team sign in with Ever ID.', 'https://ever.works'],
+		// prettier-ignore
+		['ever-works', 'git-merge-outline', 'From merge to live', '2026-10-29T00:00:00.000Z', "App Works follow every merged change through build and deployment, post progress to the Task's thread, and close the Task only once the change is live.", 'https://ever.works'],
+		// prettier-ignore
+		['ever-platform', 'grid-outline', 'One Apps page', '2026-11-06T00:00:00.000Z', 'See the Ever products your organization uses, the apps built with Ever Works and your installs from apps.ever.co in one place, and set up or connect each.', 'https://ever.co'],
+		// prettier-ignore
+		['ever-platform', 'people-outline', 'Create your organization', '2026-11-01T00:00:00.000Z', 'Create an organization on app.ever.co and manage it and its Ever products from one place.', 'https://ever.co'],
+		// prettier-ignore
+		['ever-platform', 'shield-outline', 'Account security', '2026-11-01T00:00:00.000Z', 'Review and manage how you sign in to your Ever account from the Account security page.', 'https://ever.co'],
+		// prettier-ignore
+		['ever-platform', 'credit-card-outline', 'Billing in one place', '2026-11-01T00:00:00.000Z', "See and manage your organization's Ever subscriptions from the Billing page.", 'https://ever.co'],
+		// prettier-ignore
+		['ever-platform', 'log-in-outline', 'One Ever ID for every app', '2026-10-02T00:00:00.000Z', 'Sign in to Ever Teams, Ever Works and the other Ever apps with the same Ever ID account.', 'https://ever.co']
+	];
+
+	/** The starter entries, for the spec that keeps them in step with the fresh-install template. */
+	get rows(): readonly PlatformChangelogRow[] {
+		return this.entries;
+	}
+
+	public async up(queryRunner: QueryRunner): Promise<void> {
+		console.log(chalk.yellow(this.name + ' start running!'));
+
+		switch (queryRunner.connection.options.type as DatabaseTypeEnum) {
+			case DatabaseTypeEnum.sqlite:
+			case DatabaseTypeEnum.betterSqlite3:
+				return this.seed(
+					queryRunner,
+					(identifier) => `"${identifier}"`,
+					() => '?',
+					// TypeORM stores sqlite datetime as 'YYYY-MM-DD HH:MM:SS'
+					(iso) => iso.slice(0, 19).replace('T', ' '),
+					(value) => (value ? 1 : 0)
+				);
+			case DatabaseTypeEnum.postgres:
+				return this.seed(
+					queryRunner,
+					(identifier) => `"${identifier}"`,
+					(n) => `$${n}`,
+					(iso) => new Date(iso),
+					(value) => value
+				);
+			case DatabaseTypeEnum.mysql:
+				return this.seed(
+					queryRunner,
+					(identifier) => `\`${identifier}\``,
+					() => '?',
+					// MySQL DATETIME rejects the trailing 'Z' on older versions
+					(iso) => iso.slice(0, 19).replace('T', ' '),
+					(value) => (value ? 1 : 0)
+				);
+			default:
+				throw new Error(`Unsupported database: ${queryRunner.connection.options.type}`);
+		}
+	}
+
+	public async down(): Promise<void> {
+		// Intentionally empty: content-only and additive; the operator may have edited these rows since.
+	}
+
+	/**
+	 * Inserts every entry whose product has no entry of that title yet. Runs through `queryRunner.query`, which
+	 * carries the migration's transaction, so a failed insert rolls the whole batch back.
+	 */
+	private async seed(
+		queryRunner: QueryRunner,
+		quote: (identifier: string) => string,
+		param: (n: number) => string,
+		date: (iso: string) => unknown,
+		bool: (value: boolean) => unknown
+	): Promise<void> {
+		if (!(await queryRunner.hasTable('changelog')) || !(await queryRunner.hasColumn('changelog', 'platform'))) {
+			console.log(chalk.gray(`${this.name}: no changelog.platform column, nothing to seed.`));
+			return;
+		}
+		const table = quote('changelog');
+		const existsQuery = `SELECT 1 FROM ${table} WHERE ${quote('platform')} = ${param(1)} AND ${quote(
+			'title'
+		)} = ${param(2)} LIMIT 1`;
+		const columns = ['platform', 'icon', 'title', 'date', 'isFeature', 'content', 'learnMoreUrl', 'imageUrl', 'id'];
+		const insertQuery = `INSERT INTO ${table} (${columns.map(quote).join(', ')}) VALUES (${columns
+			.map((_, i) => param(i + 1))
+			.join(', ')})`;
+
+		let inserted = 0;
+		for (const [platform, icon, title, isoDate, content, learnMoreUrl] of this.entries) {
+			const existing = await queryRunner.query(existsQuery, [platform, title]);
+			if (Array.isArray(existing) && existing.length > 0) {
+				continue;
+			}
+			await queryRunner.query(insertQuery, [
+				platform,
+				icon,
+				title,
+				date(isoDate),
+				bool(false),
+				content,
+				learnMoreUrl,
+				'',
+				uuidV4()
+			]);
+			inserted++;
+		}
+		console.log(chalk.green(`${this.name}: ${inserted} of ${this.entries.length} entries added.`));
+	}
+}

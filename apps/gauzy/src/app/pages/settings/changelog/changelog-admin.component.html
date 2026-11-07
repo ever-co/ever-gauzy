@@ -9,6 +9,26 @@
 	</nb-card-header>
 
 	<nb-card-body>
+		<div class="product-picker" role="group" [attr.aria-label]="i18n + '.PRODUCT' | translate">
+			<span class="product-label">{{ i18n + '.PRODUCT' | translate }}</span>
+			<div class="product-options">
+				@for (option of platforms; track option.key) {
+					<button
+						type="button"
+						nbButton
+						size="small"
+						[status]="option.key === platform ? 'primary' : 'basic'"
+						[appearance]="option.key === platform ? 'filled' : 'outline'"
+						[attr.aria-pressed]="option.key === platform"
+						(click)="selectPlatform(option.key)"
+					>
+						{{ option.name }}
+					</button>
+				}
+			</div>
+			<p class="product-hint">{{ i18n + '.PRODUCT_HINT' | translate }}</p>
+		</div>
+
 		@if (loading && !loadFailed) {
 			<div class="loading">
 				<nb-spinner status="primary" size="medium"></nb-spinner>

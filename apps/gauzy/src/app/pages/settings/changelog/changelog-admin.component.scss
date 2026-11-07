@@ -201,3 +201,28 @@ $muted: var(--text-hint-color);
     text-transform: none;
   }
 }
+
+.product-picker {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+  margin-bottom: 1.5rem;
+
+  .product-label {
+    font-weight: 600;
+  }
+
+  .product-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .product-hint {
+    flex-basis: 100%;
+    margin: 0;
+    font-size: 0.8125rem;
+    color: var(--text-hint-color);
+  }
+}

@@ -95,7 +95,7 @@ describe('ChangelogAdminComponent', () => {
 		component.add(component.sections[1]);
 
 		expect(dialogService.open).toHaveBeenCalledWith(ChangelogEntryDialogComponent, {
-			context: { entry: { isFeature: true } },
+			context: { entry: { isFeature: true, platform: 'gauzy' } },
 			closeOnBackdropClick: false,
 			closeOnEsc: false
 		});
@@ -109,7 +109,7 @@ describe('ChangelogAdminComponent', () => {
 		component.edit(newer);
 
 		expect(dialogService.open).toHaveBeenCalledWith(ChangelogEntryDialogComponent, {
-			context: { entry: newer },
+			context: { entry: { ...newer, platform: 'gauzy' } },
 			closeOnBackdropClick: false,
 			closeOnEsc: false
 		});
@@ -161,5 +161,50 @@ describe('ChangelogAdminComponent', () => {
 
 		expect(errorHandlingService.handleError).toHaveBeenCalledWith(failure);
 		expect(component.deleted).toEqual([older]);
+	});
+
+	it("shows Gauzy's entries first, read without naming a product, as every Gauzy surface reads them", () => {
+		expect(component.platform).toBe('gauzy');
+		expect(changelogService.find.mock.calls.every(([query]) => !('platform' in query))).toBe(true);
+	});
+
+	it("shows another product's What's New entries only, read for that product", async () => {
+		changelogService.find.mockClear();
+
+		component.selectPlatform('ever-teams');
+		await Promise.resolve();
+		await new Promise((resolve) => setTimeout(resolve));
+
+		expect(changelogService.find).toHaveBeenCalledTimes(1);
+		expect(changelogService.find).toHaveBeenCalledWith({ isFeature: 0, platform: 'ever-teams' });
+		expect(component.sections.map(({ isFeature }) => isFeature)).toEqual([false]);
+	});
+
+	it('ignores a product it does not know, and the one already shown', () => {
+		changelogService.find.mockClear();
+
+		component.selectPlatform('gauzy');
+		component.selectPlatform('unknown-product');
+
+		expect(changelogService.find).not.toHaveBeenCalled();
+		expect(component.platform).toBe('gauzy');
+	});
+
+	it('adds an entry for the product shown, and edits an entry as the product it belongs to', async () => {
+		component.selectPlatform('ever-works');
+		await new Promise((resolve) => setTimeout(resolve));
+
+		component.add(component.sections[0]);
+		component.edit({ id: 'works-1', title: 'Old API answer' });
+		component.edit({ id: 'teams-1', title: 'Moved', platform: 'ever-teams' });
+
+		const contexts = dialogService.open.mock.calls
+			.filter(([type]) => type === ChangelogEntryDialogComponent)
+			.map(([, config]) => config.context.entry);
+		expect(contexts).toEqual([
+			{ isFeature: false, platform: 'ever-works' },
+			{ id: 'works-1', title: 'Old API answer', platform: 'ever-works' },
+			{ id: 'teams-1', title: 'Moved', platform: 'ever-teams' }
+		]);
 	});
 });

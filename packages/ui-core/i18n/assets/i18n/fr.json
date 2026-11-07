@@ -1277,6 +1277,8 @@
 		"MANAGE": {
 			"TITLE": "Nouveautés",
 			"SUBTITLE": "Les entrées du panneau Nouveautés et les cartes de fonctionnalités de la page d'inscription. Elles sont partagées par tous les locataires de cette installation : seul son opérateur peut les modifier.",
+			"PRODUCT": "Produit",
+			"PRODUCT_HINT": "Chaque produit n'affiche que ses propres entrées. Une entrée ajoutée appartient au produit sélectionné ici.",
 			"WHATS_NEW": "Panneau Nouveautés",
 			"WHATS_NEW_HINT": "Affichées dans le panneau Nouveautés et sur la page de connexion, les plus récentes en premier.",
 			"FEATURES": "Fonctionnalités de la page d'inscription",

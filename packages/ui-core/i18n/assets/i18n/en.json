@@ -1307,6 +1307,8 @@
 		"MANAGE": {
 			"TITLE": "What's New",
 			"SUBTITLE": "The entries of the What's New panel and the feature cards of the sign-up page. They are shared by every tenant of this installation, so only its operator can change them.",
+			"PRODUCT": "Product",
+			"PRODUCT_HINT": "Each product shows only its own entries. An entry you add belongs to the product selected here.",
 			"WHATS_NEW": "What's New panel",
 			"WHATS_NEW_HINT": "Shown in the What's New panel and on the sign-in page, newest first.",
 			"FEATURES": "Sign-up page features",

@@ -1276,6 +1276,8 @@
 		"MANAGE": {
 			"TITLE": "Novità",
 			"SUBTITLE": "Le voci del pannello Novità e le schede delle funzionalità della pagina di registrazione. Sono condivise da tutti i tenant di questa installazione, quindi solo il suo operatore può modificarle.",
+			"PRODUCT": "Prodotto",
+			"PRODUCT_HINT": "Ogni prodotto mostra solo le proprie voci. Una voce aggiunta appartiene al prodotto selezionato qui.",
 			"WHATS_NEW": "Pannello Novità",
 			"WHATS_NEW_HINT": "Mostrate nel pannello Novità e nella pagina di accesso, le più recenti per prime.",
 			"FEATURES": "Funzionalità della pagina di registrazione",

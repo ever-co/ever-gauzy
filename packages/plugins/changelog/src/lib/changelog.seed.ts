@@ -1,27 +1,38 @@
 import { DataSource } from 'typeorm';
-import { IChangelog } from '@gauzy/contracts';
+import { DEFAULT_CHANGELOG_PLATFORM, IChangelog } from '@gauzy/contracts';
 import { Changelog } from './changelog.entity';
 import { INITIAL_CHANGELOG_TEMPLATE } from './initial-changelog-template';
+import { PLATFORM_CHANGELOG_TEMPLATES } from './platform-changelog-templates';
 
-export const createChangelog = async (
-	dataSource: DataSource
-): Promise<IChangelog[]> => {
+/**
+ * The rows a fresh database starts with: Gauzy's entries, then the starter entries of every other product
+ * that reads this table (Ever Teams, Ever Works, Ever Platform), each stamped with its product.
+ */
+export function buildChangelogSeedRows(): IChangelog[] {
+	const gauzy = INITIAL_CHANGELOG_TEMPLATE.map((item) => toRow(item, DEFAULT_CHANGELOG_PLATFORM));
+	const others = Object.entries(PLATFORM_CHANGELOG_TEMPLATES).flatMap(([platform, items]) =>
+		items.map((item) => toRow(item, platform))
+	);
+	return [...gauzy, ...others];
+}
+
+function toRow(item: IChangelog, platform: string): IChangelog {
+	return {
+		icon: item.icon,
+		title: item.title,
+		date: item.date,
+		content: item.content,
+		isFeature: item.isFeature ?? false,
+		learnMoreUrl: item.learnMoreUrl ?? '',
+		imageUrl: item.imageUrl ?? '',
+		platform
+	};
+}
+
+export const createChangelog = async (dataSource: DataSource): Promise<IChangelog[]> => {
 	return await new Promise<IChangelog[]>(async (resolve, reject) => {
 		try {
-			const changelogs: IChangelog[] = [];
-			const templates: IChangelog[] = INITIAL_CHANGELOG_TEMPLATE;
-			for (const item of templates) {
-				const changelog: IChangelog = {
-					icon: item.icon,
-					title: item.title,
-					date: item.date,
-					content: item.content,
-					isFeature: item.isFeature,
-					learnMoreUrl: item.learnMoreUrl,
-					imageUrl: item.imageUrl
-				};
-				changelogs.push(changelog);
-			}
+			const changelogs = buildChangelogSeedRows();
 			await insertChangelog(dataSource, changelogs);
 			resolve(changelogs);
 		} catch (err) {
@@ -32,14 +43,6 @@ export const createChangelog = async (
 	});
 };
 
-const insertChangelog = async (
-	dataSource: DataSource,
-	changelogs: IChangelog[]
-): Promise<void> => {
-	await dataSource
-		.createQueryBuilder()
-		.insert()
-		.into(Changelog)
-		.values(changelogs)
-		.execute();
+const insertChangelog = async (dataSource: DataSource, changelogs: IChangelog[]): Promise<void> => {
+	await dataSource.createQueryBuilder().insert().into(Changelog).values(changelogs).execute();
 };

@@ -1275,6 +1275,8 @@
 		"MANAGE": {
 			"TITLE": "Co nowego",
 			"SUBTITLE": "Wpisy panelu „Co nowego” i karty funkcji strony rejestracji. Są wspólne dla wszystkich dzierżawców tej instalacji, więc zmieniać je może tylko jej operator.",
+			"PRODUCT": "Produkt",
+			"PRODUCT_HINT": "Każdy produkt pokazuje tylko własne wpisy. Dodany wpis należy do produktu wybranego tutaj.",
 			"WHATS_NEW": "Panel „Co nowego”",
 			"WHATS_NEW_HINT": "Wyświetlane w panelu „Co nowego” i na stronie logowania, od najnowszych.",
 			"FEATURES": "Funkcje strony rejestracji",
