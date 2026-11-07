@@ -40298,6 +40298,17 @@ type TaskView {
   Whether the view is protected from edits. The delivered create never sets it and the column is not updateable.
   """
   isLocked: Boolean
+
+  """
+  Bumped by every save. `updateTaskView` and `setTaskViewOrder` refuse a stated `expectedVersion` that is not this
+  one (`TASK_VIEW_VERSION_CONFLICT`), so a client reads it before a save and gets the bumped one back.
+  """
+  version: Int
+
+  """
+  The task ids in the order the view shows them (a manual ordering), as `setTaskViewOrder` wrote them.
+  """
+  manualOrder: [ID!]
   projectId: ID
   organizationTeamId: ID
   projectModuleId: ID
@@ -40378,6 +40389,11 @@ What a caller states when it changes a saved view. Every member but the identifi
 """
 input UpdateTaskViewInput {
   id: ID!
+
+  """
+  The version the client read; the save is refused when the view moved on (`TASK_VIEW_VERSION_CONFLICT`).
+  """
+  expectedVersion: Int
   organizationId: ID
   name: String
   description: String

@@ -43,6 +43,8 @@ export interface ICreateTaskViewInput {
 /** The members `UpdateTaskViewInput` declares in the schema. */
 export interface IUpdateTaskViewInput extends Partial<ICreateTaskViewInput> {
 	id: Id;
+	/** The version the client read; the save is refused when the view moved on. */
+	expectedVersion?: number | null;
 }
 
 /** The members `TaskViewOrderInput` declares in the schema. */
@@ -188,9 +190,11 @@ export class TaskViewResolver {
 	@Permissions(PermissionsEnum.ORG_TASK_EDIT)
 	@Mutation('updateTaskView')
 	async updateTaskView(@Args('input') input: IUpdateTaskViewInput): Promise<ITaskView> {
-		const { id, ...values } = input;
+		const { id, expectedVersion, ...values } = input;
 
-		return await this.commandBus.execute(new TaskViewUpdateCommand(id, values as never));
+		return await this.commandBus.execute(
+			new TaskViewUpdateCommand(id, { ...values, ...(expectedVersion === null || expectedVersion === undefined ? {} : { expectedVersion }) } as never)
+		);
 	}
 
 	/**

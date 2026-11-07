@@ -7,12 +7,16 @@ import {
 	ID as Id,
 	IPagination,
 	ITask,
+	ITaskBulkChanges,
 	ITaskBulkUpdateInput,
 	ITaskBulkUpdateOutcome,
 	ITaskReferenceResolution,
 	ITaskUpdateInput as ITaskUpdateBody,
 	PermissionsEnum,
-	TaskBuiltInViewEnum
+	TaskBuiltInViewEnum,
+	TaskPriorityEnum,
+	TaskSizeEnum,
+	TaskStatusEnum
 } from '@gauzy/contracts';
 import {
 	ConnectionFilter,
@@ -38,6 +42,49 @@ import { TaskCreateCommand, TaskUpdateCommand } from './commands';
 import { TaskViewsEnabledGuard } from './task-views-enabled';
 import { TASK_REFERENCES_MAX } from './task-reference';
 import { TASK_VIEW_PAGE_MAX } from './views/view-filters';
+
+/**
+ * The order a built-in view answers in when the caller states none: soonest due first, as the route's reader orders
+ * — not the list's newest-first — with the creation and the id as the tie-breakers.
+ */
+const BUILT_IN_VIEW_DEFAULT_SORT: readonly ConnectionSortKey[] = [
+	{ field: 'dueDate', direction: 'ASC' },
+	{ field: 'createdAt', direction: 'DESC' },
+	{ field: 'id', direction: 'DESC' }
+];
+
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const BULK_VOCABULARIES: ReadonlyArray<readonly [keyof ITaskBulkChanges, readonly string[]]> = [
+	['status', Object.values(TaskStatusEnum)],
+	['priority', Object.values(TaskPriorityEnum)],
+	['size', Object.values(TaskSizeEnum)]
+];
+const BULK_ID_FIELDS: readonly (keyof ITaskBulkChanges)[] = ['taskStatusId', 'taskPriorityId', 'taskSizeId', 'projectId', 'organizationSprintId'];
+const BULK_ID_LISTS: readonly (keyof ITaskBulkChanges)[] = ['addTagIds', 'removeTagIds', 'setTagIds', 'addMemberIds', 'removeMemberIds', 'setMemberIds'];
+
+/**
+ * The checks the route's DTO runs on a change (`TaskBulkChangesDTO`): the three vocabularies are their enums, an
+ * identifier is a UUID (or null, which clears), a list holds UUIDs, the due date parses, the archive flag is a boolean.
+ * GraphQL runs no validator on its arguments, so the same rules are stated here; the first member that fails is named.
+ */
+export function bulkChangesProblem(changes: ITaskBulkChanges | null | undefined, path: string): string | null {
+	if (!changes || typeof changes !== 'object') return null;
+	for (const [field, allowed] of BULK_VOCABULARIES) {
+		const value = changes[field];
+		if (value !== undefined && value !== null && !allowed.includes(String(value))) return `${path}.${field}`;
+	}
+	for (const field of BULK_ID_FIELDS) {
+		const value = changes[field];
+		if (value !== undefined && value !== null && !UUID.test(String(value))) return `${path}.${field}`;
+	}
+	for (const field of BULK_ID_LISTS) {
+		const value = changes[field];
+		if (value !== undefined && (!Array.isArray(value) || value.some((id) => !UUID.test(String(id))))) return `${path}.${field}`;
+	}
+	if (changes.dueDate !== undefined && changes.dueDate !== null && Number.isNaN(new Date(changes.dueDate as never).getTime())) return `${path}.dueDate`;
+	if (changes.isArchived !== undefined && typeof changes.isArchived !== 'boolean') return `${path}.isArchived`;
+	return null;
+}
 
 /** The built-in view each value of the schema's `TaskBuiltInView` names (the route's keys carry dashes). */
 const BUILT_IN_VIEW_OF: Readonly<Record<string, TaskBuiltInViewEnum>> = {
@@ -549,7 +596,11 @@ export class TaskResolver {
 			take: TASK_VIEW_PAGE_MAX
 		});
 
-		return this.connection(this.rowsOf(answer), { filter, sort, page, first, after, last, before, limit, offset });
+		return this.connection(
+			this.rowsOf(answer),
+			{ filter, sort, page, first, after, last, before, limit, offset },
+			BUILT_IN_VIEW_DEFAULT_SORT
+		);
 	}
 
 	/**
@@ -580,13 +631,21 @@ export class TaskResolver {
 	 * Changes many tasks in one request, through the method `POST /tasks/bulk-update` calls and the same
 	 * per-task command `updateTask` dispatches (activity, notifications and sync events per task), under the
 	 * route's permission and the task views switch. The cap, the two forms and their exclusion are the
-	 * service's rules (`BULK_LIMIT_EXCEEDED`, ...), stated once for both protocols.
+	 * service's rules (`BULK_LIMIT_EXCEEDED`, ...), stated once for both protocols; the values of a change are
+	 * checked here as the route's DTO checks them (`TASK_BULK_CHANGES_INVALID`), before any task is touched.
 	 */
 	@Mutation('bulkUpdateTasks')
 	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TASK_EDIT)
 	@UseGuards(TaskViewsEnabledGuard)
 	async bulkUpdateTasks(@Args('input') input: ITaskBulkUpdateInput): Promise<ITaskBulkUpdateOutcome> {
 		const { organizationId, ...body } = input;
+		const problem =
+			bulkChangesProblem(body.changes, 'changes') ??
+			(body.items ?? []).map((item, index) => bulkChangesProblem(item?.changes, `items.${index}.changes`)).find(Boolean) ??
+			null;
+		if (problem) {
+			throw new BadRequestException(`TASK_BULK_CHANGES_INVALID: ${problem} is not a value the route takes.`);
+		}
 
 		return await this.taskService.bulkUpdate(
 			{ ...this.scopeOfTheCaller(), ...(organizationId ? { organizationId } : {}), ...body },
@@ -805,12 +864,16 @@ export class TaskResolver {
 	 * The connection one list root field answers with, built by the one implementation every domain
 	 * on this platform shares.
 	 */
-	private connection(rows: readonly Task[] | undefined, request: ConnectionRequest): GraphqlConnection<Task> {
+	private connection(
+		rows: readonly Task[] | undefined,
+		request: ConnectionRequest,
+		defaultSort: readonly ConnectionSortKey[] = TASK_DEFAULT_SORT
+	): GraphqlConnection<Task> {
 		return buildConnection<Task>({
 			rows: rows ?? [],
 			filterable: TASK_FILTERABLE,
 			sortable: TASK_SORTABLE,
-			defaultSort: TASK_DEFAULT_SORT,
+			defaultSort,
 			request
 		});
 	}

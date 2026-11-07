@@ -16,7 +16,7 @@ import { CursorCodec } from '../api/cursor';
 import { RequestContext } from '../core/context';
 import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../shared/guards';
 import { TaskController } from './task.controller';
-import { TaskResolver } from './task.resolver';
+import { bulkChangesProblem, TaskResolver } from './task.resolver';
 import { TaskService } from './task.service';
 import { TaskCreateCommand, TaskUpdateCommand } from './commands';
 import { TaskViewsEnabledGuard } from './task-views-enabled';
@@ -430,6 +430,17 @@ describe('TaskResolver — the task views extensions, two protocols, the same op
 				expect.objectContaining({ organizationId: ORGANIZATION, timeZone: 'Europe/Sofia', take: 200 })
 			);
 			await expect(resolver.builtInViewTasks('yesterday')).rejects.toBeInstanceOf(NotFoundException);
+
+			// Soonest due first when the caller states no order, as the route answers: not the list's newest first.
+			taskService.findBuiltInView.mockResolvedValueOnce({
+				items: [
+					{ ...ROWS[0], dueDate: new Date('2026-03-20T10:00:00.000Z') },
+					{ ...ROWS[1], dueDate: new Date('2026-03-05T10:00:00.000Z') }
+				],
+				total: 2
+			});
+			const dueFirst = await resolver.builtInViewTasks('dueSoon');
+			expect(dueFirst.nodes.map((node) => node.id)).toEqual([EXCEPTION, PICKING]);
 		} finally {
 			organization.mockRestore();
 		}
@@ -463,6 +474,25 @@ describe('TaskResolver — the task views extensions, two protocols, the same op
 		expect(command).toBeInstanceOf(TaskUpdateCommand);
 		expect(command.id).toBe(PICKING);
 		expect(command.input).toEqual({ status: 'Done' });
+	});
+
+	it('refuses a change the route\'s DTO would refuse before any task is touched, naming the member', async () => {
+		const { resolver, taskService } = surfaces();
+
+		await expect(resolver.bulkUpdateTasks({ taskIds: [PICKING], changes: { status: 'Nope' } } as never)).rejects.toMatchObject({
+			message: expect.stringContaining('TASK_BULK_CHANGES_INVALID: changes.status')
+		});
+		await expect(
+			resolver.bulkUpdateTasks({ items: [{ taskId: PICKING, changes: { status: 'Done' } }, { taskId: EXCEPTION, changes: { setTagIds: ['x'] } }] } as never)
+		).rejects.toMatchObject({ message: expect.stringContaining('items.1.changes.setTagIds') });
+		expect(taskService.bulkUpdate).not.toHaveBeenCalled();
+
+		expect(bulkChangesProblem({ status: null, taskStatusId: null, dueDate: null, addTagIds: [] }, 'changes')).toBeNull();
+		expect(bulkChangesProblem({ priority: 'urgent', size: 'large', taskSizeId: PICKING, dueDate: '2026-03-01' } as never, 'changes')).toBeNull();
+		expect(bulkChangesProblem({ dueDate: 'soon' } as never, 'changes')).toBe('changes.dueDate');
+		expect(bulkChangesProblem({ projectId: 'p1' }, 'changes')).toBe('changes.projectId');
+		expect(bulkChangesProblem({ isArchived: 'yes' as never }, 'changes')).toBe('changes.isArchived');
+		expect(bulkChangesProblem(null, 'changes')).toBeNull();
 	});
 
 	it('serves the three behind the task views switch, as their routes are', () => {

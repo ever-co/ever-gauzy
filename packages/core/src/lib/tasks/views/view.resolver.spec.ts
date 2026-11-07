@@ -207,6 +207,10 @@ describe('TaskViewResolver — the SDL declares the capabilities the REST routes
 		expect(body).toMatch(/filterOptions: JSON/);
 		expect(body).toMatch(/displayOptions: JSON/);
 		expect(body).toMatch(/properties: JSON/);
+		// The version a save is checked against, and the manual order, so a client can use `expectedVersion`.
+		expect(body).toMatch(/version: Int/);
+		expect(body).toMatch(/manualOrder: \[ID!\]/);
+		expect(printed).toMatch(/input UpdateTaskViewInput \{[\s\S]*?expectedVersion: Int/);
 	});
 
 	it('does not restate the replay of the older document, and serves the FR-3 reader as its own field', () => {
@@ -309,6 +313,12 @@ describe('TaskViewResolver — one concept, two protocols, the same operations',
 		expect(command).toBeInstanceOf(TaskViewUpdateCommand);
 		expect(command.id).toBe(MINE);
 		expect(command.input).toEqual({ name: 'My work' });
+
+		// The version the client read travels to the same conditional save the REST route makes; null is "not stated".
+		await resolver.updateTaskView({ id: MINE, name: 'My work', expectedVersion: 3 });
+		expect(commandBus.execute.mock.calls[1][0].input).toEqual({ name: 'My work', expectedVersion: 3 });
+		await resolver.updateTaskView({ id: MINE, name: 'My work', expectedVersion: null });
+		expect(commandBus.execute.mock.calls[2][0].input).toEqual({ name: 'My work' });
 	});
 
 	it('removes a view through the same service method the REST route calls', async () => {
