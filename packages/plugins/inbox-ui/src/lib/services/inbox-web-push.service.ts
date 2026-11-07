@@ -15,10 +15,19 @@ export const INBOX_PUSH_WORKER_SCOPE = 'assets/';
 export const INBOX_PUSH_OWNER_KEY = 'gauzy-inbox-push-owner';
 
 /**
- * Where this browser stands: `unavailable` (the platform has web push off), `unsupported` (the browser cannot),
- * `blocked` (the person refused notifications for the site), `off`, `on`.
+ * Changed at every sign-out on this browser, and read by all its tabs: a step that began before a sign-out, here or in
+ * another tab, finds it changed when it is about to record a subscription, and undoes its work instead.
  */
-export type InboxWebPushState = 'unavailable' | 'unsupported' | 'blocked' | 'off' | 'on';
+export const INBOX_PUSH_SIGN_OUT_KEY = 'gauzy-inbox-push-signed-out';
+
+/**
+ * Where this browser stands: `unavailable` (the platform has web push off), `unsupported` (the browser cannot),
+ * `blocked` (the person refused notifications for the site), `off`, `on` (subscribed, and the platform confirmed the
+ * device), `sync-failed` (subscribed for this account, but the platform did not confirm the device: it could not be
+ * reached, refused the registration or has web push off, so notifications may not arrive; switching off still works,
+ * and asking again retries).
+ */
+export type InboxWebPushState = 'unavailable' | 'unsupported' | 'blocked' | 'off' | 'on' | 'sync-failed';
 
 interface IInboxPushDevice {
 	id: string;
@@ -31,84 +40,123 @@ interface PushOwner {
 	endpoint: string;
 }
 
+/** The account a step runs for, and the sign-outs it started after: this tab's, and the browser's. */
+interface PushSession {
+	userId: string | null;
+	signOuts: number;
+	signedOut: string | null;
+}
+
+/** A step whose account signed out, here or in another tab, while it was on its way. */
+class InboxWebPushSessionEnded extends Error {}
+
+function statusOf(error: unknown): number | undefined {
+	return (error as { status?: number } | null)?.status;
+}
+
 /**
  * Browser notifications for the inbox on this device, over the platform's web push devices
  * (`/api/inbox/push-subscriptions`: the VAPID public key, my devices). The routes answer 404 where web push is off.
  *
- * The subscription belongs to the account that opted in (kept in local storage with its device): another account on
- * the same browser starts with it off and has to opt in itself; a sign-out removes the device while the session still
- * allows it and unsubscribes the browser. Every step after a sign-out waits for that cleanup.
+ * The subscription belongs to the account that opted in (the owner record, in local storage and so shared by the
+ * browser's tabs). A subscription without an owner record for the signed-in account is never registered or reused:
+ * it is unsubscribed at the next step, in any tab, and a new opt-in subscribes anew, so whatever device another
+ * account still has on the platform for the old endpoint points at nothing. A sign-out clears the owner record and
+ * changes the sign-out marker at once, sends the device's removal while the session still allows it, and unsubscribes
+ * the browser; every next step of this tab waits until the browser has unsubscribed.
  */
 @Injectable({ providedIn: 'root' })
 export class InboxWebPushService {
 	private readonly http = inject(HttpClient);
 	private readonly store = inject(Store);
-	/** The sign-out cleanup on its way: whatever comes next waits for it. */
+	/** The sign-out unsubscribing the browser: whatever this tab does next waits for it. */
 	private cleanup: Promise<void> = Promise.resolve();
+	/** Sign-outs in this tab (the marker in storage covers the other tabs, and storage that is blocked). */
+	private signOuts = 0;
 
 	/**
-	 * Where this browser stands for the signed-in account. A subscription of another account is ended first. A
-	 * subscribed browser is registered again (the platform drops devices after failed pushes); a failed re-registration,
-	 * like a platform that cannot be reached, leaves the switch where the browser is — on while subscribed, so it can
-	 * still be switched off — and switching on again retries.
+	 * Where this browser stands for the signed-in account. A subscription the account did not opt in with is ended
+	 * first, before any request. An owned subscription is registered again (the platform drops devices after failed
+	 * pushes): `on` once the platform confirmed it, `sync-failed` when it could not.
 	 */
 	async state(): Promise<InboxWebPushState> {
 		await this.cleanup;
 		if (!supportsWebPush()) return 'unsupported';
-		let reachable = true;
+		const session = this.session();
+		const subscription = await this.ownSubscription(session);
+		let key: 'ok' | 'off' | 'unreachable' = 'ok';
 		try {
 			await this.publicKey();
 		} catch (error) {
-			if ((error as { status?: number })?.status === 404) return 'unavailable';
-			reachable = false;
+			key = statusOf(error) === 404 ? 'off' : 'unreachable';
+		}
+		if (!subscription) {
+			if (key === 'off') return 'unavailable';
+			return Notification.permission === 'denied' ? 'blocked' : 'off';
 		}
 		if (Notification.permission === 'denied') return 'blocked';
-		let subscription = await this.subscription().catch(() => null);
-		const owner = this.owner();
-		if (subscription && (!owner || owner.userId !== this.store.userId || owner.endpoint !== subscription.endpoint)) {
-			// Opted in by someone else on this browser (or before the owner was recorded): ended, never taken over.
-			await subscription.unsubscribe().catch(() => undefined);
-			this.setOwner(null);
-			subscription = null;
+		// Subscribed, but nothing to confirm it with (or no permission to show anything): it stays switchable, so it
+		// can be switched off, also where the platform has turned web push off since.
+		if (key !== 'ok' || Notification.permission !== 'granted') return 'sync-failed';
+		try {
+			await this.register(subscription, session);
+			return 'on';
+		} catch (error) {
+			return error instanceof InboxWebPushSessionEnded ? 'off' : 'sync-failed';
 		}
-		if (!subscription) return 'off';
-		if (reachable && Notification.permission === 'granted') {
-			await this.register(subscription).catch(() => undefined);
-		}
-		return 'on';
 	}
 
-	/** Asks for permission, registers the worker, subscribes with the platform's key and registers the device. */
+	/**
+	 * Asks for permission, registers the worker, subscribes with the platform's key and registers the device. A
+	 * subscription this account did not opt in with is never taken over: it is ended and a new one made.
+	 */
 	async enable(): Promise<InboxWebPushState> {
 		await this.cleanup;
+		const session = this.session();
+		const userId = session.userId;
+		if (!userId) throw new InboxWebPushSessionEnded('No signed-in account.');
 		const permission = await Notification.requestPermission();
 		if (permission !== 'granted') return permission === 'denied' ? 'blocked' : 'off';
 		const registration = await navigator.serviceWorker.register(this.urlOf(INBOX_PUSH_WORKER_PATH), { scope: this.urlOf(INBOX_PUSH_WORKER_SCOPE) });
 		const publicKey = await this.publicKey();
-		const subscription =
-			(await registration.pushManager.getSubscription()) ??
-			(await registration.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: base64UrlToBytes(publicKey) as BufferSource }));
+		let subscription = await registration.pushManager.getSubscription();
+		if (subscription && !this.owns(subscription, userId)) {
+			// Throws when it cannot be ended: it must never be registered for this account.
+			await subscription.unsubscribe();
+			this.setOwner(null);
+			subscription = null;
+		}
+		const deviceId = subscription ? (this.owner()?.deviceId ?? null) : null;
+		subscription ??= await registration.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: base64UrlToBytes(publicKey) as BufferSource });
+		if (!this.isCurrent(session)) {
+			await this.undo(subscription, null, session);
+			return 'off';
+		}
+		// Claimed before the registration, so this account's other tabs do not take it for one left by a sign-out.
+		this.setOwner({ userId, deviceId, endpoint: subscription.endpoint });
 		try {
-			await this.register(subscription);
+			await this.register(subscription, session);
 		} catch (error) {
+			if (error instanceof InboxWebPushSessionEnded) return 'off';
 			// Not registered: the browser must not keep a subscription the platform never pushes to.
 			await subscription.unsubscribe().catch(() => undefined);
-			this.setOwner(null);
+			if (this.claimed(subscription)) this.setOwner(null);
 			throw error;
 		}
 		return 'on';
 	}
 
 	/**
-	 * Removes this device from the platform, then unsubscribes the browser. A failure (the list, the removal) is
-	 * thrown with the browser still subscribed, so the switch stays on and switching off retries.
+	 * Removes this device from the platform (one it no longer has counts as removed), then unsubscribes the browser. A
+	 * failure (the list, the removal) is thrown with the browser still subscribed, so the switch stays on and switching
+	 * off retries.
 	 */
 	async disable(): Promise<InboxWebPushState> {
 		await this.cleanup;
 		const subscription = await this.subscription();
 		if (subscription) {
 			const deviceId = await this.deviceIdOf(subscription);
-			if (deviceId) await firstValueFrom(this.http.delete(`${DEVICES}/${encodeURIComponent(deviceId)}`));
+			if (deviceId) await this.removeDevice(deviceId);
 			await subscription.unsubscribe();
 		}
 		this.setOwner(null);
@@ -116,27 +164,29 @@ export class InboxWebPushService {
 	}
 
 	/**
-	 * A sign-out on this browser. Called before the session is cleared: the removal of the device is sent at once,
-	 * while the request still carries the session, and the browser unsubscribes; the next account's first step waits
-	 * for both. Never throws.
+	 * A sign-out on this browser, called before the session is cleared (the auth strategy's `logout$`, which it does
+	 * not wait for). At once: the owner record is cleared and the sign-out marker changed, so no step of any tab records
+	 * the subscription for the account that signed out, and the device's removal is sent while the request still carries
+	 * the session. Then the browser unsubscribes: from that moment it delivers nothing on that subscription, whatever the
+	 * platform still holds. Never rejects; when unsubscribing fails, the next step of any tab ends the subscription
+	 * (it has no owner).
 	 */
-	forgetThisBrowser(): void {
+	forgetThisBrowser(): Promise<void> {
 		const owner = this.owner();
-		const removal = owner?.deviceId
-			? firstValueFrom(this.http.delete(`${DEVICES}/${encodeURIComponent(owner.deviceId)}`)).catch(() => undefined)
-			: Promise.resolve(undefined);
+		this.signOuts += 1;
+		this.write(INBOX_PUSH_SIGN_OUT_KEY, `${Date.now()}-${Math.random().toString(36).slice(2)}`);
 		this.setOwner(null);
-		this.cleanup = Promise.all([
-			removal,
-			(async () => {
-				try {
-					if (!supportsWebPush()) return;
-					await (await this.subscription())?.unsubscribe();
-				} catch {
-					// Nothing to undo.
-				}
-			})()
-		]).then(() => undefined);
+		if (owner?.deviceId) void this.removeDevice(owner.deviceId).catch(() => undefined);
+		this.cleanup = (async () => {
+			try {
+				if (!supportsWebPush()) return;
+				const subscription = await this.subscription();
+				if (subscription && !this.claimed(subscription)) await subscription.unsubscribe();
+			} catch {
+				// Left without an owner: the next step ends it.
+			}
+		})();
+		return this.cleanup;
 	}
 
 	/** The app opened for a signed-in account: a subscribed browser is registered again (never throws). */
@@ -158,15 +208,48 @@ export class InboxWebPushService {
 		return (await registration?.pushManager.getSubscription()) ?? null;
 	}
 
+	/**
+	 * This browser's subscription when the account opted in with it. One of another account, or one a sign-out left
+	 * without an owner, is ended, never taken over.
+	 */
+	private async ownSubscription(session: PushSession): Promise<PushSubscription | null> {
+		const subscription = await this.subscription().catch(() => null);
+		if (!subscription) return null;
+		if (session.userId && this.owns(subscription, session.userId)) return subscription;
+		await subscription.unsubscribe().catch(() => undefined);
+		this.setOwner(null);
+		return null;
+	}
+
 	/** This browser's device on the platform: the one recorded at registration, else the one with its endpoint. */
 	private async deviceIdOf(subscription: PushSubscription): Promise<string | null> {
 		const owner = this.owner();
 		if (owner?.deviceId && owner.endpoint === subscription.endpoint) return owner.deviceId;
-		const devices = await firstValueFrom(this.http.get<IInboxPushDevice[]>(DEVICES));
+		let devices: IInboxPushDevice[] | null;
+		try {
+			devices = await firstValueFrom(this.http.get<IInboxPushDevice[]>(DEVICES));
+		} catch (error) {
+			// Web push is off on the platform: it has no device to remove.
+			if (statusOf(error) === 404) return null;
+			throw error;
+		}
 		return (devices ?? []).find((candidate) => candidate.endpoint === subscription.endpoint)?.id ?? null;
 	}
 
-	private async register(subscription: PushSubscription): Promise<void> {
+	/** Removes a device; one the platform does not have (any more, or not this account's) counts as removed. */
+	private async removeDevice(deviceId: string): Promise<void> {
+		try {
+			await firstValueFrom(this.http.delete(`${DEVICES}/${encodeURIComponent(deviceId)}`));
+		} catch (error) {
+			if (statusOf(error) !== 404) throw error;
+		}
+	}
+
+	/**
+	 * Registers the device and records the account as its owner, unless the account signed out (here or in another tab)
+	 * while the registration was on its way: then nothing is recorded, the work is undone, and it throws.
+	 */
+	private async register(subscription: PushSubscription, session: PushSession): Promise<void> {
 		const json = subscription.toJSON();
 		const device = await firstValueFrom(
 			this.http.post<IInboxPushDevice>(DEVICES, {
@@ -176,8 +259,49 @@ export class InboxWebPushService {
 				userAgent: navigator.userAgent.slice(0, 255)
 			})
 		);
-		const userId = this.store.userId;
-		if (userId) this.setOwner({ userId, deviceId: device?.id ?? null, endpoint: subscription.endpoint });
+		if (!session.userId || !this.isCurrent(session)) {
+			await this.undo(subscription, device?.id ?? null, session);
+			throw new InboxWebPushSessionEnded('Signed out while registering.');
+		}
+		this.setOwner({ userId: session.userId, deviceId: device?.id ?? null, endpoint: subscription.endpoint });
+	}
+
+	/**
+	 * Undoes a step whose account signed out meanwhile. The device it registered is removed while this tab still has
+	 * that account's session (another tab signed out); after a sign-out here the request would carry none, and the
+	 * platform drops the device at its first push to the ended endpoint. The browser unsubscribes unless a newer
+	 * opt-in claimed the subscription.
+	 */
+	private async undo(subscription: PushSubscription, deviceId: string | null, session: PushSession): Promise<void> {
+		const ownSessionLive = this.signOuts === session.signOuts && !!session.userId && this.store.userId === session.userId && !!this.store.token;
+		if (deviceId && ownSessionLive) await this.removeDevice(deviceId).catch(() => undefined);
+		const current = await this.subscription().catch(() => null);
+		if (current && current.endpoint === subscription.endpoint && !this.claimed(current)) {
+			await current.unsubscribe().catch(() => undefined);
+		}
+	}
+
+	private session(): PushSession {
+		return { userId: this.store.userId ?? null, signOuts: this.signOuts, signedOut: this.read(INBOX_PUSH_SIGN_OUT_KEY) };
+	}
+
+	/** Whether the step's account is still the one signed in, with no sign-out since it began (here or in another tab). */
+	private isCurrent(session: PushSession): boolean {
+		return (
+			this.signOuts === session.signOuts &&
+			this.read(INBOX_PUSH_SIGN_OUT_KEY) === session.signedOut &&
+			(this.store.userId ?? null) === session.userId
+		);
+	}
+
+	private owns(subscription: PushSubscription, userId: string): boolean {
+		const owner = this.owner();
+		return !!owner && owner.userId === userId && owner.endpoint === subscription.endpoint;
+	}
+
+	/** Whether the owner record names this subscription (whoever's it is). */
+	private claimed(subscription: PushSubscription): boolean {
+		return this.owner()?.endpoint === subscription.endpoint;
 	}
 
 	private owner(): PushOwner | null {
@@ -191,9 +315,21 @@ export class InboxWebPushService {
 	}
 
 	private setOwner(owner: PushOwner | null): void {
+		this.write(INBOX_PUSH_OWNER_KEY, owner ? JSON.stringify(owner) : null);
+	}
+
+	private read(key: string): string | null {
 		try {
-			if (owner) localStorage.setItem(INBOX_PUSH_OWNER_KEY, JSON.stringify(owner));
-			else localStorage.removeItem(INBOX_PUSH_OWNER_KEY);
+			return localStorage.getItem(key);
+		} catch {
+			return null;
+		}
+	}
+
+	private write(key: string, value: string | null): void {
+		try {
+			if (value === null) localStorage.removeItem(key);
+			else localStorage.setItem(key, value);
 		} catch {
 			// Storage can be blocked: the next visit asks again.
 		}

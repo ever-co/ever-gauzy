@@ -262,10 +262,12 @@ export const InboxUiPlugin: PluginUiDefinition = {
 		registerInboxEntryPoints(injector);
 		registerInboxSettingsEntryPoints(injector);
 		// A sign-out ends this browser's inbox notifications (a shared browser): the device is removed while the session
-		// still allows it. An account that opens the app has its subscribed browser registered again.
+		// still allows it, and the browser unsubscribes. `logout$` does not wait for that: what holds without waiting is
+		// told on `forgetThisBrowser`. An account that opens the app has its own subscribed browser registered again, and
+		// any other subscription ended.
 		const push = injector.get(InboxWebPushService);
 		// Optional: a shell without the auth strategy (none today) simply has nothing to end.
-		injector.get(AuthStrategy, null)?.logout$.subscribe(() => push.forgetThisBrowser());
+		injector.get(AuthStrategy, null)?.logout$.subscribe(() => void push.forgetThisBrowser());
 		injector
 			.get(Store)
 			.user$.pipe(
