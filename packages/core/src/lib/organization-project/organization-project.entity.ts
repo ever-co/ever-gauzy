@@ -2,7 +2,19 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { JoinColumn, RelationId, JoinTable } from 'typeorm';
 import { Exclude } from 'class-transformer';
 import { billingRateColumn } from '../shared/pipes/billing-rate.transform';
-import { IsBoolean, IsDateString, IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString, IsUUID } from 'class-validator';
+import {
+	IsArray,
+	IsBoolean,
+	IsDateString,
+	IsEnum,
+	IsNotEmpty,
+	IsNumber,
+	IsOptional,
+	IsString,
+	IsUUID,
+	Matches,
+	ValidateIf
+} from 'class-validator';
 import {
 	CurrenciesEnum,
 	IActivity,
@@ -34,7 +46,7 @@ import {
 	ProjectStatusEnum,
 	TaskListTypeEnum
 } from '@gauzy/contracts';
-import { isMySQL } from '@gauzy/config';
+import { isMySQL, isPostgres } from '@gauzy/config';
 import {
 	Activity,
 	Employee,
@@ -135,6 +147,26 @@ export class OrganizationProject
 	@IsString()
 	@MultiORMColumn({ nullable: true })
 	code?: string;
+
+	/**
+	 * The key tasks are addressed by (`API` in `API-42`): two to ten upper-case letters and digits, starting with a
+	 * letter, unique within the organization. Null until a manager sets one; the key derived from the name (the
+	 * first three characters, as `Task.prefix` carries it) answers until then.
+	 */
+	@ApiPropertyOptional({ type: () => String, nullable: true })
+	@IsOptional()
+	@ValidateIf((it) => it.taskKey !== null)
+	@Matches(/^[A-Z][A-Z0-9]{1,9}$/, { message: 'taskKey must be 2 to 10 upper-case letters or digits, starting with a letter' })
+	@ColumnIndex()
+	@MultiORMColumn({ nullable: true, length: 16 })
+	taskKey?: string | null;
+
+	/** The project's former keys, which keep resolving after a rename. Written by the platform, never by a client. */
+	@ApiPropertyOptional({ type: () => Array })
+	@IsOptional()
+	@IsArray()
+	@MultiORMColumn({ type: isPostgres() ? 'jsonb' : isMySQL() ? 'json' : 'text', nullable: true })
+	taskKeyHistory?: string[] | null;
 
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()

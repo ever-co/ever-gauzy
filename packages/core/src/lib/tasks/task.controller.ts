@@ -15,7 +15,17 @@ import {
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CommandBus } from '@nestjs/cqrs';
 import { DeleteResult } from 'typeorm';
-import { PermissionsEnum, ITask, IPagination, ID, ITaskCreateInput, ITaskUpdateInput } from '@gauzy/contracts';
+import {
+	PermissionsEnum,
+	ITask,
+	IPagination,
+	ID,
+	ITaskBulkUpdateOutcome,
+	ITaskCreateInput,
+	ITaskReferenceResolution,
+	ITaskUpdateInput,
+	TaskBuiltInViewEnum
+} from '@gauzy/contracts';
 import {
 	BulkExecutor,
 	BulkOperation,
@@ -41,12 +51,17 @@ import {
 	TaskDateFilterInputDTO,
 	TaskByNumberParamsDTO,
 	TaskByNumberQueryDTO,
+	TaskBuiltInViewQueryDTO,
+	TaskBulkUpdateDTO,
 	TaskMaxNumberQueryDTO,
 	TaskMemberDTO,
 	TaskQueryDTO,
+	TaskReferenceResolveDTO,
 	UpdateTaskDTO,
 	UpdateTaskStatusDTO
 } from './dto';
+import { TaskViewsEnabledGuard } from './task-views-enabled';
+import { isBuiltInView } from './built-in-views';
 
 @ApiTags('Tasks')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
@@ -203,6 +218,67 @@ export class TaskController extends CrudController<Task> {
 	@UseValidationPipe({ transform: true })
 	async findTasksByViewQuery(@Param('id', UUIDValidationPipe) viewId: ID): Promise<IPagination<ITask>> {
 		return this.taskService.findTasksByViewQuery(viewId);
+	}
+
+	/**
+	 * GET a built-in view: `mine`, `this-week`, `overdue` or `due-soon`, computed by the platform for the caller
+	 * in the caller's time zone. Behind `GAUZY_TASK_VIEWS_ENABLED` (404 otherwise).
+	 *
+	 * @param key The view.
+	 * @param query The organization, the time zone and the page.
+	 * @returns The caller's tasks of that view.
+	 */
+	@ApiOperation({ summary: 'Get the tasks of a built-in view (mine, this-week, overdue, due-soon).' })
+	@ApiResponse({ status: HttpStatus.OK, description: 'Tasks retrieved successfully.' })
+	@ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'No such view, or the extensions are off.' })
+	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_TASK_VIEW)
+	@UseGuards(TaskViewsEnabledGuard)
+	@Get('/built-in/:key')
+	@UseValidationPipe({ transform: true, whitelist: true })
+	async findBuiltInView(@Param('key') key: string, @Query() query: TaskBuiltInViewQueryDTO): Promise<IPagination<ITask>> {
+		if (!isBuiltInView(key)) {
+			throw new NotFoundException(`No built-in view "${key}".`);
+		}
+		return this.taskService.findBuiltInView(key as TaskBuiltInViewEnum, query);
+	}
+
+	/**
+	 * POST a bulk update: one change for up to 100 tasks (`taskIds` + `changes`), or a change per task (`items`,
+	 * which is how an undo sends the previous values back). Every task is updated by the same command as
+	 * `PUT /tasks/:id` (activity, notifications and sync events per task); the answer holds one result per task
+	 * with the previous values. Behind `GAUZY_TASK_VIEWS_ENABLED` (404 otherwise).
+	 *
+	 * @param input The tasks and the changes.
+	 * @returns One result per task, with the previous values.
+	 */
+	@ApiOperation({ summary: 'Change many tasks in one request, with per-task results and undo data.' })
+	@ApiResponse({ status: HttpStatus.OK, description: 'Applied, with one result per task.' })
+	@ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'Nothing to change, both forms sent, or over the limit (BULK_LIMIT_EXCEEDED).' })
+	@HttpCode(HttpStatus.OK)
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TASK_EDIT)
+	@UseGuards(TaskViewsEnabledGuard)
+	@Post('/bulk-update')
+	@UseValidationPipe({ whitelist: true, transform: true })
+	async bulkUpdate(@Body() input: TaskBulkUpdateDTO): Promise<ITaskBulkUpdateOutcome> {
+		return this.taskService.bulkUpdate(input, (id, update) => this.commandBus.execute(new TaskUpdateCommand(id, update as ITaskUpdateInput)));
+	}
+
+	/**
+	 * POST references to resolve: `KEY-number` identifiers (`API-42`) to the tasks they name, by the project's
+	 * key, its former keys, or the key derived from its name. Behind `GAUZY_TASK_VIEWS_ENABLED` (404 otherwise).
+	 *
+	 * @param input The organization and the references.
+	 * @returns One resolution per reference.
+	 */
+	@ApiOperation({ summary: 'Resolve KEY-number references to tasks.' })
+	@ApiResponse({ status: HttpStatus.OK, description: 'One resolution per reference.' })
+	@HttpCode(HttpStatus.OK)
+	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_TASK_VIEW)
+	@UseGuards(TaskViewsEnabledGuard)
+	@Post('/resolve-references')
+	@UseValidationPipe({ whitelist: true })
+	async resolveReferences(@Body() input: TaskReferenceResolveDTO): Promise<ITaskReferenceResolution[]> {
+		return this.taskService.resolveReferences(input);
 	}
 
 	/**

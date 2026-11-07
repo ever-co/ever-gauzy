@@ -22,7 +22,8 @@ import {
 	LessThanOrEqual,
 	MoreThanOrEqual,
 	Raw,
-	SaveOptions
+	SaveOptions,
+	Not
 } from 'typeorm';
 import { isBoolean, isUUID } from 'class-validator';
 import { SOFT_DELETABLE_FILTER } from 'mikro-orm-soft-delete';
@@ -48,7 +49,15 @@ import {
 	NotificationActionTypeEnum,
 	ITimeLog,
 	TaskSyncScopeEnum,
-	TimesheetStatus
+	TimesheetStatus,
+	ITaskBuiltInViewQuery,
+	ITaskBulkUpdateInput,
+	ITaskBulkUpdateOutcome,
+	ITaskBulkUpdateResult,
+	ITaskReferenceResolution,
+	ITaskReferenceResolveInput,
+	TaskBuiltInViewEnum,
+	TaskStatusEnum
 } from '@gauzy/contracts';
 import { isEmpty, isNotEmpty } from '@gauzy/utils';
 import { isMySQL, isPostgres, isSqlite } from '@gauzy/config';
@@ -78,6 +87,9 @@ import { TaskEvent } from '../event-bus/events/task.event';
 import { BaseEntityEventTypeEnum } from '../event-bus/base-entity-event';
 import { IFindOneOptions } from '../core/crud/icrud.service';
 import { Task } from './task.entity';
+import { BulkUpdateRequestError, changesToUpdate, normalizeBulkUpdate } from './bulk-update';
+import { keysOfProject, parseTaskReference } from './task-reference';
+import { builtInViewWindow, relationsTreeOf } from './built-in-views';
 import { TypeOrmOrganizationSprintTaskHistoryRepository } from './../organization-sprint/repository/type-orm-organization-sprint-task-history.repository';
 import { GetTaskByIdDTO } from './dto';
 import { prepareSQLQuery as p } from './../database/database.helper';
@@ -2480,5 +2492,160 @@ export class TaskService extends TenantAwareCrudService<Task> {
 		}
 		const date = new Date(value);
 		return Number.isNaN(date.getTime()) ? null : date;
+	}
+
+	// ------------------------------------------------------------------ task views extensions
+
+	/**
+	 * Changes many tasks in one request. Each task is read in the caller's tenant and the request's organization,
+	 * its changes are turned into the update the single route runs (tag and member lists computed from the task as
+	 * it is), `apply` runs that update (the controller passes the update command, so activity, notifications and
+	 * sync events happen per task exactly as for one update), and the previous values are answered so the caller
+	 * can undo. A task that is missing, another organization's, or refused by its update is reported; the others
+	 * are applied. Tasks are applied one after another.
+	 */
+	async bulkUpdate(
+		input: ITaskBulkUpdateInput,
+		apply: (id: ID, update: Partial<ITaskUpdateInput>) => Promise<ITask>
+	): Promise<ITaskBulkUpdateOutcome> {
+		let items: ReturnType<typeof normalizeBulkUpdate>;
+		try {
+			items = normalizeBulkUpdate(input);
+		} catch (error) {
+			if (error instanceof BulkUpdateRequestError) {
+				throw new BadRequestException(`${error.code}: ${error.message}`);
+			}
+			throw error;
+		}
+		const tenantId = RequestContext.currentTenantId() ?? input.tenantId;
+		const organizationId = input.organizationId;
+		const results: ITaskBulkUpdateResult[] = [];
+		for (const item of items) {
+			const taskId = String(item.taskId);
+			let task: Task | null = null;
+			try {
+				task = await this.typeOrmRepository.findOne({
+					where: { id: taskId, tenantId, organizationId },
+					relations: { tags: true, members: true }
+				});
+			} catch (error) {
+				results.push({ taskId, ok: false, error: `TASK_READ_FAILED: ${(error as Error)?.message ?? 'unknown'}` });
+				continue;
+			}
+			if (!task) {
+				results.push({ taskId, ok: false, error: 'TASK_NOT_FOUND: no such task in this organization.' });
+				continue;
+			}
+			const { update, previous } = changesToUpdate(task, item.changes);
+			try {
+				await apply(task.id, update);
+				results.push({ taskId, ok: true, previous });
+			} catch (error) {
+				const message = (error as { message?: unknown })?.message;
+				const text = typeof message === 'string' ? message : (message as { message?: string })?.message ?? 'The update was refused.';
+				results.push({ taskId, ok: false, error: text, previous });
+			}
+		}
+		const applied = results.filter((result) => result.ok).length;
+		return { applied, refused: results.length - applied, results };
+	}
+
+	/**
+	 * Resolves `KEY-number` references to tasks of the organization: by the project's key, its former keys, or
+	 * the key derived from its name (the prefix the create path writes). A reference nobody answers to, or a
+	 * number no task of that project holds, resolves to nothing; a task that cannot be read answers the same.
+	 */
+	async resolveReferences(input: ITaskReferenceResolveInput): Promise<ITaskReferenceResolution[]> {
+		const tenantId = RequestContext.currentTenantId() ?? input.tenantId;
+		const organizationId = input.organizationId;
+		const projects = await this.typeOrmRepository.manager.find(OrganizationProject, {
+			where: { tenantId, organizationId },
+			select: { id: true, name: true, taskKey: true, taskKeyHistory: true }
+		});
+		const byKey = new Map<string, OrganizationProject[]>();
+		for (const project of projects) {
+			for (const key of keysOfProject(project)) {
+				const list = byKey.get(key) ?? [];
+				list.push(project);
+				byKey.set(key, list);
+			}
+		}
+		const resolutions: ITaskReferenceResolution[] = [];
+		for (const reference of input.references ?? []) {
+			const parts = parseTaskReference(reference);
+			if (!parts) {
+				resolutions.push({ reference, key: '', number: 0, resolved: false });
+				continue;
+			}
+			const candidates = byKey.get(parts.key) ?? [];
+			let found: Task | null = null;
+			for (const project of candidates) {
+				found = await this.typeOrmRepository.findOne({
+					where: { tenantId, organizationId, projectId: project.id, number: parts.number },
+					select: { id: true, title: true, status: true, projectId: true }
+				});
+				if (found) break;
+			}
+			if (!found) {
+				resolutions.push({ reference, key: parts.key, number: parts.number, resolved: false });
+				continue;
+			}
+			const project = candidates.find((candidate) => candidate.id === found?.projectId);
+			resolutions.push({
+				reference,
+				key: parts.key,
+				number: parts.number,
+				resolved: true,
+				taskId: found.id,
+				projectId: found.projectId,
+				title: found.title,
+				status: found.status as TaskStatusEnum,
+				currentKey: project ? keysOfProject(project)[0] : parts.key
+			});
+		}
+		return resolutions;
+	}
+
+	/**
+	 * The caller's tasks of a built-in view (`mine`, `this-week`, `overdue`, `due-soon`), the day and week bounds
+	 * computed in the caller's time zone. The caller is the signed-in employee; a user without an employee has no
+	 * tasks of their own.
+	 */
+	async findBuiltInView(key: TaskBuiltInViewEnum, query: ITaskBuiltInViewQuery): Promise<IPagination<ITask>> {
+		const employeeId = RequestContext.currentEmployeeId();
+		if (!employeeId) {
+			return { items: [], total: 0 };
+		}
+		const tenantId = RequestContext.currentTenantId() ?? query.tenantId;
+		const organizationId = query.organizationId;
+		const window = builtInViewWindow(key, new Date(), query.timeZone);
+		const where: FindOptionsWhere<Task> = {
+			tenantId,
+			organizationId,
+			isScreeningTask: false,
+			members: { id: employeeId }
+		};
+		if (window.dueDateFrom && window.dueDateTo) {
+			where.dueDate = Between(window.dueDateFrom, window.dueDateTo);
+		} else if (window.dueDateFrom) {
+			where.dueDate = MoreThanOrEqual(window.dueDateFrom);
+		} else if (window.dueDateTo) {
+			where.dueDate = LessThanOrEqual(window.dueDateTo);
+		}
+		if (window.openOnly) {
+			where.status = Not(In([TaskStatusEnum.DONE, TaskStatusEnum.COMPLETED, TaskStatusEnum.CANCELLED]));
+		}
+		const take = Math.min(Math.max(Number(query.take) || 50, 1), 200);
+		const skip = Math.max(Number(query.skip) || 0, 0);
+		const requested = Array.isArray(query.relations) && query.relations.length > 0 ? query.relations : ['members', 'members.user', 'tags', 'project', 'taskStatus', 'taskPriority', 'taskSize'];
+		const relations = relationsTreeOf(requested) as FindOptionsRelations<Task>;
+		const [items, total] = await this.typeOrmRepository.findAndCount({
+			where,
+			relations,
+			order: { dueDate: 'ASC', createdAt: 'DESC' },
+			take,
+			skip
+		});
+		return { items, total };
 	}
 }

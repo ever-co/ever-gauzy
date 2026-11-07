@@ -1,15 +1,19 @@
-import { HttpException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
+import { ConflictException, HttpException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
 import {
 	ActionTypeEnum,
 	ActorTypeEnum,
 	BaseEntityEnum,
 	ID,
+	IPagination,
 	ITaskView,
 	ITaskViewCreateInput,
-	ITaskViewUpdateInput
+	ITaskViewOrderInput,
+	ITaskViewUpdateInput,
+	TaskViewVisibilityEnum
 } from '@gauzy/contracts';
 import { FavoriteService } from '../../core/decorators';
 import { TenantAwareCrudService } from '../../core/crud';
+import { LegacyFindManyOptions, LegacyFindOneOptions } from '../../core/utils';
 import { RequestContext } from '../../core/context';
 import { ActivityLogService } from '../../activity-log/activity-log.service';
 import { TaskView } from './view.entity';
@@ -71,19 +75,22 @@ export class TaskViewService extends TenantAwareCrudService<TaskView> {
 	 */
 	async update(id: ID, input: ITaskViewUpdateInput): Promise<ITaskView> {
 		const tenantId = RequestContext.currentTenantId() || input.tenantId;
-
+		// Retrieve existing view.
+		const existingTaskView = await this.findOneByIdString(id);
+		if (!existingTaskView) {
+			throw new NotFoundException('View not found');
+		}
+		// A save that states the version it read is refused when the view moved on since: the caller gets the
+		// latest view to merge into, nothing is overwritten.
+		this.assertExpectedVersion(existingTaskView, input.expectedVersion);
+		const { expectedVersion: _expected, ...changes } = input;
+		void _expected;
 		try {
-			// Retrieve existing view.
-			const existingTaskView = await this.findOneByIdString(id);
-
-			if (!existingTaskView) {
-				throw new NotFoundException('View not found');
-			}
-
 			const updatedTaskView = await super.create({
-				...input,
+				...changes,
 				tenantId,
-				id
+				id,
+				version: (existingTaskView.version ?? 1) + 1
 			});
 
 			// Generate the activity log
@@ -108,4 +115,84 @@ export class TaskViewService extends TenantAwareCrudService<TaskView> {
 			throw new HttpException(`Failed to update view: ${error.message}`, HttpStatus.BAD_REQUEST);
 		}
 	}
+
+	/**
+	 * The views as the caller may list them: every shared view the query reaches, and the caller's own personal
+	 * views. Another person's personal views never appear, whatever the query asks.
+	 */
+	public async findAll(filter?: LegacyFindManyOptions<TaskView>): Promise<IPagination<TaskView>> {
+		const page = await super.findAll(filter);
+		const userId = RequestContext.currentUserId();
+		const hidden = page.items.filter((view) => isPersonalOfSomeoneElse(view, userId)).length;
+		if (hidden === 0) {
+			return page;
+		}
+		return {
+			items: page.items.filter((view) => !isPersonalOfSomeoneElse(view, userId)),
+			total: Math.max(0, page.total - hidden)
+		};
+	}
+
+	/** A personal view reads as not found to anyone but its creator. */
+	public async findOneByIdString(id: ID, options?: LegacyFindOneOptions<TaskView>): Promise<TaskView> {
+		const view = await super.findOneByIdString(id, options);
+		if (isPersonalOfSomeoneElse(view, RequestContext.currentUserId())) {
+			throw new NotFoundException('View not found');
+		}
+		return view;
+	}
+
+	/**
+	 * Sets the order the view shows its tasks in (manual ordering): the whole list, each task once. Bumps the
+	 * version like any save; a stated `expectedVersion` is checked first.
+	 */
+	async setOrder(id: ID, input: ITaskViewOrderInput): Promise<ITaskView> {
+		const tenantId = RequestContext.currentTenantId() || input.tenantId;
+		const existing = await this.findOneByIdString(id);
+		if (!existing) {
+			throw new NotFoundException('View not found');
+		}
+		this.assertExpectedVersion(existing, input.expectedVersion);
+		const manualOrder = [...new Set((input.taskIds ?? []).map((taskId) => String(taskId)))] as ID[];
+		const updated = await super.create({ id, tenantId, manualOrder, version: (existing.version ?? 1) + 1 });
+		this.activityLogService.logActivity<TaskView>(
+			BaseEntityEnum.TaskView,
+			ActionTypeEnum.Updated,
+			ActorTypeEnum.User,
+			updated.id,
+			updated.name,
+			updated,
+			updated.organizationId,
+			tenantId,
+			existing,
+			{ manualOrder }
+		);
+		return updated;
+	}
+
+	/** 409 with the latest view when the caller's version is behind. */
+	private assertExpectedVersion(existing: ITaskView, expectedVersion: number | undefined): void {
+		if (expectedVersion === undefined || expectedVersion === null) {
+			return;
+		}
+		const current = existing.version ?? 1;
+		if (expectedVersion !== current) {
+			throw new ConflictException({
+				message: `TASK_VIEW_VERSION_CONFLICT: the view is at version ${current}, not ${expectedVersion}.`,
+				code: 'TASK_VIEW_VERSION_CONFLICT',
+				view: existing
+			});
+		}
+	}
+}
+
+/** Whether a view is personal and belongs to someone other than `userId`. */
+export function isPersonalOfSomeoneElse(
+	view: Pick<ITaskView, 'visibility' | 'createdByUserId'> | null | undefined,
+	userId: ID | null | undefined
+): boolean {
+	if (!view || view.visibility !== TaskViewVisibilityEnum.PERSONAL) {
+		return false;
+	}
+	return !view.createdByUserId || !userId || String(view.createdByUserId) !== String(userId);
 }

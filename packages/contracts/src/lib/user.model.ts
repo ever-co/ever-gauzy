@@ -77,6 +77,15 @@ export type IQuickActionsUiPreferences = {
 	shortcuts?: Record<string, string>;
 };
 
+/**
+ * Per-user keyboard bindings of the clients' command registries, stored server-side under
+ * `IUserUiPreferences.keyboard` so a rebinding follows the person to every device. Keyed by command id; the
+ * value is the binding in the client's own syntax (`'shift+i'`, `'g t'`); an empty string removes the default.
+ */
+export type IKeyboardUiPreferences = {
+	bindings?: Record<string, string>;
+};
+
 /** A feature's state: a plain JSON object (the API rejects arrays and primitives at the top level). */
 export type UiPreferenceFeature = { [key: string]: unknown };
 
@@ -90,6 +99,7 @@ export type UiPreferenceFeature = { [key: string]: unknown };
 export interface IUserUiPreferences {
 	aiChat?: IAiChatUiPreferences;
 	quickActions?: IQuickActionsUiPreferences;
+	keyboard?: IKeyboardUiPreferences;
 	/** Any other feature: ONE plain (non-array) object per feature key. */
 	[feature: string]: UiPreferenceFeature | undefined;
 }
@@ -101,6 +111,7 @@ export interface IUserUiPreferences {
 export interface IUserUiPreferencesUpdateInput {
 	aiChat?: IAiChatUiPreferences | null;
 	quickActions?: IQuickActionsUiPreferences | null;
+	keyboard?: IKeyboardUiPreferences | null;
 	[feature: string]: UiPreferenceFeature | null | undefined;
 }
 

@@ -1,6 +1,6 @@
 import { EventBus } from '@nestjs/cqrs';
-import { BadRequestException, HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { Brackets, FindOptionsWhere, ILike, In, IsNull, SelectQueryBuilder } from 'typeorm';
+import { BadRequestException, HttpException, HttpStatus, Injectable, ConflictException } from '@nestjs/common';
+import { Brackets, FindOptionsWhere, ILike, In, IsNull, Not, SelectQueryBuilder } from 'typeorm';
 import { EntityProperty, FilterQuery, raw } from '@mikro-orm/core';
 import {
 	ActionTypeEnum,
@@ -91,6 +91,7 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 		// Destructure the input data
 		// The client rate is written through the project rate route only, which checks who may set it
 		const { tags = [], memberIds = [], managerIds = [], organizationId, billRateValue: _rate, ...entity } = input;
+		await this.prepareTaskKey(entity, { tenantId, organizationId });
 		void _rate;
 
 		try {
@@ -228,6 +229,7 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 			where: { organizationId, tenantId },
 			relations: { image: true, members: true, organizationContact: true, tags: true, teams: true }
 		});
+		await this.prepareTaskKey(entity, { tenantId, organizationId, existing: organizationProject });
 
 		try {
 			// Retrieve members and managers IDs
@@ -1042,6 +1044,45 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 
 				return !!project;
 			}
+		}
+	}
+
+	/**
+	 * Normalizes a task key on its way in and keeps the organization's keys unique: the key is upper-cased and
+	 * trimmed (`null` clears it), refused with 409 (`PROJECT_KEY_TAKEN`) when another project of the organization
+	 * holds it, and a replaced key is kept in `taskKeyHistory` so old references keep resolving. A body without a
+	 * `taskKey` leaves both untouched; the history is never written from a body.
+	 */
+	private async prepareTaskKey(
+		entity: { taskKey?: string | null; taskKeyHistory?: string[] | null },
+		scope: { tenantId: ID; organizationId: ID; existing?: { id?: ID; taskKey?: string | null; taskKeyHistory?: string[] | null } | null }
+	): Promise<void> {
+		delete entity.taskKeyHistory;
+		if (!('taskKey' in entity)) {
+			return;
+		}
+		const key = entity.taskKey === null || entity.taskKey === undefined ? null : String(entity.taskKey).trim().toUpperCase();
+		entity.taskKey = key || null;
+		if (entity.taskKey) {
+			const holder = await this.typeOrmRepository.findOne({
+				where: {
+					tenantId: scope.tenantId,
+					organizationId: scope.organizationId,
+					taskKey: entity.taskKey,
+					...(scope.existing?.id ? { id: Not(scope.existing.id) } : {})
+				},
+				select: { id: true, name: true }
+			});
+			if (holder) {
+				throw new ConflictException(`PROJECT_KEY_TAKEN: the key ${entity.taskKey} belongs to the project "${holder.name}".`);
+			}
+		}
+		const previous = scope.existing?.taskKey ? String(scope.existing.taskKey).toUpperCase() : null;
+		if (previous && previous !== entity.taskKey) {
+			const history = Array.isArray(scope.existing?.taskKeyHistory) ? scope.existing.taskKeyHistory : [];
+			entity.taskKeyHistory = [...new Set([...history.map((item) => String(item).toUpperCase()), previous])].filter(
+				(item) => item !== entity.taskKey
+			);
 		}
 	}
 }
