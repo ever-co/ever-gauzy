@@ -1,8 +1,9 @@
 import { Injectable, Logger, OnModuleInit, Optional } from '@nestjs/common';
 import { EventsHandler, IEventHandler } from '@nestjs/cqrs';
-import { DataSource, In } from 'typeorm';
+import { DataSource, In, MoreThanOrEqual } from 'typeorm';
 import {
 	BaseEntityEnum,
+	EmployeeNotificationTypeEnum,
 	ID,
 	IEmployeeNotification,
 	IInboxItem,
@@ -26,6 +27,7 @@ import {
 } from '@gauzy/core';
 import { InboxItem } from '../entities/inbox-item.entity';
 import { InboxItemRecipient } from '../entities/inbox-item-recipient.entity';
+import { INBOX_MENTION_DEDUPE_WINDOW_MS } from '../inbox.constants';
 import { InboxSourceHandlerRegistry } from '../inbox-source-handler.registry';
 import { InboxService } from '../inbox.service';
 import { InboxItemFeed } from '../inbox-item-feed';
@@ -61,6 +63,29 @@ export function notificationItemInput(notification: IEmployeeNotification, userI
 		},
 		recipients: [{ userId, isRead: !!notification.isRead }]
 	};
+}
+
+/**
+ * Whether a notification is one the Inbox files once per recipient, record and kind within the window (spec FR-4):
+ * a mention — the same employee mentioned twice in one page, or in two quick edits, is one thing to look at. A
+ * notification without a record to key on is never a twin of another.
+ */
+export function isDedupedNotification(notification: Pick<IEmployeeNotification, 'type' | 'entity' | 'entityId'> | null | undefined): boolean {
+	return notification?.type === EmployeeNotificationTypeEnum.MENTION && !!notification.entity && !!notification.entityId;
+}
+
+/** The notification type an item was filed for, read from the metadata the bridge wrote (a JSON document, or already parsed). */
+export function notificationTypeOf(metadata: unknown): string | null {
+	let parsed: unknown = metadata;
+	if (typeof metadata === 'string') {
+		try {
+			parsed = JSON.parse(metadata);
+		} catch {
+			return null;
+		}
+	}
+	const type = (parsed as { notificationType?: unknown } | null)?.notificationType;
+	return typeof type === 'string' ? type : null;
 }
 
 /**
@@ -133,7 +158,11 @@ export class InboxNotificationBridge implements OnModuleInit, IInboxSourceHandle
 		await repository.update({ id: row.id }, patch as never);
 	}
 
-	/** Files a notification that now exists as an inbox item of its receiver. */
+	/**
+	 * Files a notification that now exists as an inbox item of its receiver — unless it is a mention whose twin (the
+	 * same receiver, record and kind) was filed within the last ten minutes: then the entry that exists is the one to
+	 * look at, and the notification row stays what the Notifications tab reads.
+	 */
 	async fileNotification(notification: IEmployeeNotification): Promise<void> {
 		try {
 			const userId = await this.userIdOfEmployee(notification?.receiverEmployeeId, notification?.tenantId);
@@ -141,10 +170,43 @@ export class InboxNotificationBridge implements OnModuleInit, IInboxSourceHandle
 			if (!input) {
 				return;
 			}
+			if (isDedupedNotification(notification) && (await this.hasRecentTwin(notification, userId as ID))) {
+				this.logger.debug(`Notification ${notification.id} is not filed: a ${notification.type} on ${notification.entity} ${notification.entityId} reached user ${userId} within the last ${INBOX_MENTION_DEDUPE_WINDOW_MS / 60_000} minutes`);
+				return;
+			}
 			await this.inbox.upsertExternal(input);
 		} catch (error) {
 			this.logger.warn(`Notification ${notification?.id} was not filed in the inbox: ${(error as Error)?.message}`);
 		}
+	}
+
+	/**
+	 * Whether an item of the same kind, on the same record, reached the user within the window: the user's recipient
+	 * rows of the window (few), then their items narrowed to the record, the type compared from the metadata.
+	 */
+	private async hasRecentTwin(notification: IEmployeeNotification, userId: ID, now = Date.now()): Promise<boolean> {
+		const since = new Date(now - INBOX_MENTION_DEDUPE_WINDOW_MS);
+		const recent = await this.dataSource.getRepository(InboxItemRecipient).find({
+			select: { inboxItemId: true },
+			where: { userId, tenantId: notification.tenantId, createdAt: MoreThanOrEqual(since) },
+			take: 200
+		} as never);
+		const itemIds = recent.map((row) => row.inboxItemId).filter(Boolean);
+		if (!itemIds.length) {
+			return false;
+		}
+		const items = await this.dataSource.getRepository(InboxItem).find({
+			select: { id: true, externalId: true, metadata: true },
+			where: {
+				id: In(itemIds),
+				tenantId: notification.tenantId,
+				kind: InboxItemKindEnum.NOTIFICATION,
+				source: InboxItemSourceEnum.GAUZY,
+				entity: notification.entity,
+				entityId: notification.entityId
+			}
+		} as never);
+		return items.some((item) => String(item.externalId ?? '') !== String(notification.id) && notificationTypeOf(item.metadata) === String(notification.type));
 	}
 
 	/** The notification API changed read / archive state: the filed items' recipient rows follow. */

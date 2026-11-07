@@ -1,5 +1,8 @@
-import { InboxItemKindEnum, InboxItemSourceEnum, INBOX_NOTIFICATION_EXTERNAL_SOURCE } from '@gauzy/contracts';
-import { notificationItemInput } from './inbox-notification.bridge';
+import { BaseEntityEnum, EmployeeNotificationTypeEnum, InboxItemKindEnum, InboxItemSourceEnum, INBOX_NOTIFICATION_EXTERNAL_SOURCE } from '@gauzy/contracts';
+import { DataSource } from 'typeorm';
+import { InboxSourceHandlerRegistry } from '../inbox-source-handler.registry';
+import { InboxService } from '../inbox.service';
+import { InboxNotificationBridge, isDedupedNotification, notificationItemInput, notificationTypeOf } from './inbox-notification.bridge';
 
 describe('notificationItemInput', () => {
 	const notification = {
@@ -50,5 +53,62 @@ describe('notificationItemInput', () => {
 		expect(notificationItemInput({ ...notification, id: '' } as never, 'u2')).toBeNull();
 		expect(notificationItemInput({ ...notification, tenantId: undefined } as never, 'u2')).toBeNull();
 		expect(notificationItemInput(notification as never, '' as never)).toBeNull();
+	});
+});
+
+describe('isDedupedNotification / notificationTypeOf', () => {
+	it('dedupes a mention on a record, and nothing else', () => {
+		expect(isDedupedNotification({ type: EmployeeNotificationTypeEnum.MENTION, entity: BaseEntityEnum.Task, entityId: 't1' })).toBe(true);
+		expect(isDedupedNotification({ type: EmployeeNotificationTypeEnum.MENTION, entity: BaseEntityEnum.Task, entityId: undefined } as never)).toBe(false);
+		expect(isDedupedNotification({ type: EmployeeNotificationTypeEnum.COMMENT, entity: BaseEntityEnum.Task, entityId: 't1' })).toBe(false);
+		expect(isDedupedNotification(null)).toBe(false);
+	});
+
+	it('reads the notification type from the metadata the bridge wrote, stored or parsed', () => {
+		expect(notificationTypeOf(JSON.stringify({ notificationType: 'Mention' }))).toBe('Mention');
+		expect(notificationTypeOf({ notificationType: 'Comment' })).toBe('Comment');
+		expect(notificationTypeOf('not json')).toBeNull();
+		expect(notificationTypeOf(null)).toBeNull();
+	});
+});
+
+/** The bridge over doubles: the employee's user, the recipient rows of the window, the items on the record. */
+function bridge(options: { recipients?: Array<{ inboxItemId: string }>; items?: Array<{ id: string; externalId: string; metadata: unknown }> } = {}) {
+	const employees = { findOne: jest.fn(async () => ({ id: 'e2', userId: 'u2' })) };
+	const recipients = { find: jest.fn(async () => options.recipients ?? []) };
+	const items = { find: jest.fn(async () => options.items ?? []) };
+	const dataSource = {
+		getRepository: (entity: { name?: string }) => (entity?.name === 'Employee' ? employees : entity?.name === 'InboxItemRecipient' ? recipients : items)
+	} as unknown as DataSource;
+	const upsertExternal = jest.fn(async () => ({}));
+	const instance = new InboxNotificationBridge(dataSource, { upsertExternal } as unknown as InboxService, new InboxSourceHandlerRegistry());
+	return { instance, upsertExternal, recipients, items };
+}
+
+describe('InboxNotificationBridge.fileNotification (FR-4)', () => {
+	const mention = { id: 'n2', tenantId: 'ten', organizationId: 'org', type: EmployeeNotificationTypeEnum.MENTION, title: 'Ada mentioned you', message: null, entity: 'Task', entityId: 't1', sentByEmployeeId: 'e1', receiverEmployeeId: 'e2', isRead: false };
+
+	it('files a mention whose twin reached the user more than ten minutes ago, or on another record', async () => {
+		const { instance, upsertExternal } = bridge({ recipients: [], items: [] });
+		await instance.fileNotification(mention as never);
+		expect(upsertExternal).toHaveBeenCalledTimes(1);
+	});
+
+	it('does not file a mention whose twin (same user, record and kind) was filed within ten minutes', async () => {
+		const { instance, upsertExternal, items } = bridge({ recipients: [{ inboxItemId: 'i1' }], items: [{ id: 'i1', externalId: 'n1', metadata: JSON.stringify({ notificationType: 'Mention' }) }] });
+		await instance.fileNotification(mention as never);
+		expect(upsertExternal).not.toHaveBeenCalled();
+		expect(items.find).toHaveBeenCalledTimes(1);
+	});
+
+	it('files a mention beside a recent item of another kind on the record, and any assignment', async () => {
+		const { instance, upsertExternal } = bridge({ recipients: [{ inboxItemId: 'i1' }], items: [{ id: 'i1', externalId: 'n1', metadata: JSON.stringify({ notificationType: 'Comment' }) }] });
+		await instance.fileNotification(mention as never);
+		expect(upsertExternal).toHaveBeenCalledTimes(1);
+
+		const assignment = bridge({ recipients: [{ inboxItemId: 'i1' }], items: [{ id: 'i1', externalId: 'n1', metadata: JSON.stringify({ notificationType: 'Assignment' }) }] });
+		await assignment.instance.fileNotification({ ...mention, id: 'n3', type: EmployeeNotificationTypeEnum.ASSIGNMENT } as never);
+		expect(assignment.upsertExternal).toHaveBeenCalledTimes(1);
+		expect(assignment.recipients.find).not.toHaveBeenCalled();
 	});
 });
