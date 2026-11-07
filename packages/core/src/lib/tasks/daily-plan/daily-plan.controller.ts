@@ -16,11 +16,17 @@ import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { ID, IDailyPlan, IDailyPlanTasksUpdateInput, IPagination, PermissionsEnum } from '@gauzy/contracts';
 import { CrudController, BaseQueryDTO } from '../../core/crud';
 import { UseValidationPipe } from '../../shared/pipes';
-import { CreateDailyPlanDTO, RemoveTaskFromManyPlansDTO, UpdateDailyPlanDTO } from './dto';
+import { CreateDailyPlanDTO, DailyPlanQueryDTO, RemoveTaskFromManyPlansDTO, UpdateDailyPlanDTO } from './dto';
+import { leanDailyPlans } from './daily-plan.lean';
 import { PermissionGuard, TenantPermissionGuard } from '../../shared/guards';
 import { Permissions } from '../../shared/decorators';
 import { DailyPlan } from './daily-plan.entity';
 import { DailyPlanService } from './daily-plan.service';
+
+/** A plan list in the shape the client asked for: `lean` trims the people (see `daily-plan.lean.ts`). */
+function shaped(params: DailyPlanQueryDTO, page: IPagination<IDailyPlan>): IPagination<IDailyPlan> {
+	return params.shape === 'lean' ? { ...page, items: leanDailyPlans(page.items) } : page;
+}
 
 @ApiTags('Daily Plan')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
@@ -54,8 +60,8 @@ export class DailyPlanController extends CrudController<DailyPlan> {
 	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.DAILY_PLAN_READ)
 	@Get('/me')
 	@UseValidationPipe()
-	async getMyPlans(@Query() params: BaseQueryDTO<DailyPlan>): Promise<IPagination<IDailyPlan>> {
-		return await this.dailyPlanService.getMyPlans(params);
+	async getMyPlans(@Query() params: DailyPlanQueryDTO): Promise<IPagination<IDailyPlan>> {
+		return shaped(params, await this.dailyPlanService.getMyPlans(params));
 	}
 
 	/**
@@ -81,8 +87,8 @@ export class DailyPlanController extends CrudController<DailyPlan> {
 	@Get('/team')
 	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.DAILY_PLAN_READ)
 	@UseValidationPipe()
-	async getTeamDailyPlans(@Query() params: BaseQueryDTO<DailyPlan>): Promise<IPagination<IDailyPlan>> {
-		return await this.dailyPlanService.getTeamDailyPlans(params);
+	async getTeamDailyPlans(@Query() params: DailyPlanQueryDTO): Promise<IPagination<IDailyPlan>> {
+		return shaped(params, await this.dailyPlanService.getTeamDailyPlans(params));
 	}
 
 	/**
@@ -110,9 +116,9 @@ export class DailyPlanController extends CrudController<DailyPlan> {
 	@Get('/employee/:id')
 	async getEmployeeDailyPlans(
 		@Param('id') employeeId: ID,
-		@Query() params: BaseQueryDTO<DailyPlan>
+		@Query() params: DailyPlanQueryDTO
 	): Promise<IPagination<IDailyPlan>> {
-		return await this.dailyPlanService.getDailyPlansByEmployee(params, employeeId);
+		return shaped(params, await this.dailyPlanService.getDailyPlansByEmployee(params, employeeId));
 	}
 
 	/**
@@ -256,8 +262,8 @@ export class DailyPlanController extends CrudController<DailyPlan> {
 	@Get('/')
 	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.DAILY_PLAN_READ)
 	@UseValidationPipe()
-	async get(@Query() params: BaseQueryDTO<DailyPlan>): Promise<IPagination<IDailyPlan>> {
-		return await this.dailyPlanService.getAllPlans(params);
+	async get(@Query() params: DailyPlanQueryDTO): Promise<IPagination<IDailyPlan>> {
+		return shaped(params, await this.dailyPlanService.getAllPlans(params));
 	}
 
 	/**
