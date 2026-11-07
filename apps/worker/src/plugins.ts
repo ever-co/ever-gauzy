@@ -19,6 +19,7 @@ import { EmailProviderSesPlugin, isSesEnabled } from '@gauzy/plugin-email-provid
 import { IntegrationEverWorksPlugin, isEverWorksEnabled } from '@gauzy/plugin-integration-ever-works';
 import { IntegrationAsanaPlugin, isAsanaEnabled } from '@gauzy/plugin-integration-asana';
 import { IntegrationLinearPlugin, isLinearEnabled } from '@gauzy/plugin-integration-linear';
+import { IntegrationTrelloPlugin, isTrelloEnabled } from '@gauzy/plugin-integration-trello';
 import { InventoryPlugin } from '@gauzy/plugin-inventory';
 import { OrderPlugin } from '@gauzy/plugin-order';
 import { PricingPlugin } from '@gauzy/plugin-pricing';
@@ -158,6 +159,15 @@ export const plugins = resolvePluginLoadOrder([
 	 */
 	...(isLinearEnabled(process.env, (message) => console.warn(message)) ? [IntegrationLinearPlugin] : []),
 	/**
+	 * The Trello integration — hosted here, behind its switch, for the scheduled import it owns: a `@ScheduledJob`
+	 * fires only in this process, so a plugin that is not hosted here never imports on its own (its webhooks and
+	 * "import now" are the API's). The sweep is registered by the plugin only where a queue root exists and
+	 * `TRELLO_IMPORT_INTERVAL_MINUTES` is not `0`, so a worker without Redis is unchanged.
+	 *
+	 * 🛑 Off unless `TRELLO_ENABLED` is exactly `true` — the same switch as the API's list.
+	 */
+	...(isTrelloEnabled(process.env, (message) => console.warn(message)) ? [IntegrationTrelloPlugin] : []),
+	/**
 	 * The Inbox — hosted with what writes into it, and only when both are switched on: the Ever Works sync (this
 	 * process runs it as often as the API does, whoever holds the connection's lease, and it writes Ever Works inbox
 	 * items through the Inbox's writer), the notification delivery (its sweep reads the entries), and a task
@@ -167,7 +177,7 @@ export const plugins = resolvePluginLoadOrder([
 	 *
 	 * 🛑 Off unless `GAUZY_INBOX_ENABLED` is exactly `true` as well, so a worker is unchanged by default.
 	 */
-	...((everWorksEnabled || inboxDeliveryEnabled || isAsanaEnabled(process.env) || isLinearEnabled(process.env)) && isInboxEnabled(process.env, (message) => console.warn(message)) ? [InboxPlugin] : []),
+	...((everWorksEnabled || inboxDeliveryEnabled || isAsanaEnabled(process.env) || isLinearEnabled(process.env) || isTrelloEnabled(process.env)) && isInboxEnabled(process.env, (message) => console.warn(message)) ? [InboxPlugin] : []),
 	/**
 	 * Email delivery of the Inbox's notifications (immediate or digest per kind, the Inbox spec FR-10–FR-12): the
 	 * sweep that decides and sends runs here, on the worker's queue root, every minute.
