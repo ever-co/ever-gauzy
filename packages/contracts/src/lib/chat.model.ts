@@ -1,4 +1,5 @@
 import { IBasePerTenantAndOrganizationEntityModel, ID, JsonData } from './base-entity.model';
+import { ITask } from './task.model';
 
 /**
  * Chat (`@gauzy/plugin-chat`): conversations between the employees of an organization — channels, direct and
@@ -348,6 +349,14 @@ export interface IChatSearchResult {
 
 export interface IChatCreateTaskInput {
 	projectId?: ID;
+	/** The task's title; the message's first line when left out. */
 	title?: string;
 	assigneeEmployeeIds?: ID[];
+}
+
+/** `POST /chat/messages/:id/create-task`: the task, the message's reference to it, and the events the change caused. */
+export interface IChatCreateTaskResult {
+	task: ITask;
+	reference: IChatTaskReference;
+	events: IChatEvent[];
 }

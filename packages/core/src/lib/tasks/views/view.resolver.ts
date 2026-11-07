@@ -1,8 +1,8 @@
-import { NotFoundException, UseGuards } from '@nestjs/common';
+import { BadRequestException, NotFoundException, UseGuards } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { Args, ID, Int, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { FeatureFlag } from '@gauzy/common';
-import { ID as Id, IPagination, ITaskView, PermissionsEnum } from '@gauzy/contracts';
+import { ID as Id, IPagination, ITaskView, ITaskViewFilterGroup, ITaskViewOrderInput, ITaskViewTasksPage, PermissionsEnum, TaskViewGroupBy } from '@gauzy/contracts';
 import {
 	ConnectionFilter,
 	ConnectionPageRequest,
@@ -14,8 +14,12 @@ import {
 import { BaseQueryDTO } from '../../core/crud';
 import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../../shared/guards';
 import { FEATURE_GRAPHQL } from '../../feature/graphql-feature.code';
+import { RequestContext } from '../../core/context';
 import { TaskView } from './view.entity';
 import { TaskViewService } from './view.service';
+import { TaskViewTasksService } from './view-tasks.service';
+import { TASK_VIEW_ORDER_MAX } from './dto/task-view-order.dto';
+import { TaskViewsEnabledGuard } from '../task-views-enabled';
 import { TaskViewCreateCommand, TaskViewUpdateCommand } from './commands';
 import { Permissions } from '../../shared/decorators';
 import { deleteRemovedRows } from '../../graphql/delete-answer';
@@ -39,6 +43,15 @@ export interface ICreateTaskViewInput {
 /** The members `UpdateTaskViewInput` declares in the schema. */
 export interface IUpdateTaskViewInput extends Partial<ICreateTaskViewInput> {
 	id: Id;
+	/** The version the client read; the save is refused when the view moved on. */
+	expectedVersion?: number | null;
+}
+
+/** The members `TaskViewOrderInput` declares in the schema. */
+export interface ITaskViewOrderGraphqlInput {
+	organizationId?: Id | null;
+	taskIds: Id[];
+	expectedVersion?: number | null;
 }
 
 /**
@@ -89,9 +102,11 @@ const TASK_VIEW_DEFAULT_SORT: readonly ConnectionSortKey[] = [
  * tenant could write a view (GHSA-v79w-54p2-wmh5). The fields state the same, neither wider nor narrower
  * than REST.
  *
- * **The tasks a view selects are not a field of this resource.** They are the `/api/tasks/view/:id`
- * route's answer, which belongs to the task resource and is served there as `tasksByView`; a second
- * field here would be a second surface for one reader.
+ * **The replay of a view's older `queryParams` document is not a field of this resource.** It is the
+ * `/api/tasks/view/:id` route's answer, which belongs to the task resource and is served there as
+ * `tasksByView`; a second field here would be a second surface for one reader. The FR-3 reader —
+ * `/api/task-views/:id/tasks`, the `filterOptions` tree with a keyset page and group counts — is this
+ * resource's own route, and `taskViewTasks` is its twin here.
  *
  * **The gate is the catalogue's**: `FEATURE_GRAPHQL` is the code the commerce catalogue declares for
  * the GraphQL endpoint and its resolvers, applied once here so every field below is behind the one
@@ -102,7 +117,11 @@ const TASK_VIEW_DEFAULT_SORT: readonly ConnectionSortKey[] = [
 @UseGuards(TenantPermissionGuard, PermissionGuard, FeatureFlagGuard)
 @FeatureFlag(FEATURE_GRAPHQL)
 export class TaskViewResolver {
-	constructor(private readonly taskViewService: TaskViewService, private readonly commandBus: CommandBus) {}
+	constructor(
+		private readonly taskViewService: TaskViewService,
+		private readonly commandBus: CommandBus,
+		private readonly viewTasks: TaskViewTasksService
+	) {}
 
 	/**
 	 * The saved views of the caller's tenant.
@@ -171,9 +190,11 @@ export class TaskViewResolver {
 	@Permissions(PermissionsEnum.ORG_TASK_EDIT)
 	@Mutation('updateTaskView')
 	async updateTaskView(@Args('input') input: IUpdateTaskViewInput): Promise<ITaskView> {
-		const { id, ...values } = input;
+		const { id, expectedVersion, ...values } = input;
 
-		return await this.commandBus.execute(new TaskViewUpdateCommand(id, values as never));
+		return await this.commandBus.execute(
+			new TaskViewUpdateCommand(id, { ...values, ...(expectedVersion === null || expectedVersion === undefined ? {} : { expectedVersion }) } as never)
+		);
 	}
 
 	/**
@@ -211,6 +232,58 @@ export class TaskViewResolver {
 	@Mutation('recoverTaskView')
 	async recoverTaskView(@Args('id', { type: () => ID }) id: Id): Promise<TaskView> {
 		return await this.taskViewService.softRecover(id);
+	}
+
+	/**
+	 * The tasks of a view (FR-3), through the reader `GET /task-views/:id/tasks` calls, under its permission
+	 * and behind the task views switch (`TaskViewsEnabledGuard`, the route's own guard). A null argument is an
+	 * absent one: the reader takes the view's own filter, grouping, organization and defaults for what the
+	 * caller did not state, and the query's `filter` only when one is stated.
+	 */
+	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_TASK_VIEW)
+	@UseGuards(TaskViewsEnabledGuard)
+	@Query('taskViewTasks')
+	async taskViewTasks(
+		@Args('viewId', { type: () => ID }) viewId: Id,
+		@Args('organizationId', { type: () => ID, nullable: true }) organizationId?: Id | null,
+		@Args('filter') filter?: ITaskViewFilterGroup | null,
+		@Args('groupBy', { type: () => String, nullable: true }) groupBy?: TaskViewGroupBy | null,
+		@Args('timeZone', { type: () => String, nullable: true }) timeZone?: string | null,
+		@Args('cursor', { type: () => String, nullable: true }) cursor?: string | null,
+		@Args('limit', { type: () => Int, nullable: true }) limit?: number | null,
+		@Args('relations', { type: () => [String], nullable: true }) relations?: string[] | null
+	): Promise<ITaskViewTasksPage> {
+		return await this.viewTasks.tasksOf(viewId, {
+			organizationId: organizationId ?? undefined,
+			filter: filter ?? undefined,
+			groupBy: groupBy ?? undefined,
+			timeZone: timeZone ?? undefined,
+			cursor: cursor ?? undefined,
+			limit: limit ?? undefined,
+			relations: relations ?? undefined
+		});
+	}
+
+	/**
+	 * Writes the order a view shows its tasks in, through the method `PUT /task-views/:id/order` calls, under
+	 * its permission and the task views switch. The cap is the route's DTO's (`TASK_VIEW_ORDER_MAX`); GraphQL
+	 * runs no validator on its arguments, so it is stated here. The organization is the input's, else the
+	 * credential's.
+	 */
+	@Permissions(PermissionsEnum.ORG_TASK_EDIT)
+	@UseGuards(TaskViewsEnabledGuard)
+	@Mutation('setTaskViewOrder')
+	async setTaskViewOrder(@Args('id', { type: () => ID }) id: Id, @Args('input') input: ITaskViewOrderGraphqlInput): Promise<ITaskView> {
+		const taskIds = Array.isArray(input?.taskIds) ? input.taskIds : [];
+		if (taskIds.length > TASK_VIEW_ORDER_MAX) {
+			throw new BadRequestException(`TASK_VIEW_ORDER_LIMIT_EXCEEDED: at most ${TASK_VIEW_ORDER_MAX} tasks in a manual order.`);
+		}
+
+		return await this.taskViewService.setOrder(id, {
+			organizationId: input.organizationId ?? RequestContext.currentOrganizationId() ?? undefined,
+			taskIds,
+			expectedVersion: input.expectedVersion ?? undefined
+		} as ITaskViewOrderInput);
 	}
 
 	/** The connection one list root field answers with. */

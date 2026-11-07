@@ -69,7 +69,7 @@ export function startOfWeekIn(at: Date, timeZone: string): Date {
 	return startOfDayIn(new Date(dayStart.getTime() - daysSinceMonday * 86_400_000 + 12 * 3_600_000), timeZone);
 }
 
-function addDays(at: Date, days: number, timeZone: string): Date {
+export function addDays(at: Date, days: number, timeZone: string): Date {
 	// Noon of the target day, then its start: immune to a DST change inside the span.
 	return startOfDayIn(new Date(at.getTime() + days * 86_400_000 + 12 * 3_600_000), timeZone);
 }

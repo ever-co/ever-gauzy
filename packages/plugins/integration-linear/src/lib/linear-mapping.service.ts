@@ -143,7 +143,7 @@ export class LinearMappingService extends TenantAwareCrudService<LinearTeamMappi
 			if (input.linearTeamKey !== undefined) patch.linearTeamKey = input.linearTeamKey;
 			if (input.linearTeamName !== undefined) patch.linearTeamName = input.linearTeamName;
 			if (!Object.keys(patch).length) return;
-			await this.assertOutboundFree(tenant, patch.projectId ?? mapping.projectId, patch.direction ?? mapping.direction, mapping.id, manager);
+			await this.assertOutboundFree(tenant, patch.projectId ?? mapping.projectId, patch.direction ?? mapping.direction, mapping.id ?? null, manager);
 			await manager.update(LinearTeamMapping, { id: mapping.id, tenantId: tenant.tenantId as ID }, patch as never);
 		});
 		return this.requireOne(tenant, mappingId);

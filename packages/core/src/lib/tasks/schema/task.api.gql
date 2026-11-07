@@ -209,6 +209,43 @@ extend type Query {
 	"""
 	taskByNumber(prefix: String!, number: Int!, projectId: ID): Task
 
+	"""
+	The tasks of a built-in view — `mine`, `thisWeek`, `overdue`, `dueSoon` — computed by the platform for
+	the caller in the caller's time zone, as `GET /tasks/built-in/:key` answers them: the caller's own open
+	tasks, due in the window the view names, soonest due first. The delivered reader answers at most 200
+	rows, within which the connection pages. Served only where the task views extensions are enabled
+	(`GAUZY_TASK_VIEWS_ENABLED`); refused as not found otherwise, as the route is.
+	"""
+	builtInViewTasks(
+		view: TaskBuiltInView!
+		"The organization the view is read in; the credential's when omitted."
+		organizationId: ID
+		"IANA time zone the day and week bounds are taken in (default UTC)."
+		timeZone: String
+		filter: TaskFilter
+		sort: [TaskSort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+	): TaskConnection!
+
+	"""
+	`KEY-number` references (`API-42`) resolved to the tasks they name — by the project's key, its former
+	keys, or the key derived from its name — one resolution per reference, in request order, at most fifty.
+	A reference nobody answers to resolves to nothing; one that two projects answer to is reported ambiguous
+	rather than guessed. Mirrors `POST /tasks/resolve-references`; served only where the task views
+	extensions are enabled.
+	"""
+	resolveTaskReferences(
+		references: [String!]!
+		"The organization the references are resolved in; the credential's when omitted."
+		organizationId: ID
+	): [TaskReferenceResolution!]!
+
 	# --------------------------------------------------------------------------------------------
 	# What hangs off a task
 	# --------------------------------------------------------------------------------------------
@@ -292,6 +329,34 @@ extend type Query {
 	How many saved views the caller's tenant holds.
 	"""
 	taskViewCount: Int
+
+	"""
+	The tasks of a saved view, as `GET /task-views/:id/tasks` serves them: the view's filter tree (or
+	`filter`, an unsaved edit of it) over the tasks the caller may list, a keyset page with a cursor, the
+	counts per group, relative dates resolved in `timeZone`, and the conditions the platform could not apply
+	reported in `invalidFilters` rather than refused — a filter on a deleted label loads the view without it
+	and says so.
+
+	Not `tasksByView`: that field replays the filter set the older `queryParams` document stores; this one
+	reads the view's `filterOptions` tree, pages by keyset and counts the groups. Served only where the task
+	views extensions are enabled.
+	"""
+	taskViewTasks(
+		viewId: ID!
+		"The organization the view is read in; the view's own when omitted."
+		organizationId: ID
+		"A filter tree instead of the view's: an and / or group of conditions, as `filterOptions.filter` holds it."
+		filter: JSON
+		groupBy: TaskViewGroupBy
+		"IANA time zone the relative dates are resolved in (default UTC)."
+		timeZone: String
+		"The cursor the previous page answered."
+		cursor: String
+		"How many tasks the page carries (default 50, at most 200)."
+		limit: Int
+		"The relations the tasks carry, from the built-in views' allowlist."
+		relations: [String!]
+	): TaskViewTasksPage!
 
 	"""
 	The days planned in the caller's tenant and organization.
@@ -650,6 +715,15 @@ extend type Mutation {
 	"""
 	unassignEmployeeFromTeamTasks(employeeId: ID!, organizationTeamId: ID!): Boolean!
 
+	"""
+	Changes many tasks in one request — one change for up to 100 tasks (`taskIds` + `changes`), or a change
+	per task (`items`, how an undo sends the previous values back) — every task through the same command
+	`updateTask` dispatches, with one result per task and the values before the change. Mirrors
+	`POST /tasks/bulk-update` under its permission and cap: refused with `BULK_LIMIT_EXCEEDED` over it, and
+	as not found where the task views extensions are off.
+	"""
+	bulkUpdateTasks(input: TaskBulkUpdateInput!): TaskBulkUpdatePayload!
+
 	# --------------------------------------------------------------------------------------------
 	# What hangs off a task
 	# --------------------------------------------------------------------------------------------
@@ -728,6 +802,13 @@ extend type Mutation {
 	Puts a withdrawn view back.
 	"""
 	recoverTaskView(id: ID!): TaskView!
+
+	"""
+	Writes the order a view shows its tasks in — the task ids in display order, at most 5000 — refused with
+	`TASK_VIEW_VERSION_CONFLICT` when `expectedVersion` is not the version stored. Mirrors
+	`PUT /task-views/:id/order`; served only where the task views extensions are enabled.
+	"""
+	setTaskViewOrder(id: ID!, input: TaskViewOrderInput!): TaskView!
 
 	"""
 	Opens a day's plan.

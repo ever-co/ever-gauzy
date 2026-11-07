@@ -174,7 +174,7 @@ export class LinearSyncService {
 		const mapping = await this.mappings.findInboundForTeam(tenant.id as ID, linearTeamId);
 		if (!mapping) return { applied: false, error: null };
 		const scope = { tenantId: tenant.tenantId as ID, organizationId: tenant.organizationId as ID };
-		const run = await this.runs.startWebhookRun(tenant, mapping.id);
+		const run = await this.runs.startWebhookRun(tenant, mapping.id as ID);
 		const counts = emptyCounts();
 		let error: string | null = null;
 		try {
