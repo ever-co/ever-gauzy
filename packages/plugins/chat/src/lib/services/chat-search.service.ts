@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { DataSource, In } from 'typeorm';
+import { DataSource, In, IsNull } from 'typeorm';
 import { ID, IChatSearchQuery, IChatSearchResult, SearchFilterOperator } from '@gauzy/contracts';
 import { SearchService } from '@gauzy/plugin-search';
 import { CHAT_AGGREGATES, CHAT_MAX_PAGE_SIZE, CHAT_PAGE_SIZE } from '../chat.constants';
@@ -15,8 +15,9 @@ const CHAT_SEARCH_MAX_SKIP = 10_000;
  * Search over chat messages, through the platform's search plugin (the `chat_message` declaration it ships) and
  * narrowed to the caller's own conversations: a hit is only ever a message of a conversation the caller is a
  * member of, because every query carries that set as a filter — the index's permission says a person may search
- * chat, not which conversations are theirs. The hits come back as messages with their relations, best match
- * first; a message deleted since it was indexed is left out.
+ * chat, not which conversations are theirs. The declaration is private, so the generic search routes leave it
+ * out and this route is the one way to it (`SearchService.searchWithin`). The hits come back as messages with
+ * their relations, best match first; a message deleted since it was indexed is left out.
  */
 @Injectable()
 export class ChatSearchService {
@@ -41,7 +42,7 @@ export class ChatSearchService {
 		}
 		// An empty set must never reach the index: a filter with no values is not a filter.
 		if (!scope.length) return { messages: [], total: 0, hasMore: false };
-		const page = await this.searchService.search({
+		const page = await this.searchService.searchWithin({
 			q,
 			entities: [CHAT_AGGREGATES.MESSAGE],
 			filters: [{ attribute: 'conversationId', operator: SearchFilterOperator.IN, value: scope, entity: CHAT_AGGREGATES.MESSAGE }],
@@ -60,9 +61,9 @@ export class ChatSearchService {
 		return { messages, total, hasMore: skip + ids.length < total };
 	}
 
-	/** The conversations the caller is a member of (by user: a membership is the person's, employee or not). */
+	/** The conversations the caller is a member of (by user: a membership is the person's, employee or not; one they left is not theirs to search). */
 	private async memberConversationIds(caller: IChatCaller): Promise<string[]> {
-		const rows = await this.dataSource.getRepository(ChatMember).find({ select: { conversationId: true }, where: { tenantId: caller.tenantId, userId: caller.userId } });
+		const rows = await this.dataSource.getRepository(ChatMember).find({ select: { conversationId: true }, where: { tenantId: caller.tenantId, userId: caller.userId, leftAt: IsNull() } });
 		return [...new Set(rows.map((row) => String(row.conversationId)))];
 	}
 }

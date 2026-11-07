@@ -71,7 +71,7 @@ tenant switched off by hand stays off).
 | `PATCH /messages/:id` · `DELETE` · `POST /:id/pin` · `/:id/unpin` · `/:id/unread` | one message |
 | `POST` / `DELETE /messages/:id/reactions/:emoji` | reactions |
 | `GET /threads` · `POST /read-all` · `POST /read-restore { snapshotId }` | followed threads; mark all read with a one-minute undo |
-| `GET /search?q=&conversationId=&limit=&skip=` | the messages of my conversations that match, best first (the search plugin's `chat_message` index, filtered to my memberships) |
+| `GET /search?q=&conversationId=&limit=&skip=` | the messages of my conversations that match, best first (the search plugin's `chat_message` index — a private declaration the generic `/search` routes leave out — filtered to the memberships I have not left) |
 
 Mention tokens in a body: `<@employeeId>`, `<#conversationId>`, `<!channel>`,
 `<!here>` — rename-safe, rendered as chips by the clients. Sends are idempotent

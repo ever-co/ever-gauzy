@@ -9,12 +9,12 @@ import { ChatSearchService } from './chat-search.service';
 const caller: IChatCaller = { tenantId: 'ten', organizationId: 'org', userId: 'u1', employeeId: 'e1', canManage: false };
 
 function searchOver(options: { memberOf?: string[]; hits?: Array<{ entityId: string }>; total?: number; rows?: Array<{ id: string; conversationId: string; deletedAt?: Date | null }> } = {}) {
-	const members = { find: jest.fn(async () => (options.memberOf ?? ['c1', 'c2']).map((conversationId) => ({ conversationId }))) };
+	const members = { find: jest.fn(async (_options: { where: Record<string, unknown> }) => (options.memberOf ?? ['c1', 'c2']).map((conversationId) => ({ conversationId }))) };
 	const messages = { find: jest.fn(async () => options.rows ?? []) };
 	const dataSource = { getRepository: (entity: { name?: string }) => (entity?.name === 'ChatMember' ? members : messages) } as unknown as DataSource;
 	const search = jest.fn(async () => ({ items: options.hits ?? [], total: options.total ?? (options.hits ?? []).length, facets: [], searchedEntities: ['chat_message'], pageInfo: {} }));
 	const withRelations = jest.fn(async (_caller: IChatCaller, rows: Array<{ id: string }>) => rows.map((row) => ({ ...row, reactions: [], taskReferences: [], following: false })));
-	const service = new ChatSearchService(dataSource, {} as ChatAccessService, { withRelations } as unknown as ChatMessageService, { search } as unknown as SearchService);
+	const service = new ChatSearchService(dataSource, {} as ChatAccessService, { withRelations } as unknown as ChatMessageService, { searchWithin: search } as unknown as SearchService);
 	return { service, search, members, messages, withRelations };
 }
 
@@ -38,6 +38,14 @@ describe('ChatSearchService', () => {
 		expect(result.total).toBe(3);
 		expect(result.hasMore).toBe(false);
 		expect(withRelations).toHaveBeenCalledTimes(1);
+	});
+
+	it('reads the memberships I have not left, and asks the scoped search (the declaration is private)', async () => {
+		const { service, members, search } = searchOver({ hits: [] });
+		await service.search(caller, { q: 'hello' });
+		expect(members.find).toHaveBeenCalledTimes(1);
+		expect(members.find.mock.calls[0][0].where).toMatchObject({ tenantId: 'ten', userId: 'u1', leftAt: { _type: 'isNull' } });
+		expect(search).toHaveBeenCalledTimes(1);
 	});
 
 	it('narrows to one conversation of mine, and answers 404 for one I am not in', async () => {

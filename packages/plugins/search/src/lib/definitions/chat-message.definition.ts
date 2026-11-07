@@ -3,7 +3,9 @@ import { ChatMessageKindEnum, ISearchIndexRegistration, PermissionsEnum, SearchF
 /**
  * Chat messages: the body is the text (a message has no title of its own, so the title is the body too, cut by
  * the builder), the conversation and the author are keywords a request filters on — the chat's own search route
- * narrows every query to the conversations the caller is a member of, which `permission` alone cannot say. Only a
+ * narrows every query to the conversations the caller is a member of, which `permission` alone cannot say: the
+ * declaration is private (`privateScope`), so the generic search, suggestion and facet routes leave it out and
+ * only `SearchService.searchWithin`, which that route calls with the caller's conversations as a filter, reaches it. Only a
  * member's message is indexed (a system line, or an integration's post, is not what a person searches for), and a
  * deleted message keeps its row with an empty body, so it matches nothing.
  */
@@ -15,6 +17,7 @@ export const CHAT_MESSAGE_INDEX: ISearchIndexRegistration = {
 	bodyTemplate: '{{body}}',
 	keywordFields: ['conversationId', 'authorEmployeeId', 'kind'],
 	visibleWhen: { field: 'kind', values: [ChatMessageKindEnum.MESSAGE] },
+	privateScope: true,
 	sourceUpdatedAtField: 'updatedAt',
 	defaultWeight: 1,
 	isSystem: true,
