@@ -1,0 +1,180 @@
+// @ts-nocheck
+import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { z } from 'zod';
+import { apiClient } from '../../common/api-client';
+import { answer, describeError, query, registerCollaborationTool, scope } from './collaboration-tool';
+
+const DOCS = '/api/plugins/docs';
+
+/** The most Markdown characters one `get_page` answers; the rest follows from `offset`. */
+export const PAGE_MARKDOWN_MAX = 60_000;
+
+/** A page as the tools list it. */
+export function pageSummary(document: Record<string, any>) {
+	return {
+		id: document.id,
+		name: document.name,
+		kind: document.kind,
+		parentId: document.parentId ?? null,
+		index: document.index ?? null,
+		icon: document.icon ?? null,
+		description: document.description ?? null,
+		visibility: document.visibility ?? null,
+		organizationTeamId: document.organizationTeamId ?? null,
+		isLocked: !!document.isLocked,
+		revision: Number(document.contentRevision) || null,
+		createdAt: document.createdAt ?? null,
+		updatedAt: document.updatedAt ?? null
+	};
+}
+
+/** A slice of a Markdown text: `offset` characters in, at most `limit`, and where the next slice starts. */
+export function slice(markdown: string, offset = 0, limit = PAGE_MARKDOWN_MAX): { markdown: string; offset: number; truncated: boolean; nextOffset: number | null; length: number } {
+	const start = Math.max(0, Math.min(Number(offset) || 0, markdown.length));
+	const end = Math.min(markdown.length, start + Math.max(1, Math.min(Number(limit) || PAGE_MARKDOWN_MAX, PAGE_MARKDOWN_MAX)));
+	return { markdown: markdown.slice(start, end), offset: start, truncated: end < markdown.length, nextOffset: end < markdown.length ? end : null, length: markdown.length };
+}
+
+/** The docs tools: the reads under `docs:read`, the writes under `docs:write`. */
+export function registerDocsTools(server: McpServer, access: { read: boolean; write: boolean }): void {
+	if (!access.read) return;
+
+	registerCollaborationTool(
+		server,
+		'list_pages',
+		"The pages (and folders) of the signed-in user's organization: a space (the organization's, the caller's private pages, a team's), a parent's children, or a name search. Reads GET /plugins/docs/documents.",
+		{
+			parentId: z.string().uuid().optional().describe('The children of this folder or page; omitted with `root`: the top level'),
+			root: z.boolean().optional().describe('The top level only'),
+			space: z.enum(['organization', 'private', 'team']).optional().describe('Which space'),
+			organizationTeamId: z.string().uuid().optional().describe("With space `team`: this team's pages"),
+			q: z.string().max(200).optional().describe('A text to search for in the names'),
+			kind: z.enum(['PAGE', 'FOLDER', 'FILE']).optional().describe('Pages only, folders only, files only (default pages and folders)'),
+			includeArchived: z.boolean().optional().describe('Also the archived ones'),
+			page: z.number().int().min(1).optional().describe('The page of the list (default 1)'),
+			limit: z.number().int().min(1).max(200).optional().describe('How many per page (default 50)')
+		},
+		async (args) => {
+			const limit = args.limit ?? 50;
+			const page = args.page ?? 1;
+			const list = await apiClient.get<Record<string, any>>(`${DOCS}/documents`, {
+				params: query({
+					...scope(),
+					parentId: args.root ? 'root' : args.parentId,
+					space: args.space,
+					organizationTeamId: args.organizationTeamId,
+					q: args.q,
+					searchIn: args.q ? 'name' : undefined,
+					kind: args.kind ? [args.kind] : ['PAGE', 'FOLDER'],
+					archived: args.includeArchived ? 'include' : 'exclude',
+					sort: 'updatedAt',
+					sortOrder: 'DESC',
+					take: limit,
+					skip: (page - 1) * limit
+				})
+			});
+			const items = Array.isArray(list) ? list : (list?.items ?? []);
+			return answer({ pages: items.map(pageSummary), total: Array.isArray(list) ? items.length : (list?.total ?? items.length), page, limit });
+		}
+	);
+
+	registerCollaborationTool(
+		server,
+		'get_page',
+		'One page as Markdown with its metadata and revision (the number `update_page_markdown` checks). A long page is answered in slices: `truncated` with a `nextOffset` to continue from. Reads GET /plugins/docs/documents/:id and /:id/export/markdown.',
+		{
+			pageId: z.string().uuid().describe('The page'),
+			offset: z.number().int().min(0).optional().describe('Continue the Markdown from this character (the previous answer\'s nextOffset)'),
+			limit: z.number().int().min(1).max(PAGE_MARKDOWN_MAX).optional().describe(`How many characters at most (default ${PAGE_MARKDOWN_MAX})`)
+		},
+		async (args) => {
+			const [document, markdown] = await Promise.all([
+				apiClient.get<Record<string, any>>(`${DOCS}/documents/${args.pageId}`, { params: scope() }),
+				apiClient.get<string>(`${DOCS}/documents/${args.pageId}/export/markdown`, { params: scope(), responseType: 'text', transformResponse: [(data: unknown) => data] })
+			]);
+			return answer({ page: pageSummary(document ?? {}), ...slice(String(markdown ?? ''), args.offset, args.limit) });
+		}
+	);
+
+	registerCollaborationTool(
+		server,
+		'search_pages',
+		"Searches the organization's documents by meaning (the knowledge index) for a question or a phrase: the best-matching passages with their pages. Reads POST /plugins/docs/knowledge/search.",
+		{
+			query: z.string().min(1).max(1000).describe('The question or phrase'),
+			topK: z.number().int().min(1).max(50).optional().describe('How many passages (default 10)'),
+			documentIds: z.array(z.string().uuid()).max(50).optional().describe('Search these documents only')
+		},
+		async (args) => {
+			const result = await apiClient.post<unknown>(`${DOCS}/knowledge/search`, {
+				...scope(),
+				query: args.query,
+				...(args.topK ? { topK: args.topK } : {}),
+				...(args.documentIds ? { documentIds: args.documentIds } : {}),
+				kinds: ['PAGE']
+			});
+			return answer({ results: result ?? [] });
+		}
+	);
+
+	if (!access.write) return;
+
+	registerCollaborationTool(
+		server,
+		'create_page',
+		"Creates a page (under a parent, in a space) in the signed-in user's name, with its text as Markdown when given. Writes POST /plugins/docs/documents, then PUT /:id/content/markdown.",
+		{
+			name: z.string().min(1).max(255).describe('The page title'),
+			parentId: z.string().uuid().optional().describe('The folder or page to create it under'),
+			visibility: z.enum(['ORGANIZATION', 'PRIVATE', 'TEAM']).optional().describe('Who sees it (default the organization)'),
+			organizationTeamId: z.string().uuid().optional().describe("With visibility TEAM: the team's space"),
+			markdown: z.string().max(2_000_000).optional().describe('The page text as Markdown'),
+			description: z.string().max(1000).optional().describe('A short description')
+		},
+		async (args) => {
+			const created = await apiClient.post<Record<string, any>>(`${DOCS}/documents`, {
+				...scope(),
+				kind: 'PAGE',
+				name: args.name,
+				...(args.parentId ? { parentId: args.parentId } : {}),
+				...(args.visibility ? { visibility: args.visibility } : {}),
+				...(args.organizationTeamId ? { organizationTeamId: args.organizationTeamId } : {}),
+				...(args.description ? { description: args.description } : {})
+			});
+			let revision = Number(created?.contentRevision) || null;
+			if (args.markdown && created?.id) {
+				const updated = await apiClient.put<Record<string, any>>(`${DOCS}/documents/${created.id}/content/markdown`, { ...scope(), markdown: args.markdown });
+				revision = Number(updated?.revision) || revision;
+			}
+			return answer({ page: { ...pageSummary(created ?? {}), revision } });
+		}
+	);
+
+	registerCollaborationTool(
+		server,
+		'update_page_markdown',
+		"Applies a Markdown text to a page: only the blocks whose Markdown changed are replaced (formatting the Markdown cannot carry stays on the others), editors with the page open see it live. State `expectedRevision` (from get_page) and a page that moved on answers a conflict with its current revision instead of writing. Writes PUT /plugins/docs/documents/:id/content/markdown.",
+		{
+			pageId: z.string().uuid().describe('The page'),
+			markdown: z.string().max(2_000_000).describe('The whole page as Markdown, as get_page answered it with your changes'),
+			expectedRevision: z.number().int().min(1).optional().describe('The revision get_page answered; the write is refused when the page moved on')
+		},
+		async (args) => {
+			try {
+				const result = await apiClient.put<Record<string, any>>(`${DOCS}/documents/${args.pageId}/content/markdown`, {
+					...scope(),
+					markdown: args.markdown,
+					...(args.expectedRevision ? { expectedRevision: args.expectedRevision } : {})
+				});
+				return answer({ revision: result?.revision ?? null, changed: !!result?.changed, changedBlocks: result?.changedBlocks ?? 0, keptBlocks: result?.keptBlocks ?? 0 });
+			} catch (error) {
+				const { status, body } = describeError(error);
+				if (status === 409) {
+					const current = (body as { currentRevision?: unknown } | null)?.currentRevision;
+					return answer({ conflict: true, currentRevision: typeof current === 'number' ? current : null, message: 'The page changed since the revision stated; read it again (get_page) and apply your change to the current text.' });
+				}
+				throw error;
+			}
+		}
+	);
+}

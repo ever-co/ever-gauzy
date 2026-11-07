@@ -27,6 +27,7 @@ import { registerActivityLogTools } from './activity-logs';
 import { registerWarehouseTools } from './warehouses';
 import { registerPipelineTools } from './pipelines';
 import { registerSkillTools } from './skills';
+import { registerCollaborationTools } from './collaboration';
 
 /**
  * Register every MCP tool module on the given server.
@@ -61,4 +62,6 @@ export function registerAllMcpTools(server: McpServer, sessionId?: string): void
 	registerWarehouseTools(server);
 	registerPipelineTools(server);
 	registerSkillTools(server);
+	// The collaboration groups (chat, docs, inbox): each enabled per deployment, each under the session's scopes.
+	registerCollaborationTools(server, sessionId);
 }

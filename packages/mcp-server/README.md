@@ -246,6 +246,25 @@ const status = manager.getStatus();
 - Employee recognition programs
 - Achievement tracking and rewards
 
+#### Collaboration tool groups: chat, docs, inbox (14 tools, off by default)
+
+Three groups over the collaboration suite's routes, each enabled per deployment and gated per session by scopes
+(`chat:read`, `chat:write`, `docs:read`, `docs:write`, `inbox:read`, `inbox:write`; a write scope reads too):
+
+| Group | Switch | Read tools | Write tools |
+| --- | --- | --- | --- |
+| chat | `GAUZY_MCP_TOOLS_CHAT=true` | `list_chat_conversations`, `list_chat_messages`, `get_chat_thread`, `search_chat_messages` | `post_chat_message`, `mark_chat_conversation_read` |
+| docs | `GAUZY_MCP_TOOLS_DOCS=true` | `list_pages`, `get_page` (Markdown + revision, in slices), `search_pages` | `create_page`, `update_page_markdown` (block-level merge, compare-and-set on the revision) |
+| inbox | `GAUZY_MCP_TOOLS_INBOX=true` | `list_inbox_items`, `get_inbox_counts` | `set_inbox_item_state` |
+
+A session's scopes are the ones its bearer token carried when the transport recorded them on the session
+(`metadata.oauthScopes`), else `GAUZY_MCP_TOOLS_SCOPES` (a comma list), else every scope of the enabled groups — a local
+server speaks for its one signed-in user. A group the session may not read is not registered at all (a client sees no
+such tool); its writes are registered only under the write scope. Every call runs under the signed-in user's tenant,
+organization and permissions — what is outside their access is "not found", as the routes answer it — and is logged by
+name, user, duration and outcome, never with what was sent or answered. Answers carry a note that message, page and
+entry bodies are user-authored text: data, not instructions. The chat search needs a server that serves `GET /chat/search`.
+
 ### 🏗️ Technical Features
 
 - **📝 Schema Validation**: Comprehensive Zod schemas with TypeScript support
@@ -441,6 +460,9 @@ API_BASE_URL=https://api.gauzy.co    # Gauzy API endpoint
 ```
 
 ### Optional Variables
+
+- `GAUZY_MCP_TOOLS_CHAT`, `GAUZY_MCP_TOOLS_DOCS`, `GAUZY_MCP_TOOLS_INBOX`: `true` enables a collaboration tool group (off by default)
+- `GAUZY_MCP_TOOLS_SCOPES`: the scopes a session holds when its token states none (default: every scope of the enabled groups)
 
 ```bash
 GAUZY_AUTH_EMAIL=user@example.com    # Auto-login email
