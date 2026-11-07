@@ -25,7 +25,7 @@
 
 - [x] **T12**. `integration-linear-ui` Angular plugin (#11692): connect page → `install/state` redirect, callback landing, mappings page (team, project, direction, state map), Import now, runs table
 - [ ] **T13**. Comments inbound (attributed by e-mail, else marked external) and attachments as task file links
-- [ ] **T14**. Scheduled incremental import for connections without webhooks; token refresh when Linear issues expiring tokens
+- [x] **T14**. Scheduled incremental import for connections without webhooks (a five-minute sweep in the worker, `X_IMPORT_INTERVAL_MINUTES`; ever-gauzy #11700, #11694, #11698); token refresh when Linear issues expiring tokens (in the Linear plugin's tenant service)
 - [ ] **T15**. Inbox entry for the integration's managers on a refused token; conflict records and their resolution
 - [x] **T16**. Ever Teams `integrations-settings` page on the same routes (ever-teams #4974)
 
