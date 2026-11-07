@@ -7,7 +7,8 @@ import { IEverApp } from '@gauzy/ui-core/common';
  * are relative so they resolve under the web base href and the desktop builds' `./` base href.
  *
  * The catalog lives here, in an Ever Platform module, because it names Ever hosts: the egress audit keeps those out of
- * the core packages (`tools/egress-audit/static-hostnames.mjs`). The Gauzy web app provides it with `provideEverApps`.
+ * the core packages (`tools/egress-audit/static-hostnames.mjs`). `EverConnectUiPlugin` carries it in its options
+ * (`EVER_APPS_PLUGIN_OPTION`), where the Gauzy web app finds it among the active UI plugins.
  */
 export const EVER_APP_CATALOG: ReadonlyArray<IEverApp> = [
 	{

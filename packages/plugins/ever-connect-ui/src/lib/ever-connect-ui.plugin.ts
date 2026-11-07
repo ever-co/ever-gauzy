@@ -1,7 +1,9 @@
 import { Routes } from '@angular/router';
 import { PermissionsEnum } from '@gauzy/contracts';
 import { defineDeclarativePlugin, PageExtensionDefinition, PluginRouteInput } from '@gauzy/plugin-ui';
+import { EVER_APPS_PLUGIN_OPTION } from '@gauzy/ui-core/common';
 import en from '../i18n/en.json';
+import { EVER_APP_CATALOG } from './ever-app-catalog';
 
 /** Path of the page, relative to `/pages/integrations` (the `redirectUrl` of the integration). */
 export const EVER_CONNECT_PATH = 'ever-connect';
@@ -82,11 +84,13 @@ export const CHECK_ON_EVER_PLATFORM_EXTENSION: PageExtensionDefinition = {
  * Ever Platform UI plugin (`@gauzy/plugin-ever-connect-ui`): Integrations > Ever Platform, the
  * confirmation page of a workspace created from Ever, and "Check on Ever Platform" on a contact.
  * The pages ask the API first; where the Ever Platform module is not loaded (the default) they only
- * say so, and the contact page shows no button.
+ * say so, and the contact page shows no button. Its options carry the header app switcher's catalog
+ * (`EVER_APP_CATALOG`), which the web app reads from the plugin list; without this plugin there is no switcher.
  */
 export const EverConnectUiPlugin = defineDeclarativePlugin('ever-connect', {
 	version: '0.1.0',
 	location: 'integrations-sections',
+	options: { [EVER_APPS_PLUGIN_OPTION]: EVER_APP_CATALOG },
 	routes: [EVER_CONNECT_ROUTE, EVER_CONNECT_PROVISION_ROUTE],
 	extensions: [CHECK_ON_EVER_PLATFORM_EXTENSION],
 	permissionKeys: [PermissionsEnum.INTEGRATION_VIEW],
