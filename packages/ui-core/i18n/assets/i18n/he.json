@@ -5018,7 +5018,9 @@
 		"COLLAPSE_SIDEBAR": "כווץ את סרגל הצד",
 		"EXPAND_SIDEBAR": "הרחב את סרגל הצד",
 		"EVER_APPS": "אפליקציות",
-		"SWITCH_EVER_APP": "מעבר לאפליקציה אחרת של Ever"
+		"SWITCH_EVER_APP": "מעבר לאפליקציה אחרת של Ever",
+		"WORKSPACE": "סביבת עבודה",
+		"SWITCH_WORKSPACE": "החלפת סביבת עבודה"
 	},
 	"AI_ASSISTANT": {
 		"TITLE": "עוזר AI",

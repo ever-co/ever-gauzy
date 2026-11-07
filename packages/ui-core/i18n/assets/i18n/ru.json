@@ -5025,7 +5025,9 @@
 		"COLLAPSE_SIDEBAR": "Свернуть боковую панель",
 		"EXPAND_SIDEBAR": "Развернуть боковую панель",
 		"EVER_APPS": "Приложения",
-		"SWITCH_EVER_APP": "Перейти в другое приложение Ever"
+		"SWITCH_EVER_APP": "Перейти в другое приложение Ever",
+		"WORKSPACE": "Рабочее пространство",
+		"SWITCH_WORKSPACE": "Сменить рабочее пространство"
 	},
 	"AI_ASSISTANT": {
 		"TITLE": "ИИ-ассистент",

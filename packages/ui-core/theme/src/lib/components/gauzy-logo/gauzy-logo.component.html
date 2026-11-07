@@ -1,18 +1,28 @@
 @if (isAccordion) {
 	<nb-accordion class="accordion workspace">
 		<nb-accordion-item [collapsed]="controlled" (collapsedChange)="onCollapse($event)">
-			<nb-accordion-item-header class="principal" (click)="toggleWorkspace()">
+			<nb-accordion-item-header
+				class="principal"
+				(click)="toggleWorkspace()"
+				[title]="'HEADER.SWITCH_WORKSPACE' | translate"
+				[attr.aria-label]="tenantName + ' — ' + ('HEADER.SWITCH_WORKSPACE' | translate)"
+			>
 				<!-- This block is the TENANT (workspace) switcher, not an organization
 				     one — the organization is picked from the header selector, and
 				     duplicating it here is what made the two read as the same control.
 				     The active tenant stays visible in BOTH states, so the panel it
 				     opens lists only the other tenants. -->
 				<div class="tenant">
-					<img [src]="tenantLogo" [alt]="tenantName" />
-					<div class="description text">
-						<div [nbTooltip]="tenantName">
+					@if (hasTenantLogo) {
+						<img class="tenant-avatar" [src]="tenantLogo" alt="" (error)="onTenantLogoError()" />
+					} @else {
+						<span class="tenant-avatar tenant-initials" aria-hidden="true">{{ tenantInitials }}</span>
+					}
+					<div class="description">
+						<div class="tenant-name" [nbTooltip]="tenantName">
 							{{ tenantName }}
 						</div>
+						<div class="tenant-caption">{{ 'HEADER.WORKSPACE' | translate }}</div>
 					</div>
 					<svg
 						class="switch-indicator"

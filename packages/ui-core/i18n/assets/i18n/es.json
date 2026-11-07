@@ -4996,7 +4996,9 @@
 		"COLLAPSE_SIDEBAR": "Contraer la barra lateral",
 		"EXPAND_SIDEBAR": "Expandir la barra lateral",
 		"EVER_APPS": "Aplicaciones",
-		"SWITCH_EVER_APP": "Cambiar a otra aplicación de Ever"
+		"SWITCH_EVER_APP": "Cambiar a otra aplicación de Ever",
+		"WORKSPACE": "Espacio de trabajo",
+		"SWITCH_WORKSPACE": "Cambiar de espacio de trabajo"
 	},
 	"AI_ASSISTANT": {
 		"TITLE": "Asistente de IA",

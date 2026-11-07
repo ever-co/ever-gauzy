@@ -5525,7 +5525,9 @@
 		"COLLAPSE_SIDEBAR": "Collapse sidebar",
 		"EXPAND_SIDEBAR": "Expand sidebar",
 		"EVER_APPS": "Apps",
-		"SWITCH_EVER_APP": "Switch to another Ever app"
+		"SWITCH_EVER_APP": "Switch to another Ever app",
+		"WORKSPACE": "Workspace",
+		"SWITCH_WORKSPACE": "Switch workspace"
 	},
 	"AI_ASSISTANT": {
 		"TITLE": "AI Assistant",

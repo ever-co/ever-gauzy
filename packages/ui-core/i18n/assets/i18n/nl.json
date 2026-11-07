@@ -4994,7 +4994,9 @@
 		"COLLAPSE_SIDEBAR": "Zijbalk inklappen",
 		"EXPAND_SIDEBAR": "Zijbalk uitklappen",
 		"EVER_APPS": "Apps",
-		"SWITCH_EVER_APP": "Naar een andere Ever-app gaan"
+		"SWITCH_EVER_APP": "Naar een andere Ever-app gaan",
+		"WORKSPACE": "Werkruimte",
+		"SWITCH_WORKSPACE": "Van werkruimte wisselen"
 	},
 	"AI_ASSISTANT": {
 		"TITLE": "AI-assistent",

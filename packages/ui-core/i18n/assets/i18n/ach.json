@@ -4763,7 +4763,9 @@
 		"COLLAPSE_SIDEBAR": "Kan bar ma i nget",
 		"EXPAND_SIDEBAR": "Yab bar ma i nget",
 		"EVER_APPS": "Apps",
-		"SWITCH_EVER_APP": "Switch to another Ever app"
+		"SWITCH_EVER_APP": "Switch to another Ever app",
+		"WORKSPACE": "Workspace",
+		"SWITCH_WORKSPACE": "Switch workspace"
 	},
 	"AI_ASSISTANT": {
 		"TITLE": "Lakony me AI",
