@@ -3,7 +3,8 @@
 // ships only when the responses captured before and after it are identical.
 //   node tools/perf/report-correctness.mjs capture <label>        -> every case's response under tools/perf/correctness/<label>/
 //   node tools/perf/report-correctness.mjs diff <labelA> <labelB> -> compares the two captures case by case (deep, order-sensitive)
-// Env: BASE (default http://localhost:3000/api), EMAIL / PASSWORD (admin@ever.co / admin), ANCHOR (the fixed "today" the
+// Env: BASE (default http://localhost:3000/api), EMAIL (required: the demo super admin, see .env.sample) / PASSWORD
+// (default admin), ANCHOR (the fixed "today" the
 // date ranges are built from, so a later capture asks the same days), ONLY=name,name (some endpoints only, added to an
 // existing capture). Diff: SORT_SLOTS=1 compares each log's `timeSlots` list as a set (the joins returned it in index
 // order, the figures query in startedAt order); IGNORE_KEYS=lastLoginAt,updatedAt drops fields the capture's own
@@ -108,10 +109,11 @@ if (mode === 'diff') {
 }
 
 // ---- capture ----
+if (!process.env.EMAIL) throw new Error('EMAIL is required: the account to sign in as (the demo super admin of .env.sample)');
 const login = await fetch(`${base}/auth/login`, {
 	method: 'POST',
 	headers: { 'content-type': 'application/json' },
-	body: JSON.stringify({ email: process.env.EMAIL || 'admin@ever.co', password: process.env.PASSWORD || 'admin' })
+	body: JSON.stringify({ email: process.env.EMAIL, password: process.env.PASSWORD || 'admin' })
 }).then((r) => r.json());
 if (!login.token) throw new Error('login failed ' + JSON.stringify(login).slice(0, 200));
 const { token, user } = login;
