@@ -330,6 +330,22 @@ export interface IChatReadAllResult {
 	snapshotId: string;
 }
 
+/** `GET /chat/search`: a query over the messages of my conversations (one of them when `conversationId` is given). */
+export interface IChatSearchQuery {
+	q: string;
+	conversationId?: ID;
+	limit?: number;
+	skip?: number;
+}
+
+export interface IChatSearchResult {
+	/** The matching messages, best match first, with their relations. */
+	messages: IChatMessageWithRelations[];
+	/** How many messages match in all (the search index's count). */
+	total: number;
+	hasMore: boolean;
+}
+
 export interface IChatCreateTaskInput {
 	projectId?: ID;
 	title?: string;
