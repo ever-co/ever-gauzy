@@ -4,6 +4,16 @@ import { isSelfServiceSignupAllowed, resolveAuthSwitches } from '@gauzy/config';
 /** The switch that loads the plugin. Off unless set to exactly `true`. */
 export const ZITADEL_ENABLED_ENV = 'ZITADEL_ENABLED';
 
+/**
+ * The App Launcher switch (shared with the Ever Platform connection plugin, which serves the launcher's routes).
+ * Off unless set to exactly `true`. Only while it is on does a sign-in ask Ever ID for a refresh token
+ * (`offline_access`) and keep it, encrypted, with the session it opened.
+ */
+export const APP_LAUNCHER_ENABLED_ENV = 'EVER_APP_LAUNCHER_ENABLED';
+
+/** The scope that asks the issuer for a refresh token. */
+export const OFFLINE_ACCESS_SCOPE = 'offline_access';
+
 /** How a person without a link may be connected to an existing Gauzy account. */
 export type ZitadelLinkMode = 'explicit' | 'confirmed';
 
@@ -41,6 +51,11 @@ export interface AuthZitadelSettings {
 	clientBaseUrl: string;
 	/** Mark cookies `Secure` (the API is served over https). */
 	secureCookies: boolean;
+	/**
+	 * `EVER_APP_LAUNCHER_ENABLED=true`: a browser sign-in also asks for `offline_access` and keeps the refresh token
+	 * of its Ever ID session (encrypted), so the App Launcher can read the person's apps. Off: nothing changes.
+	 */
+	launcherEnabled: boolean;
 }
 
 type Env = Record<string, string | undefined>;
@@ -88,6 +103,33 @@ export function isZitadelEnabled(env: Env = process.env): boolean {
 	return readStrictBoolean(env, ZITADEL_ENABLED_ENV, false, (message) =>
 		new Logger('AuthZitadelPlugin').warn(message)
 	);
+}
+
+/**
+ * Whether the App Launcher is on. Read once, when the plugin starts: only the exact string `true` turns it on;
+ * unset, empty and `false` keep it off, any other value keeps it off and is reported through `warn`.
+ *
+ * @param env - Environment variables.
+ * @param warn - Receives one line when the value is not `true` or `false` (never the value itself).
+ * @returns `true` only for `EVER_APP_LAUNCHER_ENABLED=true`.
+ */
+export function isAppLauncherEnabled(env: Env = process.env, warn: (message: string) => void = () => undefined): boolean {
+	return readStrictBoolean(env, APP_LAUNCHER_ENABLED_ENV, false, warn);
+}
+
+/**
+ * The scopes of a sign-in's authorize request: the configured ones, plus `offline_access` while the App Launcher
+ * keeps refresh tokens. Without that, exactly the configured ones.
+ *
+ * @param scopes - The configured scopes (`ZITADEL_SCOPES`, or the default).
+ * @param keepRefreshToken - Whether the sign-in keeps the refresh token of its Ever ID session.
+ * @returns The scopes to request.
+ */
+export function signinScopes(scopes: string[], keepRefreshToken: boolean): string[] {
+	if (!keepRefreshToken || scopes.includes(OFFLINE_ACCESS_SCOPE)) {
+		return scopes;
+	}
+	return [...scopes, OFFLINE_ACCESS_SCOPE];
 }
 
 /**
@@ -270,6 +312,7 @@ export function parseZitadelSettings(env: Env, warn: (message: string) => void =
 		everConnectEnabled,
 		apiBaseUrl,
 		clientBaseUrl,
-		secureCookies: /^https:\/\//i.test(apiBaseUrl)
+		secureCookies: /^https:\/\//i.test(apiBaseUrl),
+		launcherEnabled: isAppLauncherEnabled(env, warn)
 	};
 }

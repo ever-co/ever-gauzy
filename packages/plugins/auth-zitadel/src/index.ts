@@ -2,7 +2,9 @@
  * Public API Surface of @gauzy/plugin-auth-zitadel
  */
 export {
+	APP_LAUNCHER_ENABLED_ENV,
 	ZITADEL_ENABLED_ENV,
+	isAppLauncherEnabled,
 	isEverHost,
 	isZitadelEnabled,
 	parseZitadelSettings,
@@ -15,6 +17,7 @@ export * from './lib/entities';
 export * from './lib/events/zitadel-account.events';
 export * from './lib/ports/ever-connect-config.port';
 export * from './lib/ports/ever-id-accounts.port';
+export * from './lib/ports/ever-id-session-tokens.port';
 export { subjectHashOf } from './lib/handlers/person-deletion.listener';
 export * from './lib/ports/create-user-pre-linked.port';
 export * from './lib/ports/handoff-reader.port';

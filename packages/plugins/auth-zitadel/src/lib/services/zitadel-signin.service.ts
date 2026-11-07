@@ -45,6 +45,11 @@ export interface ZitadelDecideOptions {
 	redirect?: string;
 	/** Branding of the requesting app for Gauzy's one-time code e-mail (token channel). */
 	branding?: ZitadelEmailBranding;
+	/**
+	 * The encrypted Ever ID refresh token of the browser sign-in, kept with the session records of a linked sign-in
+	 * while the App Launcher is on. Never kept for any other outcome.
+	 */
+	everRefreshTokenEncrypted?: string | null;
 }
 
 /** A one-time record behind `#/auth/ever-id?handoff=…` or the register page prefill. */
@@ -127,7 +132,10 @@ export class ZitadelSigninService {
 		const linked = await this.accounts.findLinkedUsers(identity.issuer, identity.subject);
 		if (linked.length) {
 			await this.events.signedIn(linked, identity);
-			return { type: 'workspaces', response: await this.signInLinked(linked, identity, hints, idToken.sid) };
+			return {
+				type: 'workspaces',
+				response: await this.signInLinked(linked, identity, hints, idToken.sid, undefined, options.everRefreshTokenEncrypted)
+			};
 		}
 
 		if (settings.signupEnabled) {
@@ -182,9 +190,10 @@ export class ZitadelSigninService {
 		identity: ZitadelIdentity,
 		hints: ZitadelClaimHints,
 		sid?: string,
-		teams?: Map<ID, ZitadelTeamList>
+		teams?: Map<ID, ZitadelTeamList>,
+		everRefreshTokenEncrypted?: string | null
 	): Promise<ZitadelSigninWorkspaceResponse> {
-		return this.workspaces.signIn(users, identity, hints, sid, teams);
+		return this.workspaces.signIn(users, identity, hints, sid, teams, everRefreshTokenEncrypted);
 	}
 
 	/** Stores a workspace response under a new one-time key. */
