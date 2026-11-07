@@ -58,6 +58,27 @@ export interface AsanaTask {
 	num_subtasks?: number;
 }
 
+/** A story of a task: here only the comments (`resource_subtype: comment_added`), with who wrote them. */
+export interface AsanaStory {
+	gid: string;
+	resource_subtype: string | null;
+	/** The comment as plain text (Asana also has `html_text`, its own markup). */
+	text: string | null;
+	created_at: string;
+	created_by: { gid: string; name: string; email: string | null } | null;
+}
+
+/** A file or link on a task: the address that opens it (`view_url` for a hosted file, else the permalink or the download). */
+export interface AsanaAttachment {
+	gid: string;
+	name: string | null;
+	download_url: string | null;
+	permalink_url: string | null;
+	view_url: string | null;
+	host: string | null;
+	created_at: string;
+}
+
 export interface AsanaTaskUpdateInput {
 	name?: string;
 	notes?: string | null;
@@ -134,6 +155,12 @@ const TASK_FIELDS = [
 	'custom_fields.enum_value.name',
 	'num_subtasks'
 ].join(',');
+
+const STORY_FIELDS = 'gid,resource_subtype,text,created_at,created_by.gid,created_by.name,created_by.email';
+const ATTACHMENT_FIELDS = 'gid,name,download_url,permalink_url,view_url,host,created_at';
+/** How many stories of one task are read at most (every story counts: a long-lived task has many system ones). */
+const STORIES_MAX = 2000;
+const ATTACHMENTS_MAX = 500;
 
 type FetchLike = (
 	input: string,
@@ -288,6 +315,17 @@ export class AsanaApiClient {
 		}
 	}
 
+	/** The comments of a task (its stories of subtype `comment_added`), oldest first. */
+	async stories(taskGid: string): Promise<AsanaStory[]> {
+		const stories = await this.pages<AsanaStory>(`/tasks/${encodeURIComponent(taskGid)}/stories?opt_fields=${STORY_FIELDS}&limit=100`, STORIES_MAX);
+		return stories.filter((story) => story.resource_subtype === 'comment_added');
+	}
+
+	/** The files and links of a task. */
+	async attachments(taskGid: string): Promise<AsanaAttachment[]> {
+		return this.pages<AsanaAttachment>(`/tasks/${encodeURIComponent(taskGid)}/attachments?opt_fields=${ATTACHMENT_FIELDS}&limit=100`, ATTACHMENTS_MAX);
+	}
+
 	/** The subtasks of a task, in their order (every page; a task with thousands of subtasks is capped). */
 	async subtasks(taskGid: string): Promise<AsanaTask[]> {
 		return this.pages<AsanaTask>(`/tasks/${encodeURIComponent(taskGid)}/subtasks?opt_fields=${TASK_FIELDS}&limit=100`, 5000);
@@ -328,7 +366,11 @@ export class AsanaApiClient {
 			filters: [
 				{ resource_type: 'task', action: 'added' },
 				{ resource_type: 'task', action: 'changed' },
-				{ resource_type: 'task', action: 'undeleted' }
+				{ resource_type: 'task', action: 'undeleted' },
+				// A comment added or edited, a file attached: delivered with the task they belong to, which is read again.
+				{ resource_type: 'story', resource_subtype: 'comment_added', action: 'added' },
+				{ resource_type: 'story', resource_subtype: 'comment_added', action: 'changed' },
+				{ resource_type: 'attachment', action: 'added' }
 			]
 		});
 	}

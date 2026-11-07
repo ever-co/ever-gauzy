@@ -54,7 +54,9 @@ export function taskGidsOf(events: AsanaWebhookEvent[] | undefined): string[] {
 	const gids = new Set<string>();
 	for (const event of events ?? []) {
 		if (!event || !['added', 'changed', 'undeleted'].includes(event.action)) continue;
-		const gid = event.resource?.resource_type === 'task' ? event.resource.gid : null;
+		const type = event.resource?.resource_type;
+		// A task's own event names the task; a comment's or an attachment's names the task it belongs to (its parent).
+		const gid = type === 'task' ? event.resource?.gid : (type === 'story' || type === 'attachment') && event.parent?.resource_type === 'task' ? event.parent.gid : null;
 		if (gid) gids.add(gid);
 	}
 	return [...gids];

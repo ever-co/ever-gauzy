@@ -1,5 +1,5 @@
 import { TaskPriorityEnum, TaskStatusEnum } from '@gauzy/contracts';
-import { AsanaSection, AsanaTask, AsanaTaskUpdateInput } from '../client/asana-api.client';
+import { AsanaAttachment, AsanaSection, AsanaStory, AsanaTask, AsanaTaskUpdateInput } from '../client/asana-api.client';
 
 /** The task status of a completed Asana task, and of one in a section the map does not name. */
 export const ASANA_COMPLETED_STATUS = TaskStatusEnum.COMPLETED;
@@ -136,4 +136,35 @@ export function asanaUpdateOf(task: { title?: string | null; description?: strin
 	if (task.status !== undefined) input.completed = isCompletedStatus(task.status);
 	if (task.dueDate !== undefined) input.due_on = asanaDueOnOf(task.dueDate);
 	return input;
+}
+
+/** The platform keeps a comment as HTML: the text's characters that would read as markup, escaped. */
+export function escapeHtml(value: string): string {
+	return value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+/**
+ * A comment's body as the platform keeps it (HTML): the author's words, one paragraph per line; and, when the author
+ * is nobody here (no employee with their e-mail), who wrote them, named first, so the comment is not read as the
+ * connecting person's. Empty for a story without text.
+ */
+export function commentHtmlOf(story: Pick<AsanaStory, 'text' | 'created_by'>, attributed: boolean): string {
+	const text = (story.text ?? '').trim();
+	if (!text) return '';
+	const paragraphs = text
+		.split(/\r?\n+/)
+		.map((line) => line.trim())
+		.filter(Boolean)
+		.map((line) => `<p>${escapeHtml(line)}</p>`)
+		.join('');
+	if (attributed) return paragraphs;
+	const name = story.created_by?.name?.trim() || 'Someone';
+	return `<p><strong>${escapeHtml(name)}</strong> (Asana)</p>${paragraphs}`;
+}
+
+/** The link an attachment is kept as: its name, and the address that opens it (the view page, else the permalink, else the download); null without one. */
+export function attachmentLinkOf(attachment: Pick<AsanaAttachment, 'name' | 'view_url' | 'permalink_url' | 'download_url'>): { title: string; url: string } | null {
+	const url = (attachment.view_url || attachment.permalink_url || attachment.download_url || '').trim();
+	if (!/^https?:\/\//i.test(url)) return null;
+	return { title: (attachment.name ?? '').trim().slice(0, 255) || url, url };
 }

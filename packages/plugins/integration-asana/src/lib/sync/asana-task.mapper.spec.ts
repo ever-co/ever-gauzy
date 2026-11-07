@@ -2,6 +2,8 @@ import { TaskPriorityEnum, TaskStatusEnum } from '@gauzy/contracts';
 import { AsanaTask } from '../client/asana-api.client';
 import {
 	asanaUpdateOf,
+	attachmentLinkOf,
+	commentHtmlOf,
 	isCompletedStatus,
 	parseSectionMap,
 	sectionForStatus,
@@ -82,5 +84,19 @@ describe('asana task mapper', () => {
 		expect(sectionForStatus('custom', {}, SECTIONS)).toBeNull();
 		expect(asanaUpdateOf({ title: 'T', description: null, status: TaskStatusEnum.COMPLETED, dueDate: new Date('2026-03-04T10:00:00Z') })).toEqual({ name: 'T', notes: '', completed: true, due_on: '2026-03-04' });
 		expect(asanaUpdateOf({ status: TaskStatusEnum.OPEN })).toEqual({ completed: false });
+	});
+
+	it('keeps a comment as escaped HTML paragraphs, naming an author who is nobody here', () => {
+		const story = { text: 'Ship it <today>\n\nThen "rest"', created_by: { gid: 'u1', name: 'Ada & Co', email: null } };
+		expect(commentHtmlOf(story, true)).toBe('<p>Ship it &lt;today&gt;</p><p>Then &quot;rest&quot;</p>');
+		expect(commentHtmlOf(story, false)).toBe('<p><strong>Ada &amp; Co</strong> (Asana)</p><p>Ship it &lt;today&gt;</p><p>Then &quot;rest&quot;</p>');
+		expect(commentHtmlOf({ text: '  ', created_by: null }, false)).toBe('');
+		expect(commentHtmlOf({ text: 'x', created_by: null }, false)).toBe('<p><strong>Someone</strong> (Asana)</p><p>x</p>');
+	});
+
+	it('keeps an attachment as a link to what opens it, named, and none without an address', () => {
+		expect(attachmentLinkOf({ name: 'spec.pdf', view_url: 'https://app.asana.com/v/1', permalink_url: 'https://p', download_url: null })).toEqual({ title: 'spec.pdf', url: 'https://app.asana.com/v/1' });
+		expect(attachmentLinkOf({ name: '', view_url: null, permalink_url: null, download_url: 'https://d/x' })).toEqual({ title: 'https://d/x', url: 'https://d/x' });
+		expect(attachmentLinkOf({ name: 'x', view_url: null, permalink_url: 'ftp://nope', download_url: null })).toBeNull();
 	});
 });

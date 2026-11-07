@@ -31,7 +31,7 @@ describe('Asana webhook checks', () => {
 		expect(isAsanaSignatureValid(secret, Buffer.concat([body, Buffer.from(' ')]), signature)).toBe(false);
 	});
 
-	it('names the tasks of the events that add, change or undelete a task, each once', () => {
+	it('names the tasks of the events that add, change or undelete a task, or a comment or attachment of one, each once', () => {
 		expect(
 			taskGidsOf([
 				{ action: 'changed', resource: { gid: 't1', resource_type: 'task' } },
@@ -39,9 +39,12 @@ describe('Asana webhook checks', () => {
 				{ action: 'changed', resource: { gid: 't1', resource_type: 'task' } },
 				{ action: 'deleted', resource: { gid: 't3', resource_type: 'task' } },
 				{ action: 'changed', resource: { gid: 's1', resource_type: 'story' } },
+				{ action: 'added', resource: { gid: 's2', resource_type: 'story', resource_subtype: 'comment_added' }, parent: { gid: 't5', resource_type: 'task' } },
+				{ action: 'added', resource: { gid: 'a1', resource_type: 'attachment' }, parent: { gid: 't6', resource_type: 'task' } },
+				{ action: 'removed', resource: { gid: 'a2', resource_type: 'attachment' }, parent: { gid: 't7', resource_type: 'task' } },
 				{ action: 'undeleted', resource: { gid: 't4', resource_type: 'task' } }
 			])
-		).toEqual(['t1', 't2', 't4']);
+		).toEqual(['t1', 't2', 't5', 't6', 't4']);
 		expect(taskGidsOf(undefined)).toEqual([]);
 	});
 });

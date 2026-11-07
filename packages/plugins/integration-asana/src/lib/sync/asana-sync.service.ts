@@ -24,10 +24,15 @@ import { asanaSyncUser, runInAsanaContext } from '../asana-process';
 import { emptyCounts, AsanaSyncCounts, AsanaSyncRunService } from '../asana-sync-run.service';
 import { AsanaTenantService } from '../asana-tenant.service';
 import { ASANA_APPLY_CONCURRENCY, ASANA_CONFIG, ASANA_IMPORT_CLOCK_SKEW_MS, ASANA_SUBTASK_MAX_DEPTH, ASANA_TASKS_PAGE_SIZE, AsanaSettingName } from '../asana.constants';
+import { AsanaAuthor, AsanaTaskDetailsService } from './asana-task-details.service';
 import { asanaUpdateOf, knownStatusesOf, parseSectionMap, sectionForStatus, statusKey, taskFieldsOf } from './asana-task.mapper';
 
-/** What one Asana task became. */
+/** What one Asana task became, and the platform task it is (none when skipped). */
 type ApplyOutcome = 'created' | 'updated' | 'skipped';
+interface ApplyResult {
+	outcome: ApplyOutcome;
+	taskId: ID | null;
+}
 
 /** A connection's client, replaced once when Asana refused the token and a renewal worked. */
 interface ClientHolder {
@@ -51,6 +56,12 @@ interface ApplyContext extends ClientHolder {
 	pendingParents: Array<{ taskId: ID; parentSourceId: string }>;
 	/** The tasks applied in this run, so a subtask reached twice (through its parent and on its own) is applied once. */
 	applied: Set<string>;
+	/** The user who connected: the comments nobody here wrote are theirs to own. */
+	connectedByUserId: ID | null;
+	/** The comment authors by e-mail, once per run. */
+	authorsByEmail: Map<string, AsanaAuthor | null>;
+	/** What the details import brought in this run (comments, attachments as links): reported, not counted on the run. */
+	details: { comments: number; links: number };
 	counts: AsanaSyncCounts;
 }
 
@@ -88,6 +99,7 @@ export class AsanaSyncService {
 		private readonly employeeService: EmployeeService,
 		private readonly integrationMapService: IntegrationMapService,
 		private readonly integrationTenantSyncService: IntegrationTenantSyncService,
+		private readonly taskDetails: AsanaTaskDetailsService,
 		@Inject(ASANA_CONFIG) private readonly config: AsanaConfig
 	) {}
 
@@ -163,6 +175,7 @@ export class AsanaSyncService {
 					offset = page.nextOffset;
 				}
 				await this.linkParents(context);
+				this.reportDetails(context);
 			});
 			if (counts.failed > 0) {
 				error = `${counts.failed} task(s) could not be applied; the import position was kept so the next import reads them again.`;
@@ -215,6 +228,7 @@ export class AsanaSyncService {
 					await this.applyOne(context, task);
 				}
 				await this.linkParents(context);
+				this.reportDetails(context);
 			});
 			if (counts.failed > 0) error = `${counts.failed} task(s) could not be applied.`;
 		} catch (caught) {
@@ -440,6 +454,9 @@ export class AsanaSyncService {
 			tagIdsByAsanaGid: new Map(),
 			pendingParents: [],
 			applied: new Set(),
+			connectedByUserId: this.connectedByUserId(tenant),
+			authorsByEmail: new Map(),
+			details: { comments: 0, links: 0 },
 			counts
 		};
 	}
@@ -452,14 +469,18 @@ export class AsanaSyncService {
 	private async applyOne(context: ApplyContext, task: AsanaTask, depth = 0): Promise<void> {
 		if (context.applied.has(task.gid)) return;
 		context.applied.add(task.gid);
+		let taskId: ID | null = null;
 		try {
-			const outcome = await this.applyTask(context, task);
-			context.counts[outcome] += 1;
+			const result = await this.applyTask(context, task);
+			context.counts[result.outcome] += 1;
+			taskId = result.taskId;
 		} catch (caught) {
 			if (caught instanceof AsanaApiError) throw caught;
 			context.counts.failed += 1;
 			this.logger.warn(`Asana task ${task.gid} could not be applied: ${this.describe(caught)}`);
 		}
+		// Behind the task itself: its comments and attachments, read apart (two calls), each kept once.
+		if (taskId) await this.taskDetails.apply(this.detailsContextOf(context), task, taskId);
 		if (!(task.num_subtasks && task.num_subtasks > 0) || depth >= ASANA_SUBTASK_MAX_DEPTH || task.resource_subtype === 'section') return;
 		let subtasks: AsanaTask[];
 		try {
@@ -490,7 +511,7 @@ export class AsanaSyncService {
 	}
 
 	/** One apply at a time per Asana task: chained in the process, locked across processes (`lockedTransaction`), within the process's apply slots. */
-	private applyTask(context: ApplyContext, task: AsanaTask): Promise<ApplyOutcome> {
+	private applyTask(context: ApplyContext, task: AsanaTask): Promise<ApplyResult> {
 		const key = `${context.mapping.integrationId}:${task.gid}`;
 		return this.serialized(key, () => this.withApplySlot(() => this.lockedTransaction([`integration-asana:task:${key}`], () => this.applyTaskNow(context, task))));
 	}
@@ -499,14 +520,14 @@ export class AsanaSyncService {
 	 * One Asana task → one platform task: created once, updated after, by the platform's id map. A relation whose
 	 * lookup did not answer (the assignee by e-mail, a tag) is left as the task has it; an empty value clears it.
 	 */
-	private async applyTaskNow(context: ApplyContext, task: AsanaTask): Promise<ApplyOutcome> {
+	private async applyTaskNow(context: ApplyContext, task: AsanaTask): Promise<ApplyResult> {
 		const { scope, mapping } = context;
 		const integrationId = mapping.integrationId;
 		const existing = await this.integrationMapService
 			.findOneByWhereOptions({ entity: IntegrationEntity.TASK, sourceId: task.gid, integrationId, ...scope })
 			.catch(() => null);
 		// A section header is not a task.
-		if (task.resource_subtype === 'section') return 'skipped';
+		if (task.resource_subtype === 'section') return { outcome: 'skipped', taskId: null };
 		// An Asana task two mapped projects share belongs to the mapping that imported it first: another leaves it
 		// alone rather than moving it between the platform's projects on every import.
 		if (existing?.gauzyId) {
@@ -514,7 +535,7 @@ export class AsanaSyncService {
 				.getRepository(Task)
 				.findOne({ where: { id: existing.gauzyId, tenantId: scope.tenantId } as never, select: { id: true, projectId: true } as never })
 				.catch(() => null);
-			if (owner?.projectId && owner.projectId !== mapping.projectId) return 'skipped';
+			if (owner?.projectId && owner.projectId !== mapping.projectId) return { outcome: 'skipped', taskId: null };
 		}
 		const fields = taskFieldsOf(task, mapping.asanaProjectGid, context.sectionMap, context.knownStatuses);
 		const members = await this.membersOf(context, task.assignee?.email ?? null);
@@ -537,7 +558,7 @@ export class AsanaSyncService {
 		if (task.parent?.gid && map?.gauzyId) {
 			context.pendingParents.push({ taskId: map.gauzyId as ID, parentSourceId: task.parent.gid });
 		}
-		return existing ? 'updated' : 'created';
+		return { outcome: existing ? 'updated' : 'created', taskId: (map?.gauzyId as ID | undefined) ?? null };
 	}
 
 	/** Subtasks point at their parent's task once every task of the run is in. */
@@ -551,6 +572,24 @@ export class AsanaSyncService {
 				.execute(new TaskUpdateCommand(pending.taskId, { ...context.scope, parentId: parent.gauzyId as ID } as ITaskUpdateInput, false))
 				.catch((caught: unknown) => this.logger.warn(`Task ${pending.taskId} could not be linked to its parent: ${this.describe(caught)}`));
 		}
+	}
+
+	/** What the details import needs of a run: its scope, the connection's reads, and the run's own caches and tallies. */
+	private detailsContextOf(context: ApplyContext) {
+		return {
+			scope: context.scope,
+			integrationId: context.mapping.integrationId,
+			connectedByUserId: context.connectedByUserId,
+			read: <T>(make: (client: AsanaApiClient) => Promise<T>) => this.call(context, make),
+			authorsByEmail: context.authorsByEmail,
+			details: context.details
+		};
+	}
+
+	/** One line per run about the details, when there were any (they are not counted on the run). */
+	private reportDetails(context: ApplyContext): void {
+		const { comments, links } = context.details;
+		if (comments || links) this.logger.log(`Mapping ${context.mapping.id}: ${comments} comment(s) and ${links} attachment link(s) brought in`);
 	}
 
 	/** The task's members for the Asana assignee: by e-mail, nobody when there is none, `undefined` when the lookup failed. */

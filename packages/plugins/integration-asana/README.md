@@ -50,6 +50,13 @@ no table (its migration is not registered) and makes no outbound request. Same l
   that could not be applied keeps the import position. An Asana task two mapped projects share belongs to the
   mapping that imported it first; the other skips it. Section and status names compare by key: case ignored,
   spaces as hyphens (`In Progress` is `in-progress`). `GET …/runs` lists the runs.
+- **Comments and attachments.** Behind every task brought in, its comments (Asana's stories of subtype
+  `comment_added`) become comments of the task — attributed to the employee whose user has the author's e-mail,
+  else kept as the connecting user's, marked system and named after their author — and follow an edit in Asana;
+  its attachments become resource links of the task (the name, the address that opens it), reusing a link a person
+  already added with the same address. Both are kept once (the id map, entities `Comment` and `Attachment`).
+  The webhook also delivers a comment added or edited and a file attached, as the task they belong to; a mapping
+  whose webhook was registered before this filter existed gets it with `POST …/mappings/:mappingId/webhook`.
 - **Scheduled import.** Every five minutes the worker process (`apps/worker`, the one whose scheduler root is
   enabled) sweeps the mappings that bring tasks in: one whose last import is older than
   `ASANA_IMPORT_INTERVAL_MINUTES` (or that was never imported) is imported again, the changes since its position,
