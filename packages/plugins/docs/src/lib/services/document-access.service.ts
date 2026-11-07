@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { In, IsNull, WhereExpressionBuilder } from 'typeorm';
 import { DocumentShareAccessEnum, DocumentVisibilityEnum, ID, PermissionsEnum } from '@gauzy/contracts';
-import { Employee, OrganizationTeamEmployee, RequestContext } from '@gauzy/core';
+import { Employee, OrganizationTeamEmployee, RequestContext, RolePermission, User } from '@gauzy/core';
 import { TypeOrmDocumentShareRepository } from '../repositories/type-orm-document-share.repository';
 import {
 	IDocumentAccessRow,
@@ -156,11 +156,11 @@ export class DocumentAccessService {
 	}
 
 	/**
-	 * The employees among the given ids who are active in the document's organization and may read the page: for an
-	 * ORGANIZATION page every one of them (the read permission itself is theirs to hold), for a PRIVATE or TEAM page
-	 * the creator, the team's members and the share grantees — the pure predicate with the page's shares, each
+	 * The employees among the given ids who are active in the document's organization, whose role holds the documents
+	 * read permission, and who may read the page: for an ORGANIZATION page every one of them, for a PRIVATE or TEAM
+	 * page the creator, the team's members and the share grantees — the pure predicate with the page's shares, each
 	 * employee as the subject. What a review request or a share may name without telling someone of a page they
-	 * cannot open.
+	 * cannot open. Three queries whatever the number of employees (memberships, roles, permissions).
 	 *
 	 * @param document The document projection with its id.
 	 * @param employeeIds The employees named.
@@ -182,8 +182,18 @@ export class DocumentAccessService {
 				isArchived: false
 			}
 		});
+		if (!employees.length) {
+			return [];
+		}
 		const byId = new Map(employees.map((employee) => [String(employee.id), employee]));
-		const shares = document.visibility === DocumentVisibilityEnum.ORGANIZATION ? [] : await this.loadShares(document.id);
+		const [teamIdsByEmployee, readers, shares] = await Promise.all([
+			this.teamIdsByEmployee(employees.map((employee) => employee.id as ID)),
+			this.usersHoldingRead(
+				document.tenantId,
+				employees.map((employee) => employee.userId).filter(Boolean) as ID[]
+			),
+			document.visibility === DocumentVisibilityEnum.ORGANIZATION ? Promise.resolve([]) : this.loadShares(document.id)
+		]);
 		const kept: ID[] = [];
 		for (const id of wanted) {
 			const employee = byId.get(id);
@@ -195,8 +205,8 @@ export class DocumentAccessService {
 				{
 					userId: employee.userId ?? null,
 					employeeId: employee.id as ID,
-					teamIds: await this.currentTeamIds(employee.id as ID),
-					hasReadPermission: true,
+					teamIds: teamIdsByEmployee.get(String(employee.id)) ?? [],
+					hasReadPermission: !!employee.userId && readers.has(String(employee.userId)),
 					hasManagePermission: false
 				}
 			);
@@ -205,6 +215,84 @@ export class DocumentAccessService {
 			}
 		}
 		return kept;
+	}
+
+	/**
+	 * The team ids of each of the given employees, in one query.
+	 *
+	 * @param employeeIds The employees whose memberships to resolve.
+	 * @returns Employee id → organization-team ids (no entry for an employee of no team, or on a lookup failure).
+	 */
+	private async teamIdsByEmployee(employeeIds: ID[]): Promise<Map<string, ID[]>> {
+		const byEmployee = new Map<string, ID[]>();
+		if (!employeeIds.length) {
+			return byEmployee;
+		}
+		try {
+			const memberships = await this.typeOrmDocumentShareRepository.manager.find(OrganizationTeamEmployee, {
+				select: { employeeId: true, organizationTeamId: true },
+				where: { employeeId: In(employeeIds), deletedAt: IsNull() }
+			});
+			for (const membership of memberships) {
+				if (!membership.employeeId || !membership.organizationTeamId) {
+					continue;
+				}
+				const key = String(membership.employeeId);
+				byEmployee.set(key, [...(byEmployee.get(key) ?? []), membership.organizationTeamId as ID]);
+			}
+		} catch (error) {
+			// A membership lookup failure must never widen access — it degrades to "no team shares".
+			this.logger.warn(`Team membership lookup failed for ${employeeIds.length} employees: ${(error as Error).message}`);
+		}
+		return byEmployee;
+	}
+
+	/**
+	 * The users among the given ids whose role holds the documents read permission in the tenant: what the route
+	 * guard proves of the requesting user, resolved for someone else (a reviewer named, a share grantee). Two queries
+	 * (the users' roles, the roles' grants).
+	 *
+	 * @param tenantId The tenant the permission is held in.
+	 * @param userIds The users to resolve.
+	 * @returns The ids of the users who hold the permission (none on a lookup failure).
+	 */
+	private async usersHoldingRead(tenantId: ID, userIds: ID[]): Promise<Set<string>> {
+		const holders = new Set<string>();
+		if (!userIds.length) {
+			return holders;
+		}
+		try {
+			const manager = this.typeOrmDocumentShareRepository.manager;
+			const users = await manager.find(User, {
+				select: { id: true, roleId: true },
+				where: { id: In(userIds), tenantId }
+			});
+			const roleIds = [...new Set(users.map((user) => user.roleId).filter(Boolean))] as ID[];
+			if (!roleIds.length) {
+				return holders;
+			}
+			const grants = await manager.find(RolePermission, {
+				select: { roleId: true },
+				where: {
+					tenantId,
+					roleId: In(roleIds),
+					permission: PermissionsEnum.DOCS_READ,
+					enabled: true,
+					isActive: true,
+					isArchived: false
+				}
+			});
+			const readingRoles = new Set(grants.map((grant) => String(grant.roleId)));
+			for (const user of users) {
+				if (user.roleId && readingRoles.has(String(user.roleId))) {
+					holders.add(String(user.id));
+				}
+			}
+		} catch (error) {
+			// A permission lookup failure must never widen the audience — it degrades to "nobody".
+			this.logger.warn(`Read permission lookup failed for ${userIds.length} users: ${(error as Error).message}`);
+		}
+		return holders;
 	}
 
 	/**
