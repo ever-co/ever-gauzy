@@ -226,6 +226,18 @@ export class AsanaTenantService {
 	 * Files (or resolves) the Inbox item about the connection and remembers that it got through; nothing without
 	 * the Inbox plugin or a connecting user. A filing that failed is tried again by the next {@link setAttention}.
 	 */
+	/**
+	 * Files the notice of a refused connection whose filing did not get through (no `ATTENTION_NOTICE_AT`): the
+	 * scheduled sweep calls it for every refused connection it leaves alone, so the retry is durable — every five
+	 * minutes until the Inbox took it — and does not wait for the next refusal.
+	 */
+	async ensureAttentionFiled(tenant: IIntegrationTenant): Promise<void> {
+		const settings = this.settingsOf(tenant);
+		const reason = settings[AsanaSettingName.ATTENTION_REASON] || null;
+		if (!reason || settings[AsanaSettingName.ATTENTION_NOTICE_AT]) return;
+		await this.fileAttention(tenant, reason);
+	}
+
 	private async fileAttention(tenant: IIntegrationTenant, reason: string | null, alsoUserIds: readonly ID[] = []): Promise<void> {
 		if (!this.inbox) return;
 		// The row as it is now: a filing from before a reconnect or a newer refusal is stale and files nothing.
