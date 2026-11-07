@@ -1729,7 +1729,15 @@
 		"poppler",
 		"pdfium",
 		"rasterizing",
-		"cmaps"
+		"cmaps",
+		"cmdstat",
+		"commandstats",
+		"Contoso",
+		"dbid",
+		"resetstat",
+		"RESETSTAT",
+		"seqno",
+		"Worktrees"
 	],
 	"useGitignore": true,
 	"ignorePaths": [
