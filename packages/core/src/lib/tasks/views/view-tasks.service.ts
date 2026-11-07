@@ -261,9 +261,11 @@ export class TaskViewTasksService {
 
 	/**
 	 * A page by keyset: the rows after the cursor's row in the ordering (its sort value, then its id), `limit` of them,
-	 * and the cursor of the next. The cursor names the row; its sort value is read back from the row, so a title of
-	 * any length makes no cursor a client could not send back. A row the cursor names that is no longer there is a
-	 * cursor the walk cannot resume from (`TASK_VIEW_CURSOR_STALE`: read the first page again).
+	 * and the cursor of the next. The cursor names the row, so a title of any length makes no cursor a client could not
+	 * send back; the row is read back for the stale check and the unset branch, and the seek compares against the row's
+	 * stored value in the database itself (a bound `Date` carries milliseconds where a Postgres timestamp carries
+	 * microseconds, so a bound value could skip the rows between the two). A row the cursor names that is no longer there
+	 * is a cursor the walk cannot resume from (`TASK_VIEW_CURSOR_STALE`: read the first page again).
 	 *
 	 * A column that may be unset (`dueDate`) sorts its unset rows last whichever direction the dates take: the
 	 * ordering is "is it unset" first, then the date, then the id — and the seek past a cursor says the same.
@@ -284,11 +286,9 @@ export class TaskViewTasksService {
 				// Past an unset row: the unset rows after it, by id.
 				builder.andWhere(`(${column} IS NULL AND task.id ${comparator} :cursorId)`, { cursorId: cursor.id });
 			} else {
-				const after = `(${column} ${comparator} :cursorValue OR (${column} = :cursorValue AND task.id ${comparator} :cursorId))`;
-				builder.andWhere(nullable ? `((${column} IS NOT NULL AND ${after}) OR ${column} IS NULL)` : after, {
-					cursorValue: field === 'title' ? String(value ?? '') : new Date(value as Date),
-					cursorId: cursor.id
-				});
+				const anchorValue = `(SELECT ${q('a')}.${q(field)} FROM ${q('task')} ${q('a')} WHERE ${q('a')}.${q('id')} = :cursorId)`;
+				const after = `(${column} ${comparator} ${anchorValue} OR (${column} = ${anchorValue} AND task.id ${comparator} :cursorId))`;
+				builder.andWhere(nullable ? `((${column} IS NOT NULL AND ${after}) OR ${column} IS NULL)` : after, { cursorId: cursor.id });
 			}
 		}
 		if (nullable) {

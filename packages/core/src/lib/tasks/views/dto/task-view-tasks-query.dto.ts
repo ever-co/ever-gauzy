@@ -47,7 +47,8 @@ export class TaskViewTasksQueryDTO extends TenantOrganizationBaseDTO implements 
 		try {
 			return JSON.parse(value);
 		} catch {
-			return { op: 'and', conditions: ['malformed'] };
+			// Passes `@IsObject()` and fails `isFilterGroup`, so the tree is reported as `{ path: 'filter', reason: 'malformed' }`.
+			return { op: 'and', conditions: null } as unknown as ITaskViewFilterGroup;
 		}
 	})
 	@IsObject()

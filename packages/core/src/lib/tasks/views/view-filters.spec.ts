@@ -49,6 +49,8 @@ describe('the filter tree', () => {
 		expect(paths.get(tree!.conditions[1])).toBe('filter.conditions.4');
 		expect(paths.get((tree!.conditions[1] as { conditions: unknown[] }).conditions[1] as never)).toBe('filter.conditions.4.conditions.1');
 		expect(validateFilterTree(null)).toEqual({ tree: null, invalid: [], paths: new Map() });
+		// What the route's DTO answers for a filter whose JSON does not parse: reported at the root, as malformed.
+		expect(validateFilterTree({ op: 'and', conditions: null })).toEqual({ tree: null, invalid: [{ path: 'filter', reason: 'malformed' }], paths: new Map() });
 		expect(validateFilterTree({ op: 'and', conditions: [{ field: 'size', operator: 'notIn', values: ['x'] }] }).tree).toBeNull();
 	});
 

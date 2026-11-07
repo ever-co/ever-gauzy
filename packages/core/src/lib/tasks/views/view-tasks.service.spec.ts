@@ -137,11 +137,13 @@ describe('TaskViewTasksService', () => {
 		expect(calls('take')).toContainEqual([3]);
 		expect(decodeCursor(first.nextCursor)).toEqual({ id: B });
 		await service.tasksOf('v1', { limit: 2, cursor: first.nextCursor as string });
-		// The row's own sort value, read back by the cursor's id within the tenant.
+		// The row is read back by the cursor's id within the tenant (the stale check); the seek compares against its stored
+		// value in the database, at the store's own precision.
 		expect(tasks.findOne).toHaveBeenCalledWith({ select: { id: true, createdAt: true }, where: { id: B, tenantId: 'ten' } });
-		const seek = calls('andWhere').find((call) => typeof call[0] === 'string' && call[0].includes(':cursorValue'));
-		expect(seek?.[0]).toBe('(task.createdAt < :cursorValue OR (task.createdAt = :cursorValue AND task.id < :cursorId))');
-		expect(seek?.[1]).toEqual({ cursorValue: new Date('2026-11-07T11:00:00.000Z'), cursorId: B });
+		const anchor = '(SELECT [a].[createdAt] FROM [task] [a] WHERE [a].[id] = :cursorId)';
+		const seek = calls('andWhere').find((call) => typeof call[0] === 'string' && call[0].includes(':cursorId'));
+		expect(seek?.[0]).toBe(`(task.createdAt < ${anchor} OR (task.createdAt = ${anchor} AND task.id < :cursorId))`);
+		expect(seek?.[1]).toEqual({ cursorId: B });
 		expect(calls('orderBy')).toContainEqual(['task.createdAt', 'DESC']);
 	});
 
@@ -162,9 +164,10 @@ describe('TaskViewTasksService', () => {
 		expect(calls('addOrderBy')).toContainEqual(['task.dueDate', 'DESC']);
 		// Past a dated row: the earlier dated rows, then every undated one.
 		await service.tasksOf('v1', { cursor: encodeCursor({ id: A }) });
-		const dated = calls('andWhere').find((call) => typeof call[0] === 'string' && call[0].includes(':cursorValue'));
-		expect(dated?.[0]).toBe('((task.dueDate IS NOT NULL AND (task.dueDate < :cursorValue OR (task.dueDate = :cursorValue AND task.id < :cursorId))) OR task.dueDate IS NULL)');
-		expect(dated?.[1]).toEqual({ cursorValue: new Date('2026-11-10T00:00:00.000Z'), cursorId: A });
+		const anchor = '(SELECT [a].[dueDate] FROM [task] [a] WHERE [a].[id] = :cursorId)';
+		const dated = calls('andWhere').find((call) => typeof call[0] === 'string' && call[0].includes('IS NOT NULL AND'));
+		expect(dated?.[0]).toBe(`((task.dueDate IS NOT NULL AND (task.dueDate < ${anchor} OR (task.dueDate = ${anchor} AND task.id < :cursorId))) OR task.dueDate IS NULL)`);
+		expect(dated?.[1]).toEqual({ cursorId: A });
 		// Past an undated row: only the undated rows after it.
 		await service.tasksOf('v1', { cursor: encodeCursor({ id: B }) });
 		const undated = calls('andWhere').find((call) => typeof call[0] === 'string' && call[0].includes('IS NULL AND task.id'));
