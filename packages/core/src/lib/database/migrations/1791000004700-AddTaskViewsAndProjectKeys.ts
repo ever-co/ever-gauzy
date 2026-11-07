@@ -26,20 +26,20 @@ const COLUMNS: readonly ColumnSpec[] = [
 
 /**
  * The unique index that keeps a project key unique within an organization (and quick to resolve). Rows without a key
- * are left out: a partial index on Postgres and SQLite; on MySQL a unique index already admits any number of NULLs.
+ * are no concern: every one of the three databases treats NULLs as distinct in a unique index. The entity declares the
+ * same index, so `migration:generate` sees nothing to add.
  */
 const KEY_INDEX = {
 	name: 'UQ_organization_project_organization_task_key',
 	table: 'organization_project',
-	columns: ['tenantId', 'organizationId', 'taskKey'],
-	where: `"taskKey" IS NOT NULL`
+	columns: ['tenantId', 'organizationId', 'taskKey']
 };
 
 /**
  * Adds the columns of the task views extensions: `task_view.visibility` (`personal` / `shared`, null = shared),
  * `task_view.version` (bumped by every save, default 1), `task_view.manualOrder` (the task ids in manual order),
  * `organization_project.taskKey` (the key tasks are addressed by) and `organization_project.taskKeyHistory`
- * (former keys), plus a unique index on `(tenantId, organizationId, taskKey)` for rows that hold a key.
+ * (former keys), plus a unique index on `(tenantId, organizationId, taskKey)`.
  *
  * Nothing is backfilled: views stay shared, projects keep resolving under the key derived from their name until a
  * manager sets one. Running `up` twice is harmless (`IF NOT EXISTS` on Postgres, column and index checks elsewhere),
@@ -102,7 +102,7 @@ export class AddTaskViewsAndProjectKeys1791000004700 implements MigrationInterfa
 			return;
 		}
 		await queryRunner.query(
-			`CREATE UNIQUE INDEX IF NOT EXISTS ${quoted(dialect, KEY_INDEX.name)} ON ${quoted(dialect, KEY_INDEX.table)} (${columns}) WHERE ${KEY_INDEX.where}`
+			`CREATE UNIQUE INDEX IF NOT EXISTS ${quoted(dialect, KEY_INDEX.name)} ON ${quoted(dialect, KEY_INDEX.table)} (${columns})`
 		);
 	}
 

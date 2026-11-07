@@ -1,6 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { JoinColumn, RelationId, JoinTable } from 'typeorm';
-import { Exclude } from 'class-transformer';
+import { Exclude, Transform } from 'class-transformer';
 import { billingRateColumn } from '../shared/pipes/billing-rate.transform';
 import {
 	IsArray,
@@ -91,6 +91,7 @@ import { HasCustomFields } from '../core/entities/custom-entity-fields';
 import { Taggable } from '../tags/tag.types';
 
 @MultiORMEntity('organization_project', { mikroOrmRepository: () => MikroOrmOrganizationProjectRepository })
+@ColumnIndex('UQ_organization_project_organization_task_key', ['tenantId', 'organizationId', 'taskKey'], { unique: true })
 export class OrganizationProject
 	extends TenantOrganizationBaseEntity
 	implements IOrganizationProject, Taggable, HasCustomFields
@@ -156,9 +157,10 @@ export class OrganizationProject
 	 */
 	@ApiPropertyOptional({ type: () => String, nullable: true })
 	@IsOptional()
+	// A key is trimmed and upper-cased on its way in (`api` → `API`); an empty string clears it, like null.
+	@Transform(({ value }) => (typeof value === 'string' ? value.trim().toUpperCase() || null : value))
 	@ValidateIf((it) => it.taskKey !== null)
 	@Matches(/^[A-Z][A-Z0-9]{1,9}$/, { message: 'taskKey must be 2 to 10 upper-case letters or digits, starting with a letter' })
-	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, length: 16 })
 	taskKey?: string | null;
 

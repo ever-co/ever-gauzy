@@ -108,16 +108,6 @@ export class TaskViewController extends CrudController<TaskView> {
 		return await this.commandBus.execute(new TaskViewUpdateCommand(id, entity));
 	}
 
-	@ApiOperation({ summary: 'Delete view' })
-	@ApiResponse({
-		status: HttpStatus.NO_CONTENT,
-		description: 'The record has been successfully deleted'
-	})
-	@ApiResponse({
-		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found'
-	})
-	@HttpCode(HttpStatus.ACCEPTED)
 	/**
 	 * PUT the manual order of a view: the task ids in the order the view shows them. Behind
 	 * `GAUZY_TASK_VIEWS_ENABLED` (404 otherwise); a stated `expectedVersion` is refused with 409 when stale.
@@ -135,6 +125,16 @@ export class TaskViewController extends CrudController<TaskView> {
 		return await this.taskViewService.setOrder(id, input);
 	}
 
+	@ApiOperation({ summary: 'Delete view' })
+	@ApiResponse({
+		status: HttpStatus.NO_CONTENT,
+		description: 'The record has been successfully deleted'
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@HttpCode(HttpStatus.ACCEPTED)
 	@Permissions(PermissionsEnum.ORG_TASK_EDIT)
 	@Delete('/:id')
 	async delete(@Param('id', UUIDValidationPipe) id: ID): Promise<DeleteResult> {

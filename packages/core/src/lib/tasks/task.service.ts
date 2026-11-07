@@ -88,7 +88,7 @@ import { BaseEntityEventTypeEnum } from '../event-bus/base-entity-event';
 import { IFindOneOptions } from '../core/crud/icrud.service';
 import { Task } from './task.entity';
 import { BulkUpdateRequestError, changesToUpdate, normalizeBulkUpdate } from './bulk-update';
-import { keysOfProject, parseTaskReference } from './task-reference';
+import { derivedProjectKey, keysOfProject, normalizeTaskKey, parseTaskReference } from './task-reference';
 import { BUILT_IN_VIEW_DEFAULT_RELATIONS, BUILT_IN_VIEW_RELATIONS, builtInViewWindow, relationsTreeOf } from './built-in-views';
 import { TypeOrmOrganizationSprintTaskHistoryRepository } from './../organization-sprint/repository/type-orm-organization-sprint-task-history.repository';
 import { GetTaskByIdDTO } from './dto';
@@ -2517,7 +2517,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			}
 			throw error;
 		}
-		const tenantId = RequestContext.currentTenantId() ?? input.tenantId;
+		const tenantId = tenantIdOf(input);
 		const organizationId = organizationIdOf(input);
 		const results: ITaskBulkUpdateResult[] = [];
 		for (const item of items) {
@@ -2556,7 +2556,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 	 * number no task of that project holds, resolves to nothing; a task that cannot be read answers the same.
 	 */
 	async resolveReferences(input: ITaskReferenceResolveInput): Promise<ITaskReferenceResolution[]> {
-		const tenantId = RequestContext.currentTenantId() ?? input.tenantId;
+		const tenantId = tenantIdOf(input);
 		const organizationId = organizationIdOf(input);
 		const projects = await this.typeOrmRepository.manager.find(OrganizationProject, {
 			where: { tenantId, organizationId },
@@ -2606,7 +2606,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 				projectId: found.projectId,
 				title: found.title,
 				status: found.status as TaskStatusEnum,
-				currentKey: project ? keysOfProject(project)[0] : parts.key
+				currentKey: project ? (normalizeTaskKey(project.taskKey) ?? derivedProjectKey(project.name) ?? parts.key) : parts.key
 			});
 		}
 		return resolutions;
@@ -2618,18 +2618,18 @@ export class TaskService extends TenantAwareCrudService<Task> {
 	 * tasks of their own.
 	 */
 	async findBuiltInView(key: TaskBuiltInViewEnum, query: ITaskBuiltInViewQuery): Promise<IPagination<ITask>> {
-		const employeeId = RequestContext.currentEmployeeId();
+		// The caller's own employee record: `currentEmployeeId()` answers null for a `CHANGE_SELECTED_EMPLOYEE` holder.
+		const employeeId = RequestContext.currentUser()?.employeeId ?? RequestContext.currentEmployeeId();
 		if (!employeeId) {
 			return { items: [], total: 0 };
 		}
-		const tenantId = RequestContext.currentTenantId() ?? query.tenantId;
+		const tenantId = tenantIdOf(query);
 		const organizationId = organizationIdOf(query);
 		const window = builtInViewWindow(key, new Date(), query.timeZone);
 		const where: FindOptionsWhere<Task> = {
 			tenantId,
 			organizationId,
-			isScreeningTask: false,
-			members: { id: employeeId }
+			isScreeningTask: false
 		};
 		if (window.dueDateFrom && window.dueDateTo) {
 			where.dueDate = Between(window.dueDateFrom, window.dueDateTo);
@@ -2656,14 +2656,34 @@ export class TaskService extends TenantAwareCrudService<Task> {
 		const relations = relationsTreeOf(requested) as FindOptionsRelations<Task>;
 		// The platform's sensitive-relation table applies here as on every other read (tracked time, for one).
 		this.assertRelationsPermitted({ relations });
-		const [items, total] = await this.typeOrmRepository.findAndCount({
-			where: wheres,
-			relations,
-			order: { dueDate: 'ASC', createdAt: 'DESC' },
-			take,
-			skip
-		});
-		return { items, total };
+		// Membership is a subquery, never a join shared with the loaded `members` relation: a join used for both
+		// would list the caller as a task's only assignee. The page of ids first, then the rows with every relation.
+		const idsQuery = this.typeOrmRepository
+			.createQueryBuilder('task')
+			.select(['task.id'])
+			.where(wheres)
+			.andWhere((qb) => {
+				const membership = qb
+					.subQuery()
+					.select('"task_employee"."taskId"')
+					.from('task_employee', 'task_employee')
+					.where('"task_employee"."employeeId" = :employeeId')
+					.getQuery();
+				return `"task"."id" IN ${membership}`;
+			})
+			.setParameter('employeeId', employeeId)
+			.orderBy('task.dueDate', 'ASC')
+			.addOrderBy('task.createdAt', 'DESC')
+			.skip(skip)
+			.take(take);
+		const [page, total] = await idsQuery.getManyAndCount();
+		if (page.length === 0) {
+			return { items: [], total };
+		}
+		const ids = page.map((task) => task.id);
+		const rows = await this.typeOrmRepository.find({ where: { id: In(ids), tenantId, organizationId }, relations });
+		const byId = new Map(rows.map((task) => [String(task.id), task]));
+		return { items: ids.map((id) => byId.get(String(id))).filter((task): task is Task => !!task), total };
 	}
 }
 
@@ -2675,7 +2695,16 @@ export class TaskService extends TenantAwareCrudService<Task> {
 function organizationIdOf(input: { organizationId?: ID; organization?: { id?: ID } | null }): ID {
 	const organizationId = input.organizationId ?? input.organization?.id;
 	if (!organizationId) {
-		throw new BadRequestException('ORGANIZATION_REQUIRED: state the organization of the request.');
+		throw new BadRequestException('TASK_SCOPE_REQUIRED: state the organization of the request.');
 	}
 	return organizationId;
+}
+
+/** The caller's tenant, which every one of these reads is scoped by; a request without one is refused. */
+function tenantIdOf(input: { tenantId?: ID }): ID {
+	const tenantId = RequestContext.currentTenantId() ?? input.tenantId;
+	if (!tenantId) {
+		throw new BadRequestException('TASK_SCOPE_REQUIRED: the tenant of the request is unknown.');
+	}
+	return tenantId;
 }

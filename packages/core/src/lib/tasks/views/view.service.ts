@@ -1,4 +1,4 @@
-import { ConflictException, HttpException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, HttpException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
 import {
 	ActionTypeEnum,
 	ActorTypeEnum,
@@ -82,19 +82,12 @@ export class TaskViewService extends TenantAwareCrudService<TaskView> {
 			throw new NotFoundException('View not found');
 		}
 		// A save that states the version it read is refused when the view moved on since: the caller gets the
-		// latest view to merge into, nothing is overwritten. The bump is one conditional write, so two saves that
-		// read the same version cannot both pass: the second finds the version gone and gets the 409.
-		const nextVersion = await this.bumpVersion(existingTaskView, input.expectedVersion, tenantId);
-		const { expectedVersion: _expected, version: _version, ...changes } = input;
-		void _expected;
+		// latest view to merge into, nothing is overwritten. The changes and the version move in one conditional
+		// write, so two saves that read the same version cannot both pass, and a failed save bumps nothing.
+		const { expectedVersion, version: _version, ...changes } = input;
 		void _version;
 		try {
-			const updatedTaskView = await super.create({
-				...changes,
-				tenantId,
-				id,
-				version: nextVersion
-			});
+			const updatedTaskView = await this.saveVersioned(existingTaskView, expectedVersion, tenantId, changes);
 
 			// Generate the activity log
 			const { organizationId } = updatedTaskView;
@@ -159,9 +152,8 @@ export class TaskViewService extends TenantAwareCrudService<TaskView> {
 		if (!existing) {
 			throw new NotFoundException('View not found');
 		}
-		const nextVersion = await this.bumpVersion(existing, input.expectedVersion, tenantId);
 		const manualOrder = [...new Set((input.taskIds ?? []).map((taskId) => String(taskId)))] as ID[];
-		const updated = await super.create({ id, tenantId, manualOrder, version: nextVersion });
+		const updated = await this.saveVersioned(existing, input.expectedVersion, tenantId, { manualOrder });
 		this.activityLogService.logActivity<TaskView>(
 			BaseEntityEnum.TaskView,
 			ActionTypeEnum.Updated,
@@ -178,27 +170,43 @@ export class TaskViewService extends TenantAwareCrudService<TaskView> {
 	}
 
 	/**
-	 * Moves the view from the version the caller read (or the version just read, when the caller stated none) to
-	 * the next one in a single conditional write, and answers the next version. Nothing moved means another save
-	 * got there first: 409 with the latest view, so the caller can merge.
+	 * Writes the changes and moves the version in one conditional `UPDATE`, then answers the row as saved. With an
+	 * `expectedVersion` the write matches that version and moves it one on: nothing matched means another save got
+	 * there first, 409 with the latest view so the caller can merge, and nothing (the version included) changed.
+	 * Without one the write matches the row alone and the database adds one to whatever version it holds, so a
+	 * caller that did not ask for the check never gets a conflict. Only columns and relations of the view are
+	 * written; a stated version is a positive integer, whatever validated the input.
 	 */
-	private async bumpVersion(existing: ITaskView, expectedVersion: number | undefined, tenantId: ID | undefined): Promise<number> {
-		const current = existing.version ?? 1;
-		const expected = expectedVersion ?? current;
-		const next = expected + 1;
-		const result = await this.typeOrmRepository.update(
-			{ id: existing.id, ...(tenantId ? { tenantId } : {}), version: expected } as FindOptionsWhere<TaskView>,
-			{ version: next } as never
-		);
+	private async saveVersioned(
+		existing: ITaskView,
+		expectedVersion: number | undefined,
+		tenantId: ID | undefined,
+		changes: Record<string, unknown>
+	): Promise<TaskView> {
+		if (expectedVersion !== undefined && (!Number.isInteger(expectedVersion) || expectedVersion < 1)) {
+			throw new BadRequestException('TASK_VIEW_VERSION_INVALID: expectedVersion is a positive integer.');
+		}
+		const metadata = this.typeOrmRepository.metadata;
+		const values: Record<string, unknown> = {};
+		for (const [key, value] of Object.entries(changes)) {
+			if (value === undefined || key === 'id' || key === 'tenantId' || key === 'version') continue;
+			if (metadata.findColumnWithPropertyPath(key) || metadata.findRelationWithPropertyPath(key)) values[key] = value;
+		}
+		const where = { id: existing.id, ...(tenantId ? { tenantId } : {}), ...(expectedVersion !== undefined ? { version: expectedVersion } : {}) };
+		const version = expectedVersion !== undefined ? expectedVersion + 1 : () => 'version + 1';
+		const result = await this.typeOrmRepository.update(where as FindOptionsWhere<TaskView>, { ...values, version } as never);
 		if (!result.affected) {
-			const latest = await super.findOneByIdString(existing.id as ID).catch(() => existing);
+			const latest = await super.findOneByIdString(existing.id as ID).catch(() => null);
+			if (expectedVersion === undefined || !latest) {
+				throw new NotFoundException('View not found');
+			}
 			throw new ConflictException({
-				message: `TASK_VIEW_VERSION_CONFLICT: the view is at version ${latest?.version ?? current}, not ${expected}.`,
+				message: `TASK_VIEW_VERSION_CONFLICT: the view is at version ${latest.version ?? 1}, not ${expectedVersion}.`,
 				code: 'TASK_VIEW_VERSION_CONFLICT',
 				view: latest
 			});
 		}
-		return next;
+		return super.findOneByIdString(existing.id as ID);
 	}
 
 	/** The caller's read conditions with the visibility rule added as alternatives (an OR of the shared and own cases). */

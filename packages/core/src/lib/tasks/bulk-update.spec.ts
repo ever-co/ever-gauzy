@@ -21,7 +21,23 @@ describe('normalizeBulkUpdate', () => {
 		expect(items).toEqual([{ taskId: 'a', changes: { priority: TaskPriorityEnum.LOW, isArchived: true } }]);
 	});
 
-	it('refuses an empty, an ambiguous, an oversize and a change-less request', () => {
+	it('refuses an empty, an ambiguous, an oversize and a change-less request, each with its code', () => {
+		const codeOf = (input: ITaskBulkUpdateInput) => {
+			try {
+				normalizeBulkUpdate(input);
+				return null;
+			} catch (error) {
+				return (error as BulkUpdateRequestError).code;
+			}
+		};
+		expect(codeOf({} as ITaskBulkUpdateInput)).toBe('BULK_UPDATE_EMPTY');
+		expect(codeOf({ taskIds: [], items: [] } as ITaskBulkUpdateInput)).toBe('BULK_UPDATE_EMPTY');
+		expect(codeOf({ taskIds: ['a'], changes: { isArchived: true }, items: [{ taskId: 'b', changes: { isArchived: true } }] } as ITaskBulkUpdateInput)).toBe(
+			'BULK_UPDATE_AMBIGUOUS'
+		);
+		const manyItems = Array.from({ length: TASK_BULK_UPDATE_MAX + 1 }, (_, at) => ({ taskId: `t${at}`, changes: { isArchived: true } }));
+		expect(codeOf({ items: manyItems } as ITaskBulkUpdateInput)).toBe('BULK_LIMIT_EXCEEDED');
+		expect(codeOf({ items: [{ taskId: 'a', changes: {} }] } as ITaskBulkUpdateInput)).toBe('BULK_UPDATE_NO_CHANGES');
 		expect(() => normalizeBulkUpdate({} as ITaskBulkUpdateInput)).toThrow(BulkUpdateRequestError);
 		expect(() => normalizeBulkUpdate({ taskIds: ['a'], changes: { isArchived: true }, items: [{ taskId: 'b', changes: { isArchived: true } }] } as ITaskBulkUpdateInput)).toThrow(
 			/not both/
