@@ -57,6 +57,10 @@ no table (its migration is not registered) and makes no outbound request. Same l
   already added with the same address. Both are kept once (the id map, entities `Comment` and `Attachment`).
   The webhook also delivers a comment added or edited and a file attached, as the task they belong to; a mapping
   whose webhook was registered before this filter existed gets it with `POST …/mappings/:mappingId/webhook`.
+- **A refused token.** When Asana refuses the connection's token (a 401), the connection is marked — the page asks for
+  a reconnect, the lookups answer `ASANA_TOKEN_REFUSED`, the scheduled import leaves its mappings alone — and, with the
+  Inbox plugin loaded, the person who connected gets a high-priority Inbox notice (one per connection; resolved when a
+  renewed token works or someone connects again).
 - **Scheduled import.** Every five minutes the worker process (`apps/worker`, the one whose scheduler root is
   enabled) sweeps the mappings that bring tasks in: one whose last import is older than
   `ASANA_IMPORT_INTERVAL_MINUTES` (or that was never imported) is imported again, the changes since its position,
