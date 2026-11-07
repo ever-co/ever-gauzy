@@ -1,176 +1,262 @@
-<nb-card class="card-scroll">
+<nb-card class="card-scroll manual-time-report">
 	<nb-card-header>
-		<div class="row">
-			<div class="col-auto">
-				<h4>
-					<ngx-header-title>
-						{{ 'REPORT_PAGE.MANUAL_TIME_EDIT_REPORT' | translate }}
-					</ngx-header-title>
-				</h4>
-			</div>
+		<div class="report-heading">
+			<h4>
+				<ngx-header-title>
+					{{ 'REPORT_PAGE.MANUAL_TIME_EDIT_REPORT' | translate }}
+				</ngx-header-title>
+			</h4>
+			<p class="report-subtitle">{{ 'REPORT_PAGE.MANUAL_TIME.SUBTITLE' | translate }}</p>
 		</div>
-		<div class="row">
-			<div class="col-auto ml-auto">
-				<div class="filters">
-					<ngx-gauzy-filters
-						[filters]="filters"
-						[saveFilters]="(datePickerConfig$ | async).isSaveDatePicker"
-						[hasLogTypeFilter]="false"
-						[hasSourceFilter]="false"
-						[hasActivityLevelFilter]="false"
-						(filtersChange)="filtersChange($event)"
-					></ngx-gauzy-filters>
-					<div class="col-auto">
-						<ng-select
-							[searchable]="false"
-							[clearable]="true"
-							[items]="actions"
-							[placeholder]="'REPORT_PAGE.ACTION' | translate"
-							[formControl]="control"
-							appendTo="body"
-						></ng-select>
-					</div>
+		<div class="filters">
+			<ngx-gauzy-filters
+				[filters]="filters"
+				[saveFilters]="(datePickerConfig$ | async)?.isSaveDatePicker"
+				[hasLogTypeFilter]="false"
+				[hasSourceFilter]="false"
+				[hasActivityLevelFilter]="false"
+				(filtersChange)="filtersChange($event)"
+			>
+				<div class="col-auto single-filter-wrapper task-filter">
+					<ga-task-selector
+						[formControl]="taskControl"
+						[addTag]="false"
+						[projectId]="selectedProjectId"
+						[employeeId]="selectedEmployeeId"
+						[placeholder]="'REPORT_PAGE.MANUAL_TIME.ALL_TASKS' | translate"
+					></ga-task-selector>
 				</div>
-			</div>
+				<div class="col-auto single-filter-wrapper action-filter">
+					<ng-select
+						[searchable]="false"
+						[clearable]="true"
+						[items]="actions"
+						bindValue="value"
+						[placeholder]="'REPORT_PAGE.MANUAL_TIME.ALL_ACTIONS' | translate"
+						[formControl]="actionControl"
+						appendTo="body"
+					>
+						<ng-template ng-label-tmp ng-option-tmp let-item="item">
+							{{ item.label | translate }}
+						</ng-template>
+					</ng-select>
+				</div>
+				<div class="col-auto single-filter-wrapper toggle-filter">
+					<nb-toggle [formControl]="billableOnlyControl" status="primary">
+						{{ 'REPORT_PAGE.MANUAL_TIME.BILLABLE_ONLY' | translate }}
+					</nb-toggle>
+				</div>
+				@if (hasSelectedTeam) {
+					<div class="col-auto single-filter-wrapper toggle-filter">
+						<nb-toggle
+							[formControl]="includeTimeWithoutTeamControl"
+							status="primary"
+							[nbTooltip]="'REPORT_PAGE.MANUAL_TIME.INCLUDE_TIME_WITHOUT_TEAM_HINT' | translate"
+						>
+							{{ 'REPORT_PAGE.MANUAL_TIME.INCLUDE_TIME_WITHOUT_TEAM' | translate }}
+						</nb-toggle>
+					</div>
+				}
+				@if (hasReportFilters) {
+					<div gaFilterActions class="col-auto single-filter-wrapper reset-action">
+						<button type="button" class="reset-button" (click)="clearReportFilters()">
+							<nb-icon icon="refresh-outline"></nb-icon>
+							<span>{{ 'REPORT_PAGE.MANUAL_TIME.RESET_FILTERS' | translate }}</span>
+						</button>
+					</div>
+				}
+				<div gaFilterActions class="col-auto single-filter-wrapper export-action">
+					<button nbButton status="basic" outline [disabled]="!canExport" (click)="exportToCsv()">
+						<nb-icon icon="download-outline"></nb-icon>
+						{{ 'BUTTONS.EXPORT_TO_CSV' | translate }}
+					</button>
+				</div>
+			</ngx-gauzy-filters>
 		</div>
 	</nb-card-header>
 	<nb-card-body class="report-body">
 		<div class="report-container">
 			<div class="table">
-				<div
-					class="weekly-logs row-table"
-					[nbSpinner]="loading"
-					nbSpinnerSize="giant"
-					nbSpinnerStatus="primary"
-				>
-					<!--
-						The rows used to sit inside a bare `<ng-template class="table-template">`.
-						An ng-template with no structural directive and no ngTemplateOutlet is
-						never instantiated, so this branch rendered NOTHING - which is the
-						branch taken whenever the report has data. The page was blank exactly
-						when there was something to show, and only the empty state below ever
-						appeared.
-					-->
-					@if (dailyData?.length > 0) {
-							@for (day of dailyData; track day) {
-								<nb-card class="card">
-									<nb-card-header class="card-title">
-										{{ day.date | dateFormat }}
-									</nb-card-header>
-									<nb-card-body class="manual-time-container">
-										<ng-container [ngTemplateOutlet]="columnsHeader"></ng-container>
-										@for (timeLogRow of day.timeLogs; track timeLogRow) {
-											<div class="cart-body project-row">
-												<div class="table-row">
-													<div class="table-inner-wrapper">
-														<div class="responsive-table-row employee-column">
-															<div class="responsive-table-header">
-																{{ 'REPORT_PAGE.EMPLOYEE' | translate }}
-															</div>
-															<div class="responsive-table-content project-name">
-																<ng-container
-																	[ngTemplateOutlet]="employeeEl"
-																	[ngTemplateOutletContext]="{
-																		$implicit: $safeNavigationMigration(timeLogRow?.employee)
-																	}"
-																>
-																</ng-container>
-															</div>
+				<div class="weekly-logs row-table" [nbSpinner]="loading" nbSpinnerSize="giant" nbSpinnerStatus="primary">
+					@if (timeLogs.length > 0) {
+						<section class="summary" [attr.aria-label]="'REPORT_PAGE.MANUAL_TIME.SUMMARY' | translate">
+							<div class="summary-item summary-item--primary">
+								<span class="summary-label">{{ 'REPORT_PAGE.MANUAL_TIME.TOTAL_TIME' | translate }}</span>
+								<span class="summary-value">{{ summary.duration | durationFormat }}</span>
+							</div>
+							<div class="summary-item">
+								<span class="summary-label">{{ 'REPORT_PAGE.MANUAL_TIME.ENTRIES' | translate }}</span>
+								<span class="summary-value">{{ summary.entries }}</span>
+							</div>
+							<div class="summary-item">
+								<span class="summary-label">
+									<span class="dot dot--added"></span>
+									{{ 'REPORT_PAGE.MANUAL_TIME.ADDED' | translate }}
+								</span>
+								<span class="summary-value">{{ summary.added }}</span>
+							</div>
+							<div class="summary-item">
+								<span class="summary-label">
+									<span class="dot dot--edited"></span>
+									{{ 'REPORT_PAGE.MANUAL_TIME.EDITED' | translate }}
+								</span>
+								<span class="summary-value">{{ summary.edited }}</span>
+							</div>
+							<div class="summary-item">
+								<span class="summary-label">{{ 'REPORT_PAGE.MANUAL_TIME.EMPLOYEES' | translate }}</span>
+								<span class="summary-value">{{ summary.employees }}</span>
+							</div>
+						</section>
+						@if (hasMore) {
+							<p class="summary-note">
+								<nb-icon icon="info-outline"></nb-icon>
+								{{ 'REPORT_PAGE.MANUAL_TIME.PARTIAL_TOTALS' | translate : { count: timeLogs.length } }}
+							</p>
+						}
+
+						@for (day of dailyData; track day.date) {
+							<nb-card class="card">
+								<nb-card-header class="card-title day-header">
+									<span class="day-date">{{ day.date | dateFormat }}</span>
+									<span class="day-meta">
+										{{ 'REPORT_PAGE.MANUAL_TIME.ENTRIES_COUNT' | translate : { count: day.timeLogs.length } }}
+										<span class="day-meta-separator">·</span>
+										<span class="day-total">{{ day.duration | durationFormat }}</span>
+									</span>
+								</nb-card-header>
+								<nb-card-body class="manual-time-container">
+									<ng-container [ngTemplateOutlet]="columnsHeader"></ng-container>
+									@for (timeLog of day.timeLogs; track timeLog.id) {
+										<div class="cart-body project-row">
+											<div class="table-row">
+												<div class="table-inner-wrapper">
+													<div class="responsive-table-row employee-column">
+														<div class="responsive-table-header">
+															{{ 'REPORT_PAGE.EMPLOYEE' | translate }}
 														</div>
-														<div class="responsive-table-row project-column">
-															<div class="responsive-table-header">
-																{{ 'REPORT_PAGE.PROJECT' | translate }}
-															</div>
-															<div class="responsive-table-content project-name">
-																<ng-container
-																	[ngTemplateOutlet]="projectEl"
-																	[ngTemplateOutletContext]="{
-																		$implicit: $safeNavigationMigration(timeLogRow?.project)
-																	}"
-																>
-																</ng-container>
-															</div>
+														<div class="responsive-table-content">
+															<ng-container
+																[ngTemplateOutlet]="employeeEl"
+																[ngTemplateOutletContext]="{ $implicit: timeLog?.employee }"
+															></ng-container>
 														</div>
-														<div class="responsive-table-row to-do-column">
-															<div class="responsive-table-header">
-																{{ 'REPORT_PAGE.TO_DO' | translate }}
-															</div>
-															<div class="responsive-table-content project-name">
-																<ng-container
-																	[ngTemplateOutlet]="taskEl"
-																	[ngTemplateOutletContext]="{
-																		$implicit: $safeNavigationMigration(timeLogRow?.task)
-																	}"
-																>
-																</ng-container>
-															</div>
+													</div>
+													<div class="responsive-table-row project-column">
+														<div class="responsive-table-header">
+															{{ 'REPORT_PAGE.PROJECT' | translate }}
 														</div>
-														<div class="responsive-table-row small-column">
-															<div class="responsive-table-header">
-																{{ 'REPORT_PAGE.REASON' | translate }}
-															</div>
-															<div class="responsive-table-content day-col">
-																{{ timeLogRow.reason || '&#8212;' }}
-															</div>
+														<div class="responsive-table-content">
+															<ng-container
+																[ngTemplateOutlet]="projectEl"
+																[ngTemplateOutletContext]="{ $implicit: timeLog?.project }"
+															></ng-container>
 														</div>
-														<div class="responsive-table-row small-column">
-															<div class="responsive-table-header">
-																{{ 'REPORT_PAGE.FROM' | translate }}
-															</div>
-															<div class="responsive-table-content day-col">
-																{{ timeLogRow.createdAt | timeFormat }}
-															</div>
+													</div>
+													<div class="responsive-table-row task-column">
+														<div class="responsive-table-header">
+															{{ 'REPORT_PAGE.TO_DO' | translate }}
 														</div>
-														<div class="responsive-table-row small-column">
-															<div class="responsive-table-header">
-																{{ 'REPORT_PAGE.TIME_SPAN' | translate }}
-															</div>
-															<div class="responsive-table-content day-col">
-																{{ timeLogRow.duration | durationFormat }}
-															</div>
+														<div class="responsive-table-content">
+															@if (timeLog?.task) {
+																<span class="cell-text" [title]="timeLog.task.title">{{ timeLog.task.title }}</span>
+															} @else {
+																<span class="muted">{{ 'REPORT_PAGE.NO_TASK' | translate }}</span>
+															}
 														</div>
-														<div class="responsive-table-row small-column">
-															<div class="responsive-table-header">
-																{{ 'REPORT_PAGE.CHANGED_AT' | translate }}
-															</div>
-															<div class="responsive-table-content day-col">
-																{{ timeLogRow.editedAt | dateTimeFormat }}
-															</div>
+													</div>
+													<div class="responsive-table-row reason-column">
+														<div class="responsive-table-header">
+															{{ 'REPORT_PAGE.REASON' | translate }}
 														</div>
-														<div class="responsive-table-row small-column action-column">
-															<div class="responsive-table-header">
-																{{ 'REPORT_PAGE.ACTION' | translate }}
-															</div>
-															<div class="responsive-table-content day-col">
-																@switch (timeLogRow.isEdited) {
-																	@case (true) {
-																		<nb-badge
-																			[text]="
-																				ManualTimeLogAction.EDITED | titlecase
-																			"
-																		></nb-badge>
-																	}
-																	@case (false) {
-																		<nb-badge
-																			[text]="
-																				ManualTimeLogAction.ADDED | titlecase
-																			"
-																		></nb-badge>
-																	}
-																}
-															</div>
+														<div class="responsive-table-content">
+															@if (timeLog.reason) {
+																<span class="cell-text reason" [title]="timeLog.reason">{{ timeLog.reason }}</span>
+															} @else {
+																<span class="muted">&#8212;</span>
+															}
+														</div>
+													</div>
+													<div class="responsive-table-row time-column">
+														<div class="responsive-table-header">
+															{{ 'REPORT_PAGE.MANUAL_TIME.TIME_RANGE' | translate }}
+														</div>
+														<div class="responsive-table-content day-col">
+															{{ timeLog.startedAt | utcToTimezone : loadedTimeZone | timeFormat : timeFormat : false }}
+															&ndash;
+															{{ timeLog.stoppedAt | utcToTimezone : loadedTimeZone | timeFormat : timeFormat : false }}
+														</div>
+													</div>
+													<div class="responsive-table-row duration-column">
+														<div class="responsive-table-header">
+															{{ 'REPORT_PAGE.DURATION' | translate }}
+														</div>
+														<div class="responsive-table-content day-col">
+															<span class="duration-span">{{ timeLog.duration | durationFormat }}</span>
+															@if (timeLog.isBillable) {
+																<span class="billable-tag" [nbTooltip]="'REPORT_PAGE.MANUAL_TIME.BILLABLE' | translate">
+																	<nb-icon icon="pricetags-outline"></nb-icon>
+																</span>
+															}
+														</div>
+													</div>
+													<div class="responsive-table-row changed-column">
+														<div class="responsive-table-header">
+															{{ 'REPORT_PAGE.CHANGED_AT' | translate }}
+														</div>
+														<div class="responsive-table-content day-col">
+															{{ changedAt(timeLog) | utcToTimezone : loadedTimeZone | dateTimeFormat }}
+														</div>
+													</div>
+													<div class="responsive-table-row action-column">
+														<div class="responsive-table-header">
+															{{ 'REPORT_PAGE.ACTION' | translate }}
+														</div>
+														<div class="responsive-table-content">
+															@if (isEdited(timeLog)) {
+																<span class="action-pill action-pill--edited">
+																	{{ 'REPORT_PAGE.MANUAL_TIME.EDITED' | translate }}
+																</span>
+															} @else {
+																<span class="action-pill action-pill--added">
+																	{{ 'REPORT_PAGE.MANUAL_TIME.ADDED' | translate }}
+																</span>
+															}
 														</div>
 													</div>
 												</div>
 											</div>
-										}
-									</nb-card-body>
-								</nb-card>
+										</div>
+									}
+								</nb-card-body>
+							</nb-card>
+						}
+
+						<div class="report-footer">
+							<span class="report-footer-count">
+								{{ 'REPORT_PAGE.MANUAL_TIME.SHOWING' | translate : { count: timeLogs.length } }}
+							</span>
+							@if (hasMore) {
+								<button
+									nbButton
+									status="primary"
+									outline
+									size="small"
+									[disabled]="loadingMore"
+									[nbSpinner]="loadingMore"
+									nbSpinnerSize="tiny"
+									(click)="loadMore()"
+								>
+									{{ 'REPORT_PAGE.MANUAL_TIME.LOAD_MORE' | translate }}
+								</button>
 							}
+						</div>
 					} @else {
 						<ngx-no-data-message
 							[loading]="loading"
-							[message]="'REPORT_PAGE.NO_DATA.MANUAL_ACTIVITY' | translate"
+							[message]="
+								(hasReportFilters ? 'REPORT_PAGE.MANUAL_TIME.NO_DATA_FILTERED' : 'REPORT_PAGE.NO_DATA.MANUAL_ACTIVITY')
+									| translate
+							"
 						></ngx-no-data-message>
 					}
 				</div>
@@ -183,65 +269,54 @@
 	@if (project) {
 		<ga-project-column-view [project]="project"></ga-project-column-view>
 	} @else {
-		<span>{{ 'REPORT_PAGE.NO_PROJECT' | translate }}</span>
-	}
-</ng-template>
-
-<ng-template let-task #taskEl>
-	@if (task) {
-		<span>{{ task?.title }} </span>
-	} @else {
-		<span>{{ 'REPORT_PAGE.NO_TASK' | translate }}</span>
+		<span class="muted">{{ 'REPORT_PAGE.NO_PROJECT' | translate }}</span>
 	}
 </ng-template>
 
 <ng-template let-employee #employeeEl>
-	<div class="avatar-wrapper-outer">
-		@if (employee) {
+	@if (employee) {
+		<div class="avatar-wrapper-outer">
 			<ngx-avatar
 				class="report-table"
-				[src]="$safeNavigationMigration(employee?.user?.imageUrl)"
-				[name]="$safeNavigationMigration(employee?.user?.name)"
-				[id]="$safeNavigationMigration(employee?.id)"
+				[src]="employee?.user?.imageUrl"
+				[name]="employee?.user?.name"
+				[id]="employee?.id"
 				[employee]="employee"
 				linkTo="view"
 			></ngx-avatar>
-		}
-	</div>
-	<ng-template #noEmployee>
-		<span>{{ 'REPORT_PAGE.NO_EMPLOYEE' | translate }}</span>
-	</ng-template>
+		</div>
+	} @else {
+		<span class="muted">{{ 'REPORT_PAGE.NO_EMPLOYEE' | translate }}</span>
+	}
 </ng-template>
 
 <ng-template #columnsHeader>
-	@if (dailyData?.length > 0) {
-		<div class="columns-header">
-			<div class="table-inner-wrapper font-weight-bold align-items-center">
-				<div class="responsive-table-row column-heading employee-column">
-					{{ 'REPORT_PAGE.EMPLOYEE' | translate }}
-				</div>
-				<div class="responsive-table-row column-heading project-column">
-					{{ 'REPORT_PAGE.PROJECT' | translate }}
-				</div>
-				<div class="responsive-table-row column-heading to-do-column">
-					{{ 'REPORT_PAGE.TO_DO' | translate }}
-				</div>
-				<div class="responsive-table-row column-heading small-column">
-					{{ 'REPORT_PAGE.REASON' | translate }}
-				</div>
-				<div class="responsive-table-row column-heading small-column">
-					{{ 'REPORT_PAGE.FROM' | translate }}
-				</div>
-				<div class="responsive-table-row column-heading small-column">
-					{{ 'REPORT_PAGE.TIME_SPAN' | translate }}
-				</div>
-				<div class="responsive-table-row column-heading small-column">
-					{{ 'REPORT_PAGE.CHANGED_AT' | translate }}
-				</div>
-				<div class="responsive-table-row column-heading small-column action-column">
-					{{ 'REPORT_PAGE.ACTION' | translate }}
-				</div>
+	<div class="columns-header">
+		<div class="table-inner-wrapper">
+			<div class="responsive-table-row column-heading employee-column">
+				{{ 'REPORT_PAGE.EMPLOYEE' | translate }}
+			</div>
+			<div class="responsive-table-row column-heading project-column">
+				{{ 'REPORT_PAGE.PROJECT' | translate }}
+			</div>
+			<div class="responsive-table-row column-heading task-column">
+				{{ 'REPORT_PAGE.TO_DO' | translate }}
+			</div>
+			<div class="responsive-table-row column-heading reason-column">
+				{{ 'REPORT_PAGE.REASON' | translate }}
+			</div>
+			<div class="responsive-table-row column-heading time-column">
+				{{ 'REPORT_PAGE.MANUAL_TIME.TIME_RANGE' | translate }}
+			</div>
+			<div class="responsive-table-row column-heading duration-column">
+				{{ 'REPORT_PAGE.DURATION' | translate }}
+			</div>
+			<div class="responsive-table-row column-heading changed-column">
+				{{ 'REPORT_PAGE.CHANGED_AT' | translate }}
+			</div>
+			<div class="responsive-table-row column-heading action-column">
+				{{ 'REPORT_PAGE.ACTION' | translate }}
 			</div>
 		</div>
-	}
+	</div>
 </ng-template>
