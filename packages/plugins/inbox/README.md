@@ -227,7 +227,10 @@ person's attention lands:
   `EmployeeNotificationCreatedEvent`). The two read states are one: reading or archiving the item updates the
   notification (the bridge is the `GAUZY` source handler), and an edit or a mark-all-read through
   `/api/employee-notification` updates the items' recipient rows (`EmployeeNotificationUpdatedEvent`). Neither
-  direction echoes. Clients that read employee notifications today see the same entries, unchanged.
+  direction echoes. Clients that read employee notifications today see the same entries, unchanged. A mention
+  is filed once per receiver, record and kind within ten minutes (spec FR-4): the same employee mentioned twice in
+  one page, or in two quick edits, has one entry to look at (the notification rows themselves are all kept); the
+  check and the filing run under one lock per receiver, record and kind, so two filed at once cannot both pass.
 - **Followers are told.** With `GAUZY_NOTIFICATION_FANOUT_ENABLED=true` (off by default), a comment on a record
   an employee follows, and a change of a followed task's status, priority, due date or members, create a
   notification for each follower except the actor (`packages/core/src/lib/entity-subscription/fan-out/`). The
