@@ -71,6 +71,8 @@ function fixture(options: { view?: Record<string, unknown>; rows?: IRow[]; group
 function runBracket(bracket: unknown): Record<string, jest.Mock> {
 	const inner: Record<string, jest.Mock> = {};
 	for (const name of ['where', 'andWhere', 'orWhere']) inner[name] = jest.fn(() => inner);
+	// A query that built no bracket fails here, by name, not on a property of `undefined`.
+	if (!bracket || typeof bracket !== 'object') throw new Error('the query passed no bracket to andWhere');
 	(bracket as { whereFactory: (qb: unknown) => void }).whereFactory(inner);
 	return inner;
 }
