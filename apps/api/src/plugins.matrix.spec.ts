@@ -19,6 +19,8 @@ const STUBBED = Array.from(PLUGINS_SOURCE.matchAll(/from '((?:@gauzy\/plugin-|\.
 		name !== '@gauzy/plugin-integration-linear' &&
 		name !== '@gauzy/plugin-integration-asana' &&
 		name !== '@gauzy/plugin-inbox' &&
+		name !== '@gauzy/plugin-realtime' &&
+		name !== '@gauzy/plugin-chat' &&
 		name !== '@gauzy/plugin-email-provider-resend' &&
 		name !== '@gauzy/plugin-email-provider-postmark' &&
 		name !== '@gauzy/plugin-email-provider-mailgun' &&
@@ -35,6 +37,8 @@ class IntegrationEverWorksPlugin {}
 class IntegrationLinearPlugin {}
 class IntegrationAsanaPlugin {}
 class InboxPlugin {}
+class RealtimePlugin {}
+class ChatPlugin {}
 class EmailProviderSesPlugin {}
 class EmailProviderSendGridPlugin {}
 class EmailProviderMailgunPlugin {}
@@ -103,6 +107,14 @@ function loadPlugins(env: Record<string, string | undefined>, before?: () => voi
 				InboxEmailPlugin,
 				isInboxEnabled: jest.requireActual('../../../packages/plugins/inbox/src/lib/inbox-enabled').isInboxEnabled,
 				isInboxEmailEnabled: jest.requireActual('../../../packages/plugins/inbox/src/lib/email/inbox-email-enabled').isInboxEmailEnabled
+			}));
+			jest.doMock('@gauzy/plugin-realtime', () => ({
+				RealtimePlugin,
+				isRealtimeEnabled: jest.requireActual('../../../packages/plugins/realtime/src/lib/realtime-enabled').isRealtimeEnabled
+			}));
+			jest.doMock('@gauzy/plugin-chat', () => ({
+				ChatPlugin,
+				isChatEnabled: jest.requireActual('../../../packages/plugins/chat/src/lib/chat-enabled').isChatEnabled
 			}));
 			jest.doMock('@gauzy/plugin-email-provider-resend', () => ({
 				EmailProviderResendPlugin,
