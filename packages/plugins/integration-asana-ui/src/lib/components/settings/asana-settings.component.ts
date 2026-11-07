@@ -259,7 +259,7 @@ interface MappingDraft {
 								<tbody>
 									@for (run of runs; track run.id) {
 										<tr>
-											<td>{{ 'ASANA.RUNS.KINDS.' + run.kind | translate }}{{ run.full ? ' (full)' : '' }}</td>
+											<td>{{ 'ASANA.RUNS.KINDS.' + run.kind | translate }}{{ run.full ? ' ' + ('ASANA.RUNS.FULL' | translate) : '' }}</td>
 											<td>{{ 'ASANA.RUNS.STATUSES.' + run.status | translate }}</td>
 											<td>{{ run.startedAt ? (run.startedAt | date: 'short') : '—' }}</td>
 											<td>{{ run.finishedAt ? (run.finishedAt | date: 'short') : '—' }}</td>
@@ -311,10 +311,10 @@ interface MappingDraft {
 				font-size: 0.85rem;
 			}
 			.section-map {
-				border: 1px solid rgba(143, 155, 179, 0.3);
-				border-radius: 0.5rem;
-				padding: 0.5rem 1rem 1rem;
-				margin: 1rem 0;
+				border: 1px solid var(--divider-color, #edf1f7);
+				border-radius: var(--border-radius);
+				padding: 8px 16px 16px;
+				margin: 16px 0;
 			}
 			.actions button {
 				margin-right: 0.25rem;
@@ -459,12 +459,15 @@ export class AsanaSettingsComponent implements OnInit {
 		this.loadingProjects = true;
 		this.cdr.markForCheck();
 		this.api.projects(this.integrationId, workspaceGid).subscribe({
+			// An answer for a workspace no longer chosen is dropped: the list and the flag follow the current one.
 			next: (projects) => {
+				if (this.draft.asanaWorkspaceGid !== workspaceGid) return;
 				this.loadingProjects = false;
 				this.asanaProjects = projects;
 				this.cdr.markForCheck();
 			},
 			error: (error) => {
+				if (this.draft.asanaWorkspaceGid !== workspaceGid) return;
 				this.loadingProjects = false;
 				this.showError(error);
 			}
@@ -480,13 +483,13 @@ export class AsanaSettingsComponent implements OnInit {
 		this.cdr.markForCheck();
 		this.api.sections(this.integrationId, projectGid).subscribe({
 			next: (sections: AsanaSection[]) => {
+				if (this.draft.asanaProjectGid !== projectGid) return;
 				this.loadingSections = false;
-				if (this.draft.asanaProjectGid === projectGid) {
-					this.draft = { ...this.draft, sections: sections.map((section) => ({ gid: section.gid, name: section.name, status: '' })) };
-				}
+				this.draft = { ...this.draft, sections: sections.map((section) => ({ gid: section.gid, name: section.name, status: '' })) };
 				this.cdr.markForCheck();
 			},
 			error: (error) => {
+				if (this.draft.asanaProjectGid !== projectGid) return;
 				this.loadingSections = false;
 				this.showError(error);
 			}

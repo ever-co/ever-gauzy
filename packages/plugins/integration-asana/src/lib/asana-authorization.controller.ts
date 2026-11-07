@@ -82,7 +82,8 @@ export class AsanaAuthorizationController {
 			response.status('error' in result ? 400 : 200).json(result);
 			return;
 		}
-		const params = new URLSearchParams(result as Record<string, string>);
+		// The page may host several integrations' returns: the provider is named so each reads only its own.
+		const params = new URLSearchParams({ provider: 'asana', ...(result as Record<string, string>) });
 		response.redirect(`${this.config.postInstallUrl}?${params.toString()}`);
 	}
 }

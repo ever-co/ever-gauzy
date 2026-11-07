@@ -89,6 +89,7 @@
 		"TITLE": "Runs",
 		"EMPTY": "No run yet.",
 		"KIND": "Kind",
+		"FULL": "(full)",
 		"STATUS": "Status",
 		"STARTED": "Started",
 		"FINISHED": "Finished",
