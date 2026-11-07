@@ -11,8 +11,7 @@ import {
 	taskFieldsOf,
 	taskPriorityOf,
 	trelloColorOf,
-	trelloUpdateOf,
-	watermarkOf
+	trelloUpdateOf
 } from './trello-card.mapper';
 
 const LISTS = [
@@ -97,10 +96,8 @@ describe('trello-card.mapper', () => {
 		expect(trelloUpdateOf({ title: '' })).toEqual({});
 	});
 
-	it('keeps the watermark on the newest activity and tells the cards changed since', () => {
+	it('tells the cards changed since the import position', () => {
 		const cards = [card({ dateLastActivity: '2026-01-01T00:00:00.000Z' }), card({ dateLastActivity: '2026-01-05T00:00:00.000Z' })];
-		expect(watermarkOf(cards, '2026-01-03T00:00:00.000Z')).toBe('2026-01-05T00:00:00.000Z');
-		expect(watermarkOf([], '2026-01-03T00:00:00.000Z')).toBe('2026-01-03T00:00:00.000Z');
 		expect(isChangedSince(cards[0], '2026-01-03T00:00:00.000Z')).toBe(false);
 		expect(isChangedSince(cards[1], '2026-01-03T00:00:00.000Z')).toBe(true);
 		expect(isChangedSince(cards[0], null)).toBe(true);

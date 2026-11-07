@@ -42,6 +42,10 @@ export const TRELLO_WEBHOOK_MAX_BYTES = 1024 * 1024;
 export const TRELLO_CARDS_PAGE_SIZE = 1000;
 /** How many applies may hold a transaction (and its pool connection) at once in one process. */
 export const TRELLO_APPLY_CONCURRENCY = 4;
+/** The import position is the run's start minus this margin: a change made while the pages were read is not skipped next time. */
+export const TRELLO_IMPORT_CLOCK_SKEW_MS = 60_000;
+/** The import position is the run's start minus this margin: a change made while the pages were read is not skipped next time. */
+export const TRELLO_IMPORT_CLOCK_SKEW_MS = 60_000;
 
 /** The queue the scheduled import sweep travels on, the schedule that asks for it, and the queue job it runs as. */
 export const TRELLO_QUEUE_NAME = 'integration-trello';
@@ -55,11 +59,18 @@ export const TRELLO_IMPORT_SWEEP_BATCH = 50;
 export const TRELLO_IMPORT_WEBHOOK_STRIDE = 4;
 /** A mapping counts as due this long before its interval is up, so one imported right after a sweep does not slip a whole sweep. */
 export const TRELLO_IMPORT_SWEEP_SLACK_MS = 60_000;
+/** How many times the queue tries a sweep that could not run, and the first delay between tries (doubled each time). */
+export const TRELLO_IMPORT_SWEEP_ATTEMPTS = 3;
+export const TRELLO_IMPORT_SWEEP_RETRY_DELAY_MS = 30_000;
 
 /** Error codes the routes answer with (`{ message, code }`). */
 export const TRELLO_NOT_CONFIGURED = 'TRELLO_NOT_CONFIGURED';
 export const TRELLO_NOT_CONNECTED = 'TRELLO_NOT_CONNECTED';
 export const TRELLO_TOKEN_REFUSED = 'TRELLO_TOKEN_REFUSED';
+export const TRELLO_UNAVAILABLE = 'TRELLO_UNAVAILABLE';
+export const TRELLO_WEBHOOK_NOT_REMOVED = 'TRELLO_WEBHOOK_NOT_REMOVED';
+export const TRELLO_UNAVAILABLE = 'TRELLO_UNAVAILABLE';
+export const TRELLO_WEBHOOK_NOT_REMOVED = 'TRELLO_WEBHOOK_NOT_REMOVED';
 export const TRELLO_STATE_INVALID = 'TRELLO_STATE_INVALID';
 export const TRELLO_MAPPING_EXISTS = 'TRELLO_MAPPING_EXISTS';
 export const TRELLO_PROJECT_OUTBOUND_TAKEN = 'TRELLO_PROJECT_OUTBOUND_TAKEN';

@@ -135,15 +135,6 @@ export function isChangedSince(card: Pick<TrelloCard, 'dateLastActivity'>, since
 	return !since || !card.dateLastActivity || card.dateLastActivity > since;
 }
 
-/** The newest `dateLastActivity` among the cards (the watermark the next incremental import starts from). */
-export function watermarkOf(cards: readonly Pick<TrelloCard, 'dateLastActivity'>[], current: string | null | undefined): string | null {
-	let latest = current ?? null;
-	for (const card of cards) {
-		if (card.dateLastActivity && (!latest || card.dateLastActivity > latest)) latest = card.dateLastActivity;
-	}
-	return latest;
-}
-
 /** Trello names its label colours (`green`, `red_dark`, …); a hex the platform's tags take. */
 export function trelloColorOf(color: string | null | undefined): string {
 	const named: Record<string, string> = {

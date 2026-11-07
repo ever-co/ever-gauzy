@@ -1,4 +1,4 @@
-import { BadRequestException, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { ID, IIntegrationSetting, IIntegrationTenant, IntegrationEntity } from '@gauzy/contracts';
 import { Integration, IntegrationSettingService, IntegrationTenantService, IntegrationTenantUpdateOrCreateCommand, RequestContext } from '@gauzy/core';
@@ -132,12 +132,19 @@ export class TrelloTenantService {
 			[TrelloSettingName.ATTENTION_REASON, '']
 		].map(([settingsName, settingsValue]) => ({ settingsName, settingsValue, tenantId, organizationId }));
 		const entitySettings = [IntegrationEntity.PROJECT, IntegrationEntity.TASK, IntegrationEntity.LABEL].map((entity) => ({ entity, sync: true, tenantId, organizationId }));
-		return this.commandBus.execute(
+		const written: IIntegrationTenant = await this.commandBus.execute(
 			new IntegrationTenantUpdateOrCreateCommand(
 				{ name: TRELLO_INTEGRATION_NAME, integration: { provider: TRELLO_INTEGRATION_NAME }, tenantId, organizationId },
 				{ name: TRELLO_INTEGRATION_NAME, integration, tenantId, organizationId, entitySettings, settings, isActive: true, isArchived: false } as never
 			)
 		);
+		// The platform's settings writer reports a failed write instead of raising it: the token is read back, and a
+		// connection whose token is not the one just handed over is not answered as connected.
+		const stored = await this.findAnyById(written.id as ID);
+		if (!stored || this.settingsOf(stored)[TrelloSettingName.TOKEN] !== token) {
+			throw new InternalServerErrorException({ message: 'The Trello connection could not be stored; connect again', code: TRELLO_NOT_CONNECTED });
+		}
+		return stored;
 	}
 
 	/** Records why the connection needs a person (a refused token), or clears it. */

@@ -4,7 +4,7 @@ import { DatePipe } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { NbAlertModule, NbButtonModule, NbCardModule } from '@nebular/theme';
 import { TranslatePipe } from '@ngx-translate/core';
-import { combineLatest, distinctUntilChanged, map, merge, Subject, switchMap, of, catchError, tap, take } from 'rxjs';
+import { combineLatest, distinctUntilChanged, filter, map, merge, Subject, switchMap, of, catchError, tap, take } from 'rxjs';
 import { Store } from '@gauzy/ui-core/core';
 import { TRELLO_LINK } from '../../integration-trello-ui.plugin';
 import { TrelloConnectionSummary, TrelloStatus, TrelloUiService } from '../../services/trello-ui.service';
@@ -129,14 +129,25 @@ export class TrelloPageComponent implements OnInit {
 			distinctUntilChanged(),
 			tap((organizationId) => (this.organizationId = organizationId))
 		);
-		// Trello's return: `#token=` in the fragment, `?state=` in the query. Finished once, as soon as the organization is known.
-		combineLatest([this.route.fragment, this.route.queryParamMap, organizations$])
-			.pipe(take(1), takeUntilDestroyed(this.destroyRef))
-			.subscribe(([fragment, params, organizationId]) => {
-				const token = tokenOfFragment(fragment);
-				const state = params.get('state');
-				if (token && state && organizationId) this.finishReturn(organizationId, token, state);
-			});
+		// Trello's return: `#token=` in the fragment, `?state=` in the query. Known at once — the status is not read while
+		// it is being finished — and finished once, as soon as the organization is known: the store may say null first
+		// (a full page load), and a return taken on that emission would lose the token.
+		combineLatest([this.route.fragment, this.route.queryParamMap])
+			.pipe(
+				take(1),
+				map(([fragment, params]) => ({ token: tokenOfFragment(fragment), state: params.get('state') })),
+				filter((back): back is { token: string; state: string } => !!back.token && !!back.state),
+				tap(() => (this.finishing = true)),
+				switchMap((back) =>
+					organizations$.pipe(
+						filter((organizationId): organizationId is string => !!organizationId),
+						take(1),
+						map((organizationId) => ({ ...back, organizationId }))
+					)
+				),
+				takeUntilDestroyed(this.destroyRef)
+			)
+			.subscribe(({ organizationId, token, state }) => this.finishReturn(organizationId, token, state));
 		combineLatest([merge(organizations$, this.reload$.pipe(map(() => this.organizationId)))])
 			.pipe(
 				switchMap(([organizationId]) => {

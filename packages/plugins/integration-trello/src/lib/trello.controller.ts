@@ -1,8 +1,8 @@
-import { BadRequestException, Body, Controller, Delete, Get, HttpCode, HttpStatus, Inject, Logger, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
+import { BadGatewayException, BadRequestException, Body, Controller, Delete, Get, HttpCode, HttpStatus, Inject, Logger, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ID, PermissionsEnum } from '@gauzy/contracts';
 import { PermissionGuard, Permissions, RequestContext, TenantPermissionGuard, UUIDValidationPipe, UseValidationPipe } from '@gauzy/core';
-import { TrelloApiError } from './client/trello-api.client';
+import { TrelloApiClient, TrelloApiError } from './client/trello-api.client';
 import { CreateTrelloMappingDTO, TrelloConnectDTO, TrelloImportDTO, TrelloInstallStateDTO, TrelloRunsQueryDTO, TrelloStatusQueryDTO, UpdateTrelloMappingDTO } from './dto/trello.dto';
 import { TrelloSyncRun } from './entities/trello-sync-run.entity';
 import { TrelloBoardMapping, TrelloSyncDirection } from './entities/trello-board-mapping.entity';
@@ -19,7 +19,9 @@ import {
 	TRELLO_NOT_CONNECTED,
 	TRELLO_ROUTE_PREFIX,
 	TRELLO_STATE_INVALID,
-	TRELLO_TOKEN_REFUSED
+	TRELLO_TOKEN_REFUSED,
+	TRELLO_UNAVAILABLE,
+	TRELLO_WEBHOOK_NOT_REMOVED
 } from './trello.constants';
 import { TrelloSyncService } from './sync/trello-sync.service';
 import { parseListMap } from './sync/trello-card.mapper';
@@ -54,6 +56,26 @@ export class TrelloController {
 		private readonly sync: TrelloSyncService,
 		private readonly connectState: TrelloConnectStateService
 	) {}
+
+	/**
+	 * A read of Trello for a route: Trello's own refusals are answered as such — a refused token is recorded on the
+	 * connection (the page then asks for a reconnect) and answered 400 `TRELLO_TOKEN_REFUSED`; anything else Trello
+	 * answered (a rate limit, an outage) is 502 `TRELLO_UNAVAILABLE`, not a 500 that says nothing.
+	 */
+	private async trello<T>(tenant: Parameters<TrelloTenantService['clientFor']>[0], make: (client: TrelloApiClient) => Promise<T>): Promise<T> {
+		try {
+			return await make(this.tenants.clientFor(tenant));
+		} catch (error) {
+			if (error instanceof TrelloApiError) {
+				if (error.isUnauthorized) {
+					await this.tenants.setAttention(tenant, 'token_refused');
+					throw new BadRequestException({ message: 'Trello refused the connection\'s token; connect again', code: TRELLO_TOKEN_REFUSED });
+				}
+				throw new BadGatewayException({ message: `Trello did not answer: ${error.message}`, code: TRELLO_UNAVAILABLE });
+			}
+			throw error;
+		}
+	}
 
 	/** Whether the application is configured and webhooks can be taken, and the organization's connection if any. */
 	@ApiOperation({ summary: 'The Trello integration status of an organization' })
@@ -157,8 +179,7 @@ export class TrelloController {
 	@Get('/:integrationId/metadata')
 	async metadata(@Param('integrationId', UUIDValidationPipe) integrationId: ID) {
 		const tenant = await this.tenants.requireById(integrationId);
-		const client = this.tenants.clientFor(tenant);
-		const [me, boards] = await Promise.all([client.me(), client.boards()]);
+		const [me, boards] = await this.trello(tenant, (client) => Promise.all([client.me(), client.boards()]));
 		return { member: { id: me.id, username: me.username, fullName: me.fullName }, boards };
 	}
 
@@ -166,7 +187,7 @@ export class TrelloController {
 	@Get('/:integrationId/boards/:boardId/lists')
 	async lists(@Param('integrationId', UUIDValidationPipe) integrationId: ID, @Param('boardId') boardId: string) {
 		const tenant = await this.tenants.requireById(integrationId);
-		return this.tenants.clientFor(tenant).lists(String(boardId).slice(0, 32));
+		return this.trello(tenant, (client) => client.lists(String(boardId).slice(0, 32)));
 	}
 
 	@ApiOperation({ summary: 'The board ↔ project mappings of a connection' })
@@ -219,9 +240,15 @@ export class TrelloController {
 	@Post('/:integrationId/mappings/:mappingId/webhook')
 	@HttpCode(HttpStatus.ACCEPTED)
 	async registerWebhook(@Param('integrationId', UUIDValidationPipe) integrationId: ID, @Param('mappingId', UUIDValidationPipe) mappingId: ID): Promise<{ accepted: true }> {
+		if (!trelloWebhooksEnabled(this.config)) {
+			throw new BadRequestException({ message: 'This server has no public address or application secret for Trello webhooks', code: TRELLO_NOT_CONFIGURED });
+		}
 		const tenant = await this.tenants.requireById(integrationId);
 		const mapping = await this.mappings.requireOne(tenant, mappingId);
-		await this.sync.removeWebhook(tenant, mapping);
+		// The current webhook must be gone before it is forgotten: one Trello still delivers to is not left untracked.
+		if (!(await this.sync.removeWebhook(tenant, mapping))) {
+			throw new BadGatewayException({ message: 'The current Trello webhook could not be removed; try again', code: TRELLO_WEBHOOK_NOT_REMOVED });
+		}
 		await this.mappings.recordWebhook(mapping, null);
 		setImmediate(() => void this.sync.ensureWebhook(tenant, mapping));
 		return { accepted: true };

@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap, Router } from '@angular/router';
-import { of, throwError } from 'rxjs';
+import { BehaviorSubject, Observable, of, throwError } from 'rxjs';
 import { Store } from '@gauzy/ui-core/core';
 import { TrelloStatus, TrelloUiService } from '../../services/trello-ui.service';
 import { TrelloPageComponent } from './trello-page.component';
@@ -16,12 +16,12 @@ describe('TrelloPageComponent', () => {
 	const api = { status: jest.fn(), installState: jest.fn(), connect: jest.fn() };
 	const router = { navigate: jest.fn().mockResolvedValue(true) };
 
-	function render(query: Record<string, string> = {}, fragment: string | null = null) {
+	function render(query: Record<string, string> = {}, fragment: string | null = null, selectedOrganization$: Observable<{ id: string } | null> = of(ORGANIZATION)) {
 		TestBed.configureTestingModule({
 			imports: [TrelloPageComponent],
 			providers: [
 				{ provide: TrelloUiService, useValue: api },
-				{ provide: Store, useValue: { selectedOrganization$: of(ORGANIZATION) } },
+				{ provide: Store, useValue: { selectedOrganization$ } },
 				{ provide: Router, useValue: router },
 				{ provide: ActivatedRoute, useValue: { queryParamMap: of(convertToParamMap(query)), fragment: of(fragment) } }
 			]
@@ -70,6 +70,19 @@ describe('TrelloPageComponent', () => {
 		render({ state: 's1' }, 'token=tok123');
 		expect(api.connect).toHaveBeenCalledWith(ORGANIZATION.id, 'tok123', 's1');
 		expect(router.navigate).toHaveBeenCalledWith(['/pages/integrations/trello', 'int-1'], { replaceUrl: true });
+	});
+
+	it('back from Trello before the organization is known: waits for it, reads no status meanwhile, connects once', () => {
+		api.status.mockReturnValue(of(status()));
+		api.connect.mockReturnValue(of({ id: 'int-1', organizationId: ORGANIZATION.id }));
+		const organizations = new BehaviorSubject<{ id: string } | null>(null);
+		const { component } = render({ state: 's1' }, 'token=tok123', organizations);
+		expect(api.connect).not.toHaveBeenCalled();
+		expect(api.status).not.toHaveBeenCalled();
+		expect(component.finishing).toBe(true);
+		organizations.next(ORGANIZATION);
+		expect(api.connect).toHaveBeenCalledTimes(1);
+		expect(api.connect).toHaveBeenCalledWith(ORGANIZATION.id, 'tok123', 's1');
 	});
 
 	it('back from Trello with a refused token: says why, drops the token from the address, and shows the status', () => {

@@ -22,8 +22,8 @@ import { TrelloMappingService } from '../trello-mapping.service';
 import { trelloSyncUser, runInTrelloContext } from '../trello-process';
 import { emptyCounts, TrelloSyncCounts, TrelloSyncRunService } from '../trello-sync-run.service';
 import { TrelloTenantService } from '../trello-tenant.service';
-import { TRELLO_APPLY_CONCURRENCY, TRELLO_CARDS_PAGE_SIZE, TRELLO_CONFIG, TrelloSettingName } from '../trello.constants';
-import { isChangedSince, knownStatusesOf, listForStatus, parseListMap, statusKey, taskFieldsOf, trelloColorOf, trelloUpdateOf, watermarkOf } from './trello-card.mapper';
+import { TRELLO_APPLY_CONCURRENCY, TRELLO_CARDS_PAGE_SIZE, TRELLO_CONFIG, TRELLO_IMPORT_CLOCK_SKEW_MS, TrelloSettingName } from '../trello.constants';
+import { isChangedSince, knownStatusesOf, listForStatus, parseListMap, statusKey, taskFieldsOf, trelloColorOf, trelloUpdateOf } from './trello-card.mapper';
 
 /** What one card became. */
 type ApplyOutcome = 'created' | 'updated' | 'skipped';
@@ -46,9 +46,14 @@ interface ApplyContext extends ClientHolder {
 	statusIdsByName: Map<string, ID>;
 	priorityIdsByName: Map<string, ID>;
 	employeeIdsByMember: Map<string, ID | null>;
+	/** The organization's employees (with their user), loaded once per run when a member is first matched. */
+	employees?: EmployeeLike[];
 	tagIdsByLabel: Map<string, ID | null>;
 	counts: TrelloSyncCounts;
 }
+
+/** What a member is matched against: the user's e-mail (its local part is Trello's username) and name. */
+type EmployeeLike = { id?: ID; user?: { email?: string | null; firstName?: string | null; lastName?: string | null; name?: string | null } | null };
 
 const RATE_LIMIT_MAX_WAIT_MS = 60_000;
 /** How long a board's lists are kept for outbound pushes. */
@@ -108,12 +113,15 @@ export class TrelloSyncService {
 	}
 
 	/** Removes the mapping's webhook on Trello (best effort). */
-	async removeWebhook(tenant: IIntegrationTenant, mapping: TrelloBoardMapping): Promise<void> {
-		if (!mapping.webhookId) return;
+	/** Removes the mapping's webhook from Trello; `true` when it is gone (or there was none), `false` when Trello still has it. */
+	async removeWebhook(tenant: IIntegrationTenant, mapping: TrelloBoardMapping): Promise<boolean> {
+		if (!mapping.webhookId) return true;
 		try {
 			await this.call(this.holderOf(tenant), (client) => client.deleteWebhook(mapping.webhookId as string));
+			return true;
 		} catch (caught) {
 			this.logger.warn(`The Trello webhook of mapping ${mapping.id} could not be removed: ${this.describe(caught)}`);
+			return false;
 		}
 	}
 
@@ -130,7 +138,10 @@ export class TrelloSyncService {
 		const user = trelloSyncUser(scope, this.connectedByUserId(tenant) ?? run.requestedByUserId ?? null);
 		const counts = emptyCounts();
 		const since = options.full ? null : mapping.lastCursor ?? null;
-		let cursor: string | null = since;
+		// The next import starts a little before this run did: Trello pages by id, not by activity, so a card changed
+		// while the pages were read would otherwise sit below the newest activity read and be skipped next time.
+		// Reading a few cards again is harmless (the apply is idempotent through the id map).
+		const cursor = new Date(Date.now() - TRELLO_IMPORT_CLOCK_SKEW_MS).toISOString();
 		let error: string | null = null;
 		try {
 			await runInTrelloContext(user, async () => {
@@ -145,7 +156,6 @@ export class TrelloSyncService {
 						}
 						await this.applyOne(context, card);
 					}
-					cursor = watermarkOf(page.items, cursor);
 					await this.runs.progress(run, counts);
 					if (!page.nextBefore) break;
 					before = page.nextBefore;
@@ -492,7 +502,7 @@ export class TrelloSyncService {
 			if (!member?.id) continue;
 			if (!context.employeeIdsByMember.has(member.id)) {
 				try {
-					context.employeeIdsByMember.set(member.id, await this.findEmployee(context.scope, member));
+					context.employeeIdsByMember.set(member.id, await this.findEmployee(context, member));
 				} catch (caught) {
 					this.logger.warn(`The employee of Trello member ${member.username || member.id} could not be looked up: ${this.describe(caught)}`);
 					return undefined;
@@ -504,20 +514,24 @@ export class TrelloSyncService {
 		return ids.map((id) => ({ id }));
 	}
 
-	private async findEmployee(scope: { tenantId: ID; organizationId: ID }, member: { username: string; fullName: string }): Promise<ID | null> {
-		const { items } = await this.employeeService.findAll({
-			where: { ...scope, isActive: true, isArchived: false },
-			relations: { user: true }
-		} as never);
+	/** The employee a Trello member is: the organization's employees are loaded once per run and matched in memory. */
+	private async findEmployee(context: ApplyContext, member: { username: string; fullName: string }): Promise<ID | null> {
+		if (!context.employees) {
+			const { items } = await this.employeeService.findAll({
+				where: { ...context.scope, isActive: true, isArchived: false },
+				relations: { user: true }
+			} as never);
+			context.employees = items as EmployeeLike[];
+		}
+		const items = context.employees;
 		const username = member.username.trim().toLowerCase();
 		const fullName = member.fullName.trim().toLowerCase().replace(/\s+/g, ' ');
-		type EmployeeLike = { id?: ID; user?: { email?: string | null; firstName?: string | null; lastName?: string | null; name?: string | null } | null };
 		const byEmail = username
-			? (items as EmployeeLike[]).find((employee) => String(employee.user?.email ?? '').toLowerCase().split('@')[0] === username)
+			? items.find((employee) => String(employee.user?.email ?? '').toLowerCase().split('@')[0] === username)
 			: undefined;
 		if (byEmail?.id) return byEmail.id;
 		if (!fullName) return null;
-		const byName = (items as EmployeeLike[]).find((employee) => {
+		const byName = items.find((employee) => {
 			const user = employee.user;
 			const joined = [user?.firstName, user?.lastName].filter(Boolean).join(' ').trim().toLowerCase().replace(/\s+/g, ' ');
 			const named = String(user?.name ?? '').trim().toLowerCase().replace(/\s+/g, ' ');
