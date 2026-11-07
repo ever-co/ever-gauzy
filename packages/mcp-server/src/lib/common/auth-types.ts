@@ -117,12 +117,15 @@ export function loadAuthorizationConfig(env: NodeJS.ProcessEnv = process.env): A
 	const clientSecret = env.MCP_AUTH_INTROSPECTION_CLIENT_SECRET;
 
 	const cacheTtl = Number.parseInt(env.MCP_AUTH_TOKEN_CACHE_TTL ?? '', 10);
-	// `||`, not `??`: the deploy substitutes an unset secret as '', which must not mean "no scope required"
-	const operatorScopes = env.MCP_AUTH_REQUIRED_SCOPES || env.MCP_REQUIRED_SCOPES;
+	// The first variable that names scopes is the operator's list. An empty or blank value (the deploy substitutes an
+	// unset secret as '', and ' ' or ',' parse to nothing) must not mean "no scope required": the next one, else the default.
+	const operatorScopes = [env.MCP_AUTH_REQUIRED_SCOPES, env.MCP_REQUIRED_SCOPES]
+		.map((value) => splitList(value ?? ''))
+		.find((scopes) => scopes.length > 0);
 
 	return {
 		enabled,
-		requiredScopes: splitList(operatorScopes || DEFAULT_REQUIRED_SCOPES.join(',')),
+		requiredScopes: operatorScopes ?? [...DEFAULT_REQUIRED_SCOPES],
 		// Only the default may be met by collaboration scopes alone: an operator's own list is never weakened.
 		collaborationOnlyAdmission: !operatorScopes,
 		resourceUri: env.MCP_AUTH_RESOURCE_URI || env.MCP_RESOURCE_URI,

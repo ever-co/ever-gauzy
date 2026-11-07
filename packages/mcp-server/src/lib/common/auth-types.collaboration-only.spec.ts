@@ -72,6 +72,21 @@ describe('OAuthValidator — admission on collaboration scopes alone', () => {
 		});
 	});
 
+	/** A blank value used to leave the required scopes empty, and an empty list is checked by no token at all. */
+	it('reads a blank or delimiter-only value as unset, never as "no scope required"', () => {
+		for (const blank of [' ', ',', ' , ']) {
+			expect(deployed({ MCP_AUTH_REQUIRED_SCOPES: blank })).toEqual({
+				requiredScopes: ['mcp.read'],
+				collaborationOnlyAdmission: true
+			});
+		}
+		// Nor does it hide the other variable's list.
+		expect(deployed({ MCP_AUTH_REQUIRED_SCOPES: ' ', MCP_REQUIRED_SCOPES: 'mcp.admin' })).toEqual({
+			requiredScopes: ['mcp.admin'],
+			collaborationOnlyAdmission: false
+		});
+	});
+
 	it('admits chat:read alone against the default required scopes, for the collaboration tools only', async () => {
 		const config = deployed({});
 		expect(await validator('chat:read', config).validateToken('t', config.requiredScopes)).toMatchObject({
