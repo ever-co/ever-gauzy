@@ -56,8 +56,13 @@ export class AsanaSyncRunService extends TenantAwareCrudService<AsanaSyncRun> {
 	 */
 	async claimImport(tenant: IIntegrationTenant, mapping: AsanaProjectMapping, input: { full?: boolean; requestedByUserId?: ID | null }): Promise<AsanaSyncRun> {
 		return this.dataSource.transaction(async (manager) => {
-			if (manager.connection.options.type === 'postgres') {
+			// Every writer of the mapping's runs is serialized: an advisory lock on Postgres (a parameterized
+			// statement, the key a bind value), the mapping's row locked on MySQL / MariaDB; SQLite serializes writers.
+			const dialect = manager.connection.options.type;
+			if (dialect === 'postgres') {
 				await manager.query('SELECT pg_advisory_xact_lock(hashtext($1))', [`integration-asana:import:${mapping.id}`]);
+			} else if (dialect === 'mysql' || dialect === 'mariadb') {
+				await manager.findOne(AsanaProjectMapping, { where: { id: mapping.id } as never, lock: { mode: 'pessimistic_write' } });
 			}
 			const staleBefore = new Date(Date.now() - ASANA_IMPORT_STALE_MS);
 			await manager.update(

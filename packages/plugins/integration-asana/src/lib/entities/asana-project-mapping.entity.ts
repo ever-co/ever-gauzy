@@ -80,10 +80,11 @@ export class AsanaProjectMapping extends TenantOrganizationBaseEntity {
 	@MultiORMColumn({ type: 'varchar', length: 64, nullable: true })
 	webhookHandshakeToken?: string | null;
 
-	@MultiORMColumn({ nullable: true })
+	// `Date | null` reflects as `Object` under strictNullChecks (the plugin's lib build), which TypeORM refuses: the type is said.
+	@MultiORMColumn({ type: Date, nullable: true })
 	webhookHandshakeStartedAt?: Date | null;
 
-	@MultiORMColumn({ nullable: true })
+	@MultiORMColumn({ type: Date, nullable: true })
 	lastImportedAt?: Date | null;
 
 	/** The `modified_at` of the newest task imported: the next incremental import starts from it. */

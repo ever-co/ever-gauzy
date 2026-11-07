@@ -4,13 +4,13 @@ import { ID, PermissionsEnum } from '@gauzy/contracts';
 import { PermissionGuard, Permissions, RequestContext, TenantPermissionGuard, UUIDValidationPipe, UseValidationPipe } from '@gauzy/core';
 import { AsanaImportDTO, AsanaInstallStateDTO, AsanaRunsQueryDTO, AsanaStatusQueryDTO, CreateAsanaMappingDTO, UpdateAsanaMappingDTO } from './dto/asana.dto';
 import { AsanaSyncRun } from './entities/asana-sync-run.entity';
-import { AsanaProjectMapping } from './entities/asana-project-mapping.entity';
+import { AsanaProjectMapping, AsanaSyncDirection } from './entities/asana-project-mapping.entity';
 import { AsanaConfig, isAsanaConfigured } from './asana-config';
 import { AsanaMappingService } from './asana-mapping.service';
 import { AsanaOAuthStateService } from './asana-oauth-state.service';
 import { AsanaSyncRunService } from './asana-sync-run.service';
 import { AsanaConnectionSummary, AsanaTenantService } from './asana-tenant.service';
-import { ASANA_CONFIG, ASANA_NOT_CONFIGURED, ASANA_NOT_CONNECTED, ASANA_OAUTH_AUTHORIZE_URL, ASANA_ROUTE_PREFIX } from './asana.constants';
+import { ASANA_CONFIG, ASANA_MAPPING_NOT_INBOUND, ASANA_NOT_CONFIGURED, ASANA_NOT_CONNECTED, ASANA_OAUTH_AUTHORIZE_URL, ASANA_ROUTE_PREFIX } from './asana.constants';
 import { AsanaSyncService } from './sync/asana-sync.service';
 import { parseSectionMap } from './sync/asana-task.mapper';
 
@@ -194,6 +194,10 @@ export class AsanaController {
 	): Promise<{ accepted: true; run: AsanaSyncRun }> {
 		const tenant = await this.tenants.requireById(integrationId);
 		const mapping = await this.mappings.requireOne(tenant, mappingId);
+		// The same rule as the webhook path: an outbound or switched-off mapping brings nothing in.
+		if (mapping.direction === AsanaSyncDirection.OUTBOUND || !mapping.syncEnabled) {
+			throw new BadRequestException({ message: 'This mapping does not import tasks (it is outbound, or its sync is off)', code: ASANA_MAPPING_NOT_INBOUND });
+		}
 		const requestedByUserId = RequestContext.currentUserId() as ID;
 		const full = !!body.full;
 		const run = await this.runs.claimImport(tenant, mapping, { full, requestedByUserId });

@@ -1,4 +1,5 @@
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { DataSource, EntityManager } from 'typeorm';
 import { ID, IIntegrationTenant } from '@gauzy/contracts';
 import { OrganizationProjectService, TenantAwareCrudService } from '@gauzy/core';
 import {
@@ -21,12 +22,21 @@ export interface AsanaMappingInput {
 }
 
 /** The Asana project ↔ platform project mappings of the connections, scoped to the caller's tenant. */
+/** Whether a write failed on a unique index: Postgres 23505, MySQL / MariaDB ER_DUP_ENTRY (1062), SQLite's constraint code. */
+export function isUniqueViolation(error: unknown): boolean {
+	const failure = error as { code?: unknown; errno?: unknown; driverError?: { code?: unknown; errno?: unknown } } | null;
+	const code = String(failure?.code ?? failure?.driverError?.code ?? '');
+	const errno = Number(failure?.errno ?? failure?.driverError?.errno ?? 0);
+	return code === '23505' || code === 'ER_DUP_ENTRY' || errno === 1062 || code === 'SQLITE_CONSTRAINT' || code === 'SQLITE_CONSTRAINT_UNIQUE';
+}
+
 @Injectable()
 export class AsanaMappingService extends TenantAwareCrudService<AsanaProjectMapping> {
 	constructor(
 		readonly typeOrmAsanaProjectMappingRepository: TypeOrmAsanaProjectMappingRepository,
 		readonly mikroOrmAsanaProjectMappingRepository: MikroOrmAsanaProjectMappingRepository,
-		private readonly organizationProjectService: OrganizationProjectService
+		private readonly organizationProjectService: OrganizationProjectService,
+		private readonly dataSource: DataSource
 	) {
 		super(typeOrmAsanaProjectMappingRepository, mikroOrmAsanaProjectMappingRepository);
 	}
@@ -52,28 +62,56 @@ export class AsanaMappingService extends TenantAwareCrudService<AsanaProjectMapp
 		return this.typeOrmAsanaProjectMappingRepository.findOne({ where: { id: mappingId } });
 	}
 
-	/** Creates a mapping: the project must be the organization's, the Asana project not mapped yet. */
+	/**
+	 * Creates a mapping: the project must be the organization's, the Asana project not mapped yet, the project not
+	 * already sending its tasks elsewhere. The checks and the write run in one transaction that admits one writer per
+	 * connection at a time (an advisory lock on Postgres, the connection's mappings locked on MySQL / MariaDB; SQLite
+	 * serializes writers), and a unique-index violation that still gets through answers the same 409.
+	 */
 	async createMapping(tenant: IIntegrationTenant, input: AsanaMappingInput): Promise<AsanaProjectMapping> {
 		await this.requireProject(tenant, input.projectId);
-		const existing = await this.findOneByOptions({
-			where: { integrationId: tenant.id as ID, asanaProjectGid: input.asanaProjectGid, tenantId: tenant.tenantId as ID }
-		}).catch(() => null);
-		if (existing) {
-			throw new ConflictException({ message: 'This Asana project is mapped already', code: ASANA_MAPPING_EXISTS, mappingId: existing.id });
+		const scope = { tenantId: tenant.tenantId as ID, organizationId: tenant.organizationId as ID };
+		const direction = input.direction ?? AsanaSyncDirection.INBOUND;
+		return this.dataSource.transaction(async (manager) => {
+			await this.lockMappingsOf(manager, tenant);
+			const existing = await manager.findOne(AsanaProjectMapping, { where: { integrationId: tenant.id as ID, asanaProjectGid: input.asanaProjectGid, tenantId: scope.tenantId } as never });
+			if (existing) throw this.mappedAlready(existing.id as ID);
+			await this.assertOutboundFree(tenant, input.projectId, direction, null, manager);
+			const mapping = Object.assign(new AsanaProjectMapping(), {
+				integrationId: tenant.id as ID,
+				...scope,
+				asanaWorkspaceGid: input.asanaWorkspaceGid,
+				asanaProjectGid: input.asanaProjectGid,
+				asanaProjectName: input.asanaProjectName ?? null,
+				projectId: input.projectId,
+				direction,
+				sectionMap: serializeSectionMap(input.sectionMap),
+				syncEnabled: input.syncEnabled ?? true
+			});
+			try {
+				return await manager.save(AsanaProjectMapping, mapping);
+			} catch (error) {
+				if (!isUniqueViolation(error)) throw error;
+				const raced = await manager
+					.findOne(AsanaProjectMapping, { where: { integrationId: tenant.id as ID, asanaProjectGid: input.asanaProjectGid, tenantId: scope.tenantId } as never })
+					.catch(() => null);
+				throw raced ? this.mappedAlready(raced.id as ID) : error;
+			}
+		});
+	}
+
+	private mappedAlready(mappingId: ID): ConflictException {
+		return new ConflictException({ message: 'This Asana project is mapped already', code: ASANA_MAPPING_EXISTS, mappingId });
+	}
+
+	/** One writer of a connection's mappings at a time within the transaction (see `createMapping`). */
+	private async lockMappingsOf(manager: EntityManager, tenant: IIntegrationTenant): Promise<void> {
+		const dialect = manager.connection.options.type;
+		if (dialect === 'postgres') {
+			await manager.query('SELECT pg_advisory_xact_lock(hashtext($1))', [`integration-asana:mappings:${tenant.id}`]);
+		} else if (dialect === 'mysql' || dialect === 'mariadb') {
+			await manager.find(AsanaProjectMapping, { where: { integrationId: tenant.id as ID, tenantId: tenant.tenantId as ID } as never, lock: { mode: 'pessimistic_write' } });
 		}
-		await this.assertOutboundFree(tenant, input.projectId, input.direction ?? AsanaSyncDirection.INBOUND, null);
-		return this.create({
-			integrationId: tenant.id as ID,
-			tenantId: tenant.tenantId as ID,
-			organizationId: tenant.organizationId as ID,
-			asanaWorkspaceGid: input.asanaWorkspaceGid,
-			asanaProjectGid: input.asanaProjectGid,
-			asanaProjectName: input.asanaProjectName ?? null,
-			projectId: input.projectId,
-			direction: input.direction ?? AsanaSyncDirection.INBOUND,
-			sectionMap: serializeSectionMap(input.sectionMap),
-			syncEnabled: input.syncEnabled ?? true
-		} as never);
 	}
 
 	/** Changes a mapping's project, direction, section map or switch. */
@@ -85,12 +123,16 @@ export class AsanaMappingService extends TenantAwareCrudService<AsanaProjectMapp
 			patch.projectId = input.projectId;
 		}
 		if (input.direction) patch.direction = input.direction;
-		await this.assertOutboundFree(tenant, patch.projectId ?? mapping.projectId, patch.direction ?? mapping.direction, mapping.id);
 		if (input.sectionMap !== undefined) patch.sectionMap = serializeSectionMap(input.sectionMap);
 		if (input.syncEnabled !== undefined) patch.syncEnabled = input.syncEnabled;
 		if (input.asanaProjectName !== undefined) patch.asanaProjectName = input.asanaProjectName;
 		if (Object.keys(patch).length) {
-			await this.typeOrmAsanaProjectMappingRepository.update({ id: mapping.id, tenantId: tenant.tenantId as ID }, patch as never);
+			// The outbound check and the write under the same lock as a creation, so two changes cannot both pass it.
+			await this.dataSource.transaction(async (manager) => {
+				await this.lockMappingsOf(manager, tenant);
+				await this.assertOutboundFree(tenant, patch.projectId ?? mapping.projectId, patch.direction ?? mapping.direction, mapping.id, manager);
+				await manager.update(AsanaProjectMapping, { id: mapping.id, tenantId: tenant.tenantId as ID }, patch as never);
+			});
 		}
 		return this.requireOne(tenant, mappingId);
 	}
@@ -116,9 +158,12 @@ export class AsanaMappingService extends TenantAwareCrudService<AsanaProjectMapp
 		mapping.webhookHandshakeStartedAt = startedAt;
 	}
 
-	/** The mapping that sends a project's tasks out, in the tenant and organization, or null. */
+	/** The mapping that sends a project's tasks out, in the tenant and organization (the oldest, should two exist), or null. */
 	async findOutboundForProject(scope: { tenantId: ID; organizationId: ID }, projectId: ID): Promise<AsanaProjectMapping | null> {
-		const mappings = await this.typeOrmAsanaProjectMappingRepository.find({ where: { projectId, tenantId: scope.tenantId, organizationId: scope.organizationId, syncEnabled: true } });
+		const mappings = await this.typeOrmAsanaProjectMappingRepository.find({
+			where: { projectId, tenantId: scope.tenantId, organizationId: scope.organizationId, syncEnabled: true },
+			order: { createdAt: 'ASC' } as never
+		});
 		return mappings.find((mapping) => mapping.direction !== AsanaSyncDirection.INBOUND) ?? null;
 	}
 
@@ -131,10 +176,10 @@ export class AsanaMappingService extends TenantAwareCrudService<AsanaProjectMapp
 	}
 
 	/** A project sends its tasks to at most one Asana project: a second `outbound` / `both` mapping is refused (409). */
-	private async assertOutboundFree(tenant: IIntegrationTenant, projectId: ID, direction: AsanaSyncDirection, exceptMappingId: ID | null): Promise<void> {
+	private async assertOutboundFree(tenant: IIntegrationTenant, projectId: ID, direction: AsanaSyncDirection, exceptMappingId: ID | null, manager: EntityManager): Promise<void> {
 		if (direction === AsanaSyncDirection.INBOUND) return;
-		const others = await this.typeOrmAsanaProjectMappingRepository.find({
-			where: { projectId, tenantId: tenant.tenantId as ID, organizationId: tenant.organizationId as ID }
+		const others = await manager.find(AsanaProjectMapping, {
+			where: { projectId, tenantId: tenant.tenantId as ID, organizationId: tenant.organizationId as ID } as never
 		});
 		const taken = others.find((other) => other.id !== exceptMappingId && other.direction !== AsanaSyncDirection.INBOUND);
 		if (taken) {
