@@ -44,7 +44,13 @@ import { InboxItem } from '../entities/inbox-item.entity';
 import { InboxItemRecipient } from '../entities/inbox-item-recipient.entity';
 import { InboxService } from '../inbox.service';
 import { InboxSourceHandlerRegistry } from '../inbox-source-handler.registry';
-import { INBOX_ITEM_CREATED, INBOX_STREAMED_EVENTS, InboxRealtime, inboxItemCreatedData } from './inbox-realtime';
+import {
+	INBOX_ITEM_CREATED,
+	INBOX_ITEM_STATE_CHANGED,
+	INBOX_STREAMED_EVENTS,
+	InboxRealtime,
+	inboxItemCreatedData
+} from './inbox-realtime';
 
 jest.setTimeout(60_000);
 
@@ -106,7 +112,7 @@ describe('InboxRealtime', () => {
 			) as never
 		).onModuleInit();
 		expect(mockDeclared).toEqual([[catalogue, consumer, ...INBOX_STREAMED_EVENTS]]);
-		expect(INBOX_STREAMED_EVENTS).toEqual([INBOX_ITEM_CREATED]);
+		expect(INBOX_STREAMED_EVENTS).toEqual([INBOX_ITEM_CREATED, INBOX_ITEM_STATE_CHANGED]);
 
 		mockDeclared.length = 0;
 		// A process without the subscription surface (the worker): nothing to declare, and no failure.

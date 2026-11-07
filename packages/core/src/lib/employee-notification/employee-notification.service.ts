@@ -21,6 +21,7 @@ import { RequestContext } from '../core/context/request-context';
 import { EmployeeNotificationSettingService } from '../employee-notification-setting/employee-notification-setting.service';
 import { EmployeeCreateNotificationEvent } from './events/employee-notification.event';
 import { EmployeeNotificationCreatedEvent } from './events/employee-notification-created.event';
+import { EmployeeNotificationUpdatedEvent } from './events/employee-notification-updated.event';
 import { EmployeeNotification } from './employee-notification.entity';
 import { TypeOrmEmployeeNotificationRepository } from './repository/type-orm-employee-notification.repository';
 import { MikroOrmEmployeeNotificationRepository } from './repository/mikro-orm-employee-notification.repository';
@@ -173,14 +174,7 @@ export class EmployeeNotificationService extends TenantAwareCrudService<Employee
 
 			// Create the notification entry using the provided input along with the tenantId and return the created notification
 			const notification = await super.create({ ...input, tenantId });
-			// Tell the in-process listeners (the real-time channel, the Inbox) that a row exists. Never fails the write.
-			if (notification?.id) {
-				try {
-					this._eventBus.publish(new EmployeeNotificationCreatedEvent(notification));
-				} catch (publishError) {
-					this.logger.warn(`The created event of notification ${notification.id} was not published: ${(publishError as Error)?.message}`);
-				}
-			}
+			this.publishCreated(notification);
 			return notification;
 		} catch (error) {
 			this.logger.error('Error while creating employee notification:', error);
@@ -301,7 +295,63 @@ export class EmployeeNotificationService extends TenantAwareCrudService<Employee
 		void _receiverEmployeeId;
 		void _receiverEmployee;
 
-		return await super.update(id, patch as QueryDeepPartialEntity<EmployeeNotification>);
+		const result = await super.update(id, patch as QueryDeepPartialEntity<EmployeeNotification>);
+		await this.publishStateChange(id, patch);
+		return result;
+	}
+
+	/**
+	 * Tells the in-process listeners (the Inbox, the real-time channel) that a notification row exists. Never
+	 * fails the write.
+	 */
+	private publishCreated(notification: IEmployeeNotification | undefined): void {
+		if (!notification?.id) {
+			return;
+		}
+		try {
+			this._eventBus.publish(new EmployeeNotificationCreatedEvent(notification));
+		} catch (error) {
+			this.logger.warn(`The created event of notification ${notification.id} was not published: ${(error as Error)?.message}`);
+		}
+	}
+
+	/**
+	 * Tells the listeners that the read / archive state of one notification changed (an edit by id). A change
+	 * stated by criteria rather than an id names no notification and is not announced. The event names the
+	 * notification's receiver (read from the row: an administrator may edit a colleague's notification), never
+	 * the caller. Never fails the write.
+	 */
+	private async publishStateChange(id: string | FindOptionsWhere<EmployeeNotification>, patch: Record<string, unknown>): Promise<void> {
+		const isRead = typeof patch['isRead'] === 'boolean' ? (patch['isRead'] as boolean) : undefined;
+		const isArchived = typeof patch['isArchived'] === 'boolean' ? (patch['isArchived'] as boolean) : undefined;
+		if (isRead === undefined && isArchived === undefined) {
+			return;
+		}
+		const notificationId = typeof id === 'string' ? id : (id as { id?: ID })?.id;
+		if (!notificationId || typeof notificationId !== 'string') {
+			return;
+		}
+		const tenantId = RequestContext.currentTenantId();
+		if (!tenantId) {
+			return;
+		}
+		try {
+			const row = await this.findOneByIdString(notificationId).catch(() => null);
+			if (!row) {
+				return;
+			}
+			this._eventBus.publish(
+				new EmployeeNotificationUpdatedEvent({
+					tenantId,
+					receiverEmployeeId: row.receiverEmployeeId ?? null,
+					ids: [notificationId],
+					...(isRead !== undefined ? { isRead } : {}),
+					...(isArchived !== undefined ? { isArchived } : {})
+				})
+			);
+		} catch (error) {
+			this.logger.warn(`The state change of notification ${notificationId} was not published: ${(error as Error)?.message}`);
+		}
 	}
 
 	/**
@@ -372,6 +422,17 @@ export class EmployeeNotificationService extends TenantAwareCrudService<Employee
 
 			// Extract the count of notifications that were updated.
 			const count = updateResult?.affected || 0;
+
+			// The listeners mirror the bulk read (the Inbox items filed for these notifications). Never fails the write.
+			if (count > 0) {
+				try {
+					this._eventBus.publish(
+						new EmployeeNotificationUpdatedEvent({ tenantId, receiverEmployeeId, ids: 'all', isRead: true })
+					);
+				} catch (error) {
+					this.logger.warn(`The mark-all-read of employee ${receiverEmployeeId} was not published: ${(error as Error)?.message}`);
+				}
+			}
 
 			return { success: true, count };
 		} catch (error) {
@@ -506,6 +567,15 @@ export class EmployeeNotificationService extends TenantAwareCrudService<Employee
 			// A request waiting for an admin's decision, which no notification setting turns off
 			case EmployeeNotificationTypeEnum.RATE_CHANGE_REQUEST:
 				return true;
+			// A followed record changed: switched off through the `preferences` JSON (no column of its own).
+			case EmployeeNotificationTypeEnum.TASK_UPDATE: {
+				const preferences = employeeNotificationSetting.preferences;
+				const taskUpdate =
+					preferences && typeof preferences === 'object' && !Array.isArray(preferences)
+						? (preferences as Record<string, unknown>)['taskUpdate']
+						: undefined;
+				return taskUpdate !== false;
+			}
 			default:
 				throw new Error(`Unsupported notification type: ${type}`);
 		}

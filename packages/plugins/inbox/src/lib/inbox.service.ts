@@ -52,6 +52,7 @@ type RecipientChange = {
 	isArchived?: boolean;
 	archivedAt?: Date | null;
 	snoozedUntil?: Date | null;
+	doneAt?: Date | null;
 };
 type RecipientUpdate = QueryDeepPartialEntity<InboxItemRecipient>;
 type ItemUpdate = QueryDeepPartialEntity<InboxItem>;
@@ -428,8 +429,18 @@ export class InboxService implements IInboxItemWriter, IInboxRecipientActions {
 			}
 			stated.snoozedUntil = change.snoozedUntil ?? null;
 		}
+		if (typeof input?.isDone === 'boolean') {
+			// Done is a triage state of its own (the item stays readable in the Done tab); doing an item also reads it.
+			change.doneAt = input.isDone ? (recipient.doneAt ?? now) : null;
+			if (input.isDone && !recipient.isRead && typeof input.isRead !== 'boolean') {
+				change.isRead = true;
+				change.readAt = now;
+				stated.isRead = true;
+			}
+			stated.isDone = input.isDone;
+		}
 		if (Object.keys(change).length === 0) {
-			throw new BadRequestException('State a change: isRead, isArchived or snoozedUntil.');
+			throw new BadRequestException('State a change: isRead, isArchived, snoozedUntil or isDone.');
 		}
 
 		await this.dataSource.getRepository(InboxItemRecipient).update({ id: recipient.id }, change as RecipientUpdate);
@@ -446,6 +457,14 @@ export class InboxService implements IInboxItemWriter, IInboxRecipientActions {
 			}
 		}
 		await this.feed?.recipientChanged(item, recipient, Object.keys(stated) as IInboxRecipientStateField[]);
+		// The user's other clients: refetch the item and the counts (never fails the write).
+		await this.realtime?.recipientStateChanged({
+			tenantId,
+			organizationId: item.organizationId ?? null,
+			userId,
+			itemIds: [item.id as ID],
+			stated: Object.keys(stated)
+		});
 		return this.get(id);
 	}
 
@@ -468,7 +487,8 @@ export class InboxService implements IInboxItemWriter, IInboxRecipientActions {
 			.select('recipient.id', 'recipientId')
 			.addSelect('item.id', 'itemId')
 			.addSelect('item.source', 'source')
-			.getRawMany<{ recipientId: ID; itemId: ID; source: string }>();
+			.addSelect('item.organizationId', 'organizationId')
+			.getRawMany<{ recipientId: ID; itemId: ID; source: string; organizationId: ID | null }>();
 		const ids = rows.map((row) => row.recipientId);
 
 		const repository = this.dataSource.getRepository(InboxItemRecipient);
@@ -489,6 +509,25 @@ export class InboxService implements IInboxItemWriter, IInboxRecipientActions {
 				userId,
 				rows.map((row) => ({ recipientId: row.recipientId, itemId: row.itemId }))
 			);
+		}
+		// The user's other clients: one event per organization of the items read (an item's event is scoped to its
+		// own organization, as a single read's is; the bulk may span the caller's organizations and tenant-wide items).
+		const byOrganization = new Map<string, { organizationId: ID | null; itemIds: ID[] }>();
+		for (const row of rows) {
+			const organizationId = row.organizationId ?? null;
+			const key = String(organizationId ?? '');
+			const group = byOrganization.get(key) ?? { organizationId, itemIds: [] };
+			group.itemIds.push(row.itemId);
+			byOrganization.set(key, group);
+		}
+		for (const group of byOrganization.values()) {
+			void this.realtime?.recipientStateChanged({
+				tenantId,
+				organizationId: group.organizationId,
+				userId,
+				itemIds: group.itemIds,
+				stated: ['isRead']
+			});
 		}
 		return { updated: ids.length };
 	}
@@ -831,6 +870,17 @@ export class InboxService implements IInboxItemWriter, IInboxRecipientActions {
 				})
 			);
 			query.andWhere('recipient.snoozedUntil > :now', { now: new Date() });
+			// A done item lives in the Done tab only, snoozed or not.
+			query.andWhere('recipient.doneAt IS NULL');
+		} else if (tab === InboxTabEnum.DONE) {
+			// Done and not archived: where a done item is found (and brought back).
+			query.andWhere(
+				new Brackets((where) => {
+					where.where('recipient.isArchived = :notArchived', { notArchived: false });
+					where.orWhere('recipient.isArchived IS NULL');
+				})
+			);
+			query.andWhere('recipient.doneAt IS NOT NULL');
 		} else {
 			query.andWhere(
 				new Brackets((where) => {
@@ -838,6 +888,8 @@ export class InboxService implements IInboxItemWriter, IInboxRecipientActions {
 					where.orWhere('recipient.isArchived IS NULL');
 				})
 			);
+			// A done item leaves the open tabs (it is in the Done tab).
+			query.andWhere('recipient.doneAt IS NULL');
 			// A snoozed item comes back when its time has come.
 			query.andWhere(
 				new Brackets((where) => {
@@ -903,7 +955,9 @@ export class InboxService implements IInboxItemWriter, IInboxRecipientActions {
 			readAt: row.readAt ?? null,
 			isArchived: !!row.isArchived,
 			archivedAt: row.archivedAt ?? undefined,
-			snoozedUntil: row.snoozedUntil ?? null
+			snoozedUntil: row.snoozedUntil ?? null,
+			isDone: !!row.doneAt,
+			doneAt: row.doneAt ?? null
 		};
 	}
 
