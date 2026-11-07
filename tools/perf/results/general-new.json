@@ -8,7 +8,7 @@
   "at": "2026-11-07T00:31:42.613Z",
   "provenance": {
     "harnessCommit": "df28bb10e0332f433644abc86f88a4be2b0769f9",
-    "buildCommit": "df28bb10e0332f433644abc86f88a4be2b0769f9",
+    "buildCommit": "3376e22171",
     "command": "C:\\Coding\\Worktrees\\ever-gauzy-perf-teams\\tools\\perf\\api-bench.mjs tools/perf/scenarios.json",
     "env": {
       "BASE": "http://localhost:3000/api",
@@ -31,7 +31,8 @@
       "cpus": 8,
       "memoryGB": 48
     },
-    "correctness": null
+    "correctness": null,
+    "buildCommitNote": "production build of perf/teams-hot-queries in the worktree (BUILD_COMMIT was not set at run time; corrected from the build logs)"
   },
   "results": [
     {

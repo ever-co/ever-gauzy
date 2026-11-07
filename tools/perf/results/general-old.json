@@ -8,7 +8,7 @@
   "at": "2026-11-07T00:26:13.523Z",
   "provenance": {
     "harnessCommit": "df28bb10e0332f433644abc86f88a4be2b0769f9",
-    "buildCommit": "df28bb10e0332f433644abc86f88a4be2b0769f9",
+    "buildCommit": "bed2d88c41",
     "command": "C:\\Coding\\Worktrees\\ever-gauzy-perf-teams\\tools\\perf\\api-bench.mjs tools/perf/scenarios.json",
     "env": {
       "BASE": "http://localhost:3000/api",
@@ -31,7 +31,8 @@
       "cpus": 8,
       "memoryGB": 48
     },
-    "correctness": null
+    "correctness": null,
+    "buildCommitNote": "production build of origin/develop in the main checkout"
   },
   "results": [
     {
