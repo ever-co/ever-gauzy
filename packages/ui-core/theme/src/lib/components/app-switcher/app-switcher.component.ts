@@ -3,7 +3,6 @@ import {
 	ChangeDetectionStrategy,
 	Component,
 	ElementRef,
-	HostBinding,
 	HostListener,
 	inject,
 	Input,
@@ -85,7 +84,9 @@ function getNextRowIndex(key: string, focusedIndex: number, rowCount: number): n
 	templateUrl: './app-switcher.component.html',
 	styleUrls: ['./app-switcher.component.scss'],
 	changeDetection: ChangeDetectionStrategy.Eager,
-	standalone: false
+	standalone: false,
+	/** Without a catalog there is nothing to switch to: the host is hidden. */
+	host: { '[attr.hidden]': 'apps.length === 0 ? "" : null' }
 })
 export class AppSwitcherComponent implements OnDestroy {
 	private readonly _electronService = inject(ElectronService);
@@ -102,10 +103,6 @@ export class AppSwitcherComponent implements OnDestroy {
 		withDeploymentAddress(app, this._environment?.CLIENT_BASE_URL)
 	);
 
-	/** Without a catalog there is nothing to switch to: the trigger is not shown. */
-	@HostBinding('attr.hidden') get hiddenWithoutApps(): '' | null {
-		return this.apps.length === 0 ? '' : null;
-	}
 	readonly markPath = EVER_MARK_PATH;
 	readonly panelId: string;
 	readonly markGradientId: string;
