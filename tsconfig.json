@@ -88,6 +88,7 @@
 			"@gauzy/plugin-integration-ever-works-ui": ["./packages/plugins/integration-ever-works-ui/src/index.ts"],
 			"@gauzy/plugin-integration-linear-ui": ["./packages/plugins/integration-linear-ui/src/index.ts"],
 			"@gauzy/plugin-integration-asana-ui": ["./packages/plugins/integration-asana-ui/src/index.ts"],
+			"@gauzy/plugin-integration-trello-ui": ["./packages/plugins/integration-trello-ui/src/index.ts"],
 			"@gauzy/plugin-integration-sim": ["./packages/plugins/integration-sim/src/index.ts"],
 			"@gauzy/plugin-integration-sim-ui": ["./packages/plugins/integration-sim-ui/src/index.ts"],
 			"@gauzy/plugin-integration-upwork": ["./packages/plugins/integration-upwork/src/index.ts"],
