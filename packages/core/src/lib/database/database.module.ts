@@ -6,6 +6,7 @@ import { MySqlDriver } from '@mikro-orm/mysql';
 import { KnexModule } from 'nest-knexjs';
 import { ConfigModule, ConfigService, DatabaseTypeEnum, TypeOrmCompatibleBetterSqliteDriver } from '@gauzy/config';
 import { ConnectionEntityManager } from './connection-entity-manager';
+import { SqlitePlannerStatisticsService } from './sqlite-planner-statistics.service';
 import { serializeEmbeddedTransactions } from './embedded-transaction-queue';
 import { MigrationLockingDataSource } from './migration-run-lock';
 import { pruneTypeOrmSkeletonMetadata } from './typeorm-skeleton-metadata';
@@ -98,7 +99,7 @@ const mikroOrmDriver = mikroOrmDriverMap[process.env.DB_TYPE] || TypeOrmCompatib
 			inject: [ConfigService]
 		})
 	],
-	providers: [ConnectionEntityManager],
-	exports: [ConnectionEntityManager]
+	providers: [ConnectionEntityManager, SqlitePlannerStatisticsService],
+	exports: [ConnectionEntityManager, SqlitePlannerStatisticsService]
 })
 export class DatabaseModule {}

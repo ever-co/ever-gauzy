@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import * as chalk from 'chalk';
 import { environment } from '@gauzy/config';
 import { SeedDataService } from '../core/seeds/seed-data.service';
+import { SqlitePlannerStatisticsService } from '../database/sqlite-planner-statistics.service';
 import { UserService } from '../user/user.service';
 import { getPublishedSeedAccounts } from '../bootstrap/validate-secrets';
 
@@ -9,7 +10,11 @@ import { getPublishedSeedAccounts } from '../bootstrap/validate-secrets';
 export class AppService {
 	public userCount: number = 0;
 
-	constructor(private readonly seedDataService: SeedDataService, private readonly userService: UserService) {}
+	constructor(
+		private readonly seedDataService: SeedDataService,
+		private readonly userService: UserService,
+		private readonly sqlitePlannerStatistics: SqlitePlannerStatisticsService
+	) {}
 
 	/**
 	 * Seed DB if no users exists (for simplicity and safety we only re-seed DB if no users found)
@@ -85,6 +90,8 @@ export class AppService {
 		// Only run demo seed if no users exist and demo mode is enabled
 		if (this.userCount === 0 && isDemo) {
 			await this.seedDataService.runDemoSeed();
+			// The seed filled an empty database: give SQLite's planner its statistics (nothing on other databases)
+			await this.sqlitePlannerStatistics.analyze();
 		}
 	}
 }

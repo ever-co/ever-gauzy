@@ -103,6 +103,23 @@ export class RecordingQueryBuilder {
  * The sub-query double: renders the SELECT it is given as one line of SQL (`getQuery()` answers it in
  * parentheses, as typeorm does for a sub-query) and binds its parameters on the parent builder.
  */
+/**
+ * The entity manager's query builder as `TimeLogService.loadTimeSlotFigures` uses it: every chained call returns the
+ * stub, and `getRawMany` answers the slot figures of the given logs (one row per slot of each log's `timeSlots`, as
+ * the junction query would). Hand it to a mocked repository as `manager.createQueryBuilder`.
+ */
+export function slotFiguresQueryBuilder(logs: () => unknown[]) {
+	const stub: Record<string, unknown> = {};
+	for (const method of ['select', 'addSelect', 'from', 'innerJoin', 'where', 'andWhere', 'orderBy', 'addOrderBy']) {
+		stub[method] = () => stub;
+	}
+	stub.getRawMany = async () =>
+		(logs() as Array<{ id: string; timeSlots?: Array<{ id: string; overall: number; duration: number }> }>).flatMap(
+			(log) => (log.timeSlots ?? []).map((slot) => ({ timeLogId: log.id, id: slot.id, overall: slot.overall, duration: slot.duration }))
+		);
+	return stub;
+}
+
 export class RecordingSubQuery {
 	private selection = '';
 	private source = '';

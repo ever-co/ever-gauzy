@@ -16,6 +16,7 @@ import {
 	IGetTimeLogConflictInput,
 	IGetTimeLogReportInput,
 	ITimeLog,
+	ITimeSlot,
 	TimeLogType,
 	IAmountOwedReport,
 	OwedRateSource,
@@ -258,9 +259,11 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 				// Create a query builder for the TimeLog entity
 				const query = this.typeOrmRepository.createQueryBuilder('time_log');
 
-				// Inner join with related entities (employee, timeSlots)
+				// Inner join with the employee. The slots are not joined: joined onto the logs they multiplied every log into
+				// one row per slot (and, where the slots were also loaded as a relation, per slot squared), tens of
+				// thousands of wide rows for a month; `getFilterTimeLogQuery` requires a slot in the activity range with
+				// an EXISTS sub-query instead, which answers the same set of logs.
 				query.innerJoin(`${query.alias}.employee`, 'employee');
-				query.innerJoin(`${query.alias}.timeSlots`, 'timeSlots');
 
 				// Set find options for the query
 				query.setFindOptions({
@@ -284,16 +287,10 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 								lastName: true,
 								imageUrl: true
 							}
-						},
-						timeSlots: {
-							id: true,
-							overall: true,
-							duration: true
 						}
 					},
 					relations: {
-						// Related entities to be included in the result
-						timeSlots: true,
+						// Related entities to be included in the result (the slots' figures are loaded apart, see below)
 						employee: {
 							user: true
 						}
@@ -306,8 +303,9 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 				// Apply additional conditions to the query based on request filters
 				await this.getFilterTimeLogQuery(query, request);
 
-				// Execute the query and retrieve time logs
+				// Execute the query and retrieve time logs, then the figures of their slots the activity is averaged from
 				logs = await query.getMany();
+				await this.loadTimeSlotFigures(logs);
 				break;
 			}
 		}
@@ -507,9 +505,11 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 				// Create a query builder for the TimeLog entity
 				const query = this.typeOrmRepository.createQueryBuilder('time_log');
 
-				// Inner join with related entities (employee, timeSlots)
+				// Inner join with the employee. The slots are not joined: joined onto the logs they multiplied every log into
+				// one row per slot (and, where the slots were also loaded as a relation, per slot squared), tens of
+				// thousands of wide rows for a month; `getFilterTimeLogQuery` requires a slot in the activity range with
+				// an EXISTS sub-query instead, which answers the same set of logs.
 				query.innerJoin(`${query.alias}.employee`, 'employee');
-				query.innerJoin(`${query.alias}.timeSlots`, 'timeSlots');
 
 				// Set find options for the query
 				query.setFindOptions({
@@ -606,9 +606,11 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 				// Create a query builder for the TimeLog entity
 				const query = this.typeOrmRepository.createQueryBuilder('time_log');
 
-				// Inner join with related entities (employee, timeSlots)
+				// Inner join with the employee. The slots are not joined: joined onto the logs they multiplied every log into
+				// one row per slot (and, where the slots were also loaded as a relation, per slot squared), tens of
+				// thousands of wide rows for a month; `getFilterTimeLogQuery` requires a slot in the activity range with
+				// an EXISTS sub-query instead, which answers the same set of logs.
 				query.innerJoin(`${query.alias}.employee`, 'employee');
-				query.innerJoin(`${query.alias}.timeSlots`, 'timeSlots');
 
 				// Set find options for the query
 				query.setFindOptions({
@@ -635,11 +637,6 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 							}
 						},
 						task: TimeLogService.TASK_SELECT_FIELDS,
-						timeSlots: {
-							id: true,
-							overall: true,
-							duration: true
-						},
 						organizationContact: {
 							id: true,
 							name: true,
@@ -662,7 +659,6 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 						// Related entities to be included in the result
 						project: { organizationContact: true },
 						task: { taskStatus: true },
-						timeSlots: true,
 						organizationContact: true,
 						employee: { user: true }
 					},
@@ -674,8 +670,9 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 				// Apply additional conditions to the query based on request filters
 				await this.getFilterTimeLogQuery(query, request);
 
-				// Execute the query and retrieve time logs
+				// Execute the query and retrieve time logs, then the figures of their slots the activity is averaged from
 				logs = await query.getMany();
+				await this.loadTimeSlotFigures(logs);
 				break;
 			}
 		}
@@ -733,9 +730,11 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 				// Create a query builder for the TimeLog entity
 				const query = this.typeOrmRepository.createQueryBuilder('time_log');
 
-				// Inner join with related entities (employee, timeSlots)
+				// Inner join with the employee. The slots are not joined: joined onto the logs they multiplied every log into
+				// one row per slot (and, where the slots were also loaded as a relation, per slot squared), tens of
+				// thousands of wide rows for a month; `getFilterTimeLogQuery` requires a slot in the activity range with
+				// an EXISTS sub-query instead, which answers the same set of logs.
 				query.innerJoin(`${query.alias}.employee`, 'employee');
-				query.innerJoin(`${query.alias}.timeSlots`, 'timeSlots');
 
 				// Set up the find options for the query
 				query.setFindOptions({
@@ -838,9 +837,11 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 				// Step 1: Create a query builder for the TimeLog entity
 				const query = this.typeOrmRepository.createQueryBuilder('time_log');
 
-				// Inner join with related entities (employee, timeSlots)
+				// Inner join with the employee. The slots are not joined: joined onto the logs they multiplied every log into
+				// one row per slot (and, where the slots were also loaded as a relation, per slot squared), tens of
+				// thousands of wide rows for a month; `getFilterTimeLogQuery` requires a slot in the activity range with
+				// an EXISTS sub-query instead, which answers the same set of logs.
 				query.innerJoin(`${query.alias}.employee`, 'employee');
-				query.innerJoin(`${query.alias}.timeSlots`, 'timeSlots');
 
 				// Set find options for the query
 				query.setFindOptions({
@@ -958,9 +959,11 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 				// Create a query builder for the TimeLog entity
 				const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
 
-				// Inner join with related entities (employee, timeSlots)
+				// Inner join with the employee. The slots are not joined: joined onto the logs they multiplied every log into
+				// one row per slot (and, where the slots were also loaded as a relation, per slot squared), tens of
+				// thousands of wide rows for a month; `getFilterTimeLogQuery` requires a slot in the activity range with
+				// an EXISTS sub-query instead, which answers the same set of logs.
 				query.innerJoin(`${query.alias}.employee`, 'employee');
-				query.innerJoin(`${query.alias}.timeSlots`, 'timeSlots');
 
 				// Set find options for the query
 				query.setFindOptions({
@@ -1601,6 +1604,48 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 	 * @param scope The organization the slots must belong to, and the activity range (`overall`, in seconds
 	 * of a ten-minute slot) one of them must lie in, if any.
 	 */
+	/**
+	 * Loads, onto each log, the activity figures of its slots (`id`, `overall`, `duration`, and the `percentage` the
+	 * subscriber derives on load), which the report groupings average (`calculateAverageActivity`) and the weekly
+	 * report answers per log: every slot linked to the log that is not deleted, as the
+	 * `timeSlots` relation loaded them when it was joined (the join carried the soft-delete condition only, so the
+	 * activity-level range the logs are filtered on does not narrow a log's slots). One query per thousand logs
+	 * instead of one row per (log × slot × slot); a log without slots keeps an empty list.
+	 *
+	 * @param logs - The logs of a report, as read with their other relations.
+	 */
+	private async loadTimeSlotFigures(logs: ITimeLog[]): Promise<void> {
+		const figures = new Map<ID, ITimeSlot[]>();
+		const ids = [...new Set(logs.map((log) => log.id))];
+		for (let offset = 0; offset < ids.length; offset += TimeLogService.SLOT_FIGURES_CHUNK) {
+			const timeLogIds = ids.slice(offset, offset + TimeLogService.SLOT_FIGURES_CHUNK);
+			const rows = await this.typeOrmRepository.manager
+				.createQueryBuilder()
+				.select(p(`"slotLog"."timeLogId"`), 'timeLogId')
+				.addSelect(p(`"slot"."id"`), 'id')
+				.addSelect(p(`"slot"."overall"`), 'overall')
+				.addSelect(p(`"slot"."duration"`), 'duration')
+				.from(p('time_slot_time_logs'), p('slotLog'))
+				.innerJoin(p('time_slot'), p('slot'), p(`"slot"."id" = "slotLog"."timeSlotId"`))
+				.where(p(`"slotLog"."timeLogId" IN (:...timeLogIds)`), { timeLogIds })
+				.andWhere(p(`"slot"."deletedAt" IS NULL`))
+				.orderBy(p(`"slot"."startedAt"`), 'ASC')
+				.addOrderBy(p(`"slot"."id"`), 'ASC')
+				.getRawMany<{ timeLogId: ID; id: ID; overall: number; duration: number }>();
+			for (const { timeLogId, id, overall, duration } of rows) {
+				// `percentage` as `TimeSlotSubscriber.afterEntityLoad` set it on the joined slots (the weekly report
+				// answers each log's slots): the slot's activity share, rounded as there, 0 for an empty duration.
+				const percentage = duration === 0 ? 0 : parseFloat(Math.round((overall * 100) / duration).toFixed(2));
+				if (!figures.has(timeLogId)) figures.set(timeLogId, []);
+				figures.get(timeLogId).push({ id, overall, duration, percentage } as ITimeSlot);
+			}
+		}
+		// Assigned once every row is read: a log without slots keeps an empty list
+		for (const log of logs) {
+			log.timeSlots = figures.get(log.id) ?? [];
+		}
+	}
+
 	private requireTimeSlot(
 		query: SelectQueryBuilder<TimeLog>,
 		scope: { tenantId: ID; organizationId: ID; start?: number; end?: number }
@@ -2270,6 +2315,9 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		// Check if the end date is on or before the current date
 		return moment(end).isSameOrBefore(moment());
 	}
+
+	/** Logs per slot-figures query (`loadTimeSlotFigures`): keeps the IN list within every database's limits. */
+	private static readonly SLOT_FIGURES_CHUNK = 1000;
 
 	private static readonly TASK_SELECT_FIELDS = {
 		id: true,
