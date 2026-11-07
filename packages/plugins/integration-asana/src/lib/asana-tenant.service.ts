@@ -228,7 +228,12 @@ export class AsanaTenantService {
 	 */
 	private async fileAttention(tenant: IIntegrationTenant, reason: string | null, alsoUserIds: readonly ID[] = []): Promise<void> {
 		if (!this.inbox) return;
-		const userId = this.settingsOf(tenant)[AsanaSettingName.CONNECTED_BY_USER_ID];
+		// The row as it is now: a filing from before a reconnect or a newer refusal is stale and files nothing.
+		const current = await this.findAnyById(tenant.id as ID);
+		if (!current) return;
+		const settings = this.settingsOf(current);
+		if ((settings[AsanaSettingName.ATTENTION_REASON] || null) !== (reason || null)) return;
+		const userId = settings[AsanaSettingName.CONNECTED_BY_USER_ID];
 		const recipients = [...new Set([userId, ...alsoUserIds].filter(Boolean).map(String))] as ID[];
 		if (!recipients.length) return;
 		try {
