@@ -84,7 +84,7 @@ describe('TaskService.update — moving the time logs with the task', () => {
 		({ restore } = asTenantUser(fixture, { permissions }));
 	};
 
-	const movedIds = () => (write.executed ? (write.where?.id as { value: string[] }).value : []);
+	const movedIds = () => (write.executed ? ((write.where?.id as { value: string[] } | undefined)?.value ?? []) : []);
 
 	beforeEach(() => {
 		organizationAllowsModifyTime = true;
