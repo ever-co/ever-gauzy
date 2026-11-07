@@ -107,6 +107,10 @@ export class TaskViewService extends TenantAwareCrudService<TaskView> {
 			// return updated view
 			return updatedTaskView;
 		} catch (error) {
+			// The typed refusals of the save keep their status and body (the 409 carries the latest view to merge into).
+			if (error instanceof ConflictException || error instanceof NotFoundException || error instanceof BadRequestException) {
+				throw error;
+			}
 			// Handle errors and return an appropriate error response
 			throw new HttpException(`Failed to update view: ${error.message}`, HttpStatus.BAD_REQUEST);
 		}
