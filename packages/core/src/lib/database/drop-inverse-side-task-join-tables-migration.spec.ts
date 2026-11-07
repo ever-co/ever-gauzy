@@ -2,13 +2,14 @@ import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 import { DataSource } from 'typeorm';
-import { DropInverseSideTaskJoinTables1791000004900 } from './1791000004900-DropInverseSideTaskJoinTables';
+import { DropInverseSideTaskJoinTables1791000004900 } from './migrations/1791000004900-DropInverseSideTaskJoinTables';
 
 /**
  * `DropInverseSideTaskJoinTables1791000004900` on a real SQLite database: the two retired junction tables are
  * dropped, every row they held is in the owning table afterwards (a link already there is not duplicated), and a
  * second run finds nothing to do. The retired tables are given rows here on purpose: production's are empty, and
- * the migration must still lose nothing where they are not.
+ * the migration must still lose nothing where they are not. The spec lives beside the other migration specs, outside
+ * `migrations/`, which TypeORM loads whole at startup.
  */
 describe('DropInverseSideTaskJoinTables1791000004900 (SQLite)', () => {
 	const TIMEOUT = 60 * 1000;

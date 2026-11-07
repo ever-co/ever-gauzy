@@ -132,7 +132,8 @@ describe('OrganizationTeam.tasks under relationLoadStrategy query (real entities
 		// The team ids fill the team-id list (TypeORM also narrows by the task ids it found, which is fine)
 		expect(TEAMS.every((id) => parameters.includes(id))).toBe(true);
 		// No stray junction table is created for the inverse side any more
-		expect(measured.tables).not.toEqual(expect.arrayContaining(['organization_team_tasks_task', 'employee_tasks_task']));
+		expect(measured.tables).not.toContain('organization_team_tasks_task');
+		expect(measured.tables).not.toContain('employee_tasks_task');
 		expect(measured.queryStrategy).toEqual(expected);
 	});
 });
