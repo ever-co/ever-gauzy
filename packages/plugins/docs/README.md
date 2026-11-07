@@ -73,6 +73,28 @@ degraded one.
 
 Run `yarn nx build plugin-docs` to build the library.
 
+## Markdown (export and update)
+
+- `GET /plugins/docs/documents/:id/export/markdown` answers a page as Markdown (`text/markdown`, a download named after
+  the page); `?subtree=true` answers the page and the pages under it the caller may read as a zip: `index.md` for the
+  root, one file per page (`<slug>.md`, or `<slug>/index.md` when it has children) under its parent's folder, the
+  links between the pages relative, the files the pages show (images and attachments served by the Documents API)
+  under `assets/`. Up to 500 pages, and up to 256 MB of files (a file past the budget keeps its API link); a page the
+  caller may not read is left out with what is under it. The route shares the bulk route's rate limit
+  (`GAUZY_DOCS_ADMIN_OPS_RATE_LIMIT`).
+- `PUT /plugins/docs/documents/:id/content/markdown` `{ markdown, expectedRevision? }` applies a Markdown text to a
+  page: the text is read back into the canonical JSON, and only the blocks whose Markdown changed are replaced — a
+  block whose Markdown is the same keeps its stored JSON, attributes the Markdown cannot carry and all (a longest
+  common subsequence of the blocks' Markdown decides). The content route's rules apply: a stale `expectedRevision` is
+  409 `DOCS_CONTENT_CONFLICT` with the current one, a locked page 423, the schema, the version snapshot, the HTML
+  render cache, the mention and link sync. Nothing is written when the text changes nothing. Answers the document,
+  its revision, and `changedBlocks` / `keptBlocks`.
+- The stored subset Markdown carries: paragraphs, headings, bullet / ordered / task lists (nested), code blocks with a
+  language, quotes, rules, tables, images, hard breaks; bold, italic, strike, code and links. Mentions, emoji, maths,
+  callouts, details, files and embeds are written as text or links on export; what Markdown cannot say (alignment,
+  colours, block ids) survives an update on the blocks it did not change. `services/document-markdown.ts` (pure, with a
+  spec) does the two directions and the block diff; `marked` reads the Markdown, `archiver` writes the zip.
+
 ## Running unit tests
 
 Run `yarn nx test plugin-docs` to execute the unit tests via [Jest](https://jestjs.io).

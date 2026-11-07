@@ -734,8 +734,8 @@ export class DocumentUploadService {
 	 * @param id The FILE document id.
 	 * @returns The blob plus its hardened response metadata.
 	 */
-	async getRawFile(id: ID): Promise<IDocumentRawFile> {
-		const document = await this.requireFileDocument(id);
+	async getRawFile(id: ID, organizationId?: ID): Promise<IDocumentRawFile> {
+		const document = await this.requireFileDocument(id, organizationId);
 		const provider = new FileStorage().setProvider(document.storageProvider).getProviderInstance();
 
 		// As bytes whatever the provider answers (the S3 family returns the SDK's body stream, whose `length` is
@@ -767,8 +767,8 @@ export class DocumentUploadService {
 	 * Resolves a FILE document through the read scope (404 on a cross-org / invisible id) and
 	 * validates its storage key shape before any provider call.
 	 */
-	private async requireFileDocument(id: ID): Promise<Document> {
-		const document = await this.documentService.findOneScoped(id);
+	private async requireFileDocument(id: ID, organizationId?: ID): Promise<Document> {
+		const document = await this.documentService.findOneScoped(id, [], organizationId);
 
 		if (document.kind !== DocumentKindEnum.FILE) {
 			throw new ConflictException({
