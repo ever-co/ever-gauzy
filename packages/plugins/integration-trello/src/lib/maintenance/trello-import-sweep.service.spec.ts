@@ -34,12 +34,13 @@ function sweep(config: Partial<TrelloConfig> = {}) {
 	const findAnyById = jest.fn(async (integrationId: string) =>
 		gone.has(integrationId) ? null : { id: integrationId, tenantId: integrationId.replace('int-', ''), organizationId: 'org-1', settings: [] }
 	);
+	const ensureAttentionFiled = jest.fn(async (_tenant: { id: string }) => undefined);
 	const summaryOf = jest.fn((tenant: { id: string }) => ({ attentionReason: attention.has(tenant.id) ? 'token_refused' : null }));
 	const claimImport = jest.fn(async (_tenant: unknown, mapping: TrelloBoardMapping, _input: { full?: boolean; requestedByUserId?: string | null }) => ({ id: `run-${mapping.id}`, mappingId: mapping.id }));
 	const importMapping = jest.fn().mockResolvedValue(undefined);
 	const service = new TrelloImportSweepService(
 		{ find, findOne } as unknown as TypeOrmTrelloBoardMappingRepository,
-		{ findAnyById, summaryOf } as unknown as TrelloTenantService,
+		{ findAnyById, summaryOf, ensureAttentionFiled } as unknown as TrelloTenantService,
 		{ claimImport } as unknown as TrelloSyncRunService,
 		{ importMapping } as unknown as TrelloSyncService,
 		{ importIntervalMinutes: 15, ...config } as TrelloConfig
@@ -48,7 +49,7 @@ function sweep(config: Partial<TrelloConfig> = {}) {
 		lastListed = mappings;
 		find.mockResolvedValue(mappings);
 	};
-	return { service, find, findOne, findOneAnswers, list, findAnyById, summaryOf, attention, gone, claimImport, importMapping, tenantsSeen };
+	return { service, find, findOne, findOneAnswers, list, findAnyById, summaryOf, ensureAttentionFiled, attention, gone, claimImport, importMapping, tenantsSeen };
 }
 
 beforeEach(() => {
