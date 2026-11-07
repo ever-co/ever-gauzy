@@ -98,7 +98,7 @@ export class AppSwitcherComponent implements OnDestroy {
 	@ViewChild('trigger') readonly triggerRef?: ElementRef<HTMLButtonElement>;
 	@ViewChild('appsPopover') readonly appsPopover?: NbPopoverDirective;
 
-	/** The catalog the deployment provides (`provideEverApps`), each row as this deployment serves it. */
+	/** The catalog the deployment provides (`EVER_APPS`), each row as this deployment serves it. */
 	readonly apps: ReadonlyArray<IEverApp> = inject(EVER_APPS).map((app) =>
 		withDeploymentAddress(app, this._environment?.CLIENT_BASE_URL)
 	);

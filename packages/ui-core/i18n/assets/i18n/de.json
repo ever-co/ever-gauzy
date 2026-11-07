@@ -4990,7 +4990,9 @@
 		"COLLAPSE_SIDEBAR": "Seitenleiste einklappen",
 		"EXPAND_SIDEBAR": "Seitenleiste ausklappen",
 		"EVER_APPS": "Apps",
-		"SWITCH_EVER_APP": "Zu einer anderen Ever-App wechseln"
+		"SWITCH_EVER_APP": "Zu einer anderen Ever-App wechseln",
+		"WORKSPACE": "Arbeitsbereich",
+		"SWITCH_WORKSPACE": "Arbeitsbereich wechseln"
 	},
 	"AI_ASSISTANT": {
 		"TITLE": "KI-Assistent",

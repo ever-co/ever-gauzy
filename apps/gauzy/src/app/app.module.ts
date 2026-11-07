@@ -35,8 +35,7 @@ import { getPluginUiConfig } from '@gauzy/plugin-ui';
 import { PostHogModule } from '@gauzy/plugin-posthog-ui';
 import { GAUZY_ENV, environment } from '@gauzy/ui-config';
 import { UiCoreModule } from '@gauzy/ui-core';
-import { CommonModule, provideEverApps } from '@gauzy/ui-core/common';
-import { EVER_APP_CATALOG } from '@gauzy/plugin-ever-connect-ui';
+import { CommonModule, EVER_APPS, everAppsFromPluginOptions } from '@gauzy/ui-core/common';
 import {
 	APIInterceptor,
 	AppInitService,
@@ -145,8 +144,10 @@ const FEATURE_MODULES = [
 		// Exposes the full environment config to the DI tree via the GAUZY_ENV token.
 		{ provide: GAUZY_ENV, useValue: environment },
 
-		// The Ever apps the header's app switcher lists: the catalog of the Ever Platform UI module.
-		provideEverApps(EVER_APP_CATALOG),
+		// The Ever apps the header's app switcher lists: the catalog the Ever Platform UI module carries in its
+		// plugin options (plugin-ui.config.ts, loaded before bootstrap). Not imported here, so taking the module
+		// out of the plugin list removes the catalog and the switcher with it.
+		{ provide: EVER_APPS, useFactory: () => everAppsFromPluginOptions(getPluginUiConfig().plugins) },
 
 		// Angular CDK 21 enables the Popover API for overlays by default (top layer), which causes
 		// Nebular dialogs to render above toasts. Disabling it restores z-index-based stacking.

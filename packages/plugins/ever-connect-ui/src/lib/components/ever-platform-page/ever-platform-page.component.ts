@@ -16,6 +16,7 @@ import { distinctUntilChanged, forkJoin, Observable, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { PermissionsEnum } from '@gauzy/contracts';
 import { Store } from '@gauzy/ui-core/core';
+import { LookupOptionsComponent } from '../lookup-options/lookup-options.component';
 import { ApprovalDecision, PendingApprovalsComponent } from '../pending-approvals/pending-approvals.component';
 import {
 	EverConnectAuditRow,
@@ -59,7 +60,8 @@ export type EverPlatformView = 'loading' | 'ready' | 'unavailable' | 'error';
 		NbTabsetModule,
 		NbToggleModule,
 		TranslatePipe,
-		PendingApprovalsComponent
+		PendingApprovalsComponent,
+		LookupOptionsComponent
 	],
 	template: `
 		<nb-card>
@@ -410,6 +412,15 @@ export type EverPlatformView = 'loading' | 'ready' | 'unavailable' | 'error';
 												{{ 'EVER_CONNECT.INTEGRATIONS.SHOW_SCOPE' | translate }}
 											</button>
 										</div>
+										@if (
+											item.key === 'counterparty_lookup' && item.options && selectedOrganizationId
+										) {
+											<ngx-ever-connect-lookup-options
+												[organizationId]="selectedOrganizationId"
+												[autoCheck]="item.options.auto_check === true"
+												[canEdit]="canEditIntegrations"
+											/>
+										}
 										@if (item.state === 'pending_operator' && !status?.operator) {
 											<p class="hint" data-test="waiting-operator">
 												{{ 'EVER_CONNECT.INTEGRATIONS.WAITING_OPERATOR' | translate }}
@@ -618,6 +629,16 @@ export class EverPlatformPageComponent implements OnInit {
 	noticeParams: Record<string, unknown> = {};
 	noticeStatus: 'success' | 'warning' | 'danger' | 'info' = 'success';
 	private organizationId: string | null = null;
+
+	/** The organization the page shows. */
+	get selectedOrganizationId(): string | null {
+		return this.organizationId;
+	}
+
+	/** Whether the person may change integrations (`INTEGRATION_EDIT`). */
+	get canEditIntegrations(): boolean {
+		return this.store.hasPermission(PermissionsEnum.INTEGRATION_EDIT);
+	}
 
 	ngOnInit(): void {
 		this.store.selectedOrganization$

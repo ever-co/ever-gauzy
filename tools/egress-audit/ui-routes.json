@@ -1052,6 +1052,18 @@
       "note": "registered at run time by a UI plugin of apps/gauzy/src/plugin-ui.config.ts or a page module (the generator lists the registry call as a note)"
     },
     {
+      "path": "/pages/integrations/asana",
+      "file": "packages/plugins/integration-asana-ui/src/lib/integration-asana-ui.plugin.ts",
+      "source": "manual",
+      "note": "registered at run time by a UI plugin of apps/gauzy/src/plugin-ui.config.ts or a page module (the generator lists the registry call as a note)"
+    },
+    {
+      "path": "/pages/integrations/asana/:integrationId",
+      "file": "packages/plugins/integration-asana-ui/src/lib/integration-asana-ui.plugin.ts",
+      "source": "manual",
+      "note": "registered at run time by a UI plugin of apps/gauzy/src/plugin-ui.config.ts or a page module (the generator lists the registry call as a note)"
+    },
+    {
       "path": "/pages/integrations/gauzy-ai",
       "file": "apps/gauzy/src/app/pages/integrations/integrations.module.ts",
       "source": "manual",

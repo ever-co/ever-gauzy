@@ -37,6 +37,25 @@ export class GauzyLogoComponent implements AfterViewInit, OnInit, OnDestroy {
 	/** Active tenant (workspace) shown by the sidebar switcher. */
 	public tenantName = '';
 	public tenantLogo: string = DEFAULT_SVG;
+	private tenantLogoFailed = false;
+
+	get hasTenantLogo(): boolean {
+		const logo = (this.tenantLogo || '').replace(/^\/+/, '');
+		return !!logo && logo !== DEFAULT_SVG && !this.tenantLogoFailed;
+	}
+
+	get tenantInitials(): string {
+		const words = (this.tenantName || '').trim().split(/\s+/).filter(Boolean);
+		return words
+			.slice(0, 2)
+			.map((word) => Array.from(word)[0])
+			.join('')
+			.toUpperCase();
+	}
+
+	onTenantLogoError(): void {
+		this.tenantLogoFailed = true;
+	}
 
 	private _controlled = true;
 	@Input()
@@ -103,6 +122,7 @@ export class GauzyLogoComponent implements AfterViewInit, OnInit, OnDestroy {
 				distinctUntilChange(),
 				tap(({ name, logo }) => {
 					this.tenantName = name;
+					if (logo !== this.tenantLogo) this.tenantLogoFailed = false;
 					this.tenantLogo = logo;
 				}),
 				untilDestroyed(this)

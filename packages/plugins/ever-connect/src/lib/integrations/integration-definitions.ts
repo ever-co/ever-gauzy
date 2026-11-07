@@ -9,8 +9,11 @@ import { INTEGRATIONS, IntegrationDefinition, IntegrationKey } from '../sdk';
  * - `scopeVersion` and `scopeSha256` pin the scope this release was reviewed with: when the SDK's
  *   scope changes, `definitions.drift.spec.ts` fails until the pin is updated (and a scope change
  *   without a new `scope_version` fails there too);
- * - `available`: `true` only for the integrations this release can run. The others read "coming
- *   soon" here whatever Ever Platform says, and nothing of theirs moves;
+ * - `available`: `true` for the integrations the connection itself runs (`instance_url`,
+ *   `stats_link`, `ever_id_login`). Every other one is available only once a handler is registered
+ *   for it (`IntegrationHandlerRegistry`: the counterparty check and discoverability in this
+ *   release); without one it reads "coming soon" here whatever Ever Platform says, and nothing of
+ *   it moves;
  * - `instanceWide`: the integration acts for the whole installation; only its operator asks for
  *   the consent and accepts it locally;
  * - `appEverCoOnly`: consent only in app.ever.co.
@@ -68,6 +71,15 @@ export function gauzyIntegration(key: string): GauzyIntegrationDefinition | null
 /** The shared definition (what moves, why, how often), from the SDK. */
 export function sharedDefinition(key: IntegrationKey): IntegrationDefinition {
 	return INTEGRATIONS[key];
+}
+
+/**
+ * The entitlement feature an integration needs (`features.<name>` of the organization's entitlement
+ * document), as the SDK's definition names it, or `null` when it needs none.
+ */
+export function requiredFeature(key: IntegrationKey): string | null {
+	const feature = (sharedDefinition(key) as { requires_feature?: string | null }).requires_feature;
+	return typeof feature === 'string' && feature.length > 0 ? feature : null;
 }
 
 /** Whether `key` is offered on this installation: `stats_link` is never offered on Ever Cloud. */

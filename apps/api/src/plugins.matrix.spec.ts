@@ -17,6 +17,7 @@ const STUBBED = Array.from(PLUGINS_SOURCE.matchAll(/from '((?:@gauzy\/plugin-|\.
 		name !== '@gauzy/plugin-ever-connect' &&
 		name !== '@gauzy/plugin-integration-ever-works' &&
 		name !== '@gauzy/plugin-integration-linear' &&
+		name !== '@gauzy/plugin-integration-asana' &&
 		name !== '@gauzy/plugin-inbox' &&
 		name !== '@gauzy/plugin-email-provider-resend' &&
 		name !== '@gauzy/plugin-email-provider-postmark' &&
@@ -32,6 +33,7 @@ class EverStatsPlugin {}
 class EverConnectPlugin {}
 class IntegrationEverWorksPlugin {}
 class IntegrationLinearPlugin {}
+class IntegrationAsanaPlugin {}
 class InboxPlugin {}
 class EmailProviderSesPlugin {}
 class EmailProviderSendGridPlugin {}
@@ -91,6 +93,10 @@ function loadPlugins(env: Record<string, string | undefined>, before?: () => voi
 			jest.doMock('@gauzy/plugin-integration-linear', () => ({
 				IntegrationLinearPlugin,
 				isLinearEnabled: jest.requireActual('../../../packages/plugins/integration-linear/src/lib/linear-enabled').isLinearEnabled
+			}));
+			jest.doMock('@gauzy/plugin-integration-asana', () => ({
+				IntegrationAsanaPlugin,
+				isAsanaEnabled: jest.requireActual('../../../packages/plugins/integration-asana/src/lib/asana-enabled').isAsanaEnabled
 			}));
 			jest.doMock('@gauzy/plugin-inbox', () => ({
 				InboxPlugin,
@@ -315,6 +321,24 @@ describe('API plugin list: Linear integration', () => {
 			const plugins = loadPlugins({ LINEAR_ENABLED: value });
 			expect(plugins.includes(IntegrationLinearPlugin)).toBe(loaded);
 			expect(warn.mock.calls.filter(([message]) => String(message).includes('LINEAR_ENABLED'))).toHaveLength(lines);
+		} finally {
+			warn.mockRestore();
+		}
+	});
+});
+
+describe('API plugin list: Asana integration', () => {
+	it.each([
+		['unset (the default)', undefined, false, 0],
+		['false', 'false', false, 0],
+		['true', 'true', true, 0],
+		['yes', 'yes', false, 1]
+	])('ASANA_ENABLED %s: loaded %s, %i log line(s)', (_name, value, loaded, lines) => {
+		const warn = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+		try {
+			const plugins = loadPlugins({ ASANA_ENABLED: value });
+			expect(plugins.includes(IntegrationAsanaPlugin)).toBe(loaded);
+			expect(warn.mock.calls.filter(([message]) => String(message).includes('ASANA_ENABLED'))).toHaveLength(lines);
 		} finally {
 			warn.mockRestore();
 		}

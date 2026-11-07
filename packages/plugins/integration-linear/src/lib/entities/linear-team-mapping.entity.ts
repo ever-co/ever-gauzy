@@ -69,7 +69,8 @@ export class LinearTeamMapping extends TenantOrganizationBaseEntity {
 	@MultiORMColumn({ type: 'boolean', default: true })
 	syncEnabled!: boolean;
 
-	@MultiORMColumn({ nullable: true })
+	// `Date | null` reflects as `Object` under strictNullChecks (the plugin's lib build), which TypeORM refuses: the type is said.
+	@MultiORMColumn({ type: Date, nullable: true })
 	lastImportedAt?: Date | null;
 
 	/** The `updatedAt` of the newest issue imported: the next incremental import starts after it. */

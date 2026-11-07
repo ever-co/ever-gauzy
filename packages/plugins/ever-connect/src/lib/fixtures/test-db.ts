@@ -62,7 +62,8 @@ export const CORE_TABLES = [
 	'integration_type',
 	'integration_integration_type',
 	'integration_tenant',
-	'integration_setting'
+	'integration_setting',
+	'contact'
 ];
 
 /** Postgres runs in a schema of its own, so the suites never touch tables another test left behind. */
@@ -129,7 +130,8 @@ export async function createCoreTables(dataSource: DataSource, d: TestDialect): 
 	const flags = `${t('isActive')} ${bool} NULL, ${t('isArchived')} ${bool} NULL, ${t('createdAt')} ${ts} NULL DEFAULT ${now}, ${t('updatedAt')} ${ts} NULL DEFAULT ${now}, ${t('deletedAt')} ${ts} NULL`;
 	const tables: Record<string, string> = {
 		tenant: `${t('id')} ${id} PRIMARY KEY, ${t('name')} ${text}, ${t('createdAt')} ${ts} NULL, ${t('deletedAt')} ${ts} NULL`,
-		organization: `${t('id')} ${id} PRIMARY KEY, ${t('tenantId')} ${id} NULL, ${t('name')} ${text}, ${flags}`,
+		organization: `${t('id')} ${id} PRIMARY KEY, ${t('tenantId')} ${id} NULL, ${t('name')} ${text}, ${t('taxId')} ${text} NULL, ${t('contactId')} ${id} NULL, ${flags}`,
+		contact: `${t('id')} ${id} PRIMARY KEY, ${t('tenantId')} ${id} NULL, ${t('organizationId')} ${id} NULL, ${t('country')} ${text} NULL, ${flags}`,
 		role: `${t('id')} ${id} PRIMARY KEY, ${t('name')} ${text}, ${t('tenantId')} ${id} NULL`,
 		user: `${t('id')} ${id} PRIMARY KEY, ${t('tenantId')} ${id} NULL, ${t('email')} ${text}, ${t('roleId')} ${id} NULL, ${t('emailVerifiedAt')} ${ts} NULL, ${flags}`,
 		user_organization: `${t('id')} ${id} PRIMARY KEY, ${t('tenantId')} ${id} NULL, ${t('organizationId')} ${id} NULL, ${t('userId')} ${id} NULL, ${flags}`,

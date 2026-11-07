@@ -10,13 +10,13 @@
     align-items: center;
     justify-content: center;
     appearance: none;
-    width: 1.75rem;
-    height: 1.75rem;
-    min-width: 1.75rem;
+    width: 2rem;
+    height: 2rem;
+    min-width: 2rem;
     margin: 0;
     padding: 0;
     border: 0;
-    border-radius: var(--gauzy-radius-sm, 6px);
+    border-radius: 0.5rem;
     background-color: transparent;
     color: nb-theme(text-hint-color);
     line-height: 0;

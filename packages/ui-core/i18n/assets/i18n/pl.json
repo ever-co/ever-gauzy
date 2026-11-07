@@ -4993,7 +4993,9 @@
 		"COLLAPSE_SIDEBAR": "Zwiń panel boczny",
 		"EXPAND_SIDEBAR": "Rozwiń panel boczny",
 		"EVER_APPS": "Aplikacje",
-		"SWITCH_EVER_APP": "Przejdź do innej aplikacji Ever"
+		"SWITCH_EVER_APP": "Przejdź do innej aplikacji Ever",
+		"WORKSPACE": "Obszar roboczy",
+		"SWITCH_WORKSPACE": "Przełącz obszar roboczy"
 	},
 	"AI_ASSISTANT": {
 		"TITLE": "Asystent AI",
