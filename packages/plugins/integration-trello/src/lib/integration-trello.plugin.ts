@@ -1,12 +1,12 @@
 import { ApplicationPluginConfig } from '@gauzy/common';
 import { GauzyCorePlugin as Plugin, IOnPluginBootstrap, IOnPluginDestroy } from '@gauzy/plugin';
 import { isSchedulerQueueRootEnabled } from '@gauzy/scheduler';
-import { CreateIntegrationTrelloTables1791000005100 } from './database/migrations/1791000005100-CreateIntegrationTrelloTables';
+import { CreateIntegrationTrelloTables1791000005150 } from './database/migrations/1791000005150-CreateIntegrationTrelloTables';
 import { TRELLO_ENTITIES, TrelloModule } from './trello.module';
 import { TrelloMaintenanceModule } from './maintenance/trello-maintenance.module';
 
 /** The plugin's migrations, oldest first (ordered with the platform's by their timestamps). */
-export const TRELLO_MIGRATIONS = [CreateIntegrationTrelloTables1791000005100];
+export const TRELLO_MIGRATIONS = [CreateIntegrationTrelloTables1791000005150];
 
 /**
  * The Trello integration (`@gauzy/plugin-integration-trello`): connect a Trello member with the application's key
