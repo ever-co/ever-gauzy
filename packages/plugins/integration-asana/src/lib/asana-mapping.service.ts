@@ -1,7 +1,7 @@
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { DataSource, EntityManager } from 'typeorm';
 import { ID, IIntegrationTenant } from '@gauzy/contracts';
-import { OrganizationProjectService, TenantAwareCrudService } from '@gauzy/core';
+import { Organization, OrganizationProjectService, TenantAwareCrudService } from '@gauzy/core';
 import {
 	AsanaProjectMapping,
 	AsanaSyncDirection,
@@ -105,13 +105,17 @@ export class AsanaMappingService extends TenantAwareCrudService<AsanaProjectMapp
 		return new ConflictException({ message: 'This Asana project is mapped already', code: ASANA_MAPPING_EXISTS, mappingId });
 	}
 
-	/** One writer of a connection's mappings at a time within the transaction (see `createMapping`). */
+	/**
+	 * One writer of an organization's mappings at a time within the transaction (see `createMapping`): an advisory
+	 * lock by organization on Postgres (two connections of one organization serialize too), the organization's own
+	 * row on MySQL / MariaDB — a row that always exists, unlike the mappings (a first mapping has none to lock).
+	 */
 	private async lockMappingsOf(manager: EntityManager, tenant: IIntegrationTenant): Promise<void> {
 		const dialect = manager.connection.options.type;
 		if (dialect === 'postgres') {
-			await manager.query('SELECT pg_advisory_xact_lock(hashtext($1))', [`integration-asana:mappings:${tenant.id}`]);
+			await manager.query('SELECT pg_advisory_xact_lock(hashtext($1))', [`integration-asana:mappings:${tenant.tenantId}:${tenant.organizationId}`]);
 		} else if (dialect === 'mysql' || dialect === 'mariadb') {
-			await manager.find(AsanaProjectMapping, { where: { integrationId: tenant.id as ID, tenantId: tenant.tenantId as ID } as never, lock: { mode: 'pessimistic_write' } });
+			await manager.findOne(Organization, { where: { id: tenant.organizationId as ID } as never, lock: { mode: 'pessimistic_write' } });
 		}
 	}
 
