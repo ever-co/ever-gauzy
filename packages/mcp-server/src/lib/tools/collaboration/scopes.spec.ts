@@ -40,8 +40,11 @@ describe('the collaboration tool groups and their scopes', () => {
 describe('the scopes of one request', () => {
 	const env = { GAUZY_MCP_TOOLS_CHAT: 'true', GAUZY_MCP_TOOLS_DOCS: 'true' };
 
-	it("holds a validated token's scopes strictly: a token without a collaboration scope reaches none", () => {
-		expect([...requestScopes(['chat:read', 'openid'], 's1', env)]).toEqual(['chat:read', 'openid']);
+	it("holds a token's named collaboration scopes exactly, else what its mcp.* scopes allow, else none", () => {
+		expect([...requestScopes(['chat:read', 'openid', 'mcp.write'], 's1', env)]).toEqual(['chat:read']);
+		expect([...requestScopes(['mcp.read'], 's1', env)].sort()).toEqual(['chat:read', 'docs:read']);
+		expect([...requestScopes(['mcp.write'], 's1', env)].sort()).toEqual(['chat:read', 'chat:write', 'docs:read', 'docs:write']);
+		expect([...requestScopes(['openid'], 's1', env)]).toEqual([]);
 		expect([...requestScopes([], 's1', env)]).toEqual([]);
 	});
 

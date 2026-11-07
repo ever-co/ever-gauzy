@@ -81,7 +81,8 @@ export class OAuth2ClientManager {
 	private securityLogger: SecurityLogger;
 
 	// Default supported scopes for MCP
-	private readonly DEFAULT_SCOPES = ['mcp.read', 'mcp.write', 'mcp.admin'];
+	/** The scopes a client may register and request: the general ones, and the per-group collaboration ones. */
+	private readonly DEFAULT_SCOPES = ['mcp.read', 'mcp.write', 'mcp.admin', 'chat:read', 'chat:write', 'docs:read', 'docs:write', 'inbox:read', 'inbox:write'];
 	private readonly DEFAULT_GRANT_TYPES = ['authorization_code', 'refresh_token'];
 	private readonly DEFAULT_RESPONSE_TYPES = ['code'];
 

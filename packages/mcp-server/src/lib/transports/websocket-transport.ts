@@ -142,6 +142,8 @@ interface WebSocketConnection {
 	isLocal: boolean;
 	/** The OAuth bearer token the connection opened with, checked again before each message it sends */
 	bearerToken?: string;
+	/** The scopes the connection's bearer token carried at its last validation (the collaboration tools read them). */
+	tokenScopes?: string[];
 	created: Date;
 	lastSeen: Date;
 	metadata: Record<string, any>;
@@ -403,6 +405,7 @@ export class WebSocketTransport {
 					return;
 				}
 				connection.bearerToken = bearerToken;
+				connection.tokenScopes = Array.isArray(validation.scopes) ? validation.scopes : [];
 			} else if (!connection.isLocal) {
 				logger.warn(`WebSocket connection rejected: no bearer token from ${clientIP}`);
 				refuse(1008, 'Authorization required');
@@ -509,6 +512,7 @@ export class WebSocketTransport {
 						connection.bearerToken,
 						this.authorizationConfig.requiredScopes
 					);
+					connection.tokenScopes = Array.isArray(validation.scopes) ? validation.scopes : [];
 					if (!validation.valid) {
 						logger.warn(`WebSocket connection ${connection.id} closed: ${validation.error}`);
 						this.sendError(connection, message.id ?? null, -32001, 'Token is no longer valid');
@@ -525,6 +529,11 @@ export class WebSocketTransport {
 			logger.error(`Error parsing message from ${connection.id}:`, error);
 			this.sendError(connection, null, -32700, 'Parse error');
 		}
+	}
+
+	/** The collaboration scopes of a connection: its bearer token's when it has one, else its session's. */
+	private collaborationScopesOf(connection: WebSocketConnection): Set<string> {
+		return requestScopes(connection.bearerToken ? (connection.tokenScopes ?? []) : undefined, connection.userContext?.sessionId);
 	}
 
 	private async handleMcpMessage(connection: WebSocketConnection, message: JsonRpcRequest): Promise<void> {
@@ -612,7 +621,7 @@ export class WebSocketTransport {
 
 				case 'tools/list': {
 					// The collaboration tools the connection's session does not allow are not listed (see `requestScopes`).
-					const tools = filterCollaborationTools(await this.getTools(), requestScopes(undefined, connection.userContext?.sessionId));
+					const tools = filterCollaborationTools(await this.getTools(), this.collaborationScopesOf(connection));
 					logger.debug(`Tools list: ${JSON.stringify(tools)}`);
 					transport.send({
 						jsonrpc: '2.0',
@@ -623,7 +632,7 @@ export class WebSocketTransport {
 				}
 				case 'tools/call': {
 					// The collaboration tools check the session's scopes again at the call (not found when not allowed).
-					const result = await runWithCollaborationScopes(requestScopes(undefined, connection.userContext?.sessionId), () =>
+					const result = await runWithCollaborationScopes(this.collaborationScopesOf(connection), () =>
 						this.callTool(params as Record<string, unknown>, this.resolveAuthKey(connection), connection.isLocal)
 					);
 					transport.send({

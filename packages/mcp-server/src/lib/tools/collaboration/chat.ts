@@ -151,14 +151,17 @@ export function registerChatTools(server: McpServer, access: { read: boolean; wr
 			limit: z.number().int().min(1).max(100).optional().describe('How many replies (default 50)')
 		},
 		async (args) => {
-			const read = (id: string) =>
+			const read = (id: string, cursors: boolean) =>
 				apiClient.get<Row>(`${CHAT}/messages/${id}/thread`, {
-					params: query({ ...scope(), before: args.before, after: args.after, limit: args.limit })
+					params: query({ ...scope(), ...(cursors ? { before: args.before, after: args.after } : {}), limit: cursors ? args.limit : 1 })
 				});
-			let thread = await read(args.messageId);
-			// The route answers the message it is given as the root: a reply names its thread's root, which is read instead.
+			// The route answers the message it is given as the root, and a cursor must be a reply of that root: the root is
+			// found first (a reply names it), then its thread is read with the cursors.
+			const hasCursor = !!(args.before || args.after);
+			let thread = await read(args.messageId, !hasCursor);
 			const rootOf = thread?.['root']?.['threadRootId'];
-			if (rootOf && rootOf !== args.messageId) thread = await read(String(rootOf));
+			const rootId = rootOf && rootOf !== args.messageId ? String(rootOf) : args.messageId;
+			if (hasCursor || rootId !== args.messageId) thread = await read(rootId, true);
 			const root = thread?.['root'] ?? null;
 			return answer({ root: root ? messageSummary(root) : null, ...page(thread), following: root?.['following'] ?? null });
 		}

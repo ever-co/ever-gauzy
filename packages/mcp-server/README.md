@@ -261,8 +261,11 @@ A session's scopes are the ones its bearer token carried when the transport reco
 (`metadata.oauthScopes`), else `GAUZY_MCP_TOOLS_SCOPES` (a comma list), else every scope of the enabled groups — a local
 server speaks for its one signed-in user. A group the session may not read is not registered at all (a client sees no
 such tool); its writes are registered only under the write scope. A chat message posted through `post_chat_message` is
-marked as written with an assistant (the MCP client's name, `assistedBy`), and where the client supports elicitation the
-person approves it before it is posted. Over HTTP and WebSocket the caller's own scopes — its
+marked as written with an assistant (`assistedBy`), and where the client supports elicitation the person approves it
+before it is posted. Over stdio the server knows the client (its name, its capabilities). Over HTTP and WebSocket it
+does not see the client's initialize handshake: there messages are marked `MCP client` and posted without the approval
+step. A bearer token holds the collaboration scopes it names (`chat:read`, …), else what its `mcp.read` / `mcp.write`
+scopes allow (reads / writes of every enabled group); the authorization server advertises and grants the named scopes. Over HTTP and WebSocket the caller's own scopes — its
 bearer token's, else its session's — decide again what `tools/list` shows and what a call may run (a tool they do not
 allow answers "not found"). Every call runs under the signed-in user's tenant,
 organization and permissions — what is outside their access is "not found", as the routes answer it — and is logged by

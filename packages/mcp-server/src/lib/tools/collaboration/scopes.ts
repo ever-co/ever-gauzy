@@ -79,12 +79,31 @@ export function collaborationScopesOf(
 }
 
 /**
- * The scopes one HTTP or WebSocket request holds: the scopes its validated bearer token carries — a token states its
- * scopes, so one without a collaboration scope reaches no collaboration tool — else the session's (see
- * {@link collaborationScopesOf}).
+ * The collaboration scopes a validated bearer token holds. A token that names collaboration scopes (`chat:read`, …)
+ * holds exactly those — the fine-grained grant. A token with the platform's general scopes only holds the matching
+ * access to every enabled group: `mcp.read` reads, `mcp.write` (or `mcp.admin`) writes. A token with neither holds none.
+ */
+export function tokenCollaborationScopes(tokenScopes: readonly unknown[], env: Record<string, string | undefined> = process.env): Set<string> {
+	const scopes = tokenScopes.map(String);
+	const named = scopes.filter((scope) => /^(chat|docs|inbox):(read|write)$/.test(scope));
+	if (named.length) return new Set(named);
+	const granted = new Set<string>();
+	const groups = enabledCollaborationGroups(env);
+	const writes = scopes.includes('mcp.write') || scopes.includes('mcp.admin');
+	const reads = writes || scopes.includes('mcp.read');
+	for (const group of groups) {
+		if (reads) granted.add(`${group}:read`);
+		if (writes) granted.add(`${group}:write`);
+	}
+	return granted;
+}
+
+/**
+ * The scopes one HTTP or WebSocket request holds: its validated bearer token's (see {@link tokenCollaborationScopes}),
+ * else the session's (see {@link collaborationScopesOf}).
  */
 export function requestScopes(tokenScopes: unknown, sessionId?: string, env: Record<string, string | undefined> = process.env): Set<string> {
-	if (Array.isArray(tokenScopes)) return new Set(tokenScopes.map(String));
+	if (Array.isArray(tokenScopes)) return tokenCollaborationScopes(tokenScopes, env);
 	return collaborationScopesOf(sessionId, env);
 }
 

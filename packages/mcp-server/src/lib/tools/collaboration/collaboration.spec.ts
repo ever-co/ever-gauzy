@@ -166,6 +166,15 @@ describe('chat', () => {
 		expect(fromReply.root.id).toBe(ROOT);
 		expect(fromReply.messages.map((message: { id: string }) => message.id)).toEqual([MESSAGE]);
 
+		// A reply's id with a cursor: the root is found first (no cursor), then its thread is read with the cursor.
+		api.get.mockResolvedValueOnce({ root: { id: MESSAGE, threadRootId: ROOT }, messages: [], hasBefore: false, hasAfter: false });
+		api.get.mockResolvedValueOnce({ root: { id: ROOT }, messages: [{ id: CONVERSATION }], hasBefore: true, hasAfter: false });
+		await call(chat.get('get_chat_thread'), { messageId: MESSAGE, before: MESSAGE, limit: 5 });
+		expect(api.get.mock.calls.slice(-2)).toEqual([
+			[`/api/chat/messages/${MESSAGE}/thread`, { params: { tenantId: 'ten', organizationId: 'org', limit: 1 } }],
+			[`/api/chat/messages/${ROOT}/thread`, { params: { tenantId: 'ten', organizationId: 'org', before: MESSAGE, limit: 5 } }]
+		]);
+
 		api.get.mockResolvedValueOnce({ messages: [{ id: MESSAGE, body: 'onboarding flow' }], total: 1, hasMore: false });
 		const found = await call(chat.get('search_chat_messages'), { q: 'onboarding', conversationId: CONVERSATION });
 		expect(api.get).toHaveBeenLastCalledWith('/api/chat/search', { params: { tenantId: 'ten', organizationId: 'org', q: 'onboarding', conversationId: CONVERSATION } });
@@ -273,8 +282,9 @@ describe('docs', () => {
 		expect(whole.markdown).toBe('# Title\n\nA long body.');
 		expect(whole.truncated).toBe(false);
 		expect(api.get).toHaveBeenCalledWith(`/api/plugins/docs/documents/${PAGE}/export/markdown`, expect.objectContaining({ responseType: 'text' }));
-		// The revision is read before the text: never newer than the text it is answered with.
-		expect(order).toEqual(['document', 'markdown']);
+		// The revision is read before the text (never newer than it), and again after (a save in between is told).
+		expect(order).toEqual(['document', 'markdown', 'document']);
+		expect(whole.revisionChanged).toBeUndefined();
 
 		const first = await call(docs.get('get_page'), { pageId: PAGE, limit: 8 });
 		expect(first).toEqual(expect.objectContaining({ markdown: '# Title\n', offset: 0, truncated: true, nextOffset: 8, length: 21 }));
@@ -282,6 +292,18 @@ describe('docs', () => {
 		expect(rest).toEqual(expect.objectContaining({ markdown: '\nA long body.', truncated: false, nextOffset: null }));
 		expect(rest.page.revision).toBe(7);
 		expect(slice('abc', 10)).toEqual({ markdown: '', offset: 3, truncated: false, nextOffset: null, length: 3 });
+	});
+
+	it('tells the client when a save landed while the page was read', async () => {
+		let reads = 0;
+		api.get.mockImplementation(async (path: string) => {
+			if (path.endsWith('/export/markdown')) return 'text';
+			reads += 1;
+			return { id: PAGE, name: 'Title', kind: 'PAGE', contentRevision: reads === 1 ? 7 : 8 };
+		});
+		const read = await call(tools(ALL, ['docs:read']).get('get_page'), { pageId: PAGE });
+		expect(read).toEqual(expect.objectContaining({ revisionChanged: true, page: expect.objectContaining({ revision: 7 }) }));
+		expect(read.warning).toContain('offset 0');
 	});
 
 	it('creates a page then writes its Markdown, and applies a Markdown update with the revision check — a stale one answers the conflict', async () => {
@@ -327,6 +349,14 @@ describe('inbox', () => {
 		expect(api.get).toHaveBeenLastCalledWith('/api/inbox/items', { params: { tenantId: 'ten', organizationId: 'org', tab: 'all', unread: true, limit: 5 } });
 		expect(page.items[0]).toEqual(expect.objectContaining({ id: ITEM, title: 'Mentioned', state: { isRead: false, isArchived: false, snoozedUntil: null, isDone: false } }));
 		expect(page.nextCursor).toBe('n');
+
+		// A decision answers its choices and the answer given.
+		api.get.mockResolvedValueOnce({
+			items: [{ id: ITEM, kind: 'APPROVAL', source: 'GAUZY', title: 'Approve?', options: [{ id: 'yes', label: 'Approve', style: 'primary' }], requireReason: true, response: { optionId: 'yes', text: 'ok' } }],
+			nextCursor: null
+		});
+		const decisions = await call(inbox.get('list_inbox_items'), {});
+		expect(decisions.items[0].decision).toEqual({ options: [{ id: 'yes', label: 'Approve', style: 'primary' }], requireReason: true, response: { optionId: 'yes', text: 'ok' } });
 
 		api.get.mockResolvedValueOnce({ unread: 2, decisionsOpen: 1, emailUnread: 0, byMailbox: [] });
 		expect((await call(inbox.get('get_inbox_counts'))).counts).toEqual({ unread: 2, decisionsOpen: 1, emailUnread: 0, byMailbox: [] });

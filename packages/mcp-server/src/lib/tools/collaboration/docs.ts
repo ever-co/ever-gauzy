@@ -88,7 +88,7 @@ export function registerDocsTools(server: McpServer, access: { read: boolean; wr
 	registerCollaborationTool<{ pageId: string; offset?: number; limit?: number }>(
 		server,
 		'get_page',
-		"One page as Markdown with its metadata and revision (the number `update_page_markdown` checks). The revision is read before the text, so it is never newer than the text it is answered with. A long page is answered in slices: `truncated` with a `nextOffset` to continue from; every slice carries the revision it was read at — slices of different revisions are not one text, so read again from 0 when it changes. Reads GET /plugins/docs/documents/:id and /:id/export/markdown.",
+		"One page as Markdown with its metadata and revision (the number `update_page_markdown` checks). The revision is read before the text, so it is never newer than the text it is answered with. A long page is answered in slices: `truncated` with a `nextOffset` to continue from; every slice carries the revision it was read at — slices of different revisions are not one text, so read again from 0 when it changes; `revisionChanged` says a save landed during this read. Reads GET /plugins/docs/documents/:id and /:id/export/markdown.",
 		{
 			pageId: z.string().uuid().describe('The page'),
 			offset: z.number().int().min(0).optional().describe('Continue the Markdown from this character (the previous answer\'s nextOffset)'),
@@ -103,7 +103,16 @@ export function registerDocsTools(server: McpServer, access: { read: boolean; wr
 				responseType: 'text',
 				transformResponse: [(data: unknown) => data]
 			});
-			return answer({ page: pageSummary(document ?? {}), ...slice(String(markdown ?? ''), args.offset, args.limit) });
+			// Read again: a save between the two reads makes this text newer than the revision answered with it.
+			const after = await apiClient.get<Row>(`${DOCS}/documents/${args.pageId}`, { params: scope() });
+			const revisionChanged = Number(after?.['contentRevision']) !== Number(document?.['contentRevision']);
+			return answer({
+				page: pageSummary(document ?? {}),
+				...slice(String(markdown ?? ''), args.offset, args.limit),
+				...(revisionChanged
+					? { revisionChanged: true, warning: 'The page was saved while it was read: read it again from offset 0 before joining slices or updating it.' }
+					: {})
+			});
 		}
 	);
 

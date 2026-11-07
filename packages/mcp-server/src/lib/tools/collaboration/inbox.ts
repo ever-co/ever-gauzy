@@ -24,6 +24,16 @@ export function entrySummary(item: Row) {
 		entity: item.entity ?? null,
 		entityId: item.entityId ?? null,
 		createdAt: item.createdAt ?? null,
+		// A question or an approval: its choices, whether an answer needs a reason, and the answer given.
+		...(item['options'] || item['response'] || item['requireReason']
+			? {
+					decision: {
+						options: (item['options'] ?? []).map((option: Row) => ({ id: option['id'], label: option['label'] ?? null, style: option['style'] ?? null })),
+						requireReason: !!item['requireReason'],
+						response: item['response'] ?? null
+					}
+				}
+			: {}),
 		state: recipient
 			? { isRead: !!recipient.isRead, isArchived: !!recipient.isArchived, snoozedUntil: recipient.snoozedUntil ?? null, isDone: recipient.isDone ?? !!recipient.doneAt }
 			: null
