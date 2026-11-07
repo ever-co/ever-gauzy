@@ -10,7 +10,7 @@ import { ToastrService } from '@gauzy/ui-core/core';
 import { CHAT_THREAD_POLL_MS } from '../../chat-ui.constants';
 import { apiErrorMessage, continuesGroup, mergeMessages, newNonce } from '../../chat-ui.helpers';
 import { ChatPeople } from '../../services/chat-people.service';
-import { ChatThreadPage, ChatUiService } from '../../services/chat-ui.service';
+import { ChatMessagePatch, ChatThreadPage, ChatUiService, threadFieldsOf } from '../../services/chat-ui.service';
 import { clearDraft, ComposerSubmission, MessageComposerComponent } from '../message-composer/message-composer.component';
 import { MessageAction, MessageItemComponent } from '../message-item/message-item.component';
 
@@ -168,8 +168,12 @@ export class ThreadPaneComponent {
 	readonly readOnly = input(false);
 
 	readonly closed = output<void>();
-	/** The root changed (reply count, follow state): the conversation shows it too. */
-	readonly rootChanged = output<IChatMessageWithRelations>();
+	/**
+	 * The root changed: its thread fields (reply count, last reply, follow state) after a reply, a follow or a poll,
+	 * or the whole message after an edit, a delete, a pin or a reaction made here. The conversation applies the
+	 * patch to its own copy, so a stale root held here never overwrites a newer body or deletion there.
+	 */
+	readonly rootChanged = output<ChatMessagePatch>();
 
 	protected readonly root = signal<IChatMessageWithRelations | null>(null);
 	protected readonly replies = signal<IChatMessageWithRelations[]>([]);
@@ -187,6 +191,8 @@ export class ThreadPaneComponent {
 	protected readonly draftKey = computed(() => `thread:${this.rootMessageId()}`);
 
 	private poll: Subscription | null = null;
+	/** Counts the visits of this pane (every root switch): a reply belongs to the visit it was made in. */
+	private visit = 0;
 	/** The last reply a thread read was sent for, so the same read is not sent twice. */
 	private lastMarkedId: string | null = null;
 
@@ -194,6 +200,7 @@ export class ThreadPaneComponent {
 		effect(() => {
 			this.rootMessageId();
 			untracked(() => {
+				this.visit += 1;
 				this.stopPolling();
 				this.editing.set(null);
 				this.loadingMore.set(false);
@@ -281,7 +288,7 @@ export class ThreadPaneComponent {
 				if (root && page.root.replyCount !== root.replyCount) {
 					const next = { ...root, replyCount: page.root.replyCount, lastReplyAt: page.root.lastReplyAt };
 					this.root.set(next);
-					this.rootChanged.emit(next);
+					this.rootChanged.emit(threadFieldsOf(next));
 				}
 				if (this.replies().length !== before) this.markRead();
 			});
@@ -340,7 +347,7 @@ export class ThreadPaneComponent {
 					if (!this.isCurrent(id)) return;
 					const next = { ...root, following };
 					this.root.set(next);
-					this.rootChanged.emit(next);
+					this.rootChanged.emit(threadFieldsOf(next));
 				},
 				error: (error) => this.fail(error)
 			});
@@ -350,6 +357,7 @@ export class ThreadPaneComponent {
 		const root = this.root();
 		if (!root) return;
 		const id = this.rootMessageId();
+		const visit = this.visit;
 		const editing = this.editing();
 		this.sending.set(true);
 		const request = editing
@@ -364,25 +372,29 @@ export class ThreadPaneComponent {
 		request.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
 			next: (result) => {
 				if (!editing) this.api.notifyChanged();
-				if (!this.isCurrent(id)) {
-					if (!editing) clearDraft(`thread:${id}`);
+				if (this.isCurrent(id)) {
+					if (editing) {
+						this.replace(result.message);
+					} else {
+						this.replies.set(mergeMessages(this.replies(), [result.message]));
+						const current = this.root() ?? root;
+						const next = { ...current, replyCount: current.replyCount + 1, lastReplyAt: result.message.createdAt, following: true };
+						this.root.set(next);
+						this.rootChanged.emit(threadFieldsOf(next));
+						this.lastMarkedId = String(result.message.id);
+					}
+				}
+				// Only the visit the reply was made in leaves edit mode and clears the box.
+				if (visit !== this.visit) {
+					if (!editing && !this.isCurrent(id)) clearDraft(`thread:${id}`);
 					return;
 				}
 				this.sending.set(false);
 				this.resetToken.update((value) => value + 1);
-				if (editing) {
-					this.replace(result.message);
-					this.editing.set(null);
-				} else {
-					this.replies.set(mergeMessages(this.replies(), [result.message]));
-					const next = { ...root, replyCount: root.replyCount + 1, lastReplyAt: result.message.createdAt, following: true };
-					this.root.set(next);
-					this.rootChanged.emit(next);
-					this.lastMarkedId = String(result.message.id);
-				}
+				if (editing) this.editing.set(null);
 			},
 			error: (error) => {
-				if (!this.isCurrent(id)) return;
+				if (visit !== this.visit) return;
 				this.sending.set(false);
 				this.fail(error, 'CHAT.COMPOSER.SEND_FAILED');
 			}

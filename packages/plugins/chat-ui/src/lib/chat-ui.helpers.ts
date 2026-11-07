@@ -109,12 +109,13 @@ export function renderBodyHtml(
 				return `<span class="chat-mention${part.isMe ? ' chat-mention-me' : ''}">@${escapeHtml(part.label)}</span>`;
 			}
 			if (part.kind === 'channel') return `<span class="chat-mention">#${escapeHtml(part.label)}</span>`;
-			return `<span class="chat-mention chat-mention-me">@${part.label}</span>`;
+			return `<span class="chat-mention chat-mention-me">@${escapeHtml(part.label)}</span>`;
 		})
 		.join('');
 	const html = marked.parse(withChips, { async: false, gfm: true, breaks: true }) as string;
 	const safe = sanitizer.sanitize(SecurityContext.HTML, html) ?? '';
-	// After the sanitizer: its serializer encodes `<` inside attribute values, so a tag pattern is reliable here.
+	// After the sanitizer (Angular's serializer encodes `<` inside attribute values, so a tag pattern is reliable on
+	// its output); one more gate behind the sanitizer, never the only one.
 	return safe.replace(REMOTE_MEDIA_TAGS, '');
 }
 

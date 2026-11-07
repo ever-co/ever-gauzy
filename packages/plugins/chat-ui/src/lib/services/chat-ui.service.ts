@@ -40,6 +40,14 @@ export type ChatThreadPage = IChatMessagePage & { root: IChatMessageWithRelation
 /** A followed thread's root, with how many of its replies I have not read. */
 export type ChatFollowedThread = IChatMessageWithRelations & { unreadReplies: number };
 
+/** A change to a message the page passes around: at least its id, with the fields that changed. */
+export type ChatMessagePatch = Partial<IChatMessageWithRelations> & { id: ID };
+
+/** The fields of a message that its thread moves: the reply count, the last reply, whether I follow it. */
+export function threadFieldsOf(message: IChatMessageWithRelations): ChatMessagePatch {
+	return { id: message.id, replyCount: message.replyCount, lastReplyAt: message.lastReplyAt, following: message.following };
+}
+
 /** A person chat shows (`GET /chat/people`): an active employee with the name and picture any chat user may see. */
 export interface ChatPersonRecord {
 	employeeId: ID;

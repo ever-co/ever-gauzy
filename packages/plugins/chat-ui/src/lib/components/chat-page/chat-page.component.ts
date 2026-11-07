@@ -13,7 +13,7 @@ import { CHAT_LINK, CHAT_LIST_POLL_MS } from '../../chat-ui.constants';
 import { conversationTitle, isUnread, plainBody, sortConversations } from '../../chat-ui.helpers';
 import { ChatAvailabilityService, isFinalRefusal } from '../../services/chat-availability.service';
 import { ChatPeople, ChatPeopleService, EMPTY_PEOPLE } from '../../services/chat-people.service';
-import { ChatFollowedThread, ChatUiService } from '../../services/chat-ui.service';
+import { ChatFollowedThread, ChatMessagePatch, ChatUiService } from '../../services/chat-ui.service';
 import { BrowseChannelsDialogComponent, NewChannelDialogComponent, NewDirectDialogComponent } from '../../dialogs/chat-dialogs.component';
 import { ChatListView, ConversationListComponent } from '../conversation-list/conversation-list.component';
 import { ConversationViewComponent } from '../conversation-view/conversation-view.component';
@@ -359,8 +359,8 @@ export class ChatPageComponent implements OnInit {
 	protected readonly notFound = signal(false);
 	protected readonly busy = signal(false);
 	protected readonly undoSnapshot = signal<string | null>(null);
-	/** The last thread root that changed (reply count, follow state): the open conversation applies it to its copy. */
-	protected readonly rootPatch = signal<IChatMessageWithRelations | null>(null);
+	/** The last change of a thread's root (its thread fields, or the whole message after an edit there): the open conversation applies it to its copy. */
+	protected readonly rootPatch = signal<ChatMessagePatch | null>(null);
 
 	/** `:conversationId`, `?thread=`, `?message=` and the route's view, as signals. */
 	protected readonly conversationId = toSignal(this.route.paramMap.pipe(map((params) => params.get('conversationId')), distinctUntilChanged()), { initialValue: null });
@@ -554,8 +554,8 @@ export class ChatPageComponent implements OnInit {
 		void this.router.navigate([CHAT_LINK]);
 	}
 
-	protected onRootChanged(root: IChatMessageWithRelations): void {
-		this.rootPatch.set(root);
+	protected onRootChanged(patch: ChatMessagePatch): void {
+		this.rootPatch.set(patch);
 		this.api.notifyChanged();
 	}
 

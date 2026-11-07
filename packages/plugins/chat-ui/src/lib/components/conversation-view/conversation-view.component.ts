@@ -30,7 +30,7 @@ import { ToastrService } from '@gauzy/ui-core/core';
 import { CHAT_MESSAGES_POLL_MS } from '../../chat-ui.constants';
 import { apiErrorMessage, continuesGroup, conversationTitle, mergeMessages, newNonce } from '../../chat-ui.helpers';
 import { ChatPeople } from '../../services/chat-people.service';
-import { ChatEvents, ChatUiService, memberStateFromEvents } from '../../services/chat-ui.service';
+import { ChatEvents, ChatMessagePatch, ChatUiService, memberStateFromEvents } from '../../services/chat-ui.service';
 import { clearDraft, ComposerSubmission, MessageComposerComponent } from '../message-composer/message-composer.component';
 import { MessageAction, MessageItemComponent } from '../message-item/message-item.component';
 
@@ -43,7 +43,8 @@ const NEAR_BOTTOM_PX = 80;
  * message marks the conversation read up to it (never past what is shown); "mark unread from here" is explicit.
  *
  * Every request captures the conversation it was made for and drops its answer when another one is open by
- * then; the poll stops the moment the conversation changes.
+ * then; the poll stops the moment the conversation changes. A send also captures the visit it was made in, so a
+ * send that lands after the person left and came back merges its message but never clears what they are typing now.
  */
 @Component({
 	selector: 'ngx-chat-conversation-view',
@@ -270,8 +271,8 @@ export class ConversationViewComponent {
 	readonly untitled = input('Conversation');
 	/** A message to scroll to and highlight (a deep link): the page around it is shown, nothing is marked read. */
 	readonly highlightId = input<string | null>(null);
-	/** A message changed elsewhere on the page (a thread's root: reply count, follow state): the view's copy follows. */
-	readonly patch = input<IChatMessageWithRelations | null>(null);
+	/** A message changed elsewhere on the page (a thread's root: its thread fields, or the whole message): the view's copy follows. */
+	readonly patch = input<ChatMessagePatch | null>(null);
 
 	readonly openThread = output<IChatMessageWithRelations>();
 	readonly stateChanged = output<IChatMemberState>();
@@ -305,6 +306,8 @@ export class ConversationViewComponent {
 
 	private poll: Subscription | null = null;
 	private loadedId: string | null = null;
+	/** Counts the visits of this view (every conversation switch): a send belongs to the visit it was made in. */
+	private visit = 0;
 	/** The last message a read was asked up to, so the same read is not sent twice. */
 	private lastMarkedId: string | null = null;
 
@@ -315,6 +318,7 @@ export class ConversationViewComponent {
 				this.state.set(conversation.state ?? null);
 				if (this.loadedId !== String(conversation.id)) {
 					this.loadedId = String(conversation.id);
+					this.visit += 1;
 					this.stopPolling();
 					this.editing.set(null);
 					this.pinsOpen.set(false);
@@ -626,6 +630,7 @@ export class ConversationViewComponent {
 
 	protected onSubmit(submission: ComposerSubmission): void {
 		const id = String(this.conversation().id);
+		const visit = this.visit;
 		const editing = this.editing();
 		this.sending.set(true);
 		if (editing) {
@@ -634,14 +639,15 @@ export class ConversationViewComponent {
 				.pipe(takeUntilDestroyed(this.destroyRef))
 				.subscribe({
 					next: (result) => {
-						if (!this.isCurrent(id)) return;
-						this.replace(result.message);
+						if (this.isCurrent(id)) this.replace(result.message);
+						// Only the visit the edit was made in leaves edit mode and clears the box.
+						if (visit !== this.visit) return;
 						this.editing.set(null);
 						this.sending.set(false);
 						this.resetToken.update((value) => value + 1);
 					},
 					error: (error) => {
-						if (!this.isCurrent(id)) return;
+						if (visit !== this.visit) return;
 						this.sending.set(false);
 						this.fail(error, 'CHAT.COMPOSER.SEND_FAILED');
 					}
@@ -654,18 +660,21 @@ export class ConversationViewComponent {
 			.subscribe({
 				next: (result) => {
 					this.api.notifyChanged();
-					if (!this.isCurrent(id)) {
-						// The message went out: the draft of that conversation is not to be sent again.
-						clearDraft(`conversation:${id}`);
+					if (this.isCurrent(id)) {
+						this.messages.set(mergeMessages(this.messages(), [result.message]));
+						queueMicrotask(() => this.scrollToBottom(true));
+					}
+					if (visit !== this.visit) {
+						// The message went out after the person moved on: the draft it came from is not to be sent again,
+						// and whatever they type now is theirs to keep.
+						if (!this.isCurrent(id)) clearDraft(`conversation:${id}`);
 						return;
 					}
-					this.messages.set(mergeMessages(this.messages(), [result.message]));
 					this.sending.set(false);
 					this.resetToken.update((value) => value + 1);
-					queueMicrotask(() => this.scrollToBottom(true));
 				},
 				error: (error) => {
-					if (!this.isCurrent(id)) return;
+					if (visit !== this.visit) return;
 					this.sending.set(false);
 					this.fail(error, 'CHAT.COMPOSER.SEND_FAILED');
 				}
@@ -750,8 +759,8 @@ export class ConversationViewComponent {
 		}
 	}
 
-	/** Puts the API's version of a message in place of ours. */
-	private replace(message: IChatMessageWithRelations): void {
+	/** Puts the API's version of a message (or the fields of it that changed) in place of ours. */
+	private replace(message: ChatMessagePatch): void {
 		this.messages.set(this.messages().map((item) => (item.id === message.id ? { ...item, ...message } : item)));
 	}
 
