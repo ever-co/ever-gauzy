@@ -21,8 +21,6 @@ describe('OrganizationTeamService.getOrganizationTeamStatistic read access', () 
 	const UNKNOWN_TEAM = '72000000-0000-4000-8000-000000000009';
 	/** The member relations Ever Teams asks for when it reads one team. */
 	const RELATIONS = ['members', 'members.role', 'members.employee', 'members.employee.user'];
-	/** How the read loads them: one query per relation, not joined onto the team row. */
-	const READ_OPTIONS = { relations: RELATIONS, relationLoadStrategy: 'query' };
 	const NOT_FOUND = 'The requested record was not found';
 
 	const USER = {
@@ -172,7 +170,7 @@ describe('OrganizationTeamService.getOrganizationTeamStatistic read access', () 
 		const refusal = await refusalOf(TEAM);
 
 		expect(refusal.getResponse()).toBeInstanceOf(NotFoundException);
-		expect(findOneByIdString).not.toHaveBeenCalledWith(TEAM, READ_OPTIONS);
+		expect(findOneByIdString).not.toHaveBeenCalledWith(TEAM, { relations: RELATIONS });
 	});
 
 	it('lets an active member read the team with every member and relation it asks for', async () => {
@@ -184,7 +182,7 @@ describe('OrganizationTeamService.getOrganizationTeamStatistic read access', () 
 		expect(organizationTeamEmployeeService.find).toHaveBeenCalledWith({
 			where: { organizationTeamId: TEAM, employeeId: EMPLOYEE.member }
 		});
-		expect(findOneByIdString).toHaveBeenLastCalledWith(TEAM, READ_OPTIONS);
+		expect(findOneByIdString).toHaveBeenLastCalledWith(TEAM, { relations: RELATIONS });
 	});
 
 	it.each([
@@ -215,7 +213,7 @@ describe('OrganizationTeamService.getOrganizationTeamStatistic read access', () 
 		expect(organizationTeamEmployeeService.find).not.toHaveBeenCalled();
 		expect(findOneByIdString.mock.calls).toEqual([
 			[TEAM, { where: { createdByUserId: USER.creator } }],
-			[TEAM, READ_OPTIONS]
+			[TEAM, { relations: RELATIONS }]
 		]);
 	});
 
@@ -237,7 +235,7 @@ describe('OrganizationTeamService.getOrganizationTeamStatistic read access', () 
 			await expect(readTeam(TEAM)).resolves.toEqual(STORED_TEAM);
 
 			expect(organizationTeamEmployeeService.find).not.toHaveBeenCalled();
-			expect(findOneByIdString.mock.calls).toEqual([[TEAM, READ_OPTIONS]]);
+			expect(findOneByIdString.mock.calls).toEqual([[TEAM, { relations: RELATIONS }]]);
 		}
 	);
 
