@@ -22,7 +22,7 @@ flowchart LR
     S[REST POST /realtime/presence · /typing] --> P
     P --> F[Subscription.collaborationEvents<br/>tenantScopedTopicStream]
     F --> CL[Clients over graphql-ws]
-    CL -. catch-up .-> R[GET /realtime/events?after=sequence]
+    CL -. catch-up .-> R[GET /realtime/events?after=&afterId=]
     R --> O
 ```
 
@@ -39,7 +39,7 @@ same outbox rows, filtered to the collaboration catalogue and the caller's addre
 | Concern | Choice | Rationale |
 | ------- | ------ | --------- |
 | Package | new `packages/plugins/realtime` (`@gauzy/plugin-realtime`), loaded only when `GAUZY_REALTIME_ENABLED` is exactly `true` | Principle I; same loading contract as the Inbox plugin (`isInboxEnabled`) |
-| Durable events | `EventOutboxService.append(manager, {...})` after the domain write, from bus subscribers | Zero changes to domain transactions; replay and catch-up come from `event_outbox.sequence` |
+| Durable events | `EventOutboxService.append(manager, {...})` after the domain write, from bus subscribers | Zero changes to domain transactions; replay and catch-up walk the rows by (`createdAt`, `id`), which never move once appended |
 | Streaming | `declareStreamedEvents(catalogue, consumer, ...names)` + `tenantScopedTopicStream(pubSub, names, …)` in a plugin resolver | The plugin-facing surface core already exports |
 | Ephemeral signals | `GraphqlPubSub.publish(name, tenantId, envelope)` without an outbox row | Lost on disconnect by design (spec §1) |
 | Permission | new `PermissionsEnum.REALTIME_SUBSCRIBE`, default for SUPER_ADMIN, ADMIN, MANAGER, EMPLOYEE; seeded for existing tenants by a plugin migration | Employees must not need `EVENT_OUTBOX_VIEW` |
@@ -71,7 +71,7 @@ None. Presence stays on `Employee`; hints and signals carry ids only.
   - `IRealtimeChangeHint { entity: BaseEntityEnum | string; entityId: ID; action: 'created'|'updated'|'deleted'; organizationId?: ID; actorUserId?: ID; recipientUserIds?: ID[]; parent?: { entity: string; entityId: ID } }`
   - `IRealtimePresenceInput { status: 'active'|'idle'|'away' }`, `IRealtimePresence { employeeId, userId, status, at }`
   - `IRealtimeTypingInput { conversationId: ID; threadRootId?: ID; recipientUserIds: ID[] }`
-  - `IRealtimeCatchUpQuery { after?: number; limit?: number }`, `IRealtimeEventEnvelope` (mirror of the kernel `EventEnvelope`).
+  - `IRealtimeCatchUpQuery { after?: number; afterId?: string; limit?: number }`, `IRealtimeCatchUp { events, cursor, cursorId, hasMore, resync }`, `IRealtimeEventEnvelope` (mirror of the kernel `EventEnvelope`).
 - `PermissionsEnum.REALTIME_SUBSCRIBE = 'REALTIME_SUBSCRIBE'` + `default-role-permissions.ts` rows (new tenants).
 
 ## 4. API Surface
@@ -80,7 +80,7 @@ None. Presence stays on `Employee`; hints and signals carry ids only.
 | ------ | -------- | ---------- | ----------- | ------ |
 | `POST` | `/api/realtime/presence` | employee (`@Permissions()`), `REALTIME_SUBSCRIBE` | Records presence (`EmployeeService.updatePresence`) and publishes `presence.changed` to the organization | New |
 | `POST` | `/api/realtime/typing` | `REALTIME_SUBSCRIBE` | Publishes `typing.signalled` addressed to `recipientUserIds` (rate-limited 5/s per user) | New |
-| `GET` | `/api/realtime/events?after=&limit=` | `REALTIME_SUBSCRIBE` | Catch-up: outbox rows of the collaboration catalogue for the caller's tenant/organization with `sequence > after` (≤ 500), addressed rows only when the caller is a recipient; answers `resync: true` when `after` is older than the retention window | New |
+| `GET` | `/api/realtime/events?after=&afterId=&limit=` | `REALTIME_SUBSCRIBE` | Catch-up: outbox rows of the collaboration catalogue for the caller's tenant/organization after the exact (`after` ms, `afterId`) cursor (≤ 500 a page, `hasMore` when cut), read once and bounded, addressed rows only when the caller is a recipient; answers `cursor`/`cursorId` to continue from and `resync: true` when the cursor predates the oldest row the caller's scope retains | New |
 | `GET` | `/api/realtime/status` | `REALTIME_SUBSCRIBE` | Whether subscriptions are served in this process, the catalogue names, limits | New |
 | GraphQL | `Subscription.collaborationEvents(names: [String!]!, aggregateId: ID): EventEnvelope!` | `REALTIME_SUBSCRIBE` (+ `FEATURE_GRAPHQL`) | Streams the selected collaboration events of the caller's tenant/organization, addressed ones only to the caller | New |
 
@@ -94,7 +94,7 @@ Errors: `400` unknown event name; `403` missing permission; `429` typing rate li
 | `task.created/updated/deleted` | `TaskEvent` on the RxJS bus | `{ entity: 'Task', entityId, action, projectId?, organizationId }` | organization |
 | `comment.created/updated/deleted` | new `CommentEvent` | `{ entity: 'Comment', entityId, action, parent: { entity, entityId } }` | organization |
 | `mention.created` | `CreateMentionEvent` (CQRS) | `{ entity, entityId, mentionedEmployeeId }` | addressed: mentioned employee's user |
-| `employee_notification.created` | `EmployeeCreateNotificationEvent` (CQRS) | `{ type, entity, entityId }` | addressed: receiver's user |
+| `employee_notification.created` | `EmployeeNotificationCreatedEvent` (CQRS, after the row is saved) | `{ notificationId, type, entity, entityId }` | addressed: receiver's user |
 | `document.updated` | `DocumentEvent` (RxJS, docs plugin) — subscribed by constructor name to avoid a hard dependency | `{ entity: 'Document', entityId, action }` | organization |
 | `presence.changed` | `POST /realtime/presence` | `{ employeeId, userId, status, at }` | organization (ephemeral) |
 | `typing.signalled` | `POST /realtime/typing` | `{ conversationId, threadRootId?, employeeId, userId }` | addressed (ephemeral) |
@@ -159,7 +159,7 @@ None. Outbox dispatch and retention are the existing worker's.
 | GraphQL snapshot / field-binding gate fails for the gated plugin SDL | high | CI red | add the schema file to `GATED_PLUGIN_SCHEMAS` in `tools/scripts/graphql-field-binding-check.mjs`, keep a plain `gql` template |
 | Outbox retention shorter than the spec's 24 h window | medium | more resyncs | catch-up answers `resync` honestly; retention knob documented |
 | `document.updated` subscription by constructor name misses a renamed class | low | no doc hints | spec test asserts the name; chat/docs lanes may switch to a direct import |
-| Hint storms on bulk task updates | medium | load | coalesce per aggregate per second in `RealtimeChangeHints` |
+| Hint storms on bulk task updates | medium | load | coalesce per aggregate per second (trailing edge, so the last edit is announced) in `RealtimeHintsService` |
 | Multi-replica without Redis engine | medium | missed events across replicas | status route reports the engine; runbook note |
 
 ## 14. References
