@@ -32,6 +32,9 @@ export function attentionItemOf(tenant: TrelloAttentionTenant, reason: string | 
 		metadata: { integrationId: tenant.id, reason },
 		externalSource: TRELLO_INBOX_SOURCE,
 		externalId: `${tenant.id}:attention`,
+		// An open notice is the current connecting user's alone (a former one is not told of a refusal that is not theirs);
+		// a resolution keeps everyone the notice reached.
+		replaceRecipients: open,
 		// A new refusal re-surfaces the notice: the recipient reads it again, from the inbox it may have archived it from.
 		recipients: recipientUserIds.map((userId) => (open ? { userId, isRead: false, isArchived: false } : { userId }))
 	};

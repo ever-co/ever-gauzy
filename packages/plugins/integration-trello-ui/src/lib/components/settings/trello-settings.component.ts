@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, inject, OnInit, signal } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, inject, OnInit } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -46,6 +46,9 @@ interface MappingDraft {
  * (add with a list → status map, change the direction or the switch, register the webhook again, import now,
  * remove), and the latest runs.
  */
+/** A mapping as the list shows it: the stored mapping and how many refused changes its row took (see `restore`). */
+type TrelloMappingRow = TrelloMapping & { rowVersion?: number };
+
 @Component({
 	selector: 'ngx-trello-settings',
 	changeDetection: ChangeDetectionStrategy.OnPush,
@@ -335,7 +338,7 @@ export class TrelloSettingsComponent implements OnInit {
 	webhooks = false;
 	boards: TrelloBoard[] = [];
 	projects: IOrganizationProject[] = [];
-	mappings: TrelloMapping[] = [];
+	mappings: TrelloMappingRow[] = [];
 	runs: TrelloRun[] = [];
 	draft: MappingDraft = this.emptyDraft();
 	loading = true;
@@ -531,8 +534,6 @@ export class TrelloSettingsComponent implements OnInit {
 		void this.router.navigate([TRELLO_LINK]);
 	}
 
-	/** How many refused changes each row took (see `restore`): local state, as a signal. */
-	private readonly rowVersions = signal<ReadonlyMap<string, number>>(new Map());
 
 	/** One request at a time: `apply` takes its answer; `revert` puts the page back when it was refused. */
 	private request<T>(request: Observable<T>, apply: (value: T) => void, revert?: () => void): void {
@@ -554,13 +555,13 @@ export class TrelloSettingsComponent implements OnInit {
 		});
 	}
 
-	private replace(updated: TrelloMapping): void {
-		this.mappings = this.mappings.map((mapping) => (mapping.id === updated.id ? updated : mapping));
+	private replace(updated: TrelloMapping, rowVersion?: number): void {
+		this.mappings = this.mappings.map((mapping) => (mapping.id === updated.id ? { ...updated, rowVersion: rowVersion ?? mapping.rowVersion } : mapping));
 	}
 
-	/** A row's identity for the list: its mapping, and how many refused changes it took (each one re-creates the row). */
-	rowKey(mapping: TrelloMapping): string {
-		return `${mapping.id}:${this.rowVersions().get(mapping.id) ?? 0}`;
+	/** A row's identity for the list: its mapping, and how many refused changes it took (each one re-creates the row); the count is the row's own. */
+	rowKey(mapping: TrelloMappingRow): string {
+		return `${mapping.id}:${mapping.rowVersion ?? 0}`;
 	}
 
 	/**
@@ -569,8 +570,8 @@ export class TrelloSettingsComponent implements OnInit {
 	 * instead, and the list re-creates the row with the stored values.
 	 */
 	private restore(mapping: TrelloMapping): void {
-		this.rowVersions.update((versions) => new Map(versions).set(mapping.id, (versions.get(mapping.id) ?? 0) + 1));
-		this.replace({ ...mapping });
+		const current = this.mappings.find((row) => row.id === mapping.id);
+		this.replace(mapping, (current?.rowVersion ?? 0) + 1);
 	}
 
 	private showError(error: unknown): void {

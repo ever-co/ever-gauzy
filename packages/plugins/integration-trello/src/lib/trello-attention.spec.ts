@@ -13,6 +13,7 @@ describe('attentionItemOf', () => {
 			source: InboxItemSourceEnum.SYSTEM,
 			priority: InboxItemPriorityEnum.HIGH,
 			status: InboxItemStatusEnum.OPEN,
+			replaceRecipients: true,
 			externalSource: TRELLO_INBOX_SOURCE,
 			externalId: 'int-1:attention',
 			metadata: { integrationId: 'int-1', reason: 'token_refused' },
