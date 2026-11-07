@@ -1,7 +1,7 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 import * as chalk from 'chalk';
 import { DatabaseTypeEnum } from '@gauzy/config';
-import { assignProjectKeys } from '../../tasks/task-reference';
+import { assignProjectKeys, takenProjectKeys, uniqueProjectKey } from '../../tasks/task-reference';
 
 type Dialect = 'postgres' | 'sqlite' | 'mysql';
 
@@ -61,15 +61,41 @@ export class BackfillProjectTaskKeys1791000004900 implements MigrationInterface 
 		}
 		let written = 0;
 		for (const projects of byOrganization.values()) {
+			const names = new Map(projects.map((project) => [project.id, project.name]));
 			for (const [id, key] of assignProjectKeys(projects)) {
+				if (await this.writeKey(queryRunner, dialect, projects[0], id, key, names.get(id) ?? null)) written += 1;
+			}
+		}
+		console.log(chalk.green(`${this.name}: ${written} project key(s) given.`));
+	}
+
+	/**
+	 * Writes one project's key. A project created meanwhile (the API may be running) can hold that key first: the
+	 * organization's keys are read again and the next free one is written, a few times; the migration never stops
+	 * on a key. Answers whether a key was written.
+	 */
+	private async writeKey(queryRunner: QueryRunner, dialect: Dialect, scope: ProjectRow, id: string, first: string, name: string | null): Promise<boolean> {
+		const q = (identifier: string) => quoted(dialect, identifier);
+		let key: string | null = first;
+		for (let attempt = 1; key && attempt <= 5; attempt += 1) {
+			try {
 				await queryRunner.query(
 					`UPDATE ${q('organization_project')} SET ${q('taskKey')} = ${param(dialect, 1)} WHERE ${q('id')} = ${param(dialect, 2)} AND ${q('taskKey')} IS NULL`,
 					[key, id]
 				);
-				written += 1;
+				return true;
+			} catch (error) {
+				if (!isUniqueViolation(error)) throw error;
+				const current = (await queryRunner.query(
+					`SELECT ${['name', 'taskKey', 'taskKeyHistory'].map(q).join(', ')} FROM ${q('organization_project')} WHERE ${q('tenantId')} ${scope.tenantId === null ? 'IS NULL' : `= ${param(dialect, 1)}`} AND ${q('organizationId')} ${scope.organizationId === null ? 'IS NULL' : `= ${param(dialect, scope.tenantId === null ? 1 : 2)}`}`,
+					[scope.tenantId, scope.organizationId].filter((value) => value !== null)
+				)) as ProjectRow[];
+				const taken = takenProjectKeys(current);
+				taken.add(key);
+				key = uniqueProjectKey(name, taken);
 			}
 		}
-		console.log(chalk.green(`${this.name}: ${written} project key(s) given.`));
+		return false;
 	}
 
 	public async down(): Promise<void> {
@@ -89,6 +115,13 @@ function dialectOf(queryRunner: QueryRunner): Dialect {
 		default:
 			throw new Error(`Unsupported database: ${queryRunner.connection.options.type}`);
 	}
+}
+
+/** A unique-index refusal on any of the three databases (another project took the key first). */
+function isUniqueViolation(error: unknown): boolean {
+	const candidate = error as { code?: unknown; errno?: unknown; driverError?: { code?: unknown; errno?: unknown } } | null;
+	const codes = [candidate?.code, candidate?.errno, candidate?.driverError?.code, candidate?.driverError?.errno].map((code) => String(code ?? ''));
+	return codes.includes('23505') || codes.includes('ER_DUP_ENTRY') || codes.includes('1062') || codes.some((code) => code.startsWith('SQLITE_CONSTRAINT'));
 }
 
 function quoted(dialect: Dialect, identifier: string): string {

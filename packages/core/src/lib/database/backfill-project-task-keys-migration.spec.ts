@@ -37,6 +37,28 @@ describe('BackfillProjectTaskKeys1791000004900', () => {
 		expect(queryRunner.updates[0].sql).toBe('UPDATE "organization_project" SET "taskKey" = $1 WHERE "id" = $2 AND "taskKey" IS NULL');
 	});
 
+	it('takes the next free key when a project created meanwhile holds the first one', async () => {
+		const queryRunner = runner([{ id: 'p1', tenantId: 't', organizationId: 'o1', name: 'Gauzy', taskKey: null, taskKeyHistory: null }]);
+		let first = true;
+		queryRunner.query.mockImplementation(async (sql: string, params: unknown[] = []) => {
+			if (sql.startsWith('SELECT "id"')) return [{ id: 'p1', tenantId: 't', organizationId: 'o1', name: 'Gauzy', taskKey: null, taskKeyHistory: null }];
+			if (sql.startsWith('SELECT "name"')) return [{ name: 'Gauzy Web', taskKey: 'GAU', taskKeyHistory: null }, { name: 'Gauzy', taskKey: null, taskKeyHistory: null }];
+			if (sql.startsWith('UPDATE')) {
+				queryRunner.updates.push({ sql, params });
+				if (first) {
+					first = false;
+					throw Object.assign(new Error('duplicate key'), { code: '23505' });
+				}
+			}
+			return [];
+		});
+		await new BackfillProjectTaskKeys1791000004900().up(queryRunner as never);
+		expect(queryRunner.updates.map((update) => update.params)).toEqual([
+			['GAU', 'p1'],
+			['GAU2', 'p1']
+		]);
+	});
+
 	it('does nothing where the key column is not there', async () => {
 		const queryRunner = runner([]);
 		queryRunner.hasColumn.mockResolvedValueOnce(false);
