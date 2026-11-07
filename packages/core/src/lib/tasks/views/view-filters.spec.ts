@@ -18,7 +18,7 @@ const NOW = new Date('2026-11-07T12:30:00.000Z');
 
 describe('the filter tree', () => {
 	it('keeps what can be applied and reports the rest with its place', () => {
-		const { tree, invalid } = validateFilterTree({
+		const { tree, invalid, paths } = validateFilterTree({
 			op: 'and',
 			conditions: [
 				{ field: 'status', operator: 'in', values: [A, 'nope', A] },
@@ -44,8 +44,31 @@ describe('the filter tree', () => {
 			{ path: 'filter.conditions.5', field: 'priority', reason: 'malformed' },
 			{ path: 'filter.conditions.6', reason: 'unknown-field' }
 		]);
-		expect(validateFilterTree(null)).toEqual({ tree: null, invalid: [] });
+		// Each kept node remembers where the caller put it, so a later report names the condition the caller wrote.
+		expect(paths.get(tree!.conditions[0])).toBe('filter.conditions.0');
+		expect(paths.get(tree!.conditions[1])).toBe('filter.conditions.4');
+		expect(paths.get((tree!.conditions[1] as { conditions: unknown[] }).conditions[1] as never)).toBe('filter.conditions.4.conditions.1');
+		expect(validateFilterTree(null)).toEqual({ tree: null, invalid: [], paths: new Map() });
 		expect(validateFilterTree({ op: 'and', conditions: [{ field: 'size', operator: 'notIn', values: ['x'] }] }).tree).toBeNull();
+	});
+
+	it('counts every node against the budget and stops nesting at the depth cap, reporting the excess as malformed', () => {
+		// 150 empty groups: the root and the first 99 take the budget of 100; the 51 after them are reported, not entered.
+		const wide = validateFilterTree({ op: 'and', conditions: Array.from({ length: 150 }, () => ({ op: 'or', conditions: [] })) });
+		expect(wide.tree).toBeNull();
+		expect(wide.invalid).toHaveLength(51);
+		expect(wide.invalid[0]).toEqual({ path: 'filter.conditions.99', reason: 'malformed' });
+		expect(wide.invalid[50]).toEqual({ path: 'filter.conditions.149', reason: 'malformed' });
+		// A chain nested twelve deep: the group at depth 9 is reported at its place and nothing below it is visited.
+		let deep: Record<string, unknown> = { op: 'and', conditions: [{ field: 'status', operator: 'isEmpty' }] };
+		for (let level = 0; level < 12; level += 1) deep = { op: 'and', conditions: [deep] };
+		const nested = validateFilterTree(deep);
+		expect(nested.tree).toBeNull();
+		expect(nested.invalid).toEqual([{ path: `filter${'.conditions.0'.repeat(9)}`, reason: 'malformed' }]);
+		// A condition past the budget is reported too.
+		const many = validateFilterTree({ op: 'and', conditions: Array.from({ length: 101 }, () => ({ field: 'priority', operator: 'isEmpty' })) });
+		expect(many.tree!.conditions).toHaveLength(99);
+		expect(many.invalid).toEqual([{ path: 'filter.conditions.99', reason: 'malformed' }, { path: 'filter.conditions.100', reason: 'malformed' }]);
 	});
 
 	it('reads the options stored as an object or as JSON, the grouping and the ordering with their defaults', () => {
@@ -76,9 +99,11 @@ describe('relative windows', () => {
 
 describe('the cursor', () => {
 	it('round-trips a keyset and an offset, and reads anything else as none', () => {
-		const keyset = encodeCursor({ v: '2026-11-07T12:30:00.000Z', id: A });
-		expect(decodeCursor(keyset)).toEqual({ v: '2026-11-07T12:30:00.000Z', id: A });
-		expect(decodeCursor(encodeCursor({ v: null, id: B }))).toEqual({ v: null, id: B });
+		const keyset = encodeCursor({ id: A });
+		expect(decodeCursor(keyset)).toEqual({ id: A });
+		// The cursor names the row and nothing of its values: its size is the same for a one-word title and a long one.
+		expect(keyset.length).toBeLessThan(80);
+		expect(decodeCursor(encodeCursor({ id: B }))).toEqual({ id: B });
 		expect(decodeCursor(encodeCursor({ o: 40 }))).toEqual({ o: 40 });
 		expect(decodeCursor('not-a-cursor')).toBeNull();
 		expect(decodeCursor(Buffer.from('{"id":"x"}').toString('base64url'))).toBeNull();

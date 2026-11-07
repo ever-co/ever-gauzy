@@ -22,8 +22,9 @@ export const TASK_VIEW_ORDER_FIELDS = ['createdAt', 'updatedAt', 'dueDate', 'tit
 export const TASK_VIEW_PAGE_MAX = 200;
 export const TASK_VIEW_PAGE_DEFAULT = 50;
 export const TASK_VIEW_MANUAL_ORDER_MAX = 5000;
-/** The most conditions one tree may hold (nested ones counted). */
+/** The most nodes one tree may hold — conditions and groups, nested ones counted — and how deep it may nest. */
 export const TASK_VIEW_FILTER_MAX_CONDITIONS = 100;
+export const TASK_VIEW_FILTER_MAX_DEPTH = 8;
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -44,45 +45,58 @@ export function filterOptionsOf(raw: unknown): ITaskViewFilterOptions {
 	return value && typeof value === 'object' && !Array.isArray(value) ? (value as ITaskViewFilterOptions) : {};
 }
 
-/** What validating a tree answered: the tree with only what can be applied, and what could not. */
+/** What validating a tree answered: the tree with only what can be applied, what could not, and where each kept node was. */
 export interface IValidatedFilter {
 	tree: ITaskViewFilterGroup | null;
 	invalid: ITaskViewInvalidFilter[];
+	/** The place of each kept node in the tree the caller sent, so a later report names the condition the caller wrote. */
+	paths: Map<ITaskViewFilterCondition | ITaskViewFilterGroup, string>;
 }
 
 /**
  * Keeps of a tree what the platform can apply — a known field, an operator the field takes, well-formed values —
  * and reports the rest with its place in the tree, so a client can show the condition as invalid and remove it.
+ *
+ * Every node costs one of the budget, a group as much as a condition, and a group nested deeper than
+ * `TASK_VIEW_FILTER_MAX_DEPTH` is reported as malformed and not entered: a tree of many empty groups, or one
+ * nested without end, is bounded by the budget and the depth rather than by the call stack.
  */
 export function validateFilterTree(tree: unknown): IValidatedFilter {
 	const invalid: ITaskViewInvalidFilter[] = [];
+	const paths = new Map<ITaskViewFilterCondition | ITaskViewFilterGroup, string>();
 	let budget = TASK_VIEW_FILTER_MAX_CONDITIONS;
-	const group = (value: unknown, path: string): ITaskViewFilterGroup | null => {
-		if (!isFilterGroup(value)) {
+	const group = (value: unknown, path: string, depth: number): ITaskViewFilterGroup | null => {
+		if (!isFilterGroup(value) || depth > TASK_VIEW_FILTER_MAX_DEPTH || budget <= 0) {
 			invalid.push({ path, reason: 'malformed' });
 			return null;
 		}
-		const op = (value as ITaskViewFilterGroup).op === 'or' ? 'or' : 'and';
+		budget -= 1;
+		const op = value.op === 'or' ? 'or' : 'and';
 		const conditions: Array<ITaskViewFilterCondition | ITaskViewFilterGroup> = [];
-		(value as ITaskViewFilterGroup).conditions.forEach((entry, index) => {
+		value.conditions.forEach((entry, index) => {
 			const at = `${path}.conditions.${index}`;
+			if (isFilterGroup(entry)) {
+				const nested = group(entry, at, depth + 1);
+				if (nested && nested.conditions.length) conditions.push(nested);
+				return;
+			}
 			if (budget <= 0) {
 				invalid.push({ path: at, reason: 'malformed' });
 				return;
 			}
-			if (isFilterGroup(entry)) {
-				const nested = group(entry, at);
-				if (nested && nested.conditions.length) conditions.push(nested);
-				return;
-			}
 			budget -= 1;
 			const condition = validateCondition(entry, at, invalid);
-			if (condition) conditions.push(condition);
+			if (condition) {
+				paths.set(condition, at);
+				conditions.push(condition);
+			}
 		});
-		return { op, conditions };
+		const kept: ITaskViewFilterGroup = { op, conditions };
+		paths.set(kept, path);
+		return kept;
 	};
-	const result = tree === null || tree === undefined ? null : group(tree, 'filter');
-	return { tree: result && result.conditions.length ? result : null, invalid };
+	const result = tree === null || tree === undefined ? null : group(tree, 'filter', 0);
+	return { tree: result && result.conditions.length ? result : null, invalid, paths };
 }
 
 function validateCondition(entry: unknown, path: string, invalid: ITaskViewInvalidFilter[]): ITaskViewFilterCondition | null {
@@ -177,9 +191,11 @@ export function groupingOf(value: unknown, fallback: unknown = 'none'): TaskView
 	return pick(value) ?? pick(fallback) ?? 'none';
 }
 
-/** A keyset cursor: the sort value and the id of the last row of the page; or an offset, for a manual ordering. */
+/**
+ * A keyset cursor: the id of the last row of the page (its sort value is read from the row when the next page is
+ * asked for, so the cursor's size never depends on a title); or an offset, for a manual ordering.
+ */
 export interface IViewCursor {
-	v?: string | null;
 	id?: string;
 	o?: number;
 }
@@ -195,7 +211,7 @@ export function decodeCursor(value: unknown): IViewCursor | null {
 		const parsed = JSON.parse(Buffer.from(value, 'base64url').toString('utf8')) as IViewCursor;
 		if (!parsed || typeof parsed !== 'object') return null;
 		if (typeof parsed.o === 'number' && Number.isInteger(parsed.o) && parsed.o >= 0) return { o: parsed.o };
-		if (typeof parsed.id === 'string' && UUID.test(parsed.id)) return { v: parsed.v === null || parsed.v === undefined ? null : String(parsed.v), id: parsed.id };
+		if (typeof parsed.id === 'string' && UUID.test(parsed.id)) return { id: parsed.id };
 		return null;
 	} catch {
 		return null;

@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { Brackets, DataSource, FindOptionsRelations, In, ObjectLiteral, SelectQueryBuilder } from 'typeorm';
+import { Brackets, DataSource, FindOptionsRelations, In, ObjectLiteral, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
 import {
 	ID,
 	ITask,
@@ -13,6 +13,7 @@ import {
 	TaskViewGroupBy
 } from '@gauzy/contracts';
 import { RequestContext } from '../../core/context';
+import { quoteIdentifier as q } from '../../database/database.helper';
 import { BUILT_IN_VIEW_DEFAULT_RELATIONS, BUILT_IN_VIEW_RELATIONS, relationsTreeOf } from '../built-in-views';
 import { Task } from '../task.entity';
 import { TaskView } from './view.entity';
@@ -56,8 +57,8 @@ const REFERENCES: Readonly<Record<string, string>> = {
 	team: 'OrganizationTeam'
 };
 const GROUP_FIELDS: Readonly<Record<string, string>> = { status: 'status', priority: 'priority', size: 'size', project: 'project', sprint: 'sprint', assignee: 'assignees', team: 'team', label: 'labels' };
-/** A due date that is not set sorts last: compared as this instant. */
-const FAR_FUTURE = '9999-12-31T00:00:00.000Z';
+/** The ordering whose column may be unset: those rows sort last, whichever direction the dates take. */
+const NULLABLE_ORDERINGS: ReadonlySet<string> = new Set(['dueDate']);
 
 /**
  * The tasks of a saved view (FR-3): the view's filter tree (or the query's, an unsaved edit of it) over the tasks
@@ -76,7 +77,7 @@ export class TaskViewTasksService {
 		const options = filterOptionsOf(view.filterOptions);
 		const validated = validateFilterTree(query.filter !== undefined ? query.filter : options.filter ?? null);
 		const invalid: ITaskViewInvalidFilter[] = [...validated.invalid];
-		const tree = validated.tree ? await this.withoutDeletedReferences(validated.tree, tenantId, 'filter', invalid) : null;
+		const tree = validated.tree ? await this.withoutDeletedReferences(validated.tree, tenantId, validated.paths, invalid) : null;
 		const ordering = orderingOf(options.orderBy);
 		const groupBy = groupingOf(query.groupBy, options.groupBy);
 		const limit = pageLimitOf(query.limit);
@@ -85,8 +86,8 @@ export class TaskViewTasksService {
 		const total = await base().getCount();
 		const groups = groupBy === 'none' ? null : await this.groupCounts(base(), groupBy, tenantId);
 		const { ids, nextCursor } = ordering.field === 'manual'
-			? await this.manualPage(base(), view, decodeCursor(query.cursor), limit)
-			: await this.keysetPage(base(), ordering, decodeCursor(query.cursor), limit);
+			? await this.manualPage(base, view, decodeCursor(query.cursor), limit)
+			: await this.keysetPage(base(), ordering, decodeCursor(query.cursor), limit, tenantId);
 		const items = await this.rowsOf(ids, tenantId, organizationId, relations);
 		return { items, nextCursor, total, groups, groupBy, invalidFilters: invalid };
 	}
@@ -108,16 +109,16 @@ export class TaskViewTasksService {
 		return builder;
 	}
 
-	private applyGroup(where: { where: (c: unknown, p?: ObjectLiteral) => unknown; andWhere: (c: unknown, p?: ObjectLiteral) => unknown; orWhere: (c: unknown, p?: ObjectLiteral) => unknown }, group: ITaskViewFilterGroup, counter: { n: number }, now: Date, timeZone?: string | null): void {
+	private applyGroup(where: WhereExpressionBuilder, group: ITaskViewFilterGroup, counter: { n: number }, now: Date, timeZone?: string | null): void {
 		let first = true;
 		for (const entry of group.conditions) {
 			const clause: { sql: string | Brackets; params?: ObjectLiteral } | null = isFilterGroup(entry)
 				? { sql: new Brackets((nested) => this.applyGroup(nested, entry, counter, now, timeZone)) }
 				: this.conditionClause(entry, counter, now, timeZone);
 			if (!clause) continue;
-			if (first) where.where(clause.sql, clause.params);
-			else if (group.op === 'or') where.orWhere(clause.sql, clause.params);
-			else where.andWhere(clause.sql, clause.params);
+			const method = first ? 'where' : group.op === 'or' ? 'orWhere' : 'andWhere';
+			if (clause.sql instanceof Brackets) where[method](clause.sql);
+			else where[method](clause.sql, clause.params);
 			first = false;
 		}
 		if (first) where.where('1 = 1');
@@ -142,8 +143,10 @@ export class TaskViewTasksService {
 			}
 		}
 		if (membership) {
+			// The join table is named raw, so its identifiers are quoted the way the configured dialect quotes them.
+			const alias = q(`${key}m`);
 			const exists = (values?: ID[]) =>
-				`EXISTS (SELECT 1 FROM "${membership.table}" "${key}m" WHERE "${key}m"."taskId" = task.id${values ? ` AND "${key}m"."${membership.column}" IN (:...${key})` : ''})`;
+				`EXISTS (SELECT 1 FROM ${q(membership.table)} ${alias} WHERE ${alias}.${q('taskId')} = task.id${values ? ` AND ${alias}.${q(membership.column)} IN (:...${key})` : ''})`;
 			switch (condition.operator) {
 				case 'in':
 					return { sql: exists(condition.values), params: { [key]: condition.values } };
@@ -179,13 +182,22 @@ export class TaskViewTasksService {
 		}
 	}
 
-	/** The tree with the ids that no longer exist taken out of its conditions, each loss reported. */
-	private async withoutDeletedReferences(group: ITaskViewFilterGroup, tenantId: ID, path: string, invalid: ITaskViewInvalidFilter[]): Promise<ITaskViewFilterGroup | null> {
+	/**
+	 * The tree with the ids that no longer exist taken out of its conditions, each loss reported at the place the
+	 * condition had in the tree the caller sent (`paths`), not at its place among the conditions that survived
+	 * validation — an unknown field at index 0 and a deleted label at index 1 are two reports, at 0 and at 1.
+	 */
+	private async withoutDeletedReferences(
+		group: ITaskViewFilterGroup,
+		tenantId: ID,
+		paths: ReadonlyMap<ITaskViewFilterCondition | ITaskViewFilterGroup, string>,
+		invalid: ITaskViewInvalidFilter[]
+	): Promise<ITaskViewFilterGroup | null> {
 		const conditions: Array<ITaskViewFilterCondition | ITaskViewFilterGroup> = [];
 		for (const [index, entry] of group.conditions.entries()) {
-			const at = `${path}.conditions.${index}`;
+			const at = paths.get(entry) ?? `${paths.get(group) ?? 'filter'}.conditions.${index}`;
 			if (isFilterGroup(entry)) {
-				const nested = await this.withoutDeletedReferences(entry, tenantId, at, invalid);
+				const nested = await this.withoutDeletedReferences(entry, tenantId, paths, invalid);
 				if (nested) conditions.push(nested);
 				continue;
 			}
@@ -214,11 +226,12 @@ export class TaskViewTasksService {
 			rows = await builder.select(`task.${column}`, 'key').addSelect('COUNT(*)', 'count').groupBy(`task.${column}`).getRawMany();
 		} else {
 			// A task with two assignees (or labels, or teams) counts in each of its groups; one with none counts under null.
+			const key = `${q('g')}.${q(membership.column)}`;
 			rows = await builder
-				.leftJoin(membership.table, 'g', `"g"."taskId" = task.id`)
-				.select(`"g"."${membership.column}"`, 'key')
+				.leftJoin(membership.table, 'g', `${q('g')}.${q('taskId')} = task.id`)
+				.select(key, 'key')
 				.addSelect('COUNT(*)', 'count')
-				.groupBy(`"g"."${membership.column}"`)
+				.groupBy(key)
 				.getRawMany();
 		}
 		const keys = rows.map((row) => row.key).filter((key): key is ID => !!key);
@@ -246,47 +259,69 @@ export class TaskViewTasksService {
 
 	// ---------------------------------------------------------------- the page
 
-	/** A page by keyset: the rows after the cursor's (sort value, id), `limit` of them, and the cursor of the next. */
-	private async keysetPage(builder: SelectQueryBuilder<Task>, ordering: ITaskViewOrdering, cursor: IViewCursor | null, limit: number): Promise<{ ids: ID[]; nextCursor: string | null }> {
-		const column = ordering.field === 'title' ? 'task.title' : `task.${ordering.field}`;
-		const sortExpression = ordering.field === 'dueDate' ? `COALESCE(task.dueDate, :farFuture)` : column;
+	/**
+	 * A page by keyset: the rows after the cursor's row in the ordering (its sort value, then its id), `limit` of them,
+	 * and the cursor of the next. The cursor names the row; its sort value is read back from the row, so a title of
+	 * any length makes no cursor a client could not send back. A row the cursor names that is no longer there is a
+	 * cursor the walk cannot resume from (`TASK_VIEW_CURSOR_STALE`: read the first page again).
+	 *
+	 * A column that may be unset (`dueDate`) sorts its unset rows last whichever direction the dates take: the
+	 * ordering is "is it unset" first, then the date, then the id — and the seek past a cursor says the same.
+	 */
+	private async keysetPage(builder: SelectQueryBuilder<Task>, ordering: ITaskViewOrdering, cursor: IViewCursor | null, limit: number, tenantId: ID): Promise<{ ids: ID[]; nextCursor: string | null }> {
+		const field = ordering.field as Exclude<ITaskViewOrdering['field'], 'manual'>;
+		const column = `task.${field}`;
 		const direction = ordering.direction === 'asc' ? 'ASC' : 'DESC';
 		const comparator = direction === 'ASC' ? '>' : '<';
-		builder.setParameter('farFuture', new Date(FAR_FUTURE));
+		const nullable = NULLABLE_ORDERINGS.has(field);
 		if (cursor && typeof cursor.id === 'string') {
-			const value = ordering.field === 'title' ? String(cursor.v ?? '') : new Date(cursor.v ?? FAR_FUTURE);
-			builder.andWhere(`(${sortExpression} ${comparator} :cursorValue OR (${sortExpression} = :cursorValue AND task.id ${comparator} :cursorId))`, { cursorValue: value, cursorId: cursor.id });
+			const anchor = await this.dataSource.getRepository(Task).findOne({ select: { id: true, [field]: true } as never, where: { id: cursor.id, tenantId } });
+			if (!anchor) {
+				throw new BadRequestException('TASK_VIEW_CURSOR_STALE: the task the cursor names is no longer there; read the first page again.');
+			}
+			const value = (anchor as unknown as Record<string, unknown>)[field];
+			if (nullable && (value === null || value === undefined)) {
+				// Past an unset row: the unset rows after it, by id.
+				builder.andWhere(`(${column} IS NULL AND task.id ${comparator} :cursorId)`, { cursorId: cursor.id });
+			} else {
+				const after = `(${column} ${comparator} :cursorValue OR (${column} = :cursorValue AND task.id ${comparator} :cursorId))`;
+				builder.andWhere(nullable ? `((${column} IS NOT NULL AND ${after}) OR ${column} IS NULL)` : after, {
+					cursorValue: field === 'title' ? String(value ?? '') : new Date(value as Date),
+					cursorId: cursor.id
+				});
+			}
 		}
-		const rows = await builder
-			.select(['task.id', ordering.field === 'title' ? 'task.title' : `task.${ordering.field}`])
-			.orderBy(sortExpression, direction)
-			.addOrderBy('task.id', direction)
-			.take(limit + 1)
-			.getMany();
+		if (nullable) {
+			builder.orderBy(`CASE WHEN ${column} IS NULL THEN 1 ELSE 0 END`, 'ASC').addOrderBy(column, direction);
+		} else {
+			builder.orderBy(column, direction);
+		}
+		const rows = await builder.select(['task.id', column]).addOrderBy('task.id', direction).take(limit + 1).getMany();
 		const page = rows.slice(0, limit);
 		const last = page[page.length - 1];
-		const nextCursor = rows.length > limit && last ? encodeCursor({ v: this.sortValueOf(last, ordering), id: String(last.id) }) : null;
+		const nextCursor = rows.length > limit && last ? encodeCursor({ id: String(last.id) }) : null;
 		return { ids: page.map((row) => row.id as ID), nextCursor };
 	}
 
-	private sortValueOf(task: Task, ordering: ITaskViewOrdering): string | null {
-		if (ordering.field === 'title') return String(task.title ?? '');
-		const value = (task as unknown as Record<string, unknown>)[ordering.field];
-		if (!value && ordering.field === 'dueDate') return FAR_FUTURE;
-		return value ? new Date(value as Date).toISOString() : null;
-	}
-
-	/** A page of a manual ordering: the view's order first, the rest by creation, by offset (the ordering has no key to seek by). */
-	private async manualPage(builder: SelectQueryBuilder<Task>, view: TaskView, cursor: IViewCursor | null, limit: number): Promise<{ ids: ID[]; nextCursor: string | null }> {
-		const rows = await builder.select(['task.id', 'task.createdAt']).orderBy('task.createdAt', 'DESC').addOrderBy('task.id', 'DESC').take(TASK_VIEW_MANUAL_ORDER_MAX).getMany();
-		const position = new Map((view.manualOrder ?? []).map((id, index) => [String(id), index]));
-		const ordered = rows
-			.map((row, index) => ({ id: row.id as ID, rank: position.get(String(row.id)) ?? position.size + index }))
-			.sort((a, b) => a.rank - b.rank)
-			.map((row) => row.id);
+	/**
+	 * A page of a manual ordering, by offset (the ordering has no key to seek by): the tasks the view's order names, in
+	 * that order, whatever their age — read by their ids, so one the person put first is never lost behind newer
+	 * tasks — then the newest `TASK_VIEW_MANUAL_ORDER_MAX` of the rest.
+	 */
+	private async manualPage(base: () => SelectQueryBuilder<Task>, view: TaskView, cursor: IViewCursor | null, limit: number): Promise<{ ids: ID[]; nextCursor: string | null }> {
+		const order = [...new Set((view.manualOrder ?? []).map(String))].slice(0, TASK_VIEW_MANUAL_ORDER_MAX);
+		const position = new Map(order.map((id, index) => [id, index]));
+		const ordered = order.length
+			? (await base().select(['task.id']).andWhere('task.id IN (:...ordered)', { ordered: order }).getMany())
+					.map((row) => String(row.id))
+					.sort((a, b) => (position.get(a) ?? 0) - (position.get(b) ?? 0))
+			: [];
+		const rest = base().select(['task.id']).orderBy('task.createdAt', 'DESC').addOrderBy('task.id', 'DESC').take(TASK_VIEW_MANUAL_ORDER_MAX);
+		if (order.length) rest.andWhere('task.id NOT IN (:...ordered)', { ordered: order });
+		const ids = [...ordered, ...(await rest.getMany()).map((row) => String(row.id))] as ID[];
 		const offset = cursor && typeof cursor.o === 'number' ? cursor.o : 0;
-		const page = ordered.slice(offset, offset + limit);
-		return { ids: page, nextCursor: offset + limit < ordered.length ? encodeCursor({ o: offset + limit }) : null };
+		const page = ids.slice(offset, offset + limit);
+		return { ids: page, nextCursor: offset + limit < ids.length ? encodeCursor({ o: offset + limit }) : null };
 	}
 
 	private relationsOf(requested: unknown): FindOptionsRelations<Task> {
