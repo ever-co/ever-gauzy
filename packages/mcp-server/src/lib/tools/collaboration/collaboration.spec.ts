@@ -173,7 +173,15 @@ describe('chat', () => {
 
 		api.post.mockResolvedValueOnce({ message: { id: MESSAGE, body: 'Summary', conversationId: CONVERSATION } });
 		const posted = await call(chat.get('post_chat_message'), { conversationId: CONVERSATION, body: 'Summary', threadRootId: MESSAGE, idempotencyKey: 'k1' });
-		expect(api.post).toHaveBeenLastCalledWith(`/api/chat/conversations/${CONVERSATION}/messages`, { tenantId: 'ten', organizationId: 'org', body: 'Summary', threadRootId: MESSAGE, nonce: 'k1' });
+		expect(api.post).toHaveBeenLastCalledWith(`/api/chat/conversations/${CONVERSATION}/messages`, {
+			tenantId: 'ten',
+			organizationId: 'org',
+			body: 'Summary',
+			assistedBy: 'MCP client',
+			threadRootId: MESSAGE,
+			nonce: 'k1'
+		});
+		expect(posted).toEqual(expect.objectContaining({ posted: true, approvedByPerson: false }));
 		expect(posted.message.id).toBe(MESSAGE);
 
 		api.post.mockResolvedValueOnce({ unreadCount: 0 });
@@ -196,6 +204,49 @@ describe('chat', () => {
 		api.get.mockRejectedValueOnce(Object.assign(new Error('connect ECONNREFUSED 10.0.0.5:3000'), { isAxiosError: true, code: 'ECONNREFUSED' }));
 		const transport = await list({ conversationId: CONVERSATION }).catch((error: Error) => error.message);
 		expect(transport).toBe('list_chat_messages failed: the platform API did not answer the request.');
+	});
+});
+
+describe('assisted messages', () => {
+	/** The tools of a server whose client is named and may (or may not) ask the person. */
+	function withClient(elicit: jest.Mock | null) {
+		const registered = new Map<string, ToolCallback>();
+		const server = {
+			registerTool: (name: string, _config: unknown, callback: ToolCallback) => registered.set(name, callback),
+			tool: () => undefined,
+			server: {
+				getClientVersion: () => ({ name: 'claude-desktop', title: 'Claude' }),
+				getClientCapabilities: () => (elicit ? { elicitation: {} } : {}),
+				elicitInput: elicit ?? undefined
+			}
+		};
+		registerCollaborationTools(server as never, 'session', ALL, () => new Set(['chat:write']));
+		const post = registered.get('post_chat_message') as ToolCallback;
+		return (args: Record<string, unknown>) => runWithCollaborationScopes(new Set(['chat:write']), () => post(args));
+	}
+
+	it('asks the person first where the client can, and posts nothing when they decline', async () => {
+		const elicit = jest.fn().mockResolvedValueOnce({ action: 'decline' });
+		const post = withClient(elicit);
+		const declined = JSON.parse((await post({ conversationId: CONVERSATION, body: 'Ship it?' })).content[0].text).data;
+		expect(declined).toEqual({ posted: false, reason: 'declined' });
+		expect(elicit).toHaveBeenCalledWith(expect.objectContaining({ message: expect.stringContaining('Ship it?') }));
+		expect(api.post).not.toHaveBeenCalled();
+
+		elicit.mockResolvedValueOnce({ action: 'accept', content: { post: true } });
+		api.post.mockResolvedValueOnce({ message: { id: MESSAGE, conversationId: CONVERSATION, body: 'Ship it?', assistedBy: 'Claude' } });
+		const approved = JSON.parse((await post({ conversationId: CONVERSATION, body: 'Ship it?' })).content[0].text).data;
+		expect(approved).toEqual(expect.objectContaining({ posted: true, approvedByPerson: true }));
+		expect(approved.message.assistedBy).toBe('Claude');
+		expect(api.post).toHaveBeenCalledWith(`/api/chat/conversations/${CONVERSATION}/messages`, expect.objectContaining({ assistedBy: 'Claude' }));
+	});
+
+	it('posts at once, still marked, where the client cannot ask', async () => {
+		const post = withClient(null);
+		api.post.mockResolvedValueOnce({ message: { id: MESSAGE, conversationId: CONVERSATION, body: 'Done' } });
+		const sent = JSON.parse((await post({ conversationId: CONVERSATION, body: 'Done' })).content[0].text).data;
+		expect(sent).toEqual(expect.objectContaining({ posted: true, approvedByPerson: false }));
+		expect(api.post).toHaveBeenCalledWith(`/api/chat/conversations/${CONVERSATION}/messages`, expect.objectContaining({ assistedBy: 'Claude' }));
 	});
 });
 

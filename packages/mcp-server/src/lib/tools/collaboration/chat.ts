@@ -5,6 +5,46 @@ import { answer, query, registerCollaborationTool, scope } from './collaboration
 
 const CHAT = '/api/chat';
 
+/** The most characters of the client's name the platform keeps as the assistant of a message. */
+export const ASSISTED_BY_MAX = 120;
+
+/** The low-level server's view of the client: who it is and whether it can ask the person (elicitation). */
+interface ClientChannel {
+	getClientVersion?: () => { name?: string; title?: string } | undefined;
+	getClientCapabilities?: () => { elicitation?: unknown } | undefined;
+	elicitInput?: (params: Record<string, unknown>) => Promise<{ action: 'accept' | 'decline' | 'cancel'; content?: Record<string, unknown> }>;
+}
+
+function channelOf(server: McpServer): ClientChannel | undefined {
+	return (server as unknown as { server?: ClientChannel }).server;
+}
+
+/** The name a message posted through this server is marked with: the MCP client's own (an AI assistant). */
+export function assistedByOf(server: McpServer): string {
+	const client = channelOf(server)?.getClientVersion?.();
+	const name = String(client?.title || client?.name || 'MCP client').trim() || 'MCP client';
+	return name.slice(0, ASSISTED_BY_MAX);
+}
+
+/**
+ * Asks the person to approve a message before it is posted in their name, where the client can ask (MCP
+ * elicitation); answers whether to post. A client that cannot ask posts at once — the message is marked as
+ * assisted either way.
+ */
+export async function approvedToPost(server: McpServer, preview: { conversationId: string; body: string; threadRootId?: string }): Promise<{ approved: boolean; asked: boolean; action?: string }> {
+	const channel = channelOf(server);
+	if (!channel?.getClientCapabilities?.()?.elicitation || !channel.elicitInput) return { approved: true, asked: false };
+	const reply = await channel.elicitInput({
+		message: `Post this message in your name${preview.threadRootId ? ' (a thread reply)' : ''}? It will be marked as written with an assistant.\n\n${preview.body}`,
+		requestedSchema: {
+			type: 'object',
+			properties: { post: { type: 'boolean', title: 'Post it', description: 'Post the message as shown' } },
+			required: ['post']
+		}
+	});
+	return { approved: reply.action === 'accept' && reply.content?.['post'] === true, asked: true, action: reply.action };
+}
+
 type Row = Record<string, any>;
 
 /** A conversation as the tools list it: the row's identity and the caller's state, no member list. */
@@ -38,6 +78,7 @@ export function messageSummary(message: Row) {
 		authorEmployeeId: message['authorEmployeeId'] ?? null,
 		authorUserId: message['authorUserId'] ?? null,
 		appName: message['appName'] ?? null,
+		assistedBy: message['assistedBy'] ?? null,
 		createdAt: message['createdAt'] ?? null,
 		editedAt: message['editedAt'] ?? null,
 		replyToId: message['replyToId'] ?? null,
@@ -146,7 +187,7 @@ export function registerChatTools(server: McpServer, access: { read: boolean; wr
 	registerCollaborationTool<{ conversationId: string; body: string; threadRootId?: string; replyToId?: string; mentionEmployeeIds?: string[]; idempotencyKey?: string }>(
 		server,
 		'post_chat_message',
-		"Posts a message in one of my conversations, in the signed-in user's name — a reply in a thread when `threadRootId` is given. The message is visible to the user at once in their chat. Writes POST /chat/conversations/:id/messages.",
+		"Posts a message in one of my conversations, in the signed-in user's name — a reply in a thread when `threadRootId` is given — marked as written with an assistant (the client's name). Where the client supports it, the person approves the message first; declined, nothing is posted (`posted: false`). Writes POST /chat/conversations/:id/messages.",
 		{
 			conversationId: z.string().uuid().describe('The conversation'),
 			body: z.string().min(1).max(10000).describe('The message text (Markdown)'),
@@ -156,15 +197,19 @@ export function registerChatTools(server: McpServer, access: { read: boolean; wr
 			idempotencyKey: z.string().max(64).optional().describe('A key of the client: the same key posts once')
 		},
 		async (args) => {
+			const approval = await approvedToPost(server, { conversationId: args.conversationId, body: args.body, threadRootId: args.threadRootId });
+			if (!approval.approved) return answer({ posted: false, reason: approval.action === 'cancel' ? 'cancelled' : 'declined' });
 			const sent = await apiClient.post<Row>(`${CHAT}/conversations/${args.conversationId}/messages`, {
 				...scope(),
 				body: args.body,
+				// What people see next to the message: it was written with an assistant, and which one.
+				assistedBy: assistedByOf(server),
 				...(args.threadRootId ? { threadRootId: args.threadRootId } : {}),
 				...(args.replyToId ? { replyToId: args.replyToId } : {}),
 				...(args.mentionEmployeeIds ? { mentionEmployeeIds: args.mentionEmployeeIds } : {}),
 				...(args.idempotencyKey ? { nonce: args.idempotencyKey } : {})
 			});
-			return answer({ message: messageSummary(sent?.['message'] ?? sent ?? {}) });
+			return answer({ posted: true, approvedByPerson: approval.asked, message: messageSummary(sent?.['message'] ?? sent ?? {}) });
 		}
 	);
 
