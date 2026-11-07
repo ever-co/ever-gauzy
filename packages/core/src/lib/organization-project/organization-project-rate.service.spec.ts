@@ -287,6 +287,14 @@ describe('OrganizationProjectRateService', () => {
 			expect(membershipUpdate).not.toHaveBeenCalled();
 		});
 
+		it('is never set by a manager for themselves through their own id in another letter case', async () => {
+			// The UUID pipe keeps the letter case of the route id, and Postgres matches a uuid in any case to the
+			// stored row: an upper-case own id is still the manager's own.
+			await expect(setMemberRate('MANAGER-EMPLOYEE', 99)).rejects.toThrow(ForbiddenException);
+
+			expect(membershipUpdate).not.toHaveBeenCalled();
+		});
+
 		it('is set by an admin, their own included, and cleared with null', async () => {
 			permissions = [PermissionsEnum.ORG_EMPLOYEES_EDIT];
 

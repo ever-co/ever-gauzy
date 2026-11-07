@@ -3,6 +3,7 @@ import { Equal, IsNull, Or } from 'typeorm';
 import { ID, IOrganizationProjectRates, IOrganizationProjectRateUpdateInput, PermissionsEnum } from '@gauzy/contracts';
 import { RequestContext } from '../core/context';
 import { Organization } from '../core/entities/internal';
+import { isSameId } from '../employee/own-rates';
 import { assertCurrentUserBelongsToOrganization } from '../user-organization/assert-organization-membership';
 import { OrganizationProject } from './organization-project.entity';
 import { TypeOrmOrganizationProjectRepository } from './repository/type-orm-organization-project.repository';
@@ -77,8 +78,9 @@ export class OrganizationProjectRateService {
 		const managerEmployeeId = await this.assertMayManageRates(projectId, organizationId, tenantId);
 		await this.findProject(projectId, organizationId, tenantId);
 
-		// What the client is billed for a manager's own time is an admin's call
-		const setsOwnRate = managerEmployeeId === employeeId;
+		// What the client is billed for a manager's own time is an admin's call. The ids are compared as uuids
+		// (case-insensitively), as the database matches them: a manager's own id sent in upper case is still their own.
+		const setsOwnRate = isSameId(managerEmployeeId, employeeId);
 		if (setsOwnRate) {
 			throw new ForbiddenException('A project manager cannot set their own rate on the project. Ask an admin.');
 		}
