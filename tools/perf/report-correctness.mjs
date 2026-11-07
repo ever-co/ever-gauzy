@@ -21,6 +21,9 @@ const [mode, labelA, labelB] = process.argv.slice(2);
 
 // SORT_SLOTS=1 orders every `timeSlots` list by slot id before comparing: the list is a set (the joins returned it in
 // index order, the figures query in startedAt order), its numbers are what the reports average.
+/** Top-level rows of an answer: the length of a list, the keys of an object, 0 otherwise. */
+const rowsOf = (body) => (Array.isArray(body) ? body.length : body && typeof body === 'object' ? Object.keys(body).length : 0);
+
 const sortSlots = process.env.SORT_SLOTS === '1';
 // IGNORE_KEYS=lastLoginAt,updatedAt drops fields the environment changes between captures (the capture's own sign-in
 // updates the admin user's lastLoginAt / updatedAt, and that user is an employee the activity report embeds).
@@ -68,6 +71,7 @@ if (mode === 'diff') {
 	const isCase = (f) => f.endsWith('.json') && f !== '_meta.json';
 	const files = readdirSync(dirA).filter(isCase);
 	let same = 0;
+	let sameWithRows = 0;
 	let different = 0;
 	let missing = 0;
 	// A case only one capture holds (an interrupted capture, an ONLY= subset) counts as missing in either direction
@@ -93,9 +97,12 @@ if (mode === 'diff') {
 		if (d.length) {
 			different++;
 			console.log(`DIFF ${f}\n  ${d.slice(0, 8).join('\n  ')}`);
-		} else same++;
+		} else {
+			same++;
+			if ((a.rows ?? rowsOf(a.body)) > 0) sameWithRows++;
+		}
 	}
-	console.log(`\n${same} identical, ${different} different, ${missing} missing (of ${files.length})`);
+	console.log(`\n${same} identical (${sameWithRows} of them with rows), ${different} different, ${missing} missing (of ${files.length})`);
 	process.exit(different || missing ? 1 : 0);
 }
 
@@ -218,6 +225,7 @@ let n = 0;
 const t0 = performance.now();
 const timings = {};
 const statuses = {};
+const rowCounts = {};
 for (const [epName, ep] of Object.entries(endpoints)) {
 	if (only && !only.has(epName)) continue;
 	for (const c of cases) {
@@ -227,16 +235,20 @@ for (const [epName, ep] of Object.entries(endpoints)) {
 		const ms = Math.round(performance.now() - t);
 		(timings[epName] ??= []).push(ms);
 		(statuses[epName] ??= []).push(r.status);
-		writeFileSync(join(outDir, `${epName}__${c.name}.json`), JSON.stringify({ path, status: r.status, body: r.body }));
+		// What the answer holds: top-level rows (a list) or keys (an object), so an empty report is visible
+		const rows = rowsOf(r.body);
+		(rowCounts[epName] ??= []).push(rows);
+		writeFileSync(join(outDir, `${epName}__${c.name}.json`), JSON.stringify({ path, status: r.status, rows, body: r.body }));
 		n++;
 	}
 	const ts = timings[epName].sort((a, b) => a - b);
 	const failed = statuses[epName].filter((status) => !(status >= 200 && status < 300));
+	const empty = rowCounts[epName].filter((rows, i) => rows === 0 && statuses[epName][i] >= 200 && statuses[epName][i] < 300).length;
 	console.log(
 		`${epName.padEnd(26)} ${cases.length} cases  p50 ${ts[Math.floor(ts.length / 2)]} ms  max ${ts[ts.length - 1]} ms${
 			failed.length ? `  FAILED ${failed.length} (status ${[...new Set(failed)].join(',')})` : ''
-		}`
+		}${empty ? `  EMPTY ${empty} (a 2xx answer with no rows: no evidence for the filter of that case)` : ''}`
 	);
 }
-if (!only) writeFileSync(join(outDir, '_meta.json'), JSON.stringify({ base, organizationId, cases: cases.length, endpoints: Object.keys(endpoints), timings, statuses, took: Math.round(performance.now() - t0) }, null, 2));
+if (!only) writeFileSync(join(outDir, '_meta.json'), JSON.stringify({ base, organizationId, cases: cases.length, endpoints: Object.keys(endpoints), timings, statuses, rowCounts, took: Math.round(performance.now() - t0) }, null, 2));
 console.log(`captured ${n} responses to ${outDir} in ${Math.round((performance.now() - t0) / 1000)}s`);
