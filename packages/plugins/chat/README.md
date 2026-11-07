@@ -78,6 +78,16 @@ per `nonce`, with no time limit: reusing a `nonce` answers the message the sende
 created with it (deleted or not) and sends nothing new, so a `nonce` must be
 unique for the sender across conversations.
 
+## GraphQL (served only with the plugin)
+
+The read routes have GraphQL twins (`graphql/chat.schema.ts`, `ChatResolver`; the chat spec T17), registered by the
+plugin's `extensions` and named in the field-binding gate (`tools/scripts/graphql-field-binding-check.mjs`):
+`chatPeople`, `chatCategories`, `chatConversations`, `chatBrowseConversations`, `chatStates`, `chatConversation(id)`,
+`chatConversationMembers(id)`, `chatMessages(conversationId, query)`, `chatPins(conversationId)`, `chatThreads`,
+`chatThread(messageId, query)`. Each reaches the service method its route reaches, as the caller, behind the same
+guards (`CHAT_VIEW`, the tenant's `FEATURE_CHAT`, and the GraphQL capability `FEATURE_GRAPHQL`); the page query is
+validated with the route's DTO. Enumerated values are strings holding the REST values. The writes stay REST.
+
 ## Enabling
 
 ```env

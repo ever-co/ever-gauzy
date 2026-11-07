@@ -75,6 +75,12 @@ const GATED_PLUGIN_SCHEMAS = [
 		flag: 'GAUZY_REALTIME_ENABLED',
 		file: 'packages/plugins/realtime/src/lib/graphql/realtime.schema.ts',
 		exportName: 'realtimeSchemaExtensions'
+	},
+	{
+		plugin: 'ChatPlugin',
+		flag: 'GAUZY_CHAT_ENABLED',
+		file: 'packages/plugins/chat/src/lib/graphql/chat.schema.ts',
+		exportName: 'chatSchemaExtensions'
 	}
 ];
 
