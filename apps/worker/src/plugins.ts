@@ -2,7 +2,7 @@ import { resolvePluginLoadOrder } from '@gauzy/plugin';
 import { CartPlugin } from '@gauzy/plugin-cart';
 import { CatalogPlugin } from '@gauzy/plugin-catalog';
 import { DocsPlugin } from '@gauzy/plugin-docs';
-import { InboxPlugin, isInboxEnabled } from '@gauzy/plugin-inbox';
+import { InboxDeliveryPlugin, InboxPlugin, isInboxEnabled, isInboxNotificationEmailEnabled } from '@gauzy/plugin-inbox';
 import { IntegrationEverWorksPlugin, isEverWorksEnabled } from '@gauzy/plugin-integration-ever-works';
 import { IntegrationAsanaPlugin, isAsanaEnabled } from '@gauzy/plugin-integration-asana';
 import { InventoryPlugin } from '@gauzy/plugin-inventory';
@@ -130,12 +130,19 @@ export const plugins = resolvePluginLoadOrder([
 	 */
 	...(isAsanaEnabled(process.env, (message) => console.warn(message)) ? [IntegrationAsanaPlugin] : []),
 	/**
-	 * The Inbox — hosted only with the Ever Works integration, and only when both are switched on. This
-	 * process runs the integration's sync as often as the API does (whoever holds the connection's lease),
-	 * and the sync writes Ever Works inbox items into the Inbox through its writer; without the Inbox here
-	 * those items would wait for the API. It owns no queue or schedule of its own.
+	 * The Inbox — hosted only with the Ever Works integration or the notification email delivery, and only when
+	 * both are switched on. This process runs the integration's sync as often as the API does (whoever holds the
+	 * connection's lease), and the sync writes Ever Works inbox items into the Inbox through its writer; without
+	 * the Inbox here those items would wait for the API. The Inbox itself owns no queue or schedule.
 	 *
 	 * 🛑 Off unless `GAUZY_INBOX_ENABLED` is exactly `true` as well, so a worker is unchanged by default.
 	 */
-	...(everWorksEnabled && isInboxEnabled(process.env, (message) => console.warn(message)) ? [InboxPlugin] : [])
+	...((everWorksEnabled || isInboxNotificationEmailEnabled(process.env)) && isInboxEnabled(process.env, (message) => console.warn(message)) ? [InboxPlugin] : []),
+	/**
+	 * Email delivery of the Inbox's notifications (immediate or digest per kind, the Inbox spec FR-10–FR-12): the
+	 * sweep that decides and sends runs here, on the worker's queue root, every minute.
+	 *
+	 * 🛑 Off unless `GAUZY_INBOX_NOTIFICATION_EMAIL_ENABLED` is exactly `true` as well — the same switch as the API's list.
+	 */
+	...(isInboxEnabled(process.env) && isInboxNotificationEmailEnabled(process.env, (message) => console.warn(message)) ? [InboxDeliveryPlugin] : [])
 ]);

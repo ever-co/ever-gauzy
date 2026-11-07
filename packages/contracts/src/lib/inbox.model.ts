@@ -408,6 +408,44 @@ export interface IInboxRecipientActions {
 	setState(id: ID, input: IInboxRecipientStateInput): Promise<IInboxItemWithState>;
 }
 
+/** How an entry reaches a person beyond the in-app list (the Inbox spec, "Preferences and channels"). */
+export enum InboxDeliveryChannelEnum {
+	EMAIL = 'email'
+}
+
+/** What the delivery decided for one entry and one person: nothing, an email at once, or a place in the daily digest. */
+export enum InboxDeliveryModeEnum {
+	NONE = 'none',
+	IMMEDIATE = 'immediate',
+	DIGEST = 'digest'
+}
+
+/**
+ * One decision of the delivery lane (`inbox_delivery`, `@gauzy/plugin-inbox`): an entry, a person, a channel, what
+ * was decided from the person's preferences, when it is due, and whether it went out. The row is the outbox: the
+ * worker's sweep writes it once per entry and person, sends what is due, and records the attempt.
+ */
+export interface IInboxDelivery extends IBasePerTenantAndOrganizationEntityModel {
+	inboxItemId: ID;
+	userId: ID;
+	/** The employee whose preferences decided it, when the entry names one. */
+	employeeId?: ID | null;
+	channel: InboxDeliveryChannelEnum;
+	mode: InboxDeliveryModeEnum;
+	/** The notification type the preferences were read for (`Assignment`, `Mention`, …). */
+	notificationType?: string | null;
+	/** When it is to go out: at once, after the do-not-disturb window, or at the next digest hour. */
+	dueAt?: Date | null;
+	/** The digest's day (`YYYY-MM-DD` in the person's time zone): one email per person per day. */
+	digestKey?: string | null;
+	sentAt?: Date | null;
+	attempts: number;
+	nextAttemptAt?: Date | null;
+	lastError?: string | null;
+	/** Given up after the last attempt. */
+	failedAt?: Date | null;
+}
+
 /** Tokens of the observer seam and of the recipient actions, provided by `@gauzy/plugin-inbox` when it is loaded. */
 export const INBOX_ITEM_FEED = 'INBOX_ITEM_FEED';
 export const INBOX_RECIPIENT_ACTIONS = 'INBOX_RECIPIENT_ACTIONS';
