@@ -30,7 +30,7 @@
 
 ## Phase 4 — Delivery (lane G10)
 
-- [ ] **T13**. Email immediate / digest (worker job, templates) honouring `preferences`
+- [x] **T13**. Email immediate / digest (worker job, templates) honouring `preferences`
 - [ ] **T14**. Web push subscriptions (`web-push` dependency already present) and the push decision (no focused session)
 - [ ] **T15**. Settings page in the Angular app and Ever Teams for per-kind channels, DND, digest hour
 
