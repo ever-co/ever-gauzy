@@ -36,7 +36,8 @@ export interface TrelloImportSweepOutcome {
  * The connections are settled before the batch is cut: one that is gone, or whose token was refused (the attention
  * the sync recorded — a person must reconnect it, and asking Trello again every interval changes nothing), takes
  * its mappings out of the sweep, so they never hold the front of the queue against the mappings behind them. Of
- * what is left, the longest waiting go first and a sweep takes at most `TRELLO_IMPORT_SWEEP_BATCH`: a backlog is
+ * what is left, the longest waiting go first — a mapping never imported before any other, whatever the database
+ * makes of a null in an order (PostgreSQL puts it last) — and a sweep takes at most `TRELLO_IMPORT_SWEEP_BATCH`: a backlog is
  * cleared over a few sweeps rather than in one pass that holds the worker. Each mapping is read again inside its
  * context right before its claim — the sweep's list is minutes old by then, and a mapping switched off, turned
  * outbound or removed meanwhile is left alone. A mapping whose import could not start is reported and left for the
@@ -59,7 +60,7 @@ export class TrelloImportSweepService {
 	async run(now = new Date()): Promise<TrelloImportSweepOutcome> {
 		const outcome: TrelloImportSweepOutcome = { due: 0, imported: 0, skipped: 0, failed: 0 };
 		if (this.config.importIntervalMinutes <= 0) return outcome;
-		const due = await this.findDue(now);
+		const due = waitingFirst(await this.findDue(now));
 		const batch = (await this.withConnections(due)).slice(0, TRELLO_IMPORT_SWEEP_BATCH);
 		outcome.due = batch.length;
 		for (const { tenant, mapping } of batch) {
@@ -77,7 +78,7 @@ export class TrelloImportSweepService {
 		return outcome;
 	}
 
-	/** The inbound mappings whose last import is older than their interval (or that were never imported), the oldest first. */
+	/** The inbound mappings whose last import is older than their interval, or that were never imported (the order is decided by the caller). */
 	async findDue(now: Date): Promise<TrelloBoardMapping[]> {
 		const interval = this.config.importIntervalMinutes * 60_000;
 		const before = (factor: number) => new Date(now.getTime() - interval * factor + TRELLO_IMPORT_SWEEP_SLACK_MS);
@@ -87,8 +88,7 @@ export class TrelloImportSweepService {
 				{ ...inbound, lastImportedAt: IsNull() },
 				{ ...inbound, webhookId: IsNull(), lastImportedAt: LessThan(before(1)) },
 				{ ...inbound, webhookId: Not(IsNull()), lastImportedAt: LessThan(before(TRELLO_IMPORT_WEBHOOK_STRIDE)) }
-			] as never,
-			order: { lastImportedAt: 'ASC' }
+			] as never
 		});
 	}
 
@@ -130,4 +130,10 @@ export class TrelloImportSweepService {
 			return true;
 		});
 	}
+}
+
+/** The mappings by how long they waited: never imported first, then the oldest import first (a stable order within a tie). */
+export function waitingFirst(mappings: TrelloBoardMapping[]): TrelloBoardMapping[] {
+	const at = (mapping: TrelloBoardMapping): number => (mapping.lastImportedAt ? new Date(mapping.lastImportedAt).getTime() : 0);
+	return [...mappings].sort((a, b) => at(a) - at(b));
 }
