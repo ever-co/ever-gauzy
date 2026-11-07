@@ -1,4 +1,5 @@
 import { EventBus } from '@nestjs/cqrs';
+import { heldKeysOf, uniqueProjectKey } from '../tasks/task-reference';
 import { BadRequestException, HttpException, HttpStatus, Injectable, ConflictException } from '@nestjs/common';
 import { Brackets, FindOptionsWhere, ILike, In, IsNull, Not, SelectQueryBuilder } from 'typeorm';
 import { EntityProperty, FilterQuery, raw } from '@mikro-orm/core';
@@ -91,6 +92,12 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 		// Destructure the input data
 		// The client rate is written through the project rate route only, which checks who may set it
 		const { tags = [], memberIds = [], managerIds = [], organizationId, billRateValue: _rate, ...entity } = input;
+		// A project created without a key gets the first letters of its name, unique in the organization (editable
+		// later); an explicit `taskKey: null` keeps it without one.
+		if (!('taskKey' in entity) || entity.taskKey === undefined) {
+			const proposed = await this.proposeTaskKey(entity.name, { tenantId, organizationId });
+			if (proposed) entity.taskKey = proposed;
+		}
 		await this.prepareTaskKey(entity, { tenantId, organizationId });
 		void _rate;
 
@@ -1056,6 +1063,22 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 
 				return !!project;
 			}
+		}
+	}
+
+	/** The key a new project of the organization is given: its name's first letters, unique among every key held there. */
+	private async proposeTaskKey(name: string | null | undefined, scope: { tenantId?: ID | null; organizationId?: ID | null }): Promise<string | null> {
+		if (!scope.tenantId || !scope.organizationId) return null;
+		try {
+			const projects = await this.typeOrmRepository.find({
+				where: { tenantId: scope.tenantId, organizationId: scope.organizationId },
+				select: { id: true, taskKey: true, taskKeyHistory: true },
+				withDeleted: true
+			});
+			return uniqueProjectKey(name, projects.flatMap((project) => heldKeysOf(project)));
+		} catch {
+			// A key is optional: the project is created without one (a manager can set it) rather than not at all.
+			return null;
 		}
 	}
 

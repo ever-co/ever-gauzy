@@ -95,11 +95,25 @@ export function keysOfProject(project: { name?: string | null; taskKey?: string 
 }
 
 /**
- * A unique key for a new project among the organization's keys: the derived key, then the derived key with a
- * number (`FUL`, `FUL2`, `FUL3`, …). Null when the name derives no key.
+ * The key proposed for a project: the derived key when it is a valid key, else the first three letters of the name
+ * (a key starts with a letter: `3D Print` → `DPR`). Null for a name with fewer than two letters or digits.
+ */
+export function proposedProjectKey(name: string | null | undefined): string | null {
+	const derived = derivedProjectKey(name);
+	if (derived && isValidTaskKey(derived)) return derived;
+	const letters = String(name ?? '')
+		.replace(/[^A-Za-z]/g, '')
+		.toUpperCase()
+		.slice(0, 3);
+	return letters.length >= 2 ? letters : null;
+}
+
+/**
+ * A unique key for a new project among the organization's keys: the proposed key, then the proposed key with a
+ * number (`FUL`, `FUL2`, `FUL3`, …). Null when the name proposes no key.
  */
 export function uniqueProjectKey(name: string | null | undefined, taken: Iterable<string>): string | null {
-	const base = derivedProjectKey(name);
+	const base = proposedProjectKey(name);
 	if (!base) return null;
 	const used = new Set([...taken].map((key) => String(key).toUpperCase()));
 	if (!used.has(base)) return base;
@@ -108,4 +122,44 @@ export function uniqueProjectKey(name: string | null | undefined, taken: Iterabl
 		if (!used.has(candidate)) return candidate;
 	}
 	return null;
+}
+
+/** Every key a project holds or held (its key and its former keys), upper-cased: what no other project may take. */
+export function heldKeysOf(project: { taskKey?: string | null; taskKeyHistory?: string[] | string | null }): string[] {
+	const held: string[] = [];
+	const current = normalizeTaskKey(project.taskKey);
+	if (current) held.push(current);
+	let history: unknown = project.taskKeyHistory;
+	if (typeof history === 'string') {
+		// Stored as JSON text on SQLite.
+		try {
+			history = JSON.parse(history);
+		} catch {
+			history = [];
+		}
+	}
+	for (const former of Array.isArray(history) ? history : []) {
+		const key = normalizeTaskKey(String(former));
+		if (key) held.push(key);
+	}
+	return held;
+}
+
+/**
+ * Keys for the projects of one organization that have none, oldest first: each the unique key of its name among
+ * every key held in the organization and those given before it. A project whose name proposes no key gets none.
+ */
+export function assignProjectKeys(
+	projects: ReadonlyArray<{ id: string; name?: string | null; taskKey?: string | null; taskKeyHistory?: string[] | string | null }>
+): Map<string, string> {
+	const taken = new Set(projects.flatMap((project) => heldKeysOf(project)));
+	const assigned = new Map<string, string>();
+	for (const project of projects) {
+		if (normalizeTaskKey(project.taskKey)) continue;
+		const key = uniqueProjectKey(project.name, taken);
+		if (!key) continue;
+		taken.add(key);
+		assigned.set(project.id, key);
+	}
+	return assigned;
 }

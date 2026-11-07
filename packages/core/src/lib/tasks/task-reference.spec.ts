@@ -6,7 +6,10 @@ import {
 	normalizeTaskKey,
 	parseTaskReference,
 	parseTaskReferences,
-	uniqueProjectKey
+	uniqueProjectKey,
+	proposedProjectKey,
+	assignProjectKeys,
+	heldKeysOf
 } from './task-reference';
 
 describe('task references', () => {
@@ -53,5 +56,38 @@ describe('task references', () => {
 		expect(uniqueProjectKey('Fulfilment', ['FUL'])).toBe('FUL2');
 		expect(uniqueProjectKey('Fulfilment', ['ful', 'FUL2'])).toBe('FUL3');
 		expect(uniqueProjectKey('A', [])).toBeNull();
+	});
+});
+
+describe('project keys for projects without one', () => {
+	it('proposes the derived key, or the first letters when the derived key would start with a digit', () => {
+		expect(proposedProjectKey('Fulfilment')).toBe('FUL');
+		expect(proposedProjectKey('3D Print')).toBe('DPR');
+		expect(proposedProjectKey('A')).toBeNull();
+		expect(uniqueProjectKey('3D Print', ['DPR'])).toBe('DPR2');
+	});
+
+	it('reads the keys a project holds and held, also from JSON text', () => {
+		expect(heldKeysOf({ taskKey: 'api', taskKeyHistory: ['OLD'] })).toEqual(['API', 'OLD']);
+		expect(heldKeysOf({ taskKey: null, taskKeyHistory: '["WEB"]' })).toEqual(['WEB']);
+		expect(heldKeysOf({ taskKey: null, taskKeyHistory: 'not json' })).toEqual([]);
+	});
+
+	it('gives keys oldest first, unique against every key held or held before in the organization', () => {
+		const assigned = assignProjectKeys([
+			{ id: '1', name: 'Gauzy', taskKey: null },
+			{ id: '2', name: 'Gauzy Teams', taskKey: null },
+			{ id: '3', name: 'Fulfilment', taskKey: 'FUL' },
+			{ id: '4', name: 'Fun', taskKey: null, taskKeyHistory: null },
+			{ id: '5', name: 'Web', taskKey: 'SITE', taskKeyHistory: ['WEB'] },
+			{ id: '6', name: 'Website', taskKey: null },
+			{ id: '7', name: 'X', taskKey: null }
+		]);
+		expect([...assigned]).toEqual([
+			['1', 'GAU'],
+			['2', 'GAU2'],
+			['4', 'FUN'],
+			['6', 'WEB2']
+		]);
 	});
 });
