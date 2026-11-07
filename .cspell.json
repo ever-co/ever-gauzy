@@ -1737,7 +1737,12 @@
 		"resetstat",
 		"RESETSTAT",
 		"seqno",
-		"Worktrees"
+		"Worktrees",
+		"unarchive",
+		"unfollow",
+		"unpin",
+		"unreads",
+		"nopush"
 	],
 	"useGitignore": true,
 	"ignorePaths": [

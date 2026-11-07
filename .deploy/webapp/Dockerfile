@@ -135,6 +135,7 @@ COPY --chown=node:node packages/plugins/docs-ui/package.json ./packages/plugins/
 COPY --chown=node:node packages/plugins/docs/package.json ./packages/plugins/docs/
 COPY --chown=node:node packages/plugins/ai-chat/package.json ./packages/plugins/ai-chat/
 COPY --chown=node:node packages/plugins/inbox-ui/package.json ./packages/plugins/inbox-ui/
+COPY --chown=node:node packages/plugins/chat-ui/package.json ./packages/plugins/chat-ui/
 COPY --chown=node:node packages/ui-core/package.json ./packages/ui-core/
 COPY --chown=node:node packages/ui-config/package.json ./packages/ui-config/
 COPY --chown=node:node packages/ui-auth/package.json ./packages/ui-auth/
