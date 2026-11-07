@@ -15,13 +15,13 @@ import { AsanaSyncService } from './sync/asana-sync.service';
 import { parseSectionMap } from './sync/asana-task.mapper';
 
 /** What a mapping route answers: the row with its section map resolved and the webhook secret left out. */
-export interface AsanaMappingView extends Omit<AsanaProjectMapping, 'sectionMap' | 'webhookSecret'> {
+export interface AsanaMappingView extends Omit<AsanaProjectMapping, 'sectionMap' | 'webhookSecret' | 'webhookHandshakeToken' | 'webhookHandshakeStartedAt'> {
 	sectionMap: Record<string, string>;
 	hasWebhook: boolean;
 }
 
 function mappingView(mapping: AsanaProjectMapping): AsanaMappingView {
-	const { webhookSecret: _secret, ...rest } = mapping;
+	const { webhookSecret: _secret, webhookHandshakeToken: _token, webhookHandshakeStartedAt: _started, ...rest } = mapping;
 	return { ...rest, sectionMap: parseSectionMap(mapping.sectionMap), hasWebhook: !!mapping.webhookGid } as AsanaMappingView;
 }
 
