@@ -146,12 +146,3 @@ export function issueUpdateOf(
 	if (task.dueDate !== undefined) input.dueDate = linearDueDateOf(task.dueDate);
 	return input;
 }
-
-/** The newest `updatedAt` among the issues (the watermark the next incremental import starts after). */
-export function watermarkOf(issues: readonly Pick<LinearIssue, 'updatedAt'>[], current: string | null | undefined): string | null {
-	let latest = current ?? null;
-	for (const issue of issues) {
-		if (issue.updatedAt && (!latest || issue.updatedAt > latest)) latest = issue.updatedAt;
-	}
-	return latest;
-}
