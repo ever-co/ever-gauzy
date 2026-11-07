@@ -172,6 +172,11 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.DOCS_REVIEW,
 			PermissionsEnum.DOCS_AI_IMPORT,
 			/** Documents Permissions End */
+			/** Chat Permissions Start */
+			PermissionsEnum.CHAT_VIEW,
+			PermissionsEnum.CHAT_SEND,
+			PermissionsEnum.CHAT_MANAGE,
+			/** Chat Permissions End */
 			PermissionsEnum.IMPORT_ADD,
 			PermissionsEnum.EXPORT_ADD,
 			PermissionsEnum.FILE_STORAGE_VIEW,
@@ -641,6 +646,11 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.DOCS_REVIEW,
 			PermissionsEnum.DOCS_AI_IMPORT,
 			/** Documents Permissions End */
+			/** Chat Permissions Start */
+			PermissionsEnum.CHAT_VIEW,
+			PermissionsEnum.CHAT_SEND,
+			PermissionsEnum.CHAT_MANAGE,
+			/** Chat Permissions End */
 
 			PermissionsEnum.IMPORT_ADD,
 			PermissionsEnum.EXPORT_ADD,
@@ -942,6 +952,10 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.DOCS_CREATE,
 			PermissionsEnum.DOCS_UPDATE,
 			/** Documents Permissions End */
+			/** Chat Permissions Start */
+			PermissionsEnum.CHAT_VIEW,
+			PermissionsEnum.CHAT_SEND,
+			/** Chat Permissions End */
 			PermissionsEnum.ORG_STRATEGIC_INITIATIVE_READ,
 			PermissionsEnum.PLUGIN_VIEW,
 			PermissionsEnum.PLUGIN_DISCOVER,
@@ -969,6 +983,10 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.DOCS_CREATE,
 			PermissionsEnum.DOCS_UPDATE,
 			/** Documents Permissions End */
+			/** Chat Permissions Start */
+			PermissionsEnum.CHAT_VIEW,
+			PermissionsEnum.CHAT_SEND,
+			/** Chat Permissions End */
 			/** Time Off Permissions Start */
 			PermissionsEnum.TIME_OFF_VIEW,
 			/** Time Off Permissions End */
@@ -1140,6 +1158,11 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.DOCS_REVIEW,
 			PermissionsEnum.DOCS_AI_IMPORT,
 			/** Documents Permissions End */
+			/** Chat Permissions Start */
+			PermissionsEnum.CHAT_VIEW,
+			PermissionsEnum.CHAT_SEND,
+			PermissionsEnum.CHAT_MANAGE,
+			/** Chat Permissions End */
 			// Plugin permissions
 			PermissionsEnum.PLUGIN_VIEW,
 			PermissionsEnum.PLUGIN_DISCOVER,

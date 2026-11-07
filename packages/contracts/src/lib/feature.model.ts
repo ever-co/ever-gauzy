@@ -145,6 +145,7 @@ export enum FeatureEnum {
 	FEATURE_EMAIL_VERIFICATION = 'FEATURE_EMAIL_VERIFICATION',
 	FEATURE_OPEN_STATS = 'FEATURE_OPEN_STATS', // Enable/Disable Global Open Stats Endpoint Configuration
 	FEATURE_DOCUMENTS = 'FEATURE_DOCUMENTS', // Central hub for company documents: uploads, wiki pages, review, and AI knowledge
+	FEATURE_CHAT = 'FEATURE_CHAT', // Chat between employees: channels, direct and group messages, threads (@gauzy/plugin-chat)
 
 	/** Defines feature flags and settings related to user authentication methods. */
 	FEATURE_EMAIL_PASSWORD_LOGIN = 'FEATURE_EMAIL_PASSWORD_LOGIN',

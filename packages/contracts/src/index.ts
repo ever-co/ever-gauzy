@@ -77,6 +77,7 @@ export * from './lib/employee-statistics.model';
 export * from './lib/employee.model';
 export * from './lib/employee-agent-profile.model';
 export * from './lib/inbox.model';
+export * from './lib/chat.model';
 export * from './lib/inbox-email.model';
 export * from './lib/entity-subscription.model';
 export * from './lib/entity-with-members.model';
