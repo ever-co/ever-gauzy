@@ -12,6 +12,7 @@ import { IntegrationPlanePlugin } from '@gauzy/plugin-integration-plane-ui';
 import { IntegrationEverAsyncPlugin } from '@gauzy/plugin-integration-ever-async-ui';
 import { IntegrationEverWorksUiPlugin } from '@gauzy/plugin-integration-ever-works-ui';
 import { IntegrationLinearUiPlugin } from '@gauzy/plugin-integration-linear-ui';
+import { IntegrationAsanaUiPlugin } from '@gauzy/plugin-integration-asana-ui';
 import { EverConnectUiPlugin } from '@gauzy/plugin-ever-connect-ui';
 import { DashboardTimeTrackReactUiPlugin } from '@gauzy/plugin-dashboard-time-track-react-ui';
 import { AiChatReactUiPlugin } from '@gauzy/plugin-ai-chat-react-ui';
@@ -100,6 +101,8 @@ export const uiPluginConfig: PluginUiConfig = {
 		// Integrations > Linear. Where the API's Linear plugin is not loaded (the default: LINEAR_ENABLED
 		// unset) the page only says so.
 		IntegrationLinearUiPlugin,
+		// Integrations > Asana, the same way (ASANA_ENABLED).
+		IntegrationAsanaUiPlugin,
 		// Integrations > Ever Platform. Where the API's Ever Platform module is not loaded (the
 		// default) the page only says so.
 		EverConnectUiPlugin,
