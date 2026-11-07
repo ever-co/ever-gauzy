@@ -207,7 +207,7 @@ export class TrelloSyncService {
 	async applyCardsFromWebhook(tenant: IIntegrationTenant, mapping: TrelloBoardMapping, cardIds: string[]): Promise<{ applied: number; error: string | null }> {
 		if (!cardIds.length || !mapping.syncEnabled || mapping.direction === 'outbound') return { applied: 0, error: null };
 		const scope = { tenantId: tenant.tenantId as ID, organizationId: tenant.organizationId as ID };
-		const run = await this.runs.startWebhookRun(tenant, mapping.id);
+		const run = await this.runs.startWebhookRun(tenant, mapping.id as ID);
 		const counts = emptyCounts();
 		let error: string | null = null;
 		try {

@@ -1,3 +1,4 @@
+// cspell:ignore Fapi — the URL-encoded `/api` of a callback URL
 import { TrelloApiClient, TrelloApiError } from './trello-api.client';
 
 function fakeFetch(answers: Array<{ status: number; body: unknown; headers?: Record<string, string> }>) {

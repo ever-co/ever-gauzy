@@ -20,7 +20,7 @@ function mappingOf(id: string, tenantId = 'tenant-1', organizationId = 'org-1'):
 function sweep(config: Partial<AsanaConfig> = {}) {
 	const find = jest.fn().mockResolvedValue([]);
 	let lastListed: AsanaProjectMapping[] = [];
-	const tenantsSeen: Array<string | undefined> = [];
+	const tenantsSeen: Array<string | null | undefined> = [];
 	/** What the re-read answers for a mapping when the test says so (null = removed); the listed one otherwise. */
 	const findOneAnswers = new Map<string, AsanaProjectMapping | null>();
 	const findOne = jest.fn(async ({ where }: { where: { id: string } }) => {
