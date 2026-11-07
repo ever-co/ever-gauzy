@@ -1,4 +1,5 @@
-import { Body, Controller, Get, HttpStatus, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, HttpStatus, Param, Post, Put, Query, Res, UseGuards } from '@nestjs/common';
+import type { Response } from 'express';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
@@ -17,6 +18,8 @@ import { BulkDocumentActionCommand } from '../commands/bulk-document-action.comm
 import { CreateDocumentCommand } from '../commands/create-document.command';
 import { UpdateDocumentCommand } from '../commands/update-document.command';
 import { UpdateDocumentContentCommand } from '../commands/update-document-content.command';
+import { UpdateDocumentMarkdownDTO } from '../dto/update-document-markdown.dto';
+import { DocumentMarkdownService, IDocumentMarkdownUpdateResult } from '../services/document-markdown.service';
 import {
 	BulkDocumentActionDTO,
 	CreateDocumentDTO,
@@ -85,7 +88,11 @@ export function toRelationList(relations?: string | string[]): string[] {
 @FeatureFlag(FeatureEnum.FEATURE_DOCUMENTS)
 @Controller('/plugins/docs/documents')
 export class DocumentController {
-	constructor(private readonly commandBus: CommandBus, private readonly queryBus: QueryBus) {}
+	constructor(
+		private readonly commandBus: CommandBus,
+		private readonly queryBus: QueryBus,
+		private readonly markdown: DocumentMarkdownService
+	) {}
 
 	/**
 	 * Retrieves a paginated, filtered document list. List projections never include content
@@ -180,6 +187,59 @@ export class DocumentController {
 		@Body() input: UpdateDocumentContentDTO
 	): Promise<IDocument> {
 		return this.commandBus.execute(new UpdateDocumentContentCommand(id, input));
+	}
+
+	/**
+	 * A page as Markdown (the stored subset), or with `subtree=true` the page and the pages under it the caller may
+	 * read as a zip (`index.md` for the root, one file per page, relative links, the files they show under
+	 * `assets/`). Declared before `GET /:id` so the static segment is never swallowed by it.
+	 */
+	@ApiOperation({ summary: 'Export a page as Markdown, or a subtree as a zip of Markdown files.' })
+	@ApiResponse({ status: HttpStatus.OK, description: 'The Markdown (text/markdown) or the zip (application/zip).' })
+	@ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Document not found.' })
+	@ApiResponse({ status: HttpStatus.CONFLICT, description: 'Not a page.' })
+	@Permissions(PermissionsEnum.DOCS_READ)
+	@UseValidationPipe({ whitelist: true, transform: true })
+	@Get('/:id/export/markdown')
+	public async exportMarkdown(
+		@Param('id', UUIDValidationPipe) id: ID,
+		@Res() res: Response,
+		@Query('subtree') subtree?: string,
+		@Query() query?: DocumentScopeQueryDTO
+	): Promise<void> {
+		res.setHeader('X-Content-Type-Options', 'nosniff');
+		res.setHeader('Cache-Control', 'private, no-store');
+		if (subtree === 'true' || subtree === '1') {
+			// The page is read (and refused) before any byte of the zip goes out: a 404 or a 409 is still an answer.
+			const page = await this.markdown.exportPage(id, query?.organizationId);
+			const fileName = page.fileName.replace(/\.md$/, '.zip');
+			res.setHeader('Content-Type', 'application/zip');
+			res.setHeader('Content-Disposition', `attachment; filename="${fileName}"; filename*=UTF-8''${encodeURIComponent(fileName)}`);
+			await this.markdown.writeSubtreeZip(id, query?.organizationId, res);
+			return;
+		}
+		const page = await this.markdown.exportPage(id, query?.organizationId);
+		res.setHeader('Content-Type', 'text/markdown; charset=utf-8');
+		res.setHeader('Content-Disposition', `attachment; filename="${page.fileName}"; filename*=UTF-8''${encodeURIComponent(page.fileName)}`);
+		res.end(page.markdown);
+	}
+
+	/**
+	 * Applies a Markdown text to a page, changing only the blocks whose Markdown changed; the content route's rules
+	 * apply (a stale `expectedRevision` → 409 `DOCS_CONTENT_CONFLICT`, a locked page → 423, the schema, the snapshot,
+	 * the HTML cache, the mention and link sync). Nothing is written when the text changes nothing.
+	 */
+	@ApiOperation({ summary: 'Update a page from Markdown (block diff, revision check).' })
+	@ApiResponse({ status: HttpStatus.OK, description: 'The document as saved, and what the Markdown changed.' })
+	@ApiResponse({ status: HttpStatus.CONFLICT, description: 'Stale revision, or not a page.' })
+	@Permissions(PermissionsEnum.DOCS_UPDATE)
+	@UseValidationPipe({ whitelist: true, transform: true, forbidNonWhitelisted: true })
+	@Put('/:id/content/markdown')
+	public async updateContentFromMarkdown(
+		@Param('id', UUIDValidationPipe) id: ID,
+		@Body() input: UpdateDocumentMarkdownDTO
+	): Promise<IDocumentMarkdownUpdateResult> {
+		return this.markdown.updateFromMarkdown(id, input);
 	}
 
 	/**
