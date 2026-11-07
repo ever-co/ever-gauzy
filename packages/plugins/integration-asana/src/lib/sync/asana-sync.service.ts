@@ -23,7 +23,7 @@ import { AsanaMappingService } from '../asana-mapping.service';
 import { asanaSyncUser, runInAsanaContext } from '../asana-process';
 import { emptyCounts, AsanaSyncCounts, AsanaSyncRunService } from '../asana-sync-run.service';
 import { AsanaTenantService } from '../asana-tenant.service';
-import { ASANA_CONFIG, ASANA_IMPORT_MAX_TASKS, ASANA_TASKS_PAGE_SIZE, AsanaSettingName } from '../asana.constants';
+import { ASANA_APPLY_CONCURRENCY, ASANA_CONFIG, ASANA_TASKS_PAGE_SIZE, AsanaSettingName } from '../asana.constants';
 import { asanaUpdateOf, knownStatusesOf, parseSectionMap, sectionForStatus, statusKey, taskFieldsOf, watermarkOf } from './asana-task.mapper';
 
 /** What one Asana task became. */
@@ -73,6 +73,9 @@ export class AsanaSyncService {
 	private readonly pushChains = new Map<string, Promise<void>>();
 	/** The applies of each Asana task, one after the other. */
 	private readonly applyChains = new Map<string, Promise<unknown>>();
+	/** The apply slots: how many applies may hold a transaction at once here (`withApplySlot`). */
+	private applySlotsFree = ASANA_APPLY_CONCURRENCY;
+	private readonly applyWaiters: Array<() => void> = [];
 
 	constructor(
 		private readonly commandBus: CommandBus,
@@ -127,8 +130,9 @@ export class AsanaSyncService {
 
 	/**
 	 * Imports the mapping's tasks into a claimed run: every page of them (changed since the watermark unless
-	 * `full`), each one a task created or updated, subtasks linked to their parents at the end. The watermark
-	 * moves only when every task went through and every page was read. The run row is always finished.
+	 * `full`), streamed — each page applied before the next is read, however many there are — each one a task
+	 * created or updated, subtasks linked to their parents at the end. The watermark moves only when every task
+	 * went through and every page was read. The run row is always finished.
 	 */
 	async importMapping(tenant: IIntegrationTenant, mapping: AsanaProjectMapping, run: AsanaSyncRun, options: { full?: boolean } = {}): Promise<void> {
 		const scope = { tenantId: tenant.tenantId as ID, organizationId: tenant.organizationId as ID };
@@ -137,33 +141,24 @@ export class AsanaSyncService {
 		const since = options.full ? null : mapping.lastCursor ?? null;
 		let cursor: string | null = since;
 		let error: string | null = null;
-		let complete = false;
 		try {
 			await runInAsanaContext(user, async () => {
 				const context = await this.openContext(tenant, mapping, counts);
 				let offset: string | null = null;
-				let seen = 0;
 				for (;;) {
 					const page = await this.call(context, (client) => client.tasks(mapping.asanaProjectGid, { modifiedSince: since, offset, limit: ASANA_TASKS_PAGE_SIZE }));
 					for (const task of page.items) {
 						await this.applyOne(context, task);
 					}
 					cursor = watermarkOf(page.items, cursor);
-					seen += page.items.length;
 					await this.runs.progress(run, counts);
-					if (!page.nextOffset) {
-						complete = true;
-						break;
-					}
-					if (seen >= ASANA_IMPORT_MAX_TASKS) break;
+					if (!page.nextOffset) break;
 					offset = page.nextOffset;
 				}
 				await this.linkParents(context);
 			});
 			if (counts.failed > 0) {
 				error = `${counts.failed} task(s) could not be applied; the import position was kept so the next import reads them again.`;
-			} else if (!complete) {
-				error = `The import stopped at ${ASANA_IMPORT_MAX_TASKS} tasks; the import position was kept. Run it again to continue.`;
 			}
 		} catch (caught) {
 			error = this.describe(caught);
@@ -253,8 +248,9 @@ export class AsanaSyncService {
 		const scope = { tenantId, organizationId: task.organizationId as ID };
 		const mapping = await this.mappings.findOutboundForProject(scope, task.projectId as ID);
 		if (!mapping) return;
-		const tenant = await this.tenants.requireById(mapping.integrationId).catch(() => null);
-		if (!tenant) return;
+		// The task's tenant is the trusted one (an event may carry no request context): the connection must be its.
+		const tenant = await this.tenants.findAnyById(mapping.integrationId);
+		if (!tenant || tenant.tenantId !== tenantId) return;
 		const holder: ClientHolder = { tenant, client: await this.tenants.clientReady(tenant), renewed: false };
 		try {
 			const sectionMap = parseSectionMap(mapping.sectionMap);
@@ -297,7 +293,8 @@ export class AsanaSyncService {
 		const integrationId = mapping.integrationId;
 		const sourceKey = `${integrationId}:${created.gid}`;
 		const outcome = await this.serialized(sourceKey, () =>
-			this.dataSource.transaction(async (manager): Promise<'recorded' | 'duplicate' | 'reconciled'> => {
+			this.withApplySlot(() =>
+				this.dataSource.transaction(async (manager): Promise<'recorded' | 'duplicate' | 'reconciled'> => {
 				if (manager.connection.options.type === 'postgres') {
 					await manager.query('SELECT pg_advisory_xact_lock(hashtext($1))', [`integration-asana:task:${sourceKey}`]);
 					await manager.query('SELECT pg_advisory_xact_lock(hashtext($1))', [`integration-asana:task:${taskId}`]);
@@ -321,7 +318,8 @@ export class AsanaSyncService {
 					Object.assign(new IntegrationMap(), { entity: IntegrationEntity.TASK, gauzyId: taskId, sourceId: created.gid, integrationId, ...scope })
 				);
 				return 'recorded';
-			})
+				})
+			)
 		);
 		if (outcome === 'duplicate') {
 			await this.call(holder, (client) => client.updateTask(created.gid, { name: `[duplicate] ${created.name}`, completed: true })).catch((caught: unknown) => {
@@ -329,6 +327,23 @@ export class AsanaSyncService {
 			});
 		} else if (outcome === 'reconciled') {
 			this.logger.warn(`Task ${taskId}: the task the webhook of Asana task ${created.gid} made meanwhile was removed as a duplicate.`);
+		}
+	}
+
+	/**
+	 * Runs `work` holding one of the apply slots: an apply holds its transaction's pool connection while the
+	 * platform's commands use others, so at most `ASANA_APPLY_CONCURRENCY` applies run at once in a process and
+	 * a burst of deliveries cannot take the pool from the API's requests. Waiters are served in order.
+	 */
+	private async withApplySlot<T>(work: () => Promise<T>): Promise<T> {
+		if (this.applySlotsFree > 0 && this.applyWaiters.length === 0) this.applySlotsFree -= 1;
+		else await new Promise<void>((resolve) => this.applyWaiters.push(resolve));
+		try {
+			return await work();
+		} finally {
+			const next = this.applyWaiters.shift();
+			if (next) next();
+			else this.applySlotsFree += 1;
 		}
 	}
 
@@ -396,16 +411,21 @@ export class AsanaSyncService {
 		}
 	}
 
-	/** One apply at a time per Asana task: chained in the process, an advisory lock across processes on Postgres. */
+	/**
+	 * One apply at a time per Asana task: chained in the process, an advisory lock across processes on Postgres
+	 * (a parameterized statement: the key is a bind value), within the process's apply slots.
+	 */
 	private applyTask(context: ApplyContext, task: AsanaTask): Promise<ApplyOutcome> {
 		const key = `${context.mapping.integrationId}:${task.gid}`;
 		return this.serialized(key, () =>
-			this.dataSource.transaction(async (manager) => {
-				if (manager.connection.options.type === 'postgres') {
-					await manager.query('SELECT pg_advisory_xact_lock(hashtext($1))', [`integration-asana:task:${key}`]);
-				}
-				return this.applyTaskNow(context, task);
-			})
+			this.withApplySlot(() =>
+				this.dataSource.transaction(async (manager) => {
+					if (manager.connection.options.type === 'postgres') {
+						await manager.query('SELECT pg_advisory_xact_lock(hashtext($1))', [`integration-asana:task:${key}`]);
+					}
+					return this.applyTaskNow(context, task);
+				})
+			)
 		);
 	}
 

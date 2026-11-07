@@ -43,7 +43,8 @@ export const ASANA_WEBHOOK_HANDSHAKE_WINDOW_MS = 10 * 60_000;
 
 /** How many tasks one page of an import asks for, and the safety cap of one run (it then keeps its position and says so). */
 export const ASANA_TASKS_PAGE_SIZE = 100;
-export const ASANA_IMPORT_MAX_TASKS = 50_000;
+/** How many applies may hold a transaction (and its pool connection) at once in one process. */
+export const ASANA_APPLY_CONCURRENCY = 4;
 
 /** An access token this close to its expiry is renewed before use. */
 export const ASANA_TOKEN_REFRESH_AHEAD_MS = 5 * 60 * 1000;

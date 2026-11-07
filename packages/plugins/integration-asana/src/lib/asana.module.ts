@@ -50,7 +50,9 @@ export const ASANA_ENTITIES = [AsanaProjectMapping, AsanaSyncRun];
 		OrganizationProjectModule,
 		EmployeeModule
 	],
-	controllers: [AsanaController, AsanaAuthorizationController, AsanaWebhookController],
+	// The callback and the webhook before the id routes: registered after, `GET /callback` would be taken by
+	// `GET /:integrationId` (and refused by its guard and its UUID check).
+	controllers: [AsanaAuthorizationController, AsanaWebhookController, AsanaController],
 	providers: [
 		AsanaCatalogService,
 		AsanaLifecycle,
