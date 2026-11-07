@@ -1,0 +1,580 @@
+import { Inject, Injectable, Logger } from '@nestjs/common';
+import { CommandBus } from '@nestjs/cqrs';
+import { DataSource, IsNull } from 'typeorm';
+import { ID, IIntegrationMap, IIntegrationTenant, IntegrationEntity, isTaskSyncAllowed, ITaskCreateInput, ITaskUpdateInput } from '@gauzy/contracts';
+import {
+	EmployeeService,
+	IntegrationMap,
+	IntegrationMapService,
+	IntegrationMapSyncLabelCommand,
+	IntegrationMapSyncTaskCommand,
+	IntegrationTenantSyncService,
+	Task,
+	TaskPriority,
+	TaskStatus
+} from '@gauzy/core';
+import { TrelloApiClient, TrelloApiError, TrelloCard, TrelloLabel, TrelloList } from '../client/trello-api.client';
+import { TrelloSyncRun } from '../entities/trello-sync-run.entity';
+import { TrelloBoardMapping } from '../entities/trello-board-mapping.entity';
+import { TrelloConfig, trelloWebhookTargetOf } from '../trello-config';
+import { TrelloMappingService } from '../trello-mapping.service';
+import { trelloSyncUser, runInTrelloContext } from '../trello-process';
+import { emptyCounts, TrelloSyncCounts, TrelloSyncRunService } from '../trello-sync-run.service';
+import { TrelloTenantService } from '../trello-tenant.service';
+import { TRELLO_APPLY_CONCURRENCY, TRELLO_CARDS_PAGE_SIZE, TRELLO_CONFIG, TrelloSettingName } from '../trello.constants';
+import { isChangedSince, knownStatusesOf, listForStatus, parseListMap, statusKey, taskFieldsOf, trelloColorOf, trelloUpdateOf, watermarkOf } from './trello-card.mapper';
+
+/** What one card became. */
+type ApplyOutcome = 'created' | 'updated' | 'skipped';
+
+/** A connection's client. */
+interface ClientHolder {
+	tenant: IIntegrationTenant;
+	client: TrelloApiClient;
+}
+
+/** The caches of one run: the board's lists, the statuses and priorities of the project, the employees by Trello member, the tags by label. */
+interface ApplyContext extends ClientHolder {
+	mapping: TrelloBoardMapping;
+	scope: { tenantId: ID; organizationId: ID };
+	listMap: Record<string, string>;
+	/** The board's lists by id → name (the status of a card in an unmapped list is its list's name, when that is a status). */
+	listNames: Map<string, string>;
+	/** The statuses a task may take, by key (`statusKey`) → the name as stored, and → the row's id. */
+	knownStatuses: Map<string, string>;
+	statusIdsByName: Map<string, ID>;
+	priorityIdsByName: Map<string, ID>;
+	employeeIdsByMember: Map<string, ID | null>;
+	tagIdsByLabel: Map<string, ID | null>;
+	counts: TrelloSyncCounts;
+}
+
+const RATE_LIMIT_MAX_WAIT_MS = 60_000;
+/** How long a board's lists are kept for outbound pushes. */
+const LISTS_TTL_MS = 5 * 60 * 1000;
+
+const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
+
+/**
+ * The sync itself: an import of a mapped board's cards (every one, or those changed since the watermark), one
+ * card from a webhook, and a platform task's changes sent back. Inbound writes go through the platform's
+ * `IntegrationMapSyncTaskCommand` (one id map per card, a task created once and updated after) with
+ * `triggeredEvent = false`, so nothing the sync writes is sent out again. Every call to Trello waits once for a
+ * rate limit; a refused token marks the connection for a person (Trello's tokens are not renewable).
+ */
+@Injectable()
+export class TrelloSyncService {
+	private readonly logger = new Logger(TrelloSyncService.name);
+	private readonly listsCache = new Map<string, { at: number; lists: TrelloList[] }>();
+	/** The pushes of each platform task, one after the other. */
+	private readonly pushChains = new Map<string, Promise<void>>();
+	/** The applies of each card, one after the other. */
+	private readonly applyChains = new Map<string, Promise<unknown>>();
+	/** The apply slots: how many applies may hold a transaction at once here (`withApplySlot`). */
+	private applySlotsFree = TRELLO_APPLY_CONCURRENCY;
+	private readonly applyWaiters: Array<() => void> = [];
+
+	constructor(
+		private readonly commandBus: CommandBus,
+		private readonly tenants: TrelloTenantService,
+		private readonly mappings: TrelloMappingService,
+		private readonly runs: TrelloSyncRunService,
+		private readonly dataSource: DataSource,
+		private readonly employeeService: EmployeeService,
+		private readonly integrationMapService: IntegrationMapService,
+		private readonly integrationTenantSyncService: IntegrationTenantSyncService,
+		@Inject(TRELLO_CONFIG) private readonly config: TrelloConfig
+	) {}
+
+	// ---------------------------------------------------------------- webhooks
+
+	/**
+	 * Registers Trello's webhook on the mapping's board (best effort: without a public address or the secret, or
+	 * when Trello refuses, the mapping syncs by imports). Trello sends a HEAD request to the receiver before it
+	 * answers, so the receiver must be reachable now; every later delivery is signed with the application's secret.
+	 */
+	async ensureWebhook(tenant: IIntegrationTenant, mapping: TrelloBoardMapping): Promise<void> {
+		const target = trelloWebhookTargetOf(this.config, mapping.id as string);
+		if (!target || mapping.webhookId) return;
+		try {
+			const holder = this.holderOf(tenant);
+			const webhook = await this.call(holder, (client) => client.createWebhook({ idModel: mapping.trelloBoardId, callbackURL: target, description: `Ever Gauzy mapping ${mapping.id}` }));
+			await this.mappings.recordWebhook(mapping, webhook.id);
+		} catch (caught) {
+			await this.noteRefusedToken(tenant, caught);
+			this.logger.warn(`The Trello webhook of mapping ${mapping.id} could not be registered: ${this.describe(caught)}`);
+		}
+	}
+
+	/** Removes the mapping's webhook on Trello (best effort). */
+	async removeWebhook(tenant: IIntegrationTenant, mapping: TrelloBoardMapping): Promise<void> {
+		if (!mapping.webhookId) return;
+		try {
+			await this.call(this.holderOf(tenant), (client) => client.deleteWebhook(mapping.webhookId as string));
+		} catch (caught) {
+			this.logger.warn(`The Trello webhook of mapping ${mapping.id} could not be removed: ${this.describe(caught)}`);
+		}
+	}
+
+	// ---------------------------------------------------------------- inbound: import
+
+	/**
+	 * Imports the mapping's cards into a claimed run: every page of the board's cards (Trello pages by id, newest
+	 * first), those changed since the watermark unless `full`, each one a task created or updated, the pages
+	 * streamed — each applied before the next is read. The watermark moves only when every card went through and
+	 * every page was read. The run row is always finished.
+	 */
+	async importMapping(tenant: IIntegrationTenant, mapping: TrelloBoardMapping, run: TrelloSyncRun, options: { full?: boolean } = {}): Promise<void> {
+		const scope = { tenantId: tenant.tenantId as ID, organizationId: tenant.organizationId as ID };
+		const user = trelloSyncUser(scope, this.connectedByUserId(tenant) ?? run.requestedByUserId ?? null);
+		const counts = emptyCounts();
+		const since = options.full ? null : mapping.lastCursor ?? null;
+		let cursor: string | null = since;
+		let error: string | null = null;
+		try {
+			await runInTrelloContext(user, async () => {
+				const context = await this.openContext(tenant, mapping, counts);
+				let before: string | null = null;
+				for (;;) {
+					const page = await this.call(context, (client) => client.cards(mapping.trelloBoardId, { before, limit: TRELLO_CARDS_PAGE_SIZE }));
+					for (const card of page.items) {
+						if (!isChangedSince(card, since)) {
+							counts.skipped += 1;
+							continue;
+						}
+						await this.applyOne(context, card);
+					}
+					cursor = watermarkOf(page.items, cursor);
+					await this.runs.progress(run, counts);
+					if (!page.nextBefore) break;
+					before = page.nextBefore;
+				}
+			});
+			if (counts.failed > 0) {
+				error = `${counts.failed} card(s) could not be applied; the import position was kept so the next import reads them again.`;
+			}
+		} catch (caught) {
+			error = this.describe(caught);
+			await this.noteRefusedToken(tenant, caught);
+			this.logger.warn(`Import of mapping ${mapping.id} failed: ${error}`);
+		} finally {
+			try {
+				await this.mappings.recordImport(mapping, { cursor: error ? undefined : cursor, error });
+			} catch (caught) {
+				error = error ?? this.describe(caught);
+				this.logger.warn(`The import position of mapping ${mapping.id} could not be written: ${this.describe(caught)}`);
+			}
+			await this.runs.finish(run, { counts, cursor: error ? since : cursor, error }).catch((caught: unknown) => {
+				this.logger.warn(`Run ${run.id} could not be finished: ${this.describe(caught)}`);
+			});
+		}
+		if (!error) {
+			await this.integrationTenantSyncService
+				.recordSyncCompleted(tenant.id as ID, { tenantId: scope.tenantId, organizationId: scope.organizationId, counts: { task: counts.created + counts.updated } })
+				.catch((caught: unknown) => this.logger.warn(`The sync completion of ${tenant.id} could not be recorded: ${this.describe(caught)}`));
+		}
+	}
+
+	// ---------------------------------------------------------------- inbound: webhook
+
+	/**
+	 * Applies the cards a webhook delivery named (read again from Trello: an action carries ids), through the
+	 * mapping's project. The import watermark is not touched. Answers how many were applied, or why not.
+	 */
+	async applyCardsFromWebhook(tenant: IIntegrationTenant, mapping: TrelloBoardMapping, cardIds: string[]): Promise<{ applied: number; error: string | null }> {
+		if (!cardIds.length || !mapping.syncEnabled || mapping.direction === 'outbound') return { applied: 0, error: null };
+		const scope = { tenantId: tenant.tenantId as ID, organizationId: tenant.organizationId as ID };
+		const run = await this.runs.startWebhookRun(tenant, mapping.id);
+		const counts = emptyCounts();
+		let error: string | null = null;
+		try {
+			await runInTrelloContext(trelloSyncUser(scope, this.connectedByUserId(tenant)), async () => {
+				const context = await this.openContext(tenant, mapping, counts);
+				for (const id of cardIds) {
+					const card = await this.call(context, (client) => client.card(id));
+					if (!card || card.idBoard !== mapping.trelloBoardId) {
+						counts.skipped += 1;
+						continue;
+					}
+					await this.applyOne(context, card);
+				}
+			});
+			if (counts.failed > 0) error = `${counts.failed} card(s) could not be applied.`;
+		} catch (caught) {
+			error = this.describe(caught);
+			await this.noteRefusedToken(tenant, caught);
+			this.logger.warn(`Webhook cards of mapping ${mapping.id} failed: ${error}`);
+		} finally {
+			await this.runs.finish(run, { counts, cursor: mapping.lastCursor ?? null, error }).catch(() => undefined);
+		}
+		return { applied: counts.created + counts.updated, error };
+	}
+
+	// ---------------------------------------------------------------- outbound
+
+	/**
+	 * Sends a platform task's changes to its card, or creates one when the project's mapping sends new tasks out.
+	 * The saved task is read again by id; the pushes of one task run one after the other. Never throws.
+	 */
+	pushTask(taskId: ID, tenantId: ID): Promise<void> {
+		const key = String(taskId);
+		const previous = this.pushChains.get(key) ?? Promise.resolve();
+		const next = previous
+			.catch(() => undefined)
+			.then(() => this.pushTaskNow(taskId, tenantId))
+			.catch((caught: unknown) => this.logger.warn(`Task ${taskId} could not be sent to Trello: ${this.describe(caught)}`))
+			.finally(() => {
+				if (this.pushChains.get(key) === next) this.pushChains.delete(key);
+			});
+		this.pushChains.set(key, next);
+		return next;
+	}
+
+	private async pushTaskNow(taskId: ID, tenantId: ID): Promise<void> {
+		const task = await this.dataSource.getRepository(Task).findOne({ where: { id: taskId, tenantId } as never });
+		if (!task?.projectId || !task.organizationId || !isTaskSyncAllowed(task, 'third-party')) return;
+		const scope = { tenantId, organizationId: task.organizationId as ID };
+		const mapping = await this.mappings.findOutboundForProject(scope, task.projectId as ID);
+		if (!mapping) return;
+		// The task's tenant is the trusted one (an event may carry no request context): the connection must be its.
+		const tenant = await this.tenants.findAnyById(mapping.integrationId);
+		if (!tenant || tenant.tenantId !== tenantId) return;
+		const holder = this.holderOf(tenant);
+		try {
+			const listMap = parseListMap(mapping.listMap);
+			const lists = await this.boardLists(holder, mapping.integrationId, mapping.trelloBoardId);
+			const input = trelloUpdateOf(task);
+			const list = listForStatus(task.status, listMap, lists);
+			const existing = await this.findTaskMap(task.id as ID, mapping.integrationId, scope);
+			if (existing?.sourceId) {
+				await this.call(holder, (client) => client.updateCard(existing.sourceId, { ...input, ...(list ? { idList: list.id } : {}) }));
+				return;
+			}
+			if (!input.name) return;
+			// A new card goes to the list of its status, else the board's first list.
+			const target = list ?? lists[0];
+			if (!target) return;
+			await this.createCardOnce(holder, mapping, task.id as ID, scope, { idList: target.id, name: input.name, desc: input.desc, due: input.due ?? null });
+		} catch (caught) {
+			await this.noteRefusedToken(tenant, caught);
+			throw caught;
+		}
+	}
+
+	/**
+	 * Creates the card of a platform task and records its id map: the card is created outside any transaction;
+	 * the map is written in a short transaction that holds the new card's source lock (the one an inbound apply
+	 * of that card takes, in this process and on Postgres) and the platform task's, and looks again. When another
+	 * process recorded a map for the platform task meanwhile, the card just created is archived as a duplicate.
+	 * When the webhook Trello sent for the new card got there first and made a platform task of it, that map is
+	 * pointed at this task and the task the webhook made is removed.
+	 */
+	private async createCardOnce(
+		holder: ClientHolder,
+		mapping: TrelloBoardMapping,
+		taskId: ID,
+		scope: { tenantId: ID; organizationId: ID },
+		input: Parameters<TrelloApiClient['createCard']>[0]
+	): Promise<void> {
+		const created = await this.call(holder, (client) => client.createCard(input));
+		const integrationId = mapping.integrationId;
+		const sourceKey = `${integrationId}:${created.id}`;
+		const outcome = await this.serialized(sourceKey, () =>
+			this.withApplySlot(() =>
+				this.dataSource.transaction(async (manager): Promise<'recorded' | 'duplicate' | 'reconciled'> => {
+					if (manager.connection.options.type === 'postgres') {
+						await manager.query('SELECT pg_advisory_xact_lock(hashtext($1))', [`integration-trello:card:${sourceKey}`]);
+						await manager.query('SELECT pg_advisory_xact_lock(hashtext($1))', [`integration-trello:task:${taskId}`]);
+					}
+					const byTask = await manager.findOne(IntegrationMap, {
+						where: { entity: IntegrationEntity.TASK, gauzyId: taskId, integrationId, ...scope } as never
+					});
+					if (byTask) return 'duplicate';
+					const bySource = await manager.findOne(IntegrationMap, {
+						where: { entity: IntegrationEntity.TASK, sourceId: created.id, integrationId, ...scope } as never
+					});
+					if (bySource) {
+						await manager.update(IntegrationMap, { id: bySource.id }, { gauzyId: taskId } as never);
+						if (bySource.gauzyId && bySource.gauzyId !== taskId) {
+							await manager.softDelete(Task, { id: bySource.gauzyId, tenantId: scope.tenantId } as never);
+						}
+						return 'reconciled';
+					}
+					await manager.save(
+						IntegrationMap,
+						Object.assign(new IntegrationMap(), { entity: IntegrationEntity.TASK, gauzyId: taskId, sourceId: created.id, integrationId, ...scope })
+					);
+					return 'recorded';
+				})
+			)
+		);
+		if (outcome === 'duplicate') {
+			await this.call(holder, (client) => client.updateCard(created.id, { name: `[duplicate] ${created.name}`, closed: true })).catch((caught: unknown) => {
+				this.logger.warn(`Card ${created.id} was created twice for task ${taskId} and could not be archived: ${this.describe(caught)}`);
+			});
+		} else if (outcome === 'reconciled') {
+			this.logger.warn(`Task ${taskId}: the task the webhook of card ${created.id} made meanwhile was removed as a duplicate.`);
+		}
+	}
+
+	/**
+	 * Runs `work` holding one of the apply slots: an apply holds its transaction's pool connection while the
+	 * platform's commands use others, so at most `TRELLO_APPLY_CONCURRENCY` applies run at once in a process and
+	 * a burst of deliveries cannot take the pool from the API's requests. Waiters are served in order.
+	 */
+	private async withApplySlot<T>(work: () => Promise<T>): Promise<T> {
+		if (this.applySlotsFree > 0 && this.applyWaiters.length === 0) this.applySlotsFree -= 1;
+		else await new Promise<void>((resolve) => this.applyWaiters.push(resolve));
+		try {
+			return await work();
+		} finally {
+			const next = this.applyWaiters.shift();
+			if (next) next();
+			else this.applySlotsFree += 1;
+		}
+	}
+
+	/** Runs `work` after whatever runs for `key` in this process (the lock across processes is the caller's). */
+	private serialized<T>(key: string, work: () => Promise<T>): Promise<T> {
+		const previous = this.applyChains.get(key) ?? Promise.resolve();
+		const next = previous
+			.catch(() => undefined)
+			.then(work)
+			.finally(() => {
+				if (this.applyChains.get(key) === next) this.applyChains.delete(key);
+			});
+		this.applyChains.set(key, next);
+		return next;
+	}
+
+	// ---------------------------------------------------------------- one card
+
+	private async openContext(tenant: IIntegrationTenant, mapping: TrelloBoardMapping, counts: TrelloSyncCounts): Promise<ApplyContext> {
+		const scope = { tenantId: tenant.tenantId as ID, organizationId: tenant.organizationId as ID };
+		// The project's own statuses and priorities, and the organization's (no project) under them.
+		const where = [{ ...scope, projectId: mapping.projectId }, { ...scope, projectId: IsNull() }];
+		const holder = this.holderOf(tenant);
+		const [statuses, priorities, lists] = await Promise.all([
+			this.dataSource.getRepository(TaskStatus).find({ where: where as never }).catch(() => [] as TaskStatus[]),
+			this.dataSource.getRepository(TaskPriority).find({ where: where as never }).catch(() => [] as TaskPriority[]),
+			this.boardLists(holder, mapping.integrationId, mapping.trelloBoardId)
+		]);
+		// A project's own status wins over the organization's of the same name; names compare by key (`statusKey`).
+		const orderedStatuses = [...statuses].sort((a, b) => (a.projectId ? 0 : 1) - (b.projectId ? 0 : 1));
+		const knownStatuses = knownStatusesOf(orderedStatuses.map((status) => status.name));
+		const statusIdsByName = new Map<string, ID>();
+		for (const status of orderedStatuses) {
+			const key = statusKey(status.name);
+			if (key && !statusIdsByName.has(key)) statusIdsByName.set(key, status.id as ID);
+		}
+		const priorityIdsByName = new Map<string, ID>();
+		for (const priority of [...priorities].sort((a, b) => (a.projectId ? 0 : 1) - (b.projectId ? 0 : 1))) {
+			const key = String(priority.name ?? '').toLowerCase();
+			if (key && !priorityIdsByName.has(key)) priorityIdsByName.set(key, priority.id as ID);
+		}
+		return {
+			...holder,
+			mapping,
+			scope,
+			listMap: parseListMap(mapping.listMap),
+			listNames: new Map(lists.map((list) => [list.id, list.name])),
+			knownStatuses,
+			statusIdsByName,
+			priorityIdsByName,
+			employeeIdsByMember: new Map(),
+			tagIdsByLabel: new Map(),
+			counts
+		};
+	}
+
+	/** One card of a run: a failure counts and is logged; a refused token stops the run. */
+	private async applyOne(context: ApplyContext, card: TrelloCard): Promise<void> {
+		try {
+			const outcome = await this.applyCard(context, card);
+			context.counts[outcome] += 1;
+		} catch (caught) {
+			if (caught instanceof TrelloApiError) throw caught;
+			context.counts.failed += 1;
+			this.logger.warn(`Card ${card.id} could not be applied: ${this.describe(caught)}`);
+		}
+	}
+
+	/**
+	 * One apply at a time per card: chained in the process, an advisory lock across processes on Postgres (a
+	 * parameterized statement: the key is a bind value), within the process's apply slots.
+	 */
+	private applyCard(context: ApplyContext, card: TrelloCard): Promise<ApplyOutcome> {
+		const key = `${context.mapping.integrationId}:${card.id}`;
+		return this.serialized(key, () =>
+			this.withApplySlot(() =>
+				this.dataSource.transaction(async (manager) => {
+					if (manager.connection.options.type === 'postgres') {
+						await manager.query('SELECT pg_advisory_xact_lock(hashtext($1))', [`integration-trello:card:${key}`]);
+					}
+					return this.applyCardNow(context, card);
+				})
+			)
+		);
+	}
+
+	/**
+	 * One card → one platform task: created once, updated after, by the platform's id map. A relation whose lookup
+	 * did not answer (a member, a label) is left as the task has it; an empty value clears it.
+	 */
+	private async applyCardNow(context: ApplyContext, card: TrelloCard): Promise<ApplyOutcome> {
+		const { scope, mapping } = context;
+		const integrationId = mapping.integrationId;
+		const existing = await this.integrationMapService
+			.findOneByWhereOptions({ entity: IntegrationEntity.TASK, sourceId: card.id, integrationId, ...scope })
+			.catch(() => null);
+		// A card moved to another mapped board belongs to the mapping that imported it first: another leaves it alone.
+		if (existing?.gauzyId) {
+			const owner = await this.dataSource
+				.getRepository(Task)
+				.findOne({ where: { id: existing.gauzyId, tenantId: scope.tenantId } as never, select: { id: true, projectId: true } as never })
+				.catch(() => null);
+			if (owner?.projectId && owner.projectId !== mapping.projectId) return 'skipped';
+		}
+		const fields = taskFieldsOf(card, context.listNames, context.listMap, context.knownStatuses);
+		const members = await this.membersOf(context, card.members ?? []);
+		const tags = await this.tagsOf(context, card.labels ?? []);
+		const entity = {
+			...scope,
+			projectId: mapping.projectId,
+			title: fields.title,
+			description: fields.description,
+			status: fields.status,
+			taskStatusId: context.statusIdsByName.get(statusKey(fields.status)) ?? null,
+			priority: fields.priority ?? null,
+			taskPriorityId: fields.priority ? context.priorityIdsByName.get(fields.priority.toLowerCase()) ?? null : null,
+			dueDate: fields.dueDate,
+			...(members === undefined ? {} : { members }),
+			...(tags === undefined ? {} : { tags })
+		} as unknown as ITaskCreateInput | ITaskUpdateInput;
+		await this.commandBus.execute(new IntegrationMapSyncTaskCommand({ entity, sourceId: card.id, integrationId, ...scope }, false));
+		return existing ? 'updated' : 'created';
+	}
+
+	/**
+	 * The task's members for the card's members: Trello tells a member's username and full name (an e-mail only for
+	 * the token's own member), so an employee is matched by a user e-mail starting with the username, else by the
+	 * user's full name; nobody when none matches; `undefined` when a lookup failed.
+	 */
+	private async membersOf(context: ApplyContext, members: ReadonlyArray<{ id: string; username: string; fullName: string }>): Promise<Array<{ id: ID }> | undefined> {
+		const ids: ID[] = [];
+		for (const member of members) {
+			if (!member?.id) continue;
+			if (!context.employeeIdsByMember.has(member.id)) {
+				try {
+					context.employeeIdsByMember.set(member.id, await this.findEmployee(context.scope, member));
+				} catch (caught) {
+					this.logger.warn(`The employee of Trello member ${member.username || member.id} could not be looked up: ${this.describe(caught)}`);
+					return undefined;
+				}
+			}
+			const id = context.employeeIdsByMember.get(member.id);
+			if (id) ids.push(id);
+		}
+		return ids.map((id) => ({ id }));
+	}
+
+	private async findEmployee(scope: { tenantId: ID; organizationId: ID }, member: { username: string; fullName: string }): Promise<ID | null> {
+		const { items } = await this.employeeService.findAll({
+			where: { ...scope, isActive: true, isArchived: false },
+			relations: { user: true }
+		} as never);
+		const username = member.username.trim().toLowerCase();
+		const fullName = member.fullName.trim().toLowerCase().replace(/\s+/g, ' ');
+		type EmployeeLike = { id?: ID; user?: { email?: string | null; firstName?: string | null; lastName?: string | null; name?: string | null } | null };
+		const byEmail = username
+			? (items as EmployeeLike[]).find((employee) => String(employee.user?.email ?? '').toLowerCase().split('@')[0] === username)
+			: undefined;
+		if (byEmail?.id) return byEmail.id;
+		if (!fullName) return null;
+		const byName = (items as EmployeeLike[]).find((employee) => {
+			const user = employee.user;
+			const joined = [user?.firstName, user?.lastName].filter(Boolean).join(' ').trim().toLowerCase().replace(/\s+/g, ' ');
+			const named = String(user?.name ?? '').trim().toLowerCase().replace(/\s+/g, ' ');
+			return (joined && joined === fullName) || (named && named === fullName);
+		});
+		return byName?.id ?? null;
+	}
+
+	/** The task's tags for the card's labels: one per label, created once by the platform's label sync; `undefined` when a sync failed. */
+	private async tagsOf(context: ApplyContext, labels: TrelloLabel[]): Promise<Array<{ id: ID }> | undefined> {
+		const ids: ID[] = [];
+		for (const label of labels) {
+			if (!label?.id) continue;
+			// An unnamed label is its colour.
+			const name = label.name?.trim() || (label.color ? `${label.color}` : '');
+			if (!name) continue;
+			if (!context.tagIdsByLabel.has(label.id)) {
+				try {
+					const map: IIntegrationMap = await this.commandBus.execute(
+						new IntegrationMapSyncLabelCommand({
+							entity: { name, color: trelloColorOf(label.color), ...context.scope } as never,
+							sourceId: label.id,
+							integrationId: context.mapping.integrationId,
+							...context.scope
+						})
+					);
+					context.tagIdsByLabel.set(label.id, (map?.gauzyId as ID | undefined) ?? null);
+				} catch (caught) {
+					this.logger.warn(`Label ${name} could not be synced: ${this.describe(caught)}`);
+					return undefined;
+				}
+			}
+			const id = context.tagIdsByLabel.get(label.id);
+			if (id) ids.push(id);
+		}
+		return ids.map((id) => ({ id }));
+	}
+
+	// ---------------------------------------------------------------- helpers
+
+	private holderOf(tenant: IIntegrationTenant): ClientHolder {
+		return { tenant, client: this.tenants.clientFor(tenant) };
+	}
+
+	private async findTaskMap(taskId: ID, integrationId: ID, scope: { tenantId: ID; organizationId: ID }): Promise<IIntegrationMap | null> {
+		return this.integrationMapService.findOneByWhereOptions({ entity: IntegrationEntity.TASK, gauzyId: taskId, integrationId, ...scope }).catch(() => null);
+	}
+
+	private async boardLists(holder: ClientHolder, integrationId: ID, boardId: string): Promise<TrelloList[]> {
+		const key = `${integrationId}:${boardId}`;
+		const cached = this.listsCache.get(key);
+		if (cached && Date.now() - cached.at < LISTS_TTL_MS) return cached.lists;
+		const lists = await this.call(holder, (client) => client.lists(boardId));
+		this.listsCache.set(key, { at: Date.now(), lists });
+		return lists;
+	}
+
+	/** One call to Trello: a rate limit waited out once, then the call made again. */
+	private async call<T>(holder: ClientHolder, make: (client: TrelloApiClient) => Promise<T>): Promise<T> {
+		try {
+			return await make(holder.client);
+		} catch (caught) {
+			if (caught instanceof TrelloApiError && caught.isRateLimited) {
+				await sleep(Math.min(Math.max((caught.retryAfterSeconds ?? 10) * 1000, 1000), RATE_LIMIT_MAX_WAIT_MS));
+				return make(holder.client);
+			}
+			throw caught;
+		}
+	}
+
+	/** A refused token or key marks the connection for a person (Trello's tokens cannot be renewed here). */
+	private async noteRefusedToken(tenant: IIntegrationTenant, caught: unknown): Promise<void> {
+		if (caught instanceof TrelloApiError && caught.isUnauthorized) {
+			await this.tenants.setAttention(tenant, 'token_refused');
+		}
+	}
+
+	private connectedByUserId(tenant: IIntegrationTenant): ID | null {
+		const value = this.tenants.settingsOf(tenant)[TrelloSettingName.CONNECTED_BY_USER_ID];
+		return value ? (value as ID) : null;
+	}
+
+	private describe(error: unknown): string {
+		return error instanceof Error ? `${error.name}: ${error.message}` : String(error);
+	}
+}
