@@ -35,12 +35,13 @@ function sweep(config: Partial<LinearConfig> = {}) {
 		gone.has(integrationId) ? null : { id: integrationId, tenantId: integrationId.replace('int-', ''), organizationId: 'org-1', settings: [] }
 	);
 	const ensureAttentionFiled = jest.fn(async (_tenant: { id: string }) => undefined);
+	const findRefusedUnfiled = jest.fn(async () => [] as Array<{ id: string }>);
 	const summaryOf = jest.fn((tenant: { id: string }) => ({ attentionReason: attention.has(tenant.id) ? 'token_refused' : null }));
 	const claimImport = jest.fn(async (_tenant: unknown, mapping: LinearTeamMapping, _input: { full?: boolean; requestedByUserId?: string | null }) => ({ id: `run-${mapping.id}`, mappingId: mapping.id }));
 	const importMapping = jest.fn().mockResolvedValue(undefined);
 	const service = new LinearImportSweepService(
 		{ find, findOne } as unknown as TypeOrmLinearTeamMappingRepository,
-		{ findAnyById, summaryOf, ensureAttentionFiled } as unknown as LinearTenantService,
+		{ findAnyById, summaryOf, ensureAttentionFiled, findRefusedUnfiled } as unknown as LinearTenantService,
 		{ claimImport } as unknown as LinearSyncRunService,
 		{ importMapping } as unknown as LinearSyncService,
 		{ importIntervalMinutes: 15, webhookSecret: null, ...config } as LinearConfig
@@ -49,7 +50,7 @@ function sweep(config: Partial<LinearConfig> = {}) {
 		lastListed = mappings;
 		find.mockResolvedValue(mappings);
 	};
-	return { service, find, findOne, findOneAnswers, list, findAnyById, summaryOf, ensureAttentionFiled, attention, gone, claimImport, importMapping, tenantsSeen };
+	return { service, find, findOne, findOneAnswers, list, findAnyById, summaryOf, ensureAttentionFiled, findRefusedUnfiled, attention, gone, claimImport, importMapping, tenantsSeen };
 }
 
 beforeEach(() => {
@@ -62,9 +63,18 @@ afterEach(() => {
 });
 
 describe('LinearImportSweepService', () => {
+	it('files again the notice of a refused connection whose filing did not get through — first, and whatever its mappings', async () => {
+		const { service, list, findRefusedUnfiled, ensureAttentionFiled } = sweep();
+		findRefusedUnfiled.mockResolvedValue([{ id: 'int-tenant-9' }]);
+		list([]);
+		const outcome = await service.run();
+		expect(ensureAttentionFiled).toHaveBeenCalledWith(expect.objectContaining({ id: 'int-tenant-9' }));
+		expect(outcome.attention).toBe(1);
+	});
+
 	it('does nothing at all when the interval is 0', async () => {
 		const { service, find } = sweep({ importIntervalMinutes: 0 });
-		expect(await service.run(now)).toEqual({ due: 0, imported: 0, skipped: 0, failed: 0 });
+		expect(await service.run(now)).toEqual({ attention: 0, due: 0, imported: 0, skipped: 0, failed: 0 });
 		expect(find).not.toHaveBeenCalled();
 	});
 
@@ -93,7 +103,7 @@ describe('LinearImportSweepService', () => {
 		const { service, list, findAnyById, claimImport, importMapping, tenantsSeen } = sweep();
 		list([mappingOf('m-1', 'tenant-1'), mappingOf('m-2', 'tenant-2')]);
 
-		expect(await service.run(now)).toEqual({ due: 2, imported: 2, skipped: 0, failed: 0 });
+		expect(await service.run(now)).toEqual({ attention: 0, due: 2, imported: 2, skipped: 0, failed: 0 });
 
 		expect(findAnyById.mock.calls.map((call) => call[0])).toEqual(['int-tenant-1', 'int-tenant-2']);
 		expect(tenantsSeen).toEqual(['tenant-1', 'tenant-2']);
@@ -111,7 +121,7 @@ describe('LinearImportSweepService', () => {
 		attention.add('int-refused');
 		gone.add('int-gone');
 
-		expect(await service.run(now)).toEqual({ due: 1, imported: 1, skipped: 0, failed: 0 });
+		expect(await service.run(now)).toEqual({ attention: 0, due: 1, imported: 1, skipped: 0, failed: 0 });
 		// Each connection is read once, whatever its number of mappings.
 		expect(findAnyById).toHaveBeenCalledTimes(3);
 		expect(importMapping).toHaveBeenCalledTimes(1);
@@ -140,7 +150,7 @@ describe('LinearImportSweepService', () => {
 		findOneAnswers.set('outbound', { ...mappingOf('outbound'), direction: LinearSyncDirection.OUTBOUND });
 		findOneAnswers.set('removed', null);
 
-		expect(await service.run(now)).toEqual({ due: 5, imported: 1, skipped: 4, failed: 0 });
+		expect(await service.run(now)).toEqual({ attention: 0, due: 5, imported: 1, skipped: 4, failed: 0 });
 		expect(claimImport).toHaveBeenCalledTimes(2);
 		expect(importMapping).toHaveBeenCalledTimes(1);
 		expect(importMapping.mock.calls[0][1].id).toBe('fine');
@@ -153,7 +163,7 @@ describe('LinearImportSweepService', () => {
 			throw new Error('connection lost');
 		});
 
-		expect(await service.run(now)).toEqual({ due: 2, imported: 1, skipped: 0, failed: 1 });
+		expect(await service.run(now)).toEqual({ attention: 0, due: 2, imported: 1, skipped: 0, failed: 1 });
 		expect(importMapping).toHaveBeenCalledTimes(1);
 		expect(importMapping.mock.calls[0][1].id).toBe('fine');
 	});

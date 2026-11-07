@@ -3,7 +3,6 @@ import { GauzyCorePlugin as Plugin, IOnPluginBootstrap, IOnPluginDestroy } from 
 import { isSchedulerQueueRootEnabled } from '@gauzy/scheduler';
 import { CreateIntegrationLinearTables1791000004900 } from './database/migrations/1791000004900-CreateIntegrationLinearTables';
 import { LINEAR_ENTITIES, LinearModule } from './linear.module';
-import { readLinearConfig } from './linear-config';
 import { LinearMaintenanceModule } from './maintenance/linear-maintenance.module';
 
 /** The plugin's migrations, oldest first (ordered with the platform's by their timestamps). */
@@ -20,9 +19,9 @@ export const LINEAR_MIGRATIONS = [CreateIntegrationLinearTables1791000004900];
  */
 @Plugin({
 	// The scheduled import travels on a queue, so it is registered only where a queue root exists (the worker
-	// process, or an API with `REDIS_ENABLED`); an operator switches it off with `LINEAR_IMPORT_INTERVAL_MINUTES=0`.
+	// process, or an API with `REDIS_ENABLED`); `LINEAR_IMPORT_INTERVAL_MINUTES=0` switches the imports off; the sweep still runs to file the refused-token notices the Inbox has not taken.
 	// Without it the integration is whole: webhooks and "import now" need no schedule.
-	imports: [LinearModule, ...(isSchedulerQueueRootEnabled() && readLinearConfig(process.env).importIntervalMinutes > 0 ? [LinearMaintenanceModule] : [])],
+	imports: [LinearModule, ...(isSchedulerQueueRootEnabled() ? [LinearMaintenanceModule] : [])],
 	// Arrays, not factories: the platform resolves a factory for migrations but not for entities.
 	entities: [...LINEAR_ENTITIES],
 	migrations: [...LINEAR_MIGRATIONS],

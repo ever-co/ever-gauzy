@@ -17,11 +17,12 @@ no table (its migration is not registered) and makes no outbound request.
 | `LINEAR_REDIRECT_URL` | The callback registered on the application. Default: `API_BASE_URL` + `/api/integration/linear/callback`. |
 | `LINEAR_POST_INSTALL_URL` | Where the callback sends the person once connected. Default: `CLIENT_BASE_URL` + `/#/pages/integrations/linear`. |
 | `LINEAR_WEBHOOK_SECRET` | The application's webhook signing secret. Without it webhooks are refused (imports still work). |
-| `LINEAR_IMPORT_INTERVAL_MINUTES` | How many minutes apart the worker imports the changes of each inbound mapping (default `15`; `0` switches the scheduled import off). When the application has a webhook secret (`LINEAR_WEBHOOK_SECRET`) every mapping is swept every fourth interval instead. |
+| `LINEAR_IMPORT_INTERVAL_MINUTES` | How many minutes apart the worker imports the changes of each inbound mapping (default `15`; the worker sweeps every five minutes, so a value below five behaves as five; `0` switches the scheduled import off — the sweep still files the refused-token notices the Inbox has not taken). When the application has a webhook secret (`LINEAR_WEBHOOK_SECRET`) every mapping is swept every fourth interval instead. |
 | `LINEAR_API_URL` | Linear's GraphQL endpoint; only for a test double. |
 
 The webhook URL to register on the application is `API_BASE_URL` + `/api/integration/linear/webhook`,
-for the `Issues` resource.
+for the `Issues`, `Comments` and `Attachments` resources — Linear subscribes each resource separately, and
+without the last two a comment or an attachment reaches Gauzy only with the scheduled reconciliation.
 
 ## How it works
 

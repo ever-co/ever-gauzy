@@ -11,6 +11,8 @@ import { LinearSyncService } from '../sync/linear-sync.service';
 
 /** What one sweep did. */
 export interface LinearImportSweepOutcome {
+	/** The refused connections whose notice was filed again (the Inbox had not taken it yet). */
+	attention: number;
 	/** The mappings that were due (those of a connection that is gone or waits for a person are not counted). */
 	due: number;
 	/** The imports that ran (each is a run of its mapping, like one a person asked for). */
@@ -58,7 +60,9 @@ export class LinearImportSweepService {
 
 	/** Imports every mapping that is due, the longest waiting first, and says what happened. */
 	async run(now = new Date()): Promise<LinearImportSweepOutcome> {
-		const outcome: LinearImportSweepOutcome = { due: 0, imported: 0, skipped: 0, failed: 0 };
+		const outcome: LinearImportSweepOutcome = { attention: 0, due: 0, imported: 0, skipped: 0, failed: 0 };
+		// First, and whatever the mappings: the notices the Inbox has not taken yet.
+		outcome.attention = await this.retryAttention();
 		if (this.config.importIntervalMinutes <= 0) return outcome;
 		const due = waitingFirst(await this.findDue(now));
 		const batch = (await this.withConnections(due)).slice(0, LINEAR_IMPORT_SWEEP_BATCH);
@@ -95,6 +99,23 @@ export class LinearImportSweepService {
 	 * The mappings with their connection, in the same order, without those of a connection that is gone (its mappings go
 	 * with it) or that waits for a person (an attention reason: a refused token). Each connection is read once.
 	 */
+	/**
+	 * Files again the notice of every refused connection whose filing did not get through, whatever its mappings
+	 * (none, outbound, switched off, imported a moment ago): the retry waits for no import, only for the sweep.
+	 */
+	private async retryAttention(): Promise<number> {
+		let filed = 0;
+		for (const tenant of await this.tenants.findRefusedUnfiled()) {
+			try {
+				await this.tenants.ensureAttentionFiled(tenant);
+				filed += 1;
+			} catch (error) {
+				this.logger.warn(`The attention of connection ${tenant.id} could not be filed from the sweep: ${error instanceof Error ? error.message : String(error)}`);
+			}
+		}
+		return filed;
+	}
+
 	private async withConnections(mappings: LinearTeamMapping[]): Promise<Array<{ tenant: IIntegrationTenant; mapping: LinearTeamMapping }>> {
 		const connections = new Map<string, IIntegrationTenant | null>();
 		const result: Array<{ tenant: IIntegrationTenant; mapping: LinearTeamMapping }> = [];
@@ -102,12 +123,7 @@ export class LinearImportSweepService {
 			const key = String(mapping.integrationId);
 			if (!connections.has(key)) {
 				const tenant = await this.tenants.findAnyById(mapping.integrationId);
-				const refused = !!tenant && !!this.tenants.summaryOf(tenant).attentionReason;
-				// A refused connection whose notice never got through is filed from here: the retry is the sweep's.
-				if (tenant && refused) {
-					await this.tenants.ensureAttentionFiled(tenant).catch((error: unknown) => this.logger.warn(`The attention of connection ${tenant.id} could not be filed from the sweep: ${(error as Error)?.message ?? error}`));
-				}
-				connections.set(key, tenant && !refused ? tenant : null);
+				connections.set(key, tenant && !this.tenants.summaryOf(tenant).attentionReason ? tenant : null);
 			}
 			const tenant = connections.get(key);
 			if (tenant) result.push({ tenant, mapping });

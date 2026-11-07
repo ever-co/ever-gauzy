@@ -157,7 +157,7 @@ export class LinearSyncService {
 		} catch (caught) {
 			error = this.describe(caught);
 			if (caught instanceof LinearApiError && caught.isUnauthorized) {
-				await this.tenants.setAttention(tenant, 'token_refused');
+				await this.tenants.setAttention(tenant, 'token_refused', this.tenants.settingsOf(tenant)[LinearSettingName.ACCESS_TOKEN] ?? null);
 			}
 			this.logger.warn(`Import of mapping ${mapping.id} failed: ${error}`);
 		} finally {
@@ -196,7 +196,7 @@ export class LinearSyncService {
 				const holder: ClientHolder = { tenant, client: await this.tenants.clientReady(tenant), renewed: false };
 				teamId = await this.call(holder, (client) => client.issueTeamId(issueId));
 			} catch (caught) {
-				if (caught instanceof LinearApiError && caught.isUnauthorized) await this.tenants.setAttention(tenant, 'token_refused');
+				if (caught instanceof LinearApiError && caught.isUnauthorized) await this.tenants.setAttention(tenant, 'token_refused', this.tenants.settingsOf(tenant)[LinearSettingName.ACCESS_TOKEN] ?? null);
 				return { applied: false, error: this.describe(caught) };
 			}
 			if (!teamId) return { applied: false, error: null };
@@ -224,7 +224,7 @@ export class LinearSyncService {
 		} catch (caught) {
 			error = this.describe(caught);
 			if (caught instanceof LinearApiError && caught.isUnauthorized) {
-				await this.tenants.setAttention(tenant, 'token_refused');
+				await this.tenants.setAttention(tenant, 'token_refused', this.tenants.settingsOf(tenant)[LinearSettingName.ACCESS_TOKEN] ?? null);
 			}
 			this.logger.warn(`Webhook issue ${issueId} of mapping ${mapping.id} failed: ${error}`);
 		} finally {
@@ -276,7 +276,7 @@ export class LinearSyncService {
 			await this.createIssueOnce(holder, mapping, task.id as ID, scope, input.title, input);
 		} catch (caught) {
 			if (caught instanceof LinearApiError && caught.isUnauthorized) {
-				await this.tenants.setAttention(tenant, 'token_refused');
+				await this.tenants.setAttention(tenant, 'token_refused', this.tenants.settingsOf(tenant)[LinearSettingName.ACCESS_TOKEN] ?? null);
 			}
 			throw caught;
 		}
@@ -421,7 +421,14 @@ export class LinearSyncService {
 		if (taskId) {
 			const detailsContext = this.detailsContextOf(context);
 			const resolvedTaskId = taskId;
-			await this.serializedDetails(`${context.mapping.integrationId}:${issue.id}`, () => this.issueDetails.apply(detailsContext, issue, resolvedTaskId));
+			try {
+				await this.serializedDetails(`${context.mapping.integrationId}:${issue.id}`, () => this.issueDetails.apply(detailsContext, issue, resolvedTaskId));
+			} catch (caught) {
+				// The API's refusal is the run's; a lock that could not be taken, or a store error, is this issue's details failing, and the run goes on.
+				if (caught instanceof LinearApiError) throw caught;
+				context.details.failed += 1;
+				this.logger.warn(`The details of issue ${issue.id} could not be kept: ${this.describe(caught)}`);
+			}
 		}
 	}
 
@@ -452,11 +459,6 @@ export class LinearSyncService {
 		}
 	}
 
-	/**
-	 * One issue → one task, one apply at a time per issue: in this process the applies of an issue are chained,
-	 * and across processes on Postgres they wait for an advisory lock on the issue held while the platform's
-	 * id-map command runs (an import and a webhook, or two deliveries, never create two tasks for one issue).
-	 */
 	/** The details of one issue, one run at a time: chained in the process, locked across processes (the details service writes through its own repositories; the transaction is the mutex). */
 	private serializedDetails(key: string, work: () => Promise<void>): Promise<void> {
 		const previous = this.detailsChains.get(key) ?? Promise.resolve();
@@ -470,6 +472,11 @@ export class LinearSyncService {
 		return next;
 	}
 
+	/**
+	 * One issue → one task, one apply at a time per issue: in this process the applies of an issue are chained,
+	 * and across processes on Postgres they wait for an advisory lock on the issue held while the platform's
+	 * id-map command runs (an import and a webhook, or two deliveries, never create two tasks for one issue).
+	 */
 	private applyIssue(context: ApplyContext, issue: LinearIssue): Promise<ApplyResult> {
 		const key = `${context.mapping.integrationId}:${issue.id}`;
 		const previous = this.issueChains.get(key) ?? Promise.resolve();
