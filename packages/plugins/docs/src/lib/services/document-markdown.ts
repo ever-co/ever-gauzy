@@ -76,6 +76,13 @@ function escapeText(text: string): string {
 		.replace(/^(\s*)([#>+-]|\d+[.)])(\s)/gm, (_all, lead: string, marker: string, after: string) => `${lead}\\${marker}${after}`);
 }
 
+/** The longest run of backticks in a text (0 for none). */
+function longestBacktickRun(text: string): number {
+	let longest = 0;
+	for (const run of text.match(/`+/g) ?? []) longest = Math.max(longest, run.length);
+	return longest;
+}
+
 function markOf(marks: IDocMark[] | undefined, type: string): IDocMark | undefined {
 	return marks?.find((mark) => mark.type === type);
 }
@@ -85,8 +92,10 @@ function textToMarkdown(node: IDocNode): string {
 	if (!raw) return '';
 	const marks = Array.isArray(node.marks) ? node.marks : [];
 	if (markOf(marks, 'code')) {
-		const fence = raw.includes('`') ? '``' : '`';
-		return `${fence}${raw}${fence}`;
+		// A fence longer than any run of backticks inside, padded when the text starts or ends with one (CommonMark).
+		const fence = '`'.repeat(longestBacktickRun(raw) + 1);
+		const pad = raw.startsWith('`') || raw.endsWith('`') ? ' ' : '';
+		return `${fence}${pad}${raw}${pad}${fence}`;
 	}
 	let text = escapeText(raw);
 	if (markOf(marks, 'bold')) text = `**${text}**`;
@@ -198,7 +207,7 @@ export function blockToMarkdown(node: IDocNode, options: IMarkdownOptions = {}):
 		case 'codeBlock': {
 			const language = String(attrs['language'] ?? '');
 			const text = childrenOf(node).map((child) => String(child.text ?? '')).join('');
-			const fence = text.includes('```') ? '````' : '```';
+			const fence = '`'.repeat(Math.max(3, longestBacktickRun(text) + 1));
 			return `${fence}${language}\n${text}\n${fence}`;
 		}
 		case 'blockquote':
@@ -410,6 +419,49 @@ function blockNodes(tokens: Tokens.Generic[] | undefined): IDocNode[] {
 	return nodes;
 }
 
+/** The ids of the employees a document mentions (`employeeMention` nodes), in document order, each once. */
+export function collectEmployeeMentionIds(value: unknown): string[] {
+	const ids = new Set<string>();
+	const walk = (node: unknown): void => {
+		if (Array.isArray(node)) {
+			node.forEach(walk);
+			return;
+		}
+		if (!node || typeof node !== 'object') return;
+		const record = node as IDocNode;
+		if (record.type === 'employeeMention') {
+			const id = attrsOf(record)['id'];
+			if (typeof id === 'string' && id.trim()) ids.add(id.trim());
+		}
+		walk(record.content);
+	};
+	walk(value);
+	return [...ids];
+}
+
+/** The ids of the files a document shows: images served by the Documents API and attachments. */
+export function collectFileIds(value: unknown): string[] {
+	const ids = new Set<string>();
+	const walk = (node: unknown): void => {
+		if (Array.isArray(node)) {
+			node.forEach(walk);
+			return;
+		}
+		if (!node || typeof node !== 'object') return;
+		const record = node as IDocNode;
+		const attrs = attrsOf(record);
+		if (record.type === 'image') {
+			const id = rawFileIdOf(attrs['src']) ?? (typeof attrs['documentId'] === 'string' ? (attrs['documentId'] as string) : null);
+			if (id) ids.add(id);
+		} else if (record.type === 'fileAttachment' && typeof attrs['documentId'] === 'string' && attrs['documentId']) {
+			ids.add(attrs['documentId'] as string);
+		}
+		walk(record.content);
+	};
+	walk(value);
+	return [...ids];
+}
+
 /** The canonical document of a Markdown text (the stored subset: paragraphs, headings, lists, code, quotes, rules, tables, images, links and marks). */
 export function markdownToDocument(markdown: string): IDocNode {
 	const tokens: TokensList = new Lexer({ gfm: true, breaks: false }).lex(String(markdown ?? '').replace(/\r\n?/g, '\n'));
@@ -419,30 +471,61 @@ export function markdownToDocument(markdown: string): IDocNode {
 
 // ---------------------------------------------------------------- the block diff
 
+/** The most cells the exact (longest common subsequence) matcher allocates; past it the in-order matcher is used. */
+export const MARKDOWN_DIFF_MAX_CELLS = 2_000_000;
+
 /** The key a block is compared by: its Markdown, trailing whitespace aside. */
-function blockKeyOf(node: IDocNode): string {
-	return (blockToMarkdown(node) ?? '').replace(/\s+$/g, '');
+function keyOf(markdown: string | null): string {
+	return (markdown ?? '').replace(/\s+$/g, '');
 }
 
-/** For each incoming block, the index of the stored block it matches (a longest common subsequence of block keys), else -1. */
-function matchBlocks(current: string[], incoming: string[]): number[] {
-	const n = current.length;
+/**
+ * The blocks a stored block becomes once its Markdown is read back: one for most, several for a `details` block
+ * (its summary, then its content) — the parser decides, so the units are the ones an incoming text produces.
+ */
+function unitsOf(node: IDocNode): string[] {
+	const markdown = blockToMarkdown(node);
+	if (markdown === null) return [];
+	return childrenOf(markdownToDocument(markdown)).map((block) => keyOf(blockToMarkdown(block)));
+}
+
+/**
+ * For each incoming key, the index of the stored unit it matches, else -1: a longest common subsequence while the
+ * table fits (`maxCells`), otherwise an in-order match (each incoming key takes the next unmatched stored unit with
+ * that key), which never allocates more than the inputs.
+ */
+function matchUnits(stored: string[], incoming: string[], maxCells: number): number[] {
+	const n = stored.length;
 	const m = incoming.length;
-	const table: number[][] = Array.from({ length: n + 1 }, () => new Array<number>(m + 1).fill(0));
+	const matched = new Array<number>(m).fill(-1);
+	if (!n || !m) return matched;
+	if (n * m > maxCells) {
+		let cursor = 0;
+		for (let j = 0; j < m; j += 1) {
+			for (let i = cursor; i < n; i += 1) {
+				if (stored[i] === incoming[j]) {
+					matched[j] = i;
+					cursor = i + 1;
+					break;
+				}
+			}
+		}
+		return matched;
+	}
+	const rows: Int32Array[] = Array.from({ length: n + 1 }, () => new Int32Array(m + 1));
 	for (let i = n - 1; i >= 0; i -= 1) {
 		for (let j = m - 1; j >= 0; j -= 1) {
-			table[i][j] = current[i] === incoming[j] ? table[i + 1][j + 1] + 1 : Math.max(table[i + 1][j], table[i][j + 1]);
+			rows[i][j] = stored[i] === incoming[j] ? rows[i + 1][j + 1] + 1 : Math.max(rows[i + 1][j], rows[i][j + 1]);
 		}
 	}
-	const matched = new Array<number>(m).fill(-1);
 	let i = 0;
 	let j = 0;
 	while (i < n && j < m) {
-		if (current[i] === incoming[j]) {
+		if (stored[i] === incoming[j]) {
 			matched[j] = i;
 			i += 1;
 			j += 1;
-		} else if (table[i + 1][j] >= table[i][j + 1]) {
+		} else if (rows[i + 1][j] >= rows[i][j + 1]) {
 			i += 1;
 		} else {
 			j += 1;
@@ -454,17 +537,64 @@ function matchBlocks(current: string[], incoming: string[]): number[] {
 /**
  * The stored document with a Markdown text applied: a block whose Markdown is unchanged keeps its stored JSON (its
  * attributes, marks and nodes the Markdown cannot carry), a block whose Markdown changed, or is new, is the Markdown's;
- * blocks the Markdown dropped are gone.
+ * blocks the Markdown dropped are gone. A stored block is compared through the blocks its own Markdown reads back as
+ * (a `details` block is several), and is kept only when all of them come back, in order; an empty paragraph between
+ * two kept blocks is kept with them. The same text as the stored one changes nothing.
  */
-export function mergeMarkdownUpdate(current: unknown, markdown: string): IMarkdownMerge {
-	const stored = childrenOf(docOf(current));
+export function mergeMarkdownUpdate(current: unknown, markdown: string, options: { maxCells?: number } = {}): IMarkdownMerge {
+	const document = docOf(current);
+	const stored = childrenOf(document);
+	const normalized = String(markdown ?? '').replace(/\r\n?/g, '\n').replace(/\s+$/g, '');
+	if (normalized === documentToMarkdown(document).replace(/\s+$/g, '')) {
+		return { contentJson: document, changedBlocks: 0, keptBlocks: stored.length, changed: false };
+	}
 	const incoming = childrenOf(markdownToDocument(markdown));
-	const matched = matchBlocks(stored.map(blockKeyOf), incoming.map(blockKeyOf));
-	const content = incoming.map((node, index) => (matched[index] >= 0 ? stored[matched[index]] : node));
-	const keptBlocks = matched.filter((index) => index >= 0).length;
-	const changedBlocks = incoming.length - keptBlocks;
-	const changed = changedBlocks > 0 || keptBlocks !== stored.length || matched.some((index, position) => index >= 0 && stored[index] !== content[position]);
-	return { contentJson: { type: 'doc', content }, changedBlocks, keptBlocks, changed };
+	const incomingKeys = incoming.map((block) => keyOf(blockToMarkdown(block)));
+	const units: Array<{ owner: number; key: string }> = [];
+	const unitsByOwner = new Map<number, number[]>();
+	stored.forEach((block, owner) => {
+		for (const key of unitsOf(block)) {
+			unitsByOwner.set(owner, [...(unitsByOwner.get(owner) ?? []), units.length]);
+			units.push({ owner, key });
+		}
+	});
+	const matched = matchUnits(units.map((unit) => unit.key), incomingKeys, options.maxCells ?? MARKDOWN_DIFF_MAX_CELLS);
+	const incomingOfUnit = new Map<number, number>();
+	matched.forEach((unit, index) => {
+		if (unit >= 0) incomingOfUnit.set(unit, index);
+	});
+	// A stored block is kept when every unit of it came back, in order and next to each other.
+	const ownerOfIncoming = new Map<number, number>();
+	const kept = new Set<number>();
+	for (const [owner, ownerUnits] of unitsByOwner) {
+		const positions = ownerUnits.map((unit) => incomingOfUnit.get(unit) ?? -1);
+		const consecutive = positions.every((position, index) => position >= 0 && (index === 0 || position === positions[index - 1] + 1));
+		if (!consecutive) continue;
+		kept.add(owner);
+		positions.forEach((position) => ownerOfIncoming.set(position, owner));
+	}
+	const content: IDocNode[] = [];
+	let lastOwner = -1;
+	let changedBlocks = 0;
+	for (let index = 0; index < incoming.length; index += 1) {
+		const owner = ownerOfIncoming.get(index);
+		if (owner === undefined) {
+			content.push(incoming[index]);
+			changedBlocks += 1;
+			continue;
+		}
+		if (lastOwner === owner) continue; // the same stored block, continued
+		// The empty paragraphs the stored document had between this block and the kept one before it stay with them.
+		if (lastOwner >= 0 && owner > lastOwner) {
+			for (let between = lastOwner + 1; between < owner; between += 1) {
+				if (blockToMarkdown(stored[between]) === null) content.push(stored[between]);
+			}
+		}
+		content.push(stored[owner]);
+		lastOwner = owner;
+	}
+	const changed = changedBlocks > 0 || content.length !== stored.length || content.some((block, index) => block !== stored[index]);
+	return { contentJson: { type: 'doc', content }, changedBlocks, keptBlocks: kept.size, changed };
 }
 
 /** A file name for a page: its name as a slug, `.md`. */

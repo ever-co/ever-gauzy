@@ -1,5 +1,7 @@
 import {
 	blockToMarkdown,
+	collectEmployeeMentionIds,
+	collectFileIds,
 	documentToMarkdown,
 	IDocNode,
 	markdownFileNameOf,
@@ -96,6 +98,33 @@ describe('documentToMarkdown', () => {
 		expect(documentToMarkdown(JSON.stringify(PAGE))).toBe(PAGE_MARKDOWN);
 		expect(documentToMarkdown(null)).toBe('');
 	});
+
+	it('sizes a code fence to the backticks inside, and pads inline code that starts or ends with one', () => {
+		const doc: IDocNode = {
+			type: 'doc',
+			content: [
+				paragraph(text('a ``b`` c', [{ type: 'code' }]), text(' and '), text('`tick', [{ type: 'code' }])),
+				{ type: 'codeBlock', attrs: { language: 'md' }, content: [text('```js\nx\n```')] }
+			]
+		};
+		const markdown = documentToMarkdown(doc);
+		expect(markdown).toBe('```a ``b`` c``` and `` `tick ``\n\n````md\n```js\nx\n```\n````\n');
+		expect(documentToMarkdown(markdownToDocument(markdown))).toBe(markdown);
+	});
+
+	it('collects the employees a page mentions and the files it shows', () => {
+		const doc: IDocNode = {
+			type: 'doc',
+			content: [
+				paragraph({ type: 'employeeMention', attrs: { id: 'e1', label: 'Ada' } }, { type: 'documentMention', attrs: { id: 'd1' } }, { type: 'employeeMention', attrs: { id: 'e1' } }),
+				{ type: 'image', attrs: { src: '/api/plugins/docs/documents/0b5a3f4e-6c1d-4f7a-9a52-3c2d1e0f9b8a/raw' } },
+				{ type: 'image', attrs: { src: 'https://cdn.test/x.png' } },
+				{ type: 'fileAttachment', attrs: { documentId: 'f2', name: 'a.pdf' } }
+			]
+		};
+		expect(collectEmployeeMentionIds(doc)).toEqual(['e1']);
+		expect(collectFileIds(doc)).toEqual(['0b5a3f4e-6c1d-4f7a-9a52-3c2d1e0f9b8a', 'f2']);
+	});
 });
 
 describe('markdownToDocument', () => {
@@ -142,6 +171,30 @@ describe('mergeMarkdownUpdate', () => {
 		expect(removed.changed).toBe(true);
 		expect(removed.changedBlocks).toBe(0);
 		expect(removed.contentJson.content).toHaveLength((PAGE.content as IDocNode[]).length - 1);
+	});
+
+	it('keeps a block that reads back as several (details) and the empty paragraphs between kept blocks, when their text is unchanged', () => {
+		const details: IDocNode = { type: 'details', attrs: { open: true }, content: [{ type: 'detailsSummary', content: [text('More')] }, { type: 'detailsContent', content: [paragraph(text('hidden'))] }] };
+		const stored: IDocNode = { type: 'doc', content: [paragraph(text('first')), details, paragraph(), paragraph(text('last'))] };
+		const exported = documentToMarkdown(stored);
+		const same = mergeMarkdownUpdate(stored, exported);
+		expect(same.changed).toBe(false);
+		expect(same.contentJson).toBe(stored);
+		const edited = mergeMarkdownUpdate(stored, exported.replace('first', 'first!'));
+		expect(edited.changedBlocks).toBe(1);
+		expect(edited.contentJson.content?.[1]).toBe(details);
+		expect(edited.contentJson.content?.[2]).toBe(stored.content?.[2]);
+		expect(edited.contentJson.content?.[3]).toBe(stored.content?.[3]);
+		expect(edited.contentJson.content).toHaveLength(4);
+	});
+
+	it('matches in order without the table when the blocks would not fit it', () => {
+		const stored: IDocNode = { type: 'doc', content: [paragraph(text('a')), paragraph(text('b')), paragraph(text('c'))] };
+		const merge = mergeMarkdownUpdate(stored, 'a\n\nx\n\nc\n', { maxCells: 1 });
+		expect(merge.changedBlocks).toBe(1);
+		expect(merge.keptBlocks).toBe(2);
+		expect(merge.contentJson.content?.[0]).toBe(stored.content?.[0]);
+		expect(merge.contentJson.content?.[2]).toBe(stored.content?.[2]);
 	});
 
 	it('keeps the attributes the Markdown cannot carry on an unchanged block', () => {
