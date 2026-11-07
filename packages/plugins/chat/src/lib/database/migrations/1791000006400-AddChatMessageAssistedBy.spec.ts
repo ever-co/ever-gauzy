@@ -25,6 +25,16 @@ describe('AddChatMessageAssistedBy1791000006400', () => {
 		expect(mysql.statements.filter((sql) => sql.startsWith('ALTER TABLE'))).toEqual(['ALTER TABLE `chat_message` ADD COLUMN `assistedBy` varchar(120) NULL']);
 	});
 
+	it('takes a column another process added between the check and the statement as added', async () => {
+		const racing = runner('mysql', false);
+		racing.hasColumn.mockResolvedValueOnce(false).mockResolvedValueOnce(true);
+		racing.query.mockRejectedValueOnce(Object.assign(new Error("Duplicate column name 'assistedBy'"), { errno: 1060 }));
+		await expect(new AddChatMessageAssistedBy1791000006400().up(racing as never)).resolves.toBeUndefined();
+		const failing = runner('mysql', false);
+		failing.query.mockRejectedValueOnce(new Error('disk full'));
+		await expect(new AddChatMessageAssistedBy1791000006400().up(failing as never)).rejects.toThrow('disk full');
+	});
+
 	it('changes nothing when the column is there already, and drops it only when it is', async () => {
 		const present = runner('better-sqlite3', true);
 		await new AddChatMessageAssistedBy1791000006400().up(present as never);

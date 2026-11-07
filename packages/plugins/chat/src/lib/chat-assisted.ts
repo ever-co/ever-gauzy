@@ -8,5 +8,6 @@ export const CHAT_ASSISTED_BY_MAX_LENGTH = 120;
  */
 export function assistedByOf(value: string | null | undefined): string | null {
 	const name = typeof value === 'string' ? value.trim() : '';
-	return name ? name.slice(0, CHAT_ASSISTED_BY_MAX_LENGTH) : null;
+	// Cut by code point, as the DTO counts: an emoji at the limit is kept whole, never split into a lone surrogate.
+	return name ? Array.from(name).slice(0, CHAT_ASSISTED_BY_MAX_LENGTH).join('') : null;
 }

@@ -11,7 +11,12 @@ describe('assistedByOf', () => {
 		expect(assistedByOf('   ')).toBeNull();
 	});
 
-	it("cuts a long name to the column's length", () => {
+	it("cuts a long name to the column's length, by code point", () => {
 		expect(assistedByOf('x'.repeat(500))).toHaveLength(CHAT_ASSISTED_BY_MAX_LENGTH);
+		const atTheLimit = 'a'.repeat(CHAT_ASSISTED_BY_MAX_LENGTH - 1) + '🤖';
+		expect(assistedByOf(atTheLimit)).toBe(atTheLimit);
+		const past = assistedByOf('a'.repeat(CHAT_ASSISTED_BY_MAX_LENGTH) + '🤖') as string;
+		expect(Array.from(past)).toHaveLength(CHAT_ASSISTED_BY_MAX_LENGTH);
+		expect(past.endsWith('a')).toBe(true);
 	});
 });
