@@ -34,12 +34,13 @@ function sweep(config: Partial<LinearConfig> = {}) {
 	const findAnyById = jest.fn(async (integrationId: string) =>
 		gone.has(integrationId) ? null : { id: integrationId, tenantId: integrationId.replace('int-', ''), organizationId: 'org-1', settings: [] }
 	);
+	const ensureAttentionFiled = jest.fn(async (_tenant: { id: string }) => undefined);
 	const summaryOf = jest.fn((tenant: { id: string }) => ({ attentionReason: attention.has(tenant.id) ? 'token_refused' : null }));
 	const claimImport = jest.fn(async (_tenant: unknown, mapping: LinearTeamMapping, _input: { full?: boolean; requestedByUserId?: string | null }) => ({ id: `run-${mapping.id}`, mappingId: mapping.id }));
 	const importMapping = jest.fn().mockResolvedValue(undefined);
 	const service = new LinearImportSweepService(
 		{ find, findOne } as unknown as TypeOrmLinearTeamMappingRepository,
-		{ findAnyById, summaryOf } as unknown as LinearTenantService,
+		{ findAnyById, summaryOf, ensureAttentionFiled } as unknown as LinearTenantService,
 		{ claimImport } as unknown as LinearSyncRunService,
 		{ importMapping } as unknown as LinearSyncService,
 		{ importIntervalMinutes: 15, webhookSecret: null, ...config } as LinearConfig
@@ -48,7 +49,7 @@ function sweep(config: Partial<LinearConfig> = {}) {
 		lastListed = mappings;
 		find.mockResolvedValue(mappings);
 	};
-	return { service, find, findOne, findOneAnswers, list, findAnyById, summaryOf, attention, gone, claimImport, importMapping, tenantsSeen };
+	return { service, find, findOne, findOneAnswers, list, findAnyById, summaryOf, ensureAttentionFiled, attention, gone, claimImport, importMapping, tenantsSeen };
 }
 
 beforeEach(() => {

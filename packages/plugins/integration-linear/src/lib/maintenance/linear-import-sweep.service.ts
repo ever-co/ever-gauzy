@@ -102,7 +102,12 @@ export class LinearImportSweepService {
 			const key = String(mapping.integrationId);
 			if (!connections.has(key)) {
 				const tenant = await this.tenants.findAnyById(mapping.integrationId);
-				connections.set(key, tenant && !this.tenants.summaryOf(tenant).attentionReason ? tenant : null);
+				const refused = !!tenant && !!this.tenants.summaryOf(tenant).attentionReason;
+				// A refused connection whose notice never got through is filed from here: the retry is the sweep's.
+				if (tenant && refused) {
+					await this.tenants.ensureAttentionFiled(tenant).catch((error: unknown) => this.logger.warn(`The attention of connection ${tenant.id} could not be filed from the sweep: ${(error as Error)?.message ?? error}`));
+				}
+				connections.set(key, tenant && !refused ? tenant : null);
 			}
 			const tenant = connections.get(key);
 			if (tenant) result.push({ tenant, mapping });
