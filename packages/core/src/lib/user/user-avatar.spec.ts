@@ -13,7 +13,7 @@ import { getSeedAvatarFileName, isSelfResolvingImageUrl, shouldSeedAvatar } from
  */
 describe('getSeedAvatarFileName', () => {
 	it('returns the bare filename for a seeded avatar path', () => {
-		expect(getSeedAvatarFileName('assets/images/avatars/alish.jpg')).toBe('alish.jpg');
+		expect(getSeedAvatarFileName('assets/images/avatars/aiden.png')).toBe('aiden.png');
 	});
 
 	it('tolerates a leading slash', () => {
@@ -21,11 +21,11 @@ describe('getSeedAvatarFileName', () => {
 	});
 
 	it('trims surrounding whitespace', () => {
-		expect(getSeedAvatarFileName('  assets/images/avatars/ruslan.jpg  ')).toBe('ruslan.jpg');
+		expect(getSeedAvatarFileName('  assets/images/avatars/ronan.png  ')).toBe('ronan.png');
 	});
 
 	it('ignores an absolute URL, which is a real uploaded avatar', () => {
-		expect(getSeedAvatarFileName('https://cdn.ever.co/avatars/alish.jpg')).toBeUndefined();
+		expect(getSeedAvatarFileName('https://cdn.ever.co/avatars/aiden.png')).toBeUndefined();
 	});
 
 	it('ignores a dummy image URL', () => {
@@ -49,11 +49,11 @@ describe('getSeedAvatarFileName', () => {
 	});
 
 	it('refuses a nested path inside the seed directory', () => {
-		expect(getSeedAvatarFileName('assets/images/avatars/nested/alish.jpg')).toBeUndefined();
+		expect(getSeedAvatarFileName('assets/images/avatars/nested/aiden.png')).toBeUndefined();
 	});
 
 	it('refuses a backslash-separated nested path', () => {
-		expect(getSeedAvatarFileName('assets/images/avatars/nested\\alish.jpg')).toBeUndefined();
+		expect(getSeedAvatarFileName('assets/images/avatars/nested\\aiden.png')).toBeUndefined();
 	});
 });
 
@@ -91,7 +91,7 @@ describe('shouldSeedAvatar', () => {
 	});
 
 	it('backfills an existing user that still carries the legacy seed path', () => {
-		expect(shouldSeedAvatar({ imageUrl: 'assets/images/avatars/alish.jpg' })).toBe(true);
+		expect(shouldSeedAvatar({ imageUrl: 'assets/images/avatars/aiden.png' })).toBe(true);
 		expect(shouldSeedAvatar({ imageUrl: '/assets/images/avatars/avatar-default.svg' })).toBe(true);
 	});
 
@@ -119,11 +119,11 @@ describe('isSelfResolvingImageUrl', () => {
 		expect(isSelfResolvingImageUrl('http://localhost:3000/a.png')).toBe(true);
 		expect(isSelfResolvingImageUrl('data:image/svg+xml;base64,AAA=')).toBe(true);
 		expect(isSelfResolvingImageUrl('//cdn.example.com/a.jpg')).toBe(true);
-		expect(isSelfResolvingImageUrl('/assets/images/avatars/alish.jpg')).toBe(true);
+		expect(isSelfResolvingImageUrl('/assets/images/avatars/aiden.png')).toBe(true);
 	});
 
 	it('rejects a bare relative path, which is the value that 404s', () => {
-		expect(isSelfResolvingImageUrl('assets/images/avatars/alish.jpg')).toBe(false);
+		expect(isSelfResolvingImageUrl('assets/images/avatars/aiden.png')).toBe(false);
 		expect(isSelfResolvingImageUrl('assets/images/logos/ever-large.jpg')).toBe(false);
 	});
 
