@@ -36,7 +36,16 @@ import { IntegrationEverAsyncPlugin } from '@gauzy/plugin-integration-ever-async
 import { IntegrationEverWorksPlugin, isEverWorksEnabled } from '@gauzy/plugin-integration-ever-works';
 import { IntegrationLinearPlugin, isLinearEnabled } from '@gauzy/plugin-integration-linear';
 import { IntegrationAsanaPlugin, isAsanaEnabled } from '@gauzy/plugin-integration-asana';
-import { InboxEmailPlugin, InboxPlugin, isInboxEmailEnabled, isInboxEnabled } from '@gauzy/plugin-inbox';
+import { IntegrationTrelloPlugin, isTrelloEnabled } from '@gauzy/plugin-integration-trello';
+import {
+	InboxDeliveryPlugin,
+	InboxEmailPlugin,
+	InboxPlugin,
+	isInboxEmailEnabled,
+	isInboxEnabled,
+	isInboxNotificationEmailEnabled,
+	isInboxWebPushEnabled
+} from '@gauzy/plugin-inbox';
 import { isRealtimeEnabled, RealtimePlugin } from '@gauzy/plugin-realtime';
 
 import { ChatPlugin, isChatEnabled } from '@gauzy/plugin-chat';
@@ -127,6 +136,10 @@ export const plugins = [
 	// as statuses, webhooks). Off unless ASANA_ENABLED=true; when off it is not loaded at all.
 	...(isAsanaEnabled(process.env, (message) => console.warn(message)) ? [IntegrationAsanaPlugin] : []),
 
+	// Trello integration (key + token connect, board ↔ project mappings, card import, two-way sync with lists as
+	// statuses, webhooks). Off unless TRELLO_ENABLED=true; when off it is not loaded at all.
+	...(isTrelloEnabled(process.env, (message) => console.warn(message)) ? [IntegrationTrelloPlugin] : []),
+
 	// Inbox (questions, approvals, escalations and notices addressed to a user, each with its own state; the
 	// Ever Works integration feeds it through a source-handler registry). Off unless GAUZY_INBOX_ENABLED=true;
 	// when off it is not loaded at all (no route, no table, no role grant). Any other value keeps it off and is
@@ -148,6 +161,16 @@ export const plugins = [
 	// off it is not loaded at all (no route, no table, no transport: mail goes out over SMTP as before).
 	...(isInboxEnabled(process.env) && isInboxEmailEnabled(process.env, (message) => console.warn(message))
 		? [InboxEmailPlugin]
+		: []),
+
+	// Delivery of the Inbox's notifications beyond the app (the Inbox spec FR-10–FR-13): emails (immediate or digest
+	// per kind) under GAUZY_INBOX_NOTIFICATION_EMAIL_ENABLED, web push to the person's devices (their subscriptions
+	// and routes) under GAUZY_INBOX_WEB_PUSH_ENABLED. Only on top of the Inbox, and off unless one of the two is
+	// exactly true; the API owns the tables and the push routes, the worker runs the sweep.
+	...(isInboxEnabled(process.env) &&
+	(isInboxNotificationEmailEnabled(process.env, (message) => console.warn(message)) ||
+		isInboxWebPushEnabled(process.env, (message) => console.warn(message)))
+		? [InboxDeliveryPlugin]
 		: []),
 
 	// Email provider: Resend (plan 04 §5.2). Off unless EMAIL_PROVIDER_RESEND_ENABLED=true; when off it is not

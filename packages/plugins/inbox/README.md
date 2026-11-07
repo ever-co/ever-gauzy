@@ -227,7 +227,10 @@ person's attention lands:
   `EmployeeNotificationCreatedEvent`). The two read states are one: reading or archiving the item updates the
   notification (the bridge is the `GAUZY` source handler), and an edit or a mark-all-read through
   `/api/employee-notification` updates the items' recipient rows (`EmployeeNotificationUpdatedEvent`). Neither
-  direction echoes. Clients that read employee notifications today see the same entries, unchanged.
+  direction echoes. Clients that read employee notifications today see the same entries, unchanged. A mention
+  is filed once per receiver, record and kind within ten minutes (spec FR-4): the same employee mentioned twice in
+  one page, or in two quick edits, has one entry to look at (the notification rows themselves are all kept); the
+  check and the filing run under one lock per receiver, record and kind, so two filed at once cannot both pass.
 - **Followers are told.** With `GAUZY_NOTIFICATION_FANOUT_ENABLED=true` (off by default), a comment on a record
   an employee follows, and a change of a followed task's status, priority, due date or members, create a
   notification for each follower except the actor (`packages/core/src/lib/entity-subscription/fan-out/`). The
@@ -242,6 +245,61 @@ person's attention lands:
 The delivery choices beyond the per-type switches (email immediate / digest / off, push, do-not-disturb, digest
 hour) are declared on the notification setting's `preferences` JSON (`IEmployeeNotificationPreferences`); the
 email and push delivery lanes read them.
+
+## Email delivery of notifications (immediate / digest)
+
+`GAUZY_INBOX_NOTIFICATION_EMAIL_ENABLED=true` (on top of the Inbox; off by default) loads `InboxDeliveryPlugin` in the
+API (its table) and the worker (its sweep). Every minute the worker's sweep (`InboxDeliveryService.sweep`):
+
+1. **decides** every notification entry filed in the last day whose recipient has no `inbox_delivery` row yet, from
+   the employee's notification setting — the per-kind switch, then the email mode of the kind
+   (`preferences.emailByType[kind]`, else `preferences.email`: `immediate` by default, `digest`, or `off`), the
+   do-not-disturb window (`preferences.dnd`: an immediate email waits for the window's end) and the digest hour
+   (`preferences.digestHour`, 8 by default, in `preferences.dnd.timeZone`, else the user's time zone, else UTC);
+2. **sends the immediate emails** that are due (template `inbox-notification`: the entry's title, kind and text, a
+   link to it in the Inbox page);
+3. **sends the digests** that are due as one email per person (template `inbox-digest`, newest first, up to fifty
+   entries and a count): the people first (a bounded set), then each person's whole due set, so a digest is never
+   a page of one; one per person and day, since a day's rows share the person's digest hour.
+
+The sweep runs under a named lock across the workers (`InboxNamedLocks`): a sweep that finds it held is skipped, so
+two workers never both send a row. The rows are the outbox: unique on entry, person and channel (two workers never both file one), a send that failed
+is tried again later (waits doubling from five minutes, five attempts, then given up with its error on the row), a
+worker that was down catches up from the rows. The emails go through the platform's templates in the recipient's
+language and its transports (`EmailSendService`); they carry only what the entry shows its recipient. The templates
+ship with the platform's seeds and are migrated into existing installations (`1791000004850`).
+`INBOX_DELIVERY_SWEEP_BATCH` (200) bounds one sweep. The worker hosts the Inbox email features and the email providers
+with the delivery (each under its own switch), since a provider's transport registers only in the process that
+hosts it. Nothing here changes an entry or its read state; the settings page (T15) is its own lane.
+
+## Web push delivery of notifications
+
+`GAUZY_INBOX_WEB_PUSH_ENABLED=true` with a VAPID key pair (`GAUZY_INBOX_VAPID_PUBLIC_KEY`, `GAUZY_INBOX_VAPID_PRIVATE_KEY`;
+`npx web-push generate-vapid-keys`) loads the same delivery plugin — with or without the email switch — and adds (the
+Inbox spec FR-13):
+
+- **`GET /inbox/push-subscriptions/public-key`** `{ publicKey }`: what a browser subscribes with
+  (`PushManager.subscribe({ userVisibleOnly: true, applicationServerKey })`).
+- **`POST /inbox/push-subscriptions`** `{ endpoint, keys: { p256dh, auth }, expirationTime?, userAgent? }` (the browser's
+  `PushSubscription.toJSON()`): registers the caller's device, or refreshes the one the endpoint names (new keys, failures
+  cleared); **`GET`** lists the caller's devices; **`DELETE /:id`** removes one. The routes answer 404 where push is off
+  or the keys are not set.
+- **The sweep's push step** (`InboxDeliveryService.sendPushes`): every notification entry is decided for push as it is
+  for email (`inbox_delivery` rows of channel `push`): the kind's switch, then `preferences.pushByType[kind]`, else
+  `preferences.push`, else on when the person has a device subscribed (registering one is the opt-in); the
+  do-not-disturb window holds a push. A due row is pushed to each of the person's devices (`web-push`: the payload is
+  the entry's title, text, kind and link, with a tag per entry so a device shows one) — unless the person has an active,
+  focused session (their employee record reported active input within 90 s, through the real-time channel's presence),
+  when the row is closed as skipped: they are looking at the app, where the entry already is. A device the push service
+  no longer knows (404 / 410) is removed; one that failed five times in a row is removed. `GAUZY_INBOX_VAPID_SUBJECT`
+  names the sender (an `https:` URL or `mailto:`; the client's address by default).
+- **Where a push may go** is the platform's outbound-endpoint policy, the webhooks' (nothing that is not globally
+  routable: no private, loopback or link-local address, no single-label or special-use host): refused at registration
+  as text, resolved again before each push, and once more by the connection's own lookup; a device whose endpoint is
+  refused is removed. `GAUZY_WEBHOOK_ALLOW_PRIVATE_NETWORK=true` lifts the rule, as for webhooks. A process on the push
+  switch alone sends no email, whatever email rows are due: each channel is served under its own switch.
+
+The Angular app and Ever Teams register the browser (the service worker and the subscription) in their own lanes.
 
 ## Tests
 

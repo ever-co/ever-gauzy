@@ -1,4 +1,5 @@
 import { IBasePerTenantAndOrganizationEntityModel, ID, JsonData } from './base-entity.model';
+import { ITask } from './task.model';
 
 /**
  * Chat (`@gauzy/plugin-chat`): conversations between the employees of an organization — channels, direct and
@@ -330,8 +331,61 @@ export interface IChatReadAllResult {
 	snapshotId: string;
 }
 
+/** One file of a conversation: the document a message carries, as the files pane lists it. */
+export interface IChatFile {
+	documentId: ID;
+	messageId: ID;
+	conversationId: ID;
+	name: string;
+	originalFilename?: string | null;
+	mimeType?: string | null;
+	fileSize?: number | null;
+	status?: string | null;
+	fileUrl?: string | null;
+	thumbUrl?: string | null;
+	authorEmployeeId?: ID | null;
+	authorUserId?: ID | null;
+	/** When the file was attached (the message's send). */
+	attachedAt: Date;
+}
+
+/** `GET /chat/conversations/:id/files`: newest first, paged. */
+export interface IChatFilesQuery {
+	limit?: number;
+	skip?: number;
+}
+
+/** `GET /chat/search`: a query over the messages of my conversations (one of them when `conversationId` is given). */
+export interface IChatSearchQuery {
+	q: string;
+	conversationId?: ID;
+	limit?: number;
+	skip?: number;
+}
+
+export interface IChatFilesResult {
+	files: IChatFile[];
+	hasMore: boolean;
+}
+
+export interface IChatSearchResult {
+	/** The matching messages, best match first, with their relations. */
+	messages: IChatMessageWithRelations[];
+	/** How many messages match in all (the search index's count). */
+	total: number;
+	hasMore: boolean;
+}
+
 export interface IChatCreateTaskInput {
 	projectId?: ID;
+	/** The task's title; the message's first line when left out. */
 	title?: string;
 	assigneeEmployeeIds?: ID[];
+}
+
+/** `POST /chat/messages/:id/create-task`: the task, the message's reference to it, and the events the change caused. */
+export interface IChatCreateTaskResult {
+	task: ITask;
+	reference: IChatTaskReference;
+	events: IChatEvent[];
 }

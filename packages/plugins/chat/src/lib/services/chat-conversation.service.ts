@@ -98,7 +98,7 @@ export class ChatConversationService {
 		const repository = this.dataSource.getRepository(ChatCategory);
 		const category = await repository.findOne({ where: { id, tenantId: caller.tenantId } });
 		if (!category) throw new NotFoundException('The requested record was not found');
-		// The channels of a deleted category stay, uncategorised.
+		// The channels of a deleted category stay, uncategorized.
 		await this.dataSource.getRepository(ChatConversation).update({ categoryId: id, tenantId: caller.tenantId }, { categoryId: null as never });
 		await repository.remove(category);
 	}

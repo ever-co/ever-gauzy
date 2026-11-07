@@ -6,7 +6,7 @@ export const DEFAULT_CANDIDATES = [
 		password: '12345678',
 		firstName: 'John',
 		lastName: 'S.',
-		imageUrl: 'assets/images/avatars/alish.jpg',
+		imageUrl: 'assets/images/avatars/john.png',
 		candidateLevel: 'D',
 		preferredLanguage: LanguagesEnum.ENGLISH,
 		preferredComponentLayout: ComponentLayoutStyleEnum.TABLE

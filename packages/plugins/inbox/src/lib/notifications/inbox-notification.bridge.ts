@@ -3,6 +3,7 @@ import { EventsHandler, IEventHandler } from '@nestjs/cqrs';
 import { DataSource, In } from 'typeorm';
 import {
 	BaseEntityEnum,
+	EmployeeNotificationTypeEnum,
 	ID,
 	IEmployeeNotification,
 	IInboxItem,
@@ -26,6 +27,8 @@ import {
 } from '@gauzy/core';
 import { InboxItem } from '../entities/inbox-item.entity';
 import { InboxItemRecipient } from '../entities/inbox-item-recipient.entity';
+import { INBOX_MENTION_DEDUPE_WINDOW_MS } from '../inbox.constants';
+import { InboxNamedLocks } from '../email/database/named-locks';
 import { InboxSourceHandlerRegistry } from '../inbox-source-handler.registry';
 import { InboxService } from '../inbox.service';
 import { InboxItemFeed } from '../inbox-item-feed';
@@ -64,6 +67,49 @@ export function notificationItemInput(notification: IEmployeeNotification, userI
 }
 
 /**
+ * Whether a notification is one the Inbox files once per recipient, record and kind within the window (spec FR-4):
+ * a mention — the same employee mentioned twice in one page, or in two quick edits, is one thing to look at. A
+ * notification without a record to key on is never a twin of another.
+ */
+export function isDedupedNotification(notification: Pick<IEmployeeNotification, 'type' | 'entity' | 'entityId'> | null | undefined): boolean {
+	return notification?.type === EmployeeNotificationTypeEnum.MENTION && !!notification.entity && !!notification.entityId;
+}
+
+/** The notification type an item was filed for, read from the metadata the bridge wrote (a JSON document, or already parsed). */
+/** What `hasRecentTwin` asks for, in one place a test can read: the receiver, the window, the record, the kind, and not the notification itself. */
+export function recentTwinCriteriaOf(notification: Pick<IEmployeeNotification, 'id' | 'tenantId' | 'type' | 'entity' | 'entityId'>, userId: ID, now = Date.now()) {
+	return {
+		userId: String(userId),
+		tenantId: String(notification.tenantId),
+		since: new Date(now - INBOX_MENTION_DEDUPE_WINDOW_MS),
+		kind: InboxItemKindEnum.NOTIFICATION,
+		source: InboxItemSourceEnum.GAUZY,
+		entity: String(notification.entity),
+		entityId: String(notification.entityId),
+		externalId: String(notification.id),
+		type: String(notification.type)
+	};
+}
+
+/** The lock a mention's check-and-file runs under: one per receiver, record and kind. */
+export function twinLockNameOf(notification: Pick<IEmployeeNotification, 'tenantId' | 'type' | 'entity' | 'entityId'>, userId: ID): string {
+	return `notification-twin:${notification.tenantId}:${userId}:${notification.entity}:${notification.entityId}:${notification.type}`;
+}
+
+export function notificationTypeOf(metadata: unknown): string | null {
+	let parsed: unknown = metadata;
+	if (typeof metadata === 'string') {
+		try {
+			parsed = JSON.parse(metadata);
+		} catch {
+			return null;
+		}
+	}
+	const type = (parsed as { notificationType?: unknown } | null)?.notificationType;
+	return typeof type === 'string' ? type : null;
+}
+
+/**
  * The unified inbox: every platform notification (an assignment, a mention, a comment on a followed record, …)
  * is filed as an inbox item of kind NOTIFICATION the moment it exists, and the two read states are kept one.
  *
@@ -79,6 +125,8 @@ export function notificationItemInput(notification: IEmployeeNotification, userI
 export class InboxNotificationBridge implements OnModuleInit, IInboxSourceHandler {
 	readonly source = InboxItemSourceEnum.GAUZY;
 	private readonly logger = new Logger(InboxNotificationBridge.name);
+	/** Serialises a mention's twin check and filing per receiver, record and kind, across the replicas. */
+	private readonly locks: InboxNamedLocks;
 
 	constructor(
 		private readonly dataSource: DataSource,
@@ -88,7 +136,9 @@ export class InboxNotificationBridge implements OnModuleInit, IInboxSourceHandle
 		@Optional() private readonly feed?: InboxItemFeed,
 		/** Tells the user's other clients about a mirrored change; absent in bare test wiring. */
 		@Optional() private readonly realtime?: InboxRealtime
-	) {}
+	) {
+		this.locks = new InboxNamedLocks(dataSource);
+	}
 
 	onModuleInit(): void {
 		if (!this.registry.get(this.source)) {
@@ -133,7 +183,13 @@ export class InboxNotificationBridge implements OnModuleInit, IInboxSourceHandle
 		await repository.update({ id: row.id }, patch as never);
 	}
 
-	/** Files a notification that now exists as an inbox item of its receiver. */
+	/**
+	 * Files a notification that now exists as an inbox item of its receiver — unless it is a mention whose twin (the
+	 * same receiver, record and kind) was filed within the last ten minutes: then the entry that exists is the one to
+	 * look at, and the notification row stays what the Notifications tab reads. The check and the filing run under
+	 * one lock per receiver, record and kind, so two mentions filed at once (two replicas, or one receiver named
+	 * twice in a burst) cannot both find no twin.
+	 */
 	async fileNotification(notification: IEmployeeNotification): Promise<void> {
 		try {
 			const userId = await this.userIdOfEmployee(notification?.receiverEmployeeId, notification?.tenantId);
@@ -141,11 +197,41 @@ export class InboxNotificationBridge implements OnModuleInit, IInboxSourceHandle
 			if (!input) {
 				return;
 			}
+			// A comment's task and record join the item first; the twin check keys on the notification alone.
 			await this.withCommentParent(input);
-			await this.inbox.upsertExternal(input);
+			if (!isDedupedNotification(notification)) {
+				await this.inbox.upsertExternal(input);
+				return;
+			}
+			await this.locks.run(twinLockNameOf(notification, userId as ID), async () => {
+				if (await this.hasRecentTwin(notification, userId as ID)) {
+					this.logger.debug(`Notification ${notification.id} is not filed: a ${notification.type} on ${notification.entity} ${notification.entityId} reached user ${userId} within the last ${INBOX_MENTION_DEDUPE_WINDOW_MS / 60_000} minutes`);
+					return;
+				}
+				await this.inbox.upsertExternal(input);
+			});
 		} catch (error) {
 			this.logger.warn(`Notification ${notification?.id} was not filed in the inbox: ${(error as Error)?.message}`);
 		}
+	}
+
+	/**
+	 * Whether an item of the same kind, on the same record, reached the user within the window: one query over the
+	 * user's recipient rows of the window joined to their items on the record (no cap — a busy receiver's tenth
+	 * minute is as long as anyone's), the kind compared from the metadata, which the database cannot read.
+	 */
+	private async hasRecentTwin(notification: IEmployeeNotification, userId: ID, now = Date.now()): Promise<boolean> {
+		const criteria = recentTwinCriteriaOf(notification, userId, now);
+		const rows = (await this.dataSource
+			.getRepository(InboxItemRecipient)
+			.createQueryBuilder('recipient')
+			.innerJoin(InboxItem, 'item', 'item.id = recipient.inboxItemId AND item.tenantId = recipient.tenantId')
+			.select('item.metadata', 'metadata')
+			.where('recipient.userId = :userId AND recipient.tenantId = :tenantId AND recipient.createdAt >= :since', criteria)
+			.andWhere('item.kind = :kind AND item.source = :source AND item.entity = :entity AND item.entityId = :entityId')
+			.andWhere('(item.externalId IS NULL OR item.externalId != :externalId)')
+			.getRawMany()) as Array<{ metadata?: unknown }>;
+		return rows.some((row) => notificationTypeOf(row.metadata) === criteria.type);
 	}
 
 	/** The notification API changed read / archive state: the filed items' recipient rows follow. */

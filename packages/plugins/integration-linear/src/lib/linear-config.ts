@@ -1,4 +1,4 @@
-import { LINEAR_API_URL, LINEAR_ROUTE_PREFIX } from './linear.constants';
+import { LINEAR_API_URL, LINEAR_IMPORT_INTERVAL_MINUTES_DEFAULT, LINEAR_ROUTE_PREFIX } from './linear.constants';
 
 /** What the operator configured for the Linear integration. */
 export interface LinearConfig {
@@ -19,6 +19,12 @@ export interface LinearConfig {
 	postInstallUrl: string | null;
 	/** The signing secret of the application's webhooks (`LINEAR_WEBHOOK_SECRET`); `null` = webhooks refused. */
 	webhookSecret: string | null;
+	/**
+	 * How many minutes apart the worker imports the changes of each inbound mapping (`LINEAR_IMPORT_INTERVAL_MINUTES`,
+	 * {@link LINEAR_IMPORT_INTERVAL_MINUTES_DEFAULT} by default); `0` switches the scheduled import off. When the application has a
+	 * webhook secret (`LINEAR_WEBHOOK_SECRET`) every mapping is swept every fourth interval instead.
+	 */
+	importIntervalMinutes: number;
 	/** Linear's GraphQL endpoint (`LINEAR_API_URL`, for a test double); the public one by default. */
 	apiUrl: string;
 }
@@ -61,8 +67,20 @@ export function readLinearConfig(
 		redirectUrl,
 		postInstallUrl,
 		webhookSecret: env['LINEAR_WEBHOOK_SECRET']?.trim() || null,
-		apiUrl: normaliseLinearUrl(env['LINEAR_API_URL'], 'LINEAR_API_URL', warn) ?? LINEAR_API_URL
+		apiUrl: normaliseLinearUrl(env['LINEAR_API_URL'], 'LINEAR_API_URL', warn) ?? LINEAR_API_URL,
+		importIntervalMinutes: linearImportIntervalOf(env['LINEAR_IMPORT_INTERVAL_MINUTES'], warn)
 	};
+}
+
+/** A whole number of minutes (`0` = off); unset is the default, anything else is reported once and the default is used. */
+export function linearImportIntervalOf(raw: string | undefined, warn: (message: string) => void): number {
+	const value = raw?.trim();
+	if (!value) return LINEAR_IMPORT_INTERVAL_MINUTES_DEFAULT;
+	if (!/^\d+$/.test(value)) {
+		warn(`LINEAR_IMPORT_INTERVAL_MINUTES is not a whole number of minutes; the default (${LINEAR_IMPORT_INTERVAL_MINUTES_DEFAULT}) is used.`);
+		return LINEAR_IMPORT_INTERVAL_MINUTES_DEFAULT;
+	}
+	return Number(value);
 }
 
 /** Whether a person can connect: the OAuth application and its callback are known. */

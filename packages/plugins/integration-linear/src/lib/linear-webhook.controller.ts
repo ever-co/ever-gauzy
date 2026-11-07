@@ -16,7 +16,26 @@ export interface LinearWebhookPayload {
 	type: string;
 	organizationId?: string;
 	webhookTimestamp?: number;
-	data?: { id?: string; teamId?: string; team?: { id?: string } };
+	data?: { id?: string; teamId?: string; team?: { id?: string }; issueId?: string; issue?: { id?: string; teamId?: string; team?: { id?: string } } };
+}
+
+/**
+ * The issue a delivery is about, and its team when the delivery says it: an issue created or updated names itself;
+ * a comment or an attachment created or updated names the issue it belongs to (the issue is read again, and its
+ * comments and attachments with it). Anything else — a removal, another type — is nothing to apply.
+ */
+export function issueOfDelivery(payload: Pick<LinearWebhookPayload, 'type' | 'action' | 'data'>): { issueId: string; teamId: string | null } | null {
+	if (payload.action !== 'create' && payload.action !== 'update') return null;
+	const data = payload.data;
+	if (payload.type === 'Issue') {
+		const issueId = data?.id;
+		return issueId ? { issueId, teamId: data?.teamId ?? data?.team?.id ?? null } : null;
+	}
+	if (payload.type === 'Comment' || payload.type === 'Attachment') {
+		const issueId = data?.issueId ?? data?.issue?.id;
+		return issueId ? { issueId, teamId: data?.issue?.teamId ?? data?.issue?.team?.id ?? null } : null;
+	}
+	return null;
 }
 
 /** Whether the delivery is what Linear signed: `Linear-Signature` is the hex HMAC-SHA256 of the raw body with the signing secret. */
@@ -82,14 +101,10 @@ export class LinearWebhookController {
 		const delivery = typeof deliveryId === 'string' && deliveryId.trim() ? deliveryId.trim().slice(0, 128) : null;
 		if (delivery && this.wasApplied(delivery)) return { accepted: true, queued: false, duplicate: true };
 
-		const type = payload.type || eventHeader || '';
-		if (type !== 'Issue' || (payload.action !== 'create' && payload.action !== 'update')) {
-			return { accepted: true, queued: false };
-		}
-		const issueId = payload.data?.id;
-		const teamId = payload.data?.teamId ?? payload.data?.team?.id;
+		const about = issueOfDelivery({ ...payload, type: payload.type || eventHeader || '' });
 		const linearOrganizationId = payload.organizationId;
-		if (!issueId || !teamId || !linearOrganizationId) return { accepted: true, queued: false };
+		if (!about || !linearOrganizationId) return { accepted: true, queued: false };
+		const { issueId, teamId } = about;
 
 		// Answered now; applied behind the response (reading the issue and writing the task may take longer than
 		// Linear waits for a receiver).
@@ -101,7 +116,7 @@ export class LinearWebhookController {
 		return { accepted: true, queued: true };
 	}
 
-	private async apply(linearOrganizationId: string, issueId: string, teamId: string, delivery: string | null): Promise<void> {
+	private async apply(linearOrganizationId: string, issueId: string, teamId: string | null, delivery: string | null): Promise<void> {
 		const tenants = await this.tenants.findByLinearOrganization(linearOrganizationId);
 		const failures: string[] = [];
 		for (const tenant of tenants) {

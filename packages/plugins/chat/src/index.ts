@@ -13,3 +13,5 @@ export * from './lib/services/chat-message.service';
 export * from './lib/services/chat-notifier.service';
 export * from './lib/controllers/chat-conversation.controller';
 export * from './lib/controllers/chat-message.controller';
+export * from './lib/graphql/chat.schema';
+export * from './lib/graphql/chat.resolver';

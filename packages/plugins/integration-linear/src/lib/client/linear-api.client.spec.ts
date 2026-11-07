@@ -67,7 +67,10 @@ describe('LinearApiClient', () => {
 		expect(retryAfterSecondsOf(headers({}))).toBeNull();
 		expect(retryAfterSecondsOf(headers({ 'Retry-After': '' }))).toBeNull();
 		expect(retryAfterSecondsOf(headers({ 'Retry-After': '12' }))).toBe(12);
-		expect(retryAfterSecondsOf(headers({ 'X-RateLimit-Requests-Reset': String(1_000_000 + 45_000) }), 1_000_000)).toBe(45);
+		// A real epoch: in milliseconds it is above 1e11, in seconds below it (a small number reads as seconds).
+		const now = Date.UTC(2026, 10, 7, 12, 0, 0);
+		expect(retryAfterSecondsOf(headers({ 'X-RateLimit-Requests-Reset': String(now + 45_000) }), now)).toBe(45);
+		expect(retryAfterSecondsOf(headers({ 'X-RateLimit-Requests-Reset': String(now / 1000 + 45) }), now)).toBe(45);
 	});
 
 	it('exchanges a code and renews a token as form posts', async () => {

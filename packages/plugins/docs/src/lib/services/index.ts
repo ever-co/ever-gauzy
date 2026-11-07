@@ -3,6 +3,7 @@ import { DocumentService } from './document.service';
 import { DocumentAccessService } from './document-access.service';
 import { DocumentCategoryService } from './document-category.service';
 import { DocumentCollaborationService } from './document-collaboration.service';
+import { DocumentMarkdownService } from './document-markdown.service';
 import { DocumentKnowledgeService } from './document-knowledge.service';
 import { DocumentLinkService } from './document-link.service';
 import { DocumentNotifierService } from './document-notifier.service';
@@ -62,7 +63,10 @@ export const Services = [
 	DocumentKnowledgeService,
 	DocumentReviewService,
 	DocumentNotifierService,
-	DocumentCollaborationService
+	DocumentCollaborationService,
+	DocumentMarkdownService
 ];
 export { DocumentCollaborationService } from './document-collaboration.service';
+export { DocumentMarkdownService } from './document-markdown.service';
+export * from './document-markdown';
 export { DocumentNotifierService } from './document-notifier.service';

@@ -1,4 +1,4 @@
-import { isLinearConfigured, readLinearConfig } from './linear-config';
+import { isLinearConfigured, readLinearConfig, linearImportIntervalOf } from './linear-config';
 
 describe('readLinearConfig', () => {
 	it('derives the callback and the post-install page from the platform URLs', () => {
@@ -12,6 +12,16 @@ describe('readLinearConfig', () => {
 		expect(config.postInstallUrl).toBe('https://app.example.com/#/pages/integrations/linear');
 		expect(config.apiUrl).toBe('https://api.linear.app/graphql');
 		expect(isLinearConfigured(config)).toBe(true);
+	});
+
+	it('reads the import interval as whole minutes, 0 switching the scheduled import off, and keeps the default otherwise', () => {
+		const warn = jest.fn();
+		expect(readLinearConfig({}).importIntervalMinutes).toBe(15);
+		expect(readLinearConfig({ LINEAR_IMPORT_INTERVAL_MINUTES: ' 30 ' }).importIntervalMinutes).toBe(30);
+		expect(readLinearConfig({ LINEAR_IMPORT_INTERVAL_MINUTES: '0' }).importIntervalMinutes).toBe(0);
+		expect(linearImportIntervalOf('1.5', warn)).toBe(15);
+		expect(linearImportIntervalOf('-5', warn)).toBe(15);
+		expect(warn).toHaveBeenCalledTimes(2);
 	});
 
 	it('prefers the explicit URLs and refuses unusable ones', () => {

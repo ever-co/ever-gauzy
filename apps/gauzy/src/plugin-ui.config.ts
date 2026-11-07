@@ -13,6 +13,7 @@ import { IntegrationEverAsyncPlugin } from '@gauzy/plugin-integration-ever-async
 import { IntegrationEverWorksUiPlugin } from '@gauzy/plugin-integration-ever-works-ui';
 import { IntegrationLinearUiPlugin } from '@gauzy/plugin-integration-linear-ui';
 import { IntegrationAsanaUiPlugin } from '@gauzy/plugin-integration-asana-ui';
+import { IntegrationTrelloUiPlugin } from '@gauzy/plugin-integration-trello-ui';
 import { EverConnectUiPlugin } from '@gauzy/plugin-ever-connect-ui';
 import { DashboardTimeTrackReactUiPlugin } from '@gauzy/plugin-dashboard-time-track-react-ui';
 import { AiChatReactUiPlugin } from '@gauzy/plugin-ai-chat-react-ui';
@@ -103,6 +104,8 @@ export const uiPluginConfig: PluginUiConfig = {
 		IntegrationLinearUiPlugin,
 		// Integrations > Asana, the same way (ASANA_ENABLED).
 		IntegrationAsanaUiPlugin,
+		// Integrations > Trello, the same way (TRELLO_ENABLED).
+		IntegrationTrelloUiPlugin,
 		// Integrations > Ever Platform. Where the API's Ever Platform module is not loaded (the
 		// default) the page only says so.
 		EverConnectUiPlugin,

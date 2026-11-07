@@ -12,6 +12,7 @@ import {
 	ChatDirectDTO,
 	ChatMembersDTO,
 	ChatMemberStateDTO,
+	ChatFilesQueryDTO,
 	ChatMessageCreateDTO,
 	ChatMessagesQueryDTO,
 	ChatReadDTO
@@ -78,7 +79,7 @@ export class ChatConversationController {
 	@Delete('/categories/:id')
 	@Permissions(PermissionsEnum.CHAT_MANAGE)
 	@HttpCode(HttpStatus.NO_CONTENT)
-	@ApiOperation({ summary: 'Delete a category; its channels stay, uncategorised (CHAT_MANAGE).' })
+	@ApiOperation({ summary: 'Delete a category; its channels stay, uncategorized (CHAT_MANAGE).' })
 	async deleteCategory(@Param('id', UUIDValidationPipe) id: ID): Promise<void> {
 		await this.conversations.deleteCategory(this.access.caller(), id);
 	}
@@ -236,6 +237,14 @@ export class ChatConversationController {
 	@ApiOperation({ summary: 'The pinned messages of a conversation.' })
 	pins(@Param('id', UUIDValidationPipe) id: ID) {
 		return this.messages.pins(this.access.caller(), id);
+	}
+
+	@Get('/conversations/:id/files')
+	@Header('Cache-Control', 'no-store')
+	@UseValidationPipe({ whitelist: true, transform: true })
+	@ApiOperation({ summary: 'The files the messages of a conversation carry, newest first (the document links the sends wrote).' })
+	files(@Param('id', UUIDValidationPipe) id: ID, @Query() query: ChatFilesQueryDTO) {
+		return this.messages.files(this.access.caller(), id, query);
 	}
 
 	@Post('/conversations/:id/messages')
