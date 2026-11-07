@@ -28,7 +28,7 @@ export function entrySummary(item: Row) {
 		...(item['options'] || item['response'] || item['requireReason']
 			? {
 					decision: {
-						options: (item['options'] ?? []).map((option: Row) => ({ id: option['id'], label: option['label'] ?? null, style: option['style'] ?? null })),
+						options: (item['options'] ?? []).map((option: Row) => ({ id: option['id'], label: option['label'] ?? null, description: option['description'] ?? null, recommended: !!option['recommended'] })),
 						requireReason: !!item['requireReason'],
 						response: item['response'] ?? null
 					}
