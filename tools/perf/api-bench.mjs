@@ -258,12 +258,17 @@ async function resolveContext() {
 	const employeeOfUser = !!vars.employeeId;
 	const c = (await pgClient()) ?? sqliteClient();
 	if (c) {
-		// The organization with the most employees, so list endpoints return real pages.
-		const org = await c.query(
-			`select o.id from organization o left join employee e on e."organizationId" = o.id
+		// The signed-in employee's organization, where the setup (daily plans, manual time) is accepted for that
+		// employee; a user without an employee record benches the organization with the most employees, so list
+		// endpoints return real pages.
+		const employeeOrganizationId = user.employee?.organizationId;
+		const org = employeeOrganizationId
+			? { rows: [{ id: employeeOrganizationId }] }
+			: await c.query(
+					`select o.id from organization o left join employee e on e."organizationId" = o.id
 			  where o."tenantId" = $1 group by o.id order by count(e.id) desc, min(o."createdAt") limit 1`,
-			[user.tenantId]
-		);
+					[user.tenantId]
+			  );
 		vars.organizationId = org.rows[0]?.id;
 		if (!vars.employeeId) {
 			const emp = await c.query(
