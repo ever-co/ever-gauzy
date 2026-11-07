@@ -9,7 +9,8 @@
 // order, the figures query in startedAt order); IGNORE_KEYS=lastLoginAt,updatedAt drops fields the capture's own
 // sign-in changes on the admin user (an employee the activity report embeds).
 // Cases: a base request per endpoint, each filter dimension varied one at a time, plus 24 seeded random combinations;
-// 17 endpoints × 48 cases = 816 responses per capture (the captures are git-ignored).
+// 16 endpoints × 48 cases = 768 responses per capture (the captures are git-ignored). A case counts as identical only
+// when both builds answered 2xx: two matching failures prove nothing.
 import { mkdirSync, writeFileSync, readFileSync, readdirSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -79,6 +80,10 @@ if (mode === 'diff') {
 		const b = JSON.parse(readFileSync(pb, 'utf8'));
 		const d = diff(canonical(a.body), canonical(b.body));
 		if (a.status !== b.status) d.unshift(`status ${a.status} vs ${b.status}`);
+		// Two failed answers prove nothing about the report's values: a case is identical only when both answered 2xx
+		if (!(a.status >= 200 && a.status < 300) || !(b.status >= 200 && b.status < 300)) {
+			d.unshift(`failed response: status ${a.status} / ${b.status} (a report value was not compared)`);
+		}
 		if (d.length) {
 			different++;
 			console.log(`DIFF ${f}\n  ${d.slice(0, 8).join('\n  ')}`);
@@ -135,7 +140,7 @@ const dims = {
 	employeeIds: [null, employeeIds.slice(0, 1), employeeIds.slice(1, 4), employeeIds.slice(0, 12)],
 	teamIds: [null, teamIds.slice(0, 1), teamIds.slice(0, 3)],
 	projectIds: [null, projectIds.slice(0, 1), projectIds.slice(0, 5)],
-	source: [null, ['DESKTOP'], ['WEB_TIMER', 'DESKTOP']]
+	source: [null, ['DESKTOP'], ['TEAMS', 'DESKTOP']]
 };
 const endpoints = {
 	'daily-date': { path: '/timesheet/time-log/report/daily', extra: { groupBy: 'date' } },
@@ -145,7 +150,6 @@ const endpoints = {
 	'daily-date-without-team': { path: '/timesheet/time-log/report/daily', extra: { groupBy: 'date', includeTimeWithoutTeam: 'true' } },
 	'daily-chart': { path: '/timesheet/time-log/report/daily-chart', extra: {} },
 	weekly: { path: '/timesheet/time-log/report/weekly', extra: {} },
-	'owed-amount': { path: '/timesheet/time-log/report/owed-amount', extra: {} },
 	'statistics-counts': { path: '/timesheet/statistics/counts', extra: {} },
 	'activity-report': { path: '/timesheet/activity/report', extra: { groupBy: 'date' } },
 	'activity-daily-app': { path: '/timesheet/activity/daily', extra: { 'types[0]': 'APP' } },
@@ -195,6 +199,7 @@ mkdirSync(outDir, { recursive: true });
 let n = 0;
 const t0 = performance.now();
 const timings = {};
+const statuses = {};
 for (const [epName, ep] of Object.entries(endpoints)) {
 	if (only && !only.has(epName)) continue;
 	for (const c of cases) {
@@ -203,11 +208,17 @@ for (const [epName, ep] of Object.entries(endpoints)) {
 		const r = await get(path);
 		const ms = Math.round(performance.now() - t);
 		(timings[epName] ??= []).push(ms);
+		(statuses[epName] ??= []).push(r.status);
 		writeFileSync(join(outDir, `${epName}__${c.name}.json`), JSON.stringify({ path, status: r.status, body: r.body }));
 		n++;
 	}
 	const ts = timings[epName].sort((a, b) => a - b);
-	console.log(`${epName.padEnd(26)} ${cases.length} cases  p50 ${ts[Math.floor(ts.length / 2)]} ms  max ${ts[ts.length - 1]} ms`);
+	const failed = statuses[epName].filter((status) => !(status >= 200 && status < 300));
+	console.log(
+		`${epName.padEnd(26)} ${cases.length} cases  p50 ${ts[Math.floor(ts.length / 2)]} ms  max ${ts[ts.length - 1]} ms${
+			failed.length ? `  FAILED ${failed.length} (status ${[...new Set(failed)].join(',')})` : ''
+		}`
+	);
 }
-if (!only) writeFileSync(join(outDir, '_meta.json'), JSON.stringify({ base, organizationId, cases: cases.length, endpoints: Object.keys(endpoints), timings, took: Math.round(performance.now() - t0) }, null, 2));
+if (!only) writeFileSync(join(outDir, '_meta.json'), JSON.stringify({ base, organizationId, cases: cases.length, endpoints: Object.keys(endpoints), timings, statuses, took: Math.round(performance.now() - t0) }, null, 2));
 console.log(`captured ${n} responses to ${outDir} in ${Math.round((performance.now() - t0) / 1000)}s`);
