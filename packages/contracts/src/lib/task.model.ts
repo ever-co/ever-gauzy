@@ -182,3 +182,96 @@ export interface ITaskAdvancedFilter extends IBaseRelationsEntityModel {
 export interface IAdvancedTaskFiltering {
 	filters?: ITaskAdvancedFilter;
 }
+
+// ------------------------------------------------------------------ task views extensions (bulk update, references, built-in views)
+
+/** The most tasks one bulk update takes. */
+export const TASK_BULK_UPDATE_MAX = 100;
+
+/**
+ * What a bulk update changes on a task. Lists take `add` / `remove` (applied to the task's current list) or `set`
+ * (the whole list); the previous values the platform answers use `set`, so an undo is the same request with them.
+ */
+export interface ITaskBulkChanges {
+	status?: TaskStatusEnum | null;
+	taskStatusId?: ID | null;
+	priority?: TaskPriorityEnum | null;
+	taskPriorityId?: ID | null;
+	size?: TaskSizeEnum | null;
+	taskSizeId?: ID | null;
+	addTagIds?: ID[];
+	removeTagIds?: ID[];
+	setTagIds?: ID[];
+	addMemberIds?: ID[];
+	removeMemberIds?: ID[];
+	setMemberIds?: ID[];
+	projectId?: ID | null;
+	organizationSprintId?: ID | null;
+	dueDate?: Date | null;
+	isArchived?: boolean;
+}
+
+export interface ITaskBulkUpdateItem {
+	taskId: ID;
+	changes: ITaskBulkChanges;
+}
+
+/** `POST /tasks/bulk-update`: one change for many tasks (`taskIds` + `changes`), or a change per task (`items`). */
+export interface ITaskBulkUpdateInput extends IBasePerTenantAndOrganizationEntityModel {
+	taskIds?: ID[];
+	changes?: ITaskBulkChanges;
+	items?: ITaskBulkUpdateItem[];
+}
+
+export interface ITaskBulkUpdateResult {
+	taskId: ID;
+	ok: boolean;
+	/** Why the task was not changed (not found, not this organization's, refused by the update). */
+	error?: string;
+	/** The values before the change, as the changes that put them back. */
+	previous?: ITaskBulkChanges;
+}
+
+export interface ITaskBulkUpdateOutcome {
+	applied: number;
+	refused: number;
+	results: ITaskBulkUpdateResult[];
+}
+
+/** `POST /tasks/resolve-references`: `KEY-number` references to resolve, at most fifty. */
+export interface ITaskReferenceResolveInput extends IBasePerTenantAndOrganizationEntityModel {
+	references: string[];
+}
+
+export interface ITaskReferenceResolution {
+	/** The reference as it was sent. */
+	reference: string;
+	key: string;
+	number: number;
+	resolved: boolean;
+	/** More than one project answers to the key with that number: refused rather than guessed. */
+	ambiguous?: boolean;
+	taskId?: ID;
+	projectId?: ID;
+	title?: string;
+	status?: TaskStatusEnum;
+	/** The key the task is addressed by today (the project's current key). */
+	currentKey?: string;
+}
+
+/** The views the platform computes without saving: my tasks, this week, overdue, due soon. */
+export enum TaskBuiltInViewEnum {
+	MINE = 'mine',
+	THIS_WEEK = 'this-week',
+	OVERDUE = 'overdue',
+	DUE_SOON = 'due-soon'
+}
+
+/** `GET /tasks/built-in/:key`: the caller's time zone (IANA) decides the day and week bounds. */
+export interface ITaskBuiltInViewQuery extends IBasePerTenantAndOrganizationEntityModel {
+	timeZone?: string;
+	take?: number;
+	skip?: number;
+	/** `relations` the page carries (the same as the task list). */
+	relations?: string[];
+}

@@ -8,3 +8,4 @@ export * from './get-task-by-date-filter.dto';
 export * from './task-advanced-filter.dto';
 export * from './task-query.dto';
 export * from './task-by-number.dto';
+export * from './task-views-extensions.dto';

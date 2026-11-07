@@ -21,7 +21,8 @@ import { PermissionGuard, TenantPermissionGuard } from '../../shared/guards';
 import { CrudController, FindOptionsQueryDTO, BaseQueryDTO } from '../../core/crud';
 import { TaskView } from './view.entity';
 import { TaskViewService } from './view.service';
-import { CreateViewDTO, UpdateViewDTO } from './dto';
+import { CreateViewDTO, TaskViewOrderDTO, UpdateViewDTO } from './dto';
+import { TaskViewsEnabledGuard } from '../task-views-enabled';
 import { TaskViewCreateCommand, TaskViewUpdateCommand } from './commands';
 import { Permissions } from '../../shared/decorators';
 import { TenantOrganizationBaseDTO } from '../../core/dto';
@@ -105,6 +106,23 @@ export class TaskViewController extends CrudController<TaskView> {
 	@UseValidationPipe()
 	async update(@Param('id', UUIDValidationPipe) id: ID, @Body() entity: UpdateViewDTO): Promise<ITaskView> {
 		return await this.commandBus.execute(new TaskViewUpdateCommand(id, entity));
+	}
+
+	/**
+	 * PUT the manual order of a view: the task ids in the order the view shows them. Behind
+	 * `GAUZY_TASK_VIEWS_ENABLED` (404 otherwise); a stated `expectedVersion` is refused with 409 when stale.
+	 */
+	@ApiOperation({ summary: "Set a view's manual task order." })
+	@ApiResponse({ status: HttpStatus.OK, description: 'The view with its new order and version' })
+	@ApiResponse({ status: HttpStatus.CONFLICT, description: 'TASK_VIEW_VERSION_CONFLICT' })
+	@ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Record not found, or the extensions are off' })
+	@HttpCode(HttpStatus.OK)
+	@Permissions(PermissionsEnum.ORG_TASK_EDIT)
+	@UseGuards(TaskViewsEnabledGuard)
+	@Put('/:id/order')
+	@UseValidationPipe({ whitelist: true })
+	async setOrder(@Param('id', UUIDValidationPipe) id: ID, @Body() input: TaskViewOrderDTO): Promise<ITaskView> {
+		return await this.taskViewService.setOrder(id, input);
 	}
 
 	@ApiOperation({ summary: 'Delete view' })

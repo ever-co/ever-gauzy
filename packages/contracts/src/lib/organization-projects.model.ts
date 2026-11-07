@@ -89,6 +89,10 @@ export interface IOrganizationProjectSetting extends IBasePerTenantAndOrganizati
 }
 
 export interface IOrganizationProject extends IOrganizationProjectBase {
+	/** The key tasks are addressed by (`API` in `API-42`): upper-case letters and digits, unique within the organization. */
+	taskKey?: string | null;
+	/** The project's former keys, which keep resolving after a rename. */
+	taskKeyHistory?: string[] | null;
 	name: string; // Make sure these are required
 }
 
@@ -104,7 +108,9 @@ export interface IOrganizationProjectsFindInput
 	relations?: string[];
 }
 
-export interface IOrganizationProjectCreateInput extends IOrganizationProjectBase, IMemberEntityBased {}
+export interface IOrganizationProjectCreateInput extends IOrganizationProjectBase, IMemberEntityBased {
+	taskKey?: string | null;
+}
 
 export interface IOrganizationProjectUpdateInput extends IOrganizationProjectCreateInput {}
 

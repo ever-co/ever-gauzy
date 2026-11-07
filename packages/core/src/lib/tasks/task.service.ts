@@ -22,7 +22,8 @@ import {
 	LessThanOrEqual,
 	MoreThanOrEqual,
 	Raw,
-	SaveOptions
+	SaveOptions,
+	Not
 } from 'typeorm';
 import { isBoolean, isUUID } from 'class-validator';
 import { SOFT_DELETABLE_FILTER } from 'mikro-orm-soft-delete';
@@ -48,7 +49,15 @@ import {
 	NotificationActionTypeEnum,
 	ITimeLog,
 	TaskSyncScopeEnum,
-	TimesheetStatus
+	TimesheetStatus,
+	ITaskBuiltInViewQuery,
+	ITaskBulkUpdateInput,
+	ITaskBulkUpdateOutcome,
+	ITaskBulkUpdateResult,
+	ITaskReferenceResolution,
+	ITaskReferenceResolveInput,
+	TaskBuiltInViewEnum,
+	TaskStatusEnum
 } from '@gauzy/contracts';
 import { isEmpty, isNotEmpty } from '@gauzy/utils';
 import { isMySQL, isPostgres, isSqlite } from '@gauzy/config';
@@ -78,6 +87,9 @@ import { TaskEvent } from '../event-bus/events/task.event';
 import { BaseEntityEventTypeEnum } from '../event-bus/base-entity-event';
 import { IFindOneOptions } from '../core/crud/icrud.service';
 import { Task } from './task.entity';
+import { BulkUpdateRequestError, changesToUpdate, normalizeBulkUpdate } from './bulk-update';
+import { derivedProjectKey, keysOfProject, normalizeTaskKey, parseTaskReference } from './task-reference';
+import { BUILT_IN_VIEW_DEFAULT_RELATIONS, BUILT_IN_VIEW_RELATIONS, builtInViewWindow, relationsTreeOf } from './built-in-views';
 import { TypeOrmOrganizationSprintTaskHistoryRepository } from './../organization-sprint/repository/type-orm-organization-sprint-task-history.repository';
 import { GetTaskByIdDTO } from './dto';
 import { prepareSQLQuery as p } from './../database/database.helper';
@@ -2481,4 +2493,218 @@ export class TaskService extends TenantAwareCrudService<Task> {
 		const date = new Date(value);
 		return Number.isNaN(date.getTime()) ? null : date;
 	}
+
+	// ------------------------------------------------------------------ task views extensions
+
+	/**
+	 * Changes many tasks in one request. Each task is read in the caller's tenant and the request's organization,
+	 * its changes are turned into the update the single route runs (tag and member lists computed from the task as
+	 * it is), `apply` runs that update (the controller passes the update command, so activity, notifications and
+	 * sync events happen per task exactly as for one update), and the previous values are answered so the caller
+	 * can undo. A task that is missing, another organization's, or refused by its update is reported; the others
+	 * are applied. Tasks are applied one after another.
+	 */
+	async bulkUpdate(
+		input: ITaskBulkUpdateInput,
+		apply: (id: ID, update: Partial<ITaskUpdateInput>) => Promise<ITask>
+	): Promise<ITaskBulkUpdateOutcome> {
+		let items: ReturnType<typeof normalizeBulkUpdate>;
+		try {
+			items = normalizeBulkUpdate(input);
+		} catch (error) {
+			if (error instanceof BulkUpdateRequestError) {
+				throw new BadRequestException(`${error.code}: ${error.message}`);
+			}
+			throw error;
+		}
+		const tenantId = tenantIdOf(input);
+		const organizationId = organizationIdOf(input);
+		const results: ITaskBulkUpdateResult[] = [];
+		for (const item of items) {
+			const taskId = String(item.taskId);
+			let task: Task | null = null;
+			try {
+				task = await this.typeOrmRepository.findOne({
+					where: { id: taskId, tenantId, organizationId },
+					relations: { tags: true, members: true }
+				});
+			} catch (error) {
+				results.push({ taskId, ok: false, error: `TASK_READ_FAILED: ${(error as Error)?.message ?? 'unknown'}` });
+				continue;
+			}
+			if (!task) {
+				results.push({ taskId, ok: false, error: 'TASK_NOT_FOUND: no such task in this organization.' });
+				continue;
+			}
+			const { update, previous } = changesToUpdate(task, item.changes);
+			try {
+				await apply(task.id, update);
+				results.push({ taskId, ok: true, previous });
+			} catch (error) {
+				const message = (error as { message?: unknown })?.message;
+				const text = typeof message === 'string' ? message : (message as { message?: string })?.message ?? 'The update was refused.';
+				results.push({ taskId, ok: false, error: text, previous });
+			}
+		}
+		const applied = results.filter((result) => result.ok).length;
+		return { applied, refused: results.length - applied, results };
+	}
+
+	/**
+	 * Resolves `KEY-number` references to tasks of the organization: by the project's key, its former keys, or
+	 * the key derived from its name (the prefix the create path writes). A reference nobody answers to, or a
+	 * number no task of that project holds, resolves to nothing; a task that cannot be read answers the same.
+	 */
+	async resolveReferences(input: ITaskReferenceResolveInput): Promise<ITaskReferenceResolution[]> {
+		const tenantId = tenantIdOf(input);
+		const organizationId = organizationIdOf(input);
+		const projects = await this.typeOrmRepository.manager.find(OrganizationProject, {
+			where: { tenantId, organizationId },
+			select: { id: true, name: true, taskKey: true, taskKeyHistory: true }
+		});
+		const byKey = new Map<string, OrganizationProject[]>();
+		for (const project of projects) {
+			for (const key of keysOfProject(project)) {
+				const list = byKey.get(key) ?? [];
+				list.push(project);
+				byKey.set(key, list);
+			}
+		}
+		const resolutions: ITaskReferenceResolution[] = [];
+		for (const reference of input.references ?? []) {
+			const parts = parseTaskReference(reference);
+			if (!parts) {
+				resolutions.push({ reference, key: '', number: 0, resolved: false });
+				continue;
+			}
+			const candidates = byKey.get(parts.key) ?? [];
+			// Every project answering to the key is read: a derived key two projects share (`Gauzy`, `Gauzy Teams`),
+			// or a former key that is now another project's, must not open whichever task the store listed first.
+			const matches =
+				candidates.length === 0
+					? []
+					: await this.typeOrmRepository.find({
+							where: { tenantId, organizationId, projectId: In(candidates.map((project) => project.id)), number: parts.number },
+							select: { id: true, title: true, status: true, projectId: true }
+						});
+			if (matches.length > 1) {
+				resolutions.push({ reference, key: parts.key, number: parts.number, resolved: false, ambiguous: true });
+				continue;
+			}
+			const found = matches[0] ?? null;
+			if (!found) {
+				resolutions.push({ reference, key: parts.key, number: parts.number, resolved: false });
+				continue;
+			}
+			const project = candidates.find((candidate) => candidate.id === found?.projectId);
+			resolutions.push({
+				reference,
+				key: parts.key,
+				number: parts.number,
+				resolved: true,
+				taskId: found.id,
+				projectId: found.projectId,
+				title: found.title,
+				status: found.status as TaskStatusEnum,
+				currentKey: project ? (normalizeTaskKey(project.taskKey) ?? derivedProjectKey(project.name) ?? parts.key) : parts.key
+			});
+		}
+		return resolutions;
+	}
+
+	/**
+	 * The caller's tasks of a built-in view (`mine`, `this-week`, `overdue`, `due-soon`), the day and week bounds
+	 * computed in the caller's time zone. The caller is the signed-in employee; a user without an employee has no
+	 * tasks of their own.
+	 */
+	async findBuiltInView(key: TaskBuiltInViewEnum, query: ITaskBuiltInViewQuery): Promise<IPagination<ITask>> {
+		// The caller's own employee record: `currentEmployeeId()` answers null for a `CHANGE_SELECTED_EMPLOYEE` holder.
+		const employeeId = RequestContext.currentUser()?.employeeId ?? RequestContext.currentEmployeeId();
+		if (!employeeId) {
+			return { items: [], total: 0 };
+		}
+		const tenantId = tenantIdOf(query);
+		const organizationId = organizationIdOf(query);
+		const window = builtInViewWindow(key, new Date(), query.timeZone);
+		const where: FindOptionsWhere<Task> = {
+			tenantId,
+			organizationId,
+			isScreeningTask: false
+		};
+		if (window.dueDateFrom && window.dueDateTo) {
+			where.dueDate = Between(window.dueDateFrom, window.dueDateTo);
+		} else if (window.dueDateFrom) {
+			where.dueDate = MoreThanOrEqual(window.dueDateFrom);
+		} else if (window.dueDateTo) {
+			where.dueDate = LessThanOrEqual(window.dueDateTo);
+		}
+		// A task whose status is unset is still open: `NOT IN` alone would drop it (SQL `NOT IN` never matches NULL).
+		const closed = [TaskStatusEnum.DONE, TaskStatusEnum.COMPLETED, TaskStatusEnum.CANCELLED];
+		const wheres: FindOptionsWhere<Task>[] = window.openOnly
+			? [
+					{ ...where, status: Not(In(closed)) },
+					{ ...where, status: IsNull() }
+				]
+			: [where];
+		const take = Math.min(Math.max(Number(query.take) || 50, 1), 200);
+		const skip = Math.max(Number(query.skip) || 0, 0);
+		const requested = Array.isArray(query.relations) && query.relations.length > 0 ? query.relations : [...BUILT_IN_VIEW_DEFAULT_RELATIONS];
+		const refused = requested.filter((name) => !BUILT_IN_VIEW_RELATIONS.has(String(name)));
+		if (refused.length > 0) {
+			throw new BadRequestException(`RELATION_NOT_ALLOWED: a built-in view does not load ${refused.join(', ')}.`);
+		}
+		const relations = relationsTreeOf(requested) as FindOptionsRelations<Task>;
+		// The platform's sensitive-relation table applies here as on every other read (tracked time, for one).
+		this.assertRelationsPermitted({ relations });
+		// Membership is a subquery, never a join shared with the loaded `members` relation: a join used for both
+		// would list the caller as a task's only assignee. The page of ids first, then the rows with every relation.
+		const idsQuery = this.typeOrmRepository
+			.createQueryBuilder('task')
+			.select(['task.id'])
+			.where(wheres)
+			.andWhere((qb) => {
+				const membership = qb
+					.subQuery()
+					.select('"task_employee"."taskId"')
+					.from('task_employee', 'task_employee')
+					.where('"task_employee"."employeeId" = :employeeId')
+					.getQuery();
+				return `"task"."id" IN ${membership}`;
+			})
+			.setParameter('employeeId', employeeId)
+			.orderBy('task.dueDate', 'ASC')
+			.addOrderBy('task.createdAt', 'DESC')
+			.skip(skip)
+			.take(take);
+		const [page, total] = await idsQuery.getManyAndCount();
+		if (page.length === 0) {
+			return { items: [], total };
+		}
+		const ids = page.map((task) => task.id);
+		const rows = await this.typeOrmRepository.find({ where: { id: In(ids), tenantId, organizationId }, relations });
+		const byId = new Map(rows.map((task) => [String(task.id), task]));
+		return { items: ids.map((id) => byId.get(String(id))).filter((task): task is Task => !!task), total };
+	}
+}
+
+/**
+ * The organization a request names, in either form the base DTO accepts (`organizationId`, or `organization.id`,
+ * both checked against the caller's memberships by the DTO). Required: without one, a read scoped by the tenant
+ * alone would reach every organization of the tenant.
+ */
+function organizationIdOf(input: { organizationId?: ID; organization?: { id?: ID } | null }): ID {
+	const organizationId = input.organizationId ?? input.organization?.id;
+	if (!organizationId) {
+		throw new BadRequestException('TASK_SCOPE_REQUIRED: state the organization of the request.');
+	}
+	return organizationId;
+}
+
+/** The caller's tenant, which every one of these reads is scoped by; a request without one is refused. */
+function tenantIdOf(input: { tenantId?: ID }): ID {
+	const tenantId = RequestContext.currentTenantId() ?? input.tenantId;
+	if (!tenantId) {
+		throw new BadRequestException('TASK_SCOPE_REQUIRED: the tenant of the request is unknown.');
+	}
+	return tenantId;
 }
