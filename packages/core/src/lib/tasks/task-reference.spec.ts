@@ -9,7 +9,8 @@ import {
 	uniqueProjectKey,
 	proposedProjectKey,
 	assignProjectKeys,
-	heldKeysOf
+	heldKeysOf,
+	takenProjectKeys
 } from './task-reference';
 
 describe('task references', () => {
@@ -89,5 +90,22 @@ describe('project keys for projects without one', () => {
 			['4', 'FUN'],
 			['6', 'WEB2']
 		]);
+	});
+
+	it('keeps the alias a keyed project still answers to free, and leaves stored values alone', () => {
+		// `DPR Website` is keyed SITE but its tasks still open as DPR-n: `3D Print` must not take DPR.
+		expect(takenProjectKeys([{ name: 'DPR Website', taskKey: 'SITE' }, { name: 'Gauzy', taskKey: null }])).toEqual(new Set(['SITE', 'DPR']));
+		const assigned = assignProjectKeys([
+			{ id: 'a', name: 'DPR Website', taskKey: 'SITE' },
+			{ id: 'b', name: '3D Print', taskKey: null },
+			{ id: 'c', name: 'Blank', taskKey: '' },
+			{ id: 'd', name: 'Bad', taskKey: 'lower case' }
+		]);
+		expect([...assigned]).toEqual([['b', 'DPR2']]);
+	});
+
+	it('numbers past 999 while the key fits in ten characters', () => {
+		const taken = new Set(['PRO', ...Array.from({ length: 998 }, (_, index) => `PRO${index + 2}`)]);
+		expect(uniqueProjectKey('Project 1000', taken)).toBe('PRO1000');
 	});
 });

@@ -55,7 +55,9 @@ export class BackfillProjectTaskKeys1791000004900 implements MigrationInterface 
 		const byOrganization = new Map<string, ProjectRow[]>();
 		for (const row of rows) {
 			const scope = `${row.tenantId ?? ''}|${row.organizationId ?? ''}`;
-			byOrganization.set(scope, [...(byOrganization.get(scope) ?? []), row]);
+			const group = byOrganization.get(scope);
+			if (group) group.push(row);
+			else byOrganization.set(scope, [row]);
 		}
 		let written = 0;
 		for (const projects of byOrganization.values()) {
