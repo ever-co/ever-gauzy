@@ -16,6 +16,8 @@ export enum InboxItemKindEnum {
 	ESCALATION = 'ESCALATION',
 	/** Read-only information. */
 	NOTICE = 'NOTICE',
+	/** A platform notification (assignment, mention, comment, …) filed as an item of the unified inbox. */
+	NOTIFICATION = 'NOTIFICATION',
 	/** An email of one of my mailboxes (plan 04 §5, P4). */
 	EMAIL = 'EMAIL'
 }
@@ -62,7 +64,9 @@ export enum InboxTabEnum {
 	EMAIL = 'email',
 	/** My items snoozed until a time still to come (hidden from the other tabs until then). */
 	SNOOZED = 'snoozed',
-	ARCHIVED = 'archived'
+	ARCHIVED = 'archived',
+	/** My items marked done (hidden from the open tabs). */
+	DONE = 'done'
 }
 
 /** One option of a QUESTION (or an APPROVAL / ESCALATION that offers choices). */
@@ -121,11 +125,17 @@ export interface IInboxItemRecipient extends IBasePerTenantAndOrganizationEntity
 	/** `isArchived` / `archivedAt` (the base columns) are this recipient's archive state. */
 	snoozedUntil?: Date | null;
 	deliveredAt?: Date | null;
+	/** When this recipient marked the item done (hidden from the open tabs; found in the Done tab). */
+	doneAt?: Date | null;
 }
 
 /** An item with the caller's own recipient state (the list and detail answers). */
 export interface IInboxItemWithState extends IInboxItem {
-	recipient: Pick<IInboxItemRecipient, 'isRead' | 'readAt' | 'isArchived' | 'archivedAt' | 'snoozedUntil'> | null;
+	recipient:
+		| (Pick<IInboxItemRecipient, 'isRead' | 'readAt' | 'isArchived' | 'archivedAt' | 'snoozedUntil' | 'doneAt'> & {
+				isDone?: boolean;
+		  })
+		| null;
 }
 
 /** `GET /inbox/items` filters. */
@@ -170,6 +180,8 @@ export interface IInboxRecipientStateInput {
 	isArchived?: boolean;
 	/** ISO date-time; `null` un-snoozes. */
 	snoozedUntil?: Date | string | null;
+	/** Done: hidden from the open tabs, kept in the Done tab; `false` brings it back. */
+	isDone?: boolean;
 }
 
 /** One recipient of an item a source creates, with the state it already has there (if any). */
@@ -277,7 +289,13 @@ export const INBOX_SOURCE_HANDLER_REGISTRY = 'INBOX_SOURCE_HANDLER_REGISTRY';
 export const INBOX_ITEM_WRITER = 'INBOX_ITEM_WRITER';
 
 /** The recipient state a change stated (`IInboxItemChange.stated`). */
-export type IInboxRecipientStateField = 'isRead' | 'isArchived' | 'snoozedUntil';
+export type IInboxRecipientStateField = 'isRead' | 'isArchived' | 'snoozedUntil' | 'isDone';
+
+/**
+ * The `externalSource` of the items the Inbox files for the platform's own employee notifications (the unified
+ * inbox): `externalId` is the notification's id, so the two stay one fact with one read state.
+ */
+export const INBOX_NOTIFICATION_EXTERNAL_SOURCE = 'gauzy-notification';
 
 /**
  * What changed in the Inbox (`IInboxItemObserver.changed`): an item itself (created, re-delivered by its source,

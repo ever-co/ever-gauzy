@@ -138,4 +138,10 @@ export class InboxStateDTO implements IInboxRecipientStateInput {
 	@Type(() => Date)
 	@IsDate()
 	snoozedUntil?: Date | null;
+
+	/** Done (hidden from the open tabs, kept in the Done tab); `false` brings the item back. */
+	@ApiPropertyOptional({ type: () => Boolean })
+	@IsOptional()
+	@IsBoolean()
+	isDone?: boolean;
 }

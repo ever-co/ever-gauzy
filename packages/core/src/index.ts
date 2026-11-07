@@ -104,6 +104,15 @@ export { EmployeeCreateNotificationEvent, EmployeeNotificationCreatedEvent } fro
 // them itself or it fails DI at boot on the first plugin that injects either service.
 export { ActivityLogModule } from './lib/activity-log/activity-log.module';
 export { MentionModule } from './lib/mention/mention.module';
+// The notification facts other packages act on: the Inbox files created notifications as items and mirrors
+// their read state; the real-time channel turns them into addressed hints.
+export {
+	EmployeeCreateNotificationEvent,
+	EmployeeNotificationCreatedEvent,
+	EmployeeNotificationUpdatedEvent
+} from './lib/employee-notification/events';
+export type { IEmployeeNotificationStateChange } from './lib/employee-notification/events';
+export { FollowerFanOutService, isNotificationFanOutEnabled } from './lib/entity-subscription/fan-out';
 // Same rationale as `MentionService` above, for the entity-subscription fan-out: the handler is
 // registered by core, but a plugin that wants an author subscribed to the entity they just created
 // (the pattern `CommentService` uses) needs the event CLASS to publish — `@nestjs/cqrs` dispatches
