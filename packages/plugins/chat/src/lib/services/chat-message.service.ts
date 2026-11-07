@@ -7,7 +7,10 @@ import {
 	CHAT_MESSAGE_MAX_LENGTH,
 	ChatMessageKindEnum,
 	ChatTaskReferenceKindEnum,
+	DocumentKindEnum,
 	IChatEvent,
+	IChatFilesQuery,
+	IChatFilesResult,
 	IChatMessageCreateInput,
 	IChatMessagePage,
 	IChatMessagesQuery,
@@ -19,9 +22,11 @@ import {
 	IChatTaskReference,
 	ID,
 	ReactionEntityEnum,
-	IChatThreadReadResult
+	IChatThreadReadResult,
+	BaseEntityEnum
 } from '@gauzy/contracts';
 import { Reaction } from '@gauzy/core';
+import { chatFileOf, chatSqlDialectOf, ChatSqlDialect, IChatFileDocument, IChatFileLink, jsonListHasColumn, linkMetadataOf } from '../chat-files';
 import { mentionedEmployees, parseMentions } from '../chat-mentions';
 import { CHAT_MAX_PAGE_SIZE, CHAT_PAGE_SIZE, CHAT_READ_RESTORE_TTL_MS } from '../chat.constants';
 import { ChatConversation } from '../entities/chat-conversation.entity';
@@ -268,7 +273,8 @@ export class ChatMessageService {
 		const attachmentIds = this.validAttachments(input.attachmentIds);
 
 		// The same send twice (a retry, however late, the message since deleted or not) answers the same message, so
-		// the unique (author, nonce) key never refuses a retry.
+		// the unique (author, nonce) key never refuses a retry — before the files are checked: a file deleted since
+		// the first send is no reason to refuse the retry of a send that went through.
 		if (input.nonce) {
 			const existing = await this.sentWithNonce(caller, input.nonce);
 			if (existing) {
@@ -276,6 +282,7 @@ export class ChatMessageService {
 				return { message, events: [] };
 			}
 		}
+		await this.requireOwnFiles(caller, attachmentIds);
 
 		let root: ChatMessage | null = null;
 		if (input.threadRootId) {
@@ -370,6 +377,7 @@ export class ChatMessageService {
 						})
 					);
 				}
+				await this.linkAttachments(manager, caller, conversation, created.id as ID, attachmentIds, false);
 				return { created, count };
 			});
 			message = written.created;
@@ -427,9 +435,19 @@ export class ChatMessageService {
 		message.mentionEmployeeIds = mentioned.length ? JSON.stringify(mentioned) : null;
 		message.mentionsChannel = parsed.channel;
 		message.mentionsHere = parsed.here;
-		if (input.attachmentIds) message.attachmentIds = this.validAttachments(input.attachmentIds).length ? JSON.stringify(this.validAttachments(input.attachmentIds)) : null;
+		const attachments = input.attachmentIds ? this.validAttachments(input.attachmentIds) : null;
+		if (attachments) {
+			await this.requireOwnFiles(caller, attachments);
+			message.attachmentIds = attachments.length ? JSON.stringify(attachments) : null;
+		}
 		message.editedAt = new Date();
-		await this.dataSource.getRepository(ChatMessage).save(message);
+		// The message and its links change together or not at all; the row's update lock holds a second edit of the
+		// same message until this one is committed, so two edits cannot leave the message with one set of attachments
+		// and the pane with another.
+		await this.dataSource.transaction(async (manager) => {
+			await manager.getRepository(ChatMessage).save(message);
+			if (attachments) await this.linkAttachments(manager, caller, conversation, message.id as ID, attachments, true);
+		});
 		// A mention the edit added or took away moves the badge of a member who has not read the message yet.
 		if (inTimeline(message) && (added.length || removed.length)) {
 			const position = await this.timelinePosition(caller.tenantId, message.conversationId, message, true);
@@ -467,6 +485,7 @@ export class ChatMessageService {
 				mentionEmployeeIds: null,
 				deletedAt: new Date()
 			} as never);
+			await manager.getRepository<ObjectLiteral>('DocumentLink').delete({ entity: BaseEntityEnum.ChatMessage, entityId: message.id, tenantId: caller.tenantId } as never);
 			if (timeline) {
 				// The timeline is one message shorter: the conversation's count follows, a read position past the end
 				// is brought back to it, and a member who had not read the message loses the badge it gave them.
@@ -680,6 +699,97 @@ export class ChatMessageService {
 	}
 
 	/** A message and its conversation, when the caller is a member; not found otherwise. */
+	// ---------------------------------------------------------------- files
+
+	/**
+	 * The files of a conversation: every document a message of it carries, newest first, with the message and its
+	 * author — read from the document links the sends wrote, so the pane is the same list the Docs plugin shows on
+	 * the documents' side. A link counts only when the message itself names the document (`attachmentIds`): a link
+	 * written any other way is not an attachment and cannot put a file under another member's name. A document that
+	 * is gone, or a message deleted since, is not a file any more, and takes no place on the page.
+	 */
+	async files(caller: IChatCaller, conversationId: ID, query: IChatFilesQuery = {}): Promise<IChatFilesResult> {
+		await this.access.requireMember(conversationId, caller);
+		const limit = Math.min(Math.max(Number(query.limit) || CHAT_PAGE_SIZE, 1), CHAT_MAX_PAGE_SIZE);
+		const skip = Math.max(Number(query.skip) || 0, 0);
+		const rows = (await this.dataSource
+			.getRepository<ObjectLiteral>('DocumentLink')
+			.createQueryBuilder('link')
+			.innerJoin(
+				ChatMessage,
+				'message',
+				`message.id = link.entityId AND message.conversationId = :conversationId AND message.deletedAt IS NULL AND ${jsonListHasColumn('message.attachmentIds', 'link.documentId', this.dialect())}`,
+				{ conversationId }
+			)
+			.innerJoin('Document', 'document', 'document.id = link.documentId AND document.tenantId = link.tenantId AND document.deletedAt IS NULL')
+			.where('link.entity = :entity', { entity: BaseEntityEnum.ChatMessage })
+			.andWhere('link.tenantId = :tenantId', { tenantId: caller.tenantId })
+			.select('link.documentId', 'documentId')
+			.addSelect('link.entityId', 'messageId')
+			.addSelect('link.createdAt', 'attachedAt')
+			.addSelect('message.authorEmployeeId', 'authorEmployeeId')
+			.addSelect('message.authorUserId', 'authorUserId')
+			.orderBy('link.createdAt', 'DESC')
+			.addOrderBy('link.id', 'DESC')
+			.offset(skip)
+			.limit(limit + 1)
+			.getRawMany()) as Array<Omit<IChatFileLink, 'conversationId'>>;
+		const page = rows.slice(0, limit);
+		const documentIds = [...new Set(page.map((row) => String(row.documentId)))];
+		const documents = documentIds.length
+			? ((await this.dataSource.getRepository<ObjectLiteral>('Document').find({
+					select: { id: true, name: true, originalFilename: true, mimeType: true, fileSize: true, status: true, storageProvider: true, storageKey: true, thumbKey: true },
+					where: { id: In(documentIds), tenantId: caller.tenantId }
+			  } as never)) as IChatFileDocument[])
+			: [];
+		const byId = new Map(documents.map((document) => [String(document.id), document]));
+		const files = page.map((row) => chatFileOf({ ...row, conversationId }, byId.get(String(row.documentId)))).filter((file): file is NonNullable<typeof file> => !!file);
+		return { files, hasMore: rows.length > limit };
+	}
+
+	/** Every attachment must be a file the caller uploaded (kind FILE, created by the caller's user) in the tenant. */
+	private async requireOwnFiles(caller: IChatCaller, documentIds: readonly ID[]): Promise<void> {
+		if (!documentIds.length) return;
+		const rows = (await this.dataSource.getRepository<ObjectLiteral>('Document').find({
+			select: { id: true },
+			where: { id: In([...documentIds]), tenantId: caller.tenantId, kind: DocumentKindEnum.FILE, createdByUserId: caller.userId }
+		} as never)) as Array<{ id: ID }>;
+		if (rows.length !== documentIds.length) throw new BadRequestException('Every attachment must be a file you uploaded.');
+	}
+
+	/**
+	 * The document links that make a message's attachments visible on the documents' side (and the files pane): one
+	 * per attachment; with `replace`, the links of attachments the message no longer carries go.
+	 */
+	private async linkAttachments(manager: EntityManager, caller: IChatCaller, conversation: ChatConversation, messageId: ID, documentIds: readonly ID[], replace: boolean): Promise<void> {
+		const links = manager.getRepository<ObjectLiteral>('DocumentLink');
+		const wanted = new Set(documentIds.map(String));
+		const existing = (await links.find({ select: { id: true, documentId: true }, where: { entity: BaseEntityEnum.ChatMessage, entityId: messageId, tenantId: caller.tenantId } } as never)) as Array<{ id: ID; documentId: ID }>;
+		const linked = new Set(existing.map((row) => String(row.documentId)));
+		if (replace) {
+			const gone = existing.filter((row) => !wanted.has(String(row.documentId))).map((row) => row.id);
+			if (gone.length) await links.delete({ id: In(gone) } as never);
+		}
+		for (const documentId of wanted) {
+			if (linked.has(documentId)) continue;
+			await links.save(
+				links.create({
+					documentId,
+					entity: BaseEntityEnum.ChatMessage,
+					entityId: messageId,
+					metadata: linkMetadataOf(conversation.id as ID, this.dialect()),
+					tenantId: caller.tenantId,
+					organizationId: conversation.organizationId ?? caller.organizationId ?? undefined
+				} as never)
+			);
+		}
+	}
+
+	/** The connection's dialect, for what the query builder cannot write portably (see `chat-files.ts`). */
+	private dialect(): ChatSqlDialect {
+		return chatSqlDialectOf(String(this.dataSource.options?.type));
+	}
+
 	private async messageAndConversation(caller: IChatCaller, messageId: ID): Promise<{ message: ChatMessage; conversation: ChatConversation }> {
 		const message = await this.dataSource.getRepository(ChatMessage).findOne({ where: { id: messageId, tenantId: caller.tenantId }, withDeleted: true });
 		if (!message) throw new NotFoundException('The requested record was not found');
