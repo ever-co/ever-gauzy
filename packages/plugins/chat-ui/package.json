@@ -34,7 +34,7 @@
 		"@gauzy/ui-core": "^0.1.0",
 		"@nebular/theme": "^18.0.0",
 		"@ngx-translate/core": "^18.0.0",
-		"marked": "^15.0.12",
+		"marked": "^15.0.0",
 		"rxjs": "^7.8.2",
 		"tslib": "^2.8.1"
 	},

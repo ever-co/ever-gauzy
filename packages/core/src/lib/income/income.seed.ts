@@ -27,6 +27,9 @@ const readIncomeDataFromCSV = (filePath: string): Promise<any[]> => {
 	});
 };
 
+/** The columns a seeded client is looked up and created by: scalar columns, so the payload is also a valid `where`. */
+type ClientPayload = Pick<OrganizationContact, 'name' | 'tenantId' | 'organizationId' | 'contactType' | 'budgetType'>;
+
 /**
  * Finds an existing client or creates a new OrganizationContact based on the payload.
  *
@@ -34,10 +37,7 @@ const readIncomeDataFromCSV = (filePath: string): Promise<any[]> => {
  * @param payload - The client details payload.
  * @returns A promise that resolves to an OrganizationContact.
  */
-const findOrCreateClient = async (
-	dataSource: DataSource,
-	payload: Partial<OrganizationContact>
-): Promise<OrganizationContact> => {
+const findOrCreateClient = async (dataSource: DataSource, payload: ClientPayload): Promise<OrganizationContact> => {
 	let client = await dataSource.manager.findOne(OrganizationContact, {
 		where: payload
 	});
