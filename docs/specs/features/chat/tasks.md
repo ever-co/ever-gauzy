@@ -33,9 +33,18 @@
 - [ ] **T16**. Search definition in the search plugin; `/chat/search` with membership filter
 - [ ] **T17**. GraphQL twins (gated schema) for the read routes; field-binding check entry
 
+## Phase 5 — Angular UI (lane G4, `packages/plugins/chat-ui`, PR 3)
+
+- [x] **T20**. Plugin package scaffolded from inbox-ui; registration (plugin-ui config, build lists, tsconfig path, app dependency, Dockerfile, API copy list)
+- [x] **T21**. `ChatUiService` (every phase-1 route), `ChatPeopleService` (employees once per organization), `ChatAvailabilityService` (nav entry + header badge follow `/chat/states`)
+- [x] **T22**. Helpers + specs: mention tokens ↔ chips, Markdown body through `marked` + the sanitizer, `@` query and suggestions, titles, sorting, grouping, merging
+- [x] **T23**. Page: conversation list (Unreads, Threads, favourites, channels by category, direct), conversation view (header actions, pins, older on scroll, newer polled every 5 s, read on view, mark unread from here), composer (Enter sends, `@` suggestions, edit mode), message actions (reply, react, pin, edit, delete) and task cards, thread pane (follow, also-send), Unreads view with mark-all-read + undo, Threads view, dialogs (new channel, new message, browse)
+- [ ] **T24**. In-cluster PR build green; bot threads answered; two users exchange messages live on dev
+- [ ] **T25**. Phase 2 UI: live channel through the realtime subscriptions (drop the polls), attachments, link previews, emoji autocomplete, send-to-chat from a task, create-task-from-message, categories and channel settings
+
 ## Phase 4 — Verification and docs
 
 - [ ] **T18**. CI/typecheck green; enable on dev; two users exchange messages, threads, reactions live; non-member 404
 - [x] **T19**. Plugin README; `docs/specs/README.md` status
 
-**Status 2026-11-07:** phase 1 in ever-gauzy #11683 (ready for review; 38 bot findings answered — organization boundary, membership/key rules, counters, undo handle, platform wiring). Phase 2 (T14–T17) follows after merge; T18 is the dev-environment check. A membership-checked typing route delegating to the real-time signals is planned for phase 2.
+**Status 2026-11-07:** phase 1 MERGED (ever-gauzy #11683, plus #11686 so the realtime plugin offers the chat events). The Angular UI (phase 5, T20–T23) is in ever-gauzy #11687 (draft; in-cluster build pending). Phase 2 (T14–T17) and the phase-2 UI (T25) follow; T18 / T24 are the dev-environment checks. A membership-checked typing route delegating to the real-time signals is planned for phase 2.
