@@ -50,20 +50,12 @@ export class DocumentReviewService {
 			return document;
 		}
 
-		const previous = document.reviewStatus;
-		await this.updateReview(document, {
-			reviewStatus: DocumentReviewStatusEnum.PENDING,
-			reviewReason: DocumentReviewReasonEnum.MANUAL,
-			reviewedById: null,
-			reviewedAt: null
-		});
-		if (input.reason) {
-			await this.mergeReviewMetadata(document, { requestReason: input.reason.slice(0, 1000) });
-		}
 		// The reviewers named: active employees of the organization whose role may read documents and who may read
 		// the page (a PRIVATE or TEAM page names only its creator, its team's members and its share grantees); the
 		// others are left out of the metadata and of the Inbox alike, so a request never tells someone of a page they
-		// cannot open. The list is stored even when empty: the previous request's reviewers are not this one's.
+		// cannot open. Resolved before the state changes: a lookup failure leaves the document as it was, so the
+		// requester can ask again. The list is stored even when empty: the previous request's reviewers are not this
+		// one's.
 		const reviewerEmployeeIds = input.reviewerEmployeeIds?.length
 			? await this.documentAccessService.readersAmong(
 					{
@@ -77,7 +69,18 @@ export class DocumentReviewService {
 					input.reviewerEmployeeIds
 				)
 			: [];
-		await this.mergeReviewMetadata(document, { requestedReviewerIds: reviewerEmployeeIds });
+
+		const previous = document.reviewStatus;
+		await this.updateReview(document, {
+			reviewStatus: DocumentReviewStatusEnum.PENDING,
+			reviewReason: DocumentReviewReasonEnum.MANUAL,
+			reviewedById: null,
+			reviewedAt: null
+		});
+		await this.mergeReviewMetadata(document, {
+			...(input.reason ? { requestReason: input.reason.slice(0, 1000) } : {}),
+			requestedReviewerIds: reviewerEmployeeIds
+		});
 		// §8/§9.4 — whoever asked for the review is the person who needs to hear about its
 		// outcome, so the request itself subscribes them to the document.
 		this.documentService.subscribeRequesterToDocument(document, EntitySubscriptionTypeEnum.MANUAL);
