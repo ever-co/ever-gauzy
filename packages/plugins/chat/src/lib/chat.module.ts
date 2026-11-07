@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { MentionModule, RolePermissionModule } from '@gauzy/core';
+import { MentionModule, RolePermissionModule , TaskModule } from '@gauzy/core';
 import { ChatConversationController } from './controllers/chat-conversation.controller';
 import { ChatMessageController } from './controllers/chat-message.controller';
 import { ChatCategory } from './entities/chat-category.entity';
@@ -31,7 +31,9 @@ export const CHAT_ENTITIES = [ChatCategory, ChatConversation, ChatMember, ChatMe
 		RolePermissionModule,
 		// Mentions go through the platform's mention service; message notifications through the CQRS bus.
 		MentionModule,
-		CqrsModule
+		CqrsModule,
+		// Typed `KEY-number` references are resolved by the platform's task service; a task made from a message by its command.
+		TaskModule
 	],
 	controllers: [ChatConversationController, ChatMessageController],
 	providers: [ChatAccessService, ChatRealtime, ChatNotifierService, ChatConversationService, ChatMessageService],
