@@ -18,6 +18,11 @@ jest.mock('@gauzy/core', () => {
 		TenantOrganizationBaseEntity: class {},
 		MikroOrmBaseEntityRepository: class {},
 		RolePermissionModule: class RolePermissionModule {},
+		// The notification bridge the module declares handles these events and reads these entities.
+		Employee: class Employee {},
+		EmployeeNotification: class EmployeeNotification {},
+		EmployeeNotificationCreatedEvent: class EmployeeNotificationCreatedEvent {},
+		EmployeeNotificationUpdatedEvent: class EmployeeNotificationUpdatedEvent {},
 		RequestContext: { currentTenantId: () => null, currentUserId: () => null, hasPermission: () => false },
 		FEATURE_GRAPHQL: 'FEATURE_GRAPHQL',
 		FeatureFlagGuard: class FeatureFlagGuard {},
