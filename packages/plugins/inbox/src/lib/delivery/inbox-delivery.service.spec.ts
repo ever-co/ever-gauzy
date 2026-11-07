@@ -3,11 +3,13 @@ import { InboxDeliveryChannelEnum, InboxDeliveryModeEnum } from '@gauzy/contract
 import { InboxItem } from '../entities/inbox-item.entity';
 import { InboxItemRecipient } from '../entities/inbox-item-recipient.entity';
 import { InboxDelivery } from './inbox-delivery.entity';
+import { InboxDeliveryContextUnavailableError } from './inbox-delivery-context';
 import { InboxDeliveryMailer } from './inbox-delivery-mailer';
 import { InboxDeliveryService } from './inbox-delivery.service';
 
 // The sweep runs each send inside a request context of the recipient's tenant; here the context is the test's.
 jest.mock('./inbox-delivery-context', () => ({
+	InboxDeliveryContextUnavailableError: class InboxDeliveryContextUnavailableError extends Error {},
 	deliveryUserOf: jest.fn(() => ({})),
 	runInDeliveryContext: jest.fn((_user: unknown, fn: () => Promise<unknown>) => fn())
 }));
@@ -31,6 +33,7 @@ function fixture(options: {
 	settings?: Record<string, Record<string, unknown>>;
 	insertFails?: boolean;
 	sendFails?: boolean;
+	contextFails?: boolean;
 } = {}) {
 	const query: Record<string, jest.Mock> = {};
 	for (const name of ['innerJoin', 'select', 'addSelect', 'where', 'setParameter', 'orderBy', 'limit']) query[name] = jest.fn(() => query);
@@ -80,6 +83,7 @@ function fixture(options: {
 	} as unknown as DataSource;
 	const mailer = {
 		sendNotification: jest.fn(async (_recipient: unknown, _line: unknown) => {
+			if (options.contextFails) throw new InboxDeliveryContextUnavailableError();
 			if (options.sendFails) throw new Error('SMTP refused');
 		}),
 		sendDigest: jest.fn(async (_recipient: unknown, _lines: unknown, _total: number) => {
@@ -170,6 +174,12 @@ describe('InboxDeliveryService.sendImmediate', () => {
 		expect(mailer.sendNotification).not.toHaveBeenCalled();
 		expect(delivery.update.mock.calls.map((call) => (call[1] as { lastError: string }).lastError)).toEqual(['The user has no email address.', 'The entry is gone.']);
 		expect(delivery.update.mock.calls.every((call) => (call[1] as { failedAt?: Date }).failedAt === NOW)).toBe(true);
+	});
+
+	it('raises the process\'s own context failure as the sweep\'s, leaving the rows untouched', async () => {
+		const { service, delivery } = fixture({ due: [dueRow('d1', InboxDeliveryModeEnum.IMMEDIATE)], items: [item('i-d1', '2026-11-07T12:00:00.000Z')], users: { u1: user('u1') }, contextFails: true });
+		await expect(service.sendImmediate(NOW, 200)).rejects.toBeInstanceOf(InboxDeliveryContextUnavailableError);
+		expect(delivery.update).not.toHaveBeenCalled();
 	});
 
 	it('records a failed attempt with a later next attempt, and gives up after the fifth', async () => {

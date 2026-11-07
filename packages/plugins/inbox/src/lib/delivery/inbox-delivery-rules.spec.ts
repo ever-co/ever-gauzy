@@ -36,6 +36,10 @@ describe('the delivery clock', () => {
 		expect(instantOfLocal('2026-11-01', 8, 0, 'America/New_York').toISOString()).toBe('2026-11-01T13:00:00.000Z');
 		expect(nextLocalDate('2026-10-31')).toBe('2026-11-01');
 		expect(nextLocalDate('2026-12-31')).toBe('2027-01-01');
+		// 14 March 2027 in New York: 02:00 becomes 03:00, so 02:30 does not exist and is the first instant after the gap.
+		expect(instantOfLocal('2027-03-14', 2, 30, 'America/New_York').toISOString()).toBe('2027-03-14T07:00:00.000Z');
+		expect(instantOfLocal('2027-03-14', 3, 0, 'America/New_York').toISOString()).toBe('2027-03-14T07:00:00.000Z');
+		expect(instantOfLocal('2027-03-14', 1, 59, 'America/New_York').toISOString()).toBe('2027-03-14T06:59:00.000Z');
 	});
 
 	it('reads HH:mm as minutes of the day, and nothing else', () => {
@@ -80,6 +84,15 @@ describe('the digest hour', () => {
 		expect(nextDigestAt(NOW, 15, 'Europe/Sofia').toISOString()).toBe('2026-11-07T13:00:00.000Z');
 		expect(nextDigestAt(NOW, 8, 'America/Los_Angeles').toISOString()).toBe('2026-11-07T16:00:00.000Z');
 		expect(nextDigestAt(NOW, 99, 'UTC').toISOString()).toBe('2026-11-08T08:00:00.000Z');
+	});
+
+	it('is today up to the last millisecond before the hour, and tomorrow from the hour itself', () => {
+		expect(nextDigestAt(new Date('2026-11-07T07:59:59.999Z'), 8, 'UTC').toISOString()).toBe('2026-11-07T08:00:00.000Z');
+		expect(nextDigestAt(new Date('2026-11-07T08:00:00.000Z'), 8, 'UTC').toISOString()).toBe('2026-11-08T08:00:00.000Z');
+		// A digest hour the clock skips on the day the clocks go forward goes out at the first instant after the gap.
+		expect(nextDigestAt(new Date('2027-03-14T05:30:00.000Z'), 2, 'America/New_York').toISOString()).toBe('2027-03-14T07:00:00.000Z');
+		// A window's end in the gap ends there too.
+		expect(windowEndAfter(new Date('2027-03-14T06:30:00.000Z'), { start: '22:00', end: '02:30' }, 'America/New_York').toISOString()).toBe('2027-03-14T07:00:00.000Z');
 	});
 
 	it('keeps the chosen hour across a daylight-saving change (the next calendar day, not 24 hours on)', () => {

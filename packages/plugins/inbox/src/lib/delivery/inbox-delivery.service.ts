@@ -6,7 +6,7 @@ import { InboxItemRecipient } from '../entities/inbox-item-recipient.entity';
 import { InboxNamedLocks } from '../email/database/named-locks';
 import { InboxDelivery } from './inbox-delivery.entity';
 import { InboxDeliveryMailer, IInboxDeliveryLine, IInboxDeliveryRecipient } from './inbox-delivery-mailer';
-import { deliveryUserOf, runInDeliveryContext } from './inbox-delivery-context';
+import { deliveryUserOf, InboxDeliveryContextUnavailableError, runInDeliveryContext } from './inbox-delivery-context';
 import {
 	INBOX_DELIVERY_DIGEST_MAX_ITEMS,
 	INBOX_DELIVERY_INTAKE_LOOKBACK_MS,
@@ -231,6 +231,8 @@ export class InboxDeliveryService {
 				await this.markSent([row], now);
 				sent += 1;
 			} catch (error) {
+				// This process cannot open a tenant-scoped context: the sweep's failure (the queue retries it), not the row's.
+				if (error instanceof InboxDeliveryContextUnavailableError) throw error;
 				await this.recordFailure([row], error, now);
 				failed += 1;
 			}
@@ -273,6 +275,7 @@ export class InboxDeliveryService {
 				await this.markSent(present, now);
 				sent += 1;
 			} catch (error) {
+				if (error instanceof InboxDeliveryContextUnavailableError) throw error;
 				await this.recordFailure(present, error, now);
 				failed += 1;
 			}

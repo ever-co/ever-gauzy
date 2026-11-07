@@ -19,8 +19,19 @@ jest.mock('@gauzy/plugin-integration-ever-works', () => ({
 // The Inbox, likewise: its real switch, a stub class.
 jest.mock('@gauzy/plugin-inbox', () => ({
 	InboxPlugin: class InboxPlugin {},
-	isInboxEnabled: jest.requireActual('../../../packages/plugins/inbox/src/lib/inbox-enabled').isInboxEnabled
+	InboxDeliveryPlugin: class InboxDeliveryPlugin {},
+	InboxEmailPlugin: class InboxEmailPlugin {},
+	isInboxEnabled: jest.requireActual('../../../packages/plugins/inbox/src/lib/inbox-enabled').isInboxEnabled,
+	isInboxNotificationEmailEnabled: jest.requireActual('../../../packages/plugins/inbox/src/lib/inbox-enabled')
+		.isInboxNotificationEmailEnabled,
+	isInboxEmailEnabled: () => false
 }));
+// The email providers the delivery sends through: stubs with their switches off (the list reads them only with the delivery on).
+jest.mock('@gauzy/plugin-email-provider-resend', () => ({ EmailProviderResendPlugin: class EmailProviderResendPlugin {}, isResendEnabled: () => false }));
+jest.mock('@gauzy/plugin-email-provider-postmark', () => ({ EmailProviderPostmarkPlugin: class EmailProviderPostmarkPlugin {}, isPostmarkEnabled: () => false }));
+jest.mock('@gauzy/plugin-email-provider-mailgun', () => ({ EmailProviderMailgunPlugin: class EmailProviderMailgunPlugin {}, isMailgunEnabled: () => false }));
+jest.mock('@gauzy/plugin-email-provider-sendgrid', () => ({ EmailProviderSendGridPlugin: class EmailProviderSendGridPlugin {}, isSendGridEnabled: () => false }));
+jest.mock('@gauzy/plugin-email-provider-ses', () => ({ EmailProviderSesPlugin: class EmailProviderSesPlugin {}, isSesEnabled: () => false }));
 jest.mock('@gauzy/plugin-catalog', () => ({ CatalogPlugin: class CatalogPlugin {} }));
 jest.mock('@gauzy/plugin-pricing', () => ({ PricingPlugin: class PricingPlugin {} }));
 jest.mock('@gauzy/plugin-tax', () => ({ TaxPlugin: class TaxPlugin {} }));
