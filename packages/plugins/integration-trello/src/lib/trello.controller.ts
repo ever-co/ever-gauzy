@@ -20,6 +20,7 @@ import {
 	TRELLO_ROUTE_PREFIX,
 	TRELLO_STATE_INVALID,
 	TRELLO_TOKEN_REFUSED,
+	TRELLO_REQUEST_REFUSED,
 	TRELLO_UNAVAILABLE,
 	TRELLO_WEBHOOK_NOT_REMOVED
 } from './trello.constants';
@@ -70,6 +71,10 @@ export class TrelloController {
 				if (error.isUnauthorized) {
 					await this.tenants.setAttention(tenant, 'token_refused');
 					throw new BadRequestException({ message: 'Trello refused the connection\'s token; connect again', code: TRELLO_TOKEN_REFUSED });
+				}
+				// The user lacks access to that one resource, or it is gone: the request's refusal, not the connection's.
+				if (error.isForbidden || error.isNotFound) {
+					throw new BadRequestException({ message: `Trello refused the request: ${error.message}`, code: TRELLO_REQUEST_REFUSED });
 				}
 				throw new BadGatewayException({ message: `Trello did not answer: ${error.message}`, code: TRELLO_UNAVAILABLE });
 			}

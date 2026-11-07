@@ -107,7 +107,7 @@ interface MappingDraft {
 									</tr>
 								</thead>
 								<tbody>
-									@for (mapping of mappings; track mapping.id) {
+									@for (mapping of mappings; track rowKey(mapping)) {
 										<tr [attr.data-test]="'mapping-' + mapping.id">
 											<td>
 												<strong>{{ mapping.trelloBoardName || mapping.trelloBoardId }}</strong>
@@ -492,12 +492,12 @@ export class TrelloSettingsComponent implements OnInit {
 	changeDirection(mapping: TrelloMapping, direction: TrelloDirection): void {
 		if (!this.integrationId || direction === mapping.direction) return;
 		// Refused (a project that already sends its tasks elsewhere, for one): the row shows the stored direction again.
-		this.request(this.api.updateMapping(this.integrationId, mapping.id, { direction }), (updated) => this.replace(updated), () => this.replace({ ...mapping }));
+		this.request(this.api.updateMapping(this.integrationId, mapping.id, { direction }), (updated) => this.replace(updated), () => this.restore(mapping));
 	}
 
 	changeSync(mapping: TrelloMapping, syncEnabled: boolean): void {
 		if (!this.integrationId || syncEnabled === mapping.syncEnabled) return;
-		this.request(this.api.updateMapping(this.integrationId, mapping.id, { syncEnabled }), (updated) => this.replace(updated), () => this.replace({ ...mapping }));
+		this.request(this.api.updateMapping(this.integrationId, mapping.id, { syncEnabled }), (updated) => this.replace(updated), () => this.restore(mapping));
 	}
 
 	registerWebhook(mapping: TrelloMapping): void {
@@ -531,7 +531,9 @@ export class TrelloSettingsComponent implements OnInit {
 		void this.router.navigate([TRELLO_LINK]);
 	}
 
-	/** One request with the busy flag and the error line. */
+	/** How many refused changes each row took (see `restore`). */
+	private readonly rowVersions = new Map<string, number>();
+
 	/** One request at a time: `apply` takes its answer; `revert` puts the page back when it was refused. */
 	private request<T>(request: Observable<T>, apply: (value: T) => void, revert?: () => void): void {
 		this.busy = true;
@@ -554,6 +556,21 @@ export class TrelloSettingsComponent implements OnInit {
 
 	private replace(updated: TrelloMapping): void {
 		this.mappings = this.mappings.map((mapping) => (mapping.id === updated.id ? updated : mapping));
+	}
+
+	/** A row's identity for the list: its mapping, and how many refused changes it took (each one re-creates the row). */
+	rowKey(mapping: TrelloMapping): string {
+		return `${mapping.id}:${this.rowVersions.get(mapping.id) ?? 0}`;
+	}
+
+	/**
+	 * Puts a row back as it is stored after a refused change. Replacing the mapping alone is not enough: the bound
+	 * values did not change, so the select and the checkbox keep the choice the person made; the row's key changes
+	 * instead, and the list re-creates the row with the stored values.
+	 */
+	private restore(mapping: TrelloMapping): void {
+		this.rowVersions.set(mapping.id, (this.rowVersions.get(mapping.id) ?? 0) + 1);
+		this.replace({ ...mapping });
 	}
 
 	private showError(error: unknown): void {
