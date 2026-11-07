@@ -13,7 +13,7 @@ import { apiClient } from '../../common/api-client';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
-import { registerCollaborationTools } from './index';
+import { registerCollaborationTools, restrictCollaborationTools } from './index';
 import { slice } from './docs';
 import { COLLABORATION_TOOLS, runWithCollaborationScopes } from './scopes';
 
@@ -385,6 +385,42 @@ describe('discovery', () => {
 			expect(schemaOf('search_pages').properties['topK']).toEqual(expect.objectContaining({ maximum: 12 }));
 			expect(schemaOf('search_pages').properties['documentIds']).toEqual(expect.objectContaining({ maxItems: 20 }));
 			expect(schemaOf('get_chat_thread').properties).toEqual(expect.objectContaining({ before: expect.anything(), after: expect.anything(), limit: expect.anything() }));
+		} finally {
+			await client.close();
+			await server.close();
+		}
+	});
+
+	/**
+	 * The shared server registered its groups under the deployment's fallback scopes, so `GAUZY_MCP_TOOLS_SCOPES=docs:read`
+	 * left out the chat tools even for a `chat:read` token on HTTP or WebSocket, whose scopes take precedence. It now
+	 * registers every enabled group; the transports decide per request, and an SDK transport (stdio) drops what the
+	 * fallback does not allow when it connects.
+	 */
+	it('registers every enabled group on the shared server, whatever the fallback scopes', () => {
+		const names: string[] = [];
+		const server = { registerTool: (name: string) => names.push(name), tool: () => undefined };
+		const registered = registerCollaborationTools(server as never, undefined, { ...ALL, GAUZY_MCP_TOOLS_SCOPES: 'docs:read' }, () => new Set(['docs:read']));
+		expect(registered).toEqual(['chat', 'docs', 'inbox']);
+		expect(names.sort()).toEqual(Object.keys(COLLABORATION_TOOLS).sort());
+		// A server made for one session still registers what that session holds.
+		expect(registerCollaborationTools(server as never, 'session', ALL, () => new Set(['docs:read']))).toEqual(['docs']);
+	});
+
+	it('removes the tools a scope list does not allow, so a client of that server neither lists nor reaches them', async () => {
+		const server = new McpServer({ name: 'collaboration-spec', version: '0.0.0' });
+		registerCollaborationTools(server, undefined, ALL);
+		expect(restrictCollaborationTools(server, new Set(['docs:read'])).sort()).toEqual(
+			Object.keys(COLLABORATION_TOOLS).filter((name) => !['list_pages', 'get_page', 'search_pages'].includes(name)).sort()
+		);
+		const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
+		const client = new Client({ name: 'collaboration-spec-client', version: '0.0.0' });
+		await Promise.all([server.connect(serverTransport), client.connect(clientTransport)]);
+		try {
+			const { tools: listed } = await client.listTools();
+			expect(listed.map((tool) => tool.name).sort()).toEqual(['get_page', 'list_pages', 'search_pages']);
+			const refused = await client.callTool({ name: 'list_chat_conversations', arguments: {} }).catch((error: Error) => ({ error: error.message }));
+			expect(JSON.stringify(refused)).toContain('not found');
 		} finally {
 			await client.close();
 			await server.close();

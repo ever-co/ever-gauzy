@@ -61,9 +61,10 @@ export function parseScopes(value: string | undefined | null): Set<string> | nul
 }
 
 /**
- * The scopes one session holds, in this order: the scopes its bearer token carried, when the transport recorded them
- * on the session (`metadata.oauthScopes`); else the deployment's `GAUZY_MCP_TOOLS_SCOPES`; else every scope of the
- * enabled groups — a local server speaks for its one signed-in user.
+ * The scopes of a caller without a bearer token (stdio, a loopback caller, a server with authorization off), in this
+ * order: its session's `metadata.oauthScopes` when something recorded them there (no transport does: a caller with a
+ * token is served under the token's own scopes, see {@link requestScopes}); else the deployment's
+ * `GAUZY_MCP_TOOLS_SCOPES`; else every scope of the enabled groups — a local server speaks for its one signed-in user.
  */
 export function collaborationScopesOf(
 	sessionId: string | undefined,
