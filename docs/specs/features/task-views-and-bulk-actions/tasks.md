@@ -23,7 +23,7 @@
 
 - [x] **T10**. Server-side grouping counts and cursor pagination for a view's tasks; filter tree contract; invalid filters reported
 - [ ] **T11**. Generated keys for existing projects on enable (owner's call; proposed: first letters, deduplicated, editable)
-- [ ] **T12**. GraphQL twins of the new routes
+- [x] **T12**. GraphQL twins of the new routes
 - [ ] **T13**. Ever Teams lane `tasks-keyboard-and-views` (shortcut registry over `uiPreferences.keyboard`, bulk toolbar, saved views pages, palette groups)
 
 **Status 2026-11-07:** phase 1 in ever-gauzy [#11688](https://github.com/ever-co/ever-gauzy/pull/11688) (ready for review; in-cluster build + bot threads next).
