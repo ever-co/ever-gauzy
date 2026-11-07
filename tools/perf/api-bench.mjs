@@ -490,6 +490,23 @@ async function setupTimeLogs(ctx) {
 		console.log(`  setup: ${created} ${plan.label} time log(s) created for the bench employee (had ${have}, wanted ${plan.wanted})`);
 		outcome[plan.label] = { wanted: plan.wanted, had: have, created, degraded: have + created < plan.wanted };
 	}
+	// Completion is judged on what the month scenarios will read, not on what was created: a log placed before the
+	// measured window (the plan's day index reaches back a day per two logs) counts as missing.
+	const readBack = await request(
+		'GET',
+		`/timesheet/time-log?tenantId=${tenantId}&organizationId=${organizationId}&startDate=${ctx.vars.monthStart}&endDate=${ctx.vars.todayEnd}&employeeIds[0]=${employeeId}&teamIds[0]=${teamId}`,
+		{ headers }
+	);
+	const inWindow = readBack.status < 300 ? JSON.parse(readBack.body.toString()) ?? [] : [];
+	for (const plan of plans) {
+		const lengthMs = plan.hours * 3_600_000;
+		const have = inWindow.filter((log) => Date.parse(log.stoppedAt) - Date.parse(log.startedAt) === lengthMs).length;
+		outcome[plan.label].inWindow = have;
+		if (have < plan.wanted) {
+			outcome[plan.label].degraded = true;
+			console.warn(`  setup: ${have} of ${plan.wanted} ${plan.label} log(s) fall in the measured month window`);
+		}
+	}
 	return outcome;
 }
 
