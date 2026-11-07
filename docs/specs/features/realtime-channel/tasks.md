@@ -44,7 +44,7 @@
 ## Phase 4 — Verification and docs
 
 - [ ] **T16**. `yarn nx test plugin-realtime`; `tsc --noEmit -p packages/plugins/realtime/tsconfig.lib.json` strict and with `strictNullChecks` off; `node tools/scripts/graphql-field-binding-check.mjs`
-- [ ] **T17**. Plugin README (enable, events, routes, client recipe with `graphql-ws`), `docs/specs/README.md` status → `In Progress`/`Implemented`
+- [x] **T17**. Plugin README (enable, events, routes, client recipe with `graphql-ws`), `docs/specs/README.md` status → `In Progress`/`Implemented`
 - [ ] **T18**. Enable on dev; verify with a small Node script (`graphql-ws` + `ws`) that a task update is received within 1 s and that catch-up replays it
 
 ## Definition of Done

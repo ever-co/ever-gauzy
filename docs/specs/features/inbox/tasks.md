@@ -32,6 +32,6 @@
 
 - [x] **T13**. Email immediate / digest (worker job, templates) honouring `preferences`
 - [x] **T14**. Web push subscriptions (`web-push` dependency already present) and the push decision (no focused session) (ever-gauzy #11721; the browsers' side — service worker + subscribe in the Angular app and Ever Teams — follows)
-- [ ] **T15**. Settings page in the Angular app and Ever Teams for per-kind channels, DND, digest hour
+- [x] **T15**. Settings page in the Angular app and Ever Teams for per-kind channels, DND, digest hour (ever-gauzy #11714 `inbox-ui` Settings → Notifications; ever-teams #4978)
 
 **Status 2026-11-07:** merged into develop (ever-gauzy #11682, `b9070d1dc2`) after one bot round (organization-scoped followers, receiver-named state events, mirrored changes announced, snoozed/done tab, per-organization events).
