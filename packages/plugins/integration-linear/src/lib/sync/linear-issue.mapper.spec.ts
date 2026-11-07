@@ -87,6 +87,8 @@ describe('linear issue mapper', () => {
 		expect(linearStateFor('custom', STATES, DEFAULT_STATE_MAP)).toBeNull();
 		const update = issueUpdateOf({ title: 'T', description: null, status: TaskStatusEnum.CANCELLED, priority: TaskPriorityEnum.URGENT, dueDate: new Date('2026-03-04T10:00:00Z') }, STATES, DEFAULT_STATE_MAP);
 		expect(update).toEqual({ title: 'T', description: null, stateId: 's-cancel', priority: 1, dueDate: '2026-03-04' });
+		// A partial task (a status change alone) leaves the issue's priority and due date as they are.
+		expect(issueUpdateOf({ status: TaskStatusEnum.COMPLETED }, STATES, DEFAULT_STATE_MAP)).toEqual({ stateId: 's-done' });
 	});
 
 	it('advances the watermark to the newest change', () => {

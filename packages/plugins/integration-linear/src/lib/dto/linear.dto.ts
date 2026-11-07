@@ -2,21 +2,18 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
 import { IsBoolean, IsEnum, IsInt, IsObject, IsOptional, IsString, IsUUID, Max, MaxLength, Min } from 'class-validator';
 import { ID } from '@gauzy/contracts';
+import { TenantOrganizationBaseDTO } from '@gauzy/core';
 import { LinearSyncDirection } from '../entities/linear-team-mapping.entity';
 
-/** `POST /integration/linear/install/state`: which organization the connection is for. */
-export class LinearInstallStateDTO {
-	@ApiProperty({ type: String })
-	@IsUUID()
-	organizationId!: ID;
-}
+/**
+ * `POST /integration/linear/install/state`: which organization the connection is for. The platform's base DTO
+ * checks that the organization is one of the caller's (`IsOrganizationBelongsToUser`), so a state can never be
+ * minted for another organization of the tenant.
+ */
+export class LinearInstallStateDTO extends TenantOrganizationBaseDTO {}
 
-/** `GET /integration/linear/status?organizationId=`. */
-export class LinearStatusQueryDTO {
-	@ApiProperty({ type: String })
-	@IsUUID()
-	organizationId!: ID;
-}
+/** `GET /integration/linear/status?organizationId=`: an organization of the caller's. */
+export class LinearStatusQueryDTO extends TenantOrganizationBaseDTO {}
 
 export class CreateLinearMappingDTO {
 	@ApiProperty({ type: String })

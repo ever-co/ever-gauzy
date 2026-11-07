@@ -1,4 +1,5 @@
-import { Injectable } from '@nestjs/common';
+import { ConflictException, Injectable } from '@nestjs/common';
+import { DataSource, LessThan, MoreThanOrEqual } from 'typeorm';
 import { ID, IIntegrationTenant } from '@gauzy/contracts';
 import { TenantAwareCrudService } from '@gauzy/core';
 import {
@@ -8,6 +9,8 @@ import {
 	MikroOrmLinearSyncRunRepository,
 	TypeOrmLinearSyncRunRepository
 } from './entities/linear-sync-run.entity';
+import { LinearTeamMapping } from './entities/linear-team-mapping.entity';
+import { LINEAR_RUN_IN_PROGRESS } from './linear.constants';
 
 export interface LinearSyncCounts {
 	created: number;
@@ -20,12 +23,16 @@ export function emptyCounts(): LinearSyncCounts {
 	return { created: 0, updated: 0, skipped: 0, failed: 0 };
 }
 
-/** The runs (imports, webhook applications) of the connections: started, finished, listed. */
+/** A running import that made no progress for this long is abandoned (its process died): it no longer blocks a new one. */
+export const LINEAR_IMPORT_STALE_MS = 30 * 60 * 1000;
+
+/** The runs (imports, webhook applications) of the connections: claimed, started, advanced, finished, listed. */
 @Injectable()
 export class LinearSyncRunService extends TenantAwareCrudService<LinearSyncRun> {
 	constructor(
 		readonly typeOrmLinearSyncRunRepository: TypeOrmLinearSyncRunRepository,
-		readonly mikroOrmLinearSyncRunRepository: MikroOrmLinearSyncRunRepository
+		readonly mikroOrmLinearSyncRunRepository: MikroOrmLinearSyncRunRepository,
+		private readonly dataSource: DataSource
 	) {
 		super(typeOrmLinearSyncRunRepository, mikroOrmLinearSyncRunRepository);
 	}
@@ -39,27 +46,71 @@ export class LinearSyncRunService extends TenantAwareCrudService<LinearSyncRun> 
 		});
 	}
 
-	/** Whether an import of the mapping is running now. */
+	/** Whether an import of the mapping is live now (running, with progress within the stale window). */
 	async hasRunning(mappingId: ID): Promise<boolean> {
 		const count = await this.typeOrmLinearSyncRunRepository.count({
-			where: { mappingId, kind: LinearSyncRunKind.IMPORT, status: LinearSyncRunStatus.RUNNING }
+			where: {
+				mappingId,
+				kind: LinearSyncRunKind.IMPORT,
+				status: LinearSyncRunStatus.RUNNING,
+				updatedAt: MoreThanOrEqual(new Date(Date.now() - LINEAR_IMPORT_STALE_MS))
+			}
 		});
 		return count > 0;
 	}
 
-	async start(
+	/**
+	 * Claims the mapping for one import: in one transaction (serialised per mapping on Postgres with an advisory
+	 * lock), abandoned runs are failed, a live one refuses the claim (409), and the new run is written. Two requests
+	 * cannot both claim the same mapping.
+	 */
+	async claimImport(
 		tenant: IIntegrationTenant,
-		input: { mappingId: ID | null; kind: LinearSyncRunKind; full?: boolean; requestedByUserId?: ID | null }
+		mapping: LinearTeamMapping,
+		input: { full?: boolean; requestedByUserId?: ID | null }
 	): Promise<LinearSyncRun> {
+		return this.dataSource.transaction(async (manager) => {
+			if (manager.connection.options.type === 'postgres') {
+				await manager.query('SELECT pg_advisory_xact_lock(hashtext($1))', [`integration-linear:import:${mapping.id}`]);
+			}
+			const staleBefore = new Date(Date.now() - LINEAR_IMPORT_STALE_MS);
+			await manager.update(
+				LinearSyncRun,
+				{ mappingId: mapping.id, kind: LinearSyncRunKind.IMPORT, status: LinearSyncRunStatus.RUNNING, updatedAt: LessThan(staleBefore) },
+				{ status: LinearSyncRunStatus.FAILED, finishedAt: new Date(), lastError: 'Abandoned: no progress for 30 minutes (the process stopped).', updatedAt: new Date() } as never
+			);
+			const live = await manager.count(LinearSyncRun, {
+				where: { mappingId: mapping.id, kind: LinearSyncRunKind.IMPORT, status: LinearSyncRunStatus.RUNNING }
+			});
+			if (live > 0) {
+				throw new ConflictException({ message: 'An import of this mapping is running', code: LINEAR_RUN_IN_PROGRESS });
+			}
+			const run = Object.assign(new LinearSyncRun(), {
+				integrationId: tenant.id as ID,
+				tenantId: tenant.tenantId as ID,
+				organizationId: tenant.organizationId as ID,
+				mappingId: mapping.id,
+				kind: LinearSyncRunKind.IMPORT,
+				status: LinearSyncRunStatus.RUNNING,
+				full: !!input.full,
+				requestedByUserId: input.requestedByUserId ?? null,
+				startedAt: new Date()
+			});
+			return manager.save(LinearSyncRun, run);
+		});
+	}
+
+	/** A webhook application: one issue, no claim needed. */
+	async startWebhookRun(tenant: IIntegrationTenant, mappingId: ID): Promise<LinearSyncRun> {
 		const run = Object.assign(new LinearSyncRun(), {
 			integrationId: tenant.id as ID,
 			tenantId: tenant.tenantId as ID,
 			organizationId: tenant.organizationId as ID,
-			mappingId: input.mappingId,
-			kind: input.kind,
+			mappingId,
+			kind: LinearSyncRunKind.WEBHOOK,
 			status: LinearSyncRunStatus.RUNNING,
-			full: input.full ?? false,
-			requestedByUserId: input.requestedByUserId ?? null,
+			full: false,
+			requestedByUserId: null,
 			startedAt: new Date()
 		});
 		return this.typeOrmLinearSyncRunRepository.save(run);
@@ -71,6 +122,7 @@ export class LinearSyncRunService extends TenantAwareCrudService<LinearSyncRun> 
 			{
 				status: outcome.error ? LinearSyncRunStatus.FAILED : LinearSyncRunStatus.DONE,
 				finishedAt: new Date(),
+				updatedAt: new Date(),
 				createdCount: outcome.counts.created,
 				updatedCount: outcome.counts.updated,
 				skippedCount: outcome.counts.skipped,
@@ -81,10 +133,13 @@ export class LinearSyncRunService extends TenantAwareCrudService<LinearSyncRun> 
 		);
 	}
 
-	/** Counts of a run in progress (so a long import shows its progress). */
+	/** Counts of a run in progress: the heartbeat that keeps it live (a long import shows its progress). */
 	async progress(run: LinearSyncRun, counts: LinearSyncCounts): Promise<void> {
 		await this.typeOrmLinearSyncRunRepository
-			.update({ id: run.id }, { createdCount: counts.created, updatedCount: counts.updated, skippedCount: counts.skipped, failedCount: counts.failed } as never)
+			.update(
+				{ id: run.id },
+				{ createdCount: counts.created, updatedCount: counts.updated, skippedCount: counts.skipped, failedCount: counts.failed, updatedAt: new Date() } as never
+			)
 			.catch(() => undefined);
 	}
 }

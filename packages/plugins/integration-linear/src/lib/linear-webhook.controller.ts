@@ -1,4 +1,17 @@
-import { BadRequestException, Controller, Header, Headers, HttpCode, HttpStatus, Inject, Logger, Post, Req, UnauthorizedException } from '@nestjs/common';
+import {
+	BadRequestException,
+	Controller,
+	Header,
+	Headers,
+	HttpCode,
+	HttpStatus,
+	Inject,
+	InternalServerErrorException,
+	Logger,
+	Post,
+	Req,
+	UnauthorizedException
+} from '@nestjs/common';
 import { ApiExcludeController } from '@nestjs/swagger';
 import { createHmac, timingSafeEqual } from 'node:crypto';
 import { Request } from 'express';
@@ -16,7 +29,6 @@ export interface LinearWebhookPayload {
 	type: string;
 	organizationId?: string;
 	webhookTimestamp?: number;
-	webhookId?: string;
 	data?: { id?: string; teamId?: string; team?: { id?: string } };
 }
 
@@ -37,17 +49,18 @@ export function isLinearTimestampFresh(webhookTimestamp: number | undefined, now
 /**
  * `POST /integration/linear/webhook`: Linear's deliveries for the OAuth application. Public, so
  * everything rests on the signature over the raw bytes with the application's signing secret
- * (`LINEAR_WEBHOOK_SECRET`; no secret, no webhooks), on the delivery's timestamp, and on its id (a
- * retried delivery is applied once per process). The workspace in the payload names the connections it
- * concerns, never the tenant: each of them applies the issue through its own inbound mapping of the team.
+ * (`LINEAR_WEBHOOK_SECRET`; no secret, no webhooks) and on the delivery's timestamp. A delivery
+ * (`Linear-Delivery`) is remembered once it was applied, so a retry of an applied one does nothing; one
+ * that failed answers 500, which Linear retries. The workspace in the payload names the connections it
+ * concerns, never the tenant: each applies the issue through its own inbound mapping of the team.
  */
 @ApiExcludeController()
 @Public()
 @Controller(LINEAR_ROUTE_PREFIX)
 export class LinearWebhookController {
 	private readonly logger = new Logger(LinearWebhookController.name);
-	/** Delivery ids seen lately → when. */
-	private readonly seen = new Map<string, number>();
+	/** Delivery ids applied lately → when. */
+	private readonly applied = new Map<string, number>();
 
 	constructor(
 		@Inject(LINEAR_CONFIG) private readonly config: LinearConfig,
@@ -61,7 +74,8 @@ export class LinearWebhookController {
 	async receive(
 		@Req() request: RawBodyRequest,
 		@Headers('linear-signature') signature?: string,
-		@Headers('linear-event') eventHeader?: string
+		@Headers('linear-event') eventHeader?: string,
+		@Headers('linear-delivery') deliveryId?: string
 	): Promise<{ accepted: boolean; applied: number; duplicate?: boolean }> {
 		const secret = this.config.webhookSecret;
 		if (!secret) throw new UnauthorizedException('Linear webhooks are not configured on this server.');
@@ -76,7 +90,8 @@ export class LinearWebhookController {
 			throw new BadRequestException('The webhook body is not JSON.');
 		}
 		if (!isLinearTimestampFresh(payload.webhookTimestamp)) throw new UnauthorizedException('The webhook timestamp is missing or too old.');
-		if (payload.webhookId && this.isDuplicate(payload.webhookId)) return { accepted: true, applied: 0, duplicate: true };
+		const delivery = typeof deliveryId === 'string' && deliveryId.trim() ? deliveryId.trim().slice(0, 128) : null;
+		if (delivery && this.wasApplied(delivery)) return { accepted: true, applied: 0, duplicate: true };
 
 		const type = payload.type || eventHeader || '';
 		if (type !== 'Issue' || (payload.action !== 'create' && payload.action !== 'update')) {
@@ -89,24 +104,30 @@ export class LinearWebhookController {
 
 		const tenants = await this.tenants.findByLinearOrganization(linearOrganizationId);
 		let applied = 0;
+		const failures: string[] = [];
 		for (const tenant of tenants) {
-			try {
-				await this.sync.applyIssueFromWebhook(tenant, issueId, teamId);
-				applied += 1;
-			} catch (error) {
-				this.logger.warn(`Webhook issue ${issueId} could not be applied for connection ${tenant.id}: ${error instanceof Error ? error.message : String(error)}`);
-			}
+			const outcome = await this.sync.applyIssueFromWebhook(tenant, issueId, teamId);
+			if (outcome.error) failures.push(`${tenant.id}: ${outcome.error}`);
+			else if (outcome.applied) applied += 1;
 		}
+		if (failures.length) {
+			// A 5xx: Linear delivers again; the connections that applied it are idempotent on the retry.
+			this.logger.warn(`Webhook issue ${issueId} failed for ${failures.length} connection(s): ${failures.join('; ')}`);
+			throw new InternalServerErrorException('The issue could not be applied for every connection.');
+		}
+		if (delivery) this.remember(delivery);
 		return { accepted: true, applied };
 	}
 
-	private isDuplicate(webhookId: string): boolean {
+	private wasApplied(delivery: string): boolean {
 		const now = Date.now();
-		for (const [id, at] of this.seen) {
-			if (now - at > LINEAR_WEBHOOK_DEDUPE_MS) this.seen.delete(id);
+		for (const [id, at] of this.applied) {
+			if (now - at > LINEAR_WEBHOOK_DEDUPE_MS) this.applied.delete(id);
 		}
-		if (this.seen.has(webhookId)) return true;
-		this.seen.set(webhookId, now);
-		return false;
+		return this.applied.has(delivery);
+	}
+
+	private remember(delivery: string): void {
+		this.applied.set(delivery, Date.now());
 	}
 }

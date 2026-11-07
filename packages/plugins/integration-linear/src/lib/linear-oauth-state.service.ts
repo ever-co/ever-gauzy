@@ -1,8 +1,9 @@
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
-import { Inject, Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger, Optional } from '@nestjs/common';
 import { Cache } from 'cache-manager';
 import { randomBytes } from 'node:crypto';
 import { ID } from '@gauzy/contracts';
+import { EVER_REDIS_CLIENT } from '@gauzy/core';
 
 /**
  * What the platform remembers when a signed-in person starts the connect flow: the tenant and
@@ -16,34 +17,57 @@ export interface LinearOAuthState {
 	userId?: ID;
 }
 
+/** The slice of the (node-redis) client used for the atomic single-use operations. */
+interface RedisAtomicClient {
+	getDel(key: string): Promise<string | null>;
+	set(key: string, value: string, options: { PX: number }): Promise<unknown>;
+}
+
 const CACHE_PREFIX = 'linear_oauth_state:';
 /** Long enough to authorize on Linear, short enough to limit a replay. */
 const TTL_MS = 10 * 60 * 1000;
 /** A minted nonce: 32 random bytes as lowercase hex. */
 const NONCE_PATTERN = /^[a-f0-9]{64}$/;
 
-/** The single-use `state` nonces of the connect flow, kept in the platform's cache (shared across replicas when it is Redis). */
+/**
+ * The single-use `state` nonces of the connect flow. With Redis (`REDIS_ENABLED=true`) a nonce is consumed
+ * with `GETDEL`, one operation across every replica; without it the platform's cache manager is used,
+ * with an in-process guard (a single-node run).
+ */
 @Injectable()
 export class LinearOAuthStateService {
 	private readonly logger = new Logger(LinearOAuthStateService.name);
-	/** The nonces being consumed in this process: the read and the delete are not one operation on every cache. */
+	/** The nonces being consumed in this process (the non-Redis fallback: the read and the delete are two calls). */
 	private readonly consuming = new Set<string>();
 
-	constructor(@Inject(CACHE_MANAGER) private readonly cache: Cache) {}
+	constructor(
+		@Inject(CACHE_MANAGER) private readonly cache: Cache,
+		@Optional() @Inject(EVER_REDIS_CLIENT) private readonly redis: RedisAtomicClient | null
+	) {}
 
 	/** Mints a nonce bound to the given scope. */
 	async create(state: LinearOAuthState): Promise<string> {
 		const nonce = randomBytes(32).toString('hex');
-		await this.cache.set(`${CACHE_PREFIX}${nonce}`, JSON.stringify(state), TTL_MS);
+		const key = `${CACHE_PREFIX}${nonce}`;
+		const value = JSON.stringify(state);
+		if (this.redis) {
+			await this.redis.set(key, value, { PX: TTL_MS });
+		} else {
+			await this.cache.set(key, value, TTL_MS);
+		}
 		return nonce;
 	}
 
-	/** Resolves a nonce and invalidates it (single use); `null` for an unknown, malformed or expired one. */
+	/** Resolves a nonce and invalidates it (single use); `null` for an unknown, malformed, expired or already used one. */
 	async consume(nonce?: string): Promise<LinearOAuthState | null> {
 		if (!nonce || !NONCE_PATTERN.test(nonce)) {
 			return null;
 		}
 		const key = `${CACHE_PREFIX}${nonce}`;
+		if (this.redis) {
+			// One operation: exactly one caller, on any replica, resolves a given nonce.
+			return this.parse(await this.redis.getDel(key));
+		}
 		if (this.consuming.has(key)) {
 			return null;
 		}

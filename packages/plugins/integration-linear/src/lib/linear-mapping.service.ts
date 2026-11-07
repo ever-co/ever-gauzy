@@ -7,7 +7,7 @@ import {
 	MikroOrmLinearTeamMappingRepository,
 	TypeOrmLinearTeamMappingRepository
 } from './entities/linear-team-mapping.entity';
-import { LINEAR_MAPPING_EXISTS, LINEAR_PROJECT_NOT_FOUND } from './linear.constants';
+import { LINEAR_MAPPING_EXISTS, LINEAR_PROJECT_NOT_FOUND, LINEAR_PROJECT_OUTBOUND_TAKEN } from './linear.constants';
 import { serializeStateMap } from './sync/linear-issue.mapper';
 
 export interface LinearMappingInput {
@@ -58,6 +58,7 @@ export class LinearMappingService extends TenantAwareCrudService<LinearTeamMappi
 		if (existing) {
 			throw new ConflictException({ message: 'This Linear team is mapped already', code: LINEAR_MAPPING_EXISTS, mappingId: existing.id });
 		}
+		await this.assertOutboundFree(tenant, input.projectId, input.direction ?? LinearSyncDirection.INBOUND, null);
 		return this.create({
 			integrationId: tenant.id as ID,
 			tenantId: tenant.tenantId as ID,
@@ -81,6 +82,7 @@ export class LinearMappingService extends TenantAwareCrudService<LinearTeamMappi
 			patch.projectId = input.projectId;
 		}
 		if (input.direction) patch.direction = input.direction;
+		await this.assertOutboundFree(tenant, patch.projectId ?? mapping.projectId, patch.direction ?? mapping.direction, mapping.id);
 		if (input.stateMap !== undefined) patch.stateMap = serializeStateMap(input.stateMap);
 		if (input.syncEnabled !== undefined) patch.syncEnabled = input.syncEnabled;
 		if (input.linearTeamKey !== undefined) patch.linearTeamKey = input.linearTeamKey;
@@ -122,6 +124,25 @@ export class LinearMappingService extends TenantAwareCrudService<LinearTeamMappi
 				lastError: outcome.error ?? null
 			} as never
 		);
+	}
+
+	/**
+	 * A project sends its tasks to at most one Linear team: a second `outbound` / `both` mapping of the same
+	 * project is refused (409), so a task's push always uses the team that owns its issue.
+	 */
+	private async assertOutboundFree(tenant: IIntegrationTenant, projectId: ID, direction: LinearSyncDirection, exceptMappingId: ID | null): Promise<void> {
+		if (direction === LinearSyncDirection.INBOUND) return;
+		const others = await this.typeOrmLinearTeamMappingRepository.find({
+			where: { projectId, tenantId: tenant.tenantId as ID, organizationId: tenant.organizationId as ID }
+		});
+		const taken = others.find((other) => other.id !== exceptMappingId && other.direction !== LinearSyncDirection.INBOUND);
+		if (taken) {
+			throw new ConflictException({
+				message: 'This project already sends its tasks to another Linear team',
+				code: LINEAR_PROJECT_OUTBOUND_TAKEN,
+				mappingId: taken.id
+			});
+		}
 	}
 
 	private async requireProject(tenant: IIntegrationTenant, projectId: ID): Promise<void> {

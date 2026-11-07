@@ -1,7 +1,6 @@
 import {
 	BadRequestException,
 	Body,
-	ConflictException,
 	Controller,
 	Delete,
 	Get,
@@ -26,7 +25,7 @@ import { LinearMappingService } from './linear-mapping.service';
 import { LinearOAuthStateService } from './linear-oauth-state.service';
 import { LinearSyncRunService } from './linear-sync-run.service';
 import { LinearConnectionSummary, LinearTenantService } from './linear-tenant.service';
-import { LINEAR_CONFIG, LINEAR_NOT_CONFIGURED, LINEAR_OAUTH_AUTHORIZE_URL, LINEAR_OAUTH_SCOPES, LINEAR_ROUTE_PREFIX, LINEAR_RUN_IN_PROGRESS } from './linear.constants';
+import { LINEAR_CONFIG, LINEAR_NOT_CONFIGURED, LINEAR_OAUTH_AUTHORIZE_URL, LINEAR_OAUTH_SCOPES, LINEAR_ROUTE_PREFIX } from './linear.constants';
 import { LinearSyncService } from './sync/linear-sync.service';
 import { DEFAULT_STATE_MAP, parseStateMap } from './sync/linear-issue.mapper';
 
@@ -65,7 +64,7 @@ export class LinearController {
 	@ApiOperation({ summary: 'The Linear integration status of an organization' })
 	@Permissions(PermissionsEnum.INTEGRATION_VIEW, PermissionsEnum.INTEGRATION_ADD, PermissionsEnum.INTEGRATION_EDIT)
 	@Get('/status')
-	@UseValidationPipe({ whitelist: true })
+	@UseValidationPipe({ whitelist: true, transform: true })
 	async status(@Query() query: LinearStatusQueryDTO): Promise<{ configured: boolean; defaultStateMap: Record<string, string>; connection: LinearConnectionSummary | null }> {
 		const tenant = await this.tenants.forOrganization(query.organizationId);
 		return { configured: isLinearConfigured(this.config), defaultStateMap: DEFAULT_STATE_MAP, connection: tenant ? this.tenants.summaryOf(tenant) : null };
@@ -75,14 +74,15 @@ export class LinearController {
 	@ApiOperation({ summary: 'Start the Linear connect flow' })
 	@Post('/install/state')
 	@HttpCode(HttpStatus.OK)
-	@UseValidationPipe({ whitelist: true })
+	@UseValidationPipe({ whitelist: true, transform: true })
 	async installState(@Body() body: LinearInstallStateDTO): Promise<{ state: string; authorizeUrl: string }> {
 		if (!isLinearConfigured(this.config)) {
 			throw new BadRequestException({ message: 'The Linear OAuth application is not configured on this server', code: LINEAR_NOT_CONFIGURED });
 		}
 		const tenantId = RequestContext.currentTenantId() as ID;
 		const userId = RequestContext.currentUserId() as ID;
-		const state = await this.oauthState.create({ tenantId, organizationId: body.organizationId, userId });
+		// The organization is the caller's (the DTO checked); the state binds the callback to it and to this tenant.
+		const state = await this.oauthState.create({ tenantId, organizationId: body.organizationId as ID, userId });
 		const params = new URLSearchParams({
 			client_id: this.config.clientId as string,
 			redirect_uri: this.config.redirectUrl as string,
@@ -170,7 +170,10 @@ export class LinearController {
 		await this.mappings.removeMapping(tenant, mappingId);
 	}
 
-	/** Starts an import of the mapping's issues; answers the run at once, the import goes on behind it. */
+	/**
+	 * Starts an import of the mapping's issues: the mapping is claimed first (one run at a time, 409 while one is
+	 * live), the run is answered at once, and the import goes on behind the response.
+	 */
 	@ApiOperation({ summary: 'Import the issues of a mapped team now' })
 	@Post('/:integrationId/mappings/:mappingId/import')
 	@HttpCode(HttpStatus.ACCEPTED)
@@ -179,21 +182,19 @@ export class LinearController {
 		@Param('integrationId', UUIDValidationPipe) integrationId: ID,
 		@Param('mappingId', UUIDValidationPipe) mappingId: ID,
 		@Body() body: LinearImportDTO
-	): Promise<{ accepted: true; mappingId: ID; full: boolean }> {
+	): Promise<{ accepted: true; run: LinearSyncRun }> {
 		const tenant = await this.tenants.requireById(integrationId);
 		const mapping = await this.mappings.requireOne(tenant, mappingId);
-		if (await this.runs.hasRunning(mapping.id)) {
-			throw new ConflictException({ message: 'An import of this mapping is running', code: LINEAR_RUN_IN_PROGRESS });
-		}
 		const requestedByUserId = RequestContext.currentUserId() as ID;
 		const full = !!body.full;
+		const run = await this.runs.claimImport(tenant, mapping, { full, requestedByUserId });
 		// The import outlives the response: it opens a request context of its own (see `runInLinearContext`).
 		setImmediate(() => {
-			this.sync.importMapping(tenant, mapping, { full, requestedByUserId }).catch((error: unknown) => {
+			this.sync.importMapping(tenant, mapping, run, { full }).catch((error: unknown) => {
 				this.logger.warn(`Import of mapping ${mapping.id} failed to start: ${error instanceof Error ? error.message : String(error)}`);
 			});
 		});
-		return { accepted: true, mappingId: mapping.id, full };
+		return { accepted: true, run };
 	}
 
 	@ApiOperation({ summary: 'The latest runs of a connection' })

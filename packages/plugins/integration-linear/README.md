@@ -40,14 +40,19 @@ for the `Issues` resource.
   once (the platform's id map, `integration_map` entity `ISSUE`), updated on later runs: title, description,
   status (and the project's status row of that name), priority, due date, the assignee matched by e-mail (left
   unassigned otherwise), labels as tags (one per label, by the platform's label sync), and sub-issues linked
-  to their parent's task. Archived issues are skipped. `GET …/runs` lists the runs with their counts and errors.
+  to their parent's task. Archived issues are skipped. One import runs per mapping at a time (a second request is
+  refused while one is live; a run without progress for 30 minutes counts as abandoned). An issue that could not
+  be applied keeps the import position, so the next import reads it again. `GET …/runs` lists the runs with
+  their counts and errors.
 - **Webhooks.** `POST /integration/linear/webhook` (public) verifies `Linear-Signature` (the HMAC-SHA256 of
-  the raw body with the signing secret), refuses deliveries older than a minute and retried delivery ids, then
-  applies the issue through every connection of that workspace whose mapping of the team syncs inbound.
-- **Outbound.** When a project's mapping is `outbound` or `both`, a task created or changed on the platform
-  updates its issue (state by the mapping, title, description, priority, due date) or creates one in the
-  team. Tasks kept out of third-party sync (`syncScope`) are never sent. The sync's own inbound writes raise no
-  platform event, so an issue that came in is never sent back.
+  the raw body with the signing secret), refuses deliveries older than a minute, then applies the issue through
+  every connection of that workspace whose mapping of the team syncs inbound. A delivery (`Linear-Delivery`) is
+  remembered once applied, so a retry does nothing; one that failed answers 500, which Linear retries.
+- **Outbound.** When a project's mapping is `outbound` or `both` (one such mapping per project), a task created
+  or changed on the platform updates its issue (state by the mapping, title, description, priority, due date) or
+  creates one in the team; the saved task is read again by id, and the pushes of one task run one after the other.
+  Tasks kept out of third-party sync (`syncScope`) are never sent. The sync's own inbound writes raise no platform
+  event, so an issue that came in is never sent back.
 - **Attention.** A refused token sets the connection's `attention_reason` setting to `token_refused` (shown
   by `GET …/status`); connecting again clears it.
 

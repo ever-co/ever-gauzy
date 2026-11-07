@@ -133,7 +133,8 @@ export function issueUpdateOf(
 	if (task.description !== undefined) input.description = task.description ?? null;
 	const state = linearStateFor(task.status, states, stateMap);
 	if (state) input.stateId = state.id;
-	input.priority = linearPriorityOf(task.priority);
+	// Only what the task carries: a partial task leaves the issue's priority alone.
+	if (task.priority !== undefined) input.priority = linearPriorityOf(task.priority);
 	if (task.dueDate !== undefined) input.dueDate = linearDueDateOf(task.dueDate);
 	return input;
 }
