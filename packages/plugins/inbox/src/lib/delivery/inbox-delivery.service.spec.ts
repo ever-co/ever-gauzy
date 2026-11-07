@@ -6,6 +6,11 @@ import { InboxDelivery } from './inbox-delivery.entity';
 import { InboxDeliveryContextUnavailableError } from './inbox-delivery-context';
 import { InboxDeliveryMailer } from './inbox-delivery-mailer';
 import { InboxDeliveryService } from './inbox-delivery.service';
+import { InboxPushGoneError } from './push/inbox-delivery-pusher';
+import { INBOX_PUSH_NO_SUBSCRIPTION, INBOX_PUSH_SKIPPED_FOCUSED } from './push/inbox-push.constants';
+
+// The sweep serves the channels the switches name; the email tests run with email alone, the push tests add push.
+process.env['GAUZY_INBOX_NOTIFICATION_EMAIL_ENABLED'] = 'true';
 
 // The sweep runs each send inside a request context of the recipient's tenant; here the context is the test's.
 jest.mock('./inbox-delivery-context', () => ({
@@ -34,6 +39,12 @@ function fixture(options: {
 	insertFails?: boolean;
 	sendFails?: boolean;
 	contextFails?: boolean;
+	/** The push wiring: the person's devices (by user), the ones the push service says are gone, the employees' heartbeats. */
+	push?: boolean;
+	devices?: Record<string, Array<{ id: string; endpoint: string; p256dh: string; auth: string; failures?: number }>>;
+	gone?: string[];
+	pushFails?: boolean;
+	employees?: Record<string, { lastSeenAt: Date | null; isIdle: boolean }>;
 } = {}) {
 	const query: Record<string, jest.Mock> = {};
 	for (const name of ['innerJoin', 'select', 'addSelect', 'where', 'setParameter', 'orderBy', 'limit']) query[name] = jest.fn(() => query);
@@ -71,6 +82,7 @@ function fixture(options: {
 	const items = { find: jest.fn(async () => options.items ?? []) };
 	const users = { findOne: jest.fn(async (query: { where: { id: string } }) => options.users?.[query.where.id] ?? null) };
 	const settings = { findOne: jest.fn(async (query: { where: { employeeId: string } }) => options.settings?.[query.where.employeeId] ?? null) };
+	const employees = { findOne: jest.fn(async (query: { where: { id: string } }) => options.employees?.[query.where.id] ?? null) };
 	const dataSource = {
 		getRepository: (target: unknown) => {
 			if (target === InboxItemRecipient) return recipients;
@@ -78,10 +90,12 @@ function fixture(options: {
 			if (target === InboxItem) return items;
 			if (target === 'User') return users;
 			if (target === 'EmployeeNotificationSetting') return settings;
+			if (target === 'Employee') return employees;
 			throw new Error(`Unexpected repository ${String(target)}`);
 		}
 	} as unknown as DataSource;
 	const mailer = {
+		host: () => 'https://app.test',
 		sendNotification: jest.fn(async (_recipient: unknown, _line: unknown) => {
 			if (options.contextFails) throw new InboxDeliveryContextUnavailableError();
 			if (options.sendFails) throw new Error('SMTP refused');
@@ -90,8 +104,24 @@ function fixture(options: {
 			if (options.sendFails) throw new Error('SMTP refused');
 		})
 	};
-	const service = new InboxDeliveryService(dataSource, mailer as unknown as InboxDeliveryMailer);
-	return { service, query, delivery, mailer, users, settings, items, people };
+	const pusher = {
+		configured: () => true,
+		send: jest.fn(async (device: { id: string }, _payload: unknown) => {
+			if ((options.gone ?? []).includes(device.id)) throw new InboxPushGoneError(410);
+			if (options.pushFails) throw new Error('push service refused');
+		})
+	};
+	const subscriptions = {
+		hasAny: jest.fn(async (_tenantId: string, userId: string) => (options.devices?.[userId] ?? []).length > 0),
+		devicesOf: jest.fn(async (_tenantId: string, userId: string) => options.devices?.[userId] ?? []),
+		markUsed: jest.fn(async (_id: string, _now: Date) => undefined),
+		gone: jest.fn(async (_id: string) => undefined),
+		recordFailure: jest.fn(async (_device: unknown) => false)
+	};
+	const service = options.push
+		? new InboxDeliveryService(dataSource, mailer as unknown as InboxDeliveryMailer, pusher as never, subscriptions as never)
+		: new InboxDeliveryService(dataSource, mailer as unknown as InboxDeliveryMailer);
+	return { service, query, delivery, mailer, users, settings, items, people, pusher, subscriptions, employees };
 }
 
 const user = (id: string, email: string | null = `${id}@example.test`) => ({ id, email, firstName: 'Ada', lastName: 'Lovelace', preferredLanguage: 'bg', timeZone: 'Europe/Sofia' });
@@ -116,6 +146,84 @@ const dueRow = (id: string, mode: InboxDeliveryModeEnum, overrides: Partial<Inbo
 	...overrides
 });
 const item = (id: string, createdAt: string, type = 'Mention'): Partial<InboxItem> => ({ id, title: `Entry ${id}`, body: `<p>Body of ${id}</p>`, metadata: JSON.stringify({ notificationType: type }), createdAt: new Date(createdAt) });
+
+describe('InboxDeliveryService — web push (FR-13)', () => {
+	const device = (id: string) => ({ id, endpoint: `https://push.test/${id}`, p256dh: 'p', auth: 'a', failures: 0 });
+	const pushRow = (id: string, userId: string, employeeId: string) =>
+		dueRow(id, InboxDeliveryModeEnum.IMMEDIATE, { userId, employeeId, channel: InboxDeliveryChannelEnum.PUSH });
+
+	beforeAll(() => {
+		process.env['GAUZY_INBOX_WEB_PUSH_ENABLED'] = 'true';
+	});
+	afterAll(() => {
+		delete process.env['GAUZY_INBOX_WEB_PUSH_ENABLED'];
+	});
+
+	it('decides a push beside the email for a person with a device, and none for one without', async () => {
+		const { service, delivery, query } = fixture({
+			push: true,
+			intake: [intake(1, 'e1'), intake(2, 'e2')],
+			users: { u1: user('u1'), u2: user('u2') },
+			devices: { u1: [device('d1')] }
+		});
+		expect(await service.intake(NOW, 200)).toBe(4);
+		expect(query.setParameter.mock.calls.map((call) => call[1])).toEqual([InboxDeliveryChannelEnum.EMAIL, InboxDeliveryChannelEnum.PUSH]);
+		const pushes = delivery.insert.mock.calls.map((call) => call[0] as Partial<InboxDelivery>).filter((row) => row.channel === InboxDeliveryChannelEnum.PUSH);
+		expect(pushes).toHaveLength(2);
+		expect(pushes[0]).toMatchObject({ inboxItemId: 'i1', userId: 'u1', mode: InboxDeliveryModeEnum.IMMEDIATE, dueAt: NOW });
+		expect(pushes[1]).toMatchObject({ inboxItemId: 'i2', userId: 'u2', mode: InboxDeliveryModeEnum.NONE });
+	});
+
+	it('serves neither channel this process is not switched to', async () => {
+		const { service, delivery } = fixture({ intake: [intake(1, 'e1')], users: { u1: user('u1') } });
+		// No pusher wired: email alone, as before.
+		expect(await service.intake(NOW, 200)).toBe(1);
+		expect(delivery.insert.mock.calls.map((call) => (call[0] as Partial<InboxDelivery>).channel)).toEqual([InboxDeliveryChannelEnum.EMAIL]);
+	});
+
+	it('pushes a due row to every device, drops a device the service no longer knows, and marks the row sent', async () => {
+		const { service, pusher, subscriptions, delivery } = fixture({
+			push: true,
+			due: [pushRow('p1', 'u1', 'e1')],
+			items: [item('i-p1', '2026-11-07T12:00:00.000Z')],
+			devices: { u1: [device('d1'), device('d2')] },
+			gone: ['d2'],
+			employees: { e1: { lastSeenAt: new Date('2026-11-07T12:00:00.000Z'), isIdle: false } }
+		});
+		const outcome = await service.sendPushes(NOW, 200);
+		expect(outcome).toEqual({ sent: 1, skipped: 0, failed: 0 });
+		expect(pusher.send).toHaveBeenCalledTimes(2);
+		expect(pusher.send.mock.calls[0][1]).toMatchObject({ title: 'Entry i-p1', itemId: 'i-p1', tag: 'inbox-i-p1', url: expect.stringContaining('i-p1') });
+		expect(subscriptions.markUsed).toHaveBeenCalledWith('d1', NOW);
+		expect(subscriptions.gone).toHaveBeenCalledWith('d2');
+		expect(delivery.update).toHaveBeenCalledWith({ id: expect.anything() }, expect.objectContaining({ sentAt: NOW }));
+	});
+
+	it('does not push to a person with an active, focused session, and closes the row as skipped', async () => {
+		const { service, pusher, delivery } = fixture({
+			push: true,
+			due: [pushRow('p1', 'u1', 'e1')],
+			items: [item('i-p1', '2026-11-07T12:00:00.000Z')],
+			devices: { u1: [device('d1')] },
+			// Active input a minute ago: a focused session. Idle, or an hour ago, would be pushed to.
+			employees: { e1: { lastSeenAt: new Date('2026-11-07T12:29:00.000Z'), isIdle: false } }
+		});
+		expect(await service.sendPushes(NOW, 200)).toEqual({ sent: 0, skipped: 1, failed: 0 });
+		expect(pusher.send).not.toHaveBeenCalled();
+		expect(delivery.update).toHaveBeenCalledWith({ id: expect.anything() }, { failedAt: NOW, lastError: INBOX_PUSH_SKIPPED_FOCUSED });
+	});
+
+	it('closes a row whose person has no device left, and tries again later one every device refused', async () => {
+		const none = fixture({ push: true, due: [pushRow('p1', 'u1', 'e1')], items: [item('i-p1', '2026-11-07T12:00:00.000Z')], employees: { e1: { lastSeenAt: null, isIdle: true } } });
+		expect(await none.service.sendPushes(NOW, 200)).toEqual({ sent: 0, skipped: 0, failed: 1 });
+		expect(none.delivery.update).toHaveBeenCalledWith({ id: expect.anything() }, { failedAt: NOW, lastError: INBOX_PUSH_NO_SUBSCRIPTION });
+
+		const refused = fixture({ push: true, due: [pushRow('p1', 'u1', 'e1')], items: [item('i-p1', '2026-11-07T12:00:00.000Z')], devices: { u1: [device('d1')] }, pushFails: true });
+		expect(await refused.service.sendPushes(NOW, 200)).toEqual({ sent: 0, skipped: 0, failed: 1 });
+		expect(refused.subscriptions.recordFailure).toHaveBeenCalledWith(expect.objectContaining({ id: 'd1' }));
+		expect(refused.delivery.update).toHaveBeenCalledWith({ id: expect.anything() }, expect.objectContaining({ attempts: 1, nextAttemptAt: new Date('2026-11-07T12:35:00.000Z') }));
+	});
+});
 
 describe('InboxDeliveryService.intake', () => {
 	it("decides each new entry once, from the employee's setting: at once, in the digest, or not at all", async () => {

@@ -36,7 +36,15 @@ import { IntegrationEverAsyncPlugin } from '@gauzy/plugin-integration-ever-async
 import { IntegrationEverWorksPlugin, isEverWorksEnabled } from '@gauzy/plugin-integration-ever-works';
 import { IntegrationLinearPlugin, isLinearEnabled } from '@gauzy/plugin-integration-linear';
 import { IntegrationAsanaPlugin, isAsanaEnabled } from '@gauzy/plugin-integration-asana';
-import { InboxDeliveryPlugin, InboxEmailPlugin, InboxPlugin, isInboxEmailEnabled, isInboxEnabled, isInboxNotificationEmailEnabled } from '@gauzy/plugin-inbox';
+import {
+	InboxDeliveryPlugin,
+	InboxEmailPlugin,
+	InboxPlugin,
+	isInboxEmailEnabled,
+	isInboxEnabled,
+	isInboxNotificationEmailEnabled,
+	isInboxWebPushEnabled
+} from '@gauzy/plugin-inbox';
 import { isRealtimeEnabled, RealtimePlugin } from '@gauzy/plugin-realtime';
 
 import { ChatPlugin, isChatEnabled } from '@gauzy/plugin-chat';
@@ -150,10 +158,13 @@ export const plugins = [
 		? [InboxEmailPlugin]
 		: []),
 
-	// Email delivery of the Inbox's notifications (immediate or digest per kind, the Inbox spec FR-10–FR-12). Only on
-	// top of the Inbox, and off unless GAUZY_INBOX_NOTIFICATION_EMAIL_ENABLED=true as well; the API owns the table, the
-	// worker runs the sweep.
-	...(isInboxEnabled(process.env) && isInboxNotificationEmailEnabled(process.env, (message) => console.warn(message))
+	// Delivery of the Inbox's notifications beyond the app (the Inbox spec FR-10–FR-13): emails (immediate or digest
+	// per kind) under GAUZY_INBOX_NOTIFICATION_EMAIL_ENABLED, web push to the person's devices (their subscriptions
+	// and routes) under GAUZY_INBOX_WEB_PUSH_ENABLED. Only on top of the Inbox, and off unless one of the two is
+	// exactly true; the API owns the tables and the push routes, the worker runs the sweep.
+	...(isInboxEnabled(process.env) &&
+	(isInboxNotificationEmailEnabled(process.env, (message) => console.warn(message)) ||
+		isInboxWebPushEnabled(process.env, (message) => console.warn(message)))
 		? [InboxDeliveryPlugin]
 		: []),
 

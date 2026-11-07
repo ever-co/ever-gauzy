@@ -221,6 +221,40 @@ export function decideEmailDelivery(input: {
 	return { mode: InboxDeliveryModeEnum.IMMEDIATE, dueAt: deferred, digestKey: null };
 }
 
+/**
+ * Whether a kind is pushed to the person's devices: the kind's own switch (`preferences.pushByType[kind]`), else the
+ * one for every kind (`preferences.push`), else on when a device is subscribed — registering one is the opt-in.
+ */
+export function pushOnFor(preferences: IEmployeeNotificationPreferences, type: string | null | undefined, hasSubscription: boolean): boolean {
+	const own = type ? preferences.pushByType?.[type] : undefined;
+	if (typeof own === 'boolean') return own;
+	if (typeof preferences.push === 'boolean') return preferences.push;
+	return hasSubscription;
+}
+
+/**
+ * What to do with one entry for one person over web push (FR-13): nothing when no device is subscribed, the kind is
+ * off, or push is off for it; else a push at once — after the do-not-disturb window when the entry falls inside it
+ * (FR-11). Whether the person is looking at the app is decided when the push is due, not here.
+ */
+export function decidePushDelivery(input: {
+	now: Date;
+	type: string | null | undefined;
+	setting: IDeliverySettingLike | null | undefined;
+	userTimeZone?: string | null;
+	hasSubscription: boolean;
+}): IDeliveryDecision {
+	const none: IDeliveryDecision = { mode: InboxDeliveryModeEnum.NONE, dueAt: null, digestKey: null };
+	if (!input.hasSubscription) return none;
+	const preferences = preferencesOf(input.setting);
+	if (!kindSwitchOf(input.setting, preferences, input.type)) return none;
+	if (!pushOnFor(preferences, input.type, input.hasSubscription)) return none;
+	const timeZone = timeZoneOf(preferences, input.userTimeZone);
+	const dnd = preferences.dnd;
+	const deferred = dnd && isWithinWindow(localClockOf(input.now, timeZone), dnd) ? windowEndAfter(input.now, dnd, timeZone) : input.now;
+	return { mode: InboxDeliveryModeEnum.IMMEDIATE, dueAt: deferred, digestKey: null };
+}
+
 /** How long to wait before the next attempt (doubling from the base, capped), or null when the attempts are spent. */
 export function retryDelayMs(attempts: number): number | null {
 	if (attempts >= INBOX_DELIVERY_MAX_ATTEMPTS) return null;

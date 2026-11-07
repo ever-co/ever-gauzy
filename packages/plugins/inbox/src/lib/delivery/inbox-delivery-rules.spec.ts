@@ -1,6 +1,7 @@
 import { EmployeeNotificationTypeEnum, InboxDeliveryModeEnum } from '@gauzy/contracts';
 import {
 	decideEmailDelivery,
+	decidePushDelivery,
 	emailModeOf,
 	excerptOf,
 	inboxItemLinkOf,
@@ -148,6 +149,25 @@ describe('decideEmailDelivery', () => {
 		expect(utc.dueAt).toEqual(new Date('2026-11-07T16:00:00.000Z'));
 		const outside = decideEmailDelivery({ now: NOW, type: EmployeeNotificationTypeEnum.ASSIGNMENT, setting: { preferences: { dnd: { start: '22:00', end: '07:00' } } }, userTimeZone: 'Europe/Sofia' });
 		expect(outside.dueAt).toEqual(NOW);
+	});
+});
+
+describe('decidePushDelivery', () => {
+	const mention = EmployeeNotificationTypeEnum.MENTION;
+
+	it('pushes at once to a person with a device, and nothing without one, when the kind is off, or when push is off for it', () => {
+		expect(decidePushDelivery({ now: NOW, type: mention, setting: null, hasSubscription: true })).toEqual({ mode: InboxDeliveryModeEnum.IMMEDIATE, dueAt: NOW, digestKey: null });
+		expect(decidePushDelivery({ now: NOW, type: mention, setting: null, hasSubscription: false }).mode).toBe(InboxDeliveryModeEnum.NONE);
+		expect(decidePushDelivery({ now: NOW, type: mention, setting: { mention: false }, hasSubscription: true }).mode).toBe(InboxDeliveryModeEnum.NONE);
+		expect(decidePushDelivery({ now: NOW, type: mention, setting: { preferences: { push: false } }, hasSubscription: true }).mode).toBe(InboxDeliveryModeEnum.NONE);
+		expect(decidePushDelivery({ now: NOW, type: mention, setting: { preferences: { pushByType: { Mention: false } } }, hasSubscription: true }).mode).toBe(InboxDeliveryModeEnum.NONE);
+		// The kind's own switch wins over the one for every kind.
+		expect(decidePushDelivery({ now: NOW, type: mention, setting: { preferences: { push: false, pushByType: { Mention: true } } }, hasSubscription: true }).mode).toBe(InboxDeliveryModeEnum.IMMEDIATE);
+	});
+
+	it("holds a push until the do-not-disturb window ends, in the window's own time zone", () => {
+		const held = decidePushDelivery({ now: NOW, type: mention, setting: { preferences: { dnd: { start: '12:00', end: '16:00' } } }, userTimeZone: 'Europe/Sofia', hasSubscription: true });
+		expect(held).toEqual({ mode: InboxDeliveryModeEnum.IMMEDIATE, dueAt: new Date('2026-11-07T14:00:00.000Z'), digestKey: null });
 	});
 });
 

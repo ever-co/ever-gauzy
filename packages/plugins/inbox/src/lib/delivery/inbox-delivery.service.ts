@@ -1,9 +1,10 @@
-import { ConflictException, Injectable, Logger } from '@nestjs/common';
+import { ConflictException, Injectable, Logger, Optional } from '@nestjs/common';
 import { DataSource, In, IsNull, LessThanOrEqual, ObjectLiteral } from 'typeorm';
 import { ID, InboxDeliveryChannelEnum, InboxDeliveryModeEnum, InboxItemKindEnum, InboxItemSourceEnum } from '@gauzy/contracts';
 import { InboxItem } from '../entities/inbox-item.entity';
 import { InboxItemRecipient } from '../entities/inbox-item-recipient.entity';
 import { InboxNamedLocks } from '../email/database/named-locks';
+import { isInboxNotificationEmailEnabled, isInboxWebPushEnabled } from '../inbox-enabled';
 import { InboxDelivery } from './inbox-delivery.entity';
 import { InboxDeliveryMailer, IInboxDeliveryLine, IInboxDeliveryRecipient } from './inbox-delivery-mailer';
 import { deliveryUserOf, InboxDeliveryContextUnavailableError, runInDeliveryContext } from './inbox-delivery-context';
@@ -13,13 +14,20 @@ import {
 	INBOX_DELIVERY_SWEEP_LOCK,
 	readInboxDeliveryBatch
 } from './inbox-delivery.constants';
-import { decideEmailDelivery, excerptOf, kindLabelOf, metadataOf, retryDelayMs } from './inbox-delivery-rules';
+import { decideEmailDelivery, decidePushDelivery, excerptOf, inboxItemLinkOf, kindLabelOf, metadataOf, retryDelayMs } from './inbox-delivery-rules';
+import { InboxDeliveryPusher, InboxPushGoneError } from './push/inbox-delivery-pusher';
+import { InboxPushSubscriptionService } from './push/inbox-push-subscription.service';
+import { INBOX_PUSH_FOCUSED_WINDOW_MS, INBOX_PUSH_NO_SUBSCRIPTION, INBOX_PUSH_SKIPPED_FOCUSED } from './push/inbox-push.constants';
 
 /** What one sweep did. */
 export interface IInboxDeliverySweepReport {
 	decided: number;
 	immediateSent: number;
 	digestsSent: number;
+	/** Pushes that a push service accepted for at least one of the person's devices. */
+	pushesSent: number;
+	/** Pushes closed unsent because the person had an active, focused session (FR-13). */
+	pushesSkipped: number;
 	failed: number;
 }
 
@@ -66,7 +74,13 @@ export class InboxDeliveryService {
 	/** One sweep at a time across the workers (a transaction-scoped advisory lock on PostgreSQL, `GET_LOCK` on MySQL). */
 	private readonly locks: InboxNamedLocks;
 
-	constructor(private readonly dataSource: DataSource, private readonly mailer: InboxDeliveryMailer) {
+	constructor(
+		private readonly dataSource: DataSource,
+		private readonly mailer: InboxDeliveryMailer,
+		/** The web push sender and the devices (FR-13); absent in bare test wiring, when nothing is pushed. */
+		@Optional() private readonly pusher?: InboxDeliveryPusher,
+		@Optional() private readonly subscriptions?: InboxPushSubscriptionService
+	) {
 		this.locks = new InboxNamedLocks(dataSource);
 	}
 
@@ -76,7 +90,7 @@ export class InboxDeliveryService {
 		} catch (error) {
 			if (error instanceof ConflictException) {
 				this.logger.log('Inbox delivery sweep: another worker holds the sweep; this one is skipped');
-				return { decided: 0, immediateSent: 0, digestsSent: 0, failed: 0 };
+				return { decided: 0, immediateSent: 0, digestsSent: 0, pushesSent: 0, pushesSkipped: 0, failed: 0 };
 			}
 			throw error;
 		}
@@ -84,23 +98,45 @@ export class InboxDeliveryService {
 
 	private async runSweep(now: Date): Promise<IInboxDeliverySweepReport> {
 		const batch = readInboxDeliveryBatch();
-		const report: IInboxDeliverySweepReport = { decided: 0, immediateSent: 0, digestsSent: 0, failed: 0 };
+		const report: IInboxDeliverySweepReport = { decided: 0, immediateSent: 0, digestsSent: 0, pushesSent: 0, pushesSkipped: 0, failed: 0 };
 		report.decided = await this.intake(now, batch);
 		const immediate = await this.sendImmediate(now, batch);
 		const digests = await this.sendDigests(now, batch);
+		const pushes = await this.sendPushes(now, batch);
 		report.immediateSent = immediate.sent;
 		report.digestsSent = digests.sent;
-		report.failed = immediate.failed + digests.failed;
-		if (report.decided || report.immediateSent || report.digestsSent || report.failed) {
-			this.logger.log(`Inbox delivery sweep: decided ${report.decided}, sent ${report.immediateSent} at once and ${report.digestsSent} digests, ${report.failed} failed`);
+		report.pushesSent = pushes.sent;
+		report.pushesSkipped = pushes.skipped;
+		report.failed = immediate.failed + digests.failed + pushes.failed;
+		if (report.decided || report.immediateSent || report.digestsSent || report.pushesSent || report.pushesSkipped || report.failed) {
+			this.logger.log(
+				`Inbox delivery sweep: decided ${report.decided}, sent ${report.immediateSent} at once, ${report.digestsSent} digests and ${report.pushesSent} pushes (${report.pushesSkipped} skipped for a focused session), ${report.failed} failed`
+			);
 		}
 		return report;
 	}
 
+	/**
+	 * The channels this process decides and sends: email under its switch; web push under its switch, with the VAPID keys
+	 * and the devices' store. The plugin is loaded for either, so a process on one switch leaves the other channel alone.
+	 */
+	private channels(): InboxDeliveryChannelEnum[] {
+		const channels: InboxDeliveryChannelEnum[] = [];
+		if (isInboxNotificationEmailEnabled()) channels.push(InboxDeliveryChannelEnum.EMAIL);
+		if (isInboxWebPushEnabled() && this.pusher?.configured() && this.subscriptions) channels.push(InboxDeliveryChannelEnum.PUSH);
+		return channels;
+	}
+
 	// ---------------------------------------------------------------- intake
 
-	/** Decides the entries with no delivery row yet; answers how many rows were written. */
+	/** Decides the entries with no delivery row yet, for each channel this process serves; answers how many rows were written. */
 	async intake(now: Date, batch: number): Promise<number> {
+		let decided = 0;
+		for (const channel of this.channels()) decided += await this.intakeChannel(channel, now, batch);
+		return decided;
+	}
+
+	private async intakeChannel(channel: InboxDeliveryChannelEnum, now: Date, batch: number): Promise<number> {
 		const since = new Date(now.getTime() - INBOX_DELIVERY_INTAKE_LOOKBACK_MS);
 		const rows = (await this.dataSource
 			.getRepository(InboxItemRecipient)
@@ -123,14 +159,14 @@ export class InboxDeliveryService {
 					.getQuery();
 				return `NOT EXISTS ${decided}`;
 			})
-			.setParameter('channel', InboxDeliveryChannelEnum.EMAIL)
+			.setParameter('channel', channel)
 			.orderBy('recipient.createdAt', 'ASC')
 			.limit(batch)
 			.getRawMany()) as IIntakeRow[];
 		let decided = 0;
 		for (const row of rows) {
 			try {
-				if (await this.decide(row, now)) decided += 1;
+				if (await this.decide(row, now, channel)) decided += 1;
 			} catch (error) {
 				this.logger.warn(`Inbox delivery: entry ${row.inboxItemId} for user ${row.userId} was not decided (${(error as Error)?.message ?? error})`);
 			}
@@ -138,14 +174,17 @@ export class InboxDeliveryService {
 		return decided;
 	}
 
-	/** Writes the decision for one entry and person (false when a concurrent sweep wrote it first). */
-	private async decide(row: IIntakeRow, now: Date): Promise<boolean> {
+	/** Writes the decision for one entry, person and channel (false when a concurrent sweep wrote it first). */
+	private async decide(row: IIntakeRow, now: Date, channel: InboxDeliveryChannelEnum): Promise<boolean> {
 		const metadata = metadataOf(row.metadata);
 		const employeeId = typeof metadata.receiverEmployeeId === 'string' ? (metadata.receiverEmployeeId as ID) : null;
 		const type = typeof metadata.notificationType === 'string' ? metadata.notificationType : null;
 		const setting = employeeId ? await this.settingOf(employeeId, row.tenantId) : null;
 		const user = await this.userOf(row.userId, row.tenantId);
-		const decision = decideEmailDelivery({ now, type, setting, userTimeZone: user?.timeZone ?? null });
+		const decision =
+			channel === InboxDeliveryChannelEnum.PUSH
+				? decidePushDelivery({ now, type, setting, userTimeZone: user?.timeZone ?? null, hasSubscription: !!(await this.subscriptions?.hasAny(row.tenantId, row.userId)) })
+				: decideEmailDelivery({ now, type, setting, userTimeZone: user?.timeZone ?? null });
 		const repository = this.dataSource.getRepository(InboxDelivery);
 		try {
 			await repository.insert({
@@ -154,7 +193,7 @@ export class InboxDeliveryService {
 				inboxItemId: row.inboxItemId,
 				userId: row.userId,
 				employeeId: employeeId ?? undefined,
-				channel: InboxDeliveryChannelEnum.EMAIL,
+				channel,
 				mode: decision.mode,
 				notificationType: type ?? undefined,
 				dueAt: decision.dueAt ?? undefined,
@@ -164,7 +203,7 @@ export class InboxDeliveryService {
 			return true;
 		} catch (error) {
 			// Unique on (entry, person, channel): another sweep decided it in the meantime.
-			if (await repository.exists({ where: { inboxItemId: row.inboxItemId, userId: row.userId, channel: InboxDeliveryChannelEnum.EMAIL } })) return false;
+			if (await repository.exists({ where: { inboxItemId: row.inboxItemId, userId: row.userId, channel } })) return false;
 			throw error;
 		}
 	}
@@ -172,9 +211,9 @@ export class InboxDeliveryService {
 	// ---------------------------------------------------------------- sending
 
 	/** The rows of a mode that are due now: not sent, not given up, due, and not waiting for a retry; a person's alone when given. */
-	private async due(mode: InboxDeliveryModeEnum, now: Date, batch: number | null, person?: { tenantId: ID; userId: ID }): Promise<InboxDelivery[]> {
+	private async due(channel: InboxDeliveryChannelEnum, mode: InboxDeliveryModeEnum, now: Date, batch: number | null, person?: { tenantId: ID; userId: ID }): Promise<InboxDelivery[]> {
 		const base = {
-			channel: InboxDeliveryChannelEnum.EMAIL,
+			channel,
 			mode,
 			sentAt: IsNull(),
 			failedAt: IsNull(),
@@ -192,14 +231,14 @@ export class InboxDeliveryService {
 	}
 
 	/** The people with a due row of the mode, earliest due first, `batch` of them at most: a digest is a person's whole due set, never a page of it. */
-	private async duePeople(mode: InboxDeliveryModeEnum, now: Date, batch: number): Promise<Array<{ tenantId: ID; userId: ID }>> {
+	private async duePeople(channel: InboxDeliveryChannelEnum, mode: InboxDeliveryModeEnum, now: Date, batch: number): Promise<Array<{ tenantId: ID; userId: ID }>> {
 		const rows = (await this.dataSource
 			.getRepository(InboxDelivery)
 			.createQueryBuilder('delivery')
 			.select('delivery.tenantId', 'tenantId')
 			.addSelect('delivery.userId', 'userId')
 			.where('delivery.channel = :channel AND delivery.mode = :mode AND delivery.sentAt IS NULL AND delivery.failedAt IS NULL AND delivery.dueAt <= :now', {
-				channel: InboxDeliveryChannelEnum.EMAIL,
+				channel,
 				mode,
 				now
 			})
@@ -213,7 +252,7 @@ export class InboxDeliveryService {
 	}
 
 	async sendImmediate(now: Date, batch: number): Promise<{ sent: number; failed: number }> {
-		const rows = await this.due(InboxDeliveryModeEnum.IMMEDIATE, now, batch);
+		const rows = await this.due(InboxDeliveryChannelEnum.EMAIL, InboxDeliveryModeEnum.IMMEDIATE, now, batch);
 		let sent = 0;
 		let failed = 0;
 		if (!rows.length) return { sent, failed };
@@ -244,11 +283,11 @@ export class InboxDeliveryService {
 		let sent = 0;
 		let failed = 0;
 		// The people first (a bounded set), then each person's whole due set: a digest is never a page of one.
-		const people = await this.duePeople(InboxDeliveryModeEnum.DIGEST, now, batch);
+		const people = await this.duePeople(InboxDeliveryChannelEnum.EMAIL, InboxDeliveryModeEnum.DIGEST, now, batch);
 		if (!people.length) return { sent, failed };
 		const groups: InboxDelivery[][] = [];
 		for (const person of people) {
-			const group = await this.due(InboxDeliveryModeEnum.DIGEST, now, null, person);
+			const group = await this.due(InboxDeliveryChannelEnum.EMAIL, InboxDeliveryModeEnum.DIGEST, now, null, person);
 			if (group.length) groups.push(group);
 		}
 		const items = await this.itemsOf(groups.flat().map((row) => row.inboxItemId));
@@ -281,6 +320,84 @@ export class InboxDeliveryService {
 			}
 		}
 		return { sent, failed };
+	}
+
+	/**
+	 * Pushes the due rows to each of the person's devices (FR-13) — unless the person has an active, focused session,
+	 * when the row is closed as skipped: they are looking at the app, where the entry already is. A device the push
+	 * service no longer knows is removed; one that failed again is counted, and removed at the limit. The row is sent
+	 * once one device took it; it is tried again when every device refused, and closed when the person has none.
+	 */
+	async sendPushes(now: Date, batch: number): Promise<{ sent: number; skipped: number; failed: number }> {
+		const outcome = { sent: 0, skipped: 0, failed: 0 };
+		if (!this.pusher || !this.subscriptions || !this.channels().includes(InboxDeliveryChannelEnum.PUSH)) return outcome;
+		const rows = await this.due(InboxDeliveryChannelEnum.PUSH, InboxDeliveryModeEnum.IMMEDIATE, now, batch);
+		if (!rows.length) return outcome;
+		const items = await this.itemsOf(rows.map((row) => row.inboxItemId));
+		const host = this.mailer.host();
+		for (const row of rows) {
+			const item = items.get(String(row.inboxItemId));
+			if (!item) {
+				await this.giveUp([row], 'The entry is gone.', now);
+				outcome.failed += 1;
+				continue;
+			}
+			if (await this.hasFocusedSession(row, now)) {
+				await this.giveUp([row], INBOX_PUSH_SKIPPED_FOCUSED, now);
+				outcome.skipped += 1;
+				continue;
+			}
+			const devices = await this.subscriptions.devicesOf(row.tenantId as ID, row.userId);
+			if (!devices.length) {
+				await this.giveUp([row], INBOX_PUSH_NO_SUBSCRIPTION, now);
+				outcome.failed += 1;
+				continue;
+			}
+			const line = this.lineOf(item);
+			const payload = { title: line.title, body: line.body, kindLabel: line.kindLabel, url: inboxItemLinkOf(host, line.itemId), itemId: String(line.itemId), tag: `inbox-${line.itemId}` };
+			let delivered = 0;
+			let lastError: unknown = null;
+			for (const device of devices) {
+				try {
+					await this.pusher.send(device, payload);
+					delivered += 1;
+					await this.subscriptions.markUsed(device.id as ID, now);
+				} catch (error) {
+					if (error instanceof InboxPushGoneError) {
+						await this.subscriptions.gone(device.id as ID);
+						continue;
+					}
+					lastError = error;
+					await this.subscriptions.recordFailure(device);
+				}
+			}
+			if (delivered) {
+				await this.markSent([row], now);
+				outcome.sent += 1;
+			} else if (lastError) {
+				await this.recordFailure([row], lastError, now);
+				outcome.failed += 1;
+			} else {
+				await this.giveUp([row], INBOX_PUSH_NO_SUBSCRIPTION, now);
+				outcome.failed += 1;
+			}
+		}
+		return outcome;
+	}
+
+	/**
+	 * FR-13: whether the person's employee record reported active (not idle) input within the window — the heartbeat the
+	 * clients send through the real-time channel's presence — which is a focused session on the account.
+	 */
+	private async hasFocusedSession(row: InboxDelivery, now: Date): Promise<boolean> {
+		if (!row.employeeId) return false;
+		const employee = (await this.dataSource.getRepository<ObjectLiteral>('Employee').findOne({
+			select: { id: true, lastSeenAt: true, isIdle: true },
+			where: { id: row.employeeId, tenantId: row.tenantId }
+		} as never)) as { lastSeenAt?: Date | string | null; isIdle?: boolean | null } | null;
+		if (!employee?.lastSeenAt || employee.isIdle) return false;
+		const seen = new Date(employee.lastSeenAt).getTime();
+		return Number.isFinite(seen) && now.getTime() - seen <= INBOX_PUSH_FOCUSED_WINDOW_MS;
 	}
 
 	// ---------------------------------------------------------------- reads and marks

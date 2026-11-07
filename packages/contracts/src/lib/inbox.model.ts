@@ -410,7 +410,9 @@ export interface IInboxRecipientActions {
 
 /** How an entry reaches a person beyond the in-app list (the Inbox spec, "Preferences and channels"). */
 export enum InboxDeliveryChannelEnum {
-	EMAIL = 'email'
+	EMAIL = 'email',
+	/** Web push to the person's subscribed browsers (FR-13). */
+	PUSH = 'push'
 }
 
 /** What the delivery decided for one entry and one person: nothing, an email at once, or a place in the daily digest. */
@@ -444,6 +446,40 @@ export interface IInboxDelivery extends IBasePerTenantAndOrganizationEntityModel
 	lastError?: string | null;
 	/** Given up after the last attempt. */
 	failedAt?: Date | null;
+}
+
+/**
+ * One browser or device a person subscribed to the Inbox's web push (`inbox_push_subscription`, the Inbox spec FR-13),
+ * as the browser's `PushSubscription` gives it. The person's own: registered, listed and removed by them; pushed to
+ * by the delivery sweep; removed when the push service no longer knows it or after repeated failures.
+ */
+export interface IInboxPushSubscription extends IBasePerTenantAndOrganizationEntityModel {
+	userId: ID;
+	employeeId?: ID | null;
+	/** The push service's endpoint of the device. */
+	endpoint: string;
+	/** The device's own keys. */
+	p256dh: string;
+	auth: string;
+	expirationTime?: Date | null;
+	/** The device's name for the list (the browser's user agent, as the client states it). */
+	userAgent?: string | null;
+	lastUsedAt?: Date | null;
+	/** Consecutive failed pushes; the subscription is removed at `INBOX_PUSH_MAX_FAILURES`. */
+	failures: number;
+}
+
+/** `POST /inbox/push-subscriptions`: the browser's `PushSubscription.toJSON()`, plus the device's name. */
+export interface IInboxPushSubscriptionInput {
+	endpoint: string;
+	keys: { p256dh: string; auth: string };
+	expirationTime?: number | null;
+	userAgent?: string | null;
+}
+
+/** `GET /inbox/push-subscriptions/public-key`: the VAPID public key a browser subscribes with. */
+export interface IInboxPushPublicKey {
+	publicKey: string;
 }
 
 /** Tokens of the observer seam and of the recipient actions, provided by `@gauzy/plugin-inbox` when it is loaded. */

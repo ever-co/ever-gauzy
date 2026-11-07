@@ -40,3 +40,24 @@ export function isInboxEnabled(
 	warn('GAUZY_INBOX_ENABLED is neither "true" nor "false"; the Inbox stays off (the default).');
 	return false;
 }
+
+/**
+ * Whether the Inbox pushes notifications to the person's subscribed browsers (`GAUZY_INBOX_WEB_PUSH_ENABLED`, the Inbox
+ * spec FR-13): the delivery plugin (its subscriptions table and routes) and the worker's push step. Off unless the value
+ * is exactly `true`; only on top of the Inbox, and only with the VAPID keys (`GAUZY_INBOX_VAPID_PUBLIC_KEY` /
+ * `GAUZY_INBOX_VAPID_PRIVATE_KEY`), without which nothing is pushed.
+ */
+export function isInboxWebPushEnabled(
+	env: Record<string, string | undefined> = process.env,
+	warn: (message: string) => void = () => undefined
+): boolean {
+	const raw = env['GAUZY_INBOX_WEB_PUSH_ENABLED'];
+	if (raw === undefined || raw === '' || raw === 'false') {
+		return false;
+	}
+	if (raw === 'true') {
+		return true;
+	}
+	warn('GAUZY_INBOX_WEB_PUSH_ENABLED is neither "true" nor "false"; web push stays off (the default).');
+	return false;
+}

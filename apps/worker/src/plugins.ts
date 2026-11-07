@@ -2,7 +2,15 @@ import { resolvePluginLoadOrder } from '@gauzy/plugin';
 import { CartPlugin } from '@gauzy/plugin-cart';
 import { CatalogPlugin } from '@gauzy/plugin-catalog';
 import { DocsPlugin } from '@gauzy/plugin-docs';
-import { InboxDeliveryPlugin, InboxEmailPlugin, InboxPlugin, isInboxEmailEnabled, isInboxEnabled, isInboxNotificationEmailEnabled } from '@gauzy/plugin-inbox';
+import {
+	InboxDeliveryPlugin,
+	InboxEmailPlugin,
+	InboxPlugin,
+	isInboxEmailEnabled,
+	isInboxEnabled,
+	isInboxNotificationEmailEnabled,
+	isInboxWebPushEnabled
+} from '@gauzy/plugin-inbox';
 import { EmailProviderMailgunPlugin, isMailgunEnabled } from '@gauzy/plugin-email-provider-mailgun';
 import { EmailProviderPostmarkPlugin, isPostmarkEnabled } from '@gauzy/plugin-email-provider-postmark';
 import { EmailProviderResendPlugin, isResendEnabled } from '@gauzy/plugin-email-provider-resend';
@@ -48,8 +56,11 @@ import { TaxPlugin } from '@gauzy/plugin-tax';
  */
 /** Read once: each switch warns once about a value that is neither `true` nor `false`. */
 const everWorksEnabled = isEverWorksEnabled(process.env, (message) => console.warn(message));
-/** The Inbox's notification email delivery: its sweep, and the transports it sends through, are hosted here. */
-const inboxDeliveryEnabled = isInboxEnabled(process.env) && isInboxNotificationEmailEnabled(process.env, (message) => console.warn(message));
+/** The Inbox's notification delivery (emails, web push): its sweep, and the transports it sends through, are hosted here. */
+const inboxDeliveryEnabled =
+	isInboxEnabled(process.env) &&
+	(isInboxNotificationEmailEnabled(process.env, (message) => console.warn(message)) ||
+		isInboxWebPushEnabled(process.env, (message) => console.warn(message)));
 
 export const plugins = resolvePluginLoadOrder([
 	/**
@@ -144,12 +155,13 @@ export const plugins = resolvePluginLoadOrder([
 	 *
 	 * 🛑 Off unless `GAUZY_INBOX_ENABLED` is exactly `true` as well, so a worker is unchanged by default.
 	 */
-	...((everWorksEnabled || isInboxNotificationEmailEnabled(process.env)) && isInboxEnabled(process.env, (message) => console.warn(message)) ? [InboxPlugin] : []),
+	...((everWorksEnabled || inboxDeliveryEnabled) && isInboxEnabled(process.env, (message) => console.warn(message)) ? [InboxPlugin] : []),
 	/**
 	 * Email delivery of the Inbox's notifications (immediate or digest per kind, the Inbox spec FR-10–FR-12): the
 	 * sweep that decides and sends runs here, on the worker's queue root, every minute.
 	 *
-	 * 🛑 Off unless `GAUZY_INBOX_NOTIFICATION_EMAIL_ENABLED` is exactly `true` as well — the same switch as the API's list.
+	 * 🛑 Off unless `GAUZY_INBOX_NOTIFICATION_EMAIL_ENABLED` or `GAUZY_INBOX_WEB_PUSH_ENABLED` is exactly `true` as well — the
+	 * same switches as the API's list; each channel is served under its own.
 	 */
 	...(inboxDeliveryEnabled ? [InboxDeliveryPlugin] : []),
 	/**

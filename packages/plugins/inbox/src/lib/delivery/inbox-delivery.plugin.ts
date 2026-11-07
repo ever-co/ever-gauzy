@@ -2,11 +2,12 @@ import { ApplicationPluginConfig } from '@gauzy/common';
 import { GauzyCorePlugin as Plugin, IOnPluginBootstrap, IOnPluginDestroy } from '@gauzy/plugin';
 import { isSchedulerQueueRootEnabled } from '@gauzy/scheduler';
 import { CreateInboxDeliveryTable1791000005300 } from '../database/migrations/1791000005300-CreateInboxDeliveryTable';
+import { CreateInboxPushSubscriptionTable1791000005400 } from '../database/migrations/1791000005400-CreateInboxPushSubscriptionTable';
 import { InboxDeliveryMaintenanceModule } from './inbox-delivery-maintenance.module';
 import { INBOX_DELIVERY_ENTITIES, InboxDeliveryModule } from './inbox-delivery.module';
 
 /** The plugin's migrations, oldest first (ordered with the platform's by their timestamps). */
-export const INBOX_DELIVERY_MIGRATIONS = [CreateInboxDeliveryTable1791000005300];
+export const INBOX_DELIVERY_MIGRATIONS = [CreateInboxDeliveryTable1791000005300, CreateInboxPushSubscriptionTable1791000005400];
 
 /**
  * Email delivery of the Inbox's notifications (the Inbox spec, "Preferences and channels": immediate or digest per

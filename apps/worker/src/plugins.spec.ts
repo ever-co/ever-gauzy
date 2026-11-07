@@ -24,6 +24,7 @@ jest.mock('@gauzy/plugin-inbox', () => ({
 	isInboxEnabled: jest.requireActual('../../../packages/plugins/inbox/src/lib/inbox-enabled').isInboxEnabled,
 	isInboxNotificationEmailEnabled: jest.requireActual('../../../packages/plugins/inbox/src/lib/inbox-enabled')
 		.isInboxNotificationEmailEnabled,
+	isInboxWebPushEnabled: jest.requireActual('../../../packages/plugins/inbox/src/lib/inbox-enabled').isInboxWebPushEnabled,
 	isInboxEmailEnabled: () => false
 }));
 // The email providers the delivery sends through: stubs with their switches off (the list reads them only with the delivery on).

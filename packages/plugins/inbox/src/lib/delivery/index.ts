@@ -8,3 +8,4 @@ export * from './inbox-delivery.worker';
 export * from './inbox-delivery.module';
 export * from './inbox-delivery-maintenance.module';
 export * from './inbox-delivery.plugin';
+export * from './push';

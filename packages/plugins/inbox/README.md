@@ -267,8 +267,31 @@ language and its transports (`EmailSendService`); they carry only what the entry
 ship with the platform's seeds and are migrated into existing installations (`1791000004850`).
 `INBOX_DELIVERY_SWEEP_BATCH` (200) bounds one sweep. The worker hosts the Inbox email features and the email providers
 with the delivery (each under its own switch), since a provider's transport registers only in the process that
-hosts it. Nothing here changes an entry or its read state; web push
-(spec T14) and the settings page (T15) are their own lanes.
+hosts it. Nothing here changes an entry or its read state; the settings page (T15) is its own lane.
+
+## Web push delivery of notifications
+
+`GAUZY_INBOX_WEB_PUSH_ENABLED=true` with a VAPID key pair (`GAUZY_INBOX_VAPID_PUBLIC_KEY`, `GAUZY_INBOX_VAPID_PRIVATE_KEY`;
+`npx web-push generate-vapid-keys`) loads the same delivery plugin — with or without the email switch — and adds (the
+Inbox spec FR-13):
+
+- **`GET /inbox/push-subscriptions/public-key`** `{ publicKey }`: what a browser subscribes with
+  (`PushManager.subscribe({ userVisibleOnly: true, applicationServerKey })`).
+- **`POST /inbox/push-subscriptions`** `{ endpoint, keys: { p256dh, auth }, expirationTime?, userAgent? }` (the browser's
+  `PushSubscription.toJSON()`): registers the caller's device, or refreshes the one the endpoint names (new keys, failures
+  cleared); **`GET`** lists the caller's devices; **`DELETE /:id`** removes one. The routes answer 404 where push is off
+  or the keys are not set.
+- **The sweep's push step** (`InboxDeliveryService.sendPushes`): every notification entry is decided for push as it is
+  for email (`inbox_delivery` rows of channel `push`): the kind's switch, then `preferences.pushByType[kind]`, else
+  `preferences.push`, else on when the person has a device subscribed (registering one is the opt-in); the
+  do-not-disturb window holds a push. A due row is pushed to each of the person's devices (`web-push`: the payload is
+  the entry's title, text, kind and link, with a tag per entry so a device shows one) — unless the person has an active,
+  focused session (their employee record reported active input within 90 s, through the real-time channel's presence),
+  when the row is closed as skipped: they are looking at the app, where the entry already is. A device the push service
+  no longer knows (404 / 410) is removed; one that failed five times in a row is removed. `GAUZY_INBOX_VAPID_SUBJECT`
+  names the sender (an `https:` URL or `mailto:`; the client's address by default).
+
+The Angular app and Ever Teams register the browser (the service worker and the subscription) in their own lanes.
 
 ## Tests
 
