@@ -142,6 +142,36 @@ export function nextContentRevision(document: Pick<Document, 'contentRevision'>)
 	return (Number.isFinite(current) && current >= 1 ? current : 1) + 1;
 }
 
+/**
+ * Moves the document's revision from the one loaded to the next in one conditional `UPDATE`, and answers the next.
+ * Nothing moved means another content write landed since the load: 409 `DOCS_CONTENT_CONFLICT` with the revision
+ * the row holds now, and nothing is written by the caller either. Shared by the content save and the version
+ * restore, so every content change is a claimed revision.
+ *
+ * @param repository The document repository (TypeORM).
+ * @param document The document as loaded.
+ * @returns The claimed revision.
+ */
+export async function claimNextContentRevision(
+	repository: { update: TypeOrmDocumentRepository['update']; findOne: TypeOrmDocumentRepository['findOne'] },
+	document: Pick<Document, 'id' | 'tenantId' | 'contentRevision'>
+): Promise<number> {
+	const current = Number(document.contentRevision);
+	const loaded = Number.isFinite(current) && current >= 1 ? current : 1;
+	const next = loaded + 1;
+	const result = await repository.update({ id: document.id as ID, tenantId: document.tenantId, contentRevision: loaded }, { contentRevision: next });
+	if (!result.affected) {
+		const row = await repository.findOne({ select: { id: true, contentRevision: true, updatedAt: true }, where: { id: document.id as ID, tenantId: document.tenantId } });
+		throw new ConflictException({
+			message: `Document content changed since it was loaded (revision ${row?.contentRevision ?? '?'}, not ${loaded})`,
+			code: DOCS_CONTENT_CONFLICT,
+			currentUpdatedAt: row?.updatedAt ?? null,
+			currentRevision: row?.contentRevision ?? null
+		});
+	}
+	return next;
+}
+
 export function nextContentToken(loaded?: Date | string | null): Date {
 	const previous = loaded ? new Date(loaded).getTime() : Number.NaN;
 	const now = Date.now();
@@ -614,7 +644,7 @@ export class DocumentService extends TenantAwareCrudService<Document> {
 				currentRevision: document.contentRevision ?? 1
 			});
 		}
-		// The same check on the revision, for writers that hold one (API and MCP clients).
+		// The same check on the revision, for writers that hold one (API and MCP clients); the write below claims it.
 		this.assertExpectedRevision(document, input.expectedRevision);
 
 		// §6.1 step 1 — the TipTap schema is the first line of defense. Validated BEFORE the
@@ -633,12 +663,15 @@ export class DocumentService extends TenantAwareCrudService<Document> {
 		// Nor can the ORM's own stamp be relied on: on SQLite `CURRENT_TIMESTAMP` has one-second
 		// precision, so two saves inside one second would share a token. The save states its own,
 		// strictly newer than the one it replaces (see `nextContentToken`).
+		// The revision moves in one guarded write before the save: two saves that read the same revision cannot both
+		// pass (the second finds it gone and gets the 409), whatever either of them stated as `expectedRevision`.
+		const contentRevision = await claimNextContentRevision(this.typeOrmRepository, document);
 		const { updatedAt: loadedToken, ...current } = document;
 		const updated = await this.save({
 			...current,
 			id: document.id,
 			updatedAt: nextContentToken(loadedToken),
-			contentRevision: nextContentRevision(document),
+			contentRevision,
 			contentJson,
 			// 🛑 NOT `?? document.contentHtml`: reusing the stored HTML when the client omits it
 			// leaves the render cache describing the PREVIOUS revision, which is what read-only

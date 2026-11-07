@@ -9,6 +9,7 @@ import {
 	ID
 } from '@gauzy/contracts';
 import { Employee, EmployeeCreateNotificationEvent, EmployeeNotification, OrganizationTeamEmployee, RequestContext } from '@gauzy/core';
+import { getDocsConfig } from '../docs.config';
 import { DOCS_NOTIFICATION_DEDUPE_MINUTES } from '../docs.constants';
 import { Document } from '../entities/document.entity';
 import { TypeOrmDocumentRepository } from '../repositories/type-orm-document.repository';
@@ -21,9 +22,20 @@ export function actorDisplayName(user: { firstName?: string; lastName?: string; 
 	return parts.length ? parts.join(' ') : user.name || user.email || 'Someone';
 }
 
+/** The kinds of Inbox entry this feature files; each is deduped on its own. */
+export type DocumentNotificationKind = 'shared' | 'review-requested' | 'review-approved' | 'review-rejected';
+
+/** The short line under the title, which also tells one kind from another with the same notification type. */
+export const DOCUMENT_NOTIFICATION_MESSAGE: Record<DocumentNotificationKind, string> = {
+	shared: 'Page shared with you',
+	'review-requested': 'Review requested',
+	'review-approved': 'Review approved',
+	'review-rejected': 'Review rejected'
+};
+
 /** What a share, a review request or a review decision reads as in the Inbox. */
 export function documentNotificationTitle(
-	kind: 'shared' | 'review-requested' | 'review-approved' | 'review-rejected',
+	kind: DocumentNotificationKind,
 	actorName: string,
 	document: Pick<Document, 'name'>,
 	detail?: string | null
@@ -61,7 +73,7 @@ export class DocumentNotifierService {
 		try {
 			const receivers = target.employeeId ? [target.employeeId] : target.teamId ? await this.teamMemberIds(target.teamId, document.tenantId) : [];
 			const title = documentNotificationTitle('shared', actorDisplayName(RequestContext.currentUser()), document, String(access).toLowerCase());
-			return await this.publish(document, receivers, EmployeeNotificationTypeEnum.ASSIGNMENT, title);
+			return await this.publish(document, receivers, 'shared', EmployeeNotificationTypeEnum.ASSIGNMENT, title);
 		} catch (error) {
 			this.logger.warn(`Share notifications of document ${document.id} were not sent: ${(error as Error)?.message}`);
 			return 0;
@@ -73,7 +85,7 @@ export class DocumentNotifierService {
 		if (!reviewerEmployeeIds.length) return 0;
 		try {
 			const title = documentNotificationTitle('review-requested', actorDisplayName(RequestContext.currentUser()), document, reason);
-			return await this.publish(document, reviewerEmployeeIds, EmployeeNotificationTypeEnum.ASSIGNMENT, title);
+			return await this.publish(document, reviewerEmployeeIds, 'review-requested', EmployeeNotificationTypeEnum.ASSIGNMENT, title);
 		} catch (error) {
 			this.logger.warn(`Review-request notifications of document ${document.id} were not sent: ${(error as Error)?.message}`);
 			return 0;
@@ -85,9 +97,9 @@ export class DocumentNotifierService {
 		try {
 			const creator = await this.creatorEmployeeId(document);
 			if (!creator) return 0;
-			const kind = decision === DocumentReviewStatusEnum.APPROVED ? 'review-approved' : 'review-rejected';
+			const kind: DocumentNotificationKind = decision === DocumentReviewStatusEnum.APPROVED ? 'review-approved' : 'review-rejected';
 			const title = documentNotificationTitle(kind, actorDisplayName(RequestContext.currentUser()), document, note);
-			return await this.publish(document, [creator], EmployeeNotificationTypeEnum.TASK_UPDATE, title);
+			return await this.publish(document, [creator], kind, EmployeeNotificationTypeEnum.TASK_UPDATE, title);
 		} catch (error) {
 			this.logger.warn(`Review-decision notifications of document ${document.id} were not sent: ${(error as Error)?.message}`);
 			return 0;
@@ -96,12 +108,17 @@ export class DocumentNotifierService {
 
 	// ---------------------------------------------------------------- helpers
 
-	/** Publishes one notification per receiver that was not told the same thing recently; answers how many. */
-	private async publish(document: Document, receiverEmployeeIds: readonly ID[], type: EmployeeNotificationTypeEnum, title: string): Promise<number> {
+	/**
+	 * Publishes one notification per receiver that was not told the same kind of thing recently; answers how many.
+	 * Nothing is sent while the collaboration feature is off: the share and review routes keep working as before.
+	 */
+	private async publish(document: Document, receiverEmployeeIds: readonly ID[], kind: DocumentNotificationKind, type: EmployeeNotificationTypeEnum, title: string): Promise<number> {
+		if (!getDocsConfig().collabEnabled) return 0;
 		const actorEmployeeId = (RequestContext.currentUser()?.employeeId as ID | undefined) ?? RequestContext.currentEmployeeId() ?? null;
 		const receivers = notifiableReceivers(receiverEmployeeIds, document.metadata, actorEmployeeId);
 		if (!receivers.length) return 0;
-		const recent = await this.recentlyNotified(document, receivers, type);
+		const message = DOCUMENT_NOTIFICATION_MESSAGE[kind];
+		const recent = await this.recentlyNotified(document, receivers, type, message);
 		let sent = 0;
 		for (const receiverEmployeeId of receivers) {
 			if (recent.has(String(receiverEmployeeId))) continue;
@@ -111,6 +128,7 @@ export class DocumentNotifierService {
 					entityId: document.id as ID,
 					type,
 					title,
+					message,
 					receiverEmployeeId,
 					...(actorEmployeeId ? { sentByEmployeeId: actorEmployeeId } : {}),
 					organizationId: document.organizationId ?? undefined,
@@ -122,8 +140,8 @@ export class DocumentNotifierService {
 		return sent;
 	}
 
-	/** The receivers already told of the same kind of thing on this page within the dedupe window. */
-	private async recentlyNotified(document: Document, receivers: readonly ID[], type: EmployeeNotificationTypeEnum): Promise<Set<string>> {
+	/** The receivers already told of the same kind of thing (same type and message line) on this page within the window. */
+	private async recentlyNotified(document: Document, receivers: readonly ID[], type: EmployeeNotificationTypeEnum, message: string): Promise<Set<string>> {
 		try {
 			const since = new Date(Date.now() - DOCS_NOTIFICATION_DEDUPE_MINUTES * 60_000);
 			const rows = await this.typeOrmDocumentRepository.manager.find(EmployeeNotification, {
@@ -133,6 +151,7 @@ export class DocumentNotifierService {
 					entity: BaseEntityEnum.Document,
 					entityId: document.id as ID,
 					type,
+					message,
 					receiverEmployeeId: In(receivers as ID[]),
 					createdAt: MoreThan(since)
 				}

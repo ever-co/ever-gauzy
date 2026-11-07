@@ -189,7 +189,7 @@ describe('document access predicate — visibility + share composition (spec 08 
 			expect(effectiveShareAccess(shared, subject())).toBe(DocumentShareAccessEnum.VIEW);
 		});
 
-		it('a TEAM page without a team (its team deleted) is the creator's and the admins' only', () => {
+		it("a TEAM page without a team (its team deleted) is the creator's and the admins' only", () => {
 			const orphan = doc({ visibility: DocumentVisibilityEnum.TEAM, organizationTeamId: null });
 			expect(isTeamSpaceMember(orphan, subject({ teamIds: [TEAM] }))).toBe(false);
 			expect(isDocumentReadable(orphan, subject({ teamIds: [TEAM] }))).toBe(false);

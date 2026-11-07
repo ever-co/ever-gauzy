@@ -87,6 +87,7 @@ export class DocumentPathService {
 					kind: true,
 					parentId: true,
 					visibility: true,
+					organizationTeamId: true,
 					createdByUserId: true
 				}
 			});
@@ -95,7 +96,7 @@ export class DocumentPathService {
 			}
 
 			const readable = await this.documentAccessService.canRead(
-				{ createdByUserId: ancestor.createdByUserId, visibility: ancestor.visibility },
+				{ createdByUserId: ancestor.createdByUserId, visibility: ancestor.visibility, organizationTeamId: ancestor.organizationTeamId },
 				ancestor.id
 			);
 			segments.unshift(

@@ -1,4 +1,5 @@
 import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { isBetterSqlite3, isSqlite } from '@gauzy/config';
 import { EventBus } from '@nestjs/cqrs';
 import { In, IsNull } from 'typeorm';
 import {
@@ -17,6 +18,7 @@ import { DOCS_COLLAB_DISABLED } from '../docs.constants';
 import { MoveDocumentSpaceDTO } from '../dto/document-space.dto';
 import { Document } from '../entities/document.entity';
 import { TypeOrmDocumentRepository } from '../repositories/type-orm-document.repository';
+import { canAdministerShares } from './document-access.predicate';
 import { DocumentAccessService } from './document-access.service';
 import { isMutedBy, withMuted } from './document-collaboration.helpers';
 import { DocumentTreeService } from './document-tree.service';
@@ -84,9 +86,10 @@ export class DocumentCollaborationService {
 
 	/**
 	 * Moves a page to a space: the organization's, a team's (the team is checked like on create), or the caller's
-	 * private one. By default the descendants the caller may write move too, so a subtree never straddles spaces;
-	 * a descendant the caller may not write stays where it is. Only the page's owner or a `DOCS_MANAGE` holder
-	 * changes a page's space, as its visibility.
+	 * private one. By default the descendants move too, so a subtree never straddles spaces — but only the ones
+	 * whose space the caller may change (their own, or every one for a `DOCS_MANAGE` holder): someone else's page
+	 * under the folder, shared back at `VIEW`, stays where its owner put it. Only the page's owner or a
+	 * `DOCS_MANAGE` holder changes a page's space, as its visibility.
 	 */
 	async moveToSpace(id: ID, input: MoveDocumentSpaceDTO): Promise<Document> {
 		this.assertEnabled();
@@ -107,8 +110,19 @@ export class DocumentCollaborationService {
 		const ids: ID[] = [document.id as ID];
 		if (input.applyToSubtree !== false) {
 			const subtree = await this.documentTreeService.collectVisibleSubtree(document, (candidates) => this.documentService.filterReadableDocumentIds(candidates, document.organizationId));
-			for (const descendantId of subtree.ids) {
-				if (String(descendantId) !== String(document.id)) ids.push(descendantId);
+			const descendantIds = subtree.ids.filter((descendantId) => String(descendantId) !== String(document.id));
+			if (descendantIds.length) {
+				// The space of a descendant is its owner's to change (or a manager's), exactly as the root's.
+				const subject = await this.documentAccessService.currentSubject();
+				const rows = await this.typeOrmDocumentRepository.find({
+					select: { id: true, createdByUserId: true, visibility: true, organizationTeamId: true },
+					where: { id: In(descendantIds), tenantId: document.tenantId, organizationId: document.organizationId }
+				});
+				for (const row of rows) {
+					if (canAdministerShares({ createdByUserId: row.createdByUserId, visibility: row.visibility, organizationTeamId: row.organizationTeamId }, subject)) {
+						ids.push(row.id as ID);
+					}
+				}
 			}
 		}
 		await this.typeOrmDocumentRepository.update(
@@ -199,9 +213,23 @@ export class DocumentCollaborationService {
 		});
 	}
 
+	/**
+	 * Changes the muted list of the page in one transaction that re-reads the metadata under a row lock (where the
+	 * database has one; SQLite serialises its writers itself), so two people muting at once, or a mute beside a
+	 * review note, never overwrite each other's change.
+	 */
 	private async setMuted(document: Document, employeeId: ID, muted: boolean): Promise<void> {
-		const metadata = withMuted(document.metadata, employeeId, muted);
-		await this.typeOrmDocumentRepository.update({ id: document.id as ID, tenantId: document.tenantId }, { metadata: metadata as never });
+		const embedded = isSqlite() || isBetterSqlite3();
+		const metadata = await this.typeOrmDocumentRepository.manager.transaction(async (manager) => {
+			const current = await manager.findOne(Document, {
+				select: { id: true, metadata: true },
+				where: { id: document.id as ID, tenantId: document.tenantId },
+				...(embedded ? {} : { lock: { mode: 'pessimistic_write' as const } })
+			});
+			const next = withMuted(current?.metadata ?? document.metadata, employeeId, muted);
+			await manager.update(Document, { id: document.id as ID, tenantId: document.tenantId }, { metadata: next as never });
+			return next;
+		});
 		document.metadata = metadata;
 	}
 
@@ -223,28 +251,36 @@ export class DocumentCollaborationService {
 		return teams.map((team) => ({ id: team.id as ID, name: team.name }));
 	}
 
-	/** How many live documents the caller may read in each space (the visibility rule applied in SQL). */
+	/**
+	 * How many live documents each space lists for the caller, counted exactly as `GET /documents?space=…` lists
+	 * them: the organization's pages, the caller's own private pages, and each team's pages the caller may read
+	 * (a TEAM page without a team is listed by no space).
+	 */
 	private async countBySpace(tenantId: ID, organizationId: ID): Promise<{ organization: number; privateMine: number; byTeam: Map<string, number> }> {
 		const qb = this.typeOrmDocumentRepository
 			.createQueryBuilder('document')
 			.select(`"document"."visibility"`, 'visibility')
 			.addSelect(`"document"."organizationTeamId"`, 'organizationTeamId')
+			.addSelect(`"document"."createdByUserId"`, 'createdByUserId')
 			.addSelect('COUNT(1)', 'count')
 			.where(p(`"document"."tenantId" = :tenantId`), { tenantId })
 			.andWhere(p(`"document"."organizationId" = :organizationId`), { organizationId })
 			.andWhere(p(`"document"."isArchived" = :isArchived`), { isArchived: false })
 			.groupBy(`"document"."visibility"`)
-			.addGroupBy(`"document"."organizationTeamId"`);
+			.addGroupBy(`"document"."organizationTeamId"`)
+			.addGroupBy(`"document"."createdByUserId"`);
 		this.documentService.applyVisibilityScope(qb);
-		const rows = await qb.getRawMany<{ visibility: string; organizationTeamId: string | null; count: string | number }>();
+		const rows = await qb.getRawMany<{ visibility: string; organizationTeamId: string | null; createdByUserId: string | null; count: string | number }>();
+		const userId = String(RequestContext.currentUserId() ?? '');
 		const result = { organization: 0, privateMine: 0, byTeam: new Map<string, number>() };
 		for (const row of rows) {
 			const count = Number(row.count) || 0;
-			if (row.visibility === DocumentVisibilityEnum.TEAM && row.organizationTeamId) {
-				result.byTeam.set(String(row.organizationTeamId), (result.byTeam.get(String(row.organizationTeamId)) ?? 0) + count);
+			if (row.visibility === DocumentVisibilityEnum.TEAM) {
+				if (row.organizationTeamId) {
+					result.byTeam.set(String(row.organizationTeamId), (result.byTeam.get(String(row.organizationTeamId)) ?? 0) + count);
+				}
 			} else if (row.visibility === DocumentVisibilityEnum.PRIVATE) {
-				// The visibility scope already narrowed PRIVATE rows to the caller's own (and the ones shared with them).
-				result.privateMine += count;
+				if (userId && String(row.createdByUserId ?? '') === userId) result.privateMine += count;
 			} else {
 				result.organization += count;
 			}
