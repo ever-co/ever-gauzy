@@ -56,7 +56,7 @@ hint.
 | Route | What |
 | --- | --- |
 | `GET /api/realtime/status` | whether this process serves subscriptions; the selectable names |
-| `GET /api/realtime/events?after=&afterId=&limit=` | catch-up: the events after the cursor (`after` = epoch ms of the newest applied event, `afterId` = its `eventId`), oldest first; answers `cursor` + `cursorId` to continue from, `hasMore` when a page is full, and `resync: true` when the cursor predates the oldest row the caller's scope retains (or nothing is retained): then refetch through the read APIs |
+| `GET /api/realtime/events?after=&afterId=&limit=` | catch-up: the events after the cursor (`after` = epoch ms of the newest applied event, `afterId` = its `eventId`), oldest first; answers `cursor` + `cursorId` (the position walked to, possibly a row addressed to someone else) to continue from, `hasMore` when a page is full, and `resync: true` when the cursor predates the oldest row the caller's scope retains (or nothing is retained): then refetch through the read APIs |
 | `POST /api/realtime/presence { status }` | `active` / `idle` / `away` / `offline`; persisted on the employee, published to the organization |
 | `POST /api/realtime/typing { conversationId, threadRootId?, recipientUserIds }` | ephemeral, at most 50 recipients, rate-limited |
 

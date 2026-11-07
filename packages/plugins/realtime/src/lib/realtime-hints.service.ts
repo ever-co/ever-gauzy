@@ -249,10 +249,29 @@ export class RealtimeHintsService implements OnModuleInit, OnModuleDestroy {
 		if (!input) {
 			return false;
 		}
+		if (input.hint.action !== 'updated') {
+			// A `deleted` (or `created`) hint must not be followed by an older `updated` one of the same aggregate.
+			await this.flushTrailing(input);
+		}
 		if (input.hint.action === 'updated' && this.coalesced(input)) {
 			return false;
 		}
 		return this.appendNow(input);
+	}
+
+	/** Appends now the pending trailing hints of the input's aggregate, so the outbox keeps the facts in order. */
+	private async flushTrailing(input: IRealtimeHintInput): Promise<void> {
+		for (const [key, pending] of this.trailing) {
+			const sameAggregate =
+				pending.input.tenantId === input.tenantId &&
+				pending.input.aggregateType === input.aggregateType &&
+				pending.input.aggregateId === input.aggregateId;
+			if (!sameAggregate) continue;
+			clearTimeout(pending.timer);
+			this.trailing.delete(key);
+			this.recent.set(key, Date.now());
+			await this.appendNow(pending.input);
+		}
 	}
 
 	private async appendNow(input: IRealtimeHintInput): Promise<boolean> {

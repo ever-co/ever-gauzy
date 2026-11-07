@@ -158,9 +158,16 @@ export interface IRealtimeEventEnvelope<T = JsonData> {
 /** Answer of `GET /api/realtime/events`. */
 export interface IRealtimeCatchUp {
 	events: IRealtimeEventEnvelope[];
-	/** The `occurredAt` (epoch ms) to pass as `after` next time; `null` when nothing is retained yet. */
+	/**
+	 * The position to continue from: the epoch ms to pass as `after` next time. `null` only when no outbox serves
+	 * this process.
+	 */
 	cursor: number | null;
-	/** The `eventId` to pass as `afterId` next time, beside `cursor`; `null` when nothing is retained yet. */
+	/**
+	 * The `eventId` to pass as `afterId` next time, beside `cursor`: the last row the answer walked past, which may be
+	 * one not answered (addressed to someone else). `null` when there is no position yet: no cursor was sent and no
+	 * row was walked.
+	 */
 	cursorId: string | null;
 	/** True when more events follow the ones answered: call again with the cursor before trusting the stream. */
 	hasMore: boolean;

@@ -89,6 +89,26 @@ describe('selectCatchUp', () => {
 		expect(answer.hasMore).toBe(true);
 	});
 
+	it('walks past a window of rows the caller cannot see instead of stalling on it', () => {
+		const hidden = [1000, 2000, 3000, 4000].map((at, index) =>
+			row({ eventId: `h${index + 1}`, at, payload: { recipientUserIds: ['u2'] } })
+		);
+		// The read window (4 rows) held nothing for u1 and was cut: the cursor moves to its end, and more follows.
+		const first = selectCatchUp(hidden, 'u1', { after: 0, limit: 1 }, { truncated: true, resync: false });
+		expect(first.events).toEqual([]);
+		expect(first.cursor).toBe(4000);
+		expect(first.cursorId).toBe('h4');
+		expect(first.hasMore).toBe(true);
+		const second = selectCatchUp(
+			[...hidden, row({ eventId: 'v1', at: 5000 })],
+			'u1',
+			{ after: first.cursor ?? 0, afterId: first.cursorId ?? undefined, limit: 1 },
+			ok
+		);
+		expect(second.events.map((e) => e.eventId)).toEqual(['v1']);
+		expect(second.hasMore).toBe(false);
+	});
+
 	it('keeps the cursor when nothing is new', () => {
 		const quiet = selectCatchUp(rows, 'u1', { after: 9000, afterId: 'zz' }, ok);
 		expect(quiet.events).toEqual([]);

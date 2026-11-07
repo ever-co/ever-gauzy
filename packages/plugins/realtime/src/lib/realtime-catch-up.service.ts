@@ -37,7 +37,10 @@ export function admitsRow(row: Pick<CatchUpRow, 'payload'>, userId: string | nul
 	return recipients.map(String).includes(String(userId));
 }
 
-/** The order a catch-up cursor walks: time, then event id (a total order, so a page never cuts a tie). */
+/**
+ * The order a catch-up cursor walks: time, then event id — a total order, and the one the outbox read uses, so a
+ * bounded read and a page cut a same-millisecond group at the same place.
+ */
 export function compareRows(a: Pick<CatchUpRow, 'createdAt' | 'eventId'>, b: Pick<CatchUpRow, 'createdAt' | 'eventId'>): number {
 	return rowTime(a) - rowTime(b) || String(a.eventId).localeCompare(String(b.eventId));
 }
@@ -75,12 +78,15 @@ export function selectCatchUp(
 		return { events: [], cursor: Date.now(), cursorId: null, hasMore: false, resync: false };
 	}
 
-	const visible = rows
-		.filter((row) => admitsRow(row, userId))
-		.filter((row) => afterCursor(row, after, afterId))
-		.sort(compareRows);
+	// Every row after the cursor the read examined, in cursor order; then the ones this caller may receive.
+	const examined = rows.filter((row) => afterCursor(row, after, afterId)).sort(compareRows);
+	const visible = examined.filter((row) => admitsRow(row, userId));
 	const page = visible.slice(0, limit);
-	const last = page[page.length - 1];
+	const full = page.length === limit;
+	// The position to continue from: the last answered row when the page is full (visible rows may follow it);
+	// otherwise the last row examined, visible to the caller or not — every visible row up to it was answered, so
+	// a window of rows addressed to others never stalls the walk.
+	const position = full ? page[page.length - 1] : examined[examined.length - 1];
 
 	const events: IRealtimeEventEnvelope[] = page.map((row) => ({
 		eventId: row.eventId,
@@ -93,9 +99,10 @@ export function selectCatchUp(
 
 	return {
 		events,
-		cursor: last ? rowTime(last) : after,
-		cursorId: last ? String(last.eventId) : afterId,
-		hasMore: visible.length > limit || (state.truncated && page.length === limit),
+		cursor: position ? rowTime(position) : after,
+		cursorId: position ? String(position.eventId) : afterId,
+		// More may follow when visible rows were left off a full page, or when the read itself was cut.
+		hasMore: full ? visible.length > limit || state.truncated : state.truncated,
 		resync: state.resync
 	};
 }
@@ -104,8 +111,10 @@ export function selectCatchUp(
  * Catch-up after a reconnect: the collaboration events of the caller's scope after a cursor, from the outbox.
  *
  * The outbox is the replay store. The rows are read through the outbox service's bounded, caller-scoped read
- * (tenant, organization or tenant-wide; the collaboration event names; `createdAt` from the cursor time), then
- * selected in code: the recipient rule, the exact cursor (`after` + `afterId`) and the page. `resync` is answered
+ * (tenant, organization or tenant-wide; the collaboration event names; `createdAt` from the cursor time; ordered
+ * by `createdAt` then `eventId`, the cursor's own order), then selected in code: the recipient rule, the exact
+ * cursor (`after` + `afterId`) and the page. The answered cursor is the position walked to — the last row
+ * examined when the page is not full, which may be a row addressed to someone else. `resync` is answered
  * when the cursor predates the oldest row the caller's scope still retains — the retention watermark this
  * installation can state — or when nothing is retained at all: the client then refetches through the read APIs
  * rather than trusting a stream that may have lost rows.
