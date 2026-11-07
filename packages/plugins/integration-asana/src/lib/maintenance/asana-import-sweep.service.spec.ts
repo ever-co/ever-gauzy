@@ -26,7 +26,7 @@ function sweep(config: Partial<AsanaConfig> = {}) {
 		return { id: integrationId, tenantId: integrationId.replace('int-', ''), organizationId: 'org-1', settings: [] };
 	});
 	const summaryOf = jest.fn(() => ({ attentionReason: null }));
-	const claimImport = jest.fn(async (_tenant: unknown, mapping: AsanaProjectMapping) => ({ id: `run-${mapping.id}`, mappingId: mapping.id }));
+	const claimImport = jest.fn(async (_tenant: unknown, mapping: AsanaProjectMapping, _input: { full?: boolean; requestedByUserId?: string | null }) => ({ id: `run-${mapping.id}`, mappingId: mapping.id }));
 	const importMapping = jest.fn().mockResolvedValue(undefined);
 	const service = new AsanaImportSweepService(
 		{ find } as unknown as TypeOrmAsanaProjectMappingRepository,
@@ -91,7 +91,7 @@ describe('AsanaImportSweepService', () => {
 	it('leaves alone a mapping whose import is running, whose connection is gone, or whose connection waits for a person', async () => {
 		const { service, find, requireById, summaryOf, claimImport, importMapping } = sweep();
 		find.mockResolvedValue([mappingOf('running'), mappingOf('gone'), mappingOf('refused'), mappingOf('fine')]);
-		claimImport.mockImplementation(async (_tenant: unknown, mapping: AsanaProjectMapping) => {
+		claimImport.mockImplementation(async (_tenant: unknown, mapping: AsanaProjectMapping, _input: { full?: boolean; requestedByUserId?: string | null }) => {
 			if (mapping.id === 'running') throw new ConflictException('An import of this mapping is running');
 			return { id: `run-${mapping.id}`, mappingId: mapping.id };
 		});
