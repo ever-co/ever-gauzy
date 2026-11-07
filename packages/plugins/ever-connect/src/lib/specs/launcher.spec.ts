@@ -470,6 +470,14 @@ describe('App Launcher routes', () => {
 
 		it('never reuses an answer once the Ever ID session it was read with ended', async () => {
 			expect((await get(`/apps?organizationId=${ORG}`)).body.meta.worksTotal).toBe(2);
+			const feedReads = () => platform.requests.filter((r) => r.url.includes('/v1/orgs/')).length;
+			const readsBefore = feedReads();
+			// A new Ever ID session: read again with its own token.
+			everId.sid = 'sid-2';
+			expect((await get(`/apps?organizationId=${ORG}`)).body.meta.worksTotal).toBe(2);
+			expect(everId.requests.map((request) => request.sid)).toEqual(['sid-1', 'sid-2']);
+			expect(feedReads()).toBe(readsBefore + 2);
+
 			everId.sid = null;
 			const after = await get(`/apps?organizationId=${ORG}`);
 			expect(after.body.signInAvailable).toBe(true);
