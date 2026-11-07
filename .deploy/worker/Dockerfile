@@ -470,13 +470,13 @@ RUN --mount=type=bind,from=prod-dependencies,source=/srv/gauzy/node_modules,targ
     cp -r /mnt/packages/core/node_modules ./node_modules/@gauzy/core/ && \
     cp -r /mnt/packages/scheduler/node_modules ./node_modules/@gauzy/scheduler/ && \
     cp -r /mnt/packages/plugins/changelog/node_modules ./node_modules/@gauzy/plugin-changelog/ && \
-    if [ -d /mnt/packages/plugins/chat/node_modules ]; then cp -r /mnt/packages/plugins/chat/node_modules ./node_modules/@gauzy/plugin-chat/; fi && \
+    if [ -d /mnt/packages/plugins/chat/node_modules ] && [ -d ./node_modules/@gauzy/plugin-chat ]; then cp -r /mnt/packages/plugins/chat/node_modules ./node_modules/@gauzy/plugin-chat/; fi && \
     cp -r /mnt/packages/plugins/integration-activepieces/node_modules ./node_modules/@gauzy/plugin-integration-activepieces/ && \
     cp -r /mnt/packages/plugins/integration-ai/node_modules ./node_modules/@gauzy/plugin-integration-ai/ && \
     cp -r /mnt/packages/plugins/integration-github/node_modules ./node_modules/@gauzy/plugin-integration-github/ && \
     cp -r /mnt/packages/plugins/integration-hubstaff/node_modules ./node_modules/@gauzy/plugin-integration-hubstaff/ && \
     cp -r /mnt/packages/plugins/integration-jira/node_modules ./node_modules/@gauzy/plugin-integration-jira/ && \
-    if [ -d /mnt/packages/plugins/integration-linear/node_modules ]; then cp -r /mnt/packages/plugins/integration-linear/node_modules ./node_modules/@gauzy/plugin-integration-linear/; fi && \
+    if [ -d /mnt/packages/plugins/integration-linear/node_modules ] && [ -d ./node_modules/@gauzy/plugin-integration-linear ]; then cp -r /mnt/packages/plugins/integration-linear/node_modules ./node_modules/@gauzy/plugin-integration-linear/; fi && \
     cp -r /mnt/packages/plugins/integration-make-com/node_modules ./node_modules/@gauzy/plugin-integration-make-com/ && \
     cp -r /mnt/packages/plugins/integration-sim/node_modules ./node_modules/@gauzy/plugin-integration-sim/ && \
     cp -r /mnt/packages/plugins/integration-plane/node_modules ./node_modules/@gauzy/plugin-integration-plane/ && \
@@ -507,7 +507,7 @@ RUN --mount=type=bind,from=prod-dependencies,source=/srv/gauzy/node_modules,targ
     cp -r /mnt/packages/plugins/videos/node_modules ./node_modules/@gauzy/plugin-videos/ && \
     cp -r /mnt/packages/plugins/soundshot/node_modules ./node_modules/@gauzy/plugin-soundshot/ && \
     cp -r /mnt/packages/plugins/registry/node_modules ./node_modules/@gauzy/plugin-registry/ && \
-    if [ -d /mnt/packages/plugins/realtime/node_modules ]; then cp -r /mnt/packages/plugins/realtime/node_modules ./node_modules/@gauzy/plugin-realtime/; fi && \
+    if [ -d /mnt/packages/plugins/realtime/node_modules ] && [ -d ./node_modules/@gauzy/plugin-realtime ]; then cp -r /mnt/packages/plugins/realtime/node_modules ./node_modules/@gauzy/plugin-realtime/; fi && \
     cp -r /mnt/packages/plugins/ai-chat/node_modules ./node_modules/@gauzy/plugin-ai-chat/ && \
     cp -r /mnt/packages/plugins/ai-provider-anthropic/node_modules ./node_modules/@gauzy/plugin-ai-provider-anthropic/ && \
     cp -r /mnt/packages/plugins/ai-provider-openai/node_modules ./node_modules/@gauzy/plugin-ai-provider-openai/ && \
