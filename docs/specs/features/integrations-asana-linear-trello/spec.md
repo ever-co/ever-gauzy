@@ -6,11 +6,11 @@
 
 **Feature ID**: `integrations-asana-linear-trello`
 **Branch**: `feat/integration-asana`, `feat/integration-linear`, `feat/integration-trello`
-**Status**: `Draft`
+**Status**: `Linear phase 1 in review`
 **Created**: 2026-11-07
 **Last updated**: 2026-11-07
 **Owner**: platform maintainers
-**Feature flag**: per integration, `INTEGRATION_ASANA_ENABLED`, `INTEGRATION_LINEAR_ENABLED`, `INTEGRATION_TRELLO_ENABLED` (default off)
+**Feature flag**: per integration, `LINEAR_ENABLED`, `ASANA_ENABLED`, `TRELLO_ENABLED` (default off; exactly `true` loads the plugin, as `EVER_WORKS_ENABLED`)
 
 ---
 
