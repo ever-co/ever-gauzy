@@ -5,6 +5,7 @@ import { DocsPlugin } from '@gauzy/plugin-docs';
 import { InboxPlugin, isInboxEnabled } from '@gauzy/plugin-inbox';
 import { IntegrationEverWorksPlugin, isEverWorksEnabled } from '@gauzy/plugin-integration-ever-works';
 import { IntegrationAsanaPlugin, isAsanaEnabled } from '@gauzy/plugin-integration-asana';
+import { IntegrationLinearPlugin, isLinearEnabled } from '@gauzy/plugin-integration-linear';
 import { InventoryPlugin } from '@gauzy/plugin-inventory';
 import { OrderPlugin } from '@gauzy/plugin-order';
 import { PricingPlugin } from '@gauzy/plugin-pricing';
@@ -129,6 +130,10 @@ export const plugins = resolvePluginLoadOrder([
 	 * 🛑 Off unless `ASANA_ENABLED` is exactly `true` — the same switch as the API's list.
 	 */
 	...(isAsanaEnabled(process.env, (message) => console.warn(message)) ? [IntegrationAsanaPlugin] : []),
+	 * The Linear integration — hosted here, behind its switch, for the scheduled import it owns: a `@ScheduledJob`
+	 * `LINEAR_IMPORT_INTERVAL_MINUTES` is not `0`, so a worker without Redis is unchanged.
+	 * 🛑 Off unless `LINEAR_ENABLED` is exactly `true` — the same switch as the API's list.
+	...(isLinearEnabled(process.env, (message) => console.warn(message)) ? [IntegrationLinearPlugin] : []),
 	/**
 	 * The Inbox — hosted only with the Ever Works integration, and only when both are switched on. This
 	 * process runs the integration's sync as often as the API does (whoever holds the connection's lease),
