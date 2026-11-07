@@ -37,7 +37,11 @@ toggle.
   written in the message transaction; `unread = conversation.messageCount −
   readCount`. One call (`GET /chat/states`) answers every badge.
 - **Attachments** are document ids uploaded through the Docs plugin (`POST
-  /plugins/docs/documents/upload`).
+  /plugins/docs/documents/upload`): a message carries only files its sender
+  uploaded, and each one is linked to the message (`DocumentLink { entity:
+  ChatMessage }`), so the documents' side shows where a file was shared and the
+  conversation's files pane (`GET /conversations/:id/files`) lists what its
+  messages carry, newest first. A deleted message's links go with it.
 
 ## Tables
 
@@ -66,6 +70,7 @@ tenant switched off by hand stays off).
 | `POST /conversations/:id/read { messageId? }` | mark read up to a message (default: all) |
 | `GET /conversations/:id/messages?before=&after=&around=&limit=` | messages, newest by default |
 | `GET /conversations/:id/pins` | pinned messages |
+| `GET /conversations/:id/files?limit=&skip=` | the files the conversation's messages carry, newest first, with the message and its author |
 | `POST /conversations/:id/messages` | send: `{ body, nonce?, replyToId?, threadRootId?, alsoInConversation?, attachmentIds?, mentionEmployeeIds?, taskId? }` |
 | `GET /messages/:id/thread` · `POST /:id/follow` · `/:id/unfollow` · `POST /:id/thread/read` | threads (read marks a followed thread's replies read) |
 | `PATCH /messages/:id` · `DELETE` · `POST /:id/pin` · `/:id/unpin` · `/:id/unread` | one message |
