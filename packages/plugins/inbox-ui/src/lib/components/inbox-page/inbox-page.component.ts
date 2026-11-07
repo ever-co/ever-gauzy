@@ -32,7 +32,6 @@ import {
 	apiTabOf,
 	INBOX_UI_TABS,
 	InboxUiTab,
-	isSnoozed,
 	listedIn,
 	isTranslationKey,
 	isUnread,
