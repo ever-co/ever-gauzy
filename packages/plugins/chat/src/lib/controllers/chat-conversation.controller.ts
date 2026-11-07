@@ -79,7 +79,7 @@ export class ChatConversationController {
 	@Delete('/categories/:id')
 	@Permissions(PermissionsEnum.CHAT_MANAGE)
 	@HttpCode(HttpStatus.NO_CONTENT)
-	@ApiOperation({ summary: 'Delete a category; its channels stay, uncategorised (CHAT_MANAGE).' })
+	@ApiOperation({ summary: 'Delete a category; its channels stay, uncategorized (CHAT_MANAGE).' })
 	async deleteCategory(@Param('id', UUIDValidationPipe) id: ID): Promise<void> {
 		await this.conversations.deleteCategory(this.access.caller(), id);
 	}

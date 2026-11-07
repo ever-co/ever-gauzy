@@ -1,3 +1,4 @@
+// cspell:ignore cret — the test secret `s3cret`
 import { createHmac } from 'node:crypto';
 import { cardIdOf, isTrelloSignatureValid } from './trello-webhook.controller';
 

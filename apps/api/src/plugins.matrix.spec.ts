@@ -46,6 +46,7 @@ class EmailProviderSendGridPlugin {}
 class EmailProviderMailgunPlugin {}
 class EmailProviderPostmarkPlugin {}
 class InboxEmailPlugin {}
+class InboxDeliveryPlugin {}
 class EmailProviderResendPlugin {}
 
 /** A stand-in plugin class; `init()` mimics the configurable plugins. */
@@ -111,7 +112,10 @@ function loadPlugins(env: Record<string, string | undefined>, before?: () => voi
 			jest.doMock('@gauzy/plugin-inbox', () => ({
 				InboxPlugin,
 				InboxEmailPlugin,
+				InboxDeliveryPlugin,
 				isInboxEnabled: jest.requireActual('../../../packages/plugins/inbox/src/lib/inbox-enabled').isInboxEnabled,
+				isInboxNotificationEmailEnabled: jest.requireActual('../../../packages/plugins/inbox/src/lib/inbox-enabled').isInboxNotificationEmailEnabled,
+				isInboxWebPushEnabled: jest.requireActual('../../../packages/plugins/inbox/src/lib/inbox-enabled').isInboxWebPushEnabled,
 				isInboxEmailEnabled: jest.requireActual('../../../packages/plugins/inbox/src/lib/email/inbox-email-enabled').isInboxEmailEnabled
 			}));
 			jest.doMock('@gauzy/plugin-realtime', () => ({

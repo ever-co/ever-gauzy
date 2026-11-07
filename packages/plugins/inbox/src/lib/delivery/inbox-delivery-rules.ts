@@ -92,8 +92,9 @@ function minutesOff(guess: Date, date: string, hour: number, minute: number, tim
  * The instant the person's clock shows `date` at `hour:minute`: the UTC guess corrected by what the clock shows
  * there, and checked once more, so the offset that applies on THAT day is the one used (a daylight-saving change
  * between the guess and the day would otherwise leave an hour's error). A time the clock skips on the day the
- * clocks go forward (02:30 where 02:00 becomes 03:00) is the first instant after the gap — the later of the two
- * candidates the correction oscillates between — so a digest hour or a window's end in the gap is not an hour early.
+ * clocks go forward (02:30 where 02:00 becomes 03:00) is the first instant after the gap (03:00), found between
+ * the two candidates the correction oscillates between, so a digest hour or a window's end in the gap is not an
+ * hour early.
  */
 export function instantOfLocal(date: string, hour: number, minute: number, timeZone?: string | null): Date {
 	const [year, month, day] = date.split('-').map(Number);
@@ -105,8 +106,17 @@ export function instantOfLocal(date: string, hour: number, minute: number, timeZ
 		previous = instant;
 		instant = new Date(instant.getTime() + off * 60_000);
 	}
-	// Never settled: the time is in a gap. The later candidate is the first instant after it.
-	return new Date(Math.max(instant.getTime(), previous.getTime()));
+	// Never settled: the time is in a gap. The earlier candidate shows a time before it and the later one a time past
+	// it (02:30 + the gap: 03:30), so the first instant after the gap is the first minute between them whose clock
+	// is no longer before the skipped time. Offsets change on whole minutes, so the halving ends on that minute.
+	let before = Math.min(instant.getTime(), previous.getTime());
+	let after = Math.max(instant.getTime(), previous.getTime());
+	while (after - before > 60_000) {
+		const middle = before + Math.floor((after - before) / 120_000) * 60_000;
+		if (minutesOff(new Date(middle), date, hour, minute, timeZone) > 0) before = middle;
+		else after = middle;
+	}
+	return new Date(after);
 }
 
 /** `HH:mm` as minutes of the day, or null when it is not one. */
