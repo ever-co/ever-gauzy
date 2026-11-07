@@ -73,11 +73,14 @@ interface RecordedCall {
 }
 
 async function mock<T>(path: string, body?: unknown): Promise<T> {
-	const response = await fetch(`${MOCK}/__mock/${path}`, {
-		method: body === undefined ? 'GET' : 'POST',
-		headers: { 'content-type': 'application/json' },
-		body: body === undefined ? undefined : JSON.stringify(body)
-	});
+	const send = () =>
+		fetch(`${MOCK}/__mock/${path}`, {
+			method: body === undefined ? 'GET' : 'POST',
+			headers: { 'content-type': 'application/json' },
+			body: body === undefined ? undefined : JSON.stringify(body)
+		});
+	// A kept-alive connection the mock closed meanwhile (another suite used it) fails once: ask again.
+	const response = await send().catch(() => send());
 	if (response.status >= 300) {
 		throw new Error(`mock ${path}: ${response.status} ${await response.text()}`);
 	}
@@ -174,8 +177,11 @@ suite('the counterparty check and discoverability against the mock platform', ()
 		roots = testRootsFile(dir, ISSUER);
 	});
 
-	afterAll(() => {
+	afterAll(async () => {
 		rmSync(dir, { recursive: true, force: true });
+		// The mock closes an idle kept-alive connection after 5 s. Waiting here lets this process see
+		// it closed, so a suite run next in the same process does not reuse it.
+		await new Promise((resolve) => setTimeout(resolve, 5_500));
 	});
 
 	beforeEach(async () => {
@@ -206,8 +212,10 @@ suite('the counterparty check and discoverability against the mock platform', ()
 	afterEach(async () => {
 		await app?.close();
 		app = undefined;
-		await dropTables(dataSource, 'better-sqlite3', [...PLUGIN_TABLES, ...CORE_TABLES]);
-		await dataSource.destroy();
+		if (dataSource?.isInitialized) {
+			await dropTables(dataSource, 'better-sqlite3', [...PLUGIN_TABLES, ...CORE_TABLES]);
+			await dataSource.destroy();
+		}
 	});
 
 	function environment(extra: Record<string, string> = {}): Record<string, string | undefined> {
