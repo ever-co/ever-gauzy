@@ -19,6 +19,7 @@ import {
 	ASANA_OAUTH_AUTHORIZE_URL,
 	ASANA_ROUTE_PREFIX,
 	ASANA_TOKEN_REFUSED,
+	ASANA_REQUEST_REFUSED,
 	ASANA_UNAVAILABLE,
 	ASANA_WEBHOOK_NOT_REMOVED
 } from './asana.constants';
@@ -70,6 +71,10 @@ export class AsanaController {
 				if (error.isUnauthorized) {
 					await this.tenants.setAttention(tenant, 'token_refused');
 					throw new BadRequestException({ message: 'Asana refused the connection\'s token; connect again', code: ASANA_TOKEN_REFUSED });
+				}
+				// The user lacks access to that one resource, or it is gone: the request's refusal, not the connection's.
+				if (error.isForbidden || error.isNotFound) {
+					throw new BadRequestException({ message: `Asana refused the request: ${error.message}`, code: ASANA_REQUEST_REFUSED });
 				}
 				throw new BadGatewayException({ message: `Asana did not answer: ${error.message}`, code: ASANA_UNAVAILABLE });
 			}
