@@ -1,6 +1,25 @@
-import { Injectable, Logger, NotFoundException, ForbiddenException, NotAcceptableException } from '@nestjs/common';
+import {
+	Injectable,
+	Logger,
+	NotFoundException,
+	ForbiddenException,
+	NotAcceptableException,
+	UnprocessableEntityException
+} from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
-import { IsNull, Between, Not, In, LessThanOrEqual, MoreThanOrEqual } from 'typeorm';
+import {
+	IsNull,
+	Between,
+	Not,
+	In,
+	LessThanOrEqual,
+	MoreThanOrEqual,
+	FindOneOptions,
+	FindOptionsRelations,
+	FindOptionsWhere,
+	Or,
+	Equal
+} from 'typeorm';
 import * as moment from 'moment';
 import {
 	TimeLogType,
@@ -17,7 +36,7 @@ import {
 	ID
 } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/utils';
-import { TimeLog } from '../../core/entities/internal';
+import { DailyPlan, Employee, OrganizationTeam, OrganizationTeamEmployee, TimeLog } from '../../core/entities/internal';
 import { RequestContext } from '../../core/context';
 import {
 	MultiORM,
@@ -33,6 +52,8 @@ import { assertSensitiveRelationsAllowed } from '../../core/util/sensitive-relat
 import { withoutTrackedDataRelations } from '../../core/util/tracked-data-sensitive-relations.config';
 import { prepareSQLQuery as p } from '../../database/database.helper';
 import { EmployeeService } from '../../employee/employee.service';
+import { ManagedEmployeeService } from '../../employee/managed-employee.service';
+import { ITrackingTurnedOffScope } from './events/tracking-turned-off.event';
 import {
 	DeleteTimeSpanCommand,
 	IGetConflictTimeLogCommand,
@@ -40,6 +61,12 @@ import {
 	TimeLogCreateCommand,
 	TimeLogUpdateCommand
 } from '../time-log/commands';
+import {
+	assertRequiredContext,
+	projectIdForEntry,
+	teamIdForEntry
+} from '../time-log/organization-tracking-requirements';
+import { isTrackerSource } from '../time-log/tracker-source';
 import { TypeOrmTimeLogRepository } from '../time-log/repository/type-orm-time-log.repository';
 import { MikroOrmTimeLogRepository } from '../time-log/repository/mikro-orm-time-log.repository';
 import { TypeOrmEmployeeRepository } from '../../employee/repository/type-orm-employee.repository';
@@ -53,9 +80,29 @@ import {
 	exclusiveWindowEnd,
 	secondsWithinWindow
 } from './timer.helper';
+import {
+	DAILY_PLAN_REQUIRED,
+	PLAN_RULE_SOURCES,
+	TASK_NOT_PLANNED,
+	planDatesForStart,
+	planHasTasks,
+	planHoldsTask
+} from './timer-plan-rule';
 
 // Get the type of the Object-Relational Mapping (ORM) used in the application.
 const ormType: MultiORM = getORMType();
+
+/**
+ * The Ever Teams clients, web and mobile. Their timer starts name a task and, in installed versions, no project, so
+ * the log's project is taken from the task; the other clients keep writing what they send.
+ */
+const PROJECT_FROM_TASK_SOURCES: ReadonlyArray<string> = [TimeLogSourceEnum.TEAMS, TimeLogSourceEnum.MOBILE];
+
+/**
+ * The Ever Teams clients, web and mobile. They are the ones that turn tracking off per team, so only their starts
+ * are held to that switch; the other clients of this API never set it and keep their behavior.
+ */
+const TEAM_TRACKING_SWITCH_SOURCES: ReadonlyArray<string> = [TimeLogSourceEnum.TEAMS, TimeLogSourceEnum.MOBILE];
 
 @Injectable()
 export class TimerService {
@@ -69,7 +116,8 @@ export class TimerService {
 		readonly typeOrmEmployeeRepository: TypeOrmEmployeeRepository,
 		readonly mikroOrmEmployeeRepository: MikroOrmEmployeeRepository,
 		private readonly _employeeService: EmployeeService,
-		private readonly _commandBus: CommandBus
+		private readonly _commandBus: CommandBus,
+		private readonly _managedEmployeeService: ManagedEmployeeService
 	) {}
 
 	/**
@@ -91,6 +139,36 @@ export class TimerService {
 	}
 
 	/**
+	 * Whether a timer status request that names an employee reads that employee (true) or the caller, as a request
+	 * naming the caller themselves always did (false). A caller who may act for every employee reads anyone; a manager
+	 * of the employee (ManagedEmployeeService) reads them too. Anyone else is refused: they used to get their own
+	 * status back, labelled as the colleague's, with no error.
+	 *
+	 * @throws ForbiddenException when the caller may not read the named employee's status.
+	 */
+	private async readsStatusOfNamedEmployee(employeeId: ID, organizationId: ID): Promise<boolean> {
+		const actsForEveryEmployee = RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE);
+		if (actsForEveryEmployee) {
+			return true;
+		}
+
+		const callerEmployeeId = RequestContext.currentEmployeeId();
+		if (employeeId === callerEmployeeId) {
+			return false;
+		}
+
+		const managesEmployee = await this._managedEmployeeService.canManageEmployee(
+			employeeId,
+			undefined,
+			organizationId
+		);
+		if (!managesEmployee) {
+			throw new ForbiddenException("You can't see this employee's timer status.");
+		}
+		return true;
+	}
+
+	/**
 	 * Implementation of timer status logic
 	 * This is intended to be used directly by the command handler
 	 */
@@ -104,12 +182,17 @@ export class TimerService {
 
 		let employee: IEmployee;
 
-		/** SUPER_ADMIN have ability to see employees timer status by specific employee (employeeId) */
-		const permission = RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE);
+		const namedEmployeeId = request.employeeId;
+		const namesAnEmployee = isNotEmpty(namedEmployeeId);
+		let readsNamedEmployee = false;
+		if (namesAnEmployee) {
+			readsNamedEmployee = await this.readsStatusOfNamedEmployee(namedEmployeeId, organizationId);
+		}
 
-		if (!!permission && isNotEmpty(request.employeeId)) {
-			const { employeeId } = request;
-			employee = await this.fetchEmployee({ id: employeeId, tenantId, organizationId });
+		if (readsNamedEmployee) {
+			// Someone else's log: the tracked data hanging off it (slots, screenshots) stays out, as on the worked status
+			request = { ...request, relations: withoutTrackedDataRelations(request.relations) };
+			employee = await this.fetchEmployee({ id: namedEmployeeId, tenantId, organizationId });
 		} else {
 			const userId = RequestContext.currentUserId();
 			employee = await this.fetchEmployee({ userId, tenantId, organizationId });
@@ -260,17 +343,7 @@ export class TimerService {
 		this.debug(() => `Start Timer Request (${moment.utc(request.startedAt).toDate()}): ${JSON.stringify(request)}`);
 
 		// Destructure the necessary parameters from the request
-		const {
-			source,
-			logType,
-			projectId,
-			taskId,
-			organizationContactId,
-			organizationTeamId,
-			description,
-			isBillable,
-			version
-		} = request;
+		const { source, logType, taskId, organizationContactId, description, isBillable, version } = request;
 
 		// Retrieve the tenant ID from the current context or the provided one in the request
 		const tenantId = RequestContext.currentTenantId() ?? request.tenantId;
@@ -279,8 +352,8 @@ export class TimerService {
 		const startedAt = moment.utc(request.startedAt ?? moment.utc()).toDate();
 		this.debug(() => `new timer started at: ${startedAt}`);
 
-		// Retrieve the employee information
-		const employee = await this.findEmployee();
+		// Retrieve the employee information, with the organization whose switches the start must meet
+		const employee = await this.findEmployee({ organization: true });
 
 		// Throw an exception if the employee is not found or tracking is disabled
 		if (!employee.isTrackingEnabled) {
@@ -289,6 +362,38 @@ export class TimerService {
 
 		// Get the employee ID
 		const { id: employeeId, organizationId } = employee;
+		const requirements = employee.organization;
+		const trackedEmployee = { employeeId, organizationId, tenantId };
+		const manager = this.typeOrmTimeLogRepository.manager;
+
+		const teamIdToLog = await teamIdForEntry(manager, trackedEmployee, request, requirements);
+
+		await this.assertTrackingOnInTeam(employeeId, organizationId, tenantId, teamIdToLog, source);
+
+		await this.assertPlannedWhenTeamRequiresIt({
+			employeeId,
+			organizationId,
+			tenantId,
+			organizationTeamId: teamIdToLog,
+			taskId,
+			source,
+			planDay: request.planDay
+		});
+
+		const takesTaskProject = PROJECT_FROM_TASK_SOURCES.includes(source);
+		const startContext = { taskId, organizationTeamId: teamIdToLog, projectId: request.projectId };
+		const projectIdToLog = await projectIdForEntry(
+			manager,
+			trackedEmployee,
+			startContext,
+			requirements,
+			takesTaskProject
+		);
+
+		const isTrackerStart = isTrackerSource(source);
+		if (!isTrackerStart) {
+			assertRequiredContext(requirements, { taskId, organizationTeamId: teamIdToLog, projectId: projectIdToLog });
+		}
 
 		// Stop any previous running timers
 		await this.stopPreviousRunningTimers(employeeId, organizationId, tenantId);
@@ -304,10 +409,10 @@ export class TimerService {
 				duration: 0,
 				source: source || TimeLogSourceEnum.WEB_TIMER,
 				logType: logType || TimeLogType.TRACKED,
-				projectId: projectId || null,
+				projectId: projectIdToLog || null,
 				taskId: taskId || null,
 				organizationContactId: organizationContactId || null,
-				organizationTeamId: organizationTeamId || null,
+				organizationTeamId: teamIdToLog || null,
 				description: description || null,
 				isBillable: isBillable || false,
 				version: version || null,
@@ -328,6 +433,116 @@ export class TimerService {
 	}
 
 	/**
+	 * Refuses an Ever Teams start for a team that requires a daily plan when the employee has no plan with tasks
+	 * for their day in that team, or when the task they start is in none of those plans. Their day is the one the
+	 * client sends (see planDatesForStart), or the days around today for a client that sends none. Ever Teams web
+	 * checks the same before starting; the mobile app and older web tabs did not, and the rule stayed advisory.
+	 *
+	 * @throws UnprocessableEntityException with the code DAILY_PLAN_REQUIRED or TASK_NOT_PLANNED.
+	 */
+	private async assertPlannedWhenTeamRequiresIt(start: {
+		employeeId: ID;
+		organizationId: ID;
+		tenantId: ID;
+		organizationTeamId?: ID | null;
+		taskId?: ID;
+		source?: TimeLogSourceEnum;
+		planDay?: string;
+	}): Promise<void> {
+		const { employeeId, organizationId, tenantId, organizationTeamId, taskId, source, planDay } = start;
+		const isPlanRuleClient = PLAN_RULE_SOURCES.includes(source);
+		if (!isPlanRuleClient) {
+			return;
+		}
+		if (!organizationTeamId) {
+			return;
+		}
+
+		const team = await this.typeOrmTimeLogRepository.manager.findOne(OrganizationTeam, {
+			where: { id: organizationTeamId, organizationId, tenantId },
+			select: { id: true, requirePlanToTrack: true }
+		});
+		const teamRequiresPlan = team?.requirePlanToTrack === true;
+		if (!teamRequiresPlan) {
+			return;
+		}
+
+		const { from, to } = planDatesForStart(planDay, moment.utc());
+		const plans = await this.typeOrmTimeLogRepository.manager.find(DailyPlan, {
+			where: {
+				employeeId,
+				organizationTeamId,
+				organizationId,
+				tenantId,
+				date: Between(from, to),
+				isActive: Or(IsNull(), Equal(true)),
+				isArchived: Or(IsNull(), Equal(false))
+			},
+			relations: { tasks: true }
+		});
+		const plansWithTasks = plans.filter(planHasTasks);
+		if (plansWithTasks.length === 0) {
+			throw new UnprocessableEntityException({
+				message: 'Your team requires a daily plan before you track time. Plan your day first.',
+				code: DAILY_PLAN_REQUIRED
+			});
+		}
+
+		if (!taskId) {
+			return;
+		}
+		const isTaskPlanned = plansWithTasks.some((plan) => planHoldsTask(plan, taskId));
+		if (!isTaskPlanned) {
+			throw new UnprocessableEntityException({
+				message: "Add this task to today's plan before you track time on it.",
+				code: TASK_NOT_PLANNED
+			});
+		}
+	}
+
+	/**
+	 * Refuses an Ever Teams start for a team where the employee's tracking is turned off. Ever Teams hides the timer
+	 * then, but an open tab from before or the mobile app could still start it.
+	 *
+	 * @param employeeId The employee starting the timer.
+	 * @param organizationId The employee's organization.
+	 * @param tenantId The caller's tenant.
+	 * @param organizationTeamId The team the timer starts for, if any.
+	 * @param source The client starting the timer.
+	 */
+	private async assertTrackingOnInTeam(
+		employeeId: ID,
+		organizationId: ID,
+		tenantId: ID,
+		organizationTeamId: ID | null | undefined,
+		source: TimeLogSourceEnum | undefined
+	): Promise<void> {
+		const isTeamSwitchClient = TEAM_TRACKING_SWITCH_SOURCES.includes(source);
+		if (!isTeamSwitchClient) {
+			return;
+		}
+		if (!organizationTeamId) {
+			return;
+		}
+		const membership = await this.typeOrmTimeLogRepository.manager.findOne(OrganizationTeamEmployee, {
+			// A membership left inactive or archived no longer ties the employee to the team (NULL counts as current)
+			where: {
+				employeeId,
+				organizationTeamId,
+				organizationId,
+				tenantId,
+				isActive: Or(IsNull(), Equal(true)),
+				isArchived: Or(IsNull(), Equal(false))
+			},
+			select: { id: true, isTrackingEnabled: true }
+		});
+		const isTrackingOffInTeam = membership?.isTrackingEnabled === false;
+		if (isTrackingOffInTeam) {
+			throw new ForbiddenException('Time tracking is turned off for you in this team.');
+		}
+	}
+
+	/**
 	 * Implementation of stop timer logic
 	 * This is intended to be used directly by the command handler
 	 */
@@ -337,12 +552,9 @@ export class TimerService {
 		// Validate the date range and check if the timer is running
 		validateDateRange(request.startedAt, request.stoppedAt);
 
-		// Fetch the employee details
+		// Fetch the employee details. Turning tracking off does not refuse the stop: a timer still running when an
+		// admin turned it off could otherwise never be stopped, and would keep counting time
 		const employee = await this.findEmployee();
-		// Check if time tracking is enabled for the employee
-		if (!employee.isTrackingEnabled) {
-			throw new ForbiddenException('The time tracking functionality has been disabled for you.');
-		}
 
 		// Retrieve tenant ID
 		const tenantId = RequestContext.currentTenantId() ?? request.tenantId;
@@ -647,15 +859,20 @@ export class TimerService {
 	/**
 	 * Retrieves the current employee record based on the user and tenant context.
 	 *
+	 * @param relations The relations to load with the employee, none by default.
 	 * @returns The employee record if found.
 	 * @throws NotFoundException if the employee record is not found.
 	 */
-	async findEmployee(): Promise<IEmployee> {
+	async findEmployee(relations?: FindOptionsRelations<Employee>): Promise<IEmployee> {
 		const userId = RequestContext.currentUserId(); // Get the current user ID
 		const tenantId = RequestContext.currentTenantId(); // Get the current tenant ID
 
 		// Fetch the employee record using userId and tenantId
-		const employee = await this._employeeService.findOneByUserId(userId, undefined, { where: { tenantId } });
+		const options: FindOneOptions<Employee> = { where: { tenantId } };
+		if (relations) {
+			options.relations = relations;
+		}
+		const employee = await this._employeeService.findOneByUserId(userId, undefined, options);
 
 		if (!employee) {
 			throw new NotFoundException('Employee record not found. Please verify your details and try again.');
@@ -901,6 +1118,121 @@ export class TimerService {
 	private debug(message: () => string): void {
 		if (Logger.isLevelEnabled('debug')) {
 			this.logger.debug(message());
+		}
+	}
+
+	/**
+	 * Stops the running timers of an employee whose time tracking was just turned off, at this moment, as a stop of
+	 * their own would. With a team, only a timer running for that team stops. Called for a caller who may change
+	 * the employee's tracking (an admin, or the team's manager), so it reads and writes by the ids given rather than
+	 * through the caller's employee scope.
+	 *
+	 * @param scope The employee, their organization and tenant, and the team when tracking was turned off for it only.
+	 * @returns The stopped time logs.
+	 */
+	async stopRunningTimersOf(scope: ITrackingTurnedOffScope): Promise<ITimeLog[]> {
+		const { employeeId, organizationId, tenantId, organizationTeamId } = scope;
+		const where: FindOptionsWhere<TimeLog> = { employeeId, organizationId, tenantId, isRunning: true };
+		if (organizationTeamId) {
+			where.organizationTeamId = organizationTeamId;
+		}
+
+		const runningLogs = await this.findTimeLogsWhere(where);
+		const stoppedAt = moment.utc().toDate();
+		const stoppedLogs: ITimeLog[] = [];
+		for (const runningLog of runningLogs) {
+			const partialTimeLog: Partial<ITimeLog> = { isRunning: false };
+			const stopsAfterStart = stoppedAt >= new Date(runningLog.startedAt);
+			if (stopsAfterStart) {
+				partialTimeLog.stoppedAt = stoppedAt;
+			}
+			// Each stop on its own: one that fails leaves the others stopped, and those are still returned
+			try {
+				const stoppedLog = await this._commandBus.execute(
+					new TimeLogUpdateCommand(partialTimeLog, runningLog.id)
+				);
+				stoppedLogs.push(stoppedLog);
+			} catch (error) {
+				this.logger.warn(`Failed to stop the running time log ${runningLog.id}: ${error?.message}`);
+				const storedLog = await this.storedStoppedLog(runningLog.id, tenantId);
+				if (storedLog) {
+					stoppedLogs.push(storedLog);
+				}
+			}
+		}
+
+		const hasStoppedAny = stoppedLogs.length > 0;
+		if (hasStoppedAny) {
+			await this.markNotTrackingWhenNothingRuns(employeeId, organizationId, tenantId);
+		}
+		return stoppedLogs;
+	}
+
+	/**
+	 * The log as stored after a failed stop, when it no longer runs: the update writes the stop before its later
+	 * steps, so a failure after that write still stopped it. Undefined when it still runs or cannot be read.
+	 */
+	private async storedStoppedLog(timeLogId: ID, tenantId: ID): Promise<ITimeLog | undefined> {
+		try {
+			const [storedLog] = await this.findTimeLogsWhere({ id: timeLogId, tenantId });
+			const wasStopped = storedLog?.isRunning === false;
+			if (wasStopped) {
+				return storedLog;
+			}
+		} catch (error) {
+			this.logger.warn(`Failed to read back the time log ${timeLogId}: ${error?.message}`);
+		}
+		return undefined;
+	}
+
+	/**
+	 * Marks the employee as not tracking once no timer of theirs runs: turned off for one team, a timer of another
+	 * team may still run. Left as it is when that cannot be read.
+	 */
+	private async markNotTrackingWhenNothingRuns(employeeId: ID, organizationId: ID, tenantId: ID): Promise<void> {
+		try {
+			const stillRunning = await this.findTimeLogsWhere({
+				employeeId,
+				organizationId,
+				tenantId,
+				isRunning: true
+			});
+			const hasNoTimerLeft = stillRunning.length === 0;
+			if (hasNoTimerLeft) {
+				await this.markNotTracking(employeeId, organizationId, tenantId);
+			}
+		} catch (error) {
+			this.logger.warn(`Failed to read the running timers of employee ${employeeId}: ${error?.message}`);
+		}
+	}
+
+	private async findTimeLogsWhere(where: FindOptionsWhere<TimeLog>): Promise<ITimeLog[]> {
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM: {
+				const findOptions = parseTypeORMFindToMikroOrm<TimeLog>({ where });
+				const items = await this.mikroOrmTimeLogRepository.findAll(findOptions);
+				return items.map((entity: TimeLog) => wrapSerialize(entity)) as TimeLog[];
+			}
+			case MultiORMEnum.TypeORM:
+			default:
+				return await this.typeOrmTimeLogRepository.find({ where });
+		}
+	}
+
+	private async markNotTracking(employeeId: ID, organizationId: ID, tenantId: ID): Promise<void> {
+		const employee = { id: employeeId, organizationId, tenantId };
+		const status = { isOnline: false, isTrackingTime: false };
+		try {
+			switch (this.ormType) {
+				case MultiORMEnum.MikroORM:
+					await this.mikroOrmEmployeeRepository.nativeUpdate(employee, status);
+					return;
+				case MultiORMEnum.TypeORM:
+				default:
+					await this.typeOrmEmployeeRepository.update(employee, status);
+			}
+		} catch (error) {
+			this.logger.warn(`Failed to mark employee ${employeeId} as not tracking: ${error?.message}`);
 		}
 	}
 }

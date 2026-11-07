@@ -29,7 +29,10 @@ export enum EmployeeNotificationTypeEnum {
 	MENTION = 'Mention', // Stored as 3 in DB
 	COMMENT = 'Comment', // Stored as 4 in DB
 	MESSAGE = 'Message', // Stored as 5 in DB
-	BROADCAST = 'Broadcast' // Stored as 6 in DB
+	BROADCAST = 'Broadcast', // Stored as 6 in DB
+	RATE_CHANGE_REQUEST = 'RateChangeRequest', // Stored as 7 in DB
+	/** A record the employee follows changed (a task's status, for example). Stored as 8 in DB. */
+	TASK_UPDATE = 'TaskUpdate'
 }
 
 /**
@@ -43,7 +46,9 @@ export enum NotificationActionTypeEnum {
 	Mentioned = 'Mentioned',
 	Commented = 'Commented',
 	Messaged = 'Messaged',
-	Broadcasted = 'Broadcasted'
+	Broadcasted = 'Broadcasted',
+	/** A followed record was changed (status, assignment, dates). */
+	Updated = 'Updated'
 }
 
 /**

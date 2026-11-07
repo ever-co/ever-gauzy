@@ -743,6 +743,7 @@
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Default Rate",
+			"OWN_RATES_LOCKED": "Ask an admin to change your rate.",
 			"EXPECTED_RATE": "Expected Rate",
 			"LIMITS": "Limits",
 			"ERRORS": {
@@ -1213,6 +1214,7 @@
 		"SMS_GATEWAYS": "SMS Gateways",
 		"CUSTOM_SMTP": "Custom SMTP",
 		"OAUTH_CLIENTS": "OAuth Clients",
+		"API_TOKENS": "API Tokens",
 		"INVENTORY": "Inventory",
 		"SALES": "Sales",
 		"PAYMENTS": "Payments",
@@ -2634,7 +2636,95 @@
 			"HR": "hr",
 			"SETTINGS": "Settings",
 			"GENERAL_SETTINGS": "General Settings",
-			"INTEGRATIONS": "Integrations"
+			"INTEGRATIONS": "Integrations",
+			"PROJECTS_TAB": {
+				"TITLE": "Projects",
+				"CAPTION": "Projects this employee is a member of. Members can track time and work on the project’s tasks.",
+				"SEARCH": "Search projects",
+				"ASSIGN": "Assign projects",
+				"ASSIGN_DIALOG_TITLE": "Assign to projects",
+				"ASSIGN_DIALOG_SUBTITLE": "Choose the projects {{ employee }} should join. They will be able to track time and work on their tasks.",
+				"ASSIGN_SEARCH": "Search by name, key or client",
+				"SELECT_ALL": "Select all",
+				"DESELECT_ALL": "Deselect all",
+				"SELECTED_COUNT": "{{ count }} selected",
+				"CLEAR_SELECTION": "Clear",
+				"ASSIGN_SUBMIT": "Assign",
+				"ALL_ASSIGNED": "This employee is already a member of every project.",
+				"COLUMNS": {
+					"PROJECT": "Project",
+					"ROLE": "Role",
+					"STATUS": "Status",
+					"MEMBERS": "Members",
+					"BILLING": "Billing"
+				},
+				"ROLE_MANAGER": "Manager",
+				"ROLE_MEMBER": "Member",
+				"STATUS": {
+					"OPEN": "Open",
+					"IN_PROGRESS": "In progress",
+					"COMPLETED": "Completed",
+					"CANCELLED": "Cancelled",
+					"CUSTOM": "Custom"
+				},
+				"BILLING": {
+					"RATE": "Hourly rate",
+					"FLAT_FEE": "Flat fee",
+					"MILESTONES": "Milestones"
+				},
+				"PUBLIC": "Public",
+				"PRIVATE": "Private",
+				"QUICK_LOOK": "Quick look",
+				"OPEN_PROJECT": "Open project page",
+				"REMOVE": "Remove from project",
+				"REMOVE_TITLE": "Remove from project",
+				"REMOVE_MESSAGE": "Remove {{ employee }} from {{ project }}? They will no longer be able to track time on it.",
+				"REMOVE_HINT": "You can assign them to this project again at any time.",
+				"SHOWING": "Showing {{ count }} of {{ total }} projects",
+				"NO_MATCH": "No projects match “{{ term }}”",
+				"NO_MATCH_PICKER": "No matching projects",
+				"CLEAR_SEARCH": "Clear search",
+				"EMPTY_TITLE": "No projects yet",
+				"EMPTY_TEXT": "Assign this employee to a project so they can track time and work on its tasks."
+			},
+			"CONTACTS_TAB": {
+				"TITLE": "Contacts",
+				"CAPTION": "Clients, customers and leads this employee works with.",
+				"SEARCH": "Search contacts",
+				"ASSIGN": "Assign contacts",
+				"ASSIGN_DIALOG_TITLE": "Assign to contacts",
+				"ASSIGN_DIALOG_SUBTITLE": "Choose the contacts {{ employee }} should work with.",
+				"ASSIGN_SEARCH": "Search by name",
+				"SELECT_ALL": "Select all",
+				"DESELECT_ALL": "Deselect all",
+				"SELECTED_COUNT": "{{ count }} selected",
+				"CLEAR_SELECTION": "Clear",
+				"ASSIGN_SUBMIT": "Assign",
+				"ALL_ASSIGNED": "This employee is already assigned to every contact.",
+				"NO_MATCH_PICKER": "No matching contacts",
+				"LOAD_MORE": "Load more",
+				"LOAD_FAILED": "Contacts could not be loaded.",
+				"COLUMNS": {
+					"CONTACT": "Contact",
+					"TYPE": "Type",
+					"PROJECTS": "Projects"
+				},
+				"TYPE": {
+					"CLIENT": "Client",
+					"CUSTOMER": "Customer",
+					"LEAD": "Lead"
+				},
+				"OPEN_CONTACT": "Open contact page",
+				"REMOVE": "Remove from contact",
+				"REMOVE_TITLE": "Remove from contact",
+				"REMOVE_MESSAGE": "Remove {{ employee }} from {{ contact }}? They will no longer be assigned to this contact.",
+				"REMOVE_HINT": "You can assign them to this contact again at any time.",
+				"SHOWING": "Showing {{ count }} of {{ total }} contacts",
+				"NO_MATCH": "No contacts match “{{ term }}”",
+				"CLEAR_SEARCH": "Clear search",
+				"EMPTY_TITLE": "No contacts yet",
+				"EMPTY_TEXT": "Assign this employee to a client, customer or lead to show who they work with."
+			}
 		},
 		"ADD_EMPLOYEES": {
 			"STEP_1": "Step 1",
@@ -3802,6 +3892,7 @@
 				"SEARCH_INDEX_DEFINITIONS_VIEW": "See which fields the search index holds and how much each one weighs.",
 				"SEARCH_INDEX_DEFINITIONS_EDIT": "Add, re-weight, deactivate or remove the fields the search index holds.",
 				"ORG_EMPLOYEES_EDIT": "Change employees' profiles, employment details, rates and settings.",
+				"CHANGE_OWN_RATES": "Change your own rates on your own employee profile. Without it, you see your rates and ask an admin to change them.",
 				"ORG_CANDIDATES_VIEW": "See the organization's candidates and their profiles.",
 				"ORG_CANDIDATES_EDIT": "Create, edit and delete candidates.",
 				"ORG_USERS_VIEW": "See the users of the organization and their roles.",
@@ -3885,6 +3976,7 @@
 			"ORG_EMPLOYEES_ADD": "Create Organization Employees",
 			"ORG_EMPLOYEES_VIEW": "View Organization Employees",
 			"ORG_EMPLOYEES_EDIT": "Edit Organization Employees",
+			"CHANGE_OWN_RATES": "Change Own Rates",
 			"ORG_EMPLOYEES_DELETE": "Delete Organization Employees",
 			"ORG_CANDIDATES_VIEW": "View Organization Candidates",
 			"ORG_CANDIDATES_EDIT": "Create/Edit/Delete Organization Candidates",
@@ -4988,7 +5080,45 @@
 			"HEADER": "Manage User",
 			"EDIT_EXISTING_USER": "Edit Existing User",
 			"MAIN": "Main",
-			"USER_ORGANIZATIONS": "Organizations"
+			"USER_ORGANIZATIONS": "Organizations",
+			"CHANGE_PHOTO": "Change photo",
+			"EMAIL_VERIFIED": "Email verified",
+			"EMAIL_NOT_VERIFIED": "Email not verified",
+			"MEMBER_SINCE": "Member since",
+			"LAST_SIGN_IN": "Last sign-in",
+			"NEVER_SIGNED_IN": "Never",
+			"PERSONAL_DETAILS": "Personal details",
+			"ACCESS": "Access",
+			"PASSWORD": "Password",
+			"PASSWORD_HINT": "Leave both fields empty to keep the current password.",
+			"PREFERENCES": "Preferences",
+			"ORGANIZATIONS_CAPTION": "Organizations this user belongs to and can work in.",
+			"ADD_ORGANIZATION": "Add to organization",
+			"NO_ORGANIZATIONS": "This user is not in any organization yet.",
+			"REMOVE_FROM_ORGANIZATION": "Remove from organization",
+			"ADD_DIALOG_TITLE": "Add to organizations",
+			"ADD_DIALOG_SUBTITLE": "Choose the organizations {{ name }} should join.",
+			"SEARCH_ORGANIZATIONS": "Search organizations",
+			"SELECT_ALL": "Select all",
+			"DESELECT_ALL": "Deselect all",
+			"SELECTED_COUNT": "{{ count }} selected",
+			"CLEAR_SELECTION": "Clear",
+			"ALL_ORGANIZATIONS_JOINED": "This user is already in every organization.",
+			"NO_MATCHING_ORGANIZATIONS": "No matching organizations",
+			"GROUP_ACCOUNT": "Account",
+			"GROUP_LOCALE": "Language & time",
+			"STATUS": "Status",
+			"ACTIVE_STATUS": "Active",
+			"INACTIVE_STATUS": "Inactive",
+			"LAST_UPDATED": "Last updated",
+			"LANGUAGE": "Language",
+			"TIME_ZONE": "Time zone",
+			"LOCAL_TIME": "Local time",
+			"TIME_FORMAT": "Time format",
+			"TIME_FORMAT_12": "12-hour",
+			"TIME_FORMAT_24": "24-hour",
+			"NOT_SET": "Not set",
+			"LOAD_FAILED": "This user could not be loaded."
 		},
 		"REMOVE_USER": "'{{ name }}' was removed",
 		"ACTIVE": "Active",
@@ -5393,7 +5523,11 @@
 		"SELECT_TEAM": "Team",
 		"AI_CHAT": "AI Chat",
 		"COLLAPSE_SIDEBAR": "Collapse sidebar",
-		"EXPAND_SIDEBAR": "Expand sidebar"
+		"EXPAND_SIDEBAR": "Expand sidebar",
+		"EVER_APPS": "Apps",
+		"SWITCH_EVER_APP": "Switch to another Ever app",
+		"WORKSPACE": "Workspace",
+		"SWITCH_WORKSPACE": "Switch workspace"
 	},
 	"AI_ASSISTANT": {
 		"TITLE": "AI Assistant",
@@ -8713,6 +8847,63 @@
 			"COPY_FAILED": "Failed to copy to clipboard"
 		}
 	},
+	"USER_API_TOKENS": {
+		"TITLE": "API Tokens",
+		"SUBTITLE": "Tokens for your own agents and scripts. A token can do what you can do, so keep it as safe as a password.",
+		"EMPTY": {
+			"TITLE": "You have no API tokens yet.",
+			"HINT": "Click \"Create token\" to make one for an agent or a script."
+		},
+		"TABLE": {
+			"NAME": "Name",
+			"TOKEN": "Token",
+			"CREATED": "Created",
+			"LAST_USED": "Last used",
+			"EXPIRES": "Expires",
+			"ACTIONS": "Actions"
+		},
+		"VALUES": {
+			"NEVER_USED": "Never used",
+			"NEVER_EXPIRES": "Never",
+			"EXPIRED": "Expired"
+		},
+		"ACTIONS": {
+			"CREATE": "Create token",
+			"REVOKE": "Revoke"
+		},
+		"DIALOG": {
+			"TITLE": "Create an API token",
+			"NAME": "Name",
+			"NAME_PLACEHOLDER": "e.g. Task agent on my PC",
+			"EXPIRY": "Expires after",
+			"EXPIRY_90_DAYS": "90 days",
+			"EXPIRY_1_YEAR": "1 year",
+			"EXPIRY_NEVER": "Never",
+			"HINT": "A token that never expires keeps working until you revoke it."
+		},
+		"SECRET_DIALOG": {
+			"TITLE": "Save your API token",
+			"WARNING": "This is the only time the token is shown, and it cannot be read again. Copy it now. If you lose it, revoke it and create a new one.",
+			"ACKNOWLEDGE": "I have copied and safely stored the token.",
+			"CLOSE": "I've saved it, close",
+			"COPIED": "Token copied to clipboard",
+			"COPY_ARIA": "Copy token"
+		},
+		"CONFIRM": {
+			"REVOKE": "Revoke \"{{name}}\"? It cannot start a new session from now on, and a session it already started ends within an hour."
+		},
+		"TOASTS": {
+			"CREATED": "Created \"{{name}}\"",
+			"REVOKED": "API token revoked"
+		},
+		"ERRORS": {
+			"LOAD_FAILED": "Failed to load API tokens",
+			"CREATE_FAILED": "Failed to create the API token",
+			"TOO_MANY": "You hold as many API tokens as allowed. Revoke one you no longer use first.",
+			"REVOKE_FAILED": "Failed to revoke the API token",
+			"COPY_FAILED": "Failed to copy to clipboard"
+		}
+	},
 	"RICH_TEXT_EDITOR": {
 		"TOOLBAR": {
 			"LABEL": "Text formatting",
@@ -8874,6 +9065,46 @@
 		"COMMENT_IMAGE_TYPES": "Only PNG, JPEG, GIF, WebP and BMP images can be attached.",
 		"COMMENT_IMAGE_LIMIT": "A comment can carry up to {{ count }} images.",
 		"COMMENT_IMAGE_FAILED": "Couldn’t upload {{ name }}."
+	},
+	"EXPENSE_VIEW": {
+		"EXPENSE": "Expense",
+		"DETAILS": "Details",
+		"DESCRIPTION": "Description",
+		"NO_DESCRIPTION": "No purpose, notes or tags were added to this expense.",
+		"RECEIPT": "Receipt",
+		"NO_RECEIPT": "No receipt attached",
+		"OPEN_RECEIPT": "Open receipt",
+		"AMOUNT": "Amount",
+		"CURRENCY_HINT": "In {{ currency }}",
+		"SPLIT_HINT": "In {{ currency }}, split across all employees",
+		"TAX": "Tax",
+		"NO_TAX": "No tax",
+		"TAX_LABEL": "Tax label",
+		"TYPE": "Type",
+		"EXPENSE_DATE": "Expense date",
+		"LINK_COPIED": "Link copied",
+		"CATEGORY_SPENDING": "Category spending",
+		"CATEGORY_SPENDING_CAPTION": "{{ category }} · last {{ count }} months · {{ currency }}",
+		"VENDOR_PAYMENTS": "Vendor payments",
+		"VENDOR_PAYMENTS_CAPTION": "{{ vendor }} · last {{ count }} payments · {{ currency }}",
+		"NO_OTHER_PAYMENTS": "No other payments to this vendor yet",
+		"MONTH_SHARE": "Share of the month",
+		"MONTH_SHARE_CAPTION": "{{ category }} in {{ month }}",
+		"THIS_EXPENSE": "This expense",
+		"THIS_MONTH": "This expense's month",
+		"OTHER_MONTHS": "Other months",
+		"OTHER_PAYMENTS": "Other payments",
+		"REST_OF_MONTH": "Rest of the month",
+		"MONTH_TOTAL": "Month total",
+		"CHART_FAILED": "The chart could not be loaded",
+		"CHART_RANGE": "Chart range",
+		"LAST_MONTHS": "Last {{ count }} months",
+		"LAST_PAYMENTS": "Last {{ count }} payments",
+		"RECEIPT_UPLOAD": "Upload a receipt",
+		"RECEIPT_UPLOAD_HINT": "Click to choose an image: PNG, JPG, GIF, WebP or BMP",
+		"RECEIPT_REPLACE": "Replace",
+		"RECEIPT_UPLOADING": "Uploading…",
+		"RECEIPT_UPLOAD_FAILED": "The receipt could not be uploaded. Try another image."
 	},
 	"TASK_VIEW": {
 		"PROJECT": "Project",

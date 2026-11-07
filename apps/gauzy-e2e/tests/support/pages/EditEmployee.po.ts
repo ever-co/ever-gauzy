@@ -290,18 +290,33 @@ export const clickProjectOrContactDropdown = async () => {
 	// wrapper is intentionally inert to avoid the focus-only click closing/no-opening the panel.
 };
 
+/** The entry ticked in an assign dialog (Projects or Contacts tab), until its row is verified; null when none was. */
+let pickedName: string | null = null;
+
 export const selectProjectOrContactFromDropdown = async (index: number) => {
-	// #departmentsSelect is the <ga-edit-employee-membership> ng-select (multiple, hideSelected,
-	// appendTo="body"). Driven through the shared ng-select driver: it opens the control by keyboard,
+	// Projects (<ga-edit-employee-projects>) and Contacts (<ga-edit-employee-contacts>): the assign dialog's
+	// checklist — tick the index-th entry. A page that still has <ga-edit-employee-membership>:
+	// #departmentsSelect, an ng-select (multiple, hideSelected,
+	// appendTo="body"), driven through the shared ng-select driver: it opens the control by keyboard,
 	// counts only REAL options (ng-select's "No items found" row is also a `div.ng-option`, which the old
 	// loop happily "clicked" as if it were a project), and confirms the pick by the chip it commits.
 	// BEST-EFFORT by design: the list is "all org entities MINUS the ones already assigned to this
 	// employee", so on the Projects tab it is legitimately EMPTY when CustomCommands.addProject already
-	// made this employee a member of every project. In that case nothing is picked, the add form's "Add"
+	// made this employee a member of every project. In that case nothing is picked, the "Assign"/"Add"
 	// stays disabled, and the caller's verifyProjectOrContactExist still checks the employee's list.
 	const page = getPage();
 	await waitForSpinnerGone();
 	await page.waitForLoadState('networkidle').catch(() => {});
+	pickedName = null;
+	if (await page.locator('.assign-dialog').count()) {
+		const option = page.locator(EditEmployeePage.assignOptionCss).nth(index);
+		if (await option.count()) {
+			// Remembered, so the save is checked against this entry rather than any row already listed.
+			pickedName = (await option.locator('.assign-option__name').innerText()).trim();
+			await option.click();
+		}
+		return; // no Escape here: it would close the assign dialog
+	}
 	await selectNgOption(
 		EditEmployeePage.projectOrContactsDropdownCss,
 		EditEmployeePage.projectOrContactDropdownOptionCss,
@@ -322,9 +337,41 @@ export const clickSaveProjectOrContactButton = async () => {
 	// button only gates on form.invalid, which is satisfied once an option is picked).
 	await waitForSpinnerGone();
 	await dispatchClick(EditEmployeePage.saveProjectOrContactButtonCss);
+	// Projects and Contacts: the assign dialog closes once the server took the ticks.
+	const page = getPage();
+	const dialog = page.locator('.assign-dialog');
+	if (!(await dialog.count())) {
+		return;
+	}
+	if (pickedName) {
+		// An entry was ticked: a dialog left open means the assignment was refused. Fail on it here,
+		// instead of closing the dialog and losing the only sign of the failure.
+		await dialog.waitFor({ state: 'detached', timeout: 15000 }).catch(() => {
+			throw new Error(`Assigning "${pickedName}" was not accepted: the assign dialog stayed open`);
+		});
+		return;
+	}
+	// Nothing was left to tick, so "Assign" stays disabled and the dialog open: close it, as cleanup only,
+	// so its backdrop can't swallow the next tab click.
+	await page.keyboard.press('Escape').catch(() => {});
+	await dialog.waitFor({ state: 'detached', timeout: 5000 }).catch(() => {});
 };
 
 export const verifyProjectOrContactExist = async () => {
+	if (pickedName) {
+		// Projects and Contacts: the row of the entry just assigned, not merely any row.
+		const escaped = pickedName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+		const page = getPage();
+		await page
+			.locator(EditEmployeePage.verifyProjectOrContactCss)
+			.filter({
+				has: page.locator(EditEmployeePage.assignedRowNameCss, { hasText: new RegExp(`^\\s*${escaped}\\s*$`) })
+			})
+			.first()
+			.waitFor({ state: 'visible', timeout: 30_000 });
+		pickedName = null;
+		return;
+	}
 	await verifyElementIsVisible(EditEmployeePage.verifyProjectOrContactCss);
 };
 

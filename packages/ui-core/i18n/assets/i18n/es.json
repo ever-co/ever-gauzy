@@ -693,6 +693,7 @@
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Tasa de incumplimiento predeterminada",
+			"OWN_RATES_LOCKED": "Pide a un administrador que cambie tu tarifa.",
 			"EXPECTED_RATE": "Tasa esperada",
 			"LIMITS": "Límites",
 			"ERRORS": {
@@ -1157,6 +1158,7 @@
 		"SMS_GATEWAYS": "SMS Gateways",
 		"CUSTOM_SMTP": "SMTP personalizado",
 		"OAUTH_CLIENTS": "Clientes OAuth",
+		"API_TOKENS": "Tokens de API",
 		"INVENTORY": "Inventario",
 		"SALES": "Ventas",
 		"PAYMENTS": "Pagos",
@@ -2169,7 +2171,95 @@
 			"HR": "HR",
 			"SETTINGS": "Configuraciones",
 			"GENERAL_SETTINGS": "Ajustes Generales",
-			"INTEGRATIONS": "Integraciones"
+			"INTEGRATIONS": "Integraciones",
+			"PROJECTS_TAB": {
+				"TITLE": "Proyectos",
+				"CAPTION": "Proyectos de los que este empleado es miembro. Los miembros pueden registrar tiempo y trabajar en las tareas del proyecto.",
+				"SEARCH": "Buscar proyectos",
+				"ASSIGN": "Asignar proyectos",
+				"ASSIGN_DIALOG_TITLE": "Asignar a proyectos",
+				"ASSIGN_DIALOG_SUBTITLE": "Elige los proyectos a los que debe unirse {{ employee }}. Podrá registrar tiempo y trabajar en sus tareas.",
+				"ASSIGN_SEARCH": "Buscar por nombre, clave o cliente",
+				"SELECT_ALL": "Seleccionar todo",
+				"DESELECT_ALL": "Deseleccionar todo",
+				"SELECTED_COUNT": "{{ count }} seleccionados",
+				"CLEAR_SELECTION": "Borrar",
+				"ASSIGN_SUBMIT": "Asignar",
+				"ALL_ASSIGNED": "Este empleado ya es miembro de todos los proyectos.",
+				"COLUMNS": {
+					"PROJECT": "Proyecto",
+					"ROLE": "Rol",
+					"STATUS": "Estado",
+					"MEMBERS": "Miembros",
+					"BILLING": "Facturación"
+				},
+				"ROLE_MANAGER": "Gerente",
+				"ROLE_MEMBER": "Miembro",
+				"STATUS": {
+					"OPEN": "Abierto",
+					"IN_PROGRESS": "En curso",
+					"COMPLETED": "Completado",
+					"CANCELLED": "Cancelado",
+					"CUSTOM": "Personalizado"
+				},
+				"BILLING": {
+					"RATE": "Tarifa por hora",
+					"FLAT_FEE": "Tarifa fija",
+					"MILESTONES": "Hitos"
+				},
+				"PUBLIC": "Público",
+				"PRIVATE": "Privado",
+				"QUICK_LOOK": "Vista rápida",
+				"OPEN_PROJECT": "Abrir la página del proyecto",
+				"REMOVE": "Quitar del proyecto",
+				"REMOVE_TITLE": "Quitar del proyecto",
+				"REMOVE_MESSAGE": "¿Quitar a {{ employee }} de {{ project }}? Ya no podrá registrar tiempo en él.",
+				"REMOVE_HINT": "Puedes volver a asignarlo a este proyecto en cualquier momento.",
+				"SHOWING": "Mostrando {{ count }} de {{ total }} proyectos",
+				"NO_MATCH": "Ningún proyecto coincide con «{{ term }}»",
+				"NO_MATCH_PICKER": "No hay proyectos que coincidan",
+				"CLEAR_SEARCH": "Borrar búsqueda",
+				"EMPTY_TITLE": "Aún no hay proyectos",
+				"EMPTY_TEXT": "Asigna este empleado a un proyecto para que pueda registrar tiempo y trabajar en sus tareas."
+			},
+			"CONTACTS_TAB": {
+				"TITLE": "Contactos",
+				"CAPTION": "Clientes, compradores y prospectos con los que trabaja este empleado.",
+				"SEARCH": "Buscar contactos",
+				"ASSIGN": "Asignar contactos",
+				"ASSIGN_DIALOG_TITLE": "Asignar a contactos",
+				"ASSIGN_DIALOG_SUBTITLE": "Elige los contactos con los que debe trabajar {{ employee }}.",
+				"ASSIGN_SEARCH": "Buscar por nombre",
+				"SELECT_ALL": "Seleccionar todo",
+				"DESELECT_ALL": "Deseleccionar todo",
+				"SELECTED_COUNT": "{{ count }} seleccionados",
+				"CLEAR_SELECTION": "Borrar",
+				"ASSIGN_SUBMIT": "Asignar",
+				"ALL_ASSIGNED": "Este empleado ya está asignado a todos los contactos.",
+				"NO_MATCH_PICKER": "No hay contactos que coincidan",
+				"LOAD_MORE": "Cargar más",
+				"LOAD_FAILED": "No se pudieron cargar los contactos.",
+				"COLUMNS": {
+					"CONTACT": "Contacto",
+					"TYPE": "Tipo",
+					"PROJECTS": "Proyectos"
+				},
+				"TYPE": {
+					"CLIENT": "Cliente",
+					"CUSTOMER": "Comprador",
+					"LEAD": "Prospecto"
+				},
+				"OPEN_CONTACT": "Abrir la página del contacto",
+				"REMOVE": "Quitar del contacto",
+				"REMOVE_TITLE": "Quitar del contacto",
+				"REMOVE_MESSAGE": "¿Quitar a {{ employee }} de {{ contact }}? Ya no estará asignado a este contacto.",
+				"REMOVE_HINT": "Puedes volver a asignarlo a este contacto en cualquier momento.",
+				"SHOWING": "Mostrando {{ count }} de {{ total }} contactos",
+				"NO_MATCH": "Ningún contacto coincide con «{{ term }}»",
+				"CLEAR_SEARCH": "Borrar búsqueda",
+				"EMPTY_TITLE": "Aún no hay contactos",
+				"EMPTY_TEXT": "Asigna este empleado a un cliente, comprador o prospecto para mostrar con quién trabaja."
+			}
 		},
 		"ADD_EMPLOYEES": {
 			"STEP_1": "Paso 1",
@@ -3304,6 +3394,7 @@
 				"SEARCH_INDEX_DEFINITIONS_VIEW": "Ver qué campos contiene el índice de búsqueda y cuánto pesa cada uno.",
 				"SEARCH_INDEX_DEFINITIONS_EDIT": "Añadir, reponderar, desactivar o quitar los campos que contiene el índice de búsqueda.",
 				"ORG_EMPLOYEES_EDIT": "Modificar los perfiles, datos laborales, tarifas y configuración de los empleados.",
+				"CHANGE_OWN_RATES": "Cambiar tus propias tarifas en tu perfil de empleado. Sin este permiso, ves tus tarifas y pides a un administrador que las cambie.",
 				"ORG_CANDIDATES_VIEW": "Ver los candidatos de la organización y sus perfiles.",
 				"ORG_CANDIDATES_EDIT": "Crear, editar y eliminar candidatos.",
 				"ORG_USERS_VIEW": "Ver los usuarios de la organización y sus roles.",
@@ -3386,6 +3477,7 @@
 			"ORG_PROPOSAL_TEMPLATES_EDIT": "Crear/Editar/Eliminar plantillas de propuestas",
 			"ORG_EMPLOYEES_VIEW": "Ver empleados de la organización.",
 			"ORG_EMPLOYEES_EDIT": "Crear/Editar/Eliminar Empleados de la Organización",
+			"CHANGE_OWN_RATES": "Cambiar tarifas propias",
 			"ORG_CANDIDATES_VIEW": "Ver candidatos de la organización.",
 			"ORG_CANDIDATES_EDIT": "Crear/Editar/Eliminar Candidatos de Organizaciones.",
 			"ORG_USERS_VIEW": "Ver usuarios de la organización.",
@@ -4282,6 +4374,7 @@
 		"SUCCESSFULLY_ADDED_PRODUCTS": "¡Los productos se agregaron correctamente!",
 		"MAIN": "Principal",
 		"INVENTORY": "Inventario",
+		"COULD_NOT_UPLOAD_IMAGE": "No se pudo subir la imagen",
 		"IMAGE_WAS_DELETED": "La imagen fue eliminada."
 	},
 	"TASKS_PAGE": {
@@ -4460,7 +4553,45 @@
 			"HEADER": "Gestionar Usuarios",
 			"EDIT_EXISTING_USER": "Editar Usuario Existente",
 			"MAIN": "Principal",
-			"USER_ORGANIZATIONS": "Organizaciones"
+			"USER_ORGANIZATIONS": "Organizaciones",
+			"CHANGE_PHOTO": "Cambiar foto",
+			"EMAIL_VERIFIED": "Correo verificado",
+			"EMAIL_NOT_VERIFIED": "Correo no verificado",
+			"MEMBER_SINCE": "Miembro desde",
+			"LAST_SIGN_IN": "Último inicio de sesión",
+			"NEVER_SIGNED_IN": "Nunca",
+			"PERSONAL_DETAILS": "Datos personales",
+			"ACCESS": "Acceso",
+			"PASSWORD": "Contraseña",
+			"PASSWORD_HINT": "Deja ambos campos vacíos para mantener la contraseña actual.",
+			"PREFERENCES": "Preferencias",
+			"ORGANIZATIONS_CAPTION": "Organizaciones a las que pertenece este usuario y en las que puede trabajar.",
+			"ADD_ORGANIZATION": "Añadir a una organización",
+			"NO_ORGANIZATIONS": "Este usuario aún no está en ninguna organización.",
+			"REMOVE_FROM_ORGANIZATION": "Quitar de la organización",
+			"ADD_DIALOG_TITLE": "Añadir a organizaciones",
+			"ADD_DIALOG_SUBTITLE": "Elige las organizaciones a las que debe unirse {{ name }}.",
+			"SEARCH_ORGANIZATIONS": "Buscar organizaciones",
+			"SELECT_ALL": "Seleccionar todo",
+			"DESELECT_ALL": "Deseleccionar todo",
+			"SELECTED_COUNT": "{{ count }} seleccionadas",
+			"CLEAR_SELECTION": "Borrar",
+			"ALL_ORGANIZATIONS_JOINED": "Este usuario ya está en todas las organizaciones.",
+			"NO_MATCHING_ORGANIZATIONS": "No hay organizaciones que coincidan",
+			"GROUP_ACCOUNT": "Cuenta",
+			"GROUP_LOCALE": "Idioma y hora",
+			"STATUS": "Estado",
+			"ACTIVE_STATUS": "Activo",
+			"INACTIVE_STATUS": "Inactivo",
+			"LAST_UPDATED": "Última actualización",
+			"LANGUAGE": "Idioma",
+			"TIME_ZONE": "Zona horaria",
+			"LOCAL_TIME": "Hora local",
+			"TIME_FORMAT": "Formato de hora",
+			"TIME_FORMAT_12": "12 horas",
+			"TIME_FORMAT_24": "24 horas",
+			"NOT_SET": "Sin definir",
+			"LOAD_FAILED": "No se pudo cargar este usuario."
 		},
 		"REMOVE_USER": "'{{ name }}' fue removido.",
 		"ACTIVE": "Activo",
@@ -4863,7 +4994,11 @@
 		"SELECT_TEAM": "Equipo",
 		"AI_CHAT": "Chat de IA",
 		"COLLAPSE_SIDEBAR": "Contraer la barra lateral",
-		"EXPAND_SIDEBAR": "Expandir la barra lateral"
+		"EXPAND_SIDEBAR": "Expandir la barra lateral",
+		"EVER_APPS": "Aplicaciones",
+		"SWITCH_EVER_APP": "Cambiar a otra aplicación de Ever",
+		"WORKSPACE": "Espacio de trabajo",
+		"SWITCH_WORKSPACE": "Cambiar de espacio de trabajo"
 	},
 	"AI_ASSISTANT": {
 		"TITLE": "Asistente de IA",
@@ -7574,6 +7709,63 @@
 			"DELETE_FAILED": "Error al revocar el cliente OAuth"
 		}
 	},
+	"USER_API_TOKENS": {
+		"TITLE": "Tokens de API",
+		"SUBTITLE": "Tokens para tus propios agentes y scripts. Un token puede hacer lo mismo que tú, así que guárdalo con el mismo cuidado que una contraseña.",
+		"EMPTY": {
+			"TITLE": "Aún no tienes tokens de API.",
+			"HINT": "Haz clic en \"Crear token\" para generar uno para un agente o un script."
+		},
+		"TABLE": {
+			"NAME": "Nombre",
+			"TOKEN": "Token",
+			"CREATED": "Creado",
+			"LAST_USED": "Último uso",
+			"EXPIRES": "Caduca",
+			"ACTIONS": "Acciones"
+		},
+		"VALUES": {
+			"NEVER_USED": "Sin usar",
+			"NEVER_EXPIRES": "Nunca",
+			"EXPIRED": "Caducado"
+		},
+		"ACTIONS": {
+			"CREATE": "Crear token",
+			"REVOKE": "Revocar"
+		},
+		"DIALOG": {
+			"TITLE": "Crear un token de API",
+			"NAME": "Nombre",
+			"NAME_PLACEHOLDER": "p. ej., agente de tareas en mi PC",
+			"EXPIRY": "Caduca después de",
+			"EXPIRY_90_DAYS": "90 días",
+			"EXPIRY_1_YEAR": "1 año",
+			"EXPIRY_NEVER": "Nunca",
+			"HINT": "Un token que no caduca sigue funcionando hasta que lo revoques."
+		},
+		"SECRET_DIALOG": {
+			"TITLE": "Guarda tu token de API",
+			"WARNING": "Esta es la única vez que se muestra el token y no se puede volver a leer. Cópialo ahora. Si lo pierdes, revócalo y crea uno nuevo.",
+			"ACKNOWLEDGE": "He copiado y guardado el token de forma segura.",
+			"CLOSE": "Ya lo he guardado, cerrar",
+			"COPIED": "Token copiado al portapapeles",
+			"COPY_ARIA": "Copiar token"
+		},
+		"CONFIRM": {
+			"REVOKE": "¿Revocar \"{{name}}\"? A partir de ahora no podrá iniciar nuevas sesiones, y una sesión ya iniciada terminará en menos de una hora."
+		},
+		"TOASTS": {
+			"CREATED": "Se creó \"{{name}}\"",
+			"REVOKED": "Token de API revocado"
+		},
+		"ERRORS": {
+			"LOAD_FAILED": "No se pudieron cargar los tokens de API",
+			"CREATE_FAILED": "No se pudo crear el token de API",
+			"TOO_MANY": "Ya tienes el máximo de tokens de API permitido. Revoca primero uno que ya no uses.",
+			"REVOKE_FAILED": "No se pudo revocar el token de API",
+			"COPY_FAILED": "No se pudo copiar al portapapeles"
+		}
+	},
 	"PROJECT_QUICK_LOOK": {
 		"OPEN_DETAILS": "Ver detalles del proyecto {{ name }}",
 		"PROGRESS": "Progreso",
@@ -7664,6 +7856,46 @@
 		"COMMENT_IMAGE_TYPES": "Solo se pueden adjuntar imágenes PNG, JPEG, GIF, WebP y BMP.",
 		"COMMENT_IMAGE_LIMIT": "Un comentario puede llevar hasta {{ count }} imágenes.",
 		"COMMENT_IMAGE_FAILED": "No se pudo subir {{ name }}."
+	},
+	"EXPENSE_VIEW": {
+		"EXPENSE": "Gasto",
+		"DETAILS": "Detalles",
+		"DESCRIPTION": "Descripción",
+		"NO_DESCRIPTION": "No se añadió ningún propósito, nota ni etiqueta a este gasto.",
+		"RECEIPT": "Recibo",
+		"NO_RECEIPT": "Sin recibo adjunto",
+		"OPEN_RECEIPT": "Abrir recibo",
+		"AMOUNT": "Importe",
+		"CURRENCY_HINT": "En {{ currency }}",
+		"SPLIT_HINT": "En {{ currency }}, dividido entre todos los empleados",
+		"TAX": "Impuesto",
+		"NO_TAX": "Sin impuesto",
+		"TAX_LABEL": "Etiqueta del impuesto",
+		"TYPE": "Tipo",
+		"EXPENSE_DATE": "Fecha del gasto",
+		"LINK_COPIED": "Enlace copiado",
+		"CATEGORY_SPENDING": "Gasto de la categoría",
+		"CATEGORY_SPENDING_CAPTION": "{{ category }} · últimos {{ count }} meses · {{ currency }}",
+		"VENDOR_PAYMENTS": "Pagos al proveedor",
+		"VENDOR_PAYMENTS_CAPTION": "{{ vendor }} · últimos {{ count }} pagos · {{ currency }}",
+		"NO_OTHER_PAYMENTS": "Aún no hay otros pagos a este proveedor",
+		"MONTH_SHARE": "Parte del mes",
+		"MONTH_SHARE_CAPTION": "{{ category }} en {{ month }}",
+		"THIS_EXPENSE": "Este gasto",
+		"THIS_MONTH": "Mes de este gasto",
+		"OTHER_MONTHS": "Otros meses",
+		"OTHER_PAYMENTS": "Otros pagos",
+		"REST_OF_MONTH": "Resto del mes",
+		"MONTH_TOTAL": "Total del mes",
+		"CHART_FAILED": "No se pudo cargar el gráfico",
+		"CHART_RANGE": "Rango del gráfico",
+		"LAST_MONTHS": "Últimos {{ count }} meses",
+		"LAST_PAYMENTS": "Últimos {{ count }} pagos",
+		"RECEIPT_UPLOAD": "Subir un recibo",
+		"RECEIPT_UPLOAD_HINT": "Haz clic para elegir una imagen: PNG, JPG, GIF, WebP o BMP",
+		"RECEIPT_REPLACE": "Reemplazar",
+		"RECEIPT_UPLOADING": "Subiendo…",
+		"RECEIPT_UPLOAD_FAILED": "No se pudo subir el recibo. Prueba con otra imagen."
 	},
 	"TASK_VIEW": {
 		"PROJECT": "Proyecto",

@@ -66,7 +66,7 @@
 				</div>
 			</div>
 
-			<!-- Tabs, as the project page's: the task itself, and its subtasks as a board. -->
+			<!-- Tabs, as the project page's: the task itself, its subtasks as a board, what changed, and its comments. -->
 			<div class="tab-row project-page-tabs task-page-tabs">
 				<div class="tabs" role="tablist" [attr.aria-label]="task.title">
 					@for (item of tabs; track item.id) {
@@ -84,6 +84,9 @@
 							{{ item.label | translate }}
 							@if (item.id === 'board' && subtasks.length) {
 								<span class="title-count tab-count">{{ subtasks.length }}</span>
+							}
+							@if (item.id === 'comments' && commentCount) {
+								<span class="title-count tab-count">{{ commentCount }}</span>
 							}
 						</button>
 					}
@@ -136,6 +139,26 @@
 						[openTaskPage]="true"
 						[reloadKey]="activityReloadKey"
 					></ga-project-activity>
+				</div>
+			}
+
+			<!-- The Comments load when first opened, then stay loaded, keeping any draft. -->
+			@if (commentsOpened) {
+				<div
+					class="project-page-pane task-page-wide"
+					role="tabpanel"
+					id="task-view-pane-comments"
+					aria-labelledby="task-view-tab-comments"
+					[hidden]="tab !== 'comments'"
+				>
+					<ga-entity-comments
+						[entity]="commentEntity"
+						[entityId]="task.id"
+						[entityName]="task.title"
+						[organizationId]="organization?.id"
+						[tenantId]="organization?.tenantId"
+						(countChange)="onCommentCount($event)"
+					></ga-entity-comments>
 				</div>
 			}
 
@@ -472,6 +495,7 @@
 <ng-template #statusMenu>
 	@if (canEdit && statuses.length) {
 		<nb-select
+			gaOptionsAtStart
 			class="task-status-select"
 			size="small"
 			status="basic"

@@ -6,7 +6,8 @@ import {
 	IOrganizationContactFindInput,
 	IEditEntityByMemberInput,
 	IOrganizationContactUpdateInput,
-	IEmployee
+	IEmployee,
+	IPagination
 } from '@gauzy/contracts';
 import { firstValueFrom } from 'rxjs';
 import { toParams } from '@gauzy/ui-core/common';
@@ -62,6 +63,45 @@ export class OrganizationContactService {
 			this.http.get<{ items: IOrganizationContact[]; total: number }>(`${API_PREFIX}/organization-contact`, {
 				params: toParams({ data })
 			})
+		);
+	}
+
+	/**
+	 * A page of contacts. `where` may carry `name`, `primaryEmail` or `primaryPhone` (each matched as a substring)
+	 * and `members`, employee IDs whose contacts to return; `take` is the page size, at most 100, and `skip` the
+	 * page, counted from 1.
+	 */
+	pagination(query: {
+		where: Record<string, unknown>;
+		order?: Record<string, 'ASC' | 'DESC'>;
+		relations?: string[];
+		skip?: number;
+		take?: number;
+	}): Promise<IPagination<IOrganizationContact>> {
+		return firstValueFrom(
+			this.http.get<IPagination<IOrganizationContact>>(`${API_PREFIX}/organization-contact/pagination`, {
+				params: toParams(query)
+			})
+		);
+	}
+
+	/**
+	 * A page of the contacts an employee can be assigned to, ordered by name: each one's id, name, picture and type
+	 * only. It takes ORG_EMPLOYEES_EDIT (as assigning does), not ORG_CONTACT_VIEW. `name` is matched as a substring;
+	 * `take` is the page size, at most 100, and `skip` the page, counted from 1.
+	 */
+	getAssignable(query: {
+		organizationId: string;
+		tenantId: string;
+		name?: string;
+		take?: number;
+		skip?: number;
+	}): Promise<IPagination<Pick<IOrganizationContact, 'id' | 'name' | 'imageUrl' | 'contactType'>>> {
+		return firstValueFrom(
+			this.http.get<IPagination<Pick<IOrganizationContact, 'id' | 'name' | 'imageUrl' | 'contactType'>>>(
+				`${API_PREFIX}/organization-contact/assignable`,
+				{ params: toParams(query) }
+			)
 		);
 	}
 

@@ -1,6 +1,18 @@
-import { ChangeDetectorRef, Component, EventEmitter, inject, Input, OnInit, Output, ViewChild, ChangeDetectionStrategy } from '@angular/core';
+import {
+	ChangeDetectorRef,
+	Component,
+	effect,
+	EventEmitter,
+	inject,
+	input,
+	Input,
+	OnInit,
+	Output,
+	ViewChild,
+	ChangeDetectionStrategy
+} from '@angular/core';
 import { CommonModule, Location } from '@angular/common';
-import { NavigationEnd, Router } from '@angular/router';
+import { Router } from '@angular/router';
 import {
 	NbAccordionModule,
 	NbPopoverDirective,
@@ -111,17 +123,30 @@ export class MenuItemComponent implements OnInit {
 	}
 
 	/**
-	 * Returns the selected children.
+	 * The sub-row that owns the current route, resolved by SidebarMenuComponent.
 	 *
-	 * @return {IMenuItem} The selected children.
+	 * Fed from above rather than worked out here, so one place decides which row is active: each
+	 * row used to match the URL on its own, and with several rows claiming a path (a prefix link and
+	 * a deeper one) the winner was simply whichever ran last.
+	 *
+	 * @return {IMenuItem} The selected child, or null when none is.
 	 */
-	private _selectedChildren: IMenuItem;
-	public get selectedChildren() {
-		return this._selectedChildren;
+	public readonly activeChild = input<IMenuItem | null>(null);
+	public get selectedChildren(): IMenuItem | null {
+		return this.activeChild();
 	}
-	public set selectedChildren(value: IMenuItem) {
-		this._selectedChildren = value;
-	}
+
+	/**
+	 * Open the accordion so the active sub-row is on screen, e.g. after a reload or a deep link.
+	 *
+	 * Runs only when `activeChild` changes, so a group the user folds by hand stays folded until the
+	 * route moves to another of its rows.
+	 */
+	private readonly _expandToActiveChild = effect(() => {
+		if (this.activeChild() && this.collapse) {
+			this.collapse = false;
+		}
+	});
 
 	/**
 	 * The hover flyout that lists this entry's sub-links while the sidebar is collapsed to the icon
@@ -246,21 +271,6 @@ export class MenuItemComponent implements OnInit {
 				untilDestroyed(this)
 			)
 			.subscribe(() => this.syncSidebarState());
-
-		// Check if the 'home' property of the 'item' object is truthy
-		if (this.item.home) {
-			// If 'home' is truthy, emit an event to notify the parent component
-			// This emits the 'selectedChange' event with the 'item' as the data
-			this.selectedChange.emit(this.item);
-		}
-
-		this.checkUrl(this._router.url);
-		this._router.events
-			.pipe(
-				filter((event): event is NavigationEnd => event instanceof NavigationEnd),
-				untilDestroyed(this)
-			)
-			.subscribe((event) => this.checkUrl(event.urlAfterRedirects));
 	}
 
 	public isSelectedChild(child: IMenuItem): boolean {
@@ -281,16 +291,13 @@ export class MenuItemComponent implements OnInit {
 	 * @param event The event containing information about the item to focus on.
 	 */
 	public focusOn(event: IMenuItemFocusChangeEvent): void {
-		// Set the selected children property to the children of the event
-		this.selectedChildren = event.children;
-
 		// Toggle the collapse state if it's currently collapsed
 		if (this.collapse) {
 			this.collapse = !this.collapse;
 		}
 
-		// Emit the selectedChange event with the parent of the event
-		this.selectedChange.emit(event.parent);
+		// Emit the selectedChange event; the sidebar hands the child back down through `activeChild`
+		this.selectedChange.emit(event);
 
 		// Manually detect changes using ChangeDetectorRef
 		this._cdr.detectChanges();
@@ -299,9 +306,8 @@ export class MenuItemComponent implements OnInit {
 	/**
 	 * Dismiss the rail flyout.
 	 *
-	 * Bound to a CLICK on the flyout's row list rather than to `focusItemChange`: a child row also
-	 * emits that event from its own `ngOnInit`/`NavigationEnd` handler, so hiding on it would close
-	 * the panel the moment it opened on any entry that owns the current route.
+	 * Bound to a CLICK on the flyout's row list rather than to `focusItemChange`, so the panel closes
+	 * on any press inside the list, including the "add" button, which emits that event too.
 	 */
 	public closeRailFlyout(): void {
 		if (this._railFlyout?.isShown) {
@@ -381,17 +387,22 @@ export class MenuItemComponent implements OnInit {
 		this.jitsuTrackClick();
 
 		// Redirect to the specified URL
-		if (!this.hasChildren && this.item.link) {
+		const isLeaf = !this.hasChildren && !!this.item.link;
+		const isHome = !!this.item.home && !!this.item.url;
+		if (isLeaf) {
 			// Leaf row (including a parent whose children are all filtered out): navigate to its link
 			this._router.navigateByUrl(this.item.link);
 		}
-		if (this.item.home && this.item.url) {
+		if (isHome) {
 			// If the item represents the home page, navigate to its URL
 			this._router.navigateByUrl(this.item.url);
 		}
 
-		// Emit the selectedChange event to notify parent components
-		this.selectedChange.emit(this.item);
+		// Only a row that navigates takes the highlight. A parent header just opens or closes its
+		// sub-menu; selecting it would move the highlight off the sub-row that owns the route.
+		if (isLeaf || isHome) {
+			this.selectedChange.emit({ parent: this.item, children: null });
+		}
 
 		// Manually detect changes using ChangeDetectorRef
 		this._cdr.detectChanges();
@@ -472,17 +483,5 @@ export class MenuItemComponent implements OnInit {
 				untilDestroyed(this)
 			)
 			.subscribe();
-	}
-
-	private checkUrl(url: string): void {
-		if (this.selected || this.hasChildren || !this.item?.link) {
-			return;
-		}
-		const pathOnly = url.split(/[?#]/)[0];
-		const { link, pathMatch } = this.item;
-		const matches = pathOnly === link || (pathMatch === 'prefix' && pathOnly.startsWith(`${link}/`));
-		if (matches) {
-			this.selectedChange.emit(this.item);
-		}
 	}
 }

@@ -40,7 +40,11 @@ import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { Permissions } from './../shared/decorators';
 import { CountQueryDTO } from './../shared/dto';
 import { AbstractValidationPipe, ParseJsonPipe, UUIDValidationPipe, UseValidationPipe } from './../shared/pipes';
-import { CreateOrganizationContactDTO, UpdateOrganizationContactDTO } from './dto';
+import {
+	CreateOrganizationContactDTO,
+	OrganizationContactAssignableQueryDTO,
+	UpdateOrganizationContactDTO
+} from './dto';
 
 @ApiTags('OrganizationContact')
 @UseGuards(TenantPermissionGuard)
@@ -94,6 +98,30 @@ export class OrganizationContactController extends CrudController<OrganizationCo
 	@UseValidationPipe({ transform: true })
 	async pagination(@Query() filter: BaseQueryDTO<OrganizationContact>): Promise<IPagination<IOrganizationContact>> {
 		return await this.organizationContactService.pagination(filter);
+	}
+
+	/**
+	 * GET a page of the contacts an employee can be assigned to: each one's id, name, picture and type only.
+	 *
+	 * Assigning a contact to an employee (`PUT /employee`) takes ORG_EMPLOYEES_EDIT; so does choosing one. The full
+	 * contact records stay behind ORG_CONTACT_VIEW (`/pagination`).
+	 *
+	 * @param query The organization, an optional name to match, the page size and the page (from 1).
+	 * @returns The page of contacts, and how many match in all.
+	 */
+	@ApiOperation({ summary: 'Find a page of the contacts an employee can be assigned to.' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found contacts: id, name, picture and type of each.'
+	})
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_EMPLOYEES_EDIT)
+	@Get('/assignable')
+	@UseValidationPipe({ transform: true })
+	async findAssignable(
+		@Query() query: OrganizationContactAssignableQueryDTO
+	): Promise<IPagination<Pick<IOrganizationContact, 'id' | 'name' | 'imageUrl' | 'contactType'>>> {
+		return await this.organizationContactService.findAssignable(query);
 	}
 
 	/**

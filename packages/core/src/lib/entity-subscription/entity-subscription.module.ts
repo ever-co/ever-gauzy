@@ -11,6 +11,9 @@ import { EntitySubscriptionResolver } from './entity-subscription.resolver';
 import { EntitySubscription } from './entity-subscription.entity';
 import { TypeOrmEntitySubscriptionRepository } from './repository/type-orm-entity-subscription.repository';
 import { MikroOrmEntitySubscriptionRepository } from './repository/mikro-orm-entity-subscription.repository';
+import { EmployeeNotificationModule } from '../employee-notification/employee-notification.module';
+import { EventBusModule } from '../event-bus/event-bus.module';
+import { FollowerCommentFanOutHandler, FollowerFanOutService } from './fan-out';
 
 /**
  * The subscriptions an employee holds against the records it wants to be told about.
@@ -28,11 +31,17 @@ import { MikroOrmEntitySubscriptionRepository } from './repository/mikro-orm-ent
 		TypeOrmModule.forFeature([EntitySubscription]),
 		MikroOrmModule.forFeature([EntitySubscription]),
 		RolePermissionModule,
-		CqrsModule
+		CqrsModule,
+		// The followers are told through the notification service, from the task facts on the in-process bus.
+		EmployeeNotificationModule,
+		EventBusModule
 	],
 	controllers: [EntitySubscriptionController],
 	providers: [
 		EntitySubscriptionService,
+		// Follower fan-out (off unless GAUZY_NOTIFICATION_FANOUT_ENABLED=true): comments and task changes reach followers.
+		FollowerFanOutService,
+		FollowerCommentFanOutHandler,
 		// The GraphQL view of the same resource: declared here because a resolver can only inject the
 		// services and the command bus its own module can reach, and this module is what reaches both.
 		EntitySubscriptionResolver,

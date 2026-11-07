@@ -121,6 +121,24 @@ export const PROJECT_MANAGE_DEFAULT_INTEGRATIONS = [
 		provider: IntegrationEnum.PLANE
 	},
 	{
+		name: IntegrationEnum.LINEAR,
+		imgSrc: 'linear.svg',
+		isComingSoon: false,
+		integrationTypesMap: <string[]>[IntegrationTypeEnum.ALL_INTEGRATIONS, IntegrationTypeEnum.PROJECT_MANAGEMENT],
+		order: 13,
+		redirectUrl: sluggable(IntegrationEnum.LINEAR),
+		provider: IntegrationEnum.LINEAR
+	},
+	{
+		name: IntegrationEnum.ASANA,
+		imgSrc: 'asana.svg',
+		isComingSoon: false,
+		integrationTypesMap: <string[]>[IntegrationTypeEnum.ALL_INTEGRATIONS, IntegrationTypeEnum.PROJECT_MANAGEMENT],
+		order: 14,
+		redirectUrl: sluggable(IntegrationEnum.ASANA),
+		provider: IntegrationEnum.ASANA
+	},
+	{
 		name: IntegrationEnum.EVER_ASYNC,
 		imgSrc: 'ever-async.svg',
 		isComingSoon: false,

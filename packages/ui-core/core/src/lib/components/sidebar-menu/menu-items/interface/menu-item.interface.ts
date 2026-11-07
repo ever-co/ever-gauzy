@@ -2,7 +2,7 @@ import { NbMenuItem } from '@nebular/theme';
 import { FeatureEnum, PermissionsEnum } from '@gauzy/contracts';
 
 export interface IMenuItemFocusChangeEvent {
-	children: IMenuItem;
+	children: IMenuItem | null; // The sub-row that was picked, or null for a top-level row.
 	parent: IMenuItem;
 }
 
@@ -16,5 +16,6 @@ export interface IMenuItem extends NbMenuItem {
 		withOrganizationShortcuts?: boolean; //Declare if the sidebar item has organization level shortcuts
 		hide?: () => boolean; //Hide the menu item if this returns true,
 		add?: string;
+		activePaths?: string[]; // Extra paths the item is highlighted on besides its link, each matched with everything below it
 	};
 }

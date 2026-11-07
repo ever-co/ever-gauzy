@@ -27,6 +27,7 @@ jest.mock('@gauzy/core', () => ({
 	parseFindOptionsSelect: (value: any) => value,
 	prepareSQLQuery: (value: string) => value,
 	LIKE_OPERATOR: 'ILIKE',
+	assertCallerColumnsAllowed: jest.fn(),
 	// 🛑 Returns a FIXED string; it deliberately does not attempt to strip anything.
 	//
 	// This double previously faked the allowlist with `html.replace(/<script...>/gi, '')`. That is

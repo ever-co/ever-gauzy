@@ -31,4 +31,8 @@ export class InboxItemRecipient extends TenantOrganizationBaseEntity {
 
 	@MultiORMColumn({ nullable: true })
 	deliveredAt?: Date;
+
+	/** Marked done by this recipient: hidden from the open tabs, found in the Done tab (migration 1791000005200). */
+	@MultiORMColumn({ nullable: true })
+	doneAt?: Date;
 }

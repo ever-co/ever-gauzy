@@ -50,7 +50,11 @@ const SHARED_ON_TASK = { id: 'team-1', name: 'Platform', prefix: 'PLA', color: '
 
 function read(tasks: Record<string, unknown>[]) {
 	const team = { id: 'team-1', name: 'Platform', public: true, organizationId: 'organization-1', tasks };
-	const repository = { findOneOrFail: jest.fn(async () => structuredClone(team)), manager: { find: jest.fn() } };
+	// The team's tasks are read from their own side (`manager.find(Task, { where: { teams: { id } } })`).
+	const repository = {
+		findOneOrFail: jest.fn(async () => structuredClone({ ...team, tasks: undefined })),
+		manager: { find: jest.fn(async () => structuredClone(tasks)) }
+	};
 	const service = new PublicTeamService(repository as any, {} as any, {} as any);
 	return service.findOneByProfileLink(
 		{ profile_link: 'link', id: 'team-1' } as any,

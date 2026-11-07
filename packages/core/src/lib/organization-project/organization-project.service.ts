@@ -1,6 +1,6 @@
 import { EventBus } from '@nestjs/cqrs';
-import { BadRequestException, HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { Brackets, FindOptionsWhere, ILike, In, IsNull, SelectQueryBuilder } from 'typeorm';
+import { BadRequestException, HttpException, HttpStatus, Injectable, ConflictException } from '@nestjs/common';
+import { Brackets, FindOptionsWhere, ILike, In, IsNull, Not, SelectQueryBuilder } from 'typeorm';
 import { EntityProperty, FilterQuery, raw } from '@mikro-orm/core';
 import {
 	ActionTypeEnum,
@@ -89,7 +89,10 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 		const currentRoleId = RequestContext.currentRoleId();
 
 		// Destructure the input data
-		const { tags = [], memberIds = [], managerIds = [], organizationId, ...entity } = input;
+		// The client rate is written through the project rate route only, which checks who may set it
+		const { tags = [], memberIds = [], managerIds = [], organizationId, billRateValue: _rate, ...entity } = input;
+		await this.prepareTaskKey(entity, { tenantId, organizationId });
+		void _rate;
 
 		try {
 			// If the employee creates the project, default add as a manager
@@ -195,6 +198,12 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 			return project;
 		} catch (error) {
 			// Handle errors and return an appropriate error response
+			if (error instanceof ConflictException) {
+				throw error;
+			}
+			if (isProjectKeyConflict(error)) {
+				throw new ConflictException('PROJECT_KEY_TAKEN: another project of the organization holds that key.');
+			}
 			throw new HttpException(`Failed to create organization project: ${error.message}`, HttpStatus.BAD_REQUEST);
 		}
 	}
@@ -215,13 +224,18 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 		// `members` is never saved from the input: the relation cascades, so a membership row stated in the body
 		// (`{ id, isManager: true }`) was written as given and raised the flag `updateOrganizationProjectMembers`
 		// gates. The members change through `memberIds` / `managerIds` alone.
-		const { memberIds, managerIds, organizationId, members: _members, ...entity } = input;
+		const { memberIds, managerIds, organizationId, members: _members, billRateValue: _rate, ...entity } = input;
 		void _members;
+		void _rate;
+		// A rate in the body is never saved here, so the activity log does not record it as changed either
+		const { billRateValue: _discardedRate, ...loggedInput } = input;
+		void _discardedRate;
 
 		const organizationProject = await super.findOneByIdString(id, {
 			where: { organizationId, tenantId },
 			relations: { image: true, members: true, organizationContact: true, tags: true, teams: true }
 		});
+		await this.prepareTaskKey(entity, { tenantId, organizationId, existing: organizationProject });
 
 		try {
 			// Retrieve members and managers IDs
@@ -274,12 +288,18 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 				organizationId,
 				tenantId,
 				organizationProject,
-				input
+				loggedInput
 			);
 
 			return updatedProject;
 		} catch (error) {
 			// Handle errors and return an appropriate error response
+			if (error instanceof ConflictException) {
+				throw error;
+			}
+			if (isProjectKeyConflict(error)) {
+				throw new ConflictException('PROJECT_KEY_TAKEN: another project of the organization holds that key.');
+			}
 			throw new HttpException(`Failed to update organization project: ${error.message}`, HttpStatus.BAD_REQUEST);
 		}
 	}
@@ -1038,4 +1058,56 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 			}
 		}
 	}
+
+	/**
+	 * Normalizes a task key on its way in and keeps the organization's keys unique: the key is upper-cased and
+	 * trimmed (`null` clears it), refused with 409 (`PROJECT_KEY_TAKEN`) when another project of the organization
+	 * holds it, and a replaced key is kept in `taskKeyHistory` so old references keep resolving. A body without a
+	 * `taskKey` leaves both untouched; the history is never written from a body.
+	 */
+	private async prepareTaskKey(
+		entity: { taskKey?: string | null; taskKeyHistory?: string[] | null },
+		scope: { tenantId: ID; organizationId: ID; existing?: { id?: ID; taskKey?: string | null; taskKeyHistory?: string[] | null } | null }
+	): Promise<void> {
+		delete entity.taskKeyHistory;
+		if (!('taskKey' in entity)) {
+			return;
+		}
+		const key = entity.taskKey === null || entity.taskKey === undefined ? null : String(entity.taskKey).trim().toUpperCase();
+		entity.taskKey = key || null;
+		if (entity.taskKey) {
+			const holder = await this.typeOrmRepository.findOne({
+				where: {
+					tenantId: scope.tenantId,
+					organizationId: scope.organizationId,
+					taskKey: entity.taskKey,
+					...(scope.existing?.id ? { id: Not(scope.existing.id) } : {})
+				},
+				select: { id: true, name: true }
+			});
+			if (holder) {
+				throw new ConflictException(`PROJECT_KEY_TAKEN: the key ${entity.taskKey} belongs to the project "${holder.name}".`);
+			}
+		}
+		const previous = scope.existing?.taskKey ? String(scope.existing.taskKey).toUpperCase() : null;
+		if (previous && previous !== entity.taskKey) {
+			const history = Array.isArray(scope.existing?.taskKeyHistory) ? scope.existing.taskKeyHistory : [];
+			entity.taskKeyHistory = [...new Set([...history.map((item) => String(item).toUpperCase()), previous])].filter(
+				(item) => item !== entity.taskKey
+			);
+		}
+	}
+}
+
+/**
+ * Whether a save was refused by the unique index on the project key (two concurrent saves that both found the key
+ * free): Postgres `23505`, MySQL `ER_DUP_ENTRY`, SQLite's constraint error, each naming the index or the column.
+ */
+export function isProjectKeyConflict(error: unknown): boolean {
+	const candidate = error as { code?: string | number; message?: string; driverError?: { code?: string | number; message?: string } } | null;
+	const codes = [candidate?.code, candidate?.driverError?.code].map((code) => String(code ?? ''));
+	const message = `${candidate?.message ?? ''} ${candidate?.driverError?.message ?? ''}`;
+	const isUniqueViolation =
+		codes.includes('23505') || codes.includes('ER_DUP_ENTRY') || codes.includes('1062') || codes.some((code) => code.startsWith('SQLITE_CONSTRAINT'));
+	return isUniqueViolation && /UQ_organization_project_organization_task_key|taskKey/i.test(message);
 }

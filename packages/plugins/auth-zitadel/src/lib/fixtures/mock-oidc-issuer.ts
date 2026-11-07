@@ -16,6 +16,26 @@ interface PendingCode {
 	nonce: string;
 	codeChallenge: string;
 	claims: JWTPayload;
+	/** The scopes the authorize request asked for. */
+	scope: string;
+}
+
+/**
+ * Holds one refresh request (by arrival order) to simulate two API processes refreshing at once: `before` waits
+ * before the refresh token is checked, `after` checks (and rotates) it, then waits before answering. `arrived` is
+ * called as the request is held.
+ */
+export interface MockRefreshHold {
+	when: 'before' | 'after';
+	until: Promise<void>;
+	arrived?: () => void;
+}
+
+/** A token request the issuer answered, without the client credential and without any token value. */
+export interface MockTokenRequest {
+	grantType: string;
+	/** The token-exchange parameters (`audience`, `scope`, token types), when it was one. */
+	params: Record<string, string>;
 }
 
 export class MockOidcIssuer {
@@ -29,6 +49,19 @@ export class MockOidcIssuer {
 	authorizeError: string | null = null;
 	/** The last authorize request's query parameters. */
 	lastAuthorizeQuery: URLSearchParams | null = null;
+	/** Every token request (grant type and the exchange parameters; never a token). */
+	readonly tokenRequests: MockTokenRequest[] = [];
+	/** Refresh tokens issued for `offline_access` and not used yet (one use each: they rotate). */
+	readonly refreshTokens = new Map<string, string>();
+	/** Access tokens issued by the code exchange or a refresh, by value, with their subject. */
+	readonly accessTokens = new Map<string, string>();
+	/** When set, the token-exchange grant answers with this HTTP status and OAuth error. */
+	exchangeError: { status: number; error: string } | null = null;
+	/** Lifetime the token-exchange grant reports, seconds. */
+	exchangeExpiresIn = 3600;
+	/** Holds for the refresh requests, by arrival order (see {@link MockRefreshHold}). */
+	refreshHolds: Array<MockRefreshHold | undefined> = [];
+	private refreshCount = 0;
 
 	private server: Server | null = null;
 	private jose: Jose | null = null;
@@ -135,7 +168,8 @@ export class MockOidcIssuer {
 				redirectUri,
 				nonce: query.get('nonce') ?? '',
 				codeChallenge: query.get('code_challenge') ?? '',
-				claims: this.nextClaims
+				claims: this.nextClaims,
+				scope: query.get('scope') ?? ''
 			});
 			// The claims belong to this authorization only; a later one starts from the defaults.
 			this.nextClaims = {};
@@ -155,6 +189,20 @@ export class MockOidcIssuer {
 		if (req.headers['authorization'] !== expected) {
 			return this.json(res, 401, { error: 'invalid_client' });
 		}
+		const grantType = body.get('grant_type') ?? '';
+		if (grantType === 'refresh_token') {
+			this.tokenRequests.push({ grantType, params: {} });
+			return this.refresh(body, res);
+		}
+		if (grantType === 'urn:ietf:params:oauth:grant-type:token-exchange') {
+			const params: Record<string, string> = {};
+			for (const name of ['audience', 'scope', 'subject_token_type', 'requested_token_type']) {
+				params[name] = body.get(name) ?? '';
+			}
+			this.tokenRequests.push({ grantType, params });
+			return this.exchange(body, res);
+		}
+		this.tokenRequests.push({ grantType, params: {} });
 		const pending = this.codes.get(body.get('code') ?? '');
 		this.codes.delete(body.get('code') ?? '');
 		const verifier = body.get('code_verifier') ?? '';
@@ -164,7 +212,62 @@ export class MockOidcIssuer {
 		}
 		const subject = String(pending.claims.sub ?? 'person-1');
 		const idToken = await this.sign(this.idTokenClaims(subject, { nonce: pending.nonce, ...pending.claims }));
-		return this.json(res, 200, { id_token: idToken, access_token: 'opaque-access-token', token_type: 'Bearer', expires_in: 600 });
+		const answer: Record<string, unknown> = { id_token: idToken, access_token: 'opaque-access-token', token_type: 'Bearer', expires_in: 600 };
+		if (pending.scope.split(' ').includes('offline_access')) {
+			answer['refresh_token'] = this.issueRefreshToken(subject);
+		}
+		return this.json(res, 200, answer);
+	}
+
+	private issueRefreshToken(subject: string): string {
+		const token = `mock-rt-${randomBytes(12).toString('hex')}`;
+		this.refreshTokens.set(token, subject);
+		return token;
+	}
+
+	/** The refresh grant: one use per refresh token, which rotates. */
+	private async refresh(body: URLSearchParams, res: ServerResponse): Promise<void> {
+		const hold = this.refreshHolds[this.refreshCount++];
+		if (hold?.when === 'before') {
+			hold.arrived?.();
+			await hold.until;
+		}
+		const used = body.get('refresh_token') ?? '';
+		const subject = this.refreshTokens.get(used);
+		if (!subject) {
+			return this.json(res, 400, { error: 'invalid_grant' });
+		}
+		this.refreshTokens.delete(used);
+		const accessToken = `mock-at-${randomBytes(12).toString('hex')}`;
+		this.accessTokens.set(accessToken, subject);
+		const rotated = this.issueRefreshToken(subject);
+		if (hold?.when === 'after') {
+			hold.arrived?.();
+			await hold.until;
+		}
+		return this.json(res, 200, {
+			access_token: accessToken,
+			token_type: 'Bearer',
+			expires_in: 600,
+			refresh_token: rotated
+		});
+	}
+
+	/** RFC 8693 token exchange of an access token this issuer gave out. */
+	private exchange(body: URLSearchParams, res: ServerResponse): void {
+		if (this.exchangeError) {
+			return this.json(res, this.exchangeError.status, { error: this.exchangeError.error });
+		}
+		const subject = this.accessTokens.get(body.get('subject_token') ?? '');
+		if (!subject) {
+			return this.json(res, 400, { error: 'invalid_grant' });
+		}
+		return this.json(res, 200, {
+			access_token: `mock-xt-${randomBytes(12).toString('hex')}`,
+			issued_token_type: 'urn:ietf:params:oauth:token-type:access_token',
+			token_type: 'Bearer',
+			expires_in: this.exchangeExpiresIn
+		});
 	}
 
 	private readBody(req: IncomingMessage): Promise<string> {

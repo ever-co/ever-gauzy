@@ -12,7 +12,14 @@ export class OrganizationTeamDTO
 			TenantOrganizationBaseDTO,
 			IntersectionType(PartialType(RelationalTagDTO), MemberEntityBasedDTO)
 		),
-		PickType(OrganizationTeam, ['logo', 'prefix', 'imageId', 'shareProfileView', 'requirePlanToTrack'])
+		PickType(OrganizationTeam, [
+			'logo',
+			'prefix',
+			'imageId',
+			'shareProfileView',
+			'requirePlanToTrack',
+			'defaultProjectId'
+		])
 	)
 	implements Omit<IOrganizationTeam, 'name'>
 {

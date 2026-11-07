@@ -24,9 +24,16 @@ import {
  * concurrent starts, the link record in Gauzy's integration tables, the audit, and what is stored
  * encrypted.
  */
-/** The six tables of the `EverConnect` migration (the `EverConnectIdentity` one has its own spec). */
+/** The six tables of the `EverConnect` migration (the `EverConnectIdentity` and `EverConnectProvision` ones have their own specs). */
 const TABLES = PLUGIN_TABLES.filter(
-	(table) => !['ever_instance', 'ever_connect_person_link_report', 'ever_connect_person_request'].includes(table)
+	(table) =>
+		![
+			'ever_instance',
+			'ever_connect_person_link_report',
+			'ever_connect_person_request',
+			'ever_connect_provision_intent',
+			'ever_connect_provision_result'
+		].includes(table)
 ).sort();
 
 class RecordingLogger implements Logger {

@@ -150,6 +150,8 @@ export enum IntegrationEnum {
 	ACTIVE_PIECES = 'ActivePieces',
 	SIM = 'Sim',
 	PLANE = 'Plane',
+	LINEAR = 'Linear',
+	ASANA = 'Asana',
 	EVER_ASYNC = 'Ever_Async',
 	EVER_CONNECT = 'Ever_Connect',
 	/** Ever Works: two-way sync of tasks, teams, goals, missions, ideas, docs, agents and inbox. */
@@ -182,6 +184,8 @@ export enum IntegrationEntity {
 	ORGANIZATION_TEAM = 'OrganizationTeam',
 	STRATEGIC_INITIATIVE = 'StrategicInitiative',
 	COMMENT = 'Comment',
+	/** A file or link of a task kept as a resource link (Asana, Trello, Linear attachments). */
+	ATTACHMENT = 'Attachment',
 	DOCUMENT = 'Document',
 	INBOX_ITEM = 'InboxItem',
 	AGENT = 'Agent'

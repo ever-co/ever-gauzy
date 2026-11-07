@@ -6,6 +6,7 @@ import {
 	EverConnectTenantDeletionSubscriber
 } from './ever-connect-deletion.subscriber';
 import { EverConnectModule } from './ever-connect.module';
+import { EverConnectOrganizationIdentifierSubscriber } from './subscribers/organization-identifier.subscriber';
 
 /**
  * `ever_instance` is registered by one Ever Platform plugin only: the anonymous statistics plugin
@@ -27,7 +28,12 @@ const entities =
 @Plugin({
 	imports: [EverConnectModule.register()],
 	entities: [...entities],
-	// A deleted Gauzy tenant or organization: its link is removed and its rows go with it.
-	subscribers: [EverConnectOrganizationDeletionSubscriber, EverConnectTenantDeletionSubscriber]
+	// A deleted Gauzy tenant or organization: its link is removed and its rows go with it. A changed
+	// tax id is uploaded (as salted hashes) only for an organization that opted in to being discoverable.
+	subscribers: [
+		EverConnectOrganizationDeletionSubscriber,
+		EverConnectTenantDeletionSubscriber,
+		EverConnectOrganizationIdentifierSubscriber
+	]
 })
 export class EverConnectPlugin {}

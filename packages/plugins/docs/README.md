@@ -133,3 +133,38 @@ they are absent, and that fallback will not match a real provider's signature.
   an address would make the destination tenant depend on row order.
 - Rotating a platform address changes the address itself; the previous one stops resolving at once.
 - Setting an address inactive rejects mail while keeping its history — capture data is never deleted.
+
+## Collaboration: spaces, follows, notifications (`GAUZY_DOCS_COLLAB_ENABLED`)
+
+Off by default. With the flag on:
+
+- **Spaces.** A page is in the organization's space (`visibility: ORGANIZATION`), a team's space
+  (`visibility: TEAM` + `organizationTeamId`, a team of the organization the writer belongs to — or
+  administers with `DOCS_MANAGE`) or the writer's private space (`visibility: PRIVATE`). A team's
+  pages are its current members' to read and write, like a page shared with the team at `EDIT`;
+  membership resolves at query time, so leaving a team hides its pages on the next request. Shares
+  apply to PRIVATE and TEAM pages. `GET /plugins/docs/documents/spaces` lists the spaces the caller
+  sees with their counts; `GET /documents?space=organization|team|private[&organizationTeamId=…]`
+  lists one space; `POST /documents/:id/space` moves a page — and, by default, the descendants the
+  caller may write — to another space (the owner's or a `DOCS_MANAGE` holder's call, like visibility).
+  With the flag off, a `TEAM` write answers 404 `DOCS_COLLAB_DISABLED`; existing TEAM pages keep
+  their access rules.
+- **Follow / mute.** `GET|POST /documents/:id/follow`, `POST /documents/:id/unfollow`,
+  `POST /documents/:id/mute`, `POST /documents/:id/unmute`. Following is the platform's entity
+  subscription (what the comment fan-out and the mention service already create); muting removes
+  the caller's subscriptions and is remembered in `metadata.collaboration.mutedEmployeeIds`, so the
+  plugin's own notifications leave them out until they unmute (a direct mention still subscribes
+  them again, as everywhere on the platform).
+- **Inbox entries.** A page shared with me (or with my team), a review asked of me
+  (`reviewerEmployeeIds` on the review request), a decision on a page I created — through the
+  platform's notifications, which the unified Inbox lists; mentions and comments on followed pages
+  were already the platform's. The same person is told of the same thing on one page once per ten
+  minutes (`DOCS_NOTIFICATION_DEDUPE_MINUTES`).
+- **`contentRevision`.** Moves on every content change (content save, version restore; the Markdown
+  update of the next phase). A content save may state `expectedRevision`; a stale one is 409
+  `DOCS_CONTENT_CONFLICT` with `currentRevision`, like a stale `expectedUpdatedAt`.
+
+Migration `1791000004800` adds `document.organizationTeamId` (foreign key to `organization_team`,
+`SET NULL` — a deleted team leaves its pages in place for a manager to move) and
+`document.contentRevision` (default 1), plus the index `IDX_document_tenant_org_team`.
+

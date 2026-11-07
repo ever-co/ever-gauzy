@@ -1,38 +1,240 @@
-@use 'gauzy/_gauzy-overrides' as *;
-@forward '@shared/_edit-profile-form';
+@use 'var' as v;
+
+// The user edit page's frame, as on the employee page: a header with the user at a glance, then the route tabs
+// over a compact body. Theme tokens are read as CSS variables.
+
+$radius: var(--border-radius);
 
 :host {
-  nb-card {
-    nb-card-body {
-      background-color: nb-theme(gauzy-card-2);
-      padding: 1rem;
+  display: block;
+}
+
+// -- Header --
+.header-container {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  min-width: 0;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.user-image {
+  flex: 0 0 44px;
+  width: 44px;
+  height: 44px;
+  object-fit: cover;
+  border-radius: $radius;
+  border: 1px solid var(--gauzy-border-default-color);
+}
+
+.user-image--empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--gauzy-sidebar-background-3);
+  color: var(--text-hint-color);
+
+  nb-icon {
+    width: 1.375rem;
+    height: 1.375rem;
+    font-size: 1.375rem;
+  }
+}
+
+.user-details {
+  min-width: 0;
+}
+
+.user-name-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.5rem;
+  min-width: 0;
+}
+
+.user-name {
+  margin: 0;
+  font-size: 1.0625rem;
+  font-weight: 600;
+  line-height: 1.375rem;
+  letter-spacing: -0.01em;
+  color: var(--gauzy-text-color-1);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+.user-role {
+  display: inline-flex;
+  align-items: center;
+  height: 1.125rem;
+  padding: 0 0.4375rem;
+  border-radius: 0.5625rem;
+  background-color: var(--color-primary-transparent-100);
+  font-size: 0.625rem;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--text-primary-color);
+  white-space: nowrap;
+}
+
+.user-meta {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0 0.5rem;
+  margin-top: 0.125rem;
+  font-size: 0.8125rem;
+  line-height: 1.125rem;
+  color: var(--text-hint-color);
+  min-width: 0;
+}
+
+.user-meta__item {
+  min-width: 0;
+  overflow-wrap: anywhere;
+
+  & + .user-meta__item::before {
+    content: '·';
+    margin-inline-end: 0.5rem;
+    color: var(--text-disabled-color);
+  }
+}
+
+// -- Body: the tabs, then the active tab on the page's own surface --
+// The card grows with its content and the page scrolls: Nebular's `overflow: auto` on the card body (and a
+// clipping card) would make the body the scroll container, and the Main tab's sticky identity panel would then
+// never stick.
+.user-edit {
+  overflow: visible;
+}
+
+.body {
+  padding: 1rem;
+  background-color: var(--gauzy-card-2);
+  overflow: visible;
+}
+
+// Underline tabs, as Jira and Hubstaff draw them: icon and label on one line over a single hairline, the active
+// tab in the primary colour with a 2px underline on that line. The app-wide rules give a route tab a raised box
+// (`_overrides.scss`), and at desktop widths stack its icon over its label (`includes/_tabset.scss`); this page
+// replaces both for its own strip.
+:host ::ng-deep .tabset {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  background: transparent;
+  box-shadow: none;
+
+  .route-tabset {
+    display: flex;
+    flex: 0 0 auto;
+    gap: 0.125rem;
+    margin: 0;
+    padding: 0;
+    border-bottom: 1px solid var(--gauzy-border-default-color);
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: none;
+
+    &::-webkit-scrollbar {
+      display: none;
     }
   }
-  @include input-appearance(42px, var(--gauzy-card-1));
 
-  ::ng-deep .route-tabset .route-tab {
-    &.active {
-      svg {
-        fill: nb-theme(text-primary-color);
+  .route-tab {
+    flex: 0 0 auto;
+    margin: 0;
+
+    .tab-link {
+      display: inline-flex !important;
+      align-items: center;
+      gap: 0.375rem;
+      margin: 0 0 -1px; // the underline sits on the strip's hairline
+      padding: 0.4375rem 0.625rem;
+      border-radius: 0;
+      border-bottom: 2px solid transparent;
+      background: transparent !important;
+      font-size: 0.8125rem;
+      font-weight: 500;
+      line-height: 1.125rem;
+      text-transform: none;
+      color: var(--gauzy-text-color-2);
+      white-space: nowrap;
+      transition:
+        color 0.15s ease-in-out,
+        border-color 0.15s ease-in-out;
+
+      // Nebular's own underline; the border above takes its place.
+      &::before {
+        display: none;
       }
-    }
 
-    a.tab-link {
-      border-radius: nb-theme(border-radius) nb-theme(border-radius) 0 0;
-      display: flex !important;
+      &:hover {
+        color: var(--gauzy-text-color-1);
+        border-bottom-color: var(--gauzy-border-default-color);
+      }
 
-      span.tab-text {
-        text-transform: lowercase;
-        display: block;
+      &:focus-visible {
+        outline: 2px solid var(--color-primary-500);
+        outline-offset: -2px;
+      }
 
-        &:first-letter {
-          text-transform: uppercase;
+      nb-icon {
+        display: inline-block !important;
+        flex: 0 0 auto;
+        width: 0.875rem;
+        height: 0.875rem;
+        margin: 0 !important;
+        font-size: 0.875rem;
+        color: inherit;
+
+        svg {
+          fill: currentColor;
         }
       }
+
+      .tab-text {
+        font: inherit;
+        color: inherit;
+      }
+    }
+
+    &.active .tab-link {
+      font-weight: 600;
+      color: var(--text-primary-color);
+      border-bottom-color: var(--color-primary-500);
     }
   }
-  .gap-1 {
-    @include nb-rtl(gap, 1rem);
-    @include nb-ltr(gap, 0);
+
+  > router-outlet {
+    display: none;
+  }
+
+  > router-outlet ~ * {
+    display: block;
+    padding-top: 1rem;
+  }
+}
+
+@media only screen and (max-width: v.$break-md) {
+  .body {
+    padding: 0.75rem;
+  }
+
+  .user-name {
+    white-space: normal;
   }
 }

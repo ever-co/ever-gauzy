@@ -64,6 +64,13 @@ export interface EverConnectConfig {
 	 * query or a fragment.
 	 */
 	signIn: { redirectUri: string; logoutUri: string } | null;
+	/**
+	 * Creating a workspace a person confirmed from Ever (`EVER_CONNECT_PROVISION_ENABLED`, off unless
+	 * exactly `true`; while off every route of it answers 404). `appUrl` and `apiUrl` are this
+	 * installation's web app and API (`CLIENT_BASE_URL`, `API_BASE_URL`), sent back to Ever Platform as
+	 * the new workspace's addresses.
+	 */
+	provision: { enabled: boolean; appUrl: string; apiUrl: string };
 }
 
 /** `localhost` (and `*.localhost`), `127.0.0.0/8` and `::1`. */
@@ -215,6 +222,54 @@ function parseSignIn(env: Env): EverConnectConfig['signIn'] {
 }
 
 /**
+ * `EVER_CONNECT_PROVISION_ENABLED`: only the exact value `true` turns it on; unset, empty and `false`
+ * keep it off silently, anything else keeps it off with one warning that never repeats the value.
+ */
+export function isProvisionEnabled(env: Env, warn: Warn = () => undefined): boolean {
+	const raw = env['EVER_CONNECT_PROVISION_ENABLED'];
+	if (raw === undefined || raw === '' || raw === 'false') {
+		return false;
+	}
+	if (raw === 'true') {
+		return true;
+	}
+	warn('EVER_CONNECT_PROVISION_ENABLED is neither "true" nor "false"; creating workspaces from Ever stays off (the default).');
+	return false;
+}
+
+/**
+ * An address of this installation sent to Ever Platform (`CLIENT_BASE_URL`, `API_BASE_URL`): https (plain
+ * http only on a loopback address: the sign-in link it carries must not cross a network in clear), no
+ * credentials, query or fragment, without trailing slashes; `null` when it is not one.
+ */
+function baseUrlOf(raw: string | undefined, fallback: string): string | null {
+	let url: URL;
+	try {
+		url = new URL(raw?.trim() || fallback);
+	} catch {
+		return null;
+	}
+	const secure = url.protocol === 'https:' || (url.protocol === 'http:' && isLoopbackHost(url.hostname));
+	if (!secure || url.username || url.password || url.search || url.hash) {
+		return null;
+	}
+	return `${url.origin}${url.pathname.replace(/\/+$/, '')}`;
+}
+
+/** The settings of creating a workspace from Ever (off, with a warning, when an address is unusable). */
+function parseProvision(env: Env, warn: Warn): EverConnectConfig['provision'] {
+	const enabled = isProvisionEnabled(env, warn);
+	const appUrl = baseUrlOf(env['CLIENT_BASE_URL'], 'http://localhost:4200');
+	const apiUrl = baseUrlOf(env['API_BASE_URL'], 'http://localhost:3000');
+	if (enabled && (!appUrl || !apiUrl)) {
+		warn(
+			'CLIENT_BASE_URL and API_BASE_URL must be https addresses (plain http on a loopback address only) without credentials, a query or a fragment; creating workspaces from Ever stays off until they are.'
+		);
+	}
+	return { enabled: enabled && !!appUrl && !!apiUrl, appUrl: appUrl ?? '', apiUrl: apiUrl ?? '' };
+}
+
+/**
  * Reads the settings once. A malformed value falls back to its default with one `warn` line (which
  * never repeats the value), except an unusable Ever Platform address, which sends nothing.
  */
@@ -243,7 +298,8 @@ export function readEverConnectConfig(env: Env = process.env, warn: Warn = () =>
 		returnUnusable: Boolean(env['CLIENT_BASE_URL']?.trim()) && !ret,
 		issuer: localPlatform ? issuer : null,
 		localPlatform,
-		signIn: parseSignIn(env)
+		signIn: parseSignIn(env),
+		provision: parseProvision(env, warn)
 	};
 }
 

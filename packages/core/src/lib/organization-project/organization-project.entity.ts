@@ -1,6 +1,20 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { JoinColumn, RelationId, JoinTable } from 'typeorm';
-import { IsBoolean, IsDateString, IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString, IsUUID } from 'class-validator';
+import { Exclude, Transform } from 'class-transformer';
+import { billingRateColumn } from '../shared/pipes/billing-rate.transform';
+import {
+	IsArray,
+	IsBoolean,
+	IsDateString,
+	IsEnum,
+	IsNotEmpty,
+	IsNumber,
+	IsOptional,
+	IsString,
+	IsUUID,
+	Matches,
+	ValidateIf
+} from 'class-validator';
 import {
 	CurrenciesEnum,
 	IActivity,
@@ -60,6 +74,7 @@ import {
 import {
 	ColumnIndex,
 	EmbeddedColumn,
+	JsonArrayColumn,
 	MultiORMColumn,
 	MultiORMEntity,
 	MultiORMManyToMany,
@@ -76,6 +91,7 @@ import { HasCustomFields } from '../core/entities/custom-entity-fields';
 import { Taggable } from '../tags/tag.types';
 
 @MultiORMEntity('organization_project', { mikroOrmRepository: () => MikroOrmOrganizationProjectRepository })
+@ColumnIndex('UQ_organization_project_organization_task_key', ['tenantId', 'organizationId', 'taskKey'], { unique: true })
 export class OrganizationProject
 	extends TenantOrganizationBaseEntity
 	implements IOrganizationProject, Taggable, HasCustomFields
@@ -134,6 +150,27 @@ export class OrganizationProject
 	@MultiORMColumn({ nullable: true })
 	code?: string;
 
+	/**
+	 * The key tasks are addressed by (`API` in `API-42`): two to ten upper-case letters and digits, starting with a
+	 * letter, unique within the organization. Null until a manager sets one; the key derived from the name (the
+	 * first three characters, as `Task.prefix` carries it) answers until then.
+	 */
+	@ApiPropertyOptional({ type: () => String, nullable: true })
+	@IsOptional()
+	// A key is trimmed and upper-cased on its way in (`api` → `API`); an empty string clears it, like null.
+	@Transform(({ value }) => (typeof value === 'string' ? value.trim().toUpperCase() || null : value))
+	@ValidateIf((it) => it.taskKey !== null)
+	@Matches(/^[A-Z][A-Z0-9]{1,9}$/, { message: 'taskKey must be 2 to 10 upper-case letters or digits, starting with a letter' })
+	@MultiORMColumn({ nullable: true, length: 16 })
+	taskKey?: string | null;
+
+	/** The project's former keys, which keep resolving after a rename. Written by the platform, never by a client. */
+	@ApiPropertyOptional({ type: () => Array })
+	@IsOptional()
+	@IsArray()
+	@JsonArrayColumn<string>({ nullable: true })
+	taskKeyHistory?: string[] | null;
+
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsString()
@@ -181,6 +218,21 @@ export class OrganizationProject
 	@IsNumber()
 	@MultiORMColumn({ nullable: true })
 	budget?: number;
+
+	/**
+	 * The project's client rate: what the client is billed per hour of the project's time, in the project's currency,
+	 * else the organization's. It does not change what members are paid. Written and read through the project rate
+	 * routes only, which check who may and answer plain objects: generic project reads, open to any employee who views
+	 * projects, never answer it, even for a caller `select` naming it.
+	 */
+	@ApiPropertyOptional({
+		type: () => Number,
+		nullable: true,
+		description: "What the client is billed per hour of the project's time, in the project's currency"
+	})
+	@Exclude({ toPlainOnly: true })
+	@MultiORMColumn({ ...billingRateColumn(), select: false, hidden: true })
+	billRateValue?: number | null;
 
 	// Specifies the type of budget for the project, if provided.
 	@ApiPropertyOptional({ type: () => String, enum: OrganizationProjectBudgetTypeEnum })

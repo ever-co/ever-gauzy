@@ -95,12 +95,23 @@ export { PasswordHashModule, PasswordHashService } from './lib/password-hash';
 // platform mechanisms instead of re-implementing them.
 export { ActivityLogService } from './lib/activity-log/activity-log.service';
 export { MentionService } from './lib/mention/mention.service';
+// The in-process facts the real-time channel turns into change hints (`@gauzy/plugin-realtime`).
+export { CreateMentionEvent } from './lib/mention/events';
 // 🛑 `@Global()` means "available everywhere ONCE IMPORTED", not "always present". The API gets
 // both modules through core's own `AppModule`; a host that builds its own module graph —
 // `apps/worker`, which runs the plugin pipelines without core's HTTP `AppModule` — has to import
 // them itself or it fails DI at boot on the first plugin that injects either service.
 export { ActivityLogModule } from './lib/activity-log/activity-log.module';
 export { MentionModule } from './lib/mention/mention.module';
+// The notification facts other packages act on: the Inbox files created notifications as items and mirrors
+// their read state; the real-time channel turns them into addressed hints.
+export {
+	EmployeeCreateNotificationEvent,
+	EmployeeNotificationCreatedEvent,
+	EmployeeNotificationUpdatedEvent
+} from './lib/employee-notification/events';
+export type { IEmployeeNotificationStateChange } from './lib/employee-notification/events';
+export { FollowerFanOutService, isNotificationFanOutEnabled } from './lib/entity-subscription/fan-out';
 // Same rationale as `MentionService` above, for the entity-subscription fan-out: the handler is
 // registered by core, but a plugin that wants an author subscribed to the entity they just created
 // (the pattern `CommentService` uses) needs the event CLASS to publish — `@nestjs/cqrs` dispatches
@@ -143,6 +154,11 @@ export { UserModule, UserService } from './lib/user';
 // The command that invites people through the platform's own invite flow (its e-mail, its role rules, its accept
 // path), for a package that invites someone it found elsewhere: the Ever Works integration's "invite to Gauzy".
 export { InviteBulkCreateCommand } from './lib/invite/commands/invite.bulk.create.command';
+// The commands that create an organization and a team through the platform's own paths (their seeding, their
+// admin memberships), for a package that creates a workspace a person confirmed elsewhere: the Ever ID sign-in
+// plugin's workspace provisioning. `@nestjs/cqrs` dispatches on the constructor, so a copy would reach no handler.
+export { OrganizationCreateCommand } from './lib/organization/commands/organization.create.command';
+export { OrganizationTeamCreateCommand } from './lib/organization-team/commands/organization-team.create.command';
 // The membership check a REST DTO makes through `@IsOrganizationBelongsToUser()`, for a package that resolves the
 // organization from a stored record rather than from the request (an integration ID, for instance).
 export { assertCurrentUserBelongsToOrganization } from './lib/user-organization/assert-organization-membership';
@@ -156,6 +172,7 @@ export {
 // The comment-access policy contract, for a package whose records carry comments that must follow the record's own
 // access rules: it declares a provider with `@CommentParentAccessPolicy()` implementing the interface, and the
 // comment API applies it (see `OrganizationContactCommentAccessPolicy`, which governs a contact's notes).
+export * from './lib/comment/events';
 export { CommentParentAccessPolicy } from './lib/comment/parent-access';
 export type { ICommentParent, ICommentParentAccessPolicy } from './lib/comment/parent-access';
 export {
@@ -386,7 +403,9 @@ export { GraphqlSubscriptionModule } from './lib/graphql/subscriptions/graphql-s
 export { GraphqlPubSub } from './lib/graphql/subscriptions/graphql-pubsub.service';
 export {
 	NON_SUBSCRIBABLE_EVENT_NAMES,
-	SubscriptionCatalogue
+	SubscriptionCatalogue,
+	isEventNameShaped,
+	matchesEventSelection
 } from './lib/graphql/subscriptions/subscription-catalogue';
 export { GraphqlSubscriptionConsumer } from './lib/graphql/subscriptions/subscription-consumer';
 export { GraphqlSubscriptionBusBridge } from './lib/graphql/subscriptions/subscription-bus-bridge';
@@ -408,6 +427,8 @@ export {
 // plugin's sign-up requires exactly the documents the register form requires.
 export { AuthModule } from './lib/auth/auth.module';
 export { AuthService } from './lib/auth/auth.service';
+// For a plugin's route that lets a holder keep access once a token is gone (linking a sign-in identity, for one).
+export { assertFirstPartyRequest } from './lib/auth/oauth-app-first-party';
 // The operator's registration switches as the API applies them (APP_USER_REGISTRATION,
 // ALLOW_TENANTS_REGISTRATION, ADMIN_PASSWORD_RESET), for a plugin that creates accounts or tenants of its own:
 // it asks the same policy, so it can never stay open on a server whose operator closed registration.

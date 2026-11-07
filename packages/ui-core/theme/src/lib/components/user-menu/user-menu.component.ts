@@ -1,4 +1,5 @@
 import { Component, HostListener, Input, OnDestroy, OnInit, Output, EventEmitter, ChangeDetectionStrategy } from '@angular/core';
+import { Router } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { environment } from '@gauzy/ui-config';
 import { IEmployee, IUser, IEmployeeUpdateInput } from '@gauzy/contracts';
@@ -101,7 +102,8 @@ export class UserMenuComponent implements OnInit, OnDestroy {
 
 	constructor(
 		private readonly _employeeService: EmployeesService,
-		private readonly _errorHandler: ErrorHandlingService
+		private readonly _errorHandler: ErrorHandlingService,
+		private readonly _router: Router
 	) {
 		this._user$ = new Observable();
 		this._employee$ = new BehaviorSubject(null);
@@ -173,6 +175,15 @@ export class UserMenuComponent implements OnInit, OnDestroy {
 
 	public onClick() {
 		this.close.emit();
+	}
+
+	/**
+	 * The identity card at the top of the panel opens the user's profile, the
+	 * same page as the "Profile" row below it, then closes the panel.
+	 */
+	public onOpenProfile() {
+		this._router.navigate(['/pages/auth/profile']);
+		this.onClick();
 	}
 
 	public onClickOutside(clickedInside: boolean) {

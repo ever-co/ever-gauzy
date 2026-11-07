@@ -1,0 +1,103 @@
+{
+	"TITLE": "Linear",
+	"UNAVAILABLE": "The Linear integration is not loaded on this server (LINEAR_ENABLED is off).",
+	"NOT_CONFIGURED": "The Linear OAuth application is not configured on this server (LINEAR_CLIENT_ID, LINEAR_CLIENT_SECRET, the callback URL). Nobody can connect until it is.",
+	"ERROR": "Something went wrong.",
+	"RETRY": "Try again",
+	"LOADING": "Loading…",
+	"COMMON": {
+		"SAVE": "Save",
+		"CANCEL": "Cancel",
+		"REMOVE": "Remove",
+		"REFRESH": "Refresh",
+		"BACK": "Back",
+		"YES": "Yes",
+		"NO": "No",
+		"NEVER": "Never"
+	},
+	"CONNECT": {
+		"TITLE": "Connect your Linear workspace",
+		"TEXT": "You will authorize this platform in Linear and come back here. Then map Linear teams to projects, import their issues as tasks, and keep them in sync.",
+		"BUTTON": "Connect Linear",
+		"STARTING": "Opening Linear…"
+	},
+	"CALLBACK_ERRORS": {
+		"not_configured": "The Linear OAuth application is not configured on this server.",
+		"denied": "Linear did not authorize the connection.",
+		"invalid_state": "The connect flow expired or was already used. Start it again.",
+		"exchange_failed": "Linear refused the authorization code. Start the flow again.",
+		"workspace_unreadable": "The workspace could not be read after authorizing.",
+		"not_saved": "The connection could not be saved."
+	},
+	"CONNECTED": {
+		"TITLE": "Linear is connected",
+		"WORKSPACE": "Workspace",
+		"CONNECTED_ON": "Connected on",
+		"OPEN_SETTINGS": "Open the settings",
+		"ATTENTION": "This connection needs attention: {{ reason }}",
+		"REASONS": {
+			"token_refused": "Linear refused the token. Connect again."
+		}
+	},
+	"SETTINGS": {
+		"TITLE": "Linear settings",
+		"OVERVIEW": "Connection",
+		"DISCONNECT": "Disconnect",
+		"DISCONNECT_CONFIRM": "Disconnect Linear from this organization? The mappings go; the imported tasks stay.",
+		"DISCONNECTED": "Linear was disconnected."
+	},
+	"MAPPINGS": {
+		"TITLE": "Teams and projects",
+		"INTRO": "Each Linear team maps to one project. Inbound brings the team's issues in as tasks; outbound sends the project's tasks to the team (one outbound mapping per project).",
+		"EMPTY": "No team is mapped yet.",
+		"TEAM": "Linear team",
+		"PROJECT": "Project",
+		"DIRECTION": "Direction",
+		"STATE_MAP": "Task status per Linear state",
+		"STATE_MAP_HINT": "The task status name an issue gets for each kind of Linear workflow state.",
+		"SYNC": "Sync",
+		"ENABLED": "On",
+		"DISABLED": "Off",
+		"ADD": "Map a team",
+		"ADDING": "Saving…",
+		"REMOVE_CONFIRM": "Remove this mapping? The imported tasks stay.",
+		"IMPORT": "Import changes",
+		"IMPORT_FULL": "Import everything",
+		"IMPORT_STARTED": "The import started; see the runs below.",
+		"LAST_IMPORT": "Last import",
+		"LAST_ERROR": "Last error",
+		"DIRECTIONS": {
+			"inbound": "Inbound (Linear → tasks)",
+			"outbound": "Outbound (tasks → Linear)",
+			"both": "Both ways"
+		},
+		"STATE_KINDS": {
+			"triage": "Triage",
+			"backlog": "Backlog",
+			"unstarted": "Unstarted",
+			"started": "Started",
+			"completed": "Completed",
+			"canceled": "Canceled"
+		},
+		"NO_TEAMS": "The workspace has no team the connection can see."
+	},
+	"RUNS": {
+		"TITLE": "Runs",
+		"EMPTY": "No run yet.",
+		"KIND": "Kind",
+		"STATUS": "Status",
+		"STARTED": "Started",
+		"FINISHED": "Finished",
+		"COUNTS": "Created / updated / skipped / failed",
+		"ERROR": "Error",
+		"KINDS": {
+			"import": "Import",
+			"webhook": "Webhook"
+		},
+		"STATUSES": {
+			"running": "Running",
+			"done": "Done",
+			"failed": "Failed"
+		}
+	}
+}

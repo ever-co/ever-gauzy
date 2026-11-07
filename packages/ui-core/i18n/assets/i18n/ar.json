@@ -690,6 +690,7 @@
 		},
 		"RATES": {
 			"DEFAULT_RATE": "معدل الافتراضي",
+			"OWN_RATES_LOCKED": "اطلب من المسؤول تغيير سعرك.",
 			"EXPECTED_RATE": "المعدل المتوقع",
 			"LIMITS": "الحدود",
 			"ERRORS": {
@@ -1154,6 +1155,7 @@
 		"SMS_GATEWAYS": "بوابات الرسائل القصيرة",
 		"CUSTOM_SMTP": "SMTP مخصص",
 		"OAUTH_CLIENTS": "عملاء OAuth",
+		"API_TOKENS": "رموز API",
 		"INVENTORY": "المخزون",
 		"SALES": "المبيعات",
 		"PAYMENTS": "المدفوعات",
@@ -2166,7 +2168,95 @@
 			"HR": "ساعة",
 			"SETTINGS": "الإعدادات",
 			"GENERAL_SETTINGS": "إعدادات عامة",
-			"INTEGRATIONS": "التكاملات"
+			"INTEGRATIONS": "التكاملات",
+			"PROJECTS_TAB": {
+				"TITLE": "المشاريع",
+				"CAPTION": "المشاريع التي ينتمي إليها هذا الموظف. يمكن للأعضاء تتبع الوقت والعمل على مهام المشروع.",
+				"SEARCH": "البحث في المشاريع",
+				"ASSIGN": "تعيين مشاريع",
+				"ASSIGN_DIALOG_TITLE": "التعيين في مشاريع",
+				"ASSIGN_DIALOG_SUBTITLE": "اختر المشاريع التي يجب أن ينضم إليها {{ employee }}. سيتمكن من تتبع الوقت والعمل على مهامها.",
+				"ASSIGN_SEARCH": "ابحث بالاسم أو الرمز أو العميل",
+				"SELECT_ALL": "تحديد الكل",
+				"DESELECT_ALL": "إلغاء تحديد الكل",
+				"SELECTED_COUNT": "تم تحديد {{ count }}",
+				"CLEAR_SELECTION": "مسح",
+				"ASSIGN_SUBMIT": "تعيين",
+				"ALL_ASSIGNED": "هذا الموظف عضو بالفعل في جميع المشاريع.",
+				"COLUMNS": {
+					"PROJECT": "المشروع",
+					"ROLE": "الدور",
+					"STATUS": "الحالة",
+					"MEMBERS": "الأعضاء",
+					"BILLING": "الفوترة"
+				},
+				"ROLE_MANAGER": "مدير",
+				"ROLE_MEMBER": "عضو",
+				"STATUS": {
+					"OPEN": "مفتوح",
+					"IN_PROGRESS": "قيد التنفيذ",
+					"COMPLETED": "مكتمل",
+					"CANCELLED": "ملغى",
+					"CUSTOM": "مخصص"
+				},
+				"BILLING": {
+					"RATE": "سعر بالساعة",
+					"FLAT_FEE": "رسوم ثابتة",
+					"MILESTONES": "مراحل"
+				},
+				"PUBLIC": "عام",
+				"PRIVATE": "خاص",
+				"QUICK_LOOK": "نظرة سريعة",
+				"OPEN_PROJECT": "فتح صفحة المشروع",
+				"REMOVE": "إزالة من المشروع",
+				"REMOVE_TITLE": "إزالة من المشروع",
+				"REMOVE_MESSAGE": "هل تريد إزالة {{ employee }} من {{ project }}؟ لن يتمكن بعد ذلك من تتبع الوقت عليه.",
+				"REMOVE_HINT": "يمكنك تعيينه في هذا المشروع مرة أخرى في أي وقت.",
+				"SHOWING": "عرض {{ count }} من {{ total }} مشروع",
+				"NO_MATCH": "لا توجد مشاريع تطابق «{{ term }}»",
+				"NO_MATCH_PICKER": "لا توجد مشاريع مطابقة",
+				"CLEAR_SEARCH": "مسح البحث",
+				"EMPTY_TITLE": "لا توجد مشاريع بعد",
+				"EMPTY_TEXT": "عيّن هذا الموظف في مشروع ليتمكن من تتبع الوقت والعمل على مهامه."
+			},
+			"CONTACTS_TAB": {
+				"TITLE": "جهات الاتصال",
+				"CAPTION": "العملاء والزبائن والعملاء المحتملون الذين يعمل معهم هذا الموظف.",
+				"SEARCH": "البحث في جهات الاتصال",
+				"ASSIGN": "تعيين جهات اتصال",
+				"ASSIGN_DIALOG_TITLE": "التعيين لجهات اتصال",
+				"ASSIGN_DIALOG_SUBTITLE": "اختر جهات الاتصال التي يجب أن يعمل معها {{ employee }}.",
+				"ASSIGN_SEARCH": "البحث بالاسم",
+				"SELECT_ALL": "تحديد الكل",
+				"DESELECT_ALL": "إلغاء تحديد الكل",
+				"SELECTED_COUNT": "تم تحديد {{ count }}",
+				"CLEAR_SELECTION": "مسح",
+				"ASSIGN_SUBMIT": "تعيين",
+				"ALL_ASSIGNED": "هذا الموظف معيّن بالفعل لجميع جهات الاتصال.",
+				"NO_MATCH_PICKER": "لا توجد جهات اتصال مطابقة",
+				"LOAD_MORE": "تحميل المزيد",
+				"LOAD_FAILED": "تعذّر تحميل جهات الاتصال.",
+				"COLUMNS": {
+					"CONTACT": "جهة الاتصال",
+					"TYPE": "النوع",
+					"PROJECTS": "المشاريع"
+				},
+				"TYPE": {
+					"CLIENT": "عميل",
+					"CUSTOMER": "زبون",
+					"LEAD": "عميل محتمل"
+				},
+				"OPEN_CONTACT": "فتح صفحة جهة الاتصال",
+				"REMOVE": "إزالة من جهة الاتصال",
+				"REMOVE_TITLE": "إزالة من جهة الاتصال",
+				"REMOVE_MESSAGE": "هل تريد إزالة {{ employee }} من {{ contact }}؟ لن يكون معيّنًا لجهة الاتصال هذه بعد الآن.",
+				"REMOVE_HINT": "يمكنك تعيينه لجهة الاتصال هذه مرة أخرى في أي وقت.",
+				"SHOWING": "عرض {{ count }} من {{ total }} جهة اتصال",
+				"NO_MATCH": "لا توجد جهات اتصال تطابق «{{ term }}»",
+				"CLEAR_SEARCH": "مسح البحث",
+				"EMPTY_TITLE": "لا توجد جهات اتصال بعد",
+				"EMPTY_TEXT": "عيّن هذا الموظف لعميل أو زبون أو عميل محتمل لإظهار من يعمل معهم."
+			}
 		},
 		"ADD_EMPLOYEES": {
 			"STEP_1": "الخطوة 1",
@@ -3300,6 +3390,7 @@
 				"SEARCH_INDEX_DEFINITIONS_VIEW": "عرض الحقول التي يحتفظ بها فهرس البحث ومقدار وزن كل منها.",
 				"SEARCH_INDEX_DEFINITIONS_EDIT": "إضافة الحقول التي يحتفظ بها فهرس البحث أو تغيير وزنها أو إلغاء تفعيلها أو إزالتها.",
 				"ORG_EMPLOYEES_EDIT": "تغيير الملفات الشخصية للموظفين وتفاصيل توظيفهم وأجورهم وإعداداتهم.",
+				"CHANGE_OWN_RATES": "تغيير أسعارك الخاصة في ملفك الوظيفي. بدونه، ترى أسعارك وتطلب من المسؤول تغييرها.",
 				"ORG_CANDIDATES_VIEW": "عرض مرشحي المنظمة وملفاتهم الشخصية.",
 				"ORG_CANDIDATES_EDIT": "إنشاء المرشحين وتعديلهم وحذفهم.",
 				"ORG_USERS_VIEW": "عرض مستخدمي المنظمة وأدوارهم.",
@@ -3382,6 +3473,7 @@
 			"ORG_PROPOSAL_TEMPLATES_EDIT": "إنشاء/تعديل/حذف قوالب الاقتراحات",
 			"ORG_EMPLOYEES_VIEW": "عرض موظفي المؤسسة",
 			"ORG_EMPLOYEES_EDIT": "إنشاء/تعديل/حذف موظفي المنظمة",
+			"CHANGE_OWN_RATES": "تغيير الأسعار الخاصة",
 			"ORG_CANDIDATES_VIEW": "عرض مرشحي المنظمة",
 			"ORG_CANDIDATES_EDIT": "إنشاء/تحرير/حذف مرشحي المؤسسة",
 			"ORG_USERS_VIEW": "عرض مستخدمي المؤسسة",
@@ -4278,6 +4370,7 @@
 		"SUCCESSFULLY_ADDED_PRODUCTS": "تمت إضافة المنتجات بنجاح!",
 		"MAIN": "الرئيسية",
 		"INVENTORY": "المخزون",
+		"COULD_NOT_UPLOAD_IMAGE": "تعذّر رفع الصورة",
 		"IMAGE_WAS_DELETED": "تم حذف الصورة"
 	},
 	"TASKS_PAGE": {
@@ -4456,7 +4549,45 @@
 			"HEADER": "إدارة المستخدم",
 			"EDIT_EXISTING_USER": "تحرير المستخدم الموجود",
 			"MAIN": "الرئيسي",
-			"USER_ORGANIZATIONS": "المنظمات"
+			"USER_ORGANIZATIONS": "المنظمات",
+			"CHANGE_PHOTO": "تغيير الصورة",
+			"EMAIL_VERIFIED": "البريد الإلكتروني موثّق",
+			"EMAIL_NOT_VERIFIED": "البريد الإلكتروني غير موثّق",
+			"MEMBER_SINCE": "عضو منذ",
+			"LAST_SIGN_IN": "آخر تسجيل دخول",
+			"NEVER_SIGNED_IN": "أبدًا",
+			"PERSONAL_DETAILS": "البيانات الشخصية",
+			"ACCESS": "الوصول",
+			"PASSWORD": "كلمة المرور",
+			"PASSWORD_HINT": "اترك الحقلين فارغين للإبقاء على كلمة المرور الحالية.",
+			"PREFERENCES": "التفضيلات",
+			"ORGANIZATIONS_CAPTION": "المؤسسات التي ينتمي إليها هذا المستخدم ويمكنه العمل فيها.",
+			"ADD_ORGANIZATION": "إضافة إلى مؤسسة",
+			"NO_ORGANIZATIONS": "هذا المستخدم ليس في أي مؤسسة بعد.",
+			"REMOVE_FROM_ORGANIZATION": "إزالة من المؤسسة",
+			"ADD_DIALOG_TITLE": "إضافة إلى مؤسسات",
+			"ADD_DIALOG_SUBTITLE": "اختر المؤسسات التي يجب أن ينضم إليها {{ name }}.",
+			"SEARCH_ORGANIZATIONS": "البحث في المؤسسات",
+			"SELECT_ALL": "تحديد الكل",
+			"DESELECT_ALL": "إلغاء تحديد الكل",
+			"SELECTED_COUNT": "تم تحديد {{ count }}",
+			"CLEAR_SELECTION": "مسح",
+			"ALL_ORGANIZATIONS_JOINED": "هذا المستخدم موجود بالفعل في جميع المؤسسات.",
+			"NO_MATCHING_ORGANIZATIONS": "لا توجد مؤسسات مطابقة",
+			"GROUP_ACCOUNT": "الحساب",
+			"GROUP_LOCALE": "اللغة والوقت",
+			"STATUS": "الحالة",
+			"ACTIVE_STATUS": "نشط",
+			"INACTIVE_STATUS": "غير نشط",
+			"LAST_UPDATED": "آخر تحديث",
+			"LANGUAGE": "اللغة",
+			"TIME_ZONE": "المنطقة الزمنية",
+			"LOCAL_TIME": "الوقت المحلي",
+			"TIME_FORMAT": "تنسيق الوقت",
+			"TIME_FORMAT_12": "12 ساعة",
+			"TIME_FORMAT_24": "24 ساعة",
+			"NOT_SET": "غير محدد",
+			"LOAD_FAILED": "تعذر تحميل هذا المستخدم."
 		},
 		"REMOVE_USER": "تمت إزالة '{{ name }}'",
 		"ACTIVE": "نشط",
@@ -4859,7 +4990,11 @@
 		"SELECT_TEAM": "فريق",
 		"AI_CHAT": "دردشة الذكاء الاصطناعي",
 		"COLLAPSE_SIDEBAR": "طي الشريط الجانبي",
-		"EXPAND_SIDEBAR": "توسيع الشريط الجانبي"
+		"EXPAND_SIDEBAR": "توسيع الشريط الجانبي",
+		"EVER_APPS": "التطبيقات",
+		"SWITCH_EVER_APP": "الانتقال إلى تطبيق Ever آخر",
+		"WORKSPACE": "مساحة العمل",
+		"SWITCH_WORKSPACE": "تبديل مساحة العمل"
 	},
 	"AI_ASSISTANT": {
 		"TITLE": "مساعد الذكاء الاصطناعي",
@@ -7564,6 +7699,63 @@
 			"DELETE_FAILED": "فشل في إلغاء عميل OAuth"
 		}
 	},
+	"USER_API_TOKENS": {
+		"TITLE": "رموز API",
+		"SUBTITLE": "رموز لوكلائك ونصوصك البرمجية. يستطيع الرمز فعل كل ما تستطيع فعله، لذا احفظه بعناية كما تحفظ كلمة المرور.",
+		"EMPTY": {
+			"TITLE": "ليس لديك أي رموز API بعد.",
+			"HINT": "انقر على \"إنشاء رمز\" لإنشاء رمز لوكيل أو نص برمجي."
+		},
+		"TABLE": {
+			"NAME": "الاسم",
+			"TOKEN": "الرمز",
+			"CREATED": "تاريخ الإنشاء",
+			"LAST_USED": "آخر استخدام",
+			"EXPIRES": "تاريخ الانتهاء",
+			"ACTIONS": "الإجراءات"
+		},
+		"VALUES": {
+			"NEVER_USED": "لم يُستخدم",
+			"NEVER_EXPIRES": "أبدًا",
+			"EXPIRED": "منتهي الصلاحية"
+		},
+		"ACTIONS": {
+			"CREATE": "إنشاء رمز",
+			"REVOKE": "إلغاء"
+		},
+		"DIALOG": {
+			"TITLE": "إنشاء رمز API",
+			"NAME": "الاسم",
+			"NAME_PLACEHOLDER": "مثال: وكيل المهام على جهازي",
+			"EXPIRY": "تنتهي الصلاحية بعد",
+			"EXPIRY_90_DAYS": "90 يومًا",
+			"EXPIRY_1_YEAR": "سنة واحدة",
+			"EXPIRY_NEVER": "أبدًا",
+			"HINT": "الرمز الذي لا تنتهي صلاحيته يظل يعمل حتى تلغيه."
+		},
+		"SECRET_DIALOG": {
+			"TITLE": "احفظ رمز API",
+			"WARNING": "هذه هي المرة الوحيدة التي يظهر فيها الرمز، ولا يمكن قراءته مرة أخرى. انسخه الآن. إذا فقدته، فألغه وأنشئ رمزًا جديدًا.",
+			"ACKNOWLEDGE": "لقد نسخت الرمز وحفظته في مكان آمن.",
+			"CLOSE": "تم الحفظ، إغلاق",
+			"COPIED": "تم نسخ الرمز إلى الحافظة",
+			"COPY_ARIA": "نسخ الرمز"
+		},
+		"CONFIRM": {
+			"REVOKE": "هل تريد إلغاء \"{{name}}\"؟ لن يتمكن من الآن من بدء جلسة جديدة، وستنتهي أي جلسة بدأها خلال ساعة."
+		},
+		"TOASTS": {
+			"CREATED": "تم إنشاء \"{{name}}\"",
+			"REVOKED": "تم إلغاء رمز API"
+		},
+		"ERRORS": {
+			"LOAD_FAILED": "تعذر تحميل رموز API",
+			"CREATE_FAILED": "تعذر إنشاء رمز API",
+			"TOO_MANY": "لديك بالفعل الحد الأقصى من رموز API. ألغِ أولاً رمزًا لم تعد تستخدمه.",
+			"REVOKE_FAILED": "تعذر إلغاء رمز API",
+			"COPY_FAILED": "تعذر النسخ إلى الحافظة"
+		}
+	},
 	"PROJECT_QUICK_LOOK": {
 		"OPEN_DETAILS": "عرض تفاصيل المشروع {{ name }}",
 		"PROGRESS": "التقدم",
@@ -7654,6 +7846,46 @@
 		"COMMENT_IMAGE_TYPES": "يمكن إرفاق صور PNG وJPEG وGIF وWebP وBMP فقط.",
 		"COMMENT_IMAGE_LIMIT": "يمكن أن يحمل التعليق ما يصل إلى {{ count }} صور.",
 		"COMMENT_IMAGE_FAILED": "تعذّر رفع {{ name }}."
+	},
+	"EXPENSE_VIEW": {
+		"EXPENSE": "مصروف",
+		"DETAILS": "التفاصيل",
+		"DESCRIPTION": "الوصف",
+		"NO_DESCRIPTION": "لم تتم إضافة غرض أو ملاحظات أو وسوم إلى هذا المصروف.",
+		"RECEIPT": "الإيصال",
+		"NO_RECEIPT": "لا يوجد إيصال مرفق",
+		"OPEN_RECEIPT": "فتح الإيصال",
+		"AMOUNT": "المبلغ",
+		"CURRENCY_HINT": "بعملة {{ currency }}",
+		"SPLIT_HINT": "بعملة {{ currency }}، مقسّم على جميع الموظفين",
+		"TAX": "الضريبة",
+		"NO_TAX": "بدون ضريبة",
+		"TAX_LABEL": "تسمية الضريبة",
+		"TYPE": "النوع",
+		"EXPENSE_DATE": "تاريخ المصروف",
+		"LINK_COPIED": "تم نسخ الرابط",
+		"CATEGORY_SPENDING": "الإنفاق حسب الفئة",
+		"CATEGORY_SPENDING_CAPTION": "{{ category }} · آخر {{ count }} أشهر · {{ currency }}",
+		"VENDOR_PAYMENTS": "مدفوعات المورّد",
+		"VENDOR_PAYMENTS_CAPTION": "{{ vendor }} · آخر {{ count }} دفعات · {{ currency }}",
+		"NO_OTHER_PAYMENTS": "لا توجد دفعات أخرى لهذا المورّد بعد",
+		"MONTH_SHARE": "حصة الشهر",
+		"MONTH_SHARE_CAPTION": "{{ category }} في {{ month }}",
+		"THIS_EXPENSE": "هذا المصروف",
+		"THIS_MONTH": "شهر هذا المصروف",
+		"OTHER_MONTHS": "الأشهر الأخرى",
+		"OTHER_PAYMENTS": "الدفعات الأخرى",
+		"REST_OF_MONTH": "باقي الشهر",
+		"MONTH_TOTAL": "إجمالي الشهر",
+		"CHART_FAILED": "تعذّر تحميل المخطط",
+		"CHART_RANGE": "نطاق المخطط",
+		"LAST_MONTHS": "آخر {{ count }} أشهر",
+		"LAST_PAYMENTS": "آخر {{ count }} دفعات",
+		"RECEIPT_UPLOAD": "رفع إيصال",
+		"RECEIPT_UPLOAD_HINT": "انقر لاختيار صورة: PNG أو JPG أو GIF أو WebP أو BMP",
+		"RECEIPT_REPLACE": "استبدال",
+		"RECEIPT_UPLOADING": "جارٍ الرفع…",
+		"RECEIPT_UPLOAD_FAILED": "تعذّر رفع الإيصال. جرّب صورة أخرى."
 	},
 	"TASK_VIEW": {
 		"PROJECT": "المشروع",

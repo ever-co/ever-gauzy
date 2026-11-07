@@ -58,6 +58,7 @@ jest.mock('@gauzy/core', () => {
 		parseFindOptionsSelect: (value: unknown) => value,
 		prepareSQLQuery: (value: string) => value,
 		LIKE_OPERATOR: 'ILIKE',
+		assertCallerColumnsAllowed: jest.fn(),
 		sanitizeRichHtml: (html: string) => html
 	};
 });

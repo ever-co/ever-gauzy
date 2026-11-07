@@ -1,9 +1,11 @@
-import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
+import { Inject, Injectable, Logger, OnModuleDestroy, OnModuleInit, Optional } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, IsNull, LessThan, Not, Repository } from 'typeorm';
 import { environment } from '@gauzy/config';
 import { ID } from '@gauzy/contracts';
 import { Token } from '@gauzy/core';
+import type { AuthZitadelSettings } from '../auth-zitadel.config';
+import { AUTH_ZITADEL_SETTINGS } from '../auth-zitadel.tokens';
 import { ZitadelLogoutJti } from '../entities/zitadel-logout-jti.entity';
 import { ZitadelSession } from '../entities/zitadel-session.entity';
 import {
@@ -72,7 +74,8 @@ export class ZitadelSessionService implements OnModuleInit, OnModuleDestroy, Zit
 		@InjectRepository(ZitadelSession) private readonly sessions: Repository<ZitadelSession>,
 		@InjectRepository(ZitadelLogoutJti) private readonly logoutJtis: Repository<ZitadelLogoutJti>,
 		@InjectRepository(Token) private readonly tokens: Repository<Token>,
-		private readonly store: ZitadelStoreService
+		private readonly store: ZitadelStoreService,
+		@Optional() @Inject(AUTH_ZITADEL_SETTINGS) private readonly settings?: AuthZitadelSettings
 	) {}
 
 	onModuleInit(): void {
@@ -96,8 +99,16 @@ export class ZitadelSessionService implements OnModuleInit, OnModuleDestroy, Zit
 
 	/**
 	 * Records that `users` were handed workspace tokens within the identity provider session `sid`.
+	 *
+	 * @param everRefreshTokenEncrypted - The session's Ever ID refresh token, already encrypted
+	 *   (`ZitadelRefreshTokenService.seal`), kept with every record of the session while the App Launcher is on;
+	 *   ignored without a session id. Absent (the default, and always while the launcher is off): nothing is kept.
 	 */
-	async record(sid: string | undefined, users: Array<{ id?: ID; tenantId?: ID | null }>): Promise<void> {
+	async record(
+		sid: string | undefined,
+		users: Array<{ id?: ID; tenantId?: ID | null }>,
+		everRefreshTokenEncrypted?: string | null
+	): Promise<void> {
 		const signedIn = users.filter((user) => !!user.id);
 		if (!signedIn.length) {
 			return;
@@ -110,7 +121,8 @@ export class ZitadelSessionService implements OnModuleInit, OnModuleDestroy, Zit
 					userId: user.id,
 					tenantId: user.tenantId ?? null,
 					accessTokenId: null,
-					refreshTokenId: null
+					refreshTokenId: null,
+					everRefreshTokenEncrypted: sid && everRefreshTokenEncrypted ? everRefreshTokenEncrypted : null
 				})
 			)
 		);
@@ -201,7 +213,8 @@ export class ZitadelSessionService implements OnModuleInit, OnModuleDestroy, Zit
 
 	/**
 	 * Deletes session records older than the refresh-token lifetime, ended records whose sign-in never
-	 * finished, and expired logout token ids.
+	 * finished, and expired logout token ids. While the App Launcher is off it also removes every Ever ID refresh
+	 * token a session still keeps from a time it was on.
 	 */
 	async prune(now = new Date()): Promise<void> {
 		const retentionSeconds = Number(environment.JWT_REFRESH_TOKEN_EXPIRATION_TIME) || DEFAULT_SESSION_RETENTION_S;
@@ -211,6 +224,9 @@ export class ZitadelSessionService implements OnModuleInit, OnModuleDestroy, Zit
 			createdAt: LessThan(new Date(now.getTime() - SESSION_BIND_WINDOW_MS))
 		});
 		await this.logoutJtis.delete({ expiresAt: LessThan(now) });
+		if (!this.settings?.launcherEnabled) {
+			await this.sessions.update({ everRefreshTokenEncrypted: Not(IsNull()) }, { everRefreshTokenEncrypted: null });
+		}
 	}
 
 	/** The store key of a user's binding marker (a digest, so any user id fits the key format). */
@@ -224,8 +240,12 @@ export class ZitadelSessionService implements OnModuleInit, OnModuleDestroy, Zit
 		const boundTokens = bound.map((row) => row.refreshTokenId);
 		if (pending.length) {
 			const pendingIds = pending.map((row) => row.id);
-			// Kept, marked as ended: the refresh token their sign-in still produces is revoked on arrival.
-			await this.sessions.update({ id: In(pendingIds) }, { isActive: false, archivedAt: new Date() });
+			// Kept, marked as ended: the refresh token their sign-in still produces is revoked on arrival. An Ever ID
+			// refresh token kept for the App Launcher ends with the session.
+			await this.sessions.update(
+				{ id: In(pendingIds) },
+				{ isActive: false, archivedAt: new Date(), everRefreshTokenEncrypted: null }
+			);
 			// A sign-in may have bound one of them in the meantime, before it could see the mark.
 			const boundMeanwhile = await this.sessions.find({ where: { id: In(pendingIds), refreshTokenId: Not(IsNull()) } });
 			boundTokens.push(...boundMeanwhile.map((row) => row.refreshTokenId));

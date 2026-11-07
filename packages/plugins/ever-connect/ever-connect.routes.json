@@ -11,6 +11,38 @@
 			"mounted_when": "EVER_STATS_SERVES contains teams",
 			"answers": "{\"connected\": true|false}",
 			"purpose": "The paired Ever Teams web app asks it, with the signed-in person's token, whether this installation is connected to Ever Platform."
+		},
+		{
+			"method": "POST",
+			"path": "/api/ever-connect/provision/preflight",
+			"auth": "public",
+			"mounted_when": "EVER_CONNECT_PROVISION_ENABLED=true on a connected installation with the Ever ID sign-in plugin loaded (404 otherwise); 10 requests a minute per address",
+			"answers": "{ok, org_display_name, handle, product_tenant_exists, sign_in_required, provision_key}, or 401 intent_invalid / 422 product_mismatch / 409 intent_replayed",
+			"purpose": "Verifies Ever Platform's signed request ({intent}) against the root-verified keys and keeps it, by its id, under a new one-time key (only its SHA-256 is stored)."
+		},
+		{
+			"method": "POST",
+			"path": "/api/ever-connect/provision/summary",
+			"auth": "public",
+			"mounted_when": "EVER_CONNECT_PROVISION_ENABLED=true on a connected installation with the Ever ID sign-in plugin loaded (404 otherwise); 10 requests a minute per address",
+			"answers": "what the confirmation page shows (the organization's public names, the e-mail of the person's own Ever ID sign-in, what will be created, the return address)",
+			"purpose": "No side effect: {provision_key, handoff_key}."
+		},
+		{
+			"method": "GET",
+			"path": "/api/ever-connect/provision",
+			"auth": "public",
+			"mounted_when": "EVER_CONNECT_PROVISION_ENABLED=true on a connected installation with the Ever ID sign-in plugin loaded (404 otherwise); 10 requests a minute per address",
+			"answers": "a static HTML page (Cache-Control: no-store, Referrer-Policy: no-referrer, a Content-Security-Policy that allows only its own script and style)",
+			"purpose": "Where Ever sends a person to create a workspace, with the signed request in the URL fragment (#intent=<JWS>), which never reaches a server. The page removes it from the address bar, sends it to preflight and opens Sign in with Ever ID with the one-time key it gets."
+		},
+		{
+			"method": "POST",
+			"path": "/api/ever-connect/provision",
+			"auth": "public",
+			"mounted_when": "EVER_CONNECT_PROVISION_ENABLED=true on a connected installation with the Ever ID sign-in plugin loaded (404 otherwise); 10 requests a minute per address",
+			"answers": "201 {status: created, product_tenant_id, product_org_id, product_user_id, employee_id?, team_id?, sign_in_url, return_to}, 200 {status: exists, ...}, or an application/problem+json error",
+			"purpose": "The person confirmed creating the workspace Ever asked for: {provision_key, handoff_key, request: {first_name?, last_name?}}. Both keys are one-time keys (the request kept by preflight, the person's own Ever ID sign-in); the signed-in Ever ID must be the person the request names."
 		}
 	],
 	"adapter_endpoints": [
@@ -31,22 +63,6 @@
 			"mounted": false,
 			"answers": "ever.usage.v1 (counts only)",
 			"purpose": "Not in this release. Will answer Ever Platform's count of employees and users of a linked organization, only while the usage reporting integration is enabled for it."
-		},
-		{
-			"method": "GET",
-			"path": "/api/ever-connect/provision",
-			"auth": "platform_intent",
-			"mounted": false,
-			"answers": "a confirmation page",
-			"purpose": "Not in this release. Will receive a signed provisioning intent from Ever Platform."
-		},
-		{
-			"method": "POST",
-			"path": "/api/ever-connect/provision",
-			"auth": "platform_intent",
-			"mounted": false,
-			"answers": "the provisioning result",
-			"purpose": "Not in this release. Will complete a signed provisioning intent after the operator's confirmation."
 		}
 	]
 }

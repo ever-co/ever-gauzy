@@ -684,6 +684,12 @@ export class UserService extends TenantAwareCrudService<User> {
 			// token to, so naming another organization of the tenant here put the user inside it.
 			await this.assertOrganizationPreferencesAreMemberships(user, entity);
 
+			// A password or an address is how an account is kept for good, so a session that came from an API token does
+			// not set one: it would hold the account after the API token is revoked.
+			if (entity['hash'] !== undefined || isEmailAddressChange(user.email, entity.email)) {
+				assertFirstPartyRequest('Changing the password or the address of an account');
+			}
+
 			// Update password hash if provided
 			if (entity['hash']) {
 				entity['hash'] = await this.getPasswordHash(entity['hash']);

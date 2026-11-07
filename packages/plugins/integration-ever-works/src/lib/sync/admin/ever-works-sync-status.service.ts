@@ -268,6 +268,8 @@ export class EverWorksSyncStatusService {
 			.andWhere('log.status = :status', { status: 'error' })
 			.orderBy('log.createdAt', 'DESC')
 			.addOrderBy('log.id', 'DESC')
+			// The newest row only: `getOne` reads every match and keeps the first without a limit.
+			.limit(1)
 			.getOne();
 		return row
 			? {

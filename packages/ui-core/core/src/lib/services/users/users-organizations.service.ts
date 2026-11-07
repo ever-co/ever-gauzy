@@ -65,6 +65,20 @@ export class UsersOrganizationsService {
 	}
 
 	/**
+	 * Set user as active in the organization again: reactivates an inactive membership rather than adding a second one.
+	 *
+	 * @param id - The ID of the user organization.
+	 * @returns A promise that resolves to the updated user organization.
+	 */
+	setUserAsActive(id: ID): Promise<IUserOrganization> {
+		return firstValueFrom(
+			this.http.put<IUserOrganization>(`${API_PREFIX}/user-organization/${id}`, {
+				isActive: true
+			})
+		);
+	}
+
+	/**
 	 * Get the count of organizations a user belongs to.
 	 *
 	 * @param id - The user ID.

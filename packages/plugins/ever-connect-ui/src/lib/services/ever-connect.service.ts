@@ -80,6 +80,27 @@ export interface EverConnectIntegration {
 	revoked_at: string | null;
 	consent: { id: string; at: string | null; source: string | null } | null;
 	policy: 'allowed' | 'denied_by_env' | 'denied_by_policy';
+	/** The entitlement feature it needs, and whether this organization's entitlement grants it now. */
+	requires_feature?: string | null;
+	feature_on?: boolean | null;
+	/** The integration's own settings for this organization (the counterparty check: `auto_check`). */
+	options?: { auto_check?: boolean } & Record<string, unknown>;
+}
+
+/** One identifier of a contact to check on Ever Platform (the value never leaves the API). */
+export interface EverConnectLookupItem {
+	kind: 'vat' | 'registration' | 'email';
+	value: string;
+	country?: string | null;
+}
+
+/** What a check found for one identifier, in the order asked. */
+export interface EverConnectLookupResult {
+	kind: 'vat' | 'registration' | 'email';
+	status: 'match' | 'none' | 'cannot_be_checked';
+	reason?: string;
+	handle?: string;
+	features?: string[];
 }
 
 export interface EverConnectEntitlement {
@@ -151,6 +172,27 @@ export class EverConnectUiService {
 		return this.http.put<EverConnectIntegration>(
 			`${BASE}/integrations/${encodeURIComponent(key)}`,
 			{ enabled: false },
+			this.org(organizationId)
+		);
+	}
+
+	/**
+	 * Checks a contact on Ever Platform: the API hashes the values and sends only the hashes; this web
+	 * app never calls Ever Platform itself.
+	 */
+	lookup(organizationId: string, items: EverConnectLookupItem[]): Observable<{ items: EverConnectLookupResult[] }> {
+		return this.http.post<{ items: EverConnectLookupResult[] }>(
+			`${BASE}/lookup`,
+			{ items },
+			this.org(organizationId)
+		);
+	}
+
+	/** Turns "check a contact when it is opened" on or off for the organization. */
+	setLookupAutoCheck(organizationId: string, autoCheck: boolean): Observable<{ auto_check: boolean }> {
+		return this.http.put<{ auto_check: boolean }>(
+			`${BASE}/integrations/counterparty_lookup/options`,
+			{ auto_check: autoCheck },
 			this.org(organizationId)
 		);
 	}

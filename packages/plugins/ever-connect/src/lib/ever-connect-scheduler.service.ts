@@ -25,6 +25,7 @@ import { EverConnectPlatformService, errorCode, isCredentialRevoked } from './ev
 import { EverConnectSignals } from './ever-connect-signals';
 import { EverConnectStore } from './ever-connect.store';
 import { personRequestKind, PersonRequestsHandler } from './handlers/person-requests.handler';
+import { EverConnectProvisionCompletion } from './services/ever-connect-provision-completion.service';
 import { EventEnvelope, ProblemError } from './sdk';
 
 /** What the dispatcher did with one event. */
@@ -77,7 +78,8 @@ export class EverConnectScheduler implements OnModuleInit, OnModuleDestroy {
 		@Inject(EVER_CONNECT_SETTINGS) private readonly config: EverConnectConfig,
 		@Optional() @Inject(EVER_CONNECT_CLOCK) clock?: { now: () => number },
 		@Optional() private readonly personRequests?: PersonRequestsHandler,
-		@Optional() lease?: EverConnectLease
+		@Optional() lease?: EverConnectLease,
+		@Optional() private readonly provisions?: EverConnectProvisionCompletion
 	) {
 		this.now = clock?.now ?? (() => Date.now());
 		this.holder = lease?.holder ?? randomUUID();
@@ -188,6 +190,8 @@ export class EverConnectScheduler implements OnModuleInit, OnModuleDestroy {
 				lastError: null
 			});
 			await this.states.retryPending();
+			// Workspaces created from Ever whose report to Ever Platform is due (also every 15 seconds by Sign in with Ever ID's worker).
+			await this.provisions?.sendDue().catch(() => undefined);
 			await this.platform.keys().catch(() => undefined);
 			await this.entitlements.refreshAll();
 			return true;

@@ -1040,6 +1040,30 @@
       "note": "registered at run time by a UI plugin of apps/gauzy/src/plugin-ui.config.ts or a page module (the generator lists the registry call as a note)"
     },
     {
+      "path": "/pages/integrations/linear",
+      "file": "packages/plugins/integration-linear-ui/src/lib/integration-linear-ui.plugin.ts",
+      "source": "manual",
+      "note": "registered at run time by a UI plugin of apps/gauzy/src/plugin-ui.config.ts or a page module (the generator lists the registry call as a note)"
+    },
+    {
+      "path": "/pages/integrations/linear/:integrationId",
+      "file": "packages/plugins/integration-linear-ui/src/lib/integration-linear-ui.plugin.ts",
+      "source": "manual",
+      "note": "registered at run time by a UI plugin of apps/gauzy/src/plugin-ui.config.ts or a page module (the generator lists the registry call as a note)"
+    },
+    {
+      "path": "/pages/integrations/asana",
+      "file": "packages/plugins/integration-asana-ui/src/lib/integration-asana-ui.plugin.ts",
+      "source": "manual",
+      "note": "registered at run time by a UI plugin of apps/gauzy/src/plugin-ui.config.ts or a page module (the generator lists the registry call as a note)"
+    },
+    {
+      "path": "/pages/integrations/asana/:integrationId",
+      "file": "packages/plugins/integration-asana-ui/src/lib/integration-asana-ui.plugin.ts",
+      "source": "manual",
+      "note": "registered at run time by a UI plugin of apps/gauzy/src/plugin-ui.config.ts or a page module (the generator lists the registry call as a note)"
+    },
+    {
       "path": "/pages/integrations/gauzy-ai",
       "file": "apps/gauzy/src/app/pages/integrations/integrations.module.ts",
       "source": "manual",
@@ -1620,6 +1644,14 @@
       "file": "packages/plugins/ai-chat-react-ui/src/lib/settings/ai-chat-settings.routes.ts",
       "source": "manual",
       "note": "registered at run time by a UI plugin of apps/gauzy/src/plugin-ui.config.ts or a page module (the generator lists the registry call as a note)"
+    },
+    {
+      "path": "/pages/settings/api-tokens",
+      "file": "apps/gauzy/src/app/pages/settings/api-tokens/api-tokens-routing.module.ts:7",
+      "guards": [
+        "userApiTokensEnabledGuard"
+      ],
+      "source": "router"
     },
     {
       "path": "/pages/settings/billing",

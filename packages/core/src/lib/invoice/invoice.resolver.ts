@@ -171,7 +171,6 @@ const INVOICE_FILTERABLE = {
 	alreadyPaid: 'DECIMAL',
 	amountDue: 'DECIMAL',
 	hasRemainingAmountInvoiced: 'BOOLEAN',
-	token: 'STRING',
 	paymentTermId: 'ID',
 	vendorId: 'ID',
 	fromOrganizationId: 'ID',

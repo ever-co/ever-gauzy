@@ -1,3 +1,8 @@
+// The tabs start right under the page's header.
+:host {
+  --record-page-body-padding-top: 0;
+}
+
 // The page's own controls in the header: favorite star, the period's dates and the period switcher.
 .project-page-actions {
   display: flex;

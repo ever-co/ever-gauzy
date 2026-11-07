@@ -215,6 +215,34 @@ badge keeps its 60-second count poll. Nothing here can fail an Inbox write: a
 failed append is logged, and a process without an outbox or a subscription
 surface (the worker) skips it.
 
+## The unified inbox (notifications, followers, done)
+
+Spec: `docs/specs/features/inbox/`. Three additions make the Inbox the one place everything that needs a
+person's attention lands:
+
+- **Platform notifications are filed as items.** Every `EmployeeNotification` the platform creates (an
+  assignment, a mention, a comment on a followed record, a task change, ...) is filed the moment it exists as an
+  item of kind `NOTIFICATION`, source `GAUZY`, `externalSource = gauzy-notification`, `externalId = <notification
+  id>`, addressed to the receiver's user (`src/lib/notifications/inbox-notification.bridge.ts`, on
+  `EmployeeNotificationCreatedEvent`). The two read states are one: reading or archiving the item updates the
+  notification (the bridge is the `GAUZY` source handler), and an edit or a mark-all-read through
+  `/api/employee-notification` updates the items' recipient rows (`EmployeeNotificationUpdatedEvent`). Neither
+  direction echoes. Clients that read employee notifications today see the same entries, unchanged.
+- **Followers are told.** With `GAUZY_NOTIFICATION_FANOUT_ENABLED=true` (off by default), a comment on a record
+  an employee follows, and a change of a followed task's status, priority, due date or members, create a
+  notification for each follower except the actor (`packages/core/src/lib/entity-subscription/fan-out/`). The
+  receiver's per-type switches apply; `TaskUpdate` is switched off per employee through the notification setting's
+  `preferences.taskUpdate`. The follower records (`EntitySubscription`) already existed; this is what reads them.
+- **Done.** `PATCH /inbox/items/:id/state { isDone }` (and `markInboxItem`) marks an item done: it leaves the open
+  tabs and is found in the `done` tab (`?tab=done`); `isDone: false` brings it back. Doing an item reads it. Column
+  `inbox_item_recipient.doneAt` (migration `1791000005200`).
+- **Real time.** `inbox_item.state_changed` (addressed to the user, content-free: item ids and the state fields)
+  is appended to the outbox on every state change and on mark-all-read, next to `inbox_item.created`.
+
+The delivery choices beyond the per-type switches (email immediate / digest / off, push, do-not-disturb, digest
+hour) are declared on the notification setting's `preferences` JSON (`IEmployeeNotificationPreferences`); the
+email and push delivery lanes read them.
+
 ## Tests
 
 ```sh

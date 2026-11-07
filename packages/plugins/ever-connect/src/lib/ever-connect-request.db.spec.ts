@@ -318,10 +318,13 @@ describe.each(TEST_TARGETS)('Ever Platform routes on $name', (target) => {
 		expect(list.status).toBe(200);
 		const keys = list.body.map((row: { key: string }) => row.key);
 		expect(keys).toContain('stats_link');
-		expect(list.body.find((row: { key: string }) => row.key === 'counterparty_lookup').state).toBe('coming_soon');
+		// The counterparty check and discoverability have their handlers: per link, so "link first" for an
+		// organization without one. An integration without a handler stays "coming soon".
+		expect(list.body.find((row: { key: string }) => row.key === 'counterparty_lookup').state).toBe('not_linked');
 		expect(list.body.find((row: { key: string }) => row.key === 'counterparty_discoverable').state).toBe(
-			'coming_soon'
+			'not_linked'
 		);
+		expect(list.body.find((row: { key: string }) => row.key === 'provider_access').state).toBe('coming_soon');
 		// INTEGRATION_EDIT is needed to ask for a consent link or switch anything.
 		expect(
 			(

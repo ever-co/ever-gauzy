@@ -177,6 +177,24 @@ export class OrganizationTeam extends TenantOrganizationBaseEntity implements IO
 	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	imageId?: ID;
+
+	/**
+	 * The project the team files its members' new tasks and time under. Ever Teams creates one with each team; deleting
+	 * that project releases the choice rather than the team.
+	 */
+	@MultiORMManyToOne(() => OrganizationProject, {
+		nullable: true,
+		onDelete: 'SET NULL'
+	})
+	@JoinColumn()
+	defaultProject?: IOrganizationProject | null;
+
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsUUID()
+	@RelationId((it: OrganizationTeam) => it.defaultProject)
+	@MultiORMColumn({ nullable: true, relationId: true })
+	defaultProjectId?: ID | null;
 	/*
 	|--------------------------------------------------------------------------
 	| @OneToMany

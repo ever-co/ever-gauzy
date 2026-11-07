@@ -5,6 +5,7 @@
 <!-- Single Select -->
 @if (!multiple) {
   <ng-select
+    [ariaLabel]="accessibleLabel() || (label || placeholder || 'CONTEXT_MENU.PROJECT' | translate)"
     #select
     class="gauzy-entity-select"
     [ngClass]="panelClass"
@@ -41,6 +42,10 @@
     }
   </ng-select>
 } @else {
+  <!-- nb-select gives its button no label of its own: the button is pointed at this one (`_labelMultiSelect`). -->
+  <span [id]="multiSelectLabelId" hidden>
+    {{ accessibleLabel() || (label || placeholder || 'CONTEXT_MENU.PROJECT' | translate) }}
+  </span>
   <nb-select
     class="multiple-select"
     [disabled]="disabled"

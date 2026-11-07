@@ -4,3 +4,4 @@ export * from './database.helper';
 export * from './check-constraint.helper';
 export * from './embedded-transaction-queue';
 export * from './typeorm-skeleton-metadata';
+export * from './sqlite-planner-statistics.service';

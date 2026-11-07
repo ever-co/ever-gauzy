@@ -1,4 +1,4 @@
-import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
+import { Injectable, Logger, OnModuleDestroy, OnModuleInit, Optional } from '@nestjs/common';
 import { Subscription } from 'rxjs';
 import { IDENTITY_TICK_MS } from './ever-connect.constants';
 import { EverConnectLease } from './ever-connect-lease';
@@ -8,14 +8,15 @@ import { EverConnectStore } from './ever-connect.store';
 import { EverIdLoginHandler } from './handlers/ever-id-login.handler';
 import { PersonRequestsHandler } from './handlers/person-requests.handler';
 import { PersonLinkReporter } from './reporters/person-link.reporter';
+import { EverConnectProvisionCompletion } from './services/ever-connect-provision-completion.service';
 
 /**
  * The background work of Sign in with Ever ID and of a person's requests, run by the API process that
  * holds the connection's lease, and only while the installation is connected: every 15 seconds (or
  * at once after a new link report), it asks for the sign-in client when nothing was asked for yet,
  * reads it while it is being made, queues the links that existed before it was ready, sends the link
- * reports that are due, takes up a person's requests whose handling stopped, and sends again the
- * answers that could not be sent. All of it is kept in the database, so a restart loses nothing.
+ * reports that are due, takes up a person's requests whose handling stopped, sends again the
+ * answers that could not be sent, and the reports of workspaces created from Ever that are due. All of it is kept in the database, so a restart loses nothing.
  * Before a connection exists nothing is scheduled.
  */
 @Injectable()
@@ -34,7 +35,8 @@ export class EverConnectIdentityWorker implements OnModuleInit, OnModuleDestroy 
 		private readonly signals: EverConnectSignals,
 		private readonly everIdLogin: EverIdLoginHandler,
 		private readonly reporter: PersonLinkReporter,
-		private readonly requests: PersonRequestsHandler
+		private readonly requests: PersonRequestsHandler,
+		@Optional() private readonly provisions?: EverConnectProvisionCompletion
 	) {}
 
 	onModuleInit(): void {
@@ -90,7 +92,8 @@ export class EverConnectIdentityWorker implements OnModuleInit, OnModuleDestroy 
 			['the existing links', () => this.backfill()],
 			['the link reports', () => this.reporter.sendDue()],
 			["a person's requests", () => this.requests.resumeDue()],
-			['the answers', () => this.requests.sendDue()]
+			['the answers', () => this.requests.sendDue()],
+			['the workspace completion reports', async () => this.provisions?.sendDue()]
 		] as const) {
 			try {
 				await work();

@@ -11,7 +11,8 @@ import { ColumnIndex, MultiORMColumn, MultiORMEntity, SkipExport } from '@gauzy/
  *   `coming_soon`, or `pending_operator` (an installation-wide integration the connecting
  *   organization consented to, waiting for the operator's local accept).
  * - `revokeSource`: `instance`, `platform`, `env`, `policy` or `operator`.
- * - `configEncrypted`: an integration's configuration, stored encrypted (none in this release).
+ * - `configEncrypted`: an integration's configuration, stored encrypted (Sign in with Ever ID's
+ *   sign-in client; for discoverability, the salt versions of the last upload and a pending removal).
  *
  * Times are epoch milliseconds. Created by the core `EverConnect` migration; never exported.
  */

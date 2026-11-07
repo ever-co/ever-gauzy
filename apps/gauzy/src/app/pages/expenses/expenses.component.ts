@@ -627,8 +627,8 @@ export class ExpensesComponent extends PaginationFilterBaseComponent implements 
 			return;
 		}
 
-		this.viewSections = buildExpenseViewSections();
 		this.viewedExpense = expense;
+		this.describeViewedExpense();
 	}
 
 	closeView(): void {
@@ -729,9 +729,23 @@ export class ExpensesComponent extends PaginationFilterBaseComponent implements 
 		this.translateService.onLangChange
 			.pipe(
 				tap(() => this._loadSettingsSmartTable()),
+				// An open drawer shows the type and a flat tax worked out in the previous language.
+				tap(() => this.describeViewedExpense()),
 				untilDestroyed(this)
 			)
 			.subscribe();
+	}
+
+	/** The drawer's sections for the expense it shows, in the viewer's language and locale. */
+	private describeViewedExpense(): void {
+		if (!this.viewedExpense) {
+			return;
+		}
+		this.viewSections = buildExpenseViewSections(
+			this.viewedExpense,
+			(key) => this.getTranslation(key),
+			this.translateService.getCurrentLang() || undefined
+		);
 	}
 
 	/**

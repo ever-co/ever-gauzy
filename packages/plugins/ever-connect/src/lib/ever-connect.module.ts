@@ -1,6 +1,6 @@
 import { DynamicModule, Inject, Injectable, Logger, Module, OnApplicationBootstrap, Optional } from '@nestjs/common';
 import { EventBusModule, RolePermissionModule } from '@gauzy/core';
-import { EVER_CONNECT_CONFIG } from '@gauzy/plugin-auth-zitadel';
+import { EVER_CONNECT_CONFIG, EVER_ID_TOKEN_VAULT } from '@gauzy/plugin-auth-zitadel';
 import { EverInstanceModule, EverInstanceService, EverOperatorService } from '@gauzy/plugin-ever-instance';
 import { EverConnectAuditService } from './ever-connect-audit.service';
 import { EverConnectCatalogService } from './ever-connect-catalog.service';
@@ -10,6 +10,7 @@ import { EVER_CONNECT_CONFIG_PROVIDER } from './ever-connect-config.provider';
 import { EverConnectConnectionService } from './ever-connect-connection.service';
 import { EVER_CONNECT_ENV, EVER_CONNECT_SETTINGS } from './ever-connect.constants';
 import { EverConnectController } from './ever-connect.controller';
+import { EverConnectDiscoverableService } from './ever-connect-discoverable.service';
 import { isEverConnectEnabled } from './ever-connect-enabled';
 import { EverConnectEntitlementService } from './ever-connect-entitlement.service';
 import { EverConnectHealthController } from './ever-connect-health.controller';
@@ -19,17 +20,35 @@ import { EverConnectInstanceController } from './ever-connect-instance.controlle
 import { EverConnectIntegrationStateService } from './ever-connect-integration-state.service';
 import { EverConnectLease } from './ever-connect-lease';
 import { EverConnectLinkService } from './ever-connect-link.service';
+import { EverConnectLookupService } from './ever-connect-lookup.service';
 import { EverConnectPlatformService, errorCode } from './ever-connect-platform.service';
+import { EverConnectProvisionController } from './ever-connect-provision.controller';
+import { EverConnectProvisionExceptionFilter } from './ever-connect-provision.filter';
+import { EverConnectProvisionStore } from './ever-connect-provision.store';
 import { EverConnectScheduler } from './ever-connect-scheduler.service';
 import { EverConnectSignals } from './ever-connect-signals';
 import { EverConnectStore } from './ever-connect.store';
 import { EverConnectEnabledGuard, EverConnectOperatorGuard } from './guards/ever-connect-operator.guard';
+import { EverConnectProvisionGuard } from './guards/ever-connect-provision.guard';
 import { EverIdLoginHandler } from './handlers/ever-id-login.handler';
 import { PersonDeletionHandler } from './handlers/person-deletion.handler';
 import { PersonExportHandler } from './handlers/person-export.handler';
 import { PersonRequestsHandler } from './handlers/person-requests.handler';
+import { IntegrationHandlerRegistry } from './integrations/integration-handler.registry';
 import { PersonLinkReporter } from './reporters/person-link.reporter';
+import { EverConnectIntentVerifier } from './services/ever-connect-intent-verifier.service';
+import { EverConnectProvisionCompletion } from './services/ever-connect-provision-completion.service';
+import { EverConnectProvisionGate } from './services/ever-connect-provision-gate.service';
+import { EverConnectProvisionService } from './services/ever-connect-provision.service';
 import { EverConnectWellKnownService } from './well-known/ever-connect-well-known.service';
+import { EverConnectLauncherController } from './launcher/ever-connect-launcher.controller';
+import { EverConnectLauncherService } from './launcher/ever-connect-launcher.service';
+import { EverConnectLauncherTokenService } from './launcher/ever-connect-launcher-token.service';
+import { EVER_CONNECT_LAUNCHER_SETTINGS, readLauncherConfig } from './launcher/launcher-config';
+import { LauncherFirstPartyGuard } from './launcher/launcher-first-party.guard';
+import { LauncherOriginGuard } from './launcher/launcher-origin.guard';
+import { LauncherReads } from './launcher/launcher-reads';
+import { LauncherTokenVault } from './launcher/launcher-token-vault';
 
 /**
  * Lists "Ever Platform" among the integrations, pins the operator of a single-tenant installation,
@@ -73,10 +92,13 @@ export class EverConnectLifecycle implements OnApplicationBootstrap {
 
 /**
  * The Ever Platform connection module. `register()` reads the environment once; the health route
- * for a paired Ever Teams web app is mounted only when `EVER_STATS_SERVES` names `teams`.
+ * for a paired Ever Teams web app is mounted only when `EVER_STATS_SERVES` names `teams`, and the App
+ * Launcher's routes and services exist only with `EVER_APP_LAUNCHER_ENABLED=true` (and Ever ID sign-in
+ * loaded): otherwise they are not registered at all, so their routes answer 404.
  *
  * Global so that the Ever ID sign-in plugin finds `EVER_CONNECT_CONFIG` (Sign in with Ever ID's
- * client), which it asks optionally; the module's other providers stay its own.
+ * client) and, with the App Launcher on, `EVER_ID_TOKEN_VAULT`, which it asks optionally; the module's
+ * other providers stay its own.
  */
 @Module({})
 export class EverConnectModule {
@@ -86,6 +108,22 @@ export class EverConnectModule {
 		const config = readEverConnectConfig(env, (message) =>
 			isEverConnectEnabled(env, () => undefined) ? logger.warn(message) : undefined
 		);
+		const launcher = readLauncherConfig(env, (message) =>
+			isEverConnectEnabled(env, () => undefined) ? logger.warn(message) : undefined
+		);
+		const launcherProviders = launcher.enabled
+			? [
+					{ provide: EVER_CONNECT_LAUNCHER_SETTINGS, useValue: launcher },
+					LauncherReads,
+					EverConnectLauncherTokenService,
+					EverConnectLauncherService,
+					LauncherOriginGuard,
+					LauncherFirstPartyGuard,
+					LauncherTokenVault,
+					// The Ever ID sign-in plugin asks for it (optionally) to encrypt the refresh token a session keeps.
+					{ provide: EVER_ID_TOKEN_VAULT, useExisting: LauncherTokenVault }
+				]
+			: [];
 		return {
 			module: EverConnectModule,
 			global: true,
@@ -95,7 +133,11 @@ export class EverConnectModule {
 			controllers: [
 				EverConnectController,
 				EverConnectInstanceController,
-				...(config.serves.includes('teams') ? [EverConnectHealthController] : [])
+				// Answers 404 unless EVER_CONNECT_PROVISION_ENABLED=true (see its guard).
+				EverConnectProvisionController,
+				...(config.serves.includes('teams') ? [EverConnectHealthController] : []),
+				// Registered only with EVER_APP_LAUNCHER_ENABLED=true and Ever ID sign-in loaded.
+				...(launcher.enabled ? [EverConnectLauncherController] : [])
 			],
 			providers: [
 				{ provide: EVER_CONNECT_SETTINGS, useValue: config },
@@ -106,7 +148,12 @@ export class EverConnectModule {
 				EverConnectCatalogService,
 				EverConnectPlatformService,
 				EverConnectEntitlementService,
+				// The handlers of the integrations beyond the connection's own: an integration without one
+				// reads "coming soon". The counterparty check and discoverability register themselves.
+				IntegrationHandlerRegistry,
 				EverConnectIntegrationStateService,
+				EverConnectLookupService,
+				EverConnectDiscoverableService,
 				EverConnectLinkService,
 				EverConnectCleanupService,
 				EverConnectConnectionService,
@@ -120,12 +167,25 @@ export class EverConnectModule {
 				PersonRequestsHandler,
 				EverConnectIdentityWorker,
 				EverConnectWellKnownService,
+				EverConnectProvisionStore,
+				EverConnectIntentVerifier,
+				EverConnectProvisionGate,
+				EverConnectProvisionCompletion,
+				EverConnectProvisionService,
+				EverConnectProvisionGuard,
+				EverConnectProvisionExceptionFilter,
 				EverConnectScheduler,
 				EverConnectOperatorGuard,
 				EverConnectEnabledGuard,
-				EverConnectLifecycle
+				EverConnectLifecycle,
+				...launcherProviders
 			],
-			exports: [EverConnectConnectionService, EverConnectIntegrationStateService, EVER_CONNECT_CONFIG]
+			exports: [
+				EverConnectConnectionService,
+				EverConnectIntegrationStateService,
+				EVER_CONNECT_CONFIG,
+				...(launcher.enabled ? [EVER_ID_TOKEN_VAULT] : [])
+			]
 		};
 	}
 }

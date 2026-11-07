@@ -1,11 +1,445 @@
-<div class="container-contact">
-	<ga-edit-employee-membership
-		[selectedEmployee]="selectedEmployee"
-		[organizationEntities]="organizationContact"
-		[employeeEntities]="employeeContact"
-		[placeholder]="'FORM.PLACEHOLDERS.CONTACTS' | translate"
-		[title]="'EMPLOYEES_PAGE.EDIT_EMPLOYEE.EMPLOYEE_CONTACTS' | translate"
-		(entitiesAdded)="submitForm($event, false)"
-		(entitiesRemoved)="submitForm($event, true)"
-	></ga-edit-employee-membership>
+<div class="container-contacts">
+	<section class="contacts" [nbSpinner]="loading && !rows.length" nbSpinnerSize="small" nbSpinnerStatus="basic">
+		<!-- ── Header: title with count, caption, search and the Assign action ── -->
+		<header class="contacts__header">
+			<div class="contacts__heading">
+				<h6 class="contacts__title">
+					{{ T + '.TITLE' | translate }}
+					@if (rows.length) {
+						<span class="contacts__count">{{ rows.length }}</span>
+					}
+				</h6>
+				<span class="contacts__caption">{{ T + '.CAPTION' | translate }}</span>
+			</div>
+
+			<div class="contacts__toolbar">
+				@if (rows.length) {
+					<label class="contacts__search">
+						<nb-icon icon="search-outline" aria-hidden="true"></nb-icon>
+						<input
+							nbInput
+							fieldSize="small"
+							type="search"
+							[(ngModel)]="searchTerm"
+							[placeholder]="T + '.SEARCH' | translate"
+							[attr.aria-label]="T + '.SEARCH' | translate"
+						/>
+					</label>
+				}
+				@if (canChangeContacts) {
+					<button
+						type="button"
+						class="contacts__assign-toggle"
+						nbButton
+						status="primary"
+						size="small"
+						(click)="openAssign()"
+					>
+						<nb-icon icon="plus-outline"></nb-icon>{{ T + '.ASSIGN' | translate }}
+					</button>
+				}
+			</div>
+		</header>
+
+		<!-- ── Table ── -->
+		@if (visibleRows.length) {
+			<div class="contacts__table" role="table" [attr.aria-label]="T + '.TITLE' | translate">
+				<div class="contacts__row contacts__row--head" role="row">
+					<span role="columnheader">{{ T + '.COLUMNS.CONTACT' | translate }}</span>
+					<span role="columnheader">{{ T + '.COLUMNS.TYPE' | translate }}</span>
+					<span role="columnheader" class="col-projects">{{ T + '.COLUMNS.PROJECTS' | translate }}</span>
+					<span role="columnheader" class="col-actions"></span>
+				</div>
+
+				<ul class="contacts__list" role="rowgroup">
+					@for (row of visibleRows; track row.id) {
+						<li class="contacts__row" role="row" [class.is-busy]="removingId === row.id">
+							<!-- Contact: avatar, name (opens the contact's page), email · phone -->
+							<span class="cell-contact" role="cell">
+								<span class="avatar" [style.--avatar]="row.color">
+									@if (row.imageUrl) {
+										<img [src]="row.imageUrl" [alt]="row.name" />
+									} @else {
+										<span aria-hidden="true">{{ row.initials }}</span>
+									}
+								</span>
+								<span class="contact-text">
+									@if (canOpenContact) {
+										<a class="contact-name" [routerLink]="['/pages/contacts/view', row.id]">
+											{{ row.name }}
+										</a>
+									} @else {
+										<span class="contact-name">{{ row.name }}</span>
+									}
+									@if (row.email || row.phone) {
+										<span class="contact-meta">
+											@if (row.email) {
+												<span class="contact-meta__item">
+													<nb-icon icon="email-outline"></nb-icon>{{ row.email }}
+												</span>
+											}
+											@if (row.phone) {
+												<span class="contact-meta__item">
+													<nb-icon icon="phone-outline"></nb-icon>{{ row.phone }}
+												</span>
+											}
+										</span>
+									}
+								</span>
+							</span>
+
+							<span role="cell">
+								@if (row.type) {
+									<span [class]="'lozenge tone-' + row.type.tone">{{ row.type.key | translate }}</span>
+								} @else {
+									<span class="muted">—</span>
+								}
+							</span>
+
+							<!-- Projects: the first one, and how many more -->
+							<span role="cell" class="col-projects">
+								@if (row.projectNames.length) {
+									<span
+										class="projects-chip"
+										[nbTooltip]="row.projectList"
+										nbTooltipPlacement="top"
+									>
+										<nb-icon icon="briefcase-outline"></nb-icon>
+										<span class="projects-chip__name">{{ row.projectNames[0] }}</span>
+										@if (row.projectNames.length > 1) {
+											<span class="projects-chip__more">+{{ row.projectNames.length - 1 }}</span>
+										}
+									</span>
+								} @else {
+									<span class="muted">—</span>
+								}
+							</span>
+
+							<span role="cell" class="col-actions">
+								@if (canOpenContact) {
+									<a
+										nbButton
+										ghost
+										size="small"
+										status="basic"
+										class="row-action"
+										[routerLink]="['/pages/contacts/view', row.id]"
+										[nbTooltip]="T + '.OPEN_CONTACT' | translate"
+										[attr.aria-label]="T + '.OPEN_CONTACT' | translate"
+									>
+										<nb-icon icon="external-link-outline"></nb-icon>
+									</a>
+								}
+								@if (canChangeContacts) {
+									<button
+										type="button"
+										nbButton
+										ghost
+										size="small"
+										status="danger"
+										class="row-action row-action--remove"
+										[disabled]="!!removingId || saving || loading"
+										[nbTooltip]="T + '.REMOVE' | translate"
+										[attr.aria-label]="T + '.REMOVE' | translate"
+										(click)="remove(row)"
+									>
+										<nb-icon icon="person-remove-outline"></nb-icon>
+									</button>
+								}
+							</span>
+						</li>
+					}
+				</ul>
+			</div>
+
+			<footer class="contacts__footer">
+				{{ T + '.SHOWING' | translate: { count: visibleRows.length, total: rows.length } }}
+			</footer>
+		} @else if (rows.length) {
+			<!-- Search matched nothing -->
+			<div class="empty">
+				<nb-icon class="empty__icon" icon="search-outline"></nb-icon>
+				<p class="empty__title">{{ T + '.NO_MATCH' | translate: { term: searchTerm } }}</p>
+				<button type="button" nbButton ghost status="primary" size="small" (click)="clearSearch()">
+					{{ T + '.CLEAR_SEARCH' | translate }}
+				</button>
+			</div>
+		} @else if (!loading) {
+			<!-- No contacts yet -->
+			<div class="empty">
+				<span class="empty__badge"><nb-icon icon="people-outline"></nb-icon></span>
+				<p class="empty__title">{{ T + '.EMPTY_TITLE' | translate }}</p>
+				<p class="empty__text">{{ T + '.EMPTY_TEXT' | translate }}</p>
+				@if (canChangeContacts) {
+					<button type="button" nbButton status="primary" size="small" (click)="openAssign()">
+						<nb-icon icon="plus-outline"></nb-icon>{{ T + '.ASSIGN' | translate }}
+					</button>
+				}
+			</div>
+		}
+	</section>
 </div>
+
+<!-- Assign: a searchable checklist of the organization's contacts the employee is not assigned to yet. -->
+<ng-template #assignDialog>
+	<nb-card class="assign-dialog" role="dialog" aria-labelledby="assignContactsDialogTitle">
+		<!-- nb-card projects only its header, body and footer in order: the search lives in the header. -->
+		<nb-card-header class="assign-dialog__header">
+			<div class="assign-dialog__head">
+				<span class="assign-dialog__icon" aria-hidden="true">
+					<nb-icon icon="people-outline"></nb-icon>
+				</span>
+				<div class="assign-dialog__heading">
+					<h6 class="assign-dialog__title" id="assignContactsDialogTitle">
+						{{ T + '.ASSIGN_DIALOG_TITLE' | translate }}
+					</h6>
+					<span class="assign-dialog__subtitle">
+						{{ T + '.ASSIGN_DIALOG_SUBTITLE' | translate: { employee: employeeName } }}
+					</span>
+				</div>
+				<button
+					type="button"
+					class="assign-dialog__close"
+					nbButton
+					ghost
+					size="small"
+					status="basic"
+					[disabled]="saving"
+					[attr.aria-label]="'BUTTONS.CANCEL' | translate"
+					(click)="closeAssign()"
+				>
+					<nb-icon icon="close-outline"></nb-icon>
+				</button>
+			</div>
+
+			<div class="assign-dialog__toolbar">
+				<label class="assign-dialog__search">
+					<nb-icon icon="search-outline" aria-hidden="true"></nb-icon>
+					<input
+						nbInput
+						fullWidth
+						fieldSize="small"
+						type="search"
+						id="assignContactsSearch"
+						autocomplete="off"
+						[ngModel]="assignSearch"
+						(ngModelChange)="onAssignSearch($event)"
+						[placeholder]="T + '.ASSIGN_SEARCH' | translate"
+						[attr.aria-label]="T + '.ASSIGN_SEARCH' | translate"
+					/>
+				</label>
+				@if (assignOptions.length) {
+					<button type="button" class="assign-dialog__link" (click)="toggleAllOptions()">
+						{{ (allOptionsSelected ? T + '.DESELECT_ALL' : T + '.SELECT_ALL') | translate }}
+					</button>
+				}
+			</div>
+		</nb-card-header>
+
+		<!-- Contacts are read a page at a time, searched by name on the server; the next page loads near the end. -->
+		<nb-card-body class="assign-dialog__body" (scroll)="onOptionsScroll($event)">
+			@if (!assignOptions.length) {
+				@if (optionsFailed) {
+					<div class="assign-dialog__empty">
+						<nb-icon class="empty__icon" icon="alert-circle-outline"></nb-icon>
+						<p class="empty__text">{{ T + '.LOAD_FAILED' | translate }}</p>
+						<button type="button" nbButton ghost status="primary" size="small" (click)="retryOptions()">
+							{{ 'BUTTONS.RETRY' | translate }}
+						</button>
+					</div>
+				} @else if (optionsLoading) {
+					<div
+						class="assign-dialog__empty"
+						[nbSpinner]="true"
+						nbSpinnerSize="small"
+						nbSpinnerStatus="basic"
+					></div>
+				} @else if (assignSearch.trim()) {
+					<div class="assign-dialog__empty">
+						<nb-icon class="empty__icon" icon="search-outline"></nb-icon>
+						<p class="empty__text">{{ T + '.NO_MATCH_PICKER' | translate }}</p>
+					</div>
+				} @else {
+					<div class="assign-dialog__empty">
+						<span class="empty__badge"><nb-icon icon="checkmark-circle-2-outline"></nb-icon></span>
+						<p class="empty__text">{{ T + '.ALL_ASSIGNED' | translate }}</p>
+					</div>
+				}
+			} @else {
+				<ul class="assign-dialog__list">
+					@for (row of assignOptions; track row.id) {
+						<li>
+							<button
+								type="button"
+								class="assign-option"
+								[class.is-selected]="assignSelection.has(row.id)"
+								[attr.aria-pressed]="assignSelection.has(row.id)"
+								[disabled]="saving"
+								(click)="toggleOption(row.id)"
+							>
+								<span class="assign-option__check" aria-hidden="true">
+									<nb-icon icon="checkmark-outline"></nb-icon>
+								</span>
+								<span class="avatar" [style.--avatar]="row.color">
+									@if (row.imageUrl) {
+										<img [src]="row.imageUrl" [alt]="row.name" />
+									} @else {
+										<span aria-hidden="true">{{ row.initials }}</span>
+									}
+								</span>
+								<span class="contact-text">
+									<span class="assign-option__name">{{ row.name }}</span>
+									@if (row.email || row.phone) {
+										<span class="contact-meta">
+											@if (row.email) {
+												<span class="contact-meta__item">
+													<nb-icon icon="email-outline"></nb-icon>{{ row.email }}
+												</span>
+											} @else {
+												<span class="contact-meta__item">
+													<nb-icon icon="phone-outline"></nb-icon>{{ row.phone }}
+												</span>
+											}
+										</span>
+									}
+								</span>
+								<span class="assign-option__side">
+									@if (row.type) {
+										<span [class]="'lozenge tone-' + row.type.tone">{{ row.type.key | translate }}</span>
+									}
+								</span>
+							</button>
+						</li>
+					}
+				</ul>
+				<!-- The end of what is read so far: more on its way, a failed page, or more to read. -->
+				@if (optionsLoading) {
+					<div class="assign-dialog__more" [nbSpinner]="true" nbSpinnerSize="tiny" nbSpinnerStatus="basic"></div>
+				} @else if (optionsFailed) {
+					<div class="assign-dialog__more">
+						<span class="assign-dialog__more-text">{{ T + '.LOAD_FAILED' | translate }}</span>
+						<button type="button" class="assign-dialog__link" (click)="retryOptions()">
+							{{ 'BUTTONS.RETRY' | translate }}
+						</button>
+					</div>
+				} @else if (hasMoreOptions) {
+					<div class="assign-dialog__more">
+						<button type="button" class="assign-dialog__link" (click)="loadMoreOptions()">
+							{{ T + '.LOAD_MORE' | translate }}
+						</button>
+					</div>
+				}
+			}
+		</nb-card-body>
+
+		<nb-card-footer class="assign-dialog__footer">
+			<span class="assign-dialog__count">
+				@if (assignSelection.size) {
+					{{ T + '.SELECTED_COUNT' | translate: { count: assignSelection.size } }}
+					<button type="button" class="assign-dialog__link" [disabled]="saving" (click)="clearSelection()">
+						{{ T + '.CLEAR_SELECTION' | translate }}
+					</button>
+				}
+			</span>
+			<div class="assign-dialog__actions">
+				<button
+					type="button"
+					nbButton
+					outline
+					status="basic"
+					size="small"
+					[disabled]="saving"
+					(click)="closeAssign()"
+				>
+					{{ 'BUTTONS.CANCEL' | translate }}
+				</button>
+				<button
+					type="button"
+					class="assign-dialog__submit"
+					nbButton
+					status="primary"
+					size="small"
+					[disabled]="!assignSelection.size || saving"
+					[nbSpinner]="saving"
+					nbSpinnerSize="tiny"
+					(click)="assignSelected()"
+				>
+					<nb-icon icon="person-add-outline"></nb-icon>{{ T + '.ASSIGN_SUBMIT' | translate }}
+					@if (assignSelection.size) {
+						<span class="assign-dialog__badge">{{ assignSelection.size }}</span>
+					}
+				</button>
+			</div>
+		</nb-card-footer>
+	</nb-card>
+</ng-template>
+
+<!-- Remove confirmation: names the employee and shows the contact, so the wrong row is hard to remove by mistake. -->
+<ng-template #removeDialog let-row let-ref="dialogRef">
+	<nb-card class="remove-dialog" role="alertdialog" aria-labelledby="removeContactDialogTitle">
+		<nb-card-header class="remove-dialog__header">
+			<span class="remove-dialog__icon" aria-hidden="true">
+				<nb-icon icon="alert-triangle-outline"></nb-icon>
+			</span>
+			<h6 class="remove-dialog__title" id="removeContactDialogTitle">{{ T + '.REMOVE_TITLE' | translate }}</h6>
+			<button
+				type="button"
+				class="remove-dialog__close"
+				nbButton
+				ghost
+				size="small"
+				status="basic"
+				[attr.aria-label]="'BUTTONS.CANCEL' | translate"
+				(click)="ref.close(false)"
+			>
+				<nb-icon icon="close-outline"></nb-icon>
+			</button>
+		</nb-card-header>
+
+		<nb-card-body class="remove-dialog__body">
+			<div class="remove-dialog__contact">
+				<span class="avatar" [style.--avatar]="row.color">
+					@if (row.imageUrl) {
+						<img [src]="row.imageUrl" [alt]="row.name" />
+					} @else {
+						<span aria-hidden="true">{{ row.initials }}</span>
+					}
+				</span>
+				<span class="contact-text">
+					<span class="remove-dialog__contact-name">{{ row.name }}</span>
+					@if (row.type || row.email) {
+						<span class="contact-meta">
+							@if (row.type) {
+								<span class="contact-meta__item">{{ row.type.key | translate }}</span>
+							}
+							@if (row.email) {
+								<span class="contact-meta__item">{{ row.email }}</span>
+							}
+						</span>
+					}
+				</span>
+			</div>
+
+			<p class="remove-dialog__message">
+				{{ T + '.REMOVE_MESSAGE' | translate: { employee: employeeName, contact: row.name } }}
+			</p>
+			<p class="remove-dialog__hint">{{ T + '.REMOVE_HINT' | translate }}</p>
+		</nb-card-body>
+
+		<nb-card-footer class="remove-dialog__footer">
+			<button type="button" nbButton outline status="basic" size="small" (click)="ref.close(false)">
+				{{ 'BUTTONS.CANCEL' | translate }}
+			</button>
+			<button
+				type="button"
+				class="remove-dialog__confirm"
+				nbButton
+				status="danger"
+				size="small"
+				(click)="ref.close(true)"
+			>
+				<nb-icon icon="person-remove-outline"></nb-icon>{{ 'BUTTONS.REMOVE' | translate }}
+			</button>
+		</nb-card-footer>
+	</nb-card>
+</ng-template>

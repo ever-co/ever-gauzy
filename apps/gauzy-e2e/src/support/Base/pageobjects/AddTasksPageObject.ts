@@ -26,7 +26,10 @@ export const AddTaskPage = {
 	// ng-select's (click)="toggleItem(item)". ':not(.ng-option-disabled)' is applied by the shared driver.
 	tagsSelectOptionCss: 'div.ng-option',
 	closeTagsMultiSelectDropdownCss: '.ng-select-container > .ng-arrow-wrapper',
-	confirmDuplicateOrEditTaskButtonCss: 'nb-card-footer > button[status="success"]',
+	// The dialog's primary action (Create / Save): since the dialog layout of #11566 it sits in the footer's
+	// `.task-actions` group with status "primary", beside a ghost Cancel; it was a direct footer child with
+	// status "success".
+	confirmDuplicateOrEditTaskButtonCss: 'ngx-add-task-dialog nb-card-footer .task-actions > button[status="primary"]',
 	confirmEditTaskButtonCss: '',
 	confirmDeleteTaskButtonCss: 'button.mr-3.ml-3',
 	addTitleInputCss: '[formControlName="title"]',
@@ -37,7 +40,7 @@ export const AddTaskPage = {
 	estimateHoursInputCss: '[formControlName="estimateHours"]',
 	estimateMinsInputCss: '[formControlName="estimateMinutes"]',
 	descriptionTextareaCss: '[formControlName="description"]',
-	saveNewTaskButtonCss: 'nb-card-footer > button[status="success"]',
+	saveNewTaskButtonCss: 'ngx-add-task-dialog nb-card-footer .task-actions > button[status="primary"]',
 	verifyTextCss: 'angular2-smart-table table tbody',
 	toastrMessageCss: 'nb-toast.ng-trigger',
 	searchTitleInputCss: 'input[placeholder="Title"]'

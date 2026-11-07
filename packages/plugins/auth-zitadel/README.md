@@ -8,6 +8,7 @@
       "## How it works",
       "## Outbound requests",
       "## Data",
+      "## App Launcher",
       "## Turning it off",
       "## Build and test"
     ]
@@ -55,6 +56,9 @@ Settings on the API (defaults in brackets):
   `EVER_PLATFORM_PROJECT_ID` is set.
 - `EVER_INSTALL_SOURCE`: `cloud` only on Ever Cloud. Nothing else is ever
   used to decide that an install is Ever Cloud.
+- `EVER_APP_LAUNCHER_ENABLED` (unset, off): `true` keeps the Ever ID refresh
+  token of each browser sign-in for the App Launcher (see "App Launcher"
+  below). Unset, or any other value: nothing changes.
 
 Booleans accept exactly `true` or `false`; any other value is logged once
 and the default is used.
@@ -79,7 +83,17 @@ All under `/api/auth/zitadel`:
 - `GET /config` (anyone): whether the sign-in is enabled, and which flows
   are on.
 - `GET /` (anyone): starts a sign-in (PKCE, `state`, `nonce`; never a login
-  hint).
+  hint). With `?provision=<key>` (the opaque key of a workspace the Ever
+  Platform connection plugin was asked to create) the key rides in the signed
+  transaction cookie on the way to the issuer (never in the authorize URL),
+  and the callback links nothing and signs nobody
+  in: it keeps the verified identity (issuer, subject, verified e-mail,
+  names; never the token; stored under the SHA-256 of a new one-time key)
+  and opens the web app's confirmation page
+  `#/auth/ever-connect/provision?provision=<key>&handoff=<key>`. That plugin
+  reads it through `ZITADEL_HANDOFF_READER` and creates the workspace through
+  `ZITADEL_PROVISIONER` (Gauzy's own register, tenant, organization,
+  employee and team paths; the owner linked with method `provisioned`).
 - `GET /callback` (the issuer): returns from the issuer, for sign-in and
   linking.
 - `POST /handoff` (anyone): redeems the one-time key of a redirect, once.
@@ -176,6 +190,11 @@ check a back-channel logout token or a first-party token (all cached). None
 while the plugin is off or unconfigured, and none at start. Issuers must use
 https (http only on the local machine).
 
+With the App Launcher on (`EVER_APP_LAUNCHER_ENABLED=true`), the same token
+endpoint also gets a refresh request and a token exchange when a person opens
+the launcher (at most one refresh per Ever ID session while its access token
+lasts; see "App Launcher"). Off: none.
+
 With the Ever Platform connection plugin loaded (`EVER_CONNECT_ENABLED=true`)
 and Sign in with Ever ID enabled there, a sign-in whose ID token carries none of
 Ever Platform's `urn:ever:*` claims asks that plugin for Ever Platform's view of
@@ -191,14 +210,56 @@ Four tables, created by the core migration listed in `MIGRATIONS.md`:
 - `zitadel_session`: sessions opened through Ever ID;
 - `zitadel_logout_jti`: the logout token replay cache.
 
-Ever ID tokens are never stored. Deleting a Gauzy user deletes that user's
-links and session records with it (foreign keys with `ON DELETE CASCADE`).
+Ever ID tokens are never stored, with one exception while the App Launcher is
+on: each session record keeps its Ever ID refresh token, encrypted (see "App
+Launcher"). Deleting a Gauzy user deletes that user's links and session
+records with it (foreign keys with `ON DELETE CASCADE`).
 
 When a person asks Ever Platform to delete their data, the Ever Platform
 connection plugin asks this plugin (`EVER_ID_ACCOUNTS`) to remove the links of
 that person's Ever ID identities and to end the Gauzy sessions opened through
 them; the Gauzy users themselves are not changed here. The identities are named
 by `sha256(<issuer>#<subject>)` only.
+
+## App Launcher
+
+The App Launcher in the web app's header shows the Ever apps and "Your apps":
+what the person's organization installed from apps.ever.co and its apps on
+Ever Platform. The Ever Platform connection plugin serves it
+(`@gauzy/plugin-ever-connect`, see its README); to read "Your apps" it needs a
+token of the person, which this plugin provides.
+
+- **Off by default.** Only `EVER_APP_LAUNCHER_ENABLED=true` (exactly) turns it
+  on, read once at start. Off, the authorize request, the callback and the
+  stored data are exactly as described above.
+- **What changes when on.** A browser sign-in also asks for `offline_access`
+  (not a link from Settings, not a workspace confirmation). When the person's
+  Ever ID is linked and the ID token names its session (`sid`), the refresh
+  token Ever ID returns is kept with that session's records
+  (`zitadel_session.everRefreshTokenEncrypted`), encrypted with AES-256-GCM
+  under `ENCRYPTION_KEY` (or a strong `JWT_SECRET`) by the Ever Platform
+  connection plugin, the way it stores the installation's own keys
+  (`EVER_ID_TOKEN_VAULT`; this plugin never imports it). Without that plugin,
+  or without such a secret, nothing is kept and the API logs it once at
+  start. The value is never selected unless asked for, never returned by a
+  route, never exported and never logged.
+- **How it is used.** When the person opens the launcher, a refresh request
+  gives a fresh access token (kept in memory until a minute before it
+  expires; a rotated refresh token replaces the stored one), which is
+  exchanged (RFC 8693) for a token for Ever Platform with the `apps:read`
+  scope only. That token stays in the API's memory; it never reaches the
+  browser or an address. Requests run one at a time per Ever ID session in
+  an API process. When several processes refresh one session at once, the
+  one the issuer accepts stores its rotated token; one that is refused reads
+  the stored token again, retries once with a newer one, and removes it only
+  when it is still the one it sent, so no rotated token is lost. Each process
+  keeps at most 5,000 access tokens in memory, expired ones dropped first.
+- **When it goes.** With the session: on a back-channel logout from Ever ID,
+  on a person's deletion request, when the daily pruning removes old session
+  records, when Ever ID refuses it (the person signs in again), and at the
+  next pruning (a minute after start, then daily) once the launcher is off.
+
+Its column is added by this plugin's own migration (`MIGRATIONS.md`).
 
 ## Turning it off
 

@@ -28,6 +28,10 @@ export class EmployeeNotificationTypeTransformer implements ValueTransformer {
 				return 5;
 			case EmployeeNotificationTypeEnum.BROADCAST:
 				return 6;
+			case EmployeeNotificationTypeEnum.RATE_CHANGE_REQUEST:
+				return 7;
+			case EmployeeNotificationTypeEnum.TASK_UPDATE:
+				return 8;
 			default:
 				throw new Error(`Unsupported notification type: ${value}`);
 		}
@@ -55,6 +59,10 @@ export class EmployeeNotificationTypeTransformer implements ValueTransformer {
 				return EmployeeNotificationTypeEnum.MESSAGE;
 			case 6:
 				return EmployeeNotificationTypeEnum.BROADCAST;
+			case 7:
+				return EmployeeNotificationTypeEnum.RATE_CHANGE_REQUEST;
+			case 8:
+				return EmployeeNotificationTypeEnum.TASK_UPDATE;
 			default:
 				throw new Error(`Unknown notification type value: ${value}`);
 		}

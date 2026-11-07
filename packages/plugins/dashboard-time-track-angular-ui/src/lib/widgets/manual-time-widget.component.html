@@ -30,6 +30,7 @@
 						[src]="$safeNavigationMigration(manualTime?.user?.imageUrl)"
 						[id]="$safeNavigationMigration(manualTime?.employeeId)"
 						[employee]="$safeNavigationMigration(manualTime?.employee)"
+						linkTo="view"
 					></ngx-avatar>
 
 					<span class="cell-text" [title]="$safeNavigationMigration(manualTime?.project?.name)">

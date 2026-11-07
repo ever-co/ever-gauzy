@@ -6,10 +6,13 @@ import { JobSearchPlugin } from '@gauzy/plugin-job-search-ui';
 import { JobsPlugin } from '@gauzy/plugin-jobs-ui';
 import { DocsUiPlugin } from '@gauzy/plugin-docs-ui';
 import { InboxUiPlugin } from '@gauzy/plugin-inbox-ui';
+import { ChatUiPlugin } from '@gauzy/plugin-chat-ui';
 import { IntegrationUpworkPlugin } from '@gauzy/plugin-integration-upwork-ui';
 import { IntegrationPlanePlugin } from '@gauzy/plugin-integration-plane-ui';
 import { IntegrationEverAsyncPlugin } from '@gauzy/plugin-integration-ever-async-ui';
 import { IntegrationEverWorksUiPlugin } from '@gauzy/plugin-integration-ever-works-ui';
+import { IntegrationLinearUiPlugin } from '@gauzy/plugin-integration-linear-ui';
+import { IntegrationAsanaUiPlugin } from '@gauzy/plugin-integration-asana-ui';
 import { EverConnectUiPlugin } from '@gauzy/plugin-ever-connect-ui';
 import { DashboardTimeTrackReactUiPlugin } from '@gauzy/plugin-dashboard-time-track-react-ui';
 import { AiChatReactUiPlugin } from '@gauzy/plugin-ai-chat-react-ui';
@@ -84,6 +87,10 @@ export const uiPluginConfig: PluginUiConfig = {
 		// loads the Inbox (GAUZY_INBOX_ENABLED=true); elsewhere (the default) the route only says it is off.
 		InboxUiPlugin,
 
+		// Chat (/pages/chat, the header badge). The nav entry and the badge appear only where the API serves the
+		// chat (@gauzy/plugin-chat loaded and FEATURE_CHAT on); elsewhere the route only says it is off.
+		ChatUiPlugin,
+
 		// Integration Plugins
 		IntegrationUpworkPlugin,
 		IntegrationPlanePlugin,
@@ -91,6 +98,11 @@ export const uiPluginConfig: PluginUiConfig = {
 		// Integrations > Ever Works. Where the API's Ever Works plugin is not loaded (the default:
 		// EVER_WORKS_ENABLED unset) the page only says so.
 		IntegrationEverWorksUiPlugin,
+		// Integrations > Linear. Where the API's Linear plugin is not loaded (the default: LINEAR_ENABLED
+		// unset) the page only says so.
+		IntegrationLinearUiPlugin,
+		// Integrations > Asana, the same way (ASANA_ENABLED).
+		IntegrationAsanaUiPlugin,
 		// Integrations > Ever Platform. Where the API's Ever Platform module is not loaded (the
 		// default) the page only says so.
 		EverConnectUiPlugin,

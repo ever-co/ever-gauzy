@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, Input, forwardRef, EventEmitter, Output, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnInit, OnDestroy, Input, input, forwardRef, EventEmitter, Output, ChangeDetectionStrategy } from '@angular/core';
 import { IOrganization, IOrganizationVendor } from '@gauzy/contracts';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import { Subject } from 'rxjs';
@@ -98,6 +98,12 @@ export class VendorSelectComponent implements OnInit, OnDestroy {
 
 	@Output()
 	onChanged = new EventEmitter<IOrganizationVendor>();
+
+	/**
+	 * Accessible name of the control, for a host that shows its own label; without one the control is named by its
+	 * label or placeholder. Not `ariaLabel`, which is also a property of every element.
+	 */
+	readonly accessibleLabel = input<string>();
 
 	constructor(
 		private readonly store: Store,

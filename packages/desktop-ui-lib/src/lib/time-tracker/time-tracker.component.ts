@@ -110,6 +110,7 @@ import { SelectorValidator } from '../shared/utils/validation/selector.validator
 import { TimeTrackerQuery } from './+state/time-tracker.query';
 import { IgnitionState, TimeTrackerStore } from './+state/time-tracker.store';
 import { SoundFilePlayer, TimerSoundService } from './sounds';
+import { timerRequiredFields } from './timer-required-fields';
 import { OrganizationSelectorComponent } from './organization-selector/organization-selector.component';
 import { OrganizationSwitchService } from './organization-selector/organization-switch.service';
 import { HumanizePipe } from './pipes/humanize.pipe';
@@ -2115,24 +2116,14 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	}
 
 	public validationField(): boolean {
-		const selectorValidator = new SelectorValidator([
-			{
-				service: this.projectSelectorService,
-				requireField: this.userOrganization.requireProject
-			},
-			{
-				service: this.taskSelectorService,
-				requireField: this.userOrganization.requireTask
-			},
-			{
-				service: this.clientSelectorService,
-				requireField: this.userOrganization.requireClient
-			},
-			{
-				service: this.noteService,
-				requireField: this.userOrganization.requireDescription
-			}
-		]);
+		const requiredFields = timerRequiredFields(this.userOrganization, {
+			project: this.projectSelectorService,
+			task: this.taskSelectorService,
+			client: this.clientSelectorService,
+			note: this.noteService,
+			team: this.teamSelectorService
+		});
+		const selectorValidator = new SelectorValidator(requiredFields);
 
 		return selectorValidator.validateAll();
 	}

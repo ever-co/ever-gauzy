@@ -34,7 +34,12 @@ import { IntegrationSimPlugin } from '@gauzy/plugin-integration-sim';
 import { IntegrationPlanePlugin } from '@gauzy/plugin-integration-plane';
 import { IntegrationEverAsyncPlugin } from '@gauzy/plugin-integration-ever-async';
 import { IntegrationEverWorksPlugin, isEverWorksEnabled } from '@gauzy/plugin-integration-ever-works';
+import { IntegrationLinearPlugin, isLinearEnabled } from '@gauzy/plugin-integration-linear';
+import { IntegrationAsanaPlugin, isAsanaEnabled } from '@gauzy/plugin-integration-asana';
 import { InboxEmailPlugin, InboxPlugin, isInboxEmailEnabled, isInboxEnabled } from '@gauzy/plugin-inbox';
+import { isRealtimeEnabled, RealtimePlugin } from '@gauzy/plugin-realtime';
+
+import { ChatPlugin, isChatEnabled } from '@gauzy/plugin-chat';
 import { EmailProviderPostmarkPlugin, isPostmarkEnabled } from '@gauzy/plugin-email-provider-postmark';
 import { EmailProviderResendPlugin, isResendEnabled } from '@gauzy/plugin-email-provider-resend';
 import { EmailProviderMailgunPlugin, isMailgunEnabled } from '@gauzy/plugin-email-provider-mailgun';
@@ -113,11 +118,30 @@ export const plugins = [
 	// logged once.
 	...(isEverWorksEnabled(process.env, (message) => console.warn(message)) ? [IntegrationEverWorksPlugin] : []),
 
+	// Linear integration (OAuth connect, team ↔ project mappings, issue import, two-way status sync,
+	// webhooks). Off unless LINEAR_ENABLED=true; when off it is not loaded at all (no route, no table,
+	// no outbound request). Any other value keeps it off and is logged once.
+	...(isLinearEnabled(process.env, (message) => console.warn(message)) ? [IntegrationLinearPlugin] : []),
+
+	// Asana integration (OAuth connect, project ↔ project mappings, task import, two-way sync with sections
+	// as statuses, webhooks). Off unless ASANA_ENABLED=true; when off it is not loaded at all.
+	...(isAsanaEnabled(process.env, (message) => console.warn(message)) ? [IntegrationAsanaPlugin] : []),
+
 	// Inbox (questions, approvals, escalations and notices addressed to a user, each with its own state; the
 	// Ever Works integration feeds it through a source-handler registry). Off unless GAUZY_INBOX_ENABLED=true;
 	// when off it is not loaded at all (no route, no table, no role grant). Any other value keeps it off and is
 	// logged once.
 	...(isInboxEnabled(process.env, (message) => console.warn(message)) ? [InboxPlugin] : []),
+
+	// Real-time channel (collaboration change hints on the event outbox, presence and typing signals, the
+	// `collaborationEvents` subscription). Off unless GAUZY_REALTIME_ENABLED=true; when off it is not loaded at
+	// all (no route, no GraphQL field, no outbox row, no role grant). Any other value keeps it off and is logged once.
+	...(isRealtimeEnabled(process.env, (message) => console.warn(message)) ? [RealtimePlugin] : []),
+
+	// Chat between employees (channels, direct and group messages, threads, reactions, mentions, task cards). Off
+	// unless GAUZY_CHAT_ENABLED=true; when off it is not loaded at all (no route, no table, no role grant). Routes
+	// answer only for tenants whose FEATURE_CHAT toggle is on. Any other value keeps it off and is logged once.
+	...(isChatEnabled(process.env, (message) => console.warn(message)) ? [ChatPlugin] : []),
 
 	// Inbox email (mailboxes, the inbound pipeline, email provider accounts and the transport seam's provider
 	// transports; plan 04 §5). Only on top of the Inbox, and off unless GAUZY_INBOX_EMAIL_ENABLED=true as well; when

@@ -9134,6 +9134,22 @@ type Mutation {
   recoverTask(id: ID!): Task!
 
   """
+  Assigns one employee to one task and writes nothing else on it. Mirrors
+  `PUT /tasks/:id/members/:employeeId`, in the caller's own organization.
+  
+  An employee may assign themselves; assigning someone else needs an organization admin or a manager
+  of the task's team. An employee already on the task is a no-op.
+  """
+  addTaskMember(taskId: ID!, employeeId: ID!): Boolean!
+
+  """
+  Takes one employee off one task and writes nothing else on it. Mirrors
+  `DELETE /tasks/:id/members/:employeeId`, under the same rule as `addTaskMember`. An employee who is
+  not on the task is a no-op.
+  """
+  removeTaskMember(taskId: ID!, employeeId: ID!): Boolean!
+
+  """
   Takes one employee off every task of one team.
   
   The delivered route answers nothing at all — it is a statement about the tasks it touched rather
@@ -19628,7 +19644,7 @@ type EmployeeNotification {
 
   """
   The kind of notification, as the vocabulary's own value: `Payment`, `Assignment`, `Invitation`,
-  `Mention`, `Comment`, `Message` or `Broadcast`. The value is the column's own, which is why it is
+  `Mention`, `Comment`, `Message`, `Broadcast` or `RateChangeRequest`. The value is the column's own, which is why it is
   carried as text rather than as an enum declared here.
   """
   type: String
@@ -19769,7 +19785,7 @@ input CreateEmployeeNotificationInput {
   message: String
 
   """
-  The kind of notification, as the vocabulary's own value — `Payment`, `Assignment`, `Invitation`, `Mention`, `Comment`, `Message` or `Broadcast`.
+  The kind of notification, as the vocabulary's own value — `Payment`, `Assignment`, `Invitation`, `Mention`, `Comment`, `Message`, `Broadcast` or `RateChangeRequest`.
   """
   type: String
 
@@ -27616,7 +27632,6 @@ input InvoiceFilter {
   alreadyPaid: DecimalFilter
   amountDue: DecimalFilter
   hasRemainingAmountInvoiced: BooleanFilter
-  token: StringFilter
   paymentTermId: IDFilter
   vendorId: IDFilter
   fromOrganizationId: IDFilter
@@ -33665,7 +33680,11 @@ type Organization {
   """Whether a manually recorded time entry must carry a description."""
   requireDescription: Boolean!
 
-  """Whether a time entry must name a project."""
+  """
+  Whether a new time entry must name a project. The server checks timer starts and time recorded by hand, not stops
+  or edits of existing logs. It files an entry without one under its task's project, then its team's default project,
+  and refuses it otherwise, except what a client sends with source `DESKTOP` (the desktop timer and the agent).
+  """
   requireProject: Boolean!
 
   """Whether a time entry must name a task."""
@@ -33673,6 +33692,14 @@ type Organization {
 
   """Whether a time entry must name a client."""
   requireClient: Boolean!
+
+  """
+  Whether a new time entry must name a team. The server checks timer starts and time recorded by hand, not stops or
+  edits of existing logs. It files an entry without one under the employee's team when they have exactly one active
+  team in the organization (inactive, archived or deleted teams do not count), and refuses it otherwise, except what
+  a client sends with source `DESKTOP` (the desktop timer and the agent).
+  """
+  requireTeam: Boolean!
 
   """Whether the organization renders times on a 12- or a 24-hour clock."""
   timeFormat: Int!
@@ -38302,16 +38329,12 @@ input SharedEntitySort {
 The fields a share list may be narrowed by. `and` is the default; `or` requires any of its members and
 `not` excludes the rows that match it.
 
-A share's own token is filterable, and that is deliberate rather than a leak: the list is
-tenant-guarded, and the filter runs over the rows as the caller reads them, so it only matches a
-token the row already answers — one of a share the caller manages. What it is *not* is a way to
-resolve the shared record — that is the token read, and its answer is the target rather than a
-`SharedEntity`.
+A share's token is not filterable: it is a secret, like every credential column. Reading the shared
+record by its token is the token read, whose answer is the target rather than a `SharedEntity`.
 """
 input SharedEntityFilter {
   id: IDFilter
   organizationId: IDFilter
-  token: StringFilter
   entity: StringFilter
   entityId: IDFilter
   shareRules: JSONFilter
@@ -41427,6 +41450,12 @@ type TimeOffPolicy {
 
   """Whether this is the organization's default policy."""
   isDefault: Boolean
+
+  """
+  Whether approving a request refuses it when an employee's leave balance for this policy cannot cover the
+  request's working days. Off by default: the approval goes through and the balance is overdrawn.
+  """
+  requireSufficientBalance: Boolean
   tenantId: ID
   organizationId: ID
   isActive: Boolean
@@ -41550,6 +41579,7 @@ input CreateTimeOffPolicyInput {
   """The accrual period, as the contracts package's vocabulary states it."""
   accrualFrequency: String
   isDefault: Boolean
+  requireSufficientBalance: Boolean
 }
 
 """
@@ -41574,6 +41604,7 @@ input UpdateTimeOffPolicyInput {
   accrualRate: Decimal
   accrualFrequency: String
   isDefault: Boolean
+  requireSufficientBalance: Boolean
 }
 
 """One stretch of leave asked for under a policy."""
@@ -43597,6 +43628,13 @@ input CreateManualTimeLogInput {
   """The client to attribute the work to."""
   organizationContactId: ID
 
+  """
+  The team to attribute the work to. An organization that requires a team refuses an entry without one, unless the
+  employee has exactly one active team in the organization, which the entry is then filed under. Inactive, archived
+  or deleted teams do not count.
+  """
+  organizationTeamId: ID
+
   """What was worked on."""
   description: String
 
@@ -44205,6 +44243,12 @@ input TimerToggleInput {
 
   """The tags to file the log under, by the tag identifiers' text form."""
   tags: [String!]
+
+  """
+  The member's current day, as `YYYY-MM-DD`. When the team requires a daily plan, an Ever Teams start
+  (`TEAMS`, `MOBILE`) needs a plan for that day. Ignored unless it is today somewhere.
+  """
+  planDay: String
 }
 
 """

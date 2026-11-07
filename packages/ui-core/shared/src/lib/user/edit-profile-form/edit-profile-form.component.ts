@@ -17,6 +17,17 @@ import {
 } from '@gauzy/ui-core/core';
 import { FormHelpers } from '../../forms/helpers';
 
+/** Roles with a USERS_PAGE.ROLE string; any other (INTERVIEWER, a custom role) shows by its name. */
+const TRANSLATED_ROLES: RolesEnum[] = [
+	RolesEnum.SUPER_ADMIN,
+	RolesEnum.ADMIN,
+	RolesEnum.MANAGER,
+	RolesEnum.DATA_ENTRY,
+	RolesEnum.VIEWER,
+	RolesEnum.EMPLOYEE,
+	RolesEnum.CANDIDATE
+];
+
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-profile',
@@ -29,9 +40,16 @@ export class EditProfileFormComponent implements OnInit, OnDestroy {
 	FormHelpers: typeof FormHelpers = FormHelpers;
 	hoverState: boolean;
 	loading: boolean;
+	/** A save is on its way: the Save button waits for it. */
+	saving = false;
+	/** The photo failed to load: the placeholder shows instead. */
+	avatarFailed = false;
 	listOfTimeFormats = DEFAULT_TIME_FORMATS;
 	role: IRole;
+	/** The signed-in user (from the store). */
 	user: IUser;
+	/** The user being edited, as last read: the identity panel's name, role, dates and verification. */
+	profile: IUser;
 	user$: Subject<any> = new Subject();
 
 	/*
@@ -54,6 +72,10 @@ export class EditProfileFormComponent implements OnInit, OnDestroy {
 	}
 	@Input() set allowRoleChange(value: boolean) {
 		this._allowRoleChange = value;
+		// Where the role can change, a Save needs one: an empty role must not be looked up and assigned.
+		const role = this.form?.get('role');
+		role?.setValidators(value ? [Validators.required] : []);
+		role?.updateValueAndValidity({ emitEvent: false });
 	}
 
 	@Output() userSubmitted = new EventEmitter<void>();
@@ -83,6 +105,81 @@ export class EditProfileFormComponent implements OnInit, OnDestroy {
 	}
 
 	public excludes: RolesEnum[] = [];
+
+	/** Whether the profile being edited is the signed-in user's own. */
+	get isOwnProfile(): boolean {
+		return !this.selectedUser?.id || this.selectedUser.id === this._store.userId;
+	}
+
+	/** The name shown in the identity panel: the full name, else the email. */
+	get displayName(): string {
+		const { firstName, lastName, email } = this.form.getRawValue();
+		return [firstName, lastName].filter(Boolean).join(' ') || email || '';
+	}
+
+	/** Whether the account is active (a user without the flag counts as active, as the app treats them). */
+	get isActiveAccount(): boolean {
+		return this.profile?.isActive !== false;
+	}
+
+	/** The interface language, for naming languages and formatting the local time. */
+	private get uiLanguage(): string {
+		return (typeof document !== 'undefined' && document.documentElement.lang) || 'en';
+	}
+
+	/** The preferred language by name ("English"), else its code; null when not set. */
+	get languageName(): string | null {
+		const code = this.profile?.preferredLanguage;
+		if (!code) {
+			return null;
+		}
+		try {
+			return new Intl.DisplayNames([this.uiLanguage], { type: 'language' }).of(code) || code;
+		} catch {
+			return code;
+		}
+	}
+
+	/** The user's time now, in their time zone and time format; null without a valid time zone. */
+	get localTime(): string | null {
+		const timeZone = this.profile?.timeZone;
+		if (!timeZone) {
+			return null;
+		}
+		try {
+			return new Intl.DateTimeFormat(this.uiLanguage, {
+				timeZone,
+				hour: '2-digit',
+				minute: '2-digit',
+				...(this.profile?.timeFormat ? { hour12: Number(this.profile.timeFormat) === 12 } : {})
+			}).format(new Date());
+		} catch {
+			return null;
+		}
+	}
+
+	/** The time format's i18n key; null when not set. */
+	get timeFormatKey(): string | null {
+		switch (Number(this.profile?.timeFormat)) {
+			case 12:
+				return 'USERS_PAGE.EDIT_USER.TIME_FORMAT_12';
+			case 24:
+				return 'USERS_PAGE.EDIT_USER.TIME_FORMAT_24';
+			default:
+				return null;
+		}
+	}
+
+	/** The role's label: translated for the roles with a USERS_PAGE.ROLE string, as named for any other. */
+	get roleLabel(): { key?: string; text: string } | null {
+		const name = this.role?.name;
+		if (!name) {
+			return null;
+		}
+		return TRANSLATED_ROLES.includes(name as RolesEnum)
+			? { key: `USERS_PAGE.ROLE.${name}`, text: name }
+			: { text: name.replace(/_/g, ' ') };
+	}
 
 	constructor(
 		private readonly _fb: UntypedFormBuilder,
@@ -149,6 +246,7 @@ export class EditProfileFormComponent implements OnInit, OnDestroy {
 			}
 
 			// Patch the form with the retrieved user data
+			this.profile = user;
 			this._patchForm({ ...user });
 		} catch (error) {
 			this._errorHandler?.handleError(error); // Handle errors gracefully
@@ -159,55 +257,46 @@ export class EditProfileFormComponent implements OnInit, OnDestroy {
 		this._toastrService.danger(error);
 	}
 
+	/**
+	 * Saves an uploaded photo on the user. The form shows it at once and keeps its id, so a Save sends it too, even
+	 * when this update fails. Only the photo is sent: a role picked in the form is not saved before its Save. The
+	 * signed-in user's session takes the photo only once it is saved, and only for their own profile (an admin
+	 * changing another user's photo used to put it on their own avatar).
+	 */
 	async updateImageAsset(image: IImageAsset) {
-		this._store.user = {
-			...this._store.user,
-			imageId: image.id
-		};
-
-		let request: IUserUpdateInput = {
-			imageId: image.id
-		};
-
-		if (this.allowRoleChange) {
-			const { tenantId } = this._store.user;
-			const role = await firstValueFrom(
-				this._roleService.getRoleByOptions({
-					name: this.form.get('role').value.name,
-					tenantId
-				})
-			);
-
-			request = {
-				...request,
-				role
-			};
-		}
+		const isOwnProfile = this.isOwnProfile;
+		// The session the photo was saved for: a sign-out, or another user's sign-in, while it is saved must not get it.
+		const sessionUserId = this._store.userId;
+		this.avatarFailed = false;
+		this.form.patchValue({ imageId: image.id, imageUrl: image.fullUrl || image.url });
 
 		try {
-			await this._userService
-				.update(this.selectedUser ? this.selectedUser.id : this._store.userId, request)
-				.then((res: IUser) => {
-					try {
-						if (res) {
-							this._store.user = {
-								...this._store.user,
-								imageUrl: res.imageUrl
-							} as IUser;
-						}
-						this._toastrService.success('TOASTR.MESSAGE.IMAGE_UPDATED');
-					} catch (error) {
-						console.log('Error while uploading profile avatar', error);
-					}
-				});
+			const res: IUser = await this._userService.update(
+				this.selectedUser ? this.selectedUser.id : this._store.userId,
+				{ imageId: image.id }
+			);
+			if (isOwnProfile && sessionUserId && this._store.userId === sessionUserId && this._store.user) {
+				this._store.user = {
+					...this._store.user,
+					imageId: image.id,
+					imageUrl: res?.imageUrl || image.fullUrl || image.url
+				} as IUser;
+			}
+			this._toastrService.success('TOASTR.MESSAGE.IMAGE_UPDATED');
 		} catch (error) {
 			this._errorHandler.handleError(error);
 		}
 	}
 
 	async submitForm() {
+		const roleName = this.form.get('role').value?.name;
+		// The role field is required where it can change; checked here too, since a click can be dispatched at a
+		// disabled Save.
+		if (this.saving || this.form.invalid || (this.allowRoleChange && !roleName)) {
+			return;
+		}
 		const { timeFormat, timeZone } = this.form.value;
-		const { email, firstName, lastName, tags, preferredLanguage, password, phoneNumber } = this.form.value;
+		const { email, firstName, lastName, tags, preferredLanguage, password, phoneNumber, imageId } = this.form.value;
 
 		if (!EmailValidator.isValid(email, patterns.email)) {
 			this._toastrService.error('TOASTR.MESSAGE.EMAIL_SHOULD_BE_REAL');
@@ -221,7 +310,9 @@ export class EditProfileFormComponent implements OnInit, OnDestroy {
 			preferredLanguage,
 			timeZone,
 			timeFormat,
-			phoneNumber
+			phoneNumber,
+			// The photo shown: an upload whose own save failed is saved with the rest.
+			...(imageId ? { imageId } : {})
 		};
 
 		if (password) {
@@ -231,22 +322,24 @@ export class EditProfileFormComponent implements OnInit, OnDestroy {
 			};
 		}
 
-		if (this.allowRoleChange) {
-			const { tenantId } = this._store.user;
-			const role = await firstValueFrom(
-				this._roleService.getRoleByOptions({
-					name: this.form.get('role').value.name,
-					tenantId
-				})
-			);
-
-			request = {
-				...request,
-				role
-			};
-		}
-
+		// Set before the role lookup: a click while it runs must not send a second save.
+		this.saving = true;
 		try {
+			if (this.allowRoleChange) {
+				const { tenantId } = this._store.user;
+				const role = await firstValueFrom(
+					this._roleService.getRoleByOptions({
+						name: roleName,
+						tenantId
+					})
+				);
+
+				request = {
+					...request,
+					role
+				};
+			}
+
 			await this._userService
 				.update(this.selectedUser ? this.selectedUser.id : this._store.userId, request)
 				.then(() => {
@@ -267,6 +360,8 @@ export class EditProfileFormComponent implements OnInit, OnDestroy {
 				});
 		} catch (error) {
 			this._errorHandler.handleError(error);
+		} finally {
+			this.saving = false;
 		}
 	}
 
