@@ -70,6 +70,9 @@ export class LookupOptionsComponent {
 
 	set(value: boolean): void {
 		if (!this.canEdit || this.busy || value === this.autoCheck) return;
+		const before = this.autoCheck;
+		// The toggle shows the value asked for while it is saved, and the saved one after.
+		this.autoCheck = value;
 		this.busy = true;
 		this.failed = false;
 		this.api
@@ -83,6 +86,8 @@ export class LookupOptionsComponent {
 					this.cdr.markForCheck();
 				},
 				error: (_error: HttpErrorResponse) => {
+					// Not saved: the toggle goes back to the saved value, and a new click is taken.
+					this.autoCheck = before;
 					this.busy = false;
 					this.failed = true;
 					this.cdr.markForCheck();

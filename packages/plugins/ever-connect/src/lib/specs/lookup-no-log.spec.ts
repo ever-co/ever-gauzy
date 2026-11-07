@@ -21,7 +21,14 @@ const HASH = /\b[0-9a-f]{64}\b/;
 describe('the counterparty check and discoverability log no value and no hash', () => {
 	let h: LookupHarness;
 	const lines: string[] = [];
-	const VALUES = ['BG123456789', 'bg 123 456 789', 'secret.person@example.com', '987654321', 'DE999999999'];
+	const VALUES = [
+		'BG123456789',
+		'bg 123 456 789',
+		'secret.person@example.com',
+		'987654321',
+		'DE999999999',
+		'DE888888888'
+	];
 
 	beforeEach(async () => {
 		lines.length = 0;
@@ -102,16 +109,16 @@ describe('the counterparty check and discoverability log no value and no hash', 
 	it('on every outcome of the discoverable upload and its removal', async () => {
 		await setOrganizationIdentifiers(h, { taxId: 'DE999999999' });
 		await h.setIntegration('counterparty_discoverable', true);
-		for (const answer of [
-			problem(500, 'internal'),
-			problem(409, 'identifier_claimed'),
-			{ status: 200, body: { items: [] } }
-		]) {
+		for (const [answer, taxId] of [
+			[problem(500, 'internal'), 'DE999999999'],
+			[problem(409, 'identifier_claimed'), 'DE999999999'],
+			[{ status: 200, body: { items: [] } }, 'DE888888888']
+		] as const) {
 			h.platform.on(IDENTIFIERS_PUT, answer);
 			await h.discoverable.identifierChanged({
 				tenantId: h.acme.tenantId,
 				organizationId: h.acme.organizationId,
-				taxId: 'DE999999999'
+				taxId
 			});
 		}
 		h.platform.offline = true;
@@ -130,6 +137,7 @@ describe('the counterparty check and discoverability log no value and no hash', 
 		expect(audit).toContain('identifiers.push');
 		expect(audit).not.toMatch(HASH);
 		expect(audit).not.toContain('DE999999999');
+		expect(audit).not.toContain('DE888888888');
 		// Nothing about the identifiers is stored in clear.
 		const rows = JSON.stringify(await h.dataSource.query('SELECT * FROM "ever_connect_integration"'));
 		expect(rows).not.toMatch(HASH);

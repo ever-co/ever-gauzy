@@ -158,6 +158,16 @@ describe('CheckOnEverPlatformButtonComponent', () => {
 		expect(api.lookup).not.toHaveBeenCalled();
 	});
 
+	it('a contact of another organization (the selector changed on the page) is not checked under this one', async () => {
+		api.integrations.mockReturnValue(of([row()]));
+		contacts.getById.mockResolvedValue({ ...CONTACT, organizationId: 'aaaaaaaa-2222-4333-8444-555555555555' });
+		const { find, fixture } = render();
+		(find('check-on-ever-platform') as HTMLButtonElement).click();
+		await fixture.whenStable();
+		expect(dialogs.open).not.toHaveBeenCalled();
+		expect(api.lookup).not.toHaveBeenCalled();
+	});
+
 	it('lookupShown and vatSuggestion', () => {
 		expect(lookupShown(row())).toBe(true);
 		expect(lookupShown(row({ key: 'counterparty_discoverable' }))).toBe(false);
@@ -293,6 +303,18 @@ describe('LookupOptionsComponent', () => {
 		expect(component.autoCheck).toBe(false);
 		component.set(true);
 		expect(api.setLookupAutoCheck).toHaveBeenCalledWith(ORGANIZATION.id, true);
+		expect(component.autoCheck).toBe(true);
+	});
+
+	it('a save that fails puts the toggle back, and the next click is taken', () => {
+		api.setLookupAutoCheck.mockReturnValueOnce(throwError(() => ({ status: 502 })));
+		const component = render(true);
+		component.set(true);
+		expect(component.autoCheck).toBe(false);
+		expect(component.failed).toBe(true);
+		api.setLookupAutoCheck.mockReturnValueOnce(of({ auto_check: true }));
+		component.set(true);
+		expect(api.setLookupAutoCheck).toHaveBeenCalledTimes(2);
 		expect(component.autoCheck).toBe(true);
 	});
 

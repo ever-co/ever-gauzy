@@ -203,6 +203,9 @@ export class CheckOnEverPlatformButtonComponent implements OnInit {
 		const contact = await this.readContact();
 		this.opening = false;
 		this.cdr.markForCheck();
+		// A contact of another organization (the organization selector changed on this page) is never
+		// checked under this organization's link.
+		if (contact?.organizationId && contact.organizationId !== organizationId) return;
 		const vat = vatSuggestion(contact?.contact?.fiscalInformation);
 		this.dialogs?.open(CheckOnEverPlatformDialogComponent, {
 			context: {

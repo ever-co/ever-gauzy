@@ -224,6 +224,47 @@ describe('discoverability', () => {
 		expect(h.platform.callsTo(IDENTIFIERS_PUT)).toHaveLength(2);
 	});
 
+	it('a cleared tax id whose removal did not go through is removed at the next heartbeat, discoverability still on', async () => {
+		await h.setIntegration('counterparty_discoverable', true);
+		await saveTaxId(ACME);
+		h.platform.offline = true;
+		await saveTaxId(null);
+		h.platform.offline = false;
+		expect(h.platform.callsTo(IDENTIFIERS_DELETE)).toHaveLength(1);
+		await h.states.retryPending();
+		expect(h.platform.callsTo(IDENTIFIERS_DELETE)).toHaveLength(2);
+		const state = h.discoverable.read((await h.store.integration(LINK_ID, 'counterparty_discoverable'))!);
+		expect(state).toEqual({ pushed: [], digest: null, pending: null });
+		await h.states.retryPending();
+		expect(h.platform.callsTo(IDENTIFIERS_DELETE)).toHaveLength(2);
+		expect(h.platform.callsTo(IDENTIFIERS_PUT)).toHaveLength(1);
+	});
+
+	it('changes are uploaded in the order they were saved; the heartbeat uploads what the organization holds now', async () => {
+		await h.setIntegration('counterparty_discoverable', true);
+		await setOrganizationIdentifiers(h, { taxId: 'BG000000002' });
+		const change = (taxId: string) =>
+			h.discoverable.identifierChanged({
+				tenantId: h.acme.tenantId,
+				organizationId: h.acme.organizationId,
+				taxId
+			});
+		await Promise.all([change('BG000000001'), change('BG000000002')]);
+		const bodies = h.platform.callsTo(IDENTIFIERS_PUT).map((call) => call.body);
+		expect(bodies).toEqual([
+			{ hashes: [{ kind: 'vat', salt_version: 1, hash: hashOf(SALT_V1, 'BG000000001') }] },
+			{ hashes: [{ kind: 'vat', salt_version: 1, hash: hashOf(SALT_V1, 'BG000000002') }] }
+		]);
+		// A change this process did not see (another API process, a direct database write): the next
+		// heartbeat uploads what the organization holds.
+		await setOrganizationIdentifiers(h, { taxId: ACME });
+		await h.states.retryPending();
+		expect(h.platform.callsTo(IDENTIFIERS_PUT).at(-1)?.body).toEqual({
+			hashes: [{ kind: 'vat', salt_version: 1, hash: hashOf(SALT_V1, ACME) }]
+		});
+		expect(h.platform.callsTo(IDENTIFIERS_PUT)).toHaveLength(3);
+	});
+
 	it('an upload that did not go through is sent again at the next heartbeat; one Ever Platform refuses as claimed is not', async () => {
 		await h.setIntegration('counterparty_discoverable', true);
 		h.platform.offline = true;

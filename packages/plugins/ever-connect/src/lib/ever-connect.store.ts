@@ -606,11 +606,22 @@ export class EverConnectStore {
 		now: number
 	): Promise<Map<string, string | null>> {
 		const found = new Map<string, string | null>();
-		for (const { kind, hash } of entries) {
-			const row = await this.sql.one(LOOKUP_CACHE, { organizationId, kind, hash, saltVersion: String(saltVersion) });
-			const expiresAt = row ? num(row['expiresAt']) : null;
-			if (row && expiresAt !== null && expiresAt > now) {
-				found.set(`${kind}:${hash}`, str(row['result']));
+		const hashes = [...new Set(entries.map((entry) => entry.hash))];
+		if (!hashes.length) {
+			return found;
+		}
+		const wanted = new Set(entries.map(({ kind, hash }) => `${kind}:${hash}`));
+		const q = (c: string) => this.sql.q(c);
+		const marks = hashes.map((_, i) => this.sql.ph(i + 4)).join(', ');
+		const { rows } = await this.sql.run(
+			`SELECT ${q('kind')}, ${q('hash')}, ${q('result')}, ${q('expiresAt')} FROM ${q(LOOKUP_CACHE)} ` +
+				`WHERE ${q('organizationId')} = ${this.sql.ph(1)} AND ${q('saltVersion')} = ${this.sql.ph(2)} AND ${q('expiresAt')} > ${this.sql.ph(3)} AND ${q('hash')} IN (${marks})`,
+			[organizationId, String(saltVersion), now, ...hashes]
+		);
+		for (const row of rows) {
+			const slot = `${String(row['kind'])}:${String(row['hash'])}`;
+			if (wanted.has(slot)) {
+				found.set(slot, str(row['result']));
 			}
 		}
 		return found;
