@@ -2,10 +2,11 @@ import { DataSource, EntitySchema } from 'typeorm';
 import { applyTypeOrmReadPathPatches } from './typeorm-read-path.patches';
 
 /**
- * The inverse side of a many-to-many under `relationLoadStrategy: 'query'`, with and without Gauzy's TypeORM
- * read-path patches: `Task.teams` owns the join table, `Team.tasks` is the inverse side. On Gauzy's entities the
- * inverse side came back empty (`OrganizationTeam.tasks`, ever-co/ever-gauzy#11676); this pins down whether the
- * patches are the cause, on the smallest pair of entities.
+ * The inverse side of a many-to-many under `relationLoadStrategy: 'query'` with Gauzy's TypeORM read-path patches
+ * applied: `Task.teams` owns the join table, `Team.tasks` is the inverse side. On Gauzy's entities the inverse side
+ * came back empty (`OrganizationTeam.tasks`, ever-co/ever-gauzy#11676) because both sides declare a `@JoinTable`
+ * (see `organization-team.tasks-query-strategy.sqlite.spec.ts`); this checks that, on the smallest pair of entities
+ * with one owner, the inverse side loads correctly with the patches applied — the patches are not what empties it.
  */
 const Task = new EntitySchema<any>({
 	name: 'Task',
@@ -57,7 +58,8 @@ describe('inverse many-to-many under relationLoadStrategy query', () => {
 	const expected = { 'team-1': ['task-1', 'task-2'], 'team-2': ['task-3'] };
 
 	it('loads the inverse side with the read-path patches applied', async () => {
-		applyTypeOrmReadPathPatches();
+		// `true`: applied now or already (TYPEORM_SKIP_REDUNDANT_RELATION_IDS=false would answer false and run unpatched)
+		expect(applyTypeOrmReadPathPatches({ ...process.env, TYPEORM_SKIP_REDUNDANT_RELATION_IDS: undefined })).toBe(true);
 		await expect(tasksOfTeams()).resolves.toEqual(expected);
 	});
 });

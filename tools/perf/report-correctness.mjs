@@ -104,12 +104,24 @@ const { token, user } = login;
 const tenantId = user.tenantId;
 const headers = { authorization: `Bearer ${token}`, 'tenant-id': tenantId };
 const get = (path) => fetch(base + path, { headers }).then(async (r) => ({ status: r.status, body: await r.json().catch(() => null) }));
+// A list the cases are built from: a refused or malformed answer stops the capture and names the lookup, so a capture
+// never silently covers less than it claims
+const list = async (name, path) => {
+	const r = await get(path);
+	if (!(r.status >= 200 && r.status < 300) || !Array.isArray(r.body?.items)) {
+		throw new Error(`${name} lookup failed: status ${r.status}, body ${JSON.stringify(r.body).slice(0, 200)}`);
+	}
+	return r.body.items;
+};
 
-const orgs = await get(`/organization?${new URLSearchParams({ 'where[tenantId]': tenantId })}`);
-const organizationId = user.employee?.organizationId || orgs.body.items[0].id;
-const employees = (await get(`/employee/pagination?${new URLSearchParams({ 'where[organizationId]': organizationId, 'where[tenantId]': tenantId, take: '50' })}`)).body.items ?? [];
-const teams = (await get(`/organization-team?${new URLSearchParams({ 'where[organizationId]': organizationId, 'where[tenantId]': tenantId })}`)).body.items ?? [];
-const projects = (await get(`/organization-projects?${new URLSearchParams({ 'where[organizationId]': organizationId, 'where[tenantId]': tenantId })}`)).body.items ?? [];
+const organizationId = user.employee?.organizationId || (await list('organization', `/organization?${new URLSearchParams({ 'where[tenantId]': tenantId })}`))[0]?.id;
+if (!organizationId) throw new Error('no organization for the signed-in user');
+const employees = await list('employee', `/employee/pagination?${new URLSearchParams({ 'where[organizationId]': organizationId, 'where[tenantId]': tenantId, take: '50' })}`);
+const teams = await list('team', `/organization-team?${new URLSearchParams({ 'where[organizationId]': organizationId, 'where[tenantId]': tenantId })}`);
+const projects = await list('project', `/organization-projects?${new URLSearchParams({ 'where[organizationId]': organizationId, 'where[tenantId]': tenantId })}`);
+if (!employees.length || !teams.length || !projects.length) {
+	throw new Error(`the organization has ${employees.length} employees, ${teams.length} teams, ${projects.length} projects: the cases need at least one of each`);
+}
 const employeeIds = employees.map((e) => e.id).sort();
 const teamIds = teams.map((t) => t.id).sort();
 const projectIds = projects.map((p) => p.id).sort();

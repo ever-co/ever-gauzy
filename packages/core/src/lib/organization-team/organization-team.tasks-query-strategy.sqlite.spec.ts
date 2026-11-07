@@ -127,7 +127,7 @@ describe('OrganizationTeam.tasks under relationLoadStrategy query (real entities
 
 		const junctionRead = measured.statements.find((statement) => /FROM "task_team"/.test(statement));
 		expect(junctionRead).toMatch(/"task_team"\."taskId" IN \(\?, \?\) AND "task_team"\."organizationTeamId" IN \(\?, \?, \?\)/);
-		expect(junctionRead).toMatch(new RegExp(`\["${TEAMS[0]}","${TEAMS[1]}","${TASKS[0]}","${TASKS[1]}","${TASKS[2]}"\]`));
+		expect(junctionRead).toContain(JSON.stringify([TEAMS[0], TEAMS[1], TASKS[0], TASKS[1], TASKS[2]]));
 		// Today's answer (see the header); flips to `expected` once the inverse side no longer declares a JoinTable
 		expect(measured.queryStrategy).toEqual({ [TEAMS[0]]: [], [TEAMS[1]]: [] });
 	});
