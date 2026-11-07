@@ -18,6 +18,7 @@ const STUBBED = Array.from(PLUGINS_SOURCE.matchAll(/from '((?:@gauzy\/plugin-|\.
 		name !== '@gauzy/plugin-integration-ever-works' &&
 		name !== '@gauzy/plugin-integration-linear' &&
 		name !== '@gauzy/plugin-integration-asana' &&
+		name !== '@gauzy/plugin-integration-trello' &&
 		name !== '@gauzy/plugin-inbox' &&
 		name !== '@gauzy/plugin-realtime' &&
 		name !== '@gauzy/plugin-chat' &&
@@ -36,6 +37,7 @@ class EverConnectPlugin {}
 class IntegrationEverWorksPlugin {}
 class IntegrationLinearPlugin {}
 class IntegrationAsanaPlugin {}
+class IntegrationTrelloPlugin {}
 class InboxPlugin {}
 class RealtimePlugin {}
 class ChatPlugin {}
@@ -101,6 +103,10 @@ function loadPlugins(env: Record<string, string | undefined>, before?: () => voi
 			jest.doMock('@gauzy/plugin-integration-asana', () => ({
 				IntegrationAsanaPlugin,
 				isAsanaEnabled: jest.requireActual('../../../packages/plugins/integration-asana/src/lib/asana-enabled').isAsanaEnabled
+			}));
+			jest.doMock('@gauzy/plugin-integration-trello', () => ({
+				IntegrationTrelloPlugin,
+				isTrelloEnabled: jest.requireActual('../../../packages/plugins/integration-trello/src/lib/trello-enabled').isTrelloEnabled
 			}));
 			jest.doMock('@gauzy/plugin-inbox', () => ({
 				InboxPlugin,
@@ -351,6 +357,24 @@ describe('API plugin list: Asana integration', () => {
 			const plugins = loadPlugins({ ASANA_ENABLED: value });
 			expect(plugins.includes(IntegrationAsanaPlugin)).toBe(loaded);
 			expect(warn.mock.calls.filter(([message]) => String(message).includes('ASANA_ENABLED'))).toHaveLength(lines);
+		} finally {
+			warn.mockRestore();
+		}
+	});
+});
+
+describe('API plugin list: Trello integration', () => {
+	it.each([
+		['unset (the default)', undefined, false, 0],
+		['false', 'false', false, 0],
+		['true', 'true', true, 0],
+		['yes', 'yes', false, 1]
+	])('TRELLO_ENABLED %s: loaded %s, %i log line(s)', (_name, value, loaded, lines) => {
+		const warn = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+		try {
+			const plugins = loadPlugins({ TRELLO_ENABLED: value });
+			expect(plugins.includes(IntegrationTrelloPlugin)).toBe(loaded);
+			expect(warn.mock.calls.filter(([message]) => String(message).includes('TRELLO_ENABLED'))).toHaveLength(lines);
 		} finally {
 			warn.mockRestore();
 		}

@@ -1,6 +1,8 @@
 import { TaskPriorityEnum, TaskStatusEnum } from '@gauzy/contracts';
 import { LinearIssue, LinearWorkflowState } from '../client/linear-api.client';
 import {
+	attachmentLinkOf,
+	commentHtmlOf,
 	DEFAULT_STATE_MAP,
 	issueUpdateOf,
 	linearPriorityOf,
@@ -9,8 +11,7 @@ import {
 	serializeStateMap,
 	stateTypeOfStatus,
 	taskFieldsOf,
-	taskPriorityOf,
-	watermarkOf
+	taskPriorityOf
 } from './linear-issue.mapper';
 
 const STATES: LinearWorkflowState[] = [
@@ -95,8 +96,17 @@ describe('linear issue mapper', () => {
 		expect(issueUpdateOf({ priority: null }, STATES, DEFAULT_STATE_MAP)).toEqual({ priority: 0 });
 	});
 
-	it('advances the watermark to the newest change', () => {
-		expect(watermarkOf([issue(), issue({ updatedAt: '2026-01-05T00:00:00.000Z' })], '2026-01-03T00:00:00.000Z')).toBe('2026-01-05T00:00:00.000Z');
-		expect(watermarkOf([], null)).toBeNull();
+	it('keeps a comment as escaped HTML paragraphs, naming an author who is nobody here', () => {
+		const comment = { body: 'Ship it <today>\n\nThen "rest"', user: { id: 'u1', name: 'ada', displayName: 'Ada & Co', email: null } };
+		expect(commentHtmlOf(comment, true)).toBe('<p>Ship it &lt;today&gt;</p><p>Then &quot;rest&quot;</p>');
+		expect(commentHtmlOf(comment, false)).toBe('<p><strong>Ada &amp; Co</strong> (Linear)</p><p>Ship it &lt;today&gt;</p><p>Then &quot;rest&quot;</p>');
+		expect(commentHtmlOf({ body: '  ', user: null }, false)).toBe('');
+		expect(commentHtmlOf({ body: 'x', user: { id: 'u2', name: 'grace', displayName: null, email: null } }, false)).toBe('<p><strong>grace</strong> (Linear)</p><p>x</p>');
+	});
+
+	it('keeps an attachment as a titled link to its address, and none without an HTTP(S) address', () => {
+		expect(attachmentLinkOf({ title: 'Design', url: 'https://www.figma.com/file/1' })).toEqual({ title: 'Design', url: 'https://www.figma.com/file/1' });
+		expect(attachmentLinkOf({ title: '', url: 'https://d/x' })).toEqual({ title: 'https://d/x', url: 'https://d/x' });
+		expect(attachmentLinkOf({ title: 'x', url: 'ftp://nope' })).toBeNull();
 	});
 });

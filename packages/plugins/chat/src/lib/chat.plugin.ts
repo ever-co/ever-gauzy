@@ -1,6 +1,8 @@
 import { ApplicationPluginConfig } from '@gauzy/common';
 import { GauzyCorePlugin as Plugin, IOnPluginBootstrap, IOnPluginDestroy } from '@gauzy/plugin';
 import { CHAT_MIGRATIONS } from './database/chat-migrations';
+import { ChatResolver } from './graphql/chat.resolver';
+import { chatSchemaExtensions } from './graphql/chat.schema';
 import { CHAT_ENTITIES, ChatModule } from './chat.module';
 
 export { CHAT_MIGRATIONS };
@@ -17,6 +19,11 @@ export { CHAT_MIGRATIONS };
 	// Arrays, not factories: the platform resolves a factory for migrations but not for entities.
 	entities: [...CHAT_ENTITIES],
 	migrations: [...CHAT_MIGRATIONS],
+	// The GraphQL twins of the read routes (the chat spec, T17), served only with the plugin.
+	extensions: {
+		schema: chatSchemaExtensions,
+		resolvers: [ChatResolver]
+	},
 	configuration: (config: ApplicationPluginConfig) => config
 })
 export class ChatPlugin implements IOnPluginBootstrap, IOnPluginDestroy {

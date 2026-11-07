@@ -3,7 +3,6 @@ import { GauzyCorePlugin as Plugin, IOnPluginBootstrap, IOnPluginDestroy } from 
 import { isSchedulerQueueRootEnabled } from '@gauzy/scheduler';
 import { CreateIntegrationAsanaTables1791000005000 } from './database/migrations/1791000005000-CreateIntegrationAsanaTables';
 import { ASANA_ENTITIES, AsanaModule } from './asana.module';
-import { readAsanaConfig } from './asana-config';
 import { AsanaMaintenanceModule } from './maintenance/asana-maintenance.module';
 
 /** The plugin's migrations, oldest first (ordered with the platform's by their timestamps). */
@@ -20,9 +19,9 @@ export const ASANA_MIGRATIONS = [CreateIntegrationAsanaTables1791000005000];
  */
 @Plugin({
 	// The scheduled import travels on a queue, so it is registered only where a queue root exists (the worker
-	// process, or an API with `REDIS_ENABLED`); an operator switches it off with `ASANA_IMPORT_INTERVAL_MINUTES=0`.
+	// process, or an API with `REDIS_ENABLED`); `ASANA_IMPORT_INTERVAL_MINUTES=0` switches the imports off; the sweep still runs to file the refused-token notices the Inbox has not taken.
 	// Without it the integration is whole: webhooks and "import now" need no schedule.
-	imports: [AsanaModule, ...(isSchedulerQueueRootEnabled() && readAsanaConfig(process.env).importIntervalMinutes > 0 ? [AsanaMaintenanceModule] : [])],
+	imports: [AsanaModule, ...(isSchedulerQueueRootEnabled() ? [AsanaMaintenanceModule] : [])],
 	entities: [...ASANA_ENTITIES],
 	migrations: [...ASANA_MIGRATIONS],
 	configuration: (config: ApplicationPluginConfig) => config

@@ -37,5 +37,10 @@ export const INBOX_MY_MAILBOX_LINK = `${INBOX_LINK}/${INBOX_MY_MAILBOX_PATH}`;
 
 /** The core nav section the settings entries go under, and their ids. */
 export const INBOX_SETTINGS_NAV_SECTION_ID = 'settings';
+
+/** Settings -> Notifications (`/pages/settings/notifications`): the employee's own notification preferences. */
+export const INBOX_NOTIFICATION_SETTINGS_PATH = 'notifications';
+export const INBOX_NOTIFICATION_SETTINGS_LINK = `/pages/settings/${INBOX_NOTIFICATION_SETTINGS_PATH}`;
+export const INBOX_NOTIFICATION_SETTINGS_NAV_ID = 'settings-notifications';
 export const INBOX_PROVIDERS_NAV_ID = 'settings-inbox-providers';
 export const INBOX_MAILBOXES_NAV_ID = 'settings-inbox-mailboxes';

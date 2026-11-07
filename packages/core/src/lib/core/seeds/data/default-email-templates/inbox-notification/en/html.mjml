@@ -1,0 +1,22 @@
+<mjml>
+	<mj-body background-color="#fff">
+		<mj-section>
+			<mj-column>
+				<mj-divider border-color="#1B005D" border-width="1px"></mj-divider>
+				<mj-text font-size="14px" font-family="helvetica" color="#6c757d">{{kindLabel}}</mj-text>
+				<mj-text font-size="20px" font-family="helvetica">{{title}}</mj-text>
+				{{#if body}}
+				<mj-text font-size="16px" font-family="helvetica">
+					<p>{{body}}</p>
+				</mj-text>
+				{{/if}}
+				<mj-button href="{{link}}" background-color="#1B005D" font-family="helvetica">Open in your Inbox</mj-button>
+				<mj-divider border-color="#1B005D" border-width="1px"></mj-divider>
+				<mj-text align="center" font-size="12px" font-family="helvetica" color="#6c757d">
+					You receive this email because your notification settings ask for it.
+					<a href="{{settingsLink}}" style="color: #598bff">Change them</a>.
+				</mj-text>
+			</mj-column>
+		</mj-section>
+	</mj-body>
+</mjml>

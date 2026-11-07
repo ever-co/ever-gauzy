@@ -69,6 +69,9 @@ const PROGRAMME_WITHOUT_WITH_DELETED = new Set([
 
 const PLATFORM_WITHOUT_WITH_DELETED = new Set([
 	'activities', 'activityLogs', 'addresses',
+	// `GET /tasks/built-in/:key` binds `TaskBuiltInViewQueryDTO` (the organization, the time zone, the page), not
+	// `BaseQueryDTO`, so the route takes no `withDeleted` either: both surfaces answer live tasks only.
+	'builtInViewTasks',
 	'apiCallLogs',
 	'channelDomains', 'contactBuyers',
 	'contactCredentials', 'contactGroups',
@@ -146,6 +149,8 @@ const COMPUTED_ANSWERS = new Set([
 	'resolveTaxRate',
 	// A resolution: what a variant costs in this context, per currency and quantity band.
 	'resolvePrice',
+	// A resolution: which tasks `KEY-number` references name, one answer per reference in request order.
+	'resolveTaskReferences',
 	// The components of one parent row, bounded by that row's own composition.
 	'taxRateParts',
 	'taxRegimeRates',

@@ -719,6 +719,36 @@ describe('SearchService — which entities a caller may search (doc 05 §3.18)',
 		expect(fixture.service.permittedEntities({ entities: ['product'] })).toEqual(['product']);
 	});
 
+	it('leaves a private declaration out of the generic page and the permitted set; searchWithin reaches it, with a filter', async () => {
+		const fixture = searchFixture({ permissions: [VISIBLE] });
+
+		jest.spyOn(RequestContext, 'hasPermission').mockImplementation((permission: never) => permission === (VISIBLE as never));
+
+		await indexAll(fixture);
+		fixture.registry.clear();
+		fixture.registry.register(VARIANT);
+		fixture.registry.register({ ...PRODUCT, privateScope: true } as never);
+
+		expect(fixture.service.permittedEntities()).toEqual(['product_variant']);
+		expect(fixture.service.permittedEntities({ entities: ['product'] })).toEqual([]);
+		expect(fixture.service.permittedEntities({ entities: ['product'] }, true)).toEqual(['product']);
+
+		const page = await fixture.service.search({ q: 'blue' });
+
+		expect(page.items.map((hit) => hit.entity)).toEqual(['product_variant']);
+
+		// A search within a scope carries that scope: without a filter it is a generic search by another name.
+		await expect(fixture.service.searchWithin({ q: 'blue', entities: ['product'] })).rejects.toBeInstanceOf(BadRequestException);
+
+		const within = await fixture.service.searchWithin({
+			q: 'blue',
+			entities: ['product'],
+			filters: [{ attribute: 'sku', operator: SearchFilterOperator.EQ, value: 'SKU-P1' }]
+		});
+
+		expect(within.items.map((hit) => hit.entityId)).toEqual(['p1']);
+	});
+
 	it('reports the freshness of the index through the reindex service', async () => {
 		const fixture = searchFixture();
 

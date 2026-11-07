@@ -12,6 +12,9 @@ import {
 	INBOX_MAILBOXES_SETTINGS_PATH,
 	INBOX_MY_MAILBOX_PATH,
 	INBOX_NAV_ID,
+	INBOX_NOTIFICATION_SETTINGS_LINK,
+	INBOX_NOTIFICATION_SETTINGS_NAV_ID,
+	INBOX_NOTIFICATION_SETTINGS_PATH,
 	INBOX_PATH,
 	INBOX_PROVIDERS_NAV_ID,
 	INBOX_PROVIDERS_SETTINGS_LINK,
@@ -92,6 +95,37 @@ export const INBOX_MAILBOXES_SETTINGS_ROUTE: PluginRouteInput = {
 	loadComponent: () => import('./settings/inbox-mailboxes-page.component').then((m) => m.InboxMailboxesPageComponent),
 	canActivate: [PermissionsGuard],
 	data: INBOX_SETTINGS_ROUTE_DATA
+};
+
+/**
+ * Settings → Notifications (`/pages/settings/notifications`, the Inbox spec T15): the employee's own notification
+ * setting — switches, email modes, quiet hours, digest hour. Served to every signed-in user (the setting is the
+ * platform's, whether or not the Inbox is on); the page says so when the user is not an employee here.
+ */
+export const INBOX_NOTIFICATION_SETTINGS_ROUTE: PluginRouteInput = {
+	location: 'settings-sections',
+	path: INBOX_NOTIFICATION_SETTINGS_PATH,
+	loadComponent: () => import('./settings/notification-settings-page.component').then((m) => m.InboxNotificationSettingsPageComponent),
+	data: {
+		selectors: {
+			project: false,
+			team: false,
+			employee: false,
+			date: false,
+			organization: true
+		}
+	}
+};
+
+/** The Settings → Notifications entry of the core Settings nav section, for every signed-in user. */
+export const INBOX_NOTIFICATION_SETTINGS_NAV_ITEM = {
+	id: INBOX_NOTIFICATION_SETTINGS_NAV_ID,
+	title: 'Notifications',
+	icon: 'fas fa-bell',
+	link: INBOX_NOTIFICATION_SETTINGS_LINK,
+	data: {
+		translationKey: 'INBOX.NOTIFICATION_SETTINGS.MENU'
+	}
 };
 
 /** The Settings → Inbox entries of the core Settings nav section (`INBOX_MAILBOX_MANAGE`). */
@@ -205,7 +239,7 @@ export function registerInboxEntryPoints(injector: Injector): Subscription {
 const declarative = defineDeclarativePlugin('inbox', {
 	version: '0.1.0',
 	location: INBOX_SECTIONS_LOCATION,
-	routes: [INBOX_PAGE_ROUTE, INBOX_PROVIDERS_SETTINGS_ROUTE, INBOX_MAILBOXES_SETTINGS_ROUTE],
+	routes: [INBOX_PAGE_ROUTE, INBOX_NOTIFICATION_SETTINGS_ROUTE, INBOX_PROVIDERS_SETTINGS_ROUTE, INBOX_MAILBOXES_SETTINGS_ROUTE],
 	permissionKeys: [PermissionsEnum.INBOX_VIEW],
 	translationNamespace: 'INBOX',
 	translations: { en }
@@ -221,6 +255,8 @@ export const InboxUiPlugin: PluginUiDefinition = {
 	...declarative,
 	bootstrap: (injector: Injector) => {
 		declarative.bootstrap?.(injector);
+		// The notification setting is the platform's: its page is in Settings whether or not the Inbox is served.
+		injector.get(NavMenuBuilderService).addNavMenuItems([INBOX_NOTIFICATION_SETTINGS_NAV_ITEM] as never, INBOX_SETTINGS_NAV_SECTION_ID);
 		registerInboxEntryPoints(injector);
 		registerInboxSettingsEntryPoints(injector);
 	}
