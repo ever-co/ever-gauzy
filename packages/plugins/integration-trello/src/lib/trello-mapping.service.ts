@@ -8,7 +8,8 @@ import {
 	TrelloSyncDirection,
 	TypeOrmTrelloBoardMappingRepository
 } from './entities/trello-board-mapping.entity';
-import { TRELLO_MAPPING_EXISTS, TRELLO_PROJECT_NOT_FOUND, TRELLO_PROJECT_OUTBOUND_TAKEN } from './trello.constants';
+import { TrelloSyncRun } from './entities/trello-sync-run.entity';
+import { TRELLO_MAPPING_EXISTS, TRELLO_MAPPING_PROJECT_FIXED, TRELLO_PROJECT_NOT_FOUND, TRELLO_PROJECT_OUTBOUND_TAKEN } from './trello.constants';
 import { serializeListMap } from './sync/trello-card.mapper';
 
 /** What a mapping is made or changed from. */
@@ -71,31 +72,31 @@ export class TrelloMappingService extends TenantAwareCrudService<TrelloBoardMapp
 		await this.requireProject(tenant, input.projectId);
 		const scope = { tenantId: tenant.tenantId as ID, organizationId: tenant.organizationId as ID };
 		const direction = input.direction ?? TrelloSyncDirection.INBOUND;
-		return this.dataSource.transaction(async (manager) => {
-			await this.lockMappingsOf(manager, tenant);
-			const existing = await manager.findOne(TrelloBoardMapping, { where: { integrationId: tenant.id as ID, trelloBoardId: input.trelloBoardId, tenantId: scope.tenantId } as never });
-			if (existing) throw this.mappedAlready(existing.id as ID);
-			await this.assertOutboundFree(tenant, input.projectId, direction, null, manager);
-			const mapping = Object.assign(new TrelloBoardMapping(), {
-				integrationId: tenant.id as ID,
-				...scope,
-				trelloBoardId: input.trelloBoardId,
-				trelloBoardName: input.trelloBoardName ?? null,
-				projectId: input.projectId,
-				direction,
-				listMap: serializeListMap(input.listMap),
-				syncEnabled: input.syncEnabled ?? true
+		const where = { integrationId: tenant.id as ID, trelloBoardId: input.trelloBoardId, tenantId: scope.tenantId };
+		try {
+			return await this.dataSource.transaction(async (manager) => {
+				await this.lockMappingsOf(manager, tenant);
+				const existing = await manager.findOne(TrelloBoardMapping, { where: where as never });
+				if (existing) throw this.mappedAlready(existing.id as ID);
+				await this.assertOutboundFree(tenant, input.projectId, direction, null, manager);
+				const mapping = Object.assign(new TrelloBoardMapping(), {
+					integrationId: tenant.id as ID,
+					...scope,
+					trelloBoardId: input.trelloBoardId,
+					trelloBoardName: input.trelloBoardName ?? null,
+					projectId: input.projectId,
+					direction,
+					listMap: serializeListMap(input.listMap),
+					syncEnabled: input.syncEnabled ?? true
+				});
+				return manager.save(TrelloBoardMapping, mapping);
 			});
-			try {
-				return await manager.save(TrelloBoardMapping, mapping);
-			} catch (error) {
-				if (!isUniqueViolation(error)) throw error;
-				const raced = await manager
-					.findOne(TrelloBoardMapping, { where: { integrationId: tenant.id as ID, trelloBoardId: input.trelloBoardId, tenantId: scope.tenantId } as never })
-					.catch(() => null);
-				throw raced ? this.mappedAlready(raced.id as ID) : error;
-			}
-		});
+		} catch (error) {
+			if (!isUniqueViolation(error)) throw error;
+			// The violation aborted the transaction (Postgres): the raced row is read outside it, once it rolled back.
+			const raced = await this.typeOrmTrelloBoardMappingRepository.findOne({ where: where as never }).catch(() => null);
+			throw raced ? this.mappedAlready(raced.id as ID) : error;
+		}
 	}
 
 	private mappedAlready(mappingId: ID): ConflictException {
@@ -112,26 +113,35 @@ export class TrelloMappingService extends TenantAwareCrudService<TrelloBoardMapp
 		}
 	}
 
-	/** Changes a mapping's project, direction, list map or switch. */
+	/**
+	 * Changes a mapping's project, direction, list map or switch: the mapping is read again under the same lock as a
+	 * creation, so the outbound check sees the latest row and two changes cannot both pass it. A mapping that has
+	 * imported or taken a webhook keeps its project (its tasks' id maps point into that project): remove it and map
+	 * the board again instead.
+	 */
 	async updateMapping(tenant: IIntegrationTenant, mappingId: ID, input: Partial<TrelloMappingInput>): Promise<TrelloBoardMapping> {
-		const mapping = await this.requireOne(tenant, mappingId);
-		const patch: Partial<TrelloBoardMapping> = {};
-		if (input.projectId && input.projectId !== mapping.projectId) {
-			await this.requireProject(tenant, input.projectId);
-			patch.projectId = input.projectId;
-		}
-		if (input.direction) patch.direction = input.direction;
-		if (input.listMap !== undefined) patch.listMap = serializeListMap(input.listMap);
-		if (input.syncEnabled !== undefined) patch.syncEnabled = input.syncEnabled;
-		if (input.trelloBoardName !== undefined) patch.trelloBoardName = input.trelloBoardName;
-		if (Object.keys(patch).length) {
-			// The outbound check and the write under the same lock as a creation, so two changes cannot both pass it.
-			await this.dataSource.transaction(async (manager) => {
-				await this.lockMappingsOf(manager, tenant);
-				await this.assertOutboundFree(tenant, patch.projectId ?? mapping.projectId, patch.direction ?? mapping.direction, mapping.id, manager);
-				await manager.update(TrelloBoardMapping, { id: mapping.id, tenantId: tenant.tenantId as ID }, patch as never);
-			});
-		}
+		await this.requireOne(tenant, mappingId);
+		if (input.projectId) await this.requireProject(tenant, input.projectId);
+		await this.dataSource.transaction(async (manager) => {
+			await this.lockMappingsOf(manager, tenant);
+			const mapping = await manager.findOne(TrelloBoardMapping, { where: { id: mappingId, integrationId: tenant.id as ID, tenantId: tenant.tenantId as ID } as never });
+			if (!mapping) throw new NotFoundException({ message: 'The mapping was not found' });
+			const patch: Partial<TrelloBoardMapping> = {};
+			if (input.projectId && input.projectId !== mapping.projectId) {
+				const runs = await manager.count(TrelloSyncRun, { where: { mappingId: mapping.id, tenantId: tenant.tenantId as ID } as never });
+				if (runs > 0) {
+					throw new ConflictException({ message: 'A mapping that has synced keeps its project; remove it and map the board again', code: TRELLO_MAPPING_PROJECT_FIXED, mappingId });
+				}
+				patch.projectId = input.projectId;
+			}
+			if (input.direction) patch.direction = input.direction;
+			if (input.listMap !== undefined) patch.listMap = serializeListMap(input.listMap);
+			if (input.syncEnabled !== undefined) patch.syncEnabled = input.syncEnabled;
+			if (input.trelloBoardName !== undefined) patch.trelloBoardName = input.trelloBoardName;
+			if (!Object.keys(patch).length) return;
+			await this.assertOutboundFree(tenant, patch.projectId ?? mapping.projectId, patch.direction ?? mapping.direction, mapping.id, manager);
+			await manager.update(TrelloBoardMapping, { id: mapping.id, tenantId: tenant.tenantId as ID }, patch as never);
+		});
 		return this.requireOne(tenant, mappingId);
 	}
 

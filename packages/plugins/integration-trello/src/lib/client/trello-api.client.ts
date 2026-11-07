@@ -227,10 +227,11 @@ export class TrelloApiClient {
 		return normaliseCard(card);
 	}
 
-	async createCard(input: { idList: string; name: string; desc?: string; due?: string | null }): Promise<TrelloCard> {
+	async createCard(input: { idList: string; name: string; desc?: string; due?: string | null; dueComplete?: boolean }): Promise<TrelloCard> {
 		const params: Record<string, string> = { idList: input.idList, name: input.name, fields: CARD_FIELDS, members: 'true', member_fields: MEMBER_FIELDS, labels: 'true' };
 		if (input.desc !== undefined) params['desc'] = input.desc;
 		if (input.due) params['due'] = input.due;
+		if (input.dueComplete !== undefined) params['dueComplete'] = String(input.dueComplete);
 		return normaliseCard(await this.call<TrelloCard>('POST', '/cards', params));
 	}
 

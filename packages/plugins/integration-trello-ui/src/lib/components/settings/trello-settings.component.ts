@@ -434,7 +434,12 @@ export class TrelloSettingsComponent implements OnInit {
 	chooseBoard(boardId: string): void {
 		if (!this.integrationId) return;
 		this.draft = { ...this.draft, trelloBoardId: boardId, lists: [] };
-		if (!boardId) return;
+		if (!boardId) {
+			// Nothing chosen: no read is awaited, and an earlier one's answer is dropped by the guard below.
+			this.loadingLists = false;
+			this.cdr.markForCheck();
+			return;
+		}
 		this.loadingLists = true;
 		this.cdr.markForCheck();
 		this.api.lists(this.integrationId, boardId).subscribe({

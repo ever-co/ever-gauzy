@@ -1,7 +1,8 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
-import { DataSource, IsNull } from 'typeorm';
-import { ID, IIntegrationMap, IIntegrationTenant, IntegrationEntity, isTaskSyncAllowed, ITaskCreateInput, ITaskUpdateInput } from '@gauzy/contracts';
+import { createHash } from 'node:crypto';
+import { DataSource, EntityManager, IsNull } from 'typeorm';
+import { ID, IIntegrationMap, IIntegrationTenant, IntegrationEntity, isTaskSyncAllowed, ITag, ITaskCreateInput, ITaskUpdateInput } from '@gauzy/contracts';
 import {
 	EmployeeService,
 	IntegrationMap,
@@ -254,7 +255,7 @@ export class TrelloSyncService {
 			// A new card goes to the list of its status, else the board's first list.
 			const target = list ?? lists[0];
 			if (!target) return;
-			await this.createCardOnce(holder, mapping, task.id as ID, scope, { idList: target.id, name: input.name, desc: input.desc, due: input.due ?? null });
+			await this.createCardOnce(holder, mapping, task.id as ID, scope, { idList: target.id, name: input.name, desc: input.desc, due: input.due ?? null, dueComplete: input.dueComplete });
 		} catch (caught) {
 			await this.noteRefusedToken(tenant, caught);
 			throw caught;
@@ -281,11 +282,7 @@ export class TrelloSyncService {
 		const sourceKey = `${integrationId}:${created.id}`;
 		const outcome = await this.serialized(sourceKey, () =>
 			this.withApplySlot(() =>
-				this.dataSource.transaction(async (manager): Promise<'recorded' | 'duplicate' | 'reconciled'> => {
-					if (manager.connection.options.type === 'postgres') {
-						await manager.query('SELECT pg_advisory_xact_lock(hashtext($1))', [`integration-trello:card:${sourceKey}`]);
-						await manager.query('SELECT pg_advisory_xact_lock(hashtext($1))', [`integration-trello:task:${taskId}`]);
-					}
+				this.lockedTransaction([`integration-trello:card:${sourceKey}`, `integration-trello:task:${taskId}`], async (manager): Promise<'recorded' | 'duplicate' | 'reconciled'> => {
 					const byTask = await manager.findOne(IntegrationMap, {
 						where: { entity: IntegrationEntity.TASK, gauzyId: taskId, integrationId, ...scope } as never
 					});
@@ -315,6 +312,35 @@ export class TrelloSyncService {
 		} else if (outcome === 'reconciled') {
 			this.logger.warn(`Task ${taskId}: the task the webhook of card ${created.id} made meanwhile was removed as a duplicate.`);
 		}
+	}
+
+	/**
+	 * Runs `work` in a transaction that holds a cross-process lock on each key: an advisory lock on Postgres, a named
+	 * lock on MySQL / MariaDB (held by the transaction's own session and released with it); SQLite serializes writers.
+	 * The statements are parameterized: a key is a bind value, never part of the SQL.
+	 */
+	private lockedTransaction<T>(keys: readonly string[], work: (manager: EntityManager) => Promise<T>): Promise<T> {
+		return this.dataSource.transaction(async (manager) => {
+			const dialect = manager.connection.options.type;
+			const named: string[] = [];
+			try {
+				for (const key of keys) {
+					if (dialect === 'postgres') {
+						await manager.query('SELECT pg_advisory_xact_lock(hashtext($1))', [key]);
+					} else if (dialect === 'mysql' || dialect === 'mariadb') {
+						const name = createHash('sha1').update(key).digest('hex');
+						const rows = (await manager.query('SELECT GET_LOCK(?, 30) AS got', [name])) as Array<{ got?: unknown }>;
+						if (Number(rows?.[0]?.got) !== 1) throw new Error(`The lock ${key} could not be taken within 30 s`);
+						named.push(name);
+					}
+				}
+				return await work(manager);
+			} finally {
+				for (const name of named.reverse()) {
+					await manager.query('SELECT RELEASE_LOCK(?)', [name]).catch(() => undefined);
+				}
+			}
+		});
 	}
 
 	/**
@@ -399,22 +425,10 @@ export class TrelloSyncService {
 		}
 	}
 
-	/**
-	 * One apply at a time per card: chained in the process, an advisory lock across processes on Postgres (a
-	 * parameterized statement: the key is a bind value), within the process's apply slots.
-	 */
+	/** One apply at a time per card: chained in the process, locked across processes (`lockedTransaction`), within the process's apply slots. */
 	private applyCard(context: ApplyContext, card: TrelloCard): Promise<ApplyOutcome> {
 		const key = `${context.mapping.integrationId}:${card.id}`;
-		return this.serialized(key, () =>
-			this.withApplySlot(() =>
-				this.dataSource.transaction(async (manager) => {
-					if (manager.connection.options.type === 'postgres') {
-						await manager.query('SELECT pg_advisory_xact_lock(hashtext($1))', [`integration-trello:card:${key}`]);
-					}
-					return this.applyCardNow(context, card);
-				})
-			)
-		);
+		return this.serialized(key, () => this.withApplySlot(() => this.lockedTransaction([`integration-trello:card:${key}`], () => this.applyCardNow(context, card))));
 	}
 
 	/**
@@ -510,7 +524,8 @@ export class TrelloSyncService {
 			if (!name) continue;
 			if (!context.tagIdsByLabel.has(label.id)) {
 				try {
-					const map: IIntegrationMap = await this.commandBus.execute(
+					// The label sync answers the tag itself (created once, updated after), not its id map.
+					const tag: ITag = await this.commandBus.execute(
 						new IntegrationMapSyncLabelCommand({
 							entity: { name, color: trelloColorOf(label.color), ...context.scope } as never,
 							sourceId: label.id,
@@ -518,7 +533,7 @@ export class TrelloSyncService {
 							...context.scope
 						})
 					);
-					context.tagIdsByLabel.set(label.id, (map?.gauzyId as ID | undefined) ?? null);
+					context.tagIdsByLabel.set(label.id, (tag?.id as ID | undefined) ?? null);
 				} catch (caught) {
 					this.logger.warn(`Label ${name} could not be synced: ${this.describe(caught)}`);
 					return undefined;

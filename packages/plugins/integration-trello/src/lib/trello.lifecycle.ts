@@ -24,7 +24,7 @@ export class TrelloLifecycle implements OnApplicationBootstrap {
 			this.logger.log(
 				isTrelloConfigured(this.config)
 					? 'The Trello integration is loaded (TRELLO_ENABLED=true).'
-					: 'The Trello integration is loaded, but TRELLO_CLIENT_ID, TRELLO_CLIENT_SECRET or the callback URL is missing: nobody can connect until they are set.'
+					: 'The Trello integration is loaded, but TRELLO_API_KEY or the return page (TRELLO_RETURN_URL, else CLIENT_BASE_URL) is missing: nobody can connect until they are set.'
 			);
 		} catch (error) {
 			// Never stop the API: the catalogue row is written again at the next start.
