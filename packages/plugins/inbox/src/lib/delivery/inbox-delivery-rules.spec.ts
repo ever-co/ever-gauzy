@@ -5,6 +5,7 @@ import {
 	excerptOf,
 	inboxItemLinkOf,
 	instantOfLocal,
+	nextLocalDate,
 	isWithinWindow,
 	kindSwitchOf,
 	localClockOf,
@@ -31,6 +32,10 @@ describe('the delivery clock', () => {
 		expect(instantOfLocal('2026-11-07', 8, 0, 'America/Los_Angeles').toISOString()).toBe('2026-11-07T16:00:00.000Z');
 		expect(instantOfLocal('2026-11-07', 23, 30, 'Pacific/Auckland').toISOString()).toBe('2026-11-07T10:30:00.000Z');
 		expect(instantOfLocal('2026-11-07', 0, 15, 'UTC').toISOString()).toBe('2026-11-07T00:15:00.000Z');
+		// The day the clocks go back in New York (01:30 happens twice): the instant is still that day's 08:00.
+		expect(instantOfLocal('2026-11-01', 8, 0, 'America/New_York').toISOString()).toBe('2026-11-01T13:00:00.000Z');
+		expect(nextLocalDate('2026-10-31')).toBe('2026-11-01');
+		expect(nextLocalDate('2026-12-31')).toBe('2027-01-01');
 	});
 
 	it('reads HH:mm as minutes of the day, and nothing else', () => {
@@ -75,6 +80,13 @@ describe('the digest hour', () => {
 		expect(nextDigestAt(NOW, 15, 'Europe/Sofia').toISOString()).toBe('2026-11-07T13:00:00.000Z');
 		expect(nextDigestAt(NOW, 8, 'America/Los_Angeles').toISOString()).toBe('2026-11-07T16:00:00.000Z');
 		expect(nextDigestAt(NOW, 99, 'UTC').toISOString()).toBe('2026-11-08T08:00:00.000Z');
+	});
+
+	it('keeps the chosen hour across a daylight-saving change (the next calendar day, not 24 hours on)', () => {
+		// 09:00 EDT on 31 October 2026; the digest hour has passed; the clocks go back overnight: 08:00 EST is 13:00 UTC.
+		expect(nextDigestAt(new Date('2026-10-31T13:00:00.000Z'), 8, 'America/New_York').toISOString()).toBe('2026-11-01T13:00:00.000Z');
+		// 23:00 EDT on 31 October inside a 22:00–07:00 window: it ends at 07:00 EST, 12:00 UTC.
+		expect(windowEndAfter(new Date('2026-11-01T03:00:00.000Z'), { start: '22:00', end: '07:00' }, 'America/New_York').toISOString()).toBe('2026-11-01T12:00:00.000Z');
 	});
 });
 

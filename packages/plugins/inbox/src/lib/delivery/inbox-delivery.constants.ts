@@ -4,6 +4,8 @@ import { EmployeeNotificationTypeEnum } from '@gauzy/contracts';
 export const INBOX_DELIVERY_QUEUE_NAME = 'inbox-delivery';
 export const INBOX_DELIVERY_SWEEP_JOB = 'inbox-delivery-sweep';
 export const INBOX_DELIVERY_SWEEP_SCHEDULE = 'inbox-delivery-sweep';
+/** The named lock one sweep holds across the workers (`InboxNamedLocks`). */
+export const INBOX_DELIVERY_SWEEP_LOCK = 'inbox-delivery-sweep';
 /** A sweep that could not run at all is tried again by the queue, a little later each time. */
 export const INBOX_DELIVERY_SWEEP_ATTEMPTS = 3;
 export const INBOX_DELIVERY_SWEEP_RETRY_DELAY_MS = 30_000;

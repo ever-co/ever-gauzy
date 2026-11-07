@@ -1,14 +1,16 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { ConflictException, Injectable, Logger } from '@nestjs/common';
 import { DataSource, In, IsNull, LessThanOrEqual, ObjectLiteral } from 'typeorm';
 import { ID, InboxDeliveryChannelEnum, InboxDeliveryModeEnum, InboxItemKindEnum, InboxItemSourceEnum } from '@gauzy/contracts';
 import { InboxItem } from '../entities/inbox-item.entity';
 import { InboxItemRecipient } from '../entities/inbox-item-recipient.entity';
+import { InboxNamedLocks } from '../email/database/named-locks';
 import { InboxDelivery } from './inbox-delivery.entity';
 import { InboxDeliveryMailer, IInboxDeliveryLine, IInboxDeliveryRecipient } from './inbox-delivery-mailer';
 import { deliveryUserOf, runInDeliveryContext } from './inbox-delivery-context';
 import {
 	INBOX_DELIVERY_DIGEST_MAX_ITEMS,
 	INBOX_DELIVERY_INTAKE_LOOKBACK_MS,
+	INBOX_DELIVERY_SWEEP_LOCK,
 	readInboxDeliveryBatch
 } from './inbox-delivery.constants';
 import { decideEmailDelivery, excerptOf, kindLabelOf, metadataOf, retryDelayMs } from './inbox-delivery-rules';
@@ -54,15 +56,33 @@ interface IDeliveryUser {
  *
  * The rows are the outbox: a send that fails is tried again later (doubling waits, five attempts, then given up
  * with its error on the row), a worker that was down catches up from the rows, two workers never both file the
- * same entry (the row is unique on entry, person and channel). Nothing here changes the entry or its read state.
+ * same entry (the row is unique on entry, person and channel) nor both send one: the sweep runs under a named
+ * lock across the workers (a sweep that finds it held is skipped, the next minute's takes over). Nothing here
+ * changes the entry or its read state.
  */
 @Injectable()
 export class InboxDeliveryService {
 	private readonly logger = new Logger(InboxDeliveryService.name);
+	/** One sweep at a time across the workers (a transaction-scoped advisory lock on PostgreSQL, `GET_LOCK` on MySQL). */
+	private readonly locks: InboxNamedLocks;
 
-	constructor(private readonly dataSource: DataSource, private readonly mailer: InboxDeliveryMailer) {}
+	constructor(private readonly dataSource: DataSource, private readonly mailer: InboxDeliveryMailer) {
+		this.locks = new InboxNamedLocks(dataSource);
+	}
 
 	async sweep(now = new Date()): Promise<IInboxDeliverySweepReport> {
+		try {
+			return await this.locks.run(INBOX_DELIVERY_SWEEP_LOCK, () => this.runSweep(now));
+		} catch (error) {
+			if (error instanceof ConflictException) {
+				this.logger.log('Inbox delivery sweep: another worker holds the sweep; this one is skipped');
+				return { decided: 0, immediateSent: 0, digestsSent: 0, failed: 0 };
+			}
+			throw error;
+		}
+	}
+
+	private async runSweep(now: Date): Promise<IInboxDeliverySweepReport> {
 		const batch = readInboxDeliveryBatch();
 		const report: IInboxDeliverySweepReport = { decided: 0, immediateSent: 0, digestsSent: 0, failed: 0 };
 		report.decided = await this.intake(now, batch);
@@ -151,17 +171,45 @@ export class InboxDeliveryService {
 
 	// ---------------------------------------------------------------- sending
 
-	/** The rows of a mode that are due now: not sent, not given up, due, and not waiting for a retry. */
-	private async due(mode: InboxDeliveryModeEnum, now: Date, batch: number): Promise<InboxDelivery[]> {
-		const base = { channel: InboxDeliveryChannelEnum.EMAIL, mode, sentAt: IsNull(), failedAt: IsNull(), dueAt: LessThanOrEqual(now) };
+	/** The rows of a mode that are due now: not sent, not given up, due, and not waiting for a retry; a person's alone when given. */
+	private async due(mode: InboxDeliveryModeEnum, now: Date, batch: number | null, person?: { tenantId: ID; userId: ID }): Promise<InboxDelivery[]> {
+		const base = {
+			channel: InboxDeliveryChannelEnum.EMAIL,
+			mode,
+			sentAt: IsNull(),
+			failedAt: IsNull(),
+			dueAt: LessThanOrEqual(now),
+			...(person ? { tenantId: person.tenantId, userId: person.userId } : {})
+		};
 		return this.dataSource.getRepository(InboxDelivery).find({
 			where: [
 				{ ...base, nextAttemptAt: IsNull() },
 				{ ...base, nextAttemptAt: LessThanOrEqual(now) }
 			],
 			order: { dueAt: 'ASC' },
-			take: batch
+			...(batch === null ? {} : { take: batch })
 		});
+	}
+
+	/** The people with a due row of the mode, earliest due first, `batch` of them at most: a digest is a person's whole due set, never a page of it. */
+	private async duePeople(mode: InboxDeliveryModeEnum, now: Date, batch: number): Promise<Array<{ tenantId: ID; userId: ID }>> {
+		const rows = (await this.dataSource
+			.getRepository(InboxDelivery)
+			.createQueryBuilder('delivery')
+			.select('delivery.tenantId', 'tenantId')
+			.addSelect('delivery.userId', 'userId')
+			.where('delivery.channel = :channel AND delivery.mode = :mode AND delivery.sentAt IS NULL AND delivery.failedAt IS NULL AND delivery.dueAt <= :now', {
+				channel: InboxDeliveryChannelEnum.EMAIL,
+				mode,
+				now
+			})
+			.andWhere('(delivery.nextAttemptAt IS NULL OR delivery.nextAttemptAt <= :now)')
+			.groupBy('delivery.tenantId')
+			.addGroupBy('delivery.userId')
+			.orderBy('MIN(delivery.dueAt)', 'ASC')
+			.limit(batch)
+			.getRawMany()) as Array<{ tenantId: ID; userId: ID }>;
+		return rows.filter((row) => row.tenantId && row.userId);
 	}
 
 	async sendImmediate(now: Date, batch: number): Promise<{ sent: number; failed: number }> {
@@ -191,17 +239,18 @@ export class InboxDeliveryService {
 	}
 
 	async sendDigests(now: Date, batch: number): Promise<{ sent: number; failed: number }> {
-		const rows = await this.due(InboxDeliveryModeEnum.DIGEST, now, batch);
 		let sent = 0;
 		let failed = 0;
-		if (!rows.length) return { sent, failed };
-		const groups = new Map<string, InboxDelivery[]>();
-		for (const row of rows) {
-			const key = `${row.tenantId}:${row.userId}`;
-			groups.set(key, [...(groups.get(key) ?? []), row]);
+		// The people first (a bounded set), then each person's whole due set: a digest is never a page of one.
+		const people = await this.duePeople(InboxDeliveryModeEnum.DIGEST, now, batch);
+		if (!people.length) return { sent, failed };
+		const groups: InboxDelivery[][] = [];
+		for (const person of people) {
+			const group = await this.due(InboxDeliveryModeEnum.DIGEST, now, null, person);
+			if (group.length) groups.push(group);
 		}
-		const items = await this.itemsOf(rows.map((row) => row.inboxItemId));
-		for (const group of groups.values()) {
+		const items = await this.itemsOf(groups.flat().map((row) => row.inboxItemId));
+		for (const group of groups) {
 			const first = group[0];
 			const recipient = await this.recipientOf(first);
 			if (!recipient) {

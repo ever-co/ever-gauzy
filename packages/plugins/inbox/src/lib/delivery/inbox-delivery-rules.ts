@@ -73,15 +73,35 @@ export function localClockOf(now: Date, timeZone?: string | null): IDeliveryCloc
 	};
 }
 
-/** The instant the person's clock shows `date` at `hour:minute` (within an hour across a daylight-saving change). */
-export function instantOfLocal(date: string, hour: number, minute: number, timeZone?: string | null): Date {
+/** The calendar day after `date` (`YYYY-MM-DD`). */
+export function nextLocalDate(date: string): string {
 	const [year, month, day] = date.split('-').map(Number);
-	const guess = new Date(Date.UTC(year, month - 1, day, hour, minute, 0, 0));
+	return new Date(Date.UTC(year, month - 1, day + 1)).toISOString().slice(0, 10);
+}
+
+/** How far a guess is from showing `date` at `hour:minute` on the person's clock, in minutes. */
+function minutesOff(guess: Date, date: string, hour: number, minute: number, timeZone?: string | null): number {
 	const shown = localClockOf(guess, timeZone);
 	let difference = hour * 60 + minute - (shown.hour * 60 + shown.minute);
 	if (shown.date < date) difference += MINUTES_IN_DAY;
 	else if (shown.date > date) difference -= MINUTES_IN_DAY;
-	return new Date(guess.getTime() + difference * 60_000);
+	return difference;
+}
+
+/**
+ * The instant the person's clock shows `date` at `hour:minute`: the UTC guess corrected by what the clock shows
+ * there, and checked once more, so the offset that applies on THAT day is the one used (a daylight-saving change
+ * between the guess and the day would otherwise leave an hour's error).
+ */
+export function instantOfLocal(date: string, hour: number, minute: number, timeZone?: string | null): Date {
+	const [year, month, day] = date.split('-').map(Number);
+	let instant = new Date(Date.UTC(year, month - 1, day, hour, minute, 0, 0));
+	for (let pass = 0; pass < 2; pass += 1) {
+		const off = minutesOff(instant, date, hour, minute, timeZone);
+		if (off === 0) break;
+		instant = new Date(instant.getTime() + off * 60_000);
+	}
+	return instant;
 }
 
 /** `HH:mm` as minutes of the day, or null when it is not one. */
@@ -101,23 +121,22 @@ export function isWithinWindow(clock: IDeliveryClock, window: { start?: unknown;
 	return start < end ? at >= start && at < end : at >= start || at < end;
 }
 
-/** When the window the clock is in ends, as an instant. */
+/** When the window the clock is in ends, as an instant: today's end when still ahead, else tomorrow's (the next calendar day's, not 24 hours on). */
 export function windowEndAfter(now: Date, window: { start?: unknown; end?: unknown }, timeZone?: string | null): Date {
 	const clock = localClockOf(now, timeZone);
 	const end = minutesOfDay(window.end) ?? 0;
 	const at = clock.hour * 60 + clock.minute;
-	const today = instantOfLocal(clock.date, Math.floor(end / 60), end % 60, timeZone);
-	if (at < end) return today;
-	return new Date(today.getTime() + MINUTES_IN_DAY * 60_000);
+	const date = at < end ? clock.date : nextLocalDate(clock.date);
+	return instantOfLocal(date, Math.floor(end / 60), end % 60, timeZone);
 }
 
-/** The next moment the person's clock shows the digest hour (today when it is still ahead, else tomorrow). */
+/** The next moment the person's clock shows the digest hour: today when still ahead, else the next calendar day's (not 24 hours on). */
 export function nextDigestAt(now: Date, digestHour: number, timeZone?: string | null): Date {
 	const clock = localClockOf(now, timeZone);
 	const hour = Number.isInteger(digestHour) && digestHour >= 0 && digestHour <= 23 ? digestHour : INBOX_DELIVERY_DEFAULT_DIGEST_HOUR;
 	const today = instantOfLocal(clock.date, hour, 0, timeZone);
 	if (today.getTime() > now.getTime()) return today;
-	return new Date(today.getTime() + MINUTES_IN_DAY * 60_000);
+	return instantOfLocal(nextLocalDate(clock.date), hour, 0, timeZone);
 }
 
 /** The `preferences` of a setting, stored as an object or as its JSON. */

@@ -256,14 +256,18 @@ API (its table) and the worker (its sweep). Every minute the worker's sweep (`In
 2. **sends the immediate emails** that are due (template `inbox-notification`: the entry's title, kind and text, a
    link to it in the Inbox page);
 3. **sends the digests** that are due as one email per person (template `inbox-digest`, newest first, up to fifty
-   entries and a count): one per person and day, since a day's rows share the person's digest hour.
+   entries and a count): the people first (a bounded set), then each person's whole due set, so a digest is never
+   a page of one; one per person and day, since a day's rows share the person's digest hour.
 
-The rows are the outbox: unique on entry, person and channel (two workers never both file one), a send that failed
+The sweep runs under a named lock across the workers (`InboxNamedLocks`): a sweep that finds it held is skipped, so
+two workers never both send a row. The rows are the outbox: unique on entry, person and channel (two workers never both file one), a send that failed
 is tried again later (waits doubling from five minutes, five attempts, then given up with its error on the row), a
 worker that was down catches up from the rows. The emails go through the platform's templates in the recipient's
 language and its transports (`EmailSendService`); they carry only what the entry shows its recipient. The templates
 ship with the platform's seeds and are migrated into existing installations (`1791000004850`).
-`INBOX_DELIVERY_SWEEP_BATCH` (200) bounds one sweep. Nothing here changes an entry or its read state; web push
+`INBOX_DELIVERY_SWEEP_BATCH` (200) bounds one sweep. The worker hosts the Inbox email features and the email providers
+with the delivery (each under its own switch), since a provider's transport registers only in the process that
+hosts it. Nothing here changes an entry or its read state; web push
 (spec T14) and the settings page (T15) are their own lanes.
 
 ## Tests

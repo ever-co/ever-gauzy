@@ -44,13 +44,25 @@ function fixture(options: {
 	});
 	query.getRawMany = jest.fn(async () => options.intake ?? []);
 	const recipients = { createQueryBuilder: jest.fn(() => query) };
+	const people: Record<string, jest.Mock> = {};
+	for (const name of ['select', 'addSelect', 'where', 'andWhere', 'groupBy', 'addGroupBy', 'orderBy', 'limit']) people[name] = jest.fn(() => people);
+	people.getRawMany = jest.fn(async () => {
+		const seen = new Map<string, { tenantId: string; userId: string }>();
+		for (const row of options.due ?? []) seen.set(`${row.tenantId}:${row.userId}`, { tenantId: String(row.tenantId), userId: String(row.userId) });
+		return [...seen.values()];
+	});
 	const delivery = {
 		create: jest.fn((row: Partial<InboxDelivery>) => row),
 		insert: jest.fn(async (_row: Partial<InboxDelivery>) => {
 			if (options.insertFails) throw new Error('duplicate key');
 		}),
 		exists: jest.fn(async () => !!options.insertFails),
-		find: jest.fn(async (_options: unknown) => options.due ?? []),
+		createQueryBuilder: jest.fn(() => people),
+		// A person's own rows when the criteria name one (the digest's whole set), else every due row (immediate, paged).
+		find: jest.fn(async (criteria: { where: Array<{ userId?: string }> }) => {
+			const userId = criteria?.where?.[0]?.userId;
+			return (options.due ?? []).filter((row) => !userId || row.userId === userId);
+		}),
 		update: jest.fn(async (_criteria: unknown, _patch: unknown) => ({ affected: 1 }))
 	};
 	const items = { find: jest.fn(async () => options.items ?? []) };
@@ -75,7 +87,7 @@ function fixture(options: {
 		})
 	};
 	const service = new InboxDeliveryService(dataSource, mailer as unknown as InboxDeliveryMailer);
-	return { service, query, delivery, mailer, users, settings, items };
+	return { service, query, delivery, mailer, users, settings, items, people };
 }
 
 const user = (id: string, email: string | null = `${id}@example.test`) => ({ id, email, firstName: 'Ada', lastName: 'Lovelace', preferredLanguage: 'bg', timeZone: 'Europe/Sofia' });
@@ -139,6 +151,7 @@ describe('InboxDeliveryService.sendImmediate', () => {
 		const criteria = delivery.find.mock.calls[0][0] as { where: Array<Record<string, unknown>>; take: number };
 		expect(criteria.where).toHaveLength(2);
 		expect(criteria.where[0]).toMatchObject({ channel: 'email', mode: InboxDeliveryModeEnum.IMMEDIATE });
+		expect(criteria.take).toBe(200);
 		expect(mailer.sendNotification).toHaveBeenCalledWith(
 			{ tenantId: 'ten', organizationId: 'org', email: 'u1@example.test', name: 'Ada Lovelace', locale: 'bg' },
 			{ itemId: 'i-d1', title: 'Entry i-d1', body: 'Body of i-d1', kindLabel: 'Mention' }
@@ -173,13 +186,19 @@ describe('InboxDeliveryService.sendImmediate', () => {
 });
 
 describe('InboxDeliveryService.sendDigests', () => {
-	it('sends one digest per person with the entries newest first, and marks every row of it sent', async () => {
-		const { service, delivery, mailer } = fixture({
+	it('sends one digest per person — the people first, then each one\'s whole due set — newest first, every row of it marked sent', async () => {
+		const { service, delivery, mailer, people } = fixture({
 			due: [dueRow('a', InboxDeliveryModeEnum.DIGEST), dueRow('b', InboxDeliveryModeEnum.DIGEST), dueRow('c', InboxDeliveryModeEnum.DIGEST, { userId: 'u2' })],
 			items: [item('i-a', '2026-11-07T08:00:00.000Z', 'Comment'), item('i-b', '2026-11-07T11:00:00.000Z'), item('i-c', '2026-11-07T09:00:00.000Z')],
 			users: { u1: user('u1'), u2: user('u2') }
 		});
 		expect(await service.sendDigests(NOW, 200)).toEqual({ sent: 2, failed: 0 });
+		expect(people.limit).toHaveBeenCalledWith(200);
+		expect(people.groupBy).toHaveBeenCalledWith('delivery.tenantId');
+		// A person's rows are read without a page: the digest is the whole due set.
+		const personCriteria = delivery.find.mock.calls[0][0] as { where: Array<Record<string, unknown>>; take?: number };
+		expect(personCriteria.where[0]).toMatchObject({ mode: InboxDeliveryModeEnum.DIGEST, tenantId: 'ten', userId: 'u1' });
+		expect(personCriteria.take).toBeUndefined();
 		expect(mailer.sendDigest).toHaveBeenCalledTimes(2);
 		const [recipient, lines, total] = mailer.sendDigest.mock.calls[0] as unknown as [{ email: string }, Array<{ itemId: string; kindLabel: string }>, number];
 		expect(recipient.email).toBe('u1@example.test');
