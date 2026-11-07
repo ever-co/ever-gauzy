@@ -1,4 +1,5 @@
 import {
+	BaseEntityEnum,
 	IInboxItem,
 	IInboxItemOption,
 	IInboxItemWithState,
@@ -10,7 +11,7 @@ import {
 import { INBOX_EMPLOYEE_LINK, INBOX_PROJECT_LINK, INBOX_TASK_LINK } from './inbox-ui.constants';
 
 /** The page's tabs: the API's item tabs plus Notifications (read live from `/employee-notification`). */
-export type InboxUiTab = 'all' | 'decisions' | 'email' | 'notifications' | 'snoozed' | 'archived';
+export type InboxUiTab = 'all' | 'decisions' | 'email' | 'notifications' | 'snoozed' | 'done' | 'archived';
 
 export const INBOX_UI_TABS: readonly InboxUiTab[] = [
 	'all',
@@ -18,6 +19,7 @@ export const INBOX_UI_TABS: readonly InboxUiTab[] = [
 	'email',
 	'notifications',
 	'snoozed',
+	'done',
 	'archived'
 ];
 
@@ -32,6 +34,8 @@ export function apiTabOf(tab: InboxUiTab): InboxTabEnum | null {
 			return InboxTabEnum.EMAIL;
 		case 'snoozed':
 			return InboxTabEnum.SNOOZED;
+		case 'done':
+			return InboxTabEnum.DONE;
 		case 'archived':
 			return InboxTabEnum.ARCHIVED;
 		default:
@@ -129,14 +133,24 @@ export function snoozeUntil(preset: InboxSnoozePreset, now: Date = new Date()): 
 
 /** One of the links of an item (the detail pane's "Open …" buttons). */
 export interface InboxItemLink {
-	kind: 'task' | 'project' | 'agent';
+	kind: 'task' | 'comment' | 'project' | 'agent';
 	commands: string[];
+	queryParams?: Record<string, string>;
 }
 
-/** The task, project and agent an item links to, as router commands. */
-export function linksOf(item: Pick<IInboxItem, 'taskId' | 'projectId' | 'agentEmployeeId'>): InboxItemLink[] {
+/**
+ * The task, project and agent an item links to, as router commands. A notification about a comment (a comment on
+ * a record I follow, a mention in one) opens its task at the comment (`?comment=`), rather than the task alone.
+ */
+export function linksOf(item: Pick<IInboxItem, 'taskId' | 'projectId' | 'agentEmployeeId' | 'entity' | 'entityId'>): InboxItemLink[] {
 	const links: InboxItemLink[] = [];
-	if (item.taskId) links.push({ kind: 'task', commands: [INBOX_TASK_LINK, item.taskId] });
+	if (item.taskId) {
+		links.push(
+			item.entity === BaseEntityEnum.Comment && item.entityId
+				? { kind: 'comment', commands: [INBOX_TASK_LINK, item.taskId], queryParams: { comment: String(item.entityId) } }
+				: { kind: 'task', commands: [INBOX_TASK_LINK, item.taskId] }
+		);
+	}
 	if (item.projectId) links.push({ kind: 'project', commands: [INBOX_PROJECT_LINK, item.projectId, 'edit'] });
 	if (item.agentEmployeeId) links.push({ kind: 'agent', commands: [INBOX_EMPLOYEE_LINK, item.agentEmployeeId] });
 	return links;
@@ -156,6 +170,11 @@ export function isArchived(item: Pick<IInboxItemWithState, 'recipient'>): boolea
 export function isSnoozed(item: Pick<IInboxItemWithState, 'recipient'>, now: Date = new Date()): boolean {
 	const until = item.recipient?.snoozedUntil ? new Date(item.recipient.snoozedUntil) : null;
 	return !!until && !Number.isNaN(until.getTime()) && until.getTime() > now.getTime();
+}
+
+/** Whether the caller has the item done (`isDone` as the API answers it, else the time it was done). */
+export function isDone(item: Pick<IInboxItemWithState, 'recipient'>): boolean {
+	return !!item.recipient && (item.recipient.isDone ?? !!item.recipient.doneAt);
 }
 
 /** Replaces an item of a list by its new version (same id), keeping the order. */

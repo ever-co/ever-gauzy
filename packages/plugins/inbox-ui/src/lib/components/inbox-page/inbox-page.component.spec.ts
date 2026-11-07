@@ -106,6 +106,48 @@ describe('InboxPageComponent', () => {
 		expect(component.selected()).toMatchObject({ id: 'a', recipient: { isRead: true } });
 	});
 
+	it('an item marked done leaves the open tabs; brought back, it leaves the Done tab', () => {
+		api.counts.mockReturnValue(of({ unread: 1, decisionsOpen: 1, byMailbox: [] }));
+		api.list.mockReturnValue(of({ items: [item('a')], nextCursor: null }));
+		const { component, find } = render();
+		expect(find('tab-done')).not.toBeNull();
+		api.setState.mockReturnValue(
+			of(item('a', { recipient: { isRead: true, isArchived: false, snoozedUntil: null, isDone: true } }))
+		);
+		component.changeState(component.items()[0], { isDone: true });
+		expect(api.setState).toHaveBeenCalledWith('a', { isDone: true });
+		expect(component.items()).toEqual([]);
+		expect(component.selected()).toBeNull();
+
+		api.list.mockReturnValue(
+			of({ items: [item('a', { recipient: { isRead: true, isArchived: false, snoozedUntil: null, isDone: true } })], nextCursor: null })
+		);
+		component.selectTab('done');
+		expect(api.list).toHaveBeenLastCalledWith(expect.objectContaining({ tab: InboxTabEnum.DONE }));
+		expect(component.items().map((entry) => entry.id)).toEqual(['a']);
+		api.setState.mockReturnValue(of(item('a', { recipient: { isRead: true, isArchived: false, snoozedUntil: null, isDone: false } })));
+		component.changeState(component.items()[0], { isDone: false });
+		expect(component.items()).toEqual([]);
+	});
+
+	it('shows my counts beside the tabs, and reads them again after a change', () => {
+		api.counts.mockReturnValue(of({ unread: 3, decisionsOpen: 2, byMailbox: [{ mailboxId: 'm', unread: 1 }] }));
+		api.list.mockReturnValue(of({ items: [], nextCursor: null }));
+		const { component, find, fixture } = render();
+		expect(find('count-all')?.textContent?.trim()).toBe('3');
+		expect(find('count-decisions')?.textContent?.trim()).toBe('2');
+		expect(find('count-email')?.textContent?.trim()).toBe('1');
+		expect(find('count-snoozed')).toBeNull();
+		expect(find('count-done')).toBeNull();
+
+		api.counts.mockReturnValue(of({ unread: 0, decisionsOpen: 2, byMailbox: [] }));
+		api.changed$.next();
+		fixture.detectChanges();
+		expect(find('count-all')).toBeNull();
+		expect(component.tabCount('decisions')).toBe(2);
+		expect(component.tabCount('email')).toBeNull();
+	});
+
 	it('a failed state change is shown', () => {
 		api.counts.mockReturnValue(of({ unread: 1, decisionsOpen: 1, byMailbox: [] }));
 		api.list.mockReturnValue(of({ items: [item('a')], nextCursor: null }));

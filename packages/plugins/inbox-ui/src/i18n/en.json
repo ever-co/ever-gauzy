@@ -21,6 +21,7 @@
 		"email": "Email",
 		"notifications": "Notifications",
 		"snoozed": "Snoozed",
+		"done": "Done",
 		"archived": "Archived"
 	},
 	"FILTERS": {
@@ -36,6 +37,7 @@
 		"APPROVAL": "Approval",
 		"ESCALATION": "Escalation",
 		"NOTICE": "Notice",
+		"NOTIFICATION": "Notification",
 		"EMAIL": "Email"
 	},
 	"SOURCE": {
@@ -80,6 +82,8 @@
 		"MARK_UNREAD": "Mark unread",
 		"ARCHIVE": "Archive",
 		"UNARCHIVE": "Unarchive",
+		"MARK_DONE": "Mark done",
+		"MARK_NOT_DONE": "Not done",
 		"UNSNOOZE": "Snoozed until {{ date }}: wake now",
 		"MARK_ALL_READ": "Mark all read"
 	},
@@ -90,6 +94,7 @@
 	},
 	"OPEN": {
 		"task": "Open task",
+		"comment": "Open comment",
 		"project": "Open project",
 		"agent": "Open agent"
 	},

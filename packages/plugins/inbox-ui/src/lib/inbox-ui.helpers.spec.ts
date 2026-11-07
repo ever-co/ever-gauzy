@@ -1,7 +1,8 @@
-import { InboxItemKindEnum, InboxItemStatusEnum, InboxTabEnum } from '@gauzy/contracts';
+import { BaseEntityEnum, InboxItemKindEnum, InboxItemStatusEnum, InboxTabEnum } from '@gauzy/contracts';
 import {
 	apiTabOf,
 	escalationDetails,
+	isDone,
 	isSnoozed,
 	isTranslationKey,
 	isUnread,
@@ -23,6 +24,7 @@ describe('Inbox UI helpers', () => {
 		expect(apiTabOf('decisions')).toBe(InboxTabEnum.DECISIONS);
 		expect(apiTabOf('email')).toBe(InboxTabEnum.EMAIL);
 		expect(apiTabOf('snoozed')).toBe(InboxTabEnum.SNOOZED);
+		expect(apiTabOf('done')).toBe(InboxTabEnum.DONE);
 		expect(apiTabOf('archived')).toBe(InboxTabEnum.ARCHIVED);
 		expect(apiTabOf('notifications')).toBeNull();
 	});
@@ -82,6 +84,11 @@ describe('Inbox UI helpers', () => {
 			{ kind: 'agent', commands: ['/pages/employees/view', 'e'] }
 		]);
 		expect(linksOf({})).toEqual([]);
+		// A notification about a comment opens its task at the comment.
+		expect(linksOf({ taskId: 't', entity: BaseEntityEnum.Comment, entityId: 'c' })).toEqual([
+			{ kind: 'comment', commands: ['/pages/tasks/view', 't'], queryParams: { comment: 'c' } }
+		]);
+		expect(linksOf({ entity: BaseEntityEnum.Comment, entityId: 'c' })).toEqual([]);
 	});
 
 	it('reads my recipient state; a reader without one sees the item as read', () => {
@@ -89,6 +96,10 @@ describe('Inbox UI helpers', () => {
 		const recipient = { isRead: false, isArchived: false, snoozedUntil: new Date('2026-10-16T13:00:00Z') };
 		expect(isUnread({ recipient })).toBe(true);
 		expect(isUnread({ recipient: null })).toBe(false);
+		expect(isDone({ recipient })).toBe(false);
+		expect(isDone({ recipient: { ...recipient, isDone: true } })).toBe(true);
+		expect(isDone({ recipient: { ...recipient, doneAt: new Date('2026-10-16T12:30:00Z') } })).toBe(true);
+		expect(isDone({ recipient: null })).toBe(false);
 		expect(isSnoozed({ recipient }, now)).toBe(true);
 		expect(isSnoozed({ recipient: { ...recipient, snoozedUntil: new Date('2026-10-16T11:00:00Z') } }, now)).toBe(
 			false

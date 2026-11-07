@@ -141,6 +141,7 @@ export class InboxNotificationBridge implements OnModuleInit, IInboxSourceHandle
 			if (!input) {
 				return;
 			}
+			await this.withCommentParent(input);
 			await this.inbox.upsertExternal(input);
 		} catch (error) {
 			this.logger.warn(`Notification ${notification?.id} was not filed in the inbox: ${(error as Error)?.message}`);
@@ -245,6 +246,33 @@ export class InboxNotificationBridge implements OnModuleInit, IInboxSourceHandle
 	}
 
 	/** The user behind an employee of the tenant. */
+	/**
+	 * A notification about a comment (a comment on a record the receiver follows, a mention in one) names the comment;
+	 * the item also names the comment's task, so a client opens the task at the comment, and keeps the comment's record
+	 * in its metadata (`parentEntity`, `parentEntityId`) for the records that are not tasks. Best effort: a comment that
+	 * cannot be read leaves the item as the notification names it.
+	 */
+	private async withCommentParent(input: IInboxItemUpsertInput): Promise<void> {
+		if (input.entity !== BaseEntityEnum.Comment || !input.entityId || input.taskId) {
+			return;
+		}
+		try {
+			const comment = await this.dataSource.getRepository<{ id: ID; entity?: string | null; entityId?: ID | null }>('Comment').findOne({
+				select: { id: true, entity: true, entityId: true },
+				where: { id: input.entityId, tenantId: input.tenantId }
+			} as never);
+			if (!comment?.entity || !comment.entityId) {
+				return;
+			}
+			if (comment.entity === BaseEntityEnum.Task) {
+				input.taskId = comment.entityId;
+			}
+			input.metadata = { ...(input.metadata ?? {}), parentEntity: comment.entity, parentEntityId: comment.entityId };
+		} catch (error) {
+			this.logger.warn(`Notification ${input.externalId}: the comment's record was not read (${(error as Error)?.message})`);
+		}
+	}
+
 	private async userIdOfEmployee(employeeId: ID | undefined | null, tenantId: ID | undefined | null): Promise<ID | null> {
 		if (!employeeId) {
 			return null;

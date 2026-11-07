@@ -46,7 +46,13 @@ The UI has no switch of its own. It follows the API:
 
 - **Tabs:** All, Decisions (open questions, approvals and escalations), Email,
   **Notifications**, Snoozed (where a snoozed item can be found and woken
-  before its time) and Archived.
+  before its time), Done (what I marked done, to review; "Not done" brings
+  an item back to the open tabs) and Archived. A tab shows my count beside
+  its name where the API counts it: unread (All), open decisions, unread
+  email; the counts are read again after the page changes an item.
+- **Platform notifications** filed in the Inbox (kind Notification: an
+  assignment, a mention, a comment on a record I follow) open their task; a
+  comment notification opens the task at the comment (`?comment=`).
 - **Notifications** are Gauzy's own `EmployeeNotification`s, read live from
   `/api/employee-notification` for the signed-in user's employee: their first
   Angular UI. Nothing is copied into the Inbox.
