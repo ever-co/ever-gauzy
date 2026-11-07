@@ -21,6 +21,7 @@ import { sanitizeErrorMessage, sessionIdForLog } from '../common/error-utils';
 import { SecurityEvents, SecurityLogger } from '../common/security-logger';
 import { AuthorizationMiddleware, AuthorizedRequest } from '../common/authorization-middleware';
 import { runWithAuthKey } from '../common/auth-context';
+import { filterCollaborationTools, isCollaborationTool, requestScopes, runWithCollaborationScopes } from '../tools/collaboration/scopes';
 import { isLocalCaller } from '../common/local-caller';
 import { authManager } from '../common/auth-manager';
 
@@ -849,7 +850,11 @@ export class HttpTransport {
 					break;
 
 				case 'tools/list': {
-					const tools = await this.getTools();
+					// The collaboration tools a caller's token (or session) does not allow are not listed (see `requestScopes`).
+					const tools = filterCollaborationTools(
+						await this.getTools(),
+						requestScopes(tokenInfo?.valid ? tokenInfo.scopes : undefined, userContext?.sessionId)
+					);
 					logger.debug(`Tools list: ${JSON.stringify(tools)}`);
 					transport.send({
 						jsonrpc: '2.0',
@@ -869,7 +874,9 @@ export class HttpTransport {
 					const authKey = callerKey ?? `http:anonymous:${randomUUID()}`;
 					let result: unknown;
 					try {
-						result = await this.callTool(params as Record<string, unknown>, authKey, callerIsLocal);
+						// The collaboration tools check the caller's scopes again at the call (not found when not allowed).
+						const scopes = requestScopes(tokenInfo?.valid ? tokenInfo.scopes : undefined, userContext?.sessionId);
+						result = await runWithCollaborationScopes(scopes, () => this.callTool(params as Record<string, unknown>, authKey, callerIsLocal));
 					} finally {
 						if (callerKey === undefined) {
 							authManager.clearKey(authKey);
@@ -949,7 +956,11 @@ export class HttpTransport {
 					Object.keys((args as Record<string, unknown>) || {})
 				);
 			} else {
-				logger.debug(`Calling tool: ${name} with args:`, validation.sanitized);
+				// A collaboration tool carries people's messages and pages: only the argument names are logged.
+				logger.debug(
+					`Calling tool: ${name} with args:`,
+					isCollaborationTool(name) ? { keys: Object.keys((args as Record<string, unknown>) || {}) } : validation.sanitized
+				);
 			}
 
 			// Pass the original args, as stdio does: the API would store the HTML-escaped copy as is

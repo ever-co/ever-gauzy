@@ -1,3 +1,4 @@
+import { AsyncLocalStorage } from 'node:async_hooks';
 import { sessionManager } from '../../session/session-manager';
 
 /** The collaboration tool groups: each enabled per deployment, each read and written under its own scope. */
@@ -16,6 +17,29 @@ export const COLLABORATION_GROUP_SWITCHES: Readonly<Record<CollaborationGroup, s
 
 /** The scopes a session holds when neither its token nor the deployment states them: every scope of the enabled groups. */
 export const COLLABORATION_SCOPES_ENV = 'GAUZY_MCP_TOOLS_SCOPES';
+
+/** Every collaboration tool, the group it belongs to, and whether it reads or writes. */
+export const COLLABORATION_TOOLS: Readonly<Record<string, { group: CollaborationGroup; access: CollaborationAccess }>> = {
+	list_chat_conversations: { group: 'chat', access: 'read' },
+	list_chat_messages: { group: 'chat', access: 'read' },
+	get_chat_thread: { group: 'chat', access: 'read' },
+	search_chat_messages: { group: 'chat', access: 'read' },
+	post_chat_message: { group: 'chat', access: 'write' },
+	mark_chat_conversation_read: { group: 'chat', access: 'write' },
+	list_pages: { group: 'docs', access: 'read' },
+	get_page: { group: 'docs', access: 'read' },
+	search_pages: { group: 'docs', access: 'read' },
+	create_page: { group: 'docs', access: 'write' },
+	update_page_markdown: { group: 'docs', access: 'write' },
+	list_inbox_items: { group: 'inbox', access: 'read' },
+	get_inbox_counts: { group: 'inbox', access: 'read' },
+	set_inbox_item_state: { group: 'inbox', access: 'write' }
+};
+
+/** Whether a tool is one of the collaboration tools (their arguments and answers are people's text: never logged). */
+export function isCollaborationTool(name: unknown): boolean {
+	return typeof name === 'string' && Object.prototype.hasOwnProperty.call(COLLABORATION_TOOLS, name);
+}
 
 /** The groups the deployment enables. */
 export function enabledCollaborationGroups(env: Record<string, string | undefined> = process.env): CollaborationGroup[] {
@@ -54,8 +78,38 @@ export function collaborationScopesOf(
 	return parseScopes(env[COLLABORATION_SCOPES_ENV]) ?? allScopesOf(enabledCollaborationGroups(env));
 }
 
+/**
+ * The scopes one HTTP or WebSocket request holds: the scopes its validated bearer token carries — a token states its
+ * scopes, so one without a collaboration scope reaches no collaboration tool — else the session's (see
+ * {@link collaborationScopesOf}).
+ */
+export function requestScopes(tokenScopes: unknown, sessionId?: string, env: Record<string, string | undefined> = process.env): Set<string> {
+	if (Array.isArray(tokenScopes)) return new Set(tokenScopes.map(String));
+	return collaborationScopesOf(sessionId, env);
+}
+
 /** Whether the scopes allow an access to a group: a write scope allows reading too. */
 export function allows(scopes: ReadonlySet<string>, group: CollaborationGroup, access: CollaborationAccess): boolean {
 	if (scopes.has(`${group}:write`)) return true;
 	return access === 'read' && scopes.has(`${group}:read`);
+}
+
+/** The tools a caller may see: every other tool, and the collaboration tools its scopes allow. */
+export function filterCollaborationTools<T extends { name: string }>(tools: readonly T[], scopes: ReadonlySet<string>): T[] {
+	return tools.filter((tool) => {
+		const entry = COLLABORATION_TOOLS[tool.name];
+		return !entry || allows(scopes, entry.group, entry.access);
+	});
+}
+
+const scopeContext = new AsyncLocalStorage<{ scopes: ReadonlySet<string> }>();
+
+/** Runs one tool call under the scopes of the request that made it (the transports call this). */
+export function runWithCollaborationScopes<T>(scopes: ReadonlySet<string> | undefined, fn: () => T): T {
+	return scopes ? scopeContext.run({ scopes }, fn) : fn();
+}
+
+/** The scopes of the request being served, when a transport stated them. */
+export function currentCollaborationScopes(): ReadonlySet<string> | undefined {
+	return scopeContext.getStore()?.scopes;
 }

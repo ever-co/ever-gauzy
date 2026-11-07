@@ -10,6 +10,7 @@ import { ExtendedMcpServer, ToolDescriptor } from '../mcp-server';
 import { getEnhancedTLSOptions, validateMCPToolInput, validateRequestSize } from '../common/security-config';
 import { SecurityLogger, SecurityEvents } from '../common/security-logger';
 import { runWithAuthKey } from '../common/auth-context';
+import { filterCollaborationTools, isCollaborationTool, requestScopes, runWithCollaborationScopes } from '../tools/collaboration/scopes';
 import { isLocalCaller } from '../common/local-caller';
 import { authManager } from '../common/auth-manager';
 import { sessionIdForLog } from '../common/error-utils';
@@ -610,7 +611,8 @@ export class WebSocketTransport {
 					break;
 
 				case 'tools/list': {
-					const tools = await this.getTools();
+					// The collaboration tools the connection's session does not allow are not listed (see `requestScopes`).
+					const tools = filterCollaborationTools(await this.getTools(), requestScopes(undefined, connection.userContext?.sessionId));
 					logger.debug(`Tools list: ${JSON.stringify(tools)}`);
 					transport.send({
 						jsonrpc: '2.0',
@@ -620,10 +622,9 @@ export class WebSocketTransport {
 					break;
 				}
 				case 'tools/call': {
-					const result = await this.callTool(
-						params as Record<string, unknown>,
-						this.resolveAuthKey(connection),
-						connection.isLocal
+					// The collaboration tools check the session's scopes again at the call (not found when not allowed).
+					const result = await runWithCollaborationScopes(requestScopes(undefined, connection.userContext?.sessionId), () =>
+						this.callTool(params as Record<string, unknown>, this.resolveAuthKey(connection), connection.isLocal)
 					);
 					transport.send({
 						jsonrpc: '2.0',
@@ -721,8 +722,9 @@ export class WebSocketTransport {
 			}
 
 			// Never log sensitive args; for login show only argument keys
+			// The login's secrets, and a collaboration tool's messages and pages: only the argument names are logged.
 			const safeArgsForLog =
-				name === 'login' ? { keys: Object.keys((args as Record<string, unknown>) || {}) } : sanitized;
+				name === 'login' || isCollaborationTool(name) ? { keys: Object.keys((args as Record<string, unknown>) || {}) } : sanitized;
 			logger.debug(`Calling tool: ${name} with args:`, safeArgsForLog);
 
 			// Pass the original args, as stdio does: the API would store the HTML-escaped copy as is

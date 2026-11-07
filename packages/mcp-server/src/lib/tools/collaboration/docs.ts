@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import { apiClient } from '../../common/api-client';
@@ -6,25 +5,33 @@ import { answer, describeError, query, registerCollaborationTool, scope } from '
 
 const DOCS = '/api/plugins/docs';
 
+type Row = Record<string, any>;
+
 /** The most Markdown characters one `get_page` answers; the rest follows from `offset`. */
 export const PAGE_MARKDOWN_MAX = 60_000;
 
+/** The knowledge search's own limits (`KnowledgeSearchDTO`): a query of 2–500 characters, 12 passages, 20 documents. */
+export const KNOWLEDGE_QUERY_MIN = 2;
+export const KNOWLEDGE_QUERY_MAX = 500;
+export const KNOWLEDGE_TOP_K_MAX = 12;
+export const KNOWLEDGE_DOCUMENTS_MAX = 20;
+
 /** A page as the tools list it. */
-export function pageSummary(document: Record<string, any>) {
+export function pageSummary(document: Row) {
 	return {
-		id: document.id,
-		name: document.name,
-		kind: document.kind,
-		parentId: document.parentId ?? null,
-		index: document.index ?? null,
-		icon: document.icon ?? null,
-		description: document.description ?? null,
-		visibility: document.visibility ?? null,
-		organizationTeamId: document.organizationTeamId ?? null,
-		isLocked: !!document.isLocked,
-		revision: Number(document.contentRevision) || null,
-		createdAt: document.createdAt ?? null,
-		updatedAt: document.updatedAt ?? null
+		id: document['id'],
+		name: document['name'],
+		kind: document['kind'],
+		parentId: document['parentId'] ?? null,
+		index: document['index'] ?? null,
+		icon: document['icon'] ?? null,
+		description: document['description'] ?? null,
+		visibility: document['visibility'] ?? null,
+		organizationTeamId: document['organizationTeamId'] ?? null,
+		isLocked: !!document['isLocked'],
+		revision: Number(document['contentRevision']) || null,
+		createdAt: document['createdAt'] ?? null,
+		updatedAt: document['updatedAt'] ?? null
 	};
 }
 
@@ -39,7 +46,7 @@ export function slice(markdown: string, offset = 0, limit = PAGE_MARKDOWN_MAX): 
 export function registerDocsTools(server: McpServer, access: { read: boolean; write: boolean }): void {
 	if (!access.read) return;
 
-	registerCollaborationTool(
+	registerCollaborationTool<{ parentId?: string; root?: boolean; space?: string; organizationTeamId?: string; q?: string; kind?: string; includeArchived?: boolean; page?: number; limit?: number }>(
 		server,
 		'list_pages',
 		"The pages (and folders) of the signed-in user's organization: a space (the organization's, the caller's private pages, a team's), a parent's children, or a name search. Reads GET /plugins/docs/documents.",
@@ -56,8 +63,8 @@ export function registerDocsTools(server: McpServer, access: { read: boolean; wr
 		},
 		async (args) => {
 			const limit = args.limit ?? 50;
-			const page = args.page ?? 1;
-			const list = await apiClient.get<Record<string, any>>(`${DOCS}/documents`, {
+			const pageNumber = args.page ?? 1;
+			const list = await apiClient.get<Row | Row[]>(`${DOCS}/documents`, {
 				params: query({
 					...scope(),
 					parentId: args.root ? 'root' : args.parentId,
@@ -70,44 +77,48 @@ export function registerDocsTools(server: McpServer, access: { read: boolean; wr
 					sort: 'updatedAt',
 					sortOrder: 'DESC',
 					take: limit,
-					skip: (page - 1) * limit
+					skip: (pageNumber - 1) * limit
 				})
 			});
-			const items = Array.isArray(list) ? list : (list?.items ?? []);
-			return answer({ pages: items.map(pageSummary), total: Array.isArray(list) ? items.length : (list?.total ?? items.length), page, limit });
+			const items: Row[] = Array.isArray(list) ? list : (list?.['items'] ?? []);
+			return answer({ pages: items.map(pageSummary), total: Array.isArray(list) ? items.length : (list?.['total'] ?? items.length), page: pageNumber, limit });
 		}
 	);
 
-	registerCollaborationTool(
+	registerCollaborationTool<{ pageId: string; offset?: number; limit?: number }>(
 		server,
 		'get_page',
-		'One page as Markdown with its metadata and revision (the number `update_page_markdown` checks). A long page is answered in slices: `truncated` with a `nextOffset` to continue from. Reads GET /plugins/docs/documents/:id and /:id/export/markdown.',
+		"One page as Markdown with its metadata and revision (the number `update_page_markdown` checks). The revision is read before the text, so it is never newer than the text it is answered with. A long page is answered in slices: `truncated` with a `nextOffset` to continue from; every slice carries the revision it was read at — slices of different revisions are not one text, so read again from 0 when it changes. Reads GET /plugins/docs/documents/:id and /:id/export/markdown.",
 		{
 			pageId: z.string().uuid().describe('The page'),
 			offset: z.number().int().min(0).optional().describe('Continue the Markdown from this character (the previous answer\'s nextOffset)'),
 			limit: z.number().int().min(1).max(PAGE_MARKDOWN_MAX).optional().describe(`How many characters at most (default ${PAGE_MARKDOWN_MAX})`)
 		},
 		async (args) => {
-			const [document, markdown] = await Promise.all([
-				apiClient.get<Record<string, any>>(`${DOCS}/documents/${args.pageId}`, { params: scope() }),
-				apiClient.get<string>(`${DOCS}/documents/${args.pageId}/export/markdown`, { params: scope(), responseType: 'text', transformResponse: [(data: unknown) => data] })
-			]);
+			// The revision first, then the text: a save in between makes the revision older than the text, which the update
+			// refuses as a conflict, never newer — a newer revision would let a write over another editor's change through.
+			const document = await apiClient.get<Row>(`${DOCS}/documents/${args.pageId}`, { params: scope() });
+			const markdown = await apiClient.get<string>(`${DOCS}/documents/${args.pageId}/export/markdown`, {
+				params: scope(),
+				responseType: 'text',
+				transformResponse: [(data: unknown) => data]
+			});
 			return answer({ page: pageSummary(document ?? {}), ...slice(String(markdown ?? ''), args.offset, args.limit) });
 		}
 	);
 
-	registerCollaborationTool(
+	registerCollaborationTool<{ query: string; topK?: number; documentIds?: string[] }>(
 		server,
 		'search_pages',
-		"Searches the organization's documents by meaning (the knowledge index) for a question or a phrase: the best-matching passages with their pages. Reads POST /plugins/docs/knowledge/search.",
+		"Searches the organization's documents by meaning (the knowledge index) for a question or a phrase: the best-matching passages with their pages. Reads POST /plugins/docs/knowledge/search (the signed-in user's organization).",
 		{
-			query: z.string().min(1).max(1000).describe('The question or phrase'),
-			topK: z.number().int().min(1).max(50).optional().describe('How many passages (default 10)'),
-			documentIds: z.array(z.string().uuid()).max(50).optional().describe('Search these documents only')
+			query: z.string().min(KNOWLEDGE_QUERY_MIN).max(KNOWLEDGE_QUERY_MAX).describe(`The question or phrase (${KNOWLEDGE_QUERY_MIN}–${KNOWLEDGE_QUERY_MAX} characters)`),
+			topK: z.number().int().min(1).max(KNOWLEDGE_TOP_K_MAX).optional().describe(`How many passages (at most ${KNOWLEDGE_TOP_K_MAX})`),
+			documentIds: z.array(z.string().uuid()).max(KNOWLEDGE_DOCUMENTS_MAX).optional().describe(`Search these documents only (at most ${KNOWLEDGE_DOCUMENTS_MAX})`)
 		},
 		async (args) => {
+			// The route's body is the search alone (it refuses any other member); the organization is the request's own.
 			const result = await apiClient.post<unknown>(`${DOCS}/knowledge/search`, {
-				...scope(),
 				query: args.query,
 				...(args.topK ? { topK: args.topK } : {}),
 				...(args.documentIds ? { documentIds: args.documentIds } : {}),
@@ -119,10 +130,10 @@ export function registerDocsTools(server: McpServer, access: { read: boolean; wr
 
 	if (!access.write) return;
 
-	registerCollaborationTool(
+	registerCollaborationTool<{ name: string; parentId?: string; visibility?: string; organizationTeamId?: string; markdown?: string; description?: string }>(
 		server,
 		'create_page',
-		"Creates a page (under a parent, in a space) in the signed-in user's name, with its text as Markdown when given. Writes POST /plugins/docs/documents, then PUT /:id/content/markdown.",
+		"Creates a page (under a parent, in a space) in the signed-in user's name, with its text as Markdown when given. Writes POST /plugins/docs/documents, then PUT /:id/content/markdown; when the text could not be written the page is answered anyway, with `markdownWritten: false`, so the text can be written with update_page_markdown rather than the page created twice.",
 		{
 			name: z.string().min(1).max(255).describe('The page title'),
 			parentId: z.string().uuid().optional().describe('The folder or page to create it under'),
@@ -132,7 +143,7 @@ export function registerDocsTools(server: McpServer, access: { read: boolean; wr
 			description: z.string().max(1000).optional().describe('A short description')
 		},
 		async (args) => {
-			const created = await apiClient.post<Record<string, any>>(`${DOCS}/documents`, {
+			const created = await apiClient.post<Row>(`${DOCS}/documents`, {
 				...scope(),
 				kind: 'PAGE',
 				name: args.name,
@@ -141,32 +152,41 @@ export function registerDocsTools(server: McpServer, access: { read: boolean; wr
 				...(args.organizationTeamId ? { organizationTeamId: args.organizationTeamId } : {}),
 				...(args.description ? { description: args.description } : {})
 			});
-			let revision = Number(created?.contentRevision) || null;
-			if (args.markdown && created?.id) {
-				const updated = await apiClient.put<Record<string, any>>(`${DOCS}/documents/${created.id}/content/markdown`, { ...scope(), markdown: args.markdown });
-				revision = Number(updated?.revision) || revision;
+			let revision = Number(created?.['contentRevision']) || null;
+			if (args.markdown && created?.['id']) {
+				try {
+					const updated = await apiClient.put<Row>(`${DOCS}/documents/${created['id']}/content/markdown`, { ...scope(), markdown: args.markdown });
+					revision = Number(updated?.['revision']) || revision;
+				} catch (error) {
+					const { status } = describeError(error);
+					return answer({
+						page: { ...pageSummary(created ?? {}), revision },
+						markdownWritten: false,
+						warning: `The page was created, but its text was not written${status ? ` (${status})` : ''}: write it with update_page_markdown on this page rather than creating it again.`
+					});
+				}
 			}
-			return answer({ page: { ...pageSummary(created ?? {}), revision } });
+			return answer({ page: { ...pageSummary(created ?? {}), revision }, markdownWritten: !!args.markdown });
 		}
 	);
 
-	registerCollaborationTool(
+	registerCollaborationTool<{ pageId: string; markdown: string; expectedRevision: number }>(
 		server,
 		'update_page_markdown',
-		"Applies a Markdown text to a page: only the blocks whose Markdown changed are replaced (formatting the Markdown cannot carry stays on the others), editors with the page open see it live. State `expectedRevision` (from get_page) and a page that moved on answers a conflict with its current revision instead of writing. Writes PUT /plugins/docs/documents/:id/content/markdown.",
+		"Applies a Markdown text to a page: only the blocks whose Markdown changed are replaced (formatting the Markdown cannot carry stays on the others), editors with the page open see it live. `expectedRevision` (from get_page) is required: a page that moved on answers a conflict with its current revision instead of writing. Writes PUT /plugins/docs/documents/:id/content/markdown.",
 		{
 			pageId: z.string().uuid().describe('The page'),
 			markdown: z.string().max(2_000_000).describe('The whole page as Markdown, as get_page answered it with your changes'),
-			expectedRevision: z.number().int().min(1).optional().describe('The revision get_page answered; the write is refused when the page moved on')
+			expectedRevision: z.number().int().min(1).describe('The revision get_page answered; the write is refused when the page moved on')
 		},
 		async (args) => {
 			try {
-				const result = await apiClient.put<Record<string, any>>(`${DOCS}/documents/${args.pageId}/content/markdown`, {
+				const result = await apiClient.put<Row>(`${DOCS}/documents/${args.pageId}/content/markdown`, {
 					...scope(),
 					markdown: args.markdown,
-					...(args.expectedRevision ? { expectedRevision: args.expectedRevision } : {})
+					expectedRevision: args.expectedRevision
 				});
-				return answer({ revision: result?.revision ?? null, changed: !!result?.changed, changedBlocks: result?.changedBlocks ?? 0, keptBlocks: result?.keptBlocks ?? 0 });
+				return answer({ revision: result?.['revision'] ?? null, changed: !!result?.['changed'], changedBlocks: result?.['changedBlocks'] ?? 0, keptBlocks: result?.['keptBlocks'] ?? 0 });
 			} catch (error) {
 				const { status, body } = describeError(error);
 				if (status === 409) {

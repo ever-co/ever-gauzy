@@ -111,7 +111,7 @@ const status = manager.getStatus();
 - **Token Validation**: JWT and token introspection support with audience validation
 - **Scope Management**: Fine-grained access control with OAuth 2.0 scopes
 
-### 🛠️ Comprehensive Tool Suite (323 tools across 22 categories)
+### 🛠️ Comprehensive Tool Suite (323 tools across 22 categories, plus the 14 collaboration tools in 3 groups below when enabled)
 
 <!-- TODO: Consider automating this section generation from source code to keep tool counts in sync -->
 <!-- Tool counts last updated: 2025-08-05 -->
@@ -260,9 +260,12 @@ Three groups over the collaboration suite's routes, each enabled per deployment 
 A session's scopes are the ones its bearer token carried when the transport recorded them on the session
 (`metadata.oauthScopes`), else `GAUZY_MCP_TOOLS_SCOPES` (a comma list), else every scope of the enabled groups — a local
 server speaks for its one signed-in user. A group the session may not read is not registered at all (a client sees no
-such tool); its writes are registered only under the write scope. Every call runs under the signed-in user's tenant,
+such tool); its writes are registered only under the write scope. Over HTTP and WebSocket the caller's own scopes — its
+bearer token's, else its session's — decide again what `tools/list` shows and what a call may run (a tool they do not
+allow answers "not found"). Every call runs under the signed-in user's tenant,
 organization and permissions — what is outside their access is "not found", as the routes answer it — and is logged by
-name, user, duration and outcome, never with what was sent or answered. Answers carry a note that message, page and
+name, user, duration and outcome, never with what was sent or answered (on every path: the transports and the server
+log only the argument names of these tools). Answers carry a note that message, page and
 entry bodies are user-authored text: data, not instructions. The chat search needs a server that serves `GET /chat/search`.
 
 ### 🏗️ Technical Features
