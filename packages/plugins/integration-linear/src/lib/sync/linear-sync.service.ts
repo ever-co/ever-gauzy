@@ -23,8 +23,8 @@ import { LinearMappingService } from '../linear-mapping.service';
 import { linearSyncUser, runInLinearContext } from '../linear-process';
 import { emptyCounts, LinearSyncCounts, LinearSyncRunService } from '../linear-sync-run.service';
 import { LinearTenantService } from '../linear-tenant.service';
-import { LINEAR_CONFIG, LINEAR_IMPORT_MAX_ISSUES, LINEAR_ISSUES_PAGE_SIZE, LinearSettingName } from '../linear.constants';
-import { issueUpdateOf, parseStateMap, taskFieldsOf, watermarkOf } from './linear-issue.mapper';
+import { LINEAR_CONFIG, LINEAR_IMPORT_CLOCK_SKEW_MS, LINEAR_IMPORT_MAX_ISSUES, LINEAR_ISSUES_PAGE_SIZE, LinearSettingName } from '../linear.constants';
+import { issueUpdateOf, parseStateMap, taskFieldsOf } from './linear-issue.mapper';
 
 /** What one issue became. */
 type ApplyOutcome = 'created' | 'updated' | 'skipped';
@@ -105,7 +105,10 @@ export class LinearSyncService {
 		const user = linearSyncUser(scope, this.connectedByUserId(tenant) ?? run.requestedByUserId ?? null);
 		const counts = emptyCounts();
 		const since = options.full ? null : mapping.lastCursor ?? null;
-		let cursor: string | null = since;
+		// The next import starts a little before this run did: an issue changed while the pages were read would otherwise
+		// sit below the newest change read and be skipped next time. Recorded only by a complete run (a capped one keeps
+		// its position); reading a few issues again is harmless (the apply is idempotent through the id map).
+		const cursor = new Date(Date.now() - LINEAR_IMPORT_CLOCK_SKEW_MS).toISOString();
 		let error: string | null = null;
 		let complete = false;
 		try {
@@ -120,7 +123,6 @@ export class LinearSyncService {
 					for (const issue of page.nodes) {
 						await this.applyOne(context, issue);
 					}
-					cursor = watermarkOf(page.nodes, cursor);
 					seen += page.nodes.length;
 					await this.runs.progress(run, counts);
 					if (!page.pageInfo.hasNextPage || !page.pageInfo.endCursor) {

@@ -68,6 +68,13 @@ export class LinearTenantService {
 			.catch(() => null);
 	}
 
+	/** A connection by id with its settings, in whatever tenant, or null: for work with no request context (a sweep). */
+	async findAnyById(integrationId: ID): Promise<IIntegrationTenant | null> {
+		return this.integrationTenantService['typeOrmRepository']
+			.findOne({ where: { id: integrationId, name: LINEAR_INTEGRATION_NAME, isActive: true, isArchived: false } as never, relations: { settings: true } as never })
+			.catch(() => null) as Promise<IIntegrationTenant | null>;
+	}
+
 	/** A connection by id, in the current tenant, with its settings; 404 otherwise. */
 	async requireById(integrationId: ID): Promise<IIntegrationTenant> {
 		const tenantId = RequestContext.currentTenantId();

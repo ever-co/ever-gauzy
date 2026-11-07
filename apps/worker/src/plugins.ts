@@ -4,6 +4,7 @@ import { CatalogPlugin } from '@gauzy/plugin-catalog';
 import { DocsPlugin } from '@gauzy/plugin-docs';
 import { InboxPlugin, isInboxEnabled } from '@gauzy/plugin-inbox';
 import { IntegrationEverWorksPlugin, isEverWorksEnabled } from '@gauzy/plugin-integration-ever-works';
+import { IntegrationLinearPlugin, isLinearEnabled } from '@gauzy/plugin-integration-linear';
 import { InventoryPlugin } from '@gauzy/plugin-inventory';
 import { OrderPlugin } from '@gauzy/plugin-order';
 import { PricingPlugin } from '@gauzy/plugin-pricing';
@@ -119,6 +120,15 @@ export const plugins = resolvePluginLoadOrder([
 	 * loaded, its module graph is never built and nothing is scheduled.
 	 */
 	...(everWorksEnabled ? [IntegrationEverWorksPlugin] : []),
+	/**
+	 * The Linear integration — hosted here, behind its switch, for the scheduled import it owns: a `@ScheduledJob`
+	 * fires only in this process, so a plugin that is not hosted here never imports on its own (its webhooks and
+	 * "import now" are the API's). The sweep is registered by the plugin only where a queue root exists and
+	 * `LINEAR_IMPORT_INTERVAL_MINUTES` is not `0`, so a worker without Redis is unchanged.
+	 *
+	 * 🛑 Off unless `LINEAR_ENABLED` is exactly `true` — the same switch as the API's list.
+	 */
+	...(isLinearEnabled(process.env, (message) => console.warn(message)) ? [IntegrationLinearPlugin] : []),
 	/**
 	 * The Inbox — hosted only with the Ever Works integration, and only when both are switched on. This
 	 * process runs the integration's sync as often as the API does (whoever holds the connection's lease),

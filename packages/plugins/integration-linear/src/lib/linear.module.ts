@@ -27,6 +27,7 @@ import { LINEAR_CONFIG } from './linear.constants';
 import { LinearLifecycle } from './linear.lifecycle';
 import { LinearEventSubscriber } from './sync/linear-event.subscriber';
 import { LinearSyncService } from './sync/linear-sync.service';
+import { LinearImportSweepService } from './maintenance/linear-import-sweep.service';
 
 /** Every table the plugin owns (its migration creates them). */
 export const LINEAR_ENTITIES = [LinearTeamMapping, LinearSyncRun];
@@ -65,6 +66,7 @@ export const LINEAR_ENTITIES = [LinearTeamMapping, LinearSyncRun];
 		LinearMappingService,
 		LinearSyncRunService,
 		LinearSyncService,
+		LinearImportSweepService,
 		LinearEventSubscriber,
 		TypeOrmLinearTeamMappingRepository,
 		MikroOrmLinearTeamMappingRepository,
@@ -78,6 +80,6 @@ export const LINEAR_ENTITIES = [LinearTeamMapping, LinearSyncRun];
 			}
 		}
 	],
-	exports: [LinearCatalogService, LinearTenantService, LinearMappingService, LinearSyncService, LINEAR_CONFIG]
+	exports: [LinearCatalogService, LinearTenantService, LinearMappingService, LinearSyncService, LinearImportSweepService, LINEAR_CONFIG]
 })
 export class LinearModule {}

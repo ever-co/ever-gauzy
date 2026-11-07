@@ -17,6 +17,7 @@ no table (its migration is not registered) and makes no outbound request.
 | `LINEAR_REDIRECT_URL` | The callback registered on the application. Default: `API_BASE_URL` + `/api/integration/linear/callback`. |
 | `LINEAR_POST_INSTALL_URL` | Where the callback sends the person once connected. Default: `CLIENT_BASE_URL` + `/#/pages/integrations/linear`. |
 | `LINEAR_WEBHOOK_SECRET` | The application's webhook signing secret. Without it webhooks are refused (imports still work). |
+| `LINEAR_IMPORT_INTERVAL_MINUTES` | How many minutes apart the worker imports the changes of each inbound mapping (default `15`; `0` switches the scheduled import off). When the application has a webhook secret (`LINEAR_WEBHOOK_SECRET`) every mapping is swept every fourth interval instead. |
 | `LINEAR_API_URL` | Linear's GraphQL endpoint; only for a test double. |
 
 The webhook URL to register on the application is `API_BASE_URL` + `/api/integration/linear/webhook`,
@@ -52,6 +53,13 @@ for the `Issues` resource.
   workspace whose mapping of the team syncs inbound. A delivery (`Linear-Delivery`) is remembered once every
   connection applied it, so a retry does nothing; one that failed is not, and the next import reads the issue
   again (a webhook never moves the import position).
+- **Scheduled import.** Every five minutes the worker process (`apps/worker`, the one whose scheduler root is
+  enabled) sweeps the mappings that bring issues in: one whose last import is older than
+  `LINEAR_IMPORT_INTERVAL_MINUTES` (or that was never imported) is imported again, the changes since its position,
+  the longest waiting first and at most fifty per sweep. When the application has a webhook secret (`LINEAR_WEBHOOK_SECRET`) every mapping is swept every fourth interval instead, a reconcile
+  against deliveries that were missed. The sweep takes the same claim "import now" takes (one import per mapping
+  at a time), opens each tenant's own request context, and leaves a connection whose token was refused to the
+  person who must reconnect it. Registered only where a queue root exists; `0` switches it off.
 - **Outbound.** When a project's mapping is `outbound` or `both` (one such mapping per project), a task created
   or changed on the platform updates its issue (state by the mapping, title, description, priority, due date) or
   creates one in the team; the saved task is read again by id, and the pushes of one task run one after the other.
