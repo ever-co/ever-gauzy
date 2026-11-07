@@ -42,6 +42,7 @@ import { EverConnectLauncherController } from './launcher/ever-connect-launcher.
 import { EverConnectLauncherService } from './launcher/ever-connect-launcher.service';
 import { EverConnectLauncherTokenService } from './launcher/ever-connect-launcher-token.service';
 import { EVER_CONNECT_LAUNCHER_SETTINGS, readLauncherConfig } from './launcher/launcher-config';
+import { LauncherFirstPartyGuard } from './launcher/launcher-first-party.guard';
 import { LauncherOriginGuard } from './launcher/launcher-origin.guard';
 import { LauncherReads } from './launcher/launcher-reads';
 import { LauncherTokenVault } from './launcher/launcher-token-vault';
@@ -114,6 +115,7 @@ export class EverConnectModule {
 					EverConnectLauncherTokenService,
 					EverConnectLauncherService,
 					LauncherOriginGuard,
+					LauncherFirstPartyGuard,
 					LauncherTokenVault,
 					// The Ever ID sign-in plugin asks for it (optionally) to encrypt the refresh token a session keeps.
 					{ provide: EVER_ID_TOKEN_VAULT, useExisting: LauncherTokenVault }

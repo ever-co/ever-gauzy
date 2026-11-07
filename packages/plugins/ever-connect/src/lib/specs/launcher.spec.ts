@@ -23,6 +23,7 @@ import { EverConnectLauncherService } from '../launcher/ever-connect-launcher.se
 import { EverConnectLauncherTokenService } from '../launcher/ever-connect-launcher-token.service';
 import { EVER_CONNECT_LAUNCHER_SETTINGS, MAX_LAUNCHER_ORIGINS, readLauncherConfig } from '../launcher/launcher-config';
 import { LAUNCHER_SNAPSHOT_VERSION, mapApps, mapInstalls } from '../launcher/launcher-items';
+import { LauncherFirstPartyGuard } from '../launcher/launcher-first-party.guard';
 import { LauncherOriginGuard } from '../launcher/launcher-origin.guard';
 import { LauncherReads } from '../launcher/launcher-reads';
 import { LauncherTokenVault } from '../launcher/launcher-token-vault';
@@ -204,6 +205,7 @@ describe('App Launcher routes', () => {
 				EverConnectLauncherTokenService,
 				LauncherReads,
 				LauncherOriginGuard,
+				LauncherFirstPartyGuard,
 				LauncherTokenVault,
 				EVER_CONNECT_LAUNCHER_SETTINGS,
 				EVER_ID_TOKEN_VAULT
@@ -286,6 +288,7 @@ describe('App Launcher routes', () => {
 					{ provide: EverOperatorService, useValue: { isOperator: async () => false } },
 					EverConnectEnabledGuard,
 					LauncherOriginGuard,
+					LauncherFirstPartyGuard,
 					LauncherReads,
 					EverConnectLauncherTokenService,
 					EverConnectLauncherService
@@ -297,10 +300,26 @@ describe('App Launcher routes', () => {
 				.compile();
 			app = moduleRef.createNestApplication({ logger: false });
 			app.setGlobalPrefix('api');
-			app.use((request: { user?: unknown }, _response: unknown, next: () => void) => {
-				request.user = { id: USER, tenantId: TENANT, role: { name: 'EMPLOYEE' } };
-				next();
-			});
+			app.use(
+				(
+					request: { user?: unknown; headers: Record<string, string> },
+					_response: unknown,
+					next: () => void
+				) => {
+					// As Gauzy's authentication attaches the person; with OAuth app scope enforcement on it also records the
+					// app's grant (here when the test asks for it).
+					const grant = request.headers['x-test-recorded-grant']
+						? { clientId: 'app', scopes: ['profile'] }
+						: undefined;
+					request.user = {
+						id: USER,
+						tenantId: TENANT,
+						role: { name: 'EMPLOYEE' },
+						...(grant ? { oauthApp: grant } : {})
+					};
+					next();
+				}
+			);
 			await app.listen(0, '127.0.0.1');
 			base = (await app.getUrl()).replace('[::1]', '127.0.0.1');
 		});
@@ -344,6 +363,39 @@ describe('App Launcher routes', () => {
 			}
 			expect(platform.requests).toEqual([]);
 			expect(everId.exchanges).toBe(0);
+		});
+
+		it("answers the person's own first-party session only: never a third-party app's token or an API token session", async () => {
+			/** An access token as Gauzy issues it (the signature was checked by its authentication, not here). */
+			const bearer = (claims: Record<string, unknown>) =>
+				`Bearer ${Buffer.from('{"alg":"HS256","typ":"JWT"}').toString('base64url')}.${Buffer.from(
+					JSON.stringify({ id: USER, tenantId: TENANT, ...claims })
+				).toString('base64url')}.test-signature`;
+
+			const firstParty = await get(`/apps?organizationId=${ORG}`, { origin: WEB, authorization: bearer({}) });
+			expect(firstParty.status).toBe(200);
+			const exchangesBefore = everId.exchanges;
+			const readsBefore = platform.requests.length;
+
+			for (const headers of [
+				// An identity-only OAuth app (profile and e-mail): no permission to narrow, still refused.
+				{ authorization: bearer({ oauthApp: { clientId: 'third-party-app', scopes: ['profile', 'email'] } }) },
+				// An OAuth app with broad scopes.
+				{ authorization: bearer({ oauthApp: { clientId: 'third-party-app', scopes: ['read', 'write'] } }) },
+				// A session started from a personal API token.
+				{ authorization: bearer({ apiTokenId: 'api-token-1' }) },
+				// The grant Gauzy's authentication recorded on the person.
+				{ 'x-test-recorded-grant': '1' }
+			]) {
+				for (const path of ['/config', `/apps?organizationId=${ORG}`]) {
+					const refused = await get(path, { origin: WEB, ...headers });
+					expect(refused.status).toBe(403);
+					expect(refused.body.code).toBe('first_party_only');
+				}
+			}
+			expect(everId.exchanges).toBe(exchangesBefore);
+			expect(platform.requests.length).toBe(readsBefore);
+			expect(Reflect.getMetadata('__guards__', EverConnectLauncherController)).toContain(LauncherFirstPartyGuard);
 		});
 
 		it('config: this product, the Manage address, and whether to offer signing in with Ever ID', async () => {

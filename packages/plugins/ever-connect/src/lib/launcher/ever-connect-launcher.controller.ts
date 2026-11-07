@@ -8,10 +8,12 @@ import type { RequestWithUser } from '../ever-connect-request';
 import { EverConnectStore } from '../ever-connect.store';
 import { EverConnectEnabledGuard } from '../guards/ever-connect-operator.guard';
 import { EverConnectLauncherService } from './ever-connect-launcher.service';
+import { LauncherFirstPartyGuard } from './launcher-first-party.guard';
 import { LauncherOriginGuard } from './launcher-origin.guard';
 
 /**
- * The App Launcher of the web app's header, for a signed-in person (Gauzy's tenant guard, no new permission):
+ * The App Launcher of the web app's header, for a signed-in person in their own first-party session (Gauzy's tenant
+ * guard, no new permission; a third-party OAuth app's token or an API token session gets 403 `first_party_only`):
  *
  * - `GET /api/ever-connect/launcher/config`: `{enabled, current, worksAppUrl, signInAvailable}`;
  * - `GET /api/ever-connect/launcher/apps?organizationId=`: the Ever apps, and the apps of the Ever organization the
@@ -23,7 +25,7 @@ import { LauncherOriginGuard } from './launcher-origin.guard';
  */
 @ApiTags('Ever Platform')
 @ApiBearerAuth()
-@UseGuards(EverConnectEnabledGuard, LauncherOriginGuard, TenantPermissionGuard)
+@UseGuards(EverConnectEnabledGuard, LauncherOriginGuard, LauncherFirstPartyGuard, TenantPermissionGuard)
 @Controller('/ever-connect/launcher')
 export class EverConnectLauncherController {
 	constructor(
