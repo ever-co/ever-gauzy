@@ -6,6 +6,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { MentionModule, RolePermissionModule , TaskModule } from '@gauzy/core';
 import { ChatConversationController } from './controllers/chat-conversation.controller';
 import { ChatMessageController } from './controllers/chat-message.controller';
+import { ChatResolver } from './graphql/chat.resolver';
 import { ChatCategory } from './entities/chat-category.entity';
 import { ChatConversation } from './entities/chat-conversation.entity';
 import { ChatMember } from './entities/chat-member.entity';
@@ -40,7 +41,9 @@ export const CHAT_ENTITIES = [ChatCategory, ChatConversation, ChatMember, ChatMe
 		SearchPluginModule
 	],
 	controllers: [ChatConversationController, ChatMessageController],
-	providers: [ChatAccessService, ChatRealtime, ChatNotifierService, ChatConversationService, ChatMessageService, ChatSearchService],
+	// The resolver is listed here as well as in the plugin's `extensions`: a resolver only the plugin metadata names is
+	// never registered, and the schema would advertise fields nothing resolves.
+	providers: [ChatAccessService, ChatRealtime, ChatNotifierService, ChatConversationService, ChatMessageService, ChatSearchService, ChatResolver],
 	exports: [ChatAccessService, ChatConversationService, ChatMessageService, ChatRealtime]
 })
 export class ChatModule {}
