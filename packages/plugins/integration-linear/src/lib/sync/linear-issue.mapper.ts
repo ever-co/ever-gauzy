@@ -1,5 +1,5 @@
 import { TaskPriorityEnum, TaskStatusEnum } from '@gauzy/contracts';
-import { LinearIssue, LinearIssueUpdateInput, LinearStateType, LinearWorkflowState } from '../client/linear-api.client';
+import { LinearAttachment, LinearComment, LinearIssue, LinearIssueUpdateInput, LinearStateType, LinearWorkflowState } from '../client/linear-api.client';
 
 /** The kinds of Linear workflow state, in the order a reverse lookup prefers them. */
 export const LINEAR_STATE_TYPES: readonly LinearStateType[] = ['started', 'completed', 'canceled', 'backlog', 'unstarted', 'triage'];
@@ -145,4 +145,35 @@ export function issueUpdateOf(
 	}
 	if (task.dueDate !== undefined) input.dueDate = linearDueDateOf(task.dueDate);
 	return input;
+}
+
+/** The platform keeps a comment as HTML: the text's characters that would read as markup, escaped. */
+export function escapeHtml(value: string): string {
+	return value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+/**
+ * A comment's body as the platform keeps it (HTML): the author's words as written (Linear's Markdown is kept as
+ * text), one paragraph per line; and, when the author is nobody here (no employee with their e-mail), who wrote
+ * them, named first, so the comment is not read as the connecting person's. Empty for a comment without text.
+ */
+export function commentHtmlOf(comment: Pick<LinearComment, 'body' | 'user'>, attributed: boolean): string {
+	const text = (comment.body ?? '').trim();
+	if (!text) return '';
+	const paragraphs = text
+		.split(/\r?\n+/)
+		.map((line) => line.trim())
+		.filter(Boolean)
+		.map((line) => `<p>${escapeHtml(line)}</p>`)
+		.join('');
+	if (attributed) return paragraphs;
+	const name = comment.user?.displayName?.trim() || comment.user?.name?.trim() || 'Someone';
+	return `<p><strong>${escapeHtml(name)}</strong> (Linear)</p>${paragraphs}`;
+}
+
+/** The link an attachment is kept as: its title and the address that opens it; null without an HTTP(S) address. */
+export function attachmentLinkOf(attachment: Pick<LinearAttachment, 'title' | 'url'>): { title: string; url: string } | null {
+	const url = (attachment.url ?? '').trim();
+	if (!/^https?:\/\//i.test(url)) return null;
+	return { title: (attachment.title ?? '').trim().slice(0, 255) || url, url };
 }

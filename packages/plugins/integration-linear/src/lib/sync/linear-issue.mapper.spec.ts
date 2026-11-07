@@ -1,6 +1,8 @@
 import { TaskPriorityEnum, TaskStatusEnum } from '@gauzy/contracts';
 import { LinearIssue, LinearWorkflowState } from '../client/linear-api.client';
 import {
+	attachmentLinkOf,
+	commentHtmlOf,
 	DEFAULT_STATE_MAP,
 	issueUpdateOf,
 	linearPriorityOf,
@@ -92,5 +94,19 @@ describe('linear issue mapper', () => {
 		// A priority Linear has no number for is left alone; an explicit null clears it.
 		expect(issueUpdateOf({ priority: 'custom' }, STATES, DEFAULT_STATE_MAP)).toEqual({});
 		expect(issueUpdateOf({ priority: null }, STATES, DEFAULT_STATE_MAP)).toEqual({ priority: 0 });
+	});
+
+	it('keeps a comment as escaped HTML paragraphs, naming an author who is nobody here', () => {
+		const comment = { body: 'Ship it <today>\n\nThen "rest"', user: { id: 'u1', name: 'ada', displayName: 'Ada & Co', email: null } };
+		expect(commentHtmlOf(comment, true)).toBe('<p>Ship it &lt;today&gt;</p><p>Then &quot;rest&quot;</p>');
+		expect(commentHtmlOf(comment, false)).toBe('<p><strong>Ada &amp; Co</strong> (Linear)</p><p>Ship it &lt;today&gt;</p><p>Then &quot;rest&quot;</p>');
+		expect(commentHtmlOf({ body: '  ', user: null }, false)).toBe('');
+		expect(commentHtmlOf({ body: 'x', user: { id: 'u2', name: 'grace', displayName: null, email: null } }, false)).toBe('<p><strong>grace</strong> (Linear)</p><p>x</p>');
+	});
+
+	it('keeps an attachment as a titled link to its address, and none without an HTTP(S) address', () => {
+		expect(attachmentLinkOf({ title: 'Design', url: 'https://www.figma.com/file/1' })).toEqual({ title: 'Design', url: 'https://www.figma.com/file/1' });
+		expect(attachmentLinkOf({ title: '', url: 'https://d/x' })).toEqual({ title: 'https://d/x', url: 'https://d/x' });
+		expect(attachmentLinkOf({ title: 'x', url: 'ftp://nope' })).toBeNull();
 	});
 });

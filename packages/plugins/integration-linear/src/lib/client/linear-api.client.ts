@@ -47,6 +47,23 @@ export interface LinearUser {
 	email: string | null;
 }
 
+/** A comment on an issue (Markdown), with who wrote it and the comment it answers, if any. */
+export interface LinearComment {
+	id: string;
+	body: string | null;
+	createdAt: string;
+	updatedAt: string;
+	user: LinearUser | null;
+	parent: { id: string } | null;
+}
+
+/** A file or link on an issue: the address that opens it. */
+export interface LinearAttachment {
+	id: string;
+	title: string | null;
+	url: string | null;
+}
+
 export interface LinearIssue {
 	id: string;
 	identifier: string;
@@ -69,6 +86,9 @@ export interface LinearIssue {
 	parent: { id: string } | null;
 	team: { id: string; key: string } | null;
 	project: { id: string; name: string } | null;
+	/** The issue's latest hundred comments, oldest first, and its first fifty attachments: read with the issue. */
+	comments?: { nodes: LinearComment[] } | null;
+	attachments?: { nodes: LinearAttachment[] } | null;
 }
 
 export interface LinearIssueUpdateInput {
@@ -120,6 +140,8 @@ const ISSUE_FIELDS = `
 	parent { id }
 	team { id key }
 	project { id name }
+	comments(first: 100, orderBy: createdAt) { nodes { id body createdAt updatedAt user { id name displayName email } parent { id } } }
+	attachments(first: 50) { nodes { id title url } }
 `;
 
 type FetchLike = (

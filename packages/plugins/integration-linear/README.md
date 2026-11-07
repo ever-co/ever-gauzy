@@ -53,6 +53,13 @@ for the `Issues` resource.
   workspace whose mapping of the team syncs inbound. A delivery (`Linear-Delivery`) is remembered once every
   connection applied it, so a retry does nothing; one that failed is not, and the next import reads the issue
   again (a webhook never moves the import position).
+- **Comments and attachments.** They come with every issue read (the latest hundred comments, the first fifty
+  attachments): each comment becomes a comment of the task — attributed to the employee whose user has the
+  author's e-mail, else kept as the connecting user's, marked system and named after their author; a reply goes
+  under the comment it answers — and follows an edit in Linear; each attachment becomes a resource link of the task
+  (the title, the address that opens it), reusing a link a person already added with the same address. Both are
+  kept once (the id map, entities `Comment` and `Attachment`). The webhook also takes a comment or attachment
+  created or updated, as the issue it belongs to, which is read again.
 - **Scheduled import.** Every five minutes the worker process (`apps/worker`, the one whose scheduler root is
   enabled) sweeps the mappings that bring issues in: one whose last import is older than
   `LINEAR_IMPORT_INTERVAL_MINUTES` (or that was never imported) is imported again, the changes since its position,

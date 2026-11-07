@@ -183,6 +183,8 @@ export enum IntegrationEntity {
 	ORGANIZATION_TEAM = 'OrganizationTeam',
 	STRATEGIC_INITIATIVE = 'StrategicInitiative',
 	COMMENT = 'Comment',
+	/** A file or link of a task kept as a resource link (Asana, Trello, Linear attachments). */
+	ATTACHMENT = 'Attachment',
 	DOCUMENT = 'Document',
 	INBOX_ITEM = 'InboxItem',
 	AGENT = 'Agent'
