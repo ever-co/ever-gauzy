@@ -46,9 +46,10 @@ uses the in-process engine.
 | `presence.changed` | no | organization | `{ employeeId, userId, status, at }` |
 | `typing.signalled` | no | the named users | `{ conversationId, threadRootId, employeeId, userId, at }` |
 
-The subscription and the catch-up also offer the events the chat and inbox plugins declare when they are
-loaded (`chat_message.*`, `chat_conversation.*`, `chat_member_state.*`, `chat_thread.*`, `inbox_item.*`): the
-collaboration families, and nothing of another family.
+The subscription and the catch-up also offer the events the chat and inbox
+plugins declare when they are loaded (`chat_message.*`, `chat_conversation.*`,
+`chat_member_state.*`, `chat_thread.*`, `inbox_item.*`): the collaboration
+families, and nothing of another family.
 
 Repeated `*.updated` hints of one aggregate within one second are folded: the
 first is appended at once, the latest of the rest when the second closes. A fact
