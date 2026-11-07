@@ -73,7 +73,11 @@ export class TrelloTenantService {
 	async findAnyById(integrationId: ID): Promise<IIntegrationTenant | null> {
 		return this.integrationTenantService['typeOrmRepository']
 			.findOne({ where: { id: integrationId, name: TRELLO_INTEGRATION_NAME, isActive: true, isArchived: false } as never, relations: { settings: true } as never })
-			.catch(() => null) as Promise<IIntegrationTenant | null>;
+			.catch((error: unknown) => {
+				// A connection the store could not read is not a missing one, but the caller can do no more with it either.
+				this.logger.warn(`Connection ${integrationId} could not be read: ${error instanceof Error ? error.message : String(error)}`);
+				return null;
+			}) as Promise<IIntegrationTenant | null>;
 	}
 
 	settingsOf(tenant: IIntegrationTenant): TrelloSettings {
@@ -159,22 +163,34 @@ export class TrelloTenantService {
 	 * in their Inbox, once per refusal (the item is keyed by the connection) and once more when it works again.
 	 */
 	async setAttention(tenant: IIntegrationTenant, reason: string | null): Promise<void> {
-		const before = this.settingsOf(tenant)[TrelloSettingName.ATTENTION_REASON] || null;
+		const settings = this.settingsOf(tenant);
+		const before = settings[TrelloSettingName.ATTENTION_REASON] || null;
+		const noticed = !!settings[TrelloSettingName.ATTENTION_NOTICE_AT];
 		try {
 			await this.writeSetting(tenant, TrelloSettingName.ATTENTION_REASON, reason ?? '');
 		} catch (error) {
+			// Not filed either: the Inbox must not say the imports are paused while the sweep still runs them.
 			this.logger.warn(`The attention reason of connection ${tenant.id} could not be written: ${(error as Error).message}`);
+			return;
 		}
-		if (reason ? before !== reason : !!before) await this.fileAttention(tenant, reason);
+		// Filed when the reason changed — and again when an earlier filing (or resolution) did not get through: the
+		// item is keyed by the connection, so a second filing updates it rather than adding one.
+		const changed = reason ? before !== reason : !!before;
+		const pending = reason ? !noticed : noticed;
+		if (changed || pending) await this.fileAttention(tenant, reason);
 	}
 
-	/** Files (or resolves) the Inbox item about the connection; nothing without the Inbox plugin or a connecting user. */
+	/**
+	 * Files (or resolves) the Inbox item about the connection and remembers that it got through; nothing without
+	 * the Inbox plugin or a connecting user. A filing that failed is tried again by the next {@link setAttention}.
+	 */
 	private async fileAttention(tenant: IIntegrationTenant, reason: string | null): Promise<void> {
 		if (!this.inbox) return;
 		const userId = this.settingsOf(tenant)[TrelloSettingName.CONNECTED_BY_USER_ID];
 		if (!userId) return;
 		try {
 			await this.inbox.upsertExternal(attentionItemOf({ id: tenant.id as ID, tenantId: tenant.tenantId as ID, organizationId: tenant.organizationId as ID }, reason, [userId as ID]));
+			await this.writeSetting(tenant, TrelloSettingName.ATTENTION_NOTICE_AT, reason ? new Date().toISOString() : '');
 		} catch (error) {
 			this.logger.warn(`The attention of connection ${tenant.id} could not be filed in the Inbox: ${(error as Error).message}`);
 		}
