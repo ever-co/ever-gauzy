@@ -16,6 +16,7 @@ const STUBBED = Array.from(PLUGINS_SOURCE.matchAll(/from '((?:@gauzy\/plugin-|\.
 		name !== '@gauzy/plugin-ever-stats' &&
 		name !== '@gauzy/plugin-ever-connect' &&
 		name !== '@gauzy/plugin-integration-ever-works' &&
+		name !== '@gauzy/plugin-integration-linear' &&
 		name !== '@gauzy/plugin-inbox' &&
 		name !== '@gauzy/plugin-email-provider-resend' &&
 		name !== '@gauzy/plugin-email-provider-postmark' &&
@@ -30,6 +31,7 @@ class AuthOidcPlugin {}
 class EverStatsPlugin {}
 class EverConnectPlugin {}
 class IntegrationEverWorksPlugin {}
+class IntegrationLinearPlugin {}
 class InboxPlugin {}
 class EmailProviderSesPlugin {}
 class EmailProviderSendGridPlugin {}
@@ -85,6 +87,10 @@ function loadPlugins(env: Record<string, string | undefined>, before?: () => voi
 			jest.doMock('@gauzy/plugin-integration-ever-works', () => ({
 				IntegrationEverWorksPlugin,
 				isEverWorksEnabled: jest.requireActual('../../../packages/plugins/integration-ever-works/src/lib/ever-works-enabled').isEverWorksEnabled
+			}));
+			jest.doMock('@gauzy/plugin-integration-linear', () => ({
+				IntegrationLinearPlugin,
+				isLinearEnabled: jest.requireActual('../../../packages/plugins/integration-linear/src/lib/linear-enabled').isLinearEnabled
 			}));
 			jest.doMock('@gauzy/plugin-inbox', () => ({
 				InboxPlugin,
@@ -289,6 +295,26 @@ describe('API plugin list: Ever Works integration', () => {
 				EVER_CONNECT_ENABLED: connect ? 'true' : undefined
 			});
 			expect([plugins.includes(IntegrationEverWorksPlugin), plugins.includes(EverConnectPlugin)]).toEqual([works, connect]);
+		} finally {
+			warn.mockRestore();
+		}
+	});
+});
+
+describe('API plugin list: Linear integration', () => {
+	it.each([
+		['unset (the default)', undefined, false, 0],
+		['empty', '', false, 0],
+		['false', 'false', false, 0],
+		['true', 'true', true, 0],
+		['TRUE', 'TRUE', false, 1],
+		['1', '1', false, 1]
+	])('LINEAR_ENABLED %s: loaded %s, %i log line(s)', (_name, value, loaded, lines) => {
+		const warn = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+		try {
+			const plugins = loadPlugins({ LINEAR_ENABLED: value });
+			expect(plugins.includes(IntegrationLinearPlugin)).toBe(loaded);
+			expect(warn.mock.calls.filter(([message]) => String(message).includes('LINEAR_ENABLED'))).toHaveLength(lines);
 		} finally {
 			warn.mockRestore();
 		}

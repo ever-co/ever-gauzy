@@ -72,6 +72,7 @@
 		"@gauzy/plugin-ever-connect": "^0.1.0",
 		"@gauzy/plugin-integration-ever-async": "^0.1.0",
 		"@gauzy/plugin-integration-ever-works": "^0.1.0",
+		"@gauzy/plugin-integration-linear": "^0.1.0",
 		"@gauzy/plugin-inbox": "^0.1.0",
 		"@gauzy/plugin-realtime": "^0.1.0",
 		"@gauzy/plugin-chat": "^0.1.0",

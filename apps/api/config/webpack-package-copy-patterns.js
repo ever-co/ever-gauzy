@@ -46,6 +46,7 @@ const SKIP_PACKAGES = new Set([
 	'integration-activepieces-ui',
 	'plugin-integration-ever-async-ui',
 	'plugin-integration-ever-works-ui',
+	'plugin-integration-linear-ui',
 	'plugin-auth-zitadel-ui',
 	'plugin-ever-stats-ui',
 	'plugin-ever-connect-ui',

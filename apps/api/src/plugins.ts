@@ -34,6 +34,7 @@ import { IntegrationSimPlugin } from '@gauzy/plugin-integration-sim';
 import { IntegrationPlanePlugin } from '@gauzy/plugin-integration-plane';
 import { IntegrationEverAsyncPlugin } from '@gauzy/plugin-integration-ever-async';
 import { IntegrationEverWorksPlugin, isEverWorksEnabled } from '@gauzy/plugin-integration-ever-works';
+import { IntegrationLinearPlugin, isLinearEnabled } from '@gauzy/plugin-integration-linear';
 import { InboxEmailPlugin, InboxPlugin, isInboxEmailEnabled, isInboxEnabled } from '@gauzy/plugin-inbox';
 import { isRealtimeEnabled, RealtimePlugin } from '@gauzy/plugin-realtime';
 
@@ -115,6 +116,11 @@ export const plugins = [
 	// all (no route, no table, no timer, no outbound request). Any other value keeps it off and is
 	// logged once.
 	...(isEverWorksEnabled(process.env, (message) => console.warn(message)) ? [IntegrationEverWorksPlugin] : []),
+
+	// Linear integration (OAuth connect, team ↔ project mappings, issue import, two-way status sync,
+	// webhooks). Off unless LINEAR_ENABLED=true; when off it is not loaded at all (no route, no table,
+	// no outbound request). Any other value keeps it off and is logged once.
+	...(isLinearEnabled(process.env, (message) => console.warn(message)) ? [IntegrationLinearPlugin] : []),
 
 	// Inbox (questions, approvals, escalations and notices addressed to a user, each with its own state; the
 	// Ever Works integration feeds it through a source-handler registry). Off unless GAUZY_INBOX_ENABLED=true;
