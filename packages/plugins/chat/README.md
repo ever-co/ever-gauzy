@@ -69,14 +69,14 @@ tenant switched off by hand stays off).
 | `POST /conversations/:id/messages` | send: `{ body, nonce?, replyToId?, threadRootId?, alsoInConversation?, attachmentIds?, mentionEmployeeIds?, taskId? }` |
 | `GET /messages/:id/thread` · `POST /:id/follow` · `/:id/unfollow` · `POST /:id/thread/read` | threads (read marks a followed thread's replies read) |
 | `PATCH /messages/:id` · `DELETE` · `POST /:id/pin` · `/:id/unpin` · `/:id/unread` | one message |
-| `POST /messages/:id/create-task { projectId?, title?, assigneeEmployeeIds? }` | a task from a message (`ORG_TASK_ADD` too): its first line as the title unless given, the body as the description; the message keeps a `created` reference |
+| `POST /messages/:id/create-task { projectId?, title?, assigneeEmployeeIds? }` | a task from a message (`ORG_TASK_ADD` too): its first line as the title unless given, the text as the description (HTML); the message keeps a `created` reference — a 500 that names the task id means the task exists but could not be linked |
 | `POST` / `DELETE /messages/:id/reactions/:emoji` | reactions |
 | `GET /threads` · `POST /read-all` · `POST /read-restore { snapshotId }` | followed threads; mark all read with a one-minute undo |
 
 Mention tokens in a body: `<@employeeId>`, `<#conversationId>`, `<!channel>`,
 `<!here>` — rename-safe, rendered as chips by the clients. A task typed as
 `KEY-number` (the project's key, a former key, or the key derived from its name)
-or linked by id (`/task/<id>`, `/tasks/<id>`, `?taskId=`) is resolved when the
+or linked by id (`/task/<id>`, `/tasks/<id>`, `/tasks/view/<id>`, `?taskId=`) is resolved when the
 message is sent or edited and kept as a `mention` task reference; "send to chat"
 (`taskId`) is a `sent` reference; the clients render all of them as task cards. Sends are idempotent
 per `nonce`, with no time limit: reusing a `nonce` answers the message the sender

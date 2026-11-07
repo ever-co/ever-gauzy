@@ -1,4 +1,4 @@
-import { BadRequestException, ForbiddenException, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
 import { Brackets, DataSource, EntityManager, In, IsNull, MoreThan, MoreThanOrEqual, Not, ObjectLiteral, SelectQueryBuilder } from 'typeorm';
 import {
 	ActorTypeEnum,
@@ -30,7 +30,7 @@ import {
 import { CommandBus } from '@nestjs/cqrs';
 import { Reaction, RequestContext, TaskCreateCommand, TaskService } from '@gauzy/core';
 import { mentionedEmployees, parseMentions } from '../chat-mentions';
-import { taskMentionsIn, taskTitleOf } from '../chat-task-references';
+import { taskDescriptionOf, taskMentionsIn, taskTitleOf } from '../chat-task-references';
 import { CHAT_MAX_PAGE_SIZE, CHAT_PAGE_SIZE, CHAT_READ_RESTORE_TTL_MS } from '../chat.constants';
 import { ChatConversation } from '../entities/chat-conversation.entity';
 import { ChatMember } from '../entities/chat-member.entity';
@@ -452,8 +452,14 @@ export class ChatMessageService {
 		message.mentionsHere = parsed.here;
 		if (input.attachmentIds) message.attachmentIds = this.validAttachments(input.attachmentIds).length ? JSON.stringify(this.validAttachments(input.attachmentIds)) : null;
 		message.editedAt = new Date();
-		await this.dataSource.getRepository(ChatMessage).save(message);
-		await this.replaceTaskMentions(caller, conversation, message);
+		// The body and its task references change together: the references are resolved first, then written with the
+		// body in one transaction, whose row lock makes a second edit wait — a message never shows one edit's text with
+		// another's task cards, and an edit whose references could not be written is not half done.
+		const taskMentions = await this.mentionedTaskIds(caller, conversation, body, await this.keptTaskReferences(caller, message));
+		await this.dataSource.transaction(async (manager) => {
+			await manager.getRepository(ChatMessage).save(message);
+			await this.writeTaskMentions(manager, caller, conversation, message, taskMentions);
+		});
 		// A mention the edit added or took away moves the badge of a member who has not read the message yet.
 		if (inTimeline(message) && (added.length || removed.length)) {
 			const position = await this.timelinePosition(caller.tenantId, message.conversationId, message, true);
@@ -733,15 +739,23 @@ export class ChatMessageService {
 				organizationId,
 				projectId: input.projectId ?? null,
 				title,
-				description: message.body,
+				description: taskDescriptionOf(message.body),
 				status: TaskStatusEnum.OPEN,
 				members
 			} as unknown as ITaskCreateInput)
 		);
 		const repository = this.dataSource.getRepository(ChatTaskReference);
-		const saved = await repository.save(
-			repository.create({ messageId: message.id as ID, taskId: task.id as ID, kind: ChatTaskReferenceKindEnum.CREATED, tenantId: caller.tenantId, organizationId })
-		);
+		let saved: ChatTaskReference;
+		try {
+			saved = await repository.save(
+				repository.create({ messageId: message.id as ID, taskId: task.id as ID, kind: ChatTaskReferenceKindEnum.CREATED, tenantId: caller.tenantId, organizationId })
+			);
+		} catch (error) {
+			// The task exists (its own transaction committed) but the message does not point to it: said with the task's
+			// id, so the person links it by hand rather than creating it again.
+			this.logger.error(`Task ${task.id} was created from message ${message.id}, but the reference could not be saved: ${error instanceof Error ? error.message : String(error)}`);
+			throw new InternalServerErrorException({ message: `The task was created (${task.id}) but the message could not be linked to it; link it by hand rather than creating it again`, taskId: task.id });
+		}
 		const members2 = await this.access.members(caller.tenantId, message.conversationId);
 		const events = [await this.realtime.publish(this.realtime.messageFact(CHAT_EVENT_NAMES.MESSAGE_UPDATED, message, members2.map((m) => m.userId)))];
 		return { task, reference: { messageId: saved.messageId, taskId: saved.taskId, kind: saved.kind }, events };
@@ -788,25 +802,29 @@ export class ChatMessageService {
 		return [...ids] as ID[];
 	}
 
-	/** After an edit: the message's `mention` references follow its new body; a card sent or a task created with it stays. */
-	private async replaceTaskMentions(caller: IChatCaller, conversation: ChatConversation, message: ChatMessage): Promise<void> {
-		const repository = this.dataSource.getRepository(ChatTaskReference);
-		const kept = await repository.find({ where: { messageId: message.id as ID, tenantId: caller.tenantId, kind: Not(ChatTaskReferenceKindEnum.MENTION) } });
-		const wanted = await this.mentionedTaskIds(caller, conversation, message.body, kept.map((reference) => reference.taskId));
-		await this.dataSource.transaction(async (manager) => {
-			await manager.getRepository(ChatTaskReference).delete({ messageId: message.id as ID, tenantId: caller.tenantId, kind: ChatTaskReferenceKindEnum.MENTION });
-			for (const taskId of wanted) {
-				await manager.getRepository(ChatTaskReference).save(
-					manager.getRepository(ChatTaskReference).create({
-						messageId: message.id as ID,
-						taskId,
-						kind: ChatTaskReferenceKindEnum.MENTION,
-						tenantId: caller.tenantId,
-						organizationId: conversation.organizationId ?? caller.organizationId ?? undefined
-					})
-				);
-			}
-		});
+	/** The tasks a message refers to other than by its text (a card sent with it, a task created from it): an edit keeps them. */
+	private async keptTaskReferences(caller: IChatCaller, message: ChatMessage): Promise<ID[]> {
+		const kept = await this.dataSource
+			.getRepository(ChatTaskReference)
+			.find({ where: { messageId: message.id as ID, tenantId: caller.tenantId, kind: Not(ChatTaskReferenceKindEnum.MENTION) } });
+		return kept.map((reference) => reference.taskId);
+	}
+
+	/** After an edit, in its transaction: the message's `mention` references follow its new body. */
+	private async writeTaskMentions(manager: EntityManager, caller: IChatCaller, conversation: ChatConversation, message: ChatMessage, wanted: readonly ID[]): Promise<void> {
+		const repository = manager.getRepository(ChatTaskReference);
+		await repository.delete({ messageId: message.id as ID, tenantId: caller.tenantId, kind: ChatTaskReferenceKindEnum.MENTION });
+		for (const taskId of wanted) {
+			await repository.save(
+				repository.create({
+					messageId: message.id as ID,
+					taskId,
+					kind: ChatTaskReferenceKindEnum.MENTION,
+					tenantId: caller.tenantId,
+					organizationId: conversation.organizationId ?? caller.organizationId ?? undefined
+				})
+			);
+		}
 	}
 
 	private async messageAndConversation(caller: IChatCaller, messageId: ID): Promise<{ message: ChatMessage; conversation: ChatConversation }> {
