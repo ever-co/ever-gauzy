@@ -19,7 +19,7 @@ describe('InboxNotificationSettingsPageComponent', () => {
 			providers: [
 				{ provide: InboxNotificationSettingsService, useValue: api },
 				{ provide: ToastrService, useValue: toastr },
-				{ provide: TranslateService, useValue: { currentLang: 'en', getCurrentLang: () => 'en', instant: (key: string) => key, get: (key: string) => of(key), onLangChange: of(), onTranslationChange: of(), onDefaultLangChange: of() } },
+				{ provide: TranslateService, useValue: { currentLang: 'en', getCurrentLang: () => 'en', instant: (key: string) => key, translate: (key: string) => key, get: (key: string) => of(key), onLangChange: of(), onTranslationChange: of(), onDefaultLangChange: of() } },
 				{
 					provide: Store,
 					useValue: {
