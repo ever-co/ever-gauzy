@@ -28,6 +28,8 @@ export interface IDocumentAccessShare {
 export interface IDocumentAccessRow {
 	createdByUserId?: ID | null;
 	visibility: DocumentVisibilityEnum;
+	/** The team whose space a `TEAM` document is in. */
+	organizationTeamId?: ID | null;
 	isLocked?: boolean;
 	/** Share overlay rows of THIS document (already scoped to the document). */
 	shares?: IDocumentAccessShare[] | null;
@@ -75,8 +77,23 @@ export function shareTargetsSubject(share: IDocumentAccessShare, subject: IDocum
 }
 
 /**
+ * Whether the document is in a team space the subject currently belongs to. A team's pages are its members'
+ * to read and write, like a page shared with the team at `EDIT`; `DOCS_MANAGE` holders reach every space.
+ *
+ * @param document The document projection.
+ * @param subject The requesting subject.
+ * @returns True for a member of the document's team.
+ */
+export function isTeamSpaceMember(document: IDocumentAccessRow, subject: IDocumentAccessSubject): boolean {
+	if (document.visibility !== DocumentVisibilityEnum.TEAM || !document.organizationTeamId) {
+		return false;
+	}
+	return !!subject.teamIds?.length && subject.teamIds.includes(document.organizationTeamId);
+}
+
+/**
  * The strongest share access the subject holds on the document, or `null` when no share
- * applies. Shares are an additive overlay on PRIVATE documents only — on ORGANIZATION
+ * applies. Shares are an additive overlay on PRIVATE and TEAM documents — on ORGANIZATION
  * documents they have no effect in v1 (§3.3), so `null` is returned there as well.
  *
  * @param document The document projection (with its share rows).
@@ -87,7 +104,7 @@ export function effectiveShareAccess(
 	document: IDocumentAccessRow,
 	subject: IDocumentAccessSubject
 ): DocumentShareAccessEnum | null {
-	if (document.visibility !== DocumentVisibilityEnum.PRIVATE) {
+	if (document.visibility === DocumentVisibilityEnum.ORGANIZATION) {
 		return null;
 	}
 	let best: DocumentShareAccessEnum | null = null;
@@ -120,18 +137,19 @@ export function hasShareAtLeast(
 }
 
 /**
- * The §3.4 effective-read-access truth table:
+ * The §3.4 effective-read-access truth table (a TEAM document reads like a PRIVATE one shared with its team):
  *
- * | # | `DOCS_READ` | Visibility   | Creator | `DOCS_MANAGE` | Share >= VIEW | Readable |
- * |---|-------------|--------------|---------|---------------|---------------|----------|
- * | 1 | no          | any          | any     | any           | any           | **No**   |
- * | 2 | yes         | ORGANIZATION | any     | any           | any           | **Yes**  |
- * | 3 | yes         | PRIVATE      | yes     | any           | any           | **Yes**  |
- * | 4 | yes         | PRIVATE      | no      | yes           | any           | **Yes**  |
- * | 5 | yes         | PRIVATE      | no      | no            | yes           | **Yes**  |
- * | 6 | yes         | PRIVATE      | no      | no            | no            | **No**   |
+ * | # | `DOCS_READ` | Visibility     | Creator | `DOCS_MANAGE` | Team member | Share >= VIEW | Readable |
+ * |---|-------------|----------------|---------|---------------|-------------|---------------|----------|
+ * | 1 | no          | any            | any     | any           | any         | any           | **No**   |
+ * | 2 | yes         | ORGANIZATION   | any     | any           | any         | any           | **Yes**  |
+ * | 3 | yes         | PRIVATE / TEAM | yes     | any           | any         | any           | **Yes**  |
+ * | 4 | yes         | PRIVATE / TEAM | no      | yes           | any         | any           | **Yes**  |
+ * | 5 | yes         | TEAM           | no      | no            | yes         | any           | **Yes**  |
+ * | 6 | yes         | PRIVATE / TEAM | no      | no            | no          | yes           | **Yes**  |
+ * | 7 | yes         | PRIVATE / TEAM | no      | no            | no          | no            | **No**   |
  *
- * Row 6 is a 404 on the wire — existence is never revealed.
+ * Row 7 is a 404 on the wire — existence is never revealed.
  *
  * @param document The document projection.
  * @param subject The requesting subject.
@@ -143,10 +161,10 @@ export function isDocumentReadable(document: IDocumentAccessRow, subject: IDocum
 		return false;
 	}
 	// Row 2 — ORGANIZATION documents are readable org-wide.
-	if (document.visibility !== DocumentVisibilityEnum.PRIVATE) {
+	if (document.visibility === DocumentVisibilityEnum.ORGANIZATION) {
 		return true;
 	}
-	// Row 3 — the creator always reads their own PRIVATE documents.
+	// Row 3 — the creator always reads their own PRIVATE / TEAM documents.
 	if (subject.userId && document.createdByUserId && document.createdByUserId === subject.userId) {
 		return true;
 	}
@@ -154,7 +172,11 @@ export function isDocumentReadable(document: IDocumentAccessRow, subject: IDocum
 	if (subject.hasManagePermission) {
 		return true;
 	}
-	// Row 5 — the share overlay (any level implies VIEW).
+	// Row 5 — a team's pages are its members'.
+	if (isTeamSpaceMember(document, subject)) {
+		return true;
+	}
+	// Row 6 — the share overlay (any level implies VIEW).
 	return hasShareAtLeast(document, subject, DocumentShareAccessEnum.VIEW);
 }
 
@@ -179,6 +201,10 @@ export function isDocumentWritable(document: IDocumentAccessRow, subject: IDocum
 		return true;
 	}
 	if (subject.userId && document.createdByUserId && document.createdByUserId === subject.userId) {
+		return true;
+	}
+	// A team's pages are its members' to write, as a page shared with the team at `EDIT` would be.
+	if (isTeamSpaceMember(document, subject)) {
 		return true;
 	}
 	return hasShareAtLeast(document, subject, DocumentShareAccessEnum.EDIT);

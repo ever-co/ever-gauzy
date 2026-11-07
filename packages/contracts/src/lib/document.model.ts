@@ -93,7 +93,42 @@ export enum DocumentReviewReasonEnum {
  */
 export enum DocumentVisibilityEnum {
 	ORGANIZATION = 'ORGANIZATION',
-	PRIVATE = 'PRIVATE'
+	PRIVATE = 'PRIVATE',
+	/** The page belongs to a team space (`organizationTeamId`): its members and `DOCS_MANAGE` holders reach it. */
+	TEAM = 'TEAM'
+}
+
+/**
+ * The spaces a page tree is listed in: the organization's, one per team (its members' pages), and each person's
+ * private one. A document's space follows from its `visibility` and `organizationTeamId`.
+ */
+export enum DocumentSpaceKindEnum {
+	ORGANIZATION = 'organization',
+	TEAM = 'team',
+	PRIVATE = 'private'
+}
+
+/** One space as the caller sees it, with how many documents of theirs it lists. */
+export interface IDocumentSpace {
+	kind: DocumentSpaceKindEnum;
+	/** The team of a team space. */
+	organizationTeamId?: ID;
+	name: string;
+	documentCount: number;
+}
+
+/** Moves a page (and, when asked, its subtree) to a space: the organization's, a team's, or the caller's private one. */
+export interface IDocumentSpaceMoveInput extends IBasePerTenantAndOrganizationEntityModel {
+	visibility: DocumentVisibilityEnum;
+	organizationTeamId?: ID | null;
+	/** Also move every descendant the caller may write (default true). */
+	applyToSubtree?: boolean;
+}
+
+/** Whether the caller follows a page (gets told of comments and changes) or muted it. */
+export interface IDocumentFollowState {
+	following: boolean;
+	muted: boolean;
 }
 
 /**
@@ -153,6 +188,10 @@ export interface IDocument extends IBasePerTenantAndOrganizationEntityModel {
 	reviewedBy?: IEmployee;
 	reviewedAt?: Date;
 	visibility: DocumentVisibilityEnum;
+	organizationTeamId?: ID; // TEAM visibility: the team whose space the document is in
+	organizationTeam?: IOrganizationTeam;
+	/** Moves on every content change (content save, Markdown update, version restore): the compare-and-set token of API writers. */
+	contentRevision?: number;
 	externalSource?: string; // Importer/integration namespace
 	externalId?: string; // Id inside `externalSource`; together they make importers idempotent
 	metadata?: JsonData; // Catch-all provenance/extension dict
@@ -283,6 +322,7 @@ export interface IDocumentCreateInput extends IBasePerTenantAndOrganizationEntit
 	contentHtml?: string; // PAGE only
 	contentBinary?: Uint8Array; // PAGE only
 	visibility?: DocumentVisibilityEnum;
+	organizationTeamId?: ID | null; // With TEAM visibility: the team's space
 	tags?: ITag[];
 	categoryIds?: ID[];
 	importToKnowledge?: boolean;

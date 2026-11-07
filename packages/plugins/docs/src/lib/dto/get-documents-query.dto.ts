@@ -6,6 +6,7 @@ import {
 	DocumentKnowledgeStatusEnum,
 	DocumentReviewStatusEnum,
 	DocumentSourceEnum,
+	DocumentSpaceKindEnum,
 	DocumentStatusEnum,
 	DocumentVisibilityEnum,
 	ID
@@ -97,6 +98,18 @@ export class GetDocumentsQueryDTO extends BaseQueryDTO<Document> {
 	@IsOptional()
 	@IsEnum(DocumentVisibilityEnum)
 	readonly visibility?: DocumentVisibilityEnum;
+
+	/** The space to list: the organization's pages, the caller's private pages, or a team's (`organizationTeamId`). */
+	@ApiPropertyOptional({ type: () => String, enum: DocumentSpaceKindEnum })
+	@IsOptional()
+	@IsEnum(DocumentSpaceKindEnum)
+	readonly space?: DocumentSpaceKindEnum;
+
+	/** With `space: team` (or alone): only the pages of this team's space. */
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsUUID()
+	readonly organizationTeamId?: ID;
 
 	/** Archived rows handling; default `exclude`. */
 	@ApiPropertyOptional({ type: () => String, enum: ['exclude', 'include', 'only'] })

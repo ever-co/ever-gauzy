@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { IsNull, WhereExpressionBuilder } from 'typeorm';
-import { DocumentShareAccessEnum, ID, PermissionsEnum } from '@gauzy/contracts';
+import { DocumentShareAccessEnum, DocumentVisibilityEnum, ID, PermissionsEnum } from '@gauzy/contracts';
 import { OrganizationTeamEmployee, RequestContext } from '@gauzy/core';
 import { TypeOrmDocumentShareRepository } from '../repositories/type-orm-document-share.repository';
 import {
@@ -12,7 +12,7 @@ import {
 	isDocumentReadable,
 	isDocumentWritable
 } from './document-access.predicate';
-import { buildShareGrantExistsSql } from './document-access.sql';
+import { buildShareGrantExistsSql, buildTeamSpaceSql } from './document-access.sql';
 
 /**
  * Resolves the requesting subject (user id, employee id, current team ids, permissions)
@@ -108,6 +108,23 @@ export class DocumentAccessService {
 			return false;
 		}
 		web.orWhere(buildShareGrantExistsSql(alias), { shareEmployeeId: employeeId, shareTenantId: tenantId });
+		return true;
+	}
+
+	/**
+	 * Folds the team-space clause into a visibility bracket: the pages of the teams the requesting subject
+	 * belongs to, when it has an employee identity to match memberships against.
+	 *
+	 * @param web The `OR` bracket of the visibility scope.
+	 * @param alias The document alias in the surrounding query.
+	 * @returns True when the clause was added (i.e. the parameters were bound).
+	 */
+	public applyTeamScope(web: WhereExpressionBuilder, alias: string): boolean {
+		const employeeId = this.currentEmployeeId();
+		if (!employeeId) {
+			return false;
+		}
+		web.orWhere(buildTeamSpaceSql(alias), { teamEmployeeId: employeeId, teamVisibility: DocumentVisibilityEnum.TEAM });
 		return true;
 	}
 

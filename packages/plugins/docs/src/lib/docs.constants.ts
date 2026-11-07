@@ -57,6 +57,16 @@ export const DOCS_INBOUND_SENDER_NOT_ALLOWED = 'DOCS_INBOUND_SENDER_NOT_ALLOWED'
 export const DOCS_INBOUND_NO_ATTACHMENTS = 'DOCS_INBOUND_NO_ATTACHMENTS';
 /** The submitted `contentJson` is not a schema-valid TipTap document (`08` §6.1). */
 export const DOCS_CONTENT_SCHEMA_INVALID = 'DOCS_CONTENT_SCHEMA_INVALID';
+/** 404: the collaboration feature (team spaces, follows, Markdown routes) is off on this installation. */
+export const DOCS_COLLAB_DISABLED = 'DOCS_COLLAB_DISABLED';
+/** 400: a TEAM document names no team. */
+export const DOCS_TEAM_REQUIRED = 'DOCS_TEAM_REQUIRED';
+/** 400: the team named is not one of the document's organization. */
+export const DOCS_TEAM_NOT_IN_ORGANIZATION = 'DOCS_TEAM_NOT_IN_ORGANIZATION';
+/** 403: only a member of the team (or `DOCS_MANAGE`) puts a document in its space. */
+export const DOCS_TEAM_NOT_MEMBER = 'DOCS_TEAM_NOT_MEMBER';
+/** The same person is not told twice of the same thing on one page within this window. */
+export const DOCS_NOTIFICATION_DEDUPE_MINUTES = 10;
 /** The submitted `contentBinary` exceeds `GAUZY_DOCS_MAX_BINARY_BYTES` (`10` §7.1 P6). */
 export const DOCS_CONTENT_BINARY_TOO_LARGE = 'DOCS_CONTENT_BINARY_TOO_LARGE';
 
@@ -64,6 +74,8 @@ export const DOCS_CONTENT_BINARY_TOO_LARGE = 'DOCS_CONTENT_BINARY_TOO_LARGE';
  * Environment variable keys read by `docs.config.ts`.
  */
 export const ENV_GAUZY_DOCS_MAX_FILE_SIZE = 'GAUZY_DOCS_MAX_FILE_SIZE';
+/** `true` switches the collaboration feature on: team spaces, follow / mute, Markdown export and update. Off by default. */
+export const ENV_GAUZY_DOCS_COLLAB_ENABLED = 'GAUZY_DOCS_COLLAB_ENABLED';
 export const ENV_GAUZY_DOCS_MAX_BINARY_BYTES = 'GAUZY_DOCS_MAX_BINARY_BYTES';
 export const ENV_GAUZY_DOCS_AI_ENABLED = 'GAUZY_DOCS_AI_ENABLED';
 export const ENV_GAUZY_DOCS_EMBEDDING_MODEL = 'GAUZY_DOCS_EMBEDDING_MODEL';

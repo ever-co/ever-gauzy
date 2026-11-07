@@ -2,8 +2,10 @@ import { DocsFeatureService } from './docs-feature.service';
 import { DocumentService } from './document.service';
 import { DocumentAccessService } from './document-access.service';
 import { DocumentCategoryService } from './document-category.service';
+import { DocumentCollaborationService } from './document-collaboration.service';
 import { DocumentKnowledgeService } from './document-knowledge.service';
 import { DocumentLinkService } from './document-link.service';
+import { DocumentNotifierService } from './document-notifier.service';
 import { DocumentPathService } from './document-path.service';
 import { DocumentProcessingService } from './document-processing.service';
 import { DocumentQuotaService } from './document-quota.service';
@@ -58,5 +60,9 @@ export const Services = [
 	DocumentProcessingService,
 	DocumentUploadService,
 	DocumentKnowledgeService,
-	DocumentReviewService
+	DocumentReviewService,
+	DocumentNotifierService,
+	DocumentCollaborationService
 ];
+export { DocumentCollaborationService } from './document-collaboration.service';
+export { DocumentNotifierService } from './document-notifier.service';

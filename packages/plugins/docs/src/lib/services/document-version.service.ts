@@ -9,6 +9,7 @@ import { DocumentVersion } from '../entities/document-version.entity';
 import { MikroOrmDocumentVersionRepository } from '../repositories/mikro-orm-document-version.repository';
 import { TypeOrmDocumentRepository } from '../repositories/type-orm-document.repository';
 import { TypeOrmDocumentVersionRepository } from '../repositories/type-orm-document-version.repository';
+import { nextContentRevision } from './document.service';
 
 @Injectable()
 export class DocumentVersionService extends TenantAwareCrudService<DocumentVersion> {
@@ -173,6 +174,8 @@ export class DocumentVersionService extends TenantAwareCrudService<DocumentVersi
 		document.contentJson = version.contentJson ?? null;
 		document.contentHtml = version.contentHtml ?? null;
 		document.contentBinary = version.contentBinary ?? null;
+		// A restore is a content change like any other for the writers that hold a revision.
+		document.contentRevision = nextContentRevision(document);
 		const restored = await this.typeOrmDocumentRepository.save(document);
 
 		this.logger.log(`Restored document ${document.id} to version ${versionId}`);
