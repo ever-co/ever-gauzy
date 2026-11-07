@@ -15,8 +15,8 @@ import { DatabaseTypeEnum } from '@gauzy/config';
  * those links through the owner. A table that is already gone is skipped, so running `up` twice is harmless.
  * `down` recreates the two tables empty, as the original schema had them.
  */
-export class DropInverseSideTaskJoinTables1791000004900 implements MigrationInterface {
-	name = 'DropInverseSideTaskJoinTables1791000004900';
+export class DropInverseSideTaskJoinTables1791000004925 implements MigrationInterface {
+	name = 'DropInverseSideTaskJoinTables1791000004925';
 
 	/** The retired tables and the owning table + columns their rows move to. */
 	private readonly tables = [

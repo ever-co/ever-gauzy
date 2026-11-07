@@ -11,7 +11,7 @@ import * as path from 'path';
  * second, always empty junction table `organization_team_tasks_task` existed in every database) and the query
  * strategy read `task_team` with the id lists swapped, answering every team an empty list (ever-co/ever-gauzy#11676
  * loaded the public team's tasks from the task's side because of it). With the decorator gone
- * (`DropInverseSideTaskJoinTables1791000004900` retires the stray table), the query strategy answers the same as the
+ * (`DropInverseSideTaskJoinTables1791000004925` retires the stray table), the query strategy answers the same as the
  * join strategy and reads `task_team` by the team ids. `Employee.tasks` (inverse of `Task.members`, junction
  * `task_employee`) had the same decorator and the same answer; it is checked the same way.
  */
