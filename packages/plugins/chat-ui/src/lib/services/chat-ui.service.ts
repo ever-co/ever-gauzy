@@ -2,6 +2,9 @@ import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Observable, Subject } from 'rxjs';
 import {
+	CHAT_EVENT_NAMES,
+	ChatMemberRoleEnum,
+	ChatNotifyLevelEnum,
 	IChatCategory,
 	IChatConversationCreateInput,
 	IChatConversationList,
@@ -27,14 +30,60 @@ import { CHAT_PAGE_SIZE } from '../chat-ui.constants';
 const CHAT = `${API_PREFIX}/chat`;
 const path = (id: ID) => encodeURIComponent(String(id));
 
-type Events = { events: IChatEvent[] };
-type ConversationAnswer = { conversation: IChatConversationWithState } & Events;
+/** What a write answers besides its record: the events it caused. */
+export type ChatEvents = { events: IChatEvent[] };
+type ConversationAnswer = { conversation: IChatConversationWithState } & ChatEvents;
 
 /** A thread: its root message and a page of its replies. */
 export type ChatThreadPage = IChatMessagePage & { root: IChatMessageWithRelations };
 
 /** A followed thread's root, with how many of its replies I have not read. */
 export type ChatFollowedThread = IChatMessageWithRelations & { unreadReplies: number };
+
+/** A person chat shows (`GET /chat/people`): an active employee with the name and picture any chat user may see. */
+export interface ChatPersonRecord {
+	employeeId: ID;
+	userId: ID;
+	name: string;
+	imageUrl: string | null;
+}
+
+/** What `chat_member.state_changed` carries. */
+interface MemberStateChangedData {
+	conversationId?: ID;
+	readCount?: number;
+	mentionCount?: number;
+	notifyLevel?: IChatMemberState['notifyLevel'];
+	isFavorite?: boolean;
+	lastReadMessageId?: ID | null;
+}
+
+/**
+ * My state of a conversation after the events a write answered: the member-state fact of that conversation,
+ * applied over the state I had (the role stays; the unread count is the message count minus what I read).
+ */
+export function memberStateFromEvents(
+	events: readonly IChatEvent[] | undefined,
+	conversation: Pick<IChatConversationWithState, 'id' | 'messageCount'>,
+	current: IChatMemberState | null
+): IChatMemberState | null {
+	const fact = (events ?? []).find(
+		(event) => event.name === CHAT_EVENT_NAMES.MEMBER_STATE_CHANGED && String((event.data as MemberStateChangedData)?.conversationId) === String(conversation.id)
+	);
+	if (!fact) return current;
+	const data = fact.data as MemberStateChangedData;
+	const readCount = Number(data.readCount ?? 0);
+	return {
+		conversationId: conversation.id,
+		role: current?.role ?? ChatMemberRoleEnum.MEMBER,
+		notifyLevel: data.notifyLevel ?? current?.notifyLevel ?? ChatNotifyLevelEnum.ALL,
+		isFavorite: data.isFavorite ?? current?.isFavorite ?? false,
+		unreadCount: Math.max(0, (conversation.messageCount ?? 0) - readCount),
+		mentionCount: Number(data.mentionCount ?? 0),
+		lastReadMessageId: data.lastReadMessageId ?? current?.lastReadMessageId ?? null,
+		lastReadAt: current?.lastReadAt ?? null
+	};
+}
 
 /**
  * The chat routes of the API (`@gauzy/plugin-chat`, `/api/chat/*`). They exist only where the API loads the
@@ -53,7 +102,12 @@ export class ChatUiService {
 		this.changes.next();
 	}
 
-	// ---------------------------------------------------------------- conversations
+	// ---------------------------------------------------------------- people and conversations
+
+	/** The active employees of my organization with name and picture (what chat shows and suggests). */
+	people(): Observable<ChatPersonRecord[]> {
+		return this.http.get<ChatPersonRecord[]>(`${CHAT}/people`);
+	}
 
 	listMine(): Observable<IChatConversationList> {
 		return this.http.get<IChatConversationList>(`${CHAT}/conversations`);
@@ -93,25 +147,25 @@ export class ChatUiService {
 		return this.http.post<ConversationAnswer>(`${CHAT}/conversations/${path(id)}/join`, {});
 	}
 
-	leave(id: ID): Observable<Events> {
-		return this.http.post<Events>(`${CHAT}/conversations/${path(id)}/leave`, {});
+	leave(id: ID): Observable<ChatEvents> {
+		return this.http.post<ChatEvents>(`${CHAT}/conversations/${path(id)}/leave`, {});
 	}
 
 	members(id: ID): Observable<IChatMemberSummary[]> {
 		return this.http.get<IChatMemberSummary[]>(`${CHAT}/conversations/${path(id)}/members`);
 	}
 
-	addMembers(id: ID, employeeIds: ID[]): Observable<{ members: IChatMemberSummary[] } & Events> {
-		return this.http.post<{ members: IChatMemberSummary[] } & Events>(`${CHAT}/conversations/${path(id)}/members`, { employeeIds });
+	addMembers(id: ID, employeeIds: ID[]): Observable<{ members: IChatMemberSummary[] } & ChatEvents> {
+		return this.http.post<{ members: IChatMemberSummary[] } & ChatEvents>(`${CHAT}/conversations/${path(id)}/members`, { employeeIds });
 	}
 
-	removeMember(id: ID, employeeId: ID): Observable<Events> {
-		return this.http.delete<Events>(`${CHAT}/conversations/${path(id)}/members/${path(employeeId)}`);
+	removeMember(id: ID, employeeId: ID): Observable<ChatEvents> {
+		return this.http.delete<ChatEvents>(`${CHAT}/conversations/${path(id)}/members/${path(employeeId)}`);
 	}
 
 	/** My notify level and favourite flag of a conversation. */
-	setState(id: ID, input: IChatMemberStateInput): Observable<{ state: IChatMemberState } & Events> {
-		return this.http.patch<{ state: IChatMemberState } & Events>(`${CHAT}/conversations/${path(id)}/state`, input);
+	setState(id: ID, input: IChatMemberStateInput): Observable<{ state: IChatMemberState } & ChatEvents> {
+		return this.http.patch<{ state: IChatMemberState } & ChatEvents>(`${CHAT}/conversations/${path(id)}/state`, input);
 	}
 
 	categories(): Observable<IChatCategory[]> {
@@ -138,17 +192,17 @@ export class ChatUiService {
 		return this.http.patch<IChatSendResult>(`${CHAT}/messages/${path(messageId)}`, input);
 	}
 
-	remove(messageId: ID): Observable<Events> {
-		return this.http.delete<Events>(`${CHAT}/messages/${path(messageId)}`);
+	remove(messageId: ID): Observable<ChatEvents> {
+		return this.http.delete<ChatEvents>(`${CHAT}/messages/${path(messageId)}`);
 	}
 
 	setPinned(messageId: ID, pinned: boolean): Observable<IChatSendResult> {
 		return this.http.post<IChatSendResult>(`${CHAT}/messages/${path(messageId)}/${pinned ? 'pin' : 'unpin'}`, {});
 	}
 
-	/** Marks the conversation unread from this message on. */
-	unreadFrom(messageId: ID): Observable<{ state: IChatMemberState } & Events> {
-		return this.http.post<{ state: IChatMemberState } & Events>(`${CHAT}/messages/${path(messageId)}/unread`, {});
+	/** Marks the conversation unread from this message on; the answer's events carry my new state. */
+	unreadFrom(messageId: ID): Observable<ChatEvents> {
+		return this.http.post<ChatEvents>(`${CHAT}/messages/${path(messageId)}/unread`, {});
 	}
 
 	react(messageId: ID, emoji: string, on: boolean): Observable<IChatSendResult> {
@@ -164,8 +218,13 @@ export class ChatUiService {
 		});
 	}
 
-	setFollowing(rootMessageId: ID, following: boolean): Observable<Events> {
-		return this.http.post<Events>(`${CHAT}/messages/${path(rootMessageId)}/${following ? 'follow' : 'unfollow'}`, {});
+	setFollowing(rootMessageId: ID, following: boolean): Observable<ChatEvents> {
+		return this.http.post<ChatEvents>(`${CHAT}/messages/${path(rootMessageId)}/${following ? 'follow' : 'unfollow'}`, {});
+	}
+
+	/** Marks a thread I follow read (its unread replies go to zero). */
+	markThreadRead(rootMessageId: ID): Observable<{ updated: boolean }> {
+		return this.http.post<{ updated: boolean }>(`${CHAT}/messages/${path(rootMessageId)}/thread/read`, {});
 	}
 
 	/** My followed threads. */
@@ -173,9 +232,9 @@ export class ChatUiService {
 		return this.http.get<ChatFollowedThread[]>(`${CHAT}/threads`);
 	}
 
-	/** Marks a conversation read up to a message (default: everything). */
-	read(conversationId: ID, messageId?: ID): Observable<{ state: IChatMemberState } & Events> {
-		return this.http.post<{ state: IChatMemberState } & Events>(`${CHAT}/conversations/${path(conversationId)}/read`, messageId ? { messageId } : {});
+	/** Marks a conversation read up to a message (without one: everything, followed threads included); the events carry my state. */
+	read(conversationId: ID, messageId?: ID): Observable<ChatEvents> {
+		return this.http.post<ChatEvents>(`${CHAT}/conversations/${path(conversationId)}/read`, messageId ? { messageId } : {});
 	}
 
 	readAll(): Observable<IChatReadAllResult> {
@@ -183,7 +242,7 @@ export class ChatUiService {
 	}
 
 	/** Undoes a mark-all-read within a minute. */
-	readRestore(snapshotId: string): Observable<{ restored: number } & Events> {
-		return this.http.post<{ restored: number } & Events>(`${CHAT}/read-restore`, { snapshotId });
+	readRestore(snapshotId: string): Observable<{ restored: number } & ChatEvents> {
+		return this.http.post<{ restored: number } & ChatEvents>(`${CHAT}/read-restore`, { snapshotId });
 	}
 }

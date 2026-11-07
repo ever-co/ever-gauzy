@@ -1,10 +1,9 @@
-import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Observable, of } from 'rxjs';
 import { catchError, map, shareReplay } from 'rxjs/operators';
-import { ID, IEmployee, IPagination } from '@gauzy/contracts';
-import { API_PREFIX, toParams } from '@gauzy/ui-core/common';
-import { ChatPerson, userName } from '../chat-ui.helpers';
+import { ID } from '@gauzy/contracts';
+import { ChatPerson } from '../chat-ui.helpers';
+import { ChatPersonRecord, ChatUiService } from './chat-ui.service';
 
 /** The people of the organization, by employee id and by user id, plus the list for the pickers. */
 export interface ChatPeople {
@@ -17,27 +16,28 @@ export const EMPTY_PEOPLE: ChatPeople = { byEmployee: new Map(), byUser: new Map
 
 /**
  * The organization's active employees, for the names and pictures the chat shows (authors, members, mention chips)
- * and the `@` suggestions and the new-message picker. Read once per organization through Gauzy's own `/api/employee`
- * route and shared by every component; `refresh()` reads again.
+ * and the `@` suggestions and the new-message picker. Read through the chat's own `GET /chat/people` (open to every
+ * chat user, unlike the platform's employee routes), once per organization and shared by every component;
+ * `refresh()` reads again.
  */
 @Injectable({ providedIn: 'root' })
 export class ChatPeopleService {
-	private readonly http = inject(HttpClient);
+	private readonly api = inject(ChatUiService);
 	private readonly cache = new Map<string, Observable<ChatPeople>>();
 
 	people(organizationId: ID, tenantId: ID): Observable<ChatPeople> {
 		const key = `${tenantId}:${organizationId}`;
 		let cached = this.cache.get(key);
 		if (!cached) {
-			cached = this.http
-				.get<IPagination<IEmployee>>(`${API_PREFIX}/employee`, {
-					params: toParams({ relations: ['user'], where: { organizationId, tenantId } })
-				})
-				.pipe(
-					map((page) => toPeople(page?.items ?? [])),
-					catchError(() => of(EMPTY_PEOPLE)),
-					shareReplay({ bufferSize: 1, refCount: false })
-				);
+			cached = this.api.people().pipe(
+				map((records) => toPeople(records)),
+				catchError(() => {
+					// A refusal is not kept: the next reader asks again (the chat may be served a moment later).
+					this.cache.delete(key);
+					return of(EMPTY_PEOPLE);
+				}),
+				shareReplay({ bufferSize: 1, refCount: false })
+			);
 			this.cache.set(key, cached);
 		}
 		return cached;
@@ -48,18 +48,17 @@ export class ChatPeopleService {
 	}
 }
 
-/** The employees as people, active ones only, named and sorted. */
-export function toPeople(employees: readonly IEmployee[]): ChatPeople {
+/** The records as people, named and sorted, each employee once. */
+export function toPeople(records: readonly ChatPersonRecord[]): ChatPeople {
 	const byEmployee = new Map<string, ChatPerson>();
 	const byUser = new Map<string, ChatPerson>();
-	for (const employee of employees) {
-		if (!employee?.id || employee.isActive === false || employee.isArchived) continue;
-		const name = userName(employee.user) || employee.fullName || String(employee.id);
+	for (const record of records ?? []) {
+		if (!record?.employeeId) continue;
 		const person: ChatPerson = {
-			employeeId: String(employee.id),
-			userId: employee.userId ? String(employee.userId) : employee.user?.id ? String(employee.user.id) : null,
-			name,
-			imageUrl: employee.user?.imageUrl ?? null
+			employeeId: String(record.employeeId),
+			userId: record.userId ? String(record.userId) : null,
+			name: record.name || String(record.employeeId),
+			imageUrl: record.imageUrl ?? null
 		};
 		byEmployee.set(person.employeeId, person);
 		if (person.userId) byUser.set(person.userId, person);

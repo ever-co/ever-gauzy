@@ -5,10 +5,11 @@ import { RouterLink } from '@angular/router';
 import { NbBadgeModule, NbIconModule } from '@nebular/theme';
 import { TranslatePipe } from '@ngx-translate/core';
 import { EMPTY, merge, Subject, timer } from 'rxjs';
-import { catchError, filter, switchMap, takeUntil, tap } from 'rxjs/operators';
+import { catchError, filter, switchMap, takeUntil } from 'rxjs/operators';
 import { IChatStates } from '@gauzy/contracts';
 import { CHAT_BADGE_POLL_MS, CHAT_LINK } from '../../chat-ui.constants';
 import { badgeText } from '../../chat-ui.helpers';
+import { ChatAvailabilityService, isFinalRefusal } from '../../services/chat-availability.service';
 import { ChatUiService } from '../../services/chat-ui.service';
 
 /** How many conversations hold unread messages, plus the followed threads with unread replies. */
@@ -51,30 +52,47 @@ export function unreadOf(states: IChatStates | null | undefined): number {
 })
 export class ChatHeaderBadgeComponent implements OnInit {
 	private readonly api = inject(ChatUiService);
+	private readonly availability = inject(ChatAvailabilityService);
 	private readonly destroyRef = inject(DestroyRef);
-	private readonly stop$ = new Subject<void>();
+	/** A final refusal (the chat went away for this scope) stops the polling until the scope changes. */
+	private readonly refused$ = new Subject<void>();
 
 	protected readonly link = CHAT_LINK;
-	readonly unread = signal(0);
-	readonly text = signal('');
+	protected readonly unread = signal(0);
+	protected readonly text = signal('');
 
 	ngOnInit(): void {
-		const tick$ = timer(0, CHAT_BADGE_POLL_MS).pipe(filter(() => typeof document === 'undefined' || !document.hidden));
-		merge(tick$, this.api.changed$)
+		this.startPolling();
+	}
+
+	/** Reads my states on a timer and after every write of the page, anew for every scope the chat is served in. */
+	private startPolling(): void {
+		this.availability.scope$
 			.pipe(
-				switchMap(() =>
-					this.api.states().pipe(
-						catchError((error: HttpErrorResponse) => {
-							if (error?.status === 404 || error?.status === 403 || error?.status === 401) this.stop$.next();
-							return EMPTY;
-						})
-					)
-				),
-				tap((states: IChatStates) => this.show(unreadOf(states))),
-				takeUntil(this.stop$),
+				switchMap((scope) => {
+					this.show(0);
+					if (!scope) return EMPTY;
+					const tick$ = timer(0, CHAT_BADGE_POLL_MS).pipe(filter(() => typeof document === 'undefined' || !document.hidden));
+					return merge(tick$, this.api.changed$).pipe(
+						switchMap(() => this.readStates()),
+						takeUntil(this.refused$)
+					);
+				}),
 				takeUntilDestroyed(this.destroyRef)
 			)
-			.subscribe();
+			.subscribe((states) => this.show(unreadOf(states)));
+	}
+
+	private readStates() {
+		return this.api.states().pipe(
+			catchError((error: HttpErrorResponse) => {
+				if (isFinalRefusal(error)) {
+					this.show(0);
+					this.refused$.next();
+				}
+				return EMPTY;
+			})
+		);
 	}
 
 	private show(unread: number): void {

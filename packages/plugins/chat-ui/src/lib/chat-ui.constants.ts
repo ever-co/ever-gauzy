@@ -24,6 +24,8 @@ export const CHAT_BADGE_POLL_MS = 60_000;
 export const CHAT_LIST_POLL_MS = 30_000;
 /** The open conversation asks for newer messages this often while the tab is visible. */
 export const CHAT_MESSAGES_POLL_MS = 5_000;
+/** The open thread asks for newer replies this often while the tab is visible. */
+export const CHAT_THREAD_POLL_MS = 5_000;
 
 /** The newest page a conversation opens with (the API's default is 50, its maximum 200). */
 export const CHAT_PAGE_SIZE = 50;

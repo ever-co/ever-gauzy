@@ -4,13 +4,14 @@ import { ChangeDetectionStrategy, Component, computed, DestroyRef, inject, OnIni
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { NbAlertModule, NbButtonModule, NbCardModule, NbDialogService, NbIconModule, NbSpinnerModule } from '@nebular/theme';
-import { TranslatePipe } from '@ngx-translate/core';
-import { combineLatest, EMPTY, forkJoin, merge, Observable, of, timer } from 'rxjs';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
+import { combineLatest, EMPTY, forkJoin, merge, Observable, of, Subscription, timer } from 'rxjs';
 import { catchError, distinctUntilChanged, filter, map, switchMap } from 'rxjs/operators';
 import { IChatCategory, IChatConversationWithState, IChatMemberState, IChatMessageWithRelations, IChatStates, IOrganization, IUser, PermissionsEnum } from '@gauzy/contracts';
 import { Store, ToastrService } from '@gauzy/ui-core/core';
 import { CHAT_LINK, CHAT_LIST_POLL_MS } from '../../chat-ui.constants';
 import { conversationTitle, isUnread, plainBody, sortConversations } from '../../chat-ui.helpers';
+import { ChatAvailabilityService, isFinalRefusal } from '../../services/chat-availability.service';
 import { ChatPeople, ChatPeopleService, EMPTY_PEOPLE } from '../../services/chat-people.service';
 import { ChatFollowedThread, ChatUiService } from '../../services/chat-ui.service';
 import { BrowseChannelsDialogComponent, NewChannelDialogComponent, NewDirectDialogComponent } from '../../dialogs/chat-dialogs.component';
@@ -29,8 +30,9 @@ const UNDO_MS = 55_000;
  * Threads), the open conversation in the middle, and a thread on the right. The lists refresh every 30 s while the
  * tab is visible and at once after a write; the open conversation polls for newer messages on its own.
  *
- * The page asks the API first (`/chat/states`): a 404 means this installation does not serve the chat, and the
- * page says so and makes no other request.
+ * The page asks the API first (`/chat/states`) for the signed-in user in the selected organization: a 404 means
+ * this installation does not serve the chat, and the page says so and makes no other request. When the user or
+ * the organization changes, everything shown is dropped and asked again for the new scope.
  */
 @Component({
 	selector: 'ngx-chat-page',
@@ -303,8 +305,8 @@ const UNDO_MS = 55_000;
 				font-weight: 700;
 			}
 			.count.mention {
-				background: #e4493f;
-				color: #fff;
+				background: var(--color-danger-default, #e4493f);
+				color: var(--text-control-color, #fff);
 			}
 			.empty {
 				padding: 1rem 0.5rem;
@@ -334,9 +336,11 @@ const UNDO_MS = 55_000;
 })
 export class ChatPageComponent implements OnInit {
 	private readonly api = inject(ChatUiService);
+	private readonly availability = inject(ChatAvailabilityService);
 	private readonly peopleService = inject(ChatPeopleService);
 	private readonly store = inject(Store);
 	private readonly toastr = inject(ToastrService);
+	private readonly translate = inject(TranslateService);
 	private readonly dialog = inject(NbDialogService);
 	private readonly route = inject(ActivatedRoute);
 	private readonly router = inject(Router);
@@ -344,40 +348,39 @@ export class ChatPageComponent implements OnInit {
 
 	protected readonly chatLink = CHAT_LINK;
 
-	readonly state = signal<ChatPageState>('loading');
-	readonly conversations = signal<IChatConversationWithState[]>([]);
-	readonly categories = signal<IChatCategory[]>([]);
-	readonly states = signal<IChatStates | null>(null);
-	readonly threads = signal<ChatFollowedThread[]>([]);
+	protected readonly state = signal<ChatPageState>('loading');
+	protected readonly conversations = signal<IChatConversationWithState[]>([]);
+	protected readonly categories = signal<IChatCategory[]>([]);
+	protected readonly states = signal<IChatStates | null>(null);
+	protected readonly threads = signal<ChatFollowedThread[]>([]);
 	/** A conversation opened by link that is not in my list (a public channel I am not in). */
-	readonly extra = signal<IChatConversationWithState | null>(null);
-	readonly notFound = signal(false);
-	readonly busy = signal(false);
-	readonly undoSnapshot = signal<string | null>(null);
+	protected readonly extra = signal<IChatConversationWithState | null>(null);
+	protected readonly notFound = signal(false);
+	protected readonly busy = signal(false);
+	protected readonly undoSnapshot = signal<string | null>(null);
 
 	/** `:conversationId`, `?thread=`, `?message=` and the route's view, as signals. */
-	readonly conversationId = toSignal(this.route.paramMap.pipe(map((params) => params.get('conversationId')), distinctUntilChanged()), { initialValue: null });
-	readonly threadId = toSignal(this.route.queryParamMap.pipe(map((params) => params.get('thread')), distinctUntilChanged()), { initialValue: null });
-	readonly highlightId = toSignal(this.route.queryParamMap.pipe(map((params) => params.get('message')), distinctUntilChanged()), { initialValue: null });
+	protected readonly conversationId = toSignal(this.route.paramMap.pipe(map((params) => params.get('conversationId')), distinctUntilChanged()), { initialValue: null });
+	protected readonly threadId = toSignal(this.route.queryParamMap.pipe(map((params) => params.get('thread')), distinctUntilChanged()), { initialValue: null });
+	protected readonly highlightId = toSignal(this.route.queryParamMap.pipe(map((params) => params.get('message')), distinctUntilChanged()), { initialValue: null });
 	private readonly routeView = toSignal(this.route.data.pipe(map((data) => (data['view'] as string | undefined) ?? null)), { initialValue: null });
 
-	readonly view = computed<'home' | 'conversation' | 'unreads' | 'threads'>(() => {
+	protected readonly view = computed<'home' | 'conversation' | 'unreads' | 'threads'>(() => {
 		if (this.routeView() === 'unreads') return 'unreads';
 		if (this.routeView() === 'threads') return 'threads';
 		return this.conversationId() ? 'conversation' : 'home';
 	});
-	readonly listView = computed<ChatListView>(() => (this.view() === 'unreads' || this.view() === 'threads' ? this.view() : 'conversation') as ChatListView);
+	protected readonly listView = computed<ChatListView>(() => (this.view() === 'unreads' || this.view() === 'threads' ? this.view() : 'conversation') as ChatListView);
 
-	private readonly organization = toSignal(this.store.selectedOrganization$ as Observable<IOrganization | null>, { initialValue: null });
 	private readonly user = toSignal(this.store.user$ as Observable<IUser | null>, { initialValue: null });
-	readonly meEmployeeId = computed(() => {
+	protected readonly meEmployeeId = computed(() => {
 		const user = this.user() as (IUser & { employeeId?: string; employee?: { id?: string } }) | null;
 		return user?.employee?.id ? String(user.employee.id) : user?.employeeId ? String(user.employeeId) : null;
 	});
-	readonly meUserId = computed(() => (this.user()?.id ? String(this.user()!.id) : null));
-	readonly isAdmin = computed(() => this.store.hasPermission(PermissionsEnum.CHAT_MANAGE));
+	protected readonly meUserId = computed(() => (this.user()?.id ? String(this.user()!.id) : null));
+	protected readonly isAdmin = computed(() => this.store.hasPermission(PermissionsEnum.CHAT_MANAGE));
 
-	readonly people = toSignal(
+	protected readonly people = toSignal(
 		combineLatest([
 			this.store.selectedOrganization$ as Observable<IOrganization | null>,
 			this.store.user$ as Observable<IUser | null>
@@ -389,30 +392,45 @@ export class ChatPageComponent implements OnInit {
 		{ initialValue: EMPTY_PEOPLE as ChatPeople }
 	);
 
-	readonly conversationNames = computed(() => {
+	protected readonly conversationNames = computed(() => {
 		const names = new Map<string, string>();
 		for (const conversation of this.conversations()) if (conversation.name) names.set(String(conversation.id), conversation.name);
 		return names;
 	});
-	readonly selected = computed(() => {
+	protected readonly selected = computed(() => {
 		const id = this.conversationId();
 		if (!id) return null;
 		return this.conversations().find((conversation) => String(conversation.id) === id) ?? (String(this.extra()?.id) === id ? this.extra() : null);
 	});
-	readonly unreads = computed(() =>
+	protected readonly unreads = computed(() =>
 		sortConversations(this.conversations().filter(isUnread)).sort((a, b) => {
 			const at = a.lastMessageAt ? new Date(a.lastMessageAt).getTime() : 0;
 			const bt = b.lastMessageAt ? new Date(b.lastMessageAt).getTime() : 0;
 			return bt - at;
 		})
 	);
-	readonly threadUnreadCount = computed(() => (this.states()?.threads ?? []).filter((thread) => thread.unreadReplies > 0).length);
+	protected readonly threadUnreadCount = computed(() => (this.states()?.threads ?? []).filter((thread) => thread.unreadReplies > 0).length);
 
+	/** Counts up at every scope change and every list refresh, so a late answer of an earlier one is dropped. */
+	private scopeToken = 0;
 	private listScope = 0;
+	private listPolling: Subscription | null = null;
 
 	ngOnInit(): void {
-		this.checkAvailability();
-		// A conversation opened by link that the list does not hold: read it on its own.
+		this.followScope();
+		this.followRoute();
+	}
+
+	/** Every user / organization change drops what is shown and asks the API again for the new scope. */
+	private followScope(): void {
+		this.availability.scope$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((scope) => {
+			this.resetForScope();
+			if (scope) this.checkAvailability();
+		});
+	}
+
+	/** A conversation opened by link that the list does not hold: read it on its own. */
+	private followRoute(): void {
 		this.route.paramMap
 			.pipe(
 				map((params) => params.get('conversationId')),
@@ -426,40 +444,68 @@ export class ChatPageComponent implements OnInit {
 			});
 	}
 
+	private resetForScope(): void {
+		this.scopeToken += 1;
+		this.listScope += 1;
+		this.listPolling?.unsubscribe();
+		this.listPolling = null;
+		this.state.set('loading');
+		this.conversations.set([]);
+		this.categories.set([]);
+		this.states.set(null);
+		this.threads.set([]);
+		this.extra.set(null);
+		this.notFound.set(false);
+		this.busy.set(false);
+		this.undoSnapshot.set(null);
+	}
+
 	private checkAvailability(): void {
+		const token = this.scopeToken;
 		this.api
 			.states()
 			.pipe(takeUntilDestroyed(this.destroyRef))
 			.subscribe({
 				next: (states) => {
+					if (token !== this.scopeToken) return;
 					this.states.set(states);
 					this.state.set('ready');
 					this.startListPolling();
 				},
-				error: (error: HttpErrorResponse) => this.state.set(error?.status === 404 || error?.status === 403 ? 'unavailable' : 'error')
+				error: (error: HttpErrorResponse) => {
+					if (token !== this.scopeToken) return;
+					this.state.set(isFinalRefusal(error) ? 'unavailable' : 'error');
+				}
 			});
 	}
 
-	reload(): void {
+	protected reload(): void {
 		this.state.set('loading');
 		this.checkAvailability();
 	}
 
+	/** The lists on a timer while the tab is visible, and at once after every write of the page. */
 	private startListPolling(): void {
+		this.listPolling?.unsubscribe();
+		const token = this.scopeToken;
 		const tick$ = timer(0, CHAT_LIST_POLL_MS).pipe(filter(() => typeof document === 'undefined' || !document.hidden));
-		merge(tick$, this.api.changed$)
+		this.listPolling = merge(tick$, this.api.changed$)
 			.pipe(
 				switchMap(() => {
 					const scope = ++this.listScope;
 					return forkJoin({ list: this.api.listMine(), states: this.api.states(), threads: this.api.threads().pipe(catchError(() => of([] as ChatFollowedThread[]))) }).pipe(
 						map((answer) => ({ ...answer, scope })),
-						catchError(() => EMPTY)
+						catchError((error: HttpErrorResponse) => {
+							// The chat went away for this scope (switched off, or no longer this user's): the page says so.
+							if (isFinalRefusal(error) && token === this.scopeToken) this.state.set('unavailable');
+							return EMPTY;
+						})
 					);
 				}),
 				takeUntilDestroyed(this.destroyRef)
 			)
 			.subscribe(({ list, states, threads, scope }) => {
-				if (scope !== this.listScope) return;
+				if (scope !== this.listScope || token !== this.scopeToken) return;
 				this.conversations.set(sortConversations(list.conversations));
 				this.categories.set(list.categories);
 				this.states.set(states);
@@ -471,15 +517,16 @@ export class ChatPageComponent implements OnInit {
 
 	private fetchIfMissing(id: string): void {
 		if (this.conversations().some((conversation) => String(conversation.id) === id) || String(this.extra()?.id) === id) return;
+		const token = this.scopeToken;
 		this.api
 			.getConversation(id)
 			.pipe(takeUntilDestroyed(this.destroyRef))
 			.subscribe({
 				next: (conversation) => {
-					if (this.conversationId() === id) this.extra.set(conversation);
+					if (token === this.scopeToken && this.conversationId() === id) this.extra.set(conversation);
 				},
 				error: () => {
-					if (this.conversationId() === id) this.notFound.set(true);
+					if (token === this.scopeToken && this.conversationId() === id) this.notFound.set(true);
 				}
 			});
 	}
@@ -487,7 +534,7 @@ export class ChatPageComponent implements OnInit {
 	// ---------------------------------------------------------------- list changes
 
 	/** Puts a conversation into the list (new or changed) and keeps the order. */
-	upsert(conversation: IChatConversationWithState): void {
+	protected upsert(conversation: IChatConversationWithState): void {
 		const others = this.conversations().filter((item) => String(item.id) !== String(conversation.id));
 		this.conversations.set(sortConversations([...others, conversation]));
 		if (String(this.extra()?.id) === String(conversation.id)) this.extra.set(null);
@@ -521,12 +568,15 @@ export class ChatPageComponent implements OnInit {
 	// ---------------------------------------------------------------- unreads
 
 	protected readAll(): void {
+		const token = this.scopeToken;
 		this.busy.set(true);
 		this.api
 			.readAll()
 			.pipe(takeUntilDestroyed(this.destroyRef))
 			.subscribe({
 				next: (result) => {
+					this.api.notifyChanged();
+					if (token !== this.scopeToken) return;
 					this.busy.set(false);
 					this.toastr.success('CHAT.UNREADS.MARKED', { count: result.updated });
 					this.undoSnapshot.set(result.snapshotId);
@@ -535,9 +585,9 @@ export class ChatPageComponent implements OnInit {
 						.subscribe(() => {
 							if (this.undoSnapshot() === result.snapshotId) this.undoSnapshot.set(null);
 						});
-					this.api.notifyChanged();
 				},
 				error: () => {
+					if (token !== this.scopeToken) return;
 					this.busy.set(false);
 					this.toastr.danger('CHAT.DIALOG.FAILED');
 				}
@@ -545,18 +595,21 @@ export class ChatPageComponent implements OnInit {
 	}
 
 	protected undoReadAll(snapshotId: string): void {
+		const token = this.scopeToken;
 		this.busy.set(true);
 		this.api
 			.readRestore(snapshotId)
 			.pipe(takeUntilDestroyed(this.destroyRef))
 			.subscribe({
 				next: () => {
+					this.api.notifyChanged();
+					if (token !== this.scopeToken) return;
 					this.busy.set(false);
 					this.undoSnapshot.set(null);
 					this.toastr.success('CHAT.UNREADS.RESTORED');
-					this.api.notifyChanged();
 				},
 				error: () => {
+					if (token !== this.scopeToken) return;
 					this.busy.set(false);
 					this.undoSnapshot.set(null);
 					this.toastr.danger('CHAT.DIALOG.FAILED');
@@ -597,12 +650,12 @@ export class ChatPageComponent implements OnInit {
 	// ---------------------------------------------------------------- labels
 
 	protected title(conversation: IChatConversationWithState): string {
-		return conversationTitle(conversation, this.people().byEmployee, this.meEmployeeId(), 'Conversation');
+		return conversationTitle(conversation, this.people().byEmployee, this.meEmployeeId(), this.translate.instant('CHAT.UNNAMED'));
 	}
 
 	protected titleOf(conversationId: string): string {
 		const conversation = this.conversations().find((item) => String(item.id) === String(conversationId));
-		return conversation ? this.title(conversation) : 'Conversation';
+		return conversation ? this.title(conversation) : this.translate.instant('CHAT.UNNAMED');
 	}
 
 	protected preview(thread: ChatFollowedThread): string {

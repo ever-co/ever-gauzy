@@ -1,11 +1,10 @@
-import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, computed, DestroyRef, inject, OnInit, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { NbButtonModule, NbCardModule, NbCheckboxModule, NbDialogRef, NbIconModule, NbInputModule, NbSpinnerModule } from '@nebular/theme';
-import { TranslatePipe } from '@ngx-translate/core';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { CHAT_GROUP_MAX_MEMBERS, ChatVisibilityEnum, IChatConversationWithState } from '@gauzy/contracts';
-import { ChatPerson } from '../chat-ui.helpers';
+import { apiErrorMessage, ChatPerson } from '../chat-ui.helpers';
 import { ChatPeople, EMPTY_PEOPLE } from '../services/chat-people.service';
 import { ChatUiService } from '../services/chat-ui.service';
 import { PersonAvatarComponent } from '../components/person-avatar/person-avatar.component';
@@ -66,7 +65,7 @@ const DIALOG_STYLES = `
 		}
 		.error {
 			margin: 0.5rem 0 0;
-			color: #e4493f;
+			color: var(--color-danger-default, #e4493f);
 			font-size: 0.8125rem;
 		}
 		.footer {
@@ -79,12 +78,6 @@ const DIALOG_STYLES = `
 		}
 	`;
 
-function messageOf(error: unknown): string | null {
-	const body = (error as HttpErrorResponse)?.error;
-	const message = body?.message;
-	if (Array.isArray(message)) return message.join(' ');
-	return typeof message === 'string' && message.trim() ? message : null;
-}
 
 /** A new channel: name, topic, private or public. Closes with the conversation. */
 @Component({
@@ -122,13 +115,14 @@ function messageOf(error: unknown): string | null {
 export class NewChannelDialogComponent {
 	protected readonly ref = inject<NbDialogRef<NewChannelDialogComponent>>(NbDialogRef);
 	private readonly api = inject(ChatUiService);
+	private readonly translate = inject(TranslateService);
 	private readonly destroyRef = inject(DestroyRef);
 
 	protected name = '';
 	protected topic = '';
 	protected isPrivate = false;
-	readonly busy = signal(false);
-	readonly error = signal<string | null>(null);
+	protected readonly busy = signal(false);
+	protected readonly error = signal<string | null>(null);
 
 	protected create(): void {
 		const name = this.name.trim().replace(/^#/, '');
@@ -146,7 +140,7 @@ export class NewChannelDialogComponent {
 				next: (answer) => this.ref.close(answer.conversation),
 				error: (error) => {
 					this.busy.set(false);
-					this.error.set(messageOf(error) ?? 'CHAT.DIALOG.FAILED');
+					this.error.set(apiErrorMessage(error) ?? this.translate.instant('CHAT.DIALOG.FAILED'));
 				}
 			});
 	}
@@ -193,6 +187,7 @@ export class NewChannelDialogComponent {
 export class NewDirectDialogComponent {
 	protected readonly ref = inject<NbDialogRef<NewDirectDialogComponent>>(NbDialogRef);
 	private readonly api = inject(ChatUiService);
+	private readonly translate = inject(TranslateService);
 	private readonly destroyRef = inject(DestroyRef);
 
 	/** Set by the opener (dialog context). */
@@ -200,12 +195,12 @@ export class NewDirectDialogComponent {
 	meEmployeeId: string | null = null;
 
 	protected readonly max = CHAT_GROUP_MAX_MEMBERS - 1;
-	readonly query = signal('');
-	readonly selected = signal<ReadonlySet<string>>(new Set());
-	readonly busy = signal(false);
-	readonly error = signal<string | null>(null);
+	protected readonly query = signal('');
+	protected readonly selected = signal<ReadonlySet<string>>(new Set());
+	protected readonly busy = signal(false);
+	protected readonly error = signal<string | null>(null);
 
-	readonly candidates = computed<ChatPerson[]>(() => {
+	protected readonly candidates = computed<ChatPerson[]>(() => {
 		const needle = this.query().trim().toLowerCase();
 		return this.people.list
 			.filter((person) => person.employeeId !== this.meEmployeeId)
@@ -232,7 +227,7 @@ export class NewDirectDialogComponent {
 				next: (answer) => this.ref.close(answer.conversation),
 				error: (error) => {
 					this.busy.set(false);
-					this.error.set(messageOf(error) ?? 'CHAT.DIALOG.FAILED');
+					this.error.set(apiErrorMessage(error) ?? this.translate.instant('CHAT.DIALOG.FAILED'));
 				}
 			});
 	}
@@ -285,12 +280,13 @@ export class NewDirectDialogComponent {
 export class BrowseChannelsDialogComponent implements OnInit {
 	protected readonly ref = inject<NbDialogRef<BrowseChannelsDialogComponent>>(NbDialogRef);
 	private readonly api = inject(ChatUiService);
+	private readonly translate = inject(TranslateService);
 	private readonly destroyRef = inject(DestroyRef);
 
-	readonly channels = signal<IChatConversationWithState[]>([]);
-	readonly loading = signal(true);
-	readonly busyId = signal<string | null>(null);
-	readonly error = signal<string | null>(null);
+	protected readonly channels = signal<IChatConversationWithState[]>([]);
+	protected readonly loading = signal(true);
+	protected readonly busyId = signal<string | null>(null);
+	protected readonly error = signal<string | null>(null);
 
 	ngOnInit(): void {
 		this.api
@@ -303,7 +299,7 @@ export class BrowseChannelsDialogComponent implements OnInit {
 				},
 				error: (error) => {
 					this.loading.set(false);
-					this.error.set(messageOf(error) ?? 'CHAT.DIALOG.FAILED');
+					this.error.set(apiErrorMessage(error) ?? this.translate.instant('CHAT.DIALOG.FAILED'));
 				}
 			});
 	}
@@ -317,7 +313,7 @@ export class BrowseChannelsDialogComponent implements OnInit {
 				next: (answer) => this.ref.close(answer.conversation),
 				error: (error) => {
 					this.busyId.set(null);
-					this.error.set(messageOf(error) ?? 'CHAT.DIALOG.FAILED');
+					this.error.set(apiErrorMessage(error) ?? this.translate.instant('CHAT.DIALOG.FAILED'));
 				}
 			});
 	}

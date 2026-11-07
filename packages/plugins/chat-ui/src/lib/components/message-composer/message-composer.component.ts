@@ -1,10 +1,10 @@
-import { ChangeDetectionStrategy, Component, computed, effect, ElementRef, input, output, signal, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, ElementRef, input, output, signal, untracked, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { NbButtonModule, NbIconModule } from '@nebular/theme';
 import { TranslatePipe } from '@ngx-translate/core';
 import { CHAT_MESSAGE_MAX_LENGTH } from '@gauzy/contracts';
 import { CHAT_MENTION_SUGGESTIONS } from '../../chat-ui.constants';
-import { ChatPerson, mentionQueryAt, splitMentions, suggestMentions } from '../../chat-ui.helpers';
+import { ChatPerson, mentionQueryAt, namesToTokens, suggestMentions, tokensToNames, uniqueLabel } from '../../chat-ui.helpers';
 import { ChatPeople } from '../../services/chat-people.service';
 import { PersonAvatarComponent } from '../person-avatar/person-avatar.component';
 
@@ -14,35 +14,14 @@ export interface ComposerSubmission {
 	mentionEmployeeIds: string[];
 }
 
-/** The body as the person reads it while writing: tokens shown as `@Name`, turned back into tokens on send. */
-export function tokensToNames(body: string, people: ChatPeople): { text: string; picked: Map<string, string> } {
-	const picked = new Map<string, string>();
-	const text = splitMentions(body, people.byEmployee, new Map(), null)
-		.map((part) => {
-			if (part.kind === 'text') return part.text;
-			if (part.kind === 'mention') {
-				picked.set(part.label, part.employeeId);
-				return `@${part.label}`;
-			}
-			if (part.kind === 'channel') return `#${part.label}`;
-			return `@${part.label}`;
-		})
-		.join('');
-	return { text, picked };
-}
-
-/** `@Name` back into `<@employeeId>` for the names that were picked, longest names first, plus `@channel` / `@here`. */
-export function namesToTokens(text: string, picked: ReadonlyMap<string, string>): string {
-	let out = text;
-	for (const [name, id] of [...picked.entries()].sort((a, b) => b[0].length - a[0].length)) {
-		out = out.split(`@${name}`).join(`<@${id}>`);
-	}
-	return out.replace(/(^|\s)@(channel|here)(?=\s|$|[.,!?])/g, '$1<!$2>');
-}
+/** The unsent text of each conversation and thread, kept while the page lives (a switch and back finds it again). */
+const DRAFTS = new Map<string, string>();
 
 /**
  * The text box of a conversation or a thread: Enter sends, Shift+Enter breaks the line, `@` opens the people
  * suggestions (arrows, Enter, Escape). In edit mode it starts with the message's text and offers Save / Cancel.
+ * Mentions show as `@Name` (`#channel`) while writing and go out as tokens; each label stands for one id, so two
+ * people of one name never swap. The length that counts is the tokenized body's, the one the API measures.
  */
 @Component({
 	selector: 'ngx-chat-message-composer',
@@ -122,7 +101,7 @@ export function namesToTokens(text: string, picked: ReadonlyMap<string, string>)
 			}
 			.hint.over {
 				opacity: 1;
-				color: #e4493f;
+				color: var(--color-danger-default, #e4493f);
 			}
 			.buttons {
 				display: flex;
@@ -161,12 +140,15 @@ export function namesToTokens(text: string, picked: ReadonlyMap<string, string>)
 })
 export class MessageComposerComponent {
 	readonly people = input.required<ChatPeople>();
+	readonly conversationNames = input<ReadonlyMap<string, string>>(new Map());
 	readonly placeholder = input('');
 	readonly disabled = input(false);
 	/** The message being edited (its body with tokens), or null for a new message. */
 	readonly initialBody = input<string | null>(null);
 	readonly editing = input(false);
-	/** Clears the box after this submission counter changes (the parent sent it). */
+	/** Where the unsent text belongs (a conversation, a thread): it is kept per key and found again on return. */
+	readonly draftKey = input<string | null>(null);
+	/** Clears the box (and the draft of the key) after this submission counter changes (the parent sent it). */
 	readonly resetToken = input(0);
 
 	readonly submitted = output<ComposerSubmission>();
@@ -176,34 +158,47 @@ export class MessageComposerComponent {
 
 	protected readonly max = CHAT_MESSAGE_MAX_LENGTH;
 	protected text = '';
+	/** `@label` → employee id and `#label` → conversation id, as shown in the box. */
 	private picked = new Map<string, string>();
+	private channels = new Map<string, string>();
+	/** Whether the person typed since the box was last filled (a late people list must not overwrite that). */
+	private dirty = false;
+	private lastReset = 0;
 	protected readonly length = signal(0);
 	protected readonly query = signal<{ query: string; start: number } | null>(null);
 	protected readonly highlighted = signal(0);
 
-	readonly suggestions = computed(() => {
+	protected readonly suggestions = computed(() => {
 		const query = this.query();
 		if (!query) return [] as ChatPerson[];
 		return suggestMentions(this.people().list, query.query, CHAT_MENTION_SUGGESTIONS);
 	});
-	readonly isTooLong = computed(() => this.length() > this.max);
-	readonly canSend = computed(() => this.length() > 0 && !this.isTooLong() && !this.disabled());
+	protected readonly isTooLong = computed(() => this.length() > this.max);
+	protected readonly canSend = computed(() => this.length() > 0 && !this.isTooLong() && !this.disabled());
 
 	constructor() {
+		// The box is filled when the edited message or the place changes: with the message's text, or the draft of the place.
 		effect(() => {
 			const initial = this.initialBody();
-			const { text, picked } = tokensToNames(initial ?? '', this.people());
-			this.text = text;
-			this.picked = picked;
-			this.length.set(text.trim().length);
-			if (initial !== null) queueMicrotask(() => this.focus());
+			const key = this.draftKey();
+			untracked(() => this.fill(initial, key));
+		});
+		// Names that arrive after the box was filled replace the `…` labels, as long as nothing was typed since.
+		effect(() => {
+			this.people();
+			this.conversationNames();
+			untracked(() => {
+				const initial = this.initialBody();
+				if (initial !== null && !this.dirty) this.fill(initial, this.draftKey());
+			});
 		});
 		effect(() => {
-			this.resetToken();
-			this.text = '';
-			this.picked = new Map();
-			this.length.set(0);
-			this.query.set(null);
+			const token = this.resetToken();
+			untracked(() => {
+				if (token === this.lastReset) return;
+				this.lastReset = token;
+				this.clear();
+			});
 		});
 	}
 
@@ -211,8 +206,56 @@ export class MessageComposerComponent {
 		this.box()?.nativeElement.focus();
 	}
 
+	private fill(initial: string | null, key: string | null): void {
+		if (initial !== null) {
+			const labels = tokensToNames(initial, this.people().byEmployee, this.conversationNames());
+			this.text = labels.text;
+			this.picked = labels.people;
+			this.channels = labels.channels;
+			queueMicrotask(() => this.focus());
+		} else {
+			const labels = tokensToNames(key ? (DRAFTS.get(key) ?? '') : '', this.people().byEmployee, this.conversationNames());
+			this.text = labels.text;
+			this.picked = labels.people;
+			this.channels = labels.channels;
+		}
+		this.dirty = false;
+		this.query.set(null);
+		this.measure();
+	}
+
+	private clear(): void {
+		this.text = '';
+		this.picked = new Map();
+		this.channels = new Map();
+		this.dirty = false;
+		const key = this.draftKey();
+		if (key) DRAFTS.delete(key);
+		this.length.set(0);
+		this.query.set(null);
+	}
+
+	/** The body as the API would receive it, and its length (the one that counts). */
+	private tokenized(): string {
+		return namesToTokens(this.text.trim(), this.picked, this.channels);
+	}
+
+	private measure(): void {
+		this.length.set(this.tokenized().length);
+	}
+
+	private keepDraft(): void {
+		const key = this.draftKey();
+		if (!key || this.editing()) return;
+		const body = this.tokenized();
+		if (body) DRAFTS.set(key, body);
+		else DRAFTS.delete(key);
+	}
+
 	protected onInput(): void {
-		this.length.set(this.text.trim().length);
+		this.dirty = true;
+		this.measure();
+		this.keepDraft();
 		this.onCaretMove();
 	}
 
@@ -267,10 +310,13 @@ export class MessageComposerComponent {
 		const element = this.box()?.nativeElement;
 		if (!query || !element) return;
 		const caret = element.selectionStart ?? this.text.length;
-		const insertion = `@${person.name} `;
+		const label = uniqueLabel(person.name, person.employeeId, this.picked);
+		const insertion = `@${label} `;
 		this.text = `${this.text.slice(0, query.start)}${insertion}${this.text.slice(caret)}`;
-		this.picked.set(person.name, person.employeeId);
-		this.length.set(this.text.trim().length);
+		this.picked.set(label, person.employeeId);
+		this.dirty = true;
+		this.measure();
+		this.keepDraft();
 		this.query.set(null);
 		const position = query.start + insertion.length;
 		queueMicrotask(() => {
@@ -281,7 +327,7 @@ export class MessageComposerComponent {
 
 	protected send(): void {
 		if (!this.canSend()) return;
-		const body = namesToTokens(this.text.trim(), this.picked);
+		const body = this.tokenized();
 		const mentionEmployeeIds = [...new Set([...this.picked.values()].filter((id) => body.includes(`<@${id}>`)))];
 		this.submitted.emit({ body, mentionEmployeeIds });
 	}

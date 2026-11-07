@@ -167,8 +167,8 @@ export type ChatListView = 'conversation' | 'unreads' | 'threads';
 				text-align: center;
 			}
 			.count.mention {
-				background: #e4493f;
-				color: #fff;
+				background: var(--color-danger-default, #e4493f);
+				color: var(--text-control-color, #fff);
 			}
 			.empty {
 				margin: 0;
@@ -200,18 +200,18 @@ export class ConversationListComponent {
 	protected readonly unreadsLink = `${CHAT_LINK}/${CHAT_UNREADS_PATH}`;
 	protected readonly threadsLink = `${CHAT_LINK}/${CHAT_THREADS_PATH}`;
 
-	readonly unreadCount = computed(() => this.conversations().filter(isUnread).length);
-	readonly favorites = computed(() => this.conversations().filter((conversation) => conversation.state?.isFavorite));
-	readonly channels = computed(() =>
+	protected readonly unreadCount = computed(() => this.conversations().filter(isUnread).length);
+	protected readonly favorites = computed(() => this.conversations().filter((conversation) => conversation.state?.isFavorite));
+	protected readonly channels = computed(() =>
 		this.conversations().filter((conversation) => conversation.kind === ChatConversationKindEnum.CHANNEL && !conversation.state?.isFavorite)
 	);
-	readonly channelCount = computed(() => this.channels().length);
-	readonly direct = computed(() =>
+	protected readonly channelCount = computed(() => this.channels().length);
+	protected readonly direct = computed(() =>
 		this.conversations().filter((conversation) => conversation.kind !== ChatConversationKindEnum.CHANNEL && !conversation.state?.isFavorite)
 	);
 
 	/** The channels under their category (in category order), the uncategorized ones first. */
-	readonly channelGroups = computed(() => {
+	protected readonly channelGroups = computed(() => {
 		const channels = this.channels();
 		if (channels.length === 0) return [];
 		const categories = [...this.categories()].sort((a, b) => a.position - b.position);

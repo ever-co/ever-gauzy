@@ -1,4 +1,3 @@
-import { HttpErrorResponse } from '@angular/common/http';
 import {
 	ChangeDetectionStrategy,
 	Component,
@@ -29,9 +28,9 @@ import {
 } from '@gauzy/contracts';
 import { ToastrService } from '@gauzy/ui-core/core';
 import { CHAT_MESSAGES_POLL_MS } from '../../chat-ui.constants';
-import { continuesGroup, conversationTitle, mergeMessages, newNonce } from '../../chat-ui.helpers';
+import { apiErrorMessage, continuesGroup, conversationTitle, mergeMessages, newNonce } from '../../chat-ui.helpers';
 import { ChatPeople } from '../../services/chat-people.service';
-import { ChatUiService } from '../../services/chat-ui.service';
+import { ChatEvents, ChatUiService, memberStateFromEvents } from '../../services/chat-ui.service';
 import { ComposerSubmission, MessageComposerComponent } from '../message-composer/message-composer.component';
 import { MessageAction, MessageItemComponent } from '../message-item/message-item.component';
 
@@ -40,8 +39,11 @@ const NEAR_BOTTOM_PX = 80;
 
 /**
  * One conversation: its header (title, members, favourite, notifications, join / leave, archive, pins), the
- * messages (newest page first, older on scroll, newer by polling), and the composer. Opening it with unread
- * messages marks it read; "mark unread from here" is explicit.
+ * messages (newest page first, older on scroll, newer by polling), and the composer. Reading the latest loaded
+ * message marks the conversation read up to it (never past what is shown); "mark unread from here" is explicit.
+ *
+ * Every request captures the conversation it was made for and drops its answer when another one is open by
+ * then; the poll stops the moment the conversation changes.
  */
 @Component({
 	selector: 'ngx-chat-conversation-view',
@@ -58,7 +60,7 @@ const NEAR_BOTTOM_PX = 80;
 					<span class="members">{{ 'CHAT.LIST.MEMBERS' | translate: { count: conversation().memberCount } }}</span>
 				</div>
 				<div class="actions">
-					<button nbButton ghost size="tiny" type="button" data-test="favorite" [nbTooltip]="(state()?.isFavorite ? 'CHAT.VIEW.UNFAVORITE' : 'CHAT.VIEW.FAVORITE') | translate" (click)="toggleFavorite()">
+					<button nbButton ghost size="tiny" type="button" data-test="favorite" [nbTooltip]="(state()?.isFavorite ? 'CHAT.VIEW.UNFAVORITE' : 'CHAT.VIEW.FAVORITE') | translate" [attr.aria-label]="(state()?.isFavorite ? 'CHAT.VIEW.UNFAVORITE' : 'CHAT.VIEW.FAVORITE') | translate" (click)="toggleFavorite()">
 						<nb-icon [icon]="state()?.isFavorite ? 'star' : 'star-outline'"></nb-icon>
 					</button>
 					@if (isMember()) {
@@ -68,7 +70,7 @@ const NEAR_BOTTOM_PX = 80;
 							<nb-option value="muted">{{ 'CHAT.VIEW.NOTIFY_MUTED' | translate }}</nb-option>
 						</nb-select>
 					}
-					<button nbButton ghost size="tiny" type="button" data-test="pins" [class.active]="pinsOpen()" [nbTooltip]="'CHAT.VIEW.PINNED' | translate" (click)="togglePins()">
+					<button nbButton ghost size="tiny" type="button" data-test="pins" [class.active]="pinsOpen()" [nbTooltip]="'CHAT.VIEW.PINNED' | translate" [attr.aria-label]="'CHAT.VIEW.PINNED' | translate" (click)="togglePins()">
 						<nb-icon icon="pin-outline"></nb-icon>
 					</button>
 					@if (!isMember()) {
@@ -130,6 +132,11 @@ const NEAR_BOTTOM_PX = 80;
 						(action)="onAction(message, $event)"
 					></ngx-chat-message-item>
 				}
+				@if (hasAfter()) {
+					<button nbButton ghost size="tiny" type="button" class="older" data-test="jump-to-latest" (click)="jumpToLatest()">
+						{{ 'CHAT.VIEW.JUMP_TO_LATEST' | translate }}
+					</button>
+				}
 			</div>
 
 			@if (newBelow()) {
@@ -144,10 +151,12 @@ const NEAR_BOTTOM_PX = 80;
 				} @else if (isMember()) {
 					<ngx-chat-message-composer
 						[people]="people()"
+						[conversationNames]="conversationNames()"
 						[placeholder]="'CHAT.COMPOSER.PLACEHOLDER' | translate: { name: title() }"
 						[disabled]="sending()"
 						[editing]="editing() !== null"
 						[initialBody]="editing()?.body ?? null"
+						[draftKey]="draftKey()"
 						[resetToken]="resetToken()"
 						(submitted)="onSubmit($event)"
 						(cancel)="editing.set(null)"
@@ -259,7 +268,7 @@ export class ConversationViewComponent {
 	/** `CHAT_MANAGE`: acts as a manager everywhere. */
 	readonly isAdmin = input(false);
 	readonly untitled = input('Conversation');
-	/** A message to scroll to and highlight (a deep link). */
+	/** A message to scroll to and highlight (a deep link): the page around it is shown, nothing is marked read. */
 	readonly highlightId = input<string | null>(null);
 
 	readonly openThread = output<IChatMessageWithRelations>();
@@ -269,28 +278,33 @@ export class ConversationViewComponent {
 
 	private readonly scroller = viewChild<ElementRef<HTMLDivElement>>('scroller');
 
-	readonly messages = signal<IChatMessageWithRelations[]>([]);
-	readonly hasBefore = signal(false);
-	readonly loading = signal(false);
-	readonly loadingOlder = signal(false);
-	readonly error = signal(false);
-	readonly sending = signal(false);
-	readonly editing = signal<IChatMessageWithRelations | null>(null);
-	readonly resetToken = signal(0);
-	readonly newBelow = signal(false);
-	readonly pinsOpen = signal(false);
-	readonly pins = signal<IChatMessageWithRelations[]>([]);
+	protected readonly messages = signal<IChatMessageWithRelations[]>([]);
+	protected readonly hasBefore = signal(false);
+	/** Newer messages exist past the loaded page (a view around an old message): nothing is marked read then. */
+	protected readonly hasAfter = signal(false);
+	protected readonly loading = signal(false);
+	protected readonly loadingOlder = signal(false);
+	protected readonly error = signal(false);
+	protected readonly sending = signal(false);
+	protected readonly editing = signal<IChatMessageWithRelations | null>(null);
+	protected readonly resetToken = signal(0);
+	protected readonly newBelow = signal(false);
+	protected readonly pinsOpen = signal(false);
+	protected readonly pins = signal<IChatMessageWithRelations[]>([]);
 	/** The caller's state, kept here so a read / favourite change shows at once. */
-	readonly state = signal<IChatMemberState | null>(null);
+	protected readonly state = signal<IChatMemberState | null>(null);
 
-	readonly title = computed(() => conversationTitle(this.conversation(), this.people().byEmployee, this.meEmployeeId(), this.untitled()));
-	readonly isMember = computed(() => this.state() !== null);
-	readonly canLeave = computed(() => this.isMember() && !this.conversation().isDefault && this.conversation().kind !== ChatConversationKindEnum.DIRECT);
-	readonly canManage = computed(() => this.isAdmin() || this.state()?.role === ChatMemberRoleEnum.MANAGER);
-	readonly readOnly = computed(() => !!this.conversation().archivedAt || !this.isMember());
+	protected readonly title = computed(() => conversationTitle(this.conversation(), this.people().byEmployee, this.meEmployeeId(), this.untitled()));
+	protected readonly isMember = computed(() => this.state() !== null);
+	protected readonly canLeave = computed(() => this.isMember() && !this.conversation().isDefault && this.conversation().kind !== ChatConversationKindEnum.DIRECT);
+	protected readonly canManage = computed(() => this.isAdmin() || this.state()?.role === ChatMemberRoleEnum.MANAGER);
+	protected readonly readOnly = computed(() => !!this.conversation().archivedAt || !this.isMember());
+	protected readonly draftKey = computed(() => `conversation:${this.conversation().id}`);
 
 	private poll: Subscription | null = null;
 	private loadedId: string | null = null;
+	/** The last message a read was asked up to, so the same read is not sent twice. */
+	private lastMarkedId: string | null = null;
 
 	constructor() {
 		effect(() => {
@@ -299,55 +313,87 @@ export class ConversationViewComponent {
 				this.state.set(conversation.state ?? null);
 				if (this.loadedId !== String(conversation.id)) {
 					this.loadedId = String(conversation.id);
+					this.stopPolling();
 					this.editing.set(null);
 					this.pinsOpen.set(false);
 					this.newBelow.set(false);
+					this.loadingOlder.set(false);
+					this.lastMarkedId = null;
 					this.reload();
 				}
 			});
 		});
-		this.destroyRef.onDestroy(() => this.poll?.unsubscribe());
+		this.destroyRef.onDestroy(() => this.stopPolling());
+	}
+
+	/** Whether the open conversation is still the one a request was made for. */
+	private isCurrent(id: string): boolean {
+		return String(this.conversation().id) === id;
 	}
 
 	// ---------------------------------------------------------------- loading
 
-	reload(): void {
-		const id = this.conversation().id;
+	protected reload(): void {
+		const id = String(this.conversation().id);
+		this.stopPolling();
 		this.loading.set(true);
 		this.error.set(false);
 		this.messages.set([]);
+		this.hasAfter.set(false);
 		const highlight = this.highlightId();
 		this.api
 			.messages(id, highlight ? { around: highlight } : {})
 			.pipe(takeUntilDestroyed(this.destroyRef))
 			.subscribe({
 				next: (page) => {
-					if (String(this.conversation().id) !== String(id)) return;
+					if (!this.isCurrent(id)) return;
 					this.messages.set(mergeMessages([], page.messages));
 					this.hasBefore.set(page.hasBefore);
+					this.hasAfter.set(page.hasAfter);
 					this.loading.set(false);
 					queueMicrotask(() => (highlight ? this.scrollTo(highlight) : this.scrollToBottom(false)));
 					this.markReadIfVisible();
 					this.startPolling();
 				},
 				error: () => {
+					if (!this.isCurrent(id)) return;
 					this.loading.set(false);
 					this.error.set(true);
 				}
 			});
 	}
 
+	/** Leaves a view around an old message for the newest page. */
+	protected jumpToLatest(): void {
+		const id = String(this.conversation().id);
+		this.api
+			.messages(id, {})
+			.pipe(takeUntilDestroyed(this.destroyRef))
+			.subscribe({
+				next: (page) => {
+					if (!this.isCurrent(id)) return;
+					this.messages.set(mergeMessages([], page.messages));
+					this.hasBefore.set(page.hasBefore);
+					this.hasAfter.set(false);
+					queueMicrotask(() => this.scrollToBottom(false));
+				},
+				error: () => undefined
+			});
+	}
+
 	protected loadOlder(): void {
 		const first = this.messages()[0];
 		if (!first || this.loadingOlder()) return;
+		const id = String(this.conversation().id);
 		const element = this.scroller()?.nativeElement;
 		const heightBefore = element?.scrollHeight ?? 0;
 		this.loadingOlder.set(true);
 		this.api
-			.messages(this.conversation().id, { before: first.id })
+			.messages(id, { before: first.id })
 			.pipe(takeUntilDestroyed(this.destroyRef))
 			.subscribe({
 				next: (page) => {
+					if (!this.isCurrent(id)) return;
 					this.messages.set(mergeMessages(this.messages(), page.messages));
 					this.hasBefore.set(page.hasBefore);
 					this.loadingOlder.set(false);
@@ -355,16 +401,20 @@ export class ConversationViewComponent {
 						if (element) element.scrollTop += element.scrollHeight - heightBefore;
 					});
 				},
-				error: () => this.loadingOlder.set(false)
+				error: () => {
+					if (this.isCurrent(id)) this.loadingOlder.set(false);
+				}
 			});
 	}
 
 	private startPolling(): void {
-		this.poll?.unsubscribe();
-		const id = this.conversation().id;
+		this.stopPolling();
+		const id = String(this.conversation().id);
 		this.poll = timer(CHAT_MESSAGES_POLL_MS, CHAT_MESSAGES_POLL_MS)
 			.pipe(
 				filter(() => typeof document === 'undefined' || !document.hidden),
+				// A view around an old message is not followed: the newest page is a jump away.
+				filter(() => !this.hasAfter()),
 				switchMap(() => {
 					const last = this.messages()[this.messages().length - 1];
 					return this.api.messages(id, last ? { after: last.id } : {}).pipe(catchError(() => EMPTY));
@@ -372,7 +422,7 @@ export class ConversationViewComponent {
 				takeUntilDestroyed(this.destroyRef)
 			)
 			.subscribe((page) => {
-				if (page.messages.length === 0) return;
+				if (!this.isCurrent(id) || page.messages.length === 0) return;
 				const wasNearBottom = this.isNearBottom();
 				this.messages.set(mergeMessages(this.messages(), page.messages));
 				if (wasNearBottom) {
@@ -382,6 +432,11 @@ export class ConversationViewComponent {
 					this.newBelow.set(true);
 				}
 			});
+	}
+
+	private stopPolling(): void {
+		this.poll?.unsubscribe();
+		this.poll = null;
 	}
 
 	protected onScroll(): void {
@@ -422,38 +477,71 @@ export class ConversationViewComponent {
 
 	// ---------------------------------------------------------------- read state
 
+	/**
+	 * Marks the conversation read up to the last loaded message, when it is shown and the read position is behind
+	 * it: never everything (a view around an old message holds newer ones), never the followed threads.
+	 */
 	private markReadIfVisible(): void {
-		const state = this.state();
-		if (!state || (state.unreadCount ?? 0) === 0 && (state.mentionCount ?? 0) === 0) return;
 		if (typeof document !== 'undefined' && document.hidden) return;
-		const id = this.conversation().id;
+		if (this.hasAfter()) return;
+		const state = this.state();
+		const last = this.messages()[this.messages().length - 1];
+		if (!state || !last) return;
+		const lastId = String(last.id);
+		const unread = (state.unreadCount ?? 0) > 0 || (state.mentionCount ?? 0) > 0;
+		const behind = !!state.lastReadMessageId && String(state.lastReadMessageId) !== lastId;
+		if ((!unread && !behind) || this.lastMarkedId === lastId) return;
+		this.lastMarkedId = lastId;
+		const id = String(this.conversation().id);
 		this.api
-			.read(id)
+			.read(id, last.id)
 			.pipe(takeUntilDestroyed(this.destroyRef))
 			.subscribe({
 				next: (answer) => {
-					this.state.set(answer.state);
-					this.stateChanged.emit(answer.state);
+					if (!this.isCurrent(id)) return;
+					// Everything loaded was read; the API's own count follows with the next list refresh.
+					this.applyEvents(answer, { unreadCount: 0 });
 					this.api.notifyChanged();
 				},
-				error: () => undefined
+				error: () => {
+					if (this.isCurrent(id) && this.lastMarkedId === lastId) this.lastMarkedId = null;
+				}
 			});
+	}
+
+	/** My state from the events a write answered, with what the view knows better on top. */
+	private applyEvents(answer: ChatEvents, known: Partial<IChatMemberState> = {}): void {
+		const conversation = this.conversation();
+		const next = memberStateFromEvents(answer.events, conversation, this.state());
+		if (next) this.applyState({ ...next, ...known });
 	}
 
 	protected toggleFavorite(): void {
 		const current = this.state();
+		const id = String(this.conversation().id);
 		this.api
-			.setState(this.conversation().id, { isFavorite: !current?.isFavorite })
+			.setState(id, { isFavorite: !current?.isFavorite })
 			.pipe(takeUntilDestroyed(this.destroyRef))
-			.subscribe({ next: (answer) => this.applyState(answer.state), error: (error) => this.fail(error) });
+			.subscribe({
+				next: (answer) => {
+					if (this.isCurrent(id)) this.applyState(answer.state);
+				},
+				error: (error) => this.fail(error)
+			});
 	}
 
 	protected setNotifyLevel(level: ChatNotifyLevelEnum | string): void {
 		if (!level || level === this.state()?.notifyLevel) return;
+		const id = String(this.conversation().id);
 		this.api
-			.setState(this.conversation().id, { notifyLevel: level as ChatNotifyLevelEnum })
+			.setState(id, { notifyLevel: level as ChatNotifyLevelEnum })
 			.pipe(takeUntilDestroyed(this.destroyRef))
-			.subscribe({ next: (answer) => this.applyState(answer.state), error: (error) => this.fail(error) });
+			.subscribe({
+				next: (answer) => {
+					if (this.isCurrent(id)) this.applyState(answer.state);
+				},
+				error: (error) => this.fail(error)
+			});
 	}
 
 	private applyState(state: IChatMemberState): void {
@@ -464,11 +552,13 @@ export class ConversationViewComponent {
 	// ---------------------------------------------------------------- membership and settings
 
 	protected join(): void {
+		const id = String(this.conversation().id);
 		this.api
-			.join(this.conversation().id)
+			.join(id)
 			.pipe(takeUntilDestroyed(this.destroyRef))
 			.subscribe({
 				next: (answer) => {
+					if (!this.isCurrent(id)) return;
 					this.conversationChanged.emit(answer.conversation);
 					this.api.notifyChanged();
 				},
@@ -477,24 +567,31 @@ export class ConversationViewComponent {
 	}
 
 	protected leave(): void {
+		const id = String(this.conversation().id);
 		this.api
-			.leave(this.conversation().id)
+			.leave(id)
 			.pipe(takeUntilDestroyed(this.destroyRef))
 			.subscribe({
 				next: () => {
 					this.toastr.success('CHAT.VIEW.LEFT');
 					this.api.notifyChanged();
-					this.left.emit();
+					if (this.isCurrent(id)) this.left.emit();
 				},
 				error: (error) => this.fail(error)
 			});
 	}
 
 	protected toggleArchived(): void {
+		const id = String(this.conversation().id);
 		this.api
-			.setArchived(this.conversation().id, !this.conversation().archivedAt)
+			.setArchived(id, !this.conversation().archivedAt)
 			.pipe(takeUntilDestroyed(this.destroyRef))
-			.subscribe({ next: (answer) => this.conversationChanged.emit(answer.conversation), error: (error) => this.fail(error) });
+			.subscribe({
+				next: (answer) => {
+					if (this.isCurrent(id)) this.conversationChanged.emit(answer.conversation);
+				},
+				error: (error) => this.fail(error)
+			});
 	}
 
 	protected togglePins(): void {
@@ -504,48 +601,60 @@ export class ConversationViewComponent {
 	}
 
 	private loadPins(): void {
+		const id = String(this.conversation().id);
 		this.api
-			.pins(this.conversation().id)
+			.pins(id)
 			.pipe(takeUntilDestroyed(this.destroyRef))
-			.subscribe({ next: (pins) => this.pins.set(pins), error: () => this.pins.set([]) });
+			.subscribe({
+				next: (pins) => {
+					if (this.isCurrent(id)) this.pins.set(pins);
+				},
+				error: () => {
+					if (this.isCurrent(id)) this.pins.set([]);
+				}
+			});
 	}
 
 	// ---------------------------------------------------------------- messages
 
 	protected onSubmit(submission: ComposerSubmission): void {
+		const id = String(this.conversation().id);
 		const editing = this.editing();
+		this.sending.set(true);
 		if (editing) {
-			this.sending.set(true);
 			this.api
 				.edit(editing.id, { body: submission.body, mentionEmployeeIds: submission.mentionEmployeeIds })
 				.pipe(takeUntilDestroyed(this.destroyRef))
 				.subscribe({
 					next: (result) => {
+						if (!this.isCurrent(id)) return;
 						this.replace(result.message);
 						this.editing.set(null);
 						this.sending.set(false);
 						this.resetToken.update((value) => value + 1);
 					},
 					error: (error) => {
+						if (!this.isCurrent(id)) return;
 						this.sending.set(false);
 						this.fail(error, 'CHAT.COMPOSER.SEND_FAILED');
 					}
 				});
 			return;
 		}
-		this.sending.set(true);
 		this.api
-			.send(this.conversation().id, { body: submission.body, nonce: newNonce(), mentionEmployeeIds: submission.mentionEmployeeIds })
+			.send(id, { body: submission.body, nonce: newNonce(), mentionEmployeeIds: submission.mentionEmployeeIds })
 			.pipe(takeUntilDestroyed(this.destroyRef))
 			.subscribe({
 				next: (result) => {
+					this.api.notifyChanged();
+					if (!this.isCurrent(id)) return;
 					this.messages.set(mergeMessages(this.messages(), [result.message]));
 					this.sending.set(false);
 					this.resetToken.update((value) => value + 1);
 					queueMicrotask(() => this.scrollToBottom(true));
-					this.api.notifyChanged();
 				},
 				error: (error) => {
+					if (!this.isCurrent(id)) return;
 					this.sending.set(false);
 					this.fail(error, 'CHAT.COMPOSER.SEND_FAILED');
 				}
@@ -553,6 +662,7 @@ export class ConversationViewComponent {
 	}
 
 	protected onAction(message: IChatMessageWithRelations, action: MessageAction): void {
+		const id = String(this.conversation().id);
 		switch (action.kind) {
 			case 'reply':
 				this.openThread.emit(message);
@@ -566,7 +676,9 @@ export class ConversationViewComponent {
 					.remove(message.id)
 					.pipe(takeUntilDestroyed(this.destroyRef))
 					.subscribe({
-						next: () => this.replace({ ...message, body: '', deletedAt: new Date() }),
+						next: () => {
+							if (this.isCurrent(id)) this.replace({ ...message, body: '', deletedAt: new Date() });
+						},
 						error: (error) => this.fail(error)
 					});
 				return;
@@ -576,6 +688,7 @@ export class ConversationViewComponent {
 					.pipe(takeUntilDestroyed(this.destroyRef))
 					.subscribe({
 						next: (result) => {
+							if (!this.isCurrent(id)) return;
 							this.replace(result.message);
 							if (this.pinsOpen()) this.loadPins();
 						},
@@ -586,7 +699,12 @@ export class ConversationViewComponent {
 				this.api
 					.react(message.id, action.emoji, action.on)
 					.pipe(takeUntilDestroyed(this.destroyRef))
-					.subscribe({ next: (result) => this.replace(result.message), error: (error) => this.fail(error) });
+					.subscribe({
+						next: (result) => {
+							if (this.isCurrent(id)) this.replace(result.message);
+						},
+						error: (error) => this.fail(error)
+					});
 				return;
 			case 'unread':
 				this.api
@@ -594,8 +712,13 @@ export class ConversationViewComponent {
 					.pipe(takeUntilDestroyed(this.destroyRef))
 					.subscribe({
 						next: (answer) => {
-							this.applyState(answer.state);
 							this.api.notifyChanged();
+							if (!this.isCurrent(id)) return;
+							// At least the loaded messages from this one on are unread now; the list refresh brings the exact count.
+							const from = new Date(message.createdAt as Date).getTime();
+							const unreadCount = this.messages().filter((item) => new Date(item.createdAt as Date).getTime() >= from).length;
+							this.lastMarkedId = null;
+							this.applyEvents(answer, { unreadCount: Math.max(unreadCount, 1) });
 						},
 						error: (error) => this.fail(error)
 					});
@@ -604,7 +727,12 @@ export class ConversationViewComponent {
 				this.api
 					.setFollowing(message.id, action.following)
 					.pipe(takeUntilDestroyed(this.destroyRef))
-					.subscribe({ next: () => this.replace({ ...message, following: action.following }), error: (error) => this.fail(error) });
+					.subscribe({
+						next: () => {
+							if (this.isCurrent(id)) this.replace({ ...message, following: action.following });
+						},
+						error: (error) => this.fail(error)
+					});
 				return;
 			default:
 				return;
@@ -612,15 +740,11 @@ export class ConversationViewComponent {
 	}
 
 	/** Puts the API's version of a message in place of ours. */
-	replace(message: IChatMessageWithRelations): void {
+	private replace(message: IChatMessageWithRelations): void {
 		this.messages.set(this.messages().map((item) => (item.id === message.id ? { ...item, ...message } : item)));
 	}
 
 	private fail(error: unknown, fallbackKey = 'CHAT.DIALOG.FAILED'): void {
-		const body = (error as HttpErrorResponse)?.error;
-		const message = body?.message;
-		const text = Array.isArray(message) ? message.join(' ') : typeof message === 'string' && message.trim() ? message : null;
-		if (text) this.toastr.danger(text);
-		else this.toastr.danger(this.translate.instant(fallbackKey));
+		this.toastr.danger(apiErrorMessage(error) ?? this.translate.instant(fallbackKey));
 	}
 }

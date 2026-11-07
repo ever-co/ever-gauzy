@@ -22,8 +22,8 @@ export type MessageAction =
 
 /**
  * One message: the author header (unless it continues the previous author's group), the body with mention
- * chips, the task cards, the reactions, the thread summary, and a toolbar on hover (reply, react, pin, edit,
- * delete, mark unread).
+ * chips, the task cards, the reactions, the thread summary, and a toolbar shown on hover and on keyboard focus
+ * (reply, react, pin, edit, delete, mark unread).
  */
 @Component({
 	selector: 'ngx-chat-message-item',
@@ -82,7 +82,7 @@ export type MessageAction =
 				@if (message().reactions?.length) {
 					<div class="reactions" data-test="reactions">
 						@for (reaction of message().reactions; track reaction.emoji) {
-							<button type="button" class="reaction" [class.mine]="reaction.mine" (click)="act({ kind: 'react', emoji: reaction.emoji, on: !reaction.mine })">
+							<button type="button" class="reaction" [class.mine]="reaction.mine" [attr.aria-pressed]="reaction.mine" (click)="act({ kind: 'react', emoji: reaction.emoji, on: !reaction.mine })">
 								<span>{{ reaction.emoji }}</span>
 								<span class="reaction-count">{{ reaction.count }}</span>
 							</button>
@@ -106,37 +106,44 @@ export type MessageAction =
 			</div>
 
 			@if (!message().deletedAt && !readOnly()) {
-				<div class="toolbar" role="toolbar">
-					<button type="button" class="tool" [nbTooltip]="'CHAT.MESSAGE.REACT' | translate" (click)="picking.set(!picking())" data-test="react">
+				<div class="toolbar" role="toolbar" [attr.aria-label]="'CHAT.MESSAGE.MORE' | translate">
+					<button type="button" class="tool" [nbTooltip]="'CHAT.MESSAGE.REACT' | translate" [attr.aria-label]="'CHAT.MESSAGE.REACT' | translate" (click)="picking.set(!picking())" data-test="react">
 						<nb-icon icon="smiling-face-outline"></nb-icon>
 					</button>
 					@if (canReply()) {
-						<button type="button" class="tool" [nbTooltip]="'CHAT.MESSAGE.REPLY' | translate" (click)="act({ kind: 'reply' })" data-test="reply">
+						<button type="button" class="tool" [nbTooltip]="'CHAT.MESSAGE.REPLY' | translate" [attr.aria-label]="'CHAT.MESSAGE.REPLY' | translate" (click)="act({ kind: 'reply' })" data-test="reply">
 							<nb-icon icon="corner-up-left-outline"></nb-icon>
 						</button>
 					}
-					<button type="button" class="tool" [nbTooltip]="(message().pinnedAt ? 'CHAT.MESSAGE.UNPIN' : 'CHAT.MESSAGE.PIN') | translate" (click)="act({ kind: 'pin', pinned: !message().pinnedAt })" data-test="pin">
+					<button
+						type="button"
+						class="tool"
+						[nbTooltip]="(message().pinnedAt ? 'CHAT.MESSAGE.UNPIN' : 'CHAT.MESSAGE.PIN') | translate"
+						[attr.aria-label]="(message().pinnedAt ? 'CHAT.MESSAGE.UNPIN' : 'CHAT.MESSAGE.PIN') | translate"
+						(click)="act({ kind: 'pin', pinned: !message().pinnedAt })"
+						data-test="pin"
+					>
 						<nb-icon icon="pin-outline"></nb-icon>
 					</button>
 					@if (isMine()) {
-						<button type="button" class="tool" [nbTooltip]="'CHAT.MESSAGE.EDIT' | translate" (click)="act({ kind: 'edit' })" data-test="edit">
+						<button type="button" class="tool" [nbTooltip]="'CHAT.MESSAGE.EDIT' | translate" [attr.aria-label]="'CHAT.MESSAGE.EDIT' | translate" (click)="act({ kind: 'edit' })" data-test="edit">
 							<nb-icon icon="edit-outline"></nb-icon>
 						</button>
 					}
 					@if (isMine() || canManage()) {
-						<button type="button" class="tool" [nbTooltip]="'CHAT.MESSAGE.DELETE' | translate" (click)="act({ kind: 'delete' })" data-test="delete">
+						<button type="button" class="tool" [nbTooltip]="'CHAT.MESSAGE.DELETE' | translate" [attr.aria-label]="'CHAT.MESSAGE.DELETE' | translate" (click)="act({ kind: 'delete' })" data-test="delete">
 							<nb-icon icon="trash-2-outline"></nb-icon>
 						</button>
 					}
 					@if (canMarkUnread()) {
-						<button type="button" class="tool" [nbTooltip]="'CHAT.MESSAGE.MARK_UNREAD' | translate" (click)="act({ kind: 'unread' })" data-test="unread">
+						<button type="button" class="tool" [nbTooltip]="'CHAT.MESSAGE.MARK_UNREAD' | translate" [attr.aria-label]="'CHAT.MESSAGE.MARK_UNREAD' | translate" (click)="act({ kind: 'unread' })" data-test="unread">
 							<nb-icon icon="eye-off-outline"></nb-icon>
 						</button>
 					}
 					@if (picking()) {
 						<span class="picker" data-test="reaction-picker">
 							@for (emoji of quickReactions; track emoji) {
-								<button type="button" class="tool emoji" (click)="react(emoji)">{{ emoji }}</button>
+								<button type="button" class="tool emoji" [attr.aria-label]="emoji" (click)="react(emoji)">{{ emoji }}</button>
 							}
 						</span>
 					}
@@ -208,25 +215,26 @@ export type MessageAction =
 				line-height: 1.5;
 				overflow-wrap: anywhere;
 			}
-			.body :is(p, ul, ol, pre, blockquote) {
+			/* The body is set through innerHTML, so its elements carry no view attribute: these rules reach past the view. */
+			:host ::ng-deep .body :is(p, ul, ol, pre, blockquote) {
 				margin: 0 0 0.25rem;
 			}
-			.body pre {
+			:host ::ng-deep .body pre {
 				padding: 0.5rem;
 				border-radius: 0.25rem;
 				background: rgba(127, 127, 127, 0.12);
 				overflow-x: auto;
 			}
-			.body code {
+			:host ::ng-deep .body code {
 				font-size: 0.8125rem;
 			}
-			.body .chat-mention {
+			:host ::ng-deep .body .chat-mention {
 				padding: 0 0.25rem;
 				border-radius: 0.25rem;
 				background: rgba(51, 102, 255, 0.15);
 				font-weight: 600;
 			}
-			.body .chat-mention-me {
+			:host ::ng-deep .body .chat-mention-me {
 				background: rgba(255, 193, 7, 0.35);
 			}
 			.deleted {
@@ -280,7 +288,7 @@ export type MessageAction =
 				color: inherit;
 			}
 			.reaction.mine {
-				border-color: #3366ff;
+				border-color: var(--color-primary-default, #3366ff);
 				background: rgba(51, 102, 255, 0.12);
 			}
 			.reaction-count {
@@ -295,7 +303,7 @@ export type MessageAction =
 				border: 0;
 				border-radius: 0.25rem;
 				background: transparent;
-				color: #3366ff;
+				color: var(--color-primary-default, #3366ff);
 				font-size: 0.8125rem;
 				cursor: pointer;
 			}
@@ -303,20 +311,24 @@ export type MessageAction =
 				opacity: 0.7;
 				color: inherit;
 			}
+			/* Kept in the layout (so its buttons can take keyboard focus), shown on hover and when one of them has focus. */
 			.toolbar {
 				position: absolute;
 				top: -0.75rem;
 				right: 0.75rem;
-				display: none;
+				display: flex;
 				gap: 0.125rem;
 				padding: 0.125rem;
 				border-radius: 0.375rem;
 				background: var(--card-background-color, #fff);
 				box-shadow: 0 0.125rem 0.5rem rgba(0, 0, 0, 0.18);
+				opacity: 0;
+				pointer-events: none;
 			}
 			.message:hover .toolbar,
 			.message:focus-within .toolbar {
-				display: flex;
+				opacity: 1;
+				pointer-events: auto;
 			}
 			.tool {
 				display: inline-flex;
@@ -330,7 +342,8 @@ export type MessageAction =
 				color: inherit;
 				cursor: pointer;
 			}
-			.tool:hover {
+			.tool:hover,
+			.tool:focus-visible {
 				background: rgba(127, 127, 127, 0.15);
 			}
 			.picker {
@@ -364,7 +377,7 @@ export class MessageItemComponent {
 	protected readonly quickReactions = CHAT_QUICK_REACTIONS;
 	protected readonly picking = signal(false);
 
-	readonly author = computed(() => {
+	protected readonly author = computed(() => {
 		const message = this.message();
 		const people = this.people();
 		return (
@@ -373,19 +386,19 @@ export class MessageItemComponent {
 			null
 		);
 	});
-	readonly authorName = computed(() => {
+	protected readonly authorName = computed(() => {
 		const message = this.message();
 		if (message.kind === ChatMessageKindEnum.SYSTEM) return 'System';
 		if (message.kind === ChatMessageKindEnum.APP) return message.appName ?? 'App';
 		return this.author()?.name ?? '…';
 	});
-	readonly isMine = computed(() => {
+	protected readonly isMine = computed(() => {
 		const message = this.message();
 		const me = this.meEmployeeId();
 		const meUser = this.meUserId();
 		return (!!me && String(message.authorEmployeeId) === me) || (!!meUser && String(message.authorUserId) === meUser);
 	});
-	readonly html = computed(() =>
+	protected readonly html = computed(() =>
 		renderBodyHtml(this.message().body ?? '', this.people().byEmployee, this.conversationNames(), this.meEmployeeId(), this.sanitizer)
 	);
 

@@ -1,5 +1,6 @@
 import { ChatConversationKindEnum, ChatMessageKindEnum, ChatVisibilityEnum, IChatConversationWithState, IChatMessage } from '@gauzy/contracts';
 import {
+	apiErrorMessage,
 	badgeText,
 	ChatPerson,
 	continuesGroup,
@@ -9,11 +10,14 @@ import {
 	mentionedEmployeeIds,
 	mentionQueryAt,
 	mergeMessages,
+	namesToTokens,
 	plainBody,
 	renderBodyHtml,
 	sortConversations,
 	splitMentions,
 	suggestMentions,
+	tokensToNames,
+	uniqueLabel,
 	userName
 } from './chat-ui.helpers';
 
@@ -63,7 +67,7 @@ describe('mention tokens', () => {
 			{ kind: 'text', text: 'hi ' },
 			{ kind: 'mention', employeeId: ANNA, label: 'Anna Ivanova', isMe: true },
 			{ kind: 'text', text: ' see ' },
-			{ kind: 'channel', label: 'general' },
+			{ kind: 'channel', conversationId: GENERAL, label: 'general' },
 			{ kind: 'text', text: ' ' },
 			{ kind: 'everyone', label: 'here' },
 			{ kind: 'text', text: ' <@unknown>' }
@@ -81,6 +85,35 @@ describe('mention tokens', () => {
 		expect(html).toContain('<strong>bold</strong>');
 		expect(html).toContain('<span class="chat-mention">@Anna Ivanova</span>');
 		expect(html).not.toContain('<script');
+	});
+
+	it('leaves images out of a rendered body', () => {
+		const sanitizer = { sanitize: (_context: unknown, html: string) => html };
+		const html = renderBodyHtml('see ![x](https://example.test/p.gif) <img src="https://example.test/q.gif"> done', people, conversations, null, sanitizer);
+		expect(html).not.toContain('<img');
+		expect(html).toContain('done');
+	});
+
+	it('shows tokens as labels while writing and turns the labels back into tokens, each person kept apart', () => {
+		const BOB_TWIN = '44444444-4444-4444-8444-444444444444';
+		const twins = new Map(people);
+		twins.set(BOB_TWIN, { employeeId: BOB_TWIN, userId: 'u4', name: 'Bob Stone', imageUrl: null });
+		const labels = tokensToNames(`<@${BOB}> and <@${BOB_TWIN}> in <#${GENERAL}> <!here>`, twins, conversations);
+		expect(labels.text).toBe('@Bob Stone and @Bob Stone (2) in #general @here');
+		expect(labels.people.get('Bob Stone')).toBe(BOB);
+		expect(labels.people.get('Bob Stone (2)')).toBe(BOB_TWIN);
+		expect(namesToTokens(labels.text, labels.people, labels.channels)).toBe(`<@${BOB}> and <@${BOB_TWIN}> in <#${GENERAL}> <!here>`);
+		expect(uniqueLabel('Bob Stone', BOB, labels.people)).toBe('Bob Stone');
+		expect(uniqueLabel('Bob Stone', 'someone-else', labels.people)).toBe('Bob Stone (3)');
+		// A label is never matched inside a longer word.
+		expect(namesToTokens('@Bob Stoned @Bob Stone', new Map([['Bob Stone', BOB]]))).toBe(`@Bob Stoned <@${BOB}>`);
+	});
+
+	it('reads the message of an API refusal', () => {
+		expect(apiErrorMessage({ error: { message: 'No.' } })).toBe('No.');
+		expect(apiErrorMessage({ error: { message: ['name is short', 'topic is long'] } })).toBe('name is short topic is long');
+		expect(apiErrorMessage({ error: { message: '  ' } })).toBeNull();
+		expect(apiErrorMessage(null)).toBeNull();
 	});
 
 	it('finds the @ query under the caret and suggests people', () => {

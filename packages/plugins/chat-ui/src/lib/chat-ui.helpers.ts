@@ -21,7 +21,7 @@ export interface ChatPerson {
 export type ChatBodyPart =
 	| { kind: 'text'; text: string }
 	| { kind: 'mention'; employeeId: string; label: string; isMe: boolean }
-	| { kind: 'channel'; label: string }
+	| { kind: 'channel'; conversationId: string; label: string }
 	| { kind: 'everyone'; label: 'channel' | 'here' };
 
 /**
@@ -46,7 +46,7 @@ export function splitMentions(
 			const person = people.get(id);
 			parts.push({ kind: 'mention', employeeId: id, label: person?.name ?? '…', isMe: !!meEmployeeId && id === meEmployeeId });
 		} else if (sigil === '#' && id) {
-			parts.push({ kind: 'channel', label: conversations.get(id) ?? '…' });
+			parts.push({ kind: 'channel', conversationId: id, label: conversations.get(id) ?? '…' });
 		}
 		last = match.index + match[0].length;
 	}
@@ -81,10 +81,16 @@ function escapeHtml(text: string): string {
 	return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
+function escapeRegExp(text: string): string {
+	return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 /**
  * A body as safe HTML: the Markdown subset the API stores (paragraphs, emphasis, code, lists, quotes, links)
  * with the mention tokens as chips. The chips are put in before Markdown runs (plain HTML passes through it),
- * and the whole result goes through Angular's sanitizer, so nothing a member typed can script the page.
+ * images are taken out (the subset has none, and an `<img>` would make every reader's browser fetch a URL of the
+ * author's choosing), and the whole result goes through Angular's sanitizer, so nothing a member typed can
+ * script the page.
  */
 export function renderBodyHtml(
 	body: string,
@@ -103,8 +109,81 @@ export function renderBodyHtml(
 			return `<span class="chat-mention chat-mention-me">@${part.label}</span>`;
 		})
 		.join('');
-	const html = marked.parse(withChips, { async: false, gfm: true, breaks: true }) as string;
+	const html = (marked.parse(withChips, { async: false, gfm: true, breaks: true }) as string).replace(/<img\b[^>]*>/gi, '');
 	return sanitizer.sanitize(SecurityContext.HTML, html) ?? '';
+}
+
+/** The message an API refusal carries (a string, or the validation messages joined), or null when it has none. */
+export function apiErrorMessage(error: unknown): string | null {
+	const body = (error as { error?: { message?: unknown } } | null | undefined)?.error;
+	const message = body?.message;
+	if (Array.isArray(message)) {
+		const text = message.filter((part) => typeof part === 'string' && part.trim()).join(' ');
+		return text || null;
+	}
+	return typeof message === 'string' && message.trim() ? message : null;
+}
+
+// ---------------------------------------------------------------- the composer's view of mentions
+
+/** What the composer keeps beside the text: which `@label` and `#label` stand for which id. */
+export interface ComposerLabels {
+	text: string;
+	people: Map<string, string>;
+	channels: Map<string, string>;
+}
+
+/**
+ * The label a mention shows in the box, unique among the labels picked so far: two people of one name get
+ * `Name` and `Name (2)`, so an edit never swaps one for the other.
+ */
+export function uniqueLabel(name: string, id: string, labels: ReadonlyMap<string, string>): string {
+	const current = labels.get(name);
+	if (current === undefined || current === id) return name;
+	for (let n = 2; ; n += 1) {
+		const candidate = `${name} (${n})`;
+		const taken = labels.get(candidate);
+		if (taken === undefined || taken === id) return candidate;
+	}
+}
+
+/** The body as the person reads it while writing: tokens shown as `@Name` / `#channel`, each label mapped to its id. */
+export function tokensToNames(body: string, people: ReadonlyMap<string, ChatPerson>, conversations: ReadonlyMap<string, string>): ComposerLabels {
+	const picked = new Map<string, string>();
+	const channels = new Map<string, string>();
+	const text = splitMentions(body, people, conversations, null)
+		.map((part) => {
+			if (part.kind === 'text') return part.text;
+			if (part.kind === 'mention') {
+				const label = uniqueLabel(part.label, part.employeeId, picked);
+				picked.set(label, part.employeeId);
+				return `@${label}`;
+			}
+			if (part.kind === 'channel') {
+				const label = uniqueLabel(part.label, part.conversationId, channels);
+				channels.set(label, part.conversationId);
+				return `#${label}`;
+			}
+			return `@${part.label}`;
+		})
+		.join('');
+	return { text, people: picked, channels };
+}
+
+/**
+ * `@Name` back into `<@employeeId>` and `#channel` into `<#conversationId>` for the labels that were picked
+ * (longest first, a label never matched inside a longer word), plus `@channel` / `@here` into `<!channel>` / `<!here>`.
+ */
+export function namesToTokens(text: string, people: ReadonlyMap<string, string>, channels: ReadonlyMap<string, string> = new Map()): string {
+	let out = text;
+	const byLength = (a: [string, string], b: [string, string]) => b[0].length - a[0].length;
+	for (const [label, id] of [...people.entries()].sort(byLength)) {
+		out = out.replace(new RegExp(`@${escapeRegExp(label)}(?![\\p{L}\\p{N}_])`, 'gu'), `<@${id}>`);
+	}
+	for (const [label, id] of [...channels.entries()].sort(byLength)) {
+		out = out.replace(new RegExp(`#${escapeRegExp(label)}(?![\\p{L}\\p{N}_])`, 'gu'), `<#${id}>`);
+	}
+	return out.replace(/(^|\s)@(channel|here)(?=\s|$|[.,!?])/g, '$1<!$2>');
 }
 
 /**
