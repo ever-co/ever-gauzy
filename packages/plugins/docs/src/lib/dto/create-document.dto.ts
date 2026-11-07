@@ -9,7 +9,8 @@ import {
 	IsString,
 	IsUUID,
 	MaxLength,
-	Min
+	Min,
+	ValidateIf
 } from 'class-validator';
 import {
 	DocumentKindEnum,
@@ -81,6 +82,13 @@ export class CreateDocumentDTO extends TenantOrganizationBaseDTO implements IDoc
 	@IsOptional()
 	@IsEnum(DocumentVisibilityEnum)
 	readonly visibility?: DocumentVisibilityEnum;
+
+	/** With `visibility: TEAM`: the team whose space the document is in (a team of the organization the caller belongs to). */
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@ValidateIf((it) => it.organizationTeamId !== null)
+	@IsUUID()
+	readonly organizationTeamId?: ID | null;
 
 	@ApiPropertyOptional({ type: () => Array })
 	@IsOptional()

@@ -5,6 +5,7 @@ import { DocumentLinkController } from './document-link.controller';
 import { DocumentReviewController } from './document-review.controller';
 import { DocumentInboundAddressController } from './document-inbound-address.controller';
 import { DocumentSettingsController } from './document-settings.controller';
+import { DocumentCollaborationController } from './document-collaboration.controller';
 import { DocumentShareController } from './document-share.controller';
 import { DocumentStatsController } from './document-stats.controller';
 import { DocumentTreeController } from './document-tree.controller';
@@ -38,6 +39,8 @@ export * from './document-version.controller';
  * public capture surface never get mixed up by accident.
  */
 export const Controllers = [
+	// Before DocumentController: its static `/documents/spaces` must beat `/documents/:id`.
+	DocumentCollaborationController,
 	DocumentUploadController,
 	DocumentKnowledgeController,
 	DocumentReviewController,

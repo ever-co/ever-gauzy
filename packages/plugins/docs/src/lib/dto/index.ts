@@ -6,6 +6,7 @@ export * from './document-link.dto';
 export * from './document-inbound-address.dto';
 export * from './document-scope-query.dto';
 export * from './document-settings.dto';
+export * from './document-space.dto';
 export * from './document-share.dto';
 export * from './document-tag-reference';
 export * from './duplicate-document.dto';
