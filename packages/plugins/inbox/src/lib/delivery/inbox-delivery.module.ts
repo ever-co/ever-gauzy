@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { EmailSendModule } from '@gauzy/core';
+import { EmailSendModule, RolePermissionModule } from '@gauzy/core';
 import { InboxDelivery } from './inbox-delivery.entity';
 import { InboxDeliveryMailer } from './inbox-delivery-mailer';
 import { InboxDeliveryService } from './inbox-delivery.service';
@@ -14,7 +14,14 @@ export const INBOX_DELIVERY_ENTITIES = [InboxDelivery, InboxPushSubscription];
 
 /** The delivery lane's services: the sweep and the mailer. The schedule lives in `InboxDeliveryMaintenanceModule`. */
 @Module({
-	imports: [TypeOrmModule.forFeature(INBOX_DELIVERY_ENTITIES), MikroOrmModule.forFeature(INBOX_DELIVERY_ENTITIES), EmailSendModule],
+	// RolePermissionModule: the push devices' controller is guarded by TenantPermissionGuard / PermissionGuard, which
+	// resolve RolePermissionService in this module (without it the API refuses to boot once web push is on).
+	imports: [
+		TypeOrmModule.forFeature(INBOX_DELIVERY_ENTITIES),
+		MikroOrmModule.forFeature(INBOX_DELIVERY_ENTITIES),
+		EmailSendModule,
+		RolePermissionModule
+	],
 	// The push routes (the caller's devices) answer 404 where web push is off; the sweep's push step reads the same store.
 	controllers: [InboxPushController],
 	providers: [InboxDeliveryMailer, InboxDeliveryPusher, InboxPushSubscriptionService, InboxDeliveryService],
