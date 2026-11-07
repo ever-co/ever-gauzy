@@ -215,7 +215,7 @@ jobs:
       # `yarn install` ("Couldn't find package ... on the npm registry"), and no pull request check builds images.
       - name: Image Dockerfiles copy every plugin the apps depend on
         if: always()
-        run: node tools/scripts/docker-plugin-copy-check.mjs
+        run: node tools/scripts/docker-plugin-copy-check.mjs --self-test && node tools/scripts/docker-plugin-copy-check.mjs
 
       - name: Permission and feature contributions
         if: always()
