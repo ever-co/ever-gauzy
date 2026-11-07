@@ -497,7 +497,19 @@ async function setupTimeLogs(ctx) {
 		`/timesheet/time-log?tenantId=${tenantId}&organizationId=${organizationId}&startDate=${ctx.vars.monthStart}&endDate=${ctx.vars.todayEnd}&employeeIds[0]=${employeeId}&teamIds[0]=${teamId}`,
 		{ headers }
 	);
-	const inWindow = readBack.status < 300 ? JSON.parse(readBack.body.toString()) ?? [] : [];
+	if (readBack.status === 0 || readBack.status >= 300) {
+		// The count is unknown, not zero: the plans are marked degraded with the reason, nothing is aborted.
+		const reason = `time-log read-back failed: status ${readBack.status} ${
+			readBack.error?.message || readBack.body?.toString().slice(0, 200) || ''
+		}`.trim();
+		console.warn(`  setup: ${reason}`);
+		for (const plan of plans) {
+			outcome[plan.label].degraded = true;
+			outcome[plan.label].reason = reason;
+		}
+		return outcome;
+	}
+	const inWindow = JSON.parse(readBack.body.toString()) ?? [];
 	for (const plan of plans) {
 		const lengthMs = plan.hours * 3_600_000;
 		const have = inWindow.filter((log) => Date.parse(log.stoppedAt) - Date.parse(log.startedAt) === lengthMs).length;
