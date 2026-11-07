@@ -18,7 +18,7 @@ Off by default. The plugin is loaded only when `TRELLO_ENABLED=true` (exactly); 
 | `TRELLO_APP_NAME` | The name Trello shows on its authorize page. Default: `Ever Gauzy`. |
 | `TRELLO_RETURN_URL` | The page Trello sends the person back to with the token. Default: `CLIENT_BASE_URL` + `/#/pages/integrations/trello`. |
 | `TRELLO_WEBHOOK_BASE_URL` | The public address Trello delivers webhooks to (default `API_BASE_URL`). |
-| `TRELLO_IMPORT_INTERVAL_MINUTES` | How many minutes apart the worker imports the changes of each inbound mapping (default `15`; `0` switches the scheduled import off). A mapping with a live webhook (`webhookId`) is swept every fourth interval instead. |
+| `TRELLO_IMPORT_INTERVAL_MINUTES` | How many minutes apart the worker imports the changes of each inbound mapping (default `15`; `0` switches the scheduled import off). A mapping with a live webhook (`webhookId`) is swept every fourth interval instead.  The worker sweeps every five minutes, so a value below five behaves as five; with `0` the sweep still files the refused-token notices the Inbox has not taken. |
 | `TRELLO_API_URL` | Trello's REST endpoint; only for a test double. |
 
 ## How it works

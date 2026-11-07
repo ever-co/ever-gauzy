@@ -470,9 +470,16 @@ export class TrelloSyncService {
 			const details = await this.cardDetails.collect(detailsContext, card);
 			const key = `${context.mapping.integrationId}:${card.id}`;
 			const resolvedTaskId = taskId;
-			await this.serialized(`${key}:details`, () =>
-				this.withApplySlot(() => this.lockedTransaction([`integration-trello:card-details:${key}`], () => this.cardDetails.apply(detailsContext, card, details, resolvedTaskId)))
-			);
+			try {
+				await this.serialized(`${key}:details`, () =>
+					this.withApplySlot(() => this.lockedTransaction([`integration-trello:card-details:${key}`], () => this.cardDetails.apply(detailsContext, card, details, resolvedTaskId)))
+				);
+			} catch (caught) {
+				// The API's refusal is the run's; a lock that could not be taken, or a store error, is this card's details failing, and the run goes on.
+				if (caught instanceof TrelloApiError) throw caught;
+				context.details.failed += 1;
+				this.logger.warn(`The details of card ${card.id} could not be kept: ${this.describe(caught)}`);
+			}
 		}
 	}
 
@@ -586,19 +593,11 @@ export class TrelloSyncService {
 		}
 		const items = context.employees;
 		const username = member.username.trim().toLowerCase();
-		const fullName = member.fullName.trim().toLowerCase().replace(/\s+/g, ' ');
 		const byEmail = username
 			? items.find((employee) => String(employee.user?.email ?? '').toLowerCase().split('@')[0] === username)
 			: undefined;
-		if (byEmail?.id) return byEmail;
-		if (!fullName) return null;
-		const byName = items.find((employee) => {
-			const user = employee.user;
-			const joined = [user?.firstName, user?.lastName].filter(Boolean).join(' ').trim().toLowerCase().replace(/\s+/g, ' ');
-			const named = String(user?.name ?? '').trim().toLowerCase().replace(/\s+/g, ' ');
-			return (joined && joined === fullName) || (named && named === fullName);
-		});
-		return byName?.id ? byName : null;
+		// One trust rule for members and comment authors alike: a name a member chooses never matches an employee.
+		return byEmail?.id ? byEmail : null;
 	}
 
 	/** The task's tags for the card's labels: one per label, created once by the platform's label sync; `undefined` when a sync failed. */
@@ -667,7 +666,7 @@ export class TrelloSyncService {
 	/** A refused token or key marks the connection for a person (Trello's tokens cannot be renewed here). */
 	private async noteRefusedToken(tenant: IIntegrationTenant, caught: unknown): Promise<void> {
 		if (caught instanceof TrelloApiError && caught.isUnauthorized) {
-			await this.tenants.setAttention(tenant, 'token_refused');
+			await this.tenants.setAttention(tenant, 'token_refused', this.tenants.settingsOf(tenant)[TrelloSettingName.TOKEN] ?? null);
 		}
 	}
 
