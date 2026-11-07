@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
-import { of, throwError } from 'rxjs';
+import { of, Subject, throwError } from 'rxjs';
 import { Store, ToastrService } from '@gauzy/ui-core/core';
 import { InboxNotificationSettingsService } from '../services/inbox-notification-settings.service';
 import { InboxNotificationSettingsPageComponent } from './notification-settings-page.component';
@@ -12,6 +12,8 @@ describe('InboxNotificationSettingsPageComponent', () => {
 	let employee: { id: string } | null = { id: 'e1' };
 
 	function render() {
+		// A suite renders more than once: the module of the render before is reset first.
+		TestBed.resetTestingModule();
 		TestBed.configureTestingModule({
 			imports: [InboxNotificationSettingsPageComponent],
 			providers: [
@@ -65,7 +67,7 @@ describe('InboxNotificationSettingsPageComponent', () => {
 		component.setKind('mention', false);
 		expect(api.update).toHaveBeenCalledWith('s1', { tenantId: 'ten', organizationId: 'org', employeeId: 'e1' }, { mention: false });
 		expect(component.isOn('mention')).toBe(false);
-		expect(component.busy().size).toBe(0);
+		expect(component.saving()).toBe(false);
 	});
 
 	it("merges a kind's email mode, the quiet hours and the digest hour into the preferences", () => {
@@ -86,7 +88,31 @@ describe('InboxNotificationSettingsPageComponent', () => {
 		expect(api.update).toHaveBeenCalledTimes(5);
 	});
 
-	it('creates the row on the first change when there is none, and puts a refused change back with a message', () => {
+	it('holds every control while a save is on its way, so no second change overlaps it', () => {
+		api.forEmployee.mockReturnValue(of({ id: 's1', preferences: {} }));
+		api.update.mockReturnValue(new Subject());
+		const { component } = render();
+		component.setKind('mention', false);
+		expect(component.saving()).toBe(true);
+		component.setKind('comment', false);
+		component.setDigestHour(9);
+		expect(api.update).toHaveBeenCalledTimes(1);
+		expect(component.isOn('comment')).toBe(true);
+	});
+
+	it('ignores the answer of a save or a load for a scope that is no longer the page\'s', () => {
+		const answer = new Subject<{ id: string; mention?: boolean; preferences: Record<string, unknown> }>();
+		api.forEmployee.mockReturnValue(of({ id: 's1', preferences: {} }));
+		api.update.mockReturnValue(answer);
+		const { component } = render();
+		component.setKind('mention', false);
+		(component as unknown as { scope: { employeeId: string } | null }).scope = { employeeId: 'other' } as never;
+		answer.next({ id: 's9', mention: true, preferences: {} });
+		expect(component.setting()?.id).toBe('s1');
+		expect(component.saving()).toBe(false);
+	});
+
+	it('creates the row on the first change when there is none, reloads when that is refused, and puts a refused change back with a message', () => {
 		api.forEmployee.mockReturnValue(of(null));
 		api.create.mockReturnValue(of({ id: 's1', comment: false, preferences: {} }));
 		const { component } = render();
@@ -98,5 +124,13 @@ describe('InboxNotificationSettingsPageComponent', () => {
 		component.setDefaultMode('off');
 		expect(component.defaultMode()).toBe('immediate');
 		expect(toastr.danger).toHaveBeenCalledWith('No.');
+
+		// No row yet and the create refused: the stored state is read again, so the controls show it.
+		api.forEmployee.mockReturnValue(of(null));
+		api.create.mockReturnValue(throwError(() => ({ status: 500 })));
+		const fresh = render().component;
+		fresh.setKind('comment', false);
+		expect(api.forEmployee).toHaveBeenCalledTimes(2);
+		expect(fresh.setting()).toBeNull();
 	});
 });

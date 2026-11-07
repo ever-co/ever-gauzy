@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { Observable, of, throwError } from 'rxjs';
+import { map, switchMap } from 'rxjs/operators';
 import { ID, IEmployeeNotificationSetting, IPagination } from '@gauzy/contracts';
 import { API_PREFIX, toParams } from '@gauzy/ui-core/common';
 
@@ -11,6 +11,11 @@ const SETTINGS = `${API_PREFIX}/employee-notification-setting`;
 export type IInboxNotificationSettingInput = Partial<
 	Pick<IEmployeeNotificationSetting, 'payment' | 'assignment' | 'invitation' | 'mention' | 'comment' | 'message' | 'preferences'>
 >;
+
+/** Whether an API answer is the row (TypeORM) rather than an update count (MikroORM). */
+export function isSettingRow(answer: unknown): answer is IEmployeeNotificationSetting {
+	return !!answer && typeof answer === 'object' && typeof (answer as { id?: unknown }).id === 'string' && !!(answer as { id: string }).id;
+}
 
 /** Where a row lives. */
 export interface IInboxNotificationSettingScope {
@@ -50,11 +55,25 @@ export class InboxNotificationSettingsService {
 		});
 	}
 
+	/**
+	 * Updates the row and answers it: the API answers the row on TypeORM and `{ affected }` on MikroORM, so an answer
+	 * that is no row is followed by a read of the row (gone meanwhile: an error, as a refused save).
+	 */
 	update(id: ID, scope: IInboxNotificationSettingScope, input: IInboxNotificationSettingInput): Observable<IEmployeeNotificationSetting> {
-		return this.http.put<IEmployeeNotificationSetting>(`${SETTINGS}/${encodeURIComponent(String(id))}`, {
-			...input,
-			tenantId: scope.tenantId,
-			organizationId: scope.organizationId
-		});
+		return this.http
+			.put<IEmployeeNotificationSetting | { affected?: number }>(`${SETTINGS}/${encodeURIComponent(String(id))}`, {
+				...input,
+				tenantId: scope.tenantId,
+				organizationId: scope.organizationId
+			})
+			.pipe(
+				switchMap((answer) =>
+					isSettingRow(answer)
+						? of(answer)
+						: this.forEmployee(scope).pipe(
+								switchMap((row) => (row ? of(row) : throwError(() => new Error('The notification setting is gone.'))))
+						  )
+				)
+			);
 	}
 }
