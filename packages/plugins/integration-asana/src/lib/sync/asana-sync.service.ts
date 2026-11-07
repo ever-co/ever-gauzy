@@ -1,8 +1,8 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { randomBytes } from 'node:crypto';
+import { createHash, randomBytes } from 'node:crypto';
 import { CommandBus } from '@nestjs/cqrs';
-import { DataSource, In, IsNull } from 'typeorm';
-import { ID, IIntegrationMap, IIntegrationTenant, IntegrationEntity, isTaskSyncAllowed, ITaskCreateInput, ITaskUpdateInput } from '@gauzy/contracts';
+import { DataSource, EntityManager, In, IsNull } from 'typeorm';
+import { ID, IIntegrationMap, IIntegrationTenant, IntegrationEntity, isTaskSyncAllowed, ITag, ITaskCreateInput, ITaskUpdateInput } from '@gauzy/contracts';
 import {
 	EmployeeService,
 	IntegrationMap,
@@ -294,11 +294,7 @@ export class AsanaSyncService {
 		const sourceKey = `${integrationId}:${created.gid}`;
 		const outcome = await this.serialized(sourceKey, () =>
 			this.withApplySlot(() =>
-				this.dataSource.transaction(async (manager): Promise<'recorded' | 'duplicate' | 'reconciled'> => {
-				if (manager.connection.options.type === 'postgres') {
-					await manager.query('SELECT pg_advisory_xact_lock(hashtext($1))', [`integration-asana:task:${sourceKey}`]);
-					await manager.query('SELECT pg_advisory_xact_lock(hashtext($1))', [`integration-asana:task:${taskId}`]);
-				}
+				this.lockedTransaction([`integration-asana:task:${sourceKey}`, `integration-asana:task:${taskId}`], async (manager): Promise<'recorded' | 'duplicate' | 'reconciled'> => {
 				const byTask = await manager.findOne(IntegrationMap, {
 					where: { entity: IntegrationEntity.TASK, gauzyId: taskId, integrationId, ...scope } as never
 				});
@@ -328,6 +324,35 @@ export class AsanaSyncService {
 		} else if (outcome === 'reconciled') {
 			this.logger.warn(`Task ${taskId}: the task the webhook of Asana task ${created.gid} made meanwhile was removed as a duplicate.`);
 		}
+	}
+
+	/**
+	 * Runs `work` in a transaction that holds a cross-process lock on each key: an advisory lock on Postgres, a named
+	 * lock on MySQL / MariaDB (held by the transaction's own session and released with it); SQLite serializes writers.
+	 * The statements are parameterized: a key is a bind value, never part of the SQL.
+	 */
+	private lockedTransaction<T>(keys: readonly string[], work: (manager: EntityManager) => Promise<T>): Promise<T> {
+		return this.dataSource.transaction(async (manager) => {
+			const dialect = manager.connection.options.type;
+			const named: string[] = [];
+			try {
+				for (const key of keys) {
+					if (dialect === 'postgres') {
+						await manager.query('SELECT pg_advisory_xact_lock(hashtext($1))', [key]);
+					} else if (dialect === 'mysql' || dialect === 'mariadb') {
+						const name = createHash('sha1').update(key).digest('hex');
+						const rows = (await manager.query('SELECT GET_LOCK(?, 30) AS got', [name])) as Array<{ got?: unknown }>;
+						if (Number(rows?.[0]?.got) !== 1) throw new Error(`The lock ${key} could not be taken within 30 s`);
+						named.push(name);
+					}
+				}
+				return await work(manager);
+			} finally {
+				for (const name of named.reverse()) {
+					await manager.query('SELECT RELEASE_LOCK(?)', [name]).catch(() => undefined);
+				}
+			}
+		});
 	}
 
 	/**
@@ -411,22 +436,10 @@ export class AsanaSyncService {
 		}
 	}
 
-	/**
-	 * One apply at a time per Asana task: chained in the process, an advisory lock across processes on Postgres
-	 * (a parameterized statement: the key is a bind value), within the process's apply slots.
-	 */
+	/** One apply at a time per Asana task: chained in the process, locked across processes (`lockedTransaction`), within the process's apply slots. */
 	private applyTask(context: ApplyContext, task: AsanaTask): Promise<ApplyOutcome> {
 		const key = `${context.mapping.integrationId}:${task.gid}`;
-		return this.serialized(key, () =>
-			this.withApplySlot(() =>
-				this.dataSource.transaction(async (manager) => {
-					if (manager.connection.options.type === 'postgres') {
-						await manager.query('SELECT pg_advisory_xact_lock(hashtext($1))', [`integration-asana:task:${key}`]);
-					}
-					return this.applyTaskNow(context, task);
-				})
-			)
-		);
+		return this.serialized(key, () => this.withApplySlot(() => this.lockedTransaction([`integration-asana:task:${key}`], () => this.applyTaskNow(context, task))));
 	}
 
 	/**
@@ -515,7 +528,8 @@ export class AsanaSyncService {
 			if (!tag?.gid || !tag.name) continue;
 			if (!context.tagIdsByAsanaGid.has(tag.gid)) {
 				try {
-					const map: IIntegrationMap = await this.commandBus.execute(
+					// The label sync answers the tag itself (created once, updated after), not its id map.
+					const synced: ITag = await this.commandBus.execute(
 						new IntegrationMapSyncLabelCommand({
 							entity: { name: tag.name, color: asanaColorOf(tag.color), ...context.scope } as never,
 							sourceId: tag.gid,
@@ -523,7 +537,7 @@ export class AsanaSyncService {
 							...context.scope
 						})
 					);
-					context.tagIdsByAsanaGid.set(tag.gid, (map?.gauzyId as ID | undefined) ?? null);
+					context.tagIdsByAsanaGid.set(tag.gid, (synced?.id as ID | undefined) ?? null);
 				} catch (caught) {
 					this.logger.warn(`Tag ${tag.name} could not be synced: ${this.describe(caught)}`);
 					return undefined;

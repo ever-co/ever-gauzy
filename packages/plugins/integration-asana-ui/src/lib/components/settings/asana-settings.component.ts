@@ -455,7 +455,12 @@ export class AsanaSettingsComponent implements OnInit {
 		if (!this.integrationId) return;
 		this.draft = { ...this.emptyDraft(), asanaWorkspaceGid: workspaceGid, projectId: this.draft.projectId, direction: this.draft.direction, syncEnabled: this.draft.syncEnabled };
 		this.asanaProjects = [];
-		if (!workspaceGid) return;
+		if (!workspaceGid) {
+			// Nothing chosen: no read is awaited, and an earlier one's answer is dropped by the guard below.
+			this.loadingProjects = false;
+			this.cdr.markForCheck();
+			return;
+		}
 		this.loadingProjects = true;
 		this.cdr.markForCheck();
 		this.api.projects(this.integrationId, workspaceGid).subscribe({
@@ -478,7 +483,11 @@ export class AsanaSettingsComponent implements OnInit {
 	chooseAsanaProject(projectGid: string): void {
 		if (!this.integrationId) return;
 		this.draft = { ...this.draft, asanaProjectGid: projectGid, sections: [] };
-		if (!projectGid) return;
+		if (!projectGid) {
+			this.loadingSections = false;
+			this.cdr.markForCheck();
+			return;
+		}
 		this.loadingSections = true;
 		this.cdr.markForCheck();
 		this.api.sections(this.integrationId, projectGid).subscribe({
