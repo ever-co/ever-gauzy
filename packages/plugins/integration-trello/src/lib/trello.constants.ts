@@ -44,8 +44,6 @@ export const TRELLO_CARDS_PAGE_SIZE = 1000;
 export const TRELLO_APPLY_CONCURRENCY = 4;
 /** The import position is the run's start minus this margin: a change made while the pages were read is not skipped next time. */
 export const TRELLO_IMPORT_CLOCK_SKEW_MS = 60_000;
-/** The import position is the run's start minus this margin: a change made while the pages were read is not skipped next time. */
-export const TRELLO_IMPORT_CLOCK_SKEW_MS = 60_000;
 
 /** The queue the scheduled import sweep travels on, the schedule that asks for it, and the queue job it runs as. */
 export const TRELLO_QUEUE_NAME = 'integration-trello';
@@ -67,8 +65,6 @@ export const TRELLO_IMPORT_SWEEP_RETRY_DELAY_MS = 30_000;
 export const TRELLO_NOT_CONFIGURED = 'TRELLO_NOT_CONFIGURED';
 export const TRELLO_NOT_CONNECTED = 'TRELLO_NOT_CONNECTED';
 export const TRELLO_TOKEN_REFUSED = 'TRELLO_TOKEN_REFUSED';
-export const TRELLO_UNAVAILABLE = 'TRELLO_UNAVAILABLE';
-export const TRELLO_WEBHOOK_NOT_REMOVED = 'TRELLO_WEBHOOK_NOT_REMOVED';
 export const TRELLO_UNAVAILABLE = 'TRELLO_UNAVAILABLE';
 export const TRELLO_WEBHOOK_NOT_REMOVED = 'TRELLO_WEBHOOK_NOT_REMOVED';
 export const TRELLO_STATE_INVALID = 'TRELLO_STATE_INVALID';
