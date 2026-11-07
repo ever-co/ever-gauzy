@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException, Optional } from '@nestjs/common';
-import { EntityManager, FindOptionsWhere, IsNull } from 'typeorm';
+import { EntityManager, FindOptionsWhere, In, IsNull, MoreThanOrEqual } from 'typeorm';
 import { EntityManager as MikroOrmEntityManager, QueryOrder } from '@mikro-orm/core';
 import { randomUUID } from 'node:crypto';
 import { isMySQL, isPostgres } from '@gauzy/config';
@@ -648,6 +648,61 @@ export class EventOutboxService extends CrudService<EventOutbox> {
 				...(query.aggregateId ? { aggregateId: query.aggregateId } : {})
 			}),
 			order: { availableAt: 'ASC', sequence: 'ASC', id: 'ASC' }
+		} as never);
+	}
+
+	/**
+	 * The caller's rows of some event names since a time, oldest first, bounded — the read a client's catch-up
+	 * after a reconnect makes (the real-time channel), scoped exactly as {@link listOutboxRows} scopes.
+	 *
+	 * Ordered by `createdAt` then `eventId`, which is the order a catch-up cursor walks: `createdAt` is written
+	 * once at append and never moves, unlike `availableAt`, which the dispatcher pushes for leases and retries.
+	 *
+	 * Both ORMs push the names, the time and the bound into the query. Under MikroORM the store reads one bounded
+	 * listing per name (a row among the first `limit` overall is among the first `limit` of its name), and the
+	 * listings are merged, ordered and cut here; the answer is the same set.
+	 *
+	 * @param query The event names (all when omitted), the earliest `createdAt` to answer (a stated value that is
+	 * no time answers nothing), and the most rows.
+	 * @returns The rows, oldest first.
+	 */
+	async listOutboxRowsSince(query: { eventNames?: readonly string[]; since?: Date; limit: number }): Promise<EventOutbox[]> {
+		const limit = Math.min(Math.max(Math.trunc(Number(query.limit)) || 1, 1), 5000);
+		const names = query.eventNames?.length ? [...new Set(query.eventNames)] : undefined;
+		if (query.since !== undefined && !(query.since instanceof Date && Number.isFinite(query.since.getTime()))) {
+			// A stated lower bound that is no time matches no row; only an omitted one means "from the start".
+			return [];
+		}
+		const since = query.since instanceof Date ? new Date(query.since.getTime()) : null;
+		// The cursor order: time, then event id — the same key the catch-up walks, so a bounded read never cuts
+		// a same-millisecond group differently from the cursor.
+		const byCursor = (a: EventOutbox, b: EventOutbox): number =>
+			new Date(a.createdAt as Date).getTime() - new Date(b.createdAt as Date).getTime() ||
+			String(a.eventId).localeCompare(String(b.eventId));
+
+		if (this.usesMikroOrm) {
+			// One bounded query per name (a row in the first `limit` overall is in the first `limit` of its name),
+			// then merged, ordered and cut.
+			const listings = await Promise.all(
+				(names ?? [undefined]).map((eventName) =>
+					this.mikroOrmStore.find<EventOutbox>(
+						EventOutbox,
+						this.rowsOfTheCallerOnMikroOrm(eventName ? { eventName } : {}),
+						[{ createdAt: QueryOrder.ASC }, { eventId: QueryOrder.ASC }],
+						{ ...(since ? { since } : {}), limit }
+					)
+				)
+			);
+			return listings.flat().sort(byCursor).slice(0, limit);
+		}
+
+		return this.typeOrmEventOutboxRepository.find({
+			where: this.rowsOfTheCaller<EventOutbox>({
+				...(names ? { eventName: In(names) } : {}),
+				...(since ? { createdAt: MoreThanOrEqual(since) } : {})
+			} as FindOptionsWhere<EventOutbox>),
+			order: { createdAt: 'ASC', eventId: 'ASC' },
+			take: limit
 		} as never);
 	}
 

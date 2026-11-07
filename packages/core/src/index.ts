@@ -95,6 +95,9 @@ export { PasswordHashModule, PasswordHashService } from './lib/password-hash';
 // platform mechanisms instead of re-implementing them.
 export { ActivityLogService } from './lib/activity-log/activity-log.service';
 export { MentionService } from './lib/mention/mention.service';
+// The in-process facts the real-time channel turns into change hints (`@gauzy/plugin-realtime`).
+export { CreateMentionEvent } from './lib/mention/events';
+export { EmployeeCreateNotificationEvent, EmployeeNotificationCreatedEvent } from './lib/employee-notification/events';
 // 🛑 `@Global()` means "available everywhere ONCE IMPORTED", not "always present". The API gets
 // both modules through core's own `AppModule`; a host that builds its own module graph —
 // `apps/worker`, which runs the plugin pipelines without core's HTTP `AppModule` — has to import
@@ -161,6 +164,7 @@ export {
 // The comment-access policy contract, for a package whose records carry comments that must follow the record's own
 // access rules: it declares a provider with `@CommentParentAccessPolicy()` implementing the interface, and the
 // comment API applies it (see `OrganizationContactCommentAccessPolicy`, which governs a contact's notes).
+export * from './lib/comment/events';
 export { CommentParentAccessPolicy } from './lib/comment/parent-access';
 export type { ICommentParent, ICommentParentAccessPolicy } from './lib/comment/parent-access';
 export {
@@ -391,7 +395,9 @@ export { GraphqlSubscriptionModule } from './lib/graphql/subscriptions/graphql-s
 export { GraphqlPubSub } from './lib/graphql/subscriptions/graphql-pubsub.service';
 export {
 	NON_SUBSCRIBABLE_EVENT_NAMES,
-	SubscriptionCatalogue
+	SubscriptionCatalogue,
+	isEventNameShaped,
+	matchesEventSelection
 } from './lib/graphql/subscriptions/subscription-catalogue';
 export { GraphqlSubscriptionConsumer } from './lib/graphql/subscriptions/subscription-consumer';
 export { GraphqlSubscriptionBusBridge } from './lib/graphql/subscriptions/subscription-bus-bridge';

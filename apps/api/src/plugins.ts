@@ -35,6 +35,7 @@ import { IntegrationPlanePlugin } from '@gauzy/plugin-integration-plane';
 import { IntegrationEverAsyncPlugin } from '@gauzy/plugin-integration-ever-async';
 import { IntegrationEverWorksPlugin, isEverWorksEnabled } from '@gauzy/plugin-integration-ever-works';
 import { InboxEmailPlugin, InboxPlugin, isInboxEmailEnabled, isInboxEnabled } from '@gauzy/plugin-inbox';
+import { isRealtimeEnabled, RealtimePlugin } from '@gauzy/plugin-realtime';
 import { EmailProviderPostmarkPlugin, isPostmarkEnabled } from '@gauzy/plugin-email-provider-postmark';
 import { EmailProviderResendPlugin, isResendEnabled } from '@gauzy/plugin-email-provider-resend';
 import { EmailProviderMailgunPlugin, isMailgunEnabled } from '@gauzy/plugin-email-provider-mailgun';
@@ -118,6 +119,11 @@ export const plugins = [
 	// when off it is not loaded at all (no route, no table, no role grant). Any other value keeps it off and is
 	// logged once.
 	...(isInboxEnabled(process.env, (message) => console.warn(message)) ? [InboxPlugin] : []),
+
+	// Real-time channel (collaboration change hints on the event outbox, presence and typing signals, the
+	// `collaborationEvents` subscription). Off unless GAUZY_REALTIME_ENABLED=true; when off it is not loaded at
+	// all (no route, no GraphQL field, no outbox row, no role grant). Any other value keeps it off and is logged once.
+	...(isRealtimeEnabled(process.env, (message) => console.warn(message)) ? [RealtimePlugin] : []),
 
 	// Inbox email (mailboxes, the inbound pipeline, email provider accounts and the transport seam's provider
 	// transports; plan 04 §5). Only on top of the Inbox, and off unless GAUZY_INBOX_EMAIL_ENABLED=true as well; when

@@ -27,6 +27,7 @@ import { TenantAwareCrudService } from './../core/crud';
 import { IFindOneOptions } from '../core/crud/icrud.service';
 import { LegacyFindManyOptions, LegacyFindOneOptions, normalizeRelationsToPaths } from '../core/utils';
 import { RequestContext } from '../core/context';
+import { CommentEvent, CommentEventType, ICommentEventComment } from './events';
 import { CreateEntitySubscriptionEvent } from '../entity-subscription/events';
 import { EmployeeService } from '../employee/employee.service';
 import { MentionService } from '../mention/mention.service';
@@ -159,6 +160,9 @@ export class CommentService extends TenantAwareCrudService<Comment> {
 				})
 			);
 
+			// Tell the in-process listeners (the real-time channel) that the record's comments changed.
+			this.publishCommentEvent('created', comment);
+
 			// Return the newly created comment.
 			return comment;
 		} catch (error) {
@@ -243,6 +247,15 @@ export class CommentService extends TenantAwareCrudService<Comment> {
 					updatedComment.organizationId ?? comment.organizationId
 				);
 			}
+
+			this.publishCommentEvent('updated', {
+				...(updatedComment as Partial<ICommentEventComment>),
+				id,
+				entity: comment.entity,
+				entityId: comment.entityId,
+				tenantId: comment.tenantId,
+				organizationId: (updatedComment as Partial<ICommentEventComment>)?.organizationId ?? comment.organizationId
+			});
 
 			return updatedComment;
 		} catch (error) {
@@ -340,7 +353,10 @@ export class CommentService extends TenantAwareCrudService<Comment> {
 	public async softRemove(id: ID, options?: IFindOneOptions<Comment>, saveOptions?: SaveOptions): Promise<Comment> {
 		await this.assertMayManage(id, false);
 
-		return super.softRemove(id, options, saveOptions);
+		const removed = await super.softRemove(id, options, saveOptions);
+		// A withdrawn comment leaves the list the way a deleted one does.
+		this.publishCommentEvent('deleted', removed);
+		return removed;
 	}
 
 	/**
@@ -354,7 +370,10 @@ export class CommentService extends TenantAwareCrudService<Comment> {
 	public async softRecover(id: ID, options?: IFindOneOptions<Comment>, saveOptions?: SaveOptions): Promise<Comment> {
 		await this.assertMayManage(id, true);
 
-		return super.softRecover(id, options, saveOptions);
+		const recovered = await super.softRecover(id, options, saveOptions);
+		// A restored comment comes back the way an edited one changes.
+		this.publishCommentEvent('updated', recovered);
+		return recovered;
 	}
 
 	/**
@@ -373,7 +392,64 @@ export class CommentService extends TenantAwareCrudService<Comment> {
 			await this.assertMayManage(criteria, true);
 		}
 
-		return super.delete(criteria, options);
+		// Read before the row goes, so the in-process listeners learn which record lost a comment.
+		const deleting = typeof criteria === 'string' ? await this.commentForEvent(criteria) : null;
+		const result = await super.delete(criteria, options);
+		if (deleting) {
+			this.publishCommentEvent('deleted', deleting);
+		}
+
+		return result;
+	}
+
+	/**
+	 * Publishes a {@link CommentEvent} on the CQRS bus. Never fails the write: a listener that is absent or
+	 * throws costs an instant update, not the comment.
+	 */
+	private publishCommentEvent(type: CommentEventType, comment: Partial<ICommentEventComment> | null | undefined): void {
+		if (!comment?.id) {
+			return;
+		}
+		try {
+			this._eventBus.publish(
+				new CommentEvent(
+					type,
+					{
+						id: comment.id,
+						entity: comment.entity,
+						entityId: comment.entityId,
+						parentId: comment.parentId ?? null,
+						tenantId: comment.tenantId,
+						organizationId: comment.organizationId ?? null
+					},
+					RequestContext.currentUserId()
+				)
+			);
+		} catch (error) {
+			console.warn(`Comment ${type} event was not published for ${comment.id}: ${(error as Error)?.message}`);
+		}
+	}
+
+	/**
+	 * The members of a comment an event needs, or `null` when the row cannot be read (it is then deleted
+	 * silently, as before).
+	 */
+	private async commentForEvent(id: ID): Promise<ICommentEventComment | null> {
+		try {
+			const comment = await super.findOneByIdString(id);
+			return comment?.id
+				? {
+						id: comment.id as ID,
+						entity: comment.entity,
+						entityId: comment.entityId,
+						parentId: comment.parentId ?? null,
+						tenantId: comment.tenantId,
+						organizationId: comment.organizationId ?? null
+				  }
+				: null;
+		} catch {
+			return null;
+		}
 	}
 
 	/**

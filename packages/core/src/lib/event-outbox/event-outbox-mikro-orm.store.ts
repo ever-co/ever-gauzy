@@ -310,15 +310,28 @@ export class EventOutboxMikroOrmStore {
 	 * @param table The table.
 	 * @param where The criteria, by member name, in MikroORM's spelling.
 	 * @param orderBy The order, as MikroORM states one.
+	 * @param options A lower bound on `createdAt` (`since`, inclusive) and a row `limit`, applied in the query.
 	 * @returns The rows.
 	 */
-	async find<T>(table: OutboxTable, where: Row, orderBy: Array<Record<string, QueryOrder>>): Promise<T[]> {
-		const rows = (await this.manager(table)
+	async find<T>(
+		table: OutboxTable,
+		where: Row,
+		orderBy: Array<Record<string, QueryOrder>>,
+		options: { since?: Date; limit?: number } = {}
+	): Promise<T[]> {
+		const query = this.manager(table)
 			.createQueryBuilder(table, 'record')
 			.select('*')
-			.where({ ...where, deletedAt: null } as never)
-			.orderBy(orderBy as never)
-			.execute('all')) as Row[];
+			.where({
+				...where,
+				deletedAt: null,
+				...(options.since ? { createdAt: { $gte: options.since } } : {})
+			} as never)
+			.orderBy(orderBy as never);
+		if (options.limit) {
+			query.limit(options.limit);
+		}
+		const rows = (await query.execute('all')) as Row[];
 
 		return rows.map((row) => this.rowOf(table, row) as unknown as T);
 	}
