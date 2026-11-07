@@ -29,17 +29,36 @@ for (const name of names) {
 		['seq p50 ms', (r) => r?.sequential?.p50, 'lower'],
 		['seq p90 ms', (r) => r?.sequential?.p90, 'lower'],
 		[`c${base.concurrency} rps`, (r) => r?.concurrent?.rps, 'higher'],
-		[`c${base.concurrency} p99 ms`, (r) => r?.concurrent?.p99, 'lower'],
-		['SQL/req', (r) => r?.sqlPerRequest, 'lower'],
-		['Redis/req', (r) => r?.redisPerRequest, 'lower']
+		// A p99 over a few samples is a sample maximum: the sample count is part of the metric's name.
+		[
+			`c${base.concurrency} p99 ms (n=${runs.map((run) => pick(run, name)?.concurrent?.n ?? '–').join('/')})`,
+			(r) => r?.concurrent?.p99,
+			'lower'
+		],
+		['SQL ms/req', (r) => r?.sqlMsPerRequest, 'lower'],
+		// Statement counts: a ratio of counts, never of speed (the relation-per-query reads run MORE statements and
+		// less SQL time).
+		['SQL/req', (r) => r?.sqlPerRequest, 'count'],
+		['Redis/req', (r) => r?.redisPerRequest, 'count']
 	];
 	for (const [metric, get, better] of rows) {
 		const values = runs.map((run) => get(pick(run, name)));
 		if (values.every((v) => v === undefined || v === null)) continue;
 		const first = values[0];
 		const last = values[values.length - 1];
-		const factor = better === 'lower' ? first / last : last / first;
-		const label = better === 'lower' ? (factor >= 1 ? 'faster' : 'slower') : factor >= 1 ? 'more' : 'less';
+		const factor = better === 'higher' ? last / first : first / last;
+		const label =
+			better === 'lower'
+				? factor >= 1
+					? 'faster'
+					: 'slower'
+				: better === 'count'
+					? factor >= 1
+						? 'fewer statements'
+						: 'more statements'
+					: factor >= 1
+						? 'more'
+						: 'less';
 		const shown = factor >= 1 ? factor : 1 / factor;
 		const change = Number.isFinite(factor) && factor > 0 ? `${shown.toFixed(2)}× ${label}` : '';
 		console.log(`| ${name} | ${metric} | ${values.map((v) => (v ?? '–')).join(' | ')} | ${change} |`);
