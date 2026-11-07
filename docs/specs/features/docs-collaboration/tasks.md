@@ -22,9 +22,9 @@
 
 ## Phase 2 — Markdown (lane G5, PR 2)
 
-- [ ] **T11**. TipTap JSON ↔ Markdown for the stored subset (paragraphs, headings, lists, code, quotes, rules, links, marks) with a spec
-- [ ] **T12**. `GET /documents/:id/export/markdown` (one page) and `?subtree=true` (zip with relative links)
-- [ ] **T13**. `PUT /documents/:id/content/markdown` with `expectedRevision`: block diff, only the changed blocks replaced, HTML cache refreshed, mentions and links synced
+- [x] **T11**. TipTap JSON ↔ Markdown for the stored subset (paragraphs, headings, lists, code, quotes, rules, links, marks) with a spec
+- [x] **T12**. `GET /documents/:id/export/markdown` (one page) and `?subtree=true` (zip with relative links)
+- [x] **T13**. `PUT /documents/:id/content/markdown` with `expectedRevision`: block diff, only the changed blocks replaced, HTML cache refreshed, mentions and links synced
 - [ ] **T14**. MCP docs tools take the Markdown route (`mcp-collaboration-tools`)
 
 ## Phase 3 — Live sessions (lane G5, PR 3)
