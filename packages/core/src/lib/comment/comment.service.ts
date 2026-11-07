@@ -353,7 +353,10 @@ export class CommentService extends TenantAwareCrudService<Comment> {
 	public async softRemove(id: ID, options?: IFindOneOptions<Comment>, saveOptions?: SaveOptions): Promise<Comment> {
 		await this.assertMayManage(id, false);
 
-		return super.softRemove(id, options, saveOptions);
+		const removed = await super.softRemove(id, options, saveOptions);
+		// A withdrawn comment leaves the list the way a deleted one does.
+		this.publishCommentEvent('deleted', removed);
+		return removed;
 	}
 
 	/**
@@ -367,7 +370,10 @@ export class CommentService extends TenantAwareCrudService<Comment> {
 	public async softRecover(id: ID, options?: IFindOneOptions<Comment>, saveOptions?: SaveOptions): Promise<Comment> {
 		await this.assertMayManage(id, true);
 
-		return super.softRecover(id, options, saveOptions);
+		const recovered = await super.softRecover(id, options, saveOptions);
+		// A restored comment comes back the way an edited one changes.
+		this.publishCommentEvent('updated', recovered);
+		return recovered;
 	}
 
 	/**
