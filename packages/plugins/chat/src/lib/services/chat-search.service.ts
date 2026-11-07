@@ -8,7 +8,7 @@ import { ChatMessage } from '../entities/chat-message.entity';
 import { ChatAccessService, IChatCaller } from './chat-access.service';
 import { ChatMessageService } from './chat-message.service';
 
-/** How far a search may page (the index answers a count; a listing beyond this is what the messages route is for). */
+/** How far a search may page (the index answers a count; a listing beyond this is what the messages route is for): a `skip` past it is refused. */
 const CHAT_SEARCH_MAX_SKIP = 10_000;
 
 /**
@@ -32,7 +32,9 @@ export class ChatSearchService {
 		const q = String(query.q ?? '').trim();
 		if (!q) throw new BadRequestException('A search needs a query.');
 		const limit = Math.min(Math.max(Number(query.limit) || CHAT_PAGE_SIZE, 1), CHAT_MAX_PAGE_SIZE);
-		const skip = Math.min(Math.max(Number(query.skip) || 0, 0), CHAT_SEARCH_MAX_SKIP);
+		const skip = Math.max(Number(query.skip) || 0, 0);
+		// Refused, not clamped: a clamped skip would answer the same page again, and a client following `hasMore` would loop.
+		if (skip > CHAT_SEARCH_MAX_SKIP) throw new BadRequestException(`A search pages no further than ${CHAT_SEARCH_MAX_SKIP} hits.`);
 		const mine = await this.memberConversationIds(caller);
 		let scope = mine;
 		if (query.conversationId) {
@@ -58,7 +60,8 @@ export class ChatSearchService {
 		const ordered = ids.map((id) => byId.get(id)).filter((row): row is ChatMessage => !!row && !row.deletedAt);
 		const messages = await this.messages.withRelations(caller, ordered);
 		const total = Number(page.total ?? messages.length);
-		return { messages, total, hasMore: skip + ids.length < total };
+		// No next page past the cap either: the one that would start beyond it cannot be asked for.
+		return { messages, total, hasMore: skip + ids.length < total && skip + limit <= CHAT_SEARCH_MAX_SKIP };
 	}
 
 	/** The conversations the caller is a member of (by user: a membership is the person's, employee or not; one they left is not theirs to search). */

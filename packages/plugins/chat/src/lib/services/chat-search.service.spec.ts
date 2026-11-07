@@ -1,4 +1,4 @@
-import { NotFoundException } from '@nestjs/common';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 import { SearchFilterOperator } from '@gauzy/contracts';
 import { SearchService } from '@gauzy/plugin-search';
@@ -60,6 +60,13 @@ describe('ChatSearchService', () => {
 		expect(await service.search(caller, { q: 'x' })).toEqual({ messages: [], total: 0, hasMore: false });
 		expect(search).not.toHaveBeenCalled();
 		await expect(service.search(caller, { q: '  ' })).rejects.toThrow('A search needs a query.');
+	});
+
+	it('refuses a skip past the cap, and says no more hits once the next page would start past it', async () => {
+		const { service } = searchOver({ hits: [{ entityId: 'm1' }], total: 20_000, rows: [{ id: 'm1', conversationId: 'c1' }] });
+		await expect(service.search(caller, { q: 'hello', skip: 10_001 })).rejects.toBeInstanceOf(BadRequestException);
+		const last = await service.search(caller, { q: 'hello', skip: 9_990, limit: 20 });
+		expect(last.hasMore).toBe(false);
 	});
 
 	it('pages with skip and says whether more hits follow', async () => {
