@@ -352,11 +352,11 @@ describe('inbox', () => {
 
 		// A decision answers its choices and the answer given.
 		api.get.mockResolvedValueOnce({
-			items: [{ id: ITEM, kind: 'APPROVAL', source: 'GAUZY', title: 'Approve?', options: [{ id: 'yes', label: 'Approve', style: 'primary' }], requireReason: true, response: { optionId: 'yes', text: 'ok' } }],
+			items: [{ id: ITEM, kind: 'APPROVAL', source: 'GAUZY', title: 'Approve?', options: [{ id: 'yes', label: 'Approve', recommended: true }], requireReason: true, response: { optionId: 'yes', text: 'ok' } }],
 			nextCursor: null
 		});
 		const decisions = await call(inbox.get('list_inbox_items'), {});
-		expect(decisions.items[0].decision).toEqual({ options: [{ id: 'yes', label: 'Approve', style: 'primary' }], requireReason: true, response: { optionId: 'yes', text: 'ok' } });
+		expect(decisions.items[0].decision).toEqual({ options: [{ id: 'yes', label: 'Approve', description: null, recommended: true }], requireReason: true, response: { optionId: 'yes', text: 'ok' } });
 
 		api.get.mockResolvedValueOnce({ unread: 2, decisionsOpen: 1, emailUnread: 0, byMailbox: [] });
 		expect((await call(inbox.get('get_inbox_counts'))).counts).toEqual({ unread: 2, decisionsOpen: 1, emailUnread: 0, byMailbox: [] });
