@@ -73,18 +73,26 @@ export class BackfillProjectTaskKeys1791000004950 implements MigrationInterface 
 	 * Writes one project's key. A project created meanwhile (the API may be running) can hold that key first: the
 	 * organization's keys are read again and the next free one is written, a few times; the migration never stops
 	 * on a key. Answers whether a key was written.
+	 *
+	 * On Postgres inside the migration's transaction, a refused statement aborts the whole transaction (every later
+	 * statement fails with `25P02`), so each attempt runs under a savepoint and a refusal rolls back to it before the
+	 * keys are read again. MySQL (InnoDB) and SQLite undo only the refused statement and need none.
 	 */
 	private async writeKey(queryRunner: QueryRunner, dialect: Dialect, scope: ProjectRow, id: string, first: string, name: string | null): Promise<boolean> {
 		const q = (identifier: string) => quoted(dialect, identifier);
+		const savepoint = dialect === 'postgres' && queryRunner.isTransactionActive ? BACKFILL_SAVEPOINT : null;
 		let key: string | null = first;
 		for (let attempt = 1; key && attempt <= 5; attempt += 1) {
+			if (savepoint) await queryRunner.query(`SAVEPOINT ${savepoint}`);
 			try {
 				await queryRunner.query(
 					`UPDATE ${q('organization_project')} SET ${q('taskKey')} = ${param(dialect, 1)} WHERE ${q('id')} = ${param(dialect, 2)} AND ${q('taskKey')} IS NULL`,
 					[key, id]
 				);
+				if (savepoint) await queryRunner.query(`RELEASE SAVEPOINT ${savepoint}`);
 				return true;
 			} catch (error) {
+				if (savepoint) await queryRunner.query(`ROLLBACK TO SAVEPOINT ${savepoint}`);
 				if (!isUniqueViolation(error)) throw error;
 				const current = (await queryRunner.query(
 					`SELECT ${['name', 'taskKey', 'taskKeyHistory'].map(q).join(', ')} FROM ${q('organization_project')} WHERE ${q('tenantId')} ${scope.tenantId === null ? 'IS NULL' : `= ${param(dialect, 1)}`} AND ${q('organizationId')} ${scope.organizationId === null ? 'IS NULL' : `= ${param(dialect, scope.tenantId === null ? 1 : 2)}`}`,
@@ -116,6 +124,9 @@ function dialectOf(queryRunner: QueryRunner): Dialect {
 			throw new Error(`Unsupported database: ${queryRunner.connection.options.type}`);
 	}
 }
+
+/** The savepoint each Postgres key write runs under (see `writeKey`). */
+const BACKFILL_SAVEPOINT = 'backfill_project_task_key';
 
 /** A unique-index refusal on any of the three databases (another project took the key first). */
 function isUniqueViolation(error: unknown): boolean {
