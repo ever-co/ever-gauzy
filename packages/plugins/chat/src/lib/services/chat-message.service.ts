@@ -26,7 +26,7 @@ import {
 	BaseEntityEnum
 } from '@gauzy/contracts';
 import { Reaction } from '@gauzy/core';
-import { chatFileOf, IChatFileDocument, IChatFileLink } from '../chat-files';
+import { chatFileOf, chatSqlDialectOf, ChatSqlDialect, IChatFileDocument, IChatFileLink, jsonListHasColumn, linkMetadataOf } from '../chat-files';
 import { mentionedEmployees, parseMentions } from '../chat-mentions';
 import { CHAT_MAX_PAGE_SIZE, CHAT_PAGE_SIZE, CHAT_READ_RESTORE_TTL_MS } from '../chat.constants';
 import { ChatConversation } from '../entities/chat-conversation.entity';
@@ -271,10 +271,10 @@ export class ChatMessageService {
 		if (conversation.archivedAt) throw new BadRequestException('This conversation is archived.');
 		const body = this.validBody(input.body);
 		const attachmentIds = this.validAttachments(input.attachmentIds);
-		await this.requireOwnFiles(caller, attachmentIds);
 
 		// The same send twice (a retry, however late, the message since deleted or not) answers the same message, so
-		// the unique (author, nonce) key never refuses a retry.
+		// the unique (author, nonce) key never refuses a retry — before the files are checked: a file deleted since
+		// the first send is no reason to refuse the retry of a send that went through.
 		if (input.nonce) {
 			const existing = await this.sentWithNonce(caller, input.nonce);
 			if (existing) {
@@ -282,6 +282,7 @@ export class ChatMessageService {
 				return { message, events: [] };
 			}
 		}
+		await this.requireOwnFiles(caller, attachmentIds);
 
 		let root: ChatMessage | null = null;
 		if (input.threadRootId) {
@@ -440,8 +441,13 @@ export class ChatMessageService {
 			message.attachmentIds = attachments.length ? JSON.stringify(attachments) : null;
 		}
 		message.editedAt = new Date();
-		await this.dataSource.getRepository(ChatMessage).save(message);
-		if (attachments) await this.dataSource.transaction((manager) => this.linkAttachments(manager, caller, conversation, message.id as ID, attachments, true));
+		// The message and its links change together or not at all; the row's update lock holds a second edit of the
+		// same message until this one is committed, so two edits cannot leave the message with one set of attachments
+		// and the pane with another.
+		await this.dataSource.transaction(async (manager) => {
+			await manager.getRepository(ChatMessage).save(message);
+			if (attachments) await this.linkAttachments(manager, caller, conversation, message.id as ID, attachments, true);
+		});
 		// A mention the edit added or took away moves the badge of a member who has not read the message yet.
 		if (inTimeline(message) && (added.length || removed.length)) {
 			const position = await this.timelinePosition(caller.tenantId, message.conversationId, message, true);
@@ -698,7 +704,9 @@ export class ChatMessageService {
 	/**
 	 * The files of a conversation: every document a message of it carries, newest first, with the message and its
 	 * author — read from the document links the sends wrote, so the pane is the same list the Docs plugin shows on
-	 * the documents' side. A document that is gone, or a message deleted since, is not a file any more.
+	 * the documents' side. A link counts only when the message itself names the document (`attachmentIds`): a link
+	 * written any other way is not an attachment and cannot put a file under another member's name. A document that
+	 * is gone, or a message deleted since, is not a file any more, and takes no place on the page.
 	 */
 	async files(caller: IChatCaller, conversationId: ID, query: IChatFilesQuery = {}): Promise<IChatFilesResult> {
 		await this.access.requireMember(conversationId, caller);
@@ -707,7 +715,13 @@ export class ChatMessageService {
 		const rows = (await this.dataSource
 			.getRepository<ObjectLiteral>('DocumentLink')
 			.createQueryBuilder('link')
-			.innerJoin(ChatMessage, 'message', 'message.id = link.entityId AND message.conversationId = :conversationId AND message.deletedAt IS NULL', { conversationId })
+			.innerJoin(
+				ChatMessage,
+				'message',
+				`message.id = link.entityId AND message.conversationId = :conversationId AND message.deletedAt IS NULL AND ${jsonListHasColumn('message.attachmentIds', 'link.documentId', this.dialect())}`,
+				{ conversationId }
+			)
+			.innerJoin('Document', 'document', 'document.id = link.documentId AND document.tenantId = link.tenantId AND document.deletedAt IS NULL')
 			.where('link.entity = :entity', { entity: BaseEntityEnum.ChatMessage })
 			.andWhere('link.tenantId = :tenantId', { tenantId: caller.tenantId })
 			.select('link.documentId', 'documentId')
@@ -763,12 +777,17 @@ export class ChatMessageService {
 					documentId,
 					entity: BaseEntityEnum.ChatMessage,
 					entityId: messageId,
-					metadata: { conversationId: conversation.id },
+					metadata: linkMetadataOf(conversation.id as ID, this.dialect()),
 					tenantId: caller.tenantId,
 					organizationId: conversation.organizationId ?? caller.organizationId ?? undefined
 				} as never)
 			);
 		}
+	}
+
+	/** The connection's dialect, for what the query builder cannot write portably (see `chat-files.ts`). */
+	private dialect(): ChatSqlDialect {
+		return chatSqlDialectOf(String(this.dataSource.options?.type));
 	}
 
 	private async messageAndConversation(caller: IChatCaller, messageId: ID): Promise<{ message: ChatMessage; conversation: ChatConversation }> {

@@ -70,7 +70,7 @@ tenant switched off by hand stays off).
 | `POST /conversations/:id/read { messageId? }` | mark read up to a message (default: all) |
 | `GET /conversations/:id/messages?before=&after=&around=&limit=` | messages, newest by default |
 | `GET /conversations/:id/pins` | pinned messages |
-| `GET /conversations/:id/files?limit=&skip=` | the files the conversation's messages carry, newest first, with the message and its author |
+| `GET /conversations/:id/files?limit=&skip=` | the files the conversation's messages carry (a document the message itself names, still there), newest first, with the message and its author |
 | `POST /conversations/:id/messages` | send: `{ body, nonce?, replyToId?, threadRootId?, alsoInConversation?, attachmentIds?, mentionEmployeeIds?, taskId? }` |
 | `GET /messages/:id/thread` · `POST /:id/follow` · `/:id/unfollow` · `POST /:id/thread/read` | threads (read marks a followed thread's replies read) |
 | `PATCH /messages/:id` · `DELETE` · `POST /:id/pin` · `/:id/unpin` · `/:id/unread` | one message |

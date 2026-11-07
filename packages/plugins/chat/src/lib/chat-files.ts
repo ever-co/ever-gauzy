@@ -1,5 +1,30 @@
 import { ID, IChatFile } from '@gauzy/contracts';
 
+/** The dialects the files query tells apart (the one predicate the query builder cannot write portably). */
+export type ChatSqlDialect = 'mysql' | 'sqlite' | 'postgres';
+
+/** The dialect of a connection, from its driver type. */
+export function chatSqlDialectOf(type: string | undefined): ChatSqlDialect {
+	if (type === 'mysql' || type === 'mariadb') return 'mysql';
+	if (type === 'sqlite' || type === 'better-sqlite3') return 'sqlite';
+	return 'postgres';
+}
+
+/**
+ * A predicate: the JSON array of strings stored as text in `column` (`["id",…]`, as `JSON.stringify` writes it)
+ * names the value of `valueColumn`. For ids, which hold no quote, escape or wildcard.
+ */
+export function jsonListHasColumn(column: string, valueColumn: string, dialect: ChatSqlDialect): string {
+	if (dialect === 'mysql') return `${column} LIKE CONCAT('%"', ${valueColumn}, '"%')`;
+	return `${column} LIKE '%"' || CAST(${valueColumn} AS TEXT) || '"%'`;
+}
+
+/** The metadata of a message's document link: an object, or its JSON on SQLite, whose text column takes no object. */
+export function linkMetadataOf(conversationId: ID, dialect: ChatSqlDialect): Record<string, unknown> | string {
+	const metadata = { conversationId };
+	return dialect === 'sqlite' ? JSON.stringify(metadata) : metadata;
+}
+
 /** A document link of a message as the files query reads it (raw: the link's columns and the message's author). */
 export interface IChatFileLink {
 	documentId: ID;
