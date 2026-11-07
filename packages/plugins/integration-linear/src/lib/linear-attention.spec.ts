@@ -16,7 +16,10 @@ describe('attentionItemOf', () => {
 			externalSource: LINEAR_INBOX_SOURCE,
 			externalId: 'int-1:attention',
 			metadata: { integrationId: 'int-1', reason: 'token_refused' },
-			recipients: [{ userId: 'user-1' }, { userId: 'user-2' }]
+			recipients: [
+				{ userId: 'user-1', isRead: false, isArchived: false },
+				{ userId: 'user-2', isRead: false, isArchived: false }
+			]
 		});
 		expect(item.title).toContain('refused');
 		expect(item.body).toContain('Settings → Integrations → Linear');
@@ -24,6 +27,7 @@ describe('attentionItemOf', () => {
 
 	it('resolves the same item, at a normal priority, when the connection works again', () => {
 		const item = attentionItemOf(tenant, null, ['user-1']);
+		expect(item.recipients).toEqual([{ userId: 'user-1' }]);
 		expect(item).toMatchObject({ status: InboxItemStatusEnum.RESOLVED, priority: InboxItemPriorityEnum.NORMAL, externalId: 'int-1:attention', metadata: { integrationId: 'int-1', reason: null } });
 		expect(item.body).toContain('again');
 	});

@@ -102,15 +102,22 @@ describe('LinearIssueDetailsService', () => {
 		expect(comments.rows[0]).toMatchObject({ comment: '<p><strong>Grace Hopper</strong> (Linear)</p><p>Looks good</p>', actorType: ActorTypeEnum.System, employeeId: undefined, createdByUserId: 'user-owner' });
 	});
 
+	it('keeps an updated comment attributed as it was kept: a System comment keeps its author line even when the author is matched now', async () => {
+		const later = details({ maps: [{ entity: IntegrationEntity.COMMENT, sourceId: 'cm-1', gauzyId: 'comment-row-9' }] });
+		later.comments.rows.push({ id: 'comment-row-9', tenantId: 'tenant-1', comment: '<p><strong>Ada</strong> (Linear)</p><p>Looks good</p>', employeeId: undefined });
+		await later.service.apply(later.context, issue([comment({ body: 'Looks great' })]), 'task-1');
+		expect(later.comments.update).toHaveBeenCalledWith({ id: 'comment-row-9' }, expect.objectContaining({ comment: '<p><strong>Ada</strong> (Linear)</p><p>Looks great</p>' }));
+	});
+
 	it('follows an edit of a mapped comment and leaves the same words alone', async () => {
 		const edited = details({ maps: [{ entity: IntegrationEntity.COMMENT, sourceId: 'cm-1', gauzyId: 'comment-row-9' }] });
-		edited.comments.rows.push({ id: 'comment-row-9', tenantId: 'tenant-1', comment: '<p>Looks good</p>' });
+		edited.comments.rows.push({ id: 'comment-row-9', tenantId: 'tenant-1', comment: '<p>Looks good</p>', employeeId: 'emp-ada' });
 		await edited.service.apply(edited.context, issue([comment({ body: 'Looks great' })]), 'task-1');
 		expect(edited.comments.save).not.toHaveBeenCalled();
 		expect(edited.comments.update).toHaveBeenCalledWith({ id: 'comment-row-9' }, expect.objectContaining({ comment: '<p>Looks great</p>' }));
 
 		const same = details({ maps: [{ entity: IntegrationEntity.COMMENT, sourceId: 'cm-1', gauzyId: 'comment-row-9' }] });
-		same.comments.rows.push({ id: 'comment-row-9', tenantId: 'tenant-1', comment: '<p>Looks good</p>' });
+		same.comments.rows.push({ id: 'comment-row-9', tenantId: 'tenant-1', comment: '<p>Looks good</p>', employeeId: 'emp-ada' });
 		await same.service.apply(same.context, issue([comment()]), 'task-1');
 		expect(same.comments.update).not.toHaveBeenCalled();
 	});

@@ -1,4 +1,4 @@
-import { LINEAR_API_URL } from '../linear.constants';
+import { LINEAR_API_URL, LINEAR_ISSUES_PAGE_SIZE } from '../linear.constants';
 
 /** The kinds of workflow state Linear has; a mapping names a task status for each. */
 export type LinearStateType = 'triage' | 'backlog' | 'unstarted' | 'started' | 'completed' | 'canceled';
@@ -86,7 +86,7 @@ export interface LinearIssue {
 	parent: { id: string } | null;
 	team: { id: string; key: string } | null;
 	project: { id: string; name: string } | null;
-	/** The issue's latest hundred comments, oldest first, and its first fifty attachments: read with the issue. */
+	/** The issue's latest fifty comments, oldest first, and its first twenty-five attachments: read with the issue. */
 	comments?: { nodes: LinearComment[] } | null;
 	attachments?: { nodes: LinearAttachment[] } | null;
 }
@@ -145,8 +145,8 @@ const ISSUE_FIELDS = `
 	parent { id }
 	team { id key }
 	project { id name }
-	comments(first: 100, orderBy: createdAt) { nodes { id body createdAt updatedAt user { id name displayName email } parent { id } } }
-	attachments(first: 50) { nodes { id title url } }
+	comments(first: 50, orderBy: createdAt) { nodes { id body createdAt updatedAt user { id name displayName email } parent { id } } }
+	attachments(first: 25) { nodes { id title url } }
 `;
 
 type FetchLike = (
@@ -301,9 +301,15 @@ export class LinearApiClient {
 					pageInfo { hasNextPage endCursor }
 				}
 			}`,
-			{ filter, after: options.after ?? null, first: options.first ?? 50 }
+			{ filter, after: options.after ?? null, first: options.first ?? LINEAR_ISSUES_PAGE_SIZE }
 		);
 		return data.issues;
+	}
+
+	/** The team an issue belongs to: a light read for a delivery that names the issue alone. */
+	async issueTeamId(id: string): Promise<string | null> {
+		const data = await this.query<{ issue: { team: { id: string } | null } | null }>('query($id: String!) { issue(id: $id) { team { id } } }', { id });
+		return data.issue?.team?.id ?? null;
 	}
 
 	async issue(id: string): Promise<LinearIssue | null> {

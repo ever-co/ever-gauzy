@@ -188,13 +188,15 @@ export class LinearSyncService {
 	 * applied, or why not.
 	 */
 	async applyIssueFromWebhook(tenant: IIntegrationTenant, issueId: string, linearTeamId: string | null): Promise<{ applied: boolean; error: string | null }> {
-		// A comment's or attachment's delivery may not say the team: the issue is read first to learn it.
+		// A comment's or attachment's delivery may not say the team: the issue's team is read first (a light read, through
+		// the same waits and renewal as every other, a refused token recorded as everywhere else).
 		let teamId = linearTeamId;
 		if (!teamId) {
 			try {
-				const client = await this.tenants.clientReady(tenant);
-				teamId = (await client.issue(issueId))?.team?.id ?? null;
+				const holder: ClientHolder = { tenant, client: await this.tenants.clientReady(tenant), renewed: false };
+				teamId = await this.call(holder, (client) => client.issueTeamId(issueId));
 			} catch (caught) {
+				if (caught instanceof LinearApiError && caught.isUnauthorized) await this.tenants.setAttention(tenant, 'token_refused');
 				return { applied: false, error: this.describe(caught) };
 			}
 			if (!teamId) return { applied: false, error: null };
@@ -217,6 +219,8 @@ export class LinearSyncService {
 				await this.linkParents(context);
 				this.reportDetails(context);
 			});
+			// A task or a detail that could not be written is the run's failure: the delivery is not remembered as applied.
+			if (counts.failed > 0) error = `${counts.failed} issue(s) or detail(s) could not be applied.`;
 		} catch (caught) {
 			error = this.describe(caught);
 			if (caught instanceof LinearApiError && caught.isUnauthorized) {

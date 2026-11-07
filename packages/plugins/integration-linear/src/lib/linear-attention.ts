@@ -32,6 +32,7 @@ export function attentionItemOf(tenant: LinearAttentionTenant, reason: string | 
 		metadata: { integrationId: tenant.id, reason },
 		externalSource: LINEAR_INBOX_SOURCE,
 		externalId: `${tenant.id}:attention`,
-		recipients: recipientUserIds.map((userId) => ({ userId }))
+		// A new refusal re-surfaces the notice: the recipient reads it again, from the inbox it may have archived it from.
+		recipients: recipientUserIds.map((userId) => (open ? { userId, isRead: false, isArchived: false } : { userId }))
 	};
 }

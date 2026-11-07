@@ -130,17 +130,24 @@ export const plugins = resolvePluginLoadOrder([
 	 * 🛑 Off unless `ASANA_ENABLED` is exactly `true` — the same switch as the API's list.
 	 */
 	...(isAsanaEnabled(process.env, (message) => console.warn(message)) ? [IntegrationAsanaPlugin] : []),
+	/**
 	 * The Linear integration — hosted here, behind its switch, for the scheduled import it owns: a `@ScheduledJob`
+	 * fires only in this process, so a plugin that is not hosted here never imports on its own (its webhooks and
+	 * "import now" are the API's). The sweep is registered by the plugin only where a queue root exists and
 	 * `LINEAR_IMPORT_INTERVAL_MINUTES` is not `0`, so a worker without Redis is unchanged.
+	 *
 	 * 🛑 Off unless `LINEAR_ENABLED` is exactly `true` — the same switch as the API's list.
+	 */
 	...(isLinearEnabled(process.env, (message) => console.warn(message)) ? [IntegrationLinearPlugin] : []),
 	/**
-	 * The Inbox — hosted only with the Ever Works integration, and only when both are switched on. This
-	 * process runs the integration's sync as often as the API does (whoever holds the connection's lease),
-	 * and the sync writes Ever Works inbox items into the Inbox through its writer; without the Inbox here
-	 * those items would wait for the API. It owns no queue or schedule of its own.
+	 * The Inbox — hosted with an integration that writes into it, and only when both are switched on: the Ever
+	 * Works sync (this process runs it as often as the API does, whoever holds the connection's lease, and it
+	 * writes Ever Works inbox items through the Inbox's writer), and a task integration whose scheduled import
+	 * met a refused token (the notice to the person who connected is filed through the same writer; without the
+	 * Inbox here that notice would never be filed, since the reason is already recorded when the API looks). It
+	 * owns no queue or schedule of its own.
 	 *
 	 * 🛑 Off unless `GAUZY_INBOX_ENABLED` is exactly `true` as well, so a worker is unchanged by default.
 	 */
-	...(everWorksEnabled && isInboxEnabled(process.env, (message) => console.warn(message)) ? [InboxPlugin] : [])
+	...((everWorksEnabled || isAsanaEnabled(process.env) || isLinearEnabled(process.env)) && isInboxEnabled(process.env, (message) => console.warn(message)) ? [InboxPlugin] : [])
 ]);

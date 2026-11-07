@@ -53,7 +53,7 @@ for the `Issues` resource.
   workspace whose mapping of the team syncs inbound. A delivery (`Linear-Delivery`) is remembered once every
   connection applied it, so a retry does nothing; one that failed is not, and the next import reads the issue
   again (a webhook never moves the import position).
-- **Comments and attachments.** They come with every issue read (the latest hundred comments, the first fifty
+- **Comments and attachments.** They come with every issue read (the latest fifty comments, the first twenty-five
   attachments): each comment becomes a comment of the task — attributed to the employee whose user has the
   author's e-mail, else kept as the connecting user's, marked system and named after their author; a reply goes
   under the comment it answers — and follows an edit in Linear; each attachment becomes a resource link of the task

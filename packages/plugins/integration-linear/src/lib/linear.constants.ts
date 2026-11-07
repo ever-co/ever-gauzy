@@ -36,7 +36,9 @@ export enum LinearSettingName {
 	/** The Gauzy user who connected: the sync's writes are attributed to them. */
 	CONNECTED_BY_USER_ID = 'connected_by_user_id',
 	/** Why the connection needs attention (a refused token), or empty. */
-	ATTENTION_REASON = 'attention_reason'
+	ATTENTION_REASON = 'attention_reason',
+	/** When the Inbox notice of the attention was filed (empty: none filed, or resolved). */
+	ATTENTION_NOTICE_AT = 'attention_notice_at'
 }
 
 /** The largest webhook body accepted. */
@@ -46,8 +48,12 @@ export const LINEAR_WEBHOOK_TOLERANCE_MS = 60_000;
 /** How long a delivery id is remembered, so a retried delivery is applied once. */
 export const LINEAR_WEBHOOK_DEDUPE_MS = 10 * 60 * 1000;
 
-/** How many issues one page of an import asks for, and the safety cap of one run (it then keeps its position and says so). */
-export const LINEAR_ISSUES_PAGE_SIZE = 50;
+/**
+ * How many issues one page of an import asks for (each comes with its latest comments and attachments, and Linear
+ * budgets a query's complexity: ten issues with fifty comments each stay within it), and the safety cap of one run
+ * (it then keeps its position and says so).
+ */
+export const LINEAR_ISSUES_PAGE_SIZE = 10;
 export const LINEAR_IMPORT_MAX_ISSUES = 50_000;
 /** The import position is the run's start minus this margin: a change made while the pages were read is not skipped next time. */
 export const LINEAR_IMPORT_CLOCK_SKEW_MS = 60_000;
