@@ -5,15 +5,13 @@ import * as path from 'path';
 /**
  * `OrganizationTeam.tasks` under `relationLoadStrategy: 'query'`, on Gauzy's real entities and a real SQLite database.
  *
- * `Task.teams` owns the relation (`@JoinTable({ name: 'task_team' })`) and `OrganizationTeam.tasks` ALSO carries a
- * bare `@JoinTable()`, so TypeORM treats both sides as owners (a second, empty junction table
- * `organization_team_tasks_task` exists in every database). The join strategy still answers the tasks through
- * `task_team`; the query strategy reads `task_team` with the id lists swapped (`"taskId" IN (<team ids>)`) and answers
- * every team an empty list. The public team link therefore loads the tasks from the task's side
- * (ever-co/ever-gauzy#11676). A two-entity schema with the JoinTable on one side loads the inverse side correctly.
- *
- * This spec states today's answer. Once the inverse-side `@JoinTable()` is removed (an owner decision: the stray
- * tables and their migration), the query strategy answers the same as the join strategy, and this expectation flips.
+ * `Task.teams` owns the relation (`@JoinTable({ name: 'task_team' })`); `OrganizationTeam.tasks` is its inverse side.
+ * Until 2026-11-07 the inverse side carried a bare `@JoinTable()` too, so TypeORM treated both sides as owners (a
+ * second, always empty junction table `organization_team_tasks_task` existed in every database) and the query
+ * strategy read `task_team` with the id lists swapped, answering every team an empty list (ever-co/ever-gauzy#11676
+ * loaded the public team's tasks from the task's side because of it). With the decorator gone
+ * (`DropInverseSideTaskJoinTables1791000004900` retires the stray table), the query strategy answers the same as the
+ * join strategy and reads `task_team` by the team ids.
  */
 const TIMEOUT = 10 * 60 * 1000;
 
@@ -28,6 +26,7 @@ type Measured = {
 	taskSide: Record<string, string[]>;
 	statements: string[];
 	junctionColumns: string[];
+	tables: string[];
 };
 
 async function measure(): Promise<Measured> {
@@ -84,6 +83,7 @@ async function measure(): Promise<Measured> {
 			for (const [index, id] of TEAMS.entries()) await insert('organization_team', { ...scope, id, name: `Team ${index + 1}` });
 			for (const [index, id] of TASKS.entries()) await insert('task', { ...scope, id, title: `Task ${index + 1}` });
 			measured.junctionColumns = ((await dataSource.query(`PRAGMA table_info("task_team")`)) as any[]).map((c) => c.name);
+			measured.tables = ((await dataSource.query(`SELECT name FROM sqlite_master WHERE type = 'table'`)) as any[]).map((t) => t.name);
 			for (const [taskId, organizationTeamId] of [
 				[TASKS[0], TEAMS[0]],
 				[TASKS[1], TEAMS[0]],
@@ -119,19 +119,20 @@ describe('OrganizationTeam.tasks under relationLoadStrategy query (real entities
 		measured = await measure();
 	}, TIMEOUT);
 
-	it('join strategy and the owning side answer the tasks; the query strategy on the inverse side answers none, reading task_team with the id lists swapped', () => {
+	it('the query strategy on the inverse side answers the same tasks as the join strategy, reading task_team by the team ids', () => {
 		const expected = { [TEAMS[0]]: [TASKS[0], TASKS[1]].sort(), [TEAMS[1]]: [TASKS[2]] };
 		expect(measured.junctionColumns).toEqual(expect.arrayContaining(['taskId', 'organizationTeamId']));
 		expect(measured.joinStrategy).toEqual(expected);
 		expect(measured.taskSide).toEqual({ [TASKS[0]]: [TEAMS[0]], [TASKS[1]]: [TEAMS[0]], [TASKS[2]]: [TEAMS[1]] });
-
 		const junctionRead = measured.statements.find((statement) => /FROM "task_team"/.test(statement));
-		expect(junctionRead).toMatch(/"task_team"\."taskId" IN \(\?, \?\) AND "task_team"\."organizationTeamId" IN \(\?, \?, \?\)/);
-		// The team ids fill the task-id list and the task ids the team-id list (each list compared as a set)
+		expect(junctionRead).toBeDefined();
+		// The junction is read by the team ids (the inverse side's own column), not with the lists swapped
+		expect(junctionRead).toMatch(/"task_team"\."organizationTeamId" IN \(\?, \?\)/);
 		const parameters: string[] = JSON.parse(String(junctionRead).slice(String(junctionRead).lastIndexOf(' -- ') + 4));
-		expect(new Set(parameters.slice(0, 2))).toEqual(new Set(TEAMS));
-		expect(new Set(parameters.slice(2))).toEqual(new Set(TASKS));
-		// Today's answer (see the header); flips to `expected` once the inverse side no longer declares a JoinTable
-		expect(measured.queryStrategy).toEqual({ [TEAMS[0]]: [], [TEAMS[1]]: [] });
+		// The team ids fill the team-id list (TypeORM also narrows by the task ids it found, which is fine)
+		expect(TEAMS.every((id) => parameters.includes(id))).toBe(true);
+		// No stray junction table is created for the inverse side any more
+		expect(measured.tables).not.toEqual(expect.arrayContaining(['organization_team_tasks_task', 'employee_tasks_task']));
+		expect(measured.queryStrategy).toEqual(expected);
 	});
 });
