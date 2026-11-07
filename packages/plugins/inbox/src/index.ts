@@ -13,3 +13,5 @@ export * from './lib/entities/inbox-item-recipient.entity';
 export * from './lib/notifications';
 // The Inbox email features (plan 04 §5, Phase 4): off unless GAUZY_INBOX_EMAIL_ENABLED=true as well.
 export * from './lib/email';
+// Email delivery of notifications (immediate / digest, the Inbox spec FR-10–FR-12): off unless GAUZY_INBOX_NOTIFICATION_EMAIL_ENABLED=true as well.
+export * from './lib/delivery';

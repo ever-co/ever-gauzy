@@ -1,4 +1,4 @@
-import { BadRequestException, ForbiddenException, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
 import { Brackets, DataSource, EntityManager, In, IsNull, MoreThan, MoreThanOrEqual, Not, ObjectLiteral, SelectQueryBuilder } from 'typeorm';
 import {
 	ActorTypeEnum,
@@ -8,6 +8,8 @@ import {
 	ChatMessageKindEnum,
 	ChatTaskReferenceKindEnum,
 	DocumentKindEnum,
+	IChatCreateTaskInput,
+	IChatCreateTaskResult,
 	IChatEvent,
 	IChatFilesQuery,
 	IChatFilesResult,
@@ -21,13 +23,19 @@ import {
 	IChatSendResult,
 	IChatTaskReference,
 	ID,
+	ITask,
+	ITaskCreateInput,
+	PermissionsEnum,
 	ReactionEntityEnum,
 	IChatThreadReadResult,
-	BaseEntityEnum
+	BaseEntityEnum,
+	TaskStatusEnum
 } from '@gauzy/contracts';
-import { Reaction } from '@gauzy/core';
+import { CommandBus } from '@nestjs/cqrs';
+import { Reaction, RequestContext, TaskCreateCommand, TaskService } from '@gauzy/core';
 import { chatFileOf, chatSqlDialectOf, ChatSqlDialect, IChatFileDocument, IChatFileLink, jsonListHasColumn, linkMetadataOf } from '../chat-files';
 import { mentionedEmployees, parseMentions } from '../chat-mentions';
+import { taskDescriptionOf, taskMentionsIn, taskTitleOf } from '../chat-task-references';
 import { CHAT_MAX_PAGE_SIZE, CHAT_PAGE_SIZE, CHAT_READ_RESTORE_TTL_MS } from '../chat.constants';
 import { ChatConversation } from '../entities/chat-conversation.entity';
 import { ChatMember } from '../entities/chat-member.entity';
@@ -99,7 +107,9 @@ export class ChatMessageService {
 		private readonly dataSource: DataSource,
 		private readonly access: ChatAccessService,
 		private readonly realtime: ChatRealtime,
-		private readonly notifier: ChatNotifierService
+		private readonly notifier: ChatNotifierService,
+		private readonly tasks: TaskService,
+		private readonly commandBus: CommandBus
 	) {}
 
 	// ---------------------------------------------------------------- reads
@@ -307,6 +317,8 @@ export class ChatMessageService {
 			} as never);
 			if (!task) throw new NotFoundException('The task was not found');
 		}
+		// The tasks the body refers to (typed `KEY-number`, linked by id), resolved now and recorded with the message.
+		const mentionedTasks = await this.mentionedTaskIds(caller, conversation, body, input.taskId ? [input.taskId] : []);
 
 		const members = await this.access.members(caller.tenantId, conversationId);
 		const mentioned = mentionedEmployees(body, input.mentionEmployeeIds, members.map((m) => m.employeeId), caller.employeeId);
@@ -377,6 +389,17 @@ export class ChatMessageService {
 						})
 					);
 				}
+				for (const taskId of mentionedTasks) {
+					await manager.getRepository(ChatTaskReference).save(
+						manager.getRepository(ChatTaskReference).create({
+							messageId: created.id as ID,
+							taskId,
+							kind: ChatTaskReferenceKindEnum.MENTION,
+							tenantId: caller.tenantId,
+							organizationId: conversation.organizationId ?? caller.organizationId ?? undefined
+						})
+					);
+				}
 				await this.linkAttachments(manager, caller, conversation, created.id as ID, attachmentIds, false);
 				return { created, count };
 			});
@@ -441,12 +464,14 @@ export class ChatMessageService {
 			message.attachmentIds = attachments.length ? JSON.stringify(attachments) : null;
 		}
 		message.editedAt = new Date();
-		// The message and its links change together or not at all; the row's update lock holds a second edit of the
-		// same message until this one is committed, so two edits cannot leave the message with one set of attachments
-		// and the pane with another.
+		// The body, its attachments and its task references change together: the references are resolved first, then
+		// written with the body and the attachment links in one transaction, whose row lock makes a second edit wait — a
+		// message never shows one edit's text with another's attachments or task cards, and an edit is never half done.
+		const taskMentions = await this.mentionedTaskIds(caller, conversation, body, await this.keptTaskReferences(caller, message));
 		await this.dataSource.transaction(async (manager) => {
 			await manager.getRepository(ChatMessage).save(message);
 			if (attachments) await this.linkAttachments(manager, caller, conversation, message.id as ID, attachments, true);
+			await this.writeTaskMentions(manager, caller, conversation, message, taskMentions);
 		});
 		// A mention the edit added or took away moves the badge of a member who has not read the message yet.
 		if (inTimeline(message) && (added.length || removed.length)) {
@@ -781,6 +806,123 @@ export class ChatMessageService {
 					tenantId: caller.tenantId,
 					organizationId: conversation.organizationId ?? caller.organizationId ?? undefined
 				} as never)
+			);
+		}
+	}
+
+	// ---------------------------------------------------------------- tasks
+
+	/**
+	 * Creates a task from a message — its title the message's first line unless one is given, its description the
+	 * body, the assignees given (the caller is added by the platform) — and records the message's reference to it
+	 * (kind `created`). The caller must be able to add tasks (`ORG_TASK_ADD`) and a member of the conversation; the
+	 * project, when named, must be the organization's.
+	 */
+	async createTask(caller: IChatCaller, messageId: ID, input: IChatCreateTaskInput): Promise<IChatCreateTaskResult> {
+		if (!RequestContext.hasPermission(PermissionsEnum.ORG_TASK_ADD)) throw new ForbiddenException('Creating a task needs the ORG_TASK_ADD permission.');
+		const { message, conversation } = await this.messageForWrite(caller, messageId);
+		if (message.deletedAt) throw new BadRequestException('A deleted message cannot become a task.');
+		const organizationId = (conversation.organizationId ?? caller.organizationId) as ID | null;
+		if (!organizationId) throw new BadRequestException('A task needs an organization.');
+		if (input.projectId) {
+			const project = await this.dataSource
+				.getRepository<ObjectLiteral>('OrganizationProject')
+				.findOne({ select: { id: true }, where: { id: input.projectId, tenantId: caller.tenantId, organizationId } } as never);
+			if (!project) throw new NotFoundException('The project was not found');
+		}
+		const title = (input.title ?? '').trim() || taskTitleOf(message.body);
+		if (!title) throw new BadRequestException('The message has no text to title the task with.');
+		const members = await this.assignees(caller.tenantId, organizationId, input.assigneeEmployeeIds ?? []);
+		const task: ITask = await this.commandBus.execute(
+			new TaskCreateCommand({
+				tenantId: caller.tenantId,
+				organizationId,
+				projectId: input.projectId ?? null,
+				title,
+				description: taskDescriptionOf(message.body),
+				status: TaskStatusEnum.OPEN,
+				members
+			} as unknown as ITaskCreateInput)
+		);
+		const repository = this.dataSource.getRepository(ChatTaskReference);
+		let saved: ChatTaskReference;
+		try {
+			saved = await repository.save(
+				repository.create({ messageId: message.id as ID, taskId: task.id as ID, kind: ChatTaskReferenceKindEnum.CREATED, tenantId: caller.tenantId, organizationId })
+			);
+		} catch (error) {
+			// The task exists (its own transaction committed) but the message does not point to it: said with the task's
+			// id, so the person links it by hand rather than creating it again.
+			this.logger.error(`Task ${task.id} was created from message ${message.id}, but the reference could not be saved: ${error instanceof Error ? error.message : String(error)}`);
+			throw new InternalServerErrorException({ message: `The task was created (${task.id}) but the message could not be linked to it; link it by hand rather than creating it again`, taskId: task.id });
+		}
+		const members2 = await this.access.members(caller.tenantId, message.conversationId);
+		const events = [await this.realtime.publish(this.realtime.messageFact(CHAT_EVENT_NAMES.MESSAGE_UPDATED, message, members2.map((m) => m.userId)))];
+		return { task, reference: { messageId: saved.messageId, taskId: saved.taskId, kind: saved.kind }, events };
+	}
+
+	/** The assignees named, each an employee of the organization (an unknown one is refused, not dropped). */
+	private async assignees(tenantId: ID, organizationId: ID, employeeIds: readonly ID[]): Promise<Array<{ id: ID }>> {
+		const ids = [...new Set(employeeIds.map(String))];
+		if (!ids.length) return [];
+		const rows = await this.dataSource
+			.getRepository<ObjectLiteral>('Employee')
+			.find({ select: { id: true }, where: { id: In(ids), tenantId, organizationId } } as never);
+		if (rows.length !== ids.length) throw new NotFoundException('An assignee is not an employee of the organization');
+		return ids.map((id) => ({ id: id as ID }));
+	}
+
+	/**
+	 * The tasks a body refers to, resolved: a typed `KEY-number` through the platform's reference resolver (the
+	 * project's key, its former keys, the key derived from its name; an ambiguous one is left out), a linked id when
+	 * the task is the tenant's (and the conversation's organization's, when it has one). Those in `except` (a card
+	 * sent with the message) are not repeated. Never throws: a resolver that failed leaves the typed ones out.
+	 */
+	private async mentionedTaskIds(caller: IChatCaller, conversation: ChatConversation, body: string, except: readonly ID[]): Promise<ID[]> {
+		const mentions = taskMentionsIn(body);
+		const ids = new Set<string>();
+		if (mentions.typed.length) {
+			const organizationId = conversation.organizationId ?? caller.organizationId ?? undefined;
+			const resolutions = await this.tasks
+				.resolveReferences({ tenantId: caller.tenantId, organizationId, references: mentions.typed } as never)
+				.catch((error: unknown) => {
+					this.logger.warn(`The task references of a message could not be resolved: ${error instanceof Error ? error.message : String(error)}`);
+					return [];
+				});
+			for (const resolution of resolutions) if (resolution.resolved && resolution.taskId) ids.add(String(resolution.taskId));
+		}
+		if (mentions.linked.length) {
+			const rows = await this.dataSource.getRepository<ObjectLiteral>('Task').find({
+				select: { id: true },
+				where: { id: In(mentions.linked), tenantId: caller.tenantId, ...(conversation.organizationId ? { organizationId: conversation.organizationId } : {}) }
+			} as never);
+			for (const row of rows) ids.add(String(row['id']));
+		}
+		for (const id of except) ids.delete(String(id));
+		return [...ids] as ID[];
+	}
+
+	/** The tasks a message refers to other than by its text (a card sent with it, a task created from it): an edit keeps them. */
+	private async keptTaskReferences(caller: IChatCaller, message: ChatMessage): Promise<ID[]> {
+		const kept = await this.dataSource
+			.getRepository(ChatTaskReference)
+			.find({ where: { messageId: message.id as ID, tenantId: caller.tenantId, kind: Not(ChatTaskReferenceKindEnum.MENTION) } });
+		return kept.map((reference) => reference.taskId);
+	}
+
+	/** After an edit, in its transaction: the message's `mention` references follow its new body. */
+	private async writeTaskMentions(manager: EntityManager, caller: IChatCaller, conversation: ChatConversation, message: ChatMessage, wanted: readonly ID[]): Promise<void> {
+		const repository = manager.getRepository(ChatTaskReference);
+		await repository.delete({ messageId: message.id as ID, tenantId: caller.tenantId, kind: ChatTaskReferenceKindEnum.MENTION });
+		for (const taskId of wanted) {
+			await repository.save(
+				repository.create({
+					messageId: message.id as ID,
+					taskId,
+					kind: ChatTaskReferenceKindEnum.MENTION,
+					tenantId: caller.tenantId,
+					organizationId: conversation.organizationId ?? caller.organizationId ?? undefined
+				})
 			);
 		}
 	}

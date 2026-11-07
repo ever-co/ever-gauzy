@@ -12,8 +12,8 @@ import {
 	IsUUID,
 	Max,
 	MaxLength,
+	MinLength,
 	Min,
-	MinLength
 } from 'class-validator';
 import {
 	CHAT_GROUP_MAX_MEMBERS,
@@ -26,6 +26,7 @@ import {
 	IChatConversationUpdateInput,
 	IChatCreateTaskInput,
 	IChatFilesQuery,
+	IChatSearchQuery,
 	IChatDirectInput,
 	IChatMemberStateInput,
 	IChatMembersInput,
@@ -239,6 +240,34 @@ export class ChatMessageUpdateDTO implements IChatMessageUpdateInput {
 }
 
 export class ChatFilesQueryDTO implements IChatFilesQuery {
+	@ApiPropertyOptional({ type: () => Number, minimum: 1, maximum: CHAT_MAX_PAGE_SIZE })
+	@IsOptional()
+	@Type(() => Number)
+	@IsInt()
+	@Min(1)
+	@Max(CHAT_MAX_PAGE_SIZE)
+	limit?: number;
+
+	@ApiPropertyOptional({ type: () => Number, minimum: 0 })
+	@IsOptional()
+	@Type(() => Number)
+	@IsInt()
+	@Min(0)
+	skip?: number;
+}
+
+export class ChatSearchQueryDTO implements IChatSearchQuery {
+	@ApiProperty({ type: () => String, description: 'The free-text query.' })
+	@IsString()
+	@MinLength(1)
+	@MaxLength(200)
+	q!: string;
+
+	@ApiPropertyOptional({ type: () => String, description: 'One of my conversations to search in.' })
+	@IsOptional()
+	@IsUUID()
+	conversationId?: ID;
+
 	@ApiPropertyOptional({ type: () => Number, minimum: 1, maximum: CHAT_MAX_PAGE_SIZE })
 	@IsOptional()
 	@Type(() => Number)

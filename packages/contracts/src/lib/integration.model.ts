@@ -152,6 +152,7 @@ export enum IntegrationEnum {
 	PLANE = 'Plane',
 	LINEAR = 'Linear',
 	ASANA = 'Asana',
+	TRELLO = 'Trello',
 	EVER_ASYNC = 'Ever_Async',
 	EVER_CONNECT = 'Ever_Connect',
 	/** Ever Works: two-way sync of tasks, teams, goals, missions, ideas, docs, agents and inbox. */

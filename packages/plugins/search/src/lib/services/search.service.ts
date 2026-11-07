@@ -66,7 +66,8 @@ export class SearchService {
 	 * @returns One status per entity.
 	 */
 	async indexStatus(entities?: string[]): Promise<ISearchIndexStatus[]> {
-		const scope = entities?.length ? entities.filter((entity) => this.permittedEntities({ entities: [entity] }).length > 0) : this.permittedEntities();
+		// Counts, not rows: a private declaration's freshness is reported like any other's.
+		const scope = entities?.length ? entities.filter((entity) => this.permittedEntities({ entities: [entity] }, true).length > 0) : this.permittedEntities(undefined, true);
 
 		// Nothing the caller may view is nothing to report: `status` reads an empty list as "every registered entity".
 		if (scope.length === 0) {
@@ -84,7 +85,29 @@ export class SearchService {
 	 * @throws BadRequestException when the request carries neither text nor a filter.
 	 */
 	async search(request: ISearchRequestInput): Promise<ISearchPage> {
-		const entities = this.permittedEntities(request);
+		return await this.rankedPage(request, false);
+	}
+
+	/**
+	 * A page that reaches the private declarations too (`privateScope`): for an entity's own route, which narrows
+	 * the request to the caller's own scope before it asks (the chat's search carries the caller's conversations as
+	 * a filter). Never a generic surface's answer — those are `search`, `suggest` and `facets` — and never without
+	 * a filter, since a search within a scope is that scope.
+	 *
+	 * @param request The request, with the scope as a filter.
+	 * @returns The page.
+	 * @throws BadRequestException when the request carries no filter.
+	 */
+	async searchWithin(request: ISearchRequestInput): Promise<ISearchPage> {
+		if (!request?.filters?.length) {
+			throw new BadRequestException('SEARCH_QUERY_INVALID: a search within a scope carries that scope as a filter.');
+		}
+
+		return await this.rankedPage(request, true);
+	}
+
+	private async rankedPage(request: ISearchRequestInput, includePrivate: boolean): Promise<ISearchPage> {
+		const entities = this.permittedEntities(request, includePrivate);
 		const take = this.pageSize(request?.take);
 		const skip = this.offset(request?.skip);
 		const organizationId = this.scopedOrganizationId(request);
@@ -174,12 +197,14 @@ export class SearchService {
 	 *
 	 * An entity is in scope when a declaration exists for it, the declaration is active, the
 	 * installation actually has the entity's table, and the caller holds the grant the declaration
-	 * names. A request that names entities narrows this set and can never widen it.
+	 * names. A request that names entities narrows this set and can never widen it. A private declaration
+	 * (`privateScope`) is out unless the caller says it carries the scope (`searchWithin`).
 	 *
 	 * @param request The request.
+	 * @param includePrivate Whether the private declarations count.
 	 * @returns The entity keys.
 	 */
-	permittedEntities(request?: ISearchRequestInput): string[] {
+	permittedEntities(request?: ISearchRequestInput, includePrivate = false): string[] {
 		const requested = (request?.entities ?? []).map((entity) => String(entity)).filter(Boolean);
 		const wanted = requested.length > 0 ? new Set(requested) : null;
 
@@ -187,6 +212,7 @@ export class SearchService {
 			.getAll()
 			.filter((definition) => (wanted ? wanted.has(definition.entity) : true))
 			.filter((definition) => definition.isActive !== false)
+			.filter((definition) => includePrivate || !definition.privateScope)
 			.filter((definition) => Boolean(this.indexer.entityKeyOf(definition.entity)))
 			.filter((definition) => this.mayRead(definition))
 			.map((definition) => definition.entity);

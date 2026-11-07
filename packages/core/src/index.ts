@@ -195,6 +195,7 @@ export {
 	pickAgentProfileInput
 } from './lib/employee-agent-profile';
 export { AutomationTaskSyncCommand, TaskCreateCommand, TaskModule, TaskService, TaskUpdateCommand } from './lib/tasks';
+export { normalizeTaskKey, parseTaskReference, parseTaskReferences, TASK_REFERENCES_MAX } from './lib/tasks/task-reference';
 
 export { IntegrationModule, IntegrationService } from './lib/integration';
 export {

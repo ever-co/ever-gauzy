@@ -382,6 +382,12 @@ export interface ISearchIndexRegistration {
 	 * outside it is not matched even before that happens.
 	 */
 	visibleWhen?: ISearchRowRule;
+	/**
+	 * Whether the rows are private to a set of people `permission` cannot name (a chat message is its conversation's
+	 * members'). A private declaration is left out of the generic search, suggestion and facet routes: only the
+	 * entity's own route reaches it, through `SearchService.searchWithin`, carrying the caller's own set as a filter.
+	 */
+	privateScope?: boolean;
 }
 
 /**
