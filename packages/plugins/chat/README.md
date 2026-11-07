@@ -72,6 +72,7 @@ tenant switched off by hand stays off).
 | `POST /messages/:id/create-task { projectId?, title?, assigneeEmployeeIds? }` | a task from a message (`ORG_TASK_ADD` too): its first line as the title unless given, the text as the description (HTML); the message keeps a `created` reference — a 500 that names the task id means the task exists but could not be linked |
 | `POST` / `DELETE /messages/:id/reactions/:emoji` | reactions |
 | `GET /threads` · `POST /read-all` · `POST /read-restore { snapshotId }` | followed threads; mark all read with a one-minute undo |
+| `GET /search?q=&conversationId=&limit=&skip=` | the messages of my conversations that match, best first (the search plugin's `chat_message` index — a private declaration the generic `/search` routes leave out — filtered to the memberships I have not left) |
 
 Mention tokens in a body: `<@employeeId>`, `<#conversationId>`, `<!channel>`,
 `<!here>` — rename-safe, rendered as chips by the clients. A task typed as
@@ -92,5 +93,5 @@ FEATURE_CHAT=true            # or switch the feature on per tenant in Settings �
 
 ## Not yet in this plugin (next slices)
 
-Link previews, search, incoming webhooks, GraphQL twins, the Ever Teams client
+Link previews, incoming webhooks, GraphQL twins, the Ever Teams client
 (in progress).
