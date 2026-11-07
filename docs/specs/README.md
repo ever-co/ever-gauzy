@@ -24,7 +24,7 @@ docs/specs/
 
 | Feature | Spec | Status | Flag |
 | ------- | ---- | ------ | ---- |
-| Real-time channel (platform push gateway, presence, typing) | [`features/realtime-channel/`](features/realtime-channel/spec.md) | Draft | `GAUZY_REALTIME_ENABLED` |
+| Real-time channel (collaboration events on the outbox, presence, typing, subscription) | [`features/realtime-channel/`](features/realtime-channel/spec.md) | In Progress | `GAUZY_REALTIME_ENABLED` |
 | Chat (channels, direct messages, threads, mentions, reactions, task cards) | [`features/chat/`](features/chat/spec.md) | Draft | `GAUZY_CHAT_ENABLED` |
 | Inbox (unified notifications, triage, preferences, push) | [`features/inbox/`](features/inbox/spec.md) | Draft | `GAUZY_INBOX_ENABLED` |
 | Docs collaboration (spaces, live co-editing, notifications, Markdown export and API editing) | [`features/docs-collaboration/`](features/docs-collaboration/spec.md) | Draft | `GAUZY_DOCS_COLLAB_ENABLED` |
