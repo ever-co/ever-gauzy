@@ -266,6 +266,8 @@ export class EmailResetService extends TenantAwareCrudService<EmailReset> {
 						]);
 					});
 					query.orderBy(p(`"${query.alias}"."createdAt"`), 'DESC');
+					// The newest row only: `getOne` reads every match and keeps the first without a limit.
+					query.limit(1);
 
 					return await query.getOneOrFail();
 				}
