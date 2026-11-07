@@ -23,7 +23,7 @@
 
 ## Phase 3 — Verification and UI
 
-- [ ] **T9**. CI green on #11682 (tsc, Jest, schema snapshot, field-binding check); fix forward
+- [x] **T9**. CI green on #11682 (tsc, Jest, schema snapshot, field-binding check); fix forward
 - [ ] **T10**. Enable on dev: mention → NOTIFICATION item; read mirror both ways; follower comment notification with the flag on
 - [ ] **T11**. Angular `inbox-ui`: Done tab + action, NOTIFICATION rendering (opens the task/comment), counts
 - [ ] **T12**. Dedupe rule per spec FR-4 (10-minute window per recipient/target/kind) in the notification service
@@ -33,3 +33,5 @@
 - [ ] **T13**. Email immediate / digest (worker job, templates) honouring `preferences`
 - [ ] **T14**. Web push subscriptions (`web-push` dependency already present) and the push decision (no focused session)
 - [ ] **T15**. Settings page in the Angular app and Ever Teams for per-kind channels, DND, digest hour
+
+**Status 2026-11-07:** merged into develop (ever-gauzy #11682, `b9070d1dc2`) after one bot round (organization-scoped followers, receiver-named state events, mirrored changes announced, snoozed/done tab, per-organization events).

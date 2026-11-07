@@ -24,9 +24,9 @@ docs/specs/
 
 | Feature | Spec | Status | Flag |
 | ------- | ---- | ------ | ---- |
-| Real-time channel (collaboration events on the outbox, presence, typing, subscription) | [`features/realtime-channel/`](features/realtime-channel/spec.md) | In Progress | `GAUZY_REALTIME_ENABLED` |
-| Chat (channels, direct messages, threads, mentions, reactions, task cards) | [`features/chat/`](features/chat/spec.md) | Draft | `GAUZY_CHAT_ENABLED` |
-| Inbox (unified notifications, triage, preferences, push) | [`features/inbox/`](features/inbox/spec.md) | In Progress | `GAUZY_INBOX_ENABLED` |
+| Real-time channel (collaboration events on the outbox, presence, typing, subscription) | [`features/realtime-channel/`](features/realtime-channel/spec.md) | Merged (#11681) — dev verification open | `GAUZY_REALTIME_ENABLED` |
+| Chat (channels, direct messages, threads, mentions, reactions, task cards) | [`features/chat/`](features/chat/spec.md) | Phase 1 in review (#11683) | `GAUZY_CHAT_ENABLED` |
+| Inbox (unified notifications, triage, preferences, push) | [`features/inbox/`](features/inbox/spec.md) | Unified inbox merged (#11682); email/push/settings open | `GAUZY_INBOX_ENABLED` |
 | Docs collaboration (spaces, live co-editing, notifications, Markdown export and API editing) | [`features/docs-collaboration/`](features/docs-collaboration/spec.md) | Draft | `GAUZY_DOCS_COLLAB_ENABLED` |
 | Tasks: saved views, bulk actions, keyboard-first lists | [`features/task-views-and-bulk-actions/`](features/task-views-and-bulk-actions/spec.md) | Draft | `GAUZY_TASK_VIEWS_ENABLED` |
 | Integrations: Asana, Linear, Trello (import and sync) | [`features/integrations-asana-linear-trello/`](features/integrations-asana-linear-trello/spec.md) | Draft | per-integration tenant setting |
