@@ -1,8 +1,9 @@
-import { BadRequestException, Inject, Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable, InternalServerErrorException, Logger, NotFoundException, Optional } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
-import { ID, IIntegrationSetting, IIntegrationTenant, IntegrationEntity } from '@gauzy/contracts';
+import { ID, IInboxItemWriter, IIntegrationSetting, IIntegrationTenant, INBOX_ITEM_WRITER, IntegrationEntity } from '@gauzy/contracts';
 import { Integration, IntegrationSettingService, IntegrationTenantService, IntegrationTenantUpdateOrCreateCommand, RequestContext } from '@gauzy/core';
 import { TrelloApiClient, TrelloMember } from './client/trello-api.client';
+import { attentionItemOf } from './trello-attention';
 import { TrelloConfig } from './trello-config';
 import { TRELLO_CONFIG, TRELLO_INTEGRATION_NAME, TRELLO_NOT_CONFIGURED, TRELLO_NOT_CONNECTED, TrelloSettingName } from './trello.constants';
 
@@ -36,7 +37,9 @@ export class TrelloTenantService {
 		private readonly commandBus: CommandBus,
 		private readonly integrationTenantService: IntegrationTenantService,
 		private readonly integrationSettingService: IntegrationSettingService,
-		@Inject(TRELLO_CONFIG) private readonly config: TrelloConfig
+		@Inject(TRELLO_CONFIG) private readonly config: TrelloConfig,
+		/** The Inbox, when its plugin is loaded: the person who connected hears there of a refused token. */
+		@Optional() @Inject(INBOX_ITEM_WRITER) private readonly inbox?: IInboxItemWriter | null
 	) {}
 
 	/** The connection of an organization in the current tenant, with its settings, or null. */
@@ -119,6 +122,9 @@ export class TrelloTenantService {
 	/** Records (or renews) the connection of an organization with a checked token and the Trello member it belongs to. */
 	async connect(scope: { tenantId: ID; organizationId: ID; userId?: ID | null }, token: string, member: TrelloMember): Promise<IIntegrationTenant> {
 		const { tenantId, organizationId } = scope;
+		// The connection this one replaces, if any: a refusal it carried is over once the new token is stored.
+		const replaced = await this.forOrganization(organizationId, tenantId);
+		const wasRefused = !!(replaced && this.settingsOf(replaced)[TrelloSettingName.ATTENTION_REASON]);
 		const integration = await this.integrationTenantService['typeOrmRepository'].manager.findOne(Integration, { where: { name: TRELLO_INTEGRATION_NAME } });
 		if (!integration) {
 			throw new NotFoundException({ message: 'The Trello integration is not in the catalogue', code: TRELLO_NOT_CONNECTED });
@@ -144,15 +150,33 @@ export class TrelloTenantService {
 		if (!stored || this.settingsOf(stored)[TrelloSettingName.TOKEN] !== token) {
 			throw new InternalServerErrorException({ message: 'The Trello connection could not be stored; connect again', code: TRELLO_NOT_CONNECTED });
 		}
+		if (wasRefused) await this.fileAttention(stored, null);
 		return stored;
 	}
 
-	/** Records why the connection needs a person (a refused token), or clears it. */
+	/**
+	 * Records why the connection needs a person (a refused token), or clears it — and tells the person who connected
+	 * in their Inbox, once per refusal (the item is keyed by the connection) and once more when it works again.
+	 */
 	async setAttention(tenant: IIntegrationTenant, reason: string | null): Promise<void> {
+		const before = this.settingsOf(tenant)[TrelloSettingName.ATTENTION_REASON] || null;
 		try {
 			await this.writeSetting(tenant, TrelloSettingName.ATTENTION_REASON, reason ?? '');
 		} catch (error) {
 			this.logger.warn(`The attention reason of connection ${tenant.id} could not be written: ${(error as Error).message}`);
+		}
+		if (reason ? before !== reason : !!before) await this.fileAttention(tenant, reason);
+	}
+
+	/** Files (or resolves) the Inbox item about the connection; nothing without the Inbox plugin or a connecting user. */
+	private async fileAttention(tenant: IIntegrationTenant, reason: string | null): Promise<void> {
+		if (!this.inbox) return;
+		const userId = this.settingsOf(tenant)[TrelloSettingName.CONNECTED_BY_USER_ID];
+		if (!userId) return;
+		try {
+			await this.inbox.upsertExternal(attentionItemOf({ id: tenant.id as ID, tenantId: tenant.tenantId as ID, organizationId: tenant.organizationId as ID }, reason, [userId as ID]));
+		} catch (error) {
+			this.logger.warn(`The attention of connection ${tenant.id} could not be filed in the Inbox: ${(error as Error).message}`);
 		}
 	}
 

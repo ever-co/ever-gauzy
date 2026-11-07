@@ -55,6 +55,10 @@ Off by default. The plugin is loaded only when `TRELLO_ENABLED=true` (exactly); 
   already added with the same address. Both are kept once (the id map, entities `Comment` and `Attachment`). The
   webhook delivers a comment added, edited or removed and a file attached as the card they belong to, which is
   read again.
+- **A refused token.** When Trello refuses the connection's token (a 401), the connection is marked — the page asks for
+  a reconnect, the lookups answer `TRELLO_TOKEN_REFUSED`, the scheduled import leaves its mappings alone — and, with the
+  Inbox plugin loaded, the person who connected gets a high-priority Inbox notice (one per connection; resolved when a
+  renewed token works or someone connects again).
 - **Scheduled import.** Every five minutes the worker process (`apps/worker`, the one whose scheduler root is
   enabled) sweeps the mappings that bring cards in: one whose last import is older than
   `TRELLO_IMPORT_INTERVAL_MINUTES` (or that was never imported) is imported again, the changes since its position,
