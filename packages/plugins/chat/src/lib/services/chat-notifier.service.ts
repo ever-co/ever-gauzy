@@ -116,10 +116,12 @@ export class ChatNotifierService {
 	 */
 	async markConversationRead(conversationId: ID, caller: { tenantId: ID; employeeId: ID }, upTo?: Pick<ChatMessage, 'createdAt'> | null): Promise<number> {
 		try {
+			// `entityId` is text while a message id is a uuid on Postgres: the subquery answers text on every dialect.
+			const textType = this.dataSource.options.type === 'mysql' ? 'CHAR(36)' : 'TEXT';
 			const messageIds = this.dataSource
 				.getRepository(ChatMessage)
 				.createQueryBuilder('message')
-				.select('message.id')
+				.select(`CAST(message.id AS ${textType})`)
 				.where('message.conversationId = :conversationId', { conversationId })
 				.andWhere('message.tenantId = :tenantId', { tenantId: caller.tenantId });
 			if (upTo?.createdAt) messageIds.andWhere('message.createdAt <= :upToAt', { upToAt: upTo.createdAt });

@@ -151,8 +151,9 @@ export const ENTITY_LINKS: Record<BaseEntityEnum, FavoriteLinkBuilder> = {
 	[BaseEntityEnum.KeyResult]: () => `/pages/goals`,
 	[BaseEntityEnum.InboxItem]: () => `/pages/dashboard`,
 	[BaseEntityEnum.InboxEmail]: () => `/pages/dashboard`,
-	[BaseEntityEnum.ChatConversation]: (id) => `/pages/chat/${id}`,
-	[BaseEntityEnum.ChatMessage]: () => `/pages/chat`
+	// The chat pages arrive with the chat UI; until then a favourite leads home.
+	[BaseEntityEnum.ChatConversation]: () => `/pages/dashboard`,
+	[BaseEntityEnum.ChatMessage]: () => `/pages/dashboard`
 };
 
 /** `120 USD` — an amount with its currency, as a record's name when it has no other. */

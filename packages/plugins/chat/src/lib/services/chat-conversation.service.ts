@@ -229,7 +229,7 @@ export class ChatConversationService {
 					organizationId: caller.organizationId ?? undefined
 				})
 			);
-			const employees = await this.employeesOfTenant(caller.tenantId, [caller.employeeId, ...(input.memberEmployeeIds ?? [])]);
+			const employees = await this.employeesOfTenant(caller.tenantId, [caller.employeeId, ...(input.memberEmployeeIds ?? [])], caller.organizationId);
 			await manager.getRepository(ChatMember).save(
 				employees.map((employee) =>
 					manager.getRepository(ChatMember).create({
@@ -550,18 +550,17 @@ export class ChatConversationService {
 
 	/** A member who left or was removed follows none of the conversation's threads any more. */
 	private async dropFollows(tenantId: ID, conversationId: ID, employeeId: ID): Promise<void> {
-		const roots = this.dataSource
-			.getRepository(ChatMessage)
-			.createQueryBuilder('m')
-			.select('m.id')
-			.where('m.conversationId = :conversationId');
-		await this.dataSource
-			.getRepository(ChatThreadFollow)
-			.createQueryBuilder()
-			.delete()
-			.where('employeeId = :employeeId AND tenantId = :tenantId', { employeeId, tenantId })
-			.andWhere(`rootMessageId IN (${roots.getQuery()})`, { conversationId })
-			.execute();
+		const follows = await this.dataSource.getRepository(ChatThreadFollow).find({ select: { id: true, rootMessageId: true }, where: { employeeId, tenantId } });
+		if (!follows.length) return;
+		// Object criteria, so every column name is quoted for the dialect (a raw camelCase name is folded on Postgres).
+		const roots = await this.dataSource.getRepository(ChatMessage).find({
+			select: { id: true },
+			where: { id: In(follows.map((follow) => follow.rootMessageId)), conversationId, tenantId },
+			withDeleted: true
+		});
+		if (!roots.length) return;
+		const rootIds = new Set(roots.map((root) => String(root.id)));
+		await this.dataSource.getRepository(ChatThreadFollow).delete({ id: In(follows.filter((follow) => rootIds.has(String(follow.rootMessageId))).map((follow) => follow.id as ID)) });
 	}
 
 	private async membersChanged(caller: IChatCaller, conversation: ChatConversation): Promise<IChatEvent[]> {

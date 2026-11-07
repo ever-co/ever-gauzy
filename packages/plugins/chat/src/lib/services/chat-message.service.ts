@@ -1,5 +1,5 @@
 import { BadRequestException, ForbiddenException, Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { Brackets, DataSource, EntityManager, In, IsNull, Not, ObjectLiteral, SelectQueryBuilder } from 'typeorm';
+import { Brackets, DataSource, EntityManager, In, IsNull, MoreThan, Not, ObjectLiteral, SelectQueryBuilder } from 'typeorm';
 import {
 	ActorTypeEnum,
 	CHAT_EVENT_NAMES,
@@ -452,15 +452,14 @@ export class ChatMessageService {
 			if (timeline) {
 				// The timeline is one message shorter: the conversation's count follows, a read position past the end
 				// is brought back to it, and a member who had not read the message loses the badge it gave them.
-				const total = Math.max(0, (conversation.messageCount ?? 0) - 1);
-				await manager.getRepository(ChatConversation).update({ id: conversation.id as ID }, { messageCount: total });
-				await manager
-					.getRepository(ChatMember)
-					.createQueryBuilder()
-					.update()
-					.set({ readCount: total })
-					.where('conversationId = :conversationId AND readCount > :total', { conversationId: conversation.id, total })
-					.execute();
+				// Atomic: a send that arrived since the conversation row was read keeps its increment.
+				await manager.getRepository(ChatConversation).decrement({ id: conversation.id as ID }, 'messageCount', 1);
+				const fresh = await manager.getRepository(ChatConversation).findOne({ select: { id: true, messageCount: true }, where: { id: conversation.id as ID } });
+				const total = Math.max(0, fresh?.messageCount ?? (conversation.messageCount ?? 0) - 1);
+				if ((fresh?.messageCount ?? 0) < 0) {
+					await manager.getRepository(ChatConversation).update({ id: conversation.id as ID }, { messageCount: 0 });
+				}
+				await manager.getRepository(ChatMember).update({ conversationId: conversation.id as ID, readCount: MoreThan(total) }, { readCount: total });
 				for (const m of members) {
 					if ((m.readCount ?? 0) >= position || (m.mentionCount ?? 0) <= 0) continue;
 					if (broadcast || mentionedBefore.includes(String(m.employeeId))) {
@@ -555,14 +554,10 @@ export class ChatMessageService {
 		Object.assign(member, { ...patch, lastReadMessageId: lastReadMessageId ?? undefined });
 		// Thread replies the caller follows in this conversation are read too when reading everything.
 		if (!messageId) {
-			await this.dataSource
-				.getRepository(ChatThreadFollow)
-				.createQueryBuilder()
-				.update()
-				.set({ unreadReplies: 0, lastReadReplyAt: now })
-				.where('employeeId = :employeeId AND tenantId = :tenantId', { employeeId: caller.employeeId, tenantId: caller.tenantId })
-				.andWhere(`rootMessageId IN (${this.dataSource.getRepository(ChatMessage).createQueryBuilder('m').select('m.id').where('m.conversationId = :conversationId').getQuery()})`, { conversationId })
-				.execute();
+			const followIds = await this.followIdsIn(caller, conversationId);
+			if (followIds.length) {
+				await this.dataSource.getRepository(ChatThreadFollow).update({ id: In(followIds) }, { unreadReplies: 0, lastReadReplyAt: now });
+			}
 		}
 		void this.notifier.markConversationRead(conversationId, { tenantId: caller.tenantId, employeeId: caller.employeeId }, anchor);
 		return { events: [await this.realtime.publish(this.realtime.memberStateFact(member))] };
@@ -676,6 +671,22 @@ export class ChatMessageService {
 		const found = await this.messageAndConversation(caller, messageId);
 		if (found.conversation.archivedAt) throw new BadRequestException('This conversation is archived.');
 		return found;
+	}
+
+	/** The caller's follows of the threads of a conversation (object criteria: every name quoted for the dialect). */
+	private async followIdsIn(caller: IChatCaller & { employeeId: ID }, conversationId: ID): Promise<ID[]> {
+		const follows = await this.dataSource.getRepository(ChatThreadFollow).find({
+			select: { id: true, rootMessageId: true },
+			where: { employeeId: caller.employeeId, tenantId: caller.tenantId }
+		});
+		if (!follows.length) return [];
+		const roots = await this.dataSource.getRepository(ChatMessage).find({
+			select: { id: true },
+			where: { id: In(follows.map((follow) => follow.rootMessageId)), conversationId, tenantId: caller.tenantId },
+			withDeleted: true
+		});
+		const rootIds = new Set(roots.map((root) => String(root.id)));
+		return follows.filter((follow) => rootIds.has(String(follow.rootMessageId))).map((follow) => follow.id as ID);
 	}
 
 	/** The message the caller sent with a nonce, deleted or not. */
@@ -801,12 +812,14 @@ export class ChatMessageService {
 			.take(take);
 	}
 
-	/** How many timeline messages (deleted ones included) come before a message — plus the message itself when `inclusive`. */
+	/**
+	 * How many timeline messages come before a message — plus the message itself when `inclusive`. Deleted messages
+	 * are left out, as `messageCount` leaves them out once deleted: the two stay on one scale.
+	 */
 	private async timelinePosition(tenantId: ID, conversationId: ID, anchor: ChatMessage, inclusive: boolean): Promise<number> {
 		const count = await this.dataSource
 			.getRepository(ChatMessage)
 			.createQueryBuilder('message')
-			.withDeleted()
 			.where('message.conversationId = :conversationId', { conversationId })
 			.andWhere('message.tenantId = :tenantId', { tenantId })
 			.andWhere(

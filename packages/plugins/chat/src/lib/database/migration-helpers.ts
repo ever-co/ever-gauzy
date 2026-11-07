@@ -14,12 +14,12 @@ export function dialectOf(queryRunner: QueryRunner): ChatDialect {
 	throw new Error(`Unsupported database: ${type}`);
 }
 
-/** Quotes an identifier for the dialect. */
 /** The n-th (1-based) bind parameter of the dialect. */
 export function param(dialect: ChatDialect, n: number): string {
 	return dialect === 'postgres' ? `$${n}` : '?';
 }
 
+/** Quotes an identifier for the dialect. */
 export function q(dialect: ChatDialect, name: string): string {
 	return dialect === 'mysql' ? `\`${name}\`` : `"${name}"`;
 }
@@ -78,12 +78,19 @@ export async function createIndexIfMissing(queryRunner: QueryRunner, table: stri
 	const columns = spec.columns.map((column) => q(dialect, column)).join(', ');
 	const partial = dialect !== 'mysql' && spec.where ? ` WHERE ${spec.where[dialect]}` : '';
 	const unique = spec.unique ? 'UNIQUE ' : '';
-	try {
+	if (dialect !== 'mysql') {
+		// Postgres and SQLite say it in the statement: a failed statement would abort the migration's transaction
+		// on Postgres, after which no probe can run.
 		await queryRunner.query(
-			`CREATE ${unique}INDEX ${q(dialect, spec.name)} ON ${q(dialect, table)} (${columns})${partial}`
+			`CREATE ${unique}INDEX IF NOT EXISTS ${q(dialect, spec.name)} ON ${q(dialect, table)} (${columns})${partial}`
 		);
+		return;
+	}
+	try {
+		await queryRunner.query(`CREATE ${unique}INDEX ${q(dialect, spec.name)} ON ${q(dialect, table)} (${columns})`);
 	} catch (error) {
-		// Another process (the API and the worker start together) created it between the probe and here.
+		// MySQL has no IF NOT EXISTS for an index and its DDL auto-commits: another process (the API and the worker
+		// start together) created it between the probe and here.
 		if (await hasIndex(queryRunner, table, spec.name)) return;
 		throw error;
 	}

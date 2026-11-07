@@ -127,6 +127,7 @@ export class ChatConversationController {
 	}
 
 	@Patch('/conversations/:id')
+	@Permissions(PermissionsEnum.CHAT_SEND)
 	@UseValidationPipe({ whitelist: true })
 	@Header('Cache-Control', 'no-store')
 	@ApiOperation({ summary: 'Edit a channel (name, topic, visibility, category); its managers and CHAT_MANAGE holders.' })
@@ -135,6 +136,7 @@ export class ChatConversationController {
 	}
 
 	@Post('/conversations/:id/archive')
+	@Permissions(PermissionsEnum.CHAT_SEND)
 	@HttpCode(HttpStatus.OK)
 	@Header('Cache-Control', 'no-store')
 	@ApiOperation({ summary: 'Archive a conversation (read-only from now on).' })
@@ -143,6 +145,7 @@ export class ChatConversationController {
 	}
 
 	@Post('/conversations/:id/unarchive')
+	@Permissions(PermissionsEnum.CHAT_SEND)
 	@HttpCode(HttpStatus.OK)
 	@Header('Cache-Control', 'no-store')
 	@ApiOperation({ summary: 'Bring an archived conversation back.' })
@@ -176,6 +179,7 @@ export class ChatConversationController {
 	}
 
 	@Post('/conversations/:id/members')
+	@Permissions(PermissionsEnum.CHAT_SEND)
 	@HttpCode(HttpStatus.OK)
 	@UseValidationPipe({ whitelist: true })
 	@Header('Cache-Control', 'no-store')
@@ -185,6 +189,7 @@ export class ChatConversationController {
 	}
 
 	@Delete('/conversations/:id/members/:employeeId')
+	@Permissions(PermissionsEnum.CHAT_SEND)
 	@HttpCode(HttpStatus.OK)
 	@Header('Cache-Control', 'no-store')
 	@ApiOperation({ summary: 'Remove an employee from a channel or group (its managers).' })
