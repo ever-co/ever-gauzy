@@ -13,6 +13,7 @@ import '../core/entities/internal';
 import { Test, TestingModule } from '@nestjs/testing';
 import { environment } from '@gauzy/config';
 import { SeedDataService } from '../core/seeds/seed-data.service';
+import { SqlitePlannerStatisticsService } from '../database/sqlite-planner-statistics.service';
 import { UserService } from '../user/user.service';
 import { AppService } from './app.service';
 
@@ -29,6 +30,7 @@ describe('AppService', () => {
 	let service: AppService;
 	let seedDataService: jest.Mocked<Pick<SeedDataService, 'runDefaultSeed' | 'runDemoSeed'>>;
 	let userService: jest.Mocked<Pick<UserService, 'countAll' | 'findAccountsUsingPasswords'>>;
+	let sqlitePlannerStatistics: jest.Mocked<Pick<SqlitePlannerStatisticsService, 'analyze'>>;
 
 	beforeEach(async () => {
 		seedDataService = {
@@ -40,11 +42,14 @@ describe('AppService', () => {
 			findAccountsUsingPasswords: jest.fn().mockResolvedValue({ matches: [], inconclusive: [] })
 		} as never;
 
+		sqlitePlannerStatistics = { analyze: jest.fn().mockResolvedValue(undefined) } as never;
+
 		const module: TestingModule = await Test.createTestingModule({
 			providers: [
 				AppService,
 				{ provide: SeedDataService, useValue: seedDataService },
-				{ provide: UserService, useValue: userService }
+				{ provide: UserService, useValue: userService },
+				{ provide: SqlitePlannerStatisticsService, useValue: sqlitePlannerStatistics }
 			]
 		}).compile();
 
@@ -215,6 +220,26 @@ describe('AppService', () => {
 			await service.seedDemoIfEmpty();
 
 			expect(seedDataService.runDemoSeed).not.toHaveBeenCalled();
+			expect(sqlitePlannerStatistics.analyze).not.toHaveBeenCalled();
+		});
+
+		it('gathers the SQLite planner statistics once the demo seed has filled the empty database', async () => {
+			const savedEnvironmentDemo = environment.demo;
+			environment.demo = true;
+			try {
+				userService.countAll.mockResolvedValue(0);
+				await service.seedDBIfEmpty();
+
+				await service.seedDemoIfEmpty();
+
+				expect(seedDataService.runDemoSeed).toHaveBeenCalledTimes(1);
+				expect(sqlitePlannerStatistics.analyze).toHaveBeenCalledTimes(1);
+				expect(sqlitePlannerStatistics.analyze.mock.invocationCallOrder[0]).toBeGreaterThan(
+					seedDataService.runDemoSeed.mock.invocationCallOrder[0]
+				);
+			} finally {
+				environment.demo = savedEnvironmentDemo;
+			}
 		});
 	});
 });

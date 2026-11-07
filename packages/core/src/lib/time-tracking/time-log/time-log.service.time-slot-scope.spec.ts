@@ -103,10 +103,31 @@ describe('TimeLogService — the time-slot scope of a query', () => {
 	});
 
 	describe('the report queries', () => {
-		it('keep their conditions on the timeSlots join', async () => {
-			await service.getWeeklyReport({ ...request, activityLevel: { start: 10, end: 50 } });
+		it.each([
+			['weekly', (s: TimeLogService, r: IGetTimeLogReportInput) => s.getWeeklyReport(r)],
+			['daily', (s: TimeLogService, r: IGetTimeLogReportInput) => s.getDailyReport(r)],
+			['daily chart', (s: TimeLogService, r: IGetTimeLogReportInput) => s.getDailyReportCharts(r)],
+			['owed amount', (s: TimeLogService, r: IGetTimeLogReportInput) => s.getOwedAmountReport(r)],
+			['owed amount chart', (s: TimeLogService, r: IGetTimeLogReportInput) => s.getOwedAmountReportCharts(r)],
+			['time limit', (s: TimeLogService, r: IGetTimeLogReportInput) => s.getTimeLimit(r as any)]
+		])('%s: joins the employee only and requires a slot in the activity range with EXISTS', async (_name, run) => {
+			await run(service, { ...request, activityLevel: { start: 10, end: 50 } });
 
-			expect(builder.expressionMap.joinAttributes.map(({ alias }) => alias.name)).toContain('timeSlots');
+			expect(builder.expressionMap.joinAttributes.map(({ alias }) => alias.name)).toEqual(['employee']);
+			const { conditions, parameters } = executedFilters(builder);
+			expect(slotScope(conditions)).toEqual([
+				'EXISTS (SELECT 1 FROM time_slot_time_logs slotLog INNER JOIN time_slot slot ON "slot"."id" = "slotLog"."timeSlotId" WHERE "slotLog"."timeLogId" = "time_log"."id" AND "slot"."deletedAt" IS NULL AND "slot"."tenantId" = :slotTenantId AND "slot"."organizationId" = :slotOrganizationId AND "slot"."overall" BETWEEN :slotActivityStart AND :slotActivityEnd)'
+			]);
+			expect(parameters).toEqual(expect.objectContaining({ slotActivityStart: 60, slotActivityEnd: 300 }));
+			expect(conditions).not.toContain('"timeSlots"."overall" BETWEEN :start AND :end');
+		});
+
+		it('a query that does join the slots keeps its conditions on that join', async () => {
+			builder.innerJoin('time_log.timeSlots', 'timeSlots');
+
+			await service.getFilterTimeLogQuery(builder as any, { ...request, activityLevel: { start: 10, end: 50 } });
+			await builder.getMany();
+
 			const { conditions, parameters } = executedFilters(builder);
 			expect(conditions).toEqual(
 				expect.arrayContaining([
