@@ -248,7 +248,7 @@ const status = manager.getStatus();
 
 #### Collaboration tool groups: chat, docs, inbox (14 tools, off by default)
 
-Three groups over the collaboration suite's routes, each enabled per deployment and gated per session by scopes
+Three groups over the collaboration suite's routes, each enabled per deployment and gated per caller by scopes
 (`chat:read`, `chat:write`, `docs:read`, `docs:write`, `inbox:read`, `inbox:write`; a write scope reads too):
 
 | Group | Switch | Read tools | Write tools |
@@ -257,19 +257,29 @@ Three groups over the collaboration suite's routes, each enabled per deployment 
 | docs | `GAUZY_MCP_TOOLS_DOCS=true` | `list_pages`, `get_page` (Markdown + revision, in slices), `search_pages` | `create_page`, `update_page_markdown` (block-level merge, compare-and-set on the revision) |
 | inbox | `GAUZY_MCP_TOOLS_INBOX=true` | `list_inbox_items`, `get_inbox_counts` | `set_inbox_item_state` |
 
-A session's scopes are the ones its bearer token carried when the transport recorded them on the session
-(`metadata.oauthScopes`), else `GAUZY_MCP_TOOLS_SCOPES` (a comma list), else every scope of the enabled groups — a local
-server speaks for its one signed-in user. A group the session may not read is not registered at all (a client sees no
-such tool); its writes are registered only under the write scope. A chat message posted through `post_chat_message` is
-marked as written with an assistant (`assistedBy`), and where the client supports elicitation the person approves it
-before it is posted. Over stdio the server knows the client (its name, its capabilities). Over HTTP and WebSocket it
-does not see the client's initialize handshake: there messages are marked `MCP client` and posted without the approval
-step. A bearer token holds the collaboration scopes it names (`chat:read`, …), else what its `mcp.read` / `mcp.write`
-scopes allow (reads / writes of every enabled group); the authorization server advertises and grants the named scopes.
-A token granted named collaboration scopes alone (no `mcp.read`) is admitted too, and reaches the collaboration tools
-only: every other tool is hidden from it and answers "not found". Over HTTP and WebSocket the caller's own scopes — its
-bearer token's, else its session's — decide again what `tools/list` shows and what a call may run (a tool they do not
-allow answers "not found"). Every call runs under the signed-in user's tenant,
+The server every transport shares registers every enabled group. What a caller reaches is decided per caller; a tool
+its scopes do not allow is not listed and answers "not found", as an unregistered one does:
+
+- **HTTP and WebSocket, with a bearer token:** the token's scopes, checked again at every request (WebSocket: when the
+  connection opens and before every message). A token holds the collaboration scopes it names (`chat:read`, …); a token
+  that names none holds what its `mcp.read` / `mcp.write` (or `mcp.admin`) scopes allow: reads, or reads and writes, of
+  every enabled group. The authorization server (mcp-auth) advertises and grants the named scopes. While
+  `MCP_AUTH_REQUIRED_SCOPES` (or `MCP_REQUIRED_SCOPES`) is unset, so the required scope is the default `mcp.read`, a
+  token granted named collaboration scopes alone is admitted too, and reaches the collaboration tools only (every other
+  tool is hidden from it and answers "not found"). Once the operator sets the required scopes, every token must hold
+  them all.
+- **HTTP and WebSocket without a token** (a caller on this machine in loopback desktop mode, or authorization switched
+  off) **and stdio:** `GAUZY_MCP_TOOLS_SCOPES` (a comma list), else every scope of the enabled groups — a local server
+  speaks for its one signed-in user. Stdio applies the list when it connects: the tools it does not allow are removed.
+  No transport records a token's scopes on a session; a session whose `metadata.oauthScopes` is set (nothing sets it
+  today) would hold those first.
+- **A server made for one session** (`createMcpServer(sessionId)`) registers only the groups that session may read,
+  and their writes only under the write scope.
+
+A chat message posted through `post_chat_message` is marked as written with an assistant (`assistedBy`), and where the
+client supports elicitation the person approves it before it is posted. Over stdio the server knows the client (its
+name, its capabilities). Over HTTP and WebSocket it does not see the client's initialize handshake: there messages are
+marked `MCP client` and posted without the approval step. Every call runs under the signed-in user's tenant,
 organization and permissions — what is outside their access is "not found", as the routes answer it — and is logged by
 name, user, duration and outcome, never with what was sent or answered (on every path: the transports and the server
 log only the argument names of these tools). Answers carry a note that message, page and
@@ -472,7 +482,8 @@ API_BASE_URL=https://api.gauzy.co    # Gauzy API endpoint
 ### Optional Variables
 
 - `GAUZY_MCP_TOOLS_CHAT`, `GAUZY_MCP_TOOLS_DOCS`, `GAUZY_MCP_TOOLS_INBOX`: `true` enables a collaboration tool group (off by default)
-- `GAUZY_MCP_TOOLS_SCOPES`: the scopes a session holds when its token states none (default: every scope of the enabled groups)
+- `GAUZY_MCP_TOOLS_SCOPES`: the collaboration scopes of a caller without a bearer token — stdio, a loopback caller, or a server with authorization off (default: every scope of the enabled groups); a token's own scopes always come first
+- `MCP_AUTH_REQUIRED_SCOPES`: the scopes every bearer token must hold (default `mcp.read`); while it is unset, a token holding collaboration scopes alone is admitted for the collaboration tools only
 
 ```bash
 GAUZY_AUTH_EMAIL=user@example.com    # Auto-login email
