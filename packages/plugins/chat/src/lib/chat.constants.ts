@@ -13,8 +13,6 @@ export const CHAT_AGGREGATES = {
 export const CHAT_PAGE_SIZE = 50;
 export const CHAT_MAX_PAGE_SIZE = 200;
 
-/** How long a sender's idempotency key is remembered. */
-export const CHAT_NONCE_TTL_MS = 24 * 60 * 60 * 1000;
 
 /** How long a mark-all-read can be undone. */
 export const CHAT_READ_RESTORE_TTL_MS = 60 * 1000;

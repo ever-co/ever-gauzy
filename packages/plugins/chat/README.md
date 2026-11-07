@@ -6,9 +6,13 @@ grouped in categories), direct and group messages, threads, reactions, pins,
 
 **Off by default.** The plugin is loaded only when `GAUZY_CHAT_ENABLED=true`
 (exactly), and its routes answer only for tenants whose `FEATURE_CHAT` toggle is
-on. Off, nothing changes: no route, no table. (The chat permissions sit in the
-platform's default role grants, like every plugin permission, so a tenant has
-them the day the plugin is turned on; with the plugin off they guard nothing.)
+on. With the plugin off, no route answers. The chat tables are created by the
+plugin's migrations the first time the plugin loads — for every tenant, whatever
+its `FEATURE_CHAT` toggle says — and stay, with their data, when the plugin is
+turned off again (a migration is never undone by a flag). (The chat permissions
+sit in the platform's default role grants, like every plugin permission, so a
+tenant has them the day the plugin is turned on; with the plugin off they guard
+nothing.)
 The `FEATURE_CHAT` catalogue row is seeded by the plugin's own migration
 (`1791000006300`) on an existing installation, so Settings → Features shows the
 toggle.
@@ -25,7 +29,10 @@ toggle.
   outbox (`chat_message.created`, `chat_message.updated`,
   `chat_message.deleted`, `chat_conversation.changed`,
   `chat_member.state_changed`, `chat_thread.changed`) and answers the same
-  facts, so the sender applies them at once and subscribers get the rest.
+  facts, so the sender applies them at once and subscribers get the rest. The
+  events are best effort: a write succeeds even when its event could not be
+  appended (logged), and category writes publish none — a client refreshes
+  through the read routes when it needs certainty (and on every reconnect).
 - **Unread counts are counters**: `chat_member.readCount` / `mentionCount` are
   written in the message transaction; `unread = conversation.messageCount −
   readCount`. One call (`GET /chat/states`) answers every badge.
@@ -37,8 +44,9 @@ toggle.
 `chat_category`, `chat_conversation`, `chat_member`, `chat_message`,
 `chat_thread_follow`, `chat_task_reference` (migration `1791000006100`,
 PostgreSQL / MySQL / SQLite, idempotent) and the role grants (`1791000006200`:
-`CHAT_VIEW`, `CHAT_SEND` for everyone who works in the organization,
-`CHAT_MANAGE` for administrators and managers).
+`CHAT_VIEW` and `CHAT_SEND` for the SUPER_ADMIN, ADMIN, MANAGER, EMPLOYEE and
+DATA_ENTRY roles, `CHAT_MANAGE` for SUPER_ADMIN, ADMIN and MANAGER; a grant a
+tenant switched off by hand stays off).
 
 ## Routes (`/api/chat`, `CHAT_VIEW`; writes `CHAT_SEND`; 404 for a conversation the caller is not in)
 
@@ -65,7 +73,9 @@ PostgreSQL / MySQL / SQLite, idempotent) and the role grants (`1791000006200`:
 
 Mention tokens in a body: `<@employeeId>`, `<#conversationId>`, `<!channel>`,
 `<!here>` — rename-safe, rendered as chips by the clients. Sends are idempotent
-per `nonce` for a day.
+per `nonce`, with no time limit: reusing a `nonce` answers the message the sender
+created with it (deleted or not) and sends nothing new, so a `nonce` must be
+unique for the sender across conversations.
 
 ## Enabling
 

@@ -253,7 +253,7 @@ export interface IChatReadInput {
 
 export interface IChatMessageCreateInput {
 	body: string;
-	/** Idempotency key chosen by the client (a UUID); the same key within a day answers the same message. */
+	/** Idempotency key chosen by the client (a UUID, unique for the sender): the same key answers the same message, however late. */
 	nonce?: string;
 	replyToId?: ID;
 	threadRootId?: ID;
