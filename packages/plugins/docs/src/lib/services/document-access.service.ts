@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { IsNull, WhereExpressionBuilder } from 'typeorm';
+import { In, IsNull, WhereExpressionBuilder } from 'typeorm';
 import { DocumentShareAccessEnum, DocumentVisibilityEnum, ID, PermissionsEnum } from '@gauzy/contracts';
-import { OrganizationTeamEmployee, RequestContext } from '@gauzy/core';
+import { Employee, OrganizationTeamEmployee, RequestContext } from '@gauzy/core';
 import { TypeOrmDocumentShareRepository } from '../repositories/type-orm-document-share.repository';
 import {
 	IDocumentAccessRow,
@@ -153,6 +153,58 @@ export class DocumentAccessService {
 			this.logger.warn(`Share lookup failed for document ${documentId}: ${(error as Error).message}`);
 			return [];
 		}
+	}
+
+	/**
+	 * The employees among the given ids who are active in the document's organization and may read the page: for an
+	 * ORGANIZATION page every one of them (the read permission itself is theirs to hold), for a PRIVATE or TEAM page
+	 * the creator, the team's members and the share grantees — the pure predicate with the page's shares, each
+	 * employee as the subject. What a review request or a share may name without telling someone of a page they
+	 * cannot open.
+	 *
+	 * @param document The document projection with its id.
+	 * @param employeeIds The employees named.
+	 * @returns The ids kept, in the order given, each once.
+	 */
+	public async readersAmong(document: IDocumentAccessRow & { id: ID; tenantId: ID; organizationId?: ID | null }, employeeIds: readonly ID[]): Promise<ID[]> {
+		const wanted = [...new Set(employeeIds.map(String))];
+		if (!wanted.length) {
+			return [];
+		}
+		const manager = this.typeOrmDocumentShareRepository.manager;
+		const employees = await manager.find(Employee, {
+			select: { id: true, userId: true },
+			where: {
+				id: In(wanted as ID[]),
+				tenantId: document.tenantId,
+				...(document.organizationId ? { organizationId: document.organizationId } : {}),
+				isActive: true,
+				isArchived: false
+			}
+		});
+		const byId = new Map(employees.map((employee) => [String(employee.id), employee]));
+		const shares = document.visibility === DocumentVisibilityEnum.ORGANIZATION ? [] : await this.loadShares(document.id);
+		const kept: ID[] = [];
+		for (const id of wanted) {
+			const employee = byId.get(id);
+			if (!employee) {
+				continue;
+			}
+			const readable = isDocumentReadable(
+				{ ...document, shares },
+				{
+					userId: employee.userId ?? null,
+					employeeId: employee.id as ID,
+					teamIds: await this.currentTeamIds(employee.id as ID),
+					hasReadPermission: true,
+					hasManagePermission: false
+				}
+			);
+			if (readable) {
+				kept.push(employee.id as ID);
+			}
+		}
+		return kept;
 	}
 
 	/**

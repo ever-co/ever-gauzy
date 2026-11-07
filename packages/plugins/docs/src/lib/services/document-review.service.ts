@@ -14,6 +14,7 @@ import { ApproveReviewDTO, RejectReviewDTO, RequestReviewDTO } from '../dto';
 import { Document } from '../entities/document.entity';
 import { DocumentIndexService } from '../knowledge/indexing/document-index.service';
 import { TypeOrmDocumentRepository } from '../repositories/type-orm-document.repository';
+import { DocumentAccessService } from './document-access.service';
 import { DocumentNotifierService } from './document-notifier.service';
 import { DocumentService } from './document.service';
 
@@ -33,7 +34,8 @@ export class DocumentReviewService {
 		private readonly documentService: DocumentService,
 		private readonly documentIndexService: DocumentIndexService,
 		private readonly typeOrmDocumentRepository: TypeOrmDocumentRepository,
-		private readonly documentNotifier: DocumentNotifierService
+		private readonly documentNotifier: DocumentNotifierService,
+		private readonly documentAccessService: DocumentAccessService
 	) {}
 
 	/**
@@ -58,15 +60,31 @@ export class DocumentReviewService {
 		if (input.reason) {
 			await this.mergeReviewMetadata(document, { requestReason: input.reason.slice(0, 1000) });
 		}
-		if (input.reviewerEmployeeIds?.length) {
-			await this.mergeReviewMetadata(document, { requestedReviewerIds: [...new Set(input.reviewerEmployeeIds)] });
+		// The reviewers named: active employees of the organization who may read the page (a PRIVATE or TEAM page
+		// names only its creator, its team's members and its share grantees); the others are left out of the
+		// metadata and of the Inbox alike, so a request never tells someone of a page they cannot open.
+		const reviewerEmployeeIds = input.reviewerEmployeeIds?.length
+			? await this.documentAccessService.readersAmong(
+					{
+						id: document.id as ID,
+						tenantId: document.tenantId,
+						organizationId: document.organizationId,
+						createdByUserId: document.createdByUserId,
+						visibility: document.visibility,
+						organizationTeamId: document.organizationTeamId
+					},
+					input.reviewerEmployeeIds
+				)
+			: [];
+		if (reviewerEmployeeIds.length) {
+			await this.mergeReviewMetadata(document, { requestedReviewerIds: reviewerEmployeeIds });
 		}
 		// §8/§9.4 — whoever asked for the review is the person who needs to hear about its
 		// outcome, so the request itself subscribes them to the document.
 		this.documentService.subscribeRequesterToDocument(document, EntitySubscriptionTypeEnum.MANUAL);
 		this.emit(document, previous, DocumentReviewStatusEnum.PENDING);
 		// The reviewers named hear of the request in their Inbox (best effort).
-		void this.documentNotifier.notifyReviewRequested(document, input.reviewerEmployeeIds ?? [], input.reason ?? null);
+		void this.documentNotifier.notifyReviewRequested(document, reviewerEmployeeIds, input.reason ?? null);
 		return document;
 	}
 

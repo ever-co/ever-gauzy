@@ -484,7 +484,10 @@ export class DocumentService extends TenantAwareCrudService<Document> {
 		const contentJson = input.contentJson ? this.validateContentJson(input.contentJson) : null;
 
 		const organizationId = this.resolveOrganizationId(input as any);
-		const space = await this.resolveSpaceFields(input.visibility, input.organizationTeamId, organizationId);
+		// The visibility first (the organization's default when the input names none), then the team against it: a
+		// team id on a row that is not TEAM is never stored, whatever the input carried.
+		const visibility = input.visibility ?? (await this.resolveDefaultVisibility(organizationId));
+		const space = await this.resolveSpaceFields(visibility, input.organizationTeamId, organizationId);
 		const document = await this.create({
 			...this.buildAssignableFields(input),
 			...space,
@@ -498,7 +501,7 @@ export class DocumentService extends TenantAwareCrudService<Document> {
 			// §4.3/§4.14 — the organization default is the whole point of the setting; hardcoding
 			// ORGANIZATION here meant an org that chose PRIVATE got ORGANIZATION for 100% of the
 			// content its people authored (the upload path already honours it).
-			visibility: input.visibility ?? (await this.resolveDefaultVisibility(organizationId))
+			visibility
 		});
 
 		// The create DTO accepts `mentionEmployeeIds`, so it has to mean something: without this
@@ -1376,8 +1379,11 @@ export class DocumentService extends TenantAwareCrudService<Document> {
 		organizationTeamId: ID | null | undefined,
 		organizationId: ID
 	): Promise<Partial<Document>> {
+		if (visibility === undefined) {
+			return {};
+		}
 		if (visibility !== DocumentVisibilityEnum.TEAM) {
-			return visibility === undefined ? {} : { visibility, organizationTeamId: null as unknown as ID };
+			return { visibility, organizationTeamId: null as unknown as ID };
 		}
 		if (!getDocsConfig().collabEnabled) {
 			throw new NotFoundException({ message: 'Team spaces are not enabled on this installation', code: DOCS_COLLAB_DISABLED });

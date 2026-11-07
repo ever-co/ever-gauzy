@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { ForbiddenException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { isBetterSqlite3, isSqlite } from '@gauzy/config';
 import { EventBus } from '@nestjs/cqrs';
 import { In, IsNull } from 'typeorm';
@@ -14,7 +14,7 @@ import {
 } from '@gauzy/contracts';
 import { CreateEntitySubscriptionEvent, EntitySubscription, OrganizationTeam, OrganizationTeamEmployee, RequestContext, prepareSQLQuery as p } from '@gauzy/core';
 import { getDocsConfig } from '../docs.config';
-import { DOCS_COLLAB_DISABLED } from '../docs.constants';
+import { DOCS_COLLAB_DISABLED, DOCS_WRITE_FORBIDDEN } from '../docs.constants';
 import { MoveDocumentSpaceDTO } from '../dto/document-space.dto';
 import { Document } from '../entities/document.entity';
 import { TypeOrmDocumentRepository } from '../repositories/type-orm-document.repository';
@@ -101,7 +101,7 @@ export class DocumentCollaborationService {
 			organizationTeamId: document.organizationTeamId
 		});
 		if (!owner) {
-			throw new BadRequestException({ message: "Only the document's owner may move it to another space", code: 'DOCS_WRITE_FORBIDDEN' });
+			throw new ForbiddenException({ message: "Only the document's owner may move it to another space", code: DOCS_WRITE_FORBIDDEN });
 		}
 		const fields = await this.documentService.resolveSpaceFields(input.visibility, input.organizationTeamId ?? null, document.organizationId);
 		const targetVisibility = (fields.visibility ?? input.visibility) as DocumentVisibilityEnum;
