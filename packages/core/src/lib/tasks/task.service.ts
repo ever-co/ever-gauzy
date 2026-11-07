@@ -713,7 +713,10 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			{ members: task.members ?? [] },
 			{ members }
 		);
-		this.publishTaskEvent(updatedTask, BaseEntityEventTypeEnum.UPDATED);
+		// The event states the members, so a listener that watches the followed fields sees the change.
+		this.publishTaskEvent(updatedTask, BaseEntityEventTypeEnum.UPDATED, {
+			members: members.map((member) => member.id).filter(Boolean)
+		} as unknown as Partial<ITaskUpdateInput>);
 	}
 
 	/**
@@ -815,7 +818,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 	 * @param task - The task as written
 	 * @param type - What happened to it
 	 */
-	private publishTaskEvent(task: Task, type: BaseEntityEventTypeEnum): void {
+	private publishTaskEvent(task: Task, type: BaseEntityEventTypeEnum, input: Partial<ITaskUpdateInput> = {}): void {
 		if (!this._domainEventBus) {
 			return;
 		}
@@ -830,7 +833,8 @@ export class TaskService extends TenantAwareCrudService<Task> {
 					new TaskEvent(ctx, task, type, {
 						tenantId,
 						organizationId,
-						projectId
+						projectId,
+						...input
 					} as ITaskUpdateInput)
 				)
 			).catch(logFailure);

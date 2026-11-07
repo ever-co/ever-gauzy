@@ -296,7 +296,7 @@ export class EmployeeNotificationService extends TenantAwareCrudService<Employee
 		void _receiverEmployee;
 
 		const result = await super.update(id, patch as QueryDeepPartialEntity<EmployeeNotification>);
-		this.publishStateChange(id, patch);
+		await this.publishStateChange(id, patch);
 		return result;
 	}
 
@@ -317,9 +317,11 @@ export class EmployeeNotificationService extends TenantAwareCrudService<Employee
 
 	/**
 	 * Tells the listeners that the read / archive state of one notification changed (an edit by id). A change
-	 * stated by criteria rather than an id names no notification and is not announced.
+	 * stated by criteria rather than an id names no notification and is not announced. The event names the
+	 * notification's receiver (read from the row: an administrator may edit a colleague's notification), never
+	 * the caller. Never fails the write.
 	 */
-	private publishStateChange(id: string | FindOptionsWhere<EmployeeNotification>, patch: Record<string, unknown>): void {
+	private async publishStateChange(id: string | FindOptionsWhere<EmployeeNotification>, patch: Record<string, unknown>): Promise<void> {
 		const isRead = typeof patch['isRead'] === 'boolean' ? (patch['isRead'] as boolean) : undefined;
 		const isArchived = typeof patch['isArchived'] === 'boolean' ? (patch['isArchived'] as boolean) : undefined;
 		if (isRead === undefined && isArchived === undefined) {
@@ -334,10 +336,14 @@ export class EmployeeNotificationService extends TenantAwareCrudService<Employee
 			return;
 		}
 		try {
+			const row = await this.findOneByIdString(notificationId).catch(() => null);
+			if (!row) {
+				return;
+			}
 			this._eventBus.publish(
 				new EmployeeNotificationUpdatedEvent({
 					tenantId,
-					receiverEmployeeId: RequestContext.currentEmployeeId() ?? RequestContext.currentUser()?.employeeId ?? null,
+					receiverEmployeeId: row.receiverEmployeeId ?? null,
 					ids: [notificationId],
 					...(isRead !== undefined ? { isRead } : {}),
 					...(isArchived !== undefined ? { isArchived } : {})

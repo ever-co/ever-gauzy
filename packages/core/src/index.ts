@@ -97,7 +97,6 @@ export { ActivityLogService } from './lib/activity-log/activity-log.service';
 export { MentionService } from './lib/mention/mention.service';
 // The in-process facts the real-time channel turns into change hints (`@gauzy/plugin-realtime`).
 export { CreateMentionEvent } from './lib/mention/events';
-export { EmployeeCreateNotificationEvent, EmployeeNotificationCreatedEvent } from './lib/employee-notification/events';
 // 🛑 `@Global()` means "available everywhere ONCE IMPORTED", not "always present". The API gets
 // both modules through core's own `AppModule`; a host that builds its own module graph —
 // `apps/worker`, which runs the plugin pipelines without core's HTTP `AppModule` — has to import

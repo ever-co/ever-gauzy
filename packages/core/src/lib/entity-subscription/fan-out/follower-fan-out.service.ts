@@ -1,6 +1,6 @@
 import { Injectable, Logger, OnModuleDestroy, OnModuleInit, Optional } from '@nestjs/common';
 import { Subscription } from 'rxjs';
-import { DataSource } from 'typeorm';
+import { DataSource, In } from 'typeorm';
 import {
 	BaseEntityEnum,
 	EmployeeNotificationTypeEnum,
@@ -9,7 +9,7 @@ import {
 	NotificationActionTypeEnum
 } from '@gauzy/contracts';
 import { RequestContext } from '../../core/context/request-context';
-import { EntitySubscription, Task } from '../../core/entities/internal';
+import { Employee, EntitySubscription, Task } from '../../core/entities/internal';
 import { CommentEvent } from '../../comment/events';
 import { EmployeeNotificationService } from '../../employee-notification/employee-notification.service';
 import { EventBus } from '../../event-bus/event-bus';
@@ -129,12 +129,12 @@ export class FollowerFanOutService implements OnModuleInit, OnModuleDestroy {
 	}): Promise<number> {
 		try {
 			const actorEmployeeId = RequestContext.currentEmployeeId() ?? RequestContext.currentUser()?.employeeId ?? null;
-			const followers = await this.followersOf(input.entity, input.entityId, input.tenantId);
+			const followers = await this.followersOf(input.entity, input.entityId, input.tenantId, input.organizationId ?? null);
 			const receivers = followers.filter((employeeId) => !actorEmployeeId || String(employeeId) !== String(actorEmployeeId));
 			if (!receivers.length) {
 				return 0;
 			}
-			const entityName = input.entityName ?? (await this.entityName(input.entity, input.entityId, input.tenantId));
+			const entityName = input.entityName ?? (await this.entityName(input.entity, input.entityId, input.tenantId, input.organizationId ?? null));
 			const actorName = actorDisplayName(RequestContext.currentUser());
 			for (const receiverEmployeeId of receivers) {
 				this.notifications.publishNotificationEvent(
@@ -159,21 +159,43 @@ export class FollowerFanOutService implements OnModuleInit, OnModuleDestroy {
 		}
 	}
 
-	/** The distinct employees following a record. */
-	private async followersOf(entity: BaseEntityEnum, entityId: ID, tenantId: ID): Promise<ID[]> {
+	/**
+	 * The distinct employees following a record who may hear of it: the subscriptions of the record's own
+	 * organization, held by active employees of that organization. A subscription filed from another organization
+	 * (the subscription API checks no access to its target) names nobody here, so a record's title never reaches
+	 * an employee who cannot read the record.
+	 */
+	private async followersOf(entity: BaseEntityEnum, entityId: ID, tenantId: ID, organizationId: ID | null): Promise<ID[]> {
 		const rows = await this.dataSource.getRepository(EntitySubscription).find({
 			select: { employeeId: true },
-			where: { entity, entityId, tenantId }
+			where: { entity, entityId, tenantId, ...(organizationId ? { organizationId } : {}) }
 		});
-		return [...new Set(rows.map((row) => row.employeeId).filter(Boolean))] as ID[];
+		const employeeIds = [...new Set(rows.map((row) => row.employeeId).filter(Boolean))] as ID[];
+		if (!employeeIds.length) {
+			return [];
+		}
+		const employees = await this.dataSource.getRepository(Employee).find({
+			select: { id: true },
+			where: {
+				id: In(employeeIds),
+				tenantId,
+				...(organizationId ? { organizationId } : {}),
+				isActive: true,
+				isArchived: false
+			}
+		});
+		return employees.map((employee) => employee.id as ID);
 	}
 
 	/** The name a notification title shows for the record (a task's title; otherwise the entity kind). */
-	private async entityName(entity: BaseEntityEnum, entityId: ID, tenantId: ID): Promise<string> {
+	private async entityName(entity: BaseEntityEnum, entityId: ID, tenantId: ID, organizationId: ID | null): Promise<string> {
 		if (entity === BaseEntityEnum.Task) {
 			const task = await this.dataSource
 				.getRepository(Task)
-				.findOne({ select: { id: true, title: true }, where: { id: entityId, tenantId } })
+				.findOne({
+					select: { id: true, title: true },
+					where: { id: entityId, tenantId, ...(organizationId ? { organizationId } : {}) }
+				})
 				.catch(() => null);
 			if (task?.title) return task.title;
 		}

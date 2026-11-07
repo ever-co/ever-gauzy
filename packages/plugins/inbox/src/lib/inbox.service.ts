@@ -487,7 +487,8 @@ export class InboxService implements IInboxItemWriter, IInboxRecipientActions {
 			.select('recipient.id', 'recipientId')
 			.addSelect('item.id', 'itemId')
 			.addSelect('item.source', 'source')
-			.getRawMany<{ recipientId: ID; itemId: ID; source: string }>();
+			.addSelect('item.organizationId', 'organizationId')
+			.getRawMany<{ recipientId: ID; itemId: ID; source: string; organizationId: ID | null }>();
 		const ids = rows.map((row) => row.recipientId);
 
 		const repository = this.dataSource.getRepository(InboxItemRecipient);
@@ -509,13 +510,22 @@ export class InboxService implements IInboxItemWriter, IInboxRecipientActions {
 				rows.map((row) => ({ recipientId: row.recipientId, itemId: row.itemId }))
 			);
 		}
-		// The user's other clients: one event for the whole bulk read (never fails the write).
-		if (rows.length) {
+		// The user's other clients: one event per organization of the items read (an item's event is scoped to its
+		// own organization, as a single read's is; the bulk may span the caller's organizations and tenant-wide items).
+		const byOrganization = new Map<string, { organizationId: ID | null; itemIds: ID[] }>();
+		for (const row of rows) {
+			const organizationId = row.organizationId ?? null;
+			const key = String(organizationId ?? '');
+			const group = byOrganization.get(key) ?? { organizationId, itemIds: [] };
+			group.itemIds.push(row.itemId);
+			byOrganization.set(key, group);
+		}
+		for (const group of byOrganization.values()) {
 			void this.realtime?.recipientStateChanged({
 				tenantId,
-				organizationId: RequestContext.currentOrganizationId() ?? null,
+				organizationId: group.organizationId,
 				userId,
-				itemIds: rows.map((row) => row.itemId),
+				itemIds: group.itemIds,
 				stated: ['isRead']
 			});
 		}
@@ -860,6 +870,8 @@ export class InboxService implements IInboxItemWriter, IInboxRecipientActions {
 				})
 			);
 			query.andWhere('recipient.snoozedUntil > :now', { now: new Date() });
+			// A done item lives in the Done tab only, snoozed or not.
+			query.andWhere('recipient.doneAt IS NULL');
 		} else if (tab === InboxTabEnum.DONE) {
 			// Done and not archived: where a done item is found (and brought back).
 			query.andWhere(

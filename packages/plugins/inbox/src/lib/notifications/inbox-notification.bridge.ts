@@ -1,4 +1,4 @@
-import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit, Optional } from '@nestjs/common';
 import { EventsHandler, IEventHandler } from '@nestjs/cqrs';
 import { DataSource, In } from 'typeorm';
 import {
@@ -8,6 +8,7 @@ import {
 	IInboxItem,
 	IInboxItemRecipient,
 	IInboxItemUpsertInput,
+	IInboxRecipientStateField,
 	IInboxRecipientStateInput,
 	IInboxSourceHandler,
 	IInboxSourceReplyResult,
@@ -27,6 +28,8 @@ import { InboxItem } from '../entities/inbox-item.entity';
 import { InboxItemRecipient } from '../entities/inbox-item-recipient.entity';
 import { InboxSourceHandlerRegistry } from '../inbox-source-handler.registry';
 import { InboxService } from '../inbox.service';
+import { InboxItemFeed } from '../inbox-item-feed';
+import { InboxRealtime } from '../realtime/inbox-realtime';
 
 /**
  * The inbox item a platform notification becomes: kind NOTIFICATION, source GAUZY, identified by the notification
@@ -80,7 +83,11 @@ export class InboxNotificationBridge implements OnModuleInit, IInboxSourceHandle
 	constructor(
 		private readonly dataSource: DataSource,
 		private readonly inbox: InboxService,
-		private readonly registry: InboxSourceHandlerRegistry
+		private readonly registry: InboxSourceHandlerRegistry,
+		/** Tells the observers about a mirrored change; absent in bare test wiring. */
+		@Optional() private readonly feed?: InboxItemFeed,
+		/** Tells the user's other clients about a mirrored change; absent in bare test wiring. */
+		@Optional() private readonly realtime?: InboxRealtime
 	) {}
 
 	onModuleInit(): void {
@@ -102,11 +109,12 @@ export class InboxNotificationBridge implements OnModuleInit, IInboxSourceHandle
 		const patch: Partial<EmployeeNotification> = {};
 		if (typeof change?.isRead === 'boolean') {
 			patch.isRead = change.isRead;
-			patch.readAt = change.isRead ? (recipient?.readAt ?? new Date()) : undefined;
+			// A cleared state clears its date: an undefined member would leave the old one in place.
+			patch.readAt = change.isRead ? (recipient?.readAt ?? new Date()) : (null as never);
 		}
 		if (typeof change?.isArchived === 'boolean') {
 			patch.isArchived = change.isArchived;
-			patch.archivedAt = change.isArchived ? (recipient?.archivedAt ?? new Date()) : undefined;
+			patch.archivedAt = change.isArchived ? (recipient?.archivedAt ?? new Date()) : (null as never);
 		}
 		if (!Object.keys(patch).length) {
 			return;
@@ -150,7 +158,6 @@ export class InboxNotificationBridge implements OnModuleInit, IInboxSourceHandle
 				return;
 			}
 			const items = await this.dataSource.getRepository(InboxItem).find({
-				select: { id: true },
 				where: {
 					tenantId: change.tenantId,
 					externalSource: INBOX_NOTIFICATION_EXTERNAL_SOURCE,
@@ -160,23 +167,80 @@ export class InboxNotificationBridge implements OnModuleInit, IInboxSourceHandle
 			if (!items.length) {
 				return;
 			}
+			const itemById = new Map(items.map((item) => [String(item.id), item]));
 			const now = new Date();
 			const recipients = this.dataSource.getRepository(InboxItemRecipient);
 			const where = { tenantId: change.tenantId, userId, inboxItemId: In(items.map((item) => item.id)) };
+			const changed: Array<{ recipient: InboxItemRecipient; stated: IInboxRecipientStateField[] }> = [];
 			if (change.isRead !== undefined) {
-				await recipients.update(
-					{ ...where, isRead: !change.isRead },
-					change.isRead ? { isRead: true, readAt: now } : { isRead: false, readAt: null as never }
-				);
+				// Mark-all-read leaves archived notifications unread; the mirror leaves their copies alone too.
+				const criteria = { ...where, isRead: !change.isRead, ...(change.ids === 'all' ? { isArchived: false } : {}) };
+				const rows = await recipients.find({ where: criteria });
+				if (rows.length) {
+					await recipients.update(
+						{ id: In(rows.map((row) => row.id)) },
+						change.isRead ? { isRead: true, readAt: now } : { isRead: false, readAt: null as never }
+					);
+					changed.push(...rows.map((recipient) => ({ recipient, stated: ['isRead'] as IInboxRecipientStateField[] })));
+				}
 			}
 			if (change.isArchived !== undefined) {
-				await recipients.update(
-					{ ...where, isArchived: !change.isArchived },
-					change.isArchived ? { isArchived: true, archivedAt: now } : { isArchived: false, archivedAt: null as never }
-				);
+				const rows = await recipients.find({ where: { ...where, isArchived: !change.isArchived } });
+				if (rows.length) {
+					await recipients.update(
+						{ id: In(rows.map((row) => row.id)) },
+						change.isArchived ? { isArchived: true, archivedAt: now } : { isArchived: false, archivedAt: null as never }
+					);
+					changed.push(...rows.map((recipient) => ({ recipient, stated: ['isArchived'] as IInboxRecipientStateField[] })));
+				}
+			}
+			if (changed.length) {
+				this.announce(change.tenantId, userId, itemById, changed);
 			}
 		} catch (error) {
 			this.logger.warn(`The notification state change was not mirrored to the inbox: ${(error as Error)?.message}`);
+		}
+	}
+
+	/**
+	 * A mirrored change is a change like any other to the observers and to the user's other clients: the feed hears
+	 * one recipient change per row, the channel one `inbox_item.state_changed` per organization of the items. The
+	 * source handler is not called (the change came from the source), so nothing echoes. Best effort.
+	 */
+	private announce(
+		tenantId: ID,
+		userId: ID,
+		itemById: Map<string, InboxItem>,
+		changed: Array<{ recipient: InboxItemRecipient; stated: IInboxRecipientStateField[] }>
+	): void {
+		if (this.feed?.observed) {
+			for (const { recipient, stated } of changed) {
+				const item = itemById.get(String(recipient.inboxItemId));
+				if (item) void this.feed.recipientChanged(item, recipient, stated);
+			}
+		}
+		if (!this.realtime) {
+			return;
+		}
+		const byOrganization = new Map<string, { organizationId: ID | null; itemIds: Set<ID>; stated: Set<string> }>();
+		for (const { recipient, stated } of changed) {
+			const item = itemById.get(String(recipient.inboxItemId));
+			if (!item) continue;
+			const organizationId = (item.organizationId as ID | null | undefined) ?? null;
+			const key = String(organizationId ?? '');
+			const group = byOrganization.get(key) ?? { organizationId, itemIds: new Set<ID>(), stated: new Set<string>() };
+			group.itemIds.add(item.id as ID);
+			for (const field of stated) group.stated.add(field);
+			byOrganization.set(key, group);
+		}
+		for (const group of byOrganization.values()) {
+			void this.realtime.recipientStateChanged({
+				tenantId,
+				organizationId: group.organizationId,
+				userId,
+				itemIds: [...group.itemIds],
+				stated: [...group.stated]
+			});
 		}
 	}
 
