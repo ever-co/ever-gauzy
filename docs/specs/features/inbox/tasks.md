@@ -25,7 +25,7 @@
 
 - [x] **T9**. CI green on #11682 (tsc, Jest, schema snapshot, field-binding check); fix forward
 - [ ] **T10**. Enable on dev: mention → NOTIFICATION item; read mirror both ways; follower comment notification with the flag on
-- [ ] **T11**. Angular `inbox-ui`: Done tab + action, NOTIFICATION rendering (opens the task/comment), counts
+- [x] **T11**. Angular `inbox-ui`: Done tab + action, NOTIFICATION rendering (opens the task/comment), counts (ever-gauzy #11720)
 - [x] **T12**. Dedupe rule per spec FR-4 (10-minute window per recipient/target/kind) in the Inbox's notification bridge (ever-gauzy #11707: a mention whose twin reached the user within ten minutes is not filed again)
 
 ## Phase 4 — Delivery (lane G10)
