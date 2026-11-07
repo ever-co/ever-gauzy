@@ -3,7 +3,8 @@ import { Routes } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { PermissionsEnum } from '@gauzy/contracts';
 import { defineDeclarativePlugin, PluginRouteInput, PluginUiDefinition } from '@gauzy/plugin-ui';
-import { AuthStrategy, NavigationBuilderService, NavMenuBuilderService, PermissionsGuard } from '@gauzy/ui-core/core';
+import { AuthStrategy, NavigationBuilderService, NavMenuBuilderService, PermissionsGuard, Store } from '@gauzy/ui-core/core';
+import { distinctUntilChanged, filter, map } from 'rxjs/operators';
 import {
 	INBOX_HEADER_ACTION_ID,
 	INBOX_LINK,
@@ -260,9 +261,18 @@ export const InboxUiPlugin: PluginUiDefinition = {
 		injector.get(NavMenuBuilderService).addNavMenuItems([INBOX_NOTIFICATION_SETTINGS_NAV_ITEM] as never, INBOX_SETTINGS_NAV_SECTION_ID);
 		registerInboxEntryPoints(injector);
 		registerInboxSettingsEntryPoints(injector);
-		// A sign-out ends this browser's inbox notifications (a shared browser).
+		// A sign-out ends this browser's inbox notifications (a shared browser): the device is removed while the session
+		// still allows it. An account that opens the app has its subscribed browser registered again.
 		const push = injector.get(InboxWebPushService);
 		// Optional: a shell without the auth strategy (none today) simply has nothing to end.
-		injector.get(AuthStrategy, null)?.logout$.subscribe(() => void push.forgetThisBrowser());
+		injector.get(AuthStrategy, null)?.logout$.subscribe(() => push.forgetThisBrowser());
+		injector
+			.get(Store)
+			.user$.pipe(
+				map((user) => user?.id ?? null),
+				distinctUntilChanged(),
+				filter((userId): userId is string => !!userId)
+			)
+			.subscribe(() => void push.resync());
 	}
 };

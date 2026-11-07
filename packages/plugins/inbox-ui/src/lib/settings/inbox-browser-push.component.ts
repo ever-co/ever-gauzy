@@ -13,6 +13,43 @@ import { InboxWebPushService, InboxWebPushState } from '../services/inbox-web-pu
 	selector: 'ngx-inbox-browser-push',
 	changeDetection: ChangeDetectionStrategy.OnPush,
 	imports: [NbToggleModule, TranslatePipe],
+	// The settings page's row layout, for this section's own rows.
+	styles: [
+		`
+			.group {
+				margin-bottom: 1.5rem;
+			}
+			.group h5 {
+				margin: 0 0 0.25rem;
+			}
+			.hint {
+				margin: 0.25rem 0 0;
+				font-size: 0.85rem;
+				opacity: 0.75;
+			}
+			.row {
+				display: flex;
+				justify-content: space-between;
+				align-items: center;
+				gap: 1rem;
+				padding: 0.75rem 0;
+			}
+			.text {
+				display: flex;
+				flex-direction: column;
+				min-width: 0;
+			}
+			.label {
+				font-weight: 600;
+			}
+			.controls {
+				display: flex;
+				justify-content: flex-end;
+				align-items: center;
+				gap: 0.75rem;
+			}
+		`
+	],
 	template: `
 		@if (state() !== 'unavailable' && state() !== null) {
 			<section class="group" data-test="browser-push">
