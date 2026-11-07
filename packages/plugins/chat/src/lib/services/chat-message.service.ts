@@ -5,7 +5,6 @@ import {
 	CHAT_EVENT_NAMES,
 	CHAT_MESSAGE_MAX_ATTACHMENTS,
 	CHAT_MESSAGE_MAX_LENGTH,
-	ChatConversationKindEnum,
 	ChatMessageKindEnum,
 	ChatTaskReferenceKindEnum,
 	IChatEvent,
@@ -310,7 +309,7 @@ export class ChatMessageService {
 		const now = new Date();
 
 		let message: ChatMessage;
-		let readCount = conversation.messageCount ?? 0;
+		let readCount: number;
 		try {
 			const written = await this.dataSource.transaction(async (manager) => {
 				const repository = manager.getRepository(ChatMessage);

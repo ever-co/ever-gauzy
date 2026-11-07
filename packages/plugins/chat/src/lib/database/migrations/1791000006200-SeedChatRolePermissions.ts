@@ -1,7 +1,7 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 import { randomUUID } from 'node:crypto';
 import { PermissionsEnum, RolesEnum } from '@gauzy/contracts';
-import { dialectOf, ChatDialect, lockMigrations, param, q } from '../migration-helpers';
+import { dialectOf, lockMigrations, param, q } from '../migration-helpers';
 
 /** Who gets which inbox grant (the Chat spec §3): administrators all three, managers and employees `INBOX_VIEW`. */
 export const CHAT_ROLE_GRANTS: Readonly<Record<string, readonly PermissionsEnum[]>> = {
