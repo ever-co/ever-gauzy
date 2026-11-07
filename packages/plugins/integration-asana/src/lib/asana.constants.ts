@@ -45,6 +45,10 @@ export const ASANA_WEBHOOK_HANDSHAKE_WINDOW_MS = 10 * 60_000;
 export const ASANA_TASKS_PAGE_SIZE = 100;
 /** How many applies may hold a transaction (and its pool connection) at once in one process. */
 export const ASANA_APPLY_CONCURRENCY = 4;
+/** How far down a task's subtasks are followed (a subtask of a subtask is depth 2). */
+export const ASANA_SUBTASK_MAX_DEPTH = 5;
+/** The import position is the run's start minus this margin: a change made while the pages were read is not skipped next time. */
+export const ASANA_IMPORT_CLOCK_SKEW_MS = 60_000;
 
 /** An access token this close to its expiry is renewed before use. */
 export const ASANA_TOKEN_REFRESH_AHEAD_MS = 5 * 60 * 1000;
@@ -61,11 +65,16 @@ export const ASANA_IMPORT_SWEEP_BATCH = 50;
 export const ASANA_IMPORT_WEBHOOK_STRIDE = 4;
 /** A mapping counts as due this long before its interval is up, so one imported right after a sweep does not slip a whole sweep. */
 export const ASANA_IMPORT_SWEEP_SLACK_MS = 60_000;
+/** How many times the queue tries a sweep that could not run, and the first delay between tries (doubled each time). */
+export const ASANA_IMPORT_SWEEP_ATTEMPTS = 3;
+export const ASANA_IMPORT_SWEEP_RETRY_DELAY_MS = 30_000;
 
 /** Error codes the routes answer with (`{ message, code }`). */
 export const ASANA_NOT_CONFIGURED = 'ASANA_NOT_CONFIGURED';
 export const ASANA_NOT_CONNECTED = 'ASANA_NOT_CONNECTED';
 export const ASANA_TOKEN_REFUSED = 'ASANA_TOKEN_REFUSED';
+export const ASANA_UNAVAILABLE = 'ASANA_UNAVAILABLE';
+export const ASANA_WEBHOOK_NOT_REMOVED = 'ASANA_WEBHOOK_NOT_REMOVED';
 export const ASANA_STATE_INVALID = 'ASANA_STATE_INVALID';
 export const ASANA_MAPPING_EXISTS = 'ASANA_MAPPING_EXISTS';
 export const ASANA_PROJECT_OUTBOUND_TAKEN = 'ASANA_PROJECT_OUTBOUND_TAKEN';

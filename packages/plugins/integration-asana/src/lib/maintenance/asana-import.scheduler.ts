@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { CronExpression } from '@nestjs/schedule';
 import { ScheduledJob } from '@gauzy/scheduler';
-import { ASANA_IMPORT_SWEEP_JOB, ASANA_IMPORT_SWEEP_SCHEDULE, ASANA_QUEUE_NAME } from '../asana.constants';
+import { ASANA_IMPORT_SWEEP_ATTEMPTS, ASANA_IMPORT_SWEEP_JOB, ASANA_IMPORT_SWEEP_RETRY_DELAY_MS, ASANA_IMPORT_SWEEP_SCHEDULE, ASANA_QUEUE_NAME } from '../asana.constants';
 
 /** What the schedule tells the worker about the sweep it asked for. */
 export interface IAsanaImportSweepJob {
@@ -24,6 +24,8 @@ export class AsanaImportScheduler {
 		cron: CronExpression.EVERY_5_MINUTES,
 		queueName: ASANA_QUEUE_NAME,
 		queueJobName: ASANA_IMPORT_SWEEP_JOB,
+		// A sweep that could not run (its listing failed) is tried again by the queue, a little later each time.
+		queueJobOptions: { attempts: ASANA_IMPORT_SWEEP_ATTEMPTS, backoff: { type: 'exponential', delay: ASANA_IMPORT_SWEEP_RETRY_DELAY_MS }, removeOnComplete: true, removeOnFail: 20 },
 		preventOverlap: true
 	})
 	async enqueueSweep(): Promise<IAsanaImportSweepJob> {

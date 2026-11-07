@@ -9,8 +9,7 @@ import {
 	knownStatusesOf,
 	statusKey,
 	taskFieldsOf,
-	taskPriorityOf,
-	watermarkOf
+	taskPriorityOf
 } from './asana-task.mapper';
 
 const SECTIONS = [
@@ -83,10 +82,5 @@ describe('asana task mapper', () => {
 		expect(sectionForStatus('custom', {}, SECTIONS)).toBeNull();
 		expect(asanaUpdateOf({ title: 'T', description: null, status: TaskStatusEnum.COMPLETED, dueDate: new Date('2026-03-04T10:00:00Z') })).toEqual({ name: 'T', notes: '', completed: true, due_on: '2026-03-04' });
 		expect(asanaUpdateOf({ status: TaskStatusEnum.OPEN })).toEqual({ completed: false });
-	});
-
-	it('advances the watermark to the newest change', () => {
-		expect(watermarkOf([task(), task({ modified_at: '2026-01-05T00:00:00.000Z' })], '2026-01-03T00:00:00.000Z')).toBe('2026-01-05T00:00:00.000Z');
-		expect(watermarkOf([], null)).toBeNull();
 	});
 });

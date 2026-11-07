@@ -137,12 +137,3 @@ export function asanaUpdateOf(task: { title?: string | null; description?: strin
 	if (task.dueDate !== undefined) input.due_on = asanaDueOnOf(task.dueDate);
 	return input;
 }
-
-/** The newest `modified_at` among the tasks (the watermark the next incremental import starts from). */
-export function watermarkOf(tasks: readonly Pick<AsanaTask, 'modified_at'>[], current: string | null | undefined): string | null {
-	let latest = current ?? null;
-	for (const task of tasks) {
-		if (task.modified_at && (!latest || task.modified_at > latest)) latest = task.modified_at;
-	}
-	return latest;
-}

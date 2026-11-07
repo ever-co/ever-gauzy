@@ -23,8 +23,8 @@ import { AsanaMappingService } from '../asana-mapping.service';
 import { asanaSyncUser, runInAsanaContext } from '../asana-process';
 import { emptyCounts, AsanaSyncCounts, AsanaSyncRunService } from '../asana-sync-run.service';
 import { AsanaTenantService } from '../asana-tenant.service';
-import { ASANA_APPLY_CONCURRENCY, ASANA_CONFIG, ASANA_TASKS_PAGE_SIZE, AsanaSettingName } from '../asana.constants';
-import { asanaUpdateOf, knownStatusesOf, parseSectionMap, sectionForStatus, statusKey, taskFieldsOf, watermarkOf } from './asana-task.mapper';
+import { ASANA_APPLY_CONCURRENCY, ASANA_CONFIG, ASANA_IMPORT_CLOCK_SKEW_MS, ASANA_SUBTASK_MAX_DEPTH, ASANA_TASKS_PAGE_SIZE, AsanaSettingName } from '../asana.constants';
+import { asanaUpdateOf, knownStatusesOf, parseSectionMap, sectionForStatus, statusKey, taskFieldsOf } from './asana-task.mapper';
 
 /** What one Asana task became. */
 type ApplyOutcome = 'created' | 'updated' | 'skipped';
@@ -49,6 +49,8 @@ interface ApplyContext extends ClientHolder {
 	tagIdsByAsanaGid: Map<string, ID | null>;
 	/** Subtasks whose parent is linked once every task of the run is in. */
 	pendingParents: Array<{ taskId: ID; parentSourceId: string }>;
+	/** The tasks applied in this run, so a subtask reached twice (through its parent and on its own) is applied once. */
+	applied: Set<string>;
 	counts: AsanaSyncCounts;
 }
 
@@ -116,13 +118,16 @@ export class AsanaSyncService {
 	}
 
 	/** Removes the mapping's webhook on Asana (best effort). */
-	async removeWebhook(tenant: IIntegrationTenant, mapping: AsanaProjectMapping): Promise<void> {
-		if (!mapping.webhookGid) return;
+	/** Removes the mapping's webhook from Asana; `true` when it is gone (or there was none), `false` when Asana still has it. */
+	async removeWebhook(tenant: IIntegrationTenant, mapping: AsanaProjectMapping): Promise<boolean> {
+		if (!mapping.webhookGid) return true;
 		try {
 			const holder: ClientHolder = { tenant, client: await this.tenants.clientReady(tenant), renewed: false };
 			await this.call(holder, (client) => client.deleteWebhook(mapping.webhookGid as string));
+			return true;
 		} catch (caught) {
 			this.logger.warn(`The Asana webhook of mapping ${mapping.id} could not be removed: ${this.describe(caught)}`);
+			return false;
 		}
 	}
 
@@ -139,7 +144,10 @@ export class AsanaSyncService {
 		const user = asanaSyncUser(scope, this.connectedByUserId(tenant) ?? run.requestedByUserId ?? null);
 		const counts = emptyCounts();
 		const since = options.full ? null : mapping.lastCursor ?? null;
-		let cursor: string | null = since;
+		// The next import starts a little before this run did: Asana's pages are not ordered by `modified_at`, so a task
+		// changed while they were read would otherwise sit below the newest change read and be skipped next time.
+		// Reading a few tasks again is harmless (the apply is idempotent through the id map).
+		const cursor = new Date(Date.now() - ASANA_IMPORT_CLOCK_SKEW_MS).toISOString();
 		let error: string | null = null;
 		try {
 			await runInAsanaContext(user, async () => {
@@ -150,7 +158,6 @@ export class AsanaSyncService {
 					for (const task of page.items) {
 						await this.applyOne(context, task);
 					}
-					cursor = watermarkOf(page.items, cursor);
 					await this.runs.progress(run, counts);
 					if (!page.nextOffset) break;
 					offset = page.nextOffset;
@@ -201,7 +208,7 @@ export class AsanaSyncService {
 				const context = await this.openContext(tenant, mapping, counts);
 				for (const gid of taskGids) {
 					const task = await this.call(context, (client) => client.task(gid));
-					if (!task || !(task.memberships ?? []).some((membership) => membership?.project?.gid === mapping.asanaProjectGid)) {
+					if (!task || !(await this.belongsToProject(context, task))) {
 						counts.skipped += 1;
 						continue;
 					}
@@ -432,12 +439,19 @@ export class AsanaSyncService {
 			employeeIdsByEmail: new Map(),
 			tagIdsByAsanaGid: new Map(),
 			pendingParents: [],
+			applied: new Set(),
 			counts
 		};
 	}
 
-	/** One Asana task of a run: a failure counts and is logged; a refused token stops the run. */
-	private async applyOne(context: ApplyContext, task: AsanaTask): Promise<void> {
+	/**
+	 * One Asana task of a run, then its subtasks: a subtask is in the project only when someone added it, so the
+	 * project's pages do not carry it — it is read through its parent (`num_subtasks`), as far down as
+	 * `ASANA_SUBTASK_MAX_DEPTH`. A failure counts and is logged; a refused token stops the run.
+	 */
+	private async applyOne(context: ApplyContext, task: AsanaTask, depth = 0): Promise<void> {
+		if (context.applied.has(task.gid)) return;
+		context.applied.add(task.gid);
 		try {
 			const outcome = await this.applyTask(context, task);
 			context.counts[outcome] += 1;
@@ -446,6 +460,33 @@ export class AsanaSyncService {
 			context.counts.failed += 1;
 			this.logger.warn(`Asana task ${task.gid} could not be applied: ${this.describe(caught)}`);
 		}
+		if (!(task.num_subtasks && task.num_subtasks > 0) || depth >= ASANA_SUBTASK_MAX_DEPTH || task.resource_subtype === 'section') return;
+		let subtasks: AsanaTask[];
+		try {
+			subtasks = await this.call(context, (client) => client.subtasks(task.gid));
+		} catch (caught) {
+			if (caught instanceof AsanaApiError && caught.isUnauthorized) throw caught;
+			this.logger.warn(`The subtasks of Asana task ${task.gid} could not be read: ${this.describe(caught)}`);
+			return;
+		}
+		for (const subtask of subtasks) {
+			await this.applyOne(context, subtask, depth + 1);
+		}
+	}
+
+	/**
+	 * Whether a task a webhook named is the mapping's: in the project itself, or a subtask whose parent chain reaches
+	 * a task that is (a subtask is in the project only when someone added it, and its events name the subtask).
+	 */
+	private async belongsToProject(context: ApplyContext, task: AsanaTask): Promise<boolean> {
+		let current: AsanaTask | null = task;
+		for (let depth = 0; current && depth <= ASANA_SUBTASK_MAX_DEPTH; depth += 1) {
+			if ((current.memberships ?? []).some((membership) => membership?.project?.gid === context.mapping.asanaProjectGid)) return true;
+			if (!current.parent?.gid) return false;
+			const parentGid: string = current.parent.gid;
+			current = await this.call(context, (client) => client.task(parentGid));
+		}
+		return false;
 	}
 
 	/** One apply at a time per Asana task: chained in the process, locked across processes (`lockedTransaction`), within the process's apply slots. */

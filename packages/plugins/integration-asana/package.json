@@ -1,7 +1,7 @@
 {
 	"name": "@gauzy/plugin-integration-asana",
 	"version": "0.1.0",
-	"description": "Ever Gauzy Platform plugin for the Asana integration (OAuth connect, team to project mapping, issue import, two-way status sync, webhooks); off unless ASANA_ENABLED=true",
+	"description": "Ever Gauzy Platform plugin for the Asana integration (OAuth connect, Asana project to project mapping, task import, two-way sync with sections as statuses, webhooks, a scheduled import); off unless ASANA_ENABLED=true",
 	"author": {
 		"name": "Ever Co. LTD",
 		"url": "https://github.com/ever-co"
@@ -48,6 +48,7 @@
 		"class-transformer": "^0.5.1",
 		"class-validator": "^0.15.1",
 		"express": "^5.3.0",
+		"nestjs-cls": "^7.0.1",
 		"rxjs": "^7.8.2",
 		"tslib": "^2.8.1",
 		"typeorm": "^1.1.2"

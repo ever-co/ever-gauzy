@@ -44,7 +44,9 @@ no table (its migration is not registered) and makes no outbound request. Same l
   changed since the last import) runs behind the response, one import per mapping at a time. Each Asana task
   becomes a task of the project once (the platform's id map, entity `TASK`), updated on later runs: name,
   notes, status (completion and section), the project's status row of that name, a priority from a custom
-  field called Priority, due date, the assignee by e-mail, tags as tags, subtasks under their parent. A task
+  field called Priority, due date, the assignee by e-mail, tags as tags, subtasks under their parent (a subtask is in
+  the project only when someone added it, so each task's subtasks are read through it, five levels down). The next
+  import starts a minute before this one did, whatever the pages carried. A task
   that could not be applied keeps the import position. An Asana task two mapped projects share belongs to the
   mapping that imported it first; the other skips it. Section and status names compare by key: case ignored,
   spaces as hyphens (`In Progress` is `in-progress`). `GET …/runs` lists the runs.

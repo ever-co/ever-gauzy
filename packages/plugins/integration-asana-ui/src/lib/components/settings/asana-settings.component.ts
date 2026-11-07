@@ -540,12 +540,13 @@ export class AsanaSettingsComponent implements OnInit {
 
 	changeDirection(mapping: AsanaMapping, direction: AsanaDirection): void {
 		if (!this.integrationId || direction === mapping.direction) return;
-		this.request(this.api.updateMapping(this.integrationId, mapping.id, { direction }), (updated) => this.replace(updated));
+		// Refused (a project that already sends its tasks elsewhere, for one): the row shows the stored direction again.
+		this.request(this.api.updateMapping(this.integrationId, mapping.id, { direction }), (updated) => this.replace(updated), () => this.replace({ ...mapping }));
 	}
 
 	changeSync(mapping: AsanaMapping, syncEnabled: boolean): void {
 		if (!this.integrationId || syncEnabled === mapping.syncEnabled) return;
-		this.request(this.api.updateMapping(this.integrationId, mapping.id, { syncEnabled }), (updated) => this.replace(updated));
+		this.request(this.api.updateMapping(this.integrationId, mapping.id, { syncEnabled }), (updated) => this.replace(updated), () => this.replace({ ...mapping }));
 	}
 
 	registerWebhook(mapping: AsanaMapping): void {
@@ -580,7 +581,8 @@ export class AsanaSettingsComponent implements OnInit {
 	}
 
 	/** One request with the busy flag and the error line. */
-	private request<T>(request: Observable<T>, apply: (value: T) => void): void {
+	/** One request at a time: `apply` takes its answer; `revert` puts the page back when it was refused. */
+	private request<T>(request: Observable<T>, apply: (value: T) => void, revert?: () => void): void {
 		this.busy = true;
 		this.error = null;
 		this.notice = null;
@@ -593,6 +595,7 @@ export class AsanaSettingsComponent implements OnInit {
 			},
 			error: (error) => {
 				this.busy = false;
+				revert?.();
 				this.showError(error);
 			}
 		});

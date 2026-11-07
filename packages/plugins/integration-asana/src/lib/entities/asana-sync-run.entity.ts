@@ -14,9 +14,9 @@ import {
 
 /** Why a run started. */
 export enum AsanaSyncRunKind {
-	/** An admin's "Import now" (every issue, or the ones changed since the last run). */
+	/** An admin's "Import now" or the scheduled sweep (every task, or the ones changed since the last run). */
 	IMPORT = 'import',
-	/** A webhook delivery applied to one issue. */
+	/** A webhook delivery applied to the tasks it names. */
 	WEBHOOK = 'webhook'
 }
 

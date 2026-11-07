@@ -1,7 +1,8 @@
-import { BadRequestException, Body, Controller, Delete, Get, HttpCode, HttpStatus, Inject, Logger, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
+import { BadGatewayException, BadRequestException, Body, Controller, Delete, Get, HttpCode, HttpStatus, Inject, Logger, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ID, PermissionsEnum } from '@gauzy/contracts';
 import { PermissionGuard, Permissions, RequestContext, TenantPermissionGuard, UUIDValidationPipe, UseValidationPipe } from '@gauzy/core';
+import { AsanaApiClient, AsanaApiError } from './client/asana-api.client';
 import { AsanaImportDTO, AsanaInstallStateDTO, AsanaRunsQueryDTO, AsanaStatusQueryDTO, CreateAsanaMappingDTO, UpdateAsanaMappingDTO } from './dto/asana.dto';
 import { AsanaSyncRun } from './entities/asana-sync-run.entity';
 import { AsanaProjectMapping, AsanaSyncDirection } from './entities/asana-project-mapping.entity';
@@ -10,7 +11,17 @@ import { AsanaMappingService } from './asana-mapping.service';
 import { AsanaOAuthStateService } from './asana-oauth-state.service';
 import { AsanaSyncRunService } from './asana-sync-run.service';
 import { AsanaConnectionSummary, AsanaTenantService } from './asana-tenant.service';
-import { ASANA_CONFIG, ASANA_MAPPING_NOT_INBOUND, ASANA_NOT_CONFIGURED, ASANA_NOT_CONNECTED, ASANA_OAUTH_AUTHORIZE_URL, ASANA_ROUTE_PREFIX } from './asana.constants';
+import {
+	ASANA_CONFIG,
+	ASANA_MAPPING_NOT_INBOUND,
+	ASANA_NOT_CONFIGURED,
+	ASANA_NOT_CONNECTED,
+	ASANA_OAUTH_AUTHORIZE_URL,
+	ASANA_ROUTE_PREFIX,
+	ASANA_TOKEN_REFUSED,
+	ASANA_UNAVAILABLE,
+	ASANA_WEBHOOK_NOT_REMOVED
+} from './asana.constants';
 import { AsanaSyncService } from './sync/asana-sync.service';
 import { parseSectionMap } from './sync/asana-task.mapper';
 
@@ -45,6 +56,26 @@ export class AsanaController {
 		private readonly sync: AsanaSyncService,
 		private readonly oauthState: AsanaOAuthStateService
 	) {}
+
+	/**
+	 * A read of Asana for a route: Asana's own refusals are answered as such — a refused token is recorded on the
+	 * connection (the page then asks for a reconnect) and answered 400 `ASANA_TOKEN_REFUSED`; anything else Asana
+	 * answered (a rate limit, an outage) is 502 `ASANA_UNAVAILABLE`, not a 500 that says nothing.
+	 */
+	private async asana<T>(tenant: Parameters<AsanaTenantService['clientReady']>[0], make: (client: AsanaApiClient) => Promise<T>): Promise<T> {
+		try {
+			return await make(await this.tenants.clientReady(tenant));
+		} catch (error) {
+			if (error instanceof AsanaApiError) {
+				if (error.isUnauthorized) {
+					await this.tenants.setAttention(tenant, 'token_refused');
+					throw new BadRequestException({ message: 'Asana refused the connection\'s token; connect again', code: ASANA_TOKEN_REFUSED });
+				}
+				throw new BadGatewayException({ message: `Asana did not answer: ${error.message}`, code: ASANA_UNAVAILABLE });
+			}
+			throw error;
+		}
+	}
 
 	/** Whether the OAuth application is configured, and the organization's connection if any. */
 	@ApiOperation({ summary: 'The Asana integration status of an organization' })
@@ -105,7 +136,7 @@ export class AsanaController {
 	@Get('/:integrationId/metadata')
 	async metadata(@Param('integrationId', UUIDValidationPipe) integrationId: ID) {
 		const tenant = await this.tenants.requireById(integrationId);
-		const me = await (await this.tenants.clientReady(tenant)).me();
+		const me = await this.asana(tenant, (client) => client.me());
 		return { user: { gid: me.gid, name: me.name, email: me.email }, workspaces: me.workspaces };
 	}
 
@@ -113,7 +144,7 @@ export class AsanaController {
 	@Get('/:integrationId/workspaces/:workspaceGid/projects')
 	async projects(@Param('integrationId', UUIDValidationPipe) integrationId: ID, @Param('workspaceGid') workspaceGid: string) {
 		const tenant = await this.tenants.requireById(integrationId);
-		const projects = await (await this.tenants.clientReady(tenant)).projects(String(workspaceGid).slice(0, 64));
+		const projects = await this.asana(tenant, (client) => client.projects(String(workspaceGid).slice(0, 64)));
 		return projects.filter((project) => !project.archived);
 	}
 
@@ -121,7 +152,7 @@ export class AsanaController {
 	@Get('/:integrationId/projects/:projectGid/sections')
 	async sections(@Param('integrationId', UUIDValidationPipe) integrationId: ID, @Param('projectGid') projectGid: string) {
 		const tenant = await this.tenants.requireById(integrationId);
-		return (await this.tenants.clientReady(tenant)).sections(String(projectGid).slice(0, 64));
+		return this.asana(tenant, (client) => client.sections(String(projectGid).slice(0, 64)));
 	}
 
 	@ApiOperation({ summary: 'The Asana project ↔ project mappings of a connection' })
@@ -174,9 +205,15 @@ export class AsanaController {
 	@Post('/:integrationId/mappings/:mappingId/webhook')
 	@HttpCode(HttpStatus.ACCEPTED)
 	async registerWebhook(@Param('integrationId', UUIDValidationPipe) integrationId: ID, @Param('mappingId', UUIDValidationPipe) mappingId: ID): Promise<{ accepted: true }> {
+		if (!this.config.webhookBaseUrl) {
+			throw new BadRequestException({ message: 'This server has no public address for Asana webhooks', code: ASANA_NOT_CONFIGURED });
+		}
 		const tenant = await this.tenants.requireById(integrationId);
 		const mapping = await this.mappings.requireOne(tenant, mappingId);
-		await this.sync.removeWebhook(tenant, mapping);
+		// The current webhook must be gone before it is forgotten: one Asana still delivers to is not left untracked.
+		if (!(await this.sync.removeWebhook(tenant, mapping))) {
+			throw new BadGatewayException({ message: 'The current Asana webhook could not be removed; try again', code: ASANA_WEBHOOK_NOT_REMOVED });
+		}
 		await this.mappings.recordWebhook(mapping, { gid: null, secret: null });
 		setImmediate(() => void this.sync.ensureWebhook(tenant, mapping));
 		return { accepted: true };

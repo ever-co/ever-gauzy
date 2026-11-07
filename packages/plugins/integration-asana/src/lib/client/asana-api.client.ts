@@ -54,6 +54,8 @@ export interface AsanaTask {
 	parent: { gid: string } | null;
 	memberships: Array<{ project: { gid: string } | null; section: AsanaSection | null }>;
 	custom_fields: AsanaCustomField[];
+	/** How many subtasks the task has (they are read apart: a subtask is in the project only when someone added it). */
+	num_subtasks?: number;
 }
 
 export interface AsanaTaskUpdateInput {
@@ -129,7 +131,8 @@ const TASK_FIELDS = [
 	'custom_fields.name',
 	'custom_fields.type',
 	'custom_fields.enum_value.gid',
-	'custom_fields.enum_value.name'
+	'custom_fields.enum_value.name',
+	'num_subtasks'
 ].join(',');
 
 type FetchLike = (
@@ -283,6 +286,11 @@ export class AsanaApiClient {
 			if (error instanceof AsanaApiError && error.isNotFound) return null;
 			throw error;
 		}
+	}
+
+	/** The subtasks of a task, in their order (every page; a task with thousands of subtasks is capped). */
+	async subtasks(taskGid: string): Promise<AsanaTask[]> {
+		return this.pages<AsanaTask>(`/tasks/${encodeURIComponent(taskGid)}/subtasks?opt_fields=${TASK_FIELDS}&limit=100`, 5000);
 	}
 
 	async updateTask(gid: string, input: AsanaTaskUpdateInput): Promise<AsanaTask> {

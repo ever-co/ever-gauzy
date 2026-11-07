@@ -1,4 +1,4 @@
-import { BadRequestException, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { ID, IIntegrationSetting, IIntegrationTenant, IntegrationEntity } from '@gauzy/contracts';
 import { Integration, IntegrationSettingService, IntegrationTenantService, IntegrationTenantUpdateOrCreateCommand, RequestContext } from '@gauzy/core';
@@ -172,12 +172,19 @@ export class AsanaTenantService {
 			[AsanaSettingName.ATTENTION_REASON, '']
 		].map(([settingsName, settingsValue]) => ({ settingsName, settingsValue, tenantId, organizationId }));
 		const entitySettings = [IntegrationEntity.PROJECT, IntegrationEntity.TASK, IntegrationEntity.LABEL].map((entity) => ({ entity, sync: true, tenantId, organizationId }));
-		return this.commandBus.execute(
+		const written: IIntegrationTenant = await this.commandBus.execute(
 			new IntegrationTenantUpdateOrCreateCommand(
 				{ name: ASANA_INTEGRATION_NAME, integration: { provider: ASANA_INTEGRATION_NAME }, tenantId, organizationId },
 				{ name: ASANA_INTEGRATION_NAME, integration, tenantId, organizationId, entitySettings, settings, isActive: true, isArchived: false } as never
 			)
 		);
+		// The platform's settings writer reports a failed write instead of raising it: the token is read back, and a
+		// connection whose token is not the one just granted is not answered as connected.
+		const stored = await this.findAnyById(written.id as ID);
+		if (!stored || this.settingsOf(stored)[AsanaSettingName.ACCESS_TOKEN] !== token.accessToken) {
+			throw new InternalServerErrorException({ message: 'The Asana connection could not be stored; connect again', code: ASANA_NOT_CONNECTED });
+		}
+		return stored;
 	}
 
 	/** Records why the connection needs a person (a refused token), or clears it. */
