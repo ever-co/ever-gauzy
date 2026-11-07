@@ -236,6 +236,7 @@ export class ZitadelRefreshTokenService implements EverIdSessionTokensPort, OnMo
 		if (cached && cached.usableUntil > this.nowSeconds()) {
 			return cached;
 		}
+		this.accessTokens.delete(sid);
 		let pending = this.refreshing.get(sid);
 		if (!pending) {
 			pending = this.refresh(sid, row.everRefreshTokenEncrypted).finally(() => this.refreshing.delete(sid));

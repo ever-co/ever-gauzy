@@ -77,6 +77,14 @@ export class EverConnectLauncherService {
 			this.remember(key, empty);
 			return empty;
 		}
+		// Configuration loading already warned once; not cached, so a later change shows.
+		if (!this.config.audience) {
+			return this.answer(
+				mergeLauncherResponse({ catalog, current: `platform:${LAUNCHER_CURRENT}` }),
+				false,
+				'not_configured'
+			);
+		}
 
 		let code: LauncherWorksErrorCode;
 		try {

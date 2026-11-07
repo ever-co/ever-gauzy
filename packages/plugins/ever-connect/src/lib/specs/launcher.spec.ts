@@ -250,6 +250,7 @@ describe('App Launcher routes', () => {
 		let store: { links: Map<string, { everOrgId: string; status: string }>; members: Set<string> };
 		let logs: string[];
 		let restoreLogs: () => void;
+		let launcherSettings: { audience: string | null };
 
 		beforeEach(async () => {
 			clock = { current: Date.UTC(2026, 10, 7, 12), now: () => clock.current };
@@ -267,12 +268,13 @@ describe('App Launcher routes', () => {
 				EVER_WORKS_API_URL: 'https://api.works.example',
 				EVER_APP_LAUNCHER_ORIGINS: WEB
 			};
+			launcherSettings = readLauncherConfig(env);
 			const moduleRef = await Test.createTestingModule({
 				controllers: [EverConnectLauncherController],
 				providers: [
 					{ provide: EVER_CONNECT_ENV, useValue: env },
 					{ provide: EVER_CONNECT_SETTINGS, useValue: readEverConnectConfig(env) },
-					{ provide: EVER_CONNECT_LAUNCHER_SETTINGS, useValue: readLauncherConfig(env) },
+					{ provide: EVER_CONNECT_LAUNCHER_SETTINGS, useValue: launcherSettings },
 					{ provide: EVER_CONNECT_FETCH, useValue: platform.fetch },
 					{ provide: EVER_CONNECT_CLOCK, useValue: clock },
 					{ provide: EVER_ID_SESSION_TOKENS, useValue: everId },
@@ -494,6 +496,17 @@ describe('App Launcher routes', () => {
 			const answer = await get(`/apps?organizationId=${ORG}`);
 			expect(answer.body.error).toEqual({ section: 'works', code: 'token_unavailable' });
 			expect(platform.requests.filter((r) => r.url.includes('/v1/orgs/'))).toEqual([]);
+		});
+
+		it('without the Ever Platform audience: the works section not configured, no warning per request, not cached', async () => {
+			launcherSettings.audience = null;
+			const answer = await get(`/apps?organizationId=${ORG}`);
+			expect(answer.body.error).toEqual({ section: 'works', code: 'not_configured' });
+			expect(everId.exchanges).toBe(0);
+			expect(logs.some((line) => line.includes('not_configured'))).toBe(false);
+
+			launcherSettings.audience = 'platform-project';
+			expect((await get(`/apps?organizationId=${ORG}`)).body.error).toBeNull();
 		});
 
 		it('an organization that is not linked: an empty works section, and no token is asked for', async () => {
