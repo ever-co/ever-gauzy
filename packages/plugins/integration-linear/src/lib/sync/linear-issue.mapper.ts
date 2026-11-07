@@ -81,8 +81,8 @@ export function taskPriorityOf(priority: number | null | undefined): TaskPriorit
 	}
 }
 
-/** A task priority as Linear's number (0 = none). */
-export function linearPriorityOf(priority: string | null | undefined): number {
+/** A task priority as Linear's number: 0 (none) for no priority, null for a priority Linear has no number for. */
+export function linearPriorityOf(priority: string | null | undefined): number | null {
 	switch (priority) {
 		case TaskPriorityEnum.URGENT:
 			return 1;
@@ -92,8 +92,12 @@ export function linearPriorityOf(priority: string | null | undefined): number {
 			return 3;
 		case TaskPriorityEnum.LOW:
 			return 4;
-		default:
+		case null:
+		case undefined:
+		case '':
 			return 0;
+		default:
+			return null;
 	}
 }
 
@@ -133,8 +137,12 @@ export function issueUpdateOf(
 	if (task.description !== undefined) input.description = task.description ?? null;
 	const state = linearStateFor(task.status, states, stateMap);
 	if (state) input.stateId = state.id;
-	// Only what the task carries: a partial task leaves the issue's priority alone.
-	if (task.priority !== undefined) input.priority = linearPriorityOf(task.priority);
+	// Only what the task carries: a partial task, or a priority Linear has no number for, leaves the issue's alone;
+	// an explicit null clears it.
+	if (task.priority !== undefined) {
+		const priority = linearPriorityOf(task.priority);
+		if (priority !== null) input.priority = priority;
+	}
 	if (task.dueDate !== undefined) input.dueDate = linearDueDateOf(task.dueDate);
 	return input;
 }

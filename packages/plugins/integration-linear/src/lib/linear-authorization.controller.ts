@@ -5,6 +5,7 @@ import { Public } from '@gauzy/common';
 import { exchangeLinearCode, LinearApiClient } from './client/linear-api.client';
 import { isLinearConfigured, LinearConfig } from './linear-config';
 import { LinearOAuthStateService } from './linear-oauth-state.service';
+import { linearSyncUser, runInLinearContext } from './linear-process';
 import { LinearTenantService } from './linear-tenant.service';
 import { LINEAR_CONFIG, LINEAR_OAUTH_TOKEN_URL, LINEAR_ROUTE_PREFIX } from './linear.constants';
 
@@ -64,7 +65,9 @@ export class LinearAuthorizationController {
 			return this.back(response, { error: 'workspace_unreadable' });
 		}
 		try {
-			const tenant = await this.tenants.connect(scope, token, viewer);
+			// The request is public (no user, no tenant): the connection is written inside a request context built
+			// from the consumed state, so the platform's tenant-aware services scope it to that tenant.
+			const tenant = await runInLinearContext(linearSyncUser(scope, scope.userId ?? null), () => this.tenants.connect(scope, token, viewer));
 			return this.back(response, { integrationId: String(tenant.id), organizationId: String(scope.organizationId) });
 		} catch (error) {
 			this.logger.error(`The Linear connection could not be saved: ${error instanceof Error ? error.message : String(error)}`);

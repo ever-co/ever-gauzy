@@ -24,6 +24,8 @@ export const LINEAR_CONFIG = 'LINEAR_CONFIG';
 /** The `integration_setting` rows of a connected organization. */
 export enum LinearSettingName {
 	ACCESS_TOKEN = 'access_token',
+	/** Renews the access token before it expires (rotated on every renewal). */
+	REFRESH_TOKEN = 'refresh_token',
 	TOKEN_TYPE = 'token_type',
 	EXPIRES_AT = 'expires_at',
 	SCOPE = 'scope',
@@ -44,9 +46,12 @@ export const LINEAR_WEBHOOK_TOLERANCE_MS = 60_000;
 /** How long a delivery id is remembered, so a retried delivery is applied once. */
 export const LINEAR_WEBHOOK_DEDUPE_MS = 10 * 60 * 1000;
 
-/** How many issues one page of an import asks for, and the most one run imports. */
+/** How many issues one page of an import asks for, and the safety cap of one run (it then keeps its position and says so). */
 export const LINEAR_ISSUES_PAGE_SIZE = 50;
-export const LINEAR_IMPORT_MAX_ISSUES = 10_000;
+export const LINEAR_IMPORT_MAX_ISSUES = 50_000;
+
+/** An access token this close to its expiry is renewed before use. */
+export const LINEAR_TOKEN_REFRESH_AHEAD_MS = 10 * 60 * 1000;
 
 /** Error codes the routes answer with (`{ message, code }`). */
 export const LINEAR_NOT_CONFIGURED = 'LINEAR_NOT_CONFIGURED';

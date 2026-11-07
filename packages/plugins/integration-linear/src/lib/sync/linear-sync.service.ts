@@ -28,11 +28,16 @@ import { issueUpdateOf, parseStateMap, taskFieldsOf, watermarkOf } from './linea
 /** What one issue became. */
 type ApplyOutcome = 'created' | 'updated' | 'skipped';
 
-/** The caches of one run: the statuses and priorities of the project, the employees by e-mail, the tags by label. */
-interface ApplyContext {
+/** A connection's client, replaced once when Linear refused the token and a renewal worked. */
+interface ClientHolder {
 	tenant: IIntegrationTenant;
-	mapping: LinearTeamMapping;
 	client: LinearApiClient;
+	renewed: boolean;
+}
+
+/** The caches of one run: the statuses and priorities of the project, the employees by e-mail, the tags by label. */
+interface ApplyContext extends ClientHolder {
+	mapping: LinearTeamMapping;
 	scope: { tenantId: ID; organizationId: ID };
 	stateMap: Record<LinearStateType, string>;
 	statusIdsByName: Map<string, ID>;
@@ -42,6 +47,14 @@ interface ApplyContext {
 	/** Children whose parent is linked once every issue of the run is in. */
 	pendingParents: Array<{ taskId: ID; parentSourceId: string }>;
 	counts: LinearSyncCounts;
+}
+
+/** A lookup that did not answer: the task's relation is left as it is, not emptied. */
+class ResolutionFailed extends Error {
+	constructor(what: string, cause: unknown) {
+		super(`${what}: ${cause instanceof Error ? cause.message : String(cause)}`);
+		this.name = 'ResolutionFailed';
+	}
 }
 
 const RATE_LIMIT_MAX_WAIT_MS = 60_000;
@@ -54,7 +67,8 @@ const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve,
  * The sync itself: an import of a mapped team's issues (every one, or those changed since the watermark),
  * one issue from a webhook, and a task's changes sent back to its issue. Inbound writes go through the
  * platform's `IntegrationMapSyncIssueCommand` (one id map per issue, a task created once and updated
- * after) with `triggeredEvent = false`, so nothing the sync writes is sent out again.
+ * after) with `triggeredEvent = false`, so nothing the sync writes is sent out again. Every call to Linear
+ * waits once for a rate limit, and renews the token once when Linear refused it.
  */
 @Injectable()
 export class LinearSyncService {
@@ -80,7 +94,8 @@ export class LinearSyncService {
 	/**
 	 * Imports the mapping's issues into a claimed run: every page of them (changed since the watermark unless
 	 * `full`), each one a task created or updated, sub-issues linked to their parents at the end. The watermark
-	 * moves only when every issue went through: a failed one keeps it, so the next import reads it again.
+	 * moves only when every issue went through and every page was read: a failed issue, or a run stopped at the
+	 * safety cap, keeps it so the next import reads them again. The run row is always finished.
 	 */
 	async importMapping(tenant: IIntegrationTenant, mapping: LinearTeamMapping, run: LinearSyncRun, options: { full?: boolean } = {}): Promise<void> {
 		const scope = { tenantId: tenant.tenantId as ID, organizationId: tenant.organizationId as ID };
@@ -89,14 +104,15 @@ export class LinearSyncService {
 		const since = options.full ? null : mapping.lastCursor ?? null;
 		let cursor: string | null = since;
 		let error: string | null = null;
+		let complete = false;
 		try {
 			await runInLinearContext(user, async () => {
 				const context = await this.openContext(tenant, mapping, counts);
 				let after: string | null = null;
 				let seen = 0;
 				for (;;) {
-					const page = await this.withRateLimit(() =>
-						context.client.issues(mapping.linearTeamId, { updatedAfter: since, after, first: LINEAR_ISSUES_PAGE_SIZE })
+					const page = await this.call(context, (client) =>
+						client.issues(mapping.linearTeamId, { updatedAfter: since, after, first: LINEAR_ISSUES_PAGE_SIZE })
 					);
 					for (const issue of page.nodes) {
 						await this.applyOne(context, issue);
@@ -104,13 +120,19 @@ export class LinearSyncService {
 					cursor = watermarkOf(page.nodes, cursor);
 					seen += page.nodes.length;
 					await this.runs.progress(run, counts);
-					if (!page.pageInfo.hasNextPage || !page.pageInfo.endCursor || seen >= LINEAR_IMPORT_MAX_ISSUES) break;
+					if (!page.pageInfo.hasNextPage || !page.pageInfo.endCursor) {
+						complete = true;
+						break;
+					}
+					if (seen >= LINEAR_IMPORT_MAX_ISSUES) break;
 					after = page.pageInfo.endCursor;
 				}
 				await this.linkParents(context);
 			});
 			if (counts.failed > 0) {
 				error = `${counts.failed} issue(s) could not be applied; the import position was kept so the next import reads them again.`;
+			} else if (!complete) {
+				error = `The import stopped at ${LINEAR_IMPORT_MAX_ISSUES} issues (the pages come newest first); the import position was kept. Run it again to continue.`;
 			}
 		} catch (caught) {
 			error = this.describe(caught);
@@ -118,9 +140,18 @@ export class LinearSyncService {
 				await this.tenants.setAttention(tenant, 'token_refused');
 			}
 			this.logger.warn(`Import of mapping ${mapping.id} failed: ${error}`);
+		} finally {
+			try {
+				await this.mappings.recordImport(mapping, { cursor: error ? undefined : cursor, error });
+			} catch (caught) {
+				error = error ?? this.describe(caught);
+				this.logger.warn(`The import position of mapping ${mapping.id} could not be written: ${this.describe(caught)}`);
+			}
+			// Always: a run row left RUNNING would block the mapping until it counts as abandoned.
+			await this.runs.finish(run, { counts, cursor: error ? since : cursor, error }).catch((caught: unknown) => {
+				this.logger.warn(`Run ${run.id} could not be finished: ${this.describe(caught)}`);
+			});
 		}
-		await this.mappings.recordImport(mapping, { cursor: error ? undefined : cursor, error });
-		await this.runs.finish(run, { counts, cursor: error ? since : cursor, error });
 		if (!error) {
 			await this.integrationTenantSyncService
 				.recordSyncCompleted(tenant.id as ID, { tenantId: scope.tenantId, organizationId: scope.organizationId, counts: { issue: counts.created + counts.updated } })
@@ -133,7 +164,8 @@ export class LinearSyncService {
 	/**
 	 * Applies one issue a webhook named: read again from Linear (the delivery carries ids, not the people), then
 	 * imported through the team's inbound mapping. The import watermark is not touched: one issue says nothing
-	 * about the older ones. Answers whether it was applied, or why not.
+	 * about the older ones, and a delivery that was lost is read by the next import. Answers whether it was
+	 * applied, or why not.
 	 */
 	async applyIssueFromWebhook(tenant: IIntegrationTenant, issueId: string, linearTeamId: string): Promise<{ applied: boolean; error: string | null }> {
 		const mapping = await this.mappings.findInboundForTeam(tenant.id as ID, linearTeamId);
@@ -145,7 +177,7 @@ export class LinearSyncService {
 		try {
 			await runInLinearContext(linearSyncUser(scope, this.connectedByUserId(tenant)), async () => {
 				const context = await this.openContext(tenant, mapping, counts);
-				const issue = await this.withRateLimit(() => context.client.issue(issueId));
+				const issue = await this.call(context, (client) => client.issue(issueId));
 				if (!issue || issue.team?.id !== mapping.linearTeamId) {
 					counts.skipped += 1;
 					return;
@@ -159,8 +191,9 @@ export class LinearSyncService {
 				await this.tenants.setAttention(tenant, 'token_refused');
 			}
 			this.logger.warn(`Webhook issue ${issueId} of mapping ${mapping.id} failed: ${error}`);
+		} finally {
+			await this.runs.finish(run, { counts, cursor: mapping.lastCursor ?? null, error }).catch(() => undefined);
 		}
-		await this.runs.finish(run, { counts, cursor: mapping.lastCursor ?? null, error });
 		return { applied: !error && counts.skipped === 0, error };
 	}
 
@@ -193,18 +226,18 @@ export class LinearSyncService {
 		if (!mapping) return;
 		const tenant = await this.tenants.requireById(mapping.integrationId).catch(() => null);
 		if (!tenant) return;
+		const holder: ClientHolder = { tenant, client: await this.tenants.clientReady(tenant), renewed: false };
 		try {
-			const client = this.tenants.clientFor(tenant);
 			const stateMap = parseStateMap(mapping.stateMap);
-			const states = await this.teamStates(client, mapping.integrationId, mapping.linearTeamId);
+			const states = await this.teamStates(holder, mapping.integrationId, mapping.linearTeamId);
 			const input = issueUpdateOf(task, states, stateMap);
 			const existing = await this.findIssueMap(task.id as ID, mapping.integrationId, scope);
 			if (existing?.sourceId) {
-				await this.withRateLimit(() => client.updateIssue(existing.sourceId, input));
+				await this.call(holder, (client) => client.updateIssue(existing.sourceId, input));
 				return;
 			}
 			if (!input.title) return;
-			await this.createIssueOnce(client, mapping, task.id as ID, scope, input.title, input);
+			await this.createIssueOnce(holder, mapping, task.id as ID, scope, input.title, input);
 		} catch (caught) {
 			if (caught instanceof LinearApiError && caught.isUnauthorized) {
 				await this.tenants.setAttention(tenant, 'token_refused');
@@ -218,7 +251,7 @@ export class LinearSyncService {
 	 * Postgres (an advisory lock) and checked again inside it, so two pushes never create two issues.
 	 */
 	private async createIssueOnce(
-		client: LinearApiClient,
+		holder: ClientHolder,
 		mapping: LinearTeamMapping,
 		taskId: ID,
 		scope: { tenantId: ID; organizationId: ID },
@@ -233,7 +266,7 @@ export class LinearSyncService {
 				where: { entity: IntegrationEntity.ISSUE, gauzyId: taskId, integrationId: mapping.integrationId, ...scope } as never
 			});
 			if (existing) return;
-			const issue = await this.withRateLimit(() => client.createIssue({ ...input, teamId: mapping.linearTeamId, title }));
+			const issue = await this.call(holder, (client) => client.createIssue({ ...input, teamId: mapping.linearTeamId, title }));
 			await manager.save(
 				IntegrationMap,
 				Object.assign(new IntegrationMap(), {
@@ -270,8 +303,9 @@ export class LinearSyncService {
 		}
 		return {
 			tenant,
+			client: await this.tenants.clientReady(tenant),
+			renewed: false,
 			mapping,
-			client: this.tenants.clientFor(tenant),
 			scope,
 			stateMap: parseStateMap(mapping.stateMap),
 			statusIdsByName,
@@ -295,7 +329,11 @@ export class LinearSyncService {
 		}
 	}
 
-	/** One issue → one task: created once, updated after, by the platform's id map. */
+	/**
+	 * One issue → one task: created once, updated after, by the platform's id map. A relation whose lookup did
+	 * not answer (the employee by e-mail, a label's tag) is left as the task has it; an empty value from Linear
+	 * clears it.
+	 */
 	private async applyIssue(context: ApplyContext, issue: LinearIssue): Promise<ApplyOutcome> {
 		const { scope, mapping } = context;
 		const integrationId = mapping.integrationId;
@@ -305,8 +343,8 @@ export class LinearSyncService {
 		// An archived issue that never became a task stays out; one that did keeps its task as it was.
 		if (issue.archivedAt) return 'skipped';
 		const fields = taskFieldsOf(issue, context.stateMap);
-		const assigneeId = await this.employeeIdOf(context, issue.assignee?.email ?? null);
-		const tagIds = await this.tagIdsOf(context, issue.labels?.nodes ?? []);
+		const members = await this.membersOf(context, issue.assignee?.email ?? null);
+		const tags = await this.tagsOf(context, issue.labels?.nodes ?? []);
 		const entity = {
 			...scope,
 			projectId: mapping.projectId,
@@ -318,8 +356,8 @@ export class LinearSyncService {
 			priority: fields.priority ?? null,
 			taskPriorityId: fields.priority ? context.priorityIdsByName.get(fields.priority.toLowerCase()) ?? null : null,
 			dueDate: fields.dueDate,
-			members: assigneeId ? [{ id: assigneeId }] : [],
-			tags: tagIds.map((id) => ({ id })),
+			...(members === undefined ? {} : { members }),
+			...(tags === undefined ? {} : { tags }),
 			// A sub-issue is linked once its parent is in (below); an issue without a parent leaves its former one.
 			...(issue.parent?.id ? {} : { parentId: null })
 		} as unknown as ITaskCreateInput | ITaskUpdateInput;
@@ -345,44 +383,58 @@ export class LinearSyncService {
 		}
 	}
 
-	/** The employee of the organization with that e-mail, or null (an assignee without one is left unassigned). */
-	private async employeeIdOf(context: ApplyContext, email: string | null): Promise<ID | null> {
+	/**
+	 * The task's members for the issue's assignee: the employee with that e-mail, nobody when the issue has no
+	 * assignee or no employee has the e-mail, and `undefined` (the relation left alone) when the lookup failed.
+	 */
+	private async membersOf(context: ApplyContext, email: string | null): Promise<Array<{ id: ID }> | undefined> {
 		const key = email?.trim().toLowerCase();
-		if (!key) return null;
-		if (context.employeeIdsByEmail.has(key)) return context.employeeIdsByEmail.get(key) ?? null;
-		const { items } = await this.employeeService
-			.findAll({ where: { ...context.scope, isActive: true, isArchived: false, user: { email: In([key, email as string]) } }, relations: { user: true }, take: 1 } as never)
-			.catch(() => ({ items: [] }));
-		const id = (items[0]?.id as ID | undefined) ?? null;
-		context.employeeIdsByEmail.set(key, id);
-		return id;
+		if (!key) return [];
+		try {
+			if (!context.employeeIdsByEmail.has(key)) {
+				const { items } = await this.employeeService.findAll({
+					where: { ...context.scope, isActive: true, isArchived: false, user: { email: In([key, email as string]) } },
+					relations: { user: true },
+					take: 1
+				} as never);
+				context.employeeIdsByEmail.set(key, (items[0]?.id as ID | undefined) ?? null);
+			}
+		} catch (caught) {
+			this.logger.warn(`The employee of ${key} could not be looked up: ${new ResolutionFailed('employee', caught).message}`);
+			return undefined;
+		}
+		const id = context.employeeIdsByEmail.get(key);
+		return id ? [{ id }] : [];
 	}
 
-	/** The tags of the issue's labels: one per label, created once by the platform's label sync. */
-	private async tagIdsOf(context: ApplyContext, labels: LinearLabel[]): Promise<ID[]> {
+	/**
+	 * The task's tags for the issue's labels: one per label, created once by the platform's label sync; `undefined`
+	 * (the relation left alone) when any label's sync failed, so a passing failure never strips the task's tags.
+	 */
+	private async tagsOf(context: ApplyContext, labels: LinearLabel[]): Promise<Array<{ id: ID }> | undefined> {
 		const ids: ID[] = [];
 		for (const label of labels) {
 			if (!label?.id || !label.name) continue;
 			if (!context.tagIdsByLabelId.has(label.id)) {
-				const map: IIntegrationMap | null = await this.commandBus
-					.execute(
+				try {
+					const map: IIntegrationMap = await this.commandBus.execute(
 						new IntegrationMapSyncLabelCommand({
 							entity: { name: label.name, color: label.color || '#6E7681', ...context.scope } as never,
 							sourceId: label.id,
 							integrationId: context.mapping.integrationId,
 							...context.scope
 						})
-					)
-					.catch((caught: unknown) => {
-						this.logger.warn(`Label ${label.name} could not be synced: ${this.describe(caught)}`);
-						return null;
-					});
-				context.tagIdsByLabelId.set(label.id, (map?.gauzyId as ID | undefined) ?? null);
+					);
+					context.tagIdsByLabelId.set(label.id, (map?.gauzyId as ID | undefined) ?? null);
+				} catch (caught) {
+					this.logger.warn(`Label ${label.name} could not be synced: ${new ResolutionFailed('label', caught).message}`);
+					return undefined;
+				}
 			}
 			const id = context.tagIdsByLabelId.get(label.id);
 			if (id) ids.push(id);
 		}
-		return ids;
+		return ids.map((id) => ({ id }));
 	}
 
 	// ---------------------------------------------------------------- helpers
@@ -393,24 +445,36 @@ export class LinearSyncService {
 			.catch(() => null);
 	}
 
-	private async teamStates(client: LinearApiClient, integrationId: ID, linearTeamId: string): Promise<LinearWorkflowState[]> {
+	private async teamStates(holder: ClientHolder, integrationId: ID, linearTeamId: string): Promise<LinearWorkflowState[]> {
 		const key = `${integrationId}:${linearTeamId}`;
 		const cached = this.statesCache.get(key);
 		if (cached && Date.now() - cached.at < STATES_TTL_MS) return cached.states;
-		const team = await this.withRateLimit(() => client.team(linearTeamId));
+		const team = await this.call(holder, (client) => client.team(linearTeamId));
 		const states = team?.states ?? [];
 		this.statesCache.set(key, { at: Date.now(), states });
 		return states;
 	}
 
-	/** Waits once for a rate limit to lift (what Linear asked, up to a minute), then tries again. */
-	private async withRateLimit<T>(call: () => Promise<T>): Promise<T> {
+	/**
+	 * One call to Linear with the connection's client: a rate limit is waited out once (what Linear asked, up to a
+	 * minute) and the call made again; a refused token is renewed once with the refresh token and the call made
+	 * again with the new client. Anything else is the caller's.
+	 */
+	private async call<T>(holder: ClientHolder, make: (client: LinearApiClient) => Promise<T>): Promise<T> {
 		try {
-			return await call();
+			return await make(holder.client);
 		} catch (caught) {
 			if (caught instanceof LinearApiError && caught.isRateLimited) {
 				await sleep(Math.min(Math.max((caught.retryAfterSeconds ?? 5) * 1000, 1000), RATE_LIMIT_MAX_WAIT_MS));
-				return call();
+				return make(holder.client);
+			}
+			if (caught instanceof LinearApiError && caught.isUnauthorized && !holder.renewed) {
+				holder.renewed = true;
+				const renewed = await this.tenants.refreshAccessToken(holder.tenant);
+				if (renewed) {
+					holder.client = renewed;
+					return make(holder.client);
+				}
 			}
 			throw caught;
 		}

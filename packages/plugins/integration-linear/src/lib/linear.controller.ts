@@ -114,7 +114,7 @@ export class LinearController {
 	@Get('/:integrationId/metadata')
 	async metadata(@Param('integrationId', UUIDValidationPipe) integrationId: ID) {
 		const tenant = await this.tenants.requireById(integrationId);
-		const viewer = await this.tenants.clientFor(tenant).viewer();
+		const viewer = await (await this.tenants.clientReady(tenant)).viewer();
 		return { viewer: { id: viewer.id, name: viewer.name, email: viewer.email }, organization: viewer.organization };
 	}
 
@@ -122,14 +122,14 @@ export class LinearController {
 	@Get('/:integrationId/teams')
 	async teams(@Param('integrationId', UUIDValidationPipe) integrationId: ID) {
 		const tenant = await this.tenants.requireById(integrationId);
-		return this.tenants.clientFor(tenant).teams();
+		return (await this.tenants.clientReady(tenant)).teams();
 	}
 
 	@ApiOperation({ summary: 'A Linear team with its workflow states and labels' })
 	@Get('/:integrationId/teams/:teamId')
 	async team(@Param('integrationId', UUIDValidationPipe) integrationId: ID, @Param('teamId') teamId: string) {
 		const tenant = await this.tenants.requireById(integrationId);
-		const team = await this.tenants.clientFor(tenant).team(String(teamId).slice(0, 64));
+		const team = await (await this.tenants.clientReady(tenant)).team(String(teamId).slice(0, 64));
 		if (!team) throw new BadRequestException({ message: 'The Linear team was not found' });
 		return team;
 	}

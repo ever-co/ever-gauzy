@@ -91,7 +91,7 @@ export class LinearApiError extends Error {
 		this.name = 'LinearApiError';
 	}
 
-	/** The token was refused: the connection needs attention. */
+	/** The token was refused: the connection needs a fresh token, or a person. */
 	get isUnauthorized(): boolean {
 		return this.status === 401 || this.status === 403;
 	}
@@ -99,6 +99,17 @@ export class LinearApiError extends Error {
 	get isRateLimited(): boolean {
 		return this.status === 429;
 	}
+}
+
+/** The OAuth token Linear hands out (the code exchange and the refresh answer the same shape). */
+export interface LinearOAuthToken {
+	accessToken: string;
+	tokenType: string;
+	/** Seconds until the access token expires, when Linear says. */
+	expiresIn: number | null;
+	scope: string | null;
+	/** The token that renews the access token, when Linear hands one out (rotated on every refresh). */
+	refreshToken: string | null;
 }
 
 const ISSUE_FIELDS = `
@@ -111,11 +122,38 @@ const ISSUE_FIELDS = `
 	project { id name }
 `;
 
-type FetchLike = (input: string, init: { method: string; headers: Record<string, string>; body: string; signal?: AbortSignal }) => Promise<{
+type FetchLike = (
+	input: string,
+	init: { method: string; headers: Record<string, string>; body: string; signal?: AbortSignal }
+) => Promise<{
 	status: number;
 	headers: { get(name: string): string | null };
 	text(): Promise<string>;
 }>;
+
+/** How long one call to Linear may take. */
+const CALL_TIMEOUT_MS = 30_000;
+
+function timeoutSignal(ms: number): AbortSignal | undefined {
+	return typeof AbortSignal !== 'undefined' && 'timeout' in AbortSignal ? AbortSignal.timeout(ms) : undefined;
+}
+
+/**
+ * The seconds to wait that a rate-limited answer names: `Retry-After` (seconds), else
+ * `X-RateLimit-Requests-Reset` (a UTC epoch in milliseconds); null when neither is readable.
+ */
+export function retryAfterSecondsOf(headers: { get(name: string): string | null }, now = Date.now()): number | null {
+	const retryAfter = headers.get('Retry-After')?.trim();
+	if (retryAfter && /^\d+$/.test(retryAfter)) return Math.max(1, Number(retryAfter));
+	const reset = headers.get('X-RateLimit-Requests-Reset')?.trim();
+	if (reset && /^\d+$/.test(reset)) {
+		const at = Number(reset);
+		// Milliseconds since the epoch; a value in seconds is accepted too.
+		const resetMs = at > 1e11 ? at : at * 1000;
+		return Math.max(1, Math.ceil((resetMs - now) / 1000));
+	}
+	return null;
+}
 
 export interface LinearApiClientOptions {
 	apiUrl?: string;
@@ -129,7 +167,8 @@ export interface LinearApiClientOptions {
  * The slice of Linear's GraphQL API the integration uses, over the platform's own `fetch`: the viewer and
  * workspace, the teams with their workflow states and labels, the issues of a team page by page (changed
  * since a watermark, archived ones included), one issue, and an issue update or creation. A refused
- * token, a rate limit and a GraphQL error each surface as a {@link LinearApiError}.
+ * token, a rate limit (HTTP 429, or a `RATELIMITED` GraphQL error) and a GraphQL error each surface as a
+ * {@link LinearApiError}.
  */
 export class LinearApiClient {
 	private readonly apiUrl: string;
@@ -142,34 +181,38 @@ export class LinearApiClient {
 		const tokenType = options.tokenType ?? 'Bearer';
 		this.authorization = tokenType ? `${tokenType} ${accessToken}` : accessToken;
 		this.fetchImpl = options.fetchImpl ?? ((globalThis as { fetch: FetchLike }).fetch as FetchLike);
-		this.timeoutMs = options.timeoutMs ?? 30_000;
+		this.timeoutMs = options.timeoutMs ?? CALL_TIMEOUT_MS;
 	}
 
 	async query<T>(query: string, variables: Record<string, unknown> = {}): Promise<T> {
-		const signal = typeof AbortSignal !== 'undefined' && 'timeout' in AbortSignal ? AbortSignal.timeout(this.timeoutMs) : undefined;
 		const response = await this.fetchImpl(this.apiUrl, {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json', Authorization: this.authorization },
 			body: JSON.stringify({ query, variables }),
-			signal
+			signal: timeoutSignal(this.timeoutMs)
 		});
 		const text = await response.text();
 		if (response.status === 429) {
-			const reset = Number(response.headers.get('X-RateLimit-Requests-Reset') ?? response.headers.get('Retry-After'));
-			const retryAfter = Number.isFinite(reset) ? (reset > 1e11 ? Math.max(1, Math.ceil((reset - Date.now()) / 1000)) : reset) : null;
-			throw new LinearApiError('Linear rate limit reached', 429, retryAfter);
+			throw new LinearApiError('Linear rate limit reached', 429, retryAfterSecondsOf(response.headers));
 		}
-		if (response.status >= 400) {
-			throw new LinearApiError(`Linear answered HTTP ${response.status}`, response.status);
-		}
-		let body: { data?: T; errors?: Array<{ message: string; extensions?: { code?: string; type?: string } }> };
+		let body: { data?: T; errors?: Array<{ message: string; extensions?: { code?: string; type?: string } }> } | null = null;
 		try {
 			body = JSON.parse(text);
 		} catch {
+			body = null;
+		}
+		const errors = body?.errors ?? [];
+		if (errors.some((error) => /RATELIMITED/i.test(error.extensions?.code ?? error.extensions?.type ?? ''))) {
+			throw new LinearApiError(errors[0]?.message || 'Linear rate limit reached', 429, retryAfterSecondsOf(response.headers));
+		}
+		if (response.status >= 400) {
+			throw new LinearApiError(errors[0]?.message || `Linear answered HTTP ${response.status}`, response.status);
+		}
+		if (!body) {
 			throw new LinearApiError('Linear answered something that is not JSON', response.status);
 		}
-		if (body.errors?.length) {
-			const first = body.errors[0];
+		if (errors.length) {
+			const first = errors[0];
 			const code = first.extensions?.code ?? first.extensions?.type ?? '';
 			const unauthorized = /AUTHENTICATION|UNAUTHENTICATED|FORBIDDEN/i.test(code) || /authentication|unauthorized/i.test(first.message);
 			throw new LinearApiError(first.message, unauthorized ? 401 : null);
@@ -214,7 +257,10 @@ export class LinearApiClient {
 		return { team, states: [...states.nodes].sort((a, b) => a.position - b.position), labels: labels.nodes };
 	}
 
-	/** One page of a team's issues, oldest change first when a watermark is given, archived ones included. */
+	/**
+	 * One page of a team's issues, newest change first (Linear's `orderBy: updatedAt`), those changed after the
+	 * watermark when one is given, archived ones included.
+	 */
 	async issues(
 		teamId: string,
 		options: { updatedAfter?: string | null; after?: string | null; first?: number } = {}
@@ -257,33 +303,23 @@ export class LinearApiClient {
 	}
 }
 
-/** Exchanges an authorization code for a token at Linear's OAuth endpoint. */
-export async function exchangeLinearCode(
-	tokenUrl: string,
-	input: { code: string; clientId: string; clientSecret: string; redirectUri: string },
-	fetchImpl: FetchLike = (globalThis as { fetch: FetchLike }).fetch
-): Promise<{ accessToken: string; tokenType: string; expiresIn: number | null; scope: string | null }> {
-	const body = new URLSearchParams({
-		code: input.code,
-		redirect_uri: input.redirectUri,
-		client_id: input.clientId,
-		client_secret: input.clientSecret,
-		grant_type: 'authorization_code'
-	}).toString();
+/** One form post to Linear's OAuth token endpoint, bounded in time; the token it answers. */
+async function postTokenRequest(tokenUrl: string, form: Record<string, string>, fetchImpl: FetchLike, what: string): Promise<LinearOAuthToken> {
 	const response = await fetchImpl(tokenUrl, {
 		method: 'POST',
 		headers: { 'Content-Type': 'application/x-www-form-urlencoded', Accept: 'application/json' },
-		body
+		body: new URLSearchParams(form).toString(),
+		signal: timeoutSignal(CALL_TIMEOUT_MS)
 	});
 	const text = await response.text();
 	if (response.status >= 400) {
-		throw new LinearApiError(`Linear refused the authorization code (HTTP ${response.status})`, response.status);
+		throw new LinearApiError(`Linear refused the ${what} (HTTP ${response.status})`, response.status);
 	}
-	let parsed: { access_token?: string; token_type?: string; expires_in?: number; scope?: string };
+	let parsed: { access_token?: string; token_type?: string; expires_in?: number; scope?: string; refresh_token?: string };
 	try {
 		parsed = JSON.parse(text);
 	} catch {
-		throw new LinearApiError('Linear answered something that is not JSON to the code exchange', response.status);
+		throw new LinearApiError(`Linear answered something that is not JSON to the ${what}`, response.status);
 	}
 	if (!parsed.access_token) {
 		throw new LinearApiError('Linear answered no access token', response.status);
@@ -292,6 +328,35 @@ export async function exchangeLinearCode(
 		accessToken: parsed.access_token,
 		tokenType: parsed.token_type || 'Bearer',
 		expiresIn: typeof parsed.expires_in === 'number' ? parsed.expires_in : null,
-		scope: parsed.scope ?? null
+		scope: parsed.scope ?? null,
+		refreshToken: typeof parsed.refresh_token === 'string' && parsed.refresh_token ? parsed.refresh_token : null
 	};
+}
+
+/** Exchanges an authorization code for a token at Linear's OAuth endpoint. */
+export function exchangeLinearCode(
+	tokenUrl: string,
+	input: { code: string; clientId: string; clientSecret: string; redirectUri: string },
+	fetchImpl: FetchLike = (globalThis as { fetch: FetchLike }).fetch
+): Promise<LinearOAuthToken> {
+	return postTokenRequest(
+		tokenUrl,
+		{ code: input.code, redirect_uri: input.redirectUri, client_id: input.clientId, client_secret: input.clientSecret, grant_type: 'authorization_code' },
+		fetchImpl,
+		'authorization code'
+	);
+}
+
+/** Renews an access token with its refresh token; Linear answers a new pair (the old refresh token is spent). */
+export function refreshLinearToken(
+	tokenUrl: string,
+	input: { refreshToken: string; clientId: string; clientSecret: string },
+	fetchImpl: FetchLike = (globalThis as { fetch: FetchLike }).fetch
+): Promise<LinearOAuthToken> {
+	return postTokenRequest(
+		tokenUrl,
+		{ refresh_token: input.refreshToken, client_id: input.clientId, client_secret: input.clientSecret, grant_type: 'refresh_token' },
+		fetchImpl,
+		'token refresh'
+	);
 }

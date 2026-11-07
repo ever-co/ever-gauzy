@@ -78,6 +78,7 @@ describe('linear issue mapper', () => {
 		expect([1, 2, 3, 4, 0].map(taskPriorityOf)).toEqual([TaskPriorityEnum.URGENT, TaskPriorityEnum.HIGH, TaskPriorityEnum.MEDIUM, TaskPriorityEnum.LOW, null]);
 		expect(linearPriorityOf(TaskPriorityEnum.LOW)).toBe(4);
 		expect(linearPriorityOf(null)).toBe(0);
+		expect(linearPriorityOf('custom')).toBeNull();
 	});
 
 	it('finds the Linear state a task status moves an issue to: the first state of the mapped kind', () => {
@@ -89,6 +90,9 @@ describe('linear issue mapper', () => {
 		expect(update).toEqual({ title: 'T', description: null, stateId: 's-cancel', priority: 1, dueDate: '2026-03-04' });
 		// A partial task (a status change alone) leaves the issue's priority and due date as they are.
 		expect(issueUpdateOf({ status: TaskStatusEnum.COMPLETED }, STATES, DEFAULT_STATE_MAP)).toEqual({ stateId: 's-done' });
+		// A priority Linear has no number for is left alone; an explicit null clears it.
+		expect(issueUpdateOf({ priority: 'custom' }, STATES, DEFAULT_STATE_MAP)).toEqual({});
+		expect(issueUpdateOf({ priority: null }, STATES, DEFAULT_STATE_MAP)).toEqual({ priority: 0 });
 	});
 
 	it('advances the watermark to the newest change', () => {

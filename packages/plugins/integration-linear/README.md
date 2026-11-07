@@ -28,8 +28,9 @@ for the `Issues` resource.
   `INTEGRATION_EDIT`) answers a single-use `state` bound to the caller's tenant and the organization, and
   the Linear authorize URL to send them to. Linear sends them back to the public callback, which binds the
   connection to the state's tenant and organization (never to the query), exchanges the code once, reads the
-  workspace, and writes an `integration_tenant` named `Linear` with the token and the workspace in its
-  settings. The token is never answered by a route.
+  workspace, and writes an `integration_tenant` named `Linear` with the tokens and the workspace in its
+  settings. No route answers a token. An access token about to expire is renewed with the refresh token
+  before use (one renewal at a time per connection, the pair rotated), and once more when Linear refuses it.
 - **Map.** `GET /integration/linear/:integrationId/teams` lists the workspace's teams;
   `GET …/teams/:teamId` adds the team's workflow states and labels. `POST …/mappings` maps a team to a
   project with a `direction` (`inbound` by default, `outbound`, `both`) and an optional `stateMap`: the task
@@ -42,12 +43,15 @@ for the `Issues` resource.
   unassigned otherwise), labels as tags (one per label, by the platform's label sync), and sub-issues linked
   to their parent's task. Archived issues are skipped. One import runs per mapping at a time (a second request is
   refused while one is live; a run without progress for 30 minutes counts as abandoned). An issue that could not
-  be applied keeps the import position, so the next import reads it again. `GET …/runs` lists the runs with
-  their counts and errors.
+  be applied keeps the import position, so the next import reads it again; so does a run stopped at the safety cap
+  (50,000 issues, the pages come newest first). A lookup that fails (an employee by e-mail, a label's tag) leaves
+  that relation of the task as it is. `GET …/runs` lists the runs with their counts and errors.
 - **Webhooks.** `POST /integration/linear/webhook` (public) verifies `Linear-Signature` (the HMAC-SHA256 of
-  the raw body with the signing secret), refuses deliveries older than a minute, then applies the issue through
-  every connection of that workspace whose mapping of the team syncs inbound. A delivery (`Linear-Delivery`) is
-  remembered once applied, so a retry does nothing; one that failed answers 500, which Linear retries.
+  the raw body with the signing secret), refuses deliveries older than a minute, acknowledges at once (Linear
+  gives a receiver five seconds), then applies the issue behind the response through every connection of that
+  workspace whose mapping of the team syncs inbound. A delivery (`Linear-Delivery`) is remembered once every
+  connection applied it, so a retry does nothing; one that failed is not, and the next import reads the issue
+  again (a webhook never moves the import position).
 - **Outbound.** When a project's mapping is `outbound` or `both` (one such mapping per project), a task created
   or changed on the platform updates its issue (state by the mapping, title, description, priority, due date) or
   creates one in the team; the saved task is read again by id, and the pushes of one task run one after the other.
