@@ -1,4 +1,4 @@
-import { BackfillProjectTaskKeys1791000004900 } from './migrations/1791000004900-BackfillProjectTaskKeys';
+import { BackfillProjectTaskKeys1791000004950 } from './migrations/1791000004950-BackfillProjectTaskKeys';
 
 /** A Postgres query runner over a few projects that records the updates. */
 function runner(rows: Array<Record<string, unknown>>) {
@@ -17,7 +17,7 @@ function runner(rows: Array<Record<string, unknown>>) {
 	};
 }
 
-describe('BackfillProjectTaskKeys1791000004900', () => {
+describe('BackfillProjectTaskKeys1791000004950', () => {
 	beforeEach(() => jest.spyOn(console, 'log').mockImplementation(() => undefined));
 	afterEach(() => jest.restoreAllMocks());
 
@@ -28,7 +28,7 @@ describe('BackfillProjectTaskKeys1791000004900', () => {
 			{ id: 'p3', tenantId: 't', organizationId: 'o2', name: 'Gauzy', taskKey: null, taskKeyHistory: null },
 			{ id: 'p4', tenantId: 't', organizationId: 'o2', name: 'Ops', taskKey: 'OPS', taskKeyHistory: null }
 		]);
-		await new BackfillProjectTaskKeys1791000004900().up(queryRunner as never);
+		await new BackfillProjectTaskKeys1791000004950().up(queryRunner as never);
 		expect(queryRunner.updates.map((update) => update.params)).toEqual([
 			['GAU', 'p1'],
 			['GAU2', 'p2'],
@@ -52,7 +52,7 @@ describe('BackfillProjectTaskKeys1791000004900', () => {
 			}
 			return [];
 		});
-		await new BackfillProjectTaskKeys1791000004900().up(queryRunner as never);
+		await new BackfillProjectTaskKeys1791000004950().up(queryRunner as never);
 		expect(queryRunner.updates.map((update) => update.params)).toEqual([
 			['GAU', 'p1'],
 			['GAU2', 'p1']
@@ -62,7 +62,7 @@ describe('BackfillProjectTaskKeys1791000004900', () => {
 	it('does nothing where the key column is not there', async () => {
 		const queryRunner = runner([]);
 		queryRunner.hasColumn.mockResolvedValueOnce(false);
-		await new BackfillProjectTaskKeys1791000004900().up(queryRunner as never);
+		await new BackfillProjectTaskKeys1791000004950().up(queryRunner as never);
 		expect(queryRunner.query).not.toHaveBeenCalled();
 	});
 });

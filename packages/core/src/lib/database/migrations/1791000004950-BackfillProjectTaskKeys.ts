@@ -24,10 +24,10 @@ interface ProjectRow {
  * (advisory on Postgres, named on MySQL) makes two API processes that boot together run it one after the other.
  * `down` changes nothing: a backfilled key cannot be told from one a manager set.
  */
-export class BackfillProjectTaskKeys1791000004900 implements MigrationInterface {
-	name = 'BackfillProjectTaskKeys1791000004900';
+export class BackfillProjectTaskKeys1791000004950 implements MigrationInterface {
+	name = 'BackfillProjectTaskKeys1791000004950';
 
-	private readonly advisoryLockKey = 1791000004900;
+	private readonly advisoryLockKey = 1791000004950;
 	readonly mysqlLockName = `gauzy:migration:${this.advisoryLockKey}`;
 
 	public async up(queryRunner: QueryRunner): Promise<void> {
