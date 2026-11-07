@@ -41,10 +41,20 @@ export interface AuthorizationConfig {
 	};
 	/** How long an introspection answer is reused, in seconds (at most {@link MAX_TOKEN_CACHE_TTL_SECONDS}) */
 	tokenCacheTtlSeconds?: number;
+	/**
+	 * Whether a token that lacks the required scopes but names a collaboration scope of an enabled group (`chat:read`
+	 * alone) is admitted, for the collaboration tools only. True only while the operator left the required scopes at
+	 * their default (neither MCP_AUTH_REQUIRED_SCOPES nor MCP_REQUIRED_SCOPES set): scopes an operator requires are
+	 * always required. Unset means no.
+	 */
+	collaborationOnlyAdmission?: boolean;
 }
 
 /** An introspection answer is reused for at most this long, so a revoked token stops working within a minute */
 export const MAX_TOKEN_CACHE_TTL_SECONDS = 60;
+
+/** The scopes a token must hold when the operator states none */
+export const DEFAULT_REQUIRED_SCOPES: readonly string[] = ['mcp.read'];
 
 /** The audience mcp-auth puts in its tokens when MCP_AUTH_JWT_AUDIENCE is not set */
 const DEFAULT_TOKEN_AUDIENCE = 'gauzy-mcp-api';
@@ -107,11 +117,14 @@ export function loadAuthorizationConfig(env: NodeJS.ProcessEnv = process.env): A
 	const clientSecret = env.MCP_AUTH_INTROSPECTION_CLIENT_SECRET;
 
 	const cacheTtl = Number.parseInt(env.MCP_AUTH_TOKEN_CACHE_TTL ?? '', 10);
+	// `||`, not `??`: the deploy substitutes an unset secret as '', which must not mean "no scope required"
+	const operatorScopes = env.MCP_AUTH_REQUIRED_SCOPES || env.MCP_REQUIRED_SCOPES;
 
 	return {
 		enabled,
-		// `||`, not `??`: the deploy substitutes an unset secret as '', which must not mean "no scope required"
-		requiredScopes: splitList(env.MCP_AUTH_REQUIRED_SCOPES || env.MCP_REQUIRED_SCOPES || 'mcp.read'),
+		requiredScopes: splitList(operatorScopes || DEFAULT_REQUIRED_SCOPES.join(',')),
+		// Only the default may be met by collaboration scopes alone: an operator's own list is never weakened.
+		collaborationOnlyAdmission: !operatorScopes,
 		resourceUri: env.MCP_AUTH_RESOURCE_URI || env.MCP_RESOURCE_URI,
 		authorizationServers:
 			enabled && issuer
@@ -213,12 +226,28 @@ export class OAuthValidator {
 		if (result.valid && requiredScopes?.length) {
 			const scopes = result.scopes ?? [];
 			if (!requiredScopes.every((scope) => scopes.includes(scope))) {
-				// A fine-grained grant (`chat:read` alone) is admitted for the collaboration tools, and only for them.
-				if (admitsCollaborationOnly(scopes)) return { ...result, collaborationOnly: true };
+				// A fine-grained grant (`chat:read` alone) is admitted for the collaboration tools, and only for them — and
+				// only against the default required scopes: an operator's MCP_AUTH_REQUIRED_SCOPES is always required.
+				if (this.admitsCollaborationOnlyAgainst(requiredScopes) && admitsCollaborationOnly(scopes)) {
+					return { ...result, collaborationOnly: true };
+				}
 				return { ...result, valid: false, error: 'insufficient_scope' };
 			}
 		}
 		return result;
+	}
+
+	/**
+	 * Whether a token short of these required scopes may still be admitted on collaboration scopes alone: only when the
+	 * deployment allows it (the operator set no required scopes) and these are exactly the default ones — a caller that
+	 * asks for more is never answered with less.
+	 */
+	private admitsCollaborationOnlyAgainst(requiredScopes: readonly string[]): boolean {
+		return (
+			this.config.collaborationOnlyAdmission === true &&
+			requiredScopes.length === DEFAULT_REQUIRED_SCOPES.length &&
+			DEFAULT_REQUIRED_SCOPES.every((scope) => requiredScopes.includes(scope))
+		);
 	}
 
 	/**
