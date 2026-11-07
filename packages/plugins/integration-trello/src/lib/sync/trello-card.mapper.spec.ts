@@ -111,12 +111,11 @@ describe('trello-card.mapper', () => {
 		expect(trelloColorOf(null)).toBe('#6E7681');
 	});
 
-	it('keeps a comment as escaped HTML paragraphs, naming a member who is nobody here', () => {
+	it('keeps a comment as escaped HTML paragraphs, always named after its member', () => {
 		const action = { data: { text: 'Ship it <today>\n\nThen "rest"' }, memberCreator: { id: 'm1', username: 'ada', fullName: 'Ada & Co' } };
-		expect(commentHtmlOf(action, true)).toBe('<p>Ship it &lt;today&gt;</p><p>Then &quot;rest&quot;</p>');
-		expect(commentHtmlOf(action, false)).toBe('<p><strong>Ada &amp; Co</strong> (Trello)</p><p>Ship it &lt;today&gt;</p><p>Then &quot;rest&quot;</p>');
-		expect(commentHtmlOf({ data: { text: '  ' }, memberCreator: null }, false)).toBe('');
-		expect(commentHtmlOf({ data: { text: 'x' }, memberCreator: { id: 'm2', username: 'grace', fullName: '' } }, false)).toBe('<p><strong>grace</strong> (Trello)</p><p>x</p>');
+		expect(commentHtmlOf(action)).toBe('<p><strong>Ada &amp; Co</strong> (Trello)</p><p>Ship it &lt;today&gt;</p><p>Then &quot;rest&quot;</p>');
+		expect(commentHtmlOf({ data: { text: '  ' }, memberCreator: null })).toBe('');
+		expect(commentHtmlOf({ data: { text: 'x' }, memberCreator: { id: 'm2', username: 'grace', fullName: '' } })).toBe('<p><strong>grace</strong> (Trello)</p><p>x</p>');
 	});
 
 	it('keeps an attachment as a named link to its address, and none without an HTTP(S) address', () => {

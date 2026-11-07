@@ -161,11 +161,11 @@ export function escapeHtml(value: string): string {
 }
 
 /**
- * A comment's body as the platform keeps it (HTML): the member's words, one paragraph per line; and, when the member
- * is nobody here (no employee matched by username or name), who wrote them, named first, so the comment is not read
- * as the connecting person's. Empty for a comment without text.
+ * A comment's body as the platform keeps it (HTML): who wrote it, named first — a Trello member's username and
+ * display name are chosen by the member, so the comment is never attributed to an employee from them and the name
+ * stays in the text — then the member's words, one paragraph per line. Empty for a comment without text.
  */
-export function commentHtmlOf(action: Pick<TrelloCommentAction, 'data' | 'memberCreator'>, attributed: boolean): string {
+export function commentHtmlOf(action: Pick<TrelloCommentAction, 'data' | 'memberCreator'>): string {
 	const text = (action.data?.text ?? '').trim();
 	if (!text) return '';
 	const paragraphs = text
@@ -174,7 +174,6 @@ export function commentHtmlOf(action: Pick<TrelloCommentAction, 'data' | 'member
 		.filter(Boolean)
 		.map((line) => `<p>${escapeHtml(line)}</p>`)
 		.join('');
-	if (attributed) return paragraphs;
 	const name = action.memberCreator?.fullName?.trim() || action.memberCreator?.username?.trim() || 'Someone';
 	return `<p><strong>${escapeHtml(name)}</strong> (Trello)</p>${paragraphs}`;
 }

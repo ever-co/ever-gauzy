@@ -49,10 +49,14 @@ Off by default. The plugin is loaded only when `TRELLO_ENABLED=true` (exactly); 
   boards share belongs to the mapping that imported it first. List and status names compare by key: case
   ignored, spaces as hyphens (`In Progress` is `in-progress`). `GET …/runs` lists the runs.
 - **Comments and attachments.** Behind every card brought in, its comments (Trello's `commentCard` actions)
-  become comments of the task — attributed to the employee the member is (by username, else by name), else kept
-  as the connecting user's, marked system and named after their member — and follow an edit in Trello; its
+  become comments of the task — kept as the connecting user's, marked system and named after their Trello member
+  in the text: a member's username and name are chosen by the member, so a comment is never attributed to an
+  employee from them — and follow an edit in Trello; its
   attachments become resource links of the task (the name, the address that opens it), reusing a link a person
-  already added with the same address. Both are kept once (the id map, entities `Comment` and `Attachment`). The
+  already added with the same address. Both are kept once (the id map, entities `Comment` and `Attachment`), one
+  run at a time per card. A comment or attachment that could not be read or kept counts as a failure of the run:
+  the import position is kept, so the next import reads the card again; a refusal of one resource (403, 404) is
+  not retried. What an earlier run missed for good, `{ "full": true }` brings in. The
   webhook delivers a comment added, edited or removed and a file attached as the card they belong to, which is
   read again.
 - **A refused token.** When Trello refuses the connection's token (a 401), the connection is marked — the page asks for

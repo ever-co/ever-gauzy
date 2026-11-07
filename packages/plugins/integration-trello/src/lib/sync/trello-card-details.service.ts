@@ -3,39 +3,42 @@ import { CommandBus } from '@nestjs/cqrs';
 import { DataSource } from 'typeorm';
 import { ActorTypeEnum, BaseEntityEnum, ID, IntegrationEntity } from '@gauzy/contracts';
 import { Comment, IntegrationMapService, IntegrationMapSyncEntityCommand, ResourceLink } from '@gauzy/core';
-import { TrelloApiClient, TrelloApiError, TrelloAttachment, TrelloCard, TrelloCommentAction, TrelloMember } from '../client/trello-api.client';
+import { TrelloApiClient, TrelloApiError, TrelloAttachment, TrelloCard, TrelloCommentAction } from '../client/trello-api.client';
 import { attachmentLinkOf, commentHtmlOf } from './trello-card.mapper';
 
-/** The employee (and their user) a comment is attributed to, by the member who wrote it. */
-export interface TrelloAuthor {
-	employeeId: ID;
-	userId: ID | null;
-}
-
-/** What a run hands the details import: its scope, how to read Trello and match a member, and the tallies it keeps. */
+/** What a run hands the details import: its scope, how to read Trello, and the tallies it keeps. */
 export interface TrelloDetailsContext {
 	scope: { tenantId: ID; organizationId: ID };
 	integrationId: ID;
-	/** The user who connected (the comments nobody here wrote are theirs to own). */
+	/** The user who connected: every imported comment is theirs to own (see the class comment). */
 	connectedByUserId: ID | null;
 	/** A read of Trello with the run's rate-limit waits. */
 	read<T>(make: (client: TrelloApiClient) => Promise<T>): Promise<T>;
-	/** The employee a Trello member is (by username, else by name), as the run matches card members. */
-	authorOf(member: Pick<TrelloMember, 'id' | 'username' | 'fullName'> | null): Promise<TrelloAuthor | null>;
-	details: { comments: number; links: number };
+	/** What the details import brought in, and what it could not read or keep (a failure of the run: the position is kept). */
+	details: { comments: number; links: number; failed: number };
+}
+
+/** A card's details as read from Trello, before anything is written. */
+export interface TrelloCardDetails {
+	comments: TrelloCommentAction[];
+	attachments: TrelloAttachment[];
 }
 
 /**
  * A card's comments and attachments, brought in behind the card itself: every comment (a `commentCard` action)
- * becomes a comment of the platform task once — attributed to the employee the member is, else kept as the
- * connecting user's, marked `System`, and named after its member in the text — and follows an edit in Trello;
- * every attachment becomes a resource link of the task once (its name, the address that opens it), reusing a link
- * a person already added with the same address. Both are kept by the platform's id map (entities `Comment` and
- * `Attachment`), so a card read again adds nothing twice. Written through the entities' repositories, as the
- * platform's other integration does: the comment API states the author as its caller, which here is the sync.
+ * becomes a comment of the platform task once — kept as the connecting user's, marked `System`, and named after
+ * its Trello member in the text: a member's username and display name are chosen by the member (a board guest can
+ * take anyone's), and only the token's own member has an e-mail, so a comment is never attributed to an employee
+ * from them — and follows an edit in Trello; every attachment becomes a resource link of the task once (its name,
+ * the address that opens it), reusing a link a person already added with the same address. Both are kept by the
+ * platform's id map (entities `Comment` and `Attachment`), so a card read again adds nothing twice. Written
+ * through the entities' repositories, as the platform's other integration does.
  *
- * A comment or attachment that could not be applied is reported and left for the next read of the card; a refused
- * token stops the run, as it does for the cards.
+ * The reads ({@link collect}) and the writes ({@link apply}) are apart: the caller reads with no lock held and
+ * writes one run at a time per card, so two runs that meet on one card (a webhook and an import) never both find
+ * no mapped comment and keep it twice. A comment or attachment that could not be read or kept is reported and
+ * counted as a failure of the run — the import position is then kept and the next import reads the card again;
+ * a refusal of one resource (403, 404) is not counted, a retry changes nothing. A refused token stops the run.
  */
 @Injectable()
 export class TrelloCardDetailsService {
@@ -47,34 +50,48 @@ export class TrelloCardDetailsService {
 		private readonly integrationMapService: IntegrationMapService
 	) {}
 
-	/** The comments and attachments of one card, each once. */
-	async apply(context: TrelloDetailsContext, card: TrelloCard, taskId: ID): Promise<void> {
-		await this.applyComments(context, card, taskId);
-		await this.applyAttachments(context, card, taskId);
+	/** Reads the card's comments and attachments (two calls); what could not be read is counted and left empty. */
+	async collect(context: TrelloDetailsContext, card: TrelloCard): Promise<TrelloCardDetails> {
+		return {
+			comments: await this.readPart(context, card, 'comments', (client) => client.comments(card.id)),
+			attachments: await this.readPart(context, card, 'attachments', (client) => client.attachments(card.id))
+		};
 	}
 
-	private async applyComments(context: TrelloDetailsContext, card: TrelloCard, taskId: ID): Promise<void> {
-		let comments: TrelloCommentAction[];
-		try {
-			comments = await context.read((client) => client.comments(card.id));
-		} catch (caught) {
-			if (caught instanceof TrelloApiError && caught.isUnauthorized) throw caught;
-			this.logger.warn(`The comments of card ${card.id} could not be read: ${this.describe(caught)}`);
-			return;
-		}
-		for (const action of comments) {
+	/** Keeps what was read, each once. */
+	async apply(context: TrelloDetailsContext, card: TrelloCard, details: TrelloCardDetails, taskId: ID): Promise<void> {
+		for (const action of details.comments) {
 			try {
 				await this.applyComment(context, action, taskId);
 			} catch (caught) {
-				this.logger.warn(`Comment ${action.id} of card ${card.id} could not be applied: ${this.describe(caught)}`);
+				context.details.failed += 1;
+				this.logger.warn(`Comment ${action.id} of card ${card.id} could not be kept: ${this.describe(caught)}`);
 			}
+		}
+		for (const attachment of details.attachments) {
+			try {
+				await this.applyAttachment(context, attachment, taskId);
+			} catch (caught) {
+				context.details.failed += 1;
+				this.logger.warn(`Attachment ${attachment.id} of card ${card.id} could not be kept: ${this.describe(caught)}`);
+			}
+		}
+	}
+
+	private async readPart<T>(context: TrelloDetailsContext, card: TrelloCard, what: string, make: (client: TrelloApiClient) => Promise<T[]>): Promise<T[]> {
+		try {
+			return await context.read(make);
+		} catch (caught) {
+			if (caught instanceof TrelloApiError && caught.isUnauthorized) throw caught;
+			if (!(caught instanceof TrelloApiError && (caught.isForbidden || caught.isNotFound))) context.details.failed += 1;
+			this.logger.warn(`The ${what} of card ${card.id} could not be read: ${this.describe(caught)}`);
+			return [];
 		}
 	}
 
 	private async applyComment(context: TrelloDetailsContext, action: TrelloCommentAction, taskId: ID): Promise<void> {
 		const { scope, integrationId } = context;
-		const author = await context.authorOf(action.memberCreator);
-		const html = commentHtmlOf(action, !!author);
+		const html = commentHtmlOf(action);
 		if (!html) return;
 		const comments = this.dataSource.getRepository(Comment);
 		const existing = await this.integrationMapService
@@ -93,9 +110,8 @@ export class TrelloCardDetailsService {
 				entity: BaseEntityEnum.Task,
 				entityId: taskId,
 				comment: html,
-				actorType: author ? ActorTypeEnum.User : ActorTypeEnum.System,
-				employeeId: author?.employeeId ?? undefined,
-				createdByUserId: author?.userId ?? context.connectedByUserId ?? undefined,
+				actorType: ActorTypeEnum.System,
+				createdByUserId: context.connectedByUserId ?? undefined,
 				tenantId: scope.tenantId,
 				organizationId: scope.organizationId
 			} as unknown as Comment)
@@ -104,24 +120,6 @@ export class TrelloCardDetailsService {
 			new IntegrationMapSyncEntityCommand({ gauzyId: saved.id as ID, integrationId, sourceId: action.id, entity: IntegrationEntity.COMMENT, ...scope })
 		);
 		context.details.comments += 1;
-	}
-
-	private async applyAttachments(context: TrelloDetailsContext, card: TrelloCard, taskId: ID): Promise<void> {
-		let attachments: TrelloAttachment[];
-		try {
-			attachments = await context.read((client) => client.attachments(card.id));
-		} catch (caught) {
-			if (caught instanceof TrelloApiError && caught.isUnauthorized) throw caught;
-			this.logger.warn(`The attachments of card ${card.id} could not be read: ${this.describe(caught)}`);
-			return;
-		}
-		for (const attachment of attachments) {
-			try {
-				await this.applyAttachment(context, attachment, taskId);
-			} catch (caught) {
-				this.logger.warn(`Attachment ${attachment.id} of card ${card.id} could not be applied: ${this.describe(caught)}`);
-			}
-		}
 	}
 
 	private async applyAttachment(context: TrelloDetailsContext, attachment: TrelloAttachment, taskId: ID): Promise<void> {

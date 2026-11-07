@@ -23,7 +23,7 @@ import { trelloSyncUser, runInTrelloContext } from '../trello-process';
 import { emptyCounts, TrelloSyncCounts, TrelloSyncRunService } from '../trello-sync-run.service';
 import { TrelloTenantService } from '../trello-tenant.service';
 import { TRELLO_APPLY_CONCURRENCY, TRELLO_CARDS_PAGE_SIZE, TRELLO_CONFIG, TRELLO_IMPORT_CLOCK_SKEW_MS, TrelloSettingName } from '../trello.constants';
-import { TrelloAuthor, TrelloCardDetailsService } from './trello-card-details.service';
+import { TrelloCardDetailsService } from './trello-card-details.service';
 import { isChangedSince, knownStatusesOf, listForStatus, parseListMap, statusKey, taskFieldsOf, trelloColorOf, trelloUpdateOf } from './trello-card.mapper';
 
 /** What one card became. */
@@ -58,7 +58,7 @@ interface ApplyContext extends ClientHolder {
 	/** The user who connected: the comments nobody here wrote are theirs to own. */
 	connectedByUserId: ID | null;
 	/** What the details import brought in this run (comments, attachments as links): reported, not counted on the run. */
-	details: { comments: number; links: number };
+	details: { comments: number; links: number; failed: number };
 	counts: TrelloSyncCounts;
 }
 
@@ -445,7 +445,7 @@ export class TrelloSyncService {
 			employeeIdsByMember: new Map(),
 			tagIdsByLabel: new Map(),
 			connectedByUserId: this.connectedByUserId(tenant),
-			details: { comments: 0, links: 0 },
+			details: { comments: 0, links: 0, failed: 0 },
 			counts
 		};
 	}
@@ -462,8 +462,18 @@ export class TrelloSyncService {
 			context.counts.failed += 1;
 			this.logger.warn(`Card ${card.id} could not be applied: ${this.describe(caught)}`);
 		}
-		// Behind the card itself: its comments and attachments, read apart (two calls), each kept once.
-		if (taskId) await this.cardDetails.apply(this.detailsContextOf(context), card, taskId);
+		// Behind the card itself: its comments and attachments — read apart (two calls, no lock held while Trello answers),
+		// then kept one run at a time per card under the card's own lock: a webhook and an import that meet on one card
+		// would otherwise both find no mapped comment and keep it twice.
+		if (taskId) {
+			const detailsContext = this.detailsContextOf(context);
+			const details = await this.cardDetails.collect(detailsContext, card);
+			const key = `${context.mapping.integrationId}:${card.id}`;
+			const resolvedTaskId = taskId;
+			await this.serialized(`${key}:details`, () =>
+				this.withApplySlot(() => this.lockedTransaction([`integration-trello:card-details:${key}`], () => this.cardDetails.apply(detailsContext, card, details, resolvedTaskId)))
+			);
+		}
 	}
 
 	/** One apply at a time per card: chained in the process, locked across processes (`lockedTransaction`), within the process's apply slots. */
@@ -533,26 +543,27 @@ export class TrelloSyncService {
 		return ids.map((id) => ({ id }));
 	}
 
-	/** What the details import needs of a run: its scope, the connection's reads, the member matching, and the run's tallies. */
+	/** What the details import needs of a run: its scope, the connection's reads, and the run's tallies. */
 	private detailsContextOf(context: ApplyContext) {
 		return {
 			scope: context.scope,
 			integrationId: context.mapping.integrationId,
 			connectedByUserId: context.connectedByUserId,
 			read: <T>(make: (client: TrelloApiClient) => Promise<T>) => this.call(context, make),
-			authorOf: async (member: { id: string; username: string; fullName: string } | null): Promise<TrelloAuthor | null> => {
-				if (!member?.id) return null;
-				const row = await this.findEmployeeRow(context, member).catch(() => null);
-				return row?.id ? { employeeId: row.id, userId: row.userId ?? null } : null;
-			},
 			details: context.details
 		};
 	}
 
-	/** One line per run about the details, when there were any (they are not counted on the run). */
+	/**
+	 * One line per run about the details, when there were any; what could not be read or kept counts as a failure
+	 * of the run, so the import position is kept and the next import reads the task again.
+	 */
 	private reportDetails(context: ApplyContext): void {
-		const { comments, links } = context.details;
-		if (comments || links) this.logger.log(`Mapping ${context.mapping.id}: ${comments} comment(s) and ${links} attachment link(s) brought in`);
+		const { comments, links, failed } = context.details;
+		if (failed) context.counts.failed += failed;
+		if (comments || links || failed) {
+			this.logger.log(`Mapping ${context.mapping.id}: ${comments} comment(s) and ${links} attachment link(s) brought in, ${failed} not read or kept`);
+		}
 	}
 
 	/** The employee a Trello member is: the organization's employees are loaded once per run and matched in memory. */
