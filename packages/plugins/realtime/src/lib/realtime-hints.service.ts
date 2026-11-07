@@ -48,7 +48,7 @@ export function taskHint(
 		aggregateType: REALTIME_AGGREGATES.TASK,
 		aggregateId: task.id,
 		tenantId: task.tenantId,
-		organizationId: task.organizationId ?? null,
+		organizationId: task.organizationId,
 		hint: {
 			entity: BaseEntityEnum.Task,
 			entityId: task.id,
@@ -69,7 +69,7 @@ export function commentHint(event: Pick<CommentEvent, 'type' | 'comment' | 'acto
 		aggregateType: REALTIME_AGGREGATES.COMMENT,
 		aggregateId: comment.id,
 		tenantId: comment.tenantId,
-		organizationId: comment.organizationId ?? null,
+		organizationId: comment.organizationId,
 		hint: {
 			entity: BaseEntityEnum.Comment,
 			entityId: comment.id,
@@ -146,7 +146,7 @@ export function documentHint(
 		aggregateType: REALTIME_AGGREGATES.DOCUMENT,
 		aggregateId: document.id,
 		tenantId: document.tenantId,
-		organizationId: document.organizationId ?? null,
+		organizationId: document.organizationId,
 		hint: {
 			entity: BaseEntityEnum.Document,
 			entityId: document.id,
