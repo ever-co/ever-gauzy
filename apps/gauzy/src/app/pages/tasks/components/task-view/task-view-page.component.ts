@@ -9,6 +9,7 @@ import { distinctUntilChanged, filter, first, map } from 'rxjs/operators';
 import * as moment from 'moment-timezone';
 import {
 	BaseEntityEnum,
+	ID,
 	IOrganization,
 	IPagination,
 	ITask,
@@ -390,7 +391,8 @@ export class TaskViewPageComponent extends TranslationBaseComponent implements O
 		this.openTab(tab);
 		void this.router.navigate([], {
 			relativeTo: this.route,
-			queryParams: { tab: tab === 'overview' ? null : tab },
+			// A tab the user chose: the comment a link pointed at is no longer pointed at, or the tab could not be left.
+			queryParams: { tab: tab === 'overview' ? null : tab, comment: null },
 			queryParamsHandling: 'merge',
 			replaceUrl: true
 		});

@@ -108,9 +108,12 @@ describe('InboxPageComponent', () => {
 
 	it('an item marked done leaves the open tabs; brought back, it leaves the Done tab', () => {
 		api.counts.mockReturnValue(of({ unread: 1, decisionsOpen: 1, byMailbox: [] }));
-		api.list.mockReturnValue(of({ items: [item('a')], nextCursor: null }));
+		api.list.mockReturnValue(of({ items: [item('a', { recipient: { isRead: true, isArchived: false, snoozedUntil: null } })], nextCursor: null }));
 		const { component, find } = render();
 		expect(find('tab-done')).not.toBeNull();
+		// The item is open (read already: opening it changes nothing) when it is marked done, so the pane must close.
+		component.open(component.items()[0]);
+		expect(component.selected()).toMatchObject({ id: 'a' });
 		api.setState.mockReturnValue(
 			of(item('a', { recipient: { isRead: true, isArchived: false, snoozedUntil: null, isDone: true } }))
 		);

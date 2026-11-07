@@ -245,7 +245,6 @@ export class InboxNotificationBridge implements OnModuleInit, IInboxSourceHandle
 		}
 	}
 
-	/** The user behind an employee of the tenant. */
 	/**
 	 * A notification about a comment (a comment on a record the receiver follows, a mention in one) names the comment;
 	 * the item also names the comment's task, so a client opens the task at the comment, and keeps the comment's record
@@ -273,6 +272,7 @@ export class InboxNotificationBridge implements OnModuleInit, IInboxSourceHandle
 		}
 	}
 
+	/** The user behind an employee of the tenant. */
 	private async userIdOfEmployee(employeeId: ID | undefined | null, tenantId: ID | undefined | null): Promise<ID | null> {
 		if (!employeeId) {
 			return null;

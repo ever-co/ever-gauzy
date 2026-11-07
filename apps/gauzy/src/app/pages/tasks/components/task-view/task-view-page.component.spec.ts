@@ -1355,7 +1355,7 @@ describe('TaskViewPageComponent', () => {
 			expect(page.commentEntity).toBe(BaseEntityEnum.Task);
 			expect(router.navigate).toHaveBeenLastCalledWith(
 				[],
-				expect.objectContaining({ queryParams: { tab: 'comments' }, replaceUrl: true })
+				expect.objectContaining({ queryParams: { tab: 'comments', comment: null }, replaceUrl: true })
 			);
 		});
 
@@ -1380,6 +1380,11 @@ describe('TaskViewPageComponent', () => {
 			// Another link, without the comment: the comment is no longer pointed at.
 			queryParams$.next(convertToParamMap({ tab: 'comments' }));
 			expect(page.highlightCommentId).toBeNull();
+
+			// A tab the user chooses clears the comment from the address, so the Comments tab can be left.
+			queryParams$.next(convertToParamMap({ comment: 'c-9' }));
+			page.selectTab('overview');
+			expect(router.navigate).toHaveBeenLastCalledWith([], expect.objectContaining({ queryParams: { tab: null, comment: null } }));
 		});
 
 		it('keeps the comments behind another tab, so a draft survives', async () => {

@@ -289,7 +289,7 @@ export function apiMessage(error: unknown): string | null {
 				margin-left: 0.35rem;
 				padding: 0 0.35rem;
 				border-radius: 0.75rem;
-				background: var(--color-basic-300, #e4e9f2);
+				background: var(--gauzy-card-2);
 				font-size: 0.75em;
 			}
 			.tabs .active {

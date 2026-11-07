@@ -205,6 +205,8 @@ export class EntityCommentsComponent implements OnChanges, OnDestroy {
 	private readonly _imageAssets = inject(ImageAssetService);
 	/** Numbers each read, so only the latest one is applied: a post and a delete can each refresh at once. */
 	private _sequence = 0;
+	/** The comment last revealed: a refresh after a post or a delete does not scroll back to it. */
+	private _revealedId: ID | null = null;
 	private _imageKey = 0;
 
 	/** Lookups of image addresses under way, by asset, so an image is looked up once at a time. */
@@ -225,6 +227,7 @@ export class EntityCommentsComponent implements OnChanges, OnDestroy {
 		if (this.entity && this.entityId && (changes['entity'] || changes['entityId'] || changes['organizationId'])) {
 			this.openThreadId = null;
 			this.confirmingDeleteId = null;
+			this._revealedId = null;
 			this.clearImages('comment');
 			this.clearImages('reply');
 			this.threads = loading([]);
@@ -235,16 +238,18 @@ export class EntityCommentsComponent implements OnChanges, OnDestroy {
 	}
 
 	/**
-	 * Shows the comment the page points at, once the list holds it: a reply's thread is opened, and the comment is
-	 * scrolled into view after it is drawn. Nothing happens for a comment the list does not hold.
+	 * Shows the comment the page points at, once the list holds it and once per comment: a reply's thread is opened,
+	 * and the comment is scrolled into view after it is drawn. A refresh after a post or a delete leaves the reader
+	 * where they are; nothing happens for a comment the list does not hold.
 	 */
 	private reveal(): void {
 		const id = this.highlightCommentId;
-		if (!id || this.threads.loading) return;
+		if (!id || this.threads.loading || this._revealedId === id) return;
 		const thread = this.threads.value.find(
 			(candidate) => candidate.entry.comment.id === id || candidate.replies.some((reply) => reply.comment.id === id)
 		);
 		if (!thread) return;
+		this._revealedId = id;
 		if (thread.entry.comment.id !== id) this.openThreadId = thread.entry.comment.id;
 		setTimeout(() => {
 			const element = this._host.nativeElement.querySelector<HTMLElement>(`[data-comment-id="${CSS.escape(String(id))}"]`);

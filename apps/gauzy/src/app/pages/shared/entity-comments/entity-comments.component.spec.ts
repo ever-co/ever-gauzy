@@ -170,27 +170,40 @@ describe('EntityCommentsComponent', () => {
 		expect(toastr.success).toHaveBeenCalledWith('CONTACTS_PAGE.NOTE_DELETED');
 	});
 
-	it('marks the comment it is pointed at, opens its thread when it is a reply, and scrolls to it', async () => {
+	it('marks the comment it is pointed at, opens its thread when it is a reply, and scrolls to it once', async () => {
+		const original = Element.prototype.scrollIntoView;
 		const scrolled: string[] = [];
 		Element.prototype.scrollIntoView = function () {
 			scrolled.push(this.getAttribute('data-comment-id'));
 		} as never;
-		const fixture = await render({ highlightCommentId: 'reply' });
-		await new Promise((resolve) => setTimeout(resolve));
-		fixture.detectChanges();
+		try {
+			const fixture = await render({ highlightCommentId: 'reply' });
+			await new Promise((resolve) => setTimeout(resolve));
+			fixture.detectChanges();
 
-		expect(state(fixture).openThreadId).toBe('first');
-		expect(element(fixture).querySelector('.reply.highlighted')?.getAttribute('data-comment-id')).toBe('reply');
-		expect(scrolled).toEqual(['reply']);
+			expect(state(fixture).openThreadId).toBe('first');
+			expect(element(fixture).querySelector('.reply.highlighted')?.getAttribute('data-comment-id')).toBe('reply');
+			expect(scrolled).toEqual(['reply']);
 
-		// Another comment pointed at later: marked in turn; one the list does not hold changes nothing.
-		fixture.componentRef.setInput('highlightCommentId', 'second');
-		fixture.detectChanges();
-		await new Promise((resolve) => setTimeout(resolve));
-		expect(element(fixture).querySelector('.comment.highlighted')?.getAttribute('data-comment-id')).toBe('second');
-		fixture.componentRef.setInput('highlightCommentId', 'missing');
-		fixture.detectChanges();
-		expect(element(fixture).querySelector('.highlighted')).toBeNull();
+			// A refresh (after a post, say) leaves the reader where they are: no second scroll, the thread as they left it.
+			state(fixture).openThreadId = null;
+			await state(fixture).load();
+			await new Promise((resolve) => setTimeout(resolve));
+			expect(scrolled).toEqual(['reply']);
+			expect(state(fixture).openThreadId).toBeNull();
+
+			// Another comment pointed at later: marked in turn; one the list does not hold changes nothing.
+			fixture.componentRef.setInput('highlightCommentId', 'second');
+			fixture.detectChanges();
+			await new Promise((resolve) => setTimeout(resolve));
+			expect(element(fixture).querySelector('.comment.highlighted')?.getAttribute('data-comment-id')).toBe('second');
+			expect(scrolled).toEqual(['reply', 'second']);
+			fixture.componentRef.setInput('highlightCommentId', 'missing');
+			fixture.detectChanges();
+			expect(element(fixture).querySelector('.highlighted')).toBeNull();
+		} finally {
+			Element.prototype.scrollIntoView = original;
+		}
 	});
 
 	it('gives each instance on a page its own box ids', async () => {
