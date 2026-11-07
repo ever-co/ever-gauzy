@@ -257,32 +257,44 @@ export class LinearSyncService {
 	 * one issue.
 	 */
 	/**
-	 * Runs `work` in a transaction that holds a cross-process lock on each key: an advisory lock on Postgres, a named
-	 * lock on MySQL / MariaDB (held by the transaction's own session and released with it); SQLite serializes writers.
-	 * The statements are parameterized: a key is a bind value, never part of the SQL.
+	 * Runs `work` in a transaction that holds a cross-process lock on each key: an advisory lock on Postgres (taken
+	 * in the transaction, released with its commit), a named lock on MySQL / MariaDB (a session lock: taken on the
+	 * transaction's own connection before it starts and released only after it committed or rolled back, so a waiter
+	 * always reads what the holder wrote); SQLite serializes writers. The statements are parameterized: a key is a
+	 * bind value, never part of the SQL.
 	 */
-	private lockedTransaction<T>(keys: readonly string[], work: (manager: EntityManager) => Promise<T>): Promise<T> {
-		return this.dataSource.transaction(async (manager) => {
-			const dialect = manager.connection.options.type;
-			const named: string[] = [];
-			try {
+	private async lockedTransaction<T>(keys: readonly string[], work: (manager: EntityManager) => Promise<T>): Promise<T> {
+		const runner = this.dataSource.createQueryRunner();
+		await runner.connect();
+		const dialect = runner.connection.options.type;
+		const named: string[] = [];
+		try {
+			if (dialect === 'mysql' || dialect === 'mariadb') {
 				for (const key of keys) {
-					if (dialect === 'postgres') {
-						await manager.query('SELECT pg_advisory_xact_lock(hashtext($1))', [key]);
-					} else if (dialect === 'mysql' || dialect === 'mariadb') {
-						const name = createHash('sha1').update(key).digest('hex');
-						const rows = (await manager.query('SELECT GET_LOCK(?, 30) AS got', [name])) as Array<{ got?: unknown }>;
-						if (Number(rows?.[0]?.got) !== 1) throw new Error(`The lock ${key} could not be taken within 30 s`);
-						named.push(name);
-					}
-				}
-				return await work(manager);
-			} finally {
-				for (const name of named.reverse()) {
-					await manager.query('SELECT RELEASE_LOCK(?)', [name]).catch(() => undefined);
+					const name = createHash('sha1').update(key).digest('hex');
+					const rows = (await runner.query('SELECT GET_LOCK(?, 30) AS got', [name])) as Array<{ got?: unknown }>;
+					if (Number(rows?.[0]?.got) !== 1) throw new Error(`The lock ${key} could not be taken within 30 s`);
+					named.push(name);
 				}
 			}
-		});
+			await runner.startTransaction();
+			try {
+				if (dialect === 'postgres') {
+					for (const key of keys) await runner.query('SELECT pg_advisory_xact_lock(hashtext($1))', [key]);
+				}
+				const result = await work(runner.manager);
+				await runner.commitTransaction();
+				return result;
+			} catch (error) {
+				await runner.rollbackTransaction().catch(() => undefined);
+				throw error;
+			}
+		} finally {
+			for (const name of named.reverse()) {
+				await runner.query('SELECT RELEASE_LOCK(?)', [name]).catch(() => undefined);
+			}
+			await runner.release();
+		}
 	}
 
 	private async createIssueOnce(
