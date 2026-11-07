@@ -252,7 +252,10 @@ export class EntityCommentsComponent implements OnChanges, OnDestroy {
 		this._revealedId = id;
 		if (thread.entry.comment.id !== id) this.openThreadId = thread.entry.comment.id;
 		setTimeout(() => {
-			const element = this._host.nativeElement.querySelector<HTMLElement>(`[data-comment-id="${CSS.escape(String(id))}"]`);
+			// The attribute is compared as text (no selector built from the id, so no `CSS.escape`, which jsdom does not have).
+			const element = Array.from(this._host.nativeElement.querySelectorAll<HTMLElement>('[data-comment-id]')).find(
+				(candidate) => candidate.getAttribute('data-comment-id') === String(id)
+			);
 			element?.scrollIntoView?.({ block: 'center', behavior: 'smooth' });
 		});
 	}
