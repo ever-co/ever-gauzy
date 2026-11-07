@@ -1,34 +1,44 @@
 # @gauzy/plugin-chat
 
-Chat between the employees of an organization: channels (public or private, grouped in categories), direct and
-group messages, threads, reactions, pins, @mentions, attachments and task cards. Spec:
-`docs/specs/features/chat/`.
+Chat between the employees of an organization: channels (public or private,
+grouped in categories), direct and group messages, threads, reactions, pins,
+@mentions, attachments and task cards. Spec: `docs/specs/features/chat/`.
 
-**Off by default.** The plugin is loaded only when `GAUZY_CHAT_ENABLED=true` (exactly), and its routes answer only
-for tenants whose `FEATURE_CHAT` toggle is on. Off, nothing changes: no route, no table. (The chat permissions sit
-in the platform's default role grants, like every plugin permission, so a tenant has them the day the plugin is
-turned on; with the plugin off they guard nothing.) The `FEATURE_CHAT` catalogue row is seeded by the plugin's own
-migration (`1791000006300`) on an existing installation, so Settings → Features shows the toggle.
+**Off by default.** The plugin is loaded only when `GAUZY_CHAT_ENABLED=true`
+(exactly), and its routes answer only for tenants whose `FEATURE_CHAT` toggle is
+on. Off, nothing changes: no route, no table. (The chat permissions sit in the
+platform's default role grants, like every plugin permission, so a tenant has
+them the day the plugin is turned on; with the plugin off they guard nothing.)
+The `FEATURE_CHAT` catalogue row is seeded by the plugin's own migration
+(`1791000006300`) on an existing installation, so Settings → Features shows the
+toggle.
 
 ## What it is built on
 
-- **Reactions** are the platform's `Reaction` rows (`entity = ChatMessage`), written through chat routes that check
-  membership.
-- **Mentions** go through the platform's mention service (a MENTION notification, filed in the Inbox); a direct or
-  group message and a reply in a followed thread create a MESSAGE notification. Reading a conversation marks them
-  read.
-- **Real time**: every write appends content-free, addressed facts to the event outbox (`chat_message.created`,
-  `chat_message.updated`, `chat_message.deleted`, `chat_conversation.changed`, `chat_member.state_changed`,
-  `chat_thread.changed`) and answers the same facts, so the sender applies them at once and subscribers get the rest.
-- **Unread counts are counters**: `chat_member.readCount` / `mentionCount` are written in the message transaction;
-  `unread = conversation.messageCount − readCount`. One call (`GET /chat/states`) answers every badge.
-- **Attachments** are document ids uploaded through the Docs plugin (`POST /plugins/docs/documents/upload`).
+- **Reactions** are the platform's `Reaction` rows (`entity = ChatMessage`),
+  written through chat routes that check membership.
+- **Mentions** go through the platform's mention service (a MENTION
+  notification, filed in the Inbox); a direct or group message and a reply in a
+  followed thread create a MESSAGE notification. Reading a conversation marks
+  them read.
+- **Real time**: every write appends content-free, addressed facts to the event
+  outbox (`chat_message.created`, `chat_message.updated`,
+  `chat_message.deleted`, `chat_conversation.changed`,
+  `chat_member.state_changed`, `chat_thread.changed`) and answers the same
+  facts, so the sender applies them at once and subscribers get the rest.
+- **Unread counts are counters**: `chat_member.readCount` / `mentionCount` are
+  written in the message transaction; `unread = conversation.messageCount −
+  readCount`. One call (`GET /chat/states`) answers every badge.
+- **Attachments** are document ids uploaded through the Docs plugin (`POST
+  /plugins/docs/documents/upload`).
 
 ## Tables
 
-`chat_category`, `chat_conversation`, `chat_member`, `chat_message`, `chat_thread_follow`, `chat_task_reference`
-(migration `1791000006100`, PostgreSQL / MySQL / SQLite, idempotent) and the role grants (`1791000006200`:
-`CHAT_VIEW`, `CHAT_SEND` for everyone who works in the organization, `CHAT_MANAGE` for administrators and managers).
+`chat_category`, `chat_conversation`, `chat_member`, `chat_message`,
+`chat_thread_follow`, `chat_task_reference` (migration `1791000006100`,
+PostgreSQL / MySQL / SQLite, idempotent) and the role grants (`1791000006200`:
+`CHAT_VIEW`, `CHAT_SEND` for everyone who works in the organization,
+`CHAT_MANAGE` for administrators and managers).
 
 ## Routes (`/api/chat`, `CHAT_VIEW`; writes `CHAT_SEND`; 404 for a conversation the caller is not in)
 
@@ -53,17 +63,19 @@ migration (`1791000006300`) on an existing installation, so Settings → Feature
 | `POST` / `DELETE /messages/:id/reactions/:emoji` | reactions |
 | `GET /threads` · `POST /read-all` · `POST /read-restore { snapshotId }` | followed threads; mark all read with a one-minute undo |
 
-Mention tokens in a body: `<@employeeId>`, `<#conversationId>`, `<!channel>`, `<!here>` — rename-safe, rendered
-as chips by the clients. Sends are idempotent per `nonce` for a day.
+Mention tokens in a body: `<@employeeId>`, `<#conversationId>`, `<!channel>`,
+`<!here>` — rename-safe, rendered as chips by the clients. Sends are idempotent
+per `nonce` for a day.
 
 ## Enabling
 
-```
+```env
 GAUZY_CHAT_ENABLED=true
 FEATURE_CHAT=true            # or switch the feature on per tenant in Settings → Features
 ```
 
 ## Not yet in this plugin (next slices)
 
-Link previews, search, task references typed as `KEY-number`, "create task from message", incoming webhooks, the
-Angular UI (`@gauzy/plugin-chat-ui`), GraphQL twins, the Ever Teams client.
+Link previews, search, task references typed as `KEY-number`, "create task from
+message", incoming webhooks, the Angular UI (`@gauzy/plugin-chat-ui`), GraphQL
+twins, the Ever Teams client.
