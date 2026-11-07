@@ -1,5 +1,5 @@
 import { BadRequestException, ForbiddenException, Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { Brackets, DataSource, EntityManager, In, IsNull, MoreThan, Not, ObjectLiteral, SelectQueryBuilder } from 'typeorm';
+import { Brackets, DataSource, EntityManager, In, IsNull, MoreThan, MoreThanOrEqual, Not, ObjectLiteral, SelectQueryBuilder } from 'typeorm';
 import {
 	ActorTypeEnum,
 	CHAT_EVENT_NAMES,
@@ -459,6 +459,9 @@ export class ChatMessageService {
 				if ((fresh?.messageCount ?? 0) < 0) {
 					await manager.getRepository(ChatConversation).update({ id: conversation.id as ID }, { messageCount: 0 });
 				}
+				// A member who had read the deleted message (position or past it) has read one message fewer now; then
+				// nobody's position may exceed the new total.
+				await manager.getRepository(ChatMember).decrement({ conversationId: conversation.id as ID, readCount: MoreThanOrEqual(position) }, 'readCount', 1);
 				await manager.getRepository(ChatMember).update({ conversationId: conversation.id as ID, readCount: MoreThan(total) }, { readCount: total });
 				for (const m of members) {
 					if ((m.readCount ?? 0) >= position || (m.mentionCount ?? 0) <= 0) continue;
