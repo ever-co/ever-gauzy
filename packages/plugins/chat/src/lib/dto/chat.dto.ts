@@ -25,6 +25,7 @@ import {
 	IChatConversationCreateInput,
 	IChatConversationUpdateInput,
 	IChatCreateTaskInput,
+	IChatFilesQuery,
 	IChatSearchQuery,
 	IChatDirectInput,
 	IChatMemberStateInput,
@@ -236,6 +237,23 @@ export class ChatMessageUpdateDTO implements IChatMessageUpdateInput {
 	@ArrayMaxSize(100)
 	@IsUUID('all', { each: true })
 	mentionEmployeeIds?: ID[];
+}
+
+export class ChatFilesQueryDTO implements IChatFilesQuery {
+	@ApiPropertyOptional({ type: () => Number, minimum: 1, maximum: CHAT_MAX_PAGE_SIZE })
+	@IsOptional()
+	@Type(() => Number)
+	@IsInt()
+	@Min(1)
+	@Max(CHAT_MAX_PAGE_SIZE)
+	limit?: number;
+
+	@ApiPropertyOptional({ type: () => Number, minimum: 0 })
+	@IsOptional()
+	@Type(() => Number)
+	@IsInt()
+	@Min(0)
+	skip?: number;
 }
 
 export class ChatSearchQueryDTO implements IChatSearchQuery {

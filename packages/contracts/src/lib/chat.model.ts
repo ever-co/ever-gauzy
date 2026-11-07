@@ -331,12 +331,41 @@ export interface IChatReadAllResult {
 	snapshotId: string;
 }
 
+/** One file of a conversation: the document a message carries, as the files pane lists it. */
+export interface IChatFile {
+	documentId: ID;
+	messageId: ID;
+	conversationId: ID;
+	name: string;
+	originalFilename?: string | null;
+	mimeType?: string | null;
+	fileSize?: number | null;
+	status?: string | null;
+	fileUrl?: string | null;
+	thumbUrl?: string | null;
+	authorEmployeeId?: ID | null;
+	authorUserId?: ID | null;
+	/** When the file was attached (the message's send). */
+	attachedAt: Date;
+}
+
+/** `GET /chat/conversations/:id/files`: newest first, paged. */
+export interface IChatFilesQuery {
+	limit?: number;
+	skip?: number;
+}
+
 /** `GET /chat/search`: a query over the messages of my conversations (one of them when `conversationId` is given). */
 export interface IChatSearchQuery {
 	q: string;
 	conversationId?: ID;
 	limit?: number;
 	skip?: number;
+}
+
+export interface IChatFilesResult {
+	files: IChatFile[];
+	hasMore: boolean;
 }
 
 export interface IChatSearchResult {
