@@ -560,4 +560,121 @@ export class EverConnectStore {
 	async archiveLinkRecord(integrationTenantId: string): Promise<void> {
 		await this.sql.update('integration_tenant', { isActive: false, isArchived: true }, { id: integrationTenantId });
 	}
+
+	/** One setting of a link's `integration_tenant` row (`integration_setting`), or `null`. */
+	async linkSetting(integrationTenantId: string, settingsName: string): Promise<string | null> {
+		const row = await this.sql.one('integration_setting', { integrationId: integrationTenantId, settingsName });
+		return row ? str(row['settingsValue']) : null;
+	}
+
+	/** Writes one setting of a link's `integration_tenant` row (created on first write). */
+	async setLinkSetting(
+		owner: { tenantId: string; organizationId: string },
+		integrationTenantId: string,
+		settingsName: string,
+		settingsValue: string
+	): Promise<void> {
+		const changed = await this.sql.update(
+			'integration_setting',
+			{ settingsValue },
+			{ integrationId: integrationTenantId, settingsName }
+		);
+		if (changed === 0) {
+			await this.sql.insert('integration_setting', {
+				id: randomUUID(),
+				tenantId: owner.tenantId,
+				organizationId: owner.organizationId,
+				integrationId: integrationTenantId,
+				settingsName,
+				settingsValue,
+				isActive: true,
+				isArchived: false
+			});
+		}
+	}
+
+	// ── The counterparty check's cache (`ever_connect_lookup_cache`) ─────────────
+
+	/**
+	 * The answers kept for these hashes of one organization, still valid at `now`: `result` is the
+	 * match (JSON) or `null` for "none found".
+	 */
+	async lookupCacheRead(
+		organizationId: string,
+		saltVersion: number,
+		entries: Array<{ kind: string; hash: string }>,
+		now: number
+	): Promise<Map<string, string | null>> {
+		const found = new Map<string, string | null>();
+		for (const { kind, hash } of entries) {
+			const row = await this.sql.one(LOOKUP_CACHE, { organizationId, kind, hash, saltVersion: String(saltVersion) });
+			const expiresAt = row ? num(row['expiresAt']) : null;
+			if (row && expiresAt !== null && expiresAt > now) {
+				found.set(`${kind}:${hash}`, str(row['result']));
+			}
+		}
+		return found;
+	}
+
+	/** Keeps one answer for a hash of one organization until `expiresAt` (replacing an older one). */
+	async lookupCacheWrite(
+		owner: { tenantId: string; organizationId: string },
+		entry: { kind: string; hash: string; saltVersion: number; result: string | null; expiresAt: number }
+	): Promise<void> {
+		const key = { organizationId: owner.organizationId, kind: entry.kind, hash: entry.hash };
+		const values = { saltVersion: String(entry.saltVersion), result: entry.result, expiresAt: entry.expiresAt };
+		const inserted = await this.sql.insertIgnore(LOOKUP_CACHE, {
+			id: randomUUID(),
+			tenantId: owner.tenantId,
+			...key,
+			...values
+		});
+		if (!inserted) {
+			await this.sql.update(LOOKUP_CACHE, values, key);
+		}
+	}
+
+	/** Removes the answers of one organization: all of them, or only those expired at `expiredAt`. */
+	async purgeLookupCache(owner: { tenantId: string; organizationId: string }, expiredAt?: number): Promise<void> {
+		const q = (c: string) => this.sql.q(c);
+		const params: unknown[] = [owner.tenantId, owner.organizationId];
+		let where = `${q('tenantId')} = ${this.sql.ph(1)} AND ${q('organizationId')} = ${this.sql.ph(2)}`;
+		if (expiredAt !== undefined) {
+			params.push(expiredAt);
+			where += ` AND ${q('expiresAt')} <= ${this.sql.ph(3)}`;
+		}
+		await this.sql.run(`DELETE FROM ${q(LOOKUP_CACHE)} WHERE ${where}`, params);
+	}
+
+	// ── A Gauzy organization's own identifiers (read only) ──────────────────────
+
+	/**
+	 * The tax id of a Gauzy organization and the country of its address (`organization.taxId`,
+	 * `contact.country`), or `null` when it does not exist (or was deleted).
+	 */
+	async organizationIdentifiers(
+		tenantId: string,
+		organizationId: string
+	): Promise<{ taxId: string | null; country: string | null } | null> {
+		const q = (c: string) => this.sql.q(c);
+		const text = (expr: string) => (this.sql.dialect === 'postgres' ? `${expr}::text` : expr);
+		const { rows } = await this.sql.run(
+			`SELECT o.${q('taxId')} AS ${q('taxId')}, o.${q('contactId')} AS ${q('contactId')} FROM ${q('organization')} o ` +
+				`WHERE ${text(`o.${q('id')}`)} = ${this.sql.ph(1)} AND ${text(`o.${q('tenantId')}`)} = ${this.sql.ph(2)} AND o.${q('deletedAt')} IS NULL`,
+			[organizationId, tenantId]
+		);
+		if (!rows.length) {
+			return null;
+		}
+		const contactId = str(rows[0]['contactId']);
+		let country: string | null = null;
+		if (contactId) {
+			const contact = await this.sql.run(
+				`SELECT c.${q('country')} AS ${q('country')} FROM ${q('contact')} c WHERE ${text(`c.${q('id')}`)} = ${this.sql.ph(1)}`,
+				[contactId]
+			);
+			country = str(contact.rows[0]?.['country']);
+		}
+		return { taxId: str(rows[0]['taxId']), country };
+	}
 }

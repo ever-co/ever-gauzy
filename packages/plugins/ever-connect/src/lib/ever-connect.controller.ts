@@ -8,11 +8,13 @@ import {
 	HttpCode,
 	HttpStatus,
 	Inject,
+	NotFoundException,
 	Param,
 	Post,
 	Put,
 	Query,
 	Req,
+	Res,
 	UseGuards
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
@@ -27,10 +29,12 @@ import { EVER_CONNECT_SETTINGS } from './ever-connect.constants';
 import { EntitlementSummary, EverConnectEntitlementService } from './ever-connect-entitlement.service';
 import { EverConnectIntegrationStateService, IntegrationView } from './ever-connect-integration-state.service';
 import { EverConnectLinkService, LinkView } from './ever-connect-link.service';
+import { COUNTERPARTY_LOOKUP, EverConnectLookupService, LookupRateLimitedError } from './ever-connect-lookup.service';
 import { organizationScope } from './ever-connect-request';
 import type { RequestWithUser } from './ever-connect-request';
 import { EverConnectStore } from './ever-connect.store';
 import { EverConnectEnabledGuard } from './guards/ever-connect-operator.guard';
+import { LookupResponse, parseLookupOptions, parseLookupRequest } from './dto/lookup.dto';
 
 /** `GET /api/ever-connect/status`. */
 export interface EverConnectStatus {
@@ -72,7 +76,8 @@ export class EverConnectController {
 		private readonly store: EverConnectStore,
 		private readonly operator: EverOperatorService,
 		private readonly cleanup: EverConnectCleanupService,
-		@Inject(EVER_CONNECT_SETTINGS) private readonly config: EverConnectConfig
+		@Inject(EVER_CONNECT_SETTINGS) private readonly config: EverConnectConfig,
+		private readonly lookup: EverConnectLookupService
 	) {}
 
 	@Get('status')
@@ -159,6 +164,58 @@ export class EverConnectController {
 		}
 		const scope = await organizationScope(request, organizationId, this.store, this.operator);
 		return this.states.setEnabled(key, body.enabled, scope);
+	}
+
+	/**
+	 * Checks a contact on Ever Platform: `{ "items": [{ "kind": "vat" | "registration" | "email",
+	 * "value", "country"? }] }` (at most 100). Only while `counterparty_lookup` is enabled for this
+	 * organization's link and its entitlement grants the feature (403 `integration_disabled` /
+	 * `entitlement_required` otherwise, before anything is sent). The values are hashed here and never
+	 * leave this installation, never logged and never stored; the answer names, per identifier, the
+	 * handle of an organization that chose to be discoverable, "none" or "cannot be checked". 429 with
+	 * `Retry-After` when the organization checked too often.
+	 */
+	@Post('lookup')
+	@HttpCode(HttpStatus.OK)
+	@Permissions(PermissionsEnum.INTEGRATION_VIEW)
+	@Header('Cache-Control', 'no-store')
+	async check(
+		@Req() request: RequestWithUser,
+		@Body() body: unknown,
+		@Res({ passthrough: true }) response: { setHeader(name: string, value: string): void },
+		@Query('organizationId') organizationId?: string
+	): Promise<LookupResponse> {
+		const scope = await organizationScope(request, organizationId, this.store, this.operator);
+		const { items } = parseLookupRequest(body);
+		try {
+			return await this.lookup.check(scope, items);
+		} catch (error) {
+			if (error instanceof LookupRateLimitedError) {
+				response.setHeader('Retry-After', String(error.retryAfterS));
+			}
+			throw error;
+		}
+	}
+
+	/**
+	 * The counterparty check's own settings for this organization: `{ "auto_check": true|false }`
+	 * (check a contact when it is opened; off by default). Any other integration: 404.
+	 */
+	@Put('integrations/:key/options')
+	@Permissions(PermissionsEnum.INTEGRATION_EDIT)
+	@Header('Cache-Control', 'no-store')
+	async setOptions(
+		@Req() request: RequestWithUser,
+		@Param('key') key: string,
+		@Body() body: unknown,
+		@Query('organizationId') organizationId?: string
+	): Promise<{ auto_check: boolean }> {
+		if (key !== COUNTERPARTY_LOOKUP) {
+			throw new NotFoundException();
+		}
+		const scope = await organizationScope(request, organizationId, this.store, this.operator);
+		const { auto_check } = parseLookupOptions(body);
+		return this.lookup.setAutoCheck(scope, auto_check);
 	}
 
 	/** Links this organization with a link code from app.ever.co: `{ "link_code": "EVL-…" }`. */

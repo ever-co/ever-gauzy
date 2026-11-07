@@ -10,6 +10,7 @@ import { EVER_CONNECT_CONFIG_PROVIDER } from './ever-connect-config.provider';
 import { EverConnectConnectionService } from './ever-connect-connection.service';
 import { EVER_CONNECT_ENV, EVER_CONNECT_SETTINGS } from './ever-connect.constants';
 import { EverConnectController } from './ever-connect.controller';
+import { EverConnectDiscoverableService } from './ever-connect-discoverable.service';
 import { isEverConnectEnabled } from './ever-connect-enabled';
 import { EverConnectEntitlementService } from './ever-connect-entitlement.service';
 import { EverConnectHealthController } from './ever-connect-health.controller';
@@ -19,6 +20,7 @@ import { EverConnectInstanceController } from './ever-connect-instance.controlle
 import { EverConnectIntegrationStateService } from './ever-connect-integration-state.service';
 import { EverConnectLease } from './ever-connect-lease';
 import { EverConnectLinkService } from './ever-connect-link.service';
+import { EverConnectLookupService } from './ever-connect-lookup.service';
 import { EverConnectPlatformService, errorCode } from './ever-connect-platform.service';
 import { EverConnectProvisionController } from './ever-connect-provision.controller';
 import { EverConnectProvisionExceptionFilter } from './ever-connect-provision.filter';
@@ -32,6 +34,7 @@ import { EverIdLoginHandler } from './handlers/ever-id-login.handler';
 import { PersonDeletionHandler } from './handlers/person-deletion.handler';
 import { PersonExportHandler } from './handlers/person-export.handler';
 import { PersonRequestsHandler } from './handlers/person-requests.handler';
+import { IntegrationHandlerRegistry } from './integrations/integration-handler.registry';
 import { PersonLinkReporter } from './reporters/person-link.reporter';
 import { EverConnectIntentVerifier } from './services/ever-connect-intent-verifier.service';
 import { EverConnectProvisionCompletion } from './services/ever-connect-provision-completion.service';
@@ -145,7 +148,12 @@ export class EverConnectModule {
 				EverConnectCatalogService,
 				EverConnectPlatformService,
 				EverConnectEntitlementService,
+				// The handlers of the integrations beyond the connection's own: an integration without one
+				// reads "coming soon". The counterparty check and discoverability register themselves.
+				IntegrationHandlerRegistry,
 				EverConnectIntegrationStateService,
+				EverConnectLookupService,
+				EverConnectDiscoverableService,
 				EverConnectLinkService,
 				EverConnectCleanupService,
 				EverConnectConnectionService,
