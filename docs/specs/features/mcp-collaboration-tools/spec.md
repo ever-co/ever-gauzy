@@ -6,7 +6,7 @@
 
 **Feature ID**: `mcp-collaboration-tools`
 **Branch**: `feat/mcp-collaboration-tools`
-**Status**: `Draft`
+**Status**: `In Progress` (ever-gauzy #11722)
 **Created**: 2026-11-07
 **Last updated**: 2026-11-07
 **Owner**: platform maintainers

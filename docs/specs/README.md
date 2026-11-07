@@ -31,7 +31,7 @@ docs/specs/
 | Tasks: saved views, bulk actions, keyboard-first lists | [`features/task-views-and-bulk-actions/`](features/task-views-and-bulk-actions/spec.md) | Phase 1 in review ([#11688](https://github.com/ever-co/ever-gauzy/pull/11688)) — [`plan`](features/task-views-and-bulk-actions/plan.md) · [`tasks`](features/task-views-and-bulk-actions/tasks.md) | `GAUZY_TASK_VIEWS_ENABLED` |
 | Integrations: Linear, Asana, Trello (import and sync) | [`features/integrations-asana-linear-trello/`](features/integrations-asana-linear-trello/spec.md) | Linear phase 1 in review (`feat/integration-linear`) — [`plan`](features/integrations-asana-linear-trello/plan.md) · [`tasks`](features/integrations-asana-linear-trello/tasks.md) | `LINEAR_ENABLED`, `ASANA_ENABLED`, `TRELLO_ENABLED` |
 | Chat incoming webhooks (bots and automation posts) | [`features/chat-incoming-webhooks/`](features/chat-incoming-webhooks/spec.md) | Draft | `GAUZY_CHAT_WEBHOOKS_ENABLED` |
-| MCP tools for chat, docs and inbox | [`features/mcp-collaboration-tools/`](features/mcp-collaboration-tools/spec.md) | Draft | MCP server config |
+| MCP tools for chat, docs and inbox | [`features/mcp-collaboration-tools/`](features/mcp-collaboration-tools/spec.md) | In Progress (ever-gauzy #11722: the three groups, switches and scopes; assisted marker and session-recorded scopes open) | MCP server config |
 
 Statuses: `Draft` → `In Review` → `Approved` → `Implemented` → `Retrospective`.
 
