@@ -33,7 +33,9 @@ export enum AsanaSettingName {
 	/** The Gauzy user who connected: the sync's writes are attributed to them. */
 	CONNECTED_BY_USER_ID = 'connected_by_user_id',
 	/** Why the connection needs attention (a refused token), or empty. */
-	ATTENTION_REASON = 'attention_reason'
+	ATTENTION_REASON = 'attention_reason',
+	/** When the Inbox notice of the attention was filed (empty: none filed, or resolved). */
+	ATTENTION_NOTICE_AT = 'attention_notice_at'
 }
 
 /** The largest webhook body accepted. */

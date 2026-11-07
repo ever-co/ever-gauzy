@@ -107,10 +107,13 @@ export class AsanaTaskDetailsService {
 			.findOneByWhereOptions({ entity: IntegrationEntity.COMMENT, sourceId: story.gid, integrationId, ...scope })
 			.catch(() => null);
 		if (existing?.gauzyId) {
-			// Edited in Asana: the platform's copy follows; the same words are left alone.
-			const row = await comments.findOne({ where: { id: existing.gauzyId, tenantId: scope.tenantId } as never, select: { id: true, comment: true } as never });
-			if (row && row.comment !== html) {
-				await comments.update({ id: existing.gauzyId } as never, { comment: html, editedAt: new Date() } as never);
+			// Edited in Asana: the platform's copy follows, as it was attributed when it was kept (an author matched only
+			// now does not lose the name line a System comment carries); the same words are left alone.
+			const row = await comments.findOne({ where: { id: existing.gauzyId, tenantId: scope.tenantId } as never, select: { id: true, comment: true, employeeId: true } as never });
+			if (!row) return;
+			const stored = commentHtmlOf(story, !!row.employeeId);
+			if (row.comment !== stored) {
+				await comments.update({ id: existing.gauzyId } as never, { comment: stored, editedAt: new Date() } as never);
 			}
 			return;
 		}

@@ -101,16 +101,23 @@ describe('AsanaTaskDetailsService', () => {
 		expect(comments.rows[0]).toMatchObject({ comment: '<p><strong>Grace</strong> (Asana)</p><p>Looks good</p>', actorType: ActorTypeEnum.System, employeeId: undefined, createdByUserId: 'user-owner' });
 	});
 
+	it('keeps an updated comment attributed as it was kept: a System comment keeps its author line even when the author is matched now', async () => {
+		const later = details({ stories: [story({ text: 'Looks great' })], maps: [{ entity: IntegrationEntity.COMMENT, sourceId: 's-1', gauzyId: 'comment-row-9' }] });
+		later.comments.rows.push({ id: 'comment-row-9', tenantId: 'tenant-1', comment: '<p><strong>Ada</strong> (Asana)</p><p>Looks good</p>', employeeId: undefined });
+		await later.service.apply(later.context, task, await later.service.collect(later.context, task), 'task-1');
+		expect(later.comments.update).toHaveBeenCalledWith({ id: 'comment-row-9' }, expect.objectContaining({ comment: '<p><strong>Ada</strong> (Asana)</p><p>Looks great</p>' }));
+	});
+
 	it('follows an edit of a mapped comment and leaves the same words alone', async () => {
 		const edited = details({ stories: [story({ text: 'Looks great' })], maps: [{ entity: IntegrationEntity.COMMENT, sourceId: 's-1', gauzyId: 'comment-row-9' }] });
-		edited.comments.rows.push({ id: 'comment-row-9', tenantId: 'tenant-1', comment: '<p>Looks good</p>' });
+		edited.comments.rows.push({ id: 'comment-row-9', tenantId: 'tenant-1', comment: '<p>Looks good</p>', employeeId: 'emp-ada' });
 		await edited.service.apply(edited.context, task, await edited.service.collect(edited.context, task), 'task-1');
 		expect(edited.comments.save).not.toHaveBeenCalled();
 		expect(edited.comments.update).toHaveBeenCalledWith({ id: 'comment-row-9' }, expect.objectContaining({ comment: '<p>Looks great</p>' }));
 		expect(edited.context.details.comments).toBe(0);
 
 		const same = details({ stories: [story()], maps: [{ entity: IntegrationEntity.COMMENT, sourceId: 's-1', gauzyId: 'comment-row-9' }] });
-		same.comments.rows.push({ id: 'comment-row-9', tenantId: 'tenant-1', comment: '<p>Looks good</p>' });
+		same.comments.rows.push({ id: 'comment-row-9', tenantId: 'tenant-1', comment: '<p>Looks good</p>', employeeId: 'emp-ada' });
 		await same.service.apply(same.context, task, await same.service.collect(same.context, task), 'task-1');
 		expect(same.comments.update).not.toHaveBeenCalled();
 	});
