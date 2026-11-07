@@ -12,6 +12,7 @@ import {
 	InboxNotificationSettingsService
 } from '../services/inbox-notification-settings.service';
 import { apiErrorMessage, viewOfLoadError } from './inbox-settings.helpers';
+import { InboxBrowserPushComponent } from './inbox-browser-push.component';
 import {
 	browserTimeZone,
 	DEFAULT_QUIET_HOURS,
@@ -48,7 +49,17 @@ const HOURS = Array.from({ length: 24 }, (_, hour) => hour);
 @Component({
 	selector: 'ngx-inbox-notification-settings-page',
 	changeDetection: ChangeDetectionStrategy.OnPush,
-	imports: [NbAlertModule, NbButtonModule, NbCardModule, NbInputModule, NbSelectModule, NbSpinnerModule, NbToggleModule, TranslatePipe],
+	imports: [
+		NbAlertModule,
+		NbButtonModule,
+		NbCardModule,
+		NbInputModule,
+		NbSelectModule,
+		NbSpinnerModule,
+		NbToggleModule,
+		TranslatePipe,
+		InboxBrowserPushComponent
+	],
 	templateUrl: './notification-settings-page.component.html',
 	styleUrl: './notification-settings-page.component.scss'
 })
