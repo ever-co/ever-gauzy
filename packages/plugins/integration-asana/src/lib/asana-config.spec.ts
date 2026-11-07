@@ -1,4 +1,4 @@
-import { asanaWebhookTargetOf, isAsanaConfigured, readAsanaConfig } from './asana-config';
+import { asanaWebhookTargetOf, isAsanaConfigured, readAsanaConfig, asanaImportIntervalOf } from './asana-config';
 
 describe('readAsanaConfig', () => {
 	it('derives the callback, the post-install page and the webhook target from the platform URLs', () => {
@@ -14,6 +14,16 @@ describe('readAsanaConfig', () => {
 		expect(asanaWebhookTargetOf(config, 'm-1')).toBe('https://api.example.com/api/integration/asana/webhook/m-1');
 		expect(asanaWebhookTargetOf(config, 'm-1', 'tok/en')).toBe('https://api.example.com/api/integration/asana/webhook/m-1?handshake=tok%2Fen');
 		expect(isAsanaConfigured(config)).toBe(true);
+	});
+
+	it('reads the import interval as whole minutes, 0 switching the scheduled import off, and keeps the default otherwise', () => {
+		const warn = jest.fn();
+		expect(readAsanaConfig({}).importIntervalMinutes).toBe(15);
+		expect(readAsanaConfig({ ASANA_IMPORT_INTERVAL_MINUTES: ' 30 ' }).importIntervalMinutes).toBe(30);
+		expect(readAsanaConfig({ ASANA_IMPORT_INTERVAL_MINUTES: '0' }).importIntervalMinutes).toBe(0);
+		expect(asanaImportIntervalOf('1.5', warn)).toBe(15);
+		expect(asanaImportIntervalOf('-5', warn)).toBe(15);
+		expect(warn).toHaveBeenCalledTimes(2);
 	});
 
 	it('prefers the explicit URLs, refuses unusable ones, and registers no webhook without a public address', () => {

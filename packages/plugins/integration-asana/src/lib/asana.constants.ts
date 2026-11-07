@@ -49,6 +49,19 @@ export const ASANA_APPLY_CONCURRENCY = 4;
 /** An access token this close to its expiry is renewed before use. */
 export const ASANA_TOKEN_REFRESH_AHEAD_MS = 5 * 60 * 1000;
 
+/** The queue the scheduled import sweep travels on, the schedule that asks for it, and the queue job it runs as. */
+export const ASANA_QUEUE_NAME = 'integration-asana';
+export const ASANA_IMPORT_SWEEP_SCHEDULE = 'integration-asana-import-sweep';
+export const ASANA_IMPORT_SWEEP_JOB = 'integration-asana.import-due';
+/** The default of `ASANA_IMPORT_INTERVAL_MINUTES`: how many minutes apart a mapping's changes are imported. */
+export const ASANA_IMPORT_INTERVAL_MINUTES_DEFAULT = 15;
+/** How many mappings one sweep imports at most (the longest waiting first; the rest wait for the next sweep). */
+export const ASANA_IMPORT_SWEEP_BATCH = 50;
+/** A mapping with a live webhook is swept this many intervals apart: a reconcile of missed deliveries, not a second feed. */
+export const ASANA_IMPORT_WEBHOOK_STRIDE = 4;
+/** A mapping counts as due this long before its interval is up, so one imported right after a sweep does not slip a whole sweep. */
+export const ASANA_IMPORT_SWEEP_SLACK_MS = 60_000;
+
 /** Error codes the routes answer with (`{ message, code }`). */
 export const ASANA_NOT_CONFIGURED = 'ASANA_NOT_CONFIGURED';
 export const ASANA_NOT_CONNECTED = 'ASANA_NOT_CONNECTED';

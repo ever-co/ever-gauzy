@@ -27,6 +27,7 @@ import { ASANA_CONFIG } from './asana.constants';
 import { AsanaLifecycle } from './asana.lifecycle';
 import { AsanaEventSubscriber } from './sync/asana-event.subscriber';
 import { AsanaSyncService } from './sync/asana-sync.service';
+import { AsanaImportSweepService } from './maintenance/asana-import-sweep.service';
 
 /** Every table the plugin owns (its migration creates them). */
 export const ASANA_ENTITIES = [AsanaProjectMapping, AsanaSyncRun];
@@ -61,6 +62,7 @@ export const ASANA_ENTITIES = [AsanaProjectMapping, AsanaSyncRun];
 		AsanaMappingService,
 		AsanaSyncRunService,
 		AsanaSyncService,
+		AsanaImportSweepService,
 		AsanaEventSubscriber,
 		TypeOrmAsanaProjectMappingRepository,
 		MikroOrmAsanaProjectMappingRepository,
@@ -74,6 +76,6 @@ export const ASANA_ENTITIES = [AsanaProjectMapping, AsanaSyncRun];
 			}
 		}
 	],
-	exports: [AsanaCatalogService, AsanaTenantService, AsanaMappingService, AsanaSyncService, ASANA_CONFIG]
+	exports: [AsanaCatalogService, AsanaTenantService, AsanaMappingService, AsanaSyncService, AsanaImportSweepService, ASANA_CONFIG]
 })
 export class AsanaModule {}

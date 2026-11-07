@@ -1,4 +1,4 @@
-import { ASANA_API_URL, ASANA_ROUTE_PREFIX } from './asana.constants';
+import { ASANA_API_URL, ASANA_IMPORT_INTERVAL_MINUTES_DEFAULT, ASANA_ROUTE_PREFIX } from './asana.constants';
 
 /** What the operator configured for the Asana integration. */
 export interface AsanaConfig {
@@ -22,6 +22,12 @@ export interface AsanaConfig {
 	 * `/api/integration/asana/webhook/:mappingId`. `null` = no webhooks are registered (imports still work).
 	 */
 	webhookBaseUrl: string | null;
+	/**
+	 * How many minutes apart the worker imports the changes of each inbound mapping (`ASANA_IMPORT_INTERVAL_MINUTES`,
+	 * {@link ASANA_IMPORT_INTERVAL_MINUTES_DEFAULT} by default); `0` switches the scheduled import off. A mapping with a live webhook
+	 * (`webhookGid`) is swept every fourth interval instead.
+	 */
+	importIntervalMinutes: number;
 	/** Asana's REST endpoint (`ASANA_API_URL`, for a test double); the public one by default. */
 	apiUrl: string;
 }
@@ -66,8 +72,20 @@ export function readAsanaConfig(
 		redirectUrl,
 		postInstallUrl,
 		webhookBaseUrl,
-		apiUrl: normaliseAsanaUrl(env['ASANA_API_URL'], 'ASANA_API_URL', warn) ?? ASANA_API_URL
+		apiUrl: normaliseAsanaUrl(env['ASANA_API_URL'], 'ASANA_API_URL', warn) ?? ASANA_API_URL,
+		importIntervalMinutes: asanaImportIntervalOf(env['ASANA_IMPORT_INTERVAL_MINUTES'], warn)
 	};
+}
+
+/** A whole number of minutes (`0` = off); unset is the default, anything else is reported once and the default is used. */
+export function asanaImportIntervalOf(raw: string | undefined, warn: (message: string) => void): number {
+	const value = raw?.trim();
+	if (!value) return ASANA_IMPORT_INTERVAL_MINUTES_DEFAULT;
+	if (!/^\d+$/.test(value)) {
+		warn(`ASANA_IMPORT_INTERVAL_MINUTES is not a whole number of minutes; the default (${ASANA_IMPORT_INTERVAL_MINUTES_DEFAULT}) is used.`);
+		return ASANA_IMPORT_INTERVAL_MINUTES_DEFAULT;
+	}
+	return Number(value);
 }
 
 /** Whether a person can connect: the OAuth application and its callback are known. */

@@ -17,6 +17,7 @@ no table (its migration is not registered) and makes no outbound request. Same l
 | `ASANA_REDIRECT_URL` | A redirect URL registered on the application. Default: `API_BASE_URL` + `/api/integration/asana/callback`. |
 | `ASANA_POST_INSTALL_URL` | Where the callback sends the person once connected. Default: `CLIENT_BASE_URL` + `/#/pages/integrations/asana`. |
 | `ASANA_WEBHOOK_BASE_URL` | The public address Asana delivers webhooks to (default `API_BASE_URL`); unset both, and no webhook is registered (imports still work). |
+| `ASANA_IMPORT_INTERVAL_MINUTES` | How many minutes apart the worker imports the changes of each inbound mapping (default `15`; `0` switches the scheduled import off). A mapping with a live webhook (`webhookGid`) is swept every fourth interval instead. |
 | `ASANA_API_URL` | Asana's REST endpoint; only for a test double. |
 
 ## How it works
@@ -47,6 +48,13 @@ no table (its migration is not registered) and makes no outbound request. Same l
   that could not be applied keeps the import position. An Asana task two mapped projects share belongs to the
   mapping that imported it first; the other skips it. Section and status names compare by key: case ignored,
   spaces as hyphens (`In Progress` is `in-progress`). `GET …/runs` lists the runs.
+- **Scheduled import.** Every five minutes the worker process (`apps/worker`, the one whose scheduler root is
+  enabled) sweeps the mappings that bring tasks in: one whose last import is older than
+  `ASANA_IMPORT_INTERVAL_MINUTES` (or that was never imported) is imported again, the changes since its position,
+  the longest waiting first and at most fifty per sweep. A mapping with a live webhook (`webhookGid`) is swept every fourth interval instead, a reconcile
+  against deliveries that were missed. The sweep takes the same claim "import now" takes (one import per mapping
+  at a time), opens each tenant's own request context, and leaves a connection whose token was refused to the
+  person who must reconnect it. Registered only where a queue root exists; `0` switches it off.
 - **Outbound.** When a mapping is `outbound` or `both`, a platform task created or changed updates its Asana
   task (name, notes, completion by status, due date, and the section the status maps to) or creates one in
   the Asana project. Tasks kept out of third-party sync are never sent; the sync's own inbound writes raise no
