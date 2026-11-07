@@ -103,7 +103,8 @@ if (mode === 'diff') {
 		}
 	}
 	console.log(`\n${same} identical (${sameWithRows} of them with rows), ${different} different, ${missing} missing (of ${files.length})`);
-	process.exit(different || missing ? 1 : 0);
+	// Nothing compared (both captures empty, an ONLY= naming no endpoint) is a failure, not a pass
+	process.exit(different || missing || same === 0 ? 1 : 0);
 }
 
 // ---- capture ----
