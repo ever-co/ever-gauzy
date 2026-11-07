@@ -151,10 +151,10 @@ type AsanaMappingRow = AsanaMapping & { rowVersion?: number };
 												}
 											</td>
 											<td class="actions">
-												<button nbButton size="tiny" status="primary" type="button" [disabled]="busy" (click)="importNow(mapping, false)">
+												<button nbButton size="tiny" status="primary" type="button" [disabled]="busy || !canImport(mapping)" (click)="importNow(mapping, false)">
 													{{ 'ASANA.MAPPINGS.IMPORT' | translate }}
 												</button>
-												<button nbButton size="tiny" ghost type="button" [disabled]="busy" (click)="importNow(mapping, true)">
+												<button nbButton size="tiny" ghost type="button" [disabled]="busy || !canImport(mapping)" (click)="importNow(mapping, true)">
 													{{ 'ASANA.MAPPINGS.IMPORT_FULL' | translate }}
 												</button>
 												<button nbButton size="tiny" ghost status="danger" type="button" [disabled]="busy" (click)="remove(mapping)">
@@ -314,7 +314,7 @@ type AsanaMappingRow = AsanaMapping & { rowVersion?: number };
 				font-size: 0.85rem;
 			}
 			.section-map {
-				border: 1px solid var(--divider-color, #edf1f7);
+				border: 1px solid var(--divider-color);
 				border-radius: var(--border-radius);
 				padding: 8px 16px 16px;
 				margin: 16px 0;
@@ -559,6 +559,11 @@ export class AsanaSettingsComponent implements OnInit {
 			// Registered behind the response: the list is read again shortly.
 			setTimeout(() => this.loadMappings(), 3000);
 		});
+	}
+
+	/** Whether the API would import this mapping now: switched on and not outbound (the route's own rule). */
+	canImport(mapping: AsanaMapping): boolean {
+		return !!mapping.syncEnabled && String(mapping.direction) !== 'outbound';
 	}
 
 	importNow(mapping: AsanaMapping, full: boolean): void {

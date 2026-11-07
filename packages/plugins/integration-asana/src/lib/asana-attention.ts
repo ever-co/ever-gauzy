@@ -15,7 +15,7 @@ export interface AsanaAttentionTenant {
  * until someone connects again — or, with no reason, that the connection works again (the same item, resolved).
  * One item per connection: a second refusal updates it rather than filing another.
  */
-export function attentionItemOf(tenant: AsanaAttentionTenant, reason: string | null, recipientUserIds: readonly ID[]): IInboxItemUpsertInput {
+export function attentionItemOf(tenant: AsanaAttentionTenant, reason: string | null, recipientUserIds: readonly ID[], resurface = true): IInboxItemUpsertInput {
 	const open = !!reason;
 	return {
 		tenantId: tenant.tenantId,
@@ -36,6 +36,7 @@ export function attentionItemOf(tenant: AsanaAttentionTenant, reason: string | n
 		// a resolution keeps everyone the notice reached.
 		replaceRecipients: open,
 		// A new refusal re-surfaces the notice: the recipient reads it again, from the inbox it may have archived it from.
-		recipients: recipientUserIds.map((userId) => (open ? { userId, isRead: false, isArchived: false } : { userId }))
+		// (a retry of a filing that was taken but not recorded names the recipient without touching their read state).
+		recipients: recipientUserIds.map((userId) => (open && resurface ? { userId, isRead: false, isArchived: false } : { userId }))
 	};
 }

@@ -183,7 +183,7 @@ export class AsanaSyncService {
 		} catch (caught) {
 			error = this.describe(caught);
 			if (caught instanceof AsanaApiError && caught.isUnauthorized) {
-				await this.tenants.setAttention(tenant, 'token_refused');
+				await this.tenants.setAttention(tenant, 'token_refused', this.tenants.settingsOf(tenant)[AsanaSettingName.ACCESS_TOKEN] ?? null);
 			}
 			this.logger.warn(`Import of mapping ${mapping.id} failed: ${error}`);
 		} finally {
@@ -234,7 +234,7 @@ export class AsanaSyncService {
 		} catch (caught) {
 			error = this.describe(caught);
 			if (caught instanceof AsanaApiError && caught.isUnauthorized) {
-				await this.tenants.setAttention(tenant, 'token_refused');
+				await this.tenants.setAttention(tenant, 'token_refused', this.tenants.settingsOf(tenant)[AsanaSettingName.ACCESS_TOKEN] ?? null);
 			}
 			this.logger.warn(`Webhook tasks of mapping ${mapping.id} failed: ${error}`);
 		} finally {
@@ -288,7 +288,7 @@ export class AsanaSyncService {
 			await this.createTaskOnce(holder, mapping, task.id as ID, scope, { ...input, name: input.name, projectGid: mapping.asanaProjectGid, sectionGid: section?.gid ?? null });
 		} catch (caught) {
 			if (caught instanceof AsanaApiError && caught.isUnauthorized) {
-				await this.tenants.setAttention(tenant, 'token_refused');
+				await this.tenants.setAttention(tenant, 'token_refused', this.tenants.settingsOf(tenant)[AsanaSettingName.ACCESS_TOKEN] ?? null);
 			}
 			throw caught;
 		}
@@ -487,9 +487,16 @@ export class AsanaSyncService {
 			const details = await this.taskDetails.collect(detailsContext, task);
 			const key = `${context.mapping.integrationId}:${task.gid}`;
 			const resolvedTaskId = taskId;
-			await this.serialized(`${key}:details`, () =>
-				this.withApplySlot(() => this.lockedTransaction([`integration-asana:task-details:${key}`], () => this.taskDetails.apply(detailsContext, task, details, resolvedTaskId)))
-			);
+			try {
+				await this.serialized(`${key}:details`, () =>
+					this.withApplySlot(() => this.lockedTransaction([`integration-asana:task-details:${key}`], () => this.taskDetails.apply(detailsContext, task, details, resolvedTaskId)))
+				);
+			} catch (caught) {
+				// The API's refusal is the run's; a lock that could not be taken, or a store error, is this task's details failing, and the run goes on.
+				if (caught instanceof AsanaApiError) throw caught;
+				context.details.failed += 1;
+				this.logger.warn(`The details of task ${task.gid} could not be kept: ${this.describe(caught)}`);
+			}
 		}
 		if (!(task.num_subtasks && task.num_subtasks > 0) || depth >= ASANA_SUBTASK_MAX_DEPTH || task.resource_subtype === 'section') return;
 		let subtasks: AsanaTask[];

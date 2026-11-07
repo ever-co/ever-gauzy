@@ -17,7 +17,7 @@ no table (its migration is not registered) and makes no outbound request. Same l
 | `ASANA_REDIRECT_URL` | A redirect URL registered on the application. Default: `API_BASE_URL` + `/api/integration/asana/callback`. |
 | `ASANA_POST_INSTALL_URL` | Where the callback sends the person once connected. Default: `CLIENT_BASE_URL` + `/#/pages/integrations/asana`. |
 | `ASANA_WEBHOOK_BASE_URL` | The public address Asana delivers webhooks to (default `API_BASE_URL`); unset both, and no webhook is registered (imports still work). |
-| `ASANA_IMPORT_INTERVAL_MINUTES` | How many minutes apart the worker imports the changes of each inbound mapping (default `15`; `0` switches the scheduled import off). A mapping with a live webhook (`webhookGid`) is swept every fourth interval instead. |
+| `ASANA_IMPORT_INTERVAL_MINUTES` | How many minutes apart the worker imports the changes of each inbound mapping (default `15`; `0` switches the scheduled import off). A mapping with a live webhook (`webhookGid`) is swept every fourth interval instead.  The worker sweeps every five minutes, so a value below five behaves as five; with `0` the sweep still files the refused-token notices the Inbox has not taken. |
 | `ASANA_API_URL` | Asana's REST endpoint; only for a test double. |
 
 ## How it works

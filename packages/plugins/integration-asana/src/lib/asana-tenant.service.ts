@@ -204,7 +204,17 @@ export class AsanaTenantService {
 	 * Records why the connection needs a person (a refused token), or clears it — and tells the person who connected
 	 * in their Inbox, once per refusal (the item is keyed by the connection) and once more when it works again.
 	 */
-	async setAttention(tenant: IIntegrationTenant, reason: string | null): Promise<void> {
+	async setAttention(tenant: IIntegrationTenant, reason: string | null, refusedToken?: string | null): Promise<void> {
+		// A refusal names the token it was for: when the row holds another one by now (reconnected meanwhile), the
+		// refusal is stale and the connection is left alone; a real refusal of the new token marks it on its next use.
+		if (reason && refusedToken) {
+			const current = await this.findAnyById(tenant.id as ID);
+			const stored = current ? this.settingsOf(current)[AsanaSettingName.ACCESS_TOKEN] : null;
+			if (current && stored && stored !== refusedToken) {
+				this.logger.log(`Connection ${tenant.id}: the refused token is not the stored one any more; not marked.`);
+				return;
+			}
+		}
 		const settings = this.settingsOf(tenant);
 		const before = settings[AsanaSettingName.ATTENTION_REASON] || null;
 		const noticed = !!settings[AsanaSettingName.ATTENTION_NOTICE_AT];
@@ -223,10 +233,6 @@ export class AsanaTenantService {
 	}
 
 	/**
-	 * Files (or resolves) the Inbox item about the connection and remembers that it got through; nothing without
-	 * the Inbox plugin or a connecting user. A filing that failed is tried again by the next {@link setAttention}.
-	 */
-	/**
 	 * Files the notice of a refused connection whose filing did not get through (no `ATTENTION_NOTICE_AT`): the
 	 * scheduled sweep calls it for every refused connection it leaves alone, so the retry is durable — every five
 	 * minutes until the Inbox took it — and does not wait for the next refusal.
@@ -235,10 +241,30 @@ export class AsanaTenantService {
 		const settings = this.settingsOf(tenant);
 		const reason = settings[AsanaSettingName.ATTENTION_REASON] || null;
 		if (!reason || settings[AsanaSettingName.ATTENTION_NOTICE_AT]) return;
-		await this.fileAttention(tenant, reason);
+		await this.fileAttention(tenant, reason, [], false);
 	}
 
-	private async fileAttention(tenant: IIntegrationTenant, reason: string | null, alsoUserIds: readonly ID[] = []): Promise<void> {
+	/** The connections of this integration that wait for a person and whose notice did not get through yet: the sweep files those again. */
+	async findRefusedUnfiled(): Promise<IIntegrationTenant[]> {
+		const rows = (await this.integrationTenantService['typeOrmRepository']
+			.find({ where: { name: ASANA_INTEGRATION_NAME, isActive: true, isArchived: false } as never, relations: { settings: true } as never })
+			.catch((error: unknown) => {
+				this.logger.warn(`The refused connections could not be listed: ${(error as Error)?.message ?? error}`);
+				return [];
+			})) as IIntegrationTenant[];
+		return rows.filter((row) => {
+			const settings = this.settingsOf(row);
+			return !!settings[AsanaSettingName.ATTENTION_REASON] && !settings[AsanaSettingName.ATTENTION_NOTICE_AT];
+		});
+	}
+
+	/**
+	 * Files (or resolves) the Inbox item about the connection and remembers that it got through; nothing without
+	 * the Inbox plugin or a connecting user. A filing that failed is tried again by the next {@link setAttention}
+	 * and by the sweep ({@link ensureAttentionFiled}). The two writes are separate: an item that was taken but whose
+	 * timestamp was not written is logged as such, and a retry re-files it without re-surfacing it.
+	 */
+	private async fileAttention(tenant: IIntegrationTenant, reason: string | null, alsoUserIds: readonly ID[] = [], resurface = true): Promise<void> {
 		if (!this.inbox) return;
 		// The row as it is now: a filing from before a reconnect or a newer refusal is stale and files nothing.
 		const current = await this.findAnyById(tenant.id as ID);
@@ -249,10 +275,15 @@ export class AsanaTenantService {
 		const recipients = [...new Set([userId, ...alsoUserIds].filter(Boolean).map(String))] as ID[];
 		if (!recipients.length) return;
 		try {
-			await this.inbox.upsertExternal(attentionItemOf({ id: tenant.id as ID, tenantId: tenant.tenantId as ID, organizationId: tenant.organizationId as ID }, reason, recipients));
-			await this.writeSetting(tenant, AsanaSettingName.ATTENTION_NOTICE_AT, reason ? new Date().toISOString() : '');
+			await this.inbox.upsertExternal(attentionItemOf({ id: tenant.id as ID, tenantId: tenant.tenantId as ID, organizationId: tenant.organizationId as ID }, reason, recipients, resurface));
 		} catch (error) {
 			this.logger.warn(`The attention of connection ${tenant.id} could not be filed in the Inbox: ${(error as Error).message}`);
+			return;
+		}
+		try {
+			await this.writeSetting(tenant, AsanaSettingName.ATTENTION_NOTICE_AT, reason ? new Date().toISOString() : '');
+		} catch (error) {
+			this.logger.warn(`The attention of connection ${tenant.id} was filed, but that could not be recorded (it will be filed again, without re-surfacing): ${(error as Error).message}`);
 		}
 	}
 
