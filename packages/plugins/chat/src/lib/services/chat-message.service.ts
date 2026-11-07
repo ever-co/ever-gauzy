@@ -1,4 +1,5 @@
 import { BadRequestException, ForbiddenException, Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
+import { assistedByOf } from '../chat-assisted';
 import { Brackets, DataSource, EntityManager, In, IsNull, MoreThan, MoreThanOrEqual, Not, ObjectLiteral, SelectQueryBuilder } from 'typeorm';
 import {
 	ActorTypeEnum,
@@ -349,7 +350,7 @@ export class ChatMessageService {
 						attachmentIds: attachmentIds.length ? JSON.stringify(attachmentIds) : null,
 						nonce: input.nonce ?? null,
 						// Shown beside the message: the person wrote it with an assistant. Never changed by an edit.
-						assistedBy: input.assistedBy?.trim().slice(0, 120) || null,
+						assistedBy: assistedByOf(input.assistedBy),
 						tenantId: caller.tenantId,
 						organizationId: conversation.organizationId ?? caller.organizationId ?? undefined
 					})
