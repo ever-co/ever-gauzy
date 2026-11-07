@@ -1,5 +1,5 @@
 {
-	"description": "The report endpoints behind Ever Teams' Apps & URLs page (dashboard/app-url), Time and Activity report and the Gauzy timesheet reports, with the query the Teams web app sends (activity 0..100, TRACKED logs, grouped by date, the user's time zone). The daily report and the activity report are the two the owner reported slow on demo.ever.team (SQLite).",
+	"description": "The report endpoints behind Ever Teams' Apps & URLs page (dashboard/app-url), Time and Activity report and the Gauzy timesheet reports, with the query the Teams web app sends (activity 0..100, TRACKED logs, grouped by date, the user's time zone). The daily report and the activity report are the two the owner reported slow on the Teams demo site (SQLite).",
 	"endpoints": [
 		{
 			"name": "report-daily-week",

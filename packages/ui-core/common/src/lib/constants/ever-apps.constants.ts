@@ -1,3 +1,5 @@
+import { InjectionToken, Provider } from '@angular/core';
+
 export type EverAppId = 'gauzy' | 'teams' | 'works' | 'platform' | 'demand' | 'rec' | 'traduora';
 
 export interface IEverApp {
@@ -10,54 +12,24 @@ export interface IEverApp {
 
 export const CURRENT_EVER_APP_ID: EverAppId = 'gauzy';
 
-// Same apps, URLs and logos as the Ever Teams app switcher (ever-teams apps/web/core/constants/config/ever-apps.ts):
-// keep both lists in sync. Works ships the Teams tile and Demand the Platform tile today, so those pairs look alike.
-// Logo paths are relative so they resolve under the web base href and the desktop builds' `./` base href.
-export const EVER_APPS: ReadonlyArray<IEverApp> = [
-	{
-		id: 'platform',
-		shortName: 'Platform',
-		logo: 'assets/images/ever-apps/platform.svg',
-		url: 'https://ever.co',
-		domain: 'ever.co'
-	},
-	{
-		id: 'works',
-		shortName: 'Works',
-		logo: 'assets/images/ever-apps/works.svg',
-		url: 'https://app.ever.works',
-		domain: 'app.ever.works'
-	},
-	{
-		id: 'teams',
-		shortName: 'Teams',
-		logo: 'assets/images/ever-apps/teams.svg',
-		url: 'https://app.ever.team',
-		domain: 'app.ever.team'
-	},
-	{
-		id: 'gauzy',
-		shortName: 'Gauzy',
-		logo: 'assets/images/ever-apps/gauzy.svg',
-		url: 'https://app.gauzy.co',
-		domain: 'app.gauzy.co'
-	},
-	{
-		id: 'demand',
-		shortName: 'Demand',
-		logo: 'assets/images/ever-apps/demand.svg',
-		url: 'https://everdemand.co',
-		domain: 'everdemand.co'
-	},
-	{ id: 'rec', shortName: 'Rec', logo: 'assets/images/ever-apps/rec.svg', url: 'https://rec.so', domain: 'rec.so' },
-	{
-		id: 'traduora',
-		shortName: 'Traduora',
-		logo: 'assets/images/ever-apps/traduora.png',
-		url: 'https://traduora.co',
-		domain: 'traduora.co'
-	}
-];
+/**
+ * The Ever apps the app switcher lists. Empty by default: the catalog (names, logos and web addresses of the Ever
+ * apps) belongs to the Ever Platform UI module, `EVER_APP_CATALOG` of `@gauzy/plugin-ever-connect-ui`, which the
+ * Gauzy web app provides through `provideEverApps`. A deployment without that module shows no switcher.
+ */
+export const EVER_APPS = new InjectionToken<ReadonlyArray<IEverApp>>('EVER_APPS', {
+	providedIn: 'root',
+	factory: (): ReadonlyArray<IEverApp> => []
+});
+
+/**
+ * The provider of the app switcher's catalog, for a root module's `providers`.
+ *
+ * @param apps - The Ever apps to list, in their display order.
+ */
+export function provideEverApps(apps: ReadonlyArray<IEverApp>): Provider {
+	return { provide: EVER_APPS, useValue: apps };
+}
 
 export function isCurrentEverApp(app: IEverApp): boolean {
 	return app.id === CURRENT_EVER_APP_ID;
