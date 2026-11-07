@@ -16,14 +16,17 @@
 
 ## 1. Overview
 
-The platform already records employee notifications (assignments, mentions, comments,
-invitations, messages, broadcasts, payments, rate-change requests) with read and archive
-state and one on/off setting per type. The Inbox turns that record into a complete,
-unified inbox: every event that needs a person's attention lands there with enough
-context to act on it (what happened, by whom, on which task, comment, document, page,
-conversation or integration item), can be triaged (read, unread, archive, snooze until a
-time, done), grouped by source, filtered (all, unread, mentions, assigned, by source) and
-paginated. Each employee chooses, per notification kind, which **channels** deliver it:
+The platform already has two feeds: **employee notifications** (assignments and
+mentions today; types exist for comments, invitations, messages, broadcasts and payments)
+with read state and one on/off setting per type, and the flag-gated **Inbox** (questions,
+approvals, escalations, notices and email addressed to a person, with read, archive and
+snooze state, a header bell, and seams through which other plugins file items). This
+feature makes the Inbox the **one** place where everything that needs a person's
+attention lands, with enough context to act on it (what happened, by whom, on which task,
+comment, document, page, conversation, decision or integration item): notifications are
+filed as inbox items as they are created, followers of a record are told about changes,
+items can be triaged (read, unread, archive, snooze until a time, done), grouped by
+source, filtered (all, unread, mentions, assigned, decisions, by source) and paginated. Each employee chooses, per notification kind, which **channels** deliver it:
 in-app, email (immediate or digest) and push (web push now, mobile push later). New
 entries are pushed live over the real-time channel; the same API serves the Angular app,
 Ever Teams, the desktop apps, the MCP server and the SDKs.
@@ -129,8 +132,11 @@ Ever Teams, the desktop apps, the MCP server and the SDKs.
 
 - **FR-14** The Inbox MUST be fully usable through REST and the SDKs and readable through
   MCP tools.
-- **FR-15** Existing employee-notification endpoints MUST keep working unchanged;
-  the Inbox extends them.
+- **FR-15** Existing employee-notification and inbox endpoints MUST keep working
+  unchanged; clients that read employee notifications today MUST see the same entries
+  (filed items mirror read state both ways).
+- **FR-16** Decisions already in the Inbox (questions, approvals, escalations) MUST keep
+  their reply flow and appear in the same list, filterable as "Decisions".
 
 ## 4. Non-Functional Requirements
 
@@ -150,8 +156,9 @@ Ever Teams, the desktop apps, the MCP server and the SDKs.
 
 | Entity / concept | Description |
 | ---------------- | ----------- |
-| `EmployeeNotification` (existing) | One entry for one recipient, extended with kind, actor, secondary target, snooze/done state and source |
-| `NotificationPreference` | Per employee per kind: email mode, push on/off; plus do-not-disturb window and digest hour |
+| `InboxItem` + `InboxItemRecipient` (existing) | The unified entry: kind (now also `notification`), source, actor, target and secondary target, per-recipient read/archive/snooze/done state |
+| `EmployeeNotification` (existing) | The platform's notification record; every new one is filed as an inbox item, and its own API keeps working |
+| `NotificationPreference` | Per employee per kind: email mode, push on/off; plus do-not-disturb window and digest hour (extends the existing per-type settings) |
 | `PushSubscription` | One browser or device subscription of an employee |
 | `Follow` (existing subscription) | An employee following a task (or later a page or conversation) |
 | `Digest`          | The daily email summarising unread entries |

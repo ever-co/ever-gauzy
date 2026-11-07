@@ -27,7 +27,7 @@ docs/specs/
 | Real-time channel (platform push gateway, presence, typing) | [`features/realtime-channel/`](features/realtime-channel/spec.md) | Draft | `GAUZY_REALTIME_ENABLED` |
 | Chat (channels, direct messages, threads, mentions, reactions, task cards) | [`features/chat/`](features/chat/spec.md) | Draft | `GAUZY_CHAT_ENABLED` |
 | Inbox (unified notifications, triage, preferences, push) | [`features/inbox/`](features/inbox/spec.md) | Draft | `GAUZY_INBOX_ENABLED` |
-| Docs (pages, page tree, versions, comments, mentions, export) | [`features/docs-pages/`](features/docs-pages/spec.md) | Draft | `GAUZY_DOCS_PAGES_ENABLED` |
+| Docs collaboration (spaces, live co-editing, notifications, Markdown export and API editing) | [`features/docs-collaboration/`](features/docs-collaboration/spec.md) | Draft | `GAUZY_DOCS_COLLAB_ENABLED` |
 | Tasks: saved views, bulk actions, keyboard-first lists | [`features/task-views-and-bulk-actions/`](features/task-views-and-bulk-actions/spec.md) | Draft | `GAUZY_TASK_VIEWS_ENABLED` |
 | Integrations: Asana, Linear, Trello (import and sync) | [`features/integrations-asana-linear-trello/`](features/integrations-asana-linear-trello/spec.md) | Draft | per-integration tenant setting |
 | Chat incoming webhooks (bots and automation posts) | [`features/chat-incoming-webhooks/`](features/chat-incoming-webhooks/spec.md) | Draft | `GAUZY_CHAT_WEBHOOKS_ENABLED` |

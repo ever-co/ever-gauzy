@@ -155,14 +155,14 @@ unreachable, every feature keeps working with its documented polling.
 
 ## 8. Open Questions
 
-- `[NEEDS CLARIFICATION: replay store — database table (simplest, works on SQLite) vs the shared cache; the plan proposes a table plus a cache-backed fan-out on PostgreSQL deployments]`
 - `[NEEDS CLARIFICATION: whether the desktop timer apps adopt the channel in the first release or stay on their current polling]`
+- Resolved 2026-11-07: the channel is built on the platform's existing **event outbox** (numbered, partitioned, addressed events with REST catch-up) and its **GraphQL subscription transport** (`Subscription.events`), extended with presence and typing signals and with streamed events for the collaboration domains. No second transport is introduced; the plan names the pieces.
 
 ## 9. Constitution Gates
 
-- [x] I Plugin-first — new `packages/plugins/realtime` plugin; core only publishes events.
+- [x] I Plugin-first — a `packages/plugins/realtime` plugin adds presence, typing and the collaboration event catalogue; the outbox and subscription kernel stay in core.
 - [x] II Tenant/organization scoping — every event and connection is organization-scoped.
-- [x] III Both ORMs, additive migrations — event table only, additive.
+- [x] III Both ORMs, additive migrations — presence table only, additive.
 - [x] IV Default-off flag; nothing removed — `GAUZY_REALTIME_ENABLED`; polling stays.
 - [x] V Contracts and API first — event contracts in `@gauzy/contracts`; HTTP stays authoritative.
 - [x] VI Permissions, privacy, security — per-audience delivery, authorization re-checks.
