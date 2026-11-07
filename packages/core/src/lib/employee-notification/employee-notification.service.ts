@@ -311,7 +311,7 @@ export class EmployeeNotificationService extends TenantAwareCrudService<Employee
 		try {
 			this._eventBus.publish(new EmployeeNotificationCreatedEvent(notification));
 		} catch (error) {
-			this.logger.warn(`The created event of notification ${notification.id} was not published: ${error?.message}`);
+			this.logger.warn(`The created event of notification ${notification.id} was not published: ${(error as Error)?.message}`);
 		}
 	}
 
@@ -344,7 +344,7 @@ export class EmployeeNotificationService extends TenantAwareCrudService<Employee
 				})
 			);
 		} catch (error) {
-			this.logger.warn(`The state change of notification ${notificationId} was not published: ${error?.message}`);
+			this.logger.warn(`The state change of notification ${notificationId} was not published: ${(error as Error)?.message}`);
 		}
 	}
 
@@ -424,7 +424,7 @@ export class EmployeeNotificationService extends TenantAwareCrudService<Employee
 						new EmployeeNotificationUpdatedEvent({ tenantId, receiverEmployeeId, ids: 'all', isRead: true })
 					);
 				} catch (error) {
-					this.logger.warn(`The mark-all-read of employee ${receiverEmployeeId} was not published: ${error?.message}`);
+					this.logger.warn(`The mark-all-read of employee ${receiverEmployeeId} was not published: ${(error as Error)?.message}`);
 				}
 			}
 
