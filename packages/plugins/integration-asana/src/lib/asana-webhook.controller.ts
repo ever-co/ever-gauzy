@@ -1,4 +1,4 @@
-import { BadRequestException, Controller, Header, Headers, HttpCode, HttpStatus, Logger, NotFoundException, Param, Post, Req, Res, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, Controller, ForbiddenException, Header, Headers, HttpCode, HttpStatus, Logger, NotFoundException, Param, Post, Query, Req, Res, UnauthorizedException } from '@nestjs/common';
 import { ApiExcludeController } from '@nestjs/swagger';
 import { createHmac, timingSafeEqual } from 'node:crypto';
 import { Request, Response } from 'express';
@@ -7,7 +7,8 @@ import { ID } from '@gauzy/contracts';
 import { Public } from '@gauzy/common';
 import { AsanaMappingService } from './asana-mapping.service';
 import { AsanaTenantService } from './asana-tenant.service';
-import { ASANA_ROUTE_PREFIX, ASANA_WEBHOOK_MAX_BYTES } from './asana.constants';
+import { ASANA_ROUTE_PREFIX, ASANA_WEBHOOK_HANDSHAKE_WINDOW_MS, ASANA_WEBHOOK_MAX_BYTES } from './asana.constants';
+import { AsanaProjectMapping } from './entities/asana-project-mapping.entity';
 import { AsanaSyncService } from './sync/asana-sync.service';
 
 type RawBodyRequest = Request & { rawBody?: Buffer };
@@ -29,6 +30,25 @@ export function isAsanaSignatureValid(secret: string, rawBody: Buffer, signature
 	return given.length === wanted.length && timingSafeEqual(given, wanted);
 }
 
+/**
+ * Whether a handshake may set the mapping's secret: only the one of a registration this platform started — its
+ * single-use token in the address, within the registration's window. An unsolicited handshake (anyone who knows a
+ * mapping id can send `X-Hook-Secret`) is refused, so nobody can replace the secret and sign deliveries.
+ */
+export function isHandshakeAccepted(
+	mapping: Pick<AsanaProjectMapping, 'webhookHandshakeToken' | 'webhookHandshakeStartedAt'>,
+	token: string | undefined,
+	now: number = Date.now()
+): boolean {
+	const expected = mapping.webhookHandshakeToken;
+	if (!expected || !token || !mapping.webhookHandshakeStartedAt) return false;
+	const started = new Date(mapping.webhookHandshakeStartedAt).getTime();
+	if (!Number.isFinite(started) || now - started > ASANA_WEBHOOK_HANDSHAKE_WINDOW_MS || started - now > 60_000) return false;
+	const given = Buffer.from(token);
+	const wanted = Buffer.from(expected);
+	return given.length === wanted.length && timingSafeEqual(given, wanted);
+}
+
 /** The gids of the tasks a delivery's events concern (added, changed or undeleted), each once. */
 export function taskGidsOf(events: AsanaWebhookEvent[] | undefined): string[] {
 	const gids = new Set<string>();
@@ -44,9 +64,11 @@ export function taskGidsOf(events: AsanaWebhookEvent[] | undefined): string[] {
  * `POST /integration/asana/webhook/:mappingId`: Asana's deliveries for one mapping's project. Public, so
  * everything rests on the mapping named in the path and on Asana's own scheme: the first call is the handshake
  * (`X-Hook-Secret`, answered back as the same header), which gives the mapping the secret every later delivery
- * is signed with (`X-Hook-Signature`, the HMAC-SHA256 of the raw body). A delivery is acknowledged as soon as the
- * signature checks (Asana waits a few seconds), then the tasks its events name are applied behind the response.
- * Nothing in the payload picks the tenant: the mapping does.
+ * is signed with (`X-Hook-Signature`, the HMAC-SHA256 of the raw body). The handshake is accepted only while a
+ * registration started by this platform is in flight, and only with that registration's token in the address
+ * (`?handshake=`). A delivery is acknowledged as soon as the signature checks (Asana waits a few seconds), then
+ * the tasks its events name are applied behind the response. Nothing in the payload picks the tenant: the
+ * mapping does.
  */
 @ApiExcludeController()
 @Public()
@@ -68,16 +90,22 @@ export class AsanaWebhookController {
 		@Req() request: RawBodyRequest,
 		@Res({ passthrough: true }) response: Response,
 		@Headers('x-hook-secret') hookSecret?: string,
-		@Headers('x-hook-signature') signature?: string
+		@Headers('x-hook-signature') signature?: string,
+		@Query('handshake') handshakeToken?: string
 	): Promise<{ accepted: boolean; queued: number }> {
 		if (!isUUID(mappingId)) throw new NotFoundException();
 		const mapping = await this.mappings.findAnyById(mappingId as ID);
 		if (!mapping) throw new NotFoundException();
 
-		// The handshake: Asana sends the secret once, when the webhook is created, and expects it echoed.
+		// The handshake: Asana sends the secret once, when the webhook is created, and expects it echoed. Only the
+		// handshake of the registration in flight (its token, its window) may set it; the token is spent on success.
 		if (typeof hookSecret === 'string' && hookSecret.trim()) {
+			if (!isHandshakeAccepted(mapping, typeof handshakeToken === 'string' ? handshakeToken : undefined)) {
+				throw new ForbiddenException('No webhook registration is in flight for this mapping.');
+			}
 			const secret = hookSecret.trim().slice(0, 255);
 			await this.mappings.recordWebhook(mapping, { gid: mapping.webhookGid ?? null, secret });
+			await this.mappings.startHandshake(mapping, null);
 			response.setHeader('X-Hook-Secret', secret);
 			return { accepted: true, queued: 0 };
 		}

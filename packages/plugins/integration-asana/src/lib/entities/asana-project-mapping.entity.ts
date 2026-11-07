@@ -76,6 +76,13 @@ export class AsanaProjectMapping extends TenantOrganizationBaseEntity {
 	@MultiORMColumn({ type: 'varchar', length: 255, nullable: true })
 	webhookSecret?: string | null;
 
+	/** A registration in flight: the single-use token its handshake must carry in the address, and when it started. */
+	@MultiORMColumn({ type: 'varchar', length: 64, nullable: true })
+	webhookHandshakeToken?: string | null;
+
+	@MultiORMColumn({ nullable: true })
+	webhookHandshakeStartedAt?: Date | null;
+
 	@MultiORMColumn({ nullable: true })
 	lastImportedAt?: Date | null;
 

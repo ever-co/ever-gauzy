@@ -76,6 +76,9 @@ export function isAsanaConfigured(config: AsanaConfig): boolean {
 }
 
 /** The address Asana delivers a mapping's events to, or null when webhooks are off. */
-export function asanaWebhookTargetOf(config: AsanaConfig, mappingId: string): string | null {
-	return config.webhookBaseUrl ? `${config.webhookBaseUrl}/api${ASANA_ROUTE_PREFIX}/webhook/${encodeURIComponent(mappingId)}` : null;
+export function asanaWebhookTargetOf(config: AsanaConfig, mappingId: string, handshakeToken?: string | null): string | null {
+	if (!config.webhookBaseUrl) return null;
+	const target = `${config.webhookBaseUrl}/api${ASANA_ROUTE_PREFIX}/webhook/${encodeURIComponent(mappingId)}`;
+	// The registration's single-use token: the receiver accepts the handshake only with it (see the webhook controller).
+	return handshakeToken ? `${target}?handshake=${encodeURIComponent(handshakeToken)}` : target;
 }

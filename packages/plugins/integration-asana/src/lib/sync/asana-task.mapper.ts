@@ -5,6 +5,24 @@ import { AsanaSection, AsanaTask, AsanaTaskUpdateInput } from '../client/asana-a
 export const ASANA_COMPLETED_STATUS = TaskStatusEnum.COMPLETED;
 export const ASANA_DEFAULT_STATUS = TaskStatusEnum.OPEN;
 
+/** How a status or section name is compared: case ignored, spaces and underscores as hyphens (`In Progress` = `in-progress`). */
+export function statusKey(value: string | null | undefined): string {
+	return String(value ?? '')
+		.trim()
+		.toLowerCase()
+		.replace(/[\s_]+/g, '-');
+}
+
+/** The statuses a mapping may name, by key → the name as stored (the first of a key wins, so order them by precedence). */
+export function knownStatusesOf(names: Iterable<string | null | undefined>): Map<string, string> {
+	const known = new Map<string, string>();
+	for (const name of names) {
+		const key = statusKey(name);
+		if (key && !known.has(key)) known.set(key, String(name).trim());
+	}
+	return known;
+}
+
 /** The mapping's section map: section gid → task status name; unknown shapes are ignored. */
 export function parseSectionMap(json: string | null | undefined): Record<string, string> {
 	if (!json) return {};
@@ -41,17 +59,17 @@ export function sectionOf(task: AsanaTask, projectGid: string): AsanaSection | n
 }
 
 /**
- * The task status of an Asana task: completed → the completed status; else the section's status from the map;
- * else the section's name when it is a status name of the project (`knownStatuses`, lower-cased); else open.
+ * The task status of an Asana task: completed → the completed status; else the section's status from the map
+ * (as the project stores the name, when it has it); else the section's name when it is a status name of the
+ * project (`knownStatuses`, by key — `In Progress` is `in-progress`); else open.
  */
-export function taskStatusOf(task: AsanaTask, projectGid: string, sectionMap: Record<string, string>, knownStatuses: ReadonlySet<string>): string {
+export function taskStatusOf(task: AsanaTask, projectGid: string, sectionMap: Record<string, string>, knownStatuses: ReadonlyMap<string, string>): string {
 	if (task.completed) return ASANA_COMPLETED_STATUS;
 	const section = sectionOf(task, projectGid);
 	if (!section) return ASANA_DEFAULT_STATUS;
 	const mapped = sectionMap[section.gid];
-	if (mapped) return mapped;
-	const byName = section.name?.trim().toLowerCase();
-	return byName && knownStatuses.has(byName) ? byName : ASANA_DEFAULT_STATUS;
+	if (mapped) return knownStatuses.get(statusKey(mapped)) ?? mapped;
+	return knownStatuses.get(statusKey(section.name)) ?? ASANA_DEFAULT_STATUS;
 }
 
 /** Whether a task status means the Asana task is done. */
@@ -60,17 +78,17 @@ export function isCompletedStatus(status: string | null | undefined): boolean {
 	return value === TaskStatusEnum.COMPLETED || value === TaskStatusEnum.DONE || value === TaskStatusEnum.CANCELLED;
 }
 
-/** The section a task status moves an Asana task to: the first section the map names for that status, or null. */
+/** The section a task status moves an Asana task to: the first section the map names for that status, else the section named like it, or null. */
 export function sectionForStatus(status: string | null | undefined, sectionMap: Record<string, string>, sections: readonly AsanaSection[]): AsanaSection | null {
-	const wanted = status?.trim().toLowerCase();
+	const wanted = statusKey(status);
 	if (!wanted) return null;
 	for (const [gid, name] of Object.entries(sectionMap)) {
-		if (name.toLowerCase() === wanted) {
+		if (statusKey(name) === wanted) {
 			const section = sections.find((candidate) => candidate.gid === gid);
 			if (section) return section;
 		}
 	}
-	return sections.find((candidate) => candidate.name?.trim().toLowerCase() === wanted) ?? null;
+	return sections.find((candidate) => statusKey(candidate.name) === wanted) ?? null;
 }
 
 /** The task priority an Asana custom field called "Priority" names (an enum value with urgent / high / medium / low in it). */
@@ -100,7 +118,7 @@ export function asanaDueOnOf(date: Date | string | null | undefined): string | n
 }
 
 /** The task fields an Asana task sets (the rest — project, members, tags, parent — is the sync's to resolve). */
-export function taskFieldsOf(task: AsanaTask, projectGid: string, sectionMap: Record<string, string>, knownStatuses: ReadonlySet<string>) {
+export function taskFieldsOf(task: AsanaTask, projectGid: string, sectionMap: Record<string, string>, knownStatuses: ReadonlyMap<string, string>) {
 	return {
 		title: task.name?.trim() || `Asana ${task.gid}`,
 		description: task.notes?.trim() ? task.notes : null,

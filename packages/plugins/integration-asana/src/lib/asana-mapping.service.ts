@@ -108,6 +108,14 @@ export class AsanaMappingService extends TenantAwareCrudService<AsanaProjectMapp
 		mapping.webhookSecret = webhook.secret;
 	}
 
+	/** Opens (with a token) or closes (null) the window in which the webhook's handshake may set the mapping's secret. */
+	async startHandshake(mapping: AsanaProjectMapping, token: string | null): Promise<void> {
+		const startedAt = token ? new Date() : null;
+		await this.typeOrmAsanaProjectMappingRepository.update({ id: mapping.id }, { webhookHandshakeToken: token, webhookHandshakeStartedAt: startedAt } as never);
+		mapping.webhookHandshakeToken = token;
+		mapping.webhookHandshakeStartedAt = startedAt;
+	}
+
 	/** The mapping that sends a project's tasks out, in the tenant and organization, or null. */
 	async findOutboundForProject(scope: { tenantId: ID; organizationId: ID }, projectId: ID): Promise<AsanaProjectMapping | null> {
 		const mappings = await this.typeOrmAsanaProjectMappingRepository.find({ where: { projectId, tenantId: scope.tenantId, organizationId: scope.organizationId, syncEnabled: true } });

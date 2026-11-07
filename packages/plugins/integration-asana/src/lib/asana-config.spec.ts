@@ -12,6 +12,7 @@ describe('readAsanaConfig', () => {
 		expect(config.postInstallUrl).toBe('https://app.example.com/#/pages/integrations/asana');
 		expect(config.apiUrl).toBe('https://app.asana.com/api/1.0');
 		expect(asanaWebhookTargetOf(config, 'm-1')).toBe('https://api.example.com/api/integration/asana/webhook/m-1');
+		expect(asanaWebhookTargetOf(config, 'm-1', 'tok/en')).toBe('https://api.example.com/api/integration/asana/webhook/m-1?handshake=tok%2Fen');
 		expect(isAsanaConfigured(config)).toBe(true);
 	});
 

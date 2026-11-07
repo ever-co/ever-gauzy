@@ -1,4 +1,5 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
+import { randomBytes } from 'node:crypto';
 import { CommandBus } from '@nestjs/cqrs';
 import { DataSource, In, IsNull } from 'typeorm';
 import { ID, IIntegrationMap, IIntegrationTenant, IntegrationEntity, isTaskSyncAllowed, ITaskCreateInput, ITaskUpdateInput } from '@gauzy/contracts';
@@ -23,7 +24,7 @@ import { asanaSyncUser, runInAsanaContext } from '../asana-process';
 import { emptyCounts, AsanaSyncCounts, AsanaSyncRunService } from '../asana-sync-run.service';
 import { AsanaTenantService } from '../asana-tenant.service';
 import { ASANA_CONFIG, ASANA_IMPORT_MAX_TASKS, ASANA_TASKS_PAGE_SIZE, AsanaSettingName } from '../asana.constants';
-import { asanaUpdateOf, parseSectionMap, sectionForStatus, taskFieldsOf, watermarkOf } from './asana-task.mapper';
+import { asanaUpdateOf, knownStatusesOf, parseSectionMap, sectionForStatus, statusKey, taskFieldsOf, watermarkOf } from './asana-task.mapper';
 
 /** What one Asana task became. */
 type ApplyOutcome = 'created' | 'updated' | 'skipped';
@@ -40,6 +41,8 @@ interface ApplyContext extends ClientHolder {
 	mapping: AsanaProjectMapping;
 	scope: { tenantId: ID; organizationId: ID };
 	sectionMap: Record<string, string>;
+	/** The statuses a task may take, by key (`statusKey`) → the name as stored, and → the row's id. */
+	knownStatuses: Map<string, string>;
 	statusIdsByName: Map<string, ID>;
 	priorityIdsByName: Map<string, ID>;
 	employeeIdsByEmail: Map<string, ID | null>;
@@ -69,7 +72,7 @@ export class AsanaSyncService {
 	/** The pushes of each platform task, one after the other. */
 	private readonly pushChains = new Map<string, Promise<void>>();
 	/** The applies of each Asana task, one after the other. */
-	private readonly applyChains = new Map<string, Promise<ApplyOutcome>>();
+	private readonly applyChains = new Map<string, Promise<unknown>>();
 
 	constructor(
 		private readonly commandBus: CommandBus,
@@ -87,13 +90,16 @@ export class AsanaSyncService {
 
 	/**
 	 * Registers Asana's webhook on the mapping's project (best effort: without a public address, or when Asana
-	 * refuses, the mapping syncs by imports). Asana calls the receiver with the handshake while this runs; the
-	 * receiver stores the secret on the mapping (`recordWebhookSecret`).
+	 * refuses, the mapping syncs by imports). Asana calls the receiver with the handshake while this runs: the
+	 * target carries a single-use token, and the receiver accepts the handshake — and stores the secret on the
+	 * mapping — only with that token while the registration is in flight; the token is dropped either way.
 	 */
 	async ensureWebhook(tenant: IIntegrationTenant, mapping: AsanaProjectMapping): Promise<void> {
-		const target = asanaWebhookTargetOf(this.config, mapping.id as string);
+		const token = randomBytes(24).toString('hex');
+		const target = asanaWebhookTargetOf(this.config, mapping.id as string, token);
 		if (!target || mapping.webhookGid) return;
 		try {
+			await this.mappings.startHandshake(mapping, token);
 			const holder: ClientHolder = { tenant, client: await this.tenants.clientReady(tenant), renewed: false };
 			const webhook = await this.call(holder, (client) => client.createWebhook(mapping.asanaProjectGid, target));
 			// The handshake wrote the secret; the gid is written here (the secret stays as the handshake left it).
@@ -101,6 +107,8 @@ export class AsanaSyncService {
 			await this.mappings.recordWebhook(mapping, { gid: webhook.gid, secret: current?.webhookSecret ?? mapping.webhookSecret ?? null });
 		} catch (caught) {
 			this.logger.warn(`The Asana webhook of mapping ${mapping.id} could not be registered: ${this.describe(caught)}`);
+		} finally {
+			await this.mappings.startHandshake(mapping, null).catch(() => undefined);
 		}
 	}
 
@@ -271,9 +279,12 @@ export class AsanaSyncService {
 
 	/**
 	 * Creates the Asana task of a platform task and records its id map: the task is created outside any
-	 * transaction, the map is written in a short transaction locked per task on Postgres that looks again; when
-	 * another process recorded a map meanwhile, the Asana task just created is completed and renamed as a
-	 * duplicate (Asana has no archive for tasks).
+	 * transaction; the map is written in a short transaction that holds the new task's source lock (the one an
+	 * inbound apply of that gid takes, in this process and on Postgres) and the platform task's, and looks again.
+	 * When another process recorded a map for the platform task meanwhile, the Asana task just created is
+	 * completed and renamed as a duplicate (Asana has no archive for tasks). When the webhook Asana sent for the
+	 * new task got there first and made a platform task of it, that map is pointed at this task and the task the
+	 * webhook made is removed.
 	 */
 	private async createTaskOnce(
 		holder: ClientHolder,
@@ -283,25 +294,55 @@ export class AsanaSyncService {
 		input: Parameters<AsanaApiClient['createTask']>[0]
 	): Promise<void> {
 		const created = await this.call(holder, (client) => client.createTask(input));
-		const recorded = await this.dataSource.transaction(async (manager) => {
-			if (manager.connection.options.type === 'postgres') {
-				await manager.query('SELECT pg_advisory_xact_lock(hashtext($1))', [`integration-asana:task:${taskId}`]);
-			}
-			const existing = await manager.findOne(IntegrationMap, {
-				where: { entity: IntegrationEntity.TASK, gauzyId: taskId, integrationId: mapping.integrationId, ...scope } as never
-			});
-			if (existing) return false;
-			await manager.save(
-				IntegrationMap,
-				Object.assign(new IntegrationMap(), { entity: IntegrationEntity.TASK, gauzyId: taskId, sourceId: created.gid, integrationId: mapping.integrationId, ...scope })
-			);
-			return true;
-		});
-		if (!recorded) {
+		const integrationId = mapping.integrationId;
+		const sourceKey = `${integrationId}:${created.gid}`;
+		const outcome = await this.serialized(sourceKey, () =>
+			this.dataSource.transaction(async (manager): Promise<'recorded' | 'duplicate' | 'reconciled'> => {
+				if (manager.connection.options.type === 'postgres') {
+					await manager.query('SELECT pg_advisory_xact_lock(hashtext($1))', [`integration-asana:task:${sourceKey}`]);
+					await manager.query('SELECT pg_advisory_xact_lock(hashtext($1))', [`integration-asana:task:${taskId}`]);
+				}
+				const byTask = await manager.findOne(IntegrationMap, {
+					where: { entity: IntegrationEntity.TASK, gauzyId: taskId, integrationId, ...scope } as never
+				});
+				if (byTask) return 'duplicate';
+				const bySource = await manager.findOne(IntegrationMap, {
+					where: { entity: IntegrationEntity.TASK, sourceId: created.gid, integrationId, ...scope } as never
+				});
+				if (bySource) {
+					await manager.update(IntegrationMap, { id: bySource.id }, { gauzyId: taskId } as never);
+					if (bySource.gauzyId && bySource.gauzyId !== taskId) {
+						await manager.softDelete(Task, { id: bySource.gauzyId, tenantId: scope.tenantId } as never);
+					}
+					return 'reconciled';
+				}
+				await manager.save(
+					IntegrationMap,
+					Object.assign(new IntegrationMap(), { entity: IntegrationEntity.TASK, gauzyId: taskId, sourceId: created.gid, integrationId, ...scope })
+				);
+				return 'recorded';
+			})
+		);
+		if (outcome === 'duplicate') {
 			await this.call(holder, (client) => client.updateTask(created.gid, { name: `[duplicate] ${created.name}`, completed: true })).catch((caught: unknown) => {
 				this.logger.warn(`Asana task ${created.gid} was created twice for task ${taskId} and could not be closed: ${this.describe(caught)}`);
 			});
+		} else if (outcome === 'reconciled') {
+			this.logger.warn(`Task ${taskId}: the task the webhook of Asana task ${created.gid} made meanwhile was removed as a duplicate.`);
 		}
+	}
+
+	/** Runs `work` after whatever runs for `key` in this process (the lock across processes is the caller's). */
+	private serialized<T>(key: string, work: () => Promise<T>): Promise<T> {
+		const previous = this.applyChains.get(key) ?? Promise.resolve();
+		const next = previous
+			.catch(() => undefined)
+			.then(work)
+			.finally(() => {
+				if (this.applyChains.get(key) === next) this.applyChains.delete(key);
+			});
+		this.applyChains.set(key, next);
+		return next;
 	}
 
 	// ---------------------------------------------------------------- one Asana task
@@ -313,9 +354,12 @@ export class AsanaSyncService {
 			this.dataSource.getRepository(TaskStatus).find({ where: where as never }).catch(() => [] as TaskStatus[]),
 			this.dataSource.getRepository(TaskPriority).find({ where: where as never }).catch(() => [] as TaskPriority[])
 		]);
+		// A project's own status wins over the organization's of the same name; names compare by key (`statusKey`).
+		const orderedStatuses = [...statuses].sort((a, b) => (a.projectId ? 0 : 1) - (b.projectId ? 0 : 1));
+		const knownStatuses = knownStatusesOf(orderedStatuses.map((status) => status.name));
 		const statusIdsByName = new Map<string, ID>();
-		for (const status of [...statuses].sort((a, b) => (a.projectId ? 0 : 1) - (b.projectId ? 0 : 1))) {
-			const key = String(status.name ?? '').toLowerCase();
+		for (const status of orderedStatuses) {
+			const key = statusKey(status.name);
 			if (key && !statusIdsByName.has(key)) statusIdsByName.set(key, status.id as ID);
 		}
 		const priorityIdsByName = new Map<string, ID>();
@@ -330,6 +374,7 @@ export class AsanaSyncService {
 			mapping,
 			scope,
 			sectionMap: parseSectionMap(mapping.sectionMap),
+			knownStatuses,
 			statusIdsByName,
 			priorityIdsByName,
 			employeeIdsByEmail: new Map(),
@@ -354,22 +399,14 @@ export class AsanaSyncService {
 	/** One apply at a time per Asana task: chained in the process, an advisory lock across processes on Postgres. */
 	private applyTask(context: ApplyContext, task: AsanaTask): Promise<ApplyOutcome> {
 		const key = `${context.mapping.integrationId}:${task.gid}`;
-		const previous = this.applyChains.get(key) ?? Promise.resolve();
-		const next = previous
-			.catch(() => undefined)
-			.then(() =>
-				this.dataSource.transaction(async (manager) => {
-					if (manager.connection.options.type === 'postgres') {
-						await manager.query('SELECT pg_advisory_xact_lock(hashtext($1))', [`integration-asana:task:${key}`]);
-					}
-					return this.applyTaskNow(context, task);
-				})
-			)
-			.finally(() => {
-				if (this.applyChains.get(key) === next) this.applyChains.delete(key);
-			});
-		this.applyChains.set(key, next);
-		return next;
+		return this.serialized(key, () =>
+			this.dataSource.transaction(async (manager) => {
+				if (manager.connection.options.type === 'postgres') {
+					await manager.query('SELECT pg_advisory_xact_lock(hashtext($1))', [`integration-asana:task:${key}`]);
+				}
+				return this.applyTaskNow(context, task);
+			})
+		);
 	}
 
 	/**
@@ -384,7 +421,16 @@ export class AsanaSyncService {
 			.catch(() => null);
 		// A section header is not a task.
 		if (task.resource_subtype === 'section') return 'skipped';
-		const fields = taskFieldsOf(task, mapping.asanaProjectGid, context.sectionMap, new Set(context.statusIdsByName.keys()));
+		// An Asana task two mapped projects share belongs to the mapping that imported it first: another leaves it
+		// alone rather than moving it between the platform's projects on every import.
+		if (existing?.gauzyId) {
+			const owner = await this.dataSource
+				.getRepository(Task)
+				.findOne({ where: { id: existing.gauzyId, tenantId: scope.tenantId } as never, select: { id: true, projectId: true } as never })
+				.catch(() => null);
+			if (owner?.projectId && owner.projectId !== mapping.projectId) return 'skipped';
+		}
+		const fields = taskFieldsOf(task, mapping.asanaProjectGid, context.sectionMap, context.knownStatuses);
 		const members = await this.membersOf(context, task.assignee?.email ?? null);
 		const tags = await this.tagsOf(context, task.tags ?? []);
 		const entity = {
@@ -393,7 +439,7 @@ export class AsanaSyncService {
 			title: fields.title,
 			description: fields.description,
 			status: fields.status,
-			taskStatusId: context.statusIdsByName.get(fields.status.toLowerCase()) ?? null,
+			taskStatusId: context.statusIdsByName.get(statusKey(fields.status)) ?? null,
 			priority: fields.priority ?? null,
 			taskPriorityId: fields.priority ? context.priorityIdsByName.get(fields.priority.toLowerCase()) ?? null : null,
 			dueDate: fields.dueDate,

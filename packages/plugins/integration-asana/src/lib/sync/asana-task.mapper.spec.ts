@@ -6,6 +6,8 @@ import {
 	parseSectionMap,
 	sectionForStatus,
 	serializeSectionMap,
+	knownStatusesOf,
+	statusKey,
 	taskFieldsOf,
 	taskPriorityOf,
 	watermarkOf
@@ -48,7 +50,7 @@ describe('asana task mapper', () => {
 	});
 
 	it('reads the task fields: completed wins, then the map, then a section named like a status, then open', () => {
-		const known = new Set([TaskStatusEnum.IN_PROGRESS, TaskStatusEnum.OPEN, TaskStatusEnum.COMPLETED]);
+		const known = knownStatusesOf([TaskStatusEnum.IN_PROGRESS, TaskStatusEnum.OPEN, TaskStatusEnum.COMPLETED]);
 		expect(taskFieldsOf(task(), 'p1', { 's-doing': 'in-review' }, known)).toEqual({
 			title: 'Fix the thing',
 			description: 'Body',
@@ -59,6 +61,12 @@ describe('asana task mapper', () => {
 		expect(taskFieldsOf(task(), 'p1', {}, known).status).toBe(TaskStatusEnum.IN_PROGRESS);
 		expect(taskFieldsOf(task({ memberships: [{ project: { gid: 'p1' }, section: { gid: 's-x', name: 'Someday' } }] }), 'p1', {}, known).status).toBe(TaskStatusEnum.OPEN);
 		expect(taskFieldsOf(task({ completed: true }), 'p1', {}, known).status).toBe(TaskStatusEnum.COMPLETED);
+		// A section named with spaces matches a hyphenated status, and a mapped value takes the name as the project stores it.
+		const custom = knownStatusesOf(['Ready For Review', TaskStatusEnum.OPEN]);
+		expect(taskFieldsOf(task({ memberships: [{ project: { gid: 'p1' }, section: { gid: 's-r', name: 'ready for review' } }] }), 'p1', {}, custom).status).toBe('Ready For Review');
+		expect(taskFieldsOf(task(), 'p1', { 's-doing': 'READY_FOR_REVIEW' }, custom).status).toBe('Ready For Review');
+		expect(statusKey(' In Progress ')).toBe('in-progress');
+		expect(knownStatusesOf(['In Progress', 'in-progress', '', null]).get('in-progress')).toBe('In Progress');
 		expect(taskFieldsOf(task({ name: '', notes: ' ', custom_fields: [], due_on: null }), 'p1', {}, known)).toMatchObject({ title: 'Asana t1', description: null, priority: null, dueDate: null });
 	});
 

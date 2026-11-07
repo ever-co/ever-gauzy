@@ -1,7 +1,19 @@
 import { createHmac } from 'node:crypto';
-import { isAsanaSignatureValid, taskGidsOf } from './asana-webhook.controller';
+import { isAsanaSignatureValid, isHandshakeAccepted, taskGidsOf } from './asana-webhook.controller';
 
 describe('Asana webhook checks', () => {
+	it('accepts a handshake only with the token of a registration in flight, within its window', () => {
+		const started = new Date('2026-11-07T10:00:00.000Z');
+		const now = started.getTime() + 60_000;
+		const open = { webhookHandshakeToken: 'tok-1', webhookHandshakeStartedAt: started };
+		expect(isHandshakeAccepted(open, 'tok-1', now)).toBe(true);
+		expect(isHandshakeAccepted(open, 'tok-2', now)).toBe(false);
+		expect(isHandshakeAccepted(open, undefined, now)).toBe(false);
+		expect(isHandshakeAccepted(open, 'tok-1', now + 11 * 60_000)).toBe(false);
+		expect(isHandshakeAccepted({ webhookHandshakeToken: null, webhookHandshakeStartedAt: null }, 'tok-1', now)).toBe(false);
+		expect(isHandshakeAccepted({ webhookHandshakeToken: 'tok-1', webhookHandshakeStartedAt: null }, 'tok-1', now)).toBe(false);
+	});
+
 	const secret = 'hook-secret';
 	const body = Buffer.from(JSON.stringify({ events: [{ action: 'changed', resource: { gid: 't1', resource_type: 'task' } }] }));
 

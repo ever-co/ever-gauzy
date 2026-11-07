@@ -34,15 +34,19 @@ no table (its migration is not registered) and makes no outbound request. Same l
   per Asana project; a platform project sends its tasks to at most one Asana project.
 - **Webhooks.** A mapping registers a webhook on its Asana project at `ASANA_WEBHOOK_BASE_URL` +
   `/api/integration/asana/webhook/:mappingId` (best effort; `POST …/mappings/:mappingId/webhook` registers it
-  again). Asana's handshake (`X-Hook-Secret`) is echoed and the secret stored on the mapping; every later
-  delivery is checked (`X-Hook-Signature`, the HMAC-SHA256 of the raw body), acknowledged at once, and the
-  tasks its events name are read again from Asana and applied behind the response.
+  again). The target carries a single-use token, and Asana's handshake (`X-Hook-Secret`) is echoed — and the
+  secret stored on the mapping — only with that token while the registration is in flight (ten minutes), so an
+  unsolicited handshake cannot replace the secret. Every later delivery is checked (`X-Hook-Signature`, the
+  HMAC-SHA256 of the raw body), acknowledged at once, and the tasks its events name are read again from Asana
+  and applied behind the response.
 - **Import.** `POST …/mappings/:mappingId/import` (`{ "full": true }` for every task, otherwise the ones
   changed since the last import) runs behind the response, one import per mapping at a time. Each Asana task
   becomes a task of the project once (the platform's id map, entity `TASK`), updated on later runs: name,
   notes, status (completion and section), the project's status row of that name, a priority from a custom
   field called Priority, due date, the assignee by e-mail, tags as tags, subtasks under their parent. A task
-  that could not be applied keeps the import position. `GET …/runs` lists the runs.
+  that could not be applied keeps the import position. An Asana task two mapped projects share belongs to the
+  mapping that imported it first; the other skips it. Section and status names compare by key: case ignored,
+  spaces as hyphens (`In Progress` is `in-progress`). `GET …/runs` lists the runs.
 - **Outbound.** When a mapping is `outbound` or `both`, a platform task created or changed updates its Asana
   task (name, notes, completion by status, due date, and the section the status maps to) or creates one in
   the Asana project. Tasks kept out of third-party sync are never sent; the sync's own inbound writes raise no

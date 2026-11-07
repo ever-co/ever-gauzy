@@ -34,6 +34,8 @@ function mappingColumns(d: AsanaDialect): string {
 		`${c('syncEnabled')} ${t.boolean(true)}`,
 		`${c('webhookGid')} ${t.varchar(64)}${t.nul}`,
 		`${c('webhookSecret')} ${t.varchar(255)}${t.nul}`,
+		`${c('webhookHandshakeToken')} ${t.varchar(64)}${t.nul}`,
+		`${c('webhookHandshakeStartedAt')} ${t.timestamp}${t.nul}`,
 		`${c('lastImportedAt')} ${t.timestamp}${t.nul}`,
 		`${c('lastCursor')} ${t.varchar(64)}${t.nul}`,
 		`${c('lastError')} ${t.text}${t.nul}`

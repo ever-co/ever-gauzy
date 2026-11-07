@@ -38,6 +38,8 @@ export enum AsanaSettingName {
 
 /** The largest webhook body accepted. */
 export const ASANA_WEBHOOK_MAX_BYTES = 1024 * 1024;
+/** How long after a registration starts its handshake is accepted. */
+export const ASANA_WEBHOOK_HANDSHAKE_WINDOW_MS = 10 * 60_000;
 
 /** How many tasks one page of an import asks for, and the safety cap of one run (it then keeps its position and says so). */
 export const ASANA_TASKS_PAGE_SIZE = 100;
