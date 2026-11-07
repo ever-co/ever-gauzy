@@ -8,15 +8,18 @@ import { createServer } from 'node:net';
 import { INestApplication } from '@nestjs/common';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Test } from '@nestjs/testing';
-import { OidcModule } from '@gauzy/auth';
+import { getRepositoryToken } from '@nestjs/typeorm';
+import { OidcDiscoveryService, OidcHttpService, OidcModule } from '@gauzy/auth';
 import { EVER_REDIS_CLIENT, EventBus } from '@gauzy/core';
 import { AuthZitadelController } from '../auth-zitadel.controller';
 import { AuthZitadelSettings, parseZitadelSettings } from '../auth-zitadel.config';
 import { AUTH_ZITADEL_SETTINGS } from '../auth-zitadel.tokens';
+import { ZitadelSession } from '../entities/zitadel-session.entity';
 import { ZitadelConfiguredGuard } from '../guards/zitadel-configured.guard';
 import { ZitadelHandoffThrottleGuard } from '../guards/zitadel-handoff-throttle.guard';
 import { ZitadelRetryAfterInterceptor } from '../http/zitadel-retry';
 import { EVER_CONNECT_CONFIG, EverConnectConfigPort } from '../ports/ever-connect-config.port';
+import { EVER_ID_TOKEN_VAULT } from '../ports/ever-id-session-tokens.port';
 import { ITermsAcceptanceDocument } from '@gauzy/contracts';
 import { GAUZY_AUTH } from '../ports/gauzy-auth.port';
 import { TERMS_DOCUMENTS, TermsDocumentsPort } from '../ports/terms-documents.port';
@@ -28,6 +31,7 @@ import { ZitadelEventsService } from '../services/zitadel-events.service';
 import { ZitadelFlowService } from '../services/zitadel-flow.service';
 import { ZitadelHandoffService } from '../services/zitadel-handoff.service';
 import { ZitadelLinkService } from '../services/zitadel-link.service';
+import { ZitadelRefreshTokenService } from '../services/zitadel-refresh-token.service';
 import { ZitadelSessionService } from '../services/zitadel-session.service';
 import { ZitadelSigninService } from '../services/zitadel-signin.service';
 import { ZitadelSignupService } from '../services/zitadel-signup.service';
@@ -37,6 +41,7 @@ import { ZitadelTokenSigninService } from '../services/zitadel-token-signin.serv
 import { ZitadelWorkspaceService } from '../services/zitadel-workspace.service';
 import { FakeGauzyAuth, FakeSubscriptionGate, InMemoryAccounts, InMemoryCache, InMemorySessions } from './in-memory-accounts';
 import { MockOidcIssuer } from './mock-oidc-issuer';
+import { TestTokenVault } from './test-token-vault';
 
 export const TEST_CLIENT_ID = 'gauzy-web-test';
 export const TEST_CLIENT_BASE_URL = 'http://client.example.test';
@@ -56,6 +61,15 @@ export interface ZitadelTestApp {
 	store: ZitadelStoreService;
 	/** The hand-off of a sign-in started to confirm a workspace (`ZITADEL_HANDOFF_READER`). */
 	handoffs: ZitadelHandoffService;
+	/** The App Launcher's refresh tokens (`EVER_ID_SESSION_TOKENS`), over the in-memory session records. */
+	refreshTokens: ZitadelRefreshTokenService;
+	/** The encryption the connection plugin provides (`EVER_ID_TOKEN_VAULT`), as a test stand-in. */
+	vault: TestTokenVault;
+	/**
+	 * Another API process's refresh-token service: the same session records, issuer and encryption, a memory of its
+	 * own (to refresh one session from two processes at once).
+	 */
+	replica(): ZitadelRefreshTokenService;
 	published: unknown[];
 	close(): Promise<void>;
 }
@@ -138,6 +152,7 @@ async function startApp(
 	const sessions = new InMemorySessions();
 	const cache = new InMemoryCache();
 	const terms = new FakeTermsDocuments();
+	const vault = new TestTokenVault();
 	const published: unknown[] = [];
 
 	const moduleRef = await Test.createTestingModule({
@@ -149,6 +164,9 @@ async function startApp(
 			{ provide: EVER_REDIS_CLIENT, useValue: null },
 			{ provide: ZitadelAccountService, useValue: accounts },
 			{ provide: ZitadelSessionService, useValue: sessions },
+			{ provide: getRepositoryToken(ZitadelSession), useValue: sessions.repository() },
+			// The kept refresh tokens' encryption (the App Launcher keeps none unless it is on).
+			{ provide: EVER_ID_TOKEN_VAULT, useValue: vault },
 			{ provide: ZitadelSubscriptionGateService, useValue: gate },
 			{ provide: GAUZY_AUTH, useValue: gauzyAuth },
 			{ provide: TERMS_DOCUMENTS, useValue: terms },
@@ -164,6 +182,7 @@ async function startApp(
 			ZitadelLinkService,
 			ZitadelHandoffService,
 			ZitadelFlowService,
+			ZitadelRefreshTokenService,
 			ZitadelTokenSigninService,
 			ZitadelBackchannelService,
 			ZitadelConfiguredGuard,
@@ -194,6 +213,16 @@ async function startApp(
 		terms,
 		store: moduleRef.get(ZitadelStoreService),
 		handoffs: moduleRef.get(ZitadelHandoffService),
+		refreshTokens: moduleRef.get(ZitadelRefreshTokenService),
+		vault,
+		replica: () =>
+			new ZitadelRefreshTokenService(
+				moduleRef.get(ZitadelConfigService),
+				sessions.repository() as never,
+				moduleRef.get(OidcDiscoveryService),
+				moduleRef.get(OidcHttpService),
+				vault
+			),
 		published,
 		async close() {
 			await app.close();

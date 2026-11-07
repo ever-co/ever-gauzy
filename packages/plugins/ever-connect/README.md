@@ -15,6 +15,7 @@ The web part is [`@gauzy/plugin-ever-connect-ui`](../ever-connect-ui/README.md):
 | `EVER_CONNECT_ENABLED` unset, or anything but `true` | The module is not loaded. Nothing is sent, nothing is scheduled. Any value other than `true`/`false` is reported once in the log. |
 | `EVER_CONNECT_ENABLED=true`, not connected           | Loaded and idle: no request, no timer, until the operator connects (or `EVER_CONNECT_CODE` is set).                               |
 | Connected                                            | Only the requests listed below, each on its own trigger.                                                                          |
+| `EVER_APP_LAUNCHER_ENABLED` unset, or anything but `true` | The App Launcher's routes are not registered (404) and none of its reads is ever made, connected or not.                     |
 
 ## Anonymous usage statistics
 
@@ -36,7 +37,7 @@ Before the code is used, Ever Platform's key manifest is fetched and verified; a
 
 ### Requests made while connected
 
-All requests go through the Ever Platform SDK's client (`@ever-co/connect-sdk`, pinned to an exact version): only `EVER_PLATFORM_API_URL`, no redirects followed, no cookies, a 10 s deadline for writes and 6 s for reads, `User-Agent: ever-connect-sdk/<version> (gauzy/<version>)`, an `Idempotency-Key` on writes. The instance token is kept in memory only.
+All requests go through the Ever Platform SDK's client (`@ever-co/connect-sdk`, pinned to an exact version), except the App Launcher's reads, which are listed in "App Launcher" below and are made only while it is on: only `EVER_PLATFORM_API_URL`, no redirects followed, no cookies, a 10 s deadline for writes and 6 s for reads, `User-Agent: ever-connect-sdk/<version> (gauzy/<version>)`, an `Idempotency-Key` on writes. The instance token is kept in memory only.
 
 A spec checks this table against the outbound-call rows of the SDK's contracts package (`@ever-co/connect-contracts`, `ROWS`): every request below is one of the SDK's, under its row number.
 
@@ -116,6 +117,23 @@ A person who starts a company on app.ever.co and chooses Ever Gauzy is sent to `
 
 Repeats are safe: the same request (its idempotency key) answers the workspace already created and never makes a second one; a request used under another key is refused; an Ever organization already linked by another creation is refused. A creation that stopped half way is finished, with the same tenant and organization, by its retry. The plan in the signed request is the entitlement: the check of it calls no payment provider, and Gauzy's own register route and its subscription check are unchanged (the new tenant is otherwise set up as any new tenant is). 10 requests a minute per address on each route.
 
+### App Launcher
+
+Off unless `EVER_APP_LAUNCHER_ENABLED=true` (exactly, read once at start) with the Ever ID sign-in plugin loaded (`ZITADEL_ENABLED=true`); otherwise its routes are not registered (they answer 404) and nothing of it runs. It shows a signed-in person the Ever apps and "Your apps": what the Ever organization linked to their current Gauzy organization installed from apps.ever.co, and its apps with a live deployment. The web app renders it in its header.
+
+- `GET /api/ever-connect/launcher/config` (signed in, any member): `{enabled, current: "ever-gauzy", worksAppUrl, signInAvailable}`. `signInAvailable` is `true` when the person has no Ever ID session that can read their apps (they signed in some other way): the launcher then offers to sign in with Ever ID.
+- `GET /api/ever-connect/launcher/apps?organizationId=` (signed in, a member of that organization, else 403; no new permission): the element's data (`items`, `meta`, as `AppLauncherListResponse`), `signInAvailable`, and `error` (`{section: "works", code}` when "Your apps" could not be read this time; the Ever apps are always there). An organization that is not linked gets an empty "Your apps".
+- Both answer only the person's own first-party session: a request with a third-party OAuth app's token (whatever its scopes, an identity-only app included) or a session started from a personal API token gets 403 `first_party_only`, before anything is read.
+- Both answer only the browser origins of `EVER_APP_LAUNCHER_ORIGINS` (default: the origin of `CLIENT_BASE_URL`; a request without `Origin` only when the browser marks it `Sec-Fetch-Site: same-origin`), else 403 `origin_not_allowed`. Both send `Cache-Control: no-store`. No answer carries a token.
+
+To read "Your apps" the API exchanges the person's Ever ID token (RFC 8693, at Ever ID, through the Ever ID sign-in plugin, which keeps the refresh token of each Ever ID session while the launcher is on, encrypted by this module as it stores its own documents, under a purpose of its own; see that plugin's README) for a token with the `apps:read` scope and Ever Platform's audience (`EVER_PLATFORM_PROJECT_ID`). Ever Platform answers such a token on the two reads below only, and only for an organization the person belongs to. The token stays in the API's memory, per person and Ever ID session, until a minute before it expires (an hour at most); it is never stored, never sent to the browser, never put in an address and never logged. An answer is reused for 60 seconds per person and organization, in memory.
+
+The launcher's reads, each to a fixed path, under the same rules as the SDK's client (no redirect followed, no cookie, a deadline, a size limit). The two Ever Platform reads are not in the operation table of the SDK release this module pins yet; they move to the SDK's client once it has them.
+
+- `GET <EVER_WORKS_API_URL>/api/app-launcher/platforms`: the public catalog of Ever apps, without any credential, at most once an hour (2 s deadline). When it cannot be read, a bundled list is shown.
+- `GET <EVER_PLATFORM_API_URL>/v1/orgs/{org}/installs` and `GET <EVER_PLATFORM_API_URL>/v1/orgs/{org}/apps?limit=100`: when a person opens the launcher for a linked organization (at most once a minute per person and organization), with the delegated token in the `Authorization` header and the Ever organization's id in the path. Nothing else is sent.
+- At Ever ID (the sign-in plugin's issuer): a refresh request and the token exchange, at most once per person and Ever ID session while the token lasts.
+
 ### `/.well-known/ever-connect`
 
 Registered outside `/api` while this module is loaded. It answers only while Ever Platform checks the installation's address (after `instance_url` was consented and accepted, at most 10 minutes): a short-lived statement signed with the connection key, `{iss: <the installation's id>, aud: "urn:ever:instance-url", url, iat, exp}` with `exp` at most 10 minutes after `iat`. At any other time it answers 404, exactly as an address that does not exist. This release does not send the installation's address yet, so it always answers 404.
@@ -145,6 +163,11 @@ Tables `ever_connect_connection`, `ever_connect_link`, `ever_connect_integration
 | `EVER_CONNECT_INTEGRATIONS_DENY`                       | unset                 | integration keys denied for every organization (comma separated, or `*`)                                                              |
 | `EVER_CONNECT_FEED_MODE`                               | `longpoll`            | `interval`: one read of the event feed every 15 minutes                                                                               |
 | `EVER_CONNECT_PROVISION_ENABLED`                       | unset (off)           | `true` (exactly) lets a person create a workspace from Ever (see "Creating a workspace from Ever"); otherwise its routes answer 404 |
+| `EVER_APP_LAUNCHER_ENABLED`                            | unset (off)           | `true` (exactly), with `ZITADEL_ENABLED=true`, turns on the App Launcher (see "App Launcher"); otherwise its routes answer 404 and nothing of it runs |
+| `EVER_APP_LAUNCHER_ORIGINS`                            | the origin of `CLIENT_BASE_URL` | the browser origins the App Launcher's routes answer (comma separated, at most 50)                                          |
+| `EVER_PLATFORM_PROJECT_ID`                             | unset                 | Ever Platform's audience, which the App Launcher's token is exchanged for (shared with the Ever ID sign-in plugin); unset, "Your apps" is not read |
+| `EVER_WORKS_API_URL`                                   | `https://api.ever.works` | for the App Launcher: where the public catalog of Ever apps is read (https; an address that cannot be used means the bundled list is shown) |
+| `EVER_WORKS_APP_URL`                                   | `https://app.ever.works` | for the App Launcher: where its "Manage" link leads                                                                          |
 | `EVER_ENTITLEMENT_FILE`                                | unset                 | a downloaded entitlement document (`.jws`), imported once when the connection starts, for an installation without a route to Ever Platform; the operator can also import one on the Entitlements tab |
 | `EVER_INSTALL_SOURCE`                                  | `self-hosted`         | how the installation is deployed, declared by the operator; `cloud` means Ever operates it                                            |
 | `EVER_OPERATOR_USER_IDS`, `EVER_OPERATOR_EMAILS`       | unset                 | the operators of the installation (shared with the statistics module)                                                                 |

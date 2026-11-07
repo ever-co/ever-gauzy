@@ -61,20 +61,24 @@ export class ZitadelWorkspaceService {
 	 * remembers the identity provider session for back-channel logout.
 	 *
 	 * @param teams - Team lists Gauzy already returned for some of these users, by user id.
+	 * @param everRefreshTokenEncrypted - The encrypted Ever ID refresh token of the session, kept with its records
+	 *   while the App Launcher is on (see `ZitadelSessionService.record`).
 	 */
 	async signIn(
 		users: User[],
 		identity: ZitadelIdentity,
 		hints: ZitadelClaimHints,
 		sid?: string,
-		teams?: Map<ID, ZitadelTeamList>
+		teams?: Map<ID, ZitadelTeamList>,
+		everRefreshTokenEncrypted?: string | null
 	): Promise<ZitadelSigninWorkspaceResponse> {
 		const response = await this.build(users, hints, teams);
 		const allowed = new Set(response.workspaces.map((workspace) => workspace.user.id));
 		await this.accounts.touchLastLogin(identity, [...allowed]);
 		await this.sessions.record(
 			sid,
-			users.filter((user) => allowed.has(user.id))
+			users.filter((user) => allowed.has(user.id)),
+			everRefreshTokenEncrypted
 		);
 		return response;
 	}

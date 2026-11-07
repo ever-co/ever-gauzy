@@ -22,6 +22,7 @@ import { ZitadelHandoffThrottleGuard } from './guards/zitadel-handoff-throttle.g
 import { ZitadelRetryAfterInterceptor } from './http/zitadel-retry';
 import { ZITADEL_PROVISIONER } from './ports/create-user-pre-linked.port';
 import { EVER_ID_ACCOUNTS } from './ports/ever-id-accounts.port';
+import { EVER_ID_SESSION_TOKENS } from './ports/ever-id-session-tokens.port';
 import { ZITADEL_HANDOFF_READER } from './ports/handoff-reader.port';
 import { GAUZY_AUTH } from './ports/gauzy-auth.port';
 import { TERMS_DOCUMENTS } from './ports/terms-documents.port';
@@ -34,6 +35,7 @@ import { ZitadelFlowService } from './services/zitadel-flow.service';
 import { ZitadelHandoffService } from './services/zitadel-handoff.service';
 import { ZitadelLinkService } from './services/zitadel-link.service';
 import { ZitadelProvisionService } from './services/zitadel-provision.service';
+import { ZitadelRefreshTokenService } from './services/zitadel-refresh-token.service';
 import { ZitadelSessionService } from './services/zitadel-session.service';
 import { ZitadelSigninService } from './services/zitadel-signin.service';
 import { ZitadelSignupService } from './services/zitadel-signup.service';
@@ -62,6 +64,7 @@ export const AUTH_ZITADEL_SERVICES = [
 	ZitadelClaimsService,
 	ZitadelWorkspaceService,
 	ZitadelSessionService,
+	ZitadelRefreshTokenService,
 	ZitadelEventsService,
 	ZitadelSubscriptionGateService,
 	ZitadelSignupService,
@@ -86,7 +89,8 @@ export const AUTH_ZITADEL_SERVICES = [
  * Global for its ports, which the Ever Platform connection plugin asks (optionally):
  * {@link EVER_ID_ACCOUNTS} when a person's deletion or export request names an Ever ID, and
  * {@link ZITADEL_HANDOFF_READER} with {@link ZITADEL_PROVISIONER} when a person confirms a workspace
- * Ever Platform asked this installation to create.
+ * Ever Platform asked this installation to create, and {@link EVER_ID_SESSION_TOKENS} for the App Launcher
+ * (`EVER_APP_LAUNCHER_ENABLED=true`).
  */
 @Global()
 @Module({
@@ -106,8 +110,9 @@ export const AUTH_ZITADEL_SERVICES = [
 		...AUTH_ZITADEL_SERVICES,
 		{ provide: EVER_ID_ACCOUNTS, useExisting: ZitadelPersonDataListener },
 		{ provide: ZITADEL_HANDOFF_READER, useExisting: ZitadelHandoffService },
-		{ provide: ZITADEL_PROVISIONER, useExisting: ZitadelProvisionService }
+		{ provide: ZITADEL_PROVISIONER, useExisting: ZitadelProvisionService },
+		{ provide: EVER_ID_SESSION_TOKENS, useExisting: ZitadelRefreshTokenService }
 	],
-	exports: [EVER_ID_ACCOUNTS, ZITADEL_HANDOFF_READER, ZITADEL_PROVISIONER]
+	exports: [EVER_ID_ACCOUNTS, ZITADEL_HANDOFF_READER, ZITADEL_PROVISIONER, EVER_ID_SESSION_TOKENS]
 })
 export class AuthZitadelModule {}
