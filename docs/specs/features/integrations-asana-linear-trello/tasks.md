@@ -19,24 +19,24 @@
 - [x] **T8**. Webhooks: `POST /webhook` (signature over the raw body, timestamp tolerance, delivery dedupe), one issue applied per connection of the workspace
 - [x] **T9**. Outbound: `TaskEvent` → update or create the issue (state by the mapping, title, description, priority, due date); `isTaskSyncAllowed`
 - [x] **T10**. README, `.env.sample`, the issue mapper spec, the webhook checks spec
-- [ ] **T11**. Bot threads answered; manual check on dev against a Linear workspace (connect, map, import, a webhook, a status change both ways)
+- [ ] **T11**. Bot threads answered (#11692: 4 rounds, 34 threads; #11696: the callback route order, `type: Date` columns, tags, locks); manual check on dev against a Linear workspace (connect, map, import, a webhook, a status change both ways) still to do
 
 ## Linear — Phase 2 (lane G7a, PR 2+)
 
-- [ ] **T12**. `integration-linear-ui` Angular plugin: connect page → `install/state` redirect, callback landing, mappings page (team, project, direction, state map), Import now, runs table
+- [x] **T12**. `integration-linear-ui` Angular plugin (#11692): connect page → `install/state` redirect, callback landing, mappings page (team, project, direction, state map), Import now, runs table
 - [ ] **T13**. Comments inbound (attributed by e-mail, else marked external) and attachments as task file links
 - [ ] **T14**. Scheduled incremental import for connections without webhooks; token refresh when Linear issues expiring tokens
 - [ ] **T15**. Inbox entry for the integration's managers on a refused token; conflict records and their resolution
-- [ ] **T16**. Ever Teams `integrations-settings` page on the same routes
+- [x] **T16**. Ever Teams `integrations-settings` page on the same routes (ever-teams #4974)
 
 ## Asana — (lane G7b)
 
-- [ ] **T17**. Plugin on the Linear layout: OAuth (refresh tokens), workspaces → projects → tasks (sections as statuses, custom priority), subtasks, stories as comments, webhooks with the handshake
-- [ ] **T18**. UI plugin and Teams page
+- [x] **T17**. Plugin on the Linear layout (#11694): OAuth (refresh tokens), workspaces → projects → tasks (sections as statuses, custom priority), subtasks, webhooks with the handshake (single-use token); stories as comments → phase 2 with T13
+- [x] **T18**. UI plugin (`integration-asana-ui`, #11694) and Teams page (ever-teams #4975)
 
 ## Trello — (lane G7c)
 
-- [ ] **T19**. Plugin on the Linear layout: OAuth 1.0a or token, boards → lists → cards (lists as statuses, labels, checklists as sub-tasks, due dates), webhooks over the callback URL
-- [ ] **T20**. UI plugin and Teams page
+- [x] **T19**. Plugin on the Asana layout (#11698): the authorize page's token handed back by the return page (`POST /connect` with the flow's state), boards → lists → cards (lists as statuses, labels as tags and priority, due dates, members by username or name), webhooks signed with the app secret over the callback URL; checklists as sub-tasks → phase 2
+- [x] **T20**. UI plugin (`integration-trello-ui`, #11698) and Teams page (ever-teams #4976)
 
 **Status 2026-11-07:** Linear phase 1 in ever-gauzy `feat/integration-linear` (PR opened with the lane; bot threads next).
