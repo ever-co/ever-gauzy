@@ -133,10 +133,13 @@ export interface IRealtimeTypingSignal {
 export interface IRealtimeCatchUpQuery {
 	/**
 	 * The `occurredAt` time, in epoch milliseconds, of the newest event the client applied; omitted for
-	 * "the newest retained events". Events at exactly that time are answered again (a client applies an
-	 * event by its `eventId`, so a repeat is harmless), which is what makes the cursor lossless.
+	 * "the newest retained events". With `afterId`, the cursor is exact: the events after that one. Without it,
+	 * events at exactly that time are answered again (a client applies an event by its `eventId`, so a repeat is
+	 * harmless).
 	 */
 	after?: number;
+	/** The `eventId` of the newest event the client applied, as the answer's `cursorId` gave it. */
+	afterId?: string;
 	/** At most this many events (1–500, default 200). */
 	limit?: number;
 }
@@ -157,6 +160,10 @@ export interface IRealtimeCatchUp {
 	events: IRealtimeEventEnvelope[];
 	/** The `occurredAt` (epoch ms) to pass as `after` next time; `null` when nothing is retained yet. */
 	cursor: number | null;
+	/** The `eventId` to pass as `afterId` next time, beside `cursor`; `null` when nothing is retained yet. */
+	cursorId: string | null;
+	/** True when more events follow the ones answered: call again with the cursor before trusting the stream. */
+	hasMore: boolean;
 	/** True when `after` precedes what is retained: the client must refetch its data through the read APIs. */
 	resync: boolean;
 }

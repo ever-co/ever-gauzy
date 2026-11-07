@@ -20,6 +20,7 @@ import { redactDatabaseError } from '../core/errors/database-error';
 import { RequestContext } from '../core/context/request-context';
 import { EmployeeNotificationSettingService } from '../employee-notification-setting/employee-notification-setting.service';
 import { EmployeeCreateNotificationEvent } from './events/employee-notification.event';
+import { EmployeeNotificationCreatedEvent } from './events/employee-notification-created.event';
 import { EmployeeNotification } from './employee-notification.entity';
 import { TypeOrmEmployeeNotificationRepository } from './repository/type-orm-employee-notification.repository';
 import { MikroOrmEmployeeNotificationRepository } from './repository/mikro-orm-employee-notification.repository';
@@ -171,7 +172,16 @@ export class EmployeeNotificationService extends TenantAwareCrudService<Employee
 			}
 
 			// Create the notification entry using the provided input along with the tenantId and return the created notification
-			return await super.create({ ...input, tenantId });
+			const notification = await super.create({ ...input, tenantId });
+			// Tell the in-process listeners (the real-time channel, the Inbox) that a row exists. Never fails the write.
+			if (notification?.id) {
+				try {
+					this._eventBus.publish(new EmployeeNotificationCreatedEvent(notification));
+				} catch (publishError) {
+					this.logger.warn(`The created event of notification ${notification.id} was not published: ${(publishError as Error)?.message}`);
+				}
+			}
+			return notification;
 		} catch (error) {
 			this.logger.error('Error while creating employee notification:', error);
 			throw new BadRequestException('Error while creating notification', error);

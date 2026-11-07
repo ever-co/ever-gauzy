@@ -1,5 +1,5 @@
 import { EventsHandler, IEventHandler } from '@nestjs/cqrs';
-import { CommentEvent, CreateMentionEvent, EmployeeCreateNotificationEvent } from '@gauzy/core';
+import { CommentEvent, CreateMentionEvent, EmployeeNotificationCreatedEvent } from '@gauzy/core';
 import { RealtimeHintsService } from '../realtime-hints.service';
 
 /** A comment changed: `comment.<created|updated|deleted>`. */
@@ -12,7 +12,11 @@ export class RealtimeCommentEventHandler implements IEventHandler<CommentEvent> 
 	}
 }
 
-/** Someone was mentioned: `mention.created`, addressed to them. */
+/**
+ * Someone was mentioned: `mention.created`, addressed to them. `CreateMentionEvent` is the request the mention
+ * handler writes the row from, in the same in-process dispatch; the hint only tells the mentioned user to refetch,
+ * so a (logged) failure of that write costs one empty refetch, never a wrong fact.
+ */
 @EventsHandler(CreateMentionEvent)
 export class RealtimeMentionEventHandler implements IEventHandler<CreateMentionEvent> {
 	constructor(private readonly hints: RealtimeHintsService) {}
@@ -22,13 +26,16 @@ export class RealtimeMentionEventHandler implements IEventHandler<CreateMentionE
 	}
 }
 
-/** A notification is created for an employee: `employee_notification.created`, addressed to them. */
-@EventsHandler(EmployeeCreateNotificationEvent)
-export class RealtimeNotificationEventHandler implements IEventHandler<EmployeeCreateNotificationEvent> {
+/**
+ * A notification row exists for an employee: `employee_notification.created`, addressed to them. The created
+ * event, not the request to create one: a request the receiver switched off saves nothing and announces nothing.
+ */
+@EventsHandler(EmployeeNotificationCreatedEvent)
+export class RealtimeNotificationEventHandler implements IEventHandler<EmployeeNotificationCreatedEvent> {
 	constructor(private readonly hints: RealtimeHintsService) {}
 
-	async handle(event: EmployeeCreateNotificationEvent): Promise<void> {
-		await this.hints.onNotification(event.input);
+	async handle(event: EmployeeNotificationCreatedEvent): Promise<void> {
+		await this.hints.onNotification(event.notification);
 	}
 }
 

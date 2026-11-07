@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException, Optional } from '@nestjs/common';
-import { EntityManager, FindOptionsWhere, IsNull } from 'typeorm';
+import { EntityManager, FindOptionsWhere, In, IsNull, MoreThanOrEqual } from 'typeorm';
 import { EntityManager as MikroOrmEntityManager, QueryOrder } from '@mikro-orm/core';
 import { randomUUID } from 'node:crypto';
 import { isMySQL, isPostgres } from '@gauzy/config';
@@ -648,6 +648,54 @@ export class EventOutboxService extends CrudService<EventOutbox> {
 				...(query.aggregateId ? { aggregateId: query.aggregateId } : {})
 			}),
 			order: { availableAt: 'ASC', sequence: 'ASC', id: 'ASC' }
+		} as never);
+	}
+
+	/**
+	 * The caller's rows of some event names since a time, oldest first, bounded — the read a client's catch-up
+	 * after a reconnect makes (the real-time channel), scoped exactly as {@link listOutboxRows} scopes.
+	 *
+	 * Ordered by `createdAt` then `id`, which is the order a catch-up cursor walks: `createdAt` is written once
+	 * at append and never moves, unlike `availableAt`, which the dispatcher pushes for leases and retries.
+	 *
+	 * Under TypeORM the names, the time and the bound are pushed into the query. Under MikroORM the store's read
+	 * takes equality criteria only, so the rows of each name are read and the time and the bound are applied
+	 * here; the answer is the same set.
+	 *
+	 * @param query The event names (all when omitted), the earliest `createdAt` to answer, and the most rows.
+	 * @returns The rows, oldest first.
+	 */
+	async listOutboxRowsSince(query: { eventNames?: readonly string[]; since?: Date; limit: number }): Promise<EventOutbox[]> {
+		const limit = Math.min(Math.max(Math.trunc(Number(query.limit)) || 1, 1), 5000);
+		const names = query.eventNames?.length ? [...new Set(query.eventNames)] : undefined;
+		const sinceMs = query.since instanceof Date && Number.isFinite(query.since.getTime()) ? query.since.getTime() : null;
+		const byTime = (a: EventOutbox, b: EventOutbox): number =>
+			new Date(a.createdAt as Date).getTime() - new Date(b.createdAt as Date).getTime() || String(a.id).localeCompare(String(b.id));
+
+		if (this.usesMikroOrm) {
+			const listings = await Promise.all(
+				(names ?? [undefined]).map((eventName) =>
+					this.mikroOrmStore.find<EventOutbox>(
+						EventOutbox,
+						this.rowsOfTheCallerOnMikroOrm(eventName ? { eventName } : {}),
+						[{ createdAt: QueryOrder.ASC }, { id: QueryOrder.ASC }]
+					)
+				)
+			);
+			return listings
+				.flat()
+				.filter((row) => sinceMs === null || new Date(row.createdAt as Date).getTime() >= sinceMs)
+				.sort(byTime)
+				.slice(0, limit);
+		}
+
+		return this.typeOrmEventOutboxRepository.find({
+			where: this.rowsOfTheCaller<EventOutbox>({
+				...(names ? { eventName: In(names) } : {}),
+				...(sinceMs !== null ? { createdAt: MoreThanOrEqual(new Date(sinceMs)) } : {})
+			} as FindOptionsWhere<EventOutbox>),
+			order: { createdAt: 'ASC', id: 'ASC' },
+			take: limit
 		} as never);
 	}
 

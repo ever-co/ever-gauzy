@@ -13,9 +13,12 @@ describe('realtime hints', () => {
 		});
 	});
 
-	it('produces nothing for a fact without an identity or a tenant', () => {
-		expect(taskHint({ id: '', tenantId: 'ten' }, 'created', null)).toBeNull();
-		expect(taskHint({ id: 't1' }, 'created', null)).toBeNull();
+	it('produces nothing for a fact without an identity, a tenant or (organization-wide) an organization', () => {
+		expect(taskHint({ id: '', tenantId: 'ten', organizationId: 'org' }, 'created', null)).toBeNull();
+		expect(taskHint({ id: 't1', organizationId: 'org' }, 'created', null)).toBeNull();
+		// A partial save result without its organization must not become a tenant-wide hint.
+		expect(taskHint({ id: 't1', tenantId: 'ten' }, 'updated', null)).toBeNull();
+		expect(documentHint({ id: 'd1', tenantId: 'ten' }, 'updated', null)).toBeNull();
 		expect(mentionHint({ entityId: 'c1', tenantId: 'ten' } as never, null, null)).toBeNull();
 	});
 
@@ -48,12 +51,14 @@ describe('realtime hints', () => {
 		expect(mention?.hint.parent).toEqual({ entity: 'Task', entityId: 't1' });
 
 		const notification = notificationHint(
-			{ entity: 'Task', entityId: 't1', type: 1, receiverEmployeeId: 'e2', tenantId: 'ten', organizationId: 'org' } as never,
+			{ id: 'n1', entity: 'Task', entityId: 't1', type: 'Assignment', receiverEmployeeId: 'e2', tenantId: 'ten', organizationId: 'org' } as never,
 			'u2',
 			'u1'
 		);
 		expect(notification?.name).toBe('employee_notification.created');
+		expect(notification?.aggregateId).toBe('n1');
 		expect(notification?.hint.recipientUserIds).toEqual(['u2']);
+		expect(notificationHint({ entity: 'Task', entityId: 't1', tenantId: 'ten' } as never, 'u2', null)).toBeNull();
 	});
 
 	it('maps every document fact to document.updated with the action inside', () => {

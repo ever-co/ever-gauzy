@@ -20,8 +20,8 @@ Nothing new is invented for transport:
   every employee may open with `REALTIME_SUBSCRIBE` (the kernel's `Subscription.events` stays reserved for
   `EVENT_OUTBOX_VIEW` holders).
 - **Signals** (`presence.changed`, `typing.signalled`) are published straight to the pub/sub, never stored.
-- **Catch-up** after a reconnect is `GET /api/realtime/events?after=<epoch ms>`: the same outbox rows,
-  scoped to the caller.
+- **Catch-up** after a reconnect is `GET /api/realtime/events?after=<epoch ms>&afterId=<eventId>`: the same
+  outbox rows, scoped to the caller, walked by an exact (time, id) cursor.
 
 Multi-replica deployments set `GRAPHQL_PUBSUB_ENGINE` (a Redis-backed engine) so a subscriber on one API
 replica sees the events of another; a single instance uses the in-process engine.
@@ -38,14 +38,16 @@ replica sees the events of another; a single instance uses the in-process engine
 | `presence.changed` | no | organization | `{ employeeId, userId, status, at }` |
 | `typing.signalled` | no | the named users | `{ conversationId, threadRootId, employeeId, userId, at }` |
 
-Repeated `*.updated` hints of one aggregate within one second are folded into one.
+Repeated `*.updated` hints of one aggregate within one second are folded: the first is appended at once, the
+latest of the rest when the second closes. A fact without its organization (a partial save result) produces no
+organization-wide hint.
 
 ## Routes (all need `REALTIME_SUBSCRIBE`)
 
 | Route | What |
 | --- | --- |
 | `GET /api/realtime/status` | whether this process serves subscriptions; the selectable names |
-| `GET /api/realtime/events?after=&limit=` | catch-up: events since `after` (epoch ms), oldest first, `cursor` to continue from, `resync: true` when `after` is older than what is retained |
+| `GET /api/realtime/events?after=&afterId=&limit=` | catch-up: the events after the cursor (`after` = epoch ms of the newest applied event, `afterId` = its `eventId`), oldest first; answers `cursor` + `cursorId` to continue from, `hasMore` when a page is full, and `resync: true` when the cursor predates the oldest row the caller's scope retains (or nothing is retained): then refetch through the read APIs |
 | `POST /api/realtime/presence { status }` | `active` / `idle` / `away` / `offline`; persisted on the employee, published to the organization |
 | `POST /api/realtime/typing { conversationId, threadRootId?, recipientUserIds }` | ephemeral, at most 50 recipients, rate-limited |
 
@@ -65,9 +67,10 @@ subscription {
 ```
 
 Over `graphql-ws`, with the user's JWT in the `connection_init` payload (`authorization: Bearer …`,
-`tenant-id`, `organization-id`), exactly as for every platform subscription. On reconnect call
-`GET /api/realtime/events?after=<last occurredAt in ms>` and apply the answer by `eventId`; on
-`resync: true` refetch through the read APIs.
+`tenant-id`, `organization-id`), exactly as for every platform subscription. Remember the `occurredAt` (as epoch
+ms) and `eventId` of the newest event applied; on reconnect call `GET /api/realtime/events?after=&afterId=`,
+apply the answer by `eventId`, repeat while `hasMore`, and on `resync: true` refetch through the read APIs.
+A client with no cursor yet starts from the answer's `cursor` (now).
 
 ## Enabling
 

@@ -5,7 +5,7 @@ import { DataSource } from 'typeorm';
 import {
 	BaseEntityEnum,
 	ID,
-	IEmployeeNotificationCreateInput,
+	IEmployeeNotification,
 	IMentionCreateInput,
 	IRealtimeChangeHint,
 	REALTIME_EVENT_NAMES,
@@ -40,7 +40,9 @@ export function taskHint(
 	action: RealtimeChangeAction,
 	actorUserId: ID | null
 ): IRealtimeHintInput | null {
-	if (!task?.id || !task.tenantId) return null;
+	// An organization-wide hint needs its organization: a partial save result without one would otherwise be
+	// filed tenant-wide and reach every organization of the tenant.
+	if (!task?.id || !task.tenantId || !task.organizationId) return null;
 	return {
 		name: `task.${action}`,
 		aggregateType: REALTIME_AGGREGATES.TASK,
@@ -61,7 +63,7 @@ export function taskHint(
 /** The hint a comment event becomes: addressed to nobody, it names the record whose comments changed. */
 export function commentHint(event: Pick<CommentEvent, 'type' | 'comment' | 'actorUserId'>): IRealtimeHintInput | null {
 	const comment = event.comment;
-	if (!comment?.id || !comment.tenantId) return null;
+	if (!comment?.id || !comment.tenantId || !comment.organizationId) return null;
 	return {
 		name: `comment.${event.type}`,
 		aggregateType: REALTIME_AGGREGATES.COMMENT,
@@ -105,26 +107,27 @@ export function mentionHint(input: IMentionCreateInput, recipientUserId: ID | nu
 	};
 }
 
-/** The hint a new employee notification becomes: addressed to the receiver's user. */
+/** The hint a saved employee notification becomes: addressed to the receiver's user, named by the row's id. */
 export function notificationHint(
-	input: IEmployeeNotificationCreateInput,
+	notification: IEmployeeNotification,
 	recipientUserId: ID | null,
 	actorUserId: ID | null
 ): IRealtimeHintInput | null {
-	if (!input?.entityId || !input.tenantId || !recipientUserId) return null;
+	if (!notification?.id || !notification.tenantId || !recipientUserId) return null;
 	return {
 		name: REALTIME_EVENT_NAMES.EMPLOYEE_NOTIFICATION_CREATED,
 		aggregateType: REALTIME_AGGREGATES.EMPLOYEE_NOTIFICATION,
-		aggregateId: input.entityId,
-		tenantId: input.tenantId,
-		organizationId: input.organizationId ?? null,
+		aggregateId: notification.id,
+		tenantId: notification.tenantId,
+		organizationId: notification.organizationId ?? null,
 		hint: {
-			entity: String(input.entity),
-			entityId: input.entityId,
+			entity: String(notification.entity),
+			entityId: notification.entityId,
 			action: 'created',
-			organizationId: input.organizationId ?? null,
-			type: input.type ?? null,
-			receiverEmployeeId: input.receiverEmployeeId ?? null,
+			organizationId: notification.organizationId ?? null,
+			notificationId: notification.id,
+			type: notification.type ?? null,
+			receiverEmployeeId: notification.receiverEmployeeId ?? null,
 			actorUserId,
 			recipientUserIds: [recipientUserId]
 		}
@@ -137,7 +140,7 @@ export function documentHint(
 	action: RealtimeChangeAction,
 	actorUserId: ID | null
 ): IRealtimeHintInput | null {
-	if (!document?.id || !document.tenantId) return null;
+	if (!document?.id || !document.tenantId || !document.organizationId) return null;
 	return {
 		name: REALTIME_EVENT_NAMES.DOCUMENT_UPDATED,
 		aggregateType: REALTIME_AGGREGATES.DOCUMENT,
@@ -163,10 +166,12 @@ export function coalesceKey(input: Pick<IRealtimeHintInput, 'name' | 'aggregateI
  * Turns the platform's in-process facts into durable, content-free change hints on the event outbox.
  *
  * It listens where the domains already publish — `TaskEvent` and `DocumentEvent` on the RxJS bus, `CommentEvent`,
- * `CreateMentionEvent` and `EmployeeCreateNotificationEvent` on the CQRS bus (through the handlers in
+ * `CreateMentionEvent` and `EmployeeNotificationCreatedEvent` on the CQRS bus (through the handlers in
  * `./handlers`) — and appends one hint per fact **after** the write, the way the Inbox appends
  * `inbox_item.created`: a lost hint costs a subscriber the instant update, never the write. Repeated
- * `*.updated` hints of one aggregate within {@link REALTIME_HINT_COALESCE_MS} are folded into one.
+ * `*.updated` hints of one aggregate within {@link REALTIME_HINT_COALESCE_MS} are folded: the first at once,
+ * the latest of the rest when the window closes. A fact without its organization produces no organization-wide
+ * hint, so a partial save result never reaches the whole tenant.
  *
  * Other plugins file their own hints through {@link appendHint} (the chat plugin, for its messages) so the
  * addressing and scoping rules live in one place.
@@ -176,6 +181,7 @@ export class RealtimeHintsService implements OnModuleInit, OnModuleDestroy {
 	private readonly logger = new Logger('RealtimeHintsService');
 	private readonly subscriptions: Subscription[] = [];
 	private readonly recent = new Map<string, number>();
+	private readonly trailing = new Map<string, { input: IRealtimeHintInput; timer: NodeJS.Timeout }>();
 	private readonly userOfEmployee = new Map<string, { userId: ID | null; at: number }>();
 
 	constructor(
@@ -195,6 +201,10 @@ export class RealtimeHintsService implements OnModuleInit, OnModuleDestroy {
 	onModuleDestroy(): void {
 		for (const subscription of this.subscriptions.splice(0)) {
 			subscription.unsubscribe();
+		}
+		for (const [key, pending] of this.trailing) {
+			clearTimeout(pending.timer);
+			this.trailing.delete(key);
 		}
 	}
 
@@ -219,17 +229,21 @@ export class RealtimeHintsService implements OnModuleInit, OnModuleDestroy {
 		await this.appendHint(mentionHint(input, recipient, this.actor()));
 	}
 
-	/** A notification is being created for an employee. */
-	async onNotification(input: IEmployeeNotificationCreateInput): Promise<void> {
-		const recipient = await this.userIdOfEmployee(input?.receiverEmployeeId, input?.tenantId);
-		await this.appendHint(notificationHint(input, recipient, this.actor()));
+	/** A notification row exists for an employee (a request the receiver switched off never gets here). */
+	async onNotification(notification: IEmployeeNotification): Promise<void> {
+		const recipient = await this.userIdOfEmployee(notification?.receiverEmployeeId, notification?.tenantId);
+		await this.appendHint(notificationHint(notification, recipient, this.actor()));
 	}
 
 	/**
 	 * Appends one hint to the outbox. Never throws: a hint that cannot be filed is logged.
 	 *
+	 * Repeated `updated` hints of one aggregate inside the coalescing window are folded: the first is appended at
+	 * once and the latest of the rest is appended when the window closes (trailing edge), so a burst of edits costs
+	 * two rows and a subscriber that refetched on the first still learns of the last.
+	 *
 	 * @param input The hint, or `null` for a fact that produces none.
-	 * @returns True when a row was appended.
+	 * @returns True when a row was appended now.
 	 */
 	async appendHint(input: IRealtimeHintInput | null): Promise<boolean> {
 		if (!input) {
@@ -238,8 +252,13 @@ export class RealtimeHintsService implements OnModuleInit, OnModuleDestroy {
 		if (input.hint.action === 'updated' && this.coalesced(input)) {
 			return false;
 		}
+		return this.appendNow(input);
+	}
+
+	private async appendNow(input: IRealtimeHintInput): Promise<boolean> {
 		const outbox = this.find(EventOutboxService);
 		if (!outbox) {
+			this.recent.delete(coalesceKey(input));
 			return false;
 		}
 		try {
@@ -253,17 +272,36 @@ export class RealtimeHintsService implements OnModuleInit, OnModuleDestroy {
 			});
 			return true;
 		} catch (error) {
+			this.recent.delete(coalesceKey(input));
 			this.logger.warn(`${input.name} was not appended for ${input.aggregateId}: ${(error as Error)?.message}`);
 			return false;
 		}
 	}
 
-	/** Whether an identical hint was appended within the coalescing window (and records this one). */
+	/**
+	 * Whether an identical hint was appended within the coalescing window. When it was, the latest input is kept
+	 * and appended once the window closes, so the final state is never left unannounced.
+	 */
 	private coalesced(input: IRealtimeHintInput): boolean {
 		const now = Date.now();
 		const key = coalesceKey(input);
 		const last = this.recent.get(key);
 		if (last !== undefined && now - last < REALTIME_HINT_COALESCE_MS) {
+			const pending = this.trailing.get(key);
+			if (pending) {
+				pending.input = input;
+			} else {
+				const timer = setTimeout(() => {
+					const latest = this.trailing.get(key);
+					this.trailing.delete(key);
+					if (latest) {
+						this.recent.set(key, Date.now());
+						void this.appendNow(latest.input);
+					}
+				}, Math.max(1, REALTIME_HINT_COALESCE_MS - (now - last)));
+				timer.unref?.();
+				this.trailing.set(key, { input, timer });
+			}
 			return true;
 		}
 		this.recent.set(key, now);

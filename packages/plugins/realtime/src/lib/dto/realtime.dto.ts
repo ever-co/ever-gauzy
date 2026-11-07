@@ -1,6 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { ArrayMaxSize, ArrayMinSize, IsArray, IsEnum, IsInt, IsOptional, IsUUID, Max, Min } from 'class-validator';
+import { ArrayMaxSize, ArrayMinSize, IsArray, IsEnum, IsInt, IsOptional, IsString, IsUUID, Max, MaxLength, Min } from 'class-validator';
 import {
 	ID,
 	IRealtimeCatchUpQuery,
@@ -45,6 +45,12 @@ export class RealtimeCatchUpQueryDTO implements IRealtimeCatchUpQuery {
 	@IsInt()
 	@Min(0)
 	after?: number;
+
+	@ApiPropertyOptional({ type: () => String, description: 'The eventId of the newest event already applied (the previous answer\'s cursorId).' })
+	@IsOptional()
+	@IsString()
+	@MaxLength(64)
+	afterId?: string;
 
 	@ApiPropertyOptional({ type: () => Number, minimum: 1, maximum: REALTIME_CATCH_UP_MAX })
 	@IsOptional()
