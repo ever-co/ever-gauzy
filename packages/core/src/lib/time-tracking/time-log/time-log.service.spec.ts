@@ -21,7 +21,7 @@ import {
 	executedFilters,
 	mockRequestContext,
 	nextMacrotask,
-	RecordingQueryBuilder
+	RecordingQueryBuilder, slotFiguresQueryBuilder
 } from '../testing/recording-query-builder';
 import { TypeOrmEmployeeRepository } from '../../employee/repository/type-orm-employee.repository';
 import { TypeOrmTimeLogRepository } from './repository/type-orm-time-log.repository';
@@ -133,6 +133,16 @@ describe('TimeLogService', () => {
 	});
 
 	describe('report queries', () => {
+		// Every report loads its logs' slot figures through the entity manager's query builder (`loadTimeSlotFigures`)
+		beforeEach(() => {
+			Object.assign(service.typeOrmTimeLogRepository, {
+				manager: {
+					findOne: jest.fn().mockResolvedValue(null),
+					createQueryBuilder: () => slotFiguresQueryBuilder(() => builder.rows)
+				}
+			});
+		});
+
 		const request: IGetTimeLogReportInput = {
 			organizationId: ORGANIZATION_ID,
 			employeeIds: [TARGET_EMPLOYEE_ID],
@@ -402,7 +412,9 @@ describe('TimeLogService', () => {
 			/** Hands the TypeORM repository an entity manager, for the organization currency lookup. */
 			const organizationLookup = (organization: { currency?: string | null } | null) => {
 				const findOne = jest.fn().mockResolvedValue(organization);
-				Object.assign(service.typeOrmTimeLogRepository, { manager: { findOne } });
+				Object.assign(service.typeOrmTimeLogRepository, {
+					manager: { findOne, createQueryBuilder: () => slotFiguresQueryBuilder(() => builder.rows) }
+				});
 				return findOne;
 			};
 
@@ -556,7 +568,9 @@ describe('TimeLogService', () => {
 			/** Hands the TypeORM repository an entity manager, for the organization currency lookup. */
 			const organizationLookup = (organization: { currency?: string | null } | null) => {
 				const findOne = jest.fn().mockResolvedValue(organization);
-				Object.assign(service.typeOrmTimeLogRepository, { manager: { findOne } });
+				Object.assign(service.typeOrmTimeLogRepository, {
+					manager: { findOne, createQueryBuilder: () => slotFiguresQueryBuilder(() => builder.rows) }
+				});
 				return findOne;
 			};
 
