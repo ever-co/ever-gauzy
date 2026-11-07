@@ -73,7 +73,7 @@ describe('LinearImportSweepService', () => {
 		expect(find).toHaveBeenCalledTimes(1);
 		const query = find.mock.calls[0][0] as { where: Array<Record<string, FindOperator<unknown>>>; order: unknown; take?: number };
 		expect(query.take).toBeUndefined();
-		expect(query.order).toEqual({ lastImportedAt: 'ASC' });
+		expect(query.order).toBeUndefined();
 		expect(query.where).toHaveLength(2);
 		for (const branch of query.where) {
 			expect(branch['syncEnabled']).toBe(true);
@@ -117,12 +117,15 @@ describe('LinearImportSweepService', () => {
 		expect(importMapping.mock.calls[0][1].id).toBe('fine');
 	});
 
-	it('imports at most one batch per sweep, the longest waiting first', async () => {
+	it('imports at most one batch per sweep, the longest waiting first — a mapping never imported before any other, whatever the database listed first', async () => {
 		const { service, list, importMapping } = sweep();
-		list(Array.from({ length: LINEAR_IMPORT_SWEEP_BATCH + 5 }, (_, index) => mappingOf(`m-${index}`)));
+		const imported = Array.from({ length: LINEAR_IMPORT_SWEEP_BATCH + 5 }, (_, index) => ({ ...mappingOf(`m-${index}`), lastImportedAt: new Date(now.getTime() - (index + 1) * 3_600_000) }));
+		// Listed last, as PostgreSQL lists a null on an ascending order.
+		list([...imported, { ...mappingOf('never'), lastImportedAt: null }]);
 
 		expect(await service.run(now)).toMatchObject({ due: LINEAR_IMPORT_SWEEP_BATCH, imported: LINEAR_IMPORT_SWEEP_BATCH });
-		expect(importMapping.mock.calls[0][1].id).toBe('m-0');
+		expect(importMapping.mock.calls[0][1].id).toBe('never');
+		expect(importMapping.mock.calls[1][1].id).toBe(`m-${LINEAR_IMPORT_SWEEP_BATCH + 4}`);
 	});
 
 	it('leaves alone a mapping whose import is running, and one switched off, turned outbound or removed since it was listed', async () => {
