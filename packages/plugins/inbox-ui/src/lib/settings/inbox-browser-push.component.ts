@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, inject, OnInit, signal } from '@angular/core';
-import { NbToggleModule } from '@nebular/theme';
+import { NbButtonModule, NbToggleModule } from '@nebular/theme';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { ToastrService } from '@gauzy/ui-core/core';
 import { InboxWebPushService, InboxWebPushState } from '../services/inbox-web-push.service';
@@ -7,12 +7,13 @@ import { InboxWebPushService, InboxWebPushState } from '../services/inbox-web-pu
 /**
  * Settings -> Notifications -> Browser notifications: the inbox's web push on this device. Shown where the platform
  * has web push on; the switch subscribes this browser (asking for permission) or removes it. A blocked or
- * unsupported browser says so, with the switch held.
+ * unsupported browser says so, with the switch held. A subscription the platform did not confirm (`sync-failed`) says
+ * so too, with the switch on (switching off removes it) and a retry.
  */
 @Component({
 	selector: 'ngx-inbox-browser-push',
 	changeDetection: ChangeDetectionStrategy.OnPush,
-	imports: [NbToggleModule, TranslatePipe],
+	imports: [NbButtonModule, NbToggleModule, TranslatePipe],
 	// The settings page's row layout, for this section's own rows.
 	styles: [
 		`
@@ -61,10 +62,15 @@ import { InboxWebPushService, InboxWebPushState } from '../services/inbox-web-pu
 						<span class="hint" data-test="browser-push-state">{{ 'INBOX.NOTIFICATION_SETTINGS.PUSH_STATE.' + state() | translate }}</span>
 					</div>
 					<div class="controls">
+						@if (state() === 'sync-failed') {
+							<button nbButton size="small" type="button" data-test="browser-push-retry" [disabled]="busy()" (click)="retry()">
+								{{ 'INBOX.RETRY' | translate }}
+							</button>
+						}
 						<nb-toggle
 							data-test="browser-push-switch"
-							[checked]="state() === 'on'"
-							[disabled]="busy() || (state() !== 'on' && state() !== 'off')"
+							[checked]="state() === 'on' || state() === 'sync-failed'"
+							[disabled]="busy() || (state() !== 'on' && state() !== 'off' && state() !== 'sync-failed')"
 							[attr.aria-label]="'INBOX.NOTIFICATION_SETTINGS.PUSH_LABEL' | translate"
 							(checkedChange)="toggle($event)"
 						></nb-toggle>
@@ -94,6 +100,20 @@ export class InboxBrowserPushComponent implements OnInit {
 		} catch {
 			this.toastr.danger(this.translate.instant('INBOX.NOTIFICATION_SETTINGS.PUSH_FAILED'));
 			this.state.set(await this.push.state().catch(() => 'off' as const));
+		} finally {
+			this.busy.set(false);
+		}
+	}
+
+	/** `sync-failed`: asks the platform again (the state registers a subscribed browser again); a new failure is told. */
+	async retry(): Promise<void> {
+		this.busy.set(true);
+		try {
+			const state = await this.push.state();
+			this.state.set(state);
+			if (state === 'sync-failed') this.toastr.danger(this.translate.instant('INBOX.NOTIFICATION_SETTINGS.PUSH_RETRY_FAILED'));
+		} catch {
+			this.toastr.danger(this.translate.instant('INBOX.NOTIFICATION_SETTINGS.PUSH_RETRY_FAILED'));
 		} finally {
 			this.busy.set(false);
 		}
