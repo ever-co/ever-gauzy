@@ -110,8 +110,8 @@ async function createTable(queryRunner: QueryRunner, table: string, columns: (d:
  * only where `TRELLO_ENABLED=true` loads the plugin. Idempotent on every dialect, serialised on Postgres with an
  * advisory lock, and reversible.
  */
-export class CreateIntegrationTrelloTables1791000005100 implements MigrationInterface {
-	name = 'CreateIntegrationTrelloTables1791000005100';
+export class CreateIntegrationTrelloTables1791000005150 implements MigrationInterface {
+	name = 'CreateIntegrationTrelloTables1791000005150';
 
 	public async up(queryRunner: QueryRunner): Promise<void> {
 		await lockMigrations(queryRunner);

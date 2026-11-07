@@ -78,7 +78,7 @@ Off by default. The plugin is loaded only when `TRELLO_ENABLED=true` (exactly); 
 ## Tables
 
 `integration_trello_board_mapping` and `integration_trello_sync_run`, created by the plugin's own migration
-(`1791000005100`), idempotent on PostgreSQL, MySQL and SQLite.
+(`1791000005150`), idempotent on PostgreSQL, MySQL and SQLite.
 
 ## Build
 
