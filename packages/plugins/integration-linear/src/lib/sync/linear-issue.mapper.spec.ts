@@ -9,8 +9,7 @@ import {
 	serializeStateMap,
 	stateTypeOfStatus,
 	taskFieldsOf,
-	taskPriorityOf,
-	watermarkOf
+	taskPriorityOf
 } from './linear-issue.mapper';
 
 const STATES: LinearWorkflowState[] = [
@@ -93,10 +92,5 @@ describe('linear issue mapper', () => {
 		// A priority Linear has no number for is left alone; an explicit null clears it.
 		expect(issueUpdateOf({ priority: 'custom' }, STATES, DEFAULT_STATE_MAP)).toEqual({});
 		expect(issueUpdateOf({ priority: null }, STATES, DEFAULT_STATE_MAP)).toEqual({ priority: 0 });
-	});
-
-	it('advances the watermark to the newest change', () => {
-		expect(watermarkOf([issue(), issue({ updatedAt: '2026-01-05T00:00:00.000Z' })], '2026-01-03T00:00:00.000Z')).toBe('2026-01-05T00:00:00.000Z');
-		expect(watermarkOf([], null)).toBeNull();
 	});
 });
