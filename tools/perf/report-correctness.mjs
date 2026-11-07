@@ -65,10 +65,16 @@ function diff(a, b, path = '$', out = []) {
 if (mode === 'diff') {
 	const dirA = join(here, 'correctness', labelA);
 	const dirB = join(here, 'correctness', labelB);
-	const files = readdirSync(dirA).filter((f) => f.endsWith('.json') && f !== '_meta.json');
+	const isCase = (f) => f.endsWith('.json') && f !== '_meta.json';
+	const files = readdirSync(dirA).filter(isCase);
 	let same = 0;
 	let different = 0;
 	let missing = 0;
+	// A case only one capture holds (an interrupted capture, an ONLY= subset) counts as missing in either direction
+	for (const f of readdirSync(dirB).filter((f) => isCase(f) && !existsSync(join(dirA, f)))) {
+		missing++;
+		console.log(`MISSING in ${labelA}: ${f}`);
+	}
 	for (const f of files) {
 		const pb = join(dirB, f);
 		if (!existsSync(pb)) {

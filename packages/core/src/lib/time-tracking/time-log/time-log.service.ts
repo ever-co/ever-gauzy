@@ -1615,12 +1615,8 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 	 * @param logs - The logs of a report, as read with their other relations.
 	 */
 	private async loadTimeSlotFigures(logs: ITimeLog[]): Promise<void> {
-		const byId = new Map<ID, ITimeLog>();
-		for (const log of logs) {
-			log.timeSlots = [];
-			byId.set(log.id, log);
-		}
-		const ids = [...byId.keys()];
+		const figures = new Map<ID, ITimeSlot[]>();
+		const ids = [...new Set(logs.map((log) => log.id))];
 		for (let offset = 0; offset < ids.length; offset += TimeLogService.SLOT_FIGURES_CHUNK) {
 			const timeLogIds = ids.slice(offset, offset + TimeLogService.SLOT_FIGURES_CHUNK);
 			const rows = await this.typeOrmRepository.manager
@@ -1640,8 +1636,13 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 				// `percentage` as `TimeSlotSubscriber.afterEntityLoad` set it on the joined slots (the weekly report
 				// answers each log's slots): the slot's activity share, rounded as there, 0 for an empty duration.
 				const percentage = duration === 0 ? 0 : parseFloat(Math.round((overall * 100) / duration).toFixed(2));
-				byId.get(timeLogId)?.timeSlots.push({ id, overall, duration, percentage } as ITimeSlot);
+				if (!figures.has(timeLogId)) figures.set(timeLogId, []);
+				figures.get(timeLogId).push({ id, overall, duration, percentage } as ITimeSlot);
 			}
+		}
+		// Assigned once every row is read: a log without slots keeps an empty list
+		for (const log of logs) {
+			log.timeSlots = figures.get(log.id) ?? [];
 		}
 	}
 
