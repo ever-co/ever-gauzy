@@ -60,6 +60,10 @@ for the `Issues` resource.
   (the title, the address that opens it), reusing a link a person already added with the same address. Both are
   kept once (the id map, entities `Comment` and `Attachment`). The webhook also takes a comment or attachment
   created or updated, as the issue it belongs to, which is read again.
+- **A refused token.** When Linear refuses the connection's token (a 401), the connection is marked — the page asks for
+  a reconnect, the lookups answer `LINEAR_TOKEN_REFUSED`, the scheduled import leaves its mappings alone — and, with the
+  Inbox plugin loaded, the person who connected gets a high-priority Inbox notice (one per connection; resolved when a
+  renewed token works or someone connects again).
 - **Scheduled import.** Every five minutes the worker process (`apps/worker`, the one whose scheduler root is
   enabled) sweeps the mappings that bring issues in: one whose last import is older than
   `LINEAR_IMPORT_INTERVAL_MINUTES` (or that was never imported) is imported again, the changes since its position,
