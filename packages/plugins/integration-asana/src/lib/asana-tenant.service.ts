@@ -1,8 +1,9 @@
-import { BadRequestException, Inject, Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable, InternalServerErrorException, Logger, NotFoundException, Optional } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
-import { ID, IIntegrationSetting, IIntegrationTenant, IntegrationEntity } from '@gauzy/contracts';
+import { ID, IInboxItemWriter, IIntegrationSetting, IIntegrationTenant, INBOX_ITEM_WRITER, IntegrationEntity } from '@gauzy/contracts';
 import { Integration, IntegrationSettingService, IntegrationTenantService, IntegrationTenantUpdateOrCreateCommand, RequestContext } from '@gauzy/core';
 import { AsanaApiClient, AsanaOAuthToken, refreshAsanaToken } from './client/asana-api.client';
+import { attentionItemOf } from './asana-attention';
 import { AsanaConfig } from './asana-config';
 import { ASANA_CONFIG, ASANA_INTEGRATION_NAME, ASANA_NOT_CONNECTED, ASANA_OAUTH_TOKEN_URL, ASANA_TOKEN_REFRESH_AHEAD_MS, AsanaSettingName } from './asana.constants';
 
@@ -39,7 +40,9 @@ export class AsanaTenantService {
 		private readonly commandBus: CommandBus,
 		private readonly integrationTenantService: IntegrationTenantService,
 		private readonly integrationSettingService: IntegrationSettingService,
-		@Inject(ASANA_CONFIG) private readonly config: AsanaConfig
+		@Inject(ASANA_CONFIG) private readonly config: AsanaConfig,
+		/** The Inbox, when its plugin is loaded: the person who connected hears there of a refused token. */
+		@Optional() @Inject(INBOX_ITEM_WRITER) private readonly inbox?: IInboxItemWriter | null
 	) {}
 
 	/** The connection of an organization in the current tenant, with its settings, or null. */
@@ -73,7 +76,11 @@ export class AsanaTenantService {
 	async findAnyById(integrationId: ID): Promise<IIntegrationTenant | null> {
 		return this.integrationTenantService['typeOrmRepository']
 			.findOne({ where: { id: integrationId, name: ASANA_INTEGRATION_NAME, isActive: true, isArchived: false } as never, relations: { settings: true } as never })
-			.catch(() => null) as Promise<IIntegrationTenant | null>;
+			.catch((error: unknown) => {
+				// A connection the store could not read is not a missing one, but the caller can do no more with it either.
+				this.logger.warn(`Connection ${integrationId} could not be read: ${error instanceof Error ? error.message : String(error)}`);
+				return null;
+			}) as Promise<IIntegrationTenant | null>;
 	}
 
 	settingsOf(tenant: IIntegrationTenant): AsanaSettings {
@@ -156,6 +163,10 @@ export class AsanaTenantService {
 		user: { gid: string; name: string; email: string | null }
 	): Promise<IIntegrationTenant> {
 		const { tenantId, organizationId } = scope;
+		// The connection this one replaces, if any: a refusal it carried is over once the new token is stored.
+		const replaced = await this.forOrganization(organizationId, tenantId);
+		const wasRefused = !!(replaced && this.settingsOf(replaced)[AsanaSettingName.ATTENTION_REASON]);
+		const previousUserId = (replaced && this.settingsOf(replaced)[AsanaSettingName.CONNECTED_BY_USER_ID]) || null;
 		const integration = await this.integrationTenantService['typeOrmRepository'].manager.findOne(Integration, { where: { name: ASANA_INTEGRATION_NAME } });
 		if (!integration) {
 			throw new NotFoundException({ message: 'The Asana integration is not in the catalogue', code: ASANA_NOT_CONNECTED });
@@ -184,15 +195,95 @@ export class AsanaTenantService {
 		if (!stored || this.settingsOf(stored)[AsanaSettingName.ACCESS_TOKEN] !== token.accessToken) {
 			throw new InternalServerErrorException({ message: 'The Asana connection could not be stored; connect again', code: ASANA_NOT_CONNECTED });
 		}
+		// The notice went to whoever connected before: they hear of the resolution too, whoever reconnected.
+		if (wasRefused) await this.fileAttention(stored, null, previousUserId ? [previousUserId as ID] : []);
 		return stored;
 	}
 
-	/** Records why the connection needs a person (a refused token), or clears it. */
-	async setAttention(tenant: IIntegrationTenant, reason: string | null): Promise<void> {
+	/**
+	 * Records why the connection needs a person (a refused token), or clears it — and tells the person who connected
+	 * in their Inbox, once per refusal (the item is keyed by the connection) and once more when it works again.
+	 */
+	async setAttention(tenant: IIntegrationTenant, reason: string | null, refusedToken?: string | null): Promise<void> {
+		// A refusal names the token it was for: when the row holds another one by now (reconnected meanwhile), the
+		// refusal is stale and the connection is left alone; a real refusal of the new token marks it on its next use.
+		if (reason && refusedToken) {
+			const current = await this.findAnyById(tenant.id as ID);
+			const stored = current ? this.settingsOf(current)[AsanaSettingName.ACCESS_TOKEN] : null;
+			if (current && stored && stored !== refusedToken) {
+				this.logger.log(`Connection ${tenant.id}: the refused token is not the stored one any more; not marked.`);
+				return;
+			}
+		}
+		const settings = this.settingsOf(tenant);
+		const before = settings[AsanaSettingName.ATTENTION_REASON] || null;
+		const noticed = !!settings[AsanaSettingName.ATTENTION_NOTICE_AT];
 		try {
 			await this.writeSetting(tenant, AsanaSettingName.ATTENTION_REASON, reason ?? '');
 		} catch (error) {
+			// Not filed either: the Inbox must not say the imports are paused while the sweep still runs them.
 			this.logger.warn(`The attention reason of connection ${tenant.id} could not be written: ${(error as Error).message}`);
+			return;
+		}
+		// Filed when the reason changed — and again when an earlier filing (or resolution) did not get through: the
+		// item is keyed by the connection, so a second filing updates it rather than adding one.
+		const changed = reason ? before !== reason : !!before;
+		const pending = reason ? !noticed : noticed;
+		if (changed || pending) await this.fileAttention(tenant, reason);
+	}
+
+	/**
+	 * Files the notice of a refused connection whose filing did not get through (no `ATTENTION_NOTICE_AT`): the
+	 * scheduled sweep calls it for every refused connection it leaves alone, so the retry is durable — every five
+	 * minutes until the Inbox took it — and does not wait for the next refusal.
+	 */
+	async ensureAttentionFiled(tenant: IIntegrationTenant): Promise<void> {
+		const settings = this.settingsOf(tenant);
+		const reason = settings[AsanaSettingName.ATTENTION_REASON] || null;
+		if (!reason || settings[AsanaSettingName.ATTENTION_NOTICE_AT]) return;
+		await this.fileAttention(tenant, reason, [], false);
+	}
+
+	/** The connections of this integration that wait for a person and whose notice did not get through yet: the sweep files those again. */
+	async findRefusedUnfiled(): Promise<IIntegrationTenant[]> {
+		const rows = (await this.integrationTenantService['typeOrmRepository']
+			.find({ where: { name: ASANA_INTEGRATION_NAME, isActive: true, isArchived: false } as never, relations: { settings: true } as never })
+			.catch((error: unknown) => {
+				this.logger.warn(`The refused connections could not be listed: ${(error as Error)?.message ?? error}`);
+				return [];
+			})) as IIntegrationTenant[];
+		return rows.filter((row) => {
+			const settings = this.settingsOf(row);
+			return !!settings[AsanaSettingName.ATTENTION_REASON] && !settings[AsanaSettingName.ATTENTION_NOTICE_AT];
+		});
+	}
+
+	/**
+	 * Files (or resolves) the Inbox item about the connection and remembers that it got through; nothing without
+	 * the Inbox plugin or a connecting user. A filing that failed is tried again by the next {@link setAttention}
+	 * and by the sweep ({@link ensureAttentionFiled}). The two writes are separate: an item that was taken but whose
+	 * timestamp was not written is logged as such, and a retry re-files it without re-surfacing it.
+	 */
+	private async fileAttention(tenant: IIntegrationTenant, reason: string | null, alsoUserIds: readonly ID[] = [], resurface = true): Promise<void> {
+		if (!this.inbox) return;
+		// The row as it is now: a filing from before a reconnect or a newer refusal is stale and files nothing.
+		const current = await this.findAnyById(tenant.id as ID);
+		if (!current) return;
+		const settings = this.settingsOf(current);
+		if ((settings[AsanaSettingName.ATTENTION_REASON] || null) !== (reason || null)) return;
+		const userId = settings[AsanaSettingName.CONNECTED_BY_USER_ID];
+		const recipients = [...new Set([userId, ...alsoUserIds].filter(Boolean).map(String))] as ID[];
+		if (!recipients.length) return;
+		try {
+			await this.inbox.upsertExternal(attentionItemOf({ id: tenant.id as ID, tenantId: tenant.tenantId as ID, organizationId: tenant.organizationId as ID }, reason, recipients, resurface));
+		} catch (error) {
+			this.logger.warn(`The attention of connection ${tenant.id} could not be filed in the Inbox: ${(error as Error).message}`);
+			return;
+		}
+		try {
+			await this.writeSetting(tenant, AsanaSettingName.ATTENTION_NOTICE_AT, reason ? new Date().toISOString() : '');
+		} catch (error) {
+			this.logger.warn(`The attention of connection ${tenant.id} was filed, but that could not be recorded (it will be filed again, without re-surfacing): ${(error as Error).message}`);
 		}
 	}
 
@@ -207,7 +298,7 @@ export class AsanaTenantService {
 		if (token.refreshToken) await this.writeSetting(tenant, AsanaSettingName.REFRESH_TOKEN, token.refreshToken);
 		await this.writeSetting(tenant, AsanaSettingName.TOKEN_TYPE, token.tokenType);
 		await this.writeSetting(tenant, AsanaSettingName.EXPIRES_AT, this.expiresAtOf(token));
-		await this.writeSetting(tenant, AsanaSettingName.ATTENTION_REASON, '');
+		await this.setAttention(tenant, null);
 	}
 
 	/** Writes one setting row of the connection (updated when it exists, created otherwise) and mirrors it in memory. */

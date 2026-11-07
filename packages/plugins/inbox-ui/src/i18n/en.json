@@ -330,5 +330,42 @@
 		"MESSAGES": "{{ count }} message(s)",
 		"EMPTY": "You have no mailbox yet. An administrator can create one in Settings → Inbox mailboxes.",
 		"MANAGE": "Manage mailboxes"
+	},
+	"NOTIFICATION_SETTINGS": {
+		"MENU": "Notifications",
+		"TITLE": "Notifications",
+		"SUBTITLE": "What reaches you, and how: in your inbox always, by email at once or in a daily digest.",
+		"NO_EMPLOYEE": "Notifications belong to your employee profile in an organization, and this account has none here.",
+		"FORBIDDEN": "These settings are not yours to read.",
+		"LOAD_ERROR": "Your notification settings could not load.",
+		"SAVE_FAILED": "That setting was not saved. Try again.",
+		"KINDS_TITLE": "Kinds",
+		"KINDS_HINT": "Turning a kind off stops new notifications of that kind; the ones already there stay. The select beside a kind is how its email goes out.",
+		"KINDS": {
+			"ASSIGNMENT": { "TITLE": "Assignments", "TEXT": "Someone assigns a task to you." },
+			"MENTION": { "TITLE": "Mentions", "TEXT": "Someone writes @ and your name in a comment." },
+			"COMMENT": { "TITLE": "Comments", "TEXT": "Someone comments on a task you follow." },
+			"INVITATION": { "TITLE": "Invitations", "TEXT": "Someone invites you to a team." },
+			"MESSAGE": { "TITLE": "Messages", "TEXT": "Someone sends you a direct message." },
+			"PAYMENT": { "TITLE": "Payments", "TEXT": "A payment is recorded for you." }
+		},
+		"MODE_LABEL": "Email",
+		"MODE": {
+			"default": "As every kind ({{mode}})",
+			"immediate": "At once",
+			"digest": "In the daily digest",
+			"off": "Never"
+		},
+		"EMAIL_TITLE": "Email",
+		"EMAIL_HINT": "How a kind reaches you by email unless its own select says otherwise.",
+		"DEFAULT_LABEL": "Every kind",
+		"DEFAULT_TEXT": "At once, in the daily digest, or never.",
+		"QUIET_TITLE": "Quiet hours and digest",
+		"QUIET_LABEL": "Quiet hours",
+		"QUIET_TEXT": "No email between these times ({{timeZone}}); it waits until the window ends.",
+		"QUIET_FROM": "From",
+		"QUIET_TO": "Until",
+		"DIGEST_LABEL": "Daily digest",
+		"DIGEST_TEXT": "One email a day, at this hour, with the entries set to the digest."
 	}
 }

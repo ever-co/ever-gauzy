@@ -257,10 +257,13 @@ export class LinearApiClient {
 
 	/** Every team of the workspace the token may see. */
 	async teams(): Promise<LinearTeam[]> {
+		type TeamsPage = { teams: { nodes: LinearTeam[]; pageInfo: LinearPageInfo } };
 		const teams: LinearTeam[] = [];
 		let after: string | null = null;
 		for (;;) {
-			const data = await this.query<{ teams: { nodes: LinearTeam[]; pageInfo: LinearPageInfo } }>(
+			// Annotated: `after` feeds the query and is read back from its answer, which leaves `data` untyped
+			// under `noImplicitAny` (TS7022) otherwise.
+			const data: TeamsPage = await this.query<TeamsPage>(
 				'query($after: String) { teams(first: 100, after: $after) { nodes { id key name } pageInfo { hasNextPage endCursor } } }',
 				{ after }
 			);

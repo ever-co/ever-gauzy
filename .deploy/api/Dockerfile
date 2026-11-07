@@ -87,6 +87,7 @@ COPY --chown=node:node packages/plugins/integration-upwork/package.json ./packag
 COPY --chown=node:node packages/plugins/integration-github/package.json ./packages/plugins/integration-github/
 COPY --chown=node:node packages/plugins/integration-jira/package.json ./packages/plugins/integration-jira/
 COPY --chown=node:node packages/plugins/integration-linear/package.json ./packages/plugins/integration-linear/
+COPY --chown=node:node packages/plugins/integration-asana/package.json ./packages/plugins/integration-asana/
 COPY --chown=node:node packages/plugins/integration-make-com/package.json ./packages/plugins/integration-make-com/
 COPY --chown=node:node packages/plugins/integration-sim/package.json ./packages/plugins/integration-sim/
 COPY --chown=node:node packages/plugins/integration-plane/package.json ./packages/plugins/integration-plane/
@@ -112,8 +113,10 @@ COPY --chown=node:node packages/plugins/product-reviews/package.json ./packages/
 COPY --chown=node:node packages/plugins/videos/package.json ./packages/plugins/videos/
 COPY --chown=node:node packages/plugins/camshot/package.json ./packages/plugins/camshot/
 COPY --chown=node:node packages/plugins/knowledge-base/package.json ./packages/plugins/knowledge-base/
+COPY --chown=node:node packages/plugins/integration-asana/package.json ./packages/plugins/integration-asana/
 COPY --chown=node:node packages/plugins/chat/package.json ./packages/plugins/chat/
 COPY --chown=node:node packages/plugins/integration-linear/package.json ./packages/plugins/integration-linear/
+COPY --chown=node:node packages/plugins/integration-asana/package.json ./packages/plugins/integration-asana/
 COPY --chown=node:node packages/plugins/realtime/package.json ./packages/plugins/realtime/
 COPY --chown=node:node packages/plugins/changelog/package.json ./packages/plugins/changelog/
 COPY --chown=node:node packages/plugins/chat/package.json ./packages/plugins/chat/
@@ -250,6 +253,7 @@ COPY --chown=node:node packages/plugins/integration-upwork/package.json ./packag
 COPY --chown=node:node packages/plugins/integration-github/package.json ./packages/plugins/integration-github/
 COPY --chown=node:node packages/plugins/integration-jira/package.json ./packages/plugins/integration-jira/
 COPY --chown=node:node packages/plugins/integration-linear/package.json ./packages/plugins/integration-linear/
+COPY --chown=node:node packages/plugins/integration-asana/package.json ./packages/plugins/integration-asana/
 COPY --chown=node:node packages/plugins/integration-make-com/package.json ./packages/plugins/integration-make-com/
 COPY --chown=node:node packages/plugins/integration-sim/package.json ./packages/plugins/integration-sim/
 COPY --chown=node:node packages/plugins/integration-plane/package.json ./packages/plugins/integration-plane/
@@ -275,8 +279,10 @@ COPY --chown=node:node packages/plugins/product-reviews/package.json ./packages/
 COPY --chown=node:node packages/plugins/videos/package.json ./packages/plugins/videos/
 COPY --chown=node:node packages/plugins/camshot/package.json ./packages/plugins/camshot/
 COPY --chown=node:node packages/plugins/knowledge-base/package.json ./packages/plugins/knowledge-base/
+COPY --chown=node:node packages/plugins/integration-asana/package.json ./packages/plugins/integration-asana/
 COPY --chown=node:node packages/plugins/chat/package.json ./packages/plugins/chat/
 COPY --chown=node:node packages/plugins/integration-linear/package.json ./packages/plugins/integration-linear/
+COPY --chown=node:node packages/plugins/integration-asana/package.json ./packages/plugins/integration-asana/
 COPY --chown=node:node packages/plugins/realtime/package.json ./packages/plugins/realtime/
 COPY --chown=node:node packages/plugins/changelog/package.json ./packages/plugins/changelog/
 COPY --chown=node:node packages/plugins/chat/package.json ./packages/plugins/chat/
@@ -501,6 +507,7 @@ RUN --mount=type=bind,from=prod-dependencies,source=/srv/gauzy/node_modules,targ
     cp -r /mnt/packages/plugins/integration-hubstaff/node_modules ./node_modules/@gauzy/plugin-integration-hubstaff/ && \
     cp -r /mnt/packages/plugins/integration-jira/node_modules ./node_modules/@gauzy/plugin-integration-jira/ && \
     if [ -d /mnt/packages/plugins/integration-linear/node_modules ]; then cp -r /mnt/packages/plugins/integration-linear/node_modules ./node_modules/@gauzy/plugin-integration-linear/; fi && \
+    if [ -d /mnt/packages/plugins/integration-asana/node_modules ]; then cp -r /mnt/packages/plugins/integration-asana/node_modules ./node_modules/@gauzy/plugin-integration-asana/; fi && \
     cp -r /mnt/packages/plugins/integration-make-com/node_modules ./node_modules/@gauzy/plugin-integration-make-com/ && \
     cp -r /mnt/packages/plugins/integration-sim/node_modules ./node_modules/@gauzy/plugin-integration-sim/ && \
     cp -r /mnt/packages/plugins/integration-plane/node_modules ./node_modules/@gauzy/plugin-integration-plane/ && \

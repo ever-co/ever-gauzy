@@ -145,7 +145,7 @@ export class AsanaMappingService extends TenantAwareCrudService<AsanaProjectMapp
 			if (input.syncEnabled !== undefined) patch.syncEnabled = input.syncEnabled;
 			if (input.asanaProjectName !== undefined) patch.asanaProjectName = input.asanaProjectName;
 			if (!Object.keys(patch).length) return;
-			await this.assertOutboundFree(tenant, patch.projectId ?? mapping.projectId, patch.direction ?? mapping.direction, mapping.id, manager);
+			await this.assertOutboundFree(tenant, patch.projectId ?? mapping.projectId, patch.direction ?? mapping.direction, mapping.id ?? null, manager);
 			await manager.update(AsanaProjectMapping, { id: mapping.id, tenantId: tenant.tenantId as ID }, patch as never);
 		});
 		return this.requireOne(tenant, mappingId);

@@ -33,7 +33,9 @@ export enum AsanaSettingName {
 	/** The Gauzy user who connected: the sync's writes are attributed to them. */
 	CONNECTED_BY_USER_ID = 'connected_by_user_id',
 	/** Why the connection needs attention (a refused token), or empty. */
-	ATTENTION_REASON = 'attention_reason'
+	ATTENTION_REASON = 'attention_reason',
+	/** When the Inbox notice of the attention was filed (empty: none filed, or resolved). */
+	ATTENTION_NOTICE_AT = 'attention_notice_at'
 }
 
 /** The largest webhook body accepted. */
@@ -74,6 +76,7 @@ export const ASANA_NOT_CONFIGURED = 'ASANA_NOT_CONFIGURED';
 export const ASANA_NOT_CONNECTED = 'ASANA_NOT_CONNECTED';
 export const ASANA_TOKEN_REFUSED = 'ASANA_TOKEN_REFUSED';
 export const ASANA_UNAVAILABLE = 'ASANA_UNAVAILABLE';
+export const ASANA_REQUEST_REFUSED = 'ASANA_REQUEST_REFUSED';
 export const ASANA_WEBHOOK_NOT_REMOVED = 'ASANA_WEBHOOK_NOT_REMOVED';
 export const ASANA_STATE_INVALID = 'ASANA_STATE_INVALID';
 export const ASANA_MAPPING_EXISTS = 'ASANA_MAPPING_EXISTS';
