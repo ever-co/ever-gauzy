@@ -57,10 +57,11 @@ export class LinearSyncRun extends TenantOrganizationBaseEntity {
 	@MultiORMColumn({ type: 'boolean', default: false })
 	full!: boolean;
 
-	@MultiORMColumn({ nullable: true })
+	// `Date | null` reflects as `Object` under strictNullChecks (the plugin's lib build), which TypeORM refuses: the type is said.
+	@MultiORMColumn({ type: Date, nullable: true })
 	startedAt?: Date | null;
 
-	@MultiORMColumn({ nullable: true })
+	@MultiORMColumn({ type: Date, nullable: true })
 	finishedAt?: Date | null;
 
 	@MultiORMColumn({ type: 'integer', default: 0 })
