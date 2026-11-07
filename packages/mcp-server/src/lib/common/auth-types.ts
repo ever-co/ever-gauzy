@@ -6,6 +6,7 @@
  * dependency chain in the monorepo.
  */
 
+import { admitsCollaborationOnly } from './collaboration-token';
 import { createHash } from 'node:crypto';
 import { Request, Response } from 'express';
 
@@ -82,6 +83,8 @@ export interface TokenValidationResult {
 	scopes?: string[];
 	subject?: string;
 	clientId?: string;
+	/** The token lacks the server's required scopes but names collaboration scopes: it reaches the collaboration tools only. */
+	collaborationOnly?: boolean;
 }
 
 /**
@@ -210,6 +213,8 @@ export class OAuthValidator {
 		if (result.valid && requiredScopes?.length) {
 			const scopes = result.scopes ?? [];
 			if (!requiredScopes.every((scope) => scopes.includes(scope))) {
+				// A fine-grained grant (`chat:read` alone) is admitted for the collaboration tools, and only for them.
+				if (admitsCollaborationOnly(scopes)) return { ...result, collaborationOnly: true };
 				return { ...result, valid: false, error: 'insufficient_scope' };
 			}
 		}

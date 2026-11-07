@@ -854,7 +854,7 @@ export class HttpTransport {
 					const tools = filterCollaborationTools(
 						await this.getTools(),
 						requestScopes(tokenInfo?.valid ? tokenInfo.scopes : undefined, userContext?.sessionId)
-					);
+					).filter((tool) => !tokenInfo?.collaborationOnly || isCollaborationTool(tool.name));
 					logger.debug(`Tools list: ${JSON.stringify(tools)}`);
 					transport.send({
 						jsonrpc: '2.0',
@@ -875,6 +875,10 @@ export class HttpTransport {
 					let result: unknown;
 					try {
 						// The collaboration tools check the caller's scopes again at the call (not found when not allowed).
+						// A token admitted on collaboration scopes alone reaches no other tool.
+						if (tokenInfo?.collaborationOnly && !isCollaborationTool((params as Record<string, unknown>)?.['name'])) {
+							throw new Error(`Tool '${String((params as Record<string, unknown>)?.['name'] ?? '')}' not found`);
+						}
 						const scopes = requestScopes(tokenInfo?.valid ? tokenInfo.scopes : undefined, userContext?.sessionId);
 						result = await runWithCollaborationScopes(scopes, () => this.callTool(params as Record<string, unknown>, authKey, callerIsLocal));
 					} finally {

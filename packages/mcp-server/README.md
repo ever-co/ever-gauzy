@@ -265,7 +265,9 @@ marked as written with an assistant (`assistedBy`), and where the client support
 before it is posted. Over stdio the server knows the client (its name, its capabilities). Over HTTP and WebSocket it
 does not see the client's initialize handshake: there messages are marked `MCP client` and posted without the approval
 step. A bearer token holds the collaboration scopes it names (`chat:read`, …), else what its `mcp.read` / `mcp.write`
-scopes allow (reads / writes of every enabled group); the authorization server advertises and grants the named scopes. Over HTTP and WebSocket the caller's own scopes — its
+scopes allow (reads / writes of every enabled group); the authorization server advertises and grants the named scopes.
+A token granted named collaboration scopes alone (no `mcp.read`) is admitted too, and reaches the collaboration tools
+only: every other tool is hidden from it and answers "not found". Over HTTP and WebSocket the caller's own scopes — its
 bearer token's, else its session's — decide again what `tools/list` shows and what a call may run (a tool they do not
 allow answers "not found"). Every call runs under the signed-in user's tenant,
 organization and permissions — what is outside their access is "not found", as the routes answer it — and is logged by

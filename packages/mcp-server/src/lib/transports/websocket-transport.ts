@@ -144,6 +144,8 @@ interface WebSocketConnection {
 	bearerToken?: string;
 	/** The scopes the connection's bearer token carried at its last validation (the collaboration tools read them). */
 	tokenScopes?: string[];
+	/** The token was admitted on collaboration scopes alone: the collaboration tools only. */
+	collaborationOnly?: boolean;
 	created: Date;
 	lastSeen: Date;
 	metadata: Record<string, any>;
@@ -406,6 +408,7 @@ export class WebSocketTransport {
 				}
 				connection.bearerToken = bearerToken;
 				connection.tokenScopes = Array.isArray(validation.scopes) ? validation.scopes : [];
+				connection.collaborationOnly = !!validation.collaborationOnly;
 			} else if (!connection.isLocal) {
 				logger.warn(`WebSocket connection rejected: no bearer token from ${clientIP}`);
 				refuse(1008, 'Authorization required');
@@ -513,6 +516,7 @@ export class WebSocketTransport {
 						this.authorizationConfig.requiredScopes
 					);
 					connection.tokenScopes = Array.isArray(validation.scopes) ? validation.scopes : [];
+					connection.collaborationOnly = !!validation.collaborationOnly;
 					if (!validation.valid) {
 						logger.warn(`WebSocket connection ${connection.id} closed: ${validation.error}`);
 						this.sendError(connection, message.id ?? null, -32001, 'Token is no longer valid');
@@ -621,7 +625,9 @@ export class WebSocketTransport {
 
 				case 'tools/list': {
 					// The collaboration tools the connection's session does not allow are not listed (see `requestScopes`).
-					const tools = filterCollaborationTools(await this.getTools(), this.collaborationScopesOf(connection));
+					const tools = filterCollaborationTools(await this.getTools(), this.collaborationScopesOf(connection)).filter(
+						(tool) => !connection.collaborationOnly || isCollaborationTool(tool.name)
+					);
 					logger.debug(`Tools list: ${JSON.stringify(tools)}`);
 					transport.send({
 						jsonrpc: '2.0',
@@ -632,6 +638,10 @@ export class WebSocketTransport {
 				}
 				case 'tools/call': {
 					// The collaboration tools check the session's scopes again at the call (not found when not allowed).
+					// A token admitted on collaboration scopes alone reaches no other tool.
+					if (connection.collaborationOnly && !isCollaborationTool((params as Record<string, unknown>)?.['name'])) {
+						throw new Error(`Tool '${String((params as Record<string, unknown>)?.['name'] ?? '')}' not found`);
+					}
 					const result = await runWithCollaborationScopes(this.collaborationScopesOf(connection), () =>
 						this.callTool(params as Record<string, unknown>, this.resolveAuthKey(connection), connection.isLocal)
 					);
