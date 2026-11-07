@@ -61,7 +61,7 @@ interface ApplyContext extends ClientHolder {
 	/** The comment authors by e-mail, once per run. */
 	authorsByEmail: Map<string, AsanaAuthor | null>;
 	/** What the details import brought in this run (comments, attachments as links): reported, not counted on the run. */
-	details: { comments: number; links: number };
+	details: { comments: number; links: number; failed: number };
 	counts: AsanaSyncCounts;
 }
 
@@ -183,7 +183,7 @@ export class AsanaSyncService {
 		} catch (caught) {
 			error = this.describe(caught);
 			if (caught instanceof AsanaApiError && caught.isUnauthorized) {
-				await this.tenants.setAttention(tenant, 'token_refused');
+				await this.tenants.setAttention(tenant, 'token_refused', this.tenants.settingsOf(tenant)[AsanaSettingName.ACCESS_TOKEN] ?? null);
 			}
 			this.logger.warn(`Import of mapping ${mapping.id} failed: ${error}`);
 		} finally {
@@ -234,7 +234,7 @@ export class AsanaSyncService {
 		} catch (caught) {
 			error = this.describe(caught);
 			if (caught instanceof AsanaApiError && caught.isUnauthorized) {
-				await this.tenants.setAttention(tenant, 'token_refused');
+				await this.tenants.setAttention(tenant, 'token_refused', this.tenants.settingsOf(tenant)[AsanaSettingName.ACCESS_TOKEN] ?? null);
 			}
 			this.logger.warn(`Webhook tasks of mapping ${mapping.id} failed: ${error}`);
 		} finally {
@@ -288,7 +288,7 @@ export class AsanaSyncService {
 			await this.createTaskOnce(holder, mapping, task.id as ID, scope, { ...input, name: input.name, projectGid: mapping.asanaProjectGid, sectionGid: section?.gid ?? null });
 		} catch (caught) {
 			if (caught instanceof AsanaApiError && caught.isUnauthorized) {
-				await this.tenants.setAttention(tenant, 'token_refused');
+				await this.tenants.setAttention(tenant, 'token_refused', this.tenants.settingsOf(tenant)[AsanaSettingName.ACCESS_TOKEN] ?? null);
 			}
 			throw caught;
 		}
@@ -456,7 +456,7 @@ export class AsanaSyncService {
 			applied: new Set(),
 			connectedByUserId: this.connectedByUserId(tenant),
 			authorsByEmail: new Map(),
-			details: { comments: 0, links: 0 },
+			details: { comments: 0, links: 0, failed: 0 },
 			counts
 		};
 	}
@@ -479,8 +479,25 @@ export class AsanaSyncService {
 			context.counts.failed += 1;
 			this.logger.warn(`Asana task ${task.gid} could not be applied: ${this.describe(caught)}`);
 		}
-		// Behind the task itself: its comments and attachments, read apart (two calls), each kept once.
-		if (taskId) await this.taskDetails.apply(this.detailsContextOf(context), task, taskId);
+		// Behind the task itself: its comments and attachments — read apart (two calls, no lock held while Asana answers),
+		// then kept one run at a time per task under the task's own lock: a webhook and an import that meet on one task
+		// would otherwise both find no mapped comment and keep it twice.
+		if (taskId) {
+			const detailsContext = this.detailsContextOf(context);
+			const details = await this.taskDetails.collect(detailsContext, task);
+			const key = `${context.mapping.integrationId}:${task.gid}`;
+			const resolvedTaskId = taskId;
+			try {
+				await this.serialized(`${key}:details`, () =>
+					this.withApplySlot(() => this.lockedTransaction([`integration-asana:task-details:${key}`], () => this.taskDetails.apply(detailsContext, task, details, resolvedTaskId)))
+				);
+			} catch (caught) {
+				// The API's refusal is the run's; a lock that could not be taken, or a store error, is this task's details failing, and the run goes on.
+				if (caught instanceof AsanaApiError) throw caught;
+				context.details.failed += 1;
+				this.logger.warn(`The details of task ${task.gid} could not be kept: ${this.describe(caught)}`);
+			}
+		}
 		if (!(task.num_subtasks && task.num_subtasks > 0) || depth >= ASANA_SUBTASK_MAX_DEPTH || task.resource_subtype === 'section') return;
 		let subtasks: AsanaTask[];
 		try {
@@ -586,10 +603,20 @@ export class AsanaSyncService {
 		};
 	}
 
-	/** One line per run about the details, when there were any (they are not counted on the run). */
+	/**
+	 * One line per run about the details, when there were any; what could not be read or kept counts as a failure
+	 * of the run, so the import position is kept and the next import reads the task again.
+	 */
 	private reportDetails(context: ApplyContext): void {
-		const { comments, links } = context.details;
-		if (comments || links) this.logger.log(`Mapping ${context.mapping.id}: ${comments} comment(s) and ${links} attachment link(s) brought in`);
+		const { comments, links, failed } = context.details;
+		if (failed) {
+			context.counts.failed += failed;
+			// Counted once: a second report on the same context would count them again.
+			context.details.failed = 0;
+		}
+		if (comments || links || failed) {
+			this.logger.log(`Mapping ${context.mapping.id}: ${comments} comment(s) and ${links} attachment link(s) brought in, ${failed} not read or kept`);
+		}
 	}
 
 	/** The task's members for the Asana assignee: by e-mail, nobody when there is none, `undefined` when the lookup failed. */

@@ -48,6 +48,9 @@ interface MappingDraft {
  * mappings (add with a section → status map, change the direction or the switch, register the webhook again,
  * import now, remove), and the latest runs.
  */
+/** A mapping as the list shows it: the stored mapping and how many refused changes its row took (see `restore`). */
+type AsanaMappingRow = AsanaMapping & { rowVersion?: number };
+
 @Component({
 	selector: 'ngx-asana-settings',
 	changeDetection: ChangeDetectionStrategy.OnPush,
@@ -109,7 +112,7 @@ interface MappingDraft {
 									</tr>
 								</thead>
 								<tbody>
-									@for (mapping of mappings; track mapping.id) {
+									@for (mapping of mappings; track rowKey(mapping)) {
 										<tr [attr.data-test]="'mapping-' + mapping.id">
 											<td>
 												<strong>{{ mapping.asanaProjectName || mapping.asanaProjectGid }}</strong>
@@ -148,10 +151,10 @@ interface MappingDraft {
 												}
 											</td>
 											<td class="actions">
-												<button nbButton size="tiny" status="primary" type="button" [disabled]="busy" (click)="importNow(mapping, false)">
+												<button nbButton size="tiny" status="primary" type="button" [disabled]="busy || !canImport(mapping)" (click)="importNow(mapping, false)">
 													{{ 'ASANA.MAPPINGS.IMPORT' | translate }}
 												</button>
-												<button nbButton size="tiny" ghost type="button" [disabled]="busy" (click)="importNow(mapping, true)">
+												<button nbButton size="tiny" ghost type="button" [disabled]="busy || !canImport(mapping)" (click)="importNow(mapping, true)">
 													{{ 'ASANA.MAPPINGS.IMPORT_FULL' | translate }}
 												</button>
 												<button nbButton size="tiny" ghost status="danger" type="button" [disabled]="busy" (click)="remove(mapping)">
@@ -311,7 +314,7 @@ interface MappingDraft {
 				font-size: 0.85rem;
 			}
 			.section-map {
-				border: 1px solid var(--divider-color, #edf1f7);
+				border: 1px solid var(--divider-color);
 				border-radius: var(--border-radius);
 				padding: 8px 16px 16px;
 				margin: 16px 0;
@@ -351,7 +354,7 @@ export class AsanaSettingsComponent implements OnInit {
 	workspaces: AsanaWorkspace[] = [];
 	asanaProjects: AsanaProject[] = [];
 	projects: IOrganizationProject[] = [];
-	mappings: AsanaMapping[] = [];
+	mappings: AsanaMappingRow[] = [];
 	runs: AsanaRun[] = [];
 	draft: MappingDraft = this.emptyDraft();
 	loading = true;
@@ -541,12 +544,12 @@ export class AsanaSettingsComponent implements OnInit {
 	changeDirection(mapping: AsanaMapping, direction: AsanaDirection): void {
 		if (!this.integrationId || direction === mapping.direction) return;
 		// Refused (a project that already sends its tasks elsewhere, for one): the row shows the stored direction again.
-		this.request(this.api.updateMapping(this.integrationId, mapping.id, { direction }), (updated) => this.replace(updated), () => this.replace({ ...mapping }));
+		this.request(this.api.updateMapping(this.integrationId, mapping.id, { direction }), (updated) => this.replace(updated), () => this.restore(mapping));
 	}
 
 	changeSync(mapping: AsanaMapping, syncEnabled: boolean): void {
 		if (!this.integrationId || syncEnabled === mapping.syncEnabled) return;
-		this.request(this.api.updateMapping(this.integrationId, mapping.id, { syncEnabled }), (updated) => this.replace(updated), () => this.replace({ ...mapping }));
+		this.request(this.api.updateMapping(this.integrationId, mapping.id, { syncEnabled }), (updated) => this.replace(updated), () => this.restore(mapping));
 	}
 
 	registerWebhook(mapping: AsanaMapping): void {
@@ -556,6 +559,11 @@ export class AsanaSettingsComponent implements OnInit {
 			// Registered behind the response: the list is read again shortly.
 			setTimeout(() => this.loadMappings(), 3000);
 		});
+	}
+
+	/** Whether the API would import this mapping now: switched on and not outbound (the route's own rule). */
+	canImport(mapping: AsanaMapping): boolean {
+		return !!mapping.syncEnabled && String(mapping.direction) !== 'outbound';
 	}
 
 	importNow(mapping: AsanaMapping, full: boolean): void {
@@ -580,7 +588,7 @@ export class AsanaSettingsComponent implements OnInit {
 		void this.router.navigate([ASANA_LINK]);
 	}
 
-	/** One request with the busy flag and the error line. */
+
 	/** One request at a time: `apply` takes its answer; `revert` puts the page back when it was refused. */
 	private request<T>(request: Observable<T>, apply: (value: T) => void, revert?: () => void): void {
 		this.busy = true;
@@ -601,8 +609,23 @@ export class AsanaSettingsComponent implements OnInit {
 		});
 	}
 
-	private replace(updated: AsanaMapping): void {
-		this.mappings = this.mappings.map((mapping) => (mapping.id === updated.id ? updated : mapping));
+	private replace(updated: AsanaMapping, rowVersion?: number): void {
+		this.mappings = this.mappings.map((mapping) => (mapping.id === updated.id ? { ...updated, rowVersion: rowVersion ?? mapping.rowVersion } : mapping));
+	}
+
+	/** A row's identity for the list: its mapping, and how many refused changes it took (each one re-creates the row); the count is the row's own. */
+	rowKey(mapping: AsanaMappingRow): string {
+		return `${mapping.id}:${mapping.rowVersion ?? 0}`;
+	}
+
+	/**
+	 * Puts a row back as it is stored after a refused change. Replacing the mapping alone is not enough: the bound
+	 * values did not change, so the select and the checkbox keep the choice the person made; the row's key changes
+	 * instead, and the list re-creates the row with the stored values.
+	 */
+	private restore(mapping: AsanaMapping): void {
+		const current = this.mappings.find((row) => row.id === mapping.id);
+		this.replace(mapping, (current?.rowVersion ?? 0) + 1);
 	}
 
 	private showError(error: unknown): void {

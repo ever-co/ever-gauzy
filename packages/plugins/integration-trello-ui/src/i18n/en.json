@@ -1,0 +1,99 @@
+{
+	"TITLE": "Trello",
+	"UNAVAILABLE": "The Trello integration is not loaded on this server (TRELLO_ENABLED is off).",
+	"NOT_CONFIGURED": "The Trello application is not configured on this server (TRELLO_API_KEY and the return page). Nobody can connect until it is.",
+	"ERROR": "Something went wrong.",
+	"RETRY": "Try again",
+	"LOADING": "Loading…",
+	"COMMON": {
+		"SAVE": "Save",
+		"CANCEL": "Cancel",
+		"REMOVE": "Remove",
+		"REFRESH": "Refresh",
+		"BACK": "Back",
+		"YES": "Yes",
+		"NO": "No",
+		"NEVER": "Never"
+	},
+	"CONNECT": {
+		"TITLE": "Connect your Trello account",
+		"TEXT": "You will allow this platform in Trello and come back here. Then map Trello boards to projects, import their cards as tasks, and keep them in sync.",
+		"BUTTON": "Connect Trello",
+		"STARTING": "Opening Trello…",
+		"FINISHING": "Finishing the connection with Trello…"
+	},
+	"CONNECTED": {
+		"TITLE": "Trello is connected",
+		"MEMBER": "Member",
+		"CONNECTED_ON": "Connected on",
+		"OPEN_SETTINGS": "Open the settings",
+		"ATTENTION": "This connection needs attention: {{ reason }}",
+		"REASONS": {
+			"token_refused": "Trello refused the token (it may have been revoked). Connect again."
+		}
+	},
+	"SETTINGS": {
+		"TITLE": "Trello settings",
+		"OVERVIEW": "Connection",
+		"WEBHOOKS": "Webhooks",
+		"WEBHOOKS_ON": "On: Trello sends changes as they happen.",
+		"WEBHOOKS_OFF": "Off: this server has no public address for Trello or no application secret (TRELLO_WEBHOOK_BASE_URL, TRELLO_API_SECRET); use the imports.",
+		"DISCONNECT": "Disconnect",
+		"DISCONNECT_CONFIRM": "Disconnect Trello from this organization? The mappings go; the imported tasks stay.",
+		"DISCONNECTED": "Trello was disconnected."
+	},
+	"MAPPINGS": {
+		"TITLE": "Boards and projects",
+		"INTRO": "Each Trello board maps to one project. Inbound brings the board's cards in as tasks; outbound sends the project's tasks to Trello (one outbound mapping per project). An archived or done card is always the completed status; a list can name the status its cards get.",
+		"EMPTY": "No board is mapped yet.",
+		"BOARD": "Trello board",
+		"PROJECT": "Project",
+		"DIRECTION": "Direction",
+		"LIST_MAP": "Task status per list",
+		"LIST_MAP_HINT": "The task status name a card gets in each list of the board. Leave a list blank to use its name when it is a status, else open.",
+		"LIST_BY_NAME": "by the list's name",
+		"LISTS_MAPPED": "{{ count }} list(s) mapped",
+		"SYNC": "Sync",
+		"ENABLED": "On",
+		"DISABLED": "Off",
+		"WEBHOOK": "Webhook",
+		"WEBHOOK_ON": "Registered",
+		"WEBHOOK_REGISTER": "Register",
+		"WEBHOOK_REQUESTED": "The webhook is being registered; the list refreshes in a moment.",
+		"ADD": "Map a board",
+		"ADDING": "Saving…",
+		"REMOVE_CONFIRM": "Remove this mapping? The imported tasks stay.",
+		"IMPORT": "Import changes",
+		"IMPORT_FULL": "Import everything",
+		"IMPORT_STARTED": "The import started; see the runs below.",
+		"LAST_IMPORT": "Last import",
+		"LAST_ERROR": "Last error",
+		"DIRECTIONS": {
+			"inbound": "Inbound (Trello → tasks)",
+			"outbound": "Outbound (tasks → Trello)",
+			"both": "Both ways"
+		},
+		"NO_BOARDS": "Every board the member can see is mapped, or there is none.",
+		"NO_LISTS": "This board has no list."
+	},
+	"RUNS": {
+		"TITLE": "Runs",
+		"EMPTY": "No run yet.",
+		"KIND": "Kind",
+		"FULL": "(full)",
+		"STATUS": "Status",
+		"STARTED": "Started",
+		"FINISHED": "Finished",
+		"COUNTS": "Created / updated / skipped / failed",
+		"ERROR": "Error",
+		"KINDS": {
+			"import": "Import",
+			"webhook": "Webhook"
+		},
+		"STATUSES": {
+			"running": "Running",
+			"done": "Done",
+			"failed": "Failed"
+		}
+	}
+}

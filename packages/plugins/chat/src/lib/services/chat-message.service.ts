@@ -1,4 +1,4 @@
-import { BadRequestException, ForbiddenException, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
 import { Brackets, DataSource, EntityManager, In, IsNull, MoreThan, MoreThanOrEqual, Not, ObjectLiteral, SelectQueryBuilder } from 'typeorm';
 import {
 	ActorTypeEnum,
@@ -7,7 +7,12 @@ import {
 	CHAT_MESSAGE_MAX_LENGTH,
 	ChatMessageKindEnum,
 	ChatTaskReferenceKindEnum,
+	DocumentKindEnum,
+	IChatCreateTaskInput,
+	IChatCreateTaskResult,
 	IChatEvent,
+	IChatFilesQuery,
+	IChatFilesResult,
 	IChatMessageCreateInput,
 	IChatMessagePage,
 	IChatMessagesQuery,
@@ -18,11 +23,19 @@ import {
 	IChatSendResult,
 	IChatTaskReference,
 	ID,
+	ITask,
+	ITaskCreateInput,
+	PermissionsEnum,
 	ReactionEntityEnum,
-	IChatThreadReadResult
+	IChatThreadReadResult,
+	BaseEntityEnum,
+	TaskStatusEnum
 } from '@gauzy/contracts';
-import { Reaction } from '@gauzy/core';
+import { CommandBus } from '@nestjs/cqrs';
+import { Reaction, RequestContext, TaskCreateCommand, TaskService } from '@gauzy/core';
+import { chatFileOf, chatSqlDialectOf, ChatSqlDialect, IChatFileDocument, IChatFileLink, jsonListHasColumn, linkMetadataOf } from '../chat-files';
 import { mentionedEmployees, parseMentions } from '../chat-mentions';
+import { taskDescriptionOf, taskMentionsIn, taskTitleOf } from '../chat-task-references';
 import { CHAT_MAX_PAGE_SIZE, CHAT_PAGE_SIZE, CHAT_READ_RESTORE_TTL_MS } from '../chat.constants';
 import { ChatConversation } from '../entities/chat-conversation.entity';
 import { ChatMember } from '../entities/chat-member.entity';
@@ -94,7 +107,9 @@ export class ChatMessageService {
 		private readonly dataSource: DataSource,
 		private readonly access: ChatAccessService,
 		private readonly realtime: ChatRealtime,
-		private readonly notifier: ChatNotifierService
+		private readonly notifier: ChatNotifierService,
+		private readonly tasks: TaskService,
+		private readonly commandBus: CommandBus
 	) {}
 
 	// ---------------------------------------------------------------- reads
@@ -268,7 +283,8 @@ export class ChatMessageService {
 		const attachmentIds = this.validAttachments(input.attachmentIds);
 
 		// The same send twice (a retry, however late, the message since deleted or not) answers the same message, so
-		// the unique (author, nonce) key never refuses a retry.
+		// the unique (author, nonce) key never refuses a retry — before the files are checked: a file deleted since
+		// the first send is no reason to refuse the retry of a send that went through.
 		if (input.nonce) {
 			const existing = await this.sentWithNonce(caller, input.nonce);
 			if (existing) {
@@ -276,6 +292,7 @@ export class ChatMessageService {
 				return { message, events: [] };
 			}
 		}
+		await this.requireOwnFiles(caller, attachmentIds);
 
 		let root: ChatMessage | null = null;
 		if (input.threadRootId) {
@@ -300,6 +317,8 @@ export class ChatMessageService {
 			} as never);
 			if (!task) throw new NotFoundException('The task was not found');
 		}
+		// The tasks the body refers to (typed `KEY-number`, linked by id), resolved now and recorded with the message.
+		const mentionedTasks = await this.mentionedTaskIds(caller, conversation, body, input.taskId ? [input.taskId] : []);
 
 		const members = await this.access.members(caller.tenantId, conversationId);
 		const mentioned = mentionedEmployees(body, input.mentionEmployeeIds, members.map((m) => m.employeeId), caller.employeeId);
@@ -370,6 +389,18 @@ export class ChatMessageService {
 						})
 					);
 				}
+				for (const taskId of mentionedTasks) {
+					await manager.getRepository(ChatTaskReference).save(
+						manager.getRepository(ChatTaskReference).create({
+							messageId: created.id as ID,
+							taskId,
+							kind: ChatTaskReferenceKindEnum.MENTION,
+							tenantId: caller.tenantId,
+							organizationId: conversation.organizationId ?? caller.organizationId ?? undefined
+						})
+					);
+				}
+				await this.linkAttachments(manager, caller, conversation, created.id as ID, attachmentIds, false);
 				return { created, count };
 			});
 			message = written.created;
@@ -427,9 +458,21 @@ export class ChatMessageService {
 		message.mentionEmployeeIds = mentioned.length ? JSON.stringify(mentioned) : null;
 		message.mentionsChannel = parsed.channel;
 		message.mentionsHere = parsed.here;
-		if (input.attachmentIds) message.attachmentIds = this.validAttachments(input.attachmentIds).length ? JSON.stringify(this.validAttachments(input.attachmentIds)) : null;
+		const attachments = input.attachmentIds ? this.validAttachments(input.attachmentIds) : null;
+		if (attachments) {
+			await this.requireOwnFiles(caller, attachments);
+			message.attachmentIds = attachments.length ? JSON.stringify(attachments) : null;
+		}
 		message.editedAt = new Date();
-		await this.dataSource.getRepository(ChatMessage).save(message);
+		// The body, its attachments and its task references change together: the references are resolved first, then
+		// written with the body and the attachment links in one transaction, whose row lock makes a second edit wait — a
+		// message never shows one edit's text with another's attachments or task cards, and an edit is never half done.
+		const taskMentions = await this.mentionedTaskIds(caller, conversation, body, await this.keptTaskReferences(caller, message));
+		await this.dataSource.transaction(async (manager) => {
+			await manager.getRepository(ChatMessage).save(message);
+			if (attachments) await this.linkAttachments(manager, caller, conversation, message.id as ID, attachments, true);
+			await this.writeTaskMentions(manager, caller, conversation, message, taskMentions);
+		});
 		// A mention the edit added or took away moves the badge of a member who has not read the message yet.
 		if (inTimeline(message) && (added.length || removed.length)) {
 			const position = await this.timelinePosition(caller.tenantId, message.conversationId, message, true);
@@ -467,6 +510,7 @@ export class ChatMessageService {
 				mentionEmployeeIds: null,
 				deletedAt: new Date()
 			} as never);
+			await manager.getRepository<ObjectLiteral>('DocumentLink').delete({ entity: BaseEntityEnum.ChatMessage, entityId: message.id, tenantId: caller.tenantId } as never);
 			if (timeline) {
 				// The timeline is one message shorter: the conversation's count follows, a read position past the end
 				// is brought back to it, and a member who had not read the message loses the badge it gave them.
@@ -680,6 +724,214 @@ export class ChatMessageService {
 	}
 
 	/** A message and its conversation, when the caller is a member; not found otherwise. */
+	// ---------------------------------------------------------------- files
+
+	/**
+	 * The files of a conversation: every document a message of it carries, newest first, with the message and its
+	 * author — read from the document links the sends wrote, so the pane is the same list the Docs plugin shows on
+	 * the documents' side. A link counts only when the message itself names the document (`attachmentIds`): a link
+	 * written any other way is not an attachment and cannot put a file under another member's name. A document that
+	 * is gone, or a message deleted since, is not a file any more, and takes no place on the page.
+	 */
+	async files(caller: IChatCaller, conversationId: ID, query: IChatFilesQuery = {}): Promise<IChatFilesResult> {
+		await this.access.requireMember(conversationId, caller);
+		const limit = Math.min(Math.max(Number(query.limit) || CHAT_PAGE_SIZE, 1), CHAT_MAX_PAGE_SIZE);
+		const skip = Math.max(Number(query.skip) || 0, 0);
+		const rows = (await this.dataSource
+			.getRepository<ObjectLiteral>('DocumentLink')
+			.createQueryBuilder('link')
+			.innerJoin(
+				ChatMessage,
+				'message',
+				`message.id = link.entityId AND message.conversationId = :conversationId AND message.deletedAt IS NULL AND ${jsonListHasColumn('message.attachmentIds', 'link.documentId', this.dialect())}`,
+				{ conversationId }
+			)
+			.innerJoin('Document', 'document', 'document.id = link.documentId AND document.tenantId = link.tenantId AND document.deletedAt IS NULL')
+			.where('link.entity = :entity', { entity: BaseEntityEnum.ChatMessage })
+			.andWhere('link.tenantId = :tenantId', { tenantId: caller.tenantId })
+			.select('link.documentId', 'documentId')
+			.addSelect('link.entityId', 'messageId')
+			.addSelect('link.createdAt', 'attachedAt')
+			.addSelect('message.authorEmployeeId', 'authorEmployeeId')
+			.addSelect('message.authorUserId', 'authorUserId')
+			.orderBy('link.createdAt', 'DESC')
+			.addOrderBy('link.id', 'DESC')
+			.offset(skip)
+			.limit(limit + 1)
+			.getRawMany()) as Array<Omit<IChatFileLink, 'conversationId'>>;
+		const page = rows.slice(0, limit);
+		const documentIds = [...new Set(page.map((row) => String(row.documentId)))];
+		const documents = documentIds.length
+			? ((await this.dataSource.getRepository<ObjectLiteral>('Document').find({
+					select: { id: true, name: true, originalFilename: true, mimeType: true, fileSize: true, status: true, storageProvider: true, storageKey: true, thumbKey: true },
+					where: { id: In(documentIds), tenantId: caller.tenantId }
+			  } as never)) as IChatFileDocument[])
+			: [];
+		const byId = new Map(documents.map((document) => [String(document.id), document]));
+		const files = page.map((row) => chatFileOf({ ...row, conversationId }, byId.get(String(row.documentId)))).filter((file): file is NonNullable<typeof file> => !!file);
+		return { files, hasMore: rows.length > limit };
+	}
+
+	/** Every attachment must be a file the caller uploaded (kind FILE, created by the caller's user) in the tenant. */
+	private async requireOwnFiles(caller: IChatCaller, documentIds: readonly ID[]): Promise<void> {
+		if (!documentIds.length) return;
+		const rows = (await this.dataSource.getRepository<ObjectLiteral>('Document').find({
+			select: { id: true },
+			where: { id: In([...documentIds]), tenantId: caller.tenantId, kind: DocumentKindEnum.FILE, createdByUserId: caller.userId }
+		} as never)) as Array<{ id: ID }>;
+		if (rows.length !== documentIds.length) throw new BadRequestException('Every attachment must be a file you uploaded.');
+	}
+
+	/**
+	 * The document links that make a message's attachments visible on the documents' side (and the files pane): one
+	 * per attachment; with `replace`, the links of attachments the message no longer carries go.
+	 */
+	private async linkAttachments(manager: EntityManager, caller: IChatCaller, conversation: ChatConversation, messageId: ID, documentIds: readonly ID[], replace: boolean): Promise<void> {
+		const links = manager.getRepository<ObjectLiteral>('DocumentLink');
+		const wanted = new Set(documentIds.map(String));
+		const existing = (await links.find({ select: { id: true, documentId: true }, where: { entity: BaseEntityEnum.ChatMessage, entityId: messageId, tenantId: caller.tenantId } } as never)) as Array<{ id: ID; documentId: ID }>;
+		const linked = new Set(existing.map((row) => String(row.documentId)));
+		if (replace) {
+			const gone = existing.filter((row) => !wanted.has(String(row.documentId))).map((row) => row.id);
+			if (gone.length) await links.delete({ id: In(gone) } as never);
+		}
+		for (const documentId of wanted) {
+			if (linked.has(documentId)) continue;
+			await links.save(
+				links.create({
+					documentId,
+					entity: BaseEntityEnum.ChatMessage,
+					entityId: messageId,
+					metadata: linkMetadataOf(conversation.id as ID, this.dialect()),
+					tenantId: caller.tenantId,
+					organizationId: conversation.organizationId ?? caller.organizationId ?? undefined
+				} as never)
+			);
+		}
+	}
+
+	// ---------------------------------------------------------------- tasks
+
+	/**
+	 * Creates a task from a message — its title the message's first line unless one is given, its description the
+	 * body, the assignees given (the caller is added by the platform) — and records the message's reference to it
+	 * (kind `created`). The caller must be able to add tasks (`ORG_TASK_ADD`) and a member of the conversation; the
+	 * project, when named, must be the organization's.
+	 */
+	async createTask(caller: IChatCaller, messageId: ID, input: IChatCreateTaskInput): Promise<IChatCreateTaskResult> {
+		if (!RequestContext.hasPermission(PermissionsEnum.ORG_TASK_ADD)) throw new ForbiddenException('Creating a task needs the ORG_TASK_ADD permission.');
+		const { message, conversation } = await this.messageForWrite(caller, messageId);
+		if (message.deletedAt) throw new BadRequestException('A deleted message cannot become a task.');
+		const organizationId = (conversation.organizationId ?? caller.organizationId) as ID | null;
+		if (!organizationId) throw new BadRequestException('A task needs an organization.');
+		if (input.projectId) {
+			const project = await this.dataSource
+				.getRepository<ObjectLiteral>('OrganizationProject')
+				.findOne({ select: { id: true }, where: { id: input.projectId, tenantId: caller.tenantId, organizationId } } as never);
+			if (!project) throw new NotFoundException('The project was not found');
+		}
+		const title = (input.title ?? '').trim() || taskTitleOf(message.body);
+		if (!title) throw new BadRequestException('The message has no text to title the task with.');
+		const members = await this.assignees(caller.tenantId, organizationId, input.assigneeEmployeeIds ?? []);
+		const task: ITask = await this.commandBus.execute(
+			new TaskCreateCommand({
+				tenantId: caller.tenantId,
+				organizationId,
+				projectId: input.projectId ?? null,
+				title,
+				description: taskDescriptionOf(message.body),
+				status: TaskStatusEnum.OPEN,
+				members
+			} as unknown as ITaskCreateInput)
+		);
+		const repository = this.dataSource.getRepository(ChatTaskReference);
+		let saved: ChatTaskReference;
+		try {
+			saved = await repository.save(
+				repository.create({ messageId: message.id as ID, taskId: task.id as ID, kind: ChatTaskReferenceKindEnum.CREATED, tenantId: caller.tenantId, organizationId })
+			);
+		} catch (error) {
+			// The task exists (its own transaction committed) but the message does not point to it: said with the task's
+			// id, so the person links it by hand rather than creating it again.
+			this.logger.error(`Task ${task.id} was created from message ${message.id}, but the reference could not be saved: ${error instanceof Error ? error.message : String(error)}`);
+			throw new InternalServerErrorException({ message: `The task was created (${task.id}) but the message could not be linked to it; link it by hand rather than creating it again`, taskId: task.id });
+		}
+		const members2 = await this.access.members(caller.tenantId, message.conversationId);
+		const events = [await this.realtime.publish(this.realtime.messageFact(CHAT_EVENT_NAMES.MESSAGE_UPDATED, message, members2.map((m) => m.userId)))];
+		return { task, reference: { messageId: saved.messageId, taskId: saved.taskId, kind: saved.kind }, events };
+	}
+
+	/** The assignees named, each an employee of the organization (an unknown one is refused, not dropped). */
+	private async assignees(tenantId: ID, organizationId: ID, employeeIds: readonly ID[]): Promise<Array<{ id: ID }>> {
+		const ids = [...new Set(employeeIds.map(String))];
+		if (!ids.length) return [];
+		const rows = await this.dataSource
+			.getRepository<ObjectLiteral>('Employee')
+			.find({ select: { id: true }, where: { id: In(ids), tenantId, organizationId } } as never);
+		if (rows.length !== ids.length) throw new NotFoundException('An assignee is not an employee of the organization');
+		return ids.map((id) => ({ id: id as ID }));
+	}
+
+	/**
+	 * The tasks a body refers to, resolved: a typed `KEY-number` through the platform's reference resolver (the
+	 * project's key, its former keys, the key derived from its name; an ambiguous one is left out), a linked id when
+	 * the task is the tenant's (and the conversation's organization's, when it has one). Those in `except` (a card
+	 * sent with the message) are not repeated. Never throws: a resolver that failed leaves the typed ones out.
+	 */
+	private async mentionedTaskIds(caller: IChatCaller, conversation: ChatConversation, body: string, except: readonly ID[]): Promise<ID[]> {
+		const mentions = taskMentionsIn(body);
+		const ids = new Set<string>();
+		if (mentions.typed.length) {
+			const organizationId = conversation.organizationId ?? caller.organizationId ?? undefined;
+			const resolutions = await this.tasks
+				.resolveReferences({ tenantId: caller.tenantId, organizationId, references: mentions.typed } as never)
+				.catch((error: unknown) => {
+					this.logger.warn(`The task references of a message could not be resolved: ${error instanceof Error ? error.message : String(error)}`);
+					return [];
+				});
+			for (const resolution of resolutions) if (resolution.resolved && resolution.taskId) ids.add(String(resolution.taskId));
+		}
+		if (mentions.linked.length) {
+			const rows = await this.dataSource.getRepository<ObjectLiteral>('Task').find({
+				select: { id: true },
+				where: { id: In(mentions.linked), tenantId: caller.tenantId, ...(conversation.organizationId ? { organizationId: conversation.organizationId } : {}) }
+			} as never);
+			for (const row of rows) ids.add(String(row['id']));
+		}
+		for (const id of except) ids.delete(String(id));
+		return [...ids] as ID[];
+	}
+
+	/** The tasks a message refers to other than by its text (a card sent with it, a task created from it): an edit keeps them. */
+	private async keptTaskReferences(caller: IChatCaller, message: ChatMessage): Promise<ID[]> {
+		const kept = await this.dataSource
+			.getRepository(ChatTaskReference)
+			.find({ where: { messageId: message.id as ID, tenantId: caller.tenantId, kind: Not(ChatTaskReferenceKindEnum.MENTION) } });
+		return kept.map((reference) => reference.taskId);
+	}
+
+	/** After an edit, in its transaction: the message's `mention` references follow its new body. */
+	private async writeTaskMentions(manager: EntityManager, caller: IChatCaller, conversation: ChatConversation, message: ChatMessage, wanted: readonly ID[]): Promise<void> {
+		const repository = manager.getRepository(ChatTaskReference);
+		await repository.delete({ messageId: message.id as ID, tenantId: caller.tenantId, kind: ChatTaskReferenceKindEnum.MENTION });
+		for (const taskId of wanted) {
+			await repository.save(
+				repository.create({
+					messageId: message.id as ID,
+					taskId,
+					kind: ChatTaskReferenceKindEnum.MENTION,
+					tenantId: caller.tenantId,
+					organizationId: conversation.organizationId ?? caller.organizationId ?? undefined
+				})
+			);
+		}
+	}
+
+	/** The connection's dialect, for what the query builder cannot write portably (see `chat-files.ts`). */
+	private dialect(): ChatSqlDialect {
+		return chatSqlDialectOf(String(this.dataSource.options?.type));
+	}
+
 	private async messageAndConversation(caller: IChatCaller, messageId: ID): Promise<{ message: ChatMessage; conversation: ChatConversation }> {
 		const message = await this.dataSource.getRepository(ChatMessage).findOne({ where: { id: messageId, tenantId: caller.tenantId }, withDeleted: true });
 		if (!message) throw new NotFoundException('The requested record was not found');
