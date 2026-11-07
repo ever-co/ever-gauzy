@@ -177,8 +177,8 @@ export class InboxDeliveryService {
 	/** Writes the decision for one entry, person and channel (false when a concurrent sweep wrote it first). */
 	private async decide(row: IIntakeRow, now: Date, channel: InboxDeliveryChannelEnum): Promise<boolean> {
 		const metadata = metadataOf(row.metadata);
-		const employeeId = typeof metadata.receiverEmployeeId === 'string' ? (metadata.receiverEmployeeId as ID) : null;
-		const type = typeof metadata.notificationType === 'string' ? metadata.notificationType : null;
+		const employeeId = typeof metadata['receiverEmployeeId'] === 'string' ? (metadata['receiverEmployeeId'] as ID) : null;
+		const type = typeof metadata['notificationType'] === 'string' ? metadata['notificationType'] : null;
 		const setting = employeeId ? await this.settingOf(employeeId, row.tenantId) : null;
 		const user = await this.userOf(row.userId, row.tenantId);
 		const decision =
@@ -418,7 +418,7 @@ export class InboxDeliveryService {
 			itemId: item.id as ID,
 			title: String(item.title ?? '').trim() || 'Notification',
 			body: excerptOf(item.body),
-			kindLabel: kindLabelOf(typeof metadata.notificationType === 'string' ? metadata.notificationType : null)
+			kindLabel: kindLabelOf(typeof metadata['notificationType'] === 'string' ? metadata['notificationType'] : null)
 		};
 	}
 

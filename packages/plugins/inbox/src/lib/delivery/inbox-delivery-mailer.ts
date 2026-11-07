@@ -37,9 +37,16 @@ export class InboxDeliveryMailer {
 		return String(env.clientBaseUrl || '').replace(/\/+$/, '');
 	}
 
+	/** The tenant's e-mail transport. None answering is a failed attempt the sweep retries, as a send error is. */
+	private async transportOf(recipient: IInboxDeliveryRecipient) {
+		const instance = await this.sender.getEmailInstance({ tenantId: recipient.tenantId, organizationId: recipient.organizationId ?? undefined });
+		if (!instance) throw new Error('No e-mail transport answers for this tenant / organization');
+		return instance;
+	}
+
 	async sendNotification(recipient: IInboxDeliveryRecipient, line: IInboxDeliveryLine): Promise<void> {
 		const host = this.host();
-		const instance = await this.sender.getEmailInstance({ tenantId: recipient.tenantId, organizationId: recipient.organizationId ?? undefined });
+		const instance = await this.transportOf(recipient);
 		await instance.send({
 			template: EmailTemplateEnum.INBOX_NOTIFICATION,
 			message: { to: recipient.email },
@@ -60,7 +67,7 @@ export class InboxDeliveryMailer {
 
 	async sendDigest(recipient: IInboxDeliveryRecipient, lines: IInboxDeliveryLine[], total: number): Promise<void> {
 		const host = this.host();
-		const instance = await this.sender.getEmailInstance({ tenantId: recipient.tenantId, organizationId: recipient.organizationId ?? undefined });
+		const instance = await this.transportOf(recipient);
 		await instance.send({
 			template: EmailTemplateEnum.INBOX_DIGEST,
 			message: { to: recipient.email },

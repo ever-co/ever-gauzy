@@ -75,8 +75,9 @@ describe('isDedupedNotification / notificationTypeOf', () => {
 /** The bridge over doubles: the employee's user, the recipient rows of the window, the items on the record. */
 function bridge(options: { twins?: Array<{ metadata: unknown }> } = {}) {
 	const employees = { findOne: jest.fn(async () => ({ id: 'e2', userId: 'u2' })) };
-	const query: Record<string, jest.Mock> = {};
-	query.innerJoin = jest.fn((_entity: unknown, _alias: string, _condition: string) => query);
+	// Named keys, not `Record<string, …>`: the plugin compiles with `noPropertyAccessFromIndexSignature` (TS4111).
+	const query = {} as Record<'innerJoin' | 'select' | 'where' | 'andWhere' | 'getRawMany', jest.Mock>;
+	query.innerJoin =jest.fn((_entity: unknown, _alias: string, _condition: string) => query);
 	query.select = jest.fn((_column: string, _alias: string) => query);
 	query.where = jest.fn((_sql: string, _params?: Record<string, unknown>) => query);
 	query.andWhere = jest.fn((_sql: string) => query);

@@ -47,10 +47,11 @@ function fixture(options: {
 	pushFails?: boolean;
 	employees?: Record<string, { lastSeenAt: Date | null; isIdle: boolean }>;
 } = {}) {
-	const query: Record<string, jest.Mock> = {};
-	for (const name of ['innerJoin', 'select', 'addSelect', 'where', 'setParameter', 'orderBy', 'limit']) query[name] = jest.fn(() => query);
-	const sub: Record<string, jest.Mock> = {};
-	for (const name of ['select', 'from', 'where']) sub[name] = jest.fn(() => sub);
+	// Named keys, not `Record<string, …>`: the plugin compiles with `noPropertyAccessFromIndexSignature` (TS4111).
+	const query = {} as Record<'innerJoin' | 'select' | 'addSelect' | 'where' | 'setParameter' | 'orderBy' | 'limit' | 'subQuery' | 'andWhere' | 'getRawMany', jest.Mock>;
+	for (const name of ['innerJoin', 'select', 'addSelect', 'where', 'setParameter', 'orderBy', 'limit'] as const) query[name] = jest.fn(() => query);
+	const sub = {} as Record<'select' | 'from' | 'where' | 'getQuery', jest.Mock>;
+	for (const name of ['select', 'from', 'where'] as const) sub[name] = jest.fn(() => sub);
 	sub.getQuery = jest.fn(() => '(decided)');
 	query.subQuery = jest.fn(() => sub);
 	query.andWhere = jest.fn((condition: string | ((qb: unknown) => string)) => {
@@ -59,8 +60,8 @@ function fixture(options: {
 	});
 	query.getRawMany = jest.fn(async () => options.intake ?? []);
 	const recipients = { createQueryBuilder: jest.fn(() => query) };
-	const people: Record<string, jest.Mock> = {};
-	for (const name of ['select', 'addSelect', 'where', 'andWhere', 'groupBy', 'addGroupBy', 'orderBy', 'limit']) people[name] = jest.fn(() => people);
+	const people = {} as Record<'select' | 'addSelect' | 'where' | 'andWhere' | 'groupBy' | 'addGroupBy' | 'orderBy' | 'limit' | 'getRawMany', jest.Mock>;
+	for (const name of ['select', 'addSelect', 'where', 'andWhere', 'groupBy', 'addGroupBy', 'orderBy', 'limit'] as const) people[name] = jest.fn(() => people);
 	people.getRawMany = jest.fn(async () => {
 		const seen = new Map<string, { tenantId: string; userId: string }>();
 		for (const row of options.due ?? []) seen.set(`${row.tenantId}:${row.userId}`, { tenantId: String(row.tenantId), userId: String(row.userId) });
