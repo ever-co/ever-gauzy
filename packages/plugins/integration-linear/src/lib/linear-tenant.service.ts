@@ -1,6 +1,6 @@
-import { BadRequestException, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable, InternalServerErrorException, Logger, NotFoundException, Optional } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
-import { ID, IIntegrationSetting, IIntegrationTenant, IntegrationEntity } from '@gauzy/contracts';
+import { ID, IInboxItemWriter, IIntegrationSetting, IIntegrationTenant, INBOX_ITEM_WRITER, IntegrationEntity } from '@gauzy/contracts';
 import {
 	Integration,
 	IntegrationSettingGetManyCommand,
@@ -10,6 +10,7 @@ import {
 	RequestContext
 } from '@gauzy/core';
 import { LinearApiClient, LinearOAuthToken, LinearViewer, refreshLinearToken } from './client/linear-api.client';
+import { attentionItemOf } from './linear-attention';
 import { LinearConfig } from './linear-config';
 import {
 	LINEAR_CONFIG,
@@ -53,7 +54,9 @@ export class LinearTenantService {
 		private readonly commandBus: CommandBus,
 		private readonly integrationTenantService: IntegrationTenantService,
 		private readonly integrationSettingService: IntegrationSettingService,
-		@Inject(LINEAR_CONFIG) private readonly config: LinearConfig
+		@Inject(LINEAR_CONFIG) private readonly config: LinearConfig,
+		/** The Inbox, when its plugin is loaded: the person who connected hears there of a refused token. */
+		@Optional() @Inject(INBOX_ITEM_WRITER) private readonly inbox?: IInboxItemWriter | null
 	) {}
 
 	/** The connection of an organization in the current tenant, with its settings, or null. */
@@ -66,6 +69,17 @@ export class LinearTenantService {
 				order: { createdAt: 'DESC' }
 			})
 			.catch(() => null);
+	}
+
+	/** A connection by id with its settings, in whatever tenant, or null: for work with no request context (a sweep). */
+	async findAnyById(integrationId: ID): Promise<IIntegrationTenant | null> {
+		return this.integrationTenantService['typeOrmRepository']
+			.findOne({ where: { id: integrationId, name: LINEAR_INTEGRATION_NAME, isActive: true, isArchived: false } as never, relations: { settings: true } as never })
+			.catch((error: unknown) => {
+				// A connection the store could not read is not a missing one, but the caller can do no more with it either.
+				this.logger.warn(`Connection ${integrationId} could not be read: ${error instanceof Error ? error.message : String(error)}`);
+				return null;
+			}) as Promise<IIntegrationTenant | null>;
 	}
 
 	/** A connection by id, in the current tenant, with its settings; 404 otherwise. */
@@ -195,6 +209,10 @@ export class LinearTenantService {
 		viewer: LinearViewer
 	): Promise<IIntegrationTenant> {
 		const { tenantId, organizationId } = scope;
+		// The connection this one replaces, if any: a refusal it carried is over once the new token is stored.
+		const replaced = await this.forOrganization(organizationId, tenantId);
+		const wasRefused = !!(replaced && this.settingsOf(replaced)[LinearSettingName.ATTENTION_REASON]);
+		const previousUserId = (replaced && this.settingsOf(replaced)[LinearSettingName.CONNECTED_BY_USER_ID]) || null;
 		const integration = await this.integrationTenantService['typeOrmRepository'].manager.findOne(Integration, {
 			where: { name: LINEAR_INTEGRATION_NAME }
 		});
@@ -219,7 +237,7 @@ export class LinearTenantService {
 			tenantId,
 			organizationId
 		}));
-		return this.commandBus.execute(
+		const written: IIntegrationTenant = await this.commandBus.execute(
 			new IntegrationTenantUpdateOrCreateCommand(
 				{ name: LINEAR_INTEGRATION_NAME, integration: { provider: LINEAR_INTEGRATION_NAME }, tenantId, organizationId },
 				{
@@ -234,14 +252,70 @@ export class LinearTenantService {
 				} as never
 			)
 		);
+		// The platform's settings writer reports a failed write instead of raising it, and answers the row without its
+		// settings: the connection is read back — the token checked, and the notice of the connection it replaces resolved.
+		const stored = await this.findAnyById(written.id as ID);
+		if (!stored || this.settingsOf(stored)[LinearSettingName.ACCESS_TOKEN] !== token.accessToken) {
+			throw new InternalServerErrorException({ message: 'The Linear connection could not be stored; connect again', code: LINEAR_NOT_CONNECTED });
+		}
+		// The notice went to whoever connected before: they hear of the resolution too, whoever reconnected.
+		if (wasRefused) await this.fileAttention(stored, null, previousUserId ? [previousUserId as ID] : []);
+		return stored;
 	}
 
-	/** Records why the connection needs a person (a refused token), or clears it. */
+	/**
+	 * Records why the connection needs a person (a refused token), or clears it — and tells the person who connected
+	 * in their Inbox, once per refusal (the item is keyed by the connection) and once more when it works again.
+	 */
 	async setAttention(tenant: IIntegrationTenant, reason: string | null): Promise<void> {
+		const settings = this.settingsOf(tenant);
+		const before = settings[LinearSettingName.ATTENTION_REASON] || null;
+		const noticed = !!settings[LinearSettingName.ATTENTION_NOTICE_AT];
 		try {
 			await this.writeSetting(tenant, LinearSettingName.ATTENTION_REASON, reason ?? '');
 		} catch (error) {
+			// Not filed either: the Inbox must not say the imports are paused while the sweep still runs them.
 			this.logger.warn(`The attention reason of connection ${tenant.id} could not be written: ${(error as Error).message}`);
+			return;
+		}
+		// Filed when the reason changed — and again when an earlier filing (or resolution) did not get through: the
+		// item is keyed by the connection, so a second filing updates it rather than adding one.
+		const changed = reason ? before !== reason : !!before;
+		const pending = reason ? !noticed : noticed;
+		if (changed || pending) await this.fileAttention(tenant, reason);
+	}
+
+	/**
+	 * Files (or resolves) the Inbox item about the connection and remembers that it got through; nothing without
+	 * the Inbox plugin or a connecting user. A filing that failed is tried again by the next {@link setAttention}.
+	 */
+	/**
+	 * Files the notice of a refused connection whose filing did not get through (no `ATTENTION_NOTICE_AT`): the
+	 * scheduled sweep calls it for every refused connection it leaves alone, so the retry is durable — every five
+	 * minutes until the Inbox took it — and does not wait for the next refusal.
+	 */
+	async ensureAttentionFiled(tenant: IIntegrationTenant): Promise<void> {
+		const settings = this.settingsOf(tenant);
+		const reason = settings[LinearSettingName.ATTENTION_REASON] || null;
+		if (!reason || settings[LinearSettingName.ATTENTION_NOTICE_AT]) return;
+		await this.fileAttention(tenant, reason);
+	}
+
+	private async fileAttention(tenant: IIntegrationTenant, reason: string | null, alsoUserIds: readonly ID[] = []): Promise<void> {
+		if (!this.inbox) return;
+		// The row as it is now: a filing from before a reconnect or a newer refusal is stale and files nothing.
+		const current = await this.findAnyById(tenant.id as ID);
+		if (!current) return;
+		const settings = this.settingsOf(current);
+		if ((settings[LinearSettingName.ATTENTION_REASON] || null) !== (reason || null)) return;
+		const userId = settings[LinearSettingName.CONNECTED_BY_USER_ID];
+		const recipients = [...new Set([userId, ...alsoUserIds].filter(Boolean).map(String))] as ID[];
+		if (!recipients.length) return;
+		try {
+			await this.inbox.upsertExternal(attentionItemOf({ id: tenant.id as ID, tenantId: tenant.tenantId as ID, organizationId: tenant.organizationId as ID }, reason, recipients));
+			await this.writeSetting(tenant, LinearSettingName.ATTENTION_NOTICE_AT, reason ? new Date().toISOString() : '');
+		} catch (error) {
+			this.logger.warn(`The attention of connection ${tenant.id} could not be filed in the Inbox: ${(error as Error).message}`);
 		}
 	}
 
@@ -256,7 +330,7 @@ export class LinearTenantService {
 		if (token.refreshToken) await this.writeSetting(tenant, LinearSettingName.REFRESH_TOKEN, token.refreshToken);
 		await this.writeSetting(tenant, LinearSettingName.TOKEN_TYPE, token.tokenType);
 		await this.writeSetting(tenant, LinearSettingName.EXPIRES_AT, this.expiresAtOf(token));
-		await this.writeSetting(tenant, LinearSettingName.ATTENTION_REASON, '');
+		await this.setAttention(tenant, null);
 	}
 
 	/** Writes one setting row of the connection (updated when it exists, created otherwise) and mirrors it in memory. */
