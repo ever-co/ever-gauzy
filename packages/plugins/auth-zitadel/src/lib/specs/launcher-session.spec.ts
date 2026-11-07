@@ -19,6 +19,13 @@ jest.setTimeout(60_000);
 const LAUNCHER_ON = { EVER_APP_LAUNCHER_ENABLED: 'true' };
 const PLATFORM = { audience: 'platform-project-id', scope: 'apps:read' };
 
+/** A promise the test resolves itself. */
+function deferred(): { promise: Promise<void>; resolve: () => void } {
+	let resolve: () => void = () => undefined;
+	const promise = new Promise<void>((done) => (resolve = done));
+	return { promise, resolve };
+}
+
 /** Every line the plugin logs during a test (Nest's logger and the console), to look for token values in. */
 function captureLogs(): { lines: string[]; restore: () => void } {
 	const lines: string[] = [];
@@ -220,6 +227,63 @@ describe('Ever ID refresh token kept for the App Launcher (HTTP, against a mock 
 			expect(await t.refreshTokens.sessionOf(userId)).toBeNull();
 		});
 
+		describe('two API processes refreshing the same session at once (one refresh token, used once)', () => {
+			/** The refresh token the session keeps right now, decrypted. */
+			const storedRefreshToken = () => {
+				const blob = t.sessions.recorded[0].everRefreshTokenEncrypted;
+				return blob ? (JSON.parse(t.vault.open(blob)) as { refreshToken: string }).refreshToken : null;
+			};
+
+			it('keeps the rotated token when the refused process clears before the winner stores', async () => {
+				const { userId, sid } = await linkedSignIn('person-race-clear');
+				const winner = t.refreshTokens;
+				const loser = t.replica();
+				const release = deferred();
+				const arrived = deferred();
+				// The winner's refresh is checked and rotated at the issuer, then its answer is held.
+				t.issuer.refreshHolds = [{ when: 'after', until: release.promise, arrived: arrived.resolve }];
+
+				const winning = winner.exchange(sid, PLATFORM);
+				await arrived.promise;
+				// The other process sends the same, now used, refresh token: refused while the old one is still
+				// stored, so it clears it (compare-and-clear) and gives nothing this time.
+				expect(await loser.exchange(sid, PLATFORM)).toBeNull();
+				expect(storedRefreshToken()).toBeNull();
+
+				release.resolve();
+				expect((await winning).token).toMatch(/^mock-xt-/);
+				// The winner stored its rotated token for the session whatever was stored: it survives.
+				const [live] = [...t.issuer.refreshTokens.keys()];
+				expect(storedRefreshToken()).toBe(live);
+				expect(await loser.sessionOf(userId)).toBe(sid);
+				expect((await t.replica().exchange(sid, PLATFORM)).token).toMatch(/^mock-xt-/);
+			});
+
+			it('retries once with the token another process rotated meanwhile', async () => {
+				const { userId, sid } = await linkedSignIn('person-race-retry');
+				const late = t.replica();
+				const release = deferred();
+				const arrived = deferred();
+				// The late process has read the stored token and sent it; the issuer holds it before checking it.
+				t.issuer.refreshHolds = [{ when: 'before', until: release.promise, arrived: arrived.resolve }];
+
+				const lateAnswer = late.exchange(sid, PLATFORM);
+				await arrived.promise;
+				// Meanwhile another process refreshes with the same token and stores the rotated one.
+				expect((await t.refreshTokens.exchange(sid, PLATFORM)).token).toMatch(/^mock-xt-/);
+
+				release.resolve();
+				// Refused (its token was used), the late process reads the session again and retries with the new one.
+				expect((await lateAnswer).token).toMatch(/^mock-xt-/);
+				expect(t.issuer.tokenRequests.filter((request) => request.grantType === 'refresh_token')).toHaveLength(
+					3
+				);
+				const [live] = [...t.issuer.refreshTokens.keys()];
+				expect(storedRefreshToken()).toBe(live);
+				expect(await late.sessionOf(userId)).toBe(sid);
+			});
+		});
+
 		it('gives nothing once the session ended (back-channel logout), even with an access token in memory', async () => {
 			const { userId, sid } = await linkedSignIn('person-logout');
 			await t.refreshTokens.exchange(sid, PLATFORM);
@@ -293,6 +357,79 @@ describe('ZitadelRefreshTokenService without a way to encrypt the token', () => 
 		);
 		expect(service.keeping).toBe(false);
 		expect(service.seal('https://idp.example.test', 'sid-1', 'refresh-token-value')).toBeNull();
+	});
+});
+
+describe('ZitadelRefreshTokenService memory of access tokens', () => {
+	/** A refresh-token service with a small memory and a clock the test moves, over fakes that always refresh. */
+	class SmallMemory extends ZitadelRefreshTokenService {
+		protected override readonly maxCachedAccessTokens = 3;
+		now = 1_800_000_000;
+		protected override nowSeconds(): number {
+			return this.now;
+		}
+	}
+
+	function create(): { service: SmallMemory; refreshes: () => number } {
+		const vault = new TestTokenVault();
+		const issuer = {
+			issuer: 'https://idp.example.test',
+			clientId: 'web',
+			clientSecret: 'secret',
+			redirectUri: '',
+			scopes: []
+		};
+		const blob = vault.seal(JSON.stringify({ v: 1, issuer: issuer.issuer, refreshToken: 'kept-refresh-token' }));
+		let count = 0;
+		const service = new SmallMemory(
+			{ settings: { launcherEnabled: true }, issuer: async () => issuer } as never,
+			{
+				findOne: async () => ({ id: 'row', everRefreshTokenEncrypted: blob }),
+				update: async () => ({ affected: 1 })
+			} as never,
+			{ get: async () => ({ token_endpoint: 'https://idp.example.test/oauth/v2/token' }) } as never,
+			{
+				postForm: async () => {
+					count++;
+					return { status: 200, data: { access_token: `access-${count}`, expires_in: 600 } };
+				}
+			} as never,
+			vault
+		);
+		return { service, refreshes: () => count };
+	}
+
+	it('holds at most its limit, dropping the oldest, and uses a held token until a minute before it expires', async () => {
+		const { service, refreshes } = create();
+		for (const sid of ['s1', 's2', 's3', 's4']) {
+			await service.accessTokenFor(sid);
+		}
+		expect(service.cachedAccessTokens).toBe(3);
+		expect(refreshes()).toBe(4);
+
+		// s4 is held: no refresh. s1 was dropped (the oldest): refreshed again.
+		await service.accessTokenFor('s4');
+		expect(refreshes()).toBe(4);
+		await service.accessTokenFor('s1');
+		expect(refreshes()).toBe(5);
+		expect(service.cachedAccessTokens).toBe(3);
+
+		// 600 s tokens are used for 540 s, then refreshed.
+		service.now += 541;
+		await service.accessTokenFor('s1');
+		expect(refreshes()).toBe(6);
+	});
+
+	it('drops expired tokens first when full', async () => {
+		const { service } = create();
+		await service.accessTokenFor('s1');
+		await service.accessTokenFor('s2');
+		service.now += 541;
+		await service.accessTokenFor('s3');
+		expect(service.cachedAccessTokens).toBe(3);
+		await service.accessTokenFor('s4');
+		// s1 and s2 had expired: both went, s3 and s4 stay.
+		expect(service.cachedAccessTokens).toBe(2);
 	});
 });
 

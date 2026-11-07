@@ -9,7 +9,7 @@ import { INestApplication } from '@nestjs/common';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Test } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { OidcModule } from '@gauzy/auth';
+import { OidcDiscoveryService, OidcHttpService, OidcModule } from '@gauzy/auth';
 import { EVER_REDIS_CLIENT, EventBus } from '@gauzy/core';
 import { AuthZitadelController } from '../auth-zitadel.controller';
 import { AuthZitadelSettings, parseZitadelSettings } from '../auth-zitadel.config';
@@ -65,6 +65,11 @@ export interface ZitadelTestApp {
 	refreshTokens: ZitadelRefreshTokenService;
 	/** The encryption the connection plugin provides (`EVER_ID_TOKEN_VAULT`), as a test stand-in. */
 	vault: TestTokenVault;
+	/**
+	 * Another API process's refresh-token service: the same session records, issuer and encryption, a memory of its
+	 * own (to refresh one session from two processes at once).
+	 */
+	replica(): ZitadelRefreshTokenService;
 	published: unknown[];
 	close(): Promise<void>;
 }
@@ -210,6 +215,14 @@ async function startApp(
 		handoffs: moduleRef.get(ZitadelHandoffService),
 		refreshTokens: moduleRef.get(ZitadelRefreshTokenService),
 		vault,
+		replica: () =>
+			new ZitadelRefreshTokenService(
+				moduleRef.get(ZitadelConfigService),
+				sessions.repository() as never,
+				moduleRef.get(OidcDiscoveryService),
+				moduleRef.get(OidcHttpService),
+				vault
+			),
 		published,
 		async close() {
 			await app.close();

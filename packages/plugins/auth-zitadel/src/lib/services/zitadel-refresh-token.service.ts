@@ -19,6 +19,9 @@ export const TOKEN_EXPIRY_MARGIN_S = 60;
 /** The longest lifetime used for an exchanged token, seconds, whatever the issuer says. */
 export const MAX_EXCHANGED_TOKEN_LIFETIME_S = 3600;
 
+/** The most session access tokens one process keeps in memory at once (one per Ever ID session in use). */
+export const MAX_CACHED_ACCESS_TOKENS = 5000;
+
 /** RFC 8693 token exchange. */
 export const TOKEN_EXCHANGE_GRANT = 'urn:ietf:params:oauth:grant-type:token-exchange';
 
@@ -67,8 +70,15 @@ function oauthError(data: unknown): string | null {
  *
  * - {@link accessTokenFor}: a fresh access token of a session, from a refresh grant with this installation's client
  *   at the same issuer. The rotated refresh token replaces the stored one; the access token stays in this
- *   process's memory until a minute before it expires. A refresh token the issuer refuses (`invalid_grant`) is
- *   removed: the person signs in with Ever ID again.
+ *   process's memory until a minute before it expires (at most {@link MAX_CACHED_ACCESS_TOKENS} of them, expired
+ *   ones dropped first). A refresh token the issuer refuses (`invalid_grant`) is removed: the person signs in with
+ *   Ever ID again.
+ *
+ *   Several API processes may refresh the same session at once, and only one of them gets through (a refresh token
+ *   is used once). No lock is held while the issuer answers: the one that gets through stores its rotated token for
+ *   the session whatever is stored then, and one that is refused reads the stored token again. When another process
+ *   rotated it meanwhile, it tries once more with that one; it removes the token only when it is still the very one
+ *   it sent (compare-and-clear), so a token another process just stored is never lost.
  * - {@link exchange}: RFC 8693 token exchange of that access token for another audience and scope (the App
  *   Launcher asks for `apps:read` on Ever Platform). The answer is handed to the caller and never stored here.
  *
@@ -79,8 +89,10 @@ function oauthError(data: unknown): string | null {
 @Injectable()
 export class ZitadelRefreshTokenService implements EverIdSessionTokensPort, OnModuleInit {
 	private readonly logger = new Logger(ZitadelRefreshTokenService.name);
-	/** Fresh access tokens by session id, this process only. */
+	/** Fresh access tokens by session id, this process only (bounded, see {@link remember}). */
 	private readonly accessTokens = new Map<string, SessionAccessToken>();
+	/** The most access tokens kept in memory; a property so tests can lower it. */
+	protected readonly maxCachedAccessTokens: number = MAX_CACHED_ACCESS_TOKENS;
 	/** One refresh at a time per session: a rotated refresh token is used once. */
 	private readonly refreshing = new Map<string, Promise<SessionAccessToken | null>>();
 
@@ -199,6 +211,11 @@ export class ZitadelRefreshTokenService implements EverIdSessionTokensPort, OnMo
 		return { token, expiresAt: this.nowSeconds() + lifetime - TOKEN_EXPIRY_MARGIN_S };
 	}
 
+	/** How many session access tokens this process holds in memory right now. */
+	get cachedAccessTokens(): number {
+		return this.accessTokens.size;
+	}
+
 	/** Current time in seconds; a method so tests can move the clock. */
 	protected nowSeconds(): number {
 		return Math.floor(Date.now() / 1000);
@@ -236,8 +253,12 @@ export class ZitadelRefreshTokenService implements EverIdSessionTokensPort, OnMo
 		});
 	}
 
-	/** A refresh grant with the session's kept refresh token; stores the rotated one. */
-	private async refresh(sid: string, blob: string): Promise<SessionAccessToken | null> {
+	/**
+	 * A refresh grant with the session's kept refresh token (`blob`, as read from the session); stores the rotated one.
+	 *
+	 * @param retried - This is the one retry with a token another process rotated meanwhile.
+	 */
+	private async refresh(sid: string, blob: string, retried = false): Promise<SessionAccessToken | null> {
 		const kept = this.open(blob);
 		if (!kept) {
 			// Not readable with this process's secrets any more (the secret changed): it can never be used.
@@ -255,11 +276,7 @@ export class ZitadelRefreshTokenService implements EverIdSessionTokensPort, OnMo
 		});
 		if (answer.status !== 200) {
 			if (oauthError(answer.data) === 'invalid_grant') {
-				this.logger.warn(
-					'Ever ID refused a kept refresh token; it is removed (the person signs in with Ever ID again).'
-				);
-				await this.removeKept(sid, blob);
-				return null;
+				return this.refused(sid, blob, retried);
 			}
 			this.logger.warn(
 				`Ever ID refused a refresh (${answer.status} ${oauthError(answer.data) ?? 'no error code'}).`
@@ -274,18 +291,64 @@ export class ZitadelRefreshTokenService implements EverIdSessionTokensPort, OnMo
 		const rotated = body['refresh_token'];
 		if (typeof rotated === 'string' && rotated && rotated !== kept.refreshToken) {
 			const sealed = this.seal(kept.issuer, sid, rotated);
-			// Only where the token just used is still stored: a rotation another replica stored meanwhile is kept.
-			await this.sessions.update({ sid, everRefreshTokenEncrypted: blob }, { everRefreshTokenEncrypted: sealed });
+			if (sealed) {
+				// Stored for the session whatever is stored now: this is the token the issuer just handed out, so it is
+				// the one that works, even if a process that was refused the old one cleared it meanwhile.
+				await this.sessions.update({ sid, isActive: true }, { everRefreshTokenEncrypted: sealed });
+			}
 		}
 		const fresh: SessionAccessToken = {
 			token,
 			usableUntil: this.nowSeconds() + (Number(body['expires_in']) || 0) - TOKEN_EXPIRY_MARGIN_S,
 			issuer: kept.issuer
 		};
-		if (fresh.usableUntil > this.nowSeconds()) {
-			this.accessTokens.set(sid, fresh);
-		}
+		this.remember(sid, fresh);
 		return fresh;
+	}
+
+	/**
+	 * The issuer refused the refresh token `blob` (`invalid_grant`). Another process may have used it a moment ago and
+	 * stored the rotated one: read the session again, and try once more with a token stored meanwhile. Only a token
+	 * that is still the one sent is removed (compare-and-clear), so a newer one is never lost.
+	 */
+	private async refused(sid: string, blob: string, retried: boolean): Promise<SessionAccessToken | null> {
+		const current = await this.keptRow(sid);
+		if (!current) {
+			// The session ended meanwhile.
+			this.accessTokens.delete(sid);
+			return null;
+		}
+		if (current.everRefreshTokenEncrypted !== blob) {
+			// Rotated by another process meanwhile: that one works.
+			return retried ? null : this.refresh(sid, current.everRefreshTokenEncrypted, true);
+		}
+		this.logger.warn(
+			'Ever ID refused a kept refresh token; it is removed (the person signs in with Ever ID again).'
+		);
+		await this.removeKept(sid, blob);
+		return null;
+	}
+
+	/**
+	 * Keeps a session's access token in memory until it is no longer usable. Expired ones go first when the cache is
+	 * full; if it is still full, the oldest (a Map keeps insertion order).
+	 */
+	private remember(sid: string, fresh: SessionAccessToken): void {
+		const now = this.nowSeconds();
+		if (fresh.usableUntil <= now) {
+			return;
+		}
+		this.accessTokens.delete(sid);
+		if (this.accessTokens.size >= this.maxCachedAccessTokens) {
+			for (const [other, token] of this.accessTokens) {
+				if (token.usableUntil <= now) this.accessTokens.delete(other);
+			}
+			for (const other of this.accessTokens.keys()) {
+				if (this.accessTokens.size < this.maxCachedAccessTokens) break;
+				this.accessTokens.delete(other);
+			}
+		}
+		this.accessTokens.set(sid, fresh);
 	}
 
 	/** Sends one form request to the issuer's token endpoint with this installation's client credential. */
@@ -304,7 +367,7 @@ export class ZitadelRefreshTokenService implements EverIdSessionTokensPort, OnMo
 		}
 	}
 
-	/** Removes a kept token, only where it is still the one stored. */
+	/** Removes a kept token, only where it is still the one stored (compare-and-clear). */
 	private async removeKept(sid: string, blob: string): Promise<void> {
 		this.accessTokens.delete(sid);
 		await this.sessions.update({ sid, everRefreshTokenEncrypted: blob }, { everRefreshTokenEncrypted: null });

@@ -248,7 +248,12 @@ token of the person, which this plugin provides.
   expires; a rotated refresh token replaces the stored one), which is
   exchanged (RFC 8693) for a token for Ever Platform with the `apps:read`
   scope only. That token stays in the API's memory; it never reaches the
-  browser or an address. Requests run one at a time per Ever ID session.
+  browser or an address. Requests run one at a time per Ever ID session in
+  an API process. When several processes refresh one session at once, the
+  one the issuer accepts stores its rotated token; one that is refused reads
+  the stored token again, retries once with a newer one, and removes it only
+  when it is still the one it sent, so no rotated token is lost. Each process
+  keeps at most 5,000 access tokens in memory, expired ones dropped first.
 - **When it goes.** With the session: on a back-channel logout from Ever ID,
   on a person's deletion request, when the daily pruning removes old session
   records, when Ever ID refuses it (the person signs in again), and at the

@@ -20,6 +20,17 @@ interface PendingCode {
 	scope: string;
 }
 
+/**
+ * Holds one refresh request (by arrival order) to simulate two API processes refreshing at once: `before` waits
+ * before the refresh token is checked, `after` checks (and rotates) it, then waits before answering. `arrived` is
+ * called as the request is held.
+ */
+export interface MockRefreshHold {
+	when: 'before' | 'after';
+	until: Promise<void>;
+	arrived?: () => void;
+}
+
 /** A token request the issuer answered, without the client credential and without any token value. */
 export interface MockTokenRequest {
 	grantType: string;
@@ -48,6 +59,9 @@ export class MockOidcIssuer {
 	exchangeError: { status: number; error: string } | null = null;
 	/** Lifetime the token-exchange grant reports, seconds. */
 	exchangeExpiresIn = 3600;
+	/** Holds for the refresh requests, by arrival order (see {@link MockRefreshHold}). */
+	refreshHolds: Array<MockRefreshHold | undefined> = [];
+	private refreshCount = 0;
 
 	private server: Server | null = null;
 	private jose: Jose | null = null;
@@ -212,7 +226,12 @@ export class MockOidcIssuer {
 	}
 
 	/** The refresh grant: one use per refresh token, which rotates. */
-	private refresh(body: URLSearchParams, res: ServerResponse): void {
+	private async refresh(body: URLSearchParams, res: ServerResponse): Promise<void> {
+		const hold = this.refreshHolds[this.refreshCount++];
+		if (hold?.when === 'before') {
+			hold.arrived?.();
+			await hold.until;
+		}
 		const used = body.get('refresh_token') ?? '';
 		const subject = this.refreshTokens.get(used);
 		if (!subject) {
@@ -221,11 +240,16 @@ export class MockOidcIssuer {
 		this.refreshTokens.delete(used);
 		const accessToken = `mock-at-${randomBytes(12).toString('hex')}`;
 		this.accessTokens.set(accessToken, subject);
+		const rotated = this.issueRefreshToken(subject);
+		if (hold?.when === 'after') {
+			hold.arrived?.();
+			await hold.until;
+		}
 		return this.json(res, 200, {
 			access_token: accessToken,
 			token_type: 'Bearer',
 			expires_in: 600,
-			refresh_token: this.issueRefreshToken(subject)
+			refresh_token: rotated
 		});
 	}
 
