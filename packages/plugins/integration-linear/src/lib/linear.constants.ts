@@ -53,6 +53,19 @@ export const LINEAR_IMPORT_MAX_ISSUES = 50_000;
 /** An access token this close to its expiry is renewed before use. */
 export const LINEAR_TOKEN_REFRESH_AHEAD_MS = 10 * 60 * 1000;
 
+/** The queue the scheduled import sweep travels on, the schedule that asks for it, and the queue job it runs as. */
+export const LINEAR_QUEUE_NAME = 'integration-linear';
+export const LINEAR_IMPORT_SWEEP_SCHEDULE = 'integration-linear-import-sweep';
+export const LINEAR_IMPORT_SWEEP_JOB = 'integration-linear.import-due';
+/** The default of `LINEAR_IMPORT_INTERVAL_MINUTES`: how many minutes apart a mapping's changes are imported. */
+export const LINEAR_IMPORT_INTERVAL_MINUTES_DEFAULT = 15;
+/** How many mappings one sweep imports at most (the longest waiting first; the rest wait for the next sweep). */
+export const LINEAR_IMPORT_SWEEP_BATCH = 50;
+/** A mapping with a live webhook is swept this many intervals apart: a reconcile of missed deliveries, not a second feed. */
+export const LINEAR_IMPORT_WEBHOOK_STRIDE = 4;
+/** A mapping counts as due this long before its interval is up, so one imported right after a sweep does not slip a whole sweep. */
+export const LINEAR_IMPORT_SWEEP_SLACK_MS = 60_000;
+
 /** Error codes the routes answer with (`{ message, code }`). */
 export const LINEAR_NOT_CONFIGURED = 'LINEAR_NOT_CONFIGURED';
 export const LINEAR_NOT_CONNECTED = 'LINEAR_NOT_CONNECTED';
