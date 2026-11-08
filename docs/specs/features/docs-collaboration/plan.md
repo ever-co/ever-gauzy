@@ -73,7 +73,23 @@ adds the live-session module (`GAUZY_DOCS_LIVE_ENABLED`, limits, access re-check
   keep their access rules; everything else is as before.
 - **Rollout dependencies**: `GAUZY_DOCS_COLLAB_ENABLED` for the routes and the share / review entries;
   `GAUZY_NOTIFICATION_FANOUT_ENABLED` for the comments-on-followed-pages entries; `GAUZY_INBOX_ENABLED` for the
-  entries to appear in the Inbox (the notification rows exist either way).
+  entries to appear in the Inbox (the notification rows exist either way). The flags are not enough for FR-10:
+  a receiver whose legacy notification switch for the type is off (`comment` for comments, `assignment` for
+  shares and review requests, `preferences.taskUpdate` for review decisions) gets no notification row and so
+  no entry. The Inbox fix (inbox plan §10.2, task T17) is a prerequisite for FR-10 to hold for every
+  receiver.
+- **Markdown merge** (`mergeMarkdownUpdate` in `services/document-markdown.ts`, behind
+  `PUT /documents/:id/content/markdown`, merged with phase 2): the stored blocks and the incoming ones are
+  matched by their Markdown, in order (a longest common subsequence; a greedy in-order match above
+  `MARKDOWN_DIFF_MAX_CELLS`); a matched block keeps its stored JSON (attributes, marks, comment anchors), an
+  unmatched incoming block is built from the Markdown, an unmatched stored block is dropped. Known limitations:
+  blocks carry no identity in Markdown, so (1) among identical blocks the earliest stored ones are kept:
+  removing the first of two identical paragraphs keeps the first's stored block and drops the second's,
+  comments included; (2) a reorder keeps only the blocks of the longest common subsequence: `[A, B]` →
+  `[B, A]` keeps one of them and rebuilds the other from its Markdown, losing its attributes and comment
+  anchors. Neither case is refused yet. Follow-up: stable block ids round-tripped in the exported Markdown
+  (or targeted block edits) with move-aware matching, and a 409 for an update that cannot keep a changed,
+  duplicated or moved block's comments.
 
 ## 5. Tests
 

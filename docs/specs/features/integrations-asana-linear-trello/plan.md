@@ -1,6 +1,6 @@
 # Implementation Plan: Integrations — Linear, Asana, Trello
 
-**Feature ID**: `integrations-asana-linear-trello` · **Spec**: [`spec.md`](./spec.md) · **Branches**: `feat/integration-linear`, `feat/integration-asana`, `feat/integration-trello` · **Status**: phase 1 merged for Linear (ever-gauzy #11692, #11705), Asana (#11694, #11706) and Trello (#11698) (updated 2026-11-08)
+**Feature ID**: `integrations-asana-linear-trello` · **Spec**: [`spec.md`](./spec.md) · **Branches**: `feat/integration-linear`, `feat/integration-asana`, `feat/integration-trello` · **Status**: phase 1 code merged into `develop` for Linear (ever-gauzy #11692, #11705), Asana (#11694, #11706) and Trello (#11698); the manual checks on dev (tasks T11) are outstanding (updated 2026-11-08)
 
 ## 1. Summary
 

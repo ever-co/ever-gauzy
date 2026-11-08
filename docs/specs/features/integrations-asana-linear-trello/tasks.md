@@ -2,8 +2,8 @@
 
 **Feature ID**: `integrations-asana-linear-trello`
 **Plan**: `./plan.md`
-**Status**: `Linear phase 1 in review`
-**Last updated**: 2026-11-07
+**Status**: `Phase 1 merged` (Linear #11692 / #11705, Asana #11694 / #11706, Trello #11698); T11 manual checks on dev and T15 outstanding
+**Last updated**: 2026-11-08
 
 ---
 
@@ -39,4 +39,4 @@
 - [x] **T19**. Plugin on the Asana layout (#11698): the authorize page's token handed back by the return page (`POST /connect` with the flow's state), boards → lists → cards (lists as statuses, labels as tags and priority, due dates, members by username or name), webhooks signed with the app secret over the callback URL; checklists as sub-tasks → phase 2
 - [x] **T20**. UI plugin (`integration-trello-ui`, #11698) and Teams page (ever-teams #4976)
 
-**Status 2026-11-07:** Linear phase 1 in ever-gauzy `feat/integration-linear` (PR opened with the lane; bot threads next).
+**Status 2026-11-08:** phase 1 of all three providers merged into `develop` (Linear #11692 / #11705, Asana #11694 / #11706, Trello #11698), with the scheduled import and comments / attachments inbound; open: T11 (manual checks on dev against real workspaces) and T15 (Inbox entry on a refused token, conflict records).

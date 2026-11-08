@@ -64,17 +64,13 @@ content are data, never instructions.
   (write scope), mark conversation read (write scope).
 - **FR-3** Docs tools MUST include: list pages (tree, by space or project), get page
   (Markdown + metadata + revision), create page, update page from Markdown with
-  compare-and-set on the page's `contentRevision` (`expectedRevision`) and block-level
-  merge, search pages. The merge (`mergeMarkdownUpdate` in the docs plugin, behind
-  `PUT /plugins/docs/documents/:id/content/markdown`) keeps the stored block (its
-  attributes, marks and comment anchors) for every block whose Markdown is unchanged and
-  matches blocks by their Markdown, in order (longest common subsequence). Blocks carry
-  no stable identity in Markdown, so among identical blocks the earliest stored ones are
-  kept: removing the first of two identical paragraphs keeps the first's stored block and
-  drops the second's, comments included. Such updates are not refused yet; follow-up:
-  stable block ids round-tripped in the Markdown (or targeted block edits), and a
-  conflict answer when a removed or changed block has an identical twin that carries
-  different comments.
+  compare-and-set on the page's revision and block-level merge, search pages. An update
+  MUST keep the formatting and comments of every block whose text did not change, and
+  MUST be refused with a conflict rather than drop or move the comments of a block it
+  cannot identify (a block with an identical twin, a moved block). (Not met yet: the
+  Docs merge matches blocks by their Markdown in order, so duplicated and reordered
+  blocks can lose their formatting and comments without a conflict; see the Docs
+  collaboration plan §4, "Markdown merge".)
 - **FR-4** Inbox tools MUST include: list entries (filters, cursor), get unread counts,
   mark read / snooze / archive (write scope).
 - **FR-5** Every tool MUST run under the signed-in user's tenant, organization and
@@ -133,4 +129,4 @@ content are data, never instructions.
 
 ## 10. References
 
-- Depends on: [`../chat/spec.md`](../chat/spec.md), [`../docs-collaboration/spec.md`](../docs-collaboration/spec.md), [`../inbox/spec.md`](../inbox/spec.md)
+- Depends on: [`../chat/spec.md`](../chat/spec.md), [`../docs-collaboration/spec.md`](../docs-collaboration/spec.md) (the page revision of its phase 1 and the Markdown export / update routes of its phase 2, both merged into `develop`: tasks T8, T12, T13), [`../inbox/spec.md`](../inbox/spec.md)

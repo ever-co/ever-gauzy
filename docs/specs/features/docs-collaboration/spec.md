@@ -114,7 +114,9 @@ Angular app and for Ever Teams through the same API:
   requested from me, review approved/rejected on my page; with the Inbox dedupe rules
   (the ten-minute window is for mentions and repeated shares; every distinct review
   request and decision is an entry of its own). Comment entries need the platform's
-  follower notifications (`GAUZY_NOTIFICATION_FANOUT_ENABLED`) to be on (plan §4).
+  follower notifications (`GAUZY_NOTIFICATION_FANOUT_ENABLED`) to be on, and a receiver
+  who switched the legacy notification type off gets no entry until the Inbox's T17
+  lands (plan §4).
 - **FR-11** Members MUST be able to follow or mute a page.
 
 ### Export and API
