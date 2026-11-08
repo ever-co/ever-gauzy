@@ -140,7 +140,7 @@ sequenceDiagram
     participant O as Event outbox
     participant C as Clients
     W->>N: publishNotificationEvent(type, actor, target)
-    N->>N: EmployeeNotification row (existing API unchanged; skipped when the receiver's per-type switch is off)
+    N->>N: EmployeeNotification row (existing API unchanged, skipped when the receiver's per-type switch is off)
     N-->>I: EmployeeNotificationCreatedEvent (CQRS, after the row is saved)
     I->>I: InboxNotificationBridge.fileNotification → upsertExternal(kind: notification, source: GAUZY, externalId: notification id)
     I->>O: inbox_item.created (recipientUserIds)
