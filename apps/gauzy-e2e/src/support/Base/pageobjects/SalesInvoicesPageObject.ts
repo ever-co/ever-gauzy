@@ -15,10 +15,11 @@ export const SalesInvoicesPage = {
 	setStatusButtonCss: 'ngx-invoices div.btn-group.actions nb-select.select-nb',
 	viewButtonCss: 'ngx-invoices div.btn-group.actions button.action:has(nb-icon[icon="eye-outline"])',
 	moreButtonCss: 'ngx-invoices div.btn-group.actions button.action:has(nb-icon[icon="more-vertical-outline"])',
-	// The "more" popover renders in a cdk overlay (outside ngx-invoices).
+	// The "more" popover renders in a cdk overlay (outside ngx-invoices). Its rows are `button.menu-item`
+	// (the danger row adds `.menu-item-danger`) since the menu redesign of #11518; they were `button.action`.
 	popoverCss: 'div.popover-container-action',
-	popoverButtonCss: 'div.popover-container-action button.action',
-	deleteButtonCss: 'div.popover-container-action button.action.danger',
+	popoverButtonCss: 'div.popover-container-action button.menu-item',
+	deleteButtonCss: 'div.popover-container-action button.menu-item.menu-item-danger',
 	addTagsDropdownCss: '#addTags',
 	tagsDropdownOption: 'div.ng-option',
 	discountInputCss: '#inputDiscountValue',

@@ -316,7 +316,9 @@ describe('export redaction of the real entity graph', () => {
 			'DocumentInboundAddress.domainVerificationToken':
 				'the value an organization publishes in a public DNS TXT record to prove it controls a domain; it grants nothing on its own',
 			'DocumentIndexState.contentHash':
-				'a digest of document content used to detect re-indexing work, not a credential — and the entity is skipExport()-ed in docs.plugin.ts'
+				'a digest of document content used to detect re-indexing work, not a credential — and the entity is skipExport()-ed in docs.plugin.ts',
+			'SubscriptionBilling.chargeClaimToken':
+				'a lock id: a random UUID a billing pass writes so its own conditional writes can tell its claim from another pass’s. No route or input accepts it, so it opens nothing, and a cycle imported mid-charge must keep it: heldByCharge() reads it, and the next pass recovers the stale claim'
 		};
 
 		/** `refreshTokenTtl` -> ['refresh', 'token', 'ttl'] */

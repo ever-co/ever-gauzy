@@ -15,6 +15,7 @@
 
 			<!-- Team selector -->
 			<gauzy-team-selector formControlName="teamId" class="selector"></gauzy-team-selector>
+			<ngx-error-message class="full-width" [field]="form.get('teamId')"></ngx-error-message>
 
 			<!-- Task selector -->
 			<gauzy-task-selector formControlName="taskId" class="selector"></gauzy-task-selector>

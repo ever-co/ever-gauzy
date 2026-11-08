@@ -6,6 +6,7 @@ import { Permissions } from './../../shared/decorators';
 import { UseValidationPipe } from '../../shared/pipes';
 import { ActivityService } from './activity.service';
 import { ActivityMapService } from './activity.map.service';
+import { leanActivityReport } from './activity-report.lean';
 import { BulkActivityInputDTO } from './dto/bulk-activities-input.dto';
 import { ActivityQueryDTO } from './dto';
 
@@ -101,7 +102,7 @@ export class ActivityController {
 		} else if (options.groupBy === ReportGroupFilterEnum.project) {
 			activities = this.activityMapService.mapByProject(activities);
 		}
-		return activities;
+		return options.shape === 'lean' ? leanActivityReport(activities) : activities;
 	}
 
 	/**

@@ -8,7 +8,8 @@
  *   3. runs C concurrent clients for D seconds (throughput + latency under load),
  *   4. optionally counts the SQL statements PostgreSQL executed per request (pg_stat_statements).
  *
- * Dependency-free except `pg` (only when PG_URL is set), resolved from the repo's node_modules.
+ * Dependency-free except `pg` (only when PG_URL is set) or `better-sqlite3` (only when SQLITE_PATH names the API's
+ * SQLite file instead), resolved from the repo's node_modules.
  *
  * Usage (from the repo root):
  *   BASE=http://localhost:3999/api EMAIL='<seeded super admin email>' PASSWORD=admin \
@@ -149,6 +150,23 @@ async function pgClient() {
 	return pg;
 }
 
+/**
+ * The ids (organization, employee, project, team) read from the API's SQLite file when SQLITE_PATH names one and
+ * PG_URL does not: the same queries as against PostgreSQL, through better-sqlite3 from the repo's node_modules, with
+ * the `$n` placeholders rewritten. Statement counts are not available on SQLite.
+ */
+function sqliteClient() {
+	if (!env.SQLITE_PATH) return null;
+	const Database = require('better-sqlite3');
+	const db = new Database(env.SQLITE_PATH, { readonly: true, fileMustExist: true });
+	return {
+		async query(sql, params = []) {
+			const statement = sql.replace(/\$\d+/g, '?');
+			return { rows: db.prepare(statement).all(...params) };
+		}
+	};
+}
+
 async function pgReset() {
 	const c = await pgClient();
 	if (!c) return;
@@ -236,14 +254,21 @@ async function resolveContext() {
 	const token = data.token;
 	const user = data.user;
 	const vars = { tenantId: user.tenantId, userId: user.id, employeeId: user.employee?.id || user.employeeId || '' };
-	const c = await pgClient();
+	// Whether the bench employee is the signed-in user's own (the "me" reads answer that employee's records only).
+	const employeeOfUser = !!vars.employeeId;
+	const c = (await pgClient()) ?? sqliteClient();
 	if (c) {
-		// The organization with the most employees, so list endpoints return real pages.
-		const org = await c.query(
-			`select o.id from organization o left join employee e on e."organizationId" = o.id
+		// The signed-in employee's organization, where the setup (daily plans, manual time) is accepted for that
+		// employee; a user without an employee record benches the organization with the most employees, so list
+		// endpoints return real pages.
+		const employeeOrganizationId = user.employee?.organizationId;
+		const org = employeeOrganizationId
+			? { rows: [{ id: employeeOrganizationId }] }
+			: await c.query(
+					`select o.id from organization o left join employee e on e."organizationId" = o.id
 			  where o."tenantId" = $1 group by o.id order by count(e.id) desc, min(o."createdAt") limit 1`,
-			[user.tenantId]
-		);
+					[user.tenantId]
+			  );
 		vars.organizationId = org.rows[0]?.id;
 		if (!vars.employeeId) {
 			const emp = await c.query(
@@ -256,10 +281,245 @@ async function resolveContext() {
 			vars.organizationId
 		]);
 		vars.projectId = proj.rows[0]?.id || '';
+		// The team with the most active members (what the Teams app reads on every page), unless TEAM_ID names one.
+		const team = await c.query(
+			`select t.id from organization_team t left join organization_team_employee m on m."organizationTeamId" = t.id
+			  where t."organizationId" = $1 and t."deletedAt" is null group by t.id order by count(m.id) desc, min(t."createdAt") limit 1`,
+			[vars.organizationId]
+		);
+		vars.teamId = env.TEAM_ID || team.rows[0]?.id || '';
 	} else {
 		vars.organizationId = env.ORGANIZATION_ID;
+		vars.teamId = env.TEAM_ID || '';
 	}
-	return { token, vars };
+	Object.assign(vars, dateRangeVars());
+	return { token, vars, employeeOfUser };
+}
+
+/**
+ * The date windows the Teams app sends with its reads: today (timer status, team detail statistics), the last 7
+ * days (timesheet) and the last 30 days (reports), all in UTC, as `{todayStart}` … `{monthStart}`.
+ */
+function dateRangeVars() {
+	const now = new Date();
+	const startOfDay = (d) => new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
+	const todayStart = startOfDay(now);
+	const todayEnd = new Date(todayStart.getTime() + 86_400_000 - 1);
+	const daysAgo = (n) => new Date(todayStart.getTime() - n * 86_400_000);
+	return {
+		todayStart: todayStart.toISOString(),
+		todayEnd: todayEnd.toISOString(),
+		weekStart: daysAgo(7).toISOString(),
+		monthStart: daysAgo(30).toISOString(),
+		timeZone: 'UTC'
+	};
+}
+
+/**
+ * Gives the bench employee the daily plans the Teams app reads on `GET /daily-plan/me` (SETUP_DAILY_PLANS=<n>, one
+ * plan per day back from today, each with up to three of the organization's tasks), when they have fewer than that.
+ * The demo seed creates none. Idempotent: counts the existing plans first.
+ */
+async function setupDailyPlans(ctx) {
+	const wanted = Number(env.SETUP_DAILY_PLANS || 0);
+	if (!wanted) return undefined;
+	// A requested setup that cannot start is still reported, so the run is marked degraded rather than complete.
+	if (!ctx.vars.teamId) {
+		console.warn('  setup: no team resolved, daily plans not created');
+		return { wanted, had: 0, created: 0, plans: 0, degraded: true, reason: 'teamId unavailable' };
+	}
+	const { tenantId, organizationId, employeeId, teamId } = ctx.vars;
+	// `/daily-plan/me` reads the plans of the SIGNED-IN user's employee; plans made for another employee would
+	// never be read by the benchmark.
+	if (!ctx.employeeOfUser) {
+		throw new Error('SETUP_DAILY_PLANS needs a sign-in with an employee record (the plans are read as "mine")');
+	}
+	const headers = { authorization: `Bearer ${ctx.token}`, 'tenant-id': tenantId, 'organization-id': organizationId };
+	const existing = await request(
+		'GET',
+		`/daily-plan/me?where[organizationId]=${organizationId}&where[tenantId]=${tenantId}&where[organizationTeamId]=${teamId}`,
+		{ headers }
+	);
+	const existingPlans = existing.status < 300 ? JSON.parse(existing.body.toString()).items ?? [] : [];
+	const have = existingPlans.length;
+	// One plan per day; a day that already has one is skipped (creating it again answers the existing plan).
+	const plannedDays = new Set(existingPlans.map((plan) => String(plan.date).slice(0, 10)));
+	const tasks = await request(
+		'GET',
+		`/tasks/pagination?where[organizationId]=${organizationId}&where[tenantId]=${tenantId}&take=30&skip=0`,
+		{ headers }
+	);
+	const taskIds = tasks.status < 300 ? (JSON.parse(tasks.body.toString()).items ?? []).map((t) => t.id) : [];
+	let created = 0;
+	for (let day = 0; have + created < wanted && day < wanted + plannedDays.size; day++) {
+		const date = new Date(Date.parse(ctx.vars.todayStart) - day * 86_400_000).toISOString();
+		if (plannedDays.has(date.slice(0, 10))) continue;
+		const taskId = taskIds[day % Math.max(taskIds.length, 1)];
+		const plan = await request('POST', '/daily-plan', {
+			headers,
+			body: {
+				tenantId,
+				organizationId,
+				employeeId,
+				organizationTeamId: teamId,
+				date,
+				workTimePlanned: 8,
+				status: 'open',
+				...(taskId ? { taskId } : {})
+			}
+		});
+		if (plan.status >= 300) {
+			console.warn(`  setup: daily plan for ${date.slice(0, 10)} refused: ${plan.status} ${plan.body?.toString().slice(0, 200)}`);
+			continue;
+		}
+		created++;
+	}
+	// Three tasks per plan, as a planned day usually holds a few: the plans are read back (a freshly created plan is
+	// answered without its id by older API builds) and each short one gets tasks until it holds three.
+	const TASKS_PER_PLAN = 3;
+	let tasksAssigned = 0;
+	let assignmentsRefused = 0;
+	let short = 0;
+	const readBack = await request(
+		'GET',
+		`/daily-plan/me?where[organizationId]=${organizationId}&where[tenantId]=${tenantId}&where[organizationTeamId]=${teamId}&relations[0]=tasks`,
+		{ headers }
+	);
+	const plans = readBack.status < 300 ? JSON.parse(readBack.body.toString()).items ?? [] : [];
+	for (const [index, plan] of plans.entries()) {
+		const held = new Set((plan.tasks ?? []).map((task) => task.id));
+		for (let offset = 0; held.size < TASKS_PER_PLAN && offset < taskIds.length; offset++) {
+			const taskId = taskIds[(index + offset) % taskIds.length];
+			if (held.has(taskId)) continue;
+			const assigned = await request('POST', `/daily-plan/${plan.id}/task`, {
+				headers,
+				body: { tenantId, organizationId, employeeId, taskId }
+			});
+			if (assigned.status >= 300) {
+				assignmentsRefused++;
+				continue;
+			}
+			held.add(taskId);
+			tasksAssigned++;
+		}
+		if (held.size < TASKS_PER_PLAN) short++;
+	}
+	console.log(
+		`  setup: ${created} daily plan(s) created for the bench employee (had ${have}, wanted ${wanted}); ${tasksAssigned} task(s) assigned, ${assignmentsRefused} refused; ${plans.length} plan(s) read back${short ? `, ${short} still short of ${TASKS_PER_PLAN} tasks` : ''}`
+	);
+	const degraded = plans.length < wanted || assignmentsRefused > 0 || short > 0;
+	if (degraded) {
+		console.warn('  setup: the daily-plan benchmarks measure fewer plans or task relations than intended');
+	}
+	return { wanted, had: have, created, plans: plans.length, tasksAssigned, assignmentsRefused, short, degraded };
+}
+
+/**
+ * Gives the bench employee the manual time logs of the last 30 days the timesheet reads return
+ * (SETUP_TIME_LOGS=<n>: n one-hour logs, two per day back from yesterday, in the bench team and project, each
+ * answered with its ten-minute time slots by the API), when they have fewer than that in the team. Idempotent:
+ * counts the team's logs of the window first.
+ */
+async function setupTimeLogs(ctx) {
+	// Short logs (one hour: six ten-minute slots) and long ones (three hours: eighteen slots, the shape of a tracked
+	// working block, which is what made the slot joins explode on production).
+	const plans = [
+		{ wanted: Number(env.SETUP_TIME_LOGS || 0), hours: 1, startHours: [9, 14], label: 'one-hour' },
+		{ wanted: Number(env.SETUP_LONG_TIME_LOGS || 0), hours: 3, startHours: [18, 0], label: 'three-hour' }
+	].filter((plan) => plan.wanted > 0);
+	if (!plans.length) return undefined;
+	if (!ctx.vars.teamId) {
+		console.warn('  setup: no team resolved, time logs not created');
+		return Object.fromEntries(
+			plans.map((plan) => [plan.label, { wanted: plan.wanted, had: 0, created: 0, degraded: true, reason: 'teamId unavailable' }])
+		);
+	}
+	if (!ctx.employeeOfUser) {
+		throw new Error('SETUP_TIME_LOGS needs a sign-in with an employee record (the timer reads answer "my" logs)');
+	}
+	const { tenantId, organizationId, employeeId, teamId, projectId } = ctx.vars;
+	const headers = { authorization: `Bearer ${ctx.token}`, 'tenant-id': tenantId, 'organization-id': organizationId };
+	const existing = await request(
+		'GET',
+		`/timesheet/time-log?tenantId=${tenantId}&organizationId=${organizationId}&startDate=${ctx.vars.monthStart}&endDate=${ctx.vars.todayEnd}&employeeIds[0]=${employeeId}&teamIds[0]=${teamId}`,
+		{ headers }
+	);
+	const logs = existing.status < 300 ? JSON.parse(existing.body.toString()) ?? [] : [];
+	const tasks = await request(
+		'GET',
+		`/tasks/pagination?where[organizationId]=${organizationId}&where[tenantId]=${tenantId}&take=10&skip=0`,
+		{ headers }
+	);
+	const taskIds = tasks.status < 300 ? (JSON.parse(tasks.body.toString()).items ?? []).map((t) => t.id) : [];
+	const outcome = {};
+	for (const plan of plans) {
+		const lengthMs = plan.hours * 3_600_000;
+		const have = logs.filter((log) => Date.parse(log.stoppedAt) - Date.parse(log.startedAt) === lengthMs).length;
+		if (have >= plan.wanted) {
+			outcome[plan.label] = { wanted: plan.wanted, had: have, created: 0, degraded: false };
+			continue;
+		}
+		let created = 0;
+		for (let i = have; i < plan.wanted; i++) {
+			// Two logs a day at the plan's start hours, the day before yesterday first.
+			const day = new Date(Date.parse(ctx.vars.todayStart) - (1 + Math.floor(i / 2)) * 86_400_000);
+			const startedAt = new Date(day.getTime() + plan.startHours[i % 2] * 3_600_000);
+			const log = await request('POST', '/timesheet/time-log', {
+				headers,
+				body: {
+					tenantId,
+					organizationId,
+					employeeId,
+					organizationTeamId: teamId,
+					...(projectId ? { projectId } : {}),
+					...(taskIds.length ? { taskId: taskIds[i % taskIds.length] } : {}),
+					startedAt: startedAt.toISOString(),
+					stoppedAt: new Date(startedAt.getTime() + lengthMs).toISOString(),
+					logType: 'MANUAL',
+					source: 'TEAMS',
+					isBillable: true,
+					description: `bench ${plan.label} log ${i + 1}`
+				}
+			});
+			if (log.status >= 300) {
+				console.warn(`  setup: ${plan.label} log ${i + 1} refused: ${log.status} ${log.body?.toString().slice(0, 200)}`);
+				continue;
+			}
+			created++;
+		}
+		console.log(`  setup: ${created} ${plan.label} time log(s) created for the bench employee (had ${have}, wanted ${plan.wanted})`);
+		outcome[plan.label] = { wanted: plan.wanted, had: have, created, degraded: have + created < plan.wanted };
+	}
+	// Completion is judged on what the month scenarios will read, not on what was created: a log placed before the
+	// measured window (the plan's day index reaches back a day per two logs) counts as missing.
+	const readBack = await request(
+		'GET',
+		`/timesheet/time-log?tenantId=${tenantId}&organizationId=${organizationId}&startDate=${ctx.vars.monthStart}&endDate=${ctx.vars.todayEnd}&employeeIds[0]=${employeeId}&teamIds[0]=${teamId}`,
+		{ headers }
+	);
+	if (readBack.status === 0 || readBack.status >= 300) {
+		// The count is unknown, not zero: the plans are marked degraded with the reason, nothing is aborted.
+		const reason = `time-log read-back failed: status ${readBack.status} ${
+			readBack.error?.message || readBack.body?.toString().slice(0, 200) || ''
+		}`.trim();
+		console.warn(`  setup: ${reason}`);
+		for (const plan of plans) {
+			outcome[plan.label].degraded = true;
+			outcome[plan.label].reason = reason;
+		}
+		return outcome;
+	}
+	const inWindow = JSON.parse(readBack.body.toString()) ?? [];
+	for (const plan of plans) {
+		const lengthMs = plan.hours * 3_600_000;
+		const have = inWindow.filter((log) => Date.parse(log.stoppedAt) - Date.parse(log.startedAt) === lengthMs).length;
+		outcome[plan.label].inWindow = have;
+		if (have < plan.wanted) {
+			outcome[plan.label].degraded = true;
+			console.warn(`  setup: ${have} of ${plan.wanted} ${plan.label} log(s) fall in the measured month window`);
+		}
+	}
+	return outcome;
 }
 
 async function runEndpoint(ep, ctx) {
@@ -350,8 +610,16 @@ async function main() {
 	const scenarios = JSON.parse(fs.readFileSync(scenarioFile, 'utf8'));
 	const ctx = await resolveContext();
 	console.log(
-		`[${LABEL}] base=${BASE} tenant=${ctx.vars.tenantId} org=${ctx.vars.organizationId} employee=${ctx.vars.employeeId} seq=${SEQ} c=${CONCURRENCY} d=${DURATION}s`
+		`[${LABEL}] base=${BASE} tenant=${ctx.vars.tenantId} org=${ctx.vars.organizationId} employee=${ctx.vars.employeeId} team=${ctx.vars.teamId} seq=${SEQ} c=${CONCURRENCY} d=${DURATION}s`
 	);
+	// What the setup achieved goes into the result file: a run on thinner data than intended is marked degraded, so a
+	// comparison never credits the code with what the data set did.
+	const setup = { dailyPlans: await setupDailyPlans(ctx), timeLogs: await setupTimeLogs(ctx) };
+	const degraded =
+		!!setup.dailyPlans?.degraded || Object.values(setup.timeLogs ?? {}).some((plan) => plan.degraded);
+	if (degraded) {
+		console.warn('  setup: INCOMPLETE — this run is marked degraded in the result file');
+	}
 	const results = [];
 	for (const ep of scenarios.endpoints) {
 		if (ONLY && !ONLY.includes(ep.name)) continue;
@@ -379,6 +647,8 @@ async function main() {
 					duration: DURATION,
 					at: new Date().toISOString(),
 					provenance: provenance(),
+					setup,
+					degraded,
 					results
 				},
 				null,

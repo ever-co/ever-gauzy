@@ -16,6 +16,8 @@ export enum InboxItemKindEnum {
 	ESCALATION = 'ESCALATION',
 	/** Read-only information. */
 	NOTICE = 'NOTICE',
+	/** A platform notification (assignment, mention, comment, …) filed as an item of the unified inbox. */
+	NOTIFICATION = 'NOTIFICATION',
 	/** An email of one of my mailboxes (plan 04 §5, P4). */
 	EMAIL = 'EMAIL'
 }
@@ -62,7 +64,9 @@ export enum InboxTabEnum {
 	EMAIL = 'email',
 	/** My items snoozed until a time still to come (hidden from the other tabs until then). */
 	SNOOZED = 'snoozed',
-	ARCHIVED = 'archived'
+	ARCHIVED = 'archived',
+	/** My items marked done (hidden from the open tabs). */
+	DONE = 'done'
 }
 
 /** One option of a QUESTION (or an APPROVAL / ESCALATION that offers choices). */
@@ -121,11 +125,17 @@ export interface IInboxItemRecipient extends IBasePerTenantAndOrganizationEntity
 	/** `isArchived` / `archivedAt` (the base columns) are this recipient's archive state. */
 	snoozedUntil?: Date | null;
 	deliveredAt?: Date | null;
+	/** When this recipient marked the item done (hidden from the open tabs; found in the Done tab). */
+	doneAt?: Date | null;
 }
 
 /** An item with the caller's own recipient state (the list and detail answers). */
 export interface IInboxItemWithState extends IInboxItem {
-	recipient: Pick<IInboxItemRecipient, 'isRead' | 'readAt' | 'isArchived' | 'archivedAt' | 'snoozedUntil'> | null;
+	recipient:
+		| (Pick<IInboxItemRecipient, 'isRead' | 'readAt' | 'isArchived' | 'archivedAt' | 'snoozedUntil' | 'doneAt'> & {
+				isDone?: boolean;
+		  })
+		| null;
 }
 
 /** `GET /inbox/items` filters. */
@@ -155,6 +165,8 @@ export interface IInboxItemPage {
 export interface IInboxItemCounts {
 	unread: number;
 	decisionsOpen: number;
+	/** My unread email items, whichever mailbox they belong to — or none (a mirrored email of a source). */
+	emailUnread: number;
 	byMailbox: Array<{ mailboxId: ID; unread: number }>;
 }
 
@@ -170,6 +182,8 @@ export interface IInboxRecipientStateInput {
 	isArchived?: boolean;
 	/** ISO date-time; `null` un-snoozes. */
 	snoozedUntil?: Date | string | null;
+	/** Done: hidden from the open tabs, kept in the Done tab; `false` brings it back. */
+	isDone?: boolean;
 }
 
 /** One recipient of an item a source creates, with the state it already has there (if any). */
@@ -277,7 +291,13 @@ export const INBOX_SOURCE_HANDLER_REGISTRY = 'INBOX_SOURCE_HANDLER_REGISTRY';
 export const INBOX_ITEM_WRITER = 'INBOX_ITEM_WRITER';
 
 /** The recipient state a change stated (`IInboxItemChange.stated`). */
-export type IInboxRecipientStateField = 'isRead' | 'isArchived' | 'snoozedUntil';
+export type IInboxRecipientStateField = 'isRead' | 'isArchived' | 'snoozedUntil' | 'isDone';
+
+/**
+ * The `externalSource` of the items the Inbox files for the platform's own employee notifications (the unified
+ * inbox): `externalId` is the notification's id, so the two stay one fact with one read state.
+ */
+export const INBOX_NOTIFICATION_EXTERNAL_SOURCE = 'gauzy-notification';
 
 /**
  * What changed in the Inbox (`IInboxItemObserver.changed`): an item itself (created, re-delivered by its source,
@@ -388,6 +408,80 @@ export interface IInboxItemFeed {
 export interface IInboxRecipientActions {
 	reply(id: ID, input: IInboxReplyInput): Promise<IInboxItemWithState>;
 	setState(id: ID, input: IInboxRecipientStateInput): Promise<IInboxItemWithState>;
+}
+
+/** How an entry reaches a person beyond the in-app list (the Inbox spec, "Preferences and channels"). */
+export enum InboxDeliveryChannelEnum {
+	EMAIL = 'email',
+	/** Web push to the person's subscribed browsers (FR-13). */
+	PUSH = 'push'
+}
+
+/** What the delivery decided for one entry and one person: nothing, an email at once, or a place in the daily digest. */
+export enum InboxDeliveryModeEnum {
+	NONE = 'none',
+	IMMEDIATE = 'immediate',
+	DIGEST = 'digest'
+}
+
+/**
+ * One decision of the delivery lane (`inbox_delivery`, `@gauzy/plugin-inbox`): an entry, a person, a channel, what
+ * was decided from the person's preferences, when it is due, and whether it went out. The row is the outbox: the
+ * worker's sweep writes it once per entry and person, sends what is due, and records the attempt.
+ */
+export interface IInboxDelivery extends IBasePerTenantAndOrganizationEntityModel {
+	inboxItemId: ID;
+	userId: ID;
+	/** The employee whose preferences decided it, when the entry names one. */
+	employeeId?: ID | null;
+	channel: InboxDeliveryChannelEnum;
+	mode: InboxDeliveryModeEnum;
+	/** The notification type the preferences were read for (`Assignment`, `Mention`, …). */
+	notificationType?: string | null;
+	/** When it is to go out: at once, after the do-not-disturb window, or at the next digest hour. */
+	dueAt?: Date | null;
+	/** The digest's day (`YYYY-MM-DD` in the person's time zone): one email per person per day. */
+	digestKey?: string | null;
+	sentAt?: Date | null;
+	attempts: number;
+	nextAttemptAt?: Date | null;
+	lastError?: string | null;
+	/** Given up after the last attempt. */
+	failedAt?: Date | null;
+}
+
+/**
+ * One browser or device a person subscribed to the Inbox's web push (`inbox_push_subscription`, the Inbox spec FR-13),
+ * as the browser's `PushSubscription` gives it. The person's own: registered, listed and removed by them; pushed to
+ * by the delivery sweep; removed when the push service no longer knows it or after repeated failures.
+ */
+export interface IInboxPushSubscription extends IBasePerTenantAndOrganizationEntityModel {
+	userId: ID;
+	employeeId?: ID | null;
+	/** The push service's endpoint of the device. */
+	endpoint: string;
+	/** The device's own keys. */
+	p256dh: string;
+	auth: string;
+	expirationTime?: Date | null;
+	/** The device's name for the list (the browser's user agent, as the client states it). */
+	userAgent?: string | null;
+	lastUsedAt?: Date | null;
+	/** Consecutive failed pushes; the subscription is removed at `INBOX_PUSH_MAX_FAILURES`. */
+	failures: number;
+}
+
+/** `POST /inbox/push-subscriptions`: the browser's `PushSubscription.toJSON()`, plus the device's name. */
+export interface IInboxPushSubscriptionInput {
+	endpoint: string;
+	keys: { p256dh: string; auth: string };
+	expirationTime?: number | null;
+	userAgent?: string | null;
+}
+
+/** `GET /inbox/push-subscriptions/public-key`: the VAPID public key a browser subscribes with. */
+export interface IInboxPushPublicKey {
+	publicKey: string;
 }
 
 /** Tokens of the observer seam and of the recipient actions, provided by `@gauzy/plugin-inbox` when it is loaded. */

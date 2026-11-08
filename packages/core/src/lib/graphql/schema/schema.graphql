@@ -2728,6 +2728,48 @@ type Query {
   taskByNumber(prefix: String!, number: Int!, projectId: ID): Task
 
   """
+  The tasks of a built-in view — `mine`, `thisWeek`, `overdue`, `dueSoon` — computed by the platform for
+  the caller in the caller's time zone, as `GET /tasks/built-in/:key` answers them: the caller's own open
+  tasks, due in the window the view names, soonest due first. The delivered reader answers at most 200
+  rows, within which the connection pages. Served only where the task views extensions are enabled
+  (`GAUZY_TASK_VIEWS_ENABLED`); refused as not found otherwise, as the route is.
+  """
+  builtInViewTasks(
+    view: TaskBuiltInView!
+
+    """The organization the view is read in; the credential's when omitted."""
+    organizationId: ID
+
+    """IANA time zone the day and week bounds are taken in (default UTC)."""
+    timeZone: String
+    filter: TaskFilter
+    sort: [TaskSort!]
+    page: PageInput
+    first: Int
+    after: String
+    last: Int
+    before: String
+    limit: Int
+    offset: Int
+  ): TaskConnection!
+
+  """
+  `KEY-number` references (`API-42`) resolved to the tasks they name — by the project's key, its former
+  keys, or the key derived from its name — one resolution per reference, in request order, at most fifty.
+  A reference nobody answers to resolves to nothing; one that two projects answer to is reported ambiguous
+  rather than guessed. Mirrors `POST /tasks/resolve-references`; served only where the task views
+  extensions are enabled.
+  """
+  resolveTaskReferences(
+    references: [String!]!
+
+    """
+    The organization the references are resolved in; the credential's when omitted.
+    """
+    organizationId: ID
+  ): [TaskReferenceResolution!]!
+
+  """
   The estimates the caller's tenant holds. One task's estimates are this connection with `taskId` in
   `filter`.
   """
@@ -2759,6 +2801,42 @@ type Query {
 
   """How many saved views the caller's tenant holds."""
   taskViewCount: Int
+
+  """
+  The tasks of a saved view, as `GET /task-views/:id/tasks` serves them: the view's filter tree (or
+  `filter`, an unsaved edit of it) over the tasks the caller may list, a keyset page with a cursor, the
+  counts per group, relative dates resolved in `timeZone`, and the conditions the platform could not apply
+  reported in `invalidFilters` rather than refused — a filter on a deleted label loads the view without it
+  and says so.
+  
+  Not `tasksByView`: that field replays the filter set the older `queryParams` document stores; this one
+  reads the view's `filterOptions` tree, pages by keyset and counts the groups. Served only where the task
+  views extensions are enabled.
+  """
+  taskViewTasks(
+    viewId: ID!
+
+    """The organization the view is read in; the view's own when omitted."""
+    organizationId: ID
+
+    """
+    A filter tree instead of the view's: an and / or group of conditions, as `filterOptions.filter` holds it.
+    """
+    filter: JSON
+    groupBy: TaskViewGroupBy
+
+    """IANA time zone the relative dates are resolved in (default UTC)."""
+    timeZone: String
+
+    """The cursor the previous page answered."""
+    cursor: String
+
+    """How many tasks the page carries (default 50, at most 200)."""
+    limit: Int
+
+    """The relations the tasks carry, from the built-in views' allowlist."""
+    relations: [String!]
+  ): TaskViewTasksPage!
 
   """The days planned in the caller's tenant and organization."""
   dailyPlans(filter: DailyPlanFilter, sort: [DailyPlanSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int): DailyPlanConnection!
@@ -9134,6 +9212,22 @@ type Mutation {
   recoverTask(id: ID!): Task!
 
   """
+  Assigns one employee to one task and writes nothing else on it. Mirrors
+  `PUT /tasks/:id/members/:employeeId`, in the caller's own organization.
+  
+  An employee may assign themselves; assigning someone else needs an organization admin or a manager
+  of the task's team. An employee already on the task is a no-op.
+  """
+  addTaskMember(taskId: ID!, employeeId: ID!): Boolean!
+
+  """
+  Takes one employee off one task and writes nothing else on it. Mirrors
+  `DELETE /tasks/:id/members/:employeeId`, under the same rule as `addTaskMember`. An employee who is
+  not on the task is a no-op.
+  """
+  removeTaskMember(taskId: ID!, employeeId: ID!): Boolean!
+
+  """
   Takes one employee off every task of one team.
   
   The delivered route answers nothing at all — it is a statement about the tasks it touched rather
@@ -9141,6 +9235,15 @@ type Mutation {
   carries.
   """
   unassignEmployeeFromTeamTasks(employeeId: ID!, organizationTeamId: ID!): Boolean!
+
+  """
+  Changes many tasks in one request — one change for up to 100 tasks (`taskIds` + `changes`), or a change
+  per task (`items`, how an undo sends the previous values back) — every task through the same command
+  `updateTask` dispatches, with one result per task and the values before the change. Mirrors
+  `POST /tasks/bulk-update` under its permission and cap: refused with `BULK_LIMIT_EXCEEDED` over it, and
+  as not found where the task views extensions are off.
+  """
+  bulkUpdateTasks(input: TaskBulkUpdateInput!): TaskBulkUpdatePayload!
 
   """Records an estimate for a task."""
   createTaskEstimation(input: CreateTaskEstimationInput!): TaskEstimation!
@@ -9190,6 +9293,13 @@ type Mutation {
 
   """Puts a withdrawn view back."""
   recoverTaskView(id: ID!): TaskView!
+
+  """
+  Writes the order a view shows its tasks in — the task ids in display order, at most 5000 — refused with
+  `TASK_VIEW_VERSION_CONFLICT` when `expectedVersion` is not the version stored. Mirrors
+  `PUT /task-views/:id/order`; served only where the task views extensions are enabled.
+  """
+  setTaskViewOrder(id: ID!, input: TaskViewOrderInput!): TaskView!
 
   """Opens a day's plan."""
   createDailyPlan(input: CreateDailyPlanInput!): DailyPlan!
@@ -19628,7 +19738,7 @@ type EmployeeNotification {
 
   """
   The kind of notification, as the vocabulary's own value: `Payment`, `Assignment`, `Invitation`,
-  `Mention`, `Comment`, `Message` or `Broadcast`. The value is the column's own, which is why it is
+  `Mention`, `Comment`, `Message`, `Broadcast` or `RateChangeRequest`. The value is the column's own, which is why it is
   carried as text rather than as an enum declared here.
   """
   type: String
@@ -19769,7 +19879,7 @@ input CreateEmployeeNotificationInput {
   message: String
 
   """
-  The kind of notification, as the vocabulary's own value — `Payment`, `Assignment`, `Invitation`, `Mention`, `Comment`, `Message` or `Broadcast`.
+  The kind of notification, as the vocabulary's own value — `Payment`, `Assignment`, `Invitation`, `Mention`, `Comment`, `Message`, `Broadcast` or `RateChangeRequest`.
   """
   type: String
 
@@ -27616,7 +27726,6 @@ input InvoiceFilter {
   alreadyPaid: DecimalFilter
   amountDue: DecimalFilter
   hasRemainingAmountInvoiced: BooleanFilter
-  token: StringFilter
   paymentTermId: IDFilter
   vendorId: IDFilter
   fromOrganizationId: IDFilter
@@ -33665,7 +33774,11 @@ type Organization {
   """Whether a manually recorded time entry must carry a description."""
   requireDescription: Boolean!
 
-  """Whether a time entry must name a project."""
+  """
+  Whether a new time entry must name a project. The server checks timer starts and time recorded by hand, not stops
+  or edits of existing logs. It files an entry without one under its task's project, then its team's default project,
+  and refuses it otherwise, except what a client sends with source `DESKTOP` (the desktop timer and the agent).
+  """
   requireProject: Boolean!
 
   """Whether a time entry must name a task."""
@@ -33673,6 +33786,14 @@ type Organization {
 
   """Whether a time entry must name a client."""
   requireClient: Boolean!
+
+  """
+  Whether a new time entry must name a team. The server checks timer starts and time recorded by hand, not stops or
+  edits of existing logs. It files an entry without one under the employee's team when they have exactly one active
+  team in the organization (inactive, archived or deleted teams do not count), and refuses it otherwise, except what
+  a client sends with source `DESKTOP` (the desktop timer and the agent).
+  """
+  requireTeam: Boolean!
 
   """Whether the organization renders times on a 12- or a 24-hour clock."""
   timeFormat: Int!
@@ -38302,16 +38423,12 @@ input SharedEntitySort {
 The fields a share list may be narrowed by. `and` is the default; `or` requires any of its members and
 `not` excludes the rows that match it.
 
-A share's own token is filterable, and that is deliberate rather than a leak: the list is
-tenant-guarded, and the filter runs over the rows as the caller reads them, so it only matches a
-token the row already answers — one of a share the caller manages. What it is *not* is a way to
-resolve the shared record — that is the token read, and its answer is the target rather than a
-`SharedEntity`.
+A share's token is not filterable: it is a secret, like every credential column. Reading the shared
+record by its token is the token read, whose answer is the target rather than a `SharedEntity`.
 """
 input SharedEntityFilter {
   id: IDFilter
   organizationId: IDFilter
-  token: StringFilter
   entity: StringFilter
   entityId: IDFilter
   shareRules: JSONFilter
@@ -40181,6 +40298,17 @@ type TaskView {
   Whether the view is protected from edits. The delivered create never sets it and the column is not updateable.
   """
   isLocked: Boolean
+
+  """
+  Bumped by every save. `updateTaskView` and `setTaskViewOrder` refuse a stated `expectedVersion` that is not this
+  one (`TASK_VIEW_VERSION_CONFLICT`), so a client reads it before a save and gets the bumped one back.
+  """
+  version: Int
+
+  """
+  The task ids in the order the view shows them (a manual ordering), as `setTaskViewOrder` wrote them.
+  """
+  manualOrder: [ID!]
   projectId: ID
   organizationTeamId: ID
   projectModuleId: ID
@@ -40261,6 +40389,11 @@ What a caller states when it changes a saved view. Every member but the identifi
 """
 input UpdateTaskViewInput {
   id: ID!
+
+  """
+  The version the client read; the save is refused when the view moved on (`TASK_VIEW_VERSION_CONFLICT`).
+  """
+  expectedVersion: Int
   organizationId: ID
   name: String
   description: String
@@ -40273,6 +40406,195 @@ input UpdateTaskViewInput {
   organizationTeamId: ID
   projectModuleId: ID
   organizationSprintId: ID
+}
+
+"""
+The views the platform computes without saving, as `builtInViewTasks` names them.
+"""
+enum TaskBuiltInView {
+  """The caller's open tasks."""
+  mine
+
+  """The caller's open tasks due this week."""
+  thisWeek
+
+  """The caller's open tasks whose due date has passed."""
+  overdue
+
+  """The caller's open tasks due in the next seven days."""
+  dueSoon
+}
+
+"""One `KEY-number` reference as `resolveTaskReferences` answers it."""
+type TaskReferenceResolution {
+  """The reference as it was sent."""
+  reference: String!
+  key: String!
+  number: Int!
+  resolved: Boolean!
+
+  """
+  More than one project answers to the key with that number: refused rather than guessed.
+  """
+  ambiguous: Boolean
+  taskId: ID
+  projectId: ID
+  title: String
+  status: String
+
+  """The key the task is addressed by today (the project's current key)."""
+  currentKey: String
+}
+
+"""
+What a bulk update changes on a task. A member sent as null is cleared; a list named `set…` replaces the
+task's, `add…` and `remove…` adjust it.
+"""
+input TaskBulkChangesInput {
+  status: String
+  taskStatusId: ID
+  priority: String
+  taskPriorityId: ID
+  size: String
+  taskSizeId: ID
+  addTagIds: [ID!]
+  removeTagIds: [ID!]
+  setTagIds: [ID!]
+  addMemberIds: [ID!]
+  removeMemberIds: [ID!]
+  setMemberIds: [ID!]
+  projectId: ID
+  organizationSprintId: ID
+  dueDate: DateTime
+  isArchived: Boolean
+}
+
+"""
+One task and the change it takes — how an undo sends the previous values back.
+"""
+input TaskBulkUpdateItemInput {
+  taskId: ID!
+  changes: TaskBulkChangesInput!
+}
+
+"""
+What `bulkUpdateTasks` takes: one change for many tasks (`taskIds` + `changes`), or a change per task
+(`items`); never both.
+"""
+input TaskBulkUpdateInput {
+  """The organization the tasks belong to; the credential's when omitted."""
+  organizationId: ID
+  taskIds: [ID!]
+  changes: TaskBulkChangesInput
+  items: [TaskBulkUpdateItemInput!]
+}
+
+"""
+The values a task held before a bulk update changed them, as the changes that put them back.
+"""
+type TaskBulkChanges {
+  status: String
+  taskStatusId: ID
+  priority: String
+  taskPriorityId: ID
+  size: String
+  taskSizeId: ID
+  addTagIds: [ID!]
+  removeTagIds: [ID!]
+  setTagIds: [ID!]
+  addMemberIds: [ID!]
+  removeMemberIds: [ID!]
+  setMemberIds: [ID!]
+  projectId: ID
+  organizationSprintId: ID
+  dueDate: DateTime
+  isArchived: Boolean
+}
+
+"""One task's outcome in a bulk update."""
+type TaskBulkUpdateResult {
+  taskId: ID!
+  ok: Boolean!
+
+  """
+  Why the task was not changed (not found, not this organization's, refused by the update).
+  """
+  error: String
+
+  """The values before the change, as the changes that put them back."""
+  previous: TaskBulkChanges
+}
+
+"""
+What a bulk update adds up to: `applied + refused` is how many entries `results` holds.
+"""
+type TaskBulkUpdatePayload {
+  applied: Int!
+  refused: Int!
+
+  """One entry per task, in request order."""
+  results: [TaskBulkUpdateResult!]!
+}
+
+"""The order a view shows its tasks in, as `setTaskViewOrder` takes it."""
+input TaskViewOrderInput {
+  """The organization the view belongs to; the credential's when omitted."""
+  organizationId: ID
+
+  """Task ids in display order, at most 5000."""
+  taskIds: [ID!]!
+
+  """The version the client read; refused when stale."""
+  expectedVersion: Int
+}
+
+"""How a view's tasks are grouped for the counts `taskViewTasks` answers."""
+enum TaskViewGroupBy {
+  none
+  status
+  priority
+  size
+  project
+  sprint
+  assignee
+  team
+  label
+}
+
+"""
+One group of a view's tasks: the key (an id, or null for the tasks without one), its name when known, and
+how many.
+"""
+type TaskViewGroupCount {
+  key: ID
+  label: String
+  count: Int!
+}
+
+"""
+A condition the platform could not apply: where it is in the tree (`filter.conditions.0.conditions.2`),
+and why — `unknown-field`, `unknown-operator`, `malformed`, or `deleted-reference` with the ids that no
+longer exist (the condition was applied without them).
+"""
+type TaskViewInvalidFilter {
+  path: String!
+  field: String
+  reason: String!
+  values: [ID!]
+}
+
+"""
+One page of a view's tasks, as `taskViewTasks` answers it: the tasks, the cursor of the next page (null on
+the last one), how many tasks the filter selects, the counts per group when a grouping was asked for (the
+view's, or the query's), and the conditions that could not be applied.
+"""
+type TaskViewTasksPage {
+  items: [Task!]!
+  nextCursor: String
+  total: Int!
+  groups: [TaskViewGroupCount!]
+  groupBy: TaskViewGroupBy!
+  invalidFilters: [TaskViewInvalidFilter!]!
 }
 
 """
@@ -41427,6 +41749,12 @@ type TimeOffPolicy {
 
   """Whether this is the organization's default policy."""
   isDefault: Boolean
+
+  """
+  Whether approving a request refuses it when an employee's leave balance for this policy cannot cover the
+  request's working days. Off by default: the approval goes through and the balance is overdrawn.
+  """
+  requireSufficientBalance: Boolean
   tenantId: ID
   organizationId: ID
   isActive: Boolean
@@ -41550,6 +41878,7 @@ input CreateTimeOffPolicyInput {
   """The accrual period, as the contracts package's vocabulary states it."""
   accrualFrequency: String
   isDefault: Boolean
+  requireSufficientBalance: Boolean
 }
 
 """
@@ -41574,6 +41903,7 @@ input UpdateTimeOffPolicyInput {
   accrualRate: Decimal
   accrualFrequency: String
   isDefault: Boolean
+  requireSufficientBalance: Boolean
 }
 
 """One stretch of leave asked for under a policy."""
@@ -43597,6 +43927,13 @@ input CreateManualTimeLogInput {
   """The client to attribute the work to."""
   organizationContactId: ID
 
+  """
+  The team to attribute the work to. An organization that requires a team refuses an entry without one, unless the
+  employee has exactly one active team in the organization, which the entry is then filed under. Inactive, archived
+  or deleted teams do not count.
+  """
+  organizationTeamId: ID
+
   """What was worked on."""
   description: String
 
@@ -44205,6 +44542,12 @@ input TimerToggleInput {
 
   """The tags to file the log under, by the tag identifiers' text form."""
   tags: [String!]
+
+  """
+  The member's current day, as `YYYY-MM-DD`. When the team requires a daily plan, an Ever Teams start
+  (`TEAMS`, `MOBILE`) needs a plan for that day. Ignored unless it is today somewhere.
+  """
+  planDay: String
 }
 
 """

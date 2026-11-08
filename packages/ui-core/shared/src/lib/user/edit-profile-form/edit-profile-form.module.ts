@@ -8,7 +8,9 @@ import {
 	NbSelectModule,
 	NbInputModule,
 	NbBadgeModule,
-	NbFormFieldModule
+	NbFormFieldModule,
+	NbSpinnerModule,
+	NbTooltipModule
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { TranslatePipe } from '@ngx-translate/core';
@@ -35,6 +37,8 @@ import { TimeZoneSelectorModule } from '../../modules/selectors';
 		NbSelectModule,
 		NbBadgeModule,
 		NbFormFieldModule,
+		NbSpinnerModule,
+		NbTooltipModule,
 		NgSelectModule,
 		TagsColorInputModule,
 		UserFormsModule,

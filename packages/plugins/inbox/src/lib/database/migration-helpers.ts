@@ -173,6 +173,48 @@ export function sqliteForeignKeys(prefix: string): string {
 		.join(', ');
 }
 
+/** Whether a column of that name exists on the table. */
+export async function hasColumn(queryRunner: QueryRunner, table: string, column: string): Promise<boolean> {
+	const dialect = dialectOf(queryRunner);
+	if (dialect === 'postgres') {
+		const rows = await queryRunner.query(
+			`SELECT 1 FROM information_schema.columns WHERE table_schema = current_schema() AND table_name = $1 AND column_name = $2`,
+			[table, column]
+		);
+		return rows.length > 0;
+	}
+	if (dialect === 'mysql') {
+		const rows = await queryRunner.query(
+			'SELECT 1 FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ? LIMIT 1',
+			[table, column]
+		);
+		return rows.length > 0;
+	}
+	const rows: Array<{ name: string }> = await queryRunner.query(`PRAGMA table_info("${table}")`);
+	return rows.some((row) => row.name === column);
+}
+
+/**
+ * Adds a nullable column when it does not exist (re-running issues no DDL). `type` is given per dialect family,
+ * as each `CREATE TABLE` of this plugin spells it.
+ */
+export async function addColumnIfMissing(
+	queryRunner: QueryRunner,
+	table: string,
+	column: string,
+	type: { postgres: string; mysql: string; sqlite: string }
+): Promise<void> {
+	if (await hasColumn(queryRunner, table, column)) return;
+	const dialect = dialectOf(queryRunner);
+	try {
+		await queryRunner.query(`ALTER TABLE ${q(dialect, table)} ADD COLUMN ${q(dialect, column)} ${type[dialect]}`);
+	} catch (error) {
+		// Another process (the API and the worker start together) added it between the probe and here.
+		if (await hasColumn(queryRunner, table, column)) return;
+		throw error;
+	}
+}
+
 /** Drops the table when it exists (its indexes and constraints go with it). */
 export async function dropTableIfExists(queryRunner: QueryRunner, table: string): Promise<void> {
 	await queryRunner.query(`DROP TABLE IF EXISTS ${q(dialectOf(queryRunner), table)}`);

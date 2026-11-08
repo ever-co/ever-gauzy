@@ -64,3 +64,36 @@ export function teamRoleAfterEdit(
 
 	return grantsManagement ? null : current;
 }
+
+type FlaggableMembership = Pick<OrganizationTeamEmployee, 'employeeId' | 'isManager' | 'isActive' | 'isArchived'>;
+
+function isCurrentFlaggedManager(member: FlaggableMembership, employeeId: ID): boolean {
+	const isCaller = member.employeeId === employeeId;
+	const isFlagged = member.isManager === true;
+	const isCurrent = member.isActive !== false && member.isArchived !== true;
+	return isCaller && isFlagged && isCurrent;
+}
+
+/**
+ * Whether the caller may give members of a team the `isManager` flag, which lets a manager act for the team's members
+ * (ManagedEmployeeService). A caller who may act for every employee may, on any team. A manager who holds the flag on
+ * this team may too, on this team only: its members are already theirs to act for. The manager role alone never
+ * grants it, since any employee who creates a team gets that role over the colleagues they pick.
+ *
+ * @param teamMembers - The team's memberships, the caller's included.
+ * @param callerEmployeeId - The caller's employee, or `null` when they have none.
+ * @param actsForEveryEmployee - Whether the caller holds CHANGE_SELECTED_EMPLOYEE.
+ */
+export function mayFlagTeamManagers(
+	teamMembers: ReadonlyArray<FlaggableMembership>,
+	callerEmployeeId: ID | null,
+	actsForEveryEmployee: boolean
+): boolean {
+	if (actsForEveryEmployee) {
+		return true;
+	}
+	if (!callerEmployeeId) {
+		return false;
+	}
+	return teamMembers.some((member) => isCurrentFlaggedManager(member, callerEmployeeId));
+}

@@ -6,7 +6,7 @@ import {
 	Injectable,
 	NotFoundException
 } from '@nestjs/common';
-import { DeleteResult, FindOptionsWhere, SelectQueryBuilder, UpdateResult } from 'typeorm';
+import { DeleteResult, FindOptionsRelations, FindOptionsWhere, SelectQueryBuilder, UpdateResult } from 'typeorm';
 import { isUUID } from 'class-validator';
 import * as moment from 'moment';
 import {
@@ -19,7 +19,6 @@ import {
 	IPagination,
 	PermissionsEnum
 } from '@gauzy/contracts';
-import { isBetterSqlite3, isSqlite } from '@gauzy/config';
 import { isNotEmpty } from '@gauzy/utils';
 import { prepareSQLQuery as p } from '../../database/database.helper';
 import { BaseQueryDTO, TenantAwareCrudService } from '../../core/crud';
@@ -29,60 +28,26 @@ import { EmployeeService } from '../../employee/employee.service';
 import { ManagedEmployeeService } from '../../employee/managed-employee.service';
 import { TaskService } from '../task.service';
 import { DailyPlan } from './daily-plan.entity';
+import { storedDayStart, storedPlanDay } from './daily-plan-stored-day';
+import { dayIfTodaySomewhere } from './daily-plan-caller-day';
 import { MikroOrmDailyPlanRepository } from './repository/mikro-orm-daily-plan.repository';
 import { TypeOrmDailyPlanRepository } from './repository/type-orm-daily-plan.repository';
+import { assertCallerColumnsAllowed } from '../../core/util/caller-restricted-columns.helper';
 
 const hasTask = (plan: IDailyPlan, taskId: ID): boolean => plan.tasks.some((task) => task.id === taskId);
 
 /**
- * Whether plan dates are stored in UTC. TypeORM writes a SQLite datetime as a UTC string, while on
- * PostgreSQL and MySQL it hands the Date to the driver, which writes it in the API process's local time.
- */
-const storesDatesInUtc = (): boolean => isSqlite() || isBetterSqlite3();
-
-/**
- * The day a plan dated `date` is stored under, as `YYYY-MM-DD`: the date part of the stored value, which is
- * what the unique index keys on. It is the UTC day on SQLite and on a process running in UTC, the usual
- * deployment, and the process's local day otherwise.
- */
-const storedPlanDay = (date: Date | string): string =>
-	(storesDatesInUtc() ? moment.utc(date) : moment(date)).format('YYYY-MM-DD');
-
-/**
- * The instant a stored day starts, for a bound passed to the database as a Date, which the driver writes the
- * same way as the plan dates.
- */
-const storedDayStart = (day: string): Date =>
-	(storesDatesInUtc() ? moment.utc(day, 'YYYY-MM-DD') : moment(day, 'YYYY-MM-DD')).toDate();
-
-/** From UTC-12 to UTC+14, the current day of every time zone is at most one day away from the UTC date. */
-const MAX_DAYS_FROM_UTC_DATE = 1;
-
-/**
- * The first plan day a bulk task removal changes, as `YYYY-MM-DD`. Plans are stored on the user's own calendar day,
- * so the caller may send its current day. A value that is not a valid day that is today somewhere is ignored, and
- * the UTC date stays the cutoff, as for a caller that sends nothing.
+ * The first plan day a bulk task removal changes, as `YYYY-MM-DD`. The caller may send its current day. A value that
+ * is not a valid day that is today somewhere is ignored, and the UTC date stays the cutoff, as for a caller that
+ * sends nothing.
  */
 const removalCutoffDay = (callerToday: unknown): string => {
-	const utcToday = moment.utc().startOf('day');
-	const utcDay = utcToday.format('YYYY-MM-DD');
-
-	if (typeof callerToday !== 'string') {
-		return utcDay;
+	const callerDay = dayIfTodaySomewhere(callerToday);
+	if (callerDay) {
+		return callerDay;
 	}
 
-	const callerDay = moment.utc(callerToday, 'YYYY-MM-DD', true);
-	const isValidDay = callerDay.isValid();
-	const daysFromUtcToday = callerDay.diff(utcToday, 'days');
-	const distanceInDays = Math.abs(daysFromUtcToday);
-	const isTodaySomewhere = distanceInDays <= MAX_DAYS_FROM_UTC_DATE;
-	const isCallerToday = isValidDay && isTodaySomewhere;
-
-	if (!isCallerToday) {
-		return utcDay;
-	}
-
-	return callerDay.format('YYYY-MM-DD');
+	return moment.utc().format('YYYY-MM-DD');
 };
 
 @Injectable()
@@ -95,6 +60,38 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 		private readonly _managedEmployeeService: ManagedEmployeeService
 	) {
 		super(typeOrmDailyPlanRepository, mikroOrmDailyPlanRepository);
+	}
+
+	/**
+	 * How the relations of a plan list are loaded under TypeORM.
+	 *
+	 * Joined onto the plan rows (TypeORM's default), the relations the Teams app asks for on every list
+	 * (`employee.user`, `tasks.members.user`) multiply each plan by its tasks and each task by its members,
+	 * and a relation the query already joins for its own conditions (`tasks`) is joined a second time: on
+	 * production `GET /daily-plan/me` answered 49 plans as 2,033 joined rows, which the API then hydrated on
+	 * the event loop (1,348 calls at 1.7 s mean, 23 s max). Loaded with one query per relation instead, the
+	 * plans come back once each and every relation is filled in exactly as before.
+	 */
+	private static readonly RELATION_LOAD_STRATEGY: 'query' = 'query';
+
+	/**
+	 * The relations a plan list loads: the ones every list always loaded (`employee`, `tasks`) and the ones
+	 * the caller asks for, as one nested object. A deeper request (`employee.user`) keeps its depth.
+	 *
+	 * @param always - The relations the list loads whatever the caller asks.
+	 * @param requested - The caller's relations, as sent (`employee.user`) or already nested.
+	 */
+	private static listRelations(
+		always: Record<string, true>,
+		requested: string[] | FindOptionsRelations<DailyPlan> | undefined
+	): FindOptionsRelations<DailyPlan> {
+		const merged: Record<string, unknown> = { ...always };
+		for (const [relation, value] of Object.entries(parseFindOptionsRelations<DailyPlan>(requested) ?? {})) {
+			if (value) {
+				merged[relation] = value;
+			}
+		}
+		return merged as FindOptionsRelations<DailyPlan>;
 	}
 
 	/**
@@ -149,8 +146,9 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 					tasks: task ? [task] : []
 				});
 				try {
-					await this.save(newPlan);
-					return newPlan;
+					// The saved plan, with its generated id: the object passed in is not given one, so a client that
+					// created a plan was answered one it could not address (add a task to, update, delete).
+					return (await this.save(newPlan)) ?? newPlan;
 				} catch (error) {
 					// Only one plan per employee, team and day can exist. When a concurrent request created
 					// it after the lookup above, this insert is refused and the task goes to that plan.
@@ -282,6 +280,7 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 		// Builds its own query, so the check in the CRUD read methods never runs: assert the
 		// sensitive-relation table on the client-supplied relations before anything is loaded.
 		this.assertRelationsPermitted(options);
+		assertCallerColumnsAllowed(this.typeOrmRepository?.metadata, options);
 		const organizationTeamId = await this.resolveReadableTeam(options, employeeId);
 
 		try {
@@ -308,9 +307,15 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 					// Create the initial query
 					const query = this.typeOrmDailyPlanRepository.createQueryBuilder(this.tableName);
 
-					// Join related entities
-					query.leftJoin(`${query.alias}.employee`, 'employee');
-					query.leftJoin(`${query.alias}.tasks`, 'tasks');
+					const loadsRelations = isNotEmpty(options) && isNotEmpty(options.relations);
+
+					// Join related entities. Not when the relations are loaded with their own queries (see
+					// RELATION_LOAD_STRATEGY): a bare join on `tasks` still answered one plan row per task, and a
+					// condition on a relation gets its join from TypeORM itself.
+					if (!loadsRelations) {
+						query.leftJoin(`${query.alias}.employee`, 'employee');
+						query.leftJoin(`${query.alias}.tasks`, 'tasks');
+					}
 
 					// Apply optional find options if provided
 					query.setFindOptions({
@@ -318,10 +323,11 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 							isNotEmpty(options.where) && {
 								where: options.where
 							}),
-						...(isNotEmpty(options) &&
-							isNotEmpty(options.relations) && {
-								relations: parseFindOptionsRelations(options.relations)
-							})
+						...(loadsRelations && {
+							relations: parseFindOptionsRelations(options.relations),
+							// See RELATION_LOAD_STRATEGY: the relations are not joined onto the plan rows.
+							relationLoadStrategy: DailyPlanService.RELATION_LOAD_STRATEGY
+						})
 					});
 
 					query.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
@@ -377,6 +383,7 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 		// Builds its own query, so the check in the CRUD read methods never runs: assert the
 		// sensitive-relation table on the client-supplied relations before anything is loaded.
 		this.assertRelationsPermitted(options);
+		assertCallerColumnsAllowed(this.typeOrmRepository?.metadata, options);
 		// The query below already filters on the team from `where`, which is the one checked here.
 		await this.resolveReadableTeam(options);
 
@@ -405,13 +412,21 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 					// Create the initial query
 					const query = this.typeOrmDailyPlanRepository.createQueryBuilder(this.tableName);
 
-					// Join related entities
-					query.leftJoinAndSelect(`${query.alias}.employee`, 'employee');
-					query.leftJoinAndSelect(`${query.alias}.tasks`, 'tasks');
+					// Join related entities. `employee` and `tasks` are always answered: joined and selected here
+					// when the caller asks for nothing more, otherwise loaded with the caller's relations by their
+					// own queries (see RELATION_LOAD_STRATEGY), with no join at all — a caller's `tasks` on top of
+					// the join here made every plan row one per (task × task).
+					if (!isNotEmpty(relations)) {
+						query.leftJoinAndSelect(`${query.alias}.employee`, 'employee');
+						query.leftJoinAndSelect(`${query.alias}.tasks`, 'tasks');
+					}
 
 					query.setFindOptions({
 						where: isNotEmpty(where) && where,
-						relations: isNotEmpty(relations) && parseFindOptionsRelations(relations)
+						...(isNotEmpty(relations) && {
+							relations: DailyPlanService.listRelations({ employee: true, tasks: true }, relations),
+							relationLoadStrategy: DailyPlanService.RELATION_LOAD_STRATEGY
+						})
 					});
 
 					// Filter conditions
@@ -1007,10 +1022,12 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 					// Initial query
 					const query = this.typeOrmDailyPlanRepository.createQueryBuilder(this.tableName);
 
-					// Joins
-					query.leftJoinAndSelect(`${query.alias}.employee`, 'employee');
-					query.leftJoinAndSelect(`${query.alias}.tasks`, 'tasks');
-					query.leftJoinAndSelect('employee.user', 'user');
+					// The employee, their user and the tasks of every plan, loaded with one query each rather than
+					// joined (see RELATION_LOAD_STRATEGY): the task join alone answered each plan once per task.
+					query.setFindOptions({
+						relations: { employee: { user: true }, tasks: true },
+						relationLoadStrategy: DailyPlanService.RELATION_LOAD_STRATEGY
+					});
 
 					// Conditions
 					query.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });

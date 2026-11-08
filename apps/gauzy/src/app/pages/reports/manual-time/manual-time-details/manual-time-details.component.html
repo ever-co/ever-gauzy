@@ -1,0 +1,288 @@
+<nb-card class="details" role="dialog" aria-labelledby="manual-time-details-title">
+	<!-- ── Header: what this is, whose, and when ─────────────────────────── -->
+	<nb-card-header class="details-header">
+		<div class="header-main">
+			<div class="header-title-row">
+				<h5 class="details-title" id="manual-time-details-title">
+					{{ 'REPORT_PAGE.MANUAL_TIME.DETAILS.TITLE' | translate }}
+				</h5>
+				@if (isEdited) {
+					<span class="action-pill action-pill--edited">{{ 'REPORT_PAGE.MANUAL_TIME.EDITED' | translate }}</span>
+				} @else {
+					<span class="action-pill action-pill--added">{{ 'REPORT_PAGE.MANUAL_TIME.ADDED' | translate }}</span>
+				}
+			</div>
+			<div class="header-meta">
+				@if (timeLog?.employee) {
+					<ngx-avatar
+						class="report-table header-avatar"
+						[src]="timeLog.employee.user?.imageUrl"
+						[name]="employeeName"
+						[id]="timeLog.employee.id"
+						[employee]="timeLog.employee"
+						linkTo="view"
+					></ngx-avatar>
+				} @else {
+					<span>{{ 'REPORT_PAGE.NO_EMPLOYEE' | translate }}</span>
+				}
+				<span class="meta-separator" aria-hidden="true"></span>
+				<span class="header-date">{{ timeLog?.startedAt | utcToTimezone : timeZone | dateFormat }}</span>
+			</div>
+		</div>
+		<button type="button" class="icon-button" [attr.aria-label]="'BUTTONS.CLOSE' | translate" (click)="close()">
+			<nb-icon icon="close-outline"></nb-icon>
+		</button>
+	</nb-card-header>
+
+	<nb-card-body class="details-body">
+		<!-- ── The entry in four figures ──────────────────────────────────── -->
+		<section class="summary">
+			<div class="summary-cell">
+				<span class="summary-label">{{ 'REPORT_PAGE.DURATION' | translate }}</span>
+				<span class="summary-value summary-value--hero">{{ timeLog?.duration | durationFormat }}</span>
+			</div>
+			<div class="summary-cell">
+				<span class="summary-label">{{ 'REPORT_PAGE.MANUAL_TIME.TIME_RANGE' | translate }}</span>
+				<span class="summary-value">
+					{{ timeLog?.startedAt | utcToTimezone : timeZone | timeFormat : timeFormat : false }}
+					&ndash;
+					{{ timeLog?.stoppedAt | utcToTimezone : timeZone | timeFormat : timeFormat : false }}
+				</span>
+			</div>
+			<div class="summary-cell">
+				<span class="summary-label">{{ 'REPORT_PAGE.MANUAL_TIME.BILLABLE' | translate }}</span>
+				<span class="summary-value">
+					@if (timeLog?.isBillable) {
+						<span class="status status--good">
+							<nb-icon icon="checkmark-circle-2-outline" aria-hidden="true"></nb-icon>
+							{{ 'REPORT_PAGE.MANUAL_TIME.YES' | translate }}
+						</span>
+					} @else {
+						<span class="status">
+							<nb-icon icon="minus-circle-outline" aria-hidden="true"></nb-icon>
+							{{ 'REPORT_PAGE.MANUAL_TIME.NO' | translate }}
+						</span>
+					}
+				</span>
+			</div>
+			<div class="summary-cell">
+				<span class="summary-label">{{ 'TIMESHEET.SOURCE' | translate }}</span>
+				<span class="summary-value">
+					{{ timeLog?.source ? (timeLog.source | replace : '_' : ' ' | titlecase) : '—' }}
+				</span>
+			</div>
+		</section>
+
+		<!-- ── The employee's day: where this entry sits, and how the day splits ── -->
+		<section class="panel" [nbSpinner]="dayLoading" nbSpinnerSize="small" nbSpinnerStatus="basic">
+			<header class="panel-header">
+				<div class="panel-heading">
+					<h6 class="panel-title">{{ 'REPORT_PAGE.MANUAL_TIME.DETAILS.DAY_TITLE' | translate }}</h6>
+					@if (day?.total) {
+						<span class="panel-caption">
+							{{
+								'REPORT_PAGE.MANUAL_TIME.DETAILS.DAY_CAPTION'
+									| translate : { total: (day.total | durationFormat), share: manualShare }
+							}}
+						</span>
+					}
+				</div>
+				<ul class="legend" aria-hidden="true">
+					<li><span class="swatch swatch--tracked"></span>{{ 'REPORT_PAGE.MANUAL_TIME.DETAILS.TRACKED' | translate }}</li>
+					<li><span class="swatch swatch--manual"></span>{{ 'REPORT_PAGE.MANUAL_TIME.DETAILS.OTHER_MANUAL' | translate }}</li>
+					<li><span class="swatch swatch--current"></span>{{ 'REPORT_PAGE.MANUAL_TIME.DETAILS.THIS_ENTRY' | translate }}</li>
+				</ul>
+			</header>
+
+			<!-- Chart 1: the day, hour by hour -->
+			<div
+				class="timeline"
+				role="img"
+				[attr.aria-label]="
+					'REPORT_PAGE.MANUAL_TIME.DETAILS.TIMELINE_LABEL'
+						| translate : { count: day?.segments?.length ?? 0, total: ((day?.total ?? 0) | durationFormat) }
+				"
+			>
+				<div class="timeline-track">
+					@for (tick of ticks; track tick; let i = $index) {
+						@if (tick > 0 && tick < 24) {
+							<span class="timeline-grid" [style.left.%]="tickPosition(i, tick)"></span>
+						}
+					}
+					@for (segment of day?.segments ?? []; track segment.id) {
+						<span
+							class="timeline-segment timeline-segment--{{ segment.kind }}"
+							[style.left.%]="segment.left"
+							[style.width.%]="segment.width"
+							[nbTooltip]="segment.range + '  ·  ' + (segment.duration | durationFormat)"
+							nbTooltipPlacement="top"
+							nbTooltipStatus="basic"
+						></span>
+					}
+				</div>
+				<div class="timeline-axis" aria-hidden="true">
+					@for (tick of ticks; track tick; let i = $index) {
+						<span class="timeline-tick" [style.left.%]="tickPosition(i, tick)">
+							{{ tick === 24 ? '24:00' : (tick < 10 ? '0' + tick : tick) + ':00' }}
+						</span>
+					}
+				</div>
+			</div>
+
+			<!-- Chart 2: the day's time, split -->
+			@if (day?.total) {
+				<div class="split">
+					<div class="split-bar" role="img" [attr.aria-label]="'REPORT_PAGE.MANUAL_TIME.DETAILS.SPLIT_LABEL' | translate : { tracked: trackedShare, manual: manualShare }">
+						@if (day.tracked) {
+							<span class="split-part split-part--tracked" [style.width.%]="widthOf(day.tracked)"></span>
+						}
+						@if (otherManual) {
+							<span class="split-part split-part--manual" [style.width.%]="widthOf(otherManual)"></span>
+						}
+						@if (day.current) {
+							<span class="split-part split-part--current" [style.width.%]="widthOf(day.current)"></span>
+						}
+					</div>
+					<dl class="split-figures">
+						<div class="split-figure">
+							<dt>
+								<span class="swatch swatch--tracked"></span>
+								<span class="split-name">{{ 'REPORT_PAGE.MANUAL_TIME.DETAILS.TRACKED' | translate }}</span>
+							</dt>
+							<dd>
+								{{ day.tracked | durationFormat }}
+								<span class="split-share">{{ trackedShare }}%</span>
+							</dd>
+						</div>
+						<div class="split-figure">
+							<dt>
+								<span class="swatch swatch--manual"></span>
+								<span class="split-name">{{ 'REPORT_PAGE.MANUAL_TIME.DETAILS.OTHER_MANUAL' | translate }}</span>
+							</dt>
+							<dd>
+								{{ otherManual | durationFormat }}
+								<span class="split-share">{{ manualShare - currentShare }}%</span>
+							</dd>
+						</div>
+						<div class="split-figure">
+							<dt>
+								<span class="swatch swatch--current"></span>
+								<span class="split-name">{{ 'REPORT_PAGE.MANUAL_TIME.DETAILS.THIS_ENTRY' | translate }}</span>
+							</dt>
+							<dd>
+								{{ day.current | durationFormat }}
+								<span class="split-share">{{ currentShare }}%</span>
+							</dd>
+						</div>
+					</dl>
+				</div>
+			}
+
+			@if (dayFailed) {
+				<p class="panel-note">
+					<nb-icon icon="alert-circle-outline" aria-hidden="true"></nb-icon>
+					{{ 'REPORT_PAGE.MANUAL_TIME.DETAILS.DAY_UNAVAILABLE' | translate }}
+				</p>
+			}
+		</section>
+
+		<!-- ── What the time was logged against ─────────────────────────────── -->
+		<dl class="facts">
+			<div class="fact">
+				<dt>{{ 'REPORT_PAGE.PROJECT' | translate }}</dt>
+				<dd>
+					@if (timeLog?.project) {
+						<a
+							class="entity-link"
+							[routerLink]="projectLink"
+							[attr.aria-label]="'REPORT_PAGE.MANUAL_TIME.DETAILS.OPEN_PROJECT' | translate : { name: timeLog.project.name }"
+							(click)="close()"
+						>
+							<ga-project-column-view [project]="timeLog.project"></ga-project-column-view>
+						</a>
+					} @else {
+						<span class="muted">{{ 'REPORT_PAGE.NO_PROJECT' | translate }}</span>
+					}
+				</dd>
+			</div>
+			<div class="fact">
+				<dt>{{ 'TIMESHEET.ORGANIZATION_CONTACT' | translate }}</dt>
+				<dd>
+					@if (timeLog?.organizationContact) {
+						{{ timeLog.organizationContact.name }}
+					} @else {
+						<span class="muted">{{ 'TIMESHEET.NO_ORGANIZATION_CONTACT' | translate }}</span>
+					}
+				</dd>
+			</div>
+			<div class="fact fact--wide">
+				<dt>{{ 'REPORT_PAGE.TO_DO' | translate }}</dt>
+				<dd>
+					@if (timeLog?.task) {
+						<a
+							class="entity-link entity-link--text"
+							[routerLink]="taskLink"
+							[attr.aria-label]="'REPORT_PAGE.MANUAL_TIME.DETAILS.OPEN_TASK' | translate : { name: timeLog.task.title }"
+							(click)="close()"
+						>
+							<span class="entity-link-text">{{ timeLog.task.title }}</span>
+						</a>
+					} @else {
+						<span class="muted">{{ 'REPORT_PAGE.NO_TASK' | translate }}</span>
+					}
+				</dd>
+			</div>
+			<div class="fact fact--wide">
+				<dt>{{ 'REPORT_PAGE.REASON' | translate }}</dt>
+				<dd class="prose">
+					@if (timeLog?.reason) {
+						{{ timeLog.reason }}
+					} @else {
+						<span class="muted">{{ 'REPORT_PAGE.MANUAL_TIME.DETAILS.NO_REASON' | translate }}</span>
+					}
+				</dd>
+			</div>
+			@if (timeLog?.description) {
+				<div class="fact fact--wide">
+					<dt>{{ 'TIMESHEET.NOTES' | translate }}</dt>
+					<dd class="prose">{{ timeLog.description }}</dd>
+				</div>
+			}
+		</dl>
+	</nb-card-body>
+
+	<!-- ── History on the left, actions on the right ─────────────────────── -->
+	<nb-card-footer class="details-footer">
+		<ul class="history" [attr.aria-label]="'REPORT_PAGE.MANUAL_TIME.DETAILS.HISTORY' | translate">
+			<li class="history-item">
+				<span class="history-dot history-dot--added" aria-hidden="true"></span>
+				<span class="history-label">{{ 'REPORT_PAGE.MANUAL_TIME.DETAILS.ADDED_ON' | translate }}</span>
+				<span class="history-time">{{ timeLog?.createdAt | utcToTimezone : timeZone | dateTimeFormat }}</span>
+			</li>
+			@if (isEdited) {
+				<li class="history-item history-item--edited">
+					<span class="history-dot history-dot--edited" aria-hidden="true"></span>
+					<span class="history-label">{{ 'REPORT_PAGE.MANUAL_TIME.DETAILS.LAST_EDITED' | translate }}</span>
+					<span class="history-time">{{ changedAt | utcToTimezone : timeZone | dateTimeFormat }}</span>
+				</li>
+			} @else {
+				<li class="history-item history-item--none">
+					<span class="history-label">{{ 'REPORT_PAGE.MANUAL_TIME.DETAILS.NOT_EDITED' | translate }}</span>
+				</li>
+			}
+		</ul>
+		<div class="actions">
+			<button nbButton status="basic" ghost size="small" (click)="close()">
+				{{ 'BUTTONS.CLOSE' | translate }}
+			</button>
+			<ng-template [ngxPermissionsOnly]="PermissionsEnum.ALLOW_MODIFY_TIME">
+				<ng-template ngxTimeTrackingAuthorized [permission]="PermissionsEnum.ALLOW_MODIFY_TIME">
+					<button nbButton status="primary" size="small" [disabled]="timeLog?.isRunning || isApproved" (click)="edit()">
+						<nb-icon icon="edit-outline"></nb-icon>
+						{{ 'BUTTONS.EDIT' | translate }}
+					</button>
+				</ng-template>
+			</ng-template>
+		</div>
+	</nb-card-footer>
+</nb-card>

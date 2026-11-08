@@ -4,10 +4,12 @@
  */
 import '../core/entities/internal';
 
+import { format } from 'node:util';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { PermissionsEnum } from '@gauzy/contracts';
 import { CrudService } from '../core/crud/crud.service';
 import { RequestContext } from '../core/context/request-context';
+import { TenantAwareCrudService } from '../core/crud/tenant-aware-crud.service';
 import { ReactionService } from './reaction.service';
 
 /**
@@ -85,5 +87,51 @@ describe('ReactionService — withdrawing and restoring a reaction follow the ru
 		await expect(service.softRecover(OWN)).rejects.toBeInstanceOf(BadRequestException);
 		expect(baseSoftRemove).not.toHaveBeenCalled();
 		expect(baseSoftRecover).not.toHaveBeenCalled();
+	});
+});
+
+/**
+ * A failed `ReactionService.delete` logs the reaction's id as an argument of `console.error`, never inside its format
+ * string (CodeQL js/tainted-format-string): a `%s` or `%o` in the id would otherwise consume the error object and
+ * print something else than what happened.
+ */
+describe('ReactionService.delete — the failure log', () => {
+	const FORMAT = '[ReactionDelete] Failed to delete reaction with id: %s. Error:';
+	const failure = new Error('database is down');
+
+	let service: ReactionService;
+	let log: jest.SpyInstance;
+
+	beforeEach(() => {
+		service = Object.create(ReactionService.prototype);
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue('tenant-1');
+		jest.spyOn(RequestContext, 'currentEmployeeId').mockReturnValue('employee-me');
+		jest.spyOn(TenantAwareCrudService.prototype, 'delete').mockRejectedValue(failure);
+		log = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+	});
+
+	afterEach(() => jest.restoreAllMocks());
+
+	it('prints the same line as before for an ordinary id', async () => {
+		const id = '9f0c3c62-6d1b-4c55-9a39-6a3c6e0d1f3a';
+
+		await expect(service.delete(id)).rejects.toBeInstanceOf(BadRequestException);
+
+		expect(log).toHaveBeenCalledWith(FORMAT, id, failure);
+		// What the template literal printed: the id in the text, the error after it.
+		expect(format(...(log.mock.calls[0] as [string, ...unknown[]]))).toBe(
+			format(`[ReactionDelete] Failed to delete reaction with id: ${id}. Error:`, failure)
+		);
+	});
+
+	it('keeps placeholders in the id as text, and the error intact', async () => {
+		const id = '%s %o %d';
+
+		await expect(service.delete(id)).rejects.toBeInstanceOf(BadRequestException);
+
+		expect(log).toHaveBeenCalledWith(FORMAT, id, failure);
+		const printed = format(...(log.mock.calls[0] as [string, ...unknown[]]));
+		expect(printed.startsWith('[ReactionDelete] Failed to delete reaction with id: %s %o %d. Error: ')).toBe(true);
+		expect(printed).toContain('database is down');
 	});
 });

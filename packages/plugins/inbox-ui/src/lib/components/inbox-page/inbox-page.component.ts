@@ -19,6 +19,7 @@ import { TranslatePipe } from '@ngx-translate/core';
 import { EMPTY, Subject, Subscription } from 'rxjs';
 import { catchError, debounceTime, distinctUntilChanged, map, skip, switchMap } from 'rxjs/operators';
 import {
+	IInboxItemCounts,
 	IInboxItemWithState,
 	IInboxRecipientStateInput,
 	IInboxReplyInput,
@@ -31,7 +32,7 @@ import {
 	apiTabOf,
 	INBOX_UI_TABS,
 	InboxUiTab,
-	isSnoozed,
+	listedIn,
 	isTranslationKey,
 	isUnread,
 	replaceItem,
@@ -55,7 +56,8 @@ export function apiMessage(error: unknown): string | null {
 
 /**
  * `/pages/inbox` (plan 04 §1, G-P3-2): everything addressed to me. Tabs All, Decisions, Email, Notifications
- * and Archived; filters (kind, source, unread only, text); a list and the detail pane of the selected item.
+ * Done and Archived, each with my count where the API counts it (unread, open decisions, unread email); filters
+ * (kind, source, unread only, text); a list and the detail pane of the selected item.
  *
  * The page asks the API first. A 404 means this installation's API does not load the Inbox
  * (`GAUZY_INBOX_ENABLED` is not `true`, the default): the page says so and makes no other request.
@@ -142,6 +144,9 @@ export function apiMessage(error: unknown): string | null {
 									(click)="selectTab(entry)"
 								>
 									{{ 'INBOX.TABS.' + entry | translate }}
+									@if (tabCount(entry); as count) {
+										<span class="count" [attr.data-test]="'count-' + entry">{{ count }}</span>
+									}
 								</button>
 							}
 						</div>
@@ -279,6 +284,13 @@ export function apiMessage(error: unknown): string | null {
 				gap: 0.25rem;
 				margin-bottom: 0.75rem;
 			}
+			.tabs .count {
+				margin-left: 0.35rem;
+				padding: 0 0.35rem;
+				border-radius: 0.75rem;
+				background: var(--gauzy-card-2);
+				font-size: 0.75em;
+			}
 			.tabs .active {
 				border-bottom: 2px solid var(--color-primary-default, #3366ff);
 			}
@@ -364,6 +376,8 @@ export class InboxPageComponent implements OnInit {
 	readonly items = signal<IInboxItemWithState[]>([]);
 	readonly nextCursor = signal<string | null>(null);
 	readonly loading = signal(false);
+	/** My counts, beside the tabs: read with the availability check, and again after the page changed an item. */
+	readonly counts = signal<IInboxItemCounts | null>(null);
 	readonly selectedId = signal<string | null>(null);
 	/** A read / archive / snooze change is on its way. */
 	readonly busy = signal(false);
@@ -421,7 +435,34 @@ export class InboxPageComponent implements OnInit {
 		this.setUpListStream();
 		this.setUpSearch();
 		this.followItemLinks();
+		this.followCounts();
 		this.checkAvailability();
+	}
+
+	/** The tabs' counts follow my changes (the signal the header badge follows too). A failed read keeps the last. */
+	private followCounts(): void {
+		this.api.changed$
+			.pipe(
+				switchMap(() => this.api.counts().pipe(catchError(() => EMPTY))),
+				takeUntilDestroyed(this.destroyRef)
+			)
+			.subscribe((counts) => this.counts.set(counts));
+	}
+
+	/** The count a tab shows beside its name: my unread items (All), the open decisions, the unread email; none for the rest. */
+	tabCount(tab: InboxUiTab): number | null {
+		const counts = this.counts();
+		if (!counts) return null;
+		const value =
+			tab === 'all'
+				? counts.unread
+				: tab === 'decisions'
+					? counts.decisionsOpen
+					: tab === 'email'
+						? // Every unread email item (`emailUnread`); an older API answers the mailboxes' counts only.
+							(counts.emailUnread ?? (counts.byMailbox ?? []).reduce((sum, mailbox) => sum + (Number(mailbox.unread) || 0), 0))
+						: null;
+		return value && value > 0 ? value : null;
 	}
 
 	/** A later `?item=` while the page stays (the router reuses it for another link): opened like the first one. */
@@ -460,7 +501,8 @@ export class InboxPageComponent implements OnInit {
 			.counts()
 			.pipe(takeUntilDestroyed(this.destroyRef))
 			.subscribe({
-				next: () => {
+				next: (counts) => {
+					this.counts.set(counts);
 					this.view.set('ready');
 					// The list first: its answer opens a linked item (so the list never lands over the fresher item read).
 					this.reload();
@@ -693,11 +735,12 @@ export class InboxPageComponent implements OnInit {
 				if (this.opened()?.id === next.id) this.opened.set(next);
 				if (this.leavesList(change, next)) {
 					this.items.set(this.items().filter((entry) => entry.id !== next.id));
-					// Archived, snoozed or woken: it is gone from this view. Only read: it stays open.
+					// Archived, snoozed, woken, done or brought back: it is gone from this view. Only read: it stays open.
 					const onlyRead =
 						change.isRead !== undefined &&
 						change.isArchived === undefined &&
-						change.snoozedUntil === undefined;
+						change.snoozedUntil === undefined &&
+						change.isDone === undefined;
 					if (this.selectedId() === next.id && !onlyRead) this.selectedId.set(null);
 					// The API pages by offset: with an item gone, the next page would skip one. Start over.
 					if (this.nextCursor()) this.reload();
@@ -713,14 +756,13 @@ export class InboxPageComponent implements OnInit {
 		});
 	}
 
-	/** Whether an item no longer belongs to the list shown after a change of my state. */
-	private leavesList(change: IInboxRecipientStateInput, next: IInboxItemWithState): boolean {
-		const tab = this.tab();
-		if (change.isArchived !== undefined && (tab === 'archived') !== !!change.isArchived) return true;
-		if (change.snoozedUntil !== undefined && tab !== 'archived') {
-			// Snoozed leaves the open tabs; woken leaves the Snoozed tab.
-			return tab === 'snoozed' ? !isSnoozed(next) : isSnoozed(next);
-		}
+	/**
+	 * Whether an item no longer belongs to the list shown after a change of my state: the tab's own rule over the
+	 * state the API answered (`listedIn`, the API's rules — an archived item marked done stays in Archived, a done
+	 * item snoozed stays in Done), then the "unread only" filter.
+	 */
+	private leavesList(_change: IInboxRecipientStateInput, next: IInboxItemWithState): boolean {
+		if (!listedIn(this.tab(), next)) return true;
 		return this.unreadOnly() && !isUnread(next);
 	}
 

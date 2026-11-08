@@ -42,6 +42,9 @@ export const inboxSchemaExtensions = gql`
 		isArchived: Boolean
 		archivedAt: DateTime
 		snoozedUntil: DateTime
+		"Marked done by the caller (hidden from the open tabs, found in the 'done' tab)."
+		isDone: Boolean
+		doneAt: DateTime
 	}
 
 	"An item of the caller's Inbox: a question, an approval, an escalation, a notice or an email."
@@ -97,6 +100,8 @@ export const inboxSchemaExtensions = gql`
 	type InboxItemCounts {
 		unread: Int!
 		decisionsOpen: Int!
+		"My unread email items, whichever mailbox they belong to — or none."
+		emailUnread: Int!
 		byMailbox: [InboxMailboxUnreadCount!]!
 	}
 
@@ -121,6 +126,8 @@ export const inboxSchemaExtensions = gql`
 		isArchived: Boolean
 		"A time to snooze until; null un-snoozes."
 		snoozedUntil: DateTime
+		"Done: hidden from the open tabs, kept in the 'done' tab; false brings the item back."
+		isDone: Boolean
 	}
 
 	"An answer to a question, an approval or an escalation (the body of POST /inbox/items/:id/reply)."

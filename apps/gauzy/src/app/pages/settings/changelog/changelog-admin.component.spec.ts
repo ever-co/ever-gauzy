@@ -12,9 +12,20 @@ import { ChangelogEntryDialogComponent } from './changelog-entry-dialog/changelo
  * entries, reading the list again after every change.
  */
 describe('ChangelogAdminComponent', () => {
-	const older: IChangelog = { id: 'news-1', title: 'Dark mode', date: new Date('2026-08-01T00:00:00.000Z') };
-	const newer: IChangelog = { id: 'news-2', title: 'Deals board', date: new Date('2026-10-31T00:00:00.000Z') };
-	const feature: IChangelog = { id: 'feature-1', title: 'Time tracking', isFeature: true };
+	// A current API names every row's product.
+	const older: IChangelog = {
+		id: 'news-1',
+		title: 'Dark mode',
+		date: new Date('2026-08-01T00:00:00.000Z'),
+		platform: 'gauzy'
+	};
+	const newer: IChangelog = {
+		id: 'news-2',
+		title: 'Deals board',
+		date: new Date('2026-10-31T00:00:00.000Z'),
+		platform: 'gauzy'
+	};
+	const feature: IChangelog = { id: 'feature-1', title: 'Time tracking', isFeature: true, platform: 'gauzy' };
 
 	let changelogService: { find: jest.Mock; delete: jest.Mock; recover: jest.Mock };
 	let dialogService: { open: jest.Mock };
@@ -95,7 +106,7 @@ describe('ChangelogAdminComponent', () => {
 		component.add(component.sections[1]);
 
 		expect(dialogService.open).toHaveBeenCalledWith(ChangelogEntryDialogComponent, {
-			context: { entry: { isFeature: true } },
+			context: { entry: { isFeature: true, platform: 'gauzy' } },
 			closeOnBackdropClick: false,
 			closeOnEsc: false
 		});
@@ -109,7 +120,7 @@ describe('ChangelogAdminComponent', () => {
 		component.edit(newer);
 
 		expect(dialogService.open).toHaveBeenCalledWith(ChangelogEntryDialogComponent, {
-			context: { entry: newer },
+			context: { entry: { ...newer, platform: 'gauzy' } },
 			closeOnBackdropClick: false,
 			closeOnEsc: false
 		});
@@ -161,5 +172,120 @@ describe('ChangelogAdminComponent', () => {
 
 		expect(errorHandlingService.handleError).toHaveBeenCalledWith(failure);
 		expect(component.deleted).toEqual([older]);
+	});
+
+	it("shows Gauzy's entries first, read without naming a product, as every Gauzy surface reads them", () => {
+		expect(component.platform).toBe('gauzy');
+		expect(changelogService.find.mock.calls.every(([query]) => !('platform' in query))).toBe(true);
+	});
+
+	it("shows another product's What's New entries only, read for that product", async () => {
+		changelogService.find.mockClear();
+
+		component.selectPlatform('ever-teams');
+		await Promise.resolve();
+		await new Promise((resolve) => setTimeout(resolve));
+
+		expect(changelogService.find).toHaveBeenCalledTimes(1);
+		expect(changelogService.find).toHaveBeenCalledWith({ isFeature: 0, platform: 'ever-teams' });
+		expect(component.sections.map(({ isFeature }) => isFeature)).toEqual([false]);
+	});
+
+	it('ignores a product it does not know, and the one already shown', () => {
+		changelogService.find.mockClear();
+
+		component.selectPlatform('gauzy');
+		component.selectPlatform('unknown-product');
+
+		expect(changelogService.find).not.toHaveBeenCalled();
+		expect(component.platform).toBe('gauzy');
+	});
+
+	it('adds an entry for the product shown, and edits an entry as the product it belongs to', async () => {
+		component.selectPlatform('ever-works');
+		await new Promise((resolve) => setTimeout(resolve));
+
+		component.add(component.sections[0]);
+		component.edit({ id: 'works-1', title: 'Old API answer' });
+		component.edit({ id: 'teams-1', title: 'Moved', platform: 'ever-teams' });
+
+		const contexts = dialogService.open.mock.calls
+			.filter(([type]) => type === ChangelogEntryDialogComponent)
+			.map(([, config]) => config.context.entry);
+		expect(contexts).toEqual([
+			{ isFeature: false, platform: 'ever-works' },
+			{ id: 'works-1', title: 'Old API answer', platform: 'ever-works' },
+			{ id: 'teams-1', title: 'Moved', platform: 'ever-teams' }
+		]);
+	});
+
+	it("lists in another product's view only the rows that name it", async () => {
+		const teams: IChangelog = { id: 'teams-1', title: 'Team chat', platform: 'ever-teams' };
+		changelogService.find.mockReturnValueOnce(of({ items: [teams, newer], total: 2 }));
+
+		component.selectPlatform('ever-teams');
+		await new Promise((resolve) => setTimeout(resolve));
+
+		expect(component.sections[0].entries).toEqual([teams]);
+	});
+
+	it("turns the other products off against an API that keeps one list for all, never showing Gauzy's news under them", async () => {
+		const legacy = { id: 'legacy-1', title: 'Dark mode', date: new Date('2026-08-01T00:00:00.000Z') };
+		changelogService.find.mockImplementation(() => of({ items: [legacy], total: 1 }));
+
+		await component.load();
+
+		expect(component.platformsSupported).toBe(false);
+		expect(component.isPlatformAvailable('gauzy')).toBe(true);
+		expect(component.isPlatformAvailable('ever-teams')).toBe(false);
+		changelogService.find.mockClear();
+		component.selectPlatform('ever-teams');
+		expect(changelogService.find).not.toHaveBeenCalled();
+		expect(component.platform).toBe('gauzy');
+	});
+
+	it('turns the other products back on once a later read shows the API keeps products apart', async () => {
+		// One answer from an older API instance, as during a rolling deploy.
+		const legacy = { id: 'legacy-1', title: 'Dark mode', date: new Date('2026-08-01T00:00:00.000Z') };
+		changelogService.find.mockImplementationOnce(() => of({ items: [legacy], total: 1 }));
+		await component.load();
+		expect(component.platformsSupported).toBe(false);
+
+		await component.load();
+
+		expect(component.platformsSupported).toBe(true);
+		expect(component.isPlatformAvailable('ever-teams')).toBe(true);
+	});
+
+	it('keeps what it knows when a read returns no rows', async () => {
+		changelogService.find.mockImplementation(() => of({ items: [], total: 0 }));
+
+		await component.load();
+
+		expect(component.platformsSupported).toBe(true);
+	});
+
+	it('keeps what was deleted under the product it was deleted from', async () => {
+		await component.remove(newer);
+		expect(component.deletedHere.map(({ id }) => id)).toEqual(['news-2']);
+
+		component.selectPlatform('ever-works');
+		await new Promise((resolve) => setTimeout(resolve));
+
+		expect(component.deletedHere).toEqual([]);
+		expect(component.deleted).toEqual([newer]);
+	});
+
+	it('adds nothing under another product before the API has shown it keeps products apart', async () => {
+		component.platformsSupported = null;
+		component.selectPlatform('ever-teams');
+		await new Promise((resolve) => setTimeout(resolve));
+		component.platformsSupported = null;
+		dialogService.open.mockClear();
+
+		component.add(component.sections[0]);
+
+		expect(component.canAdd).toBe(false);
+		expect(dialogService.open).not.toHaveBeenCalled();
 	});
 });

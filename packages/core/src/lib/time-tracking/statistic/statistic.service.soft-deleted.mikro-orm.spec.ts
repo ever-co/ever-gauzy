@@ -134,7 +134,8 @@ describe('StatisticService on MikroORM — soft-deleted rows', () => {
 				'source'
 			].forEach((column) => table.string(column).nullable());
 			table.string('startedAt');
-			table.integer('duration').nullable();
+			// No `duration`: the real table has none (the entity works it out from the two instants when it loads)
+			table.string('stoppedAt').nullable();
 			table.string('deletedAt').nullable();
 		});
 		await knex.schema.createTable('time_slot', (table) => {
@@ -166,7 +167,7 @@ describe('StatisticService on MikroORM — soft-deleted rows', () => {
 				tenantId: TENANT_ID,
 				organizationId: ORGANIZATION_ID,
 				source: 'BROWSER',
-				duration: 600,
+				stoppedAt: log.startedAt.replace(':00:00', ':10:00'),
 				deletedAt: null,
 				...log
 			});
@@ -228,7 +229,7 @@ describe('StatisticService on MikroORM — soft-deleted rows', () => {
 				logType: 'MANUAL',
 				source: 'BROWSER',
 				startedAt,
-				duration: 1800,
+				stoppedAt: startedAt.replace(':00:00', ':30:00'),
 				deletedAt: null
 			});
 			for (const [index, slotId] of slotIds.entries()) {

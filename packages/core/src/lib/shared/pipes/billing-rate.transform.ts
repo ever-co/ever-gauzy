@@ -32,3 +32,16 @@ export const toBillingRate = ({ value }: TransformFnParams) => {
 	const n = typeof value === 'number' ? value : Number.parseFloat(value || 0);
 	return Number.isFinite(n) ? roundToScale(n) : Number.NaN;
 };
+
+/**
+ * `@Transform` for a rate that may be cleared: `null` stays `null` and a missing value stays missing (so the DTO can
+ * refuse it), where {@link toBillingRate} reads both as 0.
+ */
+export const toNullableBillingRate = (params: TransformFnParams) => {
+	const isCleared = params.value === null;
+	const isMissing = params.value === undefined;
+	if (isCleared || isMissing) {
+		return params.value;
+	}
+	return toBillingRate(params);
+};

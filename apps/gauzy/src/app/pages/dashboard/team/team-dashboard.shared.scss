@@ -82,7 +82,7 @@ $weight-medium: 500;
   color: inherit;
   text-decoration: none;
 
-  &:hover .cell-title {
+  &[href]:hover .cell-title {
     color: nb-theme(color-primary-500);
   }
 }

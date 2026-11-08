@@ -85,6 +85,22 @@
 			"module_routes": "any",
 			"allowed_rows": [1, 3, 4, 6, 7, 8, 9],
 			"required_rows": [1, 3, 4, 8]
+		},
+		"positive_lookup": {
+			"description": "The connection on against the mock platform; the operator's organization links, its owner enables the counterparty check and discoverability (the mock's consent), a contact is checked, the organization's tax id is saved and discoverability is switched off: the only calls beyond the connection's own are the salt, the query, the identifier upload and its removal (rows 13 and 12), each with salted hashes only, and none before the consent.",
+			"env": {
+				"EVER_CONNECT_ENABLED": "true",
+				"EVER_CONNECT_CODE": "EVC-TEST-0000-0001",
+				"EVER_PLATFORM_API_URL": "__MOCK_URL__",
+				"EVER_PLATFORM_ISSUER": "__MOCK_ISSUER__",
+				"EVER_STATS_ENABLED": "false",
+				"EVER_PLATFORM_ROOT_KEYS_FILE": "/ever-audit/roots.json"
+			},
+			"mock": true,
+			"trigger": "lookupAndDiscoverable",
+			"module_routes": "any",
+			"allowed_rows": [1, 3, 4, 5, 6, 7, 8, 9, 10, 12, 13],
+			"required_rows": [1, 3, 4, 5, 8, 9, 10, 12, 13]
 		}
 	},
 	"phase": 2,

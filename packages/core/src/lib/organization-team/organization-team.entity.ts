@@ -177,6 +177,24 @@ export class OrganizationTeam extends TenantOrganizationBaseEntity implements IO
 	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	imageId?: ID;
+
+	/**
+	 * The project the team files its members' new tasks and time under. Ever Teams creates one with each team; deleting
+	 * that project releases the choice rather than the team.
+	 */
+	@MultiORMManyToOne(() => OrganizationProject, {
+		nullable: true,
+		onDelete: 'SET NULL'
+	})
+	@JoinColumn()
+	defaultProject?: IOrganizationProject | null;
+
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsUUID()
+	@RelationId((it: OrganizationTeam) => it.defaultProject)
+	@MultiORMColumn({ nullable: true, relationId: true })
+	defaultProjectId?: ID | null;
 	/*
 	|--------------------------------------------------------------------------
 	| @OneToMany
@@ -281,7 +299,9 @@ export class OrganizationTeam extends TenantOrganizationBaseEntity implements IO
 	tags?: ITag[];
 
 	/**
-	 * Task
+	 * Task — the inverse side of `Task.teams`, which owns the relation through `task_team`. No `@JoinTable()` here:
+	 * with one, TypeORM treated this side as a second owner with its own (always empty) junction table and the query
+	 * load strategy answered the tasks of a team empty.
 	 */
 	@MultiORMManyToMany(() => Task, (it) => it.teams, {
 		/** Defines the database action to perform on update. */
@@ -289,7 +309,6 @@ export class OrganizationTeam extends TenantOrganizationBaseEntity implements IO
 		/** Defines the database cascade action on delete. */
 		onDelete: 'CASCADE'
 	})
-	@JoinTable()
 	tasks?: ITask[];
 
 	/**

@@ -8,6 +8,7 @@ import {
 	isDocumentLockedFor,
 	isDocumentReadable,
 	isDocumentWritable,
+	isTeamSpaceMember,
 	shareTargetsSubject
 } from './document-access.predicate';
 
@@ -165,6 +166,40 @@ describe('document access predicate — visibility + share composition (spec 08 
 
 		it('an unlocked document never blocks anyone', () => {
 			expect(isDocumentLockedFor(doc({ isLocked: false }), subject())).toBe(false);
+		});
+	});
+
+	describe('team spaces (TEAM visibility reads like PRIVATE shared with the team at EDIT)', () => {
+		const teamDoc = doc({ visibility: DocumentVisibilityEnum.TEAM, organizationTeamId: TEAM });
+
+		it('row 5: a current member of the team reads and writes the page', () => {
+			expect(isTeamSpaceMember(teamDoc, subject({ teamIds: [TEAM] }))).toBe(true);
+			expect(isDocumentReadable(teamDoc, subject({ teamIds: [TEAM] }))).toBe(true);
+			expect(isDocumentWritable(teamDoc, subject({ teamIds: [TEAM], hasUpdatePermission: true }))).toBe(true);
+			// The verb permission is still needed on top.
+			expect(isDocumentWritable(teamDoc, subject({ teamIds: [TEAM] }))).toBe(false);
+		});
+
+		it('row 7: someone outside the team sees nothing, unless shared or an admin', () => {
+			expect(isDocumentReadable(teamDoc, subject({ teamIds: ['team-other'] }))).toBe(false);
+			expect(isDocumentReadable(teamDoc, subject({ hasManagePermission: true }))).toBe(true);
+			expect(isDocumentReadable(teamDoc, subject({ userId: CREATOR }))).toBe(true);
+			const shared = doc({ visibility: DocumentVisibilityEnum.TEAM, organizationTeamId: TEAM, shares: [{ employeeId: EMPLOYEE, access: DocumentShareAccessEnum.VIEW }] });
+			expect(isDocumentReadable(shared, subject())).toBe(true);
+			expect(effectiveShareAccess(shared, subject())).toBe(DocumentShareAccessEnum.VIEW);
+		});
+
+		it("a TEAM page without a team (its team deleted) is the creator's and the admins' only", () => {
+			const orphan = doc({ visibility: DocumentVisibilityEnum.TEAM, organizationTeamId: null });
+			expect(isTeamSpaceMember(orphan, subject({ teamIds: [TEAM] }))).toBe(false);
+			expect(isDocumentReadable(orphan, subject({ teamIds: [TEAM] }))).toBe(false);
+			expect(isDocumentReadable(orphan, subject({ userId: CREATOR }))).toBe(true);
+		});
+
+		it('ORGANIZATION pages ignore team membership and shares as before', () => {
+			const open = doc({ visibility: DocumentVisibilityEnum.ORGANIZATION });
+			expect(isTeamSpaceMember(open, subject({ teamIds: [TEAM] }))).toBe(false);
+			expect(effectiveShareAccess(doc({ visibility: DocumentVisibilityEnum.ORGANIZATION, shares: [{ employeeId: EMPLOYEE, access: DocumentShareAccessEnum.EDIT }] }), subject())).toBeNull();
 		});
 	});
 

@@ -49,6 +49,7 @@ export * from './navigation';
 export * from './navigation-builder';
 export * from './notification';
 export * from './oauth-client';
+export * from './user-api-token';
 export * from './organization';
 export * from './organizations';
 export * from './payment';

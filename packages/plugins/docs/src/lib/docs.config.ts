@@ -26,6 +26,7 @@ import {
 	ENV_GAUZY_DOCS_CHUNK_TOKENS,
 	ENV_GAUZY_DOCS_CLASSIFY_MODEL,
 	ENV_GAUZY_DOCS_CLASSIFY_SAMPLE_CHARS,
+	ENV_GAUZY_DOCS_COLLAB_ENABLED,
 	ENV_GAUZY_DOCS_EMBED_BATCH_SIZE,
 	ENV_GAUZY_DOCS_EMBEDDING_DIMS,
 	ENV_GAUZY_DOCS_EMBEDDING_MODEL,
@@ -62,6 +63,8 @@ export interface IDocsConfig {
 	maxBinaryBytes: number;
 	/** Master switch for the AI pipeline (classification, embedding, retrieval). */
 	aiEnabled: boolean;
+	/** The collaboration feature: team spaces, follow / mute, Markdown export and update. Off by default. */
+	collabEnabled: boolean;
 	/** Embedding model id used by the knowledge pipeline. */
 	embeddingModel: string;
 	/** Classification model id; undefined falls back to the chat default model. */
@@ -177,6 +180,7 @@ export const getDocsConfig = (): IDocsConfig => ({
 	// skips the classify/embed stages and extraction + search keep working. Set to `false` to keep the
 	// AI stages off even where a provider IS configured.
 	aiEnabled: parseBoolEnv(ENV_GAUZY_DOCS_AI_ENABLED, true),
+	collabEnabled: parseBoolEnv(ENV_GAUZY_DOCS_COLLAB_ENABLED, false),
 	embeddingModel: process.env[ENV_GAUZY_DOCS_EMBEDDING_MODEL] || DEFAULT_DOCS_EMBEDDING_MODEL,
 	classifyModel: process.env[ENV_GAUZY_DOCS_CLASSIFY_MODEL] || undefined,
 	versionDebounceMinutes: parseIntEnv(ENV_GAUZY_DOCS_VERSION_DEBOUNCE_MINUTES, DEFAULT_DOCS_VERSION_DEBOUNCE_MINUTES),

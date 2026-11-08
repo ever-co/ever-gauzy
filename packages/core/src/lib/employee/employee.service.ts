@@ -30,6 +30,8 @@ import {
 	EmployeeKindEnum,
 	IAgentEmployee,
 	IAgentEmployeeCreateInput,
+	IEmployeePayRate,
+	IEmployeeUpdateInput,
 	RolesEnum
 } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/utils';
@@ -58,6 +60,9 @@ import { writeAgentProfile } from '../employee-agent-profile/employee-agent-prof
 import { recountMembersOfEmployeeProjects } from '../organization-project/organization-project-members-count';
 import { defaultAgentEmail, findOneForUpdate, isAgentEmail, isEmployeeKind } from './agent-employee';
 import { withoutAssignedComments } from '../comment/assigned-comments';
+import { assertCurrentUserBelongsToOrganization } from '../user-organization/assert-organization-membership';
+import { callerEmployeeId, changesPayRate, findStoredPayRates, mayReadPayRateOf } from './pay-rate';
+import { isSameId } from './own-rates';
 
 /**
  * Columns the employees table can be sorted by. Any other `order` key from the query string is ignored.
@@ -1185,4 +1190,74 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 			console.error('EmployeeService: could not recount the members of the employee’s projects', error);
 		}
 	}
+
+	/**
+	 * An employee's pay rate, for the employee themself or a holder of ORG_EMPLOYEES_EDIT. It is salary data: no
+	 * teammate, manager by role or generic read gets it.
+	 *
+	 * @throws ForbiddenException for anyone else.
+	 * @throws NotFoundException when the employee is not one of the organization.
+	 */
+	async findPayRate(employeeId: ID, organizationId: ID): Promise<IEmployeePayRate> {
+		const manager = this.typeOrmRepository.manager;
+		await assertCurrentUserBelongsToOrganization(manager, organizationId);
+
+		const mayRead = mayReadPayRateOf(employeeId);
+		if (!mayRead) {
+			throw new ForbiddenException('Only the employee and the organization rate editors read a pay rate.');
+		}
+
+		const tenantId = RequestContext.currentTenantId();
+		const [stored] = await findStoredPayRates(manager, [employeeId], tenantId, organizationId);
+		if (!stored) {
+			throw new NotFoundException('Employee not found.');
+		}
+		const organization = await manager.findOne(Organization, {
+			where: { id: organizationId, tenantId },
+			select: { id: true, currency: true }
+		});
+		const currency = stored.payRateCurrency || organization?.currency;
+		return {
+			employeeId,
+			payRateValue: toPayRateNumber(stored.payRateValue),
+			payRateCurrency: stored.payRateCurrency,
+			currency: currency ?? null
+		};
+	}
+
+	/**
+	 * Refuses an edit of one's own employee record that would change one's own pay rate without CHANGE_OWN_RATES, which
+	 * SUPER_ADMIN and ADMIN hold by default. Someone else's pay rate needs ORG_EMPLOYEES_EDIT, which the edit route
+	 * requires. Sending the stored value again passes.
+	 *
+	 * @throws ForbiddenException when the pay rate would change.
+	 */
+	async assertOwnPayRateUnchanged(employeeId: ID, input: IEmployeeUpdateInput): Promise<void> {
+		const isOwnRecord = isSameId(callerEmployeeId(), employeeId);
+		if (!isOwnRecord) {
+			return;
+		}
+		const changesOwnRates = RequestContext.hasPermission(PermissionsEnum.CHANGE_OWN_RATES);
+		if (changesOwnRates) {
+			return;
+		}
+		const sendsPayRate = input.payRateValue !== undefined || input.payRateCurrency !== undefined;
+		if (!sendsPayRate) {
+			return;
+		}
+		const tenantId = RequestContext.currentTenantId();
+		const [stored] = await findStoredPayRates(this.typeOrmRepository.manager, [employeeId], tenantId);
+		if (changesPayRate(stored, input)) {
+			throw new ForbiddenException(
+				'You cannot change your own pay rate. Send a rate change request to an admin instead.'
+			);
+		}
+	}
+}
+
+function toPayRateNumber(rate: number | string | null): number | null {
+	if (rate === null) {
+		return null;
+	}
+	return Number(rate);
 }

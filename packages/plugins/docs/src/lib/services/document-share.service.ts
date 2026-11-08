@@ -8,6 +8,7 @@ import { DocumentShare } from '../entities/document-share.entity';
 import { MikroOrmDocumentShareRepository } from '../repositories/mikro-orm-document-share.repository';
 import { TypeOrmDocumentShareRepository } from '../repositories/type-orm-document-share.repository';
 import { DocumentAccessService } from './document-access.service';
+import { DocumentNotifierService } from './document-notifier.service';
 import { DocumentService } from './document.service';
 
 /**
@@ -33,7 +34,8 @@ export class DocumentShareService extends TenantAwareCrudService<DocumentShare> 
 		public readonly typeOrmDocumentShareRepository: TypeOrmDocumentShareRepository,
 		public readonly mikroOrmDocumentShareRepository: MikroOrmDocumentShareRepository,
 		private readonly documentService: DocumentService,
-		private readonly documentAccessService: DocumentAccessService
+		private readonly documentAccessService: DocumentAccessService,
+		private readonly documentNotifier: DocumentNotifierService
 	) {
 		super(typeOrmDocumentShareRepository, mikroOrmDocumentShareRepository);
 	}
@@ -75,11 +77,11 @@ export class DocumentShareService extends TenantAwareCrudService<DocumentShare> 
 			});
 		}
 
-		// The overlay is additive on PRIVATE documents only (08 §3.3) — sharing an
+		// The overlay is additive on PRIVATE and TEAM documents (08 §3.3) — sharing an
 		// ORGANIZATION document would be a silent no-op, so it is refused loudly.
-		if (document.visibility !== DocumentVisibilityEnum.PRIVATE) {
+		if (document.visibility === DocumentVisibilityEnum.ORGANIZATION) {
 			throw new ConflictException({
-				message: 'Shares apply to PRIVATE documents only',
+				message: 'Shares apply to PRIVATE and TEAM documents only',
 				code: DOCS_SHARE_NOT_PRIVATE
 			});
 		}
@@ -109,6 +111,8 @@ export class DocumentShareService extends TenantAwareCrudService<DocumentShare> 
 		} as any);
 
 		this.logger.debug(`Document ${documentId} shared (${input.access}) with ${hasEmployee ? 'employee' : 'team'}.`);
+		// The people the page was shared with hear of it in their Inbox (best effort).
+		void this.documentNotifier.notifyShared(document, { employeeId: share.employeeId ?? null, teamId: share.teamId ?? null }, input.access);
 		return share;
 	}
 

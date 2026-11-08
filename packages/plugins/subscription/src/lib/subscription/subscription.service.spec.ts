@@ -7001,8 +7001,12 @@ describe('SubscriptionService → EntitlementGrantConsumer — the cancellation 
 			'@gauzy/plugin-entitlement/src/lib/events/entitlement-grant.consumer'
 		);
 		const revoked: unknown[][] = [];
+		// The consumer reads a subscription's rights through `findGranted` (8ea29d871c), a context-safe read
+		// scoped by the event's tenant and organization, no longer through `find`.
 		const entitlementService = {
-			find: async (options: Row) => [{ id: 'entitlement-1', subscriptionId: options.where.subscriptionId }],
+			findGranted: async ({ subscriptionId }: { subscriptionId?: string }) => [
+				{ id: 'entitlement-1', subscriptionId }
+			],
 			revoke: async (...args: unknown[]) => {
 				revoked.push(args);
 			}

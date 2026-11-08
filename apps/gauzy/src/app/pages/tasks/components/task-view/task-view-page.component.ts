@@ -9,6 +9,7 @@ import { distinctUntilChanged, filter, first, map } from 'rxjs/operators';
 import * as moment from 'moment-timezone';
 import {
 	BaseEntityEnum,
+	ID,
 	IOrganization,
 	IPagination,
 	ITask,
@@ -19,6 +20,7 @@ import {
 } from '@gauzy/contracts';
 import { API_PREFIX, toParams, toUtcOffset } from '@gauzy/ui-core/common';
 import {
+	CommentService,
 	Store,
 	TasksService,
 	TimesheetService,
@@ -89,9 +91,9 @@ export const HOURS_DAYS = 14;
 export const ENTRIES_DAYS = 30;
 
 /** The page's tabs, as the project page's; the open one is in the URL (`?tab=`). */
-export type TaskViewTab = 'overview' | 'board' | 'activity';
+export type TaskViewTab = 'overview' | 'board' | 'activity' | 'comments';
 
-const TABS: TaskViewTab[] = ['overview', 'board', 'activity'];
+const TABS: TaskViewTab[] = ['overview', 'board', 'activity', 'comments'];
 
 /** One subtask, as the Subtasks panel lists it. */
 export interface ISubtaskRow {
@@ -156,7 +158,8 @@ export class TaskViewPageComponent extends TranslationBaseComponent implements O
 	readonly tabs: { id: TaskViewTab; label: string; icon: string }[] = [
 		{ id: 'overview', label: 'PROJECT_VIEW.TABS.OVERVIEW', icon: 'home-outline' },
 		{ id: 'board', label: 'PROJECT_VIEW.TABS.BOARD', icon: 'grid-outline' },
-		{ id: 'activity', label: 'PROJECT_VIEW.TABS.ACTIVITY', icon: 'list-outline' }
+		{ id: 'activity', label: 'PROJECT_VIEW.TABS.ACTIVITY', icon: 'list-outline' },
+		{ id: 'comments', label: 'PROJECT_VIEW.TABS.COMMENTS', icon: 'message-square-outline' }
 	];
 	tab: TaskViewTab = 'overview';
 	/**
@@ -172,6 +175,22 @@ export class TaskViewPageComponent extends TranslationBaseComponent implements O
 	boardReloadKey = 0;
 	/** Bumped after any change made here — from the header or on the Board — so an open Activity tab reads again. */
 	activityReloadKey = 0;
+
+	/** The Comments load when first opened, then stay mounted, so a draft survives a look at another tab. */
+	commentsOpened = false;
+	/** The task's comments, replies included, on the Comments tab; read with the task, kept by the tab. */
+	commentCount = 0;
+	/** The Comments tab has counted the comments for this task: its count is newer than the first read. */
+	private commentCountFromTab = false;
+	/**
+	 * Bumped by every full load, not by a refresh: a count read started by an earlier visit — even of the same task —
+	 * is discarded, while one still pending through a refresh after a status move is kept.
+	 */
+	private commentCountSequence = 0;
+	/** Entity type the Comments tab hangs its comments off, as the Activity tab reads them. */
+	readonly commentEntity = BaseEntityEnum.Task;
+	/** The comment the URL points at (`?comment=`, an Inbox notification's link): the Comments tab opens on it. */
+	highlightCommentId: ID | null = null;
 
 	task: ITask = null;
 	status: IRecordViewStatus = null;
@@ -230,6 +249,7 @@ export class TaskViewPageComponent extends TranslationBaseComponent implements O
 		private readonly statisticsService: TimesheetStatisticsService,
 		private readonly timeZoneService: TimeZoneService,
 		private readonly toastrService: ToastrService,
+		private readonly commentService: CommentService,
 		private readonly store: Store
 	) {
 		super(translateService);
@@ -269,14 +289,18 @@ export class TaskViewPageComponent extends TranslationBaseComponent implements O
 				untilDestroyed(this)
 			)
 			.subscribe((canCreateTasks) => (this.canCreateTasks = canCreateTasks));
-		// The open tab follows the URL, so a tab can be bookmarked, shared and reached with Back.
+		// The open tab follows the URL, so a tab can be bookmarked, shared and reached with Back. A link that names a
+		// comment (`?comment=`, as an Inbox notification's does) opens the Comments tab on it, tab or no tab.
 		this.route.queryParamMap
 			.pipe(
-				map((params) => params.get('tab') as TaskViewTab),
-				distinctUntilChanged(),
+				map((params) => ({ tab: params.get('tab') as TaskViewTab, comment: params.get('comment')?.trim() || null })),
+				distinctUntilChanged((a, b) => a.tab === b.tab && a.comment === b.comment),
 				untilDestroyed(this)
 			)
-			.subscribe((tab) => this.openTab(TABS.includes(tab) ? tab : 'overview'));
+			.subscribe(({ tab, comment }) => {
+				this.highlightCommentId = comment;
+				this.openTab(TABS.includes(tab) ? tab : comment ? 'comments' : 'overview');
+			});
 		// The estimate is spelled out in the viewer's language.
 		this.translateService.onLangChange.pipe(untilDestroyed(this)).subscribe(() => this.show());
 	}
@@ -294,10 +318,15 @@ export class TaskViewPageComponent extends TranslationBaseComponent implements O
 		this.task = null;
 		// Another task's board is not read behind the Overview until its own tab is opened.
 		this.boardOpened = this.tab === 'board';
+		// Nor its comments, which read every page and look up each attached image.
+		this.commentsOpened = this.tab === 'comments';
 		this.tracking = loading(null);
 		this.workers = [];
 		this.statuses = [];
 		this.currentStatusId = null;
+		this.commentCount = 0;
+		this.commentCountFromTab = false;
+		const commentSequence = ++this.commentCountSequence;
 		this.state = 'loading';
 		try {
 			const task = await this.tasksService.getById(id, TASK_PAGE_RELATIONS);
@@ -311,6 +340,7 @@ export class TaskViewPageComponent extends TranslationBaseComponent implements O
 			this.show();
 			this.state = 'ready';
 			this.loadPanels(task, sequence);
+			void this.loadCommentCount(task.id, commentSequence);
 		} catch (error) {
 			if (sequence !== this.loadSequence) {
 				return;
@@ -334,6 +364,12 @@ export class TaskViewPageComponent extends TranslationBaseComponent implements O
 				this.reloadPanels(sequence);
 				return;
 			}
+			// Moved to another project (an edit, a move on a board): the old project's statuses are not this task's.
+			// They go, as on a load, so neither the status menu nor a new subtask takes one while the new ones are read.
+			if ((task.projectId ?? null) !== (this.task?.projectId ?? null)) {
+				this.statuses = [];
+				this.currentStatusId = null;
+			}
 			this.task = task;
 			this.show();
 			this.loadPanels(task, sequence);
@@ -355,7 +391,8 @@ export class TaskViewPageComponent extends TranslationBaseComponent implements O
 		this.openTab(tab);
 		void this.router.navigate([], {
 			relativeTo: this.route,
-			queryParams: { tab: tab === 'overview' ? null : tab },
+			// A tab the user chose: the comment a link pointed at is no longer pointed at, or the tab could not be left.
+			queryParams: { tab: tab === 'overview' ? null : tab, comment: null },
 			queryParamsHandling: 'merge',
 			replaceUrl: true
 		});
@@ -364,6 +401,13 @@ export class TaskViewPageComponent extends TranslationBaseComponent implements O
 	private openTab(tab: TaskViewTab): void {
 		this.tab = tab;
 		if (tab === 'board') this.boardOpened = true;
+		if (tab === 'comments') this.commentsOpened = true;
+	}
+
+	/** The count the Comments tab reports each time it reads its list, after a post or a delete among others. */
+	onCommentCount(count: number): void {
+		this.commentCountFromTab = true;
+		this.commentCount = count;
 	}
 
 	/**
@@ -705,6 +749,20 @@ export class TaskViewPageComponent extends TranslationBaseComponent implements O
 				(value) => this.hashNumberPipe.transform(value)
 			)
 		);
+	}
+
+	/**
+	 * The Comments tab's count, before the tab is opened; a failed read leaves the tab without one. An answer that
+	 * comes after the tab has counted for itself is older than the tab's count, and is dropped. It is kept to the
+	 * visit it was read for, not to the load sequence: a refresh after a status move leaves the comments as they were.
+	 */
+	private async loadCommentCount(taskId: string, sequence: number): Promise<void> {
+		try {
+			const count = await this.commentService.count(BaseEntityEnum.Task, taskId, this.scope());
+			if (sequence === this.commentCountSequence && !this.commentCountFromTab) this.commentCount = count;
+		} catch {
+			// The tab shows no count.
+		}
 	}
 
 	/** The statuses the task's project takes, for the menus. */

@@ -24,7 +24,7 @@ import { Throttle } from '@nestjs/throttler';
 import { Request, Response } from 'express';
 import { Public } from '@gauzy/common';
 import { LanguagesEnum } from '@gauzy/contracts';
-import { RequestContext, UseValidationPipe } from '@gauzy/core';
+import { assertFirstPartyRequest, RequestContext, UseValidationPipe } from '@gauzy/core';
 import {
 	BackchannelLogoutDTO,
 	ConfirmDTO,
@@ -94,13 +94,21 @@ export class AuthZitadelController {
 		return this.config.publicConfig();
 	}
 
-	/** Starts a sign-in: redirects to the issuer (PKCE, state and nonce; never a login hint). */
+	/**
+	 * Starts a sign-in: redirects to the issuer (PKCE, state and nonce; never a login hint). With
+	 * `provision` (the opaque key of a workspace this installation was asked to create), the sign-in
+	 * leads to that workspace's confirmation page.
+	 */
 	@Public()
 	@UseGuards(ZitadelConfiguredGuard)
 	@Get()
 	@Header('Cache-Control', 'no-store')
-	async start(@Res() res: Response, @Query('redirect') redirect?: string): Promise<void> {
-		res.redirect(302, await this.flow.startSignin(res, redirect));
+	async start(
+		@Res() res: Response,
+		@Query('redirect') redirect?: string,
+		@Query('provision') provision?: string
+	): Promise<void> {
+		res.redirect(302, await this.flow.startSignin(res, redirect, typeof provision === 'string' ? provision : undefined));
 	}
 
 	/** The issuer redirects back here, for sign-in and link flows alike. */
@@ -204,6 +212,9 @@ export class AuthZitadelController {
 	@HttpCode(HttpStatus.OK)
 	@Header('Cache-Control', 'no-store')
 	async link(): Promise<{ url: string }> {
+		// A linked identity signs in for good, so it is the person's own to add, not a token's.
+		assertFirstPartyRequest('Linking a sign-in identity');
+
 		return { url: await this.links.createTicket(currentUserId()) };
 	}
 

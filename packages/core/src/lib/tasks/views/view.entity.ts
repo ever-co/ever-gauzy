@@ -8,10 +8,11 @@ import {
 	IOrganizationTeam,
 	ITaskView,
 	JsonData,
+	TaskViewVisibilityEnum,
 	VisibilityLevelEnum
 } from '@gauzy/contracts';
 import { isMySQL, isPostgres } from '@gauzy/config';
-import { IsBoolean, IsEnum, IsNotEmpty, IsObject, IsOptional, IsString, IsUUID } from 'class-validator';
+import { IsArray, IsBoolean, IsEnum, IsInt, IsNotEmpty, IsObject, IsOptional, IsString, IsUUID, Min } from 'class-validator';
 import {
 	OrganizationProject,
 	OrganizationProjectModule,
@@ -19,7 +20,7 @@ import {
 	OrganizationTeam,
 	TenantOrganizationBaseEntity
 } from '../../core/entities/internal';
-import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToOne } from '../../core/decorators/entity';
+import { ColumnIndex, JsonArrayColumn, MultiORMColumn, MultiORMEntity, MultiORMManyToOne } from '../../core/decorators/entity';
 import { MikroOrmTaskViewRepository } from './repository/mikro-orm-task-view.repository';
 
 @MultiORMEntity('task_view', { mikroOrmRepository: () => MikroOrmTaskViewRepository })
@@ -73,6 +74,28 @@ export class TaskView extends TenantOrganizationBaseEntity implements ITaskView 
 	@IsBoolean()
 	@MultiORMColumn({ default: false, update: false })
 	isLocked?: boolean;
+
+	/** Personal views are listed to their creator only; null means shared (every view saved before the column). */
+	@ApiPropertyOptional({ type: () => String, enum: TaskViewVisibilityEnum })
+	@IsOptional()
+	@IsEnum(TaskViewVisibilityEnum)
+	@MultiORMColumn({ nullable: true, length: 16 })
+	visibility?: TaskViewVisibilityEnum;
+
+	/** Bumped by every save; an update that states the version it read is refused when the view moved on. */
+	@ApiPropertyOptional({ type: () => Number })
+	@IsOptional()
+	@IsInt()
+	@Min(1)
+	@MultiORMColumn({ default: 1 })
+	version?: number;
+
+	/** The task ids in the order the view shows them when its ordering is manual. */
+	@ApiPropertyOptional({ type: () => Array })
+	@IsOptional()
+	@IsArray()
+	@JsonArrayColumn<ID>({ nullable: true })
+	manualOrder?: ID[];
 
 	/*
 	|--------------------------------------------------------------------------

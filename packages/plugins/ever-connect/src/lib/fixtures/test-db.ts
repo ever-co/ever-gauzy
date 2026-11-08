@@ -21,12 +21,21 @@ const MIGRATIONS = join(__dirname, '../../../../../core/src/lib/database/migrati
 
 type Migration = { name: string; up(runner: unknown): Promise<void>; down(runner: unknown): Promise<void> };
 
-/** The core migrations the plugin needs, in order: `ever_instance`, the six Ever Platform tables, then Sign in with Ever ID's. */
+/**
+ * The core migrations the plugin needs, in order: `ever_instance`, the six Ever Platform tables, Sign in
+ * with Ever ID's, then those of creating a workspace from Ever.
+ */
 export function connectMigrations(): Migration[] {
 	const { EverInstance1790000021000 } = require(join(MIGRATIONS, '1790000021000-EverInstance'));
 	const { EverConnect1790000021200 } = require(join(MIGRATIONS, '1790000021200-EverConnect'));
 	const { EverConnectIdentity1791000003500 } = require(join(MIGRATIONS, '1791000003500-EverConnectIdentity'));
-	return [new EverInstance1790000021000(), new EverConnect1790000021200(), new EverConnectIdentity1791000003500()];
+	const { EverConnectProvision1791000003950 } = require(join(MIGRATIONS, '1791000003950-EverConnectProvision'));
+	return [
+		new EverInstance1790000021000(),
+		new EverConnect1790000021200(),
+		new EverConnectIdentity1791000003500(),
+		new EverConnectProvision1791000003950()
+	];
 }
 
 export const PLUGIN_TABLES = [
@@ -38,6 +47,8 @@ export const PLUGIN_TABLES = [
 	'ever_connect_lookup_cache',
 	'ever_connect_person_link_report',
 	'ever_connect_person_request',
+	'ever_connect_provision_intent',
+	'ever_connect_provision_result',
 	'ever_instance'
 ];
 
@@ -51,7 +62,8 @@ export const CORE_TABLES = [
 	'integration_type',
 	'integration_integration_type',
 	'integration_tenant',
-	'integration_setting'
+	'integration_setting',
+	'contact'
 ];
 
 /** Postgres runs in a schema of its own, so the suites never touch tables another test left behind. */
@@ -118,7 +130,8 @@ export async function createCoreTables(dataSource: DataSource, d: TestDialect): 
 	const flags = `${t('isActive')} ${bool} NULL, ${t('isArchived')} ${bool} NULL, ${t('createdAt')} ${ts} NULL DEFAULT ${now}, ${t('updatedAt')} ${ts} NULL DEFAULT ${now}, ${t('deletedAt')} ${ts} NULL`;
 	const tables: Record<string, string> = {
 		tenant: `${t('id')} ${id} PRIMARY KEY, ${t('name')} ${text}, ${t('createdAt')} ${ts} NULL, ${t('deletedAt')} ${ts} NULL`,
-		organization: `${t('id')} ${id} PRIMARY KEY, ${t('tenantId')} ${id} NULL, ${t('name')} ${text}, ${flags}`,
+		organization: `${t('id')} ${id} PRIMARY KEY, ${t('tenantId')} ${id} NULL, ${t('name')} ${text}, ${t('taxId')} ${text} NULL, ${t('contactId')} ${id} NULL, ${flags}`,
+		contact: `${t('id')} ${id} PRIMARY KEY, ${t('tenantId')} ${id} NULL, ${t('organizationId')} ${id} NULL, ${t('country')} ${text} NULL, ${flags}`,
 		role: `${t('id')} ${id} PRIMARY KEY, ${t('name')} ${text}, ${t('tenantId')} ${id} NULL`,
 		user: `${t('id')} ${id} PRIMARY KEY, ${t('tenantId')} ${id} NULL, ${t('email')} ${text}, ${t('roleId')} ${id} NULL, ${t('emailVerifiedAt')} ${ts} NULL, ${flags}`,
 		user_organization: `${t('id')} ${id} PRIMARY KEY, ${t('tenantId')} ${id} NULL, ${t('organizationId')} ${id} NULL, ${t('userId')} ${id} NULL, ${flags}`,

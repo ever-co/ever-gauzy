@@ -200,6 +200,9 @@ export class CreateTimeSlotHandler implements ICommandHandler<CreateTimeSlotComm
 					query.andWhere(p(`"${query.alias}"."stoppedAt" IS NOT NULL`));
 					// Add order by clause
 					query.addOrderBy(p(`"${query.alias}"."createdAt"`), 'DESC');
+					// Only the newest row is read: `getOne` takes the first of whatever the query returns, and
+					// without a limit that is every stopped log of the employee (thousands, on a busy desktop).
+					query.limit(1);
 					this.log(() => `Find timelog for specific query: ${query.getQueryAndParameters()}`);
 					// Get the last time log
 					const timeLog = await query.getOneOrFail();

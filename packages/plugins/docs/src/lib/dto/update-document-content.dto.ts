@@ -97,6 +97,13 @@ export class UpdateDocumentContentDTO extends PartialType(TenantOrganizationBase
 	@IsDateString()
 	readonly expectedUpdatedAt: Date;
 
+	/** The `contentRevision` the writer read; 409 `DOCS_CONTENT_CONFLICT` when the document moved on since. */
+	@ApiPropertyOptional({ type: () => Number })
+	@IsOptional()
+	@IsInt()
+	@Min(1)
+	readonly expectedRevision?: number;
+
 	/** True bypasses the version-snapshot debounce. */
 	@ApiPropertyOptional({ type: () => Boolean })
 	@IsOptional()

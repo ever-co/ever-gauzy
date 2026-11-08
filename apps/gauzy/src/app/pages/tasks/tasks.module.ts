@@ -51,6 +51,9 @@ import { EmployeeHoursChartComponent } from '../employees/view-employee/employee
 // The project page's board and activity feed, which the task page draws for the task and its subtasks. Standalone.
 import { ProjectBoardComponent } from '../projects/components/project-view/project-board/project-board.component';
 import { ProjectActivityComponent } from '../projects/components/project-view/project-activity/project-activity.component';
+import { SelectOptionsAtStartDirective } from '../projects/components/project-view/project-board/select-options-at-start.directive';
+// The project page's comments, which the task page's Comments tab draws for the task. Standalone.
+import { EntityCommentsComponent } from '../shared/entity-comments/entity-comments.component';
 import { TaskComponent } from './components/task/task.component';
 import { TaskViewHeaderComponent } from './components/task-view/task-view-header.component';
 import { TaskViewPageComponent } from './components/task-view/task-view-page.component';
@@ -119,7 +122,9 @@ import { SprintTaskComponent } from './components/task/tasks-layouts/tasks-sprin
 		DocumentLinksPanelComponent,
 		EmployeeHoursChartComponent,
 		ProjectBoardComponent,
-		ProjectActivityComponent
+		ProjectActivityComponent,
+		SelectOptionsAtStartDirective,
+		EntityCommentsComponent
 	]
 })
 export class TasksModule {}

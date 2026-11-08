@@ -1,11 +1,13 @@
-import { InboxItemKindEnum, InboxItemStatusEnum, InboxTabEnum } from '@gauzy/contracts';
+import { BaseEntityEnum, InboxItemKindEnum, InboxItemStatusEnum, InboxTabEnum } from '@gauzy/contracts';
 import {
 	apiTabOf,
 	escalationDetails,
+	isDone,
 	isSnoozed,
 	isTranslationKey,
 	isUnread,
 	linksOf,
+	listedIn,
 	optionsOf,
 	replaceItem,
 	mailboxLabelOf,
@@ -23,6 +25,7 @@ describe('Inbox UI helpers', () => {
 		expect(apiTabOf('decisions')).toBe(InboxTabEnum.DECISIONS);
 		expect(apiTabOf('email')).toBe(InboxTabEnum.EMAIL);
 		expect(apiTabOf('snoozed')).toBe(InboxTabEnum.SNOOZED);
+		expect(apiTabOf('done')).toBe(InboxTabEnum.DONE);
 		expect(apiTabOf('archived')).toBe(InboxTabEnum.ARCHIVED);
 		expect(apiTabOf('notifications')).toBeNull();
 	});
@@ -82,6 +85,11 @@ describe('Inbox UI helpers', () => {
 			{ kind: 'agent', commands: ['/pages/employees/view', 'e'] }
 		]);
 		expect(linksOf({})).toEqual([]);
+		// A notification about a comment opens its task at the comment.
+		expect(linksOf({ taskId: 't', entity: BaseEntityEnum.Comment, entityId: 'c' })).toEqual([
+			{ kind: 'comment', commands: ['/pages/tasks/view', 't'], queryParams: { tab: 'comments', comment: 'c' } }
+		]);
+		expect(linksOf({ entity: BaseEntityEnum.Comment, entityId: 'c' })).toEqual([]);
 	});
 
 	it('reads my recipient state; a reader without one sees the item as read', () => {
@@ -89,10 +97,32 @@ describe('Inbox UI helpers', () => {
 		const recipient = { isRead: false, isArchived: false, snoozedUntil: new Date('2026-10-16T13:00:00Z') };
 		expect(isUnread({ recipient })).toBe(true);
 		expect(isUnread({ recipient: null })).toBe(false);
+		expect(isDone({ recipient })).toBe(false);
+		expect(isDone({ recipient: { ...recipient, isDone: true } })).toBe(true);
+		expect(isDone({ recipient: { ...recipient, doneAt: new Date('2026-10-16T12:30:00Z') } })).toBe(true);
+		expect(isDone({ recipient: null })).toBe(false);
 		expect(isSnoozed({ recipient }, now)).toBe(true);
 		expect(isSnoozed({ recipient: { ...recipient, snoozedUntil: new Date('2026-10-16T11:00:00Z') } }, now)).toBe(
 			false
 		);
+	});
+
+	it('lists an item under the tabs the API lists it under, whichever state changed', () => {
+		const now = new Date('2026-10-16T12:00:00Z');
+		const later = new Date('2026-10-16T13:00:00Z');
+		const plain = { recipient: { isRead: true, isArchived: false, snoozedUntil: null } };
+		const archivedDone = { recipient: { isRead: true, isArchived: true, snoozedUntil: null, isDone: true } };
+		const doneSnoozed = { recipient: { isRead: true, isArchived: false, snoozedUntil: later, isDone: true } };
+		const snoozed = { recipient: { isRead: true, isArchived: false, snoozedUntil: later } };
+		const woken = { recipient: { isRead: true, isArchived: false, snoozedUntil: new Date('2026-10-16T11:00:00Z') } };
+		const tabs = ['all', 'decisions', 'email', 'snoozed', 'done', 'archived', 'notifications'] as const;
+		const listing = (item: Parameters<typeof listedIn>[1]) => tabs.filter((tab) => listedIn(tab, item, now));
+		expect(listing(plain)).toEqual(['all', 'decisions', 'email']);
+		expect(listing(archivedDone)).toEqual(['archived']);
+		expect(listing(doneSnoozed)).toEqual(['done']);
+		expect(listing(snoozed)).toEqual(['snoozed']);
+		expect(listing(woken)).toEqual(['all', 'decisions', 'email']);
+		expect(listing({ recipient: null })).toEqual(['all', 'decisions', 'email']);
 	});
 
 	it('names the known sources through translations and shows any other as stated', () => {

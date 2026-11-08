@@ -4,6 +4,7 @@ import { catchError, map } from 'rxjs/operators';
 import { instanceToPlain } from 'class-transformer';
 import { toSafeHttpException } from './safe-http-exception';
 import { scrubUserCredentials } from './user-credential-scrub';
+import { respondsWithPayRate } from './employee-pay-rate-scrub';
 
 /**
  * A response body with nothing to serialise: a primitive (`instanceToPlain` returns it unchanged), nothing at all,
@@ -31,11 +32,13 @@ export class TransformInterceptor implements NestInterceptor {
 	 * @returns An observable that represents the intercepted response.
 	 */
 	intercept(ctx: ExecutionContext, next: CallHandler): Observable<any> {
+		// Only the pay rate route answers a pay rate; every other response loses it (see employee-pay-rate-scrub.ts)
+		const keepPayRate = respondsWithPayRate(ctx);
 		return next.handle().pipe(
 			// Transform the data using class-transformer's instanceToPlain, then strip credential columns
 			// from any user that reached it WITHOUT its prototype (object spread, MikroORM `toJSON()`),
 			// where `@Exclude` cannot apply (GHSA-hh83-hq74-gh9f)
-			map((data) => (isPassedThrough(data) ? data : scrubUserCredentials(instanceToPlain(data)))),
+			map((data) => (isPassedThrough(data) ? data : scrubUserCredentials(instanceToPlain(data), { keepPayRate }))),
 			// Catch and handle errors
 			// One rule for every error that escapes a controller — see `toSafeHttpException`:
 			// BadRequest bodies intact, other HTTP exceptions keep their STRUCTURED body minus

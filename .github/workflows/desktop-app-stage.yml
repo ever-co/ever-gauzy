@@ -416,6 +416,10 @@ jobs:
             echo "Registry credential removed; .npmrc, .yarnrc and yarn.lock restored to HEAD."
           fi
   release-linux-arm64:
+    # On Actions this job needs an arm64 runner. With the repo variable LINUX_ARM64_IN_CLUSTER=true it runs in-cluster instead
+    # (ever-co/k8s-gitops apps/ci-builds, an emulated arm64 container), which sets CI_IN_CLUSTER=true for its own runs only.
+    # A fork has neither variable, so there it runs on Actions as before.
+    if: ${{ vars.LINUX_ARM64_IN_CLUSTER != 'true' || vars.CI_IN_CLUSTER == 'true' }}
     needs: check-release-tag
     runs-on: ${{ matrix.os }}
     timeout-minutes: 300
@@ -458,7 +462,24 @@ jobs:
           sudo env DEBIAN_FRONTEND=noninteractive NEEDRESTART_MODE=a apt install -y curl gnupg git libappindicator3-1 ca-certificates binutils icnsutils graphicsmagick libx11-dev libxtst-dev libxt-dev libxinerama-dev libx11-xcb-dev libxkbcommon-dev libxkbcommon-x11-dev libxkbfile-dev libxrandr-dev ruby ruby-dev rubygems build-essential flatpak flatpak-builder
           sudo gem install --no-document fpm
 
+      # snapd only exists on VM runners, and flatpak-builder's sandbox needs a user namespace. In-cluster (CI_IN_CLUSTER) this job
+      # runs in an unprivileged arm64 container with neither: the snap and flatpak steps and targets are skipped there instead of failing
+      # the build, and deb, rpm, tar.gz and AppImage are still made. On GitHub's runners both stay on, so nothing changes there.
+      - name: Detect snapd and the flatpak sandbox
+        id: toolchain
+        shell: bash
+        env:
+          CI_IN_CLUSTER: ${{ vars.CI_IN_CLUSTER }}
+        run: |
+          # the client alone is not enough: `snap list` needs a running snapd
+          snapd=false; command -v snap >/dev/null 2>&1 && snap list >/dev/null 2>&1 && snapd=true
+          flatpak=true; [ "$CI_IN_CLUSTER" = true ] && flatpak=false
+          echo "snapd=$snapd" >> "$GITHUB_OUTPUT"
+          echo "flatpak=$flatpak" >> "$GITHUB_OUTPUT"
+          echo "snapd: $snapd, flatpak sandbox: $flatpak"
+
       - name: Initialize Flatpak
+        if: ${{ steps.toolchain.outputs.flatpak == 'true' }}
         run: |
           export XDG_DATA_DIRS=$XDG_DATA_DIRS:/var/lib/flatpak/exports/share:$HOME/.local/share/flatpak/exports/share
           flatpak remote-add --user --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
@@ -468,6 +489,7 @@ jobs:
             org.electronjs.Electron2.BaseApp//24.08
 
       - name: Install Snapcraft
+        if: ${{ steps.toolchain.outputs.snapd == 'true' }}
         # Pin snapcraft 7.x: 8.0+ renamed the `snap` command to `pack`, but electron-builder's
         # app-builder still invokes `snapcraft snap` (ERR_ELECTRON_BUILDER_CANNOT_EXECUTE). 7.x keeps
         # the `snap` command and still supports the core22 base.
@@ -482,6 +504,7 @@ jobs:
       # ZERO snap installs of its own, so the failing operation is never reached. This exact list was
       # proven on branch exp/arm64-snap-snapcraft-version (runs 35895302909, 35895798132, 35896229973).
       - name: Pre-install snapcraft build snaps (arm64)
+        if: ${{ steps.toolchain.outputs.snapd == 'true' }}
         run: sudo snap install core18 core20 core22 gtk-common-themes gnome-3-28-1804 gnome-42-2204
 
       # On arm64 electron-builder has no template snap, so it builds WITHOUT one: snapcraft pulls
@@ -491,6 +514,7 @@ jobs:
       # hits this: it uses the template snap and runs no apt). This shim, first on PATH, runs ONLY
       # snapcraft as root and then hands the files it wrote back to the runner user.
       - name: Run snapcraft as root (arm64 host-mode snap)
+        if: ${{ steps.toolchain.outputs.snapd == 'true' }}
         run: |
           shim_dir="$HOME/.local/snapcraft-root-shim"
           mkdir -p "$shim_dir"
@@ -505,6 +529,7 @@ jobs:
           echo "$shim_dir" >> "$GITHUB_PATH"
 
       - name: Install Multipass
+        if: ${{ steps.toolchain.outputs.snapd == 'true' }}
         run: 'sudo snap install multipass'
 
       - name: Use Python 3.11 for native rebuilds (Linux)
@@ -567,6 +592,36 @@ jobs:
       - name: Ensure dist directory exists
         shell: bash
         run: mkdir -p dist/packages
+
+      # Build only the Linux targets this runner can make (see "Detect snapd and the flatpak sandbox").
+      - name: Adapt Linux targets to the runner toolchain
+        shell: bash
+        env:
+          HAS_SNAP: ${{ steps.toolchain.outputs.snapd }}
+          HAS_FLATPAK: ${{ steps.toolchain.outputs.flatpak }}
+        run: |
+          node -e '
+            const fs = require("fs");
+            const file = "apps/desktop/src/package.json";
+            const pkg = JSON.parse(fs.readFileSync(file, "utf8"));
+            const linux = pkg.build && pkg.build.linux;
+            if (!linux || !Array.isArray(linux.target)) {
+              console.log("linux.target is not a list; leaving it untouched");
+              process.exit(0);
+            }
+            const unavailable = [];
+            if (process.env.HAS_SNAP !== "true") unavailable.push("snap");
+            if (process.env.HAS_FLATPAK !== "true") unavailable.push("flatpak");
+            const name = (t) => (typeof t === "string" ? t : t && t.target);
+            const kept = linux.target.filter((t) => !unavailable.includes(name(t)));
+            if (kept.length !== linux.target.length) {
+              linux.target = kept;
+              fs.writeFileSync(file, JSON.stringify(pkg, null, 4));
+              console.log("Linux targets for this runner:", JSON.stringify(kept));
+            } else {
+              console.log("All configured Linux targets are buildable here:", JSON.stringify(kept));
+            }
+          '
 
       - name: Build Desktop App
         # Snap Store channel: prod ('apps') releases to 'stable', stage ('stage-apps') to 'edge' (the
@@ -942,7 +997,13 @@ jobs:
 
     strategy:
       matrix:
-        os: [[self-hosted, Windows, X64]]
+        # Our own Windows machines through the ever-co org variable RUNNER_WINDOWS_X64
+        # (JSON label list, today ["self-hosted","Windows","X64"]: the same runners as before).
+        # Forks have no such variable and take the GitHub-hosted image instead of
+        # waiting forever for a runner they cannot reach (owner rule 2026-11-04).
+        # `include`, not a list axis: an axis would split the label array into one job per label.
+        include:
+          - os: ${{ vars.RUNNER_WINDOWS_X64 && fromJSON(vars.RUNNER_WINDOWS_X64) || 'windows-2022' }}
 
     steps:
       # `shell: bash` runs whichever bash.exe the runner SERVICE finds first on its PATH. On EVERDESK3

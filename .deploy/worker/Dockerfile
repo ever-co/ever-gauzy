@@ -86,6 +86,9 @@ COPY --chown=node:node packages/plugins/integration-hubstaff/package.json ./pack
 COPY --chown=node:node packages/plugins/integration-upwork/package.json ./packages/plugins/integration-upwork/
 COPY --chown=node:node packages/plugins/integration-github/package.json ./packages/plugins/integration-github/
 COPY --chown=node:node packages/plugins/integration-jira/package.json ./packages/plugins/integration-jira/
+COPY --chown=node:node packages/plugins/integration-linear/package.json ./packages/plugins/integration-linear/
+COPY --chown=node:node packages/plugins/integration-asana/package.json ./packages/plugins/integration-asana/
+COPY --chown=node:node packages/plugins/integration-trello/package.json ./packages/plugins/integration-trello/
 COPY --chown=node:node packages/plugins/integration-make-com/package.json ./packages/plugins/integration-make-com/
 COPY --chown=node:node packages/plugins/integration-sim/package.json ./packages/plugins/integration-sim/
 COPY --chown=node:node packages/plugins/integration-plane/package.json ./packages/plugins/integration-plane/
@@ -111,11 +114,15 @@ COPY --chown=node:node packages/plugins/product-reviews/package.json ./packages/
 COPY --chown=node:node packages/plugins/videos/package.json ./packages/plugins/videos/
 COPY --chown=node:node packages/plugins/camshot/package.json ./packages/plugins/camshot/
 COPY --chown=node:node packages/plugins/knowledge-base/package.json ./packages/plugins/knowledge-base/
+COPY --chown=node:node packages/plugins/integration-asana/package.json ./packages/plugins/integration-asana/
 COPY --chown=node:node packages/plugins/changelog/package.json ./packages/plugins/changelog/
+COPY --chown=node:node packages/plugins/chat/package.json ./packages/plugins/chat/
+COPY --chown=node:node packages/plugins/search/package.json ./packages/plugins/search/
 COPY --chown=node:node packages/plugins/job-search/package.json ./packages/plugins/job-search/
 COPY --chown=node:node packages/plugins/job-proposal/package.json ./packages/plugins/job-proposal/
 COPY --chown=node:node packages/plugins/soundshot/package.json ./packages/plugins/soundshot/
 COPY --chown=node:node packages/plugins/registry/package.json ./packages/plugins/registry/
+COPY --chown=node:node packages/plugins/realtime/package.json ./packages/plugins/realtime/
 COPY --chown=node:node packages/plugins/ai-chat/package.json ./packages/plugins/ai-chat/
 COPY --chown=node:node packages/plugins/ai-provider-anthropic/package.json ./packages/plugins/ai-provider-anthropic/
 COPY --chown=node:node packages/plugins/ai-provider-openai/package.json ./packages/plugins/ai-provider-openai/
@@ -234,6 +241,9 @@ COPY --chown=node:node packages/plugins/integration-hubstaff/package.json ./pack
 COPY --chown=node:node packages/plugins/integration-upwork/package.json ./packages/plugins/integration-upwork/
 COPY --chown=node:node packages/plugins/integration-github/package.json ./packages/plugins/integration-github/
 COPY --chown=node:node packages/plugins/integration-jira/package.json ./packages/plugins/integration-jira/
+COPY --chown=node:node packages/plugins/integration-linear/package.json ./packages/plugins/integration-linear/
+COPY --chown=node:node packages/plugins/integration-asana/package.json ./packages/plugins/integration-asana/
+COPY --chown=node:node packages/plugins/integration-trello/package.json ./packages/plugins/integration-trello/
 COPY --chown=node:node packages/plugins/integration-make-com/package.json ./packages/plugins/integration-make-com/
 COPY --chown=node:node packages/plugins/integration-sim/package.json ./packages/plugins/integration-sim/
 COPY --chown=node:node packages/plugins/integration-plane/package.json ./packages/plugins/integration-plane/
@@ -259,11 +269,15 @@ COPY --chown=node:node packages/plugins/product-reviews/package.json ./packages/
 COPY --chown=node:node packages/plugins/videos/package.json ./packages/plugins/videos/
 COPY --chown=node:node packages/plugins/camshot/package.json ./packages/plugins/camshot/
 COPY --chown=node:node packages/plugins/knowledge-base/package.json ./packages/plugins/knowledge-base/
+COPY --chown=node:node packages/plugins/integration-asana/package.json ./packages/plugins/integration-asana/
 COPY --chown=node:node packages/plugins/changelog/package.json ./packages/plugins/changelog/
+COPY --chown=node:node packages/plugins/chat/package.json ./packages/plugins/chat/
+COPY --chown=node:node packages/plugins/search/package.json ./packages/plugins/search/
 COPY --chown=node:node packages/plugins/job-search/package.json ./packages/plugins/job-search/
 COPY --chown=node:node packages/plugins/job-proposal/package.json ./packages/plugins/job-proposal/
 COPY --chown=node:node packages/plugins/soundshot/package.json ./packages/plugins/soundshot/
 COPY --chown=node:node packages/plugins/registry/package.json ./packages/plugins/registry/
+COPY --chown=node:node packages/plugins/realtime/package.json ./packages/plugins/realtime/
 COPY --chown=node:node packages/plugins/ai-chat/package.json ./packages/plugins/ai-chat/
 COPY --chown=node:node packages/plugins/ai-provider-anthropic/package.json ./packages/plugins/ai-provider-anthropic/
 COPY --chown=node:node packages/plugins/ai-provider-openai/package.json ./packages/plugins/ai-provider-openai/
@@ -464,11 +478,15 @@ RUN --mount=type=bind,from=prod-dependencies,source=/srv/gauzy/node_modules,targ
     cp -r /mnt/packages/core/node_modules ./node_modules/@gauzy/core/ && \
     cp -r /mnt/packages/scheduler/node_modules ./node_modules/@gauzy/scheduler/ && \
     cp -r /mnt/packages/plugins/changelog/node_modules ./node_modules/@gauzy/plugin-changelog/ && \
+    if [ -d /mnt/packages/plugins/chat/node_modules ] && [ -d ./node_modules/@gauzy/plugin-chat ]; then cp -r /mnt/packages/plugins/chat/node_modules ./node_modules/@gauzy/plugin-chat/; fi && \
     cp -r /mnt/packages/plugins/integration-activepieces/node_modules ./node_modules/@gauzy/plugin-integration-activepieces/ && \
     cp -r /mnt/packages/plugins/integration-ai/node_modules ./node_modules/@gauzy/plugin-integration-ai/ && \
     cp -r /mnt/packages/plugins/integration-github/node_modules ./node_modules/@gauzy/plugin-integration-github/ && \
     cp -r /mnt/packages/plugins/integration-hubstaff/node_modules ./node_modules/@gauzy/plugin-integration-hubstaff/ && \
     cp -r /mnt/packages/plugins/integration-jira/node_modules ./node_modules/@gauzy/plugin-integration-jira/ && \
+    if [ -d /mnt/packages/plugins/integration-linear/node_modules ] && [ -d ./node_modules/@gauzy/plugin-integration-linear ]; then cp -r /mnt/packages/plugins/integration-linear/node_modules ./node_modules/@gauzy/plugin-integration-linear/; fi && \
+    if [ -d /mnt/packages/plugins/integration-asana/node_modules ] && [ -d ./node_modules/@gauzy/plugin-integration-asana ]; then cp -r /mnt/packages/plugins/integration-asana/node_modules ./node_modules/@gauzy/plugin-integration-asana/; fi && \
+    if [ -d /mnt/packages/plugins/integration-trello/node_modules ] && [ -d ./node_modules/@gauzy/plugin-integration-trello ]; then cp -r /mnt/packages/plugins/integration-trello/node_modules ./node_modules/@gauzy/plugin-integration-trello/; fi && \
     cp -r /mnt/packages/plugins/integration-make-com/node_modules ./node_modules/@gauzy/plugin-integration-make-com/ && \
     cp -r /mnt/packages/plugins/integration-sim/node_modules ./node_modules/@gauzy/plugin-integration-sim/ && \
     cp -r /mnt/packages/plugins/integration-plane/node_modules ./node_modules/@gauzy/plugin-integration-plane/ && \
@@ -499,6 +517,7 @@ RUN --mount=type=bind,from=prod-dependencies,source=/srv/gauzy/node_modules,targ
     cp -r /mnt/packages/plugins/videos/node_modules ./node_modules/@gauzy/plugin-videos/ && \
     cp -r /mnt/packages/plugins/soundshot/node_modules ./node_modules/@gauzy/plugin-soundshot/ && \
     cp -r /mnt/packages/plugins/registry/node_modules ./node_modules/@gauzy/plugin-registry/ && \
+    if [ -d /mnt/packages/plugins/realtime/node_modules ] && [ -d ./node_modules/@gauzy/plugin-realtime ]; then cp -r /mnt/packages/plugins/realtime/node_modules ./node_modules/@gauzy/plugin-realtime/; fi && \
     cp -r /mnt/packages/plugins/ai-chat/node_modules ./node_modules/@gauzy/plugin-ai-chat/ && \
     cp -r /mnt/packages/plugins/ai-provider-anthropic/node_modules ./node_modules/@gauzy/plugin-ai-provider-anthropic/ && \
     cp -r /mnt/packages/plugins/ai-provider-openai/node_modules ./node_modules/@gauzy/plugin-ai-provider-openai/ && \

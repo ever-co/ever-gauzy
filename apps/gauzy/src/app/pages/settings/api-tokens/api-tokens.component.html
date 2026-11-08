@@ -1,0 +1,93 @@
+<nb-card class="api-tokens-card card-scroll">
+	<nb-card-header class="header">
+		<div class="header-copy">
+			<h4>
+				<ngx-header-title [allowEmployee]="false">
+					<span class="menu-setting">{{ 'MENU.SETTINGS' | translate }}/ </span
+					>{{ 'USER_API_TOKENS.TITLE' | translate }}
+				</ngx-header-title>
+			</h4>
+			<p class="subtitle">{{ 'USER_API_TOKENS.SUBTITLE' | translate }}</p>
+		</div>
+		<button type="button" nbButton size="small" status="primary" (click)="openCreateDialog()">
+			<nb-icon icon="plus-outline"></nb-icon>
+			{{ 'USER_API_TOKENS.ACTIONS.CREATE' | translate }}
+		</button>
+	</nb-card-header>
+
+	<nb-card-body>
+		@if (loading()) {
+			<div class="loading">
+				<nb-spinner status="primary" size="medium"></nb-spinner>
+			</div>
+		}
+
+		@if (!loading() && tokens().length === 0) {
+			<div class="empty-state">
+				<span class="empty-mark" aria-hidden="true">
+					<nb-icon icon="lock-outline"></nb-icon>
+				</span>
+				<p class="empty-title">{{ 'USER_API_TOKENS.EMPTY.TITLE' | translate }}</p>
+				<p class="empty-hint">{{ 'USER_API_TOKENS.EMPTY.HINT' | translate }}</p>
+			</div>
+		}
+
+		@if (!loading() && tokens().length > 0) {
+			<div class="table-panel">
+				<table class="api-tokens-table">
+					<thead>
+						<tr>
+							<th>{{ 'USER_API_TOKENS.TABLE.NAME' | translate }}</th>
+							<th>{{ 'USER_API_TOKENS.TABLE.TOKEN' | translate }}</th>
+							<th>{{ 'USER_API_TOKENS.TABLE.CREATED' | translate }}</th>
+							<th>{{ 'USER_API_TOKENS.TABLE.LAST_USED' | translate }}</th>
+							<th>{{ 'USER_API_TOKENS.TABLE.EXPIRES' | translate }}</th>
+							<th class="actions-col">{{ 'USER_API_TOKENS.TABLE.ACTIONS' | translate }}</th>
+						</tr>
+					</thead>
+					<tbody>
+						@for (token of tokens(); track trackById($index, token)) {
+							<tr>
+								<td class="token-name">{{ token.name }}</td>
+								<td>
+									<code>{{ token.prefix }}…</code>
+								</td>
+								<td class="date-col">{{ token.createdAt | date: 'mediumDate' }}</td>
+								<td class="date-col">
+									@if (token.lastUsedAt) {
+										{{ token.lastUsedAt | date: 'medium' }}
+									} @else {
+										<span class="empty-value">{{ 'USER_API_TOKENS.VALUES.NEVER_USED' | translate }}</span>
+									}
+								</td>
+								<td class="date-col">
+									@if (!token.expiresAt) {
+										<span class="empty-value">{{ 'USER_API_TOKENS.VALUES.NEVER_EXPIRES' | translate }}</span>
+									} @else if (hasExpired(token)) {
+										<span class="expired">{{ 'USER_API_TOKENS.VALUES.EXPIRED' | translate }}</span>
+									} @else {
+										{{ token.expiresAt | date: 'mediumDate' }}
+									}
+								</td>
+								<td class="actions-col">
+									<button
+										type="button"
+										nbButton
+										size="tiny"
+										ghost
+										status="danger"
+										(click)="revoke(token)"
+										[nbTooltip]="'USER_API_TOKENS.ACTIONS.REVOKE' | translate"
+										[attr.aria-label]="('USER_API_TOKENS.ACTIONS.REVOKE' | translate) + ': ' + token.name"
+									>
+										<nb-icon icon="trash-2-outline"></nb-icon>
+									</button>
+								</td>
+							</tr>
+						}
+					</tbody>
+				</table>
+			</div>
+		}
+	</nb-card-body>
+</nb-card>

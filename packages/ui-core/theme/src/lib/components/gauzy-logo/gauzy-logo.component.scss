@@ -3,31 +3,44 @@
 .accordion.workspace {
   width: 100%;
   max-width: nb-theme(sidebar-width);
-  max-height: 2.625rem;
+  max-height: 2.75rem;
   box-shadow: unset;
 
   .tenant {
     display: flex;
     flex-direction: row;
     align-items: center;
+    gap: 0.5rem;
     width: 100%;
 
-    // 1.75rem (not the 2.25rem the organization row used): the header is a
-    // fixed 42px and the avatar now shows in BOTH states, so it has to clear
-    // the accordion's own padding instead of being cropped by it.
-    img {
-      width: 1.75rem;
-      height: 1.75rem;
-      border-radius: nb-theme(button-rectangle-border-radius);
-      margin-right: 0.5rem;
-      object-fit: cover;
+    .tenant-avatar {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 1.25rem;
+      height: 1.25rem;
       flex: 0 0 auto;
+      border-radius: 0.3125rem;
+      object-fit: cover;
+      box-shadow: inset 0 0 0 1px var(--gauzy-overlay-border-color, rgba(126, 126, 143, 0.18));
+    }
+
+    .tenant-initials {
+      color: nb-theme(text-control-color);
+      background: linear-gradient(135deg, nb-theme(color-primary-400), nb-theme(color-primary-600));
+      font-size: 0.5625rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      line-height: 1;
+      user-select: none;
     }
 
     .description {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
       min-width: 0;
       flex: 1 1 auto;
-      // `.text` below adds a 10px side margin meant for the old two-line block.
       margin: 0;
 
       > div {
@@ -43,9 +56,20 @@
         // Unpressured, both resolve to the same width (text, capped below).
         width: auto;
         max-width: 150px;
-        font-size: 0.875rem;
-        font-weight: 400;
+      }
+
+      .tenant-name {
+        font-size: 0.8125rem;
+        font-weight: 600;
+        line-height: 1rem;
         color: nb-theme(text-basic-color);
+      }
+
+      .tenant-caption {
+        font-size: 0.5625rem;
+        font-weight: 400;
+        line-height: 0.75rem;
+        color: nb-theme(text-hint-color);
       }
     }
   }
@@ -74,10 +98,14 @@ nb-accordion-item-header ::ng-deep nb-icon {
 
 .switch-indicator {
   flex: 0 0 auto;
-  width: 1rem;
-  height: 1rem;
-  margin-left: 0.25rem;
+  width: 0.875rem;
+  height: 0.875rem;
   color: nb-theme(text-hint-color);
+  transition: color 0.15s ease-in-out;
+}
+
+nb-accordion-item-header.principal:hover .switch-indicator {
+  color: nb-theme(text-basic-color);
 }
 
 nb-accordion-item-body ::ng-deep {
@@ -118,29 +146,30 @@ nb-accordion-item-body.setting ::ng-deep {
 // GEOMETRY for the principal header is state-agnostic: identical height and
 // vertical alignment whether the switcher is collapsed or expanded, so
 // toggling it never shifts the tenant row.
-//
-// So is the CHROME. It carries no border, ring or fill in either state — it
-// identifies the tenant and opens a panel, and dressing it as a text input
-// invited the reading that you could type a company name into it. Hover is the
-// only affordance it needs.
 nb-accordion-item:first-child nb-accordion-item-header.principal {
-  max-height: 42px;
-  min-height: 42px;
+  max-height: 2.75rem;
+  min-height: 2.75rem;
   align-items: center;
-  // Nebular's `accordion-padding` (0.625rem all round) leaves only 22px of
-  // content box inside a 42px row — not enough for the tenant avatar.
-  padding: 0.25rem 0.625rem;
+  padding: 0 0.5rem;
   border-bottom: none;
   background-color: transparent;
-  border-radius: nb-theme(border-radius);
-  box-shadow: none;
-  transition: background-color 0.15s ease-in-out;
+  border-radius: 0.625rem;
+  box-shadow: inset 0 0 0 1px var(--gauzy-overlay-border-color, rgba(126, 126, 143, 0.18));
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease-in-out,
+    box-shadow 0.15s ease-in-out;
+
+  &:focus-visible {
+    outline: 2px solid nb-theme(color-primary-default);
+    outline-offset: 1px;
+  }
 }
 
 nb-accordion-item:first-child.collapsed nb-accordion-item-header.principal {
   border-bottom: none;
   background-color: transparent;
-  box-shadow: none;
+  box-shadow: inset 0 0 0 1px var(--gauzy-overlay-border-color, rgba(126, 126, 143, 0.18));
 }
 
 // Declared after the state blocks above (and matching `.collapsed` explicitly)
@@ -148,6 +177,7 @@ nb-accordion-item:first-child.collapsed nb-accordion-item-header.principal {
 nb-accordion-item:first-child nb-accordion-item-header.principal:hover,
 nb-accordion-item:first-child.collapsed nb-accordion-item-header.principal:hover {
   background-color: nb-theme(background-basic-color-3);
+  box-shadow: inset 0 0 0 1px nb-theme(border-basic-color-4);
 }
 
 .white-svg {

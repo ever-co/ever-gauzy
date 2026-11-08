@@ -1,16 +1,41 @@
-<nb-card class="card-scroll">
-	<nb-card-header class="d-flex gap-1">
-		<ngx-back-navigation></ngx-back-navigation>
-		<h4>
-			{{ 'USERS_PAGE.EDIT_USER.HEADER' | translate }}
-			@if (user?.name) {
-			<span> {{ user.name }} </span>
-			} @if (user?.username) {
-			<span> ({{ user.username }}) </span>
-			}
-		</h4>
+<nb-card class="user-edit">
+	<!-- The user at a glance, as on the employee page: photo, name, role, then username and email. -->
+	<nb-card-header class="header">
+		<div class="header-container">
+			<ngx-back-navigation></ngx-back-navigation>
+
+			<div class="user-info">
+				@if (user?.imageUrl && !avatarFailed) {
+					<img class="user-image" [src]="user.imageUrl" alt="" (error)="avatarFailed = true" />
+				} @else {
+					<div class="user-image user-image--empty" aria-hidden="true">
+						<nb-icon icon="person-outline"></nb-icon>
+					</div>
+				}
+
+				<div class="user-details">
+					<div class="user-name-row">
+						<h4 class="user-name">{{ displayName || ('USERS_PAGE.EDIT_USER.HEADER' | translate) }}</h4>
+						@if (roleLabel; as label) {
+							<span class="user-role">{{ label.key ? (label.key | translate) : label.text }}</span>
+						}
+					</div>
+
+					@if (user?.username || user?.email) {
+						<div class="user-meta">
+							@if (user?.username; as username) {
+								<span class="user-meta__item">{{ '@' + username }}</span>
+							}
+							@if (user?.email; as email) {
+								<span class="user-meta__item">{{ email }}</span>
+							}
+						</div>
+					}
+				</div>
+			</div>
+		</div>
 	</nb-card-header>
-	<nb-card-body>
-		<nb-route-tabset [tabs]="tabs"></nb-route-tabset>
+	<nb-card-body class="body">
+		<nb-route-tabset class="tabset" [tabs]="tabs"></nb-route-tabset>
 	</nb-card-body>
 </nb-card>

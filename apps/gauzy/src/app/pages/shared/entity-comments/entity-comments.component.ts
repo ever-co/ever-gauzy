@@ -3,6 +3,7 @@ import {
 	Component,
 	EventEmitter,
 	HostListener,
+	ElementRef,
 	inject,
 	Input,
 	OnChanges,
@@ -163,6 +164,8 @@ export class EntityCommentsComponent implements OnChanges, OnDestroy {
 	@Input() newestFirst = false;
 	/** Whether the reader may post, reply and delete. */
 	@Input() canWrite = true;
+	/** A comment to show: marked, scrolled to, and its thread opened when it is a reply (an Inbox notification's link). */
+	@Input() highlightCommentId: ID | null = null;
 	/** What the comments are called; see {@link IEntityCommentsLabels}. */
 	@Input() set labels(labels: Partial<IEntityCommentsLabels> | null | undefined) {
 		this.text = { ...DEFAULT_ENTITY_COMMENTS_LABELS, ...(labels ?? {}) };
@@ -195,12 +198,15 @@ export class EntityCommentsComponent implements OnChanges, OnDestroy {
 	protected imageUrls = new Map<ID, IImageUrls | null>();
 
 	private readonly _commentService = inject(CommentService);
+	private readonly _host = inject<ElementRef<HTMLElement>>(ElementRef);
 	private readonly _store = inject(Store);
 	private readonly _toastr = inject(ToastrService);
 	private readonly _translate = inject(TranslateService);
 	private readonly _imageAssets = inject(ImageAssetService);
 	/** Numbers each read, so only the latest one is applied: a post and a delete can each refresh at once. */
 	private _sequence = 0;
+	/** The comment last revealed: a refresh after a post or a delete does not scroll back to it. */
+	private _revealedId: ID | null = null;
 	private _imageKey = 0;
 
 	/** Lookups of image addresses under way, by asset, so an image is looked up once at a time. */
@@ -221,11 +227,37 @@ export class EntityCommentsComponent implements OnChanges, OnDestroy {
 		if (this.entity && this.entityId && (changes['entity'] || changes['entityId'] || changes['organizationId'])) {
 			this.openThreadId = null;
 			this.confirmingDeleteId = null;
+			this._revealedId = null;
 			this.clearImages('comment');
 			this.clearImages('reply');
 			this.threads = loading([]);
 			void this.load();
+		} else if (changes['highlightCommentId']) {
+			this.reveal();
 		}
+	}
+
+	/**
+	 * Shows the comment the page points at, once the list holds it and once per comment: a reply's thread is opened,
+	 * and the comment is scrolled into view after it is drawn. A refresh after a post or a delete leaves the reader
+	 * where they are; nothing happens for a comment the list does not hold.
+	 */
+	private reveal(): void {
+		const id = this.highlightCommentId;
+		if (!id || this.threads.loading || this._revealedId === id) return;
+		const thread = this.threads.value.find(
+			(candidate) => candidate.entry.comment.id === id || candidate.replies.some((reply) => reply.comment.id === id)
+		);
+		if (!thread) return;
+		this._revealedId = id;
+		if (thread.entry.comment.id !== id) this.openThreadId = thread.entry.comment.id;
+		setTimeout(() => {
+			// The attribute is compared as text (no selector built from the id, so no `CSS.escape`, which jsdom does not have).
+			const element = Array.from(this._host.nativeElement.querySelectorAll<HTMLElement>('[data-comment-id]')).find(
+				(candidate) => candidate.getAttribute('data-comment-id') === String(id)
+			);
+			element?.scrollIntoView?.({ block: 'center', behavior: 'smooth' });
+		});
 	}
 
 	ngOnDestroy(): void {
@@ -245,6 +277,7 @@ export class EntityCommentsComponent implements OnChanges, OnDestroy {
 			this.threads = loaded(threads);
 			this.countChange.emit(items.length);
 			void this.lookUpImages(threads);
+			this.reveal();
 		} catch {
 			if (sequence !== this._sequence) return;
 			// A failed read shows a retry, never "no comments" or a stale list.

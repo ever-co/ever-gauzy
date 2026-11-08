@@ -12,6 +12,7 @@ import { createHash } from 'node:crypto';
 import { EverInstanceService } from '@gauzy/plugin-ever-instance';
 import { EverConnectAuditService } from './ever-connect-audit.service';
 import { deniedByEnv } from './ever-connect-config';
+import { EverConnectEntitlementService } from './ever-connect-entitlement.service';
 import type { EverConnectConfig } from './ever-connect-config';
 import {
 	EVER_CONNECT_CLOCK,
@@ -33,8 +34,10 @@ import {
 	gauzyIntegration,
 	GauzyIntegrationDefinition,
 	offeredOn,
+	requiredFeature,
 	sharedDefinition
 } from './integrations/integration-definitions';
+import { IntegrationHandlerRegistry } from './integrations/integration-handler.registry';
 import { PersonLinkReporter } from './reporters/person-link.reporter';
 import { CONSTANTS, IntegrationKey, ProblemError, signCompactJws } from './sdk';
 
@@ -79,6 +82,15 @@ export interface IntegrationView {
 	revoked_at: string | null;
 	consent: { id: string; at: string | null; source: string | null } | null;
 	policy: 'allowed' | 'denied_by_env' | 'denied_by_policy';
+	/** The entitlement feature it needs (`features.<name>`), or `null`. */
+	requires_feature: string | null;
+	/**
+	 * Whether this organization's entitlement document grants that feature now (no request is made);
+	 * `null` for an integration that needs none, or one of the whole installation.
+	 */
+	feature_on: boolean | null;
+	/** The integration's own settings for this organization (the counterparty check: `auto_check`). */
+	options?: Record<string, unknown>;
 	/**
 	 * Sign in with Ever ID only: how far this installation's sign-in client got (`pending`, `ready`,
 	 * `failed`; `lost` or `unreadable`: enable it again in app.ever.co). Never the client itself.
@@ -144,8 +156,9 @@ export function consentLinkAllowed(link: string, apiUrl: string | null): boolean
  *   for every organization.
  *
  * In this release `instance_url`, `stats_link` and `ever_id_login` (Sign in with Ever ID, while Ever
- * Platform offers it) can be enabled; every other integration reads "coming soon" whatever Ever
- * Platform says, and nothing of it moves.
+ * Platform offers it) can be enabled, and so can every integration a handler is registered for
+ * (`IntegrationHandlerRegistry`: the counterparty check and discoverability); every other
+ * integration reads "coming soon" whatever Ever Platform says, and nothing of it moves.
  */
 @Injectable()
 export class EverConnectIntegrationStateService {
@@ -167,9 +180,19 @@ export class EverConnectIntegrationStateService {
 		@Inject(EVER_CONNECT_SETTINGS) private readonly config: EverConnectConfig,
 		@Optional() @Inject(EVER_CONNECT_CLOCK) clock?: { now: () => number },
 		@Optional() private readonly everIdLogin?: EverIdLoginHandler,
-		@Optional() private readonly linkReporter?: PersonLinkReporter
+		@Optional() private readonly linkReporter?: PersonLinkReporter,
+		@Optional() private readonly handlers?: IntegrationHandlerRegistry,
+		@Optional() private readonly entitlements?: EverConnectEntitlementService
 	) {
 		this.now = clock?.now ?? (() => Date.now());
+	}
+
+	/**
+	 * Whether this installation can run `definition`: one of the integrations the connection itself
+	 * runs, or one a handler is registered for. Any other reads "coming soon".
+	 */
+	isAvailable(definition: GauzyIntegrationDefinition): boolean {
+		return definition.available || (this.handlers?.has(definition.key) ?? false);
 	}
 
 	/** The integrations Gauzy offers on this installation (never `stats_link` on Ever Cloud). */
@@ -249,7 +272,7 @@ export class EverConnectIntegrationStateService {
 		let state: IntegrationLocalState = 'available';
 		let revokeSource: RevokeSource | null = before?.revokeSource as RevokeSource | null;
 		let operatorAccept: string | null = before?.operatorAccept ?? null;
-		if (!definition.available) {
+		if (!this.isAvailable(definition)) {
 			state = 'coming_soon';
 		} else if (denied) {
 			state = 'denied_by_policy';
@@ -378,11 +401,18 @@ export class EverConnectIntegrationStateService {
 	/** Every integration offered, with this organization's state (installation-wide ones too). */
 	async list(context: IntegrationContext): Promise<IntegrationView[]> {
 		const link = await this.store.linkOf(context.tenantId, context.organizationId);
+		// The organization's features, from its stored document (no request is made).
+		const features =
+			link && this.entitlements
+				? (await this.entitlements.features(context.tenantId, context.organizationId)).features
+				: {};
 		const views: IntegrationView[] = [];
 		for (const definition of this.offered()) {
 			const scope = definition.instanceWide ? 'instance' : link?.linkId;
 			const row = scope ? await this.store.integration(scope, definition.key) : null;
-			views.push(await this.view(definition, row, Boolean(scope)));
+			views.push(
+				await this.view(definition, row, Boolean(scope), definition.instanceWide ? null : features, link)
+			);
 		}
 		return views;
 	}
@@ -390,12 +420,17 @@ export class EverConnectIntegrationStateService {
 	private async view(
 		definition: GauzyIntegrationDefinition,
 		row: IntegrationRecord | null,
-		scoped: boolean
+		scoped: boolean,
+		features: Record<string, boolean> | null = null,
+		link: LinkRecord | null = null
 	): Promise<IntegrationView> {
 		const shared = sharedDefinition(definition.key);
 		const denied = await this.deniedBy(definition.key);
+		const feature = requiredFeature(definition.key);
+		const handler = this.handlers?.get(definition.key) ?? null;
+		const options = handler?.options && link && this.isAvailable(definition) ? await handler.options(link) : null;
 		let state: IntegrationView['state'] = row?.state as IntegrationLocalState;
-		if (!definition.available) state = 'coming_soon';
+		if (!this.isAvailable(definition)) state = 'coming_soon';
 		else if (denied) state = 'denied_by_policy';
 		else if (!scoped) state = 'not_linked';
 		else if (!row) state = 'available';
@@ -425,6 +460,9 @@ export class EverConnectIntegrationStateService {
 				? { id: row.consentId, at: isoMs(row.consentedAt), source: row.consentSource }
 				: null,
 			policy: denied === 'env' ? 'denied_by_env' : denied === 'policy' ? 'denied_by_policy' : 'allowed',
+			requires_feature: feature,
+			feature_on: feature && features ? features[feature] === true : null,
+			...(options ? { options } : {}),
 			...(definition.key === EVER_ID_LOGIN && this.everIdLogin
 				? { sign_in_client: await this.everIdLogin.status() }
 				: {})
@@ -493,7 +531,7 @@ export class EverConnectIntegrationStateService {
 				message: 'The operator of this installation does not allow this integration.'
 			});
 		}
-		if (!definition.available) {
+		if (!this.isAvailable(definition)) {
 			throw new ConflictException({
 				statusCode: 409,
 				code: 'not_available',
@@ -851,6 +889,19 @@ export class EverConnectIntegrationStateService {
 	 * rest of the heartbeat.
 	 */
 	async retryPending(): Promise<void> {
+		// What a handler could not finish (an identifier upload or its removal) goes first: Ever
+		// Platform takes it while the integration is still on there.
+		for (const handler of this.handlers?.all() ?? []) {
+			try {
+				await handler.retry?.();
+			} catch (error) {
+				if (isCredentialRevoked(error)) {
+					this.signals.revoked$.next();
+					return;
+				}
+				this.logger.warn(`The ${handler.key} integration could not finish its work (${errorCode(error)}).`);
+			}
+		}
 		for (const row of await this.store.integrations()) {
 			if (!row.pendingRemoteRevoke) continue;
 			await this.tellOff(row);
@@ -875,6 +926,7 @@ export class EverConnectIntegrationStateService {
 				// This installation's sign-in client: asked for now, read until it is ready.
 				await this.everIdLogin?.enabled();
 			}
+			await this.handlers?.get(row.name)?.onEnable?.(row);
 		} catch (error) {
 			if (isCredentialRevoked(error)) {
 				this.signals.revoked$.next();
@@ -895,6 +947,15 @@ export class EverConnectIntegrationStateService {
 		}
 		if (row.name === EVER_ID_LOGIN) {
 			await this.forgetSignInClient();
+		}
+		const handler = this.handlers?.get(row.name);
+		if (handler?.onDisable) {
+			try {
+				await handler.onDisable(row);
+			} catch (error) {
+				// Off it is, whatever the handler did.
+				this.logger.warn(`The ${row.name} integration could not be cleared here (${errorCode(error)}).`);
+			}
 		}
 	}
 

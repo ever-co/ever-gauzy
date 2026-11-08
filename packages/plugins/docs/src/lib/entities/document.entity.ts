@@ -32,6 +32,7 @@ import {
 	IDocumentShare,
 	IDocumentVersion,
 	IEmployee,
+	IOrganizationTeam,
 	ITag,
 	JsonData
 } from '@gauzy/contracts';
@@ -44,6 +45,7 @@ import {
 	MultiORMManyToMany,
 	MultiORMManyToOne,
 	MultiORMOneToMany,
+	OrganizationTeam,
 	Tag,
 	TenantOrganizationBaseEntity,
 	VirtualMultiOrmColumn
@@ -65,6 +67,7 @@ import { DocumentVersion } from './document-version.entity';
 @ColumnIndex('IDX_document_tenant_org_source', ['tenantId', 'organizationId', 'source'])
 @ColumnIndex('IDX_document_tenant_org_visibility', ['tenantId', 'organizationId', 'visibility'])
 @ColumnIndex('IDX_document_tenant_org_sha256', ['tenantId', 'organizationId', 'sha256'])
+@ColumnIndex('IDX_document_tenant_org_team', ['tenantId', 'organizationId', 'organizationTeamId'])
 export class Document extends TenantOrganizationBaseEntity implements IDocument {
 	/**
 	 * The node kind of the Documents tree: `FOLDER` | `PAGE` | `FILE`.
@@ -356,12 +359,23 @@ export class Document extends TenantOrganizationBaseEntity implements IDocument 
 	reviewedAt?: Date;
 
 	/**
-	 * Visibility scope: `ORGANIZATION` (default) or `PRIVATE`.
+	 * Visibility scope: `ORGANIZATION` (default), `PRIVATE`, or `TEAM` (the space of `organizationTeamId`).
 	 */
 	@ApiProperty({ type: () => String, enum: DocumentVisibilityEnum })
 	@IsEnum(DocumentVisibilityEnum)
 	@MultiORMColumn({ type: 'varchar', length: 16, default: DocumentVisibilityEnum.ORGANIZATION })
 	visibility: DocumentVisibilityEnum;
+
+	/**
+	 * Moves on every content change (content save, Markdown update, version restore), whatever the snapshot
+	 * debounce does to `version`: the compare-and-set token of API and MCP writers (`expectedRevision`).
+	 */
+	@ApiProperty({ type: () => Number })
+	@IsOptional()
+	@IsInt()
+	@Min(1)
+	@MultiORMColumn({ default: 1 })
+	contentRevision: number;
 
 	/**
 	 * Importer/integration namespace (e.g. `'organization-document'`, `'help-center'`).
@@ -437,6 +451,29 @@ export class Document extends TenantOrganizationBaseEntity implements IDocument 
 	@RelationId((it: Document) => it.parent)
 	@MultiORMColumn({ nullable: true, relationId: true })
 	parentId?: ID;
+
+	/**
+	 * The team whose space the document is in (`visibility: TEAM`). Null for the organization and private spaces.
+	 */
+	@MultiORMManyToOne(() => OrganizationTeam, {
+		/** Specifies whether the relation column can have null values. */
+		nullable: true,
+
+		/** A deleted team leaves its pages in place, without a space, for a manager to move. */
+		onDelete: 'SET NULL'
+	})
+	@JoinColumn()
+	organizationTeam?: IOrganizationTeam;
+
+	/**
+	 * The UUID of the team whose space the document is in.
+	 */
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsUUID()
+	@RelationId((it: Document) => it.organizationTeam)
+	@MultiORMColumn({ nullable: true, relationId: true })
+	organizationTeamId?: ID;
 
 	/**
 	 * The Employee who approved/rejected the review.

@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { FindOptionsWhere } from 'typeorm';
-import { IChangelog, IPagination } from '@gauzy/contracts';
+import { DEFAULT_CHANGELOG_PLATFORM, IChangelog, IPagination } from '@gauzy/contracts';
 import { CrudService } from '@gauzy/core';
 import { Changelog } from './changelog.entity';
 import { TypeOrmChangelogRepository } from './repository/type-orm-changelog.repository';
@@ -29,7 +29,11 @@ export class ChangelogService extends CrudService<Changelog> {
 	 * creation date, so without `date DESC` the display order was whatever the
 	 * database felt like returning.
 	 *
-	 * @param where filter (e.g. `{ isFeature: true }`), already validated/whitelisted by the controller
+	 * Every listing is scoped to one product: one table feeds the "What's new" of Gauzy, Ever Teams (which
+	 * shares Gauzy's database) and other Ever products. A query that names no product lists Gauzy's, so the
+	 * readers written before products existed keep seeing exactly what they saw.
+	 *
+	 * @param where filter (e.g. `{ isFeature: true, platform: 'ever-teams' }`), already validated/whitelisted by the controller
 	 * @returns
 	 */
 	public async findAllChangelogs(where?: FindOptionsWhere<Changelog>): Promise<IPagination<IChangelog>> {
@@ -39,7 +43,7 @@ export class ChangelogService extends CrudService<Changelog> {
 			Object.entries(where ?? {}).filter(([, value]) => value !== undefined)
 		) as FindOptionsWhere<Changelog>;
 		return await this.findAll({
-			...(Object.keys(filter).length ? { where: filter } : {}),
+			where: { ...filter, platform: (filter.platform as string) ?? DEFAULT_CHANGELOG_PLATFORM },
 			order: { date: 'DESC', createdAt: 'DESC' },
 			take: ChangelogService.MAX_PUBLIC_ITEMS
 		});

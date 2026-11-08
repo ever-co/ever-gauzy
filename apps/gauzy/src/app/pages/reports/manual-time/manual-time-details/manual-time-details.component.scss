@@ -1,0 +1,685 @@
+@use 'gauzy/_gauzy-overrides' as *;
+
+// The details of one manual entry, in the employee page's overview vocabulary:
+// a summary strip, hairline panels with a caption and an HTML legend, and the
+// tracked/manual chart colours that page's hours chart uses.
+//
+// Chart colours: tracked is `--gauzy-chart-profit`, manual `--gauzy-chart-bonus`
+// - the theme's validated blue/fuchsia pair, whose note obliges a text legend,
+// kept here. "Other manual" and "this entry" are both manual, so they share the
+// hue and are told apart by TEXTURE (a 45° hatch on the other entries) and by
+// the 2px surface ring on this one, not by a third shade: no muted fuchsia step
+// passed the palette checks on the dark surface.
+
+$hairline: 1px solid var(--gauzy-border-default-color);
+$tracked: var(--gauzy-chart-profit);
+$manual: var(--gauzy-chart-bonus);
+$hatch: repeating-linear-gradient(135deg, $manual 0 3px, transparent 3px 6px);
+
+:host {
+	display: block;
+	width: 46rem;
+	max-width: calc(100vw - 2rem);
+}
+
+.details {
+	display: flex;
+	flex-direction: column;
+	margin: 0;
+	max-height: calc(100vh - 3rem);
+	overflow: hidden;
+	border: none;
+	border-radius: var(--border-radius);
+	background-color: var(--gauzy-card-1);
+	box-shadow: 0 24px 48px -12px rgba(0, 0, 0, 0.45), inset 0 0 0 1px var(--gauzy-border-default-color);
+}
+
+// ── Header ──────────────────────────────────────────────────────────────────
+
+.details-header {
+	display: flex;
+	align-items: flex-start;
+	justify-content: space-between;
+	gap: 1rem;
+	padding: 1.125rem 1.25rem 1rem;
+	border-bottom: $hairline;
+}
+
+.header-main {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+	min-width: 0;
+}
+
+.header-title-row {
+	display: flex;
+	align-items: center;
+	gap: 0.625rem;
+}
+
+.details-title {
+	margin: 0;
+	font-size: 1.0625rem;
+	font-weight: 600;
+	line-height: 1.5rem;
+	letter-spacing: -0.01em;
+	color: var(--gauzy-text-color-1);
+}
+
+.header-meta {
+	display: flex;
+	align-items: center;
+	gap: 0.625rem;
+	min-width: 0;
+	font-size: 0.8125rem;
+	line-height: 1.25rem;
+	color: var(--gauzy-text-color-2);
+}
+
+// The shared avatar stacks its picture over the name at its default size; the
+// report's compact variant puts them on one line, which is what a header wants.
+.header-avatar {
+	min-width: 0;
+}
+
+.meta-separator {
+	width: 3px;
+	height: 3px;
+	border-radius: 50%;
+	background-color: var(--gauzy-text-color-2);
+	opacity: 0.6;
+}
+
+.header-date {
+	white-space: nowrap;
+}
+
+.icon-button {
+	display: inline-flex;
+	flex: 0 0 auto;
+	align-items: center;
+	justify-content: center;
+	width: 2rem;
+	height: 2rem;
+	padding: 0;
+	border: none;
+	border-radius: var(--gauzy-radius-sm);
+	background: transparent;
+	color: var(--gauzy-text-color-2);
+	cursor: pointer;
+	transition: color 0.15s ease, background-color 0.15s ease;
+
+	nb-icon {
+		font-size: 1.25rem;
+	}
+
+	&:hover {
+		color: var(--gauzy-text-color-1);
+		background-color: var(--gauzy-card-2);
+	}
+
+	&:focus-visible {
+		outline: 2px solid var(--color-primary-default);
+		outline-offset: 2px;
+	}
+}
+
+// ── Body ────────────────────────────────────────────────────────────────────
+
+.details-body {
+	display: flex;
+	flex: 1 1 auto;
+	flex-direction: column;
+	gap: 1rem;
+	min-height: 0;
+	padding: 1.25rem;
+	overflow-x: hidden;
+	overflow-y: auto;
+	background-color: var(--gauzy-card-2);
+
+	// The body scrolls; its blocks never shrink. Each one clips its own corners
+	// with `overflow: hidden`, which drops a flex item's minimum height to zero,
+	// so without this the column squeezed the summary and the facts down to a
+	// sliver instead of scrolling.
+	> * {
+		flex: 0 0 auto;
+		min-width: 0;
+	}
+}
+
+// ── Summary strip (the employee page's) ─────────────────────────────────────
+
+.summary {
+	display: grid;
+	grid-template-columns: repeat(4, minmax(0, 1fr));
+	overflow: hidden;
+	border-radius: var(--gauzy-radius-sm);
+	background-color: var(--gauzy-card-1);
+	box-shadow: inset 0 0 0 1px var(--gauzy-border-default-color);
+}
+
+.summary-cell {
+	display: flex;
+	flex-direction: column;
+	justify-content: space-between;
+	gap: 0.25rem;
+	min-width: 0;
+	padding: 0.75rem 1rem;
+	box-shadow: -1px 0 0 0 var(--gauzy-border-default-color);
+}
+
+.summary-label,
+.facts dt {
+	font-size: nb-theme(text-caption-font-size);
+	font-weight: 400;
+	line-height: 1rem;
+	color: var(--gauzy-text-color-2);
+}
+
+.summary-value {
+	display: inline-flex;
+	align-items: center;
+	font-size: 0.875rem;
+	font-weight: 500;
+	line-height: 1.5rem;
+	color: var(--gauzy-text-color-1);
+	font-variant-numeric: tabular-nums;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+
+	&--hero {
+		font-size: 1.25rem;
+		font-weight: 600;
+		letter-spacing: -0.01em;
+	}
+}
+
+.status {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.3125rem;
+	color: var(--gauzy-text-color-2);
+
+	nb-icon {
+		width: 1rem;
+		height: 1rem;
+		font-size: 1rem;
+	}
+
+	&--good {
+		color: var(--gauzy-text-color-1);
+
+		nb-icon {
+			color: var(--color-success-default);
+		}
+	}
+}
+
+// ── Day panel ───────────────────────────────────────────────────────────────
+
+.panel {
+	display: flex;
+	flex-direction: column;
+	gap: 1rem;
+	padding: 1rem;
+	border-radius: var(--gauzy-radius-sm);
+	background-color: var(--gauzy-card-1);
+	box-shadow: inset 0 0 0 1px var(--gauzy-border-default-color);
+}
+
+.panel-header {
+	display: flex;
+	align-items: flex-start;
+	justify-content: space-between;
+	gap: 1rem;
+	flex-wrap: wrap;
+}
+
+.panel-heading {
+	display: flex;
+	flex-direction: column;
+	gap: 0.125rem;
+}
+
+.panel-title {
+	margin: 0;
+	font-size: 0.8125rem;
+	font-weight: 600;
+	line-height: 1.25rem;
+	color: var(--gauzy-text-color-1);
+}
+
+.panel-caption {
+	font-size: 0.6875rem;
+	line-height: 1rem;
+	color: var(--gauzy-text-color-2);
+	font-variant-numeric: tabular-nums;
+}
+
+.panel-note {
+	display: flex;
+	align-items: center;
+	gap: 0.375rem;
+	margin: 0;
+	font-size: 0.6875rem;
+	line-height: 1rem;
+	color: var(--gauzy-text-color-2);
+
+	nb-icon {
+		width: 0.875rem;
+		height: 0.875rem;
+		font-size: 0.875rem;
+	}
+}
+
+// Text in text tokens; the swatch beside it carries the identity.
+.legend {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.875rem;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+
+	li {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.375rem;
+		font-size: 0.6875rem;
+		line-height: 1rem;
+		color: var(--gauzy-text-color-2);
+	}
+}
+
+.swatch {
+	display: inline-block;
+	flex: 0 0 auto;
+	width: 0.625rem;
+	height: 0.625rem;
+	border-radius: 2px;
+
+	&--tracked {
+		background-color: $tracked;
+	}
+
+	&--manual {
+		background: $hatch;
+		box-shadow: inset 0 0 0 1px $manual;
+	}
+
+	&--current {
+		background-color: $manual;
+	}
+}
+
+// Chart 1: the day timeline - 24 hours, one mark per time log.
+.timeline {
+	display: flex;
+	flex-direction: column;
+	gap: 0.375rem;
+}
+
+.timeline-track {
+	position: relative;
+	height: 2rem;
+	border-radius: 4px;
+	background-color: var(--gauzy-card-2);
+}
+
+// Recessive hour lines at 06, 12 and 18: a reading aid, not data.
+.timeline-grid {
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	width: 1px;
+	background-color: var(--gauzy-chart-grid);
+}
+
+.timeline-segment {
+	position: absolute;
+	top: 0.375rem;
+	bottom: 0.375rem;
+	min-width: 3px;
+	border-radius: 3px;
+	// The 2px surface gap between neighbouring marks.
+	box-shadow: 0 0 0 1px var(--gauzy-card-2);
+	cursor: default;
+	transition: filter 0.15s ease;
+
+	&:hover {
+		filter: brightness(1.15);
+	}
+
+	&--tracked {
+		background-color: $tracked;
+	}
+
+	&--manual {
+		background: $hatch;
+		box-shadow: inset 0 0 0 1px $manual, 0 0 0 1px var(--gauzy-card-2);
+	}
+
+	// This entry: full height, solid, and ringed in the surface so it reads
+	// over any log it overlaps.
+	&--current {
+		top: 0.125rem;
+		bottom: 0.125rem;
+		z-index: 1;
+		background-color: $manual;
+		box-shadow: 0 0 0 2px var(--gauzy-card-1);
+	}
+}
+
+.timeline-axis {
+	position: relative;
+	height: 1rem;
+}
+
+.timeline-tick {
+	position: absolute;
+	top: 0;
+	transform: translateX(-50%);
+	font-size: 0.625rem;
+	line-height: 1rem;
+	color: var(--gauzy-chart-label);
+	font-variant-numeric: tabular-nums;
+	white-space: nowrap;
+
+	&:first-child {
+		transform: none;
+	}
+
+	&:last-child {
+		transform: translateX(-100%);
+	}
+}
+
+// Chart 2: how the day's time splits - one 100% bar, three parts.
+.split {
+	display: flex;
+	flex-direction: column;
+	gap: 0.75rem;
+	padding-top: 1rem;
+	border-top: $hairline;
+}
+
+.split-bar {
+	display: flex;
+	gap: 2px;
+	height: 0.5rem;
+	overflow: hidden;
+	border-radius: 4px;
+}
+
+.split-part {
+	min-width: 3px;
+	height: 100%;
+
+	&--tracked {
+		background-color: $tracked;
+	}
+
+	&--manual {
+		background: $hatch;
+		box-shadow: inset 0 0 0 1px $manual;
+	}
+
+	&--current {
+		background-color: $manual;
+	}
+}
+
+.split-figures {
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	gap: 1rem;
+	margin: 0;
+}
+
+.split-figure {
+	display: flex;
+	flex-direction: column;
+	gap: 0.125rem;
+	min-width: 0;
+
+	// One line per label, cut with an ellipsis: a long translation must not run
+	// into the next column.
+	dt {
+		display: flex;
+		align-items: center;
+		gap: 0.375rem;
+		min-width: 0;
+		font-size: 0.6875rem;
+		font-weight: 400;
+		line-height: 1rem;
+		color: var(--gauzy-text-color-2);
+	}
+
+	.split-name {
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+
+	dd {
+		display: flex;
+		align-items: baseline;
+		gap: 0.375rem;
+		margin: 0;
+		font-size: 0.875rem;
+		font-weight: 600;
+		line-height: 1.25rem;
+		color: var(--gauzy-text-color-1);
+		font-variant-numeric: tabular-nums;
+	}
+}
+
+.split-share {
+	font-size: 0.6875rem;
+	font-weight: 400;
+	color: var(--gauzy-text-color-2);
+}
+
+// ── Facts ───────────────────────────────────────────────────────────────────
+
+.facts {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 0;
+	margin: 0;
+	overflow: hidden;
+	border-radius: var(--gauzy-radius-sm);
+	background-color: var(--gauzy-card-1);
+	box-shadow: inset 0 0 0 1px var(--gauzy-border-default-color);
+}
+
+.fact {
+	display: flex;
+	flex-direction: column;
+	gap: 0.25rem;
+	min-width: 0;
+	padding: 0.75rem 1rem;
+	box-shadow: 0 -1px 0 0 var(--gauzy-border-default-color), -1px 0 0 0 var(--gauzy-border-default-color);
+
+	dd {
+		margin: 0;
+		font-size: 0.8125rem;
+		line-height: 1.25rem;
+		color: var(--gauzy-text-color-1);
+		overflow-wrap: anywhere;
+	}
+}
+
+.fact--wide {
+	grid-column: 1 / -1;
+}
+
+// A project or task that opens its own page: the value at rest, an underlined
+// link on hover and focus - no surface, no icon.
+.entity-link {
+	display: inline-block;
+	max-width: 100%;
+	border-radius: 2px;
+	color: var(--gauzy-text-color-1);
+	text-decoration: none;
+
+	&:hover {
+		text-decoration: none;
+
+		.entity-link-text {
+			color: var(--color-primary-default);
+			text-decoration: underline;
+			text-underline-offset: 2px;
+		}
+	}
+
+	&:focus-visible {
+		outline: 2px solid var(--color-primary-default);
+		outline-offset: 2px;
+	}
+
+	// The project chip draws its own name; it takes the hover treatment too.
+	&:hover ::ng-deep ga-project-column-view .main-header {
+		color: var(--color-primary-default);
+		text-decoration: underline;
+		text-underline-offset: 2px;
+	}
+}
+
+.entity-link-text {
+	overflow-wrap: anywhere;
+	transition: color 0.15s ease;
+}
+
+.prose {
+	white-space: pre-line;
+}
+
+.muted {
+	color: var(--gauzy-text-color-2);
+}
+
+// ── Footer: history and actions on one line ─────────────────────────────────
+
+.details-footer {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 1rem;
+	padding: 0.75rem 1.25rem;
+	border-top: $hairline;
+	background-color: var(--gauzy-card-1);
+}
+
+.history {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.25rem 1.25rem;
+	min-width: 0;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.history-item {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.375rem;
+	font-size: 0.6875rem;
+	line-height: 1rem;
+	color: var(--gauzy-text-color-2);
+	white-space: nowrap;
+}
+
+.history-dot {
+	width: 0.4375rem;
+	height: 0.4375rem;
+	border-radius: 50%;
+
+	&--added {
+		background-color: var(--color-success-default);
+	}
+
+	&--edited {
+		background-color: var(--color-warning-default);
+	}
+}
+
+.history-label {
+	color: var(--gauzy-text-color-1);
+	font-weight: 500;
+}
+
+.history-time {
+	font-variant-numeric: tabular-nums;
+}
+
+.actions {
+	display: flex;
+	flex: 0 0 auto;
+	gap: 0.5rem;
+
+	nb-icon {
+		margin-inline-end: 0.25rem;
+	}
+}
+
+// ── The report's Action pills ───────────────────────────────────────────────
+
+.action-pill {
+	display: inline-flex;
+	align-items: center;
+	padding: 2px 8px;
+	border-radius: 999px;
+	font-size: 11px;
+	font-weight: 600;
+	line-height: 16px;
+	letter-spacing: 0.02em;
+	white-space: nowrap;
+
+	&--added {
+		color: var(--color-success-default);
+		background-color: var(--color-success-transparent-100);
+	}
+
+	&--edited {
+		color: var(--color-warning-default);
+		background-color: var(--color-warning-transparent-100);
+	}
+}
+
+// ── Narrow ──────────────────────────────────────────────────────────────────
+
+@media (max-width: 40rem) {
+	.summary {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+
+	.facts {
+		grid-template-columns: minmax(0, 1fr);
+	}
+
+	.split-figures {
+		grid-template-columns: minmax(0, 1fr);
+		gap: 0.5rem;
+	}
+
+	.details-footer {
+		flex-direction: column;
+		align-items: stretch;
+	}
+
+	.actions {
+		justify-content: flex-end;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.icon-button,
+	.timeline-segment {
+		transition: none;
+	}
+}

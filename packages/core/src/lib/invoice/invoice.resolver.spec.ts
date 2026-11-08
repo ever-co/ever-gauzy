@@ -771,6 +771,25 @@ describe('InvoiceResolver — the connection contract', () => {
 		expect((error as Error).message).toContain('QUERY_UNKNOWN_FILTER_FIELD');
 	});
 
+	it('refuses a filter on the share token, which reads the invoice without signing in', async () => {
+		const { resolver } = surfaces();
+
+		const direct = await resolver.invoices({ token: { eq: 'a-token' } }).catch((thrown) => thrown);
+		const nested = await resolver.invoices({ or: [{ token: { like: 'a%' } }] }).catch((thrown) => thrown);
+
+		expect(direct).toBeInstanceOf(BadRequestException);
+		expect((direct as Error).message).toContain('QUERY_UNKNOWN_FILTER_FIELD');
+		expect(nested).toBeInstanceOf(BadRequestException);
+		expect((nested as Error).message).toContain('QUERY_UNKNOWN_FILTER_FIELD');
+	});
+
+	it('leaves the share token out of the filter input', () => {
+		const filterInput = printed.slice(printed.indexOf('input InvoiceFilter {'));
+		const filterBody = filterInput.slice(0, filterInput.indexOf('}'));
+
+		expect(filterBody).not.toMatch(/\btoken:/);
+	});
+
 	it('refuses both pagination styles at once rather than silently preferring one', async () => {
 		const { resolver } = surfaces();
 

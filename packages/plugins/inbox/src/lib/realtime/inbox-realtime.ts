@@ -29,7 +29,19 @@ export const INBOX_ITEM_AGGREGATE = 'inbox_item';
  * A typed field of the Inbox's own (`inboxItemCreated`, for holders of `INBOX_VIEW`) is a follow-up: the schema
  * snapshot and the field-binding gate read the schema with the flag off, where a flag-gated plugin's SDL is absent.
  */
-export const INBOX_STREAMED_EVENTS: readonly string[] = ['inbox_item.created'];
+export const INBOX_STREAMED_EVENTS: readonly string[] = ['inbox_item.created', 'inbox_item.state_changed'];
+
+/** The fact appended when a recipient's own state of one or more items changed (read, archived, snoozed, done). */
+export const INBOX_ITEM_STATE_CHANGED = 'inbox_item.state_changed';
+
+/** What `inbox_item.state_changed` carries: which items, which state fields, for whom. Content-free. */
+export interface IInboxItemStateChangedData {
+	itemIds: ID[];
+	stated: string[];
+	organizationId: ID | null;
+	/** The one user whose state changed: the event reaches their subscriptions only. */
+	recipientUserIds: ID[];
+}
 
 /** What `inbox_item.created` carries. */
 export interface IInboxItemCreatedData {
@@ -118,6 +130,42 @@ export class InboxRealtime implements OnModuleInit {
 			});
 		} catch (error) {
 			this.logger.warn(`inbox_item.created was not appended for item ${item.id}: ${(error as Error)?.message}`);
+		}
+	}
+
+	/**
+	 * Appends `inbox_item.state_changed` for a recipient whose own state of these items changed (one read, a
+	 * mark-all-read, an archive, a snooze, a done). Addressed to that user only; a client refetches its list and
+	 * counts. Appended after the state is written; a lost event costs the instant badge, not the state.
+	 */
+	async recipientStateChanged(input: {
+		tenantId: ID;
+		organizationId?: ID | null;
+		userId: ID;
+		itemIds: ReadonlyArray<ID>;
+		stated: ReadonlyArray<string>;
+	}): Promise<void> {
+		const itemIds = [...new Set((input?.itemIds ?? []).filter(Boolean))];
+		if (!input?.tenantId || !input.userId || !itemIds.length) return;
+		const outbox = this.find(EventOutboxService);
+		if (!outbox) return;
+		const data: IInboxItemStateChangedData = {
+			itemIds,
+			stated: [...new Set(input.stated ?? [])],
+			organizationId: (input.organizationId as ID) ?? null,
+			recipientUserIds: [input.userId]
+		};
+		try {
+			await outbox.append(this.dataSource.manager, {
+				name: INBOX_ITEM_STATE_CHANGED,
+				aggregateType: INBOX_ITEM_AGGREGATE,
+				aggregateId: itemIds[0],
+				tenantId: input.tenantId,
+				...(input.organizationId ? { organizationId: input.organizationId as ID } : { tenantWide: true }),
+				data: data as unknown as Record<string, unknown>
+			});
+		} catch (error) {
+			this.logger.warn(`inbox_item.state_changed was not appended for user ${input.userId}: ${(error as Error)?.message}`);
 		}
 	}
 

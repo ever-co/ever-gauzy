@@ -20,6 +20,7 @@ import {
 	INBOX_SNOOZE_PRESETS,
 	InboxSnoozePreset,
 	isArchived,
+	isDone,
 	isSnoozed,
 	isTranslationKey,
 	isUnread,
@@ -36,7 +37,7 @@ import { InboxEmailViewerComponent } from '../inbox-email-viewer/inbox-email-vie
 /**
  * The detail pane of one inbox item (plan 04 §1): what it asks, its answer, the reply composer for a
  * question, an approval or an escalation, the sandboxed viewer for an email, and the recipient's own actions
- * (read / unread, archive, snooze, open the linked task, project or agent).
+ * (read / unread, archive, snooze, done, open the linked task — at the comment for a comment notification —, project or agent).
  */
 @Component({
 	selector: 'ngx-inbox-item-detail',
@@ -230,6 +231,17 @@ import { InboxEmailViewerComponent } from '../inbox-email-viewer/inbox-email-vie
 						<nb-icon [icon]="archived() ? 'arrow-circle-up-outline' : 'archive-outline'"></nb-icon>
 						{{ (archived() ? 'INBOX.ACTIONS.UNARCHIVE' : 'INBOX.ACTIONS.ARCHIVE') | translate }}
 					</button>
+					<button
+						nbButton
+						ghost
+						size="small"
+						data-test="toggle-done"
+						[disabled]="busy()"
+						(click)="toggleDone()"
+					>
+						<nb-icon [icon]="done() ? 'undo-outline' : 'checkmark-circle-2-outline'"></nb-icon>
+						{{ (done() ? 'INBOX.ACTIONS.MARK_NOT_DONE' : 'INBOX.ACTIONS.MARK_DONE') | translate }}
+					</button>
 					@if (snoozed()) {
 						<button
 							nbButton
@@ -267,6 +279,7 @@ import { InboxEmailViewerComponent } from '../inbox-email-viewer/inbox-email-vie
 							size="small"
 							[attr.data-test]="'open-' + link.kind"
 							[routerLink]="link.commands"
+							[queryParams]="link.queryParams ?? null"
 						>
 							<nb-icon icon="external-link-outline"></nb-icon>
 							{{ 'INBOX.OPEN.' + link.kind | translate }}
@@ -364,6 +377,7 @@ export class InboxItemDetailComponent {
 	readonly unread = computed(() => isUnread(this.item()));
 	readonly archived = computed(() => isArchived(this.item()));
 	readonly snoozed = computed(() => isSnoozed(this.item()));
+	readonly done = computed(() => isDone(this.item()));
 	readonly problem = computed(() => replyProblem(this.item(), this.text(), this.optionId()));
 	/** Only a recipient answers (a mailbox reader only reads), and only an open decision. */
 	readonly canReply = computed(() => {
@@ -423,6 +437,11 @@ export class InboxItemDetailComponent {
 
 	toggleArchive(): void {
 		this.stateChanged.emit({ isArchived: !this.archived() });
+	}
+
+	/** Done hides the item from the open tabs (the Done tab keeps it); "not done" brings it back. */
+	toggleDone(): void {
+		this.stateChanged.emit({ isDone: !this.done() });
 	}
 
 	snooze(preset: InboxSnoozePreset): void {

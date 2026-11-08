@@ -16,6 +16,7 @@ import {
 	DocumentKnowledgeStatusEnum,
 	DocumentReviewStatusEnum,
 	DocumentSourceEnum,
+	DocumentSpaceKindEnum,
 	DocumentStatusEnum,
 	DocumentVisibilityEnum,
 	EntitySubscriptionTypeEnum,
@@ -28,6 +29,8 @@ import {
 	EventBus,
 	FavoriteService,
 	MentionService,
+	OrganizationTeam,
+	OrganizationTeamEmployee,
 	RequestContext,
 	TenantAwareCrudService,
 	parseFindOptionsRelations,
@@ -38,6 +41,7 @@ import { CreateDocumentLinkCommand } from '../commands/create-document-link.comm
 import { DeleteDocumentLinkCommand } from '../commands/delete-document-link.command';
 import { getDocsConfig } from '../docs.config';
 import {
+	DOCS_COLLAB_DISABLED,
 	DOCS_CONTENT_BINARY_TOO_LARGE,
 	DOCS_CONTENT_CONFLICT,
 	DOCS_CONTENT_JSON_REQUIRED,
@@ -47,6 +51,9 @@ import {
 	DOCS_ORGANIZATION_REQUIRED,
 	DOCS_PARENT_NOT_CONTAINER,
 	DOCS_SOURCE_RESERVED,
+	DOCS_TEAM_NOT_IN_ORGANIZATION,
+	DOCS_TEAM_NOT_MEMBER,
+	DOCS_TEAM_REQUIRED,
 	DOCS_WRITE_FORBIDDEN
 } from '../docs.constants';
 import {
@@ -116,6 +123,8 @@ export const DOCUMENT_LIST_COLUMNS = [
 	'reviewedById',
 	'reviewedAt',
 	'visibility',
+	'organizationTeamId',
+	'contentRevision',
 	'externalSource',
 	'externalId'
 ];
@@ -127,6 +136,42 @@ export const DOCUMENT_LIST_COLUMNS = [
  *
  * @param loaded The `updatedAt` the save replaces.
  */
+/** The revision the next content write carries: one past the document's (a row born before revisions counts as 1). */
+export function nextContentRevision(document: Pick<Document, 'contentRevision'>): number {
+	const current = Number(document.contentRevision);
+	return (Number.isFinite(current) && current >= 1 ? current : 1) + 1;
+}
+
+/**
+ * Moves the document's revision from the one loaded to the next in one conditional `UPDATE`, and answers the next.
+ * Nothing moved means another content write landed since the load: 409 `DOCS_CONTENT_CONFLICT` with the revision
+ * the row holds now, and nothing is written by the caller either. Shared by the content save and the version
+ * restore, so every content change is a claimed revision.
+ *
+ * @param repository The document repository (TypeORM).
+ * @param document The document as loaded.
+ * @returns The claimed revision.
+ */
+export async function claimNextContentRevision(
+	repository: { update: TypeOrmDocumentRepository['update']; findOne: TypeOrmDocumentRepository['findOne'] },
+	document: Pick<Document, 'id' | 'tenantId' | 'contentRevision'>
+): Promise<number> {
+	const current = Number(document.contentRevision);
+	const loaded = Number.isFinite(current) && current >= 1 ? current : 1;
+	const next = loaded + 1;
+	const result = await repository.update({ id: document.id as ID, tenantId: document.tenantId, contentRevision: loaded }, { contentRevision: next });
+	if (!result.affected) {
+		const row = await repository.findOne({ select: { id: true, contentRevision: true, updatedAt: true }, where: { id: document.id as ID, tenantId: document.tenantId } });
+		throw new ConflictException({
+			message: `Document content changed since it was loaded (revision ${row?.contentRevision ?? '?'}, not ${loaded})`,
+			code: DOCS_CONTENT_CONFLICT,
+			currentUpdatedAt: row?.updatedAt ?? null,
+			currentRevision: row?.contentRevision ?? null
+		});
+	}
+	return next;
+}
+
 export function nextContentToken(loaded?: Date | string | null): Date {
 	const previous = loaded ? new Date(loaded).getTime() : Number.NaN;
 	const now = Date.now();
@@ -181,6 +226,8 @@ export class DocumentService extends TenantAwareCrudService<Document> {
 				if (userId) {
 					web.orWhere(p(`"${alias}"."createdByUserId" = :visibilityUserId`), { visibilityUserId: userId });
 				}
+				// The spaces of the teams the requester belongs to.
+				this.documentAccessService.applyTeamScope(web, alias);
 				// Additive share overlay — never subtracts rights, no-op without an employee identity.
 				this.documentAccessService.applyShareScope(web, alias);
 			})
@@ -251,7 +298,7 @@ export class DocumentService extends TenantAwareCrudService<Document> {
 	 */
 	public canRead(document: Document): Promise<boolean> {
 		return this.documentAccessService.canRead(
-			{ createdByUserId: document.createdByUserId, visibility: document.visibility },
+			{ createdByUserId: document.createdByUserId, visibility: document.visibility, organizationTeamId: document.organizationTeamId },
 			document.id
 		);
 	}
@@ -268,6 +315,7 @@ export class DocumentService extends TenantAwareCrudService<Document> {
 			{
 				createdByUserId: document.createdByUserId,
 				visibility: document.visibility,
+				organizationTeamId: document.organizationTeamId,
 				isLocked: document.isLocked
 			},
 			document.id
@@ -294,6 +342,7 @@ export class DocumentService extends TenantAwareCrudService<Document> {
 	private async assertMayChangeOwnerFields(document: Document, input: UpdateDocumentDTO): Promise<void> {
 		const changesOwnerField =
 			(input.visibility !== undefined && input.visibility !== document.visibility) ||
+			(input.organizationTeamId !== undefined && (input.organizationTeamId ?? null) !== (document.organizationTeamId ?? null)) ||
 			(input.isLocked !== undefined && input.isLocked !== !!document.isLocked) ||
 			(input.organizationId !== undefined && input.organizationId !== document.organizationId);
 		if (!changesOwnerField) {
@@ -342,14 +391,14 @@ export class DocumentService extends TenantAwareCrudService<Document> {
 		}
 
 		if (
-			document.visibility === DocumentVisibilityEnum.PRIVATE &&
+			document.visibility !== DocumentVisibilityEnum.ORGANIZATION &&
 			!RequestContext.hasPermission(PermissionsEnum.DOCS_MANAGE) &&
 			document.createdByUserId !== RequestContext.currentUserId()
 		) {
-			// Last gate: the share overlay. Only reached for someone else's PRIVATE document,
-			// so the extra lookup never touches the common read paths.
+			// Last gate: team membership and the share overlay. Only reached for someone else's PRIVATE or
+			// TEAM document, so the extra lookup never touches the common read paths.
 			const shared = await this.documentAccessService.canRead(
-				{ createdByUserId: document.createdByUserId, visibility: document.visibility },
+				{ createdByUserId: document.createdByUserId, visibility: document.visibility, organizationTeamId: document.organizationTeamId },
 				document.id
 			);
 			if (!shared) {
@@ -379,7 +428,7 @@ export class DocumentService extends TenantAwareCrudService<Document> {
 				return related;
 			}
 			const readable = await this.documentAccessService.canRead(
-				{ createdByUserId: related.createdByUserId, visibility: related.visibility },
+				{ createdByUserId: related.createdByUserId, visibility: related.visibility, organizationTeamId: related.organizationTeamId },
 				related.id
 			);
 			return readable ? related : { id: null, restricted: true };
@@ -435,8 +484,13 @@ export class DocumentService extends TenantAwareCrudService<Document> {
 		const contentJson = input.contentJson ? this.validateContentJson(input.contentJson) : null;
 
 		const organizationId = this.resolveOrganizationId(input as any);
+		// The visibility first (the organization's default when the input names none), then the team against it: a
+		// team id on a row that is not TEAM is never stored, whatever the input carried.
+		const visibility = input.visibility ?? (await this.resolveDefaultVisibility(organizationId));
+		const space = await this.resolveSpaceFields(visibility, input.organizationTeamId, organizationId);
 		const document = await this.create({
 			...this.buildAssignableFields(input),
+			...space,
 			kind: input.kind,
 			contentJson,
 			contentHtml: this.resolveContentHtml(input.contentHtml, contentJson, null),
@@ -447,7 +501,7 @@ export class DocumentService extends TenantAwareCrudService<Document> {
 			// §4.3/§4.14 — the organization default is the whole point of the setting; hardcoding
 			// ORGANIZATION here meant an org that chose PRIVATE got ORGANIZATION for 100% of the
 			// content its people authored (the upload path already honours it).
-			visibility: input.visibility ?? (await this.resolveDefaultVisibility(organizationId))
+			visibility
 		});
 
 		// The create DTO accepts `mentionEmployeeIds`, so it has to mean something: without this
@@ -533,10 +587,15 @@ export class DocumentService extends TenantAwareCrudService<Document> {
 		const document = await this.findOneScoped(id);
 		await this.assertCanWrite(document);
 		await this.assertMayChangeOwnerFields(document, input);
+		const space =
+			input.visibility !== undefined || input.organizationTeamId !== undefined
+				? await this.resolveSpaceFields(input.visibility ?? document.visibility, input.organizationTeamId ?? document.organizationTeamId, document.organizationId)
+				: {};
 
 		const updated = await this.save({
 			...document,
 			...this.buildAssignableFields(input),
+			...space,
 			id: document.id
 		});
 
@@ -584,9 +643,12 @@ export class DocumentService extends TenantAwareCrudService<Document> {
 			throw new ConflictException({
 				message: 'Document content changed since it was loaded',
 				code: DOCS_CONTENT_CONFLICT,
-				currentUpdatedAt: document.updatedAt
+				currentUpdatedAt: document.updatedAt,
+				currentRevision: document.contentRevision ?? 1
 			});
 		}
+		// The same check on the revision, for writers that hold one (API and MCP clients); the write below claims it.
+		this.assertExpectedRevision(document, input.expectedRevision);
 
 		// §6.1 step 1 — the TipTap schema is the first line of defense. Validated BEFORE the
 		// version snapshot so a rejected payload cannot burn a version slot.
@@ -604,11 +666,15 @@ export class DocumentService extends TenantAwareCrudService<Document> {
 		// Nor can the ORM's own stamp be relied on: on SQLite `CURRENT_TIMESTAMP` has one-second
 		// precision, so two saves inside one second would share a token. The save states its own,
 		// strictly newer than the one it replaces (see `nextContentToken`).
+		// The revision moves in one guarded write before the save: two saves that read the same revision cannot both
+		// pass (the second finds it gone and gets the 409), whatever either of them stated as `expectedRevision`.
+		const contentRevision = await claimNextContentRevision(this.typeOrmRepository, document);
 		const { updatedAt: loadedToken, ...current } = document;
 		const updated = await this.save({
 			...current,
 			id: document.id,
 			updatedAt: nextContentToken(loadedToken),
+			contentRevision,
 			contentJson,
 			// 🛑 NOT `?? document.contentHtml`: reusing the stored HTML when the client omits it
 			// leaves the render cache describing the PREVIOUS revision, which is what read-only
@@ -1095,8 +1161,35 @@ export class DocumentService extends TenantAwareCrudService<Document> {
 		if (params.visibility) {
 			qb.andWhere(p(`"document"."visibility" = :visibility`), { visibility: params.visibility });
 		}
+		this.applySpaceFilter(qb, params);
 		if (typeof params.searchable === 'boolean') {
 			qb.andWhere(p(`"document"."searchable" = :searchableFlag`), { searchableFlag: params.searchable });
+		}
+	}
+
+	/**
+	 * The space a list is read in: the organization's pages, the caller's private pages, or a team's pages
+	 * (one team when `organizationTeamId` is given, else every team space the caller reaches).
+	 */
+	private applySpaceFilter(qb: SelectQueryBuilder<Document>, params: GetDocumentsQueryDTO): void {
+		switch (params.space) {
+			case DocumentSpaceKindEnum.ORGANIZATION:
+				qb.andWhere(p(`"document"."visibility" = :spaceVisibility`), { spaceVisibility: DocumentVisibilityEnum.ORGANIZATION });
+				return;
+			case DocumentSpaceKindEnum.PRIVATE:
+				qb.andWhere(p(`"document"."visibility" = :spaceVisibility`), { spaceVisibility: DocumentVisibilityEnum.PRIVATE });
+				qb.andWhere(p(`"document"."createdByUserId" = :spaceUserId`), { spaceUserId: RequestContext.currentUserId() ?? '' });
+				return;
+			case DocumentSpaceKindEnum.TEAM:
+				qb.andWhere(p(`"document"."visibility" = :spaceVisibility`), { spaceVisibility: DocumentVisibilityEnum.TEAM });
+				if (params.organizationTeamId) {
+					qb.andWhere(p(`"document"."organizationTeamId" = :spaceTeamId`), { spaceTeamId: params.organizationTeamId });
+				}
+				return;
+			default:
+				if (params.organizationTeamId) {
+					qb.andWhere(p(`"document"."organizationTeamId" = :spaceTeamId`), { spaceTeamId: params.organizationTeamId });
+				}
 		}
 	}
 
@@ -1247,6 +1340,9 @@ export class DocumentService extends TenantAwareCrudService<Document> {
 		if (input.visibility !== undefined) {
 			fields.visibility = input.visibility;
 		}
+		if (input.organizationTeamId !== undefined) {
+			fields.organizationTeamId = (input.organizationTeamId ?? null) as ID;
+		}
 		if ((input as UpdateDocumentDTO).searchable !== undefined) {
 			fields.searchable = (input as UpdateDocumentDTO).searchable;
 		}
@@ -1266,6 +1362,78 @@ export class DocumentService extends TenantAwareCrudService<Document> {
 			fields.tags = tagIds.map((id: ID) => ({ id })) as any;
 		}
 		return fields;
+	}
+
+	/**
+	 * The space fields of a create or update: a `TEAM` document names a team of its organization that the caller
+	 * belongs to (or administers with `DOCS_MANAGE`); any other visibility carries no team. Team spaces are part
+	 * of the collaboration feature, so a `TEAM` write is refused while `GAUZY_DOCS_COLLAB_ENABLED` is off.
+	 *
+	 * @param visibility The visibility written.
+	 * @param organizationTeamId The team named, if any.
+	 * @param organizationId The document's organization.
+	 * @returns The `visibility` / `organizationTeamId` pair to persist.
+	 */
+	public async resolveSpaceFields(
+		visibility: DocumentVisibilityEnum | undefined,
+		organizationTeamId: ID | null | undefined,
+		organizationId: ID
+	): Promise<Partial<Document>> {
+		if (visibility === undefined) {
+			return {};
+		}
+		if (visibility !== DocumentVisibilityEnum.TEAM) {
+			return { visibility, organizationTeamId: null as unknown as ID };
+		}
+		if (!getDocsConfig().collabEnabled) {
+			throw new NotFoundException({ message: 'Team spaces are not enabled on this installation', code: DOCS_COLLAB_DISABLED });
+		}
+		if (!organizationTeamId) {
+			throw new BadRequestException({ message: 'A TEAM document names its team (organizationTeamId)', code: DOCS_TEAM_REQUIRED });
+		}
+		const tenantId = RequestContext.currentTenantId();
+		const team = await this.typeOrmRepository.manager.findOne(OrganizationTeam, {
+			select: { id: true, organizationId: true },
+			where: { id: organizationTeamId, tenantId, organizationId }
+		});
+		if (!team) {
+			throw new BadRequestException({ message: 'The team is not one of this organization', code: DOCS_TEAM_NOT_IN_ORGANIZATION });
+		}
+		if (!RequestContext.hasPermission(PermissionsEnum.DOCS_MANAGE)) {
+			const employeeId = this.documentAccessService.currentEmployeeId();
+			const membership = employeeId
+				? await this.typeOrmRepository.manager.findOne(OrganizationTeamEmployee, {
+						select: { id: true },
+						where: { organizationTeamId, employeeId, tenantId }
+					})
+				: null;
+			if (!membership) {
+				throw new ForbiddenException({ message: 'Only a member of the team may put a document in its space', code: DOCS_TEAM_NOT_MEMBER });
+			}
+		}
+		return { visibility, organizationTeamId };
+	}
+
+	/**
+	 * 409 `DOCS_CONTENT_CONFLICT` when the writer's `expectedRevision` is not the document's: another write landed
+	 * since the writer read it. A writer that states no revision is not checked here.
+	 *
+	 * @param document The document as loaded.
+	 * @param expectedRevision The revision the writer read, if any.
+	 */
+	public assertExpectedRevision(document: Document, expectedRevision: number | undefined): void {
+		if (expectedRevision === undefined || expectedRevision === null) {
+			return;
+		}
+		const current = document.contentRevision ?? 1;
+		if (expectedRevision !== current) {
+			throw new ConflictException({
+				message: `Document content is at revision ${current}, not ${expectedRevision}`,
+				code: DOCS_CONTENT_CONFLICT,
+				currentUpdatedAt: document.updatedAt,
+				currentRevision: current
+			});
+		}
 	}
 
 	/**

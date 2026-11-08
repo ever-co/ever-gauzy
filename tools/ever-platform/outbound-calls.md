@@ -62,6 +62,8 @@ Contract version: `1.0.0-rc.8` (`@ever-co/connect-contracts` and `@ever-co/conne
 
 <!-- /generated:calls -->
 
+One more call exists, off by default and outside the table: with `EVER_CONNECT_PROVISION_ENABLED=true` on a connected installation with `EVER_CONNECT_ENABLED=true` and the Ever ID sign-in plugin loaded (`ZITADEL_ENABLED=true`), after a person created a workspace from Ever, `POST /v1/provision-intents/{jti}/complete` tells Ever Platform the ids of the new tenant, organization and owner and the addresses of this installation's web app and API (row 26 of the contract, which this version of it lists for a later version of the API). Without any of those, the routes answer 404 and the call is never made.
+
 Every request goes to `EVER_PLATFORM_API_URL` (the statistics: `EVER_STATS_API_URL`), both
 `https://api.ever.co` by default. No request carries a person's name or e-mail address. The module
 READMEs say in detail what each request carries and when.

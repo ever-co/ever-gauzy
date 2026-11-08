@@ -1,4 +1,5 @@
 import { Global, Module } from '@nestjs/common';
+import { CqrsModule } from '@nestjs/cqrs';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import {
@@ -16,6 +17,7 @@ import { InboxItemFeed } from './inbox-item-feed';
 import { InboxService } from './inbox.service';
 import { InboxSourceHandlerRegistry } from './inbox-source-handler.registry';
 import { InboxRealtime } from './realtime/inbox-realtime';
+import { INBOX_NOTIFICATION_HANDLERS, InboxNotificationBridge } from './notifications/inbox-notification.bridge';
 
 /** Every table the plugin owns (its migrations create them). */
 export const INBOX_ENTITIES = [InboxItem, InboxItemRecipient];
@@ -35,10 +37,15 @@ export const INBOX_ENTITIES = [InboxItem, InboxItemRecipient];
 		MikroOrmModule.forFeature(INBOX_ENTITIES),
 		// The tenant and permission guards of the routes need the role permissions.
 		// (The resolver's GraphQL capability gate, `FeatureFlagGuard`, reads the global `FeatureModule`.)
-		RolePermissionModule
+		RolePermissionModule,
+		// The notification facts (created, state changed) the unified inbox files and mirrors.
+		CqrsModule
 	],
 	controllers: [InboxController],
 	providers: [
+		// The unified inbox: platform notifications filed as NOTIFICATION items, read state kept one both ways.
+		InboxNotificationBridge,
+		...INBOX_NOTIFICATION_HANDLERS,
 		InboxSourceHandlerRegistry,
 		InboxService,
 		// Listed here as well as in the plugin's `extensions`: a resolver only the plugin metadata names is never

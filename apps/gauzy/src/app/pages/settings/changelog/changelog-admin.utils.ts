@@ -1,5 +1,5 @@
 import { AbstractControl, ValidationErrors, ValidatorFn } from '@angular/forms';
-import { IChangelog, IChangelogCreateInput } from '@gauzy/contracts';
+import { ChangelogPlatformEnum, DEFAULT_CHANGELOG_PLATFORM, IChangelog, IChangelogCreateInput } from '@gauzy/contracts';
 
 /** Where the page's translations live. */
 export const CHANGELOG_ADMIN_I18N = 'CHANGELOG_MENU.MANAGE';
@@ -9,6 +9,32 @@ export const CHANGELOG_ADMIN_I18N = 'CHANGELOG_MENU.MANAGE';
  * a longer value would save on PostgreSQL and SQLite and fail on MySQL.
  */
 export const CHANGELOG_FIELD_MAX_LENGTH = 255;
+
+/** A product whose What's New entries this page manages. */
+export interface IChangelogPlatformOption {
+	key: string;
+	/** The product's name: a brand, the same in every language. */
+	name: string;
+}
+
+/**
+ * The products that read this installation's What's New entries, each its own list: Gauzy, and the Ever
+ * products whose news lives here too (Ever Teams runs on this API; Ever Works and Ever Platform read it).
+ */
+export const CHANGELOG_PLATFORM_OPTIONS: readonly IChangelogPlatformOption[] = [
+	{ key: ChangelogPlatformEnum.GAUZY, name: 'Gauzy' },
+	{ key: ChangelogPlatformEnum.EVER_TEAMS, name: 'Ever Teams' },
+	{ key: ChangelogPlatformEnum.EVER_WORKS, name: 'Ever Works' },
+	{ key: ChangelogPlatformEnum.EVER_PLATFORM, name: 'Ever Platform' }
+];
+
+/**
+ * Whether the product has a sign-up page that shows feature cards. Only Gauzy's does; the other products show
+ * their What's New entries only.
+ */
+export function hasSignUpFeatures(platform: string | null | undefined): boolean {
+	return (platform || DEFAULT_CHANGELOG_PLATFORM) === DEFAULT_CHANGELOG_PLATFORM;
+}
 
 /** The icon a new entry starts with. Any Eva icon name works, as on the seeded entries. */
 export const CHANGELOG_DEFAULT_ICON = 'star-outline';

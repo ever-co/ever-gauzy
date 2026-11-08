@@ -17,6 +17,8 @@ export interface AuthorizedRequest extends Request {
 		scopes?: string[];
 		subject?: string;
 		clientId?: string;
+		/** Admitted on collaboration scopes alone: the collaboration tools only. */
+		collaborationOnly?: boolean;
 	};
 }
 
@@ -102,7 +104,8 @@ export class AuthorizationMiddleware {
 					payload: validationResult.payload,
 					scopes: validationResult.scopes,
 					subject: validationResult.subject,
-					clientId: validationResult.clientId
+					clientId: validationResult.clientId,
+					collaborationOnly: !!validationResult.collaborationOnly
 				};
 
 				this.securityLogger.debug('Token validation successful', {

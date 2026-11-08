@@ -1,25 +1,46 @@
 import { NgModule } from '@angular/core';
-import { NbIconModule, NbSpinnerModule, NbCardModule, NbBadgeModule } from '@nebular/theme';
+import {
+	NbButtonModule,
+	NbCardModule,
+	NbDialogModule,
+	NbIconModule,
+	NbSpinnerModule,
+	NbToggleModule,
+	NbTooltipModule
+} from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { TranslatePipe } from '@ngx-translate/core';
-import { GauzyFiltersModule, NoDataMessageModule, ProjectColumnViewModule, SharedModule } from '@gauzy/ui-core/shared';
+import {
+	EditTimeLogModalModule,
+	GauzyFiltersModule,
+	NoDataMessageModule,
+	ProjectColumnViewModule,
+	SharedModule,
+	TaskSelectModule
+} from '@gauzy/ui-core/shared';
 import { ManualTimeRoutingModule } from './manual-time-routing.module';
 import { ManualTimeComponent } from './manual-time/manual-time.component';
+import { ManualTimeDetailsComponent } from './manual-time-details/manual-time-details.component';
 
 @NgModule({
-	declarations: [ManualTimeComponent],
+	declarations: [ManualTimeComponent, ManualTimeDetailsComponent],
 	imports: [
 		ManualTimeRoutingModule,
 		SharedModule,
 		TranslatePipe,
+		NbButtonModule,
+		NbCardModule,
+		NbDialogModule.forChild(),
+		EditTimeLogModalModule,
 		NbIconModule,
 		NbSpinnerModule,
-		NbCardModule,
+		NbToggleModule,
+		NbTooltipModule,
 		NgSelectModule,
-		NbBadgeModule,
 		GauzyFiltersModule,
 		ProjectColumnViewModule,
-		NoDataMessageModule
+		NoDataMessageModule,
+		TaskSelectModule
 	]
 })
 export class ManualTimeModule {}
