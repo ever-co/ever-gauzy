@@ -244,6 +244,27 @@ describe('ChangelogAdminComponent', () => {
 		expect(component.platform).toBe('gauzy');
 	});
 
+	it('turns the other products back on once a later read shows the API keeps products apart', async () => {
+		// One answer from an older API instance, as during a rolling deploy.
+		const legacy = { id: 'legacy-1', title: 'Dark mode', date: new Date('2026-08-01T00:00:00.000Z') };
+		changelogService.find.mockImplementationOnce(() => of({ items: [legacy], total: 1 }));
+		await component.load();
+		expect(component.platformsSupported).toBe(false);
+
+		await component.load();
+
+		expect(component.platformsSupported).toBe(true);
+		expect(component.isPlatformAvailable('ever-teams')).toBe(true);
+	});
+
+	it('keeps what it knows when a read returns no rows', async () => {
+		changelogService.find.mockImplementation(() => of({ items: [], total: 0 }));
+
+		await component.load();
+
+		expect(component.platformsSupported).toBe(true);
+	});
+
 	it('keeps what was deleted under the product it was deleted from', async () => {
 		await component.remove(newer);
 		expect(component.deletedHere.map(({ id }) => id)).toEqual(['news-2']);

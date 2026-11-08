@@ -240,6 +240,9 @@ export class EditUserOrganizationsComponent extends TranslationBaseComponent imp
 	 * closes that dialog. An organization the user has an inactive membership of has it reactivated rather than a
 	 * second one made. Each organization leaves the ticks as soon as it is added, so when a later one fails and the
 	 * dialog stays open, a retry sends only what is still to add.
+	 *
+	 * The user's inactive memberships and name are taken when the save starts: moving to another user while it runs
+	 * replaces the page's, and the rest of the save must still reactivate and name this user's, never theirs.
 	 */
 	async addSelected(): Promise<void> {
 		const ids = [...this.addSelection];
@@ -257,10 +260,12 @@ export class EditUserOrganizationsComponent extends TranslationBaseComponent imp
 			return;
 		}
 		const { tenantId } = this.store.user;
+		const inactiveMemberships = this.inactiveMemberships;
+		const username = this.selectedUserName;
 		this.saving = true;
 		try {
 			for (const organizationId of ids) {
-				const inactive = this.inactiveMemberships.get(organizationId);
+				const inactive = inactiveMemberships.get(organizationId);
 				if (inactive) {
 					await this.userOrganizationsService.setUserAsActive(inactive);
 				} else {
@@ -281,7 +286,7 @@ export class EditUserOrganizationsComponent extends TranslationBaseComponent imp
 			}
 			this.toastrService.success(
 				this.getTranslation('NOTES.ORGANIZATIONS.ADD_NEW_USER_TO_ORGANIZATION', {
-					username: this.selectedUserName,
+					username,
 					orgname: this.getTranslation('ORGANIZATIONS_PAGE.EDIT.ADDED_TO_ORGANIZATION')
 				})
 			);

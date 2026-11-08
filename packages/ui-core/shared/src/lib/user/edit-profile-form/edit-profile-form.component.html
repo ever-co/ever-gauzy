@@ -10,6 +10,8 @@
 			>
 				<ngx-image-uploader
 					[ariaLabel]="'USERS_PAGE.EDIT_USER.CHANGE_PHOTO' | translate"
+					[disabled]="saving"
+					(uploadStarted)="onPhotoUploadStarted()"
 					(changeHoverState)="hoverState = $event"
 					(uploadedImageAsset)="updateImageAsset($event)"
 					(uploadImageAssetError)="handleImageUploadError($event)"

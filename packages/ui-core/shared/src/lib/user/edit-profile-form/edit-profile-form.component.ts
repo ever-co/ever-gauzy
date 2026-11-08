@@ -40,8 +40,18 @@ export class EditProfileFormComponent implements OnInit, OnDestroy {
 	FormHelpers: typeof FormHelpers = FormHelpers;
 	hoverState: boolean;
 	loading: boolean;
-	/** A save is on its way: the Save button waits for it. */
+	/** A save is on its way: the Save button waits for it, and the photo cannot be changed meanwhile. */
 	saving = false;
+	/**
+	 * A photo whose own save failed, which the next Save sends while the form still shows it. A photo saved by its
+	 * own update is never sent again by a Save: a Save that started earlier would otherwise put the older photo back.
+	 */
+	private _unsavedImageId: string | null = null;
+	/**
+	 * Photos picked whose upload has not finished yet. Disabling the picker during a Save does not stop an upload
+	 * already running, so a Save leaves an unsaved photo out while one is on its way: the newer photo replaces it.
+	 */
+	private _photoUploads = 0;
 	/** The photo failed to load: the placeholder shows instead. */
 	avatarFailed = false;
 	listOfTimeFormats = DEFAULT_TIME_FORMATS;
@@ -253,22 +263,36 @@ export class EditProfileFormComponent implements OnInit, OnDestroy {
 		}
 	}
 
+	/** A picked photo started uploading; `updateImageAsset` or `handleImageUploadError` follows. */
+	onPhotoUploadStarted(): void {
+		this._photoUploads += 1;
+	}
+
+	/** One upload fewer on its way (the uploader settles every upload it starts with one of the two events). */
+	private _photoUploadSettled(): void {
+		this._photoUploads = Math.max(0, this._photoUploads - 1);
+	}
+
 	handleImageUploadError(error: any) {
+		this._photoUploadSettled();
 		this._toastrService.danger(error);
 	}
 
 	/**
-	 * Saves an uploaded photo on the user. The form shows it at once and keeps its id, so a Save sends it too, even
-	 * when this update fails. Only the photo is sent: a role picked in the form is not saved before its Save. The
-	 * signed-in user's session takes the photo only once it is saved, and only for their own profile (an admin
+	 * Saves an uploaded photo on the user. The form shows it at once and keeps its id; when this update fails, the
+	 * next Save sends it with the rest. Only the photo is sent: a role picked in the form is not saved before its Save.
+	 * The signed-in user's session takes the photo only once it is saved, and only for their own profile (an admin
 	 * changing another user's photo used to put it on their own avatar).
 	 */
 	async updateImageAsset(image: IImageAsset) {
 		const isOwnProfile = this.isOwnProfile;
 		// The session the photo was saved for: a sign-out, or another user's sign-in, while it is saved must not get it.
 		const sessionUserId = this._store.userId;
+		this._photoUploadSettled();
 		this.avatarFailed = false;
 		this.form.patchValue({ imageId: image.id, imageUrl: image.fullUrl || image.url });
+		// This photo replaces one whose save failed: a Save must not send that one over it.
+		this._unsavedImageId = null;
 
 		try {
 			const res: IUser = await this._userService.update(
@@ -284,6 +308,10 @@ export class EditProfileFormComponent implements OnInit, OnDestroy {
 			}
 			this._toastrService.success('TOASTR.MESSAGE.IMAGE_UPDATED');
 		} catch (error) {
+			// Left for the next Save, unless a newer photo has replaced it meanwhile.
+			if (this.form.get('imageId').value === image.id) {
+				this._unsavedImageId = image.id;
+			}
 			this._errorHandler.handleError(error);
 		}
 	}
@@ -296,7 +324,7 @@ export class EditProfileFormComponent implements OnInit, OnDestroy {
 			return;
 		}
 		const { timeFormat, timeZone } = this.form.value;
-		const { email, firstName, lastName, tags, preferredLanguage, password, phoneNumber, imageId } = this.form.value;
+		const { email, firstName, lastName, tags, preferredLanguage, password, phoneNumber } = this.form.value;
 
 		if (!EmailValidator.isValid(email, patterns.email)) {
 			this._toastrService.error('TOASTR.MESSAGE.EMAIL_SHOULD_BE_REAL');
@@ -310,9 +338,7 @@ export class EditProfileFormComponent implements OnInit, OnDestroy {
 			preferredLanguage,
 			timeZone,
 			timeFormat,
-			phoneNumber,
-			// The photo shown: an upload whose own save failed is saved with the rest.
-			...(imageId ? { imageId } : {})
+			phoneNumber
 		};
 
 		if (password) {
@@ -340,9 +366,24 @@ export class EditProfileFormComponent implements OnInit, OnDestroy {
 				};
 			}
 
+			// Read as the request leaves (after the role lookup): the photo shown, only when its own save failed, and
+			// not while a newer photo is still uploading (its own save could land first and be overwritten).
+			const unsavedImageId =
+				this._unsavedImageId &&
+				this._unsavedImageId === this.form.get('imageId').value &&
+				this._photoUploads === 0
+					? this._unsavedImageId
+					: null;
+			if (unsavedImageId) {
+				request = { ...request, imageId: unsavedImageId };
+			}
+
 			await this._userService
 				.update(this.selectedUser ? this.selectedUser.id : this._store.userId, request)
 				.then(() => {
+					if (unsavedImageId && this._unsavedImageId === unsavedImageId) {
+						this._unsavedImageId = null;
+					}
 					if ((this.selectedUser ? this.selectedUser.id : this._store.userId) === this._store.user.id) {
 						this._store.user.email = request.email;
 					}

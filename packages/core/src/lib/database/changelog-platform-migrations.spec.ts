@@ -141,6 +141,84 @@ describe('changelog platform migrations on SQLite', () => {
 
 		expect(await dataSource.query('SELECT COUNT(*) AS "n" FROM "changelog"')).toEqual([{ n: 1 }]);
 	});
+
+	it('reverted in order, leaves only the entries it did not insert, so none reads as Gauzy news once the column is gone', async () => {
+		await run(new AddChangelogPlatform1791000005600());
+		await dataSource.query(
+			`INSERT INTO "changelog" ("id", "title", "date", "content", "platform") VALUES ('t1', 'Written by hand', '2026-10-13 00:00:00', 'Kept', 'ever-teams')`
+		);
+		await run(new SeedPlatformChangelogContent1791000005610());
+		expect(await countBy()).toEqual({ 'ever-platform': 5, 'ever-teams': 9, gauzy: 1 });
+
+		const queryRunner = dataSource.createQueryRunner();
+		try {
+			await new SeedPlatformChangelogContent1791000005610().down(queryRunner);
+			expect(await countBy()).toEqual({ 'ever-teams': 1, gauzy: 1 });
+			await new AddChangelogPlatform1791000005600().down(queryRunner);
+		} finally {
+			await queryRunner.release();
+		}
+		const left = await dataSource.query('SELECT "id" FROM "changelog" ORDER BY "id"');
+		expect(left.map(({ id }: { id: string }) => id)).toEqual(['g1', 't1']);
+	});
+
+	it('removes its entries on down even once the platform column is gone, and twice is harmless', async () => {
+		await run(new AddChangelogPlatform1791000005600());
+		await run(new SeedPlatformChangelogContent1791000005610());
+
+		const queryRunner = dataSource.createQueryRunner();
+		try {
+			await new AddChangelogPlatform1791000005600().down(queryRunner);
+			await new SeedPlatformChangelogContent1791000005610().down(queryRunner);
+			await new SeedPlatformChangelogContent1791000005610().down(queryRunner);
+		} finally {
+			await queryRunner.release();
+		}
+		expect(await dataSource.query('SELECT "id" FROM "changelog"')).toEqual([{ id: 'g1' }]);
+	});
+});
+
+describe('changelog starter entries down on Postgres and MySQL', () => {
+	const STARTER_IDS = new SeedPlatformChangelogContent1791000005610().rows.map(([platform, , title]) =>
+		platformChangelogEntryId(platform, title)
+	);
+
+	const runner = (type: 'postgres' | 'mysql', hasTable = true) => {
+		const queries: Array<{ sql: string; params: unknown[] }> = [];
+		const queryRunner = {
+			connection: { options: { type } },
+			hasTable: async () => hasTable,
+			hasColumn: async () => true,
+			query: async (sql: string, params: unknown[] = []) => {
+				queries.push({ sql: sql.replace(/\s+/g, ' ').trim(), params });
+				return [];
+			}
+		} as unknown as QueryRunner;
+		return { queries, queryRunner };
+	};
+
+	it.each([
+		['postgres' as const, '"changelog"', '"id"', STARTER_IDS.map((_, i) => `$${i + 1}`).join(', ')],
+		['mysql' as const, '`changelog`', '`id`', STARTER_IDS.map(() => '?').join(', ')]
+	])('deletes exactly the starter entries by their fixed ids on %s', async (type, table, column, placeholders) => {
+		const { queries, queryRunner } = runner(type);
+
+		await new SeedPlatformChangelogContent1791000005610().down(queryRunner);
+
+		expect(queries).toEqual([
+			{ sql: `DELETE FROM ${table} WHERE ${column} IN (${placeholders})`, params: STARTER_IDS }
+		]);
+		expect(STARTER_IDS).toHaveLength(13);
+		expect(STARTER_IDS).toContain('e6f03935-e50f-5063-9bae-cb7b50761ac9');
+	});
+
+	it('does nothing without the changelog table', async () => {
+		const { queries, queryRunner } = runner('postgres', false);
+
+		await new SeedPlatformChangelogContent1791000005610().down(queryRunner);
+
+		expect(queries).toEqual([]);
+	});
 });
 
 describe('changelog platform column on Postgres and MySQL', () => {

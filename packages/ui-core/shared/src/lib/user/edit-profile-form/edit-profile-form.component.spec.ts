@@ -1,12 +1,15 @@
+import { readFileSync } from 'fs';
+import { join } from 'path';
 import { UntypedFormBuilder } from '@angular/forms';
 import { of, Subject, throwError } from 'rxjs';
 import { RolesEnum } from '@gauzy/contracts';
 import { EditProfileFormComponent } from './edit-profile-form.component';
 
 /**
- * The user edit page's Main tab (ngx-profile): a new photo shows at once and stays with the form (so a Save sends
- * it), only the photo is sent with it, the signed-in user's session takes it only once saved and only for their own
- * profile, a save cannot be sent twice (role lookup included), and the role reads as a label.
+ * The user edit page's Main tab (ngx-profile): a new photo shows at once and stays with the form (a Save sends it
+ * when its own save failed, and never puts back an older one), only the photo is sent with it, the signed-in user's
+ * session takes it only once saved and only for their own profile, a save cannot be sent twice (role lookup
+ * included), and the role reads as a label.
  */
 describe('EditProfileFormComponent', () => {
 	const ADMIN = { id: 'admin-1', imageId: 'admin-image', imageUrl: 'admin.png', email: 'admin@ever.co' };
@@ -19,6 +22,7 @@ describe('EditProfileFormComponent', () => {
 		component.form = EditProfileFormComponent.buildForm(new UntypedFormBuilder());
 		component.form.patchValue({ email: 'ann@ever.co', firstName: 'Ann', lastName: 'Brown' });
 		component.saving = false;
+		component['_photoUploads'] = 0; // a field initializer, which Object.create skips
 		component.avatarFailed = true;
 		component.allowRoleChange = false;
 		component.selectedUser = selectedUser as any;
@@ -124,13 +128,88 @@ describe('EditProfileFormComponent', () => {
 			expect(component.saving).toBe(false);
 		});
 
-		it('sends the photo shown with the rest', async () => {
+		it('sends a photo whose own save failed with the rest, once', async () => {
+			const update = jest
+				.fn()
+				.mockRejectedValueOnce(new Error('500')) // the photo's own save
+				.mockResolvedValue({});
+			const { component } = formFor({ id: 'user-2' }, update);
+			await component.updateImageAsset(IMAGE);
+
+			await component.submitForm();
+			await component.submitForm();
+
+			expect(update.mock.calls[1]).toEqual(['user-2', expect.objectContaining({ imageId: 'image-2' })]);
+			expect(update.mock.calls[2][1]).not.toHaveProperty('imageId');
+		});
+
+		it('does not send the photo the profile was read with', async () => {
 			const { component, update } = formFor({ id: 'user-2' });
-			component.form.patchValue({ imageId: 'image-2' });
+			component.form.patchValue({ imageId: 'image-1' });
 
 			await component.submitForm();
 
-			expect(update).toHaveBeenCalledWith('user-2', expect.objectContaining({ imageId: 'image-2' }));
+			expect(update.mock.calls[0][1]).not.toHaveProperty('imageId');
+		});
+
+		it('does not put back an older photo over one uploaded while the role is looked up', async () => {
+			const role$ = new Subject<any>();
+			const { component, update } = formFor({ id: 'user-2' });
+			component.allowRoleChange = true;
+			component.form.patchValue({ role: { name: 'EMPLOYEE' }, imageId: 'image-1' });
+			component['_roleService'].getRoleByOptions = jest.fn(() => role$);
+
+			const saving = component.submitForm();
+			await component.updateImageAsset(IMAGE); // its own update lands first
+			role$.next({ id: 'role-1', name: 'EMPLOYEE' });
+			role$.complete();
+			await saving;
+
+			expect(update.mock.calls[0]).toEqual(['user-2', { imageId: 'image-2' }]);
+			expect(update.mock.calls[1][1]).not.toHaveProperty('imageId');
+		});
+
+		it('does not send a failed photo over a newer one uploaded since', async () => {
+			let landNewer: (value: any) => void = () => undefined;
+			const update = jest
+				.fn()
+				.mockRejectedValueOnce(new Error('500')) // the first photo's own save
+				.mockImplementationOnce(() => new Promise((resolve) => (landNewer = resolve))) // the newer photo's
+				.mockResolvedValue({});
+			const { component } = formFor({ id: 'user-2' }, update);
+			await component.updateImageAsset({ id: 'image-failed', fullUrl: 'https://cdn/failed.png' } as any);
+
+			const newer = component.updateImageAsset(IMAGE);
+			await component.submitForm(); // while the newer photo's own save is on its way
+			landNewer({ imageUrl: IMAGE.fullUrl });
+			await newer;
+
+			expect(update.mock.calls[2][1]).not.toHaveProperty('imageId');
+		});
+
+		it('leaves a failed photo out while a newer one is still uploading, and sends it again once that upload fails', async () => {
+			const update = jest
+				.fn()
+				.mockRejectedValueOnce(new Error('500')) // the first photo's own save
+				.mockResolvedValue({});
+			const { component } = formFor({ id: 'user-2' }, update);
+			await component.updateImageAsset({ id: 'image-failed', fullUrl: 'https://cdn/failed.png' } as any);
+
+			component.onPhotoUploadStarted(); // picked before Save: its own save could land before Save's
+			await component.submitForm();
+			expect(update.mock.calls[1][1]).not.toHaveProperty('imageId');
+
+			component.handleImageUploadError(new Error('413'));
+			await component.submitForm();
+			expect(update.mock.calls[2][1]).toEqual(expect.objectContaining({ imageId: 'image-failed' }));
+		});
+
+		it('blocks changing the photo while a save is on its way, and hears of every upload that starts', () => {
+			const template = readFileSync(join(__dirname, 'edit-profile-form.component.html'), 'utf8');
+
+			expect(template).toMatch(/<ngx-image-uploader[^>]*\[disabled\]="saving"/);
+			expect(template).toMatch(/<ngx-image-uploader[^>]*\(uploadStarted\)="onPhotoUploadStarted\(\)"/);
+			expect(template).toMatch(/<ngx-image-uploader[^>]*\(uploadImageAssetError\)="handleImageUploadError\(\$event\)"/);
 		});
 
 		it('where the role can change, sends once even when clicked again during the role lookup', async () => {

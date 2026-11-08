@@ -104,6 +104,28 @@ describe('project keys for projects without one', () => {
 		expect([...assigned]).toEqual([['b', 'DPR2']]);
 	});
 
+	it('keeps free the alias of a project with a blank or malformed key, which it still answers to', () => {
+		// `Blank` and `Bad` are left to a manager and still open as BLA-n and BAD-n.
+		expect(takenProjectKeys([{ name: 'Blank', taskKey: '' }, { name: 'Bad', taskKey: 'lower case' }])).toEqual(new Set(['BLA', 'BAD']));
+		const assigned = assignProjectKeys([
+			{ id: 'a', name: 'Blank', taskKey: '' },
+			{ id: 'b', name: 'Bad', taskKey: 'lower case' },
+			{ id: 'c', name: 'Blanket', taskKey: null },
+			{ id: 'd', name: 'Badge', taskKey: null }
+		]);
+		expect([...assigned]).toEqual([
+			['c', 'BLA2'],
+			['d', 'BAD2']
+		]);
+	});
+
+	it('reserves the alias of a project without a key only when asked (the create path), not for the backfill', () => {
+		const projects = [{ name: 'Fulfilment', taskKey: null }, { name: 'Gauzy' }];
+		expect(takenProjectKeys(projects)).toEqual(new Set());
+		expect(takenProjectKeys(projects, { reserveKeylessAliases: true })).toEqual(new Set(['FUL', 'GAU']));
+		expect(uniqueProjectKey('Fulfilment Ops', takenProjectKeys(projects, { reserveKeylessAliases: true }))).toBe('FUL2');
+	});
+
 	it('numbers past 999 while the key fits in ten characters', () => {
 		const taken = new Set(['PRO', ...Array.from({ length: 998 }, (_, index) => `PRO${index + 2}`)]);
 		expect(uniqueProjectKey('Project 1000', taken)).toBe('PRO1000');
