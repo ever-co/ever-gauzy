@@ -1207,6 +1207,8 @@
 	"REPORT_PAGE": {
 		"MANUAL_TIME": {
 			"DETAILS": {
+				"OPEN_PROJECT": "Open project {{ name }}",
+				"OPEN_TASK": "Open task {{ name }}",
 				"DAY_TITLE": "Their day",
 				"DAY_CAPTION": "{{ total }} logged · {{ share }}% added by hand",
 				"TRACKED": "Tracked",

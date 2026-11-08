@@ -1352,6 +1352,8 @@
 	"REPORT_PAGE": {
 		"MANUAL_TIME": {
 			"DETAILS": {
+				"OPEN_PROJECT": "打开项目 {{ name }}",
+				"OPEN_TASK": "打开任务 {{ name }}",
 				"DAY_TITLE": "当天",
 				"DAY_CAPTION": "共记录 {{ total }} · {{ share }}% 为手动添加",
 				"TRACKED": "已追踪",

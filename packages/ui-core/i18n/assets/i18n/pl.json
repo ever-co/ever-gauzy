@@ -1318,6 +1318,8 @@
 	"REPORT_PAGE": {
 		"MANUAL_TIME": {
 			"DETAILS": {
+				"OPEN_PROJECT": "Otwórz projekt {{ name }}",
+				"OPEN_TASK": "Otwórz zadanie {{ name }}",
 				"DAY_TITLE": "Dzień pracownika",
 				"DAY_CAPTION": "Zarejestrowano {{ total }} · {{ share }}% dodano ręcznie",
 				"TRACKED": "Śledzony",

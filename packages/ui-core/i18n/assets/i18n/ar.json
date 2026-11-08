@@ -1318,6 +1318,8 @@
 	"REPORT_PAGE": {
 		"MANUAL_TIME": {
 			"DETAILS": {
+				"OPEN_PROJECT": "فتح المشروع {{ name }}",
+				"OPEN_TASK": "فتح المهمة {{ name }}",
 				"DAY_TITLE": "يومه",
 				"DAY_CAPTION": "{{ total }} مسجّلة · {{ share }}% أُضيفت يدويًا",
 				"TRACKED": "متتبَّع",

@@ -1346,6 +1346,8 @@
 	"REPORT_PAGE": {
 		"MANUAL_TIME": {
 			"DETAILS": {
+				"OPEN_PROJECT": "Отвори проекта {{ name }}",
+				"OPEN_TASK": "Отвори задачата {{ name }}",
 				"DAY_TITLE": "Денят на служителя",
 				"DAY_CAPTION": "Записани {{ total }} · {{ share }}% добавени ръчно",
 				"TRACKED": "Проследено",
