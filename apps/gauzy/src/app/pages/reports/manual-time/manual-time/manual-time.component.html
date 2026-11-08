@@ -79,32 +79,42 @@
 			<div class="table">
 				<div class="weekly-logs row-table" [nbSpinner]="loading" nbSpinnerSize="giant" nbSpinnerStatus="primary">
 					@if (timeLogs.length > 0) {
+						<!-- One strip, one cell per figure, each with a line of context: the employee page's overview -->
 						<section class="summary" [attr.aria-label]="'REPORT_PAGE.MANUAL_TIME.SUMMARY' | translate">
-							<div class="summary-item summary-item--primary">
+							<div class="summary-cell">
 								<span class="summary-label">{{ 'REPORT_PAGE.MANUAL_TIME.TOTAL_TIME' | translate }}</span>
 								<span class="summary-value">{{ summary.duration | durationFormat }}</span>
+								<span class="summary-meta">
+									{{ 'REPORT_PAGE.MANUAL_TIME.AVG_PER_ENTRY' | translate : { value: (averagePerEntry | durationFormat) } }}
+								</span>
 							</div>
-							<div class="summary-item">
+							<div class="summary-cell">
 								<span class="summary-label">{{ 'REPORT_PAGE.MANUAL_TIME.ENTRIES' | translate }}</span>
 								<span class="summary-value">{{ summary.entries }}</span>
-							</div>
-							<div class="summary-item">
-								<span class="summary-label">
-									<span class="dot dot--added"></span>
-									{{ 'REPORT_PAGE.MANUAL_TIME.ADDED' | translate }}
+								<span class="summary-meta">
+									{{ 'REPORT_PAGE.MANUAL_TIME.ACROSS_DAYS' | translate : { count: dailyData.length } }}
 								</span>
+							</div>
+							<div class="summary-cell">
+								<span class="summary-label">{{ 'REPORT_PAGE.MANUAL_TIME.ADDED' | translate }}</span>
 								<span class="summary-value">{{ summary.added }}</span>
-							</div>
-							<div class="summary-item">
-								<span class="summary-label">
-									<span class="dot dot--edited"></span>
-									{{ 'REPORT_PAGE.MANUAL_TIME.EDITED' | translate }}
+								<span class="summary-meta">
+									{{ 'REPORT_PAGE.MANUAL_TIME.SHARE_OF_ENTRIES' | translate : { value: shareOf(summary.added) } }}
 								</span>
-								<span class="summary-value">{{ summary.edited }}</span>
 							</div>
-							<div class="summary-item">
+							<div class="summary-cell">
+								<span class="summary-label">{{ 'REPORT_PAGE.MANUAL_TIME.EDITED' | translate }}</span>
+								<span class="summary-value">{{ summary.edited }}</span>
+								<span class="summary-meta" [class.is-warning]="summary.edited > 0">
+									{{ 'REPORT_PAGE.MANUAL_TIME.SHARE_OF_ENTRIES' | translate : { value: shareOf(summary.edited) } }}
+								</span>
+							</div>
+							<div class="summary-cell">
 								<span class="summary-label">{{ 'REPORT_PAGE.MANUAL_TIME.EMPLOYEES' | translate }}</span>
 								<span class="summary-value">{{ summary.employees }}</span>
+								<span class="summary-meta">
+									{{ 'REPORT_PAGE.MANUAL_TIME.AVG_PER_EMPLOYEE' | translate : { value: (averagePerEmployee | durationFormat) } }}
+								</span>
 							</div>
 						</section>
 						@if (hasMore) {
