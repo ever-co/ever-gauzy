@@ -95,17 +95,96 @@ export function keysOfProject(project: { name?: string | null; taskKey?: string 
 }
 
 /**
- * A unique key for a new project among the organization's keys: the derived key, then the derived key with a
- * number (`FUL`, `FUL2`, `FUL3`, …). Null when the name derives no key.
+ * The key proposed for a project: the derived key when it is a valid key, else the first three letters of the name
+ * (a key starts with a letter: `3D Print` → `DPR`). Null for a name with fewer than two letters or digits.
+ */
+export function proposedProjectKey(name: string | null | undefined): string | null {
+	const derived = derivedProjectKey(name);
+	if (derived && isValidTaskKey(derived)) return derived;
+	const letters = String(name ?? '')
+		.replace(/[^A-Za-z]/g, '')
+		.toUpperCase()
+		.slice(0, 3);
+	return letters.length >= 2 ? letters : null;
+}
+
+/**
+ * A unique key for a new project among the organization's keys: the proposed key, then the proposed key with a
+ * number (`FUL`, `FUL2`, … `FUL1000`, …) for as long as a key fits in ten characters. Null when the name proposes no
+ * key. A `Set` is read as already upper-cased (the callers' own sets); any other list is upper-cased first.
  */
 export function uniqueProjectKey(name: string | null | undefined, taken: Iterable<string>): string | null {
-	const base = derivedProjectKey(name);
+	const base = proposedProjectKey(name);
 	if (!base) return null;
-	const used = new Set([...taken].map((key) => String(key).toUpperCase()));
+	const used = taken instanceof Set ? (taken as Set<string>) : new Set([...taken].map((key) => String(key).toUpperCase()));
 	if (!used.has(base)) return base;
-	for (let suffix = 2; suffix < 1000; suffix += 1) {
-		const candidate = `${base}${suffix}`.slice(0, 10);
+	for (let suffix = 2; base.length + String(suffix).length <= 10; suffix += 1) {
+		const candidate = `${base}${suffix}`;
 		if (!used.has(candidate)) return candidate;
 	}
 	return null;
+}
+
+/** Every key a project holds or held (its key and its former keys), upper-cased: what no other project may take. */
+export function heldKeysOf(project: { taskKey?: string | null; taskKeyHistory?: string[] | string | null }): string[] {
+	const held: string[] = [];
+	const current = normalizeTaskKey(project.taskKey);
+	if (current) held.push(current);
+	let history: unknown = project.taskKeyHistory;
+	if (typeof history === 'string') {
+		// Stored as JSON text on SQLite.
+		try {
+			history = JSON.parse(history);
+		} catch {
+			history = [];
+		}
+	}
+	for (const former of Array.isArray(history) ? history : []) {
+		const key = normalizeTaskKey(String(former));
+		if (key) held.push(key);
+	}
+	return held;
+}
+
+/**
+ * The keys no new key of the organization may take: every key held or held before, and the key derived from the
+ * name of every project that has a key — its tasks still answer to that alias (`DPR Website` keyed `SITE` still opens
+ * `DPR-1`), so giving it to another project would make those references ambiguous.
+ */
+export function takenProjectKeys(
+	projects: Iterable<{ name?: string | null; taskKey?: string | null; taskKeyHistory?: string[] | string | null }>
+): Set<string> {
+	const taken = new Set<string>();
+	for (const project of projects) {
+		for (const key of heldKeysOf(project)) taken.add(key);
+		if (normalizeTaskKey(project.taskKey)) {
+			const alias = derivedProjectKey(project.name);
+			if (alias) taken.add(alias);
+		}
+	}
+	return taken;
+}
+
+/**
+ * Keys for the projects of one organization that have none, oldest first: each the unique key of its name among the
+ * taken keys (see {@link takenProjectKeys}) and those given before it. Only a project with no stored key at all is
+ * given one (a blank or malformed stored value is left to a manager, as the backfill writes only empty rows); a name
+ * that proposes no key gets none.
+ */
+export function assignProjectKeys(
+	projects: ReadonlyArray<{ id: string; name?: string | null; taskKey?: string | null; taskKeyHistory?: string[] | string | null }>
+): Map<string, string> {
+	const taken = takenProjectKeys(projects);
+	const assigned = new Map<string, string>();
+	for (const project of projects) {
+		if (project.taskKey !== null && project.taskKey !== undefined) continue;
+		const key = uniqueProjectKey(project.name, taken);
+		if (!key) continue;
+		taken.add(key);
+		// Keyed now: its own derived alias is reserved too, as for every keyed project.
+		const alias = derivedProjectKey(project.name);
+		if (alias) taken.add(alias);
+		assigned.set(project.id, key);
+	}
+	return assigned;
 }

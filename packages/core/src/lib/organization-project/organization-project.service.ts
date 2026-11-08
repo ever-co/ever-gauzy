@@ -1,4 +1,5 @@
 import { EventBus } from '@nestjs/cqrs';
+import { takenProjectKeys, uniqueProjectKey } from '../tasks/task-reference';
 import { BadRequestException, HttpException, HttpStatus, Injectable, ConflictException } from '@nestjs/common';
 import { Brackets, FindOptionsWhere, ILike, In, IsNull, Not, SelectQueryBuilder } from 'typeorm';
 import { EntityProperty, FilterQuery, raw } from '@mikro-orm/core';
@@ -56,6 +57,9 @@ function memberEmployeeId(member: IMembership): ID | undefined {
 	return member?.employeeId ?? (typeof employee === 'string' ? employee : employee?.id);
 }
 
+/** How many times a create chooses its automatic task key again after a concurrent create took it. */
+const AUTOMATIC_KEY_ATTEMPTS = 5;
+
 @FavoriteService(BaseEntityEnum.OrganizationProject)
 @Injectable()
 export class OrganizationProjectService extends TenantAwareCrudService<OrganizationProject> {
@@ -91,6 +95,16 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 		// Destructure the input data
 		// The client rate is written through the project rate route only, which checks who may set it
 		const { tags = [], memberIds = [], managerIds = [], organizationId, billRateValue: _rate, ...entity } = input;
+		// A project created without a key gets the first letters of its name, unique in the organization (editable
+		// later); an explicit `taskKey: null` keeps it without one.
+		let automaticKey = false;
+		if (!('taskKey' in entity) || entity.taskKey === undefined) {
+			const proposed = await this.proposeTaskKey(entity.name, { tenantId, organizationId });
+			if (proposed) {
+				entity.taskKey = proposed;
+				automaticKey = true;
+			}
+		}
 		await this.prepareTaskKey(entity, { tenantId, organizationId });
 		void _rate;
 
@@ -150,14 +164,27 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 				});
 			});
 
-			// Create the organization project with the prepared members
-			const project = await super.create({
-				...entity,
-				members,
-				tags,
-				organizationId,
-				tenantId
-			});
+			// Create the organization project with the prepared members. A key this create chose itself that a concurrent
+			// create took first is chosen again (a few times); a key the caller chose is refused as taken.
+			let project!: IOrganizationProject;
+			for (let attempt = 1; ; attempt += 1) {
+				try {
+					project = await super.create({
+						...entity,
+						members,
+						tags,
+						organizationId,
+						tenantId
+					});
+					break;
+				} catch (error) {
+					if (!automaticKey || attempt >= AUTOMATIC_KEY_ATTEMPTS || !isProjectKeyConflict(error)) throw error;
+					const lost = entity.taskKey;
+					const next = await this.proposeTaskKey(entity.name, { tenantId, organizationId }, [lost]);
+					entity.taskKey = next ?? null;
+					if (!next) automaticKey = false;
+				}
+			}
 
 			// Subscribe creator and assignees to the project
 			try {
@@ -1056,6 +1083,28 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 
 				return !!project;
 			}
+		}
+	}
+
+	/** The key a new project of the organization is given: its name's first letters, unique among every key held there. */
+	private async proposeTaskKey(
+		name: string | null | undefined,
+		scope: { tenantId?: ID | null; organizationId?: ID | null },
+		alsoTaken: ReadonlyArray<string | null | undefined> = []
+	): Promise<string | null> {
+		if (!scope.tenantId || !scope.organizationId) return null;
+		try {
+			const projects = await this.typeOrmRepository.find({
+				where: { tenantId: scope.tenantId, organizationId: scope.organizationId },
+				select: { id: true, name: true, taskKey: true, taskKeyHistory: true },
+				withDeleted: true
+			});
+			const taken = takenProjectKeys(projects);
+			for (const key of alsoTaken) if (key) taken.add(String(key).toUpperCase());
+			return uniqueProjectKey(name, taken);
+		} catch {
+			// A key is optional: the project is created without one (a manager can set it) rather than not at all.
+			return null;
 		}
 	}
 
