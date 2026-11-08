@@ -371,6 +371,18 @@
 		"QUIET_FROM": "From",
 		"QUIET_TO": "Until",
 		"DIGEST_LABEL": "Daily digest",
-		"DIGEST_TEXT": "One email a day, at this hour, with the entries set to the digest."
+		"DIGEST_TEXT": "One email a day, at this hour, with the entries set to the digest.",
+		"PUSH_TITLE": "Browser notifications",
+		"PUSH_HINT": "A notification on this device when something new reaches your inbox, even when the app is not open.",
+		"PUSH_LABEL": "Notifications on this device",
+		"PUSH_FAILED": "Browser notifications could not be changed. Try again.",
+		"PUSH_RETRY_FAILED": "This browser's notifications still could not be confirmed. Try again later, or switch notifications off.",
+		"PUSH_STATE": {
+			"on": "This browser shows your new inbox entries.",
+			"off": "Off for this browser.",
+			"sync-failed": "This browser's notifications could not be confirmed for your account: your new entries may not arrive here, or an earlier sign-in's still could. Try again, or switch notifications off.",
+			"blocked": "Notifications are blocked for this site: allow them in your browser settings, then switch this on.",
+			"unsupported": "This browser cannot show notifications."
+		}
 	}
 }

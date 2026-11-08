@@ -156,5 +156,9 @@
 				</section>
 			}
 		}
+		<!-- A browser's notifications are the signed-in user's, employee or not (the push routes need INBOX_VIEW only). -->
+		@if (view() !== 'loading') {
+			<ngx-inbox-browser-push />
+		}
 	</nb-card-body>
 </nb-card>

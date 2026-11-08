@@ -4,6 +4,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { of, Subject, throwError } from 'rxjs';
 import { Store, ToastrService } from '@gauzy/ui-core/core';
 import { InboxNotificationSettingsService } from '../services/inbox-notification-settings.service';
+import { InboxWebPushService } from '../services/inbox-web-push.service';
 import { InboxNotificationSettingsPageComponent } from './notification-settings-page.component';
 
 /** Settings -> Notifications: the switches, the email modes, the quiet hours and the digest hour. */
@@ -19,6 +20,8 @@ describe('InboxNotificationSettingsPageComponent', () => {
 			imports: [InboxNotificationSettingsPageComponent],
 			providers: [
 				{ provide: InboxNotificationSettingsService, useValue: api },
+				// The browser notifications section has its own spec: here the platform has web push off.
+				{ provide: InboxWebPushService, useValue: { state: async () => 'unavailable', enable: jest.fn(), disable: jest.fn() } },
 				{ provide: ToastrService, useValue: toastr },
 				{ provide: TranslateService, useValue: { currentLang: 'en', getCurrentLang: () => 'en', instant: (key: string) => key, translate: (key: string) => signal(key), get: (key: string) => of(key), onLangChange: of(), onTranslationChange: of(), onDefaultLangChange: of() } },
 				{
