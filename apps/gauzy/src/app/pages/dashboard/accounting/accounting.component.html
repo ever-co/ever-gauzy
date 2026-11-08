@@ -128,10 +128,45 @@
 			<header class="panel-header">
 				<h5 class="panel-title">{{ 'DASHBOARD_PAGE.ACCOUNTING_VIEW.BREAKDOWN' | translate }}</h5>
 				@if (employeeCount) {
-				<span class="panel-count">{{ employeeCount }}</span>
+				<span class="panel-count">
+					@if (isFiltered) {
+						{{ 'DASHBOARD_PAGE.ACCOUNTING_VIEW.FILTERED_COUNT' | translate : { shown: visibleEmployees.length, total: employeeCount } }}
+					} @else {
+						{{ employeeCount }}
+					}
+				</span>
 				}
 				<!-- Same state as the column headings: either one re-sorts the rows. -->
 				<div class="panel-actions">
+					@let filterLabel = 'DASHBOARD_PAGE.ACCOUNTING_VIEW.FILTER_PLACEHOLDER' | translate;
+					<div class="filter-box">
+						<nb-icon class="filter-icon" icon="search-outline" aria-hidden="true"></nb-icon>
+						<input
+							#filterInput
+							nbInput
+							fieldSize="tiny"
+							type="search"
+							class="filter-input"
+							autocomplete="off"
+							[value]="searchTerm"
+							[placeholder]="filterLabel"
+							[attr.aria-label]="filterLabel"
+							(input)="setSearchTerm(filterInput.value)"
+							(keydown.escape)="clearSearch()"
+						/>
+						@if (searchTerm) {
+						@let clearLabel = 'DASHBOARD_PAGE.ACCOUNTING_VIEW.CLEAR_FILTER' | translate;
+						<button
+							type="button"
+							class="filter-clear"
+							[attr.aria-label]="clearLabel"
+							[nbTooltip]="clearLabel"
+							(click)="clearSearch(); filterInput.focus()"
+						>
+							<nb-icon icon="close-outline" aria-hidden="true"></nb-icon>
+						</button>
+						}
+					</div>
 					<span class="sort-label" aria-hidden="true">{{ 'DASHBOARD_PAGE.ACCOUNTING_VIEW.SORT_LABEL' | translate }}</span>
 					<nb-select
 						class="sort-select"
@@ -199,7 +234,7 @@
 					<div class="breakdown-cell" role="columnheader" aria-hidden="true"></div>
 				</div>
 
-				@for (row of sortedEmployees; track row.employee?.id; let index = $index) {
+				@for (row of visibleEmployees; track row.employee?.id; let index = $index) {
 				<div
 					class="breakdown-row"
 					role="row"
@@ -259,29 +294,43 @@
 					</div>
 				</div>
 				} @empty { @if (!loading) {
+				@if (isFiltered && employeeCount) {
+				<div class="acc-state" role="row">
+					<nb-icon icon="search-outline" aria-hidden="true"></nb-icon>
+					<p class="state-title" role="cell">
+						{{ 'DASHBOARD_PAGE.ACCOUNTING_VIEW.NO_MATCHES' | translate : { term: searchTerm.trim() } }}
+					</p>
+					<button nbButton ghost size="tiny" status="primary" type="button" (click)="clearSearch()">
+						{{ 'DASHBOARD_PAGE.ACCOUNTING_VIEW.CLEAR_FILTER' | translate }}
+					</button>
+				</div>
+				} @else {
 				<div class="acc-state" role="row">
 					<nb-icon icon="people-outline" aria-hidden="true"></nb-icon>
 					<p class="state-title" role="cell">{{ 'DASHBOARD_PAGE.ACCOUNTING_VIEW.NO_EMPLOYEES' | translate }}</p>
 				</div>
-				} }
+				} } }
 
-				@if (sortedEmployees.length) {
-				<!-- Totals: the same figures as the KPI row, set under the columns they sum. -->
+				@if (visibleEmployees.length) {
+				<!--
+					Totals: the same figures as the KPI row, set under the columns they sum.
+					While a filter is on they sum only the rows shown, so the row still adds up.
+				-->
 				<div class="breakdown-row breakdown-row--total" role="row">
 					<div class="breakdown-cell breakdown-rank" role="cell"></div>
 					<div class="breakdown-cell" role="cell">{{ 'INVOICES_PAGE.TOTAL' | translate }}</div>
 					<div class="breakdown-cell is-amount" role="cell">
-						{{ totals.income | currency : $safeNavigationMigration(organization?.currency) | position : $safeNavigationMigration(organization?.currencyPosition) }}
+						{{ visibleTotals.income | currency : $safeNavigationMigration(organization?.currency) | position : $safeNavigationMigration(organization?.currencyPosition) }}
 					</div>
 					<div class="breakdown-cell is-amount" role="cell">
-						{{ totals.expense | currency : $safeNavigationMigration(organization?.currency) | position : $safeNavigationMigration(organization?.currencyPosition) }}
+						{{ visibleTotals.expense | currency : $safeNavigationMigration(organization?.currency) | position : $safeNavigationMigration(organization?.currencyPosition) }}
 					</div>
-					<div class="breakdown-cell is-amount" [class.is-negative]="totals.profit < 0" role="cell">
-						{{ totals.profit | currency : $safeNavigationMigration(organization?.currency) | position : $safeNavigationMigration(organization?.currencyPosition) }}
+					<div class="breakdown-cell is-amount" [class.is-negative]="visibleTotals.profit < 0" role="cell">
+						{{ visibleTotals.profit | currency : $safeNavigationMigration(organization?.currency) | position : $safeNavigationMigration(organization?.currencyPosition) }}
 					</div>
 					@if (organization?.bonusType) {
-					<div class="breakdown-cell is-amount" [class.is-negative]="totals.bonus < 0" role="cell">
-						{{ totals.bonus | currency : $safeNavigationMigration(organization?.currency) | position : $safeNavigationMigration(organization?.currencyPosition) }}
+					<div class="breakdown-cell is-amount" [class.is-negative]="visibleTotals.bonus < 0" role="cell">
+						{{ visibleTotals.bonus | currency : $safeNavigationMigration(organization?.currency) | position : $safeNavigationMigration(organization?.currencyPosition) }}
 					</div>
 					}
 					<div class="breakdown-cell" role="cell"></div>
