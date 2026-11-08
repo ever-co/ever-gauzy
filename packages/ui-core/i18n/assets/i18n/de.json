@@ -1318,6 +1318,10 @@
 	},
 	"REPORT_PAGE": {
 		"MANUAL_TIME": {
+			"AVG_PER_ENTRY": "Ø {{ value }} pro Eintrag",
+			"ACROSS_DAYS": "Über {{ count }} Tage",
+			"SHARE_OF_ENTRIES": "{{ value }} % der Einträge",
+			"AVG_PER_EMPLOYEE": "Ø {{ value }} pro Mitarbeiter",
 			"SUBTITLE": "Manuell hinzugefügte oder bearbeitete Zeiteinträge im ausgewählten Zeitraum",
 			"ALL_TASKS": "Alle Aufgaben",
 			"ALL_ACTIONS": "Alle Aktionen",

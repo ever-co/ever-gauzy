@@ -1318,6 +1318,10 @@
 	},
 	"REPORT_PAGE": {
 		"MANUAL_TIME": {
+			"AVG_PER_ENTRY": "Gem. {{ value }} per registratie",
+			"ACROSS_DAYS": "Over {{ count }} dagen",
+			"SHARE_OF_ENTRIES": "{{ value }}% van de registraties",
+			"AVG_PER_EMPLOYEE": "Gem. {{ value }} per medewerker",
 			"SUBTITLE": "Handmatige tijdregistraties toegevoegd of bewerkt in de geselecteerde periode",
 			"ALL_TASKS": "Alle taken",
 			"ALL_ACTIONS": "Alle acties",

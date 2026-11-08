@@ -1318,6 +1318,10 @@
 	},
 	"REPORT_PAGE": {
 		"MANUAL_TIME": {
+			"AVG_PER_ENTRY": "Media {{ value }} per voce",
+			"ACROSS_DAYS": "In {{ count }} giorni",
+			"SHARE_OF_ENTRIES": "{{ value }}% delle voci",
+			"AVG_PER_EMPLOYEE": "Media {{ value }} per dipendente",
 			"SUBTITLE": "Voci di tempo manuale aggiunte o modificate nel periodo selezionato",
 			"ALL_TASKS": "Tutte le attività",
 			"ALL_ACTIONS": "Tutte le azioni",
