@@ -200,6 +200,11 @@ export class TaskViewPageComponent extends TranslationBaseComponent implements O
 	documentCount = 0;
 	/** Entity type the Documents tab attaches its links to. */
 	readonly documentEntity = BaseEntityEnum.Task;
+	/**
+	 * Whether the Documents tab is offered; worked out when the permissions or the feature flags change, not on
+	 * every check of the template.
+	 */
+	canSeeDocuments = false;
 
 	task: ITask = null;
 	status: IRecordViewStatus = null;
@@ -313,6 +318,7 @@ export class TaskViewPageComponent extends TranslationBaseComponent implements O
 		])
 			.pipe(untilDestroyed(this))
 			.subscribe(([{ tab, comment }]) => {
+				this.canSeeDocuments = this.hasDocumentsAccess();
 				this.highlightCommentId = comment;
 				this.openTab(TABS.includes(tab) && this.canOpenTab(tab) ? tab : comment ? 'comments' : 'overview');
 			});
@@ -427,7 +433,7 @@ export class TaskViewPageComponent extends TranslationBaseComponent implements O
 	 * Whether the Documents tab is offered: the same gates as its panel — DOCS_READ and the
 	 * organization's Documents feature — so the tab never opens on an empty pane.
 	 */
-	get canSeeDocuments(): boolean {
+	private hasDocumentsAccess(): boolean {
 		return this.store.hasPermission(PermissionsEnum.DOCS_READ) && this.store.hasFeatureEnabled(FeatureEnum.FEATURE_DOCUMENTS);
 	}
 
