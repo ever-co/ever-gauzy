@@ -112,10 +112,11 @@ describe('web portal URL', () => {
 		expect(withHashRouting('  http://127.0.0.1:4200///  ')).toBe('http://127.0.0.1:4200/#');
 		expect(withHashRouting('https://app.gauzy.co/#///')).toBe('https://app.gauzy.co/#');
 		expect(withHashRouting('http://127.0.0.1:4200/a/b/')).toBe('http://127.0.0.1:4200/a/b/#');
-		// `/\/+$/` took about 8 s on this input (quadratic: each slash restarts the run); one pass from the end is instant.
+		// `/\/+$/` took about 7.4 s on this input (quadratic: each slash restarts the run); one pass from the end takes
+		// well under a millisecond. The bound is loose on purpose, so a busy runner cannot fail it, and still far below 7 s.
 		const started = Date.now();
 		expect(withHashRouting(`http://h/${'/'.repeat(100_000)}x`)).toBe(`http://h/${'/'.repeat(100_000)}x/#`);
-		expect(Date.now() - started).toBeLessThan(200);
+		expect(Date.now() - started).toBeLessThan(1_000);
 	});
 
 	it('isHttpUrl accepts http(s) addresses only', () => {

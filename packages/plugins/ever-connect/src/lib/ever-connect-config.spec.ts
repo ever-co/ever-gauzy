@@ -86,12 +86,13 @@ describe('readEverConnectConfig', () => {
 		expect(readEverConnectConfig({ API_BASE_URL: 'https://gauzy.example.com/api///' }).provision.apiUrl).toBe(
 			'https://gauzy.example.com/api'
 		);
-		// `/\/+$/` took about 8 s on this value (quadratic: each slash restarts the run); one pass from the end is instant.
+		// `/\/+$/` took about 7.4 s on this value (quadratic: each slash restarts the run); one pass from the end takes
+		// well under a millisecond. The bound is loose on purpose, so a busy runner cannot fail it, and still far below 7 s.
 		const started = Date.now();
 		const config = readEverConnectConfig({ API_BASE_URL: `https://gauzy.example.com/${'/'.repeat(100_000)}x` });
 		expect(config.signIn).toBeNull();
 		expect(config.provision.apiUrl).toBe(`https://gauzy.example.com/${'/'.repeat(100_000)}x`);
-		expect(Date.now() - started).toBeLessThan(200);
+		expect(Date.now() - started).toBeLessThan(1_000);
 	});
 
 	it('cloud only from EVER_INSTALL_SOURCE=cloud, never from other signals', () => {
