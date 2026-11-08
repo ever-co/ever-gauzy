@@ -852,13 +852,14 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee,
 	timeOffRequests?: ITimeOffRequest[];
 
 	/**
-	 * Task
+	 * Task — the inverse side of `Task.members`, which owns the relation through `task_employee`. No `@JoinTable()`
+	 * here: with one, TypeORM treated this side as a second owner with its own (always empty) junction table and the
+	 * query load strategy answered the tasks of an employee empty.
 	 */
 	@MultiORMManyToMany(() => Task, (task) => task.members, {
 		onUpdate: 'CASCADE',
 		onDelete: 'CASCADE'
 	})
-	@JoinTable()
 	tasks?: ITask[];
 
 	/**
