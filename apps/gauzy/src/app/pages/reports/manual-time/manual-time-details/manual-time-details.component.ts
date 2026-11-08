@@ -5,7 +5,13 @@ import { filter, tap } from 'rxjs/operators';
 import { ITimeLog, PermissionsEnum, TimeFormatEnum } from '@gauzy/contracts';
 import { TimesheetService } from '@gauzy/ui-core/core';
 import { EditTimeLogModalComponent } from '@gauzy/ui-core/shared';
-import { changedAtOf, employeeNameOf, isEditedLog } from '../manual-time/manual-time-report';
+import {
+	changedAtOf,
+	employeeNameOf,
+	isEditedLog,
+	projectLinkOf,
+	taskLinkOf
+} from '../manual-time/manual-time-report';
 import { buildManualTimeDay, dayRangeOf, IManualTimeDay, IManualTimeDaySegment, percentOf } from './manual-time-day';
 
 /** The hours marked under the day timeline. */
@@ -68,6 +74,16 @@ export class ManualTimeDetailsComponent implements OnInit {
 
 	get employeeName(): string {
 		return employeeNameOf(this.timeLog?.employee);
+	}
+
+	/** The project's own page; `null` when the entry has no project. */
+	get projectLink(): string[] | null {
+		return projectLinkOf(this.timeLog);
+	}
+
+	/** The task's own page; `null` when the entry has no task. */
+	get taskLink(): string[] | null {
+		return taskLinkOf(this.timeLog);
 	}
 
 	/** Share of the day that was tracked, as a whole percentage. */
