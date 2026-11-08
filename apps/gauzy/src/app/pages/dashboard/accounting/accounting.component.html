@@ -303,9 +303,11 @@
 					<p class="state-title" role="cell">
 						{{ 'DASHBOARD_PAGE.ACCOUNTING_VIEW.NO_MATCHES' | translate : { term: searchTerm.trim() } }}
 					</p>
-					<button nbButton ghost size="tiny" status="primary" type="button" (click)="clearSearch()">
-						{{ 'DASHBOARD_PAGE.ACCOUNTING_VIEW.CLEAR_FILTER' | translate }}
-					</button>
+					<div role="cell">
+						<button nbButton ghost size="tiny" status="primary" type="button" (click)="clearSearch()">
+							{{ 'DASHBOARD_PAGE.ACCOUNTING_VIEW.CLEAR_FILTER' | translate }}
+						</button>
+					</div>
 				</div>
 				} @else {
 				<div class="acc-state" role="row">
