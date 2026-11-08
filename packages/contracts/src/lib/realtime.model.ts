@@ -71,7 +71,8 @@ export const REALTIME_COLLABORATION_FAMILIES: readonly string[] = [
 	'typing',
 	'chat_message',
 	'chat_conversation',
-	'chat_member_state',
+	// `chat_member.state_changed` (a member's read position and badges): the family is the part before the dot.
+	'chat_member',
 	'chat_thread',
 	'inbox_item'
 ];

@@ -12,8 +12,9 @@ import { ChatSearchService } from '../services/chat-search.service';
 /**
  * `/api/chat/messages*`, `/api/chat/threads`, `/api/chat/read-all`, `/api/chat/read-restore`: one message, its thread
  * and the caller's bulk read state. Same guards and 404 semantics as the conversation routes: a write others see
- * (editing, deleting, pinning, reacting) needs `CHAT_SEND`; the caller's own read and follow state needs `CHAT_VIEW`.
- * The emoji of a reaction route arrives decoded by the framework: it is used as is.
+ * (editing, deleting, pinning, reacting) needs `CHAT_SEND` as well as `CHAT_VIEW` (the second checked by
+ * `ChatAccessService.caller()`: a handler's `@Permissions` replace the class's); the caller's own read and follow
+ * state needs `CHAT_VIEW`. The emoji of a reaction route arrives decoded by the framework: it is used as is.
  */
 @ApiTags('Chat')
 @ApiBearerAuth()

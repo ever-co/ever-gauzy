@@ -86,8 +86,7 @@ export class ChatConversationService {
 	async updateCategory(caller: IChatCaller, id: ID, input: Partial<IChatCategoryInput>): Promise<IChatCategory> {
 		this.requireManage(caller);
 		const repository = this.dataSource.getRepository(ChatCategory);
-		const category = await repository.findOne({ where: { id, tenantId: caller.tenantId } });
-		if (!category) throw new NotFoundException('The requested record was not found');
+		const category = await this.categoryForWrite(caller, id);
 		if (typeof input.name === 'string' && input.name.trim()) category.name = input.name.trim();
 		if (typeof input.position === 'number') category.position = input.position;
 		return repository.save(category) as Promise<IChatCategory>;
@@ -96,11 +95,25 @@ export class ChatConversationService {
 	async deleteCategory(caller: IChatCaller, id: ID): Promise<void> {
 		this.requireManage(caller);
 		const repository = this.dataSource.getRepository(ChatCategory);
-		const category = await repository.findOne({ where: { id, tenantId: caller.tenantId } });
-		if (!category) throw new NotFoundException('The requested record was not found');
-		// The channels of a deleted category stay, uncategorized.
-		await this.dataSource.getRepository(ChatConversation).update({ categoryId: id, tenantId: caller.tenantId }, { categoryId: null as never });
+		const category = await this.categoryForWrite(caller, id);
+		// The channels of a deleted category stay, uncategorized (what the foreign key's ON DELETE SET NULL does too).
+		await this.dataSource.getRepository(ChatConversation).update({ categoryId: category.id as ID, tenantId: caller.tenantId }, { categoryId: null as never });
 		await repository.remove(category);
+	}
+
+	/**
+	 * A category the caller may change: of the caller's tenant and, when the request is scoped to an organization, of
+	 * that organization — the categories {@link listCategories} shows them, and no other. `CHAT_MANAGE` is held per
+	 * role (a `MANAGER` has it), not per organization: without this boundary a manager of one organization could
+	 * rename or delete another organization's categories by their ids. Another organization's category reads as
+	 * not found, as a conversation does.
+	 */
+	private async categoryForWrite(caller: IChatCaller, id: ID): Promise<ChatCategory> {
+		const category = await this.dataSource.getRepository(ChatCategory).findOne({
+			where: { id, tenantId: caller.tenantId, ...(caller.organizationId ? { organizationId: caller.organizationId } : {}) }
+		});
+		if (!category) throw new NotFoundException('The requested record was not found');
+		return category;
 	}
 
 	// ---------------------------------------------------------------- listing
