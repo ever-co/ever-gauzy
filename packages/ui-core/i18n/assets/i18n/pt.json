@@ -2033,7 +2033,11 @@
 			"SORT_BY": "Ordenar por {{ name }}",
 			"SORT_LABEL": "Ordenar por",
 			"SORT_ASCENDING": "Crescente",
-			"SORT_DESCENDING": "Decrescente"
+			"SORT_DESCENDING": "Decrescente",
+			"FILTER_PLACEHOLDER": "Filtrar funcionários",
+			"CLEAR_FILTER": "Limpar filtro",
+			"FILTERED_COUNT": "{{ shown }} de {{ total }}",
+			"NO_MATCHES": "Nenhum funcionário corresponde a \"{{ term }}\""
 		},
 		"SELECT_A_MONTH_AND_EMPLOYEE": "Por favor, selecione um mês e um funcionário no menu acima.",
 		"INSERT_TEXT_FOR_NOT_AUTHENTICATED_USERS": "Insira texto para usuários não autenticados.",

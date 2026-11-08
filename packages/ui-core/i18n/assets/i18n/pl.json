@@ -2032,7 +2032,11 @@
 			"SORT_BY": "Sortuj według {{ name }}",
 			"SORT_LABEL": "Sortuj według",
 			"SORT_ASCENDING": "Rosnąco",
-			"SORT_DESCENDING": "Malejąco"
+			"SORT_DESCENDING": "Malejąco",
+			"FILTER_PLACEHOLDER": "Filtruj pracowników",
+			"CLEAR_FILTER": "Wyczyść filtr",
+			"FILTERED_COUNT": "{{ shown }} z {{ total }}",
+			"NO_MATCHES": "Brak pracowników pasujących do \"{{ term }}\""
 		},
 		"SELECT_A_MONTH_AND_EMPLOYEE": "Proszę wybrać miesiąc oraz pracownika z menu powyżej",
 		"INSERT_TEXT_FOR_NOT_AUTHENTICATED_USERS": "Wprowadź tekst dla nieuwierzytelnionych użytkowników",

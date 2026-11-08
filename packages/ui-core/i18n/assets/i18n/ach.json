@@ -1919,7 +1919,11 @@
 			"SORT_BY": "Yub ki {{ name }}",
 			"SORT_LABEL": "Yub ki",
 			"SORT_ASCENDING": "Ma medde malo",
-			"SORT_DESCENDING": "Ma dok piny"
+			"SORT_DESCENDING": "Ma dok piny",
+			"FILTER_PLACEHOLDER": "Filter employees",
+			"CLEAR_FILTER": "Clear filter",
+			"FILTERED_COUNT": "{{ shown }} of {{ total }}",
+			"NO_MATCHES": "No employees match \"{{ term }}\""
 		},
 		"SELECT_A_MONTH_AND_EMPLOYEE": "crwdns196:0crwdne196:0",
 		"INSERT_TEXT_FOR_NOT_AUTHENTICATED_USERS": "crwdns2633:0crwdne2633:0",
