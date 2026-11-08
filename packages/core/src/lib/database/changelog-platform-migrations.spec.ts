@@ -3,10 +3,8 @@ import * as os from 'os';
 import * as path from 'path';
 import { DataSource, QueryRunner } from 'typeorm';
 import { AddChangelogPlatform1791000005600 } from './migrations/1791000005600-AddChangelogPlatform';
-import {
-	SeedPlatformChangelogContent1791000005610,
-	platformChangelogEntryId
-} from './migrations/1791000005610-SeedPlatformChangelogContent';
+import { SeedPlatformChangelogContent1791000005610 } from './migrations/1791000005610-SeedPlatformChangelogContent';
+import { platformChangelogEntryId } from './platform-changelog-entry-id';
 
 /**
  * `changelog.platform` and the starter entries of the other Ever products, run for real on SQLite against a

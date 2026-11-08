@@ -16,10 +16,8 @@ jest.mock('@gauzy/core', () => {
 });
 
 import { ChangelogPlatformEnum, CHANGELOG_PLATFORM_PATTERN } from '@gauzy/contracts';
-import {
-	SeedPlatformChangelogContent1791000005610,
-	platformChangelogEntryId
-} from '../../../../core/src/lib/database/migrations/1791000005610-SeedPlatformChangelogContent';
+import { SeedPlatformChangelogContent1791000005610 } from '../../../../core/src/lib/database/migrations/1791000005610-SeedPlatformChangelogContent';
+import { platformChangelogEntryId } from '../../../../core/src/lib/database/platform-changelog-entry-id';
 import { buildChangelogSeedRows, withoutExistingEntries } from './changelog.seed';
 import { INITIAL_CHANGELOG_TEMPLATE } from './initial-changelog-template';
 import { PLATFORM_CHANGELOG_TEMPLATES } from './platform-changelog-templates';
