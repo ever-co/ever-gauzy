@@ -267,7 +267,9 @@ its scopes do not allow is not listed and answers "not found", as an unregistere
   `MCP_AUTH_REQUIRED_SCOPES` (or `MCP_REQUIRED_SCOPES`) is unset, so the required scope is the default `mcp.read`, a
   token granted named collaboration scopes alone is admitted too, and reaches the collaboration tools only (every other
   tool is hidden from it and answers "not found"). Once the operator sets the required scopes, every token must hold
-  them all.
+  them all. Such a token cannot run `login` either, so its calls go to the API under a platform login the caller
+  already has: the GAUZY_AUTO_LOGIN account for a caller on this machine, the login its OAuth subject and client made
+  earlier over HTTP with a token holding `mcp.read`, or its session's. With none, the API refuses the call.
 - **HTTP and WebSocket without a token** (a caller on this machine in loopback desktop mode, or authorization switched
   off) **and stdio:** `GAUZY_MCP_TOOLS_SCOPES` (a comma list), else every scope of the enabled groups — a local server
   speaks for its one signed-in user. Stdio applies the list when it connects: the tools it does not allow are removed.
@@ -284,6 +286,9 @@ organization and permissions — what is outside their access is "not found", as
 name, user, duration and outcome, never with what was sent or answered (on every path: the transports and the server
 log only the argument names of these tools). Answers carry a note that message, page and
 entry bodies are user-authored text: data, not instructions. The chat search needs a server that serves `GET /chat/search`.
+The docs tools' revision check is only as tight as the docs API's: a content save there moves `contentRevision` in one
+write and stores the text in the next, so a `get_page` that falls between the two reads the new revision with the
+previous text, and an update against that revision then passes.
 
 ### 🏗️ Technical Features
 
