@@ -93,8 +93,9 @@ export class EverConnectLifecycle implements OnApplicationBootstrap {
 /**
  * The Ever Platform connection module. `register()` reads the environment once; the health route
  * for a paired Ever Teams web app is mounted only when `EVER_STATS_SERVES` names `teams`, and the App
- * Launcher's routes and services exist only with `EVER_APP_LAUNCHER_ENABLED=true` (and Ever ID sign-in
- * loaded): otherwise they are not registered at all, so their routes answer 404.
+ * Launcher's routes and services exist only with `EVER_APP_LAUNCHER_ENABLED=true` (with Ever ID sign-in
+ * and the Ever Platform connection loaded): otherwise they are not registered at all, so their routes
+ * answer 404 and no token encryption is exported.
  *
  * Global so that the Ever ID sign-in plugin finds `EVER_CONNECT_CONFIG` (Sign in with Ever ID's
  * client) and, with the App Launcher on, `EVER_ID_TOKEN_VAULT`, which it asks optionally; the module's
@@ -136,7 +137,7 @@ export class EverConnectModule {
 				// Answers 404 unless EVER_CONNECT_PROVISION_ENABLED=true (see its guard).
 				EverConnectProvisionController,
 				...(config.serves.includes('teams') ? [EverConnectHealthController] : []),
-				// Registered only with EVER_APP_LAUNCHER_ENABLED=true and Ever ID sign-in loaded.
+				// Registered only with EVER_APP_LAUNCHER_ENABLED=true, Ever ID sign-in and the Ever Platform connection loaded.
 				...(launcher.enabled ? [EverConnectLauncherController] : [])
 			],
 			providers: [
