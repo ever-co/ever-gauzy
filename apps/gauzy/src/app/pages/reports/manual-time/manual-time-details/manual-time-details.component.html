@@ -192,7 +192,14 @@
 				<dt>{{ 'REPORT_PAGE.PROJECT' | translate }}</dt>
 				<dd>
 					@if (timeLog?.project) {
-						<ga-project-column-view [project]="timeLog.project"></ga-project-column-view>
+						<a
+							class="entity-link"
+							[routerLink]="projectLink"
+							[attr.aria-label]="'REPORT_PAGE.MANUAL_TIME.DETAILS.OPEN_PROJECT' | translate : { name: timeLog.project.name }"
+							(click)="close()"
+						>
+							<ga-project-column-view [project]="timeLog.project"></ga-project-column-view>
+						</a>
 					} @else {
 						<span class="muted">{{ 'REPORT_PAGE.NO_PROJECT' | translate }}</span>
 					}
@@ -212,7 +219,14 @@
 				<dt>{{ 'REPORT_PAGE.TO_DO' | translate }}</dt>
 				<dd>
 					@if (timeLog?.task) {
-						{{ timeLog.task.title }}
+						<a
+							class="entity-link entity-link--text"
+							[routerLink]="taskLink"
+							[attr.aria-label]="'REPORT_PAGE.MANUAL_TIME.DETAILS.OPEN_TASK' | translate : { name: timeLog.task.title }"
+							(click)="close()"
+						>
+							<span class="entity-link-text">{{ timeLog.task.title }}</span>
+						</a>
 					} @else {
 						<span class="muted">{{ 'REPORT_PAGE.NO_TASK' | translate }}</span>
 					}

@@ -516,6 +516,43 @@ $hatch: repeating-linear-gradient(135deg, $manual 0 3px, transparent 3px 6px);
 	grid-column: 1 / -1;
 }
 
+// A project or task that opens its own page: the value at rest, an underlined
+// link on hover and focus - no surface, no icon.
+.entity-link {
+	display: inline-block;
+	max-width: 100%;
+	border-radius: 2px;
+	color: var(--gauzy-text-color-1);
+	text-decoration: none;
+
+	&:hover {
+		text-decoration: none;
+
+		.entity-link-text {
+			color: var(--color-primary-default);
+			text-decoration: underline;
+			text-underline-offset: 2px;
+		}
+	}
+
+	&:focus-visible {
+		outline: 2px solid var(--color-primary-default);
+		outline-offset: 2px;
+	}
+
+	// The project chip draws its own name; it takes the hover treatment too.
+	&:hover ::ng-deep ga-project-column-view .main-header {
+		color: var(--color-primary-default);
+		text-decoration: underline;
+		text-underline-offset: 2px;
+	}
+}
+
+.entity-link-text {
+	overflow-wrap: anywhere;
+	transition: color 0.15s ease;
+}
+
 .prose {
 	white-space: pre-line;
 }
