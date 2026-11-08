@@ -506,14 +506,19 @@ export class ChatMessageService {
 		const broadcast = !!message.mentionsChannel || !!message.mentionsHere;
 		const timeline = inTimeline(message);
 		const position = timeline ? await this.timelinePosition(caller.tenantId, message.conversationId, message, true) : 0;
-		await this.dataSource.transaction(async (manager) => {
-			await manager.getRepository(ChatMessage).update({ id: message.id }, {
+		const deleted = await this.dataSource.transaction(async (manager) => {
+			// Only a message still there is deleted, and only the request that deleted it moves the counters: two deletes
+			// of the same message can both pass the check above, and the second would take the conversation's count and
+			// the members' read positions down a second time (unread badges too low). Its UPDATE waits for the first's row
+			// lock, then matches no row.
+			const result = await manager.getRepository(ChatMessage).update({ id: message.id, deletedAt: IsNull() }, {
 				// A thread root keeps its row as a tombstone; a plain message is withdrawn.
 				body: '',
 				attachmentIds: null,
 				mentionEmployeeIds: null,
 				deletedAt: new Date()
 			} as never);
+			if (!(result.affected ?? 0)) return false;
 			await manager.getRepository<ObjectLiteral>('DocumentLink').delete({ entity: BaseEntityEnum.ChatMessage, entityId: message.id, tenantId: caller.tenantId } as never);
 			if (timeline) {
 				// The timeline is one message shorter: the conversation's count follows, a read position past the end
@@ -536,7 +541,10 @@ export class ChatMessageService {
 					}
 				}
 			}
+			return true;
 		});
+		// Deleted by a concurrent request: that one moved the counters and told the members.
+		if (!deleted) return { events: [] };
 		const events = [await this.realtime.publish(this.realtime.messageFact(CHAT_EVENT_NAMES.MESSAGE_DELETED, message, members.map((m) => m.userId)))];
 		return { events };
 	}

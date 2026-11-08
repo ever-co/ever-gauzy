@@ -1,3 +1,4 @@
+import { CHAT_EVENT_NAMES, CHAT_STREAMED_EVENTS } from '@gauzy/contracts';
 import { collaborationEventNames, collaborationReplayNames, resolveRealtimeSelection, toRealtimeEnvelope, withoutRecipients } from './realtime-envelope';
 
 describe('resolveRealtimeSelection', () => {
@@ -22,8 +23,18 @@ describe('resolveRealtimeSelection', () => {
 		expect(resolveRealtimeSelection(['*']).length).toBe(11);
 	});
 
+	it('offers every name the chat plugin declares, the member state (unread badges) included', () => {
+		const offered = collaborationEventNames(CHAT_STREAMED_EVENTS);
+		for (const name of CHAT_STREAMED_EVENTS) {
+			expect(offered).toContain(name);
+		}
+		expect(resolveRealtimeSelection([CHAT_EVENT_NAMES.MEMBER_STATE_CHANGED], offered)).toEqual(['chat_member.state_changed']);
+		expect(resolveRealtimeSelection(['chat_member.*'], offered)).toEqual(['chat_member.state_changed']);
+		expect(collaborationReplayNames(CHAT_STREAMED_EVENTS)).toEqual(expect.arrayContaining([...CHAT_STREAMED_EVENTS]));
+	});
+
 	it('offers the chat and inbox names other plugins declared, and nothing of another family', () => {
-		const declared = ['chat_message.created', 'chat_member_state.changed', 'inbox_item.created', 'order.created', 'presence.changed'];
+		const declared = ['chat_message.created', 'chat_member.state_changed', 'inbox_item.created', 'order.created', 'presence.changed'];
 		const offered = collaborationEventNames(declared);
 		expect(offered).toContain('chat_message.created');
 		expect(offered).toContain('inbox_item.created');

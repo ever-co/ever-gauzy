@@ -28,6 +28,9 @@ import { ChatMessageService } from '../services/chat-message.service';
  * state (read position, notify level, favourite) is theirs with `CHAT_VIEW`; categories and any conversation's
  * management need `CHAT_MANAGE` or a manager role on the conversation. A conversation the caller is not
  * a member of answers 404. Answers are `Cache-Control: no-store`.
+ *
+ * A write route's `@Permissions` replace the class's `CHAT_VIEW` (and the guard reads permissions as alternatives),
+ * so `CHAT_VIEW` "as well" is checked by `ChatAccessService.caller()`, which every handler reads its caller from.
  */
 @ApiTags('Chat')
 @ApiBearerAuth()

@@ -27,11 +27,26 @@ export interface IChatCaller {
 export class ChatAccessService {
 	constructor(private readonly dataSource: DataSource) {}
 
+	/**
+	 * The caller of a chat route, who must hold `CHAT_VIEW`.
+	 *
+	 * Every chat route needs `CHAT_VIEW`, a write needs its own permission (`CHAT_SEND`, `CHAT_MANAGE`) as well. The
+	 * permission guard reads a route's permissions as alternatives and the handler's `@Permissions` replace the
+	 * controller's, so a write route only asks for the write permission: a role whose `CHAT_VIEW` was taken away
+	 * could still send, create conversations and read back what it wrote. `CHAT_VIEW` is checked here, where every
+	 * route — REST and GraphQL — reads its caller, so no write route can leave it out (the way the order transaction
+	 * route checks its second grant in its body).
+	 *
+	 * @throws ForbiddenException when the caller lacks `CHAT_VIEW`.
+	 */
 	caller(): IChatCaller {
 		const tenantId = RequestContext.currentTenantId();
 		const userId = RequestContext.currentUserId();
 		if (!tenantId || !userId) {
 			throw new UnauthorizedException('Chat needs a signed-in user of a tenant.');
+		}
+		if (!RequestContext.hasPermission(PermissionsEnum.CHAT_VIEW)) {
+			throw new ForbiddenException(`Chat needs ${PermissionsEnum.CHAT_VIEW}.`);
 		}
 		return {
 			tenantId,

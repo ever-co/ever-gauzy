@@ -48,7 +48,7 @@ uses the in-process engine.
 
 The subscription and the catch-up also offer the events the chat and inbox
 plugins declare when they are loaded (`chat_message.*`, `chat_conversation.*`,
-`chat_member_state.*`, `chat_thread.*`, `inbox_item.*`): the collaboration
+`chat_member.*`, `chat_thread.*`, `inbox_item.*`): the collaboration
 families, and nothing of another family.
 
 Repeated `*.updated` hints of one aggregate within one second are folded: the
