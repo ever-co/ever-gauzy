@@ -3,7 +3,10 @@ import * as os from 'os';
 import * as path from 'path';
 import { DataSource, QueryRunner } from 'typeorm';
 import { AddChangelogPlatform1791000005600 } from './migrations/1791000005600-AddChangelogPlatform';
-import { SeedPlatformChangelogContent1791000005610 } from './migrations/1791000005610-SeedPlatformChangelogContent';
+import {
+	SeedPlatformChangelogContent1791000005610,
+	platformChangelogEntryId
+} from './migrations/1791000005610-SeedPlatformChangelogContent';
 
 /**
  * `changelog.platform` and the starter entries of the other Ever products, run for real on SQLite against a
@@ -88,6 +91,46 @@ describe('changelog platform migrations on SQLite', () => {
 		expect(kept.content).toBe('Edited by hand');
 	});
 
+	it('cannot duplicate an entry a concurrent run already inserted under its fixed id', async () => {
+		await run(new AddChangelogPlatform1791000005600());
+		// What a second process that passed the title check before the first committed would meet: the id is taken.
+		await dataSource.query(
+			`INSERT INTO "changelog" ("id", "title", "date", "content", "platform") VALUES (?, 'Renamed meanwhile', '2026-10-12 00:00:00', 'x', 'ever-teams')`,
+			[platformChangelogEntryId('ever-teams', 'Weekly time report')]
+		);
+
+		await run(new SeedPlatformChangelogContent1791000005610());
+
+		expect(await countBy()).toEqual({ 'ever-platform': 5, 'ever-teams': 8, 'ever-works': 5, gauzy: 1 });
+		const ids = await dataSource.query(
+			`SELECT "id" FROM "changelog" WHERE "platform" = 'ever-works' ORDER BY "id"`
+		);
+		expect(ids.map(({ id }: { id: string }) => id).sort()).toEqual(
+			[
+				'Install apps from apps.ever.co',
+				'The latest AI models',
+				'Build on an open-source app',
+				'Connect to Ever Platform',
+				'From merge to live'
+			]
+				.map((title) => platformChangelogEntryId('ever-works', title))
+				.sort()
+		);
+	});
+
+	it('drops the column on down', async () => {
+		await run(new AddChangelogPlatform1791000005600());
+		const queryRunner = dataSource.createQueryRunner();
+		try {
+			await new AddChangelogPlatform1791000005600().down(queryRunner);
+			expect(await queryRunner.hasColumn('changelog', 'platform')).toBe(false);
+			await expect(new AddChangelogPlatform1791000005600().down(queryRunner)).resolves.toBeUndefined();
+		} finally {
+			await queryRunner.release();
+		}
+		expect(await dataSource.query('SELECT COUNT(*) AS "n" FROM "changelog"')).toEqual([{ n: 1 }]);
+	});
+
 	it('seeds nothing on a database without the platform column', async () => {
 		await run(new SeedPlatformChangelogContent1791000005610());
 
@@ -148,7 +191,7 @@ describe('changelog platform column on Postgres and MySQL', () => {
 		const inserts = queries.filter(({ sql }) => sql.startsWith('INSERT'));
 		expect(inserts).toHaveLength(18);
 		expect(inserts[0].sql).toBe(
-			'INSERT INTO "changelog" ("platform", "icon", "title", "date", "isFeature", "content", "learnMoreUrl", "imageUrl", "id") VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)'
+			'INSERT INTO "changelog" ("platform", "icon", "title", "date", "isFeature", "content", "learnMoreUrl", "imageUrl", "id") VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) ON CONFLICT ("id") DO NOTHING'
 		);
 		expect(inserts[0].params.slice(0, 5)).toEqual([
 			'ever-teams',
@@ -176,7 +219,9 @@ describe('changelog starter entries on MySQL', () => {
 
 		expect(queries[0]).toBe('SELECT GET_LOCK(?, 120) AS `acquired`');
 		expect(queries[queries.length - 1]).toBe('SELECT RELEASE_LOCK(?)');
-		expect(queries.filter((sql) => sql.startsWith('INSERT INTO `changelog`'))).toHaveLength(18);
+		const inserts = queries.filter((sql) => sql.startsWith('INSERT INTO `changelog`'));
+		expect(inserts).toHaveLength(18);
+		expect(inserts[0].endsWith('ON DUPLICATE KEY UPDATE `id` = `id`')).toBe(true);
 	});
 
 	it('refuses to seed without the lock', async () => {

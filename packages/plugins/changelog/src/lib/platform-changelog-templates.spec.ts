@@ -16,8 +16,11 @@ jest.mock('@gauzy/core', () => {
 });
 
 import { ChangelogPlatformEnum, CHANGELOG_PLATFORM_PATTERN } from '@gauzy/contracts';
-import { SeedPlatformChangelogContent1791000005610 } from '../../../../core/src/lib/database/migrations/1791000005610-SeedPlatformChangelogContent';
-import { buildChangelogSeedRows } from './changelog.seed';
+import {
+	SeedPlatformChangelogContent1791000005610,
+	platformChangelogEntryId
+} from '../../../../core/src/lib/database/migrations/1791000005610-SeedPlatformChangelogContent';
+import { buildChangelogSeedRows, withoutExistingEntries } from './changelog.seed';
 import { INITIAL_CHANGELOG_TEMPLATE } from './initial-changelog-template';
 import { PLATFORM_CHANGELOG_TEMPLATES } from './platform-changelog-templates';
 
@@ -70,5 +73,27 @@ describe('platform changelog templates', () => {
 		expect(gauzy.map((row) => row.title)).toEqual(INITIAL_CHANGELOG_TEMPLATE.map((item) => item.title));
 		expect(rows).toHaveLength(INITIAL_CHANGELOG_TEMPLATE.length + templateRows.length);
 		expect(rows.filter((row) => row.platform === 'ever-teams').every((row) => row.isFeature === false)).toBe(true);
+	});
+
+	it('adds on a fresh database only what a migration has not already added', () => {
+		const rows = buildChangelogSeedRows();
+		const left = withoutExistingEntries(rows, [
+			{ platform: 'ever-teams', title: 'Weekly time report' },
+			{ platform: null, title: INITIAL_CHANGELOG_TEMPLATE[0].title }
+		]);
+		expect(left).toHaveLength(rows.length - 2);
+		expect(left.some((row) => row.platform === 'ever-teams' && row.title === 'Weekly time report')).toBe(false);
+	});
+
+	it('gives the starter entries ids fixed by product and title', () => {
+		expect(platformChangelogEntryId('ever-teams', 'Weekly time report')).toBe(
+			platformChangelogEntryId('ever-teams', 'Weekly time report')
+		);
+		expect(platformChangelogEntryId('ever-teams', 'Weekly time report')).not.toBe(
+			platformChangelogEntryId('ever-works', 'Weekly time report')
+		);
+		expect(platformChangelogEntryId('ever-teams', 'x')).toMatch(
+			/^[0-9a-f]{8}-[0-9a-f]{4}-5[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/
+		);
 	});
 });

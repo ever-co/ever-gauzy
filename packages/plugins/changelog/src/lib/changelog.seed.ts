@@ -16,6 +16,21 @@ export function buildChangelogSeedRows(): IChangelog[] {
 	return [...gauzy, ...others];
 }
 
+/**
+ * The rows not there yet. A product's entry is known by its title: whichever of this seed and the migrations that
+ * mirror it (`RefreshChangelogContent`, `SeedPlatformChangelogContent`) runs second adds nothing twice. Soft-deleted
+ * rows count, so an entry the operator took down stays down.
+ */
+export function withoutExistingEntries(
+	rows: IChangelog[],
+	existing: ReadonlyArray<Pick<IChangelog, 'platform' | 'title'>>
+): IChangelog[] {
+	const key = ({ platform, title }: Pick<IChangelog, 'platform' | 'title'>) =>
+		`${platform || DEFAULT_CHANGELOG_PLATFORM}/${title}`;
+	const taken = new Set(existing.map(key));
+	return rows.filter((row) => !taken.has(key(row)));
+}
+
 function toRow(item: IChangelog, platform: string): IChangelog {
 	return {
 		icon: item.icon,
@@ -32,8 +47,13 @@ function toRow(item: IChangelog, platform: string): IChangelog {
 export const createChangelog = async (dataSource: DataSource): Promise<IChangelog[]> => {
 	return await new Promise<IChangelog[]>(async (resolve, reject) => {
 		try {
-			const changelogs = buildChangelogSeedRows();
-			await insertChangelog(dataSource, changelogs);
+			const existing = await dataSource
+				.getRepository(Changelog)
+				.find({ select: { platform: true, title: true }, withDeleted: true });
+			const changelogs = withoutExistingEntries(buildChangelogSeedRows(), existing);
+			if (changelogs.length) {
+				await insertChangelog(dataSource, changelogs);
+			}
 			resolve(changelogs);
 		} catch (err) {
 			console.log('Error parsing changelog:', err);

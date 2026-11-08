@@ -31,8 +31,7 @@ const COLUMN: Readonly<{ name: string } & Record<Dialect, string>> = {
  * advisory lock (a named lock on MySQL) makes two API processes that boot at the same time against one database run
  * it one after the other.
  *
- * `down` drops the column on Postgres and MySQL. SQLite keeps it, as every additive column of this platform is kept
- * on the embedded dialect; a kept column with its default is invisible to a build without the entity member.
+ * `down` drops the column on all three databases (on SQLite through `DROP COLUMN`, as `AddDailyPlanTaskOrder` does).
  */
 export class AddChangelogPlatform1791000005600 implements MigrationInterface {
 	name = 'AddChangelogPlatform1791000005600';
@@ -89,7 +88,10 @@ export class AddChangelogPlatform1791000005600 implements MigrationInterface {
 				await queryRunner.query(`ALTER TABLE "${TABLE}" DROP COLUMN IF EXISTS "${COLUMN.name}"`);
 				break;
 			case 'sqlite':
-				console.log(chalk.gray(`${this.name}: the embedded dialect keeps its additive columns.`));
+				// `DROP COLUMN` needs SQLite 3.35+, which the bundled better-sqlite3 ships.
+				if (await queryRunner.hasColumn(TABLE, COLUMN.name)) {
+					await queryRunner.query(`ALTER TABLE "${TABLE}" DROP COLUMN "${COLUMN.name}"`);
+				}
 				break;
 			case 'mysql':
 				if (await queryRunner.hasColumn(TABLE, COLUMN.name)) {

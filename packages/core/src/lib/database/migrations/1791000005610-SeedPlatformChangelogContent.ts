@@ -1,10 +1,26 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 import * as chalk from 'chalk';
-import { v4 as uuidV4 } from 'uuid';
+import { v5 as uuidV5 } from 'uuid';
 import { DatabaseTypeEnum } from '@gauzy/config';
 
 /** [platform, icon, title, isoDate, content, learnMoreUrl] */
 type PlatformChangelogRow = readonly [string, string, string, string, string, string];
+
+/** The fixed namespace of the starter entries' ids. Never change it: the ids are what makes a rerun a no-op. */
+export const PLATFORM_CHANGELOG_ID_NAMESPACE = '4a00d5da-0335-4667-95c1-035b7b541c0f';
+
+/**
+ * The id of a starter entry: a UUID v5 of `platform/title`, the same in every run and on every database. Two API
+ * processes booting together can both pass the title check (each sees only its own uncommitted rows, and the
+ * MySQL lock is released when `up` returns, before the migration's transaction commits); the second insert of an
+ * id then conflicts and is ignored instead of adding a copy.
+ */
+export function platformChangelogEntryId(platform: string, title: string): string {
+	return uuidV5(`${platform}/${title}`, PLATFORM_CHANGELOG_ID_NAMESPACE);
+}
+
+/** How each database inserts a row unless its id is taken. */
+type InsertUnlessIdTaken = (table: string, columns: string, values: string) => string;
 
 /**
  * Adds the starter What's New entries of the other Ever products that read the `changelog` table: Ever Teams
@@ -85,7 +101,8 @@ export class SeedPlatformChangelogContent1791000005610 implements MigrationInter
 					() => '?',
 					// TypeORM stores sqlite datetime as 'YYYY-MM-DD HH:MM:SS'
 					(iso) => iso.slice(0, 19).replace('T', ' '),
-					(value) => (value ? 1 : 0)
+					(value) => (value ? 1 : 0),
+					(table, columns, values) => `INSERT OR IGNORE INTO ${table} (${columns}) VALUES (${values})`
 				);
 			case DatabaseTypeEnum.postgres:
 				return this.seed(
@@ -93,7 +110,9 @@ export class SeedPlatformChangelogContent1791000005610 implements MigrationInter
 					(identifier) => `"${identifier}"`,
 					(n) => `$${n}`,
 					(iso) => new Date(iso),
-					(value) => value
+					(value) => value,
+					(table, columns, values) =>
+						`INSERT INTO ${table} (${columns}) VALUES (${values}) ON CONFLICT ("id") DO NOTHING`
 				);
 			case DatabaseTypeEnum.mysql:
 				return withMysqlNamedLock(queryRunner, this.mysqlLockName, () =>
@@ -103,7 +122,10 @@ export class SeedPlatformChangelogContent1791000005610 implements MigrationInter
 						() => '?',
 						// MySQL DATETIME rejects the trailing 'Z' on older versions
 						(iso) => iso.slice(0, 19).replace('T', ' '),
-						(value) => (value ? 1 : 0)
+						(value) => (value ? 1 : 0),
+						// Only a taken key is let through: INSERT IGNORE would also swallow data errors.
+						(table, columns, values) =>
+							`INSERT INTO ${table} (${columns}) VALUES (${values}) ON DUPLICATE KEY UPDATE \`id\` = \`id\``
 					)
 				);
 			default:
@@ -116,15 +138,17 @@ export class SeedPlatformChangelogContent1791000005610 implements MigrationInter
 	}
 
 	/**
-	 * Inserts every entry whose product has no entry of that title yet. Runs through `queryRunner.query`, which
-	 * carries the migration's transaction, so a failed insert rolls the whole batch back.
+	 * Inserts every entry whose product has no entry of that title yet (an entry the operator wrote by hand under
+	 * the same title wins), under its fixed id, skipping an id already taken (a concurrent run). Runs through
+	 * `queryRunner.query`, which carries the migration's transaction, so a failed insert rolls the batch back.
 	 */
 	private async seed(
 		queryRunner: QueryRunner,
 		quote: (identifier: string) => string,
 		param: (n: number) => string,
 		date: (iso: string) => unknown,
-		bool: (value: boolean) => unknown
+		bool: (value: boolean) => unknown,
+		insertUnlessIdTaken: InsertUnlessIdTaken
 	): Promise<void> {
 		if (!(await queryRunner.hasTable('changelog')) || !(await queryRunner.hasColumn('changelog', 'platform'))) {
 			console.log(chalk.gray(`${this.name}: no changelog.platform column, nothing to seed.`));
@@ -135,11 +159,13 @@ export class SeedPlatformChangelogContent1791000005610 implements MigrationInter
 			'title'
 		)} = ${param(2)} LIMIT 1`;
 		const columns = ['platform', 'icon', 'title', 'date', 'isFeature', 'content', 'learnMoreUrl', 'imageUrl', 'id'];
-		const insertQuery = `INSERT INTO ${table} (${columns.map(quote).join(', ')}) VALUES (${columns
-			.map((_, i) => param(i + 1))
-			.join(', ')})`;
+		const insertQuery = insertUnlessIdTaken(
+			table,
+			columns.map(quote).join(', '),
+			columns.map((_, i) => param(i + 1)).join(', ')
+		);
 
-		let inserted = 0;
+		let attempted = 0;
 		for (const [platform, icon, title, isoDate, content, learnMoreUrl] of this.entries) {
 			const existing = await queryRunner.query(existsQuery, [platform, title]);
 			if (Array.isArray(existing) && existing.length > 0) {
@@ -154,11 +180,13 @@ export class SeedPlatformChangelogContent1791000005610 implements MigrationInter
 				content,
 				learnMoreUrl,
 				'',
-				uuidV4()
+				platformChangelogEntryId(platform, title)
 			]);
-			inserted++;
+			attempted++;
 		}
-		console.log(chalk.green(`${this.name}: ${inserted} of ${this.entries.length} entries added.`));
+		console.log(
+			chalk.green(`${this.name}: ${attempted} of ${this.entries.length} entries missing, inserted unless taken.`)
+		);
 	}
 }
 

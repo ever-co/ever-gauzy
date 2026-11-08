@@ -254,4 +254,17 @@ describe('ChangelogAdminComponent', () => {
 		expect(component.deletedHere).toEqual([]);
 		expect(component.deleted).toEqual([newer]);
 	});
+
+	it('adds nothing under another product before the API has shown it keeps products apart', async () => {
+		component.platformsSupported = null;
+		component.selectPlatform('ever-teams');
+		await new Promise((resolve) => setTimeout(resolve));
+		component.platformsSupported = null;
+		dialogService.open.mockClear();
+
+		component.add(component.sections[0]);
+
+		expect(component.canAdd).toBe(false);
+		expect(dialogService.open).not.toHaveBeenCalled();
+	});
 });

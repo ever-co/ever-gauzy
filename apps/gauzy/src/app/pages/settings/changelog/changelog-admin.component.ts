@@ -140,6 +140,15 @@ export class ChangelogAdminComponent implements OnInit {
 		return platform === DEFAULT_CHANGELOG_PLATFORM || this.platformsSupported !== false;
 	}
 
+	/**
+	 * Whether an entry can be added for the product shown. Gauzy always; another product only once the API has
+	 * shown it keeps products apart (its rows name their product): an API from before products existed would
+	 * store the entry with no product, and so publish it as Gauzy news. With no rows yet, that is not known.
+	 */
+	get canAdd(): boolean {
+		return this.platform === DEFAULT_CHANGELOG_PLATFORM || this.platformsSupported === true;
+	}
+
 	/** Shows another product's entries. */
 	selectPlatform(platform: string): void {
 		if (
@@ -156,7 +165,7 @@ export class ChangelogAdminComponent implements OnInit {
 
 	/** Adds an entry of the section's kind, for the product shown. */
 	add(section: IChangelogSection): void {
-		if (!this.isPlatformAvailable(this.platform)) {
+		if (!this.canAdd) {
 			return;
 		}
 		this._openDialog({ isFeature: section.isFeature, platform: this.platform });

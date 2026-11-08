@@ -56,7 +56,14 @@
 							<h5 class="section-title">{{ section.titleKey | translate }}</h5>
 							<p class="section-hint">{{ section.hintKey | translate }}</p>
 						</div>
-						<button type="button" nbButton size="small" status="primary" (click)="add(section)">
+						<button
+							type="button"
+							nbButton
+							size="small"
+							status="primary"
+							[disabled]="!canAdd"
+							(click)="add(section)"
+						>
 							<nb-icon icon="plus-outline"></nb-icon>
 							{{ i18n + '.ADD' | translate }}
 						</button>
