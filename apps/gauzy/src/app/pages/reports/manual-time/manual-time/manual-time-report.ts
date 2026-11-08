@@ -124,6 +124,26 @@ function sumDuration(logs: ReadonlyArray<ITimeLog>): number {
 }
 
 /**
+ * The project page an entry links to, or `null` when it has no project.
+ *
+ * @param log - The time log.
+ */
+export function projectLinkOf(log: ITimeLog | null | undefined): string[] | null {
+	const id = log?.project?.id ?? log?.projectId;
+	return id ? ['/pages/organization/projects/view', id] : null;
+}
+
+/**
+ * The task page an entry links to, or `null` when it has no task.
+ *
+ * @param log - The time log.
+ */
+export function taskLinkOf(log: ITimeLog | null | undefined): string[] | null {
+	const id = log?.task?.id ?? log?.taskId;
+	return id ? ['/pages/tasks/view', id] : null;
+}
+
+/**
  * The name the report shows for an employee.
  *
  * @param employee - The employee, as the report loads it.
