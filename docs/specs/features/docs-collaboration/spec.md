@@ -111,7 +111,10 @@ Angular app and for Ever Teams through the same API:
 
 - **FR-10** The platform MUST create Inbox entries for: page shared with me, mention in
   a page, mention in a page comment, comment on a page I created or follow, review
-  requested from me, review approved/rejected on my page; with the Inbox dedupe rules.
+  requested from me, review approved/rejected on my page; with the Inbox dedupe rules
+  (the ten-minute window is for mentions and repeated shares; every distinct review
+  request and decision is an entry of its own). Comment entries need the platform's
+  follower notifications (`GAUZY_NOTIFICATION_FANOUT_ENABLED`) to be on (plan §4).
 - **FR-11** Members MUST be able to follow or mute a page.
 
 ### Export and API

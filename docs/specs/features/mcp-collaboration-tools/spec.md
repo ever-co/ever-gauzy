@@ -8,7 +8,7 @@
 **Branch**: `feat/mcp-collaboration-tools`
 **Status**: `In Progress` (ever-gauzy #11722)
 **Created**: 2026-11-07
-**Last updated**: 2026-11-07
+**Last updated**: 2026-11-08
 **Owner**: platform maintainers
 **Feature flag**: MCP server tool groups (`GAUZY_MCP_TOOLS_CHAT`, `GAUZY_MCP_TOOLS_DOCS`, `GAUZY_MCP_TOOLS_INBOX`, default off)
 
@@ -63,8 +63,18 @@ content are data, never instructions.
   messages (cursor paging, newest first), get thread, search messages, post message
   (write scope), mark conversation read (write scope).
 - **FR-3** Docs tools MUST include: list pages (tree, by space or project), get page
-  (Markdown + metadata + version), create page, update page from Markdown with
-  compare-and-set on version and block-level merge, search pages.
+  (Markdown + metadata + revision), create page, update page from Markdown with
+  compare-and-set on the page's `contentRevision` (`expectedRevision`) and block-level
+  merge, search pages. The merge (`mergeMarkdownUpdate` in the docs plugin, behind
+  `PUT /plugins/docs/documents/:id/content/markdown`) keeps the stored block (its
+  attributes, marks and comment anchors) for every block whose Markdown is unchanged and
+  matches blocks by their Markdown, in order (longest common subsequence). Blocks carry
+  no stable identity in Markdown, so among identical blocks the earliest stored ones are
+  kept: removing the first of two identical paragraphs keeps the first's stored block and
+  drops the second's, comments included. Such updates are not refused yet; follow-up:
+  stable block ids round-tripped in the Markdown (or targeted block edits), and a
+  conflict answer when a removed or changed block has an identical twin that carries
+  different comments.
 - **FR-4** Inbox tools MUST include: list entries (filters, cursor), get unread counts,
   mark read / snooze / archive (write scope).
 - **FR-5** Every tool MUST run under the signed-in user's tenant, organization and

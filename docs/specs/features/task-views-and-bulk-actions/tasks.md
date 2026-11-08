@@ -27,3 +27,9 @@
 - [ ] **T13**. Ever Teams lane `tasks-keyboard-and-views` (shortcut registry over `uiPreferences.keyboard`, bulk toolbar, saved views pages, palette groups)
 
 **Status 2026-11-07:** phase 1 in ever-gauzy [#11688](https://github.com/ever-co/ever-gauzy/pull/11688) (ready for review; in-cluster build + bot threads next).
+
+## Follow-ups (from the plan's §7)
+
+- [ ] **T14**. One transaction per task in the bulk update (or best-effort post-save steps) so a result is accurate (plan §7.1)
+- [ ] **T15**. Reserve former and derived project keys within the organization (plan §7.2)
+- [ ] **T16**. Keep a moved task's former references and resolve them (plan §7.3)

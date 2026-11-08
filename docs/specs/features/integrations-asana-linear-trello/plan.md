@@ -1,6 +1,6 @@
 # Implementation Plan: Integrations — Linear, Asana, Trello
 
-**Feature ID**: `integrations-asana-linear-trello` · **Spec**: [`spec.md`](./spec.md) · **Branches**: `feat/integration-linear`, `feat/integration-asana`, `feat/integration-trello` · **Status**: Linear phase 1 in review (2026-11-07)
+**Feature ID**: `integrations-asana-linear-trello` · **Spec**: [`spec.md`](./spec.md) · **Branches**: `feat/integration-linear`, `feat/integration-asana`, `feat/integration-trello` · **Status**: phase 1 merged for Linear (ever-gauzy #11692, #11705), Asana (#11694, #11706) and Trello (#11698) (updated 2026-11-08)
 
 ## 1. Summary
 
@@ -13,11 +13,18 @@ request. Each provider gets, in order:
 1. **Phase 1 — connect, map, import, two-way status sync, webhooks** (`packages/plugins/integration-<provider>`):
    OAuth connect bound to a single-use state; the provider's teams / workspaces / boards listed; a mapping of each
    to a platform project with a direction and a state map; an import that turns the provider's items into tasks
-   once (the platform's id map) and updates them after; signed webhooks applying one item; a task's changes sent
-   back to its item through the platform's `TaskEvent`.
-2. **Phase 2 — the rest of the spec**: comments and attachments inbound, scheduled polling where the provider has
-   no webhooks, an Inbox entry for a refused token, conflict records with a resolution, and the Angular
-   `integration-<provider>-ui` plugin (connect page, mappings page, "Import now", runs).
+   once (the platform's id map) and updates them after; signed webhooks (each delivery verified, acknowledged at
+   once, and every item its events name re-read from the provider and applied behind the response: all the
+   tasks of an Asana delivery's `events` array, the card of Trello's one action, Linear's one entity; an empty
+   Asana heartbeat is verified and answered 200 with nothing to apply); a task's changes sent back to its item
+   through the platform's `TaskEvent`; a scheduled import sweep (`maintenance/<provider>-import-sweep.service.ts`)
+   that imports every inbound mapping incrementally every `<PROVIDER>_IMPORT_INTERVAL_MINUTES` (default 15) when
+   it has no live webhook, and every fourth interval (`<PROVIDER>_IMPORT_WEBHOOK_STRIDE`) when it has one
+   (Linear: when `LINEAR_WEBHOOK_SECRET` is set), the reconcile against deliveries the provider gave up on
+   (Trello stops after three attempts).
+2. **Phase 2 — the rest of the spec**: comments and attachments inbound, an Inbox entry for a refused token,
+   conflict records with a resolution, and the Angular `integration-<provider>-ui` plugin (connect page, mappings
+   page, "Import now", runs).
 3. **Ever Teams** consumes the same routes from its `integrations-settings` page.
 
 ## 2. Reuse
@@ -50,14 +57,26 @@ request. Each provider gets, in order:
 | `linear.controller.ts`, `linear-authorization.controller.ts`, `linear-webhook.controller.ts` (+spec), `dto/` | the management routes (guards + `INTEGRATION_*` permissions), the public callback, the public webhook |
 
 Asana and Trello repeat the layout with their own client (REST), their own item shape (tasks / sections,
-cards / lists) and their own webhook scheme (Asana's handshake and `X-Hook-Signature`; Trello's
-`X-Trello-Webhook` over the callback URL + body).
+cards / lists) and their own webhook scheme, one webhook per mapping at
+`/integration/<provider>/webhook/:mappingId`:
+
+- **Asana** (`asana-webhook.controller.ts`): the handshake's `X-Hook-Secret` is stored on the mapping and echoed,
+  accepted only while a registration this platform started is in flight (its single-use `?handshake=` token,
+  `ASANA_WEBHOOK_HANDSHAKE_WINDOW_MS`); every later delivery is verified with that mapping's secret
+  (`X-Hook-Signature` = hex HMAC-SHA256 of the raw body, `isAsanaSignatureValid`); `taskGidsOf` reads every event
+  of the `events` array (a task's own events, and the parent task of a story or an attachment), each task once;
+  an empty `events` array (the heartbeat) is answered 200 with nothing queued.
+- **Trello** (`trello-webhook.controller.ts`): `HEAD` answers 200 for a known mapping (Trello's registration
+  check); `X-Trello-Webhook` is the base64 HMAC-SHA1, with the application secret, of the **raw body followed by
+  the exact registered callback URL** (`isTrelloSignatureValid`); one action per delivery.
 
 ## 4. Rules
 
 - **Scope**: a connection is reached only by its id in the caller's tenant; the callback binds the connection to
-  the state's tenant and organization, never to its query; a webhook names the provider's workspace, which names
-  the connections, never a tenant.
+  the state's tenant and organization, never to its query. Webhooks never take a tenant from the payload:
+  Linear's one application webhook names the workspace (`organizationId`), which names the connections, each
+  applying through its own inbound mapping; an Asana or Trello webhook is registered per mapping, and the
+  mapping in its path names the connection, the tenant and (Asana) the secret it is verified with.
 - **Once**: an item becomes a task once, by its id map; later runs update it; an item that moved teams keeps its
   task; archived items are skipped.
 - **People**: an assignee is matched by e-mail among the organization's active employees, else the task is left

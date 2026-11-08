@@ -96,7 +96,7 @@ settings UI pattern, so Ever Teams and the Angular app configure them the same w
 - **FR-10** Errors needing a person (expired token, permission lost) MUST create an
   Inbox entry for the integration's managers.
 - **FR-11** Every integration MUST be usable through REST and the SDKs; each MUST be
-  independently enableable per deployment.
+  enabled independently per deployment.
 
 ### Provider notes
 

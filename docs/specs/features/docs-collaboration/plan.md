@@ -24,7 +24,7 @@ the same API.
 | Need | Existing piece | How it is used |
 | --- | --- | --- |
 | Visibility and shares | `visibility` column, `document_share`, `document-access.predicate.ts` + `.sql.ts` (one rule, two surfaces) | `TEAM` added to both surfaces; team membership resolved at query time like team shares |
-| Following | the platform's `EntitySubscription` (`CreateEntitySubscriptionEvent`), the comment fan-out and the mention service | follow = a `MANUAL` subscription; comments on followed pages and mentions were already told |
+| Following | the platform's `EntitySubscription` (`CreateEntitySubscriptionEvent`), the comment fan-out and the mention service | follow = a `MANUAL` subscription; mentions are told by the mention service; comments on followed pages are told by the core follower fan-out (`FollowerFanOutService`), which runs only with `GAUZY_NOTIFICATION_FANOUT_ENABLED=true` (default off): a deployment that enables Docs collaboration must enable it too, or FR-10's follower-comment entries are not created |
 | Notifications | `EmployeeCreateNotificationEvent` → the unified Inbox (`inbox` spec) | share / review entries, dedupe per receiver, page and kind |
 | Concurrency | `expectedUpdatedAt` on the content save (409 `DOCS_CONTENT_CONFLICT`) | `expectedRevision` beside it; `contentRevision` moves on every content change |
 | Tree operations | `DocumentTreeService.collectVisibleSubtree` | a space move takes the descendants the caller may write |
@@ -60,11 +60,20 @@ adds the live-session module (`GAUZY_DOCS_LIVE_ENABLED`, limits, access re-check
   moves a page, as with visibility.
 - **Follow / mute**: a mute removes the caller's subscriptions and keeps them out of the plugin's own
   notifications until they unmute; a direct mention subscribes them again, as everywhere on the platform.
-- **Notifications**: the same person, the same page, the same kind — once per ten minutes. The actor is never told.
+- **Notifications**: `DocumentNotifierService.publish` files share, review-request and review-decision entries;
+  the actor and the people who muted the page are never told. The same person is told of the same kind on the
+  same page once per `DOCS_NOTIFICATION_DEDUPE_MINUTES` (10; `recentlyNotified` compares type and message
+  line). Known limitation: the window applies to every kind, so a second review request (or a second
+  decision) for the same person and page within ten minutes files no entry, even when the first review was
+  already completed; the Inbox spec meant the window for mentions. Follow-up: keep the window for shares
+  only, or key review entries by review round (the review's request time).
 - **Revision**: `contentRevision` starts at 1 for every existing page and moves on every content change; a stale
   `expectedRevision` is 409 with the current one, nothing written.
 - **Flag off**: `TEAM` writes and the collaboration routes answer 404 `DOCS_COLLAB_DISABLED`; existing TEAM pages
   keep their access rules; everything else is as before.
+- **Rollout dependencies**: `GAUZY_DOCS_COLLAB_ENABLED` for the routes and the share / review entries;
+  `GAUZY_NOTIFICATION_FANOUT_ENABLED` for the comments-on-followed-pages entries; `GAUZY_INBOX_ENABLED` for the
+  entries to appear in the Inbox (the notification rows exist either way).
 
 ## 5. Tests
 

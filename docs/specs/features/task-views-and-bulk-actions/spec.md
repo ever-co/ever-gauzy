@@ -35,8 +35,11 @@ MCP server and the SDKs.
 - **Given** a personal view, **when** another member lists views, **then** they do not
   see it.
 - **Given** 40 selected tasks, **when** a member sets their status to Done in one action,
-  **then** all 40 change atomically, one activity entry per task is written, followers
-  are notified once per task, and an undo restores the previous statuses.
+  **then** each of the 40 changes as one unit (per-task atomicity: a task is changed
+  completely or not at all; the request is not all-or-nothing across tasks), the answer
+  reports every task's outcome, one activity entry per task is written, followers are
+  notified once per task, and an undo restores the previous statuses of the tasks that
+  changed.
 - **Given** a view ordered manually, **when** a member drags a task between two others,
   **then** the order persists for that view and is the same for everyone who opens it.
 - **Given** a member, **when** they open "This week", **then** they see their tasks due
@@ -46,7 +49,8 @@ MCP server and the SDKs.
 - **Given** a project with key `API`, **when** a message or page contains `API-42`,
   **then** clients can resolve it to the task if the reader may view it.
 - **Given** a task moved to another project, **when** an old reference `API-42` is
-  used, **then** it still resolves to the task.
+  used, **then** it still resolves to the task. (Not met yet: a move renumbers the task
+  and no per-task history is kept, see plan §7.)
 
 ### 2.2 Edge cases & failures
 
@@ -70,7 +74,7 @@ MCP server and the SDKs.
   ordering (including manual), layout (list, board, table, calendar, timeline), visible
   properties and a version.
 - **FR-2** Views MUST be listable per scope (mine, team, project), creatable, updatable
-  with a version check, favouritable and deletable by their creator or a manager.
+  with a version check; they can be marked as favourites, and deleted by their creator or a manager.
 - **FR-3** The platform MUST serve the tasks of a view with cursor pagination and
   server-side grouping counts, resolving relative dates in the caller's time zone.
 - **FR-4** Built-in views `mine`, `this-week`, `overdue`, `due-soon` MUST be served

@@ -42,12 +42,18 @@ existing task and view routes keep working unchanged.
   visibility is shared (every view saved before the column).
 - **Version**: every save bumps it; an update or an order that states `expectedVersion` is refused with 409 and the
   latest view when the view moved on. A save without one behaves as before.
-- **Bulk update** applies tasks one after another through the single update command; a task that is missing,
-  another organization's, or refused by its update is reported and the others are applied. The answer's `previous`
-  is a changes object (lists as `set…`), so an undo is the same request with `items` built from it.
-- **References** resolve by the project's key, its former keys and the key derived from its name; the task's
-  `prefix` stays what the create path writes. A key is two to ten upper-case letters or digits, unique within the
-  organization; clearing it keeps the derived key resolving.
+- **Bulk update** (`TaskService.bulkUpdate`) applies tasks one after another through the single update command;
+  a task that is missing, another organization's, or refused by its update is reported and the others are
+  applied: per-task results (`ok`, `error`, `previous`), never all-or-nothing across tasks. The answer's
+  `previous` is a changes object (lists as `set…`), so an undo is the same request with `items` built from it.
+  Known limitation: per-task atomicity is not guaranteed yet (§7.1).
+- **References** (`TaskService.resolveReferences`) resolve by the project's key, its former keys and the key
+  derived from its name; the task's `prefix` stays what the create path writes. Every project answering to the key
+  is read: when more than one task of those projects holds the number the answer is `ambiguous: true` and resolves
+  to nothing, rather than opening whichever task the store listed first. A key is two to ten upper-case letters or
+  digits, unique within the organization among the **current** keys (409 `PROJECT_KEY_TAKEN`); clearing it keeps
+  the derived key resolving. Known limitations: former and derived keys are not reserved (§7.2), and a moved task's
+  old reference is not kept (§7.3).
 - **Built-in views** take the caller's IANA time zone (UTC when none); weeks start on Monday; `overdue` and
   `due-soon` leave out done, completed and cancelled tasks; the caller is the signed-in employee.
 - **Keyboard bindings** live under `uiPreferences.keyboard.bindings` (command id → binding); clients own the syntax.
@@ -64,3 +70,26 @@ existing task and view routes keep working unchanged.
 Server-side grouping counts and cursor pagination for a view's tasks (FR-3), a filter tree contract shared with the
 clients, invalid-filter reporting (deleted labels), generated keys for existing projects on enable, GraphQL twins,
 and the Ever Teams lane `tasks-keyboard-and-views` (shortcut registry, bulk toolbar, saved views pages).
+
+## 7. Known limitations / follow-ups
+
+What the merged code (ever-gauzy #11688, #11717, #11719, #11728) does not do yet.
+
+1. **Per-task atomicity.** `TaskService.update` saves the task first, then writes the sprint move history,
+   syncs mentions, moves time logs, reads `syncScope` back and updates the subscriptions, none of it in one
+   transaction. When a later step fails, `TaskUpdateCommand` throws after the task already changed, and
+   `bulkUpdate` reports that task as `ok: false` although its fields moved (the undo data is still answered).
+   Follow-up: run each task's update in one transaction (`typeOrmRepository.manager.transaction`, the
+   repositories taken from its manager), or treat the post-save steps as best effort and report the save's
+   outcome.
+2. **Former and derived keys are not reserved.** The unique check covers current `taskKey`s only: after project
+   A renames `API` to `SYS`, project B may take `API`, and a derived key (first three characters of the name) can
+   equal another project's key. `resolveReferences` then reads both projects and answers `ambiguous` only when
+   both hold the number; when only one does, the reference resolves to that one, which may not be the task the
+   author meant. Follow-up: refuse a key that is in another project's `taskKeyHistory` or is another project's
+   derived key (409 `PROJECT_KEY_TAKEN`), or prefer the current key and flag every multi-project answer.
+3. **A moved task's old reference.** `TaskService.update` gives a moved task the destination's next number and
+   prefix; nothing records the old (`project`, `number`) on the task, so `API-42` no longer reaches it (and may
+   later name another task of the old project). Follow-up: keep former references per task (a small
+   `task_reference_alias` table or a JSON column), keep the old number from being reissued, and resolve aliases
+   after the live numbers.
