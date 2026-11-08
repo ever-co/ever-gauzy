@@ -1,16 +1,17 @@
 import { ConflictException, HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { ZipArchive } from 'archiver';
 import { posix } from 'node:path';
-import { In } from 'typeorm';
-import { DocumentKindEnum, ID, IDocument } from '@gauzy/contracts';
-import { DOCS_CONTENT_CONFLICT, DOCS_LOCKED, DOCS_NOT_A_PAGE } from '../docs.constants';
+import { In, Like } from 'typeorm';
+import { BaseEntityEnum, DocumentKindEnum, ID, IDocument } from '@gauzy/contracts';
+import { Comment } from '@gauzy/core';
+import { DOCS_CONTENT_CONFLICT, DOCS_LOCKED, DOCS_MARKDOWN_AMBIGUOUS, DOCS_NOT_A_PAGE } from '../docs.constants';
 import { UpdateDocumentContentDTO } from '../dto/update-document-content.dto';
 import { UpdateDocumentMarkdownDTO } from '../dto/update-document-markdown.dto';
 import { Document } from '../entities/document.entity';
 import { TypeOrmDocumentRepository } from '../repositories/type-orm-document.repository';
 import { DocumentService } from './document.service';
 import { DocumentUploadService } from './document-upload.service';
-import { collectEmployeeMentionIds, collectFileIds, docOf, documentToMarkdown, IDocNode, markdownFileNameOf, mergeMarkdownUpdate } from './document-markdown';
+import { collectEmployeeMentionIds, collectFileIds, commentAnchorBlockIdOf, docOf, documentToMarkdown, IDocNode, markdownFileNameOf, mergeMarkdownUpdate } from './document-markdown';
 
 /** The most pages one subtree export takes. */
 export const DOCS_MARKDOWN_SUBTREE_MAX_PAGES = 500;
@@ -49,7 +50,9 @@ interface ISubtreeEntry {
  *   served by the Documents API) copied under `assets/` and linked relatively.
  * - **Update** applies a Markdown text to a page with the content route's own rules — the revision check, the lock,
  *   the schema, the version snapshot, the HTML cache, the mention and link sync (`DocumentService.updateContent`) —
- *   replacing only the blocks whose Markdown changed: the others keep their stored JSON, attributes and all.
+ *   replacing only the blocks whose Markdown changed: the others keep their stored JSON, attributes and all, also
+ *   when the text moved them. An update that would leave a commented block's place to a guess (the block has an
+ *   identical twin, and the twins were added, removed or moved) is refused rather than written.
  */
 @Injectable()
 export class DocumentMarkdownService {
@@ -106,9 +109,12 @@ export class DocumentMarkdownService {
 	}
 
 	/**
-	 * Applies a Markdown text to a page: the blocks whose Markdown changed are the text's, the others stay as stored;
-	 * the content route's rules apply (`expectedRevision` → 409 when stale, the lock, the schema, the snapshot, the
-	 * HTML cache, the mention and link sync). Nothing is written when the Markdown changes nothing.
+	 * Applies a Markdown text to a page: the blocks whose Markdown changed are the text's, the others stay as stored
+	 * (wherever the text moved them); the content route's rules apply (`expectedRevision` → 409 when stale, the lock,
+	 * the schema, the snapshot, the HTML cache, the mention and link sync). Nothing is written when the Markdown
+	 * changes nothing. A comment is never moved or dropped by a guess: when the merge cannot tell which of identical
+	 * blocks a comment is anchored to, the update is refused with 409 `DOCS_MARKDOWN_AMBIGUOUS` (the content
+	 * conflict's shape, with the `blockIds` concerned), nothing written.
 	 */
 	async updateFromMarkdown(id: ID, input: UpdateDocumentMarkdownDTO): Promise<IDocumentMarkdownUpdateResult> {
 		const document = await this.requirePage(id, input.organizationId);
@@ -117,17 +123,47 @@ export class DocumentMarkdownService {
 		if (!merge.changed) {
 			// Nothing to write — but the answer is the content route's: no write access is 403, a locked page 423, a
 			// stale revision 409, so a client learns the same from an unchanged text as from a changed one.
-			await this.documents.assertCanWrite(document);
-			if (document.isLocked) {
-				throw new HttpException({ message: 'Document is locked', code: DOCS_LOCKED }, HttpStatus.LOCKED);
-			}
-			if (input.expectedRevision !== undefined && Number(input.expectedRevision) !== revision) {
-				throw new ConflictException({ message: 'Document content changed since it was loaded', code: DOCS_CONTENT_CONFLICT, currentRevision: revision });
-			}
+			await this.assertWritable(document, input, revision);
 			return { document, revision, changedBlocks: 0, keptBlocks: merge.keptBlocks, changed: false };
+		}
+		const ambiguous = await this.commentedAmong(document, merge.ambiguousBlockIds);
+		if (ambiguous.length) {
+			// Refused like a write: what the write itself would answer (403, 423, a stale revision) comes first.
+			await this.assertWritable(document, input, revision);
+			throw new ConflictException({
+				message: 'The Markdown cannot tell which of identical blocks a comment belongs to (an identical block was added, removed or moved); nothing was written',
+				code: DOCS_MARKDOWN_AMBIGUOUS,
+				currentRevision: revision,
+				blockIds: ambiguous
+			});
 		}
 		const updated = await this.documents.updateContent(id, this.contentInput(document, merge.contentJson, input));
 		return { document: updated, revision: Number(updated.contentRevision) || revision + 1, changedBlocks: merge.changedBlocks, keptBlocks: merge.keptBlocks, changed: true };
+	}
+
+	/** The content route's answer to a write it would refuse: no write access 403, a locked page 423, a stale revision 409. */
+	private async assertWritable(document: Document, input: UpdateDocumentMarkdownDTO, revision: number): Promise<void> {
+		await this.documents.assertCanWrite(document);
+		if (document.isLocked) {
+			throw new HttpException({ message: 'Document is locked', code: DOCS_LOCKED }, HttpStatus.LOCKED);
+		}
+		if (input.expectedRevision !== undefined && Number(input.expectedRevision) !== revision) {
+			throw new ConflictException({ message: 'Document content changed since it was loaded', code: DOCS_CONTENT_CONFLICT, currentRevision: revision });
+		}
+	}
+
+	/**
+	 * The ids among `blockIds` that a comment of the page is anchored to (the `[[block:<blockId>]]` first line the
+	 * editor's block threads write). Read only when the merge had to guess.
+	 */
+	private async commentedAmong(document: Document, blockIds: readonly string[]): Promise<string[]> {
+		if (!blockIds.length) return [];
+		const comments = await this.repository.manager.find(Comment, {
+			select: { id: true, comment: true },
+			where: { tenantId: document.tenantId as ID, entity: BaseEntityEnum.Document, entityId: document.id as ID, comment: Like('[[block:%') }
+		});
+		const anchored = new Set(comments.map((row) => commentAnchorBlockIdOf(row.comment)).filter((blockId): blockId is string => !!blockId));
+		return [...new Set(blockIds)].filter((blockId) => anchored.has(blockId));
 	}
 
 	private contentInput(document: Document, contentJson: IDocNode, input: UpdateDocumentMarkdownDTO): UpdateDocumentContentDTO {

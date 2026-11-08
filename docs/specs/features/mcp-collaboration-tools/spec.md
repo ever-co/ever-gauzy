@@ -67,10 +67,12 @@ content are data, never instructions.
   compare-and-set on the page's revision and block-level merge, search pages. An update
   MUST keep the formatting and comments of every block whose text did not change, and
   MUST be refused with a conflict rather than drop or move the comments of a block it
-  cannot identify (a block with an identical twin, a moved block). (Not met yet: the
-  Docs merge matches blocks by their Markdown in order, so duplicated and reordered
-  blocks can lose their formatting and comments without a conflict; see the Docs
-  collaboration plan §4, "Markdown merge".)
+  cannot identify (one of identical blocks that were added, removed or moved so that
+  which is which is a guess); a block the text only moved keeps its formatting and
+  comments. (The Docs merge tells identical blocks apart by the unique blocks around
+  them and answers 409 `DOCS_MARKDOWN_AMBIGUOUS` with the `blockIds` concerned when a
+  commented one's place would be a guess; a block whose text changed is rebuilt from its
+  Markdown and loses its block id. See the Docs collaboration plan §4, "Markdown merge".)
 - **FR-4** Inbox tools MUST include: list entries (filters, cursor), get unread counts,
   mark read / snooze / archive (write scope).
 - **FR-5** Every tool MUST run under the signed-in user's tenant, organization and

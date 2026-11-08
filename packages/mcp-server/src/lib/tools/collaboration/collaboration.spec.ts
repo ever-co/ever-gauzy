@@ -347,6 +347,14 @@ describe('docs', () => {
 		api.put.mockRejectedValueOnce({ response: { status: 409, data: { code: 'DOCS_CONTENT_CONFLICT', currentRevision: 5 } } });
 		const conflict = await call(docs.get('update_page_markdown'), { pageId: PAGE, markdown: 'x', expectedRevision: 2 });
 		expect(conflict).toEqual(expect.objectContaining({ conflict: true, currentRevision: 5 }));
+		expect(conflict.message).toContain('get_page');
+
+		// A commented block among identical twins: not a stale read, so the client is not sent to read the page again.
+		api.put.mockRejectedValueOnce({ response: { status: 409, data: { code: 'DOCS_MARKDOWN_AMBIGUOUS', currentRevision: 2, blockIds: ['b-1'] } } });
+		const ambiguous = await call(docs.get('update_page_markdown'), { pageId: PAGE, markdown: 'x', expectedRevision: 2 });
+		expect(ambiguous).toEqual(expect.objectContaining({ conflict: true, currentRevision: 2, blockIds: ['b-1'] }));
+		expect(ambiguous.message).toContain('identical twin');
+		expect(ambiguous.message).not.toContain('get_page');
 	});
 
 	it("searches with the knowledge route's own body: the search alone, the organization being the request's", async () => {
