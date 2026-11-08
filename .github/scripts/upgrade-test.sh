@@ -182,6 +182,17 @@ error_lines() {
 		grep -v 'INSECURE' | head -5 | cut -c1-300 || true
 }
 
+# migration_errors <boot log>: how many lines show a failed migration. The one tolerated QueryFailedError is develop's
+# AddDocumentChunkVector1790000002000 (see below). A connect retry ("[TypeOrmModule] Unable to connect to the database.
+# Retrying (n)...") is not a migration error when the same boot then reached "Listening at": TypeORM retried and
+# connected. The shared Postgres container answers the first connect of a boot late now and then.
+migration_errors() {
+	local retry='^$'
+	grep -q 'Listening at http' "$1" && retry='Unable to connect to the database\. Retrying \([0-9]+\)'
+	grep -E 'QueryFailedError|Error during migration|MigrationError|Unable to connect to the database' "$1" |
+		grep -v 'pgvector extension unavailable' | grep -Evc "$retry" || true
+}
+
 # dump_migrations <file>: the executed-migration rows ("timestamp<TAB>name"), as TypeORM recorded them.
 dump_migrations() {
 	if [ "$DB" = sqlite ]; then
@@ -315,8 +326,7 @@ awk '{ print } /Listening at http/ { exit }' "$OUT/after.log" >"$LOG"
 # One tolerated line: develop's AddDocumentChunkVector1790000002000 tries `CREATE EXTENSION vector` and, where the
 # server has no pgvector (the stock postgres image), logs "pgvector extension unavailable … QueryFailedError" and
 # degrades retrieval to lexical — a documented outcome, not a failed migration.
-errors="$(grep -E 'QueryFailedError|Error during migration|MigrationError|Unable to connect to the database' "$LOG" |
-	grep -vc 'pgvector extension unavailable' || true)"
+errors="$(migration_errors "$LOG")"
 if [ "${errors:-0}" = 0 ]; then
 	check "after: migration errors in the API log" pass "none"
 else
@@ -427,8 +437,7 @@ if [ "$MODE" = upgrade ] && [ -n "${GATED_PLUGIN_FLAGS:-}" ]; then
 		dump_migrations "$OUT/after-migrations.tsv"
 
 		awk '{ print } /Listening at http/ { exit }' "$OUT/gated.log" >"$OUT/gated-boot.log"
-		errors="$(grep -E 'QueryFailedError|Error during migration|MigrationError|Unable to connect to the database' "$OUT/gated-boot.log" |
-			grep -vc 'pgvector extension unavailable' || true)"
+		errors="$(migration_errors "$OUT/gated-boot.log")"
 		if [ "${errors:-0}" = 0 ]; then
 			check "gated plugins: migration errors in the API log" pass "none"
 		else
