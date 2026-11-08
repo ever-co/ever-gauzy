@@ -66,6 +66,12 @@ export class DashboardQuickLookComponent extends TranslationBaseComponent implem
 	private _selectedDateRange: IDateRangePicker | null = null;
 	private _viewSequence = 0;
 
+	// No parameters: TranslationBaseComponent injects TranslateService itself. The explicit constructor
+	// stays, because Angular refuses (NG2006) a component inheriting the undecorated base's constructor.
+	constructor() {
+		super();
+	}
+
 	ngOnInit(): void {
 		this._quickLookService.requests$
 			.pipe(
