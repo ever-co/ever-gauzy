@@ -1,7 +1,7 @@
 import { IGetActivitiesInput, ReportGroupFilterEnum } from '@gauzy/contracts';
 import { ApiPropertyOptional, IntersectionType } from '@nestjs/swagger';
 import { Transform, TransformFnParams } from 'class-transformer';
-import { IsArray, IsEnum, IsInt, IsOptional, Max, Min } from 'class-validator';
+import { IsArray, IsEnum, IsIn, IsInt, IsOptional, Max, Min } from 'class-validator';
 import { FiltersQueryDTO, SelectorsQueryDTO } from '../../../shared/dto';
 
 /**
@@ -15,6 +15,15 @@ export class ActivityQueryDTO
 	@IsOptional()
 	@IsEnum(ReportGroupFilterEnum)
 	readonly groupBy: ReportGroupFilterEnum;
+
+	/**
+	 * `lean`: the report with employees and projects trimmed to what a client shows and dropped from the rows under a
+	 * group (see `activity-report.lean.ts`); the numbers are the same. Default `full`: the answer as before.
+	 */
+	@ApiPropertyOptional({ enum: ['full', 'lean'], default: 'full' })
+	@IsOptional()
+	@IsIn(['full', 'lean'])
+	readonly shape?: 'full' | 'lean';
 
 	@ApiPropertyOptional({ type: () => Array, isArray: true })
 	@IsOptional()
