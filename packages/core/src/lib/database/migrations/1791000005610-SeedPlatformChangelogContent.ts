@@ -19,8 +19,9 @@ type InsertUnlessIdTaken = (table: string, columns: string, values: string) => s
  * frozen while the template evolves.
  *
  * Additive only: an entry is inserted when its product has no entry of that title yet, so a rerun, or an entry the
- * operator already wrote by hand, is left alone, and nothing is ever deleted. `down` removes nothing either: once
- * live, the operator may have edited these rows in Settings > What's New.
+ * operator already wrote by hand, is left alone, and `up` deletes nothing. `down` deletes the entries `up` inserted
+ * (by their fixed ids, edits included): once `AddChangelogPlatform`'s `down` drops the product column, they would
+ * otherwise read as Gauzy's news.
  */
 export class SeedPlatformChangelogContent1791000005610 implements MigrationInterface {
 	name = 'SeedPlatformChangelogContent1791000005610';
@@ -110,8 +111,25 @@ export class SeedPlatformChangelogContent1791000005610 implements MigrationInter
 		}
 	}
 
-	public async down(): Promise<void> {
-		// Intentionally empty: content-only and additive; the operator may have edited these rows since.
+	/**
+	 * Deletes the entries `up` inserted, by their fixed ids, so that `AddChangelogPlatform`'s `down`, which drops
+	 * `changelog.platform` next, does not leave them to be read as Gauzy's news. An entry the operator wrote under the
+	 * same title has another id and stays; an operator's edits to a seeded entry are lost with it.
+	 */
+	public async down(queryRunner: QueryRunner): Promise<void> {
+		console.log(chalk.yellow(this.name + ' reverting changes!'));
+
+		switch (queryRunner.connection.options.type as DatabaseTypeEnum) {
+			case DatabaseTypeEnum.sqlite:
+			case DatabaseTypeEnum.betterSqlite3:
+				return this.unseed(queryRunner, (identifier) => `"${identifier}"`, () => '?');
+			case DatabaseTypeEnum.postgres:
+				return this.unseed(queryRunner, (identifier) => `"${identifier}"`, (n) => `$${n}`);
+			case DatabaseTypeEnum.mysql:
+				return this.unseed(queryRunner, (identifier) => `\`${identifier}\``, () => '?');
+			default:
+				throw new Error(`Unsupported database: ${queryRunner.connection.options.type}`);
+		}
 	}
 
 	/**
@@ -163,6 +181,22 @@ export class SeedPlatformChangelogContent1791000005610 implements MigrationInter
 		}
 		console.log(
 			chalk.green(`${this.name}: ${attempted} of ${this.entries.length} entries missing, inserted unless taken.`)
+		);
+	}
+
+	/** Deletes the starter entries by their fixed ids, whether or not `changelog.platform` is still there. */
+	private async unseed(
+		queryRunner: QueryRunner,
+		quote: (identifier: string) => string,
+		param: (n: number) => string
+	): Promise<void> {
+		if (!(await queryRunner.hasTable('changelog'))) {
+			return;
+		}
+		const ids = this.entries.map(([platform, , title]) => platformChangelogEntryId(platform, title));
+		await queryRunner.query(
+			`DELETE FROM ${quote('changelog')} WHERE ${quote('id')} IN (${ids.map((_, i) => param(i + 1)).join(', ')})`,
+			ids
 		);
 	}
 }

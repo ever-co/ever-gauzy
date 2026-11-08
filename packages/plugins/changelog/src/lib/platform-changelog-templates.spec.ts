@@ -1,9 +1,8 @@
 // The plugin needs only these from the kernel; the real barrel boots the whole platform.
 jest.mock('@gauzy/core', () => {
 	const decorator = () => () => undefined;
-	class CrudService {
-		constructor(..._repositories: unknown[]) {}
-	}
+	// Takes the repositories the plugin's services pass to `super`, through the default constructor.
+	class CrudService {}
 	class TenantOrganizationBaseEntity {}
 	class MikroOrmBaseEntityRepository {}
 	return {
@@ -16,8 +15,10 @@ jest.mock('@gauzy/core', () => {
 });
 
 import { ChangelogPlatformEnum, CHANGELOG_PLATFORM_PATTERN } from '@gauzy/contracts';
-import { SeedPlatformChangelogContent1791000005610 } from '../../../../core/src/lib/database/migrations/1791000005610-SeedPlatformChangelogContent';
-import { platformChangelogEntryId } from '../../../../core/src/lib/database/platform-changelog-entry-id';
+// Deep paths through the `@gauzy/core` package (not relative paths across projects), as other plugin specs import
+// core internals; they are separate modules from the barrel mocked above.
+import { SeedPlatformChangelogContent1791000005610 } from '@gauzy/core/src/lib/database/migrations/1791000005610-SeedPlatformChangelogContent';
+import { platformChangelogEntryId } from '@gauzy/core/src/lib/database/platform-changelog-entry-id';
 import { buildChangelogSeedRows, withoutExistingEntries } from './changelog.seed';
 import { INITIAL_CHANGELOG_TEMPLATE } from './initial-changelog-template';
 import { PLATFORM_CHANGELOG_TEMPLATES } from './platform-changelog-templates';
