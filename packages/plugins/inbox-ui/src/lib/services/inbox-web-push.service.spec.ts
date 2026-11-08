@@ -25,6 +25,8 @@ class FakeBrowser {
 	permission: NotificationPermission = 'granted';
 	/** Holds every unsubscribe until the test lets it go. */
 	unsubscribeGate: Promise<void> = Promise.resolve();
+	/** Holds every lookup of the worker's registration until the test lets it go. */
+	lookupGate: Promise<void> = Promise.resolve();
 	failUnsubscribe = false;
 	private count = 0;
 	readonly pushManager = {
@@ -82,7 +84,13 @@ describe('InboxWebPushService', () => {
 		const registration = { pushManager: browser.pushManager };
 		Object.defineProperty(navigator, 'serviceWorker', {
 			configurable: true,
-			value: { register: jest.fn(async () => registration), getRegistration: jest.fn(async () => registration) }
+			value: {
+				register: jest.fn(async () => registration),
+				getRegistration: jest.fn(async () => {
+					await browser.lookupGate;
+					return registration;
+				})
+			}
 		});
 		Object.assign(globalThis, {
 			PushManager: class {},
@@ -214,6 +222,50 @@ describe('InboxWebPushService', () => {
 			expect(subscription.ended).toBe(true);
 		});
 
+		it("leaves a newer account's subscription alone when a lookup resumes after a sign-out in another tab", async () => {
+			const previous = browser.subscribed();
+			own(previous, 'user-a', 'device-a');
+			const gate = deferred();
+			browser.lookupGate = gate.promise;
+			const state = service.state();
+			await settle();
+
+			// Meanwhile, in another tab: A signs out, and B signs in there and switches on.
+			localStorage.setItem(INBOX_PUSH_SIGN_OUT_KEY, 'signed-out-in-another-tab');
+			const newer = browser.subscribed();
+			own(newer, 'user-b', 'device-b');
+			gate.resolve();
+			await expect(state).resolves.toBe('off');
+			expect(newer.unsubscribe).not.toHaveBeenCalled();
+			expect(owner()).toEqual({ userId: 'user-b', deviceId: 'device-b', endpoint: newer.endpoint });
+			http.expectNone(KEY);
+			http.expectNone(POST);
+		});
+
+		it("tells, instead of off, when the browser keeps the previous account's subscription; switching off retries", async () => {
+			const subscription = browser.subscribed();
+			own(subscription, 'user-a', 'device-a');
+			browser.failUnsubscribe = true;
+			const cleanup = service.forgetThisBrowser();
+			http.expectOne({ method: 'DELETE', url: `${DEVICES}/device-a` }).flush('boom', { status: 500, statusText: 'Server Error' });
+			await cleanup;
+
+			signIn('user-b');
+			await expect(service.state()).resolves.toBe('sync-failed');
+			// Once at the sign-out, twice at B's step: the subscription is still there, and nothing was registered.
+			expect(subscription.unsubscribe).toHaveBeenCalledTimes(3);
+			expect(browser.current).toBe(subscription);
+			http.expectNone(KEY);
+			http.expectNone(POST);
+
+			browser.failUnsubscribe = false;
+			const off = service.disable();
+			await settle();
+			http.expectOne({ method: 'GET', url: DEVICES }).flush([]);
+			await expect(off).resolves.toBe('off');
+			expect(subscription.ended).toBe(true);
+		});
+
 		it("switching on for the next account ends the previous account's subscription and subscribes anew", async () => {
 			const previous = browser.subscribed();
 			own(previous, 'user-a', 'device-a');
@@ -262,6 +314,24 @@ describe('InboxWebPushService', () => {
 			await expect(state).resolves.toBe('off');
 			http.expectNone(POST);
 			expect(owner()).toBeNull();
+		});
+
+		it('unsubscribes at once, inside the sign-out, when this tab already holds the subscription', async () => {
+			const subscription = browser.subscribed();
+			own(subscription, 'user-a', 'device-a');
+			// The app opened for the account: its subscription registered again (and now held by this tab).
+			const opened = service.state();
+			await settle();
+			http.expectOne(KEY).flush({ publicKey: PUBLIC_KEY });
+			await settle();
+			http.expectOne(POST).flush({ id: 'device-a', endpoint: subscription.endpoint });
+			await expect(opened).resolves.toBe('on');
+
+			const cleanup = service.forgetThisBrowser();
+			expect(subscription.unsubscribe).toHaveBeenCalledTimes(1);
+			http.expectOne({ method: 'DELETE', url: `${DEVICES}/device-a` }).flush(null, { status: 204, statusText: 'No Content' });
+			await cleanup;
+			expect(subscription.ended).toBe(true);
 		});
 
 		it('undoes a registration that was on its way, here: nothing recorded, the browser unsubscribed', async () => {
