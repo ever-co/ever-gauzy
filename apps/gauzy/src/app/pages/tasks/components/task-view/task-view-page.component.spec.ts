@@ -6,6 +6,7 @@ import { NbDialogService } from '@nebular/theme';
 import { BehaviorSubject, NEVER, of, Subject, throwError } from 'rxjs';
 import {
 	BaseEntityEnum,
+	FeatureEnum,
 	ITask,
 	PermissionsEnum,
 	TaskPriorityEnum,
@@ -61,6 +62,9 @@ describe('TaskViewPageComponent', () => {
 	let permissions: PermissionsEnum[];
 	/** Emits when the test loads permissions, as the store does once they arrive. */
 	let permissions$: BehaviorSubject<PermissionsEnum[]>;
+	/** Whether the organization has the Documents feature; emits as the store does when the flags land. */
+	let documentsEnabled: boolean;
+	let features$: BehaviorSubject<unknown[]>;
 
 	/** The HTTP reads the page makes itself: task statuses and linked issues. */
 	let statuses: any[];
@@ -111,6 +115,8 @@ describe('TaskViewPageComponent', () => {
 		};
 		permissions = [];
 		permissions$ = new BehaviorSubject<PermissionsEnum[]>([]);
+		documentsEnabled = true;
+		features$ = new BehaviorSubject<unknown[]>([]);
 		await TestBed.configureTestingModule({
 			declarations: [TaskViewPageComponent],
 			providers: [
@@ -132,7 +138,12 @@ describe('TaskViewPageComponent', () => {
 					useValue: {
 						selectedOrganization$: organization$.asObservable(),
 						userRolePermissions$: permissions$.asObservable(),
-						hasAnyPermission: (...wanted: PermissionsEnum[]) => wanted.some((p) => permissions.includes(p))
+						featureOrganizations$: features$.asObservable(),
+						featureTenant$: features$.asObservable(),
+						featureToggles$: features$.asObservable(),
+						hasAnyPermission: (...wanted: PermissionsEnum[]) => wanted.some((p) => permissions.includes(p)),
+						hasPermission: (wanted: PermissionsEnum) => permissions.includes(wanted),
+						hasFeatureEnabled: (feature: FeatureEnum) => feature === FeatureEnum.FEATURE_DOCUMENTS && documentsEnabled
 					}
 				}
 			],
@@ -1522,6 +1533,120 @@ describe('TaskViewPageComponent', () => {
 
 			expect(page.task.id).toBe(OTHER_ID);
 			expect(page.commentCount).toBe(0);
+		});
+	});
+
+	describe('documents', () => {
+		const tabButton = (): HTMLElement => fixture.nativeElement.querySelector('#task-view-tab-documents');
+		const pane = (): HTMLElement => fixture.nativeElement.querySelector('#task-view-pane-documents');
+		const tabCount = (): string =>
+			fixture.nativeElement.querySelector('#task-view-tab-documents .tab-count')?.textContent.trim() ?? null;
+
+		beforeEach(() => {
+			permissions = [PermissionsEnum.DOCS_READ];
+		});
+
+		it("offers a Documents tab, and loads the task's documents only once it is opened", async () => {
+			const page = create();
+			await settle();
+
+			expect(tabButton()).not.toBeNull();
+			expect(pane()).toBeNull();
+
+			page.selectTab('documents');
+			fixture.detectChanges();
+
+			expect(page.documentsOpened).toBe(true);
+			expect(pane()).not.toBeNull();
+			expect(pane().hidden).toBe(false);
+			expect(page.documentEntity).toBe(BaseEntityEnum.Task);
+			expect(router.navigate).toHaveBeenLastCalledWith(
+				[],
+				expect.objectContaining({ queryParams: { tab: 'documents', comment: null }, replaceUrl: true })
+			);
+		});
+
+		it('hides the tab without DOCS_READ', async () => {
+			permissions = [];
+			create();
+			await settle();
+
+			expect(tabButton()).toBeNull();
+		});
+
+		it('hides the tab when the Documents feature is off', async () => {
+			documentsEnabled = false;
+			create();
+			await settle();
+
+			expect(tabButton()).toBeNull();
+		});
+
+		it('opens on the Documents tab the URL names', async () => {
+			queryParams$.next(convertToParamMap({ tab: 'documents' }));
+			const page = create();
+			await settle();
+
+			expect(page.tab).toBe('documents');
+			expect(pane()).not.toBeNull();
+		});
+
+		it('falls back to the Overview when the URL names the Documents tab without access', async () => {
+			permissions = [];
+			queryParams$.next(convertToParamMap({ tab: 'documents' }));
+			const page = create();
+			await settle();
+
+			expect(page.tab).toBe('overview');
+			expect(pane()).toBeNull();
+		});
+
+		it('opens the Documents tab the URL names once the permissions land', async () => {
+			permissions = [];
+			queryParams$.next(convertToParamMap({ tab: 'documents' }));
+			const page = create();
+			await settle();
+			expect(page.tab).toBe('overview');
+
+			permissions = [PermissionsEnum.DOCS_READ];
+			permissions$.next(permissions);
+			fixture.detectChanges();
+
+			expect(page.tab).toBe('documents');
+			expect(pane()).not.toBeNull();
+		});
+
+		it('keeps the documents behind another tab, so an upload in flight finishes', async () => {
+			const page = create();
+			await settle();
+			page.selectTab('documents');
+			fixture.detectChanges();
+
+			page.selectTab('overview');
+			fixture.detectChanges();
+
+			expect(pane()).not.toBeNull();
+			expect(pane().hidden).toBe(true);
+		});
+
+		it("shows the count the tab reports, and drops it when the page moves to another task", async () => {
+			const page = create();
+			await settle();
+			page.selectTab('documents');
+			fixture.detectChanges();
+
+			page.onDocumentCount(3);
+			fixture.detectChanges();
+			expect(tabCount()).toBe('3');
+
+			page.selectTab('overview');
+			params$.next(convertToParamMap({ id: OTHER_ID }));
+			await settle();
+
+			expect(page.task.id).toBe(OTHER_ID);
+			expect(page.documentCount).toBe(0);
+			expect(page.documentsOpened).toBe(false);
+			expect(tabCount()).toBeNull();
 		});
 	});
 
