@@ -212,11 +212,16 @@ location; none of them changes the flag-off default.
    events and is never compared across aggregates; the catch-up cursor is (`createdAt`, `eventId`) (spec
    FR-2). A row whose insert commits after a later-stamped row was already read falls behind a client's
    cursor and is skipped by the next catch-up without a `resync` (a window of milliseconds under
-   concurrent appends from several replicas), contrary to FR-2 and the no-loss requirement. Follow-up
-   (T24): a commit-safe order, either a settle window (the catch-up answers only rows older than now minus
-   the longest append transaction, and the cursor never passes that point) or a commit-ordered position
-   (a per-organization counter row locked and incremented in the append's transaction), with a regression
-   test of two concurrent appends that commit out of stamp order.
+   concurrent appends from several replicas), contrary to FR-2 and the no-loss requirement. The same holds
+   for the live stream: a client that applied B live and disconnects resumes from B, so an earlier-stamped
+   A committing during the disconnect is never replayed. Follow-up (T24): a commit-safe order **and** a safe
+   resume position independent of the last live event, either (a) a settle window: the server stamps every
+   live envelope and every catch-up answer with a `safeCursor` (the newest position older than now minus the
+   longest append transaction), clients resume from the last `safeCursor` they received rather than from the
+   last event they applied, and deduplicate re-sent events by `eventId`; or (b) a commit-ordered position (a
+   per-organization counter row locked and incremented in the append's transaction) delivered in that order
+   live and in catch-up. Either way with a regression test of two concurrent appends that commit out of
+   stamp order, one of them delivered live before the disconnect.
 7. **The flag is deployment-wide.** `GAUZY_REALTIME_ENABLED` (`isRealtimeEnabled`) loads the plugin for
    the whole process; there is no tenant or organization switch, and nothing closes one tenant's open
    subscriptions (spec §2.2 says so).
@@ -224,5 +229,7 @@ location; none of them changes the flag-off default.
    `after` precedes the oldest row of the caller's scope or when the scope has no row: with no pruning
    at all, a client that took a `cursor` = now before its organization's first event is told to resync on
    its next reconnect although nothing was lost (a needless refetch, never a missed event). Follow-up
-   (T25): an actual retention watermark (the newest `createdAt` a retention job removed, per scope),
-   with `resync` only when the cursor precedes it; until a job exists, never.
+   (T25): an actual retention watermark stored as the full position (`createdAt`, `eventId`) of the newest
+   row a retention job removed, per scope, with `resync` whenever the client's cursor precedes that position
+   in (`createdAt`, `eventId`) order (a cursor `(t, A)` when `(t, B)` was pruned is behind it); until a job
+   exists, never.

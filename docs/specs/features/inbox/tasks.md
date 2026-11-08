@@ -40,4 +40,4 @@
 
 - [ ] **T16**. Durable filing: an outbox row in the notification's transaction, or a sweep with a durable checkpoint and no age cutoff that files notifications with no Inbox item and skips folded twins (after T18) (plan §10.1)
 - [ ] **T17**. Notification row and Inbox entry always created together; the legacy per-type switches decide only e-mail and push (plan §10.2)
-- [ ] **T18**. Mirror read / archive state to the notification rows a deduplicated entry stands for (plan §10.3)
+- [ ] **T18**. Many-to-one record of the notification rows a deduplicated entry stands for, every state change mirrored both ways through it (plan §10.3)

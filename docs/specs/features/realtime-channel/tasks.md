@@ -60,5 +60,5 @@
 - [ ] **T21**. Audience of `document.*`, `comment.*` and `task.*` hints from the parent record's read access (documents, private tasks, project membership), for live delivery and catch-up (plan §15.3)
 - [ ] **T22**. Current-membership recheck for `chat_*` events in the catch-up and the live stream (plan §15.4)
 - [ ] **T23**. Outbox retention that keeps the FR-3 floor, with a test of both bounds (plan §15.5)
-- [ ] **T24**. Commit-safe catch-up order (settle window or commit-ordered position) + a regression test of two concurrent appends committing out of stamp order (plan §15.6)
-- [ ] **T25**. `resync` from an actual retention watermark, not from the oldest retained row (plan §15.8)
+- [ ] **T24**. Commit-safe order and a safe resume position independent of the last live event (`safeCursor` settle window, or a commit-ordered position delivered in order) + a regression test of two concurrent appends committing out of stamp order (plan §15.6)
+- [ ] **T25**. `resync` from an actual retention watermark kept as the full (`createdAt`, `eventId`) position, not from the oldest retained row (plan §15.8)

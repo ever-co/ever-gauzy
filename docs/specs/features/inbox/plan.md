@@ -122,6 +122,8 @@ What the merged code does not do yet; each item names the code location.
    second `EmployeeNotification` row is saved but not filed; `onStateChange` mirrors the Inbox item's
    read / archive state to `item.externalId` only, so the second row stays unread in the
    notification API while the Inbox shows the mention read (FR-15). Follow-up (T18): record the twin's id
-   on the filed item (for example `metadata.twinNotificationIds`, the many-to-one mapping) and mirror to
-   every id, or mark the twin read when it is folded; the recovery sweep of item 1 reads the same record
-   to leave folded twins alone.
+   on the filed item (for example `metadata.twinNotificationIds`, the many-to-one mapping) and mirror every
+   state change both ways through it: an Inbox read / unread / archive / unarchive reaches every row the
+   entry stands for, and a change of any of those rows through the notification API reaches the entry
+   (marking the twin read once, at folding, would not follow a later unread or archive). The recovery sweep
+   of item 1 reads the same record to leave folded twins alone.
