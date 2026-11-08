@@ -286,6 +286,22 @@ describe('mergeMarkdownUpdate: moved and identical blocks', () => {
 		expect(merge.contentJson.content?.[count - 1]).toBe(stored.content?.[0]);
 	});
 
+	it('places the empty paragraphs once each when an alternating reorder spans them again and again', () => {
+		// 0, n-1, 1, n-2, …: every step back to the front spans most of the stored page.
+		const count = 2000;
+		const empty = (index: number): IDocNode => ({ type: 'paragraph', attrs: { blockId: `e${index}` } });
+		const stored = doc(...Array.from({ length: count }, (_, index) => [block(`paragraph ${index}`, `p${index}`), empty(index)]).flat());
+		const order = Array.from({ length: count }, (_, at) => (at % 2 === 0 ? at / 2 : count - 1 - (at - 1) / 2));
+		const merge = mergeMarkdownUpdate(stored, `${order.map((index) => `paragraph ${index}`).join('\n\n')}\n`);
+		const ids = merge.contentJson.content?.map((node) => String(node.attrs?.['blockId'])) ?? [];
+		expect(merge).toMatchObject({ changedBlocks: 0, keptBlocks: count, ambiguousBlockIds: [] });
+		expect(ids.filter((id) => id.startsWith('p'))).toEqual(order.map((index) => `p${index}`));
+		const placed = ids.filter((id) => id.startsWith('e'));
+		expect(new Set(placed).size).toBe(placed.length);
+		// The empty paragraphs between the first kept pair (0, then n-1) all come along with it.
+		expect(ids.slice(0, 3)).toEqual(['p0', 'e0', 'e1']);
+	});
+
 	it('keeps an empty paragraph once when two moved pairs of kept blocks span it', () => {
 		const empty: IDocNode = { type: 'paragraph', attrs: { blockId: 'e' } };
 		const stored = doc(block('alpha', 'a'), block('beta', 'b'), empty, block('gamma', 'c'), block('delta', 'd'));

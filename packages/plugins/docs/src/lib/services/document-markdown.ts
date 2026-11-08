@@ -638,8 +638,9 @@ function matchUnits(stored: readonly string[], incoming: readonly string[]): IUn
 			if (units.length === indexes.length) {
 				units.forEach((unit, at) => (matched[indexes[at]] = unit));
 			} else {
-				leftStored.push(...units);
-				leftIncoming.push(...indexes);
+				// One by one: a spread of a large group of twins would pass the engine's argument limit.
+				for (const unit of units) leftStored.push(unit);
+				for (const index of indexes) leftIncoming.push(index);
 			}
 		}
 		// Only removed twins, or only new ones: nothing to guess.
@@ -693,8 +694,35 @@ export function mergeMarkdownUpdate(current: unknown, markdown: string): IMarkdo
 	}
 	const guessedOwners = [...new Set([...guessed].map((unit) => units[unit].owner))].sort((a, b) => a - b);
 	const ambiguousBlockIds = guessedOwners.flatMap((owner) => blockIdsOf(stored[owner]));
+	// The empty paragraphs of the stored document (no Markdown of their own), in order. Each is placed once at most: a
+	// skip pointer per entry jumps over the ones already placed, so the overlapping stretches between kept blocks that
+	// a reorder produces are not scanned again (each empty paragraph is visited once, whatever the order).
+	const empties: number[] = [];
+	stored.forEach((block, position) => {
+		if (blockToMarkdown(block) === null) empties.push(position);
+	});
+	const skip = Array.from({ length: empties.length + 1 }, (_, at) => at);
+	const unplacedFrom = (at: number): number => {
+		let root = at;
+		while (skip[root] !== root) root = skip[root];
+		for (let next = at; next !== root; ) {
+			const up = skip[next];
+			skip[next] = root;
+			next = up;
+		}
+		return root;
+	};
+	const firstEmptyAfter = (position: number): number => {
+		let low = 0;
+		let high = empties.length;
+		while (low < high) {
+			const mid = (low + high) >>> 1;
+			if (empties[mid] <= position) low = mid + 1;
+			else high = mid;
+		}
+		return low;
+	};
 	const content: IDocNode[] = [];
-	const carried = new Set<number>();
 	let lastOwner = -1;
 	let changedBlocks = 0;
 	for (let index = 0; index < incoming.length; index += 1) {
@@ -708,11 +736,9 @@ export function mergeMarkdownUpdate(current: unknown, markdown: string): IMarkdo
 		// The empty paragraphs the stored document had between this block and the kept one before it stay with them
 		// (each once: after a move, two pairs of kept blocks can span the same stored stretch).
 		if (lastOwner >= 0 && owner > lastOwner) {
-			for (let between = lastOwner + 1; between < owner; between += 1) {
-				if (!carried.has(between) && blockToMarkdown(stored[between]) === null) {
-					content.push(stored[between]);
-					carried.add(between);
-				}
+			for (let at = unplacedFrom(firstEmptyAfter(lastOwner)); at < empties.length && empties[at] < owner; at = unplacedFrom(at + 1)) {
+				content.push(stored[empties[at]]);
+				skip[at] = at + 1;
 			}
 		}
 		content.push(stored[owner]);
