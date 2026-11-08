@@ -238,13 +238,15 @@ export class DocumentController {
 	}
 
 	/**
-	 * Applies a Markdown text to a page, changing only the blocks whose Markdown changed; the content route's rules
-	 * apply (a stale `expectedRevision` → 409 `DOCS_CONTENT_CONFLICT`, a locked page → 423, the schema, the snapshot,
-	 * the HTML cache, the mention and link sync). Nothing is written when the text changes nothing.
+	 * Applies a Markdown text to a page, changing only the blocks whose Markdown changed (a moved block is kept); the
+	 * content route's rules apply (a stale `expectedRevision` → 409 `DOCS_CONTENT_CONFLICT`, a locked page → 423, the
+	 * schema, the snapshot, the HTML cache, the mention and link sync). A text that leaves a commented block's place
+	 * among identical blocks to a guess → 409 `DOCS_MARKDOWN_AMBIGUOUS`. Nothing is written when the text changes
+	 * nothing.
 	 */
 	@ApiOperation({ summary: 'Update a page from Markdown (block diff, revision check).' })
 	@ApiResponse({ status: HttpStatus.OK, description: 'The document as saved, and what the Markdown changed.' })
-	@ApiResponse({ status: HttpStatus.CONFLICT, description: 'Stale revision, or not a page.' })
+	@ApiResponse({ status: HttpStatus.CONFLICT, description: 'Stale revision, not a page, or a commented block the Markdown cannot place among identical ones.' })
 	@Permissions(PermissionsEnum.DOCS_UPDATE)
 	@UseValidationPipe({ whitelist: true, transform: true, forbidNonWhitelisted: true })
 	@Put('/:id/content/markdown')

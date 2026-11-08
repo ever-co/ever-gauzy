@@ -31,6 +31,13 @@ export interface IMarkdownMerge {
 	keptBlocks: number;
 	/** Whether the merged document differs from the stored one at all. */
 	changed: boolean;
+	/**
+	 * The `blockId`s (of the block and the nodes inside it) of every stored block whose place the Markdown cannot tell:
+	 * a block with an identical twin when the twins were added, removed or moved so that which one is which is a
+	 * guess. The merge still makes its best guess; a caller that must not move or drop a comment anchored to one of
+	 * these ids refuses the update instead (`DocumentMarkdownService`, 409 `DOCS_MARKDOWN_AMBIGUOUS`).
+	 */
+	ambiguousBlockIds: string[];
 }
 
 const DEFAULT_PAGE_LINK = (documentId: string) => `/pages/documents?id=${encodeURIComponent(documentId)}`;
@@ -487,9 +494,6 @@ export function markdownToDocument(markdown: string): IDocNode {
 
 // ---------------------------------------------------------------- the block diff
 
-/** The most cells the exact (longest common subsequence) matcher allocates; past it the in-order matcher is used. */
-export const MARKDOWN_DIFF_MAX_CELLS = 2_000_000;
-
 /** The key a block is compared by: its Markdown, trailing whitespace aside. */
 function keyOf(markdown: string | null): string {
 	return (markdown ?? '').replace(/\s+$/g, '');
@@ -505,78 +509,162 @@ function unitsOf(node: IDocNode): string[] {
 	return childrenOf(markdownToDocument(markdown)).map((block) => keyOf(blockToMarkdown(block)));
 }
 
+/** The anchor docs-ui writes as the first line of a block comment (`[[block:<blockId>]]`, `document-comments.model.ts`). */
+const COMMENT_BLOCK_ANCHOR = /^\[\[block:([A-Za-z0-9._:-]{1,128})\]\]/;
+
+/** The `blockId` a comment body is anchored to, or null for a comment on the page as a whole. */
+export function commentAnchorBlockIdOf(comment: unknown): string | null {
+	const match = typeof comment === 'string' ? COMMENT_BLOCK_ANCHOR.exec(comment) : null;
+	return match ? match[1] : null;
+}
+
+/** The `blockId`s of a node and of the nodes inside it: the editor's UniqueID anchors (comments, `?block=` links). */
+export function blockIdsOf(node: IDocNode): string[] {
+	const ids: string[] = [];
+	const walk = (current: IDocNode): void => {
+		const id = attrsOf(current)['blockId'];
+		if (typeof id === 'string' && id) ids.push(id);
+		childrenOf(current).forEach(walk);
+	};
+	walk(node);
+	return ids;
+}
+
+/** How many times each key occurs. */
+function countsOf(keys: readonly string[]): Map<string, number> {
+	const counts = new Map<string, number>();
+	for (const key of keys) counts.set(key, (counts.get(key) ?? 0) + 1);
+	return counts;
+}
+
+/** The indexes, into `values`, of a longest strictly increasing subsequence of `values` (patience sorting). */
+function longestIncreasingSubsequence(values: readonly number[]): number[] {
+	const tails: number[] = [];
+	const previous = new Array<number>(values.length).fill(-1);
+	values.forEach((value, index) => {
+		let low = 0;
+		let high = tails.length;
+		while (low < high) {
+			const mid = (low + high) >>> 1;
+			if (values[tails[mid]] < value) low = mid + 1;
+			else high = mid;
+		}
+		if (low > 0) previous[index] = tails[low - 1];
+		tails[low] = index;
+	});
+	const run: number[] = [];
+	for (let index = tails.length ? tails[tails.length - 1] : -1; index >= 0; index = previous[index]) run.push(index);
+	return run.reverse();
+}
+
+/** For each position of a sequence, how many of the (ascending) `anchors` come before it: the gap it lies in. */
+function gapsOf(anchors: readonly number[], length: number): number[] {
+	const gaps = new Array<number>(length);
+	let next = 0;
+	for (let position = 0; position < length; position += 1) {
+		while (next < anchors.length && anchors[next] < position) next += 1;
+		gaps[position] = next;
+	}
+	return gaps;
+}
+
+/** How the incoming blocks match the stored units. */
+interface IUnitMatch {
+	/** For each incoming block, the index of the stored unit it matches, else -1. */
+	matched: number[];
+	/** The stored units whose match (or removal) is a guess among identical twins. */
+	guessed: Set<number>;
+}
+
 /**
- * For each incoming key, the index of the stored unit it matches, else -1: a longest common subsequence while the
- * table fits (`maxCells`), otherwise an in-order match — each incoming key takes the first unmatched stored unit with
- * that key at or after the one last taken — through an index of the stored keys and a binary search over each key's
- * positions, so a key that never matches costs one lookup rather than a scan of the tail: O((n + m) log n) in time
- * and O(n + m) in memory, whatever the texts.
+ * Matches the incoming blocks to the stored units by their Markdown, wherever they moved, in O((n + m) log(n + m))
+ * time and O(n + m) memory:
+ *
+ * 1. A text found exactly once on each side is the same block, wherever it went: a moved block is kept. The longest
+ *    run of those that kept their order are the anchors; the stretches before, between and after them are the gaps.
+ * 2. A text with an identical twin (more than one block with that text on a side, and some on each) is matched gap
+ *    by gap: a gap holding as many incoming twins as stored ones pairs them in order. The twins of the other gaps
+ *    are what was added, removed or moved: when only stored ones are left they were removed, when only incoming
+ *    ones they are new, and when both are left which is which is a guess — they are paired in order and the stored
+ *    ones are reported as `guessed`.
  */
-function matchUnits(stored: string[], incoming: string[], maxCells: number): number[] {
-	const n = stored.length;
-	const m = incoming.length;
-	const matched = new Array<number>(m).fill(-1);
-	if (!n || !m) return matched;
-	if (n * m > maxCells) {
-		const positions = new Map<string, number[]>();
-		stored.forEach((key, index) => {
-			const list = positions.get(key);
-			if (list) list.push(index);
-			else positions.set(key, [index]);
-		});
-		let cursor = 0;
-		for (let j = 0; j < m; j += 1) {
-			const list = positions.get(incoming[j]);
-			if (!list) continue;
-			let low = 0;
-			let high = list.length;
-			while (low < high) {
-				const mid = (low + high) >>> 1;
-				if (list[mid] < cursor) low = mid + 1;
-				else high = mid;
+function matchUnits(stored: readonly string[], incoming: readonly string[]): IUnitMatch {
+	const matched = new Array<number>(incoming.length).fill(-1);
+	const guessed = new Set<number>();
+	const storedCounts = countsOf(stored);
+	const incomingCounts = countsOf(incoming);
+	// 1. The texts found once on each side; the ones that kept their order are the anchors.
+	const indexOfUnique = new Map<string, number>();
+	incoming.forEach((key, index) => {
+		if (incomingCounts.get(key) === 1 && storedCounts.get(key) === 1) indexOfUnique.set(key, index);
+	});
+	const unique: Array<{ unit: number; index: number }> = [];
+	stored.forEach((key, unit) => {
+		const index = indexOfUnique.get(key);
+		if (index === undefined) return;
+		unique.push({ unit, index });
+		matched[index] = unit;
+	});
+	const anchors = longestIncreasingSubsequence(unique.map((pair) => pair.index)).map((at) => unique[at]);
+	const storedGaps = gapsOf(anchors.map((anchor) => anchor.unit), stored.length);
+	const incomingGaps = gapsOf(anchors.map((anchor) => anchor.index), incoming.length);
+	// 2. The texts with twins, found on both sides: their positions, gap by gap.
+	const isTwin = (key: string): boolean => {
+		const inStored = storedCounts.get(key) ?? 0;
+		const inIncoming = incomingCounts.get(key) ?? 0;
+		return inStored > 0 && inIncoming > 0 && (inStored > 1 || inIncoming > 1);
+	};
+	const twins = new Map<string, { stored: Map<number, number[]>; incoming: Map<number, number[]> }>();
+	const place = (key: string, side: 'stored' | 'incoming', gap: number, position: number): void => {
+		const entry = twins.get(key) ?? { stored: new Map<number, number[]>(), incoming: new Map<number, number[]>() };
+		twins.set(key, entry);
+		const positions = entry[side].get(gap);
+		if (positions) positions.push(position);
+		else entry[side].set(gap, [position]);
+	};
+	stored.forEach((key, unit) => {
+		if (isTwin(key)) place(key, 'stored', storedGaps[unit], unit);
+	});
+	incoming.forEach((key, index) => {
+		if (isTwin(key)) place(key, 'incoming', incomingGaps[index], index);
+	});
+	for (const twin of twins.values()) {
+		const leftStored: number[] = [];
+		const leftIncoming: number[] = [];
+		const gaps = [...new Set([...twin.stored.keys(), ...twin.incoming.keys()])].sort((a, b) => a - b);
+		for (const gap of gaps) {
+			const units = twin.stored.get(gap) ?? [];
+			const indexes = twin.incoming.get(gap) ?? [];
+			if (units.length === indexes.length) {
+				units.forEach((unit, at) => (matched[indexes[at]] = unit));
+			} else {
+				leftStored.push(...units);
+				leftIncoming.push(...indexes);
 			}
-			if (low < list.length) {
-				matched[j] = list[low];
-				cursor = list[low] + 1;
-			}
 		}
-		return matched;
+		// Only removed twins, or only new ones: nothing to guess.
+		if (!leftStored.length || !leftIncoming.length) continue;
+		leftStored.forEach((unit) => guessed.add(unit));
+		for (let at = 0; at < Math.min(leftStored.length, leftIncoming.length); at += 1) matched[leftIncoming[at]] = leftStored[at];
 	}
-	const rows: Int32Array[] = Array.from({ length: n + 1 }, () => new Int32Array(m + 1));
-	for (let i = n - 1; i >= 0; i -= 1) {
-		for (let j = m - 1; j >= 0; j -= 1) {
-			rows[i][j] = stored[i] === incoming[j] ? rows[i + 1][j + 1] + 1 : Math.max(rows[i + 1][j], rows[i][j + 1]);
-		}
-	}
-	let i = 0;
-	let j = 0;
-	while (i < n && j < m) {
-		if (stored[i] === incoming[j]) {
-			matched[j] = i;
-			i += 1;
-			j += 1;
-		} else if (rows[i + 1][j] >= rows[i][j + 1]) {
-			i += 1;
-		} else {
-			j += 1;
-		}
-	}
-	return matched;
+	return { matched, guessed };
 }
 
 /**
  * The stored document with a Markdown text applied: a block whose Markdown is unchanged keeps its stored JSON (its
- * attributes, marks and nodes the Markdown cannot carry), a block whose Markdown changed, or is new, is the Markdown's;
- * blocks the Markdown dropped are gone. A stored block is compared through the blocks its own Markdown reads back as
- * (a `details` block is several), and is kept only when all of them come back, in order; an empty paragraph between
- * two kept blocks is kept with them. The same text as the stored one changes nothing.
+ * attributes, marks, block ids and nodes the Markdown cannot carry) wherever the text moved it, a block whose
+ * Markdown changed, or is new, is the Markdown's; blocks the Markdown dropped are gone. A stored block is compared
+ * through the blocks its own Markdown reads back as (a `details` block is several), and is kept only when all of them
+ * come back, next to each other; an empty paragraph between two kept blocks is kept with them. Identical blocks are
+ * told apart by the unique blocks around them (`matchUnits`); when that leaves a guess, the stored blocks concerned
+ * are named in `ambiguousBlockIds`. The same text as the stored one changes nothing.
  */
-export function mergeMarkdownUpdate(current: unknown, markdown: string, options: { maxCells?: number } = {}): IMarkdownMerge {
+export function mergeMarkdownUpdate(current: unknown, markdown: string): IMarkdownMerge {
 	const document = docOf(current);
 	const stored = childrenOf(document);
 	const normalized = String(markdown ?? '').replace(/\r\n?/g, '\n').replace(/\s+$/g, '');
 	if (normalized === documentToMarkdown(document).replace(/\s+$/g, '')) {
-		return { contentJson: document, changedBlocks: 0, keptBlocks: stored.length, changed: false };
+		return { contentJson: document, changedBlocks: 0, keptBlocks: stored.length, changed: false, ambiguousBlockIds: [] };
 	}
 	const incoming = childrenOf(markdownToDocument(markdown));
 	const incomingKeys = incoming.map((block) => keyOf(blockToMarkdown(block)));
@@ -588,12 +676,12 @@ export function mergeMarkdownUpdate(current: unknown, markdown: string, options:
 			units.push({ owner, key });
 		}
 	});
-	const matched = matchUnits(units.map((unit) => unit.key), incomingKeys, options.maxCells ?? MARKDOWN_DIFF_MAX_CELLS);
+	const { matched, guessed } = matchUnits(units.map((unit) => unit.key), incomingKeys);
 	const incomingOfUnit = new Map<number, number>();
 	matched.forEach((unit, index) => {
 		if (unit >= 0) incomingOfUnit.set(unit, index);
 	});
-	// A stored block is kept when every unit of it came back, in order and next to each other.
+	// A stored block is kept when every unit of it came back, next to each other.
 	const ownerOfIncoming = new Map<number, number>();
 	const kept = new Set<number>();
 	for (const [owner, ownerUnits] of unitsByOwner) {
@@ -603,7 +691,10 @@ export function mergeMarkdownUpdate(current: unknown, markdown: string, options:
 		kept.add(owner);
 		positions.forEach((position) => ownerOfIncoming.set(position, owner));
 	}
+	const guessedOwners = [...new Set([...guessed].map((unit) => units[unit].owner))].sort((a, b) => a - b);
+	const ambiguousBlockIds = guessedOwners.flatMap((owner) => blockIdsOf(stored[owner]));
 	const content: IDocNode[] = [];
+	const carried = new Set<number>();
 	let lastOwner = -1;
 	let changedBlocks = 0;
 	for (let index = 0; index < incoming.length; index += 1) {
@@ -614,17 +705,21 @@ export function mergeMarkdownUpdate(current: unknown, markdown: string, options:
 			continue;
 		}
 		if (lastOwner === owner) continue; // the same stored block, continued
-		// The empty paragraphs the stored document had between this block and the kept one before it stay with them.
+		// The empty paragraphs the stored document had between this block and the kept one before it stay with them
+		// (each once: after a move, two pairs of kept blocks can span the same stored stretch).
 		if (lastOwner >= 0 && owner > lastOwner) {
 			for (let between = lastOwner + 1; between < owner; between += 1) {
-				if (blockToMarkdown(stored[between]) === null) content.push(stored[between]);
+				if (!carried.has(between) && blockToMarkdown(stored[between]) === null) {
+					content.push(stored[between]);
+					carried.add(between);
+				}
 			}
 		}
 		content.push(stored[owner]);
 		lastOwner = owner;
 	}
 	const changed = changedBlocks > 0 || content.length !== stored.length || content.some((block, index) => block !== stored[index]);
-	return { contentJson: { type: 'doc', content }, changedBlocks, keptBlocks: kept.size, changed };
+	return { contentJson: { type: 'doc', content }, changedBlocks, keptBlocks: kept.size, changed, ambiguousBlockIds };
 }
 
 /** A file name for a page: its name as a slug, `.md`. */

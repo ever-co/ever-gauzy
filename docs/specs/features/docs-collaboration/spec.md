@@ -124,7 +124,9 @@ Angular app and for Ever Teams through the same API:
 - **FR-12** Members MUST be able to export a page, or a page with its sub-pages, as
   Markdown (zip with assets and relative links) and print to PDF.
 - **FR-13** The API MUST accept a Markdown update for a page with a version check and
-  MUST change only the blocks whose Markdown changed.
+  MUST change only the blocks whose Markdown changed; a block the text only moved keeps
+  its formatting and comments, and an update that cannot tell which of identical blocks
+  a comment belongs to MUST be refused with a conflict rather than move or drop it.
 - **FR-14** Pages MUST expose a stable version that changes on every content change,
   for compare-and-set by API and MCP writers.
 

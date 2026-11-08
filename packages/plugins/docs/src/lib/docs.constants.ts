@@ -65,6 +65,12 @@ export const DOCS_TEAM_REQUIRED = 'DOCS_TEAM_REQUIRED';
 export const DOCS_TEAM_NOT_IN_ORGANIZATION = 'DOCS_TEAM_NOT_IN_ORGANIZATION';
 /** 403: only a member of the team (or `DOCS_MANAGE`) puts a document in its space. */
 export const DOCS_TEAM_NOT_MEMBER = 'DOCS_TEAM_NOT_MEMBER';
+/**
+ * 409: a Markdown update cannot tell which of identical blocks a comment is anchored to (an identical block was added,
+ * removed or moved), so it would move or drop the comment by a guess; nothing is written. Carries `currentRevision`
+ * and the `blockIds` concerned.
+ */
+export const DOCS_MARKDOWN_AMBIGUOUS = 'DOCS_MARKDOWN_AMBIGUOUS';
 /** The same person is not told twice of the same thing on one page within this window. */
 export const DOCS_NOTIFICATION_DEDUPE_MINUTES = 10;
 /** The submitted `contentBinary` exceeds `GAUZY_DOCS_MAX_BINARY_BYTES` (`10` §7.1 P6). */

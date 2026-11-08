@@ -2,6 +2,7 @@ import {
 	blockToMarkdown,
 	collectEmployeeMentionIds,
 	collectFileIds,
+	commentAnchorBlockIdOf,
 	documentToMarkdown,
 	IDocNode,
 	markdownFileNameOf,
@@ -202,16 +203,16 @@ describe('mergeMarkdownUpdate', () => {
 		expect(edited.contentJson.content).toHaveLength(4);
 	});
 
-	it('matches in order without the table when the blocks would not fit it', () => {
+	it('matches changed blocks and repeated ones in order', () => {
 		const stored: IDocNode = { type: 'doc', content: [paragraph(text('a')), paragraph(text('b')), paragraph(text('c'))] };
-		const merge = mergeMarkdownUpdate(stored, 'a\n\nx\n\nc\n', { maxCells: 1 });
+		const merge = mergeMarkdownUpdate(stored, 'a\n\nx\n\nc\n');
 		expect(merge.changedBlocks).toBe(1);
 		expect(merge.keptBlocks).toBe(2);
 		expect(merge.contentJson.content?.[0]).toBe(stored.content?.[0]);
 		expect(merge.contentJson.content?.[2]).toBe(stored.content?.[2]);
-		// A key that never matches costs a lookup, and a repeated key takes the next unmatched unit of that key, in order.
+		// A key that never matches is new, and repeated keys between the same unique blocks pair in order.
 		const repeated: IDocNode = { type: 'doc', content: [paragraph(text('a')), paragraph(text('a')), paragraph(text('b'))] };
-		const second = mergeMarkdownUpdate(repeated, 'zzz\n\na\n\na\n\nb\n', { maxCells: 1 });
+		const second = mergeMarkdownUpdate(repeated, 'zzz\n\na\n\na\n\nb\n');
 		expect(second.changedBlocks).toBe(1);
 		expect(second.keptBlocks).toBe(3);
 		expect(second.contentJson.content?.[1]).toBe(repeated.content?.[0]);
@@ -224,6 +225,82 @@ describe('mergeMarkdownUpdate', () => {
 		const merge = mergeMarkdownUpdate(stored, '# Title\n\nbody changed\n');
 		expect(merge.contentJson.content?.[0]).toMatchObject({ attrs: { textAlign: 'center', id: 'h-1' } });
 		expect(blockToMarkdown(merge.contentJson.content?.[1] as IDocNode)).toBe('body changed');
+	});
+});
+
+describe('mergeMarkdownUpdate: moved and identical blocks', () => {
+	/** A paragraph carrying the editor's block id (a comment anchor) and an attribute Markdown cannot carry. */
+	const block = (value: string, blockId: string): IDocNode => ({ type: 'paragraph', attrs: { blockId, textAlign: 'center' }, content: [text(value)] });
+	const doc = (...content: IDocNode[]): IDocNode => ({ type: 'doc', content });
+
+	it('keeps a moved block (its attributes and block id) wherever the text moved it', () => {
+		const stored = doc(block('alpha', 'a'), block('beta', 'b'), block('gamma', 'c'));
+		const merge = mergeMarkdownUpdate(stored, 'gamma\n\nalpha\n\nbeta\n');
+		expect(merge.contentJson.content).toEqual([stored.content?.[2], stored.content?.[0], stored.content?.[1]]);
+		expect(merge.contentJson.content?.[0]).toBe(stored.content?.[2]);
+		expect(merge).toMatchObject({ changed: true, changedBlocks: 0, keptBlocks: 3, ambiguousBlockIds: [] });
+		// A swap keeps both.
+		const swapped = mergeMarkdownUpdate(doc(block('alpha', 'a'), block('beta', 'b')), 'beta\n\nalpha\n');
+		expect(swapped.contentJson.content?.map((node) => node.attrs?.['blockId'])).toEqual(['b', 'a']);
+		expect(swapped.changedBlocks).toBe(0);
+	});
+
+	it('tells identical blocks apart by the unique blocks around them, also when others moved', () => {
+		const stored = doc(block('same', 'x1'), block('alpha', 'a'), block('same', 'x2'), block('beta', 'b'), block('gamma', 'c'));
+		// `gamma` moved to the top; each `same` stays on its side of `alpha`.
+		const merge = mergeMarkdownUpdate(stored, 'gamma\n\nsame\n\nalpha\n\nsame\n\nbeta\n');
+		expect(merge.contentJson.content?.map((node) => node.attrs?.['blockId'])).toEqual(['c', 'x1', 'a', 'x2', 'b']);
+		expect(merge).toMatchObject({ changedBlocks: 0, keptBlocks: 5, ambiguousBlockIds: [] });
+		// Removing the twin after `alpha` keeps the one before it: no guess.
+		const removed = mergeMarkdownUpdate(stored, 'same\n\nalpha\n\nbeta\n\ngamma\n');
+		expect(removed.contentJson.content?.map((node) => node.attrs?.['blockId'])).toEqual(['x1', 'a', 'b', 'c']);
+		expect(removed.ambiguousBlockIds).toEqual([]);
+		// A copy added after `beta` is new; the stored twins keep their places.
+		const copied = mergeMarkdownUpdate(stored, 'same\n\nalpha\n\nsame\n\nbeta\n\nsame\n\ngamma\n');
+		expect(copied.contentJson.content?.map((node) => node.attrs?.['blockId'] ?? null)).toEqual(['x1', 'a', 'x2', 'b', null, 'c']);
+		expect(copied).toMatchObject({ changedBlocks: 1, ambiguousBlockIds: [] });
+	});
+
+	it('names the blocks (and the blocks inside them) whose place among identical twins is a guess', () => {
+		const list = (blockId: string, itemId: string): IDocNode => ({ type: 'bulletList', attrs: { blockId }, content: [{ type: 'listItem', content: [{ type: 'paragraph', attrs: { blockId: itemId }, content: [text('todo')] }] }] });
+		const stored = doc(list('l1', 'i1'), list('l2', 'i2'), block('alpha', 'a'));
+		// One of two identical lists removed: which one is a guess (the merge keeps the first).
+		const merge = mergeMarkdownUpdate(stored, '- todo\n\nalpha\n');
+		expect(merge.ambiguousBlockIds).toEqual(['l1', 'i1', 'l2', 'i2']);
+		expect(merge.contentJson.content?.[0]).toBe(stored.content?.[0]);
+		expect(merge.contentJson.content).toHaveLength(2);
+		// A twin that moved past a unique block (or was removed while another was added there) is a guess too.
+		const twins = doc(block('same', 'x1'), block('alpha', 'a'), block('same', 'x2'), block('beta', 'b'));
+		expect(mergeMarkdownUpdate(twins, 'alpha\n\nsame\n\nbeta\n\nsame\n').ambiguousBlockIds).toEqual(['x1']);
+		// Every twin removed is no guess.
+		expect(mergeMarkdownUpdate(twins, 'alpha\n\nbeta\n').ambiguousBlockIds).toEqual([]);
+	});
+
+	it('keeps a reordered page of thousands of blocks in linear-logarithmic time', () => {
+		const count = 3000;
+		const stored = doc(...Array.from({ length: count }, (_, index) => block(`paragraph ${index}`, `p${index}`)));
+		const reversed = Array.from({ length: count }, (_, index) => `paragraph ${count - 1 - index}`).join('\n\n');
+		const merge = mergeMarkdownUpdate(stored, `${reversed}\n`);
+		expect(merge).toMatchObject({ changedBlocks: 0, keptBlocks: count, ambiguousBlockIds: [] });
+		expect(merge.contentJson.content?.[0]).toBe(stored.content?.[count - 1]);
+		expect(merge.contentJson.content?.[count - 1]).toBe(stored.content?.[0]);
+	});
+
+	it('keeps an empty paragraph once when two moved pairs of kept blocks span it', () => {
+		const empty: IDocNode = { type: 'paragraph', attrs: { blockId: 'e' } };
+		const stored = doc(block('alpha', 'a'), block('beta', 'b'), empty, block('gamma', 'c'), block('delta', 'd'));
+		const merge = mergeMarkdownUpdate(stored, 'alpha\n\ngamma\n\nbeta\n\ndelta\n');
+		expect(merge.contentJson.content?.filter((node) => node === empty)).toHaveLength(1);
+		expect(merge.contentJson.content?.map((node) => node.attrs?.['blockId'])).toEqual(['a', 'e', 'c', 'b', 'd']);
+	});
+});
+
+describe('commentAnchorBlockIdOf', () => {
+	it('reads the block a comment is anchored to from its first line', () => {
+		expect(commentAnchorBlockIdOf('[[block:3f1c2a7e-0000-4000-8000-000000000001]]\nLooks good')).toBe('3f1c2a7e-0000-4000-8000-000000000001');
+		expect(commentAnchorBlockIdOf('A page-level comment')).toBeNull();
+		expect(commentAnchorBlockIdOf('see [[block:abc]] later')).toBeNull();
+		expect(commentAnchorBlockIdOf(null)).toBeNull();
 	});
 });
 
