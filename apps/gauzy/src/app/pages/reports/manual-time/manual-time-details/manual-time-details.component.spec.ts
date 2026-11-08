@@ -3,7 +3,7 @@ import { provideRouter, Router } from '@angular/router';
 import { NbDialogRef, NbDialogService } from '@nebular/theme';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { of } from 'rxjs';
-import { ITimeLog, TimeLogType } from '@gauzy/contracts';
+import { ITimeLog, ITimesheet, TimeLogType, TimesheetStatus } from '@gauzy/contracts';
 import { TimesheetService } from '@gauzy/ui-core/core';
 import { EditTimeLogModalComponent } from '@gauzy/ui-core/shared';
 import { ManualTimeModule } from '../manual-time.module';
@@ -94,7 +94,7 @@ describe('ManualTimeDetailsComponent', () => {
 			organizationId: 'org-1',
 			tenantId: 'tenant-1',
 			employeeIds: ['employee-1'],
-			startDate: '2026-11-02 00:00:00',
+			startDate: '2026-11-01 00:00:00',
 			endDate: '2026-11-02 23:59:59',
 			timeZone: 'Etc/UTC'
 		});
@@ -168,5 +168,14 @@ describe('ManualTimeDetailsComponent', () => {
 		component.edit();
 
 		expect(dialogRef.close).not.toHaveBeenCalled();
+	});
+
+	it('does not edit an entry of an approved timesheet: its hours are final', () => {
+		render({ ...ENTRY, timesheet: { status: TimesheetStatus.APPROVED } as ITimesheet } as ITimeLog);
+
+		expect(component.isApproved).toBe(true);
+		component.edit();
+
+		expect(dialogService.open).not.toHaveBeenCalled();
 	});
 });
