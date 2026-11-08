@@ -38,6 +38,6 @@
 
 ## Follow-ups (from the plan's §10)
 
-- [ ] **T16**. Durable filing: a sweep (or an outbox row in the notification's transaction) that files notifications that have no Inbox item (plan §10.1)
-- [ ] **T17**. In-app entries independent of the legacy per-type switches (plan §10.2)
+- [ ] **T16**. Durable filing: an outbox row in the notification's transaction, or a sweep with a durable checkpoint and no age cutoff that files notifications with no Inbox item and skips folded twins (after T18) (plan §10.1)
+- [ ] **T17**. Notification row and Inbox entry always created together; the legacy per-type switches decide only e-mail and push (plan §10.2)
 - [ ] **T18**. Mirror read / archive state to the notification rows a deduplicated entry stands for (plan §10.3)

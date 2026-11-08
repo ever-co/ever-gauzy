@@ -101,20 +101,27 @@ What the merged code does not do yet; each item names the code location.
    `EmployeeNotificationCreatedEvent` on the in-process CQRS bus; `InboxNotificationBridge.fileNotification`
    files the item and logs (never rethrows) a failure. A process that stops between the two, or a
    failed filing, leaves a notification with no Inbox entry, and nothing files it later: no outbox
-   row, no sweep. The spec's "no lost entries" (§4 Reliability) is not met. Follow-up: a sweep in the
-   inbox worker that files `employee_notification` rows of the last N hours that have no item with
+   row, no sweep. The spec's "no lost entries" (§4 Reliability) is not met. Follow-up (T16): either an
+   outbox row written in the notification's own transaction, or a recovery sweep in the inbox worker with
+   a durable checkpoint and **no age cutoff** (it resumes from the last notification it settled, however
+   long the worker was down) that files the `employee_notification` rows with no item of
    `externalSource = INBOX_NOTIFICATION_EXTERNAL_SOURCE` and `externalId = <id>` (the upsert is already
-   idempotent), or an outbox row written in the notification's own transaction.
+   idempotent). The sweep must skip the rows folded into an existing entry by the mention rule, which
+   needs the many-to-one record of item 3 first; otherwise it would file every folded twin as a
+   duplicate entry.
 2. **The per-type switches still decide whether an entry exists.** `shouldCreateEmployeeNotification`
    (core `employee-notification.service.ts`) returns early when the receiver switched the type off
    (`comment`, `mention`, `message`, `assignment`, `invitation`, `payment`, `preferences.taskUpdate`), so
    no row is saved and the bridge has nothing to file. The spec's "in-app (always on)" (FR-10) is not
-   met for those receivers. Follow-up: file the Inbox entry from the request before the switch is read
-   (the switches then gate only the bell row, e-mail and push), or migrate the legacy switches into
-   `preferences` channels with in-app forced on.
+   met for those receivers. Follow-up (T17, a product decision): save the notification row whatever the
+   legacy switches say, so the entry and the row always exist together (FR-15 keeps both feeds equal), and
+   let the switches decide only e-mail and push, i.e. migrate them into the `preferences` channels with
+   in-app forced on. The bell then lists kinds a receiver had switched off, which is what FR-10's
+   "in-app (always on)" means.
 3. **A deduplicated mention's second row is not mirrored.** When `hasRecentTwin` finds a twin, the
    second `EmployeeNotification` row is saved but not filed; `onStateChange` mirrors the Inbox item's
    read / archive state to `item.externalId` only, so the second row stays unread in the
-   notification API while the Inbox shows the mention read (FR-15). Follow-up: record the twin's id on
-   the filed item (for example `metadata.twinNotificationIds`) and mirror to every id, or mark the twin
-   read when it is folded.
+   notification API while the Inbox shows the mention read (FR-15). Follow-up (T18): record the twin's id
+   on the filed item (for example `metadata.twinNotificationIds`, the many-to-one mapping) and mirror to
+   every id, or mark the twin read when it is folded; the recovery sweep of item 1 reads the same record
+   to leave folded twins alone.

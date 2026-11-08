@@ -81,7 +81,7 @@ None. Presence stays on `Employee`; hints and signals carry ids only.
 | ------ | -------- | ---------- | ----------- | ------ |
 | `POST` | `/api/realtime/presence` | employee (`@Permissions()`), `REALTIME_SUBSCRIBE` | Records presence (`EmployeeService.updatePresence`) and publishes `presence.changed` to the organization | New |
 | `POST` | `/api/realtime/typing` | `REALTIME_SUBSCRIBE` | Publishes `typing.signalled` addressed to `recipientUserIds` (rate-limited 5/s per user) | New |
-| `GET` | `/api/realtime/events?after=&afterId=&limit=` | `REALTIME_SUBSCRIBE` | Catch-up (`RealtimeCatchUpService.catchUp`): outbox rows of the collaboration catalogue for the caller's tenant/organization after the exact cursor (`after` = epoch ms of the last applied event's `createdAt`, `afterId` = its `eventId`, compared as (`createdAt`, `eventId`)), at most 500 a page (default 200), `hasMore` when cut; read once and bounded (`EventOutboxService.listOutboxRowsSince`); addressed rows only when the caller is one of the recipients stored on the row; answers `cursor`/`cursorId` to continue from and `resync: true` when the cursor predates the oldest row the caller's scope retains (or nothing is retained). A call without `after` answers no events and `cursor` = now. The outbox `sequence` is never compared: it is per partition (§15.6) | New |
+| `GET` | `/api/realtime/events?after=&afterId=&limit=` | `REALTIME_SUBSCRIBE` | Catch-up (`RealtimeCatchUpService.catchUp`): outbox rows of the collaboration catalogue for the caller's tenant/organization after the exact cursor (`after` = epoch ms of the last applied event's `createdAt`, `afterId` = its `eventId`, compared as (`createdAt`, `eventId`)), at most 500 a page (default 200), `hasMore` when cut; read once and bounded (`EventOutboxService.listOutboxRowsSince`); addressed rows only when the caller is one of the recipients stored on the row; answers `cursor`/`cursorId` to continue from and `resync: true` when the cursor predates the oldest row the caller's scope retains, or when the scope has no row at all (an inferred watermark: it also answers `resync` to a client whose cursor predates its organization's first event, see §15.8). A call without `after` answers no events and `cursor` = now. The outbox `sequence` is never compared: it is per partition (§15.6) | New |
 | `GET` | `/api/realtime/status` | `REALTIME_SUBSCRIBE` | Whether subscriptions are served in this process, the catalogue names, limits | New |
 | GraphQL | `Subscription.collaborationEvents(names: [String!]!, aggregateId: ID): EventEnvelope!` | `REALTIME_SUBSCRIBE` (+ `FEATURE_GRAPHQL`) | Streams the selected collaboration events of the caller's tenant/organization, addressed ones only to the caller | New |
 
@@ -190,12 +190,14 @@ location; none of them changes the flag-off default.
    disconnect and no 5 s coalescing (spec FR-7, §4 Performance). Follow-up: keep presence per
    connection (with a TTL) in the pub/sub engine and publish the merged state (active wins) only when
    it changes.
-3. **Document and comment hints reach the whole organization.** `documentHint` and `commentHint` in
-   `realtime-hints.service.ts` carry no `recipientUserIds`, so `document.updated` (and `comment.*` on a
-   page or a private task) is streamed and replayed to every member, reader or not: ids and the actor
-   only, never content (spec FR-4). Follow-up: address document hints to the page's readers (the docs
-   plugin's `DocumentAccessService`: visibility, team spaces, shares) or skip the hint for pages that
-   are not organization-visible; do the same for comments whose parent is a document.
+3. **Document, comment and task hints reach the whole organization.** `documentHint`, `commentHint` and
+   `taskHint` in `realtime-hints.service.ts` carry no `recipientUserIds`, so `document.updated`, `comment.*`
+   (on a page, a private task or any other record) and `task.*` are streamed and replayed to every member,
+   reader or not: ids and the actor only, never content (spec FR-4). Follow-up (T21): decide the audience
+   from the parent record's read access, for live delivery and catch-up alike: documents through the docs
+   plugin's `DocumentAccessService` (visibility, team spaces, shares); tasks and the comments on them
+   through the task read rules (private tasks, project membership); any other parent type the same way,
+   and no hint at all for a parent type without a read rule.
 4. **Replay trusts the recipients stored at write time.** `admitsRow` (catch-up) and
    `tenantScopedTopicStream` (live) compare the caller with the row's `recipientUserIds`; neither
    rechecks current chat membership, so a removed member can still replay the ids of events addressed
@@ -205,11 +207,22 @@ location; none of them changes the flag-off default.
    FR-3's floor (the newest 1,000 events per organization or 24 h, whichever is larger) holds by
    default. The first retention job must keep both bounds and test them; `resync` is answered whenever
    the cursor predates the oldest retained row of the caller's scope.
-6. **The cursor is time-based, not a sequence.** `EventOutboxService.append` numbers `sequence` per
-   `partitionKey` (default `<aggregateType>:<aggregateId>`), so it orders one aggregate's events and is
-   never compared across aggregates; the catch-up cursor is (`createdAt`, `eventId`) (spec FR-2). A
-   row whose insert commits after a later-stamped row was already read can fall behind a client's
-   cursor (a window of milliseconds under concurrent appends from several replicas).
+6. **The cursor is time-based, not a sequence, and not commit-safe.** `EventOutboxService.append` numbers
+   `sequence` per `partitionKey` (default `<aggregateType>:<aggregateId>`), so it orders one aggregate's
+   events and is never compared across aggregates; the catch-up cursor is (`createdAt`, `eventId`) (spec
+   FR-2). A row whose insert commits after a later-stamped row was already read falls behind a client's
+   cursor and is skipped by the next catch-up without a `resync` (a window of milliseconds under
+   concurrent appends from several replicas), contrary to FR-2 and the no-loss requirement. Follow-up
+   (T24): a commit-safe order, either a settle window (the catch-up answers only rows older than now minus
+   the longest append transaction, and the cursor never passes that point) or a commit-ordered position
+   (a per-organization counter row locked and incremented in the append's transaction), with a regression
+   test of two concurrent appends that commit out of stamp order.
 7. **The flag is deployment-wide.** `GAUZY_REALTIME_ENABLED` (`isRealtimeEnabled`) loads the plugin for
    the whole process; there is no tenant or organization switch, and nothing closes one tenant's open
    subscriptions (spec §2.2 says so).
+8. **`resync` is inferred from the oldest row.** `RealtimeCatchUpService.catchUp` answers `resync` when
+   `after` precedes the oldest row of the caller's scope or when the scope has no row: with no pruning
+   at all, a client that took a `cursor` = now before its organization's first event is told to resync on
+   its next reconnect although nothing was lost (a needless refetch, never a missed event). Follow-up
+   (T25): an actual retention watermark (the newest `createdAt` a retention job removed, per scope),
+   with `resync` only when the cursor precedes it; until a job exists, never.

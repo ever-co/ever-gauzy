@@ -117,7 +117,12 @@ type is in scope.
    retained row; then they refetch through normal HTTP. The outbox `sequence` is numbered
    per partition (`partitionKey` defaults to `<aggregateType>:<aggregateId>`), so it
    orders one aggregate's events and is never used as a cursor. (`GET /events/outbox` is
-   the operators' diagnostic listing, paged with `take` / `skip`.)
+   the operators' diagnostic listing, paged with `take` / `skip`.) Known limitation: the
+   cursor is time-based, so a row whose insert commits after a later-stamped row was
+   already read can fall behind a client's cursor and is then neither replayed nor
+   answered with `resync`; catch-up is therefore not a complete replay under concurrent
+   appends (realtime plan §15.6). Clients treat it as best effort and refetch the views
+   they show after a long disconnect.
 2. **Ephemeral signals** (`presence.changed` from `POST /api/realtime/presence`,
    `typing.signalled` from `POST /api/realtime/typing`) are published to the same pub/sub
    without an outbox row; they are lost on disconnect by design and never replayed. After

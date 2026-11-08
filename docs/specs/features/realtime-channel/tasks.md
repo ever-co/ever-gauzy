@@ -57,6 +57,8 @@
 
 - [ ] **T19**. Append chat and task/comment hints inside the originating transaction (plan §15.1)
 - [ ] **T20**. Per-connection presence, merged per employee, coalesced to one message per 5 s (plan §15.2)
-- [ ] **T21**. Address `document.updated` and document comment hints to the page's readers (plan §15.3)
+- [ ] **T21**. Audience of `document.*`, `comment.*` and `task.*` hints from the parent record's read access (documents, private tasks, project membership), for live delivery and catch-up (plan §15.3)
 - [ ] **T22**. Current-membership recheck for `chat_*` events in the catch-up and the live stream (plan §15.4)
 - [ ] **T23**. Outbox retention that keeps the FR-3 floor, with a test of both bounds (plan §15.5)
+- [ ] **T24**. Commit-safe catch-up order (settle window or commit-ordered position) + a regression test of two concurrent appends committing out of stamp order (plan §15.6)
+- [ ] **T25**. `resync` from an actual retention watermark, not from the oldest retained row (plan §15.8)
