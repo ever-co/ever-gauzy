@@ -104,14 +104,14 @@ describe('chat routes need CHAT_VIEW, writes included', () => {
 	it('refuses every handler to a role with CHAT_SEND and CHAT_MANAGE but no CHAT_VIEW, before any service is reached', async () => {
 		signIn([PermissionsEnum.CHAT_SEND, PermissionsEnum.CHAT_MANAGE]);
 		const { all, reached } = controllers();
-		const refused: string[] = [];
+		let refused = 0;
 		for (const controller of all) {
 			for (const name of handlersOf(controller)) {
 				await expect(call(controller, name)).rejects.toBeInstanceOf(ForbiddenException);
-				refused.push(name);
+				refused++;
 			}
 		}
-		expect(refused.length).toBeGreaterThan(30);
+		expect(refused).toBeGreaterThan(30);
 		expect(reached).toEqual([]);
 	});
 
