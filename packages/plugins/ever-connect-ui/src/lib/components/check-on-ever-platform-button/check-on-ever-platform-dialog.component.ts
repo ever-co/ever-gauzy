@@ -1,7 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, inject, Input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, inject, Input, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { FormsModule } from '@angular/forms';
+import { NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { NbButtonModule, NbCardModule, NbDialogRef, NbInputModule } from '@nebular/theme';
 import { TranslatePipe } from '@ngx-translate/core';
 import {
@@ -28,19 +28,19 @@ export const everPlatformProfileUrl = (handle: string): string => `https://ever.
 @Component({
 	selector: 'ngx-ever-connect-check-dialog',
 	changeDetection: ChangeDetectionStrategy.OnPush,
-	imports: [FormsModule, NbButtonModule, NbCardModule, NbInputModule, TranslatePipe],
+	imports: [ReactiveFormsModule, NbButtonModule, NbCardModule, NbInputModule, TranslatePipe],
 	template: `
 		<nb-card class="check-dialog" data-test="check-dialog">
 			<nb-card-header>{{ 'EVER_CONNECT.LOOKUP.TITLE' | translate }}</nb-card-header>
-			<nb-card-body>
+			<nb-card-body [formGroup]="form">
 				<p class="hint">{{ 'EVER_CONNECT.LOOKUP.WHAT_IS_SENT' | translate }}</p>
 				<label class="field">
 					<span>{{ 'EVER_CONNECT.LOOKUP.EMAIL' | translate }}</span>
-					<input nbInput fullWidth type="email" data-test="email" name="email" [(ngModel)]="email" />
+					<input nbInput fullWidth type="email" data-test="email" name="email" formControlName="email" />
 				</label>
 				<label class="field">
 					<span>{{ 'EVER_CONNECT.LOOKUP.VAT' | translate }}</span>
-					<input nbInput fullWidth data-test="vat" name="vat" [(ngModel)]="vat" />
+					<input nbInput fullWidth data-test="vat" name="vat" formControlName="vat" />
 					@if (vatSuggested) {
 						<small class="hint" data-test="vat-suggested">{{
 							'EVER_CONNECT.LOOKUP.VAT_SUGGESTED' | translate
@@ -49,15 +49,21 @@ export const everPlatformProfileUrl = (handle: string): string => `https://ever.
 				</label>
 				<label class="field">
 					<span>{{ 'EVER_CONNECT.LOOKUP.REGISTRATION' | translate }}</span>
-					<input nbInput fullWidth data-test="registration" name="registration" [(ngModel)]="registration" />
+					<input
+						nbInput
+						fullWidth
+						data-test="registration"
+						name="registration"
+						formControlName="registration"
+					/>
 				</label>
 				<label class="field">
 					<span>{{ 'EVER_CONNECT.LOOKUP.COUNTRY' | translate }}</span>
-					<input nbInput data-test="country" name="country" maxlength="2" [(ngModel)]="country" />
+					<input nbInput data-test="country" name="country" maxlength="2" formControlName="country" />
 				</label>
-				@if (rows.length) {
+				@if (rows().length) {
 					<ul class="results" data-test="results">
-						@for (row of rows; track $index) {
+						@for (row of rows(); track $index) {
 							<li [attr.data-test]="'result-' + row.kind">
 								<strong>{{ 'EVER_CONNECT.LOOKUP.KIND.' + row.kind | translate }}:</strong>
 								@switch (row.result.status) {
@@ -93,8 +99,8 @@ export const everPlatformProfileUrl = (handle: string): string => `https://ever.
 						}
 					</ul>
 				}
-				@if (error) {
-					<p class="error" data-test="error">{{ error | translate: errorParams }}</p>
+				@if (error(); as message) {
+					<p class="error" data-test="error">{{ message | translate: errorParams() }}</p>
 				}
 			</nb-card-body>
 			<nb-card-footer class="actions">
@@ -106,7 +112,7 @@ export const everPlatformProfileUrl = (handle: string): string => `https://ever.
 					status="primary"
 					type="button"
 					data-test="check"
-					[disabled]="busy || !hasInput()"
+					[disabled]="busy() || !hasInput()"
 					(click)="check()"
 				>
 					{{ 'EVER_CONNECT.LOOKUP.CHECK' | translate }}
@@ -150,81 +156,101 @@ export const everPlatformProfileUrl = (handle: string): string => `https://ever.
 })
 export class CheckOnEverPlatformDialogComponent {
 	private readonly api = inject(EverConnectUiService);
-	private readonly cdr = inject(ChangeDetectorRef);
 	private readonly destroyRef = inject(DestroyRef);
 	private readonly ref = inject(NbDialogRef, {
 		optional: true
 	}) as NbDialogRef<CheckOnEverPlatformDialogComponent> | null;
 
+	/** What is checked: the fields of the dialog, prefilled from the dialog's context. */
+	protected readonly form = inject(NonNullableFormBuilder).group({
+		email: '',
+		vat: '',
+		registration: '',
+		country: ''
+	});
+
+	// The dialog's context: `NbDialogService` assigns these onto the instance (signal inputs cannot
+	// take that). The prefilled values go into the form, where they are edited.
 	@Input({ required: true }) organizationId!: string;
-	@Input() email = '';
-	@Input() vat = '';
-	@Input() registration = '';
-	@Input() country = '';
+	@Input() set email(value: string | null | undefined) {
+		this.form.controls.email.setValue(value ?? '');
+	}
+	@Input() set vat(value: string | null | undefined) {
+		this.form.controls.vat.setValue(value ?? '');
+	}
+	@Input() set registration(value: string | null | undefined) {
+		this.form.controls.registration.setValue(value ?? '');
+	}
+	@Input() set country(value: string | null | undefined) {
+		this.form.controls.country.setValue(value ?? '');
+	}
 	/** The VAT field holds a suggestion read from the contact's fiscal information. */
 	@Input() vatSuggested = false;
 
-	rows: CheckRow[] = [];
-	busy = false;
-	error: string | null = null;
-	errorParams: Record<string, unknown> = {};
+	protected readonly rows = signal<CheckRow[]>([]);
+	protected readonly busy = signal(false);
+	protected readonly error = signal<string | null>(null);
+	protected readonly errorParams = signal<Record<string, unknown>>({});
 
-	readonly profileUrl = (handle?: string) => everPlatformProfileUrl(handle ?? '');
+	protected readonly profileUrl = (handle?: string) => everPlatformProfileUrl(handle ?? '');
 
-	hasInput(): boolean {
-		return [this.email, this.vat, this.registration].some((value) => (value ?? '').trim().length > 0);
+	protected hasInput(): boolean {
+		const { email, vat, registration } = this.form.getRawValue();
+		return [email, vat, registration].some((value) => value.trim().length > 0);
 	}
 
 	/** The identifiers typed, in a fixed order; the country goes with the VAT and registration numbers. */
-	items(): EverConnectLookupItem[] {
-		const country = (this.country ?? '').trim().toUpperCase() || null;
+	private items(): EverConnectLookupItem[] {
+		const value = this.form.getRawValue();
+		const email = value.email.trim();
+		const vat = value.vat.trim();
+		const registration = value.registration.trim();
+		const country = value.country.trim().toUpperCase() || null;
 		const items: EverConnectLookupItem[] = [];
-		if ((this.email ?? '').trim()) items.push({ kind: 'email', value: this.email.trim() });
-		if ((this.vat ?? '').trim()) items.push({ kind: 'vat', value: this.vat.trim(), country });
-		if ((this.registration ?? '').trim()) {
-			items.push({ kind: 'registration', value: this.registration.trim(), country });
-		}
+		if (email) items.push({ kind: 'email', value: email });
+		if (vat) items.push({ kind: 'vat', value: vat, country });
+		if (registration) items.push({ kind: 'registration', value: registration, country });
 		return items;
 	}
 
-	check(): void {
+	protected check(): void {
 		const items = this.items();
-		if (!items.length || this.busy) return;
-		this.busy = true;
-		this.error = null;
+		if (!items.length || this.busy()) return;
+		this.busy.set(true);
+		this.error.set(null);
 		this.api
 			.lookup(this.organizationId, items)
 			.pipe(takeUntilDestroyed(this.destroyRef))
 			.subscribe({
 				next: (answer) => {
-					this.rows = items.map((item, index) => ({
-						kind: item.kind,
-						result: answer.items[index] ?? { kind: item.kind, status: 'none' }
-					}));
-					this.busy = false;
-					this.cdr.markForCheck();
+					this.rows.set(
+						items.map((item, index) => ({
+							kind: item.kind,
+							result: answer.items[index] ?? { kind: item.kind, status: 'none' }
+						}))
+					);
+					this.busy.set(false);
 				},
 				error: (error: HttpErrorResponse) => {
-					this.busy = false;
-					this.rows = [];
+					this.busy.set(false);
+					this.rows.set([]);
 					const code = (error?.error as { code?: string } | null)?.code ?? null;
 					if (error?.status === 429) {
 						const seconds = Number(error.headers?.get?.('Retry-After')) || 60;
-						this.error = 'EVER_CONNECT.LOOKUP.ERRORS.rate_limited';
-						this.errorParams = { seconds };
+						this.error.set('EVER_CONNECT.LOOKUP.ERRORS.rate_limited');
+						this.errorParams.set({ seconds });
 					} else if (code === 'integration_disabled' || code === 'entitlement_required') {
-						this.error = `EVER_CONNECT.LOOKUP.ERRORS.${code}`;
-						this.errorParams = {};
+						this.error.set(`EVER_CONNECT.LOOKUP.ERRORS.${code}`);
+						this.errorParams.set({});
 					} else {
-						this.error = 'EVER_CONNECT.LOOKUP.ERRORS.generic';
-						this.errorParams = {};
+						this.error.set('EVER_CONNECT.LOOKUP.ERRORS.generic');
+						this.errorParams.set({});
 					}
-					this.cdr.markForCheck();
 				}
 			});
 	}
 
-	close(): void {
+	protected close(): void {
 		this.ref?.close();
 	}
 }

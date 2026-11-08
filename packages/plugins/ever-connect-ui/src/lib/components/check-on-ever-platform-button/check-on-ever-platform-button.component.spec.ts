@@ -1,9 +1,11 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
-import { NbDialogService } from '@nebular/theme';
-import { BehaviorSubject, of, throwError } from 'rxjs';
+import { NbDialogService, NbToggleComponent } from '@nebular/theme';
+import { TranslateService } from '@ngx-translate/core';
+import { BehaviorSubject, of, Subject, throwError } from 'rxjs';
 import { PermissionsEnum } from '@gauzy/contracts';
 import { OrganizationContactService, Store } from '@gauzy/ui-core/core';
 import { CHECK_ON_EVER_PLATFORM_EXTENSION, CONTACT_VIEW_ACTIONS_SLOT } from '../../ever-connect-ui.plugin';
@@ -197,14 +199,28 @@ describe('CheckOnEverPlatformDialogComponent', () => {
 			providers: [{ provide: EverConnectUiService, useValue: api }]
 		});
 		const fixture = TestBed.createComponent(CheckOnEverPlatformDialogComponent);
+		// As NbDialogService does with the dialog's context: assigned onto the instance before it renders.
 		Object.assign(fixture.componentInstance, { organizationId: ORGANIZATION.id, ...inputs });
 		fixture.detectChanges();
 		const el: HTMLElement = fixture.nativeElement;
+		const find = (test: string) => el.querySelector(`[data-test="${test}"]`);
 		return {
 			fixture,
-			component: fixture.componentInstance,
 			el,
-			find: (test: string) => el.querySelector(`[data-test="${test}"]`)
+			find,
+			field: (test: string) => find(test) as HTMLInputElement,
+			/** Types into a field, as the browser does it. */
+			type: (test: string, value: string) => {
+				const input = find(test) as HTMLInputElement;
+				input.value = value;
+				input.dispatchEvent(new Event('input'));
+				fixture.detectChanges();
+			},
+			/** The Check button. */
+			check: () => {
+				(find('check') as HTMLButtonElement).click();
+				fixture.detectChanges();
+			}
 		};
 	}
 
@@ -220,14 +236,17 @@ describe('CheckOnEverPlatformDialogComponent', () => {
 				]
 			})
 		);
-		const { component, fixture, find } = render({
+		const { check, field, find } = render({
 			email: 'billing@client.example',
 			vat: 'BG123456789',
 			registration: '42',
 			country: 'bg'
 		});
-		component.check();
-		fixture.detectChanges();
+		expect(field('email').value).toBe('billing@client.example');
+		expect(field('vat').value).toBe('BG123456789');
+		expect(field('registration').value).toBe('42');
+		expect(field('country').value).toBe('bg');
+		check();
 		expect(api.lookup).toHaveBeenCalledWith(ORGANIZATION.id, [
 			{ kind: 'email', value: 'billing@client.example' },
 			{ kind: 'vat', value: 'BG123456789', country: 'BG' },
@@ -239,23 +258,43 @@ describe('CheckOnEverPlatformDialogComponent', () => {
 		expect(find('cannot-be-checked')).not.toBeNull();
 	});
 
-	it('nothing entered: nothing is checked', () => {
-		const { component } = render();
-		expect(component.hasInput()).toBe(false);
-		component.check();
+	it('what is typed in the fields is what is checked (the prefilled values can be edited)', () => {
+		api.lookup.mockReturnValue(of({ items: [{ kind: 'vat', status: 'none' }] }));
+		const { check, type } = render({ email: 'billing@client.example', vat: 'BG 123 456 789', country: 'BG' });
+		type('email', '  ');
+		type('vat', ' DE123456789 ');
+		type('country', 'de');
+		check();
+		expect(api.lookup).toHaveBeenCalledWith(ORGANIZATION.id, [
+			{ kind: 'vat', value: 'DE123456789', country: 'DE' }
+		]);
+	});
+
+	it('nothing entered: the check cannot be started and nothing is checked', () => {
+		const { check, find, type } = render();
+		const button = () => find('check') as HTMLButtonElement;
+		expect(button().disabled).toBe(true);
+		check();
 		expect(api.lookup).not.toHaveBeenCalled();
+		type('registration', '42');
+		expect(button().disabled).toBe(false);
+		type('registration', ' ');
+		expect(button().disabled).toBe(true);
 	});
 
 	it('too many checks: says when to try again', () => {
 		api.lookup.mockReturnValue(
 			throwError(() => ({ status: 429, error: { code: 'rate_limited' }, headers: { get: () => '17' } }))
 		);
-		const { component, fixture, find } = render({ email: 'a@b.example' });
-		component.check();
-		fixture.detectChanges();
-		expect(component.error).toBe('EVER_CONNECT.LOOKUP.ERRORS.rate_limited');
-		expect(component.errorParams).toEqual({ seconds: 17 });
-		expect(find('error')).not.toBeNull();
+		const { check, find } = render({ email: 'a@b.example' });
+		const translate = TestBed.inject(TranslateService);
+		translate.setTranslation('en', {
+			EVER_CONNECT: { LOOKUP: { ERRORS: { rate_limited: 'Try again in {{seconds}} s' } } }
+		});
+		translate.use('en');
+		check();
+		expect(find('error')?.textContent?.trim()).toBe('Try again in 17 s');
+		expect(find('results')).toBeNull();
 	});
 });
 
@@ -283,7 +322,7 @@ describe('the check asks this installation only', () => {
 describe('LookupOptionsComponent', () => {
 	const api = { setLookupAutoCheck: jest.fn() };
 
-	function render(canEdit: boolean) {
+	function render(canEdit: boolean, autoCheck = false) {
 		TestBed.configureTestingModule({
 			imports: [LookupOptionsComponent],
 			providers: [{ provide: EverConnectUiService, useValue: api }]
@@ -291,36 +330,100 @@ describe('LookupOptionsComponent', () => {
 		const fixture = TestBed.createComponent(LookupOptionsComponent);
 		fixture.componentRef.setInput('organizationId', ORGANIZATION.id);
 		fixture.componentRef.setInput('canEdit', canEdit);
+		fixture.componentRef.setInput('autoCheck', autoCheck);
+		const saved: boolean[] = [];
+		fixture.componentInstance.autoCheckChange.subscribe((value) => saved.push(value));
 		fixture.detectChanges();
-		return fixture.componentInstance;
+		const el: HTMLElement = fixture.nativeElement;
+		const checkbox = () => el.querySelector('[data-test="auto-check"] input[type="checkbox"]') as HTMLInputElement;
+		const toggle = () =>
+			fixture.debugElement.query(By.directive(NbToggleComponent)).componentInstance as NbToggleComponent;
+		return {
+			fixture,
+			saved,
+			checkbox,
+			toggle,
+			/** What the toggle shows: its native checkbox, which must agree with the toggle's own state. */
+			shown: () => {
+				expect(toggle().checked).toBe(checkbox().checked);
+				return checkbox().checked;
+			},
+			failed: () => el.querySelector('[data-test="auto-check-failed"]') !== null,
+			/** A click on the toggle, as the browser does it: the checkbox changes, then its change event. */
+			click: () => {
+				checkbox().click();
+				fixture.detectChanges();
+			}
+		};
 	}
 
 	beforeEach(() => jest.resetAllMocks());
 
 	it('off by default; an administrator who may change integrations turns it on', () => {
 		api.setLookupAutoCheck.mockReturnValue(of({ auto_check: true }));
-		const component = render(true);
-		expect(component.autoCheck).toBe(false);
-		component.set(true);
+		const { click, saved, shown } = render(true);
+		expect(shown()).toBe(false);
+		click();
 		expect(api.setLookupAutoCheck).toHaveBeenCalledWith(ORGANIZATION.id, true);
-		expect(component.autoCheck).toBe(true);
+		expect(shown()).toBe(true);
+		expect(saved).toEqual([true]);
 	});
 
-	it('a save that fails puts the toggle back, and the next click is taken', () => {
-		api.setLookupAutoCheck.mockReturnValueOnce(throwError(() => ({ status: 502 })));
-		const component = render(true);
-		component.set(true);
-		expect(component.autoCheck).toBe(false);
-		expect(component.failed).toBe(true);
+	it.each([
+		['turned on', false],
+		['turned off', true]
+	])(
+		'%s, a save that fails at once puts the toggle and its checkbox back, and the next click is taken',
+		(_label, before) => {
+			api.setLookupAutoCheck.mockReturnValueOnce(throwError(() => ({ status: 502 })));
+			const { click, failed, saved, shown } = render(true, before);
+			expect(shown()).toBe(before);
+			click();
+			expect(api.setLookupAutoCheck).toHaveBeenCalledWith(ORGANIZATION.id, !before);
+			expect(shown()).toBe(before);
+			expect(failed()).toBe(true);
+			expect(saved).toEqual([]);
+			api.setLookupAutoCheck.mockReturnValueOnce(of({ auto_check: !before }));
+			click();
+			expect(api.setLookupAutoCheck).toHaveBeenCalledTimes(2);
+			expect(shown()).toBe(!before);
+			expect(failed()).toBe(false);
+			expect(saved).toEqual([!before]);
+		}
+	);
+
+	it('a save that fails later shows the value asked for while it is saved, then puts the toggle back', () => {
+		const answer = new Subject<{ auto_check: boolean }>();
+		api.setLookupAutoCheck.mockReturnValueOnce(answer);
+		const { checkbox, click, failed, fixture, saved, shown } = render(true);
+		click();
+		expect(shown()).toBe(true);
+		expect(checkbox().disabled).toBe(true);
+		answer.error({ status: 502 });
+		fixture.detectChanges();
+		expect(shown()).toBe(false);
+		expect(checkbox().disabled).toBe(false);
+		expect(failed()).toBe(true);
 		api.setLookupAutoCheck.mockReturnValueOnce(of({ auto_check: true }));
-		component.set(true);
+		click();
 		expect(api.setLookupAutoCheck).toHaveBeenCalledTimes(2);
-		expect(component.autoCheck).toBe(true);
+		expect(shown()).toBe(true);
+		expect(saved).toEqual([true]);
+	});
+
+	it('the saved value follows the integrations list', () => {
+		const { fixture, shown } = render(true);
+		fixture.componentRef.setInput('autoCheck', true);
+		fixture.detectChanges();
+		expect(shown()).toBe(true);
 	});
 
 	it('without INTEGRATION_EDIT nothing is sent', () => {
-		const component = render(false);
-		component.set(true);
+		const { checkbox, click, toggle } = render(false);
+		expect(checkbox().disabled).toBe(true);
+		click();
+		// Even a change that reaches the component (the toggle is disabled) is not saved.
+		toggle().checkedChange.emit(true);
 		expect(api.setLookupAutoCheck).not.toHaveBeenCalled();
 	});
 });
