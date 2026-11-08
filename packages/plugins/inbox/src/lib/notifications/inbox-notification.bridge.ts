@@ -209,6 +209,11 @@ export class InboxNotificationBridge implements OnModuleInit, IInboxSourceHandle
 		if (item?.externalSource !== INBOX_NOTIFICATION_EXTERNAL_SOURCE || !item.externalId || !item.tenantId) {
 			return;
 		}
+		// Only read and archive states reach the notification rows: a snooze or done change mirrors nothing, so it
+		// takes no entry lock (on MySQL a contended GET_LOCK would refuse a change that writes nothing).
+		if (typeof change?.isRead !== 'boolean' && typeof change?.isArchived !== 'boolean') {
+			return;
+		}
 		await this.withEntryRows(item.tenantId, item.id as ID, recipient?.userId as ID, (ids) =>
 			this.mirrorToNotifications(item.tenantId as ID, ids, change, recipient)
 		);
