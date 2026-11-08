@@ -182,6 +182,21 @@ describe('ManualTimeComponent', () => {
 		expect(component.hasMore).toBe(false);
 	});
 
+	it('works out the overview figures from the loaded entries', () => {
+		component.summary = { duration: 9000, entries: 4, added: 3, edited: 1, employees: 2 };
+
+		expect(component.averagePerEntry).toBe(2250);
+		expect(component.averagePerEmployee).toBe(4500);
+		expect(component.shareOf(component.summary.added)).toBe(75);
+		expect(component.shareOf(component.summary.edited)).toBe(25);
+	});
+
+	it('shows zeroes, not NaN, in the overview of an empty report', () => {
+		expect(component.averagePerEntry).toBe(0);
+		expect(component.averagePerEmployee).toBe(0);
+		expect(component.shareOf(0)).toBe(0);
+	});
+
 	it('drops the answer to a request that a newer one replaced', async () => {
 		let answerFirst: (logs: ITimeLog[]) => void;
 		getTimeLogs
