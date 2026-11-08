@@ -6,7 +6,9 @@ import {
 	EMPTY_MANUAL_TIME_SUMMARY,
 	groupManualTimeLogsByDay,
 	isEditedLog,
-	summarizeManualTimeLogs
+	projectLinkOf,
+	summarizeManualTimeLogs,
+	taskLinkOf
 } from './manual-time-report';
 
 const log = (overrides: Partial<ITimeLog>): ITimeLog =>
@@ -72,6 +74,20 @@ describe('manual time report', () => {
 
 		it('is empty for no entries', () => {
 			expect(summarizeManualTimeLogs([])).toBe(EMPTY_MANUAL_TIME_SUMMARY);
+		});
+	});
+
+	describe('projectLinkOf / taskLinkOf', () => {
+		it("link to the project's and the task's own pages", () => {
+			const entry = log({ project: { id: 'p1' } as ITimeLog['project'], taskId: 't1' });
+
+			expect(projectLinkOf(entry)).toEqual(['/pages/organization/projects/view', 'p1']);
+			expect(taskLinkOf(entry)).toEqual(['/pages/tasks/view', 't1']);
+		});
+
+		it('link nowhere for an entry without a project or a task', () => {
+			expect(projectLinkOf(log({}))).toBeNull();
+			expect(taskLinkOf(null)).toBeNull();
 		});
 	});
 
