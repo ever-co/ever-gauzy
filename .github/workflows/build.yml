@@ -686,7 +686,12 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          ids=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/artifacts"             --jq '.artifacts[] | select(.name=="build-node-modules") | .id')
+          # A run with no GitHub Actions run behind it (the in-cluster ci-builds runner) has no artifact
+          # list to read: the listing answers 404 and there is nothing of this run to delete.
+          if ! ids=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/artifacts"             --jq '.artifacts[] | select(.name=="build-node-modules") | .id' 2>/dev/null); then
+            echo "::notice::no artifact list for run $GITHUB_RUN_ID (not a GitHub Actions run?) - nothing to delete"
+            exit 0
+          fi
           if [ -z "$ids" ]; then echo "nothing to delete"; exit 0; fi
           for id in $ids; do
             if gh api --method DELETE "repos/$GITHUB_REPOSITORY/actions/artifacts/$id" >/dev/null 2>&1; then
