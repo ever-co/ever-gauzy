@@ -276,17 +276,24 @@ export function kindLabelOf(type: string | null | undefined): string {
 	return (type && INBOX_DELIVERY_KIND_LABELS[type]) || 'Notification';
 }
 
+/** A URL without its trailing slashes, in one pass (`/\/+$/` is quadratic on a long run of slashes). */
+export function withoutTrailingSlashes(value: string): string {
+	let end = value.length;
+	while (end > 0 && value.charCodeAt(end - 1) === 47) end--;
+	return value.slice(0, end);
+}
+
 /** The entry in the Inbox page, and the settings page, under the client's base URL. */
 export function inboxItemLinkOf(host: string, itemId: ID): string {
-	return `${host.replace(/\/+$/, '')}/${INBOX_DELIVERY_INBOX_PATH}?item=${encodeURIComponent(String(itemId))}`;
+	return `${withoutTrailingSlashes(host)}/${INBOX_DELIVERY_INBOX_PATH}?item=${encodeURIComponent(String(itemId))}`;
 }
 
 export function inboxLinkOf(host: string): string {
-	return `${host.replace(/\/+$/, '')}/${INBOX_DELIVERY_INBOX_PATH}`;
+	return `${withoutTrailingSlashes(host)}/${INBOX_DELIVERY_INBOX_PATH}`;
 }
 
 export function notificationSettingsLinkOf(host: string): string {
-	return `${host.replace(/\/+$/, '')}/${INBOX_DELIVERY_SETTINGS_PATH}`;
+	return `${withoutTrailingSlashes(host)}/${INBOX_DELIVERY_SETTINGS_PATH}`;
 }
 
 /** The metadata of an entry, stored as an object or as its JSON. */
@@ -303,10 +310,13 @@ export function metadataOf(raw: unknown): Record<string, unknown> {
 	return {};
 }
 
-/** A body cut for an email line (the entry's own text is in the Inbox). */
+/**
+ * A body cut for an email line (the entry's own text is in the Inbox). A tag stops at the next `<`, so a body of many
+ * `<` without a `>` is read in linear time (`<[^>]+>` was quadratic on it).
+ */
 export function excerptOf(body: string | null | undefined, max = 280): string {
 	const text = String(body ?? '')
-		.replace(/<[^>]+>/g, ' ')
+		.replace(/<[^<>]+>/g, ' ')
 		.replace(/\s+/g, ' ')
 		.trim();
 	return text.length > max ? `${text.slice(0, max - 1)}…` : text;

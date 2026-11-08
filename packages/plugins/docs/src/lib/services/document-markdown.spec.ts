@@ -227,6 +227,47 @@ describe('mergeMarkdownUpdate', () => {
 	});
 });
 
+describe('link and image titles (CodeQL js/incomplete-sanitization)', () => {
+	it('escapes backslashes before quotes, so a title ending in a backslash still closes', () => {
+		const doc: IDocNode = {
+			type: 'doc',
+			content: [
+				paragraph(
+					text('l', [{ type: 'link', attrs: { href: 'https://x.test', title: 'a\\' } }]),
+					{ type: 'image', attrs: { src: 'https://cdn.test/p.png', alt: 'p', title: 'say "hi" \\' } }
+				)
+			]
+		};
+		const markdown = documentToMarkdown(doc);
+		expect(markdown).toContain('[l](https://x.test "a\\\\")');
+		expect(markdown).toContain('![p](https://cdn.test/p.png "say \\"hi\\" \\\\")');
+	});
+});
+
+describe('table cells (CodeQL js/incomplete-sanitization on the cell `|` escape)', () => {
+	// A cell's Markdown has its backslashes escaped already (escapeText writes each as `\\`), and GFM takes the `\` off a
+	// `\|` before it reads the cell's inline Markdown. So the cell escapes its pipes only: escaping its backslashes again
+	// would double them, and the text would read back with two backslashes for each one it had.
+	it('escapes only the pipes, so a text with backslashes and pipes reads back the same', () => {
+		const value = 'C:\\dir | a\\|b \\';
+		const doc: IDocNode = {
+			type: 'doc',
+			content: [
+				{
+					type: 'table',
+					content: [
+						{ type: 'tableRow', content: [{ type: 'tableHeader', content: [paragraph(text('Path'))] }] },
+						{ type: 'tableRow', content: [{ type: 'tableCell', content: [paragraph(text(value))] }] }
+					]
+				}
+			]
+		};
+		const markdown = documentToMarkdown(doc);
+		expect(markdown).toContain('| C:\\\\dir \\| a\\\\\\|b \\\\ |');
+		expect(markdownToDocument(markdown).content?.[0]?.content?.[1]?.content?.[0]).toEqual({ type: 'tableCell', content: [paragraph(text(value))] });
+	});
+});
+
 describe('names', () => {
 	it('slugs a page name and reads the id of a raw-file URL', () => {
 		expect(markdownFileNameOf('Q4 Plan — Résumé!')).toBe('q4-plan-resume.md');

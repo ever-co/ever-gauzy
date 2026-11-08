@@ -87,6 +87,7 @@ function markOf(marks: IDocMark[] | undefined, type: string): IDocMark | undefin
 	return marks?.find((mark) => mark.type === type);
 }
 
+/** A text node as Markdown: a code span as it is, other text escaped, then its bold, italic, strike and link marks. */
 function textToMarkdown(node: IDocNode): string {
 	const raw = String(node.text ?? '');
 	if (!raw) return '';
@@ -105,7 +106,7 @@ function textToMarkdown(node: IDocNode): string {
 	if (link) {
 		const href = String(attrsOf(link as IDocNode)['href'] ?? '');
 		const title = attrsOf(link as IDocNode)['title'];
-		text = `[${text}](${href}${title ? ` "${String(title).replace(/"/g, '\\"')}"` : ''})`;
+		text = `[${text}](${href}${title ? ` "${quotedTitle(title)}"` : ''})`;
 	}
 	return text;
 }
@@ -138,13 +139,19 @@ function inlineToMarkdown(node: IDocNode, options: IMarkdownOptions): string {
 		.join('');
 }
 
+/** An image as Markdown (`![alt](url "title")`); a file of the Documents API (raw-file URL or `documentId`) gets `linkOfFile`'s link. */
 function imageToMarkdown(node: IDocNode, options: IMarkdownOptions): string {
 	const attrs = attrsOf(node);
 	const src = String(attrs['src'] ?? '');
 	const fileId = rawFileIdOf(src) ?? (typeof attrs['documentId'] === 'string' ? (attrs['documentId'] as string) : null);
 	const url = fileId ? (options.linkOfFile ?? DEFAULT_FILE_LINK)(fileId, src) : src;
 	const title = attrs['title'];
-	return `![${escapeText(String(attrs['alt'] ?? ''))}](${url}${title ? ` "${String(title).replace(/"/g, '\\"')}"` : ''})`;
+	return `![${escapeText(String(attrs['alt'] ?? ''))}](${url}${title ? ` "${quotedTitle(title)}"` : ''})`;
+}
+
+/** A link or image title for `"…"`: its backslashes first, then its quotes (a title ending in `\` kept the quote open). */
+function quotedTitle(title: unknown): string {
+	return String(title).replace(/\\/g, '\\\\').replace(/"/g, '\\"');
 }
 
 function indentLines(text: string, prefix: string, first = prefix): string {

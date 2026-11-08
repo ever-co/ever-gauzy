@@ -295,12 +295,18 @@ export class TagsColorInputComponent extends PictureNameTagsComponent implements
 		return labelWidth;
 	}
 
+	/**
+	 * Width of a tag's chip, measured on a probe badge with the classes the chip renders with, plus its 10px spacing.
+	 *
+	 * @param badgeText the tag's name, as the chip shows it
+	 */
 	private getTagWidth(badgeText: string) {
 		const container = this.el.nativeElement;
 		const testBadge = this.renderer.createElement('nb-badge');
 
-		// Set badge text
-		this.renderer.setProperty(testBadge, 'innerHTML', badgeText);
+		// Set badge text. As text, never as HTML: a tag's name is whatever a member typed, and the chip this measures
+		// shows it as text (`[text]="item.name"`).
+		this.renderer.setProperty(testBadge, 'textContent', badgeText);
 
 		// Append test badge to the container (not in DOM)
 		this.renderer.appendChild(container, testBadge);

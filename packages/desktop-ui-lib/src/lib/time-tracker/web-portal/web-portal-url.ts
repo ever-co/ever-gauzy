@@ -19,8 +19,15 @@ export function isHttpUrl(url: string | null | undefined): boolean {
  * `/#`, a local server's web UI address (`http://127.0.0.1:4200`) does not.
  */
 export function withHashRouting(url: string): string {
-	const base = url.trim().replace(/\/+$/, '');
+	const base = withoutTrailingSlashes(url.trim());
 	return base.includes('#') ? base : `${base}/#`;
+}
+
+/** A URL without its trailing slashes, in one pass (`/\/+$/` is quadratic on a long run of slashes). */
+function withoutTrailingSlashes(value: string): string {
+	let end = value.length;
+	while (end > 0 && value.charCodeAt(end - 1) === 47) end--;
+	return value.slice(0, end);
 }
 
 /** Whether two http(s) URLs share their origin (scheme, host and port). */
