@@ -37,6 +37,7 @@ import { Reaction, RequestContext, TaskCreateCommand, TaskService } from '@gauzy
 import { chatFileOf, chatSqlDialectOf, ChatSqlDialect, IChatFileDocument, IChatFileLink, jsonListHasColumn, linkMetadataOf } from '../chat-files';
 import { mentionedEmployees, parseMentions } from '../chat-mentions';
 import { taskDescriptionOf, taskMentionsIn, taskTitleOf } from '../chat-task-references';
+import { taskTeamsOf } from '../chat-task-team';
 import { CHAT_MAX_PAGE_SIZE, CHAT_PAGE_SIZE, CHAT_READ_RESTORE_TTL_MS } from '../chat.constants';
 import { ChatConversation } from '../entities/chat-conversation.entity';
 import { ChatMember } from '../entities/chat-member.entity';
@@ -833,6 +834,12 @@ export class ChatMessageService {
 				.findOne({ select: { id: true }, where: { id: input.projectId, tenantId: caller.tenantId, organizationId } } as never);
 			if (!project) throw new NotFoundException('The project was not found');
 		}
+		// A team outside the caller's tenant or the conversation's organization is refused here, before the task exists.
+		const teams = await taskTeamsOf(
+			(where) => this.dataSource.getRepository<ObjectLiteral>('OrganizationTeam').findOne({ select: { id: true }, where } as never) as Promise<{ id: ID } | null>,
+			{ tenantId: caller.tenantId, organizationId },
+			input.organizationTeamId
+		);
 		const title = (input.title ?? '').trim() || taskTitleOf(message.body);
 		if (!title) throw new BadRequestException('The message has no text to title the task with.');
 		const members = await this.assignees(caller.tenantId, organizationId, input.assigneeEmployeeIds ?? []);
@@ -841,6 +848,8 @@ export class ChatMessageService {
 				tenantId: caller.tenantId,
 				organizationId,
 				projectId: input.projectId ?? null,
+				// The team's lists show the task (the clients read a team's tasks through this relation).
+				teams,
 				title,
 				description: taskDescriptionOf(message.body),
 				status: TaskStatusEnum.OPEN,

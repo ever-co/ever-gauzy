@@ -329,6 +329,11 @@ export class ChatCreateTaskDTO implements IChatCreateTaskInput {
 	@IsUUID()
 	projectId?: ID;
 
+	@ApiPropertyOptional({ type: () => String, description: "The team the task belongs to (the team's lists show it)." })
+	@IsOptional()
+	@IsUUID()
+	organizationTeamId?: ID;
+
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsString()

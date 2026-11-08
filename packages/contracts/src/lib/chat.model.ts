@@ -382,6 +382,8 @@ export interface IChatSearchResult {
 
 export interface IChatCreateTaskInput {
 	projectId?: ID;
+	/** The team the task belongs to, so the team's lists show it: a team of the conversation's organization. */
+	organizationTeamId?: ID;
 	/** The task's title; the message's first line when left out. */
 	title?: string;
 	assigneeEmployeeIds?: ID[];
