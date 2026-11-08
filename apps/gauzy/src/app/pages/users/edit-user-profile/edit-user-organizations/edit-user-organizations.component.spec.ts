@@ -246,6 +246,42 @@ describe('EditUserOrganizationsComponent add dialog', () => {
 		expect(create).not.toHaveBeenCalled();
 	});
 
+	it.each([
+		['before the next user’s memberships land', new Map<string, string>()],
+		['after the next user’s memberships land', new Map([['o-3', 'membership-of-user-2']])]
+	])(
+		'keeps reactivating and naming the dialog’s user when the page moves to another user mid-save (%s)',
+		async (_moment, nextUsersInactive) => {
+			const firstJoin = new Subject<any>();
+			const create = jest.fn().mockReturnValueOnce(firstJoin).mockReturnValue(of({}));
+			const { component, create: joins, setUserAsActive } = tabWith(create);
+			component.inactiveMemberships = new Map([['o-3', 'membership-of-user-1']]);
+			component.openAdd();
+			await settle();
+			component.toggleOption('o-2');
+			component.toggleOption('o-3');
+
+			const saving = component.addSelected();
+			// What the route change, then the next user's load, does while the first join is on its way.
+			component.paramId = 'user-2';
+			component['_loadSeq']++;
+			component.selectedUserId = null;
+			component.organizations = [];
+			component.inactiveMemberships = nextUsersInactive;
+			component.selectedUserName = 'Bo Lee';
+			firstJoin.next({});
+			firstJoin.complete();
+			await saving;
+
+			expect(setUserAsActive.mock.calls).toEqual([['membership-of-user-1']]);
+			expect(joins.mock.calls.map(([input]) => [input.userId, input.organizationId])).toEqual([['user-1', 'o-2']]);
+			expect(component.getTranslation).toHaveBeenCalledWith('NOTES.ORGANIZATIONS.ADD_NEW_USER_TO_ORGANIZATION', {
+				username: 'Ann Brown',
+				orgname: 'ORGANIZATIONS_PAGE.EDIT.ADDED_TO_ORGANIZATION'
+			});
+		}
+	);
+
 	it('does not close while saving, and closes when the tab is left', () => {
 		const { component, refs } = tabWith();
 		component.openAdd();
