@@ -22,6 +22,13 @@ type PlatformChangelogRow = readonly [string, string, string, string, string, st
 export class SeedPlatformChangelogContent1791000005610 implements MigrationInterface {
 	name = 'SeedPlatformChangelogContent1791000005610';
 
+	/**
+	 * The MySQL named lock of this migration. Postgres runs are serialised by the data source's migration lock and
+	 * SQLite has one process; on MySQL two API processes booting together would both find an entry missing and add
+	 * it twice, so the checks and inserts run as one critical section there.
+	 */
+	readonly mysqlLockName = 'gauzy:migration:1791000005610';
+
 	private readonly entries: readonly PlatformChangelogRow[] = [
 		// prettier-ignore
 		['ever-teams', 'gift-outline', "What's new and About", '2026-11-08T00:00:00.000Z', 'Open the gift icon in the header to catch up on Ever Teams updates, and the new About page to see which version of the app and the API you are on.', 'https://ever.team'],
@@ -89,13 +96,15 @@ export class SeedPlatformChangelogContent1791000005610 implements MigrationInter
 					(value) => value
 				);
 			case DatabaseTypeEnum.mysql:
-				return this.seed(
-					queryRunner,
-					(identifier) => `\`${identifier}\``,
-					() => '?',
-					// MySQL DATETIME rejects the trailing 'Z' on older versions
-					(iso) => iso.slice(0, 19).replace('T', ' '),
-					(value) => (value ? 1 : 0)
+				return withMysqlNamedLock(queryRunner, this.mysqlLockName, () =>
+					this.seed(
+						queryRunner,
+						(identifier) => `\`${identifier}\``,
+						() => '?',
+						// MySQL DATETIME rejects the trailing 'Z' on older versions
+						(iso) => iso.slice(0, 19).replace('T', ' '),
+						(value) => (value ? 1 : 0)
+					)
 				);
 			default:
 				throw new Error(`Unsupported database: ${queryRunner.connection.options.type}`);
@@ -150,5 +159,25 @@ export class SeedPlatformChangelogContent1791000005610 implements MigrationInter
 			inserted++;
 		}
 		console.log(chalk.green(`${this.name}: ${inserted} of ${this.entries.length} entries added.`));
+	}
+}
+
+/**
+ * Runs `work` while holding a MySQL named lock (`GET_LOCK`), so that two processes running this migration at once
+ * run its checks and inserts one after the other. The lock is session-level and released in `finally`.
+ */
+async function withMysqlNamedLock(
+	queryRunner: QueryRunner,
+	lockName: string,
+	work: () => Promise<void>
+): Promise<void> {
+	const [row] = await queryRunner.query(`SELECT GET_LOCK(?, 120) AS \`acquired\``, [lockName]);
+	if (Number(row?.acquired) !== 1) {
+		throw new Error(`Could not acquire the MySQL migration lock ${lockName}.`);
+	}
+	try {
+		await work();
+	} finally {
+		await queryRunner.query(`SELECT RELEASE_LOCK(?)`, [lockName]);
 	}
 }

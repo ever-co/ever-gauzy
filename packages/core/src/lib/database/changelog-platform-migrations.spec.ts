@@ -159,3 +159,36 @@ describe('changelog platform column on Postgres and MySQL', () => {
 		]);
 	});
 });
+
+describe('changelog starter entries on MySQL', () => {
+	it('checks and inserts inside a named lock, so two booting processes cannot add an entry twice', async () => {
+		const queries: string[] = [];
+		const queryRunner = {
+			connection: { options: { type: 'mysql' } },
+			hasTable: async () => true,
+			hasColumn: async () => true,
+			query: async (sql: string) => {
+				queries.push(sql.replace(/\s+/g, ' ').trim());
+				return sql.includes('GET_LOCK') ? [{ acquired: 1 }] : [];
+			}
+		} as unknown as QueryRunner;
+		await new SeedPlatformChangelogContent1791000005610().up(queryRunner);
+
+		expect(queries[0]).toBe('SELECT GET_LOCK(?, 120) AS `acquired`');
+		expect(queries[queries.length - 1]).toBe('SELECT RELEASE_LOCK(?)');
+		expect(queries.filter((sql) => sql.startsWith('INSERT INTO `changelog`'))).toHaveLength(18);
+	});
+
+	it('refuses to seed without the lock', async () => {
+		const queryRunner = {
+			connection: { options: { type: 'mysql' } },
+			hasTable: async () => true,
+			hasColumn: async () => true,
+			query: async (sql: string) => (sql.includes('GET_LOCK') ? [{ acquired: 0 }] : [])
+		} as unknown as QueryRunner;
+
+		await expect(new SeedPlatformChangelogContent1791000005610().up(queryRunner)).rejects.toThrow(
+			'Could not acquire the MySQL migration lock gauzy:migration:1791000005610.'
+		);
+	});
+});

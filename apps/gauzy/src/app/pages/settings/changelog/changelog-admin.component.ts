@@ -55,8 +55,17 @@ export class ChangelogAdminComponent implements OnInit {
 	platform: string = DEFAULT_CHANGELOG_PLATFORM;
 
 	sections: IChangelogSection[] = this._sectionsOf(DEFAULT_CHANGELOG_PLATFORM);
-	/** Entries deleted while the page is open, newest first, which restore can bring back. */
+	/**
+	 * Entries deleted while the page is open, newest first, which restore can bring back, each stamped with the
+	 * product it was deleted from (the section shows the current product's only).
+	 */
 	deleted: IChangelog[] = [];
+	/**
+	 * Whether the API keeps entries per product: known once it returns rows (theirs carry a `platform`). An API
+	 * from before products existed ignores the product and returns Gauzy's entries for every query, so the other
+	 * products are turned off rather than listing, and letting the operator change, Gauzy's news under their name.
+	 */
+	platformsSupported: boolean | null = null;
 	loading = false;
 	loadFailed = false;
 	/** The entry a delete or restore is under way for. */
@@ -94,9 +103,20 @@ export class ChangelogAdminComponent implements OnInit {
 			if (sequence !== this._sequence) {
 				return;
 			}
+			const rows = pages.flatMap((page) => page?.items ?? []);
+			if (rows.some((row) => !row.platform)) {
+				this.platformsSupported = false;
+			} else if (rows.length) {
+				this.platformsSupported = true;
+			}
+			// Gauzy's view takes what the API returns (the default product); another product's view shows only rows
+			// that name it, never the Gauzy rows an older API answers with.
+			const isGauzy = this.platform === DEFAULT_CHANGELOG_PLATFORM;
 			this.sections = this.sections.map((section, index) => ({
 				...section,
-				entries: sortChangelogEntries(pages[index]?.items)
+				entries: sortChangelogEntries(
+					(pages[index]?.items ?? []).filter((item) => isGauzy || item.platform === this.platform)
+				)
 			}));
 		} catch {
 			if (sequence === this._sequence) {
@@ -110,9 +130,23 @@ export class ChangelogAdminComponent implements OnInit {
 		}
 	}
 
+	/** The entries deleted from the product shown. */
+	get deletedHere(): IChangelog[] {
+		return this.deleted.filter((entry) => (entry.platform || DEFAULT_CHANGELOG_PLATFORM) === this.platform);
+	}
+
+	/** Whether a product can be picked: Gauzy always; the others once the API is known to keep products apart. */
+	isPlatformAvailable(platform: string): boolean {
+		return platform === DEFAULT_CHANGELOG_PLATFORM || this.platformsSupported !== false;
+	}
+
 	/** Shows another product's entries. */
 	selectPlatform(platform: string): void {
-		if (platform === this.platform || !this.platforms.some(({ key }) => key === platform)) {
+		if (
+			platform === this.platform ||
+			!this.platforms.some(({ key }) => key === platform) ||
+			!this.isPlatformAvailable(platform)
+		) {
 			return;
 		}
 		this.platform = platform;
@@ -122,6 +156,9 @@ export class ChangelogAdminComponent implements OnInit {
 
 	/** Adds an entry of the section's kind, for the product shown. */
 	add(section: IChangelogSection): void {
+		if (!this.isPlatformAvailable(this.platform)) {
+			return;
+		}
 		this._openDialog({ isFeature: section.isFeature, platform: this.platform });
 	}
 
@@ -134,6 +171,8 @@ export class ChangelogAdminComponent implements OnInit {
 		if (this.busyId) {
 			return;
 		}
+		// The product the entry was listed under, kept even if the operator switches product while it deletes.
+		const platform = entry.platform || this.platform;
 		const dialog = this._dialogService.open(DeleteConfirmationComponent, {
 			context: { recordType: `"${entry.title}"`, isRecord: false }
 		});
@@ -142,7 +181,7 @@ export class ChangelogAdminComponent implements OnInit {
 		}
 		const done = await this._change(entry, () => this._changelogService.delete(entry.id), 'DELETED_MESSAGE');
 		if (done) {
-			this.deleted = [entry, ...this.deleted.filter(({ id }) => id !== entry.id)];
+			this.deleted = [{ ...entry, platform }, ...this.deleted.filter(({ id }) => id !== entry.id)];
 		}
 		this._cdr.markForCheck();
 	}

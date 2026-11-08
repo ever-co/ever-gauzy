@@ -20,13 +20,18 @@
 						[status]="option.key === platform ? 'primary' : 'basic'"
 						[appearance]="option.key === platform ? 'filled' : 'outline'"
 						[attr.aria-pressed]="option.key === platform"
+						[disabled]="!isPlatformAvailable(option.key)"
 						(click)="selectPlatform(option.key)"
 					>
 						{{ option.name }}
 					</button>
 				}
 			</div>
-			<p class="product-hint">{{ i18n + '.PRODUCT_HINT' | translate }}</p>
+			<p class="product-hint">
+				{{
+					(platformsSupported === false ? i18n + '.PRODUCTS_UNSUPPORTED' : i18n + '.PRODUCT_HINT') | translate
+				}}
+			</p>
 		</div>
 
 		@if (loading && !loadFailed) {
@@ -135,7 +140,7 @@
 			}
 		}
 
-		@if (deleted.length) {
+		@if (deletedHere.length) {
 			<section class="section deleted">
 				<div class="section-header">
 					<div class="section-copy">
@@ -144,7 +149,7 @@
 					</div>
 				</div>
 				<ul class="deleted-list">
-					@for (entry of deleted; track entry.id) {
+					@for (entry of deletedHere; track entry.id) {
 						<li class="deleted-item">
 							<span class="entry-title">
 								<nb-icon class="entry-icon" [icon]="entry.icon"></nb-icon>

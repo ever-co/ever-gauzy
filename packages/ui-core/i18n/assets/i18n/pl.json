@@ -1277,6 +1277,7 @@
 			"SUBTITLE": "Wpisy panelu „Co nowego” i karty funkcji strony rejestracji. Są wspólne dla wszystkich dzierżawców tej instalacji, więc zmieniać je może tylko jej operator.",
 			"PRODUCT": "Produkt",
 			"PRODUCT_HINT": "Każdy produkt pokazuje tylko własne wpisy. Dodany wpis należy do produktu wybranego tutaj.",
+			"PRODUCTS_UNSUPPORTED": "To API przechowuje jedną listę nowości dla wszystkich produktów. Zaktualizuj API, aby zarządzać wpisami każdego produktu.",
 			"WHATS_NEW": "Panel „Co nowego”",
 			"WHATS_NEW_HINT": "Wyświetlane w panelu „Co nowego” i na stronie logowania, od najnowszych.",
 			"FEATURES": "Funkcje strony rejestracji",

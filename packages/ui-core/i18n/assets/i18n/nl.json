@@ -1278,6 +1278,7 @@
 			"SUBTITLE": "De items van het paneel Wat is er nieuw en de functiekaarten van de registratiepagina. Ze worden gedeeld door alle tenants van deze installatie, dus alleen de beheerder van de installatie kan ze wijzigen.",
 			"PRODUCT": "Product",
 			"PRODUCT_HINT": "Elk product toont alleen zijn eigen items. Een item dat je toevoegt, hoort bij het hier gekozen product.",
+			"PRODUCTS_UNSUPPORTED": "Deze API bewaart één nieuwslijst voor alle producten. Werk de API bij om de items van elk product te beheren.",
 			"WHATS_NEW": "Paneel Wat is er nieuw",
 			"WHATS_NEW_HINT": "Getoond in het paneel Wat is er nieuw en op de aanmeldpagina, nieuwste eerst.",
 			"FEATURES": "Functies van de registratiepagina",

@@ -12,9 +12,20 @@ import { ChangelogEntryDialogComponent } from './changelog-entry-dialog/changelo
  * entries, reading the list again after every change.
  */
 describe('ChangelogAdminComponent', () => {
-	const older: IChangelog = { id: 'news-1', title: 'Dark mode', date: new Date('2026-08-01T00:00:00.000Z') };
-	const newer: IChangelog = { id: 'news-2', title: 'Deals board', date: new Date('2026-10-31T00:00:00.000Z') };
-	const feature: IChangelog = { id: 'feature-1', title: 'Time tracking', isFeature: true };
+	// A current API names every row's product.
+	const older: IChangelog = {
+		id: 'news-1',
+		title: 'Dark mode',
+		date: new Date('2026-08-01T00:00:00.000Z'),
+		platform: 'gauzy'
+	};
+	const newer: IChangelog = {
+		id: 'news-2',
+		title: 'Deals board',
+		date: new Date('2026-10-31T00:00:00.000Z'),
+		platform: 'gauzy'
+	};
+	const feature: IChangelog = { id: 'feature-1', title: 'Time tracking', isFeature: true, platform: 'gauzy' };
 
 	let changelogService: { find: jest.Mock; delete: jest.Mock; recover: jest.Mock };
 	let dialogService: { open: jest.Mock };
@@ -206,5 +217,41 @@ describe('ChangelogAdminComponent', () => {
 			{ id: 'works-1', title: 'Old API answer', platform: 'ever-works' },
 			{ id: 'teams-1', title: 'Moved', platform: 'ever-teams' }
 		]);
+	});
+
+	it("lists in another product's view only the rows that name it", async () => {
+		const teams: IChangelog = { id: 'teams-1', title: 'Team chat', platform: 'ever-teams' };
+		changelogService.find.mockReturnValueOnce(of({ items: [teams, newer], total: 2 }));
+
+		component.selectPlatform('ever-teams');
+		await new Promise((resolve) => setTimeout(resolve));
+
+		expect(component.sections[0].entries).toEqual([teams]);
+	});
+
+	it("turns the other products off against an API that keeps one list for all, never showing Gauzy's news under them", async () => {
+		const legacy = { id: 'legacy-1', title: 'Dark mode', date: new Date('2026-08-01T00:00:00.000Z') };
+		changelogService.find.mockImplementation(() => of({ items: [legacy], total: 1 }));
+
+		await component.load();
+
+		expect(component.platformsSupported).toBe(false);
+		expect(component.isPlatformAvailable('gauzy')).toBe(true);
+		expect(component.isPlatformAvailable('ever-teams')).toBe(false);
+		changelogService.find.mockClear();
+		component.selectPlatform('ever-teams');
+		expect(changelogService.find).not.toHaveBeenCalled();
+		expect(component.platform).toBe('gauzy');
+	});
+
+	it('keeps what was deleted under the product it was deleted from', async () => {
+		await component.remove(newer);
+		expect(component.deletedHere.map(({ id }) => id)).toEqual(['news-2']);
+
+		component.selectPlatform('ever-works');
+		await new Promise((resolve) => setTimeout(resolve));
+
+		expect(component.deletedHere).toEqual([]);
+		expect(component.deleted).toEqual([newer]);
 	});
 });
