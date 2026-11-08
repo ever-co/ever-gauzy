@@ -1318,6 +1318,23 @@
 	},
 	"REPORT_PAGE": {
 		"MANUAL_TIME": {
+			"DETAILS": {
+				"DAY_TITLE": "La giornata",
+				"DAY_CAPTION": "{{ total }} registrato · {{ share }}% aggiunto a mano",
+				"TRACKED": "Tracciato",
+				"OTHER_MANUAL": "Altro manuale",
+				"THIS_ENTRY": "Questa voce",
+				"TIMELINE_LABEL": "Cronologia della giornata: {{ count }} registrazioni, {{ total }} in totale",
+				"SPLIT_LABEL": "{{ tracked }}% tracciato, {{ manual }}% manuale",
+				"DAY_UNAVAILABLE": "Non è stato possibile caricare il resto della giornata, quindi viene mostrata solo questa voce.",
+				"TITLE": "Voce di tempo manuale",
+				"VIEW": "Visualizza dettagli della voce",
+				"NO_REASON": "Nessun motivo indicato",
+				"HISTORY": "Cronologia",
+				"ADDED_ON": "Aggiunta",
+				"LAST_EDITED": "Ultima modifica",
+				"NOT_EDITED": "Non modificata dopo l'aggiunta"
+			},
 			"AVG_PER_ENTRY": "Media {{ value }} per voce",
 			"ACROSS_DAYS": "In {{ count }} giorni",
 			"SHARE_OF_ENTRIES": "{{ value }}% delle voci",

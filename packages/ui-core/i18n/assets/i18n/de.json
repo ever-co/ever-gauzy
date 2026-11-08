@@ -1318,6 +1318,23 @@
 	},
 	"REPORT_PAGE": {
 		"MANUAL_TIME": {
+			"DETAILS": {
+				"DAY_TITLE": "Der Tag",
+				"DAY_CAPTION": "{{ total }} erfasst · {{ share }} % manuell hinzugefügt",
+				"TRACKED": "Erfasst",
+				"OTHER_MANUAL": "Andere manuelle",
+				"THIS_ENTRY": "Dieser Eintrag",
+				"TIMELINE_LABEL": "Tagesverlauf: {{ count }} Zeiteinträge, insgesamt {{ total }}",
+				"SPLIT_LABEL": "{{ tracked }} % erfasst, {{ manual }} % manuell",
+				"DAY_UNAVAILABLE": "Der restliche Tag konnte nicht geladen werden, daher wird nur dieser Eintrag angezeigt.",
+				"TITLE": "Manueller Zeiteintrag",
+				"VIEW": "Eintragsdetails anzeigen",
+				"NO_REASON": "Kein Grund angegeben",
+				"HISTORY": "Verlauf",
+				"ADDED_ON": "Hinzugefügt",
+				"LAST_EDITED": "Zuletzt bearbeitet",
+				"NOT_EDITED": "Seit dem Hinzufügen nicht bearbeitet"
+			},
 			"AVG_PER_ENTRY": "Ø {{ value }} pro Eintrag",
 			"ACROSS_DAYS": "Über {{ count }} Tage",
 			"SHARE_OF_ENTRIES": "{{ value }} % der Einträge",

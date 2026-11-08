@@ -1318,6 +1318,23 @@
 	},
 	"REPORT_PAGE": {
 		"MANUAL_TIME": {
+			"DETAILS": {
+				"DAY_TITLE": "Hun dag",
+				"DAY_CAPTION": "{{ total }} geregistreerd · {{ share }}% handmatig toegevoegd",
+				"TRACKED": "Gevolgd",
+				"OTHER_MANUAL": "Overig handmatig",
+				"THIS_ENTRY": "Deze registratie",
+				"TIMELINE_LABEL": "Dagverloop: {{ count }} tijdregistraties, {{ total }} in totaal",
+				"SPLIT_LABEL": "{{ tracked }}% gevolgd, {{ manual }}% handmatig",
+				"DAY_UNAVAILABLE": "De rest van de dag kon niet worden geladen, dus alleen deze registratie wordt getoond.",
+				"TITLE": "Handmatige tijdregistratie",
+				"VIEW": "Registratiedetails bekijken",
+				"NO_REASON": "Geen reden opgegeven",
+				"HISTORY": "Geschiedenis",
+				"ADDED_ON": "Toegevoegd",
+				"LAST_EDITED": "Laatst bewerkt",
+				"NOT_EDITED": "Niet bewerkt sinds toevoegen"
+			},
 			"AVG_PER_ENTRY": "Gem. {{ value }} per registratie",
 			"ACROSS_DAYS": "Over {{ count }} dagen",
 			"SHARE_OF_ENTRIES": "{{ value }}% van de registraties",

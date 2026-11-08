@@ -1320,6 +1320,23 @@
 	},
 	"REPORT_PAGE": {
 		"MANUAL_TIME": {
+			"DETAILS": {
+				"DAY_TITLE": "Su día",
+				"DAY_CAPTION": "{{ total }} registrado · {{ share }} % añadido a mano",
+				"TRACKED": "Registrado",
+				"OTHER_MANUAL": "Otro manual",
+				"THIS_ENTRY": "Esta entrada",
+				"TIMELINE_LABEL": "Línea del día: {{ count }} registros, {{ total }} en total",
+				"SPLIT_LABEL": "{{ tracked }} % registrado, {{ manual }} % manual",
+				"DAY_UNAVAILABLE": "No se pudo cargar el resto del día, así que solo se muestra esta entrada.",
+				"TITLE": "Entrada de tiempo manual",
+				"VIEW": "Ver detalles de la entrada",
+				"NO_REASON": "No se indicó ningún motivo",
+				"HISTORY": "Historial",
+				"ADDED_ON": "Añadida",
+				"LAST_EDITED": "Última edición",
+				"NOT_EDITED": "No se ha editado desde que se añadió"
+			},
 			"AVG_PER_ENTRY": "Prom. {{ value }} por entrada",
 			"ACROSS_DAYS": "En {{ count }} días",
 			"SHARE_OF_ENTRIES": "{{ value }} % de las entradas",

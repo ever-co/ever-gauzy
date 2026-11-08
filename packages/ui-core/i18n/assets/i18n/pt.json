@@ -1318,6 +1318,23 @@
 	},
 	"REPORT_PAGE": {
 		"MANUAL_TIME": {
+			"DETAILS": {
+				"DAY_TITLE": "O dia",
+				"DAY_CAPTION": "{{ total }} registado · {{ share }}% adicionado à mão",
+				"TRACKED": "Registado",
+				"OTHER_MANUAL": "Outro manual",
+				"THIS_ENTRY": "Este registo",
+				"TIMELINE_LABEL": "Linha do dia: {{ count }} registos, {{ total }} no total",
+				"SPLIT_LABEL": "{{ tracked }}% registado, {{ manual }}% manual",
+				"DAY_UNAVAILABLE": "Não foi possível carregar o resto do dia, por isso só é mostrado este registo.",
+				"TITLE": "Registo de tempo manual",
+				"VIEW": "Ver detalhes do registo",
+				"NO_REASON": "Nenhum motivo indicado",
+				"HISTORY": "Histórico",
+				"ADDED_ON": "Adicionado",
+				"LAST_EDITED": "Última edição",
+				"NOT_EDITED": "Não editado desde que foi adicionado"
+			},
 			"AVG_PER_ENTRY": "Média {{ value }} por registo",
 			"ACROSS_DAYS": "Em {{ count }} dias",
 			"SHARE_OF_ENTRIES": "{{ value }}% dos registos",

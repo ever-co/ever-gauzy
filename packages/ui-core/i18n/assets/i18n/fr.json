@@ -1319,6 +1319,23 @@
 	},
 	"REPORT_PAGE": {
 		"MANUAL_TIME": {
+			"DETAILS": {
+				"DAY_TITLE": "Sa journée",
+				"DAY_CAPTION": "{{ total }} enregistré · {{ share }} % ajouté manuellement",
+				"TRACKED": "Suivi",
+				"OTHER_MANUAL": "Autre manuel",
+				"THIS_ENTRY": "Cette entrée",
+				"TIMELINE_LABEL": "Chronologie de la journée : {{ count }} entrées, {{ total }} au total",
+				"SPLIT_LABEL": "{{ tracked }} % suivi, {{ manual }} % manuel",
+				"DAY_UNAVAILABLE": "Le reste de la journée n'a pas pu être chargé, seule cette entrée est affichée.",
+				"TITLE": "Entrée de temps manuelle",
+				"VIEW": "Voir les détails de l'entrée",
+				"NO_REASON": "Aucune raison indiquée",
+				"HISTORY": "Historique",
+				"ADDED_ON": "Ajoutée",
+				"LAST_EDITED": "Dernière modification",
+				"NOT_EDITED": "Non modifiée depuis son ajout"
+			},
 			"AVG_PER_ENTRY": "Moy. {{ value }} par entrée",
 			"ACROSS_DAYS": "Sur {{ count }} jours",
 			"SHARE_OF_ENTRIES": "{{ value }} % des entrées",
