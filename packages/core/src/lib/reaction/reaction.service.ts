@@ -153,7 +153,8 @@ export class ReactionService extends TenantAwareCrudService<Reaction> {
 			// Execute the deletion using the parent class method, scoped by tenant and employee.
 			return await super.delete(id, { where: { employeeId, tenantId } });
 		} catch (error) {
-			console.error(`[ReactionDelete] Failed to delete reaction with id: ${id}. Error:`, error);
+			// The id is an argument, not part of the format string: a `%` in it must not read as a placeholder.
+			console.error('[ReactionDelete] Failed to delete reaction with id: %s. Error:', id, error);
 			throw new BadRequestException('Reaction deletion failed', error);
 		}
 	}
