@@ -687,10 +687,16 @@ jobs:
         run: |
           set -euo pipefail
           # A run with no GitHub Actions run behind it (the in-cluster ci-builds runner) has no artifact
-          # list to read: the listing answers 404 and there is nothing of this run to delete.
-          if ! ids=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/artifacts"             --jq '.artifacts[] | select(.name=="build-node-modules") | .id' 2>/dev/null); then
-            echo "::notice::no artifact list for run $GITHUB_RUN_ID (not a GitHub Actions run?) - nothing to delete"
-            exit 0
+          # list to read: the listing answers 404 and there is nothing of this run to delete. Any other
+          # failure stays a failure, with gh's own message.
+          err=$(mktemp)
+          if ! ids=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/artifacts"             --jq '.artifacts[] | select(.name=="build-node-modules") | .id' 2>"$err"); then
+            if grep -q 'HTTP 404' "$err"; then
+              echo "::notice::no artifact list for run $GITHUB_RUN_ID (404: not a GitHub Actions run) - nothing to delete"
+              exit 0
+            fi
+            echo "::error::could not list the artifacts of run $GITHUB_RUN_ID: $(cat "$err")"
+            exit 1
           fi
           if [ -z "$ids" ]; then echo "nothing to delete"; exit 0; fi
           for id in $ids; do
