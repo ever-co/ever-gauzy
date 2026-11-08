@@ -119,3 +119,15 @@ $single-column-below: 767.98px;
   padding: 0.75rem $inset;
   border-top: $divider;
 }
+
+.product-badge {
+  display: inline-block;
+  margin-left: 0.5rem;
+  padding: 0.125rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  vertical-align: middle;
+  color: var(--color-primary-default);
+  background: var(--color-primary-transparent-default);
+}

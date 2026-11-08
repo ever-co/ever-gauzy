@@ -12,12 +12,14 @@ import {
 	NbSpinnerModule
 } from '@nebular/theme';
 import { TranslatePipe } from '@ngx-translate/core';
-import { IChangelog } from '@gauzy/contracts';
+import { DEFAULT_CHANGELOG_PLATFORM, IChangelog } from '@gauzy/contracts';
 import { ChangelogService, ErrorHandlingService, ToastrService } from '@gauzy/ui-core/core';
 import { ChangelogEntryComponent } from '@gauzy/ui-core/shared';
 import {
 	CHANGELOG_ADMIN_I18N,
 	CHANGELOG_FIELD_MAX_LENGTH,
+	CHANGELOG_PLATFORM_OPTIONS,
+	hasSignUpFeatures,
 	IChangelogFormValue,
 	httpUrlValidator,
 	imageUrlValidator,
@@ -76,6 +78,21 @@ export class ChangelogEntryDialogComponent implements OnInit {
 		return !!this.entry?.id;
 	}
 
+	/** The product the entry belongs to; Gauzy when the page named none. */
+	get platform(): string {
+		return this.entry?.platform || DEFAULT_CHANGELOG_PLATFORM;
+	}
+
+	/** The product's name, shown in the form's header so the operator sees whose news they write. */
+	get platformName(): string {
+		return CHANGELOG_PLATFORM_OPTIONS.find(({ key }) => key === this.platform)?.name ?? this.platform;
+	}
+
+	/** Whether the entry may be a sign-up page card: only Gauzy has such a page. */
+	get canBeFeature(): boolean {
+		return hasSignUpFeatures(this.platform);
+	}
+
 	ngOnInit(): void {
 		const value = toChangelogFormValue(this.entry);
 		const text = [requiredTextValidator, Validators.maxLength(this.maxLength)];
@@ -125,7 +142,8 @@ export class ChangelogEntryDialogComponent implements OnInit {
 		}
 		this.saving = true;
 		this._cdr.markForCheck();
-		const input = toChangelogInput(this.form.getRawValue());
+		const value = toChangelogInput(this.form.getRawValue());
+		const input = { ...value, isFeature: this.canBeFeature && value.isFeature, platform: this.platform };
 		try {
 			const saved = await firstValueFrom(
 				this.isEdit ? this._changelogService.update(this.entry.id, input) : this._changelogService.create(input)

@@ -1278,6 +1278,9 @@
 		"MANAGE": {
 			"TITLE": "Novedades",
 			"SUBTITLE": "Las entradas del panel de novedades y las tarjetas de funciones de la página de registro. Las comparten todos los inquilinos de esta instalación, por lo que solo su operador puede cambiarlas.",
+			"PRODUCT": "Producto",
+			"PRODUCT_HINT": "Cada producto muestra solo sus propias entradas. Una entrada que añadas pertenece al producto seleccionado aquí.",
+			"PRODUCTS_UNSUPPORTED": "Esta API guarda una sola lista de novedades para todos los productos. Actualiza la API para gestionar las entradas de cada producto.",
 			"WHATS_NEW": "Panel de novedades",
 			"WHATS_NEW_HINT": "Se muestran en el panel de novedades y en la página de inicio de sesión, las más recientes primero.",
 			"FEATURES": "Funciones de la página de registro",

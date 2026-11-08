@@ -10,10 +10,16 @@ import {
 	NbTooltipModule
 } from '@nebular/theme';
 import { TranslatePipe } from '@ngx-translate/core';
-import { IChangelog, ID } from '@gauzy/contracts';
+import { DEFAULT_CHANGELOG_PLATFORM, IChangelog, ID } from '@gauzy/contracts';
 import { ChangelogService, ErrorHandlingService, ToastrService } from '@gauzy/ui-core/core';
 import { DeleteConfirmationComponent } from '@gauzy/ui-core/shared';
-import { CHANGELOG_ADMIN_I18N, isForbidden, sortChangelogEntries } from './changelog-admin.utils';
+import {
+	CHANGELOG_ADMIN_I18N,
+	CHANGELOG_PLATFORM_OPTIONS,
+	hasSignUpFeatures,
+	isForbidden,
+	sortChangelogEntries
+} from './changelog-admin.utils';
 import { ChangelogEntryDialogComponent } from './changelog-entry-dialog/changelog-entry-dialog.component';
 
 /** One kind of entry, listed in its own section: the What's New panel's, or the sign-up page's cards. */
@@ -28,6 +34,10 @@ export interface IChangelogSection {
  * Settings > What's New: the installation-wide entries of the What's New panel and of the sign-up page's
  * feature cards, with add, edit, delete and, for what was deleted while the page is open, restore. Each kind
  * is read as its surface reads it (the newest twenty), and the list is read again after every change.
+ *
+ * The entries are kept per product: Gauzy's, and those of the Ever products that read their What's New from
+ * this installation (Ever Teams, Ever Works, Ever Platform). The page shows one product at a time, and an entry
+ * added while a product is shown belongs to it. Only Gauzy has a sign-up page with feature cards.
  */
 @Component({
 	selector: 'ga-changelog-admin',
@@ -39,10 +49,23 @@ export interface IChangelogSection {
 })
 export class ChangelogAdminComponent implements OnInit {
 	readonly i18n = CHANGELOG_ADMIN_I18N;
+	readonly platforms = CHANGELOG_PLATFORM_OPTIONS;
 
-	sections: IChangelogSection[] = [this._section(false, 'WHATS_NEW'), this._section(true, 'FEATURES')];
-	/** Entries deleted while the page is open, newest first, which restore can bring back. */
+	/** The product whose entries the page shows, and whom an added entry belongs to. */
+	platform: string = DEFAULT_CHANGELOG_PLATFORM;
+
+	sections: IChangelogSection[] = this._sectionsOf(DEFAULT_CHANGELOG_PLATFORM);
+	/**
+	 * Entries deleted while the page is open, newest first, which restore can bring back, each stamped with the
+	 * product it was deleted from (the section shows the current product's only).
+	 */
 	deleted: IChangelog[] = [];
+	/**
+	 * Whether the API keeps entries per product: known once it returns rows (theirs carry a `platform`). An API
+	 * from before products existed ignores the product and returns Gauzy's entries for every query, so the other
+	 * products are turned off rather than listing, and letting the operator change, Gauzy's news under their name.
+	 */
+	platformsSupported: boolean | null = null;
 	loading = false;
 	loadFailed = false;
 	/** The entry a delete or restore is under way for. */
@@ -69,17 +92,31 @@ export class ChangelogAdminComponent implements OnInit {
 		this.loadFailed = false;
 		this._cdr.markForCheck();
 		try {
+			// Gauzy's entries are read as every Gauzy surface reads them, naming no product (the API's default),
+			// so the page also works against an API from before products existed.
+			const product = this.platform === DEFAULT_CHANGELOG_PLATFORM ? {} : { platform: this.platform };
 			const pages = await Promise.all(
 				this.sections.map(({ isFeature }) =>
-					firstValueFrom(this._changelogService.find({ isFeature: isFeature ? 1 : 0 }))
+					firstValueFrom(this._changelogService.find({ isFeature: isFeature ? 1 : 0, ...product }))
 				)
 			);
 			if (sequence !== this._sequence) {
 				return;
 			}
+			const rows = pages.flatMap((page) => page?.items ?? []);
+			if (rows.some((row) => !row.platform)) {
+				this.platformsSupported = false;
+			} else if (rows.length) {
+				this.platformsSupported = true;
+			}
+			// Gauzy's view takes what the API returns (the default product); another product's view shows only rows
+			// that name it, never the Gauzy rows an older API answers with.
+			const isGauzy = this.platform === DEFAULT_CHANGELOG_PLATFORM;
 			this.sections = this.sections.map((section, index) => ({
 				...section,
-				entries: sortChangelogEntries(pages[index]?.items)
+				entries: sortChangelogEntries(
+					(pages[index]?.items ?? []).filter((item) => isGauzy || item.platform === this.platform)
+				)
 			}));
 		} catch {
 			if (sequence === this._sequence) {
@@ -93,19 +130,58 @@ export class ChangelogAdminComponent implements OnInit {
 		}
 	}
 
-	/** Adds an entry of the section's kind. */
+	/** The entries deleted from the product shown. */
+	get deletedHere(): IChangelog[] {
+		return this.deleted.filter((entry) => (entry.platform || DEFAULT_CHANGELOG_PLATFORM) === this.platform);
+	}
+
+	/** Whether a product can be picked: Gauzy always; the others once the API is known to keep products apart. */
+	isPlatformAvailable(platform: string): boolean {
+		return platform === DEFAULT_CHANGELOG_PLATFORM || this.platformsSupported !== false;
+	}
+
+	/**
+	 * Whether an entry can be added for the product shown. Gauzy always; another product only once the API has
+	 * shown it keeps products apart (its rows name their product): an API from before products existed would
+	 * store the entry with no product, and so publish it as Gauzy news. With no rows yet, that is not known.
+	 */
+	get canAdd(): boolean {
+		return this.platform === DEFAULT_CHANGELOG_PLATFORM || this.platformsSupported === true;
+	}
+
+	/** Shows another product's entries. */
+	selectPlatform(platform: string): void {
+		if (
+			platform === this.platform ||
+			!this.platforms.some(({ key }) => key === platform) ||
+			!this.isPlatformAvailable(platform)
+		) {
+			return;
+		}
+		this.platform = platform;
+		this.sections = this._sectionsOf(platform);
+		this.load();
+	}
+
+	/** Adds an entry of the section's kind, for the product shown. */
 	add(section: IChangelogSection): void {
-		this._openDialog({ isFeature: section.isFeature });
+		if (!this.canAdd) {
+			return;
+		}
+		this._openDialog({ isFeature: section.isFeature, platform: this.platform });
 	}
 
 	edit(entry: IChangelog): void {
-		this._openDialog(entry);
+		// An API from before products existed returns no product: the entry is the one shown.
+		this._openDialog({ ...entry, platform: entry.platform || this.platform });
 	}
 
 	async remove(entry: IChangelog): Promise<void> {
 		if (this.busyId) {
 			return;
 		}
+		// The product the entry was listed under, kept even if the operator switches product while it deletes.
+		const platform = entry.platform || this.platform;
 		const dialog = this._dialogService.open(DeleteConfirmationComponent, {
 			context: { recordType: `"${entry.title}"`, isRecord: false }
 		});
@@ -114,7 +190,7 @@ export class ChangelogAdminComponent implements OnInit {
 		}
 		const done = await this._change(entry, () => this._changelogService.delete(entry.id), 'DELETED_MESSAGE');
 		if (done) {
-			this.deleted = [entry, ...this.deleted.filter(({ id }) => id !== entry.id)];
+			this.deleted = [{ ...entry, platform }, ...this.deleted.filter(({ id }) => id !== entry.id)];
 		}
 		this._cdr.markForCheck();
 	}
@@ -166,6 +242,15 @@ export class ChangelogAdminComponent implements OnInit {
 		} finally {
 			this.busyId = null;
 		}
+	}
+
+	/** The lists a product has: its What's New entries, and for Gauzy its sign-up page's cards too. */
+	private _sectionsOf(platform: string): IChangelogSection[] {
+		const sections = [this._section(false, 'WHATS_NEW')];
+		if (hasSignUpFeatures(platform)) {
+			sections.push(this._section(true, 'FEATURES'));
+		}
+		return sections;
 	}
 
 	private _section(isFeature: boolean, key: string): IChangelogSection {

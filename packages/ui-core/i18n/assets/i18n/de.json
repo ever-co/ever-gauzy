@@ -1276,6 +1276,9 @@
 		"MANAGE": {
 			"TITLE": "Neuigkeiten",
 			"SUBTITLE": "Die Einträge des Bereichs „Neuigkeiten“ und die Funktionskarten der Registrierungsseite. Sie gelten für alle Mandanten dieser Installation, daher kann nur deren Betreiber sie ändern.",
+			"PRODUCT": "Produkt",
+			"PRODUCT_HINT": "Jedes Produkt zeigt nur seine eigenen Einträge. Ein neuer Eintrag gehört zu dem hier ausgewählten Produkt.",
+			"PRODUCTS_UNSUPPORTED": "Diese API führt eine einzige Neuigkeiten-Liste für alle Produkte. Aktualisiere die API, um die Einträge jedes Produkts zu verwalten.",
 			"WHATS_NEW": "Bereich „Neuigkeiten“",
 			"WHATS_NEW_HINT": "Wird im Bereich „Neuigkeiten“ und auf der Anmeldeseite angezeigt, die neuesten zuerst.",
 			"FEATURES": "Funktionen der Registrierungsseite",

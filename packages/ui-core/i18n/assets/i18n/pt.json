@@ -1276,6 +1276,9 @@
 		"MANAGE": {
 			"TITLE": "Novidades",
 			"SUBTITLE": "As entradas do painel de novidades e os cartões de funcionalidades da página de registo. São partilhadas por todos os inquilinos desta instalação, por isso só o seu operador as pode alterar.",
+			"PRODUCT": "Produto",
+			"PRODUCT_HINT": "Cada produto mostra apenas as suas próprias entradas. Uma entrada adicionada pertence ao produto selecionado aqui.",
+			"PRODUCTS_UNSUPPORTED": "Esta API mantém uma única lista de novidades para todos os produtos. Atualize a API para gerir as entradas de cada produto.",
 			"WHATS_NEW": "Painel de novidades",
 			"WHATS_NEW_HINT": "Mostradas no painel de novidades e na página de início de sessão, as mais recentes primeiro.",
 			"FEATURES": "Funcionalidades da página de registo",

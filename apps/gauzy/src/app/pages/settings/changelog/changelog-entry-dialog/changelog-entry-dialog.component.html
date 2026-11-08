@@ -1,6 +1,9 @@
 <nb-card class="entry-dialog" [nbSpinner]="saving" nbSpinnerStatus="primary">
 	<nb-card-header class="header">
-		<h6 class="title">{{ (isEdit ? i18n + '.EDIT_TITLE' : i18n + '.ADD_TITLE') | translate }}</h6>
+		<h6 class="title">
+			{{ (isEdit ? i18n + '.EDIT_TITLE' : i18n + '.ADD_TITLE') | translate }}
+			<span class="product-badge">{{ platformName }}</span>
+		</h6>
 		<button
 			type="button"
 			class="close-button"
@@ -129,10 +132,12 @@
 				}
 			</div>
 
-			<div class="field">
-				<nb-checkbox formControlName="isFeature">{{ i18n + '.FIELDS.IS_FEATURE' | translate }}</nb-checkbox>
-				<small class="hint">{{ i18n + '.FIELDS.IS_FEATURE_HINT' | translate }}</small>
-			</div>
+			@if (canBeFeature) {
+				<div class="field">
+					<nb-checkbox formControlName="isFeature">{{ i18n + '.FIELDS.IS_FEATURE' | translate }}</nb-checkbox>
+					<small class="hint">{{ i18n + '.FIELDS.IS_FEATURE_HINT' | translate }}</small>
+				</div>
+			}
 		</form>
 
 		<section class="preview" [attr.aria-label]="i18n + '.PREVIEW' | translate">
