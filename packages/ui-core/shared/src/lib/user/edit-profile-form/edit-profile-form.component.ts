@@ -47,6 +47,11 @@ export class EditProfileFormComponent implements OnInit, OnDestroy {
 	 * own update is never sent again by a Save: a Save that started earlier would otherwise put the older photo back.
 	 */
 	private _unsavedImageId: string | null = null;
+	/**
+	 * Photos picked whose upload has not finished yet. Disabling the picker during a Save does not stop an upload
+	 * already running, so a Save leaves an unsaved photo out while one is on its way: the newer photo replaces it.
+	 */
+	private _photoUploads = 0;
 	/** The photo failed to load: the placeholder shows instead. */
 	avatarFailed = false;
 	listOfTimeFormats = DEFAULT_TIME_FORMATS;
@@ -258,7 +263,18 @@ export class EditProfileFormComponent implements OnInit, OnDestroy {
 		}
 	}
 
+	/** A picked photo started uploading; `updateImageAsset` or `handleImageUploadError` follows. */
+	onPhotoUploadStarted(): void {
+		this._photoUploads += 1;
+	}
+
+	/** One upload fewer on its way (the uploader settles every upload it starts with one of the two events). */
+	private _photoUploadSettled(): void {
+		this._photoUploads = Math.max(0, this._photoUploads - 1);
+	}
+
 	handleImageUploadError(error: any) {
+		this._photoUploadSettled();
 		this._toastrService.danger(error);
 	}
 
@@ -272,6 +288,7 @@ export class EditProfileFormComponent implements OnInit, OnDestroy {
 		const isOwnProfile = this.isOwnProfile;
 		// The session the photo was saved for: a sign-out, or another user's sign-in, while it is saved must not get it.
 		const sessionUserId = this._store.userId;
+		this._photoUploadSettled();
 		this.avatarFailed = false;
 		this.form.patchValue({ imageId: image.id, imageUrl: image.fullUrl || image.url });
 		// This photo replaces one whose save failed: a Save must not send that one over it.
@@ -349,9 +366,12 @@ export class EditProfileFormComponent implements OnInit, OnDestroy {
 				};
 			}
 
-			// Read as the request leaves (after the role lookup): the photo shown, only when its own save failed.
+			// Read as the request leaves (after the role lookup): the photo shown, only when its own save failed, and
+			// not while a newer photo is still uploading (its own save could land first and be overwritten).
 			const unsavedImageId =
-				this._unsavedImageId && this._unsavedImageId === this.form.get('imageId').value
+				this._unsavedImageId &&
+				this._unsavedImageId === this.form.get('imageId').value &&
+				this._photoUploads === 0
 					? this._unsavedImageId
 					: null;
 			if (unsavedImageId) {

@@ -22,6 +22,7 @@ describe('EditProfileFormComponent', () => {
 		component.form = EditProfileFormComponent.buildForm(new UntypedFormBuilder());
 		component.form.patchValue({ email: 'ann@ever.co', firstName: 'Ann', lastName: 'Brown' });
 		component.saving = false;
+		component['_photoUploads'] = 0; // a field initializer, which Object.create skips
 		component.avatarFailed = true;
 		component.allowRoleChange = false;
 		component.selectedUser = selectedUser as any;
@@ -186,10 +187,29 @@ describe('EditProfileFormComponent', () => {
 			expect(update.mock.calls[2][1]).not.toHaveProperty('imageId');
 		});
 
-		it('blocks changing the photo while a save is on its way', () => {
+		it('leaves a failed photo out while a newer one is still uploading, and sends it again once that upload fails', async () => {
+			const update = jest
+				.fn()
+				.mockRejectedValueOnce(new Error('500')) // the first photo's own save
+				.mockResolvedValue({});
+			const { component } = formFor({ id: 'user-2' }, update);
+			await component.updateImageAsset({ id: 'image-failed', fullUrl: 'https://cdn/failed.png' } as any);
+
+			component.onPhotoUploadStarted(); // picked before Save: its own save could land before Save's
+			await component.submitForm();
+			expect(update.mock.calls[1][1]).not.toHaveProperty('imageId');
+
+			component.handleImageUploadError(new Error('413'));
+			await component.submitForm();
+			expect(update.mock.calls[2][1]).toEqual(expect.objectContaining({ imageId: 'image-failed' }));
+		});
+
+		it('blocks changing the photo while a save is on its way, and hears of every upload that starts', () => {
 			const template = readFileSync(join(__dirname, 'edit-profile-form.component.html'), 'utf8');
 
 			expect(template).toMatch(/<ngx-image-uploader[^>]*\[disabled\]="saving"/);
+			expect(template).toMatch(/<ngx-image-uploader[^>]*\(uploadStarted\)="onPhotoUploadStarted\(\)"/);
+			expect(template).toMatch(/<ngx-image-uploader[^>]*\(uploadImageAssetError\)="handleImageUploadError\(\$event\)"/);
 		});
 
 		it('where the role can change, sends once even when clicked again during the role lookup', async () => {
