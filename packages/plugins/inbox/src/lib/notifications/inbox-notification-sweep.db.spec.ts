@@ -50,16 +50,22 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { BadRequestException } from '@nestjs/common';
 import { DataSource, EntitySchema } from 'typeorm';
-import { EmployeeNotificationTypeEnum, INBOX_NOTIFICATION_EXTERNAL_SOURCE, PermissionsEnum } from '@gauzy/contracts';
+import {
+	EmployeeNotificationTypeEnum,
+	IInboxItemUpsertInput,
+	INBOX_NOTIFICATION_EXTERNAL_SOURCE,
+	PermissionsEnum
+} from '@gauzy/contracts';
 import { Employee, EmployeeNotification } from '@gauzy/core';
 import { INBOX_MIGRATIONS } from '../database/inbox-migrations';
+import { CreateInboxSweepCheckpointTable1791000006540 } from '../database/migrations/1791000006540-CreateInboxSweepCheckpointTable';
 import { InboxItem } from '../entities/inbox-item.entity';
 import { InboxItemRecipient } from '../entities/inbox-item-recipient.entity';
 import { InboxSweepCheckpoint } from '../entities/inbox-sweep-checkpoint.entity';
 import { INBOX_NOTIFICATION_SWEEP_CHECKPOINT, INBOX_NOTIFICATION_SWEEP_MAX_ATTEMPTS } from '../inbox.constants';
 import { InboxService } from '../inbox.service';
 import { InboxSourceHandlerRegistry } from '../inbox-source-handler.registry';
-import { InboxNotificationBridge, twinNotificationIdsOf } from './inbox-notification.bridge';
+import { InboxNotificationBridge, notificationItemInput, twinNotificationIdsOf } from './inbox-notification.bridge';
 import { InboxNotificationSweepService } from './inbox-notification-sweep.service';
 
 jest.setTimeout(60_000);
@@ -376,13 +382,14 @@ describe('The notification filing on SQLite', () => {
 
 		it('resumes from its checkpoint however long the worker was down (no age limit)', async () => {
 			const weekAgo = new Date(Date.now() - 7 * 24 * 60 * MINUTE);
-			await dataSource.getRepository(InboxSweepCheckpoint).insert({
-				id: INBOX_NOTIFICATION_SWEEP_CHECKPOINT,
-				cursorAt: new Date(weekAgo.getTime() - MINUTE),
-				cursorId: null,
-				heldId: null,
-				heldAttempts: 0
-			});
+			// The worker last settled a notification a week ago, and has not swept since.
+			const settled = await notify({ createdAt: new Date(weekAgo.getTime() - MINUTE) });
+			await dataSource
+				.getRepository(InboxSweepCheckpoint)
+				.update(
+					{ id: INBOX_NOTIFICATION_SWEEP_CHECKPOINT },
+					{ cursorAt: settled.createdAt as Date, cursorId: String(settled.id) }
+				);
 			const old = await notify({ createdAt: weekAgo });
 			const recent = await notify();
 
@@ -394,7 +401,7 @@ describe('The notification filing on SQLite', () => {
 			expect(checkpoint.cursorId).toBe(recent.id);
 		});
 
-		it('starts where the Inbox started filing, not at the first notification ever', async () => {
+		it('starts where the Inbox was switched on (the place its migration wrote), not at the first notification ever', async () => {
 			const before = await notify({ createdAt: ago(60) });
 			const first = await notify({ createdAt: ago(8) });
 			// The Inbox filed its first notification eight minutes ago: the one of an hour ago predates it (and its window).
@@ -472,6 +479,64 @@ describe('The notification filing on SQLite', () => {
 			expect(await sweepNow()).toMatchObject({ skipped: 1, filed: 1, held: false });
 			expect((await itemsOf()).map((item) => item.externalId)).toEqual([after.id]);
 		});
+		it('the migration writes the first place: where the Inbox started filing, so failed first filings are caught up', async () => {
+			const checkpoints = dataSource.getRepository(InboxSweepCheckpoint);
+			expect(await checkpoints.findOneByOrFail({ id: INBOX_NOTIFICATION_SWEEP_CHECKPOINT })).toMatchObject({
+				cursorId: null,
+				heldAttempts: 0
+			});
+			// An Inbox that filed its first notification an hour ago, and whose next filings all failed.
+			await checkpoints.delete({ id: INBOX_NOTIFICATION_SWEEP_CHECKPOINT });
+			const before = await notify({ createdAt: ago(90) });
+			const first = await notify({ createdAt: ago(60) });
+			await fileLive(first);
+			const lost = await notify({ createdAt: ago(50) });
+			await new CreateInboxSweepCheckpointTable1791000006540().up(dataSource.createQueryRunner());
+			const seeded = await checkpoints.findOneByOrFail({ id: INBOX_NOTIFICATION_SWEEP_CHECKPOINT });
+			expect(Math.abs(new Date(seeded.cursorAt as Date).getTime() - ago(60).getTime())).toBeLessThan(MINUTE);
+
+			// A second run moves nothing.
+			await checkpoints.update({ id: INBOX_NOTIFICATION_SWEEP_CHECKPOINT }, { cursorId: String(first.id) });
+			await new CreateInboxSweepCheckpointTable1791000006540().up(dataSource.createQueryRunner());
+			expect((await checkpoints.findOneByOrFail({ id: INBOX_NOTIFICATION_SWEEP_CHECKPOINT })).cursorId).toBe(
+				first.id
+			);
+			await checkpoints.update({ id: INBOX_NOTIFICATION_SWEEP_CHECKPOINT }, { cursorId: null });
+
+			expect(await sweepNow()).toMatchObject({ read: 2, present: 1, filed: 1 });
+			expect((await itemsOf()).map((item) => item.externalId).sort()).toEqual([first.id, lost.id].sort());
+			expect((await itemsOf()).map((item) => item.externalId)).not.toContain(before.id);
+		});
+
+		it('dates a recovered entry as its notification', async () => {
+			const lost = await notify({ createdAt: ago(45) });
+			await dataSource
+				.getRepository(InboxSweepCheckpoint)
+				.update({ id: INBOX_NOTIFICATION_SWEEP_CHECKPOINT }, { cursorAt: ago(60) });
+			await sweepNow();
+			const [item] = await itemsOf();
+			expect(new Date(item.createdAt as Date).getTime()).toBe(new Date(lost.createdAt as Date).getTime());
+			expect(new Date((await recipientOf(item.id)).createdAt as Date).getTime()).toBe(
+				new Date(lost.createdAt as Date).getTime()
+			);
+		});
+
+		it('completes an entry a failed write left without its recipient row', async () => {
+			const lost = await notify();
+			// The item was saved, its recipient row was not (`InboxService.write` saves the item first).
+			await inbox.upsertExternal({
+				...(notificationItemInput(lost, ADA) as IInboxItemUpsertInput),
+				recipients: []
+			});
+			expect(await itemsOf()).toHaveLength(1);
+			expect(await dataSource.getRepository(InboxItemRecipient).count()).toBe(0);
+
+			expect(await sweepNow()).toMatchObject({ read: 1, present: 0, filed: 1 });
+			const items = await itemsOf();
+			expect(items.map((item) => item.externalId)).toEqual([lost.id]);
+			expect((await recipientOf(items[0].id)).isRead).toBe(false);
+			expect(await bridge.settleNotification(lost)).toBe('present');
+		});
 	});
 
 	describe('folded mentions (FR-4) and the sweep', () => {
@@ -502,6 +567,34 @@ describe('The notification filing on SQLite', () => {
 			// Folded once: the next sweeps leave it.
 			expect(await sweepNow()).toMatchObject({ read: 0 });
 			expect(await bridge.settleNotification(twin)).toBe('present');
+		});
+
+		it('folds two lost mentions of one record into one entry, however late the sweep', async () => {
+			await dataSource
+				.getRepository(InboxSweepCheckpoint)
+				.update({ id: INBOX_NOTIFICATION_SWEEP_CHECKPOINT }, { cursorAt: ago(60) });
+			const first = await mention({ createdAt: ago(40) });
+			const twin = await mention({ createdAt: ago(38) });
+
+			expect(await sweepNow()).toMatchObject({ read: 2, filed: 1, folded: 1 });
+			const items = await itemsOf();
+			expect(items.map((item) => item.externalId)).toEqual([first.id]);
+			expect(twinNotificationIdsOf(items[0].metadata)).toEqual([twin.id]);
+		});
+
+		it("gives a recorded twin the entry's state again (a fold that stopped between its two writes)", async () => {
+			const first = await mention({ createdAt: ago(8) });
+			await fileLive(first);
+			const twin = await mention({ createdAt: ago(7) });
+			await fileLive(twin);
+			const [item] = await itemsOf();
+			await inbox.setState(item.id as never, { isRead: true });
+			await dataSource.query(`UPDATE "employee_notification" SET "isRead" = 0, "readAt" = NULL WHERE "id" = ?`, [
+				twin.id
+			]);
+
+			expect(await sweepNow()).toMatchObject({ present: 2, filed: 0, folded: 0 });
+			expect((await rowOf(twin.id)).isRead).toBe(true);
 		});
 
 		it('files a mention of another record, or ten minutes away from its twin, as an entry of its own', async () => {

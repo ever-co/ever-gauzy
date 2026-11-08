@@ -286,16 +286,18 @@ describe('InboxNotificationBridge.fileNotification (FR-4)', () => {
 });
 
 describe('InboxNotificationBridge.onStateChange (the rows an entry stands for)', () => {
-	it("mirrors a state change to the item's own notification and to every twin folded into it", async () => {
-		const { instance, notifications } = bridge();
+	it("mirrors a state change to the item's own notification and to every twin folded into it, read afresh", async () => {
+		// The twins as stored now (a fold may have landed after the caller read the item).
+		const stored = { id: 'i1', tenantId: 'ten', externalSource: INBOX_NOTIFICATION_EXTERNAL_SOURCE, externalId: 'n1', metadata: JSON.stringify({ twinNotificationIds: ['n2', 'n3'] }) };
+		const { instance, notifications } = bridge({ twinItem: stored });
 		notifications.find.mockResolvedValueOnce([
 			{ id: 'n1', isRead: false, isArchived: false },
 			{ id: 'n2', isRead: false, isArchived: false },
 			{ id: 'n3', isRead: true, isArchived: false }
 		]);
 		const readAt = new Date('2026-11-07T12:00:00.000Z');
-		const item = { externalSource: INBOX_NOTIFICATION_EXTERNAL_SOURCE, externalId: 'n1', tenantId: 'ten', metadata: { twinNotificationIds: ['n2', 'n3'] } };
-		await instance.onStateChange(item as never, { readAt } as never, { isRead: true });
+		const item = { id: 'i1', externalSource: INBOX_NOTIFICATION_EXTERNAL_SOURCE, externalId: 'n1', tenantId: 'ten', metadata: { twinNotificationIds: ['n2'] } };
+		await instance.onStateChange(item as never, { userId: 'u2', readAt } as never, { isRead: true });
 
 		const [{ where }] = notifications.find.mock.calls[0] as unknown as [{ where: { id: { value: string[] }; tenantId: string } }];
 		expect(where.id.value).toEqual(['n1', 'n2', 'n3']);

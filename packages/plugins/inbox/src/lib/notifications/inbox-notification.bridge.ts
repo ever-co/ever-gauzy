@@ -202,13 +202,16 @@ export class InboxNotificationBridge implements OnModuleInit, IInboxSourceHandle
 
 	/**
 	 * A recipient's state of a filed notification changed in the Inbox: every notification row the item stands for
-	 * follows — its own, and the mentions folded into it.
+	 * follows — its own, and the mentions folded into it. The list is read afresh under the entry's twin lock, so a
+	 * mention folded while the change was being written is reached too (see `withEntryRows`).
 	 */
 	async onStateChange(item: IInboxItem, recipient: IInboxItemRecipient, change: IInboxRecipientStateInput): Promise<void> {
 		if (item?.externalSource !== INBOX_NOTIFICATION_EXTERNAL_SOURCE || !item.externalId || !item.tenantId) {
 			return;
 		}
-		await this.mirrorToNotifications(item.tenantId, notificationIdsOf(item), change, recipient);
+		await this.withEntryRows(item.tenantId, item.id as ID, recipient?.userId as ID, (ids) =>
+			this.mirrorToNotifications(item.tenantId as ID, ids, change, recipient)
+		);
 	}
 
 	/**
@@ -227,41 +230,63 @@ export class InboxNotificationBridge implements OnModuleInit, IInboxSourceHandle
 
 	/**
 	 * Files one notification, once, whoever asks: the live filing the moment the notification exists, or the recovery
-	 * sweep any time later. A notification that already has its item, or is already recorded on its twin's, is left
-	 * alone, so the two never make two entries of one notification.
+	 * sweep any time later. A notification whose item is complete (its receiver's recipient row exists), or that is
+	 * already recorded on its twin's item, is left alone, so the two never make two entries of one notification; an
+	 * item a failed write left without its recipient row is completed.
 	 *
 	 * A mention whose twin (the same receiver, record and kind) was filed within ten minutes of it is folded: its id is
 	 * added to the twin's `metadata.twinNotificationIds`, and its row takes the entry's read / archive state, so the
-	 * notification API and the Inbox agree from the start. The check and the filing of a mention run under one lock
-	 * per receiver, record and kind, so two mentions filed at once (two replicas, one receiver named twice in a burst,
-	 * or the live filing and the sweep) cannot both find no twin.
+	 * notification API and the Inbox agree from the start (a fold found already recorded has its state taken again,
+	 * in case the first time stopped between the two writes). The check and the filing of a mention run under one lock
+	 * per receiver, record and kind — the lock the entry's state changes take too — so two mentions filed at once (two
+	 * replicas, one receiver named twice in a burst, or the live filing and the sweep) cannot both find no twin.
+	 *
+	 * `recovered` (the sweep): the entry is dated as its notification — the item and its recipient row take the
+	 * notification's creation time — so it sorts where it belongs, a mention filed later folds as it would have, and
+	 * the delivery lane decides it like any entry of that age.
 	 *
 	 * Throws what the filing threw (the sweep keeps its place and tries again); `fileNotification` logs it instead.
 	 */
-	async settleNotification(notification: IEmployeeNotification, now = Date.now()): Promise<InboxNotificationFiling> {
+	async settleNotification(
+		notification: IEmployeeNotification,
+		options: { now?: number; recovered?: boolean } = {}
+	): Promise<InboxNotificationFiling> {
+		const now = options.now ?? Date.now();
 		const userId = await this.userIdOfEmployee(notification?.receiverEmployeeId, notification?.tenantId);
 		const input = userId ? notificationItemInput(notification, userId) : null;
 		if (!input) {
 			return 'unaddressed';
 		}
+		const file = async (): Promise<InboxNotificationFiling> => {
+			const { item } = await this.inbox.upsertExternal(input);
+			if (options.recovered) {
+				await this.dateAsNotified(item.id as ID, notification);
+			}
+			return 'filed';
+		};
 		if (!isDedupedNotification(notification)) {
-			if (await this.isFiled(notification)) {
+			if ((await this.filingOf(notification, userId as ID)) === 'complete') {
 				return 'present';
 			}
 			await this.withCommentParent(input);
-			await this.inbox.upsertExternal(input);
-			return 'filed';
+			return file();
 		}
 		// A comment's task and record join the item first; the twin check keys on the notification alone.
 		await this.withCommentParent(input);
 		return this.locks.run(twinLockNameOf(notification, userId as ID), async (): Promise<InboxNotificationFiling> => {
-			if (await this.isFiled(notification)) {
+			const filing = await this.filingOf(notification, userId as ID);
+			if (filing === 'complete') {
 				return 'present';
+			}
+			if (filing === 'partial') {
+				return file();
 			}
 			const twins = (await this.twinCandidates(notification, userId as ID, now)).filter(
 				(row) => notificationTypeOf(row.metadata) === String(notification.type)
 			);
-			if (twins.some((row) => twinNotificationIdsOf(row.metadata).includes(String(notification.id)))) {
+			const recorded = twins.find((row) => twinNotificationIdsOf(row.metadata).includes(String(notification.id)));
+			if (recorded) {
+				await this.alignTwin(recorded.id, notification, userId as ID);
 				return 'present';
 			}
 			const twin = twins[0];
@@ -269,33 +294,52 @@ export class InboxNotificationBridge implements OnModuleInit, IInboxSourceHandle
 				this.logger.debug(
 					`Notification ${notification.id} is folded into inbox item ${twin.id}: a ${notification.type} on ${notification.entity} ${notification.entityId} reached user ${userId} within ${INBOX_MENTION_DEDUPE_WINDOW_MS / 60_000} minutes of it`
 				);
-				await this.recordTwin(twin.id, notification, userId as ID);
+				await this.recordTwin(twin.id, notification);
+				await this.alignTwin(twin.id, notification, userId as ID);
 				return 'folded';
 			}
-			await this.inbox.upsertExternal(input);
-			return 'filed';
+			return file();
 		});
 	}
 
-	/** Whether the notification already has its own item. */
-	private async isFiled(notification: IEmployeeNotification): Promise<boolean> {
+	/**
+	 * Whether the notification has its own item, and whether that item is complete — the receiver's recipient row
+	 * exists (`InboxService.write` saves the item first, so a failed recipient write leaves an item nobody sees).
+	 */
+	private async filingOf(notification: IEmployeeNotification, userId: ID): Promise<'complete' | 'partial' | null> {
+		const tenantId = notification.tenantId as ID;
 		const item = await this.dataSource.getRepository(InboxItem).findOne({
 			select: { id: true },
-			where: {
-				tenantId: notification.tenantId as ID,
-				externalSource: INBOX_NOTIFICATION_EXTERNAL_SOURCE,
-				externalId: String(notification.id)
-			}
+			where: { tenantId, externalSource: INBOX_NOTIFICATION_EXTERNAL_SOURCE, externalId: String(notification.id) }
 		});
-		return !!item;
+		if (!item) {
+			return null;
+		}
+		const recipient = await this.dataSource
+			.getRepository(InboxItemRecipient)
+			.findOne({ select: { id: true }, where: { tenantId, inboxItemId: item.id as ID, userId } });
+		return recipient ? 'complete' : 'partial';
+	}
+
+	/** Dates a recovered entry, and its recipient rows, as the notification it stands for (never later than now). */
+	private async dateAsNotified(itemId: ID, notification: IEmployeeNotification): Promise<void> {
+		const created = notification.createdAt ? new Date(notification.createdAt) : null;
+		if (!created || Number.isNaN(created.getTime()) || created.getTime() > Date.now()) {
+			return;
+		}
+		await this.dataSource.getRepository(InboxItem).update({ id: itemId }, { createdAt: created } as never);
+		await this.dataSource
+			.getRepository(InboxItemRecipient)
+			.update({ inboxItemId: itemId, tenantId: notification.tenantId as ID }, { createdAt: created } as never);
 	}
 
 	/**
 	 * The user's items on the notification's record whose recipient row was created within ten minutes of the
 	 * notification, newest first, the notification's own excluded: the entries a mention can be folded into, and so
-	 * the only ones it can have been folded into. One query over the user's recipient rows of the window joined to
-	 * their items on the record (no cap — a busy receiver's tenth minute is as long as anyone's); the kind is read from
-	 * the metadata by the caller, which the database cannot read.
+	 * the only ones it can have been folded into (a recovered entry is dated as its notification, see
+	 * `dateAsNotified`). One query over the user's recipient rows of the window joined to their items on the record
+	 * (no cap — a busy receiver's tenth minute is as long as anyone's); the kind is read from the metadata by the
+	 * caller, which the database cannot read.
 	 */
 	private async twinCandidates(
 		notification: IEmployeeNotification,
@@ -321,15 +365,13 @@ export class InboxNotificationBridge implements OnModuleInit, IInboxSourceHandle
 
 	/**
 	 * Records a folded mention on its twin's item (`metadata.twinNotificationIds`, written directly: a fact of the
-	 * mapping, not a change anyone is told about), and gives the mention's row the entry's read / archive state for
-	 * the receiver. Runs under the twin lock, which every fold into this item takes, so the read and the write of the
-	 * metadata are not interleaved with another fold.
+	 * mapping, not a change anyone is told about). Runs under the twin lock, which every fold into this item and every
+	 * state change of it takes, so the read and the write of the metadata are not interleaved with either.
 	 */
-	private async recordTwin(itemId: ID, notification: IEmployeeNotification, userId: ID): Promise<void> {
-		const tenantId = notification.tenantId as ID;
+	private async recordTwin(itemId: ID, notification: IEmployeeNotification): Promise<void> {
 		const notificationId = String(notification.id);
 		const items = this.dataSource.getRepository(InboxItem);
-		const item = await items.findOne({ where: { id: itemId, tenantId } });
+		const item = await items.findOne({ where: { id: itemId, tenantId: notification.tenantId as ID } });
 		if (!item) {
 			return;
 		}
@@ -341,17 +383,49 @@ export class InboxNotificationBridge implements OnModuleInit, IInboxSourceHandle
 				{ metadata: JSON.stringify({ ...metadata, twinNotificationIds: [...twins, notificationId] }) }
 			);
 		}
+	}
+
+	/** Gives a folded mention's row the entry's current read / archive state for the receiver (idempotent). */
+	private async alignTwin(itemId: ID, notification: IEmployeeNotification, userId: ID): Promise<void> {
+		const tenantId = notification.tenantId as ID;
 		const recipient = await this.dataSource
 			.getRepository(InboxItemRecipient)
-			.findOne({ where: { tenantId, inboxItemId: item.id as ID, userId } });
+			.findOne({ where: { tenantId, inboxItemId: itemId, userId } });
 		if (recipient) {
 			await this.mirrorToNotifications(
 				tenantId,
-				[notificationId],
+				[String(notification.id)],
 				{ isRead: !!recipient.isRead, isArchived: !!recipient.isArchived },
 				recipient
 			);
 		}
+	}
+
+	/**
+	 * Runs `work` with every notification row an entry stands for, read afresh. For a mention entry it runs under the
+	 * entry's twin lock (the lock its folds take), so a state change and a fold are serialised: a fold either comes
+	 * first, and is in the list, or comes after, and reads the state already written.
+	 */
+	private async withEntryRows(tenantId: ID, itemId: ID, userId: ID | undefined, work: (ids: string[]) => Promise<void>): Promise<void> {
+		const items = this.dataSource.getRepository(InboxItem);
+		const item = await items.findOne({ where: { id: itemId, tenantId } });
+		if (!item) {
+			return;
+		}
+		// The entry as the notification it was filed for: the lock its folds take is named after these.
+		const entry = {
+			tenantId,
+			type: notificationTypeOf(item.metadata),
+			entity: item.entity,
+			entityId: item.entityId
+		} as Pick<IEmployeeNotification, 'tenantId' | 'type' | 'entity' | 'entityId'>;
+		if (!userId || !isDedupedNotification(entry)) {
+			return work(notificationIdsOf(item));
+		}
+		await this.locks.run(twinLockNameOf(entry, userId), async () => {
+			const fresh = await items.findOne({ where: { id: itemId, tenantId } });
+			await work(notificationIdsOf(fresh ?? item));
+		});
 	}
 
 	/**
@@ -429,10 +503,18 @@ export class InboxNotificationBridge implements OnModuleInit, IInboxSourceHandle
 			}
 			await this.mirrorToRecipients(change, userId, items);
 			if (change.ids !== 'all') {
-				// The entries' other rows take the same state (written directly: no event, no echo).
+				// The entries' other rows take the same state (written directly: no event, no echo), each entry's list
+				// read afresh under its twin lock, as an Inbox change does.
 				const stated = new Set(change.ids.map(String));
-				const others = [...new Set(items.flatMap((item) => notificationIdsOf(item)))].filter((id) => !stated.has(id));
-				await this.mirrorToNotifications(change.tenantId, others, { isRead: change.isRead, isArchived: change.isArchived });
+				for (const item of items) {
+					await this.withEntryRows(change.tenantId, item.id as ID, userId, (ids) =>
+						this.mirrorToNotifications(
+							change.tenantId,
+							ids.filter((id) => !stated.has(id)),
+							{ isRead: change.isRead, isArchived: change.isArchived }
+						)
+					);
+				}
 			}
 		} catch (error) {
 			this.logger.warn(`The notification state change was not mirrored to the inbox: ${(error as Error)?.message}`);

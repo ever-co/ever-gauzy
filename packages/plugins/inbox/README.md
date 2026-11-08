@@ -238,9 +238,10 @@ person's attention lands:
   process that stops between the two (or a filing that fails) is caught up by a recovery sweep on the worker
   (`src/lib/notifications/inbox-notification-sweep.service.ts`, every five minutes on the `inbox-maintenance`
   queue, only where a queue root exists): it reads the notifications older than five minutes in order from a
-  durable checkpoint (`inbox_sweep_checkpoint`), with no age limit, and files those with no entry through the same
-  path as the live filing, so it never makes a second entry nor files a folded mention on its own. The worker hosts
-  the Inbox whenever `GAUZY_INBOX_ENABLED=true` for this schedule.
+  durable checkpoint (`inbox_sweep_checkpoint`, its first place written by the migration when the Inbox is switched
+  on), with no age limit, and files those with no complete entry through the same path as the live filing, so it
+  never makes a second entry nor files a folded mention on its own. A recovered entry is dated as its notification.
+  The worker hosts the Inbox whenever `GAUZY_INBOX_ENABLED=true` for this schedule.
 - **Followers are told.** With `GAUZY_NOTIFICATION_FANOUT_ENABLED=true` (off by default), a comment on a record
   an employee follows, and a change of a followed task's status, priority, due date or members, create a
   notification for each follower except the actor (`packages/core/src/lib/entity-subscription/fan-out/`). The

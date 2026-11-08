@@ -123,15 +123,18 @@ What the merged code did not do at first, and how each item stands; each names t
    `employee_notification` by `(createdAt, id)` from its checkpoint (`inbox_sweep_checkpoint`, compared in the
    database at the column's precision), with no age limit, leaving the last five minutes to the live filing,
    and files each notification through `InboxNotificationBridge.settleNotification` — the live filing's own
-   path: a notification that has its item, or is recorded on its twin's, is left alone, and a mention is
+   path: a notification whose item is complete (its receiver's recipient row exists), or that is recorded on
+   its twin's, is left alone; an item a failed write left without its recipient row is completed; a mention is
    checked and filed under the same twin lock, so the two never make two entries of one notification. The
-   twin window is measured around the notification's own creation (not the moment of filing), so a late
-   filing folds as the live one would have, and finds the folds already recorded. The first sweep starts where
-   the Inbox started filing (its oldest notification entry, less the ten-minute window). A notification whose
+   twin window is measured around the notification's own creation, and a recovered entry (item and recipient
+   row) is dated as its notification, so a late filing folds as the live one would have — two lost mentions of
+   one record included — sorts where it belongs, and the delivery lane decides it like any entry of that age
+   (one older than the lane's one-day intake window is not emailed). The first place is written by the
+   migration that creates the table, when the Inbox is switched on: where the Inbox started filing (its oldest
+   notification entry), or that moment; the sweep reads from ten minutes before it. A notification whose
    filing fails holds the checkpoint and is retried; after five sweeps, or at once when the Inbox refuses it
    (a `400`), it is given up with an error in the log. Recovered entries take the notification's read and
-   archive state. Note: recovered entries are created when the sweep files them, so the delivery lane decides
-   them then (an immediate email arrives late rather than never).
+   archive state.
 2. **The per-type switches still decide whether an entry exists.** `shouldCreateEmployeeNotification`
    (core `employee-notification.service.ts`) returns early when the receiver switched the type off
    (`comment`, `mention`, `message`, `assignment`, `invitation`, `payment`, `preferences.taskUpdate`), so
@@ -158,5 +161,8 @@ What the merged code did not do at first, and how each item stands; each names t
    mark-all-read) writes every row the entry stands for (`notificationIdsOf`). `mirrorNotificationState`
    (notification API → Inbox) finds the entries a changed row was folded into (the receiver's entries on the
    record within ten minutes of it, the only place a fold can be) as well as the entries filed for it, updates
-   their recipient rows, and writes the same state onto the entries' other rows. Folds made before the record
-   existed are recorded by the recovery sweep when it reaches them.
+   their recipient rows, and writes the same state onto the entries' other rows. Both directions read the
+   entry's list afresh under its twin lock, so a state change and a fold are serialised (a fold lands either
+   before, and is in the list, or after, and copies the state already written). Folds made before the record
+   existed are recorded by the recovery sweep when it reaches them, and a recorded fold whose state copy was
+   lost (a stop between the two writes) takes the entry's state again then.
