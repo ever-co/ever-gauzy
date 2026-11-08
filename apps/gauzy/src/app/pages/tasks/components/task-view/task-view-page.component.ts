@@ -9,6 +9,7 @@ import { distinctUntilChanged, filter, first, map } from 'rxjs/operators';
 import * as moment from 'moment-timezone';
 import {
 	BaseEntityEnum,
+	ID,
 	IOrganization,
 	IPagination,
 	ITask,
@@ -188,6 +189,8 @@ export class TaskViewPageComponent extends TranslationBaseComponent implements O
 	private commentCountSequence = 0;
 	/** Entity type the Comments tab hangs its comments off, as the Activity tab reads them. */
 	readonly commentEntity = BaseEntityEnum.Task;
+	/** The comment the URL points at (`?comment=`, an Inbox notification's link): the Comments tab opens on it. */
+	highlightCommentId: ID | null = null;
 
 	task: ITask = null;
 	status: IRecordViewStatus = null;
@@ -286,14 +289,18 @@ export class TaskViewPageComponent extends TranslationBaseComponent implements O
 				untilDestroyed(this)
 			)
 			.subscribe((canCreateTasks) => (this.canCreateTasks = canCreateTasks));
-		// The open tab follows the URL, so a tab can be bookmarked, shared and reached with Back.
+		// The open tab follows the URL, so a tab can be bookmarked, shared and reached with Back. A link that names a
+		// comment (`?comment=`, as an Inbox notification's does) opens the Comments tab on it, tab or no tab.
 		this.route.queryParamMap
 			.pipe(
-				map((params) => params.get('tab') as TaskViewTab),
-				distinctUntilChanged(),
+				map((params) => ({ tab: params.get('tab') as TaskViewTab, comment: params.get('comment')?.trim() || null })),
+				distinctUntilChanged((a, b) => a.tab === b.tab && a.comment === b.comment),
 				untilDestroyed(this)
 			)
-			.subscribe((tab) => this.openTab(TABS.includes(tab) ? tab : 'overview'));
+			.subscribe(({ tab, comment }) => {
+				this.highlightCommentId = comment;
+				this.openTab(TABS.includes(tab) ? tab : comment ? 'comments' : 'overview');
+			});
 		// The estimate is spelled out in the viewer's language.
 		this.translateService.onLangChange.pipe(untilDestroyed(this)).subscribe(() => this.show());
 	}
@@ -384,7 +391,8 @@ export class TaskViewPageComponent extends TranslationBaseComponent implements O
 		this.openTab(tab);
 		void this.router.navigate([], {
 			relativeTo: this.route,
-			queryParams: { tab: tab === 'overview' ? null : tab },
+			// A tab the user chose: the comment a link pointed at is no longer pointed at, or the tab could not be left.
+			queryParams: { tab: tab === 'overview' ? null : tab, comment: null },
 			queryParamsHandling: 'merge',
 			replaceUrl: true
 		});

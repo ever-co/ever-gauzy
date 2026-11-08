@@ -672,3 +672,11 @@ a.comment-author:hover {
     text-decoration: underline;
   }
 }
+
+// The comment a link points at (an Inbox notification's), marked until another link or tab is chosen.
+.comment.highlighted > .comment-main,
+.reply.highlighted > .comment-main {
+  background: var(--color-primary-transparent-100, rgba(51, 102, 255, 0.08));
+  border-radius: 0.25rem;
+  box-shadow: inset 3px 0 0 var(--color-primary-default, #3366ff);
+}

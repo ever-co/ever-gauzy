@@ -100,6 +100,8 @@ export const inboxSchemaExtensions = gql`
 	type InboxItemCounts {
 		unread: Int!
 		decisionsOpen: Int!
+		"My unread email items, whichever mailbox they belong to — or none."
+		emailUnread: Int!
 		byMailbox: [InboxMailboxUnreadCount!]!
 	}
 

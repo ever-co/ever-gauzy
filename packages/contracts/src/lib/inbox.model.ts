@@ -165,6 +165,8 @@ export interface IInboxItemPage {
 export interface IInboxItemCounts {
 	unread: number;
 	decisionsOpen: number;
+	/** My unread email items, whichever mailbox they belong to — or none (a mirrored email of a source). */
+	emailUnread: number;
 	byMailbox: Array<{ mailboxId: ID; unread: number }>;
 }
 
