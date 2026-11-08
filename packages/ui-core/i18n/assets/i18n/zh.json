@@ -1351,6 +1351,23 @@
 	},
 	"REPORT_PAGE": {
 		"MANUAL_TIME": {
+			"DETAILS": {
+				"DAY_TITLE": "当天",
+				"DAY_CAPTION": "共记录 {{ total }} · {{ share }}% 为手动添加",
+				"TRACKED": "已追踪",
+				"OTHER_MANUAL": "其他手动",
+				"THIS_ENTRY": "本条记录",
+				"TIMELINE_LABEL": "当天时间线：{{ count }} 条时间记录，共 {{ total }}",
+				"SPLIT_LABEL": "{{ tracked }}% 已追踪，{{ manual }}% 手动",
+				"DAY_UNAVAILABLE": "无法加载当天的其他记录，仅显示本条记录。",
+				"TITLE": "手动时间记录",
+				"VIEW": "查看记录详情",
+				"NO_REASON": "未填写原因",
+				"HISTORY": "历史",
+				"ADDED_ON": "添加于",
+				"LAST_EDITED": "最后编辑于",
+				"NOT_EDITED": "添加后未编辑"
+			},
 			"AVG_PER_ENTRY": "平均每条 {{ value }}",
 			"ACROSS_DAYS": "共 {{ count }} 天",
 			"SHARE_OF_ENTRIES": "占记录的 {{ value }}%",

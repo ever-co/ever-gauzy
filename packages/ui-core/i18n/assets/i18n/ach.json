@@ -1206,6 +1206,23 @@
 	},
 	"REPORT_PAGE": {
 		"MANUAL_TIME": {
+			"DETAILS": {
+				"DAY_TITLE": "Their day",
+				"DAY_CAPTION": "{{ total }} logged · {{ share }}% added by hand",
+				"TRACKED": "Tracked",
+				"OTHER_MANUAL": "Other manual",
+				"THIS_ENTRY": "This entry",
+				"TIMELINE_LABEL": "Day timeline: {{ count }} time logs, {{ total }} in all",
+				"SPLIT_LABEL": "{{ tracked }}% tracked, {{ manual }}% manual",
+				"DAY_UNAVAILABLE": "The rest of the day could not be loaded, so only this entry is shown.",
+				"TITLE": "Manual time entry",
+				"VIEW": "View entry details",
+				"NO_REASON": "No reason given",
+				"HISTORY": "History",
+				"ADDED_ON": "Added",
+				"LAST_EDITED": "Last edited",
+				"NOT_EDITED": "Not edited since it was added"
+			},
 			"AVG_PER_ENTRY": "Avg {{ value }} per entry",
 			"ACROSS_DAYS": "Across {{ count }} days",
 			"SHARE_OF_ENTRIES": "{{ value }}% of entries",

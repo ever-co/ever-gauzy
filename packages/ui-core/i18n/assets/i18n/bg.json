@@ -1345,6 +1345,23 @@
 	},
 	"REPORT_PAGE": {
 		"MANUAL_TIME": {
+			"DETAILS": {
+				"DAY_TITLE": "Денят на служителя",
+				"DAY_CAPTION": "Записани {{ total }} · {{ share }}% добавени ръчно",
+				"TRACKED": "Проследено",
+				"OTHER_MANUAL": "Друго ръчно",
+				"THIS_ENTRY": "Този запис",
+				"TIMELINE_LABEL": "Времева линия на деня: записи {{ count }}, общо {{ total }}",
+				"SPLIT_LABEL": "{{ tracked }}% проследено, {{ manual }}% ръчно",
+				"DAY_UNAVAILABLE": "Останалата част от деня не можа да се зареди, затова е показан само този запис.",
+				"TITLE": "Запис за ръчно време",
+				"VIEW": "Преглед на детайлите на записа",
+				"NO_REASON": "Не е посочена причина",
+				"HISTORY": "История",
+				"ADDED_ON": "Добавено",
+				"LAST_EDITED": "Последна редакция",
+				"NOT_EDITED": "Не е редактиран след добавянето"
+			},
 			"AVG_PER_ENTRY": "Средно {{ value }} на запис",
 			"ACROSS_DAYS": "Дни: {{ count }}",
 			"SHARE_OF_ENTRIES": "{{ value }}% от записите",

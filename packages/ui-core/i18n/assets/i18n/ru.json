@@ -1326,6 +1326,23 @@
 	},
 	"REPORT_PAGE": {
 		"MANUAL_TIME": {
+			"DETAILS": {
+				"DAY_TITLE": "День сотрудника",
+				"DAY_CAPTION": "Записано {{ total }} · {{ share }}% добавлено вручную",
+				"TRACKED": "Отслежено",
+				"OTHER_MANUAL": "Другое ручное",
+				"THIS_ENTRY": "Эта запись",
+				"TIMELINE_LABEL": "Шкала дня: записей {{ count }}, всего {{ total }}",
+				"SPLIT_LABEL": "{{ tracked }}% отслежено, {{ manual }}% вручную",
+				"DAY_UNAVAILABLE": "Не удалось загрузить остальную часть дня, поэтому показана только эта запись.",
+				"TITLE": "Запись ручного времени",
+				"VIEW": "Показать детали записи",
+				"NO_REASON": "Причина не указана",
+				"HISTORY": "История",
+				"ADDED_ON": "Добавлено",
+				"LAST_EDITED": "Последнее изменение",
+				"NOT_EDITED": "Не изменялась с момента добавления"
+			},
 			"AVG_PER_ENTRY": "В среднем {{ value }} на запись",
 			"ACROSS_DAYS": "Дней: {{ count }}",
 			"SHARE_OF_ENTRIES": "{{ value }}% записей",

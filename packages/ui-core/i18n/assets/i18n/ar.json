@@ -1317,6 +1317,23 @@
 	},
 	"REPORT_PAGE": {
 		"MANUAL_TIME": {
+			"DETAILS": {
+				"DAY_TITLE": "يومه",
+				"DAY_CAPTION": "{{ total }} مسجّلة · {{ share }}% أُضيفت يدويًا",
+				"TRACKED": "متتبَّع",
+				"OTHER_MANUAL": "يدوي آخر",
+				"THIS_ENTRY": "هذا الإدخال",
+				"TIMELINE_LABEL": "المخطط الزمني لليوم: {{ count }} سجلات، {{ total }} إجمالًا",
+				"SPLIT_LABEL": "{{ tracked }}% متتبَّع، {{ manual }}% يدوي",
+				"DAY_UNAVAILABLE": "تعذّر تحميل بقية اليوم، لذلك يُعرض هذا الإدخال فقط.",
+				"TITLE": "إدخال وقت يدوي",
+				"VIEW": "عرض تفاصيل الإدخال",
+				"NO_REASON": "لم يُذكر سبب",
+				"HISTORY": "السجل",
+				"ADDED_ON": "أُضيف",
+				"LAST_EDITED": "آخر تعديل",
+				"NOT_EDITED": "لم يُعدَّل منذ إضافته"
+			},
 			"AVG_PER_ENTRY": "متوسط {{ value }} لكل إدخال",
 			"ACROSS_DAYS": "على مدى {{ count }} أيام",
 			"SHARE_OF_ENTRIES": "{{ value }}% من الإدخالات",

@@ -1317,6 +1317,23 @@
 	},
 	"REPORT_PAGE": {
 		"MANUAL_TIME": {
+			"DETAILS": {
+				"DAY_TITLE": "Dzień pracownika",
+				"DAY_CAPTION": "Zarejestrowano {{ total }} · {{ share }}% dodano ręcznie",
+				"TRACKED": "Śledzony",
+				"OTHER_MANUAL": "Inny ręczny",
+				"THIS_ENTRY": "Ten wpis",
+				"TIMELINE_LABEL": "Oś dnia: wpisy {{ count }}, łącznie {{ total }}",
+				"SPLIT_LABEL": "{{ tracked }}% śledzony, {{ manual }}% ręczny",
+				"DAY_UNAVAILABLE": "Nie udało się wczytać reszty dnia, więc pokazano tylko ten wpis.",
+				"TITLE": "Ręczny wpis czasu",
+				"VIEW": "Pokaż szczegóły wpisu",
+				"NO_REASON": "Nie podano powodu",
+				"HISTORY": "Historia",
+				"ADDED_ON": "Dodano",
+				"LAST_EDITED": "Ostatnia edycja",
+				"NOT_EDITED": "Nie edytowano od dodania"
+			},
 			"AVG_PER_ENTRY": "Śr. {{ value }} na wpis",
 			"ACROSS_DAYS": "Dni: {{ count }}",
 			"SHARE_OF_ENTRIES": "{{ value }}% wpisów",
