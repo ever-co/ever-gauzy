@@ -142,7 +142,7 @@ export function registerDocsTools(server: McpServer, access: { read: boolean; wr
 	registerCollaborationTool<{ name: string; parentId?: string; visibility?: string; organizationTeamId?: string; markdown?: string; description?: string }>(
 		server,
 		'create_page',
-		"Creates a page (under a parent, in a space) in the signed-in user's name, with its text as Markdown when given. Writes POST /plugins/docs/documents, then PUT /:id/content/markdown; when the text could not be written the page is answered anyway, with `markdownWritten: false`, so the text can be written with update_page_markdown rather than the page created twice.",
+		"Creates a page (under a parent, in a space) in the signed-in user's name, with its text as Markdown when given. Writes POST /plugins/docs/documents, then PUT /:id/content/markdown against the revision the page was created at (an edit made in between is never overwritten); when the text could not be written the page is answered anyway, with `markdownWritten: false`, so the text can be written with update_page_markdown rather than the page created twice.",
 		{
 			name: z.string().min(1).max(255).describe('The page title'),
 			parentId: z.string().uuid().optional().describe('The folder or page to create it under'),
@@ -163,15 +163,27 @@ export function registerDocsTools(server: McpServer, access: { read: boolean; wr
 			});
 			let revision = Number(created?.['contentRevision']) || null;
 			if (args.markdown && created?.['id']) {
+				// The text is written against the revision the page was created at: an edit someone made in between is
+				// answered as a conflict, never overwritten. Without that revision nothing is written.
+				if (!revision) {
+					return answer({
+						page: { ...pageSummary(created ?? {}), revision },
+						markdownWritten: false,
+						warning: 'The page was created, but its revision was not answered, so its text was not written: read it with get_page, then write the text with update_page_markdown on this page rather than creating it again.'
+					});
+				}
 				try {
-					const updated = await apiClient.put<Row>(`${DOCS}/documents/${created['id']}/content/markdown`, { ...scope(), markdown: args.markdown });
+					const updated = await apiClient.put<Row>(`${DOCS}/documents/${created['id']}/content/markdown`, { ...scope(), markdown: args.markdown, expectedRevision: revision });
 					revision = Number(updated?.['revision']) || revision;
 				} catch (error) {
 					const { status } = describeError(error);
 					return answer({
 						page: { ...pageSummary(created ?? {}), revision },
 						markdownWritten: false,
-						warning: `The page was created, but its text was not written${status ? ` (${status})` : ''}: write it with update_page_markdown on this page rather than creating it again.`
+						warning:
+							status === 409
+								? 'The page was created, but someone changed it before its text was written, so the text was not written: read it with get_page, then apply the text with update_page_markdown rather than creating the page again.'
+								: `The page was created, but its text was not written${status ? ` (${status})` : ''}: write it with update_page_markdown on this page rather than creating it again.`
 					});
 				}
 			}

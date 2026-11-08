@@ -312,7 +312,8 @@ describe('docs', () => {
 		api.put.mockResolvedValueOnce({ revision: 2, changed: true, changedBlocks: 1, keptBlocks: 0 });
 		const created = await call(docs.get('create_page'), { name: 'New', parentId: ITEM, markdown: 'Hello' });
 		expect(api.post).toHaveBeenCalledWith('/api/plugins/docs/documents', { tenantId: 'ten', organizationId: 'org', kind: 'PAGE', name: 'New', parentId: ITEM });
-		expect(api.put).toHaveBeenCalledWith(`/api/plugins/docs/documents/${PAGE}/content/markdown`, { tenantId: 'ten', organizationId: 'org', markdown: 'Hello' });
+		// The text is written against the revision the page was created at.
+		expect(api.put).toHaveBeenCalledWith(`/api/plugins/docs/documents/${PAGE}/content/markdown`, { tenantId: 'ten', organizationId: 'org', markdown: 'Hello', expectedRevision: 1 });
 		expect(created.page).toEqual(expect.objectContaining({ id: PAGE, revision: 2 }));
 		expect(created.markdownWritten).toBe(true);
 
@@ -322,6 +323,21 @@ describe('docs', () => {
 		const halfway = await call(docs.get('create_page'), { name: 'New', markdown: 'Hello' });
 		expect(halfway).toEqual(expect.objectContaining({ markdownWritten: false, page: expect.objectContaining({ id: PAGE, revision: 1 }) }));
 		expect(halfway.warning).toContain('update_page_markdown');
+
+		// Someone edited the new page first: their edit stands, and the client is told to read it before writing.
+		api.post.mockResolvedValueOnce({ id: PAGE, name: 'New', kind: 'PAGE', contentRevision: 1 });
+		api.put.mockRejectedValueOnce({ isAxiosError: true, response: { status: 409, data: { code: 'DOCS_CONTENT_CONFLICT', currentRevision: 2 } } });
+		const raced = await call(docs.get('create_page'), { name: 'New', markdown: 'Hello' });
+		expect(raced).toEqual(expect.objectContaining({ markdownWritten: false, page: expect.objectContaining({ id: PAGE, revision: 1 }) }));
+		expect(raced.warning).toContain('someone changed it');
+
+		// No revision answered: nothing is written, rather than a write that could replace an edit.
+		const puts = api.put.mock.calls.length;
+		api.post.mockResolvedValueOnce({ id: PAGE, name: 'New', kind: 'PAGE' });
+		const unknown = await call(docs.get('create_page'), { name: 'New', markdown: 'Hello' });
+		expect(api.put.mock.calls.length).toBe(puts);
+		expect(unknown).toEqual(expect.objectContaining({ markdownWritten: false }));
+		expect(unknown.warning).toContain('get_page');
 
 		api.put.mockResolvedValueOnce({ revision: 3, changed: true, changedBlocks: 1, keptBlocks: 4 });
 		const updated = await call(docs.get('update_page_markdown'), { pageId: PAGE, markdown: '# T\n\nChanged', expectedRevision: 2 });
