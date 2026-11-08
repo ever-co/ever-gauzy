@@ -231,6 +231,16 @@ person's attention lands:
   is filed once per receiver, record and kind within ten minutes (spec FR-4): the same employee mentioned twice in
   one page, or in two quick edits, has one entry to look at (the notification rows themselves are all kept); the
   check and the filing run under one lock per receiver, record and kind, so two filed at once cannot both pass.
+  The folded mention is recorded on the entry (`metadata.twinNotificationIds`) and its row takes the entry's
+  state: reading, archiving (or undoing either) the entry, or any of its rows through the notification API,
+  reaches every row the entry stands for.
+- **No lost entries.** The filing runs right after the notification is committed, in the process that wrote it. A
+  process that stops between the two (or a filing that fails) is caught up by a recovery sweep on the worker
+  (`src/lib/notifications/inbox-notification-sweep.service.ts`, every five minutes on the `inbox-maintenance`
+  queue, only where a queue root exists): it reads the notifications older than five minutes in order from a
+  durable checkpoint (`inbox_sweep_checkpoint`), with no age limit, and files those with no entry through the same
+  path as the live filing, so it never makes a second entry nor files a folded mention on its own. The worker hosts
+  the Inbox whenever `GAUZY_INBOX_ENABLED=true` for this schedule.
 - **Followers are told.** With `GAUZY_NOTIFICATION_FANOUT_ENABLED=true` (off by default), a comment on a record
   an employee follows, and a change of a followed task's status, priority, due date or members, create a
   notification for each follower except the actor (`packages/core/src/lib/entity-subscription/fan-out/`). The

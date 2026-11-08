@@ -8,7 +8,7 @@
 **Branch**: `feat/inbox`
 **Status**: `Draft`
 **Created**: 2026-11-07
-**Last updated**: 2026-11-07
+**Last updated**: 2026-11-08
 **Owner**: platform maintainers
 **Feature flag**: `GAUZY_INBOX_ENABLED` (default off)
 
@@ -136,7 +136,7 @@ Ever Teams, the desktop apps, the MCP server and the SDKs.
 - **FR-15** Existing employee-notification and inbox endpoints MUST keep working
   unchanged; clients that read employee notifications today MUST see the same entries
   (filed items mirror read state both ways, including the notification rows a
-  deduplicated entry stands for; the latter is not met yet, see plan §10.3).
+  deduplicated entry stands for, see plan §10.3).
 - **FR-16** Decisions already in the Inbox (questions, approvals, escalations) MUST keep
   their reply flow and appear in the same list, filterable as "Decisions".
 
@@ -145,8 +145,9 @@ Ever Teams, the desktop apps, the MCP server and the SDKs.
 - **Performance**: list of the newest 50 entries with actors and targets under 200 ms
   P95 at 1,000,000 entries per tenant; unread counts under 50 ms.
 - **Reliability**: entry creation is part of the originating write's transaction or an
-  at-least-once outbox; no lost entries on crashes; digests never sent twice. (Not met
-  yet: entries are filed best effort after the notification row exists, see plan §10.1.)
+  at-least-once outbox; no lost entries on crashes; digests never sent twice. (Entries are
+  filed right after the notification row exists, and a recovery sweep with a durable
+  checkpoint files any the process did not live to file, see plan §10.1.)
 - **Security & privacy**: an employee reads only their own entries; targets are checked
   against the recipient's permissions at read time; email and push contain only the
   subject and a link.

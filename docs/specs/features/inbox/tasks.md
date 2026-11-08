@@ -3,7 +3,7 @@
 **Feature ID**: `inbox`
 **Plan**: `./plan.md`
 **Status**: `In Progress` — T1–T8 in ever-co/ever-gauzy#11682
-**Last updated**: 2026-11-07
+**Last updated**: 2026-11-08
 
 ---
 
@@ -26,7 +26,7 @@
 - [x] **T9**. CI green on #11682 (tsc, Jest, schema snapshot, field-binding check); fix forward
 - [ ] **T10**. Enable on dev: mention → NOTIFICATION item; read mirror both ways; follower comment notification with the flag on
 - [x] **T11**. Angular `inbox-ui`: Done tab + action, NOTIFICATION rendering (opens the task/comment), counts (ever-gauzy #11720)
-- [x] **T12**. Dedupe rule per spec FR-4 (10-minute window per recipient/target/kind) in the Inbox's notification bridge (ever-gauzy #11707: a mention whose twin reached the user within ten minutes is not filed again). Known gap: the folded twin's notification row is not mirrored when the entry is read (plan §10.3, follow-up T18)
+- [x] **T12**. Dedupe rule per spec FR-4 (10-minute window per recipient/target/kind) in the Inbox's notification bridge (ever-gauzy #11707: a mention whose twin reached the user within ten minutes is not filed again). The folded twin's notification row is mirrored since T18 (plan §10.3)
 
 ## Phase 4 — Delivery (lane G10)
 
@@ -38,6 +38,6 @@
 
 ## Follow-ups (from the plan's §10)
 
-- [ ] **T16**. Durable filing: an outbox row in the notification's transaction, or a sweep with a durable checkpoint and no age cutoff that files notifications with no Inbox item and skips folded twins (after T18) (plan §10.1)
+- [x] **T16**. Durable filing: a recovery sweep (`InboxNotificationSweepService`, worker, every five minutes) with a durable checkpoint (`inbox_sweep_checkpoint`, migration `1791000006540`) and no age cutoff that files notifications with no Inbox item through the live filing's own path and leaves folded twins alone (plan §10.1)
 - [ ] **T17**. Notification row and Inbox entry always created together; the legacy per-type switches decide only e-mail and push (plan §10.2)
-- [ ] **T18**. Many-to-one record of the notification rows a deduplicated entry stands for, every state change mirrored both ways through it (plan §10.3)
+- [x] **T18**. Many-to-one record of the notification rows a deduplicated entry stands for (`metadata.twinNotificationIds`), every state change mirrored both ways through it (plan §10.3)

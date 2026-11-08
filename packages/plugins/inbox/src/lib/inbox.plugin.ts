@@ -1,7 +1,9 @@
 import { ApplicationPluginConfig } from '@gauzy/common';
 import { GauzyCorePlugin as Plugin, IOnPluginBootstrap, IOnPluginDestroy } from '@gauzy/plugin';
+import { isSchedulerQueueRootEnabled } from '@gauzy/scheduler';
 import { INBOX_MIGRATIONS } from './database/inbox-migrations';
 import { INBOX_ENTITIES, InboxModule } from './inbox.module';
+import { InboxMaintenanceModule } from './inbox-maintenance.module';
 import { InboxResolver } from './graphql/inbox.resolver';
 import { inboxSchemaExtensions } from './graphql/inbox.schema';
 
@@ -13,9 +15,12 @@ export { INBOX_MIGRATIONS };
  * Gauzy is production: the plugin is listed by `apps/api/src/plugins.ts` only when `GAUZY_INBOX_ENABLED` is
  * exactly `true` (`isInboxEnabled`). Off (the default) it is not loaded at all: no route, no GraphQL field, no table
  * (its migrations are not even registered) and no role grant.
+ *
+ * Where a queue root exists (`isSchedulerQueueRootEnabled`: the worker) it also brings its schedule: the recovery sweep
+ * that files the notifications the live filing missed (`InboxMaintenanceModule`).
  */
 @Plugin({
-	imports: [InboxModule],
+	imports: [InboxModule, ...(isSchedulerQueueRootEnabled() ? [InboxMaintenanceModule] : [])],
 	// Arrays, not factories: the platform resolves a factory for migrations but not for entities.
 	entities: [...INBOX_ENTITIES],
 	migrations: [...INBOX_MIGRATIONS],
