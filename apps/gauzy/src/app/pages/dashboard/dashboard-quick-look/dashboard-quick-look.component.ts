@@ -3,7 +3,6 @@ import { NavigationEnd, Router } from '@angular/router';
 import { combineLatest } from 'rxjs';
 import { distinctUntilChanged, filter, map, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { TranslateService } from '@ngx-translate/core';
 import { ID, IDateRangePicker, IOrganization, IOrganizationProject, ITask } from '@gauzy/contracts';
 import { distinctUntilChange } from '@gauzy/ui-core/common';
 import {
@@ -49,26 +48,28 @@ export class DashboardQuickLookComponent extends TranslationBaseComponent implem
 	private readonly _router = inject(Router);
 	private readonly _hashPipe = new HashNumberPipe();
 
-	public readonly viewedTask = signal<ITask | null>(null);
-	public readonly viewSections = signal<IRecordViewSection[]>([]);
-	public readonly viewStatus = signal<IRecordViewStatus | null>(null);
-	public readonly viewedProject = signal<IProjectQuickLookCard | null>(null);
-	public readonly selectedEmployeeId = signal<ID | null>(null);
-	public readonly rangeStart = signal<string | null>(null);
-	public readonly rangeEnd = signal<string | null>(null);
+	protected readonly viewedTask = signal<ITask | null>(null);
+	protected readonly viewSections = signal<IRecordViewSection[]>([]);
+	protected readonly viewStatus = signal<IRecordViewStatus | null>(null);
+	protected readonly viewedProject = signal<IProjectQuickLookCard | null>(null);
+	protected readonly selectedEmployeeId = signal<ID | null>(null);
+	protected readonly rangeStart = signal<string | null>(null);
+	protected readonly rangeEnd = signal<string | null>(null);
 
 	private readonly _organization = signal<IOrganization | null>(null);
-	public readonly organizationId = computed<ID | null>(() => this._organization()?.id ?? null);
-	public readonly tenantId = computed<ID | null>(() => this._organization()?.tenantId ?? null);
-	public readonly scopeEmployeeIds = computed<ID[] | null>(() =>
+	protected readonly organizationId = computed<ID | null>(() => this._organization()?.id ?? null);
+	protected readonly tenantId = computed<ID | null>(() => this._organization()?.tenantId ?? null);
+	protected readonly scopeEmployeeIds = computed<ID[] | null>(() =>
 		this.selectedEmployeeId() ? [this.selectedEmployeeId()] : null
 	);
 
 	private _selectedDateRange: IDateRangePicker | null = null;
 	private _viewSequence = 0;
 
-	constructor(public readonly translateService: TranslateService) {
-		super(translateService);
+	// No parameters: TranslationBaseComponent injects TranslateService itself. The explicit constructor
+	// stays, because Angular refuses (NG2006) a component inheriting the undecorated base's constructor.
+	constructor() {
+		super();
 	}
 
 	ngOnInit(): void {

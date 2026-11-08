@@ -872,6 +872,9 @@ export class AccountDeletionService {
 			return await query.where('LOWER(TRIM(user.email)) = :email', { email }).orderBy('user.id', 'ASC').getMany();
 		}
 		const patterns = accountDeletionEmailPatterns(email);
+		if (!patterns.length) {
+			return [];
+		}
 		const users = await query
 			.where(
 				`(${patterns.map((_, index) => `LOWER(TRIM(user.email)) LIKE :pattern${index} ESCAPE '!'`).join(' OR ')})`,
@@ -946,6 +949,12 @@ export function planHashOf(
 }
 
 /**
+ * The most characters a normalized address can have: the request DTO allows 254, and lowercasing can turn one
+ * character into two (`İ` → `i` + combining dot). Anything longer is not an address a request could carry.
+ */
+export const ACCOUNT_DELETION_EMAIL_MAX_CHARACTERS = 512;
+
+/**
  * The `LIKE` patterns (escape character `!`), compared with `LOWER(TRIM(email))`, that the stored spellings of a
  * normalized address with non-ASCII letters match, whatever the database's LOWER does with those letters. They only
  * narrow, so the caller compares the rows they find exactly; and they narrow to addresses of the same length with
@@ -957,10 +966,15 @@ export function planHashOf(
  *   letter, the other as the two the decomposed spelling stores. An address without it has one pattern.
  * - `%`, `_` and `!` of the address itself are escaped: they are characters of the address, not wildcards.
  *
+ * An address longer than {@link ACCOUNT_DELETION_EMAIL_MAX_CHARACTERS} gets no pattern (no account can match it).
+ *
  * @param email The address, normalized (`normalizeAccountDeletionEmail`).
  */
 export function accountDeletionEmailPatterns(email: string): string[] {
-	const characters = Array.from(email);
+	const characters = Array.from(typeof email === 'string' ? email : '');
+	if (!characters.length || characters.length > ACCOUNT_DELETION_EMAIL_MAX_CHARACTERS) {
+		return [];
+	}
 	const pattern = (dottedCapitalStoredAsOne: boolean): string => {
 		let built = '';
 		for (let index = 0; index < characters.length; index++) {
