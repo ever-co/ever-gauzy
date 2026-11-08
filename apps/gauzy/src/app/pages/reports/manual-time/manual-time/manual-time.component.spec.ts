@@ -111,7 +111,7 @@ describe('ManualTimeComponent', () => {
 		expect(request).not.toHaveProperty('isEdited');
 		expect(request).not.toHaveProperty('taskIds');
 		expect(request).not.toHaveProperty('billableOnly');
-		expect(relations).toEqual(['task', 'project', 'organizationContact', 'employee', 'employee.user']);
+		expect(relations).toEqual(['task', 'project', 'organizationContact', 'employee', 'employee.user', 'timesheet']);
 	});
 
 	it('sends the action, task and billable filters', async () => {

@@ -47,7 +47,7 @@ import {
 import { ManualTimeDetailsComponent } from '../manual-time-details/manual-time-details.component';
 
 /** The relations each entry is read with: what the table and the details dialog show next to it. */
-const MANUAL_TIME_RELATIONS = ['task', 'project', 'organizationContact', 'employee', 'employee.user'];
+const MANUAL_TIME_RELATIONS = ['task', 'project', 'organizationContact', 'employee', 'employee.user', 'timesheet'];
 
 @UntilDestroy({ checkProperties: true })
 @Component({

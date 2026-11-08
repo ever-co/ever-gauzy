@@ -104,9 +104,9 @@
 				"
 			>
 				<div class="timeline-track">
-					@for (tick of ticks; track tick) {
+					@for (tick of ticks; track tick; let i = $index) {
 						@if (tick > 0 && tick < 24) {
-							<span class="timeline-grid" [style.left.%]="(tick / 24) * 100"></span>
+							<span class="timeline-grid" [style.left.%]="tickPosition(i, tick)"></span>
 						}
 					}
 					@for (segment of day?.segments ?? []; track segment.id) {
@@ -121,8 +121,8 @@
 					}
 				</div>
 				<div class="timeline-axis" aria-hidden="true">
-					@for (tick of ticks; track tick) {
-						<span class="timeline-tick" [style.left.%]="(tick / 24) * 100">
+					@for (tick of ticks; track tick; let i = $index) {
+						<span class="timeline-tick" [style.left.%]="tickPosition(i, tick)">
 							{{ tick === 24 ? '24:00' : (tick < 10 ? '0' + tick : tick) + ':00' }}
 						</span>
 					}
@@ -277,7 +277,7 @@
 			</button>
 			<ng-template [ngxPermissionsOnly]="PermissionsEnum.ALLOW_MODIFY_TIME">
 				<ng-template ngxTimeTrackingAuthorized [permission]="PermissionsEnum.ALLOW_MODIFY_TIME">
-					<button nbButton status="primary" size="small" [disabled]="timeLog?.isRunning" (click)="edit()">
+					<button nbButton status="primary" size="small" [disabled]="timeLog?.isRunning || isApproved" (click)="edit()">
 						<nb-icon icon="edit-outline"></nb-icon>
 						{{ 'BUTTONS.EDIT' | translate }}
 					</button>

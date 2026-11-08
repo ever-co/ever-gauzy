@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, Input, O
 import { NbDialogRef, NbDialogService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { filter, tap } from 'rxjs/operators';
-import { ITimeLog, PermissionsEnum, TimeFormatEnum } from '@gauzy/contracts';
+import { ITimeLog, PermissionsEnum, TimeFormatEnum, TimesheetStatus } from '@gauzy/contracts';
 import { TimesheetService } from '@gauzy/ui-core/core';
 import { EditTimeLogModalComponent } from '@gauzy/ui-core/shared';
 import {
@@ -12,10 +12,14 @@ import {
 	projectLinkOf,
 	taskLinkOf
 } from '../manual-time/manual-time-report';
-import { buildManualTimeDay, dayRangeOf, IManualTimeDay, IManualTimeDaySegment, percentOf } from './manual-time-day';
-
-/** The hours marked under the day timeline. */
-const TIMELINE_TICKS = [0, 6, 12, 18, 24];
+import {
+	buildManualTimeDay,
+	dayRangeOf,
+	IManualTimeDay,
+	IManualTimeDaySegment,
+	percentOf,
+	TIMELINE_HOURS
+} from './manual-time-day';
 
 /**
  * The details of one manual time entry, opened from a row of the Manual Time Edits report.
@@ -48,7 +52,7 @@ export class ManualTimeDetailsComponent implements OnInit {
 	@Input() timeFormat: TimeFormatEnum | undefined;
 
 	public readonly PermissionsEnum = PermissionsEnum;
-	public readonly ticks = TIMELINE_TICKS;
+	public readonly ticks = TIMELINE_HOURS;
 
 	/** The employee's day around the entry; the entry alone until the rest is read. */
 	public day: IManualTimeDay | null = null;
@@ -70,6 +74,19 @@ export class ManualTimeDetailsComponent implements OnInit {
 
 	get changedAt(): Date | string | null {
 		return changedAtOf(this.timeLog);
+	}
+
+	/**
+	 * The entry's timesheet is approved: its hours are final, so it cannot be edited from here, as on the
+	 * timesheet page.
+	 */
+	get isApproved(): boolean {
+		return this.timeLog?.timesheet?.status === TimesheetStatus.APPROVED;
+	}
+
+	/** Where an hour mark sits on the timeline: the day's own clock, so a 23- or 25-hour day lines up. */
+	tickPosition(index: number, hour: number): number {
+		return this.day?.hourPositions?.[index] ?? (hour / 24) * 100;
 	}
 
 	get employeeName(): string {
@@ -120,7 +137,7 @@ export class ManualTimeDetailsComponent implements OnInit {
 	 * too, handing the saved log to the report so it reloads.
 	 */
 	edit(): void {
-		if (!this.timeLog || this.timeLog.isRunning) {
+		if (!this.timeLog || this.timeLog.isRunning || this.isApproved) {
 			return;
 		}
 		this._dialogService
