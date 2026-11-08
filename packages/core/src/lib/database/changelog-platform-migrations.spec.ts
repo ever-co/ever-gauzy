@@ -3,10 +3,8 @@ import * as os from 'os';
 import * as path from 'path';
 import { DataSource, QueryRunner } from 'typeorm';
 import { AddChangelogPlatform1791000005600 } from './migrations/1791000005600-AddChangelogPlatform';
-import {
-	SeedPlatformChangelogContent1791000005610,
-	platformChangelogEntryId
-} from './migrations/1791000005610-SeedPlatformChangelogContent';
+import { SeedPlatformChangelogContent1791000005610 } from './migrations/1791000005610-SeedPlatformChangelogContent';
+import { platformChangelogEntryId } from './platform-changelog-entry-id';
 
 /**
  * `changelog.platform` and the starter entries of the other Ever products, run for real on SQLite against a
@@ -72,9 +70,16 @@ describe('changelog platform migrations on SQLite', () => {
 
 		expect(await countBy()).toEqual({ 'ever-platform': 5, 'ever-teams': 8, gauzy: 1 });
 		const [teams] = await dataSource.query(
-			`SELECT "icon", "date", "isFeature", "imageUrl" FROM "changelog" WHERE "platform" = 'ever-teams' AND "title" = 'Sign in with Ever ID'`
+			`SELECT "id", "icon", "date", "isFeature", "imageUrl" FROM "changelog" WHERE "platform" = 'ever-teams' AND "title" = 'Sign in with Ever ID'`
 		);
-		expect(teams).toEqual({ icon: 'log-in-outline', date: '2026-10-02 00:00:00', isFeature: 0, imageUrl: '' });
+		// Pinned on purpose (not derived through platformChangelogEntryId), so a change to the namespace or formula fails here.
+		expect(teams).toEqual({
+			id: 'e6f03935-e50f-5063-9bae-cb7b50761ac9',
+			icon: 'log-in-outline',
+			date: '2026-10-02 00:00:00',
+			isFeature: 0,
+			imageUrl: ''
+		});
 	});
 
 	it('is additive: a rerun, or an entry the operator already wrote, adds nothing twice', async () => {
