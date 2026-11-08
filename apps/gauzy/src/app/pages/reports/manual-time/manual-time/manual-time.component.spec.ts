@@ -11,6 +11,8 @@ import {
 import { ManualTimeComponent } from './manual-time.component';
 import { ManualTimeModule } from '../manual-time.module';
 import { MANUAL_TIME_REPORT_PAGE_SIZE } from './manual-time-report';
+import { NbDialogService } from '@nebular/theme';
+import { ManualTimeDetailsComponent } from '../manual-time-details/manual-time-details.component';
 
 const ORGANIZATION = { id: 'org-1', tenantId: 'tenant-1' } as IOrganization;
 
@@ -106,7 +108,7 @@ describe('ManualTimeComponent', () => {
 		expect(request).not.toHaveProperty('isEdited');
 		expect(request).not.toHaveProperty('taskIds');
 		expect(request).not.toHaveProperty('billableOnly');
-		expect(relations).toEqual(['task', 'project', 'employee', 'employee.user']);
+		expect(relations).toEqual(['task', 'project', 'organizationContact', 'employee', 'employee.user']);
 	});
 
 	it('sends the action, task and billable filters', async () => {
@@ -180,6 +182,26 @@ describe('ManualTimeComponent', () => {
 		expect(component.timeLogs).toHaveLength(MANUAL_TIME_REPORT_PAGE_SIZE + 3);
 		expect(component.summary.entries).toBe(MANUAL_TIME_REPORT_PAGE_SIZE + 3);
 		expect(component.hasMore).toBe(false);
+	});
+
+	it('opens the details of an entry and reloads once it is saved there', async () => {
+		const dialogService = TestBed.inject(NbDialogService);
+		const open = jest
+			.spyOn(dialogService, 'open')
+			.mockReturnValue({ onClose: of({ id: 'log-0' } as ITimeLog) } as ReturnType<NbDialogService['open']>);
+		select();
+		component.prepareRequest();
+		await settle();
+		const [entry] = page(1);
+
+		component.openDetails(entry);
+		await settle();
+
+		expect(open).toHaveBeenCalledWith(
+			ManualTimeDetailsComponent,
+			expect.objectContaining({ context: expect.objectContaining({ timeLog: entry }) })
+		);
+		expect(getTimeLogs).toHaveBeenCalledTimes(2);
 	});
 
 	it('works out the overview figures from the loaded entries', () => {

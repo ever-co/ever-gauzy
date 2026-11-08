@@ -277,7 +277,7 @@ $filter-control-height: 2rem;
 	}
 
 	.action-column {
-		@include report-column(84px, 84px);
+		@include report-column(104px, 104px);
 	}
 
 	// ── Cells ───────────────────────────────────────────────────────────────
@@ -305,6 +305,39 @@ $filter-control-height: 2rem;
 		display: inline-flex;
 		align-items: center;
 		gap: 6px;
+	}
+
+	// A row opens the entry's details.
+	.table-row.is-clickable {
+		cursor: pointer;
+		outline: none;
+
+		&:focus-visible > .table-inner-wrapper {
+			box-shadow: inset 0 0 0 2px var(--color-primary-default);
+		}
+
+		&:hover .row-chevron,
+		&:focus-visible .row-chevron {
+			opacity: 1;
+			transform: translateX(2px);
+		}
+	}
+
+	.action-cell {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 0.25rem;
+	}
+
+	.row-chevron {
+		flex: 0 0 auto;
+		width: 1rem;
+		height: 1rem;
+		font-size: 1rem;
+		color: var(--text-hint-color);
+		opacity: 0.5;
+		transition: opacity 0.15s ease, transform 0.15s ease;
 	}
 
 	.billable-tag {

@@ -138,13 +138,22 @@
 									<ng-container [ngTemplateOutlet]="columnsHeader"></ng-container>
 									@for (timeLog of day.timeLogs; track timeLog.id) {
 										<div class="cart-body project-row">
-											<div class="table-row">
+											<div
+												class="table-row is-clickable"
+												role="button"
+												tabindex="0"
+												[attr.aria-label]="'REPORT_PAGE.MANUAL_TIME.DETAILS.VIEW' | translate"
+												(click)="openDetails(timeLog)"
+												(keydown.enter)="openDetails(timeLog)"
+												(keydown.space)="$event.preventDefault(); openDetails(timeLog)"
+											>
 												<div class="table-inner-wrapper">
 													<div class="responsive-table-row employee-column">
 														<div class="responsive-table-header">
 															{{ 'REPORT_PAGE.EMPLOYEE' | translate }}
 														</div>
-														<div class="responsive-table-content">
+														<!-- The avatar links to the employee's page: that click is its own, not the row's -->
+														<div class="responsive-table-content" (click)="$event.stopPropagation()">
 															<ng-container
 																[ngTemplateOutlet]="employeeEl"
 																[ngTemplateOutletContext]="{ $implicit: timeLog?.employee }"
@@ -221,7 +230,7 @@
 														<div class="responsive-table-header">
 															{{ 'REPORT_PAGE.ACTION' | translate }}
 														</div>
-														<div class="responsive-table-content">
+														<div class="responsive-table-content action-cell">
 															@if (isEdited(timeLog)) {
 																<span class="action-pill action-pill--edited">
 																	{{ 'REPORT_PAGE.MANUAL_TIME.EDITED' | translate }}
@@ -231,6 +240,7 @@
 																	{{ 'REPORT_PAGE.MANUAL_TIME.ADDED' | translate }}
 																</span>
 															}
+															<nb-icon class="row-chevron" icon="chevron-right-outline" aria-hidden="true"></nb-icon>
 														</div>
 													</div>
 												</div>

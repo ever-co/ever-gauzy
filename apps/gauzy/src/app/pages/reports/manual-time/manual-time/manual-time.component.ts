@@ -9,6 +9,7 @@ import {
 	TimeFormatEnum,
 	TimeLogType
 } from '@gauzy/contracts';
+import { NbDialogService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { Observable, merge } from 'rxjs';
@@ -41,9 +42,10 @@ import {
 	MANUAL_TIME_REPORT_PAGE_SIZE,
 	summarizeManualTimeLogs
 } from './manual-time-report';
+import { ManualTimeDetailsComponent } from '../manual-time-details/manual-time-details.component';
 
-/** The relations each entry is read with: what the table shows next to it. */
-const MANUAL_TIME_RELATIONS = ['task', 'project', 'employee', 'employee.user'];
+/** The relations each entry is read with: what the table and the details dialog show next to it. */
+const MANUAL_TIME_RELATIONS = ['task', 'project', 'organizationContact', 'employee', 'employee.user'];
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -100,6 +102,7 @@ export class ManualTimeComponent extends BaseSelectorFilterComponent implements 
 		private readonly _timesheetService: TimesheetService,
 		private readonly _timesheetFilterService: TimesheetFilterService,
 		private readonly _reportExportService: ReportExportService,
+		private readonly _dialogService: NbDialogService,
 		protected readonly store: Store,
 		protected readonly dateRangePickerBuilderService: DateRangePickerBuilderService,
 		protected readonly timeZoneService: TimeZoneService
@@ -329,6 +332,26 @@ export class ManualTimeComponent extends BaseSelectorFilterComponent implements 
 				this.request?.endDate
 			)
 		});
+	}
+
+	/**
+	 * Opens the details of an entry. When it is edited from there, the report reloads so the row, the day
+	 * totals and the summary all show the saved entry.
+	 *
+	 * @param timeLog - The entry of the row.
+	 */
+	openDetails(timeLog: ITimeLog): void {
+		this._dialogService
+			.open(ManualTimeDetailsComponent, {
+				context: { timeLog, timeZone: this.loadedTimeZone, timeFormat: this.timeFormat },
+				autoFocus: true
+			})
+			.onClose.pipe(
+				filter((saved: ITimeLog | null) => !!saved),
+				tap(() => this.getManualLogs()),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	/** Whether an entry was edited after it was added. */
