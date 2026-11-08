@@ -299,8 +299,9 @@ export class TagsColorInputComponent extends PictureNameTagsComponent implements
 		const container = this.el.nativeElement;
 		const testBadge = this.renderer.createElement('nb-badge');
 
-		// Set badge text
-		this.renderer.setProperty(testBadge, 'innerHTML', badgeText);
+		// Set badge text. As text, never as HTML: a tag's name is whatever a member typed, and the chip this measures
+		// shows it as text (`[text]="item.name"`).
+		this.renderer.setProperty(testBadge, 'textContent', badgeText);
 
 		// Append test badge to the container (not in DOM)
 		this.renderer.appendChild(container, testBadge);
