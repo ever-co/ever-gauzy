@@ -24,7 +24,7 @@ type InsertUnlessIdTaken = (table: string, columns: string, values: string) => s
 
 /**
  * Adds the starter What's New entries of the other Ever products that read the `changelog` table: Ever Teams
- * (whose API shares Gauzy's database), Ever Works and Ever Platform. Runs after `AddChangelogPlatform`, which
+ * (whose API shares Gauzy's database) and Ever Platform. Runs after `AddChangelogPlatform`, which
  * gives every row its product.
  *
  * Fresh installs get the same entries from `platform-changelog-templates.ts` in `@gauzy/plugin-changelog`; this
@@ -62,16 +62,6 @@ export class SeedPlatformChangelogContent1791000005610 implements MigrationInter
 		['ever-teams', 'message-square-outline', 'Timesheet rejection reasons', '2026-10-12T00:00:00.000Z', 'When a manager rejects a timesheet, the reason they give is saved and shown to the team member.', ''],
 		// prettier-ignore
 		['ever-teams', 'log-in-outline', 'Sign in with Ever ID', '2026-10-02T00:00:00.000Z', 'Use one Ever ID account to sign in to Ever Teams and the other Ever apps.', 'https://ever.co'],
-		// prettier-ignore
-		['ever-works', 'download-outline', 'Install apps from apps.ever.co', '2026-11-07T00:00:00.000Z', 'Organization owners can ask for a Works plugin on apps.ever.co; your platform admins see the request in the app and approve the install.', 'https://ever.works'],
-		// prettier-ignore
-		['ever-works', 'flash-outline', 'The latest AI models', '2026-11-05T00:00:00.000Z', "Direct AI providers, OpenRouter and Vercel AI Gateway now default to each vendor's current models, with reasoning effort settings for the newest model families.", 'https://ever.works'],
-		// prettier-ignore
-		['ever-works', 'cube-outline', 'Build on an open-source app', '2026-11-05T00:00:00.000Z', 'A new Mission template starts your project from an existing open-source app instead of an empty repository.', 'https://ever.works'],
-		// prettier-ignore
-		['ever-works', 'log-in-outline', 'Connect to Ever Platform', '2026-11-03T00:00:00.000Z', 'Connect your Ever Works installation to Ever Platform and let your team sign in with Ever ID.', 'https://ever.works'],
-		// prettier-ignore
-		['ever-works', 'git-merge-outline', 'From merge to live', '2026-10-29T00:00:00.000Z', "App Works follow every merged change through build and deployment, post progress to the Task's thread, and close the Task only once the change is live.", 'https://ever.works'],
 		// prettier-ignore
 		['ever-platform', 'grid-outline', 'One Apps page', '2026-11-06T00:00:00.000Z', 'See the Ever products your organization uses, the apps built with Ever Works and your installs from apps.ever.co in one place, and set up or connect each.', 'https://ever.co'],
 		// prettier-ignore

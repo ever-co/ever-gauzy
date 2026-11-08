@@ -41,11 +41,7 @@ describe('platform changelog templates', () => {
 
 	it('carries starter entries for every Ever product but Gauzy', () => {
 		expect(Object.keys(PLATFORM_CHANGELOG_TEMPLATES).sort()).toEqual(
-			[
-				ChangelogPlatformEnum.EVER_PLATFORM,
-				ChangelogPlatformEnum.EVER_TEAMS,
-				ChangelogPlatformEnum.EVER_WORKS
-			].sort()
+			[ChangelogPlatformEnum.EVER_PLATFORM, ChangelogPlatformEnum.EVER_TEAMS].sort()
 		);
 	});
 

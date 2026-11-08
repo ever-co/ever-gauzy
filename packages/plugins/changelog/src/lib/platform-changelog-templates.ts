@@ -73,47 +73,6 @@ export const PLATFORM_CHANGELOG_TEMPLATES: Readonly<Record<string, readonly ICha
 			learnMoreUrl: 'https://ever.co'
 		}
 	],
-	[ChangelogPlatformEnum.EVER_WORKS]: [
-		{
-			icon: 'download-outline',
-			title: 'Install apps from apps.ever.co',
-			date: new Date('2026-11-07T00:00:00.000Z'),
-			content:
-				'Organization owners can ask for a Works plugin on apps.ever.co; your platform admins see the request in the app and approve the install.',
-			learnMoreUrl: 'https://ever.works'
-		},
-		{
-			icon: 'flash-outline',
-			title: 'The latest AI models',
-			date: new Date('2026-11-05T00:00:00.000Z'),
-			content:
-				"Direct AI providers, OpenRouter and Vercel AI Gateway now default to each vendor's current models, with reasoning effort settings for the newest model families.",
-			learnMoreUrl: 'https://ever.works'
-		},
-		{
-			icon: 'cube-outline',
-			title: 'Build on an open-source app',
-			date: new Date('2026-11-05T00:00:00.000Z'),
-			content:
-				'A new Mission template starts your project from an existing open-source app instead of an empty repository.',
-			learnMoreUrl: 'https://ever.works'
-		},
-		{
-			icon: 'log-in-outline',
-			title: 'Connect to Ever Platform',
-			date: new Date('2026-11-03T00:00:00.000Z'),
-			content: 'Connect your Ever Works installation to Ever Platform and let your team sign in with Ever ID.',
-			learnMoreUrl: 'https://ever.works'
-		},
-		{
-			icon: 'git-merge-outline',
-			title: 'From merge to live',
-			date: new Date('2026-10-29T00:00:00.000Z'),
-			content:
-				"App Works follow every merged change through build and deployment, post progress to the Task's thread, and close the Task only once the change is live.",
-			learnMoreUrl: 'https://ever.works'
-		}
-	],
 	[ChangelogPlatformEnum.EVER_PLATFORM]: [
 		{
 			icon: 'grid-outline',

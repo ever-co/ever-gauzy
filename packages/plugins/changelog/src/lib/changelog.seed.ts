@@ -6,7 +6,7 @@ import { PLATFORM_CHANGELOG_TEMPLATES } from './platform-changelog-templates';
 
 /**
  * The rows a fresh database starts with: Gauzy's entries, then the starter entries of every other product
- * that reads this table (Ever Teams, Ever Works, Ever Platform), each stamped with its product.
+ * that reads this table (Ever Teams, Ever Platform), each stamped with its product.
  */
 export function buildChangelogSeedRows(): IChangelog[] {
 	const gauzy = INITIAL_CHANGELOG_TEMPLATE.map((item) => toRow(item, DEFAULT_CHANGELOG_PLATFORM));

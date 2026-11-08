@@ -66,11 +66,11 @@ describe('changelog platform migrations on SQLite', () => {
 		expect(await countBy()).toEqual({ gauzy: 2 });
 	});
 
-	it('adds the starter entries of Ever Teams, Ever Works and Ever Platform, and leaves Gauzy alone', async () => {
+	it('adds the starter entries of Ever Teams and Ever Platform, and leaves Gauzy alone', async () => {
 		await run(new AddChangelogPlatform1791000005600());
 		await run(new SeedPlatformChangelogContent1791000005610());
 
-		expect(await countBy()).toEqual({ 'ever-platform': 5, 'ever-teams': 8, 'ever-works': 5, gauzy: 1 });
+		expect(await countBy()).toEqual({ 'ever-platform': 5, 'ever-teams': 8, gauzy: 1 });
 		const [teams] = await dataSource.query(
 			`SELECT "icon", "date", "isFeature", "imageUrl" FROM "changelog" WHERE "platform" = 'ever-teams' AND "title" = 'Sign in with Ever ID'`
 		);
@@ -86,7 +86,7 @@ describe('changelog platform migrations on SQLite', () => {
 		await run(new SeedPlatformChangelogContent1791000005610());
 		await run(new AddChangelogPlatform1791000005600());
 
-		expect(await countBy()).toEqual({ 'ever-platform': 5, 'ever-teams': 8, 'ever-works': 5, gauzy: 1 });
+		expect(await countBy()).toEqual({ 'ever-platform': 5, 'ever-teams': 8, gauzy: 1 });
 		const [kept] = await dataSource.query(`SELECT "content" FROM "changelog" WHERE "id" = 't1'`);
 		expect(kept.content).toBe('Edited by hand');
 	});
@@ -101,19 +101,19 @@ describe('changelog platform migrations on SQLite', () => {
 
 		await run(new SeedPlatformChangelogContent1791000005610());
 
-		expect(await countBy()).toEqual({ 'ever-platform': 5, 'ever-teams': 8, 'ever-works': 5, gauzy: 1 });
+		expect(await countBy()).toEqual({ 'ever-platform': 5, 'ever-teams': 8, gauzy: 1 });
 		const ids = await dataSource.query(
-			`SELECT "id" FROM "changelog" WHERE "platform" = 'ever-works' ORDER BY "id"`
+			`SELECT "id" FROM "changelog" WHERE "platform" = 'ever-platform' ORDER BY "id"`
 		);
 		expect(ids.map(({ id }: { id: string }) => id).sort()).toEqual(
 			[
-				'Install apps from apps.ever.co',
-				'The latest AI models',
-				'Build on an open-source app',
-				'Connect to Ever Platform',
-				'From merge to live'
+				'One Apps page',
+				'Create your organization',
+				'Account security',
+				'Billing in one place',
+				'One Ever ID for every app'
 			]
-				.map((title) => platformChangelogEntryId('ever-works', title))
+				.map((title) => platformChangelogEntryId('ever-platform', title))
 				.sort()
 		);
 	});
@@ -189,7 +189,7 @@ describe('changelog platform column on Postgres and MySQL', () => {
 		await new SeedPlatformChangelogContent1791000005610().up(queryRunner);
 
 		const inserts = queries.filter(({ sql }) => sql.startsWith('INSERT'));
-		expect(inserts).toHaveLength(18);
+		expect(inserts).toHaveLength(13);
 		expect(inserts[0].sql).toBe(
 			'INSERT INTO "changelog" ("platform", "icon", "title", "date", "isFeature", "content", "learnMoreUrl", "imageUrl", "id") VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) ON CONFLICT ("id") DO NOTHING'
 		);
@@ -220,7 +220,7 @@ describe('changelog starter entries on MySQL', () => {
 		expect(queries[0]).toBe('SELECT GET_LOCK(?, 120) AS `acquired`');
 		expect(queries[queries.length - 1]).toBe('SELECT RELEASE_LOCK(?)');
 		const inserts = queries.filter((sql) => sql.startsWith('INSERT INTO `changelog`'));
-		expect(inserts).toHaveLength(18);
+		expect(inserts).toHaveLength(13);
 		expect(inserts[0].endsWith('ON DUPLICATE KEY UPDATE `id` = `id`')).toBe(true);
 	});
 
