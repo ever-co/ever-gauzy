@@ -7,7 +7,7 @@ The feature specs themselves live in [`docs/specs/`](../docs/specs/).
 
 ## Layout
 
-```
+```text
 .specify/
 ├── memory/
 │   └── constitution.md          # Project principles (highest priority)

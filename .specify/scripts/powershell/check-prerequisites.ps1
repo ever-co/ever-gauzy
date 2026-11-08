@@ -11,11 +11,11 @@ $YarnMinMinor = 22
 $script:ok = $true
 
 function Write-Ok([string] $Cmd, [string] $Detail) {
-    Write-Host ("  [ok]    {0,-12} {1}" -f $Cmd, $Detail)
+    Write-Output ("  [ok]    {0,-12} {1}" -f $Cmd, $Detail)
 }
 
 function Write-Miss([string] $Cmd, [string] $Detail) {
-    Write-Host ("  [MISS]  {0,-12} {1}" -f $Cmd, $Detail) -ForegroundColor Yellow
+    Write-Output ("  [MISS]  {0,-12} {1}" -f $Cmd, $Detail)
     $script:ok = $false
 }
 
@@ -71,17 +71,17 @@ function Test-Git {
     else { Write-Miss 'git' 'install Git' }
 }
 
-Write-Host "Checking Spec Kit prerequisites..."
+Write-Output "Checking Spec Kit prerequisites..."
 Test-Node
 Test-Yarn
 Test-Git
 
 if ($script:ok) {
-    Write-Host ""
-    Write-Host "All prerequisites present."
+    Write-Output ""
+    Write-Output "All prerequisites present."
 }
 else {
-    Write-Host ""
+    Write-Output ""
     [Console]::Error.WriteLine('Some prerequisites are missing or too old -- see hints above.')
     exit 1
 }

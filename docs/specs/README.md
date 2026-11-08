@@ -6,7 +6,7 @@ Spec-driven development for the platform, following the
 ([`.specify/memory/constitution.md`](../../.specify/memory/constitution.md)) is the
 highest-priority document: every spec, plan and task list reconciles with it.
 
-```
+```text
 docs/specs/
 ├── README.md            # this index
 ├── architecture/        # cross-feature architecture docs

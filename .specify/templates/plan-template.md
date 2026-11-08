@@ -43,7 +43,7 @@ flowchart LR
 ```ts
 @MultiORMEntity('table_name')
 export class EntityName extends TenantOrganizationBaseEntity {
-	// fields, relations, indexes
+    // fields, relations, indexes
 }
 ```
 

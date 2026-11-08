@@ -66,7 +66,7 @@ try {
         $dst = [System.IO.Path]::Combine($outDir, "$kind.md")
         $content = [regex]::Replace([System.IO.File]::ReadAllText($src, $utf8NoBom), $placeholderPattern, $fill)
         [System.IO.File]::WriteAllText($dst, $content, $utf8NoBom)
-        Write-Host "  + $dst"
+        Write-Output "  + $dst"
     }
 }
 catch {
@@ -76,10 +76,10 @@ catch {
     exit 1
 }
 
-Write-Host ""
-Write-Host "Created Spec Kit feature directory: $outDir"
-Write-Host ""
-Write-Host "Next steps:"
-Write-Host "  1. Open spec.md and replace placeholders."
-Write-Host "  2. Once approved, fill in plan.md."
-Write-Host "  3. Once plan is approved, expand tasks.md."
+Write-Output ""
+Write-Output "Created Spec Kit feature directory: $outDir"
+Write-Output ""
+Write-Output "Next steps:"
+Write-Output "  1. Open spec.md and replace placeholders."
+Write-Output "  2. Once approved, fill in plan.md."
+Write-Output "  3. Once plan is approved, expand tasks.md."
