@@ -15,7 +15,6 @@
 # behind when a step fails.
 
 set -euo pipefail
-set -o errtrace
 
 if [[ $# -lt 1 || $# -gt 2 ]]; then
     echo "Usage: bash $0 <slug> [\"Feature Title\"]" >&2
@@ -82,11 +81,18 @@ fill_template() {
 
 mkdir -p "$features_dir"
 mkdir "$out_dir"
-# Remove the half-made directory when any later step fails, so a rerun starts clean.
+# From here on, any exit before the end (a failed step under `set -e`, an unset variable, Ctrl-C,
+# a TERM) removes the half-made directory, so a rerun starts clean. A signal ends the script:
+# it never resumes the loop after the cleanup.
+done_ok=false
 cleanup() {
-    rm -rf -- "$out_dir"
+    if [[ "$done_ok" != true ]]; then
+        rm -rf -- "$out_dir"
+    fi
 }
-trap cleanup ERR INT TERM
+trap cleanup EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
 
 today=$(date -u +%Y-%m-%d)
 
@@ -97,7 +103,7 @@ for kind in spec plan tasks; do
     echo "  + $dst"
 done
 
-trap - ERR INT TERM
+done_ok=true
 
 cat <<EOF
 

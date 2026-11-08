@@ -48,15 +48,23 @@ if (Test-Path -LiteralPath $outDir) {
 $today = (Get-Date).ToUniversalTime().ToString('yyyy-MM-dd')
 $utf8NoBom = New-Object System.Text.UTF8Encoding($false)
 
+# The placeholders and their values, filled in ONE pass (as the bash script does): a value is
+# never re-scanned, so a title that contains `[short-slug]` or `YYYY-MM-DD` stays as typed. The
+# evaluator's return value is inserted literally (no `$&` / `$1` substitutions).
+$placeholders = [System.Collections.Generic.Dictionary[string, string]]::new([System.StringComparer]::Ordinal)
+$placeholders['[FEATURE NAME]'] = $Title
+$placeholders['[short-slug]'] = $Slug
+$placeholders['YYYY-MM-DD'] = $today
+$placeholderPattern = ($placeholders.Keys | ForEach-Object { [regex]::Escape($_) }) -join '|'
+$fill = [System.Text.RegularExpressions.MatchEvaluator] { param($match) $placeholders[$match.Value] }
+
 [System.IO.Directory]::CreateDirectory($featuresDir) | Out-Null
 New-Item -ItemType Directory -Path $outDir | Out-Null
 try {
     foreach ($kind in @('spec', 'plan', 'tasks')) {
         $src = [System.IO.Path]::Combine($templates, "$kind-template.md")
         $dst = [System.IO.Path]::Combine($outDir, "$kind.md")
-        # String.Replace is a plain-text replacement: no regex, no `$&` / `$1` substitutions.
-        $content = [System.IO.File]::ReadAllText($src, $utf8NoBom)
-        $content = $content.Replace('[FEATURE NAME]', $Title).Replace('[short-slug]', $Slug).Replace('YYYY-MM-DD', $today)
+        $content = [regex]::Replace([System.IO.File]::ReadAllText($src, $utf8NoBom), $placeholderPattern, $fill)
         [System.IO.File]::WriteAllText($dst, $content, $utf8NoBom)
         Write-Host "  + $dst"
     }
