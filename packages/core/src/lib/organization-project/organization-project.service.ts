@@ -1099,7 +1099,8 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 				select: { id: true, name: true, taskKey: true, taskKeyHistory: true },
 				withDeleted: true
 			});
-			const taken = takenProjectKeys(projects);
+			// Nothing will key a project left without one here, so its alias is reserved too (it still answers to it).
+			const taken = takenProjectKeys(projects, { reserveKeylessAliases: true });
 			for (const key of alsoTaken) if (key) taken.add(String(key).toUpperCase());
 			return uniqueProjectKey(name, taken);
 		} catch {

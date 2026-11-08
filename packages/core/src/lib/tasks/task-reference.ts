@@ -148,16 +148,23 @@ export function heldKeysOf(project: { taskKey?: string | null; taskKeyHistory?: 
 
 /**
  * The keys no new key of the organization may take: every key held or held before, and the key derived from the
- * name of every project that has a key — its tasks still answer to that alias (`DPR Website` keyed `SITE` still opens
- * `DPR-1`), so giving it to another project would make those references ambiguous.
+ * name of every project that keeps answering to it — its tasks still answer to that alias (`DPR Website` keyed
+ * `SITE` still opens `DPR-1`), so giving it to another project would make those references ambiguous.
+ *
+ * A project with a stored value keeps its alias: a key, or a blank or malformed value, which is left to a manager
+ * (see {@link assignProjectKeys}). A project with no stored value is the one the backfill keys, so its own alias stays
+ * free for it (`Gauzy` gets `GAU`); `reserveKeylessAliases` reserves those too, for the create path, where nothing
+ * will key them (a project created with `taskKey: null` keeps answering to its alias).
  */
 export function takenProjectKeys(
-	projects: Iterable<{ name?: string | null; taskKey?: string | null; taskKeyHistory?: string[] | string | null }>
+	projects: Iterable<{ name?: string | null; taskKey?: string | null; taskKeyHistory?: string[] | string | null }>,
+	options: { reserveKeylessAliases?: boolean } = {}
 ): Set<string> {
 	const taken = new Set<string>();
 	for (const project of projects) {
 		for (const key of heldKeysOf(project)) taken.add(key);
-		if (normalizeTaskKey(project.taskKey)) {
+		const hasStoredValue = project.taskKey !== null && project.taskKey !== undefined;
+		if (hasStoredValue || options.reserveKeylessAliases) {
 			const alias = derivedProjectKey(project.name);
 			if (alias) taken.add(alias);
 		}
