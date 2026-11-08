@@ -77,6 +77,11 @@ function withoutTrailingSlashes(value: string): string {
 	return value.slice(0, end);
 }
 
+/**
+ * The origins of `EVER_APP_LAUNCHER_ORIGINS` (comma-separated), each once: a value that is not an origin is ignored,
+ * and so are those past `MAX_LAUNCHER_ORIGINS`, each case with one warning. Unset or empty: the origin of
+ * `CLIENT_BASE_URL` (`http://localhost:4200` by default).
+ */
 function parseOrigins(env: Env, warn: Warn): string[] {
 	const raw = env['EVER_APP_LAUNCHER_ORIGINS'];
 	if (raw === undefined || raw.trim() === '') {

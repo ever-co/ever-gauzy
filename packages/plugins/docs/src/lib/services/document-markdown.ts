@@ -87,6 +87,7 @@ function markOf(marks: IDocMark[] | undefined, type: string): IDocMark | undefin
 	return marks?.find((mark) => mark.type === type);
 }
 
+/** A text node as Markdown: a code span as it is, other text escaped, then its bold, italic, strike and link marks. */
 function textToMarkdown(node: IDocNode): string {
 	const raw = String(node.text ?? '');
 	if (!raw) return '';
@@ -138,6 +139,7 @@ function inlineToMarkdown(node: IDocNode, options: IMarkdownOptions): string {
 		.join('');
 }
 
+/** An image as Markdown (`![alt](url "title")`); a file of the Documents API (raw-file URL or `documentId`) gets `linkOfFile`'s link. */
 function imageToMarkdown(node: IDocNode, options: IMarkdownOptions): string {
 	const attrs = attrsOf(node);
 	const src = String(attrs['src'] ?? '');
