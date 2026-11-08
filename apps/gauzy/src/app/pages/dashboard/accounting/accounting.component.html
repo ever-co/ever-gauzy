@@ -167,36 +167,39 @@
 						</button>
 						}
 					</div>
-					<span class="sort-label" aria-hidden="true">{{ 'DASHBOARD_PAGE.ACCOUNTING_VIEW.SORT_LABEL' | translate }}</span>
-					<nb-select
-						class="sort-select"
-						size="tiny"
-						[selected]="sortKey"
-						(selectedChange)="setSortKey($event)"
-						[attr.aria-label]="'DASHBOARD_PAGE.ACCOUNTING_VIEW.SORT_LABEL' | translate"
-					>
-						@for (column of columns; track column.key) {
-						<nb-option [value]="column.key">{{ column.label | translate }}</nb-option>
-						}
-					</nb-select>
-					@let directionLabel =
-						(sortDirection === 'asc'
-							? 'DASHBOARD_PAGE.ACCOUNTING_VIEW.SORT_ASCENDING'
-							: 'DASHBOARD_PAGE.ACCOUNTING_VIEW.SORT_DESCENDING'
-						) | translate;
-					<button
-						nbButton
-						ghost
-						size="tiny"
-						status="basic"
-						type="button"
-						class="sort-direction"
-						[attr.aria-label]="directionLabel"
-						[nbTooltip]="directionLabel"
-						(click)="toggleSortDirection()"
-					>
-						<nb-icon [icon]="sortDirection === 'asc' ? 'arrow-upward-outline' : 'arrow-downward-outline'"></nb-icon>
-					</button>
+					<!-- Label, select and direction wrap as one unit, so the arrow never lands on a line by itself. -->
+					<div class="sort-group">
+						<span class="sort-label" aria-hidden="true">{{ 'DASHBOARD_PAGE.ACCOUNTING_VIEW.SORT_LABEL' | translate }}</span>
+						<nb-select
+							class="sort-select"
+							size="tiny"
+							[selected]="sortKey"
+							(selectedChange)="setSortKey($event)"
+							[attr.aria-label]="'DASHBOARD_PAGE.ACCOUNTING_VIEW.SORT_LABEL' | translate"
+						>
+							@for (column of columns; track column.key) {
+							<nb-option [value]="column.key">{{ column.label | translate }}</nb-option>
+							}
+						</nb-select>
+						@let directionLabel =
+							(sortDirection === 'asc'
+								? 'DASHBOARD_PAGE.ACCOUNTING_VIEW.SORT_ASCENDING'
+								: 'DASHBOARD_PAGE.ACCOUNTING_VIEW.SORT_DESCENDING'
+							) | translate;
+						<button
+							nbButton
+							ghost
+							size="tiny"
+							status="basic"
+							type="button"
+							class="sort-direction"
+							[attr.aria-label]="directionLabel"
+							[nbTooltip]="directionLabel"
+							(click)="toggleSortDirection()"
+						>
+							<nb-icon [icon]="sortDirection === 'asc' ? 'arrow-upward-outline' : 'arrow-downward-outline'"></nb-icon>
+						</button>
+					</div>
 				</div>
 			</header>
 

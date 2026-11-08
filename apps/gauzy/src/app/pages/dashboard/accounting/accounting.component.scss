@@ -184,15 +184,25 @@ $toolbar-control-height: 1.75rem;
 	color: var(--gauzy-text-color-1);
 }
 
-// One row: filter, label, select and direction never split. On a narrow card the
-// header's own wrap drops the whole group under the title instead.
+// Filter, then the sort group. One row while they fit; on a narrow card the sort
+// group wraps under the filter rather than overflowing `.panel`, which clips.
 .panel-actions {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: $gap-xs $gap-sm;
+	min-width: 0;
+	margin-inline-start: auto;
+}
+
+// Label, select and direction button: never split, so the arrow stays by its select.
+.sort-group {
 	display: flex;
 	flex-wrap: nowrap;
 	align-items: center;
 	gap: $gap-xs;
+	flex: 0 0 auto;
 	min-width: 0;
-	margin-inline-start: auto;
 }
 
 .sort-label {
@@ -231,13 +241,13 @@ $toolbar-control-height: 1.75rem;
 
 // Name/email filter: a tiny nbInput with the search glyph inset on the start edge
 // and a clear button on the end edge, at the same height as the sort select.
+// 13rem beside the sort group; once the sort group wraps, it fills its own line.
 .filter-box {
 	position: relative;
 	display: flex;
 	align-items: center;
-	flex: 0 1 13rem;
+	flex: 1 1 13rem;
 	min-width: 8rem;
-	margin-inline-end: $gap-sm;
 }
 
 .filter-icon,
