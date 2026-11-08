@@ -323,6 +323,40 @@ $filter-control-height: 2rem;
 		}
 	}
 
+	// The Project and Task cells open their own pages. They read as values at
+	// rest and as links on hover and focus, so the table does not turn blue.
+	.cell-link {
+		color: inherit;
+		text-decoration: none;
+		border-radius: 4px;
+
+		&:hover {
+			color: var(--color-primary-default);
+			text-decoration: underline;
+			text-underline-offset: 2px;
+		}
+
+		&:focus-visible {
+			outline: 2px solid var(--color-primary-default);
+			outline-offset: 2px;
+		}
+	}
+
+	.cell-link--chip {
+		display: inline-block;
+		max-width: 100%;
+
+		&:hover {
+			text-decoration: none;
+
+			::ng-deep ga-project-column-view .main-header {
+				color: var(--color-primary-default);
+				text-decoration: underline;
+				text-underline-offset: 2px;
+			}
+		}
+	}
+
 	.action-cell {
 		display: flex;
 		align-items: center;

@@ -167,7 +167,7 @@
 														<div class="responsive-table-content">
 															<ng-container
 																[ngTemplateOutlet]="projectEl"
-																[ngTemplateOutletContext]="{ $implicit: timeLog?.project }"
+																[ngTemplateOutletContext]="{ $implicit: timeLog?.project, link: projectLink(timeLog) }"
 															></ng-container>
 														</div>
 													</div>
@@ -177,7 +177,15 @@
 														</div>
 														<div class="responsive-table-content">
 															@if (timeLog?.task) {
-																<span class="cell-text" [title]="timeLog.task.title">{{ timeLog.task.title }}</span>
+																<!-- Opens the task; the click is the link's, not the row's -->
+																<a
+																	class="cell-link cell-text"
+																	[routerLink]="taskLink(timeLog)"
+																	[title]="timeLog.task.title"
+																	(click)="$event.stopPropagation()"
+																	(keydown.enter)="$event.stopPropagation()"
+																	>{{ timeLog.task.title }}</a
+																>
 															} @else {
 																<span class="muted">{{ 'REPORT_PAGE.NO_TASK' | translate }}</span>
 															}
@@ -285,9 +293,18 @@
 	</nb-card-body>
 </nb-card>
 
-<ng-template let-project #projectEl>
+<ng-template let-project let-link="link" #projectEl>
 	@if (project) {
-		<ga-project-column-view [project]="project"></ga-project-column-view>
+		<!-- Opens the project; the click is the link's, not the row's -->
+		<a
+			class="cell-link cell-link--chip"
+			[routerLink]="link"
+			[title]="project.name"
+			(click)="$event.stopPropagation()"
+			(keydown.enter)="$event.stopPropagation()"
+		>
+			<ga-project-column-view [project]="project"></ga-project-column-view>
+		</a>
 	} @else {
 		<span class="muted">{{ 'REPORT_PAGE.NO_PROJECT' | translate }}</span>
 	}

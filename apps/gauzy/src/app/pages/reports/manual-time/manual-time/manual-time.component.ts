@@ -40,7 +40,9 @@ import {
 	isEditedLog,
 	MANUAL_TIME_REPORT_EXPORT_NAME,
 	MANUAL_TIME_REPORT_PAGE_SIZE,
-	summarizeManualTimeLogs
+	projectLinkOf,
+	summarizeManualTimeLogs,
+	taskLinkOf
 } from './manual-time-report';
 import { ManualTimeDetailsComponent } from '../manual-time-details/manual-time-details.component';
 
@@ -352,6 +354,16 @@ export class ManualTimeComponent extends BaseSelectorFilterComponent implements 
 				untilDestroyed(this)
 			)
 			.subscribe();
+	}
+
+	/** The page of the entry's project, for the Project cell. */
+	projectLink(log: ITimeLog): string[] | null {
+		return projectLinkOf(log);
+	}
+
+	/** The page of the entry's task, for the Task cell. */
+	taskLink(log: ITimeLog): string[] | null {
+		return taskLinkOf(log);
 	}
 
 	/** Whether an entry was edited after it was added. */
