@@ -14,7 +14,8 @@ import {
 	nextDigestAt,
 	preferencesOf,
 	retryDelayMs,
-	windowEndAfter
+	windowEndAfter,
+	withoutTrailingSlashes
 } from './inbox-delivery-rules';
 
 /** A Saturday at 12:30 UTC: 14:30 in Sofia (UTC+2 in November), 04:30 in Los Angeles (UTC−8). */
@@ -184,5 +185,25 @@ describe('the attempts and the links', () => {
 		expect(excerptOf('<p>Hello</p>   <b>world</b>')).toBe('Hello world');
 		expect(excerptOf('x'.repeat(300)).length).toBe(280);
 		expect(excerptOf(null)).toBe('');
+	});
+});
+
+describe('linear-time text handling (CodeQL js/polynomial-redos)', () => {
+	it('drops trailing slashes in one pass', () => {
+		expect(withoutTrailingSlashes('https://app.test///')).toBe('https://app.test');
+		expect(withoutTrailingSlashes('https://app.test')).toBe('https://app.test');
+		expect(withoutTrailingSlashes('///')).toBe('');
+		expect(inboxItemLinkOf('https://app.test///', 'i1')).toBe(inboxItemLinkOf('https://app.test', 'i1'));
+		const started = Date.now();
+		withoutTrailingSlashes('/'.repeat(200_000) + 'x');
+		expect(Date.now() - started).toBeLessThan(200);
+	});
+
+	it('strips tags, and reads a body of many unclosed < in linear time', () => {
+		expect(excerptOf('<p>a</p><b>b</b>')).toBe('a b');
+		expect(excerptOf('1 < 2 and <i>x</i>')).toBe('1 < 2 and x');
+		const started = Date.now();
+		expect(excerptOf('<'.repeat(200_000)).length).toBeLessThanOrEqual(280);
+		expect(Date.now() - started).toBeLessThan(500);
 	});
 });

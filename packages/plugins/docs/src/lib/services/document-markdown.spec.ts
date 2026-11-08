@@ -227,6 +227,23 @@ describe('mergeMarkdownUpdate', () => {
 	});
 });
 
+describe('link and image titles (CodeQL js/incomplete-sanitization)', () => {
+	it('escapes backslashes before quotes, so a title ending in a backslash still closes', () => {
+		const doc: IDocNode = {
+			type: 'doc',
+			content: [
+				paragraph(
+					text('l', [{ type: 'link', attrs: { href: 'https://x.test', title: 'a\\' } }]),
+					{ type: 'image', attrs: { src: 'https://cdn.test/p.png', alt: 'p', title: 'say "hi" \\' } }
+				)
+			]
+		};
+		const markdown = documentToMarkdown(doc);
+		expect(markdown).toContain('[l](https://x.test "a\\\\")');
+		expect(markdown).toContain('![p](https://cdn.test/p.png "say \\"hi\\" \\\\")');
+	});
+});
+
 describe('names', () => {
 	it('slugs a page name and reads the id of a raw-file URL', () => {
 		expect(markdownFileNameOf('Q4 Plan — Résumé!')).toBe('q4-plan-resume.md');

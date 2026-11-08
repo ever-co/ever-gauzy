@@ -70,6 +70,13 @@ export function originOf(raw: string | undefined): string | null {
 	}
 }
 
+/** A value without its trailing slashes, in one pass (`/\/+$/` is quadratic on a long run of slashes). */
+function withoutTrailingSlashes(value: string): string {
+	let end = value.length;
+	while (end > 0 && value.charCodeAt(end - 1) === 47) end--;
+	return value.slice(0, end);
+}
+
 function parseOrigins(env: Env, warn: Warn): string[] {
 	const raw = env['EVER_APP_LAUNCHER_ORIGINS'];
 	if (raw === undefined || raw.trim() === '') {
@@ -84,7 +91,7 @@ function parseOrigins(env: Env, warn: Warn): string[] {
 		.filter(Boolean)) {
 		const origin = originOf(part);
 		// An origin only: a path, query or fragment means the value was not meant as one.
-		if (!origin || part.replace(/\/+$/, '') !== origin) {
+		if (!origin || withoutTrailingSlashes(part) !== origin) {
 			refused++;
 		} else if (!origins.includes(origin)) {
 			origins.push(origin);

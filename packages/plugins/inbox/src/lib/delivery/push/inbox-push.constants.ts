@@ -30,6 +30,13 @@ export function readInboxWebPushConfig(env: Record<string, string | undefined> =
 	if (!publicKey || !privateKey) return null;
 	const stated = (env['GAUZY_INBOX_VAPID_SUBJECT'] ?? '').trim();
 	const client = (env['CLIENT_BASE_URL'] ?? '').trim();
-	const subject = stated || (client.startsWith('https://') ? client.replace(/\/+$/, '') : 'mailto:noreply@localhost');
+	const subject = stated || (client.startsWith('https://') ? withoutTrailingSlashes(client) : 'mailto:noreply@localhost');
 	return { publicKey, privateKey, subject };
+}
+
+/** A URL without its trailing slashes, in one pass (`/\/+$/` is quadratic on a long run of slashes). */
+function withoutTrailingSlashes(value: string): string {
+	let end = value.length;
+	while (end > 0 && value.charCodeAt(end - 1) === 47) end--;
+	return value.slice(0, end);
 }
