@@ -1320,6 +1320,8 @@
 	"REPORT_PAGE": {
 		"MANUAL_TIME": {
 			"DETAILS": {
+				"OPEN_PROJECT": "Ouvrir le projet {{ name }}",
+				"OPEN_TASK": "Ouvrir la tâche {{ name }}",
 				"DAY_TITLE": "Sa journée",
 				"DAY_CAPTION": "{{ total }} enregistré · {{ share }} % ajouté manuellement",
 				"TRACKED": "Suivi",

@@ -1319,6 +1319,8 @@
 	"REPORT_PAGE": {
 		"MANUAL_TIME": {
 			"DETAILS": {
+				"OPEN_PROJECT": "Project {{ name }} openen",
+				"OPEN_TASK": "Taak {{ name }} openen",
 				"DAY_TITLE": "Hun dag",
 				"DAY_CAPTION": "{{ total }} geregistreerd · {{ share }}% handmatig toegevoegd",
 				"TRACKED": "Gevolgd",

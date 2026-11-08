@@ -1319,6 +1319,8 @@
 	"REPORT_PAGE": {
 		"MANUAL_TIME": {
 			"DETAILS": {
+				"OPEN_PROJECT": "Apri il progetto {{ name }}",
+				"OPEN_TASK": "Apri l'attività {{ name }}",
 				"DAY_TITLE": "La giornata",
 				"DAY_CAPTION": "{{ total }} registrato · {{ share }}% aggiunto a mano",
 				"TRACKED": "Tracciato",
