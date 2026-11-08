@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject, OnInit, signal } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, OnInit, signal } from '@angular/core';
 import { NbButtonModule, NbToggleModule } from '@nebular/theme';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { ToastrService } from '@gauzy/ui-core/core';
@@ -69,7 +69,7 @@ import { InboxWebPushService, InboxWebPushState } from '../services/inbox-web-pu
 						}
 						<nb-toggle
 							data-test="browser-push-switch"
-							[checked]="state() === 'on' || state() === 'sync-failed'"
+							[checked]="checked()"
 							[disabled]="busy() || (state() !== 'on' && state() !== 'off' && state() !== 'sync-failed')"
 							[attr.aria-label]="'INBOX.NOTIFICATION_SETTINGS.PUSH_LABEL' | translate"
 							(checkedChange)="toggle($event)"
@@ -84,22 +84,36 @@ export class InboxBrowserPushComponent implements OnInit {
 	private readonly push = inject(InboxWebPushService);
 	private readonly toastr = inject(ToastrService);
 	private readonly translate = inject(TranslateService);
+	private readonly changeDetector = inject(ChangeDetectorRef);
 
 	/** Null while the first answer is on its way. */
 	readonly state = signal<InboxWebPushState | null>(null);
 	readonly busy = signal(false);
+	/**
+	 * What the switch shows. `nb-toggle` moves before it emits: this follows it at once, then the outcome, so a refused
+	 * or failed change moves the switch back.
+	 */
+	readonly checked = signal(false);
 
+	/** Reads where this browser stands; a failure hides the section, as where web push is off. */
 	ngOnInit(): void {
-		void this.push.state().then((state) => this.state.set(state)).catch(() => this.state.set('unavailable'));
+		void this.push
+			.state()
+			.then((state) => this.show(state))
+			.catch(() => this.show('unavailable'));
 	}
 
+	/** The switch moved: switches this browser on or off, and shows the outcome (a failure is told). */
 	async toggle(isOn: boolean): Promise<void> {
 		this.busy.set(true);
+		// Rendered now, so the outcome below is a change of the binding even when it lands before the next check.
+		this.checked.set(isOn);
+		this.changeDetector.detectChanges();
 		try {
-			this.state.set(isOn ? await this.push.enable() : await this.push.disable());
+			this.show(isOn ? await this.push.enable() : await this.push.disable());
 		} catch {
 			this.toastr.danger(this.translate.instant('INBOX.NOTIFICATION_SETTINGS.PUSH_FAILED'));
-			this.state.set(await this.push.state().catch(() => 'off' as const));
+			this.show(await this.push.state().catch(() => 'off' as const));
 		} finally {
 			this.busy.set(false);
 		}
@@ -110,12 +124,18 @@ export class InboxBrowserPushComponent implements OnInit {
 		this.busy.set(true);
 		try {
 			const state = await this.push.state();
-			this.state.set(state);
+			this.show(state);
 			if (state === 'sync-failed') this.toastr.danger(this.translate.instant('INBOX.NOTIFICATION_SETTINGS.PUSH_RETRY_FAILED'));
 		} catch {
 			this.toastr.danger(this.translate.instant('INBOX.NOTIFICATION_SETTINGS.PUSH_RETRY_FAILED'));
 		} finally {
 			this.busy.set(false);
 		}
+	}
+
+	/** Shows a state: its text, and the switch on for a subscribed browser (confirmed or not). */
+	private show(state: InboxWebPushState): void {
+		this.state.set(state);
+		this.checked.set(state === 'on' || state === 'sync-failed');
 	}
 }

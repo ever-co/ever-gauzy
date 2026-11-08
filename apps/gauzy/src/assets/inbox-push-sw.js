@@ -23,7 +23,10 @@ self.addEventListener('push', (event) => {
 	);
 });
 
-/** Where a click goes: the entry's own link when it is this app's, else this app's Inbox with the entry. */
+/**
+ * Where a click goes: the entry's own link when it is this app's, else this app's Inbox with the entry, below the app's
+ * base (the parent of this worker's `assets/` scope: the app may be served below the site's root).
+ */
 function targetOf(data) {
 	const origin = self.location.origin;
 	if (data && data.url) {
@@ -35,7 +38,7 @@ function targetOf(data) {
 		}
 	}
 	const item = data && data.itemId ? '?item=' + encodeURIComponent(data.itemId) : '';
-	return origin + '/#/pages/inbox' + item;
+	return new URL('../#/pages/inbox' + item, self.registration.scope).href;
 }
 
 self.addEventListener('notificationclick', (event) => {

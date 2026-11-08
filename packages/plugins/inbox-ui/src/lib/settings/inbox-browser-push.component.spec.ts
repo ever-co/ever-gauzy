@@ -58,6 +58,28 @@ describe('InboxBrowserPushComponent', () => {
 		expect(component.busy()).toBe(false);
 	});
 
+	it('moves the switch back when switching on fails or is refused', async () => {
+		push.state.mockResolvedValue('off');
+		push.enable.mockRejectedValueOnce(new Error('offline')).mockResolvedValueOnce('off');
+		const { fixture, element } = await render();
+		expect(switchOf(element).checked).toBe(false);
+
+		// The click moves the switch first; the failure must move it back (the state read again is still off).
+		switchOf(element).click();
+		await fixture.whenStable();
+		fixture.detectChanges();
+		expect(push.enable).toHaveBeenCalledTimes(1);
+		expect(toastr.danger).toHaveBeenCalledWith('INBOX.NOTIFICATION_SETTINGS.PUSH_FAILED');
+		expect(switchOf(element).checked).toBe(false);
+
+		// The permission prompt dismissed: switching on answers off.
+		switchOf(element).click();
+		await fixture.whenStable();
+		fixture.detectChanges();
+		expect(push.enable).toHaveBeenCalledTimes(2);
+		expect(switchOf(element).checked).toBe(false);
+	});
+
 	it('shows a subscription the platform did not confirm as on but unconfirmed, with a retry that tells a new failure', async () => {
 		push.state.mockResolvedValue('sync-failed');
 		const { fixture, component, element } = await render();

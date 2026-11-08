@@ -50,6 +50,7 @@ interface PushSession {
 /** A step whose account signed out, here or in another tab, while it was on its way. */
 class InboxWebPushSessionEnded extends Error {}
 
+/** The HTTP status of a failed request, if it has one. */
 function statusOf(error: unknown): number | undefined {
 	return (error as { status?: number } | null)?.status;
 }
@@ -198,11 +199,13 @@ export class InboxWebPushService {
 		}
 	}
 
+	/** The platform's VAPID public key (404 where web push is off there). */
 	private async publicKey(): Promise<string> {
 		const answer = await firstValueFrom(this.http.get<{ publicKey: string }>(`${DEVICES}/public-key`));
 		return answer.publicKey;
 	}
 
+	/** This browser's push subscription for the inbox worker's scope, if any. */
 	private async subscription(): Promise<PushSubscription | null> {
 		const registration = await navigator.serviceWorker.getRegistration(this.urlOf(INBOX_PUSH_WORKER_SCOPE));
 		return (await registration?.pushManager.getSubscription()) ?? null;
@@ -281,6 +284,7 @@ export class InboxWebPushService {
 		}
 	}
 
+	/** The step's account and the sign-outs seen so far, to compare with when it is about to record anything. */
 	private session(): PushSession {
 		return { userId: this.store.userId ?? null, signOuts: this.signOuts, signedOut: this.read(INBOX_PUSH_SIGN_OUT_KEY) };
 	}
@@ -294,6 +298,7 @@ export class InboxWebPushService {
 		);
 	}
 
+	/** Whether the owner record says this account opted in with this subscription. */
 	private owns(subscription: PushSubscription, userId: string): boolean {
 		const owner = this.owner();
 		return !!owner && owner.userId === userId && owner.endpoint === subscription.endpoint;
@@ -304,6 +309,7 @@ export class InboxWebPushService {
 		return this.owner()?.endpoint === subscription.endpoint;
 	}
 
+	/** The owner record, when there is a well-formed one. */
 	private owner(): PushOwner | null {
 		try {
 			const raw = localStorage.getItem(INBOX_PUSH_OWNER_KEY);
@@ -314,10 +320,12 @@ export class InboxWebPushService {
 		}
 	}
 
+	/** Records (or, with null, clears) the owner record. */
 	private setOwner(owner: PushOwner | null): void {
 		this.write(INBOX_PUSH_OWNER_KEY, owner ? JSON.stringify(owner) : null);
 	}
 
+	/** A local storage value; null where storage is blocked. */
 	private read(key: string): string | null {
 		try {
 			return localStorage.getItem(key);
@@ -326,6 +334,7 @@ export class InboxWebPushService {
 		}
 	}
 
+	/** Writes (or, with null, removes) a local storage value; nothing where storage is blocked. */
 	private write(key: string, value: string | null): void {
 		try {
 			if (value === null) localStorage.removeItem(key);
