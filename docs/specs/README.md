@@ -44,5 +44,10 @@ Statuses: `Draft` → `In Review` → `Approved` → `Implemented` → `Retrospe
 ## Scaffolding a new feature
 
 ```bash
-.specify/scripts/bash/create-new-feature.sh <slug> "Feature Title"
+bash .specify/scripts/bash/create-new-feature.sh <slug> "Feature Title"
+# or, in PowerShell 7:
+pwsh -File .specify/scripts/powershell/create-new-feature.ps1 -Slug <slug> -Title "Feature Title"
 ```
+
+The slug is one lower-case directory name (`a-z`, `0-9`, `-`, at most 64 characters); see
+[`.specify/README.md`](../../.specify/README.md) for the prerequisites check.

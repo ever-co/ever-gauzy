@@ -116,7 +116,7 @@ senders work without changes.
 - [ ] A button click reaches the interaction URL with a valid signature and the reply
       updates the message.
 - [ ] Rate limits and payload limits are enforced; private-network URLs are refused.
-- [ ] Works on PostgreSQL and SQLite with both ORMs; behind `GAUZY_CHAT_WEBHOOKS_ENABLED`.
+- [ ] Works on PostgreSQL, MySQL and SQLite with both ORMs; behind `GAUZY_CHAT_WEBHOOKS_ENABLED`.
 - [ ] All functional requirements have a passing test.
 
 ## 8. Open Questions

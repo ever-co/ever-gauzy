@@ -166,7 +166,7 @@ Angular app and for Ever Teams through the same API:
 - [ ] Share, mention, comment and review events create Inbox entries with dedupe.
 - [ ] Markdown export (page, subtree) and Markdown API update work as specified.
 - [ ] Flag off: nothing changes; service down: single-writer autosave still works.
-- [ ] Works on PostgreSQL and SQLite with both ORMs.
+- [ ] Works on PostgreSQL, MySQL and SQLite with both ORMs.
 - [ ] All functional requirements have a passing test.
 
 ## 8. Open Questions

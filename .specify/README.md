@@ -18,9 +18,10 @@ The feature specs themselves live in [`docs/specs/`](../docs/specs/).
 └── scripts/
     ├── bash/
     │   ├── create-new-feature.sh   # Scaffold a feature dir under docs/specs/features/
-    │   └── check-prerequisites.sh
+    │   └── check-prerequisites.sh  # Node.js 26+, Yarn classic 1.22+, Git
     └── powershell/
-        └── create-new-feature.ps1
+        ├── create-new-feature.ps1  # Same, for PowerShell 7 (Windows, macOS, Linux)
+        └── check-prerequisites.ps1
 ```
 
 Where the specs go:
@@ -48,8 +49,23 @@ docs/specs/
 Every step runs through the [constitution gates](memory/constitution.md#compliance-checklist):
 a spec that conflicts with a non-negotiable principle blocks the next step.
 
-Scaffold a feature:
+Scaffold a feature (run the scripts through `bash` / `pwsh`, so no executable bit or
+execution policy is needed):
 
 ```bash
-.specify/scripts/bash/create-new-feature.sh <slug> "Feature Title"
+bash .specify/scripts/bash/check-prerequisites.sh
+bash .specify/scripts/bash/create-new-feature.sh <slug> "Feature Title"
 ```
+
+```powershell
+pwsh -File .specify/scripts/powershell/check-prerequisites.ps1
+pwsh -File .specify/scripts/powershell/create-new-feature.ps1 -Slug <slug> -Title "Feature Title"
+```
+
+`<slug>` is one directory name: lower-case letters, digits and hyphens, starting with a
+letter or a digit, at most 64 characters (`task-views`); anything else (`../x`, `A/B`) is
+refused. The title is inserted literally, punctuation included (`Import/Export`,
+`Tasks & Views`). A run that fails leaves no partial directory behind.
+
+The prerequisites follow the root `package.json`: Node.js 26+ (`engines.node`) and Yarn
+classic 1.22+ (`engines.yarn`, `packageManager: yarn@1.22.22`); Yarn 2+ is refused.

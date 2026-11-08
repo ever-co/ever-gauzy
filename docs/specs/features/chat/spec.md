@@ -215,7 +215,7 @@ app, Ever Teams (web, mobile, desktop), the MCP server and the SDKs.
 - [ ] "Send to chat" from a task and "Create task from message" link both ways.
 - [ ] Non-members get "not found" for private conversations; removed members stop
       receiving events.
-- [ ] Works on PostgreSQL and SQLite with both ORMs; behind `GAUZY_CHAT_ENABLED`;
+- [ ] Works on PostgreSQL, MySQL and SQLite with both ORMs; behind `GAUZY_CHAT_ENABLED`;
       nothing changes while the flag is off.
 - [ ] All functional requirements have a passing test.
 

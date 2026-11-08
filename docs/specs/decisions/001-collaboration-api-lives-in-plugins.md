@@ -24,17 +24,24 @@ or one shared).
    surface (plus events on the platform event bus and, where needed, MCP tools) in this
    repository. Clients never hold collaboration data of their own: Ever Teams, the Angular
    app, mobile and desktop are views over the same endpoints.
-2. **New capabilities are plugins** under `packages/plugins/`:
-   - `realtime` — the push channel (WebSocket gateway, presence, typing, replayable
-     event stream) that every other feature publishes to;
-   - `chat` — conversations, messages, threads, reactions, pins, unread state, webhooks;
-   - `inbox` — the unified notification inbox built on the existing employee
-     notification entity (read/unread/archive/snooze, grouping, channel preferences);
-   - `docs-pages` — pages, page tree, versions, anchored comments, exports, built next
-     to the existing `docs` (files) and `knowledge-base` plugins;
-   - `integration-asana`, `integration-linear`, `integration-trello` — following the
-     existing `integration-github` / `integration-plane` layout, each with its `-ui`
-     package.
+2. **New capabilities are plugins** under `packages/plugins/`, or extensions of the
+   plugin that already owns the domain:
+   - `realtime` (new) — the push channel that every other feature publishes to: the
+     collaboration event catalogue, the `Subscription.collaborationEvents` field on the
+     platform's existing graphql-ws transport, presence and typing signals, and the
+     REST catch-up over the event outbox (no WebSocket gateway of its own);
+   - `chat` (new) — conversations, messages, threads, reactions, pins, unread state;
+     incoming webhooks are a later lane;
+   - `inbox` (existing, extended) — the unified notification inbox: every employee
+     notification filed as an inbox item, read/archive/snooze/done, delivery
+     preferences, email and web push;
+   - `docs` (existing, extended) — the collaboration work (team spaces, follow / mute,
+     share and review entries, content revision, Markdown export and update, live
+     sessions) extends `packages/plugins/docs` and its `docs-ui`; there is no separate
+     pages plugin;
+   - `integration-asana`, `integration-linear`, `integration-trello` (new) — following
+     the existing `integration-github` / `integration-plane` / `integration-ever-works` layout, each with its
+     `-ui` package.
    Shared, cross-cutting pieces that several plugins and the core domain need
    (comments, mentions, employee notifications, task views, bulk task operations,
    activity log) stay in `packages/core` and are extended there.

@@ -130,7 +130,7 @@ MCP server and the SDKs.
 - [ ] Bulk actions apply atomically per task with per-task results and undo data.
 - [ ] Manual order persists per view.
 - [ ] Shortcut overrides persist with the user; references resolve, including old keys.
-- [ ] Works on PostgreSQL and SQLite with both ORMs; behind the flag.
+- [ ] Works on PostgreSQL, MySQL and SQLite with both ORMs; behind the flag.
 - [ ] All functional requirements have a passing test.
 
 ## 8. Open Questions

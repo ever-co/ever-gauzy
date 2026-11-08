@@ -133,7 +133,7 @@ unreachable, every feature keeps working with its documented polling.
 
 ## 6. Out of Scope
 
-- Collaborative document editing transport (CRDT sync); the docs-pages feature defines it
+- Collaborative document editing transport (CRDT sync); the docs-collaboration feature defines it
   separately and may reuse this channel's authentication.
 - Web Push / mobile push delivery (the inbox feature covers push).
 - Cross-organization or cross-tenant broadcast.
@@ -150,7 +150,7 @@ unreachable, every feature keeps working with its documented polling.
       within 15 s.
 - [ ] With `GAUZY_REALTIME_ENABLED` off, connections are refused and clients show no
       errors; chat and inbox still update through polling.
-- [ ] Works on PostgreSQL and SQLite with both ORMs; migrations are additive.
+- [ ] Works on PostgreSQL, MySQL and SQLite with both ORMs; migrations are additive.
 - [ ] All functional requirements have a passing test.
 
 ## 8. Open Questions
@@ -176,4 +176,4 @@ unreachable, every feature keeps working with its documented polling.
 
 - Architecture: [`../../architecture/collaboration-suite.md`](../../architecture/collaboration-suite.md)
 - ADR: [`../../decisions/001-collaboration-api-lives-in-plugins.md`](../../decisions/001-collaboration-api-lives-in-plugins.md)
-- Consumers: [`../chat/spec.md`](../chat/spec.md), [`../inbox/spec.md`](../inbox/spec.md), [`../docs-pages/spec.md`](../docs-pages/spec.md)
+- Consumers: [`../chat/spec.md`](../chat/spec.md), [`../inbox/spec.md`](../inbox/spec.md), [`../docs-collaboration/spec.md`](../docs-collaboration/spec.md)

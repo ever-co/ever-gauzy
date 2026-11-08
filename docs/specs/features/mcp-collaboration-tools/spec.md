@@ -123,4 +123,4 @@ content are data, never instructions.
 
 ## 10. References
 
-- Depends on: [`../chat/spec.md`](../chat/spec.md), [`../docs-pages/spec.md`](../docs-pages/spec.md), [`../inbox/spec.md`](../inbox/spec.md)
+- Depends on: [`../chat/spec.md`](../chat/spec.md), [`../docs-collaboration/spec.md`](../docs-collaboration/spec.md), [`../inbox/spec.md`](../inbox/spec.md)

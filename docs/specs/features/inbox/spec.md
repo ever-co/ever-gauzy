@@ -180,7 +180,7 @@ Ever Teams, the desktop apps, the MCP server and the SDKs.
 - [ ] Email immediate and digest modes send the expected emails in the recipient's
       language; push reaches an unfocused browser and is suppressed for a focused one.
 - [ ] Existing bell/panel clients keep working against the unchanged endpoints.
-- [ ] Works on PostgreSQL and SQLite with both ORMs; behind `GAUZY_INBOX_ENABLED`.
+- [ ] Works on PostgreSQL, MySQL and SQLite with both ORMs; behind `GAUZY_INBOX_ENABLED`.
 - [ ] All functional requirements have a passing test.
 
 ## 8. Open Questions
@@ -206,4 +206,4 @@ Ever Teams, the desktop apps, the MCP server and the SDKs.
 
 - Architecture: [`../../architecture/collaboration-suite.md`](../../architecture/collaboration-suite.md)
 - Depends on: [`../realtime-channel/spec.md`](../realtime-channel/spec.md)
-- Producers: [`../chat/spec.md`](../chat/spec.md), [`../docs-pages/spec.md`](../docs-pages/spec.md), [`../integrations-asana-linear-trello/spec.md`](../integrations-asana-linear-trello/spec.md)
+- Producers: [`../chat/spec.md`](../chat/spec.md), [`../docs-collaboration/spec.md`](../docs-collaboration/spec.md), [`../integrations-asana-linear-trello/spec.md`](../integrations-asana-linear-trello/spec.md)

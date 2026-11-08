@@ -67,7 +67,7 @@ Checklist a reviewer can run against the merged change.
 
 - [ ] [Observable outcome 1]
 - [ ] [Failure / unhappy-path outcome]
-- [ ] Works on PostgreSQL and SQLite with both ORMs
+- [ ] Works on PostgreSQL, MySQL and SQLite with both ORMs
 - [ ] Behind `[FLAG_NAME]`; nothing changes while the flag is off
 - [ ] All functional requirements have a passing test
 

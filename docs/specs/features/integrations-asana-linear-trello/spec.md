@@ -144,7 +144,7 @@ settings UI pattern, so Ever Teams and the Angular app configure them the same w
 - [ ] Both-direction sync applies status changes each way; conflicts are visible and
       resolvable; sync scope is respected.
 - [ ] Expired token pauses sync and files an Inbox entry.
-- [ ] Works on PostgreSQL and SQLite with both ORMs; behind per-provider flags.
+- [ ] Works on PostgreSQL, MySQL and SQLite with both ORMs; behind per-provider flags.
 - [ ] All functional requirements have a passing test (provider APIs mocked in tests).
 
 ## 8. Open Questions

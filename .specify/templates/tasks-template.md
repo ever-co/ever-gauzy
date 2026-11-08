@@ -44,6 +44,6 @@
 ## Definition of Done
 
 - All checkboxes ticked; tests green locally and in CI.
-- Migrations verified on PostgreSQL and SQLite with both ORMs.
+- Migrations verified on PostgreSQL, MySQL and SQLite with both ORMs.
 - Flag default stays off; enabling it in dev shows the feature end to end.
 - Constitution gates in `spec.md` §9 confirmed.
