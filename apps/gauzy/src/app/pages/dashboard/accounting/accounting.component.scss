@@ -307,7 +307,7 @@ $toolbar-control-height: 1.75rem;
 	}
 
 	&:focus-visible {
-		outline: 2px solid nb-theme(color-primary-default);
+		outline: 2px solid var(--gauzy-action-info-text);
 		outline-offset: 1px;
 	}
 }
