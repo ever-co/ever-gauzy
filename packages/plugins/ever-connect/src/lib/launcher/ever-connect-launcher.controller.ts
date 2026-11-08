@@ -19,7 +19,8 @@ import { LauncherOriginGuard } from './launcher-origin.guard';
  * - `GET /api/ever-connect/launcher/apps?organizationId=`: the Ever apps, and the apps of the Ever organization the
  *   Gauzy organization is linked to, for an organization the person is a member of (403 otherwise).
  *
- * Registered only with `EVER_APP_LAUNCHER_ENABLED=true` (and Ever ID sign-in loaded); otherwise both answer 404.
+ * Registered only with `EVER_APP_LAUNCHER_ENABLED=true` (with Ever ID sign-in and the Ever Platform connection loaded);
+ * otherwise both answer 404.
  * Both answer only the browser origins of `EVER_APP_LAUNCHER_ORIGINS`, are never cached by the browser
  * (`Cache-Control: no-store`) and never carry a token.
  */

@@ -24,13 +24,16 @@ const MAX_CACHED_ANSWERS = 5000;
  * - Ever Platform or Ever ID cannot answer: the Ever apps, and `error.section = 'works'` (never cached, so the next
  *   open tries again).
  *
- * A complete answer is reused for {@link LAUNCHER_CACHE_MS} per person and organization, in memory only. Nothing is
- * written anywhere: reading changes no state, so nothing is audited. Problems are logged with a code only.
+ * A complete answer is reused for {@link LAUNCHER_CACHE_MS} per person and organization, in memory only, and
+ * concurrent requests that find no answer share one read (an answer in error included, which is never kept). Nothing
+ * is written anywhere: reading changes no state, so nothing is audited. Problems are logged with a code only.
  */
 @Injectable()
 export class EverConnectLauncherService {
 	private readonly logger = new Logger('EverConnect');
 	private readonly answers = new Map<string, { value: LauncherAppsResponse; until: number }>();
+	/** The read in flight per answer key: concurrent misses for one key share it (removed once it settles). */
+	private readonly reading = new Map<string, Promise<LauncherAppsResponse>>();
 	private readonly now: () => number;
 
 	constructor(
@@ -63,7 +66,16 @@ export class EverConnectLauncherService {
 			return cached.value;
 		}
 		this.answers.delete(key);
+		let pending = this.reading.get(key);
+		if (!pending) {
+			pending = this.read(scope, sid, key).finally(() => this.reading.delete(key));
+			this.reading.set(key, pending);
+		}
+		return pending;
+	}
 
+	/** Reads the answer for `key` (catalog, link, token, Ever Platform's two reads) and keeps a complete one. */
+	private async read(scope: OrganizationScope, sid: string | null, key: string): Promise<LauncherAppsResponse> {
 		const catalog = await this.reads.catalog();
 		if (!sid) {
 			return this.answer(mergeLauncherResponse({ catalog, current: `platform:${LAUNCHER_CURRENT}` }), true, null);

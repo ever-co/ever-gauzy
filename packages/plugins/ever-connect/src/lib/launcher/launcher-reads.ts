@@ -93,6 +93,8 @@ export class LauncherReads {
 	private readonly fetcher: typeof globalThis.fetch;
 	private readonly now: () => number;
 	private catalogCache: { value: AppLauncherPlatformsResponse; until: number } | null = null;
+	/** The catalog read in flight: concurrent callers that find no usable catalog share it (cleared once it settles). */
+	private catalogRead: Promise<AppLauncherPlatformsResponse> | null = null;
 
 	constructor(
 		@Inject(EVER_CONNECT_SETTINGS) private readonly connect: EverConnectConfig,
@@ -104,11 +106,24 @@ export class LauncherReads {
 		this.now = () => (clock ?? Date).now();
 	}
 
-	/** The Ever apps: Ever Works' public catalog, or the bundled list when it cannot be read. */
+	/**
+	 * The Ever apps: Ever Works' public catalog, or the bundled list when it cannot be read. One read at a time: when
+	 * the kept catalog has expired, every concurrent caller waits for the same read.
+	 */
 	async catalog(): Promise<AppLauncherPlatformsResponse> {
 		if (this.catalogCache && this.catalogCache.until > this.now()) {
 			return this.catalogCache.value;
 		}
+		if (!this.catalogRead) {
+			this.catalogRead = this.loadCatalog().finally(() => {
+				this.catalogRead = null;
+			});
+		}
+		return this.catalogRead;
+	}
+
+	/** Reads the catalog (or takes the bundled list), kept for {@link CATALOG_TTL_MS} or {@link CATALOG_RETRY_MS}. */
+	private async loadCatalog(): Promise<AppLauncherPlatformsResponse> {
 		const read = this.launcher.catalogUrl ? await this.readCatalog(this.launcher.catalogUrl) : null;
 		const value = read ?? launcherSnapshot(ENVIRONMENT);
 		this.catalogCache = { value, until: this.now() + (read ? CATALOG_TTL_MS : CATALOG_RETRY_MS) };

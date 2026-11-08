@@ -70,9 +70,9 @@ function oauthError(data: unknown): string | null {
  *
  * - {@link accessTokenFor}: a fresh access token of a session, from a refresh grant with this installation's client
  *   at the same issuer. The rotated refresh token replaces the stored one; the access token stays in this
- *   process's memory until a minute before it expires (at most {@link MAX_CACHED_ACCESS_TOKENS} of them, expired
- *   ones dropped first). A refresh token the issuer refuses (`invalid_grant`) is removed: the person signs in with
- *   Ever ID again.
+ *   process's memory until a minute before it expires (at most {@link MAX_CACHED_ACCESS_TOKENS} of them; expired
+ *   ones are dropped whenever a new one is kept). A refresh token the issuer refuses (`invalid_grant`) is removed:
+ *   the person signs in with Ever ID again.
  *
  *   Several API processes may refresh the same session at once, and only one of them gets through (a refresh token
  *   is used once). No lock is held while the issuer answers: the one that gets through stores its rotated token for
@@ -336,23 +336,23 @@ export class ZitadelRefreshTokenService implements EverIdSessionTokensPort, OnMo
 	}
 
 	/**
-	 * Keeps a session's access token in memory until it is no longer usable. Expired ones go first when the cache is
-	 * full; if it is still full, the oldest (a Map keeps insertion order).
+	 * Keeps a session's access token in memory until it is no longer usable. Every token that is no longer usable is
+	 * dropped first, so the token of a session nobody asks about again does not stay in memory once it expired; if the
+	 * cache is still full, the oldest go (a Map keeps insertion order). One pass over at most
+	 * {@link MAX_CACHED_ACCESS_TOKENS} entries, once per refresh.
 	 */
 	private remember(sid: string, fresh: SessionAccessToken): void {
 		const now = this.nowSeconds();
+		this.accessTokens.delete(sid);
+		for (const [other, token] of this.accessTokens) {
+			if (token.usableUntil <= now) this.accessTokens.delete(other);
+		}
 		if (fresh.usableUntil <= now) {
 			return;
 		}
-		this.accessTokens.delete(sid);
-		if (this.accessTokens.size >= this.maxCachedAccessTokens) {
-			for (const [other, token] of this.accessTokens) {
-				if (token.usableUntil <= now) this.accessTokens.delete(other);
-			}
-			for (const other of this.accessTokens.keys()) {
-				if (this.accessTokens.size < this.maxCachedAccessTokens) break;
-				this.accessTokens.delete(other);
-			}
+		for (const other of this.accessTokens.keys()) {
+			if (this.accessTokens.size < this.maxCachedAccessTokens) break;
+			this.accessTokens.delete(other);
 		}
 		this.accessTokens.set(sid, fresh);
 	}

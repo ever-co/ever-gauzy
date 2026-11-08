@@ -5,7 +5,8 @@ import {
 	EVER_ID_SESSION_TOKENS,
 	EVER_ID_TOKEN_VAULT,
 	EverIdExchangeError,
-	EverIdSessionTokensPort
+	EverIdSessionTokensPort,
+	isAppLauncherEnabled
 } from '@gauzy/plugin-auth-zitadel';
 import { EverOperatorService } from '@gauzy/plugin-ever-instance';
 import { readEverConnectConfig } from '../ever-connect-config';
@@ -21,11 +22,16 @@ import { EverConnectEnabledGuard } from '../guards/ever-connect-operator.guard';
 import { EverConnectLauncherController } from '../launcher/ever-connect-launcher.controller';
 import { EverConnectLauncherService } from '../launcher/ever-connect-launcher.service';
 import { EverConnectLauncherTokenService } from '../launcher/ever-connect-launcher-token.service';
-import { EVER_CONNECT_LAUNCHER_SETTINGS, MAX_LAUNCHER_ORIGINS, readLauncherConfig } from '../launcher/launcher-config';
+import {
+	EVER_CONNECT_LAUNCHER_SETTINGS,
+	isLauncherSwitchedOn,
+	MAX_LAUNCHER_ORIGINS,
+	readLauncherConfig
+} from '../launcher/launcher-config';
 import { LAUNCHER_SNAPSHOT_VERSION, mapApps, mapInstalls } from '../launcher/launcher-items';
 import { LauncherFirstPartyGuard } from '../launcher/launcher-first-party.guard';
 import { LauncherOriginGuard } from '../launcher/launcher-origin.guard';
-import { LauncherReads } from '../launcher/launcher-reads';
+import { CATALOG_TTL_MS, LauncherReads } from '../launcher/launcher-reads';
 import { LauncherTokenVault } from '../launcher/launcher-token-vault';
 import { EverConnectSecretStore } from '../ever-connect-secret-store';
 
@@ -46,6 +52,33 @@ describe('App Launcher settings', () => {
 		expect(readLauncherConfig({ ...ON, EVER_APP_LAUNCHER_ENABLED: 'TRUE' }).enabled).toBe(false);
 		expect(readLauncherConfig({ ...ON, EVER_APP_LAUNCHER_ENABLED: '1' }).enabled).toBe(false);
 		expect(readLauncherConfig(ON).enabled).toBe(true);
+	});
+
+	it('are off while the Ever Platform connection is off, even with the launcher and Ever ID sign-in on', () => {
+		expect(readLauncherConfig({ ...ON, EVER_CONNECT_ENABLED: 'false' }).enabled).toBe(false);
+		expect(readLauncherConfig({ ...ON, EVER_CONNECT_ENABLED: undefined }).enabled).toBe(false);
+		expect(readLauncherConfig({ ...ON, EVER_CONNECT_ENABLED: 'TRUE' }).enabled).toBe(false);
+	});
+
+	it("read EVER_APP_LAUNCHER_ENABLED with the Ever ID sign-in plugin's own reader: same answer, same warning", () => {
+		for (const value of [undefined, '', 'false', 'true', 'TRUE', '1', 'yes']) {
+			const env = { ...ON, EVER_APP_LAUNCHER_ENABLED: value };
+			const ours: string[] = [];
+			const signIn: string[] = [];
+			expect(isLauncherSwitchedOn(env, (message) => ours.push(message))).toBe(
+				isAppLauncherEnabled(env, (message) => signIn.push(message))
+			);
+			expect(ours).toEqual(signIn);
+		}
+		// One warning for a value that is neither, through the settings too, never repeating the value.
+		const warnings: string[] = [];
+		expect(readLauncherConfig({ ...ON, EVER_APP_LAUNCHER_ENABLED: 'yes' }, (m) => warnings.push(m)).enabled).toBe(
+			false
+		);
+		const signIn: string[] = [];
+		isAppLauncherEnabled({ EVER_APP_LAUNCHER_ENABLED: 'yes' }, (m) => signIn.push(m));
+		expect(warnings).toEqual(signIn);
+		expect(warnings.join(' ')).not.toContain('yes');
 	});
 
 	it('answer the web app origin by default, and at most 50 listed origins', () => {
@@ -187,13 +220,55 @@ describe('App Launcher tiles (the SDK mapping)', () => {
 	});
 });
 
+describe('App Launcher catalog of Ever apps', () => {
+	it('is read once for concurrent callers, kept, and read once again after it expired', async () => {
+		const clock = { current: Date.UTC(2026, 10, 7, 12), now: () => clock.current };
+		const platform = new FakePlatform();
+		const env = { ...ON, EVER_WORKS_API_URL: 'https://api.works.example' };
+		const reads = new LauncherReads(
+			readEverConnectConfig(env),
+			readLauncherConfig(env),
+			platform.fetch as unknown as typeof globalThis.fetch,
+			clock
+		);
+		const catalogReads = () => platform.requests.filter((r) => r.url.endsWith('/api/app-launcher/platforms'));
+
+		const first = await Promise.all([reads.catalog(), reads.catalog(), reads.catalog()]);
+		expect(catalogReads()).toHaveLength(1);
+		expect(first.map((catalog) => catalog.catalogVersion)).toEqual([
+			'works-catalog-1',
+			'works-catalog-1',
+			'works-catalog-1'
+		]);
+		await reads.catalog();
+		expect(catalogReads()).toHaveLength(1);
+
+		clock.current += CATALOG_TTL_MS + 1;
+		await Promise.all([reads.catalog(), reads.catalog()]);
+		expect(catalogReads()).toHaveLength(2);
+
+		// A failed read is shared too: the bundled list for every caller, from one request.
+		clock.current += CATALOG_TTL_MS + 1;
+		platform.catalogStatus = 500;
+		const fallback = await Promise.all([reads.catalog(), reads.catalog()]);
+		expect(catalogReads()).toHaveLength(3);
+		expect(fallback.map((catalog) => catalog.catalogVersion)).toEqual([
+			LAUNCHER_SNAPSHOT_VERSION,
+			LAUNCHER_SNAPSHOT_VERSION
+		]);
+	});
+});
+
 describe('App Launcher routes', () => {
 	it('are not registered while the launcher is off (so they answer 404)', async () => {
 		for (const env of [
 			{},
 			{ EVER_CONNECT_ENABLED: 'true' },
 			{ ...ON, ZITADEL_ENABLED: 'false' },
-			{ ...ON, EVER_APP_LAUNCHER_ENABLED: 'false' }
+			{ ...ON, EVER_APP_LAUNCHER_ENABLED: 'false' },
+			// The launcher and Ever ID sign-in on, the Ever Platform connection off: no vault, so no refresh token kept.
+			{ ...ON, EVER_CONNECT_ENABLED: 'false' },
+			{ ZITADEL_ENABLED: 'true', EVER_APP_LAUNCHER_ENABLED: 'true' }
 		]) {
 			const registered = EverConnectModule.register(env);
 			expect(registered.controllers).not.toContain(EverConnectLauncherController);
@@ -455,7 +530,8 @@ describe('App Launcher routes', () => {
 			expect(everId.exchanges).toBe(1);
 			const feedReads = () => platform.requests.filter((r) => r.url.includes('/v1/orgs/')).length;
 			const afterFirst = feedReads();
-			expect(afterFirst).toBeLessThanOrEqual(4);
+			// One read of each feed, whether the two first requests overlapped or not.
+			expect(afterFirst).toBe(2);
 
 			clock.current += 61_000;
 			await get(`/apps?organizationId=${ORG}`);
@@ -466,6 +542,39 @@ describe('App Launcher routes', () => {
 			clock.current += 3600_000;
 			await get(`/apps?organizationId=${ORG}`);
 			expect(everId.exchanges).toBe(2);
+		});
+
+		it('shares one read between concurrent requests for the same answer, an answer in error included', async () => {
+			const launcher = app.get(EverConnectLauncherService);
+			const scope = { tenantId: TENANT, userId: USER, organizationId: ORG, isOperator: false };
+			const feedReads = () => platform.requests.filter((r) => r.url.includes('/v1/orgs/')).length;
+
+			const [first, second, third] = await Promise.all([
+				launcher.list(scope),
+				launcher.list(scope),
+				launcher.list(scope)
+			]);
+			expect(first.error).toBeNull();
+			expect(second).toBe(first);
+			expect(third).toBe(first);
+			expect(feedReads()).toBe(2);
+			expect(everId.exchanges).toBe(1);
+
+			// An answer in error is never kept, but concurrent requests still share the one read that failed.
+			clock.current += 61_000;
+			platform.feedStatus = 503;
+			const failed = await Promise.all([launcher.list(scope), launcher.list(scope)]);
+			expect(failed.map((answer) => answer.error)).toEqual([
+				{ section: 'works', code: 'feed_unavailable' },
+				{ section: 'works', code: 'feed_unavailable' }
+			]);
+			expect(feedReads()).toBe(4);
+			expect(logs.filter((line) => line.includes('feed_unavailable'))).toHaveLength(1);
+
+			// ...and the next request reads again.
+			platform.feedStatus = 200;
+			expect((await launcher.list(scope)).error).toBeNull();
+			expect(feedReads()).toBe(6);
 		});
 
 		it('never reuses an answer once the Ever ID session it was read with ended', async () => {

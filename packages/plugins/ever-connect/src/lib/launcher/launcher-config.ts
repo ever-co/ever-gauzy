@@ -1,4 +1,6 @@
+import { isAppLauncherEnabled } from '@gauzy/plugin-auth-zitadel';
 import { isLoopbackHost } from '../ever-connect-config';
+import { isEverConnectEnabled } from '../ever-connect-enabled';
 
 type Env = Record<string, string | undefined>;
 type Warn = (message: string) => void;
@@ -21,8 +23,10 @@ export const LAUNCHER_CURRENT = 'ever-gauzy';
 /** The settings of the App Launcher, read once from the environment when the module is registered. */
 export interface LauncherConfig {
 	/**
-	 * `EVER_APP_LAUNCHER_ENABLED=true` (exactly) with Ever ID sign-in loaded (`ZITADEL_ENABLED=true`): only then are
-	 * the launcher's routes registered. Otherwise they do not exist (404) and nothing of the launcher runs.
+	 * `EVER_APP_LAUNCHER_ENABLED=true` (exactly) with Ever ID sign-in loaded (`ZITADEL_ENABLED=true`) and the Ever
+	 * Platform connection loaded (`EVER_CONNECT_ENABLED=true`): only then are the launcher's routes registered and its
+	 * token encryption (`EVER_ID_TOKEN_VAULT`) offered to the sign-in. Otherwise they do not exist (404), nothing of
+	 * the launcher runs, and sign-ins keep no Ever ID refresh token.
 	 */
 	enabled: boolean;
 	/**
@@ -115,17 +119,12 @@ function parseOrigins(env: Env, warn: Warn): string[] {
 /**
  * `EVER_APP_LAUNCHER_ENABLED`: only the exact value `true` turns it on; unset, empty and `false` keep it off
  * silently, anything else keeps it off with one warning that never repeats the value.
+ *
+ * The switch is shared with the Ever ID sign-in plugin, which decides from it whether a sign-in keeps its refresh
+ * token: both read it with that plugin's {@link isAppLauncherEnabled}, so they can never disagree on a value.
  */
 export function isLauncherSwitchedOn(env: Env, warn: Warn = () => undefined): boolean {
-	const raw = env['EVER_APP_LAUNCHER_ENABLED'];
-	if (raw === undefined || raw === '' || raw === 'false') {
-		return false;
-	}
-	if (raw === 'true') {
-		return true;
-	}
-	warn('EVER_APP_LAUNCHER_ENABLED is neither "true" nor "false"; the App Launcher stays off (the default).');
-	return false;
+	return isAppLauncherEnabled(env, warn);
 }
 
 /**
@@ -138,7 +137,9 @@ export function readLauncherConfig(env: Env, warn: Warn = () => undefined): Laun
 	if (switchedOn && !signInLoaded) {
 		warn('EVER_APP_LAUNCHER_ENABLED=true has no effect without Ever ID sign-in (ZITADEL_ENABLED=true).');
 	}
-	const enabled = switchedOn && signInLoaded;
+	// The launcher is part of the Ever Platform connection: without it, nothing of the launcher is registered, not
+	// even its token encryption, so a sign-in never asks for `offline_access` (the Ever ID sign-in plugin says so).
+	const enabled = switchedOn && signInLoaded && isEverConnectEnabled(env);
 	const configuredCatalog = env['EVER_WORKS_API_URL']?.trim();
 	const catalogUrl = usableBase(configuredCatalog || DEFAULT_WORKS_API_URL);
 	if (enabled && configuredCatalog && !catalogUrl) {

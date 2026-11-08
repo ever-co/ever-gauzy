@@ -438,15 +438,15 @@ describe('ZitadelRefreshTokenService memory of access tokens', () => {
 		expect(refreshes()).toBe(6);
 	});
 
-	it('drops expired tokens first when full', async () => {
+	it('drops every expired token whenever it keeps a new one, full or not', async () => {
 		const { service } = create();
 		await service.accessTokenFor('s1');
 		await service.accessTokenFor('s2');
 		service.now += 541;
 		await service.accessTokenFor('s3');
-		expect(service.cachedAccessTokens).toBe(3);
+		// s1 and s2 had expired: both went with the next new token, although the memory was not full.
+		expect(service.cachedAccessTokens).toBe(1);
 		await service.accessTokenFor('s4');
-		// s1 and s2 had expired: both went, s3 and s4 stay.
 		expect(service.cachedAccessTokens).toBe(2);
 	});
 });
