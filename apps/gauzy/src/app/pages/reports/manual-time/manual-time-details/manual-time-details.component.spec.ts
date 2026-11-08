@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideRouter, Router } from '@angular/router';
 import { NbDialogRef, NbDialogService } from '@nebular/theme';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { of } from 'rxjs';
@@ -50,7 +51,8 @@ describe('ManualTimeDetailsComponent', () => {
 			providers: [
 				{ provide: NbDialogRef, useValue: dialogRef },
 				{ provide: NbDialogService, useValue: dialogService },
-				{ provide: TimesheetService, useValue: { getTimeLogs } }
+				{ provide: TimesheetService, useValue: { getTimeLogs } },
+				provideRouter([])
 			],
 			teardown: { destroyAfterEach: false }
 		}).compileComponents();
@@ -114,6 +116,31 @@ describe('ManualTimeDetailsComponent', () => {
 		expect(component.dayLoading).toBe(false);
 		expect(element.querySelectorAll('.timeline-segment')).toHaveLength(1);
 		expect(element.querySelector('.panel-note')).not.toBeNull();
+	});
+
+	it('links the project and the task to their own pages, closing the dialog on the way', () => {
+		const element = render({
+			...ENTRY,
+			project: { id: 'project-1', name: 'Cloud Infrastructure' } as ITimeLog['project'],
+			task: { id: 'task-1', title: 'Manage role access' } as ITimeLog['task']
+		});
+		const links = Array.from(element.querySelectorAll<HTMLAnchorElement>('a.entity-link'));
+
+		expect(links.map((link) => link.getAttribute('href'))).toEqual([
+			'/pages/organization/projects/view/project-1',
+			'/pages/tasks/view/task-1'
+		]);
+
+		const navigate = jest.spyOn(TestBed.inject(Router), 'navigateByUrl').mockResolvedValue(true);
+		links[1].click();
+		expect(String(navigate.mock.calls[0][0])).toBe('/pages/tasks/view/task-1');
+		expect(dialogRef.close).toHaveBeenCalledWith(null);
+	});
+
+	it('shows no link for an entry without a project or a task', () => {
+		const element = render(ENTRY);
+
+		expect(element.querySelector('a.entity-link')).toBeNull();
 	});
 
 	it('closes with nothing when dismissed', () => {
