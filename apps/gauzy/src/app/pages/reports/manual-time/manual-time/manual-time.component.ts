@@ -162,6 +162,25 @@ export class ManualTimeComponent extends BaseSelectorFilterComponent implements 
 		);
 	}
 
+	/** The average duration of a loaded entry, in seconds. */
+	get averagePerEntry(): number {
+		return this.summary.entries ? Math.round(this.summary.duration / this.summary.entries) : 0;
+	}
+
+	/** The average manual time per employee among the loaded entries, in seconds. */
+	get averagePerEmployee(): number {
+		return this.summary.employees ? Math.round(this.summary.duration / this.summary.employees) : 0;
+	}
+
+	/**
+	 * A count as a whole percentage of the loaded entries.
+	 *
+	 * @param count - Part of the entries, e.g. the edited ones.
+	 */
+	shareOf(count: number): number {
+		return this.summary.entries ? Math.round((count / this.summary.entries) * 100) : 0;
+	}
+
 	/** There is something to export: the rows on screen answer the current filters. */
 	get canExport(): boolean {
 		return !this.loading && !this.loadingMore && this.timeLogs.length > 0 && !!this.loadedRequest;
