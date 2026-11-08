@@ -29,24 +29,45 @@ type Row = { id: string; tenantId: string; organizationId?: string | null; name:
 /** A manager (`CHAT_MANAGE`) of organization A. */
 const managerOfA: IChatCaller = { tenantId: 'ten', organizationId: 'org-a', userId: 'u1', employeeId: 'e1', canManage: true };
 
+type Channel = { id: string; tenantId: string; organizationId: string; kind: string; categoryId: string | null };
+
+const matches = (row: object, where: Record<string, unknown>) => Object.entries(where).every(([key, value]) => (row as Record<string, unknown>)[key] === value);
+
+/** The categories of two organizations of one tenant, and a channel of each organization filed under its own. */
 function categoriesOver(rows: Row[]) {
-	const matches = (row: Row, where: Record<string, unknown>) => Object.entries(where).every(([key, value]) => (row as Record<string, unknown>)[key] === value);
+	const channels: Channel[] = [
+		{ id: 'conv-a', tenantId: 'ten', organizationId: 'org-a', kind: 'channel', categoryId: 'cat-a' },
+		{ id: 'conv-a2', tenantId: 'ten', organizationId: 'org-a', kind: 'channel', categoryId: 'cat-a2' },
+		{ id: 'conv-b', tenantId: 'ten', organizationId: 'org-b', kind: 'channel', categoryId: 'cat-b' }
+	];
 	const categories = {
 		findOne: jest.fn(async ({ where }: { where: Record<string, unknown> }) => rows.find((row) => matches(row, where)) ?? null),
 		save: jest.fn(async (row: Row) => row),
 		remove: jest.fn(async (row: Row) => row)
 	};
-	const conversations = { update: jest.fn(async () => ({ affected: 0 })) };
+	const conversations = {
+		update: jest.fn(async (where: Record<string, unknown>, patch: Partial<Channel>) => {
+			const hit = channels.filter((channel) => matches(channel, where));
+			hit.forEach((channel) => Object.assign(channel, patch));
+			return { affected: hit.length };
+		}),
+		save: jest.fn(async (row: Channel) => row)
+	};
 	const dataSource = {
-		getRepository: (entity: { name?: string }) => (entity?.name === 'ChatCategory' ? categories : conversations)
+		getRepository: (entity: { name?: string }) => (entity?.name === 'ChatCategory' ? categories : conversations),
+		transaction: jest.fn(async () => {
+			throw new Error('nothing is written in these tests');
+		})
 	} as unknown as DataSource;
-	const service = new ChatConversationService(dataSource, {} as ChatAccessService, {} as ChatRealtime);
-	return { service, categories, conversations };
+	const access = { requireManager: jest.fn(async (id: string) => ({ conversation: { ...channels.find((channel) => channel.id === id) }, member: null })) };
+	const service = new ChatConversationService(dataSource, access as unknown as ChatAccessService, {} as ChatRealtime);
+	return { service, categories, conversations, channels, dataSource: dataSource as unknown as { transaction: jest.Mock } };
 }
 
 describe('ChatConversationService categories', () => {
 	const rows = (): Row[] => [
 		{ id: 'cat-a', tenantId: 'ten', organizationId: 'org-a', name: 'Team A', position: 0 },
+		{ id: 'cat-a2', tenantId: 'ten', organizationId: 'org-a', name: 'Team A, too', position: 1 },
 		{ id: 'cat-b', tenantId: 'ten', organizationId: 'org-b', name: 'Team B', position: 0 }
 	];
 
@@ -64,17 +85,38 @@ describe('ChatConversationService categories', () => {
 	});
 
 	it('answers 404 to a manager deleting another organization\'s category, and leaves its channels categorized', async () => {
-		const { service, categories, conversations } = categoriesOver(rows());
+		const { service, categories, conversations, channels } = categoriesOver(rows());
 		await expect(service.deleteCategory(managerOfA, 'cat-b')).rejects.toBeInstanceOf(NotFoundException);
 		expect(conversations.update).not.toHaveBeenCalled();
 		expect(categories.remove).not.toHaveBeenCalled();
+		expect(channels.find((channel) => channel.id === 'conv-b')?.categoryId).toBe('cat-b');
 	});
 
-	it('deletes a category of the caller\'s organization; its channels stay, uncategorized', async () => {
-		const { service, categories, conversations } = categoriesOver(rows());
+	it('deletes a category of the caller\'s organization; its channels stay, uncategorized, and no other category\'s', async () => {
+		const { service, categories, conversations, channels } = categoriesOver(rows());
 		await service.deleteCategory(managerOfA, 'cat-a');
 		expect(conversations.update).toHaveBeenCalledWith({ categoryId: 'cat-a', tenantId: 'ten' }, { categoryId: null });
 		expect(categories.remove).toHaveBeenCalledWith(expect.objectContaining({ id: 'cat-a' }));
+		expect(channels.map((channel) => [channel.id, channel.categoryId])).toEqual([
+			['conv-a', null],
+			['conv-a2', 'cat-a2'],
+			['conv-b', 'cat-b']
+		]);
+	});
+
+	it('refuses to file a new channel under another organization\'s category, before anything is written', async () => {
+		const { service, dataSource } = categoriesOver(rows());
+		const caller = managerOfA as IChatCaller & { employeeId: string };
+		await expect(service.createChannel(caller, { name: 'ops', categoryId: 'cat-b' })).rejects.toBeInstanceOf(NotFoundException);
+		expect(dataSource.transaction).not.toHaveBeenCalled();
+	});
+
+	it('refuses to move a channel under another organization\'s category, before anything is written', async () => {
+		const { service, conversations, channels } = categoriesOver(rows());
+		await expect(service.updateConversation(managerOfA, 'conv-a', { name: 'renamed', categoryId: 'cat-b' })).rejects.toBeInstanceOf(NotFoundException);
+		expect(conversations.save).not.toHaveBeenCalled();
+		expect(conversations.update).not.toHaveBeenCalled();
+		expect(channels.find((channel) => channel.id === 'conv-a')?.categoryId).toBe('cat-a');
 	});
 
 	it('keeps the tenant-wide reach of a caller the request scopes to no organization', async () => {

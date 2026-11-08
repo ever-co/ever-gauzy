@@ -86,7 +86,7 @@ export class ChatConversationService {
 	async updateCategory(caller: IChatCaller, id: ID, input: Partial<IChatCategoryInput>): Promise<IChatCategory> {
 		this.requireManage(caller);
 		const repository = this.dataSource.getRepository(ChatCategory);
-		const category = await this.categoryForWrite(caller, id);
+		const category = await this.categoryInScope(caller, id);
 		if (typeof input.name === 'string' && input.name.trim()) category.name = input.name.trim();
 		if (typeof input.position === 'number') category.position = input.position;
 		return repository.save(category) as Promise<IChatCategory>;
@@ -95,22 +95,26 @@ export class ChatConversationService {
 	async deleteCategory(caller: IChatCaller, id: ID): Promise<void> {
 		this.requireManage(caller);
 		const repository = this.dataSource.getRepository(ChatCategory);
-		const category = await this.categoryForWrite(caller, id);
-		// The channels of a deleted category stay, uncategorized (what the foreign key's ON DELETE SET NULL does too).
+		const category = await this.categoryInScope(caller, id);
+		// The channels of a deleted category stay, uncategorized: every reference to the row goes, as the foreign key's
+		// ON DELETE SET NULL does on the databases that enforce it. A channel is only ever put under a category of its
+		// own organization (see `createChannel` / `updateConversation`).
 		await this.dataSource.getRepository(ChatConversation).update({ categoryId: category.id as ID, tenantId: caller.tenantId }, { categoryId: null as never });
 		await repository.remove(category);
 	}
 
 	/**
-	 * A category the caller may change: of the caller's tenant and, when the request is scoped to an organization, of
-	 * that organization — the categories {@link listCategories} shows them, and no other. `CHAT_MANAGE` is held per
-	 * role (a `MANAGER` has it), not per organization: without this boundary a manager of one organization could
-	 * rename or delete another organization's categories by their ids. Another organization's category reads as
+	 * A category of the caller's tenant and, when there is an organization to keep to, of that organization — the
+	 * categories {@link listCategories} shows, and no other. `CHAT_MANAGE` is held per role (a `MANAGER` has it), not
+	 * per organization: without this boundary a manager of one organization could rename or delete another
+	 * organization's categories by their ids, or file a channel under one. Another organization's category reads as
 	 * not found, as a conversation does.
+	 *
+	 * @param organizationId The organization to keep to: the caller's by default, a channel's own when one is filed.
 	 */
-	private async categoryForWrite(caller: IChatCaller, id: ID): Promise<ChatCategory> {
+	private async categoryInScope(caller: IChatCaller, id: ID, organizationId: ID | null = caller.organizationId): Promise<ChatCategory> {
 		const category = await this.dataSource.getRepository(ChatCategory).findOne({
-			where: { id, tenantId: caller.tenantId, ...(caller.organizationId ? { organizationId: caller.organizationId } : {}) }
+			where: { id, tenantId: caller.tenantId, ...(organizationId ? { organizationId } : {}) }
 		});
 		if (!category) throw new NotFoundException('The requested record was not found');
 		return category;
@@ -227,6 +231,8 @@ export class ChatConversationService {
 	async createChannel(caller: IChatCaller & { employeeId: ID }, input: IChatConversationCreateInput): Promise<{ conversation: IChatConversationWithState; events: IChatEvent[] }> {
 		const name = (input.name ?? '').trim();
 		if (!name) throw new BadRequestException('A channel needs a name.');
+		// A channel goes under a category of its own organization only.
+		if (input.categoryId) await this.categoryInScope(caller, input.categoryId);
 		const conversation = await this.dataSource.transaction(async (manager) => {
 			const created = await manager.getRepository(ChatConversation).save(
 				manager.getRepository(ChatConversation).create({
@@ -270,6 +276,8 @@ export class ChatConversationService {
 
 	async updateConversation(caller: IChatCaller, id: ID, input: IChatConversationUpdateInput): Promise<{ conversation: IChatConversationWithState; events: IChatEvent[] }> {
 		const { conversation } = await this.access.requireManager(id, caller);
+		// A channel goes under a category of its own organization only; checked before anything is written.
+		if (input.categoryId) await this.categoryInScope(caller, input.categoryId, conversation.organizationId ?? caller.organizationId);
 		if (conversation.kind !== ChatConversationKindEnum.CHANNEL && (input.name !== undefined || input.visibility !== undefined)) {
 			throw new BadRequestException('A direct or group conversation has no name or visibility to change.');
 		}
