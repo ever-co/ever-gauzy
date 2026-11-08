@@ -94,7 +94,7 @@ describe('ManualTimeDetailsComponent', () => {
 			organizationId: 'org-1',
 			tenantId: 'tenant-1',
 			employeeIds: ['employee-1'],
-			startDate: '2026-11-02 00:00:00',
+			startDate: '2026-11-01 00:00:00',
 			endDate: '2026-11-02 23:59:59',
 			timeZone: 'Etc/UTC'
 		});
