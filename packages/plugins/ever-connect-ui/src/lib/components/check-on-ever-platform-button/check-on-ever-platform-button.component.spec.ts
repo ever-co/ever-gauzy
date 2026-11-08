@@ -62,6 +62,7 @@ describe('CheckOnEverPlatformButtonComponent', () => {
 	const contacts = { getById: jest.fn() };
 	const dialogs = { open: jest.fn() };
 
+	/** Renders the button on the page of `CONTACT`, with `ORGANIZATION` selected. */
 	function render() {
 		TestBed.configureTestingModule({
 			imports: [CheckOnEverPlatformButtonComponent],
@@ -193,6 +194,7 @@ describe('CheckOnEverPlatformButtonComponent', () => {
 describe('CheckOnEverPlatformDialogComponent', () => {
 	const api = { lookup: jest.fn() };
 
+	/** Renders the dialog with this context, as `NbDialogService` opens it. */
 	function render(inputs: Partial<CheckOnEverPlatformDialogComponent> = {}) {
 		TestBed.configureTestingModule({
 			imports: [CheckOnEverPlatformDialogComponent],
@@ -322,6 +324,7 @@ describe('the check asks this installation only', () => {
 describe('LookupOptionsComponent', () => {
 	const api = { setLookupAutoCheck: jest.fn() };
 
+	/** Renders the setting with its saved value, for a person who may (or may not) change integrations. */
 	function render(canEdit: boolean, autoCheck = false) {
 		TestBed.configureTestingModule({
 			imports: [LookupOptionsComponent],

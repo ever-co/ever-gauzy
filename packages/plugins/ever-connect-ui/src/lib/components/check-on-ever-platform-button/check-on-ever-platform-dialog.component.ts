@@ -172,15 +172,19 @@ export class CheckOnEverPlatformDialogComponent {
 	// The dialog's context: `NbDialogService` assigns these onto the instance (signal inputs cannot
 	// take that). The prefilled values go into the form, where they are edited.
 	@Input({ required: true }) organizationId!: string;
+	/** The contact's e-mail (prefilled). */
 	@Input() set email(value: string | null | undefined) {
 		this.form.controls.email.setValue(value ?? '');
 	}
+	/** A VAT number (prefilled from the contact's fiscal information, as a suggestion). */
 	@Input() set vat(value: string | null | undefined) {
 		this.form.controls.vat.setValue(value ?? '');
 	}
+	/** A registration number. */
 	@Input() set registration(value: string | null | undefined) {
 		this.form.controls.registration.setValue(value ?? '');
 	}
+	/** The two-letter country the numbers belong to (prefilled from the contact's address). */
 	@Input() set country(value: string | null | undefined) {
 		this.form.controls.country.setValue(value ?? '');
 	}
@@ -192,8 +196,10 @@ export class CheckOnEverPlatformDialogComponent {
 	protected readonly error = signal<string | null>(null);
 	protected readonly errorParams = signal<Record<string, unknown>>({});
 
+	/** The public page on Ever Platform of a handle found. */
 	protected readonly profileUrl = (handle?: string) => everPlatformProfileUrl(handle ?? '');
 
+	/** Whether there is something to check: an e-mail, a VAT number or a registration number. */
 	protected hasInput(): boolean {
 		const { email, vat, registration } = this.form.getRawValue();
 		return [email, vat, registration].some((value) => value.trim().length > 0);
@@ -213,6 +219,7 @@ export class CheckOnEverPlatformDialogComponent {
 		return items;
 	}
 
+	/** Checks the identifiers typed (through this installation's API) and shows each answer, or why it failed. */
 	protected check(): void {
 		const items = this.items();
 		if (!items.length || this.busy()) return;
@@ -250,6 +257,7 @@ export class CheckOnEverPlatformDialogComponent {
 			});
 	}
 
+	/** Closes the dialog. */
 	protected close(): void {
 		this.ref?.close();
 	}
