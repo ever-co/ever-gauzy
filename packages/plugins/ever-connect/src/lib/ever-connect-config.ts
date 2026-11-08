@@ -197,12 +197,19 @@ function parseReturn(raw: string | undefined): { origin: string; url: string } |
 /** The longest sign-in endpoint Ever Platform takes. */
 const MAX_URI_LENGTH = 2048;
 
+/** A URL without its trailing slashes, in one pass (`/\/+$/` is quadratic on a long run of slashes). */
+function withoutTrailingSlashes(value: string): string {
+	let end = value.length;
+	while (end > 0 && value.charCodeAt(end - 1) === 47) end--;
+	return value.slice(0, end);
+}
+
 /**
  * The Ever ID sign-in endpoints of this API, as the sign-in plugin serves them (see
  * {@link EverConnectConfig.signIn}).
  */
 function parseSignIn(env: Env): EverConnectConfig['signIn'] {
-	const apiBase = (env['API_BASE_URL']?.trim() || 'http://localhost:3000').replace(/\/+$/, '');
+	const apiBase = withoutTrailingSlashes(env['API_BASE_URL']?.trim() || 'http://localhost:3000');
 	const redirectUri = env['ZITADEL_CALLBACK_URL']?.trim() || `${apiBase}/api/auth/zitadel/callback`;
 	const logoutUri = redirectUri.endsWith('/callback')
 		? `${redirectUri.slice(0, -'/callback'.length)}/backchannel-logout`
@@ -253,7 +260,7 @@ function baseUrlOf(raw: string | undefined, fallback: string): string | null {
 	if (!secure || url.username || url.password || url.search || url.hash) {
 		return null;
 	}
-	return `${url.origin}${url.pathname.replace(/\/+$/, '')}`;
+	return `${url.origin}${withoutTrailingSlashes(url.pathname)}`;
 }
 
 /** The settings of creating a workspace from Ever (off, with a warning, when an address is unusable). */
