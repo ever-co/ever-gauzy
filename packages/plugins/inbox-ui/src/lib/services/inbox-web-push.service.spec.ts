@@ -316,6 +316,35 @@ describe('InboxWebPushService', () => {
 			expect(owner()).toBeNull();
 		});
 
+		it("leaves the next account's opt-in alone when a switch-off's removal answers after the sign-out", async () => {
+			const subscription = browser.subscribed();
+			own(subscription, 'user-a', 'device-a');
+			const off = service.disable();
+			await settle();
+			const removal = http.expectOne({ method: 'DELETE', url: `${DEVICES}/device-a` });
+
+			// A signs out (its own removal of the device goes out too), B signs in and switches on, all before it answers.
+			const cleanup = service.forgetThisBrowser();
+			const removals = http.match({ method: 'DELETE', url: `${DEVICES}/device-a` });
+			expect(removals).toHaveLength(1);
+			removals[0].flush(null, { status: 204, statusText: 'No Content' });
+			await cleanup;
+			expect(subscription.ended).toBe(true);
+			signIn('user-b');
+			const on = service.enable();
+			await settle();
+			http.expectOne(KEY).flush({ publicKey: PUBLIC_KEY });
+			await settle();
+			const fresh = browser.current as FakeSubscription;
+			http.expectOne(POST).flush({ id: 'device-b', endpoint: fresh.endpoint });
+			await expect(on).resolves.toBe('on');
+
+			removal.flush('', { status: 404, statusText: 'Not Found' });
+			await expect(off).resolves.toBe('off');
+			expect(owner()).toEqual({ userId: 'user-b', deviceId: 'device-b', endpoint: fresh.endpoint });
+			expect(fresh.unsubscribe).not.toHaveBeenCalled();
+		});
+
 		it('unsubscribes at once, inside the sign-out, when this tab already holds the subscription', async () => {
 			const subscription = browser.subscribed();
 			own(subscription, 'user-a', 'device-a');

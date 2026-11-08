@@ -161,18 +161,22 @@ export class InboxWebPushService {
 	/**
 	 * Removes this device from the platform (one it no longer has counts as removed), then unsubscribes the browser. A
 	 * failure (the list, the removal) is thrown with the browser still subscribed, so the switch stays on and switching
-	 * off retries.
+	 * off retries. Only what it ended is forgotten: an owner record a newer opt-in wrote meanwhile (the account signed
+	 * out and another switched on, here or in another tab) stays.
 	 */
 	async disable(): Promise<InboxWebPushState> {
 		await this.cleanup;
+		const session = this.session();
 		const subscription = await this.subscription();
+		// Signed out during the lookup: the subscription may be a newer account's by now; the sign-out ended the old one.
+		if (!this.isCurrent(session)) return 'off';
 		if (subscription) {
 			const deviceId = await this.deviceIdOf(subscription);
 			if (deviceId) await this.removeDevice(deviceId);
 			await subscription.unsubscribe();
 		}
-		this.seen = null;
-		this.setOwner(null);
+		if (subscription ? this.claimed(subscription) : this.isCurrent(session)) this.setOwner(null);
+		if (!subscription || this.seen?.endpoint === subscription.endpoint) this.seen = null;
 		return 'off';
 	}
 
