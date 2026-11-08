@@ -81,7 +81,15 @@ describe('mention tokens', () => {
 	});
 
 	it('renders Markdown with chips and strips scripts', () => {
-		const sanitizer = { sanitize: (_context: unknown, html: string) => html.replace(/<script[\s\S]*?<\/script>/g, '') };
+		// Stands in for Angular's sanitizer with the DOM, not a regex: script elements are removed, the rest is kept.
+		const sanitizer = {
+			sanitize: (_context: unknown, html: string) => {
+				const template = document.createElement('template');
+				template.innerHTML = html;
+				template.content.querySelectorAll('script').forEach((script) => script.remove());
+				return template.innerHTML;
+			}
+		};
 		const html = renderBodyHtml(`**bold** <@${ANNA}> <script>alert(1)</script>`, people, conversations, BOB, sanitizer);
 		expect(html).toContain('<strong>bold</strong>');
 		expect(html).toContain('<span class="chat-mention">@Anna Ivanova</span>');

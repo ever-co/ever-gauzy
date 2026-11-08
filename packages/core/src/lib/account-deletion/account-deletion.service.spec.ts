@@ -37,6 +37,7 @@ jest.mock('./repository/type-orm-account-deletion-request.repository', () => ({
 import { ConflictException, GoneException } from '@nestjs/common';
 import { AccountDeletionOutcomeEnum } from '@gauzy/contracts';
 import {
+	ACCOUNT_DELETION_EMAIL_MAX_CHARACTERS,
 	ACCOUNT_DELETION_INVALID_LINK_MESSAGE,
 	ACCOUNT_DELETION_PARTIAL_MESSAGE,
 	AccountDeletionService,
@@ -172,6 +173,15 @@ describe('AccountDeletionService', () => {
 			]);
 			// The address's own `%`, `_` and `!` are characters, not wildcards: no address widens it to a domain
 			expect(accountDeletionEmailPatterns('%é_!@example.com')).toEqual(['!%_!_!!@example.com']);
+		});
+
+		it('builds no pattern for an empty address or one longer than any request can carry', () => {
+			expect(accountDeletionEmailPatterns('')).toEqual([]);
+			// 254 capital dotted I's (the DTO's limit) lowercase to 508 characters: still a pattern
+			const longest = 'İ'.repeat(254).toLowerCase();
+			expect(Array.from(longest)).toHaveLength(508);
+			expect(accountDeletionEmailPatterns(longest)).toHaveLength(2);
+			expect(accountDeletionEmailPatterns('é'.repeat(ACCOUNT_DELETION_EMAIL_MAX_CHARACTERS + 1))).toEqual([]);
 		});
 
 		// On a real SQLite table, the condition findUsersByEmail sends and the comparison it makes of the rows.
