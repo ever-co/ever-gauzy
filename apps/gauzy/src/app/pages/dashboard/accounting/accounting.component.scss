@@ -200,6 +200,74 @@ $weight-normal: 400; // labels, captions, chips
 	min-width: 8.5rem;
 }
 
+// Name/email filter: a tiny nbInput with the search glyph inset on the start edge
+// and a clear button on the end edge, so it sits at the sort select's height.
+.filter-box {
+	position: relative;
+	display: flex;
+	align-items: center;
+	flex: 0 1 14rem;
+	min-width: 9rem;
+	margin-inline-end: $gap-sm;
+}
+
+.filter-icon,
+.filter-clear {
+	position: absolute;
+	top: 50%;
+	transform: translateY(-50%);
+	color: var(--gauzy-text-color-2);
+}
+
+.filter-icon {
+	inset-inline-start: $gap-sm;
+	width: 0.875rem;
+	height: 0.875rem;
+	font-size: 0.875rem;
+	pointer-events: none;
+}
+
+.filter-input {
+	width: 100%;
+	max-width: none;
+	padding-inline: calc(#{$gap-sm} + 1.125rem) calc(#{$gap-xs} + 1.25rem);
+
+	// The clear button replaces the browser's own cancel glyph
+	&::-webkit-search-cancel-button {
+		appearance: none;
+	}
+}
+
+.filter-clear {
+	inset-inline-end: $gap-xs;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 1.25rem;
+	height: 1.25rem;
+	padding: 0;
+	border: 0;
+	border-radius: var(--gauzy-radius-sm);
+	background: transparent;
+	cursor: pointer;
+
+	nb-icon {
+		width: 0.875rem;
+		height: 0.875rem;
+		font-size: 0.875rem;
+	}
+
+	&:hover {
+		background-color: var(--gauzy-hover-tint);
+		color: var(--gauzy-text-color-1);
+	}
+
+	&:focus-visible {
+		outline: 2px solid nb-theme(color-primary-default);
+		outline-offset: 1px;
+	}
+}
+
 .panel-count {
 	display: inline-flex;
 	align-items: center;
