@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideRouter, Router } from '@angular/router';
 import { of } from 'rxjs';
 import { IOrganization, ITimeLog, ITimeLogFilters, ManualTimeLogAction, TimeLogType } from '@gauzy/contracts';
 import {
@@ -56,7 +57,9 @@ describe('ManualTimeComponent', () => {
 				{
 					provide: TasksService,
 					useValue: { getAllTasks: () => of({ items: [] }), getAllTasksByEmployee: async () => [] }
-				}
+				},
+				// The Project and Task cells link to their pages
+				provideRouter([])
 			],
 			teardown: { destroyAfterEach: false }
 		}).compileComponents();
@@ -202,6 +205,34 @@ describe('ManualTimeComponent', () => {
 			expect.objectContaining({ context: expect.objectContaining({ timeLog: entry }) })
 		);
 		expect(getTimeLogs).toHaveBeenCalledTimes(2);
+	});
+
+	it("links a row's project and task to their pages without opening the row's details", async () => {
+		const [entry] = page(1);
+		getTimeLogs.mockResolvedValue([
+			{
+				...entry,
+				project: { id: 'project-1', name: 'Cloud Infrastructure' },
+				task: { id: 'task-1', title: 'Manage role access' }
+			}
+		]);
+		select();
+		component.prepareRequest();
+		await settle();
+		fixture.detectChanges();
+		const openDetails = jest.spyOn(component, 'openDetails').mockImplementation(() => undefined);
+		const navigate = jest.spyOn(TestBed.inject(Router), 'navigateByUrl').mockResolvedValue(true);
+		const links = Array.from((fixture.nativeElement as HTMLElement).querySelectorAll<HTMLAnchorElement>('a.cell-link'));
+
+		expect(links.map((link) => link.getAttribute('href'))).toEqual([
+			'/pages/organization/projects/view/project-1',
+			'/pages/tasks/view/task-1'
+		]);
+
+		links[1].click();
+		expect(navigate).toHaveBeenCalled();
+		expect(String(navigate.mock.calls[0][0])).toBe('/pages/tasks/view/task-1');
+		expect(openDetails).not.toHaveBeenCalled();
 	});
 
 	it('works out the overview figures from the loaded entries', () => {
