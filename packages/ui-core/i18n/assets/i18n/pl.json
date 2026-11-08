@@ -1317,6 +1317,10 @@
 	},
 	"REPORT_PAGE": {
 		"MANUAL_TIME": {
+			"AVG_PER_ENTRY": "Śr. {{ value }} na wpis",
+			"ACROSS_DAYS": "Dni: {{ count }}",
+			"SHARE_OF_ENTRIES": "{{ value }}% wpisów",
+			"AVG_PER_EMPLOYEE": "Śr. {{ value }} na pracownika",
 			"SUBTITLE": "Ręczne wpisy czasu dodane lub edytowane w wybranym okresie",
 			"ALL_TASKS": "Wszystkie zadania",
 			"ALL_ACTIONS": "Wszystkie akcje",

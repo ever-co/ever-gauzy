@@ -1326,6 +1326,10 @@
 	},
 	"REPORT_PAGE": {
 		"MANUAL_TIME": {
+			"AVG_PER_ENTRY": "В среднем {{ value }} на запись",
+			"ACROSS_DAYS": "Дней: {{ count }}",
+			"SHARE_OF_ENTRIES": "{{ value }}% записей",
+			"AVG_PER_EMPLOYEE": "В среднем {{ value }} на сотрудника",
 			"SUBTITLE": "Записи ручного времени, добавленные или изменённые за выбранный период",
 			"ALL_TASKS": "Все задачи",
 			"ALL_ACTIONS": "Все действия",

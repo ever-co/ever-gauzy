@@ -1351,6 +1351,10 @@
 	},
 	"REPORT_PAGE": {
 		"MANUAL_TIME": {
+			"AVG_PER_ENTRY": "平均每条 {{ value }}",
+			"ACROSS_DAYS": "共 {{ count }} 天",
+			"SHARE_OF_ENTRIES": "占记录的 {{ value }}%",
+			"AVG_PER_EMPLOYEE": "平均每位员工 {{ value }}",
 			"SUBTITLE": "所选期间内添加或编辑的手动时间记录",
 			"ALL_TASKS": "所有任务",
 			"ALL_ACTIONS": "所有操作",

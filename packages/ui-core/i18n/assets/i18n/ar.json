@@ -1317,6 +1317,10 @@
 	},
 	"REPORT_PAGE": {
 		"MANUAL_TIME": {
+			"AVG_PER_ENTRY": "متوسط {{ value }} لكل إدخال",
+			"ACROSS_DAYS": "على مدى {{ count }} أيام",
+			"SHARE_OF_ENTRIES": "{{ value }}% من الإدخالات",
+			"AVG_PER_EMPLOYEE": "متوسط {{ value }} لكل موظف",
 			"SUBTITLE": "إدخالات الوقت اليدوي المضافة أو المعدلة في الفترة المحددة",
 			"ALL_TASKS": "كل المهام",
 			"ALL_ACTIONS": "كل الإجراءات",

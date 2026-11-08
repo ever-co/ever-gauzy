@@ -1345,6 +1345,10 @@
 	},
 	"REPORT_PAGE": {
 		"MANUAL_TIME": {
+			"AVG_PER_ENTRY": "Средно {{ value }} на запис",
+			"ACROSS_DAYS": "Дни: {{ count }}",
+			"SHARE_OF_ENTRIES": "{{ value }}% от записите",
+			"AVG_PER_EMPLOYEE": "Средно {{ value }} на служител",
 			"SUBTITLE": "Записи за ръчно време, добавени или редактирани в избрания период",
 			"ALL_TASKS": "Всички задачи",
 			"ALL_ACTIONS": "Всички действия",
