@@ -26,7 +26,7 @@
 - [x] **T9**. CI green on #11682 (tsc, Jest, schema snapshot, field-binding check); fix forward
 - [ ] **T10**. Enable on dev: mention → NOTIFICATION item; read mirror both ways; follower comment notification with the flag on
 - [x] **T11**. Angular `inbox-ui`: Done tab + action, NOTIFICATION rendering (opens the task/comment), counts (ever-gauzy #11720)
-- [x] **T12**. Dedupe rule per spec FR-4 (10-minute window per recipient/target/kind) in the Inbox's notification bridge (ever-gauzy #11707: a mention whose twin reached the user within ten minutes is not filed again)
+- [x] **T12**. Dedupe rule per spec FR-4 (10-minute window per recipient/target/kind) in the Inbox's notification bridge (ever-gauzy #11707: a mention whose twin reached the user within ten minutes is not filed again). Known gap: the folded twin's notification row is not mirrored when the entry is read (plan §10.3, follow-up T18)
 
 ## Phase 4 — Delivery (lane G10)
 
@@ -35,3 +35,9 @@
 - [x] **T15**. Settings page in the Angular app and Ever Teams for per-kind channels, DND, digest hour (ever-gauzy #11714 `inbox-ui` Settings → Notifications; ever-teams #4978)
 
 **Status 2026-11-07:** merged into develop (ever-gauzy #11682, `b9070d1dc2`) after one bot round (organization-scoped followers, receiver-named state events, mirrored changes announced, snoozed/done tab, per-organization events).
+
+## Follow-ups (from the plan's §10)
+
+- [ ] **T16**. Durable filing: a sweep (or an outbox row in the notification's transaction) that files notifications that have no Inbox item (plan §10.1)
+- [ ] **T17**. In-app entries independent of the legacy per-type switches (plan §10.2)
+- [ ] **T18**. Mirror read / archive state to the notification rows a deduplicated entry stands for (plan §10.3)

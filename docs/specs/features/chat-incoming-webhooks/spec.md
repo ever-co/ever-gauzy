@@ -75,8 +75,11 @@ senders work without changes.
   webhook MUST be honoured only when the webhook is allowed to broadcast.
 - **FR-4** Buttons MUST produce interaction callbacks: a signed POST (timestamp +
   signature header derived from the webhook secret) to the interaction URL with the
-  actor, the message id, the action id and value; the sender's synchronous reply MAY
-  replace or update the message.
+  actor, the message id, the action id and value, and an `interactionId` that is created
+  once per click and stays the same on every retry of that callback (also sent as an
+  `Idempotency-Key` header); receivers MUST deduplicate on it, and the platform applies
+  the sender's reply for one `interactionId` at most once. The sender's synchronous reply
+  MAY replace or update the message.
 - **FR-5** Interaction URLs and any URL in a payload MUST be validated (https only,
   public hosts only); the platform MUST NOT follow them beyond the callback POST.
 - **FR-6** Rate limits MUST apply per webhook (default 60 requests per minute, burst 20)
@@ -88,7 +91,8 @@ senders work without changes.
 
 - **Performance**: webhook POST acknowledged under 150 ms P95.
 - **Reliability**: idempotency by optional `nonce`; interaction callbacks retried three
-  times with backoff.
+  times with backoff, each retry re-signed with a fresh timestamp but carrying the same
+  `interactionId`, so a sender whose earlier response was lost does not act twice.
 - **Security & privacy**: secrets hashed at rest; URLs validated; signatures on
   callbacks; no employee data beyond name and id in callbacks.
 - **Observability**: per-webhook counters (accepted, rejected, rate-limited, callback
@@ -101,7 +105,7 @@ senders work without changes.
 | ---------------- | ----------- |
 | `ChatWebhook`    | A named incoming endpoint bound to one channel with a hashed secret, optional icon and interaction URL |
 | `AppMessage`     | A chat message authored by a webhook with a structured block layout |
-| `Interaction`    | A member's click on an app-message button and its signed callback |
+| `Interaction`    | A member's click on an app-message button and its signed callback, identified by an `interactionId` stable across retries |
 
 ## 6. Out of Scope
 

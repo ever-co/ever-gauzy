@@ -14,7 +14,8 @@
 # Each is pre-populated with the slug, title, and today's date (UTC). Nothing is left
 # behind when a step fails.
 
-set -Eeuo pipefail
+set -euo pipefail
+set -o errtrace
 
 if [[ $# -lt 1 || $# -gt 2 ]]; then
     echo "Usage: bash $0 <slug> [\"Feature Title\"]" >&2

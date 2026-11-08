@@ -92,7 +92,7 @@ Ever Teams holds no data of its own.
 | `packages/plugins/docs` (extended) | existing plugin | `document_space`, `document.spaceId`, page follows, live editing session server, Markdown merge, export | — |
 | `packages/plugins/inbox` (extended) | existing plugin | kind `notification`, bridge from `EmployeeNotificationCreatedEvent` (published after the row is saved), follower fan-out, preferences per kind/channel, push subscriptions, digest job, done state | — |
 | `packages/core` tasks (extended) | core | `TaskView` visibility/version/manual order, bulk action command, project keys + reference resolver, shortcut overrides in `User.uiPreferences` | — |
-| `packages/plugins/integration-asana`, `-linear`, `-trello` (+ `-ui`) | API plugins (flags `INTEGRATION_<X>_ENABLED`) | connection, mappings, import job, sync runs, conflicts, webhooks | `packages/plugins/integration-ever-works/` |
+| `packages/plugins/integration-asana`, `-linear`, `-trello` (+ `-ui`) | API plugins (flags `ASANA_ENABLED`, `LINEAR_ENABLED`, `TRELLO_ENABLED`) | connection, mappings, import job, sync runs, conflicts, webhooks | `packages/plugins/integration-ever-works/` |
 | `packages/mcp-server` tool groups | existing | `chat`, `docs`, `inbox` tools with scopes | existing groups |
 
 Naming: the core `channel` module is the **commerce** sales channel; chat entities are
@@ -102,14 +102,27 @@ type is in scope.
 
 ## 4. Real-time: one stream, three kinds of events
 
-1. **Durable, numbered events** are appended to the **event outbox** inside the write's
-   transaction (`partitionKey` = organization, `sequence` monotonic, `recipientUserIds`
-   when addressed). Chat messages, inbox items, task/comment/document change hints all
-   go through it. Clients subscribe with graphql-ws to `Subscription.events` and catch up
-   from `GET /events/outbox?after=<sequence>` after a reconnect; outside the retention
-   window they resynchronise through normal HTTP.
-2. **Ephemeral signals** (typing, presence changes, "notify" nudges) are published to the
-   same pub/sub without an outbox row; they are lost on disconnect by design.
+1. **Durable, replayable events** are appended to the **event outbox** right after the
+   write commits, by the plugin that owns the fact (`RealtimeHintsService.appendHint` for
+   task / comment / mention / notification / document hints, `ChatRealtime.publish` for
+   chat, the Inbox for `inbox_item.*`), with `recipientUserIds` when addressed. The append
+   is best effort and not part of the write's transaction: a crash in between loses the
+   event, never the write (realtime plan §15.1). Clients subscribe with graphql-ws to
+   **`Subscription.collaborationEvents(names, aggregateId)`** (permission
+   `REALTIME_SUBSCRIBE`; the kernel's `Subscription.events` stays reserved to
+   `EVENT_OUTBOX_VIEW` holders). After a reconnect they catch up with
+   **`GET /api/realtime/events?after=<epoch ms>&afterId=<eventId>`**: the same outbox rows,
+   walked by an exact (`createdAt`, `eventId`) cursor, answering `cursor` / `cursorId` to
+   continue from, `hasMore`, and `resync: true` when the cursor predates the oldest
+   retained row; then they refetch through normal HTTP. The outbox `sequence` is numbered
+   per partition (`partitionKey` defaults to `<aggregateType>:<aggregateId>`), so it
+   orders one aggregate's events and is never used as a cursor. (`GET /events/outbox` is
+   the operators' diagnostic listing, paged with `take` / `skip`.)
+2. **Ephemeral signals** (`presence.changed` from `POST /api/realtime/presence`,
+   `typing.signalled` from `POST /api/realtime/typing`) are published to the same pub/sub
+   without an outbox row; they are lost on disconnect by design and never replayed. After
+   a reconnect a client re-reads presence through the employee reads (`lastSeenAt`,
+   `isIdle`).
 3. **CRDT sync** for docs co-editing is a separate, binary session per page (the
    documented exception), authenticated the same way.
 
@@ -127,15 +140,20 @@ sequenceDiagram
     participant O as Event outbox
     participant C as Clients
     W->>N: publishNotificationEvent(type, actor, target)
-    N->>N: EmployeeNotification row (existing API unchanged)
-    N->>I: upsertExternal(kind: notification, source: GAUZY, externalId: notification id)
+    N->>N: EmployeeNotification row (existing API unchanged; skipped when the receiver's per-type switch is off)
+    N-->>I: EmployeeNotificationCreatedEvent (CQRS, after the row is saved)
+    I->>I: InboxNotificationBridge.fileNotification → upsertExternal(kind: notification, source: GAUZY, externalId: notification id)
     I->>O: inbox_item.created (recipientUserIds)
     O-->>C: subscription event → refetch /inbox/items, counts
     I->>I: preferences → email now / digest / push
 ```
 
-- Followers: the inbox plugin consumes `EntitySubscription` rows on task updates and
-  comments, so the subscriptions that already exist finally reach people.
+- Followers: the core follower fan-out (`entity-subscription/fan-out/`, behind
+  `GAUZY_NOTIFICATION_FANOUT_ENABLED`) turns `EntitySubscription` rows into notifications on
+  task updates and comments, so the subscriptions that already exist finally reach people.
+- Filing is best effort after the notification row exists: a crash between the two, and a
+  receiver whose per-type notification switch is off, leave no Inbox entry (inbox plan,
+  Known limitations).
 - Read state is mirrored: reading an inbox item marks the notification read and the
   reverse, so the existing bell/panel clients and the new inbox page agree.
 - Decisions (questions, approvals, escalations) keep their reply flow through the
@@ -181,9 +199,10 @@ sequenceDiagram
 | `GAUZY_CHAT_ENABLED` + `FEATURE_CHAT` | deployment + tenant | off |
 | `GAUZY_CHAT_WEBHOOKS_ENABLED` | deployment | off |
 | `GAUZY_INBOX_ENABLED` (exists) | deployment | off (on in stage/prod) |
+| `GAUZY_NOTIFICATION_FANOUT_ENABLED` (follower notifications: comments on followed tasks and pages, followed-task updates) | deployment | off |
 | `GAUZY_DOCS_COLLAB_ENABLED` + `FEATURE_DOCUMENTS` (exists) | deployment + tenant | off |
 | `GAUZY_TASK_VIEWS_ENABLED` | deployment | off |
-| `INTEGRATION_ASANA_ENABLED`, `INTEGRATION_LINEAR_ENABLED`, `INTEGRATION_TRELLO_ENABLED` | deployment | off |
+| `ASANA_ENABLED`, `LINEAR_ENABLED`, `TRELLO_ENABLED` (as `EVER_WORKS_ENABLED`) | deployment | off |
 | MCP tool groups `GAUZY_MCP_TOOLS_{CHAT,DOCS,INBOX}` | MCP server | off |
 
 Flags accept the exact string `true` (the Inbox convention). Plugins not enabled add no

@@ -48,3 +48,9 @@
 - [x] **T19**. Plugin README; `docs/specs/README.md` status
 
 **Status 2026-11-07:** phase 1 MERGED (ever-gauzy #11683, plus #11686 so the realtime plugin offers the chat events). The Angular UI (phase 5, T20–T23) is in ever-gauzy #11687 (draft; in-cluster build pending). Phase 2 (T14–T17) and the phase-2 UI (T25) follow; T18 / T24 are the dev-environment checks. A membership-checked typing route delegating to the real-time signals is planned for phase 2.
+
+## Follow-ups (from the plan's §14)
+
+- [ ] **T26**. Scope `directKey` to the organization: lookup and unique index (`tenantId`, `organizationId`, `directKey`) (plan §14.1)
+- [ ] **T27**. Generic `/reaction` reads and updates exclude or refuse `ChatMessage` (plan §14.2)
+- [ ] **T28**. The conversation read leaves thread-only replies to the thread read (plan §14.3)

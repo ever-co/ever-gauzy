@@ -7,7 +7,7 @@
 **Spec**: `./spec.md`
 **Tasks**: `./tasks.md`
 **Status**: `Approved`
-**Last updated**: 2026-11-07
+**Last updated**: 2026-11-08 (aligned with the code merged in ever-gauzy #11681 / #11686)
 
 ---
 
@@ -28,7 +28,8 @@ flowchart LR
 
 Nothing new is invented for transport: the plugin **declares** collaboration events with the
 existing subscription catalogue, **appends** content-free change hints to the existing event
-outbox after each domain write (the Inbox plugin's pattern), **publishes** ephemeral presence
+outbox after each domain write (the Inbox plugin's pattern; best effort and outside the domain
+transaction, see §15), **publishes** ephemeral presence
 and typing signals straight to the pub/sub, and exposes one typed subscription field that
 employees may open with a dedicated permission (the kernel's `Subscription.events` stays
 reserved for `EVENT_OUTBOX_VIEW` holders). Catch-up after a reconnect is a REST listing of the
@@ -39,11 +40,11 @@ same outbox rows, filtered to the collaboration catalogue and the caller's addre
 | Concern | Choice | Rationale |
 | ------- | ------ | --------- |
 | Package | new `packages/plugins/realtime` (`@gauzy/plugin-realtime`), loaded only when `GAUZY_REALTIME_ENABLED` is exactly `true` | Principle I; same loading contract as the Inbox plugin (`isInboxEnabled`) |
-| Durable events | `EventOutboxService.append(manager, {...})` after the domain write, from bus subscribers | Zero changes to domain transactions; replay and catch-up walk the rows by (`createdAt`, `id`), which never move once appended |
+| Durable events | `RealtimeHintsService.appendHint` → `EventOutboxService.append(dataSource.manager, {...})` after the domain write, from bus subscribers; never throws (a failed append is logged) | Zero changes to domain transactions; replay and catch-up walk the rows by (`createdAt`, `eventId`), which never move once appended. Not transactional with the write: a crash between the commit and the append loses that hint (§15.1) |
 | Streaming | `declareStreamedEvents(catalogue, consumer, ...names)` + `tenantScopedTopicStream(pubSub, names, …)` in a plugin resolver | The plugin-facing surface core already exports |
-| Ephemeral signals | `GraphqlPubSub.publish(name, tenantId, envelope)` without an outbox row | Lost on disconnect by design (spec §1) |
+| Ephemeral signals | `RealtimeSignalsService` → `GraphqlPubSub.publish(name, tenantId, envelope)` without an outbox row | Lost on disconnect by design (spec §1). Never replayed: after a reconnect a client re-reads presence through the employee reads (`Employee.lastSeenAt`, `isIdle`) and drops its typing indicators |
 | Permission | new `PermissionsEnum.REALTIME_SUBSCRIBE`, default for SUPER_ADMIN, ADMIN, MANAGER, EMPLOYEE; seeded for existing tenants by a plugin migration | Employees must not need `EVENT_OUTBOX_VIEW` |
-| Presence persistence | existing `Employee.lastSeenAt/isIdle` through `EmployeeService.updatePresence`; no new table | Spec FR-7 merges per employee; a table is unnecessary for v1 |
+| Presence persistence | existing `Employee.lastSeenAt/isIdle` through `EmployeeService.updatePresence`; no new table | v1 is last-write-wins per employee: every `POST /realtime/presence` overwrites `isIdle` and publishes at once, so an idle tab can mark an employee who is active in another tab idle; the per-connection merge of spec FR-7 is a follow-up (§15.2) |
 | Multi-replica | deployment sets `GRAPHQL_PUBSUB_ENGINE` (Redis) | Existing seam; spec FR-13 |
 | Comment events | add `CommentEvent` (RxJS `BaseEntityEvent<Comment>`) published by `CommentService` create/update/delete | The only domain without an in-process event today (additive core change) |
 
@@ -80,7 +81,7 @@ None. Presence stays on `Employee`; hints and signals carry ids only.
 | ------ | -------- | ---------- | ----------- | ------ |
 | `POST` | `/api/realtime/presence` | employee (`@Permissions()`), `REALTIME_SUBSCRIBE` | Records presence (`EmployeeService.updatePresence`) and publishes `presence.changed` to the organization | New |
 | `POST` | `/api/realtime/typing` | `REALTIME_SUBSCRIBE` | Publishes `typing.signalled` addressed to `recipientUserIds` (rate-limited 5/s per user) | New |
-| `GET` | `/api/realtime/events?after=&afterId=&limit=` | `REALTIME_SUBSCRIBE` | Catch-up: outbox rows of the collaboration catalogue for the caller's tenant/organization after the exact (`after` ms, `afterId`) cursor (≤ 500 a page, `hasMore` when cut), read once and bounded, addressed rows only when the caller is a recipient; answers `cursor`/`cursorId` to continue from and `resync: true` when the cursor predates the oldest row the caller's scope retains | New |
+| `GET` | `/api/realtime/events?after=&afterId=&limit=` | `REALTIME_SUBSCRIBE` | Catch-up (`RealtimeCatchUpService.catchUp`): outbox rows of the collaboration catalogue for the caller's tenant/organization after the exact cursor (`after` = epoch ms of the last applied event's `createdAt`, `afterId` = its `eventId`, compared as (`createdAt`, `eventId`)), at most 500 a page (default 200), `hasMore` when cut; read once and bounded (`EventOutboxService.listOutboxRowsSince`); addressed rows only when the caller is one of the recipients stored on the row; answers `cursor`/`cursorId` to continue from and `resync: true` when the cursor predates the oldest row the caller's scope retains (or nothing is retained). A call without `after` answers no events and `cursor` = now. The outbox `sequence` is never compared: it is per partition (§15.6) | New |
 | `GET` | `/api/realtime/status` | `REALTIME_SUBSCRIBE` | Whether subscriptions are served in this process, the catalogue names, limits | New |
 | GraphQL | `Subscription.collaborationEvents(names: [String!]!, aggregateId: ID): EventEnvelope!` | `REALTIME_SUBSCRIBE` (+ `FEATURE_GRAPHQL`) | Streams the selected collaboration events of the caller's tenant/organization, addressed ones only to the caller | New |
 
@@ -92,10 +93,10 @@ Errors: `400` unknown event name; `403` missing permission; `429` typing rate li
 | Event | Emitted when | Payload (content-free) | Audience |
 | ----- | ------------ | ---------------------- | -------- |
 | `task.created/updated/deleted` | `TaskEvent` on the RxJS bus | `{ entity: 'Task', entityId, action, projectId?, organizationId }` | organization |
-| `comment.created/updated/deleted` | new `CommentEvent` | `{ entity: 'Comment', entityId, action, parent: { entity, entityId } }` | organization |
+| `comment.created/updated/deleted` | new `CommentEvent` | `{ entity: 'Comment', entityId, action, parent: { entity, entityId } }` | organization (no check yet that the reader may see the parent record, §15.3) |
 | `mention.created` | `CreateMentionEvent` (CQRS) | `{ entity, entityId, mentionedEmployeeId }` | addressed: mentioned employee's user |
 | `employee_notification.created` | `EmployeeNotificationCreatedEvent` (CQRS, after the row is saved) | `{ notificationId, type, entity, entityId }` | addressed: receiver's user |
-| `document.updated` | `DocumentEvent` (RxJS, docs plugin) — subscribed by constructor name to avoid a hard dependency | `{ entity: 'Document', entityId, action }` | organization |
+| `document.updated` | `DocumentEvent` (RxJS, docs plugin; `RealtimeHintsService` subscribes with `bus.ofType(DocumentEvent)`, imported from `@gauzy/plugin-docs`) | `{ entity: 'Document', entityId, action, organizationId, actorUserId }` | organization: **every member, reader of the page or not** (ids only, no content; §15.3 until the hint is addressed to readers) |
 | `presence.changed` | `POST /realtime/presence` | `{ employeeId, userId, status, at }` | organization (ephemeral) |
 | `typing.signalled` | `POST /realtime/typing` | `{ conversationId, threadRootId?, employeeId, userId }` | addressed (ephemeral) |
 
@@ -116,13 +117,17 @@ lane open `graphql-ws` against the existing subscription endpoint with the user'
 
 ## 8. Background Jobs
 
-None. Outbox dispatch and retention are the existing worker's.
+None. Outbox dispatch is the existing worker's. No job prunes `event_outbox` today (§15.5).
 
 ## 9. Security & Permissions
 
 - `REALTIME_SUBSCRIBE` on every route and the subscription field; `FEATURE_GRAPHQL` guard on the field.
 - Addressed payloads carry `recipientUserIds`; the topic stream admits them only for a recipient
-  (`tenantScopedTopicStream` default `recipientsOf`); catch-up applies the same rule in SQL.
+  (`tenantScopedTopicStream` default `recipientsOf`); catch-up applies the same rule in code after the
+  bounded read (`admitsRow` in `realtime-catch-up.service.ts`). Both decide on the recipients **stored on
+  the row at write time**: a member removed from a chat conversation can still replay the ids of the
+  events addressed to them while they were a member (`conversationId`, `messageId`; the content stays
+  behind the chat API's membership check). There is no current-membership recheck yet (§15.4).
 - Typing input validated (UUIDs, ≤ 50 recipients) and rate-limited; no message text ever travels.
 - Presence status is an enum; `away`/`idle` map to `isIdle = true` for persistence.
 
@@ -157,8 +162,8 @@ None. Outbox dispatch and retention are the existing worker's.
 | Risk | Likelihood | Impact | Mitigation |
 | ---- | ---------- | ------ | ---------- |
 | GraphQL snapshot / field-binding gate fails for the gated plugin SDL | high | CI red | add the schema file to `GATED_PLUGIN_SCHEMAS` in `tools/scripts/graphql-field-binding-check.mjs`, keep a plain `gql` template |
-| Outbox retention shorter than the spec's 24 h window | medium | more resyncs | catch-up answers `resync` honestly; retention knob documented |
-| `document.updated` subscription by constructor name misses a renamed class | low | no doc hints | spec test asserts the name; chat/docs lanes may switch to a direct import |
+| Outbox retention shorter than the spec's 24 h window | low today (nothing prunes the outbox) | FR-3 broken once a retention job exists | catch-up answers `resync` honestly; any retention job MUST keep the newest 1,000 rows per organization and the last 24 h, and its test asserts both bounds (§15.5) |
+| `document.updated` subscription misses a renamed class | low | no doc hints | the hints service imports `DocumentEvent` from `@gauzy/plugin-docs` directly |
 | Hint storms on bulk task updates | medium | load | coalesce per aggregate per second (trailing edge, so the last edit is announced) in `RealtimeHintsService` |
 | Multi-replica without Redis engine | medium | missed events across replicas | status route reports the engine; runbook note |
 
@@ -166,3 +171,45 @@ None. Outbox dispatch and retention are the existing worker's.
 
 - Spec: `./spec.md` · Tasks: `./tasks.md` · Architecture: `../../architecture/collaboration-suite.md`
 - Kernel: `packages/core/src/lib/graphql/subscriptions/`, `packages/core/src/lib/event-outbox/`, `packages/plugins/inbox/src/lib/realtime/inbox-realtime.ts`
+
+## 15. Known limitations / follow-ups
+
+What the merged code (ever-gauzy #11681, #11686) does not do yet. Each item names the code
+location; none of them changes the flag-off default.
+
+1. **Hints are not transactional with the write.** `RealtimeHintsService.appendHint` (and
+   `ChatRealtime.publish` in the chat plugin) append on `dataSource.manager` after the domain write
+   commits, from bus subscribers, and swallow errors. A crash between the commit and the append, or a
+   failed append, loses that event: the write is safe, the live update and the catch-up row are not.
+   The spec's no-loss requirement (FR-9, §4 Reliability) therefore holds only while the process stays
+   up. Follow-up: append inside the originating transaction (`EventOutboxService.append(manager, …)`
+   with the write's `EntityManager`), chat messages first, then the task and comment writes.
+2. **Presence is last-write-wins per employee.** `RealtimeSignalsService.publishPresence` writes
+   `Employee.isIdle` through `EmployeeService.updatePresence` and publishes every call; there is no
+   per-connection state, no merge across a user's tabs and devices, no `offline` on the last
+   disconnect and no 5 s coalescing (spec FR-7, §4 Performance). Follow-up: keep presence per
+   connection (with a TTL) in the pub/sub engine and publish the merged state (active wins) only when
+   it changes.
+3. **Document and comment hints reach the whole organization.** `documentHint` and `commentHint` in
+   `realtime-hints.service.ts` carry no `recipientUserIds`, so `document.updated` (and `comment.*` on a
+   page or a private task) is streamed and replayed to every member, reader or not: ids and the actor
+   only, never content (spec FR-4). Follow-up: address document hints to the page's readers (the docs
+   plugin's `DocumentAccessService`: visibility, team spaces, shares) or skip the hint for pages that
+   are not organization-visible; do the same for comments whose parent is a document.
+4. **Replay trusts the recipients stored at write time.** `admitsRow` (catch-up) and
+   `tenantScopedTopicStream` (live) compare the caller with the row's `recipientUserIds`; neither
+   rechecks current chat membership, so a removed member can still replay the ids of events addressed
+   to them before the removal (spec §2.2, FR-4). Follow-up: a membership predicate that the chat plugin
+   registers with the catch-up and the live stream for the `chat_*` names.
+5. **No retention job; the replay window is whatever is retained.** Nothing prunes `event_outbox`, so
+   FR-3's floor (the newest 1,000 events per organization or 24 h, whichever is larger) holds by
+   default. The first retention job must keep both bounds and test them; `resync` is answered whenever
+   the cursor predates the oldest retained row of the caller's scope.
+6. **The cursor is time-based, not a sequence.** `EventOutboxService.append` numbers `sequence` per
+   `partitionKey` (default `<aggregateType>:<aggregateId>`), so it orders one aggregate's events and is
+   never compared across aggregates; the catch-up cursor is (`createdAt`, `eventId`) (spec FR-2). A
+   row whose insert commits after a later-stamped row was already read can fall behind a client's
+   cursor (a window of milliseconds under concurrent appends from several replicas).
+7. **The flag is deployment-wide.** `GAUZY_REALTIME_ENABLED` (`isRealtimeEnabled`) loads the plugin for
+   the whole process; there is no tenant or organization switch, and nothing closes one tenant's open
+   subscriptions (spec §2.2 says so).

@@ -8,7 +8,7 @@
 **Branch**: `feat/realtime-channel`
 **Status**: `Draft`
 **Created**: 2026-11-07
-**Last updated**: 2026-11-07
+**Last updated**: 2026-11-08
 **Owner**: platform maintainers
 **Feature flag**: `GAUZY_REALTIME_ENABLED` (default off)
 
@@ -19,9 +19,11 @@
 Clients of the platform (the Angular app, Ever Teams on web, mobile and desktop, the
 desktop timer apps) today learn about changes by polling. The real-time channel gives
 every signed-in user one authenticated push connection per client session, over which the
-platform delivers **numbered, replayable events** (new chat messages, inbox entries,
-presence and typing signals, "something changed" hints for tasks, comments, documents
-and projects) with sub-second latency. HTTP stays authoritative for data; the channel
+platform delivers **replayable events** (new chat messages, inbox entries, "something
+changed" hints for tasks, comments, documents and projects) and **ephemeral signals**
+(presence, typing) with sub-second latency. Replayable events can be caught up after a
+reconnect; signals are delivered live only and are never replayed (a reconnecting client
+re-reads presence through HTTP). HTTP stays authoritative for data; the channel
 tells clients what happened so they can patch or refetch. When the channel is disabled or
 unreachable, every feature keeps working with its documented polling.
 
@@ -42,14 +44,16 @@ unreachable, every feature keeps working with its documented polling.
   working (timer, activity) or goes idle, **then** their presence indicator changes
   within a few seconds for everyone viewing the team.
 - **Given** a client whose connection dropped for two minutes, **when** it reconnects
-  with its last event number, **then** it receives every event it missed, in order,
-  and resumes without a full reload.
+  with its cursor (the time and id of the last event it applied), **then** it receives
+  every replayable event it missed, in order, re-reads presence, and resumes without a
+  full reload.
 - **Given** a client whose connection dropped for longer than the replay window,
   **when** it reconnects, **then** it is told to resynchronise and refetches its data
   through HTTP.
-- **Given** an organization with the flag off, **when** a client tries to connect,
-  **then** the connection is refused with a clear status and the client falls back to
-  polling with no error shown to the user.
+- **Given** a deployment with the flag off, **when** a client tries to subscribe,
+  **then** the subscription is refused (the collaboration field and the `/realtime`
+  routes do not exist) and the client falls back to polling with no error shown to the
+  user.
 
 ### 2.2 Edge cases & failures
 
@@ -64,21 +68,27 @@ unreachable, every feature keeps working with its documented polling.
 - **Given** an event meant for the members of a private channel, **when** it is
   published, **then** no user outside that channel receives it, even if subscribed to
   the same organization.
-- **Given** a tenant admin who disables the flag while connections are open, **when**
-  the setting is saved, **then** open connections close gracefully and clients fall back
-  to polling without user-visible errors.
+- **Given** an operator who turns the flag off (`GAUZY_REALTIME_ENABLED`, a deployment
+  setting) and restarts the API, **when** the new processes start, **then** open
+  connections end with the old processes and clients fall back to polling without
+  user-visible errors. There is no per-tenant or per-organization switch in this release,
+  and nothing closes one tenant's connections while the others stay open (plan §15.7).
 
 ## 3. Functional Requirements
 
 - **FR-1** The platform MUST accept one push connection per client session,
   authenticated with the same credentials as the REST API (bearer token or session), and
   MUST reject anonymous connections.
-- **FR-2** Every event MUST carry an organization-scoped, monotonically increasing
-  sequence number and a topic; clients MUST be able to reconnect with their last
-  sequence number and receive all later events in order.
+- **FR-2** Every replayable event MUST carry a stable event id, a topic (its name) and
+  its position in one cursor order per organization: append time, then event id.
+  Clients MUST be able to reconnect with the cursor of the last event they applied and
+  receive all later events of their scope in that order. (The outbox's per-aggregate
+  `sequence` orders one aggregate's events only and is not a reconnect cursor.)
 - **FR-3** The platform MUST keep a replay window of at least the newest 1,000 events per
   organization or the last 24 hours, whichever is larger, and MUST answer a reconnect
-  outside the window with a resynchronise instruction.
+  outside the window with a resynchronise instruction. (Today nothing prunes the event
+  outbox, so the window is everything retained; a future retention job must keep both
+  bounds.)
 - **FR-4** Events MUST be delivered only to users who are allowed to read the underlying
   resource (organization members for organization-wide hints; conversation members for
   chat events; the recipient only for inbox events).
@@ -90,7 +100,8 @@ unreachable, every feature keeps working with its documented polling.
   clients can refetch only what changed.
 - **FR-7** Clients MUST be able to send presence (`active`, `idle`, `away`) and typing
   signals; the platform MUST merge presence across a user's connections and publish one
-  presence state per employee to the organization.
+  presence state per employee to the organization. (Not met yet: presence is
+  last-write-wins per employee, see plan §15.2.)
 - **FR-8** The platform MUST re-check a connection's authorization at least every fifteen
   seconds and immediately on session revocation, organization removal or suspension.
 - **FR-9** The platform MUST publish events after the originating write is committed,
@@ -156,7 +167,7 @@ unreachable, every feature keeps working with its documented polling.
 ## 8. Open Questions
 
 - `[NEEDS CLARIFICATION: whether the desktop timer apps adopt the channel in the first release or stay on their current polling]`
-- Resolved 2026-11-07: the channel is built on the platform's existing **event outbox** (numbered, partitioned, addressed events with REST catch-up) and its **GraphQL subscription transport** (`Subscription.events`), extended with presence and typing signals and with streamed events for the collaboration domains. No second transport is introduced; the plan names the pieces.
+- Resolved 2026-11-07: the channel is built on the platform's existing **event outbox** (addressed events, read back by the REST catch-up `GET /api/realtime/events?after=&afterId=`) and its **GraphQL subscription transport** (graphql-ws), through the plugin's own field `Subscription.collaborationEvents` (permission `REALTIME_SUBSCRIBE`; the kernel's `Subscription.events` stays reserved to `EVENT_OUTBOX_VIEW` holders), extended with presence and typing signals. No second transport is introduced; the plan names the pieces and its §15 lists what is not met yet.
 
 ## 9. Constitution Gates
 

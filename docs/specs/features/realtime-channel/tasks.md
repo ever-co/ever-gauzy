@@ -6,7 +6,7 @@
 **Feature ID**: `realtime-channel`
 **Plan**: `./plan.md`
 **Status**: `In Progress` — T1–T15 in ever-co/ever-gauzy#11681
-**Last updated**: 2026-11-07
+**Last updated**: 2026-11-08
 
 ---
 
@@ -38,7 +38,7 @@
 
 - [x] **T12**. `src/lib/dto/{realtime-presence,realtime-typing,realtime-catch-up}.dto.ts`
 - [x] **T13**. `src/lib/realtime.controller.ts`: `POST /realtime/presence`, `POST /realtime/typing` (throttled), `GET /realtime/events`, `GET /realtime/status`; guards `TenantPermissionGuard, PermissionGuard`; `@Permissions(REALTIME_SUBSCRIBE)`
-- [x] **T14**. `src/lib/realtime-catch-up.service.ts`: outbox listing by catalogue names, tenant, organization (or tenant-wide), `sequence > after`, recipient filter on `payload.recipientUserIds`, `resync` when `after` precedes the oldest retained row; works on PostgreSQL, SQLite, MySQL (JSON filtering done in code after a bounded fetch). Spec.
+- [x] **T14**. `src/lib/realtime-catch-up.service.ts`: outbox listing by catalogue names, tenant, organization (or tenant-wide) through `EventOutboxService.listOutboxRowsSince` (`createdAt` from the cursor time, ordered by `createdAt`, `eventId`), then the exact cursor in code: rows after (`after` epoch ms, `afterId` event id), compared as (`createdAt`, `eventId`), never by `sequence` (per partition); recipient filter on `payload.recipientUserIds`; answers `cursor`/`cursorId`/`hasMore`; `resync` when `after` precedes the oldest retained row; works on PostgreSQL, SQLite, MySQL (JSON filtering done in code after a bounded fetch). Spec.
 - [x] **T15**. `src/lib/graphql/realtime.schema.ts` (`extend type Subscription { collaborationEvents(...) }`, plain `gql`) and `src/lib/graphql/realtime.resolver.ts` (`tenantScopedTopicStream` + envelope mapper + name validation against the catalogue); add to `GATED_PLUGIN_SCHEMAS` in `tools/scripts/graphql-field-binding-check.mjs`. Spec for the mapper and the name validation.
 
 ## Phase 4 — Verification and docs
@@ -52,3 +52,11 @@
 - All checkboxes ticked; tests green locally and in CI.
 - Flag default stays off; enabling it in dev shows the stream end to end.
 - Constitution gates in `spec.md` §9 confirmed.
+
+## Follow-ups (from the plan's §15)
+
+- [ ] **T19**. Append chat and task/comment hints inside the originating transaction (plan §15.1)
+- [ ] **T20**. Per-connection presence, merged per employee, coalesced to one message per 5 s (plan §15.2)
+- [ ] **T21**. Address `document.updated` and document comment hints to the page's readers (plan §15.3)
+- [ ] **T22**. Current-membership recheck for `chat_*` events in the catch-up and the live stream (plan §15.4)
+- [ ] **T23**. Outbox retention that keeps the FR-3 floor, with a test of both bounds (plan §15.5)

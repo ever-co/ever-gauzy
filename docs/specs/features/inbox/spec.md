@@ -117,7 +117,8 @@ Ever Teams, the desktop apps, the MCP server and the SDKs.
 
 - **FR-10** For every kind, an employee MUST be able to choose delivery channels:
   in-app (always on), email (`immediate`, `digest`, `off`) and push (`on`, `off`), with
-  organization-wide defaults set by an admin.
+  organization-wide defaults set by an admin. (Not met yet for receivers who switched a
+  legacy notification type off: no entry is created, see plan §10.2.)
 - **FR-11** Employees MUST be able to set a do-not-disturb window during which no push or
   immediate email is sent (entries still appear in-app).
 - **FR-12** Email delivery MUST use the platform's email templates in the recipient's
@@ -134,7 +135,8 @@ Ever Teams, the desktop apps, the MCP server and the SDKs.
   MCP tools.
 - **FR-15** Existing employee-notification and inbox endpoints MUST keep working
   unchanged; clients that read employee notifications today MUST see the same entries
-  (filed items mirror read state both ways).
+  (filed items mirror read state both ways, including the notification rows a
+  deduplicated entry stands for; the latter is not met yet, see plan §10.3).
 - **FR-16** Decisions already in the Inbox (questions, approvals, escalations) MUST keep
   their reply flow and appear in the same list, filterable as "Decisions".
 
@@ -143,7 +145,8 @@ Ever Teams, the desktop apps, the MCP server and the SDKs.
 - **Performance**: list of the newest 50 entries with actors and targets under 200 ms
   P95 at 1,000,000 entries per tenant; unread counts under 50 ms.
 - **Reliability**: entry creation is part of the originating write's transaction or an
-  at-least-once outbox; no lost entries on crashes; digests never sent twice.
+  at-least-once outbox; no lost entries on crashes; digests never sent twice. (Not met
+  yet: entries are filed best effort after the notification row exists, see plan §10.1.)
 - **Security & privacy**: an employee reads only their own entries; targets are checked
   against the recipient's permissions at read time; email and push contain only the
   subject and a link.
