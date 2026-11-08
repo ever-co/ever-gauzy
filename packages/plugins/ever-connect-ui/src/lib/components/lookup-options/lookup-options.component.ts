@@ -1,16 +1,17 @@
-import { HttpErrorResponse } from '@angular/common/http';
 import {
 	ChangeDetectionStrategy,
-	ChangeDetectorRef,
 	Component,
 	DestroyRef,
-	EventEmitter,
+	ElementRef,
 	inject,
-	Input,
-	Output
+	input,
+	linkedSignal,
+	output,
+	signal,
+	viewChild
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { NbToggleModule } from '@nebular/theme';
+import { NbToggleComponent, NbToggleModule } from '@nebular/theme';
 import { TranslatePipe } from '@ngx-translate/core';
 import { EverConnectUiService } from '../../services/ever-connect.service';
 
@@ -27,14 +28,14 @@ import { EverConnectUiService } from '../../services/ever-connect.service';
 		<div class="lookup-options" data-test="lookup-options">
 			<nb-toggle
 				data-test="auto-check"
-				[checked]="autoCheck"
-				[disabled]="!canEdit || busy"
+				[checked]="saved()"
+				[disabled]="!canEdit() || busy()"
 				(checkedChange)="set($event)"
 			>
 				{{ 'EVER_CONNECT.LOOKUP.AUTO_CHECK' | translate }}
 			</nb-toggle>
 			<p class="hint">{{ 'EVER_CONNECT.LOOKUP.AUTO_CHECK_HINT' | translate }}</p>
-			@if (failed) {
+			@if (failed()) {
 				<p class="hint" data-test="auto-check-failed">
 					{{ 'EVER_CONNECT.LOOKUP.AUTO_CHECK_FAILED' | translate }}
 				</p>
@@ -56,42 +57,59 @@ import { EverConnectUiService } from '../../services/ever-connect.service';
 })
 export class LookupOptionsComponent {
 	private readonly api = inject(EverConnectUiService);
-	private readonly cdr = inject(ChangeDetectorRef);
 	private readonly destroyRef = inject(DestroyRef);
 
-	@Input({ required: true }) organizationId!: string;
-	@Input() autoCheck = false;
+	readonly organizationId = input.required<string>();
+	/** The saved value of the setting, as the integrations list read it. */
+	readonly autoCheck = input(false);
 	/** `INTEGRATION_EDIT`: the toggle can be changed. */
-	@Input() canEdit = false;
-	@Output() readonly autoCheckChange = new EventEmitter<boolean>();
+	readonly canEdit = input(false);
+	/** The value the API saved, after each save that went through. */
+	readonly autoCheckChange = output<boolean>();
 
-	busy = false;
-	failed = false;
+	/** The last value the API confirmed: the input's, until a save goes through. */
+	protected readonly saved = linkedSignal(() => this.autoCheck());
+	protected readonly busy = signal(false);
+	protected readonly failed = signal(false);
 
-	set(value: boolean): void {
-		if (!this.canEdit || this.busy || value === this.autoCheck) return;
-		const before = this.autoCheck;
-		// The toggle shows the value asked for while it is saved, and the saved one after.
-		this.autoCheck = value;
-		this.busy = true;
-		this.failed = false;
+	private readonly toggle = viewChild.required(NbToggleComponent);
+	private readonly toggleElement = viewChild.required(NbToggleComponent, { read: ElementRef });
+
+	/** A click on the toggle: the value it asks for is saved; until the API answers, the toggle shows it. */
+	protected set(value: boolean): void {
+		const before = this.saved();
+		if (!this.canEdit() || this.busy() || value === before) return;
+		this.busy.set(true);
+		this.failed.set(false);
 		this.api
-			.setLookupAutoCheck(this.organizationId, value)
+			.setLookupAutoCheck(this.organizationId(), value)
 			.pipe(takeUntilDestroyed(this.destroyRef))
 			.subscribe({
 				next: ({ auto_check }) => {
-					this.autoCheck = auto_check;
-					this.busy = false;
+					this.busy.set(false);
+					this.saved.set(auto_check);
+					this.show(auto_check);
 					this.autoCheckChange.emit(auto_check);
-					this.cdr.markForCheck();
 				},
-				error: (_error: HttpErrorResponse) => {
-					// Not saved: the toggle goes back to the saved value, and a new click is taken.
-					this.autoCheck = before;
-					this.busy = false;
-					this.failed = true;
-					this.cdr.markForCheck();
+				error: () => {
+					// Not saved: the toggle goes back to the last saved value, so the next click is taken.
+					this.busy.set(false);
+					this.failed.set(true);
+					this.show(before);
 				}
 			});
+	}
+
+	/**
+	 * Makes the toggle show `value`. The click already changed the native checkbox and the toggle's
+	 * own state, and a binding whose value did not change (a save that failed, at once or later)
+	 * writes neither back, so both are set here.
+	 */
+	private show(value: boolean): void {
+		this.toggle().writeValue(value);
+		const checkbox = (this.toggleElement().nativeElement as HTMLElement).querySelector<HTMLInputElement>(
+			'input[type="checkbox"]'
+		);
+		if (checkbox) checkbox.checked = value;
 	}
 }
