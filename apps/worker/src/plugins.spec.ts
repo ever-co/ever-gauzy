@@ -180,7 +180,8 @@ describe('worker plugins', () => {
 			expect(list.length).toBe(listWith(undefined).length + 1);
 		});
 	});
-	describe('the Inbox, hosted only with the Ever Works integration', () => {
+	// Hosted whenever it is on, for its own schedule (the recovery sweep of the notification filing), whatever else is.
+	describe('the Inbox, hosted whenever GAUZY_INBOX_ENABLED is exactly true', () => {
 		/** The list with both switches as stated (the module is evaluated afresh). */
 		function listWith(everWorks: string | undefined, inbox: string | undefined): unknown[] {
 			const saved = { EVER_WORKS_ENABLED: process.env['EVER_WORKS_ENABLED'], GAUZY_INBOX_ENABLED: process.env['GAUZY_INBOX_ENABLED'] };
@@ -207,7 +208,7 @@ describe('worker plugins', () => {
 
 		it.each([
 			['both off (the default)', undefined, undefined, false],
-			['the Inbox only', undefined, 'true', false],
+			['the Inbox only', undefined, 'true', true],
 			['Ever Works only', 'true', undefined, false],
 			['both on', 'true', 'true', true],
 			['Ever Works on, the Inbox TRUE', 'true', 'TRUE', false]

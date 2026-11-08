@@ -9,7 +9,16 @@ import {
 import { DataSource } from 'typeorm';
 import { InboxSourceHandlerRegistry } from '../inbox-source-handler.registry';
 import { InboxService } from '../inbox.service';
-import { InboxNotificationBridge, isDedupedNotification, notificationItemInput, notificationTypeOf, recentTwinCriteriaOf, twinLockNameOf } from './inbox-notification.bridge';
+import {
+	InboxNotificationBridge,
+	isDedupedNotification,
+	notificationIdsOf,
+	notificationItemInput,
+	notificationTypeOf,
+	recentTwinCriteriaOf,
+	twinLockNameOf,
+	twinNotificationIdsOf
+} from './inbox-notification.bridge';
 
 /** A platform notification as the bridge receives it. */
 const notification = {
@@ -57,6 +66,12 @@ describe('notificationItemInput', () => {
 		expect(input?.recipients).toEqual([{ userId: 'u2', isRead: true }]);
 	});
 
+	it('files a notification already archived through the notification API archived (a late filing by the sweep)', () => {
+		expect(notificationItemInput({ ...notification, isArchived: true } as never, 'u2')?.recipients).toEqual([
+			{ userId: 'u2', isRead: false, isArchived: true }
+		]);
+	});
+
 	it('files nothing without an identity, a tenant or a user', () => {
 		expect(notificationItemInput({ ...notification, id: '' } as never, 'u2')).toBeNull();
 		expect(notificationItemInput({ ...notification, tenantId: undefined } as never, 'u2')).toBeNull();
@@ -69,7 +84,12 @@ describe('InboxNotificationBridge.fileNotification', () => {
 	function commentBridge(comment: { id: string; entity: string; entityId: string } | null) {
 		const employees = { findOne: jest.fn(async () => ({ id: 'e2', userId: 'u2' })) };
 		const comments = { findOne: jest.fn(async () => comment) };
-		const dataSource = { getRepository: (target: unknown) => (target === 'Comment' ? comments : employees) };
+		// No item is filed for the notification yet.
+		const items = { findOne: jest.fn(async () => null) };
+		const dataSource = {
+			getRepository: (target: unknown) =>
+				target === 'Comment' ? comments : (target as { name?: string })?.name === 'InboxItem' ? items : employees
+		};
 		const inbox = { upsertExternal: jest.fn(async (_input: IInboxItemUpsertInput) => ({})) };
 		const registry = { get: () => null, register: jest.fn() };
 		return { comments, inbox, service: new InboxNotificationBridge(dataSource as never, inbox as never, registry as never) };
@@ -120,26 +140,65 @@ describe('isDedupedNotification / notificationTypeOf', () => {
 		expect(notificationTypeOf('not json')).toBeNull();
 		expect(notificationTypeOf(null)).toBeNull();
 	});
+
+	it('reads the folded twins an item stands for, and every notification row it stands for', () => {
+		const metadata = JSON.stringify({ notificationType: 'Mention', twinNotificationIds: ['n2', 'n3', 7, ''] });
+		expect(twinNotificationIdsOf(metadata)).toEqual(['n2', 'n3']);
+		expect(twinNotificationIdsOf({ twinNotificationIds: 'n2' })).toEqual([]);
+		expect(twinNotificationIdsOf('not json')).toEqual([]);
+		expect(notificationIdsOf({ externalId: 'n1', metadata })).toEqual(['n1', 'n2', 'n3']);
+		expect(notificationIdsOf({ externalId: 'n1', metadata: { twinNotificationIds: ['n1'] } })).toEqual(['n1']);
+		expect(notificationIdsOf({ externalId: null, metadata: null })).toEqual([]);
+	});
 });
 
-/** The bridge over doubles: the employee's user, the recipient rows of the window, the items on the record. */
-function bridge(options: { twins?: Array<{ metadata: unknown }> } = {}) {
+/**
+ * The bridge over doubles: the employee's user, the recipient rows of the window, the items on the record (none filed
+ * for the notification itself; `twinItem` is what the twin's id reads as), the notification rows.
+ */
+function bridge(
+	options: {
+		twins?: Array<{ id?: string; metadata: unknown }>;
+		twinItem?: Record<string, unknown> | null;
+		twinRecipient?: Record<string, unknown> | null;
+	} = {}
+) {
 	const employees = { findOne: jest.fn(async () => ({ id: 'e2', userId: 'u2' })) };
 	// Named keys, not `Record<string, …>`: the plugin compiles with `noPropertyAccessFromIndexSignature` (TS4111).
-	const query = {} as Record<'innerJoin' | 'select' | 'where' | 'andWhere' | 'getRawMany', jest.Mock>;
+	const query = {} as Record<'innerJoin' | 'select' | 'addSelect' | 'where' | 'andWhere' | 'orderBy' | 'getRawMany', jest.Mock>;
 	query.innerJoin =jest.fn((_entity: unknown, _alias: string, _condition: string) => query);
 	query.select = jest.fn((_column: string, _alias: string) => query);
+	query.addSelect = jest.fn((_column: string, _alias: string) => query);
 	query.where = jest.fn((_sql: string, _params?: Record<string, unknown>) => query);
 	query.andWhere = jest.fn((_sql: string) => query);
+	query.orderBy = jest.fn((_column: string, _order: string) => query);
 	query.getRawMany = jest.fn(async () => options.twins ?? []);
-	const recipients = { createQueryBuilder: jest.fn((_alias: string) => query) };
+	const recipients = {
+		createQueryBuilder: jest.fn((_alias: string) => query),
+		findOne: jest.fn(async () => options.twinRecipient ?? null)
+	};
+	const items = {
+		findOne: jest.fn(async ({ where }: { where: Record<string, unknown> }) => (where['id'] ? (options.twinItem ?? null) : null)),
+		update: jest.fn(async (_criteria: unknown, _values: unknown) => ({}))
+	};
+	const notifications = {
+		find: jest.fn(async (_options: unknown) => [] as Array<Record<string, unknown>>),
+		update: jest.fn(async (_criteria: unknown, _values: unknown) => ({}))
+	};
 	const dataSource = {
 		options: { type: 'sqlite' },
-		getRepository: (entity: { name?: string }) => (entity?.name === 'Employee' ? employees : recipients)
+		getRepository: (entity: { name?: string }) =>
+			entity?.name === 'Employee'
+				? employees
+				: entity?.name === 'InboxItem'
+					? items
+					: entity?.name === 'EmployeeNotification'
+						? notifications
+						: recipients
 	} as unknown as DataSource;
 	const upsertExternal = jest.fn(async () => ({}));
 	const instance = new InboxNotificationBridge(dataSource, { upsertExternal } as unknown as InboxService, new InboxSourceHandlerRegistry());
-	return { instance, upsertExternal, recipients, query };
+	return { instance, upsertExternal, recipients, query, items, notifications };
 }
 
 describe('InboxNotificationBridge.fileNotification (FR-4)', () => {
@@ -151,11 +210,32 @@ describe('InboxNotificationBridge.fileNotification (FR-4)', () => {
 		expect(upsertExternal).toHaveBeenCalledTimes(1);
 	});
 
-	it('does not file a mention whose twin (same user, record and kind) was filed within ten minutes', async () => {
-		const { instance, upsertExternal, query } = bridge({ twins: [{ metadata: JSON.stringify({ notificationType: 'Mention' }) }] });
-		await instance.fileNotification(mention as never);
+	it('does not file a mention whose twin (same user, record and kind) was filed within ten minutes: it records it there', async () => {
+		const metadata = JSON.stringify({ notificationType: 'Mention', twinNotificationIds: ['n0'] });
+		const readAt = new Date('2026-11-07T12:00:00.000Z');
+		const { instance, upsertExternal, query, items, notifications } = bridge({
+			twins: [{ id: 'i1', metadata }],
+			twinItem: { id: 'i1', tenantId: 'ten', externalId: 'n1', metadata },
+			twinRecipient: { isRead: true, readAt, isArchived: false }
+		});
+		notifications.find.mockResolvedValueOnce([{ id: 'n2', isRead: false, isArchived: false }]);
+		expect(await instance.settleNotification(mention as never)).toBe('folded');
 		expect(upsertExternal).not.toHaveBeenCalled();
 		expect(query.getRawMany).toHaveBeenCalledTimes(1);
+		// The many-to-one record: the twin's id joins the ones the entry already stands for.
+		const [criteria, written] = items.update.mock.calls[0] as unknown as [unknown, { metadata: string }];
+		expect(criteria).toEqual({ id: 'i1' });
+		expect(JSON.parse(written.metadata)).toEqual({ notificationType: 'Mention', twinNotificationIds: ['n0', 'n2'] });
+		// The folded row takes the entry's state: the entry was read, so the row is too.
+		expect(notifications.update).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ isRead: true, readAt }));
+	});
+
+	it('leaves a mention already recorded on its twin alone', async () => {
+		const metadata = JSON.stringify({ notificationType: 'Mention', twinNotificationIds: ['n2'] });
+		const { instance, upsertExternal, items } = bridge({ twins: [{ id: 'i1', metadata }] });
+		expect(await instance.settleNotification(mention as never)).toBe('present');
+		expect(upsertExternal).not.toHaveBeenCalled();
+		expect(items.update).not.toHaveBeenCalled();
 	});
 
 	it('files a mention beside a recent item of another kind on the record, and any assignment', async () => {
@@ -175,6 +255,7 @@ describe('InboxNotificationBridge.fileNotification (FR-4)', () => {
 			userId: 'u2',
 			tenantId: 'ten',
 			since: new Date('2026-11-07T11:50:00.000Z'),
+			until: new Date('2026-11-07T12:10:00.000Z'),
 			kind: InboxItemKindEnum.NOTIFICATION,
 			source: InboxItemSourceEnum.GAUZY,
 			entity: 'Task',
@@ -201,5 +282,36 @@ describe('InboxNotificationBridge.fileNotification (FR-4)', () => {
 
 		await instance.fileNotification({ ...mention, id: 'n3', type: EmployeeNotificationTypeEnum.ASSIGNMENT } as never);
 		expect(run).toHaveBeenCalledTimes(1);
+	});
+});
+
+describe('InboxNotificationBridge.onStateChange (the rows an entry stands for)', () => {
+	it("mirrors a state change to the item's own notification and to every twin folded into it, read afresh", async () => {
+		// The twins as stored now (a fold may have landed after the caller read the item).
+		const stored = { id: 'i1', tenantId: 'ten', externalSource: INBOX_NOTIFICATION_EXTERNAL_SOURCE, externalId: 'n1', metadata: JSON.stringify({ twinNotificationIds: ['n2', 'n3'] }) };
+		const { instance, notifications } = bridge({ twinItem: stored });
+		notifications.find.mockResolvedValueOnce([
+			{ id: 'n1', isRead: false, isArchived: false },
+			{ id: 'n2', isRead: false, isArchived: false },
+			{ id: 'n3', isRead: true, isArchived: false }
+		]);
+		const readAt = new Date('2026-11-07T12:00:00.000Z');
+		const item = { id: 'i1', externalSource: INBOX_NOTIFICATION_EXTERNAL_SOURCE, externalId: 'n1', tenantId: 'ten', metadata: { twinNotificationIds: ['n2'] } };
+		await instance.onStateChange(item as never, { userId: 'u2', readAt } as never, { isRead: true });
+
+		const [{ where }] = notifications.find.mock.calls[0] as unknown as [{ where: { id: { value: string[] }; tenantId: string } }];
+		expect(where.id.value).toEqual(['n1', 'n2', 'n3']);
+		expect(where.tenantId).toBe('ten');
+		// Only the rows whose state differs are written.
+		const [criteria, patch] = notifications.update.mock.calls[0] as unknown as [{ id: { value: string[] } }, Record<string, unknown>];
+		expect(criteria.id.value).toEqual(['n1', 'n2']);
+		expect(patch).toEqual({ isRead: true, readAt });
+	});
+
+	it('mirrors nothing for an item of another source, or with nothing stated', async () => {
+		const { instance, notifications } = bridge();
+		await instance.onStateChange({ externalSource: 'ever-works', externalId: 'x', tenantId: 'ten' } as never, {} as never, { isRead: true });
+		await instance.onStateChange({ externalSource: INBOX_NOTIFICATION_EXTERNAL_SOURCE, externalId: 'n1', tenantId: 'ten' } as never, {} as never, {});
+		expect(notifications.find).not.toHaveBeenCalled();
 	});
 });

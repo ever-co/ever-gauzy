@@ -230,12 +230,12 @@ describe('Inbox on SQLite', () => {
 				)
 			).map((row: { name: string }) => row.name);
 
-		it('create both tables, and a second run adds nothing', async () => {
-			expect(await tables()).toEqual(['inbox_item', 'inbox_item_recipient']);
+		it('create the tables (the items, their recipients, the sweep checkpoints), and a second run adds nothing', async () => {
+			expect(await tables()).toEqual(['inbox_item', 'inbox_item_recipient', 'inbox_sweep_checkpoint']);
 			for (const Migration of INBOX_MIGRATIONS) {
 				await new Migration().up(dataSource.createQueryRunner());
 			}
-			expect(await tables()).toEqual(['inbox_item', 'inbox_item_recipient']);
+			expect(await tables()).toEqual(['inbox_item', 'inbox_item_recipient', 'inbox_sweep_checkpoint']);
 		});
 
 		it('keep one recipient row per item and user, and cascade with the item', async () => {
