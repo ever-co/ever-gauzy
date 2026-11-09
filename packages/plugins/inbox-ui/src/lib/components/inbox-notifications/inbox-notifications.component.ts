@@ -8,7 +8,14 @@ import { catchError, distinctUntilChanged, map, switchMap } from 'rxjs/operators
 import { IEmployeeNotification } from '@gauzy/contracts';
 import { Store } from '@gauzy/ui-core/core';
 import { INBOX_UI_PAGE_SIZE } from '../../inbox-ui.constants';
-import { listDateFormat } from '../../inbox-ui.helpers';
+import {
+	groupByDate,
+	InboxSender,
+	listDateFormat,
+	notificationIconOf,
+	notificationTypeLabelOf,
+	senderOf
+} from '../../inbox-ui.helpers';
 import { InboxNotificationsService } from '../../services/inbox-ui.service';
 
 /** Who the tab reads for: the signed-in user's employee, in the selected organization. */
@@ -66,42 +73,71 @@ interface NotificationScope {
 				[nbSpinner]="loading()"
 				nbSpinnerSize="small"
 			>
-				@for (notification of notifications(); track notification.id) {
-					<div
-						class="notification"
-						[class.unread]="!notification.isRead"
-						[attr.data-test]="'notification-' + notification.id"
-					>
-						<span class="unread-dot" aria-hidden="true"></span>
-						<span class="avatar" aria-hidden="true"><nb-icon icon="bell-outline"></nb-icon></span>
-						<div class="text">
-							<div class="top">
-								<span class="title">{{ notification.title }}</span>
-								<time
-									class="when"
-									[attr.datetime]="notification.createdAt"
-									[attr.title]="notification.createdAt | date: 'medium'"
-									>{{ notification.createdAt | date: listDate(notification.createdAt) }}</time
-								>
+				@for (section of sections(); track section.group) {
+					<div class="group-label" [attr.data-test]="'notifications-group-' + section.group">
+						{{ 'INBOX.GROUP.' + section.group | translate }}
+					</div>
+					@for (notification of section.items; track notification.id) {
+						@let sender = senderOf(notification);
+						@let typeLabel = typeLabelOf(notification.type);
+						<div
+							class="notification"
+							[class.unread]="!notification.isRead"
+							[attr.data-test]="'notification-' + notification.id"
+						>
+							<span class="unread-dot" aria-hidden="true"></span>
+							<!-- The sender's picture (or initials), with the notification's type in a badge; the type alone without a sender. -->
+							<span class="avatar" [class.person]="!!sender" [attr.data-type]="notification.type" aria-hidden="true">
+								@if (sender) {
+									@if (sender.imageUrl) {
+										<img [src]="sender.imageUrl" alt="" loading="lazy" />
+									} @else {
+										<span class="initials">{{ sender.initials }}</span>
+									}
+									<span class="type-badge"><nb-icon [icon]="iconOf(notification.type)"></nb-icon></span>
+								} @else {
+									<nb-icon [icon]="iconOf(notification.type)"></nb-icon>
+								}
+							</span>
+							<div class="text">
+								<div class="top">
+									<span class="title">{{ notification.title }}</span>
+									<time
+										class="when"
+										[attr.datetime]="notification.createdAt"
+										[attr.title]="notification.createdAt | date: 'medium'"
+										>{{ notification.createdAt | date: listDate(notification.createdAt) }}</time
+									>
+								</div>
+								@if (notification.message) {
+									<div class="message">{{ notification.message }}</div>
+								}
+								@if (sender || typeLabel) {
+									<div class="meta" [attr.data-test]="'notification-meta-' + notification.id">
+										@if (typeLabel) {
+											<span class="type">{{ typeLabel | translate }}</span>
+										}
+										@if (sender) {
+											<span class="from">{{ 'INBOX.NOTIFICATIONS.FROM' | translate: { name: sender.name } }}</span>
+										}
+									</div>
+								}
 							</div>
-							@if (notification.message) {
-								<div class="message">{{ notification.message }}</div>
+							@if (!notification.isRead) {
+								<button
+									type="button"
+									class="read"
+									[attr.title]="'INBOX.ACTIONS.MARK_READ' | translate"
+									[attr.aria-label]="'INBOX.ACTIONS.MARK_READ' | translate"
+									[attr.data-test]="'notification-read-' + notification.id"
+									(click)="markRead(notification)"
+								>
+									<nb-icon icon="checkmark-outline"></nb-icon>
+									<span>{{ 'INBOX.ACTIONS.MARK_READ' | translate }}</span>
+								</button>
 							}
 						</div>
-						@if (!notification.isRead) {
-							<button
-								type="button"
-								class="read"
-								[attr.title]="'INBOX.ACTIONS.MARK_READ' | translate"
-								[attr.aria-label]="'INBOX.ACTIONS.MARK_READ' | translate"
-								[attr.data-test]="'notification-read-' + notification.id"
-								(click)="markRead(notification)"
-							>
-								<nb-icon icon="checkmark-outline"></nb-icon>
-								<span>{{ 'INBOX.ACTIONS.MARK_READ' | translate }}</span>
-							</button>
-						}
-					</div>
+					}
 				} @empty {
 					@if (!loading()) {
 						<div class="state" data-test="notifications-empty">
@@ -224,7 +260,26 @@ interface NotificationScope {
 			.notification.unread .unread-dot {
 				opacity: 1;
 			}
+			/* Day sections: a small label over each, as the message list has. */
+			.group-label {
+				padding: 0.375rem 1.25rem 0.25rem 1.5rem;
+				border-bottom: 1px solid var(--gauzy-border-default-color, rgba(126, 126, 143, 0.18));
+				background: var(--background-basic-color-1, #fff);
+				font-size: 0.6875rem;
+				font-weight: 600;
+				line-height: 1rem;
+				letter-spacing: 0.02em;
+				color: var(--gauzy-text-color-2, #8f9bb3);
+			}
+			.notification + .group-label {
+				border-top: 1px solid var(--gauzy-border-default-color, rgba(126, 126, 143, 0.18));
+			}
+
+			/* The type's icon in a tinted circle, or the sender's picture with the type in a badge. */
 			.avatar {
+				--tone: var(--color-warning-500, #ffaa00);
+				--tone-bg: var(--color-warning-transparent-100, rgba(255, 170, 0, 0.12));
+				position: relative;
 				display: inline-flex;
 				align-items: center;
 				justify-content: center;
@@ -232,13 +287,79 @@ interface NotificationScope {
 				width: 1.75rem;
 				height: 1.75rem;
 				border-radius: 50%;
-				color: var(--color-warning-500, #ffaa00);
-				background: var(--color-warning-transparent-100, rgba(255, 170, 0, 0.12));
+				color: var(--tone);
+				background: var(--tone-bg);
 			}
-			.avatar nb-icon {
+			.avatar[data-type='Assignment'],
+			.avatar[data-type='TaskUpdate'] {
+				--tone: var(--color-primary-500, #6e49e8);
+				--tone-bg: var(--color-primary-transparent-100, rgba(110, 73, 232, 0.12));
+			}
+			.avatar[data-type='Mention'],
+			.avatar[data-type='Comment'],
+			.avatar[data-type='Message'] {
+				--tone: var(--color-info-500, #0095ff);
+				--tone-bg: var(--color-info-transparent-100, rgba(0, 149, 255, 0.12));
+			}
+			.avatar[data-type='Payment'],
+			.avatar[data-type='RateChangeRequest'] {
+				--tone: var(--color-success-500, #00d68f);
+				--tone-bg: var(--color-success-transparent-100, rgba(0, 214, 143, 0.12));
+			}
+			.avatar > nb-icon {
 				width: 0.875rem;
 				height: 0.875rem;
 				font-size: 0.875rem;
+			}
+			.avatar.person {
+				color: var(--gauzy-text-color-1, #222b45);
+				background: var(--gauzy-hover-tint, rgba(126, 126, 143, 0.16));
+			}
+			.avatar img {
+				width: 100%;
+				height: 100%;
+				border-radius: 50%;
+				object-fit: cover;
+			}
+			.initials {
+				font-size: 0.6875rem;
+				font-weight: 600;
+				line-height: 1;
+			}
+			.type-badge {
+				position: absolute;
+				right: -0.25rem;
+				bottom: -0.25rem;
+				display: inline-flex;
+				align-items: center;
+				justify-content: center;
+				width: 1rem;
+				height: 1rem;
+				border-radius: 50%;
+				border: 2px solid var(--background-basic-color-1, #fff);
+				color: #fff;
+				background: var(--tone);
+			}
+			.type-badge nb-icon {
+				width: 0.5625rem;
+				height: 0.5625rem;
+				font-size: 0.5625rem;
+			}
+			.meta {
+				display: flex;
+				flex-wrap: wrap;
+				align-items: center;
+				gap: 0.375rem;
+				margin-top: 0.125rem;
+				font-size: 0.6875rem;
+				line-height: 1rem;
+				color: var(--gauzy-text-color-2, #8f9bb3);
+			}
+			.meta .type {
+				padding: 0 0.375rem;
+				border-radius: 0.1875rem;
+				background: var(--gauzy-hover-tint, rgba(126, 126, 143, 0.12));
+				font-weight: 500;
 			}
 			.text {
 				flex: 1;
@@ -381,6 +502,8 @@ export class InboxNotificationsComponent implements OnInit {
 	private readonly reload$ = new Subject<number>();
 
 	readonly notifications = signal<IEmployeeNotification[]>([]);
+	/** The notifications in their day sections (Today, Yesterday, …). */
+	readonly sections = computed(() => groupByDate(this.notifications()));
 	/** The unread notifications listed, for the bar over the list. */
 	readonly unreadCount = computed(() => this.notifications().filter((notification) => !notification.isRead).length);
 	readonly total = signal(0);
@@ -391,12 +514,27 @@ export class InboxNotificationsComponent implements OnInit {
 	/** "Mark all read" went through for this employee: the notifications not loaded are read too (#11098 review). */
 	private readonly markedAll = signal(false);
 
-	/** Something to mark read: an unread notification listed, or more of them not loaded yet (review F69). */
 	/** A row's time, as the message list shows it (the full date and time on hover). */
 	listDate(createdAt: Date | string | null | undefined): string {
 		return listDateFormat(createdAt);
 	}
 
+	/** The icon of a notification's type. */
+	iconOf(type: string | null | undefined): string {
+		return notificationIconOf(type);
+	}
+
+	/** A notification's type, as a translation key (`null` for a type the plugin does not know). */
+	typeLabelOf(type: string | null | undefined): string | null {
+		return notificationTypeLabelOf(type);
+	}
+
+	/** Who sent a notification (`null`: the system, or a sender the API did not join). */
+	senderOf(notification: IEmployeeNotification): InboxSender | null {
+		return senderOf(notification);
+	}
+
+	/** Something to mark read: an unread notification listed, or more of them not loaded yet (review F69). */
 	hasUnread(): boolean {
 		return (
 			this.notifications().some((notification) => !notification.isRead) ||
