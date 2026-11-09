@@ -256,6 +256,11 @@ export class TaskViewPageComponent extends TranslationBaseComponent implements O
 	private openingSubtask = false;
 	/** Bumped by every load; a load that is no longer the latest one when it answers is discarded. */
 	private loadSequence = 0;
+	/**
+	 * The sequence of the refresh still reading the task, if any. The Overview opened meanwhile reads nothing itself:
+	 * the task on screen is about to be replaced, and the refresh reads the panels for the one that replaces it.
+	 */
+	private refreshSequence: number | null = null;
 	private readonly hashNumberPipe = new HashNumberPipe();
 
 	constructor(
@@ -352,6 +357,10 @@ export class TaskViewPageComponent extends TranslationBaseComponent implements O
 		this.documentCount = 0;
 		this.tracking = loading(null);
 		this.workers = [];
+		// The Overview's other panels too: opened later, it shows none of the previous task's figures meanwhile.
+		this.hours = loading([]);
+		this.entries = loading([]);
+		this.links = loading([]);
 		this.statuses = [];
 		this.currentStatusId = null;
 		this.commentCount = 0;
@@ -390,6 +399,7 @@ export class TaskViewPageComponent extends TranslationBaseComponent implements O
 	private async refresh(taskId: string): Promise<void> {
 		if (this.state !== 'ready' || this.task?.id !== taskId) return;
 		const sequence = ++this.loadSequence;
+		this.refreshSequence = sequence;
 		try {
 			const task = await this.tasksService.getById(taskId, TASK_PAGE_RELATIONS);
 			if (sequence !== this.loadSequence) return;
@@ -409,6 +419,8 @@ export class TaskViewPageComponent extends TranslationBaseComponent implements O
 		} catch {
 			// The page keeps the task it showed; its panels, whose reads the new sequence discarded, read again.
 			if (sequence === this.loadSequence) this.reloadPanels(sequence);
+		} finally {
+			if (this.refreshSequence === sequence) this.refreshSequence = null;
 		}
 	}
 
@@ -435,8 +447,12 @@ export class TaskViewPageComponent extends TranslationBaseComponent implements O
 		this.tab = tab;
 		if (tab === 'overview' && !this.overviewOpened) {
 			this.overviewOpened = true;
-			// Opened once the task is on screen: its panels read now. Opened while it loads, the load reads them.
-			if (this.task && this.state === 'ready') this.loadOverview(this.task, this.loadSequence);
+			// Opened once the task is on screen: its panels read now. Opened while it loads, or while a refresh reads it
+			// again, that read fills them: panels read now for the task it replaces would share its sequence, and an
+			// answer of theirs landing last would show the old task's figures — its estimate, its time left.
+			if (this.task && this.state === 'ready' && this.refreshSequence !== this.loadSequence) {
+				this.loadOverview(this.task, this.loadSequence);
+			}
 		}
 		if (tab === 'board') this.boardOpened = true;
 		if (tab === 'comments') this.commentsOpened = true;
