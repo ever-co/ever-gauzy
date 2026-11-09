@@ -283,6 +283,80 @@ export function routedNoticeOf(item: Pick<IInboxItem, 'response' | 'source'>): I
 	return { alreadyDecided: false, routed };
 }
 
+/** Who sent an email item and where it arrived, as its header shows them (from the item's `metadata`). */
+export interface InboxEmailHeader {
+	/** The sender's name, else the address; `null` when the item does not say. */
+	fromName: string | null;
+	/** The sender's address, shown beside a name (`null` when it is the name itself, or unknown). */
+	fromAddress: string | null;
+	initials: string;
+	/** The mailbox's address the message came to. */
+	to: string | null;
+	attachments: number;
+	/** The spam filter's doubt about it: `suspect` or `spam`; `null` for a clean message. */
+	spam: 'suspect' | 'spam' | null;
+}
+
+export function emailHeaderOf(item: Pick<IInboxItem, 'metadata'>): InboxEmailHeader {
+	const metadata = (item.metadata ?? {}) as Record<string, unknown>;
+	const text = (key: string) => (typeof metadata[key] === 'string' ? (metadata[key] as string).trim() : '');
+	// "Name <address>", or an address alone.
+	const from = text('from');
+	const match = from.match(/^\s*"?([^"<]*?)"?\s*<([^>]+)>\s*$/);
+	const fromName = (match ? match[1].trim() || match[2].trim() : from) || null;
+	const fromAddress = match && match[1].trim() ? match[2].trim() : null;
+	const initials = (fromName ?? '')
+		.replace(/@.*$/, '')
+		.split(/[\s._-]+/)
+		.filter(Boolean)
+		.slice(0, 2)
+		.map((part) => part.charAt(0).toUpperCase())
+		.join('');
+	const attachments = Number(metadata['attachments']);
+	const verdict = text('spamVerdict');
+	return {
+		fromName,
+		fromAddress,
+		initials,
+		to: text('mailboxAddress') || null,
+		attachments: Number.isFinite(attachments) && attachments > 0 ? Math.floor(attachments) : 0,
+		spam: verdict === 'suspect' || verdict === 'spam' ? verdict : null
+	};
+}
+
+/** A run of a plain-text email's lines: what was written, a quoted earlier message ("> …"), or the signature. */
+export interface InboxEmailBlock {
+	kind: 'text' | 'quote' | 'signature';
+	text: string;
+}
+
+/**
+ * A plain-text email in blocks, as mail apps set it: quoted lines (starting with ">") grouped and unquoted, and the
+ * signature (after a "-- " line) apart. The text is shown as text; nothing in it is read as markup.
+ */
+export function emailBlocksOf(text: string | null | undefined): InboxEmailBlock[] {
+	const lines = (text ?? '').replace(/\r\n?/g, '\n').split('\n');
+	const blocks: InboxEmailBlock[] = [];
+	let signature = false;
+	const push = (kind: InboxEmailBlock['kind'], line: string) => {
+		const last = blocks[blocks.length - 1];
+		if (last?.kind === kind) last.text += `\n${line}`;
+		else blocks.push({ kind, text: line });
+	};
+	for (const line of lines) {
+		if (!signature && /^-- ?$/.test(line)) {
+			signature = true;
+			continue;
+		}
+		if (signature) push('signature', line);
+		else if (/^\s*>/.test(line)) push('quote', line.replace(/^\s*> ?/, ''));
+		else push('text', line);
+	}
+	return blocks
+		.map((block) => ({ ...block, text: block.text.replace(/^\n+|\n+$/g, '') }))
+		.filter((block) => block.text.trim() !== '');
+}
+
 /** The day sections of the message list, as mail apps group it. */
 export type InboxDateGroup = 'TODAY' | 'YESTERDAY' | 'THIS_WEEK' | 'OLDER';
 
