@@ -872,7 +872,7 @@ export function parseTypeORMFindOptions<T, O extends { relations?: any; select?:
 /**
  * Adds an ID to a where condition (MikroORM or TypeORM: both read a list as alternatives joined by OR).
  *
- * Each alternative of a list gets the id. Appending `{ id }` as one more alternative (as this used to) read the row
+ * Each alternative of a list gets the id, and the id wins over an `id` a condition states. Appending `{ id }` as one more alternative (as this used to) read the row
  * with the id OR any row another alternative matched, so a read "by id" with a list condition could answer a row the
  * id never named. An empty list (no condition) becomes `{ id }`.
  *
@@ -882,11 +882,12 @@ export function parseTypeORMFindOptions<T, O extends { relations?: any; select?:
  */
 export function concatIdToWhere<T>(id: any, where: MikroFilterQuery<T>): MikroFilterQuery<T> {
 	if (Array.isArray(where)) {
-		return (where.length ? where.map((alternative) => ({ id, ...(alternative as any) })) : { id }) as MikroFilterQuery<T>;
+		return (where.length ? where.map((alternative) => ({ ...(alternative as any), id })) : { id }) as MikroFilterQuery<T>;
 	}
+	// The id comes last: a condition that states another id never reads a row the id did not name.
 	return {
-		id,
-		...(where ? where : ({} as any))
+		...(where ? where : ({} as any)),
+		id
 	};
 }
 
@@ -1198,9 +1199,15 @@ export function processFindOperator<T>(operator: FindOperator<T>) {
 		case 'and': {
 			// `And(a, b)` is several conditions on one property, which MikroORM spells as one object
 			// carrying both — `{ $gte: 1, $lte: 5 }` — rather than as a list.
-			const parts = (Array.isArray(operator.value) ? operator.value : [operator.value]).map((part: unknown) =>
-				part instanceof FindOperator ? processFindOperator(part) : { $eq: part }
-			);
+			// A nested `And` is flattened, each of its parts one more condition of this property: kept as one part, its
+			// list sat beside the other parts' operators, and stating it at the entity level dropped them (a
+			// `Not(ChatMessage)` added beside a caller's `And(Not(Task), Not(Comment))` was lost).
+			const parts = (Array.isArray(operator.value) ? operator.value : [operator.value]).flatMap((part: unknown) => {
+				const processed = part instanceof FindOperator ? processFindOperator(part) : { $eq: part };
+				return processed !== null && typeof processed === 'object' && AND_PARTS in processed
+					? ((processed as Record<string, unknown>)[AND_PARTS] as unknown[])
+					: [processed];
+			});
 
 			// Parts that state the same operator (`And(Not(1), Not(4))`, `And(MoreThan(3), MoreThan(1))`) cannot share one
 			// object: merged, the last one replaced the others and the read asked a different question. They are kept as

@@ -168,10 +168,37 @@ describe('ChatMessageService.read (the whole conversation)', () => {
 		expect(notifier.markConversationRead).toHaveBeenCalledWith('c1', { tenantId: 'ten', employeeId: 'e1' }, null);
 	});
 
+	it('leaves the followed threads alone on a partial read, and hands the notifier the message read up to', async () => {
+		const { service, repositories, notifier } = readOver([{ id: 'f1', rootMessageId: 'r1', unreadReplies: 3, lastReadReplyAt: since }], { r1: 0 });
+		const anchor = { id: 'm5', conversationId: 'c1', createdAt: since };
+		repositories.ChatMessage.findOne.mockResolvedValueOnce(anchor as never);
+		Object.assign(service as unknown as Record<string, unknown>, { timelinePosition: jest.fn(async () => 4), countMentions: jest.fn(async () => 0) });
+		await service.read(caller as never, 'c1', 'm5');
+		expect(repositories.ChatThreadFollow.find).not.toHaveBeenCalled();
+		expect(repositories.ChatThreadFollow.decrement).not.toHaveBeenCalled();
+		expect(repositories.ChatThreadFollow.update).not.toHaveBeenCalled();
+		expect(notifier.markConversationRead).toHaveBeenCalledWith('c1', { tenantId: 'ten', employeeId: 'e1' }, anchor);
+	});
+
 	it('never raises a counter when the thread holds more thread-only replies than the follow counts', async () => {
 		const { service, repositories } = readOver([{ id: 'f1', rootMessageId: 'r1', unreadReplies: 1, lastReadReplyAt: null }], { r1: 4 });
 		await service.read(caller as never, 'c1');
 		expect(repositories.ChatThreadFollow.decrement).not.toHaveBeenCalled();
 		expect(repositories.ChatThreadFollow.update).not.toHaveBeenCalled();
+	});
+});
+
+describe('ChatMessageService.markThreadRead', () => {
+	it('clears the thread notifications also when no follow row changed (a thread read after unfollowing it)', async () => {
+		const update = jest.fn(async () => ({ affected: 0 }));
+		const dataSource = { getRepository: () => ({ update }) } as unknown as DataSource;
+		const notifier = { markThreadRead: jest.fn(async () => 0) };
+		const service = new ChatMessageService(dataSource, {} as ChatAccessService, {} as ChatRealtime, notifier as unknown as ChatNotifierService, {} as TaskService, {} as CommandBus);
+		Object.assign(service as unknown as Record<string, unknown>, { messageForCaller: jest.fn(async () => ({ id: 'r1', threadRootId: null })) });
+
+		await expect(service.markThreadRead(author, 'r1')).resolves.toEqual({ updated: false });
+
+		expect(update).toHaveBeenCalledWith({ rootMessageId: 'r1', employeeId: 'e1', tenantId: 'ten' }, expect.objectContaining({ unreadReplies: 0 }));
+		expect(notifier.markThreadRead).toHaveBeenCalledWith('r1', { tenantId: 'ten', employeeId: 'e1' });
 	});
 });

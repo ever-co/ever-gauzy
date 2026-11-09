@@ -94,6 +94,11 @@ describe('concatIdToWhere', () => {
 		expect(concatIdToWhere('x', undefined as any)).toEqual({ id: 'x' });
 		expect(concatIdToWhere('x', { name: 'a' } as any)).toEqual({ id: 'x', name: 'a' });
 	});
+
+	it('keeps the id over an id a condition states', () => {
+		expect(concatIdToWhere('x', [{ id: 'y', name: 'a' }] as any)).toEqual([{ id: 'x', name: 'a' }]);
+		expect(concatIdToWhere('x', { id: 'y' } as any)).toEqual({ id: 'x' });
+	});
 });
 
 describe.each([
@@ -120,6 +125,11 @@ describe.each([
 		await expect(harness.service().findOneByIdString(A_ID, { where: [{ name: 'b' }] } as any)).rejects.toThrow();
 		const tried = await harness.service().findOneOrFailByIdString(A_ID, { where: [{ name: 'b' }] } as any);
 		expect(tried.success).toBe(false);
+	});
+
+	it('never answers the row another id in the condition names', async () => {
+		await expect(harness.service().findOneByIdString(A_ID, { where: { id: B_ID } } as any)).resolves.toMatchObject({ id: A_ID });
+		await expect(harness.service().findOneByIdString(A_ID, { where: [{ id: B_ID }] } as any)).resolves.toMatchObject({ id: A_ID });
 	});
 
 	it('answers the row the id names when one alternative matches it', async () => {
