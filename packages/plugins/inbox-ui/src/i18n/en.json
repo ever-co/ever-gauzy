@@ -81,6 +81,15 @@
 		"DONE": "Marked done",
 		"ARCHIVED": "Archived"
 	},
+	"EMAIL": {
+		"UNKNOWN_SENDER": "Unknown sender",
+		"TO": "to {{ to }}",
+		"ATTACHMENTS": "Attachments: {{ count }}",
+		"SPAM": {
+			"suspect": "This message looks suspicious. Be careful with its links and attachments.",
+			"spam": "This message was marked as spam."
+		}
+	},
 	"BADGE_LABEL": "Inbox: {{ count }} unread",
 	"DUE": "Due {{ date }}",
 	"ANSWERED": "Answered {{ date }}",
@@ -132,9 +141,9 @@
 		"urgent": "Urgent"
 	},
 	"ESCALATION": {
-		"DECISION": "Decision needed:",
-		"ATTEMPTED": "What was tried:",
-		"CONFIDENCE": "Confidence:"
+		"DECISION": "Decision needed",
+		"ATTEMPTED": "Already tried",
+		"CONFIDENCE": "Confidence"
 	},
 	"REPLY": {
 		"OPTIONS": "Choices",
