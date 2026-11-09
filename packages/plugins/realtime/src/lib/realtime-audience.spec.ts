@@ -103,6 +103,9 @@ function row(
 	} as CatchUpRow;
 }
 
+/** No retention removed anything: the catch-up answers no `resync`. */
+const NO_WATERMARK = { forScope: async () => null } as never;
+
 const documentRow = (id: string, organizationId = ORG) =>
 	row(REALTIME_EVENT_NAMES.DOCUMENT_UPDATED, 'document', id, {
 		entity: 'Document',
@@ -179,7 +182,7 @@ describe('realtime audience', () => {
 			}
 		};
 		audience = new RealtimeAudience(moduleRef as never);
-		catchUp = new RealtimeCatchUpService(moduleRef as never, audience);
+		catchUp = new RealtimeCatchUpService(moduleRef as never, audience, NO_WATERMARK);
 	});
 
 	/** The event ids one user's catch-up answers. */
@@ -297,7 +300,7 @@ describe('realtime audience', () => {
 					return providers.get(token);
 				}
 			};
-			const withoutRules = new RealtimeCatchUpService(moduleRef as never, new RealtimeAudience(moduleRef as never));
+			const withoutRules = new RealtimeCatchUpService(moduleRef as never, new RealtimeAudience(moduleRef as never), NO_WATERMARK);
 			const ids = (await as(READER, () => withoutRules.catchUp({ after: 0 }))).events.map((event) => event.aggregate.id);
 			expect(ids).toEqual(['on-task']);
 		});
@@ -331,7 +334,7 @@ describe('realtime audience', () => {
 				[EventOutboxService, { listOutboxRowsSince: async () => rows }]
 			]);
 			const moduleRef = { get: (token: unknown) => providers.get(token) };
-			const withBatch = new RealtimeCatchUpService(moduleRef as never, new RealtimeAudience(moduleRef as never));
+			const withBatch = new RealtimeCatchUpService(moduleRef as never, new RealtimeAudience(moduleRef as never), NO_WATERMARK);
 			const got = (await as(READER, () => withBatch.catchUp({ after: 0 }))).events.map((event) => event.aggregate.id);
 			expect(got).toEqual(['on-contact', 'on-other', 'on-contact-again']);
 			expect(batches).toEqual([[CONTACT, others[0], others[1]]]);
@@ -377,7 +380,9 @@ describe('realtime audience', () => {
 			rows.push(documentRow('page-private'), documentRow('page-private'), documentRow('page-org'));
 			const first = await as(OUTSIDER, () => catchUp.catchUp({ after: 0, limit: 1 }));
 			expect(first.events.map((event) => event.aggregate.id)).toEqual(['page-org']);
-			expect(first.cursorId).toBe(rows[2].eventId);
+			// Everything was read: the position passes every row, refused or answered (to the settle horizon).
+			expect(first.cursor).toBeGreaterThan((rows[2].createdAt as Date).getTime());
+			expect(first.hasMore).toBe(false);
 		});
 
 		it('fails the catch-up when a check cannot answer, rather than skipping rows nobody decided', async () => {

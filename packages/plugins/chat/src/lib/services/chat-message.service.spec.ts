@@ -138,11 +138,13 @@ function readOver(
 			decrement: jest.fn()
 		}
 	};
-	const dataSource = {
-		getRepository: (entity: string | { name?: string }) => repositories[(typeof entity === 'string' ? entity : entity?.name) as keyof typeof repositories]
-	} as unknown as DataSource & { transaction: jest.Mock };
+	const repositoryOf = (entity: string | { name?: string }) => repositories[(typeof entity === 'string' ? entity : entity?.name) as keyof typeof repositories];
 	// The member row and its fact are written in one transaction; its manager reads the same doubles.
-	dataSource.transaction = jest.fn(async (work: (manager: DataSource) => Promise<unknown>) => work(dataSource));
+	const manager = { getRepository: repositoryOf };
+	const dataSource = {
+		getRepository: repositoryOf,
+		transaction: jest.fn(async (work: (m: typeof manager) => Promise<unknown>) => work(manager))
+	} as unknown as DataSource;
 	const access = {
 		requireMember: jest.fn(async () => ({ conversation: { id: 'c1', messageCount: 5 }, member: { id: 'mb1', employeeId: 'e1', readCount: 2, mentionCount: 1 } }))
 	} as unknown as ChatAccessService;

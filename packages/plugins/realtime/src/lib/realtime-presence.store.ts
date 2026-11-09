@@ -170,6 +170,8 @@ export class RealtimePresenceStore {
 			})
 			// A concurrent first report of the same employee inserted it: that row is the one locked below.
 			.orIgnore()
+			// Nothing is read back: an ignored insert returns no row on Postgres (`ON CONFLICT DO NOTHING ... RETURNING`).
+			.updateEntity(false)
 			.execute();
 		await repository.update(key, { updatedAt: new Date() });
 		return (await repository.findOne({ where: key })) as RealtimePresence;

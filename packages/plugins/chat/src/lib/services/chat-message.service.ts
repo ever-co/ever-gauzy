@@ -722,11 +722,12 @@ export class ChatMessageService {
 		) {
 			throw new NotFoundException('Nothing to undo.');
 		}
+		const employeeId: ID = caller.employeeId;
 		const events = await this.dataSource.transaction(async (manager) => {
 			const repository = manager.getRepository(ChatMember);
 			const facts: IChatEvent[] = [];
 			for (const row of snapshot.rows) {
-				const member = await repository.findOne({ where: { id: row.id, tenantId: caller.tenantId, employeeId: caller.employeeId } });
+				const member = await repository.findOne({ where: { id: row.id, tenantId: caller.tenantId, employeeId } });
 				if (!member) continue;
 				const patch = { readCount: Math.max(0, Number(row.readCount) || 0), mentionCount: Math.max(0, Number(row.mentionCount) || 0), lastReadMessageId: row.lastReadMessageId ?? null };
 				await repository.update({ id: member.id }, patch as never);
@@ -882,7 +883,7 @@ export class ChatMessageService {
 				members
 			} as unknown as ITaskCreateInput)
 		);
-		const members = await this.access.members(caller.tenantId, message.conversationId);
+		const conversationMembers = await this.access.members(caller.tenantId, message.conversationId);
 		let saved: ChatTaskReference;
 		let events: IChatEvent[];
 		try {
@@ -892,7 +893,7 @@ export class ChatMessageService {
 				const reference = await repository.save(
 					repository.create({ messageId: message.id as ID, taskId: task.id as ID, kind: ChatTaskReferenceKindEnum.CREATED, tenantId: caller.tenantId, organizationId })
 				);
-				return [reference, [await this.realtime.append(manager, this.realtime.messageFact(CHAT_EVENT_NAMES.MESSAGE_UPDATED, message, members.map((m) => m.userId)))]] as const;
+				return [reference, [await this.realtime.append(manager, this.realtime.messageFact(CHAT_EVENT_NAMES.MESSAGE_UPDATED, message, conversationMembers.map((m) => m.userId)))]] as const;
 			});
 		} catch (error) {
 			// The task exists (its own transaction committed) but the message does not point to it: said with the task's
