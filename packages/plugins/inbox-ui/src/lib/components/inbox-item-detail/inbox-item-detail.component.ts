@@ -1,10 +1,10 @@
 // cspell:ignore unsnooze
 import { DatePipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, effect, input, output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { NbAlertModule, NbButtonModule, NbIconModule, NbTooltipModule } from '@nebular/theme';
-import { TranslatePipe } from '@ngx-translate/core';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import {
 	IInboxItemOption,
 	IInboxItemWithState,
@@ -16,6 +16,7 @@ import {
 } from '@gauzy/contracts';
 import {
 	activityOf,
+	emailHeaderOf,
 	escalationDetails,
 	INBOX_REPLY_MAX,
 	INBOX_SNOOZE_PRESETS,
@@ -165,9 +166,12 @@ import { InboxEmailViewerComponent } from '../inbox-email-viewer/inbox-email-vie
 						<h5 class="title" data-test="detail-title">{{ current.title }}</h5>
 						<div class="meta">
 							<span class="chip" data-test="detail-kind">{{ 'INBOX.KIND.' + current.kind | translate }}</span>
-							<span class="chip" data-test="detail-source">{{
-								isKey(sourceLabel()) ? (sourceLabel() | translate) : sourceLabel()
-							}}</span>
+							<!-- An email from the Email source would say "Email" twice. -->
+							@if (current.source !== current.kind) {
+								<span class="chip" data-test="detail-source">{{
+									isKey(sourceLabel()) ? (sourceLabel() | translate) : sourceLabel()
+								}}</span>
+							}
 							@if (mailboxLabel(); as mailbox) {
 								<span class="chip" data-test="detail-mailbox">{{ mailbox }}</span>
 							}
@@ -176,9 +180,12 @@ import { InboxEmailViewerComponent } from '../inbox-email-viewer/inbox-email-vie
 									'INBOX.PRIORITY.' + current.priority | translate
 								}}</span>
 							}
-							<span class="chip status" [attr.data-status]="current.status">{{
-								'INBOX.STATUS.' + current.status | translate
-							}}</span>
+							<!-- An email is read, not decided: it has no status to show. -->
+							@if (current.kind !== kinds.EMAIL) {
+								<span class="chip status" [attr.data-status]="current.status">{{
+									'INBOX.STATUS.' + current.status | translate
+								}}</span>
+							}
 							@if (current.dueAt) {
 								<span class="chip due">
 									<nb-icon icon="calendar-outline"></nb-icon>
@@ -215,68 +222,116 @@ import { InboxEmailViewerComponent } from '../inbox-email-viewer/inbox-email-vie
 
 			<div class="detail-body">
 				@if (current.kind === kinds.EMAIL) {
+					<!-- A mail app's message header: who sent it, where it came, what it carries. -->
+					@let mail = emailHeader();
+					<div class="mail-head" data-test="email-header">
+						<span class="sender" aria-hidden="true">
+							@if (mail.initials) {
+								{{ mail.initials }}
+							} @else {
+								<nb-icon icon="person-outline"></nb-icon>
+							}
+						</span>
+						<div class="mail-who">
+							<div class="mail-from">
+								<span class="mail-name" data-test="email-from">{{
+									mail.fromName ?? ('INBOX.EMAIL.UNKNOWN_SENDER' | translate)
+								}}</span>
+								@if (mail.fromAddress) {
+									<span class="mail-address">&lt;{{ mail.fromAddress }}&gt;</span>
+								}
+							</div>
+							@if (mail.to) {
+								<div class="mail-to">{{ 'INBOX.EMAIL.TO' | translate: { to: mail.to } }}</div>
+							}
+						</div>
+						@if (mail.attachments) {
+							<span class="mail-attachments" data-test="email-attachments">
+								<nb-icon icon="attach-outline"></nb-icon>
+								{{ 'INBOX.EMAIL.ATTACHMENTS' | translate: { count: mail.attachments } }}
+							</span>
+						}
+					</div>
+					@if (mail.spam) {
+						<div class="mail-spam" role="note" data-test="email-spam">
+							<nb-icon icon="alert-triangle-outline"></nb-icon>
+							{{ 'INBOX.EMAIL.SPAM.' + mail.spam | translate }}
+						</div>
+					}
 					<ngx-inbox-email-viewer [text]="current.body" [title]="current.title"></ngx-inbox-email-viewer>
 				} @else if (current.body) {
 					<div class="body" data-test="detail-body">{{ current.body }}</div>
 				}
 
+				<!-- An escalation's details as an issue tracker's fields: a label on the left, its value on the right. -->
 				@if (current.kind === kinds.ESCALATION) {
-					<div class="callout escalation" data-test="escalation">
-						@if (escalation().decisionNeeded) {
-							<div class="callout-section">
-								<div class="callout-label">{{ 'INBOX.ESCALATION.DECISION' | translate }}</div>
-								<div>{{ escalation().decisionNeeded }}</div>
-							</div>
-						}
-						@if (escalation().attempted.length) {
-							<div class="callout-section">
-								<div class="callout-label">{{ 'INBOX.ESCALATION.ATTEMPTED' | translate }}</div>
-								<ul>
-									@for (attempt of escalation().attempted; track $index) {
-										<li>{{ attempt }}</li>
-									}
-								</ul>
-							</div>
-						}
-						@if (escalation().confidence !== null) {
-							<div class="callout-section" data-test="confidence">
-								<div class="callout-label">{{ 'INBOX.ESCALATION.CONFIDENCE' | translate }}</div>
-								<div class="confidence">
-									<span class="bar"><span [style.width.%]="escalation().confidence"></span></span>
-									<span>{{ escalation().confidence }}%</span>
-								</div>
-							</div>
-						}
-					</div>
-				}
-
-				@if (current.response) {
-					<div class="answer" data-test="answer">
-						<div class="answer-head">
-							<nb-icon icon="checkmark-circle-2-outline"></nb-icon>
-							<span>{{
-								'INBOX.ANSWERED' | translate: { date: (current.response.answeredAt | date: 'medium') }
-							}}</span>
-						</div>
-						@if (answeredOption(); as option) {
-							<div class="answer-option">
-								{{ isKey(option.label) ? (option.label | translate) : option.label }}
-							</div>
-						}
-						@if (current.response.text) {
-							<div class="body">{{ current.response.text }}</div>
-						}
-						@if (routedNotice(); as notice) {
-							@if (notice.alreadyDecided) {
-								<div class="routed" data-test="already-decided">
-									{{ 'INBOX.ALREADY_DECIDED' | translate: { source: (notice.source | translate) } }}
-								</div>
-							} @else {
-								<div class="routed" data-test="routed">
-									{{ 'INBOX.ROUTED' | translate: { routed: notice.routed } }}
+					@let details = escalation();
+					@if (details.decisionNeeded || details.attempted.length || details.confidence !== null) {
+						<dl class="fields" data-test="escalation">
+							@if (details.decisionNeeded) {
+								<div class="field">
+									<dt>{{ 'INBOX.ESCALATION.DECISION' | translate }}</dt>
+									<dd class="decision">{{ details.decisionNeeded }}</dd>
 								</div>
 							}
-						}
+							@if (details.attempted.length) {
+								<div class="field">
+									<dt>{{ 'INBOX.ESCALATION.ATTEMPTED' | translate }}</dt>
+									<dd>
+										<ol class="tried">
+											@for (attempt of details.attempted; track $index) {
+												<li>{{ attempt }}</li>
+											}
+										</ol>
+									</dd>
+								</div>
+							}
+							@if (details.confidence !== null) {
+								<div class="field" data-test="confidence">
+									<dt>{{ 'INBOX.ESCALATION.CONFIDENCE' | translate }}</dt>
+									<dd class="confidence" [attr.data-level]="confidenceLevel()">
+										<span class="meter" aria-hidden="true">
+											@for (segment of meterSegments; track segment) {
+												<span [class.on]="segment * 10 <= details.confidence + 5"></span>
+											}
+										</span>
+										<span class="confidence-value">{{ details.confidence }}%</span>
+									</dd>
+								</div>
+							}
+						</dl>
+					}
+				}
+
+				<!-- The answer as a reply under the message: who decided what, and when; no coloured box. -->
+				@if (current.response; as response) {
+					<div class="reply" data-test="answer">
+						<span class="reply-icon" aria-hidden="true"><nb-icon icon="corner-down-right-outline"></nb-icon></span>
+						<div class="reply-content">
+							<div class="reply-meta">
+								{{ 'INBOX.ANSWERED' | translate: { date: (response.answeredAt | date: 'MMM d, y, h:mm a') } }}
+							</div>
+							@if (answeredOption(); as option) {
+								<span class="choice" [attr.data-choice]="option.id">
+									<span class="choice-dot" aria-hidden="true"></span>
+									{{ isKey(option.label) ? (option.label | translate) : option.label }}
+								</span>
+							}
+							@if (response.text) {
+								<p class="reply-text">{{ response.text }}</p>
+							}
+							@if (routedNotice(); as notice) {
+								@if (notice.alreadyDecided) {
+									<div class="routed" data-test="already-decided">
+										{{ 'INBOX.ALREADY_DECIDED' | translate: { source: (notice.source | translate) } }}
+									</div>
+								} @else {
+									<div class="routed" data-test="routed">
+										{{ 'INBOX.ROUTED' | translate: { routed: notice.routed } }}
+									</div>
+								}
+							}
+						</div>
 					</div>
 				}
 
@@ -497,9 +552,9 @@ import { InboxEmailViewerComponent } from '../inbox-email-viewer/inbox-email-vie
 			}
 			.title {
 				margin: 0 0 0.375rem;
-				font-size: 0.9375rem;
+				font-size: 0.875rem;
 				font-weight: 600;
-				line-height: 1.375rem;
+				line-height: 1.25rem;
 				color: var(--gauzy-text-color-1, #222b45);
 				overflow-wrap: anywhere;
 			}
@@ -595,8 +650,8 @@ import { InboxEmailViewerComponent } from '../inbox-email-viewer/inbox-email-vie
 
 			/* Kind avatar */
 			.avatar {
-				--tone: var(--color-primary-500, #6e49e8);
-				--tone-bg: var(--color-primary-transparent-100, rgba(110, 73, 232, 0.12));
+				--tone: var(--gauzy-text-color-2, #8f9bb3);
+				--tone-bg: var(--gauzy-hover-tint, rgba(126, 126, 143, 0.12));
 				display: inline-flex;
 				align-items: center;
 				justify-content: center;
@@ -612,26 +667,6 @@ import { InboxEmailViewerComponent } from '../inbox-email-viewer/inbox-email-vie
 				height: 1rem;
 				font-size: 1rem;
 			}
-			.avatar[data-kind='QUESTION'] {
-				--tone: var(--color-info-500, #0095ff);
-				--tone-bg: var(--color-info-transparent-100, rgba(0, 149, 255, 0.12));
-			}
-			.avatar[data-kind='APPROVAL'] {
-				--tone: var(--color-success-500, #00d68f);
-				--tone-bg: var(--color-success-transparent-100, rgba(0, 214, 143, 0.12));
-			}
-			.avatar[data-kind='ESCALATION'] {
-				--tone: var(--color-danger-500, #ff3d71);
-				--tone-bg: var(--color-danger-transparent-100, rgba(255, 61, 113, 0.12));
-			}
-			.avatar[data-kind='NOTIFICATION'] {
-				--tone: var(--color-warning-500, #ffaa00);
-				--tone-bg: var(--color-warning-transparent-100, rgba(255, 170, 0, 0.12));
-			}
-			.avatar[data-kind='NOTICE'] {
-				--tone: var(--gauzy-text-color-2, #8f9bb3);
-				--tone-bg: var(--gauzy-hover-tint, rgba(126, 126, 143, 0.12));
-			}
 
 			/* Body */
 			.detail-body {
@@ -644,93 +679,276 @@ import { InboxEmailViewerComponent } from '../inbox-email-viewer/inbox-email-vie
 				max-width: 72ch;
 				white-space: pre-wrap;
 				overflow-wrap: anywhere;
-				font-size: 0.8125rem;
-				line-height: 1.25rem;
+				font-size: 0.75rem;
+				line-height: 1.125rem;
 				color: var(--gauzy-text-color-1, #222b45);
 				margin-bottom: 0.875rem;
 			}
-			.callout {
-				max-width: 72ch;
+			/* An email's header: the sender, the mailbox it came to, its attachments */
+			.mail-head {
 				display: flex;
-				flex-direction: column;
+				align-items: center;
 				gap: 0.625rem;
-				padding: 0.625rem 0.75rem;
+				max-width: 72ch;
+				padding-bottom: 0.75rem;
 				margin-bottom: 0.875rem;
-				border: 1px solid var(--color-danger-transparent-300, rgba(255, 61, 113, 0.24));
-				border-left-width: 2px;
-				border-left-color: var(--color-danger-500, #ff3d71);
-				border-radius: 0.375rem;
-				background: var(--color-danger-transparent-100, rgba(255, 61, 113, 0.08));
-				font-size: 0.8125rem;
-				line-height: 1.25rem;
+				border-bottom: 1px solid var(--gauzy-border-default-color, rgba(126, 126, 143, 0.18));
 			}
-			.callout-label {
-				margin-bottom: 0.125rem;
+			.sender {
+				display: inline-flex;
+				align-items: center;
+				justify-content: center;
+				flex-shrink: 0;
+				width: 2rem;
+				height: 2rem;
+				border-radius: 50%;
+				background: var(--gauzy-hover-tint, rgba(126, 126, 143, 0.14));
+				color: var(--gauzy-text-color-1, #222b45);
 				font-size: 0.6875rem;
 				font-weight: 600;
-				line-height: 1rem;
-				text-transform: uppercase;
-				letter-spacing: 0.03em;
-				color: var(--gauzy-text-color-2, #8f9bb3);
+				letter-spacing: 0.02em;
 			}
-			.callout ul {
-				margin: 0;
-				padding-left: 1rem;
-			}
-			.confidence {
-				display: flex;
-				align-items: center;
-				gap: 0.5rem;
-				font-size: 0.75rem;
-				font-weight: 600;
-			}
-			.bar {
-				position: relative;
-				width: 8rem;
-				height: 0.25rem;
-				border-radius: 999px;
-				background: var(--gauzy-hover-tint, rgba(126, 126, 143, 0.12));
-				overflow: hidden;
-			}
-			.bar span {
-				position: absolute;
-				inset: 0 auto 0 0;
-				border-radius: 999px;
-				background: var(--color-danger-500, #ff3d71);
-			}
-			.answer {
-				max-width: 72ch;
-				padding: 0.625rem 0.75rem;
-				margin-bottom: 0.875rem;
-				border: 1px solid var(--color-success-transparent-300, rgba(0, 214, 143, 0.24));
-				border-left-width: 2px;
-				border-left-color: var(--color-success-500, #00d68f);
-				border-radius: 0.375rem;
-				background: var(--color-success-transparent-100, rgba(0, 214, 143, 0.08));
-				font-size: 0.8125rem;
-				line-height: 1.25rem;
-			}
-			.answer-head {
-				display: flex;
-				align-items: center;
-				gap: 0.375rem;
-				margin-bottom: 0.25rem;
-				font-size: 0.75rem;
-				font-weight: 600;
-				line-height: 1rem;
-				color: var(--color-success-500, #00d68f);
-			}
-			.answer-head nb-icon {
+			.sender nb-icon {
 				width: 0.875rem;
 				height: 0.875rem;
 				font-size: 0.875rem;
+				color: var(--gauzy-text-color-2, #8f9bb3);
 			}
-			.answer-option {
+			.mail-who {
+				flex: 1;
+				min-width: 0;
+				line-height: 1.125rem;
+			}
+			.mail-from {
+				display: flex;
+				align-items: baseline;
+				gap: 0.375rem;
+				min-width: 0;
+				font-size: 0.75rem;
+			}
+			.mail-name {
 				font-weight: 600;
-				margin-bottom: 0.125rem;
+				color: var(--gauzy-text-color-1, #222b45);
+				white-space: nowrap;
+				overflow: hidden;
+				text-overflow: ellipsis;
 			}
-			.answer .body {
-				margin-bottom: 0;
+			.mail-address,
+			.mail-to {
+				min-width: 0;
+				font-size: 0.6875rem;
+				color: var(--gauzy-text-color-2, #8f9bb3);
+				white-space: nowrap;
+				overflow: hidden;
+				text-overflow: ellipsis;
+			}
+			.mail-attachments {
+				display: inline-flex;
+				align-items: center;
+				gap: 0.25rem;
+				flex-shrink: 0;
+				height: 1.5rem;
+				padding: 0 0.5rem;
+				border: 1px solid var(--gauzy-border-default-color, rgba(126, 126, 143, 0.24));
+				border-radius: 0.375rem;
+				font-size: 0.6875rem;
+				font-weight: 500;
+				color: var(--gauzy-text-color-2, #8f9bb3);
+			}
+			.mail-attachments nb-icon {
+				width: 0.75rem;
+				height: 0.75rem;
+				font-size: 0.75rem;
+			}
+			/* A spam doubt: one quiet line, not a coloured box. */
+			.mail-spam {
+				display: flex;
+				align-items: center;
+				gap: 0.375rem;
+				max-width: 72ch;
+				margin: -0.25rem 0 0.875rem;
+				font-size: 0.6875rem;
+				line-height: 1rem;
+				color: var(--gauzy-text-color-2, #8f9bb3);
+			}
+			.mail-spam nb-icon {
+				flex-shrink: 0;
+				width: 0.875rem;
+				height: 0.875rem;
+				font-size: 0.875rem;
+				color: var(--color-warning-500, #ffaa00);
+			}
+
+			/* Escalation details: an issue tracker's fields, label on the left, value on the right; neutral. */
+			.fields {
+				max-width: 72ch;
+				margin: 0 0 1rem;
+				border: 1px solid var(--gauzy-border-default-color, rgba(126, 126, 143, 0.24));
+				border-radius: 0.5rem;
+				overflow: hidden;
+			}
+			.field {
+				display: grid;
+				grid-template-columns: 8.5rem minmax(0, 1fr);
+				gap: 0.75rem;
+				padding: 0.5rem 0.75rem;
+				font-size: 0.75rem;
+				line-height: 1.125rem;
+			}
+			.field + .field {
+				border-top: 1px solid var(--gauzy-border-default-color, rgba(126, 126, 143, 0.18));
+			}
+			.field dt {
+				font-size: 0.6875rem;
+				font-weight: 500;
+				color: var(--gauzy-text-color-2, #8f9bb3);
+			}
+			.field dd {
+				margin: 0;
+				min-width: 0;
+				color: var(--gauzy-text-color-1, #222b45);
+				overflow-wrap: anywhere;
+			}
+			.field dd.decision {
+				font-weight: 600;
+			}
+			/* What was tried: small numbered steps */
+			.tried {
+				margin: 0;
+				padding: 0;
+				list-style: none;
+				counter-reset: tried;
+			}
+			.tried li {
+				position: relative;
+				padding-left: 1.5rem;
+				counter-increment: tried;
+			}
+			.tried li + li {
+				margin-top: 0.25rem;
+			}
+			.tried li::before {
+				content: counter(tried);
+				position: absolute;
+				left: 0;
+				top: 0.125rem;
+				display: inline-flex;
+				align-items: center;
+				justify-content: center;
+				width: 1rem;
+				height: 1rem;
+				border-radius: 50%;
+				background: var(--gauzy-hover-tint, rgba(126, 126, 143, 0.14));
+				color: var(--gauzy-text-color-2, #8f9bb3);
+				font-size: 0.625rem;
+				font-weight: 600;
+				line-height: 1;
+			}
+			/* Confidence: ten thin segments; only the filled ones take the level's colour. */
+			.confidence {
+				display: flex;
+				align-items: center;
+				gap: 0.625rem;
+			}
+			.meter {
+				display: inline-flex;
+				gap: 2px;
+			}
+			.meter span {
+				width: 0.375rem;
+				height: 0.75rem;
+				border-radius: 1px;
+				background: var(--gauzy-hover-tint, rgba(126, 126, 143, 0.18));
+			}
+			.confidence[data-level='low'] .meter span.on {
+				background: var(--color-danger-500, #ff3d71);
+			}
+			.confidence[data-level='medium'] .meter span.on {
+				background: var(--color-warning-500, #ffaa00);
+			}
+			.confidence[data-level='high'] .meter span.on {
+				background: var(--color-success-500, #00d68f);
+			}
+			.confidence-value {
+				font-size: 0.6875rem;
+				font-weight: 600;
+				font-variant-numeric: tabular-nums;
+			}
+
+			/* The answer: a reply under the message, as a thread shows it */
+			.reply {
+				display: flex;
+				gap: 0.625rem;
+				max-width: 72ch;
+				margin-bottom: 0.875rem;
+			}
+			.reply-icon {
+				display: inline-flex;
+				align-items: center;
+				justify-content: center;
+				flex-shrink: 0;
+				width: 1.5rem;
+				height: 1.5rem;
+				border-radius: 50%;
+				background: var(--gauzy-hover-tint, rgba(126, 126, 143, 0.14));
+				color: var(--gauzy-text-color-2, #8f9bb3);
+			}
+			.reply-icon nb-icon {
+				width: 0.75rem;
+				height: 0.75rem;
+				font-size: 0.75rem;
+			}
+			.reply-content {
+				flex: 1;
+				min-width: 0;
+				display: flex;
+				flex-direction: column;
+				align-items: flex-start;
+				gap: 0.375rem;
+				padding-top: 0.125rem;
+			}
+			.reply-meta {
+				font-size: 0.6875rem;
+				line-height: 1rem;
+				color: var(--gauzy-text-color-2, #8f9bb3);
+			}
+			.choice {
+				display: inline-flex;
+				align-items: center;
+				gap: 0.375rem;
+				height: 1.375rem;
+				padding: 0 0.625rem;
+				border: 1px solid var(--gauzy-border-default-color, rgba(126, 126, 143, 0.32));
+				border-radius: 999px;
+				font-size: 0.6875rem;
+				font-weight: 600;
+				color: var(--gauzy-text-color-1, #222b45);
+			}
+			.choice-dot {
+				width: 0.4375rem;
+				height: 0.4375rem;
+				border-radius: 50%;
+				background: var(--color-primary-500, #6e49e8);
+			}
+			.choice[data-choice='approve'] .choice-dot {
+				background: var(--color-success-500, #00d68f);
+			}
+			.choice[data-choice='reject'] .choice-dot {
+				background: var(--color-danger-500, #ff3d71);
+			}
+			.reply-text {
+				margin: 0;
+				font-size: 0.75rem;
+				line-height: 1.125rem;
+				white-space: pre-wrap;
+				overflow-wrap: anywhere;
+				color: var(--gauzy-text-color-1, #222b45);
+			}
+			@media (max-width: 600px) {
+				.field {
+					grid-template-columns: minmax(0, 1fr);
+					gap: 0.125rem;
+				}
 			}
 			/* Activity: a thin timeline under the message */
 			.activity {
@@ -741,7 +959,7 @@ import { InboxEmailViewerComponent } from '../inbox-email-viewer/inbox-email-vie
 			}
 			.activity-title {
 				margin: 0 0 0.5rem;
-				font-size: 0.6875rem;
+				font-size: 0.625rem;
 				font-weight: 600;
 				line-height: 1rem;
 				text-transform: uppercase;
@@ -759,7 +977,7 @@ import { InboxEmailViewerComponent } from '../inbox-email-viewer/inbox-email-vie
 				align-items: baseline;
 				gap: 0.5rem;
 				padding: 0 0 0.5rem 1rem;
-				font-size: 0.75rem;
+				font-size: 0.6875rem;
 				line-height: 1rem;
 			}
 			.step::before {
@@ -850,21 +1068,18 @@ import { InboxEmailViewerComponent } from '../inbox-email-viewer/inbox-email-vie
 				height: 0.75rem;
 				font-size: 0.75rem;
 			}
+			/* One neutral look: the chosen option is told by its darker outline, a light fill and its check mark. */
 			.option:hover {
-				border-color: var(--color-primary-500, #6e49e8);
-			}
-			.option.recommended {
-				border-color: var(--color-info-500, #0095ff);
+				background: var(--gauzy-hover-tint, rgba(126, 126, 143, 0.08));
 			}
 			.option.chosen {
-				border-color: var(--color-primary-500, #6e49e8);
-				background: var(--color-primary-500, #6e49e8);
-				color: #fff;
+				border-color: var(--gauzy-text-color-1, #222b45);
+				background: var(--gauzy-hover-tint, rgba(126, 126, 143, 0.14));
 			}
 			.recommended-label {
 				font-size: 0.6875rem;
 				font-weight: 400;
-				opacity: 0.85;
+				color: var(--gauzy-text-color-2, #8f9bb3);
 			}
 			.label {
 				margin: 0;
@@ -900,8 +1115,8 @@ import { InboxEmailViewerComponent } from '../inbox-email-viewer/inbox-email-vie
 				background: transparent !important;
 				color: var(--gauzy-text-color-1, #222b45);
 				font: inherit;
-				font-size: 0.8125rem;
-				line-height: 1.25rem;
+				font-size: 0.75rem;
+				line-height: 1.125rem;
 			}
 			.composer-box textarea::placeholder {
 				color: var(--gauzy-text-color-2, #8f9bb3);
@@ -941,6 +1156,7 @@ import { InboxEmailViewerComponent } from '../inbox-email-viewer/inbox-email-vie
 	]
 })
 export class InboxItemDetailComponent {
+	private readonly translate = inject(TranslateService);
 	readonly item = input.required<IInboxItemWithState>();
 	/** A request of the page for this item is running. */
 	readonly busy = input<boolean>(false);
@@ -963,14 +1179,33 @@ export class InboxItemDetailComponent {
 
 	readonly options = computed(() => optionsOf(this.item()));
 	readonly escalation = computed(() => escalationDetails(this.item()));
+	/** The confidence meter's ten segments, and the colour of its level: low under 40%, medium under 70%, else high. */
+	protected readonly meterSegments = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+	readonly confidenceLevel = computed(() => {
+		const confidence = this.escalation().confidence ?? 0;
+		return confidence < 40 ? 'low' : confidence < 70 ? 'medium' : 'high';
+	});
 	readonly links = computed(() => linksOf(this.item()));
+	/** An email's sender, mailbox, attachments and spam verdict, for its header. */
+	readonly emailHeader = computed(() => emailHeaderOf(this.item()));
 	/** The item's history, under the message. */
 	readonly activity = computed(() => activityOf(this.item()));
 	readonly unread = computed(() => isUnread(this.item()));
 	readonly archived = computed(() => isArchived(this.item()));
 	readonly snoozed = computed(() => isSnoozed(this.item()));
 	readonly done = computed(() => isDone(this.item()));
-	readonly problem = computed(() => replyProblem(this.item(), this.text(), this.optionId()));
+	/** The option chosen in the composer. */
+	readonly chosenOption = computed(() => this.options().find((option) => option.id === this.optionId()) ?? null);
+	/**
+	 * The text the reply sends: the box's words, unless they are the chosen option's own (filled in by choosing it):
+	 * the choice alone is sent then, so the answer does not say it twice and a required reason is still asked for.
+	 */
+	readonly replyText = computed(() => {
+		const text = this.text().trim();
+		const chosen = this.chosenOption();
+		return chosen && text === this.optionText(chosen).trim() ? '' : text;
+	});
+	readonly problem = computed(() => replyProblem(this.item(), this.replyText(), this.optionId()));
 	/** Only a recipient answers (a mailbox reader only reads), and only an open decision. */
 	readonly canReply = computed(() => {
 		const item = this.item();
@@ -1020,13 +1255,30 @@ export class InboxItemDetailComponent {
 		return isTranslationKey(label);
 	}
 
+	/** An option's words as the reply box shows them (Approve / Reject translated). */
+	optionText(option: IInboxItemOption): string {
+		return isTranslationKey(option.label) ? this.translate.instant(option.label) : option.label;
+	}
+
+	/**
+	 * A suggested reply: chosen, its words fill the reply box, to send as they are or to edit. A text the user wrote
+	 * is never replaced; the words of the option chosen before are. Chosen again, it is dropped with its words.
+	 */
 	choose(option: IInboxItemOption): void {
-		this.optionId.set(this.optionId() === option.id ? null : option.id);
+		const before = this.chosenOption();
+		const untouched = !this.text().trim() || (!!before && this.text() === this.optionText(before));
+		if (before?.id === option.id) {
+			this.optionId.set(null);
+			if (untouched) this.text.set('');
+			return;
+		}
+		this.optionId.set(option.id);
+		if (untouched) this.text.set(this.optionText(option));
 	}
 
 	send(): void {
 		if (this.problem() || this.busy()) return;
-		const text = this.text().trim();
+		const text = this.replyText();
 		const optionId = this.optionId();
 		this.replied.emit({ ...(text ? { text } : {}), ...(optionId ? { optionId } : {}) });
 	}
