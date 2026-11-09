@@ -55,12 +55,23 @@
 
 ## Follow-ups (from the plan's §15)
 
-- [x] **T19**. Append chat facts inside the originating transaction (`ChatRealtime.append`, savepoint retry on a partition race); task/comment/document/mention/notification hints stay best effort by decision (plan §15.1)
-- [x] **T20**. Per-connection presence (`realtime_presence`, TTL, sweep), merged per employee, published only on change, ordered by a per-employee revision (plan §15.2)
+- [x] **T19**. Append chat facts inside the originating transaction
+  (`ChatRealtime.append`, savepoint retry on a partition race);
+  task/comment/document/mention/notification hints stay best effort by decision
+  (plan §15.1)
+- [x] **T20**. Per-connection presence (`realtime_presence`, TTL, sweep), merged
+  per employee, published only on change, ordered by a per-employee revision
+  (plan §15.2)
 - [x] **T21**. Audience of `document.*`, `comment.*` and `task.*` hints from the parent record's read access (Docs visibility scope, the task read rule, the parent record's rule for comments), decided at delivery for live delivery and catch-up (`RealtimeAudience`; plan §9, §15.3)
 - [x] **T22**. Current-membership recheck for `chat_*` events in the catch-up and the live stream (`ChatMembershipAudience`, registered through `SubscriptionCatalogue.restrictAudience`; plan §9, §15.4)
 - [ ] **T23**. Outbox retention that keeps the FR-3 floor, with a test of both bounds (plan §15.5)
-- [x] **T24**. Commit-safe order and a safe resume position independent of the last live event (`safeCursor` settle window, or a commit-ordered position delivered in order) + a regression test of two concurrent appends committing out of stamp order (plan §15.6)
+- [x] **T24**. Commit-safe order and a safe resume position independent of the
+  last live event (`safeCursor` settle window, or a commit-ordered position
+  delivered in order) + a regression test of two concurrent appends committing
+  out of stamp order (plan §15.6)
+- [x] **T25**. `resync` from an actual retention watermark kept as the full
+  (`createdAt`, `eventId`) position, not from the oldest retained row (plan
+  §15.8)
 - [ ] **T26**. Coalesce the presence fan-out to at most one message per
   employee per 5 s (spec §4 Performance); today a change is published at once,
   only when the merged state changed
@@ -68,4 +79,3 @@
   `cursor` (not from streamed events), poll the catch-up while connected, apply
   a `presence.changed` only with a higher `revision`, and send a `connectionId`
   with presence at least every minute (plan §15.2, §15.6)
-- [x] **T25**. `resync` from an actual retention watermark kept as the full (`createdAt`, `eventId`) position, not from the oldest retained row (plan §15.8)
