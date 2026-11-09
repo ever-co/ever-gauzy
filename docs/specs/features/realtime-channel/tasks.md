@@ -61,6 +61,11 @@
 - [x] **T22**. Current-membership recheck for `chat_*` events in the catch-up and the live stream (`ChatMembershipAudience`, registered through `SubscriptionCatalogue.restrictAudience`; plan §9, §15.4)
 - [ ] **T23**. Outbox retention that keeps the FR-3 floor, with a test of both bounds (plan §15.5)
 - [x] **T24**. Commit-safe order and a safe resume position independent of the last live event (`safeCursor` settle window, or a commit-ordered position delivered in order) + a regression test of two concurrent appends committing out of stamp order (plan §15.6)
-- [ ] **T26**. Coalesce the presence fan-out to at most one message per employee per 5 s (spec §4 Performance); today a change is published at once, only when the merged state changed
-- [ ] **T27**. Ever Teams `realtime-client`: resume from the catch-up's own `cursor` (not from streamed events), poll the catch-up while connected, apply a `presence.changed` only with a higher `revision`, and send a `connectionId` with presence at least every minute (plan §15.2, §15.6)
+- [ ] **T26**. Coalesce the presence fan-out to at most one message per
+  employee per 5 s (spec §4 Performance); today a change is published at once,
+  only when the merged state changed
+- [ ] **T27**. Ever Teams `realtime-client`: resume from the catch-up's own
+  `cursor` (not from streamed events), poll the catch-up while connected, apply
+  a `presence.changed` only with a higher `revision`, and send a `connectionId`
+  with presence at least every minute (plan §15.2, §15.6)
 - [x] **T25**. `resync` from an actual retention watermark kept as the full (`createdAt`, `eventId`) position, not from the oldest retained row (plan §15.8)
