@@ -1,3 +1,4 @@
+import { ApplicationRef } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { BehaviorSubject, of, Subject, throwError } from 'rxjs';
@@ -568,6 +569,192 @@ describe('InboxPageComponent', () => {
 			withItemLink('deep');
 			expect(render().component.view()).toBe('unavailable');
 			expect(api.get).not.toHaveBeenCalled();
+		});
+	});
+
+	describe('bulk actions, undo, shortcuts and empty states', () => {
+		const read = (id: string, extra: Partial<IInboxItemWithState['recipient'] & object> = {}) =>
+			item(id, { recipient: { isRead: true, isArchived: false, snoozedUntil: null, ...extra } });
+
+		function ready(items: IInboxItemWithState[]) {
+			api.counts.mockReturnValue(of({ unread: 0, decisionsOpen: 0, byMailbox: [] }));
+			api.list.mockReturnValue(of({ items, nextCursor: null }));
+			return render();
+		}
+
+		const press = (key: string, target: EventTarget = document.body) => {
+			const event = new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true });
+			target.dispatchEvent(event);
+			return event;
+		};
+
+		it('archives the checked rows, one request each, and offers to undo it', () => {
+			const { component, fixture, find } = ready([read('a'), read('b'), read('c')]);
+			component.toggleChecked(component.items()[0]);
+			component.toggleChecked(component.items()[1]);
+			fixture.detectChanges();
+			expect(find('bulk-bar')).not.toBeNull();
+			expect(find('filters')).toBeNull();
+			api.setState.mockImplementation((id: string) => of(read(id, { isArchived: true })));
+
+			component.bulk({ isArchived: true });
+
+			expect(api.setState).toHaveBeenCalledTimes(2);
+			expect(api.setState).toHaveBeenCalledWith('a', { isArchived: true });
+			expect(component.items().map((entry) => entry.id)).toEqual(['c']);
+			expect(component.checkedCount()).toBe(0);
+			expect(component.undo()).toEqual({
+				kind: 'ARCHIVED',
+				entries: [
+					{ id: 'a', revert: { isArchived: false } },
+					{ id: 'b', revert: { isArchived: false } }
+				]
+			});
+			expect(api.notifyChanged).toHaveBeenCalled();
+		});
+
+		it('keeps a row that failed checked, and says so', () => {
+			const { component } = ready([read('a'), read('b')]);
+			component.toggleAll();
+			expect(component.allChecked()).toBe(true);
+			api.setState.mockImplementation((id: string) =>
+				id === 'a' ? of(read('a', { isDone: true })) : throwError(() => ({ status: 500 }))
+			);
+
+			component.bulk({ isDone: true });
+
+			expect(component.items().map((entry) => entry.id)).toEqual(['b']);
+			expect([...component.checked()]).toEqual(['b']);
+			expect(component.actionError()).toBe('INBOX.BULK.FAILED');
+		});
+
+		it('lists rows as list items: the title is the native button that opens one, the checkbox a control beside it', () => {
+			const { component, find } = ready([read('a')]);
+			const row = find('item-a') as HTMLElement;
+			expect(row.getAttribute('role')).toBe('listitem');
+			expect(row.parentElement?.getAttribute('role')).toBe('list');
+			expect(row.querySelector('[role="button"]')).toBeNull();
+			const open = find('open-a') as HTMLButtonElement;
+			expect(open.tagName).toBe('BUTTON');
+			expect(open.contains(find('check-a'))).toBe(false);
+
+			open.click();
+			expect(component.selectedId()).toBe('a');
+			(find('check-a') as HTMLButtonElement).click();
+			expect(component.isChecked(component.items()[0])).toBe(true);
+		});
+
+		it('a bulk answer that comes after another tab was chosen leaves that tab and its selection alone', () => {
+			const { component } = ready([read('a'), read('b')]);
+			component.toggleAll();
+			const answer = new Subject<IInboxItemWithState>();
+			api.setState.mockReturnValue(answer);
+			component.bulk({ isDone: true });
+
+			api.list.mockReturnValue(of({ items: [read('c')], nextCursor: null }));
+			component.selectTab('archived');
+			expect(component.checkedCount()).toBe(0);
+			answer.error({ status: 500 });
+
+			expect(component.checkedCount()).toBe(0);
+			expect(component.items().map((entry) => entry.id)).toEqual(['c']);
+		});
+
+		it('the shortcuts sheet takes focus when it opens, keeps Tab inside, and gives focus back when it closes', () => {
+			const { fixture, find } = ready([read('a')]);
+			const opener = find('shortcuts') as HTMLButtonElement;
+			opener.focus();
+			opener.click();
+			fixture.detectChanges();
+			TestBed.inject(ApplicationRef).tick();
+			const close = find('shortcuts-close') as HTMLButtonElement;
+			expect(document.activeElement).toBe(close);
+
+			const tab = new KeyboardEvent('keydown', { key: 'Tab', bubbles: true, cancelable: true });
+			close.dispatchEvent(tab);
+			expect(tab.defaultPrevented).toBe(true);
+			expect(document.activeElement).toBe(close);
+
+			press('Escape');
+			fixture.detectChanges();
+			expect(find('shortcuts-sheet')).toBeNull();
+			expect(document.activeElement).toBe(opener);
+		});
+
+		it('"Undo" takes the change back and reads the list again', () => {
+			const { component } = ready([read('a')]);
+			api.setState.mockReturnValueOnce(of(read('a', { isArchived: true })));
+			component.changeState(component.items()[0], { isArchived: true });
+			expect(component.undo()?.kind).toBe('ARCHIVED');
+			api.setState.mockReturnValueOnce(of(read('a')));
+
+			component.undoLast();
+
+			expect(api.setState).toHaveBeenLastCalledWith('a', { isArchived: false });
+			expect(component.undo()).toBeNull();
+			expect(component.items().map((entry) => entry.id)).toEqual(['a']);
+			expect(api.list).toHaveBeenCalledTimes(2);
+		});
+
+		it('j / k open the next and the previous row; e archives the open one', () => {
+			const { component } = ready([read('a'), read('b')]);
+			press('j');
+			expect(component.selectedId()).toBe('a');
+			press('j');
+			expect(component.selectedId()).toBe('b');
+			press('k');
+			expect(component.selectedId()).toBe('a');
+
+			api.setState.mockReturnValue(of(read('a', { isArchived: true })));
+			press('e');
+			expect(api.setState).toHaveBeenCalledWith('a', { isArchived: true });
+		});
+
+		it('takes no shortcut typed in a field, nor with Ctrl; "?" opens the sheet and Esc closes it', () => {
+			const { component, fixture, find } = ready([read('a')]);
+			const field = document.createElement('input');
+			document.body.appendChild(field);
+			press('j', field);
+			expect(component.selectedId()).toBeNull();
+			document.dispatchEvent(new KeyboardEvent('keydown', { key: 'j', ctrlKey: true }));
+			expect(component.selectedId()).toBeNull();
+			field.remove();
+
+			press('?');
+			fixture.detectChanges();
+			expect(find('shortcuts-sheet')).not.toBeNull();
+			press('j');
+			expect(component.selectedId()).toBeNull();
+			press('Escape');
+			fixture.detectChanges();
+			expect(find('shortcuts-sheet')).toBeNull();
+		});
+
+		it("says what each tab holds when it is empty, and offers to clear the filters when they hide everything", () => {
+			const { component, fixture, find } = ready([]);
+			expect(find('empty')?.textContent).toContain('INBOX.EMPTY_TAB.all.TITLE');
+			component.setUnread(true);
+			fixture.detectChanges();
+			expect(find('empty')?.textContent).toContain('INBOX.EMPTY_FILTERED.TITLE');
+
+			(find('clear-filters') as HTMLButtonElement).click();
+			expect(component.unreadOnly()).toBe(false);
+			expect(api.list).toHaveBeenLastCalledWith(expect.not.objectContaining({ unread: true }));
+		});
+
+		it('shows a due label on an open item that has a due date', () => {
+			const { find } = ready([read('a', {}), item('b', { dueAt: new Date(Date.now() - 60_000) as never })]);
+			expect(find('due-a')).toBeNull();
+			expect(find('due-b')?.getAttribute('data-due')).toBe('OVERDUE');
+		});
+
+		it('a click on a row\'s time or due label opens the row, as a click anywhere else on it does', () => {
+			api.setState.mockImplementation((id: string) => of(read(id)));
+			const { component, find } = ready([read('a'), item('b', { dueAt: new Date(Date.now() - 60_000) as never })]);
+			(find('when-a') as HTMLElement).click();
+			expect(component.selectedId()).toBe('a');
+			(find('due-b') as HTMLElement).click();
+			expect(component.selectedId()).toBe('b');
 		});
 	});
 });
