@@ -30,7 +30,7 @@ import { randomUUID } from 'node:crypto';
 import { ModuleRef } from '@nestjs/core';
 import { DataSource } from 'typeorm';
 import { EventOutboxService } from '@gauzy/core';
-import { REALTIME_CATCH_UP_MAX_HOLD_MS, REALTIME_CATCH_UP_SETTLE_MS } from './realtime.constants';
+import { REALTIME_CATCH_UP_HORIZON_REUSE_MS, REALTIME_CATCH_UP_MAX_HOLD_MS, REALTIME_CATCH_UP_SETTLE_MS } from './realtime.constants';
 import { RealtimeAudience } from './realtime-audience';
 import { admitsRow, afterCursor, CatchUpRow, precedesWatermark, RealtimeCatchUpService, RealtimeSettleHorizon, selectCatchUp, settleHorizon } from './realtime-catch-up.service';
 import { RealtimeReplayWatermarkService } from './realtime-replay-watermark.service';
@@ -104,6 +104,35 @@ describe('RealtimeSettleHorizon', () => {
 		const sqlite = jest.fn();
 		expect(await over('better-sqlite3', sqlite).horizon(NOW)).toBe(NOW - REALTIME_CATCH_UP_SETTLE_MS);
 		expect(sqlite).not.toHaveBeenCalled();
+	});
+
+	it('serves concurrent catch-ups with one read, and reuses it briefly (an earlier horizon is never later)', async () => {
+		let release: (rows: unknown) => void = () => undefined;
+		const query = jest.fn(() => new Promise((resolve) => (release = resolve)));
+		const horizons = over('postgres', query);
+		const first = horizons.horizon(NOW);
+		const second = horizons.horizon(NOW + 5);
+		release([{ age: 2_000 }]);
+		expect(await Promise.all([first, second])).toEqual([NOW - REALTIME_CATCH_UP_SETTLE_MS - 2_000, NOW - REALTIME_CATCH_UP_SETTLE_MS - 2_000]);
+		expect(query).toHaveBeenCalledTimes(1);
+		// Within the reuse window: the earlier horizon still serves.
+		expect(await horizons.horizon(NOW + REALTIME_CATCH_UP_HORIZON_REUSE_MS - 1)).toBe(NOW - REALTIME_CATCH_UP_SETTLE_MS - 2_000);
+		expect(query).toHaveBeenCalledTimes(1);
+		// After it: read again.
+		query.mockImplementationOnce(async () => [{ age: null }]);
+		expect(await horizons.horizon(NOW + REALTIME_CATCH_UP_HORIZON_REUSE_MS)).toBe(NOW + REALTIME_CATCH_UP_HORIZON_REUSE_MS - REALTIME_CATCH_UP_SETTLE_MS);
+		expect(query).toHaveBeenCalledTimes(2);
+	});
+
+	it('logs a failing read at most once a minute', async () => {
+		const query = jest.fn(async () => Promise.reject(new Error('connection refused')));
+		const horizons = over('postgres', query);
+		const warn = jest.spyOn(horizons['logger'], 'warn').mockImplementation(() => undefined);
+		for (const at of [NOW, NOW + 2_000, NOW + 30_000]) await horizons.horizon(at);
+		expect(warn).toHaveBeenCalledTimes(1);
+		await horizons.horizon(NOW + 60_000);
+		expect(warn).toHaveBeenCalledTimes(2);
+		expect(query).toHaveBeenCalledTimes(4);
 	});
 });
 

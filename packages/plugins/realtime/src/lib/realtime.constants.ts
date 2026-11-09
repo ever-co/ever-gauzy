@@ -31,6 +31,9 @@ export const REALTIME_CATCH_UP_SETTLE_MS = 10_000;
 /** The longest an open database transaction holds the catch-up cursor back (see `RealtimeSettleHorizon`). */
 export const REALTIME_CATCH_UP_MAX_HOLD_MS = 5 * 60_000;
 
+/** How long one read of the open transactions serves the catch-ups of a process (see `RealtimeSettleHorizon`). */
+export const REALTIME_CATCH_UP_HORIZON_REUSE_MS = 1_000;
+
 /** How long a connection's presence counts without a new report from it (clients report at least every minute). */
 export const REALTIME_PRESENCE_TTL_MS = REALTIME_PRESENCE_TTL_SECONDS * 1000;
 

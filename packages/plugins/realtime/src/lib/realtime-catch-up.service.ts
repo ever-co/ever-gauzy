@@ -4,7 +4,13 @@ import { DataSource } from 'typeorm';
 import { ID, IRealtimeCatchUp, IRealtimeCatchUpQuery, IRealtimeEventEnvelope } from '@gauzy/contracts';
 import { EventOutbox, EventOutboxService, RequestContext, SubscriptionCatalogue } from '@gauzy/core';
 import type { SubscriptionAudienceEvent } from '@gauzy/core';
-import { REALTIME_CATCH_UP_DEFAULT, REALTIME_CATCH_UP_MAX, REALTIME_CATCH_UP_MAX_HOLD_MS, REALTIME_CATCH_UP_SETTLE_MS } from './realtime.constants';
+import {
+	REALTIME_CATCH_UP_DEFAULT,
+	REALTIME_CATCH_UP_HORIZON_REUSE_MS,
+	REALTIME_CATCH_UP_MAX,
+	REALTIME_CATCH_UP_MAX_HOLD_MS,
+	REALTIME_CATCH_UP_SETTLE_MS
+} from './realtime.constants';
 import { collaborationReplayNames, withoutRecipients } from './graphql/realtime-envelope';
 import { RealtimeAudience } from './realtime-audience';
 import { IRealtimeReplayPosition, RealtimeReplayWatermarkService } from './realtime-replay-watermark.service';
@@ -92,10 +98,18 @@ export function settleHorizon(now: number = Date.now()): number {
  * further — the cursor must still move. Elsewhere the stamp is the statement's time, taken just before the commit
  * (MySQL), or there is one writer at a time (SQLite), and the settle window covers it. The transactions read are the
  * ones `pg_stat_activity` shows the platform's role: its own sessions, whatever process opened them.
+ *
+ * One read serves the process's catch-ups: concurrent callers share the read in flight, and a result serves for
+ * {@link REALTIME_CATCH_UP_HORIZON_REUSE_MS} after it. Both are safe: a horizon taken at an earlier moment is never later
+ * than one taken now (a transaction open now that began before that moment was open then too), so a reused horizon only
+ * holds the cursor further back. A read that fails falls back to the settle window and is logged at most once a minute.
  */
 @Injectable()
 export class RealtimeSettleHorizon {
 	private readonly logger = new Logger('RealtimeSettleHorizon');
+	private recent: { at: number; horizon: number } | null = null;
+	private pending: Promise<{ at: number; horizon: number }> | null = null;
+	private warnedAt = Number.NEGATIVE_INFINITY;
 
 	constructor(private readonly dataSource: DataSource) {}
 
@@ -103,17 +117,35 @@ export class RealtimeSettleHorizon {
 	async horizon(now: number = Date.now()): Promise<number> {
 		const base = settleHorizon(now);
 		if (String(this.dataSource.options?.type) !== 'postgres') return base;
+		const recent = this.recent;
+		if (recent && recent.at <= now && now - recent.at < REALTIME_CATCH_UP_HORIZON_REUSE_MS) {
+			return Math.min(recent.horizon, base);
+		}
+		this.pending ??= this.read(now).finally(() => {
+			this.pending = null;
+		});
+		return Math.min((await this.pending).horizon, base);
+	}
+
+	/** Reads the oldest open transaction and turns it into a horizon taken at `now`. */
+	private async read(now: number): Promise<{ at: number; horizon: number }> {
+		const base = settleHorizon(now);
+		let horizon = base;
 		try {
 			const [row] = await this.dataSource.query(
 				`SELECT EXTRACT(EPOCH FROM (clock_timestamp() - MIN("xact_start"))) * 1000 AS "age" FROM "pg_stat_activity" WHERE "datname" = current_database() AND "xact_start" IS NOT NULL AND "pid" <> pg_backend_pid()`
 			);
 			const age = Number(row?.age);
-			// Whole milliseconds, down: the cursor goes back to the client, whose `after` is an integer.
-			return Math.floor(Number.isFinite(age) && age > 0 ? base - Math.min(age, REALTIME_CATCH_UP_MAX_HOLD_MS) : base);
+			if (Number.isFinite(age) && age > 0) horizon = base - Math.min(age, REALTIME_CATCH_UP_MAX_HOLD_MS);
 		} catch (error) {
-			this.logger.warn(`The open transactions were not read; the settle window alone holds the cursor: ${(error as Error)?.message}`);
-			return base;
+			if (now - this.warnedAt >= 60_000) {
+				this.warnedAt = now;
+				this.logger.warn(`The open transactions were not read; the settle window alone holds the cursor: ${(error as Error)?.message}`);
+			}
 		}
+		// Whole milliseconds, down: the cursor goes back to the client, whose `after` is an integer.
+		this.recent = { at: now, horizon: Math.floor(horizon) };
+		return this.recent;
 	}
 }
 
