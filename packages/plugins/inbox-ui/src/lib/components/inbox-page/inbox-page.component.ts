@@ -1,6 +1,7 @@
 import { DatePipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import {
+	afterNextRender,
 	ChangeDetectionStrategy,
 	Component,
 	computed,
@@ -8,6 +9,7 @@ import {
 	ElementRef,
 	HostListener,
 	inject,
+	Injector,
 	OnInit,
 	signal
 } from '@angular/core';
@@ -166,7 +168,7 @@ export function apiMessage(error: unknown): string | null {
 							[nbTooltip]="'INBOX.SHORTCUTS.OPEN' | translate"
 							nbTooltipPlacement="top"
 							[attr.aria-label]="'INBOX.SHORTCUTS.OPEN' | translate"
-							(click)="shortcutsOpen.set(true)"
+							(click)="openShortcuts()"
 						>
 							<nb-icon icon="keypad-outline"></nb-icon>
 						</button>
@@ -647,14 +649,17 @@ export function apiMessage(error: unknown): string | null {
 		}
 
 		@if (shortcutsOpen()) {
-			<div class="sheet-backdrop" (click)="shortcutsOpen.set(false)">
+			<div class="sheet-backdrop" (click)="closeShortcuts()">
 				<div
 					class="sheet"
 					role="dialog"
 					aria-modal="true"
 					aria-labelledby="inbox-shortcuts-title"
 					data-test="shortcuts-sheet"
+					tabindex="-1"
 					(click)="$event.stopPropagation()"
+					(keydown.tab)="keepFocusIn($event)"
+					(keydown.shift.tab)="keepFocusIn($event)"
 				>
 					<div class="sheet-header">
 						<h5 id="inbox-shortcuts-title">{{ 'INBOX.SHORTCUTS.TITLE' | translate }}</h5>
@@ -663,7 +668,7 @@ export function apiMessage(error: unknown): string | null {
 							class="toast-close sheet-close"
 							data-test="shortcuts-close"
 							[attr.aria-label]="'INBOX.SHORTCUTS.CLOSE_SHEET' | translate"
-							(click)="shortcutsOpen.set(false)"
+							(click)="closeShortcuts()"
 						>
 							<nb-icon icon="close-outline"></nb-icon>
 						</button>
@@ -886,40 +891,40 @@ export function apiMessage(error: unknown): string | null {
 				gap: 0.375rem;
 				min-width: 0;
 			}
+			/*
+			 * The filter selects at the task page's control size (1.75rem), by Nebular's own tokens rather than by
+			 * reaching into nb-select: every one is nb-theme(...), i.e. a CSS custom property, so redefining it on
+			 * the element is the whole change (the pattern the Employees and Projects pages use for nb-toggle).
+			 *
+			 * --select-medium-text-line-height is set too, though these selects are small: the app's control floor
+			 * ($default-height in _gauzy-overrides.scss, applied to every nb-select with !important) is
+			 * calc(var(--select-medium-text-line-height) + 0.4375rem * 2). 0.875rem puts that floor at 1.75rem.
+			 */
 			.filter-row nb-select {
 				flex: 1 1 0;
 				min-width: 0;
 				max-width: none;
+				--select-min-width: 0;
+				--select-small-max-width: none;
+				--select-medium-text-line-height: 0.875rem;
+				--select-small-text-line-height: 1rem;
+				--select-outline-small-padding: 0.3125rem 0.5rem;
+				--select-icon-offset: 1.5rem;
+				--select-small-text-font-size: 0.75rem;
+				--select-small-text-font-weight: 500;
+				--select-small-placeholder-text-font-size: 0.75rem;
+				--select-small-placeholder-text-font-weight: 500;
 			}
-			/* Matched to Nebular's own nb-select.appearance-outline.size-small, as the task page does. */
-			.filter-row nb-select.appearance-outline.status-basic.size-small ::ng-deep .select-button {
-				min-width: 0 !important;
-				min-height: 1.75rem !important;
-				height: 1.75rem;
-				padding: 0 1.5rem 0 0.5rem;
-				border-radius: 0.375rem;
-				font-size: 0.75rem;
-				line-height: 1rem;
-				font-weight: 500;
-			}
-			.filter-row nb-select.appearance-outline.status-basic.size-small ::ng-deep .select-button nb-icon {
-				right: 0.25rem;
-				font-size: 0.875rem;
-			}
+			/* The "Unread only" checkbox, smaller, by nb-checkbox's tokens. */
 			.unread-toggle {
 				flex: 0 0 auto;
 				white-space: nowrap;
-			}
-			.unread-toggle ::ng-deep .custom-checkbox {
-				width: 1rem;
-				height: 1rem;
-			}
-			.unread-toggle ::ng-deep .text {
-				padding-inline-start: 0.375rem;
-				font-size: 0.75rem;
-				font-weight: 500;
-				line-height: 1rem;
-				color: var(--gauzy-text-color-1, #222b45);
+				--checkbox-height: 1rem;
+				--checkbox-width: 1rem;
+				--checkbox-text-space: 0.375rem;
+				--checkbox-text-font-size: 0.75rem;
+				--checkbox-text-font-weight: 500;
+				--checkbox-text-line-height: 1rem;
 			}
 
 			/* Message list */
@@ -1746,6 +1751,7 @@ export class InboxPageComponent implements OnInit {
 	readonly actionError = signal<string | null>(null);
 
 	private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
+	private readonly injector = inject(Injector);
 	protected readonly shortcuts = INBOX_SHORTCUTS;
 	protected readonly skeletonRows = [1, 2, 3, 4, 5, 6];
 	/** The rows in their day sections (Today, Yesterday, …). */
@@ -2314,6 +2320,9 @@ export class InboxPageComponent implements OnInit {
 		if (!before.length || this.busy()) return;
 		this.busy.set(true);
 		this.actionError.set(null);
+		// The list the rows belong to: another tab or filter chosen meanwhile is a list of its own, whose rows and
+		// selection this answer must not touch.
+		const scope = this.listScope;
 		forkJoin(
 			before.map((item) =>
 				this.api.setState(item.id!, change).pipe(
@@ -2324,10 +2333,12 @@ export class InboxPageComponent implements OnInit {
 		).subscribe((results) => {
 			this.busy.set(false);
 			const answered = results.filter((result) => !!result.next);
+			const sameList = scope === this.listScope;
 			let removed = false;
 			let items = this.items();
 			for (const { next } of answered) {
 				if (this.opened()?.id === next!.id) this.opened.set(next);
+				if (!sameList) continue;
 				if (this.leavesList(change, next!)) {
 					items = items.filter((entry) => entry.id !== next!.id);
 					removed = true;
@@ -2336,9 +2347,11 @@ export class InboxPageComponent implements OnInit {
 					items = replaceItem(items, next!);
 				}
 			}
-			this.items.set(items);
-			// The rows that failed stay checked, for another try.
-			this.checked.set(new Set(results.filter((result) => !result.next).map((result) => result.item.id!)));
+			if (sameList) {
+				this.items.set(items);
+				// The rows that failed stay checked, for another try.
+				this.checked.set(new Set(results.filter((result) => !result.next).map((result) => result.item.id!)));
+			}
 			if (answered.length < results.length) this.actionError.set('INBOX.BULK.FAILED');
 			const undo = undoOf(change, before[0]);
 			if (undo && answered.length) {
@@ -2348,7 +2361,7 @@ export class InboxPageComponent implements OnInit {
 				});
 			}
 			if (answered.length) this.api.notifyChanged();
-			if (removed && this.nextCursor()) this.reload();
+			if (sameList && removed && this.nextCursor()) this.reload();
 		});
 	}
 
@@ -2436,6 +2449,47 @@ export class InboxPageComponent implements OnInit {
 		return Math.round(Math.min(Math.max(width, LIST_WIDTH_MIN), LIST_WIDTH_MAX));
 	}
 
+	// --- The shortcuts sheet (a modal dialog) ---------------------------------------------------------------------
+
+	/** Where focus was when the sheet opened: it goes back there when the sheet closes. */
+	private focusBeforeSheet: HTMLElement | null = null;
+
+	/** Opens the sheet and moves focus into it (its close button), as a modal dialog must. */
+	openShortcuts(): void {
+		if (this.shortcutsOpen()) return;
+		const active = typeof document !== 'undefined' ? document.activeElement : null;
+		this.focusBeforeSheet = active instanceof HTMLElement ? active : null;
+		this.shortcutsOpen.set(true);
+		afterNextRender(() => this.sheetFocusables()[0]?.focus(), { injector: this.injector });
+	}
+
+	/** Closes the sheet and gives focus back to where it was (the button, or the page, that opened it). */
+	closeShortcuts(): void {
+		if (!this.shortcutsOpen()) return;
+		this.shortcutsOpen.set(false);
+		const back = this.focusBeforeSheet;
+		this.focusBeforeSheet = null;
+		if (back?.isConnected) back.focus();
+	}
+
+	/** Tab and Shift+Tab cycle inside the sheet: the page under it cannot be reached while it is open. */
+	keepFocusIn(event: Event): void {
+		const focusables = this.sheetFocusables();
+		event.preventDefault();
+		if (!focusables.length) return;
+		const index = focusables.indexOf(document.activeElement as HTMLElement);
+		const step = (event as KeyboardEvent).shiftKey ? -1 : 1;
+		focusables[(index + step + focusables.length) % focusables.length].focus();
+	}
+
+	private sheetFocusables(): HTMLElement[] {
+		const sheet = this.host.nativeElement.querySelector<HTMLElement>('[data-test="shortcuts-sheet"]');
+		if (!sheet) return [];
+		return Array.from(
+			sheet.querySelectorAll<HTMLElement>('button:not([disabled]), [href], [tabindex]:not([tabindex="-1"])')
+		);
+	}
+
 	// --- Keyboard shortcuts ---------------------------------------------------------------------------------------
 
 	/**
@@ -2449,7 +2503,7 @@ export class InboxPageComponent implements OnInit {
 		if (target?.closest?.('.cdk-overlay-container, [role="menu"], .menu-anchor')) return;
 		const key = event.key;
 		if (key === 'Escape') {
-			if (this.shortcutsOpen()) this.shortcutsOpen.set(false);
+			if (this.shortcutsOpen()) this.closeShortcuts();
 			else if (isTypingTarget(target)) return;
 			else if (this.checked().size) this.clearChecked();
 			else if (this.selectedId()) this.closeDetail();
@@ -2459,7 +2513,8 @@ export class InboxPageComponent implements OnInit {
 		}
 		if (isTypingTarget(target)) return;
 		if (key === '?') {
-			this.shortcutsOpen.set(!this.shortcutsOpen());
+			if (this.shortcutsOpen()) this.closeShortcuts();
+			else this.openShortcuts();
 			event.preventDefault();
 			return;
 		}
