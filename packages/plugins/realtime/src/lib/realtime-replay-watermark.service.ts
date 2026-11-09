@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { DataSource, EntityManager, In } from 'typeorm';
+import { DataSource, EntityManager, Equal, In, LessThan } from 'typeorm';
 import { ID } from '@gauzy/contracts';
 import { RealtimeReplayWatermark, REALTIME_TENANT_WIDE_SCOPE } from './realtime.entities';
 
@@ -69,31 +69,30 @@ export class RealtimeReplayWatermarkService {
 	/**
 	 * Records that a retention removed a scope's rows up to a position. For the retention itself: called with the
 	 * manager of the transaction that removes the rows, so the watermark and the removal commit together. A watermark
-	 * only moves forward: a position at or before the recorded one changes nothing.
+	 * only moves forward, and atomically: the scope's row is created when missing (an insert ignored when another
+	 * transaction created it first), then moved by conditional updates that each compare and write under the row's lock
+	 * — so two retentions of one scope, in whatever order they commit, leave the later position.
 	 *
 	 * @param manager The retention's transaction manager.
 	 * @param scope The tenant and the organization (null for the tenant-wide rows) the removed rows belong to.
 	 * @param position The newest removed row's position.
-	 * @returns Whether the watermark moved.
 	 */
-	async advance(manager: EntityManager, scope: { tenantId: ID; organizationId: ID | null }, position: IRealtimeReplayPosition): Promise<boolean> {
+	async advance(manager: EntityManager, scope: { tenantId: ID; organizationId: ID | null }, position: IRealtimeReplayPosition): Promise<void> {
 		const repository = manager.getRepository(RealtimeReplayWatermark);
-		const scopeKey = scopeKeyOf(scope.organizationId);
-		const existing = await repository.findOne({ where: { tenantId: scope.tenantId, scopeKey } });
-		if (existing) {
-			if (!isLaterPosition(position, positionOf(existing))) return false;
-			await repository.update({ id: existing.id }, { prunedAt: new Date(position.at), prunedEventId: position.eventId as ID });
-			return true;
-		}
-		await repository.save(
-			repository.create({
-				tenantId: scope.tenantId,
-				organizationId: scope.organizationId ?? undefined,
-				scopeKey,
-				prunedAt: new Date(position.at),
-				prunedEventId: position.eventId as ID
-			})
-		);
-		return true;
+		const key = { tenantId: scope.tenantId, scopeKey: scopeKeyOf(scope.organizationId) };
+		const prunedAt = new Date(position.at);
+		const prunedEventId = position.eventId as ID;
+		await repository
+			.createQueryBuilder()
+			.insert()
+			.into(RealtimeReplayWatermark)
+			.values({ ...key, organizationId: scope.organizationId ?? undefined, prunedAt, prunedEventId })
+			.orIgnore()
+			// Nothing is read back: an ignored insert returns no row on Postgres.
+			.updateEntity(false)
+			.execute();
+		// A later time; or the same time and a later event id. A position at or before the recorded one matches neither.
+		await repository.update({ ...key, prunedAt: LessThan(prunedAt) }, { prunedAt, prunedEventId });
+		await repository.update({ ...key, prunedAt: Equal(prunedAt), prunedEventId: LessThan(prunedEventId) }, { prunedEventId });
 	}
 }

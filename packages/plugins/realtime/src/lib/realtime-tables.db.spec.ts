@@ -13,6 +13,7 @@ jest.mock('@gauzy/core', () => {
 		__esModule: true,
 		MultiORMColumn: decorator,
 		MultiORMEntity: decorator,
+		ColumnIndex: decorator,
 		TenantOrganizationBaseEntity: class {},
 		MikroOrmBaseEntityRepository: class {},
 		Employee: class Employee {}
@@ -25,7 +26,7 @@ import { Employee } from '@gauzy/core';
 import { CreateRealtimePresenceAndWatermarkTables1791000006820 } from './database/migrations/1791000006820-CreateRealtimePresenceAndWatermarkTables';
 import { REALTIME_PRESENCE_TTL_MS } from './realtime.constants';
 import { RealtimePresence, REALTIME_PUBLISHED_PRESENCE_KEY, REALTIME_SHARED_CONNECTION_KEY, RealtimeReplayWatermark } from './realtime.entities';
-import { isLive, mergePresence, RealtimePresenceStore } from './realtime-presence.store';
+import { IPresenceOutcome, isLive, mergePresence, RealtimePresenceStore } from './realtime-presence.store';
 import { isLaterPosition, latestPosition, RealtimeReplayWatermarkService } from './realtime-replay-watermark.service';
 
 const TENANT = 'ten';
@@ -52,7 +53,8 @@ const PresenceSchema = new EntitySchema<RealtimePresence>({
 		userId: { type: 'varchar' },
 		connectionId: { type: 'varchar' },
 		status: { type: 'varchar' },
-		expiresAt: { type: 'datetime', nullable: true }
+		expiresAt: { type: 'datetime', nullable: true },
+		revision: { type: 'integer', default: 0 }
 	}
 } as never);
 
@@ -164,6 +166,12 @@ describe('RealtimePresenceStore', () => {
 		(await dataSource.query(`SELECT "lastSeenAt", "isIdle" FROM "employee" WHERE "id" = ?`, [who.employeeId]))[0] as { lastSeenAt: string | null; isIdle: number | null };
 	const published = async (who: typeof ANNA) =>
 		(await dataSource.query(`SELECT "status" FROM "realtime_presence" WHERE "employeeId" = ? AND "connectionId" = ?`, [who.employeeId, REALTIME_PUBLISHED_PRESENCE_KEY]))[0]?.status;
+	/** A sweep, with the outcomes it handed over as each employee committed. */
+	const sweep = async (moment: Date) => {
+		const told: IPresenceOutcome[] = [];
+		const counts = await store.sweep(moment, async (outcome) => void told.push(outcome));
+		return { told, counts };
+	};
 
 	beforeEach(async () => {
 		store = new RealtimePresenceStore(dataSource);
@@ -215,19 +223,48 @@ describe('RealtimePresenceStore', () => {
 		// tab-1 keeps reporting; tab-2 (the active one) crashed after its report at 1 s.
 		const ttl = REALTIME_PRESENCE_TTL_MS / 1000;
 		await report(ANNA, 'tab-1', RealtimePresenceStatus.IDLE, ttl);
-		expect(await store.sweep(at(ttl))).toEqual([]);
-		const settled = await store.sweep(at(ttl + 1));
-		expect(settled).toEqual([expect.objectContaining({ employeeId: ANNA.employeeId, status: 'idle', changed: true })]);
+		expect((await sweep(at(ttl))).told).toEqual([]);
+		const settled = await sweep(at(ttl + 1));
+		expect(settled.told).toEqual([expect.objectContaining({ employeeId: ANNA.employeeId, status: 'idle', changed: true })]);
+		expect(settled.counts).toEqual({ settled: 1, failed: 0 });
 		expect(await published(ANNA)).toBe('idle');
 		expect((await employee(ANNA)).isIdle).toBe(1);
 		// Another process sweeping the same moment finds nothing left to settle.
-		expect(await store.sweep(at(ttl + 1))).toEqual([]);
+		expect((await sweep(at(ttl + 1))).told).toEqual([]);
 	});
 
 	it('settles a crashed last tab as offline', async () => {
 		await report(BOB, 'tab-1', RealtimePresenceStatus.ACTIVE);
-		const settled = await store.sweep(at(REALTIME_PRESENCE_TTL_MS / 1000 + 1));
-		expect(settled).toEqual([expect.objectContaining({ employeeId: BOB.employeeId, userId: BOB.userId, organizationId: ORG, status: 'offline', changed: true })]);
+		const settled = await sweep(at(REALTIME_PRESENCE_TTL_MS / 1000 + 1));
+		expect(settled.told).toEqual([expect.objectContaining({ employeeId: BOB.employeeId, userId: BOB.userId, organizationId: ORG, status: 'offline', changed: true })]);
+	});
+
+	it('tells of each employee a sweep settled even when another employee’s settlement fails', async () => {
+		await report(ANNA, 'tab-1', RealtimePresenceStatus.ACTIVE);
+		await report(BOB, 'tab-1', RealtimePresenceStatus.ACTIVE, 1);
+		const transaction = dataSource.transaction.bind(dataSource);
+		let calls = 0;
+		const spy = jest.spyOn(dataSource, 'transaction').mockImplementation(((work: never) => {
+			calls += 1;
+			return calls === 1 ? Promise.reject(new Error('deadlock detected')) : transaction(work);
+		}) as never);
+		try {
+			const settled = await sweep(at(REALTIME_PRESENCE_TTL_MS / 1000 + 2));
+			expect(settled.counts).toEqual({ settled: 1, failed: 1 });
+			expect(settled.told).toEqual([expect.objectContaining({ employeeId: BOB.employeeId, status: 'offline', changed: true })]);
+		} finally {
+			spy.mockRestore();
+		}
+		// The failed one is settled by the next pass.
+		expect((await sweep(at(REALTIME_PRESENCE_TTL_MS / 1000 + 3))).told).toEqual([expect.objectContaining({ employeeId: ANNA.employeeId, status: 'offline' })]);
+	});
+
+	it('numbers the changes of an employee, and only the changes', async () => {
+		expect((await report(ANNA, 'tab-1', RealtimePresenceStatus.ACTIVE)).revision).toBe(1);
+		expect((await report(ANNA, 'tab-2', RealtimePresenceStatus.IDLE, 1)).revision).toBe(1);
+		expect((await report(ANNA, 'tab-1', RealtimePresenceStatus.AWAY, 2)).revision).toBe(2);
+		expect((await report(ANNA, 'tab-1', RealtimePresenceStatus.OFFLINE, 3)).revision).toBe(2);
+		expect((await report(BOB, 'tab-1', RealtimePresenceStatus.ACTIVE, 3)).revision).toBe(1);
 	});
 
 	it('treats a report of a lapsed tab as that tab coming back', async () => {
@@ -239,7 +276,7 @@ describe('RealtimePresenceStore', () => {
 
 	it('gives a client that names no connection one shared connection that never lapses, last report wins', async () => {
 		await report(ANNA, REALTIME_SHARED_CONNECTION_KEY, RealtimePresenceStatus.ACTIVE);
-		expect(await store.sweep(at(REALTIME_PRESENCE_TTL_MS / 1000 * 10))).toEqual([]);
+		expect((await sweep(at(REALTIME_PRESENCE_TTL_MS / 1000 * 10))).told).toEqual([]);
 		expect(await report(ANNA, REALTIME_SHARED_CONNECTION_KEY, RealtimePresenceStatus.IDLE, 1)).toMatchObject({ status: 'idle', changed: true });
 		expect(await report(ANNA, REALTIME_SHARED_CONNECTION_KEY, RealtimePresenceStatus.OFFLINE, 2)).toMatchObject({ status: 'offline', changed: true });
 	});
@@ -278,13 +315,27 @@ describe('RealtimeReplayWatermarkService', () => {
 		expect(await service.forScope('other-tenant', ORG)).toBeNull();
 	});
 
-	it('only ever moves forward, by time then event id', async () => {
+	it('only ever moves forward, by time then event id, keeping one row per scope', async () => {
 		const scope = { tenantId: TENANT, organizationId: ORG };
-		await dataSource.transaction((manager) => service.advance(manager, scope, position('2026-11-03T00:00:00.000Z', 'b')));
-		expect(await dataSource.transaction((manager) => service.advance(manager, scope, position('2026-11-02T00:00:00.000Z', 'z')))).toBe(false);
-		expect(await dataSource.transaction((manager) => service.advance(manager, scope, position('2026-11-03T00:00:00.000Z', 'a')))).toBe(false);
-		expect(await dataSource.transaction((manager) => service.advance(manager, scope, position('2026-11-03T00:00:00.000Z', 'c')))).toBe(true);
+		const advance = (iso: string, eventId: string) => dataSource.transaction((manager) => service.advance(manager, scope, position(iso, eventId)));
+		await advance('2026-11-03T00:00:00.000Z', 'b');
+		await advance('2026-11-02T00:00:00.000Z', 'z');
+		expect(await service.forScope(TENANT, ORG)).toEqual(position('2026-11-03T00:00:00.000Z', 'b'));
+		await advance('2026-11-03T00:00:00.000Z', 'a');
+		expect(await service.forScope(TENANT, ORG)).toEqual(position('2026-11-03T00:00:00.000Z', 'b'));
+		await advance('2026-11-03T00:00:00.000Z', 'c');
 		expect(await service.forScope(TENANT, ORG)).toEqual(position('2026-11-03T00:00:00.000Z', 'c'));
+		await advance('2026-11-04T00:00:00.000Z', 'a');
+		expect(await service.forScope(TENANT, ORG)).toEqual(position('2026-11-04T00:00:00.000Z', 'a'));
+		expect(await dataSource.query(`SELECT COUNT(*) AS "rows" FROM "realtime_replay_watermark"`)).toEqual([{ rows: 1 }]);
+	});
+
+	it('leaves the later position whichever of two retentions commits last', async () => {
+		const scope = { tenantId: TENANT, organizationId: ORG };
+		// The later retention commits first; the earlier one, committing after it, must not move the watermark back.
+		await dataSource.transaction((manager) => service.advance(manager, scope, position('2026-11-05T00:00:00.000Z', 'later')));
+		await dataSource.transaction((manager) => service.advance(manager, scope, position('2026-11-04T00:00:00.000Z', 'earlier')));
+		expect(await service.forScope(TENANT, ORG)).toEqual(position('2026-11-05T00:00:00.000Z', 'later'));
 	});
 
 	it('commits with the retention that removed the rows, or not at all', async () => {

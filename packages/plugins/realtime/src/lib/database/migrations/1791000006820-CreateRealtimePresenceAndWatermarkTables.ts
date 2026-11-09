@@ -5,8 +5,12 @@ import { createIndexIfMissing, createTableIfMissing, dropTableIfExists, IndexSpe
 const UUID_TYPE: Record<RealtimeDialect, string> = { postgres: 'uuid', mysql: 'varchar(36)', sqlite: 'varchar' };
 const TIMESTAMP_TYPE: Record<RealtimeDialect, string> = { postgres: 'TIMESTAMP', mysql: 'datetime(6)', sqlite: 'datetime' };
 
-/** A column of the dialect: `uuid`, a bounded `varchar`, or a timestamp. */
-function column(d: RealtimeDialect, name: string, kind: 'uuid' | 'ts' | `varchar(${number})`, required: boolean): string {
+/** Each dialect's spelling of a counter that starts at zero. */
+const COUNTER_TYPE: Record<RealtimeDialect, string> = { postgres: 'integer NOT NULL DEFAULT 0', mysql: 'int NOT NULL DEFAULT 0', sqlite: 'integer NOT NULL DEFAULT (0)' };
+
+/** A column of the dialect: `uuid`, a bounded `varchar`, a timestamp, or a counter. */
+function column(d: RealtimeDialect, name: string, kind: 'uuid' | 'ts' | 'counter' | `varchar(${number})`, required: boolean): string {
+	if (kind === 'counter') return `${q(d, name)} ${COUNTER_TYPE[d]}`;
 	let type: string = kind;
 	if (kind === 'uuid') type = UUID_TYPE[d];
 	else if (kind === 'ts') type = TIMESTAMP_TYPE[d];
@@ -26,7 +30,8 @@ export const REALTIME_PRESENCE_TABLE = {
 			column(d, 'userId', 'uuid', true),
 			column(d, 'connectionId', 'varchar(64)', true),
 			column(d, 'status', 'varchar(16)', true),
-			column(d, 'expiresAt', 'ts', false)
+			column(d, 'expiresAt', 'ts', false),
+			column(d, 'revision', 'counter', true)
 		].join(', '),
 	indexes: [
 		{ name: 'UQ_realtime_presence_connection', columns: ['tenantId', 'employeeId', 'connectionId'], unique: true },

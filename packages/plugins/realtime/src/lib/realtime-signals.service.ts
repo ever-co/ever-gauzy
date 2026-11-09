@@ -85,9 +85,8 @@ export class RealtimeSignalsService implements OnModuleInit, OnModuleDestroy {
 		if (this.sweeping) return;
 		this.sweeping = true;
 		try {
-			for (const outcome of await this.presenceStore.sweep(now)) {
-				await this.tellPresence(outcome, now);
-			}
+			// Each employee is told as soon as their settlement committed, whatever happens to the next one.
+			await this.presenceStore.sweep(now, async (outcome) => void (await this.tellPresence(outcome, now)));
 		} catch (error) {
 			this.logger.warn(`The lapsed presences were not settled: ${(error as Error)?.message}`);
 		} finally {
@@ -102,6 +101,7 @@ export class RealtimeSignalsService implements OnModuleInit, OnModuleDestroy {
 			userId: outcome.userId,
 			organizationId: outcome.organizationId,
 			status: outcome.status,
+			revision: outcome.revision,
 			at: now.toISOString()
 		};
 		if (outcome.changed) {

@@ -5,7 +5,7 @@ import { REALTIME_EVENT_HANDLERS } from './handlers/realtime-event.handlers';
 import { RealtimeResolver } from './graphql/realtime.resolver';
 import { RealtimeAudience } from './realtime-audience';
 import { RealtimeCatalogue } from './realtime-catalogue';
-import { RealtimeCatchUpService } from './realtime-catch-up.service';
+import { RealtimeCatchUpService, RealtimeSettleHorizon } from './realtime-catch-up.service';
 import { RealtimeHintsService } from './realtime-hints.service';
 import { RealtimePresenceStore } from './realtime-presence.store';
 import { RealtimeReplayWatermarkService } from './realtime-replay-watermark.service';
@@ -40,6 +40,7 @@ import { RealtimeController } from './realtime.controller';
 		RealtimePresenceStore,
 		RealtimeSignalsService,
 		RealtimeReplayWatermarkService,
+		RealtimeSettleHorizon,
 		RealtimeCatchUpService,
 		// Listed here as well as in the plugin's `extensions`: a resolver only the plugin metadata names is never
 		// registered, and the schema would advertise a field nothing resolves.

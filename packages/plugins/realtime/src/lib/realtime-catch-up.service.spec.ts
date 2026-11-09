@@ -12,6 +12,7 @@ jest.mock('@gauzy/core', () => {
 		// The plugin's entities load with the services: their decorators are no-ops here.
 		MultiORMColumn: () => () => undefined,
 		MultiORMEntity: () => () => undefined,
+		ColumnIndex: () => () => undefined,
 		SubscriptionCatalogue: class SubscriptionCatalogue {},
 		RequestContext: { currentUserId: () => 'u1', currentTenantId: () => 'ten', currentOrganizationId: () => 'org' },
 		matchesEventSelection: (selection: string, name: string) => selection === name
@@ -29,9 +30,9 @@ import { randomUUID } from 'node:crypto';
 import { ModuleRef } from '@nestjs/core';
 import { DataSource } from 'typeorm';
 import { EventOutboxService } from '@gauzy/core';
-import { REALTIME_CATCH_UP_SETTLE_MS } from './realtime.constants';
+import { REALTIME_CATCH_UP_MAX_HOLD_MS, REALTIME_CATCH_UP_SETTLE_MS } from './realtime.constants';
 import { RealtimeAudience } from './realtime-audience';
-import { admitsRow, afterCursor, CatchUpRow, precedesWatermark, RealtimeCatchUpService, selectCatchUp, settleHorizon } from './realtime-catch-up.service';
+import { admitsRow, afterCursor, CatchUpRow, precedesWatermark, RealtimeCatchUpService, RealtimeSettleHorizon, selectCatchUp, settleHorizon } from './realtime-catch-up.service';
 import { RealtimeReplayWatermarkService } from './realtime-replay-watermark.service';
 
 function row(partial: Partial<CatchUpRow> & { eventId: string; at: number }): CatchUpRow {
@@ -78,6 +79,30 @@ describe('afterCursor', () => {
 describe('settleHorizon', () => {
 	it('stays the settle window behind now', () => {
 		expect(settleHorizon(50_000)).toBe(50_000 - REALTIME_CATCH_UP_SETTLE_MS);
+	});
+});
+
+describe('RealtimeSettleHorizon', () => {
+	const NOW = 10_000_000;
+	const over = (type: string, query: jest.Mock) => new RealtimeSettleHorizon({ options: { type }, query } as unknown as DataSource);
+
+	it('stays behind the oldest transaction open on Postgres (a row it appends is stamped with its start)', async () => {
+		const query = jest.fn(async () => [{ age: '25000.5' }]);
+		expect(await over('postgres', query).horizon(NOW)).toBe(NOW - REALTIME_CATCH_UP_SETTLE_MS - 25_000.5);
+		expect(String(query.mock.calls[0])).toContain('pg_stat_activity');
+	});
+
+	it('is held back no further than the cap by a forgotten transaction', async () => {
+		const query = jest.fn(async () => [{ age: 86_400_000 }]);
+		expect(await over('postgres', query).horizon(NOW)).toBe(NOW - REALTIME_CATCH_UP_SETTLE_MS - REALTIME_CATCH_UP_MAX_HOLD_MS);
+	});
+
+	it('is the settle window alone without an open transaction, when the read fails, and off Postgres', async () => {
+		expect(await over('postgres', jest.fn(async () => [{ age: null }])).horizon(NOW)).toBe(NOW - REALTIME_CATCH_UP_SETTLE_MS);
+		expect(await over('postgres', jest.fn(async () => Promise.reject(new Error('permission denied')))).horizon(NOW)).toBe(NOW - REALTIME_CATCH_UP_SETTLE_MS);
+		const sqlite = jest.fn();
+		expect(await over('better-sqlite3', sqlite).horizon(NOW)).toBe(NOW - REALTIME_CATCH_UP_SETTLE_MS);
+		expect(sqlite).not.toHaveBeenCalled();
 	});
 });
 
@@ -190,12 +215,16 @@ describe('RealtimeCatchUpService', () => {
 	let clock: jest.SpyInstance<number, []>;
 
 	/** The service over an outbox read and a watermark; every row admitted by the audience checks. */
-	function serviceOver(read: (query: { eventNames?: readonly string[]; since?: Date; limit: number }) => Promise<CatchUpRow[]>, watermark: { at: number; eventId: string } | null = null) {
+	function serviceOver(
+		read: (query: { eventNames?: readonly string[]; since?: Date; limit: number }) => Promise<CatchUpRow[]>,
+		watermark: { at: number; eventId: string } | null = null,
+		horizons?: RealtimeSettleHorizon
+	) {
 		const outbox = { listOutboxRowsSince: jest.fn(read) };
 		const moduleRef = { get: (token: unknown) => (token === EventOutboxService ? outbox : undefined) } as unknown as ModuleRef;
 		const audience = { admitted: jest.fn(async (events: unknown[]) => events.map(() => true)) } as unknown as RealtimeAudience;
 		const watermarks = { forScope: jest.fn(async () => watermark) } as unknown as RealtimeReplayWatermarkService & { forScope: jest.Mock };
-		return { service: new RealtimeCatchUpService(moduleRef, audience, watermarks), outbox, watermarks };
+		return { service: new RealtimeCatchUpService(moduleRef, audience, watermarks, horizons), outbox, watermarks };
 	}
 
 	beforeEach(() => {
@@ -219,6 +248,21 @@ describe('RealtimeCatchUpService', () => {
 		expect(await empty.service.catchUp({ after: NOW - 86_400_000 })).toMatchObject({ events: [], resync: false });
 		const young = serviceOver(async () => [row({ eventId: 'first', at: NOW - 30_000 })]);
 		expect(await young.service.catchUp({ after: NOW - 86_400_000 })).toMatchObject({ events: [expect.objectContaining({ eventId: 'first' })], resync: false });
+	});
+
+	it('reads the watermark after the rows, so a retention committing in between answers resync', async () => {
+		const order: string[] = [];
+		const outbox = { listOutboxRowsSince: jest.fn(async () => (order.push('rows'), [])) };
+		const moduleRef = { get: (token: unknown) => (token === EventOutboxService ? outbox : undefined) } as unknown as ModuleRef;
+		const watermarks = { forScope: jest.fn(async () => (order.push('watermark'), null)) } as unknown as RealtimeReplayWatermarkService;
+		await new RealtimeCatchUpService(moduleRef, {} as RealtimeAudience, watermarks).catchUp({ after: NOW - 60_000 });
+		expect(order).toEqual(['rows', 'watermark']);
+	});
+
+	it('answers a position held behind the open transactions when it knows them', async () => {
+		const horizons = { horizon: jest.fn(async () => NOW - 120_000) } as unknown as RealtimeSettleHorizon;
+		const { service } = serviceOver(async () => [], null, horizons);
+		expect(await service.catchUp({ after: NOW - 600_000 })).toMatchObject({ cursor: NOW - 120_000, cursorId: null });
 	});
 
 	it('starts a client without a cursor from the horizon, reading nothing', async () => {

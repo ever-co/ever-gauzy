@@ -30,6 +30,7 @@ import { ChatMember } from '../entities/chat-member.entity';
 import { ChatMessage } from '../entities/chat-message.entity';
 import { ChatThreadFollow } from '../entities/chat-thread-follow.entity';
 import { ChatRealtime } from '../realtime/chat-realtime';
+import { inWriteTransaction } from '../realtime/chat-write-transaction';
 import { ChatAccessService, IChatCaller } from './chat-access.service';
 
 /** The caller's state of a conversation, from their member row and the conversation's counter. */
@@ -233,7 +234,7 @@ export class ChatConversationService {
 		if (!name) throw new BadRequestException('A channel needs a name.');
 		// A channel goes under a category of its own organization only.
 		if (input.categoryId) await this.categoryInScope(caller, input.categoryId);
-		const made = await this.dataSource.transaction(async (manager) => {
+		const made = await inWriteTransaction(this.dataSource, async (manager) => {
 			const created = await manager.getRepository(ChatConversation).save(
 				manager.getRepository(ChatConversation).create({
 					kind: ChatConversationKindEnum.CHANNEL,
@@ -288,7 +289,7 @@ export class ChatConversationService {
 		if (input.topic !== undefined) conversation.topic = input.topic?.trim() || null;
 		if (input.visibility) conversation.visibility = input.visibility;
 		if (typeof input.position === 'number') conversation.position = input.position;
-		const events = await this.dataSource.transaction(async (manager) => {
+		const events = await inWriteTransaction(this.dataSource, async (manager) => {
 			await manager.getRepository(ChatConversation).save(conversation);
 			if (input.categoryId !== undefined) {
 				// A cleared category is written as NULL: `save` leaves an undefined member untouched.
@@ -306,7 +307,7 @@ export class ChatConversationService {
 		if (conversation.isDefault) throw new BadRequestException('The default channel cannot be archived.');
 		const archivedAt = archived ? (conversation.archivedAt ?? new Date()) : null;
 		conversation.archivedAt = archivedAt ?? undefined;
-		const events = await this.dataSource.transaction(async (manager) => {
+		const events = await inWriteTransaction(this.dataSource, async (manager) => {
 			await manager.getRepository(ChatConversation).update({ id: conversation.id as ID }, { archivedAt: archivedAt as never });
 			const members = await this.access.members(caller.tenantId, id, manager);
 			return [
@@ -357,7 +358,7 @@ export class ChatConversationService {
 		directKey: string,
 		employees: Array<{ id: ID; userId: ID }>
 	): Promise<{ conversation: ChatConversation; events: IChatEvent[] }> {
-		return this.dataSource.transaction(async (manager) => {
+		return inWriteTransaction(this.dataSource, async (manager) => {
 			const created = await manager.getRepository(ChatConversation).save(
 				manager.getRepository(ChatConversation).create({
 					kind,
@@ -401,7 +402,7 @@ export class ChatConversationService {
 		if (conversation.kind !== ChatConversationKindEnum.CHANNEL || conversation.visibility !== ChatVisibilityEnum.PUBLIC || conversation.archivedAt) {
 			throw new NotFoundException('The requested record was not found');
 		}
-		const events = await this.dataSource.transaction(async (manager) => {
+		const events = await inWriteTransaction(this.dataSource, async (manager) => {
 			await this.addMembers(caller, conversation, [caller.employeeId], undefined, manager);
 			return this.membersChanged(caller, conversation, manager);
 		});
@@ -413,7 +414,7 @@ export class ChatConversationService {
 		if (!member) throw new NotFoundException('The requested record was not found');
 		if (conversation.isDefault) throw new BadRequestException('The default channel cannot be left.');
 		if (conversation.kind === ChatConversationKindEnum.DIRECT) throw new BadRequestException('A direct conversation cannot be left.');
-		const events = await this.dataSource.transaction(async (manager) => {
+		const events = await inWriteTransaction(this.dataSource, async (manager) => {
 			await manager.getRepository(ChatMember).update({ id: member.id }, { leftAt: new Date() });
 			await this.dropFollows(caller.tenantId, conversation.id as ID, caller.employeeId, manager);
 			return this.membersChanged(caller, conversation, manager);
@@ -439,7 +440,7 @@ export class ChatConversationService {
 				throw new BadRequestException(`A group holds at most ${CHAT_GROUP_MAX_MEMBERS} people.`);
 			}
 		}
-		const events = await this.dataSource.transaction(async (manager) => {
+		const events = await inWriteTransaction(this.dataSource, async (manager) => {
 			await this.addMembers(caller, conversation, employees.map((employee) => employee.id), employees, manager);
 			// A group whose membership changed is no longer "the conversation of these people": its key goes, so the
 			// original set resolves to a new group and a removed member cannot rejoin through it.
@@ -459,7 +460,7 @@ export class ChatConversationService {
 		const member = await this.dataSource.getRepository(ChatMember).findOne({ where: { conversationId: id, employeeId, tenantId: caller.tenantId, leftAt: IsNull() } });
 		if (!member) throw new NotFoundException('The requested record was not found');
 		const removedUserId = member.userId;
-		const events = await this.dataSource.transaction(async (manager) => {
+		const events = await inWriteTransaction(this.dataSource, async (manager) => {
 			await manager.getRepository(ChatMember).update({ id: member.id }, { leftAt: new Date() });
 			await this.dropFollows(caller.tenantId, conversation.id as ID, employeeId, manager);
 			if (conversation.kind === ChatConversationKindEnum.GROUP && conversation.directKey) {
@@ -479,7 +480,7 @@ export class ChatConversationService {
 		const patch: Partial<ChatMember> = {};
 		if (input.notifyLevel) patch.notifyLevel = input.notifyLevel;
 		if (typeof input.isFavorite === 'boolean') patch.isFavorite = input.isFavorite;
-		const { fresh, events } = await this.dataSource.transaction(async (manager) => {
+		const { fresh, events } = await inWriteTransaction(this.dataSource, async (manager) => {
 			// The preference columns only: a message that arrived since the read must not have its counters written back.
 			if (Object.keys(patch).length) await manager.getRepository(ChatMember).update({ id: member.id }, patch as never);
 			const current = (await this.access.membership(id, caller, manager)) ?? Object.assign(member, patch);
@@ -505,7 +506,7 @@ export class ChatConversationService {
 			return existing;
 		}
 		try {
-			return await this.dataSource.transaction(async (manager) => {
+			return await inWriteTransaction(this.dataSource, async (manager) => {
 				const created = await manager.getRepository(ChatConversation).save(
 					manager.getRepository(ChatConversation).create({
 						kind: ChatConversationKindEnum.CHANNEL,

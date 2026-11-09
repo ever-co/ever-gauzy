@@ -1,9 +1,10 @@
-import { Injectable, Type } from '@nestjs/common';
+import { Injectable, Logger, Optional, Type } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
+import { DataSource } from 'typeorm';
 import { ID, IRealtimeCatchUp, IRealtimeCatchUpQuery, IRealtimeEventEnvelope } from '@gauzy/contracts';
 import { EventOutbox, EventOutboxService, RequestContext, SubscriptionCatalogue } from '@gauzy/core';
 import type { SubscriptionAudienceEvent } from '@gauzy/core';
-import { REALTIME_CATCH_UP_DEFAULT, REALTIME_CATCH_UP_MAX, REALTIME_CATCH_UP_SETTLE_MS } from './realtime.constants';
+import { REALTIME_CATCH_UP_DEFAULT, REALTIME_CATCH_UP_MAX, REALTIME_CATCH_UP_MAX_HOLD_MS, REALTIME_CATCH_UP_SETTLE_MS } from './realtime.constants';
 import { collaborationReplayNames, withoutRecipients } from './graphql/realtime-envelope';
 import { RealtimeAudience } from './realtime-audience';
 import { IRealtimeReplayPosition, RealtimeReplayWatermarkService } from './realtime-replay-watermark.service';
@@ -79,6 +80,40 @@ export function afterCursor(row: Pick<CatchUpRow, 'createdAt' | 'eventId'>, afte
  */
 export function settleHorizon(now: number = Date.now()): number {
 	return now - REALTIME_CATCH_UP_SETTLE_MS;
+}
+
+/**
+ * The settle horizon held behind the oldest transaction still open in the database (on Postgres).
+ *
+ * The settle window alone assumes no appending transaction stays open longer than it; one that waits on a row lock can.
+ * On Postgres a row is stamped with its transaction's start (`createdAt` defaults to `now()`), so no row can appear
+ * stamped before the oldest transaction open now: the horizon stays the settle window behind that transaction's start
+ * as well. A transaction open longer than {@link REALTIME_CATCH_UP_MAX_HOLD_MS} (a forgotten session) holds it back no
+ * further — the cursor must still move. Elsewhere the stamp is the statement's time, taken just before the commit
+ * (MySQL), or there is one writer at a time (SQLite), and the settle window covers it. The transactions read are the
+ * ones `pg_stat_activity` shows the platform's role: its own sessions, whatever process opened them.
+ */
+@Injectable()
+export class RealtimeSettleHorizon {
+	private readonly logger = new Logger('RealtimeSettleHorizon');
+
+	constructor(private readonly dataSource: DataSource) {}
+
+	/** The newest time a resume position may name now, in epoch ms. */
+	async horizon(now: number = Date.now()): Promise<number> {
+		const base = settleHorizon(now);
+		if (String(this.dataSource.options?.type) !== 'postgres') return base;
+		try {
+			const [row] = await this.dataSource.query(
+				`SELECT EXTRACT(EPOCH FROM (clock_timestamp() - MIN("xact_start"))) * 1000 AS "age" FROM "pg_stat_activity" WHERE "datname" = current_database() AND "xact_start" IS NOT NULL AND "pid" <> pg_backend_pid()`
+			);
+			const age = Number(row?.age);
+			return Number.isFinite(age) && age > 0 ? base - Math.min(age, REALTIME_CATCH_UP_MAX_HOLD_MS) : base;
+		} catch (error) {
+			this.logger.warn(`The open transactions were not read; the settle window alone holds the cursor: ${(error as Error)?.message}`);
+			return base;
+		}
+	}
 }
 
 /**
@@ -197,7 +232,8 @@ export class RealtimeCatchUpService {
 	constructor(
 		private readonly moduleRef: ModuleRef,
 		private readonly audience: RealtimeAudience,
-		private readonly watermarks: RealtimeReplayWatermarkService
+		private readonly watermarks: RealtimeReplayWatermarkService,
+		@Optional() private readonly horizons?: RealtimeSettleHorizon
 	) {}
 
 	async catchUp(query: IRealtimeCatchUpQuery): Promise<IRealtimeCatchUp> {
@@ -207,7 +243,7 @@ export class RealtimeCatchUpService {
 		}
 		// Taken before anything is read: a row stamped before it that commits during this call is still ahead of the
 		// answered cursor.
-		const horizon = settleHorizon();
+		const horizon = this.horizons ? await this.horizons.horizon() : settleHorizon();
 		const after = typeof query.after === 'number' && Number.isFinite(query.after) ? query.after : null;
 		const userId = RequestContext.currentUserId();
 		if (after === null) {
@@ -217,17 +253,18 @@ export class RealtimeCatchUpService {
 		const read = Math.min(limit * CATCH_UP_READ_FACTOR, 2000);
 		const afterId = typeof query.afterId === 'string' && query.afterId ? query.afterId : null;
 
-		// The retention watermark of the caller's scope. A read that fails is an error the client sees, never an empty
-		// answer it would trust.
+		// The durable names of the collaboration families, the chat and inbox ones included when those plugins declared them.
+		const eventNames = collaborationReplayNames(this.find(SubscriptionCatalogue)?.names() ?? []);
+		const rows = await outbox.listOutboxRowsSince({ eventNames, since: new Date(after), limit: read });
+
+		// The retention watermark of the caller's scope, read after the rows: a retention that committed between the two
+		// reads (rows read already pruned) moved the watermark, so the answer says `resync`. A read that fails is an
+		// error the client sees, never an empty answer it would trust.
 		const tenantId = RequestContext.currentTenantId();
 		const watermark = tenantId
 			? await this.watermarks.forScope(String(tenantId), RequestContext.currentOrganizationId() ?? null)
 			: null;
 		const resync = precedesWatermark(watermark, after, afterId);
-
-		// The durable names of the collaboration families, the chat and inbox ones included when those plugins declared them.
-		const eventNames = collaborationReplayNames(this.find(SubscriptionCatalogue)?.names() ?? []);
-		const rows = await outbox.listOutboxRowsSince({ eventNames, since: new Date(after), limit: read });
 		const caller = userId ? String(userId) : null;
 		const refused = await this.refusedRows(rows, caller, after, afterId);
 		return selectCatchUp(rows, caller, query, { truncated: rows.length >= read, resync, horizon }, refused);

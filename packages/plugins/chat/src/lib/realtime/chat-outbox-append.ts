@@ -35,9 +35,10 @@ export function isPartitionSequenceConflict(error: unknown): boolean {
  *
  * The append runs in a savepoint and is tried again when it lost a partition race
  * ({@link isPartitionSequenceConflict}): the other transaction's row is committed by the time the refused insert
- * returns, so the next attempt numbers past it. Without the savepoint the refused insert would abort the caller's
- * transaction (Postgres) and fail the write itself — a chat message would not be sent because another member read the
- * conversation at the same moment. Any other failure fails the write: an event that cannot be stored is not silently
+ * returns, so the next attempt numbers past it — provided the transaction reads committed data, which the chat writes
+ * ensure on MySQL (`inWriteTransaction`; Postgres reads that way by default). Without the savepoint the refused insert
+ * would abort the caller's transaction (Postgres) and fail the write itself — a chat message would not be sent because
+ * another member read the conversation at the same moment. Any other failure fails the write: an event that cannot be stored is not silently
  * dropped.
  *
  * @param outbox The platform outbox.

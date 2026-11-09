@@ -87,15 +87,23 @@ hint.
 **Catch-up** answers the events after the cursor (`after` + `afterId` = the
 previous answer's `cursor` + `cursorId`), oldest first, and the position to
 continue from: the position walked to (possibly a row addressed to someone
-else), never past the settle horizon. The events may run past that position
-and are answered again next time. `hasMore` says more follows; `resync: true`
-says a retention removed rows after the cursor: refetch through the read APIs.
+else), never past the settle horizon — 10 s behind now, and on Postgres also
+behind the oldest open database transaction (for at most 5 minutes). The
+events may run past that position and are answered again next time.
+`hasMore` says more follows now; it is `false` once the answer reached the
+horizon even when newer events exist (they arrive by the stream, and by the
+next catch-up once the horizon passed them). `resync: true` says a retention
+removed rows after the cursor: refetch through the read APIs.
 
 **Presence** is `active` / `idle` / `away` / `offline` of one connection
-(`offline` ends it). The answer is the employee's merged presence, persisted on
-the employee (`lastSeenAt`, `isIdle`) and published to the organization when it
-changed. Without `connectionId`, every tab of the employee shares one
-connection that never lapses (the last report wins).
+(`offline` ends it). The answer is the employee's merged presence. The employee
+row keeps only `lastSeenAt` and `isIdle` (`true` for idle, away and offline
+alike), for clients that poll; the four states live in the plugin's table and
+the events. It is published to the organization when it changed, with the
+employee's `revision` (higher for every change: apply a
+`presence.changed` only when its revision is higher than the last applied).
+Without `connectionId`, every tab of the employee shares one connection that
+never lapses (the last report wins).
 
 ## Subscribing
 
@@ -122,13 +130,17 @@ stamped before it have arrived. On every reconnect (and, while connected, every
 minute or so, to keep the position fresh) call `GET
 /api/realtime/events?after=&afterId=`, apply the answer by `eventId` (events
 repeat: an answer may run past its cursor, and the stream delivers them too),
-repeat while `hasMore`, and on `resync: true` refetch through the read APIs. A
+repeat while `hasMore`, and on `resync: true` refetch through the read APIs.
+Events also arrive out of order (stream and catch-up interleave): treat each
+as a hint to refetch the record it names, rather than applying the counters it
+carries over newer ones (a presence change carries a `revision` for that). A
 client with no cursor yet starts from the answer's `cursor` (the settle
 horizon).
 
-Presence: give each tab or device a random `connectionId` and send its status
-on every change and at least every minute unchanged (a connection not heard from
-for 150 s lapses), and `offline` when the page closes (a `keepalive` request).
+Presence: give each tab or device a random `connectionId` (a UUID; at most 64
+letters, digits, `-` or `_` are accepted) and send its status on every change
+and at least every minute unchanged (a connection not heard from for 150 s
+lapses), and `offline` when the page closes (a `keepalive` request).
 
 ## Enabling
 

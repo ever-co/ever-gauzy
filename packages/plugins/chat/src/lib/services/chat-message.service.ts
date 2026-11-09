@@ -45,6 +45,7 @@ import { ChatMessage } from '../entities/chat-message.entity';
 import { ChatTaskReference } from '../entities/chat-task-reference.entity';
 import { ChatThreadFollow } from '../entities/chat-thread-follow.entity';
 import { ChatRealtime } from '../realtime/chat-realtime';
+import { inWriteTransaction } from '../realtime/chat-write-transaction';
 import { ChatAccessService, IChatCaller } from './chat-access.service';
 import { ChatNotifierService } from './chat-notifier.service';
 
@@ -333,7 +334,7 @@ export class ChatMessageService {
 		let followers: ChatMember[];
 		let events: IChatEvent[];
 		try {
-			const written = await this.dataSource.transaction(async (manager) => {
+			const written = await inWriteTransaction(this.dataSource, async (manager) => {
 				const repository = manager.getRepository(ChatMessage);
 				const created = await repository.save(
 					repository.create({
@@ -481,7 +482,7 @@ export class ChatMessageService {
 		// written with the body and the attachment links in one transaction, whose row lock makes a second edit wait — a
 		// message never shows one edit's text with another's attachments or task cards, and an edit is never half done.
 		const taskMentions = await this.mentionedTaskIds(caller, conversation, body, await this.keptTaskReferences(caller, message));
-		const events = await this.dataSource.transaction(async (manager) => {
+		const events = await inWriteTransaction(this.dataSource, async (manager) => {
 			await manager.getRepository(ChatMessage).save(message);
 			if (attachments) await this.linkAttachments(manager, caller, conversation, message.id as ID, attachments, true);
 			await this.writeTaskMentions(manager, caller, conversation, message, taskMentions);
@@ -515,7 +516,7 @@ export class ChatMessageService {
 		const broadcast = !!message.mentionsChannel || !!message.mentionsHere;
 		const timeline = inTimeline(message);
 		const position = timeline ? await this.timelinePosition(caller.tenantId, message.conversationId, message, true) : 0;
-		const events = await this.dataSource.transaction(async (manager): Promise<IChatEvent[] | null> => {
+		const events = await inWriteTransaction(this.dataSource, async (manager): Promise<IChatEvent[] | null> => {
 			// Only a message still there is deleted, and only the request that deleted it moves the counters: two deletes
 			// of the same message can both pass the check above, and the second would take the conversation's count and
 			// the members' read positions down a second time (unread badges too low). Its UPDATE waits for the first's row
@@ -562,7 +563,7 @@ export class ChatMessageService {
 		const pinnedAt = pinned ? (message.pinnedAt ?? new Date()) : null;
 		const pinnedByEmployeeId = pinned ? (caller.employeeId ?? null) : null;
 		const members = await this.access.members(caller.tenantId, message.conversationId);
-		const events = await this.dataSource.transaction(async (manager) => {
+		const events = await inWriteTransaction(this.dataSource, async (manager) => {
 			// Unpinning writes NULL: `save` would leave an undefined member untouched.
 			await manager.getRepository(ChatMessage).update({ id: message.id }, { pinnedAt, pinnedByEmployeeId } as never);
 			return [await this.realtime.append(manager, this.realtime.messageFact(CHAT_EVENT_NAMES.MESSAGE_UPDATED, message, members.map((m) => m.userId)))];
@@ -582,7 +583,7 @@ export class ChatMessageService {
 		if (!value || value.length > 32) throw new BadRequestException('State an emoji.');
 		const where = { entity: ReactionEntityEnum.ChatMessage, entityId: message.id as ID, emoji: value, employeeId: caller.employeeId, tenantId: caller.tenantId };
 		const members = await this.access.members(caller.tenantId, message.conversationId);
-		const events = await this.dataSource.transaction(async (manager) => {
+		const events = await inWriteTransaction(this.dataSource, async (manager) => {
 			const repository = manager.getRepository(Reaction);
 			const existing = await repository.findOne({ where });
 			if (add && !existing) {
@@ -638,7 +639,7 @@ export class ChatMessageService {
 		const now = new Date();
 		const patch = { readCount: Math.max(member.readCount ?? 0, readCount), mentionCount, lastReadMessageId, lastReadAt: now };
 		Object.assign(member, { ...patch, lastReadMessageId: lastReadMessageId ?? undefined });
-		const events = await this.dataSource.transaction(async (manager) => {
+		const events = await inWriteTransaction(this.dataSource, async (manager) => {
 			// The read columns only: a preference or a counter written since the row was read is not written back.
 			await manager.getRepository(ChatMember).update({ id: member.id }, patch as never);
 			return [await this.realtime.append(manager, this.realtime.memberStateFact(member))];
@@ -661,7 +662,7 @@ export class ChatMessageService {
 			lastReadMessageId: null
 		};
 		Object.assign(member, { ...patch, lastReadMessageId: undefined });
-		const events = await this.dataSource.transaction(async (manager) => {
+		const events = await inWriteTransaction(this.dataSource, async (manager) => {
 			await manager.getRepository(ChatMember).update({ id: member.id }, patch as never);
 			return [await this.realtime.append(manager, this.realtime.memberStateFact(member))];
 		});
@@ -678,7 +679,7 @@ export class ChatMessageService {
 		const snapshot: ReadSnapshot = { v: 1, tenantId: caller.tenantId, userId: caller.userId, employeeId: caller.employeeId, at: Date.now(), rows: [], follows: [] };
 		const now = new Date();
 		// Every conversation's read state and its fact commit together: all read, or none.
-		const events = await this.dataSource.transaction(async (manager) => {
+		const events = await inWriteTransaction(this.dataSource, async (manager) => {
 			const facts: IChatEvent[] = [];
 			for (const member of members) {
 				const total = counts.get(String(member.conversationId)) ?? 0;
@@ -723,7 +724,7 @@ export class ChatMessageService {
 			throw new NotFoundException('Nothing to undo.');
 		}
 		const employeeId: ID = caller.employeeId;
-		const events = await this.dataSource.transaction(async (manager) => {
+		const events = await inWriteTransaction(this.dataSource, async (manager) => {
 			const repository = manager.getRepository(ChatMember);
 			const facts: IChatEvent[] = [];
 			for (const row of snapshot.rows) {
@@ -888,13 +889,18 @@ export class ChatMessageService {
 		let events: IChatEvent[];
 		try {
 			// The reference and its fact commit together.
-			[saved, events] = await this.dataSource.transaction(async (manager) => {
+			const written = await inWriteTransaction(this.dataSource, async (manager) => {
 				const repository = manager.getRepository(ChatTaskReference);
 				const reference = await repository.save(
 					repository.create({ messageId: message.id as ID, taskId: task.id as ID, kind: ChatTaskReferenceKindEnum.CREATED, tenantId: caller.tenantId, organizationId })
 				);
-				return [reference, [await this.realtime.append(manager, this.realtime.messageFact(CHAT_EVENT_NAMES.MESSAGE_UPDATED, message, conversationMembers.map((m) => m.userId)))]] as const;
+				const facts: IChatEvent[] = [
+					await this.realtime.append(manager, this.realtime.messageFact(CHAT_EVENT_NAMES.MESSAGE_UPDATED, message, conversationMembers.map((m) => m.userId)))
+				];
+				return { reference, facts };
 			});
+			saved = written.reference;
+			events = written.facts;
 		} catch (error) {
 			// The task exists (its own transaction committed) but the message does not point to it: said with the task's
 			// id, so the person links it by hand rather than creating it again.

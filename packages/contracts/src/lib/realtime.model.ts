@@ -148,6 +148,12 @@ export interface IRealtimePresence {
 	userId: ID;
 	organizationId?: ID | null;
 	status: RealtimePresenceStatus;
+	/**
+	 * How many times this employee's presence changed: higher for every change, whichever API process tells it. Apply a
+	 * `presence.changed` only when its revision is higher than the last one applied for the employee (two processes may
+	 * deliver two changes out of order).
+	 */
+	revision?: number;
 	/** ISO time the presence was merged. */
 	at: string;
 }

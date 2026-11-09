@@ -10,6 +10,7 @@ jest.mock('@gauzy/core', () => {
 		// The plugin's entities load with the services: their decorators are no-ops here.
 		MultiORMColumn: () => () => undefined,
 		MultiORMEntity: () => () => undefined,
+		ColumnIndex: () => () => undefined,
 		RequestContext: {
 			currentUser: () => mockContext.user,
 			currentUserId: () => mockContext.userId,
@@ -37,8 +38,16 @@ const outcome = (overrides: Partial<IPresenceOutcome> = {}): IPresenceOutcome =>
 	userId: 'u1',
 	status: RealtimePresenceStatus.ACTIVE,
 	changed: true,
+	revision: 3,
 	...overrides
 });
+
+/** A store sweep that hands over these outcomes, as the store does once each employee committed. */
+const sweepOf = (outcomes: IPresenceOutcome[]) =>
+	jest.fn(async (_now: Date, settled: (outcome: IPresenceOutcome) => Promise<void>) => {
+		for (const each of outcomes) await settled(each);
+		return { settled: outcomes.length, failed: 0 };
+	});
 
 function signalsOver(store: Partial<Record<'report' | 'sweep', jest.Mock>>) {
 	const pubSub = { publish: jest.fn(async () => undefined) };
@@ -56,7 +65,7 @@ describe('RealtimeSignalsService presence', () => {
 		const { service, pubSub } = signalsOver({ report });
 		const presence = await service.publishPresence({ status: RealtimePresenceStatus.ACTIVE, connectionId: 'tab-1' });
 		expect(report).toHaveBeenCalledWith(expect.objectContaining({ tenantId: 'ten', organizationId: 'org', employeeId: 'e1', userId: 'u1', connectionId: 'tab-1', status: 'active' }));
-		expect(presence).toMatchObject({ employeeId: 'e1', userId: 'u1', organizationId: 'org', status: 'active' });
+		expect(presence).toMatchObject({ employeeId: 'e1', userId: 'u1', organizationId: 'org', status: 'active', revision: 3 });
 		expect(pubSub.publish).toHaveBeenCalledWith(
 			'presence.changed',
 			'ten',
@@ -88,13 +97,13 @@ describe('RealtimeSignalsService presence', () => {
 	});
 
 	it('tells each organization of the lapsed connections a sweep settled, outside any request', async () => {
-		const sweep = jest.fn(async () => [outcome({ employeeId: 'e2', userId: 'u2', organizationId: 'org-2', status: RealtimePresenceStatus.OFFLINE }), outcome({ changed: false })]);
+		const sweep = sweepOf([outcome({ employeeId: 'e2', userId: 'u2', organizationId: 'org-2', status: RealtimePresenceStatus.OFFLINE }), outcome({ changed: false })]);
 		const { service, pubSub } = signalsOver({ sweep });
 		// No request context: the scope comes from the settled rows.
 		Object.assign(mockContext, { user: null, userId: null, tenantId: null, organizationId: null });
 		const now = new Date('2026-11-09T12:00:00.000Z');
 		await service.sweepPresence(now);
-		expect(sweep).toHaveBeenCalledWith(now);
+		expect(sweep).toHaveBeenCalledWith(now, expect.any(Function));
 		expect(pubSub.publish).toHaveBeenCalledTimes(1);
 		expect(pubSub.publish).toHaveBeenCalledWith(
 			'presence.changed',
@@ -107,9 +116,9 @@ describe('RealtimeSignalsService presence', () => {
 		let release: () => void = () => undefined;
 		const sweep = jest
 			.fn()
-			.mockImplementationOnce(() => new Promise<IPresenceOutcome[]>((resolve) => (release = () => resolve([]))))
+			.mockImplementationOnce(() => new Promise((resolve) => (release = () => resolve({ settled: 0, failed: 0 }))))
 			.mockImplementationOnce(async () => Promise.reject(new Error('database unavailable')))
-			.mockImplementation(async () => []);
+			.mockImplementation(async () => ({ settled: 0, failed: 0 }));
 		const { service } = signalsOver({ sweep });
 		const first = service.sweepPresence();
 		await service.sweepPresence();
@@ -124,7 +133,7 @@ describe('RealtimeSignalsService presence', () => {
 	it('sweeps on a timer while the module lives', () => {
 		jest.useFakeTimers();
 		try {
-			const sweep = jest.fn(async () => []);
+			const sweep = sweepOf([]);
 			const { service } = signalsOver({ sweep });
 			service.onModuleInit();
 			jest.advanceTimersByTime(30_000);

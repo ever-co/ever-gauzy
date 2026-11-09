@@ -212,7 +212,8 @@ location; none of them changes the flag-off default.
    merge of the live connections (active, then idle, then away; offline when none), persisted on
    `Employee.lastSeenAt/isIdle`, and `presence.changed` is published only when the merge changes — on a
    report, or when a 30 s sweep settles a lapsed connection. A report locks the employee's published row,
-   so two reports of one employee merge one after the other. What remains: a client that names no
+   so two reports of one employee merge one after the other, and every change carries the row's `revision`
+   (readers drop a change older than the last applied, as two processes may deliver two changes out of order). What remains: a client that names no
    connection shares one per employee that never lapses (last report wins, as before), and there is no
    5 s coalescing of the fan-out beyond "only on change".
 3. ~~**Document, comment and task hints reach the whole organization.**~~ Resolved (T21): the hints stay
@@ -239,7 +240,9 @@ location; none of them changes the flag-off default.
    than an appending transaction runs between stamping and committing its row), the rows past it are still
    answered and answered again from the position (clients apply by `eventId`), and a first call answers that
    horizon instead of now; a regression test interleaves two real transactions committing out of stamp
-   order. `sequence` was no option: it is the highest position of the row's partition plus one, allocated
+   order. On Postgres, where a row is stamped with its transaction's start, the horizon is also held behind
+   the oldest transaction open in the database (`pg_stat_activity`, `RealtimeSettleHorizon`), so a transaction
+   that waits on a lock longer than the window is still covered (capped at 5 minutes for a forgotten session). `sequence` was no option: it is the highest position of the row's partition plus one, allocated
    inside the writing transaction, not at commit and not across partitions. A position taken from a
    streamed event stays unsafe (the dispatcher delivers neither in commit order nor at once), so clients
    must resume from the catch-up's own cursor — the Ever Teams client still moves its cursor on streamed

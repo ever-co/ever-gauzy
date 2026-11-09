@@ -81,8 +81,9 @@ unreachable, every feature keeps working with its documented polling.
   MUST reject anonymous connections.
 - **FR-2** Every replayable event MUST carry a stable event id, a topic (its name) and
   its position in one cursor order per organization: append time, then event id.
-  Clients MUST be able to reconnect with the cursor of the last event they applied and
-  receive all later events of their scope in that order. (The outbox's per-aggregate
+  Clients MUST be able to reconnect with the last cursor the catch-up answered them and
+  receive all later events of their scope in that order (a streamed event is no resume
+  position: the stream delivers neither in commit order nor at once, plan §15.6). (The outbox's per-aggregate
   `sequence` orders one aggregate's events only and is not a reconnect cursor.)
 - **FR-3** The platform MUST keep a replay window of at least the newest 1,000 events per
   organization or the last 24 hours, whichever is larger, and MUST answer a reconnect

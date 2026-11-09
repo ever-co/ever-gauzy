@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { ID } from '@gauzy/contracts';
-import { MikroOrmBaseEntityRepository, MultiORMColumn, MultiORMEntity, TenantOrganizationBaseEntity } from '@gauzy/core';
+import { ColumnIndex, MikroOrmBaseEntityRepository, MultiORMColumn, MultiORMEntity, TenantOrganizationBaseEntity } from '@gauzy/core';
 
 /** The MikroORM repositories the entities name (the services themselves run on TypeORM's `DataSource`). */
 @Injectable()
@@ -16,10 +16,14 @@ export class MikroOrmRealtimeReplayWatermarkRepository extends MikroOrmBaseEntit
  * Unique on (`tenantId`, `employeeId`, `connectionId`). A connection counts until `expiresAt`; a row without one never
  * lapses (the published row, and the one connection a client that names none shares).
  *
+ * The unique key is declared here as well as in the migration: the presence lock relies on it (an insert of the
+ * published row is ignored when the row exists), so a schema built from the entities (`DB_SYNCHRONIZE`) needs it too.
+ *
  * The date column is typed `?: Date`, not `Date | null`: its column type comes from the design type, and a `| null`
  * union is emitted as `Object`, which TypeORM refuses at boot.
  */
 @MultiORMEntity('realtime_presence', { mikroOrmRepository: () => MikroOrmRealtimePresenceRepository })
+@ColumnIndex('UQ_realtime_presence_connection', ['tenantId', 'employeeId', 'connectionId'], { unique: true })
 export class RealtimePresence extends TenantOrganizationBaseEntity {
 	@MultiORMColumn()
 	employeeId!: ID;
@@ -37,6 +41,14 @@ export class RealtimePresence extends TenantOrganizationBaseEntity {
 
 	@MultiORMColumn({ nullable: true })
 	expiresAt?: Date;
+
+	/**
+	 * On the published row: how many times the employee's merged presence changed. Written under the row's lock, so it
+	 * orders the changes of one employee whichever process publishes them; a reader applies a change only when its
+	 * revision is higher than the last one applied.
+	 */
+	@MultiORMColumn({ type: 'int', default: 0 })
+	revision!: number;
 }
 
 /**
@@ -45,6 +57,7 @@ export class RealtimePresence extends TenantOrganizationBaseEntity {
  * precedes it answers `resync`. Unique on (`tenantId`, `scopeKey`); it only ever moves forward.
  */
 @MultiORMEntity('realtime_replay_watermark', { mikroOrmRepository: () => MikroOrmRealtimeReplayWatermarkRepository })
+@ColumnIndex('UQ_realtime_replay_watermark_scope', ['tenantId', 'scopeKey'], { unique: true })
 export class RealtimeReplayWatermark extends TenantOrganizationBaseEntity {
 	/** The organization's id, or {@link REALTIME_TENANT_WIDE_SCOPE} for the tenant-wide rows. */
 	@MultiORMColumn({ type: 'varchar', length: 64 })

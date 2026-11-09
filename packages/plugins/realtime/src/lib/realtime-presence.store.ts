@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { DataSource, EntityManager, In, LessThanOrEqual, Not } from 'typeorm';
 import { ID, RealtimePresenceStatus } from '@gauzy/contracts';
 import { Employee } from '@gauzy/core';
@@ -55,6 +55,8 @@ export interface IPresenceOutcome {
 	userId: ID;
 	status: RealtimePresenceStatus;
 	changed: boolean;
+	/** The published row's revision after this report or sweep: higher for every change of this employee. */
+	revision: number;
 }
 
 /**
@@ -74,6 +76,8 @@ export interface IPresenceOutcome {
  */
 @Injectable()
 export class RealtimePresenceStore {
+	private readonly logger = new Logger('RealtimePresenceStore');
+
 	constructor(private readonly dataSource: DataSource) {}
 
 	/**
@@ -115,13 +119,16 @@ export class RealtimePresenceStore {
 
 	/**
 	 * Settles the employees with a connection that lapsed by `now`: forgets those connections and merges again. Every
-	 * process runs it; the lock of {@link report} makes a second process find nothing left to settle.
+	 * process runs it; the lock of {@link report} makes a second process find nothing left to settle. Each employee is
+	 * settled in a transaction of its own and handed to `settled` once it committed, so an employee whose transaction
+	 * fails (logged, settled by a later pass) never holds back the others' notices.
 	 *
 	 * @param now The moment to judge expiry at.
-	 * @param limit The most employees settled in one pass.
-	 * @returns The outcome of each employee settled.
+	 * @param settled Called with each employee's outcome as soon as it committed.
+	 * @param limit The most lapsed connections read in one pass.
+	 * @returns How many employees were settled, and how many failed.
 	 */
-	async sweep(now: Date, limit = 100): Promise<IPresenceOutcome[]> {
+	async sweep(now: Date, settled: (outcome: IPresenceOutcome) => Promise<void>, limit = 100): Promise<{ settled: number; failed: number }> {
 		const lapsed = await this.dataSource.getRepository(RealtimePresence).find({
 			select: { tenantId: true, employeeId: true, userId: true, organizationId: true },
 			where: { expiresAt: LessThanOrEqual(now), connectionId: Not(In([REALTIME_PUBLISHED_PRESENCE_KEY, REALTIME_SHARED_CONNECTION_KEY])) },
@@ -130,22 +137,29 @@ export class RealtimePresenceStore {
 		});
 		const employees = new Map<string, RealtimePresence>();
 		for (const row of lapsed) employees.set(`${row.tenantId}|${row.employeeId}`, row);
-		const outcomes: IPresenceOutcome[] = [];
+		const counts = { settled: 0, failed: 0 };
 		for (const row of employees.values()) {
 			const scope = { tenantId: row.tenantId as ID, organizationId: (row.organizationId as ID) ?? null, employeeId: row.employeeId, userId: row.userId };
-			outcomes.push(
-				await this.dataSource.transaction(async (manager) => {
+			let outcome: IPresenceOutcome;
+			try {
+				outcome = await this.dataSource.transaction(async (manager) => {
 					const published = await this.lockPublished(manager, scope);
-					const outcome = await this.merge(manager, scope, published, now);
+					const merged = await this.merge(manager, scope, published, now);
 					await manager.getRepository(Employee).update(
 						{ id: scope.employeeId, tenantId: scope.tenantId },
-						{ isIdle: outcome.status !== RealtimePresenceStatus.ACTIVE }
+						{ isIdle: merged.status !== RealtimePresenceStatus.ACTIVE }
 					);
-					return outcome;
-				})
-			);
+					return merged;
+				});
+			} catch (error) {
+				counts.failed += 1;
+				this.logger.warn(`The lapsed presence of employee ${scope.employeeId} was not settled: ${(error as Error)?.message}`);
+				continue;
+			}
+			counts.settled += 1;
+			await settled(outcome);
 		}
-		return outcomes;
+		return counts;
 	}
 
 	/**
@@ -193,14 +207,16 @@ export class RealtimePresenceStore {
 		if (lapsed.length) await repository.delete({ id: In(lapsed) });
 		const status = mergePresence(rows.filter((row) => isLive(row, now)).map((row) => row.status));
 		const changed = published.status !== status;
-		if (changed) await repository.update({ id: published.id }, { status });
+		const revision = (Number(published.revision) || 0) + (changed ? 1 : 0);
+		if (changed) await repository.update({ id: published.id }, { status, revision });
 		return {
 			tenantId: scope.tenantId,
 			organizationId: (published.organizationId as ID) ?? scope.organizationId ?? null,
 			employeeId: scope.employeeId,
 			userId: (published.userId as ID) ?? scope.userId,
 			status,
-			changed
+			changed,
+			revision
 		};
 	}
 }
