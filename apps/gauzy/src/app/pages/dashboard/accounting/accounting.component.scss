@@ -24,6 +24,10 @@ $weight-strong: 600; // KPI values, and nothing else
 $weight-medium: 500; // titles, headings, secondary figures
 $weight-normal: 400; // labels, captions, chips
 
+// One height for the breakdown header's filter, sort select and direction button,
+// so the three read as one toolbar. Below `$panel-header-height`'s 1.875rem control.
+$toolbar-control-height: 1.75rem;
+
 :host {
 	// `unset, auto`: the dashboard page owns the single scrollbar (see
 	// `../dashboard.component.scss`), so this card must not open a second one.
@@ -180,13 +184,25 @@ $weight-normal: 400; // labels, captions, chips
 	color: var(--gauzy-text-color-1);
 }
 
+// Filter, then the sort group. One row while they fit; on a narrow card the sort
+// group wraps under the filter rather than overflowing `.panel`, which clips.
 .panel-actions {
 	display: flex;
 	flex-wrap: wrap;
 	align-items: center;
-	gap: $gap-xs;
+	gap: $gap-xs $gap-sm;
 	min-width: 0;
 	margin-inline-start: auto;
+}
+
+// Label, select and direction button: never split, so the arrow stays by its select.
+.sort-group {
+	display: flex;
+	flex-wrap: nowrap;
+	align-items: center;
+	gap: $gap-xs;
+	flex: 0 0 auto;
+	min-width: 0;
 }
 
 .sort-label {
@@ -197,7 +213,103 @@ $weight-normal: 400; // labels, captions, chips
 }
 
 .sort-select {
+	flex: 0 0 auto;
 	min-width: 8.5rem;
+}
+
+/*
+ * `nb-card_overrides` → `input-appearance` gives every input and outline select in
+ * the card `min-height: $default-height !important`, which is what held these
+ * controls taller than `size="tiny"`. The selectors below out-rank it, also with
+ * `!important`, so the three toolbar controls sit at `$toolbar-control-height`.
+ */
+:host ::ng-deep nb-select.sort-select.appearance-outline.status-basic .select-button {
+	min-height: $toolbar-control-height !important;
+	height: $toolbar-control-height;
+	padding-block: 0;
+	font-size: 0.75rem;
+	font-weight: $weight-normal;
+}
+
+.sort-direction {
+	flex: 0 0 auto;
+	width: $toolbar-control-height;
+	height: $toolbar-control-height;
+	padding: 0;
+	justify-content: center;
+}
+
+// Name/email filter: a tiny nbInput with the search glyph inset on the start edge
+// and a clear button on the end edge, at the same height as the sort select.
+// 13rem beside the sort group; once the sort group wraps, it fills its own line.
+.filter-box {
+	position: relative;
+	display: flex;
+	align-items: center;
+	flex: 1 1 13rem;
+	min-width: 8rem;
+}
+
+.filter-icon,
+.filter-clear {
+	position: absolute;
+	top: 50%;
+	transform: translateY(-50%);
+	color: var(--gauzy-text-color-2);
+}
+
+.filter-icon {
+	inset-inline-start: $gap-sm;
+	width: 0.875rem;
+	height: 0.875rem;
+	font-size: 0.875rem;
+	pointer-events: none;
+}
+
+.filter-box input.filter-input {
+	width: 100%;
+	max-width: none;
+	min-height: $toolbar-control-height !important;
+	height: $toolbar-control-height;
+	padding-block: 0;
+	padding-inline: calc(#{$gap-sm} + 1.125rem) calc(#{$gap-xs} + 1.25rem);
+	font-size: 0.75rem;
+	line-height: 1rem;
+
+	// The clear button replaces the browser's own cancel glyph
+	&::-webkit-search-cancel-button {
+		appearance: none;
+	}
+}
+
+.filter-clear {
+	inset-inline-end: $gap-xs;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 1.25rem;
+	height: 1.25rem;
+	padding: 0;
+	border: 0;
+	border-radius: var(--gauzy-radius-sm);
+	background: transparent;
+	cursor: pointer;
+
+	nb-icon {
+		width: 0.875rem;
+		height: 0.875rem;
+		font-size: 0.875rem;
+	}
+
+	&:hover {
+		background-color: var(--gauzy-hover-tint);
+		color: var(--gauzy-text-color-1);
+	}
+
+	&:focus-visible {
+		outline: 2px solid var(--gauzy-action-info-text);
+		outline-offset: 1px;
+	}
 }
 
 .panel-count {

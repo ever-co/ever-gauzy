@@ -2035,7 +2035,11 @@
 			"SORT_BY": "Ordenar por {{ name }}",
 			"SORT_LABEL": "Ordenar por",
 			"SORT_ASCENDING": "Ascendente",
-			"SORT_DESCENDING": "Descendente"
+			"SORT_DESCENDING": "Descendente",
+			"FILTER_PLACEHOLDER": "Filtrar empleados",
+			"CLEAR_FILTER": "Borrar filtro",
+			"FILTERED_COUNT": "{{ shown }} de {{ total }}",
+			"NO_MATCHES": "Ningún empleado coincide con \"{{ term }}\""
 		},
 		"SELECT_A_MONTH_AND_EMPLOYEE": "Por favor seleccione un mes y empleado del menú de arriba.",
 		"INSERT_TEXT_FOR_NOT_AUTHENTICATED_USERS": "Insertar texto para usuarios no autenticados",
