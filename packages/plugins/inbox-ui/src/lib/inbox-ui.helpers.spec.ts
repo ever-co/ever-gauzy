@@ -4,6 +4,8 @@ import {
 	apiTabOf,
 	dateGroupOf,
 	dueStateOf,
+	emailBlocksOf,
+	emailHeaderOf,
 	escalationDetails,
 	groupByDate,
 	isDone,
@@ -291,6 +293,46 @@ describe('Inbox UI helpers', () => {
 			});
 			expect(senderOf({ sentByEmployee: undefined } as never)).toBeNull();
 			expect(senderOf({ sentByEmployee: { user: {} } } as never)).toBeNull();
+		});
+
+		it("reads an email's header: the sender's name and address, the mailbox, attachments and a spam doubt", () => {
+			expect(
+				emailHeaderOf({
+					metadata: {
+						from: 'Sarah Connor <sarah@acme.example>',
+						mailboxAddress: 'sales@example.com',
+						attachments: 2,
+						spamVerdict: 'suspect'
+					}
+				} as never)
+			).toEqual({
+				fromName: 'Sarah Connor',
+				fromAddress: 'sarah@acme.example',
+				initials: 'SC',
+				to: 'sales@example.com',
+				attachments: 2,
+				spam: 'suspect'
+			});
+			// An address alone is the name; a clean message has no spam doubt.
+			expect(emailHeaderOf({ metadata: { from: 'billing@vendor.example', spamVerdict: 'ham' } } as never)).toEqual({
+				fromName: 'billing@vendor.example',
+				fromAddress: null,
+				initials: 'B',
+				to: null,
+				attachments: 0,
+				spam: null
+			});
+			expect(emailHeaderOf({ metadata: null } as never).fromName).toBeNull();
+		});
+
+		it('sets a plain-text email in blocks: what was written, quotes, the signature', () => {
+			expect(emailBlocksOf('Hi,\n\nThanks.\n> On Monday:\n> Hello\n\n-- \nSarah\nAcme')).toEqual([
+				{ kind: 'text', text: 'Hi,\n\nThanks.' },
+				{ kind: 'quote', text: 'On Monday:\nHello' },
+				{ kind: 'signature', text: 'Sarah\nAcme' }
+			]);
+			expect(emailBlocksOf(null)).toEqual([]);
+			expect(emailBlocksOf('One line')).toEqual([{ kind: 'text', text: 'One line' }]);
 		});
 
 		it("tells an item's history, oldest first, from the times it carries", () => {
