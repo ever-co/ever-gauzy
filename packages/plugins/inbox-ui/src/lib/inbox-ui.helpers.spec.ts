@@ -6,9 +6,12 @@ import {
 	isSnoozed,
 	isTranslationKey,
 	isUnread,
+	kindIconOf,
 	linksOf,
+	listDateFormat,
 	listedIn,
 	optionsOf,
+	previewOf,
 	replaceItem,
 	mailboxLabelOf,
 	replyProblem,
@@ -20,6 +23,28 @@ import {
 const open = { kind: InboxItemKindEnum.QUESTION, status: InboxItemStatusEnum.OPEN, requireReason: false };
 
 describe('Inbox UI helpers', () => {
+	it('gives each kind its icon, and an unknown kind the inbox icon', () => {
+		expect(kindIconOf(InboxItemKindEnum.EMAIL)).toBe('email-outline');
+		expect(kindIconOf(InboxItemKindEnum.ESCALATION)).toBe('alert-triangle-outline');
+		expect(kindIconOf('SOMETHING_ELSE')).toBe('inbox-outline');
+		expect(kindIconOf(null)).toBe('inbox-outline');
+	});
+
+	it('shows a list row time as messaging apps do: time today, day this year, full date before', () => {
+		const now = new Date(2026, 10, 9, 15, 0);
+		expect(listDateFormat(new Date(2026, 10, 9, 4, 21), now)).toBe('shortTime');
+		expect(listDateFormat(new Date(2026, 2, 1), now)).toBe('MMM d');
+		expect(listDateFormat(new Date(2025, 11, 31), now)).toBe('mediumDate');
+		expect(listDateFormat(null, now)).toBe('short');
+		expect(listDateFormat('not a date', now)).toBe('short');
+	});
+
+	it('previews a body on one line, at most 160 characters', () => {
+		expect(previewOf('  Hello\n\n  world  ')).toBe('Hello world');
+		expect(previewOf(null)).toBe('');
+		expect(previewOf('x'.repeat(200))).toHaveLength(160);
+	});
+
 	it('maps the page tabs onto the API tabs; Notifications is none of them', () => {
 		expect(apiTabOf('all')).toBe(InboxTabEnum.ALL);
 		expect(apiTabOf('decisions')).toBe(InboxTabEnum.DECISIONS);
