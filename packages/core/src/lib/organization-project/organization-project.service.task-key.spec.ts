@@ -175,3 +175,50 @@ describe('a key another project answers to', () => {
 		expect(saved).toMatchObject({ taskKey: 'HIVE' });
 	});
 });
+
+/**
+ * The key check reads the projects of ONE organization: the stored project's own on an update (whatever the body
+ * states), the one the create names otherwise. Without one it would read every organization of the tenant and name
+ * another organization's project in the refusal, so it is refused instead.
+ */
+describe('the organization a key is checked in', () => {
+	const findIn = () => jest.fn(async (_options: { where: Record<string, unknown> }) => [] as unknown[]);
+
+	it("checks an update's key in the stored project's organization, when the body names none", async () => {
+		const { service } = serviceWith([]);
+		const find = findIn();
+		service.typeOrmRepository.find = find;
+		jest.spyOn(TenantAwareCrudService.prototype, 'findOneByIdString').mockResolvedValue({
+			id: 'p-ops',
+			name: 'Operations',
+			organizationId: ORGANIZATION,
+			taskKey: 'OPS',
+			teams: []
+		} as never);
+
+		await service.update('p-ops', { taskKey: 'RUN' } as never);
+
+		expect(find).toHaveBeenCalledWith(expect.objectContaining({ where: expect.objectContaining({ tenantId: TENANT, organizationId: ORGANIZATION }) }));
+		expect(saved).toMatchObject({ taskKey: 'RUN' });
+	});
+
+	it('takes the organization a create states as an object', async () => {
+		const { service } = serviceWith([]);
+		const find = findIn();
+		service.typeOrmRepository.find = find;
+
+		await service.create({ name: 'Runbooks', organization: { id: ORGANIZATION }, taskKey: 'RUN' } as never);
+
+		expect(find).toHaveBeenCalledWith(expect.objectContaining({ where: expect.objectContaining({ organizationId: ORGANIZATION }) }));
+	});
+
+	it('refuses a key it has no organization to check in, without reading the tenant', async () => {
+		const { service } = serviceWith([]);
+		const find = findIn();
+		service.typeOrmRepository.find = find;
+
+		await expect(service.create({ name: 'Runbooks', taskKey: 'RUN' } as never)).rejects.toThrow(/PROJECT_KEY_SCOPE_REQUIRED/);
+		expect(find).not.toHaveBeenCalled();
+		expect(saved).toBeUndefined();
+	});
+});

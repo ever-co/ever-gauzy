@@ -15,6 +15,7 @@ import {
 	Tenant
 } from '../core/entities/internal';
 import { asTenantUser, createTenantFixture } from '../core/testing/tenant-isolation/tenant-isolation.fixtures';
+import { serializeEmbeddedTransactions } from '../database/embedded-transaction-queue';
 import { Task } from './task.entity';
 import { TaskService } from './task.service';
 
@@ -45,6 +46,7 @@ const TENANT = fixture.tenantId;
 const ORGANIZATION = fixture.organizationId;
 const PROJECT_API = '83000000-0000-4000-8000-0000000000c1';
 const PROJECT_SYS = '83000000-0000-4000-8000-0000000000c2';
+const PROJECT_WEB = '83000000-0000-4000-8000-0000000000c3';
 const TASK_42 = '83000000-0000-4000-8000-000000000042';
 const TASK_41 = '83000000-0000-4000-8000-000000000041';
 
@@ -146,7 +148,10 @@ function exercise(dialect: Dialect) {
 	const refuseFormerReferenceOf = (taskId: string) => dialect.refuseFormerReferenceOf(dataSource, taskId);
 
 	beforeAll(async () => {
-		dataSource = new DataSource({ ...dialect.options(), entities: coreEntities, synchronize: true, logging: false } as DataSourceOptions);
+		// As the platform builds its data source: on SQLite, transactions take turns on the one connection.
+		dataSource = serializeEmbeddedTransactions(
+			new DataSource({ ...dialect.options(), entities: coreEntities, synchronize: true, logging: false } as DataSourceOptions)
+		);
 		await dataSource.initialize();
 	}, TIMEOUT);
 
@@ -166,6 +171,7 @@ function exercise(dialect: Dialect) {
 		await insert(Organization, { id: ORGANIZATION, tenantId: TENANT, name: 'Organization' });
 		await insert(OrganizationProject, { ...scope, id: PROJECT_API, name: 'Api Gateway', taskKey: 'API' });
 		await insert(OrganizationProject, { ...scope, id: PROJECT_SYS, name: 'Systems', taskKey: 'SYS' });
+		await insert(OrganizationProject, { ...scope, id: PROJECT_WEB, name: 'Website', taskKey: 'WEB' });
 		await insert(Task, { ...scope, id: TASK_41, title: 'Forty-one', projectId: PROJECT_API, number: 41, prefix: 'Api', status: 'open' });
 		await insert(Task, { ...scope, id: TASK_42, title: 'Forty-two', projectId: PROJECT_API, number: 42, prefix: 'Api', status: 'open' });
 
@@ -241,6 +247,33 @@ function exercise(dialect: Dialect) {
 			expect(await service.getMaxTaskNumberByProject(where, { withDeleted: true })).toBe(42);
 			// The read routes report the live tasks, as before.
 			expect(await service.getMaxTaskNumberByProject(where)).toBe(41);
+		},
+		TIMEOUT
+	);
+
+	it(
+		'keeps every reference of a task two overlapping updates move: each leaves the one it found',
+		async () => {
+			// Both read the task as API-42 before either writes. The second one's transaction waits for the first one's
+			// row lock (Postgres) or its turn (SQLite), then leaves SYS-1, the reference the first one gave the task.
+			const [first, second] = await Promise.allSettled([
+				service.update(TASK_42, { projectId: PROJECT_SYS }),
+				service.update(TASK_42, { projectId: PROJECT_WEB })
+			]);
+			const reasons = [first, second].map((result) => (result.status === 'rejected' ? String(result.reason?.message ?? result.reason) : 'ok'));
+			expect(reasons).toEqual(['ok', 'ok']);
+
+			const task = await taskRow(TASK_42);
+			const references = (await formerReferences()).map(({ projectId, number }) => ({ projectId, number }));
+			// Whichever committed last decides where the task is; the other move's reference is kept either way.
+			if (task?.projectId === PROJECT_WEB) {
+				expect(references).toEqual([{ projectId: PROJECT_SYS, number: 1 }, { projectId: PROJECT_API, number: 42 }]);
+			} else {
+				expect(task).toMatchObject({ projectId: PROJECT_SYS, number: 1 });
+				expect(references).toEqual([{ projectId: PROJECT_WEB, number: 1 }, { projectId: PROJECT_API, number: 42 }]);
+			}
+			const resolutions = await service.resolveReferences({ organizationId: ORGANIZATION, references: ['API-42', 'SYS-1', 'WEB-1'] } as never);
+			expect(resolutions.map((resolution) => resolution.taskId)).toEqual([TASK_42, TASK_42, TASK_42]);
 		},
 		TIMEOUT
 	);

@@ -105,7 +105,9 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 				automaticKey = true;
 			}
 		}
-		await this.prepareTaskKey(entity, { tenantId, organizationId });
+		// The organization the project is created in, in either form the input may state it
+		const keyScope = organizationId ?? (input as { organization?: { id?: ID } }).organization?.id;
+		await this.prepareTaskKey(entity, { tenantId, organizationId: keyScope });
 		void _rate;
 
 		try {
@@ -1117,7 +1119,11 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 	 */
 	private async prepareTaskKey(
 		entity: { taskKey?: string | null; taskKeyHistory?: string[] | null },
-		scope: { tenantId: ID; organizationId: ID; existing?: { id?: ID; taskKey?: string | null; taskKeyHistory?: string[] | null } | null }
+		scope: {
+			tenantId: ID;
+			organizationId: ID;
+			existing?: { id?: ID; organizationId?: ID; taskKey?: string | null; taskKeyHistory?: string[] | null } | null;
+		}
 	): Promise<void> {
 		delete entity.taskKeyHistory;
 		if (!('taskKey' in entity)) {
@@ -1149,12 +1155,18 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 	 */
 	private async assertTaskKeyFree(
 		key: string,
-		scope: { tenantId: ID; organizationId: ID; existing?: { id?: ID } | null }
+		scope: { tenantId: ID; organizationId: ID; existing?: { id?: ID; organizationId?: ID } | null }
 	): Promise<void> {
+		// The project's own organization (a stored project's, else the one the create names): a read without one would
+		// span every organization of the tenant and name another organization's project in the refusal.
+		const organizationId = scope.existing?.organizationId ?? scope.organizationId;
+		if (!scope.tenantId || !organizationId) {
+			throw new BadRequestException('PROJECT_KEY_SCOPE_REQUIRED: a project key is checked within the organization of the project; state it.');
+		}
 		const others = await this.typeOrmRepository.find({
 			where: {
 				tenantId: scope.tenantId,
-				organizationId: scope.organizationId,
+				organizationId,
 				...(scope.existing?.id ? { id: Not(scope.existing.id) } : {})
 			},
 			select: { id: true, name: true, taskKey: true, taskKeyHistory: true },

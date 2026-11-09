@@ -101,6 +101,34 @@ describe('TaskService.update — moving a task to another project', () => {
 		expect(saveOrder).toBeLessThan(referenceOrder);
 	});
 
+	it('keeps the reference the task holds when the transaction writes, not the one read before it', async () => {
+		// Another move committed between the read of the task and this transaction: the task is MID-3 now
+		const { manager, saves, lockedRead } = stubTaskUpdateManager(
+			{ findOne: findProject },
+			{ id: 'task-1', projectId: 'project-mid', number: 3, prefix: 'MID', organizationId: fixture.organizationId }
+		);
+		Object.defineProperty(service, 'typeOrmRepository', { value: { manager }, configurable: true });
+
+		await service.update('task-1', { projectId: 'project-new' });
+
+		expect(lockedRead.where).toHaveBeenCalledWith({ id: 'task-1' });
+		expect(saves(TaskFormerReference)).toHaveBeenCalledWith(
+			expect.objectContaining({ taskId: 'task-1', projectId: 'project-mid', number: 3, prefix: 'MID' })
+		);
+	});
+
+	it('keeps no reference when the task is already where the update moves it', async () => {
+		const { manager, saves } = stubTaskUpdateManager(
+			{ findOne: findProject },
+			{ id: 'task-1', projectId: 'project-new', number: 5, prefix: 'Eve', organizationId: fixture.organizationId }
+		);
+		Object.defineProperty(service, 'typeOrmRepository', { value: { manager }, configurable: true });
+
+		await service.update('task-1', { projectId: 'project-new' });
+
+		expect(saves(TaskFormerReference)).not.toHaveBeenCalled();
+	});
+
 	it('keeps the reference of a task taken out of its project, which keeps its number', async () => {
 		await service.update('task-1', { projectId: null, project: null } as never);
 

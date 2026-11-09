@@ -281,11 +281,6 @@ export class TaskService extends TenantAwareCrudService<Task> {
 
 			const namesProject = data.projectId !== undefined;
 			const changesProject = (data.projectId ?? null) !== (task.projectId ?? null);
-
-			// A task that leaves its project keeps the reference it held there (`API-42`), so the reference keeps
-			// resolving to it and the number is not handed to another task of that project (see TaskFormerReference).
-			const hasNumberInProject = !!task.projectId && task.number !== null && task.number !== undefined;
-			const leavesProject = namesProject && changesProject && hasNumberInProject;
 			const { organizationSprintId } = data;
 			const movesSprint = !!organizationSprintId && organizationSprintId !== task.organizationSprintId;
 
@@ -293,7 +288,19 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			// are one transaction: when a step fails the save is undone, so an update reported as failed (a bulk update's
 			// `ok: false`) changed nothing. The steps after it (mentions, time logs, subscriptions, activity) are best
 			// effort and run once it committed.
-			const updatedTask = await this.inUpdateTransaction(async ({ service, manager }) => {
+			const updatedTask = await this.inUpdateTransaction(async ({ service, manager, inTransaction }) => {
+				// A task that leaves its project keeps the reference it held there (`API-42`), so the reference keeps
+				// resolving to it and the number is not handed to another task of that project (see TaskFormerReference).
+				// The reference is the one the task holds when this transaction writes, read with the row locked: a move
+				// that committed since the task was read above (`API-42` → `SYS-1`) leaves `SYS-1`, not `API-42` again.
+				const current = namesProject ? await this.lockedReferenceOf(manager, id, task, inTransaction) : task;
+				const leavesProject =
+					namesProject &&
+					!!current.projectId &&
+					current.number !== null &&
+					current.number !== undefined &&
+					(data.projectId ?? null) !== current.projectId;
+
 				const updated = await service.saveTaskRow({
 					...data,
 					id,
@@ -303,11 +310,11 @@ export class TaskService extends TenantAwareCrudService<Task> {
 				if (leavesProject) {
 					await manager.getRepository(TaskFormerReference).save({
 						taskId: id,
-						projectId: task.projectId,
-						number: task.number,
-						prefix: task.prefix ?? null,
+						projectId: current.projectId,
+						number: current.number,
+						prefix: current.prefix ?? null,
 						// The organization the reference was valid in: the one the task was in before the update
-						organizationId: task.organizationId,
+						organizationId: current.organizationId ?? task.organizationId,
 						tenantId
 					});
 				}
@@ -392,23 +399,46 @@ export class TaskService extends TenantAwareCrudService<Task> {
 	 * for the task row this transaction holds): the time-log move, which locks that row, runs after the commit.
 	 */
 	private async inUpdateTransaction<R>(
-		work: (scope: { service: TaskService; manager: EntityManager }) => Promise<R>
+		work: (scope: { service: TaskService; manager: EntityManager; inTransaction: boolean }) => Promise<R>
 	): Promise<R> {
 		if (this.ormType !== MultiORMEnum.TypeORM) {
-			return work({ service: this, manager: this.typeOrmRepository.manager });
+			return work({ service: this, manager: this.typeOrmRepository.manager, inTransaction: false });
 		}
 		return this.typeOrmRepository.manager.transaction(async (manager: EntityManager) => {
 			// A view, not a copy: every other member is this service's own, read through the prototype.
 			const service: TaskService = Object.create(this, {
 				typeOrmRepository: { value: manager.getRepository(Task), configurable: true }
 			});
-			return work({ service, manager });
+			return work({ service, manager, inTransaction: true });
 		});
 	}
 
 	/** The tenant-aware save of an update, on the repository `this` carries (a transaction's, see inUpdateTransaction). */
 	private saveTaskRow(entity: IPartialEntity<Task>): Promise<Task> {
 		return super.create(entity);
+	}
+
+	/**
+	 * The task's project, number, prefix and organization as stored now, read by the update's transaction. On Postgres
+	 * and MySQL the row stays locked until the transaction ends (`FOR UPDATE`), so a concurrent update of the same task
+	 * waits for this one and then reads what it stored; the embedded dialect runs one transaction at a time. Outside a
+	 * transaction (MikroORM) it is a plain read. What the read does not answer is taken from the task read before.
+	 */
+	private async lockedReferenceOf(
+		manager: EntityManager,
+		id: ID,
+		task: Task,
+		inTransaction: boolean
+	): Promise<Pick<Task, 'projectId' | 'number' | 'prefix' | 'organizationId'>> {
+		const query = manager
+			.createQueryBuilder(Task, 'task')
+			.select(['task.id', 'task.projectId', 'task.number', 'task.prefix', 'task.organizationId'])
+			.where({ id });
+		if (inTransaction && (isPostgres() || isMySQL())) {
+			query.setLock('pessimistic_write');
+		}
+		const row = await query.getOne();
+		return row ? { ...task, ...row } : task;
 	}
 
 	/**

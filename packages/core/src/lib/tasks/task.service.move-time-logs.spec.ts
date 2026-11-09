@@ -240,9 +240,11 @@ describe('TaskService.update — moving the time logs with the task', () => {
 
 			await service.update('task-1', { projectId: 'project-new', moveTimeLogs: true });
 
-			// The update's transaction commits first: the move locks the task row, which a write of the update holds
+			// The update's transaction locks the task row, reads the reference it leaves and commits first: the move
+			// locks the same row, which the update holds until then
 			expect(steps).toEqual([
 				'begin',
+				'pessimistic_write task task-1',
 				'save task',
 				'save former reference',
 				'commit',

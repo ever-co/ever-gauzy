@@ -46,7 +46,8 @@ existing task and view routes keep working unchanged.
   a task that is missing, another organization's, or refused by its update is reported and the others are
   applied: per-task results (`ok`, `error`, `previous`), never all-or-nothing across tasks. The answer's
   `previous` is a changes object (lists as `set…`), so an undo is the same request with `items` built from it.
-  Each task's update is one transaction (§7.1), so a task reported as refused did not change.
+  Each task's update is one transaction (§7.1): a task reported as refused
+  did not change.
 - **References** (`TaskService.resolveReferences`) resolve by the project's key, its former keys and the key
   derived from its name; the task's `prefix` stays what the create path writes. Every project answering to the key
   is read: when more than one task of those projects holds the number the answer is `ambiguous: true` and resolves
