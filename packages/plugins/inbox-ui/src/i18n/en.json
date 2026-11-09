@@ -6,8 +6,13 @@
 	"ITEM_LINK_ERROR": "The linked item could not be opened. Reload the page to try again.",
 	"ACTION_FAILED": "That did not work. Try again.",
 	"RETRY": "Try again",
+	"SUBTITLE": "Messages, decisions and notifications addressed to you.",
+	"UNREAD_SUMMARY": "{{ count }} unread",
 	"EMPTY": "Nothing here.",
+	"EMPTY_HINT": "You're all caught up. New items addressed to you will appear here.",
 	"SELECT": "Select an item to see it here.",
+	"SELECT_HINT": "Open a message to read it, reply, or act on it.",
+	"BACK": "Back to the list",
 	"LOAD_MORE": "Load more",
 	"BADGE_LABEL": "Inbox: {{ count }} unread",
 	"DUE": "Due {{ date }}",
@@ -71,6 +76,7 @@
 		"NOTE": "Note",
 		"RESOLVE_NOTE": "Resolve note",
 		"REASON_REQUIRED": "This item asks for a reason with the reply.",
+		"PLACEHOLDER": "Write a reply…",
 		"SEND": "Send"
 	},
 	"APPROVAL": {
@@ -88,6 +94,7 @@
 		"MARK_ALL_READ": "Mark all read"
 	},
 	"SNOOZE": {
+		"MENU": "Snooze",
 		"hour": "Snooze 1 hour",
 		"tomorrow": "Snooze until tomorrow",
 		"next-week": "Snooze until next week"
@@ -101,7 +108,8 @@
 	"NOTIFICATIONS": {
 		"NO_EMPLOYEE": "Notifications are addressed to employees; this account has no employee profile.",
 		"ERROR": "The notifications could not be loaded.",
-		"EMPTY": "No notifications."
+		"EMPTY": "No notifications.",
+		"ALL_READ": "All caught up"
 	},
 	"SETTINGS": {
 		"MENU_PROVIDERS": "Inbox providers",
