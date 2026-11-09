@@ -250,7 +250,8 @@ describe('Inbox UI helpers', () => {
 		it('offers to undo archive, done and snooze, with the change that takes each back', () => {
 			const before = { recipient: { isRead: true, isArchived: false, snoozedUntil: null } } as never;
 			expect(undoOf({ isArchived: true }, before)).toEqual({ kind: 'ARCHIVED', revert: { isArchived: false } });
-			expect(undoOf({ isArchived: false }, before)).toEqual({ kind: 'UNARCHIVED', revert: { isArchived: true } });
+			const archived = { recipient: { isRead: true, isArchived: true, snoozedUntil: null } } as never;
+			expect(undoOf({ isArchived: false }, archived)).toEqual({ kind: 'UNARCHIVED', revert: { isArchived: true } });
 			expect(undoOf({ isDone: true }, before)).toEqual({ kind: 'DONE', revert: { isDone: false } });
 			expect(undoOf({ snoozedUntil: '2099-01-01T09:00:00.000Z' }, before)).toEqual({
 				kind: 'SNOOZED',
@@ -264,6 +265,21 @@ describe('Inbox UI helpers', () => {
 			});
 			// The read state is its own undo.
 			expect(undoOf({ isRead: true }, before)).toBeNull();
+		});
+
+		it('undoes to each item its own earlier state: an item done (or archived) before stays so', () => {
+			const doneBefore = { recipient: { isRead: true, isArchived: true, isDone: true, snoozedUntil: null } } as never;
+			expect(undoOf({ isDone: true }, doneBefore)).toEqual({ kind: 'DONE', revert: { isDone: true } });
+			expect(undoOf({ isArchived: true }, doneBefore)).toEqual({ kind: 'ARCHIVED', revert: { isArchived: true } });
+		});
+
+		it('counts days by the calendar, also across a clock change (a 23- or 25-hour day)', () => {
+			// 30 March 2026, 00:30: in Europe the day before had 23 hours. 28 March, 23:30, is two days back.
+			const afterClockChange = new Date(2026, 2, 30, 0, 30);
+			expect(dateGroupOf(new Date(2026, 2, 29, 0, 0), afterClockChange)).toBe('YESTERDAY');
+			expect(dateGroupOf(new Date(2026, 2, 28, 23, 30), afterClockChange)).toBe('THIS_WEEK');
+			expect(dateGroupOf(new Date(2026, 2, 23, 0, 0), afterClockChange)).toBe('THIS_WEEK');
+			expect(dateGroupOf(new Date(2026, 2, 22, 23, 59), afterClockChange)).toBe('OLDER');
 		});
 
 		it('never takes a shortcut typed in a field', () => {
