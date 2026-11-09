@@ -339,7 +339,7 @@ interface NotificationScope {
 				height: 1rem;
 				border-radius: 50%;
 				border: 2px solid var(--background-basic-color-1, #fff);
-				color: #fff;
+				color: var(--text-control-color, #fff);
 				background: var(--tone);
 			}
 			.type-badge nb-icon {
