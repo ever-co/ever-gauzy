@@ -34,4 +34,10 @@ export interface ICommentParentAccessPolicy {
 	readonly readPermissions: ReadonlyArray<PermissionsEnum>;
 	readonly writePermissions: ReadonlyArray<PermissionsEnum>;
 	findAccessibleParent(entityId: ID): Promise<ICommentParent | null>;
+	/**
+	 * Optional, for checks over many records at once (the real-time channel's catch-up): the records among
+	 * `entityIds` the caller may reach, by the same rule as {@link findAccessibleParent}, in one read. Without it the
+	 * records are read one by one (a few at a time).
+	 */
+	findAccessibleParents?(entityIds: ID[]): Promise<ICommentParent[]>;
 }

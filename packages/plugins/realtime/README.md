@@ -38,11 +38,11 @@ uses the in-process engine.
 
 | Name | Durable | Audience | Payload |
 | --- | --- | --- | --- |
-| `task.created` / `task.updated` / `task.deleted` | yes | organization | `{ entity: 'Task', entityId, action, projectId, organizationId, actorUserId }` |
-| `comment.created` / `comment.updated` / `comment.deleted` | yes | organization | `{ entity: 'Comment', entityId, action, parent: { entity, entityId }, parentCommentId }` |
+| `task.created` / `task.updated` / `task.deleted` | yes | the organization's task readers (`ALL_ORG_VIEW` or `ORG_TASK_VIEW`) | `{ entity: 'Task', entityId, action, projectId, organizationId, actorUserId }` |
+| `comment.created` / `comment.updated` / `comment.deleted` | yes | the readers of the record whose comments changed | `{ entity: 'Comment', entityId, action, parent: { entity, entityId }, parentCommentId }` |
 | `mention.created` | yes | the mentioned employee's user | `{ entity, entityId, parent, mentionedEmployeeId }` |
 | `employee_notification.created` | yes | the receiver's user | `{ entity, entityId, type, receiverEmployeeId }` |
-| `document.updated` | yes | organization | `{ entity: 'Document', entityId, action }` |
+| `document.updated` | yes | the page's readers (Docs visibility, team space, shares) | `{ entity: 'Document', entityId, action }` |
 | `presence.changed` | no | organization | `{ employeeId, userId, status, at }` |
 | `typing.signalled` | no | the named users | `{ conversationId, threadRootId, employeeId, userId, at }` |
 
@@ -50,6 +50,16 @@ The subscription and the catch-up also offer the events the chat and inbox
 plugins declare when they are loaded (`chat_message.*`, `chat_conversation.*`,
 `chat_member.*`, `chat_thread.*`, `inbox_item.*`): the collaboration
 families, and nothing of another family.
+
+**Who receives an event is decided when it is handed over**, live and in the
+catch-up alike, in the subscriber's request context (`RealtimeAudience`): an
+addressed event goes to its recipients only, and then every event must pass the
+audience checks of its name — the read rule of the page, task or comment thread
+it names (the hints themselves are organization-wide on the outbox), and the
+checks other plugins register with `SubscriptionCatalogue.restrictAudience` (the
+chat plugin: current conversation membership, so a member who left or was
+removed no longer replays the conversation). A check runs once per batch — a
+catch-up page, or a live event — never once per row.
 
 Repeated `*.updated` hints of one aggregate within one second are folded: the
 first is appended at once, the latest of the rest when the second closes. A fact

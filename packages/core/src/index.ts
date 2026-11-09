@@ -171,9 +171,15 @@ export {
 } from './lib/organization-contact';
 // The comment-access policy contract, for a package whose records carry comments that must follow the record's own
 // access rules: it declares a provider with `@CommentParentAccessPolicy()` implementing the interface, and the
-// comment API applies it (see `OrganizationContactCommentAccessPolicy`, which governs a contact's notes).
+// comment API applies it (see `OrganizationContactCommentAccessPolicy`, which governs a contact's notes). The registry
+// is exported for a package that hands comment facts to subscribers (the real-time channel) and must apply the same
+// read rule at delivery.
 export * from './lib/comment/events';
-export { CommentParentAccessPolicy } from './lib/comment/parent-access';
+export {
+	CommentParentAccessPolicy,
+	CommentParentAccessService,
+	isSpellingOfRecordType
+} from './lib/comment/parent-access';
 export type { ICommentParent, ICommentParentAccessPolicy } from './lib/comment/parent-access';
 export {
 	OrganizationProjectCreateCommand,
@@ -393,6 +399,7 @@ export * from './lib/event-outbox';
  */
 export {
 	currentSubscriberScope,
+	currentSubscriberUserId,
 	declareStreamedEvents,
 	deliverPayloadAsIs,
 	observableToAsyncIterable,
@@ -407,6 +414,11 @@ export {
 	SubscriptionCatalogue,
 	isEventNameShaped,
 	matchesEventSelection
+} from './lib/graphql/subscriptions/subscription-catalogue';
+export type {
+	SubscriptionAudienceCheck,
+	SubscriptionAudienceEvent,
+	SubscriptionAudienceSubscriber
 } from './lib/graphql/subscriptions/subscription-catalogue';
 export { GraphqlSubscriptionConsumer } from './lib/graphql/subscriptions/subscription-consumer';
 export { GraphqlSubscriptionBusBridge } from './lib/graphql/subscriptions/subscription-bus-bridge';
