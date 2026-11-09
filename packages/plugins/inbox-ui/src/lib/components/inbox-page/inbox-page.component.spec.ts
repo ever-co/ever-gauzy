@@ -747,5 +747,14 @@ describe('InboxPageComponent', () => {
 			expect(find('due-a')).toBeNull();
 			expect(find('due-b')?.getAttribute('data-due')).toBe('OVERDUE');
 		});
+
+		it('a click on a row\'s time or due label opens the row, as a click anywhere else on it does', () => {
+			api.setState.mockImplementation((id: string) => of(read(id)));
+			const { component, find } = ready([read('a'), item('b', { dueAt: new Date(Date.now() - 60_000) as never })]);
+			(find('when-a') as HTMLElement).click();
+			expect(component.selectedId()).toBe('a');
+			(find('due-b') as HTMLElement).click();
+			expect(component.selectedId()).toBe('b');
+		});
 	});
 });
