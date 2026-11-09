@@ -20,7 +20,7 @@ jest.mock('@gauzy/core', () => {
 	};
 });
 
-import { DataSource, EntitySchema } from 'typeorm';
+import { DataSource, EntityManager, EntitySchema } from 'typeorm';
 import { RealtimePresenceStatus } from '@gauzy/contracts';
 import { Employee } from '@gauzy/core';
 import { CreateRealtimePresenceAndWatermarkTables1791000006820 } from './database/migrations/1791000006820-CreateRealtimePresenceAndWatermarkTables';
@@ -33,6 +33,7 @@ const TENANT = 'ten';
 const ORG = 'org';
 const ANNA = { employeeId: 'e-anna', userId: 'u-anna' };
 const BOB = { employeeId: 'e-bob', userId: 'u-bob' };
+const CARL = { employeeId: 'e-carl', userId: 'u-carl' };
 
 /** The columns every plugin table carries, as the migration creates them. */
 const baseColumns = {
@@ -92,7 +93,7 @@ beforeAll(async () => {
 	await dataSource.query(`CREATE TABLE "employee" ("id" varchar PRIMARY KEY NOT NULL, "tenantId" varchar NOT NULL, "lastSeenAt" datetime, "isIdle" boolean)`);
 	await dataSource.query(`INSERT INTO "tenant" ("id") VALUES (?)`, [TENANT]);
 	await dataSource.query(`INSERT INTO "organization" ("id") VALUES (?)`, [ORG]);
-	for (const employee of [ANNA, BOB]) {
+	for (const employee of [ANNA, BOB, CARL]) {
 		await dataSource.query(`INSERT INTO "employee" ("id", "tenantId") VALUES (?, ?)`, [employee.employeeId, TENANT]);
 	}
 	const runner = dataSource.createQueryRunner();
@@ -242,21 +243,31 @@ describe('RealtimePresenceStore', () => {
 	it('tells of each employee a sweep settled even when another employee’s settlement fails', async () => {
 		await report(ANNA, 'tab-1', RealtimePresenceStatus.ACTIVE);
 		await report(BOB, 'tab-1', RealtimePresenceStatus.ACTIVE, 1);
-		const transaction = dataSource.transaction.bind(dataSource);
+		await report(CARL, 'tab-1', RealtimePresenceStatus.ACTIVE, 2);
+		// Bob's settlement (the second of three, in expiry order) fails after its writes: they roll back.
+		const transaction = dataSource.transaction.bind(dataSource) as (work: (manager: EntityManager) => Promise<unknown>) => Promise<unknown>;
 		let calls = 0;
-		const spy = jest.spyOn(dataSource, 'transaction').mockImplementation(((work: never) => {
+		const spy = jest.spyOn(dataSource, 'transaction').mockImplementation(((work: (manager: EntityManager) => Promise<unknown>) => {
 			calls += 1;
-			return calls === 1 ? Promise.reject(new Error('deadlock detected')) : transaction(work);
+			if (calls !== 2) return transaction(work);
+			return transaction(async (manager) => {
+				await work(manager);
+				throw new Error('deadlock detected');
+			});
 		}) as never);
 		try {
-			const settled = await sweep(at(REALTIME_PRESENCE_TTL_MS / 1000 + 2));
-			expect(settled.counts).toEqual({ settled: 1, failed: 1 });
-			expect(settled.told).toEqual([expect.objectContaining({ employeeId: BOB.employeeId, status: 'offline', changed: true })]);
+			const settled = await sweep(at(REALTIME_PRESENCE_TTL_MS / 1000 + 3));
+			expect(settled.counts).toEqual({ settled: 2, failed: 1 });
+			expect(settled.told.map((outcome) => [outcome.employeeId, outcome.status])).toEqual([
+				[ANNA.employeeId, 'offline'],
+				[CARL.employeeId, 'offline']
+			]);
 		} finally {
 			spy.mockRestore();
 		}
-		// The failed one is settled by the next pass.
-		expect((await sweep(at(REALTIME_PRESENCE_TTL_MS / 1000 + 3))).told).toEqual([expect.objectContaining({ employeeId: ANNA.employeeId, status: 'offline' })]);
+		// Bob's lapsed connection and published presence are as they were: the next pass settles and tells him.
+		expect(await published(BOB)).toBe('active');
+		expect((await sweep(at(REALTIME_PRESENCE_TTL_MS / 1000 + 4))).told).toEqual([expect.objectContaining({ employeeId: BOB.employeeId, status: 'offline', changed: true })]);
 	});
 
 	it('numbers the changes of an employee, and only the changes', async () => {

@@ -108,7 +108,8 @@ export class RealtimeSettleHorizon {
 				`SELECT EXTRACT(EPOCH FROM (clock_timestamp() - MIN("xact_start"))) * 1000 AS "age" FROM "pg_stat_activity" WHERE "datname" = current_database() AND "xact_start" IS NOT NULL AND "pid" <> pg_backend_pid()`
 			);
 			const age = Number(row?.age);
-			return Number.isFinite(age) && age > 0 ? base - Math.min(age, REALTIME_CATCH_UP_MAX_HOLD_MS) : base;
+			// Whole milliseconds, down: the cursor goes back to the client, whose `after` is an integer.
+			return Math.floor(Number.isFinite(age) && age > 0 ? base - Math.min(age, REALTIME_CATCH_UP_MAX_HOLD_MS) : base);
 		} catch (error) {
 			this.logger.warn(`The open transactions were not read; the settle window alone holds the cursor: ${(error as Error)?.message}`);
 			return base;

@@ -88,7 +88,8 @@ describe('RealtimeSettleHorizon', () => {
 
 	it('stays behind the oldest transaction open on Postgres (a row it appends is stamped with its start)', async () => {
 		const query = jest.fn(async () => [{ age: '25000.5' }]);
-		expect(await over('postgres', query).horizon(NOW)).toBe(NOW - REALTIME_CATCH_UP_SETTLE_MS - 25_000.5);
+		// Whole milliseconds, rounded down (the client sends the cursor back as an integer `after`).
+		expect(await over('postgres', query).horizon(NOW)).toBe(NOW - REALTIME_CATCH_UP_SETTLE_MS - 25_001);
 		expect(String(query.mock.calls[0])).toContain('pg_stat_activity');
 	});
 
