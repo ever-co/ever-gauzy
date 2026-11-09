@@ -155,6 +155,7 @@ export * from '../../tags/tag.entity';
 export * from '../../tag-type/tag-type.entity';
 export * from '../../tasks/daily-plan/daily-plan.entity';
 export * from '../../tasks/estimation/task-estimation.entity';
+export * from '../../tasks/former-reference/task-former-reference.entity';
 export * from '../../tasks/issue-type/issue-type.entity';
 export * from '../../tasks/linked-issue/task-linked-issue.entity';
 export * from '../../tasks/priorities/priority.entity';

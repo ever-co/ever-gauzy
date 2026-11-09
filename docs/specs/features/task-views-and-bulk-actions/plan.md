@@ -46,14 +46,15 @@ existing task and view routes keep working unchanged.
   a task that is missing, another organization's, or refused by its update is reported and the others are
   applied: per-task results (`ok`, `error`, `previous`), never all-or-nothing across tasks. The answer's
   `previous` is a changes object (lists as `set…`), so an undo is the same request with `items` built from it.
-  Known limitation: per-task atomicity is not guaranteed yet (§7.1).
+  Each task's update is one transaction (§7.1), so a task reported as refused did not change.
 - **References** (`TaskService.resolveReferences`) resolve by the project's key, its former keys and the key
   derived from its name; the task's `prefix` stays what the create path writes. Every project answering to the key
   is read: when more than one task of those projects holds the number the answer is `ambiguous: true` and resolves
   to nothing, rather than opening whichever task the store listed first. A key is two to ten upper-case letters or
-  digits, unique within the organization among the **current** keys (409 `PROJECT_KEY_TAKEN`); clearing it keeps
-  the derived key resolving. Known limitations: former and derived keys are not reserved (§7.2), and a moved task's
-  old reference is not kept (§7.3).
+  digits that no other project of the organization answers to: as its key, as a former key, or as the key derived
+  from its name (409 `PROJECT_KEY_TAKEN`, §7.2); clearing it keeps the derived key resolving. When no task of the
+  projects answering to a key holds the number, a task that held it before it moved out of one of them answers
+  (`formerReference: true`, with `currentKey` and `currentNumber`, §7.3).
 - **Built-in views** take the caller's IANA time zone (UTC when none); weeks start on Monday; `overdue` and
   `due-soon` leave out done, completed and cancelled tasks; the caller is the signed-in employee.
 - **Keyboard bindings** live under `uiPreferences.keyboard.bindings` (command id → binding); clients own the syntax.
@@ -71,9 +72,11 @@ Server-side grouping counts and cursor pagination for a view's tasks (FR-3), a f
 clients, invalid-filter reporting (deleted labels), generated keys for existing projects on enable, GraphQL twins,
 and the Ever Teams lane `tasks-keyboard-and-views` (shortcut registry, bulk toolbar, saved views pages).
 
-## 7. Known limitations / follow-ups
+## 7. Follow-ups (done)
 
-What the merged code (ever-gauzy #11688, #11717, #11719, #11728) does not do yet.
+What the code merged in ever-gauzy #11688, #11717, #11719 and #11728 did not do, and how the follow-up
+(`fix/task-references-atomic-keys-aliases`, migration `1791000006750`) does it. Each item keeps its original
+description; **Done:** says what changed.
 
 1. **Per-task atomicity.** `TaskService.update` saves the task first, then writes the sprint move history,
    syncs mentions, moves time logs, reads `syncScope` back and updates the subscriptions, none of it in one
@@ -82,14 +85,29 @@ What the merged code (ever-gauzy #11688, #11717, #11719, #11728) does not do yet
    Follow-up: run each task's update in one transaction (`typeOrmRepository.manager.transaction`, the
    repositories taken from its manager), or treat the post-save steps as best effort and report the save's
    outcome.
+   **Done:** `TaskService.update` runs the save, the former reference of a moved task, the sprint move history
+   and the read-back of the sync scope in one TypeORM transaction (`inUpdateTransaction`: a view of the service
+   whose repository is the transaction's, so the tenant-aware save and its checks run inside it). Mentions, the
+   time-log move (its own transaction, which locks the task row), subscriptions and the activity log are best
+   effort and run after the commit. On MikroORM the steps run as before, without a transaction.
 2. **Former and derived keys are not reserved.** The unique check covers current `taskKey`s only: after project
    A renames `API` to `SYS`, project B may take `API`, and a derived key (first three characters of the name) can
    equal another project's key. `resolveReferences` then reads both projects and answers `ambiguous` only when
    both hold the number; when only one does, the reference resolves to that one, which may not be the task the
    author meant. Follow-up: refuse a key that is in another project's `taskKeyHistory` or is another project's
    derived key (409 `PROJECT_KEY_TAKEN`), or prefer the current key and flag every multi-project answer.
+   **Done:** a key another project (deleted ones included) holds, held, or derives from its name is refused with
+   409 `PROJECT_KEY_TAKEN`, naming the project and how it answers to the key. A project may take back its own
+   former key, and a save that sends the project's own key back is not re-checked, so projects keyed before the
+   rule keep saving. Still possible: a **rename** can make a project's derived key equal another project's key
+   (renames are not refused for that); the resolver then answers `ambiguous` when both hold the number.
 3. **A moved task's old reference.** `TaskService.update` gives a moved task the destination's next number and
    prefix; nothing records the old (`project`, `number`) on the task, so `API-42` no longer reaches it (and may
    later name another task of the old project). Follow-up: keep former references per task (a small
    `task_reference_alias` table or a JSON column), keep the old number from being reissued, and resolve aliases
    after the live numbers.
+   **Done:** table `task_former_reference` (`TaskFormerReference`: task, project left, number, prefix; migration
+   `1791000006750` on Postgres, MySQL and SQLite). A task leaving a project, for another one or for none, gets a
+   row in the update's transaction; `getMaxTaskNumberByProject(…, { withDeleted: true })` (what every writer
+   numbers by) counts the rows, so the number is never reissued; `resolveReferences` falls back to them after the
+   live numbers. Tasks moved before the migration have no row (nothing to backfill from).

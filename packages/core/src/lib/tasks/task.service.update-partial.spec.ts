@@ -3,7 +3,9 @@ import '../core/entities/internal';
 import { IUser } from '@gauzy/contracts';
 import { TenantAwareCrudService } from '../core/crud';
 import { asTenantUser, createTenantFixture } from '../core/testing/tenant-isolation/tenant-isolation.fixtures';
+import { OrganizationSprintTaskHistory } from '../core/entities/internal';
 import { TaskService } from './task.service';
+import { stubTaskUpdateManager } from './testing/task-update-manager.stub';
 
 /**
  * `TaskService.update` read the organization and the title from the save result (and the sprint history
@@ -32,13 +34,15 @@ describe('TaskService.update — partial updates keep the stored organization an
 		({ restore } = asTenantUser(fixture));
 		logActivity = jest.fn();
 		publish = jest.fn();
-		saveHistory = jest.fn();
 		jest.spyOn(TenantAwareCrudService.prototype, 'findOneByIdString').mockResolvedValue(stored as never);
 		// The save returns only what was written, as a partial save does
 		jest.spyOn(TenantAwareCrudService.prototype, 'create').mockImplementation(async (entity) => ({ ...entity }) as never);
 		service = Object.create(TaskService.prototype);
+		// The sprint move history is written in the update's transaction, through its manager
+		const { manager, saves } = stubTaskUpdateManager();
+		saveHistory = saves(OrganizationSprintTaskHistory);
+		Object.defineProperty(service, 'typeOrmRepository', { value: { manager }, configurable: true });
 		Object.assign(service, {
-			typeOrmOrganizationSprintTaskHistoryRepository: { save: saveHistory },
 			_entitySubscriptionService: { delete: jest.fn() },
 			_activityLogService: { logActivity },
 			_eventBus: { publish },

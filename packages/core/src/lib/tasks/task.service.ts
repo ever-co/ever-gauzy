@@ -23,7 +23,8 @@ import {
 	MoreThanOrEqual,
 	Raw,
 	SaveOptions,
-	Not
+	Not,
+	EntityManager
 } from 'typeorm';
 import { isBoolean, isUUID } from 'class-validator';
 import { SOFT_DELETABLE_FILTER } from 'mikro-orm-soft-delete';
@@ -81,7 +82,15 @@ import { EmployeeNotificationService } from '../employee-notification/employee-n
 import { EmployeeRecentVisitService } from '../employee-recent-visit/employee-recent-visit.service';
 import { ManagedEmployeeService } from '../employee/managed-employee.service';
 import { CreateEntitySubscriptionEvent } from '../entity-subscription/events';
-import { Employee, Organization, OrganizationProject, TimeLog, Timesheet } from '../core/entities/internal';
+import {
+	Employee,
+	Organization,
+	OrganizationProject,
+	OrganizationSprintTaskHistory,
+	TaskFormerReference,
+	TimeLog,
+	Timesheet
+} from '../core/entities/internal';
 import { EventBus as DomainEventBus } from '../event-bus/event-bus';
 import { TaskEvent } from '../event-bus/events/task.event';
 import { BaseEntityEventTypeEnum } from '../event-bus/base-entity-event';
@@ -269,26 +278,64 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			if (removesProject) {
 				saved.project = null;
 			}
-			const updatedTask = await super.create({
-				...data,
-				id,
-				...saved
-			});
 
-			// Register Task Sprint moving history
+			const namesProject = data.projectId !== undefined;
+			const changesProject = (data.projectId ?? null) !== (task.projectId ?? null);
+
+			// A task that leaves its project keeps the reference it held there (`API-42`), so the reference keeps
+			// resolving to it and the number is not handed to another task of that project (see TaskFormerReference).
+			const hasNumberInProject = !!task.projectId && task.number !== null && task.number !== undefined;
+			const leavesProject = namesProject && changesProject && hasNumberInProject;
 			const { organizationSprintId } = data;
-			if (organizationSprintId && organizationSprintId !== task.organizationSprintId) {
-				await this.typeOrmOrganizationSprintTaskHistoryRepository.save({
-					fromSprintId: task.organizationSprintId || organizationSprintId, // Use incoming sprint ID if the task's organizationSprintId was previously null or undefined
-					toSprintId: organizationSprintId,
-					taskId: updatedTask.id,
-					movedById: userId,
-					reason: data.taskSprintMoveReason,
-					// A partial update may not carry the organization: fall back to the stored one
-					organizationId: data.organizationId ?? task.organizationId,
-					tenantId
+			const movesSprint = !!organizationSprintId && organizationSprintId !== task.organizationSprintId;
+
+			// The save, the reference the task leaves behind, the sprint move history and the read-back of the sync scope
+			// are one transaction: when a step fails the save is undone, so an update reported as failed (a bulk update's
+			// `ok: false`) changed nothing. The steps after it (mentions, time logs, subscriptions, activity) are best
+			// effort and run once it committed.
+			const updatedTask = await this.inUpdateTransaction(async ({ service, manager }) => {
+				const updated = await service.saveTaskRow({
+					...data,
+					id,
+					...saved
 				});
-			}
+
+				if (leavesProject) {
+					await manager.getRepository(TaskFormerReference).save({
+						taskId: id,
+						projectId: task.projectId,
+						number: task.number,
+						prefix: task.prefix ?? null,
+						// The organization the reference was valid in: the one the task was in before the update
+						organizationId: task.organizationId,
+						tenantId
+					});
+				}
+
+				// Register Task Sprint moving history
+				if (movesSprint) {
+					await manager.getRepository(OrganizationSprintTaskHistory).save({
+						fromSprintId: task.organizationSprintId || organizationSprintId, // Use incoming sprint ID if the task's organizationSprintId was previously null or undefined
+						toSprintId: organizationSprintId,
+						taskId: updated.id,
+						movedById: userId,
+						reason: data.taskSprintMoveReason,
+						// A partial update may not carry the organization: fall back to the stored one
+						organizationId: data.organizationId ?? task.organizationId,
+						tenantId
+					});
+				}
+
+				// Same for the sync scope: the integrations read it from the updated-task event, so a partial update of a
+				// private task must not look like an `all` task to them. The scope is read back from the row after the save
+				// (not from the copy read before it), so a concurrent edit of the scope is not overwritten in the event. A
+				// failed read-back fails the update (no UPDATED event) rather than publish a possibly stale scope.
+				if (updated.syncScope === undefined) {
+					const row = await service.findOneByIdString(id, { select: { id: true, syncScope: true } });
+					updated.syncScope = row.syncScope ?? null;
+				}
+				return updated;
+			});
 
 			// Synchronize mentions (only if mentionEmployeeIds is provided)
 			if (data.description && mentionEmployeeIds) {
@@ -300,21 +347,10 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			// or title, so fall back to the stored task for the subscriptions and the activity log.
 			const organizationId = updatedTask.organizationId ?? task.organizationId;
 
-			const namesProject = data.projectId !== undefined;
-			const changesProject = (data.projectId ?? null) !== (task.projectId ?? null);
 			const timeLogsFollowProject = moveTimeLogs === true && namesProject && changesProject;
 			if (timeLogsFollowProject) {
 				const taskProjectId = moved?.projectId ?? data.projectId ?? null;
 				await this.moveTimeLogsToProject(id, taskProjectId, organizationId, tenantId);
-			}
-
-			// Same for the sync scope: the integrations read it from the updated-task event, so a partial update of a
-			// private task must not look like an `all` task to them. The scope is read back from the row after the save
-			// (not from the copy read before it), so a concurrent edit of the scope is not overwritten in the event. A
-			// failed read-back fails the update (no UPDATED event) rather than publish a possibly stale scope.
-			if (updatedTask.syncScope === undefined) {
-				const saved = await this.findOneByIdString(id, { select: { id: true, syncScope: true } });
-				updatedTask.syncScope = saved.syncScope ?? null;
 			}
 
 			// Unsubscribe members who were unassigned from task
@@ -343,6 +379,36 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			console.error(`Error while updating task: ${error.message}`, error.message);
 			throw new HttpException({ message: error?.message, error }, HttpStatus.BAD_REQUEST);
 		}
+	}
+
+	/**
+	 * Runs the writes of one task update in one TypeORM transaction. `work` gets the manager of the transaction and a
+	 * view of this service whose TypeORM repository is bound to it, so the tenant-aware save (its scope and foreign-row
+	 * checks included) and every read and write made through either take part in the transaction: when one fails,
+	 * nothing of the update is stored. On MikroORM the work runs as it always did, on the service and the data source's
+	 * manager, without a transaction around it.
+	 *
+	 * Nothing that opens a transaction of its own on another connection may run inside `work` (on Postgres it would wait
+	 * for the task row this transaction holds): the time-log move, which locks that row, runs after the commit.
+	 */
+	private async inUpdateTransaction<R>(
+		work: (scope: { service: TaskService; manager: EntityManager }) => Promise<R>
+	): Promise<R> {
+		if (this.ormType !== MultiORMEnum.TypeORM) {
+			return work({ service: this, manager: this.typeOrmRepository.manager });
+		}
+		return this.typeOrmRepository.manager.transaction(async (manager: EntityManager) => {
+			// A view, not a copy: every other member is this service's own, read through the prototype.
+			const service: TaskService = Object.create(this, {
+				typeOrmRepository: { value: manager.getRepository(Task), configurable: true }
+			});
+			return work({ service, manager });
+		});
+	}
+
+	/** The tenant-aware save of an update, on the repository `this` carries (a transaction's, see inUpdateTransaction). */
+	private saveTaskRow(entity: IPartialEntity<Task>): Promise<Task> {
+		return super.create(entity);
 	}
 
 	/**
@@ -1723,6 +1789,48 @@ export class TaskService extends TenantAwareCrudService<Task> {
 		options: IGetTaskOptions,
 		{ withDeleted = false }: { withDeleted?: boolean } = {}
 	): Promise<number> {
+		const maxTaskNumber = await this.getMaxNumberOfProjectTasks(options, { withDeleted });
+		if (!withDeleted) {
+			return maxTaskNumber;
+		}
+		// A caller that stores `max + 1` also skips the numbers tasks held before they moved out of the project: those
+		// references keep resolving to the moved tasks, so they are never handed to another task.
+		const maxFormerNumber = await this.getMaxFormerReferenceNumber(options);
+		return Math.max(maxTaskNumber, maxFormerNumber);
+	}
+
+	/**
+	 * The highest number a task held in the project before it moved out (`task_former_reference`), 0 for none. Best
+	 * effort: a failed read is logged and counts as none, so it never stops a task from being created; the number it
+	 * hands out may then reach a moved task's old reference, which keeps resolving to the live task instead.
+	 */
+	private async getMaxFormerReferenceNumber(options: IGetTaskOptions): Promise<number> {
+		const { organizationId, projectId } = options;
+		if (!isNotEmpty(projectId)) {
+			return 0;
+		}
+		try {
+			const tenantId = RequestContext.currentTenantId() || options.tenantId;
+			const query = this.typeOrmRepository.manager
+				.createQueryBuilder(TaskFormerReference, 'former')
+				.select(p(`COALESCE(MAX("former"."number"), 0)`), 'maxNumber')
+				.where(p(`"former"."tenantId" = :tenantId`), { tenantId })
+				.andWhere(p(`"former"."organizationId" = :organizationId`), { organizationId })
+				.andWhere(p(`"former"."projectId" = :projectId`), { projectId })
+				.withDeleted();
+			const result = await query.getRawOne();
+			return Number(result?.maxNumber) || 0;
+		} catch (error) {
+			console.error('Error reading the former task numbers of the project:', error?.message);
+			return 0;
+		}
+	}
+
+	/** The highest number of the project's tasks (see getMaxTaskNumberByProject). */
+	private async getMaxNumberOfProjectTasks(
+		options: IGetTaskOptions,
+		{ withDeleted = false }: { withDeleted?: boolean } = {}
+	): Promise<number> {
 		try {
 			// Extract tenantId from context or options
 			const tenantId = RequestContext.currentTenantId() || options.tenantId;
@@ -2552,8 +2660,10 @@ export class TaskService extends TenantAwareCrudService<Task> {
 
 	/**
 	 * Resolves `KEY-number` references to tasks of the organization: by the project's key, its former keys, or
-	 * the key derived from its name (the prefix the create path writes). A reference nobody answers to, or a
-	 * number no task of that project holds, resolves to nothing; a task that cannot be read answers the same.
+	 * the key derived from its name (the prefix the create path writes). When no task of those projects holds the
+	 * number, a task that held it before it moved to another project answers (`formerReference`, with the key and the
+	 * number it holds today). A reference nobody answers to, or a number no task of that project holds or held,
+	 * resolves to nothing; a task that cannot be read answers the same.
 	 */
 	async resolveReferences(input: ITaskReferenceResolveInput): Promise<ITaskReferenceResolution[]> {
 		const tenantId = tenantIdOf(input);
@@ -2562,6 +2672,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			where: { tenantId, organizationId },
 			select: { id: true, name: true, taskKey: true, taskKeyHistory: true }
 		});
+		const projectsById = new Map(projects.map((project) => [String(project.id), project]));
 		const byKey = new Map<string, OrganizationProject[]>();
 		for (const project of projects) {
 			for (const key of keysOfProject(project)) {
@@ -2580,13 +2691,19 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			const candidates = byKey.get(parts.key) ?? [];
 			// Every project answering to the key is read: a derived key two projects share (`Gauzy`, `Gauzy Teams`),
 			// or a former key that is now another project's, must not open whichever task the store listed first.
-			const matches =
+			const candidateIds = candidates.map((project) => project.id);
+			let matches =
 				candidates.length === 0
 					? []
 					: await this.typeOrmRepository.find({
-							where: { tenantId, organizationId, projectId: In(candidates.map((project) => project.id)), number: parts.number },
-							select: { id: true, title: true, status: true, projectId: true }
+							where: { tenantId, organizationId, projectId: In(candidateIds), number: parts.number },
+							select: { id: true, title: true, status: true, projectId: true, number: true }
 						});
+			// The live numbers first: a former reference answers only when no task of those projects holds the number.
+			const formerReference = matches.length === 0 && candidates.length > 0;
+			if (formerReference) {
+				matches = await this.findTasksByFormerReference(tenantId, organizationId, candidateIds, parts.number);
+			}
 			if (matches.length > 1) {
 				resolutions.push({ reference, key: parts.key, number: parts.number, resolved: false, ambiguous: true });
 				continue;
@@ -2596,7 +2713,14 @@ export class TaskService extends TenantAwareCrudService<Task> {
 				resolutions.push({ reference, key: parts.key, number: parts.number, resolved: false });
 				continue;
 			}
-			const project = candidates.find((candidate) => candidate.id === found?.projectId);
+			// The task's project today: one of the candidates for a live number, any project for a former reference (none
+			// when the task left its project without moving to another one, and then no key addresses it today).
+			const project = found.projectId ? projectsById.get(String(found.projectId)) : undefined;
+			let currentKey: string | undefined = formerReference ? undefined : parts.key;
+			if (project) {
+				currentKey = normalizeTaskKey(project.taskKey) ?? derivedProjectKey(project.name) ?? currentKey;
+			}
+			const currentNumber = found.number === null || found.number === undefined ? undefined : Number(found.number);
 			resolutions.push({
 				reference,
 				key: parts.key,
@@ -2606,10 +2730,31 @@ export class TaskService extends TenantAwareCrudService<Task> {
 				projectId: found.projectId,
 				title: found.title,
 				status: found.status as TaskStatusEnum,
-				currentKey: project ? (normalizeTaskKey(project.taskKey) ?? derivedProjectKey(project.name) ?? parts.key) : parts.key
+				currentKey,
+				currentNumber,
+				...(formerReference ? { formerReference: true } : {})
 			});
 		}
 		return resolutions;
+	}
+
+	/**
+	 * The live tasks of the organization that held `number` in one of the projects before they moved out of it, each
+	 * once (a task that moved out, back and out again holds two references there, both its own).
+	 */
+	private async findTasksByFormerReference(tenantId: ID, organizationId: ID, projectIds: ID[], number: number): Promise<Task[]> {
+		const references = await this.typeOrmRepository.manager.find(TaskFormerReference, {
+			where: { tenantId, organizationId, projectId: In(projectIds), number },
+			select: { id: true, taskId: true }
+		});
+		const taskIds = [...new Set(references.map((former) => String(former.taskId)))];
+		if (taskIds.length === 0) {
+			return [];
+		}
+		return this.typeOrmRepository.find({
+			where: { id: In(taskIds), tenantId, organizationId },
+			select: { id: true, title: true, status: true, projectId: true, number: true }
+		});
 	}
 
 	/**

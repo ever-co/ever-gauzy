@@ -4,7 +4,7 @@ import { Brackets } from 'typeorm';
 import * as gauzyConfig from '@gauzy/config';
 import { IUser, PermissionsEnum, TimesheetStatus } from '@gauzy/contracts';
 import { TenantAwareCrudService } from '../core/crud';
-import { Organization, OrganizationProject, TimeLog, Timesheet } from '../core/entities/internal';
+import { Organization, OrganizationProject, TaskFormerReference, TimeLog, Timesheet } from '../core/entities/internal';
 import { asTenantUser, createTenantFixture } from '../core/testing/tenant-isolation/tenant-isolation.fixtures';
 import { Task } from './task.entity';
 import { TaskService } from './task.service';
@@ -144,6 +144,13 @@ describe('TaskService.update — moving the time logs with the task', () => {
 			return lock;
 		};
 		const inTransaction = {
+			// The update's own transaction saves the task and the reference it leaves in the project it left
+			getRepository: (entity: unknown) => ({
+				save: async (row: unknown) => {
+					steps.push(entity === TaskFormerReference ? 'save former reference' : 'save');
+					return row;
+				}
+			}),
 			createQueryBuilder: (entity?: unknown) => {
 				if (entity === Task) {
 					return rowLock('task');
@@ -158,7 +165,10 @@ describe('TaskService.update — moving the time logs with the task', () => {
 		jest.spyOn(TenantAwareCrudService.prototype, 'findOneByIdString').mockResolvedValue(stored as never);
 		save = jest
 			.spyOn(TenantAwareCrudService.prototype, 'create')
-			.mockImplementation(async (entity) => ({ ...stored, ...entity }) as never);
+			.mockImplementation(async (entity) => {
+				steps.push('save task');
+				return { ...stored, ...entity } as never;
+			});
 		service = Object.create(TaskService.prototype);
 		Object.assign(service, {
 			_entitySubscriptionService: { delete: jest.fn(), deleteForEmployee: jest.fn() },
@@ -230,7 +240,12 @@ describe('TaskService.update — moving the time logs with the task', () => {
 
 			await service.update('task-1', { projectId: 'project-new', moveTimeLogs: true });
 
+			// The update's transaction commits first: the move locks the task row, which a write of the update holds
 			expect(steps).toEqual([
+				'begin',
+				'save task',
+				'save former reference',
+				'commit',
 				'begin',
 				'pessimistic_write task task-1',
 				'pessimistic_write timesheet sheet-open',
@@ -247,7 +262,7 @@ describe('TaskService.update — moving the time logs with the task', () => {
 
 		await service.update('task-1', { projectId: 'project-new', moveTimeLogs: true });
 
-		expect(steps).toEqual(['begin', 'write', 'commit']);
+		expect(steps).toEqual(['begin', 'save task', 'save former reference', 'commit', 'begin', 'write', 'commit']);
 	});
 
 	it("moves a colleague's logs only for a caller who may act for them", async () => {

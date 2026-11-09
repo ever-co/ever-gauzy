@@ -2,9 +2,10 @@ import '../core/entities/internal';
 
 import { IUser } from '@gauzy/contracts';
 import { TenantAwareCrudService } from '../core/crud';
-import { OrganizationProject } from '../core/entities/internal';
+import { OrganizationProject, TaskFormerReference } from '../core/entities/internal';
 import { asTenantUser, createTenantFixture } from '../core/testing/tenant-isolation/tenant-isolation.fixtures';
 import { TaskService } from './task.service';
+import { stubTaskUpdateManager } from './testing/task-update-manager.stub';
 
 /**
  * Moving a task to another project renumbers it. The number used to be computed against the project the
@@ -33,6 +34,7 @@ describe('TaskService.update — moving a task to another project', () => {
 	let findProject: jest.Mock;
 	let update: jest.SpyInstance;
 	let save: jest.SpyInstance;
+	let formerReferences: jest.Mock;
 
 	beforeEach(() => {
 		({ restore } = asTenantUser(fixture));
@@ -57,10 +59,9 @@ describe('TaskService.update — moving a task to another project', () => {
 			_employeeNotificationService: { publishNotificationEvent: jest.fn() },
 			getMaxTaskNumberByProject: maxNumberBy
 		});
-		Object.defineProperty(service, 'typeOrmRepository', {
-			value: { manager: { findOne: findProject } },
-			configurable: true
-		});
+		const { manager, saves } = stubTaskUpdateManager({ findOne: findProject });
+		formerReferences = saves(TaskFormerReference);
+		Object.defineProperty(service, 'typeOrmRepository', { value: { manager }, configurable: true });
 	});
 
 	afterEach(() => {
@@ -82,6 +83,32 @@ describe('TaskService.update — moving a task to another project', () => {
 		expect(updated).toMatchObject({ projectId: 'project-new', number: 5, prefix: 'Eve' });
 	});
 
+	it('keeps the reference the task held in the project it left, in the transaction of the save', async () => {
+		await service.update('task-1', { projectId: 'project-new' });
+
+		expect(formerReferences).toHaveBeenCalledTimes(1);
+		expect(formerReferences).toHaveBeenCalledWith({
+			taskId: 'task-1',
+			projectId: 'project-old',
+			number: 12,
+			prefix: 'OLD',
+			organizationId: fixture.organizationId,
+			tenantId: fixture.tenantId
+		});
+		// The save and the reference are written by one transaction, the save first.
+		const [saveOrder] = save.mock.invocationCallOrder;
+		const [referenceOrder] = formerReferences.mock.invocationCallOrder;
+		expect(saveOrder).toBeLessThan(referenceOrder);
+	});
+
+	it('keeps the reference of a task taken out of its project, which keeps its number', async () => {
+		await service.update('task-1', { projectId: null, project: null } as never);
+
+		expect(save).toHaveBeenCalledWith(expect.objectContaining({ projectId: null, project: null }));
+		expect(save.mock.calls[0][0]).not.toHaveProperty('number');
+		expect(formerReferences).toHaveBeenCalledWith(expect.objectContaining({ projectId: 'project-old', number: 12 }));
+	});
+
 	it('numbers the task above the soft-deleted tasks of the project it moves to', async () => {
 		// #10724 — the target's highest number, 9, belongs to a soft-deleted task, which keeps it in the
 		// `taskNumber` unique index: the live tasks alone (up to 4) would hand out a taken number.
@@ -99,8 +126,9 @@ describe('TaskService.update — moving a task to another project', () => {
 
 		await expect(service.update('task-1', { projectId: 'project-new' })).rejects.toThrow();
 
-		// No separate write moved or renumbered the task before the save that failed.
+		// No separate write moved or renumbered the task before the save that failed, nor kept a reference.
 		expect(update).not.toHaveBeenCalled();
+		expect(formerReferences).not.toHaveBeenCalled();
 	});
 
 	it('ignores a stale number and prefix the client sends back with the move', async () => {
@@ -178,6 +206,7 @@ describe('TaskService.update — moving a task to another project', () => {
 
 		expect(maxNumberBy).not.toHaveBeenCalled();
 		expect(update).not.toHaveBeenCalled();
+		expect(formerReferences).not.toHaveBeenCalled();
 		expect(save.mock.calls[0][0]).not.toHaveProperty('number');
 		expect(save.mock.calls[1][0]).not.toHaveProperty('number');
 	});

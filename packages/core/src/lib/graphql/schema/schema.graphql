@@ -40444,6 +40444,16 @@ type TaskReferenceResolution {
 
   """The key the task is addressed by today (the project's current key)."""
   currentKey: String
+
+  """
+  The number the task holds today (differs from `number` when it was resolved by a former reference).
+  """
+  currentNumber: Int
+
+  """
+  Resolved by a reference the task held before it moved to another project.
+  """
+  formerReference: Boolean
 }
 
 """

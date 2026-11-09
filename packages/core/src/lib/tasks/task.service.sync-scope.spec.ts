@@ -4,6 +4,7 @@ import { IUser, TaskSyncScopeEnum } from '@gauzy/contracts';
 import { TenantAwareCrudService } from '../core/crud';
 import { asTenantUser, createTenantFixture } from '../core/testing/tenant-isolation/tenant-isolation.fixtures';
 import { TaskService } from './task.service';
+import { stubTaskUpdateManager } from './testing/task-update-manager.stub';
 
 /**
  * The integrations decide from the UPDATED event's task whether they may sync it (`syncScope`). A partial save
@@ -28,8 +29,8 @@ describe('TaskService.update — the returned task carries the persisted sync sc
 		// The save returns only what was written, as a partial save does
 		jest.spyOn(TenantAwareCrudService.prototype, 'create').mockImplementation(async (entity) => ({ ...entity }) as never);
 		service = Object.create(TaskService.prototype);
+		Object.defineProperty(service, 'typeOrmRepository', { value: { manager: stubTaskUpdateManager().manager }, configurable: true });
 		Object.assign(service, {
-			typeOrmOrganizationSprintTaskHistoryRepository: { save: jest.fn() },
 			_entitySubscriptionService: { delete: jest.fn() },
 			_activityLogService: { logActivity: jest.fn() },
 			_eventBus: { publish: jest.fn() },

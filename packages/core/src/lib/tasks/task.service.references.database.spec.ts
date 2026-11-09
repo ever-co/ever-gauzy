@@ -1,0 +1,242 @@
+import '../core/entities/internal';
+
+import * as fs from 'fs';
+import * as os from 'os';
+import * as path from 'path';
+import { DataSource } from 'typeorm';
+import { IUser, PermissionsEnum } from '@gauzy/contracts';
+import { coreEntities } from '../core/entities';
+import { OrganizationSprintTaskHistory, TaskFormerReference } from '../core/entities/internal';
+import { asTenantUser, createTenantFixture } from '../core/testing/tenant-isolation/tenant-isolation.fixtures';
+import { Task } from './task.entity';
+import { TaskService } from './task.service';
+
+/**
+ * `TaskService.update` and the references, on a real SQLite database with the tables TypeORM creates:
+ *
+ * - **one transaction per update.** The save, the reference a moved task leaves behind and the read-back of the
+ *   sync scope are one unit: when a step fails, the task is stored as it was. A bulk update therefore reports a
+ *   task as refused only when the task did not change (plan §7.1 of task-views-and-bulk-actions).
+ * - **a moved task keeps its old reference.** `API-42` still resolves to the task after it became `SYS-1`, and
+ *   project `API` never hands out 42 again (plan §7.3).
+ */
+
+const TIMEOUT = 15 * 60 * 1000;
+
+const fixture = createTenantFixture({
+	tenantId: '83000000-0000-4000-8000-00000000000a',
+	organizationId: '83000000-0000-4000-8000-0000000000a1',
+	user: { id: '83000000-0000-4000-8000-0000000000b1' } as IUser
+});
+const TENANT = fixture.tenantId;
+const ORGANIZATION = fixture.organizationId;
+const PROJECT_API = '83000000-0000-4000-8000-0000000000c1';
+const PROJECT_SYS = '83000000-0000-4000-8000-0000000000c2';
+const TASK_42 = '83000000-0000-4000-8000-000000000042';
+const TASK_41 = '83000000-0000-4000-8000-000000000041';
+
+describe('TaskService updates and references, on a real database', () => {
+	const file = path.join(os.tmpdir(), `gauzy-task-references-${process.pid}-${Date.now()}.sqlite3`);
+	let dataSource: DataSource;
+	let service: TaskService;
+	let restore: () => void;
+
+	/** A row with the columns given, and a placeholder in every other NOT NULL column without a default. */
+	const insert = async (table: string, row: Record<string, unknown>) => {
+		const columns: any[] = await dataSource.query(`PRAGMA table_info("${table}")`);
+		const values: Record<string, unknown> = { ...row };
+		for (const column of columns) {
+			const needsNoValue = !column.notnull || column.dflt_value !== null || column.pk;
+			if (column.name in values || needsNoValue) continue;
+			const type = String(column.type).toLowerCase();
+			let placeholder: unknown = 'x';
+			if (/int|bool|numeric|decimal|real|float/.test(type)) placeholder = 0;
+			else if (/date|time/.test(type)) placeholder = '2026-01-01 00:00:00';
+			values[column.name] = placeholder;
+		}
+		const keys = Object.keys(values);
+		await dataSource.query(
+			`INSERT INTO "${table}" (${keys.map((key) => `"${key}"`).join(', ')}) VALUES (${keys.map(() => '?').join(', ')})`,
+			keys.map((key) => values[key])
+		);
+	};
+
+	const taskRow = async (id: string) => {
+		const [row] = await dataSource.query(`SELECT "title", "projectId", "number", "prefix", "status" FROM "task" WHERE "id" = ?`, [id]);
+		return row;
+	};
+
+	const formerReferences = () =>
+		dataSource.query(`SELECT "taskId", "projectId", "number", "prefix", "organizationId", "tenantId" FROM "task_former_reference" ORDER BY "number"`);
+
+	/**
+	 * Makes the database refuse the former reference of the task named: a write the update makes after its save, in
+	 * the same transaction (a trigger, so the failure is the database's own, as a full disk or a lost lock would be).
+	 */
+	const refuseFormerReferenceOf = async (taskId: string) => {
+		await dataSource.query(
+			`CREATE TRIGGER "refuse_former_reference" BEFORE INSERT ON "task_former_reference" WHEN NEW."taskId" = '${taskId}' BEGIN SELECT RAISE(ABORT, 'disk I/O error while writing the former reference'); END`
+		);
+	};
+
+	beforeAll(async () => {
+		dataSource = new DataSource({ type: 'better-sqlite3', database: file, entities: coreEntities, synchronize: true, logging: false });
+		await dataSource.initialize();
+		// The custom-fields placeholder column the migrations add, which synchronize leaves out
+		for (const table of ['employee', 'organization_project', 'organization_contact', 'organization', 'task']) {
+			const columns: any[] = await dataSource.query(`PRAGMA table_info("${table}")`);
+			if (!columns.some((column) => column.name === 'fix_relational_custom_fields')) {
+				await dataSource.query(`ALTER TABLE "${table}" ADD COLUMN "fix_relational_custom_fields" boolean`);
+			}
+		}
+	}, TIMEOUT);
+
+	afterAll(async () => {
+		await dataSource?.destroy();
+		fs.rmSync(file, { force: true });
+	});
+
+	beforeEach(async () => {
+		await dataSource.query('DROP TRIGGER IF EXISTS "refuse_former_reference"');
+		await dataSource.query('PRAGMA foreign_keys = OFF');
+		for (const table of ['task_former_reference', 'task', 'organization_project', 'organization', 'tenant']) {
+			await dataSource.query(`DELETE FROM "${table}"`);
+		}
+		await dataSource.query('PRAGMA foreign_keys = ON');
+		const scope = { tenantId: TENANT, organizationId: ORGANIZATION };
+		await insert('tenant', { id: TENANT, name: 'Tenant' });
+		await insert('organization', { id: ORGANIZATION, tenantId: TENANT, name: 'Organization' });
+		await insert('organization_project', { ...scope, id: PROJECT_API, name: 'Api Gateway', taskKey: 'API' });
+		await insert('organization_project', { ...scope, id: PROJECT_SYS, name: 'Systems', taskKey: 'SYS' });
+		await insert('task', { ...scope, id: TASK_41, title: 'Forty-one', projectId: PROJECT_API, number: 41, prefix: 'Api', status: 'open' });
+		await insert('task', { ...scope, id: TASK_42, title: 'Forty-two', projectId: PROJECT_API, number: 42, prefix: 'Api', status: 'open' });
+
+		({ restore } = asTenantUser(fixture, { permissions: [PermissionsEnum.CHANGE_SELECTED_EMPLOYEE] }));
+		jest.spyOn(console, 'log').mockImplementation(() => undefined);
+		// The service as Nest builds it, over the real repositories (its CRUD base keeps caches set by the constructor);
+		// the collaborators the update only notifies are stand-ins.
+		const stub = (members: Record<string, unknown>) => members as never;
+		service = new TaskService(
+			dataSource.getRepository(Task) as never,
+			stub({}),
+			dataSource.getRepository(OrganizationSprintTaskHistory) as never,
+			stub({ publish: jest.fn() }),
+			stub({}),
+			stub({ delete: jest.fn() }),
+			stub({ updateEntityMentions: jest.fn() }),
+			stub({ logActivity: jest.fn() }),
+			stub({ publishNotificationEvent: jest.fn() }),
+			stub({}),
+			stub({ canManageEmployee: jest.fn(async () => true) })
+		);
+	});
+
+	afterEach(() => {
+		restore();
+		jest.restoreAllMocks();
+	});
+
+	it(
+		'renumbers a moved task in its new project and keeps the reference it held, which still resolves',
+		async () => {
+			await service.update(TASK_42, { projectId: PROJECT_SYS });
+
+			expect(await taskRow(TASK_42)).toMatchObject({ projectId: PROJECT_SYS, number: 1, prefix: 'Sys' });
+			expect(await formerReferences()).toEqual([
+				{ taskId: TASK_42, projectId: PROJECT_API, number: 42, prefix: 'Api', organizationId: ORGANIZATION, tenantId: TENANT }
+			]);
+
+			const [former, live, other, unknown] = await service.resolveReferences({
+				organizationId: ORGANIZATION,
+				references: ['API-42', 'SYS-1', 'API-41', 'API-43']
+			} as never);
+			expect(former).toMatchObject({
+				resolved: true,
+				taskId: TASK_42,
+				projectId: PROJECT_SYS,
+				formerReference: true,
+				currentKey: 'SYS',
+				currentNumber: 1
+			});
+			expect(live).toMatchObject({ resolved: true, taskId: TASK_42, currentKey: 'SYS', currentNumber: 1 });
+			expect(live).not.toHaveProperty('formerReference');
+			expect(other).toMatchObject({ resolved: true, taskId: TASK_41, currentKey: 'API', currentNumber: 41 });
+			expect(unknown).toMatchObject({ resolved: false });
+		},
+		TIMEOUT
+	);
+
+	it(
+		'never hands the number of a moved task to another task of the project it left',
+		async () => {
+			await service.update(TASK_42, { projectId: PROJECT_SYS });
+
+			const where = { tenantId: TENANT, organizationId: ORGANIZATION, projectId: PROJECT_API };
+			// What a new task of the project is numbered after: 42 is still API-42, the moved task.
+			expect(await service.getMaxTaskNumberByProject(where, { withDeleted: true })).toBe(42);
+			// The read routes report the live tasks, as before.
+			expect(await service.getMaxTaskNumberByProject(where)).toBe(41);
+		},
+		TIMEOUT
+	);
+
+	it(
+		'keeps the reference of a task that leaves its project for none',
+		async () => {
+			await service.update(TASK_42, { projectId: null });
+
+			expect(await taskRow(TASK_42)).toMatchObject({ projectId: null, number: 42 });
+			const [resolution] = await service.resolveReferences({ organizationId: ORGANIZATION, references: ['API-42'] } as never);
+			expect(resolution).toMatchObject({ resolved: true, taskId: TASK_42, formerReference: true });
+			expect(resolution.currentKey).toBeUndefined();
+		},
+		TIMEOUT
+	);
+
+	it(
+		'stores nothing of an update a later step of it failed: the save is undone',
+		async () => {
+			await refuseFormerReferenceOf(TASK_42);
+
+			await expect(service.update(TASK_42, { title: 'Renamed', projectId: PROJECT_SYS })).rejects.toThrow(/disk I\/O error/);
+
+			expect(await taskRow(TASK_42)).toMatchObject({ title: 'Forty-two', projectId: PROJECT_API, number: 42, prefix: 'Api' });
+			expect(await formerReferences()).toEqual([]);
+		},
+		TIMEOUT
+	);
+
+	it(
+		'CONTROL: stores the whole update when every step succeeds',
+		async () => {
+			await service.update(TASK_42, { title: 'Renamed', projectId: PROJECT_SYS });
+
+			expect(await taskRow(TASK_42)).toMatchObject({ title: 'Renamed', projectId: PROJECT_SYS, number: 1 });
+			expect(await formerReferences()).toHaveLength(1);
+		},
+		TIMEOUT
+	);
+
+	it(
+		'reports a task of a bulk update as refused only when it did not change',
+		async () => {
+			await refuseFormerReferenceOf(TASK_41);
+
+			const outcome = await service.bulkUpdate(
+				{ organizationId: ORGANIZATION, taskIds: [TASK_42, TASK_41], changes: { projectId: PROJECT_SYS } } as never,
+				(id, update) => service.update(id, update)
+			);
+
+			expect(outcome).toMatchObject({ applied: 1, refused: 1 });
+			const byTask = new Map(outcome.results.map((result) => [result.taskId, result]));
+			expect(byTask.get(TASK_42)).toMatchObject({ ok: true });
+			expect(byTask.get(TASK_41)).toMatchObject({ ok: false, previous: { projectId: PROJECT_API } });
+
+			// The task reported as refused is exactly as it was; the other one moved.
+			expect(await taskRow(TASK_41)).toMatchObject({ projectId: PROJECT_API, number: 41, prefix: 'Api' });
+			expect(await taskRow(TASK_42)).toMatchObject({ projectId: PROJECT_SYS, number: 1 });
+			expect((await formerReferences()).map((row: { taskId: string }) => row.taskId)).toEqual([TASK_42]);
+		},
+		TIMEOUT
+	);
+});
