@@ -65,6 +65,10 @@ existing task and view routes keep working unchanged.
 
 `task-reference.spec`, `built-in-views.spec`, `bulk-update.spec` (pure); the migration follows the tested style of
 `1791000004400`. The in-cluster PR build runs the core suite.
+The follow-ups of §7: `task.service.references.database.spec` (update, bulk update and references on real SQLite,
+and on real Postgres with `DB_TYPE=postgres GAUZY_TASK_SPEC_POSTGRES_URL=…`), `task-former-reference-migration.spec`
+(the migration on real SQLite, and on real Postgres with `GAUZY_MIGRATION_TEST_POSTGRES_URL`), and the project-key
+cases of `organization-project.service.task-key.spec`.
 
 ## 6. Phase 2
 
@@ -100,7 +104,7 @@ description; **Done:** says what changed.
    409 `PROJECT_KEY_TAKEN`, naming the project and how it answers to the key. A project may take back its own
    former key, and a save that sends the project's own key back is not re-checked, so projects keyed before the
    rule keep saving. Still possible: a **rename** can make a project's derived key equal another project's key
-   (renames are not refused for that); the resolver then answers `ambiguous` when both hold the number.
+   (renames are not refused for that); the resolver then answers `ambiguous` only when both hold the number.
 3. **A moved task's old reference.** `TaskService.update` gives a moved task the destination's next number and
    prefix; nothing records the old (`project`, `number`) on the task, so `API-42` no longer reaches it (and may
    later name another task of the old project). Follow-up: keep former references per task (a small

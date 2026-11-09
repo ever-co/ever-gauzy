@@ -3,22 +3,35 @@ import '../core/entities/internal';
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
-import { DataSource } from 'typeorm';
+import { DataSource, DataSourceOptions, EntityTarget, ObjectLiteral } from 'typeorm';
+import { isPostgres } from '@gauzy/config';
 import { IUser, PermissionsEnum } from '@gauzy/contracts';
 import { coreEntities } from '../core/entities';
-import { OrganizationSprintTaskHistory, TaskFormerReference } from '../core/entities/internal';
+import {
+	Organization,
+	OrganizationProject,
+	OrganizationSprintTaskHistory,
+	TaskFormerReference,
+	Tenant
+} from '../core/entities/internal';
 import { asTenantUser, createTenantFixture } from '../core/testing/tenant-isolation/tenant-isolation.fixtures';
 import { Task } from './task.entity';
 import { TaskService } from './task.service';
 
 /**
- * `TaskService.update` and the references, on a real SQLite database with the tables TypeORM creates:
+ * `TaskService.update` and the references, on a real database with the tables TypeORM creates:
  *
  * - **one transaction per update.** The save, the reference a moved task leaves behind and the read-back of the
  *   sync scope are one unit: when a step fails, the task is stored as it was. A bulk update therefore reports a
  *   task as refused only when the task did not change (plan §7.1 of task-views-and-bulk-actions).
  * - **a moved task keeps its old reference.** `API-42` still resolves to the task after it became `SYS-1`, and
  *   project `API` never hands out 42 again (plan §7.3).
+ *
+ * SQLite runs by default. Postgres (the production database) runs when the entities are mapped for it and an empty,
+ * throwaway database is given (the spec builds the whole schema in it):
+ *
+ *   DB_TYPE=postgres GAUZY_TASK_SPEC_POSTGRES_URL=postgres://user:password@host:port/empty_database \
+ *     node --experimental-vm-modules node_modules/jest/bin/jest.js -c packages/core/jest.config.ts <this file>
  */
 
 const TIMEOUT = 15 * 60 * 1000;
@@ -35,81 +48,126 @@ const PROJECT_SYS = '83000000-0000-4000-8000-0000000000c2';
 const TASK_42 = '83000000-0000-4000-8000-000000000042';
 const TASK_41 = '83000000-0000-4000-8000-000000000041';
 
-describe('TaskService updates and references, on a real database', () => {
-	const file = path.join(os.tmpdir(), `gauzy-task-references-${process.pid}-${Date.now()}.sqlite3`);
+/** What the database answers when it refuses a former reference (see `refuseFormerReferenceOf`). */
+const REFUSAL = 'disk I/O error while writing the former reference';
+const TABLES = ['task_former_reference', 'task', 'organization_project', 'organization', 'tenant'];
+
+/** The database the spec runs on, and what differs between the two. */
+interface Dialect {
+	options: () => DataSourceOptions;
+	/** Empties the tables the spec writes, whatever refers to them. */
+	reset: (dataSource: DataSource) => Promise<void>;
+	/** Makes the database refuse the former reference of one task (a trigger), or lets it be again (`null`). */
+	refuseFormerReferenceOf: (dataSource: DataSource, taskId: string | null) => Promise<void>;
+}
+
+const SQLITE: Dialect = {
+	options: () => ({
+		type: 'better-sqlite3',
+		database: path.join(os.tmpdir(), `gauzy-task-references-${process.pid}-${Date.now()}.sqlite3`)
+	}),
+	reset: async (dataSource) => {
+		await dataSource.query('PRAGMA foreign_keys = OFF');
+		for (const table of TABLES) {
+			await dataSource.query(`DELETE FROM "${table}"`);
+		}
+		await dataSource.query('PRAGMA foreign_keys = ON');
+	},
+	refuseFormerReferenceOf: async (dataSource, taskId) => {
+		await dataSource.query('DROP TRIGGER IF EXISTS "refuse_former_reference"');
+		if (!taskId) return;
+		await dataSource.query(
+			`CREATE TRIGGER "refuse_former_reference" BEFORE INSERT ON "task_former_reference" WHEN NEW."taskId" = '${taskId}' BEGIN SELECT RAISE(ABORT, '${REFUSAL}'); END`
+		);
+	}
+};
+
+const POSTGRES: Dialect = {
+	options: () => ({ type: 'postgres', url: process.env.GAUZY_TASK_SPEC_POSTGRES_URL }),
+	reset: async (dataSource) => {
+		await dataSource.query(`TRUNCATE ${TABLES.map((table) => `"${table}"`).join(', ')} CASCADE`);
+	},
+	refuseFormerReferenceOf: async (dataSource, taskId) => {
+		await dataSource.query('DROP TRIGGER IF EXISTS "refuse_former_reference" ON "task_former_reference"');
+		if (!taskId) return;
+		await dataSource.query(
+			`CREATE OR REPLACE FUNCTION "refuse_former_reference"() RETURNS trigger AS $body$ BEGIN IF NEW."taskId" = '${taskId}' THEN RAISE EXCEPTION '${REFUSAL}'; END IF; RETURN NEW; END; $body$ LANGUAGE plpgsql`
+		);
+		await dataSource.query(
+			`CREATE TRIGGER "refuse_former_reference" BEFORE INSERT ON "task_former_reference" FOR EACH ROW EXECUTE FUNCTION "refuse_former_reference"()`
+		);
+	}
+};
+
+function exercise(dialect: Dialect) {
 	let dataSource: DataSource;
 	let service: TaskService;
 	let restore: () => void;
 
 	/** A row with the columns given, and a placeholder in every other NOT NULL column without a default. */
-	const insert = async (table: string, row: Record<string, unknown>) => {
-		const columns: any[] = await dataSource.query(`PRAGMA table_info("${table}")`);
+	const insert = async (entity: EntityTarget<ObjectLiteral>, row: Record<string, unknown>) => {
 		const values: Record<string, unknown> = { ...row };
-		for (const column of columns) {
-			const needsNoValue = !column.notnull || column.dflt_value !== null || column.pk;
-			if (column.name in values || needsNoValue) continue;
-			const type = String(column.type).toLowerCase();
+		for (const column of dataSource.getMetadata(entity).columns) {
+			const needsNoValue =
+				column.isNullable ||
+				column.default !== undefined ||
+				column.isGenerated ||
+				column.isCreateDate ||
+				column.isUpdateDate ||
+				column.isVirtual ||
+				!!column.relationMetadata;
+			if (column.propertyName in values || needsNoValue) continue;
+			const type = typeof column.type === 'function' ? column.type.name.toLowerCase() : String(column.type).toLowerCase();
 			let placeholder: unknown = 'x';
-			if (/int|bool|numeric|decimal|real|float/.test(type)) placeholder = 0;
-			else if (/date|time/.test(type)) placeholder = '2026-01-01 00:00:00';
-			values[column.name] = placeholder;
+			if (/int|number|numeric|decimal|real|float|double/.test(type)) placeholder = 0;
+			else if (/bool/.test(type)) placeholder = false;
+			else if (/date|time/.test(type)) placeholder = new Date('2026-01-01T00:00:00Z');
+			values[column.propertyName] = placeholder;
 		}
-		const keys = Object.keys(values);
-		await dataSource.query(
-			`INSERT INTO "${table}" (${keys.map((key) => `"${key}"`).join(', ')}) VALUES (${keys.map(() => '?').join(', ')})`,
-			keys.map((key) => values[key])
-		);
+		await dataSource.createQueryBuilder().insert().into(entity).values(values).execute();
 	};
 
-	const taskRow = async (id: string) => {
-		const [row] = await dataSource.query(`SELECT "title", "projectId", "number", "prefix", "status" FROM "task" WHERE "id" = ?`, [id]);
-		return row;
-	};
+	const taskRow = (id: string) =>
+		dataSource.getRepository(Task).findOne({
+			where: { id },
+			select: { id: true, title: true, projectId: true, number: true, prefix: true, status: true }
+		});
 
 	const formerReferences = () =>
-		dataSource.query(`SELECT "taskId", "projectId", "number", "prefix", "organizationId", "tenantId" FROM "task_former_reference" ORDER BY "number"`);
+		dataSource.getRepository(TaskFormerReference).find({
+			select: { id: true, taskId: true, projectId: true, number: true, prefix: true, organizationId: true, tenantId: true },
+			order: { number: 'ASC' }
+		});
 
 	/**
 	 * Makes the database refuse the former reference of the task named: a write the update makes after its save, in
 	 * the same transaction (a trigger, so the failure is the database's own, as a full disk or a lost lock would be).
 	 */
-	const refuseFormerReferenceOf = async (taskId: string) => {
-		await dataSource.query(
-			`CREATE TRIGGER "refuse_former_reference" BEFORE INSERT ON "task_former_reference" WHEN NEW."taskId" = '${taskId}' BEGIN SELECT RAISE(ABORT, 'disk I/O error while writing the former reference'); END`
-		);
-	};
+	const refuseFormerReferenceOf = (taskId: string) => dialect.refuseFormerReferenceOf(dataSource, taskId);
 
 	beforeAll(async () => {
-		dataSource = new DataSource({ type: 'better-sqlite3', database: file, entities: coreEntities, synchronize: true, logging: false });
+		dataSource = new DataSource({ ...dialect.options(), entities: coreEntities, synchronize: true, logging: false } as DataSourceOptions);
 		await dataSource.initialize();
-		// The custom-fields placeholder column the migrations add, which synchronize leaves out
-		for (const table of ['employee', 'organization_project', 'organization_contact', 'organization', 'task']) {
-			const columns: any[] = await dataSource.query(`PRAGMA table_info("${table}")`);
-			if (!columns.some((column) => column.name === 'fix_relational_custom_fields')) {
-				await dataSource.query(`ALTER TABLE "${table}" ADD COLUMN "fix_relational_custom_fields" boolean`);
-			}
-		}
 	}, TIMEOUT);
 
 	afterAll(async () => {
-		await dataSource?.destroy();
-		fs.rmSync(file, { force: true });
+		if (!dataSource?.isInitialized) return;
+		await dialect.refuseFormerReferenceOf(dataSource, null);
+		const file = (dataSource.options as { database?: unknown }).database;
+		await dataSource.destroy();
+		if (typeof file === 'string' && file.endsWith('.sqlite3')) fs.rmSync(file, { force: true });
 	});
 
 	beforeEach(async () => {
-		await dataSource.query('DROP TRIGGER IF EXISTS "refuse_former_reference"');
-		await dataSource.query('PRAGMA foreign_keys = OFF');
-		for (const table of ['task_former_reference', 'task', 'organization_project', 'organization', 'tenant']) {
-			await dataSource.query(`DELETE FROM "${table}"`);
-		}
-		await dataSource.query('PRAGMA foreign_keys = ON');
+		await dialect.refuseFormerReferenceOf(dataSource, null);
+		await dialect.reset(dataSource);
 		const scope = { tenantId: TENANT, organizationId: ORGANIZATION };
-		await insert('tenant', { id: TENANT, name: 'Tenant' });
-		await insert('organization', { id: ORGANIZATION, tenantId: TENANT, name: 'Organization' });
-		await insert('organization_project', { ...scope, id: PROJECT_API, name: 'Api Gateway', taskKey: 'API' });
-		await insert('organization_project', { ...scope, id: PROJECT_SYS, name: 'Systems', taskKey: 'SYS' });
-		await insert('task', { ...scope, id: TASK_41, title: 'Forty-one', projectId: PROJECT_API, number: 41, prefix: 'Api', status: 'open' });
-		await insert('task', { ...scope, id: TASK_42, title: 'Forty-two', projectId: PROJECT_API, number: 42, prefix: 'Api', status: 'open' });
+		await insert(Tenant, { id: TENANT, name: 'Tenant' });
+		await insert(Organization, { id: ORGANIZATION, tenantId: TENANT, name: 'Organization' });
+		await insert(OrganizationProject, { ...scope, id: PROJECT_API, name: 'Api Gateway', taskKey: 'API' });
+		await insert(OrganizationProject, { ...scope, id: PROJECT_SYS, name: 'Systems', taskKey: 'SYS' });
+		await insert(Task, { ...scope, id: TASK_41, title: 'Forty-one', projectId: PROJECT_API, number: 41, prefix: 'Api', status: 'open' });
+		await insert(Task, { ...scope, id: TASK_42, title: 'Forty-two', projectId: PROJECT_API, number: 42, prefix: 'Api', status: 'open' });
 
 		({ restore } = asTenantUser(fixture, { permissions: [PermissionsEnum.CHANGE_SELECTED_EMPLOYEE] }));
 		jest.spyOn(console, 'log').mockImplementation(() => undefined);
@@ -129,7 +187,7 @@ describe('TaskService updates and references, on a real database', () => {
 			stub({}),
 			stub({ canManageEmployee: jest.fn(async () => true) })
 		);
-	});
+	}, TIMEOUT);
 
 	afterEach(() => {
 		restore();
@@ -143,7 +201,14 @@ describe('TaskService updates and references, on a real database', () => {
 
 			expect(await taskRow(TASK_42)).toMatchObject({ projectId: PROJECT_SYS, number: 1, prefix: 'Sys' });
 			expect(await formerReferences()).toEqual([
-				{ taskId: TASK_42, projectId: PROJECT_API, number: 42, prefix: 'Api', organizationId: ORGANIZATION, tenantId: TENANT }
+				expect.objectContaining({
+					taskId: TASK_42,
+					projectId: PROJECT_API,
+					number: 42,
+					prefix: 'Api',
+					organizationId: ORGANIZATION,
+					tenantId: TENANT
+				})
 			]);
 
 			const [former, live, other, unknown] = await service.resolveReferences({
@@ -198,7 +263,7 @@ describe('TaskService updates and references, on a real database', () => {
 		async () => {
 			await refuseFormerReferenceOf(TASK_42);
 
-			await expect(service.update(TASK_42, { title: 'Renamed', projectId: PROJECT_SYS })).rejects.toThrow(/disk I\/O error/);
+			await expect(service.update(TASK_42, { title: 'Renamed', projectId: PROJECT_SYS })).rejects.toThrow(REFUSAL);
 
 			expect(await taskRow(TASK_42)).toMatchObject({ title: 'Forty-two', projectId: PROJECT_API, number: 42, prefix: 'Api' });
 			expect(await formerReferences()).toEqual([]);
@@ -235,8 +300,19 @@ describe('TaskService updates and references, on a real database', () => {
 			// The task reported as refused is exactly as it was; the other one moved.
 			expect(await taskRow(TASK_41)).toMatchObject({ projectId: PROJECT_API, number: 41, prefix: 'Api' });
 			expect(await taskRow(TASK_42)).toMatchObject({ projectId: PROJECT_SYS, number: 1 });
-			expect((await formerReferences()).map((row: { taskId: string }) => row.taskId)).toEqual([TASK_42]);
+			expect((await formerReferences()).map((row) => row.taskId)).toEqual([TASK_42]);
 		},
 		TIMEOUT
 	);
+}
+
+(isPostgres() ? describe.skip : describe)('TaskService updates and references, on a real SQLite database', () => {
+	exercise(SQLITE);
 });
+
+(isPostgres() && process.env.GAUZY_TASK_SPEC_POSTGRES_URL ? describe : describe.skip)(
+	'TaskService updates and references, on a real Postgres database',
+	() => {
+		exercise(POSTGRES);
+	}
+);
