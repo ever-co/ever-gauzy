@@ -1,4 +1,4 @@
-import { ForbiddenException, Injectable, NotFoundException, Type } from '@nestjs/common';
+import { Injectable, Type } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
 import { BaseEntityEnum, ID, PermissionsEnum, REALTIME_EVENT_NAMES } from '@gauzy/contracts';
 import {
@@ -137,6 +137,8 @@ function chunked<T>(values: readonly T[], size: number): T[][] {
 export class RealtimeAudience {
 	private readonly own = new Map<string, SubscriptionAudienceCheck>();
 	private readonly providers = new Map<unknown, unknown>();
+	/** The document read-scope queries in flight, by subscriber and question (see `readableIn`). */
+	private readonly documentLookups = new Map<string, Promise<ID[]>>();
 
 	constructor(private readonly moduleRef: ModuleRef) {
 		const documents: SubscriptionAudienceCheck = (events) => this.documentVerdicts(events);
@@ -198,13 +200,31 @@ export class RealtimeAudience {
 		}
 		for (const [organizationId, ids] of byOrganization) {
 			for (const chunk of chunked([...ids], AUDIENCE_QUERY_CHUNK)) {
-				const found = await documents.filterReadableDocumentIds(chunk as ID[], organizationId as ID, {
-					withDeleted: true
-				});
+				const found = await this.readableIn(documents, organizationId, chunk);
 				for (const id of found) readable.add(`${organizationId}|${id}`);
 			}
 		}
 		return readable;
+	}
+
+	/**
+	 * One read-scope query of the subscriber, shared by the identical lookups in flight: a live fact handed to several
+	 * connections of one user (tabs) asks the same question in the same request context, and gets one query. Nothing
+	 * is kept once the query answers (no cache), so a share revoked or a page made private takes effect on the next
+	 * fact. Other users ask apart: the docs read scope is the subscriber's own.
+	 */
+	private readableIn(documents: DocumentService, organizationId: string, ids: string[]): Promise<ID[]> {
+		const tenantId = RequestContext.currentTenantId();
+		const userId = RequestContext.currentUserId();
+		const read = () => documents.filterReadableDocumentIds(ids as ID[], organizationId as ID, { withDeleted: true });
+		if (!tenantId || !userId) return read();
+		const key = `${tenantId}|${userId}|${organizationId}|${[...ids].sort().join(',')}`;
+		let pending = this.documentLookups.get(key);
+		if (!pending) {
+			pending = read().finally(() => this.documentLookups.delete(key));
+			this.documentLookups.set(key, pending);
+		}
+		return pending;
 	}
 
 	/** The task read rule for a task of an organization (see {@link TASK_READ_PERMISSIONS}). */
@@ -216,28 +236,33 @@ export class RealtimeAudience {
 		);
 	}
 
-	/** Each `comment.*` fact: whether the subscriber may read the comments of the record it names. */
+	/**
+	 * Each `comment.*` fact: whether the subscriber may read the comments of the record it names. Fails closed: a fact
+	 * that names no record, or a record whose rule cannot be known (the comment-access registry missing), is not
+	 * delivered; only a record type known to have no rule of its own follows the comment API's (tenant and
+	 * organization, already checked). The governed records of one type are checked together (one batch read).
+	 */
 	private async commentVerdicts(events: readonly SubscriptionAudienceEvent[]): Promise<boolean[]> {
 		const verdicts = events.map(() => false);
 		const pages: Array<{ index: number; id: string; organizationId: string | null }> = [];
-		const governed = new Map<string, { entity: string; entityId: string; indexes: number[] }>();
+		const governed = new Map<string, Array<{ index: number; entityId: string }>>();
 		const access = this.find(CommentParentAccessService);
 
 		events.forEach((event, index) => {
 			const organizationId = organizationOf(event);
 			if (organizationId && !isWithinOrganizationBoundary(organizationId as ID)) return;
 			const parent = parentOf(event);
-			if (parent && isSpellingOfRecordType(parent.entity, BaseEntityEnum.Document)) {
+			if (!parent) return;
+			if (isSpellingOfRecordType(parent.entity, BaseEntityEnum.Document)) {
 				pages.push({ index, id: parent.entityId, organizationId });
-			} else if (parent && isSpellingOfRecordType(parent.entity, BaseEntityEnum.Task)) {
+			} else if (isSpellingOfRecordType(parent.entity, BaseEntityEnum.Task)) {
 				verdicts[index] = this.mayReadTasksOf(organizationId);
-			} else if (parent && access?.isGoverned(parent.entity)) {
-				const key = `${parent.entity}|${parent.entityId}`;
-				const entry = governed.get(key) ?? { ...parent, indexes: [] };
-				entry.indexes.push(index);
-				governed.set(key, entry);
+			} else if (!access) {
+				// Which record types have a rule of their own cannot be known: none is delivered.
+				return;
+			} else if (access.isGoverned(parent.entity)) {
+				governed.set(parent.entity, [...(governed.get(parent.entity) ?? []), { index, entityId: parent.entityId }]);
 			} else {
-				// No rule of its own: the comment API's (the tenant and the organization, both already checked).
 				verdicts[index] = true;
 			}
 		});
@@ -246,30 +271,13 @@ export class RealtimeAudience {
 			const readable = await this.readableDocuments(pages);
 			for (const page of pages) verdicts[page.index] = readable.has(`${page.organizationId}|${page.id}`);
 		}
-		for (const { entity, entityId, indexes } of governed.values()) {
-			const allowed = access ? await this.mayReadGovernedComments(access, entity, entityId) : false;
-			for (const index of indexes) verdicts[index] = allowed;
+		if (access) {
+			for (const [entity, facts] of governed) {
+				const readable = await access.readableParentIds(entity, facts.map((fact) => fact.entityId));
+				for (const fact of facts) verdicts[fact.index] = readable.has(fact.entityId);
+			}
 		}
 		return verdicts;
-	}
-
-	/** Whether the subscriber passes the comment-access policy of a governed record (a refusal is `false`). */
-	private async mayReadGovernedComments(
-		access: CommentParentAccessService,
-		entity: string,
-		entityId: string
-	): Promise<boolean> {
-		if (!access.holdsPermission('read', entity)) {
-			return false;
-		}
-		try {
-			return !!(await access.assertMay('read', entity, entityId));
-		} catch (error) {
-			if (error instanceof ForbiddenException || error instanceof NotFoundException) {
-				return false;
-			}
-			throw error;
-		}
 	}
 
 	/**

@@ -267,6 +267,98 @@ describe('realtime audience', () => {
 			expect(await caughtUp(OUTSIDER)).toEqual(['on-org-page', 'on-employee']);
 		});
 
+		it('fails closed on a comment fact that names no record, and on any record but a page or a task when the comment rules cannot be known', async () => {
+			rows.push(
+				row(REALTIME_EVENT_NAMES.COMMENT_CREATED, 'comment', 'no-parent', {
+					entity: 'Comment',
+					entityId: 'no-parent',
+					action: 'created',
+					organizationId: ORG
+				}),
+				commentRow('on-org-page', { entity: BaseEntityEnum.Document, entityId: 'page-org' })
+			);
+			expect(await caughtUp(READER)).toEqual(['on-org-page']);
+
+			// A process without the comment-access registry: which records have a rule of their own is unknown.
+			rows.length = 0;
+			rows.push(
+				commentRow('on-contact', { entity: BaseEntityEnum.OrganizationContact, entityId: CONTACT }),
+				commentRow('on-employee', { entity: BaseEntityEnum.Employee, entityId: 'employee-x' }),
+				commentRow('on-task', { entity: BaseEntityEnum.Task, entityId: 'task-1' })
+			);
+			const providers = new Map<unknown, unknown>([
+				[DocumentService, documents],
+				[SubscriptionCatalogue, catalogue],
+				[EventOutboxService, { listOutboxRowsSince: async () => rows }]
+			]);
+			const moduleRef = {
+				get: (token: unknown) => {
+					if (!providers.has(token)) throw new Error('not in this process');
+					return providers.get(token);
+				}
+			};
+			const withoutRules = new RealtimeCatchUpService(moduleRef as never, new RealtimeAudience(moduleRef as never));
+			const ids = (await as(READER, () => withoutRules.catchUp({ after: 0 }))).events.map((event) => event.aggregate.id);
+			expect(ids).toEqual(['on-task']);
+		});
+
+		it('checks the governed records of one type together: one batch read for a page of contact notes', async () => {
+			const others = ['7c9e6679-7425-40de-944b-e07fc1f90ae8', '7c9e6679-7425-40de-944b-e07fc1f90ae9'];
+			const batches: ID[][] = [];
+			const single = jest.fn(async () => null);
+			// A policy with a batch read (the registry keeps the first policy of a type: a registry of its own).
+			const batchComments = new CommentParentAccessService();
+			batchComments.register({
+				entity: BaseEntityEnum.OrganizationContact,
+				readPermissions: [PermissionsEnum.ORG_CONTACT_VIEW],
+				writePermissions: [PermissionsEnum.ORG_CONTACT_EDIT],
+				findAccessibleParent: single,
+				findAccessibleParents: async (ids: ID[]) => {
+					batches.push(ids);
+					return ids.filter((id) => id !== others[1]).map((id) => ({ id, organizationId: ORG }));
+				}
+			});
+			rows.push(
+				commentRow('on-contact', { entity: BaseEntityEnum.OrganizationContact, entityId: CONTACT }),
+				commentRow('on-other', { entity: BaseEntityEnum.OrganizationContact, entityId: others[0] }),
+				commentRow('on-hidden', { entity: BaseEntityEnum.OrganizationContact, entityId: others[1] }),
+				commentRow('on-contact-again', { entity: BaseEntityEnum.OrganizationContact, entityId: CONTACT })
+			);
+			const providers = new Map<unknown, unknown>([
+				[DocumentService, documents],
+				[SubscriptionCatalogue, catalogue],
+				[CommentParentAccessService, batchComments],
+				[EventOutboxService, { listOutboxRowsSince: async () => rows }]
+			]);
+			const moduleRef = { get: (token: unknown) => providers.get(token) };
+			const withBatch = new RealtimeCatchUpService(moduleRef as never, new RealtimeAudience(moduleRef as never));
+			const got = (await as(READER, () => withBatch.catchUp({ after: 0 }))).events.map((event) => event.aggregate.id);
+			expect(got).toEqual(['on-contact', 'on-other', 'on-contact-again']);
+			expect(batches).toEqual([[CONTACT, others[0], others[1]]]);
+			expect(single).not.toHaveBeenCalled();
+		});
+
+		it('asks one read-scope query for the same live fact on several connections of one user, and none is kept', async () => {
+			const fact: SubscriptionAudienceEvent = {
+				name: REALTIME_EVENT_NAMES.DOCUMENT_UPDATED,
+				aggregateType: 'document',
+				aggregateId: 'page-org',
+				data: { organizationId: ORG }
+			};
+			const subscriber = { tenantId: TENANT, userId: 'reader' };
+			const verdicts = await as(READER, () =>
+				Promise.all([audience.admitted([fact], subscriber), audience.admitted([fact], subscriber)])
+			);
+			expect(verdicts).toEqual([[true], [true]]);
+			expect(documents.calls).toHaveLength(1);
+			// Answered: the next fact asks again (a share revoked meanwhile takes effect).
+			await as(READER, () => audience.admitted([fact], subscriber));
+			expect(documents.calls).toHaveLength(2);
+			// Another user asks apart, in their own context.
+			await as(OUTSIDER, () => audience.admitted([fact], { tenantId: TENANT, userId: 'outsider' }));
+			expect(documents.calls.map((call) => call.asUser)).toEqual(['reader', 'reader', 'outsider']);
+		});
+
 		it('replays a conversation to its current members only, and the removal notice to the member removed', async () => {
 			rows.push(
 				chatRow(CHAT_EVENT_NAMES.MESSAGE_CREATED, { conversationId: 'c1', messageId: 'm1' }, [

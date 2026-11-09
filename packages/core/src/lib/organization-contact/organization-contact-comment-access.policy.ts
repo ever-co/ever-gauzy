@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { In } from 'typeorm';
 import { BaseEntityEnum, ID, PermissionsEnum } from '@gauzy/contracts';
 import { CommentParentAccessPolicy, ICommentParent, ICommentParentAccessPolicy } from '../comment/parent-access';
 import { OrganizationContactService } from './organization-contact.service';
@@ -30,5 +31,17 @@ export class OrganizationContactCommentAccessPolicy implements ICommentParentAcc
 			}
 			throw error;
 		}
+	}
+
+	/** The contacts among `entityIds` the caller reaches through the contact read: one tenant-scoped read. */
+	async findAccessibleParents(entityIds: ID[]): Promise<ICommentParent[]> {
+		if (!entityIds.length) {
+			return [];
+		}
+		const contacts = await this.organizationContactService.find({
+			select: { id: true, organizationId: true },
+			where: { id: In(entityIds) }
+		});
+		return contacts.map((contact) => ({ id: contact.id, organizationId: contact.organizationId ?? null }));
 	}
 }
