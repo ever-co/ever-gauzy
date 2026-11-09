@@ -1,5 +1,5 @@
 import { EventBus } from '@nestjs/cqrs';
-import { takenProjectKeys, uniqueProjectKey } from '../tasks/task-reference';
+import { holderOfProjectKey, takenProjectKeys, uniqueProjectKey } from '../tasks/task-reference';
 import { BadRequestException, HttpException, HttpStatus, Injectable, ConflictException } from '@nestjs/common';
 import { Brackets, FindOptionsWhere, ILike, In, IsNull, Not, SelectQueryBuilder } from 'typeorm';
 import { EntityProperty, FilterQuery, raw } from '@mikro-orm/core';
@@ -1112,8 +1112,8 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 	/**
 	 * Normalizes a task key on its way in and keeps the organization's keys unique: the key is upper-cased and
 	 * trimmed (`null` clears it), refused with 409 (`PROJECT_KEY_TAKEN`) when another project of the organization
-	 * holds it, and a replaced key is kept in `taskKeyHistory` so old references keep resolving. A body without a
-	 * `taskKey` leaves both untouched; the history is never written from a body.
+	 * answers to it (see {@link assertTaskKeyFree}), and a replaced key is kept in `taskKeyHistory` so old references
+	 * keep resolving. A body without a `taskKey` leaves both untouched; the history is never written from a body.
 	 */
 	private async prepareTaskKey(
 		entity: { taskKey?: string | null; taskKeyHistory?: string[] | null },
@@ -1125,26 +1125,57 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 		}
 		const key = entity.taskKey === null || entity.taskKey === undefined ? null : String(entity.taskKey).trim().toUpperCase();
 		entity.taskKey = key || null;
-		if (entity.taskKey) {
-			const holder = await this.typeOrmRepository.findOne({
-				where: {
-					tenantId: scope.tenantId,
-					organizationId: scope.organizationId,
-					taskKey: entity.taskKey,
-					...(scope.existing?.id ? { id: Not(scope.existing.id) } : {})
-				},
-				select: { id: true, name: true }
-			});
-			if (holder) {
-				throw new ConflictException(`PROJECT_KEY_TAKEN: the key ${entity.taskKey} belongs to the project "${holder.name}".`);
-			}
-		}
 		const previous = scope.existing?.taskKey ? String(scope.existing.taskKey).toUpperCase() : null;
+		// A body that sends the project's own key back (a client saving the whole project) changes nothing to check: the
+		// unique index keeps current keys apart, and a key the project held before this rule stays its own.
+		if (entity.taskKey && entity.taskKey !== previous) {
+			await this.assertTaskKeyFree(entity.taskKey, scope);
+		}
 		if (previous && previous !== entity.taskKey) {
 			const history = Array.isArray(scope.existing?.taskKeyHistory) ? scope.existing.taskKeyHistory : [];
 			entity.taskKeyHistory = [...new Set([...history.map((item) => String(item).toUpperCase()), previous])].filter(
 				(item) => item !== entity.taskKey
 			);
+		}
+	}
+
+	/**
+	 * Refuses with 409 (`PROJECT_KEY_TAKEN`) a key another project of the organization answers to: its key, a key it
+	 * held before (old references such as `API-42` keep resolving to it), or the key derived from its name (its tasks
+	 * keep answering to it). Giving such a key to a second project would make those references name two projects, and
+	 * `resolveReferences` would open whichever of them holds the number. Deleted projects count too: their keys stay
+	 * in the unique index, and a restored project answers to them again. The project being saved is left out, so it
+	 * may take back a key it held before.
+	 */
+	private async assertTaskKeyFree(
+		key: string,
+		scope: { tenantId: ID; organizationId: ID; existing?: { id?: ID } | null }
+	): Promise<void> {
+		const others = await this.typeOrmRepository.find({
+			where: {
+				tenantId: scope.tenantId,
+				organizationId: scope.organizationId,
+				...(scope.existing?.id ? { id: Not(scope.existing.id) } : {})
+			},
+			select: { id: true, name: true, taskKey: true, taskKeyHistory: true },
+			withDeleted: true
+		});
+		const holder = holderOfProjectKey(others, key);
+		if (!holder) {
+			return;
+		}
+		const name = holder.project.name;
+		switch (holder.hold) {
+			case 'current':
+				throw new ConflictException(`PROJECT_KEY_TAKEN: the key ${key} belongs to the project "${name}".`);
+			case 'former':
+				throw new ConflictException(
+					`PROJECT_KEY_TAKEN: the key ${key} was a key of the project "${name}", and its old references still resolve to it.`
+				);
+			default:
+				throw new ConflictException(
+					`PROJECT_KEY_TAKEN: the tasks of the project "${name}" answer to ${key}, the key derived from its name.`
+				);
 		}
 	}
 }
