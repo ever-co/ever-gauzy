@@ -279,6 +279,31 @@ function exercise(dialect: Dialect) {
 	);
 
 	it(
+		'gives a task that moves back the number it held there (an undo restores API-42)',
+		async () => {
+			const outcome = await service.bulkUpdate(
+				{ organizationId: ORGANIZATION, taskIds: [TASK_42], changes: { projectId: PROJECT_SYS } } as never,
+				(id, update) => service.update(id, update)
+			);
+			// The undo: the same request with the previous values
+			await service.bulkUpdate(
+				{ organizationId: ORGANIZATION, items: outcome.results.map(({ taskId, previous }) => ({ taskId, changes: previous })) } as never,
+				(id, update) => service.update(id, update)
+			);
+
+			expect(await taskRow(TASK_42)).toMatchObject({ projectId: PROJECT_API, number: 42, prefix: 'Api' });
+			expect((await formerReferences()).map(({ projectId, number }) => ({ projectId, number }))).toEqual([
+				{ projectId: PROJECT_SYS, number: 1 }
+			]);
+			const [back, away] = await service.resolveReferences({ organizationId: ORGANIZATION, references: ['API-42', 'SYS-1'] } as never);
+			expect(back).toMatchObject({ resolved: true, taskId: TASK_42, currentKey: 'API', currentNumber: 42 });
+			expect(back).not.toHaveProperty('formerReference');
+			expect(away).toMatchObject({ resolved: true, taskId: TASK_42, formerReference: true });
+		},
+		TIMEOUT
+	);
+
+	it(
 		'keeps the reference of a task that leaves its project for none',
 		async () => {
 			await service.update(TASK_42, { projectId: null });

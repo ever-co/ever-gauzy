@@ -245,8 +245,8 @@ describe('TaskService.update — moving the time logs with the task', () => {
 			expect(steps).toEqual([
 				'begin',
 				'pessimistic_write task task-1',
-				'save task',
 				'save former reference',
+				'save task',
 				'commit',
 				'begin',
 				'pessimistic_write task task-1',
@@ -264,7 +264,7 @@ describe('TaskService.update — moving the time logs with the task', () => {
 
 		await service.update('task-1', { projectId: 'project-new', moveTimeLogs: true });
 
-		expect(steps).toEqual(['begin', 'save task', 'save former reference', 'commit', 'begin', 'write', 'commit']);
+		expect(steps).toEqual(['begin', 'save former reference', 'save task', 'commit', 'begin', 'write', 'commit']);
 	});
 
 	it("moves a colleague's logs only for a caller who may act for them", async () => {

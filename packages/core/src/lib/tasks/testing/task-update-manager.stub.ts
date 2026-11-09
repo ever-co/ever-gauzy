@@ -12,11 +12,11 @@ export function stubTaskUpdateManager(base: Record<string, unknown> = {}, locked
 		lockedRead[step] = jest.fn(() => lockedRead);
 	}
 	lockedRead.getOne = jest.fn(async () => lockedRow);
-	const repositories = new Map<unknown, { save: jest.Mock }>();
+	const repositories = new Map<unknown, { save: jest.Mock; delete: jest.Mock }>();
 	const repositoryOf = (entity: unknown) => {
 		let repository = repositories.get(entity);
 		if (!repository) {
-			repository = { save: jest.fn(async (row: unknown) => row) };
+			repository = { save: jest.fn(async (row: unknown) => row), delete: jest.fn(async () => ({ affected: 1 })) };
 			repositories.set(entity, repository);
 		}
 		return repository;

@@ -234,6 +234,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			// is written by the one save below, together with the rest of the update: a save that fails leaves
 			// the task where it was.
 			let moved: Partial<Task> | null = null;
+			let reclaimedNumber: number | null = null;
 			if (data.projectId && data.projectId !== task.projectId) {
 				// The task's organization after the update: the destination must be a project of it, and the next
 				// number is counted in it (counting in another organization could hand out a taken number).
@@ -249,20 +250,25 @@ export class TaskService extends TenantAwareCrudService<Task> {
 					);
 				}
 
-				// Get the maximum task number for the project the task moves to, soft-deleted tasks included: they
-				// keep their number in the `taskNumber` unique index, as for a new task
-				const maxNumber = await this.getMaxTaskNumberByProject(
-					{
-						tenantId,
-						organizationId,
-						projectId
-					},
-					{ withDeleted: true }
-				);
+				// A task moving back to a project it left takes back the number it held there (an undo restores
+				// `API-42`, not `API-43`); its former reference there is removed with the save. Otherwise the next number of
+				// the project the task moves to, soft-deleted tasks included: they keep their number in the `taskNumber`
+				// unique index, as for a new task
+				reclaimedNumber = await this.reclaimableNumberOf(id, projectId, tenantId, organizationId);
+				const number =
+					reclaimedNumber ??
+					(await this.getMaxTaskNumberByProject(
+						{
+							tenantId,
+							organizationId,
+							projectId
+						},
+						{ withDeleted: true }
+					)) + 1;
 
 				moved = {
 					projectId,
-					number: maxNumber + 1,
+					number,
 					// The destination's prefix, never the input's.
 					prefix: destination.prefix,
 					// A relation object in the input would otherwise point the save back at another project.
@@ -301,12 +307,10 @@ export class TaskService extends TenantAwareCrudService<Task> {
 					current.number !== undefined &&
 					(data.projectId ?? null) !== current.projectId;
 
-				const updated = await service.saveTaskRow({
-					...data,
-					id,
-					...saved
-				});
-
+				// The reference is written before the save. In the transaction the order does not matter. Without one
+				// (MikroORM), a save that fails after it leaves a reference to the number the task still holds, which
+				// the live number answers first: harmless. A reference written after a save that succeeded could
+				// instead fail and lose `API-42` for good.
 				if (leavesProject) {
 					await manager.getRepository(TaskFormerReference).save({
 						taskId: id,
@@ -316,6 +320,21 @@ export class TaskService extends TenantAwareCrudService<Task> {
 						// The organization the reference was valid in: the one the task was in before the update
 						organizationId: current.organizationId ?? task.organizationId,
 						tenantId
+					});
+				}
+
+				const updated = await service.saveTaskRow({
+					...data,
+					id,
+					...saved
+				});
+
+				if (reclaimedNumber !== null && moved) {
+					// The reference the task held in the project it is back in is its live number again
+					await manager.getRepository(TaskFormerReference).delete({
+						taskId: id,
+						projectId: moved.projectId,
+						number: reclaimedNumber
 					});
 				}
 
@@ -411,6 +430,33 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			});
 			return work({ service, manager, inTransaction: true });
 		});
+	}
+
+	/**
+	 * The number a task held in a project before it moved out of it (its latest former reference there), when no task of
+	 * the project holds it now: the number the task takes back when it moves back. Null when there is none. Best
+	 * effort: a failed read counts as none, and the task is numbered as any moved task.
+	 */
+	private async reclaimableNumberOf(taskId: ID, projectId: ID, tenantId: ID, organizationId: ID): Promise<number | null> {
+		try {
+			const former = await this.typeOrmRepository.manager.findOne(TaskFormerReference, {
+				where: { taskId, projectId, tenantId, organizationId },
+				select: { id: true, number: true },
+				order: { number: 'DESC' }
+			});
+			if (!former || former.number === null || former.number === undefined) {
+				return null;
+			}
+			const number = Number(former.number);
+			const holders = await this.typeOrmRepository.manager.count(Task, {
+				where: { projectId, number, tenantId, organizationId },
+				withDeleted: true
+			});
+			return holders === 0 ? number : null;
+		} catch (error) {
+			console.error('Error reading the former number of the task in its project:', error?.message);
+			return null;
+		}
 	}
 
 	/** The tenant-aware save of an update, on the repository `this` carries (a transaction's, see inUpdateTransaction). */

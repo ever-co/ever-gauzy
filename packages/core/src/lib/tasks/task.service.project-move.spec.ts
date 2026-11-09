@@ -95,10 +95,11 @@ describe('TaskService.update — moving a task to another project', () => {
 			organizationId: fixture.organizationId,
 			tenantId: fixture.tenantId
 		});
-		// The save and the reference are written by one transaction, the save first.
+		// The reference is written first: without a transaction (MikroORM), a failed save then leaves a harmless
+		// reference to the number the task still holds, instead of a moved task without its old reference.
 		const [saveOrder] = save.mock.invocationCallOrder;
 		const [referenceOrder] = formerReferences.mock.invocationCallOrder;
-		expect(saveOrder).toBeLessThan(referenceOrder);
+		expect(referenceOrder).toBeLessThan(saveOrder);
 	});
 
 	it('keeps the reference the task holds when the transaction writes, not the one read before it', async () => {
@@ -150,13 +151,13 @@ describe('TaskService.update — moving a task to another project', () => {
 	});
 
 	it('writes the move in the one save of the update: a failed save leaves the task where it was', async () => {
+		// (In the transaction the reference written before it is undone with it.)
 		save.mockRejectedValueOnce(new Error('a member of another tenant'));
 
 		await expect(service.update('task-1', { projectId: 'project-new' })).rejects.toThrow();
 
-		// No separate write moved or renumbered the task before the save that failed, nor kept a reference.
+		// No separate write moved or renumbered the task before the save that failed.
 		expect(update).not.toHaveBeenCalled();
-		expect(formerReferences).not.toHaveBeenCalled();
 	});
 
 	it('ignores a stale number and prefix the client sends back with the move', async () => {
@@ -190,7 +191,7 @@ describe('TaskService.update — moving a task to another project', () => {
 		expect(save).not.toHaveBeenCalled();
 
 		await service.update('task-1', { projectId: 'project-new' });
-		expect(findProject).toHaveBeenLastCalledWith(
+		expect(findProject).toHaveBeenCalledWith(
 			OrganizationProject,
 			expect.objectContaining({ where: expect.objectContaining({ organizationId: fixture.organizationId }) })
 		);

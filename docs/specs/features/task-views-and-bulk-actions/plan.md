@@ -46,8 +46,8 @@ existing task and view routes keep working unchanged.
   a task that is missing, another organization's, or refused by its update is reported and the others are
   applied: per-task results (`ok`, `error`, `previous`), never all-or-nothing across tasks. The answer's
   `previous` is a changes object (lists as `set…`), so an undo is the same request with `items` built from it.
-  Each task's update is one transaction (§7.1): a task reported as refused
-  did not change.
+  On TypeORM each task's update is one transaction (§7.1): a task reported as
+  refused did not change. MikroORM has no transaction there (see §7.1).
 - **References** (`TaskService.resolveReferences`) resolve by the project's key, its former keys and the key
   derived from its name; the task's `prefix` stays what the create path writes. Every project answering to the key
   is read: when more than one task of those projects holds the number the answer is `ambiguous: true` and resolves
@@ -94,7 +94,10 @@ description; **Done:** says what changed.
    and the read-back of the sync scope in one TypeORM transaction (`inUpdateTransaction`: a view of the service
    whose repository is the transaction's, so the tenant-aware save and its checks run inside it). Mentions, the
    time-log move (its own transaction, which locks the task row), subscriptions and the activity log are best
-   effort and run after the commit. On MikroORM the steps run as before, without a transaction.
+   effort and run after the commit. On MikroORM the steps run as before, without a transaction, so a failed
+   sprint-history write can still follow a stored save there; the former reference is written before the save,
+   so a failed save leaves at most a reference to the number the task still holds (the live number answers
+   first), never a moved task without its old reference.
 2. **Former and derived keys are not reserved.** The unique check covers current `taskKey`s only: after project
    A renames `API` to `SYS`, project B may take `API`, and a derived key (first three characters of the name) can
    equal another project's key. `resolveReferences` then reads both projects and answers `ambiguous` only when
