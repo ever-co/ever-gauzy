@@ -66,10 +66,12 @@
 				</div>
 			</div>
 
-			<!-- Tabs, as the project page's: the task itself, its subtasks as a board, what changed, and its comments. -->
+			<!-- Tabs, as the project page's: the task itself, its subtasks as a board, what changed, its comments and
+			     its documents. -->
 			<div class="tab-row project-page-tabs task-page-tabs">
 				<div class="tabs" role="tablist" [attr.aria-label]="task.title">
 					@for (item of tabs; track item.id) {
+						@if (item.id !== 'documents' || canSeeDocuments) {
 						<button
 							type="button"
 							role="tab"
@@ -88,7 +90,11 @@
 							@if (item.id === 'comments' && commentCount) {
 								<span class="title-count tab-count">{{ commentCount }}</span>
 							}
+							@if (item.id === 'documents' && documentCount) {
+								<span class="title-count tab-count">{{ documentCount }}</span>
+							}
 						</button>
+						}
 					}
 				</div>
 			</div>
@@ -160,6 +166,24 @@
 						[highlightCommentId]="highlightCommentId"
 						(countChange)="onCommentCount($event)"
 					></ga-entity-comments>
+				</div>
+			}
+
+			<!-- The Documents load when first opened, then stay loaded, so an upload in flight finishes. -->
+			@if (documentsOpened) {
+				<div
+					class="project-page-pane task-page-wide"
+					role="tabpanel"
+					id="task-view-pane-documents"
+					aria-labelledby="task-view-tab-documents"
+					[hidden]="tab !== 'documents'"
+				>
+					<gz-document-links-panel
+						[entity]="documentEntity"
+						[entityId]="task.id"
+						[entityLabel]="task.title"
+						(countChanged)="onDocumentCount($event)"
+					></gz-document-links-panel>
 				</div>
 			}
 

@@ -2075,7 +2075,11 @@
 			"SORT_BY": "מיון לפי {{ name }}",
 			"SORT_LABEL": "מיון לפי",
 			"SORT_ASCENDING": "סדר עולה",
-			"SORT_DESCENDING": "סדר יורד"
+			"SORT_DESCENDING": "סדר יורד",
+			"FILTER_PLACEHOLDER": "סינון עובדים",
+			"CLEAR_FILTER": "ניקוי סינון",
+			"FILTERED_COUNT": "{{ shown }} מתוך {{ total }}",
+			"NO_MATCHES": "אין עובדים התואמים ל-\"{{ term }}\""
 		},
 		"SELECT_A_MONTH_AND_EMPLOYEE": "אנא בחר חודש ועובד מהתפריט שלמעלה",
 		"INSERT_TEXT_FOR_NOT_AUTHENTICATED_USERS": "Insert text for not authenticated users",

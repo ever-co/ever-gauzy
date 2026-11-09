@@ -9,6 +9,7 @@ import { distinctUntilChanged, filter, first, map } from 'rxjs/operators';
 import * as moment from 'moment-timezone';
 import {
 	BaseEntityEnum,
+	FeatureEnum,
 	ID,
 	IOrganization,
 	IPagination,
@@ -91,9 +92,9 @@ export const HOURS_DAYS = 14;
 export const ENTRIES_DAYS = 30;
 
 /** The page's tabs, as the project page's; the open one is in the URL (`?tab=`). */
-export type TaskViewTab = 'overview' | 'board' | 'activity' | 'comments';
+export type TaskViewTab = 'overview' | 'board' | 'activity' | 'comments' | 'documents';
 
-const TABS: TaskViewTab[] = ['overview', 'board', 'activity', 'comments'];
+const TABS: TaskViewTab[] = ['overview', 'board', 'activity', 'comments', 'documents'];
 
 /** One subtask, as the Subtasks panel lists it. */
 export interface ISubtaskRow {
@@ -159,7 +160,8 @@ export class TaskViewPageComponent extends TranslationBaseComponent implements O
 		{ id: 'overview', label: 'PROJECT_VIEW.TABS.OVERVIEW', icon: 'home-outline' },
 		{ id: 'board', label: 'PROJECT_VIEW.TABS.BOARD', icon: 'grid-outline' },
 		{ id: 'activity', label: 'PROJECT_VIEW.TABS.ACTIVITY', icon: 'list-outline' },
-		{ id: 'comments', label: 'PROJECT_VIEW.TABS.COMMENTS', icon: 'message-square-outline' }
+		{ id: 'comments', label: 'PROJECT_VIEW.TABS.COMMENTS', icon: 'message-square-outline' },
+		{ id: 'documents', label: 'PROJECT_VIEW.TABS.DOCUMENTS', icon: 'file-text-outline' }
 	];
 	tab: TaskViewTab = 'overview';
 	/**
@@ -197,6 +199,18 @@ export class TaskViewPageComponent extends TranslationBaseComponent implements O
 	readonly commentEntity = BaseEntityEnum.Task;
 	/** The comment the URL points at (`?comment=`, an Inbox notification's link): the Comments tab opens on it. */
 	highlightCommentId: ID | null = null;
+
+	/** The Documents load when first opened, then stay mounted, so an upload in flight is not cut off. */
+	documentsOpened = false;
+	/** The task's attached documents, as the Documents tab last counted them. */
+	documentCount = 0;
+	/** Entity type the Documents tab attaches its links to. */
+	readonly documentEntity = BaseEntityEnum.Task;
+	/**
+	 * Whether the Documents tab is offered; worked out when the permissions or the feature flags change, not on
+	 * every check of the template.
+	 */
+	canSeeDocuments = false;
 
 	task: ITask = null;
 	status: IRecordViewStatus = null;
@@ -296,16 +310,23 @@ export class TaskViewPageComponent extends TranslationBaseComponent implements O
 			)
 			.subscribe((canCreateTasks) => (this.canCreateTasks = canCreateTasks));
 		// The open tab follows the URL, so a tab can be bookmarked, shared and reached with Back. A link that names a
-		// comment (`?comment=`, as an Inbox notification's does) opens the Comments tab on it, tab or no tab.
-		this.route.queryParamMap
-			.pipe(
+		// comment (`?comment=`, as an Inbox notification's does) opens the Comments tab on it, tab or no tab. It is
+		// checked again when the permissions and feature flags land: they arrive after the page, and gate the Documents tab.
+		combineLatest([
+			this.route.queryParamMap.pipe(
 				map((params) => ({ tab: params.get('tab') as TaskViewTab, comment: params.get('comment')?.trim() || null })),
-				distinctUntilChanged((a, b) => a.tab === b.tab && a.comment === b.comment),
-				untilDestroyed(this)
-			)
-			.subscribe(({ tab, comment }) => {
+				distinctUntilChanged((a, b) => a.tab === b.tab && a.comment === b.comment)
+			),
+			this.store.userRolePermissions$,
+			this.store.featureOrganizations$,
+			this.store.featureTenant$,
+			this.store.featureToggles$
+		])
+			.pipe(untilDestroyed(this))
+			.subscribe(([{ tab, comment }]) => {
+				this.canSeeDocuments = this.hasDocumentsAccess();
 				this.highlightCommentId = comment;
-				this.openTab(TABS.includes(tab) ? tab : comment ? 'comments' : 'overview');
+				this.openTab(TABS.includes(tab) && this.canOpenTab(tab) ? tab : comment ? 'comments' : 'overview');
 			});
 		// The estimate is spelled out in the viewer's language.
 		this.translateService.onLangChange.pipe(untilDestroyed(this)).subscribe(() => this.show());
@@ -326,6 +347,9 @@ export class TaskViewPageComponent extends TranslationBaseComponent implements O
 		this.boardOpened = this.tab === 'board';
 		// Nor its comments, which read every page and look up each attached image.
 		this.commentsOpened = this.tab === 'comments';
+		// Nor its documents; the tab counts them again once opened.
+		this.documentsOpened = this.tab === 'documents';
+		this.documentCount = 0;
 		this.tracking = loading(null);
 		this.workers = [];
 		this.statuses = [];
@@ -416,6 +440,25 @@ export class TaskViewPageComponent extends TranslationBaseComponent implements O
 		}
 		if (tab === 'board') this.boardOpened = true;
 		if (tab === 'comments') this.commentsOpened = true;
+		if (tab === 'documents') this.documentsOpened = true;
+	}
+
+	/**
+	 * Whether the Documents tab is offered: the same gates as its panel — DOCS_READ and the
+	 * organization's Documents feature — so the tab never opens on an empty pane.
+	 */
+	private hasDocumentsAccess(): boolean {
+		return this.store.hasPermission(PermissionsEnum.DOCS_READ) && this.store.hasFeatureEnabled(FeatureEnum.FEATURE_DOCUMENTS);
+	}
+
+	/** Whether a tab named in the URL may open; the others fall back to the Overview. */
+	private canOpenTab(tab: TaskViewTab): boolean {
+		return tab !== 'documents' || this.canSeeDocuments;
+	}
+
+	/** The count the Documents tab reports after each load, upload or removal. */
+	onDocumentCount(count: number): void {
+		this.documentCount = count;
 	}
 
 	/** The count the Comments tab reports each time it reads its list, after a post or a delete among others. */
