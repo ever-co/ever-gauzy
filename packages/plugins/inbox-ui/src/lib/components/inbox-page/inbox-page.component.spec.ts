@@ -628,6 +628,22 @@ describe('InboxPageComponent', () => {
 			expect(component.actionError()).toBe('INBOX.BULK.FAILED');
 		});
 
+		it('lists rows as list items: the title is the native button that opens one, the checkbox a control beside it', () => {
+			const { component, find } = ready([read('a')]);
+			const row = find('item-a') as HTMLElement;
+			expect(row.getAttribute('role')).toBe('listitem');
+			expect(row.parentElement?.getAttribute('role')).toBe('list');
+			expect(row.querySelector('[role="button"]')).toBeNull();
+			const open = find('open-a') as HTMLButtonElement;
+			expect(open.tagName).toBe('BUTTON');
+			expect(open.contains(find('check-a'))).toBe(false);
+
+			open.click();
+			expect(component.selectedId()).toBe('a');
+			(find('check-a') as HTMLButtonElement).click();
+			expect(component.isChecked(component.items()[0])).toBe(true);
+		});
+
 		it('a bulk answer that comes after another tab was chosen leaves that tab and its selection alone', () => {
 			const { component } = ready([read('a'), read('b')]);
 			component.toggleAll();
