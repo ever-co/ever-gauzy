@@ -1597,6 +1597,51 @@ describe('TaskViewPageComponent', () => {
 			expect(overviewReads()).toBe(0);
 		});
 
+		it('reads the Overview again after a board move once it is open', async () => {
+			const page = create();
+			await settle();
+			await flush();
+			const statistics = statisticsService.getTasksStatistics.mock.calls.length;
+			const reads = overviewReads();
+
+			await page.onBoardTaskMoved();
+			await flush();
+
+			expect(statisticsService.getTasksStatistics.mock.calls.length).toBe(statistics + 1);
+			expect(overviewReads()).toBeGreaterThan(reads);
+		});
+
+		it('shows the refreshed estimate when the Overview opens while a refresh reads the task', async () => {
+			tasksService.getById.mockResolvedValueOnce(task({ estimate: 4 * 3600 }));
+			queryParams$.next(convertToParamMap({ tab: 'board' }));
+			const page = create();
+			await settle();
+			await flush();
+
+			// The refresh after a board move waits on the server; the estimate changed meanwhile.
+			let answerRefresh: (value: ITask) => void;
+			tasksService.getById.mockImplementationOnce(() => new Promise<ITask>((resolve) => (answerRefresh = resolve)));
+			// Each statistics read waits, so they can answer in any order.
+			const answers: ((rows: any[]) => void)[] = [];
+			statisticsService.getTasksStatistics.mockImplementation(
+				() => new Promise<any[]>((resolve) => answers.push(resolve))
+			);
+			const moved = page.onBoardTaskMoved();
+
+			page.selectTab('overview');
+			await flush();
+			answerRefresh(task({ estimate: 2 * 3600 }));
+			await moved;
+			await flush();
+
+			// The oldest answer lands last: none may bring back the estimate the task had before.
+			[...answers].reverse().forEach((answer) => answer([{ id: TASK_ID, duration: 3600 }]));
+			await flush();
+
+			expect(statisticsService.getTasksStatistics).toHaveBeenCalledTimes(1);
+			expect(page.tracking.value).toEqual(expect.objectContaining({ estimate: '2h 00m', remaining: '1h 00m' }));
+		});
+
 		it("keeps another task's Overview unopened when the page moves to it on the Board", async () => {
 			const page = create();
 			await settle();
