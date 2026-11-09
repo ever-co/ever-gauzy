@@ -163,6 +163,12 @@ export class TaskViewPageComponent extends TranslationBaseComponent implements O
 	];
 	tab: TaskViewTab = 'overview';
 	/**
+	 * The Overview loads when first opened for the task on screen, then stays mounted behind the other tabs: it reads
+	 * the time worked and who worked it, the hours per day, the month's time entries and the linked issues, which a page
+	 * opened on another tab — the Board, most often — has no use for.
+	 */
+	overviewOpened = false;
+	/**
 	 * The Board — the subtasks as the project board — loads when first opened, then stays mounted behind the
 	 * Overview: a move still saving when the user leaves it must still reach the Subtasks panel when it lands.
 	 */
@@ -336,6 +342,9 @@ export class TaskViewPageComponent extends TranslationBaseComponent implements O
 			if (!task?.id || (task.organizationId && task.organizationId !== organizationId)) {
 				throw { status: 404 };
 			}
+			// Another task, or organization, starts with the Overview unopened unless it is the tab on screen. Set here
+			// and not with the resets above: the first load starts before the URL has named the tab.
+			this.overviewOpened = this.tab === 'overview';
 			this.task = task;
 			this.show();
 			this.state = 'ready';
@@ -400,6 +409,11 @@ export class TaskViewPageComponent extends TranslationBaseComponent implements O
 
 	private openTab(tab: TaskViewTab): void {
 		this.tab = tab;
+		if (tab === 'overview' && !this.overviewOpened) {
+			this.overviewOpened = true;
+			// Opened once the task is on screen: its panels read now. Opened while it loads, the load reads them.
+			if (this.task && this.state === 'ready') this.loadOverview(this.task, this.loadSequence);
+		}
 		if (tab === 'board') this.boardOpened = true;
 		if (tab === 'comments') this.commentsOpened = true;
 	}
@@ -661,14 +675,23 @@ export class TaskViewPageComponent extends TranslationBaseComponent implements O
 
 	/* ── Reads ── */
 
-	/** Every panel reads on its own; a failure (most often a 403) blanks only its panel. */
+	/**
+	 * Every panel reads on its own; a failure (most often a 403) blanks only its panel. The Overview's read only once it
+	 * is open: a page on another tab reads them when the Overview is first opened.
+	 */
 	private loadPanels(task: ITask, sequence: number): void {
+		if (this.overviewOpened) this.loadOverview(task, sequence);
+		// The status menu's choices — in the header, and with the Board's filters — and the status a new subtask
+		// starts in: on every tab.
+		if (this.canEdit || this.canAddSubtask) void this.loadStatuses(task, sequence);
+	}
+
+	/** The Overview's panels: the time worked and who worked it, the hours per day, the time entries, the links. */
+	private loadOverview(task: ITask, sequence: number): void {
 		void this.loadTime(task, sequence);
 		void this.loadHours(task, sequence);
 		void this.loadEntries(task, sequence);
 		void this.loadLinks(task, sequence);
-		// The status menu's choices, and the status a new subtask starts in.
-		if (this.canEdit || this.canAddSubtask) void this.loadStatuses(task, sequence);
 	}
 
 	/**
