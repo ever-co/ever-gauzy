@@ -497,11 +497,17 @@ export function apiMessage(error: unknown): string | null {
 															>
 																<span class="row-title">{{ item.title }}</span>
 															</button>
+															<!--
+																The time and the due label sit above the title button's row-wide layer (for their
+																tooltips), so a click on them opens the row itself; the keyboard opens it by the button.
+															-->
 															<time
 																class="when"
 																[attr.datetime]="item.createdAt"
+																[attr.data-test]="'when-' + item.id"
 																[nbTooltip]="item.createdAt | date: 'medium'"
 																nbTooltipPlacement="top"
+																(click)="open(item)"
 																>{{ item.createdAt | date: listDate(item.createdAt) }}</time
 															>
 														</div>
@@ -533,6 +539,7 @@ export function apiMessage(error: unknown): string | null {
 																	[attr.data-test]="'due-' + item.id"
 																	[nbTooltip]="item.dueAt | date: 'medium'"
 																	nbTooltipPlacement="top"
+																	(click)="open(item)"
 																>
 																	<nb-icon icon="calendar-outline"></nb-icon>
 																	{{
