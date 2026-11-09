@@ -96,9 +96,16 @@ describe('ChatMessageService.remove', () => {
 /**
  * `read` of a whole conversation over repository doubles: each followed thread keeps, of its unread replies, only the
  * ones that live in the thread only (their notifications stay unread too, see `ChatNotifierService`).
- * `threadOnly` is what counting the thread-only replies of each root answers.
+ * `threadOnly` is what counting the thread-only replies of each root answers. The follow rows are kept in `rows`, and
+ * the counter write is a compare-and-set on them, as the conditional UPDATE is; `beforeWrite` runs before each write
+ * (a reply or another read landing in between).
  */
-function readOver(follows: Array<{ id: string; rootMessageId: string; unreadReplies: number; lastReadReplyAt: Date | null }>, threadOnly: Record<string, number>) {
+function readOver(
+	follows: Array<{ id: string; rootMessageId: string; unreadReplies: number; lastReadReplyAt: Date | null }>,
+	threadOnly: Record<string, number>,
+	beforeWrite: (rows: Map<string, { unreadReplies: number }>, attempt: number) => void = () => undefined
+) {
+	const rows = new Map(follows.map((follow) => [follow.id, { ...follow }]));
 	const counted: Array<{ root: unknown; since: unknown }> = [];
 	const replies = () => {
 		const state: { root?: unknown; since?: unknown } = {};
@@ -109,13 +116,21 @@ function readOver(follows: Array<{ id: string; rootMessageId: string; unreadRepl
 		};
 		return builder;
 	};
+	let writes = 0;
 	const repositories = {
 		ChatMessage: { findOne: jest.fn(async () => ({ id: 'm9' })), createQueryBuilder: jest.fn(replies) },
 		ChatMember: { update: jest.fn(async () => ({ affected: 1 })) },
 		ChatThreadFollow: {
-			find: jest.fn(async () => follows.filter((follow) => follow.unreadReplies > 0)),
-			decrement: jest.fn(async () => ({ affected: 1 })),
-			update: jest.fn(async () => ({ affected: 1 }))
+			find: jest.fn(async () => [...rows.values()].filter((row) => row.unreadReplies > 0).map((row) => ({ ...row }))),
+			findOne: jest.fn(async ({ where }: { where: { id: string } }) => ({ ...rows.get(where.id)! })),
+			update: jest.fn(async (criteria: { id: string; unreadReplies: number }, patch: { unreadReplies: number }) => {
+				beforeWrite(rows, writes++);
+				const row = rows.get(criteria.id);
+				if (!row || row.unreadReplies !== criteria.unreadReplies) return { affected: 0 };
+				row.unreadReplies = patch.unreadReplies;
+				return { affected: 1 };
+			}),
+			decrement: jest.fn()
 		}
 	};
 	const dataSource = {
@@ -131,7 +146,8 @@ function readOver(follows: Array<{ id: string; rootMessageId: string; unreadRepl
 	const notifier = { markConversationRead: jest.fn(async () => 0) };
 	const service = new ChatMessageService(dataSource, access, realtime, notifier as unknown as ChatNotifierService, {} as TaskService, {} as CommandBus);
 	Object.assign(service as unknown as Record<string, unknown>, { followIdsIn: jest.fn(async () => follows.map((follow) => follow.id)) });
-	return { service, repositories, notifier, counted };
+	const unreadOf = (id: string) => rows.get(id)?.unreadReplies;
+	return { service, repositories, notifier, counted, unreadOf };
 }
 
 describe('ChatMessageService.read (the whole conversation)', () => {
@@ -139,9 +155,9 @@ describe('ChatMessageService.read (the whole conversation)', () => {
 	const since = new Date('2026-11-01T00:00:00.000Z');
 
 	it('keeps the thread-only replies of a followed thread unread, and reads the ones also sent to the conversation', async () => {
-		// f1: 3 unread, 1 of them thread-only → 2 read. f2: 2 unread, both thread-only → untouched. f3: 1 unread, none
-		// thread-only → read.
-		const { service, repositories, notifier, counted } = readOver(
+		// f1: 3 unread, 1 of them thread-only → 1. f2: 2 unread, both thread-only → untouched. f3: 1 unread, none
+		// thread-only → 0.
+		const { service, repositories, notifier, counted, unreadOf } = readOver(
 			[
 				{ id: 'f1', rootMessageId: 'r1', unreadReplies: 3, lastReadReplyAt: since },
 				{ id: 'f2', rootMessageId: 'r2', unreadReplies: 2, lastReadReplyAt: null },
@@ -150,22 +166,48 @@ describe('ChatMessageService.read (the whole conversation)', () => {
 			{ r1: 1, r2: 2, r3: 0 }
 		);
 		await service.read(caller as never, 'c1');
-		const decrements = repositories.ChatThreadFollow.decrement.mock.calls as unknown as Array<[Record<string, unknown>, string, number]>;
-		expect(decrements.map(([criteria, column, by]) => [criteria['id'], column, by])).toEqual([
-			['f1', 'unreadReplies', 2],
-			['f3', 'unreadReplies', 1]
+		expect([unreadOf('f1'), unreadOf('f2'), unreadOf('f3')]).toEqual([1, 2, 0]);
+		// A compare-and-set on the value read, never a relative decrement, and the read mark is not written.
+		const writes = repositories.ChatThreadFollow.update.mock.calls as unknown as Array<[Record<string, unknown>, Record<string, unknown>]>;
+		expect(writes.map(([criteria, patch]) => [criteria['id'], criteria['unreadReplies'], patch])).toEqual([
+			['f1', 3, { unreadReplies: 1 }],
+			['f3', 1, { unreadReplies: 0 }]
 		]);
-		// Never below zero: the decrement only applies while the counter still holds what it subtracts.
-		expect(decrements[0][0]['unreadReplies']).toEqual(expect.objectContaining({ _type: 'moreThanOrEqual', _value: 2 }));
+		expect(repositories.ChatThreadFollow.decrement).not.toHaveBeenCalled();
 		// Counted from each follow's read mark, which the conversation read does not move.
 		expect(counted).toEqual([
 			{ root: 'r1', since },
 			{ root: 'r2', since: undefined },
 			{ root: 'r3', since }
 		]);
-		expect(repositories.ChatThreadFollow.update).not.toHaveBeenCalled();
 		// The notifications of the same replies: those of the conversation's timeline are read, thread-only ones stay.
 		expect(notifier.markConversationRead).toHaveBeenCalledWith('c1', { tenantId: 'ten', employeeId: 'e1' }, null);
+	});
+
+	it('does not subtract twice when another read of the same follow got there first (a second tab)', async () => {
+		// Both reads saw 3 unread with 2 thread-only: the other one wrote 2 first; this one's write misses, it reads the
+		// follow again (2) and has nothing left to subtract.
+		const { service, repositories, unreadOf } = readOver([{ id: 'f1', rootMessageId: 'r1', unreadReplies: 3, lastReadReplyAt: since }], { r1: 2 }, (rows, attempt) => {
+			if (attempt === 0) rows.get('f1')!.unreadReplies = 2;
+		});
+		await service.read(caller as never, 'c1');
+		expect(unreadOf('f1')).toBe(2);
+		expect(repositories.ChatThreadFollow.update).toHaveBeenCalledTimes(1);
+		expect(repositories.ChatThreadFollow.findOne).toHaveBeenCalledTimes(1);
+	});
+
+	it('keeps a reply counted meanwhile: the write misses and the follow is counted again', async () => {
+		// 2 unread, 0 thread-only; a thread-only reply lands before the write (3 unread, 1 thread-only on the recount).
+		const threadOnly = { r1: 0 };
+		const { service, repositories, unreadOf } = readOver([{ id: 'f1', rootMessageId: 'r1', unreadReplies: 2, lastReadReplyAt: since }], threadOnly, (rows, attempt) => {
+			if (attempt === 0) {
+				rows.get('f1')!.unreadReplies = 3;
+				threadOnly.r1 = 1;
+			}
+		});
+		await service.read(caller as never, 'c1');
+		expect(unreadOf('f1')).toBe(1);
+		expect(repositories.ChatThreadFollow.update).toHaveBeenCalledTimes(2);
 	});
 
 	it('leaves the followed threads alone on a partial read, and hands the notifier the message read up to', async () => {
@@ -175,16 +217,41 @@ describe('ChatMessageService.read (the whole conversation)', () => {
 		Object.assign(service as unknown as Record<string, unknown>, { timelinePosition: jest.fn(async () => 4), countMentions: jest.fn(async () => 0) });
 		await service.read(caller as never, 'c1', 'm5');
 		expect(repositories.ChatThreadFollow.find).not.toHaveBeenCalled();
-		expect(repositories.ChatThreadFollow.decrement).not.toHaveBeenCalled();
 		expect(repositories.ChatThreadFollow.update).not.toHaveBeenCalled();
 		expect(notifier.markConversationRead).toHaveBeenCalledWith('c1', { tenantId: 'ten', employeeId: 'e1' }, anchor);
 	});
 
 	it('never raises a counter when the thread holds more thread-only replies than the follow counts', async () => {
-		const { service, repositories } = readOver([{ id: 'f1', rootMessageId: 'r1', unreadReplies: 1, lastReadReplyAt: null }], { r1: 4 });
+		const { service, repositories, unreadOf } = readOver([{ id: 'f1', rootMessageId: 'r1', unreadReplies: 1, lastReadReplyAt: null }], { r1: 4 });
 		await service.read(caller as never, 'c1');
-		expect(repositories.ChatThreadFollow.decrement).not.toHaveBeenCalled();
+		expect(unreadOf('f1')).toBe(1);
 		expect(repositories.ChatThreadFollow.update).not.toHaveBeenCalled();
+	});
+});
+
+describe('ChatMessageService follow (a follow that starts unread)', () => {
+	function followOver() {
+		const save = jest.fn(async (row: unknown) => row);
+		const repository = { findOne: jest.fn(async () => null), create: jest.fn((row: unknown) => row), save, update: jest.fn() };
+		const manager = { getRepository: () => repository };
+		const service = new ChatMessageService({} as DataSource, {} as ChatAccessService, {} as ChatRealtime, {} as ChatNotifierService, {} as TaskService, {} as CommandBus);
+		const follow = (root: Record<string, unknown>, read: boolean) =>
+			(service as unknown as { follow: (...args: unknown[]) => Promise<void> }).follow(manager, root, { tenantId: 'ten', organizationId: 'org', employeeId: 'e2', userId: 'u2' }, read);
+		return { follow, save };
+	}
+
+	it("starts after the thread's previous reply, so a conversation read never counts older replies on it", async () => {
+		const { follow, save } = followOver();
+		const previousReply = new Date('2026-11-02T10:00:00.000Z');
+		await follow({ id: 'r1', createdAt: new Date('2026-11-01T00:00:00.000Z'), lastReplyAt: previousReply }, false);
+		expect(save).toHaveBeenCalledWith(expect.objectContaining({ unreadReplies: 0, lastReadReplyAt: previousReply }));
+	});
+
+	it('starts at the root when the thread had no reply yet', async () => {
+		const { follow, save } = followOver();
+		const rootAt = new Date('2026-11-01T00:00:00.000Z');
+		await follow({ id: 'r1', createdAt: rootAt, lastReplyAt: null }, false);
+		expect(save).toHaveBeenCalledWith(expect.objectContaining({ lastReadReplyAt: rootAt }));
 	});
 });
 

@@ -966,42 +966,50 @@ export class ChatMessageService {
 	/**
 	 * A full read of a conversation, for the threads the caller follows in it: of a follow's unread replies, only the
 	 * ones that live in the thread only (not also sent to the conversation) stay unread — the others were just read in
-	 * the conversation. Thread-only replies are counted from the follow's read mark (`lastReadReplyAt`), which does not
-	 * move (the thread itself was not read). The counter only goes down, through a relative decrement that never takes
-	 * it below zero, so a reply arriving meanwhile still counts and two concurrent reads do not both subtract.
+	 * the conversation. Thread-only replies are counted from the follow's read mark (`lastReadReplyAt`, which a new
+	 * follow starts with, see `follow`), and the mark does not move (the thread itself was not read). The counter only
+	 * goes down, by a compare-and-set on the value read: a reply counted meanwhile, or another read of the same follow
+	 * (a second tab) that got there first, makes the write miss, and the follow is read and counted again — so two reads
+	 * never both subtract, and a reply arriving meanwhile still counts.
 	 */
 	private async readFollowedRepliesIn(caller: IChatCaller & { employeeId: ID }, conversationId: ID): Promise<void> {
 		const followIds = await this.followIdsIn(caller, conversationId);
 		if (!followIds.length) return;
 		const follows = this.dataSource.getRepository(ChatThreadFollow);
-		const unreadFollows = await follows.find({
-			select: { id: true, rootMessageId: true, unreadReplies: true, lastReadReplyAt: true },
-			where: { id: In(followIds), tenantId: caller.tenantId, unreadReplies: MoreThan(0) }
-		});
-		for (const follow of unreadFollows) {
-			const unread = follow.unreadReplies ?? 0;
-			const threadOnly = this.dataSource
-				.getRepository(ChatMessage)
-				.createQueryBuilder('reply')
-				.where('reply.threadRootId = :rootMessageId', { rootMessageId: follow.rootMessageId })
-				.andWhere('reply.tenantId = :tenantId', { tenantId: caller.tenantId })
-				.andWhere(
-					new Brackets((place) => {
-						place.where('reply.alsoInConversation IS NULL').orWhere('reply.alsoInConversation = :alsoInConversation', { alsoInConversation: false });
-					})
-				)
-				.andWhere(
-					new Brackets((by) => {
-						by.where('reply.authorEmployeeId IS NULL').orWhere('reply.authorEmployeeId != :employeeId', { employeeId: caller.employeeId });
-					})
-				);
-			if (follow.lastReadReplyAt) threadOnly.andWhere('reply.createdAt > :since', { since: follow.lastReadReplyAt });
-			const stillUnread = Math.min(unread, await threadOnly.getCount());
-			if (stillUnread < unread) {
-				const read = unread - stillUnread;
-				await follows.decrement({ id: follow.id as ID, unreadReplies: MoreThanOrEqual(read) }, 'unreadReplies', read);
+		const select = { id: true, rootMessageId: true, unreadReplies: true, lastReadReplyAt: true } as const;
+		const unreadFollows = await follows.find({ select, where: { id: In(followIds), tenantId: caller.tenantId, unreadReplies: MoreThan(0) } });
+		for (const unreadFollow of unreadFollows) {
+			let follow: ChatThreadFollow | null = unreadFollow;
+			for (let attempt = 0; attempt < 3 && follow && (follow.unreadReplies ?? 0) > 0; attempt += 1) {
+				const unread = follow.unreadReplies ?? 0;
+				const stillUnread = Math.min(unread, await this.threadOnlyRepliesSince(caller, follow));
+				if (stillUnread >= unread) break;
+				const written = await follows.update({ id: follow.id as ID, tenantId: caller.tenantId, unreadReplies: unread }, { unreadReplies: stillUnread });
+				if ((written.affected ?? 0) > 0) break;
+				follow = await follows.findOne({ select, where: { id: follow.id as ID, tenantId: caller.tenantId } });
 			}
 		}
+	}
+
+	/** The replies to a followed thread that live in the thread only, by others, since the follow's read mark. */
+	private async threadOnlyRepliesSince(caller: IChatCaller & { employeeId: ID }, follow: Pick<ChatThreadFollow, 'rootMessageId' | 'lastReadReplyAt'>): Promise<number> {
+		const replies = this.dataSource
+			.getRepository(ChatMessage)
+			.createQueryBuilder('reply')
+			.where('reply.threadRootId = :rootMessageId', { rootMessageId: follow.rootMessageId })
+			.andWhere('reply.tenantId = :tenantId', { tenantId: caller.tenantId })
+			.andWhere(
+				new Brackets((place) => {
+					place.where('reply.alsoInConversation IS NULL').orWhere('reply.alsoInConversation = :alsoInConversation', { alsoInConversation: false });
+				})
+			)
+			.andWhere(
+				new Brackets((by) => {
+					by.where('reply.authorEmployeeId IS NULL').orWhere('reply.authorEmployeeId != :employeeId', { employeeId: caller.employeeId });
+				})
+			);
+		if (follow.lastReadReplyAt) replies.andWhere('reply.createdAt > :since', { since: follow.lastReadReplyAt });
+		return replies.getCount();
 	}
 
 	private async followIdsIn(caller: IChatCaller & { employeeId: ID }, conversationId: ID): Promise<ID[]> {
@@ -1168,7 +1176,10 @@ export class ChatMessageService {
 		return count;
 	}
 
-	/** Follows a thread for an employee (upsert); a new follow starts with nothing unread when `read` is true. */
+	/**
+	 * Follows a thread for an employee (upsert); a new follow starts with nothing unread when `read` is true, and
+	 * otherwise counts the replies from this one on (its read mark is the thread's previous reply, or the root).
+	 */
 	private async follow(
 		manager: EntityManager,
 		root: ChatMessage,
@@ -1187,7 +1198,9 @@ export class ChatMessageService {
 				employeeId: who.employeeId,
 				userId: who.userId,
 				unreadReplies: 0,
-				lastReadReplyAt: read ? new Date() : undefined,
+				// A follow that starts unread (the root author's, when someone replies) starts after the replies before this
+				// one: those were never counted on it, so reading the conversation must not count them as still unread.
+				lastReadReplyAt: read ? new Date() : (root.lastReplyAt ?? root.createdAt ?? undefined),
 				tenantId: who.tenantId,
 				organizationId: root.organizationId ?? who.organizationId ?? undefined
 			})
