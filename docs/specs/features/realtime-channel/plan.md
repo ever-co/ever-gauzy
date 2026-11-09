@@ -124,10 +124,26 @@ None. Outbox dispatch is the existing worker's. No job prunes `event_outbox` tod
 - `REALTIME_SUBSCRIBE` on every route and the subscription field; `FEATURE_GRAPHQL` guard on the field.
 - Addressed payloads carry `recipientUserIds`; the topic stream admits them only for a recipient
   (`tenantScopedTopicStream` default `recipientsOf`); catch-up applies the same rule in code after the
-  bounded read (`admitsRow` in `realtime-catch-up.service.ts`). Both decide on the recipients **stored on
-  the row at write time**: a member removed from a chat conversation can still replay the ids of the
-  events addressed to them while they were a member (`conversationId`, `messageId`; the content stays
-  behind the chat API's membership check). There is no current-membership recheck yet (§15.4).
+  bounded read (`admitsRow` in `realtime-catch-up.service.ts`). The recipients are the ones **stored on
+  the row at write time**, so both deliveries then put every event to the **audience checks**
+  (`RealtimeAudience`, `realtime-audience.ts`), in the subscriber's request context, when the event is
+  handed over: the live stream from its `read` step, the catch-up once per page (one call per check per
+  batch, refused rows walked past like rows addressed to others; a check that cannot answer fails the
+  catch-up instead of skipping rows nobody decided, and drops the live event).
+  - `document.updated`: `DOCS_READ` plus the Docs visibility scope (organization, creator, team space,
+    shares, `DOCS_MANAGE`) through `DocumentService.filterReadableDocumentIds` (trashed pages included:
+    a `deleted` fact names one) — one query per organization per batch.
+  - `task.*`: the task read rule — `ALL_ORG_VIEW` or `ORG_TASK_VIEW` inside the caller's organization
+    boundary (`isWithinOrganizationBoundary`). Core has no per-task visibility: `Task.public` is read by no
+    task query, and the task reads are scoped by tenant, organization boundary and those permissions only.
+  - `comment.*`: the rule of the record whose comments changed — a page's or a task's as above, a record
+    with a comment-access policy (a contact's notes) through `CommentParentAccessService`, any other record
+    the comment API's own rule (tenant and organization).
+  - `chat_*`: current conversation membership, registered by the chat plugin through
+    `SubscriptionCatalogue.restrictAudience` (`ChatMembershipAudience`): an active `chat_member` row of the
+    subscriber, else nothing — except the `chat_conversation.changed` `removed` notice, which still
+    reaches the member it removed. One query per batch, and the live lookups of one event-loop turn (every
+    connection a fact fans out to) are answered by one query per tenant.
 - Typing input validated (UUIDs, ≤ 50 recipients) and rate-limited; no message text ever travels.
 - Presence status is an enum; `away`/`idle` map to `isIdle = true` for persistence.
 
@@ -190,19 +206,20 @@ location; none of them changes the flag-off default.
    disconnect and no 5 s coalescing (spec FR-7, §4 Performance). Follow-up: keep presence per
    connection (with a TTL) in the pub/sub engine and publish the merged state (active wins) only when
    it changes.
-3. **Document, comment and task hints reach the whole organization.** `documentHint`, `commentHint` and
-   `taskHint` in `realtime-hints.service.ts` carry no `recipientUserIds`, so `document.updated`, `comment.*`
-   (on a page, a private task or any other record) and `task.*` are streamed and replayed to every member,
-   reader or not: ids and the actor only, never content (spec FR-4). Follow-up (T21): decide the audience
-   from the parent record's read access, for live delivery and catch-up alike: documents through the docs
-   plugin's `DocumentAccessService` (visibility, team spaces, shares); tasks and the comments on them
-   through the task read rules (private tasks, project membership); any other parent type the same way,
-   and no hint at all for a parent type without a read rule.
-4. **Replay trusts the recipients stored at write time.** `admitsRow` (catch-up) and
-   `tenantScopedTopicStream` (live) compare the caller with the row's `recipientUserIds`; neither
-   rechecks current chat membership, so a removed member can still replay the ids of events addressed
-   to them before the removal (spec §2.2, FR-4). Follow-up: a membership predicate that the chat plugin
-   registers with the catch-up and the live stream for the `chat_*` names.
+3. ~~**Document, comment and task hints reach the whole organization.**~~ Resolved (T21): the hints stay
+   organization-wide on the outbox, and their audience is decided at delivery — live and in the catch-up —
+   by the read rule of the record they name (§9: Docs visibility scope, the task read rule, the parent
+   record's rule for a comment). Chosen over recipients computed at write time: an organization page has
+   as many readers as the organization has members, and a page made private or a share revoked after the
+   write is honoured at replay. What remains: the comments of a record type without a read rule of its own
+   follow the comment API's rule (tenant and organization), as the comment API itself does; the subscriber's
+   permissions are the ones of the credential the subscription opened with (the connection's session closes
+   the socket when they change).
+4. ~~**Replay trusts the recipients stored at write time.**~~ Resolved (T22): the chat plugin registers a
+   current-membership check for every `chat_*` name (`SubscriptionCatalogue.restrictAudience`), and both
+   deliveries apply it (§9): a member who left or was removed no longer receives nor replays the
+   conversation's events, the notice of their own removal excepted. The kernel's `Subscription.events`
+   (outbox viewers, `EVENT_OUTBOX_VIEW`) does not apply audience checks: its holders read the outbox itself.
 5. **No retention job; the replay window is whatever is retained.** Nothing prunes `event_outbox`, so
    FR-3's floor (the newest 1,000 events per organization or 24 h, whichever is larger) holds by
    default. The first retention job must keep both bounds and test them; `resync` is answered whenever

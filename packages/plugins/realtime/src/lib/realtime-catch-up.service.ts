@@ -2,8 +2,10 @@ import { Injectable, Type } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
 import { IRealtimeCatchUp, IRealtimeCatchUpQuery, IRealtimeEventEnvelope } from '@gauzy/contracts';
 import { EventOutbox, EventOutboxService, RequestContext, SubscriptionCatalogue } from '@gauzy/core';
+import type { SubscriptionAudienceEvent } from '@gauzy/core';
 import { REALTIME_CATCH_UP_DEFAULT, REALTIME_CATCH_UP_MAX } from './realtime.constants';
 import { collaborationReplayNames, withoutRecipients } from './graphql/realtime-envelope';
+import { RealtimeAudience } from './realtime-audience';
 
 /** The members of an outbox row the catch-up reads. */
 export type CatchUpRow = Pick<EventOutbox, 'eventId' | 'eventName' | 'aggregateType' | 'aggregateId' | 'createdAt' | 'sequence' | 'payload'>;
@@ -37,6 +39,20 @@ export function admitsRow(row: Pick<CatchUpRow, 'payload'>, userId: string | nul
 	return recipients.map(String).includes(String(userId));
 }
 
+/** A row as the audience checks read it (see {@link RealtimeAudience}). */
+export function audienceEventOfRow(
+	row: Pick<CatchUpRow, 'eventName' | 'aggregateType' | 'aggregateId' | 'payload'>
+): SubscriptionAudienceEvent {
+	const payload = row.payload;
+	const isObject = payload !== null && typeof payload === 'object' && !Array.isArray(payload);
+	return {
+		name: String(row.eventName),
+		aggregateType: String(row.aggregateType ?? ''),
+		aggregateId: String(row.aggregateId ?? ''),
+		data: isObject ? (payload as Record<string, unknown>) : {}
+	};
+}
+
 /**
  * The order a catch-up cursor walks: time, then event id — a total order, and the one the outbox read uses, so a
  * bounded read and a page cut a same-millisecond group at the same place.
@@ -61,13 +77,16 @@ export function afterCursor(row: Pick<CatchUpRow, 'createdAt' | 'eventId'>, afte
  * @param query The client's cursor and limit.
  * @param state Whether the read may have left rows behind (`truncated`) and whether the cursor predates the
  * retention watermark (`resync`).
+ * @param refused The event ids the audience checks refused this caller ({@link RealtimeAudience}): skipped like a
+ * row addressed to someone else.
  * @returns The answer.
  */
 export function selectCatchUp(
 	rows: readonly CatchUpRow[],
 	userId: string | null,
 	query: IRealtimeCatchUpQuery,
-	state: { truncated: boolean; resync: boolean }
+	state: { truncated: boolean; resync: boolean },
+	refused: ReadonlySet<string> = new Set<string>()
 ): IRealtimeCatchUp {
 	const limit = Math.min(Math.max(Math.trunc(query.limit ?? REALTIME_CATCH_UP_DEFAULT), 1), REALTIME_CATCH_UP_MAX);
 	const after = typeof query.after === 'number' && Number.isFinite(query.after) ? query.after : null;
@@ -80,7 +99,7 @@ export function selectCatchUp(
 
 	// Every row after the cursor the read examined, in cursor order; then the ones this caller may receive.
 	const examined = rows.filter((row) => afterCursor(row, after, afterId)).sort(compareRows);
-	const visible = examined.filter((row) => admitsRow(row, userId));
+	const visible = examined.filter((row) => admitsRow(row, userId) && !refused.has(String(row.eventId)));
 	const page = visible.slice(0, limit);
 	const full = page.length === limit;
 	// The position to continue from: the last answered row when the page is full (visible rows may follow it);
@@ -112,16 +131,21 @@ export function selectCatchUp(
  *
  * The outbox is the replay store. The rows are read through the outbox service's bounded, caller-scoped read
  * (tenant, organization or tenant-wide; the collaboration event names; `createdAt` from the cursor time; ordered
- * by `createdAt` then `eventId`, the cursor's own order), then selected in code: the recipient rule, the exact
- * cursor (`after` + `afterId`) and the page. The answered cursor is the position walked to — the last row
- * examined when the page is not full, which may be a row addressed to someone else. `resync` is answered
+ * by `createdAt` then `eventId`, the cursor's own order), then selected in code: the recipient rule, the audience
+ * rule (the caller's read access to the record a row names, and current chat membership — {@link RealtimeAudience},
+ * one check per batch), the exact cursor (`after` + `afterId`) and the page. The answered cursor is the position
+ * walked to — the last row examined when the page is not full, which may be a row addressed to someone else or one
+ * the audience rule refused. `resync` is answered
  * when the cursor predates the oldest row the caller's scope still retains — the retention watermark this
  * installation can state — or when nothing is retained at all: the client then refetches through the read APIs
  * rather than trusting a stream that may have lost rows.
  */
 @Injectable()
 export class RealtimeCatchUpService {
-	constructor(private readonly moduleRef: ModuleRef) {}
+	constructor(
+		private readonly moduleRef: ModuleRef,
+		private readonly audience: RealtimeAudience
+	) {}
 
 	async catchUp(query: IRealtimeCatchUpQuery): Promise<IRealtimeCatchUp> {
 		const outbox = this.find(EventOutboxService);
@@ -144,7 +168,42 @@ export class RealtimeCatchUpService {
 		// The durable names of the collaboration families, the chat and inbox ones included when those plugins declared them.
 		const eventNames = collaborationReplayNames(this.find(SubscriptionCatalogue)?.names() ?? []);
 		const rows = await outbox.listOutboxRowsSince({ eventNames, since: new Date(after), limit: read });
-		return selectCatchUp(rows, userId ? String(userId) : null, query, { truncated: rows.length >= read, resync });
+		const caller = userId ? String(userId) : null;
+		const afterId = typeof query.afterId === 'string' && query.afterId ? query.afterId : null;
+		const refused = await this.refusedRows(rows, caller, after, afterId);
+		return selectCatchUp(rows, caller, query, { truncated: rows.length >= read, resync }, refused);
+	}
+
+	/**
+	 * The rows after the cursor, addressed to the caller or to everyone, that the audience checks refuse the caller,
+	 * by event id. The rows are decided together, one check per batch. A check that cannot answer fails the catch-up
+	 * (the client asks again) rather than letting the cursor walk past rows nobody decided.
+	 */
+	private async refusedRows(
+		rows: readonly CatchUpRow[],
+		userId: string | null,
+		after: number,
+		afterId: string | null
+	): Promise<Set<string>> {
+		const candidates = rows.filter((row) => afterCursor(row, after, afterId) && admitsRow(row, userId));
+		const refused = new Set<string>();
+		if (!candidates.length) {
+			return refused;
+		}
+		const tenantId = RequestContext.currentTenantId();
+		if (!tenantId) {
+			// The outbox read is scoped by the caller's tenant; without one nothing above was read for anybody.
+			return new Set(candidates.map((row) => String(row.eventId)));
+		}
+		const verdicts = await this.audience.admitted(candidates.map(audienceEventOfRow), {
+			tenantId: String(tenantId),
+			organizationId: RequestContext.currentOrganizationId() ?? null,
+			userId
+		});
+		candidates.forEach((row, index) => {
+			if (!verdicts[index]) refused.add(String(row.eventId));
+		});
+		return refused;
 	}
 
 	private find<T>(token: Type<T>): T | undefined {

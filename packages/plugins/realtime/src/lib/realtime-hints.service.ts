@@ -34,7 +34,10 @@ export interface IRealtimeHintInput {
 	hint: IRealtimeChangeHint;
 }
 
-/** The hint a task event becomes. */
+/**
+ * The hint a task event becomes: organization-wide on the outbox; who receives it is decided at delivery by the task
+ * read rule (`RealtimeAudience`).
+ */
 export function taskHint(
 	task: { id?: ID; tenantId?: ID; organizationId?: ID | null; projectId?: ID | null } | null | undefined,
 	action: RealtimeChangeAction,
@@ -60,7 +63,10 @@ export function taskHint(
 	};
 }
 
-/** The hint a comment event becomes: addressed to nobody, it names the record whose comments changed. */
+/**
+ * The hint a comment event becomes: addressed to nobody, it names the record whose comments changed; who receives
+ * it is decided at delivery by that record's read rule (`RealtimeAudience`).
+ */
 export function commentHint(event: Pick<CommentEvent, 'type' | 'comment' | 'actorUserId'>): IRealtimeHintInput | null {
 	const comment = event.comment;
 	if (!comment?.id || !comment.tenantId || !comment.organizationId) return null;
@@ -134,7 +140,10 @@ export function notificationHint(
 	};
 }
 
-/** The hint a document event becomes (always `document.updated`; the action says what happened). */
+/**
+ * The hint a document event becomes (always `document.updated`; the action says what happened). Who receives it is
+ * decided at delivery by the Docs read rule — visibility, team space, shares (`RealtimeAudience`).
+ */
 export function documentHint(
 	document: { id?: ID; tenantId?: ID; organizationId?: ID | null } | null | undefined,
 	action: RealtimeChangeAction,
@@ -171,7 +180,8 @@ export function coalesceKey(input: Pick<IRealtimeHintInput, 'name' | 'aggregateI
  * `inbox_item.created`: a lost hint costs a subscriber the instant update, never the write. Repeated
  * `*.updated` hints of one aggregate within {@link REALTIME_HINT_COALESCE_MS} are folded: the first at once,
  * the latest of the rest when the window closes. A fact without its organization produces no organization-wide
- * hint, so a partial save result never reaches the whole tenant.
+ * hint, so a partial save result never reaches the whole tenant. The task, comment and document hints name no
+ * recipients: their readers are decided when the hint is delivered, by `RealtimeAudience`.
  *
  * Other plugins file their own hints through {@link appendHint} (the chat plugin, for its messages) so the
  * addressing and scoping rules live in one place.

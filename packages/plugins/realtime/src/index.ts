@@ -3,6 +3,7 @@ export * from './lib/realtime.plugin';
 export * from './lib/realtime.module';
 export * from './lib/realtime.constants';
 export * from './lib/realtime-catalogue';
+export * from './lib/realtime-audience';
 export * from './lib/realtime-hints.service';
 export * from './lib/realtime-signals.service';
 export * from './lib/realtime-catch-up.service';

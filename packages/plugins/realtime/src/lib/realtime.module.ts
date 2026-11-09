@@ -3,6 +3,7 @@ import { CqrsModule } from '@nestjs/cqrs';
 import { EmployeeModule, GraphqlSubscriptionModule, RolePermissionModule } from '@gauzy/core';
 import { REALTIME_EVENT_HANDLERS } from './handlers/realtime-event.handlers';
 import { RealtimeResolver } from './graphql/realtime.resolver';
+import { RealtimeAudience } from './realtime-audience';
 import { RealtimeCatalogue } from './realtime-catalogue';
 import { RealtimeCatchUpService } from './realtime-catch-up.service';
 import { RealtimeHintsService } from './realtime-hints.service';
@@ -14,7 +15,8 @@ import { RealtimeController } from './realtime.controller';
  *
  * Owns no table. It listens to the platform's in-process facts and files change hints on the event outbox,
  * publishes presence and typing signals on the subscription pub/sub, serves the catch-up and status routes,
- * and resolves `Subscription.collaborationEvents`.
+ * and resolves `Subscription.collaborationEvents`. Both deliveries put every event to the audience checks
+ * (`RealtimeAudience`) in the subscriber's request context before handing it over.
  */
 @Module({
 	imports: [
@@ -30,6 +32,7 @@ import { RealtimeController } from './realtime.controller';
 	controllers: [RealtimeController],
 	providers: [
 		RealtimeCatalogue,
+		RealtimeAudience,
 		RealtimeHintsService,
 		RealtimeSignalsService,
 		RealtimeCatchUpService,

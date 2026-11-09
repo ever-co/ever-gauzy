@@ -4,6 +4,7 @@ import { DataSource } from 'typeorm';
 import { CHAT_EVENT_NAMES, CHAT_STREAMED_EVENTS, ChatEventName, IChatEvent, ID, JsonData } from '@gauzy/contracts';
 import { declareStreamedEvents, EventOutboxService, GraphqlSubscriptionConsumer, SubscriptionCatalogue } from '@gauzy/core';
 import { CHAT_AGGREGATES } from '../chat.constants';
+import { ChatMembershipAudience } from './chat-realtime-audience';
 
 /** What one chat fact needs to reach the outbox. */
 export interface IChatRealtimeFact {
@@ -40,6 +41,9 @@ export class ChatRealtime implements OnModuleInit {
 		const catalogue = this.find(SubscriptionCatalogue);
 		if (!catalogue) return;
 		try {
+			// Delivery (live and replayed) rechecks current membership; registered first, so the events are never
+			// declared without it.
+			catalogue.restrictAudience(new ChatMembershipAudience(this.dataSource).check, ...CHAT_STREAMED_EVENTS);
 			declareStreamedEvents(catalogue, this.find(GraphqlSubscriptionConsumer), ...CHAT_STREAMED_EVENTS);
 		} catch (error) {
 			this.logger.warn(`The chat events could not be declared for subscriptions: ${(error as Error)?.message}`);
