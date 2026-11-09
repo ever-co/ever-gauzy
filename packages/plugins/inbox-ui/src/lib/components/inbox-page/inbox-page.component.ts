@@ -597,7 +597,25 @@ export function apiMessage(error: unknown): string | null {
 										></ngx-inbox-item-detail>
 									} @else {
 										<div class="state" data-test="no-selection">
-											<span class="state-icon"><nb-icon icon="message-square-outline"></nb-icon></span>
+											<!-- The message icon drawn here, so its parts move: the bubble pops in, its lines are written. -->
+											<span class="state-icon waiting" aria-hidden="true">
+												<svg
+													class="writing"
+													viewBox="0 0 24 24"
+													fill="none"
+													stroke="currentColor"
+													stroke-width="1.6"
+													stroke-linecap="round"
+													stroke-linejoin="round"
+												>
+													<path
+														class="bubble"
+														d="M18 4a3 3 0 0 1 3 3v8a3 3 0 0 1 -3 3h-5l-5 3v-3h-2a3 3 0 0 1 -3 -3v-8a3 3 0 0 1 3 -3h12z"
+													/>
+													<path class="line line-1" pathLength="1" d="M8 9h8" />
+													<path class="line line-2" pathLength="1" d="M8 13h5" />
+												</svg>
+											</span>
 											<strong>{{ 'INBOX.SELECT' | translate }}</strong>
 											<span class="state-hint">{{ 'INBOX.SELECT_HINT' | translate }}</span>
 										</div>
@@ -1404,6 +1422,96 @@ export function apiMessage(error: unknown): string | null {
 				background: var(--background-basic-color-2, #f7f9fc);
 				color: var(--text-hint-color, #8f9bb3);
 				font-size: 1.6rem;
+			}
+			/*
+			 * "Select an item": the icon's own parts move, on one 4s loop. The bubble pops in from its tail, the first
+			 * line is written, then the second; both stay a moment, fade, and the bubble breathes before the next one.
+			 */
+			.state-icon.waiting {
+				width: 4.25rem;
+				height: 4.25rem;
+			}
+			.writing {
+				width: 2rem;
+				height: 2rem;
+				overflow: visible;
+			}
+			.writing .bubble {
+				transform-box: fill-box;
+				transform-origin: 20% 100%;
+				animation: bubble-pop 4s ease-in-out infinite;
+			}
+			.writing .line {
+				stroke-dasharray: 1;
+				stroke-dashoffset: 1;
+			}
+			.writing .line-1 {
+				animation: write-line-1 4s ease-in-out infinite;
+			}
+			.writing .line-2 {
+				animation: write-line-2 4s ease-in-out infinite;
+			}
+			@keyframes bubble-pop {
+				0% {
+					transform: scale(0.86);
+				}
+				10% {
+					transform: scale(1.04);
+				}
+				16%,
+				84% {
+					transform: scale(1);
+				}
+				92% {
+					transform: scale(0.96);
+				}
+				100% {
+					transform: scale(0.86);
+				}
+			}
+			@keyframes write-line-1 {
+				0%,
+				14% {
+					stroke-dashoffset: 1;
+					opacity: 1;
+				}
+				32%,
+				76% {
+					stroke-dashoffset: 0;
+					opacity: 1;
+				}
+				88%,
+				100% {
+					stroke-dashoffset: 0;
+					opacity: 0;
+				}
+			}
+			@keyframes write-line-2 {
+				0%,
+				34% {
+					stroke-dashoffset: 1;
+					opacity: 1;
+				}
+				48%,
+				76% {
+					stroke-dashoffset: 0;
+					opacity: 1;
+				}
+				88%,
+				100% {
+					stroke-dashoffset: 0;
+					opacity: 0;
+				}
+			}
+			/* Reduced motion: the icon as it is, still and whole. */
+			@media (prefers-reduced-motion: reduce) {
+				.writing .bubble,
+				.writing .line {
+					animation: none;
+				}
+				.writing .line {
+					stroke-dashoffset: 0;
+				}
 			}
 			.state-hint {
 				max-width: 22rem;
