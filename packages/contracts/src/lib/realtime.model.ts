@@ -123,16 +123,32 @@ export enum RealtimePresenceStatus {
 
 /** Body of `POST /api/realtime/presence`. */
 export interface IRealtimePresenceInput {
+	/** What this connection reports; `offline` ends the connection (a closing tab). */
 	status: RealtimePresenceStatus;
+	/**
+	 * The client's own id for this connection (one per tab or device, at most 64 letters, digits, `-` or `_`). Each
+	 * connection reports for itself: the employee is as present as their most present connection (`active`, then
+	 * `idle`, then `away`; `offline` when none is left), so closing one of two tabs leaves the other's state. A
+	 * connection lapses when it has not reported for {@link REALTIME_PRESENCE_TTL_SECONDS}: report at least every
+	 * minute, unchanged or not. Without it, every tab of the employee reports under one shared connection that never
+	 * lapses, and the last report wins.
+	 */
+	connectionId?: string;
 }
 
-/** Payload of `presence.changed`: one employee's presence as the platform now holds it. */
+/** How long a named connection's presence counts without a new report from it. */
+export const REALTIME_PRESENCE_TTL_SECONDS = 150;
+
+/**
+ * Payload of `presence.changed` and the answer of `POST /api/realtime/presence`: one employee's presence as the
+ * platform now holds it — the merge of their connections. Told to the organization only when it changes.
+ */
 export interface IRealtimePresence {
 	employeeId: ID;
 	userId: ID;
 	organizationId?: ID | null;
 	status: RealtimePresenceStatus;
-	/** ISO time the signal was published. */
+	/** ISO time the presence was merged. */
 	at: string;
 }
 
@@ -161,13 +177,12 @@ export interface IRealtimeTypingSignal {
 /** Query of `GET /api/realtime/events`. */
 export interface IRealtimeCatchUpQuery {
 	/**
-	 * The `occurredAt` time, in epoch milliseconds, of the newest event the client applied; omitted for
-	 * "the newest retained events". With `afterId`, the cursor is exact: the events after that one. Without it,
-	 * events at exactly that time are answered again (a client applies an event by its `eventId`, so a repeat is
-	 * harmless).
+	 * The `cursor` of the previous answer, in epoch milliseconds; omitted for a first call, which answers no event and
+	 * the position to start from. With `afterId`, the cursor is exact: the events after that one. Without it, events
+	 * at exactly that time are answered again (a client applies an event by its `eventId`, so a repeat is harmless).
 	 */
 	after?: number;
-	/** The `eventId` of the newest event the client applied, as the answer's `cursorId` gave it. */
+	/** The previous answer's `cursorId`, when it gave one. */
 	afterId?: string;
 	/** At most this many events (1–500, default 200). */
 	limit?: number;
@@ -189,18 +204,25 @@ export interface IRealtimeCatchUp {
 	events: IRealtimeEventEnvelope[];
 	/**
 	 * The position to continue from: the epoch ms to pass as `after` next time. `null` only when no outbox serves
-	 * this process.
+	 * this process. It is a safe resume position: it never passes the platform's settle horizon (a few seconds
+	 * behind now), so an event that commits after a later one was answered is still after it. **Resume from the
+	 * cursor a catch-up answered, not from the newest event applied**: the events of an answer may run past its
+	 * cursor (they are answered again from it — apply an event once, by its `eventId`), and a streamed event is no
+	 * resume position at all (the stream delivers neither in commit order nor at once).
 	 */
 	cursor: number | null;
 	/**
 	 * The `eventId` to pass as `afterId` next time, beside `cursor`: the last row the answer walked past, which may be
-	 * one not answered (addressed to someone else). `null` when there is no position yet: no cursor was sent and no
-	 * row was walked.
+	 * one not answered (addressed to someone else). `null` when the position is a time only (the settle horizon, or
+	 * no cursor was sent): pass no `afterId` then.
 	 */
 	cursorId: string | null;
 	/** True when more events follow the ones answered: call again with the cursor before trusting the stream. */
 	hasMore: boolean;
-	/** True when `after` precedes what is retained: the client must refetch its data through the read APIs. */
+	/**
+	 * True when a retention removed events after `after` from what the caller reads: the client must refetch its
+	 * data through the read APIs. Never answered while nothing was removed.
+	 */
 	resync: boolean;
 }
 

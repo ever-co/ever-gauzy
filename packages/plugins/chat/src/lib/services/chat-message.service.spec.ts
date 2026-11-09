@@ -56,21 +56,25 @@ function removeOver(affected: number) {
 	const access = { members: jest.fn(async () => members) } as unknown as ChatAccessService;
 	const realtime = {
 		messageFact: jest.fn((name: string) => ({ name })),
+		append: jest.fn(async (_manager: unknown, fact: { name: string }) => ({ name: fact.name, data: {} })),
 		publish: jest.fn(async (fact: { name: string }) => ({ name: fact.name, data: {} }))
-	} as unknown as ChatRealtime;
-	const service = new ChatMessageService(dataSource, access, realtime, {} as ChatNotifierService, {} as TaskService, {} as CommandBus);
+	};
+	const service = new ChatMessageService(dataSource, access, realtime as unknown as ChatRealtime, {} as ChatNotifierService, {} as TaskService, {} as CommandBus);
 	// The lookups before the transaction: the message (not deleted when read) and its place in the timeline.
 	Object.assign(service as unknown as Record<string, unknown>, {
 		messageForWrite: jest.fn(async () => ({ message: { ...message }, conversation: { ...conversation } })),
 		timelinePosition: jest.fn(async () => 3)
 	});
-	return { service, repositories, realtime };
+	return { service, repositories, realtime, manager };
 }
 
 describe('ChatMessageService.remove', () => {
 	it('deletes only a message still there, and moves the counters when it did', async () => {
-		const { service, repositories } = removeOver(1);
+		const { service, repositories, realtime, manager } = removeOver(1);
 		const result = await service.remove(author, 'm1');
+		// The fact is appended with the delete's own transaction, so it commits with the delete or not at all.
+		expect(realtime.append).toHaveBeenCalledWith(manager, expect.objectContaining({ name: 'chat_message.deleted' }));
+		expect(realtime.publish).not.toHaveBeenCalled();
 		expect(repositories.ChatMessage.update).toHaveBeenCalledTimes(1);
 		expect(repositories.ChatMessage.update.mock.calls[0][0]).toEqual({ id: 'm1', deletedAt: expect.objectContaining({ _type: 'isNull' }) });
 		expect(repositories.ChatConversation.decrement).toHaveBeenCalledWith({ id: 'c1' }, 'messageCount', 1);
@@ -88,6 +92,7 @@ describe('ChatMessageService.remove', () => {
 		expect(repositories.ChatMember.update).not.toHaveBeenCalled();
 		expect(repositories.DocumentLink.delete).not.toHaveBeenCalled();
 		// The request that deleted it told the members; this one has nothing to tell.
+		expect(realtime.append).not.toHaveBeenCalled();
 		expect(realtime.publish).not.toHaveBeenCalled();
 		expect(result).toEqual({ events: [] });
 	});
@@ -135,12 +140,15 @@ function readOver(
 	};
 	const dataSource = {
 		getRepository: (entity: string | { name?: string }) => repositories[(typeof entity === 'string' ? entity : entity?.name) as keyof typeof repositories]
-	} as unknown as DataSource;
+	} as unknown as DataSource & { transaction: jest.Mock };
+	// The member row and its fact are written in one transaction; its manager reads the same doubles.
+	dataSource.transaction = jest.fn(async (work: (manager: DataSource) => Promise<unknown>) => work(dataSource));
 	const access = {
 		requireMember: jest.fn(async () => ({ conversation: { id: 'c1', messageCount: 5 }, member: { id: 'mb1', employeeId: 'e1', readCount: 2, mentionCount: 1 } }))
 	} as unknown as ChatAccessService;
 	const realtime = {
 		memberStateFact: jest.fn(() => ({ name: 'chat_member.state_changed' })),
+		append: jest.fn(async (_manager: unknown, fact: { name: string }) => ({ name: fact.name, data: {} })),
 		publish: jest.fn(async (fact: { name: string }) => ({ name: fact.name, data: {} }))
 	} as unknown as ChatRealtime;
 	const notifier = { markConversationRead: jest.fn(async () => 0) };

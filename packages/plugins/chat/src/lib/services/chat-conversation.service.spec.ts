@@ -193,7 +193,11 @@ function directOver(conversations: Conversation[], options: { raceWinner?: Conve
 			return work(manager);
 		})
 	} as unknown as DataSource;
-	const realtime = { publish: jest.fn(async (fact: unknown) => fact), conversationFact: jest.fn((conversation: Conversation, kind: string) => ({ kind, conversationId: conversation.id })) };
+	const realtime = {
+		append: jest.fn(async (_manager: unknown, fact: unknown) => fact),
+		publish: jest.fn(async (fact: unknown) => fact),
+		conversationFact: jest.fn((conversation: Conversation, kind: string) => ({ kind, conversationId: conversation.id }))
+	};
 	const service = new ChatConversationService(dataSource, {} as ChatAccessService, realtime as unknown as ChatRealtime);
 	// What `get` answers, by the rule of `ChatAccessService.conversation`: another organization's conversation is not found.
 	jest.spyOn(service, 'get').mockImplementation(async (caller: IChatCaller, id: string) => {
@@ -203,7 +207,7 @@ function directOver(conversations: Conversation[], options: { raceWinner?: Conve
 		}
 		return row as never;
 	});
-	return { service, repository, dataSource: dataSource as unknown as { transaction: jest.Mock }, conversations };
+	return { service, repository, dataSource: dataSource as unknown as { transaction: jest.Mock }, conversations, realtime, manager };
 }
 
 describe('ChatConversationService.direct — one conversation per organization', () => {
@@ -216,9 +220,13 @@ describe('ChatConversationService.direct — one conversation per organization',
 	});
 
 	it('creates the conversation of two people in their second organization, though they have one in the first', async () => {
-		const { service, repository, conversations } = directOver([directOfA()]);
+		const { service, repository, conversations, realtime, manager } = directOver([directOfA()]);
 		const result = await service.direct(u1In('org-b'), ['e2-b']);
 		expect(result.created).toBe(true);
+		// Announced inside the creating transaction (it commits with the conversation), never after it.
+		expect(realtime.append).toHaveBeenCalledWith(manager, { kind: 'created', conversationId: 'direct-2' });
+		expect(realtime.publish).not.toHaveBeenCalled();
+		expect(result.events).toEqual([{ kind: 'created', conversationId: 'direct-2' }]);
 		expect(result.conversation).toMatchObject({ organizationId: 'org-b', directKey: directKeyOf(['u1', 'u2']), kind: 'direct' });
 		expect(repository.findOne.mock.calls[0][0].where).toEqual({ tenantId: 'ten', organizationId: 'org-b', directKey: directKeyOf(['u1', 'u2']) });
 		expect(conversations.map((conversation) => [conversation.id, conversation.organizationId])).toEqual([
@@ -236,9 +244,11 @@ describe('ChatConversationService.direct — one conversation per organization',
 
 	it('answers the loser of a race with the winner of its own organization, not another organization’s', async () => {
 		const winner: Conversation = { ...directOfA(), id: 'direct-b', organizationId: 'org-b', createdByEmployeeId: 'e2-b', createdAt: new Date() };
-		const { service, repository } = directOver([directOfA()], { raceWinner: winner });
+		const { service, repository, realtime } = directOver([directOfA()], { raceWinner: winner });
 		const result = await service.direct(u1In('org-b'), ['e2-b']);
-		expect(result).toMatchObject({ created: false, conversation: { id: 'direct-b' } });
+		expect(result).toMatchObject({ created: false, conversation: { id: 'direct-b' }, events: [] });
+		// The winner announced it; the loser's transaction (and anything it appended) rolled back.
+		expect(realtime.publish).not.toHaveBeenCalled();
 		expect(repository.findOne.mock.calls[1][0].where).toEqual({ tenantId: 'ten', organizationId: 'org-b', directKey: directKeyOf(['u1', 'u2']) });
 	});
 

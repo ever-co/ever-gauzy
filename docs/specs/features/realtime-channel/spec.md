@@ -100,8 +100,9 @@ unreachable, every feature keeps working with its documented polling.
   clients can refetch only what changed.
 - **FR-7** Clients MUST be able to send presence (`active`, `idle`, `away`) and typing
   signals; the platform MUST merge presence across a user's connections and publish one
-  presence state per employee to the organization. (Not met yet: presence is
-  last-write-wins per employee, see plan §15.2.)
+  presence state per employee to the organization. (Met for clients that name their
+  connection, plan §15.2; a client that names none shares one connection per employee,
+  last report wins.)
 - **FR-8** The platform MUST re-check a connection's authorization at least every fifteen
   seconds and immediately on session revocation, organization removal or suspension.
 - **FR-9** The platform MUST publish events after the originating write is committed,

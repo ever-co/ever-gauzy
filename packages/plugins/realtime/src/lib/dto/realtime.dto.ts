@@ -1,6 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { ArrayMaxSize, ArrayMinSize, IsArray, IsEnum, IsInt, IsOptional, IsString, IsUUID, Max, MaxLength, Min } from 'class-validator';
+import { ArrayMaxSize, ArrayMinSize, IsArray, IsEnum, IsInt, IsOptional, IsString, IsUUID, Matches, Max, MaxLength, Min } from 'class-validator';
 import {
 	ID,
 	IRealtimeCatchUpQuery,
@@ -16,6 +16,18 @@ export class RealtimePresenceDTO implements IRealtimePresenceInput {
 	@ApiProperty({ enum: RealtimePresenceStatus })
 	@IsEnum(RealtimePresenceStatus)
 	status!: RealtimePresenceStatus;
+
+	@ApiPropertyOptional({
+		type: () => String,
+		maxLength: 64,
+		description:
+			'The id this client gave its connection (one per tab or device; letters, digits, `-` and `_`). Each connection reports for itself and the employee is as present as their most present connection; send it at least every minute, or it lapses after 150 s. Without it, every tab of the employee shares one connection and the last report wins.'
+	})
+	@IsOptional()
+	@IsString()
+	@MaxLength(64)
+	@Matches(/^[\w-]+$/)
+	connectionId?: string;
 }
 
 /** Body of `POST /realtime/typing`. */

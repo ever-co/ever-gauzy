@@ -1,5 +1,5 @@
 import { ForbiddenException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
-import { DataSource, IsNull } from 'typeorm';
+import { DataSource, EntityManager, IsNull } from 'typeorm';
 import { ChatMemberRoleEnum, ID, PermissionsEnum } from '@gauzy/contracts';
 import { RequestContext } from '@gauzy/core';
 import { ChatConversation } from '../entities/chat-conversation.entity';
@@ -80,9 +80,9 @@ export class ChatAccessService {
 	}
 
 	/** The caller's active membership of a conversation, or null. */
-	async membership(conversationId: ID, caller: IChatCaller): Promise<ChatMember | null> {
+	async membership(conversationId: ID, caller: IChatCaller, manager?: EntityManager): Promise<ChatMember | null> {
 		if (!caller.employeeId) return null;
-		return this.dataSource.getRepository(ChatMember).findOne({
+		return (manager ?? this.dataSource).getRepository(ChatMember).findOne({
 			where: { conversationId, employeeId: caller.employeeId, tenantId: caller.tenantId, leftAt: IsNull() }
 		});
 	}
@@ -111,8 +111,8 @@ export class ChatAccessService {
 	}
 
 	/** The active members of a conversation. */
-	async members(tenantId: ID, conversationId: ID): Promise<ChatMember[]> {
-		return this.dataSource.getRepository(ChatMember).find({
+	async members(tenantId: ID, conversationId: ID, manager?: EntityManager): Promise<ChatMember[]> {
+		return (manager ?? this.dataSource).getRepository(ChatMember).find({
 			where: { conversationId, tenantId, leftAt: IsNull() },
 			order: { joinedAt: 'ASC' }
 		});

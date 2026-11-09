@@ -40,11 +40,11 @@ same outbox rows, filtered to the collaboration catalogue and the caller's addre
 | Concern | Choice | Rationale |
 | ------- | ------ | --------- |
 | Package | new `packages/plugins/realtime` (`@gauzy/plugin-realtime`), loaded only when `GAUZY_REALTIME_ENABLED` is exactly `true` | Principle I; same loading contract as the Inbox plugin (`isInboxEnabled`) |
-| Durable events | `RealtimeHintsService.appendHint` → `EventOutboxService.append(dataSource.manager, {...})` after the domain write, from bus subscribers; never throws (a failed append is logged) | Zero changes to domain transactions; replay and catch-up walk the rows by (`createdAt`, `eventId`), which never move once appended. Not transactional with the write: a crash between the commit and the append loses that hint (§15.1) |
+| Durable events | Core-event hints: `RealtimeHintsService.appendHint` → `EventOutboxService.append(dataSource.manager, {...})` after the domain write, from bus subscribers; never throws (a failed append is logged). Chat facts: `ChatRealtime.append(manager, fact)` inside the chat write's own transaction | Zero changes to the core's domain transactions; replay and catch-up walk the rows by (`createdAt`, `eventId`), which never move once appended. The core-event hints are not transactional with the write: a crash between the commit and the append loses that hint (§15.1); the chat facts commit with their write |
 | Streaming | `declareStreamedEvents(catalogue, consumer, ...names)` + `tenantScopedTopicStream(pubSub, names, …)` in a plugin resolver | The plugin-facing surface core already exports |
 | Ephemeral signals | `RealtimeSignalsService` → `GraphqlPubSub.publish(name, tenantId, envelope)` without an outbox row | Lost on disconnect by design (spec §1). Never replayed: after a reconnect a client re-reads presence through the employee reads (`Employee.lastSeenAt`, `isIdle`) and drops its typing indicators |
 | Permission | new `PermissionsEnum.REALTIME_SUBSCRIBE`, default for SUPER_ADMIN, ADMIN, MANAGER, EMPLOYEE; seeded for existing tenants by a plugin migration | Employees must not need `EVENT_OUTBOX_VIEW` |
-| Presence persistence | existing `Employee.lastSeenAt/isIdle` through `EmployeeService.updatePresence`; no new table | v1 is last-write-wins per employee: every `POST /realtime/presence` overwrites `isIdle` and publishes at once, so an idle tab can mark an employee who is active in another tab idle; the per-connection merge of spec FR-7 is a follow-up (§15.2) |
+| Presence persistence | per connection in the plugin's `realtime_presence` table (TTL 150 s), merged per employee (active > idle > away > offline) and persisted on `Employee.lastSeenAt/isIdle` | One transaction per report, serialised per employee by a lock on the employee's published row; `presence.changed` only when the merge changes, from a report or from the 30 s sweep of lapsed connections (§15.2) |
 | Multi-replica | deployment sets `GRAPHQL_PUBSUB_ENGINE` (Redis) | Existing seam; spec FR-13 |
 | Comment events | add `CommentEvent` (RxJS `BaseEntityEvent<Comment>`) published by `CommentService` create/update/delete | The only domain without an in-process event today (additive core change) |
 
@@ -193,19 +193,28 @@ None. Outbox dispatch is the existing worker's. No job prunes `event_outbox` tod
 What the merged code (ever-gauzy #11681, #11686) does not do yet. Each item names the code
 location; none of them changes the flag-off default.
 
-1. **Hints are not transactional with the write.** `RealtimeHintsService.appendHint` (and
-   `ChatRealtime.publish` in the chat plugin) append on `dataSource.manager` after the domain write
-   commits, from bus subscribers, and swallow errors. A crash between the commit and the append, or a
-   failed append, loses that event: the write is safe, the live update and the catch-up row are not.
-   The spec's no-loss requirement (FR-9, §4 Reliability) therefore holds only while the process stays
-   up. Follow-up: append inside the originating transaction (`EventOutboxService.append(manager, …)`
-   with the write's `EntityManager`), chat messages first, then the task and comment writes.
-2. **Presence is last-write-wins per employee.** `RealtimeSignalsService.publishPresence` writes
-   `Employee.isIdle` through `EmployeeService.updatePresence` and publishes every call; there is no
-   per-connection state, no merge across a user's tabs and devices, no `offline` on the last
-   disconnect and no 5 s coalescing (spec FR-7, §4 Performance). Follow-up: keep presence per
-   connection (with a TTL) in the pub/sub engine and publish the merged state (active wins) only when
-   it changes.
+1. **Core-event hints are not transactional with the write (chat facts are, T19).** The chat plugin
+   appends its facts inside its writes' own transactions (`ChatRealtime.append` → `appendInTransaction`,
+   in a savepoint, tried again when another transaction took the same partition position — the
+   `UQ_event_outbox_partition_seq` race — so a concurrent append never fails the user's write); only the
+   per-member counter fan-out of a send stays after the commit (one row per member would hold the
+   conversation's row lock; the message's own fact already reaches every member).
+   `RealtimeHintsService.appendHint` still appends the task, comment, document, mention and notification
+   hints on `dataSource.manager` after the domain write commits, from bus subscribers, and logs a failure:
+   those events are published by core write paths that hand over no transaction (and are mostly single
+   auto-committed `update` statements), so joining them would mean changing the platform core's task,
+   comment, mention and notification writes for refetch triggers that carry no data. A crash between the
+   commit and the append, or a failed append, loses that hint: the write is safe, the instant refresh is
+   not (the next read, a focus refetch or a reconnect still shows the change). Kept so deliberately; the
+   reasoning is in `RealtimeHintsService`'s documentation.
+2. ~~**Presence is last-write-wins per employee.**~~ Resolved (T20): each connection reports under its own
+   `connectionId` into the plugin's `realtime_presence` table (TTL 150 s); the employee's presence is the
+   merge of the live connections (active, then idle, then away; offline when none), persisted on
+   `Employee.lastSeenAt/isIdle`, and `presence.changed` is published only when the merge changes — on a
+   report, or when a 30 s sweep settles a lapsed connection. A report locks the employee's published row,
+   so two reports of one employee merge one after the other. What remains: a client that names no
+   connection shares one per employee that never lapses (last report wins, as before), and there is no
+   5 s coalescing of the fan-out beyond "only on change".
 3. ~~**Document, comment and task hints reach the whole organization.**~~ Resolved (T21): the hints stay
    organization-wide on the outbox, and their audience is decided at delivery — live and in the catch-up —
    by the read rule of the record they name (§9: Docs visibility scope, the task read rule, the parent
@@ -222,9 +231,19 @@ location; none of them changes the flag-off default.
    (outbox viewers, `EVENT_OUTBOX_VIEW`) does not apply audience checks: its holders read the outbox itself.
 5. **No retention job; the replay window is whatever is retained.** Nothing prunes `event_outbox`, so
    FR-3's floor (the newest 1,000 events per organization or 24 h, whichever is larger) holds by
-   default. The first retention job must keep both bounds and test them; `resync` is answered whenever
-   the cursor predates the oldest retained row of the caller's scope.
-6. **The cursor is time-based, not a sequence, and not commit-safe.** `EventOutboxService.append` numbers
+   default. The first retention job (T23) must keep both bounds and test them, and record what it removed
+   with `RealtimeReplayWatermarkService.advance(manager, scope, position)` in the transaction that removes
+   the rows: that watermark is what `resync` is answered from (§15.8).
+6. ~~**The cursor is time-based, not a sequence, and not commit-safe.**~~ Resolved (T24) with a settle
+   window: the catch-up's answered position never passes `now − REALTIME_CATCH_UP_SETTLE_MS` (10 s, longer
+   than an appending transaction runs between stamping and committing its row), the rows past it are still
+   answered and answered again from the position (clients apply by `eventId`), and a first call answers that
+   horizon instead of now; a regression test interleaves two real transactions committing out of stamp
+   order. `sequence` was no option: it is the highest position of the row's partition plus one, allocated
+   inside the writing transaction, not at commit and not across partitions. A position taken from a
+   streamed event stays unsafe (the dispatcher delivers neither in commit order nor at once), so clients
+   must resume from the catch-up's own cursor — the Ever Teams client still moves its cursor on streamed
+   events (follow-up there). Original analysis: `EventOutboxService.append` numbers
    `sequence` per `partitionKey` (default `<aggregateType>:<aggregateId>`), so it orders one aggregate's
    events and is never compared across aggregates; the catch-up cursor is (`createdAt`, `eventId`) (spec
    FR-2). A row whose insert commits after a later-stamped row was already read falls behind a client's
@@ -242,7 +261,10 @@ location; none of them changes the flag-off default.
 7. **The flag is deployment-wide.** `GAUZY_REALTIME_ENABLED` (`isRealtimeEnabled`) loads the plugin for
    the whole process; there is no tenant or organization switch, and nothing closes one tenant's open
    subscriptions (spec §2.2 says so).
-8. **`resync` is inferred from the oldest row.** `RealtimeCatchUpService.catchUp` answers `resync` when
+8. ~~**`resync` is inferred from the oldest row.**~~ Resolved (T25): `resync` is answered exactly when the
+   cursor precedes the watermark of the caller's scope (the organization's and the tenant-wide rows) in the
+   plugin's `realtime_replay_watermark` table, the full (`createdAt`, `eventId`) position of the newest row a
+   retention removed; with no retention yet, never. Original: `RealtimeCatchUpService.catchUp` answers `resync` when
    `after` precedes the oldest row of the caller's scope or when the scope has no row: with no pruning
    at all, a client that took a `cursor` = now before its organization's first event is told to resync on
    its next reconnect although nothing was lost (a needless refetch, never a missed event). Follow-up

@@ -1,11 +1,12 @@
 import { Injectable, Type } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
-import { IRealtimeCatchUp, IRealtimeCatchUpQuery, IRealtimeEventEnvelope } from '@gauzy/contracts';
+import { ID, IRealtimeCatchUp, IRealtimeCatchUpQuery, IRealtimeEventEnvelope } from '@gauzy/contracts';
 import { EventOutbox, EventOutboxService, RequestContext, SubscriptionCatalogue } from '@gauzy/core';
 import type { SubscriptionAudienceEvent } from '@gauzy/core';
-import { REALTIME_CATCH_UP_DEFAULT, REALTIME_CATCH_UP_MAX } from './realtime.constants';
+import { REALTIME_CATCH_UP_DEFAULT, REALTIME_CATCH_UP_MAX, REALTIME_CATCH_UP_SETTLE_MS } from './realtime.constants';
 import { collaborationReplayNames, withoutRecipients } from './graphql/realtime-envelope';
 import { RealtimeAudience } from './realtime-audience';
+import { IRealtimeReplayPosition, RealtimeReplayWatermarkService } from './realtime-replay-watermark.service';
 
 /** The members of an outbox row the catch-up reads. */
 export type CatchUpRow = Pick<EventOutbox, 'eventId' | 'eventName' | 'aggregateType' | 'aggregateId' | 'createdAt' | 'sequence' | 'payload'>;
@@ -70,13 +71,33 @@ export function afterCursor(row: Pick<CatchUpRow, 'createdAt' | 'eventId'>, afte
 }
 
 /**
- * Selects, orders and bounds the rows a catch-up answers.
+ * The settle horizon at a moment: the newest time a resume position may name. A row is stamped (`createdAt`) when its
+ * transaction writes it, which on Postgres is the transaction's start, and becomes readable only when that transaction
+ * commits; a row stamped before one already read can therefore still appear. Any row stamped before the horizon has
+ * committed by now (or never will), so a cursor that never passes the horizon never walks past a row that is yet to
+ * appear.
+ */
+export function settleHorizon(now: number = Date.now()): number {
+	return now - REALTIME_CATCH_UP_SETTLE_MS;
+}
+
+/**
+ * Selects, orders and bounds the rows a catch-up answers, and the position to resume from.
+ *
+ * **The position never passes the settle horizon** ({@link settleHorizon}). The outbox's own `sequence` cannot order a
+ * catch-up: it is numbered per partition (one aggregate), inside the writing transaction (the highest so far plus one),
+ * so it says nothing about the order rows of different aggregates become readable. The time order (`createdAt`, then
+ * `eventId`) is total but not commit-ordered: a transaction that stamped its row first can commit after a later-stamped
+ * row was read. So the answered cursor stops at the horizon, and the rows read past it are still answered (a client is
+ * not kept waiting for what it can apply now) — they are answered again by the next catch-up from that cursor, and a
+ * client applies an event once by its `eventId`. A cursor a client sends from ahead of the horizon (one it took from a
+ * streamed event) is kept: the catch-up never moves a cursor back.
  *
  * @param rows The caller's retained collaboration rows since the cursor time, any order.
  * @param userId The caller, for addressed rows.
  * @param query The client's cursor and limit.
- * @param state Whether the read may have left rows behind (`truncated`) and whether the cursor predates the
- * retention watermark (`resync`).
+ * @param state Whether the read may have left rows behind (`truncated`), whether the cursor precedes the retention
+ * watermark (`resync`), and the settle horizon in epoch ms (`horizon`).
  * @param refused The event ids the audience checks refused this caller ({@link RealtimeAudience}): skipped like a
  * row addressed to someone else.
  * @returns The answer.
@@ -85,16 +106,18 @@ export function selectCatchUp(
 	rows: readonly CatchUpRow[],
 	userId: string | null,
 	query: IRealtimeCatchUpQuery,
-	state: { truncated: boolean; resync: boolean },
+	state: { truncated: boolean; resync: boolean; horizon: number },
 	refused: ReadonlySet<string> = new Set<string>()
 ): IRealtimeCatchUp {
 	const limit = Math.min(Math.max(Math.trunc(query.limit ?? REALTIME_CATCH_UP_DEFAULT), 1), REALTIME_CATCH_UP_MAX);
 	const after = typeof query.after === 'number' && Number.isFinite(query.after) ? query.after : null;
 	const afterId = typeof query.afterId === 'string' && query.afterId ? query.afterId : null;
+	const horizon = state.horizon;
 
-	// A client without a cursor has nothing to catch up on: it starts from now and reads its data through the APIs.
+	// A client without a cursor has nothing to catch up on: it starts from the horizon (not "now", which a row stamped
+	// before it but not yet committed would fall behind) and reads its data through the APIs.
 	if (after === null) {
-		return { events: [], cursor: Date.now(), cursorId: null, hasMore: false, resync: false };
+		return { events: [], cursor: horizon, cursorId: null, hasMore: false, resync: false };
 	}
 
 	// Every row after the cursor the read examined, in cursor order; then the ones this caller may receive.
@@ -102,10 +125,31 @@ export function selectCatchUp(
 	const visible = examined.filter((row) => admitsRow(row, userId) && !refused.has(String(row.eventId)));
 	const page = visible.slice(0, limit);
 	const full = page.length === limit;
-	// The position to continue from: the last answered row when the page is full (visible rows may follow it);
-	// otherwise the last row examined, visible to the caller or not — every visible row up to it was answered, so
-	// a window of rows addressed to others never stalls the walk.
-	const position = full ? page[page.length - 1] : examined[examined.length - 1];
+	// How far this answer covers the scope: up to the last answered row when the page is full, else up to the last row
+	// examined — visible to the caller or not, so a window of rows addressed to others never stalls the walk. `cut`
+	// says whether rows may follow that this answer did not cover (left off a full page, or beyond a bounded read).
+	const reach = full ? page[page.length - 1] : examined[examined.length - 1];
+	const cut = full ? visible.length > limit || state.truncated : state.truncated;
+
+	let cursor = after;
+	let cursorId = afterId;
+	let hasMore = false;
+	if (cut && reach && rowTime(reach) < horizon) {
+		// The answer stops before the horizon: continue after its last row, and say more follows.
+		cursor = rowTime(reach);
+		cursorId = String(reach.eventId);
+		hasMore = true;
+	} else if (cut && !reach) {
+		// A bounded read that held nothing after the cursor (a same-millisecond group larger than the read): unchanged.
+		hasMore = true;
+	} else if (horizon > after) {
+		// Every row stamped before the horizon was examined (none was cut off before it): the position is the horizon
+		// itself, as a time without an id — the rows stamped at it or later are answered again next time. Rows past the
+		// horizon are left for later even when more exist (`hasMore` false): reading them again from the horizon would
+		// answer the same rows and never move.
+		cursor = horizon;
+		cursorId = null;
+	}
 
 	const events: IRealtimeEventEnvelope[] = page.map((row) => ({
 		eventId: row.eventId,
@@ -116,14 +160,20 @@ export function selectCatchUp(
 		data: withoutRecipients(row.payload ?? {})
 	}));
 
-	return {
-		events,
-		cursor: position ? rowTime(position) : after,
-		cursorId: position ? String(position.eventId) : afterId,
-		// More may follow when visible rows were left off a full page, or when the read itself was cut.
-		hasMore: full ? visible.length > limit || state.truncated : state.truncated,
-		resync: state.resync
-	};
+	return { events, cursor, cursorId, hasMore, resync: state.resync };
+}
+
+/**
+ * Whether a retention watermark lies after a cursor: a row the retention removed (the watermark is the newest one, in
+ * cursor order) may be one the client never applied, so it must refetch rather than replay.
+ *
+ * @param watermark The newest position removed from the caller's scope, or null when nothing was.
+ * @param after The cursor time.
+ * @param afterId The cursor's event id; without one, the cursor time is inclusive (a row at that time is unapplied).
+ */
+export function precedesWatermark(watermark: IRealtimeReplayPosition | null, after: number, afterId: string | null): boolean {
+	if (!watermark) return false;
+	return afterCursor({ createdAt: new Date(watermark.at), eventId: watermark.eventId as ID }, after, afterId);
 }
 
 /**
@@ -134,17 +184,20 @@ export function selectCatchUp(
  * by `createdAt` then `eventId`, the cursor's own order), then selected in code: the recipient rule, the audience
  * rule (the caller's read access to the record a row names, and current chat membership — {@link RealtimeAudience},
  * one check per batch), the exact cursor (`after` + `afterId`) and the page. The answered cursor is the position
- * walked to — the last row examined when the page is not full, which may be a row addressed to someone else or one
- * the audience rule refused. `resync` is answered
- * when the cursor predates the oldest row the caller's scope still retains — the retention watermark this
- * installation can state — or when nothing is retained at all: the client then refetches through the read APIs
- * rather than trusting a stream that may have lost rows.
+ * walked to — the last row examined when the answer stops early, which may be a row addressed to someone else or one
+ * the audience rule refused — and never later than the settle horizon (see {@link selectCatchUp}), so a row that
+ * commits after a later-stamped one was answered is still ahead of the cursor. `resync` is answered when the cursor
+ * precedes the retention watermark of the caller's scope (the newest position a retention removed,
+ * {@link RealtimeReplayWatermarkService}): the client then refetches through the read APIs rather than trusting a
+ * stream that lost rows. Nothing else answers `resync` — not an empty scope, nor a cursor older than the scope's
+ * first row: nothing was removed there.
  */
 @Injectable()
 export class RealtimeCatchUpService {
 	constructor(
 		private readonly moduleRef: ModuleRef,
-		private readonly audience: RealtimeAudience
+		private readonly audience: RealtimeAudience,
+		private readonly watermarks: RealtimeReplayWatermarkService
 	) {}
 
 	async catchUp(query: IRealtimeCatchUpQuery): Promise<IRealtimeCatchUp> {
@@ -152,26 +205,32 @@ export class RealtimeCatchUpService {
 		if (!outbox) {
 			return { events: [], cursor: null, cursorId: null, hasMore: false, resync: false };
 		}
+		// Taken before anything is read: a row stamped before it that commits during this call is still ahead of the
+		// answered cursor.
+		const horizon = settleHorizon();
 		const after = typeof query.after === 'number' && Number.isFinite(query.after) ? query.after : null;
 		const userId = RequestContext.currentUserId();
 		if (after === null) {
-			return selectCatchUp([], userId ? String(userId) : null, query, { truncated: false, resync: false });
+			return selectCatchUp([], userId ? String(userId) : null, query, { truncated: false, resync: false, horizon });
 		}
 		const limit = Math.min(Math.max(Math.trunc(query.limit ?? REALTIME_CATCH_UP_DEFAULT), 1), REALTIME_CATCH_UP_MAX);
 		const read = Math.min(limit * CATCH_UP_READ_FACTOR, 2000);
+		const afterId = typeof query.afterId === 'string' && query.afterId ? query.afterId : null;
 
-		// The watermark: the oldest row of any name the caller's scope retains. A read that fails is an error the
-		// client sees, never an empty answer it would trust.
-		const [oldest] = await outbox.listOutboxRowsSince({ limit: 1 });
-		const resync = !oldest || after < rowTime(oldest);
+		// The retention watermark of the caller's scope. A read that fails is an error the client sees, never an empty
+		// answer it would trust.
+		const tenantId = RequestContext.currentTenantId();
+		const watermark = tenantId
+			? await this.watermarks.forScope(String(tenantId), RequestContext.currentOrganizationId() ?? null)
+			: null;
+		const resync = precedesWatermark(watermark, after, afterId);
 
 		// The durable names of the collaboration families, the chat and inbox ones included when those plugins declared them.
 		const eventNames = collaborationReplayNames(this.find(SubscriptionCatalogue)?.names() ?? []);
 		const rows = await outbox.listOutboxRowsSince({ eventNames, since: new Date(after), limit: read });
 		const caller = userId ? String(userId) : null;
-		const afterId = typeof query.afterId === 'string' && query.afterId ? query.afterId : null;
 		const refused = await this.refusedRows(rows, caller, after, afterId);
-		return selectCatchUp(rows, caller, query, { truncated: rows.length >= read, resync }, refused);
+		return selectCatchUp(rows, caller, query, { truncated: rows.length >= read, resync, horizon }, refused);
 	}
 
 	/**

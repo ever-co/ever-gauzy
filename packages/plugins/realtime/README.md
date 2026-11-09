@@ -25,10 +25,18 @@ Nothing new is invented for transport:
   employee may open with `REALTIME_SUBSCRIBE` (the kernel's
   `Subscription.events` stays reserved for `EVENT_OUTBOX_VIEW` holders).
 - **Signals** (`presence.changed`, `typing.signalled`) are published straight to
-  the pub/sub, never stored.
+  the pub/sub, never stored. Presence is kept per connection (each tab or device
+  reports under its own `connectionId`) in the plugin's `realtime_presence` table
+  and merged per employee — `active`, then `idle`, then `away`, `offline` when no
+  connection is left — so closing one of two tabs leaves the other's state;
+  `presence.changed` is published only when the merge changes, on a report or
+  when a connection lapses (no report for 150 s, settled by a sweep every 30 s).
 - **Catch-up** after a reconnect is `GET /api/realtime/events?after=<epoch
   ms>&afterId=<eventId>`: the same outbox rows, scoped to the caller, walked by
-  an exact (time, id) cursor.
+  an exact (time, id) cursor. The cursor it answers never passes the settle
+  horizon (10 s behind now), so a row that commits after a later-stamped one was
+  answered is still ahead of it; `resync` is answered only when a retention
+  removed rows after the cursor (the `realtime_replay_watermark` table).
 
 Multi-replica deployments set `GRAPHQL_PUBSUB_ENGINE` (a Redis-backed engine) so
 a subscriber on one API replica sees the events of another; a single instance
@@ -71,8 +79,8 @@ hint.
 | Route | What |
 | --- | --- |
 | `GET /api/realtime/status` | whether this process serves subscriptions; the selectable names |
-| `GET /api/realtime/events?after=&afterId=&limit=` | catch-up: the events after the cursor (`after` = epoch ms of the newest applied event, `afterId` = its `eventId`), oldest first; answers `cursor` + `cursorId` (the position walked to, possibly a row addressed to someone else) to continue from, `hasMore` when a page is full, and `resync: true` when the cursor predates the oldest row the caller's scope retains (or nothing is retained): then refetch through the read APIs |
-| `POST /api/realtime/presence { status }` | `active` / `idle` / `away` / `offline`; persisted on the employee, published to the organization |
+| `GET /api/realtime/events?after=&afterId=&limit=` | catch-up: the events after the cursor (`after` + `afterId` = the previous answer's `cursor` + `cursorId`), oldest first; answers `cursor` + `cursorId` to continue from (the position walked to, possibly a row addressed to someone else, never past the settle horizon — the events may run past it and are answered again next time), `hasMore` when more follows, and `resync: true` when a retention removed rows after the cursor: then refetch through the read APIs |
+| `POST /api/realtime/presence { status, connectionId? }` | `active` / `idle` / `away` / `offline` of one connection (`offline` ends it); answers the employee's merged presence, persisted on the employee (`lastSeenAt`, `isIdle`) and published to the organization when it changed. Without `connectionId` every tab of the employee shares one connection that never lapses (the last report wins) |
 | `POST /api/realtime/typing { conversationId, threadRootId?, recipientUserIds }` | ephemeral, at most 50 recipients, rate-limited |
 
 ## Subscribing
@@ -92,11 +100,20 @@ subscription {
 
 Over `graphql-ws`, with the user's JWT in the `connection_init` payload
 (`authorization: Bearer …`, `tenant-id`, `organization-id`), exactly as for
-every platform subscription. Remember the `occurredAt` (as epoch ms) and
-`eventId` of the newest event applied; on reconnect call `GET
-/api/realtime/events?after=&afterId=`, apply the answer by `eventId`, repeat
-while `hasMore`, and on `resync: true` refetch through the read APIs. A client
-with no cursor yet starts from the answer's `cursor` (now).
+every platform subscription. Keep as the resume position the `cursor` and
+`cursorId` of the last catch-up answer — **not** the newest event applied: the
+stream delivers neither in commit order nor at once (the outbox dispatcher runs
+every minute and retries), so a streamed event is no proof that the events
+stamped before it have arrived. On every reconnect (and, while connected, every
+minute or so, to keep the position fresh) call `GET
+/api/realtime/events?after=&afterId=`, apply the answer by `eventId` (events
+repeat: an answer may run past its cursor, and the stream delivers them too),
+repeat while `hasMore`, and on `resync: true` refetch through the read APIs. A
+client with no cursor yet starts from the answer's `cursor` (the settle horizon).
+
+Presence: give each tab or device a random `connectionId` and send its status
+on every change and at least every minute unchanged (a connection not heard from
+for 150 s lapses), and `offline` when the page closes (a `keepalive` request).
 
 ## Enabling
 
