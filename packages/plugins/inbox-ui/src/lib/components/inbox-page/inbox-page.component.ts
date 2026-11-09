@@ -22,7 +22,8 @@ import {
 	NbIconModule,
 	NbInputModule,
 	NbSelectModule,
-	NbSpinnerModule
+	NbSpinnerModule,
+	NbTooltipModule
 } from '@nebular/theme';
 import { TranslatePipe } from '@ngx-translate/core';
 import { EMPTY, forkJoin, interval, of, Subject, Subscription } from 'rxjs';
@@ -132,6 +133,7 @@ export function apiMessage(error: unknown): string | null {
 		NbInputModule,
 		NbSelectModule,
 		NbSpinnerModule,
+		NbTooltipModule,
 		RouterLink,
 		TranslatePipe,
 		InboxItemDetailComponent,
@@ -160,7 +162,8 @@ export function apiMessage(error: unknown): string | null {
 							ghost
 							size="small"
 							data-test="shortcuts"
-							[attr.title]="'INBOX.SHORTCUTS.OPEN' | translate"
+							[nbTooltip]="'INBOX.SHORTCUTS.OPEN' | translate"
+							nbTooltipPlacement="top"
 							[attr.aria-label]="'INBOX.SHORTCUTS.OPEN' | translate"
 							(click)="shortcutsOpen.set(true)"
 						>
@@ -263,7 +266,6 @@ export function apiMessage(error: unknown): string | null {
 										tabindex="0"
 										aria-orientation="vertical"
 										data-test="resizer"
-										[attr.title]="'INBOX.RESIZE' | translate"
 										[attr.aria-label]="'INBOX.RESIZE' | translate"
 										(pointerdown)="startResize($event)"
 										(pointermove)="resize($event)"
@@ -283,7 +285,8 @@ export function apiMessage(error: unknown): string | null {
 												data-test="check-all"
 												[class.on]="allChecked()"
 												[attr.aria-checked]="allChecked() ? 'true' : 'mixed'"
-												[attr.title]="'INBOX.BULK.SELECT_ALL' | translate"
+												[nbTooltip]="'INBOX.BULK.SELECT_ALL' | translate"
+												nbTooltipPlacement="top"
 												[attr.aria-label]="'INBOX.BULK.SELECT_ALL' | translate"
 												(click)="toggleAll()"
 											>
@@ -298,7 +301,8 @@ export function apiMessage(error: unknown): string | null {
 													class="bulk-tool"
 													data-test="bulk-read"
 													[disabled]="busy()"
-													[attr.title]="'INBOX.ACTIONS.MARK_READ' | translate"
+													[nbTooltip]="'INBOX.ACTIONS.MARK_READ' | translate"
+													nbTooltipPlacement="top"
 													[attr.aria-label]="'INBOX.ACTIONS.MARK_READ' | translate"
 													(click)="bulk({ isRead: true })"
 												>
@@ -309,7 +313,8 @@ export function apiMessage(error: unknown): string | null {
 													class="bulk-tool"
 													data-test="bulk-unread"
 													[disabled]="busy()"
-													[attr.title]="'INBOX.ACTIONS.MARK_UNREAD' | translate"
+													[nbTooltip]="'INBOX.ACTIONS.MARK_UNREAD' | translate"
+													nbTooltipPlacement="top"
 													[attr.aria-label]="'INBOX.ACTIONS.MARK_UNREAD' | translate"
 													(click)="bulk({ isRead: false })"
 												>
@@ -320,7 +325,8 @@ export function apiMessage(error: unknown): string | null {
 													class="bulk-tool"
 													data-test="bulk-archive"
 													[disabled]="busy()"
-													[attr.title]="(tab() === 'archived' ? 'INBOX.ACTIONS.UNARCHIVE' : 'INBOX.ACTIONS.ARCHIVE') | translate"
+													[nbTooltip]="(tab() === 'archived' ? 'INBOX.ACTIONS.UNARCHIVE' : 'INBOX.ACTIONS.ARCHIVE') | translate"
+													nbTooltipPlacement="top"
 													[attr.aria-label]="(tab() === 'archived' ? 'INBOX.ACTIONS.UNARCHIVE' : 'INBOX.ACTIONS.ARCHIVE') | translate"
 													(click)="bulk({ isArchived: tab() !== 'archived' })"
 												>
@@ -331,7 +337,8 @@ export function apiMessage(error: unknown): string | null {
 													class="bulk-tool"
 													data-test="bulk-done"
 													[disabled]="busy()"
-													[attr.title]="(tab() === 'done' ? 'INBOX.ACTIONS.MARK_NOT_DONE' : 'INBOX.ACTIONS.MARK_DONE') | translate"
+													[nbTooltip]="(tab() === 'done' ? 'INBOX.ACTIONS.MARK_NOT_DONE' : 'INBOX.ACTIONS.MARK_DONE') | translate"
+													nbTooltipPlacement="top"
 													[attr.aria-label]="(tab() === 'done' ? 'INBOX.ACTIONS.MARK_NOT_DONE' : 'INBOX.ACTIONS.MARK_DONE') | translate"
 													(click)="bulk({ isDone: tab() !== 'done' })"
 												>
@@ -342,7 +349,8 @@ export function apiMessage(error: unknown): string | null {
 													type="button"
 													class="bulk-tool"
 													data-test="bulk-clear"
-													[attr.title]="'INBOX.BULK.CLEAR' | translate"
+													[nbTooltip]="'INBOX.BULK.CLEAR' | translate"
+													nbTooltipPlacement="top"
 													[attr.aria-label]="'INBOX.BULK.CLEAR' | translate"
 													(click)="clearChecked()"
 												>
@@ -462,7 +470,8 @@ export function apiMessage(error: unknown): string | null {
 															[class.on]="isChecked(item)"
 															[attr.aria-checked]="isChecked(item)"
 															[attr.aria-label]="'INBOX.BULK.SELECT' | translate"
-															[attr.title]="'INBOX.BULK.SELECT' | translate"
+															[nbTooltip]="'INBOX.BULK.SELECT' | translate"
+															nbTooltipPlacement="top"
 															[attr.data-test]="'check-' + item.id"
 															(click)="toggleChecked(item, $event)"
 															(keydown.enter)="$event.stopPropagation()"
@@ -478,7 +487,8 @@ export function apiMessage(error: unknown): string | null {
 															<time
 																class="when"
 																[attr.datetime]="item.createdAt"
-																[attr.title]="item.createdAt | date: 'medium'"
+																[nbTooltip]="item.createdAt | date: 'medium'"
+																nbTooltipPlacement="top"
 																>{{ item.createdAt | date: listDate(item.createdAt) }}</time
 															>
 														</div>
@@ -503,7 +513,8 @@ export function apiMessage(error: unknown): string | null {
 																	class="tag due"
 																	[attr.data-due]="due"
 																	[attr.data-test]="'due-' + item.id"
-																	[attr.title]="item.dueAt | date: 'medium'"
+																	[nbTooltip]="item.dueAt | date: 'medium'"
+																	nbTooltipPlacement="top"
 																>
 																	<nb-icon icon="calendar-outline"></nb-icon>
 																	{{
@@ -1157,7 +1168,7 @@ export function apiMessage(error: unknown): string | null {
 			}
 			.lead .check {
 				position: absolute;
-				inset: 0.25rem;
+				inset: 0.375rem;
 				display: none;
 			}
 			.row:hover .lead .avatar,
@@ -1177,19 +1188,19 @@ export function apiMessage(error: unknown): string | null {
 				align-items: center;
 				justify-content: center;
 				flex-shrink: 0;
-				width: 1.25rem;
-				height: 1.25rem;
+				width: 1rem;
+				height: 1rem;
 				padding: 0;
 				border: 1.5px solid var(--gauzy-text-color-2, #8f9bb3);
-				border-radius: 0.3125rem;
+				border-radius: 0.25rem;
 				background: var(--background-basic-color-1, #fff);
 				color: #fff;
 				cursor: pointer;
 			}
 			.check nb-icon {
-				width: 0.75rem;
-				height: 0.75rem;
-				font-size: 0.75rem;
+				width: 0.625rem;
+				height: 0.625rem;
+				font-size: 0.625rem;
 			}
 			.check.on,
 			.check[aria-checked='mixed'] {
