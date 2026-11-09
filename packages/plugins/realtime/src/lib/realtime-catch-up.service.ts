@@ -91,14 +91,15 @@ export function settleHorizon(now: number = Date.now()): number {
 /**
  * The settle horizon held behind the oldest transaction still open in the database (on Postgres).
  *
- * The settle window alone assumes no appending transaction stays open longer than it; one that waits on a row lock can.
- * On Postgres a row is stamped with its transaction's start (`createdAt` defaults to `now()`), so no row can appear
- * stamped before the oldest transaction open now: the horizon stays the settle window behind that transaction's start
- * as well. A transaction open longer than {@link REALTIME_CATCH_UP_MAX_HOLD_MS} (a forgotten session) holds it back no
- * further — the cursor must still move — so an event such a transaction appends can fall behind a cursor already
- * answered, and a client that missed it live does not get it from the catch-up (plan §15.6, the remaining gap). Elsewhere the stamp is the statement's time, taken just before the commit
- * (MySQL), or there is one writer at a time (SQLite), and the settle window covers it. The transactions read are the
- * ones `pg_stat_activity` shows the platform's role: its own sessions, whatever process opened them.
+ * The settle window alone assumes no appending transaction stays open longer than it; one that waits on a row lock
+ * can. On Postgres a row is stamped with its transaction's start (`createdAt` defaults to `now()`), so no row can
+ * appear stamped before the oldest transaction open now: the horizon stays the settle window behind that
+ * transaction's start as well. A transaction open longer than {@link REALTIME_CATCH_UP_MAX_HOLD_MS} (a forgotten
+ * session) holds it back no further — the cursor must still move — so an event such a transaction appends can fall
+ * behind a cursor already answered, and a client that missed it live does not get it from the catch-up (plan §15.6,
+ * the remaining gap). Elsewhere the stamp is the statement's time, taken just before the commit (MySQL), or there is
+ * one writer at a time (SQLite), and the settle window covers it. The transactions read are the ones
+ * `pg_stat_activity` shows the platform's role: its own sessions, whatever process opened them.
  *
  * One read serves the process's catch-ups: concurrent callers share the read in flight, and a result serves for
  * {@link REALTIME_CATCH_UP_HORIZON_REUSE_MS} after it. Both are safe: a horizon taken at an earlier moment is never later
