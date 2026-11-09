@@ -32,11 +32,11 @@ export function withoutChatReactions<T>(
 	const notChat = Not(ReactionEntityEnum.ChatMessage);
 	const stated = (where as { entity?: unknown } | undefined)?.entity;
 	if (stated === undefined || stated === null) {
-		return { ...(where ?? {}), entity: notChat } as FindOptionsWhere<T>;
+		return { ...(where ?? {}), entity: notChat } as unknown as FindOptionsWhere<T>;
 	}
 	const kept =
 		stated instanceof FindOperator
 			? (stated as FindOperator<ReactionEntityEnum>)
 			: Equal(stated as ReactionEntityEnum);
-	return { ...where, entity: And(kept, notChat) } as FindOptionsWhere<T>;
+	return { ...where, entity: And(kept, notChat) } as unknown as FindOptionsWhere<T>;
 }

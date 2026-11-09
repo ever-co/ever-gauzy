@@ -870,22 +870,24 @@ export function parseTypeORMFindOptions<T, O extends { relations?: any; select?:
 }
 
 /**
- * Concatenate an ID to the given MikroORM where condition.
+ * Adds an ID to a where condition (MikroORM or TypeORM: both read a list as alternatives joined by OR).
  *
- * @param id - The ID to concatenate to the where condition.
- * @param where - MikroORM where condition.
- * @returns Concatenated MikroORM where condition.
+ * Each alternative of a list gets the id. Appending `{ id }` as one more alternative (as this used to) read the row
+ * with the id OR any row another alternative matched, so a read "by id" with a list condition could answer a row the
+ * id never named. An empty list (no condition) becomes `{ id }`.
+ *
+ * @param id - The ID every condition must match.
+ * @param where - The where condition, an object or a list of alternatives.
+ * @returns The where condition with the id.
  */
 export function concatIdToWhere<T>(id: any, where: MikroFilterQuery<T>): MikroFilterQuery<T> {
-	if (where instanceof Array) {
-		where = where.concat({ id } as any);
-	} else {
-		where = {
-			id,
-			...(where ? where : ({} as any))
-		};
+	if (Array.isArray(where)) {
+		return (where.length ? where.map((alternative) => ({ id, ...(alternative as any) })) : { id }) as MikroFilterQuery<T>;
 	}
-	return where;
+	return {
+		id,
+		...(where ? where : ({} as any))
+	};
 }
 
 /**

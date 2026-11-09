@@ -92,3 +92,86 @@ describe('ChatMessageService.remove', () => {
 		expect(result).toEqual({ events: [] });
 	});
 });
+
+/**
+ * `read` of a whole conversation over repository doubles: each followed thread keeps, of its unread replies, only the
+ * ones that live in the thread only (their notifications stay unread too, see `ChatNotifierService`).
+ * `threadOnly` is what counting the thread-only replies of each root answers.
+ */
+function readOver(follows: Array<{ id: string; rootMessageId: string; unreadReplies: number; lastReadReplyAt: Date | null }>, threadOnly: Record<string, number>) {
+	const counted: Array<{ root: unknown; since: unknown }> = [];
+	const replies = () => {
+		const state: { root?: unknown; since?: unknown } = {};
+		const builder = {
+			where: (_sql: string, params?: Record<string, unknown>) => (Object.assign(state, { root: params?.['rootMessageId'] }), builder),
+			andWhere: (_sql: unknown, params?: Record<string, unknown>) => (params && 'since' in params ? (state.since = params['since']) : undefined, builder),
+			getCount: async () => (counted.push({ root: state.root, since: state.since }), threadOnly[String(state.root)] ?? 0)
+		};
+		return builder;
+	};
+	const repositories = {
+		ChatMessage: { findOne: jest.fn(async () => ({ id: 'm9' })), createQueryBuilder: jest.fn(replies) },
+		ChatMember: { update: jest.fn(async () => ({ affected: 1 })) },
+		ChatThreadFollow: {
+			find: jest.fn(async () => follows.filter((follow) => follow.unreadReplies > 0)),
+			decrement: jest.fn(async () => ({ affected: 1 })),
+			update: jest.fn(async () => ({ affected: 1 }))
+		}
+	};
+	const dataSource = {
+		getRepository: (entity: string | { name?: string }) => repositories[(typeof entity === 'string' ? entity : entity?.name) as keyof typeof repositories]
+	} as unknown as DataSource;
+	const access = {
+		requireMember: jest.fn(async () => ({ conversation: { id: 'c1', messageCount: 5 }, member: { id: 'mb1', employeeId: 'e1', readCount: 2, mentionCount: 1 } }))
+	} as unknown as ChatAccessService;
+	const realtime = {
+		memberStateFact: jest.fn(() => ({ name: 'chat_member.state_changed' })),
+		publish: jest.fn(async (fact: { name: string }) => ({ name: fact.name, data: {} }))
+	} as unknown as ChatRealtime;
+	const notifier = { markConversationRead: jest.fn(async () => 0) };
+	const service = new ChatMessageService(dataSource, access, realtime, notifier as unknown as ChatNotifierService, {} as TaskService, {} as CommandBus);
+	Object.assign(service as unknown as Record<string, unknown>, { followIdsIn: jest.fn(async () => follows.map((follow) => follow.id)) });
+	return { service, repositories, notifier, counted };
+}
+
+describe('ChatMessageService.read (the whole conversation)', () => {
+	const caller = { ...author, employeeId: 'e1' } as IChatCaller & { employeeId: string };
+	const since = new Date('2026-11-01T00:00:00.000Z');
+
+	it('keeps the thread-only replies of a followed thread unread, and reads the ones also sent to the conversation', async () => {
+		// f1: 3 unread, 1 of them thread-only → 2 read. f2: 2 unread, both thread-only → untouched. f3: 1 unread, none
+		// thread-only → read.
+		const { service, repositories, notifier, counted } = readOver(
+			[
+				{ id: 'f1', rootMessageId: 'r1', unreadReplies: 3, lastReadReplyAt: since },
+				{ id: 'f2', rootMessageId: 'r2', unreadReplies: 2, lastReadReplyAt: null },
+				{ id: 'f3', rootMessageId: 'r3', unreadReplies: 1, lastReadReplyAt: since }
+			],
+			{ r1: 1, r2: 2, r3: 0 }
+		);
+		await service.read(caller as never, 'c1');
+		const decrements = repositories.ChatThreadFollow.decrement.mock.calls as unknown as Array<[Record<string, unknown>, string, number]>;
+		expect(decrements.map(([criteria, column, by]) => [criteria['id'], column, by])).toEqual([
+			['f1', 'unreadReplies', 2],
+			['f3', 'unreadReplies', 1]
+		]);
+		// Never below zero: the decrement only applies while the counter still holds what it subtracts.
+		expect(decrements[0][0]['unreadReplies']).toEqual(expect.objectContaining({ _type: 'moreThanOrEqual', _value: 2 }));
+		// Counted from each follow's read mark, which the conversation read does not move.
+		expect(counted).toEqual([
+			{ root: 'r1', since },
+			{ root: 'r2', since: undefined },
+			{ root: 'r3', since }
+		]);
+		expect(repositories.ChatThreadFollow.update).not.toHaveBeenCalled();
+		// The notifications of the same replies: those of the conversation's timeline are read, thread-only ones stay.
+		expect(notifier.markConversationRead).toHaveBeenCalledWith('c1', { tenantId: 'ten', employeeId: 'e1' }, null);
+	});
+
+	it('never raises a counter when the thread holds more thread-only replies than the follow counts', async () => {
+		const { service, repositories } = readOver([{ id: 'f1', rootMessageId: 'r1', unreadReplies: 1, lastReadReplyAt: null }], { r1: 4 });
+		await service.read(caller as never, 'c1');
+		expect(repositories.ChatThreadFollow.decrement).not.toHaveBeenCalled();
+		expect(repositories.ChatThreadFollow.update).not.toHaveBeenCalled();
+	});
+});

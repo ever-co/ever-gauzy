@@ -629,13 +629,9 @@ export class ChatMessageService {
 		// The read columns only: a preference or a counter written since the row was read is not written back.
 		await this.dataSource.getRepository(ChatMember).update({ id: member.id }, patch as never);
 		Object.assign(member, { ...patch, lastReadMessageId: lastReadMessageId ?? undefined });
-		// Thread replies the caller follows in this conversation are read too when reading everything.
-		if (!messageId) {
-			const followIds = await this.followIdsIn(caller, conversationId);
-			if (followIds.length) {
-				await this.dataSource.getRepository(ChatThreadFollow).update({ id: In(followIds) }, { unreadReplies: 0, lastReadReplyAt: now });
-			}
-		}
+		// Reading everything reads the replies of the followed threads that were also sent to the conversation; a reply
+		// that lives in its thread only stays unread until the thread is read (as its notification does).
+		if (!messageId) await this.readFollowedRepliesIn(caller, conversationId);
 		void this.notifier.markConversationRead(conversationId, { tenantId: caller.tenantId, employeeId: caller.employeeId }, anchor);
 		return { events: [await this.realtime.publish(this.realtime.memberStateFact(member))] };
 	}
@@ -967,6 +963,47 @@ export class ChatMessageService {
 	}
 
 	/** The caller's follows of the threads of a conversation (object criteria: every name quoted for the dialect). */
+	/**
+	 * A full read of a conversation, for the threads the caller follows in it: of a follow's unread replies, only the
+	 * ones that live in the thread only (not also sent to the conversation) stay unread — the others were just read in
+	 * the conversation. Thread-only replies are counted from the follow's read mark (`lastReadReplyAt`), which does not
+	 * move (the thread itself was not read). The counter only goes down, through a relative decrement that never takes
+	 * it below zero, so a reply arriving meanwhile still counts and two concurrent reads do not both subtract.
+	 */
+	private async readFollowedRepliesIn(caller: IChatCaller & { employeeId: ID }, conversationId: ID): Promise<void> {
+		const followIds = await this.followIdsIn(caller, conversationId);
+		if (!followIds.length) return;
+		const follows = this.dataSource.getRepository(ChatThreadFollow);
+		const unreadFollows = await follows.find({
+			select: { id: true, rootMessageId: true, unreadReplies: true, lastReadReplyAt: true },
+			where: { id: In(followIds), tenantId: caller.tenantId, unreadReplies: MoreThan(0) }
+		});
+		for (const follow of unreadFollows) {
+			const unread = follow.unreadReplies ?? 0;
+			const threadOnly = this.dataSource
+				.getRepository(ChatMessage)
+				.createQueryBuilder('reply')
+				.where('reply.threadRootId = :rootMessageId', { rootMessageId: follow.rootMessageId })
+				.andWhere('reply.tenantId = :tenantId', { tenantId: caller.tenantId })
+				.andWhere(
+					new Brackets((place) => {
+						place.where('reply.alsoInConversation IS NULL').orWhere('reply.alsoInConversation = :alsoInConversation', { alsoInConversation: false });
+					})
+				)
+				.andWhere(
+					new Brackets((by) => {
+						by.where('reply.authorEmployeeId IS NULL').orWhere('reply.authorEmployeeId != :employeeId', { employeeId: caller.employeeId });
+					})
+				);
+			if (follow.lastReadReplyAt) threadOnly.andWhere('reply.createdAt > :since', { since: follow.lastReadReplyAt });
+			const stillUnread = Math.min(unread, await threadOnly.getCount());
+			if (stillUnread < unread) {
+				const read = unread - stillUnread;
+				await follows.decrement({ id: follow.id as ID, unreadReplies: MoreThanOrEqual(read) }, 'unreadReplies', read);
+			}
+		}
+	}
+
 	private async followIdsIn(caller: IChatCaller & { employeeId: ID }, conversationId: ID): Promise<ID[]> {
 		const follows = await this.dataSource.getRepository(ChatThreadFollow).find({
 			select: { id: true, rootMessageId: true },
