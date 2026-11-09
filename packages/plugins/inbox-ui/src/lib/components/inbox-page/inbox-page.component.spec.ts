@@ -1,3 +1,4 @@
+import { ApplicationRef } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { BehaviorSubject, of, Subject, throwError } from 'rxjs';
@@ -625,6 +626,43 @@ describe('InboxPageComponent', () => {
 			expect(component.items().map((entry) => entry.id)).toEqual(['b']);
 			expect([...component.checked()]).toEqual(['b']);
 			expect(component.actionError()).toBe('INBOX.BULK.FAILED');
+		});
+
+		it('a bulk answer that comes after another tab was chosen leaves that tab and its selection alone', () => {
+			const { component } = ready([read('a'), read('b')]);
+			component.toggleAll();
+			const answer = new Subject<IInboxItemWithState>();
+			api.setState.mockReturnValue(answer);
+			component.bulk({ isDone: true });
+
+			api.list.mockReturnValue(of({ items: [read('c')], nextCursor: null }));
+			component.selectTab('archived');
+			expect(component.checkedCount()).toBe(0);
+			answer.error({ status: 500 });
+
+			expect(component.checkedCount()).toBe(0);
+			expect(component.items().map((entry) => entry.id)).toEqual(['c']);
+		});
+
+		it('the shortcuts sheet takes focus when it opens, keeps Tab inside, and gives focus back when it closes', () => {
+			const { fixture, find } = ready([read('a')]);
+			const opener = find('shortcuts') as HTMLButtonElement;
+			opener.focus();
+			opener.click();
+			fixture.detectChanges();
+			TestBed.inject(ApplicationRef).tick();
+			const close = find('shortcuts-close') as HTMLButtonElement;
+			expect(document.activeElement).toBe(close);
+
+			const tab = new KeyboardEvent('keydown', { key: 'Tab', bubbles: true, cancelable: true });
+			close.dispatchEvent(tab);
+			expect(tab.defaultPrevented).toBe(true);
+			expect(document.activeElement).toBe(close);
+
+			press('Escape');
+			fixture.detectChanges();
+			expect(find('shortcuts-sheet')).toBeNull();
+			expect(document.activeElement).toBe(opener);
 		});
 
 		it('"Undo" takes the change back and reads the list again', () => {
