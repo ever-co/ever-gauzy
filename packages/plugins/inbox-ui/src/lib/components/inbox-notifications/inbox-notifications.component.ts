@@ -1,7 +1,7 @@
 import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, DestroyRef, inject, OnInit, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { NbAlertModule, NbIconModule, NbSpinnerModule } from '@nebular/theme';
+import { NbAlertModule, NbIconModule, NbSpinnerModule, NbTooltipModule } from '@nebular/theme';
 import { TranslatePipe } from '@ngx-translate/core';
 import { combineLatest, EMPTY, Subject } from 'rxjs';
 import { catchError, distinctUntilChanged, map, switchMap } from 'rxjs/operators';
@@ -33,7 +33,7 @@ interface NotificationScope {
 @Component({
 	selector: 'ngx-inbox-notifications',
 	changeDetection: ChangeDetectionStrategy.OnPush,
-	imports: [DatePipe, NbAlertModule, NbIconModule, NbSpinnerModule, TranslatePipe],
+	imports: [DatePipe, NbAlertModule, NbIconModule, NbSpinnerModule, NbTooltipModule, TranslatePipe],
 	template: `
 		<!-- A slim bar over the list, as a mail app's: what is unread on one side, "Mark all read" on the other. -->
 		<div class="toolbar">
@@ -105,7 +105,8 @@ interface NotificationScope {
 									<time
 										class="when"
 										[attr.datetime]="notification.createdAt"
-										[attr.title]="notification.createdAt | date: 'medium'"
+										[nbTooltip]="notification.createdAt | date: 'medium'"
+										nbTooltipPlacement="top"
 										>{{ notification.createdAt | date: listDate(notification.createdAt) }}</time
 									>
 								</div>
@@ -127,7 +128,8 @@ interface NotificationScope {
 								<button
 									type="button"
 									class="read"
-									[attr.title]="'INBOX.ACTIONS.MARK_READ' | translate"
+									[nbTooltip]="'INBOX.ACTIONS.MARK_READ' | translate"
+									nbTooltipPlacement="top"
 									[attr.aria-label]="'INBOX.ACTIONS.MARK_READ' | translate"
 									[attr.data-test]="'notification-read-' + notification.id"
 									(click)="markRead(notification)"
