@@ -11,7 +11,6 @@ import {
 	NbCheckboxModule,
 	NbIconModule,
 	NbInputModule,
-	NbListModule,
 	NbSelectModule,
 	NbSpinnerModule
 } from '@nebular/theme';
@@ -30,11 +29,15 @@ import {
 import { INBOX_MY_MAILBOX_LINK, INBOX_UI_PAGE_SIZE } from '../../inbox-ui.constants';
 import {
 	apiTabOf,
+	kindIconOf,
+	INBOX_UI_TAB_ICONS,
 	INBOX_UI_TABS,
 	InboxUiTab,
 	listedIn,
 	isTranslationKey,
 	isUnread,
+	listDateFormat,
+	previewOf,
 	replaceItem,
 	sourceLabelOf
 } from '../../inbox-ui.helpers';
@@ -74,7 +77,6 @@ export function apiMessage(error: unknown): string | null {
 		NbCheckboxModule,
 		NbIconModule,
 		NbInputModule,
-		NbListModule,
 		NbSelectModule,
 		NbSpinnerModule,
 		RouterLink,
@@ -85,44 +87,89 @@ export function apiMessage(error: unknown): string | null {
 	template: `
 		<nb-card class="inbox" data-test="inbox-page">
 			<nb-card-header class="inbox-header">
-				<h4>{{ 'INBOX.TITLE' | translate }}</h4>
-				<span class="header-actions">
+				<div class="heading">
+					<span class="heading-icon" aria-hidden="true"><nb-icon icon="inbox-outline"></nb-icon></span>
+					<div class="heading-text">
+						<h4>{{ 'INBOX.TITLE' | translate }}</h4>
+						@if (view() === 'ready' && unreadTotal(); as unreadCount) {
+							<span class="subtitle" data-test="unread-summary">{{
+								'INBOX.UNREAD_SUMMARY' | translate: { count: unreadCount }
+							}}</span>
+						} @else {
+							<span class="subtitle">{{ 'INBOX.SUBTITLE' | translate }}</span>
+						}
+					</div>
+				</div>
+				<div class="header-actions">
 					@if (emailAvailable()) {
-						<a nbButton ghost size="small" data-test="my-mailbox" [routerLink]="myMailboxLink">{{
-							'INBOX.MY_MAILBOX.LINK' | translate
-						}}</a>
+						<a nbButton ghost size="small" data-test="my-mailbox" [routerLink]="myMailboxLink">
+							<nb-icon icon="email-outline"></nb-icon>
+							{{ 'INBOX.MY_MAILBOX.LINK' | translate }}
+						</a>
 					}
 					@if (view() === 'ready' && tab() !== 'notifications') {
 						<button
 							nbButton
 							size="small"
-							status="basic"
+							status="primary"
+							outline
 							data-test="mark-all-read"
 							[disabled]="loading() || !hasUnread()"
 							(click)="markAllRead()"
 						>
+							<nb-icon icon="done-all-outline"></nb-icon>
 							{{ 'INBOX.ACTIONS.MARK_ALL_READ' | translate }}
 						</button>
 					}
-				</span>
+				</div>
 			</nb-card-header>
-			<nb-card-body>
+			<nb-card-body class="inbox-body">
 				@switch (view()) {
 					@case ('unavailable') {
-						<p data-test="unavailable">{{ 'INBOX.UNAVAILABLE' | translate }}</p>
+						<div class="state" data-test="unavailable">
+							<span class="state-icon"><nb-icon icon="inbox-outline"></nb-icon></span>
+							<p>{{ 'INBOX.UNAVAILABLE' | translate }}</p>
+						</div>
 					}
 					@case ('error') {
-						<nb-alert status="danger" role="alert" data-test="error">{{
-							'INBOX.ERROR' | translate
-						}}</nb-alert>
-						<button nbButton size="small" (click)="reload()">{{ 'INBOX.RETRY' | translate }}</button>
+						<div class="state">
+							<nb-alert status="danger" role="alert" data-test="error">{{ 'INBOX.ERROR' | translate }}</nb-alert>
+							<button nbButton size="small" status="primary" (click)="reload()">
+								<nb-icon icon="refresh-outline"></nb-icon>
+								{{ 'INBOX.RETRY' | translate }}
+							</button>
+						</div>
 					}
 					@case ('loading') {
 						<div class="loading" data-test="loading" [nbSpinner]="true"></div>
 					}
 					@default {
+						<!-- The task page's tab bar: an icon before each label, the open tab underlined. -->
+						<div class="tab-row">
+							<div class="tabs" role="tablist" [attr.aria-label]="'INBOX.TITLE' | translate">
+								@for (entry of tabs; track entry) {
+									<button
+										type="button"
+										class="tab"
+										role="tab"
+										[attr.aria-selected]="tab() === entry"
+										[attr.data-test]="'tab-' + entry"
+										[class.is-active]="tab() === entry"
+										(click)="selectTab(entry)"
+									>
+										<nb-icon [icon]="tabIcons[entry]" aria-hidden="true"></nb-icon>
+										{{ 'INBOX.TABS.' + entry | translate }}
+										@if (tabCount(entry); as count) {
+											<span class="tab-count" [attr.data-test]="'count-' + entry">{{ count }}</span>
+										}
+									</button>
+								}
+							</div>
+						</div>
+
 						@if (actionError(); as message) {
 							<nb-alert
+								class="action-error"
 								status="danger"
 								role="alert"
 								closable
@@ -131,120 +178,150 @@ export function apiMessage(error: unknown): string | null {
 								>{{ isKey(message) ? (message | translate) : message }}</nb-alert
 							>
 						}
-						<div class="tabs" role="tablist">
-							@for (entry of tabs; track entry) {
-								<button
-									nbButton
-									ghost
-									size="small"
-									role="tab"
-									[attr.aria-selected]="tab() === entry"
-									[attr.data-test]="'tab-' + entry"
-									[class.active]="tab() === entry"
-									(click)="selectTab(entry)"
-								>
-									{{ 'INBOX.TABS.' + entry | translate }}
-									@if (tabCount(entry); as count) {
-										<span class="count" [attr.data-test]="'count-' + entry">{{ count }}</span>
-									}
-								</button>
-							}
-						</div>
 
 						@if (tab() === 'notifications') {
-							<ngx-inbox-notifications></ngx-inbox-notifications>
-						} @else {
-							<div class="filters" data-test="filters">
-								<nb-select
-									size="small"
-									data-test="filter-kind"
-									[placeholder]="'INBOX.FILTERS.KIND' | translate"
-									[selected]="kind()"
-									(selectedChange)="setKind($event)"
-								>
-									<nb-option [value]="null">{{ 'INBOX.FILTERS.ALL_KINDS' | translate }}</nb-option>
-									@for (value of kindOptions; track value) {
-										<nb-option [value]="value">{{ 'INBOX.KIND.' + value | translate }}</nb-option>
-									}
-								</nb-select>
-								<nb-select
-									size="small"
-									data-test="filter-source"
-									[placeholder]="'INBOX.FILTERS.SOURCE' | translate"
-									[selected]="source()"
-									(selectedChange)="setSource($event)"
-								>
-									<nb-option [value]="null">{{ 'INBOX.FILTERS.ALL_SOURCES' | translate }}</nb-option>
-									@for (value of sourceOptions; track value) {
-										<nb-option [value]="value">{{ sourceLabel(value) | translate }}</nb-option>
-									}
-								</nb-select>
-								<nb-checkbox
-									data-test="filter-unread"
-									[checked]="unreadOnly()"
-									(checkedChange)="setUnread($event)"
-								>
-									{{ 'INBOX.FILTERS.UNREAD' | translate }}
-								</nb-checkbox>
-								<input
-									nbInput
-									fieldSize="small"
-									type="search"
-									data-test="filter-q"
-									maxlength="200"
-									[placeholder]="'INBOX.FILTERS.SEARCH' | translate"
-									[ngModel]="query()"
-									(ngModelChange)="search$.next($event)"
-								/>
+							<div class="notifications-pane">
+								<ngx-inbox-notifications></ngx-inbox-notifications>
 							</div>
+						} @else {
+							<div class="panes" [class.has-selection]="!!selected()">
+								<section class="list-pane">
+									<div class="filters" data-test="filters">
+										<label class="search">
+											<nb-icon icon="search-outline" aria-hidden="true"></nb-icon>
+											<input
+												nbInput
+												fullWidth
+												class="search-input"
+												fieldSize="small"
+												type="search"
+												data-test="filter-q"
+												maxlength="200"
+												[attr.aria-label]="'INBOX.FILTERS.SEARCH' | translate"
+												[placeholder]="'INBOX.FILTERS.SEARCH' | translate"
+												[ngModel]="query()"
+												(ngModelChange)="search$.next($event)"
+											/>
+										</label>
+										<div class="filter-row">
+											<nb-select
+												size="small"
+												data-test="filter-kind"
+												[placeholder]="'INBOX.FILTERS.KIND' | translate"
+												[selected]="kind()"
+												(selectedChange)="setKind($event)"
+											>
+												<nb-option [value]="null">{{ 'INBOX.FILTERS.ALL_KINDS' | translate }}</nb-option>
+												@for (value of kindOptions; track value) {
+													<nb-option [value]="value">{{ 'INBOX.KIND.' + value | translate }}</nb-option>
+												}
+											</nb-select>
+											<nb-select
+												size="small"
+												data-test="filter-source"
+												[placeholder]="'INBOX.FILTERS.SOURCE' | translate"
+												[selected]="source()"
+												(selectedChange)="setSource($event)"
+											>
+												<nb-option [value]="null">{{ 'INBOX.FILTERS.ALL_SOURCES' | translate }}</nb-option>
+												@for (value of sourceOptions; track value) {
+													<nb-option [value]="value">{{ sourceLabel(value) | translate }}</nb-option>
+												}
+											</nb-select>
+											<nb-checkbox
+												class="unread-toggle"
+												data-test="filter-unread"
+												[checked]="unreadOnly()"
+												(checkedChange)="setUnread($event)"
+											>
+												{{ 'INBOX.FILTERS.UNREAD' | translate }}
+											</nb-checkbox>
+										</div>
+									</div>
 
-							<div class="panes">
-								<nb-list class="list" data-test="list" [nbSpinner]="loading()">
-									@for (item of items(); track item.id) {
-										<nb-list-item
-											class="row"
-											role="button"
-											tabindex="0"
-											[class.selected]="item.id === selectedId()"
-											[class.unread]="unread(item)"
-											[attr.data-test]="'item-' + item.id"
-											(click)="open(item)"
-											(keydown.enter)="open(item)"
-										>
-											<div class="row-title">{{ item.title }}</div>
-											<div class="row-meta">
-												<span>{{ 'INBOX.KIND.' + item.kind | translate }}</span>
-												<span>·</span>
-												<span>{{
-													isKey(sourceLabel(item.source))
-														? (sourceLabel(item.source) | translate)
-														: item.source
-												}}</span>
-												<span class="when">{{ item.createdAt | date: 'short' }}</span>
+									<div class="list" data-test="list" [nbSpinner]="loading()" nbSpinnerSize="small">
+										@for (item of items(); track item.id) {
+											<div
+												class="row"
+												role="button"
+												tabindex="0"
+												[class.selected]="item.id === selectedId()"
+												[class.unread]="unread(item)"
+												[attr.aria-current]="item.id === selectedId() ? 'true' : null"
+												[attr.data-test]="'item-' + item.id"
+												(click)="open(item)"
+												(keydown.enter)="open(item)"
+											>
+												<span class="unread-dot" aria-hidden="true"></span>
+												<span class="avatar" [attr.data-kind]="item.kind" aria-hidden="true">
+													<nb-icon [icon]="kindIcon(item.kind)"></nb-icon>
+												</span>
+												<div class="row-main">
+													<div class="row-top">
+														<span class="row-title">{{ item.title }}</span>
+														<time
+															class="when"
+															[attr.datetime]="item.createdAt"
+															[attr.title]="item.createdAt | date: 'medium'"
+															>{{ item.createdAt | date: listDate(item.createdAt) }}</time
+														>
+													</div>
+													@if (preview(item); as text) {
+														<div class="row-preview">{{ text }}</div>
+													}
+													<div class="row-meta">
+														<span class="tag">{{ 'INBOX.KIND.' + item.kind | translate }}</span>
+														<span class="source">{{
+															isKey(sourceLabel(item.source))
+																? (sourceLabel(item.source) | translate)
+																: item.source
+														}}</span>
+														@if (item.priority === 'high' || item.priority === 'urgent') {
+															<span class="tag priority">{{
+																'INBOX.PRIORITY.' + item.priority | translate
+															}}</span>
+														}
+													</div>
+												</div>
 											</div>
-										</nb-list-item>
-									} @empty {
-										@if (!loading()) {
-											<nb-list-item data-test="empty">{{
-												'INBOX.EMPTY' | translate
-											}}</nb-list-item>
+										} @empty {
+											@if (!loading()) {
+												<div class="state compact" data-test="empty">
+													<span class="state-icon"><nb-icon icon="inbox-outline"></nb-icon></span>
+													<strong>{{ 'INBOX.EMPTY' | translate }}</strong>
+													<span class="state-hint">{{ 'INBOX.EMPTY_HINT' | translate }}</span>
+												</div>
+											}
 										}
-									}
-								</nb-list>
-								@if (nextCursor()) {
-									<button
-										nbButton
-										ghost
-										size="small"
-										data-test="load-more"
-										[disabled]="loading()"
-										(click)="more()"
-									>
-										{{ 'INBOX.LOAD_MORE' | translate }}
-									</button>
-								}
-								<div class="detail-pane">
+										@if (nextCursor()) {
+											<div class="load-more">
+												<button
+													nbButton
+													ghost
+													size="small"
+													status="primary"
+													data-test="load-more"
+													[disabled]="loading()"
+													(click)="more()"
+												>
+													{{ 'INBOX.LOAD_MORE' | translate }}
+												</button>
+											</div>
+										}
+									</div>
+								</section>
+
+								<section class="detail-pane">
 									@if (selected(); as item) {
+										<button
+											type="button"
+											class="back"
+											data-test="back"
+											(click)="closeDetail()"
+										>
+											<nb-icon icon="arrow-back-outline"></nb-icon>
+											{{ 'INBOX.BACK' | translate }}
+										</button>
 										<ngx-inbox-item-detail
 											[item]="item"
 											[busy]="busy() || isReplying(item)"
@@ -253,9 +330,13 @@ export function apiMessage(error: unknown): string | null {
 											(stateChanged)="changeState(item, $event)"
 										></ngx-inbox-item-detail>
 									} @else {
-										<p class="hint" data-test="no-selection">{{ 'INBOX.SELECT' | translate }}</p>
+										<div class="state" data-test="no-selection">
+											<span class="state-icon"><nb-icon icon="message-square-outline"></nb-icon></span>
+											<strong>{{ 'INBOX.SELECT' | translate }}</strong>
+											<span class="state-hint">{{ 'INBOX.SELECT_HINT' | translate }}</span>
+										</div>
 									}
-								</div>
+								</section>
 							</div>
 						}
 					}
@@ -265,90 +346,513 @@ export function apiMessage(error: unknown): string | null {
 	`,
 	styles: [
 		`
+			:host {
+				display: block;
+			}
+			.inbox {
+				margin-bottom: 0;
+				overflow: hidden;
+			}
+
+			/* Header */
 			.inbox-header {
 				display: flex;
 				justify-content: space-between;
 				align-items: center;
+				gap: 1rem;
+				flex-wrap: wrap;
+				padding: 1rem 1.25rem;
 			}
-			.inbox-header h4 {
+			.heading {
+				display: flex;
+				align-items: center;
+				gap: 0.75rem;
+				min-width: 0;
+			}
+			.heading-icon {
+				display: inline-flex;
+				align-items: center;
+				justify-content: center;
+				width: 2.5rem;
+				height: 2.5rem;
+				border-radius: 0.75rem;
+				color: var(--color-primary-500, #6e49e8);
+				background: var(--color-primary-transparent-100, rgba(110, 73, 232, 0.12));
+				font-size: 1.25rem;
+				flex-shrink: 0;
+			}
+			.heading-text {
+				display: flex;
+				flex-direction: column;
+				min-width: 0;
+			}
+			.heading-text h4 {
 				margin: 0;
+				font-size: 1.25rem;
+				line-height: 1.3;
+			}
+			.subtitle {
+				font-size: 0.8125rem;
+				color: var(--text-hint-color, #8f9bb3);
 			}
 			.header-actions {
 				display: flex;
 				gap: 0.5rem;
 				align-items: center;
+				flex-wrap: wrap;
+			}
+
+			.inbox-body {
+				padding: 0;
+				overflow: hidden;
+			}
+
+			/* Tabs: the task page's tab bar (the employee page's, with an icon before each label) */
+			.tab-row {
+				display: flex;
+				align-items: flex-end;
+				padding: 0 1.25rem;
+				border-bottom: 1px solid var(--gauzy-border-default-color, rgba(126, 126, 143, 0.18));
 			}
 			.tabs {
 				display: flex;
 				flex-wrap: wrap;
-				gap: 0.25rem;
-				margin-bottom: 0.75rem;
-			}
-			.tabs .count {
-				margin-left: 0.35rem;
-				padding: 0 0.35rem;
-				border-radius: 0.75rem;
-				background: var(--gauzy-card-2);
-				font-size: 0.75em;
-			}
-			.tabs .active {
-				border-bottom: 2px solid var(--color-primary-default, #3366ff);
-			}
-			.filters {
-				display: flex;
-				flex-wrap: wrap;
-				gap: 0.5rem;
-				align-items: center;
-				margin-bottom: 0.75rem;
-			}
-			.panes {
-				display: grid;
-				grid-template-columns: minmax(16rem, 2fr) 3fr;
-				grid-template-rows: auto auto;
 				gap: 1rem;
 			}
-			.list {
-				grid-column: 1;
-				max-height: 70vh;
-				overflow: auto;
+			.tab {
+				position: relative;
+				display: inline-flex;
+				align-items: center;
+				gap: 0.375rem;
+				padding: 0.5rem 0.125rem 0.625rem;
+				border: 0;
+				background: transparent;
+				font: inherit;
+				font-size: 0.8125rem;
+				font-weight: 500;
+				line-height: 1.25rem;
+				color: var(--gauzy-text-color-2, #8f9bb3);
+				white-space: nowrap;
+				cursor: pointer;
+				transition: color 0.12s ease-in-out;
 			}
-			.detail-pane {
-				grid-column: 2;
-				grid-row: 1 / span 2;
+			.tab::after {
+				content: '';
+				position: absolute;
+				inset-inline: 0;
+				bottom: -1px;
+				height: 2px;
+				border-radius: 2px 2px 0 0;
+				background-color: transparent;
+			}
+			.tab:hover {
+				color: var(--gauzy-text-color-1, #222b45);
+			}
+			.tab:focus-visible {
+				outline: 2px solid var(--gauzy-action-info-text, #0095ff);
+				outline-offset: 2px;
+			}
+			.tab.is-active {
+				color: var(--color-primary-500, #6e49e8);
+			}
+			.tab.is-active::after {
+				background-color: var(--color-primary-500, #6e49e8);
+			}
+			.tab nb-icon {
+				width: 0.875rem;
+				height: 0.875rem;
+				font-size: 0.875rem;
+			}
+			.tab-count {
+				display: inline-flex;
+				align-items: center;
+				justify-content: center;
+				min-width: 1.25rem;
+				height: 1.125rem;
+				padding: 0 0.375rem;
+				border-radius: 999px;
+				background-color: var(--gauzy-hover-tint, rgba(126, 126, 143, 0.12));
+				font-size: 0.6875rem;
+				font-weight: 500;
+				line-height: 1;
+				color: var(--gauzy-text-color-2, #8f9bb3);
+				font-variant-numeric: tabular-nums;
+			}
+
+			.action-error {
+				margin: 0.75rem 1rem 0;
+			}
+			.notifications-pane {
+				padding: 0;
+			}
+
+			/* Two panes, mail-app style */
+			.panes {
+				display: grid;
+				grid-template-columns: minmax(17rem, 22rem) minmax(0, 1fr);
+				height: clamp(30rem, calc(100vh - 17rem), 64rem);
+			}
+			.list-pane {
+				display: flex;
+				flex-direction: column;
+				min-width: 0;
+				min-height: 0;
+				border-right: 1px solid var(--gauzy-border-default-color, rgba(126, 126, 143, 0.18));
+			}
+
+			/* Search and filters, at the task page's control size (1.75rem) */
+			.filters {
+				display: flex;
+				flex-direction: column;
+				gap: 0.5rem;
+				padding: 0.625rem 0.75rem;
+				border-bottom: 1px solid var(--gauzy-border-default-color, rgba(126, 126, 143, 0.18));
+			}
+			.search {
+				position: relative;
+				display: block;
+				margin: 0;
+				line-height: normal;
+			}
+			.search nb-icon {
+				position: absolute;
+				left: 0.5rem;
+				top: 50%;
+				transform: translateY(-50%);
+				width: 0.875rem;
+				height: 0.875rem;
+				font-size: 0.875rem;
+				color: var(--gauzy-text-color-2, #8f9bb3);
+				pointer-events: none;
+				z-index: 1;
+			}
+			/* The global input floor draws every input 46px tall, with !important. */
+			.search input.search-input {
+				min-height: 1.875rem !important;
+				height: 1.875rem;
+				padding: 0 0.625rem 0 1.75rem;
+				border-radius: 0.375rem;
+				font-size: 0.75rem;
+				line-height: 1rem;
+			}
+			.search input.search-input::placeholder {
+				font-size: 0.75rem;
+			}
+			.filter-row {
+				display: flex;
+				align-items: center;
+				gap: 0.375rem;
+				min-width: 0;
+			}
+			.filter-row nb-select {
+				flex: 1 1 0;
+				min-width: 0;
+				max-width: none;
+			}
+			/* Matched to Nebular's own nb-select.appearance-outline.size-small, as the task page does. */
+			.filter-row nb-select.appearance-outline.status-basic.size-small ::ng-deep .select-button {
+				min-width: 0 !important;
+				min-height: 1.75rem !important;
+				height: 1.75rem;
+				padding: 0 1.5rem 0 0.5rem;
+				border-radius: 0.375rem;
+				font-size: 0.75rem;
+				line-height: 1rem;
+				font-weight: 500;
+			}
+			.filter-row nb-select.appearance-outline.status-basic.size-small ::ng-deep .select-button nb-icon {
+				right: 0.25rem;
+				font-size: 0.875rem;
+			}
+			.unread-toggle {
+				flex: 0 0 auto;
+				white-space: nowrap;
+			}
+			.unread-toggle ::ng-deep .custom-checkbox {
+				width: 1rem;
+				height: 1rem;
+			}
+			.unread-toggle ::ng-deep .text {
+				padding-inline-start: 0.375rem;
+				font-size: 0.75rem;
+				font-weight: 500;
+				line-height: 1rem;
+				color: var(--gauzy-text-color-1, #222b45);
+			}
+
+			/* Message list */
+			.list {
+				flex: 1;
+				min-height: 0;
+				overflow-x: hidden;
+				overflow-y: auto;
+				padding: 0.25rem;
 			}
 			.row {
-				display: block;
+				position: relative;
+				display: flex;
+				gap: 0.625rem;
+				align-items: flex-start;
+				min-width: 0;
+				padding: 0.5rem 0.625rem 0.5rem 0.875rem;
+				border-radius: 0.5rem;
 				cursor: pointer;
+				outline: none;
+				transition: background-color 0.12s ease;
+			}
+			.row + .row {
+				margin-top: 1px;
+			}
+			.row:hover {
+				background: var(--gauzy-hover-tint, rgba(126, 126, 143, 0.08));
+			}
+			.row:focus-visible {
+				box-shadow: inset 0 0 0 2px var(--color-primary-500, #6e49e8);
 			}
 			.row.selected {
-				background: var(--background-basic-color-3, #edf1f7);
+				background: var(--color-primary-transparent-100, rgba(110, 73, 232, 0.12));
+			}
+			.row.selected::before {
+				content: '';
+				position: absolute;
+				left: 0;
+				top: 0.5rem;
+				bottom: 0.5rem;
+				width: 2px;
+				border-radius: 2px;
+				background: var(--color-primary-500, #6e49e8);
+			}
+			.unread-dot {
+				position: absolute;
+				left: 0.3rem;
+				top: 1.125rem;
+				width: 0.375rem;
+				height: 0.375rem;
+				border-radius: 50%;
+				background: var(--color-primary-500, #6e49e8);
+				opacity: 0;
+			}
+			.row.unread .unread-dot {
+				opacity: 1;
+			}
+			.row-main {
+				flex: 1;
+				min-width: 0;
+				display: flex;
+				flex-direction: column;
+				gap: 0.125rem;
+			}
+			.row-top {
+				display: flex;
+				align-items: baseline;
+				gap: 0.5rem;
+				min-width: 0;
+			}
+			.row-title {
+				flex: 1;
+				min-width: 0;
+				font-size: 0.8125rem;
+				font-weight: 500;
+				line-height: 1.125rem;
+				color: var(--gauzy-text-color-1, #222b45);
+				overflow: hidden;
+				text-overflow: ellipsis;
+				white-space: nowrap;
 			}
 			.row.unread .row-title {
 				font-weight: 600;
 			}
+			.when {
+				flex-shrink: 0;
+				font-size: 0.6875rem;
+				line-height: 1rem;
+				color: var(--gauzy-text-color-2, #8f9bb3);
+				white-space: nowrap;
+				font-variant-numeric: tabular-nums;
+			}
+			.row.unread .when {
+				color: var(--color-primary-500, #6e49e8);
+				font-weight: 600;
+			}
+			.row-preview {
+				min-width: 0;
+				font-size: 0.75rem;
+				line-height: 1rem;
+				color: var(--gauzy-text-color-2, #8f9bb3);
+				white-space: nowrap;
+				overflow: hidden;
+				text-overflow: ellipsis;
+			}
 			.row-meta {
 				display: flex;
-				gap: 0.3rem;
-				font-size: 0.8rem;
-				opacity: 0.8;
+				align-items: center;
+				gap: 0.375rem;
+				min-width: 0;
+				margin-top: 0.125rem;
+				font-size: 0.6875rem;
+				line-height: 1rem;
+				color: var(--gauzy-text-color-2, #8f9bb3);
 			}
-			.row-meta .when {
-				margin-left: auto;
+			.row-meta .source {
+				overflow: hidden;
+				text-overflow: ellipsis;
+				white-space: nowrap;
 			}
-			.hint {
-				opacity: 0.7;
+			.tag {
+				flex-shrink: 0;
+				padding: 0 0.375rem;
+				border-radius: 0.1875rem;
+				line-height: 1rem;
+				background: var(--gauzy-hover-tint, rgba(126, 126, 143, 0.12));
+				color: var(--gauzy-text-color-2, #8f9bb3);
+				font-weight: 500;
+			}
+			.tag.priority {
+				background: var(--color-danger-transparent-200, rgba(255, 61, 113, 0.16));
+				color: var(--color-danger-500, #ff3d71);
+			}
+			.load-more {
+				display: flex;
+				justify-content: center;
+				padding: 0.375rem;
+			}
+
+
+			/* Kind avatars (also used by the detail pane) */
+			.avatar {
+				--tone: var(--color-primary-500, #6e49e8);
+				--tone-bg: var(--color-primary-transparent-100, rgba(110, 73, 232, 0.12));
+				display: inline-flex;
+				align-items: center;
+				justify-content: center;
+				flex-shrink: 0;
+				width: 1.75rem;
+				height: 1.75rem;
+				border-radius: 50%;
+				color: var(--tone);
+				background: var(--tone-bg);
+				font-size: 0.875rem;
+			}
+			.avatar nb-icon {
+				width: 0.875rem;
+				height: 0.875rem;
+				font-size: 0.875rem;
+			}
+			.avatar[data-kind='QUESTION'] {
+				--tone: var(--color-info-500, #0095ff);
+				--tone-bg: var(--color-info-transparent-100, rgba(0, 149, 255, 0.12));
+			}
+			.avatar[data-kind='APPROVAL'] {
+				--tone: var(--color-success-500, #00d68f);
+				--tone-bg: var(--color-success-transparent-100, rgba(0, 214, 143, 0.12));
+			}
+			.avatar[data-kind='ESCALATION'] {
+				--tone: var(--color-danger-500, #ff3d71);
+				--tone-bg: var(--color-danger-transparent-100, rgba(255, 61, 113, 0.12));
+			}
+			.avatar[data-kind='NOTIFICATION'] {
+				--tone: var(--color-warning-500, #ffaa00);
+				--tone-bg: var(--color-warning-transparent-100, rgba(255, 170, 0, 0.12));
+			}
+			.avatar[data-kind='NOTICE'] {
+				--tone: var(--text-hint-color, #8f9bb3);
+				--tone-bg: var(--background-basic-color-3, #edf1f7);
+			}
+
+			/* Reading pane */
+			.detail-pane {
+				min-width: 0;
+				min-height: 0;
+				display: flex;
+				flex-direction: column;
+				background: var(--background-basic-color-1, #fff);
+			}
+			.detail-pane ngx-inbox-item-detail {
+				flex: 1;
+				min-height: 0;
+				display: flex;
+				flex-direction: column;
+			}
+			.back {
+				display: none;
+				align-items: center;
+				gap: 0.35rem;
+				margin: 0.5rem 0.75rem 0;
+				padding: 0.35rem 0.5rem;
+				border: 0;
+				border-radius: 0.375rem;
+				background: none;
+				color: var(--color-primary-500, #6e49e8);
+				font: inherit;
+				font-size: 0.8125rem;
+				font-weight: 600;
+				cursor: pointer;
+				align-self: flex-start;
+			}
+
+			/* Empty, unavailable and "select an item" states */
+			.state {
+				display: flex;
+				flex-direction: column;
+				align-items: center;
+				justify-content: center;
+				gap: 0.5rem;
+				height: 100%;
+				min-height: 14rem;
+				padding: 2rem 1.5rem;
+				text-align: center;
+				color: var(--text-basic-color, #222b45);
+			}
+			.state.compact {
+				min-height: 12rem;
+				height: auto;
+			}
+			.state p {
+				margin: 0;
+				max-width: 28rem;
+			}
+			.state-icon {
+				display: inline-flex;
+				align-items: center;
+				justify-content: center;
+				width: 3.5rem;
+				height: 3.5rem;
+				margin-bottom: 0.25rem;
+				border-radius: 50%;
+				background: var(--background-basic-color-2, #f7f9fc);
+				color: var(--text-hint-color, #8f9bb3);
+				font-size: 1.6rem;
+			}
+			.state-hint {
+				max-width: 22rem;
+				font-size: 0.8125rem;
+				color: var(--text-hint-color, #8f9bb3);
 			}
 			.loading {
-				min-height: 8rem;
+				min-height: 16rem;
 			}
+
+			/* Narrow screens: the list, or the open item with a way back */
 			@media (max-width: 960px) {
 				.panes {
-					grid-template-columns: 1fr;
+					grid-template-columns: minmax(0, 1fr);
+					height: auto;
+					min-height: 28rem;
 				}
-				.list,
-				.detail-pane {
-					grid-column: 1;
-					grid-row: auto;
+				.list-pane {
+					border-right: 0;
+				}
+				.list {
+					max-height: 70vh;
+				}
+				.panes.has-selection .list-pane {
+					display: none;
+				}
+				.panes:not(.has-selection) .detail-pane {
+					display: none;
+				}
+				.back {
+					display: inline-flex;
 				}
 			}
 		`
@@ -361,6 +865,7 @@ export class InboxPageComponent implements OnInit {
 	private readonly destroyRef = inject(DestroyRef);
 
 	protected readonly tabs = INBOX_UI_TABS;
+	protected readonly tabIcons = INBOX_UI_TAB_ICONS;
 	protected readonly myMailboxLink = INBOX_MY_MAILBOX_LINK;
 	/** "My mailbox" is linked only where the API serves the Inbox email features. */
 	readonly emailAvailable = toSignal(inject(InboxEmailAvailabilityService).available$, { initialValue: false });
@@ -378,6 +883,11 @@ export class InboxPageComponent implements OnInit {
 	readonly loading = signal(false);
 	/** My counts, beside the tabs: read with the availability check, and again after the page changed an item. */
 	readonly counts = signal<IInboxItemCounts | null>(null);
+	/** My unread items, under the page's title (none: the title's subtitle instead). */
+	readonly unreadTotal = computed(() => {
+		const unread = Number(this.counts()?.unread) || 0;
+		return unread > 0 ? unread : null;
+	});
 	readonly selectedId = signal<string | null>(null);
 	/** A read / archive / snooze change is on its way. */
 	readonly busy = signal(false);
@@ -666,6 +1176,26 @@ export class InboxPageComponent implements OnInit {
 
 	isKey(label: string): boolean {
 		return isTranslationKey(label);
+	}
+
+	/** The icon of a row's avatar. */
+	kindIcon(kind: string): string {
+		return kindIconOf(kind);
+	}
+
+	/** A row's time, as messaging apps show it (the full date and time on hover). */
+	listDate(createdAt: Date | string | null | undefined): string {
+		return listDateFormat(createdAt);
+	}
+
+	/** The line of the body under a row's title. */
+	preview(item: IInboxItemWithState): string {
+		return previewOf(item.body);
+	}
+
+	/** Back to the list (narrow screens, where the open item replaces the list). */
+	closeDetail(): void {
+		this.selectedId.set(null);
 	}
 
 	/** Whether a reply to this item is on its way. */
