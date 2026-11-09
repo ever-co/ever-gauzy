@@ -1,10 +1,19 @@
 import { BaseEntityEnum, InboxItemKindEnum, InboxItemStatusEnum, InboxTabEnum } from '@gauzy/contracts';
 import {
+	activityOf,
 	apiTabOf,
+	dateGroupOf,
+	dueStateOf,
 	escalationDetails,
+	groupByDate,
 	isDone,
 	isSnoozed,
 	isTranslationKey,
+	isTypingTarget,
+	notificationIconOf,
+	notificationTypeLabelOf,
+	senderOf,
+	undoOf,
 	isUnread,
 	kindIconOf,
 	linksOf,
@@ -194,5 +203,115 @@ describe('Inbox UI helpers', () => {
 		expect(mailboxLabelOf({ metadata: { mailbox: 42 } } as never)).toBeNull();
 		expect(mailboxLabelOf({ metadata: null } as never)).toBeNull();
 		expect(mailboxLabelOf({ metadata: { mailbox: 'x'.repeat(200) } } as never)).toHaveLength(120);
+	});
+
+	describe('the list sections, due labels, undo, shortcuts, notifications and activity', () => {
+		// Wednesday 11 November 2026, 15:00 local time.
+		const now = new Date(2026, 10, 11, 15, 0, 0);
+
+		it('sections a row by the day it came: today, yesterday, the 7 days before, older', () => {
+			expect(dateGroupOf(new Date(2026, 10, 11, 0, 5), now)).toBe('TODAY');
+			expect(dateGroupOf(new Date(2026, 10, 10, 23, 59), now)).toBe('YESTERDAY');
+			expect(dateGroupOf(new Date(2026, 10, 10, 0, 0), now)).toBe('YESTERDAY');
+			expect(dateGroupOf(new Date(2026, 10, 5, 12, 0), now)).toBe('THIS_WEEK');
+			expect(dateGroupOf(new Date(2026, 10, 1, 12, 0), now)).toBe('OLDER');
+			expect(dateGroupOf(null, now)).toBe('OLDER');
+			expect(dateGroupOf('not a date', now)).toBe('OLDER');
+		});
+
+		it('groups rows in their sections, keeping their order', () => {
+			const rows = [
+				{ id: 'a', createdAt: new Date(2026, 10, 11, 9) },
+				{ id: 'b', createdAt: new Date(2026, 10, 11, 8) },
+				{ id: 'c', createdAt: new Date(2026, 10, 10, 8) },
+				{ id: 'd', createdAt: new Date(2026, 9, 1) }
+			];
+			expect(groupByDate(rows, now).map((section) => [section.group, section.items.map((row) => row.id)])).toEqual([
+				['TODAY', ['a', 'b']],
+				['YESTERDAY', ['c']],
+				['OLDER', ['d']]
+			]);
+			expect(groupByDate([], now)).toEqual([]);
+		});
+
+		it('shows the due date of an open item only: overdue, due today, or due later', () => {
+			const due = (dueAt: Date | null, extra: object = {}) =>
+				({ dueAt, status: InboxItemStatusEnum.OPEN, recipient: { isRead: true }, ...extra }) as never;
+			expect(dueStateOf(due(new Date(2026, 10, 11, 9)), now)).toBe('OVERDUE');
+			expect(dueStateOf(due(new Date(2026, 10, 11, 18)), now)).toBe('TODAY');
+			expect(dueStateOf(due(new Date(2026, 10, 14, 9)), now)).toBe('UPCOMING');
+			expect(dueStateOf(due(null), now)).toBeNull();
+			expect(dueStateOf(due(new Date(2026, 10, 1), { status: InboxItemStatusEnum.ANSWERED }), now)).toBeNull();
+			expect(dueStateOf(due(new Date(2026, 10, 1), { recipient: { isRead: true, isDone: true } }), now)).toBeNull();
+		});
+
+		it('offers to undo archive, done and snooze, with the change that takes each back', () => {
+			const before = { recipient: { isRead: true, isArchived: false, snoozedUntil: null } } as never;
+			expect(undoOf({ isArchived: true }, before)).toEqual({ kind: 'ARCHIVED', revert: { isArchived: false } });
+			expect(undoOf({ isArchived: false }, before)).toEqual({ kind: 'UNARCHIVED', revert: { isArchived: true } });
+			expect(undoOf({ isDone: true }, before)).toEqual({ kind: 'DONE', revert: { isDone: false } });
+			expect(undoOf({ snoozedUntil: '2099-01-01T09:00:00.000Z' }, before)).toEqual({
+				kind: 'SNOOZED',
+				revert: { snoozedUntil: null }
+			});
+			// Woken up: the undo snoozes it again until the time it had.
+			const snoozed = { recipient: { isRead: true, snoozedUntil: '2099-01-01T09:00:00.000Z' } } as never;
+			expect(undoOf({ snoozedUntil: null }, snoozed)).toEqual({
+				kind: 'UNSNOOZED',
+				revert: { snoozedUntil: '2099-01-01T09:00:00.000Z' }
+			});
+			// The read state is its own undo.
+			expect(undoOf({ isRead: true }, before)).toBeNull();
+		});
+
+		it('never takes a shortcut typed in a field', () => {
+			expect(isTypingTarget(document.createElement('input'))).toBe(true);
+			expect(isTypingTarget(document.createElement('textarea'))).toBe(true);
+			expect(isTypingTarget(document.createElement('select'))).toBe(true);
+			expect(isTypingTarget(document.createElement('div'))).toBe(false);
+			expect(isTypingTarget(null)).toBe(false);
+		});
+
+		it("names a notification's type, with its icon; a bell and no label for a type it does not know", () => {
+			expect(notificationIconOf('Mention')).toBe('at-outline');
+			expect(notificationTypeLabelOf('Mention')).toBe('INBOX.NOTIFICATIONS.TYPE.Mention');
+			expect(notificationIconOf('Unknown')).toBe('bell-outline');
+			expect(notificationTypeLabelOf('Unknown')).toBeNull();
+			expect(notificationTypeLabelOf(undefined)).toBeNull();
+		});
+
+		it("reads a notification's sender: name, picture and initials; none without a joined sender", () => {
+			expect(
+				senderOf({ sentByEmployee: { user: { firstName: 'Ada', lastName: 'Lovelace', imageUrl: 'a.png' } } } as never)
+			).toEqual({ name: 'Ada Lovelace', imageUrl: 'a.png', initials: 'AL' });
+			expect(senderOf({ sentByEmployee: { fullName: 'grace' } } as never)).toEqual({
+				name: 'grace',
+				imageUrl: null,
+				initials: 'G'
+			});
+			expect(senderOf({ sentByEmployee: undefined } as never)).toBeNull();
+			expect(senderOf({ sentByEmployee: { user: {} } } as never)).toBeNull();
+		});
+
+		it("tells an item's history, oldest first, from the times it carries", () => {
+			const item = {
+				createdAt: new Date(2026, 10, 10, 9),
+				response: { answeredAt: new Date(2026, 10, 11, 10) },
+				recipient: {
+					isRead: true,
+					readAt: new Date(2026, 10, 10, 12),
+					isArchived: true,
+					archivedAt: new Date(2026, 10, 11, 11),
+					snoozedUntil: null
+				}
+			} as never;
+			expect(activityOf(item, now).map((step) => step.event)).toEqual(['RECEIVED', 'READ', 'ANSWERED', 'ARCHIVED']);
+			// A running snooze shows at the time it ends; a past one is left out.
+			const snoozed = {
+				createdAt: new Date(2026, 10, 10, 9),
+				recipient: { isRead: false, readAt: new Date(2026, 10, 10, 9, 30), snoozedUntil: new Date(2026, 10, 12, 9) }
+			} as never;
+			expect(activityOf(snoozed, now).map((step) => step.event)).toEqual(['RECEIVED', 'SNOOZED']);
+		});
 	});
 });
