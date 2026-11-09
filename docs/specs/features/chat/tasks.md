@@ -51,6 +51,6 @@
 
 ## Follow-ups (from the plan's §14)
 
-- [ ] **T26**. Scope `directKey` to the organization: lookup and unique index (`tenantId`, `organizationId`, `directKey`) (plan §14.1)
-- [ ] **T27**. Generic `/reaction` reads and updates exclude or refuse `ChatMessage` (plan §14.2)
-- [ ] **T28**. The conversation read leaves thread-only replies to the thread read (plan §14.3)
+- [x] **T26**. Scope `directKey` to the organization: lookup and unique index (`tenantId`, `organizationId`, `directKey`), migration `1791000006600` (plan §14.1)
+- [x] **T27**. Generic `/reaction` reads and updates exclude or refuse `ChatMessage` (plan §14.2)
+- [x] **T28**. The conversation read leaves thread-only replies to the thread read (plan §14.3)

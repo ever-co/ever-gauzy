@@ -96,6 +96,24 @@ export async function createIndexIfMissing(queryRunner: QueryRunner, table: stri
 	}
 }
 
+/** Drops the index when it exists (re-running issues no DDL that can fail). */
+export async function dropIndexIfExists(queryRunner: QueryRunner, table: string, name: string): Promise<void> {
+	const dialect = dialectOf(queryRunner);
+	if (dialect !== 'mysql') {
+		// Postgres and SQLite say it in the statement, for the reason `createIndexIfMissing` gives.
+		await queryRunner.query(`DROP INDEX IF EXISTS ${q(dialect, name)}`);
+		return;
+	}
+	if (!(await hasIndex(queryRunner, table, name))) return;
+	try {
+		await queryRunner.query(`DROP INDEX ${q(dialect, name)} ON ${q(dialect, table)}`);
+	} catch (error) {
+		// MySQL has no IF EXISTS for an index: another process dropped it between the probe and here.
+		if (!(await hasIndex(queryRunner, table, name))) return;
+		throw error;
+	}
+}
+
 /** Whether a foreign key (constraint) of that name exists on the table (Postgres and MySQL). */
 export async function hasConstraint(queryRunner: QueryRunner, table: string, name: string): Promise<boolean> {
 	const dialect = dialectOf(queryRunner);

@@ -20,11 +20,13 @@ toggle.
 ## What it is built on
 
 - **Reactions** are the platform's `Reaction` rows (`entity = ChatMessage`),
-  written through chat routes that check membership.
+  written through chat routes that check membership. The platform's generic
+  `/reaction` routes leave them out (refused, or read as not found).
 - **Mentions** go through the platform's mention service (a MENTION
   notification, filed in the Inbox); a direct or group message and a reply in a
   followed thread create a MESSAGE notification. Reading a conversation marks
-  them read.
+  them read, except a reply that lives in a thread only: reading that thread
+  marks it read.
 - **Real time**: every write appends content-free, addressed facts to the event
   outbox (`chat_message.created`, `chat_message.updated`,
   `chat_message.deleted`, `chat_conversation.changed`,
@@ -50,7 +52,10 @@ toggle.
 PostgreSQL / MySQL / SQLite, idempotent) and the role grants (`1791000006200`:
 `CHAT_VIEW` and `CHAT_SEND` for the SUPER_ADMIN, ADMIN, MANAGER, EMPLOYEE and
 DATA_ENTRY roles, `CHAT_MANAGE` for SUPER_ADMIN, ADMIN and MANAGER; a grant a
-tenant switched off by hand stays off).
+tenant switched off by hand stays off). A direct or group conversation is
+unique per organization by its `directKey` (unique index `tenantId`,
+`organizationId`, `directKey`; migration `1791000006600` replaced the
+per-tenant one).
 
 ## Routes (`/api/chat`, `CHAT_VIEW`; writes `CHAT_SEND`; 404 for a conversation the caller is not in)
 

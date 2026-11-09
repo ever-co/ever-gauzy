@@ -19,7 +19,8 @@ jest.mock('@gauzy/core', () => {
 });
 
 import { ForbiddenException, NotFoundException } from '@nestjs/common';
-import { DataSource } from 'typeorm';
+import { DataSource, FindOperator } from 'typeorm';
+import { directKeyOf } from '../chat-direct-key';
 import { ChatAccessService, IChatCaller } from './chat-access.service';
 import { ChatConversationService } from './chat-conversation.service';
 import { ChatRealtime } from '../realtime/chat-realtime';
@@ -131,5 +132,121 @@ describe('ChatConversationService categories', () => {
 		await expect(service.updateCategory({ ...managerOfA, canManage: false }, 'cat-a', { name: 'x' })).rejects.toBeInstanceOf(ForbiddenException);
 		await expect(service.deleteCategory({ ...managerOfA, canManage: false }, 'cat-a')).rejects.toBeInstanceOf(ForbiddenException);
 		expect(categories.findOne).not.toHaveBeenCalled();
+	});
+});
+
+type Conversation = { id: string; tenantId: string; organizationId: string | null; kind: string; directKey: string | null; createdByEmployeeId: string; createdAt: Date };
+type EmployeeRow = { id: string; userId: string; tenantId: string; organizationId: string };
+
+/**
+ * Users u1 and u2 are employees of two organizations of one tenant (an employee record per organization), and
+ * already have a direct conversation in organization A.
+ */
+const EMPLOYEES: EmployeeRow[] = [
+	{ id: 'e1-a', userId: 'u1', tenantId: 'ten', organizationId: 'org-a' },
+	{ id: 'e2-a', userId: 'u2', tenantId: 'ten', organizationId: 'org-a' },
+	{ id: 'e1-b', userId: 'u1', tenantId: 'ten', organizationId: 'org-b' },
+	{ id: 'e2-b', userId: 'u2', tenantId: 'ten', organizationId: 'org-b' }
+];
+
+const directOfA = (): Conversation => ({
+	id: 'direct-a',
+	tenantId: 'ten',
+	organizationId: 'org-a',
+	kind: 'direct',
+	directKey: directKeyOf(['u1', 'u2']),
+	createdByEmployeeId: 'e1-a',
+	createdAt: new Date(Date.now() - 86_400_000)
+});
+
+function directOver(conversations: Conversation[], options: { raceWinner?: Conversation } = {}) {
+	const repository = {
+		findOne: jest.fn(async ({ where }: { where: Record<string, unknown> }) => conversations.find((row) => matches(row, where)) ?? null)
+	};
+	const employees = {
+		find: jest.fn(async ({ where }: { where: { id: FindOperator<string[]>; tenantId: string; organizationId?: string } }) =>
+			EMPLOYEES.filter((employee) => (where.id.value as unknown as string[]).includes(employee.id) && employee.tenantId === where.tenantId && (!where.organizationId || employee.organizationId === where.organizationId))
+		)
+	};
+	const members = { update: jest.fn(async () => ({ affected: 0 })) };
+	const manager = {
+		getRepository: (entity: { name?: string }) =>
+			entity?.name === 'ChatConversation'
+				? {
+						create: (row: Partial<Conversation>) => ({ ...row }),
+						save: async (row: Partial<Conversation>) => {
+							const saved = { ...row, id: `direct-${conversations.length + 1}`, createdAt: new Date() } as Conversation;
+							conversations.push(saved);
+							return saved;
+						}
+				  }
+				: { create: (row: unknown) => row, save: async (row: unknown) => row }
+	};
+	const dataSource = {
+		getRepository: (entity: { name?: string }) => (entity?.name === 'ChatConversation' ? repository : entity?.name === 'ChatMember' ? members : employees),
+		transaction: jest.fn(async (work: (m: typeof manager) => Promise<unknown>) => {
+			if (options.raceWinner) {
+				// Another request created the conversation first: the unique key refuses this one.
+				conversations.push(options.raceWinner);
+				throw new Error('duplicate key value violates unique constraint "UQ_chat_conversation_organization_direct_key"');
+			}
+			return work(manager);
+		})
+	} as unknown as DataSource;
+	const realtime = { publish: jest.fn(async (fact: unknown) => fact), conversationFact: jest.fn((conversation: Conversation, kind: string) => ({ kind, conversationId: conversation.id })) };
+	const service = new ChatConversationService(dataSource, {} as ChatAccessService, realtime as unknown as ChatRealtime);
+	// What `get` answers, by the rule of `ChatAccessService.conversation`: another organization's conversation is not found.
+	jest.spyOn(service, 'get').mockImplementation(async (caller: IChatCaller, id: string) => {
+		const row = conversations.find((conversation) => conversation.id === id);
+		if (!row || (caller.organizationId && row.organizationId && row.organizationId !== caller.organizationId)) {
+			throw new NotFoundException('The requested record was not found');
+		}
+		return row as never;
+	});
+	return { service, repository, dataSource: dataSource as unknown as { transaction: jest.Mock }, conversations };
+}
+
+describe('ChatConversationService.direct — one conversation per organization', () => {
+	const u1In = (organizationId: string | null): IChatCaller & { employeeId: string } => ({
+		tenantId: 'ten',
+		organizationId,
+		userId: 'u1',
+		employeeId: organizationId === 'org-b' ? 'e1-b' : 'e1-a',
+		canManage: false
+	});
+
+	it('creates the conversation of two people in their second organization, though they have one in the first', async () => {
+		const { service, repository, conversations } = directOver([directOfA()]);
+		const result = await service.direct(u1In('org-b'), ['e2-b']);
+		expect(result.created).toBe(true);
+		expect(result.conversation).toMatchObject({ organizationId: 'org-b', directKey: directKeyOf(['u1', 'u2']), kind: 'direct' });
+		expect(repository.findOne.mock.calls[0][0].where).toEqual({ tenantId: 'ten', organizationId: 'org-b', directKey: directKeyOf(['u1', 'u2']) });
+		expect(conversations.map((conversation) => [conversation.id, conversation.organizationId])).toEqual([
+			['direct-a', 'org-a'],
+			['direct-2', 'org-b']
+		]);
+	});
+
+	it('finds the conversation of their organization, whoever starts it, and creates nothing', async () => {
+		const { service, dataSource } = directOver([directOfA()]);
+		const result = await service.direct({ ...u1In('org-a'), userId: 'u2', employeeId: 'e2-a' }, ['e1-a']);
+		expect(result).toMatchObject({ created: false, conversation: { id: 'direct-a' } });
+		expect(dataSource.transaction).not.toHaveBeenCalled();
+	});
+
+	it('answers the loser of a race with the winner of its own organization, not another organization’s', async () => {
+		const winner: Conversation = { ...directOfA(), id: 'direct-b', organizationId: 'org-b', createdByEmployeeId: 'e2-b', createdAt: new Date() };
+		const { service, repository } = directOver([directOfA()], { raceWinner: winner });
+		const result = await service.direct(u1In('org-b'), ['e2-b']);
+		expect(result).toMatchObject({ created: false, conversation: { id: 'direct-b' } });
+		expect(repository.findOne.mock.calls[1][0].where).toEqual({ tenantId: 'ten', organizationId: 'org-b', directKey: directKeyOf(['u1', 'u2']) });
+	});
+
+	it('keeps the tenant-wide lookup of a caller the request scopes to no organization', async () => {
+		const { service, repository, dataSource } = directOver([directOfA()]);
+		const result = await service.direct(u1In(null), ['e2-a']);
+		expect(result).toMatchObject({ created: false, conversation: { id: 'direct-a' } });
+		expect(repository.findOne.mock.calls[0][0].where).toEqual({ tenantId: 'ten', directKey: directKeyOf(['u1', 'u2']) });
+		expect(dataSource.transaction).not.toHaveBeenCalled();
 	});
 });
