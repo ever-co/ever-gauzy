@@ -15,6 +15,7 @@ import {
 	InboxItemStatusEnum
 } from '@gauzy/contracts';
 import {
+	activityOf,
 	escalationDetails,
 	INBOX_REPLY_MAX,
 	INBOX_SNOOZE_PRESETS,
@@ -64,7 +65,7 @@ import { InboxEmailViewerComponent } from '../inbox-email-viewer/inbox-email-vie
 							class="tool"
 							data-test="toggle-read"
 							[disabled]="busy()"
-							[attr.title]="(unread() ? 'INBOX.ACTIONS.MARK_READ' : 'INBOX.ACTIONS.MARK_UNREAD') | translate"
+							[attr.title]="((unread() ? 'INBOX.ACTIONS.MARK_READ' : 'INBOX.ACTIONS.MARK_UNREAD') | translate) + ' (u)'"
 							(click)="toggleRead()"
 						>
 							<nb-icon [icon]="unread() ? 'done-all-outline' : 'email-outline'"></nb-icon>
@@ -77,7 +78,7 @@ import { InboxEmailViewerComponent } from '../inbox-email-viewer/inbox-email-vie
 							class="tool"
 							data-test="toggle-archive"
 							[disabled]="busy()"
-							[attr.title]="(archived() ? 'INBOX.ACTIONS.UNARCHIVE' : 'INBOX.ACTIONS.ARCHIVE') | translate"
+							[attr.title]="((archived() ? 'INBOX.ACTIONS.UNARCHIVE' : 'INBOX.ACTIONS.ARCHIVE') | translate) + ' (e)'"
 							(click)="toggleArchive()"
 						>
 							<nb-icon [icon]="archived() ? 'arrow-circle-up-outline' : 'archive-outline'"></nb-icon>
@@ -91,7 +92,7 @@ import { InboxEmailViewerComponent } from '../inbox-email-viewer/inbox-email-vie
 							data-test="toggle-done"
 							[class.on]="done()"
 							[disabled]="busy()"
-							[attr.title]="(done() ? 'INBOX.ACTIONS.MARK_NOT_DONE' : 'INBOX.ACTIONS.MARK_DONE') | translate"
+							[attr.title]="((done() ? 'INBOX.ACTIONS.MARK_NOT_DONE' : 'INBOX.ACTIONS.MARK_DONE') | translate) + ' (d)'"
 							(click)="toggleDone()"
 						>
 							<nb-icon [icon]="done() ? 'undo-outline' : 'checkmark-circle-2-outline'"></nb-icon>
@@ -271,6 +272,24 @@ import { InboxEmailViewerComponent } from '../inbox-email-viewer/inbox-email-vie
 							}
 						}
 					</div>
+				}
+
+				<!-- What happened to the item, oldest first: received, read, answered, done, archived, snoozed until. -->
+				@if (activity().length) {
+					<section class="activity" data-test="activity">
+						<h6 class="activity-title">{{ 'INBOX.ACTIVITY.TITLE' | translate }}</h6>
+						<ol class="timeline">
+							@for (step of activity(); track step.event) {
+								<li class="step" [attr.data-event]="step.event" [attr.data-test]="'activity-' + step.event">
+									<span class="step-dot" aria-hidden="true"></span>
+									<span class="step-label">{{ 'INBOX.ACTIVITY.' + step.event | translate }}</span>
+									<time class="step-when" [attr.datetime]="step.at.toISOString()">{{
+										step.at | date: 'MMM d, y, h:mm a'
+									}}</time>
+								</li>
+							}
+						</ol>
+					</section>
 				}
 			</div>
 
@@ -705,6 +724,79 @@ import { InboxEmailViewerComponent } from '../inbox-email-viewer/inbox-email-vie
 			.answer .body {
 				margin-bottom: 0;
 			}
+			/* Activity: a thin timeline under the message */
+			.activity {
+				max-width: 72ch;
+				margin-top: 1.25rem;
+				padding-top: 0.75rem;
+				border-top: 1px dashed var(--gauzy-border-default-color, rgba(126, 126, 143, 0.24));
+			}
+			.activity-title {
+				margin: 0 0 0.5rem;
+				font-size: 0.6875rem;
+				font-weight: 600;
+				line-height: 1rem;
+				text-transform: uppercase;
+				letter-spacing: 0.03em;
+				color: var(--gauzy-text-color-2, #8f9bb3);
+			}
+			.timeline {
+				margin: 0;
+				padding: 0;
+				list-style: none;
+			}
+			.step {
+				position: relative;
+				display: flex;
+				align-items: baseline;
+				gap: 0.5rem;
+				padding: 0 0 0.5rem 1rem;
+				font-size: 0.75rem;
+				line-height: 1rem;
+			}
+			.step::before {
+				content: '';
+				position: absolute;
+				left: 0.1875rem;
+				top: 0.625rem;
+				bottom: -0.125rem;
+				width: 1px;
+				background: var(--gauzy-border-default-color, rgba(126, 126, 143, 0.32));
+			}
+			.step:last-child {
+				padding-bottom: 0;
+			}
+			.step:last-child::before {
+				display: none;
+			}
+			.step-dot {
+				position: absolute;
+				left: 0;
+				top: 0.25rem;
+				width: 0.4375rem;
+				height: 0.4375rem;
+				border-radius: 50%;
+				background: var(--gauzy-text-color-2, #8f9bb3);
+			}
+			.step[data-event='ANSWERED'] .step-dot,
+			.step[data-event='DONE'] .step-dot {
+				background: var(--color-success-500, #00d68f);
+			}
+			.step[data-event='SNOOZED'] .step-dot {
+				background: var(--color-warning-500, #ffaa00);
+			}
+			.step[data-event='RECEIVED'] .step-dot {
+				background: var(--color-primary-500, #6e49e8);
+			}
+			.step-label {
+				font-weight: 500;
+				color: var(--gauzy-text-color-1, #222b45);
+			}
+			.step-when {
+				color: var(--gauzy-text-color-2, #8f9bb3);
+				font-variant-numeric: tabular-nums;
+			}
+
 			.routed,
 			.hint {
 				margin-top: 0.25rem;
@@ -864,6 +956,8 @@ export class InboxItemDetailComponent {
 	readonly options = computed(() => optionsOf(this.item()));
 	readonly escalation = computed(() => escalationDetails(this.item()));
 	readonly links = computed(() => linksOf(this.item()));
+	/** The item's history, under the message. */
+	readonly activity = computed(() => activityOf(this.item()));
 	readonly unread = computed(() => isUnread(this.item()));
 	readonly archived = computed(() => isArchived(this.item()));
 	readonly snoozed = computed(() => isSnoozed(this.item()));
