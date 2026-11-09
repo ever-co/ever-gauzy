@@ -1,6 +1,16 @@
 import { DatePipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { ChangeDetectionStrategy, Component, computed, DestroyRef, inject, OnInit, signal } from '@angular/core';
+import {
+	ChangeDetectionStrategy,
+	Component,
+	computed,
+	DestroyRef,
+	ElementRef,
+	HostListener,
+	inject,
+	OnInit,
+	signal
+} from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -15,8 +25,8 @@ import {
 	NbSpinnerModule
 } from '@nebular/theme';
 import { TranslatePipe } from '@ngx-translate/core';
-import { EMPTY, Subject, Subscription } from 'rxjs';
-import { catchError, debounceTime, distinctUntilChanged, map, skip, switchMap } from 'rxjs/operators';
+import { EMPTY, forkJoin, interval, of, Subject, Subscription } from 'rxjs';
+import { catchError, debounceTime, distinctUntilChanged, filter, map, skip, switchMap } from 'rxjs/operators';
 import {
 	IInboxItemCounts,
 	IInboxItemWithState,
@@ -29,6 +39,14 @@ import {
 import { INBOX_MY_MAILBOX_LINK, INBOX_UI_PAGE_SIZE } from '../../inbox-ui.constants';
 import {
 	apiTabOf,
+	dueStateOf,
+	groupByDate,
+	InboxDueState,
+	InboxUndoKind,
+	INBOX_SHORTCUTS,
+	isArchived,
+	isDone,
+	isTypingTarget,
 	kindIconOf,
 	INBOX_UI_TAB_ICONS,
 	INBOX_UI_TABS,
@@ -39,7 +57,8 @@ import {
 	listDateFormat,
 	previewOf,
 	replaceItem,
-	sourceLabelOf
+	sourceLabelOf,
+	undoOf
 } from '../../inbox-ui.helpers';
 import { InboxEmailAvailabilityService } from '../../services/inbox-email-availability.service';
 import { InboxUiService } from '../../services/inbox-ui.service';
@@ -48,6 +67,40 @@ import { InboxNotificationsComponent } from '../inbox-notifications/inbox-notifi
 
 /** What the page shows. */
 export type InboxPageView = 'loading' | 'ready' | 'unavailable' | 'error';
+
+/** How often the page looks for new items while it is open and visible. */
+export const INBOX_POLL_MS = 60_000;
+/** How long the "Undo" toast stays. */
+export const INBOX_UNDO_MS = 6_000;
+/** The list pane's width bounds when dragged (px), and where the chosen width is kept in this browser. */
+const LIST_WIDTH_MIN = 256;
+const LIST_WIDTH_MAX = 640;
+const LIST_WIDTH_KEY = 'gauzy.inbox.listWidth';
+
+/** The last change that moved items away, for its "Undo": what it did and, by item, the change that takes it back. */
+interface InboxUndo {
+	kind: InboxUndoKind;
+	entries: Array<{ id: string; revert: IInboxRecipientStateInput }>;
+}
+
+/** The list pane's width this browser keeps (`null`: none, or storage is not available). */
+function storedListWidth(): number | null {
+	try {
+		const value = Number(globalThis.localStorage?.getItem(LIST_WIDTH_KEY));
+		return Number.isFinite(value) && value >= LIST_WIDTH_MIN && value <= LIST_WIDTH_MAX ? value : null;
+	} catch {
+		return null;
+	}
+}
+
+function storeListWidth(width: number | null): void {
+	try {
+		if (width === null) globalThis.localStorage?.removeItem(LIST_WIDTH_KEY);
+		else globalThis.localStorage?.setItem(LIST_WIDTH_KEY, String(Math.round(width)));
+	} catch {
+		// Private windows and blocked storage: the width is kept for this visit only.
+	}
+}
 
 /** The message of an API refusal, for the reply pane ("Already decided in Ever Works", …). */
 export function apiMessage(error: unknown): string | null {
@@ -101,6 +154,19 @@ export function apiMessage(error: unknown): string | null {
 					</div>
 				</div>
 				<div class="header-actions">
+					@if (view() === 'ready') {
+						<button
+							nbButton
+							ghost
+							size="small"
+							data-test="shortcuts"
+							[attr.title]="'INBOX.SHORTCUTS.OPEN' | translate"
+							[attr.aria-label]="'INBOX.SHORTCUTS.OPEN' | translate"
+							(click)="shortcutsOpen.set(true)"
+						>
+							<nb-icon icon="keypad-outline"></nb-icon>
+						</button>
+					}
 					@if (emailAvailable()) {
 						<a nbButton ghost size="small" data-test="my-mailbox" [routerLink]="myMailboxLink">
 							<nb-icon icon="email-outline"></nb-icon>
@@ -184,112 +250,295 @@ export function apiMessage(error: unknown): string | null {
 								<ngx-inbox-notifications></ngx-inbox-notifications>
 							</div>
 						} @else {
-							<div class="panes" [class.has-selection]="!!selected()">
+							<div
+								class="panes"
+								[class.has-selection]="!!selected()"
+								[style.--list-width]="listWidth() ? listWidth() + 'px' : null"
+							>
 								<section class="list-pane">
-									<div class="filters" data-test="filters">
-										<label class="search">
-											<nb-icon icon="search-outline" aria-hidden="true"></nb-icon>
-											<input
-												nbInput
-												fullWidth
-												class="search-input"
-												fieldSize="small"
-												type="search"
-												data-test="filter-q"
-												maxlength="200"
-												[attr.aria-label]="'INBOX.FILTERS.SEARCH' | translate"
-												[placeholder]="'INBOX.FILTERS.SEARCH' | translate"
-												[ngModel]="query()"
-												(ngModelChange)="search$.next($event)"
-											/>
-										</label>
-										<div class="filter-row">
-											<nb-select
-												size="small"
-												data-test="filter-kind"
-												[placeholder]="'INBOX.FILTERS.KIND' | translate"
-												[selected]="kind()"
-												(selectedChange)="setKind($event)"
+									<!-- Drag (or arrow keys) to resize the list; a double click goes back to its own width. -->
+									<div
+										class="resizer"
+										role="separator"
+										tabindex="0"
+										aria-orientation="vertical"
+										data-test="resizer"
+										[attr.title]="'INBOX.RESIZE' | translate"
+										[attr.aria-label]="'INBOX.RESIZE' | translate"
+										(pointerdown)="startResize($event)"
+										(pointermove)="resize($event)"
+										(pointerup)="endResize($event)"
+										(pointercancel)="endResize($event)"
+										(dblclick)="resetWidth()"
+										(keydown.arrowleft)="nudgeWidth(-16, $event)"
+										(keydown.arrowright)="nudgeWidth(16, $event)"
+									></div>
+									@if (checkedCount()) {
+										<!-- With rows selected, their actions take the filters' place (as mail apps do). -->
+										<div class="bulk-bar" data-test="bulk-bar">
+											<button
+												type="button"
+												class="check"
+												role="checkbox"
+												data-test="check-all"
+												[class.on]="allChecked()"
+												[attr.aria-checked]="allChecked() ? 'true' : 'mixed'"
+												[attr.title]="'INBOX.BULK.SELECT_ALL' | translate"
+												[attr.aria-label]="'INBOX.BULK.SELECT_ALL' | translate"
+												(click)="toggleAll()"
 											>
-												<nb-option [value]="null">{{ 'INBOX.FILTERS.ALL_KINDS' | translate }}</nb-option>
-												@for (value of kindOptions; track value) {
-													<nb-option [value]="value">{{ 'INBOX.KIND.' + value | translate }}</nb-option>
-												}
-											</nb-select>
-											<nb-select
-												size="small"
-												data-test="filter-source"
-												[placeholder]="'INBOX.FILTERS.SOURCE' | translate"
-												[selected]="source()"
-												(selectedChange)="setSource($event)"
-											>
-												<nb-option [value]="null">{{ 'INBOX.FILTERS.ALL_SOURCES' | translate }}</nb-option>
-												@for (value of sourceOptions; track value) {
-													<nb-option [value]="value">{{ sourceLabel(value) | translate }}</nb-option>
-												}
-											</nb-select>
-											<nb-checkbox
-												class="unread-toggle"
-												data-test="filter-unread"
-												[checked]="unreadOnly()"
-												(checkedChange)="setUnread($event)"
-											>
-												{{ 'INBOX.FILTERS.UNREAD' | translate }}
-											</nb-checkbox>
+												<nb-icon [icon]="allChecked() ? 'checkmark-outline' : 'minus-outline'"></nb-icon>
+											</button>
+											<span class="bulk-count" data-test="bulk-count">{{
+												'INBOX.BULK.SELECTED' | translate: { count: checkedCount() }
+											}}</span>
+											<div class="bulk-actions">
+												<button
+													type="button"
+													class="bulk-tool"
+													data-test="bulk-read"
+													[disabled]="busy()"
+													[attr.title]="'INBOX.ACTIONS.MARK_READ' | translate"
+													[attr.aria-label]="'INBOX.ACTIONS.MARK_READ' | translate"
+													(click)="bulk({ isRead: true })"
+												>
+													<nb-icon icon="done-all-outline"></nb-icon>
+												</button>
+												<button
+													type="button"
+													class="bulk-tool"
+													data-test="bulk-unread"
+													[disabled]="busy()"
+													[attr.title]="'INBOX.ACTIONS.MARK_UNREAD' | translate"
+													[attr.aria-label]="'INBOX.ACTIONS.MARK_UNREAD' | translate"
+													(click)="bulk({ isRead: false })"
+												>
+													<nb-icon icon="email-outline"></nb-icon>
+												</button>
+												<button
+													type="button"
+													class="bulk-tool"
+													data-test="bulk-archive"
+													[disabled]="busy()"
+													[attr.title]="(tab() === 'archived' ? 'INBOX.ACTIONS.UNARCHIVE' : 'INBOX.ACTIONS.ARCHIVE') | translate"
+													[attr.aria-label]="(tab() === 'archived' ? 'INBOX.ACTIONS.UNARCHIVE' : 'INBOX.ACTIONS.ARCHIVE') | translate"
+													(click)="bulk({ isArchived: tab() !== 'archived' })"
+												>
+													<nb-icon [icon]="tab() === 'archived' ? 'arrow-circle-up-outline' : 'archive-outline'"></nb-icon>
+												</button>
+												<button
+													type="button"
+													class="bulk-tool"
+													data-test="bulk-done"
+													[disabled]="busy()"
+													[attr.title]="(tab() === 'done' ? 'INBOX.ACTIONS.MARK_NOT_DONE' : 'INBOX.ACTIONS.MARK_DONE') | translate"
+													[attr.aria-label]="(tab() === 'done' ? 'INBOX.ACTIONS.MARK_NOT_DONE' : 'INBOX.ACTIONS.MARK_DONE') | translate"
+													(click)="bulk({ isDone: tab() !== 'done' })"
+												>
+													<nb-icon [icon]="tab() === 'done' ? 'undo-outline' : 'checkmark-circle-2-outline'"></nb-icon>
+												</button>
+												<span class="bulk-divider" aria-hidden="true"></span>
+												<button
+													type="button"
+													class="bulk-tool"
+													data-test="bulk-clear"
+													[attr.title]="'INBOX.BULK.CLEAR' | translate"
+													[attr.aria-label]="'INBOX.BULK.CLEAR' | translate"
+													(click)="clearChecked()"
+												>
+													<nb-icon icon="close-outline"></nb-icon>
+												</button>
+											</div>
 										</div>
-									</div>
-
-									<div class="list" data-test="list" [nbSpinner]="loading()" nbSpinnerSize="small">
-										@for (item of items(); track item.id) {
-											<div
-												class="row"
-												role="button"
-												tabindex="0"
-												[class.selected]="item.id === selectedId()"
-												[class.unread]="unread(item)"
-												[attr.aria-current]="item.id === selectedId() ? 'true' : null"
-												[attr.data-test]="'item-' + item.id"
-												(click)="open(item)"
-												(keydown.enter)="open(item)"
-											>
-												<span class="unread-dot" aria-hidden="true"></span>
-												<span class="avatar" [attr.data-kind]="item.kind" aria-hidden="true">
-													<nb-icon [icon]="kindIcon(item.kind)"></nb-icon>
-												</span>
-												<div class="row-main">
-													<div class="row-top">
-														<span class="row-title">{{ item.title }}</span>
-														<time
-															class="when"
-															[attr.datetime]="item.createdAt"
-															[attr.title]="item.createdAt | date: 'medium'"
-															>{{ item.createdAt | date: listDate(item.createdAt) }}</time
-														>
-													</div>
-													@if (preview(item); as text) {
-														<div class="row-preview">{{ text }}</div>
+									} @else {
+										<div class="filters" data-test="filters">
+											<label class="search">
+												<nb-icon icon="search-outline" aria-hidden="true"></nb-icon>
+												<input
+													nbInput
+													fullWidth
+													class="search-input"
+													fieldSize="small"
+													type="search"
+													data-test="filter-q"
+													maxlength="200"
+													[attr.aria-label]="'INBOX.FILTERS.SEARCH' | translate"
+													[placeholder]="'INBOX.FILTERS.SEARCH' | translate"
+													[ngModel]="query()"
+													(ngModelChange)="search$.next($event)"
+												/>
+											</label>
+											<div class="filter-row">
+												<nb-select
+													size="small"
+													data-test="filter-kind"
+													[placeholder]="'INBOX.FILTERS.KIND' | translate"
+													[selected]="kind()"
+													(selectedChange)="setKind($event)"
+												>
+													<nb-option [value]="null">{{ 'INBOX.FILTERS.ALL_KINDS' | translate }}</nb-option>
+													@for (value of kindOptions; track value) {
+														<nb-option [value]="value">{{ 'INBOX.KIND.' + value | translate }}</nb-option>
 													}
-													<div class="row-meta">
-														<span class="tag">{{ 'INBOX.KIND.' + item.kind | translate }}</span>
-														<span class="source">{{
-															isKey(sourceLabel(item.source))
-																? (sourceLabel(item.source) | translate)
-																: item.source
-														}}</span>
-														@if (item.priority === 'high' || item.priority === 'urgent') {
-															<span class="tag priority">{{
-																'INBOX.PRIORITY.' + item.priority | translate
-															}}</span>
+												</nb-select>
+												<nb-select
+													size="small"
+													data-test="filter-source"
+													[placeholder]="'INBOX.FILTERS.SOURCE' | translate"
+													[selected]="source()"
+													(selectedChange)="setSource($event)"
+												>
+													<nb-option [value]="null">{{ 'INBOX.FILTERS.ALL_SOURCES' | translate }}</nb-option>
+													@for (value of sourceOptions; track value) {
+														<nb-option [value]="value">{{ sourceLabel(value) | translate }}</nb-option>
+													}
+												</nb-select>
+												<nb-checkbox
+													class="unread-toggle"
+													data-test="filter-unread"
+													[checked]="unreadOnly()"
+													(checkedChange)="setUnread($event)"
+												>
+													{{ 'INBOX.FILTERS.UNREAD' | translate }}
+												</nb-checkbox>
+											</div>
+										</div>
+									}
+
+									<div
+										class="list"
+										data-test="list"
+										[class.selecting]="checkedCount() > 0"
+										[nbSpinner]="loading() && items().length > 0"
+										nbSpinnerSize="small"
+									>
+										@if (newCount(); as count) {
+											<button type="button" class="new-pill" data-test="new-items" (click)="showNew()">
+												<nb-icon icon="arrow-upward-outline"></nb-icon>
+												{{ 'INBOX.NEW_ITEMS' | translate: { count: count } }} · {{ 'INBOX.SHOW_NEW' | translate }}
+											</button>
+										}
+										@if (loading() && !items().length) {
+											<!-- Placeholder rows while the first page is read. -->
+											<div class="skeleton" data-test="skeleton" aria-hidden="true">
+												@for (row of skeletonRows; track row) {
+													<div class="skeleton-row">
+														<span class="skeleton-avatar"></span>
+														<span class="skeleton-lines">
+															<span class="skeleton-line" [style.width.%]="62 + ((row * 7) % 30)"></span>
+															<span class="skeleton-line short" [style.width.%]="40 + ((row * 11) % 35)"></span>
+														</span>
+													</div>
+												}
+											</div>
+										}
+										@for (section of sections(); track section.group) {
+											<div class="group-label" [attr.data-test]="'group-' + section.group">
+												{{ 'INBOX.GROUP.' + section.group | translate }}
+											</div>
+											@for (item of section.items; track item.id) {
+												@let due = dueState(item);
+												<div
+													class="row"
+													role="button"
+													tabindex="0"
+													[class.selected]="item.id === selectedId()"
+													[class.unread]="unread(item)"
+													[class.checked]="isChecked(item)"
+													[attr.aria-current]="item.id === selectedId() ? 'true' : null"
+													[attr.data-test]="'item-' + item.id"
+													(click)="open(item)"
+													(keydown.enter)="open(item)"
+												>
+													<span class="unread-dot" aria-hidden="true"></span>
+													<span class="lead">
+														<span class="avatar" [attr.data-kind]="item.kind" aria-hidden="true">
+															<nb-icon [icon]="kindIcon(item.kind)"></nb-icon>
+														</span>
+														<button
+															type="button"
+															class="check"
+															role="checkbox"
+															[class.on]="isChecked(item)"
+															[attr.aria-checked]="isChecked(item)"
+															[attr.aria-label]="'INBOX.BULK.SELECT' | translate"
+															[attr.title]="'INBOX.BULK.SELECT' | translate"
+															[attr.data-test]="'check-' + item.id"
+															(click)="toggleChecked(item, $event)"
+															(keydown.enter)="$event.stopPropagation()"
+														>
+															@if (isChecked(item)) {
+																<nb-icon icon="checkmark-outline"></nb-icon>
+															}
+														</button>
+													</span>
+													<div class="row-main">
+														<div class="row-top">
+															<span class="row-title">{{ item.title }}</span>
+															<time
+																class="when"
+																[attr.datetime]="item.createdAt"
+																[attr.title]="item.createdAt | date: 'medium'"
+																>{{ item.createdAt | date: listDate(item.createdAt) }}</time
+															>
+														</div>
+														@if (preview(item); as text) {
+															<div class="row-preview">{{ text }}</div>
 														}
+														<div class="row-meta">
+															<span class="tag">{{ 'INBOX.KIND.' + item.kind | translate }}</span>
+															<span class="source">{{
+																isKey(sourceLabel(item.source))
+																	? (sourceLabel(item.source) | translate)
+																	: item.source
+															}}</span>
+															@if (item.priority === 'high' || item.priority === 'urgent') {
+																<span class="tag priority" [attr.data-priority]="item.priority">
+																	<nb-icon icon="arrow-upward-outline"></nb-icon>
+																	{{ 'INBOX.PRIORITY.' + item.priority | translate }}
+																</span>
+															}
+															@if (due) {
+																<span
+																	class="tag due"
+																	[attr.data-due]="due"
+																	[attr.data-test]="'due-' + item.id"
+																	[attr.title]="item.dueAt | date: 'medium'"
+																>
+																	<nb-icon icon="calendar-outline"></nb-icon>
+																	{{
+																		'INBOX.DUE_STATE.' + due
+																			| translate: { date: (item.dueAt | date: 'MMM d') }
+																	}}
+																</span>
+															}
+														</div>
 													</div>
 												</div>
-											</div>
+											}
 										} @empty {
 											@if (!loading()) {
 												<div class="state compact" data-test="empty">
-													<span class="state-icon"><nb-icon icon="inbox-outline"></nb-icon></span>
-													<strong>{{ 'INBOX.EMPTY' | translate }}</strong>
-													<span class="state-hint">{{ 'INBOX.EMPTY_HINT' | translate }}</span>
+													@if (filtered()) {
+														<span class="state-icon"><nb-icon icon="search-outline"></nb-icon></span>
+														<strong>{{ 'INBOX.EMPTY_FILTERED.TITLE' | translate }}</strong>
+														<span class="state-hint">{{ 'INBOX.EMPTY_FILTERED.HINT' | translate }}</span>
+														<button
+															nbButton
+															size="tiny"
+															status="basic"
+															data-test="clear-filters"
+															(click)="clearFilters()"
+														>
+															{{ 'INBOX.FILTERS.CLEAR' | translate }}
+														</button>
+													} @else {
+														<span class="state-icon"><nb-icon [icon]="tabIcons[tab()]"></nb-icon></span>
+														<strong>{{ 'INBOX.EMPTY_TAB.' + tab() + '.TITLE' | translate }}</strong>
+														<span class="state-hint">{{
+															'INBOX.EMPTY_TAB.' + tab() + '.HINT' | translate
+														}}</span>
+													}
 												</div>
 											}
 										}
@@ -343,6 +592,62 @@ export function apiMessage(error: unknown): string | null {
 				}
 			</nb-card-body>
 		</nb-card>
+
+		@if (undo(); as toast) {
+			<!-- "Archived · Undo", as mail apps confirm an action that moved items away. -->
+			<div class="toast" role="status" data-test="undo-toast">
+				<span>{{ 'INBOX.UNDO.' + toast.kind | translate: { count: toast.entries.length } }}</span>
+				<button type="button" class="toast-action" data-test="undo" (click)="undoLast()">
+					{{ 'INBOX.UNDO.ACTION' | translate }}
+				</button>
+				<button
+					type="button"
+					class="toast-close"
+					[attr.aria-label]="'INBOX.SHORTCUTS.CLOSE_SHEET' | translate"
+					(click)="dismissUndo()"
+				>
+					<nb-icon icon="close-outline"></nb-icon>
+				</button>
+			</div>
+		}
+
+		@if (shortcutsOpen()) {
+			<div class="sheet-backdrop" (click)="shortcutsOpen.set(false)">
+				<div
+					class="sheet"
+					role="dialog"
+					aria-modal="true"
+					aria-labelledby="inbox-shortcuts-title"
+					data-test="shortcuts-sheet"
+					(click)="$event.stopPropagation()"
+				>
+					<div class="sheet-header">
+						<h5 id="inbox-shortcuts-title">{{ 'INBOX.SHORTCUTS.TITLE' | translate }}</h5>
+						<button
+							type="button"
+							class="toast-close sheet-close"
+							data-test="shortcuts-close"
+							[attr.aria-label]="'INBOX.SHORTCUTS.CLOSE_SHEET' | translate"
+							(click)="shortcutsOpen.set(false)"
+						>
+							<nb-icon icon="close-outline"></nb-icon>
+						</button>
+					</div>
+					<dl class="shortcut-list">
+						@for (shortcut of shortcuts; track shortcut.action) {
+							<div class="shortcut">
+								<dt>{{ 'INBOX.SHORTCUTS.' + shortcut.action | translate }}</dt>
+								<dd>
+									@for (key of shortcut.keys; track key) {
+										<kbd>{{ key }}</kbd>
+									}
+								</dd>
+							</div>
+						}
+					</dl>
+				</div>
+			</div>
+		}
 	`,
 	styles: [
 		`
@@ -489,10 +794,12 @@ export function apiMessage(error: unknown): string | null {
 			/* Two panes, mail-app style */
 			.panes {
 				display: grid;
-				grid-template-columns: minmax(17rem, 22rem) minmax(0, 1fr);
+				/* The list's width: 22rem, or the width it was dragged to (never under 16rem nor over half the page). */
+				grid-template-columns: clamp(16rem, var(--list-width, 22rem), 50%) minmax(0, 1fr);
 				height: clamp(30rem, calc(100vh - 17rem), 64rem);
 			}
 			.list-pane {
+				position: relative;
 				display: flex;
 				flex-direction: column;
 				min-width: 0;
@@ -711,10 +1018,285 @@ export function apiMessage(error: unknown): string | null {
 				background: var(--color-danger-transparent-200, rgba(255, 61, 113, 0.16));
 				color: var(--color-danger-500, #ff3d71);
 			}
+			.tag {
+				display: inline-flex;
+				align-items: center;
+				gap: 0.1875rem;
+			}
+			.tag nb-icon {
+				width: 0.6875rem;
+				height: 0.6875rem;
+				font-size: 0.6875rem;
+			}
+			.tag.priority[data-priority='high'] {
+				background: var(--color-warning-transparent-200, rgba(255, 170, 0, 0.16));
+				color: var(--color-warning-600, #db8b00);
+			}
+			.tag.due {
+				background: var(--gauzy-hover-tint, rgba(126, 126, 143, 0.12));
+				color: var(--gauzy-text-color-2, #8f9bb3);
+			}
+			.tag.due[data-due='TODAY'] {
+				background: var(--color-warning-transparent-200, rgba(255, 170, 0, 0.16));
+				color: var(--color-warning-600, #db8b00);
+			}
+			.tag.due[data-due='OVERDUE'] {
+				background: var(--color-danger-transparent-200, rgba(255, 61, 113, 0.16));
+				color: var(--color-danger-500, #ff3d71);
+			}
 			.load-more {
 				display: flex;
 				justify-content: center;
 				padding: 0.375rem;
+			}
+
+			/* Day sections: a small label that stays on top while its rows scroll by. */
+			.group-label {
+				position: sticky;
+				top: -0.25rem;
+				z-index: 1;
+				margin: 0 -0.25rem;
+				padding: 0.5rem 0.875rem 0.25rem;
+				background: var(--background-basic-color-1, #fff);
+				font-size: 0.6875rem;
+				font-weight: 600;
+				line-height: 1rem;
+				letter-spacing: 0.02em;
+				color: var(--gauzy-text-color-2, #8f9bb3);
+			}
+			.row + .group-label {
+				margin-top: 0.25rem;
+			}
+
+			/* "3 new · Show": newer items arrived since the list was read. */
+			.new-pill {
+				position: sticky;
+				top: 0.25rem;
+				z-index: 2;
+				display: flex;
+				align-items: center;
+				gap: 0.25rem;
+				margin: 0.25rem auto;
+				padding: 0.25rem 0.75rem;
+				border: 0;
+				border-radius: 999px;
+				background: var(--color-primary-500, #6e49e8);
+				color: #fff;
+				font: inherit;
+				font-size: 0.75rem;
+				font-weight: 600;
+				line-height: 1rem;
+				box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
+				cursor: pointer;
+			}
+			.new-pill nb-icon {
+				width: 0.75rem;
+				height: 0.75rem;
+				font-size: 0.75rem;
+			}
+
+			/* Placeholder rows while the first page is read */
+			.skeleton-row {
+				display: flex;
+				gap: 0.625rem;
+				align-items: flex-start;
+				padding: 0.625rem 0.625rem 0.625rem 0.875rem;
+			}
+			.skeleton-avatar,
+			.skeleton-line {
+				background: linear-gradient(
+					90deg,
+					var(--gauzy-hover-tint, rgba(126, 126, 143, 0.12)) 25%,
+					var(--background-basic-color-2, rgba(126, 126, 143, 0.04)) 50%,
+					var(--gauzy-hover-tint, rgba(126, 126, 143, 0.12)) 75%
+				);
+				background-size: 200% 100%;
+				animation: shimmer 1.4s ease-in-out infinite;
+			}
+			.skeleton-avatar {
+				flex-shrink: 0;
+				width: 1.75rem;
+				height: 1.75rem;
+				border-radius: 50%;
+			}
+			.skeleton-lines {
+				flex: 1;
+				display: flex;
+				flex-direction: column;
+				gap: 0.375rem;
+				padding-top: 0.125rem;
+			}
+			.skeleton-line {
+				height: 0.625rem;
+				border-radius: 0.25rem;
+			}
+			.skeleton-line.short {
+				height: 0.5rem;
+			}
+			@keyframes shimmer {
+				from {
+					background-position: 200% 0;
+				}
+				to {
+					background-position: -200% 0;
+				}
+			}
+			@media (prefers-reduced-motion: reduce) {
+				.skeleton-avatar,
+				.skeleton-line {
+					animation: none;
+				}
+			}
+
+			/* A row's checkbox takes the avatar's place under the pointer, once checked, or while rows are selected. */
+			.lead {
+				position: relative;
+				flex-shrink: 0;
+				width: 1.75rem;
+				height: 1.75rem;
+			}
+			.lead .check {
+				position: absolute;
+				inset: 0.25rem;
+				display: none;
+			}
+			.row:hover .lead .avatar,
+			.row:focus-within .lead .avatar,
+			.row.checked .lead .avatar,
+			.list.selecting .lead .avatar {
+				display: none;
+			}
+			.row:hover .lead .check,
+			.row:focus-within .lead .check,
+			.row.checked .lead .check,
+			.list.selecting .lead .check {
+				display: inline-flex;
+			}
+			.check {
+				display: inline-flex;
+				align-items: center;
+				justify-content: center;
+				flex-shrink: 0;
+				width: 1.25rem;
+				height: 1.25rem;
+				padding: 0;
+				border: 1.5px solid var(--gauzy-text-color-2, #8f9bb3);
+				border-radius: 0.3125rem;
+				background: var(--background-basic-color-1, #fff);
+				color: #fff;
+				cursor: pointer;
+			}
+			.check nb-icon {
+				width: 0.75rem;
+				height: 0.75rem;
+				font-size: 0.75rem;
+			}
+			.check.on,
+			.check[aria-checked='mixed'] {
+				border-color: var(--color-primary-500, #6e49e8);
+				background: var(--color-primary-500, #6e49e8);
+			}
+			.check:focus-visible {
+				outline: 2px solid var(--gauzy-action-info-text, #0095ff);
+				outline-offset: 1px;
+			}
+			.row.checked {
+				background: var(--color-primary-transparent-100, rgba(110, 73, 232, 0.08));
+			}
+
+			/* The selection's actions, where the filters were */
+			.bulk-bar {
+				display: flex;
+				align-items: center;
+				gap: 0.5rem;
+				/* The filters' height (search, gap, selects, padding, border), so the list does not jump. */
+				min-height: calc(5.375rem + 1px);
+				padding: 0.625rem 0.75rem;
+				border-bottom: 1px solid var(--gauzy-border-default-color, rgba(126, 126, 143, 0.18));
+				background: var(--color-primary-transparent-100, rgba(110, 73, 232, 0.06));
+			}
+			.bulk-count {
+				flex: 1;
+				min-width: 0;
+				font-size: 0.75rem;
+				font-weight: 600;
+				color: var(--gauzy-text-color-1, #222b45);
+				white-space: nowrap;
+			}
+			.bulk-actions {
+				display: flex;
+				align-items: center;
+				gap: 0.125rem;
+			}
+			.bulk-tool {
+				display: inline-flex;
+				align-items: center;
+				justify-content: center;
+				width: 1.75rem;
+				height: 1.75rem;
+				padding: 0;
+				border: 0;
+				border-radius: 0.375rem;
+				background: none;
+				color: var(--gauzy-text-color-2, #8f9bb3);
+				cursor: pointer;
+				transition:
+					background-color 0.12s ease,
+					color 0.12s ease;
+			}
+			.bulk-tool nb-icon {
+				width: 1rem;
+				height: 1rem;
+				font-size: 1rem;
+			}
+			.bulk-tool:hover:not(:disabled) {
+				background: var(--gauzy-hover-tint, rgba(126, 126, 143, 0.12));
+				color: var(--gauzy-text-color-1, #222b45);
+			}
+			.bulk-tool:disabled {
+				opacity: 0.45;
+				cursor: default;
+			}
+			.bulk-tool:focus-visible {
+				outline: 2px solid var(--gauzy-action-info-text, #0095ff);
+				outline-offset: 1px;
+			}
+			.bulk-divider {
+				width: 1px;
+				height: 1rem;
+				margin: 0 0.25rem;
+				background: var(--gauzy-border-default-color, rgba(126, 126, 143, 0.32));
+			}
+
+			/* The list's right edge, dragged to resize it */
+			.resizer {
+				position: absolute;
+				top: 0;
+				right: -4px;
+				bottom: 0;
+				z-index: 3;
+				width: 7px;
+				cursor: col-resize;
+				touch-action: none;
+			}
+			.resizer::after {
+				content: '';
+				position: absolute;
+				top: 0;
+				bottom: 0;
+				left: 3px;
+				width: 1px;
+				background: transparent;
+				transition: background-color 0.12s ease;
+			}
+			.resizer:hover::after,
+			.resizer:focus-visible::after,
+			.resizer.dragging::after {
+				width: 2px;
+				background: var(--color-primary-500, #6e49e8);
+			}
+			.resizer:focus-visible {
+				outline: none;
 			}
 
 
@@ -832,6 +1414,153 @@ export function apiMessage(error: unknown): string | null {
 				min-height: 16rem;
 			}
 
+			/* "2 archived · Undo", at the bottom of the screen */
+			.toast {
+				position: fixed;
+				left: 50%;
+				bottom: 1.5rem;
+				z-index: 1040;
+				display: flex;
+				align-items: center;
+				gap: 0.75rem;
+				max-width: calc(100vw - 2rem);
+				padding: 0.5rem 0.5rem 0.5rem 1rem;
+				border-radius: 0.5rem;
+				background: #222b45;
+				color: #fff;
+				font-size: 0.8125rem;
+				line-height: 1.25rem;
+				box-shadow: 0 8px 24px rgba(0, 0, 0, 0.24);
+				transform: translateX(-50%);
+				animation: toast-in 0.16s ease-out;
+			}
+			@keyframes toast-in {
+				from {
+					opacity: 0;
+					transform: translate(-50%, 0.5rem);
+				}
+			}
+			.toast-action {
+				padding: 0.25rem 0.5rem;
+				border: 0;
+				border-radius: 0.375rem;
+				background: none;
+				color: #a68bff;
+				font: inherit;
+				font-weight: 600;
+				cursor: pointer;
+			}
+			.toast-action:hover {
+				background: rgba(255, 255, 255, 0.08);
+			}
+			.toast-close {
+				display: inline-flex;
+				align-items: center;
+				justify-content: center;
+				width: 1.75rem;
+				height: 1.75rem;
+				padding: 0;
+				border: 0;
+				border-radius: 0.375rem;
+				background: none;
+				color: inherit;
+				opacity: 0.7;
+				cursor: pointer;
+			}
+			.toast-close:hover {
+				opacity: 1;
+				background: rgba(255, 255, 255, 0.08);
+			}
+			.toast-close nb-icon {
+				width: 1rem;
+				height: 1rem;
+				font-size: 1rem;
+			}
+			.toast-action:focus-visible,
+			.toast-close:focus-visible {
+				outline: 2px solid #a68bff;
+				outline-offset: 1px;
+			}
+
+			/* The "?" sheet of keyboard shortcuts */
+			.sheet-backdrop {
+				position: fixed;
+				inset: 0;
+				z-index: 1050;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				padding: 1rem;
+				background: rgba(0, 0, 0, 0.32);
+			}
+			.sheet {
+				width: 100%;
+				max-width: 24rem;
+				max-height: calc(100vh - 2rem);
+				overflow-y: auto;
+				border: 1px solid var(--gauzy-border-default-color, rgba(126, 126, 143, 0.18));
+				border-radius: 0.75rem;
+				background: var(--background-basic-color-1, #fff);
+				box-shadow: 0 16px 48px rgba(0, 0, 0, 0.24);
+			}
+			.sheet-header {
+				display: flex;
+				align-items: center;
+				justify-content: space-between;
+				padding: 0.75rem 0.75rem 0.5rem 1rem;
+				border-bottom: 1px solid var(--gauzy-border-default-color, rgba(126, 126, 143, 0.18));
+			}
+			.sheet-header h5 {
+				margin: 0;
+				font-size: 0.9375rem;
+				font-weight: 600;
+			}
+			.sheet-close {
+				color: var(--gauzy-text-color-2, #8f9bb3);
+			}
+			.sheet-close:hover {
+				background: var(--gauzy-hover-tint, rgba(126, 126, 143, 0.12));
+			}
+			.shortcut-list {
+				margin: 0;
+				padding: 0.375rem 0;
+			}
+			.shortcut {
+				display: flex;
+				align-items: center;
+				justify-content: space-between;
+				gap: 1rem;
+				padding: 0.375rem 1rem;
+				font-size: 0.8125rem;
+				line-height: 1.25rem;
+			}
+			.shortcut dt {
+				font-weight: 400;
+				color: var(--gauzy-text-color-1, #222b45);
+			}
+			.shortcut dd {
+				display: flex;
+				gap: 0.25rem;
+				margin: 0;
+			}
+			kbd {
+				display: inline-flex;
+				align-items: center;
+				justify-content: center;
+				min-width: 1.5rem;
+				height: 1.5rem;
+				padding: 0 0.375rem;
+				border: 1px solid var(--gauzy-border-default-color, rgba(126, 126, 143, 0.32));
+				border-bottom-width: 2px;
+				border-radius: 0.3125rem;
+				background: var(--background-basic-color-2, #f7f9fc);
+				color: var(--gauzy-text-color-1, #222b45);
+				font-family: inherit;
+				font-size: 0.75rem;
+				font-weight: 600;
+				box-shadow: none;
+			}
+
 			/* Narrow screens: the list, or the open item with a way back */
 			@media (max-width: 960px) {
 				.panes {
@@ -841,6 +1570,9 @@ export function apiMessage(error: unknown): string | null {
 				}
 				.list-pane {
 					border-right: 0;
+				}
+				.resizer {
+					display: none;
 				}
 				.list {
 					max-height: 70vh;
@@ -905,6 +1637,35 @@ export class InboxPageComponent implements OnInit {
 	/** Why the last read / archive / snooze failed (the API's message, or a translation key). */
 	readonly actionError = signal<string | null>(null);
 
+	private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
+	protected readonly shortcuts = INBOX_SHORTCUTS;
+	protected readonly skeletonRows = [1, 2, 3, 4, 5, 6];
+	/** The rows in their day sections (Today, Yesterday, …). */
+	readonly sections = computed(() => groupByDate(this.items()));
+	/** A search or a filter narrows the list (its empty state then offers to clear them). */
+	readonly filtered = computed(() => !!(this.query().trim() || this.kind() || this.source() || this.unreadOnly()));
+
+	/** The rows checked for a bulk action, by id. */
+	readonly checked = signal<ReadonlySet<string>>(new Set());
+	readonly checkedCount = computed(() => this.checked().size);
+	readonly allChecked = computed(() => {
+		const items = this.items();
+		const checked = this.checked();
+		return items.length > 0 && items.every((item) => !!item.id && checked.has(item.id));
+	});
+
+	/** Items newer than the list, found by the page's periodic look (the list itself is not changed under the reader). */
+	readonly newCount = signal(0);
+	/** The "?" sheet of keyboard shortcuts is open. */
+	readonly shortcutsOpen = signal(false);
+	/** The last change that moved items away, while its "Undo" is offered. */
+	readonly undo = signal<InboxUndo | null>(null);
+	private undoTimer: ReturnType<typeof setTimeout> | null = null;
+
+	/** The list pane's width (px) as dragged; `null`: its own width. */
+	readonly listWidth = signal<number | null>(storedListWidth());
+	private resizeStart: { x: number; width: number } | null = null;
+
 	/**
 	 * The open item, kept here as well: an item read under "unread only" leaves the list but stays open (its
 	 * body and reply form must not vanish while the user reads it).
@@ -946,7 +1707,65 @@ export class InboxPageComponent implements OnInit {
 		this.setUpSearch();
 		this.followItemLinks();
 		this.followCounts();
+		this.lookForNewItems();
 		this.checkAvailability();
+		this.destroyRef.onDestroy(() => this.clearUndoTimer());
+	}
+
+	/**
+	 * Every minute, while the page is visible and the list idle: the first page as the list asks for it, compared with
+	 * the list. Items it has that the list does not are announced ("3 new · Show") rather than slipped in under the
+	 * reader. The tabs' counts are read again at the same time.
+	 */
+	private lookForNewItems(): void {
+		interval(INBOX_POLL_MS)
+			.pipe(
+				filter(
+					() =>
+						this.view() === 'ready' &&
+						!this.loading() &&
+						typeof document !== 'undefined' &&
+						document.visibilityState === 'visible'
+				),
+				switchMap(() => {
+					const tab = apiTabOf(this.tab());
+					this.api
+						.counts()
+						.pipe(catchError(() => EMPTY))
+						.subscribe((counts) => this.counts.set(counts));
+					if (!tab) return EMPTY;
+					const scope = this.listScope;
+					return this.api.list({ ...this.listQuery(tab), limit: INBOX_UI_PAGE_SIZE }).pipe(
+						map((page) => ({ page, scope })),
+						catchError(() => EMPTY)
+					);
+				}),
+				takeUntilDestroyed(this.destroyRef)
+			)
+			.subscribe(({ page, scope }) => {
+				// The list changed (another tab or filter, a reload) while it was read: it says nothing about this list.
+				if (scope !== this.listScope || this.loading()) return;
+				const listed = new Set(this.items().map((item) => item.id));
+				this.newCount.set((page?.items ?? []).filter((item) => item.id && !listed.has(item.id)).length);
+			});
+	}
+
+	/** The list's filters as the API takes them. */
+	private listQuery(tab: NonNullable<ReturnType<typeof apiTabOf>>) {
+		return {
+			tab,
+			kind: this.kind() ?? undefined,
+			source: this.source() ?? undefined,
+			unread: this.unreadOnly() || undefined,
+			q: this.query().trim() || undefined
+		};
+	}
+
+	/** "3 new · Show": the list read again from its first page. */
+	showNew(): void {
+		this.newCount.set(0);
+		this.reload();
+		this.host.nativeElement.querySelector('.list')?.scrollTo?.({ top: 0 });
 	}
 
 	/** The tabs' counts follow my changes (the signal the header badge follows too). A failed read keeps the last. */
@@ -1074,11 +1893,7 @@ export class InboxPageComponent implements OnInit {
 					this.loading.set(true);
 					return this.api
 						.list({
-							tab: apiTab,
-							kind: this.kind() ?? undefined,
-							source: this.source() ?? undefined,
-							unread: this.unreadOnly() || undefined,
-							q: this.query().trim() || undefined,
+							...this.listQuery(apiTab),
 							cursor: append ? (this.nextCursor() ?? undefined) : undefined,
 							limit: INBOX_UI_PAGE_SIZE
 						})
@@ -1100,6 +1915,11 @@ export class InboxPageComponent implements OnInit {
 				const items = page?.items ?? [];
 				this.items.set(append ? [...this.items(), ...items] : items);
 				this.nextCursor.set(page?.nextCursor ?? null);
+				if (!append) {
+					// A fresh first page: nothing newer to announce, and only rows still listed stay checked.
+					this.newCount.set(0);
+					this.pruneChecked();
+				}
 				// A fresh page without the selected item closes it, unless it is the item I have open (read under
 				// "unread only", then the list started over): that one stays open.
 				const id = this.selectedId();
@@ -1259,19 +2079,17 @@ export class InboxPageComponent implements OnInit {
 		if (!item.id) return;
 		this.busy.set(true);
 		this.actionError.set(null);
+		// What the change takes back, as the item was before it (archive, done, snooze: an "Undo" is offered).
+		const undo = undoOf(change, item);
 		this.api.setState(item.id, change).subscribe({
 			next: (next) => {
 				this.busy.set(false);
 				if (this.opened()?.id === next.id) this.opened.set(next);
+				if (undo && next.id) this.offerUndo({ kind: undo.kind, entries: [{ id: next.id, revert: undo.revert }] });
 				if (this.leavesList(change, next)) {
 					this.items.set(this.items().filter((entry) => entry.id !== next.id));
 					// Archived, snoozed, woken, done or brought back: it is gone from this view. Only read: it stays open.
-					const onlyRead =
-						change.isRead !== undefined &&
-						change.isArchived === undefined &&
-						change.snoozedUntil === undefined &&
-						change.isDone === undefined;
-					if (this.selectedId() === next.id && !onlyRead) this.selectedId.set(null);
+					if (this.selectedId() === next.id && !this.onlyRead(change)) this.selectedId.set(null);
 					// The API pages by offset: with an item gone, the next page would skip one. Start over.
 					if (this.nextCursor()) this.reload();
 				} else {
@@ -1317,6 +2135,289 @@ export class InboxPageComponent implements OnInit {
 	private listChanged(): void {
 		this.listScope++;
 		this.markedAll.set(false);
+		this.newCount.set(0);
+		this.clearChecked();
+	}
+
+	/** Every filter off and the search emptied: the whole tab again. */
+	clearFilters(): void {
+		this.listChanged();
+		this.kind.set(null);
+		this.source.set(null);
+		this.unreadOnly.set(false);
+		this.query.set('');
+		this.reload();
+	}
+
+	/** A row's due label: overdue, due today, or due later (`null`: none to show). */
+	dueState(item: IInboxItemWithState): InboxDueState | null {
+		return dueStateOf(item);
+	}
+
+	// --- Bulk selection -------------------------------------------------------------------------------------------
+
+	isChecked(item: IInboxItemWithState): boolean {
+		return !!item.id && this.checked().has(item.id);
+	}
+
+	/** A row's checkbox: the row is not opened by it. */
+	toggleChecked(item: IInboxItemWithState, event?: Event): void {
+		event?.stopPropagation();
+		if (!item.id) return;
+		const next = new Set(this.checked());
+		if (next.has(item.id)) next.delete(item.id);
+		else next.add(item.id);
+		this.checked.set(next);
+	}
+
+	/** Every listed row checked, or none when they all are. */
+	toggleAll(): void {
+		this.checked.set(
+			this.allChecked()
+				? new Set()
+				: new Set(this.items().map((item) => item.id).filter((id): id is string => !!id))
+		);
+	}
+
+	clearChecked(): void {
+		if (this.checked().size) this.checked.set(new Set());
+	}
+
+	/** Only the rows still listed stay checked. */
+	private pruneChecked(): void {
+		const checked = this.checked();
+		if (!checked.size) return;
+		const listed = new Set(this.items().map((item) => item.id));
+		const next = new Set([...checked].filter((id) => listed.has(id)));
+		if (next.size !== checked.size) this.checked.set(next);
+	}
+
+	/**
+	 * One change for every checked row, sent item by item (the API changes one recipient state at a time). The rows
+	 * answered are updated as one row's change updates it; a row that failed stays checked and the failure is said.
+	 */
+	bulk(change: IInboxRecipientStateInput): void {
+		const before = this.items().filter((item) => !!item.id && this.checked().has(item.id));
+		if (!before.length || this.busy()) return;
+		this.busy.set(true);
+		this.actionError.set(null);
+		forkJoin(
+			before.map((item) =>
+				this.api.setState(item.id!, change).pipe(
+					map((next) => ({ item, next: next as IInboxItemWithState | null })),
+					catchError(() => of({ item, next: null as IInboxItemWithState | null }))
+				)
+			)
+		).subscribe((results) => {
+			this.busy.set(false);
+			const answered = results.filter((result) => !!result.next);
+			let removed = false;
+			let items = this.items();
+			for (const { next } of answered) {
+				if (this.opened()?.id === next!.id) this.opened.set(next);
+				if (this.leavesList(change, next!)) {
+					items = items.filter((entry) => entry.id !== next!.id);
+					removed = true;
+					if (this.selectedId() === next!.id && !this.onlyRead(change)) this.selectedId.set(null);
+				} else {
+					items = replaceItem(items, next!);
+				}
+			}
+			this.items.set(items);
+			// The rows that failed stay checked, for another try.
+			this.checked.set(new Set(results.filter((result) => !result.next).map((result) => result.item.id!)));
+			if (answered.length < results.length) this.actionError.set('INBOX.BULK.FAILED');
+			const undo = undoOf(change, before[0]);
+			if (undo && answered.length) {
+				this.offerUndo({
+					kind: undo.kind,
+					entries: answered.map(({ item }) => ({ id: item.id!, revert: undoOf(change, item)!.revert }))
+				});
+			}
+			if (answered.length) this.api.notifyChanged();
+			if (removed && this.nextCursor()) this.reload();
+		});
+	}
+
+	// --- Undo -----------------------------------------------------------------------------------------------------
+
+	/** "2 archived · Undo", for a few seconds (a newer change replaces it). */
+	private offerUndo(undo: InboxUndo): void {
+		this.clearUndoTimer();
+		this.undo.set(undo);
+		this.undoTimer = setTimeout(() => this.undo.set(null), INBOX_UNDO_MS);
+	}
+
+	dismissUndo(): void {
+		this.clearUndoTimer();
+		this.undo.set(null);
+	}
+
+	/** Takes the last change back, item by item, then reads the list again (the items come back where they were). */
+	undoLast(): void {
+		const undo = this.undo();
+		if (!undo) return;
+		this.dismissUndo();
+		this.actionError.set(null);
+		forkJoin(
+			undo.entries.map((entry) =>
+				this.api.setState(entry.id, entry.revert).pipe(
+					map(() => true),
+					catchError(() => of(false))
+				)
+			)
+		).subscribe((done) => {
+			if (done.some((ok) => !ok)) this.actionError.set('INBOX.UNDO.FAILED');
+			this.api.notifyChanged();
+			this.reload();
+		});
+	}
+
+	private clearUndoTimer(): void {
+		if (this.undoTimer) clearTimeout(this.undoTimer);
+		this.undoTimer = null;
+	}
+
+	// --- Resizing the list ----------------------------------------------------------------------------------------
+
+	startResize(event: PointerEvent): void {
+		const handle = event.currentTarget as HTMLElement | null;
+		const pane = handle?.parentElement;
+		if (!handle || !pane || event.button !== 0) return;
+		event.preventDefault();
+		handle.setPointerCapture?.(event.pointerId);
+		handle.classList.add('dragging');
+		this.resizeStart = { x: event.clientX, width: pane.getBoundingClientRect().width };
+	}
+
+	resize(event: PointerEvent): void {
+		if (!this.resizeStart) return;
+		this.listWidth.set(this.clampWidth(this.resizeStart.width + event.clientX - this.resizeStart.x));
+	}
+
+	endResize(event: PointerEvent): void {
+		if (!this.resizeStart) return;
+		const handle = event.currentTarget as HTMLElement | null;
+		handle?.releasePointerCapture?.(event.pointerId);
+		handle?.classList.remove('dragging');
+		this.resizeStart = null;
+		storeListWidth(this.listWidth());
+	}
+
+	/** The arrow keys on the handle: 16px narrower or wider. */
+	nudgeWidth(delta: number, event: Event): void {
+		event.preventDefault();
+		const pane = (event.currentTarget as HTMLElement | null)?.parentElement;
+		const width = this.listWidth() ?? pane?.getBoundingClientRect().width ?? 352;
+		this.listWidth.set(this.clampWidth(width + delta));
+		storeListWidth(this.listWidth());
+	}
+
+	/** A double click on the handle: the list's own width again. */
+	resetWidth(): void {
+		this.listWidth.set(null);
+		storeListWidth(null);
+	}
+
+	private clampWidth(width: number): number {
+		return Math.round(Math.min(Math.max(width, LIST_WIDTH_MIN), LIST_WIDTH_MAX));
+	}
+
+	// --- Keyboard shortcuts ---------------------------------------------------------------------------------------
+
+	/**
+	 * The list's shortcuts (the "?" sheet lists them). Typing in a field, a key with Ctrl / Cmd / Alt, or a key inside
+	 * a menu or an overlay (a select's options, a dialog) is never taken.
+	 */
+	@HostListener('document:keydown', ['$event'])
+	onKeydown(event: KeyboardEvent): void {
+		if (event.defaultPrevented || event.ctrlKey || event.metaKey || event.altKey || this.view() !== 'ready') return;
+		const target = event.target as HTMLElement | null;
+		if (target?.closest?.('.cdk-overlay-container, [role="menu"], .menu-anchor')) return;
+		const key = event.key;
+		if (key === 'Escape') {
+			if (this.shortcutsOpen()) this.shortcutsOpen.set(false);
+			else if (isTypingTarget(target)) return;
+			else if (this.checked().size) this.clearChecked();
+			else if (this.selectedId()) this.closeDetail();
+			else return;
+			event.preventDefault();
+			return;
+		}
+		if (isTypingTarget(target)) return;
+		if (key === '?') {
+			this.shortcutsOpen.set(!this.shortcutsOpen());
+			event.preventDefault();
+			return;
+		}
+		if (this.shortcutsOpen() || this.tab() === 'notifications') return;
+		const handled = this.runShortcut(key);
+		if (handled) event.preventDefault();
+	}
+
+	/** Runs a list shortcut; `false` for a key that is not one. */
+	private runShortcut(key: string): boolean {
+		const item = this.selected();
+		switch (key) {
+			case 'j':
+				this.move(1);
+				return true;
+			case 'k':
+				this.move(-1);
+				return true;
+			case '/':
+				this.host.nativeElement.querySelector<HTMLInputElement>('[data-test="filter-q"]')?.focus();
+				return true;
+			case 'x':
+				if (item) this.toggleChecked(item);
+				return !!item;
+			case 'r': {
+				const reply = this.host.nativeElement.querySelector<HTMLTextAreaElement>('#inbox-reply-text');
+				reply?.focus();
+				return !!reply;
+			}
+		}
+		// The rest change the open item, one change at a time.
+		if (!item?.recipient || this.busy()) return false;
+		switch (key) {
+			case 'e':
+				this.changeState(item, { isArchived: !isArchived(item) });
+				return true;
+			case 'd':
+				this.changeState(item, { isDone: !isDone(item) });
+				return true;
+			case 'u':
+				this.changeState(item, { isRead: isUnread(item) });
+				return true;
+			default:
+				return false;
+		}
+	}
+
+	/** j / k: the next or the previous row opens (from the first or the last when none is open). */
+	private move(delta: 1 | -1): void {
+		const items = this.items();
+		if (!items.length) return;
+		const index = items.findIndex((item) => item.id === this.selectedId());
+		const next =
+			index < 0 ? (delta > 0 ? 0 : items.length - 1) : Math.min(Math.max(index + delta, 0), items.length - 1);
+		if (next === index) return;
+		const item = items[next];
+		this.open(item);
+		const row = Array.from(this.host.nativeElement.querySelectorAll<HTMLElement>('.row')).find(
+			(element) => element.dataset['test'] === `item-${item.id}`
+		);
+		row?.scrollIntoView?.({ block: 'nearest' });
+	}
+
+	/** Only the read state changes: the open item stays open. */
+	private onlyRead(change: IInboxRecipientStateInput): boolean {
+		return (
+			change.isRead !== undefined &&
+			change.isArchived === undefined &&
+			change.snoozedUntil === undefined &&
+			change.isDone === undefined
+		);
 	}
 
 	private refresh(id: string): void {
