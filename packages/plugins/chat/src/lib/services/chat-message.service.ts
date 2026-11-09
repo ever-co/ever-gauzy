@@ -258,9 +258,11 @@ export class ChatMessageService {
 	}
 
 	/**
-	 * Marks a followed thread read for the caller: its unread replies go to zero and the inbox notifications about
-	 * its replies are read too (the conversation's own unread state is untouched). A thread the caller does not
-	 * follow, or a root the caller may not read, changes nothing.
+	 * Marks a thread read for the caller: a followed thread's unread replies go to zero, and the inbox notifications
+	 * about its replies are read whether or not the caller still follows it (someone who unfollowed after a reply
+	 * notified them would otherwise keep that notification unread for good, since reading the conversation leaves
+	 * thread-only replies to the thread). The conversation's own unread state is untouched; a root the caller may not
+	 * read changes nothing (`messageForCaller` refuses it).
 	 */
 	async markThreadRead(caller: IChatCaller, rootMessageId: ID): Promise<IChatThreadReadResult> {
 		if (!caller.employeeId) return { updated: false };
@@ -269,9 +271,7 @@ export class ChatMessageService {
 			.getRepository(ChatThreadFollow)
 			.update({ rootMessageId: root.id as ID, employeeId: caller.employeeId, tenantId: caller.tenantId }, { unreadReplies: 0, lastReadReplyAt: new Date() });
 		const updated = (result.affected ?? 0) > 0;
-		if (updated) {
-			void this.notifier.markThreadRead(root.id as ID, { tenantId: caller.tenantId, employeeId: caller.employeeId });
-		}
+		void this.notifier.markThreadRead(root.id as ID, { tenantId: caller.tenantId, employeeId: caller.employeeId });
 		return { updated };
 	}
 
