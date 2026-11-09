@@ -30,6 +30,9 @@
 
 ## Follow-ups (from the plan's §7)
 
-- [x] **T14**. One transaction per task in the bulk update (or best-effort post-save steps) so a result is accurate (plan §7.1)
-- [x] **T15**. Reserve former and derived project keys within the organization (plan §7.2)
-- [x] **T16**. Keep a moved task's former references and resolve them (plan §7.3)
+- [x] **T14**. One transaction per task in the bulk update (or best-effort
+  post-save steps) so a result is accurate (plan §7.1)
+- [x] **T15**. Reserve former and derived project keys within the organization
+  (plan §7.2)
+- [x] **T16**. Keep a moved task's former references and resolve them (plan
+  §7.3)

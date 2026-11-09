@@ -49,8 +49,9 @@ MCP server and the SDKs.
 - **Given** a project with key `API`, **when** a message or page contains `API-42`,
   **then** clients can resolve it to the task if the reader may view it.
 - **Given** a task moved to another project, **when** an old reference `API-42` is
-  used, **then** it still resolves to the task, the answer naming the reference the
-  task holds today, and project `API` never gives the number 42 to another task.
+  used, **then** it still resolves to the task, the answer naming the reference
+  the task holds today, and project `API` never gives the number 42 to another
+  task.
 
 ### 2.2 Edge cases & failures
 
