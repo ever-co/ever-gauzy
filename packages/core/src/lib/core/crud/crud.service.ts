@@ -423,10 +423,8 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 				case MultiORMEnum.TypeORM:
 					options = options as FindOneOptions<T>;
 					record = await this.typeOrmRepository.findOneOrFail({
-						where: {
-							id,
-							...(options && options.where ? options.where : {})
-						},
+						// Every alternative of a list condition gets the id (see concatIdToWhere).
+						where: concatIdToWhere(id, options?.where as any) as FindOptionsWhere<T> | FindOptionsWhere<T>[],
 						...(options && options.select ? { select: parseFindOptionsSelect(options.select) } : {}),
 						...(options && options.relations
 							? { relations: parseFindOptionsRelations(options.relations) }
@@ -566,10 +564,8 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 			case MultiORMEnum.TypeORM:
 				options = options as FindOneOptions<T>;
 				record = await this.typeOrmRepository.findOne({
-					where: {
-						id,
-						...(options && options.where ? options.where : {})
-					},
+					// Every alternative of a list condition gets the id (see concatIdToWhere).
+					where: concatIdToWhere(id, options?.where as any) as FindOptionsWhere<T> | FindOptionsWhere<T>[],
 					...(options && options.select ? { select: parseFindOptionsSelect(options.select) } : {}),
 					...(options && options.relations
 						? { relations: parseFindOptionsRelations(options.relations) }

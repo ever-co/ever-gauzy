@@ -323,7 +323,11 @@ export class ChatConversationService {
 		if (employees.length !== ids.length) throw new NotFoundException('One of the employees was not found.');
 		const directKey = directKeyOf(employees.map((employee) => employee.userId));
 		const repository = this.dataSource.getRepository(ChatConversation);
-		const existing = await repository.findOne({ where: { tenantId: caller.tenantId, directKey } });
+		// Unique per organization (tenantId, organizationId, directKey): two people who share two organizations have a
+		// conversation in each. A caller the request scopes to no organization keeps the tenant-wide lookup, as their
+		// reach is tenant-wide everywhere in chat.
+		const scope = { tenantId: caller.tenantId, ...(caller.organizationId ? { organizationId: caller.organizationId } : {}) };
+		const existing = await repository.findOne({ where: { ...scope, directKey } });
 		if (existing) {
 			// A member who left a group of their own accord is back in it. A group whose membership a manager changed
 			// (someone added or removed) no longer carries a key, so a removed member cannot find their way back here.
@@ -335,7 +339,7 @@ export class ChatConversationService {
 		const kind = ids.length === 2 ? ChatConversationKindEnum.DIRECT : ChatConversationKindEnum.GROUP;
 		const conversation = await this.createDirect(caller, kind, directKey, employees).catch(async (error) => {
 			// Two first requests at once: the unique key let one in; the other answers the same conversation.
-			const winner = await repository.findOne({ where: { tenantId: caller.tenantId, directKey } });
+			const winner = await repository.findOne({ where: { ...scope, directKey } });
 			if (!winner) throw error;
 			return winner;
 		});
@@ -474,8 +478,8 @@ export class ChatConversationService {
 		const organizationId = caller.organizationId;
 		if (!organizationId) return null;
 		const repository = this.dataSource.getRepository(ChatConversation);
-		// The default channel carries a key of its own under the unique (tenantId, directKey) index, so two first calls
-		// at once cannot both create one; a participants' key is a hash and never collides with it.
+		// The default channel carries a key of its own under the unique (tenantId, organizationId, directKey) index, so
+		// two first calls at once cannot both create one; a participants' key is a hash and never collides with it.
 		const directKey = `default:${organizationId}`;
 		const existing = await repository.findOne({ where: { tenantId: caller.tenantId, organizationId, isDefault: true } });
 		if (existing) {

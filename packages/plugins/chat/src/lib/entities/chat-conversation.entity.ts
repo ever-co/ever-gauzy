@@ -6,7 +6,8 @@ import { MikroOrmChatConversationRepository } from './chat.repositories';
  * `chat_conversation`: a channel (named, public or private), a direct conversation (two people) or a group (three
  * or more). `messageCount` and `lastMessageAt` are maintained in the message write; a member's unread count is
  * `messageCount − member.readCount`. A direct or group conversation carries a `directKey` (the sorted user ids,
- * hashed) that is unique per tenant, so the same people always land in the same conversation.
+ * hashed) that is unique per organization (`tenantId`, `organizationId`, `directKey`), so the same people always land
+ * in the same conversation of an organization.
  *
  * Nullable columns are typed `?: T` without `| null` (TypeORM refuses `Object` as a column type under
  * `strictNullChecks`), except where an explicit `type` is given.

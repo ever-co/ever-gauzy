@@ -113,6 +113,10 @@ export class ChatNotifierService {
 	 * Marks the caller's chat notifications about a conversation read (best effort, through the notification rows):
 	 * the message notifications of the messages read (up to `upTo` when the read is partial), and — on a full read —
 	 * the mention notifications, which the mention service files against the conversation.
+	 *
+	 * A reply that lives in its thread only (`threadRootId` set, `alsoInConversation` false) is not a message of the
+	 * conversation's timeline, so reading the conversation leaves its notification unread: it clears when the thread
+	 * is read (`markThreadRead`). A reply also sent to the conversation is read with it.
 	 */
 	async markConversationRead(conversationId: ID, caller: { tenantId: ID; employeeId: ID }, upTo?: Pick<ChatMessage, 'createdAt'> | null): Promise<number> {
 		try {
@@ -123,7 +127,12 @@ export class ChatNotifierService {
 				.createQueryBuilder('message')
 				.select(`CAST(message.id AS ${textType})`)
 				.where('message.conversationId = :conversationId', { conversationId })
-				.andWhere('message.tenantId = :tenantId', { tenantId: caller.tenantId });
+				.andWhere('message.tenantId = :tenantId', { tenantId: caller.tenantId })
+				.andWhere(
+					new Brackets((timeline) => {
+						timeline.where('message.threadRootId IS NULL').orWhere('message.alsoInConversation = :alsoInConversation', { alsoInConversation: true });
+					})
+				);
 			if (upTo?.createdAt) messageIds.andWhere('message.createdAt <= :upToAt', { upToAt: upTo.createdAt });
 			const notifications = this.dataSource.getRepository(EmployeeNotification);
 			const query = notifications
