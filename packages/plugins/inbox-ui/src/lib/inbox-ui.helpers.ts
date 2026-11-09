@@ -23,6 +23,17 @@ export const INBOX_UI_TABS: readonly InboxUiTab[] = [
 	'archived'
 ];
 
+/** The icon before each tab's label (the task page's tab bar). */
+export const INBOX_UI_TAB_ICONS: Readonly<Record<InboxUiTab, string>> = {
+	all: 'inbox-outline',
+	decisions: 'checkmark-square-2-outline',
+	email: 'email-outline',
+	notifications: 'bell-outline',
+	snoozed: 'clock-outline',
+	done: 'checkmark-circle-2-outline',
+	archived: 'archive-outline'
+};
+
 /** The API tab of a page tab (`null` for Notifications, which is not an inbox tab). */
 export function apiTabOf(tab: InboxUiTab): InboxTabEnum | null {
 	switch (tab) {
@@ -198,6 +209,38 @@ export function listedIn(tab: InboxUiTab, item: Pick<IInboxItemWithState, 'recip
 /** Replaces an item of a list by its new version (same id), keeping the order. */
 export function replaceItem<T extends { id?: string }>(items: readonly T[], next: T): T[] {
 	return items.map((item) => (item.id === next.id ? next : item));
+}
+
+/** The icon of each kind, on the list's avatars and the detail's header. */
+const INBOX_KIND_ICONS: Readonly<Record<string, string>> = {
+	[InboxItemKindEnum.QUESTION]: 'question-mark-circle-outline',
+	[InboxItemKindEnum.APPROVAL]: 'checkmark-square-2-outline',
+	[InboxItemKindEnum.ESCALATION]: 'alert-triangle-outline',
+	[InboxItemKindEnum.NOTICE]: 'info-outline',
+	[InboxItemKindEnum.NOTIFICATION]: 'bell-outline',
+	[InboxItemKindEnum.EMAIL]: 'email-outline'
+};
+
+/** The icon of an item's kind (a generic inbox icon for a kind the plugin does not know). */
+export function kindIconOf(kind: string | null | undefined): string {
+	return (kind && INBOX_KIND_ICONS[kind]) || 'inbox-outline';
+}
+
+/**
+ * The `DatePipe` format of a list row's time, as messaging apps show it: the time for today, the day and month for
+ * this year, the full date for an older item.
+ */
+export function listDateFormat(value: Date | string | null | undefined, now: Date = new Date()): string {
+	const date = value ? new Date(value) : null;
+	if (!date || Number.isNaN(date.getTime())) return 'short';
+	if (date.toDateString() === now.toDateString()) return 'shortTime';
+	if (date.getFullYear() === now.getFullYear()) return 'MMM d';
+	return 'mediumDate';
+}
+
+/** The one-line preview of a body under a list row's title: its text on one line, at most 160 characters. */
+export function previewOf(body: string | null | undefined): string {
+	return (body ?? '').replace(/\s+/g, ' ').trim().slice(0, 160);
 }
 
 /** The sources the plugin names (a translation key under `INBOX.SOURCE`); any other is shown as stated. */
