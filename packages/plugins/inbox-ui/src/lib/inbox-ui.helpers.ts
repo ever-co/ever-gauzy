@@ -364,12 +364,15 @@ export type InboxDateGroup = 'TODAY' | 'YESTERDAY' | 'THIS_WEEK' | 'OLDER';
 export function dateGroupOf(value: Date | string | null | undefined, now: Date = new Date()): InboxDateGroup {
 	const date = value ? new Date(value) : null;
 	if (!date || Number.isNaN(date.getTime())) return 'OLDER';
+	// Local calendar days, not fixed 24-hour spans: a day a clock change shortens or lengthens (23 or 25 hours)
+	// still starts at its own midnight.
 	const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
-	const day = 24 * 60 * 60 * 1000;
+	const startOfYesterday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1).getTime();
+	const startOfWeek = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 7).getTime();
 	const time = date.getTime();
 	if (time >= startOfToday) return 'TODAY';
-	if (time >= startOfToday - day) return 'YESTERDAY';
-	if (time >= startOfToday - 7 * day) return 'THIS_WEEK';
+	if (time >= startOfYesterday) return 'YESTERDAY';
+	if (time >= startOfWeek) return 'THIS_WEEK';
 	return 'OLDER';
 }
 
@@ -409,17 +412,19 @@ export type InboxUndoKind = 'ARCHIVED' | 'UNARCHIVED' | 'DONE' | 'NOT_DONE' | 'S
 
 /**
  * What a change did, for the "Undo" toast, and the change that takes it back for an item as it was before it.
- * A change of the read state only is offered no undo (`null`): "Mark unread" is its own undo.
+ * The revert is the item's own earlier state, not the opposite of the change: a bulk "Mark done" over items of
+ * which some were done already must leave those done when it is undone. A change of the read state only is offered
+ * no undo (`null`): "Mark unread" is its own undo.
  */
 export function undoOf(
 	change: IInboxRecipientStateInput,
 	before: Pick<IInboxItemWithState, 'recipient'>
 ): { kind: InboxUndoKind; revert: IInboxRecipientStateInput } | null {
 	if (change.isArchived !== undefined) {
-		return { kind: change.isArchived ? 'ARCHIVED' : 'UNARCHIVED', revert: { isArchived: !change.isArchived } };
+		return { kind: change.isArchived ? 'ARCHIVED' : 'UNARCHIVED', revert: { isArchived: isArchived(before) } };
 	}
 	if (change.isDone !== undefined) {
-		return { kind: change.isDone ? 'DONE' : 'NOT_DONE', revert: { isDone: !change.isDone } };
+		return { kind: change.isDone ? 'DONE' : 'NOT_DONE', revert: { isDone: isDone(before) } };
 	}
 	if (change.snoozedUntil !== undefined) {
 		const previous = before.recipient?.snoozedUntil ? new Date(before.recipient.snoozedUntil) : null;
