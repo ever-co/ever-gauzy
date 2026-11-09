@@ -243,10 +243,13 @@ location; none of them changes the flag-off default.
    horizon instead of now; a regression test interleaves two real transactions committing out of stamp
    order. On Postgres, where a row is stamped with its transaction's start, the horizon is also held behind
    the oldest transaction open in the database (`pg_stat_activity`, `RealtimeSettleHorizon`), so a transaction
-   that waits on a lock longer than the window is still covered (capped at 5 minutes for a forgotten
-   session). `sequence` was no option: it is the highest position of the row's partition plus one,
-   allocated
-   inside the writing transaction, not at commit and not across partitions. A position taken from a
+   that waits on a lock longer than the window is still covered — for up to 5 minutes: a transaction open
+   longer than that (a forgotten session) holds the cursor back no further, so the cursor must still move.
+   **Remaining gap:** an event appended by a transaction open for more than 5 minutes (or, off Postgres,
+   committing more than 10 s after its row was stamped) can fall behind a cursor already answered; a
+   client that missed it live does not get it from the catch-up, and no `resync` says so. `sequence` was
+   no option: it is the highest position of the row's partition plus one, allocated inside the writing
+   transaction, not at commit and not across partitions. A position taken from a
    streamed event stays unsafe (the dispatcher delivers neither in commit order nor at once), so clients
    must resume from the catch-up's own cursor — the Ever Teams client still moves its cursor on streamed
    events (follow-up there). Original analysis: `EventOutboxService.append` numbers
