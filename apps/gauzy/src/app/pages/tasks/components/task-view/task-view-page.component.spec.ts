@@ -1536,6 +1536,129 @@ describe('TaskViewPageComponent', () => {
 		});
 	});
 
+	describe('opened on another tab', () => {
+		const overviewPane = (): HTMLElement => fixture.nativeElement.querySelector('#task-view-pane-overview');
+		const linkReads = () => http.get.mock.calls.filter(([url]) => String(url).endsWith('/task-linked-issue')).length;
+		const overviewReads = () =>
+			statisticsService.getTasksStatistics.mock.calls.length +
+			statisticsService.getTaskEmployees.mock.calls.length +
+			timesheetService.getDailyReportChart.mock.calls.length +
+			timesheetService.getTimeLogs.mock.calls.length +
+			linkReads();
+
+		it('neither mounts the Overview nor reads its panels on the Board', async () => {
+			permissions = [PermissionsEnum.ORG_TASK_EDIT];
+			queryParams$.next(convertToParamMap({ tab: 'board' }));
+			const page = create();
+			await settle();
+			await flush();
+
+			expect(page.overviewOpened).toBe(false);
+			expect(overviewPane()).toBeNull();
+			expect(overviewReads()).toBe(0);
+			// The Board's toolbar carries the status menu: its statuses are read on every tab.
+			expect(http.get).toHaveBeenCalledWith(expect.stringMatching(/\/task-statuses$/), expect.anything());
+		});
+
+		it('reads the Overview once it is first opened, and not again on coming back to it', async () => {
+			queryParams$.next(convertToParamMap({ tab: 'board' }));
+			const page = create();
+			await settle();
+			await flush();
+
+			page.selectTab('overview');
+			await settle();
+			await flush();
+
+			expect(overviewPane()).not.toBeNull();
+			expect(statisticsService.getTasksStatistics).toHaveBeenCalledTimes(1);
+			expect(timesheetService.getDailyReportChart).toHaveBeenCalledTimes(1);
+			expect(timesheetService.getTimeLogs).toHaveBeenCalledTimes(1);
+			expect(linkReads()).toBe(2);
+			expect(page.entries.loading).toBe(false);
+
+			const reads = overviewReads();
+			page.selectTab('board');
+			page.selectTab('overview');
+			await flush();
+			expect(overviewReads()).toBe(reads);
+		});
+
+		it('reads no Overview panel after a board move while the Overview is unopened', async () => {
+			queryParams$.next(convertToParamMap({ tab: 'board' }));
+			const page = create();
+			await settle();
+			await flush();
+
+			await page.onBoardTaskMoved();
+			await flush();
+
+			expect(tasksService.getById).toHaveBeenCalledTimes(2);
+			expect(overviewReads()).toBe(0);
+		});
+
+		it('reads the Overview again after a board move once it is open', async () => {
+			const page = create();
+			await settle();
+			await flush();
+			const statistics = statisticsService.getTasksStatistics.mock.calls.length;
+			const reads = overviewReads();
+
+			await page.onBoardTaskMoved();
+			await flush();
+
+			expect(statisticsService.getTasksStatistics.mock.calls.length).toBe(statistics + 1);
+			expect(overviewReads()).toBeGreaterThan(reads);
+		});
+
+		it('shows the refreshed estimate when the Overview opens while a refresh reads the task', async () => {
+			tasksService.getById.mockResolvedValueOnce(task({ estimate: 4 * 3600 }));
+			queryParams$.next(convertToParamMap({ tab: 'board' }));
+			const page = create();
+			await settle();
+			await flush();
+
+			// The refresh after a board move waits on the server; the estimate changed meanwhile.
+			let answerRefresh: (value: ITask) => void;
+			tasksService.getById.mockImplementationOnce(() => new Promise<ITask>((resolve) => (answerRefresh = resolve)));
+			// Each statistics read waits, so they can answer in any order.
+			const answers: ((rows: any[]) => void)[] = [];
+			statisticsService.getTasksStatistics.mockImplementation(
+				() => new Promise<any[]>((resolve) => answers.push(resolve))
+			);
+			const moved = page.onBoardTaskMoved();
+
+			page.selectTab('overview');
+			await flush();
+			answerRefresh(task({ estimate: 2 * 3600 }));
+			await moved;
+			await flush();
+
+			// The oldest answer lands last: none may bring back the estimate the task had before.
+			[...answers].reverse().forEach((answer) => answer([{ id: TASK_ID, duration: 3600 }]));
+			await flush();
+
+			expect(statisticsService.getTasksStatistics).toHaveBeenCalledTimes(1);
+			expect(page.tracking.value).toEqual(expect.objectContaining({ estimate: '2h 00m', remaining: '1h 00m' }));
+		});
+
+		it("keeps another task's Overview unopened when the page moves to it on the Board", async () => {
+			const page = create();
+			await settle();
+			await flush();
+			expect(page.overviewOpened).toBe(true);
+
+			page.selectTab('board');
+			params$.next(convertToParamMap({ id: OTHER_ID }));
+			await settle();
+			await flush();
+
+			expect(page.task.id).toBe(OTHER_ID);
+			expect(page.overviewOpened).toBe(false);
+			expect(overviewPane()).toBeNull();
+		});
+	});
+
 	describe('documents', () => {
 		const tabButton = (): HTMLElement => fixture.nativeElement.querySelector('#task-view-tab-documents');
 		const pane = (): HTMLElement => fixture.nativeElement.querySelector('#task-view-pane-documents');

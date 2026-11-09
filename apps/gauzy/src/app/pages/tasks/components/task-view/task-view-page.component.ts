@@ -165,6 +165,12 @@ export class TaskViewPageComponent extends TranslationBaseComponent implements O
 	];
 	tab: TaskViewTab = 'overview';
 	/**
+	 * The Overview loads when first opened for the task on screen, then stays mounted behind the other tabs: it reads
+	 * the time worked and who worked it, the hours per day, the month's time entries and the linked issues, which a page
+	 * opened on another tab — the Board, most often — has no use for.
+	 */
+	overviewOpened = false;
+	/**
 	 * The Board — the subtasks as the project board — loads when first opened, then stays mounted behind the
 	 * Overview: a move still saving when the user leaves it must still reach the Subtasks panel when it lands.
 	 */
@@ -250,6 +256,11 @@ export class TaskViewPageComponent extends TranslationBaseComponent implements O
 	private openingSubtask = false;
 	/** Bumped by every load; a load that is no longer the latest one when it answers is discarded. */
 	private loadSequence = 0;
+	/**
+	 * The sequence of the refresh still reading the task, if any. The Overview opened meanwhile reads nothing itself:
+	 * the task on screen is about to be replaced, and the refresh reads the panels for the one that replaces it.
+	 */
+	private refreshSequence: number | null = null;
 	private readonly hashNumberPipe = new HashNumberPipe();
 
 	constructor(
@@ -346,6 +357,10 @@ export class TaskViewPageComponent extends TranslationBaseComponent implements O
 		this.documentCount = 0;
 		this.tracking = loading(null);
 		this.workers = [];
+		// The Overview's other panels too: opened later, it shows none of the previous task's figures meanwhile.
+		this.hours = loading([]);
+		this.entries = loading([]);
+		this.links = loading([]);
 		this.statuses = [];
 		this.currentStatusId = null;
 		this.commentCount = 0;
@@ -360,6 +375,9 @@ export class TaskViewPageComponent extends TranslationBaseComponent implements O
 			if (!task?.id || (task.organizationId && task.organizationId !== organizationId)) {
 				throw { status: 404 };
 			}
+			// Another task, or organization, starts with the Overview unopened unless it is the tab on screen. Set here
+			// and not with the resets above: the first load starts before the URL has named the tab.
+			this.overviewOpened = this.tab === 'overview';
 			this.task = task;
 			this.show();
 			this.state = 'ready';
@@ -381,6 +399,7 @@ export class TaskViewPageComponent extends TranslationBaseComponent implements O
 	private async refresh(taskId: string): Promise<void> {
 		if (this.state !== 'ready' || this.task?.id !== taskId) return;
 		const sequence = ++this.loadSequence;
+		this.refreshSequence = sequence;
 		try {
 			const task = await this.tasksService.getById(taskId, TASK_PAGE_RELATIONS);
 			if (sequence !== this.loadSequence) return;
@@ -400,6 +419,8 @@ export class TaskViewPageComponent extends TranslationBaseComponent implements O
 		} catch {
 			// The page keeps the task it showed; its panels, whose reads the new sequence discarded, read again.
 			if (sequence === this.loadSequence) this.reloadPanels(sequence);
+		} finally {
+			if (this.refreshSequence === sequence) this.refreshSequence = null;
 		}
 	}
 
@@ -424,6 +445,15 @@ export class TaskViewPageComponent extends TranslationBaseComponent implements O
 
 	private openTab(tab: TaskViewTab): void {
 		this.tab = tab;
+		if (tab === 'overview' && !this.overviewOpened) {
+			this.overviewOpened = true;
+			// Opened once the task is on screen: its panels read now. Opened while it loads, or while a refresh reads it
+			// again, that read fills them: panels read now for the task it replaces would share its sequence, and an
+			// answer of theirs landing last would show the old task's figures — its estimate, its time left.
+			if (this.task && this.state === 'ready' && this.refreshSequence !== this.loadSequence) {
+				this.loadOverview(this.task, this.loadSequence);
+			}
+		}
 		if (tab === 'board') this.boardOpened = true;
 		if (tab === 'comments') this.commentsOpened = true;
 		if (tab === 'documents') this.documentsOpened = true;
@@ -704,14 +734,23 @@ export class TaskViewPageComponent extends TranslationBaseComponent implements O
 
 	/* ── Reads ── */
 
-	/** Every panel reads on its own; a failure (most often a 403) blanks only its panel. */
+	/**
+	 * Every panel reads on its own; a failure (most often a 403) blanks only its panel. The Overview's read only once it
+	 * is open: a page on another tab reads them when the Overview is first opened.
+	 */
 	private loadPanels(task: ITask, sequence: number): void {
+		if (this.overviewOpened) this.loadOverview(task, sequence);
+		// The status menu's choices — in the header, and with the Board's filters — and the status a new subtask
+		// starts in: on every tab.
+		if (this.canEdit || this.canAddSubtask) void this.loadStatuses(task, sequence);
+	}
+
+	/** The Overview's panels: the time worked and who worked it, the hours per day, the time entries, the links. */
+	private loadOverview(task: ITask, sequence: number): void {
 		void this.loadTime(task, sequence);
 		void this.loadHours(task, sequence);
 		void this.loadEntries(task, sequence);
 		void this.loadLinks(task, sequence);
-		// The status menu's choices, and the status a new subtask starts in.
-		if (this.canEdit || this.canAddSubtask) void this.loadStatuses(task, sequence);
 	}
 
 	/**
