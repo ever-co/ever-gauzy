@@ -7,7 +7,6 @@ import {
 	computed,
 	DestroyRef,
 	ElementRef,
-	HostListener,
 	inject,
 	Injector,
 	OnInit,
@@ -124,6 +123,10 @@ export function apiMessage(error: unknown): string | null {
  */
 @Component({
 	selector: 'ngx-inbox-page',
+	// The list's keyboard shortcuts (see onKeydown).
+	host: {
+		'(document:keydown)': 'onKeydown($event)'
+	},
 	changeDetection: ChangeDetectionStrategy.OnPush,
 	imports: [
 		DatePipe,
@@ -444,22 +447,20 @@ export function apiMessage(error: unknown): string | null {
 											</div>
 										}
 										@for (section of sections(); track section.group) {
-											<div class="group-label" [attr.data-test]="'group-' + section.group">
+											<div class="group-label" aria-hidden="true" [attr.data-test]="'group-' + section.group">
 												{{ 'INBOX.GROUP.' + section.group | translate }}
 											</div>
+											<!-- Each day a list; each row an item whose title is the button that opens it. -->
+											<div class="rows" role="list" [attr.aria-label]="'INBOX.GROUP.' + section.group | translate">
 											@for (item of section.items; track item.id) {
 												@let due = dueState(item);
 												<div
 													class="row"
-													role="button"
-													tabindex="0"
+													role="listitem"
 													[class.selected]="item.id === selectedId()"
 													[class.unread]="unread(item)"
 													[class.checked]="isChecked(item)"
-													[attr.aria-current]="item.id === selectedId() ? 'true' : null"
 													[attr.data-test]="'item-' + item.id"
-													(click)="open(item)"
-													(keydown.enter)="open(item)"
 												>
 													<span class="unread-dot" aria-hidden="true"></span>
 													<span class="lead">
@@ -486,7 +487,16 @@ export function apiMessage(error: unknown): string | null {
 													</span>
 													<div class="row-main">
 														<div class="row-top">
-															<span class="row-title">{{ item.title }}</span>
+															<!-- The row's open action: a native button (Enter and Space), stretched over the row. -->
+															<button
+																type="button"
+																class="row-open"
+																[attr.aria-current]="item.id === selectedId() ? 'true' : null"
+																[attr.data-test]="'open-' + item.id"
+																(click)="open(item)"
+															>
+																<span class="row-title">{{ item.title }}</span>
+															</button>
 															<time
 																class="when"
 																[attr.datetime]="item.createdAt"
@@ -535,6 +545,7 @@ export function apiMessage(error: unknown): string | null {
 													</div>
 												</div>
 											}
+											</div>
 										} @empty {
 											@if (!loading()) {
 												<div class="state compact" data-test="empty">
@@ -944,7 +955,8 @@ export function apiMessage(error: unknown): string | null {
 				padding: 0.5rem 0.625rem 0.5rem 0.875rem;
 				border-radius: 0.5rem;
 				cursor: pointer;
-				outline: none;
+				/* Its own stacking context: the layers inside it never rise over the sticky day labels. */
+				isolation: isolate;
 				transition: background-color 0.12s ease;
 			}
 			.row + .row {
@@ -953,8 +965,44 @@ export function apiMessage(error: unknown): string | null {
 			.row:hover {
 				background: var(--gauzy-hover-tint, rgba(126, 126, 143, 0.08));
 			}
-			.row:focus-visible {
+			/*
+			 * The open action: the title is a native button whose ::after covers the whole row, so a click anywhere on
+			 * the row opens it and the keyboard focus ring is drawn around the row. The checkbox, the time and the due
+			 * label sit above it (their own click, their own tooltip).
+			 */
+			.row-open {
+				position: static;
+				display: block;
+				flex: 1;
+				min-width: 0;
+				padding: 0;
+				border: 0;
+				background: none;
+				color: inherit;
+				font: inherit;
+				text-align: left;
+				cursor: pointer;
+			}
+			.row-open::after {
+				content: '';
+				position: absolute;
+				inset: 0;
+				z-index: 1;
+				border-radius: inherit;
+			}
+			.row-open:focus {
+				outline: none;
+			}
+			.row-open:focus-visible::after {
 				box-shadow: inset 0 0 0 2px var(--color-primary-500, #6e49e8);
+			}
+			.row-open .row-title {
+				display: block;
+			}
+			.row .when,
+			.row .tag.due {
+				position: relative;
+				z-index: 2;
 			}
 			.row.selected {
 				background: var(--color-primary-transparent-100, rgba(110, 73, 232, 0.12));
@@ -1104,7 +1152,7 @@ export function apiMessage(error: unknown): string | null {
 				letter-spacing: 0.02em;
 				color: var(--gauzy-text-color-2, #8f9bb3);
 			}
-			.row + .group-label {
+			.rows + .group-label {
 				margin-top: 0.25rem;
 			}
 
@@ -1121,7 +1169,7 @@ export function apiMessage(error: unknown): string | null {
 				border: 0;
 				border-radius: 999px;
 				background: var(--color-primary-500, #6e49e8);
-				color: #fff;
+				color: var(--text-control-color, #fff);
 				font: inherit;
 				font-size: 0.75rem;
 				font-weight: 600;
@@ -1197,6 +1245,7 @@ export function apiMessage(error: unknown): string | null {
 			}
 			.lead .check {
 				position: absolute;
+				z-index: 2;
 				inset: 0.375rem;
 				display: none;
 			}
@@ -1223,7 +1272,7 @@ export function apiMessage(error: unknown): string | null {
 				border: 1.5px solid var(--gauzy-text-color-2, #8f9bb3);
 				border-radius: 0.25rem;
 				background: var(--background-basic-color-1, #fff);
-				color: #fff;
+				color: var(--text-control-color, #fff);
 				cursor: pointer;
 			}
 			.check nb-icon {
@@ -1539,8 +1588,8 @@ export function apiMessage(error: unknown): string | null {
 				max-width: calc(100vw - 2rem);
 				padding: 0.5rem 0.5rem 0.5rem 1rem;
 				border-radius: 0.5rem;
-				background: #222b45;
-				color: #fff;
+				background: var(--tooltip-background-color, #222b45);
+				color: var(--tooltip-text-color, #fff);
 				font-size: 0.8125rem;
 				line-height: 1.25rem;
 				box-shadow: 0 8px 24px rgba(0, 0, 0, 0.24);
@@ -1558,13 +1607,15 @@ export function apiMessage(error: unknown): string | null {
 				border: 0;
 				border-radius: 0.375rem;
 				background: none;
-				color: #a68bff;
+				color: inherit;
+				text-decoration: underline;
+				text-underline-offset: 0.1875rem;
 				font: inherit;
 				font-weight: 600;
 				cursor: pointer;
 			}
 			.toast-action:hover {
-				background: rgba(255, 255, 255, 0.08);
+				background: var(--gauzy-hover-tint, rgba(126, 126, 143, 0.16));
 			}
 			.toast-close {
 				display: inline-flex;
@@ -1582,7 +1633,7 @@ export function apiMessage(error: unknown): string | null {
 			}
 			.toast-close:hover {
 				opacity: 1;
-				background: rgba(255, 255, 255, 0.08);
+				background: var(--gauzy-hover-tint, rgba(126, 126, 143, 0.16));
 			}
 			.toast-close nb-icon {
 				width: 1rem;
@@ -1591,7 +1642,7 @@ export function apiMessage(error: unknown): string | null {
 			}
 			.toast-action:focus-visible,
 			.toast-close:focus-visible {
-				outline: 2px solid #a68bff;
+				outline: 2px solid var(--tooltip-text-color, #fff);
 				outline-offset: 1px;
 			}
 
@@ -2496,7 +2547,6 @@ export class InboxPageComponent implements OnInit {
 	 * The list's shortcuts (the "?" sheet lists them). Typing in a field, a key with Ctrl / Cmd / Alt, or a key inside
 	 * a menu or an overlay (a select's options, a dialog) is never taken.
 	 */
-	@HostListener('document:keydown', ['$event'])
 	onKeydown(event: KeyboardEvent): void {
 		if (event.defaultPrevented || event.ctrlKey || event.metaKey || event.altKey || this.view() !== 'ready') return;
 		const target = event.target as HTMLElement | null;
