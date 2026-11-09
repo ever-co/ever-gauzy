@@ -3,7 +3,7 @@ import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, effect, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { NbAlertModule, NbButtonModule, NbIconModule } from '@nebular/theme';
+import { NbAlertModule, NbButtonModule, NbIconModule, NbTooltipModule } from '@nebular/theme';
 import { TranslatePipe } from '@ngx-translate/core';
 import {
 	IInboxItemOption,
@@ -51,6 +51,7 @@ import { InboxEmailViewerComponent } from '../inbox-email-viewer/inbox-email-vie
 		NbAlertModule,
 		NbButtonModule,
 		NbIconModule,
+		NbTooltipModule,
 		TranslatePipe,
 		InboxEmailViewerComponent
 	],
@@ -65,7 +66,8 @@ import { InboxEmailViewerComponent } from '../inbox-email-viewer/inbox-email-vie
 							class="tool"
 							data-test="toggle-read"
 							[disabled]="busy()"
-							[attr.title]="((unread() ? 'INBOX.ACTIONS.MARK_READ' : 'INBOX.ACTIONS.MARK_UNREAD') | translate) + ' (u)'"
+							[nbTooltip]="((unread() ? 'INBOX.ACTIONS.MARK_READ' : 'INBOX.ACTIONS.MARK_UNREAD') | translate) + ' (u)'"
+							nbTooltipPlacement="top"
 							(click)="toggleRead()"
 						>
 							<nb-icon [icon]="unread() ? 'done-all-outline' : 'email-outline'"></nb-icon>
@@ -78,7 +80,8 @@ import { InboxEmailViewerComponent } from '../inbox-email-viewer/inbox-email-vie
 							class="tool"
 							data-test="toggle-archive"
 							[disabled]="busy()"
-							[attr.title]="((archived() ? 'INBOX.ACTIONS.UNARCHIVE' : 'INBOX.ACTIONS.ARCHIVE') | translate) + ' (e)'"
+							[nbTooltip]="((archived() ? 'INBOX.ACTIONS.UNARCHIVE' : 'INBOX.ACTIONS.ARCHIVE') | translate) + ' (e)'"
+							nbTooltipPlacement="top"
 							(click)="toggleArchive()"
 						>
 							<nb-icon [icon]="archived() ? 'arrow-circle-up-outline' : 'archive-outline'"></nb-icon>
@@ -92,7 +95,8 @@ import { InboxEmailViewerComponent } from '../inbox-email-viewer/inbox-email-vie
 							data-test="toggle-done"
 							[class.on]="done()"
 							[disabled]="busy()"
-							[attr.title]="((done() ? 'INBOX.ACTIONS.MARK_NOT_DONE' : 'INBOX.ACTIONS.MARK_DONE') | translate) + ' (d)'"
+							[nbTooltip]="((done() ? 'INBOX.ACTIONS.MARK_NOT_DONE' : 'INBOX.ACTIONS.MARK_DONE') | translate) + ' (d)'"
+							nbTooltipPlacement="top"
 							(click)="toggleDone()"
 						>
 							<nb-icon [icon]="done() ? 'undo-outline' : 'checkmark-circle-2-outline'"></nb-icon>
@@ -121,7 +125,8 @@ import { InboxEmailViewerComponent } from '../inbox-email-viewer/inbox-email-vie
 									class="tool"
 									data-test="snooze-menu"
 									aria-haspopup="menu"
-									[attr.title]="'INBOX.SNOOZE.MENU' | translate"
+									[nbTooltip]="'INBOX.SNOOZE.MENU' | translate"
+									nbTooltipPlacement="top"
 									[attr.aria-expanded]="snoozeOpen()"
 									[disabled]="busy()"
 									(click)="snoozeOpen.set(!snoozeOpen())"
@@ -185,7 +190,8 @@ import { InboxEmailViewerComponent } from '../inbox-email-viewer/inbox-email-vie
 					<time
 						class="when"
 						[attr.datetime]="current.createdAt"
-						[attr.title]="current.createdAt | date: 'medium'"
+						[nbTooltip]="current.createdAt | date: 'medium'"
+						nbTooltipPlacement="top"
 						>{{ current.createdAt | date: 'MMM d, y, h:mm a' }}</time
 					>
 				</div>
@@ -306,7 +312,9 @@ import { InboxEmailViewerComponent } from '../inbox-email-viewer/inbox-email-vie
 									[class.recommended]="option.recommended"
 									[attr.aria-checked]="optionId() === option.id"
 									[attr.data-test]="'option-' + option.id"
-									[attr.title]="option.description ?? null"
+									[nbTooltip]="option.description ?? ''"
+									[nbTooltipDisabled]="!option.description"
+									nbTooltipPlacement="top"
 									(click)="choose(option)"
 								>
 									@if (optionId() === option.id) {
