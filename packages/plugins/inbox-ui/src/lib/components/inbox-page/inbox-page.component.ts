@@ -41,6 +41,7 @@ import { INBOX_MY_MAILBOX_LINK, INBOX_UI_PAGE_SIZE } from '../../inbox-ui.consta
 import {
 	apiTabOf,
 	dueStateOf,
+	emailHeaderOf,
 	groupByDate,
 	InboxDueState,
 	InboxUndoKind,
@@ -497,11 +498,16 @@ export function apiMessage(error: unknown): string | null {
 														}
 														<div class="row-meta">
 															<span class="tag">{{ 'INBOX.KIND.' + item.kind | translate }}</span>
-															<span class="source">{{
-																isKey(sourceLabel(item.source))
-																	? (sourceLabel(item.source) | translate)
-																	: item.source
-															}}</span>
+															<!-- An email names its sender; anything else its source ("Email · Email" said nothing). -->
+															@if (senderName(item); as sender) {
+																<span class="source" data-test="row-sender">{{ sender }}</span>
+															} @else if (item.source !== item.kind) {
+																<span class="source">{{
+																	isKey(sourceLabel(item.source))
+																		? (sourceLabel(item.source) | translate)
+																		: item.source
+																}}</span>
+															}
 															@if (item.priority === 'high' || item.priority === 'urgent') {
 																<span class="tag priority" [attr.data-priority]="item.priority">
 																	<nb-icon icon="arrow-upward-outline"></nb-icon>
@@ -1311,10 +1317,13 @@ export function apiMessage(error: unknown): string | null {
 			}
 
 
-			/* Kind avatars (also used by the detail pane) */
+			/* Kind avatars: one neutral tone for every kind (the icon tells the kind); an unread row's is darker. */
+			.row.unread .avatar {
+				--tone: var(--gauzy-text-color-1, #222b45);
+			}
 			.avatar {
-				--tone: var(--color-primary-500, #6e49e8);
-				--tone-bg: var(--color-primary-transparent-100, rgba(110, 73, 232, 0.12));
+				--tone: var(--gauzy-text-color-2, #8f9bb3);
+				--tone-bg: var(--gauzy-hover-tint, rgba(126, 126, 143, 0.12));
 				display: inline-flex;
 				align-items: center;
 				justify-content: center;
@@ -1330,26 +1339,6 @@ export function apiMessage(error: unknown): string | null {
 				width: 0.875rem;
 				height: 0.875rem;
 				font-size: 0.875rem;
-			}
-			.avatar[data-kind='QUESTION'] {
-				--tone: var(--color-info-500, #0095ff);
-				--tone-bg: var(--color-info-transparent-100, rgba(0, 149, 255, 0.12));
-			}
-			.avatar[data-kind='APPROVAL'] {
-				--tone: var(--color-success-500, #00d68f);
-				--tone-bg: var(--color-success-transparent-100, rgba(0, 214, 143, 0.12));
-			}
-			.avatar[data-kind='ESCALATION'] {
-				--tone: var(--color-danger-500, #ff3d71);
-				--tone-bg: var(--color-danger-transparent-100, rgba(255, 61, 113, 0.12));
-			}
-			.avatar[data-kind='NOTIFICATION'] {
-				--tone: var(--color-warning-500, #ffaa00);
-				--tone-bg: var(--color-warning-transparent-100, rgba(255, 170, 0, 0.12));
-			}
-			.avatar[data-kind='NOTICE'] {
-				--tone: var(--text-hint-color, #8f9bb3);
-				--tone-bg: var(--background-basic-color-3, #edf1f7);
 			}
 
 			/* Reading pane */
@@ -2158,6 +2147,11 @@ export class InboxPageComponent implements OnInit {
 		this.unreadOnly.set(false);
 		this.query.set('');
 		this.reload();
+	}
+
+	/** An email row's sender (`null` for any other item, or an email that does not say who sent it). */
+	senderName(item: IInboxItemWithState): string | null {
+		return item.kind === InboxItemKindEnum.EMAIL ? emailHeaderOf(item).fromName : null;
 	}
 
 	/** A row's due label: overdue, due today, or due later (`null`: none to show). */
