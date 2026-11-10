@@ -167,9 +167,14 @@ catch-up cursor falls behind it is answered `resync`. Pending, failed and dead
 rows, other domains' events, rows without a tenant, the newest row of each
 aggregate (its numbering continues from it) and rows a consumer has not
 acknowledged (a dead delivery is replayed from its outbox row) are never
-removed. It
-deletes rows, so it is a separate switch: on production, turn it on only after
-checking the database's backups.
+removed. A delivery whose outbox row was removed is not replayable: the replay
+answers not found.
+
+It deletes rows, so it is a separate switch: on production, turn it on only
+after checking the database's backups. On a large outbox, also run `EXPLAIN`
+on the pass's scope query (a `GROUP BY` of `event_outbox` by tenant and
+organization) first, and add a composite index on `tenantId`,
+`organizationId`, `eventName` and `createdAt` if it is slow.
 
 ## For other plugins
 

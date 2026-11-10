@@ -791,12 +791,31 @@ export class EventOutboxService extends CrudService<EventOutbox> {
 	 * consumers that already settled. A row that is still waiting is left alone: its next claim
 	 * reaches the record.
 	 *
+	 * A record outlives its outbox row (an outbox retention may remove the row, `event_delivery` has no
+	 * foreign key to it). With the row gone the scan has nothing to claim, so the move is refused before
+	 * anything is written: a record reset to `PENDING` that nothing will ever deliver would read as a
+	 * replay that worked.
+	 *
 	 * @param id The record id.
 	 * @returns The record as it stands after the move.
-	 * @throws NotFoundException when the record does not exist inside the caller's own scope.
+	 * @throws NotFoundException when the record does not exist inside the caller's own scope, or its
+	 * event is no longer in the outbox.
 	 */
 	async replayDelivery(id: ID): Promise<EventDelivery> {
 		const delivery = await this.deliveryOfTheCaller(id);
+		const where = { eventId: delivery.eventId, tenantId: delivery.tenantId };
+		const findEvent = () =>
+			this.usesMikroOrm
+				? this.mikroOrmStore.findOne<EventOutbox>(EventOutbox, where)
+				: this.typeOrmEventOutboxRepository.findOne({ where });
+
+		if (!(await findEvent())) {
+			throw new NotFoundException(
+				`${ApiErrorCode.RESOURCE_NOT_FOUND}: delivery '${String(id)}' cannot be replayed: its event '${String(
+					delivery.eventId
+				)}' is no longer in the outbox.`
+			);
+		}
 
 		await this.updateDeliveryRow(id, {
 			status: EventOutboxStatus.PENDING,
@@ -807,11 +826,8 @@ export class EventOutboxService extends CrudService<EventOutbox> {
 			deliveredAt: null
 		});
 
-		// After the record is reset, so a pass that claims the row at once already finds it pending.
-		const where = { eventId: delivery.eventId, tenantId: delivery.tenantId };
-		const event = this.usesMikroOrm
-			? await this.mikroOrmStore.findOne<EventOutbox>(EventOutbox, where)
-			: await this.typeOrmEventOutboxRepository.findOne({ where });
+		// Read again after the record is reset, so a pass that claims the row at once already finds it pending.
+		const event = await findEvent();
 
 		if (event?.status === EventOutboxStatus.PUBLISHED || event?.status === EventOutboxStatus.DEAD) {
 			await this.updateOutboxRow(event.id as ID, {

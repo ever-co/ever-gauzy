@@ -979,6 +979,30 @@ describe.each([
 			}
 		});
 
+		it('refuses to replay a record whose event is no longer in the outbox, and leaves the record as it was', async () => {
+			harness.quiet();
+			const ran: string[] = [];
+
+			harness.registry.register(probe('orm-parity.replayed', ran));
+
+			try {
+				await appendCommitted(placed());
+				await dispatch();
+
+				const record = await recordOf('orm-parity.replayed');
+
+				// An outbox retention removed the published row; its consumer's record outlives it.
+				await harness.query(`DELETE FROM "event_outbox"`);
+
+				// By name: each half constructs the exception from its own module registry.
+				await expect(replayAsOperator(record.id)).rejects.toMatchObject({ name: NotFoundException.name });
+				expect((await recordOf('orm-parity.replayed')).status).toBe(EventOutboxStatus.PUBLISHED);
+				expect(await harness.query(`SELECT * FROM "event_outbox"`)).toEqual([]);
+			} finally {
+				harness.registry.unregister('orm-parity.replayed');
+			}
+		});
+
 		it('leaves a row that is still waiting as it is when one of its records is replayed', async () => {
 			harness.quiet();
 			const ran: string[] = [];
