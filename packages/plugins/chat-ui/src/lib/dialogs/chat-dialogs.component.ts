@@ -616,6 +616,8 @@ export class NewDirectDialogComponent implements AfterViewInit {
 	}
 
 	protected onKeydown(event: KeyboardEvent): void {
+		// Keys that belong to an IME composition (Enter confirms it) are not commands.
+		if (event.isComposing || event.keyCode === 229) return;
 		const count = this.candidates().length;
 		if ((event.key === 'ArrowDown' || event.key === 'ArrowUp') && count) {
 			event.preventDefault();
