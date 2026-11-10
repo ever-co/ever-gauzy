@@ -236,10 +236,13 @@ location; none of them changes the flag-off default.
    collaboration rows past both FR-3 bounds — older than 24 h and beyond the
    newest 1,000 of their scope (an organization, or the tenant-wide rows). It
    is conservative: collaboration replay names only, dispatched (`PUBLISHED`)
-   rows only, rows with a tenant only, at most 500 per scope and 50 scopes per
-   pass. Each scope's batch is removed in one transaction with
-   `RealtimeReplayWatermarkService.advance`, so the watermark `resync` is
-   answered from (§15.8) moves with it. **Off unless
+   rows only, rows with a tenant only, never a partition's newest row (so an
+   aggregate's `sequence` never starts over: `append` numbers a partition as
+   its highest plus one), at most 500 per scope and 50 scopes per pass,
+   looking only at scopes past the 1,000 and continuing through the scopes
+   where the previous pass stopped. Each scope's batch is removed in one
+   transaction with `RealtimeReplayWatermarkService.advance`, so the watermark
+   `resync` is answered from (§15.8) moves with it. **Off unless
    `GAUZY_REALTIME_RETENTION_ENABLED=true`**, separately from the plugin: it
    deletes rows, so production turns it on only after the backups-first check
    of its database.
