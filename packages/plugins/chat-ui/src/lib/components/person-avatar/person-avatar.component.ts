@@ -1,5 +1,5 @@
-import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
-import { ChatPerson, initialsOf } from '../../chat-ui.helpers';
+import { ChangeDetectionStrategy, Component, computed, input, signal } from '@angular/core';
+import { ChatPerson, initialsOf, nameHue, ownPicture } from '../../chat-ui.helpers';
 
 /** The sizes an avatar comes in: a list row, a message, a conversation intro. */
 export type PersonAvatarSize = 'tiny' | 'small' | 'normal' | 'large';
@@ -13,8 +13,8 @@ export type PersonAvatarSize = 'tiny' | 'small' | 'normal' | 'large';
 	selector: 'ngx-chat-person-avatar',
 	changeDetection: ChangeDetectionStrategy.OnPush,
 	template: `
-		@if (person()?.imageUrl) {
-			<img class="avatar" [class]="size()" [class.round]="round()" [src]="person()!.imageUrl" [alt]="name()" loading="lazy" />
+		@if (imageUrl(); as url) {
+			<img class="avatar" [class]="size()" [class.round]="round()" [src]="url" [alt]="name()" loading="lazy" (error)="failedUrl.set(url)" />
 		} @else {
 			<span class="avatar initials" [class]="size()" [class.round]="round()" [style.background]="tint()" role="img" [attr.aria-label]="name()">{{ initials() }}</span>
 		}
@@ -76,13 +76,15 @@ export class PersonAvatarComponent {
 	readonly size = input<PersonAvatarSize>('normal');
 	readonly round = input(false);
 
+	/** A picture that failed to load: the initials show in its place (a broken link must not show a broken image). */
+	protected readonly failedUrl = signal<string | null>(null);
+	/** Their own picture (not the generic silhouette), unless it failed to load. */
+	protected readonly imageUrl = computed(() => {
+		const url = ownPicture(this.person()?.imageUrl);
+		return url && url !== this.failedUrl() ? url : null;
+	});
 	readonly name = computed(() => this.person()?.name || this.fallbackName() || '');
 	readonly initials = computed(() => initialsOf(this.name()));
 	/** A hue picked from the name, dark enough for white initials in the light and the dark themes. */
-	readonly tint = computed(() => {
-		const name = this.name();
-		let hash = 0;
-		for (let at = 0; at < name.length; at += 1) hash = (hash * 31 + name.charCodeAt(at)) % 360;
-		return `hsl(${hash} 48% 42%)`;
-	});
+	readonly tint = computed(() => `hsl(${nameHue(this.name())} 48% 42%)`);
 }
