@@ -551,8 +551,11 @@ export function cardPlace(
 				padding: 1rem 1.25rem;
 				list-style: none;
 			}
+			/* Bootstrap's global .card stacks its content (flex-direction: column): these cards are one line. */
 			.card {
 				display: flex;
+				flex-direction: row;
+				min-width: 0;
 				align-items: center;
 				gap: 0.875rem;
 				padding: 0.75rem 1rem;
