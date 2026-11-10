@@ -1,5 +1,5 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
-import { createIndexIfMissing, createTableIfMissing, dropTableIfExists, IndexSpec, lockMigrations, q, RealtimeDialect } from '../migration-helpers';
+import { createIndexIfMissing, createTableIfMissing, dropTableIfExists, IndexSpec, lockMigrations, q, RealtimeDialect, TableSpec } from '../migration-helpers';
 
 /** Each dialect's spelling of an id column and of a timestamp column, as the platform's own migrations write them. */
 const UUID_TYPE: Record<RealtimeDialect, string> = { postgres: 'uuid', mysql: 'varchar(36)', sqlite: 'varchar' };
@@ -21,7 +21,7 @@ function column(d: RealtimeDialect, name: string, kind: 'uuid' | 'ts' | 'counter
 }
 
 /** `realtime_presence`: per-connection presence, and each employee's published presence (`RealtimePresence`). */
-export const REALTIME_PRESENCE_TABLE = {
+export const REALTIME_PRESENCE_TABLE: TableSpec = {
 	table: 'realtime_presence',
 	prefix: 'realtime_presence',
 	columns: (d: RealtimeDialect) =>
@@ -41,7 +41,7 @@ export const REALTIME_PRESENCE_TABLE = {
 };
 
 /** `realtime_replay_watermark`: the newest outbox position a retention removed, per scope (`RealtimeReplayWatermark`). */
-export const REALTIME_REPLAY_WATERMARK_TABLE = {
+export const REALTIME_REPLAY_WATERMARK_TABLE: TableSpec = {
 	table: 'realtime_replay_watermark',
 	prefix: 'realtime_replay_watermark',
 	columns: (d: RealtimeDialect) =>

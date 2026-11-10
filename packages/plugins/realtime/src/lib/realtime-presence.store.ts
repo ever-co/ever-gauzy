@@ -1,8 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { DataSource, EntityManager, In, LessThanOrEqual, Not } from 'typeorm';
+import { DataSource, EntityManager, Equal, In, IsNull, LessThan, LessThanOrEqual, Not } from 'typeorm';
 import { ID, RealtimePresenceStatus } from '@gauzy/contracts';
 import { Employee } from '@gauzy/core';
-import { REALTIME_PRESENCE_TTL_MS } from './realtime.constants';
+import { REALTIME_PRESENCE_COALESCE_MS, REALTIME_PRESENCE_TTL_MS } from './realtime.constants';
 import { RealtimePresence, REALTIME_PUBLISHED_PRESENCE_KEY, REALTIME_SHARED_CONNECTION_KEY } from './realtime.entities';
 
 /** How present each status is: the merged presence of an employee is the most present of their connections. */
@@ -57,6 +57,31 @@ export interface IPresenceOutcome {
 	changed: boolean;
 	/** The published row's revision after this report or sweep: higher for every change of this employee. */
 	revision: number;
+}
+
+/**
+ * What an attempt to tell the organization of an employee's presence may do now ({@link
+ * RealtimePresenceStore.claimPublication}): publish this outcome (this process claimed the window), try again at a
+ * moment (the window is still open, or another process claimed it meanwhile), or nothing (no revision is left untold).
+ */
+export type PresencePublication =
+	| { kind: 'publish'; outcome: IPresenceOutcome; claim: IPresenceClaim }
+	| { kind: 'later'; at: number }
+	| { kind: 'none' };
+
+/** A won claim: what it wrote on the published row, and what was there before (to give it back, see `release`). */
+export interface IPresenceClaim {
+	id: ID;
+	at: Date;
+	revision: number;
+	previousAt: Date | null;
+	previousRevision: number;
+}
+
+/** An employee whose published row holds a revision the organization was not told yet. */
+export interface IPresenceScope {
+	tenantId: ID;
+	employeeId: ID;
 }
 
 /**
@@ -160,6 +185,89 @@ export class RealtimePresenceStore {
 			await settled(outcome);
 		}
 		return counts;
+	}
+
+	/**
+	 * Claims the right to tell the organization of the employee's presence now, at most once per
+	 * {@link REALTIME_PRESENCE_COALESCE_MS} whichever process asks (spec §4: one message per employee per 5 s).
+	 *
+	 * The published row says which revision was last told and when. A conditional update moves both, and only when the
+	 * window since the last publication closed and the revision is newer: two processes asking at once cannot both
+	 * win, and an older revision is never told after a newer one. The winner publishes the row's current state — the
+	 * latest change of the window, not necessarily the one that asked. A loser (or an asker inside the window) is told
+	 * when to try again, so the window's last change is told when it closes.
+	 *
+	 * @param scope The employee.
+	 * @param now The moment of the claim — taken when claiming, never the start of the report or sweep that asks (they
+	 * may have waited on the database since), so the window recorded is the one the publication really opens.
+	 */
+	async claimPublication(scope: IPresenceScope, now: Date = new Date()): Promise<PresencePublication> {
+		const repository = this.dataSource.getRepository(RealtimePresence);
+		const row = await repository.findOne({
+			where: { tenantId: scope.tenantId, employeeId: scope.employeeId, connectionId: REALTIME_PUBLISHED_PRESENCE_KEY }
+		});
+		if (!row) return { kind: 'none' };
+		const revision = Number(row.revision) || 0;
+		const previousRevision = Number(row.publishedRevision) || 0;
+		if (revision <= previousRevision) return { kind: 'none' };
+		const last = row.publishedAt ? new Date(row.publishedAt as unknown as string).getTime() : null;
+		if (last !== null && Number.isFinite(last) && now.getTime() - last < REALTIME_PRESENCE_COALESCE_MS) {
+			return { kind: 'later', at: last + REALTIME_PRESENCE_COALESCE_MS };
+		}
+		const claim = { publishedAt: now, publishedRevision: revision };
+		const newer = { id: row.id, publishedRevision: LessThan(revision) };
+		const claimed =
+			((await repository.update({ ...newer, publishedAt: IsNull() }, claim)).affected ?? 0) > 0 ||
+			((await repository.update({ ...newer, publishedAt: LessThanOrEqual(new Date(now.getTime() - REALTIME_PRESENCE_COALESCE_MS)) }, claim)).affected ?? 0) > 0;
+		if (!claimed) {
+			// Another process claimed the window in between: what it may have left untold is tried once the window closes.
+			return { kind: 'later', at: now.getTime() + REALTIME_PRESENCE_COALESCE_MS };
+		}
+		return {
+			kind: 'publish',
+			claim: { id: row.id as ID, at: now, revision, previousAt: last !== null && Number.isFinite(last) ? new Date(last) : null, previousRevision },
+			outcome: {
+				tenantId: row.tenantId as ID,
+				organizationId: (row.organizationId as ID) ?? null,
+				employeeId: row.employeeId,
+				userId: row.userId,
+				status: row.status as RealtimePresenceStatus,
+				changed: true,
+				revision
+			}
+		};
+	}
+
+	/**
+	 * Gives a won claim back, when its publication will not happen (the process stops): the published row returns to
+	 * what it said before the claim, so the revision is untold again and the next sweep of any process tells it. A
+	 * compare-and-set on what the claim wrote: a later claim is never undone.
+	 */
+	async release(claim: IPresenceClaim): Promise<boolean> {
+		const result = await this.dataSource
+			.getRepository(RealtimePresence)
+			.update(
+				{ id: claim.id, publishedRevision: claim.revision, publishedAt: Equal(claim.at) },
+				{ publishedRevision: claim.previousRevision, publishedAt: claim.previousAt as never }
+			);
+		return (result.affected ?? 0) > 0;
+	}
+
+	/**
+	 * The employees whose published row holds a revision not told yet and whose window closed — a change whose process
+	 * stopped before telling it. The sweep tells them ({@link claimPublication} decides who).
+	 */
+	async untold(now: Date, limit = 100): Promise<IPresenceScope[]> {
+		const rows = await this.dataSource
+			.getRepository(RealtimePresence)
+			.createQueryBuilder('presence')
+			.select(['presence.id', 'presence.tenantId', 'presence.employeeId'])
+			.where('presence.connectionId = :key', { key: REALTIME_PUBLISHED_PRESENCE_KEY })
+			.andWhere('presence.revision > presence.publishedRevision')
+			.andWhere('(presence.publishedAt IS NULL OR presence.publishedAt <= :cutoff)', { cutoff: new Date(now.getTime() - REALTIME_PRESENCE_COALESCE_MS) })
+			.take(limit)
+			.getMany();
+		return rows.map((row) => ({ tenantId: row.tenantId as ID, employeeId: row.employeeId }));
 	}
 
 	/**

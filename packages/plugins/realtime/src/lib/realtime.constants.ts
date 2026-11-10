@@ -52,4 +52,10 @@ export const REALTIME_RETENTION_INTERVAL_MS = 60 * 60_000;
 export const REALTIME_RETENTION_BATCH = 500;
 export const REALTIME_RETENTION_SCOPES_PER_PASS = 50;
 
+/**
+ * The shortest time between two `presence.changed` of one employee, whichever process tells them (spec §4: at most
+ * one message per employee per 5 s). Changes inside the window are told once, as the latest state, when it closes.
+ */
+export const REALTIME_PRESENCE_COALESCE_MS = 5_000;
+
 export { REALTIME_EVENT_NAMES, REALTIME_SIGNAL_EVENTS, REALTIME_STREAMED_EVENTS };

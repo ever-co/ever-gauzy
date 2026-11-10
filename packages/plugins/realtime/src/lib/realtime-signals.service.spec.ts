@@ -49,10 +49,17 @@ const sweepOf = (outcomes: IPresenceOutcome[]) =>
 		return { settled: outcomes.length, failed: 0 };
 	});
 
-function signalsOver(store: Partial<Record<'report' | 'sweep', jest.Mock>>) {
+function signalsOver(store: Partial<Record<'report' | 'sweep' | 'claimPublication' | 'untold' | 'release', jest.Mock>>) {
 	const pubSub = { publish: jest.fn(async () => undefined) };
-	const service = new RealtimeSignalsService({} as DataSource, store as unknown as RealtimePresenceStore, pubSub as unknown as GraphqlPubSub);
-	return { service, pubSub };
+	// By default this process wins every window, and nothing is left untold.
+	const doubles = {
+		claimPublication: jest.fn(async (scope: IPresenceOutcome) => ({ kind: 'publish', outcome: scope, claim: { id: 'p1' } })),
+		untold: jest.fn(async () => []),
+		release: jest.fn(async () => true),
+		...store
+	};
+	const service = new RealtimeSignalsService({} as DataSource, doubles as unknown as RealtimePresenceStore, pubSub as unknown as GraphqlPubSub);
+	return { service, pubSub, store: doubles };
 }
 
 describe('RealtimeSignalsService presence', () => {
@@ -69,7 +76,14 @@ describe('RealtimeSignalsService presence', () => {
 		expect(pubSub.publish).toHaveBeenCalledWith(
 			'presence.changed',
 			'ten',
-			expect.objectContaining({ name: 'presence.changed', tenantId: 'ten', organizationId: 'org', aggregate: { type: 'employee', id: 'e1' }, data: presence })
+			expect.objectContaining({
+				name: 'presence.changed',
+				tenantId: 'ten',
+				organizationId: 'org',
+				aggregate: { type: 'employee', id: 'e1' },
+				// The event's time is when it was told (the claim); the answer's, when the report was merged.
+				data: { ...presence, at: expect.any(String) }
+			})
 		);
 	});
 
@@ -108,7 +122,7 @@ describe('RealtimeSignalsService presence', () => {
 		expect(pubSub.publish).toHaveBeenCalledWith(
 			'presence.changed',
 			'ten',
-			expect.objectContaining({ organizationId: 'org-2', data: expect.objectContaining({ employeeId: 'e2', status: 'offline', at: now.toISOString() }) })
+			expect.objectContaining({ organizationId: 'org-2', data: expect.objectContaining({ employeeId: 'e2', status: 'offline', at: expect.any(String) }) })
 		);
 	});
 
@@ -128,6 +142,134 @@ describe('RealtimeSignalsService presence', () => {
 		await expect(service.sweepPresence()).resolves.toBeUndefined();
 		await service.sweepPresence();
 		expect(sweep).toHaveBeenCalledTimes(3);
+	});
+
+	describe('the publication window', () => {
+		afterEach(() => jest.useRealTimers());
+
+		it('tells the latest state once the window closes when another change holds it, with one timer per employee', async () => {
+			jest.useFakeTimers({ now: new Date('2026-11-10T12:00:00.000Z') });
+			const latest = outcome({ status: RealtimePresenceStatus.AWAY, revision: 7 });
+			const claimPublication = jest
+				.fn()
+				.mockResolvedValueOnce({ kind: 'later', at: Date.now() + 4_000 })
+				.mockResolvedValueOnce({ kind: 'later', at: Date.now() + 4_000 })
+				.mockResolvedValue({ kind: 'publish', outcome: latest });
+			const { service, pubSub } = signalsOver({ report: jest.fn(async () => outcome()), claimPublication });
+			await service.publishPresence({ status: RealtimePresenceStatus.ACTIVE, connectionId: 'tab-1' });
+			await service.publishPresence({ status: RealtimePresenceStatus.IDLE, connectionId: 'tab-1' });
+			expect(pubSub.publish).not.toHaveBeenCalled();
+			await jest.advanceTimersByTimeAsync(4_000);
+			expect(claimPublication).toHaveBeenCalledTimes(3);
+			expect(pubSub.publish).toHaveBeenCalledTimes(1);
+			expect(pubSub.publish).toHaveBeenCalledWith('presence.changed', 'ten', expect.objectContaining({ data: expect.objectContaining({ status: 'away', revision: 7 }) }));
+		});
+
+		it('tells nothing when another process already told it, and survives a failing claim', async () => {
+			const claimPublication = jest
+				.fn()
+				.mockResolvedValueOnce({ kind: 'none' })
+				.mockRejectedValueOnce(new Error('database unavailable'));
+			const { service, pubSub } = signalsOver({ report: jest.fn(async () => outcome()), claimPublication });
+			await expect(service.publishPresence({ status: RealtimePresenceStatus.ACTIVE })).resolves.toMatchObject({ status: 'active' });
+			await expect(service.publishPresence({ status: RealtimePresenceStatus.ACTIVE })).resolves.toMatchObject({ status: 'active' });
+			expect(pubSub.publish).not.toHaveBeenCalled();
+		});
+
+		it('lets the sweep tell what no process told', async () => {
+			const untold = jest.fn(async () => [{ tenantId: 'ten', employeeId: 'e9' }]);
+			const claimPublication = jest.fn(async () => ({ kind: 'publish', outcome: outcome({ employeeId: 'e9', userId: 'u9' }) }));
+			const { service, pubSub } = signalsOver({ sweep: sweepOf([]), untold, claimPublication });
+			await service.sweepPresence(new Date('2026-11-10T12:00:00.000Z'));
+			expect(claimPublication).toHaveBeenCalledWith({ tenantId: 'ten', employeeId: 'e9' }, expect.any(Date));
+			expect(pubSub.publish).toHaveBeenCalledWith('presence.changed', 'ten', expect.objectContaining({ data: expect.objectContaining({ employeeId: 'e9' }) }));
+		});
+
+		it('claims with the moment of the claim, not the start of a report that waited on the database', async () => {
+			jest.useFakeTimers({ now: new Date('2026-11-10T12:00:00.000Z') });
+			// The report takes 4 s (a lock wait) before it hands its outcome over.
+			const report = jest.fn(async () => {
+				jest.setSystemTime(new Date('2026-11-10T12:00:04.000Z'));
+				return outcome();
+			});
+			const claimPublication = jest.fn(async (scope: IPresenceOutcome) => ({ kind: 'publish', outcome: scope }));
+			const { service } = signalsOver({ report, claimPublication });
+			await service.publishPresence({ status: RealtimePresenceStatus.ACTIVE });
+			expect((claimPublication.mock.calls[0] as unknown[])[1]).toEqual(new Date('2026-11-10T12:00:04.000Z'));
+		});
+
+		it('neither publishes nor schedules after the module stopped, even for a claim in flight', async () => {
+			jest.useFakeTimers();
+			let answer: (value: unknown) => void = () => undefined;
+			const claimPublication = jest
+				.fn()
+				.mockImplementationOnce(() => new Promise((resolve) => (answer = resolve)))
+				.mockResolvedValue({ kind: 'publish', outcome: outcome() });
+			const { service, pubSub } = signalsOver({ report: jest.fn(async () => outcome()), claimPublication });
+			const reporting = service.publishPresence({ status: RealtimePresenceStatus.ACTIVE });
+			await Promise.resolve();
+			service.onModuleDestroy();
+			answer({ kind: 'later', at: Date.now() + 1_000 });
+			await reporting;
+			await jest.advanceTimersByTimeAsync(10_000);
+			expect(claimPublication).toHaveBeenCalledTimes(1);
+			expect(pubSub.publish).not.toHaveBeenCalled();
+			// A report after the stop claims nothing.
+			await service.publishPresence({ status: RealtimePresenceStatus.ACTIVE });
+			expect(claimPublication).toHaveBeenCalledTimes(1);
+		});
+
+		it('claims nothing in a process without a pub/sub, so a process that has one tells the change', async () => {
+			const claimPublication = jest.fn();
+			const untold = jest.fn(async () => [outcome()]);
+			const doubles = { report: jest.fn(async () => outcome()), sweep: jest.fn(async () => undefined), claimPublication, untold, release: jest.fn() };
+			const service = new RealtimeSignalsService({} as DataSource, doubles as unknown as RealtimePresenceStore, undefined);
+			await expect(service.publishPresence({ status: RealtimePresenceStatus.ACTIVE })).resolves.toMatchObject({ status: 'active' });
+			await service.sweepPresence();
+			expect(claimPublication).not.toHaveBeenCalled();
+			expect(untold).not.toHaveBeenCalled();
+		});
+
+		it('gives back a claim whose publication the pub/sub refused, so the sweep retries it', async () => {
+			const claim = { id: 'p1', at: new Date(), revision: 4, previousAt: null, previousRevision: 3 };
+			const release = jest.fn(async () => true);
+			const { service, pubSub } = signalsOver({
+				report: jest.fn(async () => outcome()),
+				claimPublication: jest.fn(async () => ({ kind: 'publish', outcome: outcome(), claim })),
+				release
+			});
+			pubSub.publish.mockRejectedValueOnce(new Error('redis unavailable') as never);
+			await expect(service.publishPresence({ status: RealtimePresenceStatus.ACTIVE })).resolves.toMatchObject({ status: 'active' });
+			expect(release).toHaveBeenCalledWith(claim);
+			// Delivered: nothing is given back.
+			await service.publishPresence({ status: RealtimePresenceStatus.ACTIVE });
+			expect(release).toHaveBeenCalledTimes(1);
+		});
+
+		it('gives back a claim won while the module stopped, so another process tells it', async () => {
+			let answer: (value: unknown) => void = () => undefined;
+			const claim = { id: 'p1', at: new Date(), revision: 4, previousAt: null, previousRevision: 3 };
+			const claimPublication = jest.fn().mockImplementationOnce(() => new Promise((resolve) => (answer = resolve)));
+			const release = jest.fn(async () => true);
+			const { service, pubSub } = signalsOver({ report: jest.fn(async () => outcome()), claimPublication, release });
+			const reporting = service.publishPresence({ status: RealtimePresenceStatus.ACTIVE });
+			await Promise.resolve();
+			service.onModuleDestroy();
+			answer({ kind: 'publish', outcome: outcome(), claim });
+			await reporting;
+			expect(release).toHaveBeenCalledWith(claim);
+			expect(pubSub.publish).not.toHaveBeenCalled();
+		});
+
+		it('forgets the pending tries when the module stops', async () => {
+			jest.useFakeTimers();
+			const claimPublication = jest.fn(async () => ({ kind: 'later', at: Date.now() + 4_000 }));
+			const { service } = signalsOver({ report: jest.fn(async () => outcome()), claimPublication });
+			await service.publishPresence({ status: RealtimePresenceStatus.ACTIVE });
+			service.onModuleDestroy();
+			await jest.advanceTimersByTimeAsync(10_000);
+			expect(claimPublication).toHaveBeenCalledTimes(1);
+		});
 	});
 
 	it('sweeps on a timer while the module lives', () => {

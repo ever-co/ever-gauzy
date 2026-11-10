@@ -24,7 +24,8 @@ import { DataSource, EntityManager, EntitySchema } from 'typeorm';
 import { RealtimePresenceStatus } from '@gauzy/contracts';
 import { Employee } from '@gauzy/core';
 import { CreateRealtimePresenceAndWatermarkTables1791000006820 } from './database/migrations/1791000006820-CreateRealtimePresenceAndWatermarkTables';
-import { REALTIME_PRESENCE_TTL_MS } from './realtime.constants';
+import { AddRealtimePresencePublication1791000006910 } from './database/migrations/1791000006910-AddRealtimePresencePublication';
+import { REALTIME_PRESENCE_COALESCE_MS, REALTIME_PRESENCE_TTL_MS } from './realtime.constants';
 import { RealtimePresence, REALTIME_PUBLISHED_PRESENCE_KEY, REALTIME_SHARED_CONNECTION_KEY, RealtimeReplayWatermark } from './realtime.entities';
 import { IPresenceOutcome, isLive, mergePresence, RealtimePresenceStore } from './realtime-presence.store';
 import { isLaterPosition, latestPosition, RealtimeReplayWatermarkService } from './realtime-replay-watermark.service';
@@ -55,7 +56,9 @@ const PresenceSchema = new EntitySchema<RealtimePresence>({
 		connectionId: { type: 'varchar' },
 		status: { type: 'varchar' },
 		expiresAt: { type: 'datetime', nullable: true },
-		revision: { type: 'integer', default: 0 }
+		revision: { type: 'integer', default: 0 },
+		publishedAt: { type: 'datetime', nullable: true },
+		publishedRevision: { type: 'integer', default: 0 }
 	}
 } as never);
 
@@ -98,7 +101,29 @@ beforeAll(async () => {
 	}
 	const runner = dataSource.createQueryRunner();
 	await new CreateRealtimePresenceAndWatermarkTables1791000006820().up(runner);
+	await new AddRealtimePresencePublication1791000006910().up(runner);
 	await runner.release();
+});
+
+describe('AddRealtimePresencePublication1791000006910', () => {
+	const columns = async (source: DataSource) =>
+		((await source.query(`PRAGMA table_info("realtime_presence")`)) as Array<{ name: string }>).map((column) => column.name);
+
+	it('adds the publication columns once, and drops them on the way down', async () => {
+		const scratch = new DataSource({ type: 'better-sqlite3', database: ':memory:', logging: false });
+		await scratch.initialize();
+		const runner = scratch.createQueryRunner();
+		await new CreateRealtimePresenceAndWatermarkTables1791000006820().up(runner);
+		const migration = new AddRealtimePresencePublication1791000006910();
+		await migration.up(runner);
+		await migration.up(runner);
+		expect(await columns(scratch)).toEqual(expect.arrayContaining(['publishedAt', 'publishedRevision']));
+		await migration.down(runner);
+		expect(await columns(scratch)).not.toEqual(expect.arrayContaining(['publishedAt']));
+		expect(await columns(scratch)).not.toContain('publishedRevision');
+		await runner.release();
+		await scratch.destroy();
+	});
 });
 
 afterAll(async () => {
@@ -290,6 +315,88 @@ describe('RealtimePresenceStore', () => {
 		expect((await sweep(at(REALTIME_PRESENCE_TTL_MS / 1000 * 10))).told).toEqual([]);
 		expect(await report(ANNA, REALTIME_SHARED_CONNECTION_KEY, RealtimePresenceStatus.IDLE, 1)).toMatchObject({ status: 'idle', changed: true });
 		expect(await report(ANNA, REALTIME_SHARED_CONNECTION_KEY, RealtimePresenceStatus.OFFLINE, 2)).toMatchObject({ status: 'offline', changed: true });
+	});
+
+	describe('the publication window', () => {
+		const claim = (who: typeof ANNA, seconds: number, from: RealtimePresenceStore = store) =>
+			from.claimPublication({ tenantId: TENANT, employeeId: who.employeeId }, at(seconds));
+		const window = REALTIME_PRESENCE_COALESCE_MS / 1000;
+
+		it('tells a change at once, then holds the window and tells its latest change when it closes', async () => {
+			await report(ANNA, 'tab-1', RealtimePresenceStatus.ACTIVE);
+			expect(await claim(ANNA, 0)).toEqual(expect.objectContaining({ kind: 'publish', outcome: expect.objectContaining({ status: 'active', revision: 1 }) }));
+			// Two more changes inside the window: nothing is told now, the asker is told when to come back.
+			await report(ANNA, 'tab-1', RealtimePresenceStatus.IDLE, 1);
+			expect(await claim(ANNA, 1)).toEqual({ kind: 'later', at: at(window).getTime() });
+			await report(ANNA, 'tab-1', RealtimePresenceStatus.AWAY, 2);
+			expect(await claim(ANNA, 2)).toEqual({ kind: 'later', at: at(window).getTime() });
+			// The window closes: the latest state is told, once.
+			expect(await claim(ANNA, window)).toEqual(expect.objectContaining({ kind: 'publish', outcome: expect.objectContaining({ status: 'away', revision: 3 }) }));
+			expect(await claim(ANNA, window)).toEqual({ kind: 'none' });
+		});
+
+		it('tells nothing when no revision is left untold', async () => {
+			expect(await claim(BOB, 0)).toEqual({ kind: 'none' });
+			await report(BOB, 'tab-1', RealtimePresenceStatus.ACTIVE);
+			await claim(BOB, 0);
+			expect(await claim(BOB, window * 3)).toEqual({ kind: 'none' });
+		});
+
+		it('lets one of two processes claiming at once win; the other comes back when the window closes', async () => {
+			await report(ANNA, 'tab-1', RealtimePresenceStatus.ACTIVE);
+			const other = new RealtimePresenceStore(dataSource);
+			// The other process read the published row before this one's claim committed.
+			const repository = dataSource.getRepository(RealtimePresence);
+			const stale = await repository.findOne({ where: { tenantId: TENANT, employeeId: ANNA.employeeId, connectionId: REALTIME_PUBLISHED_PRESENCE_KEY } });
+			expect(await claim(ANNA, 0)).toEqual(expect.objectContaining({ kind: 'publish' }));
+			const read = jest.spyOn(repository, 'findOne').mockResolvedValueOnce(stale as never);
+			try {
+				expect(await claim(ANNA, 0, other)).toEqual({ kind: 'later', at: at(window).getTime() });
+			} finally {
+				read.mockRestore();
+			}
+		});
+
+		it('tells a newer change after the window when a stale claim published an older one meanwhile', async () => {
+			await report(ANNA, 'tab-1', RealtimePresenceStatus.ACTIVE);
+			const repository = dataSource.getRepository(RealtimePresence);
+			const stale = await repository.findOne({ where: { tenantId: TENANT, employeeId: ANNA.employeeId, connectionId: REALTIME_PUBLISHED_PRESENCE_KEY } });
+			// A newer report commits while a claim that read the row before it is still in flight.
+			await report(ANNA, 'tab-1', RealtimePresenceStatus.IDLE, 1);
+			const read = jest.spyOn(repository, 'findOne').mockResolvedValueOnce(stale as never);
+			try {
+				// The stale claim wins and publishes the older revision...
+				expect(await claim(ANNA, 1)).toEqual(expect.objectContaining({ kind: 'publish', outcome: expect.objectContaining({ status: 'active', revision: 1 }) }));
+			} finally {
+				read.mockRestore();
+			}
+			// ...so the newer report's own announcement is held to the window, and told when it closes.
+			expect(await claim(ANNA, 2)).toEqual({ kind: 'later', at: at(1 + window).getTime() });
+			expect(await claim(ANNA, 1 + window)).toEqual(expect.objectContaining({ kind: 'publish', outcome: expect.objectContaining({ status: 'idle', revision: 2 }) }));
+		});
+
+		it('gives a won claim back so the revision is untold again, and never undoes a later claim', async () => {
+			await report(ANNA, 'tab-1', RealtimePresenceStatus.ACTIVE);
+			const won = await claim(ANNA, 0);
+			if (won.kind !== 'publish') throw new Error('expected a won claim');
+			expect(await store.release(won.claim)).toBe(true);
+			expect(await store.untold(at(window))).toEqual([{ tenantId: TENANT, employeeId: ANNA.employeeId }]);
+			// Claimed again (by another process); giving back the first claim now changes nothing.
+			const again = await claim(ANNA, window);
+			expect(again.kind).toBe('publish');
+			expect(await store.release(won.claim)).toBe(false);
+			expect(await claim(ANNA, window * 2)).toEqual({ kind: 'none' });
+		});
+
+		it('names the employees whose latest change no process told, once their window closed', async () => {
+			await report(ANNA, 'tab-1', RealtimePresenceStatus.ACTIVE);
+			await claim(ANNA, 0);
+			await report(ANNA, 'tab-1', RealtimePresenceStatus.IDLE, 1);
+			await report(BOB, 'tab-1', RealtimePresenceStatus.ACTIVE, 1);
+			// Bob was never told; Anna's change waits for her window.
+			expect(await store.untold(at(2))).toEqual([{ tenantId: TENANT, employeeId: BOB.employeeId }]);
+			expect((await store.untold(at(window))).map((scope) => scope.employeeId).sort()).toEqual([ANNA.employeeId, BOB.employeeId].sort());
+		});
 	});
 
 	it('tells of a change once when two tabs report it at the same moment (the second merge sees the first)', async () => {

@@ -99,7 +99,8 @@ removed rows after the cursor: refetch through the read APIs.
 (`offline` ends it). The answer is the employee's merged presence. The employee
 row keeps only `lastSeenAt` and `isIdle` (`true` for idle, away and offline
 alike), for clients that poll; the four states live in the plugin's table and
-the events. It is published to the organization when it changed, with the
+the events. It is published to the organization when it changed — at most
+once per employee per 5 s, the window's latest state when it closes — with the
 employee's `revision` (higher for every change: apply a
 `presence.changed` only when its revision is higher than the last applied).
 Without `connectionId`, every tab of the employee shares one connection that
