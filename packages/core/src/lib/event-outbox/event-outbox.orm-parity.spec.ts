@@ -1236,7 +1236,36 @@ describe.each([
 					{ status: EventOutboxStatus.PUBLISHED }
 				]);
 			} finally {
-				harness.worker.onModuleDestroy();
+				await harness.worker.onModuleDestroy();
+				harness.registry.unregister('orm-parity.live');
+			}
+		});
+
+		it('hands over every event one transaction appended to one aggregate in the same wake', async () => {
+			harness.quiet();
+			const ran: string[] = [];
+
+			harness.registry.register({
+				key: 'orm-parity.live',
+				events: ['order.placed'],
+				handle: async (event: { sequence?: number }) => {
+					ran.push(String(event.sequence));
+				}
+			});
+			jest.spyOn(harness.worker as any, 'consumesQueue').mockReturnValue(true);
+			harness.worker.onModuleInit();
+
+			try {
+				// One partition: a claim takes only its head, so each event waits for the one before it.
+				await appendCommitted(placed(), placed(), placed());
+
+				for (let turn = 0; turn < 400 && ran.length < 3; turn += 1) {
+					await new Promise((resolve) => setTimeout(resolve, 5));
+				}
+
+				expect(ran).toEqual(['1', '2', '3']);
+			} finally {
+				await harness.worker.onModuleDestroy();
 				harness.registry.unregister('orm-parity.live');
 			}
 		});

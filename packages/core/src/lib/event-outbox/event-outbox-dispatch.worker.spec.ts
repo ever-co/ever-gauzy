@@ -33,6 +33,7 @@
  */
 import '../core/entities/internal';
 
+import { AsyncLocalStorage } from 'node:async_hooks';
 import { Logger } from '@nestjs/common';
 import { CronExpression } from '@nestjs/schedule';
 import type { Job } from 'bullmq';
@@ -736,15 +737,16 @@ describe('EventOutboxDispatchWorker — the pass after a commit (T28)', () => {
 
 		expect(placed.seen.map((event) => event.name)).toEqual(['order.placed']);
 		expect(ledger.rows[0].status).toBe(EventOutboxStatus.PUBLISHED);
-		// The same bounded, leased claim the scheduled pass makes.
-		expect(ledger.claims).toEqual([
-			{ batchSize: EVENT_OUTBOX_DISPATCH_BATCH_SIZE, leaseMs: EVENT_OUTBOX_DISPATCH_LEASE_MS }
-		]);
+		// The same bounded, leased claim the scheduled pass makes. The pass published a row, so one more
+		// looks for the next event of that partition and finds nothing.
+		const bounded = { batchSize: EVENT_OUTBOX_DISPATCH_BATCH_SIZE, leaseMs: EVENT_OUTBOX_DISPATCH_LEASE_MS };
+
+		expect(ledger.claims).toEqual([bounded, bounded]);
 		// Once per commit burst, so its report is at debug level rather than in every log.
 		expect(logged()).not.toContain('Dispatch');
 		expect(debug.mock.calls.map((call) => String(call[0])).join('\n')).toContain('Dispatched 1 event(s)');
 
-		worker.onModuleDestroy();
+		await worker.onModuleDestroy();
 	});
 
 	it('runs nothing in a process that does not consume the dispatch queue', async () => {
@@ -789,16 +791,17 @@ describe('EventOutboxDispatchWorker — the pass after a commit (T28)', () => {
 
 		expect(claim).toHaveBeenCalledTimes(3);
 
-		worker.onModuleDestroy();
+		await worker.onModuleDestroy();
 	});
 
 	it('drains a burst larger than a batch in passes, up to its limit', async () => {
 		const { ledger, worker } = consuming();
+		const full = { claimed: EVENT_OUTBOX_DISPATCH_BATCH_SIZE, published: 0 };
 		const pass = jest
 			.spyOn(worker as any, 'runPass')
-			.mockResolvedValueOnce(EVENT_OUTBOX_DISPATCH_BATCH_SIZE)
-			.mockResolvedValueOnce(EVENT_OUTBOX_DISPATCH_BATCH_SIZE)
-			.mockResolvedValueOnce(3);
+			.mockResolvedValueOnce(full)
+			.mockResolvedValueOnce(full)
+			.mockResolvedValueOnce({ claimed: 3, published: 0 });
 
 		ledger.commitSignal.committed();
 		await settle();
@@ -807,14 +810,58 @@ describe('EventOutboxDispatchWorker — the pass after a commit (T28)', () => {
 		expect(pass).toHaveBeenCalledTimes(3);
 
 		pass.mockReset();
-		pass.mockResolvedValue(EVENT_OUTBOX_DISPATCH_BATCH_SIZE);
+		pass.mockResolvedValue(full);
 		ledger.commitSignal.committed();
 		await settle();
 
 		// A steady flood stops at the limit; what is left is due for the next wake or the scheduled pass.
 		expect(pass).toHaveBeenCalledTimes(EVENT_OUTBOX_COMMIT_PASS_LIMIT);
 
-		worker.onModuleDestroy();
+		await worker.onModuleDestroy();
+	});
+
+	it('passes again while a pass publishes, because a published head lets its partition’s next event be claimed', async () => {
+		const { ledger, worker } = consuming();
+		const pass = jest
+			.spyOn(worker as any, 'runPass')
+			.mockResolvedValueOnce({ claimed: 1, published: 1 })
+			.mockResolvedValueOnce({ claimed: 1, published: 1 })
+			.mockResolvedValueOnce({ claimed: 0, published: 0 });
+
+		ledger.commitSignal.committed();
+		await settle();
+
+		expect(pass).toHaveBeenCalledTimes(3);
+
+		// Control: a pass whose rows all failed published nothing, and their backoff leaves nothing due.
+		pass.mockReset();
+		pass.mockResolvedValue({ claimed: 2, published: 0 });
+		ledger.commitSignal.committed();
+		await settle();
+
+		expect(pass).toHaveBeenCalledTimes(1);
+
+		await worker.onModuleDestroy();
+	});
+
+	it('runs the pass outside the committing request’s async context', async () => {
+		const { ledger, worker } = consuming();
+		// Stands in for `nestjs-cls`, which keeps `RequestContext` in an AsyncLocalStorage.
+		const request = new AsyncLocalStorage<string>();
+		const seen: Array<string | undefined> = [];
+
+		jest.spyOn(ledger, 'claimBatch').mockImplementation(async () => {
+			seen.push(request.getStore());
+
+			return [];
+		});
+
+		request.run('the committing request', () => ledger.commitSignal.committed());
+		await settle();
+
+		expect(seen).toEqual([undefined]);
+
+		await worker.onModuleDestroy();
 	});
 
 	it('stops a wake whose claim fails, and the next commit wakes it again', async () => {
@@ -833,7 +880,52 @@ describe('EventOutboxDispatchWorker — the pass after a commit (T28)', () => {
 
 		expect(claim).toHaveBeenCalledTimes(2);
 
-		worker.onModuleDestroy();
+		await worker.onModuleDestroy();
+	});
+
+	it('waits for a running wake when destroyed, and starts no pass after it', async () => {
+		const { ledger, worker } = consuming();
+		let release!: () => void;
+		const held = new Promise<void>((resolve) => (release = resolve));
+		const claim = jest.spyOn(ledger, 'claimBatch').mockImplementationOnce(async () => {
+			await held;
+
+			return [];
+		});
+
+		ledger.commitSignal.committed();
+		await settle();
+		// A commit lands while the pass claims, so one more pass is owed.
+		ledger.commitSignal.committed();
+
+		let destroyed = false;
+		const destroying = worker.onModuleDestroy().then(() => (destroyed = true));
+
+		await settle();
+		expect(destroyed).toBe(false);
+
+		release();
+		await destroying;
+
+		// The owed pass does not start once the module is going away.
+		expect(claim).toHaveBeenCalledTimes(1);
+
+		ledger.commitSignal.committed();
+		worker.wake();
+		await settle();
+
+		expect(claim).toHaveBeenCalledTimes(1);
+	});
+
+	it('cancels a wake that has not started yet when destroyed', async () => {
+		const { ledger, worker } = consuming();
+		const claim = jest.spyOn(ledger, 'claimBatch');
+
+		ledger.commitSignal.committed();
+		await worker.onModuleDestroy();
+		await settle();
+
+		expect(claim).not.toHaveBeenCalled();
 	});
 
 	it(`listens to nothing when ${EVENT_OUTBOX_DISPATCH_ON_COMMIT_ENV}=false, and stops listening when destroyed`, async () => {
@@ -850,7 +942,7 @@ describe('EventOutboxDispatchWorker — the pass after a commit (T28)', () => {
 
 		const destroyed = consuming();
 
-		destroyed.worker.onModuleDestroy();
+		await destroyed.worker.onModuleDestroy();
 		destroyed.ledger.commitSignal.committed();
 		await settle();
 
