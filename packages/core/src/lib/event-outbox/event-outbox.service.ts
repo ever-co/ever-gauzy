@@ -24,6 +24,7 @@ import {
 	EventDeliveryEventPublisher
 } from './event-delivery.publisher';
 import { EventOutboxMikroOrmStore, IDeliveryReplayMove, isMikroOrmEntityManager } from './event-outbox-mikro-orm.store';
+import { EventOutboxAppendSignal } from './event-outbox-append.signal';
 import { TypeOrmEventDeliveryRepository } from './repository/type-orm-event-delivery.repository';
 import { TypeOrmEventOutboxRepository } from './repository/type-orm-event-outbox.repository';
 import { MikroOrmEventDeliveryRepository } from './repository/mikro-orm-event-delivery.repository';
@@ -188,7 +189,14 @@ export class EventOutboxService extends CrudService<EventOutbox> {
 		 * that does serve the endpoint always has one, which its own suite asserts.
 		 */
 		@Optional()
-		private readonly deliveryPublisher?: EventDeliveryEventPublisher
+		private readonly deliveryPublisher?: EventDeliveryEventPublisher,
+		/**
+		 * What a pass is asked for by, right after an append, so an event is delivered in moments rather
+		 * than at the next per-minute tick. Optional for the same reason as the publisher: a suite or a
+		 * process that drains nothing appends exactly the same rows without it.
+		 */
+		@Optional()
+		private readonly appendSignal?: EventOutboxAppendSignal
 	) {
 		super(typeOrmEventOutboxRepository, mikroOrmEventOutboxRepository);
 
@@ -215,7 +223,10 @@ export class EventOutboxService extends CrudService<EventOutbox> {
 	 */
 	async append(manager: EntityManager | MikroOrmEntityManager, input: IOutboxWriteInput): Promise<EventOutbox> {
 		if (isMikroOrmEntityManager(manager)) {
-			return this.mikroOrmStore.append(manager, input);
+			const appended = await this.mikroOrmStore.append(manager, input);
+			this.appendSignal?.notify();
+
+			return appended;
 		}
 
 		// The ordering key defaults to the aggregate, because per-aggregate ordering is the only
@@ -242,7 +253,12 @@ export class EventOutboxService extends CrudService<EventOutbox> {
 			organizationId: input.tenantWide ? undefined : (input.organizationId ?? RequestContext.currentOrganizationId())
 		} as Partial<EventOutbox>);
 
-		return manager.save(EventOutbox, event);
+		const saved = await manager.save(EventOutbox, event);
+		// After the write and before the caller commits: whoever listens waits a moment before it asks for
+		// a pass, and asks again a second later, so a commit that lands in between is still delivered.
+		this.appendSignal?.notify();
+
+		return saved;
 	}
 
 	/**

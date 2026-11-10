@@ -53,7 +53,8 @@ import {
 } from './event-outbox-constant';
 import { EventConsumerRegistry } from './event-consumer.registry';
 import { EventOutboxDispatchScheduler } from './event-outbox-dispatch.scheduler';
-import { EventOutboxDispatchWorker, EventOutboxRowOutcome } from './event-outbox-dispatch.worker';
+import { EventOutboxDispatchWorker } from './event-outbox-dispatch.worker';
+import { EventOutboxRowOutcome } from './event-outbox-dispatcher';
 import type { IEventOutboxDispatchJob } from './event-outbox-dispatch.worker';
 import { describeFailure, EventOutboxService } from './event-outbox.service';
 
@@ -378,6 +379,21 @@ describe('EventOutboxDispatchWorker — one bounded pass', () => {
 		// is the store's own error rather than a message wrapped around it.
 		expect(logged()).not.toContain('Dispatched');
 		expect(failure).toHaveBeenCalled();
+	});
+});
+
+describe('EventOutboxDispatchWorker — a request that followed an append', () => {
+	it('drains what is due rather than running the one bounded pass of the per-minute tick', async () => {
+		const { ledger, worker } = dispatcher();
+
+		await worker.handleDispatch({
+			name: EVENT_OUTBOX_DISPATCH_JOB,
+			data: { requestedAt: '2026-03-01T10:00:00.000Z', drain: true }
+		} as Job<IEventOutboxDispatchJob>);
+
+		// An empty outbox: one claim, and no line at log level — a drain follows every chat message.
+		expect(ledger.claims).toHaveLength(1);
+		expect(logged()).not.toContain('Dispatching the event outbox');
 	});
 });
 

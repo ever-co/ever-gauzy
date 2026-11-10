@@ -39,9 +39,29 @@ Nothing new is invented for transport:
   answered is still ahead of it; `resync` is answered only when a retention
   removed rows after the cursor (the `realtime_replay_watermark` table).
 
-Multi-replica deployments set `GRAPHQL_PUBSUB_ENGINE` (a Redis-backed engine) so
-a subscriber on one API replica sees the events of another; a single instance
-uses the in-process engine.
+### How fast an event arrives
+
+An append asks for a dispatch pass right away instead of waiting for the
+per-minute tick:
+
+- **No queue** (`REDIS_ENABLED` not `true`): the API drains the outbox itself,
+  about 75 ms after an append, once more a second later, and every 15 s as a
+  sweep. `EVENT_OUTBOX_INLINE_DISPATCH=false` turns this off.
+- **With a queue**: the append enqueues a draining pass on the outbox queue;
+  the per-minute tick stays as the safety net.
+
+With Redis on, subscription events travel through Redis pub/sub between every
+API and worker process (`RedisGraphqlPubSubEngine`), so a pass run in one
+process reaches a socket held by another. `GRAPHQL_PUBSUB_REDIS=false` keeps the
+in-process engine; `GRAPHQL_PUBSUB_CHANNEL_PREFIX` names the channels (by
+default derived from the database and `API_BASE_URL`, so installations that
+share one Redis stay apart).
+
+`GET /api/realtime/status` reports this as `delivery: { dispatch, shared,
+prompt }`. A client may stop polling only when `prompt` is true: dispatched
+right after the write, and reaching every process (`inline`, or `queue` with a
+shared engine). One API process without Redis counts as prompt; several API
+replicas need Redis.
 
 ## Events
 

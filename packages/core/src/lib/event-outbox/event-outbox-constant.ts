@@ -42,3 +42,37 @@ export const EVENT_OUTBOX_DISPATCH_BATCH_SIZE = 100;
  * thing the lease exists for.
  */
 export const EVENT_OUTBOX_DISPATCH_LEASE_MS = 5 * 60 * 1000;
+
+/**
+ * The most passes one drain runs.
+ *
+ * A drain follows an append and keeps going while each pass publishes something, because a pass
+ * claims the head of each aggregate's queue only. The bound keeps one request from holding a worker
+ * for long: twenty-five passes of a hundred heads each is far beyond any burst a person produces, and
+ * whatever is left is the next request's or the next tick's.
+ */
+export const EVENT_OUTBOX_DRAIN_MAX_PASSES = 25;
+
+/**
+ * How long an append-driven request waits before it asks for a pass.
+ *
+ * `append` runs inside the caller's transaction, so the row is not visible until that commits. The
+ * wait lets the commit happen first and coalesces a burst of appends into one pass.
+ */
+export const EVENT_OUTBOX_APPEND_DEBOUNCE_MS = 75;
+
+/**
+ * When an append-driven request asks again, in case the first pass ran before the caller committed.
+ *
+ * Cheap — one claim that usually matches nothing — and it bounds the delay a slow commit can cause
+ * to about a second instead of the next per-minute tick.
+ */
+export const EVENT_OUTBOX_APPEND_FOLLOW_UP_MS = 1_000;
+
+/**
+ * How often a process that drains the outbox in-process sweeps it without being asked.
+ *
+ * Only for a process without a queue, where nothing else drains: rows appended by another process,
+ * rows whose retry came due and rows whose lease expired are picked up here.
+ */
+export const EVENT_OUTBOX_INLINE_SWEEP_MS = 15_000;

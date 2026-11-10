@@ -3,6 +3,7 @@ import { SchedulerModule } from '@gauzy/scheduler';
 import { EventOutboxModule } from './event-outbox.module';
 import { EventOutboxDispatchScheduler } from './event-outbox-dispatch.scheduler';
 import { EventOutboxDispatchWorker } from './event-outbox-dispatch.worker';
+import { EventOutboxQueueDispatchTrigger } from './event-outbox-dispatch.trigger';
 import { EVENT_OUTBOX_QUEUE_NAME } from './event-outbox-constant';
 
 /**
@@ -50,7 +51,9 @@ import { EVENT_OUTBOX_QUEUE_NAME } from './event-outbox-constant';
 			// service through here.
 			imports: [EventOutboxModule]
 		})
-	]
+	],
+	// Asks the queue for a drain right after an append, so delivery does not wait for the next tick.
+	providers: [EventOutboxQueueDispatchTrigger]
 })
 export class EventOutboxMaintenanceModule {}
 

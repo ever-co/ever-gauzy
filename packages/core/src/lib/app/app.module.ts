@@ -161,6 +161,10 @@ import { GraphqlOrganizationMembershipInterceptor } from '../graphql/graphql-org
 import { ReadableCommentsInterceptor } from '../comment/readable-comments.interceptor';
 import { EventOutboxModule } from '../event-outbox/event-outbox.module';
 import { EventOutboxMaintenanceModule } from '../event-outbox/event-outbox-maintenance.module';
+import {
+	EventOutboxInlineDispatchModule,
+	isEventOutboxInlineDispatchEnabled
+} from '../event-outbox/event-outbox-dispatch.trigger';
 import { WebhookMaintenanceModule } from '../webhook/webhook-maintenance.module';
 import { OperationModule } from '../operation/operation.module';
 import { WebhookModule } from '../webhook/webhook.module';
@@ -678,8 +682,9 @@ if (environment.EVER_TEAMS_CLIENT_IP_SECRET?.trim() && !clientIpSecretOf(environ
 					// same as the sweep's: without a queue root nothing hands appended events to their
 					// consumers, so GraphQL subscriptions, the search index and every outbound webhook go
 					// quiet while `event_outbox` grows. Appending still works and no writer sees an error —
-					// which is exactly why this is called out here rather than left to be discovered. A
-					// deployment that wants events delivered needs `REDIS_ENABLED` and a worker process.
+					// which is exactly why this is called out here rather than left to be discovered. The tick
+					// comes from the worker process; an append also asks for a pass at once
+					// (`EventOutboxQueueDispatchTrigger`), so delivery does not wait for the tick.
 					EventOutboxMaintenanceModule,
 					// The per-minute pass that re-attempts a delivery the ladder says is due. It is the
 					// second half of the outbound surface: the fan-out above makes the first attempt, and
@@ -689,7 +694,12 @@ if (environment.EVER_TEAMS_CLIENT_IP_SECRET?.trim() && !clientIpSecretOf(environ
 					// that event again.
 					WebhookMaintenanceModule
 			  ]
-			: []),
+			: // No queue: the API drains the outbox itself, right after each append and on a short sweep, so a
+			  // single-container or dev setup delivers subscriptions, search updates and webhooks instead of
+			  // appending events nobody hands on. `EVENT_OUTBOX_INLINE_DISPATCH=false` turns it off.
+			  isEventOutboxInlineDispatchEnabled()
+			  ? [EventOutboxInlineDispatchModule]
+			  : []),
 		//Token cleanup scheduler is disabled by default; enable when ready
 		TokenModule.forRoot({ enableScheduler: false }),
 		AccessTokenModule,

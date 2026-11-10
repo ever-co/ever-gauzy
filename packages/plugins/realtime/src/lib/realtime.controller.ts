@@ -1,4 +1,5 @@
 import { Body, Controller, Get, Header, HttpCode, HttpStatus, Optional, Post, Query, UseGuards } from '@nestjs/common';
+import { ModuleRef } from '@nestjs/core';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import {
@@ -10,11 +11,20 @@ import {
 	REALTIME_MAX_TYPING_RECIPIENTS,
 	REALTIME_SIGNAL_EVENTS
 } from '@gauzy/contracts';
-import { PermissionGuard, Permissions, SubscriptionCatalogue, TenantPermissionGuard, UseValidationPipe } from '@gauzy/core';
+import {
+	EventOutboxAppendSignal,
+	GraphqlPubSub,
+	PermissionGuard,
+	Permissions,
+	SubscriptionCatalogue,
+	TenantPermissionGuard,
+	UseValidationPipe
+} from '@gauzy/core';
 import { RealtimeCatchUpQueryDTO, RealtimePresenceDTO, RealtimeTypingDTO } from './dto/realtime.dto';
 import { collaborationEventNames, collaborationReplayNames } from './graphql/realtime-envelope';
 import { RealtimeCatalogue } from './realtime-catalogue';
 import { RealtimeCatchUpService } from './realtime-catch-up.service';
+import { describeRealtimeDelivery } from './realtime-delivery';
 import { RealtimeSignalsService } from './realtime-signals.service';
 import { REALTIME_ROUTE_PREFIX } from './realtime.constants';
 
@@ -33,7 +43,9 @@ export class RealtimeController {
 		private readonly catalogue: RealtimeCatalogue,
 		private readonly signals: RealtimeSignalsService,
 		private readonly catchUp: RealtimeCatchUpService,
-		@Optional() private readonly subscriptions?: SubscriptionCatalogue
+		@Optional() private readonly subscriptions?: SubscriptionCatalogue,
+		@Optional() private readonly pubSub?: GraphqlPubSub,
+		@Optional() private readonly moduleRef?: ModuleRef
 	) {}
 
 	@Get('/status')
@@ -49,8 +61,22 @@ export class RealtimeController {
 			subscriptions: this.catalogue.servesSubscriptions,
 			events: collaborationReplayNames(declared),
 			signals: collaborationEventNames(declared).filter((name) => signals.has(name)),
-			maxTypingRecipients: REALTIME_MAX_TYPING_RECIPIENTS
+			maxTypingRecipients: REALTIME_MAX_TYPING_RECIPIENTS,
+			// Whether a client may rely on pushed events instead of polling (see `describeRealtimeDelivery`).
+			delivery: describeRealtimeDelivery(
+				this.appendSignal()?.deliveryMode() ?? 'none',
+				this.pubSub?.sharedAcrossProcesses ?? false
+			)
 		};
+	}
+
+	/** The outbox's append signal, held by the kernel module rather than one this module imports. */
+	private appendSignal(): EventOutboxAppendSignal | undefined {
+		try {
+			return this.moduleRef?.get(EventOutboxAppendSignal, { strict: false }) ?? undefined;
+		} catch {
+			return undefined;
+		}
 	}
 
 	@Get('/events')
