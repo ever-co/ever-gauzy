@@ -125,9 +125,30 @@ describe('TaskService.update — moving a task to another project', () => {
 		);
 		Object.defineProperty(service, 'typeOrmRepository', { value: { manager }, configurable: true });
 
-		await service.update('task-1', { projectId: 'project-new' });
+		await service.update('task-1', { projectId: 'project-new', number: 12, prefix: 'OLD' } as never);
 
 		expect(saves(TaskFormerReference)).not.toHaveBeenCalled();
+		// It keeps the number and prefix it holds there, not the stale ones of a body read before that move
+		expect(save).toHaveBeenCalledWith(expect.objectContaining({ projectId: 'project-new', number: 5, prefix: 'Eve' }));
+		expect(maxNumberBy).not.toHaveBeenCalled();
+	});
+
+	it('moves a task back to the project the body names when an overlapping update moved it away meanwhile', async () => {
+		// Read in project-old; by the time this transaction holds the row, another update moved it to MID-3
+		const findProjectOrOld = jest.fn(async (entity, { where }) =>
+			entity === OrganizationProject && where.id === 'project-old' ? { id: 'project-old', name: 'Old project' } : findProject(entity, { where })
+		);
+		const { manager, saves } = stubTaskUpdateManager(
+			{ findOne: findProjectOrOld },
+			{ id: 'task-1', projectId: 'project-mid', number: 3, prefix: 'MID', organizationId: fixture.organizationId }
+		);
+		Object.defineProperty(service, 'typeOrmRepository', { value: { manager }, configurable: true });
+
+		await service.update('task-1', { projectId: 'project-old', title: 'Renamed', number: 3 } as never);
+
+		expect(findProjectOrOld).toHaveBeenCalledWith(OrganizationProject, expect.objectContaining({ where: expect.objectContaining({ id: 'project-old' }) }));
+		expect(save).toHaveBeenCalledWith(expect.objectContaining({ projectId: 'project-old', number: 100, prefix: 'Old' }));
+		expect(saves(TaskFormerReference)).toHaveBeenCalledWith(expect.objectContaining({ projectId: 'project-mid', number: 3, prefix: 'MID' }));
 	});
 
 	it('keeps the reference of a task taken out of its project, which keeps its number', async () => {

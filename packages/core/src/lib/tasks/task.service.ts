@@ -232,27 +232,14 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			// the new one, or leave the task numbered as if it had never moved. The prefix follows the project
 			// too, by the rule the create path uses (the first three characters of the project's name). The move
 			// is written by the one save below, together with the rest of the update: a save that fails leaves
-			// the task where it was. The number itself is chosen in the update's transaction (below).
+			// the task where it was. Where the task goes, and its number there, are decided in the update's transaction
+			// (below), from the task as it is once its row is locked.
 			// Set in the update's transaction (a closure): typed by assertion so that the read after it is not narrowed to null.
 			let moved = null as Partial<Task> | null;
 			let reclaimedNumber = null as number | null;
-			let destination: { projectId: ID; organizationId: ID; prefix: string | null } | null = null;
-			if (data.projectId && data.projectId !== task.projectId) {
-				// The task's organization after the update: the destination must be a project of it, and the next
-				// number is counted in it (counting in another organization could hand out a taken number).
-				const organizationId = data.organizationId ?? task.organizationId;
-				const projectId = data.projectId;
-
-				// Fails closed: a project that is not one of the organization's, or one that cannot be checked, is
-				// refused before anything is written (the tenant guard of the save checks the tenant only).
-				const found = await this.findDestinationProject(projectId, tenantId, organizationId);
-				if (!found.exists) {
-					throw new BadRequestException(
-						"The task cannot move to a project that is not one of the task's organization."
-					);
-				}
-				destination = { projectId, organizationId, prefix: found.prefix ?? null };
-			}
+			// The task's organization after the update: the destination must be a project of it, and the next number is
+			// counted in it (counting in another organization could hand out a taken number).
+			const organizationIdAfter = data.organizationId ?? task.organizationId;
 
 			// A body that removes the project can still carry the old `project` relation, which would keep the task in it
 			const removesProject = data.projectId === null && 'project' in data;
@@ -279,30 +266,40 @@ export class TaskService extends TenantAwareCrudService<Task> {
 					current.number !== undefined &&
 					(data.projectId ?? null) !== current.projectId;
 
-				// The number the task takes in the project it moves to, chosen once the row is locked, from the task as
-				// it is now: a task an overlapping update already put there keeps its number. A task moving back to a
-				// project it left takes back the number it held there (an undo restores `API-42`, not `API-43`), and its
-				// former reference there is removed with the save. Otherwise the next number of the project, soft-deleted
-				// tasks and former numbers included (they keep their number, as for a new task).
-				if (destination) {
-					const to = destination;
-					const alreadyThere = current.projectId === to.projectId;
-					reclaimedNumber = alreadyThere
-						? null
-						: await this.reclaimableNumberOf(manager, id, to.projectId, tenantId, to.organizationId);
-					const nextNumber = async () =>
-						(await this.getMaxTaskNumberByProject(
-							{ tenantId, organizationId: to.organizationId, projectId: to.projectId },
+				// Whether the task moves, decided from the task as it is now (an overlapping update may have moved it since
+				// it was read above), and its number in the project it moves to. Fails closed: a project that is not one of
+				// the organization's, or one that cannot be checked, is refused before anything is written (the tenant
+				// guard of the save checks the tenant only). A task moving back to a project it left takes back the number
+				// it held there (an undo restores `API-42`, not `API-43`), and its former reference there is removed with
+				// the save. Otherwise the next number of the project, soft-deleted tasks and former numbers included (they
+				// keep their number, as for a new task). Every read here goes through the transaction's connection.
+				const movesTo = data.projectId && data.projectId !== current.projectId ? data.projectId : null;
+				if (movesTo) {
+					const found = await this.findDestinationProject(movesTo, tenantId, organizationIdAfter, manager);
+					if (!found.exists) {
+						throw new BadRequestException(
+							"The task cannot move to a project that is not one of the task's organization."
+						);
+					}
+					reclaimedNumber = await this.reclaimableNumberOf(manager, id, movesTo, tenantId, organizationIdAfter);
+					const number =
+						reclaimedNumber ??
+						(await service.getMaxTaskNumberByProject(
+							{ tenantId, organizationId: organizationIdAfter, projectId: movesTo },
 							{ withDeleted: true }
 						)) + 1;
 					moved = {
-						projectId: to.projectId,
-						number: alreadyThere ? current.number : (reclaimedNumber ?? (await nextNumber())),
+						projectId: movesTo,
+						number,
 						// The destination's prefix, never the input's.
-						prefix: alreadyThere ? current.prefix : to.prefix,
+						prefix: found.prefix ?? null,
 						// A relation object in the input would otherwise point the save back at another project.
-						...('project' in data ? { project: { id: to.projectId } as Task['project'] } : {})
+						...('project' in data ? { project: { id: movesTo } as Task['project'] } : {})
 					};
+				} else if (data.projectId && current.projectId !== task.projectId) {
+					// An overlapping update already put the task where this one names: it keeps the number and prefix it
+					// holds there, whatever this body (read before that move) carries.
+					moved = { projectId: current.projectId, number: current.number, prefix: current.prefix };
 				}
 
 				// Update the task with the provided data. When the task moved, the project, number and prefix computed
@@ -1701,16 +1698,18 @@ export class TaskService extends TenantAwareCrudService<Task> {
 	 * @param projectId The project the task moves to.
 	 * @param tenantId The caller's tenant.
 	 * @param organizationId The task's organization (after the update).
+	 * @param manager The manager to read with: the update's transaction's, so the read takes no other connection.
 	 */
 	private async findDestinationProject(
 		projectId: ID,
 		tenantId: ID,
-		organizationId: ID
+		organizationId: ID,
+		manager: EntityManager = this.typeOrmRepository.manager
 	): Promise<{ exists: boolean; prefix?: string | null; billable?: boolean | null }> {
 		if (!tenantId || !organizationId) {
 			return { exists: false };
 		}
-		const project = await this.typeOrmRepository.manager.findOne(OrganizationProject, {
+		const project = await manager.findOne(OrganizationProject, {
 			where: { id: projectId, tenantId, organizationId },
 			select: { id: true, name: true, billable: true }
 		});
