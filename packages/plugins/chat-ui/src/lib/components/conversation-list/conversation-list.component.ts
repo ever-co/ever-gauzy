@@ -129,6 +129,12 @@ function writeCollapsed(keys: ReadonlySet<string>): void {
 								>
 									<nb-icon class="caret" [class.collapsed]="collapsed" icon="arrow-ios-downward-outline"></nb-icon>
 									<span>{{ label }}</span>
+									@if (collapsed) {
+										@let hidden = unreadIn(section);
+										@if (hidden > 0) {
+											<span class="count section-count" [attr.aria-label]="'CHAT.LIST.UNREAD_IN' | translate: { count: hidden }">{{ hidden }}</span>
+										}
+									}
 								</button>
 								@if (section.add === 'channel') {
 									<button type="button" class="section-add" [nbTooltip]="'CHAT.LIST.ADD_CHANNEL' | translate" [attr.aria-label]="'CHAT.LIST.ADD_CHANNEL' | translate" (click)="newChannel.emit()">
@@ -399,6 +405,12 @@ function writeCollapsed(keys: ReadonlySet<string>): void {
 				text-overflow: ellipsis;
 				white-space: nowrap;
 			}
+			/* A collapsed section's unread count, at the end of its header. */
+			.section-toggle .section-count {
+				flex: 0 0 auto;
+				margin-left: auto;
+				overflow: visible;
+			}
 			.section-toggle:hover,
 			.section-toggle:focus-visible {
 				color: var(--chat-text, inherit);
@@ -601,9 +613,11 @@ export class ConversationListComponent {
 	protected readonly channels = computed(() =>
 		this.conversations().filter((conversation) => conversation.kind === ChatConversationKindEnum.CHANNEL && !conversation.state?.isFavorite)
 	);
-	protected readonly direct = computed(() =>
-		this.conversations().filter((conversation) => conversation.kind !== ChatConversationKindEnum.CHANNEL && !conversation.state?.isFavorite)
-	);
+	/**
+	 * Every direct and group conversation, favourites included: Favourites is a shortcut list on top, so a person
+	 * added to it stays in Direct messages too. (A favourite channel moves to Favourites.)
+	 */
+	protected readonly direct = computed(() => this.conversations().filter((conversation) => conversation.kind !== ChatConversationKindEnum.CHANNEL));
 
 	/** The channels under their category (in category order), the uncategorized ones first. */
 	protected readonly channelGroups = computed(() => {
@@ -660,10 +674,21 @@ export class ConversationListComponent {
 			.sort((a, b) => Number(isUnread(b)) - Number(isUnread(a)));
 	});
 
-	/** Every conversation the sidebar shows, top to bottom (what Alt+↑ / Alt+↓ walks through). */
+	/**
+	 * Every conversation the sidebar shows, top to bottom (what Alt+↑ / Alt+↓ walks through), each once: a favourite
+	 * direct message shows in two sections but is one stop.
+	 */
 	private readonly visibleOrder = computed(() => {
 		if (this.query()) return this.matches();
-		return this.sections().flatMap((section) => this.shown(section));
+		const seen = new Set<string>();
+		return this.sections()
+			.flatMap((section) => this.shown(section))
+			.filter((conversation) => {
+				const id = String(conversation.id);
+				if (seen.has(id)) return false;
+				seen.add(id);
+				return true;
+			});
 	});
 
 	protected unread = isUnread;
@@ -680,11 +705,14 @@ export class ConversationListComponent {
 		writeCollapsed(next);
 	}
 
-	/** A section's rows: all of them, or, while it is collapsed, only the open and the unread ones. */
+	/** A section's rows: all of them, or none while it is collapsed (its header counts the unread ones instead). */
 	protected shown(section: ChatListSection): IChatConversationWithState[] {
-		if (!this.isCollapsed(section.key)) return section.conversations;
-		const active = this.activeId();
-		return section.conversations.filter((conversation) => conversation.id === active || isUnread(conversation));
+		return this.isCollapsed(section.key) ? [] : section.conversations;
+	}
+
+	/** The unread conversations of a section, which its header shows while the section is collapsed. */
+	protected unreadIn(section: ChatListSection): number {
+		return section.conversations.filter(isUnread).length;
 	}
 
 	protected title(conversation: IChatConversationWithState): string {

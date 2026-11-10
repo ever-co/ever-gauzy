@@ -25,7 +25,8 @@
 		"RESULTS": "Conversations",
 		"ADD_CHANNEL": "Add a channel",
 		"ADD_DIRECT": "Start a direct message",
-		"TOGGLE_SECTION": "Show or hide {{name}}"
+		"TOGGLE_SECTION": "Show or hide {{name}}",
+		"UNREAD_IN": "{{count}} unread"
 	},
 	"VIEW": {
 		"PICK": "Pick a conversation on the left, or start one.",
