@@ -79,6 +79,8 @@ interface IOutboxHarness {
 	requestContext: typeof RequestContext;
 	/** Runs work in a transaction of this ORM, handing it the transaction's own manager. */
 	inTransaction<T>(work: (manager: any) => Promise<T>): Promise<T>;
+	/** Runs work with a manager of this ORM that is in no transaction, so each statement commits on its own. */
+	withoutTransaction<T>(work: (manager: any) => Promise<T>): Promise<T>;
 	/** Writes the caller's own state change through a manager, as a service writes its aggregate. */
 	writeState(manager: any, id: string): Promise<void>;
 	/** Reads the store raw, as the database holds it. */
@@ -138,6 +140,7 @@ async function typeOrmHarness(): Promise<IOutboxHarness> {
 		worker: new EventOutboxDispatchWorker(service, registry),
 		requestContext: RequestContext,
 		inTransaction: (work) => dataSource.manager.transaction((manager) => work(manager)),
+		withoutTransaction: (work) => work(dataSource.manager),
 		writeState: async (manager, id) => {
 			await manager.query(`INSERT INTO "outbox_probe_state" ("id") VALUES (?)`, [id]);
 		},
@@ -274,6 +277,7 @@ async function mikroOrmHarness(options: { jsonMembersUnmapped?: boolean } = {}):
 		worker: new loaded.EventOutboxDispatchWorker(service, registry),
 		requestContext: loaded.RequestContext,
 		inTransaction: (work) => orm.em.fork().transactional((manager: any) => work(manager)),
+		withoutTransaction: (work) => work(orm.em.fork()),
 		writeState: async (manager, id) => {
 			await manager.execute(`INSERT INTO "outbox_probe_state" ("id") VALUES (?)`, [id], 'run');
 		},
@@ -1106,6 +1110,134 @@ describe.each([
 				).toEqual([before]);
 			} finally {
 				harness.registry.unregister('orm-parity.replayed');
+			}
+		});
+	});
+
+	describe('the signal after the commit of an append (T28)', () => {
+		/** Runs nested work in a savepoint of the caller's transaction, through that ORM's own call. */
+		const nested = <T>(manager: any, work: (inner: any) => Promise<T>): Promise<T> =>
+			typeof manager.transactional === 'function' ? manager.transactional(work) : manager.transaction(work);
+
+		/** Counts the signals the service raises. */
+		const counting = () => {
+			const raised: string[] = [];
+			const stop = harness.service.commitSignal.listen(() => raised.push('committed'));
+
+			return { raised, stop };
+		};
+
+		it('raises it after the commit of the transaction that appended, not at the append', async () => {
+			const { raised, stop } = counting();
+
+			try {
+				await harness.inTransaction(async (manager) => {
+					await harness.writeState(manager, 'state-1');
+					await harness.service.append(manager, placed());
+
+					// The event is not visible to a pass yet, so a pass asked for now would claim nothing.
+					expect(raised).toEqual([]);
+				});
+
+				expect(raised).toEqual(['committed']);
+				expect(await storedEvents(harness)).toHaveLength(1);
+			} finally {
+				stop();
+			}
+		});
+
+		it('raises nothing when the transaction rolls back', async () => {
+			const { raised, stop } = counting();
+
+			try {
+				await expect(
+					harness.inTransaction(async (manager) => {
+						await harness.service.append(manager, placed());
+
+						throw new Error('the state change was refused');
+					})
+				).rejects.toThrow('the state change was refused');
+
+				expect(raised).toEqual([]);
+				expect(await storedEvents(harness)).toEqual([]);
+			} finally {
+				stop();
+			}
+		});
+
+		it('waits for the outer commit when the append is made in a nested transaction', async () => {
+			const { raised, stop } = counting();
+
+			try {
+				await harness.inTransaction(async (manager) => {
+					await nested(manager, async (inner) => {
+						await harness.service.append(inner, placed());
+					});
+
+					// The savepoint is released, but the outer transaction holds the event until it commits.
+					expect(raised).toEqual([]);
+				});
+
+				expect(raised).toEqual(['committed']);
+			} finally {
+				stop();
+			}
+		});
+
+		it('raises it once the append returns when there is no transaction to wait for', async () => {
+			const { raised, stop } = counting();
+
+			try {
+				await harness.withoutTransaction(async (manager) => {
+					await harness.service.append(manager, placed());
+
+					expect(raised).toEqual(['committed']);
+				});
+			} finally {
+				stop();
+			}
+		});
+
+		it('lets the worker hand a committed event to its consumer without the scheduled pass', async () => {
+			harness.quiet();
+			const ran: string[] = [];
+
+			harness.registry.register({
+				key: 'orm-parity.live',
+				events: ['order.placed'],
+				handle: async () => {
+					ran.push('orm-parity.live');
+				}
+			});
+			// A process that consumes the dispatch queue, as the API does.
+			jest.spyOn(harness.worker as any, 'consumesQueue').mockReturnValue(true);
+			harness.worker.onModuleInit();
+
+			try {
+				await appendCommitted(placed());
+
+				for (let turn = 0; turn < 200 && ran.length === 0; turn += 1) {
+					await new Promise((resolve) => setTimeout(resolve, 5));
+				}
+
+				expect(ran).toEqual(['orm-parity.live']);
+
+				for (let turn = 0; turn < 200; turn += 1) {
+					const [row] = await harness.query(`SELECT "status" FROM "event_outbox"`);
+
+					if (row?.status === EventOutboxStatus.PUBLISHED) {
+						break;
+					}
+
+					await new Promise((resolve) => setTimeout(resolve, 5));
+				}
+
+				expect(await harness.query(`SELECT "status" FROM "event_outbox"`)).toEqual([
+					{ status: EventOutboxStatus.PUBLISHED }
+				]);
+			} finally {
+				harness.worker.onModuleDestroy();
+				harness.registry.unregister('orm-parity.live');
 			}
 		});
 	});

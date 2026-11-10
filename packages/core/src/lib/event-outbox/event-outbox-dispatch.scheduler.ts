@@ -28,7 +28,11 @@ import {
  * delivered an hour late is a subscription that looks broken, a search result that is wrong and a
  * partner integration that has already timed out. A minute is the coarsest period at which the outbox
  * still behaves like a transport rather than like a nightly batch, and the pass is bounded, so the
- * cost of firing it against an empty table is one claim query that matches nothing.
+ * cost of firing it against an empty table is one claim query that matches nothing. *
+ * **It is no longer what a live event waits for.** A process that consumes the queue also runs a pass
+ * right after each commit that appended an event (`EventOutboxDispatchWorker.wake`, T28). This schedule
+ * is what retries a failed row, what picks up a row whose lease expired, and what covers a commit made
+ * where no process listens for it.
  */
 @Injectable()
 export class EventOutboxDispatchScheduler {

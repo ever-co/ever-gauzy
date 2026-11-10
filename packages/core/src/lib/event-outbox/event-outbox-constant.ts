@@ -42,3 +42,22 @@ export const EVENT_OUTBOX_DISPATCH_BATCH_SIZE = 100;
  * thing the lease exists for.
  */
 export const EVENT_OUTBOX_DISPATCH_LEASE_MS = 5 * 60 * 1000;
+
+/**
+ * The switch for the pass that runs right after a commit (realtime-channel plan §15.9, T28).
+ *
+ * On unless set to `false`. With it on, a process that consumes the dispatch queue also runs a pass as
+ * soon as a transaction that appended an event commits, so a live subscriber gets the event within the
+ * time of one pass rather than up to a minute later. The scheduled pass still runs either way, and it
+ * is what retries, so turning this off only brings back the old latency.
+ */
+export const EVENT_OUTBOX_DISPATCH_ON_COMMIT_ENV = 'GAUZY_EVENT_OUTBOX_DISPATCH_ON_COMMIT';
+
+/**
+ * The most passes one wake runs back to back while each claims a full batch.
+ *
+ * A burst larger than a batch is drained in a few passes rather than left for the scheduled one, and
+ * the bound keeps a steady flood of appends from holding the process in passes. Whatever the bound
+ * leaves is due, so the next wake or the scheduled pass claims it.
+ */
+export const EVENT_OUTBOX_COMMIT_PASS_LIMIT = 10;

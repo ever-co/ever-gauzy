@@ -12,9 +12,10 @@
  *   node tools/scripts/realtime-live-check.mjs
  *
  * Optional: `GAUZY_WS_URL` (default: the API URL's origin on ws(s) + `/graphql`), `GAUZY_LIVE_TARGET_MS` (default
- * 1000, the spec's target), `GAUZY_LIVE_WAIT_MS` (default 90000). **Until realtime task T28 lands, expect the live part
- * to FAIL the 1 s target**: live events ride the outbox dispatcher, which runs every minute, so the measured latency is
- * up to about a minute (the report prints it; set `GAUZY_LIVE_TARGET_MS=90000` to check delivery itself).
+ * 1000, the spec's target), `GAUZY_LIVE_WAIT_MS` (default 90000). Live events ride the outbox dispatcher, which runs a
+ * pass right after each commit (realtime task T28) where the API consumes the dispatch queue; with
+ * `GAUZY_EVENT_OUTBOX_DISPATCH_ON_COMMIT=false`, or before T28, they wait for the per-minute pass, so the latency is up to
+ * about a minute (set `GAUZY_LIVE_TARGET_MS=90000` to check delivery itself).
  *
  * The update writes the task's own title, status and organization back unchanged (a `PUT /tasks/:id` carries the first
  * two; the organization lets the platform file the hint), which the platform reports as `task.updated`. The event is
@@ -158,7 +159,7 @@ async function main() {
 
 	const liveOk = liveMs !== null && liveMs <= targetMs;
 	console.log(`live: ${liveMs === null ? `not received within ${waitMs} ms` : `${liveMs} ms`} (target ${targetMs} ms) — ${liveOk ? 'PASS' : 'FAIL'}`);
-	if (!liveOk && liveMs !== null) console.log('(live delivery waits for the per-minute outbox dispatch until realtime task T28)');
+	if (!liveOk && liveMs !== null) console.log('(slow live delivery: is the API consuming the outbox queue, with GAUZY_EVENT_OUTBOX_DISPATCH_ON_COMMIT on?)');
 	console.log(`catch-up replay: ${replayed ? `PASS (${replayed.eventId})` : 'FAIL'}`);
 	return liveOk && replayed ? 0 : 1;
 }

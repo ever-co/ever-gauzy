@@ -10,6 +10,7 @@ export * from './event-outbox.module';
 export * from './event-outbox-constant';
 export * from './event-outbox-dispatch.scheduler';
 export * from './event-outbox-dispatch.worker';
+export * from './event-outbox-commit.signal';
 export * from './event-outbox-maintenance.module';
 export * from './dto';
 export * from './repository/type-orm-event-outbox.repository';
