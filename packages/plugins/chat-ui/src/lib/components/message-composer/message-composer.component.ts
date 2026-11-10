@@ -43,7 +43,7 @@ const MAX_BOX_HEIGHT_PX = 240;
 	template: `
 		<div class="composer" data-test="composer" [class.editing]="editing()">
 			@if (suggestions().length > 0) {
-				<ul class="popover suggestions" role="listbox" data-test="mention-suggestions">
+				<ul class="composer-popover suggestions" role="listbox" data-test="mention-suggestions">
 					@for (person of suggestions(); track person.employeeId; let index = $index) {
 						<li role="option" [attr.aria-selected]="index === highlighted()" [class.highlighted]="index === highlighted()" (mousedown)="$event.preventDefault(); pick(person)">
 							<ngx-chat-person-avatar [person]="person" size="small"></ngx-chat-person-avatar>
@@ -53,7 +53,7 @@ const MAX_BOX_HEIGHT_PX = 240;
 				</ul>
 			}
 			@if (emojiOpen()) {
-				<div class="popover emoji-grid" role="menu" data-test="composer-emoji">
+				<div class="composer-popover emoji-grid" role="menu" data-test="composer-emoji">
 					@for (emoji of emojiChoices; track emoji) {
 						<button type="button" class="emoji" role="menuitem" [attr.aria-label]="emoji" (mousedown)="$event.preventDefault()" (click)="insertEmoji(emoji)">{{ emoji }}</button>
 					}
@@ -365,11 +365,15 @@ const MAX_BOX_HEIGHT_PX = 240;
 			.hint.over {
 				color: var(--chat-danger, #e4493f);
 			}
-			.popover {
+			/* Not \`.popover\`: the app's global Bootstrap \`.popover\` (top: 0, max-width: 276px) squashed these panels. */
+			.composer-popover {
 				position: absolute;
+				top: auto;
 				bottom: calc(100% + 0.25rem);
 				left: 0;
 				z-index: 20;
+				box-sizing: border-box;
+				max-width: none;
 				margin: 0;
 				border: 1px solid var(--chat-border, rgba(127, 127, 127, 0.25));
 				border-radius: 0.5rem;
