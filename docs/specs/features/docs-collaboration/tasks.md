@@ -25,7 +25,15 @@
 - [x] **T11**. TipTap JSON ↔ Markdown for the stored subset (paragraphs, headings, lists, code, quotes, rules, links, marks) with a spec
 - [x] **T12**. `GET /documents/:id/export/markdown` (one page) and `?subtree=true` (zip with relative links)
 - [x] **T13**. `PUT /documents/:id/content/markdown` with `expectedRevision`: block diff, only the changed blocks replaced, HTML cache refreshed, mentions and links synced
-- [x] **T14**. MCP docs tools take the Markdown route (`mcp-collaboration-tools`): `get_page` reads `GET /documents/:id/export/markdown` between two reads of the revision, `create_page` and `update_page_markdown` write `PUT /documents/:id/content/markdown` with `expectedRevision` (ever-gauzy #11722 and its rounds); `docs.markdown-route.spec` drives the tools from an MCP client through the real API client to a stand-in of the routes (requests, a Markdown round trip, one edited block, a stale revision, slices)
+- [x] **T14**. MCP docs tools take the Markdown route
+  (`mcp-collaboration-tools`): `get_page` reads
+  `GET /documents/:id/export/markdown` between two reads of the revision;
+  `create_page` and `update_page_markdown` write
+  `PUT /documents/:id/content/markdown` with `expectedRevision`
+  (ever-gauzy #11722 and its rounds). `docs.markdown-route.spec` drives the
+  tools from an MCP client through the real API client to a stand-in of the
+  routes (requests, a Markdown round trip, one edited block, a stale
+  revision, slices)
 
 ## Phase 3 — Live sessions (lane G5, PR 3)
 
