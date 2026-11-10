@@ -49,12 +49,13 @@ const sweepOf = (outcomes: IPresenceOutcome[]) =>
 		return { settled: outcomes.length, failed: 0 };
 	});
 
-function signalsOver(store: Partial<Record<'report' | 'sweep' | 'claimPublication' | 'untold', jest.Mock>>) {
+function signalsOver(store: Partial<Record<'report' | 'sweep' | 'claimPublication' | 'untold' | 'release', jest.Mock>>) {
 	const pubSub = { publish: jest.fn(async () => undefined) };
 	// By default this process wins every window, and nothing is left untold.
 	const doubles = {
-		claimPublication: jest.fn(async (scope: IPresenceOutcome) => ({ kind: 'publish', outcome: scope })),
+		claimPublication: jest.fn(async (scope: IPresenceOutcome) => ({ kind: 'publish', outcome: scope, claim: { id: 'p1' } })),
 		untold: jest.fn(async () => []),
+		release: jest.fn(async () => true),
 		...store
 	};
 	const service = new RealtimeSignalsService({} as DataSource, doubles as unknown as RealtimePresenceStore, pubSub as unknown as GraphqlPubSub);
@@ -216,6 +217,21 @@ describe('RealtimeSignalsService presence', () => {
 			// A report after the stop claims nothing.
 			await service.publishPresence({ status: RealtimePresenceStatus.ACTIVE });
 			expect(claimPublication).toHaveBeenCalledTimes(1);
+		});
+
+		it('gives back a claim won while the module stopped, so another process tells it', async () => {
+			let answer: (value: unknown) => void = () => undefined;
+			const claim = { id: 'p1', at: new Date(), revision: 4, previousAt: null, previousRevision: 3 };
+			const claimPublication = jest.fn().mockImplementationOnce(() => new Promise((resolve) => (answer = resolve)));
+			const release = jest.fn(async () => true);
+			const { service, pubSub } = signalsOver({ report: jest.fn(async () => outcome()), claimPublication, release });
+			const reporting = service.publishPresence({ status: RealtimePresenceStatus.ACTIVE });
+			await Promise.resolve();
+			service.onModuleDestroy();
+			answer({ kind: 'publish', outcome: outcome(), claim });
+			await reporting;
+			expect(release).toHaveBeenCalledWith(claim);
+			expect(pubSub.publish).not.toHaveBeenCalled();
 		});
 
 		it('forgets the pending tries when the module stops', async () => {

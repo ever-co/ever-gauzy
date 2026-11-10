@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { DataSource, EntityManager, In, IsNull, LessThan, LessThanOrEqual, Not } from 'typeorm';
+import { DataSource, EntityManager, Equal, In, IsNull, LessThan, LessThanOrEqual, Not } from 'typeorm';
 import { ID, RealtimePresenceStatus } from '@gauzy/contracts';
 import { Employee } from '@gauzy/core';
 import { REALTIME_PRESENCE_COALESCE_MS, REALTIME_PRESENCE_TTL_MS } from './realtime.constants';
@@ -64,7 +64,19 @@ export interface IPresenceOutcome {
  * RealtimePresenceStore.claimPublication}): publish this outcome (this process claimed the window), try again at a
  * moment (the window is still open, or another process claimed it meanwhile), or nothing (no revision is left untold).
  */
-export type PresencePublication = { kind: 'publish'; outcome: IPresenceOutcome } | { kind: 'later'; at: number } | { kind: 'none' };
+export type PresencePublication =
+	| { kind: 'publish'; outcome: IPresenceOutcome; claim: IPresenceClaim }
+	| { kind: 'later'; at: number }
+	| { kind: 'none' };
+
+/** A won claim: what it wrote on the published row, and what was there before (to give it back, see `release`). */
+export interface IPresenceClaim {
+	id: ID;
+	at: Date;
+	revision: number;
+	previousAt: Date | null;
+	previousRevision: number;
+}
 
 /** An employee whose published row holds a revision the organization was not told yet. */
 export interface IPresenceScope {
@@ -196,7 +208,8 @@ export class RealtimePresenceStore {
 		});
 		if (!row) return { kind: 'none' };
 		const revision = Number(row.revision) || 0;
-		if (revision <= (Number(row.publishedRevision) || 0)) return { kind: 'none' };
+		const previousRevision = Number(row.publishedRevision) || 0;
+		if (revision <= previousRevision) return { kind: 'none' };
 		const last = row.publishedAt ? new Date(row.publishedAt as unknown as string).getTime() : null;
 		if (last !== null && Number.isFinite(last) && now.getTime() - last < REALTIME_PRESENCE_COALESCE_MS) {
 			return { kind: 'later', at: last + REALTIME_PRESENCE_COALESCE_MS };
@@ -212,6 +225,7 @@ export class RealtimePresenceStore {
 		}
 		return {
 			kind: 'publish',
+			claim: { id: row.id as ID, at: now, revision, previousAt: last !== null && Number.isFinite(last) ? new Date(last) : null, previousRevision },
 			outcome: {
 				tenantId: row.tenantId as ID,
 				organizationId: (row.organizationId as ID) ?? null,
@@ -222,6 +236,21 @@ export class RealtimePresenceStore {
 				revision
 			}
 		};
+	}
+
+	/**
+	 * Gives a won claim back, when its publication will not happen (the process stops): the published row returns to
+	 * what it said before the claim, so the revision is untold again and the next sweep of any process tells it. A
+	 * compare-and-set on what the claim wrote: a later claim is never undone.
+	 */
+	async release(claim: IPresenceClaim): Promise<boolean> {
+		const result = await this.dataSource
+			.getRepository(RealtimePresence)
+			.update(
+				{ id: claim.id, publishedRevision: claim.revision, publishedAt: Equal(claim.at) },
+				{ publishedRevision: claim.previousRevision, publishedAt: claim.previousAt as never }
+			);
+		return (result.affected ?? 0) > 0;
 	}
 
 	/**

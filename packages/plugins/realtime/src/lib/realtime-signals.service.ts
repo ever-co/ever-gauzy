@@ -131,14 +131,18 @@ export class RealtimeSignalsService implements OnModuleInit, OnModuleDestroy {
 	 * Tells the organization the employee's latest presence when this process wins the window
 	 * ({@link RealtimePresenceStore.claimPublication}, at the moment of the claim); otherwise tries again when the window
 	 * closes. Never throws: the report that caused it is already committed, and the sweep tells what is left untold.
-	 * After the module stopped it does nothing (a claim already in flight neither publishes nor schedules).
+	 * After the module stopped it does nothing: a claim already in flight schedules nothing, and a won one is given back
+	 * (`RealtimePresenceStore.release`) so another process's sweep tells it.
 	 */
 	private async announce(scope: IPresenceScope): Promise<void> {
 		if (this.stopped) return;
 		try {
 			const now = new Date();
 			const publication = await this.presenceStore.claimPublication(scope, now);
-			if (this.stopped) return;
+			if (this.stopped) {
+				if (publication.kind === 'publish') await this.presenceStore.release(publication.claim);
+				return;
+			}
 			if (publication.kind === 'publish') {
 				const outcome = publication.outcome;
 				await this.publish(

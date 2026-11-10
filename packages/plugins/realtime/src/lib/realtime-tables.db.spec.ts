@@ -324,14 +324,14 @@ describe('RealtimePresenceStore', () => {
 
 		it('tells a change at once, then holds the window and tells its latest change when it closes', async () => {
 			await report(ANNA, 'tab-1', RealtimePresenceStatus.ACTIVE);
-			expect(await claim(ANNA, 0)).toEqual({ kind: 'publish', outcome: expect.objectContaining({ status: 'active', revision: 1 }) });
+			expect(await claim(ANNA, 0)).toEqual(expect.objectContaining({ kind: 'publish', outcome: expect.objectContaining({ status: 'active', revision: 1 }) }));
 			// Two more changes inside the window: nothing is told now, the asker is told when to come back.
 			await report(ANNA, 'tab-1', RealtimePresenceStatus.IDLE, 1);
 			expect(await claim(ANNA, 1)).toEqual({ kind: 'later', at: at(window).getTime() });
 			await report(ANNA, 'tab-1', RealtimePresenceStatus.AWAY, 2);
 			expect(await claim(ANNA, 2)).toEqual({ kind: 'later', at: at(window).getTime() });
 			// The window closes: the latest state is told, once.
-			expect(await claim(ANNA, window)).toEqual({ kind: 'publish', outcome: expect.objectContaining({ status: 'away', revision: 3 }) });
+			expect(await claim(ANNA, window)).toEqual(expect.objectContaining({ kind: 'publish', outcome: expect.objectContaining({ status: 'away', revision: 3 }) }));
 			expect(await claim(ANNA, window)).toEqual({ kind: 'none' });
 		});
 
@@ -355,6 +355,19 @@ describe('RealtimePresenceStore', () => {
 			} finally {
 				read.mockRestore();
 			}
+		});
+
+		it('gives a won claim back so the revision is untold again, and never undoes a later claim', async () => {
+			await report(ANNA, 'tab-1', RealtimePresenceStatus.ACTIVE);
+			const won = await claim(ANNA, 0);
+			if (won.kind !== 'publish') throw new Error('expected a won claim');
+			expect(await store.release(won.claim)).toBe(true);
+			expect(await store.untold(at(window))).toEqual([{ tenantId: TENANT, employeeId: ANNA.employeeId }]);
+			// Claimed again (by another process); giving back the first claim now changes nothing.
+			const again = await claim(ANNA, window);
+			expect(again.kind).toBe('publish');
+			expect(await store.release(won.claim)).toBe(false);
+			expect(await claim(ANNA, window * 2)).toEqual({ kind: 'none' });
 		});
 
 		it('names the employees whose latest change no process told, once their window closed', async () => {
