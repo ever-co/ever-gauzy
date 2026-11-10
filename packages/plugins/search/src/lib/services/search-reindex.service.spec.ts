@@ -51,6 +51,8 @@ jest.mock('@gauzy/core', () => {
 		},
 		// The source connection asks which ORM is configured before it reads; the double answers
 		// TypeORM, which is the arm these suites exercise through their in-memory connection.
+		// The real converter: the source connection hands TypeORM what this returns.
+		parseFindOptionsRelations: jest.requireActual('@gauzy/core/src/lib/core/utils').parseFindOptionsRelations,
 		MultiORMEnum: { TypeORM: 'typeorm', MikroORM: 'mikro-orm' },
 		getORMType: () => 'typeorm'
 	};
