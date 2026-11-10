@@ -8,7 +8,7 @@
 **Branch**: `feat/task-views-and-bulk-actions`
 **Status**: `Draft`
 **Created**: 2026-11-07
-**Last updated**: 2026-11-07
+**Last updated**: 2026-11-09
 **Owner**: platform maintainers
 **Feature flag**: `GAUZY_TASK_VIEWS_ENABLED` (default off)
 
@@ -49,8 +49,11 @@ MCP server and the SDKs.
 - **Given** a project with key `API`, **when** a message or page contains `API-42`,
   **then** clients can resolve it to the task if the reader may view it.
 - **Given** a task moved to another project, **when** an old reference `API-42` is
-  used, **then** it still resolves to the task. (Not met yet: a move renumbers the task
-  and no per-task history is kept, see plan §7.)
+  used, **then** it still resolves to the task, the answer naming the reference
+  the task holds today, and project `API` never gives the number 42 to another
+  task. This holds for moves made once former references are recorded
+  (migration `1791000006750`): a task moved before keeps no old reference, and
+  nothing can rebuild one.
 
 ### 2.2 Edge cases & failures
 
@@ -59,6 +62,11 @@ MCP server and the SDKs.
   refused, and nothing is half-applied within one task.
 - **Given** more than 100 tasks selected, **when** a bulk action is requested, **then**
   it is refused with the limit named.
+- **Given** a project that held the key `API` or whose name derives it, **when**
+  another project of the organization asks for `API`, **then** it is refused
+  (`PROJECT_KEY_TAKEN`), so a reference never names two projects.
+- **Given** a bulk action where one task's update fails part-way, **when** the
+  answer reports that task as refused, **then** the task is exactly as it was.
 - **Given** a team view edited by two members at once, **when** the second saves on an
   older version, **then** they get a conflict and the latest view.
 - **Given** a filter on a deleted label, **when** the view loads, **then** the filter is
@@ -96,7 +104,9 @@ MCP server and the SDKs.
   binding) with the user's UI preferences and return them with the user profile.
 - **FR-9** Every project MUST have a unique key within its organization; tasks MUST be
   addressable as `KEY-number`, and old keys MUST keep resolving after a move; the
-  platform MUST expose a resolver for references and task links.
+  platform MUST expose a resolver for references and task links. A task's old
+  reference resolves for moves recorded since migration `1791000006750`, not for
+  earlier ones.
 
 ### Compatibility
 

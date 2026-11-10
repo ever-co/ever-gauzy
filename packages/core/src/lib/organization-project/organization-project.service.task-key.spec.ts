@@ -80,3 +80,145 @@ it('CONTROL: keeps an explicit `taskKey: null` without a key', async () => {
 	expect(find).not.toHaveBeenCalled();
 	expect(saved).toMatchObject({ taskKey: null });
 });
+
+/**
+ * A key another project answers to is refused (409 `PROJECT_KEY_TAKEN`): its key, a key it held before (old references
+ * keep resolving to it), and the key derived from its name (its tasks keep answering to it). Otherwise `API-42` could
+ * name two projects, and the resolver would open whichever one holds the number.
+ */
+describe('a key another project answers to', () => {
+	const projects = [
+		{ id: 'p-gateway', name: 'Gateway', taskKey: 'GW', taskKeyHistory: ['API'] },
+		{ id: 'p-beehive', name: 'Beehive', taskKey: 'BEE', taskKeyHistory: null },
+		{ id: 'p-ops', name: 'Operations', taskKey: 'OPS', taskKeyHistory: null }
+	];
+
+	/** The service over the organization's projects; `find` leaves out the project a `Not(id)` names. */
+	const serviceOver = (rows: Array<Record<string, unknown>>) => {
+		const { service } = serviceWith([]);
+		const find = jest.fn(async ({ where }: { where: { id?: { type?: string; value?: string } } }) =>
+			rows.filter((row) => !(where.id?.type === 'not' && where.id.value === row.id))
+		);
+		service.typeOrmRepository.find = find;
+		return { service, find };
+	};
+
+	const storedAs = (row: Record<string, unknown>) =>
+		jest.spyOn(TenantAwareCrudService.prototype, 'findOneByIdString').mockResolvedValue({ ...row, teams: [] } as never);
+
+	it("is refused when it was another project's key", async () => {
+		const { service, find } = serviceOver(projects);
+
+		await expect(service.create({ name: 'New API', organizationId: ORGANIZATION, taskKey: 'api' } as never)).rejects.toThrow(
+			/PROJECT_KEY_TAKEN: the key API was a key of the project "Gateway"/
+		);
+		expect(saved).toBeUndefined();
+		// Deleted projects count: their keys stay in the unique index, and a restored project answers to them again.
+		expect(find).toHaveBeenCalledWith(expect.objectContaining({ withDeleted: true }));
+	});
+
+	it("is refused when another project's name derives it", async () => {
+		const { service } = serviceOver(projects);
+
+		await expect(
+			service.create({ name: 'Bees', organizationId: ORGANIZATION, taskKey: 'OPE' } as never)
+		).rejects.toThrow(/PROJECT_KEY_TAKEN: the tasks of the project "Operations" answer to OPE/);
+		expect(saved).toBeUndefined();
+	});
+
+	it("is refused when it is another project's key", async () => {
+		const { service } = serviceOver(projects);
+
+		await expect(service.create({ name: 'Bees', organizationId: ORGANIZATION, taskKey: 'BEE' } as never)).rejects.toThrow(
+			/PROJECT_KEY_TAKEN: the key BEE belongs to the project "Beehive"/
+		);
+	});
+
+	it('is refused on an update too, with the history stored as JSON text (SQLite)', async () => {
+		const rows = [...projects, { id: 'p-legacy', name: 'Legacy', taskKey: 'LEG', taskKeyHistory: '["OLD"]' }];
+		const { service } = serviceOver(rows);
+		storedAs({ id: 'p-ops', name: 'Operations', taskKey: 'OPS', taskKeyHistory: null });
+
+		await expect(service.update('p-ops', { organizationId: ORGANIZATION, taskKey: 'OLD' } as never)).rejects.toThrow(
+			/the key OLD was a key of the project "Legacy"/
+		);
+		expect(saved).toBeUndefined();
+	});
+
+	it('lets a project take back a key it held before, and keeps the replaced key in its history', async () => {
+		const { service, find } = serviceOver(projects);
+		storedAs(projects[0]);
+
+		await service.update('p-gateway', { organizationId: ORGANIZATION, taskKey: 'API' } as never);
+
+		expect(find).toHaveBeenCalledWith(expect.objectContaining({ where: expect.objectContaining({ id: expect.anything() }) }));
+		expect(saved).toMatchObject({ taskKey: 'API', taskKeyHistory: ['GW'] });
+	});
+
+	it("CONTROL: a body that sends the project's own key back is not checked again", async () => {
+		// `Gateway` held API before: a project keyed API before keys were reserved keeps its key through a whole-project save.
+		const { service, find } = serviceOver([...projects, { id: 'p-api', name: 'Public API', taskKey: 'API', taskKeyHistory: null }]);
+		storedAs({ id: 'p-api', name: 'Public API', taskKey: 'API', taskKeyHistory: null });
+
+		await service.update('p-api', { organizationId: ORGANIZATION, name: 'Public API v2', taskKey: 'api' } as never);
+
+		expect(find).not.toHaveBeenCalled();
+		expect(saved).toMatchObject({ taskKey: 'API' });
+		expect(saved).not.toHaveProperty('taskKeyHistory');
+	});
+
+	it('CONTROL: a key nobody answers to is given', async () => {
+		const { service } = serviceOver(projects);
+
+		await service.create({ name: 'Bees', organizationId: ORGANIZATION, taskKey: 'HIVE' } as never);
+
+		expect(saved).toMatchObject({ taskKey: 'HIVE' });
+	});
+});
+
+/**
+ * The key check reads the projects of ONE organization: the stored project's own on an update (whatever the body
+ * states), the one the create names otherwise. Without one it would read every organization of the tenant and name
+ * another organization's project in the refusal, so it is refused instead.
+ */
+describe('the organization a key is checked in', () => {
+	const findIn = () => jest.fn(async (_options: { where: Record<string, unknown> }) => [] as unknown[]);
+
+	it("checks an update's key in the stored project's organization, when the body names none", async () => {
+		const { service } = serviceWith([]);
+		const find = findIn();
+		service.typeOrmRepository.find = find;
+		jest.spyOn(TenantAwareCrudService.prototype, 'findOneByIdString').mockResolvedValue({
+			id: 'p-ops',
+			name: 'Operations',
+			organizationId: ORGANIZATION,
+			taskKey: 'OPS',
+			teams: []
+		} as never);
+
+		await service.update('p-ops', { taskKey: 'RUN' } as never);
+
+		expect(find).toHaveBeenCalledWith(expect.objectContaining({ where: expect.objectContaining({ tenantId: TENANT, organizationId: ORGANIZATION }) }));
+		expect(saved).toMatchObject({ taskKey: 'RUN' });
+	});
+
+	it('takes the organization a create states as an object', async () => {
+		const { service } = serviceWith([]);
+		const find = findIn();
+		service.typeOrmRepository.find = find;
+
+		await service.create({ name: 'Runbooks', organization: { id: ORGANIZATION }, taskKey: 'RUN' } as never);
+
+		expect(find).toHaveBeenCalledWith(expect.objectContaining({ where: expect.objectContaining({ organizationId: ORGANIZATION }) }));
+	});
+
+	it('refuses a key it has no organization to check in, without reading the tenant', async () => {
+		const { service } = serviceWith([]);
+		const find = findIn();
+		service.typeOrmRepository.find = find;
+
+		await expect(service.create({ name: 'Runbooks', taskKey: 'RUN' } as never)).rejects.toThrow(/PROJECT_KEY_SCOPE_REQUIRED/);
+		expect(find).not.toHaveBeenCalled();
+		expect(saved).toBeUndefined();
+	});
+});
