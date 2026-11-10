@@ -3,20 +3,21 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, computed, DestroyRef, inject, OnInit, signal } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { NbAlertModule, NbButtonModule, NbCardModule, NbDialogService, NbIconModule, NbSpinnerModule } from '@nebular/theme';
+import { NbCardModule, NbDialogService, NbIconModule, NbSpinnerModule } from '@nebular/theme';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { combineLatest, EMPTY, forkJoin, merge, Observable, of, Subscription, timer } from 'rxjs';
 import { catchError, distinctUntilChanged, filter, map, switchMap } from 'rxjs/operators';
-import { IChatCategory, IChatConversationWithState, IChatMemberState, IChatMessageWithRelations, IChatStates, IOrganization, IUser, PermissionsEnum } from '@gauzy/contracts';
+import { ChatConversationKindEnum, IChatCategory, IChatConversationWithState, IChatMemberState, IChatMessageWithRelations, IChatStates, IOrganization, IUser, PermissionsEnum } from '@gauzy/contracts';
 import { Store, ToastrService } from '@gauzy/ui-core/core';
 import { CHAT_LINK, CHAT_LIST_POLL_MS } from '../../chat-ui.constants';
-import { conversationTitle, isUnread, plainBody, sortConversations } from '../../chat-ui.helpers';
+import { ChatPerson, conversationPerson, conversationTitle, isUnread, plainBody, sortConversations } from '../../chat-ui.helpers';
 import { ChatAvailabilityService, isFinalRefusal } from '../../services/chat-availability.service';
 import { ChatPeople, ChatPeopleService, EMPTY_PEOPLE } from '../../services/chat-people.service';
 import { ChatFollowedThread, ChatMessagePatch, ChatUiService } from '../../services/chat-ui.service';
 import { BrowseChannelsDialogComponent, NewChannelDialogComponent, NewDirectDialogComponent } from '../../dialogs/chat-dialogs.component';
 import { ChatListView, ConversationListComponent } from '../conversation-list/conversation-list.component';
 import { ConversationViewComponent } from '../conversation-view/conversation-view.component';
+import { PersonAvatarComponent } from '../person-avatar/person-avatar.component';
 import { ThreadPaneComponent } from '../thread-pane/thread-pane.component';
 
 /** What the page shows. */
@@ -40,26 +41,31 @@ const UNDO_MS = 55_000;
 	imports: [
 		DatePipe,
 		RouterLink,
-		NbAlertModule,
-		NbButtonModule,
 		NbCardModule,
 		NbIconModule,
 		NbSpinnerModule,
 		TranslatePipe,
 		ConversationListComponent,
 		ConversationViewComponent,
-		ThreadPaneComponent
+		ThreadPaneComponent,
+		PersonAvatarComponent
 	],
 	template: `
 		<nb-card class="chat" data-test="chat-page">
 			<nb-card-body class="body">
 				@switch (state()) {
 					@case ('unavailable') {
-						<p class="notice" data-test="unavailable">{{ 'CHAT.UNAVAILABLE' | translate }}</p>
+						<div class="state" data-test="unavailable">
+							<span class="state-icon"><nb-icon icon="slash-outline"></nb-icon></span>
+							<p>{{ 'CHAT.UNAVAILABLE' | translate }}</p>
+						</div>
 					}
 					@case ('error') {
-						<nb-alert status="danger" role="alert" data-test="error">{{ 'CHAT.ERROR' | translate }}</nb-alert>
-						<button nbButton size="small" type="button" (click)="reload()">{{ 'CHAT.RETRY' | translate }}</button>
+						<div class="state" role="alert" data-test="error">
+							<span class="state-icon danger"><nb-icon icon="alert-triangle-outline"></nb-icon></span>
+							<p>{{ 'CHAT.ERROR' | translate }}</p>
+							<button type="button" class="button primary" (click)="reload()">{{ 'CHAT.RETRY' | translate }}</button>
+						</div>
 					}
 					@case ('loading') {
 						<div class="loading" data-test="loading" [nbSpinner]="true"></div>
@@ -87,36 +93,52 @@ const UNDO_MS = 55_000;
 									@case ('unreads') {
 										<section class="simple" data-test="unreads-view">
 											<header class="simple-header">
-												<a class="back" [routerLink]="chatLink"><nb-icon icon="arrow-back-outline"></nb-icon></a>
+												<a class="back icon-button" [routerLink]="chatLink" [attr.aria-label]="'CHAT.VIEW.BACK' | translate"><nb-icon icon="arrow-back-outline"></nb-icon></a>
+												<span class="header-icon"><nb-icon icon="radio-button-on-outline"></nb-icon></span>
 												<h5>{{ 'CHAT.UNREADS.TITLE' | translate }}</h5>
 												@if (undoSnapshot(); as snapshot) {
-													<button nbButton size="tiny" status="basic" type="button" data-test="undo-read-all" (click)="undoReadAll(snapshot)">
-														{{ 'CHAT.UNREADS.UNDO' | translate }}
+													<button type="button" class="button" data-test="undo-read-all" (click)="undoReadAll(snapshot)">
+														<nb-icon icon="undo-outline"></nb-icon> {{ 'CHAT.UNREADS.UNDO' | translate }}
 													</button>
 												} @else {
-													<button nbButton size="tiny" status="basic" type="button" data-test="read-all" [disabled]="unreads().length === 0 || busy()" (click)="readAll()">
-														{{ 'CHAT.UNREADS.MARK_ALL_READ' | translate }}
+													<button type="button" class="button" data-test="read-all" [disabled]="unreads().length === 0 || busy()" (click)="readAll()">
+														<nb-icon icon="done-all-outline"></nb-icon> {{ 'CHAT.UNREADS.MARK_ALL_READ' | translate }}
 													</button>
 												}
 											</header>
 											<ul class="rows">
 												@for (conversation of unreads(); track conversation.id) {
 													<li>
-														<a class="row" [routerLink]="link(conversation.id)">
-															<strong>{{ title(conversation) }}</strong>
+														<a class="card" [routerLink]="link(conversation.id)">
+															<span class="card-icon">
+																@if (conversation.kind === 'channel') {
+																	<nb-icon [icon]="conversation.visibility === 'private' ? 'lock-outline' : 'hash-outline'"></nb-icon>
+																} @else if (personOf(conversation); as person) {
+																	<ngx-chat-person-avatar [person]="person"></ngx-chat-person-avatar>
+																} @else {
+																	<nb-icon icon="people-outline"></nb-icon>
+																}
+															</span>
+															<span class="card-main">
+																<strong>{{ cardTitle(conversation) }}</strong>
+																@if (conversation.lastMessageAt) {
+																	<time>{{ conversation.lastMessageAt | date: 'medium' }}</time>
+																}
+															</span>
 															<span class="meta">
 																@if (conversation.state?.mentionCount) {
-																	<span class="count mention">{{ conversation.state.mentionCount }}</span>
+																	<span class="count mention">&#64;{{ conversation.state.mentionCount }}</span>
 																}
 																<span class="count">{{ conversation.state?.unreadCount }}</span>
-																@if (conversation.lastMessageAt) {
-																	<time>{{ conversation.lastMessageAt | date: 'short' }}</time>
-																}
+																<nb-icon class="go" icon="arrow-ios-forward-outline"></nb-icon>
 															</span>
 														</a>
 													</li>
 												} @empty {
-													<li class="empty">{{ 'CHAT.UNREADS.EMPTY' | translate }}</li>
+													<li class="caught-up">
+														<span class="state-icon success"><nb-icon icon="checkmark-circle-2-outline"></nb-icon></span>
+														<p>{{ 'CHAT.UNREADS.EMPTY' | translate }}</p>
+													</li>
 												}
 											</ul>
 										</section>
@@ -124,28 +146,38 @@ const UNDO_MS = 55_000;
 									@case ('threads') {
 										<section class="simple" data-test="threads-view">
 											<header class="simple-header">
-												<a class="back" [routerLink]="chatLink"><nb-icon icon="arrow-back-outline"></nb-icon></a>
+												<a class="back icon-button" [routerLink]="chatLink" [attr.aria-label]="'CHAT.VIEW.BACK' | translate"><nb-icon icon="arrow-back-outline"></nb-icon></a>
+												<span class="header-icon"><nb-icon icon="message-square-outline"></nb-icon></span>
 												<h5>{{ 'CHAT.THREADS.TITLE' | translate }}</h5>
 											</header>
 											<ul class="rows">
 												@for (thread of threads(); track thread.id) {
 													<li>
-														<a class="row" [routerLink]="link(thread.conversationId)" [queryParams]="{ thread: thread.id }">
-															<strong>{{ titleOf(thread.conversationId) }}</strong>
-															<span class="preview">{{ preview(thread) }}</span>
+														<a class="card thread-card" [class.unread]="thread.unreadReplies > 0" [routerLink]="link(thread.conversationId)" [queryParams]="{ thread: thread.id }">
+															<span class="card-icon"><nb-icon icon="message-square-outline"></nb-icon></span>
+															<span class="card-main">
+																<strong>{{ titleOf(thread.conversationId) }}</strong>
+																<span class="preview">{{ preview(thread) }}</span>
+																<span class="thread-meta">
+																	<span class="replies">{{ 'CHAT.THREADS.REPLIES' | translate: { count: thread.replyCount } }}</span>
+																	@if (thread.lastReplyAt) {
+																		<time>{{ 'CHAT.THREADS.LAST_REPLY' | translate: { time: (thread.lastReplyAt | date: 'short') } }}</time>
+																	}
+																</span>
+															</span>
 															<span class="meta">
 																@if (thread.unreadReplies > 0) {
 																	<span class="count mention">{{ 'CHAT.THREADS.UNREAD_REPLIES' | translate: { count: thread.unreadReplies } }}</span>
 																}
-																<span>{{ 'CHAT.THREADS.REPLIES' | translate: { count: thread.replyCount } }}</span>
-																@if (thread.lastReplyAt) {
-																	<time>{{ thread.lastReplyAt | date: 'short' }}</time>
-																}
+																<nb-icon class="go" icon="arrow-ios-forward-outline"></nb-icon>
 															</span>
 														</a>
 													</li>
 												} @empty {
-													<li class="empty">{{ 'CHAT.THREADS.EMPTY' | translate }}</li>
+													<li class="caught-up">
+														<span class="state-icon"><nb-icon icon="message-square-outline"></nb-icon></span>
+														<p>{{ 'CHAT.THREADS.EMPTY' | translate }}</p>
+													</li>
 												}
 											</ul>
 										</section>
@@ -168,13 +200,26 @@ const UNDO_MS = 55_000;
 												(left)="onLeft(conversation.id)"
 											></ngx-chat-conversation-view>
 										} @else if (notFound()) {
-											<p class="notice" data-test="not-found">{{ 'CHAT.VIEW.NOT_FOUND' | translate }}</p>
+											<div class="state" data-test="not-found">
+												<span class="state-icon"><nb-icon icon="question-mark-circle-outline"></nb-icon></span>
+												<p>{{ 'CHAT.VIEW.NOT_FOUND' | translate }}</p>
+												<a class="button" [routerLink]="chatLink">{{ 'CHAT.VIEW.BACK' | translate }}</a>
+											</div>
 										} @else {
 											<div class="loading" [nbSpinner]="true"></div>
 										}
 									}
 									@default {
-										<p class="notice" data-test="pick">{{ 'CHAT.VIEW.PICK' | translate }}</p>
+										<div class="state home" data-test="pick">
+											<span class="state-icon accent"><nb-icon icon="message-circle-outline"></nb-icon></span>
+											<h3>{{ 'CHAT.VIEW.HOME_TITLE' | translate }}</h3>
+											<p>{{ 'CHAT.VIEW.PICK' | translate }}</p>
+											<div class="home-actions">
+												<button type="button" class="button primary" (click)="openNewChannel()"><nb-icon icon="hash-outline"></nb-icon> {{ 'CHAT.LIST.NEW_CHANNEL' | translate }}</button>
+												<button type="button" class="button" (click)="openNewDirect()"><nb-icon icon="edit-2-outline"></nb-icon> {{ 'CHAT.LIST.NEW_MESSAGE' | translate }}</button>
+												<button type="button" class="button" (click)="openBrowse()"><nb-icon icon="search-outline"></nb-icon> {{ 'CHAT.LIST.BROWSE' | translate }}</button>
+											</div>
+										</div>
 									}
 								}
 							</div>
@@ -204,29 +249,67 @@ const UNDO_MS = 55_000;
 	`,
 	styles: [
 		`
+			/*
+			 * The chat's own tokens, from the theme's: every part of the page (the sidebar, the conversation, the
+			 * thread, the messages, the composer) reads these, so the page follows the light and the dark themes.
+			 */
+			:host {
+				display: block;
+				--chat-bg: var(--gauzy-card-1, var(--card-background-color, #fff));
+				--chat-raised: var(--gauzy-card-1, var(--card-background-color, #fff));
+				--chat-sidebar-bg: var(--gauzy-sidebar-background-2, var(--background-basic-color-2, #f7f9fc));
+				--chat-border: var(--gauzy-border-default-color, rgba(127, 127, 127, 0.18));
+				--chat-border-strong: var(--border-basic-color-4, rgba(127, 127, 127, 0.35));
+				--chat-hover: var(--gauzy-hover-tint, rgba(126, 126, 143, 0.12));
+				--chat-active-tint: var(--gauzy-active-tint, rgba(126, 126, 143, 0.2));
+				--chat-elevated: var(--gauzy-sidebar-background-3, rgba(126, 126, 143, 0.1));
+				--chat-message-hover: var(--gauzy-sidebar-background-4, rgba(126, 126, 143, 0.05));
+				--chat-composer-bar: var(--gauzy-sidebar-background-4, rgba(126, 126, 143, 0.05));
+				--chat-reaction-bg: var(--gauzy-sidebar-background-3, rgba(126, 126, 143, 0.1));
+				--chat-code-bg: var(--gauzy-sidebar-background-3, rgba(126, 126, 143, 0.1));
+				--chat-text: var(--text-basic-color, inherit);
+				--chat-text-soft: var(--text-hint-color, rgba(127, 127, 127, 0.8));
+				--chat-muted: var(--text-hint-color, rgba(127, 127, 127, 0.9));
+				--chat-accent: var(--color-primary-default, #3366ff);
+				--chat-accent-soft: var(--color-primary-transparent-100, rgba(51, 102, 255, 0.08));
+				--chat-accent-soft-2: var(--color-primary-transparent-200, rgba(51, 102, 255, 0.16));
+				--chat-on-accent: var(--text-control-color, #fff);
+				--chat-send: var(--color-primary-default, #3366ff);
+				--chat-link: var(--text-primary-color, #3366ff);
+				--chat-mention-chip-bg: var(--color-primary-transparent-200, rgba(51, 102, 255, 0.16));
+				--chat-mention-chip-text: var(--text-primary-color, #3366ff);
+				--chat-danger: var(--color-danger-default, #e4493f);
+				--chat-header-height: 3.5rem;
+			}
 			.chat {
 				height: calc(100vh - 9rem);
 				min-height: 30rem;
+				margin-bottom: 0;
+				border: 1px solid var(--chat-border);
+				border-radius: 0.75rem;
+				overflow: hidden;
 			}
 			.body {
+				height: 100%;
 				padding: 0;
 				overflow: hidden;
+				background: var(--chat-bg);
 			}
 			.panes {
 				display: grid;
-				grid-template-columns: 16rem minmax(0, 1fr);
+				grid-template-columns: 17.5rem minmax(0, 1fr);
 				height: 100%;
 				min-height: 0;
 			}
 			.panes.with-thread {
-				grid-template-columns: 16rem minmax(0, 1fr) 22rem;
+				grid-template-columns: 17.5rem minmax(0, 1fr) minmax(20rem, 26rem);
 			}
 			.pane {
 				min-height: 0;
 				height: 100%;
 			}
 			.list-pane {
-				border-right: 1px solid rgba(127, 127, 127, 0.2);
+				border-right: 1px solid var(--chat-border);
 				overflow: hidden;
 			}
 			.main-pane {
@@ -234,14 +317,108 @@ const UNDO_MS = 55_000;
 				flex-direction: column;
 				min-width: 0;
 			}
-			.notice {
-				margin: 2rem 1rem;
-				font-size: 0.875rem;
-				opacity: 0.7;
+			.main-pane > * {
+				flex: 1 1 auto;
+				min-height: 0;
 			}
 			.loading {
 				min-height: 8rem;
+				height: 100%;
 				flex: 1 1 auto;
+			}
+			.state {
+				display: flex;
+				flex-direction: column;
+				align-items: center;
+				justify-content: center;
+				gap: 0.5rem;
+				height: 100%;
+				padding: 2rem 1.5rem;
+				text-align: center;
+			}
+			.state h3 {
+				margin: 0.5rem 0 0;
+				color: var(--chat-text);
+				font-size: 1.5rem;
+				font-weight: 800;
+				letter-spacing: -0.01em;
+			}
+			.state p {
+				max-width: 28rem;
+				margin: 0;
+				color: var(--chat-muted);
+				font-size: 0.9375rem;
+			}
+			.state-icon {
+				display: inline-flex;
+				align-items: center;
+				justify-content: center;
+				width: 4rem;
+				height: 4rem;
+				border-radius: 1rem;
+				background: var(--chat-elevated);
+				color: var(--chat-muted);
+			}
+			.state-icon nb-icon {
+				font-size: 2rem;
+			}
+			.state-icon.accent {
+				background: var(--chat-accent-soft);
+				color: var(--chat-accent);
+			}
+			.state-icon.danger {
+				color: var(--chat-danger);
+			}
+			.state-icon.success {
+				color: var(--color-success-default, #00b887);
+			}
+			.home-actions {
+				display: flex;
+				flex-wrap: wrap;
+				justify-content: center;
+				gap: 0.5rem;
+				margin-top: 1rem;
+			}
+			.button {
+				display: inline-flex;
+				align-items: center;
+				gap: 0.375rem;
+				height: 2.25rem;
+				padding: 0 0.875rem;
+				border: 1px solid var(--chat-border-strong);
+				border-radius: 0.5rem;
+				background: transparent;
+				color: var(--chat-text);
+				font: inherit;
+				font-size: 0.875rem;
+				font-weight: 700;
+				text-decoration: none;
+				cursor: pointer;
+				transition: background-color 0.1s ease, filter 0.1s ease;
+			}
+			.button nb-icon {
+				font-size: 1rem;
+			}
+			.button:hover:not(:disabled) {
+				background: var(--chat-hover);
+				text-decoration: none;
+			}
+			.button.primary {
+				border-color: transparent;
+				background: var(--chat-accent);
+				color: var(--chat-on-accent);
+			}
+			.button.primary:hover:not(:disabled) {
+				background: var(--chat-accent);
+				filter: brightness(1.08);
+			}
+			.button:disabled {
+				opacity: 0.5;
+				cursor: default;
+			}
+			.simple-header .button {
+				height: 2rem;
+				font-size: 0.8125rem;
 			}
 			.simple {
 				display: flex;
@@ -253,68 +430,177 @@ const UNDO_MS = 55_000;
 				display: flex;
 				align-items: center;
 				gap: 0.5rem;
-				padding: 0.5rem 0.75rem;
-				border-bottom: 1px solid rgba(127, 127, 127, 0.2);
+				min-height: var(--chat-header-height);
+				padding: 0.375rem 0.75rem 0.375rem 1.25rem;
+				border-bottom: 1px solid var(--chat-border);
+				flex: 0 0 auto;
+			}
+			.header-icon {
+				display: inline-flex;
+				color: var(--chat-text);
+			}
+			.header-icon nb-icon {
+				font-size: 1.125rem;
 			}
 			.simple-header h5 {
 				flex: 1 1 auto;
 				margin: 0;
-				font-size: 1rem;
+				color: var(--chat-text);
+				font-size: 1.0625rem;
+				font-weight: 800;
+			}
+			.icon-button {
+				display: inline-flex;
+				align-items: center;
+				justify-content: center;
+				width: 2rem;
+				height: 2rem;
+				border-radius: 0.5rem;
+				color: var(--chat-muted);
+			}
+			.icon-button:hover {
+				background: var(--chat-hover);
+				color: var(--chat-text);
 			}
 			.back {
 				display: none;
-				color: inherit;
+				margin-left: -0.5rem;
 			}
 			.rows {
+				display: flex;
+				flex-direction: column;
+				gap: 0.5rem;
 				flex: 1 1 auto;
 				min-height: 0;
 				overflow-y: auto;
 				margin: 0;
-				padding: 0.5rem;
+				padding: 1rem 1.25rem;
 				list-style: none;
 			}
-			.row {
+			.card {
+				display: flex;
+				align-items: center;
+				gap: 0.875rem;
+				padding: 0.75rem 1rem;
+				border: 1px solid var(--chat-border);
+				border-radius: 0.625rem;
+				background: var(--chat-bg);
+				color: inherit;
+				text-decoration: none;
+				transition: background-color 0.1s ease, border-color 0.1s ease, box-shadow 0.1s ease;
+			}
+			.card:hover {
+				border-color: var(--chat-border-strong);
+				background: var(--chat-message-hover);
+				box-shadow: 0 0.125rem 0.5rem rgba(0, 0, 0, 0.06);
+				text-decoration: none;
+			}
+			.card.thread-card {
+				align-items: flex-start;
+			}
+			.card.thread-card.unread {
+				box-shadow: inset 3px 0 0 var(--chat-accent);
+			}
+			.card-icon {
+				display: inline-flex;
+				align-items: center;
+				justify-content: center;
+				width: 2.25rem;
+				height: 2.25rem;
+				flex: 0 0 auto;
+				border-radius: 0.5rem;
+				background: var(--chat-elevated);
+				color: var(--chat-text);
+			}
+			.card-icon nb-icon {
+				font-size: 1.125rem;
+			}
+			.card-main {
 				display: flex;
 				flex-direction: column;
 				gap: 0.125rem;
-				padding: 0.5rem;
-				border-radius: 0.375rem;
-				color: inherit;
-				text-decoration: none;
-				font-size: 0.875rem;
+				flex: 1 1 auto;
+				min-width: 0;
 			}
-			.row:hover {
-				background: rgba(127, 127, 127, 0.12);
+			.card-main strong {
+				color: var(--chat-text);
+				font-size: 0.9375rem;
+				font-weight: 800;
+			}
+			.card-main time,
+			.thread-meta {
+				color: var(--chat-muted);
+				font-size: 0.75rem;
+			}
+			.thread-meta {
+				display: flex;
+				gap: 0.5rem;
+				margin-top: 0.25rem;
+			}
+			.replies {
+				color: var(--chat-link);
+				font-weight: 700;
 			}
 			.preview {
-				opacity: 0.8;
 				overflow: hidden;
-				text-overflow: ellipsis;
-				white-space: nowrap;
+				display: -webkit-box;
+				-webkit-line-clamp: 2;
+				-webkit-box-orient: vertical;
+				color: var(--chat-text);
+				font-size: 0.875rem;
+				line-height: 1.4;
 			}
 			.meta {
 				display: flex;
 				align-items: center;
-				gap: 0.5rem;
-				font-size: 0.75rem;
-				opacity: 0.8;
+				gap: 0.375rem;
+				flex: 0 0 auto;
+				align-self: center;
+			}
+			.go {
+				color: var(--chat-muted);
+				font-size: 1rem;
 			}
 			.count {
-				padding: 0 0.375rem;
+				min-width: 1.375rem;
+				height: 1.25rem;
+				padding: 0 0.4375rem;
 				border-radius: 999px;
-				background: rgba(127, 127, 127, 0.25);
-				font-weight: 700;
+				background: var(--chat-active-tint);
+				color: var(--chat-text);
+				font-size: 0.75rem;
+				font-weight: 800;
+				line-height: 1.25rem;
+				text-align: center;
+				white-space: nowrap;
 			}
 			.count.mention {
-				background: var(--color-danger-default, #e4493f);
-				color: var(--text-control-color, #fff);
+				background: var(--chat-danger);
+				color: #fff;
 			}
-			.empty {
-				padding: 1rem 0.5rem;
-				font-size: 0.875rem;
-				opacity: 0.7;
+			.caught-up {
+				display: flex;
+				flex-direction: column;
+				align-items: center;
+				gap: 0.75rem;
+				padding: 3rem 1rem;
+				text-align: center;
+			}
+			.caught-up p {
+				max-width: 24rem;
+				margin: 0;
+				color: var(--chat-muted);
+				font-size: 0.9375rem;
+			}
+			@media (max-width: 1200px) {
+				.panes.with-thread {
+					grid-template-columns: 15rem minmax(0, 1fr) 20rem;
+				}
 			}
 			@media (max-width: 960px) {
+				.chat {
+					height: calc(100vh - 7rem);
+				}
 				.panes,
 				.panes.with-thread {
 					grid-template-columns: 1fr;
@@ -325,11 +611,23 @@ const UNDO_MS = 55_000;
 				.panes.conversation-open .list-pane {
 					display: none;
 				}
-				.panes.with-thread .main-pane {
+				.panes.with-thread .main-pane,
+				.panes:not(.conversation-open) .main-pane {
 					display: none;
 				}
 				.back {
 					display: inline-flex;
+				}
+			}
+			@media (max-width: 600px) {
+				.rows {
+					padding: 0.75rem;
+				}
+				.simple-header {
+					padding-left: 0.75rem;
+				}
+				.simple-header .button {
+					padding: 0 0.625rem;
 				}
 			}
 		`
@@ -655,6 +953,16 @@ export class ChatPageComponent implements OnInit {
 
 	protected title(conversation: IChatConversationWithState): string {
 		return conversationTitle(conversation, this.people().byEmployee, this.meEmployeeId(), this.translate.instant('CHAT.UNNAMED'));
+	}
+
+	/** A channel's title without its `#`, beside the card's own `#` or lock icon. */
+	protected cardTitle(conversation: IChatConversationWithState): string {
+		const title = this.title(conversation);
+		return conversation.kind === ChatConversationKindEnum.CHANNEL ? title.replace(/^#/, '') : title;
+	}
+
+	protected personOf(conversation: IChatConversationWithState): ChatPerson | null {
+		return conversationPerson(conversation, this.people().byEmployee, this.meEmployeeId());
 	}
 
 	protected titleOf(conversationId: string): string {
