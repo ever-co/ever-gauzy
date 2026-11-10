@@ -32,7 +32,7 @@ import {
 } from '@gauzy/contracts';
 import { ToastrService } from '@gauzy/ui-core/core';
 import { CHAT_LINK, CHAT_MESSAGES_POLL_MS } from '../../chat-ui.constants';
-import { apiErrorMessage, continuesGroup, conversationPerson, conversationTitle, isSameDay, mergeMessages, newNonce } from '../../chat-ui.helpers';
+import { apiErrorMessage, continuesGroup, conversationPerson, conversationTitle, isSameDay, memberEmployeeIds, mergeMessages, newNonce } from '../../chat-ui.helpers';
 import { ChatPeople } from '../../services/chat-people.service';
 import { ChatEvents, ChatMessagePatch, ChatUiService, memberStateFromEvents } from '../../services/chat-ui.service';
 import { clearDraft, ComposerSubmission, MessageComposerComponent } from '../message-composer/message-composer.component';
@@ -305,6 +305,9 @@ export function unreadMarkerId(messages: readonly IChatMessageWithRelations[], s
 						[conversationNames]="conversationNames()"
 						[placeholder]="'CHAT.COMPOSER.PLACEHOLDER' | translate: { name: title() }"
 						[disabled]="sending()"
+						[everyone]="isChannel()"
+						[memberIds]="memberIds()"
+						[meEmployeeId]="meEmployeeId()"
 						[editing]="editing() !== null"
 						[initialBody]="editing()?.body ?? null"
 						[draftKey]="draftKey()"
@@ -813,6 +816,8 @@ export class ConversationViewComponent {
 
 	protected readonly chatLink = CHAT_LINK;
 	protected readonly isChannel = computed(() => this.conversation().kind === ChatConversationKindEnum.CHANNEL);
+	/** Who is in the conversation, for the `@` list (members first, the others marked). */
+	protected readonly memberIds = computed(() => memberEmployeeIds(this.conversation()));
 	protected readonly isPrivate = computed(() => this.conversation().visibility === ChatVisibilityEnum.PRIVATE);
 	/** The title without the channel's `#` (the header draws its own icon). */
 	protected readonly plainTitle = computed(() => (this.isChannel() ? this.title().replace(/^#/, '') : this.title()));

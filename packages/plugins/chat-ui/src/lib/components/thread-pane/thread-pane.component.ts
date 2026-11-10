@@ -106,6 +106,9 @@ import { MessageAction, MessageItemComponent } from '../message-item/message-ite
 						[conversationNames]="conversationNames()"
 						[placeholder]="'CHAT.THREADS.REPLY_PLACEHOLDER' | translate"
 						[disabled]="sending()"
+						[everyone]="channelName() !== null"
+						[memberIds]="memberIds()"
+						[meEmployeeId]="meEmployeeId()"
 						[editing]="editing() !== null"
 						[initialBody]="editing()?.body ?? null"
 						[draftKey]="draftKey()"
@@ -267,6 +270,8 @@ export class ThreadPaneComponent {
 	readonly meEmployeeId = input<string | null>(null);
 	readonly meUserId = input<string | null>(null);
 	readonly readOnly = input(false);
+	/** Who is in the thread's conversation, for the `@` list (null when not known). */
+	readonly memberIds = input<ReadonlySet<string> | null>(null);
 
 	readonly closed = output<void>();
 	/**
