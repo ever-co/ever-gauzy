@@ -79,6 +79,30 @@ describe('EmployeeNotificationService.create — in-app is always on', () => {
 		expect(settings.createForEmployee).toHaveBeenCalledWith(expect.objectContaining({ comment: true, employeeId: RECEIVER }));
 	});
 
+	it('saves the notification when another one created the receiver\'s settings first (the insert loses the race)', async () => {
+		const { service, saved, settings } = serviceWith('missing');
+		const winner = { ...ALL_OFF, comment: true } as IEmployeeNotificationSetting;
+		settings.createForEmployee.mockRejectedValueOnce(new Error('duplicate key value violates unique constraint'));
+		settings.findByEmployee.mockRejectedValueOnce(new NotFoundException()).mockResolvedValueOnce(winner);
+
+		await expect(
+			service.create({ type: EmployeeNotificationTypeEnum.COMMENT, receiverEmployeeId: RECEIVER, organizationId: 'org', tenantId: 'ten' } as never)
+		).resolves.toMatchObject({ id: 'notification-1' });
+		expect(saved).toHaveBeenCalledTimes(1);
+		expect(settings.findByEmployee).toHaveBeenCalledTimes(2);
+	});
+
+	it('saves the notification when the receiver\'s settings can be neither read nor created', async () => {
+		const { service, saved, settings } = serviceWith('missing');
+		settings.findByEmployee.mockRejectedValue(new Error('connection reset'));
+
+		await expect(
+			service.create({ type: EmployeeNotificationTypeEnum.MENTION, receiverEmployeeId: RECEIVER, organizationId: 'org', tenantId: 'ten' } as never)
+		).resolves.toMatchObject({ id: 'notification-1' });
+		expect(saved).toHaveBeenCalledTimes(1);
+		expect(settings.createForEmployee).not.toHaveBeenCalled();
+	});
+
 	it('still refuses a type it does not know', async () => {
 		const { service, saved } = serviceWith(ALL_OFF);
 

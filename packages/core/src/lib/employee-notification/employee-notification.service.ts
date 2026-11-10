@@ -123,39 +123,14 @@ export class EmployeeNotificationService extends TenantAwareCrudService<Employee
 			const organizationId = input.organizationId;
 			const employeeId = input.receiverEmployeeId;
 
-			// Search for the receiver notification setting
-			let employeeNotificationSetting: IEmployeeNotificationSetting;
-
-			// The RECEIVER's settings, whoever sends: the plain reads / writes of the setting service are
-			// limited to the caller's own employee, so an employee or manager sender used to be checked
-			// against their own settings row (and a missing row was created for them, not the receiver).
-			try {
-				employeeNotificationSetting = await this._employeeNotificationSettingService.findByEmployee({
-					employeeId,
-					organizationId,
-					tenantId
-				});
-			} catch (error) {
-				if (error instanceof NotFoundException) {
-					employeeNotificationSetting = await this._employeeNotificationSettingService.createForEmployee({
-						assignment: true,
-						comment: true,
-						invitation: true,
-						mention: true,
-						message: true,
-						payment: true,
-						preferences: { email: true, inApp: true },
-						employeeId,
-						organizationId,
-						tenantId
-					});
-				}
-			}
+			// The receiver's settings: created with every kind on when they have none, so the delivery rules find them.
+			// Best effort: the notification is saved whether or not they could be read or created (in-app is always on).
+			const employeeNotificationSetting = await this.receiverSettingsOf(employeeId, organizationId, tenantId);
 
 			// In-app is always on (Inbox spec FR-10 / T17, owner decision 2026-11-10): the row, and with it the bell item
 			// and the Inbox entry, is saved whatever the receiver's per-type switches say. The switches decide only
 			// e-mail and push, which the Inbox delivery rules apply (`kindSwitchOf`). An unknown type is still refused.
-			if (!this.kindSwitchOf(employeeNotificationSetting, input.type)) {
+			if (!this.kindSwitchOf(employeeNotificationSetting ?? {}, input.type)) {
 				this.logger.debug(`Notification of type ${input.type} saved in-app only: its receiver switched the kind off.`);
 			}
 
@@ -533,6 +508,50 @@ export class EmployeeNotificationService extends TenantAwareCrudService<Employee
 			// Redacted: a driver error carries the bound values (ids, the notification title) in its text.
 			this.logger.warn('Notification redelivery check failed, inserting as usual:', redactDatabaseError(error));
 			return null;
+		}
+	}
+
+	/**
+	 * The RECEIVER's notification settings, whoever sends (the plain reads and writes of the setting service are
+	 * limited to the caller's own employee, so an employee or manager sender used to be checked against their own
+	 * row, and a missing row was created for them, not the receiver). A receiver without settings gets them, every kind
+	 * on; two notifications arriving together for such a receiver both miss the read, and the one whose insert loses
+	 * the race reads the winner's row instead. Settings that cannot be read or created are logged and answered as
+	 * none: they are not what decides whether a notification is saved.
+	 */
+	private async receiverSettingsOf(employeeId: ID, organizationId: ID, tenantId: ID): Promise<IEmployeeNotificationSetting | undefined> {
+		const find = () => this._employeeNotificationSettingService.findByEmployee({ employeeId, organizationId, tenantId });
+		try {
+			return await find();
+		} catch (error) {
+			if (!(error instanceof NotFoundException)) {
+				this.logger.warn(`The notification settings of employee ${employeeId} were not read: ${(error as Error)?.message}`);
+				return undefined;
+			}
+		}
+		try {
+			return await this._employeeNotificationSettingService.createForEmployee({
+				assignment: true,
+				comment: true,
+				invitation: true,
+				mention: true,
+				message: true,
+				payment: true,
+				preferences: { email: true, inApp: true },
+				employeeId,
+				organizationId,
+				tenantId
+			});
+		} catch (createError) {
+			// Another notification created them meanwhile (the one-row-per-employee constraint refused this insert).
+			try {
+				return await find();
+			} catch (error) {
+				this.logger.warn(
+					`The notification settings of employee ${employeeId} were not created: ${(createError as Error)?.message}; nor read: ${(error as Error)?.message}`
+				);
+				return undefined;
+			}
 		}
 	}
 
