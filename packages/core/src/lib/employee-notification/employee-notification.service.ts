@@ -152,14 +152,11 @@ export class EmployeeNotificationService extends TenantAwareCrudService<Employee
 				}
 			}
 
-			// Check if the receiver employee has activated the notification for the current notification type
-			const isAllowedNotification = this.shouldCreateEmployeeNotification(
-				employeeNotificationSetting,
-				input.type
-			);
-
-			if (!isAllowedNotification) {
-				return undefined; // Do nothing if notification is not allowed
+			// In-app is always on (Inbox spec FR-10 / T17, owner decision 2026-11-10): the row, and with it the bell item
+			// and the Inbox entry, is saved whatever the receiver's per-type switches say. The switches decide only
+			// e-mail and push, which the Inbox delivery rules apply (`kindSwitchOf`). An unknown type is still refused.
+			if (!this.kindSwitchOf(employeeNotificationSetting, input.type)) {
+				this.logger.debug(`Notification of type ${input.type} saved in-app only: its receiver switched the kind off.`);
 			}
 
 			// Opt-in (no caller sets it today): a redelivered/duplicated EmployeeCreateNotificationEvent must not
@@ -203,7 +200,8 @@ export class EmployeeNotificationService extends TenantAwareCrudService<Employee
 	 *   notification. The relation objects and the read-state flags are not taken either.
 	 *
 	 * @param input - The notification the caller asked for.
-	 * @returns The created notification, or `undefined` when the receiver has switched this kind off.
+	 * @returns The created notification (saved whatever the receiver's per-type switches say: they decide only
+	 *          e-mail and push).
 	 * @throws ForbiddenException when the caller has no employee record, or names another receiver
 	 * without `CHANGE_SELECTED_EMPLOYEE`, or names a receiver outside the notification's organization.
 	 */
@@ -539,13 +537,15 @@ export class EmployeeNotificationService extends TenantAwareCrudService<Employee
 	}
 
 	/**
-	 * Determines whether a employee notification should be created based on the employee's notification settings and the notification type.
+	 * The receiver's per-type switch for a notification type: true when it is on. It no longer decides whether the
+	 * notification is saved (in-app is always on); the Inbox delivery rules apply the same switch to e-mail and push.
 	 *
-	 * @param employeeNotificationSetting - The employee's notification settings.
+	 * @param employeeNotificationSetting - The receiver's notification settings.
 	 * @param type - The type of notification.
-	 * @returns {boolean} True if a employee notification should be created, false otherwise.
+	 * @returns {boolean} Whether the receiver takes this kind by e-mail and push.
+	 * @throws Error for a type it does not know, so a new kind must add its case.
 	 */
-	private shouldCreateEmployeeNotification(
+	private kindSwitchOf(
 		employeeNotificationSetting: IEmployeeNotificationSetting,
 		type: EmployeeNotificationTypeEnum
 	): boolean {
