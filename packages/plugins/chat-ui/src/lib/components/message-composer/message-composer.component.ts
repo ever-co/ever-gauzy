@@ -4,7 +4,7 @@ import { NbIconModule, NbTooltipModule } from '@nebular/theme';
 import { TranslatePipe } from '@ngx-translate/core';
 import { CHAT_MESSAGE_MAX_LENGTH } from '@gauzy/contracts';
 import { CHAT_COMPOSER_EMOJI, CHAT_MENTION_SUGGESTIONS } from '../../chat-ui.constants';
-import { ChatPerson, mentionQueryAt, namesToTokens, suggestMentions, tokensToNames, uniqueLabel } from '../../chat-ui.helpers';
+import { markMentions, matchParts, mentionQueryAt, MentionSuggestion, namesToTokens, rankMentions, tokensToNames, uniqueLabel } from '../../chat-ui.helpers';
 import { ChatPeople } from '../../services/chat-people.service';
 import { PersonAvatarComponent } from '../person-avatar/person-avatar.component';
 
@@ -25,6 +25,17 @@ export function clearDraft(draftKey: string): void {
 /** A Markdown mark the formatting bar puts around the selection (or at the start of each selected line). */
 type ComposerFormat = 'bold' | 'italic' | 'strike' | 'code' | 'link' | 'list' | 'quote';
 
+/** One row of the `@` list: a person, or `@channel` / `@here` (in a channel), with the part the query matched. */
+type MentionChoice =
+	| ({ kind: 'person'; key: string } & MentionSuggestion)
+	| { kind: 'everyone'; key: 'channel' | 'here'; labelKey: string; parts: ReturnType<typeof matchParts> };
+
+/** The `@` words that notify a whole channel, and what each one means. */
+const EVERYONE_MENTIONS: readonly { key: 'channel' | 'here'; labelKey: string }[] = [
+	{ key: 'channel', labelKey: 'CHAT.COMPOSER.MENTION_EVERYONE' },
+	{ key: 'here', labelKey: 'CHAT.COMPOSER.MENTION_HERE' }
+];
+
 /** The text box grows with what is typed up to this height (px), then scrolls. */
 const MAX_BOX_HEIGHT_PX = 240;
 
@@ -43,14 +54,50 @@ const MAX_BOX_HEIGHT_PX = 240;
 	template: `
 		<div class="composer" data-test="composer" [class.editing]="editing()">
 			@if (suggestions().length > 0) {
-				<ul class="composer-popover suggestions" role="listbox" data-test="mention-suggestions">
-					@for (person of suggestions(); track person.employeeId; let index = $index) {
-						<li role="option" [attr.aria-selected]="index === highlighted()" [class.highlighted]="index === highlighted()" (mousedown)="$event.preventDefault(); pick(person)">
-							<ngx-chat-person-avatar [person]="person" size="small"></ngx-chat-person-avatar>
-							<span class="person-name">{{ person.name }}</span>
-						</li>
-					}
-				</ul>
+				<div class="composer-popover suggestions" data-test="mention-suggestions">
+					<ul class="suggestion-list" role="listbox" [attr.aria-label]="'CHAT.COMPOSER.MENTION' | translate">
+						@for (choice of suggestions(); track choice.key; let index = $index) {
+							@if (choice.kind === 'person' && index === 0) {
+								<li class="group" role="presentation">{{ 'CHAT.COMPOSER.PEOPLE' | translate }}</li>
+							}
+							@if (choice.kind === 'everyone' && (index === 0 || suggestions()[index - 1].kind === 'person')) {
+								<li class="group" role="presentation">{{ 'CHAT.COMPOSER.NOTIFY' | translate }}</li>
+							}
+							<li
+								class="option"
+								role="option"
+								[attr.data-index]="index"
+								[attr.aria-selected]="index === highlighted()"
+								[class.highlighted]="index === highlighted()"
+								[class.outside]="choice.kind === 'person' && choice.member === false"
+								(mouseenter)="highlighted.set(index)"
+								(mousedown)="$event.preventDefault(); pick(choice)"
+							>
+								@if (choice.kind === 'person') {
+									<ngx-chat-person-avatar [person]="choice.person" size="small"></ngx-chat-person-avatar>
+								} @else {
+									<span class="everyone-icon" aria-hidden="true">&#64;</span>
+								}
+								<span class="option-name">{{ choice.parts.before }}<mark>{{ choice.parts.match }}</mark>{{ choice.parts.after }}</span>
+								@if (choice.kind === 'everyone') {
+									<span class="option-detail">{{ choice.labelKey | translate }}</span>
+								} @else if (choice.isMe) {
+									<span class="option-detail">{{ 'CHAT.COMPOSER.YOU' | translate }}</span>
+								} @else if (choice.member === false) {
+									<span class="option-detail">{{ 'CHAT.COMPOSER.NOT_MEMBER' | translate }}</span>
+								}
+								@if (index === highlighted()) {
+									<kbd class="option-key" aria-hidden="true">↵</kbd>
+								}
+							</li>
+						}
+					</ul>
+					<div class="suggestion-hint" aria-hidden="true">
+						<span><kbd>↑</kbd><kbd>↓</kbd> {{ 'CHAT.COMPOSER.KEY_NAVIGATE' | translate }}</span>
+						<span><kbd>Tab</kbd> / <kbd>↵</kbd> {{ 'CHAT.COMPOSER.KEY_SELECT' | translate }}</span>
+						<span><kbd>Esc</kbd> {{ 'CHAT.COMPOSER.KEY_DISMISS' | translate }}</span>
+					</div>
+				</div>
 			}
 			@if (emojiOpen()) {
 				<div class="composer-popover emoji-grid" role="menu" data-test="composer-emoji">
@@ -89,6 +136,14 @@ const MAX_BOX_HEIGHT_PX = 240;
 						}
 					}
 				</div>
+				<div class="box-wrap">
+					<!-- Under the (transparent) box, the same text with each mention tinted where it sits. -->
+					<!-- Each run sits alone in its span: whitespace around an interpolation would shift the text. -->
+					<div #mirror class="box mirror" aria-hidden="true">
+						@for (part of marked(); track $index) {
+							<span [class.mention-mark]="part.mention">{{ part.text }}</span>
+						}
+					</div>
 				<textarea
 					#box
 					rows="1"
@@ -105,7 +160,9 @@ const MAX_BOX_HEIGHT_PX = 240;
 					(click)="onCaretMove()"
 					(focus)="focused.set(true)"
 					(blur)="focused.set(false)"
+					(scroll)="syncMirror()"
 				></textarea>
+				</div>
 				<div class="bottom-bar">
 					<button
 						type="button"
@@ -223,21 +280,48 @@ const MAX_BOX_HEIGHT_PX = 240;
 				margin: 0 0.25rem;
 				background: var(--chat-border, rgba(127, 127, 127, 0.3));
 			}
+			.box-wrap {
+				position: relative;
+			}
 			.box {
+				position: relative;
 				display: block;
+				box-sizing: border-box;
 				width: 100%;
 				min-height: 2.5rem;
 				max-height: 15rem;
+				margin: 0;
 				padding: 0.5rem 0.75rem;
 				border: 0;
 				outline: 0;
 				resize: none;
 				overflow-y: auto;
+				/* The same gutter on the box and its layer, so both wrap their lines at the same width. */
+				scrollbar-gutter: stable;
 				background: transparent;
 				color: var(--chat-text, inherit);
 				font: inherit;
 				font-size: 0.875rem;
 				line-height: 1.4667;
+				letter-spacing: normal;
+				word-spacing: normal;
+				white-space: pre-wrap;
+				overflow-wrap: break-word;
+			}
+			/* Same box metrics as the textarea, under it; only the mentions' tint shows. */
+			.mirror {
+				position: absolute;
+				inset: 0;
+				max-height: none;
+				overflow: hidden;
+				color: transparent;
+				pointer-events: none;
+				user-select: none;
+			}
+			.mention-mark {
+				border-radius: 0.1875rem;
+				background: var(--chat-mention-chip-bg, rgba(29, 155, 209, 0.16));
+				box-shadow: 0 0 0 0.0625rem var(--chat-mention-chip-bg, rgba(29, 155, 209, 0.16));
 			}
 			.box::placeholder {
 				color: var(--chat-muted, rgba(127, 127, 127, 0.9));
@@ -381,28 +465,122 @@ const MAX_BOX_HEIGHT_PX = 240;
 				box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.18);
 			}
 			.suggestions {
-				min-width: 16rem;
-				max-height: 16rem;
-				overflow-y: auto;
-				padding: 0.375rem;
-				list-style: none;
+				width: min(22rem, 100%);
+				overflow: hidden;
 			}
-			.suggestions li {
+			.suggestion-list {
+				max-height: 17rem;
+				overflow-y: auto;
+				margin: 0;
+				padding: 0.25rem;
+				list-style: none;
+				scrollbar-width: thin;
+				scrollbar-color: var(--chat-border-strong, rgba(127, 127, 127, 0.35)) transparent;
+			}
+			.suggestion-list::-webkit-scrollbar {
+				width: 0.375rem;
+			}
+			.suggestion-list::-webkit-scrollbar-thumb {
+				border-radius: 1rem;
+				background: var(--chat-border-strong, rgba(127, 127, 127, 0.35));
+			}
+			.suggestion-hint {
+				display: flex;
+				flex-wrap: wrap;
+				gap: 0.25rem 0.875rem;
+				padding: 0.375rem 0.75rem;
+				border-top: 1px solid var(--chat-border, rgba(127, 127, 127, 0.2));
+				background: var(--chat-composer-bar, rgba(127, 127, 127, 0.05));
+				color: var(--chat-muted, inherit);
+				font-size: 0.6875rem;
+			}
+			.suggestion-hint kbd,
+			.option-key {
+				display: inline-flex;
+				align-items: center;
+				justify-content: center;
+				min-width: 1.125rem;
+				height: 1.125rem;
+				margin-right: 0.125rem;
+				padding: 0 0.25rem;
+				border: 1px solid var(--chat-border-strong, rgba(127, 127, 127, 0.35));
+				border-radius: 0.25rem;
+				background: transparent;
+				box-shadow: none;
+				color: var(--chat-text-soft, inherit);
+				font-family: inherit;
+				font-size: 0.625rem;
+				font-weight: 600;
+				line-height: 1;
+			}
+			.option-key {
+				margin: 0 0 0 auto;
+				flex: 0 0 auto;
+			}
+			.group {
+				padding: 0.5rem 0.5rem 0.25rem;
+				color: var(--chat-muted, inherit);
+				font-size: 0.6875rem;
+				font-weight: 600;
+				letter-spacing: 0.02em;
+				cursor: default;
+			}
+			.group:not(:first-child) {
+				margin-top: 0.25rem;
+				border-top: 1px solid var(--chat-border, rgba(127, 127, 127, 0.2));
+			}
+			.option {
 				display: flex;
 				align-items: center;
-				gap: 0.625rem;
-				padding: 0.375rem 0.5rem;
+				gap: 0.5rem;
+				min-height: 2rem;
+				padding: 0.25rem 0.5rem;
 				border-radius: 0.375rem;
-				cursor: pointer;
+				color: var(--chat-text, inherit);
 				font-size: 0.8125rem;
+				cursor: pointer;
 			}
-			.suggestions li.highlighted,
-			.suggestions li:hover {
-				background: var(--chat-accent, #3366ff);
-				color: var(--chat-on-accent, #fff);
+			/* One highlighted row (the mouse moves it too), in the same soft tint as the sidebar's hover and active rows. */
+			.option.highlighted {
+				background: var(--chat-hover, rgba(127, 127, 127, 0.12));
 			}
-			.person-name {
-				font-weight: 600;
+			.option-name {
+				overflow: hidden;
+				font-weight: 400;
+				white-space: nowrap;
+				text-overflow: ellipsis;
+			}
+			.option-name mark {
+				padding: 0;
+				background: transparent;
+				color: inherit;
+				font-weight: 700;
+			}
+			/* Not in the conversation: still pickable, a step quieter. */
+			.option.outside ngx-chat-person-avatar,
+			.option.outside .option-name {
+				opacity: 0.7;
+			}
+			.option-detail {
+				flex: 0 1 auto;
+				overflow: hidden;
+				color: var(--chat-muted, inherit);
+				font-size: 0.75rem;
+				white-space: nowrap;
+				text-overflow: ellipsis;
+			}
+			.everyone-icon {
+				display: inline-flex;
+				flex: 0 0 auto;
+				align-items: center;
+				justify-content: center;
+				width: 1.5rem;
+				height: 1.5rem;
+				border-radius: 0.375rem;
+				background: var(--chat-hover, rgba(127, 127, 127, 0.15));
+				color: var(--chat-text-soft, inherit);
+				font-size: 0.8125rem;
+				font-weight: 700;
 			}
 			.emoji-grid {
 				display: grid;
@@ -441,6 +619,12 @@ export class MessageComposerComponent {
 	readonly conversationNames = input<ReadonlyMap<string, string>>(new Map());
 	readonly placeholder = input('');
 	readonly disabled = input(false);
+	/** Whether `@channel` and `@here` are offered (in a channel and its threads). */
+	readonly everyone = input(false);
+	/** The conversation's members: they come first in the `@` list, the others say they are not in it. */
+	readonly memberIds = input<ReadonlySet<string> | null>(null);
+	/** Me, marked "you" and ranked after the others in the `@` list. */
+	readonly meEmployeeId = input<string | null>(null);
 	/** The message being edited (its body with tokens), or null for a new message. */
 	readonly initialBody = input<string | null>(null);
 	readonly editing = input(false);
@@ -454,6 +638,7 @@ export class MessageComposerComponent {
 	readonly editCancelled = output<void>();
 
 	private readonly box = viewChild<ElementRef<HTMLTextAreaElement>>('box');
+	private readonly mirror = viewChild<ElementRef<HTMLDivElement>>('mirror');
 
 	protected readonly max = CHAT_MESSAGE_MAX_LENGTH;
 	protected text = '';
@@ -468,6 +653,8 @@ export class MessageComposerComponent {
 	protected readonly highlighted = signal(0);
 	protected readonly focused = signal(false);
 	protected readonly emojiOpen = signal(false);
+	/** The box's text cut into plain runs and mentions, for the tinted layer under it. */
+	protected readonly marked = signal<{ text: string; mention: boolean }[]>([]);
 
 	private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
 
@@ -483,10 +670,23 @@ export class MessageComposerComponent {
 		{ format: 'code', icon: 'code-outline', labelKey: 'CHAT.COMPOSER.CODE' }
 	];
 
-	protected readonly suggestions = computed(() => {
+	/** People whose name matches the `@` query (the ones starting with it first), then `@channel` / `@here` in a channel. */
+	protected readonly suggestions = computed<MentionChoice[]>(() => {
 		const query = this.query();
-		if (!query) return [] as ChatPerson[];
-		return suggestMentions(this.people().list, query.query, CHAT_MENTION_SUGGESTIONS);
+		if (!query) return [];
+		const people = rankMentions(this.people().list, query.query, {
+			memberIds: this.memberIds(),
+			meEmployeeId: this.meEmployeeId(),
+			limit: CHAT_MENTION_SUGGESTIONS
+		}).map((suggestion): MentionChoice => ({ kind: 'person', key: suggestion.person.employeeId, ...suggestion }));
+		const needle = query.query.trim().toLowerCase();
+		const everyone = this.everyone()
+			? EVERYONE_MENTIONS.filter((item) => item.key.startsWith(needle)).map((item): MentionChoice => {
+					const parts = matchParts(item.key, needle);
+					return { kind: 'everyone', key: item.key, labelKey: item.labelKey, parts: { ...parts, before: `@${parts.before}` } };
+				})
+			: [];
+		return [...people, ...everyone];
 	});
 	protected readonly isTooLong = computed(() => this.length() > this.max);
 	protected readonly canSend = computed(() => this.length() > 0 && !this.isTooLong() && !this.disabled());
@@ -548,6 +748,7 @@ export class MessageComposerComponent {
 		const key = this.draftKey();
 		if (key) DRAFTS.delete(key);
 		this.length.set(0);
+		this.marked.set([]);
 		this.query.set(null);
 		this.emojiOpen.set(false);
 		this.afterRender(() => this.autosize());
@@ -645,6 +846,16 @@ export class MessageComposerComponent {
 
 	private measure(): void {
 		this.length.set(this.tokenized().length);
+		const labels = [...[...this.picked.keys()].map((label) => `@${label}`), ...[...this.channels.keys()].map((label) => `#${label}`)];
+		this.marked.set(markMentions(this.text, labels));
+		this.afterRender(() => this.syncMirror());
+	}
+
+	/** Keeps the tinted layer scrolled with the box. */
+	protected syncMirror(): void {
+		const box = this.box()?.nativeElement;
+		const mirror = this.mirror()?.nativeElement;
+		if (box && mirror) mirror.scrollTop = box.scrollTop;
 	}
 
 	private keepDraft(): void {
@@ -677,14 +888,11 @@ export class MessageComposerComponent {
 	protected onKeyDown(event: KeyboardEvent): void {
 		const suggestions = this.suggestions();
 		if (suggestions.length > 0) {
-			if (event.key === 'ArrowDown') {
+			if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
 				event.preventDefault();
-				this.highlighted.set((this.highlighted() + 1) % suggestions.length);
-				return;
-			}
-			if (event.key === 'ArrowUp') {
-				event.preventDefault();
-				this.highlighted.set((this.highlighted() - 1 + suggestions.length) % suggestions.length);
+				const step = event.key === 'ArrowDown' ? 1 : -1;
+				this.highlighted.set((this.highlighted() + step + suggestions.length) % suggestions.length);
+				this.afterRender(() => this.revealHighlighted());
 				return;
 			}
 			if (event.key === 'Enter' || event.key === 'Tab') {
@@ -714,15 +922,26 @@ export class MessageComposerComponent {
 		}
 	}
 
-	protected pick(person: ChatPerson): void {
+	/** Scrolls the list so the row picked with the arrow keys stays in sight. */
+	private revealHighlighted(): void {
+		const row = this.host.nativeElement.querySelector(`.suggestion-list [data-index="${this.highlighted()}"]`);
+		row?.scrollIntoView({ block: 'nearest' });
+	}
+
+	protected pick(choice: MentionChoice): void {
 		const query = this.query();
 		const element = this.box()?.nativeElement;
 		if (!query || !element) return;
 		const caret = element.selectionStart ?? this.text.length;
-		const label = uniqueLabel(person.name, person.employeeId, this.picked);
-		const insertion = `@${label} `;
+		let insertion: string;
+		if (choice.kind === 'person') {
+			const label = uniqueLabel(choice.person.name, choice.person.employeeId, this.picked);
+			insertion = `@${label} `;
+			this.picked.set(label, choice.person.employeeId);
+		} else {
+			insertion = `@${choice.key} `;
+		}
 		this.text = `${this.text.slice(0, query.start)}${insertion}${this.text.slice(caret)}`;
-		this.picked.set(label, person.employeeId);
 		this.dirty = true;
 		this.measure();
 		this.keepDraft();
