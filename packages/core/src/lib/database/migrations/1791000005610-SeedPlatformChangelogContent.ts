@@ -17,8 +17,11 @@ type InsertUnlessIdTaken = (table: string, columns: string, values: string) => s
  *
  * Each entry's learn-more link is named, not spelled out (`whats-new-links.ts`): the deployment's settings say where it
  * points, as only the Ever Platform modules name Ever hosts in this repository, and an install that sets none gets
- * the entry without a link. (Databases this ran on before 2026-11-10, stage and demo, got the same addresses as
- * literals; `RewordPlatformChangelogEntries` brings their wording in step.)
+ * the entry without a link. The addresses are read when this runs, once: a deployment that should link its entries
+ * (production: the What's New release checklist) sets `WHATS_NEW_EVER_TEAMS_URL`, `WHATS_NEW_EVER_TEAMS_DOCS_URL` and
+ * `WHATS_NEW_EVER_URL` before it first runs; a setting added later reaches no row already written, and an operator
+ * then sets the link in Settings > What's New. (Databases this ran on before 2026-11-10, stage and demo, got the same
+ * addresses as literals; `RewordPlatformChangelogEntries` brings their wording in step.)
  *
  * Fresh installs get the same entries from `platform-changelog-templates.ts` in `@gauzy/plugin-changelog`; this
  * migration carries a frozen snapshot for databases seeded before it existed, as compact tuples so it stays
