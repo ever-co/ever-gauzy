@@ -1,6 +1,6 @@
 import { Injectable, Logger, OnModuleDestroy, OnModuleInit, Optional, Type } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
-import { DataSource, Equal, FindOptionsWhere, In, IsNull, LessThan } from 'typeorm';
+import { Brackets, DataSource, FindOptionsWhere, In, IsNull, SelectQueryBuilder } from 'typeorm';
 import { EventOutboxStatus, ID } from '@gauzy/contracts';
 import { EventOutbox, SubscriptionCatalogue } from '@gauzy/core';
 import { collaborationReplayNames } from './graphql/realtime-envelope';
@@ -32,6 +32,17 @@ export interface IRetentionPass {
 	scopes: Array<{ tenantId: ID; organizationId: ID | null; removed: number }>;
 }
 
+/** A row of the same partition with a higher `sequence`: its existence means the outer row is not the partition's newest. */
+function newerInPartition(query: SelectQueryBuilder<EventOutbox>): string {
+	return query
+		.subQuery()
+		.select('1')
+		.from(EventOutbox, 'newer')
+		.where('newer.partitionKey = outbox.partitionKey')
+		.andWhere('newer.sequence > outbox.sequence')
+		.getQuery();
+}
+
 const DEFAULT_BOUNDS: IRetentionBounds = {
 	minAgeMs: REALTIME_RETENTION_MIN_AGE_MS,
 	minEvents: REALTIME_RETENTION_MIN_EVENTS,
@@ -52,8 +63,14 @@ const DEFAULT_BOUNDS: IRetentionBounds = {
  * - it was dispatched (`PUBLISHED`): pending, failed and dead rows stay for the dispatcher and the operators;
  * - it is older than 24 hours, and it is not among the newest 1,000 collaboration rows of its scope (an organization,
  *   or the tenant-wide rows) — the replay window FR-3 promises is whichever of the two is larger;
- * - it carries a tenant (a row written outside a request belongs to nobody's catch-up).
+ * - it carries a tenant (a row written outside a request belongs to nobody's catch-up);
+ * - it is not the newest row of its partition (the highest `sequence` of its aggregate): `append` numbers a partition
+ *   as its highest `sequence` plus one, so removing a partition's last row would start the aggregate's numbering over
+ *   and break the order consumers rely on. A quiet aggregate therefore keeps one row.
  *
+ * A pass looks only at scopes holding more than the newest 1,000 rows and an old dispatched one — a scope inside the
+ * window never takes a pass's place — and goes through them in a stable order, continuing where the previous pass
+ * stopped when there are more than one pass looks at.
  * Each scope loses at most a batch of its oldest rows per pass, in one transaction that also advances the scope's
  * watermark to the newest row it removed ({@link RealtimeReplayWatermarkService.advance}); a failure removes nothing
  * and is retried by the next pass. Several processes may run it: a removal is by id (idempotent) and the watermark
@@ -67,6 +84,8 @@ export class RealtimeRetentionService implements OnModuleInit, OnModuleDestroy {
 	private readonly logger = new Logger('RealtimeRetentionService');
 	private timer: NodeJS.Timeout | null = null;
 	private running = false;
+	/** Where the next pass continues in the scopes' order (0: from the start). */
+	private scopeOffset = 0;
 
 	constructor(
 		private readonly dataSource: DataSource,
@@ -116,19 +135,28 @@ export class RealtimeRetentionService implements OnModuleInit, OnModuleDestroy {
 		const cutoff = new Date(now.getTime() - bounds.minAgeMs);
 		const repository = this.dataSource.getRepository(EventOutbox);
 
-		// The scopes holding a row old enough to go.
+		// The scopes past the count bound that hold a dispatched row past the age bound, in a stable order, from where the
+		// previous pass stopped.
 		const scopes: Array<{ tenantId: ID; organizationId: ID | null }> = await repository
 			.createQueryBuilder('outbox')
 			.select('outbox.tenantId', 'tenantId')
 			.addSelect('outbox.organizationId', 'organizationId')
 			.where('outbox.eventName IN (:...names)', { names })
-			.andWhere('outbox.status = :status', { status: EventOutboxStatus.PUBLISHED })
-			.andWhere('outbox.createdAt < :cutoff', { cutoff })
 			.andWhere('outbox.tenantId IS NOT NULL')
 			.groupBy('outbox.tenantId')
 			.addGroupBy('outbox.organizationId')
+			.having('COUNT(*) > :minEvents', { minEvents: bounds.minEvents })
+			.andHaving('SUM(CASE WHEN outbox.status = :published AND outbox.createdAt < :cutoff THEN 1 ELSE 0 END) > 0', {
+				published: EventOutboxStatus.PUBLISHED,
+				cutoff
+			})
+			.orderBy('outbox.tenantId', 'ASC')
+			.addOrderBy('outbox.organizationId', 'ASC')
+			.offset(this.scopeOffset)
 			.limit(bounds.scopes)
 			.getRawMany();
+		// A full page: the next pass continues after it; a short one: the next pass starts over.
+		this.scopeOffset = scopes.length >= bounds.scopes ? this.scopeOffset + scopes.length : 0;
 
 		const pass: IRetentionPass = { removed: 0, scopes: [] };
 		for (const raw of scopes) {
@@ -169,21 +197,33 @@ export class RealtimeRetentionService implements OnModuleInit, OnModuleDestroy {
 			if (!floor?.createdAt) return 0;
 			const floorAt = new Date(floor.createdAt as unknown as string);
 
-			// Strictly before the floor in (createdAt, eventId) order, and older than the age bound; dispatched only.
-			const dispatched = { ...ofScope, status: EventOutboxStatus.PUBLISHED } as FindOptionsWhere<EventOutbox>;
-			const where: FindOptionsWhere<EventOutbox>[] =
-				floorAt.getTime() < cutoff.getTime()
-					? [
-							{ ...dispatched, createdAt: LessThan(floorAt) },
-							{ ...dispatched, createdAt: Equal(floorAt), eventId: LessThan(floor.eventId) }
-						]
-					: [{ ...dispatched, createdAt: LessThan(cutoff) }];
-			const rows = await repository.find({
-				select: { id: true, createdAt: true, eventId: true },
-				where,
-				order: { createdAt: 'ASC', eventId: 'ASC' },
-				take: bounds.batch
-			});
+			// Strictly before the floor in (createdAt, eventId) order, older than the age bound, dispatched, and not the
+			// newest row of its partition.
+			const candidates = repository
+				.createQueryBuilder('outbox')
+				.select(['outbox.id', 'outbox.createdAt', 'outbox.eventId'])
+				.where('outbox.tenantId = :tenantId', { tenantId: scope.tenantId })
+				.andWhere(scope.organizationId ? 'outbox.organizationId = :organizationId' : 'outbox.organizationId IS NULL', {
+					organizationId: scope.organizationId
+				})
+				.andWhere('outbox.eventName IN (:...names)', { names: [...names] })
+				.andWhere('outbox.status = :published', { published: EventOutboxStatus.PUBLISHED })
+				.andWhere(
+					new Brackets((past) => {
+						if (floorAt.getTime() < cutoff.getTime()) {
+							past.where('outbox.createdAt < :floorAt', { floorAt }).orWhere(
+								new Brackets((tie) => tie.where('outbox.createdAt = :floorAt', { floorAt }).andWhere('outbox.eventId < :floorId', { floorId: floor.eventId }))
+							);
+						} else {
+							past.where('outbox.createdAt < :cutoff', { cutoff });
+						}
+					})
+				)
+				.andWhere((query: SelectQueryBuilder<EventOutbox>) => `EXISTS ${newerInPartition(query)}`)
+				.orderBy('outbox.createdAt', 'ASC')
+				.addOrderBy('outbox.eventId', 'ASC')
+				.take(bounds.batch);
+			const rows = await candidates.getMany();
 			if (!rows.length) return 0;
 
 			await repository.delete({ id: In(rows.map((row) => row.id as ID)) });

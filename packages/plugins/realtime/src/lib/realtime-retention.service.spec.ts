@@ -57,6 +57,8 @@ interface IRow {
 	eventName: string;
 	status: string;
 	createdAt: Date;
+	partitionKey: string | null;
+	sequence: number;
 }
 
 const OutboxSchema = new EntitySchema<IRow>({
@@ -70,7 +72,9 @@ const OutboxSchema = new EntitySchema<IRow>({
 		eventId: { type: 'varchar' },
 		eventName: { type: 'varchar' },
 		status: { type: 'varchar' },
-		createdAt: { type: 'datetime' }
+		createdAt: { type: 'datetime' },
+		partitionKey: { type: 'varchar', nullable: true },
+		sequence: { type: 'integer' }
 	}
 });
 
@@ -94,9 +98,17 @@ let dataSource: DataSource;
 let watermarks: RealtimeReplayWatermarkService;
 let retention: RealtimeRetentionService;
 
-/** Rows of one scope: `count` of them, `spacingMs` apart (a minute), the newest `newestHoursAgo` hours before now. */
+let partitions = 0;
+
+/**
+ * Rows of one scope: `count` of them, `spacingMs` apart (a minute), the newest `newestHoursAgo` hours before now — the
+ * events of one aggregate (one partition, numbered in time order), so only the newest is its partition's head.
+ */
 function rowsOf(organizationId: string | null, count: number, newestHoursAgo: number, overrides: Partial<IRow> = {}, spacingMs = 60_000): IRow[] {
+	const partitionKey = `task:${++partitions}`;
 	return Array.from({ length: count }, (_, index) => ({
+		partitionKey,
+		sequence: index + 1,
 		id: randomUUID(),
 		tenantId: TENANT,
 		organizationId,
@@ -126,7 +138,7 @@ beforeAll(async () => {
 	await dataSource.query(`INSERT INTO "tenant" ("id") VALUES (?)`, [TENANT]);
 	for (const id of [ORG_A, ORG_B]) await dataSource.query(`INSERT INTO "organization" ("id") VALUES (?)`, [id]);
 	await dataSource.query(
-		`CREATE TABLE "event_outbox" ("id" varchar PRIMARY KEY NOT NULL, "tenantId" varchar, "organizationId" varchar, "eventId" varchar NOT NULL, "eventName" varchar NOT NULL, "status" varchar NOT NULL, "createdAt" datetime NOT NULL)`
+		`CREATE TABLE "event_outbox" ("id" varchar PRIMARY KEY NOT NULL, "tenantId" varchar, "organizationId" varchar, "eventId" varchar NOT NULL, "eventName" varchar NOT NULL, "status" varchar NOT NULL, "createdAt" datetime NOT NULL, "partitionKey" varchar, "sequence" integer NOT NULL DEFAULT (0))`
 	);
 	const runner = dataSource.createQueryRunner();
 	await new CreateRealtimePresenceAndWatermarkTables1791000006820().up(runner);
@@ -159,13 +171,15 @@ describe('RealtimeRetentionService', () => {
 	});
 
 	it('keeps the last 24 hours, however many events they hold, and removes only what is older and beyond the 1,000', async () => {
-		// 1,100 events in the last 24 hours, and 100 older ones.
+		// 1,100 events in the last 24 hours, and 100 older ones (of another task, whose newest event stays: see below).
 		await insert([...rowsOf(ORG_B, 100, 30), ...rowsOf(ORG_B, 1_100, 1)]);
 		const pass = await retention.prune(NOW, BOUNDS);
-		expect(pass.removed).toBe(100);
-		expect(await left(ORG_B)).toBe(1_100);
-		const kept = await dataSource.getRepository(OutboxSchema).find({ where: { organizationId: ORG_B }, order: { createdAt: 'ASC' }, take: 1 });
-		expect(NOW.getTime() - kept[0].createdAt.getTime()).toBeLessThan(REALTIME_RETENTION_MIN_AGE_MS);
+		expect(pass.removed).toBe(99);
+		expect(await left(ORG_B)).toBe(1_101);
+		// Of what is older than 24 hours, only the older task's newest event is left.
+		const kept = await dataSource.getRepository(OutboxSchema).find({ where: { organizationId: ORG_B }, order: { createdAt: 'ASC' }, take: 2 });
+		expect(kept[0].sequence).toBe(100);
+		expect(NOW.getTime() - kept[1].createdAt.getTime()).toBeLessThan(REALTIME_RETENTION_MIN_AGE_MS);
 	});
 
 	it('removes nothing from a scope within both bounds', async () => {
@@ -185,10 +199,11 @@ describe('RealtimeRetentionService', () => {
 		const orphan = rowsOf(null, 3, 96, { tenantId: null });
 		await insert([...old, ...orphan, ...rowsOf(ORG_A, REALTIME_RETENTION_MIN_EVENTS, 48)]);
 		const pass = await retention.prune(NOW, BOUNDS);
-		// Four old collaboration rows were dispatched (old[4..7]); the pending, failed and dead ones and the order event stay.
-		expect(pass.removed).toBe(4);
-		const remaining = await dataSource.getRepository(OutboxSchema).find({ where: { organizationId: ORG_A }, order: { createdAt: 'ASC' }, take: 4 });
-		expect(remaining.map((row) => row.id)).toEqual(old.slice(0, 4).map((row) => row.id));
+		// Three old dispatched collaboration rows go (old[4..6]); the pending, failed and dead ones, the order event and the
+		// task's newest event (old[7], its partition's head) stay.
+		expect(pass.removed).toBe(3);
+		const remaining = await dataSource.getRepository(OutboxSchema).find({ where: { organizationId: ORG_A }, order: { createdAt: 'ASC' }, take: 5 });
+		expect(remaining.map((row) => row.id)).toEqual([...old.slice(0, 4), old[7]].map((row) => row.id));
 		expect(await dataSource.getRepository(OutboxSchema).count({ where: { tenantId: IsNull() } })).toBe(3);
 	});
 
@@ -219,6 +234,35 @@ describe('RealtimeRetentionService', () => {
 		advance.mockRestore();
 		// `run` logs a failed pass instead of throwing; the next one succeeds.
 		expect((await retention.run(NOW))?.removed).toBe(3);
+	});
+
+	it("never removes a partition's newest row, so an aggregate's numbering never starts over", async () => {
+		// A quiet task: its only events are the oldest of the organization, outside both bounds.
+		const quiet = rowsOf(ORG_A, 3, 120);
+		await insert([...quiet, ...rowsOf(ORG_A, REALTIME_RETENTION_MIN_EVENTS, 48)]);
+		expect((await retention.prune(NOW, BOUNDS)).removed).toBe(2);
+		const kept = await dataSource.getRepository(OutboxSchema).find({ where: { partitionKey: quiet[0].partitionKey as string } });
+		expect(kept.map((row) => row.sequence)).toEqual([3]);
+	});
+
+	it('looks only at scopes past the window, so idle scopes never take a pass from one that needs it', async () => {
+		const bounds = { ...BOUNDS, minEvents: 3, scopes: 2 };
+		const orgs = ['org-1', 'org-2', 'org-3'];
+		for (const id of orgs) await dataSource.query(`INSERT OR IGNORE INTO "organization" ("id") VALUES (?)`, [id]);
+		// org-1 and org-2 hold old dispatched rows, but no more than the newest 3; org-3 (last in the order) is past it.
+		await insert([...rowsOf('org-1', 3, 72), ...rowsOf('org-2', 2, 72), ...rowsOf('org-3', 6, 72)]);
+		expect(await retention.prune(NOW, bounds)).toEqual({ removed: 3, scopes: [{ tenantId: TENANT, organizationId: 'org-3', removed: 3 }] });
+	});
+
+	it('goes through more scopes than one pass looks at, continuing where the previous pass stopped', async () => {
+		const bounds = { ...BOUNDS, minEvents: 3, scopes: 2, batch: 1 };
+		const orgs = ['org-4', 'org-5', 'org-6'];
+		for (const id of orgs) await dataSource.query(`INSERT OR IGNORE INTO "organization" ("id") VALUES (?)`, [id]);
+		await insert(orgs.flatMap((id) => rowsOf(id, 7, 72)));
+		const touched = async () => (await retention.prune(NOW, bounds)).scopes.map((scope) => scope.organizationId);
+		expect(await touched()).toEqual(['org-4', 'org-5']);
+		expect(await touched()).toEqual(['org-6']);
+		expect(await touched()).toEqual(['org-4', 'org-5']);
 	});
 
 	it('runs on a timer only when the switch is on', () => {
