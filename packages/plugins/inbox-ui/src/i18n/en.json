@@ -442,7 +442,7 @@
 		"LOAD_ERROR": "Your notification settings could not load.",
 		"SAVE_FAILED": "That setting was not saved. Try again.",
 		"KINDS_TITLE": "Kinds",
-		"KINDS_HINT": "Turning a kind off stops new notifications of that kind; the ones already there stay. The select beside a kind is how its email goes out.",
+		"KINDS_HINT": "Turning a kind off stops its emails and browser notifications; its notifications still reach your bell and your Inbox. The select beside a kind is how its email goes out.",
 		"KINDS": {
 			"ASSIGNMENT": { "TITLE": "Assignments", "TEXT": "Someone assigns a task to you." },
 			"MENTION": { "TITLE": "Mentions", "TEXT": "Someone writes @ and your name in a comment." },

@@ -39,5 +39,5 @@
 ## Follow-ups (from the plan's §10)
 
 - [x] **T16**. Durable filing: a recovery sweep (`InboxNotificationSweepService`, worker, every five minutes) with a durable checkpoint (`inbox_sweep_checkpoint`, migration `1791000006540`) and no age cutoff that files notifications with no Inbox item through the live filing's own path and leaves folded twins alone (plan §10.1)
-- [ ] **T17**. Notification row and Inbox entry always created together; the legacy per-type switches decide only e-mail and push (plan §10.2)
+- [x] **T17**. Notification row and Inbox entry always created together; the legacy per-type switches decide only e-mail and push (plan §10.2). Done 2026-11-10 (owner decision: always on everywhere); `EmployeeNotificationService.create` no longer returns early, `kindSwitchOf` keeps refusing an unknown type
 - [x] **T18**. Many-to-one record of the notification rows a deduplicated entry stands for (`metadata.twinNotificationIds`), every state change mirrored both ways through it (plan §10.3)
