@@ -207,6 +207,7 @@ const MAX_BOX_HEIGHT_PX = 240;
 							(click)="send()"
 						>
 							<nb-icon icon="paper-plane-outline"></nb-icon>
+							<span class="send-label">{{ 'CHAT.COMPOSER.SEND' | translate }}</span>
 						</button>
 					}
 				</div>
@@ -387,18 +388,25 @@ const MAX_BOX_HEIGHT_PX = 240;
 			.counter.over {
 				color: var(--chat-danger, #e4493f);
 			}
+			/* Always in sight: a soft grey button while there is nothing to send, filled once there is. */
 			.send {
 				display: inline-flex;
+				flex: 0 0 auto;
 				align-items: center;
 				justify-content: center;
-				width: 2rem;
-				height: 1.75rem;
+				gap: 0.375rem;
+				height: 2rem;
+				margin-left: 0.25rem;
+				padding: 0 0.75rem;
 				border: 0;
 				border-radius: 0.375rem;
-				background: transparent;
-				color: var(--chat-muted, inherit);
+				background: var(--chat-hover, rgba(127, 127, 127, 0.15));
+				color: var(--chat-text-soft, inherit);
+				font: inherit;
+				font-size: 0.8125rem;
+				font-weight: 600;
 				cursor: pointer;
-				transition: background-color 0.12s ease, color 0.12s ease;
+				transition: background-color 0.12s ease, color 0.12s ease, filter 0.12s ease;
 			}
 			.send nb-icon {
 				font-size: 1rem;
@@ -407,12 +415,13 @@ const MAX_BOX_HEIGHT_PX = 240;
 				background: var(--chat-send, #007a5a);
 				color: #fff;
 			}
-			.send.ready:hover {
+			.send.ready:hover,
+			.send.ready:focus-visible {
 				filter: brightness(1.08);
 			}
 			.send:disabled {
 				cursor: default;
-				opacity: 0.6;
+				color: var(--chat-muted, inherit);
 			}
 			.text-button {
 				height: 1.75rem;
@@ -605,6 +614,12 @@ const MAX_BOX_HEIGHT_PX = 240;
 			}
 			@media (max-width: 600px) {
 				.hint {
+					display: none;
+				}
+				.send {
+					padding: 0 0.625rem;
+				}
+				.send-label {
 					display: none;
 				}
 				.emoji-grid {
