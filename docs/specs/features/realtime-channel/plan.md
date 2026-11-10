@@ -214,9 +214,13 @@ location; none of them changes the flag-off default.
    report, or when a 30 s sweep settles a lapsed connection. A report locks the employee's published row,
    so two reports of one employee merge one after the other, and every change carries the row's `revision`
    (readers drop a change older than the last applied, as two processes may deliver two changes out of
-   order). What remains: a client that names no
-   connection shares one per employee that never lapses (last report wins, as before), and there is no
-   5 s coalescing of the fan-out beyond "only on change".
+   order). The fan-out is coalesced (T26): one `presence.changed` per employee
+   per 5 s across processes — a conditional update of the published row's
+   `publishedAt` / `publishedRevision` admits one publication per window, the
+   window's changes are told once as its latest state when it closes (a timer in
+   the process that was held back), and the sweep tells a change whose process
+   stopped first. What remains: a client that names no connection shares one per
+   employee that never lapses (last report wins, as before).
 3. ~~**Document, comment and task hints reach the whole organization.**~~ Resolved (T21): the hints stay
    organization-wide on the outbox, and their audience is decided at delivery — live and in the catch-up —
    by the read rule of the record they name (§9: Docs visibility scope, the task read rule, the parent

@@ -141,7 +141,8 @@ export const REALTIME_PRESENCE_TTL_SECONDS = 150;
 
 /**
  * Payload of `presence.changed` and the answer of `POST /api/realtime/presence`: one employee's presence as the
- * platform now holds it — the merge of their connections. Told to the organization only when it changes.
+ * platform now holds it — the merge of their connections. Told to the organization only when it changes, and at
+ * most once per employee per 5 s: the changes of a window are told once, as its latest state, when it closes.
  */
 export interface IRealtimePresence {
 	employeeId: ID;

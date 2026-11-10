@@ -14,7 +14,19 @@ import { Employee, GraphqlPubSub, RequestContext } from '@gauzy/core';
 import type { SubscriptionEnvelope } from '@gauzy/core';
 import { REALTIME_AGGREGATES, REALTIME_PRESENCE_SWEEP_MS } from './realtime.constants';
 import { REALTIME_SHARED_CONNECTION_KEY } from './realtime.entities';
-import { IPresenceOutcome, RealtimePresenceStore } from './realtime-presence.store';
+import { IPresenceOutcome, IPresenceScope, RealtimePresenceStore } from './realtime-presence.store';
+
+/** The payload of `presence.changed` (and the answer of the presence route) for a merged presence. */
+function presenceOf(outcome: IPresenceOutcome, now: Date): IRealtimePresence {
+	return {
+		employeeId: outcome.employeeId,
+		userId: outcome.userId,
+		organizationId: outcome.organizationId,
+		status: outcome.status,
+		revision: outcome.revision,
+		at: now.toISOString()
+	};
+}
 
 /**
  * The ephemeral signals of the channel: presence and typing.
@@ -24,13 +36,17 @@ import { IPresenceOutcome, RealtimePresenceStore } from './realtime-presence.sto
  * never learns of it — which is the right fate for "Anna is typing". Presence is kept per connection and merged
  * per employee ({@link RealtimePresenceStore}); the merge is persisted on the employee (`lastSeenAt`, `isIdle`), so a
  * client that polls still sees it, and told to the organization only when it changes — on a report, or when a
- * connection lapses (a sweep every {@link REALTIME_PRESENCE_SWEEP_MS}).
+ * connection lapses (a sweep every {@link REALTIME_PRESENCE_SWEEP_MS}) — and at most once per employee per
+ * `REALTIME_PRESENCE_COALESCE_MS` across processes: the changes of a window are told once, as its latest state,
+ * when it closes. The sweep also tells a change whose process stopped before telling it.
  */
 @Injectable()
 export class RealtimeSignalsService implements OnModuleInit, OnModuleDestroy {
 	private readonly logger = new Logger('RealtimeSignalsService');
 	private sweepTimer: NodeJS.Timeout | null = null;
 	private sweeping = false;
+	/** The employees this process will try to tell again when their window closes, by tenant and employee. */
+	private readonly later = new Map<string, NodeJS.Timeout>();
 
 	constructor(
 		private readonly dataSource: DataSource,
@@ -46,6 +62,8 @@ export class RealtimeSignalsService implements OnModuleInit, OnModuleDestroy {
 	onModuleDestroy(): void {
 		if (this.sweepTimer) clearInterval(this.sweepTimer);
 		this.sweepTimer = null;
+		for (const timer of this.later.values()) clearTimeout(timer);
+		this.later.clear();
 	}
 
 	/**
@@ -87,6 +105,10 @@ export class RealtimeSignalsService implements OnModuleInit, OnModuleDestroy {
 		try {
 			// Each employee is told as soon as their settlement committed, whatever happens to the next one.
 			await this.presenceStore.sweep(now, async (outcome) => void (await this.tellPresence(outcome, now)));
+			// Then the changes no process told (it stopped inside the window).
+			for (const scope of await this.presenceStore.untold(now)) {
+				await this.announce(scope, now);
+			}
 		} catch (error) {
 			this.logger.warn(`The lapsed presences were not settled: ${(error as Error)?.message}`);
 		} finally {
@@ -94,24 +116,47 @@ export class RealtimeSignalsService implements OnModuleInit, OnModuleDestroy {
 		}
 	}
 
-	/** The merged presence as the payload says it, published to the organization when it changed. */
+	/** The merged presence as the payload says it; the organization is told when it changed (see {@link announce}). */
 	private async tellPresence(outcome: IPresenceOutcome, now: Date): Promise<IRealtimePresence> {
-		const presence: IRealtimePresence = {
-			employeeId: outcome.employeeId,
-			userId: outcome.userId,
-			organizationId: outcome.organizationId,
-			status: outcome.status,
-			revision: outcome.revision,
-			at: now.toISOString()
-		};
 		if (outcome.changed) {
-			await this.publish(
-				REALTIME_EVENT_NAMES.PRESENCE_CHANGED,
-				{ aggregate: { type: REALTIME_AGGREGATES.EMPLOYEE, id: String(outcome.employeeId) }, data: presence },
-				{ tenantId: outcome.tenantId, organizationId: outcome.organizationId }
-			);
+			await this.announce(outcome, now);
 		}
-		return presence;
+		return presenceOf(outcome, now);
+	}
+
+	/**
+	 * Tells the organization the employee's latest presence when this process wins the window
+	 * ({@link RealtimePresenceStore.claimPublication}); otherwise tries again when the window closes. Never throws: the
+	 * report that caused it is already committed, and the sweep tells what is left untold.
+	 */
+	private async announce(scope: IPresenceScope, now: Date): Promise<void> {
+		try {
+			const publication = await this.presenceStore.claimPublication(scope, now);
+			if (publication.kind === 'publish') {
+				const outcome = publication.outcome;
+				await this.publish(
+					REALTIME_EVENT_NAMES.PRESENCE_CHANGED,
+					{ aggregate: { type: REALTIME_AGGREGATES.EMPLOYEE, id: String(outcome.employeeId) }, data: presenceOf(outcome, now) },
+					{ tenantId: outcome.tenantId, organizationId: outcome.organizationId }
+				);
+			} else if (publication.kind === 'later') {
+				this.announceAt(scope, publication.at);
+			}
+		} catch (error) {
+			this.logger.warn(`The presence of employee ${scope.employeeId} was not told: ${(error as Error)?.message}`);
+		}
+	}
+
+	/** Tries again at a moment, once per employee however many changes ask meanwhile. */
+	private announceAt(scope: IPresenceScope, at: number): void {
+		const key = `${scope.tenantId}|${scope.employeeId}`;
+		if (this.later.has(key)) return;
+		const timer = setTimeout(() => {
+			this.later.delete(key);
+			void this.announce(scope, new Date());
+		}, Math.max(0, at - Date.now()));
+		timer.unref?.();
+		this.later.set(key, timer);
 	}
 
 	/**
