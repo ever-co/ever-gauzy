@@ -19,7 +19,13 @@
 		"NEW_MESSAGE": "New message",
 		"BROWSE": "Browse channels",
 		"MEMBERS": "{{count}} members",
-		"PRIVATE": "Private"
+		"PRIVATE": "Private",
+		"JUMP_TO": "Jump to…",
+		"NO_MATCHES": "No conversations match “{{query}}”.",
+		"RESULTS": "Conversations",
+		"ADD_CHANNEL": "Add a channel",
+		"ADD_DIRECT": "Start a direct message",
+		"TOGGLE_SECTION": "Show or hide {{name}}"
 	},
 	"VIEW": {
 		"PICK": "Pick a conversation on the left, or start one.",
@@ -42,7 +48,18 @@
 		"UNARCHIVE": "Unarchive",
 		"MEMBERS": "Members",
 		"NEW_MESSAGES": "New messages",
-		"JUMP_TO_LATEST": "Jump to the latest"
+		"JUMP_TO_LATEST": "Jump to the latest",
+		"HOME_TITLE": "Welcome to Chat",
+		"WELCOME_CHANNEL": "Welcome to {{name}}",
+		"WELCOME_CHANNEL_TEXT": "This is the very beginning of the {{name}} channel.",
+		"WELCOME_DIRECT_TEXT": "This is the very beginning of your conversation with {{name}}.",
+		"TODAY": "Today",
+		"YESTERDAY": "Yesterday",
+		"NEW": "New",
+		"MORE": "More actions",
+		"BACK": "Back to conversations",
+		"NOT_MEMBER": "You are viewing {{name}}. Join to send messages.",
+		"CLOSE": "Close"
 	},
 	"UNREADS": {
 		"TITLE": "Unreads",
@@ -64,7 +81,9 @@
 		"CLOSE": "Close thread",
 		"REPLY_PLACEHOLDER": "Reply in thread",
 		"LOAD_MORE": "Load more replies",
-		"OPEN": "Open thread"
+		"OPEN": "Open thread",
+		"VIEW": "View thread",
+		"LAST_REPLY": "Last reply {{time}}"
 	},
 	"MESSAGE": {
 		"EDITED": "edited",
@@ -94,7 +113,18 @@
 		"TOO_LONG": "A message holds at most {{max}} characters.",
 		"SEND_FAILED": "The message could not be sent.",
 		"MENTION_EVERYONE": "everyone in the conversation",
-		"MENTION_HERE": "everyone here now"
+		"MENTION_HERE": "everyone here now",
+		"EDITING": "Editing message",
+		"EDITING_HINT": "Escape to cancel, Enter to save",
+		"BOLD": "Bold",
+		"ITALIC": "Italic",
+		"STRIKE": "Strikethrough",
+		"CODE": "Code",
+		"LINK": "Link",
+		"LIST": "Bulleted list",
+		"QUOTE": "Quote",
+		"EMOJI": "Emoji",
+		"MENTION": "Mention someone"
 	},
 	"DIALOG": {
 		"NEW_CHANNEL": "New channel",
