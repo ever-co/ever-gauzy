@@ -152,6 +152,21 @@ The plugin's migration grants `REALTIME_SUBSCRIBE` to SUPER_ADMIN, ADMIN,
 MANAGER and EMPLOYEE of every tenant the first time the plugin loads; new
 tenants get it from the default role permissions.
 
+### Outbox retention (off by default)
+
+```env
+GAUZY_REALTIME_RETENTION_ENABLED=true
+```
+
+Once an hour, the dispatched collaboration events older than 24 hours and
+beyond the newest 1,000 of each organization (and of the tenant-wide events)
+are removed from the event outbox, at most 500 per organization per pass, and
+the replay watermark moves with them in the same transaction: a client whose
+catch-up cursor falls behind it is answered `resync`. Pending, failed and dead
+rows, other domains' events and rows without a tenant are never removed. It
+deletes rows, so it is a separate switch: on production, turn it on only after
+checking the database's backups.
+
 ## For other plugins
 
 Inject `RealtimeHintsService` (optional) and call `appendHint({ name,

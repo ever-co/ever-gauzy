@@ -231,11 +231,18 @@ location; none of them changes the flag-off default.
    deliveries apply it (§9): a member who left or was removed no longer receives nor replays the
    conversation's events, the notice of their own removal excepted. The kernel's `Subscription.events`
    (outbox viewers, `EVENT_OUTBOX_VIEW`) does not apply audience checks: its holders read the outbox itself.
-5. **No retention job; the replay window is whatever is retained.** Nothing prunes `event_outbox`, so
-   FR-3's floor (the newest 1,000 events per organization or 24 h, whichever is larger) holds by
-   default. The first retention job (T23) must keep both bounds and test them, and record what it removed
-   with `RealtimeReplayWatermarkService.advance(manager, scope, position)` in the transaction that removes
-   the rows: that watermark is what `resync` is answered from (§15.8).
+5. ~~**No retention job; the replay window is whatever is retained.**~~
+   Resolved (T23): `RealtimeRetentionService` prunes, once an hour, the
+   collaboration rows past both FR-3 bounds — older than 24 h and beyond the
+   newest 1,000 of their scope (an organization, or the tenant-wide rows). It
+   is conservative: collaboration replay names only, dispatched (`PUBLISHED`)
+   rows only, rows with a tenant only, at most 500 per scope and 50 scopes per
+   pass. Each scope's batch is removed in one transaction with
+   `RealtimeReplayWatermarkService.advance`, so the watermark `resync` is
+   answered from (§15.8) moves with it. **Off unless
+   `GAUZY_REALTIME_RETENTION_ENABLED=true`**, separately from the plugin: it
+   deletes rows, so production turns it on only after the backups-first check
+   of its database.
 6. ~~**The cursor is time-based, not a sequence, and not commit-safe.**~~ Resolved (T24) with a settle
    window: the catch-up's answered position never passes `now − REALTIME_CATCH_UP_SETTLE_MS` (10 s, longer
    than an appending transaction runs between stamping and committing its row), the rows past it are still

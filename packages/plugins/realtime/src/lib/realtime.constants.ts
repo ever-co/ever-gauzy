@@ -40,4 +40,16 @@ export const REALTIME_PRESENCE_TTL_MS = REALTIME_PRESENCE_TTL_SECONDS * 1000;
 /** How often a process looks for presences whose connections lapsed, to tell the organization. */
 export const REALTIME_PRESENCE_SWEEP_MS = 30_000;
 
+/**
+ * The replay window outbox retention keeps (spec FR-3): the collaboration events of the last 24 hours, and the newest
+ * 1,000 of each scope (an organization, or the tenant-wide rows), whichever is larger.
+ */
+export const REALTIME_RETENTION_MIN_AGE_MS = 24 * 60 * 60_000;
+export const REALTIME_RETENTION_MIN_EVENTS = 1_000;
+
+/** How often a process with retention on prunes, and how much one pass removes at most. */
+export const REALTIME_RETENTION_INTERVAL_MS = 60 * 60_000;
+export const REALTIME_RETENTION_BATCH = 500;
+export const REALTIME_RETENTION_SCOPES_PER_PASS = 50;
+
 export { REALTIME_EVENT_NAMES, REALTIME_SIGNAL_EVENTS, REALTIME_STREAMED_EVENTS };
