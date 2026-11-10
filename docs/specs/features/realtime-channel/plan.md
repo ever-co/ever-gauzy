@@ -292,3 +292,13 @@ location; none of them changes the flag-off default.
    row a retention job removed, per scope, with `resync` whenever the client's cursor precedes that position
    in (`createdAt`, `eventId`) order (a cursor `(t, A)` when `(t, B)` was pruned is behind it); until a job
    exists, never.
+9. **Live events wait for the outbox dispatcher.** A hint reaches subscribers
+   when the dispatch pass hands its row to `GraphqlSubscriptionConsumer`, and
+   that pass runs every minute (`EventOutboxDispatchScheduler`,
+   `CronExpression.EVERY_MINUTE`), so a live event arrives up to about a
+   minute after its commit, and later when the row waits behind its
+   partition's head or a retry. Spec §4's P95 under 1 s is not met. The
+   catch-up is unaffected (it reads the outbox, dispatched or not). Follow-up
+   (T28): publish to subscribers right after the commit, keeping the outbox
+   row as the replay and webhook record.
+   `tools/scripts/realtime-live-check.mjs` measures it (T18).
