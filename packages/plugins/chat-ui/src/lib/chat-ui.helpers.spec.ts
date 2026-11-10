@@ -4,10 +4,13 @@ import {
 	badgeText,
 	ChatPerson,
 	continuesGroup,
+	conversationPerson,
 	conversationTitle,
 	initialsOf,
+	isSameDay,
 	isUnread,
 	mentionedEmployeeIds,
+	mentionsMe,
 	mentionQueryAt,
 	mergeMessages,
 	namesToTokens,
@@ -206,5 +209,33 @@ describe('labels', () => {
 		expect(userName({ firstName: 'Anna', lastName: 'Ivanova' })).toBe('Anna Ivanova');
 		expect(userName({ name: 'anna', email: 'a@x' })).toBe('anna');
 		expect(userName({ email: 'a@x' })).toBe('a@x');
+	});
+});
+
+describe('display', () => {
+	const pair = [
+		{ employeeId: ANNA, userId: 'u1', role: 'member' as never },
+		{ employeeId: BOB, userId: 'u2', role: 'member' as never }
+	];
+
+	it('shows the other person of a direct conversation, myself when alone, nobody for a channel', () => {
+		expect(conversationPerson(conversation({ kind: ChatConversationKindEnum.DIRECT, members: pair }), people, ANNA)?.name).toBe('Bob Stone');
+		expect(conversationPerson(conversation({ kind: ChatConversationKindEnum.DIRECT, members: [pair[0]] }), people, ANNA)?.name).toBe('Anna Ivanova');
+		expect(conversationPerson(conversation({ members: pair }), people, ANNA)).toBeNull();
+		expect(conversationPerson(conversation({ kind: ChatConversationKindEnum.GROUP, members: [] }), people, ANNA)).toBeNull();
+	});
+
+	it('knows a body that mentions me or everyone', () => {
+		expect(mentionsMe(`hi <@${ANNA}>`, ANNA)).toBe(true);
+		expect(mentionsMe(`hi <@${BOB}>`, ANNA)).toBe(false);
+		expect(mentionsMe('heads up <!here>', ANNA)).toBe(true);
+		expect(mentionsMe('heads up <!channel>', null)).toBe(true);
+		expect(mentionsMe(`hi <@${ANNA}>`, null)).toBe(false);
+	});
+
+	it('compares calendar days', () => {
+		expect(isSameDay(new Date(2026, 10, 7, 0, 1), new Date(2026, 10, 7, 23, 59))).toBe(true);
+		expect(isSameDay(new Date(2026, 10, 7, 23, 59), new Date(2026, 10, 8, 0, 1))).toBe(false);
+		expect(isSameDay(new Date(2025, 10, 7), new Date(2026, 10, 7))).toBe(false);
 	});
 });
