@@ -230,6 +230,34 @@ export function conversationTitle(
 	return conversation.name ?? fallback;
 }
 
+/**
+ * The person a direct or group conversation's avatar shows: the first member who is not me, or me in a
+ * conversation with myself. Null for a channel, or when the person is not known (yet).
+ */
+export function conversationPerson(
+	conversation: Pick<IChatConversationWithState, 'kind' | 'members'>,
+	people: ReadonlyMap<string, ChatPerson>,
+	meEmployeeId: string | null
+): ChatPerson | null {
+	if (conversation.kind === ChatConversationKindEnum.CHANNEL) return null;
+	const members = conversation.members ?? [];
+	const other = members.find((member) => String(member.employeeId) !== String(meEmployeeId ?? '')) ?? members[0];
+	return other ? (people.get(String(other.employeeId)) ?? null) : null;
+}
+
+/** Whether a body mentions me by name, or everyone (`@channel`, `@here`). */
+export function mentionsMe(body: string, meEmployeeId: string | null): boolean {
+	if (/<!(channel|here)>/.test(body)) return true;
+	return !!meEmployeeId && mentionedEmployeeIds(body).includes(meEmployeeId);
+}
+
+/** Whether two instants fall on the same day of the local calendar. */
+export function isSameDay(a: Date | string | number, b: Date | string | number): boolean {
+	const first = new Date(a);
+	const second = new Date(b);
+	return first.getFullYear() === second.getFullYear() && first.getMonth() === second.getMonth() && first.getDate() === second.getDate();
+}
+
 /** Whether a conversation counts as unread for the list and the badges. */
 export function isUnread(conversation: Pick<IChatConversationWithState, 'state'>): boolean {
 	return (conversation.state?.unreadCount ?? 0) > 0 || (conversation.state?.mentionCount ?? 0) > 0;
