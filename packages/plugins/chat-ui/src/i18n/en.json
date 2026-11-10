@@ -124,7 +124,14 @@
 		"LIST": "Bulleted list",
 		"QUOTE": "Quote",
 		"EMOJI": "Emoji",
-		"MENTION": "Mention someone"
+		"MENTION": "Mention someone",
+		"PEOPLE": "People",
+		"NOTIFY": "Notify",
+		"YOU": "you",
+		"NOT_MEMBER": "Not in this conversation",
+		"KEY_NAVIGATE": "to navigate",
+		"KEY_SELECT": "to select",
+		"KEY_DISMISS": "to dismiss"
 	},
 	"DIALOG": {
 		"NEW_CHANNEL": "New channel",
@@ -145,5 +152,18 @@
 		"JOIN": "Join",
 		"CLOSE": "Close",
 		"FAILED": "That did not work. Try again."
+	},
+	"PROFILE": {
+		"YOU": "You",
+		"MANAGER": "Manager",
+		"MEMBER": "Member",
+		"NOT_MEMBER": "Not in this conversation",
+		"JOINED": "Joined {{date}}",
+		"IN_COMMON": "{{count}} conversations in common",
+		"IN_COMMON_ONE": "1 conversation in common",
+		"MESSAGE_PLACEHOLDER": "Message @{{name}}",
+		"MESSAGE": "Message",
+		"VIEW_PROFILE": "View profile",
+		"SENT": "Sent to {{name}}"
 	}
 }
