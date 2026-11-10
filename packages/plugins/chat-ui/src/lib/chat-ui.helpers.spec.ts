@@ -9,13 +9,20 @@ import {
 	initialsOf,
 	isSameDay,
 	isUnread,
+	markMentions,
+	matchParts,
+	memberEmployeeIds,
 	mentionedEmployeeIds,
 	mentionsMe,
 	mentionQueryAt,
 	mergeMessages,
+	nameHue,
 	namesToTokens,
 	newNonce,
+	ownPicture,
+	personTriggerOf,
 	plainBody,
+	rankMentions,
 	renderBodyHtml,
 	sortConversations,
 	splitMentions,
@@ -95,8 +102,21 @@ describe('mention tokens', () => {
 		};
 		const html = renderBodyHtml(`**bold** <@${ANNA}> <script>alert(1)</script>`, people, conversations, BOB, sanitizer);
 		expect(html).toContain('<strong>bold</strong>');
-		expect(html).toContain('<span class="chat-mention">@Anna Ivanova</span>');
+		expect(html).toContain(`<span class="chat-mention chat-mention-person chat-person-${ANNA}">@Anna Ivanova</span>`);
 		expect(html).not.toContain('<script');
+	});
+
+	it('finds the person an element of the page stands for', () => {
+		const host = document.createElement('div');
+		host.innerHTML = `<span data-person-id="${ANNA}"><b>Anna</b></span><span class="chat-mention chat-mention-person chat-person-${BOB}">@Bob</span><i>none</i>`;
+		const [marked, chip, none] = [host.querySelector('b'), host.querySelector('.chat-mention'), host.querySelector('i')];
+		expect(personTriggerOf(marked)).toEqual({ element: host.firstElementChild, employeeId: ANNA });
+		expect(personTriggerOf(chip)?.employeeId).toBe(BOB);
+		expect(personTriggerOf(none)).toBeNull();
+		expect(personTriggerOf(null)).toBeNull();
+		expect(nameHue('Anna Ivanova')).toBe(nameHue('Anna Ivanova'));
+		expect(nameHue('Anna Ivanova')).toBeGreaterThanOrEqual(0);
+		expect(nameHue('Anna Ivanova')).toBeLessThan(360);
 	});
 
 	it('leaves remote media out of a rendered body, after the sanitizer', () => {
@@ -154,6 +174,64 @@ describe('mention tokens', () => {
 		expect(mentionQueryAt('mail@x', 6)).toBeNull();
 		expect(suggestMentions([...people.values()], 'bo').map((person) => person.name)).toEqual(['Bob Stone']);
 		expect(suggestMentions([...people.values()], '').map((person) => person.name)).toEqual(['Anna Ivanova', 'Bob Stone']);
+	});
+
+	it('cuts a name around the part a query matches', () => {
+		expect(matchParts('Aster Abebe', 'st')).toEqual({ before: 'A', match: 'st', after: 'er Abebe' });
+		expect(matchParts('Aster Abebe', 'AB')).toEqual({ before: 'Aster ', match: 'Ab', after: 'ebe' });
+		expect(matchParts('Aster Abebe', '')).toEqual({ before: 'Aster Abebe', match: '', after: '' });
+		expect(matchParts('Aster Abebe', 'zz')).toEqual({ before: 'Aster Abebe', match: '', after: '' });
+		// A word start beats an earlier match inside a word.
+		expect(matchParts('Tessa Stone', 'st')).toEqual({ before: 'Tessa ', match: 'St', after: 'one' });
+	});
+
+	it('ranks the @ suggestions: name start, word start, inside; members first, me after them', () => {
+		const list: ChatPerson[] = [
+			{ employeeId: 'a', userId: null, name: 'Aster A.', imageUrl: null },
+			{ employeeId: 'b', userId: null, name: 'Booster P.', imageUrl: null },
+			{ employeeId: 'c', userId: null, name: 'Carter N.', imageUrl: null },
+			{ employeeId: 'm', userId: null, name: 'Andy Me', imageUrl: null },
+			{ employeeId: 's', userId: null, name: 'Sam Steel', imageUrl: null }
+		];
+		const names = (query: string, memberIds: ReadonlySet<string> | null = null) =>
+			rankMentions(list, query, { memberIds, meEmployeeId: 'm' }).map((item) => item.person.name);
+		expect(names('st')).toEqual(['Sam Steel', 'Aster A.', 'Booster P.']);
+		expect(names('')).toEqual(['Aster A.', 'Booster P.', 'Carter N.', 'Sam Steel', 'Andy Me']);
+		expect(names('', new Set(['c', 'm']))).toEqual(['Carter N.', 'Andy Me', 'Aster A.', 'Booster P.', 'Sam Steel']);
+		const [carter, , aster] = rankMentions(list, '', { memberIds: new Set(['c', 'm']), meEmployeeId: 'm' });
+		expect(carter.member).toBe(true);
+		expect(aster.member).toBe(false);
+		expect(rankMentions(list, 'and', { meEmployeeId: 'm' })[0]).toMatchObject({ isMe: true, member: null, parts: { match: 'And' } });
+	});
+
+	it('marks the mentions of the box where they sit', () => {
+		expect(markMentions('hi @Anna Ivanova, see #general and @channel', ['@Anna Ivanova', '#general'])).toEqual([
+			{ text: 'hi ', mention: false },
+			{ text: '@Anna Ivanova', mention: true },
+			{ text: ', see ', mention: false },
+			{ text: '#general', mention: true },
+			{ text: ' and ', mention: false },
+			{ text: '@channel', mention: true }
+		]);
+		// Not inside a word, not followed by a letter.
+		expect(markMentions('mail@here @channels', [])).toEqual([{ text: 'mail@here @channels', mention: false }]);
+		expect(markMentions('', ['@Anna'])).toEqual([]);
+	});
+});
+
+describe('people', () => {
+	it('keeps a person’s own picture and drops the generic silhouette', () => {
+		expect(ownPicture('https://cdn.example.com/a.png')).toBe('https://cdn.example.com/a.png');
+		expect(ownPicture('assets/images/avatars/avatar-default.svg')).toBeNull();
+		expect(ownPicture('/assets/images/avatars/avatar-default.svg?v=2')).toBeNull();
+		expect(ownPicture('  ')).toBeNull();
+		expect(ownPicture(null)).toBeNull();
+	});
+
+	it('lists the employees of a conversation, or null when it does not carry them', () => {
+		expect(memberEmployeeIds({ members: [{ employeeId: ANNA, userId: 'u1' } as never] })).toEqual(new Set([ANNA]));
+		expect(memberEmployeeIds({})).toBeNull();
+		expect(memberEmployeeIds(null)).toBeNull();
 	});
 });
 

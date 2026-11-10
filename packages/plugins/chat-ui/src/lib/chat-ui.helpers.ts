@@ -85,6 +85,30 @@ function escapeRegExp(text: string): string {
 	return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
+/** The class of a mention chip that names its person: `chat-person-<employeeId>`. */
+export const CHAT_PERSON_CLASS_PREFIX = 'chat-person-';
+const PERSON_ID = /^[A-Za-z0-9-]+$/;
+
+/**
+ * The person an element of the page stands for, for the profile card: an avatar or a name marked
+ * `data-person-id`, or a mention chip of a body (its `chat-person-<id>` class); the nearest one around the target.
+ */
+export function personTriggerOf(target: EventTarget | null): { element: Element; employeeId: string } | null {
+	const element = (target as Element | null)?.closest?.('[data-person-id], .chat-mention-person') ?? null;
+	if (!element) return null;
+	const marked = element.getAttribute('data-person-id');
+	const fromClass = [...element.classList].find((name) => name.startsWith(CHAT_PERSON_CLASS_PREFIX))?.slice(CHAT_PERSON_CLASS_PREFIX.length);
+	const employeeId = marked || fromClass || null;
+	return employeeId ? { element, employeeId } : null;
+}
+
+/** A hue (0–359) picked from a name: the same name always gets the same colour (avatars, profile banners). */
+export function nameHue(name: string): number {
+	let hash = 0;
+	for (let at = 0; at < name.length; at += 1) hash = (hash * 31 + name.charCodeAt(at)) % 360;
+	return hash;
+}
+
 /** The elements that load a remote URL on sight; the stored subset has none, and Angular's sanitizer keeps them. */
 const REMOTE_MEDIA_TAGS = /<\/?(img|picture|source|video|audio|track)\b[^>]*>/gi;
 
@@ -106,7 +130,9 @@ export function renderBodyHtml(
 		.map((part) => {
 			if (part.kind === 'text') return part.text;
 			if (part.kind === 'mention') {
-				return `<span class="chat-mention${part.isMe ? ' chat-mention-me' : ''}">@${escapeHtml(part.label)}</span>`;
+				// The person rides in a class (the sanitizer drops `data-*`): the page opens their profile card on hover.
+				const person = PERSON_ID.test(part.employeeId) ? ` chat-mention-person ${CHAT_PERSON_CLASS_PREFIX}${part.employeeId}` : '';
+				return `<span class="chat-mention${part.isMe ? ' chat-mention-me' : ''}${person}">@${escapeHtml(part.label)}</span>`;
 			}
 			if (part.kind === 'channel') return `<span class="chat-mention">#${escapeHtml(part.label)}</span>`;
 			return `<span class="chat-mention chat-mention-me">@${escapeHtml(part.label)}</span>`;
@@ -203,17 +229,103 @@ export function mentionQueryAt(text: string, caret: number): { query: string; st
 	return { query: match[2], start: caret - match[2].length - 1 };
 }
 
-/** The people whose name matches a query, the ones whose name starts with it first, a few at most. */
+/** The people whose name matches a query, best matches first (see `rankMentions`), a few at most. */
 export function suggestMentions(people: readonly ChatPerson[], query: string, limit = 8): ChatPerson[] {
+	return rankMentions(people, query, { limit }).map((suggestion) => suggestion.person);
+}
+
+/** Where a query matches a name: at its start (tier 0), at the start of a later word (1), inside a word (2), or not (-1). */
+function matchAt(name: string, needle: string): { at: number; tier: number } {
+	if (!needle) return { at: -1, tier: 0 };
+	const lower = name.toLowerCase();
+	if (lower.startsWith(needle)) return { at: 0, tier: 0 };
+	const word = new RegExp(`[\\s\\-'.(]${escapeRegExp(needle)}`, 'u').exec(lower);
+	if (word) return { at: word.index + 1, tier: 1 };
+	const at = lower.indexOf(needle);
+	return at < 0 ? { at: -1, tier: -1 } : { at, tier: 2 };
+}
+
+/** A name cut around the place a query matches it best (any case), so a suggestion list can bold the match. */
+export function matchParts(name: string, query: string): { before: string; match: string; after: string } {
 	const needle = query.trim().toLowerCase();
+	const { at } = matchAt(name, needle);
+	if (at < 0) return { before: name, match: '', after: '' };
+	return { before: name.slice(0, at), match: name.slice(at, at + needle.length), after: name.slice(at + needle.length) };
+}
+
+/** One person the `@` list offers: the part of the name that matched, and how they relate to the conversation. */
+export interface MentionSuggestion {
+	person: ChatPerson;
+	parts: ReturnType<typeof matchParts>;
+	/** Whether they are in the conversation (null when its members are not known). */
+	member: boolean | null;
+	isMe: boolean;
+}
+
+/**
+ * The people an `@` query suggests, as a chat app ranks them: the name starting with the query first, then a later
+ * word starting with it, then a match inside a word; at each level the conversation's members before the others,
+ * myself after them, then by name.
+ */
+export function rankMentions(
+	people: readonly ChatPerson[],
+	query: string,
+	options: { memberIds?: ReadonlySet<string> | null; meEmployeeId?: string | null; limit?: number } = {}
+): MentionSuggestion[] {
+	const needle = query.trim().toLowerCase();
+	const { memberIds = null, meEmployeeId = null, limit = 8 } = options;
 	return people
-		.filter((person) => !needle || person.name.toLowerCase().includes(needle))
-		.sort((a, b) => {
-			const aStarts = a.name.toLowerCase().startsWith(needle) ? 0 : 1;
-			const bStarts = b.name.toLowerCase().startsWith(needle) ? 0 : 1;
-			return aStarts - bStarts || a.name.localeCompare(b.name);
-		})
-		.slice(0, limit);
+		.map((person) => ({ person, match: matchAt(person.name, needle) }))
+		.filter(({ match }) => match.tier >= 0)
+		.map(({ person, match }) => ({
+			person,
+			tier: match.tier,
+			member: memberIds ? memberIds.has(person.employeeId) : null,
+			isMe: !!meEmployeeId && person.employeeId === meEmployeeId
+		}))
+		.sort(
+			(a, b) =>
+				a.tier - b.tier ||
+				Number(a.member === false) - Number(b.member === false) ||
+				Number(a.isMe) - Number(b.isMe) ||
+				a.person.name.localeCompare(b.person.name)
+		)
+		.slice(0, limit)
+		.map(({ person, member, isMe }) => ({ person, parts: matchParts(person.name, needle), member, isMe }));
+}
+
+/**
+ * The text of the box cut into plain runs and mentions (`@Name`, `#channel`, `@channel`, `@here`), so a layer under
+ * the box can tint each mention where it sits; a mention starts the text or follows a space, and no letter follows it.
+ */
+export function markMentions(text: string, labels: readonly string[]): { text: string; mention: boolean }[] {
+	const tokens = [...new Set([...labels, '@channel', '@here'])].filter(Boolean).sort((a, b) => b.length - a.length);
+	const pattern = new RegExp(`(?<=^|\\s)(?:${tokens.map(escapeRegExp).join('|')})(?![\\p{L}\\p{N}_])`, 'gu');
+	const parts: { text: string; mention: boolean }[] = [];
+	let last = 0;
+	for (let match = pattern.exec(text); match; match = pattern.exec(text)) {
+		if (match.index > last) parts.push({ text: text.slice(last, match.index), mention: false });
+		parts.push({ text: match[0], mention: true });
+		last = match.index + match[0].length;
+	}
+	if (last < text.length) parts.push({ text: text.slice(last), mention: false });
+	return parts;
+}
+
+/** The employees of a conversation, or null when the conversation does not carry its members. */
+export function memberEmployeeIds(conversation: Pick<IChatConversationWithState, 'members'> | null | undefined): ReadonlySet<string> | null {
+	const members = conversation?.members;
+	return members ? new Set(members.map((member) => String(member.employeeId))) : null;
+}
+
+/**
+ * A person's own picture: none for an empty link or Gauzy's generic silhouette (`avatar-default.svg`, set on users
+ * without a picture), so they show their initials as people without a picture do.
+ */
+export function ownPicture(url: string | null | undefined): string | null {
+	const trimmed = url?.trim();
+	if (!trimmed || /(^|\/)avatar-default\.svg([?#]|$)/i.test(trimmed)) return null;
+	return trimmed;
 }
 
 /** The name a conversation shows: its name, or the other people of a direct / group conversation. */
