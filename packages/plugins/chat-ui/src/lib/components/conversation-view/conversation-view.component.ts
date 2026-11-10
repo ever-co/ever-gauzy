@@ -368,7 +368,7 @@ export function unreadMarkerId(messages: readonly IChatMessageWithRelations[], s
 				color: var(--chat-text, inherit);
 			}
 			.title-icon nb-icon {
-				font-size: 1.125rem;
+				font-size: 1rem;
 			}
 			.title {
 				margin: 0;
@@ -376,7 +376,7 @@ export function unreadMarkerId(messages: readonly IChatMessageWithRelations[], s
 				text-overflow: ellipsis;
 				white-space: nowrap;
 				color: var(--chat-text, inherit);
-				font-size: 1.0625rem;
+				font-size: 0.9375rem;
 				font-weight: 800;
 				line-height: 1.5rem;
 			}
@@ -407,7 +407,7 @@ export function unreadMarkerId(messages: readonly IChatMessageWithRelations[], s
 				text-overflow: ellipsis;
 				white-space: nowrap;
 				color: var(--chat-muted, inherit);
-				font-size: 0.8125rem;
+				font-size: 0.75rem;
 			}
 			.actions {
 				display: flex;
@@ -419,13 +419,13 @@ export function unreadMarkerId(messages: readonly IChatMessageWithRelations[], s
 				display: inline-flex;
 				align-items: center;
 				gap: 0.25rem;
-				height: 1.875rem;
+				height: 1.75rem;
 				margin-right: 0.25rem;
 				padding: 0 0.5rem;
 				border: 1px solid var(--chat-border, rgba(127, 127, 127, 0.25));
 				border-radius: 0.5rem;
 				color: var(--chat-muted, inherit);
-				font-size: 0.8125rem;
+				font-size: 0.75rem;
 				font-weight: 700;
 			}
 			.members nb-icon {
@@ -474,7 +474,7 @@ export function unreadMarkerId(messages: readonly IChatMessageWithRelations[], s
 			.menu-title {
 				margin: 0.25rem 0.5rem 0.375rem;
 				color: var(--chat-muted, inherit);
-				font-size: 0.6875rem;
+				font-size: 0.625rem;
 				font-weight: 700;
 				text-transform: uppercase;
 				letter-spacing: 0.04em;
@@ -489,7 +489,7 @@ export function unreadMarkerId(messages: readonly IChatMessageWithRelations[], s
 				background: transparent;
 				color: var(--chat-text, inherit);
 				font: inherit;
-				font-size: 0.875rem;
+				font-size: 0.8125rem;
 				text-align: left;
 				cursor: pointer;
 			}
@@ -537,7 +537,7 @@ export function unreadMarkerId(messages: readonly IChatMessageWithRelations[], s
 			.pins-header h6 {
 				flex: 1 1 auto;
 				margin: 0;
-				font-size: 0.9375rem;
+				font-size: 0.875rem;
 				font-weight: 800;
 			}
 			.pins-body {
@@ -563,27 +563,27 @@ export function unreadMarkerId(messages: readonly IChatMessageWithRelations[], s
 				display: inline-flex;
 				align-items: center;
 				justify-content: center;
-				width: 4.5rem;
-				height: 4.5rem;
+				width: 3.5rem;
+				height: 3.5rem;
 				margin-bottom: 0.75rem;
 				border-radius: 0.875rem;
 				background: var(--chat-accent-soft, rgba(51, 102, 255, 0.12));
 				color: var(--chat-accent, #3366ff);
 			}
 			.intro-icon nb-icon {
-				font-size: 2.25rem;
+				font-size: 1.75rem;
 			}
 			.intro h3 {
 				margin: 0 0 0.25rem;
 				color: var(--chat-text, inherit);
-				font-size: 1.625rem;
+				font-size: 1.25rem;
 				font-weight: 800;
 				letter-spacing: -0.01em;
 			}
 			.intro p {
 				margin: 0;
 				color: var(--chat-muted, inherit);
-				font-size: 0.9375rem;
+				font-size: 0.8125rem;
 			}
 			.intro .intro-topic {
 				margin-top: 0.5rem;
@@ -598,7 +598,7 @@ export function unreadMarkerId(messages: readonly IChatMessageWithRelations[], s
 			.empty {
 				margin: 1rem 1.25rem;
 				color: var(--chat-muted, inherit);
-				font-size: 0.875rem;
+				font-size: 0.8125rem;
 			}
 			.link-button {
 				border: 0;
@@ -619,7 +619,7 @@ export function unreadMarkerId(messages: readonly IChatMessageWithRelations[], s
 				background: var(--chat-raised, transparent);
 				color: var(--chat-text, inherit);
 				font: inherit;
-				font-size: 0.8125rem;
+				font-size: 0.75rem;
 				font-weight: 600;
 				cursor: pointer;
 			}
@@ -656,7 +656,7 @@ export function unreadMarkerId(messages: readonly IChatMessageWithRelations[], s
 				border-radius: 999px;
 				background: var(--chat-bg, #fff);
 				color: var(--chat-text, inherit);
-				font-size: 0.8125rem;
+				font-size: 0.6875rem;
 				font-weight: 700;
 				box-shadow: 0 0.0625rem 0.25rem rgba(0, 0, 0, 0.06);
 			}
@@ -676,7 +676,7 @@ export function unreadMarkerId(messages: readonly IChatMessageWithRelations[], s
 				border-radius: 0.25rem;
 				background: var(--chat-danger, #e4493f);
 				color: #fff;
-				font-size: 0.6875rem;
+				font-size: 0.625rem;
 				font-weight: 800;
 				line-height: 1.125rem;
 				text-transform: uppercase;
@@ -696,7 +696,7 @@ export function unreadMarkerId(messages: readonly IChatMessageWithRelations[], s
 				background: var(--chat-accent, #3366ff);
 				color: var(--chat-on-accent, #fff);
 				font: inherit;
-				font-size: 0.8125rem;
+				font-size: 0.75rem;
 				font-weight: 700;
 				box-shadow: 0 0.375rem 1rem rgba(0, 0, 0, 0.2);
 				transform: translateX(-50%);
@@ -716,7 +716,7 @@ export function unreadMarkerId(messages: readonly IChatMessageWithRelations[], s
 				border-radius: 0.5rem;
 				background: var(--chat-sidebar-bg, rgba(127, 127, 127, 0.05));
 				color: var(--chat-muted, inherit);
-				font-size: 0.875rem;
+				font-size: 0.8125rem;
 			}
 			.join-bar {
 				justify-content: space-between;
@@ -724,7 +724,7 @@ export function unreadMarkerId(messages: readonly IChatMessageWithRelations[], s
 			}
 			.join {
 				flex: 0 0 auto;
-				height: 2rem;
+				height: 1.875rem;
 				padding: 0 1rem;
 				border: 0;
 				border-radius: 0.375rem;

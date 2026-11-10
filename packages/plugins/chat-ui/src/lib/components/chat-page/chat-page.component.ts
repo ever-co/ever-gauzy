@@ -339,7 +339,7 @@ const UNDO_MS = 55_000;
 			.state h3 {
 				margin: 0.5rem 0 0;
 				color: var(--chat-text);
-				font-size: 1.5rem;
+				font-size: 1.25rem;
 				font-weight: 800;
 				letter-spacing: -0.01em;
 			}
@@ -347,20 +347,20 @@ const UNDO_MS = 55_000;
 				max-width: 28rem;
 				margin: 0;
 				color: var(--chat-muted);
-				font-size: 0.9375rem;
+				font-size: 0.8125rem;
 			}
 			.state-icon {
 				display: inline-flex;
 				align-items: center;
 				justify-content: center;
-				width: 4rem;
-				height: 4rem;
+				width: 3.25rem;
+				height: 3.25rem;
 				border-radius: 1rem;
 				background: var(--chat-elevated);
 				color: var(--chat-muted);
 			}
 			.state-icon nb-icon {
-				font-size: 2rem;
+				font-size: 1.625rem;
 			}
 			.state-icon.accent {
 				background: var(--chat-accent-soft);
@@ -383,14 +383,14 @@ const UNDO_MS = 55_000;
 				display: inline-flex;
 				align-items: center;
 				gap: 0.375rem;
-				height: 2.25rem;
+				height: 2rem;
 				padding: 0 0.875rem;
 				border: 1px solid var(--chat-border-strong);
 				border-radius: 0.5rem;
 				background: transparent;
 				color: var(--chat-text);
 				font: inherit;
-				font-size: 0.875rem;
+				font-size: 0.8125rem;
 				font-weight: 700;
 				text-decoration: none;
 				cursor: pointer;
@@ -417,8 +417,8 @@ const UNDO_MS = 55_000;
 				cursor: default;
 			}
 			.simple-header .button {
-				height: 2rem;
-				font-size: 0.8125rem;
+				height: 1.875rem;
+				font-size: 0.75rem;
 			}
 			.simple {
 				display: flex;
@@ -440,13 +440,13 @@ const UNDO_MS = 55_000;
 				color: var(--chat-text);
 			}
 			.header-icon nb-icon {
-				font-size: 1.125rem;
+				font-size: 1rem;
 			}
 			.simple-header h5 {
 				flex: 1 1 auto;
 				margin: 0;
 				color: var(--chat-text);
-				font-size: 1.0625rem;
+				font-size: 0.9375rem;
 				font-weight: 800;
 			}
 			.icon-button {
@@ -524,13 +524,13 @@ const UNDO_MS = 55_000;
 			}
 			.card-main strong {
 				color: var(--chat-text);
-				font-size: 0.9375rem;
+				font-size: 0.8125rem;
 				font-weight: 800;
 			}
 			.card-main time,
 			.thread-meta {
 				color: var(--chat-muted);
-				font-size: 0.75rem;
+				font-size: 0.6875rem;
 			}
 			.thread-meta {
 				display: flex;
@@ -547,7 +547,7 @@ const UNDO_MS = 55_000;
 				-webkit-line-clamp: 2;
 				-webkit-box-orient: vertical;
 				color: var(--chat-text);
-				font-size: 0.875rem;
+				font-size: 0.8125rem;
 				line-height: 1.4;
 			}
 			.meta {
@@ -568,7 +568,7 @@ const UNDO_MS = 55_000;
 				border-radius: 999px;
 				background: var(--chat-active-tint);
 				color: var(--chat-text);
-				font-size: 0.75rem;
+				font-size: 0.6875rem;
 				font-weight: 800;
 				line-height: 1.25rem;
 				text-align: center;
@@ -590,7 +590,7 @@ const UNDO_MS = 55_000;
 				max-width: 24rem;
 				margin: 0;
 				color: var(--chat-muted);
-				font-size: 0.9375rem;
+				font-size: 0.8125rem;
 			}
 			@media (max-width: 1200px) {
 				.panes.with-thread {

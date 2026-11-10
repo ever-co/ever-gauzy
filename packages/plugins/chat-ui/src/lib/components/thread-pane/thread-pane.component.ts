@@ -157,7 +157,7 @@ import { MessageAction, MessageItemComponent } from '../message-item/message-ite
 			.title {
 				margin: 0;
 				color: var(--chat-text, inherit);
-				font-size: 1.0625rem;
+				font-size: 0.9375rem;
 				font-weight: 800;
 			}
 			.subtitle {
@@ -165,7 +165,7 @@ import { MessageAction, MessageItemComponent } from '../message-item/message-ite
 				text-overflow: ellipsis;
 				white-space: nowrap;
 				color: var(--chat-muted, inherit);
-				font-size: 0.8125rem;
+				font-size: 0.75rem;
 			}
 			.icon-button {
 				display: inline-flex;
@@ -203,7 +203,7 @@ import { MessageAction, MessageItemComponent } from '../message-item/message-ite
 				gap: 0.75rem;
 				margin: 0.75rem 1.25rem 0.25rem;
 				color: var(--chat-muted, inherit);
-				font-size: 0.8125rem;
+				font-size: 0.75rem;
 				white-space: nowrap;
 			}
 			.divider::after {
@@ -220,7 +220,7 @@ import { MessageAction, MessageItemComponent } from '../message-item/message-ite
 				background: transparent;
 				color: var(--chat-text, inherit);
 				font: inherit;
-				font-size: 0.8125rem;
+				font-size: 0.75rem;
 				font-weight: 600;
 				cursor: pointer;
 			}
@@ -233,7 +233,7 @@ import { MessageAction, MessageItemComponent } from '../message-item/message-ite
 			.empty {
 				margin: 1rem;
 				color: var(--chat-muted, inherit);
-				font-size: 0.875rem;
+				font-size: 0.8125rem;
 			}
 			.link-button {
 				border: 0;
@@ -249,7 +249,7 @@ import { MessageAction, MessageItemComponent } from '../message-item/message-ite
 			.also {
 				display: block;
 				margin-top: 0.125rem;
-				font-size: 0.8125rem;
+				font-size: 0.75rem;
 			}
 		`
 	]

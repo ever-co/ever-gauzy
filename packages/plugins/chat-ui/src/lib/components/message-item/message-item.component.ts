@@ -236,7 +236,7 @@ export type MessageAction =
 				padding-left: 1.75rem;
 				margin-bottom: 0.125rem;
 				color: var(--chat-pinned-text, #c77c02);
-				font-size: 0.75rem;
+				font-size: 0.6875rem;
 				font-weight: 600;
 			}
 			.pinned-label nb-icon {
@@ -284,7 +284,7 @@ export type MessageAction =
 			.author {
 				color: var(--chat-text, inherit);
 				font-weight: 800;
-				font-size: 0.9375rem;
+				font-size: 0.875rem;
 			}
 			.tag {
 				padding: 0 0.3125rem;
@@ -299,14 +299,14 @@ export type MessageAction =
 			}
 			.time {
 				color: var(--chat-muted, inherit);
-				font-size: 0.75rem;
+				font-size: 0.6875rem;
 			}
 			.time:hover {
 				text-decoration: underline;
 			}
 			.body {
 				color: var(--chat-text, inherit);
-				font-size: 0.9375rem;
+				font-size: 0.875rem;
 				line-height: 1.4667;
 				overflow-wrap: anywhere;
 			}
@@ -330,7 +330,7 @@ export type MessageAction =
 			}
 			:host ::ng-deep .markdown :is(h1, h2, h3, h4, h5, h6) {
 				margin: 0.25rem 0;
-				font-size: 1rem;
+				font-size: 0.9375rem;
 				font-weight: 700;
 			}
 			:host ::ng-deep .markdown :is(ul, ol) {
@@ -355,7 +355,7 @@ export type MessageAction =
 				background: var(--chat-code-bg, rgba(127, 127, 127, 0.1));
 				color: var(--chat-code-text, #e01e5a);
 				font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-				font-size: 0.8125rem;
+				font-size: 0.75rem;
 			}
 			:host ::ng-deep .markdown pre {
 				padding: 0.625rem 0.75rem;
@@ -389,12 +389,12 @@ export type MessageAction =
 				margin: 0;
 				color: var(--chat-muted, inherit);
 				font-style: italic;
-				font-size: 0.875rem;
+				font-size: 0.8125rem;
 			}
 			.edited {
 				margin-left: 0.25rem;
 				color: var(--chat-muted, inherit);
-				font-size: 0.75rem;
+				font-size: 0.6875rem;
 			}
 			.cards {
 				display: flex;
@@ -436,7 +436,7 @@ export type MessageAction =
 				flex-direction: column;
 				flex: 1 1 auto;
 				min-width: 0;
-				font-size: 0.8125rem;
+				font-size: 0.75rem;
 			}
 			.task-id {
 				overflow: hidden;
@@ -455,7 +455,7 @@ export type MessageAction =
 				gap: 0.25rem;
 				margin: 0.375rem 0 0;
 				color: var(--chat-muted, inherit);
-				font-size: 0.8125rem;
+				font-size: 0.75rem;
 			}
 			.reactions {
 				display: flex;
@@ -473,7 +473,7 @@ export type MessageAction =
 				border-radius: 999px;
 				background: var(--chat-reaction-bg, rgba(127, 127, 127, 0.12));
 				color: var(--chat-text, inherit);
-				font-size: 0.8125rem;
+				font-size: 0.75rem;
 				cursor: pointer;
 				transition: border-color 0.1s ease, background-color 0.1s ease;
 			}
@@ -491,11 +491,11 @@ export type MessageAction =
 				color: var(--chat-accent, #3366ff);
 			}
 			.reaction-emoji {
-				font-size: 0.9375rem;
+				font-size: 0.875rem;
 				line-height: 1;
 			}
 			.reaction-count {
-				font-size: 0.75rem;
+				font-size: 0.6875rem;
 				font-weight: 700;
 			}
 			.reaction.add {
@@ -525,7 +525,7 @@ export type MessageAction =
 				background: transparent;
 				color: inherit;
 				font: inherit;
-				font-size: 0.8125rem;
+				font-size: 0.75rem;
 				text-align: left;
 				cursor: pointer;
 				transition: border-color 0.1s ease, background-color 0.1s ease;

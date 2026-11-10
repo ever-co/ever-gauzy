@@ -180,7 +180,7 @@ const MAX_BOX_HEIGHT_PX = 240;
 				gap: 0.375rem;
 				padding: 0 0.25rem;
 				color: var(--chat-accent, #3366ff);
-				font-size: 0.75rem;
+				font-size: 0.6875rem;
 			}
 			.edit-hint {
 				color: var(--chat-muted, inherit);
@@ -236,7 +236,7 @@ const MAX_BOX_HEIGHT_PX = 240;
 				background: transparent;
 				color: var(--chat-text, inherit);
 				font: inherit;
-				font-size: 0.9375rem;
+				font-size: 0.875rem;
 				line-height: 1.4667;
 			}
 			.box::placeholder {
@@ -297,7 +297,7 @@ const MAX_BOX_HEIGHT_PX = 240;
 			}
 			.counter {
 				margin-right: 0.5rem;
-				font-size: 0.75rem;
+				font-size: 0.6875rem;
 				font-weight: 600;
 			}
 			.counter.over {
@@ -339,7 +339,7 @@ const MAX_BOX_HEIGHT_PX = 240;
 				background: transparent;
 				color: var(--chat-text, inherit);
 				font: inherit;
-				font-size: 0.8125rem;
+				font-size: 0.75rem;
 				font-weight: 600;
 				cursor: pointer;
 			}
@@ -359,7 +359,7 @@ const MAX_BOX_HEIGHT_PX = 240;
 				min-height: 1rem;
 				padding: 0 0.25rem;
 				color: var(--chat-muted, inherit);
-				font-size: 0.6875rem;
+				font-size: 0.625rem;
 				text-align: right;
 			}
 			.hint.over {
@@ -390,7 +390,7 @@ const MAX_BOX_HEIGHT_PX = 240;
 				padding: 0.375rem 0.5rem;
 				border-radius: 0.375rem;
 				cursor: pointer;
-				font-size: 0.875rem;
+				font-size: 0.8125rem;
 			}
 			.suggestions li.highlighted,
 			.suggestions li:hover {
