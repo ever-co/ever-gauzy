@@ -25,7 +25,7 @@ export interface PersonCardMembership {
 	imports: [DatePipe, RouterLink, NbIconModule, NbTooltipModule, TranslatePipe, PersonAvatarComponent],
 	template: `
 		@let who = person();
-		<section class="card" role="dialog" [attr.aria-label]="who.name" data-test="person-card">
+		<section class="profile" role="dialog" [attr.aria-label]="who.name" data-test="person-card">
 			<div class="banner" [style.background]="banner()" aria-hidden="true"></div>
 			@if (!isMe()) {
 				<div class="banner-actions">
@@ -107,7 +107,7 @@ export interface PersonCardMembership {
 			:host {
 				display: block;
 			}
-			.card {
+			.profile {
 				position: relative;
 				width: 18.5rem;
 				overflow: hidden;
