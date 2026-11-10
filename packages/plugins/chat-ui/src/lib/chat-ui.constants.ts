@@ -38,3 +38,37 @@ export const CHAT_MENTION_SUGGESTIONS = 8;
 
 /** The emoji the reaction picker offers. */
 export const CHAT_QUICK_REACTIONS = ['👍', '✅', '👀', '❤️', '🎉', '😂'] as const;
+
+/** How many of the quick reactions a message's hover toolbar shows as one-click buttons. */
+export const CHAT_TOOLBAR_REACTIONS = 3;
+
+/** The emoji the composer's emoji button offers for insertion at the caret. */
+export const CHAT_COMPOSER_EMOJI = [
+	'😀',
+	'😄',
+	'😂',
+	'🙂',
+	'😉',
+	'😍',
+	'🤔',
+	'😅',
+	'😎',
+	'🙏',
+	'👍',
+	'👎',
+	'👏',
+	'🙌',
+	'💪',
+	'👀',
+	'✅',
+	'❌',
+	'🎉',
+	'🔥',
+	'❤️',
+	'🚀',
+	'💯',
+	'⭐'
+] as const;
+
+/** Where the sidebar remembers which of its sections are collapsed (per browser). */
+export const CHAT_COLLAPSED_SECTIONS_KEY = 'gauzy.chat.collapsedSections';
