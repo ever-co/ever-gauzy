@@ -17,7 +17,8 @@
  *
  * Each order is forced, not hoped for. A gate stops one side inside its transaction — the retention after its delete
  * (in the watermark write that follows it), the replay after its locked read (before its first write) — and the
- * other side's statement must show up in `pg_stat_activity` waiting on a lock before the gate is opened.
+ * other side's statement must show up in `pg_stat_activity` waiting on that transaction's backend (`pg_blocking_pids`)
+ * before the gate is opened.
  *
  * Nothing on the path is doubled: the service, the MikroORM store, the retention and both ORMs are the platform's
  * own, each ORM's entity registry loaded as `DB_TYPE=postgres` loads it, over the tables the outbox migration creates.
@@ -79,27 +80,37 @@ const WAIT_MS = 15_000;
 
 /** Stops a transaction where it calls `pass`, until the case releases it. */
 interface IGate {
-	/** Resolves once the transaction reached the gate. */
-	reached: Promise<void>;
+	/** Resolves once the transaction reached the gate, with the backend (`pg_backend_pid()`) that runs it. */
+	reached: Promise<number>;
 	release(): void;
-	pass(): Promise<void>;
+	/** @param holder The backend of the transaction that stops here, read on its own connection. */
+	pass(holder: number): Promise<void>;
 }
 
 function createGate(): IGate {
-	let reach: () => void = () => undefined;
+	let reach: (holder: number) => void = () => undefined;
 	let release: () => void = () => undefined;
-	const reached = new Promise<void>((resolve) => (reach = resolve));
+	const reached = new Promise<number>((resolve) => (reach = resolve));
 	const released = new Promise<void>((resolve) => (release = resolve));
 
 	return {
 		reached,
 		release: () => release(),
-		pass: async () => {
-			reach();
+		pass: async (holder) => {
+			reach(holder);
 			await released;
 		}
 	};
 }
+
+/** Asked on a transaction's own connection, before it stops at its gate: which backend holds its locks. */
+const BACKEND_PID = `SELECT pg_backend_pid() AS "pid"`;
+
+/** The backend in an answer to `BACKEND_PID`. */
+const backendOf = (rows: Row[]): number => Number(rows[0]['pid']);
+
+/** A transaction's TypeORM manager, as far as asking for its backend goes. */
+type TypeOrmTransaction = { query(sql: string): Promise<Row[]> };
 
 /**
  * Loads the platform's registry under one ORM, in a module registry of its own.
@@ -262,12 +273,13 @@ describeOnPostgres('a delivery replay against the outbox retention on PostgreSQL
 
 				// The record's reset is the transaction's first write, right after the locked read.
 				jest.spyOn(EntityManager.prototype, 'update').mockImplementation(async function (
-					this: unknown,
+					this: TypeOrmTransaction,
 					target: unknown,
 					...rest: unknown[]
 				) {
 					if (target === platform['EventDelivery']) {
-						await gate.pass();
+						// The transaction's manager queries on the transaction's own connection.
+						await gate.pass(backendOf(await this.query(BACKEND_PID)));
 					}
 
 					return update.call(this, target, ...rest);
@@ -291,12 +303,13 @@ describeOnPostgres('a delivery replay against the outbox retention on PostgreSQL
 				// The store's own writes; the record's reset is the transaction's first, right after the locked read.
 				jest.spyOn(store, 'write').mockImplementation(async function (
 					this: unknown,
-					em: unknown,
+					em: { execute(sql: string): Promise<Row[]> },
 					table: unknown,
 					...rest: unknown[]
 				) {
 					if (table === mikro['EventDelivery']) {
-						await gate.pass();
+						// The transactional `em` executes in its transaction's context, on that connection.
+						await gate.pass(backendOf(await em.execute(BACKEND_PID)));
 					}
 
 					return write.call(this, em, table, ...rest);
@@ -402,17 +415,27 @@ describeOnPostgres('a delivery replay against the outbox retention on PostgreSQL
 		};
 
 		/**
-		 * Waits until a statement of another connection is blocked by another backend's lock, and fails if the side
+		 * Waits until a statement is blocked by the lock of the transaction stopped at the gate, and fails if the side
 		 * that should send it finished, or never got there.
+		 *
+		 * Only a wait on that one backend counts (`pg_blocking_pids`): the holder locks nothing but the suite's own rows,
+		 * so no other connection of the database — another suite's, or another blocked `SELECT` — can stand in for the
+		 * side under test.
 		 *
 		 * The statement is matched by how it starts: `pg_stat_activity` keeps only the first
 		 * `track_activity_query_size` bytes (1 kB by default), and TypeORM's column list alone is longer than that.
 		 *
 		 * @param statement The waiting statement, as `pg_stat_activity` shows it.
+		 * @param holder The backend of the transaction stopped at the gate.
 		 * @param who The side, for the failure message.
 		 * @param work That side's work.
 		 */
-		async function waitingOnALock(statement: RegExp, who: string, work: Promise<unknown>): Promise<void> {
+		async function waitingOnALock(
+			statement: RegExp,
+			holder: number,
+			who: string,
+			work: Promise<unknown>
+		): Promise<void> {
 			let finished: unknown = null;
 			const watched = work.then(
 				(value) => (finished = { value }),
@@ -422,7 +445,8 @@ describeOnPostgres('a delivery replay against the outbox retention on PostgreSQL
 
 			for (;;) {
 				const waiting = await query(
-					`SELECT "query" FROM pg_stat_activity WHERE "datname" = current_database() AND "wait_event_type" = 'Lock' AND cardinality(pg_blocking_pids("pid")) > 0`
+					`SELECT "query" FROM pg_stat_activity WHERE "datname" = current_database() AND "wait_event_type" = 'Lock' AND "pid" <> $1 AND $1 = ANY(pg_blocking_pids("pid"))`,
+					[holder]
 				);
 
 				if (waiting.some((backend) => statement.test(String(backend['query'])))) {
@@ -434,7 +458,7 @@ describeOnPostgres('a delivery replay against the outbox retention on PostgreSQL
 				}
 
 				if (Date.now() > deadline) {
-					throw new Error(`${who} did not wait on a lock within ${WAIT_MS} ms`);
+					throw new Error(`${who} did not wait on backend ${holder}'s lock within ${WAIT_MS} ms`);
 				}
 
 				await Promise.race([watched, new Promise((resolve) => setTimeout(resolve, 20))]);
@@ -474,12 +498,15 @@ describeOnPostgres('a delivery replay against the outbox retention on PostgreSQL
 			const before = await deliveryRowOf(deliveryId);
 			const deleted = gate();
 
-			// The pass stops inside its transaction, after its delete, at the watermark write that follows it.
-			watermarks.advance.mockImplementationOnce(() => deleted.pass());
+			// The pass stops inside its transaction, after its delete, at the watermark write that follows it (on the
+			// transaction's manager, so on its connection).
+			watermarks.advance.mockImplementationOnce(async (manager: TypeOrmTransaction) =>
+				deleted.pass(backendOf(await manager.query(BACKEND_PID)))
+			);
 
 			const pruning = track(retention.prune(new Date(), BOUNDS));
 
-			await deleted.reached;
+			const deleting = await deleted.reached;
 			// The delete is not committed: another connection still reads the row.
 			expect(await outboxRowOf(eventId)).toMatchObject({ status: EventOutboxStatus.PUBLISHED });
 
@@ -487,7 +514,7 @@ describeOnPostgres('a delivery replay against the outbox retention on PostgreSQL
 
 			// The replay's read of the row. A plain read never waits on a row lock in PostgreSQL, so its waiting is itself
 			// the proof that it asks for one (`FOR UPDATE`).
-			await waitingOnALock(/^\s*SELECT\b/i, 'the replay', replaying);
+			await waitingOnALock(/^\s*SELECT\b/i, deleting, 'the replay', replaying);
 			deleted.release();
 
 			expect(await pruning).toEqual({
@@ -519,11 +546,11 @@ describeOnPostgres('a delivery replay against the outbox retention on PostgreSQL
 			const replaying = track(side.service.replayDelivery(deliveryId));
 
 			// The replay holds the row under `FOR UPDATE` and has written nothing yet.
-			await locked.reached;
+			const replayer = await locked.reached;
 
 			const pruning = track(retention.prune(new Date(), BOUNDS));
 
-			await waitingOnALock(/^\s*DELETE FROM "event_outbox"/i, 'the retention', pruning);
+			await waitingOnALock(/^\s*DELETE FROM "event_outbox"/i, replayer, 'the retention', pruning);
 			locked.release();
 
 			expect(await replaying).toMatchObject({
