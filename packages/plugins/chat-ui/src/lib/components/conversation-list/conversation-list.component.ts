@@ -441,8 +441,13 @@ function writeCollapsed(keys: ReadonlySet<string>): void {
 				font-size: 0.75rem;
 				font-weight: 700;
 			}
+			/*
+			 * One line, always: the app's global Bootstrap \`.row\` (its grid) sets \`flex-wrap: wrap\` and -15px side margins,
+			 * which put a long title (a group's names) on a line of its own under the icon, outside the row.
+			 */
 			.row {
 				display: flex;
+				flex-wrap: nowrap;
 				align-items: center;
 				gap: 0.5rem;
 				box-sizing: border-box;
