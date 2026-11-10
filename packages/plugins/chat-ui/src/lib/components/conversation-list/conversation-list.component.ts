@@ -5,7 +5,7 @@ import { NbIconModule, NbTooltipModule } from '@nebular/theme';
 import { TranslatePipe } from '@ngx-translate/core';
 import { ChatConversationKindEnum, ChatNotifyLevelEnum, ChatVisibilityEnum, IChatCategory, IChatConversationWithState } from '@gauzy/contracts';
 import { CHAT_COLLAPSED_SECTIONS_KEY, CHAT_LINK, CHAT_THREADS_PATH, CHAT_UNREADS_PATH } from '../../chat-ui.constants';
-import { ChatPerson, conversationPerson, conversationTitle, isUnread } from '../../chat-ui.helpers';
+import { ChatPerson, conversationPerson, conversationTitle, groupShortTitle, isUnread, otherMemberCount } from '../../chat-ui.helpers';
 import { ChatPeople } from '../../services/chat-people.service';
 import { PersonAvatarComponent } from '../person-avatar/person-avatar.component';
 
@@ -180,16 +180,21 @@ function writeCollapsed(keys: ReadonlySet<string>): void {
 				[attr.data-test]="'conversation-' + conversation.id"
 				(click)="query() && clearSearch()"
 			>
+				@let others = othersOf(conversation);
 				<span class="row-icon">
 					@if (conversation.kind === 'channel') {
 						<nb-icon [icon]="conversation.visibility === privateVisibility ? 'lock-outline' : 'hash-outline'"></nb-icon>
+					} @else if (conversation.kind === 'group' && others > 0) {
+						<!-- A group: how many people besides me, on a tile the size of an avatar. -->
+						<span class="group-count" aria-hidden="true">{{ others }}</span>
 					} @else if (conversation.kind === 'group' || !person) {
 						<nb-icon icon="people-outline"></nb-icon>
 					} @else {
 						<ngx-chat-person-avatar [person]="person" size="tiny"></ngx-chat-person-avatar>
 					}
 				</span>
-				<span class="title">{{ rowTitle(conversation) }}</span>
+				<!-- A direct or group row may be cut short: hovering it tells every name. -->
+				<span class="title" [attr.title]="conversation.kind === 'channel' ? null : title(conversation)">{{ rowTitle(conversation) }}</span>
 				@if (conversation.state?.notifyLevel === mutedLevel) {
 					<nb-icon class="muted-icon" icon="bell-off-outline"></nb-icon>
 				}
@@ -507,6 +512,21 @@ function writeCollapsed(keys: ReadonlySet<string>): void {
 				border-radius: 0.3125rem;
 				background: var(--chat-elevated, rgba(127, 127, 127, 0.15));
 			}
+			/* A group's tile: the count of its people, in the place and the size of a direct row's avatar. */
+			.group-count {
+				display: inline-flex;
+				align-items: center;
+				justify-content: center;
+				width: 1.25rem;
+				height: 1.25rem;
+				border-radius: 0.25rem;
+				background: var(--chat-elevated, rgba(127, 127, 127, 0.18));
+				color: var(--chat-text-soft, inherit);
+				font-size: 0.625rem;
+				font-weight: 700;
+				line-height: 1;
+				font-variant-numeric: tabular-nums;
+			}
 			.add-icon nb-icon {
 				font-size: 0.75rem;
 			}
@@ -671,10 +691,21 @@ export class ConversationListComponent {
 		return conversationTitle(conversation, this.people().byEmployee, this.meEmployeeId(), this.untitled());
 	}
 
-	/** The title a row shows: a channel's without its `#` (the row draws the `#` or lock icon itself). */
+	/**
+	 * The title a row shows: a channel's without its `#` (the row draws the `#` or lock icon itself), a group's people
+	 * by first name (more of them fit; the row's tooltip has the full names).
+	 */
 	protected rowTitle(conversation: IChatConversationWithState): string {
+		if (conversation.kind === ChatConversationKindEnum.GROUP) {
+			return groupShortTitle(conversation, this.people().byEmployee, this.meEmployeeId()) ?? this.title(conversation);
+		}
 		const title = this.title(conversation);
 		return conversation.kind === ChatConversationKindEnum.CHANNEL ? title.replace(/^#/, '') : title;
+	}
+
+	/** How many people a direct or group conversation holds besides me (a group row shows it). */
+	protected othersOf(conversation: IChatConversationWithState): number {
+		return otherMemberCount(conversation, this.meEmployeeId());
 	}
 
 	protected personOf(conversation: IChatConversationWithState): ChatPerson | null {

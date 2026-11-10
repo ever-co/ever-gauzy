@@ -342,6 +342,28 @@ export function conversationTitle(
 	return conversation.name ?? fallback;
 }
 
+/** How many people a direct or group conversation holds besides me. */
+export function otherMemberCount(conversation: Pick<IChatConversationWithState, 'members'>, meEmployeeId: string | null): number {
+	return (conversation.members ?? []).filter((member) => String(member.employeeId) !== String(meEmployeeId ?? '')).length;
+}
+
+/**
+ * A group conversation's people besides me by first name ("Aster, Booster, Carter"): more of them fit a sidebar
+ * row than with full names. Null when none of them is known (yet).
+ */
+export function groupShortTitle(
+	conversation: Pick<IChatConversationWithState, 'members'>,
+	people: ReadonlyMap<string, ChatPerson>,
+	meEmployeeId: string | null
+): string | null {
+	const names = (conversation.members ?? [])
+		.filter((member) => String(member.employeeId) !== String(meEmployeeId ?? ''))
+		.map((member) => people.get(String(member.employeeId))?.name?.trim())
+		.filter((name): name is string => !!name)
+		.map((name) => name.split(/\s+/)[0]);
+	return names.length ? names.join(', ') : null;
+}
+
 /**
  * The person a direct or group conversation's avatar shows: the first member who is not me, or me in a
  * conversation with myself. Null for a channel, or when the person is not known (yet).

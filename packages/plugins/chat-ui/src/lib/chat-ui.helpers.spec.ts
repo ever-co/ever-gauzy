@@ -6,6 +6,7 @@ import {
 	continuesGroup,
 	conversationPerson,
 	conversationTitle,
+	groupShortTitle,
 	initialsOf,
 	isSameDay,
 	isUnread,
@@ -19,6 +20,7 @@ import {
 	nameHue,
 	namesToTokens,
 	newNonce,
+	otherMemberCount,
 	ownPicture,
 	personTriggerOf,
 	plainBody,
@@ -247,6 +249,19 @@ describe('conversations', () => {
 			)
 		).toBe('Bob Stone');
 		expect(conversationTitle(conversation({ kind: ChatConversationKindEnum.GROUP, name: null, members: [] }), people, ANNA, 'Conversation')).toBe('Conversation');
+	});
+
+	it('names a group by first names and counts its people besides me', () => {
+		const group = conversation({
+			kind: ChatConversationKindEnum.GROUP,
+			name: null,
+			members: [ANNA, BOB, 'unknown'].map((employeeId) => ({ employeeId, userId: 'u', role: 'member' as never }))
+		});
+		expect(groupShortTitle(group, people, ANNA)).toBe('Bob');
+		expect(groupShortTitle(group, people, null)).toBe('Anna, Bob');
+		expect(groupShortTitle(conversation({ members: [] }), people, ANNA)).toBeNull();
+		expect(otherMemberCount(group, ANNA)).toBe(2);
+		expect(otherMemberCount(conversation({ members: undefined }), ANNA)).toBe(0);
 	});
 
 	it('sorts favourites first, then by the newest message, and knows unread ones', () => {
