@@ -1,5 +1,5 @@
 import { NgTemplateOutlet } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, ElementRef, HostListener, inject, input, output, signal, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, ElementRef, inject, input, output, signal, viewChild } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { NbIconModule, NbTooltipModule } from '@nebular/theme';
 import { TranslatePipe } from '@ngx-translate/core';
@@ -56,6 +56,9 @@ function writeCollapsed(keys: ReadonlySet<string>): void {
 @Component({
 	selector: 'ngx-chat-conversation-list',
 	changeDetection: ChangeDetectionStrategy.OnPush,
+	host: {
+		'(document:keydown)': 'onDocumentKey($event)'
+	},
 	imports: [NgTemplateOutlet, RouterLink, NbIconModule, NbTooltipModule, TranslatePipe, PersonAvatarComponent],
 	template: `
 		<div class="list" data-test="chat-list">
@@ -769,9 +772,12 @@ export class ConversationListComponent {
 		}
 	}
 
-	/** Ctrl/⌘+K focuses the filter; Alt+↑ / Alt+↓ opens the previous / next conversation of the sidebar. */
-	@HostListener('document:keydown', ['$event'])
+	/**
+	 * Ctrl/⌘+K focuses the filter; Alt+↑ / Alt+↓ opens the previous / next conversation of the sidebar. A key another
+	 * handler already took (a text box, a menu) is left alone.
+	 */
 	protected onDocumentKey(event: KeyboardEvent): void {
+		if (event.defaultPrevented) return;
 		if ((event.ctrlKey || event.metaKey) && !event.altKey && !event.shiftKey && event.key.toLowerCase() === 'k') {
 			event.preventDefault();
 			const input = this.search()?.nativeElement;
