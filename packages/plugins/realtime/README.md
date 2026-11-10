@@ -170,6 +170,15 @@ acknowledged (a dead delivery is replayed from its outbox row) are never
 removed. A delivery whose outbox row was removed is not replayable: the replay
 answers not found.
 
+A replay and a pass that meet on one row do not lose it: the replay holds the
+row (`FOR UPDATE`) while it resets the delivery and re-queues the row, so either
+the delete lands first and the replay answers not found with the delivery
+untouched, or the delete waits and then keeps the row the replay re-queued. Both
+orders run on PostgreSQL, with the replay on TypeORM and on MikroORM, in
+`realtime-retention.replay-lock.postgres.spec.ts`:
+`REALTIME_TEST_POSTGRES_URL=postgres://… yarn nx run plugin-realtime:test-postgres`
+(a disposable database; without the URL the suite is skipped).
+
 It deletes rows, so it is a separate switch: on production, turn it on only
 after checking the database's backups. On a large outbox, also run `EXPLAIN`
 on the pass's scope query (a `GROUP BY` of `event_outbox` by tenant and

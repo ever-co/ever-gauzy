@@ -39,6 +39,13 @@
 			"options": {
 				"jestConfig": "packages/plugins/realtime/jest.config.ts"
 			}
+		},
+		"test-postgres": {
+			"executor": "nx:run-commands",
+			"cache": false,
+			"options": {
+				"command": "node --experimental-vm-modules node_modules/jest/bin/jest.js -c packages/plugins/realtime/jest.postgres.config.ts --runInBand"
+			}
 		}
 	}
 }
