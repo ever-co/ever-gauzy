@@ -1,16 +1,25 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { AsyncResource } from 'node:async_hooks';
+import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { QueueJobHandler, QueueWorker, QueueWorkerHost } from '@gauzy/scheduler';
 import { Job } from 'bullmq';
 import { EventOutboxStatus, IEventConsumer, IEventEnvelope } from '@gauzy/contracts';
 import {
+	EVENT_OUTBOX_COMMIT_PASS_LIMIT,
 	EVENT_OUTBOX_DISPATCH_BATCH_SIZE,
 	EVENT_OUTBOX_DISPATCH_JOB,
 	EVENT_OUTBOX_DISPATCH_LEASE_MS,
+	EVENT_OUTBOX_DISPATCH_ON_COMMIT_ENV,
 	EVENT_OUTBOX_QUEUE_NAME
 } from './event-outbox-constant';
 import { EventConsumerRegistry, EventConsumerRunOutcome } from './event-consumer.registry';
 import { EventOutbox } from './event-outbox.entity';
 import { describeFailure, EventOutboxService } from './event-outbox.service';
+
+/** How many rows one pass claimed, and how many of them it published. */
+interface IEventOutboxPassCount {
+	claimed: number;
+	published: number;
+}
 
 /** What the scheduler tells the worker about the pass it asked for. */
 export interface IEventOutboxDispatchJob {
@@ -72,11 +81,156 @@ export enum EventOutboxRowOutcome {
  */
 @Injectable()
 @QueueWorker(EVENT_OUTBOX_QUEUE_NAME)
-export class EventOutboxDispatchWorker extends QueueWorkerHost {
+export class EventOutboxDispatchWorker extends QueueWorkerHost implements OnModuleInit, OnModuleDestroy {
 	private readonly logger = new Logger(EventOutboxDispatchWorker.name);
+
+	/** Removes the commit listener; set while this worker listens. */
+	private stopListening?: () => void;
+
+	/** Whether a wake's passes are running or about to run. */
+	private waking = false;
+
+	/** Whether a commit arrived after the running wake's last claim, so one more pass is owed. */
+	private wakeAgain = false;
+
+	/** Set once the module is being destroyed: no pass after a commit starts from then on. */
+	private closing = false;
+
+	/** The wake scheduled to start, until it starts. */
+	private pendingStart?: ReturnType<typeof setImmediate>;
+
+	/** The running wake, which shutdown waits for. */
+	private running?: Promise<void>;
+
+	/**
+	 * The async context this worker was built in, which has no request.
+	 *
+	 * A pass after a commit is scheduled from inside the ORM's commit hook, so a plain `setImmediate`
+	 * would carry the committing request's context (`RequestContext` is AsyncLocalStorage, through
+	 * `nestjs-cls`) into the pass, and a delivery record of a tenant-wide event would take that request's
+	 * organization (`claimDelivery` falls back to it). The pass runs in this context instead, as a pass
+	 * the queue hands over does.
+	 */
+	private readonly outsideRequests = new AsyncResource('EventOutboxDispatchAfterCommit');
 
 	constructor(private readonly eventOutboxService: EventOutboxService, private readonly registry: EventConsumerRegistry) {
 		super();
+	}
+
+	/**
+	 * Listens for commits that appended events, unless `GAUZY_EVENT_OUTBOX_DISPATCH_ON_COMMIT=false`.
+	 *
+	 * **The pass after a commit is what brings a live event to its subscribers in about the time of one
+	 * pass** (realtime-channel spec §4, P95 under 1 s; plan §15.9, T28). The scheduled pass runs every
+	 * minute, and before this a hint waited for it. The outbox row is unchanged by this: it is written in
+	 * the caller's transaction as before and stays the replay and webhook record, and the pass is the
+	 * same claim, lease and per-partition order the scheduled one runs.
+	 */
+	onModuleInit(): void {
+		this.closing = false;
+
+		if (process.env[EVENT_OUTBOX_DISPATCH_ON_COMMIT_ENV]?.trim().toLowerCase() === 'false') {
+			return;
+		}
+
+		this.stopListening = this.eventOutboxService.commitSignal?.listen(() => this.wake());
+	}
+
+	/**
+	 * Stops listening, cancels a wake that has not started and waits for the one that runs.
+	 *
+	 * These passes run outside BullMQ, so closing the queue's worker does not wait for them. Nest destroys
+	 * modules before it shuts the application's connections down, so waiting here keeps a pass from
+	 * running against a closed database.
+	 */
+	async onModuleDestroy(): Promise<void> {
+		this.closing = true;
+		this.stopListening?.();
+		this.stopListening = undefined;
+
+		if (this.pendingStart) {
+			clearImmediate(this.pendingStart);
+			this.pendingStart = undefined;
+			this.waking = false;
+			this.wakeAgain = false;
+		}
+
+		await this.running;
+	}
+
+	/**
+	 * Asks for a pass after a commit that appended an event.
+	 *
+	 * **Only a process that consumes the dispatch queue runs it.** That is the process that already runs
+	 * every pass and hosts every consumer (see `EventOutboxMaintenanceModule`); a process without a queue
+	 * connection does not dispatch at all, and a wake must not start dispatching there.
+	 *
+	 * **Wakes coalesce without losing one.** While passes run, a wake only marks that one more is owed,
+	 * and it runs after the current one, so every commit is followed by a pass that started after it. A
+	 * burst of commits costs a pass or two, not one each. Two passes in different processes are safe for
+	 * the reason two scheduled ones are: the claim locks the rows it leases.
+	 */
+	wake(): void {
+		if (this.closing || !this.consumesQueue()) {
+			return;
+		}
+
+		if (this.waking) {
+			this.wakeAgain = true;
+
+			return;
+		}
+
+		this.waking = true;
+		// Out of the ORM's commit hook, so the request that committed carries on, and out of its async
+		// context, so the pass sees no request.
+		this.outsideRequests.runInAsyncScope(() => {
+			this.pendingStart = setImmediate(() => {
+				this.pendingStart = undefined;
+				this.running = this.runWakes();
+			});
+		});
+	}
+
+	/** Runs passes until no wake is owed. */
+	private async runWakes(): Promise<void> {
+		try {
+			do {
+				this.wakeAgain = false;
+
+				for (let pass = 1; pass <= EVENT_OUTBOX_COMMIT_PASS_LIMIT && !this.closing; pass += 1) {
+					const { claimed } = await this.runPass('a commit', true);
+
+					// A claim takes only the head of each partition, so an aggregate's next event becomes
+					// claimable once its head settles — published, or dead-lettered by the attempt budget,
+					// which the pass counts as a retry. One transaction that appended several events of one
+					// aggregate therefore needs a pass per event, and a full batch may have left rows behind.
+					// So the passes go on until one claims nothing: a head waiting out its backoff is not
+					// due, so that pass comes at once and costs one claim that matches nothing.
+					if (claimed === 0) {
+						break;
+					}
+				}
+			} while (this.wakeAgain && !this.closing);
+		} catch (error) {
+			// The claim's failure is already logged by the pass. The scheduled pass is still there, and it is
+			// what the queue retries, so a failed wake costs latency rather than an event.
+			this.logger.debug(`Stopped the event outbox passes after a commit: ${describeFailure(error)}`);
+		} finally {
+			this.waking = false;
+			this.wakeAgain = false;
+			this.running = undefined;
+		}
+	}
+
+	/** Whether this process consumes the dispatch queue: the BullMQ worker is attached and running. */
+	private consumesQueue(): boolean {
+		try {
+			return this.worker?.isRunning() === true;
+		} catch {
+			// The host throws when no worker is attached: a process without a queue root.
+			return false;
+		}
 	}
 
 	/**
@@ -86,9 +240,21 @@ export class EventOutboxDispatchWorker extends QueueWorkerHost {
 	 */
 	@QueueJobHandler(EVENT_OUTBOX_DISPATCH_JOB)
 	public async handleDispatch(job: Job<IEventOutboxDispatchJob>): Promise<void> {
-		this.logger.log(
-			`Dispatching the event outbox, requested at ${job.data?.requestedAt ?? 'an unrecorded moment'}`
-		);
+		await this.runPass(job.data?.requestedAt ?? 'an unrecorded moment', false);
+	}
+
+	/**
+	 * One pass: claims one bounded batch and hands each claimed event to its consumers.
+	 *
+	 * @param requestedBy What asked for the pass, for the log.
+	 * @param afterCommit Whether a commit asked for it. Those passes run once per commit burst, so they
+	 * log at debug level, except for failures.
+	 * @returns How many rows the pass claimed, and how many of them it published.
+	 */
+	private async runPass(requestedBy: string, afterCommit: boolean): Promise<IEventOutboxPassCount> {
+		const report = (message: string) => (afterCommit ? this.logger.debug(message) : this.logger.log(message));
+
+		report(afterCommit ? 'Dispatching the event outbox after a commit' : `Dispatching the event outbox, requested at ${requestedBy}`);
 
 		let claimed: EventOutbox[];
 
@@ -106,9 +272,9 @@ export class EventOutboxDispatchWorker extends QueueWorkerHost {
 		}
 
 		if (claimed.length === 0) {
-			this.logger.log('The event outbox had nothing due');
+			report('The event outbox had nothing due');
 
-			return;
+			return { claimed: 0, published: 0 };
 		}
 
 		const counted: Record<EventOutboxRowOutcome, number> = {
@@ -121,12 +287,14 @@ export class EventOutboxDispatchWorker extends QueueWorkerHost {
 			counted[await this.dispatchRow(row)] += 1;
 		}
 
-		this.logger.log(
+		report(
 			`Dispatched ${claimed.length} event(s): ` +
 				`${counted[EventOutboxRowOutcome.PUBLISHED]} published, ` +
 				`${counted[EventOutboxRowOutcome.RETRYING]} retrying, ` +
 				`${counted[EventOutboxRowOutcome.UNRESOLVED]} unresolved`
 		);
+
+		return { claimed: claimed.length, published: counted[EventOutboxRowOutcome.PUBLISHED] };
 	}
 
 	/**

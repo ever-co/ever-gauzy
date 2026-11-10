@@ -126,7 +126,8 @@ Over `graphql-ws`, with the user's JWT in the `connection_init` payload
 every platform subscription. Keep as the resume position the `cursor` and
 `cursorId` of the last catch-up answer — **not** the newest event applied: the
 stream delivers neither in commit order nor at once (the outbox dispatcher runs
-every minute and retries), so a streamed event is no proof that the events
+right after each commit and every minute, and retries), so a streamed event is
+no proof that the events
 stamped before it have arrived. On every reconnect (and, while connected, every
 minute or so, to keep the position fresh) call `GET
 /api/realtime/events?after=&afterId=`, apply the answer by `eventId` (events
