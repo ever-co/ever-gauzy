@@ -1,5 +1,5 @@
 import { DatePipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, ElementRef, input, output, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, ElementRef, input, output, untracked, viewChild } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { NbIconModule, NbTooltipModule } from '@nebular/theme';
 import { TranslatePipe } from '@ngx-translate/core';
@@ -89,7 +89,7 @@ export interface PersonCardMembership {
 						[disabled]="sending()"
 						[placeholder]="'CHAT.PROFILE.MESSAGE_PLACEHOLDER' | translate: { name: who.name }"
 						[attr.aria-label]="'CHAT.PROFILE.MESSAGE_PLACEHOLDER' | translate: { name: who.name }"
-						(keydown.enter)="send()"
+						(keydown.enter)="send($event)"
 					/>
 				}
 
@@ -293,13 +293,26 @@ export class PersonCardComponent {
 		return `linear-gradient(135deg, hsl(${hue} 45% 40%), hsl(${(hue + 40) % 360} 42% 28%))`;
 	});
 
+	private readonly personId = computed(() => this.person().employeeId);
+
+	constructor() {
+		// A draft belongs to the person it was typed for: the box empties whenever the card shows someone else.
+		effect(() => {
+			this.personId();
+			untracked(() => this.clear());
+		});
+	}
+
 	/** Empties the box once the page sent its text. */
 	clear(): void {
 		const box = this.quick()?.nativeElement;
 		if (box) box.value = '';
 	}
 
-	protected send(): void {
+	protected send(event?: Event): void {
+		// The Enter that confirms an IME composition (Japanese, Chinese, Korean input) is not a send.
+		const key = event as KeyboardEvent | undefined;
+		if (key?.isComposing || key?.keyCode === 229) return;
 		const box = this.quick()?.nativeElement;
 		const body = box?.value.trim() ?? '';
 		if (!body || this.sending()) return;

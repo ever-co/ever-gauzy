@@ -1,6 +1,6 @@
 import { DatePipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { ChangeDetectionStrategy, Component, computed, DestroyRef, ElementRef, HostListener, inject, OnInit, signal, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, DestroyRef, ElementRef, inject, NgZone, OnInit, signal, viewChild } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, NavigationEnd, Router, RouterLink } from '@angular/router';
 import { NbCardModule, NbDialogService, NbIconModule, NbSpinnerModule } from '@nebular/theme';
@@ -11,11 +11,13 @@ import { ChatConversationKindEnum, IChatCategory, IChatConversationWithState, IC
 import { Store, ToastrService } from '@gauzy/ui-core/core';
 import { CHAT_LINK, CHAT_LIST_POLL_MS } from '../../chat-ui.constants';
 import {
+	cardPlace,
 	ChatPerson,
 	conversationPerson,
 	conversationTitle,
 	isUnread,
 	memberEmployeeIds,
+	membershipOf,
 	newNonce,
 	personTriggerOf,
 	plainBody,
@@ -42,26 +44,12 @@ const CARD_OPEN_DELAY_MS = 450;
 const CARD_SWITCH_DELAY_MS = 150;
 /** Time for the pointer to travel from the person to their card before it closes. */
 const CARD_CLOSE_DELAY_MS = 250;
-/** The card's width (`PersonCardComponent`, 18.5rem) and a first guess of its height, before it is drawn. */
-const CARD_WIDTH_PX = 296;
+/** A first guess of the card's height, before it is drawn (its place is measured again once it is). */
 const CARD_HEIGHT_GUESS_PX = 300;
-const CARD_GAP_PX = 8;
 
-/**
- * Where the profile card goes: beside the person (right of them, else left of them), its top level with theirs,
- * kept inside the window.
- */
-export function cardPlace(
-	rect: Pick<DOMRect, 'top' | 'left' | 'right'>,
-	height: number,
-	viewport: { width: number; height: number } = { width: window.innerWidth, height: window.innerHeight }
-): { top: number; left: number } {
-	const margin = CARD_GAP_PX;
-	let left = rect.right + CARD_GAP_PX;
-	if (left + CARD_WIDTH_PX > viewport.width - margin) left = rect.left - CARD_WIDTH_PX - CARD_GAP_PX;
-	if (left < margin) left = Math.min(Math.max(rect.left, margin), viewport.width - CARD_WIDTH_PX - margin);
-	const top = Math.max(margin, Math.min(rect.top, viewport.height - height - margin));
-	return { top: Math.round(top), left: Math.round(Math.max(margin, left)) };
+/** The window's size, for placing the card. */
+function viewportSize(): { width: number; height: number } {
+	return { width: window.innerWidth, height: window.innerHeight };
 }
 
 /**
@@ -76,6 +64,15 @@ export function cardPlace(
 @Component({
 	selector: 'ngx-chat-page',
 	changeDetection: ChangeDetectionStrategy.OnPush,
+	host: {
+		'(mouseover)': 'onPointerOver($event)',
+		'(mouseout)': 'onPointerOut($event)',
+		'(focusin)': 'onFocusIn($event)',
+		'(focusout)': 'onFocusOut($event)',
+		'(keydown)': 'onTriggerKey($event)',
+		'(document:mousedown)': 'onDocumentPressForCard($event)',
+		'(document:keydown.escape)': 'onEscapeForCard()'
+	},
 	imports: [
 		DatePipe,
 		RouterLink,
@@ -653,7 +650,7 @@ export function cardPlace(
 			}
 			.count.mention {
 				background: var(--chat-danger);
-				color: #fff;
+				color: var(--chat-on-accent);
 			}
 			.caught-up {
 				display: flex;
@@ -814,10 +811,10 @@ export class ChatPageComponent implements OnInit {
 		const member = id ? this.selected()?.members?.find((item) => String(item.employeeId) === id) : null;
 		return member ? { role: member.role, joinedAt: member.joinedAt ?? null } : null;
 	});
+	/** In the open conversation, known not to be, or null when its member list cannot tell (a summary of it). */
 	protected readonly cardInConversation = computed(() => {
 		const id = this.card()?.person.employeeId;
-		const members = this.selectedMemberIds();
-		return id && members ? members.has(id) : null;
+		return id ? membershipOf(this.selectedMemberIds(), id) : null;
 	});
 	/** The channels and groups of my list they are in too (only those whose members the list carries). */
 	protected readonly cardInCommon = computed(() => {
@@ -830,10 +827,13 @@ export class ChatPageComponent implements OnInit {
 	});
 	private readonly personCard = viewChild<PersonCardComponent>('personCard');
 	private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
+	private readonly zone = inject(NgZone);
 	/** The avatar, name or mention the card belongs to. */
 	private cardTrigger: Element | null = null;
 	private cardOpenTimer: ReturnType<typeof setTimeout> | null = null;
 	private cardCloseTimer: ReturnType<typeof setTimeout> | null = null;
+	/** The card's request (a direct message, opening our conversation): dropped when the scope changes. */
+	private cardRequest: Subscription | null = null;
 	protected readonly unreads = computed(() =>
 		sortConversations(this.conversations().filter(isUnread)).sort((a, b) => {
 			const at = a.lastMessageAt ? new Date(a.lastMessageAt).getTime() : 0;
@@ -896,6 +896,11 @@ export class ChatPageComponent implements OnInit {
 		this.notFound.set(false);
 		this.busy.set(false);
 		this.undoSnapshot.set(null);
+		// The card belongs to the old scope: its person, its draft and its request go with it.
+		this.cardRequest?.unsubscribe();
+		this.cardRequest = null;
+		this.cardSending.set(false);
+		this.hideCard();
 	}
 
 	private checkAvailability(): void {
@@ -1089,7 +1094,6 @@ export class ChatPageComponent implements OnInit {
 	// ---------------------------------------------------------------- the profile card
 
 	/** The pointer rests on a person (an avatar, a name, a mention): their card opens after a short pause. */
-	@HostListener('mouseover', ['$event'])
 	protected onPointerOver(event: MouseEvent): void {
 		const trigger = personTriggerOf(event.target);
 		if (!trigger || !this.people().byEmployee.has(trigger.employeeId)) return;
@@ -1097,6 +1101,8 @@ export class ChatPageComponent implements OnInit {
 			this.keepCard();
 			return;
 		}
+		// Someone typing in the open card keeps it: passing over another person must not change who it writes to.
+		if (this.cardHasFocus()) return;
 		this.clearCardOpen();
 		// Quicker from one person to the next while a card is already open.
 		const delay = this.card() ? CARD_SWITCH_DELAY_MS : CARD_OPEN_DELAY_MS;
@@ -1104,7 +1110,6 @@ export class ChatPageComponent implements OnInit {
 	}
 
 	/** The pointer left a person: a pending card does not open, an open one closes unless the pointer reaches it. */
-	@HostListener('mouseout', ['$event'])
 	protected onPointerOut(event: MouseEvent): void {
 		const trigger = personTriggerOf(event.target);
 		if (!trigger) return;
@@ -1114,28 +1119,65 @@ export class ChatPageComponent implements OnInit {
 		if (trigger.element === this.cardTrigger) this.hideCardSoon();
 	}
 
-	@HostListener('document:mousedown', ['$event'])
+	/** The keyboard reaches a person (a focusable avatar or name): their card opens, without taking the focus. */
+	protected onFocusIn(event: FocusEvent): void {
+		const trigger = personTriggerOf(event.target);
+		if (!trigger || !this.people().byEmployee.has(trigger.employeeId) || this.cardHasFocus()) return;
+		if (trigger.element !== this.cardTrigger) this.showCard(trigger.element, trigger.employeeId);
+		else this.keepCard();
+	}
+
+	/** The focus left a person or the card: the card closes, unless the focus went from one of them to the other. */
+	protected onFocusOut(event: FocusEvent): void {
+		if (!this.card()) return;
+		const from = event.target as Node | null;
+		const fromCard = !!from && !!this.cardElement()?.contains(from);
+		const fromTrigger = !!from && !!this.cardTrigger?.contains(from);
+		if (!fromCard && !fromTrigger) return;
+		const to = event.relatedTarget as Node | null;
+		if (to && (this.cardElement()?.contains(to) || this.cardTrigger?.contains(to))) return;
+		this.hideCardSoon();
+	}
+
+	/** Enter or Space on a person opens their card and moves the focus into it (the card is drawn apart from them). */
+	protected onTriggerKey(event: KeyboardEvent): void {
+		if (event.key !== 'Enter' && event.key !== ' ') return;
+		const trigger = personTriggerOf(event.target);
+		if (!trigger || trigger.element !== event.target || !this.people().byEmployee.has(trigger.employeeId)) return;
+		event.preventDefault();
+		if (trigger.element !== this.cardTrigger) this.showCard(trigger.element, trigger.employeeId);
+		setTimeout(() => this.cardElement()?.querySelector<HTMLElement>('input, button, a[href]')?.focus());
+	}
+
 	protected onDocumentPressForCard(event: MouseEvent): void {
 		if (this.card() && !this.cardElement()?.contains(event.target as Node)) this.hideCard();
 	}
 
-	@HostListener('document:keydown.escape')
+	/** Escape closes the card; when the focus was in it, it goes back to the person the card belongs to. */
 	protected onEscapeForCard(): void {
-		if (this.card()) this.hideCard();
+		if (!this.card()) return;
+		const trigger = this.cardHasFocus() ? this.cardTrigger : null;
+		this.hideCard();
+		if (trigger instanceof HTMLElement && trigger.isConnected) trigger.focus();
 	}
 
-	/** A scroll anywhere moves the person away from their card: it closes (unless I am typing in it). */
+	/**
+	 * A scroll anywhere moves the person away from their card: it closes (unless I am typing in it). The listener runs
+	 * outside Angular's zone: every scroll of the message list would otherwise run change detection; closing the card
+	 * is a signal write, which renders on its own.
+	 */
 	private followScrollForCard(): void {
 		if (typeof document === 'undefined') return;
 		const onScroll = (event: Event) => {
 			if (!this.card() || this.cardHasFocus() || this.cardElement()?.contains(event.target as Node)) return;
 			this.hideCard();
 		};
-		document.addEventListener('scroll', onScroll, true);
+		this.zone.runOutsideAngular(() => document.addEventListener('scroll', onScroll, true));
 		this.destroyRef.onDestroy(() => {
 			document.removeEventListener('scroll', onScroll, true);
 			this.clearCardOpen();
 			this.clearCardClose();
+			this.cardRequest?.unsubscribe();
 		});
 	}
 
@@ -1143,9 +1185,11 @@ export class ChatPageComponent implements OnInit {
 		this.cardOpenTimer = null;
 		const person = this.people().byEmployee.get(employeeId);
 		if (!person || !trigger.isConnected) return;
+		// The card writes to its person: it never changes person while someone types in it.
+		if (this.cardHasFocus() && this.card()?.person.employeeId !== employeeId) return;
 		this.clearCardClose();
 		this.cardTrigger = trigger;
-		this.card.set({ person, ...cardPlace(trigger.getBoundingClientRect(), CARD_HEIGHT_GUESS_PX) });
+		this.card.set({ person, ...cardPlace(trigger.getBoundingClientRect(), CARD_HEIGHT_GUESS_PX, viewportSize()) });
 		// Placed again once drawn, with its real height (it must not run off the bottom of the window).
 		setTimeout(() => this.fitCard());
 	}
@@ -1154,7 +1198,7 @@ export class ChatPageComponent implements OnInit {
 		const shown = this.card();
 		const element = this.cardElement();
 		if (!shown || !element || !this.cardTrigger?.isConnected) return;
-		const place = cardPlace(this.cardTrigger.getBoundingClientRect(), element.offsetHeight);
+		const place = cardPlace(this.cardTrigger.getBoundingClientRect(), element.offsetHeight, viewportSize());
 		if (place.top !== shown.top || place.left !== shown.left) this.card.set({ ...shown, ...place });
 	}
 
@@ -1198,10 +1242,15 @@ export class ChatPageComponent implements OnInit {
 		return !!element && typeof document !== 'undefined' && element.contains(document.activeElement);
 	}
 
-	/** The card's box: a direct message to the person (our direct conversation, created when there is none). */
+	/**
+	 * The card's box: a direct message to the person (our direct conversation, created when there is none). The
+	 * request belongs to the scope it was made in: a change of organization cancels it, and a late answer is dropped.
+	 */
 	protected messageFromCard(person: ChatPerson, body: string): void {
+		const token = this.scopeToken;
+		this.cardRequest?.unsubscribe();
 		this.cardSending.set(true);
-		this.api
+		this.cardRequest = this.api
 			.direct([person.employeeId])
 			.pipe(
 				switchMap((answer) => this.api.send(answer.conversation.id, { body, nonce: newNonce() }).pipe(map(() => answer.conversation))),
@@ -1209,6 +1258,7 @@ export class ChatPageComponent implements OnInit {
 			)
 			.subscribe({
 				next: (conversation) => {
+					if (token !== this.scopeToken) return;
 					this.cardSending.set(false);
 					this.personCard()?.clear();
 					this.hideCard();
@@ -1217,21 +1267,28 @@ export class ChatPageComponent implements OnInit {
 					this.toastr.success('CHAT.PROFILE.SENT', { name: person.name });
 				},
 				error: () => {
+					if (token !== this.scopeToken) return;
 					this.cardSending.set(false);
 					this.toastr.danger('CHAT.COMPOSER.SEND_FAILED');
 				}
 			});
 	}
 
-	/** The card's message button: opens our direct conversation (created when there is none). */
+	/** The card's message button: opens our direct conversation (created when there is none), in the scope it was asked in. */
 	protected openDirectWith(person: ChatPerson): void {
+		const token = this.scopeToken;
 		this.hideCard();
-		this.api
+		this.cardRequest?.unsubscribe();
+		this.cardRequest = this.api
 			.direct([person.employeeId])
 			.pipe(takeUntilDestroyed(this.destroyRef))
 			.subscribe({
-				next: (answer) => this.open(answer.conversation),
-				error: () => this.toastr.danger('CHAT.DIALOG.FAILED')
+				next: (answer) => {
+					if (token === this.scopeToken) this.open(answer.conversation);
+				},
+				error: () => {
+					if (token === this.scopeToken) this.toastr.danger('CHAT.DIALOG.FAILED');
+				}
 			});
 	}
 

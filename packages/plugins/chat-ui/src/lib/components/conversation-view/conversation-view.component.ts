@@ -6,7 +6,6 @@ import {
 	DestroyRef,
 	effect,
 	ElementRef,
-	HostListener,
 	inject,
 	input,
 	LOCALE_ID,
@@ -84,6 +83,10 @@ export function unreadMarkerId(messages: readonly IChatMessageWithRelations[], s
 @Component({
 	selector: 'ngx-chat-conversation-view',
 	changeDetection: ChangeDetectionStrategy.OnPush,
+	host: {
+		'(document:click)': 'onDocumentClick()',
+		'(document:keydown.escape)': 'onEscape()'
+	},
 	imports: [RouterLink, NbIconModule, NbSpinnerModule, NbTooltipModule, TranslatePipe, MessageComposerComponent, MessageItemComponent, PersonAvatarComponent],
 	template: `
 		<section class="view" data-test="conversation-view">
@@ -101,18 +104,22 @@ export function unreadMarkerId(messages: readonly IChatMessageWithRelations[], s
 							}
 						</span>
 						<h5 class="title">{{ plainTitle() }}</h5>
-						<button
-							type="button"
-							class="star"
-							data-test="favorite"
-							[class.on]="state()?.isFavorite"
-							[nbTooltip]="(state()?.isFavorite ? 'CHAT.VIEW.UNFAVORITE' : 'CHAT.VIEW.FAVORITE') | translate"
-							[attr.aria-label]="(state()?.isFavorite ? 'CHAT.VIEW.UNFAVORITE' : 'CHAT.VIEW.FAVORITE') | translate"
-							[attr.aria-pressed]="!!state()?.isFavorite"
-							(click)="toggleFavorite()"
-						>
-							<nb-icon [icon]="state()?.isFavorite ? 'star' : 'star-outline'"></nb-icon>
-						</button>
+						<!-- A favourite is a member's own setting: none to set for a conversation I am not in. -->
+						@if (isMember()) {
+							<!-- A toggle: its name stays, aria-pressed tells its state (the tooltip names the action). -->
+							<button
+								type="button"
+								class="star"
+								data-test="favorite"
+								[class.on]="state()?.isFavorite"
+								[nbTooltip]="(state()?.isFavorite ? 'CHAT.VIEW.UNFAVORITE' : 'CHAT.VIEW.FAVORITE') | translate"
+								[attr.aria-label]="'CHAT.VIEW.FAVORITE' | translate"
+								[attr.aria-pressed]="!!state()?.isFavorite"
+								(click)="toggleFavorite()"
+							>
+								<nb-icon [icon]="state()?.isFavorite ? 'star' : 'star-outline'"></nb-icon>
+							</button>
+						}
 					</div>
 					@if (conversation().topic) {
 						<span class="topic" [attr.title]="conversation().topic">{{ conversation().topic }}</span>
@@ -1053,13 +1060,11 @@ export class ConversationViewComponent {
 	}
 
 	/** A click elsewhere closes the open menu and the pins panel (their own clicks do not reach here). */
-	@HostListener('document:click')
 	protected onDocumentClick(): void {
 		if (this.menu()) this.menu.set(null);
 		if (this.pinsOpen()) this.pinsOpen.set(false);
 	}
 
-	@HostListener('document:keydown.escape')
 	protected onEscape(): void {
 		this.menu.set(null);
 		this.pinsOpen.set(false);

@@ -102,6 +102,27 @@ export function personTriggerOf(target: EventTarget | null): { element: Element;
 	return employeeId ? { element, employeeId } : null;
 }
 
+/** The profile card's width in px (`PersonCardComponent`, 18.5rem), and its distance from the person and the window edges. */
+export const PERSON_CARD_WIDTH_PX = 296;
+export const PERSON_CARD_GAP_PX = 8;
+
+/**
+ * Where the profile card goes (viewport px): beside the person, right of them, else left of them, else over them
+ * held inside the window; its top level with theirs, moved up when it would run off the bottom.
+ */
+export function cardPlace(
+	rect: Pick<DOMRect, 'top' | 'left' | 'right'>,
+	height: number,
+	viewport: { width: number; height: number }
+): { top: number; left: number } {
+	const margin = PERSON_CARD_GAP_PX;
+	let left = rect.right + PERSON_CARD_GAP_PX;
+	if (left + PERSON_CARD_WIDTH_PX > viewport.width - margin) left = rect.left - PERSON_CARD_WIDTH_PX - PERSON_CARD_GAP_PX;
+	if (left < margin) left = Math.min(Math.max(rect.left, margin), viewport.width - PERSON_CARD_WIDTH_PX - margin);
+	const top = Math.max(margin, Math.min(rect.top, viewport.height - height - margin));
+	return { top: Math.round(top), left: Math.round(Math.max(margin, left)) };
+}
+
 /** A hue (0–359) picked from a name: the same name always gets the same colour (avatars, profile banners). */
 export function nameHue(name: string): number {
 	let hash = 0;
@@ -210,13 +231,22 @@ export function namesToTokens(text: string, people: ReadonlyMap<string, string>,
 	let out = text;
 	const byLength = (a: [string, string], b: [string, string]) => b[0].length - a[0].length;
 	for (const [label, id] of [...people.entries()].sort(byLength)) {
-		out = out.replace(new RegExp(`@${escapeRegExp(label)}(?![\\p{L}\\p{N}_])`, 'gu'), `<@${id}>`);
+		out = out.replace(new RegExp(`@${escapeRegExp(label)}${MENTION_END}`, 'gu'), `<@${id}>`);
 	}
 	for (const [label, id] of [...channels.entries()].sort(byLength)) {
-		out = out.replace(new RegExp(`#${escapeRegExp(label)}(?![\\p{L}\\p{N}_])`, 'gu'), `<#${id}>`);
+		out = out.replace(new RegExp(`#${escapeRegExp(label)}${MENTION_END}`, 'gu'), `<#${id}>`);
 	}
-	return out.replace(/(^|\s)@(channel|here)(?=\s|$|[.,!?])/g, '$1<!$2>');
+	return out.replace(new RegExp(`(^|[\\s${MARKDOWN_MARKS}])@(channel|here)(?=$|[\\s.,!?${MARKDOWN_MARKS}])`, 'gu'), '$1<!$2>');
 }
+
+/** The Markdown marks the formatting bar puts around a selection (bold / italic, strike): a mention may sit inside them. */
+const MARKDOWN_MARKS = '*_~';
+
+/**
+ * Where a mention's label ends: not before a letter or a digit (`@Bob Stone` is not in `@Bob Stoned`), nor before an
+ * underscore that goes on into a word; an underscore that closes italics (`_@Bob Stone_`) still ends it.
+ */
+const MENTION_END = '(?![\\p{L}\\p{N}]|_[\\p{L}\\p{N}])';
 
 /**
  * The `@` query under the caret, when the caret follows `@` and some word characters with no space in between:
@@ -257,36 +287,38 @@ export function matchParts(name: string, query: string): { before: string; match
 export interface MentionSuggestion {
 	person: ChatPerson;
 	parts: ReturnType<typeof matchParts>;
-	/** Whether they are in the conversation (null when its members are not known). */
+	/** Whether they are in the conversation (null when its member list cannot tell). */
 	member: boolean | null;
 	isMe: boolean;
 }
 
 /**
  * The people an `@` query suggests, as a chat app ranks them: the name starting with the query first, then a later
- * word starting with it, then a match inside a word; at each level the conversation's members before the others,
- * myself after them, then by name.
+ * word starting with it, then a match inside a word; at each level the conversation's known members first, then
+ * the people its member list cannot tell about, then the ones known to be outside it; myself after the others of my
+ * group; then by name.
  */
 export function rankMentions(
 	people: readonly ChatPerson[],
 	query: string,
-	options: { memberIds?: ReadonlySet<string> | null; meEmployeeId?: string | null; limit?: number } = {}
+	options: { memberIds?: ChatMemberIds | null; meEmployeeId?: string | null; limit?: number } = {}
 ): MentionSuggestion[] {
 	const needle = query.trim().toLowerCase();
 	const { memberIds = null, meEmployeeId = null, limit = 8 } = options;
+	const standing = (member: boolean | null) => (member === true ? 0 : member === null ? 1 : 2);
 	return people
 		.map((person) => ({ person, match: matchAt(person.name, needle) }))
 		.filter(({ match }) => match.tier >= 0)
 		.map(({ person, match }) => ({
 			person,
 			tier: match.tier,
-			member: memberIds ? memberIds.has(person.employeeId) : null,
+			member: membershipOf(memberIds, person.employeeId),
 			isMe: !!meEmployeeId && person.employeeId === meEmployeeId
 		}))
 		.sort(
 			(a, b) =>
 				a.tier - b.tier ||
-				Number(a.member === false) - Number(b.member === false) ||
+				standing(a.member) - standing(b.member) ||
 				Number(a.isMe) - Number(b.isMe) ||
 				a.person.name.localeCompare(b.person.name)
 		)
@@ -300,7 +332,8 @@ export function rankMentions(
  */
 export function markMentions(text: string, labels: readonly string[]): { text: string; mention: boolean }[] {
 	const tokens = [...new Set([...labels, '@channel', '@here'])].filter(Boolean).sort((a, b) => b.length - a.length);
-	const pattern = new RegExp(`(?<=^|\\s)(?:${tokens.map(escapeRegExp).join('|')})(?![\\p{L}\\p{N}_])`, 'gu');
+	// The same edges as `namesToTokens`, so what is tinted is what goes out as a mention (inside Markdown marks too).
+	const pattern = new RegExp(`(?<=^|[\\s${MARKDOWN_MARKS}])(?:${tokens.map(escapeRegExp).join('|')})${MENTION_END}`, 'gu');
 	const parts: { text: string; mention: boolean }[] = [];
 	let last = 0;
 	for (let match = pattern.exec(text); match; match = pattern.exec(text)) {
@@ -312,10 +345,29 @@ export function markMentions(text: string, labels: readonly string[]): { text: s
 	return parts;
 }
 
+/**
+ * The employees a conversation is known to hold, and whether that is all of them: a list entry may carry only a
+ * summary of its members (fewer than its `memberCount`), so someone missing from it may still be a member.
+ */
+export interface ChatMemberIds {
+	ids: ReadonlySet<string>;
+	complete: boolean;
+}
+
 /** The employees of a conversation, or null when the conversation does not carry its members. */
-export function memberEmployeeIds(conversation: Pick<IChatConversationWithState, 'members'> | null | undefined): ReadonlySet<string> | null {
+export function memberEmployeeIds(conversation: Pick<IChatConversationWithState, 'members' | 'memberCount'> | null | undefined): ChatMemberIds | null {
 	const members = conversation?.members;
-	return members ? new Set(members.map((member) => String(member.employeeId))) : null;
+	if (!members) return null;
+	const ids = new Set(members.map((member) => String(member.employeeId)));
+	const count = conversation?.memberCount;
+	return { ids, complete: typeof count !== 'number' || ids.size >= count };
+}
+
+/** Whether someone is in a conversation: true or false when it is known, null when the member list cannot tell. */
+export function membershipOf(memberIds: ChatMemberIds | null | undefined, employeeId: string): boolean | null {
+	if (!memberIds) return null;
+	if (memberIds.ids.has(employeeId)) return true;
+	return memberIds.complete ? false : null;
 }
 
 /**

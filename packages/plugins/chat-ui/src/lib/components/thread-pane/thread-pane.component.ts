@@ -8,7 +8,7 @@ import { catchError, filter, switchMap } from 'rxjs/operators';
 import { IChatMessageWithRelations } from '@gauzy/contracts';
 import { ToastrService } from '@gauzy/ui-core/core';
 import { CHAT_THREAD_POLL_MS } from '../../chat-ui.constants';
-import { apiErrorMessage, continuesGroup, mergeMessages, newNonce } from '../../chat-ui.helpers';
+import { apiErrorMessage, ChatMemberIds, continuesGroup, mergeMessages, newNonce } from '../../chat-ui.helpers';
 import { ChatPeople } from '../../services/chat-people.service';
 import { ChatMessagePatch, ChatThreadPage, ChatUiService, threadFieldsOf } from '../../services/chat-ui.service';
 import { clearDraft, ComposerSubmission, MessageComposerComponent } from '../message-composer/message-composer.component';
@@ -39,7 +39,7 @@ import { MessageAction, MessageItemComponent } from '../message-item/message-ite
 						data-test="follow"
 						[class.on]="root.following"
 						[nbTooltip]="(root.following ? 'CHAT.THREADS.UNFOLLOW' : 'CHAT.THREADS.FOLLOW') | translate"
-						[attr.aria-label]="(root.following ? 'CHAT.THREADS.UNFOLLOW' : 'CHAT.THREADS.FOLLOW') | translate"
+						[attr.aria-label]="'CHAT.THREADS.FOLLOW' | translate"
 						[attr.aria-pressed]="!!root.following"
 						(click)="toggleFollow()"
 					>
@@ -271,7 +271,7 @@ export class ThreadPaneComponent {
 	readonly meUserId = input<string | null>(null);
 	readonly readOnly = input(false);
 	/** Who is in the thread's conversation, for the `@` list (null when not known). */
-	readonly memberIds = input<ReadonlySet<string> | null>(null);
+	readonly memberIds = input<ChatMemberIds | null>(null);
 
 	readonly closed = output<void>();
 	/**

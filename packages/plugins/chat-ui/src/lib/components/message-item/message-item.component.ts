@@ -54,9 +54,14 @@ export type MessageAction =
 					@if (message().kind === 'system') {
 						<span class="system-icon"><nb-icon icon="info-outline"></nb-icon></span>
 					} @else {
+						<!-- A person: hover, focus, Enter or Space opens their profile card (the chat page shows it). -->
 						<ngx-chat-person-avatar
 							class="person-trigger"
 							[attr.data-person-id]="personId()"
+							[attr.tabindex]="personId() ? 0 : null"
+							[attr.role]="personId() ? 'button' : null"
+							[attr.aria-haspopup]="personId() ? 'dialog' : null"
+							[attr.aria-label]="personId() ? authorName() : null"
 							[person]="author()"
 							[fallbackName]="authorName()"
 						></ngx-chat-person-avatar>
@@ -68,7 +73,15 @@ export type MessageAction =
 			<div class="content">
 				@if (!continued()) {
 					<header class="header">
-						<span class="author" [class.person-trigger]="!!personId()" [attr.data-person-id]="personId()">{{ authorName() }}</span>
+						<span
+							class="author"
+							[class.person-trigger]="!!personId()"
+							[attr.data-person-id]="personId()"
+							[attr.tabindex]="personId() ? 0 : null"
+							[attr.role]="personId() ? 'button' : null"
+							[attr.aria-haspopup]="personId() ? 'dialog' : null"
+							>{{ authorName() }}</span
+						>
 						@if (message().kind === 'app' && message().appName) {
 							<span class="tag">{{ 'CHAT.MESSAGE.APP' | translate }}</span>
 						}
@@ -295,8 +308,14 @@ export type MessageAction =
 			.person-trigger[data-person-id] {
 				cursor: pointer;
 			}
-			.author.person-trigger:hover {
+			.author.person-trigger:hover,
+			.author.person-trigger:focus-visible {
 				text-decoration: underline;
+			}
+			.person-trigger[data-person-id]:focus-visible {
+				border-radius: 0.375rem;
+				outline: 2px solid var(--chat-accent, #3366ff);
+				outline-offset: 2px;
 			}
 			.tag {
 				padding: 0 0.3125rem;

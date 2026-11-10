@@ -2,6 +2,8 @@ import { ChatConversationKindEnum, ChatMessageKindEnum, ChatVisibilityEnum, ICha
 import {
 	apiErrorMessage,
 	badgeText,
+	cardPlace,
+	ChatMemberIds,
 	ChatPerson,
 	continuesGroup,
 	conversationPerson,
@@ -13,6 +15,7 @@ import {
 	markMentions,
 	matchParts,
 	memberEmployeeIds,
+	membershipOf,
 	mentionedEmployeeIds,
 	mentionsMe,
 	mentionQueryAt,
@@ -163,6 +166,31 @@ describe('mention tokens', () => {
 		expect(namesToTokens('@Bob Stoned @Bob Stone', new Map([['Bob Stone', BOB]]))).toBe(`@Bob Stoned <@${BOB}>`);
 	});
 
+	it('keeps a mention a mention inside the formatting bar’s marks', () => {
+		const bob = new Map([['Bob Stone', BOB]]);
+		const general = new Map([['general', GENERAL]]);
+		// Italic, bold and strike around a person (the selection taken without its trailing space).
+		expect(namesToTokens('_@Bob Stone_ ', bob)).toBe(`_<@${BOB}>_ `);
+		expect(namesToTokens('**@Bob Stone**', bob)).toBe(`**<@${BOB}>**`);
+		expect(namesToTokens('~~@Bob Stone~~', bob)).toBe(`~~<@${BOB}>~~`);
+		expect(namesToTokens('_#general_', new Map(), general)).toBe(`_<#${GENERAL}>_`);
+		// ... and around @channel / @here.
+		expect(namesToTokens('**@channel**', new Map())).toBe('**<!channel>**');
+		expect(namesToTokens('_@here_ please', new Map())).toBe('_<!here>_ please');
+		expect(namesToTokens('~~@channel~~', new Map())).toBe('~~<!channel>~~');
+		// An underscore that goes on into a word is part of it: no mention there.
+		expect(namesToTokens('@Bob Stone_x', bob)).toBe('@Bob Stone_x');
+		expect(namesToTokens('mail@here @channels', new Map())).toBe('mail@here @channels');
+		// The box tints exactly what goes out as a mention.
+		expect(markMentions('**@Bob Stone** _@channel_', ['@Bob Stone'])).toEqual([
+			{ text: '**', mention: false },
+			{ text: '@Bob Stone', mention: true },
+			{ text: '** _', mention: false },
+			{ text: '@channel', mention: true },
+			{ text: '_', mention: false }
+		]);
+	});
+
 	it('reads the message of an API refusal', () => {
 		expect(apiErrorMessage({ error: { message: 'No.' } })).toBe('No.');
 		expect(apiErrorMessage({ error: { message: ['name is short', 'topic is long'] } })).toBe('name is short topic is long');
@@ -195,15 +223,31 @@ describe('mention tokens', () => {
 			{ employeeId: 'm', userId: null, name: 'Andy Me', imageUrl: null },
 			{ employeeId: 's', userId: null, name: 'Sam Steel', imageUrl: null }
 		];
-		const names = (query: string, memberIds: ReadonlySet<string> | null = null) =>
+		const all = { ids: new Set(['c', 'm']), complete: true };
+		const names = (query: string, memberIds: ChatMemberIds | null = null) =>
 			rankMentions(list, query, { memberIds, meEmployeeId: 'm' }).map((item) => item.person.name);
 		expect(names('st')).toEqual(['Sam Steel', 'Aster A.', 'Booster P.']);
 		expect(names('')).toEqual(['Aster A.', 'Booster P.', 'Carter N.', 'Sam Steel', 'Andy Me']);
-		expect(names('', new Set(['c', 'm']))).toEqual(['Carter N.', 'Andy Me', 'Aster A.', 'Booster P.', 'Sam Steel']);
-		const [carter, , aster] = rankMentions(list, '', { memberIds: new Set(['c', 'm']), meEmployeeId: 'm' });
+		expect(names('', all)).toEqual(['Carter N.', 'Andy Me', 'Aster A.', 'Booster P.', 'Sam Steel']);
+		const [carter, , aster] = rankMentions(list, '', { memberIds: all, meEmployeeId: 'm' });
 		expect(carter.member).toBe(true);
 		expect(aster.member).toBe(false);
 		expect(rankMentions(list, 'and', { meEmployeeId: 'm' })[0]).toMatchObject({ isMe: true, member: null, parts: { match: 'And' } });
+	});
+
+	it('does not call anyone an outsider when the member list is only a summary', () => {
+		const list: ChatPerson[] = [
+			{ employeeId: 'a', userId: null, name: 'Aster A.', imageUrl: null },
+			{ employeeId: 'c', userId: null, name: 'Carter N.', imageUrl: null },
+			{ employeeId: 'z', userId: null, name: 'Zed Z.', imageUrl: null }
+		];
+		// Known members first, then the ones the summary cannot tell about (never "not in this conversation").
+		const ranked = rankMentions(list, '', { memberIds: { ids: new Set(['z']), complete: false } });
+		expect(ranked.map((item) => [item.person.name, item.member])).toEqual([
+			['Zed Z.', true],
+			['Aster A.', null],
+			['Carter N.', null]
+		]);
 	});
 
 	it('marks the mentions of the box where they sit', () => {
@@ -230,10 +274,51 @@ describe('people', () => {
 		expect(ownPicture(null)).toBeNull();
 	});
 
-	it('lists the employees of a conversation, or null when it does not carry them', () => {
-		expect(memberEmployeeIds({ members: [{ employeeId: ANNA, userId: 'u1' } as never] })).toEqual(new Set([ANNA]));
-		expect(memberEmployeeIds({})).toBeNull();
+	it('lists the employees of a conversation and knows whether that is all of them', () => {
+		const anna = [{ employeeId: ANNA, userId: 'u1' } as never];
+		expect(memberEmployeeIds({ members: anna, memberCount: 1 })).toEqual({ ids: new Set([ANNA]), complete: true });
+		// A summary: fewer members listed than the conversation holds.
+		expect(memberEmployeeIds({ members: anna, memberCount: 12 })).toEqual({ ids: new Set([ANNA]), complete: false });
+		expect(memberEmployeeIds({ members: anna } as never)).toEqual({ ids: new Set([ANNA]), complete: true });
+		expect(memberEmployeeIds({} as never)).toBeNull();
 		expect(memberEmployeeIds(null)).toBeNull();
+	});
+
+	it('tells whether someone is in a conversation only when the member list can tell', () => {
+		expect(membershipOf({ ids: new Set([ANNA]), complete: true }, ANNA)).toBe(true);
+		expect(membershipOf({ ids: new Set([ANNA]), complete: true }, BOB)).toBe(false);
+		expect(membershipOf({ ids: new Set([ANNA]), complete: false }, ANNA)).toBe(true);
+		expect(membershipOf({ ids: new Set([ANNA]), complete: false }, BOB)).toBeNull();
+		expect(membershipOf(null, ANNA)).toBeNull();
+	});
+});
+
+describe('the profile card’s place', () => {
+	const viewport = { width: 1280, height: 800 };
+	const height = 300;
+
+	it('goes right of the person, level with them', () => {
+		expect(cardPlace({ top: 100, left: 200, right: 240 }, height, viewport)).toEqual({ top: 100, left: 248 });
+	});
+
+	it('goes left of the person when the right side has no room', () => {
+		// 1100 + 8 + 296 would pass 1280 - 8: left of them instead (1060 - 296 - 8).
+		expect(cardPlace({ top: 100, left: 1060, right: 1100 }, height, viewport)).toEqual({ top: 100, left: 756 });
+	});
+
+	it('stays inside a window too narrow for either side', () => {
+		const narrow = { width: 360, height: 800 };
+		// Neither side fits: held at the person's left, pulled in so its right edge stays 8px inside the window.
+		expect(cardPlace({ top: 100, left: 120, right: 160 }, height, narrow)).toEqual({ top: 100, left: 56 });
+		// Never past the window's left margin.
+		expect(cardPlace({ top: 100, left: 0, right: 20 }, height, { width: 200, height: 800 })).toEqual({ top: 100, left: 8 });
+	});
+
+	it('moves up rather than run off the bottom, and never above the top', () => {
+		expect(cardPlace({ top: 700, left: 200, right: 240 }, height, viewport)).toEqual({ top: 492, left: 248 });
+		expect(cardPlace({ top: -50, left: 200, right: 240 }, height, viewport)).toEqual({ top: 8, left: 248 });
+		// A card taller than the window starts at the top margin.
+		expect(cardPlace({ top: 100, left: 200, right: 240 }, 900, viewport)).toEqual({ top: 8, left: 248 });
 	});
 });
 

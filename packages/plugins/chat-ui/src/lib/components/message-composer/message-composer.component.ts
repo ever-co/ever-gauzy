@@ -1,10 +1,10 @@
-import { ChangeDetectionStrategy, Component, computed, effect, ElementRef, HostListener, inject, input, output, signal, untracked, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, ElementRef, inject, input, output, signal, untracked, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { NbIconModule, NbTooltipModule } from '@nebular/theme';
 import { TranslatePipe } from '@ngx-translate/core';
 import { CHAT_MESSAGE_MAX_LENGTH } from '@gauzy/contracts';
 import { CHAT_COMPOSER_EMOJI, CHAT_MENTION_SUGGESTIONS } from '../../chat-ui.constants';
-import { markMentions, matchParts, mentionQueryAt, MentionSuggestion, namesToTokens, rankMentions, tokensToNames, uniqueLabel } from '../../chat-ui.helpers';
+import { ChatMemberIds, markMentions, matchParts, mentionQueryAt, MentionSuggestion, namesToTokens, rankMentions, tokensToNames, uniqueLabel } from '../../chat-ui.helpers';
 import { ChatPeople } from '../../services/chat-people.service';
 import { PersonAvatarComponent } from '../person-avatar/person-avatar.component';
 
@@ -39,6 +39,9 @@ const EVERYONE_MENTIONS: readonly { key: 'channel' | 'here'; labelKey: string }[
 /** The text box grows with what is typed up to this height (px), then scrolls. */
 const MAX_BOX_HEIGHT_PX = 240;
 
+/** Gives each composer's `@` list its own id (a conversation and its thread show two composers at once). */
+let nextComposerId = 0;
+
 /**
  * The text box of a conversation or a thread, framed as chat apps do: a formatting bar (bold, italic, strike,
  * code, link, list, quote: the Markdown the API stores), the box (it grows with its text), and a bottom bar with
@@ -50,12 +53,15 @@ const MAX_BOX_HEIGHT_PX = 240;
 @Component({
 	selector: 'ngx-chat-message-composer',
 	changeDetection: ChangeDetectionStrategy.OnPush,
+	host: {
+		'(document:mousedown)': 'onDocumentPress($event)'
+	},
 	imports: [FormsModule, NbIconModule, NbTooltipModule, TranslatePipe, PersonAvatarComponent],
 	template: `
 		<div class="composer" data-test="composer" [class.editing]="editing()">
 			@if (suggestions().length > 0) {
 				<div class="composer-popover suggestions" data-test="mention-suggestions">
-					<ul class="suggestion-list" role="listbox" [attr.aria-label]="'CHAT.COMPOSER.MENTION' | translate">
+					<ul class="suggestion-list" role="listbox" [id]="listId" [attr.aria-label]="'CHAT.COMPOSER.MENTION' | translate">
 						@for (choice of suggestions(); track choice.key; let index = $index) {
 							@if (choice.kind === 'person' && index === 0) {
 								<li class="group" role="presentation">{{ 'CHAT.COMPOSER.PEOPLE' | translate }}</li>
@@ -66,6 +72,7 @@ const MAX_BOX_HEIGHT_PX = 240;
 							<li
 								class="option"
 								role="option"
+								[id]="listId + '-' + index"
 								[attr.data-index]="index"
 								[attr.aria-selected]="index === highlighted()"
 								[class.highlighted]="index === highlighted()"
@@ -152,6 +159,9 @@ const MAX_BOX_HEIGHT_PX = 240;
 					[placeholder]="placeholder()"
 					[disabled]="disabled()"
 					[attr.aria-label]="placeholder()"
+					aria-autocomplete="list"
+					[attr.aria-controls]="suggestions().length ? listId : null"
+					[attr.aria-activedescendant]="suggestions().length ? listId + '-' + highlighted() : null"
 					[attr.maxlength]="max"
 					[(ngModel)]="text"
 					(ngModelChange)="onInput()"
@@ -636,8 +646,8 @@ export class MessageComposerComponent {
 	readonly disabled = input(false);
 	/** Whether `@channel` and `@here` are offered (in a channel and its threads). */
 	readonly everyone = input(false);
-	/** The conversation's members: they come first in the `@` list, the others say they are not in it. */
-	readonly memberIds = input<ReadonlySet<string> | null>(null);
+	/** The conversation's members: they come first in the `@` list, the ones known to be outside it say so. */
+	readonly memberIds = input<ChatMemberIds | null>(null);
 	/** Me, marked "you" and ranked after the others in the `@` list. */
 	readonly meEmployeeId = input<string | null>(null);
 	/** The message being edited (its body with tokens), or null for a new message. */
@@ -656,6 +666,8 @@ export class MessageComposerComponent {
 	private readonly mirror = viewChild<ElementRef<HTMLDivElement>>('mirror');
 
 	protected readonly max = CHAT_MESSAGE_MAX_LENGTH;
+	/** The `@` list's id; each option's is this plus its index (the box points at the highlighted one). */
+	protected readonly listId = `chat-mentions-${++nextComposerId}`;
 	protected text = '';
 	/** `@label` → employee id and `#label` → conversation id, as shown in the box. */
 	private picked = new Map<string, string>();
@@ -807,7 +819,8 @@ export class MessageComposerComponent {
 		const selected = this.text.slice(start, end);
 		if (kind === 'list' || kind === 'quote') {
 			const prefix = kind === 'list' ? '- ' : '> ';
-			const lineStart = this.text.lastIndexOf('\n', start - 1) + 1;
+			// At the very start there is no line before (lastIndexOf with -1 would find a leading newline at 0).
+			const lineStart = start === 0 ? 0 : this.text.lastIndexOf('\n', start - 1) + 1;
 			const lines = this.text.slice(lineStart, end).split('\n');
 			const undo = lines.every((line) => line.startsWith(prefix));
 			const block = lines.map((line) => (undo ? line.slice(prefix.length) : `${prefix}${line}`)).join('\n');
@@ -849,7 +862,6 @@ export class MessageComposerComponent {
 	}
 
 	/** A press outside the composer closes its emoji panel. */
-	@HostListener('document:mousedown', ['$event'])
 	protected onDocumentPress(event: MouseEvent): void {
 		if (this.emojiOpen() && !this.host.nativeElement.contains(event.target as Node)) this.emojiOpen.set(false);
 	}
@@ -901,6 +913,8 @@ export class MessageComposerComponent {
 	}
 
 	protected onKeyDown(event: KeyboardEvent): void {
+		// Keys that belong to an IME composition (Enter confirms it) neither pick a mention nor send.
+		if (event.isComposing || event.keyCode === 229) return;
 		const suggestions = this.suggestions();
 		if (suggestions.length > 0) {
 			if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
