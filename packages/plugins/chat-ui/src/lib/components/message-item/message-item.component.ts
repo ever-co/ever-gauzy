@@ -54,7 +54,12 @@ export type MessageAction =
 					@if (message().kind === 'system') {
 						<span class="system-icon"><nb-icon icon="info-outline"></nb-icon></span>
 					} @else {
-						<ngx-chat-person-avatar [person]="author()" [fallbackName]="authorName()"></ngx-chat-person-avatar>
+						<ngx-chat-person-avatar
+							class="person-trigger"
+							[attr.data-person-id]="personId()"
+							[person]="author()"
+							[fallbackName]="authorName()"
+						></ngx-chat-person-avatar>
 					}
 				} @else {
 					<time class="side-time" [attr.datetime]="message().createdAt" [attr.title]="message().createdAt | date: 'medium'">{{ message().createdAt | date: 'shortTime' }}</time>
@@ -63,7 +68,7 @@ export type MessageAction =
 			<div class="content">
 				@if (!continued()) {
 					<header class="header">
-						<span class="author">{{ authorName() }}</span>
+						<span class="author" [class.person-trigger]="!!personId()" [attr.data-person-id]="personId()">{{ authorName() }}</span>
 						@if (message().kind === 'app' && message().appName) {
 							<span class="tag">{{ 'CHAT.MESSAGE.APP' | translate }}</span>
 						}
@@ -286,6 +291,13 @@ export type MessageAction =
 				font-weight: 800;
 				font-size: 0.875rem;
 			}
+			/* A person's avatar and name open their profile card on hover (the chat page shows it). */
+			.person-trigger[data-person-id] {
+				cursor: pointer;
+			}
+			.author.person-trigger:hover {
+				text-decoration: underline;
+			}
 			.tag {
 				padding: 0 0.3125rem;
 				border-radius: 0.25rem;
@@ -381,6 +393,12 @@ export type MessageAction =
 			:host ::ng-deep .markdown .chat-mention-me {
 				background: var(--chat-mention-me-bg, rgba(242, 199, 68, 0.35));
 				color: var(--chat-text, inherit);
+			}
+			:host ::ng-deep .markdown .chat-mention-person {
+				cursor: pointer;
+			}
+			:host ::ng-deep .markdown .chat-mention-person:hover {
+				text-decoration: underline;
 			}
 			.deleted {
 				display: flex;
@@ -696,6 +714,12 @@ export class MessageItemComponent {
 			(message.authorUserId ? people.byUser.get(String(message.authorUserId)) : null) ??
 			null
 		);
+	});
+	/** The author's employee id, which opens their profile card on hover (none for system and app messages). */
+	protected readonly personId = computed(() => {
+		const kind = this.message().kind;
+		if (kind === ChatMessageKindEnum.SYSTEM || kind === ChatMessageKindEnum.APP) return null;
+		return this.author()?.employeeId ?? null;
 	});
 	protected readonly authorName = computed(() => {
 		const message = this.message();
