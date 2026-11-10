@@ -43,7 +43,10 @@
 
 ## Phase 4 — Verification and docs
 
-- [ ] **T16**. `yarn nx test plugin-realtime`; `tsc --noEmit -p packages/plugins/realtime/tsconfig.lib.json` strict and with `strictNullChecks` off; `node tools/scripts/graphql-field-binding-check.mjs`
+- [x] **T16**. `yarn nx test plugin-realtime`; `tsc --noEmit -p
+  packages/plugins/realtime/tsconfig.lib.json` strict and with
+  `strictNullChecks` off; `node tools/scripts/graphql-field-binding-check.mjs`
+  (2026-11-10: all three clean for the plugin's files; the binding check PASSED)
 - [x] **T17**. Plugin README (enable, events, routes, client recipe with `graphql-ws`), `docs/specs/README.md` status → `In Progress`/`Implemented`
 - [ ] **T18**. Enable on dev; verify with a small Node script (`graphql-ws` + `ws`) that a task update is received within 1 s and that catch-up replays it
 
@@ -72,7 +75,7 @@
 - [x] **T25**. `resync` from an actual retention watermark kept as the full
   (`createdAt`, `eventId`) position, not from the oldest retained row (plan
   §15.8)
-- [ ] **T26**. Coalesce the presence fan-out to at most one message per
+- [x] **T26**. Coalesce the presence fan-out to at most one message per
   employee per 5 s (spec §4 Performance); today a change is published at once,
   only when the merged state changed
 - [ ] **T27**. Ever Teams `realtime-client`: resume from the catch-up's own

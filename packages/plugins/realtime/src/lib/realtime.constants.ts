@@ -40,4 +40,10 @@ export const REALTIME_PRESENCE_TTL_MS = REALTIME_PRESENCE_TTL_SECONDS * 1000;
 /** How often a process looks for presences whose connections lapsed, to tell the organization. */
 export const REALTIME_PRESENCE_SWEEP_MS = 30_000;
 
+/**
+ * The shortest time between two `presence.changed` of one employee, whichever process tells them (spec §4: at most
+ * one message per employee per 5 s). Changes inside the window are told once, as the latest state, when it closes.
+ */
+export const REALTIME_PRESENCE_COALESCE_MS = 5_000;
+
 export { REALTIME_EVENT_NAMES, REALTIME_SIGNAL_EVENTS, REALTIME_STREAMED_EVENTS };

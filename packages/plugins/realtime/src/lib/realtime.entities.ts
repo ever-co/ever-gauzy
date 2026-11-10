@@ -49,6 +49,17 @@ export class RealtimePresence extends TenantOrganizationBaseEntity {
 	 */
 	@MultiORMColumn({ type: 'int', default: 0 })
 	revision!: number;
+
+	/**
+	 * On the published row: when the organization was last told of the employee's presence, and which revision it was
+	 * told. Written by a conditional update that admits one publication per {@link REALTIME_PRESENCE_COALESCE_MS}
+	 * window across processes (`RealtimePresenceStore.claimPublication`).
+	 */
+	@MultiORMColumn({ nullable: true })
+	publishedAt?: Date;
+
+	@MultiORMColumn({ type: 'int', default: 0 })
+	publishedRevision!: number;
 }
 
 /**
