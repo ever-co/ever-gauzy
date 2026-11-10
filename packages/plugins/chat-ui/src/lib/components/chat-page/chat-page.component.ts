@@ -2,11 +2,11 @@ import { DatePipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, computed, DestroyRef, inject, OnInit, signal } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, NavigationEnd, Router, RouterLink } from '@angular/router';
 import { NbCardModule, NbDialogService, NbIconModule, NbSpinnerModule } from '@nebular/theme';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { combineLatest, EMPTY, forkJoin, merge, Observable, of, Subscription, timer } from 'rxjs';
-import { catchError, distinctUntilChanged, filter, map, switchMap } from 'rxjs/operators';
+import { catchError, distinctUntilChanged, filter, map, startWith, switchMap } from 'rxjs/operators';
 import { ChatConversationKindEnum, IChatCategory, IChatConversationWithState, IChatMemberState, IChatMessageWithRelations, IChatStates, IOrganization, IUser, PermissionsEnum } from '@gauzy/contracts';
 import { Store, ToastrService } from '@gauzy/ui-core/core';
 import { CHAT_LINK, CHAT_LIST_POLL_MS } from '../../chat-ui.constants';
@@ -660,11 +660,26 @@ export class ChatPageComponent implements OnInit {
 	/** The last change of a thread's root (its thread fields, or the whole message after an edit there): the open conversation applies it to its copy. */
 	protected readonly rootPatch = signal<ChatMessagePatch | null>(null);
 
-	/** `:conversationId`, `?thread=`, `?message=` and the route's view, as signals. */
-	protected readonly conversationId = toSignal(this.route.paramMap.pipe(map((params) => params.get('conversationId')), distinctUntilChanged()), { initialValue: null });
+	/**
+	 * The active view below the page (`CHAT_VIEW_ROUTES`), read again after every navigation. The page is ONE route
+	 * above its views, so it lives on while the person moves between conversations, Unreads and Threads; the view's
+	 * `:conversationId` and `data.view` are on that child, not on the page's own route.
+	 */
+	private readonly activeView$ = this.router.events.pipe(
+		filter((event): event is NavigationEnd => event instanceof NavigationEnd),
+		startWith(null),
+		map(() => this.viewRoute().snapshot)
+	);
+
+	/** `:conversationId`, `?thread=`, `?message=` and the view's name, as signals. */
+	protected readonly conversationId = toSignal(this.activeView$.pipe(map((view) => view.paramMap.get('conversationId')), distinctUntilChanged()), {
+		initialValue: null
+	});
 	protected readonly threadId = toSignal(this.route.queryParamMap.pipe(map((params) => params.get('thread')), distinctUntilChanged()), { initialValue: null });
 	protected readonly highlightId = toSignal(this.route.queryParamMap.pipe(map((params) => params.get('message')), distinctUntilChanged()), { initialValue: null });
-	private readonly routeView = toSignal(this.route.data.pipe(map((data) => (data['view'] as string | undefined) ?? null)), { initialValue: null });
+	private readonly routeView = toSignal(this.activeView$.pipe(map((view) => (view.data['view'] as string | undefined) ?? null), distinctUntilChanged()), {
+		initialValue: null
+	});
 
 	protected readonly view = computed<'home' | 'conversation' | 'unreads' | 'threads'>(() => {
 		if (this.routeView() === 'unreads') return 'unreads';
@@ -730,11 +745,16 @@ export class ChatPageComponent implements OnInit {
 		});
 	}
 
+	/** The route of the active view (the page's child), or the page's own before a child exists. */
+	private viewRoute(): ActivatedRoute {
+		return this.route.firstChild ?? this.route;
+	}
+
 	/** A conversation opened by link that the list does not hold: read it on its own. */
 	private followRoute(): void {
-		this.route.paramMap
+		this.activeView$
 			.pipe(
-				map((params) => params.get('conversationId')),
+				map((view) => view.paramMap.get('conversationId')),
 				distinctUntilChanged(),
 				takeUntilDestroyed(this.destroyRef)
 			)
@@ -860,11 +880,11 @@ export class ChatPageComponent implements OnInit {
 	// ---------------------------------------------------------------- threads
 
 	protected openThread(message: IChatMessageWithRelations): void {
-		void this.router.navigate([], { relativeTo: this.route, queryParams: { thread: message.id }, queryParamsHandling: 'merge' });
+		void this.router.navigate([], { relativeTo: this.viewRoute(), queryParams: { thread: message.id }, queryParamsHandling: 'merge' });
 	}
 
 	protected closeThread(): void {
-		void this.router.navigate([], { relativeTo: this.route, queryParams: { thread: null }, queryParamsHandling: 'merge' });
+		void this.router.navigate([], { relativeTo: this.viewRoute(), queryParams: { thread: null }, queryParamsHandling: 'merge' });
 	}
 
 	// ---------------------------------------------------------------- unreads
