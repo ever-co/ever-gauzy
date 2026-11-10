@@ -1269,6 +1269,60 @@ describe.each([
 				harness.registry.unregister('orm-parity.live');
 			}
 		});
+
+		it('goes on to an aggregate’s next event in the same wake when its head is dead-lettered', async () => {
+			harness.quiet();
+			const ran: string[] = [];
+
+			harness.registry.register({
+				key: 'orm-parity.live',
+				events: ['order.placed'],
+				handle: async (event: { sequence?: number }) => {
+					ran.push(String(event.sequence));
+
+					if (event.sequence === 1) {
+						throw new Error('the head is refused');
+					}
+				}
+			});
+
+			// Appended before the worker listens, so the wake below is the only pass.
+			await appendCommitted(placed(), placed());
+			// The head has one attempt left: this claim spends it, and the failure dead-letters the row.
+			await harness.query(`UPDATE "event_outbox" SET "attemptCount" = ? WHERE "sequence" = 1`, [
+				EventOutboxService.DEFAULT_MAX_ATTEMPTS - 1
+			]);
+			jest.spyOn(harness.worker as any, 'consumesQueue').mockReturnValue(true);
+			harness.worker.onModuleInit();
+
+			try {
+				harness.service.commitSignal.committed();
+
+				for (let turn = 0; turn < 400 && ran.length < 2; turn += 1) {
+					await new Promise((resolve) => setTimeout(resolve, 5));
+				}
+
+				expect(ran).toEqual(['1', '2']);
+
+				for (let turn = 0; turn < 200; turn += 1) {
+					const rows = await harness.query(`SELECT "status" FROM "event_outbox" ORDER BY "sequence" ASC`);
+
+					if (rows[1]?.status === EventOutboxStatus.PUBLISHED) {
+						break;
+					}
+
+					await new Promise((resolve) => setTimeout(resolve, 5));
+				}
+
+				expect(await harness.query(`SELECT "sequence", "status" FROM "event_outbox" ORDER BY "sequence" ASC`)).toEqual([
+					{ sequence: 1, status: EventOutboxStatus.DEAD },
+					{ sequence: 2, status: EventOutboxStatus.PUBLISHED }
+				]);
+			} finally {
+				await harness.worker.onModuleDestroy();
+				harness.registry.unregister('orm-parity.live');
+			}
+		});
 	});
 });
 

@@ -199,13 +199,15 @@ export class EventOutboxDispatchWorker extends QueueWorkerHost implements OnModu
 				this.wakeAgain = false;
 
 				for (let pass = 1; pass <= EVENT_OUTBOX_COMMIT_PASS_LIMIT && !this.closing; pass += 1) {
-					const { claimed, published } = await this.runPass('a commit', true);
+					const { claimed } = await this.runPass('a commit', true);
 
 					// A claim takes only the head of each partition, so an aggregate's next event becomes
-					// claimable once its head is published: one transaction that appended several events
-					// of one aggregate needs a pass per event. A full batch may also have left rows behind.
-					// A pass that published nothing and claimed less than a batch leaves nothing due.
-					if (published === 0 && claimed < EVENT_OUTBOX_DISPATCH_BATCH_SIZE) {
+					// claimable once its head settles — published, or dead-lettered by the attempt budget,
+					// which the pass counts as a retry. One transaction that appended several events of one
+					// aggregate therefore needs a pass per event, and a full batch may have left rows behind.
+					// So the passes go on until one claims nothing: a head waiting out its backoff is not
+					// due, so that pass comes at once and costs one claim that matches nothing.
+					if (claimed === 0) {
 						break;
 					}
 				}

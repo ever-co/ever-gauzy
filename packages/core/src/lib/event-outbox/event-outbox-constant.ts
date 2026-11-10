@@ -54,7 +54,7 @@ export const EVENT_OUTBOX_DISPATCH_LEASE_MS = 5 * 60 * 1000;
 export const EVENT_OUTBOX_DISPATCH_ON_COMMIT_ENV = 'GAUZY_EVENT_OUTBOX_DISPATCH_ON_COMMIT';
 
 /**
- * The most passes one wake runs back to back while each publishes something or claims a full batch.
+ * The most passes one wake runs back to back while each claims something.
  *
  * A claim takes only the head of each partition, so a transaction that appended several events of one
  * aggregate needs one pass per event, and a burst larger than a batch needs a few. Both are drained

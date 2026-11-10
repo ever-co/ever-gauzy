@@ -801,13 +801,14 @@ describe('EventOutboxDispatchWorker — the pass after a commit (T28)', () => {
 			.spyOn(worker as any, 'runPass')
 			.mockResolvedValueOnce(full)
 			.mockResolvedValueOnce(full)
-			.mockResolvedValueOnce({ claimed: 3, published: 0 });
+			.mockResolvedValueOnce({ claimed: 3, published: 3 })
+			.mockResolvedValueOnce({ claimed: 0, published: 0 });
 
 		ledger.commitSignal.committed();
 		await settle();
 
-		// Two full batches may have left rows behind; the third drained what was due.
-		expect(pass).toHaveBeenCalledTimes(3);
+		// Two full batches may have left rows behind; the fourth pass found nothing left.
+		expect(pass).toHaveBeenCalledTimes(4);
 
 		pass.mockReset();
 		pass.mockResolvedValue(full);
@@ -820,26 +821,19 @@ describe('EventOutboxDispatchWorker — the pass after a commit (T28)', () => {
 		await worker.onModuleDestroy();
 	});
 
-	it('passes again while a pass publishes, because a published head lets its partition’s next event be claimed', async () => {
+	it('passes again while a pass claims anything, because a settled head lets its partition’s next event be claimed', async () => {
 		const { ledger, worker } = consuming();
 		const pass = jest
 			.spyOn(worker as any, 'runPass')
 			.mockResolvedValueOnce({ claimed: 1, published: 1 })
-			.mockResolvedValueOnce({ claimed: 1, published: 1 })
+			// A head dead-lettered by its attempt budget is counted as a retry, yet it no longer blocks.
+			.mockResolvedValueOnce({ claimed: 1, published: 0 })
 			.mockResolvedValueOnce({ claimed: 0, published: 0 });
 
 		ledger.commitSignal.committed();
 		await settle();
 
 		expect(pass).toHaveBeenCalledTimes(3);
-
-		// Control: a pass whose rows all failed published nothing, and their backoff leaves nothing due.
-		pass.mockReset();
-		pass.mockResolvedValue({ claimed: 2, published: 0 });
-		ledger.commitSignal.committed();
-		await settle();
-
-		expect(pass).toHaveBeenCalledTimes(1);
 
 		await worker.onModuleDestroy();
 	});
