@@ -125,11 +125,18 @@ describe('TaskService.update — moving a task to another project', () => {
 		);
 		Object.defineProperty(service, 'typeOrmRepository', { value: { manager }, configurable: true });
 
-		await service.update('task-1', { projectId: 'project-new', number: 12, prefix: 'OLD' } as never);
+		await service.update('task-1', {
+			projectId: 'project-new',
+			number: 12,
+			prefix: 'OLD',
+			project: { id: 'project-old' }
+		} as never);
 
 		expect(saves(TaskFormerReference)).not.toHaveBeenCalled();
-		// It keeps the number and prefix it holds there, not the stale ones of a body read before that move
+		// It keeps the number and prefix it holds there, not the stale ones of a body read before that move, and the
+		// body's stale relation does not point the save back at the project it left
 		expect(save).toHaveBeenCalledWith(expect.objectContaining({ projectId: 'project-new', number: 5, prefix: 'Eve' }));
+		expect(save.mock.calls[0][0].project).toEqual({ id: 'project-new' });
 		expect(maxNumberBy).not.toHaveBeenCalled();
 	});
 

@@ -298,8 +298,13 @@ export class TaskService extends TenantAwareCrudService<Task> {
 					};
 				} else if (data.projectId && current.projectId !== task.projectId) {
 					// An overlapping update already put the task where this one names: it keeps the number and prefix it
-					// holds there, whatever this body (read before that move) carries.
-					moved = { projectId: current.projectId, number: current.number, prefix: current.prefix };
+					// holds there, whatever this body (read before that move) carries, its `project` relation included.
+					moved = {
+						projectId: current.projectId,
+						number: current.number,
+						prefix: current.prefix,
+						...('project' in data ? { project: { id: current.projectId } as Task['project'] } : {})
+					};
 				}
 
 				// Update the task with the provided data. When the task moved, the project, number and prefix computed
