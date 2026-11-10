@@ -47,6 +47,8 @@ export class RealtimeSignalsService implements OnModuleInit, OnModuleDestroy {
 	private sweeping = false;
 	/** The employees this process will try to tell again when their window closes, by tenant and employee. */
 	private readonly later = new Map<string, NodeJS.Timeout>();
+	/** Set when the module stops: nothing is claimed, published or scheduled any more. */
+	private stopped = false;
 
 	constructor(
 		private readonly dataSource: DataSource,
@@ -60,6 +62,7 @@ export class RealtimeSignalsService implements OnModuleInit, OnModuleDestroy {
 	}
 
 	onModuleDestroy(): void {
+		this.stopped = true;
 		if (this.sweepTimer) clearInterval(this.sweepTimer);
 		this.sweepTimer = null;
 		for (const timer of this.later.values()) clearTimeout(timer);
@@ -107,7 +110,7 @@ export class RealtimeSignalsService implements OnModuleInit, OnModuleDestroy {
 			await this.presenceStore.sweep(now, async (outcome) => void (await this.tellPresence(outcome, now)));
 			// Then the changes no process told (it stopped inside the window).
 			for (const scope of await this.presenceStore.untold(now)) {
-				await this.announce(scope, now);
+				await this.announce(scope);
 			}
 		} catch (error) {
 			this.logger.warn(`The lapsed presences were not settled: ${(error as Error)?.message}`);
@@ -119,19 +122,23 @@ export class RealtimeSignalsService implements OnModuleInit, OnModuleDestroy {
 	/** The merged presence as the payload says it; the organization is told when it changed (see {@link announce}). */
 	private async tellPresence(outcome: IPresenceOutcome, now: Date): Promise<IRealtimePresence> {
 		if (outcome.changed) {
-			await this.announce(outcome, now);
+			await this.announce(outcome);
 		}
 		return presenceOf(outcome, now);
 	}
 
 	/**
 	 * Tells the organization the employee's latest presence when this process wins the window
-	 * ({@link RealtimePresenceStore.claimPublication}); otherwise tries again when the window closes. Never throws: the
-	 * report that caused it is already committed, and the sweep tells what is left untold.
+	 * ({@link RealtimePresenceStore.claimPublication}, at the moment of the claim); otherwise tries again when the window
+	 * closes. Never throws: the report that caused it is already committed, and the sweep tells what is left untold.
+	 * After the module stopped it does nothing (a claim already in flight neither publishes nor schedules).
 	 */
-	private async announce(scope: IPresenceScope, now: Date): Promise<void> {
+	private async announce(scope: IPresenceScope): Promise<void> {
+		if (this.stopped) return;
 		try {
+			const now = new Date();
 			const publication = await this.presenceStore.claimPublication(scope, now);
+			if (this.stopped) return;
 			if (publication.kind === 'publish') {
 				const outcome = publication.outcome;
 				await this.publish(
@@ -150,10 +157,10 @@ export class RealtimeSignalsService implements OnModuleInit, OnModuleDestroy {
 	/** Tries again at a moment, once per employee however many changes ask meanwhile. */
 	private announceAt(scope: IPresenceScope, at: number): void {
 		const key = `${scope.tenantId}|${scope.employeeId}`;
-		if (this.later.has(key)) return;
+		if (this.stopped || this.later.has(key)) return;
 		const timer = setTimeout(() => {
 			this.later.delete(key);
-			void this.announce(scope, new Date());
+			void this.announce(scope);
 		}, Math.max(0, at - Date.now()));
 		timer.unref?.();
 		this.later.set(key, timer);

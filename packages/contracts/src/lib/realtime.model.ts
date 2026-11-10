@@ -155,7 +155,7 @@ export interface IRealtimePresence {
 	 * deliver two changes out of order).
 	 */
 	revision?: number;
-	/** ISO time the presence was merged. */
+	/** ISO time the presence was merged (the route's answer) or told (the event: when its window opened). */
 	at: string;
 }
 

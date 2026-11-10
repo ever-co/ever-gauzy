@@ -186,9 +186,10 @@ export class RealtimePresenceStore {
 	 * when to try again, so the window's last change is told when it closes.
 	 *
 	 * @param scope The employee.
-	 * @param now The moment of the attempt.
+	 * @param now The moment of the claim — taken when claiming, never the start of the report or sweep that asks (they
+	 * may have waited on the database since), so the window recorded is the one the publication really opens.
 	 */
-	async claimPublication(scope: IPresenceScope, now: Date): Promise<PresencePublication> {
+	async claimPublication(scope: IPresenceScope, now: Date = new Date()): Promise<PresencePublication> {
 		const repository = this.dataSource.getRepository(RealtimePresence);
 		const row = await repository.findOne({
 			where: { tenantId: scope.tenantId, employeeId: scope.employeeId, connectionId: REALTIME_PUBLISHED_PRESENCE_KEY }
