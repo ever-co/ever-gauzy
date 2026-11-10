@@ -442,8 +442,8 @@ export class TaskService extends TenantAwareCrudService<Task> {
 	/**
 	 * The number a task held in a project before it moved out of it (its latest former reference there), when no task of
 	 * the project holds it now: the number the task takes back when it moves back. Read by the update's transaction,
-	 * once the task row is locked. Null when there is none. Best effort: a failed read counts as none, and the task is
-	 * numbered as any moved task.
+	 * once the task row is locked. Null when there is none. A failed read fails the update (on Postgres it aborts the
+	 * transaction, so nothing after it could run anyway), before anything is written.
 	 */
 	private async reclaimableNumberOf(
 		manager: EntityManager,
@@ -452,25 +452,20 @@ export class TaskService extends TenantAwareCrudService<Task> {
 		tenantId: ID,
 		organizationId: ID
 	): Promise<number | null> {
-		try {
-			const former = await manager.findOne(TaskFormerReference, {
-				where: { taskId, projectId, tenantId, organizationId },
-				select: { id: true, number: true },
-				order: { number: 'DESC' }
-			});
-			if (!former || former.number === null || former.number === undefined) {
-				return null;
-			}
-			const number = Number(former.number);
-			const holders = await manager.count(Task, {
-				where: { projectId, number, tenantId, organizationId },
-				withDeleted: true
-			});
-			return holders === 0 ? number : null;
-		} catch (error) {
-			console.error('Error reading the former number of the task in its project:', error?.message);
+		const former = await manager.findOne(TaskFormerReference, {
+			where: { taskId, projectId, tenantId, organizationId },
+			select: { id: true, number: true },
+			order: { number: 'DESC' }
+		});
+		if (!former || former.number === null || former.number === undefined) {
 			return null;
 		}
+		const number = Number(former.number);
+		const holders = await manager.count(Task, {
+			where: { projectId, number, tenantId, organizationId },
+			withDeleted: true
+		});
+		return holders === 0 ? number : null;
 	}
 
 	/** The tenant-aware save of an update, on the repository `this` carries (a transaction's, see inUpdateTransaction). */
@@ -1892,9 +1887,11 @@ export class TaskService extends TenantAwareCrudService<Task> {
 	}
 
 	/**
-	 * The highest number a task held in the project before it moved out (`task_former_reference`), 0 for none. Best
-	 * effort: a failed read is logged and counts as none, so it never stops a task from being created; the number it
-	 * hands out may then reach a moved task's old reference, which keeps resolving to the live task instead.
+	 * The highest number a task held in the project before it moved out (`task_former_reference`), 0 for none. Outside a
+	 * transaction (a task being created) it is best effort: a failed read is logged and counts as none, so it never
+	 * stops a task from being created; the number it hands out may then reach a moved task's old reference, which keeps
+	 * resolving to the live task instead. Inside one (a move, read through the update's transaction) a failed read fails
+	 * the update: on Postgres it has aborted the transaction, so the next statement would fail anyway.
 	 */
 	private async getMaxFormerReferenceNumber(options: IGetTaskOptions): Promise<number> {
 		const { organizationId, projectId } = options;
@@ -1913,6 +1910,9 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			const result = await query.getRawOne();
 			return Number(result?.maxNumber) || 0;
 		} catch (error) {
+			if (this.typeOrmRepository?.manager?.queryRunner?.isTransactionActive) {
+				throw error;
+			}
 			console.error('Error reading the former task numbers of the project:', error?.message);
 			return 0;
 		}

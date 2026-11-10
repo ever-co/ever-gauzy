@@ -158,6 +158,21 @@ describe('TaskService.update — moving a task to another project', () => {
 		expect(saves(TaskFormerReference)).toHaveBeenCalledWith(expect.objectContaining({ projectId: 'project-mid', number: 3, prefix: 'MID' }));
 	});
 
+	it('fails the move, writing nothing, when the read of a former number fails in the transaction', async () => {
+		// On Postgres a failed statement aborts the transaction: the update fails rather than go on as if none existed
+		const findOrFail = jest.fn(async (entity, options) => {
+			if (entity === TaskFormerReference) throw new Error('canceling statement due to statement timeout');
+			return findProject(entity, options);
+		});
+		const { manager, saves } = stubTaskUpdateManager({ findOne: findOrFail });
+		Object.defineProperty(service, 'typeOrmRepository', { value: { manager }, configurable: true });
+		jest.spyOn(console, 'error').mockImplementation(() => undefined);
+
+		await expect(service.update('task-1', { projectId: 'project-new' })).rejects.toThrow(/statement timeout/);
+		expect(save).not.toHaveBeenCalled();
+		expect(saves(TaskFormerReference)).not.toHaveBeenCalled();
+	});
+
 	it('keeps the reference of a task taken out of its project, which keeps its number', async () => {
 		await service.update('task-1', { projectId: null, project: null } as never);
 
