@@ -219,6 +219,22 @@ describe('RealtimeSignalsService presence', () => {
 			expect(claimPublication).toHaveBeenCalledTimes(1);
 		});
 
+		it('gives back a claim whose publication the pub/sub refused, so the sweep retries it', async () => {
+			const claim = { id: 'p1', at: new Date(), revision: 4, previousAt: null, previousRevision: 3 };
+			const release = jest.fn(async () => true);
+			const { service, pubSub } = signalsOver({
+				report: jest.fn(async () => outcome()),
+				claimPublication: jest.fn(async () => ({ kind: 'publish', outcome: outcome(), claim })),
+				release
+			});
+			pubSub.publish.mockRejectedValueOnce(new Error('redis unavailable') as never);
+			await expect(service.publishPresence({ status: RealtimePresenceStatus.ACTIVE })).resolves.toMatchObject({ status: 'active' });
+			expect(release).toHaveBeenCalledWith(claim);
+			// Delivered: nothing is given back.
+			await service.publishPresence({ status: RealtimePresenceStatus.ACTIVE });
+			expect(release).toHaveBeenCalledTimes(1);
+		});
+
 		it('gives back a claim won while the module stopped, so another process tells it', async () => {
 			let answer: (value: unknown) => void = () => undefined;
 			const claim = { id: 'p1', at: new Date(), revision: 4, previousAt: null, previousRevision: 3 };

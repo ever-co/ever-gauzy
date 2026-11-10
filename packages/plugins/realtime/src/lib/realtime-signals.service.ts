@@ -145,11 +145,14 @@ export class RealtimeSignalsService implements OnModuleInit, OnModuleDestroy {
 			}
 			if (publication.kind === 'publish') {
 				const outcome = publication.outcome;
-				await this.publish(
+				const told = await this.publish(
 					REALTIME_EVENT_NAMES.PRESENCE_CHANGED,
 					{ aggregate: { type: REALTIME_AGGREGATES.EMPLOYEE, id: String(outcome.employeeId) }, data: presenceOf(outcome, now) },
 					{ tenantId: outcome.tenantId, organizationId: outcome.organizationId }
 				);
+				// The pub/sub refused it: give the claim back, so the revision is untold again and the sweep retries it.
+				// (Had it been delivered before the refusal, a second delivery of the same revision is dropped by readers.)
+				if (!told) await this.presenceStore.release(publication.claim);
 			} else if (publication.kind === 'later') {
 				this.announceAt(scope, publication.at);
 			}
@@ -228,15 +231,17 @@ export class RealtimeSignalsService implements OnModuleInit, OnModuleDestroy {
 	/**
 	 * Publishes one envelope on a tenant's topic, for an organization (or tenant-wide). Never throws: a signal that
 	 * cannot be published is logged, the request that carried it still succeeds.
+	 *
+	 * @returns Whether the pub/sub took it (true as well where no pub/sub serves this process: nothing could take it).
 	 */
 	private async publish(
 		name: string,
 		parts: { aggregate: { type: string; id: string }; data: unknown; recipientUserIds?: ID[] },
 		scope: { tenantId: ID; organizationId: ID | null }
-	): Promise<void> {
+	): Promise<boolean> {
 		const { tenantId, organizationId } = scope;
 		if (!this.pubSub || !tenantId) {
-			return;
+			return true;
 		}
 		const envelope: SubscriptionEnvelope = {
 			eventId: randomUUID(),
@@ -250,8 +255,10 @@ export class RealtimeSignalsService implements OnModuleInit, OnModuleDestroy {
 		};
 		try {
 			await this.pubSub.publish(name, String(tenantId), envelope);
+			return true;
 		} catch (error) {
 			this.logger.warn(`${name} was not published: ${(error as Error)?.message}`);
+			return false;
 		}
 	}
 }

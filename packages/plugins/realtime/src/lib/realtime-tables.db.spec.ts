@@ -357,6 +357,24 @@ describe('RealtimePresenceStore', () => {
 			}
 		});
 
+		it('tells a newer change after the window when a stale claim published an older one meanwhile', async () => {
+			await report(ANNA, 'tab-1', RealtimePresenceStatus.ACTIVE);
+			const repository = dataSource.getRepository(RealtimePresence);
+			const stale = await repository.findOne({ where: { tenantId: TENANT, employeeId: ANNA.employeeId, connectionId: REALTIME_PUBLISHED_PRESENCE_KEY } });
+			// A newer report commits while a claim that read the row before it is still in flight.
+			await report(ANNA, 'tab-1', RealtimePresenceStatus.IDLE, 1);
+			const read = jest.spyOn(repository, 'findOne').mockResolvedValueOnce(stale as never);
+			try {
+				// The stale claim wins and publishes the older revision...
+				expect(await claim(ANNA, 1)).toEqual(expect.objectContaining({ kind: 'publish', outcome: expect.objectContaining({ status: 'active', revision: 1 }) }));
+			} finally {
+				read.mockRestore();
+			}
+			// ...so the newer report's own announcement is held to the window, and told when it closes.
+			expect(await claim(ANNA, 2)).toEqual({ kind: 'later', at: at(1 + window).getTime() });
+			expect(await claim(ANNA, 1 + window)).toEqual(expect.objectContaining({ kind: 'publish', outcome: expect.objectContaining({ status: 'idle', revision: 2 }) }));
+		});
+
 		it('gives a won claim back so the revision is untold again, and never undoes a later claim', async () => {
 			await report(ANNA, 'tab-1', RealtimePresenceStatus.ACTIVE);
 			const won = await claim(ANNA, 0);
