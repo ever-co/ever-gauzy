@@ -16,6 +16,7 @@ jest.mock('@gauzy/core', () => {
 		TenantOrganizationBaseEntity: class {},
 		MikroOrmBaseEntityRepository: class {},
 		EventOutbox: class EventOutbox {},
+		EventDelivery: class EventDelivery {},
 		SubscriptionCatalogue: class SubscriptionCatalogue {},
 		matchesEventSelection: (selection: string, name: string) => selection === name
 	};
@@ -32,9 +33,9 @@ jest.mock('@gauzy/plugin-docs', () => ({ __esModule: true, DocumentService: clas
 
 import { randomUUID } from 'node:crypto';
 import { ModuleRef } from '@nestjs/core';
-import { DataSource, EntitySchema, IsNull } from 'typeorm';
+import { DataSource, DeleteQueryBuilder, EntitySchema, IsNull, ObjectLiteral } from 'typeorm';
 import { EventOutboxStatus } from '@gauzy/contracts';
-import { EventOutbox } from '@gauzy/core';
+import { EventDelivery, EventOutbox } from '@gauzy/core';
 import { CreateRealtimePresenceAndWatermarkTables1791000006820 } from './database/migrations/1791000006820-CreateRealtimePresenceAndWatermarkTables';
 import { REALTIME_RETENTION_MIN_AGE_MS, REALTIME_RETENTION_MIN_EVENTS } from './realtime.constants';
 import { RealtimeReplayWatermark } from './realtime.entities';
@@ -75,6 +76,25 @@ const OutboxSchema = new EntitySchema<IRow>({
 		createdAt: { type: 'datetime' },
 		partitionKey: { type: 'varchar', nullable: true },
 		sequence: { type: 'integer' }
+	}
+});
+
+interface IDelivery {
+	id: string;
+	eventId: string;
+	consumerKey: string;
+	status: string;
+}
+
+const DeliverySchema = new EntitySchema<IDelivery>({
+	name: 'EventDelivery',
+	target: EventDelivery,
+	tableName: 'event_delivery',
+	columns: {
+		id: { primary: true, type: 'varchar' },
+		eventId: { type: 'varchar' },
+		consumerKey: { type: 'varchar' },
+		status: { type: 'varchar' }
 	}
 });
 
@@ -130,7 +150,7 @@ const left = async (organizationId: string | null) =>
 	dataSource.getRepository(OutboxSchema).count({ where: { tenantId: TENANT, organizationId: organizationId ?? IsNull() } });
 
 beforeAll(async () => {
-	dataSource = new DataSource({ type: 'better-sqlite3', database: ':memory:', entities: [OutboxSchema, WatermarkSchema], synchronize: false, logging: false });
+	dataSource = new DataSource({ type: 'better-sqlite3', database: ':memory:', entities: [OutboxSchema, DeliverySchema, WatermarkSchema], synchronize: false, logging: false });
 	await dataSource.initialize();
 	await dataSource.query(`CREATE TABLE "tenant" ("id" varchar PRIMARY KEY NOT NULL)`);
 	await dataSource.query(`CREATE TABLE "organization" ("id" varchar PRIMARY KEY NOT NULL)`);
@@ -139,6 +159,9 @@ beforeAll(async () => {
 	for (const id of [ORG_A, ORG_B]) await dataSource.query(`INSERT INTO "organization" ("id") VALUES (?)`, [id]);
 	await dataSource.query(
 		`CREATE TABLE "event_outbox" ("id" varchar PRIMARY KEY NOT NULL, "tenantId" varchar, "organizationId" varchar, "eventId" varchar NOT NULL, "eventName" varchar NOT NULL, "status" varchar NOT NULL, "createdAt" datetime NOT NULL, "partitionKey" varchar, "sequence" integer NOT NULL DEFAULT (0))`
+	);
+	await dataSource.query(
+		`CREATE TABLE "event_delivery" ("id" varchar PRIMARY KEY NOT NULL, "eventId" varchar NOT NULL, "consumerKey" varchar NOT NULL, "status" varchar NOT NULL)`
 	);
 	const runner = dataSource.createQueryRunner();
 	await new CreateRealtimePresenceAndWatermarkTables1791000006820().up(runner);
@@ -151,6 +174,7 @@ afterAll(async () => {
 
 beforeEach(async () => {
 	await dataSource.query(`DELETE FROM "event_outbox"`);
+	await dataSource.query(`DELETE FROM "event_delivery"`);
 	await dataSource.query(`DELETE FROM "realtime_replay_watermark"`);
 	watermarks = new RealtimeReplayWatermarkService(dataSource);
 	retention = new RealtimeRetentionService(dataSource, watermarks, { get: () => undefined } as unknown as ModuleRef);
@@ -237,6 +261,50 @@ describe('RealtimeRetentionService', () => {
 		advance.mockRestore();
 		// The next pass retries it.
 		expect((await retention.run(NOW))?.removed).toBe(3);
+	});
+
+	it('keeps a row a consumer has not acknowledged (pending, failed or dead), so its delivery can still be replayed', async () => {
+		// Seven events of one task: the seventh is the partition's head (kept anyway), the sixth has no delivery record.
+		const old = rowsOf(ORG_A, 7, 96);
+		await insert([...old, ...rowsOf(ORG_A, REALTIME_RETENTION_MIN_EVENTS, 48)]);
+		const delivery = (eventId: string, status: string, consumerKey = 'graphql-subscriptions') => ({ id: randomUUID(), eventId, consumerKey, status });
+		await dataSource.getRepository(DeliverySchema).insert([
+			delivery(old[0].eventId, EventOutboxStatus.DEAD),
+			delivery(old[1].eventId, EventOutboxStatus.FAILED),
+			delivery(old[2].eventId, EventOutboxStatus.PENDING),
+			// One consumer acknowledged it, another did not: the row stays for the other.
+			delivery(old[3].eventId, EventOutboxStatus.PUBLISHED),
+			delivery(old[3].eventId, EventOutboxStatus.DEAD, 'webhooks'),
+			// Acknowledged by every consumer: removed, and the record outlives it.
+			delivery(old[4].eventId, EventOutboxStatus.PUBLISHED)
+		]);
+		expect((await retention.prune(NOW, BOUNDS)).removed).toBe(2);
+		const kept = await dataSource.getRepository(OutboxSchema).find({ where: { partitionKey: old[0].partitionKey as string }, order: { sequence: 'ASC' } });
+		expect(kept.map((row) => row.sequence)).toEqual([1, 2, 3, 4, 7]);
+		expect(await dataSource.getRepository(DeliverySchema).count()).toBe(6);
+	});
+
+	it('keeps a row whose delivery an operator replays while the pass runs, and moves the watermark only over what it removed', async () => {
+		const rows = rowsOf(ORG_A, REALTIME_RETENTION_MIN_EVENTS + 3, 72);
+		await insert(rows);
+		const execute = DeleteQueryBuilder.prototype.execute;
+		const remove = jest.spyOn(DeleteQueryBuilder.prototype, 'execute').mockImplementationOnce(async function (this: DeleteQueryBuilder<ObjectLiteral>) {
+			// After the candidates were read: one replay has reset its delivery record and re-queued the row, another has
+			// only reset the record so far.
+			const reset = (eventId: string) =>
+				dataSource.query(`INSERT INTO "event_delivery" ("id", "eventId", "consumerKey", "status") VALUES (?, ?, ?, ?)`, [randomUUID(), eventId, 'graphql-subscriptions', EventOutboxStatus.PENDING]);
+			await reset(rows[2].eventId);
+			await dataSource.query(`UPDATE "event_outbox" SET "status" = ? WHERE "id" = ?`, [EventOutboxStatus.PENDING, rows[2].id]);
+			await reset(rows[1].eventId);
+			return execute.call(this);
+		});
+		try {
+			expect(await retention.prune(NOW, BOUNDS)).toEqual({ removed: 1, scopes: [{ tenantId: TENANT, organizationId: ORG_A, removed: 1 }], failed: 0 });
+		} finally {
+			remove.mockRestore();
+		}
+		expect(await left(ORG_A)).toBe(REALTIME_RETENTION_MIN_EVENTS + 2);
+		expect(await watermarks.forScope(TENANT, ORG_A)).toEqual({ at: rows[0].createdAt.getTime(), eventId: rows[0].eventId });
 	});
 
 	it("never removes a partition's newest row, so an aggregate's numbering never starts over", async () => {

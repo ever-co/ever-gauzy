@@ -164,8 +164,10 @@ beyond the newest 1,000 of each organization (and of the tenant-wide events)
 are removed from the event outbox, at most 500 per organization per pass, and
 the replay watermark moves with them in the same transaction: a client whose
 catch-up cursor falls behind it is answered `resync`. Pending, failed and dead
-rows, other domains' events, rows without a tenant and the newest row of each
-aggregate (its numbering continues from it) are never removed. It
+rows, other domains' events, rows without a tenant, the newest row of each
+aggregate (its numbering continues from it) and rows a consumer has not
+acknowledged (a dead delivery is replayed from its outbox row) are never
+removed. It
 deletes rows, so it is a separate switch: on production, turn it on only after
 checking the database's backups.
 

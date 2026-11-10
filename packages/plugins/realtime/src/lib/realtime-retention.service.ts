@@ -2,7 +2,7 @@ import { Injectable, Logger, OnModuleDestroy, OnModuleInit, Optional, Type } fro
 import { ModuleRef } from '@nestjs/core';
 import { Brackets, DataSource, FindOptionsWhere, In, IsNull, SelectQueryBuilder } from 'typeorm';
 import { EventOutboxStatus, ID } from '@gauzy/contracts';
-import { EventOutbox, SubscriptionCatalogue } from '@gauzy/core';
+import { EventDelivery, EventOutbox, SubscriptionCatalogue } from '@gauzy/core';
 import { collaborationReplayNames } from './graphql/realtime-envelope';
 import {
 	REALTIME_RETENTION_BATCH,
@@ -44,6 +44,20 @@ function newerInPartition(query: SelectQueryBuilder<EventOutbox>): string {
 		.getQuery();
 }
 
+/**
+ * A consumer's record of the outer row that is not acknowledged (pending, failed or dead): replaying it re-drives the
+ * outbox row, so the row must still be there.
+ */
+function unacknowledgedDelivery(query: SelectQueryBuilder<EventOutbox>): string {
+	return query
+		.subQuery()
+		.select('1')
+		.from(EventDelivery, 'delivery')
+		.where('delivery.eventId = outbox.eventId')
+		.andWhere('delivery.status != :acknowledged')
+		.getQuery();
+}
+
 const DEFAULT_BOUNDS: IRetentionBounds = {
 	minAgeMs: REALTIME_RETENTION_MIN_AGE_MS,
 	minEvents: REALTIME_RETENTION_MIN_EVENTS,
@@ -67,15 +81,19 @@ const DEFAULT_BOUNDS: IRetentionBounds = {
  * - it carries a tenant (a row written outside a request belongs to nobody's catch-up);
  * - it is not the newest row of its partition (the highest `sequence` of its aggregate): `append` numbers a partition
  *   as its highest `sequence` plus one, so removing a partition's last row would start the aggregate's numbering over
- *   and break the order consumers rely on. A quiet aggregate therefore keeps one row.
+ *   and break the order consumers rely on. A quiet aggregate therefore keeps one row;
+ * - every consumer's delivery record of it is acknowledged: a pending, failed or dead delivery is replayed by
+ *   re-driving its outbox row (`EventOutboxService.replayDelivery`), which therefore stays. The acknowledged records
+ *   outlive the row, as `event_delivery` is designed to (it has no foreign key to the outbox).
  *
  * A pass looks only at scopes holding more than the newest 1,000 rows and an old dispatched one — a scope inside the
  * window never takes a pass's place — and goes through them in a stable order, continuing where the previous pass
  * stopped when there are more than one pass looks at.
  * Each scope loses at most a batch of its oldest rows per pass, in one transaction that also advances the scope's
  * watermark to the newest row it removed ({@link RealtimeReplayWatermarkService.advance}); a failure removes nothing
- * and is retried by the next pass. Several processes may run it: a removal is by id (idempotent) and the watermark
- * only moves forward.
+ * and is retried by the next pass. Several processes may run it: a removal is by id (idempotent), rechecks at the
+ * delete that the row is still dispatched with every delivery acknowledged (a delivery replay may have re-queued it
+ * since it was read), and the watermark moves over what was removed, only forward.
  *
  * **Off unless `GAUZY_REALTIME_RETENTION_ENABLED=true`**, separately from the plugin itself: it deletes rows, so an
  * installation turns it on deliberately — on production only after the backups-first check of its database.
@@ -162,7 +180,7 @@ export class RealtimeRetentionService implements OnModuleInit, OnModuleDestroy {
 		const pass: IRetentionPass = { removed: 0, scopes: [], failed: 0 };
 		for (const raw of scopes) {
 			const scope = { tenantId: raw.tenantId as ID, organizationId: (raw.organizationId as ID) ?? null };
-			let removed = 0;
+			let removed: number;
 			try {
 				removed = await this.pruneScope(scope, names, cutoff, bounds);
 			} catch (error) {
@@ -206,8 +224,8 @@ export class RealtimeRetentionService implements OnModuleInit, OnModuleDestroy {
 			if (!floor?.createdAt) return 0;
 			const floorAt = new Date(floor.createdAt as unknown as string);
 
-			// Strictly before the floor in (createdAt, eventId) order, older than the age bound, dispatched, and not the
-			// newest row of its partition.
+			// Strictly before the floor in (createdAt, eventId) order, older than the age bound, dispatched, not the newest
+			// row of its partition, and with no consumer's delivery of it left to replay.
 			const candidates = repository
 				.createQueryBuilder('outbox')
 				.select(['outbox.id', 'outbox.createdAt', 'outbox.eventId'])
@@ -229,19 +247,42 @@ export class RealtimeRetentionService implements OnModuleInit, OnModuleDestroy {
 					})
 				)
 				.andWhere((query: SelectQueryBuilder<EventOutbox>) => `EXISTS ${newerInPartition(query)}`)
+				.andWhere((query: SelectQueryBuilder<EventOutbox>) => `NOT EXISTS ${unacknowledgedDelivery(query)}`, {
+					acknowledged: EventOutboxStatus.PUBLISHED
+				})
 				.orderBy('outbox.createdAt', 'ASC')
 				.addOrderBy('outbox.eventId', 'ASC')
 				.take(bounds.batch);
 			const rows = await candidates.getMany();
 			if (!rows.length) return 0;
 
-			await repository.delete({ id: In(rows.map((row) => row.id as ID)) });
-			const newest = rows[rows.length - 1];
+			// Removed only while still dispatched with every delivery acknowledged: an operator's delivery replay since the
+			// read resets the delivery record first and then re-queues the row, and either step keeps the row.
+			const ids = rows.map((row) => row.id as ID);
+			const escape = (name: string) => manager.connection.driver.escape(name);
+			const outboxTable = escape(repository.metadata.tableName);
+			const deliveryTable = escape(manager.getRepository(EventDelivery).metadata.tableName);
+			await manager
+				.createQueryBuilder()
+				.delete()
+				.from(EventOutbox)
+				.where(`${escape('id')} IN (:...ids)`, { ids })
+				.andWhere(`${escape('status')} = :published`, { published: EventOutboxStatus.PUBLISHED })
+				.andWhere(
+					`NOT EXISTS (SELECT 1 FROM ${deliveryTable} ${escape('delivery')} WHERE ${escape('delivery')}.${escape('eventId')} = ${outboxTable}.${escape('eventId')} AND ${escape('delivery')}.${escape('status')} != :acknowledged)`,
+					{ acknowledged: EventOutboxStatus.PUBLISHED }
+				)
+				.execute();
+			// The watermark moves over what was removed (re-read in the same transaction), not over what was selected.
+			const kept = new Set((await repository.find({ select: { id: true }, where: { id: In(ids) } })).map((row) => String(row.id)));
+			const removed = rows.filter((row) => !kept.has(String(row.id)));
+			if (!removed.length) return 0;
+			const newest = removed[removed.length - 1];
 			await this.watermarks.advance(manager, scope, {
 				at: new Date(newest.createdAt as unknown as string).getTime(),
 				eventId: String(newest.eventId)
 			});
-			return rows.length;
+			return removed.length;
 		});
 	}
 

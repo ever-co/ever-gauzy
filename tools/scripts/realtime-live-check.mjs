@@ -101,10 +101,10 @@ async function main() {
 	// The task's updates already in the outbox (dispatched or not): none of them is the one this check makes.
 	const before = new Set();
 	let writing = false;
-	let updatedAt = 0;
 	let liveMs = null;
-	// Settled with the event, `null` (none within the wait) or the subscription's error — handled from the start, so a
-	// refused socket can never surface as an unhandled rejection while the script is still preparing the write.
+	// Settled with the event and the moment it arrived, `null` (none within the wait) or the subscription's error —
+	// handled from the start, so a refused socket can never surface as an unhandled rejection while the script is still
+	// preparing the write.
 	const live = new Promise((resolve, reject) => {
 		const timer = setTimeout(() => resolve(null), waitMs);
 		client.subscribe(
@@ -114,7 +114,8 @@ async function main() {
 					const event = message?.data?.collaborationEvents;
 					if (writing && event?.aggregate?.id === taskId && event.eventName === 'task.updated' && !before.has(event.eventId)) {
 						clearTimeout(timer);
-						resolve(event);
+						// Timed here, on arrival: the write's own HTTP answer may come later and must not count.
+						resolve({ event, at: Date.now() });
 					}
 				},
 				error: (error) => {
@@ -136,11 +137,14 @@ async function main() {
 		for (const known of await updatesOfTask(from)) before.add(known.eventId);
 		const task = await http('GET', `/tasks/${taskId}`);
 		writing = true;
-		updatedAt = Date.now();
+		const updatedAt = Date.now();
 		await http('PUT', `/tasks/${taskId}`, { title: task.title, status: task.status, organizationId: task.organizationId ?? organizationId });
 		console.log(`task ${taskId} updated at ${new Date(updatedAt).toISOString()}`);
-		event = await live;
-		if (event) liveMs = Date.now() - updatedAt;
+		const received = await live;
+		if (received) {
+			event = received.event;
+			liveMs = Math.max(0, received.at - updatedAt);
+		}
 	} finally {
 		// Closed whatever happened above (a failed read or write included), so the socket ends cleanly.
 		await client.dispose();
