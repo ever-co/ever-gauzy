@@ -69,6 +69,9 @@ export {
 	toPositionalStatement
 } from './lib/database/database.helper';
 export type { IPositionalStatement } from './lib/database/database.helper';
+// The learn-more links of the What's New entries seeded for the other Ever products: deployment settings, not code.
+export { WHATS_NEW_LINK_SETTINGS, whatsNewLinkUrl } from './lib/database/whats-new-links';
+export type { WhatsNewLink } from './lib/database/whats-new-links';
 // The probes a migration needs to add a `CHECK` safely: a rule about a populated table is added on its
 // own tick, long after the file that created the table, and every package that adds one needs the same
 // four probes — the table, the columns the rule reads, the constraint's own absence, and the embedded

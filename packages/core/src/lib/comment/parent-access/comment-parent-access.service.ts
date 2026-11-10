@@ -1,3 +1,4 @@
+// cspell:ignore organizationcontact
 import {
 	BadRequestException,
 	ForbiddenException,
