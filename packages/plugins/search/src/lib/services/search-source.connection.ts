@@ -1,7 +1,7 @@
 import { Injectable, Logger, Optional } from '@nestjs/common';
 import { MikroORM } from '@mikro-orm/core';
 import { DataSource, EntityMetadata, In, MoreThanOrEqual } from 'typeorm';
-import { getORMType, MultiORMEnum } from '@gauzy/core';
+import { getORMType, MultiORMEnum, parseFindOptionsRelations } from '@gauzy/core';
 import { SearchSourceRow } from './search-document.builder';
 
 /**
@@ -179,7 +179,10 @@ export class SearchSourceConnection {
 
 		return (await this.dataSource.getRepository(entity.target).find({
 			where: this.typeOrmWhere(criteria) as any,
-			relations: (criteria.relations ?? []) as any,
+			// The declarations name their relations as dot paths. TypeORM 1 refuses the string-array form outright, an
+			// empty array included ("String-array \"relations\" syntax has been removed"), which failed every read of
+			// this path: no document was indexed, and each event a declaration listens to was retried, then failed.
+			relations: criteria.relations?.length ? parseFindOptionsRelations(criteria.relations) : undefined,
 			order: this.typeOrmOrder(criteria.order) as any,
 			skip: criteria.skip && criteria.skip > 0 ? criteria.skip : undefined,
 			take: criteria.take && criteria.take > 0 ? criteria.take : undefined
