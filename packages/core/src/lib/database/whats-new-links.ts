@@ -25,10 +25,13 @@ export type WhatsNewLink = keyof typeof WHATS_NEW_LINK_SETTINGS | '';
 /** The longest address a `changelog.learnMoreUrl` holds on every database (a MySQL `varchar`). */
 const MAX_URL_LENGTH = 255;
 
+/** An address spelled with its scheme and `//`: `https:example.test` parses as a URL but reads as a relative link. */
+const ABSOLUTE_HTTP_URL = /^https?:\/\//i;
+
 /**
- * The address a link's setting holds: an absolute `http(s)` URL of at most 255 characters, as set. Anything else
- * (unset, empty, relative, another scheme, too long) is no link (`''`), so a mistyped setting never writes a
- * `javascript:` or broken link into the table.
+ * The address a link's setting holds: an absolute `http(s)` URL (scheme, `//` and a host) of at most 255 characters,
+ * as set. Anything else (unset, empty, relative, `https:example.test` without its slashes, another scheme, too long)
+ * is no link (`''`), so a mistyped setting never writes a `javascript:`, relative or broken link into the table.
  *
  * @param link - The entry's link.
  * @param env - The settings (the process environment).
@@ -39,12 +42,12 @@ export function whatsNewLinkUrl(link: WhatsNewLink, env: Record<string, string |
 		return '';
 	}
 	const value = (env[WHATS_NEW_LINK_SETTINGS[link]] ?? '').trim();
-	if (!value || value.length > MAX_URL_LENGTH) {
+	if (!value || value.length > MAX_URL_LENGTH || !ABSOLUTE_HTTP_URL.test(value)) {
 		return '';
 	}
 	try {
-		const { protocol } = new URL(value);
-		return protocol === 'https:' || protocol === 'http:' ? value : '';
+		const { protocol, hostname } = new URL(value);
+		return (protocol === 'https:' || protocol === 'http:') && hostname ? value : '';
 	} catch {
 		return '';
 	}

@@ -17,7 +17,7 @@ describe('whatsNewLinkUrl', () => {
 	it('answers no link for no link, an unset or empty setting, or one that is not an absolute http(s) URL of 255 characters at most', () => {
 		expect(whatsNewLinkUrl('', { WHATS_NEW_EVER_URL: 'https://ever.example.test' })).toBe('');
 		expect(whatsNewLinkUrl('everTeamsDocs', {})).toBe('');
-		for (const value of ['', '   ', '/relative', 'javascript:alert(1)', 'ftp://ever.example.test', 'not a url', `https://a.test/${'x'.repeat(250)}`]) {
+		for (const value of ['', '   ', '/relative', 'javascript:alert(1)', 'ftp://ever.example.test', 'https:ever.example.test', 'https:/ever.example.test', 'https://', 'not a url', `https://a.test/${'x'.repeat(250)}`]) {
 			expect(whatsNewLinkUrl('ever', { WHATS_NEW_EVER_URL: value })).toBe('');
 		}
 	});
