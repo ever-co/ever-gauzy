@@ -256,7 +256,7 @@ describe('ChatMessageService follow (a follow that starts unread)', () => {
 });
 
 describe('ChatMessageService.markThreadRead', () => {
-	it('clears the thread notifications also when no follow row changed (a thread read after unfollowing it)', async () => {
+	it('clears the thread notifications also when no follow row changed (a thread read after its follow was removed)', async () => {
 		const update = jest.fn(async () => ({ affected: 0 }));
 		const dataSource = { getRepository: () => ({ update }) } as unknown as DataSource;
 		const notifier = { markThreadRead: jest.fn(async () => 0) };

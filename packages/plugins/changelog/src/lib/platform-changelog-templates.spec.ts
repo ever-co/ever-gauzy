@@ -10,7 +10,9 @@ jest.mock('@gauzy/core', () => {
 		TenantOrganizationBaseEntity,
 		MikroOrmBaseEntityRepository,
 		MultiORMEntity: decorator,
-		MultiORMColumn: decorator
+		MultiORMColumn: decorator,
+		// The real one: the seed resolves the learn-more links through it.
+		whatsNewLinkUrl: jest.requireActual('@gauzy/core/src/lib/database/whats-new-links').whatsNewLinkUrl
 	};
 });
 
@@ -18,6 +20,7 @@ import { ChangelogPlatformEnum, CHANGELOG_PLATFORM_PATTERN } from '@gauzy/contra
 // Deep paths through the `@gauzy/core` package (not relative paths across projects), as other plugin specs import
 // core internals; they are separate modules from the barrel mocked above.
 import { SeedPlatformChangelogContent1791000005610 } from '@gauzy/core/src/lib/database/migrations/1791000005610-SeedPlatformChangelogContent';
+import { RewordPlatformChangelogEntries1791000006900 } from '@gauzy/core/src/lib/database/migrations/1791000006900-RewordPlatformChangelogEntries';
 import { platformChangelogEntryId } from '@gauzy/core/src/lib/database/platform-changelog-entry-id';
 import { buildChangelogSeedRows, withoutExistingEntries } from './changelog.seed';
 import { INITIAL_CHANGELOG_TEMPLATE } from './initial-changelog-template';
@@ -34,7 +37,7 @@ describe('platform changelog templates', () => {
 			item.title,
 			item.date.toISOString(),
 			item.content,
-			item.learnMoreUrl ?? ''
+			item.learnMore
 		])
 	);
 
@@ -49,9 +52,9 @@ describe('platform changelog templates', () => {
 	});
 
 	it('fits every text in a MySQL varchar and gives every product a valid key', () => {
-		for (const [platform, icon, title, , content, learnMoreUrl] of templateRows) {
+		for (const [platform, icon, title, , content, learnMore] of templateRows) {
 			expect(CHANGELOG_PLATFORM_PATTERN.test(platform)).toBe(true);
-			for (const text of [icon, title, content, learnMoreUrl]) {
+			for (const text of [icon, title, content, learnMore]) {
 				expect(text.length).toBeLessThanOrEqual(MYSQL_VARCHAR);
 			}
 		}
@@ -68,6 +71,44 @@ describe('platform changelog templates', () => {
 		expect(gauzy.map((row) => row.title)).toEqual(INITIAL_CHANGELOG_TEMPLATE.map((item) => item.title));
 		expect(rows).toHaveLength(INITIAL_CHANGELOG_TEMPLATE.length + templateRows.length);
 		expect(rows.filter((row) => row.platform === 'ever-teams').every((row) => row.isFeature === false)).toBe(true);
+	});
+
+	it('names no Ever host: each learn-more link is a named setting the deployment fills', () => {
+		for (const [, , , , content, learnMore] of templateRows) {
+			expect(content).not.toMatch(/\b(?:ever\.co|ever\.team|gauzy\.co)\b/);
+			expect(['', 'everTeams', 'everTeamsDocs', 'ever']).toContain(learnMore);
+		}
+	});
+
+	it('links the other products\' entries to the addresses the deployment sets, and to none when it sets none', () => {
+		const settings = {
+			WHATS_NEW_EVER_TEAMS_URL: 'https://teams.example.test',
+			WHATS_NEW_EVER_TEAMS_DOCS_URL: 'https://docs.teams.example.test',
+			WHATS_NEW_EVER_URL: 'https://ever.example.test'
+		};
+		const linked = buildChangelogSeedRows(settings);
+		const link = (platform: string, title: string, rows = linked) =>
+			rows.find((row) => row.platform === platform && row.title === title)?.learnMoreUrl;
+		expect(link('ever-teams', "What's new and About")).toBe('https://teams.example.test');
+		expect(link('ever-teams', 'Weekly time report')).toBe('https://docs.teams.example.test');
+		expect(link('ever-platform', 'One Apps page')).toBe('https://ever.example.test');
+		expect(link('ever-teams', 'See who is online')).toBe('');
+
+		const unset = buildChangelogSeedRows({});
+		expect(unset.filter((row) => row.platform !== 'gauzy').every((row) => row.learnMoreUrl === '')).toBe(true);
+		// Gauzy's own entries keep the links they carry.
+		expect(unset.filter((row) => row.platform === 'gauzy').map((row) => row.learnMoreUrl)).toEqual(
+			linked.filter((row) => row.platform === 'gauzy').map((row) => row.learnMoreUrl)
+		);
+	});
+
+	it('words the reworded entries as the follow-up migration rewords the databases seeded before', () => {
+		const platform = Object.fromEntries(
+			templateRows.filter(([product]) => product === 'ever-platform').map(([, , title, , content]) => [title, content])
+		);
+		for (const [title, content] of new RewordPlatformChangelogEntries1791000006900().rows) {
+			expect(platform[title]).toBe(content);
+		}
 	});
 
 	it('adds on a fresh database only what a migration has not already added', () => {

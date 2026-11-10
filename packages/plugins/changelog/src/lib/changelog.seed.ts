@@ -1,17 +1,23 @@
 import { DataSource } from 'typeorm';
 import { DEFAULT_CHANGELOG_PLATFORM, IChangelog } from '@gauzy/contracts';
+import { whatsNewLinkUrl } from '@gauzy/core';
 import { Changelog } from './changelog.entity';
 import { INITIAL_CHANGELOG_TEMPLATE } from './initial-changelog-template';
-import { PLATFORM_CHANGELOG_TEMPLATES } from './platform-changelog-templates';
+import { PLATFORM_CHANGELOG_TEMPLATES, PlatformChangelogTemplate } from './platform-changelog-templates';
 
 /**
  * The rows a fresh database starts with: Gauzy's entries, then the starter entries of every other product
- * that reads this table (Ever Teams, Ever Platform), each stamped with its product.
+ * that reads this table (Ever Teams, Ever Platform), each stamped with its product. The other products' learn-more
+ * links are the addresses the deployment sets (`whatsNewLinkUrl`; none when it sets none).
+ *
+ * @param env - The deployment's settings (the process environment).
  */
-export function buildChangelogSeedRows(): IChangelog[] {
+export function buildChangelogSeedRows(env: Record<string, string | undefined> = process.env): IChangelog[] {
 	const gauzy = INITIAL_CHANGELOG_TEMPLATE.map((item) => toRow(item, DEFAULT_CHANGELOG_PLATFORM));
 	const others = Object.entries(PLATFORM_CHANGELOG_TEMPLATES).flatMap(([platform, items]) =>
-		items.map((item) => toRow(item, platform))
+		items.map((item: PlatformChangelogTemplate) =>
+			toRow({ ...item, learnMoreUrl: whatsNewLinkUrl(item.learnMore, env) }, platform)
+		)
 	);
 	return [...gauzy, ...others];
 }
@@ -31,7 +37,7 @@ export function withoutExistingEntries(
 	return rows.filter((row) => !taken.has(key(row)));
 }
 
-function toRow(item: IChangelog, platform: string): IChangelog {
+function toRow(item: IChangelog & { learnMore?: unknown }, platform: string): IChangelog {
 	return {
 		icon: item.icon,
 		title: item.title,

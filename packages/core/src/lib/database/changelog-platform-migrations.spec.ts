@@ -4,6 +4,7 @@ import * as path from 'path';
 import { DataSource, QueryRunner } from 'typeorm';
 import { AddChangelogPlatform1791000005600 } from './migrations/1791000005600-AddChangelogPlatform';
 import { SeedPlatformChangelogContent1791000005610 } from './migrations/1791000005610-SeedPlatformChangelogContent';
+import { RewordPlatformChangelogEntries1791000006900 } from './migrations/1791000006900-RewordPlatformChangelogEntries';
 import { platformChangelogEntryId } from './platform-changelog-entry-id';
 
 /**
@@ -318,5 +319,70 @@ describe('changelog starter entries on MySQL', () => {
 		await expect(new SeedPlatformChangelogContent1791000005610().up(queryRunner)).rejects.toThrow(
 			'Could not acquire the MySQL migration lock gauzy:migration:1791000005610.'
 		);
+	});
+});
+
+/**
+ * The follow-up that rewords two Ever Platform entries on the databases the seed ran on with the old wording, run for
+ * real on SQLite against a table with the base entity's `createdAt` / `updatedAt`, as every live table has.
+ */
+describe('RewordPlatformChangelogEntries on SQLite', () => {
+	let dataSource: DataSource;
+	let dbPath: string;
+	const OLD_WORDING = 'The text the seed wrote before 2026-11-10.';
+
+	beforeEach(async () => {
+		dbPath = path.join(os.tmpdir(), `gauzy-changelog-reword-${process.pid}-${Date.now()}-${Math.random()}.sqlite3`);
+		dataSource = new DataSource({ type: 'better-sqlite3', database: dbPath, synchronize: false, logging: false });
+		await dataSource.initialize();
+		await dataSource.query(
+			`CREATE TABLE "changelog" ("id" varchar PRIMARY KEY NOT NULL, "platform" varchar NOT NULL DEFAULT 'gauzy', "title" varchar, "content" varchar NOT NULL, "learnMoreUrl" varchar, "createdAt" datetime NOT NULL DEFAULT (datetime('now')), "updatedAt" datetime NOT NULL DEFAULT (datetime('now')))`
+		);
+		for (const title of ['One Apps page', 'Create your organization']) {
+			await dataSource.query(
+				`INSERT INTO "changelog" ("id", "platform", "title", "content", "learnMoreUrl") VALUES (?, 'ever-platform', ?, ?, 'https://seeded.example.test')`,
+				[platformChangelogEntryId('ever-platform', title), title, OLD_WORDING]
+			);
+		}
+	});
+
+	afterEach(async () => {
+		if (dataSource?.isInitialized) {
+			await dataSource.destroy();
+		}
+		fs.rmSync(dbPath, { force: true });
+	});
+
+	const contentOf = async (title: string) =>
+		(await dataSource.query(`SELECT "content", "learnMoreUrl" FROM "changelog" WHERE "title" = ?`, [title]))[0];
+
+	it('rewords the entries nobody edited, keeps an edited one, and leaves the links alone', async () => {
+		// The operator edited "Create your organization" (an edit moves updatedAt).
+		await dataSource.query(
+			`UPDATE "changelog" SET "content" = 'Our own text.', "updatedAt" = datetime('now', '+1 minute') WHERE "title" = 'Create your organization'`
+		);
+		const queryRunner = dataSource.createQueryRunner();
+		try {
+			await new RewordPlatformChangelogEntries1791000006900().up(queryRunner);
+		} finally {
+			await queryRunner.release();
+		}
+
+		const rewording = Object.fromEntries(new RewordPlatformChangelogEntries1791000006900().rows);
+		expect(await contentOf('One Apps page')).toEqual({ content: rewording['One Apps page'], learnMoreUrl: 'https://seeded.example.test' });
+		expect(await contentOf('Create your organization')).toEqual({ content: 'Our own text.', learnMoreUrl: 'https://seeded.example.test' });
+		for (const [, content] of new RewordPlatformChangelogEntries1791000006900().rows) {
+			expect(content).not.toMatch(/\b(?:ever\.co|ever\.team|gauzy\.co)\b/);
+		}
+	});
+
+	it('does nothing on a database without the table', async () => {
+		await dataSource.query(`DROP TABLE "changelog"`);
+		const queryRunner = dataSource.createQueryRunner();
+		try {
+			await expect(new RewordPlatformChangelogEntries1791000006900().up(queryRunner)).resolves.toBeUndefined();
+		} finally {
+			await queryRunner.release();
+		}
 	});
 });

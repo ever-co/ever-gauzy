@@ -250,7 +250,7 @@ export class RealtimeHintsService implements OnModuleInit, OnModuleDestroy {
 	 *
 	 * Repeated `updated` hints of one aggregate inside the coalescing window are folded: the first is appended at
 	 * once and the latest of the rest is appended when the window closes (trailing edge), so a burst of edits costs
-	 * two rows and a subscriber that refetched on the first still learns of the last.
+	 * two rows and a subscriber that read again on the first still learns of the last.
 	 *
 	 * @param input The hint, or `null` for a fact that produces none.
 	 * @returns True when a row was appended now.

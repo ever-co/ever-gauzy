@@ -19,8 +19,8 @@ const COLUMN: Readonly<{ name: string } & Record<Dialect, string>> = {
 /**
  * Adds `changelog.platform` (`varchar(50) NOT NULL DEFAULT 'gauzy'`): the product a What's New entry belongs to.
  *
- * One `changelog` table feeds the What's New of several products: Ever Teams runs on the Gauzy API (api.ever.team and
- * api.gauzy.co share one database), and other Ever products read the same public endpoint. Without a product on each
+ * One `changelog` table feeds the What's New of several products: Ever Teams runs on the Gauzy API (the two APIs share
+ * one database), and other Ever products read the same public endpoint. Without a product on each
  * row they would all show each other's news. Every row that exists today is Gauzy's, which the default backfills, and
  * the API lists Gauzy's rows when a reader names no product, so nothing a reader sees changes.
  *

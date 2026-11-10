@@ -1,10 +1,11 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 import * as chalk from 'chalk';
 import { platformChangelogEntryId } from '../platform-changelog-entry-id';
+import { WhatsNewLink, whatsNewLinkUrl } from '../whats-new-links';
 import { DatabaseTypeEnum } from '@gauzy/config';
 
-/** [platform, icon, title, isoDate, content, learnMoreUrl] */
-type PlatformChangelogRow = readonly [string, string, string, string, string, string];
+/** [platform, icon, title, isoDate, content, learnMore]: the link is named; the deployment says where it points. */
+type PlatformChangelogRow = readonly [string, string, string, string, string, WhatsNewLink];
 
 /** How each database inserts a row unless its id is taken. */
 type InsertUnlessIdTaken = (table: string, columns: string, values: string) => string;
@@ -13,6 +14,11 @@ type InsertUnlessIdTaken = (table: string, columns: string, values: string) => s
  * Adds the starter What's New entries of the other Ever products that read the `changelog` table: Ever Teams
  * (whose API shares Gauzy's database) and Ever Platform. Runs after `AddChangelogPlatform`, which
  * gives every row its product.
+ *
+ * Each entry's learn-more link is named, not spelled out (`whats-new-links.ts`): the deployment's settings say where it
+ * points, as only the Ever Platform modules name Ever hosts in this repository, and an install that sets none gets
+ * the entry without a link. (Databases this ran on before 2026-11-10, stage and demo, got the same addresses as
+ * literals; `RewordPlatformChangelogEntries` brings their wording in step.)
  *
  * Fresh installs get the same entries from `platform-changelog-templates.ts` in `@gauzy/plugin-changelog`; this
  * migration carries a frozen snapshot for databases seeded before it existed, as compact tuples so it stays
@@ -35,11 +41,11 @@ export class SeedPlatformChangelogContent1791000005610 implements MigrationInter
 
 	private readonly entries: readonly PlatformChangelogRow[] = [
 		// prettier-ignore
-		['ever-teams', 'gift-outline', "What's new and About", '2026-11-08T00:00:00.000Z', 'Open the gift icon in the header to catch up on Ever Teams updates, and the new About page to see which version of the app and the API you are on.', 'https://ever.team'],
+		['ever-teams', 'gift-outline', "What's new and About", '2026-11-08T00:00:00.000Z', 'Open the gift icon in the header to catch up on Ever Teams updates, and the new About page to see which version of the app and the API you are on.', 'everTeams'],
 		// prettier-ignore
-		['ever-teams', 'color-palette-outline', 'A lighter, cleaner look', '2026-10-17T00:00:00.000Z', 'A compact header and sidebar, one consistent dark mode and tidier inputs and buttons across the whole app.', 'https://ever.team'],
+		['ever-teams', 'color-palette-outline', 'A lighter, cleaner look', '2026-10-17T00:00:00.000Z', 'A compact header and sidebar, one consistent dark mode and tidier inputs and buttons across the whole app.', 'everTeams'],
 		// prettier-ignore
-		['ever-teams', 'bar-chart-outline', 'Weekly time report', '2026-10-12T00:00:00.000Z', "Group the Time & Activity report by week to see every member's tracked time day by day in one table.", 'https://docs.ever.team'],
+		['ever-teams', 'bar-chart-outline', 'Weekly time report', '2026-10-12T00:00:00.000Z', "Group the Time & Activity report by week to see every member's tracked time day by day in one table.", 'everTeamsDocs'],
 		// prettier-ignore
 		['ever-teams', 'people-outline', 'See who is online', '2026-10-12T00:00:00.000Z', 'Team cards show teammates as online while they are active in the app, even when they are not tracking time.', ''],
 		// prettier-ignore
@@ -49,17 +55,17 @@ export class SeedPlatformChangelogContent1791000005610 implements MigrationInter
 		// prettier-ignore
 		['ever-teams', 'message-square-outline', 'Timesheet rejection reasons', '2026-10-12T00:00:00.000Z', 'When a manager rejects a timesheet, the reason they give is saved and shown to the team member.', ''],
 		// prettier-ignore
-		['ever-teams', 'log-in-outline', 'Sign in with Ever ID', '2026-10-02T00:00:00.000Z', 'Use one Ever ID account to sign in to Ever Teams and the other Ever apps.', 'https://ever.co'],
+		['ever-teams', 'log-in-outline', 'Sign in with Ever ID', '2026-10-02T00:00:00.000Z', 'Use one Ever ID account to sign in to Ever Teams and the other Ever apps.', 'ever'],
 		// prettier-ignore
-		['ever-platform', 'grid-outline', 'One Apps page', '2026-11-06T00:00:00.000Z', 'See the Ever products your organization uses, the apps built with Ever Works and your installs from apps.ever.co in one place, and set up or connect each.', 'https://ever.co'],
+		['ever-platform', 'grid-outline', 'One Apps page', '2026-11-06T00:00:00.000Z', 'See the Ever products your organization uses, the apps built with Ever Works and your installs from Ever Apps in one place, and set up or connect each.', 'ever'],
 		// prettier-ignore
-		['ever-platform', 'people-outline', 'Create your organization', '2026-11-01T00:00:00.000Z', 'Create an organization on app.ever.co and manage it and its Ever products from one place.', 'https://ever.co'],
+		['ever-platform', 'people-outline', 'Create your organization', '2026-11-01T00:00:00.000Z', 'Create an organization in Ever Cloud and manage it and its Ever products from one place.', 'ever'],
 		// prettier-ignore
-		['ever-platform', 'shield-outline', 'Account security', '2026-11-01T00:00:00.000Z', 'Review and manage how you sign in to your Ever account from the Account security page.', 'https://ever.co'],
+		['ever-platform', 'shield-outline', 'Account security', '2026-11-01T00:00:00.000Z', 'Review and manage how you sign in to your Ever account from the Account security page.', 'ever'],
 		// prettier-ignore
-		['ever-platform', 'credit-card-outline', 'Billing in one place', '2026-11-01T00:00:00.000Z', "See and manage your organization's Ever subscriptions from the Billing page.", 'https://ever.co'],
+		['ever-platform', 'credit-card-outline', 'Billing in one place', '2026-11-01T00:00:00.000Z', "See and manage your organization's Ever subscriptions from the Billing page.", 'ever'],
 		// prettier-ignore
-		['ever-platform', 'log-in-outline', 'One Ever ID for every app', '2026-10-02T00:00:00.000Z', 'Sign in to Ever Teams, Ever Works and the other Ever apps with the same Ever ID account.', 'https://ever.co']
+		['ever-platform', 'log-in-outline', 'One Ever ID for every app', '2026-10-02T00:00:00.000Z', 'Sign in to Ever Teams, Ever Works and the other Ever apps with the same Ever ID account.', 'ever']
 	];
 
 	/** The starter entries, for the spec that keeps them in step with the fresh-install template. */
@@ -161,7 +167,7 @@ export class SeedPlatformChangelogContent1791000005610 implements MigrationInter
 		);
 
 		let attempted = 0;
-		for (const [platform, icon, title, isoDate, content, learnMoreUrl] of this.entries) {
+		for (const [platform, icon, title, isoDate, content, learnMore] of this.entries) {
 			const existing = await queryRunner.query(existsQuery, [platform, title]);
 			if (Array.isArray(existing) && existing.length > 0) {
 				continue;
@@ -173,7 +179,7 @@ export class SeedPlatformChangelogContent1791000005610 implements MigrationInter
 				date(isoDate),
 				bool(false),
 				content,
-				learnMoreUrl,
+				whatsNewLinkUrl(learnMore),
 				'',
 				platformChangelogEntryId(platform, title)
 			]);
