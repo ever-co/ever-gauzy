@@ -26,10 +26,11 @@ export interface IRetentionBounds {
 	scopes: number;
 }
 
-/** What one pass removed, per scope. */
+/** What one pass removed, per scope, and how many scopes failed (each logged, retried by the next pass). */
 export interface IRetentionPass {
 	removed: number;
 	scopes: Array<{ tenantId: ID; organizationId: ID | null; removed: number }>;
+	failed: number;
 }
 
 /** A row of the same partition with a higher `sequence`: its existence means the outer row is not the partition's newest. */
@@ -158,10 +159,18 @@ export class RealtimeRetentionService implements OnModuleInit, OnModuleDestroy {
 		// A full page: the next pass continues after it; a short one: the next pass starts over.
 		this.scopeOffset = scopes.length >= bounds.scopes ? this.scopeOffset + scopes.length : 0;
 
-		const pass: IRetentionPass = { removed: 0, scopes: [] };
+		const pass: IRetentionPass = { removed: 0, scopes: [], failed: 0 };
 		for (const raw of scopes) {
 			const scope = { tenantId: raw.tenantId as ID, organizationId: (raw.organizationId as ID) ?? null };
-			const removed = await this.pruneScope(scope, names, cutoff, bounds);
+			let removed = 0;
+			try {
+				removed = await this.pruneScope(scope, names, cutoff, bounds);
+			} catch (error) {
+				// That scope's transaction rolled back: nothing of it was removed. The scopes after it still get their turn.
+				pass.failed += 1;
+				this.logger.warn(`The collaboration events of ${scope.tenantId}/${scope.organizationId ?? 'tenant-wide'} were not pruned: ${(error as Error)?.message}`);
+				continue;
+			}
 			if (removed) {
 				pass.removed += removed;
 				pass.scopes.push({ ...scope, removed });

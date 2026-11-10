@@ -12,7 +12,9 @@
  *   node tools/scripts/realtime-live-check.mjs
  *
  * Optional: `GAUZY_WS_URL` (default: the API URL's origin on ws(s) + `/graphql`), `GAUZY_LIVE_TARGET_MS` (default
- * 1000), `GAUZY_LIVE_WAIT_MS` (default 90000: live events ride the outbox dispatcher, which runs every minute).
+ * 1000, the spec's target), `GAUZY_LIVE_WAIT_MS` (default 90000). **Until realtime task T28 lands, expect the live part
+ * to FAIL the 1 s target**: live events ride the outbox dispatcher, which runs every minute, so the measured latency is
+ * up to about a minute (the report prints it; set `GAUZY_LIVE_TARGET_MS=90000` to check delivery itself).
  *
  * The update writes the task's own title, status and organization back unchanged (a `PUT /tasks/:id` carries the first
  * two; the organization lets the platform file the hint), which the platform reports as `task.updated`. The event is
@@ -32,6 +34,7 @@ const organizationId = env.GAUZY_ORGANIZATION_ID ?? '';
 const taskId = env.GAUZY_TASK_ID ?? '';
 const targetMs = Number(env.GAUZY_LIVE_TARGET_MS ?? 1_000);
 const waitMs = Number(env.GAUZY_LIVE_WAIT_MS ?? 90_000);
+const positive = (value) => Number.isFinite(value) && value > 0;
 
 /** The subscription endpoint of an API URL: its origin on ws(s), at `/graphql`. */
 export function socketUrlOf(apiUrl) {
@@ -80,6 +83,10 @@ async function main() {
 		console.error(`Missing configuration: ${missing.join(', ')} (see the header of this script).`);
 		return 2;
 	}
+	if (!positive(targetMs) || !positive(waitMs)) {
+		console.error('GAUZY_LIVE_TARGET_MS and GAUZY_LIVE_WAIT_MS must be positive numbers of milliseconds.');
+		return 2;
+	}
 
 	// The position to replay from, taken before anything happens.
 	const start = await http('GET', '/realtime/events');
@@ -121,20 +128,23 @@ async function main() {
 		console.error(`subscription failed: ${error.message}`);
 		return null;
 	});
-	// Let the subscription start before the write.
-	await sleep(1_500);
-
 	const from = { after: start.cursor, afterId: start.cursorId };
-	for (const event of await updatesOfTask(from)) before.add(event.eventId);
-	const task = await http('GET', `/tasks/${taskId}`);
-	writing = true;
-	updatedAt = Date.now();
-	await http('PUT', `/tasks/${taskId}`, { title: task.title, status: task.status, organizationId: task.organizationId ?? organizationId });
-	console.log(`task ${taskId} updated at ${new Date(updatedAt).toISOString()}`);
-
-	const event = await live;
-	if (event) liveMs = Date.now() - updatedAt;
-	await client.dispose();
+	let event = null;
+	try {
+		// Let the subscription start before the write.
+		await sleep(1_500);
+		for (const known of await updatesOfTask(from)) before.add(known.eventId);
+		const task = await http('GET', `/tasks/${taskId}`);
+		writing = true;
+		updatedAt = Date.now();
+		await http('PUT', `/tasks/${taskId}`, { title: task.title, status: task.status, organizationId: task.organizationId ?? organizationId });
+		console.log(`task ${taskId} updated at ${new Date(updatedAt).toISOString()}`);
+		event = await live;
+		if (event) liveMs = Date.now() - updatedAt;
+	} finally {
+		// Closed whatever happened above (a failed read or write included), so the socket ends cleanly.
+		await client.dispose();
+	}
 
 	// The catch-up from the start position must answer the same event — the one received live, or, when none arrived,
 	// an update of the task that was not there before the write.
@@ -144,6 +154,7 @@ async function main() {
 
 	const liveOk = liveMs !== null && liveMs <= targetMs;
 	console.log(`live: ${liveMs === null ? `not received within ${waitMs} ms` : `${liveMs} ms`} (target ${targetMs} ms) — ${liveOk ? 'PASS' : 'FAIL'}`);
+	if (!liveOk && liveMs !== null) console.log('(live delivery waits for the per-minute outbox dispatch until realtime task T28)');
 	console.log(`catch-up replay: ${replayed ? `PASS (${replayed.eventId})` : 'FAIL'}`);
 	return liveOk && replayed ? 0 : 1;
 }

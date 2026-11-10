@@ -161,7 +161,7 @@ describe('RealtimeRetentionService', () => {
 		const rows = rowsOf(ORG_A, REALTIME_RETENTION_MIN_EVENTS + 5, 72);
 		await insert(rows);
 		const pass = await retention.prune(NOW, BOUNDS);
-		expect(pass).toEqual({ removed: 5, scopes: [{ tenantId: TENANT, organizationId: ORG_A, removed: 5 }] });
+		expect(pass).toEqual({ removed: 5, scopes: [{ tenantId: TENANT, organizationId: ORG_A, removed: 5 }], failed: 0 });
 		expect(await left(ORG_A)).toBe(REALTIME_RETENTION_MIN_EVENTS);
 		// The watermark is the newest row removed: a cursor before it resyncs, one at the oldest kept row does not.
 		const watermark = await watermarks.forScope(TENANT, ORG_A);
@@ -186,7 +186,7 @@ describe('RealtimeRetentionService', () => {
 		await insert(rowsOf(ORG_A, 900, 72));
 		// 2,000 events, all of the last 17 hours.
 		await insert(rowsOf(ORG_B, 2_000, 0, {}, 30_000));
-		expect(await retention.prune(NOW, BOUNDS)).toEqual({ removed: 0, scopes: [] });
+		expect(await retention.prune(NOW, BOUNDS)).toEqual({ removed: 0, scopes: [], failed: 0 });
 		expect(await watermarks.forScope(TENANT, ORG_A)).toBeNull();
 	});
 
@@ -225,14 +225,17 @@ describe('RealtimeRetentionService', () => {
 		expect(await left(ORG_A)).toBe(REALTIME_RETENTION_MIN_EVENTS);
 	});
 
-	it('removes nothing when the watermark cannot be advanced (one transaction), and the next pass retries', async () => {
-		await insert(rowsOf(ORG_A, REALTIME_RETENTION_MIN_EVENTS + 3, 72));
+	it('removes nothing from a scope whose watermark cannot be advanced (one transaction), prunes the others, and retries it', async () => {
+		await insert([...rowsOf(ORG_A, REALTIME_RETENTION_MIN_EVENTS + 3, 72), ...rowsOf(ORG_B, REALTIME_RETENTION_MIN_EVENTS + 2, 72)]);
 		const advance = jest.spyOn(watermarks, 'advance').mockRejectedValueOnce(new Error('database unavailable'));
-		await expect(retention.prune(NOW, BOUNDS)).rejects.toThrow('database unavailable');
+		const warn = jest.spyOn(retention['logger'], 'warn').mockImplementation(() => undefined);
+		// org-a comes first in the order and fails; org-b after it is still pruned.
+		expect(await retention.prune(NOW, BOUNDS)).toEqual({ removed: 2, scopes: [{ tenantId: TENANT, organizationId: ORG_B, removed: 2 }], failed: 1 });
+		expect(warn).toHaveBeenCalledTimes(1);
 		expect(await left(ORG_A)).toBe(REALTIME_RETENTION_MIN_EVENTS + 3);
 		expect(await watermarks.forScope(TENANT, ORG_A)).toBeNull();
 		advance.mockRestore();
-		// `run` logs a failed pass instead of throwing; the next one succeeds.
+		// The next pass retries it.
 		expect((await retention.run(NOW))?.removed).toBe(3);
 	});
 
@@ -251,7 +254,7 @@ describe('RealtimeRetentionService', () => {
 		for (const id of orgs) await dataSource.query(`INSERT OR IGNORE INTO "organization" ("id") VALUES (?)`, [id]);
 		// org-1 and org-2 hold old dispatched rows, but no more than the newest 3; org-3 (last in the order) is past it.
 		await insert([...rowsOf('org-1', 3, 72), ...rowsOf('org-2', 2, 72), ...rowsOf('org-3', 6, 72)]);
-		expect(await retention.prune(NOW, bounds)).toEqual({ removed: 3, scopes: [{ tenantId: TENANT, organizationId: 'org-3', removed: 3 }] });
+		expect(await retention.prune(NOW, bounds)).toEqual({ removed: 3, scopes: [{ tenantId: TENANT, organizationId: 'org-3', removed: 3 }], failed: 0 });
 	});
 
 	it('goes through more scopes than one pass looks at, continuing where the previous pass stopped', async () => {
