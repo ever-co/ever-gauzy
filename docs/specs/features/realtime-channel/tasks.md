@@ -49,6 +49,9 @@
   (2026-11-10: all three clean for the plugin's files; the binding check PASSED)
 - [x] **T17**. Plugin README (enable, events, routes, client recipe with `graphql-ws`), `docs/specs/README.md` status → `In Progress`/`Implemented`
 - [ ] **T18**. Enable on dev; verify with a small Node script (`graphql-ws` + `ws`) that a task update is received within 1 s and that catch-up replays it
+  (2026-11-10: the script is `tools/scripts/realtime-live-check.mjs`; it needs a
+  signed-in user's token, so the owner runs it. Expect the live part to miss
+  1 s: live events ride the outbox dispatcher, which runs every minute — T28)
 
 ## Definition of Done
 
@@ -67,7 +70,9 @@
   (plan §15.2)
 - [x] **T21**. Audience of `document.*`, `comment.*` and `task.*` hints from the parent record's read access (Docs visibility scope, the task read rule, the parent record's rule for comments), decided at delivery for live delivery and catch-up (`RealtimeAudience`; plan §9, §15.3)
 - [x] **T22**. Current-membership recheck for `chat_*` events in the catch-up and the live stream (`ChatMembershipAudience`, registered through `SubscriptionCatalogue.restrictAudience`; plan §9, §15.4)
-- [ ] **T23**. Outbox retention that keeps the FR-3 floor, with a test of both bounds (plan §15.5)
+- [x] **T23**. Outbox retention that keeps the FR-3 floor, with a test of both
+  bounds (plan §15.5; `RealtimeRetentionService`, off unless
+  `GAUZY_REALTIME_RETENTION_ENABLED=true`)
 - [x] **T24**. Commit-safe order and a safe resume position independent of the
   last live event (`safeCursor` settle window, or a commit-ordered position
   delivered in order) + a regression test of two concurrent appends committing
@@ -78,6 +83,8 @@
 - [x] **T26**. Coalesce the presence fan-out to at most one message per
   employee per 5 s (spec §4 Performance); today a change is published at once,
   only when the merged state changed
+- [ ] **T28**. Deliver live events right after the commit instead of on the
+  next per-minute dispatch pass (spec §4: P95 under 1 s; plan §15.9)
 - [ ] **T27**. Ever Teams `realtime-client`: resume from the catch-up's own
   `cursor` (not from streamed events), poll the catch-up while connected, apply
   a `presence.changed` only with a higher `revision`, and send a `connectionId`

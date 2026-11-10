@@ -979,6 +979,109 @@ describe.each([
 			}
 		});
 
+		it('refuses to replay a record whose event is no longer in the outbox, and leaves the record as it was', async () => {
+			harness.quiet();
+			const ran: string[] = [];
+
+			harness.registry.register(probe('orm-parity.replayed', ran));
+
+			try {
+				await appendCommitted(placed());
+				await dispatch();
+
+				const record = await recordOf('orm-parity.replayed');
+
+				// An outbox retention removed the published row; its consumer's record outlives it.
+				await harness.query(`DELETE FROM "event_outbox"`);
+
+				// By name: each half constructs the exception from its own module registry.
+				await expect(replayAsOperator(record.id)).rejects.toMatchObject({ name: NotFoundException.name });
+				expect((await recordOf('orm-parity.replayed')).status).toBe(EventOutboxStatus.PUBLISHED);
+				expect(await harness.query(`SELECT * FROM "event_outbox"`)).toEqual([]);
+			} finally {
+				harness.registry.unregister('orm-parity.replayed');
+			}
+		});
+
+		it('refuses to replay a record whose event id is only in the outbox of another tenant, and touches neither row', async () => {
+			harness.quiet();
+			const ran: string[] = [];
+
+			harness.registry.register(probe('orm-parity.replayed', ran));
+
+			try {
+				await appendCommitted(placed());
+				await dispatch();
+
+				const record = await recordOf('orm-parity.replayed');
+				const delivery = `SELECT "eventId", "status", "attemptCount", "lastError", "deliveredAt", "tenantId" FROM "event_delivery" WHERE "id" = ?`;
+				const outbox = `SELECT "eventId", "status", "attemptCount", "lastError", "publishedAt", "tenantId" FROM "event_outbox"`;
+
+				// The caller's row is gone, and the only row with that event id belongs to another tenant.
+				await harness.query(`UPDATE "event_outbox" SET "tenantId" = ?`, [OTHER_TENANT]);
+
+				const [recordBefore] = await harness.query(delivery, [record.id]);
+				const outboxBefore = await harness.query(outbox);
+
+				// By name: each half constructs the exception from its own module registry.
+				await expect(replayAsOperator(record.id)).rejects.toMatchObject({ name: NotFoundException.name });
+				expect(await harness.query(delivery, [record.id])).toEqual([recordBefore]);
+				expect(await harness.query(outbox)).toEqual(outboxBefore);
+				expect(recordBefore).toMatchObject({ status: EventOutboxStatus.PUBLISHED, tenantId: TENANT });
+				expect(outboxBefore).toEqual([
+					expect.objectContaining({ eventId: recordBefore.eventId, status: EventOutboxStatus.PUBLISHED, tenantId: OTHER_TENANT })
+				]);
+			} finally {
+				harness.registry.unregister('orm-parity.replayed');
+			}
+		});
+
+		it('writes nothing when the replay stops after resetting the record and before re-queueing the row', async () => {
+			harness.quiet();
+			const ran: string[] = [];
+
+			harness.registry.register(probe('orm-parity.replayed', ran));
+
+			try {
+				await appendCommitted(placed());
+				await dispatch();
+
+				const record = await recordOf('orm-parity.replayed');
+				const delivery = `SELECT "status", "attemptCount", "lastError", "deliveredAt" FROM "event_delivery" WHERE "id" = ?`;
+				const outbox = `SELECT "status", "attemptCount", "availableAt", "publishedAt" FROM "event_outbox"`;
+				const [recordBefore] = await harness.query(delivery, [record.id]);
+				const outboxBefore = await harness.query(outbox);
+
+				// The move is cut off between its two writes: the record's reset has run, the row's re-queue fails.
+				// Were the reset committed on its own, a retention could then remove the published row and leave a
+				// pending record that nothing delivers.
+				await harness.query(
+					`CREATE TRIGGER "orm_parity_replay_cut" BEFORE UPDATE ON "event_outbox" BEGIN SELECT RAISE(ABORT, 'replay cut off'); END`
+				);
+
+				try {
+					await expect(replayAsOperator(record.id)).rejects.toMatchObject({
+						message: expect.stringContaining('replay cut off')
+					});
+				} finally {
+					await harness.query(`DROP TRIGGER "orm_parity_replay_cut"`);
+				}
+
+				expect(recordBefore.status).toBe(EventOutboxStatus.PUBLISHED);
+				expect(await harness.query(delivery, [record.id])).toEqual([recordBefore]);
+				expect(await harness.query(outbox)).toEqual(outboxBefore);
+
+				// Nothing was left half-done: the same move, run again, goes through.
+				await replayAsOperator(record.id);
+				expect((await recordOf('orm-parity.replayed')).status).toBe(EventOutboxStatus.PENDING);
+				expect(await harness.query(`SELECT "status" FROM "event_outbox"`)).toEqual([
+					{ status: EventOutboxStatus.PENDING }
+				]);
+			} finally {
+				harness.registry.unregister('orm-parity.replayed');
+			}
+		});
+
 		it('leaves a row that is still waiting as it is when one of its records is replayed', async () => {
 			harness.quiet();
 			const ran: string[] = [];

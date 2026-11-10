@@ -8,6 +8,7 @@ export * from './lib/realtime-hints.service';
 export * from './lib/realtime-signals.service';
 export * from './lib/realtime-catch-up.service';
 export * from './lib/realtime-replay-watermark.service';
+export * from './lib/realtime-retention.service';
 export * from './lib/realtime-presence.store';
 export * from './lib/realtime.entities';
 export * from './lib/realtime.controller';

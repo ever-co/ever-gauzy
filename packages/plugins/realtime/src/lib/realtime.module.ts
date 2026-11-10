@@ -9,6 +9,7 @@ import { RealtimeCatchUpService, RealtimeSettleHorizon } from './realtime-catch-
 import { RealtimeHintsService } from './realtime-hints.service';
 import { RealtimePresenceStore } from './realtime-presence.store';
 import { RealtimeReplayWatermarkService } from './realtime-replay-watermark.service';
+import { RealtimeRetentionService } from './realtime-retention.service';
 import { RealtimeSignalsService } from './realtime-signals.service';
 import { RealtimeController } from './realtime.controller';
 
@@ -40,6 +41,8 @@ import { RealtimeController } from './realtime.controller';
 		RealtimePresenceStore,
 		RealtimeSignalsService,
 		RealtimeReplayWatermarkService,
+		// Prunes the replayed collaboration events past the FR-3 window; off unless GAUZY_REALTIME_RETENTION_ENABLED=true.
+		RealtimeRetentionService,
 		RealtimeSettleHorizon,
 		RealtimeCatchUpService,
 		// Listed here as well as in the plugin's `extensions`: a resolver only the plugin metadata names is never

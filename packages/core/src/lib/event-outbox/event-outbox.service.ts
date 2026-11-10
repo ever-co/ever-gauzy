@@ -23,7 +23,7 @@ import {
 	EventDeliveryAction,
 	EventDeliveryEventPublisher
 } from './event-delivery.publisher';
-import { EventOutboxMikroOrmStore, isMikroOrmEntityManager } from './event-outbox-mikro-orm.store';
+import { EventOutboxMikroOrmStore, IDeliveryReplayMove, isMikroOrmEntityManager } from './event-outbox-mikro-orm.store';
 import { TypeOrmEventDeliveryRepository } from './repository/type-orm-event-delivery.repository';
 import { TypeOrmEventOutboxRepository } from './repository/type-orm-event-outbox.repository';
 import { MikroOrmEventDeliveryRepository } from './repository/mikro-orm-event-delivery.repository';
@@ -791,36 +791,74 @@ export class EventOutboxService extends CrudService<EventOutbox> {
 	 * consumers that already settled. A row that is still waiting is left alone: its next claim
 	 * reaches the record.
 	 *
+	 * A record outlives its outbox row (an outbox retention may remove the row, `event_delivery` has no
+	 * foreign key to it). With the row gone the scan has nothing to claim, so the move is refused: a
+	 * record reset to `PENDING` that nothing will ever deliver would read as a replay that worked.
+	 *
+	 * **The move is one transaction that holds the row.** The row is read under `FOR UPDATE` where the
+	 * dialect has row locks (Postgres and MySQL; SQLite serializes writers, so there the transaction is
+	 * the lock), and the record's reset and the row's re-queue are written before it commits. A
+	 * retention's delete that is in flight therefore lands first, and the read then finds no row and
+	 * nothing is written; or the delete waits for the move, and then finds a row that is no longer
+	 * `PUBLISHED` and keeps it. A move that stops part-way writes nothing, so it can never leave a
+	 * `PENDING` record behind a row a retention went on to remove.
+	 *
 	 * @param id The record id.
 	 * @returns The record as it stands after the move.
-	 * @throws NotFoundException when the record does not exist inside the caller's own scope.
+	 * @throws NotFoundException when the record does not exist inside the caller's own scope, or its
+	 * event is no longer in the outbox.
 	 */
 	async replayDelivery(id: ID): Promise<EventDelivery> {
 		const delivery = await this.deliveryOfTheCaller(id);
-
-		await this.updateDeliveryRow(id, {
-			status: EventOutboxStatus.PENDING,
-			attemptCount: 0,
-			lastError: null,
-			// A record that is waiting to be re-driven has not been acknowledged, whatever it recorded
-			// before: leaving the instant on it would answer a `PENDING` row that claims a delivery.
-			deliveredAt: null
-		});
-
-		// After the record is reset, so a pass that claims the row at once already finds it pending.
-		const where = { eventId: delivery.eventId, tenantId: delivery.tenantId };
-		const event = this.usesMikroOrm
-			? await this.mikroOrmStore.findOne<EventOutbox>(EventOutbox, where)
-			: await this.typeOrmEventOutboxRepository.findOne({ where });
-
-		if (event?.status === EventOutboxStatus.PUBLISHED || event?.status === EventOutboxStatus.DEAD) {
-			await this.updateOutboxRow(event.id as ID, {
+		const move: IDeliveryReplayMove = {
+			id,
+			event: { eventId: delivery.eventId, tenantId: delivery.tenantId },
+			reset: {
+				status: EventOutboxStatus.PENDING,
+				attemptCount: 0,
+				lastError: null,
+				// A record that is waiting to be re-driven has not been acknowledged, whatever it recorded
+				// before: leaving the instant on it would answer a `PENDING` row that claims a delivery.
+				deliveredAt: null
+			},
+			requeueFrom: [EventOutboxStatus.PUBLISHED, EventOutboxStatus.DEAD],
+			requeue: {
 				status: EventOutboxStatus.PENDING,
 				attemptCount: 0,
 				availableAt: new Date(),
 				lastError: null,
 				publishedAt: null
-			});
+			}
+		};
+
+		const replayed = this.usesMikroOrm
+			? await this.mikroOrmStore.replayDelivery(move)
+			: await this.typeOrmEventOutboxRepository.manager.transaction(async (manager) => {
+					const event = await manager.findOne(EventOutbox, {
+						where: move.event as FindOptionsWhere<EventOutbox>,
+						// Both dialects map this to FOR UPDATE, which a retention's delete of the row waits on.
+						...(isPostgres() || isMySQL() ? { lock: { mode: 'pessimistic_write' as const } } : {})
+					});
+
+					if (!event) {
+						return false;
+					}
+
+					await manager.update(EventDelivery, { id } as any, move.reset as any);
+
+					if (move.requeueFrom.includes(event.status as EventOutboxStatus)) {
+						await manager.update(EventOutbox, { id: event.id } as any, move.requeue as any);
+					}
+
+					return true;
+			  });
+
+		if (!replayed) {
+			throw new NotFoundException(
+				`${ApiErrorCode.RESOURCE_NOT_FOUND}: delivery '${String(id)}' cannot be replayed: its event '${String(
+					delivery.eventId
+				)}' is no longer in the outbox.`
+			);
 		}
 
 		return this.announce(id, EVENT_DELIVERY_ACTIONS.REPLAYED);

@@ -13,6 +13,7 @@ import { EventOutboxStatus, ID } from '@gauzy/contracts';
 import '../core/entities/internal';
 
 import { RequestContext } from '../core/context/request-context';
+import { EventDelivery } from './event-delivery.entity';
 import { EVENT_DELIVERY_ACTIONS } from './event-delivery.publisher';
 import { EventOutboxService } from './event-outbox.service';
 import { TypeOrmEventDeliveryRepository } from './repository/type-orm-event-delivery.repository';
@@ -252,6 +253,18 @@ function surfaces(options: { tenantId?: string; organizationId?: string; publish
 	const outboxTable = new Table(OUTBOX_ROWS);
 	const deliveryTable = new Table(DELIVERY_ROWS);
 	const publisher = { deliveryChanged: jest.fn().mockResolvedValue(true) };
+	const tableOf = (entity: unknown): Table => (entity === EventDelivery ? deliveryTable : outboxTable);
+
+	// The replay's transaction: its statements reach the two tables, by entity, as the repositories' do.
+	Object.assign(outboxTable, {
+		manager: {
+			transaction: async <T>(work: (manager: unknown) => Promise<T>): Promise<T> =>
+				work({
+					findOne: (entity: unknown, options: { where?: Row }) => tableOf(entity).findOne(options),
+					update: (entity: unknown, criteria: Row, values: Row) => tableOf(entity).update(criteria, values)
+				})
+		}
+	});
 
 	const service = new EventOutboxService(
 		outboxTable as unknown as TypeOrmEventOutboxRepository,
