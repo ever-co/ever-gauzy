@@ -232,7 +232,7 @@ function writeCollapsed(keys: ReadonlySet<string>): void {
 				flex: 1 1 auto;
 				margin: 0;
 				color: var(--chat-text, inherit);
-				font-size: 1.125rem;
+				font-size: 1rem;
 				font-weight: 800;
 				letter-spacing: -0.01em;
 				white-space: nowrap;
@@ -254,7 +254,7 @@ function writeCollapsed(keys: ReadonlySet<string>): void {
 				transition: background-color 0.12s ease, color 0.12s ease;
 			}
 			.icon-button nb-icon {
-				font-size: 1.125rem;
+				font-size: 1rem;
 			}
 			.icon-button:hover,
 			.icon-button:focus-visible {
@@ -265,7 +265,7 @@ function writeCollapsed(keys: ReadonlySet<string>): void {
 				display: flex;
 				align-items: center;
 				gap: 0.5rem;
-				height: 2.25rem;
+				height: 2rem;
 				margin: 0.75rem 0.75rem 0.5rem;
 				padding: 0 0.375rem 0 0.5rem;
 				border: 1px solid var(--chat-border, rgba(127, 127, 127, 0.2));
@@ -285,7 +285,7 @@ function writeCollapsed(keys: ReadonlySet<string>): void {
 			}
 			.jump > nb-icon {
 				width: 1.25rem;
-				font-size: 1rem;
+				font-size: 0.875rem;
 				flex: 0 0 auto;
 			}
 			/* The app styles every text input (border, fill, padding, focus ring): none of that belongs inside the box. */
@@ -306,7 +306,7 @@ function writeCollapsed(keys: ReadonlySet<string>): void {
 				appearance: none;
 				color: var(--chat-text, inherit);
 				font: inherit;
-				font-size: 0.875rem;
+				font-size: 0.8125rem;
 			}
 			.jump input::placeholder {
 				color: var(--chat-muted, inherit);
@@ -321,9 +321,9 @@ function writeCollapsed(keys: ReadonlySet<string>): void {
 				box-shadow: none;
 				color: var(--chat-muted, inherit);
 				font-family: inherit;
-				font-size: 0.6875rem;
+				font-size: 0.625rem;
 				font-weight: 600;
-				line-height: 1rem;
+				line-height: 0.875rem;
 				white-space: nowrap;
 			}
 			.clear {
@@ -376,14 +376,14 @@ function writeCollapsed(keys: ReadonlySet<string>): void {
 				align-items: center;
 				gap: 0.5rem;
 				min-width: 0;
-				height: 1.75rem;
+				height: 1.625rem;
 				padding: 0 0.5rem;
 				border: 0;
 				border-radius: 0.375rem;
 				background: transparent;
 				color: var(--chat-muted, inherit);
 				font: inherit;
-				font-size: 0.8125rem;
+				font-size: 0.75rem;
 				font-weight: 700;
 				text-align: left;
 				cursor: pointer;
@@ -401,7 +401,7 @@ function writeCollapsed(keys: ReadonlySet<string>): void {
 			}
 			.caret {
 				width: 1.25rem;
-				font-size: 0.875rem;
+				font-size: 0.75rem;
 				flex: 0 0 auto;
 				transition: transform 0.15s ease;
 			}
@@ -438,7 +438,7 @@ function writeCollapsed(keys: ReadonlySet<string>): void {
 			.results-title {
 				margin: 0.25rem 0.5rem 0.375rem;
 				color: var(--chat-muted, inherit);
-				font-size: 0.8125rem;
+				font-size: 0.75rem;
 				font-weight: 700;
 			}
 			.row {
@@ -447,7 +447,7 @@ function writeCollapsed(keys: ReadonlySet<string>): void {
 				gap: 0.5rem;
 				box-sizing: border-box;
 				width: 100%;
-				height: 2rem;
+				height: 1.875rem;
 				margin: 0;
 				padding: 0 0.5rem;
 				border: 0;
@@ -455,7 +455,7 @@ function writeCollapsed(keys: ReadonlySet<string>): void {
 				background: transparent;
 				color: var(--chat-muted, inherit);
 				font: inherit;
-				font-size: 0.9375rem;
+				font-size: 0.8125rem;
 				line-height: 1;
 				text-align: left;
 				text-decoration: none;
@@ -496,14 +496,14 @@ function writeCollapsed(keys: ReadonlySet<string>): void {
 				flex: 0 0 auto;
 			}
 			.row-icon nb-icon {
-				font-size: 1.125rem;
+				font-size: 1rem;
 			}
 			.add-icon {
 				border-radius: 0.3125rem;
 				background: var(--chat-elevated, rgba(127, 127, 127, 0.15));
 			}
 			.add-icon nb-icon {
-				font-size: 0.875rem;
+				font-size: 0.75rem;
 			}
 			.title {
 				flex: 1 1 auto;
@@ -514,20 +514,20 @@ function writeCollapsed(keys: ReadonlySet<string>): void {
 				line-height: 1.25rem;
 			}
 			.muted-icon {
-				font-size: 0.875rem;
+				font-size: 0.75rem;
 				flex: 0 0 auto;
 			}
 			.count {
 				flex: 0 0 auto;
 				min-width: 1.25rem;
-				height: 1.25rem;
+				height: 1.125rem;
 				padding: 0 0.375rem;
 				border-radius: 999px;
 				background: var(--chat-active-tint, rgba(127, 127, 127, 0.25));
 				color: var(--chat-text, inherit);
-				font-size: 0.6875rem;
+				font-size: 0.625rem;
 				font-weight: 700;
-				line-height: 1.25rem;
+				line-height: 1.125rem;
 				text-align: center;
 			}
 			.count.mention {
@@ -538,7 +538,7 @@ function writeCollapsed(keys: ReadonlySet<string>): void {
 				margin: 0;
 				padding: 0.375rem 0.5rem 0.375rem 2.25rem;
 				color: var(--chat-muted, inherit);
-				font-size: 0.8125rem;
+				font-size: 0.75rem;
 				line-height: 1.25rem;
 			}
 		`
