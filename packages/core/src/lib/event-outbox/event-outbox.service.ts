@@ -792,9 +792,12 @@ export class EventOutboxService extends CrudService<EventOutbox> {
 	 * reaches the record.
 	 *
 	 * A record outlives its outbox row (an outbox retention may remove the row, `event_delivery` has no
-	 * foreign key to it). With the row gone the scan has nothing to claim, so the move is refused before
-	 * anything is written: a record reset to `PENDING` that nothing will ever deliver would read as a
-	 * replay that worked.
+	 * foreign key to it). With the row gone the scan has nothing to claim, so the move is refused: a
+	 * record reset to `PENDING` that nothing will ever deliver would read as a replay that worked. The
+	 * row is read before anything is written, and once more after the writes: a retention's delete
+	 * keeps a row whose record is not acknowledged, so once the reset is committed the row stays, but a
+	 * delete that began before it may still land. When that last read finds the row gone, the record
+	 * is put back as it was and the move is refused all the same.
 	 *
 	 * @param id The record id.
 	 * @returns The record as it stands after the move.
@@ -808,13 +811,15 @@ export class EventOutboxService extends CrudService<EventOutbox> {
 			this.usesMikroOrm
 				? this.mikroOrmStore.findOne<EventOutbox>(EventOutbox, where)
 				: this.typeOrmEventOutboxRepository.findOne({ where });
-
-		if (!(await findEvent())) {
-			throw new NotFoundException(
+		const gone = () =>
+			new NotFoundException(
 				`${ApiErrorCode.RESOURCE_NOT_FOUND}: delivery '${String(id)}' cannot be replayed: its event '${String(
 					delivery.eventId
 				)}' is no longer in the outbox.`
 			);
+
+		if (!(await findEvent())) {
+			throw gone();
 		}
 
 		await this.updateDeliveryRow(id, {
@@ -837,6 +842,18 @@ export class EventOutboxService extends CrudService<EventOutbox> {
 				lastError: null,
 				publishedAt: null
 			});
+		}
+
+		// The row may have been removed since the first read (a re-queue above waits for a delete in flight).
+		if (!event || !(await findEvent())) {
+			await this.updateDeliveryRow(id, {
+				status: delivery.status,
+				attemptCount: delivery.attemptCount,
+				lastError: delivery.lastError ?? null,
+				deliveredAt: delivery.deliveredAt ?? null
+			});
+
+			throw gone();
 		}
 
 		return this.announce(id, EVENT_DELIVERY_ACTIONS.REPLAYED);

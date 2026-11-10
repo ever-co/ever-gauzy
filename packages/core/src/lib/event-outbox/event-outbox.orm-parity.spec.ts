@@ -1003,6 +1003,81 @@ describe.each([
 			}
 		});
 
+		it('refuses to replay a record whose event id is only in the outbox of another tenant, and touches neither row', async () => {
+			harness.quiet();
+			const ran: string[] = [];
+
+			harness.registry.register(probe('orm-parity.replayed', ran));
+
+			try {
+				await appendCommitted(placed());
+				await dispatch();
+
+				const record = await recordOf('orm-parity.replayed');
+				const delivery = `SELECT "eventId", "status", "attemptCount", "lastError", "deliveredAt", "tenantId" FROM "event_delivery" WHERE "id" = ?`;
+				const outbox = `SELECT "eventId", "status", "attemptCount", "lastError", "publishedAt", "tenantId" FROM "event_outbox"`;
+
+				// The caller's row is gone, and the only row with that event id belongs to another tenant.
+				await harness.query(`UPDATE "event_outbox" SET "tenantId" = ?`, [OTHER_TENANT]);
+
+				const [recordBefore] = await harness.query(delivery, [record.id]);
+				const outboxBefore = await harness.query(outbox);
+
+				// By name: each half constructs the exception from its own module registry.
+				await expect(replayAsOperator(record.id)).rejects.toMatchObject({ name: NotFoundException.name });
+				expect(await harness.query(delivery, [record.id])).toEqual([recordBefore]);
+				expect(await harness.query(outbox)).toEqual(outboxBefore);
+				expect(recordBefore).toMatchObject({ status: EventOutboxStatus.PUBLISHED, tenantId: TENANT });
+				expect(outboxBefore).toEqual([
+					expect.objectContaining({ eventId: recordBefore.eventId, status: EventOutboxStatus.PUBLISHED, tenantId: OTHER_TENANT })
+				]);
+			} finally {
+				harness.registry.unregister('orm-parity.replayed');
+			}
+		});
+
+		it('puts the record back and refuses when the event is removed after the replay first read it', async () => {
+			harness.quiet();
+			const ran: string[] = [];
+
+			harness.registry.register(probe('orm-parity.replayed', ran));
+
+			try {
+				await appendCommitted(placed());
+				await dispatch();
+
+				const record = await recordOf('orm-parity.replayed');
+				const [before] = await harness.query(
+					`SELECT "status", "attemptCount", "lastError", "deliveredAt" FROM "event_delivery" WHERE "id" = ?`,
+					[record.id]
+				);
+				const service = harness.service as unknown as { updateDeliveryRow: (...args: unknown[]) => Promise<void> };
+				const reset = service.updateDeliveryRow.bind(service);
+				// A retention removes the row between the replay's first read and its reset of the record.
+				const between = jest.spyOn(service, 'updateDeliveryRow').mockImplementationOnce(async (...args: unknown[]) => {
+					await harness.query(`DELETE FROM "event_outbox"`);
+					return reset(...args);
+				});
+
+				try {
+					// By name: each half constructs the exception from its own module registry.
+					await expect(replayAsOperator(record.id)).rejects.toMatchObject({ name: NotFoundException.name });
+				} finally {
+					between.mockRestore();
+				}
+
+				expect(
+					await harness.query(
+						`SELECT "status", "attemptCount", "lastError", "deliveredAt" FROM "event_delivery" WHERE "id" = ?`,
+						[record.id]
+					)
+				).toEqual([before]);
+				expect(before.status).toBe(EventOutboxStatus.PUBLISHED);
+			} finally {
+				harness.registry.unregister('orm-parity.replayed');
+			}
+		});
+
 		it('leaves a row that is still waiting as it is when one of its records is replayed', async () => {
 			harness.quiet();
 			const ran: string[] = [];
