@@ -1,9 +1,10 @@
 import { Injectable, Logger, OnModuleInit, Type } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
-import { DataSource } from 'typeorm';
-import { CHAT_EVENT_NAMES, CHAT_STREAMED_EVENTS, ChatEventName, IChatEvent, ID, JsonData } from '@gauzy/contracts';
+import { DataSource, EntityManager } from 'typeorm';
+import { CHAT_EVENT_NAMES, CHAT_STREAMED_EVENTS, ChatEventName, IChatEvent, ID, IOutboxWriteInput, JsonData } from '@gauzy/contracts';
 import { declareStreamedEvents, EventOutboxService, GraphqlSubscriptionConsumer, SubscriptionCatalogue } from '@gauzy/core';
 import { CHAT_AGGREGATES } from '../chat.constants';
+import { appendInTransaction } from './chat-outbox-append';
 import { ChatMembershipAudience } from './chat-realtime-audience';
 
 /** What one chat fact needs to reach the outbox. */
@@ -25,8 +26,10 @@ export interface IChatRealtimeFact {
  * stream of the real-time plugin for everyone). A write also answers the facts it caused ({@link IChatEvent}),
  * so the sender applies them at once and the socket only has to reach the others.
  *
- * Looked up, not injected, as the Inbox does: the plugin also loads where no subscription surface exists. Nothing
- * here fails a write; a lost fact costs an instant update, never the message.
+ * A write appends its facts with its own transaction's manager ({@link append}), so a fact commits with the write and
+ * a crash between the commit and the append cannot lose it; only the per-member fan-out of a send is appended after
+ * the commit ({@link publish}). The outbox is looked up, not injected, as the Inbox does: the plugin also loads where
+ * no outbox or subscription surface exists, and then a write appends nothing.
  */
 @Injectable()
 export class ChatRealtime implements OnModuleInit {
@@ -50,27 +53,59 @@ export class ChatRealtime implements OnModuleInit {
 		}
 	}
 
-	/** Appends one fact (best effort) and returns it as the event the write answers. */
-	async publish(fact: IChatRealtimeFact): Promise<IChatEvent> {
-		const recipientUserIds = [...new Set(fact.recipientUserIds.map(String))];
-		const data = { ...fact.data, recipientUserIds } as unknown as Record<string, unknown>;
+	/**
+	 * Appends one fact inside the write's transaction and returns it as the event the write answers. The row commits
+	 * with the write or not at all: a crash after the commit cannot lose it, and a fact that cannot be stored fails the
+	 * write (a lost partition race is tried again, see {@link appendInTransaction}).
+	 *
+	 * @param manager The manager of the write's open transaction.
+	 * @param fact The fact.
+	 */
+	async append(manager: EntityManager, fact: IChatRealtimeFact): Promise<IChatEvent> {
+		const { input, event } = this.prepare(fact);
 		const outbox = this.find(EventOutboxService);
-		if (outbox && fact.tenantId && fact.aggregateId && recipientUserIds.length) {
+		if (outbox && input) {
+			await appendInTransaction(outbox, manager, input);
+		}
+		return event;
+	}
+
+	/**
+	 * Appends one fact after the write committed, best effort, and returns it as the event the write answers. Only for
+	 * the facts a write fans out to every other member (their read and mention counters after a send): one row per
+	 * member, which would hold the conversation's row lock for as long as they take to write. A lost one costs that
+	 * member an instant badge update; the message's own fact, which commits with the message, still reaches them.
+	 */
+	async publish(fact: IChatRealtimeFact): Promise<IChatEvent> {
+		const { input, event } = this.prepare(fact);
+		const outbox = this.find(EventOutboxService);
+		if (outbox && input) {
 			try {
-				await outbox.append(this.dataSource.manager, {
-					name: fact.name,
-					aggregateType: fact.aggregateType,
-					aggregateId: fact.aggregateId,
-					tenantId: fact.tenantId,
-					...(fact.organizationId ? { organizationId: fact.organizationId } : { tenantWide: true }),
-					data
-				});
+				await outbox.append(this.dataSource.manager, input);
 			} catch (error) {
 				this.logger.warn(`${fact.name} was not appended for ${fact.aggregateId}: ${(error as Error)?.message}`);
 			}
 		}
+		return event;
+	}
+
+	/** The outbox row of a fact (none when it has no tenant, aggregate or recipient), and the event the write answers. */
+	private prepare(fact: IChatRealtimeFact): { input: IOutboxWriteInput | null; event: IChatEvent } {
+		const recipientUserIds = [...new Set(fact.recipientUserIds.map(String))];
+		const data = { ...fact.data, recipientUserIds } as unknown as Record<string, unknown>;
+		const input: IOutboxWriteInput | null =
+			fact.tenantId && fact.aggregateId && recipientUserIds.length
+				? {
+						name: fact.name,
+						aggregateType: fact.aggregateType,
+						aggregateId: fact.aggregateId,
+						tenantId: fact.tenantId,
+						...(fact.organizationId ? { organizationId: fact.organizationId } : { tenantWide: true }),
+						data
+					}
+				: null;
 		const { recipientUserIds: _recipients, ...answered } = data;
-		return { name: fact.name, data: answered as JsonData };
+		return { input, event: { name: fact.name, data: answered as JsonData } };
 	}
 
 	messageFact(

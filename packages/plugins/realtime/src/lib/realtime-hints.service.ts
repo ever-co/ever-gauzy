@@ -183,8 +183,18 @@ export function coalesceKey(input: Pick<IRealtimeHintInput, 'name' | 'aggregateI
  * hint, so a partial save result never reaches the whole tenant. The task, comment and document hints name no
  * recipients: their readers are decided when the hint is delivered, by `RealtimeAudience`.
  *
- * Other plugins file their own hints through {@link appendHint} (the chat plugin, for its messages) so the
- * addressing and scoping rules live in one place.
+ * **Why these hints stay best effort, after the commit.** The facts reach this service after their write committed:
+ * `TaskEvent` is published by the task command handlers and `TaskService` once `save`/`update` returned, `CommentEvent`
+ * by `CommentService` after its write, `DocumentEvent` by the Docs services, and the mention and notification events
+ * after their rows were saved — none of them hands over a transaction, and most of those writes run in none of their
+ * own (a repository `update` is one auto-committed statement). Appending inside them would mean changing the task,
+ * comment, mention and notification write paths of the platform core, which production depends on, for hints that
+ * are refetch triggers carrying no data: a lost one costs a subscriber the instant refresh of one record (its next
+ * read, a focus refetch or a reconnect still shows the change), never the write. A TypeORM entity subscriber would
+ * join `save` transactions but not the `update`/`delete` statements most of these writes are, and the coalesced
+ * trailing hint is appended after its window by design. So the loss window — a crash between the commit and the
+ * append, or an append that fails (logged) — stays, for these hints only; the chat plugin, whose writes run in
+ * transactions of its own, appends its facts inside them (`ChatRealtime.append`).
  */
 @Injectable()
 export class RealtimeHintsService implements OnModuleInit, OnModuleDestroy {

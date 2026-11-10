@@ -1,4 +1,4 @@
-import { ForbiddenException, Injectable, Logger, Optional } from '@nestjs/common';
+import { ForbiddenException, Injectable, Logger, OnModuleDestroy, OnModuleInit, Optional } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 import { DataSource, In } from 'typeorm';
 import {
@@ -10,59 +10,107 @@ import {
 	REALTIME_EVENT_NAMES,
 	RealtimePresenceStatus
 } from '@gauzy/contracts';
-import { Employee, EmployeeService, GraphqlPubSub, RequestContext } from '@gauzy/core';
+import { Employee, GraphqlPubSub, RequestContext } from '@gauzy/core';
 import type { SubscriptionEnvelope } from '@gauzy/core';
-import { REALTIME_AGGREGATES } from './realtime.constants';
+import { REALTIME_AGGREGATES, REALTIME_PRESENCE_SWEEP_MS } from './realtime.constants';
+import { REALTIME_SHARED_CONNECTION_KEY } from './realtime.entities';
+import { IPresenceOutcome, RealtimePresenceStore } from './realtime-presence.store';
 
 /**
  * The ephemeral signals of the channel: presence and typing.
  *
  * A signal is published straight to the pub/sub on the tenant's topic, as a full envelope, without an
  * outbox row: nothing replays it, nothing delivers it to a webhook, and a subscriber that was not connected
- * never learns of it — which is the right fate for "Anna is typing". Presence is also persisted on the
- * employee (`lastSeenAt`, `isIdle`) through the existing heartbeat, so a client that polls still sees it.
+ * never learns of it — which is the right fate for "Anna is typing". Presence is kept per connection and merged
+ * per employee ({@link RealtimePresenceStore}); the merge is persisted on the employee (`lastSeenAt`, `isIdle`), so a
+ * client that polls still sees it, and told to the organization only when it changes — on a report, or when a
+ * connection lapses (a sweep every {@link REALTIME_PRESENCE_SWEEP_MS}).
  */
 @Injectable()
-export class RealtimeSignalsService {
+export class RealtimeSignalsService implements OnModuleInit, OnModuleDestroy {
 	private readonly logger = new Logger('RealtimeSignalsService');
+	private sweepTimer: NodeJS.Timeout | null = null;
+	private sweeping = false;
 
 	constructor(
 		private readonly dataSource: DataSource,
-		private readonly employeeService: EmployeeService,
+		private readonly presenceStore: RealtimePresenceStore,
 		@Optional() private readonly pubSub?: GraphqlPubSub
 	) {}
 
+	onModuleInit(): void {
+		this.sweepTimer = setInterval(() => void this.sweepPresence(), REALTIME_PRESENCE_SWEEP_MS);
+		this.sweepTimer.unref?.();
+	}
+
+	onModuleDestroy(): void {
+		if (this.sweepTimer) clearInterval(this.sweepTimer);
+		this.sweepTimer = null;
+	}
+
 	/**
-	 * Records the caller's presence on their employee and tells the organization.
+	 * Records what the caller's connection reports, merges it with the employee's other connections, and tells the
+	 * organization when the employee's presence changed.
 	 *
-	 * @param input The status the client reports.
-	 * @returns The presence as published.
+	 * @param input The status the connection reports, and the connection's id (none: the employee's shared one).
+	 * @returns The employee's presence as now merged.
 	 * @throws ForbiddenException when the caller has no employee record.
 	 */
 	async publishPresence(input: IRealtimePresenceInput): Promise<IRealtimePresence> {
 		const employeeId = RequestContext.currentUser()?.employeeId;
 		const userId = RequestContext.currentUserId();
-		if (!employeeId || !userId) {
+		const tenantId = RequestContext.currentTenantId();
+		if (!employeeId || !userId || !tenantId) {
 			throw new ForbiddenException('Only an employee can report presence.');
 		}
 
-		const status = input.status ?? RealtimePresenceStatus.ACTIVE;
-		// The existing heartbeat: `lastSeenAt` now, `isIdle` for anything but active input.
-		await this.employeeService.updatePresence({ isIdle: status !== RealtimePresenceStatus.ACTIVE });
-
-		const presence: IRealtimePresence = {
+		const now = new Date();
+		const outcome = await this.presenceStore.report({
+			tenantId,
+			organizationId: RequestContext.currentOrganizationId() ?? null,
 			employeeId,
 			userId,
-			organizationId: RequestContext.currentOrganizationId() ?? null,
-			status,
-			at: new Date().toISOString()
-		};
-
-		await this.publish(REALTIME_EVENT_NAMES.PRESENCE_CHANGED, {
-			aggregate: { type: REALTIME_AGGREGATES.EMPLOYEE, id: String(employeeId) },
-			data: presence
+			connectionId: input.connectionId || REALTIME_SHARED_CONNECTION_KEY,
+			status: input.status ?? RealtimePresenceStatus.ACTIVE,
+			now
 		});
+		return this.tellPresence(outcome, now);
+	}
 
+	/**
+	 * Settles the connections that lapsed (no report within the TTL) and tells the organization of each employee whose
+	 * presence changed. One pass at a time per process; a failed pass is logged and the next one tries again.
+	 */
+	async sweepPresence(now: Date = new Date()): Promise<void> {
+		if (this.sweeping) return;
+		this.sweeping = true;
+		try {
+			// Each employee is told as soon as their settlement committed, whatever happens to the next one.
+			await this.presenceStore.sweep(now, async (outcome) => void (await this.tellPresence(outcome, now)));
+		} catch (error) {
+			this.logger.warn(`The lapsed presences were not settled: ${(error as Error)?.message}`);
+		} finally {
+			this.sweeping = false;
+		}
+	}
+
+	/** The merged presence as the payload says it, published to the organization when it changed. */
+	private async tellPresence(outcome: IPresenceOutcome, now: Date): Promise<IRealtimePresence> {
+		const presence: IRealtimePresence = {
+			employeeId: outcome.employeeId,
+			userId: outcome.userId,
+			organizationId: outcome.organizationId,
+			status: outcome.status,
+			revision: outcome.revision,
+			at: now.toISOString()
+		};
+		if (outcome.changed) {
+			await this.publish(
+				REALTIME_EVENT_NAMES.PRESENCE_CHANGED,
+				{ aggregate: { type: REALTIME_AGGREGATES.EMPLOYEE, id: String(outcome.employeeId) }, data: presence },
+				{ tenantId: outcome.tenantId, organizationId: outcome.organizationId }
+			);
+		}
 		return presence;
 	}
 
@@ -96,11 +144,11 @@ export class RealtimeSignalsService {
 		const named = [...new Set((input.recipientUserIds ?? []).map(String))].filter((id) => id !== String(userId));
 		const recipientUserIds = named.length ? await this.colleagues(named, tenantId) : [];
 
-		await this.publish(REALTIME_EVENT_NAMES.TYPING_SIGNALLED, {
-			aggregate: { type: REALTIME_AGGREGATES.CONVERSATION, id: String(input.conversationId) },
-			data: signal,
-			recipientUserIds
-		});
+		await this.publish(
+			REALTIME_EVENT_NAMES.TYPING_SIGNALLED,
+			{ aggregate: { type: REALTIME_AGGREGATES.CONVERSATION, id: String(input.conversationId) }, data: signal, recipientUserIds },
+			{ tenantId, organizationId: RequestContext.currentOrganizationId() ?? null }
+		);
 
 		return signal;
 	}
@@ -122,18 +170,18 @@ export class RealtimeSignalsService {
 	}
 
 	/**
-	 * Publishes one envelope on the caller's tenant topic. Never throws: a signal that cannot be published is
-	 * logged, the request that carried it still succeeds.
+	 * Publishes one envelope on a tenant's topic, for an organization (or tenant-wide). Never throws: a signal that
+	 * cannot be published is logged, the request that carried it still succeeds.
 	 */
 	private async publish(
 		name: string,
-		parts: { aggregate: { type: string; id: string }; data: unknown; recipientUserIds?: ID[] }
+		parts: { aggregate: { type: string; id: string }; data: unknown; recipientUserIds?: ID[] },
+		scope: { tenantId: ID; organizationId: ID | null }
 	): Promise<void> {
-		const tenantId = RequestContext.currentTenantId();
+		const { tenantId, organizationId } = scope;
 		if (!this.pubSub || !tenantId) {
 			return;
 		}
-		const organizationId = RequestContext.currentOrganizationId();
 		const envelope: SubscriptionEnvelope = {
 			eventId: randomUUID(),
 			name,
