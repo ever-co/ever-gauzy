@@ -14,9 +14,12 @@
  * Optional: `GAUZY_WS_URL` (default: the API URL's origin on ws(s) + `/graphql`), `GAUZY_LIVE_TARGET_MS` (default
  * 1000), `GAUZY_LIVE_WAIT_MS` (default 90000: live events ride the outbox dispatcher, which runs every minute).
  *
- * The update writes the task's own title and status back unchanged (a `PUT /tasks/:id` carries both), which the platform
- * reports as `task.updated`. Exit code 0 when the event arrived live within the target and the catch-up replayed it;
- * 1 when either failed (the report says which, with the measured latency); 2 for missing configuration.
+ * The update writes the task's own title, status and organization back unchanged (a `PUT /tasks/:id` carries the first
+ * two; the organization lets the platform file the hint), which the platform reports as `task.updated`. The event is
+ * told apart from earlier updates of the task by its id: the task's `task.updated` events already in the outbox are
+ * read first, and only another one counts — no clock is compared. Exit code 0 when the event arrived live within the
+ * target and the catch-up replayed that same event; 1 when either failed (the report says which, with the measured
+ * latency); 2 for missing configuration.
  */
 import { createClient } from 'graphql-ws';
 import WebSocket from 'ws';
@@ -55,6 +58,22 @@ async function http(method, path, body) {
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
+/** The task's `task.updated` events the catch-up answers from a position (every page, at most 20). */
+async function updatesOfTask(from) {
+	const found = [];
+	let position = from;
+	for (let page = 0; page < 20; page += 1) {
+		const query = new URLSearchParams({ after: String(position.after), limit: '500' });
+		if (position.afterId) query.set('afterId', position.afterId);
+		const answer = await http('GET', `/realtime/events?${query}`);
+		if (answer.resync) throw new Error('the catch-up answered resync');
+		found.push(...answer.events.filter((event) => event.aggregate?.id === taskId && event.eventName === 'task.updated'));
+		if (!answer.hasMore) break;
+		position = { after: answer.cursor, afterId: answer.cursorId };
+	}
+	return found;
+}
+
 async function main() {
 	const missing = ['GAUZY_API_URL', 'GAUZY_TOKEN', 'GAUZY_TENANT_ID', 'GAUZY_ORGANIZATION_ID', 'GAUZY_TASK_ID'].filter((name) => !env[name]);
 	if (missing.length) {
@@ -72,8 +91,13 @@ async function main() {
 		connectionParams: { authorization: `Bearer ${token}`, 'tenant-id': tenantId, 'organization-id': organizationId },
 		retryAttempts: 0
 	});
+	// The task's updates already in the outbox (dispatched or not): none of them is the one this check makes.
+	const before = new Set();
+	let writing = false;
 	let updatedAt = 0;
 	let liveMs = null;
+	// Settled with the event, `null` (none within the wait) or the subscription's error — handled from the start, so a
+	// refused socket can never surface as an unhandled rejection while the script is still preparing the write.
 	const live = new Promise((resolve, reject) => {
 		const timer = setTimeout(() => resolve(null), waitMs);
 		client.subscribe(
@@ -81,7 +105,7 @@ async function main() {
 			{
 				next: (message) => {
 					const event = message?.data?.collaborationEvents;
-					if (event?.aggregate?.id === taskId && event.eventName === 'task.updated' && updatedAt) {
+					if (writing && event?.aggregate?.id === taskId && event.eventName === 'task.updated' && !before.has(event.eventId)) {
 						clearTimeout(timer);
 						resolve(event);
 					}
@@ -93,37 +117,30 @@ async function main() {
 				complete: () => undefined
 			}
 		);
+	}).catch((error) => {
+		console.error(`subscription failed: ${error.message}`);
+		return null;
 	});
 	// Let the subscription start before the write.
 	await sleep(1_500);
 
+	const from = { after: start.cursor, afterId: start.cursorId };
+	for (const event of await updatesOfTask(from)) before.add(event.eventId);
 	const task = await http('GET', `/tasks/${taskId}`);
+	writing = true;
 	updatedAt = Date.now();
-	await http('PUT', `/tasks/${taskId}`, { title: task.title, status: task.status });
+	await http('PUT', `/tasks/${taskId}`, { title: task.title, status: task.status, organizationId: task.organizationId ?? organizationId });
 	console.log(`task ${taskId} updated at ${new Date(updatedAt).toISOString()}`);
 
-	const event = await live.catch((error) => {
-		console.error(`subscription failed: ${error.message}`);
-		return null;
-	});
+	const event = await live;
 	if (event) liveMs = Date.now() - updatedAt;
 	await client.dispose();
 
-	// The catch-up from the start position must answer the same event (it may take a page or two).
-	let replayed = null;
-	let position = { after: start.cursor, afterId: start.cursorId };
-	for (let page = 0; page < 20 && !replayed; page += 1) {
-		const query = new URLSearchParams({ after: String(position.after), limit: '500' });
-		if (position.afterId) query.set('afterId', position.afterId);
-		const answer = await http('GET', `/realtime/events?${query}`);
-		replayed = answer.events.find((candidate) => candidate.aggregate?.id === taskId && candidate.eventName === 'task.updated' && Date.parse(candidate.occurredAt) >= updatedAt - 5_000) ?? null;
-		if (answer.resync) {
-			console.error('the catch-up answered resync');
-			break;
-		}
-		if (!answer.hasMore) break;
-		position = { after: answer.cursor, afterId: answer.cursorId };
-	}
+	// The catch-up from the start position must answer the same event — the one received live, or, when none arrived,
+	// an update of the task that was not there before the write.
+	await sleep(2_000);
+	const replayable = (await updatesOfTask(from)).filter((candidate) => !before.has(candidate.eventId));
+	const replayed = (event ? replayable.find((candidate) => candidate.eventId === event.eventId) : replayable[0]) ?? null;
 
 	const liveOk = liveMs !== null && liveMs <= targetMs;
 	console.log(`live: ${liveMs === null ? `not received within ${waitMs} ms` : `${liveMs} ms`} (target ${targetMs} ms) — ${liveOk ? 'PASS' : 'FAIL'}`);
