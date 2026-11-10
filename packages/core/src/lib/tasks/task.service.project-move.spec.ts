@@ -173,6 +173,51 @@ describe('TaskService.update — moving a task to another project', () => {
 		expect(saves(TaskFormerReference)).not.toHaveBeenCalled();
 	});
 
+	it('fails the move with the read error, writing nothing, when the next number cannot be read in the transaction', async () => {
+		const { manager, saves } = stubTaskUpdateManager({ findOne: findProject });
+		Object.defineProperty(service, 'typeOrmRepository', { value: { manager }, configurable: true });
+		maxNumberBy.mockRejectedValue(new Error('current transaction is aborted, commands ignored until end of transaction block'));
+		jest.spyOn(console, 'error').mockImplementation(() => undefined);
+
+		const failure = await service.update('task-1', { projectId: 'project-new' }).catch((error: unknown) => error);
+
+		expect((failure as { getResponse: () => { message: string } }).getResponse().message).toMatch(/current transaction is aborted/);
+		expect(save).not.toHaveBeenCalled();
+		expect(saves(TaskFormerReference)).not.toHaveBeenCalled();
+	});
+
+	describe("the former numbers a project's next number skips", () => {
+		const failingReadOn = (inTransaction: boolean) => {
+			const reader = Object.create(TaskService.prototype) as TaskService;
+			Object.defineProperty(reader, 'typeOrmRepository', {
+				value: {
+					manager: {
+						queryRunner: { isTransactionActive: inTransaction },
+						createQueryBuilder: () => {
+							throw new Error('canceling statement due to lock timeout');
+						}
+					}
+				},
+				configurable: true
+			});
+			// The live tasks' highest number, read by the other half of the method
+			jest.spyOn(reader as never, 'getMaxNumberOfProjectTasks' as never).mockResolvedValue(7 as never);
+			return reader;
+		};
+		const options = { tenantId: fixture.tenantId, organizationId: fixture.organizationId, projectId: 'project-old' };
+
+		it('fail the read inside a transaction (a move): Postgres has aborted it', async () => {
+			await expect(failingReadOn(true).getMaxTaskNumberByProject(options, { withDeleted: true })).rejects.toThrow(/lock timeout/);
+		});
+
+		it('count as none outside one (a task being created), logged', async () => {
+			const logged = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+
+			await expect(failingReadOn(false).getMaxTaskNumberByProject(options, { withDeleted: true })).resolves.toBe(7);
+			expect(logged).toHaveBeenCalled();
+		});
+	});
+
 	it('keeps the reference of a task taken out of its project, which keeps its number', async () => {
 		await service.update('task-1', { projectId: null, project: null } as never);
 
