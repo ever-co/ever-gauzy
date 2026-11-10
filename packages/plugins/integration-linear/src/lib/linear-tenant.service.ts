@@ -55,7 +55,7 @@ export class LinearTenantService {
 		private readonly integrationTenantService: IntegrationTenantService,
 		private readonly integrationSettingService: IntegrationSettingService,
 		@Inject(LINEAR_CONFIG) private readonly config: LinearConfig,
-		/** The Inbox, when its plugin is loaded: the person who connected hears there of a refused token. */
+		/** The Inbox, when its plugin is loaded: the person who connected and the integration's managers hear there of a refused token. */
 		@Optional() @Inject(INBOX_ITEM_WRITER) private readonly inbox?: IInboxItemWriter | null
 	) {}
 
@@ -265,7 +265,8 @@ export class LinearTenantService {
 
 	/**
 	 * Records why the connection needs a person (a refused token), or clears it — and tells the person who connected
-	 * in their Inbox, once per refusal (the item is keyed by the connection) and once more when it works again.
+	 * and the organization's integration managers in their Inbox, once per refusal (the item is keyed by the
+	 * connection) and once more when it works again.
 	 */
 	async setAttention(tenant: IIntegrationTenant, reason: string | null, refusedToken?: string | null): Promise<void> {
 		// A refusal names the token it was for: when the row holds another one by now (reconnected meanwhile), the
@@ -323,7 +324,9 @@ export class LinearTenantService {
 
 	/**
 	 * Files (or resolves) the Inbox item about the connection and remembers that it got through; nothing without
-	 * the Inbox plugin or a connecting user. A filing that failed is tried again by the next {@link setAttention}
+	 * the Inbox plugin, or with nobody to tell. The item goes to the person who connected and to the organization's
+	 * integration managers (the people whose role may add or edit integrations: they can connect again); a manager
+	 * list that cannot be read leaves the person who connected, and the next filing reads it again. A filing that failed is tried again by the next {@link setAttention}
 	 * and by the sweep ({@link ensureAttentionFiled}). The two writes are separate: an item that was taken but whose
 	 * timestamp was not written is logged as such, and a retry re-files it without re-surfacing it.
 	 */
@@ -335,7 +338,13 @@ export class LinearTenantService {
 		const settings = this.settingsOf(current);
 		if ((settings[LinearSettingName.ATTENTION_REASON] || null) !== (reason || null)) return;
 		const userId = settings[LinearSettingName.CONNECTED_BY_USER_ID];
-		const recipients = [...new Set([userId, ...alsoUserIds].filter(Boolean).map(String))] as ID[];
+		const managers = await this.integrationTenantService
+			.findManagerUserIds({ tenantId: current.tenantId as ID, organizationId: current.organizationId as ID })
+			.catch((error: unknown) => {
+				this.logger.warn(`The integration managers of connection ${tenant.id} could not be read: ${(error as Error)?.message ?? error}`);
+				return [] as ID[];
+			});
+		const recipients = [...new Set([userId, ...managers, ...alsoUserIds].filter(Boolean).map(String))] as ID[];
 		if (!recipients.length) return;
 		try {
 			await this.inbox.upsertExternal(attentionItemOf({ id: tenant.id as ID, tenantId: tenant.tenantId as ID, organizationId: tenant.organizationId as ID }, reason, recipients, resurface));

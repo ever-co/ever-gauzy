@@ -10,10 +10,12 @@ import {
 	IntegrationMapSyncLabelCommand,
 	IntegrationMapSyncTaskCommand,
 	IntegrationTenantSyncService,
+	syncedValuesOf,
 	Task,
 	TaskPriority,
 	TaskStatus,
-	TaskUpdateCommand
+	TaskUpdateCommand,
+	withoutKeptFields
 } from '@gauzy/core';
 import { AsanaApiClient, AsanaApiError, AsanaSection, AsanaTag, AsanaTask } from '../client/asana-api.client';
 import { AsanaSyncRun } from '../entities/asana-sync-run.entity';
@@ -21,6 +23,7 @@ import { AsanaProjectMapping } from '../entities/asana-project-mapping.entity';
 import { AsanaConfig, asanaWebhookTargetOf } from '../asana-config';
 import { AsanaMappingService } from '../asana-mapping.service';
 import { asanaSyncUser, runInAsanaContext } from '../asana-process';
+import { AsanaSyncConflictService } from '../asana-sync-conflict.service';
 import { emptyCounts, AsanaSyncCounts, AsanaSyncRunService } from '../asana-sync-run.service';
 import { AsanaTenantService } from '../asana-tenant.service';
 import { ASANA_APPLY_CONCURRENCY, ASANA_CONFIG, ASANA_IMPORT_CLOCK_SKEW_MS, ASANA_SUBTASK_MAX_DEPTH, ASANA_TASKS_PAGE_SIZE, AsanaSettingName } from '../asana.constants';
@@ -45,6 +48,10 @@ interface ClientHolder {
 interface ApplyContext extends ClientHolder {
 	mapping: AsanaProjectMapping;
 	scope: { tenantId: ID; organizationId: ID };
+	/** The run the items are applied in: the conflicts it finds name it. */
+	runId: ID | null;
+	/** How many fields changed on both sides in this run (Asana's value applied, the task's recorded). */
+	conflicts: number;
 	sectionMap: Record<string, string>;
 	/** The statuses a task may take, by key (`statusKey`) → the name as stored, and → the row's id. */
 	knownStatuses: Map<string, string>;
@@ -100,6 +107,7 @@ export class AsanaSyncService {
 		private readonly integrationMapService: IntegrationMapService,
 		private readonly integrationTenantSyncService: IntegrationTenantSyncService,
 		private readonly taskDetails: AsanaTaskDetailsService,
+		private readonly conflicts: AsanaSyncConflictService,
 		@Inject(ASANA_CONFIG) private readonly config: AsanaConfig
 	) {}
 
@@ -163,7 +171,7 @@ export class AsanaSyncService {
 		let error: string | null = null;
 		try {
 			await runInAsanaContext(user, async () => {
-				const context = await this.openContext(tenant, mapping, counts);
+				const context = await this.openContext(tenant, mapping, counts, run.id as ID);
 				let offset: string | null = null;
 				for (;;) {
 					const page = await this.call(context, (client) => client.tasks(mapping.asanaProjectGid, { modifiedSince: since, offset, limit: ASANA_TASKS_PAGE_SIZE }));
@@ -218,7 +226,7 @@ export class AsanaSyncService {
 		let error: string | null = null;
 		try {
 			await runInAsanaContext(asanaSyncUser(scope, this.connectedByUserId(tenant)), async () => {
-				const context = await this.openContext(tenant, mapping, counts);
+				const context = await this.openContext(tenant, mapping, counts, run.id as ID);
 				for (const gid of taskGids) {
 					const task = await this.call(context, (client) => client.task(gid));
 					if (!task || !(await this.belongsToProject(context, task))) {
@@ -420,7 +428,7 @@ export class AsanaSyncService {
 
 	// ---------------------------------------------------------------- one Asana task
 
-	private async openContext(tenant: IIntegrationTenant, mapping: AsanaProjectMapping, counts: AsanaSyncCounts): Promise<ApplyContext> {
+	private async openContext(tenant: IIntegrationTenant, mapping: AsanaProjectMapping, counts: AsanaSyncCounts, runId: ID | null): Promise<ApplyContext> {
 		const scope = { tenantId: tenant.tenantId as ID, organizationId: tenant.organizationId as ID };
 		const where = [{ ...scope, projectId: mapping.projectId }, { ...scope, projectId: IsNull() }];
 		const [statuses, priorities] = await Promise.all([
@@ -446,6 +454,8 @@ export class AsanaSyncService {
 			renewed: false,
 			mapping,
 			scope,
+			runId,
+			conflicts: 0,
 			sectionMap: parseSectionMap(mapping.sectionMap),
 			knownStatuses,
 			statusIdsByName,
@@ -536,6 +546,9 @@ export class AsanaSyncService {
 	/**
 	 * One Asana task → one platform task: created once, updated after, by the platform's id map. A relation whose
 	 * lookup did not answer (the assignee by e-mail, a tag) is left as the task has it; an empty value clears it.
+	 * The synced fields of a mapped task are merged three ways with what both sides last agreed on: a field changed
+	 * only on the platform keeps the task's value, one changed on both sides takes Asana's and records the task's as a
+	 * conflict.
 	 */
 	private async applyTaskNow(context: ApplyContext, task: AsanaTask): Promise<ApplyResult> {
 		const { scope, mapping } = context;
@@ -555,6 +568,8 @@ export class AsanaSyncService {
 			if (owner?.projectId && owner.projectId !== mapping.projectId) return { outcome: 'skipped', taskId: null };
 		}
 		const fields = taskFieldsOf(task, mapping.asanaProjectGid, context.sectionMap, context.knownStatuses);
+		const external = syncedValuesOf(fields);
+		const merge = await this.conflicts.prepare({ ...scope, integrationId, sourceId: task.gid, taskId: (existing?.gauzyId as ID | undefined) ?? null, external });
 		const members = await this.membersOf(context, task.assignee?.email ?? null);
 		const tags = await this.tagsOf(context, task.tags ?? []);
 		const entity = {
@@ -570,8 +585,23 @@ export class AsanaSyncService {
 			...(members === undefined ? {} : { members }),
 			...(tags === undefined ? {} : { tags }),
 			...(task.parent?.gid ? {} : { parentId: null })
-		} as unknown as ITaskCreateInput | ITaskUpdateInput;
-		const map: IIntegrationMap = await this.commandBus.execute(new IntegrationMapSyncTaskCommand({ entity, sourceId: task.gid, integrationId, ...scope }, false));
+		};
+		const write = withoutKeptFields(entity as Record<string, unknown>, merge?.keepPlatform ?? []) as unknown as ITaskCreateInput | ITaskUpdateInput;
+		const map: IIntegrationMap = await this.commandBus.execute(new IntegrationMapSyncTaskCommand({ entity: write, sourceId: task.gid, integrationId, ...scope }, false));
+		if (map?.gauzyId) {
+			// The Asana task's values become what both sides agreed on; a failure here fails it, so the next import reads it again.
+			context.conflicts += await this.conflicts.settle({
+				...scope,
+				integrationId,
+				mappingId: mapping.id as ID,
+				runId: context.runId,
+				sourceId: task.gid,
+				taskId: map.gauzyId as ID,
+				external,
+				// A merge read against another task (the mapped one was gone and is re-created) records nothing.
+				merge: merge && String(merge.task?.['id'] ?? '') === String(map.gauzyId) ? merge : null
+			});
+		}
 		if (task.parent?.gid && map?.gauzyId) {
 			context.pendingParents.push({ taskId: map.gauzyId as ID, parentSourceId: task.parent.gid });
 		}
@@ -608,6 +638,10 @@ export class AsanaSyncService {
 	 * of the run, so the import position is kept and the next import reads the task again.
 	 */
 	private reportDetails(context: ApplyContext): void {
+		if (context.conflicts) {
+			this.logger.log(`Mapping ${context.mapping.id}: ${context.conflicts} field(s) changed on both sides; Asana's value applied, the task's recorded as a conflict`);
+			context.conflicts = 0;
+		}
 		const { comments, links, failed } = context.details;
 		if (failed) {
 			context.counts.failed += failed;

@@ -84,10 +84,23 @@ cards / lists) and their own webhook scheme, one webhook per mapping at
 - **No echo**: inbound writes use `triggeredEvent = false`; outbound sends only what the mapping covers and never a
   task kept out of third-party sync.
 - **Attention**: a refused token sets the connection's `attention_reason` and the run fails; nothing is retried
-  until a person connects again.
+  until a person connects again. The Inbox notice (one per connection, resolved when the token works again) goes to
+  the person who connected and to the organization's integration managers: active members whose role grants
+  `INTEGRATION_ADD` or `INTEGRATION_EDIT` (`IntegrationTenantService.findManagerUserIds`, core).
+- **Conflicts** (T15): an inbound apply merges the synced fields (title, description, status, priority, due date)
+  three ways with the values the provider sent the last time the item was applied (`integration_<provider>_*_baseline`,
+  one row per item): changed only by the provider → applied; only on the platform → the task keeps it; on both sides
+  to different values → the provider's value is applied and the task's recorded in `integration_<provider>_sync_conflict`
+  (with the task's own columns to restore). `GET …/conflicts` lists them, `GET …/runs` counts them per run,
+  `POST …/conflicts/:id/resolve` keeps the provider's value or writes the task's back through `TaskUpdateCommand` (its
+  event sends it out on an outbound mapping; refused when the task's field changed since). The merge itself is core's
+  `mergeSyncedFields` (`integration-tenant/integration-sync-fields.ts`), shared by the three plugins. An item with no
+  baseline yet (applied before T15) is applied as before and gets one. Outbound pushes are not checked against the
+  provider (that would cost a read per push): the platform's values win there.
 
 ## 5. Open points
 
-- Conflict policy (spec §8): phase 1 lets the provider win for the fields it owns on import and the platform win on
-  an outbound push; a conflict record is phase 2.
+- Conflict policy (spec §8): T15 implements the proposal — on an inbound apply the provider wins a field changed on
+  both sides (the task's value is recorded and can be restored), a field changed only on the platform is kept; an
+  outbound push still sends the platform's values. A per-mapping choice of the winning side is not offered yet.
 - Linear's OAuth tokens do not expire today; `expires_at` is stored for when they do. A refresh flow is phase 2.

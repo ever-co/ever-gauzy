@@ -10,10 +10,12 @@ import {
 	IntegrationMapSyncIssueCommand,
 	IntegrationMapSyncLabelCommand,
 	IntegrationTenantSyncService,
+	syncedValuesOf,
 	Task,
 	TaskPriority,
 	TaskStatus,
-	TaskUpdateCommand
+	TaskUpdateCommand,
+	withoutKeptFields
 } from '@gauzy/core';
 import { LinearApiClient, LinearApiError, LinearIssue, LinearLabel, LinearStateType, LinearWorkflowState } from '../client/linear-api.client';
 import { LinearSyncRun } from '../entities/linear-sync-run.entity';
@@ -21,6 +23,7 @@ import { LinearTeamMapping } from '../entities/linear-team-mapping.entity';
 import { LinearConfig } from '../linear-config';
 import { LinearMappingService } from '../linear-mapping.service';
 import { linearSyncUser, runInLinearContext } from '../linear-process';
+import { LinearSyncConflictService } from '../linear-sync-conflict.service';
 import { emptyCounts, LinearSyncCounts, LinearSyncRunService } from '../linear-sync-run.service';
 import { LinearTenantService } from '../linear-tenant.service';
 import { LINEAR_CONFIG, LINEAR_IMPORT_CLOCK_SKEW_MS, LINEAR_IMPORT_MAX_ISSUES, LINEAR_ISSUES_PAGE_SIZE, LinearSettingName } from '../linear.constants';
@@ -46,6 +49,10 @@ interface ClientHolder {
 interface ApplyContext extends ClientHolder {
 	mapping: LinearTeamMapping;
 	scope: { tenantId: ID; organizationId: ID };
+	/** The run the issues are applied in: the conflicts it finds name it. */
+	runId: ID | null;
+	/** How many fields changed on both sides in this run (Linear's value applied, the task's recorded). */
+	conflicts: number;
 	stateMap: Record<LinearStateType, string>;
 	statusIdsByName: Map<string, ID>;
 	priorityIdsByName: Map<string, ID>;
@@ -103,6 +110,7 @@ export class LinearSyncService {
 		private readonly integrationMapService: IntegrationMapService,
 		private readonly integrationTenantSyncService: IntegrationTenantSyncService,
 		private readonly issueDetails: LinearIssueDetailsService,
+		private readonly conflicts: LinearSyncConflictService,
 		@Inject(LINEAR_CONFIG) private readonly config: LinearConfig
 	) {}
 
@@ -127,7 +135,7 @@ export class LinearSyncService {
 		let complete = false;
 		try {
 			await runInLinearContext(user, async () => {
-				const context = await this.openContext(tenant, mapping, counts);
+				const context = await this.openContext(tenant, mapping, counts, run.id as ID);
 				let after: string | null = null;
 				let seen = 0;
 				for (;;) {
@@ -209,7 +217,7 @@ export class LinearSyncService {
 		let error: string | null = null;
 		try {
 			await runInLinearContext(linearSyncUser(scope, this.connectedByUserId(tenant)), async () => {
-				const context = await this.openContext(tenant, mapping, counts);
+				const context = await this.openContext(tenant, mapping, counts, run.id as ID);
 				const issue = await this.call(context, (client) => client.issue(issueId));
 				if (!issue || issue.team?.id !== mapping.linearTeamId) {
 					counts.skipped += 1;
@@ -365,7 +373,7 @@ export class LinearSyncService {
 
 	// ---------------------------------------------------------------- one issue
 
-	private async openContext(tenant: IIntegrationTenant, mapping: LinearTeamMapping, counts: LinearSyncCounts): Promise<ApplyContext> {
+	private async openContext(tenant: IIntegrationTenant, mapping: LinearTeamMapping, counts: LinearSyncCounts, runId: ID | null): Promise<ApplyContext> {
 		const scope = { tenantId: tenant.tenantId as ID, organizationId: tenant.organizationId as ID };
 		// The project's own statuses and priorities, and the organization's (no project) under them.
 		const where = [{ ...scope, projectId: mapping.projectId }, { ...scope, projectId: IsNull() }];
@@ -390,6 +398,8 @@ export class LinearSyncService {
 			renewed: false,
 			mapping,
 			scope,
+			runId,
+			conflicts: 0,
 			stateMap: parseStateMap(mapping.stateMap),
 			statusIdsByName,
 			priorityIdsByName,
@@ -448,6 +458,10 @@ export class LinearSyncService {
 	 * of the run, so the import position is kept and the next import reads the task again.
 	 */
 	private reportDetails(context: ApplyContext): void {
+		if (context.conflicts) {
+			this.logger.log(`Mapping ${context.mapping.id}: ${context.conflicts} field(s) changed on both sides; Linear's value applied, the task's recorded as a conflict`);
+			context.conflicts = 0;
+		}
 		const { comments, links, failed } = context.details;
 		if (failed) {
 			context.counts.failed += failed;
@@ -493,7 +507,9 @@ export class LinearSyncService {
 	/**
 	 * One issue → one task: created once, updated after, by the platform's id map. A relation whose lookup did
 	 * not answer (the employee by e-mail, a label's tag) is left as the task has it; an empty value from Linear
-	 * clears it.
+	 * clears it. The synced fields of a mapped task are merged three ways with what the issue and the task last
+	 * agreed on: a field changed only on the platform keeps the task's value, one changed on both sides takes
+	 * Linear's and records the task's as a conflict.
 	 */
 	private async applyIssueNow(context: ApplyContext, issue: LinearIssue): Promise<ApplyResult> {
 		const { scope, mapping } = context;
@@ -504,6 +520,8 @@ export class LinearSyncService {
 		// An archived issue that never became a task stays out; one that did keeps its task as it was.
 		if (issue.archivedAt) return { outcome: 'skipped', taskId: null };
 		const fields = taskFieldsOf(issue, context.stateMap);
+		const external = syncedValuesOf(fields);
+		const merge = await this.conflicts.prepare({ ...scope, integrationId, sourceId: issue.id, taskId: (existing?.gauzyId as ID | undefined) ?? null, external });
 		const members = await this.membersOf(context, issue.assignee?.email ?? null);
 		const tags = await this.tagsOf(context, issue.labels?.nodes ?? []);
 		const entity = {
@@ -521,12 +539,27 @@ export class LinearSyncService {
 			...(tags === undefined ? {} : { tags }),
 			// A sub-issue is linked once its parent is in (below); an issue without a parent leaves its former one.
 			...(issue.parent?.id ? {} : { parentId: null })
-		} as unknown as ITaskCreateInput | ITaskUpdateInput;
+		};
+		const write = withoutKeptFields(entity as Record<string, unknown>, merge?.keepPlatform ?? []) as unknown as ITaskCreateInput | ITaskUpdateInput;
 		const map: IIntegrationMap = await this.commandBus.execute(
-			new IntegrationMapSyncIssueCommand({ entity, sourceId: issue.id, integrationId, ...scope }, false)
+			new IntegrationMapSyncIssueCommand({ entity: write, sourceId: issue.id, integrationId, ...scope }, false)
 		);
 		if (issue.parent?.id && map?.gauzyId) {
 			context.pendingParents.push({ taskId: map.gauzyId as ID, parentSourceId: issue.parent.id });
+		}
+		if (map?.gauzyId) {
+			// The issue's values become what both sides agreed on; a failure here fails the issue, so the next import reads it again.
+			context.conflicts += await this.conflicts.settle({
+				...scope,
+				integrationId,
+				mappingId: mapping.id as ID,
+				runId: context.runId,
+				sourceId: issue.id,
+				taskId: map.gauzyId as ID,
+				external,
+				// A merge read against another task (the mapped one was gone and is re-created) records nothing.
+				merge: merge && String(merge.task?.['id'] ?? '') === String(map.gauzyId) ? merge : null
+			});
 		}
 		return { outcome: existing ? 'updated' : 'created', taskId: (map?.gauzyId as ID | undefined) ?? null };
 	}

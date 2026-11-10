@@ -2,11 +2,12 @@ import { ApplicationPluginConfig } from '@gauzy/common';
 import { GauzyCorePlugin as Plugin, IOnPluginBootstrap, IOnPluginDestroy } from '@gauzy/plugin';
 import { isSchedulerQueueRootEnabled } from '@gauzy/scheduler';
 import { CreateIntegrationAsanaTables1791000005000 } from './database/migrations/1791000005000-CreateIntegrationAsanaTables';
+import { CreateIntegrationAsanaConflictTables1791000007020 } from './database/migrations/1791000007020-CreateIntegrationAsanaConflictTables';
 import { ASANA_ENTITIES, AsanaModule } from './asana.module';
 import { AsanaMaintenanceModule } from './maintenance/asana-maintenance.module';
 
 /** The plugin's migrations, oldest first (ordered with the platform's by their timestamps). */
-export const ASANA_MIGRATIONS = [CreateIntegrationAsanaTables1791000005000];
+export const ASANA_MIGRATIONS = [CreateIntegrationAsanaTables1791000005000, CreateIntegrationAsanaConflictTables1791000007020];
 
 /**
  * The Asana integration (`@gauzy/plugin-integration-asana`): connect an Asana account with OAuth, map its

@@ -10,9 +10,11 @@ import {
 	IntegrationMapSyncLabelCommand,
 	IntegrationMapSyncTaskCommand,
 	IntegrationTenantSyncService,
+	syncedValuesOf,
 	Task,
 	TaskPriority,
-	TaskStatus
+	TaskStatus,
+	withoutKeptFields
 } from '@gauzy/core';
 import { TrelloApiClient, TrelloApiError, TrelloCard, TrelloLabel, TrelloList } from '../client/trello-api.client';
 import { TrelloSyncRun } from '../entities/trello-sync-run.entity';
@@ -20,6 +22,7 @@ import { TrelloBoardMapping } from '../entities/trello-board-mapping.entity';
 import { TrelloConfig, trelloWebhookTargetOf } from '../trello-config';
 import { TrelloMappingService } from '../trello-mapping.service';
 import { trelloSyncUser, runInTrelloContext } from '../trello-process';
+import { TrelloSyncConflictService } from '../trello-sync-conflict.service';
 import { emptyCounts, TrelloSyncCounts, TrelloSyncRunService } from '../trello-sync-run.service';
 import { TrelloTenantService } from '../trello-tenant.service';
 import { TRELLO_APPLY_CONCURRENCY, TRELLO_CARDS_PAGE_SIZE, TRELLO_CONFIG, TRELLO_IMPORT_CLOCK_SKEW_MS, TrelloSettingName } from '../trello.constants';
@@ -44,6 +47,10 @@ interface ClientHolder {
 interface ApplyContext extends ClientHolder {
 	mapping: TrelloBoardMapping;
 	scope: { tenantId: ID; organizationId: ID };
+	/** The run the items are applied in: the conflicts it finds name it. */
+	runId: ID | null;
+	/** How many fields changed on both sides in this run (Trello's value applied, the task's recorded). */
+	conflicts: number;
 	listMap: Record<string, string>;
 	/** The board's lists by id → name (the status of a card in an unmapped list is its list's name, when that is a status). */
 	listNames: Map<string, string>;
@@ -100,6 +107,7 @@ export class TrelloSyncService {
 		private readonly integrationMapService: IntegrationMapService,
 		private readonly integrationTenantSyncService: IntegrationTenantSyncService,
 		private readonly cardDetails: TrelloCardDetailsService,
+		private readonly conflicts: TrelloSyncConflictService,
 		@Inject(TRELLO_CONFIG) private readonly config: TrelloConfig
 	) {}
 
@@ -156,7 +164,7 @@ export class TrelloSyncService {
 		let error: string | null = null;
 		try {
 			await runInTrelloContext(user, async () => {
-				const context = await this.openContext(tenant, mapping, counts);
+				const context = await this.openContext(tenant, mapping, counts, run.id as ID);
 				let before: string | null = null;
 				for (;;) {
 					const page = await this.call(context, (client) => client.cards(mapping.trelloBoardId, { before, limit: TRELLO_CARDS_PAGE_SIZE }));
@@ -212,7 +220,7 @@ export class TrelloSyncService {
 		let error: string | null = null;
 		try {
 			await runInTrelloContext(trelloSyncUser(scope, this.connectedByUserId(tenant)), async () => {
-				const context = await this.openContext(tenant, mapping, counts);
+				const context = await this.openContext(tenant, mapping, counts, run.id as ID);
 				for (const id of cardIds) {
 					const card = await this.call(context, (client) => client.card(id));
 					if (!card || card.idBoard !== mapping.trelloBoardId) {
@@ -410,7 +418,7 @@ export class TrelloSyncService {
 
 	// ---------------------------------------------------------------- one card
 
-	private async openContext(tenant: IIntegrationTenant, mapping: TrelloBoardMapping, counts: TrelloSyncCounts): Promise<ApplyContext> {
+	private async openContext(tenant: IIntegrationTenant, mapping: TrelloBoardMapping, counts: TrelloSyncCounts, runId: ID | null): Promise<ApplyContext> {
 		const scope = { tenantId: tenant.tenantId as ID, organizationId: tenant.organizationId as ID };
 		// The project's own statuses and priorities, and the organization's (no project) under them.
 		const where = [{ ...scope, projectId: mapping.projectId }, { ...scope, projectId: IsNull() }];
@@ -437,6 +445,8 @@ export class TrelloSyncService {
 			...holder,
 			mapping,
 			scope,
+			runId,
+			conflicts: 0,
 			listMap: parseListMap(mapping.listMap),
 			listNames: new Map(lists.map((list) => [list.id, list.name])),
 			knownStatuses,
@@ -492,6 +502,9 @@ export class TrelloSyncService {
 	/**
 	 * One card → one platform task: created once, updated after, by the platform's id map. A relation whose lookup
 	 * did not answer (a member, a label) is left as the task has it; an empty value clears it.
+	 * The synced fields of a mapped task are merged three ways with what both sides last agreed on: a field changed
+	 * only on the platform keeps the task's value, one changed on both sides takes Trello's and records the task's as a
+	 * conflict.
 	 */
 	private async applyCardNow(context: ApplyContext, card: TrelloCard): Promise<ApplyResult> {
 		const { scope, mapping } = context;
@@ -508,6 +521,8 @@ export class TrelloSyncService {
 			if (owner?.projectId && owner.projectId !== mapping.projectId) return { outcome: 'skipped', taskId: null };
 		}
 		const fields = taskFieldsOf(card, context.listNames, context.listMap, context.knownStatuses);
+		const external = syncedValuesOf(fields);
+		const merge = await this.conflicts.prepare({ ...scope, integrationId, sourceId: card.id, taskId: (existing?.gauzyId as ID | undefined) ?? null, external });
 		const members = await this.membersOf(context, card.members ?? []);
 		const tags = await this.tagsOf(context, card.labels ?? []);
 		const entity = {
@@ -522,8 +537,23 @@ export class TrelloSyncService {
 			dueDate: fields.dueDate,
 			...(members === undefined ? {} : { members }),
 			...(tags === undefined ? {} : { tags })
-		} as unknown as ITaskCreateInput | ITaskUpdateInput;
-		const map: IIntegrationMap = await this.commandBus.execute(new IntegrationMapSyncTaskCommand({ entity, sourceId: card.id, integrationId, ...scope }, false));
+		};
+		const write = withoutKeptFields(entity as Record<string, unknown>, merge?.keepPlatform ?? []) as unknown as ITaskCreateInput | ITaskUpdateInput;
+		const map: IIntegrationMap = await this.commandBus.execute(new IntegrationMapSyncTaskCommand({ entity: write, sourceId: card.id, integrationId, ...scope }, false));
+		if (map?.gauzyId) {
+			// The card's values become what both sides agreed on; a failure here fails the card, so the next import reads it again.
+			context.conflicts += await this.conflicts.settle({
+				...scope,
+				integrationId,
+				mappingId: mapping.id as ID,
+				runId: context.runId,
+				sourceId: card.id,
+				taskId: map.gauzyId as ID,
+				external,
+				// A merge read against another task (the mapped one was gone and is re-created) records nothing.
+				merge: merge && String(merge.task?.['id'] ?? '') === String(map.gauzyId) ? merge : null
+			});
+		}
 		return { outcome: existing ? 'updated' : 'created', taskId: (map?.gauzyId as ID | undefined) ?? null };
 	}
 
@@ -566,6 +596,10 @@ export class TrelloSyncService {
 	 * of the run, so the import position is kept and the next import reads the task again.
 	 */
 	private reportDetails(context: ApplyContext): void {
+		if (context.conflicts) {
+			this.logger.log(`Mapping ${context.mapping.id}: ${context.conflicts} field(s) changed on both sides; Trello's value applied, the task's recorded as a conflict`);
+			context.conflicts = 0;
+		}
 		const { comments, links, failed } = context.details;
 		if (failed) {
 			context.counts.failed += failed;

@@ -238,9 +238,27 @@ export {
 	IntegrationSettingModule,
 	IntegrationSettingService
 } from './lib/integration-setting';
-export type { IIntegrationSyncCompletion } from './lib/integration-tenant';
+export type {
+	IIntegrationSyncCompletion,
+	SyncedFieldConflict,
+	SyncedFieldsMerge,
+	SyncedTaskField,
+	SyncedTaskFieldsInput,
+	SyncedTaskValues
+} from './lib/integration-tenant';
 export {
+	findIntegrationManagerUserIds,
+	INTEGRATION_MANAGER_PERMISSIONS,
+	INTEGRATION_MANAGERS_LIMIT,
 	INTEGRATION_TENANT_SYNCED,
+	mergeSyncedFields,
+	parseSyncedValues,
+	sameSyncedValue,
+	SYNCED_TASK_COLUMNS,
+	SYNCED_TASK_FIELDS,
+	syncedValuesOf,
+	taskPatchOf,
+	withoutKeptFields,
 	IntegrationTenantGetCommand,
 	IntegrationTenantModule,
 	IntegrationTenantService,

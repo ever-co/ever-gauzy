@@ -11,7 +11,7 @@ export interface LinearAttentionTenant {
 }
 
 /**
- * The Inbox item that tells the person who connected that Linear refused the connection's token — imports, webhooks and the scheduled sync of its Linear mappings are paused
+ * The Inbox item that tells the person who connected, and the organization's integration managers, that Linear refused the connection's token — imports, webhooks and the scheduled sync of its Linear mappings are paused
  * until someone connects again — or, with no reason, that the connection works again (the same item, resolved).
  * One item per connection: a second refusal updates it rather than filing another.
  */
@@ -32,7 +32,7 @@ export function attentionItemOf(tenant: LinearAttentionTenant, reason: string | 
 		metadata: { integrationId: tenant.id, reason },
 		externalSource: LINEAR_INBOX_SOURCE,
 		externalId: `${tenant.id}:attention`,
-		// An open notice is the current connecting user's alone (a former one is not told of a refusal that is not theirs);
+		// An open notice is for the current connecting user and the current managers alone (a former one is not told of a refusal that is not theirs);
 		// a resolution keeps everyone the notice reached.
 		replaceRecipients: open,
 		// A new refusal re-surfaces the notice: the recipient reads it again, from the inbox it may have archived it from.

@@ -62,8 +62,19 @@ no table (its migration is not registered) and makes no outbound request. Same l
   whose webhook was registered before this filter existed gets it with `POST …/mappings/:mappingId/webhook`.
 - **A refused token.** When Asana refuses the connection's token (a 401), the connection is marked — the page asks for
   a reconnect, the lookups answer `ASANA_TOKEN_REFUSED`, the scheduled import leaves its mappings alone — and, with the
-  Inbox plugin loaded, the person who connected gets a high-priority Inbox notice (one per connection; resolved when a
+  Inbox plugin loaded, the person who connected and the organization's integration managers (members whose role may
+  add or edit integrations) get a high-priority Inbox notice (one per connection; resolved when a
   renewed token works or someone connects again).
+- **Conflicts.** Each Asana task applied is compared field by field (title, description, status, priority, due date)
+  with what it and its task last agreed on (`integration_asana_task_baseline`, the values Asana sent the last time the Asana task was
+  applied): a field changed only in Asana is applied, one changed only on the platform keeps the task's value, and one
+  changed on both sides to different values takes Asana's value and is recorded as a conflict with the task's value
+  (`integration_asana_sync_conflict`). `GET …/conflicts` lists them (open ones by default; `status`, `mappingId`,
+  `taskId`, `runId`, `take`) and `GET …/runs` counts them per run (`conflictCount`). `POST …/conflicts/:conflictId/resolve`
+  with `{ "keep": "external" }` leaves Asana's value; `{ "keep": "platform" }` writes the task's value back through
+  the platform's task update (a mapping that sends changes out sends it to the Asana task), and is refused (`409`) when the
+  task's field changed since. A newer conflict on the same task and field supersedes an older open one. An outbound
+  push sends the task's values as they are; a change made in Asana meanwhile is overwritten, not recorded.
 - **Scheduled import.** Every five minutes the worker process (`apps/worker`, the one whose scheduler root is
   enabled) sweeps the mappings that bring tasks in: one whose last import is older than
   `ASANA_IMPORT_INTERVAL_MINUTES` (or that was never imported) is imported again, the changes since its position,
@@ -79,7 +90,8 @@ no table (its migration is not registered) and makes no outbound request. Same l
 ## Tables
 
 `integration_asana_project_mapping` and `integration_asana_sync_run`, created by the plugin's own migration
-(`1791000005000`), idempotent on PostgreSQL, MySQL and SQLite.
+(`1791000005000`), idempotent on PostgreSQL, MySQL and SQLite. The conflict records, `integration_asana_sync_conflict` and `integration_asana_task_baseline`, come with
+migration `1791000007020`.
 
 ## Build
 
