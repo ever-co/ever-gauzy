@@ -219,6 +219,17 @@ describe('RealtimeSignalsService presence', () => {
 			expect(claimPublication).toHaveBeenCalledTimes(1);
 		});
 
+		it('claims nothing in a process without a pub/sub, so a process that has one tells the change', async () => {
+			const claimPublication = jest.fn();
+			const untold = jest.fn(async () => [outcome()]);
+			const doubles = { report: jest.fn(async () => outcome()), sweep: jest.fn(async () => undefined), claimPublication, untold, release: jest.fn() };
+			const service = new RealtimeSignalsService({} as DataSource, doubles as unknown as RealtimePresenceStore, undefined);
+			await expect(service.publishPresence({ status: RealtimePresenceStatus.ACTIVE })).resolves.toMatchObject({ status: 'active' });
+			await service.sweepPresence();
+			expect(claimPublication).not.toHaveBeenCalled();
+			expect(untold).not.toHaveBeenCalled();
+		});
+
 		it('gives back a claim whose publication the pub/sub refused, so the sweep retries it', async () => {
 			const claim = { id: 'p1', at: new Date(), revision: 4, previousAt: null, previousRevision: 3 };
 			const release = jest.fn(async () => true);

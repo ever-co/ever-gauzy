@@ -108,9 +108,11 @@ export class RealtimeSignalsService implements OnModuleInit, OnModuleDestroy {
 		try {
 			// Each employee is told as soon as their settlement committed, whatever happens to the next one.
 			await this.presenceStore.sweep(now, async (outcome) => void (await this.tellPresence(outcome, now)));
-			// Then the changes no process told (it stopped inside the window).
-			for (const scope of await this.presenceStore.untold(now)) {
-				await this.announce(scope);
+			// Then the changes no process told (it stopped inside the window) — by a process that can tell them.
+			if (this.pubSub) {
+				for (const scope of await this.presenceStore.untold(now)) {
+					await this.announce(scope);
+				}
 			}
 		} catch (error) {
 			this.logger.warn(`The lapsed presences were not settled: ${(error as Error)?.message}`);
@@ -132,10 +134,11 @@ export class RealtimeSignalsService implements OnModuleInit, OnModuleDestroy {
 	 * ({@link RealtimePresenceStore.claimPublication}, at the moment of the claim); otherwise tries again when the window
 	 * closes. Never throws: the report that caused it is already committed, and the sweep tells what is left untold.
 	 * After the module stopped it does nothing: a claim already in flight schedules nothing, and a won one is given back
-	 * (`RealtimePresenceStore.release`) so another process's sweep tells it.
+	 * (`RealtimePresenceStore.release`) so another process's sweep tells it. A process without a pub/sub claims nothing
+	 * either: the change stays untold, for the sweep of a process that can tell it.
 	 */
 	private async announce(scope: IPresenceScope): Promise<void> {
-		if (this.stopped) return;
+		if (this.stopped || !this.pubSub) return;
 		try {
 			const now = new Date();
 			const publication = await this.presenceStore.claimPublication(scope, now);
