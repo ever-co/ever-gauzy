@@ -1764,7 +1764,12 @@
 		"unfollow",
 		"unpin",
 		"unreads",
-		"nopush"
+		"nopush",
+		"plpgsql",
+		"TOOLONGKEY",
+		"unfollowing",
+		"sqljs",
+		"refetched"
 	],
 	"useGitignore": true,
 	"ignorePaths": [
