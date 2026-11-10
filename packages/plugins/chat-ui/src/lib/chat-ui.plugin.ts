@@ -18,25 +18,27 @@ import { ChatHeaderBadgeComponent } from './components/chat-header-badge/chat-he
 import { ChatAvailabilityService } from './services/chat-availability.service';
 import en from '../i18n/en.json';
 
-/** The page (standalone, loaded on first visit) with its views: a conversation, Unreads, Threads. */
+/**
+ * The page's views: home, Unreads, Threads, a conversation. They carry only the URL (the view's name, the
+ * conversation id) and render nothing themselves (no component, empty children): the page reads the active one.
+ */
+export const CHAT_VIEW_ROUTES: Routes = [
+	{ path: '', children: [] },
+	{ path: CHAT_UNREADS_PATH, data: { view: 'unreads' }, children: [] },
+	{ path: CHAT_THREADS_PATH, data: { view: 'threads' }, children: [] },
+	{ path: ':conversationId', children: [] }
+];
+
+/**
+ * The page (standalone, loaded on first visit) as ONE route above its views. Going from one view to another
+ * (a conversation, Unreads, Threads) changes only the child, so the page, its sidebar and its lists stay alive and
+ * only the main pane changes; one route per view would destroy and rebuild the whole page at every switch.
+ */
 export const CHAT_CHILD_ROUTES: Routes = [
 	{
 		path: '',
-		loadComponent: () => import('./components/chat-page/chat-page.component').then((m) => m.ChatPageComponent)
-	},
-	{
-		path: CHAT_UNREADS_PATH,
 		loadComponent: () => import('./components/chat-page/chat-page.component').then((m) => m.ChatPageComponent),
-		data: { view: 'unreads' }
-	},
-	{
-		path: CHAT_THREADS_PATH,
-		loadComponent: () => import('./components/chat-page/chat-page.component').then((m) => m.ChatPageComponent),
-		data: { view: 'threads' }
-	},
-	{
-		path: ':conversationId',
-		loadComponent: () => import('./components/chat-page/chat-page.component').then((m) => m.ChatPageComponent)
+		children: CHAT_VIEW_ROUTES
 	}
 ];
 
