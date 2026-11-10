@@ -10,9 +10,11 @@ import { coreEntities } from '../core/entities';
 import {
 	Organization,
 	OrganizationProject,
+	OrganizationSprint,
 	OrganizationSprintTaskHistory,
 	TaskFormerReference,
-	Tenant
+	Tenant,
+	User
 } from '../core/entities/internal';
 import { asTenantUser, createTenantFixture } from '../core/testing/tenant-isolation/tenant-isolation.fixtures';
 import { serializeEmbeddedTransactions } from '../database/embedded-transaction-queue';
@@ -49,18 +51,31 @@ const PROJECT_SYS = '83000000-0000-4000-8000-0000000000c2';
 const PROJECT_WEB = '83000000-0000-4000-8000-0000000000c3';
 const TASK_42 = '83000000-0000-4000-8000-000000000042';
 const TASK_41 = '83000000-0000-4000-8000-000000000041';
+const TASK_OTHER_42 = '83000000-0000-4000-8000-000000000142';
+const SPRINT = '83000000-0000-4000-8000-0000000000d1';
 
-/** What the database answers when it refuses a former reference (see `refuseFormerReferenceOf`). */
-const REFUSAL = 'disk I/O error while writing the former reference';
-const TABLES = ['task_former_reference', 'task', 'organization_project', 'organization', 'tenant'];
+/** What the database answers when it refuses a write (see `refuseInsert`). */
+const REFUSAL = 'disk I/O error while writing';
+const TABLES = [
+	'organization_sprint_task_history',
+	'task_former_reference',
+	'task',
+	'organization_sprint',
+	'organization_project',
+	'organization',
+	'user',
+	'tenant'
+];
+/** The tables a spec may make refuse a task's row: the former reference (before the save), the sprint history (after it). */
+const REFUSABLE = ['task_former_reference', 'organization_sprint_task_history'];
 
 /** The database the spec runs on, and what differs between the two. */
 interface Dialect {
 	options: () => DataSourceOptions;
 	/** Empties the tables the spec writes, whatever refers to them. */
 	reset: (dataSource: DataSource) => Promise<void>;
-	/** Makes the database refuse the former reference of one task (a trigger), or lets it be again (`null`). */
-	refuseFormerReferenceOf: (dataSource: DataSource, taskId: string | null) => Promise<void>;
+	/** Makes the database refuse the rows of one task in a table (a trigger), or, with `null`, every table accept them. */
+	refuseInsert: (dataSource: DataSource, table: string | null, taskId?: string) => Promise<void>;
 }
 
 const SQLITE: Dialect = {
@@ -75,11 +90,13 @@ const SQLITE: Dialect = {
 		}
 		await dataSource.query('PRAGMA foreign_keys = ON');
 	},
-	refuseFormerReferenceOf: async (dataSource, taskId) => {
-		await dataSource.query('DROP TRIGGER IF EXISTS "refuse_former_reference"');
-		if (!taskId) return;
+	refuseInsert: async (dataSource, table, taskId) => {
+		for (const refusable of REFUSABLE) {
+			await dataSource.query(`DROP TRIGGER IF EXISTS "refuse_${refusable}"`);
+		}
+		if (!table) return;
 		await dataSource.query(
-			`CREATE TRIGGER "refuse_former_reference" BEFORE INSERT ON "task_former_reference" WHEN NEW."taskId" = '${taskId}' BEGIN SELECT RAISE(ABORT, '${REFUSAL}'); END`
+			`CREATE TRIGGER "refuse_${table}" BEFORE INSERT ON "${table}" WHEN NEW."taskId" = '${taskId}' BEGIN SELECT RAISE(ABORT, '${REFUSAL} ${table}'); END`
 		);
 	}
 };
@@ -89,14 +106,16 @@ const POSTGRES: Dialect = {
 	reset: async (dataSource) => {
 		await dataSource.query(`TRUNCATE ${TABLES.map((table) => `"${table}"`).join(', ')} CASCADE`);
 	},
-	refuseFormerReferenceOf: async (dataSource, taskId) => {
-		await dataSource.query('DROP TRIGGER IF EXISTS "refuse_former_reference" ON "task_former_reference"');
-		if (!taskId) return;
+	refuseInsert: async (dataSource, table, taskId) => {
+		for (const refusable of REFUSABLE) {
+			await dataSource.query(`DROP TRIGGER IF EXISTS "refuse_${refusable}" ON "${refusable}"`);
+		}
+		if (!table) return;
 		await dataSource.query(
-			`CREATE OR REPLACE FUNCTION "refuse_former_reference"() RETURNS trigger AS $body$ BEGIN IF NEW."taskId" = '${taskId}' THEN RAISE EXCEPTION '${REFUSAL}'; END IF; RETURN NEW; END; $body$ LANGUAGE plpgsql`
+			`CREATE OR REPLACE FUNCTION "refuse_${table}"() RETURNS trigger AS $body$ BEGIN IF NEW."taskId" = '${taskId}' THEN RAISE EXCEPTION '${REFUSAL} ${table}'; END IF; RETURN NEW; END; $body$ LANGUAGE plpgsql`
 		);
 		await dataSource.query(
-			`CREATE TRIGGER "refuse_former_reference" BEFORE INSERT ON "task_former_reference" FOR EACH ROW EXECUTE FUNCTION "refuse_former_reference"()`
+			`CREATE TRIGGER "refuse_${table}" BEFORE INSERT ON "${table}" FOR EACH ROW EXECUTE FUNCTION "refuse_${table}"()`
 		);
 	}
 };
@@ -132,7 +151,7 @@ function exercise(dialect: Dialect) {
 	const taskRow = (id: string) =>
 		dataSource.getRepository(Task).findOne({
 			where: { id },
-			select: { id: true, title: true, projectId: true, number: true, prefix: true, status: true }
+			select: { id: true, title: true, projectId: true, number: true, prefix: true, status: true, organizationSprintId: true }
 		});
 
 	const formerReferences = () =>
@@ -142,10 +161,10 @@ function exercise(dialect: Dialect) {
 		});
 
 	/**
-	 * Makes the database refuse the former reference of the task named: a write the update makes after its save, in
+	 * Makes the database refuse the sprint move history of the task named: a write the update makes AFTER its save, in
 	 * the same transaction (a trigger, so the failure is the database's own, as a full disk or a lost lock would be).
 	 */
-	const refuseFormerReferenceOf = (taskId: string) => dialect.refuseFormerReferenceOf(dataSource, taskId);
+	const refuseSprintHistoryOf = (taskId: string) => dialect.refuseInsert(dataSource, 'organization_sprint_task_history', taskId);
 
 	beforeAll(async () => {
 		// As the platform builds its data source: on SQLite, transactions take turns on the one connection.
@@ -157,21 +176,24 @@ function exercise(dialect: Dialect) {
 
 	afterAll(async () => {
 		if (!dataSource?.isInitialized) return;
-		await dialect.refuseFormerReferenceOf(dataSource, null);
+		await dialect.refuseInsert(dataSource, null);
 		const file = (dataSource.options as { database?: unknown }).database;
 		await dataSource.destroy();
 		if (typeof file === 'string' && file.endsWith('.sqlite3')) fs.rmSync(file, { force: true });
 	});
 
 	beforeEach(async () => {
-		await dialect.refuseFormerReferenceOf(dataSource, null);
+		await dialect.refuseInsert(dataSource, null);
 		await dialect.reset(dataSource);
 		const scope = { tenantId: TENANT, organizationId: ORGANIZATION };
 		await insert(Tenant, { id: TENANT, name: 'Tenant' });
 		await insert(Organization, { id: ORGANIZATION, tenantId: TENANT, name: 'Organization' });
+		// The caller: the sprint move history names who moved the task
+		await insert(User, { id: fixture.user.id, tenantId: TENANT, firstName: 'Ada', lastName: 'Lovelace' });
 		await insert(OrganizationProject, { ...scope, id: PROJECT_API, name: 'Api Gateway', taskKey: 'API' });
 		await insert(OrganizationProject, { ...scope, id: PROJECT_SYS, name: 'Systems', taskKey: 'SYS' });
 		await insert(OrganizationProject, { ...scope, id: PROJECT_WEB, name: 'Website', taskKey: 'WEB' });
+		await insert(OrganizationSprint, { ...scope, id: SPRINT, name: 'Sprint 1', projectId: PROJECT_SYS });
 		await insert(Task, { ...scope, id: TASK_41, title: 'Forty-one', projectId: PROJECT_API, number: 41, prefix: 'Api', status: 'open' });
 		await insert(Task, { ...scope, id: TASK_42, title: 'Forty-two', projectId: PROJECT_API, number: 42, prefix: 'Api', status: 'open' });
 
@@ -304,6 +326,56 @@ function exercise(dialect: Dialect) {
 	);
 
 	it(
+		'numbers a task moving back as any moved task when another task holds its old number, and keeps the reference',
+		async () => {
+			await service.update(TASK_42, { projectId: PROJECT_SYS });
+			// A task numbered API-42 meanwhile (data from before former references were kept)
+			await insert(Task, {
+				tenantId: TENANT,
+				organizationId: ORGANIZATION,
+				id: TASK_OTHER_42,
+				title: 'Another forty-two',
+				projectId: PROJECT_API,
+				number: 42,
+				prefix: 'Api',
+				status: 'open'
+			});
+
+			await service.update(TASK_42, { projectId: PROJECT_API });
+
+			expect(await taskRow(TASK_42)).toMatchObject({ projectId: PROJECT_API, number: 43, prefix: 'Api' });
+			expect((await formerReferences()).map(({ projectId, number }) => ({ projectId, number }))).toEqual([
+				{ projectId: PROJECT_SYS, number: 1 },
+				{ projectId: PROJECT_API, number: 42 }
+			]);
+			// The live task answers API-42 first
+			const [resolution] = await service.resolveReferences({ organizationId: ORGANIZATION, references: ['API-42'] } as never);
+			expect(resolution).toMatchObject({ resolved: true, taskId: TASK_OTHER_42 });
+		},
+		TIMEOUT
+	);
+
+	it(
+		'gives a task two overlapping updates move back the number it held, once',
+		async () => {
+			await service.update(TASK_42, { projectId: PROJECT_SYS });
+
+			// Both read the task as SYS-1 before either writes; the second one finds it back in API once it has the lock.
+			const results = await Promise.allSettled([
+				service.update(TASK_42, { projectId: PROJECT_API }),
+				service.update(TASK_42, { projectId: PROJECT_API })
+			]);
+			expect(results.map((result) => result.status)).toEqual(['fulfilled', 'fulfilled']);
+
+			expect(await taskRow(TASK_42)).toMatchObject({ projectId: PROJECT_API, number: 42, prefix: 'Api' });
+			expect((await formerReferences()).map(({ projectId, number }) => ({ projectId, number }))).toEqual([
+				{ projectId: PROJECT_SYS, number: 1 }
+			]);
+		},
+		TIMEOUT
+	);
+
+	it(
 		'keeps the reference of a task that leaves its project for none',
 		async () => {
 			await service.update(TASK_42, { projectId: null });
@@ -319,11 +391,21 @@ function exercise(dialect: Dialect) {
 	it(
 		'stores nothing of an update a later step of it failed: the save is undone',
 		async () => {
-			await refuseFormerReferenceOf(TASK_42);
+			// The sprint history is written after the save (and after the former reference): the save and the reference
+			// must both be undone with it
+			await refuseSprintHistoryOf(TASK_42);
 
-			await expect(service.update(TASK_42, { title: 'Renamed', projectId: PROJECT_SYS })).rejects.toThrow(REFUSAL);
+			await expect(
+				service.update(TASK_42, { title: 'Renamed', projectId: PROJECT_SYS, organizationSprintId: SPRINT })
+			).rejects.toThrow(REFUSAL);
 
-			expect(await taskRow(TASK_42)).toMatchObject({ title: 'Forty-two', projectId: PROJECT_API, number: 42, prefix: 'Api' });
+			expect(await taskRow(TASK_42)).toMatchObject({
+				title: 'Forty-two',
+				projectId: PROJECT_API,
+				number: 42,
+				prefix: 'Api',
+				organizationSprintId: null
+			});
 			expect(await formerReferences()).toEqual([]);
 		},
 		TIMEOUT
@@ -332,10 +414,11 @@ function exercise(dialect: Dialect) {
 	it(
 		'CONTROL: stores the whole update when every step succeeds',
 		async () => {
-			await service.update(TASK_42, { title: 'Renamed', projectId: PROJECT_SYS });
+			await service.update(TASK_42, { title: 'Renamed', projectId: PROJECT_SYS, organizationSprintId: SPRINT });
 
-			expect(await taskRow(TASK_42)).toMatchObject({ title: 'Renamed', projectId: PROJECT_SYS, number: 1 });
+			expect(await taskRow(TASK_42)).toMatchObject({ title: 'Renamed', projectId: PROJECT_SYS, number: 1, organizationSprintId: SPRINT });
 			expect(await formerReferences()).toHaveLength(1);
+			expect(await dataSource.getRepository(OrganizationSprintTaskHistory).count({ where: { taskId: TASK_42 } })).toBe(1);
 		},
 		TIMEOUT
 	);
@@ -343,10 +426,14 @@ function exercise(dialect: Dialect) {
 	it(
 		'reports a task of a bulk update as refused only when it did not change',
 		async () => {
-			await refuseFormerReferenceOf(TASK_41);
+			await refuseSprintHistoryOf(TASK_41);
 
 			const outcome = await service.bulkUpdate(
-				{ organizationId: ORGANIZATION, taskIds: [TASK_42, TASK_41], changes: { projectId: PROJECT_SYS } } as never,
+				{
+					organizationId: ORGANIZATION,
+					taskIds: [TASK_42, TASK_41],
+					changes: { projectId: PROJECT_SYS, organizationSprintId: SPRINT }
+				} as never,
 				(id, update) => service.update(id, update)
 			);
 
@@ -356,8 +443,8 @@ function exercise(dialect: Dialect) {
 			expect(byTask.get(TASK_41)).toMatchObject({ ok: false, previous: { projectId: PROJECT_API } });
 
 			// The task reported as refused is exactly as it was; the other one moved.
-			expect(await taskRow(TASK_41)).toMatchObject({ projectId: PROJECT_API, number: 41, prefix: 'Api' });
-			expect(await taskRow(TASK_42)).toMatchObject({ projectId: PROJECT_SYS, number: 1 });
+			expect(await taskRow(TASK_41)).toMatchObject({ projectId: PROJECT_API, number: 41, prefix: 'Api', organizationSprintId: null });
+			expect(await taskRow(TASK_42)).toMatchObject({ projectId: PROJECT_SYS, number: 1, organizationSprintId: SPRINT });
 			expect((await formerReferences()).map((row) => row.taskId)).toEqual([TASK_42]);
 		},
 		TIMEOUT

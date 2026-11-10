@@ -144,6 +144,8 @@ describe('TaskService.update — moving the time logs with the task', () => {
 			return lock;
 		};
 		const inTransaction = {
+			// No former number to take back in the project the task moves to
+			findOne: async () => null,
 			// The update's own transaction saves the task and the reference it leaves in the project it left
 			getRepository: (entity: unknown) => ({
 				save: async (row: unknown) => {

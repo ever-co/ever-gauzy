@@ -51,7 +51,9 @@ MCP server and the SDKs.
 - **Given** a task moved to another project, **when** an old reference `API-42` is
   used, **then** it still resolves to the task, the answer naming the reference
   the task holds today, and project `API` never gives the number 42 to another
-  task.
+  task. This holds for moves made once former references are recorded
+  (migration `1791000006750`): a task moved before keeps no old reference, and
+  nothing can rebuild one.
 
 ### 2.2 Edge cases & failures
 
@@ -102,7 +104,9 @@ MCP server and the SDKs.
   binding) with the user's UI preferences and return them with the user profile.
 - **FR-9** Every project MUST have a unique key within its organization; tasks MUST be
   addressable as `KEY-number`, and old keys MUST keep resolving after a move; the
-  platform MUST expose a resolver for references and task links.
+  platform MUST expose a resolver for references and task links. A task's old
+  reference resolves for moves recorded since migration `1791000006750`, not for
+  earlier ones.
 
 ### Compatibility
 
