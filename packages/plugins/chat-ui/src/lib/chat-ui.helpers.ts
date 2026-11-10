@@ -223,6 +223,15 @@ export function tokensToNames(body: string, people: ReadonlyMap<string, ChatPers
 	return { text, people: picked, channels };
 }
 
+/** The Markdown marks the formatting bar puts around a selection (bold / italic, strike): a mention may sit inside them. */
+const MARKDOWN_MARKS = '*_~';
+
+/**
+ * Where a mention's label ends: not before a letter or a digit (`@Bob Stone` is not in `@Bob Stoned`), nor before an
+ * underscore that goes on into a word; an underscore that closes italics (`_@Bob Stone_`) still ends it.
+ */
+const MENTION_END = '(?![\\p{L}\\p{N}]|_[\\p{L}\\p{N}])';
+
 /**
  * `@Name` back into `<@employeeId>` and `#channel` into `<#conversationId>` for the labels that were picked
  * (longest first, a label never matched inside a longer word), plus `@channel` / `@here` into `<!channel>` / `<!here>`.
@@ -238,15 +247,6 @@ export function namesToTokens(text: string, people: ReadonlyMap<string, string>,
 	}
 	return out.replace(new RegExp(`(^|[\\s${MARKDOWN_MARKS}])@(channel|here)(?=$|[\\s.,!?${MARKDOWN_MARKS}])`, 'gu'), '$1<!$2>');
 }
-
-/** The Markdown marks the formatting bar puts around a selection (bold / italic, strike): a mention may sit inside them. */
-const MARKDOWN_MARKS = '*_~';
-
-/**
- * Where a mention's label ends: not before a letter or a digit (`@Bob Stone` is not in `@Bob Stoned`), nor before an
- * underscore that goes on into a word; an underscore that closes italics (`_@Bob Stone_`) still ends it.
- */
-const MENTION_END = '(?![\\p{L}\\p{N}]|_[\\p{L}\\p{N}])';
 
 /**
  * The `@` query under the caret, when the caret follows `@` and some word characters with no space in between:
