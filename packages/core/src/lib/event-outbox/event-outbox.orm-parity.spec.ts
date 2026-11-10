@@ -1036,7 +1036,7 @@ describe.each([
 			}
 		});
 
-		it('puts the record back and refuses when the event is removed after the replay first read it', async () => {
+		it('writes nothing when the replay stops after resetting the record and before re-queueing the row', async () => {
 			harness.quiet();
 			const ran: string[] = [];
 
@@ -1047,32 +1047,36 @@ describe.each([
 				await dispatch();
 
 				const record = await recordOf('orm-parity.replayed');
-				const [before] = await harness.query(
-					`SELECT "status", "attemptCount", "lastError", "deliveredAt" FROM "event_delivery" WHERE "id" = ?`,
-					[record.id]
+				const delivery = `SELECT "status", "attemptCount", "lastError", "deliveredAt" FROM "event_delivery" WHERE "id" = ?`;
+				const outbox = `SELECT "status", "attemptCount", "availableAt", "publishedAt" FROM "event_outbox"`;
+				const [recordBefore] = await harness.query(delivery, [record.id]);
+				const outboxBefore = await harness.query(outbox);
+
+				// The move is cut off between its two writes: the record's reset has run, the row's re-queue fails.
+				// Were the reset committed on its own, a retention could then remove the published row and leave a
+				// pending record that nothing delivers.
+				await harness.query(
+					`CREATE TRIGGER "orm_parity_replay_cut" BEFORE UPDATE ON "event_outbox" BEGIN SELECT RAISE(ABORT, 'replay cut off'); END`
 				);
-				const service = harness.service as unknown as { updateDeliveryRow: (...args: unknown[]) => Promise<void> };
-				const reset = service.updateDeliveryRow.bind(service);
-				// A retention removes the row between the replay's first read and its reset of the record.
-				const between = jest.spyOn(service, 'updateDeliveryRow').mockImplementationOnce(async (...args: unknown[]) => {
-					await harness.query(`DELETE FROM "event_outbox"`);
-					return reset(...args);
-				});
 
 				try {
-					// By name: each half constructs the exception from its own module registry.
-					await expect(replayAsOperator(record.id)).rejects.toMatchObject({ name: NotFoundException.name });
+					await expect(replayAsOperator(record.id)).rejects.toMatchObject({
+						message: expect.stringContaining('replay cut off')
+					});
 				} finally {
-					between.mockRestore();
+					await harness.query(`DROP TRIGGER "orm_parity_replay_cut"`);
 				}
 
-				expect(
-					await harness.query(
-						`SELECT "status", "attemptCount", "lastError", "deliveredAt" FROM "event_delivery" WHERE "id" = ?`,
-						[record.id]
-					)
-				).toEqual([before]);
-				expect(before.status).toBe(EventOutboxStatus.PUBLISHED);
+				expect(recordBefore.status).toBe(EventOutboxStatus.PUBLISHED);
+				expect(await harness.query(delivery, [record.id])).toEqual([recordBefore]);
+				expect(await harness.query(outbox)).toEqual(outboxBefore);
+
+				// Nothing was left half-done: the same move, run again, goes through.
+				await replayAsOperator(record.id);
+				expect((await recordOf('orm-parity.replayed')).status).toBe(EventOutboxStatus.PENDING);
+				expect(await harness.query(`SELECT "status" FROM "event_outbox"`)).toEqual([
+					{ status: EventOutboxStatus.PENDING }
+				]);
 			} finally {
 				harness.registry.unregister('orm-parity.replayed');
 			}

@@ -15,6 +15,20 @@ type OutboxTable = typeof EventOutbox | typeof EventDelivery;
 /** A row as a statement states it, or as the store answers it: members by property name. */
 type Row = Record<string, unknown>;
 
+/** One delivery replay, as `EventOutboxService.replayDelivery` states it for either ORM to write. */
+export interface IDeliveryReplayMove {
+	/** The delivery record. */
+	id: ID;
+	/** The outbox row of the record's event: its event id and tenant. */
+	event: Row;
+	/** What the record is reset to. */
+	reset: Row;
+	/** The row statuses that put the row back in the queue; a row in any other status is still waiting. */
+	requeueFrom: readonly EventOutboxStatus[];
+	/** What a row in one of those statuses is reset to. */
+	requeue: Row;
+}
+
 /**
  * The JSON members of a table, and what each reads as when the column holds nothing usable.
  *
@@ -226,6 +240,48 @@ export class EventOutboxMikroOrmStore {
 			}
 
 			return claimed;
+		});
+	}
+
+	/**
+	 * Replays one delivery record, in a transaction of the store's own.
+	 *
+	 * The statement set is the TypeORM replay's: the record's outbox row read under `FOR UPDATE` where the dialect
+	 * has row locks — Postgres and MySQL — and inside the transaction alone on SQLite, which serialises writers;
+	 * then the record's reset, and the row's re-queue when its status is one of `requeueFrom`, before the
+	 * transaction commits. With no row, nothing is written.
+	 *
+	 * @param move The record, its event and the values to write.
+	 * @returns False when the event is no longer in the outbox.
+	 */
+	async replayDelivery(move: IDeliveryReplayMove): Promise<boolean> {
+		return this.manager(EventOutbox).transactional(async (em) => {
+			const query = em
+				.createQueryBuilder(EventOutbox, 'outbox')
+				.select('*')
+				.where({ ...move.event, deletedAt: null } as never)
+				.limit(1);
+
+			if (isPostgres() || isMySQL()) {
+				// A retention's delete of the row waits on this lock, or this read waits on the delete.
+				query.setLockMode(LockMode.PESSIMISTIC_WRITE);
+			}
+
+			const found = (await query.execute('get')) as Row | null | undefined;
+
+			if (!found) {
+				return false;
+			}
+
+			const event = this.rowOf(EventOutbox, found) as unknown as EventOutbox;
+
+			await this.write(em, EventDelivery, move.id, move.reset);
+
+			if (move.requeueFrom.includes(event.status as EventOutboxStatus)) {
+				await this.write(em, EventOutbox, event.id as ID, move.requeue);
+			}
+
+			return true;
 		});
 	}
 

@@ -257,7 +257,7 @@ export class RealtimeRetentionService implements OnModuleInit, OnModuleDestroy {
 			if (!rows.length) return 0;
 
 			// Removed only while still dispatched with every delivery acknowledged: an operator's delivery replay since the
-			// read resets the delivery record first and then re-queues the row, and either step keeps the row.
+			// read resets the record and re-queues the row in one transaction holding the row, and that keeps the row.
 			const ids = rows.map((row) => row.id as ID);
 			const escape = (name: string) => manager.connection.driver.escape(name);
 			const outboxTable = escape(repository.metadata.tableName);
