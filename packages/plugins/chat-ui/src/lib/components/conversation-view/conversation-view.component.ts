@@ -348,6 +348,10 @@ export class ConversationViewComponent {
 	private loadedId: string | null = null;
 	/** Counts the visits of this view (every conversation switch): a send belongs to the visit it was made in. */
 	private visit = 0;
+	/** Counts the catch-ups: only the latest one's answer is applied. */
+	private catchUpRun = 0;
+	/** The messages changed here since the latest catch-up began (a refresh, a deletion, my own action): its page does not overrule them. */
+	private readonly touched = new Set<string>();
 	/** The last message a read was asked up to, so the same read is not sent twice. */
 	private lastMarkedId: string | null = null;
 
@@ -532,8 +536,10 @@ export class ConversationViewComponent {
 					if (!this.isCurrent(conversationId)) return;
 					const fresh = page.messages.find((message) => String(message.id) === messageId);
 					if (!fresh) return;
-					if (fresh.deletedAt && !fresh.replyCount) this.messages.set(this.messages().filter((message) => String(message.id) !== messageId));
-					else this.replace(fresh);
+					if (fresh.deletedAt && !fresh.replyCount) {
+						this.touched.add(messageId);
+						this.messages.set(this.messages().filter((message) => String(message.id) !== messageId));
+					} else this.replace(fresh);
 				},
 				error: () => undefined
 			});
@@ -547,22 +553,26 @@ export class ConversationViewComponent {
 	 */
 	private catchUp(id: string): void {
 		if (!this.isCurrent(id) || this.hasAfter() || this.loading()) return;
-		// What is loaded when the read starts: a message shown while it runs (a live event, my own send) is newer than
-		// the page may know, and stays whatever the page says.
+		// What is loaded when the read starts: a message shown while it runs (a live event, my own send), or changed
+		// here meanwhile (refreshed, deleted, my own edit), is newer than the page may know and stays as it is now.
+		const run = ++this.catchUpRun;
+		this.touched.clear();
 		const before = new Set(this.messages().map((message) => String(message.id)));
 		this.api
 			.messages(id, {})
 			.pipe(takeUntilDestroyed(this.destroyRef))
 			.subscribe({
 				next: (page) => {
-					if (!this.isCurrent(id) || this.hasAfter()) return;
+					if (!this.isCurrent(id) || this.hasAfter() || run !== this.catchUpRun) return;
 					const wasNearBottom = this.isNearBottom();
-					const arrived = this.messages().filter((message) => !before.has(String(message.id)));
+					const untouched = (message: IChatMessageWithRelations) => !this.touched.has(String(message.id));
+					const current = this.messages();
+					const kept = current.filter((message) => !before.has(String(message.id)) || !untouched(message));
 					const result = reconcileWithNewest(
-						this.messages().filter((message) => before.has(String(message.id))),
-						page
+						current.filter((message) => before.has(String(message.id)) && untouched(message)),
+						{ hasBefore: page.hasBefore, messages: page.messages.filter(untouched) }
 					);
-					this.messages.set(mergeMessages(result.messages, arrived));
+					this.messages.set(mergeMessages(result.messages, kept));
 					if (result.replaced) this.hasBefore.set(page.hasBefore);
 					if (!result.added.length) return;
 					if (wasNearBottom) {
@@ -897,6 +907,8 @@ export class ConversationViewComponent {
 
 	/** Puts the API's version of a message (or the fields of it that changed) in place of ours. */
 	private replace(message: ChatMessagePatch): void {
+		// A running catch-up does not overrule it.
+		if (message.id) this.touched.add(String(message.id));
 		this.messages.set(this.messages().map((item) => (item.id === message.id ? { ...item, ...message } : item)));
 	}
 

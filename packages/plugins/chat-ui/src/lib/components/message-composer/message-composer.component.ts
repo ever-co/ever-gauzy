@@ -344,7 +344,9 @@ export class MessageComposerComponent {
 	protected readonly canSend = computed(() => {
 		const editing = this.editing();
 		const hasFiles = !editing && readyAttachmentIds(this.attachments()).length > 0;
-		return (this.length() > 0 || hasFiles) && !this.isTooLong() && !this.disabled() && (editing || !this.uploading());
+		// A file that was not stored is taken off (or picked again) first: the message never goes out without it.
+		const refused = !editing && this.attachments().some((item) => item.status === 'failed');
+		return (this.length() > 0 || hasFiles) && !this.isTooLong() && !this.disabled() && (editing || (!this.uploading() && !refused));
 	});
 
 	constructor() {
@@ -398,6 +400,8 @@ export class MessageComposerComponent {
 		}
 		this.dirty = false;
 		this.query.set(null);
+		this.emojiQuery.set(null);
+		this.dismissed = null;
 		this.measure();
 	}
 
