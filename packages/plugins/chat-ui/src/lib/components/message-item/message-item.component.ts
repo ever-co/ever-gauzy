@@ -1,3 +1,4 @@
+// cspell:ignore referrerpolicy
 import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, input, output, signal } from '@angular/core';
 import { DomSanitizer } from '@angular/platform-browser';
