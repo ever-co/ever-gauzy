@@ -181,12 +181,15 @@ describe('RedisGraphqlPubSubEngine', () => {
 		// The subscriber connection drops; publishing (another connection) still works.
 		server.clients.delete(subscriber);
 		subscriber.emit('close');
+		// Other processes' events no longer reach this process's sockets: not shared.
+		expect(engine.shared).toBe(false);
 		await engine.publish(topic, envelope());
 		expect(await next(socket)).toEqual(envelope());
 
 		// Back: ioredis re-subscribed before saying it is ready. No second copy from the direct path.
 		server.clients.add(subscriber);
 		subscriber.emit('ready');
+		expect(engine.shared).toBe(true);
 		await engine.publish(topic, { ...envelope(), eventId: 'e-2' });
 		expect((await next(socket)) as { eventId: string }).toMatchObject({ eventId: 'e-2' });
 		expect(await next(socket)).toBeUndefined();

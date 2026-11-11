@@ -10,7 +10,6 @@ import { TYPEORM_INVALID_WHERE_VALUES_BEHAVIOR } from '@gauzy/config';
 import { coreEntities } from '../core/entities';
 import { createPlatformDataSource } from '../database/embedded-transaction-queue';
 import { CreateEventOutboxTables1791000000020 } from '../database/migrations/1791000000020-CreateEventOutboxTables';
-import { EVENT_OUTBOX_APPEND_DEBOUNCE_MS } from './event-outbox-constant';
 import { EventConsumerRegistry } from './event-consumer.registry';
 import { EventDelivery } from './event-delivery.entity';
 import { EventOutboxAppendSignal } from './event-outbox-append.signal';
@@ -46,11 +45,21 @@ const placed = (): IOutboxWriteInput => ({
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
+/** Waits until a condition holds, polling; fails the case when it does not within the bound. */
+async function until(condition: () => boolean, what: string, boundMs = 5_000): Promise<void> {
+	for (let waited = 0; !condition(); waited += 10) {
+		if (waited >= boundMs) throw new Error(`Timed out waiting for ${what}`);
+		await sleep(10);
+	}
+}
+
 describe('EventOutboxInlineDispatch on SQLite', () => {
 	let dataSource: DataSource;
 	let service: EventOutboxService;
 	let inline: EventOutboxInlineDispatch;
 	let received: IEventEnvelope[];
+	/** Claims the drain started and finished: the sync points the cases wait on. */
+	let claims: { started: number; settled: number };
 
 	beforeEach(async () => {
 		jest.spyOn(Logger.prototype, 'log').mockImplementation(() => undefined);
@@ -91,14 +100,25 @@ describe('EventOutboxInlineDispatch on SQLite', () => {
 			}
 		});
 
+		claims = { started: 0, settled: 0 };
+		const claimBatch = service.claimBatch.bind(service);
+		jest.spyOn(service, 'claimBatch').mockImplementation(async (policy) => {
+			claims.started += 1;
+			try {
+				return await claimBatch(policy);
+			} finally {
+				claims.settled += 1;
+			}
+		});
+
 		inline = new EventOutboxInlineDispatch(signal, new EventOutboxDispatcher(service, registry));
 		inline.onModuleInit();
 	});
 
 	afterEach(async () => {
 		inline.onModuleDestroy();
-		// Let a drain in progress finish before the database goes away.
-		await sleep(50);
+		// Let a claim in progress finish before the database goes away.
+		await until(() => claims.settled === claims.started, 'the last claim to finish');
 		await dataSource.destroy();
 		jest.restoreAllMocks();
 	});
@@ -107,13 +127,14 @@ describe('EventOutboxInlineDispatch on SQLite', () => {
 		const refused = dataSource.manager.transaction(async (manager) => {
 			await manager.query(`INSERT INTO "outbox_probe_state" ("id") VALUES (?)`, ['refused']);
 			await service.append(manager, placed());
-			// The writer is still busy when the drain comes due.
-			await sleep(EVENT_OUTBOX_APPEND_DEBOUNCE_MS + 200);
+			// The writer is still busy when the drain asks for its claim.
+			await until(() => claims.started >= 1, 'the drain to start its claim');
 			throw new Error('the state change was refused');
 		});
 
 		await expect(refused).rejects.toThrow('the state change was refused');
-		await sleep(300);
+		// The claim that was waiting behind the writer has run, after the rollback.
+		await until(() => claims.started >= 1 && claims.settled === claims.started, 'the claim to finish');
 
 		expect(received).toEqual([]);
 		expect(await dataSource.query(`SELECT COUNT(*) AS "n" FROM "event_outbox"`)).toEqual([{ n: 0 }]);
@@ -123,12 +144,11 @@ describe('EventOutboxInlineDispatch on SQLite', () => {
 		await dataSource.manager.transaction(async (manager) => {
 			await manager.query(`INSERT INTO "outbox_probe_state" ("id") VALUES (?)`, ['kept']);
 			await service.append(manager, placed());
-			await sleep(EVENT_OUTBOX_APPEND_DEBOUNCE_MS + 200);
+			// The drain asks while the writer is still open; it gets the row only after the commit.
+			await until(() => claims.started >= 1, 'the drain to start its claim');
 		});
 
-		for (let waited = 0; received.length === 0 && waited < 3_000; waited += 50) {
-			await sleep(50);
-		}
+		await until(() => received.length >= 1, 'the consumer to receive the committed event');
 
 		expect(received).toHaveLength(1);
 		expect(received[0]).toMatchObject({ name: 'order.placed', aggregate: { type: 'Order', id: ORDER } });

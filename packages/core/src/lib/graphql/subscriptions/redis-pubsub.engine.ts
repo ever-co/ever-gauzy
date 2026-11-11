@@ -103,11 +103,12 @@ export class RedisGraphqlPubSubEngine implements GraphqlPubSubEngine {
 	}
 
 	/**
-	 * Whether a publish reaches the subscribers of every process: not while publishing to Redis fails (it then
-	 * reaches this process's sockets only), and not once the engine is closed.
+	 * Whether events reach sockets across every process, both ways: not while publishing to Redis fails (a publish
+	 * then reaches this process's sockets only), not while a started engine does not hear Redis (its sockets then
+	 * miss what other processes publish), and not once the engine is closed.
 	 */
 	get shared(): boolean {
-		return !this.closed && !this.publishFailing;
+		return !this.closed && !this.publishFailing && (!this.started || this.listening);
 	}
 
 	/**

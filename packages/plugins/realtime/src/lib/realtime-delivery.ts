@@ -1,3 +1,4 @@
+import { resolveDatabaseType } from '@gauzy/config';
 import { IRealtimeDelivery } from '@gauzy/contracts';
 
 /**
@@ -32,7 +33,8 @@ export function describeRealtimeDelivery(
  *
  * True on SQLite: its database is a file of one process, so replicas would not share data in the first place.
  * Elsewhere only when the deployment says so (`GAUZY_API_SINGLE_PROCESS=true`), because nothing in one process
- * can tell how many others serve the same database.
+ * can tell how many others serve the same database. An unset or empty `DB_TYPE` is read the way the platform's
+ * database configuration reads it (`better-sqlite3`).
  *
  * @param dbType The configured `DB_TYPE`.
  * @param declared The `GAUZY_API_SINGLE_PROCESS` setting.
@@ -41,5 +43,6 @@ export function isSingleApiProcess(
 	dbType: string | undefined = process.env['DB_TYPE'],
 	declared: string | undefined = process.env['GAUZY_API_SINGLE_PROCESS']
 ): boolean {
-	return declared === 'true' || dbType === 'sqlite' || dbType === 'better-sqlite3';
+	const resolved = resolveDatabaseType(dbType);
+	return declared === 'true' || resolved === 'sqlite' || resolved === 'better-sqlite3';
 }

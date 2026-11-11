@@ -33,6 +33,16 @@ describe('isSingleApiProcess', () => {
 	it('holds on SQLite, whose database belongs to one process', () => {
 		expect(isSingleApiProcess('better-sqlite3', undefined)).toBe(true);
 		expect(isSingleApiProcess('sqlite', undefined)).toBe(true);
+		// Empty, or unset: the platform runs on better-sqlite3.
+		expect(isSingleApiProcess('', undefined)).toBe(true);
+		const previous = process.env['DB_TYPE'];
+		try {
+			delete process.env['DB_TYPE'];
+			expect(isSingleApiProcess(undefined, undefined)).toBe(true);
+		} finally {
+			if (previous === undefined) delete process.env['DB_TYPE'];
+			else process.env['DB_TYPE'] = previous;
+		}
 	});
 
 	it('holds elsewhere only when the deployment says so', () => {
