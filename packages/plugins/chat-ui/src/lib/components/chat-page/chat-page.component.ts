@@ -831,10 +831,7 @@ export class ChatPageComponent implements OnInit {
 	protected readonly card = signal<{ person: ChatPerson; top: number; left: number } | null>(null);
 	protected readonly cardSending = signal(false);
 	/** The employee profile page needs `ORG_EMPLOYEES_VIEW` (as on the Teams dashboard). */
-	protected readonly canViewProfiles = computed(() => {
-		this.user();
-		return this.store.hasPermission(PermissionsEnum.ORG_EMPLOYEES_VIEW);
-	});
+	protected readonly canViewProfiles = this.permission(PermissionsEnum.ORG_EMPLOYEES_VIEW);
 	/** Their role in the open conversation and since when, when they are in it. */
 	protected readonly cardMembership = computed<PersonCardMembership | null>(() => {
 		const id = this.card()?.person.employeeId;

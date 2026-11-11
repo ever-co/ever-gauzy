@@ -1769,7 +1769,11 @@
 		"TOOLONGKEY",
 		"unfollowing",
 		"sqljs",
-		"refetched"
+		"refetched",
+		"Abebe",
+		"haspopup",
+		"menuitemradio",
+		"popout"
 	],
 	"useGitignore": true,
 	"ignorePaths": [

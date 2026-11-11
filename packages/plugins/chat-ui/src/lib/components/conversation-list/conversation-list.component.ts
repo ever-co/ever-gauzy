@@ -67,7 +67,7 @@ function writeCollapsed(keys: ReadonlySet<string>): void {
 /**
  * The left pane, laid out as chat apps do: the workspace header with its compose actions, a "Jump to…" filter
  * (Ctrl/⌘+K), Unreads and Threads, then the sections (favourites, the channels by category, the direct messages)
- * with an add button each. Every section collapses, still showing its open and unread conversations. Channels and
+ * with an add button each. Every section collapses (its header then counts its unread conversations). Channels and
  * Direct messages always open expanded when the page loads; for favourites and channel categories, which are
  * collapsed is remembered per browser. Alt+↑ / Alt+↓ moves to the previous / next conversation.
  */
