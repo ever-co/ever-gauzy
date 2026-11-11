@@ -474,7 +474,6 @@ export interface IChatWebhook extends IBasePerTenantAndOrganizationEntityModel {
 	/** Whether `@channel` / `@here` in its posts notify the channel. */
 	canBroadcast: boolean;
 	createdByEmployeeId?: ID | null;
-	createdByUserId?: ID | null;
 	revokedAt?: Date | null;
 	revokedByEmployeeId?: ID | null;
 	lastUsedAt?: Date | null;

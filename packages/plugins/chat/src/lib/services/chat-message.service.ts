@@ -48,6 +48,7 @@ import { ChatRealtime } from '../realtime/chat-realtime';
 import { inWriteTransaction } from '../realtime/chat-write-transaction';
 import { ChatAccessService, IChatCaller } from './chat-access.service';
 import { ChatNotifierService } from './chat-notifier.service';
+import { blocksOf } from '../webhooks/chat-webhook-payload';
 
 /**
  * The read state a mark-all-read replaced, so it can be undone for a minute. It travels inside the undo handle
@@ -1138,6 +1139,8 @@ export class ChatMessageService {
 			...(row as unknown as IChatMessageWithRelations),
 			mentionEmployeeIds: idsOf(row.mentionEmployeeIds),
 			attachmentIds: idsOf(row.attachmentIds),
+			// An app message's layout, parsed from its JSON column (none for a member's message).
+			blocks: row.blocks ? blocksOf(row.blocks) : null,
 			reactions: [...(reactionsOf.get(String(row.id))?.values() ?? [])],
 			taskReferences: referencesOf.get(String(row.id)) ?? [],
 			following: followed.has(String(row.id))

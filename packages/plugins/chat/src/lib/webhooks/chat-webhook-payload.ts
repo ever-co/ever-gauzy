@@ -65,7 +65,7 @@ export const CHAT_APP_MAX_CONTEXT_ELEMENTS = 10;
 export const CHAT_WEBHOOK_MAX_NONCE_LENGTH = 64;
 
 const UUID = '[0-9a-fA-F-]{36}';
-const CONTROL = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F‪-‮⁦-⁩]/g;
+const CONTROL = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F\u202A-\u202E\u2066-\u2069]/g;
 const HTML_TAG = /^\/?[a-zA-Z][\w:-]*(\s[^>]*)?\/?$/;
 
 /**
@@ -439,8 +439,7 @@ export function blocksOf(json: string | null | undefined): IChatAppBlock[] {
 function nonceOf(raw: unknown, header: string | null | undefined): string | null {
 	const value = typeof raw === 'string' && raw.trim() ? raw.trim() : typeof header === 'string' && header.trim() ? header.trim() : null;
 	if (value === null) return null;
-	if (value.length > CHAT_WEBHOOK_MAX_NONCE_LENGTH || CONTROL.test(value)) {
-		CONTROL.lastIndex = 0;
+	if (value.length > CHAT_WEBHOOK_MAX_NONCE_LENGTH || /[\u0000-\u001F\u007F]/.test(value)) {
 		throw new ChatWebhookPayloadError('invalid_payload', `A nonce holds at most ${CHAT_WEBHOOK_MAX_NONCE_LENGTH} printable characters.`);
 	}
 	return value;
