@@ -13,6 +13,7 @@ jest.mock('@gauzy/core', () => ({
 }));
 
 import {
+	INBOX_DELIVERY_STATUS_HISTORY_ROWS,
 	INBOX_DELIVERY_STATUS_AVAILABLE_TTL_MS,
 	INBOX_DELIVERY_STATUS_CHECK_TIMEOUT_MS,
 	INBOX_DELIVERY_STATUS_UNAVAILABLE_TTL_MS,
@@ -180,7 +181,7 @@ describe('InboxDeliveryStatusService', () => {
 		expect((await service.status()).email).toEqual({ enabled: true, available: false });
 		expect(find).toHaveBeenCalledWith(
 			expect.objectContaining({
-				where: expect.objectContaining({ tenantId: 'tenant-1', organizationId: 'org-1', channel: 'email' }),
+				where: expect.arrayContaining([expect.objectContaining({ tenantId: 'tenant-1', organizationId: 'org-1', channel: 'email' })]),
 				order: { updatedAt: 'DESC' }
 			})
 		);
@@ -210,6 +211,31 @@ describe('InboxDeliveryStatusService', () => {
 		await jest.advanceTimersByTimeAsync(INBOX_DELIVERY_STATUS_CHECK_TIMEOUT_MS + 1);
 
 		expect((await pending).email).toEqual({ enabled: true, available: false });
+	});
+
+	it('sees the failures before a large failed digest: three full digests fit in what is read', async () => {
+		const digest = (at: string, size: number) => Array.from({ length: size }, () => failed('Refused', new Date(at)));
+		const history = [...digest('2026-11-11T10:00:00Z', 50), ...digest('2026-11-11T09:00:00Z', 50), ...digest('2026-11-11T08:00:00Z', 50), sent()];
+		const { service, find } = build(async () => ({}), async () => history.slice(0, INBOX_DELIVERY_STATUS_HISTORY_ROWS));
+
+		expect((await service.status()).email.available).toBe(false);
+		// Only attempted rows are read: sent ones, and failed sends.
+		const options = (find.mock.calls as unknown as Array<[{ where: Array<Record<string, unknown>>; take: number }]>)[0][0];
+		expect(options.take).toBe(INBOX_DELIVERY_STATUS_HISTORY_ROWS);
+		expect(options.where).toHaveLength(2);
+	});
+
+	it('does not start another check of a scope while one is still stuck, and reports it unavailable', async () => {
+		jest.useFakeTimers();
+		const { service, sender, clock } = build(() => new Promise(() => undefined));
+
+		const first = service.status();
+		await jest.advanceTimersByTimeAsync(INBOX_DELIVERY_STATUS_CHECK_TIMEOUT_MS + 1);
+		expect((await first).email.available).toBe(false);
+
+		clock.now += INBOX_DELIVERY_STATUS_UNAVAILABLE_TTL_MS + 1;
+		expect((await service.status()).email.available).toBe(false);
+		expect(sender.getEmailInstance).toHaveBeenCalledTimes(1);
 	});
 
 	it('lets the transport answer stand when the delivery log cannot be read', async () => {

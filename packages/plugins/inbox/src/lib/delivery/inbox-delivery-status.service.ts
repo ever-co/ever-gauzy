@@ -1,7 +1,8 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { DataSource, IsNull, MoreThanOrEqual } from 'typeorm';
+import { DataSource, IsNull, MoreThan, MoreThanOrEqual, Not } from 'typeorm';
 import { ID, IInboxDeliveryStatus, InboxDeliveryChannelEnum } from '@gauzy/contracts';
 import { EmailSendService, RequestContext } from '@gauzy/core';
+import { INBOX_DELIVERY_DIGEST_MAX_ITEMS } from './inbox-delivery.constants';
 import { InboxDelivery } from './inbox-delivery.entity';
 import { isInboxNotificationEmailEnabled, isInboxWebPushEnabled } from '../inbox-enabled';
 import { readInboxWebPushConfig } from './push/inbox-push.constants';
@@ -16,13 +17,17 @@ export const INBOX_DELIVERY_STATUS_CHECK_TIMEOUT_MS = 10_000;
 export const INBOX_DELIVERY_STATUS_MAX_ENTRIES = 1_000;
 /** How far back the delivery log is read for recent sends. */
 export const INBOX_DELIVERY_STATUS_HISTORY_MS = 24 * 60 * 60_000;
-/** The recent email attempts of the scope that are read (newest first). */
-export const INBOX_DELIVERY_STATUS_HISTORY_ROWS = 20;
 /**
  * Failed send attempts in a row (newest first, none sent in between) that make email unavailable: one failure is often
  * one recipient refused; several in a row with nothing sent since is the transport.
  */
 export const INBOX_DELIVERY_STATUS_FAILURES_IN_A_ROW = 3;
+/**
+ * The attempted rows of the scope that are read (newest first): enough for {@link INBOX_DELIVERY_STATUS_FAILURES_IN_A_ROW}
+ * failed digests of the largest size, each recorded on every entry it carried, so a large digest cannot hide the
+ * failures before it.
+ */
+export const INBOX_DELIVERY_STATUS_HISTORY_ROWS = INBOX_DELIVERY_DIGEST_MAX_ITEMS * INBOX_DELIVERY_STATUS_FAILURES_IN_A_ROW + 1;
 
 interface ITransportCheck {
 	available: boolean;
@@ -54,6 +59,11 @@ export class InboxDeliveryStatusService {
 	private readonly logger = new Logger(InboxDeliveryStatusService.name);
 	private readonly checks = new Map<string, ITransportCheck>();
 	private readonly pending = new Map<string, Promise<ITransportCheck>>();
+	/**
+	 * The checks still running per scope, including one whose time ran out: a stalled lookup or log read is not
+	 * started again while it runs, so stalls cannot pile up and hold database connections.
+	 */
+	private readonly inflight = new Map<string, Promise<boolean>>();
 
 	/** The clock (a spec replaces it). */
 	protected now: () => number = () => Date.now();
@@ -81,7 +91,14 @@ export class InboxDeliveryStatusService {
 		if (cached && cached.expiresAt > this.now()) return cached;
 		const running = this.pending.get(key);
 		if (running) return running;
-		const check = this.check(tenantId, organizationId)
+		if (this.inflight.has(key)) {
+			// The last check of this scope is still stuck: unavailable, without starting another.
+			const checkedAt = new Date(this.now());
+			const stuck = { available: false, checkedAt, expiresAt: checkedAt.getTime() + INBOX_DELIVERY_STATUS_UNAVAILABLE_TTL_MS };
+			this.remember(key, stuck);
+			return stuck;
+		}
+		const check = this.check(key, tenantId, organizationId)
 			.then((available) => {
 				const checkedAt = new Date(this.now());
 				const ttl = available ? INBOX_DELIVERY_STATUS_AVAILABLE_TTL_MS : INBOX_DELIVERY_STATUS_UNAVAILABLE_TTL_MS;
@@ -95,7 +112,7 @@ export class InboxDeliveryStatusService {
 	}
 
 	/** Whether email can go out for the scope: a transport answers, and its recent sends are not all failing. */
-	private async check(tenantId: ID, organizationId: ID | null): Promise<boolean> {
+	private async check(key: string, tenantId: ID, organizationId: ID | null): Promise<boolean> {
 		// The time limit covers the whole check: the transport lookup and the read of the delivery log.
 		let timer: ReturnType<typeof setTimeout> | undefined;
 		const timeout = new Promise<boolean>((resolve) => {
@@ -106,6 +123,8 @@ export class InboxDeliveryStatusService {
 			if (!(await this.transportAnswers(tenantId, organizationId))) return false;
 			return !(await this.sendsFailing(tenantId, organizationId));
 		})();
+		this.inflight.set(key, checked);
+		checked.catch(() => false).finally(() => this.inflight.delete(key));
 		try {
 			return await Promise.race([checked, timeout]);
 		} finally {
@@ -120,14 +139,19 @@ export class InboxDeliveryStatusService {
 	private async sendsFailing(tenantId: ID, organizationId: ID | null): Promise<boolean> {
 		try {
 			const since = new Date(this.now() - INBOX_DELIVERY_STATUS_HISTORY_MS);
+			const scope = {
+				tenantId,
+				organizationId: organizationId ?? IsNull(),
+				channel: InboxDeliveryChannelEnum.EMAIL,
+				updatedAt: MoreThanOrEqual(since)
+			};
+			// Attempted rows only (sent, or a send that failed): a skipped or still-due row is not read at all.
 			const rows = await this.dataSource.getRepository(InboxDelivery).find({
 				select: { id: true, userId: true, sentAt: true, lastError: true, attempts: true, updatedAt: true },
-				where: {
-					tenantId,
-					organizationId: organizationId ?? IsNull(),
-					channel: InboxDeliveryChannelEnum.EMAIL,
-					updatedAt: MoreThanOrEqual(since)
-				},
+				where: [
+					{ ...scope, sentAt: Not(IsNull()) },
+					{ ...scope, sentAt: IsNull(), lastError: Not(IsNull()), attempts: MoreThan(0) }
+				],
 				order: { updatedAt: 'DESC' },
 				take: INBOX_DELIVERY_STATUS_HISTORY_ROWS
 			});
