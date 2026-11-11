@@ -47,6 +47,9 @@ import { ChatAccessService } from '../services/chat-access.service';
 import { ChatConversationService } from '../services/chat-conversation.service';
 import { ChatMessageService } from '../services/chat-message.service';
 import { ChatSearchService } from '../services/chat-search.service';
+import { ChatDraftUploadService } from '../services/chat-draft-upload.service';
+import { ChatTaskCardService } from '../services/chat-task-card.service';
+import { ChatTypingService } from '../services/chat-typing.service';
 import { ChatConversationController } from './chat-conversation.controller';
 import { ChatMessageController } from './chat-message.controller';
 
@@ -72,8 +75,14 @@ function controllers() {
 	return {
 		reached,
 		all: [
-			new ChatConversationController(access, serviceDouble<ChatConversationService>(reached), messages),
-			new ChatMessageController(access, messages, serviceDouble<ChatSearchService>(reached))
+			new ChatConversationController(access, serviceDouble<ChatConversationService>(reached), messages, serviceDouble<ChatTypingService>(reached)),
+			new ChatMessageController(
+				access,
+				messages,
+				serviceDouble<ChatSearchService>(reached),
+				serviceDouble<ChatTaskCardService>(reached),
+				serviceDouble<ChatDraftUploadService>(reached)
+			)
 		] as object[]
 	};
 }
@@ -97,7 +106,7 @@ describe('chat routes need CHAT_VIEW, writes included', () => {
 	it('covers the write routes (handlers that state a permission of their own)', () => {
 		const handlers = controllers().all.flatMap(handlersOf);
 		expect(handlers).toEqual(
-			expect.arrayContaining(['send', 'createChannel', 'direct', 'createCategory', 'updateCategory', 'deleteCategory', 'addMembers', 'edit', 'remove', 'react', 'pin', 'createTask'])
+			expect.arrayContaining(['send', 'createChannel', 'direct', 'createCategory', 'updateCategory', 'deleteCategory', 'addMembers', 'edit', 'remove', 'react', 'pin', 'createTask', 'updateTask', 'discardAttachment', 'reorderCategories', 'typing'])
 		);
 	});
 

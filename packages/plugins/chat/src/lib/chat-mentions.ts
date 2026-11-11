@@ -72,8 +72,7 @@ export function messageExcerpt(message: { body?: string | null; attachmentNames?
 	const text = plainExcerpt(message.body, max);
 	if (text) return text;
 	const names = (message.attachmentNames ?? '')
-		.split('
-')
+		.split('\n')
 		.map((name) => name.trim())
 		.filter(Boolean);
 	if (!names.length) return '';

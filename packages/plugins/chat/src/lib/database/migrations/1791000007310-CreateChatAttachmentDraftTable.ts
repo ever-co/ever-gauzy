@@ -3,8 +3,9 @@ import { ChatDialect, columnTypes, createTableIfMissing, dropTableIfExists, lock
 
 /**
  * `chat_attachment_draft`: the files uploaded for a message that no message carries yet (one row per document, its
- * uploader's). The sweep reads them oldest first (`IDX_chat_attachment_draft_created`); a document purged takes its row
- * with it (`ON DELETE CASCADE`).
+ * uploader's). The sweep reads them oldest first (`IDX_chat_attachment_draft_created`). No foreign key to `document`:
+ * the row is written the moment the upload inserts its document, apart from the upload's own transaction (on
+ * PostgreSQL a key could not see that row before it commits); a row whose document is gone is dropped by the sweep.
  */
 export const CHAT_ATTACHMENT_DRAFT_TABLE: TableSpec = {
 	table: 'chat_attachment_draft',
@@ -18,7 +19,7 @@ export const CHAT_ATTACHMENT_DRAFT_TABLE: TableSpec = {
 		{ name: 'IDX_chat_attachment_draft_user', columns: ['tenantId', 'userId'] },
 		{ name: 'IDX_chat_attachment_draft_created', columns: ['createdAt'] }
 	],
-	foreignKeys: [{ name: 'FK_chat_attachment_draft_document', column: 'documentId', references: 'document', onDelete: 'CASCADE' }]
+	foreignKeys: []
 };
 
 /**
