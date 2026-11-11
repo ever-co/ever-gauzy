@@ -75,6 +75,16 @@
 
 /* ── Charts ── */
 
+// A chart panel's controls on the header's right: the bars / line switch, then the range filter.
+.income-chart-controls {
+  flex: 0 0 auto;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
 // The chart panels' range filter, at the project page's period switcher's size: the global input floor
 // would draw it 46px tall and stretch the panel's header.
 .income-chart-range {

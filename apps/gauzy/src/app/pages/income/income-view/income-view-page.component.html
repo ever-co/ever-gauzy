@@ -203,18 +203,21 @@
 								</span>
 							</div>
 							@if (!charts.failed) {
-								<nb-select
-									class="income-chart-range"
-									size="small"
-									status="basic"
-									[selected]="clientMonths"
-									(selectedChange)="setClientMonths($event)"
-									[attr.aria-label]="'EXPENSE_VIEW.CHART_RANGE' | translate"
-								>
-									@for (months of clientMonthOptions; track months) {
-										<nb-option [value]="months">{{ 'EXPENSE_VIEW.LAST_MONTHS' | translate : { count: months } }}</nb-option>
-									}
-								</nb-select>
+								<div class="income-chart-controls">
+									<ng-container *ngTemplateOutlet="chartKindSwitch; context: { $implicit: 'client' }"></ng-container>
+									<nb-select
+										class="income-chart-range"
+										size="small"
+										status="basic"
+										[selected]="clientMonths"
+										(selectedChange)="setClientMonths($event)"
+										[attr.aria-label]="'EXPENSE_VIEW.CHART_RANGE' | translate"
+									>
+										@for (months of clientMonthOptions; track months) {
+											<nb-option [value]="months">{{ 'EXPENSE_VIEW.LAST_MONTHS' | translate : { count: months } }}</nb-option>
+										}
+									</nb-select>
+								</div>
 							}
 						</header>
 						<div class="panel-body project-chart-body">
@@ -226,6 +229,7 @@
 									[formatValue]="formatAmount"
 									[highlightLabel]="'INCOME_VIEW.THIS_MONTH' | translate"
 									[otherLabel]="'EXPENSE_VIEW.OTHER_MONTHS' | translate"
+									[kind]="chartKinds.client"
 									[bars]="charts.clientBars"
 								></ga-expense-bar-chart>
 							}
@@ -250,18 +254,21 @@
 								}
 							</div>
 							@if (!charts.failed) {
-								<nb-select
-									class="income-chart-range"
-									size="small"
-									status="basic"
-									[selected]="clientPayments"
-									(selectedChange)="setClientPayments($event)"
-									[attr.aria-label]="'EXPENSE_VIEW.CHART_RANGE' | translate"
-								>
-									@for (payments of clientPaymentOptions; track payments) {
-										<nb-option [value]="payments">{{ 'EXPENSE_VIEW.LAST_PAYMENTS' | translate : { count: payments } }}</nb-option>
-									}
-								</nb-select>
+								<div class="income-chart-controls">
+									<ng-container *ngTemplateOutlet="chartKindSwitch; context: { $implicit: 'payments' }"></ng-container>
+									<nb-select
+										class="income-chart-range"
+										size="small"
+										status="basic"
+										[selected]="clientPayments"
+										(selectedChange)="setClientPayments($event)"
+										[attr.aria-label]="'EXPENSE_VIEW.CHART_RANGE' | translate"
+									>
+										@for (payments of clientPaymentOptions; track payments) {
+											<nb-option [value]="payments">{{ 'EXPENSE_VIEW.LAST_PAYMENTS' | translate : { count: payments } }}</nb-option>
+										}
+									</nb-select>
+								</div>
 							}
 						</header>
 						<div class="panel-body project-chart-body">
@@ -278,6 +285,7 @@
 									[formatValue]="formatAmount"
 									[highlightLabel]="'INCOME_VIEW.THIS_INCOME' | translate"
 									[otherLabel]="'EXPENSE_VIEW.OTHER_PAYMENTS' | translate"
+									[kind]="chartKinds.payments"
 									[bars]="charts.paymentBars"
 								></ga-expense-bar-chart>
 							}
@@ -338,5 +346,25 @@
 	<div class="state state--compact">
 		<nb-icon icon="alert-circle-outline" aria-hidden="true"></nb-icon>
 		<p>{{ 'EXPENSE_VIEW.CHART_FAILED' | translate }}</p>
+	</div>
+</ng-template>
+
+<!-- A chart panel's bars / line switch, as the project page's activity views: one icon button per way of drawing. -->
+<ng-template #chartKindSwitch let-panel>
+	<div class="segmented project-activity-views" role="group" [attr.aria-label]="'INCOME_VIEW.CHART_TYPE' | translate">
+		@for (option of chartKindOptions; track option.kind) {
+			<button
+				type="button"
+				class="segment"
+				[class.is-active]="chartKinds[panel] === option.kind"
+				[attr.aria-pressed]="chartKinds[panel] === option.kind"
+				[nbTooltip]="option.label | translate"
+				nbTooltipPlacement="top"
+				[attr.aria-label]="option.label | translate"
+				(click)="setChartKind(panel, option.kind)"
+			>
+				<nb-icon [icon]="option.icon" aria-hidden="true"></nb-icon>
+			</button>
+		}
 	</div>
 </ng-template>
