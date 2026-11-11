@@ -37,6 +37,12 @@ describe('TagService names', () => {
 	let service: TagService;
 
 	const useOrm = (orm: MultiORMEnum) => jest.spyOn(CrudService.prototype, 'ormType', 'get').mockReturnValue(orm);
+	// The TypeORM criterion of the first read: a team in an organization is read with a second criterion for its tags
+	// of no organization, so this returns the first (the organization's)
+	const firstWhere = (call = 0) => {
+		const where = typeOrmFind.mock.calls[call][0].where;
+		return Array.isArray(where) ? where[0] : where;
+	};
 
 	beforeEach(() => {
 		({ restore } = asTenantUser(tenantA));
@@ -91,10 +97,25 @@ describe('TagService names', () => {
 				details: { field: 'name' }
 			});
 			await expect(refusal.catch((error) => error.getStatus())).resolves.toBe(409);
+			const where = { tenantId: tenantA.tenantId, organizationId, organizationTeamId: teamId, isSystem: false };
 			expect(typeOrmFind).toHaveBeenCalledWith({
 				select: { id: true, name: true },
-				where: { tenantId: tenantA.tenantId, organizationId, organizationTeamId: teamId, isSystem: false }
+				where: [where, { ...where, organizationId: IsNull() }]
 			});
+		});
+
+		it("counts the team's tags stored with no organization: a body may name only the team", async () => {
+			// A tag filed by a body that named the team and no organization, then the same name in the team's organization
+			typeOrmFind.mockImplementation(async ({ where }) =>
+				// IsNull() is an operator object; an organization id is a string
+				[where].flat().some((criterion) => typeof criterion.organizationId === 'object')
+					? [{ id: 'tag-1', name: 'Bug' }]
+					: []
+			);
+
+			await expect(
+				service.assertNameIsFree({ name: 'bug', organizationId, organizationTeamId: teamId })
+			).rejects.toBeInstanceOf(ApiException);
 		});
 
 		it('lets a tag keep its own name, and takes a name the team does not have', async () => {
@@ -123,7 +144,7 @@ describe('TagService names', () => {
 		it('reads the team from the team object a body may send instead of its id', async () => {
 			await service.assertNameIsFree({ name: 'Bug', organizationId, organizationTeam: { id: teamId } });
 
-			expect(typeOrmFind.mock.calls[0][0].where).toEqual({
+			expect(firstWhere()).toEqual({
 				tenantId: tenantA.tenantId,
 				organizationId,
 				organizationTeamId: teamId,
@@ -138,7 +159,7 @@ describe('TagService names', () => {
 				organizationTeamId: teamId
 			});
 
-			expect(typeOrmFind.mock.calls[0][0].where).toMatchObject({ organizationId, organizationTeamId: teamId });
+			expect(firstWhere()).toMatchObject({ organizationId, organizationTeamId: teamId });
 		});
 
 		it('reads the same scope on MikroORM', async () => {
@@ -150,9 +171,9 @@ describe('TagService names', () => {
 			).rejects.toBeInstanceOf(ApiException);
 			expect(mikroOrmFind).toHaveBeenCalledWith({
 				tenantId: tenantA.tenantId,
-				organizationId,
 				organizationTeamId: teamId,
-				isSystem: false
+				isSystem: false,
+				$or: [{ organizationId }, { organizationId: null }]
 			});
 		});
 
@@ -185,7 +206,7 @@ describe('TagService names', () => {
 			await expect(
 				service.assertNameIsFree({ name: 'bug', organizationId: otherOrganizationId, organizationTeamId: teamId })
 			).rejects.toBeInstanceOf(ApiException);
-			expect(typeOrmFind.mock.calls[0][0].where).toMatchObject({ organizationId: otherOrganizationId });
+			expect(firstWhere()).toMatchObject({ organizationId: otherOrganizationId });
 			expect(RequestContext.hasRoles).toHaveBeenCalledWith([RolesEnum.SUPER_ADMIN, RolesEnum.ADMIN]);
 		});
 	});
@@ -209,7 +230,7 @@ describe('TagService names', () => {
 
 			typeOrmFind.mockReset().mockResolvedValue([]);
 			await service.assertChangeIsFree(stored, { organizationTeamId: 'team-2' }, 'tag-2');
-			expect(typeOrmFind.mock.calls[0][0].where).toMatchObject({ organizationId, organizationTeamId: 'team-2' });
+			expect(firstWhere()).toMatchObject({ organizationId, organizationTeamId: 'team-2' });
 		});
 
 		it('checks a change naming an organization the caller cannot reach where the tag stays: the update leaves it out', async () => {
@@ -220,7 +241,7 @@ describe('TagService names', () => {
 				service.assertChangeIsFree(stored, { name: 'feature', organizationId: otherOrganizationId }, 'tag-2')
 			).rejects.toBeInstanceOf(ApiException);
 			expect(typeOrmFind).toHaveBeenCalledTimes(1);
-			expect(typeOrmFind.mock.calls[0][0].where).toMatchObject({ organizationId, organizationTeamId: teamId });
+			expect(firstWhere()).toMatchObject({ organizationId, organizationTeamId: teamId });
 
 			// Nothing else: no change at all, nor is clearing the organization one
 			await expect(
@@ -246,7 +267,7 @@ describe('TagService names', () => {
 					'tag-3'
 				)
 			).rejects.toBeInstanceOf(ApiException);
-			expect(typeOrmFind.mock.calls[0][0].where).toMatchObject({
+			expect(firstWhere()).toMatchObject({
 				organizationId: IsNull(),
 				organizationTeamId: teamId
 			});
@@ -270,7 +291,7 @@ describe('TagService names', () => {
 
 			await service.assertChangeIsFree(stored, { organizationId: otherOrganizationId }, 'tag-2');
 
-			expect(typeOrmFind.mock.calls[0][0].where).toMatchObject({
+			expect(firstWhere()).toMatchObject({
 				organizationId: otherOrganizationId,
 				organizationTeamId: teamId
 			});

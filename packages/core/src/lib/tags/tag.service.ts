@@ -95,31 +95,36 @@ export class TagService extends TenantAwareCrudService<Tag> {
 	}
 
 	/**
-	 * The ids and names of the visible tags of exactly one scope (system tags are never listed, so they never take a
-	 * name from anyone).
+	 * The ids and names of the visible tags of one scope (system tags are never listed, so they never take a name from
+	 * anyone). For a team in an organization, the team's tags stored with no organization count too: `create` does not
+	 * stamp the organization, so a body naming only the team files its tag there, and the team lists it all the same.
 	 */
 	async namesInScope(scope: TagScope): Promise<Array<Pick<ITag, 'id' | 'name'>>> {
 		const { tenantId, organizationId, organizationTeamId } = scope;
+		const alsoWithoutOrganization = !!organizationTeamId && !!organizationId;
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM: {
 				const items = await this.mikroOrmRepository.find({
 					tenantId,
-					organizationId,
 					organizationTeamId,
-					isSystem: false
+					isSystem: false,
+					...(alsoWithoutOrganization
+						? { $or: [{ organizationId }, { organizationId: null }] }
+						: { organizationId })
 				} as any);
 				return items.map(({ id, name }) => ({ id, name }));
 			}
 			case MultiORMEnum.TypeORM:
 			default: {
+				const where = {
+					tenantId,
+					organizationId: organizationId ?? IsNull(),
+					organizationTeamId: organizationTeamId ?? IsNull(),
+					isSystem: false
+				};
 				return await this.typeOrmRepository.find({
 					select: { id: true, name: true },
-					where: {
-						tenantId,
-						organizationId: organizationId ?? IsNull(),
-						organizationTeamId: organizationTeamId ?? IsNull(),
-						isSystem: false
-					}
+					where: alsoWithoutOrganization ? [where, { ...where, organizationId: IsNull() }] : where
 				});
 			}
 		}
