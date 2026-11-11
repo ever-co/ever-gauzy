@@ -111,7 +111,7 @@ function viewportSize(): { width: number; height: number } {
 						<div class="loading" data-test="loading" [nbSpinner]="true"></div>
 					}
 					@default {
-						<div class="panes" [class.with-thread]="threadId()" [class.conversation-open]="view() !== 'home'">
+						<div class="panes" [class.with-thread]="!!threadId() && !!conversationId()" [class.conversation-open]="view() !== 'home'">
 							<div class="pane list-pane">
 								<ngx-chat-conversation-list
 									[conversations]="conversations()"

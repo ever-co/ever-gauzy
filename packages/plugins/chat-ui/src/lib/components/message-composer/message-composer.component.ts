@@ -176,7 +176,7 @@ let nextComposerId = 0;
 					</div>
 				</div>
 			}
-			@if (emojiOpen() && !listOpen()) {
+			@if (emojiOpen()) {
 				<div class="composer-popover emoji-grid" role="menu" data-test="composer-emoji">
 					@for (emoji of emojiChoices; track emoji) {
 						<button type="button" class="emoji" role="menuitem" [attr.aria-label]="emoji" (mousedown)="$event.preventDefault()" (click)="insertEmoji(emoji)">{{ emoji }}</button>
@@ -537,7 +537,7 @@ let nextComposerId = 0;
 			}
 			.send.ready {
 				background: var(--chat-send, #007a5a);
-				color: #fff;
+				color: var(--chat-on-accent, #fff);
 			}
 			.send.ready:hover,
 			.send.ready:focus-visible {
@@ -566,7 +566,7 @@ let nextComposerId = 0;
 			.text-button.primary {
 				border-color: transparent;
 				background: var(--chat-send, #007a5a);
-				color: #fff;
+				color: var(--chat-on-accent, #fff);
 			}
 			.text-button:disabled {
 				cursor: default;
@@ -1081,6 +1081,8 @@ export class MessageComposerComponent {
 	 */
 	protected toggleEmoji(event: MouseEvent): void {
 		const open = !this.emojiOpen();
+		// One panel at a time: the grid takes the place of an open `@` or `:` list (closed until the text or caret moves).
+		if (open && this.listOpen()) this.dismiss();
 		this.emojiOpen.set(open);
 		if (open && event.detail === 0) this.afterRender(() => this.host.nativeElement.querySelector<HTMLElement>('.emoji-grid .emoji')?.focus());
 	}
@@ -1163,6 +1165,8 @@ export class MessageComposerComponent {
 			this.query.set(next);
 			this.emojiQuery.set(emoji);
 			this.highlighted.set(0);
+			// A list that opens takes the place of the emoji grid.
+			if (next || emoji) this.emojiOpen.set(false);
 		}
 	}
 
@@ -1200,7 +1204,8 @@ export class MessageComposerComponent {
 			}
 			if (event.key === 'Enter' || event.key === 'Tab') {
 				event.preventDefault();
-				this.pick(suggestions[this.highlighted()]);
+				// The list may have shrunk under the highlight (the people list changed): the first one then.
+				this.pick(suggestions[this.highlighted()] ?? suggestions[0]);
 				return;
 			}
 			if (event.key === 'Escape') {

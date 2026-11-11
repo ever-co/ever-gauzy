@@ -64,7 +64,8 @@ type HeaderMenu = 'notify' | 'more' | null;
 
 /**
  * Where the "New" line goes when a conversation opens: before the first message after my read position, or,
- * when that position is not on the loaded page, before the last `unreadCount` messages. Null when nothing is unread.
+ * when that position is not on the loaded page, before the last `unreadCount` messages that are not deleted (the
+ * server counts none of those; a deleted thread root stays in the list). Null when nothing is unread.
  */
 export function unreadMarkerId(messages: readonly IChatMessageWithRelations[], state: IChatMemberState | null): string | null {
 	const unread = state?.unreadCount ?? 0;
@@ -74,8 +75,14 @@ export function unreadMarkerId(messages: readonly IChatMessageWithRelations[], s
 		const at = messages.findIndex((message) => String(message.id) === lastRead);
 		if (at >= 0) return messages[at + 1] ? String(messages[at + 1].id) : null;
 	}
-	const from = Math.max(0, messages.length - unread);
-	return String(messages[from].id);
+	let left = unread;
+	for (let at = messages.length - 1; at >= 0; at -= 1) {
+		if (messages[at].deletedAt) continue;
+		left -= 1;
+		if (left === 0) return String(messages[at].id);
+	}
+	// More unread than loaded: the line goes above the first loaded message.
+	return String((messages.find((message) => !message.deletedAt) ?? messages[0]).id);
 }
 
 /**

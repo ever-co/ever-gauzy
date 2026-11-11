@@ -764,6 +764,8 @@ export class ConversationListComponent {
 
 	/** How many people a direct or group conversation holds besides me (a group row shows it). */
 	protected othersOf(conversation: IChatConversationWithState): number {
+		// `members` is a summary of the first few (a group holds up to 50): the count is the whole one, less me.
+		if (typeof conversation.memberCount === 'number' && conversation.memberCount > 0) return conversation.memberCount - 1;
 		return otherMemberCount(conversation, this.meEmployeeId());
 	}
 
@@ -784,6 +786,8 @@ export class ConversationListComponent {
 	}
 
 	protected onSearchKey(event: KeyboardEvent): void {
+		// The Enter that confirms an IME composition (Japanese, Chinese, Korean input) is not a jump.
+		if (event.isComposing || event.keyCode === 229) return;
 		if (event.key === 'Escape') {
 			event.preventDefault();
 			if (this.query()) this.clearSearch();

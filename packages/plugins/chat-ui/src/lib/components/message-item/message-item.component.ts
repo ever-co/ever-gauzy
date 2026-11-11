@@ -705,6 +705,15 @@ export type MessageAction =
 				background: var(--chat-raised, #fff);
 				box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.18);
 			}
+			/* The gap above the picker is part of it: crossing it from the toolbar never leaves the message. */
+			.picker::before {
+				content: '';
+				position: absolute;
+				top: -0.3125rem;
+				right: 0;
+				left: 0;
+				height: 0.3125rem;
+			}
 			.pick {
 				width: 2.25rem;
 				height: 2.25rem;
