@@ -83,11 +83,6 @@ function setup(options: ISetup = {}) {
 			}),
 			update: jest.fn(async (where: Record<string, unknown>, patch: Record<string, unknown>) => {
 				interactionUpdates.push({ where, patch });
-				// The compare-and-set of the reply: only the first claim matches.
-				if ('replyAppliedAt' in where) {
-					if (replyApplied) return { affected: 0 };
-					replyApplied = true;
-				}
 				return { affected: 1 };
 			}),
 			findOne: jest.fn(async () => interactions[0] ?? null)
@@ -103,9 +98,14 @@ function setup(options: ISetup = {}) {
 		})
 	} as unknown as ChatAccessService;
 	const messages = { withRelations: jest.fn(async (_caller: unknown, rows: unknown[]) => rows) } as unknown as ChatMessageService;
+	// The writer's claim of replyAppliedAt: only the first reply of this setup's message is applied.
 	const writer = {
-		replace: jest.fn(async (row: Record<string, unknown>, content: { body: string }) => ({ message: { ...row, body: content.body }, events: [{ name: 'chat_message.updated', data: {} }] }))
-	} as unknown as ChatAppMessageWriter & { replace: jest.Mock };
+		replaceOnce: jest.fn(async (_messageId: string, _interactionId: string, content: { body: string }) => {
+			if (replyApplied) return null;
+			replyApplied = true;
+			return { message: { ...message, body: content.body, editedAt: new Date() }, events: [{ name: 'chat_message.updated', data: {} }] };
+		})
+	} as unknown as ChatAppMessageWriter & { replaceOnce: jest.Mock };
 	const queue = [...(options.attempts ?? [{ outcome: 'delivered', status: 200, body: Buffer.from(''), contentType: 'application/json' }])];
 	const sent: Array<{ url: string; headers: Record<string, string>; body: string }> = [];
 	const transport = {
@@ -178,8 +178,8 @@ describe('ChatInteractionService', () => {
 		const reply = Buffer.from(JSON.stringify({ text: 'Acknowledged by Ana', blocks: [{ type: 'context', elements: [{ type: 'plain_text', text: 'by Ana' }] }] }));
 		const { service, writer } = setup({ attempts: [{ outcome: 'delivered', status: 200, body: reply, contentType: 'application/json' }] });
 		const result = await service.interact(member, 'm1', { actionId: 'ack' });
-		expect(writer.replace).toHaveBeenCalledTimes(1);
-		expect(writer.replace.mock.calls[0][1]).toEqual({ body: 'Acknowledged by Ana', blocks: [{ type: ChatAppBlockTypeEnum.CONTEXT, elements: ['by Ana'] }], nonce: null });
+		expect(writer.replaceOnce).toHaveBeenCalledTimes(1);
+		expect(writer.replaceOnce.mock.calls[0][2]).toEqual({ body: 'Acknowledged by Ana', blocks: [{ type: ChatAppBlockTypeEnum.CONTEXT, elements: ['by Ana'] }], nonce: null });
 		expect(result.interaction.replyApplied).toBe(true);
 		expect(result.message?.body).toBe('Acknowledged by Ana');
 		expect(result.events).toEqual([{ name: 'chat_message.updated', data: {} }]);
@@ -217,14 +217,15 @@ describe('ChatInteractionService', () => {
 		});
 		await service.interact(member, 'm1', { actionId: 'ack' });
 		await retriesDone();
-		expect(writer.replace).toHaveBeenCalledTimes(1);
+		expect(writer.replaceOnce).toHaveBeenCalledTimes(1);
 		// The interaction row already has its reply (an earlier attempt's answer arrived after all): the compare-and-set
 		// on replyAppliedAt misses, and the message is left alone.
-		expect(writer.replace).toHaveBeenCalledTimes(1);
+		expect(writer.replaceOnce).toHaveBeenCalledTimes(1);
 		const claims = setup({ attempts: [{ outcome: 'delivered', status: 200, body: reply, contentType: 'application/json' }, { outcome: 'delivered', status: 200, body: reply, contentType: 'application/json' }] });
 		await claims.service.interact(member, 'm1', { actionId: 'ack' });
 		const second = await claims.service.interact(member, 'm1', { actionId: 'ack' });
-		expect(claims.writer.replace).toHaveBeenCalledTimes(1);
+		expect(claims.writer.replaceOnce).toHaveBeenCalledTimes(2);
+		expect(second.interaction.replyApplied).toBe(false);
 		expect(second.message).toBeUndefined();
 	});
 

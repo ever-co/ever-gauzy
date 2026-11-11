@@ -19,6 +19,9 @@ jest.mock('@gauzy/core', () => {
 		return undefined;
 	}) });
 });
+// The deployment's configured feature state (the FEATURE_CHAT environment variable), as a spec sets it.
+const mockToggles: Record<string, boolean> = { FEATURE_CHAT: true };
+jest.mock('@gauzy/config', () => ({ gauzyToggleFeatures: mockToggles }));
 
 import { BadRequestException, ForbiddenException } from '@nestjs/common';
 import { DataSource } from 'typeorm';
@@ -55,8 +58,11 @@ function setup(options: { webhook?: Record<string, unknown> | null; conversation
 		Feature: { findOne: jest.fn(async () => ({ id: 'f-chat' })) },
 		FeatureOrganization: { find: jest.fn(async () => options.toggles ?? []) }
 	};
+	const getRepository = (entity: string | { name?: string }) => (repositories as Record<string, unknown>)[(typeof entity === 'string' ? entity : entity?.name) as string];
 	const dataSource = {
-		getRepository: (entity: string | { name?: string }) => (repositories as Record<string, unknown>)[(typeof entity === 'string' ? entity : entity?.name) as string]
+		options: { type: 'postgres' },
+		getRepository,
+		transaction: jest.fn(async (work: (manager: { getRepository: typeof getRepository }) => Promise<unknown>) => work({ getRepository }))
 	} as unknown as DataSource;
 	const access = {
 		requireManager: jest.fn(async () => ({ conversation: { ...conversation }, member: { role: 'manager' } }))
@@ -116,6 +122,15 @@ describe('ChatWebhookService', () => {
 			expect(chatOff.repositories.Feature.findOne).toHaveBeenCalledWith(expect.objectContaining({ where: { code: FeatureEnum.FEATURE_CHAT } }));
 			const tenantOn = setup({ toggles: [{ organizationId: null, isEnabled: true }] });
 			expect((await tenantOn.service.receive(tenantOn.token, { text: 'x' }, 10)).status).toBe(200);
+			// No toggle stored for the tenant: the deployment's configured state decides, as for every chat route.
+			mockToggles['FEATURE_CHAT'] = false;
+			const configuredOff = setup();
+			expect(await configuredOff.service.receive(configuredOff.token, { text: 'x' }, 10)).toEqual({ status: 404, body: 'no_webhook' });
+			mockToggles['FEATURE_CHAT'] = true;
+			// A toggle that cannot be read refuses the post.
+			const unreadable = setup();
+			unreadable.repositories.Feature.findOne.mockRejectedValueOnce(new Error('connection lost'));
+			expect(await unreadable.service.receive(unreadable.token, { text: 'x' }, 10)).toEqual({ status: 404, body: 'no_webhook' });
 		});
 
 		it('answers 410 channel_is_archived for an archived channel', async () => {
@@ -170,6 +185,8 @@ describe('ChatWebhookService', () => {
 			expect(result.webhook).toEqual(expect.objectContaining({ name: 'Deploys', iconUrl: 'https://cdn.example.com/ci.png', hasSigningSecret: true, tokenHint: token.slice(-4) }));
 			expect(result.webhook).not.toHaveProperty('tokenHash');
 			expect(result.webhook).not.toHaveProperty('signingSecret');
+			// The count and the insert run under the channel's row lock.
+			expect(repositories.ChatConversation.findOne).toHaveBeenCalledWith(expect.objectContaining({ where: { id: 'c1' }, lock: { mode: 'pessimistic_write' } }));
 			expect(activityLog.logActivity).toHaveBeenCalledWith(BaseEntityEnum.ChatWebhook, ActionTypeEnum.Created, expect.anything(), saved.id, 'Deploys', expect.objectContaining({ conversationId: 'c1' }), 'org', 'ten', undefined, undefined);
 		});
 

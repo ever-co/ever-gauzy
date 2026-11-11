@@ -1,5 +1,5 @@
 import { BadRequestException, ConflictException, Injectable, Logger, NotFoundException, OnModuleDestroy } from '@nestjs/common';
-import { DataSource, IsNull } from 'typeorm';
+import { DataSource } from 'typeorm';
 import {
 	ChatInteractionStatusEnum,
 	ChatMessageKindEnum,
@@ -11,7 +11,6 @@ import {
 	IChatInteractionResult
 } from '@gauzy/contracts';
 import { RequestContext } from '@gauzy/core';
-import { ChatConversation } from '../entities/chat-conversation.entity';
 import { ChatMessage } from '../entities/chat-message.entity';
 import { ChatWebhook } from '../entities/chat-webhook.entity';
 import { ChatWebhookInteraction } from '../entities/chat-webhook-interaction.entity';
@@ -226,8 +225,9 @@ export class ChatInteractionService implements OnModuleDestroy {
 	}
 
 	/**
-	 * Applies the sender's reply to the message, at most once per interaction: a compare-and-set on `replyAppliedAt`
-	 * decides which attempt (of a retried callback whose earlier answer was lost) gets to apply it.
+	 * Applies the sender's reply to the message, at most once per interaction: the writer claims `replyAppliedAt` (a
+	 * compare-and-set) and changes the message in one transaction, so which attempt of a retried callback gets to apply
+	 * it is decided there, and the marker is never set for a message that did not change.
 	 */
 	private async applyReply(context: ICallbackContext, raw: Buffer): Promise<IChatEvent[]> {
 		const text = raw.toString('utf8').trim();
@@ -243,18 +243,10 @@ export class ChatInteractionService implements OnModuleDestroy {
 			return [];
 		}
 		if (!content) return [];
-		const appliedAt = new Date();
-		const claim = await this.dataSource
-			.getRepository(ChatWebhookInteraction)
-			.update({ id: context.interaction.id as ID, replyAppliedAt: IsNull() }, { replyAppliedAt: appliedAt } as never);
-		if (!(claim.affected ?? 0)) return [];
-		context.interaction.replyAppliedAt = appliedAt;
-		const fresh = await this.dataSource.getRepository(ChatMessage).findOne({ where: { id: context.message.id as ID } });
-		if (!fresh) return [];
-		const conversation = await this.dataSource.getRepository(ChatConversation).findOne({ select: { id: true, archivedAt: true }, where: { id: fresh.conversationId } });
-		if (conversation?.archivedAt) return [];
-		const { message, events } = await this.writer.replace(fresh, content);
-		context.message = message;
-		return events;
+		const replaced = await this.writer.replaceOnce(context.message.id as ID, context.interaction.id as ID, content);
+		if (!replaced) return [];
+		context.interaction.replyAppliedAt = replaced.message.editedAt ?? new Date();
+		context.message = replaced.message;
+		return replaced.events;
 	}
 }

@@ -131,8 +131,9 @@ the flag is exactly `true` (and chat is on): every route below answers 404.
   Answers `200 ok`, `404 no_webhook`, `410 channel_is_archived`, `422 invalid_payload | payload_too_large (64 KiB) |
   too_many_blocks (50) | invalid_blocks | no_text`, `429 rate_limited` with `Retry-After` (per webhook 60/min and 20
   per 10 s, per organization 600/min and 100 per 10 s; `GAUZY_CHAT_WEBHOOK_*` in `.env.sample`).
-- **The message**: `kind: app`, no employee author, `webhookId`, `appName`, `appIconUrl`, `blocks`; counted, mentioned
-  and streamed like a member's message. `<!channel>` / `<!here>` notify only when the webhook may broadcast.
+- **The message**: `kind: app`, no employee author, `webhookId`, `appName`, `appIconUrl`, `blocks`; counted and
+  streamed like a member's message; its mentions move the mention badges (no inbox notification yet: the platform's
+  notification writes need a signed-in author). `<!channel>` / `<!here>` count only when the webhook may broadcast.
 - **Buttons**: `POST /api/chat/messages/:id/interactions` `{ actionId, blockId? }` (members; 404 otherwise) posts a
   signed callback to the webhook's interaction URL: `X-Signature: t=<unix>,v1=<hex HMAC-SHA256 of "<t>.<body>">` (the
   platform's outgoing-webhook signature; verify within 300 s), `Idempotency-Key` = `X-Interaction-Id` = the

@@ -15,11 +15,13 @@ import {
 	IChatWebhookUpdateInput,
 	IChatWebhookWriteResult
 } from '@gauzy/contracts';
+import { gauzyToggleFeatures } from '@gauzy/config';
 import { ActivityLogService } from '@gauzy/core';
 import { getUnsafeOutboundUrlReason } from '@gauzy/utils';
 import { CHAT_ROUTE_PREFIX } from '../chat.constants';
 import { ChatConversation } from '../entities/chat-conversation.entity';
 import { ChatWebhook } from '../entities/chat-webhook.entity';
+import { inWriteTransaction } from '../realtime/chat-write-transaction';
 import { ChatAccessService, IChatCaller } from '../services/chat-access.service';
 import { ChatAppMessageWriter } from './chat-app-message.writer';
 import { interactionUrlRefusal } from './chat-interaction-transport';
@@ -114,10 +116,6 @@ export class ChatWebhookService {
 			throw new BadRequestException('Webhooks post to channels only.');
 		}
 		if (conversation.archivedAt) throw new BadRequestException('This conversation is archived.');
-		const active = await this.dataSource.getRepository(ChatWebhook).count({ where: { conversationId, tenantId: caller.tenantId, revokedAt: IsNull() } });
-		if (active >= CHAT_WEBHOOK_MAX_PER_CONVERSATION) {
-			throw new BadRequestException(`A channel has at most ${CHAT_WEBHOOK_MAX_PER_CONVERSATION} webhooks; revoke one first.`);
-		}
 		const name = this.validName(input.name);
 		const iconUrl = this.validIconUrl(input.iconUrl);
 		const interactionUrl = await this.validInteractionUrl(input.interactionUrl);
@@ -126,28 +124,39 @@ export class ChatWebhookService {
 		if (interactionUrl && !this.box.usable()) throw new BadRequestException(new ChatWebhookSecretError(this.box.problem() ?? 'no_secret').message);
 		const signingSecret = this.box.usable() ? newSigningSecret() : undefined;
 		const token = newWebhookToken();
-		const repository = this.dataSource.getRepository(ChatWebhook);
-		const saved = await repository.save(
-			repository.create({
-				id,
-				conversationId,
-				name,
-				iconUrl,
-				interactionUrl,
-				tokenHash: webhookTokenHash(token),
-				tokenHint: webhookTokenHint(token),
-				signingSecret: signingSecret ? this.box.seal(signingSecret, id) : null,
-				canBroadcast: !!input.canBroadcast,
-				createdByEmployeeId: caller.employeeId ?? null,
-				createdByUserId: caller.userId,
-				acceptedCount: 0,
-				rejectedCount: 0,
-				rateLimitedCount: 0,
-				callbackFailureCount: 0,
-				tenantId: caller.tenantId,
-				organizationId: conversation.organizationId ?? caller.organizationId ?? undefined
-			} as never)
-		);
+		// The count and the insert under the conversation's row lock (Postgres, MySQL; SQLite has one writer at a time):
+		// two creates at nine active webhooks cannot both pass the count.
+		const saved = await inWriteTransaction(this.dataSource, async (manager) => {
+			if (this.locksRows()) {
+				await manager.getRepository(ChatConversation).findOne({ select: { id: true }, where: { id: conversationId }, lock: { mode: 'pessimistic_write' } });
+			}
+			const active = await manager.getRepository(ChatWebhook).count({ where: { conversationId, tenantId: caller.tenantId, revokedAt: IsNull() } });
+			if (active >= CHAT_WEBHOOK_MAX_PER_CONVERSATION) {
+				throw new BadRequestException(`A channel has at most ${CHAT_WEBHOOK_MAX_PER_CONVERSATION} webhooks; revoke one first.`);
+			}
+			const repository = manager.getRepository(ChatWebhook);
+			return repository.save(
+				repository.create({
+					id,
+					conversationId,
+					name,
+					iconUrl,
+					interactionUrl,
+					tokenHash: webhookTokenHash(token),
+					tokenHint: webhookTokenHint(token),
+					signingSecret: signingSecret ? this.box.seal(signingSecret, id) : null,
+					canBroadcast: !!input.canBroadcast,
+					createdByEmployeeId: caller.employeeId ?? null,
+					createdByUserId: caller.userId,
+					acceptedCount: 0,
+					rejectedCount: 0,
+					rateLimitedCount: 0,
+					callbackFailureCount: 0,
+					tenantId: caller.tenantId,
+					organizationId: conversation.organizationId ?? caller.organizationId ?? undefined
+				} as never)
+			);
+		});
 		const webhook = saved as unknown as ChatWebhook;
 		this.log(ActionTypeEnum.Created, webhook, { conversationId, name, iconUrl, interactionUrl, canBroadcast: !!input.canBroadcast });
 		return { webhook: webhookView(webhook), url: webhookUrl(token), ...(signingSecret ? { signingSecret } : {}) };
@@ -257,6 +266,12 @@ export class ChatWebhookService {
 		return webhook;
 	}
 
+	/** Whether the database takes row locks (`SELECT … FOR UPDATE`): Postgres and MySQL; SQLite serialises its writers. */
+	private locksRows(): boolean {
+		const type = String((this.dataSource as { options?: { type?: unknown } }).options?.type ?? '');
+		return type === 'postgres' || type === 'mysql' || type === 'mariadb';
+	}
+
 	private requireEnabled(): void {
 		if (!isChatWebhooksEnabled()) throw new NotFoundException('The requested record was not found');
 	}
@@ -287,23 +302,25 @@ export class ChatWebhookService {
 
 	/**
 	 * Whether the tenant has chat on (`FEATURE_CHAT`): the public route runs without the tenant guard, so the stored
-	 * toggles are read here — the organization's own toggle first, then the tenant-wide one; no toggle means on (the
-	 * plugin itself is on).
+	 * toggles are read here the way `FeatureService.isFeatureEnabled` reads them — the organization's own toggle first,
+	 * then the tenant-wide one, then the deployment's configured state (`FEATURE_CHAT`). A read that fails refuses the
+	 * post: chat may be off.
 	 */
 	private async chatOnFor(webhook: ChatWebhook): Promise<boolean> {
+		const configured = !!gauzyToggleFeatures[FeatureEnum.FEATURE_CHAT];
 		try {
 			const feature = await this.dataSource.getRepository<ObjectLiteral>('Feature').findOne({ select: { id: true }, where: { code: FeatureEnum.FEATURE_CHAT } } as never);
-			if (!feature) return true;
+			if (!feature) return configured;
 			const toggles = await this.dataSource
 				.getRepository<ObjectLiteral>('FeatureOrganization')
 				.find({ select: { id: true, organizationId: true, isEnabled: true }, where: { featureId: feature['id'], tenantId: webhook.tenantId } } as never);
 			const scoped =
 				(webhook.organizationId ? toggles.find((toggle) => String(toggle['organizationId'] ?? '') === String(webhook.organizationId)) : undefined) ??
 				toggles.find((toggle) => !toggle['organizationId']);
-			return scoped ? scoped['isEnabled'] !== false : true;
+			return scoped ? scoped['isEnabled'] === true : configured;
 		} catch (error) {
 			this.logger.warn(`The chat feature toggle could not be read for a webhook post: ${(error as Error)?.message}`);
-			return true;
+			return false;
 		}
 	}
 

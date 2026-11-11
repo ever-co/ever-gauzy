@@ -177,10 +177,28 @@ describe('chat webhook payloads', () => {
 				{ type: ChatAppBlockTypeEnum.CONTEXT, elements: ['ci'] },
 				{ type: ChatAppBlockTypeEnum.HEADER, text: 'Deploy 412 (https://ci.example.com/412)' },
 				{ type: ChatAppBlockTypeEnum.SECTION, text: 'All checks passed', fields: ['Env\nprod'] },
-				{ type: ChatAppBlockTypeEnum.ACTIONS, blockId: null, elements: [{ actionId: 'rollback', text: 'Roll back', value: '412', url: null, style: null }] },
+				{ type: ChatAppBlockTypeEnum.ACTIONS, blockId: '_block-4', elements: [{ actionId: 'rollback', text: 'Roll back', value: '412', url: null, style: null }] },
 				{ type: ChatAppBlockTypeEnum.CONTEXT, elements: ['ci bot'] }
 			]);
 			expect(content.body.startsWith('New deploy')).toBe(true);
+		});
+
+		it('tells apart two attachments whose buttons share a name: each actions block gets its own id', () => {
+			const content = normalizeWebhookPayload(
+				{
+					text: 'Two deploys',
+					attachments: [
+						{ text: 'api', actions: [{ type: 'button', name: 'rollback', text: 'Roll back', value: 'api' }] },
+						{ text: 'web', actions: [{ type: 'button', name: 'rollback', text: 'Roll back', value: 'web' }] }
+					]
+				},
+				{ canBroadcast: false }
+			);
+			const ids = content.blocks.filter((block) => block.type === ChatAppBlockTypeEnum.ACTIONS).map((block) => (block as { blockId: string }).blockId);
+			expect(ids).toEqual(['_block-1', '_block-3']);
+			expect(findButton(content.blocks, 'rollback', '_block-3')?.button.value).toBe('web');
+			// Without its block the click could mean either button: it names none.
+			expect(findButton(content.blocks, 'rollback')).toBeNull();
 		});
 
 		it('falls back to the attachment fallback for the body when nothing else has text', () => {
