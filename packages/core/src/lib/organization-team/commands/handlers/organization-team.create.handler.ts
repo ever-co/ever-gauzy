@@ -7,6 +7,7 @@ import { OrganizationTeamTaskPriorityBulkCreateCommand } from './../../../tasks/
 import { OrganizationTeamTaskSizeBulkCreateCommand } from './../../../tasks/sizes/commands';
 import { OrganizationTeamTaskStatusBulkCreateCommand } from './../../../tasks/statuses/commands';
 import { OrganizationTeamIssueTypeBulkCreateCommand } from './../../../tasks/issue-type/commands';
+import { OrganizationTeamTagBulkCreateCommand } from './../../../tags/commands/organization-team-tag-bulk-create.command';
 
 @CommandHandler(OrganizationTeamCreateCommand)
 export class OrganizationTeamCreateHandler implements ICommandHandler<OrganizationTeamCreateCommand> {
@@ -49,7 +50,9 @@ export class OrganizationTeamCreateHandler implements ICommandHandler<Organizati
 				new OrganizationTeamTaskStatusBulkCreateCommand(team),
 				new OrganizationTeamTaskPriorityBulkCreateCommand(team),
 				new OrganizationTeamTaskSizeBulkCreateCommand(team),
-				new OrganizationTeamIssueTypeBulkCreateCommand(team)
+				new OrganizationTeamIssueTypeBulkCreateCommand(team),
+				// A few common labels, the team's own (ever-co/ever-teams#5016)
+				new OrganizationTeamTagBulkCreateCommand(team)
 			];
 
 			await Promise.all(commands.map((command) => this._commandBus.execute(command)));

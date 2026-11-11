@@ -1,9 +1,11 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
-import { Brackets, FindOptionsRelations, SelectQueryBuilder } from 'typeorm';
+import { BadRequestException, HttpStatus, Injectable, Logger } from '@nestjs/common';
+import { Brackets, FindOptionsRelations, IsNull, SelectQueryBuilder } from 'typeorm';
 import { isNotEmpty } from '@gauzy/utils';
-import { IPagination, ITag, ITagFindInput } from '@gauzy/contracts';
+import { ID, IOrganizationTeam, IPagination, ITag, ITagFindInput } from '@gauzy/contracts';
 import { getConfig } from '@gauzy/config';
 import { RequestContext } from '../core/context';
+import { ApiErrorCode } from '../core/errors/api-error-codes';
+import { ApiException } from '../core/errors/api-exception';
 import { TenantAwareCrudService } from '../core/crud';
 import { mikroOrmContains, MultiORMEnum, parseFindOptionsRelations } from '../core/utils';
 import { LIKE_OPERATOR } from '../core/util';
@@ -11,6 +13,7 @@ import { Tag } from './tag.entity';
 import { localFileUrl } from './../core/file-storage/file-storage';
 import { prepareSQLQuery as p } from './../database/database.helper';
 import { manyToManyCountSubquery } from './relation-count-subquery';
+import { tagNameKeyOf, TEAM_STARTER_TAGS } from './tag-name';
 import { MikroOrmTagRepository } from './repository/mikro-orm-tag.repository';
 import { TypeOrmTagRepository } from './repository/type-orm-tag.repository';
 
@@ -46,10 +49,114 @@ export const TAG_USAGE_COUNTERS: ReadonlyArray<readonly [string, string, string]
 	['warehouses', 'warehouse', 'warehouse_counter']
 ];
 
+/** Where a tag lives: the tenant, the organization (none for a tenant tag), the team (none for an organization tag). */
+export interface TagScope {
+	tenantId: ID;
+	organizationId: ID | null;
+	organizationTeamId: ID | null;
+}
+
 @Injectable()
 export class TagService extends TenantAwareCrudService<Tag> {
+	private readonly logger = new Logger(TagService.name);
+
 	constructor(typeOrmTagRepository: TypeOrmTagRepository, mikroOrmTagRepository: MikroOrmTagRepository) {
 		super(typeOrmTagRepository, mikroOrmTagRepository);
+	}
+
+	/**
+	 * The ids and names of the visible tags of exactly one scope (system tags are never listed, so they never take a
+	 * name from anyone).
+	 */
+	async namesInScope(scope: TagScope): Promise<Array<Pick<ITag, 'id' | 'name'>>> {
+		const { tenantId, organizationId, organizationTeamId } = scope;
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM: {
+				const items = await this.mikroOrmRepository.find({
+					tenantId,
+					organizationId,
+					organizationTeamId,
+					isSystem: false
+				} as any);
+				return items.map(({ id, name }) => ({ id, name }));
+			}
+			case MultiORMEnum.TypeORM:
+			default: {
+				return await this.typeOrmRepository.find({
+					select: { id: true, name: true },
+					where: {
+						tenantId,
+						organizationId: organizationId ?? IsNull(),
+						organizationTeamId: organizationTeamId ?? IsNull(),
+						isSystem: false
+					}
+				});
+			}
+		}
+	}
+
+	/**
+	 * Refuses a name another tag of the same scope already has (409, `UNIQUE_CONSTRAINT_VIOLATION` on `name`): the same team, or for a tag of no team the same
+	 * organization. Ever Teams tells a team's labels apart by name, in its task filters and pickers, so two labels of
+	 * one name would collide there (ever-co/ever-teams#5016). Names compare as {@link tagNameKeyOf} reads them.
+	 *
+	 * @param input The tag's name and scope; the tenant is the caller's.
+	 * @param exceptId The tag being renamed, which keeps its own name.
+	 */
+	async assertNameIsFree(
+		input: { name?: string | null; organizationId?: ID | null; organizationTeamId?: ID | null },
+		exceptId?: ID
+	): Promise<void> {
+		const key = tagNameKeyOf(input.name);
+		if (!key) {
+			return;
+		}
+		const tenantId = RequestContext.currentTenantId();
+		const names = await this.namesInScope({
+			tenantId,
+			organizationId: input.organizationId ?? null,
+			organizationTeamId: input.organizationTeamId ?? null
+		});
+		const isTaken = names.some((tag) => tag.id !== exceptId && tagNameKeyOf(tag.name) === key);
+		if (isTaken) {
+			throw new ApiException(
+				HttpStatus.CONFLICT,
+				ApiErrorCode.UNIQUE_CONSTRAINT_VIOLATION,
+				`A tag named "${input.name?.trim()}" already exists here.`,
+				{ field: 'name' }
+			);
+		}
+	}
+
+	/**
+	 * Gives a new team the starter labels ({@link TEAM_STARTER_TAGS}) as its own tags. A name the team has already is
+	 * left as it is, so running it again adds nothing; a failure is logged and the team keeps working without them.
+	 *
+	 * @param team The team just created.
+	 * @returns The tags created.
+	 */
+	async createTeamStarterTags(team: Pick<IOrganizationTeam, 'id' | 'organizationId'>): Promise<ITag[]> {
+		try {
+			const tenantId = RequestContext.currentTenantId();
+			const scope: TagScope = { tenantId, organizationId: team.organizationId, organizationTeamId: team.id };
+			const taken = new Set((await this.namesInScope(scope)).map((tag) => tagNameKeyOf(tag.name)));
+			const missing = TEAM_STARTER_TAGS.filter((tag) => !taken.has(tagNameKeyOf(tag.name)));
+			if (missing.length === 0) {
+				return [];
+			}
+			return await this.createMany(
+				missing.map(({ name, color }) => ({
+					name,
+					color,
+					isSystem: false,
+					organizationId: team.organizationId,
+					organizationTeamId: team.id
+				}))
+			);
+		} catch (error) {
+			this.logger.error('Error while creating the starter tags of a team', error);
+			return [];
+		}
 	}
 
 	/**
@@ -155,14 +262,16 @@ export class TagService extends TenantAwareCrudService<Tag> {
 						populate: [...populate] as any[]
 					});
 
-					const serialized = await Promise.all(items.map(async (item: any) => {
-						// `tagTypeName` is not a Tag column: the TypeORM branch adds it as a raw select alias
-						const s: Tag & { tagTypeName?: string | null } = this.serialize(item);
-						// Same field the TypeORM branch selects; the tags page shows it in its Type column
-						s.tagTypeName = s.tagType?.type ?? null;
-						if (s.icon) s.fullIconUrl = await localFileUrl(s.icon);
-						return s;
-					}));
+					const serialized = await Promise.all(
+						items.map(async (item: any) => {
+							// `tagTypeName` is not a Tag column: the TypeORM branch adds it as a raw select alias
+							const s: Tag & { tagTypeName?: string | null } = this.serialize(item);
+							// Same field the TypeORM branch selects; the tags page shows it in its Type column
+							s.tagTypeName = s.tagType?.type ?? null;
+							if (s.icon) s.fullIconUrl = await localFileUrl(s.icon);
+							return s;
+						})
+					);
 					return { items: serialized as ITag[], total };
 				}
 				case MultiORMEnum.TypeORM:
@@ -219,10 +328,12 @@ export class TagService extends TenantAwareCrudService<Tag> {
 					query.orderBy(`${query.alias}.id`, 'ASC');
 					let items = await query.getRawMany();
 
-					items = await Promise.all(items.map(async (item) => {
-						if (item.icon) item.fullIconUrl = await localFileUrl(item.icon);
-						return item;
-					}));
+					items = await Promise.all(
+						items.map(async (item) => {
+							if (item.icon) item.fullIconUrl = await localFileUrl(item.icon);
+							return item;
+						})
+					);
 					const total = items.length;
 
 					return { items, total };

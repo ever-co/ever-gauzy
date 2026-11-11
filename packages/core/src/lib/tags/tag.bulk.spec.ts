@@ -58,6 +58,8 @@ function visibilityFor(granted: PermissionsEnum[]): FieldVisibility {
 function surfaces(options: { granted?: PermissionsEnum[] } = {}) {
 	const writes: string[] = [];
 	const tagService = {
+		// The name check runs before each create; the scripted refusal below stands for its 409
+		assertNameIsFree: jest.fn(async () => undefined),
 		create: jest.fn(async (body: Record<string, unknown>) => {
 			if (body.name === 'Taken') {
 				// The refusal the service raises for a row it will not write, whichever surface asked.

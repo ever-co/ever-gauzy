@@ -8,7 +8,7 @@ import '../core/entities/internal';
 
 import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { ExecutionContext, NotFoundException } from '@nestjs/common';
+import { ExecutionContext, ConflictException, NotFoundException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { buildSchema, printSchema } from 'graphql';
 import { PermissionsEnum } from '@gauzy/contracts';
@@ -91,6 +91,7 @@ function surfaces() {
 		findTagsByLevel: jest.fn().mockResolvedValue({ items: ROWS, total: ROWS.length }),
 		findOneByIdString: jest.fn().mockResolvedValue(ROWS[0]),
 		countBy: jest.fn().mockResolvedValue(ROWS.length),
+		assertNameIsFree: jest.fn().mockResolvedValue(undefined),
 		create: jest.fn().mockResolvedValue(ROWS[0]),
 		update: jest.fn().mockResolvedValue({ affected: 1 }),
 		delete: jest.fn().mockResolvedValue({ affected: 1 }),
@@ -513,6 +514,25 @@ describe('TagResolver — one concept, two protocols, the same operations', () =
 		expect(tagService.findOneByIdString).toHaveBeenCalledWith(BUG);
 	});
 
+	it('checks a new or changed name as the REST routes do, and writes nothing when it is taken', async () => {
+		const { resolver, tagService } = surfaces();
+		const input = { name: 'Feature', color: '#0ea5e9', organizationId: ORGANIZATION };
+
+		await resolver.createTag(input);
+		expect(tagService.assertNameIsFree).toHaveBeenCalledWith(input);
+
+		await resolver.updateTag({ id: BUG, name: 'Defect' });
+		expect(tagService.assertNameIsFree).toHaveBeenLastCalledWith(
+			{ name: 'Defect', organizationId: ORGANIZATION, organizationTeamId: undefined },
+			BUG
+		);
+
+		tagService.create.mockClear();
+		tagService.assertNameIsFree.mockRejectedValueOnce(new ConflictException('taken'));
+		await expect(resolver.createTag(input)).rejects.toBeInstanceOf(ConflictException);
+		expect(tagService.create).not.toHaveBeenCalled();
+	});
+
 	it('removes a tag through the same service method the REST route calls', async () => {
 		const { resolver, tagService } = surfaces();
 
@@ -589,11 +609,7 @@ describe('TagResolver — the guard stack and the permission are the controller�
 		// The removal, the withdrawal and the restoration state the triple their routes state: the tags
 		// page offers a removal to `ALL_ORG_EDIT` or `ORG_TAGS_DELETE` and an edit to `ORG_TAGS_EDIT`,
 		// and any of the three passes, which is the OR semantics the routes have (GHSA-v79w-54p2-wmh5).
-		const removal = [
-			PermissionsEnum.ALL_ORG_EDIT,
-			PermissionsEnum.ORG_TAGS_EDIT,
-			PermissionsEnum.ORG_TAGS_DELETE
-		];
+		const removal = [PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TAGS_EDIT, PermissionsEnum.ORG_TAGS_DELETE];
 		for (const field of ['deleteTag', 'softDeleteTag', 'recoverTag']) {
 			expect(permissionOfField(field)).toEqual(removal);
 		}
