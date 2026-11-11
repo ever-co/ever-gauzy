@@ -729,7 +729,9 @@ export class TaskService extends TenantAwareCrudService<Task> {
 		if (RequestContext.hasAnyPermission([PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TASK_DELETE])) {
 			return;
 		}
-		const employeeId = RequestContext.currentEmployeeId();
+		// `currentEmployeeId()` answers null for a CHANGE_SELECTED_EMPLOYEE holder: their own employee is read off the
+		// user, as the trash list reads it, so a manager who may act for others is still recognised as one.
+		const employeeId = RequestContext.currentEmployeeId() ?? RequestContext.currentUser()?.employeeId;
 		const taskWithTeams = await this.findOneByIdString(id, {
 			relations: { teams: true },
 			...(withDeleted ? { withDeleted: true } : {})

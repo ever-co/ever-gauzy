@@ -99,12 +99,13 @@ export class CommentService extends TenantAwareCrudService<Comment> {
 			// mention notifications included.
 			const employeeId = this.callerEmployeeId();
 			// Who resolved a comment is not the body's to state either, and a new comment has no resolver. The
-			// comment it replies to is stated by `parentId` alone, the member the thread check reads.
+			// comment it replies to is stated by `parentId` alone, the member the thread check reads. A new comment
+			// was never edited: `editedAt` is the server's (see editStampOf), so a body's is dropped here too.
 			const {
 				mentionEmployeeIds = [],
 				organizationId,
 				...data
-			} = parentStatedById(this.withoutAuthorship(input));
+			} = omit(parentStatedById(this.withoutAuthorship(input)), ['editedAt']);
 
 			// A record governed by a comment-access policy (a contact's notes, for one) is written only by those
 			// its policy allows, under the record type as its policy spells it, and a comment on it is stored in

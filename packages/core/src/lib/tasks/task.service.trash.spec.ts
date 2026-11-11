@@ -165,6 +165,17 @@ describe('TaskService — the trash', () => {
 			]);
 		});
 
+		it('recognises a manager who may act for every employee (their employee is read off the user)', async () => {
+			// currentEmployeeId() answers null for a CHANGE_SELECTED_EMPLOYEE holder.
+			signIn([PermissionsEnum.ORG_TASK_EDIT, PermissionsEnum.CHANGE_SELECTED_EMPLOYEE]);
+			isManager.mockResolvedValue(true);
+			jest.spyOn(CrudService.prototype, 'softRecover').mockResolvedValue({ ...trashed, deletedAt: null } as never);
+
+			await service.softRecover('task-1');
+
+			expect(isManager).toHaveBeenCalledWith('caller-employee', [TEAM]);
+		});
+
 		it('refuses someone who neither holds the delete grants nor manages one of the task’s teams', async () => {
 			signIn([PermissionsEnum.ORG_TASK_EDIT]);
 			const remove = jest.spyOn(CrudService.prototype, 'softRemove');
