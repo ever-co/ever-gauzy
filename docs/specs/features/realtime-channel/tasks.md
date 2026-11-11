@@ -49,7 +49,7 @@
   (2026-11-10: all three clean for the plugin's files; the binding check PASSED)
 - [x] **T17**. Plugin README (enable, events, routes, client recipe with `graphql-ws`), `docs/specs/README.md` status → `In Progress`/`Implemented`
 - [ ] **T18**. Enable on dev; verify with a small Node script (`graphql-ws` + `ws`) that a task update is received within 1 s and that catch-up replays it
-  (2026-11-10: the script is `tools/scripts/realtime-live-check.mjs`; it needs a
+  (2026-11-10: the script is `tools/scripts/realtime-live-probe.mjs`; it needs a
   signed-in user's token, so the owner runs it. With T28 the live part rides the
   pass that runs right after the commit)
 

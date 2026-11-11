@@ -318,4 +318,4 @@ location; none of them changes the flag-off default.
    catch-up is unaffected (it reads the outbox, dispatched or not). Follow-up
    (T28): publish to subscribers right after the commit, keeping the outbox
    row as the replay and webhook record.
-   `tools/scripts/realtime-live-check.mjs` measures it (T18).
+   `tools/scripts/realtime-live-probe.mjs` measures it (T18).
