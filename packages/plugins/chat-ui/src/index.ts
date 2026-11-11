@@ -5,6 +5,8 @@ export * from './lib/chat-ui.constants';
 export * from './lib/chat-ui.helpers';
 export * from './lib/chat-ui.plugin';
 export * from './lib/services/chat-availability.service';
+export * from './lib/chat-link-previews';
+export * from './lib/services/chat-link-previews.service';
 export * from './lib/services/chat-live';
 export * from './lib/services/chat-live.service';
 export * from './lib/services/chat-people.service';

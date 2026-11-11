@@ -54,8 +54,17 @@ The UI has no switch of its own. It follows the API:
   (users with `ORG_TASK_ADD`), and shows its task cards (key, title and status
   where the reader may see the task, read through `GET /api/tasks?where[id]=…`,
   which records no visit, unlike `GET /api/tasks/:id`), its
-  files and a card for each web link (made from the link alone: nothing is
-  fetched from the linked site).
+  files and a card for each web link (see **Link cards**).
+- **Link cards**: up to three per message. Each asks the platform for the
+  page's preview (`GET /api/chat/link-preview?url=`, fetched and cached server
+  side; the reader's browser never fetches the linked page), one request per
+  distinct link for the page: icon and site name, title, description (two
+  lines), and the picture at its own aspect ratio (lazy, no referrer); texts
+  are shown as text. `pending` is asked again every 2 s, three times at most;
+  `unavailable` or a 400 keeps the link-only card (site and path) for the
+  session. The first request is a probe: a 404 (previews off, the platform's
+  `GAUZY_CHAT_LINK_PREVIEWS_ENABLED`) keeps every card link-only for the
+  session, without an error and without further requests.
 - **Files**: the paperclip, a drop on the composer or a paste attaches files
   (for users with `DOCS_CREATE`). Each is stored at once through the Docs
   plugin (`POST /api/plugins/docs/documents/upload`) as the sender's private
@@ -119,10 +128,8 @@ and asks again.
 
 ## Not yet in this plugin
 
-Link previews with the page's title, text and picture (the API has no
-`GET /chat/link-preview` yet: a preview must be fetched by the platform, never
-by the reader's browser), changing a task's status or assignee from its card
-(FR-14), search (`GET /chat/search` exists), presence and typing.
+Changing a task's status or assignee from its card (FR-14), search
+(`GET /chat/search` exists), presence and typing.
 
 ## Tests
 
@@ -131,6 +138,9 @@ sorting, grouping, merging, labels), `chat-ui.plugin.spec.ts` (routes,
 nav entry and badge following the availability), `services/chat-live.spec.ts`
 (the hints, when the channel is live or falls back, reconnects, retries, the
 poll periods), `chat-emoji.spec.ts`, `chat-links.spec.ts`,
+`chat-link-previews.spec.ts` (one probe, 404 off for the session, pending
+asked again, unavailable and 400 kept, passing failures asked again, reset),
+`components/link-cards/link-cards.component.spec.ts`,
 `chat-attachments.spec.ts`, `services/chat-files.store.spec.ts` and
 `components/message-composer/message-composer.component.spec.ts` (emoji
 suggestions and replacement, uploads and what a message with files sends),
