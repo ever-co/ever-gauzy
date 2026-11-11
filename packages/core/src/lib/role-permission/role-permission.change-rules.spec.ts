@@ -129,6 +129,64 @@ describe('any other role', () => {
 });
 
 /**
+ * `deletePermission` shares the rule. It used to read `.role.name` of a row that may not exist (a TypeError, reported
+ * as an empty 400 body) and answered nothing at all to a caller that is neither SUPER_ADMIN nor ADMIN.
+ */
+describe('deletePermission', () => {
+	function deleting(callerRole: { id: string; name: RolesEnum }, canChangeRoles = true) {
+		const ctx = actingAs(callerRole, canChangeRoles);
+		const remove = jest.spyOn(ctx.service, 'delete').mockResolvedValue({ affected: 1 } as never);
+		return { ...ctx, remove };
+	}
+
+	it('deletes a lower role’s row for an ADMIN, and an ADMIN row for a SUPER_ADMIN', async () => {
+		const admin = deleting(ROLES.admin);
+		await admin.service.deletePermission('p-employee');
+		expect(admin.remove).toHaveBeenCalledWith('p-employee');
+		jest.restoreAllMocks();
+
+		const superAdmin = deleting(ROLES.super);
+		await superAdmin.service.deletePermission('p-admin');
+		expect(superAdmin.remove).toHaveBeenCalledWith('p-admin');
+	});
+
+	it.each(['p-super', 'p-admin'])('an ADMIN may not delete a %s row', async (id) => {
+		const { service, remove } = deleting(ROLES.admin);
+
+		await expect(service.deletePermission(id)).rejects.toBeInstanceOf(BadRequestException);
+		expect(remove).not.toHaveBeenCalled();
+	});
+
+	it('a SUPER_ADMIN may not delete a SUPER_ADMIN row', async () => {
+		const { service, remove } = deleting(ROLES.super);
+
+		await expect(service.deletePermission('p-super')).rejects.toBeInstanceOf(BadRequestException);
+		expect(remove).not.toHaveBeenCalled();
+	});
+
+	it('refuses a row that does not exist with a message, not a TypeError', async () => {
+		const { service, remove } = deleting(ROLES.admin);
+
+		const error = await service.deletePermission('p-missing').catch((e) => e);
+
+		expect(error).toBeInstanceOf(BadRequestException);
+		expect(error.message).toContain('You can not delete the permissions of this role');
+		expect(remove).not.toHaveBeenCalled();
+	});
+
+	it('refuses any other role, and an ADMIN without CHANGE_ROLES_PERMISSIONS', async () => {
+		const employee = deleting(ROLES.employee);
+		await expect(employee.service.deletePermission('p-employee')).rejects.toBeInstanceOf(BadRequestException);
+		expect(employee.remove).not.toHaveBeenCalled();
+		jest.restoreAllMocks();
+
+		const noRight = deleting(ROLES.admin, false);
+		await expect(noRight.service.deletePermission('p-employee')).rejects.toBeInstanceOf(BadRequestException);
+		expect(noRight.remove).not.toHaveBeenCalled();
+	});
+});
+
+/**
  * The role rules say WHOSE permissions a caller may change, not WHICH: an ADMIN could enable on a lower role a
  * permission only SUPER_ADMIN holds, give that role to a user they control, and act with it.
  */

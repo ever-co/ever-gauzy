@@ -304,61 +304,18 @@ export class RolePermissionService extends TenantAwareCrudService<RolePermission
 	 */
 	public async deletePermission(id: string) {
 		try {
-			const currentTenantId = RequestContext.currentTenantId();
-			const currentRoleId = RequestContext.currentRoleId();
-
-			/**
-			 * Find current user role
-			 */
-			const role = await this._roleService.findOneByWhereOptions({
-				id: currentRoleId,
-				tenantId: currentTenantId
-			});
-
-			/**
-			 * User try to delete permission for below role
-			 */
+			// The same role rule as every other permission write. A row that does not exist (or is not the
+			// tenant's) used to reach `.role.name` on `undefined`, a TypeError reported as an empty 400 body; and a
+			// caller that is neither SUPER_ADMIN nor ADMIN fell through with no answer at all.
 			const permRecord = await this.findOneByOptions({
 				where: { id },
 				relations: { role: true }
 			});
-			const wantToDeletePermissionForRole = permRecord?.role;
-			if (role.name === RolesEnum.SUPER_ADMIN) {
-				/**
-				 * Reject request, if SUPER ADMIN try to delete permissions for SUPER ADMIN role.
-				 */
-				if (
-					wantToDeletePermissionForRole.name === RolesEnum.SUPER_ADMIN ||
-					!RequestContext.hasPermission(PermissionsEnum.CHANGE_ROLES_PERMISSIONS)
-				) {
-					throw new NotAcceptableException('You can not delete your permissions to SUPER_ADMIN');
-				}
-				return await this.delete(id);
-			} else if (role.name === RolesEnum.ADMIN) {
-				/**
-				 * Reject request, if ADMIN try to update permissions for SUPER ADMIN role.
-				 */
-				if (wantToDeletePermissionForRole.name === RolesEnum.SUPER_ADMIN) {
-					throw new NotAcceptableException(
-						'You can not delete SUPER_ADMIN permission, please ask your SUPER_ADMIN to give you more permissions'
-					);
-				}
-
-				/**
-				 * Reject request, if ADMIN try to create permissions for ADMIN role.
-				 */
-				if (
-					wantToDeletePermissionForRole.name === RolesEnum.ADMIN ||
-					!RequestContext.hasPermission(PermissionsEnum.CHANGE_ROLES_PERMISSIONS)
-				) {
-					throw new NotAcceptableException(
-						'You can not delete your permissions to ADMIN, please ask your SUPER_ADMIN to give you more permissions'
-					);
-				}
-				return await this.delete(id);
-			}
+			await this.assertMayChangePermissionsOf(permRecord?.role, 'delete');
+			return await this.delete(id);
 		} catch (error /*: WriteError*/) {
-			throw new BadRequestException(error);
+			// An `Error` passed as the response serialises to `{}`: send its message.
+			throw new BadRequestException(error?.message);
 		}
 	}
 
