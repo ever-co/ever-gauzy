@@ -131,6 +131,30 @@ export class TagService extends TenantAwareCrudService<Tag> {
 	}
 
 	/**
+	 * The organization a team belongs to, read in the given tenant; `null` when the team is not there.
+	 *
+	 * @param tenantId The caller's tenant.
+	 * @param organizationTeamId The team.
+	 */
+	private async organizationOfTeam(tenantId: ID, organizationTeamId: ID): Promise<ID | null> {
+		const where = { id: organizationTeamId, tenantId };
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM: {
+				const team = await this.mikroOrmRepository.getEntityManager().findOne('OrganizationTeam', where as any);
+				return (team as { organizationId?: ID } | null)?.organizationId ?? null;
+			}
+			case MultiORMEnum.TypeORM:
+			default: {
+				const team = await this.typeOrmRepository.manager.findOne('organization_team', {
+					select: { organizationId: true },
+					where
+				} as any);
+				return (team as { organizationId?: ID } | null)?.organizationId ?? null;
+			}
+		}
+	}
+
+	/**
 	 * Refuses a name another tag of the same team already has (409, `UNIQUE_CONSTRAINT_VIOLATION` on `name`). Ever
 	 * Teams tells a team's labels apart by name, in its task filters and pickers, so two labels of one name would
 	 * collide there (ever-co/ever-teams#5016). Names compare as {@link tagNameKeyOf} reads them. The scope is read from
@@ -159,11 +183,14 @@ export class TagService extends TenantAwareCrudService<Tag> {
 			// A tag of no team: names stay free, as they were before names were checked
 			return;
 		}
-		const organizationId = organizationIdOf(input);
+		const tenantId = RequestContext.currentTenantId();
+		// A team tag sent with no organization is listed with the team's other labels, those of its organization
+		// included: check it there. The team is read in the caller's tenant only.
+		const organizationId =
+			organizationIdOf(input) ?? (await this.organizationOfTeam(tenantId, organizationTeamId));
 		if (!isWithinOrganizationBoundary(organizationId, this.organizationBoundary())) {
 			return;
 		}
-		const tenantId = RequestContext.currentTenantId();
 		const names = await this.namesInScope({ tenantId, organizationId, organizationTeamId });
 		const isTaken = names.some((tag) => tag.id !== exceptId && tagNameKeyOf(tag.name) === key);
 		if (isTaken) {

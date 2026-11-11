@@ -33,6 +33,8 @@ describe('TagService names', () => {
 	let restore: () => void;
 	let typeOrmFind: jest.Mock;
 	let mikroOrmFind: jest.Mock;
+	// The team read that places a team tag sent with no organization: none found unless a test says so
+	let teamFind: jest.Mock;
 	let createMany: jest.SpyInstance;
 	let service: TagService;
 
@@ -49,6 +51,7 @@ describe('TagService names', () => {
 		useOrm(MultiORMEnum.TypeORM);
 		typeOrmFind = jest.fn().mockResolvedValue([]);
 		mikroOrmFind = jest.fn().mockResolvedValue([]);
+		teamFind = jest.fn().mockResolvedValue(null);
 		service = new TagService(
 			{
 				// The columns the scoping reads, the organization boundary's among them
@@ -56,7 +59,8 @@ describe('TagService names', () => {
 					tableName: 'tag',
 					hasColumnWithPropertyPath: (path: string) => scopeColumns.includes(path)
 				},
-				find: typeOrmFind
+				find: typeOrmFind,
+				manager: { findOne: teamFind }
 			} as unknown as TypeOrmTagRepository,
 			{ find: mikroOrmFind } as unknown as MikroOrmTagRepository
 		);
@@ -175,6 +179,65 @@ describe('TagService names', () => {
 				isSystem: false,
 				$or: [{ organizationId }, { organizationId: null }]
 			});
+		});
+
+		it("checks a team tag sent with no organization in its team's organization, and with none", async () => {
+			teamFind.mockResolvedValue({ organizationId });
+			typeOrmFind.mockResolvedValue([{ id: 'tag-1', name: 'Bug' }]);
+
+			await expect(service.assertNameIsFree({ name: 'bug', organizationTeamId: teamId })).rejects.toBeInstanceOf(
+				ApiException
+			);
+			// The team is read in the caller's tenant only
+			expect(teamFind).toHaveBeenCalledWith('organization_team', {
+				select: { organizationId: true },
+				where: { id: teamId, tenantId: tenantA.tenantId }
+			});
+			const where = typeOrmFind.mock.calls[0][0].where;
+			expect(where).toEqual([
+				{ tenantId: tenantA.tenantId, organizationId, organizationTeamId: teamId, isSystem: false },
+				{ tenantId: tenantA.tenantId, organizationId: IsNull(), organizationTeamId: teamId, isSystem: false }
+			]);
+		});
+
+		it('reads no names of a team sent with no organization when its organization is out of reach', async () => {
+			teamFind.mockResolvedValue({ organizationId: otherOrganizationId });
+			typeOrmFind.mockResolvedValue([{ id: 'tag-1', name: 'Bug' }]);
+
+			await expect(service.assertNameIsFree({ name: 'Bug', organizationTeamId: teamId })).resolves.toBeUndefined();
+			expect(typeOrmFind).not.toHaveBeenCalled();
+		});
+
+		it('places a team tag sent with no organization the same way on MikroORM', async () => {
+			useOrm(MultiORMEnum.MikroORM);
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			const organizationOfTeam = jest.spyOn(service as any, 'organizationOfTeam').mockResolvedValue(organizationId);
+			mikroOrmFind.mockResolvedValue([{ id: 'tag-1', name: 'Bug' }]);
+
+			await expect(service.assertNameIsFree({ name: 'BUG', organizationTeamId: teamId })).rejects.toBeInstanceOf(
+				ApiException
+			);
+			expect(organizationOfTeam).toHaveBeenCalledWith(tenantA.tenantId, teamId);
+			expect(mikroOrmFind).toHaveBeenCalledWith({
+				tenantId: tenantA.tenantId,
+				organizationTeamId: teamId,
+				isSystem: false,
+				$or: [{ organizationId }, { organizationId: null }]
+			});
+		});
+
+		it("reads a team's organization through the MikroORM entity manager, in the caller's tenant", async () => {
+			useOrm(MultiORMEnum.MikroORM);
+			const findOne = jest.fn().mockResolvedValue({ organizationId });
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			const internals = service as any;
+			internals.mikroOrmRepository = { getEntityManager: () => ({ findOne }) };
+
+			await expect(internals.organizationOfTeam(tenantA.tenantId, teamId)).resolves.toBe(organizationId);
+			expect(findOne).toHaveBeenCalledWith('OrganizationTeam', { id: teamId, tenantId: tenantA.tenantId });
+
+			findOne.mockResolvedValue(null);
+			await expect(internals.organizationOfTeam(tenantA.tenantId, teamId)).resolves.toBeNull();
 		});
 
 		it('has nothing to check without a name', async () => {
