@@ -1,5 +1,9 @@
+// The barrel pulls the whole app shell (cookies, Sentry); the page needs only these two tokens.
+jest.mock('@gauzy/ui-core/core', () => ({ Store: class Store {}, ToastrService: class ToastrService {} }));
+
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import { NbThemeModule } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { of, Subject, throwError } from 'rxjs';
 import { Store, ToastrService } from '@gauzy/ui-core/core';
@@ -17,7 +21,8 @@ describe('InboxNotificationSettingsPageComponent', () => {
 		// A suite renders more than once: the module of the render before is reset first.
 		TestBed.resetTestingModule();
 		TestBed.configureTestingModule({
-			imports: [InboxNotificationSettingsPageComponent],
+			// The reset above drops the root defaults (jest.angular-defaults.ts), the theme among them.
+			imports: [InboxNotificationSettingsPageComponent, NbThemeModule.forRoot()],
 			providers: [
 				{ provide: InboxNotificationSettingsService, useValue: api },
 				// The browser notifications section has its own spec: here the platform has web push off.
@@ -170,6 +175,7 @@ describe('InboxNotificationSettingsPageComponent', () => {
 		expect(toastr.danger).toHaveBeenCalledWith('No.');
 
 		// No row yet and the create refused: the stored state is read again, so the controls show it.
+		api.forEmployee.mockClear();
 		api.forEmployee.mockReturnValue(of(null));
 		api.create.mockReturnValue(throwError(() => ({ status: 500 })));
 		const fresh = render().component;
