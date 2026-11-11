@@ -43,7 +43,7 @@ export class AddChatMessageAssistedBy1791000006400 implements MigrationInterface
  * `lockMigrations` serializes the runs there, and a refused statement aborts the transaction, so the error is
  * raised as it is (a re-check would only fail with 25P02 and hide it).
  */
-function isColumnRaceRefusal(dialect: ChatDialect, error: unknown, kind: 'duplicate' | 'missing'): boolean {
+export function isColumnRaceRefusal(dialect: ChatDialect, error: unknown, kind: 'duplicate' | 'missing'): boolean {
 	const failure = error as { errno?: unknown; code?: unknown; message?: unknown; driverError?: { errno?: unknown; code?: unknown } } | null;
 	const message = String(failure?.message ?? '');
 	if (dialect === 'mysql') {
