@@ -186,7 +186,7 @@ interface MemberRow {
 										[attr.data-test]="'remove-member-' + member.employeeId"
 										[nbTooltip]="'CHAT.SETTINGS.REMOVE' | translate"
 										[attr.aria-label]="'CHAT.SETTINGS.REMOVE_NAMED' | translate: { name: member.name }"
-										[disabled]="busy()"
+										[disabled]="busy() || closeRequested()"
 										(click)="remove(member)"
 									>
 										<nb-icon icon="person-remove-outline"></nb-icon>
@@ -202,7 +202,7 @@ interface MemberRow {
 									<nb-option [value]="person.employeeId">{{ person.name }}</nb-option>
 								}
 							</nb-select>
-							<button nbButton size="small" status="basic" type="button" data-test="settings-add" [disabled]="!toAdd().length || busy()" (click)="add()">
+							<button nbButton size="small" status="basic" type="button" data-test="settings-add" [disabled]="!toAdd().length || busy() || closeRequested()" (click)="add()">
 								{{ 'CHAT.SETTINGS.ADD' | translate }}
 							</button>
 						</div>
@@ -255,8 +255,8 @@ export class ChannelSettingsDialogComponent implements OnInit, AfterViewInit {
 	private refreshRun = 0;
 	/** Whether the latest of those reads is still under way (Close then waits for it). */
 	private refreshing = false;
-	/** Close was asked for while that read ran: the dialog closes with its answer. */
-	private closeAfterRefresh = false;
+	/** Close was asked for while a write or the read after it ran: no new write starts, and the dialog closes after them. */
+	protected readonly closeRequested = signal(false);
 
 	protected readonly isChannel = computed(() => this.context.conversation?.kind === ChatConversationKindEnum.CHANNEL);
 	protected readonly categories = computed(() => sortCategories(this.context.categories ?? []));
@@ -324,13 +324,13 @@ export class ChannelSettingsDialogComponent implements OnInit, AfterViewInit {
 	}
 
 	protected save(): void {
-		if (!this.canSave()) return;
+		if (!this.canSave() || this.closeRequested()) return;
 		this.run(this.api.updateConversation(this.context.conversation.id, this.changes()), (answer) => this.ref.close(answer.conversation));
 	}
 
 	protected add(): void {
 		const ids = this.toAdd();
-		if (!ids.length || this.busy()) return;
+		if (!ids.length || this.busy() || this.closeRequested()) return;
 		if (this.context.conversation.kind === ChatConversationKindEnum.GROUP && this.memberSummaries().length + ids.length > CHAT_GROUP_MAX_MEMBERS) {
 			this.error.set(this.translate.instant('CHAT.SETTINGS.GROUP_FULL', { max: CHAT_GROUP_MAX_MEMBERS }));
 			return;
@@ -343,7 +343,7 @@ export class ChannelSettingsDialogComponent implements OnInit, AfterViewInit {
 	}
 
 	protected remove(member: MemberRow): void {
-		if (this.busy()) return;
+		if (this.busy() || this.closeRequested()) return;
 		if (typeof window !== 'undefined' && !window.confirm(this.translate.instant('CHAT.SETTINGS.REMOVE_CONFIRM', { name: member.name }))) return;
 		this.run(this.api.removeMember(this.context.conversation.id, member.employeeId), () => {
 			this.memberSummaries.set(this.memberSummaries().filter((item) => String(item.employeeId) !== member.employeeId));
@@ -351,13 +351,21 @@ export class ChannelSettingsDialogComponent implements OnInit, AfterViewInit {
 		});
 	}
 
-	/** Closes with the conversation as last read; while a read after a member change runs, once it answers. */
+	/**
+	 * Closes with the conversation as last read. While a member write, or the read after it, is under way, Close waits
+	 * for both (and no new write starts), so the page gets the conversation as the last change left it.
+	 */
 	protected close(): void {
-		if (this.refreshing) {
-			this.closeAfterRefresh = true;
+		if (this.busy() || this.refreshing) {
+			this.closeRequested.set(true);
 			return;
 		}
 		this.ref.close(this.changed);
+	}
+
+	/** A close asked for meanwhile happens once nothing is under way any more. */
+	private closeIfRequested(): void {
+		if (this.closeRequested() && !this.busy() && !this.refreshing) this.ref.close(this.changed);
 	}
 
 	/** The conversation again after a member change (its member count and avatars), for the page; the latest read wins. */
@@ -367,10 +375,7 @@ export class ChannelSettingsDialogComponent implements OnInit, AfterViewInit {
 		const settled = (): void => {
 			if (run !== this.refreshRun) return;
 			this.refreshing = false;
-			if (this.closeAfterRefresh) {
-				this.closeAfterRefresh = false;
-				this.ref.close(this.changed);
-			}
+			this.closeIfRequested();
 		};
 		this.api
 			.getConversation(this.context.conversation.id)
@@ -401,11 +406,14 @@ export class ChannelSettingsDialogComponent implements OnInit, AfterViewInit {
 			next: (answer) => {
 				this.busy.set(false);
 				this.api.notifyChanged();
+				// A member change starts its conversation read here; a close asked for meanwhile waits for it.
 				done(answer);
+				this.closeIfRequested();
 			},
 			error: (error) => {
 				this.busy.set(false);
 				this.fail(error);
+				this.closeIfRequested();
 			}
 		});
 	}

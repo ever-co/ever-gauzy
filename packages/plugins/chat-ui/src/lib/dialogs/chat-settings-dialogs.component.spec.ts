@@ -118,6 +118,23 @@ describe('ChannelSettingsDialogComponent', () => {
 		expect(close).toHaveBeenCalledWith(expect.objectContaining({ memberCount: 3 }));
 	});
 
+	it('waits for a member write under way and its read before closing, and starts no new write meanwhile', async () => {
+		await open({});
+		const write = new Subject<{ members: IChatMemberSummary[]; events: never[] }>();
+		api['addMembers'].mockReturnValueOnce(write);
+		dialog().toAdd.set([BOB]);
+		dialog().add();
+		dialog().close();
+		expect(close).not.toHaveBeenCalled();
+		// No new write once Close was asked for.
+		dialog().remove(dialog().members().find((member: { employeeId: string }) => member.employeeId === ANNA));
+		expect(api['removeMember']).not.toHaveBeenCalled();
+		write.next({ members: [...members, { employeeId: BOB, userId: 'u-bob', role: ChatMemberRoleEnum.MEMBER }], events: [] });
+		write.complete();
+		// The read after the write answered at once (the mock): the dialog closes with it.
+		expect(close).toHaveBeenCalledWith(expect.objectContaining({ id: 'c1' }));
+	});
+
 	it('needs a name for a channel', async () => {
 		await open({});
 		dialog().name.set(' # ');
