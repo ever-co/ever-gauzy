@@ -737,9 +737,10 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			...(withDeleted ? { withDeleted: true } : {})
 		});
 		const teamIds = teamIdsOfTaskOrganization(taskWithTeams);
+		// A manager by the membership's flag or by its MANAGER role (a team created with `managerIds` sets the role
+		// only), on a membership still in effect: as Ever Teams and `assertMayChangeMember` read a team manager.
 		const isTeamManager =
-			isNotEmpty(employeeId) &&
-			(await this._managedEmployeeService.isManagerOfTeamsOrProjects(employeeId, teamIds));
+			isNotEmpty(employeeId) && (await this._managedEmployeeService.managesAnyTeam(employeeId, teamIds));
 
 		if (!isTeamManager) {
 			throw new ForbiddenException('You can only delete a task of a team you manage.');
@@ -760,7 +761,13 @@ export class TaskService extends TenantAwareCrudService<Task> {
 	 * @throws ForbiddenException when a caller without the delete grants names no team they manage
 	 */
 	async findTrash(input: ITaskTrashFindInput): Promise<IPagination<ITask>> {
-		const { organizationId, organizationTeamId, projectId } = input;
+		const { organizationTeamId, projectId } = input;
+		// The query names its organization by id or by object (`TenantOrganizationBaseDTO`); without one the read would
+		// span every organization a tenant administrator reaches, so it is refused.
+		const organizationId = input.organizationId ?? input.organization?.id;
+		if (!isNotEmpty(organizationId)) {
+			throw new BadRequestException('The trash is listed for one organization: state organizationId.');
+		}
 		const mayDeleteAny = RequestContext.hasAnyPermission([
 			PermissionsEnum.ALL_ORG_EDIT,
 			PermissionsEnum.ORG_TASK_DELETE
@@ -770,7 +777,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			const managesTeam =
 				isNotEmpty(employeeId) &&
 				isNotEmpty(organizationTeamId) &&
-				(await this._managedEmployeeService.isManagerOfTeamsOrProjects(employeeId, [organizationTeamId]));
+				(await this._managedEmployeeService.managesAnyTeam(employeeId, [organizationTeamId]));
 			if (!managesTeam) {
 				throw new ForbiddenException('The trash of a team is listed for a manager of that team.');
 			}
@@ -797,7 +804,8 @@ export class TaskService extends TenantAwareCrudService<Task> {
 	}
 
 	/**
-	 * The trash's condition with a search: the title contains the text, or the text is the task's number.
+	 * The trash's condition with a search: the title contains the text, or the text is the task's number (`42`, `#42`)
+	 * or its key (`API-42`).
 	 */
 	private trashSearchWhere(base: FindOptionsWhere<Task>, search?: string): FindOptionsWhere<Task> | FindOptionsWhere<Task>[] {
 		const text = typeof search === 'string' ? search.trim() : '';
@@ -812,6 +820,15 @@ export class TaskService extends TenantAwareCrudService<Task> {
 		const number = /^#?(\d{1,9})$/.exec(text);
 		if (number) {
 			alternatives.push({ ...base, number: Number(number[1]) } as FindOptionsWhere<Task>);
+		}
+		// The key the lists show (`API-42`): that number with that prefix, whatever its case.
+		const key = /^([\p{L}][\p{L}\p{N}_]*)-(\d{1,9})$/u.exec(text);
+		if (key) {
+			const prefix =
+				this.ormType === MultiORMEnum.MikroORM
+					? key[1].toUpperCase()
+					: Raw((alias) => `UPPER(${alias}) = :trashPrefix`, { trashPrefix: key[1].toUpperCase() });
+			alternatives.push({ ...base, prefix, number: Number(key[2]) } as FindOptionsWhere<Task>);
 		}
 		return alternatives.length === 1 ? alternatives[0] : alternatives;
 	}

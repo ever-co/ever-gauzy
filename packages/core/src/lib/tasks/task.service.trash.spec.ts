@@ -54,7 +54,7 @@ describe('TaskService — the trash', () => {
 		service = Object.create(TaskService.prototype);
 		Object.assign(service, {
 			_domainEventBus: { publish },
-			_managedEmployeeService: { isManagerOfTeamsOrProjects: isManager }
+			_managedEmployeeService: { managesAnyTeam: isManager }
 		});
 		jest.spyOn(TenantAwareCrudService.prototype, 'findOneByIdString').mockResolvedValue(trashed as never);
 		baseFindAll = jest
@@ -118,6 +118,16 @@ describe('TaskService — the trash', () => {
 			expect(baseFindAll).not.toHaveBeenCalled();
 		});
 
+		it('refuses a read that names no organization, so it never spans a tenant', async () => {
+			signIn([PermissionsEnum.ALL_ORG_EDIT]);
+
+			await expect(service.findTrash({ organizationId: undefined } as never)).rejects.toThrow('state organizationId');
+			await service.findTrash({ organization: { id: fixture.organizationId } } as never);
+
+			expect(baseFindAll).toHaveBeenCalledTimes(1);
+			expect(read().where.organizationId).toBe(fixture.organizationId);
+		});
+
 		it('searches the title, and the number when the text is one', async () => {
 			signIn([PermissionsEnum.ORG_TASK_DELETE]);
 
@@ -131,6 +141,13 @@ describe('TaskService — the trash', () => {
 			expect(Array.isArray(where)).toBe(true);
 			expect(where).toHaveLength(2);
 			expect(where[1]).toMatchObject({ number: 42, organizationId: fixture.organizationId });
+
+			baseFindAll.mockClear();
+			await service.findTrash({ organizationId: fixture.organizationId, search: 'api-42' });
+			const byKey = read().where as Record<string, any>[];
+			expect(byKey).toHaveLength(2);
+			expect(byKey[1]).toMatchObject({ number: 42 });
+			expect(byKey[1].prefix).toBeInstanceOf(FindOperator);
 		});
 
 		it('keeps the page inside 1..100 and the offset at zero or more', async () => {
