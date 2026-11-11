@@ -1,4 +1,4 @@
-import { BadRequestException, Inject, Injectable, Logger, NotFoundException, Optional } from '@nestjs/common';
+import { BadRequestException, HttpException, HttpStatus, Inject, Injectable, Logger, NotFoundException, Optional } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 import { ChatLinkPreviewStatusEnum, ID, IChatLinkPreview } from '@gauzy/contracts';
 import { SchedulerQueueService } from '@gauzy/scheduler';
@@ -6,13 +6,14 @@ import { ChatLinkPreview } from '../entities/chat-link-preview.entity';
 import type { IChatCaller } from '../services/chat-access.service';
 import {
 	CHAT_LINK_PREVIEW_FETCH_JOB,
+	CHAT_LINK_PREVIEW_FETCHES_PER_MINUTE,
 	CHAT_LINK_PREVIEW_INLINE_CONCURRENCY,
 	CHAT_LINK_PREVIEW_PENDING_TTL_MS,
 	CHAT_LINK_PREVIEW_QUEUE,
 	CHAT_LINK_PREVIEW_READY_TTL_MS,
 	CHAT_LINK_PREVIEW_UNAVAILABLE_TTL_MS
 } from './chat-link-preview.constants';
-import { fetchPreviewPage, LinkPreviewFetchOutcome } from './link-preview-fetcher';
+import { fetchPreviewPage, isTransientFailure, LinkPreviewFetchOutcome } from './link-preview-fetcher';
 import { decodePage, ILinkPreviewData, parsePreviewHead } from './link-preview-parser';
 import { LinkPreviewUrlError, normalizePreviewUrl, previewTargetRefusal, previewUrlHash } from './link-preview-url';
 
@@ -82,6 +83,8 @@ export class ChatLinkPreviewService {
 	private readonly fetcher: ChatLinkPreviewFetcher;
 	/** The inline fetches running in this process, by tenant and link: a second ask joins the first. */
 	private readonly inFlight = new Map<string, Promise<IChatLinkPreview>>();
+	/** When each person (tenant and user) last started fetches, for the per-person budget. */
+	private readonly fetchesStarted = new Map<string, number[]>();
 	private queueFailureReported = false;
 
 	constructor(
@@ -96,7 +99,8 @@ export class ChatLinkPreviewService {
 	/**
 	 * The preview of a link, for a caller of the chat routes.
 	 *
-	 * @throws NotFoundException while previews are off; BadRequestException for a value that is not an http(s) link.
+	 * @throws NotFoundException while previews are off; BadRequestException for a value that is not an http(s) link;
+	 * 429 when the caller started more fetches this minute than the budget allows (`CHAT_LINK_PREVIEW_FETCHES_PER_MINUTE`).
 	 */
 	async preview(caller: IChatCaller, raw: string): Promise<IChatLinkPreview> {
 		if (!this.options.enabled) throw new NotFoundException('The requested record was not found');
@@ -115,11 +119,39 @@ export class ChatLinkPreviewService {
 		if (row && action === 'serve') return fromRow(href, row);
 		if (action === 'wait') return answer(href, ChatLinkPreviewStatusEnum.PENDING);
 		if (row && action === 'refresh') {
-			// The stale preview now, the new one on the next ask.
-			void this.dispatch(tenantId, href, false).catch(() => undefined);
+			// The stale preview now, the new one on the next ask (unless the caller's budget is spent: then only the stale one).
+			if (this.spendFetch(caller)) void this.dispatch(tenantId, href, false).catch(() => undefined);
 			return fromRow(href, row);
 		}
+		if (!this.spendFetch(caller)) {
+			throw new HttpException('Too many link previews were asked for; ask again in a minute.', HttpStatus.TOO_MANY_REQUESTS);
+		}
 		return this.dispatch(tenantId, href, true);
+	}
+
+	/**
+	 * Takes one fetch from the caller's budget for the minute, or answers false when it is spent. Only a fetch is counted
+	 * (a link the cache answers costs nothing), and the budget holds whether or not the platform's rate limiter is on
+	 * (`THROTTLE_ENABLED`): each fetch is an outbound request, so one person must not start them without bound. Kept per
+	 * process, like the inline fetches.
+	 */
+	private spendFetch(caller: IChatCaller): boolean {
+		const key = `${caller.tenantId}:${caller.userId}`;
+		const now = Date.now();
+		const recent = (this.fetchesStarted.get(key) ?? []).filter((at) => now - at < 60_000);
+		if (recent.length >= CHAT_LINK_PREVIEW_FETCHES_PER_MINUTE) {
+			this.fetchesStarted.set(key, recent);
+			return false;
+		}
+		recent.push(now);
+		this.fetchesStarted.set(key, recent);
+		if (this.fetchesStarted.size > 10_000) {
+			// Forget the people with nothing left in their minute, so the map follows who is active.
+			for (const [person, times] of this.fetchesStarted) {
+				if (!times.some((at) => now - at < 60_000)) this.fetchesStarted.delete(person);
+			}
+		}
+		return true;
 	}
 
 	/**
@@ -140,6 +172,16 @@ export class ChatLinkPreviewService {
 		} else {
 			// The reason only: a link can carry a secret (a share token), so it is never logged.
 			this.logger.debug(`A link preview was not fetched (${outcome.reason}).`);
+			if (isTransientFailure(outcome)) {
+				// The site is slow, down or busy for now: a good preview it has is kept, and tried again after the
+				// "unavailable" time rather than a whole day (its fetch time is set back to make it so).
+				const previous = await this.repository().findOne({ where: { tenantId, urlHash: previewUrlHash(href) } });
+				if (previous?.status === ChatLinkPreviewStatusEnum.READY && previous.data) {
+					const retryAt = new Date(Date.now() - CHAT_LINK_PREVIEW_READY_TTL_MS + CHAT_LINK_PREVIEW_UNAVAILABLE_TTL_MS);
+					await this.store(tenantId, href, { status: ChatLinkPreviewStatusEnum.READY, data: previous.data, fetchedAt: retryAt });
+					return fromRow(href, Object.assign(previous, { fetchedAt: retryAt }));
+				}
+			}
 		}
 		const status = data ? ChatLinkPreviewStatusEnum.READY : ChatLinkPreviewStatusEnum.UNAVAILABLE;
 		const fetchedAt = new Date();

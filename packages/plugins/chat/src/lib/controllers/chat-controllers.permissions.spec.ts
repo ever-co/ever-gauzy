@@ -20,6 +20,7 @@ jest.mock('@gauzy/core', () => {
 		Permissions: (...permissions: string[]) => SetMetadata('permissions', permissions),
 		UUIDValidationPipe: class UUIDValidationPipe {},
 		MultiORMColumn: decorator,
+		ColumnIndex: decorator,
 		MultiORMEntity: decorator,
 		UseValidationPipe: decorator,
 		TenantOrganizationBaseEntity: class {},

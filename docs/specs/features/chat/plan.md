@@ -200,7 +200,10 @@ were fixed together (branch `fix/chat-direct-org-thread-read-reactions`); what i
   2,048 characters, else 400) and keyed by its SHA-256 per tenant. A link whose host is internal by name or a
   non-public address literal answers `unavailable` without a fetch or a row.
 - **Refresh policy**: `ready` is served for 24 h and then served while it is fetched again; `unavailable` is fetched
-  again after 1 h; `pending` is fetched again after 2 min (a fetch that never reported back).
+  again after 1 h; `pending` is fetched again after 2 min (a fetch that never reported back). A refresh that fails for
+  a reason that may pass (timeout, connection error, 5xx, 429) keeps the `ready` preview and tries again after 1 h; a
+  4xx or a refusal takes it away. One person starts at most 60 fetches a minute (`CHAT_LINK_PREVIEW_FETCHES_PER_MINUTE`,
+  cache answers not counted; 429 beyond), enforced by the service whether or not `THROTTLE_ENABLED` is on.
 - **Fetch** (`fetchPreviewPage`, on the plugin's reusable egress guard `egress/egress-guard.ts`: `guardedRequest`, `resolveAllowedAddresses`, `pinnedLookup`, `readLimitedBody`, which the incoming webhooks' callbacks reuse): per hop, the URL is judged first (`http`/`https`, ports 80/443/8080/8443, no
   internal host names), then every address the host resolves to must be public (`isPublicAddress`: IPv4
   special-purpose ranges refused; for IPv6 only global unicast outside its special blocks, and the IPv4 that

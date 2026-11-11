@@ -59,8 +59,9 @@ The UI has no switch of its own. It follows the API:
   platform fetches; on only with `GAUZY_CHAT_LINK_PREVIEWS_ENABLED=true`), the
   page's site name, title and description as text. Nothing is loaded from the
   linked site by the reader's browser: not the page, not its picture, not its
-  icon. A pending preview is asked again after two seconds (three times at
-  most), and a 404 (previews off) stops the asks for the session.
+  icon. A pending preview, or one a failure that may pass held up (no
+  connection, 429, 5xx), is asked again after 2, 4 and 6 seconds, and a 404
+  (previews off) stops the asks for the session.
 - **Files**: the paperclip, a drop on the composer or a paste attaches files
   (for users with `DOCS_CREATE`). Each is stored at once through the Docs
   plugin (`POST /api/plugins/docs/documents/upload`) as the sender's private
@@ -135,7 +136,8 @@ changing a task's status or assignee from its card
 sorting, grouping, merging, labels), `chat-ui.plugin.spec.ts` (routes,
 nav entry and badge following the availability), `services/chat-live.spec.ts`
 (the hints, when the channel is live or falls back, reconnects, retries, the
-poll periods), `chat-emoji.spec.ts`, `chat-links.spec.ts`, `chat-link-previews.service.spec.ts`, `link-cards.component.spec.ts`,
+poll periods), `chat-emoji.spec.ts`, `chat-links.spec.ts`,
+`chat-link-previews.service.spec.ts`, `link-cards.component.spec.ts`,
 `chat-attachments.spec.ts`, `services/chat-files.store.spec.ts` and
 `components/message-composer/message-composer.component.spec.ts` (emoji
 suggestions and replacement, uploads and what a message with files sends),

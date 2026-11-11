@@ -1,5 +1,5 @@
 import { ChatLinkPreviewStatusEnum } from '@gauzy/contracts';
-import { MultiORMColumn, MultiORMEntity, TenantOrganizationBaseEntity } from '@gauzy/core';
+import { ColumnIndex, MultiORMColumn, MultiORMEntity, TenantOrganizationBaseEntity } from '@gauzy/core';
 import { MikroOrmChatLinkPreviewRepository } from './chat.repositories';
 
 /**
@@ -13,6 +13,8 @@ import { MikroOrmChatLinkPreviewRepository } from './chat.repositories';
  * refresh policy reads it with `status`.
  */
 @MultiORMEntity('chat_link_preview', { mikroOrmRepository: () => MikroOrmChatLinkPreviewRepository })
+// The migration's unique key, stated on the entity too: a schema built from the entities (`DB_SYNCHRONIZE`) has it.
+@ColumnIndex('UQ_chat_link_preview_tenant_url_hash', ['tenantId', 'urlHash'], { unique: true })
 export class ChatLinkPreview extends TenantOrganizationBaseEntity {
 	@MultiORMColumn({ type: 'varchar', length: 64 })
 	urlHash!: string;

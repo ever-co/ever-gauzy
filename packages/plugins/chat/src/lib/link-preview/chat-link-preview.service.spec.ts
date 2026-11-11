@@ -6,7 +6,14 @@
  */
 jest.mock('@gauzy/core', () => {
 	const decorator = () => () => undefined;
-	return { __esModule: true, MultiORMColumn: decorator, MultiORMEntity: decorator, TenantOrganizationBaseEntity: class {}, MikroOrmBaseEntityRepository: class {} };
+	return {
+		__esModule: true,
+		ColumnIndex: decorator,
+		MultiORMColumn: decorator,
+		MultiORMEntity: decorator,
+		TenantOrganizationBaseEntity: class {},
+		MikroOrmBaseEntityRepository: class {}
+	};
 });
 jest.mock('@gauzy/scheduler', () => ({
 	SchedulerQueueService: class SchedulerQueueService {},
@@ -22,6 +29,7 @@ import type { SchedulerQueueService } from '@gauzy/scheduler';
 import type { IChatCaller } from '../services/chat-access.service';
 import {
 	CHAT_LINK_PREVIEW_FETCH_JOB,
+	CHAT_LINK_PREVIEW_FETCHES_PER_MINUTE,
 	CHAT_LINK_PREVIEW_PENDING_TTL_MS,
 	CHAT_LINK_PREVIEW_QUEUE,
 	CHAT_LINK_PREVIEW_READY_TTL_MS,
@@ -190,6 +198,48 @@ describe('ChatLinkPreviewService: inline (no queue root)', () => {
 		await settle();
 		expect(fetcher).toHaveBeenCalledTimes(2);
 		expect(JSON.parse(String(repo.rows[0].data)).title).toBe('Post');
+	});
+
+	it('keeps a good preview when its refresh meets a site that is down or slow, and tries again after the shorter time', async () => {
+		let outcome: Awaited<ReturnType<ChatLinkPreviewFetcher>> = { ok: true, url: LINK, contentType: 'text/html', charset: null, body: PAGE };
+		const { service, fetcher, repo } = setup({ fetcher: async () => outcome });
+		await service.preview(caller(), LINK);
+		const stale = () => (repo.rows[0].fetchedAt = new Date(Date.now() - CHAT_LINK_PREVIEW_READY_TTL_MS - 1000));
+
+		for (const failure of [{ ok: false as const, reason: 'timeout' as const }, { ok: false as const, reason: 'error' as const }, { ok: false as const, reason: 'status' as const, status: 503 }]) {
+			outcome = failure;
+			stale();
+			await service.refresh('tenant-a', LINK);
+			expect(repo.rows[0]).toMatchObject({ status: ChatLinkPreviewStatusEnum.READY });
+			expect(JSON.parse(String(repo.rows[0].data)).title).toBe('Post');
+			// Fresh again for the "unavailable" time only: asked once that has passed.
+			expect(previewAction(repo.rows[0] as never, Date.now())).toBe('serve');
+			expect(previewAction(repo.rows[0] as never, Date.now() + CHAT_LINK_PREVIEW_UNAVAILABLE_TTL_MS + 1000)).toBe('refresh');
+		}
+
+		// A page that is gone, or a host that now resolves inward, takes the preview away.
+		for (const failure of [{ ok: false as const, reason: 'status' as const, status: 404 }, { ok: false as const, reason: 'blocked' as const }]) {
+			outcome = { ok: true, url: LINK, contentType: 'text/html', charset: null, body: PAGE };
+			await service.refresh('tenant-a', LINK);
+			outcome = failure;
+			await service.refresh('tenant-a', LINK);
+			expect(repo.rows[0]).toMatchObject({ status: ChatLinkPreviewStatusEnum.UNAVAILABLE, data: null });
+		}
+		expect(fetcher).toHaveBeenCalled();
+	});
+
+	it('limits the fetches one person starts a minute (429), while the cache still answers them', async () => {
+		const { service, fetcher } = setup();
+		await service.preview(caller(), LINK);
+		for (let n = 1; n < CHAT_LINK_PREVIEW_FETCHES_PER_MINUTE; n++) await service.preview(caller(), `https://www.example.com/${n}`);
+		expect(fetcher).toHaveBeenCalledTimes(CHAT_LINK_PREVIEW_FETCHES_PER_MINUTE);
+		await expect(service.preview(caller(), 'https://www.example.com/one-too-many')).rejects.toMatchObject({ status: 429 });
+		// Cached links cost nothing, and another person has a budget of their own.
+		await expect(service.preview(caller(), LINK)).resolves.toMatchObject({ status: ChatLinkPreviewStatusEnum.READY });
+		await expect(service.preview({ ...caller(), userId: 'u2' }, 'https://www.example.com/one-too-many')).resolves.toMatchObject({
+			status: ChatLinkPreviewStatusEnum.READY
+		});
+		expect(fetcher).toHaveBeenCalledTimes(CHAT_LINK_PREVIEW_FETCHES_PER_MINUTE + 1);
 	});
 
 	it('answers only the preview fields of what it stored', async () => {

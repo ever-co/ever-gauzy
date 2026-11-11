@@ -1,5 +1,5 @@
 // cspell:ignore Lineone
-import { cleanText, cleanUrl, decodeEntities, decodePage, parsePreviewHead } from './link-preview-parser';
+import { cleanText, cleanUrl, decodeEntities, decodePage, headEnded, parsePreviewHead } from './link-preview-parser';
 
 const PAGE = 'https://www.example.com/articles/one?ref=chat';
 const char = (code: number) => String.fromCodePoint(code);
@@ -58,6 +58,16 @@ describe('parsePreviewHead', () => {
 		expect(parsePreviewHead('<title>Headless</title><body><meta name="description" content="late">', PAGE)).toEqual({ title: 'Headless' });
 	});
 
+	it('reads a tag whole when a quoted value holds a ">"', () => {
+		const html = `<head><meta property="og:title" content="Forecast > sunny"><meta name='description' content='a > b, c'><link rel="icon" title="x > y" href="/i.png"></head>`;
+		expect(parsePreviewHead(html, PAGE)).toEqual({ title: 'Forecast > sunny', description: 'a > b, c', icon: 'https://www.example.com/i.png' });
+	});
+
+	it('reads comments and scripts in document order: a "<!--" in a script, a "</script>" in a comment', () => {
+		const html = `<head><script>var s = "<!--";</script><title>After the script</title><!-- </script> --><meta name="description" content="Kept"></head>`;
+		expect(parsePreviewHead(html, PAGE)).toEqual({ title: 'After the script', description: 'Kept' });
+	});
+
 	it('has no preview for a page that says nothing usable', () => {
 		expect(parsePreviewHead('<html><head><link rel="icon" href="/i.png"></head></html>', PAGE)).toBeNull();
 		expect(parsePreviewHead('', PAGE)).toBeNull();
@@ -111,6 +121,19 @@ describe('parsePreviewHead', () => {
 			image: 'https://www.example.com/a.png',
 			icon: 'https://www.example.com/touch.png'
 		});
+	});
+});
+
+describe('headEnded', () => {
+	it('finds a real end of the head, not one written in a script, a style, a comment or the title', () => {
+		expect(headEnded('<html><head><title>T</title></head>')).toBe(true);
+		expect(headEnded('<html><head><title>T</title><body>')).toBe(true);
+		expect(headEnded('<head><script>document.write("</head><body>")</script>')).toBe(false);
+		expect(headEnded('<head><style>/* </head> */</style><!-- <body> -->')).toBe(false);
+		expect(headEnded('<head><title>Why </head> matters</title>')).toBe(false);
+		// Read only so far: a script not closed yet holds everything after it.
+		expect(headEnded('<head><script>var a = "</head>')).toBe(false);
+		expect(headEnded('<head><script>var a = 1;</script></head>')).toBe(true);
 	});
 });
 

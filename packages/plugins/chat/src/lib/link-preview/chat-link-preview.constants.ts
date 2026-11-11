@@ -15,6 +15,12 @@ export const CHAT_LINK_PREVIEW_READY_TTL_MS = 24 * 60 * 60 * 1000;
 export const CHAT_LINK_PREVIEW_UNAVAILABLE_TTL_MS = 60 * 60 * 1000;
 export const CHAT_LINK_PREVIEW_PENDING_TTL_MS = 2 * 60 * 1000;
 
+/**
+ * The fetches one person may start a minute (asks the cache cannot answer): beyond it the route answers 429. The
+ * platform's rate limiter (`THROTTLE_ENABLED`, 120 asks a minute on this route) comes on top when it is on.
+ */
+export const CHAT_LINK_PREVIEW_FETCHES_PER_MINUTE = 60;
+
 /** The bounds of one fetch: the whole of it (every hop), the redirects followed, and the bytes of the page read. */
 export const CHAT_LINK_PREVIEW_TIMEOUT_MS = 5000;
 export const CHAT_LINK_PREVIEW_MAX_REDIRECTS = 3;

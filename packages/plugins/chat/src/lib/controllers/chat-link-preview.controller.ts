@@ -12,8 +12,10 @@ import { ChatAccessService } from '../services/chat-access.service';
 /**
  * `/api/chat/link-preview?url=`: the preview of a link posted in chat (the chat spec FR-20), fetched by the server
  * from public addresses only and cached per tenant. Same guards as every chat route (`CHAT_VIEW`, the tenant's
- * `FEATURE_CHAT`); 404 unless `GAUZY_CHAT_LINK_PREVIEWS_ENABLED=true`. Rate-limited per user, since an ask can start
- * a fetch. Answers `Cache-Control: no-store`.
+ * `FEATURE_CHAT`); 404 unless `GAUZY_CHAT_LINK_PREVIEWS_ENABLED=true`. An ask can start a fetch, so the fetches one
+ * person starts are budgeted by the service whatever the platform's rate limiter says (429 beyond 60 a minute), and the
+ * route's own limit (`@Throttle`, 120 asks a minute) applies on top where the limiter is on (`THROTTLE_ENABLED`).
+ * Answers `Cache-Control: no-store`.
  */
 @ApiTags('Chat')
 @ApiBearerAuth()

@@ -15,6 +15,7 @@ import {
 	firstHeaderValue,
 	systemResolver
 } from '../egress/egress-guard';
+import { headEnded } from './link-preview-parser';
 
 /**
  * The fetch of a page to preview, every hop through the chat plugin's egress guard (`egress/egress-guard.ts`: the URL
@@ -45,7 +46,12 @@ export type LinkPreviewFetchOutcome =
 			/** The start of the page, at most `maxBytes`, up to the end of its `<head>`. */
 			body: Buffer;
 	  }
-	| { ok: false; reason: LinkPreviewFetchFailure };
+	| {
+			ok: false;
+			reason: LinkPreviewFetchFailure;
+			/** The answer's HTTP status, when the page answered one that is not a success (`status`). */
+			status?: number;
+	  };
 
 /** Resolves a host name to its addresses. A seam: specs answer without a network. */
 export type LinkPreviewResolver = EgressResolver;
@@ -71,8 +77,6 @@ export const DEFAULT_LINK_PREVIEW_FETCH_OPTIONS: ILinkPreviewFetchOptions = {
 
 const REDIRECT_STATUSES = new Set([301, 302, 303, 307, 308]);
 const HTML_TYPES = new Set(['text/html', 'application/xhtml+xml']);
-/** Where the `<head>` of a page has ended: its closing tag, or the start of the body. */
-const HEAD_END = /<\/head\s*>|<body[\s>/]/i;
 
 /**
  * Fetches the start of a page to preview, through the guard.
@@ -113,7 +117,7 @@ export async function fetchPreviewPage(link: string | URL, overrides: Partial<IL
 			}
 			if (status < 200 || status >= 300) {
 				response.destroy();
-				return { ok: false, reason: 'status' };
+				return { ok: false, reason: 'status', status };
 			}
 			const contentType = firstHeaderValue(response.headers['content-type']);
 			const mediaType = contentType ? contentType.split(';')[0].trim().toLowerCase() : null;
@@ -121,10 +125,12 @@ export async function fetchPreviewPage(link: string | URL, overrides: Partial<IL
 				response.destroy();
 				return { ok: false, reason: 'type' };
 			}
+			// The read stops at a real end of the head: not a `</head>` written in a script, a comment or the title.
+			let page = '';
 			const body = await readLimitedBody(response, {
 				maxBytes: options.maxBytes,
 				signal: controller.signal,
-				stop: (window) => HEAD_END.test(window)
+				stop: (piece) => headEnded((page += piece.toString('latin1')))
 			});
 			return { ok: true, url: current.href, contentType: mediaType, charset: charsetOf(contentType), body };
 		}
@@ -144,4 +150,15 @@ export async function fetchPreviewPage(link: string | URL, overrides: Partial<IL
 export function charsetOf(contentType: string | null | undefined): string | null {
 	const match = /;\s*charset\s*=\s*"?([^";\s]+)"?/i.exec(contentType ?? '');
 	return match ? match[1].toLowerCase() : null;
+}
+
+/**
+ * Whether a fetch failed for a reason that may pass on its own (the site slow, down or busy), so a good preview it
+ * would have refreshed is worth keeping: a timeout, a connection error, a 5xx or a 429. Not a refusal, a redirect loop,
+ * another type, or a 4xx (the page is gone or closed).
+ */
+export function isTransientFailure(outcome: LinkPreviewFetchOutcome): boolean {
+	if (outcome.ok) return false;
+	if (outcome.reason === 'timeout' || outcome.reason === 'error') return true;
+	return outcome.reason === 'status' && !!outcome.status && (outcome.status >= 500 || outcome.status === 429);
 }

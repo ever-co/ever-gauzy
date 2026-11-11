@@ -61,13 +61,18 @@ function route(request: IncomingMessage, response: ServerResponse): void {
 	} else if (path === '/bomb') {
 		// 32 MB of spaces, a few dozen kilobytes compressed.
 		response.writeHead(200, { 'content-type': 'text/html', 'content-encoding': 'gzip' });
-		response.end(gzipSync(Buffer.concat([Buffer.from('<html><head><title>Bomb</title>'), Buffer.alloc(32 * 1024 * 1024, ' ')])));
+		response.end(bomb);
 	} else if (path === '/gzip') {
 		response.writeHead(200, { 'content-type': 'text/html', 'content-encoding': 'gzip' });
 		response.end(gzipSync(Buffer.from(`${HEAD}<body></body>`)));
 	} else if (path === '/long-body') {
 		response.writeHead(200, { 'content-type': 'text/html' });
 		response.end(`${HEAD}<body>${'b'.repeat(256 * 1024)}</body></html>`);
+	} else if (path === '/script-split') {
+		// A `</head>` inside a script arrives first; the real metadata a moment later.
+		response.writeHead(200, { 'content-type': 'text/html' });
+		response.write('<html><head><script>var a = "</head><body>";</script><!-- <body> -->');
+		setTimeout(() => response.end('<meta property="og:title" content="Late"></head><body>body</body></html>'), 100);
 	} else if (path === '/hang') {
 		// Never answers.
 	} else if (path === '/drip') {
@@ -87,7 +92,11 @@ function route(request: IncomingMessage, response: ServerResponse): void {
 	}
 }
 
+/** 32 MB of spaces after the start of a head, a few dozen kilobytes compressed: made once. */
+let bomb: Buffer;
+
 beforeAll(async () => {
+	bomb = gzipSync(Buffer.concat([Buffer.from('<html><head><title>Bomb</title>'), Buffer.alloc(32 * 1024 * 1024, ' ')]));
 	server = createServer(route);
 	server.on('connection', (socket) => {
 		sockets.add(socket);
@@ -125,7 +134,8 @@ function fetchFrom(link: string, resolver: LinkPreviewResolver, overrides: Parti
 	return fetchPreviewPage(link, {
 		resolver,
 		policy: { isAllowedAddress: (address) => address === LOOPBACK || isPublicAddress(address), allowedPorts: [port], allowedProtocols: ['http:', 'https:'] },
-		timeoutMs: 2000,
+		// Generous: a busy test machine must not turn a spec about something else into a timeout (the timeout specs set their own).
+		timeoutMs: 5000,
 		...overrides
 	});
 }
@@ -160,10 +170,16 @@ describe('fetchPreviewPage: what it reads', () => {
 		expect(outcome.ok && outcome.body.length).toBeLessThan(64 * 1024);
 	});
 
+	it('keeps reading past a "</head>" written in a script or a comment, to the real end of the head', async () => {
+		const outcome = await fetchFrom(`${base}/script-split`, resolverOf(SITE));
+		expect(outcome.ok).toBe(true);
+		expect(outcome.ok && outcome.body.toString()).toContain('content="Late"');
+	});
+
 	it('refuses an answer that is not HTML, in an encoding it does not read, or not a success', async () => {
 		await expect(fetchFrom(`${base}/image`, resolverOf(SITE))).resolves.toEqual({ ok: false, reason: 'type' });
 		await expect(fetchFrom(`${base}/zstd`, resolverOf(SITE))).resolves.toEqual({ ok: false, reason: 'type' });
-		await expect(fetchFrom(`${base}/missing`, resolverOf(SITE))).resolves.toEqual({ ok: false, reason: 'status' });
+		await expect(fetchFrom(`${base}/missing`, resolverOf(SITE))).resolves.toEqual({ ok: false, reason: 'status', status: 404 });
 	});
 
 	it('answers an error for a host that does not exist', async () => {
@@ -282,7 +298,8 @@ describe('fetchPreviewPage: size and time', () => {
 	});
 
 	it('reads no more than its byte limit of a compressed answer, however far it would grow', async () => {
-		const outcome = await fetchFrom(`${base}/bomb`, resolverOf(SITE), { maxBytes: 64 * 1024 });
+		// A generous deadline: this is about the byte limit, and a busy test machine must not turn it into a timeout.
+		const outcome = await fetchFrom(`${base}/bomb`, resolverOf(SITE), { maxBytes: 64 * 1024, timeoutMs: 10_000 });
 		expect(outcome.ok).toBe(true);
 		expect(outcome.ok && outcome.body.length).toBeLessThanOrEqual(64 * 1024);
 	});

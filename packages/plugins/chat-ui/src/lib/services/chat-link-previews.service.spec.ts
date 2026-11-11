@@ -62,6 +62,9 @@ describe('ChatLinkPreviewsService', () => {
 		expect(preview()).toBeNull();
 		jest.advanceTimersByTime(CHAT_LINK_PREVIEW_RETRY_MS);
 		expect(preview()).toBeNull();
+		// Each time a little later.
+		jest.advanceTimersByTime(CHAT_LINK_PREVIEW_RETRY_MS);
+		expect(linkPreview).toHaveBeenCalledTimes(2);
 		jest.advanceTimersByTime(CHAT_LINK_PREVIEW_RETRY_MS);
 		expect(preview()?.title).toBe('A post');
 		expect(linkPreview).toHaveBeenCalledTimes(3);
@@ -75,16 +78,33 @@ describe('ChatLinkPreviewsService', () => {
 		expect(linkPreview).toHaveBeenCalledTimes(3 + 4);
 	});
 
-	it('leaves the card as it is for an unavailable preview, one with no text, or a failure', async () => {
+	it('leaves the card as it is for an unavailable preview, one with no text, or a refusal, and asks those no more', async () => {
+		jest.useFakeTimers({ doNotFake: ['queueMicrotask', 'nextTick'] });
 		answer = (url) =>
 			url.endsWith('/gone')
 				? of({ url, status: ChatLinkPreviewStatusEnum.UNAVAILABLE })
 				: url.endsWith('/bare')
 					? of(ready(url, { title: '  ', description: null }))
-					: throwError(() => new HttpErrorResponse({ status: 500 }));
-		const previews = ['/gone', '/bare', '/broken'].map((path) => service.preview(`https://www.example.com${path}`));
+					: throwError(() => new HttpErrorResponse({ status: 400 }));
+		const previews = ['/gone', '/bare', '/refused'].map((path) => service.preview(`https://www.example.com${path}`));
 		await flush();
+		jest.advanceTimersByTime(CHAT_LINK_PREVIEW_RETRY_MS * 10);
 		expect(previews.map((preview) => preview())).toEqual([null, null, null]);
+		expect(linkPreview).toHaveBeenCalledTimes(3);
+	});
+
+	it('asks again after a failure that may pass: no connection, 429, 5xx', async () => {
+		jest.useFakeTimers({ doNotFake: ['queueMicrotask', 'nextTick'] });
+		const failures = [0, 429, 503];
+		answer = (url) => {
+			const status = failures.shift();
+			return status === undefined ? of(ready(url)) : throwError(() => new HttpErrorResponse({ status }));
+		};
+		const preview = service.preview(LINK);
+		await flush();
+		jest.advanceTimersByTime(CHAT_LINK_PREVIEW_RETRY_MS * 6);
+		expect(linkPreview).toHaveBeenCalledTimes(4);
+		expect(preview()?.title).toBe('A post');
 	});
 
 	it('stops asking for the session once the platform says its previews are off', async () => {

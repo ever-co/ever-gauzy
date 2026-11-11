@@ -22,8 +22,9 @@ export const CHAT_LINK_PREVIEW_RETRIES = 3;
  * since showing them would make the browser load them from the linked site (which would learn who read the link).
  *
  * - `ready` with a title or a description: the card shows them.
- * - `pending`: asked again after two seconds, three times at most; still pending, the card stays as it is.
- * - `unavailable`, a refusal, a failure: the card stays as it is (the link alone).
+ * - `pending`, or a failure that may pass (no connection, 429, 5xx): asked again after 2, 4 and 6 seconds, then given
+ *   up on; the card stays as it is meanwhile.
+ * - `unavailable`, another refusal: the card stays as it is (the link alone).
  * - 404: the platform's previews are off. Nothing more is asked this session.
  */
 @Injectable({ providedIn: 'root' })
@@ -74,12 +75,7 @@ export class ChatLinkPreviewsService {
 			next: (answer) => {
 				const text = answer?.status === ChatLinkPreviewStatusEnum.READY ? textOf(answer) : null;
 				if (text) this.previews.get(url)?.set(text);
-				if (answer?.status === ChatLinkPreviewStatusEnum.PENDING && attempt < CHAT_LINK_PREVIEW_RETRIES) {
-					setTimeout(() => {
-						this.waiting.push({ url, attempt: attempt + 1 });
-						this.next();
-					}, CHAT_LINK_PREVIEW_RETRY_MS);
-				}
+				if (answer?.status === ChatLinkPreviewStatusEnum.PENDING) this.retry(url, attempt);
 				done();
 			},
 			error: (error: unknown) => {
@@ -87,11 +83,24 @@ export class ChatLinkPreviewsService {
 					// The platform's previews are off: nothing more is asked this session.
 					this.off = true;
 					this.waiting.length = 0;
+				} else if (error instanceof HttpErrorResponse && (error.status === 0 || error.status === 429 || error.status >= 500)) {
+					// A failure that may pass (no connection, too many asks, the server busy): asked again, a little later each time.
+					this.retry(url, attempt);
 				}
 				done();
 			},
 			complete: done
 		});
+	}
+
+	/** Asks for a link again later (each time a little later), while it has asks left. */
+	private retry(url: string, attempt: number): void {
+		if (attempt >= CHAT_LINK_PREVIEW_RETRIES) return;
+		setTimeout(() => {
+			if (this.off) return;
+			this.waiting.push({ url, attempt: attempt + 1 });
+			this.next();
+		}, CHAT_LINK_PREVIEW_RETRY_MS * (attempt + 1));
 	}
 }
 
