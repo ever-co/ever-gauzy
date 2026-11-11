@@ -159,6 +159,14 @@ describe('MessageComposerComponent', () => {
 			expect(fixture.nativeElement.querySelector('[data-test="composer-attachments"]')).toBeNull();
 		});
 
+		it('says how many files did not fit the message', () => {
+			const many = Array.from({ length: 12 }, (_, index) => new File(['x'], `f${index}.txt`, { type: 'text/plain' }));
+			fixture.componentInstance.addFiles(many);
+			fixture.detectChanges();
+			expect(uploadFile).toHaveBeenCalledTimes(10);
+			expect(fixture.nativeElement.querySelector('.hint')?.textContent).toContain('CHAT.COMPOSER.TOO_MANY_FILES');
+		});
+
 		it('takes no files while a message is edited', () => {
 			fixture.componentRef.setInput('editing', true);
 			fixture.componentRef.setInput('initialBody', 'Old text');

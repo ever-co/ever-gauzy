@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { NbButtonModule, NbIconModule, NbTooltipModule } from '@nebular/theme';
 import { TranslatePipe } from '@ngx-translate/core';
 import { Subscription } from 'rxjs';
-import { CHAT_MESSAGE_MAX_LENGTH } from '@gauzy/contracts';
+import { CHAT_MESSAGE_MAX_ATTACHMENTS, CHAT_MESSAGE_MAX_LENGTH } from '@gauzy/contracts';
 import {
 	attachmentRoom,
 	bodyWithAttachments,
@@ -122,9 +122,11 @@ export function clearDraft(draftKey: string): void {
 				(paste)="onPaste($event)"
 			></textarea>
 			<div class="footer">
-				<span class="hint" [class.over]="isTooLong()">
+				<span class="hint" [class.over]="isTooLong() || skippedFiles() > 0" aria-live="polite">
 					@if (isTooLong()) {
 						{{ 'CHAT.COMPOSER.TOO_LONG' | translate: { max: max } }}
+					} @else if (skippedFiles() > 0) {
+						{{ 'CHAT.COMPOSER.TOO_MANY_FILES' | translate: { max: maxFiles, count: skippedFiles() } }}
 					} @else {
 						{{ 'CHAT.COMPOSER.HINT' | translate }}
 					}
@@ -316,6 +318,9 @@ export class MessageComposerComponent {
 	/** The `:` query under the caret (only when no `@` query is open). */
 	protected readonly emojiQuery = signal<{ query: string; start: number } | null>(null);
 	protected readonly attachments = signal<PendingAttachment[]>([]);
+	/** How many files of the last pick, drop or paste did not fit the message (it holds {@link maxFiles}). */
+	protected readonly skippedFiles = signal(0);
+	protected readonly maxFiles = CHAT_MESSAGE_MAX_ATTACHMENTS;
 	protected readonly dragging = signal(false);
 	private readonly uploads = new Map<number, Subscription>();
 	private nextKey = 0;
@@ -625,10 +630,12 @@ export class MessageComposerComponent {
 		this.addFiles(files);
 	}
 
-	/** Stores each file at once (as many as the message can still take), one request per file. */
+	/** Stores each file at once (as many as the message can still take, the rest said), one request per file. */
 	addFiles(files: readonly File[]): void {
 		if (!this.canAttach() || this.editing() || this.disabled()) return;
-		for (const file of files.slice(0, this.room())) {
+		const room = this.room();
+		this.skippedFiles.set(Math.max(0, files.length - room));
+		for (const file of files.slice(0, room)) {
 			this.nextKey += 1;
 			const key = this.nextKey;
 			this.attachments.update((list) => [
@@ -654,6 +661,7 @@ export class MessageComposerComponent {
 	}
 
 	protected removeAttachment(key: number): void {
+		this.skippedFiles.set(0);
 		this.uploads.get(key)?.unsubscribe();
 		this.uploads.delete(key);
 		this.attachments.update((list) => list.filter((item) => item.key !== key));
@@ -665,6 +673,7 @@ export class MessageComposerComponent {
 	}
 
 	private dropAttachments(): void {
+		this.skippedFiles.set(0);
 		for (const upload of this.uploads.values()) upload.unsubscribe();
 		this.uploads.clear();
 		if (this.attachments().length) this.attachments.set([]);

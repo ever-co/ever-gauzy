@@ -100,6 +100,7 @@
 		"UPLOAD_FAILED": "Not uploaded",
 		"ATTACH_UNAVAILABLE": "Attachments are not available here",
 		"REMOVE_FILE": "Remove {{name}}",
+		"TOO_MANY_FILES": "A message holds at most {{max}} files: {{count}} not added.",
 		"MENTION_SUGGESTIONS": "People to mention",
 		"EMOJI_SUGGESTIONS": "Emoji"
 	},
