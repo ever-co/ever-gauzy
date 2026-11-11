@@ -427,12 +427,26 @@ export function isDialogOpen(doc: Pick<Document, 'querySelectorAll'> | null | un
 	return false;
 }
 
+/** The inputs nothing is typed into: a key pressed on one (a row's checkbox just clicked) is a command. */
+const NON_TEXT_INPUTS: ReadonlySet<string> = new Set([
+	'checkbox',
+	'radio',
+	'button',
+	'submit',
+	'reset',
+	'range',
+	'color',
+	'file',
+	'image'
+]);
+
 /** Whether the key press happened where text is typed (a field, a select, a rich editor), not commands. */
 export function isTypingTarget(target: EventTarget | null): boolean {
 	const element = target as HTMLElement | null;
 	if (!element || typeof element.tagName !== 'string') return false;
 	const tag = element.tagName.toUpperCase();
-	if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || tag === 'NB-OPTION') return true;
+	if (tag === 'INPUT') return !NON_TEXT_INPUTS.has(String((element as HTMLInputElement).type ?? '').toLowerCase());
+	if (tag === 'TEXTAREA' || tag === 'SELECT' || tag === 'NB-OPTION') return true;
 	if (element.isContentEditable === true) return true;
 	const editable = element.getAttribute?.('contenteditable');
 	if (editable === '' || editable === 'true' || editable === 'plaintext-only') return true;

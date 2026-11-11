@@ -128,6 +128,14 @@ describe('ShortcutRegistryService', () => {
 		expect(registry.isRunnable('listOpen')).toBe(true);
 	});
 
+	it('runs a command for a button as its keys would, and says when nothing can', () => {
+		const help = jest.fn();
+		expect(registry.invoke('helpOpen')).toBe(false);
+		registry.register('helpOpen', { run: help });
+		expect(registry.invoke('helpOpen')).toBe(true);
+		expect(help).toHaveBeenCalledWith(expect.objectContaining({ commandId: 'helpOpen', extend: false }));
+	});
+
 	it('passes Shift beyond a row key as extend', () => {
 		const select = jest.fn();
 		registry.register('listSelect', { run: select });

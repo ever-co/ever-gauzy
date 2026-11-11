@@ -148,6 +148,14 @@ export class ShortcutRegistryService implements OnDestroy {
 		return () => removers.forEach((remove) => remove());
 	}
 
+	/** Runs a command as its keys would (a button doing what a shortcut does); `false` when nothing can run it now. */
+	invoke(commandId: string): boolean {
+		const handler = this.handlerOf(commandId);
+		if (!handler) return false;
+		this.zone.run(() => handler.run({ commandId, extend: false, event: new KeyboardEvent('keydown') }));
+		return true;
+	}
+
 	/** Whether a command has a handler that can run now. */
 	isRunnable(commandId: string): boolean {
 		return !!this.handlerOf(commandId);

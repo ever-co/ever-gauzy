@@ -985,10 +985,9 @@ export class TaskViewsPageComponent implements OnInit {
 		setTimeout(() => this.toolbar?.openPicker(picker));
 	}
 
+	/** The help, as `?` opens it (the same dialog, so `?` closes it again). */
 	protected openHelp(): void {
-		void import('../../keyboard/shortcut-help-dialog.component').then(({ ShortcutHelpDialogComponent }) =>
-			this.dialogs.open(ShortcutHelpDialogComponent)
-		);
+		this.registry.invoke('helpOpen');
 	}
 
 	// ---------------------------------------------------------------- helpers

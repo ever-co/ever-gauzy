@@ -214,6 +214,12 @@ describe('shortcut registry', () => {
 			expect(isTypingTarget(editor)).toBe(true);
 			expect(isTypingTarget(inside)).toBe(true);
 			expect(isTypingTarget(document.createElement('button'))).toBe(false);
+			const checkbox = document.createElement('input');
+			checkbox.type = 'checkbox';
+			expect(isTypingTarget(checkbox)).toBe(false);
+			const search = document.createElement('input');
+			search.type = 'search';
+			expect(isTypingTarget(search)).toBe(true);
 			expect(isTypingTarget(null)).toBe(false);
 		});
 
