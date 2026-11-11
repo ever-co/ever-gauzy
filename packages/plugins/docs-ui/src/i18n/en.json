@@ -42,7 +42,8 @@
 		"ORGANIZATION": "Organization",
 		"PRIVATE": "Private",
 		"LABEL": "Visibility",
-		"HINT": "Private documents are visible to you, admins and people you share them with"
+		"HINT": "Private documents are visible to you, admins and people you share them with",
+		"TEAM": "Team"
 	},
 	"REVIEW": {
 		"NONE": "Not reviewed",
@@ -91,7 +92,8 @@
 		"EXPAND": "Expand",
 		"COLLAPSE": "Collapse",
 		"COLLAPSE_SIDEBAR": "Collapse sidebar",
-		"EXPAND_SIDEBAR": "Expand sidebar"
+		"EXPAND_SIDEBAR": "Expand sidebar",
+		"SPACES": "Spaces"
 	},
 	"VIEWS": {
 		"TABLE": "Table",
@@ -718,5 +720,17 @@
 		"UPLOAD_PROGRESS": "Upload progress",
 		"AUTOSAVE_STATUS": "Autosave status",
 		"SELECTION_STATUS": "Selection status"
+	},
+	"SPACE": {
+		"ORGANIZATION": "Organization",
+		"TEAM": "Team",
+		"PRIVATE": "Private"
+	},
+	"FOLLOW": {
+		"FOLLOW": "Follow this page",
+		"UNFOLLOW": "Stop following this page",
+		"MUTE": "Mute this page",
+		"UNMUTE": "Unmute this page",
+		"FAILED": "The page could not be updated. Try again."
 	}
 }

@@ -36,6 +36,29 @@
 		</div>
 	}
 
+	<!-- Spaces (docs-collaboration): the organization's, the caller's teams', their private one. Selecting one
+    narrows the tree below to its pages; selecting it again (or "All documents") lists every space. -->
+	@if (spaces.length) {
+		<div class="docs-tree-section">
+			<div class="docs-tree-section-title">{{ 'DOCS.TREE.SPACES' | translate }}</div>
+			@for (space of spaces; track spaceKey(space)) {
+				<a
+					class="docs-tree-link"
+					[class.docs-tree-link--active]="isSelectedSpace(space)"
+					[attr.aria-pressed]="isSelectedSpace(space)"
+					role="button"
+					tabindex="0"
+					(click)="selectSpace(space)"
+					(keydown.enter)="selectSpace(space)"
+				>
+					<nb-icon [icon]="spaceIcon(space)" size="tiny"></nb-icon>
+					<span class="docs-tree-link-name">{{ spaceLabel(space) }}</span>
+					<span class="docs-tree-link-count">{{ space.documentCount }}</span>
+				</a>
+			}
+		</div>
+	}
+
 	<!-- Tree -->
 	<div class="docs-tree-section docs-tree-main">
 		<!-- The section title doubles as the root crumb: drilled into a folder, this is the

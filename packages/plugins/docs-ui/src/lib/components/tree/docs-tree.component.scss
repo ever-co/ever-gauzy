@@ -62,6 +62,24 @@
 		text-overflow: ellipsis;
 		white-space: nowrap;
 	}
+
+	/* A space's document count, pushed to the end of the row. */
+	.docs-tree-link-count {
+		margin-left: auto;
+		font-size: 0.75rem;
+		color: var(--docs-text-muted, var(--text-hint-color));
+	}
+
+	/* The space the tree is narrowed to. */
+	&.docs-tree-link--active {
+		background: var(--docs-hover, rgba(126, 126, 143, 0.12));
+		font-weight: 600;
+	}
+
+	&:focus-visible {
+		outline: 2px solid var(--color-primary-default);
+		outline-offset: -2px;
+	}
 }
 
 .docs-tree-main {

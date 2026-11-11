@@ -84,4 +84,21 @@ describe('DocumentTreeStore', () => {
 			expect(await firstValueFrom(store.nodes$)).toHaveLength(1);
 		});
 	});
+
+	describe('spaces', () => {
+		it('lists one space at the top level and every space again when cleared', async () => {
+			await store.selectSpace({ kind: 'team' as never, organizationTeamId: 'team-1' as ID });
+
+			expect(documentsService.calls[0]).toMatchObject({ parentId: 'root', space: 'team', organizationTeamId: 'team-1' });
+			expect(store.selectedSpace).toEqual({ kind: 'team', organizationTeamId: 'team-1' });
+
+			// A folder's children are its children, whatever space they are in.
+			await store.loadChildren('folder-1' as ID);
+			expect(documentsService.calls[1].space).toBeUndefined();
+
+			await store.selectSpace(null);
+			expect(documentsService.calls[2].space).toBeUndefined();
+			expect(store.selectedSpace).toBeNull();
+		});
+	});
 });

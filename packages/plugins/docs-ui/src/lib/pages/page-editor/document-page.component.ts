@@ -30,7 +30,9 @@ import {
 	BaseEntityEnum,
 	DocumentKindEnum,
 	DocumentReviewStatusEnum,
+	ID,
 	IDocument,
+	IDocumentFollowState,
 	PermissionsEnum
 } from '@gauzy/contracts';
 import { Store, ToastrService } from '@gauzy/ui-core/core';
@@ -122,6 +124,9 @@ export class DocumentPageComponent implements OnInit, OnDestroy {
 
 	public railTab: RailTab = 'toc';
 	public railOpen = true;
+	/** Whether the caller follows / muted the page; `null` hides the buttons (collaboration off, or unknown). */
+	public followState: IDocumentFollowState | null = null;
+	public followBusy = false;
 	public versionsOpen = false;
 	public menuOpen = false;
 	public iconPickerOpen = false;
@@ -316,6 +321,7 @@ export class DocumentPageComponent implements OnInit, OnDestroy {
 			this.document = loaded;
 			this.titleDraft = this.document?.name ?? '';
 			this.iconDraft = this.document?.icon ?? '';
+			this.loadFollowState(loaded.id);
 			await this.loadBreadcrumbs();
 		} catch (error) {
 			// Every failure mode lands on the same banner — an org-scope 400, a 403, a genuine
@@ -336,6 +342,49 @@ export class DocumentPageComponent implements OnInit, OnDestroy {
 			this.loading = false;
 			this.cdr.markForCheck();
 			this.applyPendingBlockAnchor();
+		}
+	}
+
+	// ─── Follow / mute (`GAUZY_DOCS_COLLAB_ENABLED`) ──────────────
+
+	/**
+	 * Whether the caller follows the page and whether they muted it; `null` — and the buttons hidden — when
+	 * collaboration is off on the platform (the route answers 404) or the state cannot be read.
+	 */
+	loadFollowState(id: ID): void {
+		this.followState = null;
+		this.documentsService.getFollowState(id).subscribe({
+			next: (state) => {
+				if (String(this.document?.id) !== String(id)) return;
+				this.followState = state;
+				this.cdr.markForCheck();
+			},
+			error: () => undefined
+		});
+	}
+
+	/** Follows or unfollows the page (comments, mentions and changes reach the Inbox while following). */
+	async toggleFollow(): Promise<void> {
+		await this.setFollow(this.followState?.following ? 'unfollow' : 'follow');
+	}
+
+	/** Mutes the page, or lifts the mute (a muted page sends nothing to the Inbox; a direct mention still does). */
+	async toggleMute(): Promise<void> {
+		await this.setFollow(this.followState?.muted ? 'unmute' : 'mute');
+	}
+
+	private async setFollow(action: 'follow' | 'unfollow' | 'mute' | 'unmute'): Promise<void> {
+		const id = this.document?.id;
+		if (!id || this.followBusy) return;
+		this.followBusy = true;
+		try {
+			const state = await firstValueFrom(this.documentsService.setFollow(id, action));
+			if (String(this.document?.id) === String(id)) this.followState = state;
+		} catch {
+			this.toastrService.danger(this.translate.instant('DOCS.FOLLOW.FAILED'));
+		} finally {
+			this.followBusy = false;
+			this.cdr.markForCheck();
 		}
 	}
 

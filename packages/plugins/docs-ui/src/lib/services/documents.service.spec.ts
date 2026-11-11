@@ -424,4 +424,41 @@ describe('DocumentsService — backend wire contract', () => {
 			expect(error.error.code).toBe('DOCS_UPLOAD_REJECTED');
 		});
 	});
+
+	describe('collaboration routes (docs-collaboration)', () => {
+		it('reads the spaces in the selected organization', async () => {
+			http.response = [{ kind: 'organization', name: 'Acme', documentCount: 3 }];
+
+			const spaces = await firstValueFrom(service.getSpaces());
+
+			expect(http.last).toMatchObject({ method: 'GET', url: '/api/plugins/docs/documents/spaces' });
+			expect(http.params.get('organizationId')).toBe(ORGANIZATION_ID);
+			expect(spaces).toEqual([{ kind: 'organization', name: 'Acme', documentCount: 3 }]);
+		});
+
+		it('reads and changes the follow state of a page', async () => {
+			http.response = { following: true, muted: false };
+
+			await firstValueFrom(service.getFollowState(DOCUMENT_ID));
+			expect(http.last).toMatchObject({ method: 'GET', url: `/api/plugins/docs/documents/${DOCUMENT_ID}/follow` });
+
+			for (const action of ['follow', 'unfollow', 'mute', 'unmute'] as const) {
+				await firstValueFrom(service.setFollow(DOCUMENT_ID, action));
+				expect(http.last).toMatchObject({
+					method: 'POST',
+					url: `/api/plugins/docs/documents/${DOCUMENT_ID}/${action}`,
+					body: { organizationId: ORGANIZATION_ID, tenantId: TENANT_ID }
+				});
+			}
+		});
+
+		it('lists one space with its team', async () => {
+			http.response = { items: [], total: 0 };
+
+			await firstValueFrom(service.getAll({ parentId: 'root', space: 'team' as never, organizationTeamId: 'team-1' as ID }));
+
+			expect(http.params.get('space')).toBe('team');
+			expect(http.params.get('organizationTeamId')).toBe('team-1');
+		});
+	});
 });
