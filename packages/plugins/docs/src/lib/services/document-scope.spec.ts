@@ -123,6 +123,9 @@ const buildService = (rows: any[] = [], access: { canRead?: boolean; canWrite?: 
 	const queryBuilder = recordingQueryBuilder();
 	const repository: any = {
 		findOne,
+		// The content save claims the next revision in one guarded `UPDATE` (`claimNextContentRevision`) before it
+		// saves; it lands here, as it does on a row nobody else moved.
+		update: jest.fn(async () => ({ affected: 1 })),
 		createQueryBuilder: jest.fn(() => queryBuilder)
 	};
 	const accessService: any = {

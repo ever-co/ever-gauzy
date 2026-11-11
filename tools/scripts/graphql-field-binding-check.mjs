@@ -81,6 +81,12 @@ const GATED_PLUGIN_SCHEMAS = [
 		flag: 'GAUZY_CHAT_ENABLED',
 		file: 'packages/plugins/chat/src/lib/graphql/chat.schema.ts',
 		exportName: 'chatSchemaExtensions'
+	},
+	{
+		plugin: 'DocsLivePlugin',
+		flag: 'GAUZY_DOCS_LIVE_ENABLED',
+		file: 'packages/plugins/docs/src/lib/live/graphql/docs-live.schema.ts',
+		exportName: 'docsLiveSchemaExtensions'
 	}
 ];
 

@@ -1,14 +1,14 @@
 /** See `documents.service.spec.ts` — the store reaches `DocumentsService`, which imports this barrel. */
 jest.mock('@gauzy/ui-core/core', () => ({ Store: class Store {} }));
 
-import { firstValueFrom, of } from 'rxjs';
+import { firstValueFrom, from, of } from 'rxjs';
 import { DocumentKindEnum, ID, IDocument, IPagination } from '@gauzy/contracts';
 import { IDocumentFindInput } from '../models/docs-api.model';
 import { DocumentTreeStore } from './document-tree.store';
 import { DocumentsService } from './documents.service';
 
 const node = (id: string, name: string, parentId: ID | null = null): IDocument =>
-	({ id, name, kind: DocumentKindEnum.FOLDER, parentId } as unknown as IDocument);
+	({ id, name, kind: DocumentKindEnum.FOLDER, parentId }) as unknown as IDocument;
 
 /** Records every query the store issues and replays a scripted response per parent. */
 class DocumentsServiceStub {
@@ -82,6 +82,45 @@ describe('DocumentTreeStore', () => {
 
 			expect(documentsService.calls.length).toBe(2);
 			expect(await firstValueFrom(store.nodes$)).toHaveLength(1);
+		});
+	});
+
+	describe('spaces', () => {
+		it('drops the roots of a space the user left while they were loading', async () => {
+			let release!: () => void;
+			const slow = new Promise<void>((resolve) => (release = resolve));
+			const getAll = documentsService.getAll.bind(documentsService);
+			jest.spyOn(documentsService, 'getAll').mockImplementationOnce((params) => {
+				documentsService.calls.push(params);
+				return from(slow.then(() => ({ items: [node('old', 'Old space page')], total: 1 }))) as never;
+			});
+
+			const first = store.selectSpace({ kind: 'organization' as never });
+			jest.spyOn(documentsService, 'getAll').mockImplementation(getAll);
+			await store.selectSpace({ kind: 'private' as never });
+			release();
+			await first;
+
+			expect((await firstValueFrom(store.nodes$)).map((root) => root.name)).toEqual(['Contracts']);
+		});
+
+		it('lists one space at the top level and every space again when cleared', async () => {
+			await store.selectSpace({ kind: 'team' as never, organizationTeamId: 'team-1' as ID });
+
+			expect(documentsService.calls[0]).toMatchObject({
+				parentId: 'root',
+				space: 'team',
+				organizationTeamId: 'team-1'
+			});
+			expect(store.selectedSpace).toEqual({ kind: 'team', organizationTeamId: 'team-1' });
+
+			// A folder's children are its children, whatever space they are in.
+			await store.loadChildren('folder-1' as ID);
+			expect(documentsService.calls[1].space).toBeUndefined();
+
+			await store.selectSpace(null);
+			expect(documentsService.calls[2].space).toBeUndefined();
+			expect(store.selectedSpace).toBeNull();
 		});
 	});
 });

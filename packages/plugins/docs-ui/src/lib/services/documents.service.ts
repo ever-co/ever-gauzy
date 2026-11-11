@@ -6,10 +6,13 @@ import {
 	IDocument,
 	IDocumentCategory,
 	IDocumentCreateInput,
+	IDocumentFollowState,
 	IDocumentLink,
 	IDocumentLinkCreateInput,
 	IDocumentMoveInput,
 	IDocumentShare,
+	IDocumentSpace,
+	IDocumentSpaceMoveInput,
 	IDocumentUpdateInput,
 	IDocumentVersion,
 	IPagination,
@@ -169,6 +172,37 @@ export class DocumentsService {
 		return this.http
 			.get<IDocumentPathSegment[] | IPagination<IDocumentPathSegment>>(`${this.API_URL}/documents/${id}/path`)
 			.pipe(map((result) => (Array.isArray(result) ? result : result?.items ?? [])));
+	}
+
+	// ─── Collaboration (`GAUZY_DOCS_COLLAB_ENABLED`; 404 `DOCS_COLLAB_DISABLED` while it is off) ─
+
+	/** The spaces the caller sees (organization, their teams, private), with how many documents each lists. */
+	getSpaces(): Observable<IDocumentSpace[]> {
+		return this.http
+			.get<IDocumentSpace[] | IPagination<IDocumentSpace>>(`${this.API_URL}/documents/spaces`, {
+				params: toParams(this.organizationScope())
+			})
+			.pipe(map((result) => (Array.isArray(result) ? result : result?.items ?? [])));
+	}
+
+	/** Moves a page (by default with the descendants the caller may write) to another space. */
+	moveToSpace(id: ID, input: IDocumentSpaceMoveInput): Observable<IDocument> {
+		return this.http.post<IDocument>(`${this.API_URL}/documents/${id}/space`, { ...this.organizationScope(), ...input });
+	}
+
+	/** Whether the caller follows the page, and whether they muted it. */
+	getFollowState(id: ID): Observable<IDocumentFollowState> {
+		return this.http.get<IDocumentFollowState>(`${this.API_URL}/documents/${id}/follow`, {
+			params: toParams(this.organizationScope())
+		});
+	}
+
+	/** Follows or unfollows the page, or mutes it or lifts the mute; answers the new state. */
+	setFollow(id: ID, action: 'follow' | 'unfollow' | 'mute' | 'unmute'): Observable<IDocumentFollowState> {
+		// The scope travels as query params, as on the follow read: the routes read the page in the selected organization.
+		return this.http.post<IDocumentFollowState>(`${this.API_URL}/documents/${id}/${action}`, {}, {
+			params: toParams(this.organizationScope())
+		});
 	}
 
 	// ─── Documents: write ────────────────────────────────────────

@@ -140,3 +140,11 @@ export {
 	ISniffResult,
 	ISniffedType
 } from './lib/services/file-sniffer';
+
+// Live co-editing (docs-collaboration phase 3), loaded only with GAUZY_DOCS_LIVE_ENABLED=true (`DocsLivePlugin`).
+export { DocsLivePlugin } from './lib/live/docs-live.plugin';
+export { DocsLiveModule } from './lib/live/docs-live.module';
+export { DocumentLiveService } from './lib/live/document-live.service';
+export * from './lib/live/docs-live.config';
+export * from './lib/live/document-live.types';
+export { DocumentLiveBridge, IDocumentLiveHandler } from './lib/services/document-live.bridge';
