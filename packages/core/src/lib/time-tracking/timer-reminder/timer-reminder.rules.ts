@@ -40,8 +40,10 @@ export function notificationPreferencesOf(raw: unknown): IEmployeeNotificationPr
 }
 
 /**
- * The employee's threshold in hours, or null when they turned the reminders off (`timerReminderHours` null or 0). A
- * value that is missing or not a number of hours in (0, 24] is the default, as in the Ever Teams settings that write it.
+ * The employee's threshold in hours, or null when they turned the reminders off (`timerReminderHours` null or 0). It is
+ * kept to the hundredth, as the title names it (`1.23 hours`), since Ever Teams reads it back from the title: a value
+ * that is missing, not a number, or not in (0, 24] once so rounded (0.004 would read `0 hours`) is the default, as in
+ * the Ever Teams settings that write it.
  *
  * @param preferences The `preferences` of the employee's notification setting (an object or its JSON).
  */
@@ -50,9 +52,8 @@ export function timerReminderHoursOf(preferences: unknown): number | null {
 	if (hours === null || hours === 0) {
 		return null;
 	}
-	return typeof hours === 'number' && Number.isFinite(hours) && hours > 0 && hours <= MAX_TIMER_REMINDER_HOURS
-		? hours
-		: DEFAULT_TIMER_REMINDER_HOURS;
+	const named = typeof hours === 'number' && Number.isFinite(hours) ? Number(hours.toFixed(2)) : Number.NaN;
+	return named > 0 && named <= MAX_TIMER_REMINDER_HOURS ? named : DEFAULT_TIMER_REMINDER_HOURS;
 }
 
 /** The reminder a run has reached after running `elapsedMs`: 0 before the threshold. */

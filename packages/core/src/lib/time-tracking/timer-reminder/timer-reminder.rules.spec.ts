@@ -34,6 +34,15 @@ describe('the threshold of the timer reminders', () => {
 		expect(timerReminderHoursOf({ timerReminderHours: 1.5 })).toBe(1.5);
 		expect(timerReminderHoursOf({ timerReminderHours: 24 })).toBe(24);
 	});
+
+	it('is kept to the hundredth, as the title names it, and one the title cannot name is the default', () => {
+		expect(timerReminderHoursOf({ timerReminderHours: 1.234 })).toBe(1.23);
+		expect(timerReminderHoursOf({ timerReminderHours: 0.01 })).toBe(0.01);
+		// `0 hours` would be its title
+		expect(timerReminderHoursOf({ timerReminderHours: 0.004 })).toBe(DEFAULT_TIMER_REMINDER_HOURS);
+		expect(timerReminderHoursOf({ timerReminderHours: 24.004 })).toBe(24);
+		expect(timerReminderHoursOf({ timerReminderHours: 24.006 })).toBe(DEFAULT_TIMER_REMINDER_HOURS);
+	});
 });
 
 describe('the reminder a run has reached', () => {
@@ -95,9 +104,11 @@ describe('the titles Ever Teams reads back', () => {
 		[1, 8, null, 'Your timer has been running for 8 hours'],
 		[1, 1, null, 'Your timer has been running for 1 hour'],
 		[1, 1.5, null, 'Your timer has been running for 1.5 hours'],
+		[1, 1.23, null, 'Your timer has been running for 1.23 hours'],
 		[1, 8, 'Fix the login page', 'Your timer has been running for 8 hours on "Fix the login page"'],
 		[2, 8, null, 'Your timer is still running after 16 hours'],
 		[2, 0.5, null, 'Your timer is still running after 1 hour'],
+		[2, 1.23, null, 'Your timer is still running after 2.46 hours'],
 		[2, 4, 'Ship it', 'Your timer is still running after 8 hours on "Ship it"']
 	] as const)('level %s at a threshold of %s hours, task %s: "%s"', (level, hours, task, title) => {
 		expect(timerReminderNotice(level, hours, task).title).toBe(title);
