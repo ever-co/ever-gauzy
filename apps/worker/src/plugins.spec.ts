@@ -33,6 +33,12 @@ jest.mock('@gauzy/plugin-email-provider-postmark', () => ({ EmailProviderPostmar
 jest.mock('@gauzy/plugin-email-provider-mailgun', () => ({ EmailProviderMailgunPlugin: class EmailProviderMailgunPlugin {}, isMailgunEnabled: () => false }));
 jest.mock('@gauzy/plugin-email-provider-sendgrid', () => ({ EmailProviderSendGridPlugin: class EmailProviderSendGridPlugin {}, isSendGridEnabled: () => false }));
 jest.mock('@gauzy/plugin-email-provider-ses', () => ({ EmailProviderSesPlugin: class EmailProviderSesPlugin {}, isSesEnabled: () => false }));
+// Task automations: their real switch, a stub class (the worker hosts the schedule half only).
+jest.mock('@gauzy/plugin-task-automations', () => ({
+	TaskAutomationsSchedulePlugin: class TaskAutomationsSchedulePlugin {},
+	isTaskAutomationsEnabled: jest.requireActual('../../../packages/plugins/task-automations/src/lib/task-automations-enabled')
+		.isTaskAutomationsEnabled
+}));
 jest.mock('@gauzy/plugin-catalog', () => ({ CatalogPlugin: class CatalogPlugin {} }));
 jest.mock('@gauzy/plugin-pricing', () => ({ PricingPlugin: class PricingPlugin {} }));
 jest.mock('@gauzy/plugin-tax', () => ({ TaxPlugin: class TaxPlugin {} }));
@@ -214,6 +220,39 @@ describe('worker plugins', () => {
 			['Ever Works on, the Inbox TRUE', 'true', 'TRUE', false]
 		])('%s: hosted %s', (_name, everWorks, inbox, hosted) => {
 			expect(hasInbox(listWith(everWorks, inbox))).toBe(hosted);
+		});
+	});
+
+	describe('the task automations’ schedule, hosted only when GAUZY_TASK_AUTOMATIONS_ENABLED is exactly true', () => {
+		function listWith(value: string | undefined): unknown[] {
+			const saved = process.env['GAUZY_TASK_AUTOMATIONS_ENABLED'];
+			if (value === undefined) delete process.env['GAUZY_TASK_AUTOMATIONS_ENABLED'];
+			else process.env['GAUZY_TASK_AUTOMATIONS_ENABLED'] = value;
+			const warn = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+			try {
+				let list: unknown[] = [];
+				jest.isolateModules(() => {
+					// eslint-disable-next-line @typescript-eslint/no-var-requires
+					list = require('./plugins').plugins;
+				});
+				return list;
+			} finally {
+				warn.mockRestore();
+				if (saved === undefined) delete process.env['GAUZY_TASK_AUTOMATIONS_ENABLED'];
+				else process.env['GAUZY_TASK_AUTOMATIONS_ENABLED'] = saved;
+			}
+		}
+
+		const hasSchedule = (list: unknown[]) =>
+			list.some((plugin) => (plugin as { name?: string })?.name === 'TaskAutomationsSchedulePlugin');
+
+		it.each([
+			['unset (the default)', undefined, false],
+			['false', 'false', false],
+			['true', 'true', true],
+			['TRUE', 'TRUE', false]
+		])('%s: hosted %s', (_name, value, hosted) => {
+			expect(hasSchedule(listWith(value))).toBe(hosted);
 		});
 	});
 });

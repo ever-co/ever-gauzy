@@ -21,6 +21,7 @@ import { IntegrationAsanaPlugin, isAsanaEnabled } from '@gauzy/plugin-integratio
 import { IntegrationLinearPlugin, isLinearEnabled } from '@gauzy/plugin-integration-linear';
 import { IntegrationTrelloPlugin, isTrelloEnabled } from '@gauzy/plugin-integration-trello';
 import { InventoryPlugin } from '@gauzy/plugin-inventory';
+import { isTaskAutomationsEnabled, TaskAutomationsSchedulePlugin } from '@gauzy/plugin-task-automations';
 import { OrderPlugin } from '@gauzy/plugin-order';
 import { PricingPlugin } from '@gauzy/plugin-pricing';
 import { TaxPlugin } from '@gauzy/plugin-tax';
@@ -180,6 +181,16 @@ export const plugins = resolvePluginLoadOrder([
 	 * 🛑 Off unless `GAUZY_INBOX_ENABLED` is exactly `true`, so a worker is unchanged by default.
 	 */
 	...(isInboxEnabled(process.env, (message) => console.warn(message)) ? [InboxPlugin] : []),
+	/**
+	 * Task automations — hosted here, behind their switch, for the one schedule they own: the 15-minute due-date
+	 * sweep. A `@ScheduledJob` fires only in this process. Only the schedule is hosted (`TaskAutomationsSchedulePlugin`:
+	 * the queue and the job that enqueues onto it, no consumer, no entity): the rules write through core's task
+	 * services, which this module graph does not host, so the sweep runs in the API that consumes the queue — the
+	 * outbox's own split. With no queue root the plugin registers nothing here.
+	 *
+	 * 🛑 Off unless `GAUZY_TASK_AUTOMATIONS_ENABLED` is exactly `true` — the same switch as the API's list.
+	 */
+	...(isTaskAutomationsEnabled(process.env, (message) => console.warn(message)) ? [TaskAutomationsSchedulePlugin] : []),
 	/**
 	 * Email delivery of the Inbox's notifications (immediate or digest per kind, the Inbox spec FR-10–FR-12): the
 	 * sweep that decides and sends runs here, on the worker's queue root, every minute.
