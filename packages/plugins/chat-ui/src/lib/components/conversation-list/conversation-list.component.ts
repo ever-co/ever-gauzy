@@ -63,6 +63,11 @@ export type ChatListView = 'conversation' | 'unreads' | 'threads';
 			<button nbButton ghost size="tiny" class="browse" data-test="browse-channels" (click)="browse.emit()">
 				<nb-icon icon="search-outline"></nb-icon> {{ 'CHAT.LIST.BROWSE' | translate }}
 			</button>
+			@if (canManageCategories()) {
+				<button nbButton ghost size="tiny" class="browse" data-test="manage-categories" (click)="manageCategories.emit()">
+					<nb-icon icon="folder-outline"></nb-icon> {{ 'CHAT.CATEGORIES.TITLE' | translate }}
+				</button>
+			}
 
 			<h6 class="section">{{ 'CHAT.LIST.DIRECT' | translate }}</h6>
 			@for (conversation of direct(); track conversation.id) {
@@ -192,10 +197,13 @@ export class ConversationListComponent {
 	readonly view = input<ChatListView>('conversation');
 	readonly threadCount = input(0);
 	readonly untitled = input('Conversation');
+	/** `CHAT_MANAGE`: offers the categories of the channels to manage. */
+	readonly canManageCategories = input(false);
 
 	readonly newChannel = output<void>();
 	readonly newDirect = output<void>();
 	readonly browse = output<void>();
+	readonly manageCategories = output<void>();
 
 	protected readonly unreadsLink = `${CHAT_LINK}/${CHAT_UNREADS_PATH}`;
 	protected readonly threadsLink = `${CHAT_LINK}/${CHAT_THREADS_PATH}`;

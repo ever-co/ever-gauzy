@@ -40,7 +40,8 @@ The UI has no switch of its own. It follows the API:
   category, the direct and group messages, with unread and mention counts;
   New channel, New message and Browse channels open dialogs.
 - **A conversation** (middle): its header (title, topic, members, favourite,
-  notification level, join / leave, archive for managers, pinned messages),
+  notification level, join / leave, archive for managers, pinned messages,
+  files, settings),
   the messages newest page first (older on scroll, newer live — see below),
   and the composer: Enter sends, Shift+Enter breaks the line, `@` suggests
   people (the body carries rename-safe `<@employeeId>` tokens), `:` and two
@@ -49,7 +50,9 @@ The UI has no switch of its own. It follows the API:
   Showing the latest loaded message marks the conversation read up to it
   (never past what is shown); "mark unread from here" is explicit. The unsent
   text of each conversation and thread is kept while the page lives. A message offers reply in thread, reactions, pin,
-  edit and delete (own messages, or managers), and shows its task cards, its
+  edit and delete (own messages, or managers) and "Create task from message"
+  (users with `ORG_TASK_ADD`), and shows its task cards (key, title and status
+  where the reader may see the task, `GET /api/tasks/:id`), its
   files and a card for each web link (made from the link alone: nothing is
   fetched from the linked site).
 - **Files**: the paperclip, a drop on the composer or a paste attaches files
@@ -61,6 +64,24 @@ The UI has no switch of its own. It follows the API:
   Messages show pictures inline and other files as links, read through the
   conversation's files (`GET /api/chat/conversations/:id/files`, members
   only), which the header's Files pane lists too.
+- **Create task from message**: title (the message's first line to start
+  with), project (optional, the organization's projects) and assignees
+  (optional; the platform assigns the creator too). The task's description is
+  the message (`POST /api/chat/messages/:id/create-task`), and the message
+  shows the task's card.
+- **Send to chat** on a task's page (`/pages/tasks/view/:id`, users with
+  `CHAT_SEND` where the chat is served): a button in the page's actions (the
+  `task-view-actions` extension slot, `PAGE_EXTENSION_SLOTS.TASK_VIEW_ACTIONS`)
+  opens a picker of my conversations (favourites first, then the latest) with
+  an optional note, and posts the task's card there in my name (`taskId` on the
+  send; without a note the text is the task's key and title).
+- **Conversation settings** (the gear, or the member count): for a channel its
+  name, topic, public or private and sidebar category; for a direct or group
+  conversation its topic; and the members, which a manager (`CHAT_MANAGE`, the
+  conversation's manager, or its creator) adds and removes (not in a direct
+  conversation or the default channel). Every member sees them.
+- **Channel categories** (`CHAT_MANAGE`, under Browse channels): add, rename,
+  move up or down, delete (the channels stay, uncategorized).
 - **A thread** (right, `?thread=<rootMessageId>`): the root, the replies
   (a page at a time, newer ones live), follow / unfollow, and a composer
   with "also send to the conversation"; showing the replies marks the thread read.
@@ -99,8 +120,8 @@ and asks again.
 
 Link previews with the page's title, text and picture (the API has no
 `GET /chat/link-preview` yet: a preview must be fetched by the platform, never
-by the reader's browser), send-to-chat from a task and create-task-from-message,
-categories management, channel settings, presence and typing.
+by the reader's browser), changing a task's status or assignee from its card
+(FR-14), search (`GET /chat/search` exists), presence and typing.
 
 ## Tests
 
@@ -111,4 +132,8 @@ nav entry and badge following the availability), `services/chat-live.spec.ts`
 poll periods), `chat-emoji.spec.ts`, `chat-links.spec.ts`,
 `chat-attachments.spec.ts`, `services/chat-files.store.spec.ts` and
 `components/message-composer/message-composer.component.spec.ts` (emoji
-suggestions and replacement, uploads and what a message with files sends).
+suggestions and replacement, uploads and what a message with files sends),
+`chat-catch-up.spec.ts`, `chat-tasks.spec.ts`, `chat-categories.spec.ts`,
+`chat-ui.extensions.spec.ts` (the task-page extension) and
+`dialogs/chat-settings-dialogs.component.spec.ts` (what the settings save,
+members, categories).

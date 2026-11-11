@@ -14,26 +14,32 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
-import { NbButtonModule, NbIconModule, NbSelectModule, NbSpinnerModule, NbTooltipModule } from '@nebular/theme';
+import { NbButtonModule, NbDialogService, NbIconModule, NbSelectModule, NbSpinnerModule, NbTooltipModule } from '@nebular/theme';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { EMPTY, merge, Subscription } from 'rxjs';
 import { auditTime, catchError, filter, switchMap } from 'rxjs/operators';
 import {
 	CHAT_EVENT_NAMES,
 	ChatConversationKindEnum,
-	ChatMemberRoleEnum,
 	ChatNotifyLevelEnum,
+	IChatCategory,
 	IChatConversationWithState,
+	IChatCreateTaskResult,
 	IChatMemberState,
 	IChatMessageWithRelations
 } from '@gauzy/contracts';
 import { ToastrService } from '@gauzy/ui-core/core';
 import { reconcileWithNewest } from '../../chat-catch-up';
+import { canManageConversation } from '../../chat-categories';
+import { withTaskReference } from '../../chat-tasks';
 import { CHAT_LIVE_AUDIT_MS, CHAT_MESSAGES_POLL_MS } from '../../chat-ui.constants';
 import { apiErrorMessage, continuesGroup, conversationTitle, mergeMessages, newNonce } from '../../chat-ui.helpers';
+import { CreateTaskDialogComponent, CreateTaskDialogContext } from '../../dialogs/chat-task-dialogs.component';
+import { ChannelSettingsContext, ChannelSettingsDialogComponent } from '../../dialogs/chat-settings-dialogs.component';
 import { ChatFilesStore } from '../../services/chat-files.store';
 import { ChatLiveService, isTabVisible } from '../../services/chat-live.service';
 import { ChatPeople } from '../../services/chat-people.service';
+import { ChatTasksService } from '../../services/chat-tasks.service';
 import { ChatEvents, ChatMessagePatch, ChatUiService, memberStateFromEvents } from '../../services/chat-ui.service';
 import { FilesPanelComponent } from '../files-panel/files-panel.component';
 import { clearDraft, ComposerSubmission, MessageComposerComponent } from '../message-composer/message-composer.component';
@@ -80,7 +86,9 @@ const NEAR_BOTTOM_PX = 80;
 					@if (conversation().topic) {
 						<span class="topic">{{ conversation().topic }}</span>
 					}
-					<span class="members">{{ 'CHAT.LIST.MEMBERS' | translate: { count: conversation().memberCount } }}</span>
+					<button type="button" class="members" data-test="members" [attr.aria-label]="'CHAT.SETTINGS.TITLE' | translate" (click)="openSettings()">
+						{{ 'CHAT.LIST.MEMBERS' | translate: { count: conversation().memberCount } }}
+					</button>
 				</div>
 				<div class="actions">
 					<button nbButton ghost size="tiny" type="button" data-test="favorite" [nbTooltip]="(state()?.isFavorite ? 'CHAT.VIEW.UNFAVORITE' : 'CHAT.VIEW.FAVORITE') | translate" [attr.aria-label]="(state()?.isFavorite ? 'CHAT.VIEW.UNFAVORITE' : 'CHAT.VIEW.FAVORITE') | translate" (click)="toggleFavorite()">
@@ -104,6 +112,11 @@ const NEAR_BOTTOM_PX = 80;
 					} @else if (canLeave()) {
 						<button nbButton ghost size="tiny" type="button" data-test="leave" (click)="leave()">{{ 'CHAT.VIEW.LEAVE' | translate }}</button>
 					}
+					@if (isMember()) {
+						<button nbButton ghost size="tiny" type="button" data-test="settings" [nbTooltip]="'CHAT.SETTINGS.TITLE' | translate" [attr.aria-label]="'CHAT.SETTINGS.TITLE' | translate" (click)="openSettings()">
+							<nb-icon icon="settings-2-outline"></nb-icon>
+						</button>
+					}
 					@if (canManage() && conversation().kind === 'channel') {
 						<button nbButton ghost size="tiny" type="button" data-test="archive" (click)="toggleArchived()">
 							{{ (conversation().archivedAt ? 'CHAT.VIEW.UNARCHIVE' : 'CHAT.VIEW.ARCHIVE') | translate }}
@@ -120,6 +133,7 @@ const NEAR_BOTTOM_PX = 80;
 							[message]="pin"
 							[people]="people()"
 							[files]="files()"
+							[tasks]="tasks()"
 							[conversationNames]="conversationNames()"
 							[meEmployeeId]="meEmployeeId()"
 							[meUserId]="meUserId()"
@@ -154,6 +168,8 @@ const NEAR_BOTTOM_PX = 80;
 						[message]="message"
 						[people]="people()"
 						[files]="files()"
+						[tasks]="tasks()"
+						[canCreateTask]="canCreateTask() && !readOnly()"
 						[conversationNames]="conversationNames()"
 						[meEmployeeId]="meEmployeeId()"
 						[meUserId]="meUserId()"
@@ -231,6 +247,18 @@ const NEAR_BOTTOM_PX = 80;
 				font-size: 0.75rem;
 				opacity: 0.7;
 			}
+			.members {
+				padding: 0;
+				border: 0;
+				background: transparent;
+				color: inherit;
+				cursor: pointer;
+			}
+			.members:hover,
+			.members:focus-visible {
+				text-decoration: underline;
+				opacity: 1;
+			}
 			.actions {
 				display: flex;
 				align-items: center;
@@ -291,6 +319,8 @@ export class ConversationViewComponent {
 	private readonly api = inject(ChatUiService);
 	private readonly live = inject(ChatLiveService);
 	private readonly filesStore = inject(ChatFilesStore);
+	private readonly taskStore = inject(ChatTasksService);
+	private readonly dialog = inject(NbDialogService);
 	private readonly toastr = inject(ToastrService);
 	private readonly translate = inject(TranslateService);
 	private readonly destroyRef = inject(DestroyRef);
@@ -304,6 +334,13 @@ export class ConversationViewComponent {
 	readonly isAdmin = input(false);
 	/** `DOCS_CREATE`: may attach files (stored as documents). */
 	readonly canAttach = input(false);
+	/** `ORG_TASK_ADD`: may create a task from a message. */
+	readonly canCreateTask = input(false);
+	/** The organization's sidebar categories (a channel's settings put it under one). */
+	readonly categories = input<readonly IChatCategory[]>([]);
+	/** The selected organization and its tenant, for the projects a task can be created in. */
+	readonly organizationId = input<string | null>(null);
+	readonly tenantId = input<string | null>(null);
 	readonly untitled = input('Conversation');
 	/** A message to scroll to and highlight (a deep link): the page around it is shown, nothing is marked read. */
 	readonly highlightId = input<string | null>(null);
@@ -333,6 +370,8 @@ export class ConversationViewComponent {
 	protected readonly filesOpen = signal(false);
 	/** The conversation's files read so far, for the attachments of the messages shown. */
 	protected readonly files = this.filesStore.byDocument;
+	/** The task summaries read so far, for the task cards. */
+	protected readonly tasks = this.taskStore.summaries;
 	protected readonly conversationIdText = computed(() => String(this.conversation().id));
 	/** The caller's state, kept here so a read / favourite change shows at once. */
 	protected readonly state = signal<IChatMemberState | null>(null);
@@ -340,7 +379,7 @@ export class ConversationViewComponent {
 	protected readonly title = computed(() => conversationTitle(this.conversation(), this.people().byEmployee, this.meEmployeeId(), this.untitled()));
 	protected readonly isMember = computed(() => this.state() !== null);
 	protected readonly canLeave = computed(() => this.isMember() && !this.conversation().isDefault && this.conversation().kind !== ChatConversationKindEnum.DIRECT);
-	protected readonly canManage = computed(() => this.isAdmin() || this.state()?.role === ChatMemberRoleEnum.MANAGER);
+	protected readonly canManage = computed(() => canManageConversation({ ...this.conversation(), state: this.state() }, this.meEmployeeId(), this.isAdmin()));
 	protected readonly readOnly = computed(() => !!this.conversation().archivedAt || !this.isMember());
 	protected readonly draftKey = computed(() => `conversation:${this.conversation().id}`);
 
@@ -380,7 +419,10 @@ export class ConversationViewComponent {
 		effect(() => {
 			const id = String(this.conversation().id);
 			const messages = [...this.messages(), ...this.pins()].filter((message) => String(message.conversationId) === id);
-			untracked(() => this.filesStore.ensureFor(id, messages));
+			untracked(() => {
+				this.filesStore.ensureFor(id, messages);
+				this.taskStore.ensure(messages.flatMap((message) => (message.taskReferences ?? []).map((reference) => String(reference.taskId))));
+			});
 		});
 		this.destroyRef.onDestroy(() => this.stopPolling());
 	}
@@ -872,6 +914,9 @@ export class ConversationViewComponent {
 						error: (error) => this.fail(error)
 					});
 				return;
+			case 'createTask':
+				this.openCreateTask(message);
+				return;
 			case 'follow':
 				this.api
 					.setFollowing(message.id, action.following)
@@ -886,6 +931,46 @@ export class ConversationViewComponent {
 			default:
 				return;
 		}
+	}
+
+	/** "Create task from message": the dialog, then the message shows the task's card. */
+	private openCreateTask(message: IChatMessageWithRelations): void {
+		const id = String(this.conversation().id);
+		const context: CreateTaskDialogContext = {
+			message,
+			people: this.people(),
+			conversationNames: this.conversationNames(),
+			organizationId: this.organizationId() ?? (this.conversation().organizationId ? String(this.conversation().organizationId) : null),
+			tenantId: this.tenantId()
+		};
+		this.dialog
+			.open(CreateTaskDialogComponent, { context: { context } })
+			.onClose.pipe(takeUntilDestroyed(this.destroyRef))
+			.subscribe((result: IChatCreateTaskResult | null | undefined) => {
+				if (!result?.task) return;
+				this.toastr.success('CHAT.TASKS.CREATED', { title: result.task.title });
+				if (!this.isCurrent(id)) return;
+				const current = this.messages().find((item) => item.id === message.id) ?? message;
+				this.replace(withTaskReference(current, result.reference));
+			});
+	}
+
+	/** The conversation's settings and members; a change comes back as the conversation the API answered. */
+	protected openSettings(): void {
+		const id = String(this.conversation().id);
+		const context: ChannelSettingsContext = {
+			conversation: { ...this.conversation(), state: this.state() },
+			categories: this.categories(),
+			people: this.people(),
+			meEmployeeId: this.meEmployeeId(),
+			canManage: this.canManage()
+		};
+		this.dialog
+			.open(ChannelSettingsDialogComponent, { context: { context } })
+			.onClose.pipe(takeUntilDestroyed(this.destroyRef))
+			.subscribe((conversation: IChatConversationWithState | null | undefined) => {
+				if (conversation && this.isCurrent(id)) this.conversationChanged.emit(conversation);
+			});
 	}
 
 	/** Puts the API's version of a message (or the fields of it that changed) in place of ours. */

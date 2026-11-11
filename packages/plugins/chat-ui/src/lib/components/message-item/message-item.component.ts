@@ -5,6 +5,7 @@ import { RouterLink } from '@angular/router';
 import { NbButtonModule, NbIconModule, NbTooltipModule } from '@nebular/theme';
 import { TranslatePipe } from '@ngx-translate/core';
 import { ChatMessageKindEnum, IChatFile, IChatMessageWithRelations } from '@gauzy/contracts';
+import { ChatTaskSummary } from '../../chat-tasks';
 import { CHAT_QUICK_REACTIONS, CHAT_TASK_LINK } from '../../chat-ui.constants';
 import { renderBodyHtml } from '../../chat-ui.helpers';
 import { ChatPeople } from '../../services/chat-people.service';
@@ -20,11 +21,13 @@ export type MessageAction =
 	| { kind: 'pin'; pinned: boolean }
 	| { kind: 'react'; emoji: string; on: boolean }
 	| { kind: 'unread' }
-	| { kind: 'follow'; following: boolean };
+	| { kind: 'follow'; following: boolean }
+	| { kind: 'createTask' };
 
 /**
  * One message: the author header (unless it continues the previous author's group), the body with mention
- * chips, its web links as cards, its files (pictures inline), the task cards, the reactions, the thread summary, and a toolbar shown on hover and on keyboard focus
+ * chips, its web links as cards, its files (pictures inline), the task cards (key, title and status where the reader
+ * may see the task), the reactions, the thread summary, and a toolbar shown on hover and on keyboard focus
  * (reply, react, pin, edit, delete, mark unread).
  */
 @Component({
@@ -73,8 +76,18 @@ export type MessageAction =
 				@for (reference of message().taskReferences ?? []; track reference.taskId) {
 					<a class="task-card" [routerLink]="taskLink(reference.taskId)" data-test="task-card">
 						<nb-icon icon="checkmark-square-2-outline"></nb-icon>
-						<span>{{ 'CHAT.MESSAGE.TASK' | translate }}</span>
-						<span class="task-id">{{ reference.taskId }}</span>
+						@if (tasks().get(reference.taskId); as task) {
+							@if (task.key) {
+								<span class="task-id">{{ task.key }}</span>
+							}
+							<span class="task-title">{{ task.title }}</span>
+							@if (task.status) {
+								<span class="task-status">{{ task.status }}</span>
+							}
+						} @else {
+							<span>{{ 'CHAT.MESSAGE.TASK' | translate }}</span>
+							<span class="task-id">{{ reference.taskId }}</span>
+						}
 					</a>
 				}
 
@@ -113,6 +126,11 @@ export type MessageAction =
 					<button type="button" class="tool" [nbTooltip]="'CHAT.MESSAGE.REACT' | translate" [attr.aria-label]="'CHAT.MESSAGE.REACT' | translate" (click)="picking.set(!picking())" data-test="react">
 						<nb-icon icon="smiling-face-outline"></nb-icon>
 					</button>
+					@if (canCreateTask()) {
+						<button type="button" class="tool" [nbTooltip]="'CHAT.TASKS.CREATE_TITLE' | translate" [attr.aria-label]="'CHAT.TASKS.CREATE_TITLE' | translate" (click)="act({ kind: 'createTask' })" data-test="create-task">
+							<nb-icon icon="checkmark-square-outline"></nb-icon>
+						</button>
+					}
 					@if (canReply()) {
 						<button type="button" class="tool" [nbTooltip]="'CHAT.MESSAGE.REPLY' | translate" [attr.aria-label]="'CHAT.MESSAGE.REPLY' | translate" (click)="act({ kind: 'reply' })" data-test="reply">
 							<nb-icon icon="corner-up-left-outline"></nb-icon>
@@ -267,6 +285,18 @@ export type MessageAction =
 				font-size: 0.6875rem;
 				opacity: 0.7;
 			}
+			.task-title {
+				max-width: 24rem;
+				overflow: hidden;
+				text-overflow: ellipsis;
+				white-space: nowrap;
+			}
+			.task-status {
+				padding: 0 0.375rem;
+				border-radius: 999px;
+				background: rgba(127, 127, 127, 0.15);
+				font-size: 0.6875rem;
+			}
 			.reactions {
 				display: flex;
 				flex-wrap: wrap;
@@ -361,6 +391,10 @@ export class MessageItemComponent {
 	readonly conversationNames = input<ReadonlyMap<string, string>>(new Map());
 	/** The conversation's files read so far, by document id (what the attachments show). */
 	readonly files = input<ReadonlyMap<string, IChatFile>>(new Map());
+	/** The task summaries read so far (null: a task the reader may not see), for the task cards. */
+	readonly tasks = input<ReadonlyMap<string, ChatTaskSummary | null>>(new Map());
+	/** Offers "Create task from message" (`ORG_TASK_ADD`, a member of a conversation that is not archived). */
+	readonly canCreateTask = input(false);
 	readonly meEmployeeId = input<string | null>(null);
 	readonly meUserId = input<string | null>(null);
 	readonly continued = input(false);

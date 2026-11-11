@@ -8,10 +8,13 @@ import {
 	DocumentSourceEnum,
 	DocumentVisibilityEnum,
 	IChatCategory,
+	IChatCategoryInput,
 	IChatConversationCreateInput,
 	IChatConversationList,
 	IChatConversationUpdateInput,
 	IChatConversationWithState,
+	IChatCreateTaskInput,
+	IChatCreateTaskResult,
 	IChatEvent,
 	IChatFilesQuery,
 	IChatFilesResult,
@@ -199,6 +202,21 @@ export class ChatUiService {
 		return this.http.get<IChatCategory[]>(`${CHAT}/categories`);
 	}
 
+	/** A sidebar category (`CHAT_MANAGE`). */
+	createCategory(input: IChatCategoryInput): Observable<IChatCategory> {
+		return this.http.post<IChatCategory>(`${CHAT}/categories`, input);
+	}
+
+	/** Renames or moves a category (`CHAT_MANAGE`). */
+	updateCategory(id: ID, input: Partial<IChatCategoryInput>): Observable<IChatCategory> {
+		return this.http.patch<IChatCategory>(`${CHAT}/categories/${path(id)}`, input);
+	}
+
+	/** Deletes a category; its channels stay, uncategorized (`CHAT_MANAGE`). */
+	deleteCategory(id: ID): Observable<void> {
+		return this.http.delete<void>(`${CHAT}/categories/${path(id)}`);
+	}
+
 	// ---------------------------------------------------------------- messages
 
 	messages(conversationId: ID, query: IChatMessagesQuery = {}): Observable<IChatMessagePage> {
@@ -230,6 +248,11 @@ export class ChatUiService {
 	/** Marks the conversation unread from this message on; the answer's events carry my new state. */
 	unreadFrom(messageId: ID): Observable<ChatEvents> {
 		return this.http.post<ChatEvents>(`${CHAT}/messages/${path(messageId)}/unread`, {});
+	}
+
+	/** Creates a task from a message (`ORG_TASK_ADD` too); the message keeps a reference to it. */
+	createTask(messageId: ID, input: IChatCreateTaskInput): Observable<IChatCreateTaskResult> {
+		return this.http.post<IChatCreateTaskResult>(`${CHAT}/messages/${path(messageId)}/create-task`, input);
 	}
 
 	react(messageId: ID, emoji: string, on: boolean): Observable<IChatSendResult> {

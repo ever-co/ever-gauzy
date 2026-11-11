@@ -12,6 +12,7 @@ import { CHAT_LIVE_AUDIT_MS, CHAT_THREAD_POLL_MS } from '../../chat-ui.constants
 import { apiErrorMessage, continuesGroup, mergeMessages, newNonce } from '../../chat-ui.helpers';
 import { ChatHint } from '../../services/chat-live';
 import { ChatFilesStore } from '../../services/chat-files.store';
+import { ChatTasksService } from '../../services/chat-tasks.service';
 import { ChatLiveService, isTabVisible } from '../../services/chat-live.service';
 import { ChatPeople } from '../../services/chat-people.service';
 import { ChatMessagePatch, ChatThreadPage, ChatUiService, threadFieldsOf } from '../../services/chat-ui.service';
@@ -53,6 +54,7 @@ import { MessageAction, MessageItemComponent } from '../message-item/message-ite
 						[message]="root"
 						[people]="people()"
 						[files]="files()"
+						[tasks]="tasks()"
 						[conversationNames]="conversationNames()"
 						[meEmployeeId]="meEmployeeId()"
 						[meUserId]="meUserId()"
@@ -68,6 +70,7 @@ import { MessageAction, MessageItemComponent } from '../message-item/message-ite
 							[message]="reply"
 							[people]="people()"
 							[files]="files()"
+							[tasks]="tasks()"
 							[conversationNames]="conversationNames()"
 							[meEmployeeId]="meEmployeeId()"
 							[meUserId]="meUserId()"
@@ -166,6 +169,7 @@ export class ThreadPaneComponent {
 	private readonly api = inject(ChatUiService);
 	private readonly live = inject(ChatLiveService);
 	private readonly filesStore = inject(ChatFilesStore);
+	private readonly taskStore = inject(ChatTasksService);
 	private readonly toastr = inject(ToastrService);
 	private readonly translate = inject(TranslateService);
 	private readonly destroyRef = inject(DestroyRef);
@@ -203,6 +207,8 @@ export class ThreadPaneComponent {
 	protected readonly replyCount = computed(() => this.replies().length);
 	/** The conversation's files read so far, for the attachments of the root and the replies. */
 	protected readonly files = this.filesStore.byDocument;
+	/** The task summaries read so far, for the task cards. */
+	protected readonly tasks = this.taskStore.summaries;
 	protected readonly draftKey = computed(() => `thread:${this.rootMessageId()}`);
 
 	private poll: Subscription | null = null;
@@ -231,7 +237,10 @@ export class ThreadPaneComponent {
 			const id = this.conversationId();
 			const root = this.root();
 			const messages = (root ? [root, ...this.replies()] : this.replies()).filter((message) => String(message.conversationId) === id);
-			untracked(() => this.filesStore.ensureFor(id, messages));
+			untracked(() => {
+				this.filesStore.ensureFor(id, messages);
+				this.taskStore.ensure(messages.flatMap((message) => (message.taskReferences ?? []).map((reference) => String(reference.taskId))));
+			});
 		});
 		this.destroyRef.onDestroy(() => this.stopPolling());
 	}
