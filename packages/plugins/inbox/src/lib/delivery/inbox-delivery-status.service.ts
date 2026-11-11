@@ -39,12 +39,14 @@ interface ITransportCheck {
  *   must answer; the SMTP chain verifies its connection there, a provider account does not (an API-key transport is
  *   only refused when it sends);
  * - so the delivery log is read as well: when the scope's latest email attempts (the last day) are
- *   {@link INBOX_DELIVERY_STATUS_FAILURES_IN_A_ROW} or more failed sends with none sent since, email is unavailable
+ *   {@link INBOX_DELIVERY_STATUS_FAILURES_IN_A_ROW} or more failed sends (an email, not a row: a digest is one email
+ *   recorded on each of its entries) with none sent since, email is unavailable
  *   whatever the transport answered — a revoked key or a refused sender shows here. A delivery that was skipped
  *   without an attempt (a person without an address) is not a failed send.
  *
  * The answer is cached per tenant and organization, one check runs at a time per scope, and a check that hangs counts
- * as unavailable after {@link INBOX_DELIVERY_STATUS_CHECK_TIMEOUT_MS}. Nothing about the transport (host, account,
+ * as unavailable after {@link INBOX_DELIVERY_STATUS_CHECK_TIMEOUT_MS} (the lookup and the log read together). Nothing
+ * about the transport (host, account,
  * error) is returned.
  */
 @Injectable()
@@ -94,8 +96,21 @@ export class InboxDeliveryStatusService {
 
 	/** Whether email can go out for the scope: a transport answers, and its recent sends are not all failing. */
 	private async check(tenantId: ID, organizationId: ID | null): Promise<boolean> {
-		if (!(await this.transportAnswers(tenantId, organizationId))) return false;
-		return !(await this.sendsFailing(tenantId, organizationId));
+		// The time limit covers the whole check: the transport lookup and the read of the delivery log.
+		let timer: ReturnType<typeof setTimeout> | undefined;
+		const timeout = new Promise<boolean>((resolve) => {
+			timer = setTimeout(() => resolve(false), INBOX_DELIVERY_STATUS_CHECK_TIMEOUT_MS);
+			timer.unref?.();
+		});
+		const checked = (async () => {
+			if (!(await this.transportAnswers(tenantId, organizationId))) return false;
+			return !(await this.sendsFailing(tenantId, organizationId));
+		})();
+		try {
+			return await Promise.race([checked, timeout]);
+		} finally {
+			if (timer) clearTimeout(timer);
+		}
 	}
 
 	/**
@@ -106,7 +121,7 @@ export class InboxDeliveryStatusService {
 		try {
 			const since = new Date(this.now() - INBOX_DELIVERY_STATUS_HISTORY_MS);
 			const rows = await this.dataSource.getRepository(InboxDelivery).find({
-				select: { id: true, sentAt: true, lastError: true, attempts: true, updatedAt: true },
+				select: { id: true, userId: true, sentAt: true, lastError: true, attempts: true, updatedAt: true },
 				where: {
 					tenantId,
 					organizationId: organizationId ?? IsNull(),
@@ -116,13 +131,17 @@ export class InboxDeliveryStatusService {
 				order: { updatedAt: 'DESC' },
 				take: INBOX_DELIVERY_STATUS_HISTORY_ROWS
 			});
-			let failures = 0;
+			// One email can stand for several rows (a digest records its outcome on every entry it carried, at once), so
+			// failures are counted per send: one person and one moment.
+			const failedSends = new Set<string>();
 			for (const row of rows) {
 				if (row.sentAt) break;
 				// A failed send was attempted; a skip (no address, nothing to say) or a row still due was not.
-				if (row.lastError && (row.attempts ?? 0) > 0) failures += 1;
+				if (row.lastError && (row.attempts ?? 0) > 0) {
+					failedSends.add(`${row.userId}|${row.updatedAt ? new Date(row.updatedAt).getTime() : row.id}`);
+				}
 			}
-			return failures >= INBOX_DELIVERY_STATUS_FAILURES_IN_A_ROW;
+			return failedSends.size >= INBOX_DELIVERY_STATUS_FAILURES_IN_A_ROW;
 		} catch (error) {
 			this.logger.debug(`The delivery log of tenant ${tenantId} was not read: ${(error as Error)?.message}`);
 			return false;
@@ -130,24 +149,14 @@ export class InboxDeliveryStatusService {
 	}
 
 	/** Whether a transport answers for the scope, within the time limit. */
-	private async transportAnswers(tenantId: ID, organizationId: ID | null): Promise<boolean> {
-		let timer: ReturnType<typeof setTimeout> | undefined;
-		const timeout = new Promise<boolean>((resolve) => {
-			timer = setTimeout(() => resolve(false), INBOX_DELIVERY_STATUS_CHECK_TIMEOUT_MS);
-			timer.unref?.();
-		});
-		const lookup = this.sender
+	private transportAnswers(tenantId: ID, organizationId: ID | null): Promise<boolean> {
+		return this.sender
 			.getEmailInstance({ tenantId, organizationId: organizationId ?? undefined })
 			.then((instance) => !!instance)
 			.catch((error) => {
 				this.logger.debug(`No mail transport answers for tenant ${tenantId}: ${(error as Error)?.message}`);
 				return false;
 			});
-		try {
-			return await Promise.race([lookup, timeout]);
-		} finally {
-			if (timer) clearTimeout(timer);
-		}
 	}
 
 	private remember(key: string, result: ITransportCheck): void {

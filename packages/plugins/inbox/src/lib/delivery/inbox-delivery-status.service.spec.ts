@@ -22,6 +22,8 @@ import {
 const FLAGS = ['GAUZY_INBOX_NOTIFICATION_EMAIL_ENABLED', 'GAUZY_INBOX_WEB_PUSH_ENABLED', 'GAUZY_INBOX_VAPID_PUBLIC_KEY', 'GAUZY_INBOX_VAPID_PRIVATE_KEY', 'GAUZY_INBOX_ENABLED'];
 
 interface IHistoryRow {
+	userId?: string;
+	updatedAt?: Date;
 	sentAt?: Date | null;
 	lastError?: string | null;
 	attempts?: number;
@@ -38,7 +40,15 @@ function build(answer: () => Promise<unknown>, history: IHistoryRow[] | (() => P
 	return { service, sender, clock, find };
 }
 
-const failed = (error = 'Invalid API key'): IHistoryRow => ({ sentAt: null, lastError: error, attempts: 1 });
+let attempt = 0;
+/** A failed send of its own (another moment), unless the row shares one. */
+const failed = (error = 'Invalid API key', at?: Date, userId = 'person-1'): IHistoryRow => ({
+	userId,
+	updatedAt: at ?? new Date(Date.parse('2026-11-11T11:00:00Z') - (attempt += 1) * 60_000),
+	sentAt: null,
+	lastError: error,
+	attempts: 1
+});
 const sent = (): IHistoryRow => ({ sentAt: new Date('2026-11-11T11:00:00Z'), lastError: null, attempts: 1 });
 const skipped = (): IHistoryRow => ({ sentAt: null, lastError: 'The person has no email address', attempts: 0 });
 
@@ -180,6 +190,26 @@ describe('InboxDeliveryStatusService', () => {
 		expect((await build(async () => ({}), [failed(), failed(), sent(), failed(), failed()]).service.status()).email.available).toBe(true);
 		expect((await build(async () => ({}), [failed('Recipient refused'), sent()]).service.status()).email.available).toBe(true);
 		expect((await build(async () => ({}), [skipped(), skipped(), skipped(), failed()]).service.status()).email.available).toBe(true);
+	});
+
+	it('counts a failed digest once, however many entries it carried', async () => {
+		const digestAt = new Date('2026-11-11T08:00:00Z');
+		const digest = [failed('Recipient refused', digestAt), failed('Recipient refused', digestAt), failed('Recipient refused', digestAt)];
+
+		expect((await build(async () => ({}), digest).service.status()).email.available).toBe(true);
+		// Three people refused at the same moment are three sends.
+		const three = [failed('x', digestAt, 'a'), failed('x', digestAt, 'b'), failed('x', digestAt, 'c')];
+		expect((await build(async () => ({}), three).service.status()).email.available).toBe(false);
+	});
+
+	it('counts a delivery log read that does not answer in time as unavailable, like the lookup', async () => {
+		jest.useFakeTimers();
+		const { service } = build(async () => ({}), () => new Promise(() => undefined));
+
+		const pending = service.status();
+		await jest.advanceTimersByTimeAsync(INBOX_DELIVERY_STATUS_CHECK_TIMEOUT_MS + 1);
+
+		expect((await pending).email).toEqual({ enabled: true, available: false });
 	});
 
 	it('lets the transport answer stand when the delivery log cannot be read', async () => {
