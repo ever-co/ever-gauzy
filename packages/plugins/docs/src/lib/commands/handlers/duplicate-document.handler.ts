@@ -1,5 +1,7 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { IDocument } from '@gauzy/contracts';
+import { RequestContext } from '@gauzy/core';
+import { DocumentLiveBridge } from '../../services/document-live.bridge';
 import { DocumentService } from '../../services/document.service';
 import { DocumentTreeService } from '../../services/document-tree.service';
 import { DuplicateDocumentCommand } from '../duplicate-document.command';
@@ -8,7 +10,8 @@ import { DuplicateDocumentCommand } from '../duplicate-document.command';
 export class DuplicateDocumentHandler implements ICommandHandler<DuplicateDocumentCommand> {
 	constructor(
 		private readonly documentService: DocumentService,
-		private readonly documentTreeService: DocumentTreeService
+		private readonly documentTreeService: DocumentTreeService,
+		private readonly liveBridge: DocumentLiveBridge
 	) {}
 
 	/**
@@ -23,6 +26,8 @@ export class DuplicateDocumentHandler implements ICommandHandler<DuplicateDocume
 	 * @returns The new root node of the copy.
 	 */
 	public async execute(command: DuplicateDocumentCommand): Promise<IDocument> {
+		// A page being edited live is copied as its editors see it, not as its last persist left it.
+		await this.liveBridge.flush(command.id, RequestContext.currentTenantId());
 		const document = await this.documentService.findOneScoped(command.id);
 
 		if (command.input?.parentId) {

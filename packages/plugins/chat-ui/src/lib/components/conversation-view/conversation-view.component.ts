@@ -591,6 +591,9 @@ export class ConversationViewComponent {
 	 */
 	private catchUp(id: string): void {
 		if (!this.isCurrent(id) || this.hasAfter() || this.loading()) return;
+		// What is loaded when the read starts: a message shown while it runs (a live event, my own send) is newer than
+		// the page may know, and stays whatever the page says.
+		const before = new Set(this.messages().map((message) => String(message.id)));
 		this.api
 			.messages(id, {})
 			.pipe(takeUntilDestroyed(this.destroyRef))
@@ -598,8 +601,12 @@ export class ConversationViewComponent {
 				next: (page) => {
 					if (!this.isCurrent(id) || this.hasAfter()) return;
 					const wasNearBottom = this.isNearBottom();
-					const result = reconcileWithNewest(this.messages(), page);
-					this.messages.set(result.messages);
+					const arrived = this.messages().filter((message) => !before.has(String(message.id)));
+					const result = reconcileWithNewest(
+						this.messages().filter((message) => before.has(String(message.id))),
+						page
+					);
+					this.messages.set(mergeMessages(result.messages, arrived));
 					if (result.replaced) this.hasBefore.set(page.hasBefore);
 					if (!result.added.length) return;
 					if (wasNearBottom) {

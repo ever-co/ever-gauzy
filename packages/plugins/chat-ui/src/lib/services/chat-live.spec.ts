@@ -1,5 +1,5 @@
 import { BehaviorSubject, Observable, of, Subject, Subscription, throwError } from 'rxjs';
-import { IRealtimeEventEnvelope, IRealtimeStatus } from '@gauzy/contracts';
+import { CHAT_STREAMED_EVENTS, IRealtimeEventEnvelope, IRealtimeStatus } from '@gauzy/contracts';
 import {
 	CHAT_EVENTS_SUBSCRIPTION,
 	CHAT_LIVE_SELECTION,
@@ -9,6 +9,8 @@ import {
 	ChatLiveTiming,
 	ChatSocketStatus,
 	chatHintOf,
+	coalesceReads,
+	coversChatEvents,
 	deliversPromptly,
 	pollTicks,
 	servesChatEvents
@@ -23,7 +25,7 @@ const DELIVERY = { dispatch: 'inline', shared: false, singleProcess: true, promp
 const STATUS: IRealtimeStatus = {
 	enabled: true,
 	subscriptions: true,
-	events: ['task.created', 'chat_message.created', 'chat_message.updated', 'chat_member.state_changed'],
+	events: ['task.created', ...CHAT_STREAMED_EVENTS],
 	signals: ['typing.signalled'],
 	maxTypingRecipients: 50,
 	delivery: DELIVERY
@@ -102,6 +104,12 @@ describe('servesChatEvents / deliversPromptly', () => {
 		expect(servesChatEvents(null)).toBe(false);
 	});
 
+	it('needs every chat event the page follows before the polls may slow down', () => {
+		expect(coversChatEvents(STATUS)).toBe(true);
+		expect(coversChatEvents({ ...STATUS, events: ['chat_message.created', 'chat_message.updated'] })).toBe(false);
+		expect(coversChatEvents(null)).toBe(false);
+	});
+
 	it('counts only an explicit prompt delivery (an older API answers none)', () => {
 		expect(deliversPromptly(STATUS)).toBe(true);
 		expect(deliversPromptly({ ...STATUS, delivery: { ...DELIVERY, prompt: false } })).toBe(false);
@@ -160,6 +168,17 @@ describe('ChatLiveChannel', () => {
 
 	it('keeps polling where delivery is not prompt, while the hints still arrive', () => {
 		const { channel, streams, watching } = platform(() => of({ ...STATUS, delivery: { ...DELIVERY, prompt: false } }));
+		const hints: ChatHint[] = [];
+		watching.add(channel.hints$.subscribe((hint) => hints.push(hint)));
+		jest.advanceTimersByTime(TIMING.settleMs * 10);
+		expect(channel.mode).toBe('fallback');
+		streams[0].next({ collaborationEvents: envelope('chat_message.created', { conversationId: CONVERSATION, messageId: MESSAGE }) });
+		expect(hints).toHaveLength(1);
+		watching.unsubscribe();
+	});
+
+	it('keeps polling where the platform offers part of the chat events, while those arrive as hints', () => {
+		const { channel, streams, watching } = platform(() => of({ ...STATUS, events: ['chat_message.created', 'chat_message.updated'] }));
 		const hints: ChatHint[] = [];
 		watching.add(channel.hints$.subscribe((hint) => hints.push(hint)));
 		jest.advanceTimersByTime(TIMING.settleMs * 10);
@@ -241,6 +260,55 @@ describe('ChatLiveChannel', () => {
 		expect(streams[2].observed).toBe(false);
 		expect(channel.mode).toBe('fallback');
 		watching.unsubscribe();
+	});
+});
+
+describe('coalesceReads', () => {
+	it('lets a read under way finish, and runs one more read for every trigger that came meanwhile', () => {
+		const triggers = new Subject<void>();
+		const reads: Subject<number>[] = [];
+		const answers: number[] = [];
+		const subscription = triggers
+			.pipe(
+				coalesceReads(() => {
+					const read = new Subject<number>();
+					reads.push(read);
+					return read;
+				})
+			)
+			.subscribe((answer) => answers.push(answer));
+
+		triggers.next();
+		triggers.next();
+		triggers.next();
+		expect(reads).toHaveLength(1);
+		reads[0].next(1);
+		reads[0].complete();
+		// The three triggers asked for one read after the first.
+		expect(reads).toHaveLength(2);
+		reads[1].next(2);
+		reads[1].complete();
+		expect(reads).toHaveLength(2);
+		expect(answers).toEqual([1, 2]);
+
+		// A failed read does not stop the next triggers.
+		triggers.next();
+		reads[2].error(new Error('500'));
+		triggers.next();
+		expect(reads).toHaveLength(4);
+		subscription.unsubscribe();
+		expect(reads[3].observed).toBe(false);
+	});
+
+	it('runs a read that answers at once for each trigger', () => {
+		const triggers = new Subject<void>();
+		const answers: number[] = [];
+		let count = 0;
+		const subscription = triggers.pipe(coalesceReads(() => of((count += 1)))).subscribe((answer) => answers.push(answer));
+		triggers.next();
+		triggers.next();
+		expect(answers).toEqual([1, 2]);
+		subscription.unsubscribe();
 	});
 });
 

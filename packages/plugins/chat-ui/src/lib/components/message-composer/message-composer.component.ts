@@ -29,6 +29,9 @@ export interface ComposerSubmission {
 	attachmentIds: string[];
 }
 
+/** Counts the composers of the page, for their element ids. */
+let composerCount = 0;
+
 /** The unsent text of each conversation and thread, kept while the page lives (a switch and back finds it again). */
 const DRAFTS = new Map<string, string>();
 
@@ -56,9 +59,9 @@ export function clearDraft(draftKey: string): void {
 	template: `
 		<div class="composer" data-test="composer" [class.dragging]="dragging()" (dragover)="onDragOver($event)" (dragleave)="dragging.set(false)" (drop)="onDrop($event)">
 			@if (emojiSuggestions().length > 0 && suggestions().length === 0) {
-				<ul class="suggestions" role="listbox" data-test="emoji-suggestions">
+				<ul class="suggestions" role="listbox" data-test="emoji-suggestions" [id]="listId" [attr.aria-label]="'CHAT.COMPOSER.EMOJI_SUGGESTIONS' | translate">
 					@for (emoji of emojiSuggestions(); track emoji.code; let index = $index) {
-						<li role="option" [attr.aria-selected]="index === highlighted()" [class.highlighted]="index === highlighted()" (mousedown)="$event.preventDefault(); pickEmoji(emoji)">
+						<li role="option" [id]="optionId(index)" [attr.aria-selected]="index === highlighted()" [class.highlighted]="index === highlighted()" (mousedown)="$event.preventDefault(); pickEmoji(emoji)">
 							<span class="emoji">{{ emoji.emoji }}</span>
 							<span>:{{ emoji.code }}:</span>
 						</li>
@@ -66,9 +69,9 @@ export function clearDraft(draftKey: string): void {
 				</ul>
 			}
 			@if (suggestions().length > 0) {
-				<ul class="suggestions" role="listbox" data-test="mention-suggestions">
+				<ul class="suggestions" role="listbox" data-test="mention-suggestions" [id]="listId" [attr.aria-label]="'CHAT.COMPOSER.MENTION_SUGGESTIONS' | translate">
 					@for (person of suggestions(); track person.employeeId; let index = $index) {
-						<li role="option" [attr.aria-selected]="index === highlighted()" [class.highlighted]="index === highlighted()" (mousedown)="$event.preventDefault(); pick(person)">
+						<li role="option" [id]="optionId(index)" [attr.aria-selected]="index === highlighted()" [class.highlighted]="index === highlighted()" (mousedown)="$event.preventDefault(); pick(person)">
 							<ngx-chat-person-avatar [person]="person" size="small"></ngx-chat-person-avatar>
 							<span>{{ person.name }}</span>
 						</li>
@@ -105,6 +108,11 @@ export function clearDraft(draftKey: string): void {
 				[placeholder]="placeholder()"
 				[disabled]="disabled()"
 				[attr.aria-label]="placeholder()"
+				role="combobox"
+				aria-autocomplete="list"
+				[attr.aria-expanded]="listOpen()"
+				[attr.aria-controls]="listOpen() ? listId : null"
+				[attr.aria-activedescendant]="listOpen() ? optionId(highlighted()) : null"
 				[attr.maxlength]="max"
 				[(ngModel)]="text"
 				(ngModelChange)="onInput()"
@@ -214,9 +222,9 @@ export function clearDraft(draftKey: string): void {
 				font-size: 1.125rem;
 			}
 			.composer.dragging {
-				outline: 2px dashed var(--color-primary-default, #3366ff);
+				outline: 2px dashed var(--color-primary-default);
 				outline-offset: 2px;
-				border-radius: 0.375rem;
+				border-radius: var(--border-radius);
 			}
 			.attachments {
 				display: flex;
@@ -232,12 +240,13 @@ export function clearDraft(draftKey: string): void {
 				gap: 0.375rem;
 				max-width: 100%;
 				padding: 0.125rem 0.25rem 0.125rem 0.5rem;
-				border: 1px solid rgba(127, 127, 127, 0.3);
-				border-radius: 0.375rem;
+				border: 1px solid var(--border-basic-color-3);
+				border-radius: var(--border-radius);
+				background: var(--background-basic-color-1);
 				font-size: 0.75rem;
 			}
 			.attachment.failed {
-				border-color: var(--color-danger-default, #e4493f);
+				border-color: var(--color-danger-default);
 			}
 			.attachment-name {
 				max-width: 12rem;
@@ -246,7 +255,7 @@ export function clearDraft(draftKey: string): void {
 				white-space: nowrap;
 			}
 			.attachment-meta {
-				opacity: 0.7;
+				color: var(--text-hint-color);
 			}
 			.attachment-remove {
 				display: inline-flex;
@@ -256,14 +265,14 @@ export function clearDraft(draftKey: string): void {
 				height: 1.25rem;
 				padding: 0;
 				border: 0;
-				border-radius: 0.25rem;
+				border-radius: var(--border-radius);
 				background: transparent;
 				color: inherit;
 				cursor: pointer;
 			}
 			.attachment-remove:hover,
 			.attachment-remove:focus-visible {
-				background: rgba(127, 127, 127, 0.15);
+				background: var(--background-basic-color-3);
 			}
 		`
 	]
@@ -325,6 +334,10 @@ export class MessageComposerComponent {
 		const query = this.emojiQuery();
 		return query ? suggestEmoji(query.query, CHAT_MENTION_SUGGESTIONS) : ([] as ChatEmoji[]);
 	});
+	/** Whether a suggestion list is shown (the box is then a combobox that owns it). */
+	protected readonly listOpen = computed(() => this.suggestions().length > 0 || this.emojiSuggestions().length > 0);
+	/** Ids that tie the box to its suggestion list and the highlighted option, unique per composer. */
+	protected readonly listId = `chat-composer-suggestions-${(composerCount += 1)}`;
 	protected readonly isTooLong = computed(() => this.length() > this.max);
 	protected readonly uploading = computed(() => this.attachments().some((item) => item.status === 'uploading'));
 	protected readonly room = computed(() => attachmentRoom(this.attachments()));
@@ -530,6 +543,10 @@ export class MessageComposerComponent {
 			element.focus();
 			element.setSelectionRange(position, position);
 		});
+	}
+
+	protected optionId(index: number): string {
+		return `${this.listId}-${index}`;
 	}
 
 	/** Closes the open suggestions until the text or the caret changes. */

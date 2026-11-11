@@ -3,7 +3,7 @@
 **Feature ID**: `docs-collaboration`
 **Plan**: `./plan.md`
 **Status**: `In review`
-**Last updated**: 2026-11-11
+**Last updated**: 2026-11-11 (T15–T17)
 
 ---
 
@@ -37,9 +37,27 @@
 
 ## Phase 3 — Live sessions (lane G5, PR 3)
 
-- [ ] **T15**. Authenticated per-page session over the realtime plugin's channel; merged state persisted to `contentBinary`, `contentJson`, `contentHtml`
-- [ ] **T16**. Presence and cursors; access re-checked on share / move / trash / lock / member changes; limits; read-only degradation; `GAUZY_DOCS_LIVE_ENABLED`
-- [ ] **T17**. Server-side writes (restore, Markdown update, duplicate) applied to the live document
+- [x] **T15**. Authenticated per-page session over the realtime plugin's
+  channel; merged state persisted to `contentBinary`, `contentJson`,
+  `contentHtml`
+  (`DocsLivePlugin`, `live/`): `Subscription.documentLive` on the platform's
+  GraphQL subscription socket streams the page's Yjs state and the edits;
+  the client posts its edits and awareness to `…/live/updates` and
+  `…/live/awareness`. Seeds are alike in every process; the state is stored
+  with a lineage + revision header; saves claim `contentRevision` and merge
+  the stored state first; several API processes relay over the shared
+  pub/sub (`document-live.yjs.spec`, `document-live.service.spec`)
+- [x] **T16**. Presence and cursors; access re-checked on share / move / trash
+  / lock / member changes; limits; read-only degradation;
+  `GAUZY_DOCS_LIVE_ENABLED`
+  (awareness relayed and removed on leave; re-checks every 60 s, on a
+  `DocumentEvent` and on a share change; team membership changes reach
+  sessions on the periodic check)
+- [x] **T17**. Server-side writes (restore, Markdown update, duplicate)
+  applied to the live document
+  (`DocumentLiveBridge`: an API / Markdown save and a restore are applied
+  block by block and stored for the new revision; a duplicate saves the
+  live document first)
 - [ ] **T18**. Ever Teams and the Angular Docs UI: spaces in the tree, follow / mute, live editing after T15
 
 **Status 2026-11-07:** phase 1 in ever-gauzy `feat/docs-collaboration` (PR opened with the lane; bot threads next).

@@ -6,13 +6,14 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { NbAlertModule, NbButtonModule, NbCardModule, NbDialogService, NbIconModule, NbSpinnerModule } from '@nebular/theme';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { combineLatest, EMPTY, forkJoin, merge, Observable, of, Subscription, timer } from 'rxjs';
-import { auditTime, catchError, distinctUntilChanged, map, switchMap } from 'rxjs/operators';
+import { auditTime, catchError, distinctUntilChanged, filter, map, switchMap } from 'rxjs/operators';
 import { IChatCategory, IChatConversationWithState, IChatMemberState, IChatMessageWithRelations, IChatStates, IOrganization, IUser, PermissionsEnum } from '@gauzy/contracts';
 import { Store, ToastrService } from '@gauzy/ui-core/core';
 import { CHAT_LINK, CHAT_LIST_POLL_MS, CHAT_LIVE_LIST_AUDIT_MS } from '../../chat-ui.constants';
 import { conversationTitle, isUnread, plainBody, sortConversations } from '../../chat-ui.helpers';
 import { ChatAvailabilityService, isFinalRefusal } from '../../services/chat-availability.service';
-import { ChatLiveService } from '../../services/chat-live.service';
+import { coalesceReads } from '../../services/chat-live';
+import { ChatLiveService, isTabVisible } from '../../services/chat-live.service';
 import { ChatPeople, ChatPeopleService, EMPTY_PEOPLE } from '../../services/chat-people.service';
 import { ChatFollowedThread, ChatMessagePatch, ChatUiService } from '../../services/chat-ui.service';
 import { BrowseChannelsDialogComponent, NewChannelDialogComponent, NewDirectDialogComponent } from '../../dialogs/chat-dialogs.component';
@@ -528,15 +529,20 @@ export class ChatPageComponent implements OnInit {
 
 	/**
 	 * The lists: at once, after every write of the page, for the chat events (any of them can move a conversation,
-	 * a count or a followed thread; a burst is read once), after a reconnect, and on the poll's ticks.
+	 * a count or a followed thread; a burst is read once; none while the tab is hidden, which catches up when shown),
+	 * after a reconnect, and on the poll's ticks. A read under way is never cancelled by the next trigger: triggers that
+	 * come meanwhile ask for one more read after it.
 	 */
 	private startListPolling(): void {
 		this.listPolling?.unsubscribe();
 		const token = this.scopeToken;
-		const events$ = this.live.hints$.pipe(auditTime(CHAT_LIVE_LIST_AUDIT_MS));
+		const events$ = this.live.hints$.pipe(
+			filter(() => isTabVisible()),
+			auditTime(CHAT_LIVE_LIST_AUDIT_MS)
+		);
 		this.listPolling = merge(timer(0), this.live.ticks(CHAT_LIST_POLL_MS), this.api.changed$, events$, this.live.catchUp$)
 			.pipe(
-				switchMap(() => {
+				coalesceReads(() => {
 					const scope = ++this.listScope;
 					return forkJoin({ list: this.api.listMine(), states: this.api.states(), threads: this.api.threads().pipe(catchError(() => of([] as ChatFollowedThread[]))) }).pipe(
 						map((answer) => ({ ...answer, scope })),

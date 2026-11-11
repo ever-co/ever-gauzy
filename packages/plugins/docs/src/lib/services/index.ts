@@ -6,6 +6,7 @@ import { DocumentCollaborationService } from './document-collaboration.service';
 import { DocumentMarkdownService } from './document-markdown.service';
 import { DocumentKnowledgeService } from './document-knowledge.service';
 import { DocumentLinkService } from './document-link.service';
+import { DocumentLiveBridge } from './document-live.bridge';
 import { DocumentNotifierService } from './document-notifier.service';
 import { DocumentPathService } from './document-path.service';
 import { DocumentProcessingService } from './document-processing.service';
@@ -36,6 +37,7 @@ export * from './document-stats.service';
 export * from './document-tree.service';
 export * from './document-upload.service';
 export * from './document-version.service';
+export * from './document-live.bridge';
 export * from './file-sniffer';
 export * from './quota.calculator';
 
@@ -46,6 +48,8 @@ export * from './quota.calculator';
  * that `DocumentService` (and through it, everything else) depends on.
  */
 export const Services = [
+	// The seam the live editing sessions fill in when `GAUZY_DOCS_LIVE_ENABLED=true` (a no-op otherwise).
+	DocumentLiveBridge,
 	DocsFeatureService,
 	DocumentAccessService,
 	DocumentQuotaService,

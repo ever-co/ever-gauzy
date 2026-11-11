@@ -23,6 +23,10 @@ import { TranslateService } from '@ngx-translate/core';
 import { Editor, Extension } from '@tiptap/core';
 import { firstValueFrom } from 'rxjs';
 import { ID, IDocument, JsonData } from '@gauzy/contracts';
+import { Store } from '@gauzy/ui-core/core';
+import { DocsLiveService } from '../services/docs-live.service';
+import { DocumentsService } from '../services/documents.service';
+import type { ILiveBinding, ILiveState } from './live/document-live.binding';
 import { stripDataUrlImages } from './extensions/base64-guard.plugin';
 import { collectBlockIds, setCommentedBlocks } from './extensions/block-comments.plugin';
 import { createDocumentEditorExtensions } from './extensions/document-extensions';
@@ -53,6 +57,16 @@ export interface ITocAnchor {
 }
 
 const READ_WPM = 200;
+
+/** The colours co-editors' cursors are drawn in, picked by user id. */
+const LIVE_COLORS = ['#3366ff', '#00b887', '#ff7a45', '#9254de', '#f5222d', '#13c2c2', '#fa8c16', '#2f54eb'];
+
+/** A connection id for one editor instance: 32 letters and digits (the server takes 8–64 of `[A-Za-z0-9_-]`). */
+function newConnectionId(): string {
+	const random =
+		typeof crypto !== 'undefined' && 'randomUUID' in crypto ? crypto.randomUUID() : `${Date.now()}${Math.random()}`;
+	return random.replace(/[^A-Za-z0-9]/g, '').padEnd(16, '0').slice(0, 32);
+}
 
 /**
  * Reads `metadata.schemaVersion` off a loaded document (spec 05 §9.1).
@@ -102,6 +116,11 @@ export class DocumentEditorComponent implements OnChanges, OnDestroy {
 	 * the stamp existed (spec 05 §9.1). The page warns when it is ahead of this build.
 	 */
 	@Output() schemaVersionChanged = new EventEmitter<number | null>();
+	/**
+	 * Where the page's live session stands (`docs-collaboration` T18): `null` while the editor saves on its own (live
+	 * editing is off on the platform, or the session ended and the editor fell back to autosave).
+	 */
+	@Output() liveStateChanged = new EventEmitter<ILiveState | null>();
 
 	@ViewChild('editorHost', { static: true }) editorHostRef!: ElementRef<HTMLElement>;
 	@ViewChild('fileInput', { static: true }) fileInputRef!: ElementRef<HTMLInputElement>;
@@ -116,6 +135,21 @@ export class DocumentEditorComponent implements OnChanges, OnDestroy {
 	private readonly zone = inject(NgZone);
 	private readonly cdr = inject(ChangeDetectorRef);
 	private readonly platformId = inject(PLATFORM_ID);
+	private readonly liveSessions = inject(DocsLiveService);
+	private readonly documents = inject(DocumentsService);
+	private readonly store = inject(Store);
+
+	/** The live session this editor is bound to, when the platform serves one. */
+	private liveBinding: ILiveBinding | null = null;
+
+	/** Where the live session stands, for the status line; `null` when not live. */
+	public liveState: ILiveState | null = null;
+
+	/** The page whose live session ended: it is edited with autosave until it is opened again. */
+	private liveEndedFor: ID | null = null;
+
+	/** Bumps on every build, so a build that awaited something does not finish after a newer one started. */
+	private buildGeneration = 0;
 
 	public editor: Editor | null = null;
 	public invisiblesVisible = false;
@@ -150,7 +184,9 @@ export class DocumentEditorComponent implements OnChanges, OnDestroy {
 
 	ngOnChanges(changes: SimpleChanges): void {
 		if (changes['editable'] && this.editor) {
-			this.editor.setEditable(this.editable);
+			// A live editor writes only while its session does.
+			const liveWrites = !this.liveBinding || (this.liveState?.phase === 'live' && !this.liveState.readOnly);
+			this.editor.setEditable(this.editable && liveWrites);
 		}
 		if (changes['document'] && this.document) {
 			this.uploadService.parentDocumentId = this.document.id ?? null;
@@ -191,9 +227,21 @@ export class DocumentEditorComponent implements OnChanges, OnDestroy {
 		this.editor?.chain().focus(position).run();
 	}
 
-	/** Manual flush (Ctrl/Cmd+S, route leave). */
+	/** Manual flush (Ctrl/Cmd+S, route leave). A live page is saved by the server: nothing to flush here. */
 	flush(options: { forceSnapshot?: boolean } = {}): Promise<boolean> {
+		// A live page is saved by the server; what is left here is the edits not sent yet.
+		if (this.liveBinding) return this.liveBinding.flush();
 		return this.autosave.flush(options);
+	}
+
+	/** Whether the editor holds edits the server has not taken: unsaved autosave content, or live edits not sent yet. */
+	get hasUnsavedChanges(): boolean {
+		return this.liveBinding ? this.liveBinding.hasPending() : this.autosave.isDirty;
+	}
+
+	/** Whether the editor is bound to a live session of the page. */
+	get isLive(): boolean {
+		return !!this.liveBinding && this.liveState?.phase === 'live';
 	}
 
 	/**
@@ -201,12 +249,17 @@ export class DocumentEditorComponent implements OnChanges, OnDestroy {
 	 * self-clearing path, so nothing short of a reload would lift it otherwise.
 	 */
 	lockReleased(document?: IDocument): void {
+		// A live session hears of the lock from the server (a `mode` frame).
+		if (this.liveBinding) return;
 		this.autosave.lockReleased((document ?? this.document)?.updatedAt as never);
 	}
 
 	/** Replaces content without emitting (conflict reload / version restore). */
 	applyRemoteContent(document: IDocument): void {
 		if (!this.editor) return;
+		// A live page already shows a server-side write (a restore arrives as an edit of the shared document);
+		// setting it again here would be sent back as an edit of its own.
+		if (this.liveBinding) return;
 		const content = (document.contentJson as never) ?? document.contentHtml ?? '';
 		this.editor.commands.setContent(content, { emitUpdate: false } as never);
 		this.loadedSchemaVersion = readSchemaVersion(document);
@@ -282,15 +335,106 @@ export class DocumentEditorComponent implements OnChanges, OnDestroy {
 	}
 
 	private teardownEditor(): void {
+		this.buildGeneration += 1;
 		this.suggestionHost.close();
 		this.uploadService.destroy();
+		this.liveBinding?.destroy();
+		this.liveBinding = null;
+		if (this.liveState) {
+			this.liveState = null;
+			this.liveStateChanged.emit(null);
+		}
 		// Unconditional destroy — leaked ProseMirror views hold DOM references (spec 05 §3.8).
 		this.editor?.destroy();
 		this.editor = null;
 		this.currentDocumentId = null;
 	}
 
+	/**
+	 * Builds the editor: bound to the page's live session when the platform serves one (the binding is loaded on
+	 * demand, in its own chunk), otherwise with autosave, as before.
+	 */
 	private createEditor(): void {
+		const generation = ++this.buildGeneration;
+		const document = this.document;
+		if (!document?.id || this.liveEndedFor === document.id) {
+			this.buildEditor(null);
+			return;
+		}
+		void this.liveSessions
+			.available()
+			.then((available) => (available ? import('./live/document-live.binding') : null))
+			.catch(() => null)
+			.then((runtime) => {
+				if (generation !== this.buildGeneration) return;
+				if (String(this.document?.id ?? '') !== String(document.id)) {
+					// Another page came in while this one was loading, and no editor existed yet for `ngOnChanges` to
+					// rebuild: build for the page the input holds now.
+					this.createEditor();
+					return;
+				}
+				if (!runtime) {
+					this.buildEditor(null);
+					return;
+				}
+				const connectionId = newConnectionId();
+				const documentId = document.id as ID;
+				this.buildEditor(
+					runtime.createLiveBinding({
+						frames: () => this.liveSessions.frames(documentId, connectionId),
+						postUpdate: (update) => this.liveSessions.postUpdate(documentId, connectionId, update),
+						postAwareness: (awareness) => this.liveSessions.postAwareness(documentId, connectionId, awareness),
+						user: this.liveUser(),
+						onState: (state) => this.zone.run(() => this.onLiveState(documentId, state))
+					})
+				);
+			});
+	}
+
+	/** The name and colour this editor shows to co-editors. */
+	private liveUser(): { name: string; color: string } {
+		const user = this.store.user;
+		const name = [user?.firstName, user?.lastName].filter(Boolean).join(' ') || user?.email || '';
+		const id = String(user?.id ?? name);
+		let hash = 0;
+		for (let index = 0; index < id.length; index += 1) hash = (hash * 31 + id.charCodeAt(index)) >>> 0;
+		return { name, color: LIVE_COLORS[hash % LIVE_COLORS.length] };
+	}
+
+	/** Follows the live session: editable while it writes, and back to autosave when it ends. */
+	private onLiveState(documentId: ID, state: ILiveState): void {
+		if (!this.liveBinding || this.currentDocumentId !== documentId) return;
+		this.liveState = state;
+		this.liveStateChanged.emit(state);
+		this.editor?.setEditable(this.editable && state.phase === 'live' && !state.readOnly);
+		if (state.phase === 'ended') {
+			if (state.reason === 'lineage') {
+				// The page was rebuilt on the server: join it again with an empty document.
+				this.rebuildEditor();
+				return;
+			}
+			this.fallBackToAutosave(documentId);
+		}
+		this.cdr.markForCheck();
+	}
+
+	/** The live session ended: the page is read again and edited with autosave, as without live editing. */
+	private fallBackToAutosave(documentId: ID): void {
+		this.liveEndedFor = documentId;
+		this.documents.getById(documentId).subscribe({
+			next: (document) => {
+				if (this.currentDocumentId !== documentId) return;
+				this.document = document;
+				this.rebuildEditor();
+			},
+			error: () => {
+				if (this.currentDocumentId === documentId) this.rebuildEditor();
+			}
+		});
+	}
+
+	private buildEditor(binding: ILiveBinding | null): void {
+		this.liveBinding = binding;
 		const extensions = createDocumentEditorExtensions({
 			injector: this.injector,
 			translate: this.translate,
@@ -302,7 +446,7 @@ export class DocumentEditorComponent implements OnChanges, OnDestroy {
 			},
 			onTocUpdate: (anchors) => this.zone.run(() => this.tocChanged.emit(anchors as ITocAnchor[])),
 			onOpenCommentThread: (blockId) => this.zone.run(() => this.commentRequested.emit(blockId)),
-			collab: false
+			collab: !!binding
 		});
 
 		const keymap = Extension.create({
@@ -323,9 +467,12 @@ export class DocumentEditorComponent implements OnChanges, OnDestroy {
 		this.zone.runOutsideAngular(() => {
 			this.editor = new Editor({
 				element: this.editorHostRef.nativeElement,
-				editable: this.editable,
-				extensions: [...extensions, keymap],
-				content: (this.document?.contentJson as never) ?? this.document?.contentHtml ?? '',
+				// A live editor waits for the session's first `sync` before it takes edits.
+				editable: binding ? false : this.editable,
+				extensions: [...extensions, ...(binding?.extensions ?? []), keymap],
+				// A live editor starts EMPTY: the session's `sync` fills the shared document. Seeding it here would put
+				// the page in twice once the server's state merges in.
+				content: binding ? undefined : ((this.document?.contentJson as never) ?? this.document?.contentHtml ?? ''),
 				editorProps: {
 					transformPastedHTML: stripDataUrlImages,
 					attributes: {
@@ -338,7 +485,8 @@ export class DocumentEditorComponent implements OnChanges, OnDestroy {
 				onUpdate: ({ editor, transaction }) => {
 					if (!transaction.docChanged) return;
 					this.zone.run(() => {
-						this.autosave.markDirty();
+						// A live page is saved by the server.
+						if (!this.liveBinding) this.autosave.markDirty();
 						this.contentChanged.emit({ json: this.getJSON(), html: editor.getHTML() });
 						this.emitStats();
 					});
@@ -363,10 +511,35 @@ export class DocumentEditorComponent implements OnChanges, OnDestroy {
 		// `this.document`; this line dereferenced it bare, so the one path those guards
 		// exist for (constructed via `afterNextRender` before the input is bound) threw
 		// here instead. Skip the autosave session rather than start one with no id.
-		if (this.document) {
+		if (binding) {
+			binding.start();
+		} else if (this.document) {
 			this.autosave.init(this.document.id, this.document.updatedAt as never, () => this.buildPayload());
 		}
 		this.cdr.markForCheck();
+	}
+
+	/** The status line of a live page. */
+	get liveStatusText(): string {
+		const state = this.liveState;
+		if (!state) return '';
+		if (state.phase === 'connecting') return this.translate.instant('DOCS.EDITOR.LIVE.CONNECTING');
+		if (state.phase === 'ended') return this.translate.instant('DOCS.EDITOR.LIVE.OFF');
+		const editing = state.editors.length
+			? ` · ${this.translate.instant('DOCS.EDITOR.LIVE.EDITING', { count: state.editors.length + 1 })}`
+			: '';
+		const readOnly = state.readOnly ? ` · ${this.liveReasonText(state.reason)}` : '';
+		return `${this.translate.instant('DOCS.EDITOR.LIVE.ON')}${editing}${readOnly}`;
+	}
+
+	private liveReasonText(reason: string | null): string {
+		const keys: Record<string, string> = {
+			no_write_access: 'DOCS.EDITOR.LIVE.READ_ONLY_NO_ACCESS',
+			locked: 'DOCS.EDITOR.LIVE.READ_ONLY_LOCKED',
+			session_limit: 'DOCS.EDITOR.LIVE.READ_ONLY_FULL',
+			size_limit: 'DOCS.EDITOR.LIVE.READ_ONLY_SIZE'
+		};
+		return this.translate.instant(keys[reason ?? ''] ?? 'DOCS.EDITOR.LIVE.READ_ONLY');
 	}
 
 	private buildPayload(): IAutosavePayload | null {

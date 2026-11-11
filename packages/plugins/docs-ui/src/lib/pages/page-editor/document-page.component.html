@@ -70,6 +70,36 @@
 					></ngx-favorite-toggle>
 				}
 
+				<!-- Follow / mute (docs-collaboration): only when the platform answers the follow state -->
+				@if (document && followState) {
+					<button
+						nbButton
+						ghost
+						size="small"
+						type="button"
+						[disabled]="followBusy"
+						[attr.aria-pressed]="followState.following"
+						[attr.aria-label]="'DOCS.FOLLOW.FOLLOW' | translate"
+						[nbTooltip]="(followState.following ? 'DOCS.FOLLOW.UNFOLLOW' : 'DOCS.FOLLOW.FOLLOW') | translate"
+						(click)="toggleFollow()"
+					>
+						<nb-icon [icon]="followState.following ? 'bell' : 'bell-outline'"></nb-icon>
+					</button>
+					<button
+						nbButton
+						ghost
+						size="small"
+						type="button"
+						[disabled]="followBusy"
+						[attr.aria-pressed]="followState.muted"
+						[attr.aria-label]="'DOCS.FOLLOW.MUTE' | translate"
+						[nbTooltip]="(followState.muted ? 'DOCS.FOLLOW.UNMUTE' : 'DOCS.FOLLOW.MUTE') | translate"
+						(click)="toggleMute()"
+					>
+						<nb-icon [icon]="followState.muted ? 'bell-off' : 'bell-off-outline'"></nb-icon>
+					</button>
+				}
+
 				<!-- Lock/unlock is **own**-scoped below ADMIN (spec 08 §1.8), so the permission
         gate carries the ownership half with it. -->
 				<ng-container *ngxPermissionsOnly="PermissionsEnum.DOCS_UPDATE">

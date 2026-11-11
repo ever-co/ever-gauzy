@@ -28,7 +28,14 @@ describe('reconcileWithNewest', () => {
 		expect(result.added).toEqual([]);
 	});
 
-	it('replaces the list when the page no longer reaches the last loaded message', () => {
+	it('keeps the history when the last loaded message was deleted (the page still overlaps)', () => {
+		const result = reconcileWithNewest(loaded, { hasBefore: true, messages: [message('c', 3), message('e', 5)] });
+		expect(result.replaced).toBe(false);
+		expect(ids(result.messages)).toEqual(['a', 'b', 'c', 'e']);
+		expect(ids(result.added)).toEqual(['e']);
+	});
+
+	it('replaces the list when the page shares no message with the loaded ones', () => {
 		const page = { hasBefore: true, messages: [message('x', 10), message('y', 11)] };
 		const result = reconcileWithNewest(loaded, page);
 		expect(result.replaced).toBe(true);

@@ -44,36 +44,46 @@ export class DocumentCollaborationController {
 	@ApiOperation({ summary: 'Whether the caller follows the page, and whether they muted it.' })
 	@ApiResponse({ status: HttpStatus.OK, description: 'The follow state.' })
 	@Permissions(PermissionsEnum.DOCS_READ)
+	@UseValidationPipe({ whitelist: true, transform: true })
 	@Get('/documents/:id/follow')
-	public async followState(@Param('id', UUIDValidationPipe) id: ID): Promise<IDocumentFollowState> {
-		return this.collaboration.followState(id);
+	public async followState(@Param('id', UUIDValidationPipe) id: ID, @Query() query: DocumentScopeQueryDTO): Promise<IDocumentFollowState> {
+		// The page is read in the selected organization (the query scope), as `GET /documents/:id` reads it.
+		return this.collaboration.followState(id, query?.organizationId);
 	}
 
 	@ApiOperation({ summary: 'Follow the page: comments and changes on it reach the Inbox.' })
 	@Permissions(PermissionsEnum.DOCS_READ)
+	@UseValidationPipe({ whitelist: true, transform: true })
 	@Post('/documents/:id/follow')
-	public async follow(@Param('id', UUIDValidationPipe) id: ID): Promise<IDocumentFollowState> {
-		return this.collaboration.follow(id);
+	public async follow(@Param('id', UUIDValidationPipe) id: ID, @Query() query: DocumentScopeQueryDTO): Promise<IDocumentFollowState> {
+		// The page is read in the selected organization (the query scope), as `GET /documents/:id` reads it.
+		return this.collaboration.follow(id, query?.organizationId);
 	}
 
 	@ApiOperation({ summary: 'Stop following the page.' })
 	@Permissions(PermissionsEnum.DOCS_READ)
+	@UseValidationPipe({ whitelist: true, transform: true })
 	@Post('/documents/:id/unfollow')
-	public async unfollow(@Param('id', UUIDValidationPipe) id: ID): Promise<IDocumentFollowState> {
-		return this.collaboration.unfollow(id);
+	public async unfollow(@Param('id', UUIDValidationPipe) id: ID, @Query() query: DocumentScopeQueryDTO): Promise<IDocumentFollowState> {
+		// The page is read in the selected organization (the query scope), as `GET /documents/:id` reads it.
+		return this.collaboration.unfollow(id, query?.organizationId);
 	}
 
 	@ApiOperation({ summary: 'Mute the page: nothing about it reaches the Inbox until unmuted.' })
 	@Permissions(PermissionsEnum.DOCS_READ)
+	@UseValidationPipe({ whitelist: true, transform: true })
 	@Post('/documents/:id/mute')
-	public async mute(@Param('id', UUIDValidationPipe) id: ID): Promise<IDocumentFollowState> {
-		return this.collaboration.mute(id);
+	public async mute(@Param('id', UUIDValidationPipe) id: ID, @Query() query: DocumentScopeQueryDTO): Promise<IDocumentFollowState> {
+		// The page is read in the selected organization (the query scope), as `GET /documents/:id` reads it.
+		return this.collaboration.mute(id, query?.organizationId);
 	}
 
 	@ApiOperation({ summary: 'Unmute the page.' })
 	@Permissions(PermissionsEnum.DOCS_READ)
+	@UseValidationPipe({ whitelist: true, transform: true })
 	@Post('/documents/:id/unmute')
-	public async unmute(@Param('id', UUIDValidationPipe) id: ID): Promise<IDocumentFollowState> {
-		return this.collaboration.unmute(id);
+	public async unmute(@Param('id', UUIDValidationPipe) id: ID, @Query() query: DocumentScopeQueryDTO): Promise<IDocumentFollowState> {
+		// The page is read in the selected organization (the query scope), as `GET /documents/:id` reads it.
+		return this.collaboration.unmute(id, query?.organizationId);
 	}
 }

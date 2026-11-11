@@ -19,12 +19,14 @@ export interface CatchUpResult<T extends IChatMessage> {
  * The loaded messages reconciled with the newest page read again after a gap: within the page's span (from its first
  * message on, or everything when the conversation has nothing before it) the page is the truth — a message it holds
  * replaces ours (an edit, a reaction, a pin, a reply count), one it does not hold was deleted and leaves; the older
- * loaded messages stay as they are. Where the page does not reach the last loaded message, it replaces the list.
+ * loaded messages stay as they are. Only a page that shares no message with the loaded ones (more was written than a
+ * page holds) replaces the list: the last loaded message may simply have been deleted.
  */
 export function reconcileWithNewest<T extends IChatMessage>(loaded: readonly T[], page: Pick<IChatMessagePage, 'hasBefore'> & { messages: readonly T[] }): CatchUpResult<T> {
-	const last = loaded[loaded.length - 1];
 	const pageById = new Map(page.messages.map((message) => [String(message.id), message]));
-	if (!last || !pageById.has(String(last.id))) {
+	const overlaps = loaded.some((message) => pageById.has(String(message.id)));
+	// Nothing in common: the page starts after the loaded range, unless nothing comes before it (then it is all).
+	if (!loaded.length || (!overlaps && page.hasBefore)) {
 		return { messages: mergeMessages([], page.messages), added: [...page.messages], replaced: true };
 	}
 	const first = page.messages[0];

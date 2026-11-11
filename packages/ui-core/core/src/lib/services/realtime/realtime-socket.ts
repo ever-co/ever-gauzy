@@ -57,6 +57,8 @@ export class RealtimeSocket {
 	private attempts = 0;
 	private reconnectTimer: unknown = null;
 	private idleTimer: unknown = null;
+	/** The `connection_init` payload of the current socket, as JSON. */
+	private connectedParams: string | null = null;
 	private readonly setTimer: (fn: () => void, ms: number) => unknown;
 	private readonly clearTimer: (handle: unknown) => void;
 
@@ -81,6 +83,8 @@ export class RealtimeSocket {
 			};
 			this.operations.add(operation);
 			this.clearIdle();
+			// A socket opened for another user or organization is not this subscription's.
+			this.refresh();
 			if (this.connection?.isReady) {
 				this.start(operation, this.connection);
 			} else {
@@ -102,6 +106,35 @@ export class RealtimeSocket {
 		this.stopWith(new RealtimeSocketUnavailableError('The socket was stopped.'));
 	}
 
+	/**
+	 * Replaces the socket when the credential or the scope changed since it opened (another user signed in, another
+	 * organization was selected): the server reads them once, from `connection_init`, so a socket opened for the
+	 * previous ones would keep streaming their events. Every open subscription starts again on the new socket.
+	 */
+	refresh(): void {
+		const params = this.options.connectionParams();
+		// Signed out: fail what is open now (also while a reconnect waits in its backoff, with no socket).
+		if (!params && (this.connection || this.reconnectTimer !== null || this.operations.size > 0)) {
+			this.stopWith(new RealtimeSocketUnavailableError('Not signed in.'));
+			return;
+		}
+		if (!this.connection || !params) {
+			return;
+		}
+		if (JSON.stringify(params) === this.connectedParams) {
+			return;
+		}
+		const previous = this.connection;
+		this.connection = null;
+		for (const operation of this.operations) {
+			operation.connection = null;
+			operation.stop = undefined;
+		}
+		// Its close is ignored (it is no longer the socket), and so are the completions it reports.
+		previous.close(1000, 'credentials changed');
+		this.connect();
+	}
+
 	private connect(): void {
 		if (this.connection || this.reconnectTimer !== null) {
 			return;
@@ -117,9 +150,11 @@ export class RealtimeSocket {
 			return;
 		}
 		this.status$.next(this.attempts > 0 ? 'reconnecting' : 'connecting');
+		// What this socket presents, once: `refresh` compares the current credential and scope with it.
+		this.connectedParams = JSON.stringify(params);
 		const connection: GraphqlWsConnection = new GraphqlWsConnection({
 			url,
-			connectionParams: () => this.options.connectionParams() ?? {},
+			connectionParams: () => params,
 			createSocket: this.options.createSocket,
 			pingIntervalMs: this.options.pingIntervalMs,
 			ackTimeoutMs: this.options.ackTimeoutMs,

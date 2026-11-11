@@ -50,7 +50,16 @@ the same API.
 
 Phase 2 adds `services/document-markdown.ts` (+spec: TipTap JSON ↔ Markdown for the stored subset, block diff) and
 the routes `GET /documents/:id/export/markdown[?subtree=true]` and `PUT /documents/:id/content/markdown`. Phase 3
-adds the live-session module (`GAUZY_DOCS_LIVE_ENABLED`, limits, access re-checks, persistence).
+adds the live-session module (`GAUZY_DOCS_LIVE_ENABLED`, limits, access
+re-checks, persistence): `live/` holds `DocsLivePlugin` and its module,
+`document-live.service.ts` (sessions, persistence, relay between processes),
+`document-live.yjs.ts` (TipTap JSON in and out of the shared document as
+y-prosemirror does, the seed every process builds alike, the block-by-block
+replacement of a server-side write, the stored state's lineage and revision
+header), `Subscription.documentLive` and the `…/live/updates` and
+`…/live/awareness` routes; `services/document-live.bridge.ts` is the seam the
+content save, the restore, the duplicate and the share changes call (a no-op
+with the flag off).
 
 ## 4. Rules
 
