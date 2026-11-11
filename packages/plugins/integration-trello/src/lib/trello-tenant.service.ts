@@ -258,7 +258,16 @@ export class TrelloTenantService {
 			this.logger.warn(`The attention of connection ${tenant.id} could not be filed in the Inbox: ${(error as Error).message}`);
 			return;
 		}
-		if (unread) return;
+		if (unread) {
+			// An earlier refusal's timestamp (a resolution whose filing failed) must not mark this partial filing as
+			// complete: it is cleared, so the sweep files the notice again with the managers.
+			if (settings[TrelloSettingName.ATTENTION_NOTICE_AT]) {
+				await this.writeSetting(current, TrelloSettingName.ATTENTION_NOTICE_AT, '').catch((error: unknown) => {
+					this.logger.warn(`The filing timestamp of connection ${tenant.id} could not be cleared: ${(error as Error)?.message ?? error}`);
+				});
+			}
+			return;
+		}
 		try {
 			await this.writeSetting(tenant, TrelloSettingName.ATTENTION_NOTICE_AT, reason ? new Date().toISOString() : '');
 		} catch (error) {

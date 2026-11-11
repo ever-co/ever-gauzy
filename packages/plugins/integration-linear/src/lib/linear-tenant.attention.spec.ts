@@ -9,9 +9,10 @@ import { LinearSettingName } from './linear.constants';
  * A refused token is told in the Inbox to the integration's managers (FR-10): the person who connected and every
  * member of the organization whose role may add or edit integrations, each once.
  */
-function harness(options: { connectedBy?: string | null; managers?: string[] | Error } = {}) {
+function harness(options: { connectedBy?: string | null; managers?: string[] | Error; noticedAt?: string } = {}) {
 	const settings: Array<{ id: string; settingsName: string; settingsValue: string }> = [{ id: 'set-token', settingsName: LinearSettingName.ACCESS_TOKEN, settingsValue: 'token-1' }];
 	if (options.connectedBy !== null) settings.push({ id: 'set-user', settingsName: LinearSettingName.CONNECTED_BY_USER_ID, settingsValue: options.connectedBy ?? 'user-connector' });
+	if (options.noticedAt) settings.push({ id: 'set-notice', settingsName: LinearSettingName.ATTENTION_NOTICE_AT, settingsValue: options.noticedAt });
 	const row = { id: 'int-1', tenantId: 'tenant-1', organizationId: 'org-1', settings };
 	const findManagerUserIds = jest.fn(async (_scope: { tenantId: string; organizationId: string }): Promise<string[]> => {
 		if (options.managers instanceof Error) throw options.managers;
@@ -69,6 +70,13 @@ describe('LinearTenantService — the refused-token notice', () => {
 		expect(refiled.recipients.map((recipient) => recipient.userId)).toEqual(['user-connector', 'user-manager']);
 		expect(refiled.replaceRecipients).toBe(true);
 		expect(harnessed.row.settings.some((setting) => setting.settingsName === LinearSettingName.ATTENTION_NOTICE_AT)).toBe(true);
+	});
+
+	it('clears the filing timestamp of an earlier refusal when a new open notice could only be filed partially', async () => {
+		// A resolution whose filing failed left the timestamp of the refusal before.
+		const { service, row } = harness({ managers: new Error('store down'), noticedAt: '2026-11-01T00:00:00.000Z' });
+		await service.setAttention(row as never, 'token_refused', 'token-1');
+		expect(row.settings.find((setting) => setting.settingsName === LinearSettingName.ATTENTION_NOTICE_AT)?.settingsValue).toBe('');
 	});
 
 	it('files for the first managers without removing anyone when the lookup is full (the cap), and records it', async () => {
