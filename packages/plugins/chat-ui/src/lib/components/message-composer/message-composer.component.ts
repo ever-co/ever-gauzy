@@ -7,7 +7,6 @@ import { Subscription } from 'rxjs';
 import { CHAT_MESSAGE_MAX_ATTACHMENTS, CHAT_MESSAGE_MAX_LENGTH } from '@gauzy/contracts';
 import {
 	attachmentRoom,
-	bodyWithAttachments,
 	fileSizeLabel,
 	filesOfTransfer,
 	PendingAttachment,
@@ -31,6 +30,9 @@ export interface ComposerSubmission {
 
 /** Counts the composers of the page, for their element ids. */
 let composerCount = 0;
+
+/** How often a composer asks to tell the members that the person is typing (a little over the platform's own interval). */
+export const CHAT_COMPOSER_TYPING_EVERY_MS = 3000;
 
 /** The unsent text of each conversation and thread, kept while the page lives (a switch and back finds it again). */
 const DRAFTS = new Map<string, string>();
@@ -298,6 +300,11 @@ export class MessageComposerComponent {
 	readonly canAttach = input(false);
 
 	readonly submitted = output<ComposerSubmission>();
+	/**
+	 * The person is typing (text changed by them, the box not empty): at most once per
+	 * {@link CHAT_COMPOSER_TYPING_EVERY_MS}, so the place tells the other members while it lasts. Never in edit mode.
+	 */
+	readonly typing = output<void>();
 	/** The person left edit mode without saving. */
 	readonly editCancelled = output<void>();
 
@@ -324,6 +331,10 @@ export class MessageComposerComponent {
 	protected readonly dragging = signal(false);
 	private readonly uploads = new Map<number, Subscription>();
 	private nextKey = 0;
+	/** The documents of the last send: a message carries them (or will), so they are never discarded as drafts. */
+	private submittedDocumentIds = new Set<string>();
+	/** When the last typing signal was asked for. */
+	private lastTyping = 0;
 	/**
 	 * Where Escape closed the suggestions: they stay closed while the text and the caret are as they were then (the
 	 * Escape's own keyup, a click on the same spot), and open again once either changes.
@@ -360,13 +371,13 @@ export class MessageComposerComponent {
 			const initial = this.initialBody();
 			const key = this.draftKey();
 			untracked(() => {
-				// The files picked belong to the place they were picked in.
-				if (key !== this.filledKey) this.dropAttachments();
+				// The files picked belong to the place they were picked in: left there unsent, they are discarded.
+				if (key !== this.filledKey) this.dropAttachments(true);
 				this.filledKey = key;
 				this.fill(initial, key);
 			});
 		});
-		this.destroyRef.onDestroy(() => this.dropAttachments());
+		this.destroyRef.onDestroy(() => this.dropAttachments(true));
 		// Names that arrive after the box was filled replace the `…` labels, as long as nothing was typed since.
 		effect(() => {
 			this.people();
@@ -420,7 +431,9 @@ export class MessageComposerComponent {
 		this.length.set(0);
 		this.query.set(null);
 		this.emojiQuery.set(null);
-		this.dropAttachments();
+		// The files went with the message that was sent: nothing to discard.
+		this.dropAttachments(false);
+		this.submittedDocumentIds = new Set();
 	}
 
 	/** The body as the API would receive it, and its length (the one that counts). */
@@ -446,6 +459,15 @@ export class MessageComposerComponent {
 		this.measure();
 		this.keepDraft();
 		this.onCaretMove();
+		this.signalTyping();
+	}
+
+	/** Asks the place to tell the members that the person is typing, at most once per interval. */
+	private signalTyping(now = Date.now()): void {
+		if (this.editing() || this.disabled() || !this.text.trim()) return;
+		if (now - this.lastTyping < CHAT_COMPOSER_TYPING_EVERY_MS) return;
+		this.lastTyping = now;
+		this.typing.emit();
 	}
 
 	/** A complete `:name:` just typed becomes its emoji, the caret right after it. */
@@ -590,8 +612,12 @@ export class MessageComposerComponent {
 		const editing = this.editing();
 		const text = this.tokenized();
 		const attachmentIds = editing ? [] : readyAttachmentIds(this.attachments());
-		const body = editing ? text : bodyWithAttachments(text, this.attachments());
+		// A message of files only goes with an empty body: the platform takes it, and shows the files.
+		const body = text;
 		const mentionEmployeeIds = [...new Set([...this.picked.values()].filter((id) => body.includes(`<@${id}>`)))];
+		for (const id of attachmentIds) this.submittedDocumentIds.add(id);
+		// Sent: the next keystroke tells the members again at once.
+		this.lastTyping = 0;
 		this.submitted.emit({ body, mentionEmployeeIds, attachmentIds });
 	}
 
@@ -664,7 +690,21 @@ export class MessageComposerComponent {
 		this.skippedFiles.set(0);
 		this.uploads.get(key)?.unsubscribe();
 		this.uploads.delete(key);
+		const removed = this.attachments().find((item) => item.key === key);
 		this.attachments.update((list) => list.filter((item) => item.key !== key));
+		if (removed) this.discard([removed]);
+	}
+
+	/**
+	 * Tells the platform that stored files will not be sent (a draft upload): their documents and bytes go. A file a
+	 * send took is never discarded; one still uploading is left to the platform's sweep of unsent uploads.
+	 */
+	private discard(items: readonly PendingAttachment[]): void {
+		for (const item of items) {
+			if (item.status !== 'ready' || !item.documentId || this.submittedDocumentIds.has(item.documentId)) continue;
+			// Best effort: an older platform without the route answers 404, and the file stays as it did.
+			this.api.discardAttachment(item.documentId).subscribe({ error: () => undefined });
+		}
 	}
 
 	private patchAttachment(key: number, patch: Partial<PendingAttachment>): void {
@@ -672,10 +712,12 @@ export class MessageComposerComponent {
 		this.attachments.update((list) => list.map((item) => (item.key === key ? { ...item, ...patch } : item)));
 	}
 
-	private dropAttachments(): void {
+	/** Lets go of the files picked; `discard` when they are left unsent (another place, the composer gone). */
+	private dropAttachments(discard: boolean): void {
 		this.skippedFiles.set(0);
 		for (const upload of this.uploads.values()) upload.unsubscribe();
 		this.uploads.clear();
+		if (discard) this.discard(this.attachments());
 		if (this.attachments().length) this.attachments.set([]);
 	}
 }

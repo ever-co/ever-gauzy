@@ -26,7 +26,12 @@ describe('chat tasks', () => {
 			id: 't1',
 			key: 'GZ-142',
 			title: 'Fix login',
-			status: 'In review'
+			status: 'In review',
+			statusId: null,
+			priority: null,
+			assigneeIds: [],
+			projectId: null,
+			organizationId: null
 		});
 		expect(taskSummaryOf({ id: 't2', title: 'No prefix', number: 7, status: TaskStatusEnum.OPEN })).toMatchObject({ key: '#7', status: TaskStatusEnum.OPEN });
 		expect(taskSummaryOf({ id: 't3', title: 'Draft' })).toMatchObject({ key: null, status: null });

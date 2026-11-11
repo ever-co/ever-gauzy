@@ -67,6 +67,24 @@ export function plainBody(body: string, people: ReadonlyMap<string, ChatPerson>,
 		.trim();
 }
 
+/**
+ * What a message reads as in one line (a thread in the list, a quote): its text, or — for a message of files only —
+ * a clip and its files' names as the platform recorded them (`📎 report.pdf, chart.png`).
+ */
+export function messagePreview(
+	message: { body?: string | null; attachmentNames?: string | null },
+	people: ReadonlyMap<string, ChatPerson>,
+	conversations: ReadonlyMap<string, string>
+): string {
+	const text = plainBody(message.body ?? '', people, conversations);
+	if (text) return text;
+	const names = (message.attachmentNames ?? '')
+		.split(/\r?\n/)
+		.map((name) => name.trim())
+		.filter(Boolean);
+	return names.length ? `📎 ${names.join(', ')}` : '';
+}
+
 /** The employees a body mentions, from its tokens. */
 export function mentionedEmployeeIds(body: string): string[] {
 	const ids = new Set<string>();

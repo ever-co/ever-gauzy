@@ -12,6 +12,7 @@ import { ChatPeople } from '../../services/chat-people.service';
 import { LinkCardsComponent } from '../link-cards/link-cards.component';
 import { MessageAttachmentsComponent } from '../message-attachments/message-attachments.component';
 import { PersonAvatarComponent } from '../person-avatar/person-avatar.component';
+import { TaskCardComponent } from '../task-card/task-card.component';
 
 /** What a message's toolbar asks of the conversation. */
 export type MessageAction =
@@ -74,21 +75,13 @@ export type MessageAction =
 				}
 
 				@for (reference of message().taskReferences ?? []; track reference.taskId) {
-					<a class="task-card" [routerLink]="taskLink(reference.taskId)" data-test="task-card">
-						<nb-icon icon="checkmark-square-2-outline"></nb-icon>
-						@if (tasks().get(reference.taskId); as task) {
-							@if (task.key) {
-								<span class="task-id">{{ task.key }}</span>
-							}
-							<span class="task-title">{{ task.title }}</span>
-							@if (task.status) {
-								<span class="task-status">{{ task.status }}</span>
-							}
-						} @else {
-							<span>{{ 'CHAT.MESSAGE.TASK' | translate }}</span>
-							<span class="task-id">{{ reference.taskId }}</span>
-						}
-					</a>
+					<ngx-chat-task-card
+						[messageId]="message().id"
+						[taskId]="reference.taskId"
+						[summary]="tasks().get(reference.taskId)"
+						[people]="people()"
+						[editable]="!readOnly() && !message().deletedAt"
+					></ngx-chat-task-card>
 				}
 
 				@if (message().attachmentIds?.length && !message().deletedAt) {
@@ -267,35 +260,6 @@ export type MessageAction =
 			.edited {
 				font-size: 0.6875rem;
 				opacity: 0.6;
-			}
-			.task-card {
-				display: inline-flex;
-				align-items: center;
-				gap: 0.375rem;
-				margin: 0.25rem 0.25rem 0 0;
-				padding: 0.25rem 0.5rem;
-				border: 1px solid rgba(127, 127, 127, 0.3);
-				border-radius: 0.375rem;
-				font-size: 0.8125rem;
-				color: inherit;
-				text-decoration: none;
-			}
-			.task-id {
-				font-family: monospace;
-				font-size: 0.6875rem;
-				opacity: 0.7;
-			}
-			.task-title {
-				max-width: 24rem;
-				overflow: hidden;
-				text-overflow: ellipsis;
-				white-space: nowrap;
-			}
-			.task-status {
-				padding: 0 0.375rem;
-				border-radius: 999px;
-				background: var(--background-basic-color-3);
-				font-size: 0.6875rem;
 			}
 			.reactions {
 				display: flex;

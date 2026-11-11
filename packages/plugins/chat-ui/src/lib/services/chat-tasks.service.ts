@@ -2,10 +2,10 @@ import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { DestroyRef, inject, Injectable, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { from, Observable, of } from 'rxjs';
-import { catchError, map, mergeMap } from 'rxjs/operators';
-import { ID, IOrganizationProject, IPagination, ITask } from '@gauzy/contracts';
+import { catchError, map, mergeMap, shareReplay } from 'rxjs/operators';
+import { ID, IOrganizationProject, IPagination, ITask, ITaskStatus } from '@gauzy/contracts';
 import { API_PREFIX, toParams } from '@gauzy/ui-core/common';
-import { ChatTaskSummary, taskSummaryOf } from '../chat-tasks';
+import { ChatTaskStatusChoice, ChatTaskSummary, statusChoicesOf, taskSummaryOf } from '../chat-tasks';
 import { ChatAvailabilityService } from './chat-availability.service';
 
 /** How many task cards are read at once. */
@@ -35,6 +35,8 @@ export class ChatTasksService {
 	private readonly asked = new Set<string>();
 	private scope = 0;
 	private organizationId: string | null = null;
+	/** The status records read for a project (by organization and project), shared by its cards. */
+	private readonly statusReads = new Map<string, Observable<Array<{ id: string | null; name?: string; value?: string; order?: number }>>>();
 
 	constructor() {
 		inject(ChatAvailabilityService)
@@ -43,6 +45,7 @@ export class ChatTasksService {
 				this.scope += 1;
 				this.organizationId = scope?.organizationId ?? null;
 				this.asked.clear();
+				this.statusReads.clear();
 				this.known.set(new Map());
 			});
 	}
@@ -71,6 +74,36 @@ export class ChatTasksService {
 			});
 	}
 
+	/**
+	 * Reads these tasks' summaries again (a card changed one, or a message that shows them changed): the cards keep
+	 * what they show until the new summary arrives.
+	 */
+	refresh(taskIds: readonly string[]): void {
+		const ids = [...new Set(taskIds.map(String))].filter((id) => this.asked.has(id));
+		for (const id of ids) this.asked.delete(id);
+		if (ids.length) this.ensure(ids);
+	}
+
+	/**
+	 * The statuses a card offers for a task: the status records of its project (the organization's when it has none),
+	 * read once per project for the page's life; the task's own status when they cannot be read.
+	 */
+	statusChoices(task: ChatTaskSummary): Observable<ChatTaskStatusChoice[]> {
+		const organizationId = task.organizationId ?? this.organizationId;
+		const key = `${organizationId ?? ''}:${task.projectId ?? ''}`;
+		let read = this.statusReads.get(key);
+		if (!read) {
+			const params = toParams({ ...(organizationId ? { organizationId } : {}), ...(task.projectId ? { projectId: task.projectId } : {}) });
+			read = this.http.get<IPagination<ITaskStatus>>(`${API_PREFIX}/task-statuses`, { params }).pipe(
+				map((page) => (page?.items ?? []).map((status) => ({ id: status.id ? String(status.id) : null, name: status.name, value: status.value, order: status.order }))),
+				catchError(() => of([] as Array<{ id: string | null; name?: string; value?: string; order?: number }>)),
+				shareReplay(1)
+			);
+			this.statusReads.set(key, read);
+		}
+		return read.pipe(map((records) => statusChoicesOf(records, task.status)));
+	}
+
 	/** Puts a task the page already holds (one just created) among the summaries. */
 	remember(task: ITask): void {
 		const summary = taskSummaryOf(task);
@@ -89,7 +122,7 @@ export class ChatTasksService {
 	summary(id: ID): Observable<ChatTaskSummary | null | undefined> {
 		const where = { id: String(id), ...(this.organizationId ? { organizationId: this.organizationId } : {}) };
 		return this.http
-			.get<IPagination<ITask>>(`${API_PREFIX}/tasks`, { params: toParams({ where, relations: ['taskStatus'], take: 1 }) })
+			.get<IPagination<ITask>>(`${API_PREFIX}/tasks`, { params: toParams({ where, relations: ['taskStatus', 'members'], take: 1 }) })
 			.pipe(
 				map((page) => {
 					const task = (page?.items ?? []).find((item) => String(item?.id) === String(id));

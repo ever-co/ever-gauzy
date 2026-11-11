@@ -10,7 +10,7 @@ import { auditTime, catchError, distinctUntilChanged, filter, map, switchMap } f
 import { IChatCategory, IChatConversationWithState, IChatMemberState, IChatMessageWithRelations, IChatStates, IOrganization, IUser, PermissionsEnum } from '@gauzy/contracts';
 import { Store, ToastrService } from '@gauzy/ui-core/core';
 import { CHAT_LINK, CHAT_LIST_POLL_MS, CHAT_LIVE_LIST_AUDIT_MS } from '../../chat-ui.constants';
-import { conversationTitle, isUnread, plainBody, sortConversations } from '../../chat-ui.helpers';
+import { conversationTitle, isUnread, messagePreview, sortConversations } from '../../chat-ui.helpers';
 import { ChatAvailabilityService, isFinalRefusal } from '../../services/chat-availability.service';
 import { coalesceReads } from '../../services/chat-live';
 import { ChatLiveService, isTabVisible } from '../../services/chat-live.service';
@@ -721,7 +721,7 @@ export class ChatPageComponent implements OnInit {
 	}
 
 	protected preview(thread: ChatFollowedThread): string {
-		return plainBody(thread.body ?? '', this.people().byEmployee, this.conversationNames());
+		return messagePreview(thread, this.people().byEmployee, this.conversationNames());
 	}
 
 	protected link(conversationId: string): string {

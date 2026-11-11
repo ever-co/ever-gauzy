@@ -9,12 +9,15 @@ import {
 	DocumentVisibilityEnum,
 	IChatCategory,
 	IChatCategoryInput,
+	IChatCategoryReorderInput,
+	IChatCategoryReorderResult,
 	IChatConversationCreateInput,
 	IChatConversationList,
 	IChatConversationUpdateInput,
 	IChatConversationWithState,
 	IChatCreateTaskInput,
 	IChatCreateTaskResult,
+	IChatDraftDiscardResult,
 	IChatEvent,
 	IChatFilesQuery,
 	IChatFilesResult,
@@ -29,6 +32,10 @@ import {
 	IChatReadAllResult,
 	IChatSendResult,
 	IChatStates,
+	IChatTaskUpdateInput,
+	IChatTaskUpdateResult,
+	IChatTypingInput,
+	IChatTypingResult,
 	ID
 } from '@gauzy/contracts';
 import { API_PREFIX, toParams } from '@gauzy/ui-core/common';
@@ -212,6 +219,11 @@ export class ChatUiService {
 		return this.http.patch<IChatCategory>(`${CHAT}/categories/${path(id)}`, input);
 	}
 
+	/** Saves the order of the categories (and of the channels within them) in one call (`CHAT_MANAGE`). */
+	reorderCategories(input: IChatCategoryReorderInput): Observable<IChatCategoryReorderResult> {
+		return this.http.post<IChatCategoryReorderResult>(`${CHAT}/categories/reorder`, input);
+	}
+
 	/** Deletes a category; its channels stay, uncategorized (`CHAT_MANAGE`). */
 	deleteCategory(id: ID): Observable<void> {
 		return this.http.delete<void>(`${CHAT}/categories/${path(id)}`);
@@ -253,6 +265,24 @@ export class ChatUiService {
 	/** Creates a task from a message (`ORG_TASK_ADD` too); the message keeps a reference to it. */
 	createTask(messageId: ID, input: IChatCreateTaskInput): Observable<IChatCreateTaskResult> {
 		return this.http.post<IChatCreateTaskResult>(`${CHAT}/messages/${path(messageId)}/create-task`, input);
+	}
+
+	/**
+	 * Changes a task from its card in a message (status, priority, assignees): the platform's task update, with the
+	 * task page's permission (`ORG_TASK_EDIT`) and activity log.
+	 */
+	updateTask(messageId: ID, taskId: ID, input: IChatTaskUpdateInput): Observable<IChatTaskUpdateResult> {
+		return this.http.patch<IChatTaskUpdateResult>(`${CHAT}/messages/${path(messageId)}/tasks/${path(taskId)}`, input);
+	}
+
+	/** Tells the other members that I am typing here (or in a thread); nothing is stored. */
+	typing(conversationId: ID, input: IChatTypingInput = {}): Observable<IChatTypingResult> {
+		return this.http.post<IChatTypingResult>(`${CHAT}/conversations/${path(conversationId)}/typing`, input);
+	}
+
+	/** Discards a file I uploaded for a message and will not send (its document and stored bytes go). */
+	discardAttachment(documentId: ID): Observable<IChatDraftDiscardResult> {
+		return this.http.delete<IChatDraftDiscardResult>(`${CHAT}/attachments/${path(documentId)}`);
 	}
 
 	react(messageId: ID, emoji: string, on: boolean): Observable<IChatSendResult> {
