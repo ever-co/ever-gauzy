@@ -7,7 +7,7 @@ import { EMPTY, merge, Subject, Subscription } from 'rxjs';
 import { auditTime, catchError, filter, switchMap } from 'rxjs/operators';
 import { CHAT_EVENT_NAMES, IChatMessageWithRelations } from '@gauzy/contracts';
 import { ToastrService } from '@gauzy/ui-core/core';
-import { reconcileWithOldest } from '../../chat-catch-up';
+import { applyCatchUp, reconcileWithOldest } from '../../chat-catch-up';
 import { CHAT_LIVE_AUDIT_MS, CHAT_THREAD_POLL_MS } from '../../chat-ui.constants';
 import { apiErrorMessage, continuesGroup, mergeMessages, newNonce } from '../../chat-ui.helpers';
 import { ChatHint } from '../../services/chat-live';
@@ -225,6 +225,8 @@ export class ThreadPaneComponent {
 	private readonly newerNow = new Subject<void>();
 	/** Counts the catch-ups: only the latest one's answer is applied. */
 	private catchUpRun = 0;
+	/** A catch-up added replies: the thread is marked read after the newer replies were read too. */
+	private readAfterNewer = false;
 	/** The messages changed here since the latest catch-up began (a refresh, a deletion, my own action): its page does not overrule them. */
 	private readonly touched = new Set<string>();
 	/** Counts the visits of this pane (every root switch): a reply belongs to the visit it was made in. */
@@ -346,7 +348,10 @@ export class ThreadPaneComponent {
 					this.root.set(next);
 					this.rootChanged.emit(threadFieldsOf(next));
 				}
-				if (this.replies().length !== before) this.markRead();
+				if (this.replies().length !== before || this.readAfterNewer) {
+					this.readAfterNewer = false;
+					this.markRead();
+				}
 			});
 		poll.add(
 			hints$
@@ -379,19 +384,14 @@ export class ThreadPaneComponent {
 			.subscribe({
 				next: (page) => {
 					if (!this.isCurrent(id) || run !== this.catchUpRun) return;
-					const untouched = (message: IChatMessageWithRelations) => !this.touched.has(String(message.id));
-					if (untouched(page.root)) this.replace(page.root, false);
-					const current = this.replies();
-					const settled = current.filter((reply) => before.has(String(reply.id)) && untouched(reply));
-					const kept = current.filter((reply) => !before.has(String(reply.id)) || !untouched(reply));
-					const result = reconcileWithOldest(settled, {
-						hasAfter: page.hasAfter,
-						messages: page.messages.filter((message) => message.id !== page.root.id && untouched(message))
-					});
-					this.replies.set(mergeMessages(result.messages, kept));
+					if (!this.touched.has(String(page.root.id))) this.replace(page.root, false);
+					const replies = { hasAfter: page.hasAfter, messages: page.messages.filter((message) => message.id !== page.root.id) };
+					const result = applyCatchUp(this.replies(), before, this.touched, (loaded) => reconcileWithOldest(loaded, replies));
+					this.replies.set(result.messages);
 					// Every reply was loaded: the poll reads from the last one. Otherwise the first page says what follows.
 					if (!wasComplete && !result.beyond) this.hasAfter.set(page.hasAfter);
-					if (result.added.length) this.markRead();
+					// The thread is marked read once the newer replies are in too (the poll's answer), never before.
+					if (result.added.length) this.readAfterNewer = true;
 					this.newerNow.next();
 				},
 				error: () => undefined
@@ -475,6 +475,8 @@ export class ThreadPaneComponent {
 					this.api.notifyChanged();
 					if (!this.isCurrent(id)) return;
 					const next = { ...root, following };
+					// A running catch-up does not overrule it.
+					this.touched.add(String(root.id));
 					this.root.set(next);
 					this.rootChanged.emit(threadFieldsOf(next));
 				},
@@ -509,6 +511,9 @@ export class ThreadPaneComponent {
 						this.replies.set(mergeMessages(this.replies(), [result.message]));
 						const current = this.root() ?? root;
 						const next = { ...current, replyCount: current.replyCount + 1, lastReplyAt: result.message.createdAt, following: true };
+						// A running catch-up overrules neither the root nor the new reply.
+						this.touched.add(String(current.id));
+						this.touched.add(String(result.message.id));
 						this.root.set(next);
 						this.rootChanged.emit(threadFieldsOf(next));
 						this.lastMarkedId = String(result.message.id);

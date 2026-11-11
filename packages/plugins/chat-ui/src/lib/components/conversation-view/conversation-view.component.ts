@@ -28,7 +28,7 @@ import {
 	IChatMessageWithRelations
 } from '@gauzy/contracts';
 import { ToastrService } from '@gauzy/ui-core/core';
-import { reconcileWithNewest } from '../../chat-catch-up';
+import { applyCatchUp, reconcileWithNewest } from '../../chat-catch-up';
 import { canManageConversation } from '../../chat-categories';
 import { CHAT_LIVE_AUDIT_MS, CHAT_MESSAGES_POLL_MS } from '../../chat-ui.constants';
 import { apiErrorMessage, continuesGroup, conversationTitle, mergeMessages, newNonce } from '../../chat-ui.helpers';
@@ -609,14 +609,8 @@ export class ConversationViewComponent {
 				next: (page) => {
 					if (!this.isCurrent(id) || this.hasAfter() || run !== this.catchUpRun) return;
 					const wasNearBottom = this.isNearBottom();
-					const untouched = (message: IChatMessageWithRelations) => !this.touched.has(String(message.id));
-					const current = this.messages();
-					const kept = current.filter((message) => !before.has(String(message.id)) || !untouched(message));
-					const result = reconcileWithNewest(
-						current.filter((message) => before.has(String(message.id)) && untouched(message)),
-						{ hasBefore: page.hasBefore, messages: page.messages.filter(untouched) }
-					);
-					this.messages.set(mergeMessages(result.messages, kept));
+					const result = applyCatchUp(this.messages(), before, this.touched, (loaded) => reconcileWithNewest(loaded, page));
+					this.messages.set(result.messages);
 					if (result.replaced) this.hasBefore.set(page.hasBefore);
 					if (!result.added.length) return;
 					if (wasNearBottom) {

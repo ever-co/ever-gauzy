@@ -55,3 +55,23 @@ export function reconcileWithOldest<T extends IChatMessage>(
 	const added = page.messages.filter((message) => !loadedIds.has(String(message.id)));
 	return { messages: mergeMessages(kept, added), added, beyond: loaded.some((message) => !inSpan(message)) };
 }
+
+/**
+ * A catch-up's answer applied to the list as it is now, not as it was when the read began: the messages loaded then
+ * are reconciled against the whole page (`reconcile`, so its span stays where the API put it); messages shown since
+ * (a live event, my own send) and messages changed here since (`touched`: refreshed, deleted, my own action) keep
+ * their current state, whatever the page says of them.
+ *
+ * @returns What `reconcile` answered, with the list to show and the added messages nobody changed meanwhile.
+ */
+export function applyCatchUp<T extends IChatMessage, R extends { messages: T[]; added: T[] }>(
+	current: readonly T[],
+	before: ReadonlySet<string>,
+	touched: ReadonlySet<string>,
+	reconcile: (loaded: readonly T[]) => R
+): R {
+	const untouched = (message: T) => !touched.has(String(message.id));
+	const kept = current.filter((message) => !before.has(String(message.id)) || !untouched(message));
+	const result = reconcile(current.filter((message) => before.has(String(message.id))));
+	return { ...result, messages: mergeMessages(result.messages.filter(untouched), kept), added: result.added.filter(untouched) };
+}
