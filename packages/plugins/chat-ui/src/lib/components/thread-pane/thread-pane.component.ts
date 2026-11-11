@@ -373,6 +373,8 @@ export class ThreadPaneComponent {
 				next: (page) => {
 					if (!this.isCurrent(id) || run !== this.catchUpRun) return;
 					if (!this.touched.has(String(page.root.id))) this.replace(rootWithMyFields(page.root, this.rootFields), false);
+					// My reply went out while the read ran: neither count knows both, so the root's are read again now.
+					if (this.rootFields.replyCount !== undefined) this.refreshRootCounts(id);
 					const replies = { hasAfter: page.hasAfter, messages: page.messages.filter((message) => message.id !== page.root.id) };
 					const result = applyCatchUp(this.replies(), before, this.touched, (loaded) => reconcileWithOldest(loaded, replies));
 					this.replies.set(result.messages);
@@ -381,6 +383,21 @@ export class ThreadPaneComponent {
 					// The thread is marked read once the newer replies are in too (the poll's answer), never before.
 					if (result.added.length) this.readAfterNewer = true;
 					this.newerNow.next();
+				},
+				error: () => undefined
+			});
+	}
+
+	/** The root's reply count and last reply as the API has them now (after a reply crossed a catch-up). */
+	private refreshRootCounts(id: string): void {
+		this.api
+			.thread(id, { limit: 1 })
+			.pipe(takeUntilDestroyed(this.destroyRef))
+			.subscribe({
+				next: (page) => {
+					const root = this.root();
+					if (!this.isCurrent(id) || !root) return;
+					this.replace({ id: root.id, replyCount: page.root.replyCount, lastReplyAt: page.root.lastReplyAt }, false);
 				},
 				error: () => undefined
 			});
