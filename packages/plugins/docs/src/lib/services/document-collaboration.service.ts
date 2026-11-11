@@ -142,13 +142,16 @@ export class DocumentCollaborationService {
 	 *
 	 * The follow and the mute belong to the caller's employee in the page's organization. A choice made before that
 	 * was saved under the employee in the caller's token, so both are read (and cleared by an unfollow or an unmute):
-	 * nobody's earlier follow or mute disappears because the identity it was saved under changed.
+	 * nobody's earlier follow or mute disappears because the identity it was saved under changed. An earlier choice is
+	 * also carried over to the page organization's employee here (see {@link carryOverEarlierChoices}).
 	 */
 	async followState(id: ID, organizationId?: ID): Promise<IDocumentFollowState> {
 		this.assertEnabled();
 		const document = await this.documentService.findOneScoped(id, [], organizationId);
-		const { employeeIds } = await this.followersOf(document);
+		const followers = await this.followersOf(document);
+		const { employeeIds } = followers;
 		if (!employeeIds.length) return { following: false, muted: false };
+		await this.carryOverEarlierChoices(document, followers);
 		const following = await this.typeOrmDocumentRepository.manager.count(EntitySubscription, {
 			where: { entity: BaseEntityEnum.Document, entityId: document.id as ID, employeeId: In(employeeIds), tenantId: document.tenantId }
 		});
@@ -220,6 +223,36 @@ export class DocumentCollaborationService {
 		const tokenEmployeeId = this.documentAccessService.currentEmployeeId();
 		const employeeIds = [...new Set([employeeId, tokenEmployeeId].filter((candidate): candidate is ID => !!candidate))];
 		return { employeeId, employeeIds };
+	}
+
+	/**
+	 * Carries a follow or a mute saved under the token's employee over to the page organization's employee, the one
+	 * that organization's comment fan-out and the plugin's notices read: a page shown as followed keeps delivering its
+	 * notices, and a muted one stays quiet. Safe to repeat (creating a subscription that exists returns it); the
+	 * earlier record is left for an unfollow or an unmute to clear.
+	 */
+	private async carryOverEarlierChoices(document: Document, { employeeId, employeeIds }: { employeeId: ID | null; employeeIds: ID[] }): Promise<void> {
+		const earlier = employeeIds.filter((candidate) => candidate !== employeeId);
+		if (!employeeId || !earlier.length) return;
+		const manager = this.typeOrmDocumentRepository.manager;
+		const scope = { entity: BaseEntityEnum.Document, entityId: document.id as ID, tenantId: document.tenantId };
+		const [own, inherited] = await Promise.all([
+			manager.count(EntitySubscription, { where: { ...scope, employeeId } }),
+			manager.findOne(EntitySubscription, { select: { id: true, type: true }, where: { ...scope, employeeId: In(earlier) } })
+		]);
+		if (!own && inherited) {
+			this.eventBus.publish(
+				new CreateEntitySubscriptionEvent({
+					...scope,
+					employeeId,
+					type: inherited.type ?? EntitySubscriptionTypeEnum.MANUAL,
+					organizationId: document.organizationId
+				})
+			);
+		}
+		if (!isMutedBy(document.metadata, employeeId) && earlier.some((candidate) => isMutedBy(document.metadata, candidate))) {
+			await this.setMuted(document, employeeId, true);
+		}
 	}
 
 	// ---------------------------------------------------------------- helpers

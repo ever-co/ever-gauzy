@@ -199,12 +199,14 @@ export class DocumentNotifierService {
 		if (!document.createdByUserId) return { employeeId: null, employeeIds: [] };
 		const userId = document.createdByUserId as ID;
 		const inOrganization = await this.employeeOfUserIn(userId, document);
+		// Every employee of theirs for the mute check; only an active, unarchived one is told.
 		const employees = await this.typeOrmDocumentRepository.manager.find(Employee, {
-			select: { id: true },
+			select: { id: true, isActive: true, isArchived: true },
 			where: { userId, tenantId: document.tenantId }
 		});
 		const employeeIds = [...new Set([inOrganization, ...employees.map((employee) => employee.id as ID)].filter((id): id is ID => !!id))];
-		return { employeeId: inOrganization ?? employeeIds[0] ?? null, employeeIds };
+		const fallback = employees.find((employee) => employee.isActive && !employee.isArchived)?.id as ID | undefined;
+		return { employeeId: inOrganization ?? fallback ?? null, employeeIds };
 	}
 
 	/** A user's active, unarchived employee in the page's organization; null when they have none there. */

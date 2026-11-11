@@ -54,6 +54,10 @@ function build({ subscriptions = [], muted = [], lookupFails = false }: Setup = 
 			const ids = named(where);
 			return rows.filter((row) => ids.has(row.employeeId)).length;
 		}),
+		findOne: jest.fn(async (_entity: unknown, { where }: { where: Record<string, unknown> }) => {
+			const ids = named(where);
+			return rows.find((row) => ids.has(row.employeeId)) ?? null;
+		}),
 		delete: jest.fn(async (_entity: unknown, where: Record<string, unknown>) => {
 			const ids = named(where);
 			for (let index = rows.length - 1; index >= 0; index -= 1) {
@@ -90,16 +94,25 @@ function build({ subscriptions = [], muted = [], lookupFails = false }: Setup = 
 }
 
 describe('DocumentCollaborationService follows across the identity change', () => {
-	it('reads a follow saved under the employee in the token', async () => {
-		const { service } = build({ subscriptions: [TOKEN_EMPLOYEE] });
+	it('reads a follow saved under the employee in the token and carries it over to the page organization employee', async () => {
+		const { service, eventBus, rows } = build({ subscriptions: [TOKEN_EMPLOYEE] });
 
 		await expect(service.followState('page-1' as never)).resolves.toEqual({ following: true, muted: false });
+		expect(eventBus.publish).toHaveBeenCalledTimes(1);
+		expect(eventBus.publish.mock.calls[0][0].input.employeeId).toBe(PAGE_EMPLOYEE);
+		expect(rows.map((row) => row.employeeId)).toEqual([TOKEN_EMPLOYEE, PAGE_EMPLOYEE]);
+
+		// Read again: nothing more to carry over.
+		await service.followState('page-1' as never);
+		expect(eventBus.publish).toHaveBeenCalledTimes(1);
 	});
 
-	it('reads a mute saved under the employee in the token, and an unmute clears it', async () => {
-		const { service, mutedIds } = build({ muted: [TOKEN_EMPLOYEE] });
+	it('reads a mute saved under the employee in the token, carries it over, and an unmute clears both', async () => {
+		const { service, mutedIds, eventBus } = build({ muted: [TOKEN_EMPLOYEE] });
 
 		await expect(service.followState('page-1' as never)).resolves.toEqual({ following: false, muted: true });
+		expect(mutedIds()).toEqual([TOKEN_EMPLOYEE, PAGE_EMPLOYEE]);
+		expect(eventBus.publish).not.toHaveBeenCalled();
 		await expect(service.unmute('page-1' as never)).resolves.toEqual({ following: false, muted: false });
 		expect(mutedIds()).toEqual([]);
 	});

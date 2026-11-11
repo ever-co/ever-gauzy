@@ -29,7 +29,19 @@ function buildNotifier() {
 		find: jest.fn(async (_entity: unknown, options: { where: Record<string, unknown> }) => {
 			const { where } = options;
 			// A user's employees in the tenant.
-			if (where['userId'] === 'creator-user') return [{ id: 'creator-employee' }, { id: 'creator-employee-elsewhere' }];
+			if (where['userId'] === 'creator-user') {
+				return [
+					{ id: 'creator-employee', isActive: true, isArchived: false },
+					{ id: 'creator-employee-elsewhere', isActive: true, isArchived: false }
+				];
+			}
+			if (where['userId'] === 'creator-without-org-employee') {
+				return [
+					{ id: 'creator-old-employee', isActive: false, isArchived: false },
+					{ id: 'creator-archived-employee', isActive: true, isArchived: true },
+					{ id: 'creator-active-employee', isActive: true, isArchived: false }
+				];
+			}
 			if (where['userId']) return [];
 			const receivers = new Set(((where['receiverEmployeeId'] as { value?: unknown[] })?.value ?? []).map(String));
 			return rows.filter((row) => row['entityId'] === where['entityId'] && row['type'] === where['type'] && row['message'] === where['message'] && receivers.has(String(row['receiverEmployeeId'])));
@@ -110,6 +122,14 @@ describe('DocumentNotifierService', () => {
 
 		expect(await notifier.notifyReviewDecided(muted, DocumentReviewStatusEnum.REJECTED, null)).toBe(0);
 		expect(published).toHaveLength(0);
+	});
+
+	it('falls back to an active, unarchived employee of the creator elsewhere in the tenant', async () => {
+		const { notifier, published } = buildNotifier();
+		const elsewhere = { ...(DOCUMENT as object), createdByUserId: 'creator-without-org-employee' } as never;
+
+		expect(await notifier.notifyReviewDecided(elsewhere, DocumentReviewStatusEnum.APPROVED, null)).toBe(1);
+		expect(published[0]['receiverEmployeeId']).toBe('creator-active-employee');
 	});
 
 	it('leaves the actor out by their employee in the page organization, not only the one in their token', async () => {
