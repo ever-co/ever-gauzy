@@ -191,6 +191,20 @@ describe('deletePermission', () => {
 		expect(remove).not.toHaveBeenCalled();
 	});
 
+	it('never puts the database driver’s own text in the 400 body', async () => {
+		const { service, remove } = deleting(ROLES.admin);
+		const driverError = Object.assign(new Error('relation "role_permission" does not exist'), {
+			driverError: { code: '42P01' },
+			code: '42P01'
+		});
+		remove.mockRejectedValue(driverError);
+
+		const error = await service.deletePermission('p-employee').catch((e) => e);
+
+		expect(error).toBeInstanceOf(BadRequestException);
+		expect(error.message).not.toContain('role_permission');
+	});
+
 	it('refuses a row whose role cannot be read, even if the lookup answers nothing', async () => {
 		const { service, read, remove } = deleting(ROLES.admin);
 		read.mockResolvedValue(undefined as never);

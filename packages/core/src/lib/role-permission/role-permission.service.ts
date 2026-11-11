@@ -18,6 +18,7 @@ import { environment } from '@gauzy/config';
 import { TenantAwareCrudService } from './../core/crud';
 import { IFindOneOptions } from './../core/crud/icrud.service';
 import { RequestContext } from './../core/context';
+import { safeErrorMessage } from './../core/errors/database-error';
 import { MultiORMEnum } from '../core/utils';
 import { ImportRecordUpdateOrCreateCommand } from './../export-import/import-record';
 import { RolePermission } from './role-permission.entity';
@@ -316,8 +317,9 @@ export class RolePermissionService extends TenantAwareCrudService<RolePermission
 			return await this.delete(id);
 		} catch (error /*: WriteError*/) {
 			// The message, not the error, is the response: a plain `Error` (such as that TypeError) serialised to
-			// `{}`. Still a 400, as every refusal of this method has been.
-			throw new BadRequestException(error?.message);
+			// `{}`. A database error is described by its driver code, never by its own text (table and column
+			// names). Still a 400, as every refusal of this method has been.
+			throw new BadRequestException(safeErrorMessage(error));
 		}
 	}
 
