@@ -233,6 +233,9 @@ describe('RedisGraphqlPubSubEngine', () => {
 		engine.asyncIterableIterator(subscriptionTopic('inbox_item.created', TENANT));
 
 		expect(pubSub.openStreams).toBe(2);
+		// Not shared until Redis acknowledged the subscription: until then this process hears nobody else.
+		expect(pubSub.sharedAcrossProcesses).toBe(false);
+		await engine.start();
 		expect(pubSub.sharedAcrossProcesses).toBe(true);
 		// Control: the in-process broker reaches this process only.
 		expect(new GraphqlPubSub().sharedAcrossProcesses).toBe(false);

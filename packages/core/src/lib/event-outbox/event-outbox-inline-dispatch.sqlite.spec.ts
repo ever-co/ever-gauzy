@@ -60,6 +60,8 @@ describe('EventOutboxInlineDispatch on SQLite', () => {
 	let received: IEventEnvelope[];
 	/** Claims the drain started and finished: the sync points the cases wait on. */
 	let claims: { started: number; settled: number };
+	/** Every drain started, so a case and the teardown can wait for each to finish its writes. */
+	let drains: Array<Promise<unknown>>;
 
 	beforeEach(async () => {
 		jest.spyOn(Logger.prototype, 'log').mockImplementation(() => undefined);
@@ -111,14 +113,31 @@ describe('EventOutboxInlineDispatch on SQLite', () => {
 			}
 		});
 
-		inline = new EventOutboxInlineDispatch(signal, new EventOutboxDispatcher(service, registry));
+		const dispatcher = new EventOutboxDispatcher(service, registry);
+		const drain = dispatcher.drain.bind(dispatcher);
+		drains = [];
+		jest.spyOn(dispatcher, 'drain').mockImplementation((options) => {
+			const running = drain(options);
+			drains.push(running);
+			return running;
+		});
+
+		inline = new EventOutboxInlineDispatch(signal, dispatcher);
 		inline.onModuleInit();
 	});
 
+	/** Waits until every drain started so far has finished, including one a finishing drain started. */
+	async function drainsFinished(): Promise<void> {
+		for (let seen = -1; seen !== drains.length;) {
+			seen = drains.length;
+			await Promise.allSettled(drains);
+		}
+	}
+
 	afterEach(async () => {
 		inline.onModuleDestroy();
-		// Let a claim in progress finish before the database goes away.
-		await until(() => claims.settled === claims.started, 'the last claim to finish');
+		// Let every drain finish its writes (marking rows published included) before the database goes away.
+		await drainsFinished();
 		await dataSource.destroy();
 		jest.restoreAllMocks();
 	});
@@ -149,8 +168,11 @@ describe('EventOutboxInlineDispatch on SQLite', () => {
 		});
 
 		await until(() => received.length >= 1, 'the consumer to receive the committed event');
+		await drainsFinished();
 
 		expect(received).toHaveLength(1);
 		expect(received[0]).toMatchObject({ name: 'order.placed', aggregate: { type: 'Order', id: ORDER } });
+		// The dispatch completed: the row is published, not left leased.
+		expect(await dataSource.query(`SELECT "status" FROM "event_outbox"`)).toEqual([{ status: 'PUBLISHED' }]);
 	});
 });
