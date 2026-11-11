@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { GraphqlSubscriptionModule, RolePermissionModule } from '@gauzy/core';
+import { EventBusModule, GraphqlSubscriptionModule, RolePermissionModule } from '@gauzy/core';
 import { DocsModule } from '../docs.module';
 import { DocumentLiveController } from './document-live.controller';
 import { DocumentLiveService } from './document-live.service';
@@ -14,6 +14,8 @@ import { DocsLiveResolver } from './graphql/docs-live.resolver';
 @Module({
 	imports: [
 		DocsModule,
+		// The core RxJS bus `DocumentEvent` travels on (the sessions re-check access on it); not global.
+		EventBusModule,
 		// The pub/sub the sessions stream on and the processes relay edits over.
 		GraphqlSubscriptionModule,
 		// The tenant and permission guards of the routes and the field.

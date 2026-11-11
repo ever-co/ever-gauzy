@@ -204,7 +204,10 @@ editor keeps its single-writer autosave with the revision check. On:
   last, `closed` with the reason. The client sends its edits to `POST /plugins/docs/documents/:id/live/updates`
   `{ connectionId, update }` (`DOCS_UPDATE`) and its cursor to `…/live/awareness` `{ connectionId, awareness }`; after
   `sync` it sends what the server lacks (`Y.encodeStateAsUpdate(doc, stateVector)`), which is how an editor that was
-  offline merges. A client holding a document of another lineage drops it first: the two would not merge.
+  offline merges. A client holding a document of another lineage drops it first: the two would not merge. An edit is
+  applied to a copy of the page first and refused (400 `DOCS_LIVE_UPDATE_INVALID`, nothing applied) when a block it
+  touches is not one the page's schema accepts; an awareness update may write only the client ids its own session
+  reported (at most eight per session).
 - **The document.** The editor binds TipTap's `Collaboration` extension to the `default` fragment; the server reads
   and writes it the way y-prosemirror does (`live/document-live.yjs.ts`, with a spec that runs the editor binding on
   the server's state). A page is seeded from its stored JSON alike in every process (the seed's client id is derived
@@ -216,9 +219,13 @@ editor keeps its single-writer autosave with the revision check. On:
   stops: `contentJson`, `contentHtml` and `contentBinary`, under a claimed `contentRevision`, with the version
   snapshot, the mention and cross-link sync and the `updated` event of a content save, attributed to the editor whose
   edit came last. A persist merges the stored state first, so two processes saving one page keep each other's edits.
+  A save that fails is tried again (2 s, then longer, up to a minute), and the page stays loaded until it is saved.
+  A state over `GAUZY_DOCS_MAX_BINARY_BYTES` is not stored: the content is saved without it and the sessions turn
+  read-only (`size_limit`).
 - **Server-side writes.** An API or Markdown save and a version restore write the page as before; the plugin then
-  applies the change to the live document block by block (the blocks that did not change stay, with what editors
-  type in them) and stores the state for the new revision, so open editors see it at once. While a page has a live
+  works the change out against the state the write found (the stored state of the previous revision) and applies it
+  to the live document, so open editors see it at once and keep what they typed, saved or not, in the blocks the
+  write did not change; it stores the state for the new revision. While a page has a live
   state, a content save's `contentBinary` (the editor's seed) and a restored version's binary are not written over
   it. A duplicate saves the live document first.
 - **Access and limits.** Read-only without write access (`no_write_access`), on a locked page (`locked`), past
@@ -229,9 +236,11 @@ editor keeps its single-writer autosave with the revision check. On:
   process (20; 429 `DOCS_LIVE_USER_LIMIT`); one edit is at most `GAUZY_DOCS_LIVE_MAX_UPDATE_BYTES` (1 MB, 413).
 - **Several API processes** need the shared pub/sub (Redis, `GRAPHQL_PUBSUB_REDIS`): each process holding a page
   relays its edits to the others on the page's tenant topic, and an edit posted to a process that does not hold its
-  session is handed to the one that does. With one process (SQLite, `GAUZY_API_SINGLE_PROCESS=true`) nothing else is
-  needed. `GET /plugins/docs/live/status` answers this process's pages and sessions and whether other processes are
-  reached (`shared`).
+  session is handed to the one that does, which answers with what it did (its 403 or 400; no answer within three
+  seconds is the 404 of a session no process holds). A lock, a move or the trash in one process is told to the
+  others, which check their sessions again. With one process (SQLite, `GAUZY_API_SINGLE_PROCESS=true`) nothing else is
+  needed. `GET /plugins/docs/live/status` answers this process's pages and sessions of the caller's tenant and whether other
+  processes are reached (`shared`).
 
 Known limits: team membership changes reach open sessions on the next periodic check (a minute), and a copy taken
 while another process holds the page reads what that process last saved (at most the persist window old).

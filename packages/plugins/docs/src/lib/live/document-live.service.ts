@@ -13,6 +13,7 @@ import {
 	OnModuleInit,
 	UnauthorizedException
 } from '@nestjs/common';
+import * as decoding from 'lib0/decoding';
 import { Subscription } from 'rxjs';
 import { Awareness, applyAwarenessUpdate, encodeAwarenessUpdate, removeAwarenessStates } from 'y-protocols/awareness';
 import * as Y from 'yjs';
@@ -24,6 +25,7 @@ import { Document } from '../entities/document.entity';
 import { DocumentEvent } from '../events/document.event';
 import { claimNextContentRevision, DocumentService } from '../services/document.service';
 import { DocumentLiveBridge, IDocumentLiveHandler } from '../services/document-live.bridge';
+import { validateTiptapDocument } from '../validation';
 import {
 	DOCS_LIVE_CONNECTION_INVALID,
 	DOCS_LIVE_READ_ONLY,
@@ -39,14 +41,17 @@ import { LiveFrameStream } from './document-live.stream';
 import { IDocumentLiveAck, IDocumentLiveFrame, IDocumentLiveStatus } from './document-live.types';
 import {
 	blockKey,
+	changedBlocksJson,
 	decodeLiveState,
 	encodeLiveState,
 	ILiveJsonNode,
 	ILiveMeta,
 	lineageOf,
+	LIVE_FRAGMENT,
 	liveDocumentJson,
-	replaceLiveContent,
-	seedLiveDocument
+	liveRevisionOf,
+	seedLiveDocument,
+	serverWriteChange
 } from './document-live.yjs';
 
 /** Origin of an edit relayed from another API process: shown to this process's sessions, not relayed again. */
@@ -58,21 +63,35 @@ const SERVER = Symbol('docs-live-server');
 
 /** How many frames may wait for a session that is not reading. */
 const MAX_BUFFERED_FRAMES = 1000;
+/** How many awareness clients (editor instances) one session may report. */
+const MAX_AWARENESS_CLIENTS_PER_SESSION = 8;
 /** How long a persist waits for an outside write to finish applying itself before it applies it itself. */
 const OUTSIDE_WRITE_ATTEMPTS = 8;
 /** The edits relayed from another process are saved by that process; this one saves them later, as a backstop. */
 const REMOTE_PERSIST_DELAY_MS = 15_000;
+/** The longest a failed save waits before it is tried again. */
+const MAX_RETRY_DELAY_MS = 60_000;
+/** How long an edit handed to another process waits for that process to answer. */
+const HAND_OVER_TIMEOUT_MS = 3_000;
 /** Connection ids are chosen by the client: a tab id, a UUID. */
 const CONNECTION_ID = /^[A-Za-z0-9_-]{8,64}$/;
+/** The fields of a page whose change may change who reads or writes it. */
+const ACCESS_FIELDS = ['visibility', 'organizationTeamId', 'organizationId', 'isLocked', 'parentId', 'isArchived'];
 
 /** A message between the API processes that hold the same page. */
 interface ILiveRelay {
 	instance: string;
-	kind: 'update' | 'awareness' | 'client-update' | 'client-awareness' | 'access' | 'flush';
+	kind: 'update' | 'awareness' | 'client-update' | 'client-awareness' | 'client-ack' | 'access' | 'flush';
 	data?: string;
 	connectionId?: string;
 	userId?: string;
 	revision?: number;
+	/** Pairs a handed-over edit with its answer. */
+	requestId?: string;
+	/** The holder's answer: 200, or the status the edit would have had there. */
+	status?: number;
+	code?: string;
+	message?: string;
 }
 
 /** One live session: one connection (a tab, a device) of one user to one page. */
@@ -98,13 +117,19 @@ interface ILiveDocument {
 	readonly tenantId: string;
 	readonly organizationId: string | null;
 	readonly doc: Y.Doc;
+	/** A copy every edit reaches first, so an edit whose content the page's schema refuses never reaches `doc`. */
+	shadow: Y.Doc;
 	readonly awareness: Awareness;
+	/** Which session (or another process) reported each awareness client id: a session writes only its own. */
+	readonly awarenessOwners: Map<number, ILiveSession | typeof REMOTE>;
 	readonly lineage: string;
 	readonly sessions: Map<string, ILiveSession>;
 	/** The event name of the page's relay topic (`docs.live.<id>`, on the tenant's topic). */
 	readonly topic: string;
 	/** The revision the state was last stored under. */
 	revision: number;
+	/** The state stored for `revision`: what a server-side write is worked out against. */
+	baseState: Uint8Array;
 	relay?: AsyncIterableIterator<ILiveRelay>;
 	/** Edits of this process's sessions that are not stored yet. */
 	dirty: boolean;
@@ -112,6 +137,12 @@ interface ILiveDocument {
 	dirtyRemote: boolean;
 	firstDirtyAt: number;
 	editSequence: number;
+	/** Saves that failed in a row; the next one waits longer. */
+	failures: number;
+	/** The revision a save claimed before it failed: the next save takes the page from there. */
+	claimedRevision?: number;
+	/** The state is over the size limit: the content is saved without it, and the sessions are read-only. */
+	oversized: boolean;
 	persistTimer?: NodeJS.Timeout;
 	recheckTimer?: NodeJS.Timeout;
 	recheckSoon?: NodeJS.Timeout;
@@ -126,34 +157,42 @@ interface ILiveDocument {
 	unloaded: boolean;
 }
 
+/** What storing a state did. */
+type StoreResult = 'stored' | 'moved' | 'too-large';
+
 /**
  * The live editing sessions of Docs pages (`docs-collaboration` plan, phase 3: tasks T15–T17).
  *
  * Each page someone edits live is one Yjs document in the API process that serves the session, seeded from the
  * stored JSON or loaded from the stored state. Editors receive it over `Subscription.documentLive` (the platform's
  * GraphQL subscription channel, the same socket as the collaboration events) and send their edits and cursors to
- * `POST /plugins/docs/documents/:id/live/updates` and `…/live/awareness`.
+ * `POST /plugins/docs/documents/:id/live/updates` and `…/live/awareness`. An edit is applied to a copy first and
+ * refused (400, nothing applied) when a block it touches is not one the page's schema accepts; an awareness update
+ * may only write the client ids its own session reported.
  *
  * **Several API processes.** Each process that holds a session of a page holds its own copy of the page's
  * document. Every edit is relayed to the others over the subscription pub/sub (`docs.live.<id>` on the tenant's
  * topic; Redis when `GRAPHQL_PUBSUB_REDIS` is on), and an edit posted to a process that does not hold the session is
- * handed to the one that does. Yjs merges the copies whatever the order. A persist merges the stored state into the
- * process's copy first, so two processes that persist the same page both keep what the other saved. A seed is built
- * alike in every process (`seedLiveDocument`), so two processes that seed one page hold one lineage.
+ * handed to the one that does, which answers with what it did (no answer within three seconds is the 404 of a session
+ * no process holds). Yjs merges the copies whatever the order. A persist merges the stored state into the process's
+ * copy first, so two processes that persist the same page both keep what the other saved. A seed is built alike in
+ * every process (`seedLiveDocument`), so two processes that seed one page hold one lineage.
  *
  * **Persistence.** The edits of a page are saved two seconds after the last one, and at most ten seconds after the
  * first unsaved one, when its last session closes and when the process stops: `contentJson`, `contentHtml` and the
  * state in `contentBinary` (with its lineage and revision), under the content revision claimed in the guarded write
  * every content change takes. The save is the content save's (`DocumentService.saveLiveContent`): the version
- * snapshot, the mention and cross-link sync and the `updated` event, attributed to the editor whose edit came last.
+ * snapshot, the mention and cross-link sync and the `updated` event, attributed to the editor whose edit came last. A
+ * save that fails is tried again, sooner then less often, and the page stays loaded until its edits are saved.
  *
  * **Server-side writes.** An API or Markdown save and a version restore write the stored JSON as before; the bridge
- * then applies the change to the live document, block by block, and stores the state for the new revision, so open
- * editors see it. A duplicate saves the live document first.
+ * then works the change out against the state the write found and applies it to the live document, so open editors
+ * see it and keep what they typed in the blocks the write did not change. A duplicate saves the live document first.
  *
  * **Access.** A session is opened only on a page the caller may read; it is read-only without write access, on a
- * locked page and past the page's editor limit. Every session is checked again every minute, when the page changes
- * (a move, a lock, the trash), and when a share changes; a session that lost read access is closed with the reason.
+ * locked page, past the page's editor limit and at the size limit. Every session is checked again every minute, when
+ * the page changes (a move, a lock, the trash — in this process or, over the pub/sub, in another) and when a share
+ * changes; a session that lost read access is closed with the reason.
  */
 @Injectable()
 export class DocumentLiveService implements OnModuleInit, OnModuleDestroy, IDocumentLiveHandler {
@@ -193,7 +232,11 @@ export class DocumentLiveService implements OnModuleInit, OnModuleDestroy, IDocu
 		this.unregister?.();
 		this.events?.unsubscribe();
 		for (const live of Array.from(this.live.values())) {
-			await this.enqueue(live, () => this.persist(live)).catch(() => undefined);
+			await this.enqueue(live, () => this.persist(live)).catch((error) =>
+				this.logger.error(
+					`The live document of ${live.documentId} was not saved at shutdown: ${messageOf(error)}`
+				)
+			);
 			for (const session of Array.from(live.sessions.values())) {
 				this.close(live, session, DocumentLiveReasonEnum.SHUTDOWN);
 			}
@@ -228,7 +271,10 @@ export class DocumentLiveService implements OnModuleInit, OnModuleDestroy, IDocu
 				code: DOCS_NOT_A_PAGE
 			});
 		}
-		if (this.sessionsOf(userId, scope.tenantId) >= this.config.maxSessionsPerUser) {
+		// A reconnecting tab replaces its own session: that one does not count against the limit.
+		const replacing = this.live.get(String(document.id))?.sessions.get(connectionId);
+		const replacesOwn = replacing && replacing.userId === userId && replacing.tenantId === scope.tenantId ? 1 : 0;
+		if (this.sessionsOf(userId, scope.tenantId) - replacesOwn >= this.config.maxSessionsPerUser) {
 			throw new HttpException(
 				{
 					message: `A user holds at most ${this.config.maxSessionsPerUser} live sessions`,
@@ -285,7 +331,7 @@ export class DocumentLiveService implements OnModuleInit, OnModuleDestroy, IDocu
 	 * @param documentId The page.
 	 * @param connectionId The session's connection.
 	 * @param update The update, base64.
-	 * @returns Whether it was applied here or handed to the process that holds the session.
+	 * @returns Whether it was applied here or by the process that holds the session.
 	 */
 	async applyClientUpdate(documentId: string, connectionId: string, update: string): Promise<IDocumentLiveAck> {
 		const bytes = this.decodePayload(update, this.config.maxUpdateBytes);
@@ -314,13 +360,19 @@ export class DocumentLiveService implements OnModuleInit, OnModuleDestroy, IDocu
 		return { accepted: true, relayed: false };
 	}
 
-	/** The sessions this process serves. */
+	/** The caller's tenant's live pages and sessions in this process. */
 	status(): IDocumentLiveStatus {
+		const tenantId = String(RequestContext.currentTenantId() ?? '');
+		let documents = 0;
 		let sessions = 0;
 		for (const live of this.live.values()) {
+			if (live.tenantId !== tenantId || live.unloaded) {
+				continue;
+			}
+			documents += 1;
 			sessions += live.sessions.size;
 		}
-		return { enabled: true, shared: this.reachesOtherProcesses(), documents: this.live.size, sessions };
+		return { enabled: true, shared: this.reachesOtherProcesses(), documents, sessions };
 	}
 
 	/* --------------------------------------------------------------------------------------------------------- */
@@ -332,20 +384,29 @@ export class DocumentLiveService implements OnModuleInit, OnModuleDestroy, IDocu
 		if (!updated?.id || updated.kind !== DocumentKindEnum.PAGE) {
 			return;
 		}
-		const revision = revisionOf(updated);
+		const revision = liveRevisionOf(updated.contentRevision);
+		const previousRevision = liveRevisionOf(previous?.contentRevision);
 		const local = this.live.get(String(updated.id));
 		if (local && !local.unloaded) {
 			await this.enqueue(local, async () => {
 				if (local.revision >= revision) {
 					return;
 				}
+				// Worked out against the state the write found, so the edits made since stay where the write did not go.
+				// Without that state at hand the page is rewritten against what editors hold now.
+				const base =
+					(local.revision === previousRevision
+						? local.baseState
+						: this.storedStateOf(previous, local.lineage)) ?? Y.encodeStateAsUpdate(local.doc);
+				const { change, state } = serverWriteChange(base, updated.contentJson);
 				// The revision first: the relayed change carries it, so the other processes learn where the page is.
 				local.revision = revision;
-				replaceLiveContent(local.doc, updated.contentJson, SERVER);
+				Y.applyUpdate(local.doc, change, SERVER);
+				local.baseState = state;
 				await this.storeState(
 					local.documentId,
 					local.tenantId,
-					local.doc,
+					state,
 					{ lineage: local.lineage, revision },
 					updated.updatedAt
 				);
@@ -355,27 +416,28 @@ export class DocumentLiveService implements OnModuleInit, OnModuleDestroy, IDocu
 
 		// Not held here: the live state, if the page has one, is the stored one the write kept.
 		const stored = decodeLiveState(previous?.contentBinary as Buffer | null);
-		if (!stored || stored.meta.revision !== revisionOf(previous)) {
+		if (!stored || stored.meta.revision !== previousRevision) {
 			stored?.doc.destroy();
 			return;
 		}
-		try {
-			const before = Y.encodeStateVector(stored.doc);
-			replaceLiveContent(stored.doc, updated.contentJson, SERVER);
-			const change = Y.encodeStateAsUpdate(stored.doc, before);
-			const meta = { lineage: stored.meta.lineage, revision };
-			if (
-				await this.storeState(String(updated.id), String(updated.tenantId), stored.doc, meta, updated.updatedAt)
-			) {
-				// The processes that hold the page apply the change; the stored state already has it.
-				await this.publish(String(updated.id), String(updated.tenantId), {
-					kind: 'update',
-					data: base64(change),
-					revision
-				});
-			}
-		} finally {
-			stored.doc.destroy();
+		const lineage = stored.meta.lineage;
+		const base = Y.encodeStateAsUpdate(stored.doc);
+		stored.doc.destroy();
+		const { change, state } = serverWriteChange(base, updated.contentJson);
+		const result = await this.storeState(
+			String(updated.id),
+			String(updated.tenantId),
+			state,
+			{ lineage, revision },
+			updated.updatedAt
+		);
+		if (result === 'stored') {
+			// The processes that hold the page apply the change; the stored state already has it.
+			await this.publish(String(updated.id), String(updated.tenantId), {
+				kind: 'update',
+				data: base64(change),
+				revision
+			});
 		}
 	}
 
@@ -430,16 +492,24 @@ export class DocumentLiveService implements OnModuleInit, OnModuleDestroy, IDocu
 	private async load(document: Document): Promise<ILiveDocument> {
 		let row: Document | null = document;
 		for (let attempt = 0; attempt < 4 && row; attempt += 1) {
-			const revision = revisionOf(row);
+			const revision = liveRevisionOf(row.contentRevision);
 			const stored = decodeLiveState(row.contentBinary as Buffer | null);
 			if (stored && stored.meta.revision === revision) {
-				return this.attach(row, stored.doc, stored.meta);
+				return this.attach(row, stored.doc, stored.meta, false);
 			}
 			stored?.doc.destroy();
 			const meta = { lineage: lineageOf(String(row.id), revision), revision };
 			const seeded = seedLiveDocument(String(row.id), revision, row.contentJson);
-			if (await this.storeState(String(row.id), String(row.tenantId), seeded, meta, row.updatedAt)) {
-				return this.attach(row, seeded, meta);
+			const result = await this.storeState(
+				String(row.id),
+				String(row.tenantId),
+				Y.encodeStateAsUpdate(seeded),
+				meta,
+				row.updatedAt
+			);
+			if (result !== 'moved') {
+				// Over the size limit the seed is not stored: the page opens read-only, as it is.
+				return this.attach(row, seeded, meta, result === 'too-large');
 			}
 			// The page moved on while it was seeded: read it again.
 			seeded.destroy();
@@ -451,26 +521,32 @@ export class DocumentLiveService implements OnModuleInit, OnModuleDestroy, IDocu
 		});
 	}
 
-	private attach(row: Document, doc: Y.Doc, meta: ILiveMeta): ILiveDocument {
+	private attach(row: Document, doc: Y.Doc, meta: ILiveMeta, oversized: boolean): ILiveDocument {
 		const awareness = new Awareness(doc);
 		// The server is no editor: it has no cursor of its own.
 		awareness.setLocalState(null);
+		const state = Y.encodeStateAsUpdate(doc);
 		const live: ILiveDocument = {
 			documentId: String(row.id),
 			tenantId: String(row.tenantId),
 			organizationId: row.organizationId ? String(row.organizationId) : null,
 			doc,
+			shadow: copyOf(state),
 			awareness,
+			awarenessOwners: new Map(),
 			lineage: meta.lineage,
 			sessions: new Map(),
 			topic: liveTopic(String(row.id)),
 			revision: meta.revision,
+			baseState: state,
 			dirty: false,
 			dirtyRemote: false,
 			firstDirtyAt: 0,
 			editSequence: 0,
+			failures: 0,
+			oversized: oversized || state.length > getDocsConfig().maxBinaryBytes,
 			chain: Promise.resolve(),
-			size: Y.encodeStateAsUpdate(doc).length,
+			size: state.length,
 			selfSaving: false,
 			unloaded: false
 		};
@@ -495,6 +571,7 @@ export class DocumentLiveService implements OnModuleInit, OnModuleDestroy, IDocu
 		clearInterval(live.recheckTimer);
 		void live.relay?.return?.();
 		live.awareness.destroy();
+		live.shadow.destroy();
 		live.doc.destroy();
 		if (this.live.get(live.documentId) === live) {
 			this.live.delete(live.documentId);
@@ -521,18 +598,82 @@ export class DocumentLiveService implements OnModuleInit, OnModuleDestroy, IDocu
 				HttpStatus.PAYLOAD_TOO_LARGE
 			);
 		}
+		this.assertAcceptable(live, bytes);
+		Y.applyUpdate(live.doc, bytes, session);
+		live.lastWriter = session;
+	}
+
+	/**
+	 * Applies an edit to the page's copy first and checks the blocks it touched against the page's schema, so an edit
+	 * the save would refuse is refused now, before anyone else receives it.
+	 */
+	private assertAcceptable(live: ILiveDocument, bytes: Uint8Array): void {
+		let changed: unknown[] = [];
+		const collect = (transaction: Y.Transaction) => {
+			changed = changed.concat(Array.from(transaction.changed.keys()));
+		};
+		live.shadow.on('afterTransaction', collect);
 		try {
-			Y.applyUpdate(live.doc, bytes, session);
+			Y.applyUpdate(live.shadow, bytes, 'check');
 		} catch {
+			this.resetShadow(live);
 			throw new BadRequestException({
 				message: 'The edit is not a Yjs update of this page',
 				code: DOCS_LIVE_UPDATE_INVALID
 			});
+		} finally {
+			live.shadow.off('afterTransaction', collect);
 		}
-		live.lastWriter = session;
+		const { blocks } = changedBlocksJson(live.shadow, changed);
+		if (!blocks.length) {
+			return;
+		}
+		try {
+			validateTiptapDocument({ type: 'doc', content: blocks });
+		} catch {
+			// The copy took the edit; it is built again from the page, which did not.
+			this.resetShadow(live);
+			throw new BadRequestException({
+				message: 'The edit puts content in the page that its schema does not accept',
+				code: DOCS_LIVE_UPDATE_INVALID
+			});
+		}
+	}
+
+	private resetShadow(live: ILiveDocument): void {
+		live.shadow.destroy();
+		live.shadow = copyOf(Y.encodeStateAsUpdate(live.doc));
 	}
 
 	private applyAwarenessFromSession(live: ILiveDocument, session: ILiveSession, bytes: Uint8Array): void {
+		let clients: number[];
+		try {
+			clients = awarenessClientsOf(bytes);
+		} catch {
+			throw new BadRequestException({
+				message: 'The awareness update cannot be read',
+				code: DOCS_LIVE_UPDATE_INVALID
+			});
+		}
+		for (const client of clients) {
+			const owner = live.awarenessOwners.get(client);
+			if (owner && owner !== session) {
+				throw new ForbiddenException({
+					message: 'The awareness update writes another editor’s state',
+					code: DOCS_LIVE_UPDATE_INVALID
+				});
+			}
+		}
+		const fresh = clients.filter((client) => !session.awarenessClients.has(client));
+		if (session.awarenessClients.size + new Set(fresh).size > MAX_AWARENESS_CLIENTS_PER_SESSION) {
+			throw new BadRequestException({
+				message: `A session reports at most ${MAX_AWARENESS_CLIENTS_PER_SESSION} editors`,
+				code: DOCS_LIVE_UPDATE_INVALID
+			});
+		}
+		for (const client of clients) {
+			live.awarenessOwners.set(client, session);
+		}
 		try {
 			applyAwarenessUpdate(live.awareness, bytes, session);
 		} catch {
@@ -545,6 +686,12 @@ export class DocumentLiveService implements OnModuleInit, OnModuleDestroy, IDocu
 
 	private onDocumentUpdate(live: ILiveDocument, update: Uint8Array, origin: unknown): void {
 		live.size += update.length;
+		// The copy follows the page (a no-op for the edit it already checked).
+		try {
+			Y.applyUpdate(live.shadow, update, 'follow');
+		} catch {
+			this.resetShadow(live);
+		}
 		const frame: IDocumentLiveFrame = { kind: 'update', documentId: live.documentId, update: base64(update) };
 		for (const session of Array.from(live.sessions.values())) {
 			if (session !== origin) {
@@ -580,9 +727,19 @@ export class DocumentLiveService implements OnModuleInit, OnModuleDestroy, IDocu
 			for (const client of [...changes.added, ...changes.updated]) {
 				origin.awarenessClients.add(client);
 			}
-			for (const client of changes.removed) {
-				origin.awarenessClients.delete(client);
+		} else if (origin === REMOTE) {
+			for (const client of [...changes.added, ...changes.updated]) {
+				if (!live.awarenessOwners.has(client)) {
+					live.awarenessOwners.set(client, REMOTE);
+				}
 			}
+		}
+		for (const client of changes.removed) {
+			const owner = live.awarenessOwners.get(client);
+			if (owner && owner !== REMOTE) {
+				owner.awarenessClients.delete(client);
+			}
+			live.awarenessOwners.delete(client);
 		}
 		const clients = [...changes.added, ...changes.updated, ...changes.removed];
 		if (!clients.length) {
@@ -623,11 +780,11 @@ export class DocumentLiveService implements OnModuleInit, OnModuleDestroy, IDocu
 		clearTimeout(live.persistTimer);
 		live.persistTimer = setTimeout(() => {
 			live.persistTimer = undefined;
-			void this.enqueue(live, () => this.persist(live)).catch((error) =>
-				this.logger.warn(
-					`The live document of ${live.documentId} was not saved: ${(error as Error)?.message ?? error}`
-				)
-			);
+			void this.enqueue(live, async () => {
+				if (await this.persistOrRetry(live)) {
+					this.unloadIfIdle(live);
+				}
+			});
 		}, due);
 		live.persistTimer.unref?.();
 	}
@@ -639,32 +796,70 @@ export class DocumentLiveService implements OnModuleInit, OnModuleDestroy, IDocu
 		return run;
 	}
 
-	/** Saves the page's edits, in the request context of the editor whose edit came last. */
-	private async persist(live: ILiveDocument): Promise<void> {
+	/**
+	 * Saves the page's edits; a save that fails is tried again later, sooner then less often.
+	 *
+	 * @returns Whether nothing is left to save.
+	 */
+	private async persistOrRetry(live: ILiveDocument): Promise<boolean> {
+		try {
+			const saved = await this.persist(live);
+			if (saved) {
+				live.failures = 0;
+				return true;
+			}
+		} catch (error) {
+			this.logger.warn(`The live document of ${live.documentId} was not saved: ${messageOf(error)}`);
+		}
+		live.failures += 1;
+		const delay = Math.min(MAX_RETRY_DELAY_MS, 1000 * 2 ** Math.min(live.failures, 6));
+		if (!live.unloaded && !this.closing) {
+			clearTimeout(live.persistTimer);
+			live.persistTimer = setTimeout(() => {
+				live.persistTimer = undefined;
+				void this.enqueue(live, async () => {
+					if (await this.persistOrRetry(live)) {
+						this.unloadIfIdle(live);
+					}
+				});
+			}, delay);
+			live.persistTimer.unref?.();
+		}
+		return false;
+	}
+
+	/**
+	 * Saves the page's edits, in the request context of the editor whose edit came last.
+	 *
+	 * @returns Whether nothing is left to save.
+	 */
+	private async persist(live: ILiveDocument): Promise<boolean> {
 		if ((!live.dirty && !live.dirtyRemote) || live.unloaded) {
-			return;
+			return true;
 		}
 		const writer = live.lastWriter ?? Array.from(live.sessions.values())[0];
 		if (!writer) {
 			// Only edits relayed from another process, and no editor here to save them as: that process saves them.
 			live.dirtyRemote = false;
-			return;
+			return true;
 		}
-		await writer.context.runInAsyncScope(() => this.persistNow(live));
+		return writer.context.runInAsyncScope(() => this.persistNow(live));
 	}
 
-	private async persistNow(live: ILiveDocument): Promise<void> {
+	private async persistNow(live: ILiveDocument): Promise<boolean> {
 		const sequence = live.editSequence;
 		for (let attempt = 0; attempt < OUTSIDE_WRITE_ATTEMPTS + 2; attempt += 1) {
 			const row = await this.readRow(live.documentId, live.tenantId);
 			if (!row || row.deletedAt) {
 				this.closeAll(live, DocumentLiveReasonEnum.TRASHED);
-				return;
+				return true;
 			}
-			const revision = revisionOf(row);
+			const revision = liveRevisionOf(row.contentRevision);
+			// A revision this process claimed for a save that then failed: the page is as it was, not written outside.
+			const ours = live.claimedRevision === revision;
 			const stored = decodeLiveState(row.contentBinary as Buffer | null);
 			if (stored && stored.meta.lineage === live.lineage) {
-				if (stored.meta.revision !== revision && attempt < OUTSIDE_WRITE_ATTEMPTS) {
+				if (stored.meta.revision !== revision && !ours && attempt < OUTSIDE_WRITE_ATTEMPTS) {
 					// A write outside the live document is applying itself (its state is stored right after its JSON).
 					stored.doc.destroy();
 					await sleep(250 * (attempt + 1));
@@ -676,30 +871,44 @@ export class DocumentLiveService implements OnModuleInit, OnModuleDestroy, IDocu
 				stored?.doc.destroy();
 			}
 			if (
+				!ours &&
 				revision > live.revision &&
 				(!stored || stored.meta.lineage !== live.lineage || stored.meta.revision !== revision)
 			) {
-				// The page was written outside the live document, and nothing applied the write to it: apply it now.
-				replaceLiveContent(live.doc, row.contentJson, SERVER);
+				// The page was written outside the live document, and nothing applied the write to it: apply it now,
+				// worked out against the state last stored here, so the edits made since stay where the write did not go.
+				const { change, state } = serverWriteChange(live.baseState, row.contentJson);
+				Y.applyUpdate(live.doc, change, SERVER);
+				live.baseState = state;
 			}
 			live.revision = Math.max(live.revision, revision);
 
 			const contentJson = liveDocumentJson(live.doc);
+			const state = Y.encodeStateAsUpdate(live.doc);
+			const fits =
+				encodeLiveState(state, { lineage: live.lineage, revision: revision + 1 }).length <=
+				getDocsConfig().maxBinaryBytes;
 			if (sameContent(contentJson, row.contentJson)) {
 				// Nothing for the content columns; the state is stored so a reload replays the edits.
-				if (
-					await this.storeState(
-						live.documentId,
-						live.tenantId,
-						live.doc,
-						{ lineage: live.lineage, revision },
-						row.updatedAt
-					)
-				) {
-					this.settled(live, sequence);
-					return;
+				const result = fits
+					? await this.storeState(
+							live.documentId,
+							live.tenantId,
+							state,
+							{ lineage: live.lineage, revision },
+							row.updatedAt
+						)
+					: 'too-large';
+				if (result === 'moved') {
+					continue;
 				}
-				continue;
+				if (result === 'too-large') {
+					this.markOversized(live);
+				} else {
+					live.baseState = state;
+				}
+				this.settled(live, sequence);
+				return true;
 			}
 
 			let next: number;
@@ -712,22 +921,29 @@ export class DocumentLiveService implements OnModuleInit, OnModuleDestroy, IDocu
 				throw error;
 			}
 			live.selfSaving = true;
+			live.claimedRevision = next;
 			try {
 				await this.documents.saveLiveContent(row, {
 					contentJson,
-					contentBinary: encodeLiveState(live.doc, { lineage: live.lineage, revision: next }),
+					// Over the size limit the content is saved without the state: the page has no live state to reload.
+					contentBinary: fits ? encodeLiveState(state, { lineage: live.lineage, revision: next }) : null,
 					contentRevision: next
 				});
 			} finally {
 				live.selfSaving = false;
 			}
+			live.claimedRevision = undefined;
 			live.revision = next;
-			live.size = Y.encodeStateAsUpdate(live.doc).length;
+			live.baseState = state;
+			live.size = state.length;
+			if (!fits) {
+				this.markOversized(live);
+			}
 			this.settled(live, sequence);
-			return;
+			return true;
 		}
 		this.logger.warn(`The live document of ${live.documentId} could not be saved; it is tried again.`);
-		this.schedulePersist(live, 5000);
+		return false;
 	}
 
 	/** Marks the edits up to `sequence` saved; later ones are saved by another persist. */
@@ -742,30 +958,61 @@ export class DocumentLiveService implements OnModuleInit, OnModuleDestroy, IDocu
 		this.schedulePersist(live);
 	}
 
+	/** The state is over the size limit: every session of the page becomes read-only. */
+	private markOversized(live: ILiveDocument): void {
+		live.oversized = true;
+		for (const session of live.sessions.values()) {
+			this.setMode(live, session, true, DocumentLiveReasonEnum.SIZE_LIMIT);
+		}
+	}
+
+	/** Lets the page go once nobody edits it and nothing is left to save. */
+	private unloadIfIdle(live: ILiveDocument): void {
+		if (live.sessions.size === 0 && !live.dirty && !live.unloaded) {
+			this.unload(live);
+		}
+	}
+
 	/**
 	 * Stores the state for the revision the page is at, without touching its content columns or its concurrency
 	 * token (`updatedAt` is written back as it was, so an editor's stale-save check is not disturbed).
 	 *
-	 * @returns False when the page is at another revision now.
+	 * @returns `moved` when the page is at another revision now; `too-large` when the state is over the size limit
+	 * (nothing is stored).
 	 */
 	private async storeState(
 		documentId: string,
 		tenantId: string,
-		doc: Y.Doc,
+		state: Uint8Array,
 		meta: ILiveMeta,
 		updatedAt: Date | undefined
-	): Promise<boolean> {
-		const binary = encodeLiveState(doc, meta);
+	): Promise<StoreResult> {
+		const binary = encodeLiveState(state, meta);
 		const maxBytes = getDocsConfig().maxBinaryBytes;
 		if (binary.length > maxBytes) {
 			this.logger.warn(`The live state of ${documentId} is over the ${maxBytes} byte limit and is not stored.`);
-			return true;
+			return 'too-large';
 		}
 		const result = await this.documents.typeOrmDocumentRepository.update(
 			{ id: documentId as ID, tenantId: tenantId as ID, contentRevision: meta.revision },
 			{ contentBinary: binary, ...(updatedAt ? { updatedAt } : {}) } as never
 		);
-		return !!result.affected;
+		return result.affected ? 'stored' : 'moved';
+	}
+
+	/** The stored state of the page as a write found it, when it is the given lineage's state for that revision. */
+	private storedStateOf(previous: Document | null | undefined, lineage: string): Uint8Array | null {
+		const stored = decodeLiveState(previous?.contentBinary as Buffer | null);
+		if (!stored) {
+			return null;
+		}
+		try {
+			return stored.meta.lineage === lineage && stored.meta.revision === liveRevisionOf(previous?.contentRevision)
+				? Y.encodeStateAsUpdate(stored.doc)
+				: null;
+		} finally {
+			stored.doc.destroy();
+		}
 	}
 
 	private readRow(documentId: string, tenantId: string): Promise<Document | null> {
@@ -781,11 +1028,21 @@ export class DocumentLiveService implements OnModuleInit, OnModuleDestroy, IDocu
 
 	private onDocumentEvent(event: DocumentEvent): void {
 		const id = event?.entity?.id ? String(event.entity.id) : null;
-		const live = id ? this.live.get(id) : undefined;
-		if (!live || live.selfSaving) {
+		if (!id) {
 			return;
 		}
-		this.recheckSoon(live);
+		const live = this.live.get(id);
+		if (live?.selfSaving) {
+			return;
+		}
+		if (live) {
+			this.recheckSoon(live);
+		}
+		// Another process may hold the page: it hears of a change of who may read or write it.
+		const tenantId = event.entity?.tenantId ? String(event.entity.tenantId) : null;
+		if (tenantId && this.reachesOtherProcesses() && changesAccess(event)) {
+			void this.publish(id, tenantId, { kind: 'access' });
+		}
 	}
 
 	private recheckSoon(live: ILiveDocument): void {
@@ -870,7 +1127,7 @@ export class DocumentLiveService implements OnModuleInit, OnModuleDestroy, IDocu
 				? DocumentLiveReasonEnum.LOCKED
 				: position >= this.config.maxSessionsPerPage
 					? DocumentLiveReasonEnum.SESSION_LIMIT
-					: session.reason === DocumentLiveReasonEnum.SIZE_LIMIT
+					: live.oversized || session.reason === DocumentLiveReasonEnum.SIZE_LIMIT
 						? DocumentLiveReasonEnum.SIZE_LIMIT
 						: null;
 		this.setMode(live, session, reason !== null, reason);
@@ -905,7 +1162,10 @@ export class DocumentLiveService implements OnModuleInit, OnModuleDestroy, IDocu
 		}
 	}
 
-	/** Removes a session (it closed, or its client went away); the page is saved and let go after its last one. */
+	/**
+	 * Removes a session (it closed, or its client went away). After the page's last one its edits are saved, and the
+	 * page is let go once they are: a save that fails keeps it loaded, and is tried again.
+	 */
 	private leave(live: ILiveDocument, session: ILiveSession): void {
 		if (session.closed) {
 			return;
@@ -919,16 +1179,8 @@ export class DocumentLiveService implements OnModuleInit, OnModuleDestroy, IDocu
 		}
 		if (live.sessions.size === 0 && !live.unloaded && !this.closing) {
 			void this.enqueue(live, async () => {
-				await this.persist(live);
-				if (live.sessions.size === 0) {
-					this.unload(live);
-				}
-			}).catch((error) => {
-				this.logger.warn(
-					`The live document of ${live.documentId} was not saved on close: ${(error as Error)?.message ?? error}`
-				);
-				if (live.sessions.size === 0) {
-					this.unload(live);
+				if (await this.persistOrRetry(live)) {
+					this.unloadIfIdle(live);
 				}
 			});
 		}
@@ -951,12 +1203,12 @@ export class DocumentLiveService implements OnModuleInit, OnModuleDestroy, IDocu
 						this.onRelay(live, message);
 					} catch (error) {
 						this.logger.debug(
-							`A relayed live message of ${live.documentId} was dropped: ${(error as Error)?.message ?? error}`
+							`A relayed live message of ${live.documentId} was dropped: ${messageOf(error)}`
 						);
 					}
 				}
 			} catch (error) {
-				this.logger.debug(`The live relay of ${live.documentId} ended: ${(error as Error)?.message ?? error}`);
+				this.logger.debug(`The live relay of ${live.documentId} ended: ${messageOf(error)}`);
 			}
 		})();
 	}
@@ -980,19 +1232,9 @@ export class DocumentLiveService implements OnModuleInit, OnModuleDestroy, IDocu
 				}
 				return;
 			case 'client-update':
-			case 'client-awareness': {
-				const session = message.connectionId ? live.sessions.get(message.connectionId) : undefined;
-				if (!session || session.userId !== message.userId || !message.data) {
-					return;
-				}
-				const bytes = fromBase64(message.data);
-				if (message.kind === 'client-update') {
-					this.applyFromSession(live, session, bytes);
-				} else {
-					this.applyAwarenessFromSession(live, session, bytes);
-				}
+			case 'client-awareness':
+				this.applyHandedOver(live, message);
 				return;
-			}
 			case 'access':
 				this.recheckSoon(live);
 				return;
@@ -1001,18 +1243,58 @@ export class DocumentLiveService implements OnModuleInit, OnModuleDestroy, IDocu
 					this.schedulePersist(live, 0);
 				}
 				return;
+			default:
+				return;
 		}
+	}
+
+	/** Applies an edit another process handed over for a session held here, and answers with what it did. */
+	private applyHandedOver(live: ILiveDocument, message: ILiveRelay): void {
+		const session = message.connectionId ? live.sessions.get(message.connectionId) : undefined;
+		if (!session || session.userId !== message.userId || !message.data) {
+			// Not held here (or not this user's): another process may hold it, and answers.
+			return;
+		}
+		let status = HttpStatus.OK;
+		let code: string | undefined;
+		let text: string | undefined;
+		try {
+			const bytes = fromBase64(message.data);
+			if (message.kind === 'client-update') {
+				this.applyFromSession(live, session, bytes);
+			} else {
+				this.applyAwarenessFromSession(live, session, bytes);
+			}
+		} catch (error) {
+			status = error instanceof HttpException ? error.getStatus() : HttpStatus.BAD_REQUEST;
+			const response =
+				error instanceof HttpException
+					? (error.getResponse() as { code?: string; message?: string })
+					: undefined;
+			code = response?.code ?? DOCS_LIVE_UPDATE_INVALID;
+			text = response?.message ?? messageOf(error);
+		}
+		void this.publish(live.documentId, live.tenantId, {
+			kind: 'client-ack',
+			requestId: message.requestId,
+			status,
+			code,
+			message: text
+		});
 	}
 
 	private async publish(documentId: string, tenantId: string, message: Omit<ILiveRelay, 'instance'>): Promise<void> {
 		try {
 			await this.pubSub.publish(liveTopic(documentId), tenantId, { ...message, instance: this.instance });
 		} catch (error) {
-			this.logger.debug(`A live message of ${documentId} was not relayed: ${(error as Error)?.message ?? error}`);
+			this.logger.debug(`A live message of ${documentId} was not relayed: ${messageOf(error)}`);
 		}
 	}
 
-	/** An edit for a session this process does not hold goes to the process that holds it. */
+	/**
+	 * An edit for a session this process does not hold goes to the process that holds it, which answers with what it
+	 * did; the caller gets that answer, or the 404 of a session no process holds when none answers in time.
+	 */
 	private async handToHolder(
 		documentId: string,
 		connectionId: string,
@@ -1021,14 +1303,58 @@ export class DocumentLiveService implements OnModuleInit, OnModuleDestroy, IDocu
 	): Promise<IDocumentLiveAck> {
 		const tenantId = RequestContext.currentTenantId();
 		const userId = RequestContext.currentUserId();
-		if (!this.reachesOtherProcesses() || !tenantId || !userId) {
-			throw new NotFoundException({
+		const notFound = () =>
+			new NotFoundException({
 				message: 'No live session of this page is open for this connection',
 				code: DOCS_LIVE_SESSION_NOT_FOUND
 			});
+		if (!this.reachesOtherProcesses() || !tenantId || !userId) {
+			throw notFound();
 		}
-		await this.publish(documentId, String(tenantId), { kind, connectionId, userId: String(userId), data });
-		return { accepted: true, relayed: true };
+		const requestId = randomUUID();
+		// Listening before asking, so the answer cannot pass by unheard.
+		const answers = this.pubSub.asyncIterableIterator<ILiveRelay>(
+			this.pubSub.topicFor(liveTopic(documentId), String(tenantId))
+		);
+		let timer: NodeJS.Timeout | undefined;
+		try {
+			const answered = new Promise<ILiveRelay | null>((resolve) => {
+				timer = setTimeout(() => resolve(null), HAND_OVER_TIMEOUT_MS);
+				void (async () => {
+					for await (const message of answers) {
+						if (message?.kind === 'client-ack' && message.requestId === requestId) {
+							resolve(message);
+							return;
+						}
+					}
+					resolve(null);
+				})().catch(() => resolve(null));
+			});
+			await this.publish(documentId, String(tenantId), {
+				kind,
+				connectionId,
+				userId: String(userId),
+				data,
+				requestId
+			});
+			const answer = await answered;
+			if (!answer) {
+				throw notFound();
+			}
+			if (answer.status && answer.status !== HttpStatus.OK) {
+				throw new HttpException(
+					{
+						message: answer.message ?? 'The edit was refused',
+						code: answer.code ?? DOCS_LIVE_UPDATE_INVALID
+					},
+					answer.status
+				);
+			}
+			return { accepted: true, relayed: true };
+		} finally {
+			clearTimeout(timer);
+			void answers.return?.();
+		}
 	}
 
 	private reachesOtherProcesses(): boolean {
@@ -1101,13 +1427,47 @@ export function liveTopic(documentId: string): string {
 	return `docs.live.${documentId}`;
 }
 
+/**
+ * The client ids an awareness update writes (y-protocols encoding: a count, then per client its id, clock and state).
+ *
+ * @param update The awareness update.
+ */
+export function awarenessClientsOf(update: Uint8Array): number[] {
+	const decoder = decoding.createDecoder(update);
+	const count = decoding.readVarUint(decoder);
+	const clients: number[] = [];
+	for (let index = 0; index < count; index += 1) {
+		clients.push(decoding.readVarUint(decoder));
+		decoding.readVarUint(decoder);
+		decoding.readVarString(decoder);
+	}
+	return clients;
+}
+
+/** Whether a document event may change who reads or writes the page. */
+function changesAccess(event: DocumentEvent): boolean {
+	if (String((event as { type?: unknown }).type) === 'deleted') {
+		return true;
+	}
+	const input = (event as { input?: Record<string, unknown> }).input;
+	if (input && typeof input === 'object' && ACCESS_FIELDS.some((field) => field in input)) {
+		return true;
+	}
+	const field = event.context?.field;
+	return !!field && ACCESS_FIELDS.includes(field);
+}
+
 function isSession(value: unknown): value is ILiveSession {
 	return !!value && typeof value === 'object' && 'connectionId' in (value as object) && 'stream' in (value as object);
 }
 
-function revisionOf(document: Pick<Document, 'contentRevision'> | null | undefined): number {
-	const revision = Number(document?.contentRevision);
-	return Number.isFinite(revision) && revision >= 1 ? revision : 1;
+function copyOf(state: Uint8Array): Y.Doc {
+	const doc = new Y.Doc({ gc: true });
+	// Declared before anything is applied: a root Yjs first meets in an update is a placeholder it replaces when the
+	// type is asked for, and the changes of a transaction would name the placeholder rather than the fragment.
+	doc.getXmlFragment(LIVE_FRAGMENT);
+	Y.applyUpdate(doc, state, 'copy');
+	return doc;
 }
 
 function sameContent(live: ILiveJsonNode, stored: unknown): boolean {
@@ -1126,6 +1486,10 @@ function base64(bytes: Uint8Array): string {
 
 function fromBase64(encoded: string): Uint8Array {
 	return new Uint8Array(Buffer.from(encoded, 'base64'));
+}
+
+function messageOf(error: unknown): string {
+	return String((error as Error)?.message ?? error);
 }
 
 function sleep(ms: number): Promise<void> {

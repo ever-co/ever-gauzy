@@ -26,7 +26,11 @@
   (ever-gauzy #11728: migration `1791000004950-BackfillProjectTaskKeys`
   keys every project without one, oldest first, from the first letters of
   its name, unique within the organization against held, former and derived
-  keys; a new project gets one on create; keys stay editable)
+  keys; a new project gets one on create; keys stay editable). Exceptions: a
+  project whose name proposes no key (fewer than two letters or digits) and a
+  project with a blank or malformed stored key are left as they are, for a
+  manager; a project created with `taskKey: null`, or when the key lookup
+  cannot run (no organization scope, a failed read), is created without one
 - [x] **T12**. GraphQL twins of the new routes
 - [ ] **T13**. Ever Teams lane `tasks-keyboard-and-views` (shortcut registry over `uiPreferences.keyboard`, bulk toolbar, saved views pages, palette groups)
 

@@ -6,7 +6,13 @@ import * as Y from 'yjs';
 import { DocumentKindEnum } from '@gauzy/contracts';
 import { GraphqlPubSub, RequestContext } from '@gauzy/core';
 import { DocumentLiveBridge } from '../services/document-live.bridge';
-import { DocumentLiveReasonEnum, DOCS_LIVE_READ_ONLY, DOCS_LIVE_SESSION_NOT_FOUND } from './docs-live.config';
+import {
+	DocumentLiveReasonEnum,
+	DOCS_LIVE_READ_ONLY,
+	DOCS_LIVE_SESSION_NOT_FOUND,
+	DOCS_LIVE_UPDATE_INVALID,
+	DOCS_LIVE_USER_LIMIT
+} from './docs-live.config';
 import { DocumentLiveService } from './document-live.service';
 import { IDocumentLiveFrame } from './document-live.types';
 import { decodeLiveState, LIVE_FRAGMENT, liveDocumentJson, normaliseNode } from './document-live.yjs';
@@ -43,6 +49,8 @@ interface IRow {
 class Table {
 	readonly rows = new Map<string, IRow>();
 	readonly saves: Array<{ userId: string | undefined; revision: number; json: unknown }> = [];
+	/** How many saves fail before they work again. */
+	failSaves = 0;
 
 	add(id: string, content: unknown[], access: { readers: string[]; writers: string[] }): IRow {
 		const row: IRow = {
@@ -87,6 +95,10 @@ class Table {
 				row: IRow,
 				input: { contentJson: unknown; contentBinary: Buffer; contentRevision: number }
 			) {
+				if (table.failSaves > 0) {
+					table.failSaves -= 1;
+					throw new Error('the database is away');
+				}
 				const stored = table.rows.get(row.id)!;
 				stored.contentJson = input.contentJson;
 				stored.contentBinary = input.contentBinary;
@@ -242,6 +254,18 @@ describe('DocumentLiveService', () => {
 		service.onModuleInit();
 		services.push(service);
 		return service;
+	}
+
+	/** A process whose saves wait (100 s): only a flush or the last session's close saves. */
+	function slowSaving(): DocumentLiveService {
+		process.env.GAUZY_DOCS_LIVE_PERSIST_DEBOUNCE_MS = '100000';
+		process.env.GAUZY_DOCS_LIVE_PERSIST_MAX_WAIT_MS = '100000';
+		try {
+			return process_();
+		} finally {
+			process.env.GAUZY_DOCS_LIVE_PERSIST_DEBOUNCE_MS = '20';
+			process.env.GAUZY_DOCS_LIVE_PERSIST_MAX_WAIT_MS = '200';
+		}
 	}
 
 	it('lets two editors co-edit a page and saves what they wrote, as the last of them', async () => {
@@ -521,7 +545,171 @@ describe('DocumentLiveService', () => {
 		});
 	});
 
+	it('keeps what an editor typed and has not saved yet in a block a server-side write did not change', async () => {
+		table.add('page-1', [paragraph('Intro'), paragraph('Plan: Friday')], { readers: ['ann'], writers: ['ann'] });
+		const service = slowSaving();
+		const ann = new Editor('ann', 'tab-ann-0001');
+		await ann.open(service, 'page-1');
+		await ann.type(service, 'page-1', ' (draft)');
+		expect(table.saves).toHaveLength(0);
+
+		// The write was made from the stored page, which does not have Ann's text yet.
+		const { previous, updated } = table.writeOutside('page-1', [paragraph('Intro'), paragraph('Plan: Monday')]);
+		await as('api', () => service.contentWritten(previous as never, updated as never));
+
+		await until(() => JSON.stringify(ann.text()).includes('Monday'));
+		const expected = normaliseNode({
+			type: 'doc',
+			content: [paragraph('Intro (draft)'), paragraph('Plan: Monday')]
+		} as never);
+		expect(ann.text()).toEqual(expected);
+
+		await as('ann', () => service.flush('page-1' as never, 'tenant-1' as never));
+		expect(normaliseNode(table.rows.get('page-1')!.contentJson as never)).toEqual(expected);
+
+		await ann.close();
+	});
+
+	it('refuses an edit whose content the page schema does not accept, and applies nothing of it', async () => {
+		table.add('page-1', [paragraph('Hello')], { readers: ['ann', 'bob'], writers: ['ann', 'bob'] });
+		const service = process_();
+		const ann = new Editor('ann', 'tab-ann-0001');
+		const bob = new Editor('bob', 'tab-bob-0001');
+		await ann.open(service, 'page-1');
+		await bob.open(service, 'page-1');
+
+		const before = Y.encodeStateVector(ann.doc);
+		ann.doc.getXmlFragment(LIVE_FRAGMENT).insert(1, [new Y.XmlElement('notANode')]);
+		const bad = Buffer.from(Y.encodeStateAsUpdate(ann.doc, before)).toString('base64');
+		await expect(as('ann', () => service.applyClientUpdate('page-1', 'tab-ann-0001', bad))).rejects.toMatchObject({
+			response: { code: DOCS_LIVE_UPDATE_INVALID }
+		});
+
+		// Bob never received it; a good edit from Bob still goes through.
+		await bob.type(service, 'page-1', '!');
+		await until(() => table.saves.length > 0);
+		expect(bob.frames.filter((frame) => frame.kind === 'update')).toHaveLength(0);
+		expect(normaliseNode(table.rows.get('page-1')!.contentJson as never)).toEqual(
+			normaliseNode({ type: 'doc', content: [paragraph('Hello!')] } as never)
+		);
+
+		await ann.close();
+		await bob.close();
+	});
+
+	it('lets a session write only the awareness of the editors it reported', async () => {
+		table.add('page-1', [paragraph('Hello')], { readers: ['ann', 'bob'], writers: ['ann', 'bob'] });
+		const service = process_();
+		const ann = new Editor('ann', 'tab-ann-0001');
+		const bob = new Editor('bob', 'tab-bob-0001');
+		await ann.open(service, 'page-1');
+		await bob.open(service, 'page-1');
+
+		const cursor = new Awareness(ann.doc);
+		cursor.setLocalState({ user: { name: 'Ann' } });
+		const own = Buffer.from(encodeAwarenessUpdate(cursor, [cursor.clientID])).toString('base64');
+		await as('ann', () => service.applyClientAwareness('page-1', 'tab-ann-0001', own));
+
+		// Bob sends Ann's client id with a newer clock, as if he were her.
+		cursor.setLocalState({ user: { name: 'Not Ann' } });
+		const forged = Buffer.from(encodeAwarenessUpdate(cursor, [cursor.clientID])).toString('base64');
+		await expect(
+			as('bob', () => service.applyClientAwareness('page-1', 'tab-bob-0001', forged))
+		).rejects.toMatchObject({
+			response: { code: DOCS_LIVE_UPDATE_INVALID }
+		});
+
+		cursor.destroy();
+		await ann.close();
+		await bob.close();
+	});
+
+	it('counts only the caller tenant in the status', async () => {
+		table.add('page-1', [paragraph('Hello')], { readers: ['ann'], writers: ['ann'] });
+		const service = process_();
+		const ann = new Editor('ann', 'tab-ann-0001');
+		await ann.open(service, 'page-1');
+
+		expect(as('ann', () => service.status())).toMatchObject({ documents: 1, sessions: 1 });
+		expect(
+			who.run({ userId: 'zed', tenantId: 'tenant-2', organizationId: 'org-9' }, () => service.status())
+		).toMatchObject({
+			documents: 0,
+			sessions: 0
+		});
+
+		await ann.close();
+	});
+
+	it('lets a reconnecting tab replace its own session at the per-user limit', async () => {
+		process.env.GAUZY_DOCS_LIVE_MAX_SESSIONS_PER_USER = '1';
+		try {
+			table.add('page-1', [paragraph('Hello')], { readers: ['ann'], writers: ['ann'] });
+			const service = process_();
+			const first = new Editor('ann', 'tab-ann-0001');
+			await first.open(service, 'page-1');
+
+			const again = new Editor('ann', 'tab-ann-0001');
+			expect(await again.open(service, 'page-1')).toMatchObject({ kind: 'sync' });
+			expect(first.frames[first.frames.length - 1]).toMatchObject({
+				kind: 'closed',
+				reason: DocumentLiveReasonEnum.REPLACED
+			});
+
+			// Control: another tab is over the limit.
+			await expect(as('ann', () => service.open('page-1', 'tab-ann-0002'))).rejects.toMatchObject({
+				response: { code: DOCS_LIVE_USER_LIMIT }
+			});
+
+			await first.close();
+			await again.close();
+		} finally {
+			delete process.env.GAUZY_DOCS_LIVE_MAX_SESSIONS_PER_USER;
+		}
+	});
+
+	it('tries a failed save again, and keeps the page loaded until its edits are saved', async () => {
+		table.add('page-1', [paragraph('Hello')], { readers: ['ann'], writers: ['ann'] });
+		const service = process_();
+		const ann = new Editor('ann', 'tab-ann-0001');
+		await ann.open(service, 'page-1');
+		table.failSaves = 1;
+		await ann.type(service, 'page-1', ' world');
+		await ann.close();
+
+		// The first save failed; the page is still held, and the retry saves it.
+		await settle(300);
+		expect(as('ann', () => service.status()).documents).toBe(1);
+		await until(() => table.saves.length === 1, 8000);
+		expect(normaliseNode(table.rows.get('page-1')!.contentJson as never)).toEqual(
+			normaliseNode({ type: 'doc', content: [paragraph('Hello world')] } as never)
+		);
+		await until(() => as('ann', () => service.status()).documents === 0);
+	});
+
 	describe('with several API processes', () => {
+		it('answers an edit handed to another process with what that process did', async () => {
+			table.add('page-1', [paragraph('Hello')], { readers: ['ann', 'viv'], writers: ['ann'] });
+			const engine = sharedEngine();
+			const first = process_(new GraphqlPubSub(engine as never));
+			const second = process_(new GraphqlPubSub(engine as never));
+			const viv = new Editor('viv', 'tab-viv-0001');
+			await viv.open(second, 'page-1');
+
+			// Viv's session is read-only on the second process; her edit posted to the first gets that answer.
+			await expect(viv.type(first, 'page-1', '!')).rejects.toMatchObject({
+				response: { code: DOCS_LIVE_READ_ONLY }
+			});
+			// No process holds this connection: the 404 that sends the client to open its session again.
+			await expect(
+				as('viv', () =>
+					first.applyClientUpdate('page-1', 'tab-viv-9999', Buffer.from([0, 0]).toString('base64'))
+				)
+			).rejects.toMatchObject({ response: { code: DOCS_LIVE_SESSION_NOT_FOUND } });
+
+			await viv.close();
+		});
+
 		it('relays edits between them, hands an edit to the process that holds its session, and keeps one lineage', async () => {
 			table.add('page-1', [paragraph('Hello'), paragraph('World')], {
 				readers: ['ann', 'bob'],

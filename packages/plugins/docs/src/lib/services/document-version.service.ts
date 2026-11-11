@@ -9,7 +9,7 @@ import { DocumentVersion } from '../entities/document-version.entity';
 import { MikroOrmDocumentVersionRepository } from '../repositories/mikro-orm-document-version.repository';
 import { TypeOrmDocumentRepository } from '../repositories/type-orm-document.repository';
 import { TypeOrmDocumentVersionRepository } from '../repositories/type-orm-document-version.repository';
-import { decodeLiveState } from '../live/document-live.yjs';
+import { isLiveStateFor } from '../live/document-live.yjs';
 import { claimNextContentRevision } from './document.service';
 import { DocumentLiveBridge } from './document-live.bridge';
 
@@ -177,7 +177,8 @@ export class DocumentVersionService extends TenantAwareCrudService<DocumentVersi
 		const previous = { ...document } as Document;
 		// While the page has a live state, the live sessions keep it and apply the restored content to it: the
 		// version's own binary is another lineage (or an editor's seed), and would fork the page open editors hold.
-		const keepsLiveState = this.liveBridge?.enabled === true && holdsLiveStateAt(document);
+		const keepsLiveState =
+			this.liveBridge?.enabled === true && isLiveStateFor(document.contentBinary as Buffer | null, document.contentRevision);
 
 		// Copy the target snapshot onto the document (entity save so subscribers run — SQLite JSON)
 		document.name = version.name;
@@ -196,15 +197,4 @@ export class DocumentVersionService extends TenantAwareCrudService<DocumentVersi
 		this.logger.log(`Restored document ${document.id} to version ${versionId}`);
 		return restored;
 	}
-}
-
-/**
- * Whether a page's stored `contentBinary` is its live state for the revision it is at.
- *
- * @param document The page.
- */
-function holdsLiveStateAt(document: Pick<Document, 'contentBinary' | 'contentRevision'>): boolean {
-	const state = decodeLiveState(document.contentBinary as Buffer | null);
-	state?.doc.destroy();
-	return !!state && state.meta.revision === (Number(document.contentRevision) || 1);
 }

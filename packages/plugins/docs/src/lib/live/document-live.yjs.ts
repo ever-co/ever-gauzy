@@ -141,11 +141,17 @@ export function decodeLiveState(
  * @param doc The document.
  * @param meta The lineage, and the revision it is stored under.
  */
-export function encodeLiveState(doc: Y.Doc, meta: ILiveMeta): Buffer {
+export function encodeLiveState(doc: Y.Doc | Uint8Array, meta: ILiveMeta): Buffer {
 	const metaBytes = Buffer.from(JSON.stringify({ lineage: meta.lineage, revision: meta.revision }), 'utf8');
 	const length = Buffer.alloc(4);
 	length.writeUInt32BE(metaBytes.length, 0);
-	return Buffer.concat([LIVE_STATE_MAGIC, length, metaBytes, Buffer.from(Y.encodeStateAsUpdate(doc))]);
+	const state = doc instanceof Uint8Array ? doc : Y.encodeStateAsUpdate(doc);
+	return Buffer.concat([
+		LIVE_STATE_MAGIC,
+		length,
+		metaBytes,
+		Buffer.from(state.buffer, state.byteOffset, state.byteLength)
+	]);
 }
 
 /**
@@ -208,6 +214,90 @@ export function replaceLiveContent(
 	}, origin);
 
 	return { kept: kept.length, written: next.length - kept.length };
+}
+
+/**
+ * The change a server-side write makes, computed against the state the write replaced rather than against what
+ * editors hold now.
+ *
+ * The stored state is the page as the write found it (`previous.contentJson`). The replacement is worked out on a
+ * copy of it, so only the blocks the write changed are removed and inserted; applied to a live document that holds
+ * unsaved edits on top of that state, the change merges with them: an edit in a block the write did not change stays,
+ * an edit in a block it replaced goes with the block.
+ *
+ * @param baseState The Yjs state the write found (the stored live state of the previous revision).
+ * @param contentJson The content the write saved.
+ * @returns The change as a Yjs update, and the whole state after it.
+ */
+export function serverWriteChange(
+	baseState: Uint8Array,
+	contentJson: unknown
+): { change: Uint8Array; state: Uint8Array } {
+	const base = new Y.Doc({ gc: true });
+	try {
+		Y.applyUpdate(base, baseState, 'storage');
+		const before = Y.encodeStateVector(base);
+		replaceLiveContent(base, contentJson, 'server');
+		return { change: Y.encodeStateAsUpdate(base, before), state: Y.encodeStateAsUpdate(base) };
+	} finally {
+		base.destroy();
+	}
+}
+
+/**
+ * A page's `contentRevision` as a number: a row from before revisions counts as 1.
+ *
+ * @param value The stored value.
+ */
+export function liveRevisionOf(value: unknown): number {
+	const revision = Number(value);
+	return Number.isFinite(revision) && revision >= 1 ? revision : 1;
+}
+
+/**
+ * Whether stored bytes are the live state of the revision a page is at.
+ *
+ * @param binary The page's `contentBinary`.
+ * @param revision The page's `contentRevision`.
+ */
+export function isLiveStateFor(binary: Uint8Array | Buffer | null | undefined, revision: unknown): boolean {
+	const state = decodeLiveState(binary);
+	state?.doc.destroy();
+	return !!state && state.meta.revision === liveRevisionOf(revision);
+}
+
+/**
+ * The page's top-level blocks a set of changed Yjs types belongs to, as JSON; `all` when the page's own list of
+ * blocks changed (a block added, removed or moved), in which case every block is returned.
+ *
+ * @param doc The document.
+ * @param changed The types a transaction changed (`transaction.changed`'s keys).
+ */
+export function changedBlocksJson(doc: Y.Doc, changed: Iterable<unknown>): { all: boolean; blocks: ILiveJsonNode[] } {
+	const fragment = doc.getXmlFragment(LIVE_FRAGMENT);
+	const tops = new Set<unknown>();
+	for (const type of changed) {
+		let current = type as { _item?: { parent?: unknown } | null } | null;
+		if (current === (fragment as unknown)) {
+			return { all: true, blocks: liveDocumentJson(doc).content ?? [] };
+		}
+		// Up the tree to the child of the fragment that holds the change.
+		for (let depth = 0; current && depth < 256; depth += 1) {
+			const parent = current._item?.parent;
+			if (parent === (fragment as unknown)) {
+				tops.add(current);
+				break;
+			}
+			current = (parent as typeof current) ?? null;
+		}
+	}
+	const blocks: ILiveJsonNode[] = [];
+	for (const child of fragment.toArray()) {
+		if (tops.has(child)) {
+			blocks.push(...readNode(child));
+		}
+	}
+	return { all: false, blocks };
 }
 
 /**

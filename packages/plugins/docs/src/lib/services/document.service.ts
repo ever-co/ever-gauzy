@@ -74,7 +74,7 @@ import { MikroOrmDocumentRepository } from '../repositories/mikro-orm-document.r
 import { TypeOrmDocumentRepository } from '../repositories/type-orm-document.repository';
 import { TypeOrmDocumentLinkRepository } from '../repositories/type-orm-document-link.repository';
 // Deep import: the pure Yjs helpers of the live sessions, not the live module (which imports this one).
-import { decodeLiveState } from '../live/document-live.yjs';
+import { isLiveStateFor } from '../live/document-live.yjs';
 import {
 	collectDocumentMentionIds,
 	generateDocumentHtml,
@@ -716,12 +716,7 @@ export class DocumentService extends TenantAwareCrudService<Document> {
 	 * @param document The page.
 	 */
 	public holdsLiveState(document: Pick<Document, 'contentBinary' | 'contentRevision'>): boolean {
-		if (!this.liveBridge?.enabled) {
-			return false;
-		}
-		const state = decodeLiveState(document.contentBinary as Buffer | null);
-		state?.doc.destroy();
-		return !!state && state.meta.revision === (Number(document.contentRevision) || 1);
+		return this.liveBridge?.enabled === true && isLiveStateFor(document.contentBinary as Buffer | null, document.contentRevision);
 	}
 
 	/**
@@ -734,13 +729,14 @@ export class DocumentService extends TenantAwareCrudService<Document> {
 	 * the activity entry are attributed to.
 	 *
 	 * @param document The page as loaded for this write.
-	 * @param input The live document's content, its stored state and the claimed revision.
+	 * @param input The live document's content, its stored state (`null` when the state is over the size limit: the
+	 * content is still saved, and the page has no live state to reload) and the claimed revision.
 	 * @returns The saved page.
 	 */
-	async saveLiveContent(document: Document, input: { contentJson: unknown; contentBinary: Buffer; contentRevision: number }): Promise<Document> {
+	async saveLiveContent(document: Document, input: { contentJson: unknown; contentBinary: Buffer | null; contentRevision: number }): Promise<Document> {
 		const contentJson = this.validateContentJson(input.contentJson);
 		const maxBinaryBytes = getDocsConfig().maxBinaryBytes;
-		if (input.contentBinary.length > maxBinaryBytes) {
+		if (input.contentBinary && input.contentBinary.length > maxBinaryBytes) {
 			throw new BadRequestException({ message: `The collaboration state exceeds the ${maxBinaryBytes} byte limit`, code: DOCS_CONTENT_BINARY_TOO_LARGE });
 		}
 		await this.documentVersionService.captureSnapshotIfNeeded(document, { force: false });
