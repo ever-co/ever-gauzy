@@ -1,8 +1,7 @@
-import { Injector } from '@angular/core';
-import { BaseEntityEnum, IIncome, PermissionsEnum } from '@gauzy/contracts';
+import { IIncome, PermissionsEnum } from '@gauzy/contracts';
 import { employeeMapper } from '@gauzy/ui-core/common';
 import { IncomeService } from '@gauzy/ui-core/core';
-import { IRecordViewRouteData, IRecordViewScope, IRecordViewSection } from '@gauzy/ui-core/shared';
+import { IRecordViewScope, IRecordViewSection } from '@gauzy/ui-core/shared';
 
 /** Relations an income's View reads — the same the income grid loads. */
 export const INCOME_VIEW_RELATIONS = ['employee', 'employee.user', 'tags', 'organization', 'client'];
@@ -53,13 +52,3 @@ export async function loadIncome(service: IncomeService, id: string, scope: IRec
 	// The grid's person shape stands in for the employee entity: not an `IEmployee`, hence the cast via `unknown`.
 	return income ? ({ ...income, employee: { ...employeeMapper(income) } } as unknown as IIncome) : null;
 }
-
-/** `/pages/accounting/income/view/:id` — one income, full width (what an income favorite opens). */
-export const INCOME_RECORD_VIEW: IRecordViewRouteData<IIncome> = {
-	heading: 'INCOME_PAGE.INCOME',
-	backLink: '/pages/accounting/income',
-	load: (id: string, injector: Injector, scope: IRecordViewScope) => loadIncome(injector.get(IncomeService), id, scope),
-	sections: () => buildIncomeViewSections(),
-	subtitle: (income) => income.client?.name,
-	favorite: { entity: BaseEntityEnum.Income, name: (income) => income.client?.name }
-};
