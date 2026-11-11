@@ -196,7 +196,8 @@ export class CommentService extends TenantAwareCrudService<Comment> {
 			const canChangeSelectedEmployee = RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE);
 			const { mentionEmployeeIds } = input;
 			// The comment an edit makes this one reply to is stated by `parentId` alone, which the thread check reads.
-			const changes = parentStatedById(input);
+			// When it was last edited is the server's to say (see editStampOf), never the body's.
+			const changes = omit(parentStatedById(input), ['editedAt']);
 
 			// Find the comment for the current employee with the given id. Callers holding
 			// CHANGE_SELECTED_EMPLOYEE may edit any comment of the tenant; everyone else must be the
@@ -230,6 +231,7 @@ export class CommentService extends TenantAwareCrudService<Comment> {
 			const updatedComment = await super.create({
 				...this.keptInPlace(withoutAuthorChange(changes, AUTHORSHIP_COLUMNS), comment, !!parent),
 				...this.resolverStatedBy(input),
+				...editStampOf(changes, comment),
 				id
 			});
 
@@ -400,6 +402,25 @@ export class CommentService extends TenantAwareCrudService<Comment> {
 		}
 
 		return result;
+	}
+
+	/**
+	 * Tells the in-process listeners (the real-time channel) that a comment's reactions changed, as a change of the
+	 * comment: `comment.updated` is the hint its record's readers already refetch on, comments and reactions alike.
+	 *
+	 * The comment is read across authors, as it is for the event of a removal: the reaction route checked the
+	 * caller's read of it before it wrote, and the event carries no content, only which record's comments changed
+	 * (the channel addresses it to that record's readers). Never fails the reaction: a comment that cannot be read
+	 * any more, or a listener that throws, costs an instant update only.
+	 *
+	 * @param commentId - The comment whose reactions changed.
+	 */
+	public async announceReactionChange(commentId: ID): Promise<void> {
+		if (!isUUID(commentId)) {
+			return;
+		}
+		const comment = await this.readAcrossAuthors(() => this.commentForEvent(commentId));
+		this.publishCommentEvent('updated', comment);
 	}
 
 	/**
@@ -906,6 +927,19 @@ function withWhere<O extends { where?: unknown }>(filter: O | undefined, where: 
  *
  * @throws {BadRequestException} When `parent` names no comment by id, or another comment than `parentId` names.
  */
+/**
+ * The edit stamp an update writes: the current time when it changes the comment's text, nothing otherwise (a
+ * resolve, a reopen or a mention change leaves `editedAt` as stored). A body's `editedAt` never reaches here: the
+ * marker readers see says the text changed, so only the server states it.
+ */
+function editStampOf(changes: { comment?: unknown }, stored: Pick<Comment, 'comment'>): Pick<IComment, 'editedAt'> {
+	const text = changes?.comment;
+	if (typeof text !== 'string' || text === stored?.comment) {
+		return {};
+	}
+	return { editedAt: new Date() };
+}
+
 function parentStatedById<I extends { parent?: { id?: ID } | null; parentId?: ID | null }>(input: I): I {
 	if (input?.parent === undefined) {
 		return input;
