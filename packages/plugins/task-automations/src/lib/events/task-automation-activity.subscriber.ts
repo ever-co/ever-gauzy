@@ -19,11 +19,11 @@ export function attributedDescription(description: string | null | undefined, ma
  */
 @EventSubscriber()
 export class TaskAutomationActivitySubscriber extends BaseEntityEventSubscriber<ActivityLog> {
-	listenTo() {
+	override listenTo() {
 		return ActivityLog;
 	}
 
-	async beforeEntityCreate(entity: ActivityLog): Promise<void> {
+	override async beforeEntityCreate(entity: ActivityLog): Promise<void> {
 		attributeActivity(entity, currentAutomationMarker());
 	}
 }

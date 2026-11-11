@@ -45,7 +45,7 @@ export function ruleFromRow(row: TaskAutomationRule): ITaskAutomationRule {
 		conditions: Array.isArray(conditions) ? conditions : [],
 		actions: Array.isArray(actions) ? actions : [],
 		lastRunAt: row.lastRunAt ?? null,
-		createdByUserId: row.createdByUserId ?? null,
+		createdByUserId: row.createdByUserId,
 		createdAt: row.createdAt,
 		updatedAt: row.updatedAt
 	} as ITaskAutomationRule;

@@ -140,7 +140,7 @@ export interface ITaskAutomationRule extends IBasePerTenantAndOrganizationEntity
 	conditions: ITaskAutomationCondition[];
 	actions: ITaskAutomationAction[];
 	lastRunAt?: Date | null;
-	createdByUserId?: ID | null;
+	createdByUserId?: ID;
 }
 
 /** What creating a rule takes; a `templateKey` fills what the body leaves out. */

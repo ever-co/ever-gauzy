@@ -139,7 +139,7 @@ export class TaskAutomationRuleService {
 			} as Partial<TaskAutomationRule>)
 		);
 		this.invalidate(scope.organizationId);
-		return this.get(scope, saved.id);
+		return this.get(scope, saved.id as ID);
 	}
 
 	/** Edits a rule: only the fields the body states change. */
@@ -196,7 +196,7 @@ export class TaskAutomationRuleService {
 			await manager.getRepository(TaskAutomationRule).delete({ id: row.id, tenantId: scope.tenantId } as never);
 		});
 		this.invalidate(scope.organizationId);
-		return { id: row.id, deleted: true };
+		return { id: row.id as ID, deleted: true };
 	}
 
 	/** The rules of an organization that are on, in their order (the engine's read). */
