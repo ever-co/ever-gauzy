@@ -87,6 +87,17 @@ describe('AsanaConflictsComponent', () => {
 		expect(find('more-conflicts')).toBeNull();
 	});
 
+	it('shows a date-only due date as its own day (the zones are covered by the utils spec)', () => {
+		api.conflicts.mockReturnValue(
+			of([conflict({ id: 'c-9', field: 'dueDate', platformValue: '2026-11-20', externalValue: '2026-11-21T00:00:00.000Z' })])
+		);
+		const { find } = render();
+
+		const due = find('conflict-c-9') as HTMLElement;
+		expect(due.querySelector('[data-test="platform-value"]')?.textContent?.trim()).toBe('Nov 20, 2026');
+		expect(due.querySelector('[data-test="external-value"]')?.textContent?.trim()).toBe('Nov 21, 2026');
+	});
+
 	it('reads the titles of many tasks a few dozen at a time, as the task filter takes them', () => {
 		api.conflicts.mockReturnValue(of(Array.from({ length: TASK_TITLES_MAX + 5 }, (_, index) => conflict({ id: `c-${index}`, taskId: `task-${index}` }))));
 		render();
