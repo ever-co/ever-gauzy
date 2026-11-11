@@ -1,289 +1,290 @@
-`// \`@gauzy/ui-core/core\` is replaced at the module boundary: its barrel boots the app's whole service graph, and this
-`// suite needs only the classes as injection tokens.
-`jest.mock('@gauzy/ui-core/core', () => ({
-`	Store: class Store {},
-`	ToastrService: class ToastrService {},
-`	NavMenuBuilderService: class NavMenuBuilderService {},
-`	PermissionsGuard: class PermissionsGuard {}
-`}));
-`
-`import { TestBed } from '@angular/core/testing';
-`import { of, throwError } from 'rxjs';
-`import {
-`	ITaskAutomationRule,
-`	ITaskAutomationTemplate,
-`	TaskAutomationActionEnum,
-`	TaskAutomationRunOutcomeEnum,
-`	TaskAutomationStatusCategoryEnum,
-`	TaskAutomationTriggerEnum
-`} from '@gauzy/contracts';
-`import { Store, ToastrService } from '@gauzy/ui-core/core';
-`import { TaskAutomationsApiService } from '../services/task-automations-api.service';
-`import { TaskAutomationsDirectoryService } from '../services/task-automations-directory.service';
-`import { TaskAutomationsPageComponent } from './automations-page.component';
-`
-`const template: ITaskAutomationTemplate = {
-`	key: 'close-parent-when-subtasks-done',
-`	name: 'Close the parent when all sub-tasks are done',
-`	description: 'When the last open sub-task of a task is done, the task moves to the first done status.',
-`	trigger: { type: TaskAutomationTriggerEnum.ALL_SUBTASKS_DONE },
-`	conditions: [],
-`	actions: [{ type: TaskAutomationActionEnum.SET_STATUS, category: TaskAutomationStatusCategoryEnum.DONE }]
-`};
-`
-`const rule = (id: string, overrides: Partial<ITaskAutomationRule> = {}): ITaskAutomationRule => ({
-`	id,
-`	name: `Rule ${id}`,
-`	isEnabled: true,
-`	position: 0,
-`	trigger: { type: TaskAutomationTriggerEnum.TASK_ASSIGNED },
-`	conditions: [],
-`	actions: [{ type: TaskAutomationActionEnum.SET_STATUS, category: TaskAutomationStatusCategoryEnum.IN_PROGRESS }],
-`	...overrides
-`});
-`
-`/** Settings → Automations. */
-`describe('TaskAutomationsPageComponent', () => {
-`	const api = {
-`		templates: jest.fn(),
-`		list: jest.fn(),
-`		create: jest.fn(),
-`		update: jest.fn(),
-`		reorder: jest.fn(),
-`		remove: jest.fn(),
-`		test: jest.fn(),
-`		runs: jest.fn()
-`	};
-`	const directory = {
-`		statuses: jest.fn(),
-`		priorities: jest.fn(),
-`		tags: jest.fn(),
-`		employees: jest.fn(),
-`		projects: jest.fn(),
-`		teams: jest.fn(),
-`		tasks: jest.fn()
-`	};
-`	const toastr = { success: jest.fn(), danger: jest.fn() };
-`
-`	function render() {
-`		TestBed.configureTestingModule({
-`			imports: [TaskAutomationsPageComponent],
-`			providers: [
-`				{ provide: TaskAutomationsApiService, useValue: api },
-`				{ provide: TaskAutomationsDirectoryService, useValue: directory },
-`				{ provide: ToastrService, useValue: toastr },
-`				{ provide: Store, useValue: { selectedOrganization$: of({ id: 'org-1' }), user: { id: 'user-1', tenantId: 'tenant-1' } } }
-`			]
-`		});
-`		const fixture = TestBed.createComponent(TaskAutomationsPageComponent);
-`		fixture.detectChanges();
-`		const el: HTMLElement = fixture.nativeElement;
-`		return {
-`			fixture,
-`			component: fixture.componentInstance,
-`			find: (test: string) => el.querySelector(`[data-test="${test}"]`) as HTMLElement | null
-`		};
-`	}
-`
-`	beforeEach(() => {
-`		jest.resetAllMocks();
-`		api.templates.mockReturnValue(of([template]));
-`		api.list.mockReturnValue(of([rule('a'), rule('b', { isEnabled: false })]));
-`		directory.statuses.mockReturnValue(of([{ value: 'done', label: 'Done' }]));
-`		directory.priorities.mockReturnValue(of([]));
-`		directory.tags.mockReturnValue(of([]));
-`		directory.employees.mockReturnValue(of([{ value: 'e-1', label: 'Ada' }]));
-`		directory.projects.mockReturnValue(of([{ value: 'project-1', label: 'Website' }]));
-`		directory.teams.mockReturnValue(of([]));
-`		directory.tasks.mockReturnValue(of([{ value: 'task-1', label: 'Ship', detail: 'API-7' }]));
-`	});
-`
-`	it('the feature is off (404): the notice only', () => {
-`		api.templates.mockReturnValue(throwError(() => ({ status: 404 })));
-`		const { component, find } = render();
-`		expect(component.view()).toBe('unavailable');
-`		expect(find('unavailable')).not.toBeNull();
-`		expect(find('rules')).toBeNull();
-`	});
-`
-`	it('without the permission (403): says so', () => {
-`		api.list.mockReturnValue(throwError(() => ({ status: 403 })));
-`		const { component, find } = render();
-`		expect(component.view()).toBe('forbidden');
-`		expect(find('forbidden')).not.toBeNull();
-`	});
-`
-`	it('another failure offers a retry', () => {
-`		api.list.mockReturnValue(throwError(() => ({ status: 500 })));
-`		const { component, find, fixture } = render();
-`		expect(component.view()).toBe('error');
-`		api.list.mockReturnValue(of([]));
-`		find('retry')?.click();
-`		fixture.detectChanges();
-`		expect(component.view()).toBe('ready');
-`		expect(find('empty')).not.toBeNull();
-`	});
-`
-`	it('lists the organization’s rules in their order, and reads the pickers’ lists', () => {
-`		const { find, component } = render();
-`		expect(api.list).toHaveBeenCalledWith('org-1');
-`		expect(find('rule-a')).not.toBeNull();
-`		expect(find('rule-b')).not.toBeNull();
-`		expect(directory.statuses).toHaveBeenCalledWith('org-1', 'tenant-1');
-`		expect(component.directory().projects).toEqual([{ value: 'project-1', label: 'Website' }]);
-`		expect(component.tasks()).toHaveLength(1);
-`	});
-`
-`	it('switches a rule on and off, and puts the switch back when the API refuses', () => {
-`		const { component } = render();
-`		api.update.mockReturnValue(of(rule('b', { isEnabled: true })));
-`		component.toggle(component.rules()[1], true);
-`		expect(api.update).toHaveBeenCalledWith('b', { isEnabled: true }, 'org-1');
-`		expect(component.rules()[1].isEnabled).toBe(true);
-`
-`		api.update.mockReturnValue(throwError(() => ({ status: 400, error: { message: 'No.' } })));
-`		component.toggle(component.rules()[0], false);
-`		expect(component.rules()[0].isEnabled).toBe(true);
-`		expect(component.actionError()).toBe('No.');
-`	});
-`
-`	it('moves a rule down, and goes back to the old order when the API refuses', () => {
-`		const { component } = render();
-`		api.reorder.mockReturnValue(of([rule('b'), rule('a')]));
-`		component.move(0, 1);
-`		expect(api.reorder).toHaveBeenCalledWith(['b', 'a'], 'org-1');
-`		expect(component.rules().map((one) => one.id)).toEqual(['b', 'a']);
-`
-`		api.reorder.mockReturnValue(throwError(() => ({ status: 500 })));
-`		component.move(0, 1);
-`		expect(component.rules().map((one) => one.id)).toEqual(['b', 'a']);
-`		expect(component.actionError()).toBe('TASK_AUTOMATIONS.ERRORS.REORDER');
-`		// At an edge nothing is sent.
-`		api.reorder.mockClear();
-`		component.move(0, -1);
-`		expect(api.reorder).not.toHaveBeenCalled();
-`	});
-`
-`	it('reorders by drag and drop', () => {
-`		const { component } = render();
-`		api.reorder.mockReturnValue(of([rule('b'), rule('a')]));
-`		component.dragFrom.set(1);
-`		component.drop(0);
-`		expect(api.reorder).toHaveBeenCalledWith(['b', 'a'], 'org-1');
-`		expect(component.dragFrom()).toBeNull();
-`	});
-`
-`	it('creates a rule from a template, with the template’s key', () => {
-`		const { component, find, fixture } = render();
-`		find('show-templates')?.click();
-`		fixture.detectChanges();
-`		expect(find('template-close-parent-when-subtasks-done')).not.toBeNull();
-`		component.startFromTemplate(template);
-`		fixture.detectChanges();
-`		expect(find('editing')).not.toBeNull();
-`		const draft = component.editing()!;
-`		api.create.mockReturnValue(of(rule('c', { name: draft.name })));
-`		component.save(draft);
-`		expect(api.create).toHaveBeenCalledWith(
-`			expect.objectContaining({
-`				templateKey: 'close-parent-when-subtasks-done',
-`				name: 'Close the parent when all sub-tasks are done',
-`				trigger: { type: TaskAutomationTriggerEnum.ALL_SUBTASKS_DONE }
-`			}),
-`			'org-1'
-`		);
-`		expect(component.rules().map((one) => one.id)).toEqual(['a', 'b', 'c']);
-`		expect(component.editing()).toBeNull();
-`		expect(toastr.success).toHaveBeenCalled();
-`	});
-`
-`	it('edits a rule, and shows the API’s refusal as it answers', () => {
-`		const { component } = render();
-`		component.edit(component.rules()[0]);
-`		const draft = { ...component.editing()!, name: 'Renamed' };
-`		api.update.mockReturnValue(throwError(() => ({ status: 400, error: { message: 'The status is not one of the organization.' } })));
-`		component.save(draft);
-`		expect(component.actionError()).toBe('The status is not one of the organization.');
-`		expect(component.editing()).not.toBeNull();
-`
-`		api.update.mockReturnValue(of(rule('a', { name: 'Renamed' })));
-`		component.save(draft);
-`		expect(api.update).toHaveBeenLastCalledWith('a', expect.objectContaining({ name: 'Renamed' }), 'org-1');
-`		expect(component.rules()[0].name).toBe('Renamed');
-`	});
-`
-`	it('deletes a rule after a confirmation', () => {
-`		const { component, find, fixture } = render();
-`		find('delete-a')?.click();
-`		fixture.detectChanges();
-`		expect(api.remove).not.toHaveBeenCalled();
-`		api.remove.mockReturnValue(of({ id: 'a', deleted: true }));
-`		find('confirm-delete-a')?.click();
-`		fixture.detectChanges();
-`		expect(api.remove).toHaveBeenCalledWith('a', 'org-1');
-`		expect(component.rules().map((one) => one.id)).toEqual(['b']);
-`	});
-`
-`	it('tests a rule on a task and shows what would happen, and lists its runs', () => {
-`		api.runs.mockReturnValue(
-`			of([
-`				{
-`					id: 'run-1',
-`					ruleId: 'a',
-`					taskId: 'task-1',
-`					eventKey: 'e:task-1',
-`					triggerType: TaskAutomationTriggerEnum.TASK_ASSIGNED,
-`					outcome: TaskAutomationRunOutcomeEnum.APPLIED,
-`					depth: 0,
-`					details: { changes: [{ action: TaskAutomationActionEnum.SET_STATUS, field: 'status', from: 'open', to: 'done' }] }
-`				}
-`			])
-`		);
-`		const { component, find, fixture } = render();
-`		component.open(component.rules()[0]);
-`		fixture.detectChanges();
-`		expect(api.runs).toHaveBeenCalledWith('a', 20, 'org-1');
-`		expect(find('run-run-1')?.textContent).toContain('status: open → Done');
-`
-`		api.test.mockReturnValue(
-`			of({
-`				ruleId: 'a',
-`				taskId: 'task-1',
-`				triggerMatches: null,
-`				triggerNote: 'Runs when someone is added as an assignee.',
-`				conditions: [],
-`				changes: [{ action: TaskAutomationActionEnum.SET_STATUS, field: 'status', from: 'open', to: 'in-progress' }],
-`				outcome: TaskAutomationRunOutcomeEnum.APPLIED
-`			})
-`		);
-`		component.testTaskId.set('task-1');
-`		component.runTest(component.rules()[0]);
-`		fixture.detectChanges();
-`		expect(api.test).toHaveBeenCalledWith('a', 'task-1', 'org-1');
-`		expect(find('test-result')).not.toBeNull();
-`		expect(find('test-changes')?.textContent).toContain('open → in-progress');
-`		expect(find('test-outcome')?.textContent).toContain('TASK_AUTOMATIONS.OUTCOMES.APPLIED');
-`	});
-`
-`	it('filters the tasks of the dry run as the user types', () => {
-`		directory.tasks.mockReturnValue(
-`			of([
-`				{ value: 't-1', label: 'Ship the notes', detail: 'API-7' },
-`				{ value: 't-2', label: 'Fix the login', detail: 'WEB-3' }
-`			])
-`		);
-`		const { component } = render();
-`		component.taskFilter.set('web');
-`		expect(component.filteredTasks().map((task) => task.value)).toEqual(['t-2']);
-`		component.taskFilter.set('');
-`		expect(component.filteredTasks()).toHaveLength(2);
-`	});
-`
-`	it('says when the runs cannot be read', () => {
-`		api.runs.mockReturnValue(throwError(() => ({ status: 500 })));
-`		const { component, find, fixture } = render();
-`		component.open(component.rules()[0]);
-`		fixture.detectChanges();
-`		expect(find('runs-error')).not.toBeNull();
-`	});
-`});
+// `@gauzy/ui-core/core` is replaced at the module boundary: its barrel boots the app's whole service graph, and this
+// suite needs only the classes as injection tokens.
+jest.mock('@gauzy/ui-core/core', () => ({
+	Store: class Store {},
+	ToastrService: class ToastrService {},
+	NavMenuBuilderService: class NavMenuBuilderService {},
+	PermissionsGuard: class PermissionsGuard {}
+}));
+
+import { TestBed } from '@angular/core/testing';
+import { of, throwError } from 'rxjs';
+import {
+	ITaskAutomationRule,
+	ITaskAutomationTemplate,
+	TaskAutomationActionEnum,
+	TaskAutomationRunOutcomeEnum,
+	TaskAutomationStatusCategoryEnum,
+	TaskAutomationTriggerEnum
+} from '@gauzy/contracts';
+import { Store, ToastrService } from '@gauzy/ui-core/core';
+import { TaskAutomationsApiService } from '../services/task-automations-api.service';
+import { TaskAutomationsDirectoryService } from '../services/task-automations-directory.service';
+import { ITaskAutomationDraft } from '../task-automations-ui.helpers';
+import { TaskAutomationsPageComponent } from './automations-page.component';
+
+const template: ITaskAutomationTemplate = {
+	key: 'close-parent-when-subtasks-done',
+	name: 'Close the parent when all sub-tasks are done',
+	description: 'When the last open sub-task of a task is done, the task moves to the first done status.',
+	trigger: { type: TaskAutomationTriggerEnum.ALL_SUBTASKS_DONE },
+	conditions: [],
+	actions: [{ type: TaskAutomationActionEnum.SET_STATUS, category: TaskAutomationStatusCategoryEnum.DONE }]
+};
+
+const rule = (id: string, overrides: Partial<ITaskAutomationRule> = {}): ITaskAutomationRule => ({
+	id,
+	name: `Rule ${id}`,
+	isEnabled: true,
+	position: 0,
+	trigger: { type: TaskAutomationTriggerEnum.TASK_ASSIGNED },
+	conditions: [],
+	actions: [{ type: TaskAutomationActionEnum.SET_STATUS, category: TaskAutomationStatusCategoryEnum.IN_PROGRESS }],
+	...overrides
+});
+
+/** Settings → Automations. */
+describe('TaskAutomationsPageComponent', () => {
+	const api = {
+		templates: jest.fn(),
+		list: jest.fn(),
+		create: jest.fn(),
+		update: jest.fn(),
+		reorder: jest.fn(),
+		remove: jest.fn(),
+		test: jest.fn(),
+		runs: jest.fn()
+	};
+	const directory = {
+		statuses: jest.fn(),
+		priorities: jest.fn(),
+		tags: jest.fn(),
+		employees: jest.fn(),
+		projects: jest.fn(),
+		teams: jest.fn(),
+		tasks: jest.fn()
+	};
+	const toastr = { success: jest.fn(), danger: jest.fn() };
+
+	function render() {
+		TestBed.configureTestingModule({
+			imports: [TaskAutomationsPageComponent],
+			providers: [
+				{ provide: TaskAutomationsApiService, useValue: api },
+				{ provide: TaskAutomationsDirectoryService, useValue: directory },
+				{ provide: ToastrService, useValue: toastr },
+				{ provide: Store, useValue: { selectedOrganization$: of({ id: 'org-1' }), user: { id: 'user-1', tenantId: 'tenant-1' } } }
+			]
+		});
+		const fixture = TestBed.createComponent(TaskAutomationsPageComponent);
+		fixture.detectChanges();
+		const el: HTMLElement = fixture.nativeElement;
+		return {
+			fixture,
+			component: fixture.componentInstance,
+			find: (test: string) => el.querySelector(`[data-test="${test}"]`) as HTMLElement | null
+		};
+	}
+
+	beforeEach(() => {
+		jest.resetAllMocks();
+		api.templates.mockReturnValue(of([template]));
+		api.list.mockReturnValue(of([rule('a'), rule('b', { isEnabled: false })]));
+		directory.statuses.mockReturnValue(of([{ value: 'done', label: 'Done' }]));
+		directory.priorities.mockReturnValue(of([]));
+		directory.tags.mockReturnValue(of([]));
+		directory.employees.mockReturnValue(of([{ value: 'e-1', label: 'Ada' }]));
+		directory.projects.mockReturnValue(of([{ value: 'project-1', label: 'Website' }]));
+		directory.teams.mockReturnValue(of([]));
+		directory.tasks.mockReturnValue(of([{ value: 'task-1', label: 'Ship', detail: 'API-7' }]));
+	});
+
+	it('the feature is off (404): the notice only', () => {
+		api.templates.mockReturnValue(throwError(() => ({ status: 404 })));
+		const { component, find } = render();
+		expect(component.view()).toBe('unavailable');
+		expect(find('unavailable')).not.toBeNull();
+		expect(find('rules')).toBeNull();
+	});
+
+	it('without the permission (403): says so', () => {
+		api.list.mockReturnValue(throwError(() => ({ status: 403 })));
+		const { component, find } = render();
+		expect(component.view()).toBe('forbidden');
+		expect(find('forbidden')).not.toBeNull();
+	});
+
+	it('another failure offers a retry', () => {
+		api.list.mockReturnValue(throwError(() => ({ status: 500 })));
+		const { component, find, fixture } = render();
+		expect(component.view()).toBe('error');
+		api.list.mockReturnValue(of([]));
+		find('retry')?.click();
+		fixture.detectChanges();
+		expect(component.view()).toBe('ready');
+		expect(find('empty')).not.toBeNull();
+	});
+
+	it('lists the organization’s rules in their order, and reads the pickers’ lists', () => {
+		const { find, component } = render();
+		expect(api.list).toHaveBeenCalledWith('org-1');
+		expect(find('rule-a')).not.toBeNull();
+		expect(find('rule-b')).not.toBeNull();
+		expect(directory.statuses).toHaveBeenCalledWith('org-1', 'tenant-1');
+		expect(component.directory().projects).toEqual([{ value: 'project-1', label: 'Website' }]);
+		expect(component.tasks()).toHaveLength(1);
+	});
+
+	it('switches a rule on and off, and puts the switch back when the API refuses', () => {
+		const { component } = render();
+		api.update.mockReturnValue(of(rule('b', { isEnabled: true })));
+		component.toggle(component.rules()[1], true);
+		expect(api.update).toHaveBeenCalledWith('b', { isEnabled: true }, 'org-1');
+		expect(component.rules()[1].isEnabled).toBe(true);
+
+		api.update.mockReturnValue(throwError(() => ({ status: 400, error: { message: 'No.' } })));
+		component.toggle(component.rules()[0], false);
+		expect(component.rules()[0].isEnabled).toBe(true);
+		expect(component.actionError()).toBe('No.');
+	});
+
+	it('moves a rule down, and goes back to the old order when the API refuses', () => {
+		const { component } = render();
+		api.reorder.mockReturnValue(of([rule('b'), rule('a')]));
+		component.move(0, 1);
+		expect(api.reorder).toHaveBeenCalledWith(['b', 'a'], 'org-1');
+		expect(component.rules().map((one) => one.id)).toEqual(['b', 'a']);
+
+		api.reorder.mockReturnValue(throwError(() => ({ status: 500 })));
+		component.move(0, 1);
+		expect(component.rules().map((one) => one.id)).toEqual(['b', 'a']);
+		expect(component.actionError()).toBe('TASK_AUTOMATIONS.ERRORS.REORDER');
+		// At an edge nothing is sent.
+		api.reorder.mockClear();
+		component.move(0, -1);
+		expect(api.reorder).not.toHaveBeenCalled();
+	});
+
+	it('reorders by drag and drop', () => {
+		const { component } = render();
+		api.reorder.mockReturnValue(of([rule('b'), rule('a')]));
+		component.dragFrom.set(1);
+		component.drop(0);
+		expect(api.reorder).toHaveBeenCalledWith(['b', 'a'], 'org-1');
+		expect(component.dragFrom()).toBeNull();
+	});
+
+	it('creates a rule from a template, with the template’s key', () => {
+		const { component, find, fixture } = render();
+		find('show-templates')?.click();
+		fixture.detectChanges();
+		expect(find('template-close-parent-when-subtasks-done')).not.toBeNull();
+		component.startFromTemplate(template);
+		fixture.detectChanges();
+		expect(find('editing')).not.toBeNull();
+		const draft = (component.editing() as ITaskAutomationDraft);
+		api.create.mockReturnValue(of(rule('c', { name: draft.name })));
+		component.save(draft);
+		expect(api.create).toHaveBeenCalledWith(
+			expect.objectContaining({
+				templateKey: 'close-parent-when-subtasks-done',
+				name: 'Close the parent when all sub-tasks are done',
+				trigger: { type: TaskAutomationTriggerEnum.ALL_SUBTASKS_DONE }
+			}),
+			'org-1'
+		);
+		expect(component.rules().map((one) => one.id)).toEqual(['a', 'b', 'c']);
+		expect(component.editing()).toBeNull();
+		expect(toastr.success).toHaveBeenCalled();
+	});
+
+	it('edits a rule, and shows the API’s refusal as it answers', () => {
+		const { component } = render();
+		component.edit(component.rules()[0]);
+		const draft = { ...(component.editing() as ITaskAutomationDraft), name: 'Renamed' };
+		api.update.mockReturnValue(throwError(() => ({ status: 400, error: { message: 'The status is not one of the organization.' } })));
+		component.save(draft);
+		expect(component.actionError()).toBe('The status is not one of the organization.');
+		expect(component.editing()).not.toBeNull();
+
+		api.update.mockReturnValue(of(rule('a', { name: 'Renamed' })));
+		component.save(draft);
+		expect(api.update).toHaveBeenLastCalledWith('a', expect.objectContaining({ name: 'Renamed' }), 'org-1');
+		expect(component.rules()[0].name).toBe('Renamed');
+	});
+
+	it('deletes a rule after a confirmation', () => {
+		const { component, find, fixture } = render();
+		find('delete-a')?.click();
+		fixture.detectChanges();
+		expect(api.remove).not.toHaveBeenCalled();
+		api.remove.mockReturnValue(of({ id: 'a', deleted: true }));
+		find('confirm-delete-a')?.click();
+		fixture.detectChanges();
+		expect(api.remove).toHaveBeenCalledWith('a', 'org-1');
+		expect(component.rules().map((one) => one.id)).toEqual(['b']);
+	});
+
+	it('tests a rule on a task and shows what would happen, and lists its runs', () => {
+		api.runs.mockReturnValue(
+			of([
+				{
+					id: 'run-1',
+					ruleId: 'a',
+					taskId: 'task-1',
+					eventKey: 'e:task-1',
+					triggerType: TaskAutomationTriggerEnum.TASK_ASSIGNED,
+					outcome: TaskAutomationRunOutcomeEnum.APPLIED,
+					depth: 0,
+					details: { changes: [{ action: TaskAutomationActionEnum.SET_STATUS, field: 'status', from: 'open', to: 'done' }] }
+				}
+			])
+		);
+		const { component, find, fixture } = render();
+		component.open(component.rules()[0]);
+		fixture.detectChanges();
+		expect(api.runs).toHaveBeenCalledWith('a', 20, 'org-1');
+		expect(find('run-run-1')?.textContent).toContain('status: open → Done');
+
+		api.test.mockReturnValue(
+			of({
+				ruleId: 'a',
+				taskId: 'task-1',
+				triggerMatches: null,
+				triggerNote: 'Runs when someone is added as an assignee.',
+				conditions: [],
+				changes: [{ action: TaskAutomationActionEnum.SET_STATUS, field: 'status', from: 'open', to: 'in-progress' }],
+				outcome: TaskAutomationRunOutcomeEnum.APPLIED
+			})
+		);
+		component.testTaskId.set('task-1');
+		component.runTest(component.rules()[0]);
+		fixture.detectChanges();
+		expect(api.test).toHaveBeenCalledWith('a', 'task-1', 'org-1');
+		expect(find('test-result')).not.toBeNull();
+		expect(find('test-changes')?.textContent).toContain('open → in-progress');
+		expect(find('test-outcome')?.textContent).toContain('TASK_AUTOMATIONS.OUTCOMES.APPLIED');
+	});
+
+	it('filters the tasks of the dry run as the user types', () => {
+		directory.tasks.mockReturnValue(
+			of([
+				{ value: 't-1', label: 'Ship the notes', detail: 'API-7' },
+				{ value: 't-2', label: 'Fix the login', detail: 'WEB-3' }
+			])
+		);
+		const { component } = render();
+		component.taskFilter.set('web');
+		expect(component.filteredTasks().map((task) => task.value)).toEqual(['t-2']);
+		component.taskFilter.set('');
+		expect(component.filteredTasks()).toHaveLength(2);
+	});
+
+	it('says when the runs cannot be read', () => {
+		api.runs.mockReturnValue(throwError(() => ({ status: 500 })));
+		const { component, find, fixture } = render();
+		component.open(component.rules()[0]);
+		fixture.detectChanges();
+		expect(find('runs-error')).not.toBeNull();
+	});
+});

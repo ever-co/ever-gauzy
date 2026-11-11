@@ -47,7 +47,7 @@ export class TaskAutomationsAvailabilityService {
 									: timer(TASK_AUTOMATIONS_AVAILABILITY_RETRY_MS * 2 ** (attempt - 1))
 						}),
 						map(() => true),
-						catchError((_error: HttpErrorResponse) => of(false))
+						catchError(() => of(false))
 					)
 		),
 		shareReplay({ bufferSize: 1, refCount: false })

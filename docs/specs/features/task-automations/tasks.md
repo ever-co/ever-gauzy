@@ -25,7 +25,9 @@
 
 ## Phase 2 — Gauzy app (PR 2)
 
-- [ ] **T14**. `@gauzy/plugin-task-automations-ui`: Settings → Automations (list, on/off, create from template or blank, edit trigger / conditions / actions, order, dry run, run history), hidden when the routes answer 404; i18n
+- [x] **T14**. `@gauzy/plugin-task-automations-ui`: Settings → Automations (list, on/off, create from template or blank, edit trigger / conditions / actions, order, dry run, run history), hidden when the routes answer 404; i18n
+  (ever-gauzy #11814: Settings → Automations, 36 specs; `TASK_AUTOMATION_MANAGE` labelled in the 14 locales and placed in
+  Roles & Permissions → Projects & tasks)
 
 ## Phase 3 — Ever Teams (PR 3, ever-teams)
 
