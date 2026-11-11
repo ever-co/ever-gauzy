@@ -1,5 +1,6 @@
 // The ui-core barrel boots half the app (and needs packages this spec does not): what the chat names from it is doubled.
 jest.mock('@gauzy/ui-core/core', () => ({ Store: class Store {} }));
+// cspell:ignore referrerpolicy -- the HTML attribute
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { ChatLinkPreview } from '../../chat-link-previews';
@@ -13,10 +14,7 @@ describe('LinkCardsComponent', () => {
 
 	beforeEach(async () => {
 		answers = new Map();
-		preview = jest.fn((url: string): Observable<ChatLinkPreview | null> => {
-			if (!answers.has(url)) answers.set(url, new BehaviorSubject<ChatLinkPreview | null>(null));
-			return answers.get(url)!.asObservable();
-		});
+		preview = jest.fn((url: string): Observable<ChatLinkPreview | null> => answerOf(url).asObservable());
 		await TestBed.configureTestingModule({
 			imports: [LinkCardsComponent],
 			providers: [{ provide: ChatLinkPreviewService, useValue: { preview } }]
@@ -25,6 +23,15 @@ describe('LinkCardsComponent', () => {
 		fixture.componentRef.setInput('body', 'See https://example.com/post and https://example.org/');
 		fixture.detectChanges();
 	});
+
+	function answerOf(url: string): BehaviorSubject<ChatLinkPreview | null> {
+		let answer = answers.get(url);
+		if (!answer) {
+			answer = new BehaviorSubject<ChatLinkPreview | null>(null);
+			answers.set(url, answer);
+		}
+		return answer;
+	}
 
 	const cards = (): HTMLElement[] => Array.from(fixture.nativeElement.querySelectorAll('[data-test="link-card"]'));
 
@@ -36,7 +43,7 @@ describe('LinkCardsComponent', () => {
 	});
 
 	it('shows a ready preview: site, title, description as text, the picture at its own aspect ratio, lazy and without referrer', () => {
-		answers.get('https://example.com/post')!.next({
+		answerOf('https://example.com/post').next({
 			url: 'https://example.com/post',
 			status: 'ready',
 			siteName: 'Example',

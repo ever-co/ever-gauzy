@@ -1,3 +1,4 @@
+// cspell:ignore referrerpolicy -- the HTML attribute
 import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { NbIconModule } from '@nebular/theme';
