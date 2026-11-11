@@ -90,6 +90,15 @@ describe('TaskAutomationEditorComponent', () => {
 		expect(saved[0].name).toBe('Named');
 	});
 
+	it('tells the page the scope it is narrowed to', () => {
+		const { component } = render();
+		const scopes: unknown[] = [];
+		component.scopeChange.subscribe((scope) => scopes.push(scope));
+		component.patchScope({ projectId: 'project-1' });
+		expect(scopes).toEqual([{ projectId: 'project-1', organizationTeamId: null }]);
+		expect(component.draft().projectId).toBe('project-1');
+	});
+
 	it('keeps the values a rule names that the lists do not hold', () => {
 		expect(withNamed([{ value: 'a', label: 'A' }], ['a', 'b', ''])).toEqual([
 			{ value: 'a', label: 'A' },

@@ -29,6 +29,8 @@ import { TaskAutomationsApiService } from '../services/task-automations-api.serv
 import {
 	ITaskAutomationChoice,
 	ITaskAutomationDirectory,
+	ITaskAutomationScope,
+	mergeChoices,
 	TaskAutomationsDirectoryService
 } from '../services/task-automations-directory.service';
 import { TASK_AUTOMATIONS_RUNS_SHOWN } from '../task-automations-ui.constants';
@@ -163,6 +165,7 @@ const EMPTY_DIRECTORY: ITaskAutomationDirectory = { statuses: [], priorities: []
 									[saving]="saving()"
 									(save)="save($event)"
 									(cancel)="closeEditor()"
+									(scopeChange)="loadScopedChoices($event)"
 								></ngx-task-automation-editor>
 							</section>
 						}
@@ -553,7 +556,14 @@ export class TaskAutomationsPageComponent implements OnInit {
 	readonly organizationId = signal<ID | null>(null);
 	readonly rules = signal<ITaskAutomationRule[]>([]);
 	readonly templates = signal<ITaskAutomationTemplate[]>([]);
-	readonly directory = signal<ITaskAutomationDirectory>(EMPTY_DIRECTORY);
+	/** The organization's choices, and the statuses and priorities of the scope the editor is narrowed to. */
+	readonly baseDirectory = signal<ITaskAutomationDirectory>(EMPTY_DIRECTORY);
+	readonly scopedChoices = signal<Pick<ITaskAutomationDirectory, 'statuses' | 'priorities'>>({ statuses: [], priorities: [] });
+	readonly directory = computed<ITaskAutomationDirectory>(() => {
+		const base = this.baseDirectory();
+		const scoped = this.scopedChoices();
+		return { ...base, statuses: mergeChoices(base.statuses, scoped.statuses), priorities: mergeChoices(base.priorities, scoped.priorities) };
+	});
 	readonly templatesOpen = signal(false);
 	/** The rule being edited (or the new one), as the editor holds it. */
 	readonly editing = signal<ITaskAutomationDraft | null>(null);
@@ -598,6 +608,7 @@ export class TaskAutomationsPageComponent implements OnInit {
 	/** The pickers' requests of the current organization (an answer for the previous one is dropped). */
 	private directorySubscription?: Subscription;
 	private tasksSubscription?: Subscription;
+	private scopedSubscription?: Subscription;
 	/** The open rule's history and test requests (another rule's late answer is dropped). */
 	private runsSubscription?: Subscription;
 	private testSubscription?: Subscription;
@@ -608,10 +619,13 @@ export class TaskAutomationsPageComponent implements OnInit {
 			this.tasksSubscription?.unsubscribe();
 			this.runsSubscription?.unsubscribe();
 			this.testSubscription?.unsubscribe();
+			this.scopedSubscription?.unsubscribe();
 		});
 		this.load$
 			.pipe(
 				switchMap(() => {
+					// What was asked for the previous organization does not land in this one.
+					this.cancelPending();
 					this.view.set('loading');
 					return forkJoin({ templates: this.api.templates(), rules: this.api.list(this.organizationId()) }).pipe(
 						catchError((error: unknown) => {
@@ -665,11 +679,50 @@ export class TaskAutomationsPageComponent implements OnInit {
 			teams: this.directoryApi.teams(organizationId, tenantId)
 		})
 			.pipe(takeUntilDestroyed(this.destroyRef))
-			.subscribe((directory) => this.directory.set(directory));
+			.subscribe((directory) => this.baseDirectory.set(directory));
 		this.tasksSubscription = this.directoryApi
 			.tasks(organizationId, tenantId)
 			.pipe(takeUntilDestroyed(this.destroyRef))
 			.subscribe((tasks) => this.tasks.set(tasks));
+	}
+
+	/**
+	 * Offers the statuses and priorities of the project or team the editor's rule is narrowed to, beside the
+	 * organization's (the platform keeps a project's own statuses apart from the organization-wide ones).
+	 */
+	loadScopedChoices(scope: ITaskAutomationScope): void {
+		this.scopedSubscription?.unsubscribe();
+		const organizationId = this.organizationId();
+		const tenantId = (this.store.user?.tenantId as ID) ?? null;
+		if (!organizationId || !tenantId || (!scope.projectId && !scope.organizationTeamId)) {
+			this.scopedChoices.set({ statuses: [], priorities: [] });
+			return;
+		}
+		this.scopedSubscription = forkJoin({
+			statuses: this.directoryApi.statuses(organizationId, tenantId, scope),
+			priorities: this.directoryApi.priorities(organizationId, tenantId, scope)
+		}).subscribe((choices) => {
+			if (this.organizationId() === organizationId) this.scopedChoices.set(choices);
+		});
+	}
+
+	/** Stops what was asked for the organization or rule shown before. */
+	private cancelPending(): void {
+		for (const subscription of [
+			this.directorySubscription,
+			this.tasksSubscription,
+			this.runsSubscription,
+			this.testSubscription,
+			this.scopedSubscription
+		]) {
+			subscription?.unsubscribe();
+		}
+		this.scopedChoices.set({ statuses: [], priorities: [] });
+	}
+
+	/** Whether an answer is still the current organization's (a save that outlived a switch is not shown in the next). */
+	private stillIn(organizationId: ID | null): boolean {
+		return this.organizationId() === organizationId;
 	}
 
 	/** A template's own name or description in the user's language, else the API's English. */
@@ -698,6 +751,7 @@ export class TaskAutomationsPageComponent implements OnInit {
 
 	closeEditor(): void {
 		this.editing.set(null);
+		this.loadScopedChoices({});
 	}
 
 	/** Creates or updates the rule the editor holds; a refusal of the API is shown as it answers. */
@@ -712,6 +766,7 @@ export class TaskAutomationsPageComponent implements OnInit {
 		request$.subscribe({
 			next: (saved) => {
 				this.saving.set(false);
+				if (!this.stillIn(organizationId)) return;
 				this.rules.update((rules) =>
 					rules.some((rule) => rule.id === saved.id) ? rules.map((rule) => (rule.id === saved.id ? saved : rule)) : [...rules, saved]
 				);
@@ -720,6 +775,7 @@ export class TaskAutomationsPageComponent implements OnInit {
 			},
 			error: (error: unknown) => {
 				this.saving.set(false);
+				if (!this.stillIn(organizationId)) return;
 				this.actionError.set(apiErrorMessage(error) ?? 'TASK_AUTOMATIONS.ERRORS.SAVE');
 			}
 		});
@@ -728,15 +784,18 @@ export class TaskAutomationsPageComponent implements OnInit {
 	/** Switches a rule on or off; the switch goes back when the API refuses. */
 	toggle(rule: ITaskAutomationRule, isEnabled: boolean): void {
 		const ruleId = rule.id as ID;
+		const organizationId = this.organizationId();
 		this.setBusy(ruleId, true);
 		this.rules.update((rules) => rules.map((one) => (one.id === ruleId ? { ...one, isEnabled } : one)));
-		this.api.update(ruleId, { isEnabled }, this.organizationId()).subscribe({
+		this.api.update(ruleId, { isEnabled }, organizationId).subscribe({
 			next: (saved) => {
 				this.setBusy(ruleId, false);
+				if (!this.stillIn(organizationId)) return;
 				this.rules.update((rules) => rules.map((one) => (one.id === ruleId ? saved : one)));
 			},
 			error: (error: unknown) => {
 				this.setBusy(ruleId, false);
+				if (!this.stillIn(organizationId)) return;
 				this.rules.update((rules) => rules.map((one) => (one.id === ruleId ? { ...one, isEnabled: !isEnabled } : one)));
 				this.actionError.set(apiErrorMessage(error) ?? 'TASK_AUTOMATIONS.ERRORS.SAVE');
 			}
@@ -761,14 +820,16 @@ export class TaskAutomationsPageComponent implements OnInit {
 		const previous = this.rules();
 		const byId = new Map(previous.map((rule) => [rule.id as ID, rule]));
 		this.rules.set(ids.map((id) => byId.get(id)).filter((rule): rule is ITaskAutomationRule => !!rule));
+		const organizationId = this.organizationId();
 		this.reordering.set(true);
-		this.api.reorder(ids, this.organizationId()).subscribe({
+		this.api.reorder(ids, organizationId).subscribe({
 			next: (rules) => {
 				this.reordering.set(false);
-				this.rules.set(rules ?? []);
+				if (this.stillIn(organizationId)) this.rules.set(rules ?? []);
 			},
 			error: (error: unknown) => {
 				this.reordering.set(false);
+				if (!this.stillIn(organizationId)) return;
 				this.rules.set(previous);
 				this.actionError.set(apiErrorMessage(error) ?? 'TASK_AUTOMATIONS.ERRORS.REORDER');
 			}
@@ -777,15 +838,19 @@ export class TaskAutomationsPageComponent implements OnInit {
 
 	remove(rule: ITaskAutomationRule): void {
 		const ruleId = rule.id as ID;
+		const organizationId = this.organizationId();
 		this.confirmDelete.set(null);
-		this.api.remove(ruleId, this.organizationId()).subscribe({
+		this.api.remove(ruleId, organizationId).subscribe({
 			next: () => {
+				if (!this.stillIn(organizationId)) return;
 				this.rules.update((rules) => rules.filter((one) => one.id !== ruleId));
 				if (this.selectedId() === ruleId) this.selectedId.set(null);
 				if (this.editing()?.id === ruleId) this.editing.set(null);
 				this.toastr.success('TASK_AUTOMATIONS.DELETED', { name: rule.name });
 			},
-			error: (error: unknown) => this.actionError.set(apiErrorMessage(error) ?? 'TASK_AUTOMATIONS.ERRORS.DELETE')
+			error: (error: unknown) => {
+				if (this.stillIn(organizationId)) this.actionError.set(apiErrorMessage(error) ?? 'TASK_AUTOMATIONS.ERRORS.DELETE');
+			}
 		});
 	}
 

@@ -86,7 +86,7 @@ export function withNamed(choices: readonly ITaskAutomationChoice[], named: read
 						id="task-automation-project"
 						data-test="project"
 						[selected]="draft().projectId"
-						(selectedChange)="patch({ projectId: $event })"
+						(selectedChange)="patchScope({ projectId: $event })"
 					>
 						<nb-option [value]="null">{{ 'TASK_AUTOMATIONS.FORM.ANY_PROJECT' | translate }}</nb-option>
 						@for (choice of projects(); track choice.value) {
@@ -102,7 +102,7 @@ export function withNamed(choices: readonly ITaskAutomationChoice[], named: read
 						id="task-automation-team"
 						data-test="team"
 						[selected]="draft().organizationTeamId"
-						(selectedChange)="patch({ organizationTeamId: $event })"
+						(selectedChange)="patchScope({ organizationTeamId: $event })"
 					>
 						<nb-option [value]="null">{{ 'TASK_AUTOMATIONS.FORM.ANY_TEAM' | translate }}</nb-option>
 						@for (choice of teams(); track choice.value) {
@@ -436,6 +436,8 @@ export class TaskAutomationEditorComponent {
 	readonly saving = input(false);
 	readonly save = output<ITaskAutomationDraft>();
 	readonly cancel = output<void>();
+	/** The project and team the draft is narrowed to, when they change (and once for the draft given). */
+	readonly scopeChange = output<{ projectId: string | null; organizationTeamId: string | null }>();
 
 	protected readonly limits = TASK_AUTOMATION_LIMITS;
 	protected readonly standalone = { standalone: true };
@@ -457,8 +459,10 @@ export class TaskAutomationEditorComponent {
 	constructor() {
 		// A new rule to edit (another row, a saved copy) starts the form over.
 		effect(() => {
-			this.draft.set(this.copy(this.value()));
+			const draft = this.copy(this.value());
+			this.draft.set(draft);
 			this.tried.set(false);
+			this.scopeChange.emit({ projectId: draft.projectId, organizationTeamId: draft.organizationTeamId });
 		});
 	}
 
@@ -481,6 +485,13 @@ export class TaskAutomationEditorComponent {
 
 	patch(change: Partial<ITaskAutomationDraft>): void {
 		this.draft.update((draft) => ({ ...draft, ...change }));
+	}
+
+	/** Narrows the rule to a project or a team (the page then offers its own statuses and priorities too). */
+	patchScope(change: Pick<Partial<ITaskAutomationDraft>, 'projectId' | 'organizationTeamId'>): void {
+		this.patch(change);
+		const draft = this.draft();
+		this.scopeChange.emit({ projectId: draft.projectId, organizationTeamId: draft.organizationTeamId });
 	}
 
 	setTrigger(type: TaskAutomationTriggerEnum): void {

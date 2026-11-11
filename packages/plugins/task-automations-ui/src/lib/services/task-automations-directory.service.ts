@@ -40,6 +40,25 @@ export interface ITaskAutomationDirectory {
 
 const byLabel = (a: ITaskAutomationChoice, b: ITaskAutomationChoice) => a.label.localeCompare(b.label);
 
+/** The project or team a rule is narrowed to (its own statuses and priorities). */
+export interface ITaskAutomationScope {
+	projectId?: ID | null;
+	organizationTeamId?: ID | null;
+}
+
+function scopeParams(scope: ITaskAutomationScope): Record<string, string> {
+	return {
+		...(scope.projectId ? { projectId: String(scope.projectId) } : {}),
+		...(scope.organizationTeamId ? { organizationTeamId: String(scope.organizationTeamId) } : {})
+	};
+}
+
+/** Two choice lists as one: the first's choices, then the second's it does not hold (by value). */
+export function mergeChoices(first: readonly ITaskAutomationChoice[], second: readonly ITaskAutomationChoice[]): ITaskAutomationChoice[] {
+	const known = new Set(first.map((choice) => choice.value));
+	return [...first, ...second.filter((choice) => !known.has(choice.value))];
+}
+
 /** The platform's default statuses (`TaskStatusEnum`), every organization's whether or not it keeps rows. */
 export const DEFAULT_STATUS_CHOICES: ITaskAutomationChoice[] = Object.values(TaskStatusEnum)
 	.filter((value) => value !== TaskStatusEnum.CUSTOM)
@@ -102,18 +121,27 @@ export function taskChoice(task: Pick<ITask, 'id' | 'title' | 'prefix' | 'number
 export class TaskAutomationsDirectoryService {
 	private readonly http = inject(HttpClient);
 
-	statuses(organizationId: ID, tenantId: ID): Observable<ITaskAutomationChoice[]> {
+	/**
+	 * The statuses of the organization, or — with a scope — those of a project or a team (the route answers the
+	 * organization-wide rows when neither is named, so a project's own statuses need their own request).
+	 */
+	statuses(organizationId: ID, tenantId: ID, scope: ITaskAutomationScope = {}): Observable<ITaskAutomationChoice[]> {
 		return this.http
-			.get<IPagination<ITaskStatus>>(`${API_PREFIX}/task-statuses`, { params: toParams({ organizationId, tenantId }) })
+			.get<IPagination<ITaskStatus>>(`${API_PREFIX}/task-statuses`, {
+				params: toParams({ organizationId, tenantId, ...scopeParams(scope) })
+			})
 			.pipe(
 				map((page) => statusChoices(page?.items ?? [])),
 				catchError(() => of(statusChoices([])))
 			);
 	}
 
-	priorities(organizationId: ID, tenantId: ID): Observable<ITaskAutomationChoice[]> {
+	/** The priorities of the organization, or of a project or a team (as {@link statuses}). */
+	priorities(organizationId: ID, tenantId: ID, scope: ITaskAutomationScope = {}): Observable<ITaskAutomationChoice[]> {
 		return this.http
-			.get<IPagination<ITaskPriority>>(`${API_PREFIX}/task-priorities`, { params: toParams({ organizationId, tenantId }) })
+			.get<IPagination<ITaskPriority>>(`${API_PREFIX}/task-priorities`, {
+				params: toParams({ organizationId, tenantId, ...scopeParams(scope) })
+			})
 			.pipe(
 				map((page) => priorityChoices(page?.items ?? [])),
 				catchError(() => of(priorityChoices([])))

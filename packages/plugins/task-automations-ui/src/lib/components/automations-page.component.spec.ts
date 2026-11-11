@@ -8,7 +8,7 @@ jest.mock('@gauzy/ui-core/core', () => ({
 }));
 
 import { TestBed } from '@angular/core/testing';
-import { of, throwError } from 'rxjs';
+import { of, Subject, throwError } from 'rxjs';
 import {
 	ITaskAutomationRule,
 	ITaskAutomationTemplate,
@@ -278,6 +278,40 @@ describe('TaskAutomationsPageComponent', () => {
 		expect(component.filteredTasks().map((task) => task.value)).toEqual(['t-2']);
 		component.taskFilter.set('');
 		expect(component.filteredTasks()).toHaveLength(2);
+	});
+
+	it('offers the statuses and priorities of the project the edited rule is narrowed to', () => {
+		const { component } = render();
+		directory.statuses.mockReturnValue(of([{ value: 'shipped', label: 'Shipped' }]));
+		directory.priorities.mockReturnValue(of([{ value: 'p0', label: 'P0' }]));
+		component.loadScopedChoices({ projectId: 'project-1', organizationTeamId: null });
+		expect(directory.statuses).toHaveBeenLastCalledWith('org-1', 'tenant-1', { projectId: 'project-1', organizationTeamId: null });
+		expect(component.directory().statuses.map((choice) => choice.value)).toEqual(['done', 'shipped']);
+		expect(component.directory().priorities.map((choice) => choice.value)).toEqual(['p0']);
+		component.loadScopedChoices({});
+		expect(component.directory().statuses.map((choice) => choice.value)).toEqual(['done']);
+	});
+
+	it('drops an answer that comes back after the organization changed', () => {
+		const { component } = render();
+		const save$ = new Subject<ITaskAutomationRule>();
+		api.create.mockReturnValue(save$);
+		component.startBlank();
+		component.save({ ...(component.editing() as ITaskAutomationDraft), name: 'In A' });
+		component.organizationId.set('org-2');
+		save$.next(rule('late'));
+		expect(component.rules().map((one) => one.id)).toEqual(['a', 'b']);
+	});
+
+	it('drops another rule’s late history', () => {
+		const late$ = new Subject<never[]>();
+		api.runs.mockReturnValueOnce(late$).mockReturnValue(of([]));
+		const { component } = render();
+		component.open(component.rules()[0]);
+		component.open(component.rules()[1]);
+		late$.next([]);
+		expect(component.selectedId()).toBe('b');
+		expect(component.runsState()).toBe('ready');
 	});
 
 	it('says when the runs cannot be read', () => {
