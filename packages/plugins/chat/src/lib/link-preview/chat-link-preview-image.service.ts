@@ -61,13 +61,14 @@ export class ChatLinkPreviewImageService {
 	}
 
 	/**
-	 * The picture of a link's preview, for a caller of the chat routes.
+	 * The picture of a link's preview, for a caller of the chat routes, or null when there is none to serve: no ready
+	 * preview of the link, no picture named, or a picture that could not be fetched. (The route answers that 204, so a
+	 * client tells "no picture for this link" from "no pictures at all", which is 404.)
 	 *
-	 * @throws NotFoundException while the pictures (or the previews) are off, and for a link with no ready preview, no
-	 * picture, or a picture that could not be fetched; BadRequestException for a value that is not an http(s) link;
-	 * 429 when the caller's fetch budget is spent.
+	 * @throws NotFoundException while the pictures (or the previews) are off; BadRequestException for a value that is
+	 * not an http(s) link; 429 when the caller's fetch budget is spent; 503 when too many pictures are being fetched.
 	 */
-	async image(caller: IChatCaller, raw: string): Promise<IChatLinkPreviewImage> {
+	async image(caller: IChatCaller, raw: string): Promise<IChatLinkPreviewImage | null> {
 		if (!this.options.enabled || !this.options.images) throw new NotFoundException('The requested record was not found');
 		let href: string;
 		try {
@@ -79,13 +80,13 @@ export class ChatLinkPreviewImageService {
 		const urlHash = previewUrlHash(href);
 		const row = await this.dataSource.getRepository(ChatLinkPreview).findOne({ where: { tenantId: caller.tenantId, urlHash } });
 		const image = imageOfRow(row);
-		if (!image) throw new NotFoundException('The requested record was not found');
+		if (!image) return null;
 
 		const key = `${caller.tenantId}:${urlHash}`;
 		const cached = this.cache.get(key);
 		if (cached && cached.image === image && cached.until > Date.now()) {
 			this.touch(key, cached);
-			return found(cached.picture);
+			return cached.picture;
 		}
 		// Shared by link and picture: a refreshed preview that names another picture does not join the old one's fetch.
 		const fetchKey = `${key}|${image}`;
@@ -100,9 +101,10 @@ export class ChatLinkPreviewImageService {
 			running = this.fetchAndKeep(key, image).finally(() => this.inFlight.delete(fetchKey));
 			this.inFlight.set(fetchKey, running);
 		}
-		return found(await running);
+		return running;
 	}
 
+	/** Fetches a picture and keeps what came of it: the picture for a day, a failure for ten minutes. Never throws. */
 	private async fetchAndKeep(key: string, image: string): Promise<IChatLinkPreviewImage | null> {
 		let outcome: LinkPreviewImageOutcome;
 		try {
@@ -127,11 +129,13 @@ export class ChatLinkPreviewImageService {
 		}
 	}
 
+	/** Marks an entry the most recently served. */
 	private touch(key: string, entry: ICachedImage): void {
 		this.cache.delete(key);
 		this.cache.set(key, entry);
 	}
 
+	/** Drops an entry and the bytes it held. */
 	private drop(key: string): void {
 		const entry = this.cache.get(key);
 		if (!entry) return;
@@ -145,7 +149,3 @@ export class ChatLinkPreviewImageService {
 	}
 }
 
-function found(picture: IChatLinkPreviewImage | null): IChatLinkPreviewImage {
-	if (!picture) throw new NotFoundException('The requested record was not found');
-	return picture;
-}

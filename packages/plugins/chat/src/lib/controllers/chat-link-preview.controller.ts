@@ -39,6 +39,7 @@ export class ChatLinkPreviewController {
 		summary:
 			'The preview of a link (title, description, image, icon): ready from the cache, pending while the server fetches it (ask again in a moment), or unavailable.'
 	})
+	/** The preview of a link, for the caller. */
 	preview(@Query() query: ChatLinkPreviewQueryDTO) {
 		return this.previews.preview(this.access.caller(), query.url);
 	}
@@ -48,13 +49,19 @@ export class ChatLinkPreviewController {
 	@UseValidationPipe({ whitelist: true, transform: true })
 	@ApiOperation({
 		summary:
-			'The picture of a link preview, served by the platform so the browser never loads it from the linked site: PNG, JPEG, GIF, WebP or AVIF, at most 1 MiB. 404 unless GAUZY_CHAT_LINK_PREVIEW_IMAGES_ENABLED=true, and for a link with no ready preview or no picture.'
+			'The picture of a link preview, served by the platform so the browser never loads it from the linked site: PNG, JPEG, GIF, WebP or AVIF, at most 1 MiB. 204 for a link with no ready preview, no picture, or one that could not be fetched; 404 unless GAUZY_CHAT_LINK_PREVIEW_IMAGES_ENABLED=true.'
 	})
-	async image(@Query() query: ChatLinkPreviewQueryDTO, @Res({ passthrough: true }) response: ChatImageResponse): Promise<StreamableFile> {
+	/** The picture of a link's preview, as bytes the browser may not sniff, run or keep; 204 when there is none. */
+	async image(@Query() query: ChatLinkPreviewQueryDTO, @Res({ passthrough: true }) response: ChatImageResponse): Promise<StreamableFile | undefined> {
 		const picture = await this.images.image(this.access.caller(), query.url);
+		// Never kept by the browser (a picture is the platform's answer for this tenant, and the client keeps it in
+		// memory itself); the platform keeps it for the day.
+		response.setHeader('Cache-Control', 'no-store');
+		if (!picture) {
+			response.status(204);
+			return undefined;
+		}
 		response.setHeader('Content-Type', picture.type);
-		// The reader's own browser may keep it for the day the platform does; nothing shared may.
-		response.setHeader('Cache-Control', 'private, max-age=86400');
 		response.setHeader('X-Content-Type-Options', 'nosniff');
 		response.setHeader('Content-Security-Policy', "default-src 'none'; sandbox");
 		response.setHeader('Content-Disposition', 'inline');
@@ -65,4 +72,5 @@ export class ChatLinkPreviewController {
 /** The part of the response the picture route sets. */
 interface ChatImageResponse {
 	setHeader(name: string, value: string): void;
+	status(code: number): unknown;
 }

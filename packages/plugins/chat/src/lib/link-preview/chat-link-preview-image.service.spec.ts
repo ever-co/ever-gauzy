@@ -63,10 +63,11 @@ describe('ChatLinkPreviewImageService', () => {
 		const { service, ready, fetcher } = setup();
 		ready('https://www.example.com/no-picture', null);
 		ready(LINK, IMAGE, 'tenant-b');
-		await expect(service.image(caller(), 'https://www.example.com/no-picture')).rejects.toBeInstanceOf(NotFoundException);
-		await expect(service.image(caller(), 'https://www.example.com/never-previewed')).rejects.toBeInstanceOf(NotFoundException);
+		// No picture to serve (the route answers 204, not the 404 of the switch being off).
+		await expect(service.image(caller(), 'https://www.example.com/no-picture')).resolves.toBeNull();
+		await expect(service.image(caller(), 'https://www.example.com/never-previewed')).resolves.toBeNull();
 		// Another tenant's preview is not this tenant's.
-		await expect(service.image(caller('tenant-a'), LINK)).rejects.toBeInstanceOf(NotFoundException);
+		await expect(service.image(caller('tenant-a'), LINK)).resolves.toBeNull();
 		expect(fetcher).not.toHaveBeenCalled();
 
 		await expect(service.image(caller('tenant-b'), LINK)).resolves.toEqual({ type: 'image/png', body: PICTURE });
@@ -82,16 +83,16 @@ describe('ChatLinkPreviewImageService', () => {
 		expect(fetcher).toHaveBeenCalledTimes(1);
 	});
 
-	it('answers 404 for a picture that could not be fetched, and does not ask for it again for a while', async () => {
+	it('has no picture for one that could not be fetched, and does not ask for it again for a while', async () => {
 		const { service, ready, fetcher } = setup({ fetcher: async () => ({ ok: false, reason: 'type' }) });
 		ready(LINK, IMAGE);
-		await expect(service.image(caller(), LINK)).rejects.toBeInstanceOf(NotFoundException);
-		await expect(service.image(caller(), LINK)).rejects.toBeInstanceOf(NotFoundException);
+		await expect(service.image(caller(), LINK)).resolves.toBeNull();
+		await expect(service.image(caller(), LINK)).resolves.toBeNull();
 		expect(fetcher).toHaveBeenCalledTimes(1);
 
 		jest.useFakeTimers({ now: Date.now() + CHAT_LINK_PREVIEW_IMAGE_FAILURE_TTL_MS + 1000, doNotFake: ['queueMicrotask', 'nextTick', 'setImmediate'] });
 		try {
-			await expect(service.image(caller(), LINK)).rejects.toBeInstanceOf(NotFoundException);
+			await expect(service.image(caller(), LINK)).resolves.toBeNull();
 			expect(fetcher).toHaveBeenCalledTimes(2);
 		} finally {
 			jest.useRealTimers();

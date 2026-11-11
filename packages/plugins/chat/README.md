@@ -171,10 +171,11 @@ platform, so a client shows it without the reader's browser loading it from the
 linked site. The route takes the link, never the picture's address, so it fetches
 nothing a preview did not name. Only PNG, JPEG, GIF, WebP or AVIF is served, by
 the bytes (never SVG), at most 1 MiB, with `X-Content-Type-Options: nosniff`, a
-`sandbox` CSP and `Cache-Control: private, max-age=86400`. Pictures are kept in
+`sandbox` CSP and `Cache-Control: no-store`. Pictures are kept in
 memory per process (256 pictures, 32 MiB, a day each; a picture that could not
 be fetched is not asked for again for ten minutes) and spend from the same
-budget. 404 for a link with no ready preview or no picture.
+budget. 204 for a link with no ready preview, no picture, or one that could not
+be fetched; 404 only while the pictures are off.
 
 On, the API makes outbound requests to whatever sites the links posted in chat
 point at, on someone's ask. Off, it makes none.

@@ -1,4 +1,4 @@
-// cspell:ignore ftypavif ftypavis WEBPVP
+// cspell:ignore ftypavif ftypavis WEBPVP miaf
 import { createServer, IncomingMessage, Server, ServerResponse } from 'node:http';
 import type { AddressInfo, Socket } from 'node:net';
 import { isPublicAddress } from '../egress/egress-address';
@@ -16,6 +16,21 @@ const SVG = Buffer.from('<svg xmlns="http://www.w3.org/2000/svg" onload="alert(1
 describe('sniffImageType', () => {
 	it('names the raster types by their bytes', () => {
 		expect([PNG, JPEG, GIF, WEBP, AVIF].map(sniffImageType)).toEqual(['image/png', 'image/jpeg', 'image/gif', 'image/webp', 'image/avif']);
+	});
+
+	it('names AVIF by a compatible brand too, within its file-type box', () => {
+		const box = (major: string, compatible: string[]) => {
+			const size = 16 + compatible.length * 4;
+			const head = Buffer.alloc(4);
+			head.writeUInt32BE(size, 0);
+			return Buffer.concat([head, Buffer.from(`ftyp${major}`), Buffer.alloc(4), Buffer.from(compatible.join('')), Buffer.alloc(32)]);
+		};
+		expect(sniffImageType(box('mif1', ['mif1', 'avif', 'miaf']))).toBe('image/avif');
+		expect(sniffImageType(box('mif1', ['mif1', 'miaf']))).toBeNull();
+		// A brand after the end of the box is not one of its brands.
+		const short = box('mif1', ['mif1']);
+		short.write('avif', 20, 'latin1');
+		expect(sniffImageType(short)).toBeNull();
 	});
 
 	it('names nothing else: SVG, HTML, text, too short', () => {

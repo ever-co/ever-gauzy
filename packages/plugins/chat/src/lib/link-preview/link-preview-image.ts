@@ -44,7 +44,20 @@ export function sniffImageType(body: Buffer): string | null {
 	if (starts([0xff, 0xd8, 0xff])) return 'image/jpeg';
 	if (body.toString('latin1', 0, 6) === 'GIF87a' || body.toString('latin1', 0, 6) === 'GIF89a') return 'image/gif';
 	if (body.toString('latin1', 0, 4) === 'RIFF' && body.toString('latin1', 8, 12) === 'WEBP') return 'image/webp';
-	const brand = body.toString('latin1', 4, 12);
-	if (brand === 'ftypavif' || brand === 'ftypavis') return 'image/avif';
+	if (isAvif(body)) return 'image/avif';
 	return null;
+}
+
+/**
+ * Whether the bytes start with an ISO file-type box (`ftyp`) that names AVIF (`avif` or `avis`) as its major brand or
+ * one of its compatible brands (an AVIF file may say `mif1` first). Only the box itself is read, within the bytes.
+ */
+function isAvif(body: Buffer): boolean {
+	if (body.length < 16 || body.toString('latin1', 4, 8) !== 'ftyp') return false;
+	const size = body.readUInt32BE(0);
+	// The box ends where it says, never past the bytes read, nor past a sane length for a list of brands.
+	const end = Math.min(size >= 16 ? size : 16, body.length, 256);
+	const brands = [body.toString('latin1', 8, 12)];
+	for (let at = 16; at + 4 <= end; at += 4) brands.push(body.toString('latin1', at, at + 4));
+	return brands.includes('avif') || brands.includes('avis');
 }

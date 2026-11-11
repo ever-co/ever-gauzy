@@ -2,9 +2,10 @@
 jest.mock('@gauzy/ui-core/core', () => ({ Store: class Store {} }));
 import { HttpErrorResponse } from '@angular/common/http';
 import { TestBed } from '@angular/core/testing';
-import { Observable, of, Subject, throwError } from 'rxjs';
+import { BehaviorSubject, Observable, of, Subject, throwError } from 'rxjs';
 import { ChatLinkPreviewStatusEnum, IChatLinkPreview } from '@gauzy/contracts';
 import { CHAT_LINK_PREVIEW_CONCURRENCY, CHAT_LINK_PREVIEW_PICTURES_MAX, CHAT_LINK_PREVIEW_RETRY_MS, ChatLinkPreviewsService, textOf } from './chat-link-previews.service';
+import { ChatAvailabilityService, ChatScope } from './chat-availability.service';
 import { ChatUiService } from './chat-ui.service';
 
 const LINK = 'https://www.example.com/post';
@@ -35,7 +36,12 @@ describe('ChatLinkPreviewsService', () => {
 		linkPreview = jest.fn((url: string) => answer(url));
 		linkPreviewImage = jest.fn((url: string) => picture(url));
 		(URL as unknown as { createObjectURL: (blob: Blob) => string }).createObjectURL = jest.fn(() => 'blob:picture');
-		TestBed.configureTestingModule({ providers: [{ provide: ChatUiService, useValue: { linkPreview, linkPreviewImage } }] });
+		TestBed.configureTestingModule({
+			providers: [
+				{ provide: ChatUiService, useValue: { linkPreview, linkPreviewImage } },
+				{ provide: ChatAvailabilityService, useValue: { scope$: new BehaviorSubject<ChatScope | null>({ userId: 'u1', organizationId: 'o1' }) } }
+			]
+		});
 		service = TestBed.inject(ChatLinkPreviewsService);
 	});
 
@@ -142,6 +148,7 @@ describe('ChatLinkPreviewsService', () => {
 
 describe('ChatLinkPreviewsService: pictures', () => {
 	let picture: jest.Mock;
+	let scope$: BehaviorSubject<ChatScope | null>;
 	let service: ChatLinkPreviewsService;
 	const flush = async () => {
 		for (let n = 0; n < 3; n++) await new Promise<void>((resolve) => queueMicrotask(resolve));
@@ -149,13 +156,16 @@ describe('ChatLinkPreviewsService: pictures', () => {
 
 	beforeEach(() => {
 		picture = jest.fn(() => of(new Blob(['bytes'], { type: 'image/png' })));
+		scope$ = new BehaviorSubject<ChatScope | null>({ userId: 'u1', organizationId: 'o1' });
 		(URL as unknown as { createObjectURL: (blob: Blob) => string }).createObjectURL = jest.fn(() => 'blob:picture');
+		(URL as unknown as { revokeObjectURL: (url: string) => void }).revokeObjectURL = jest.fn();
 		TestBed.configureTestingModule({
 			providers: [
 				{
 					provide: ChatUiService,
 					useValue: { linkPreview: (url: string) => of(ready(url, { imageAlt: 'A cover' })), linkPreviewImage: picture }
-				}
+				},
+				{ provide: ChatAvailabilityService, useValue: { scope$ } }
 			]
 		});
 		service = TestBed.inject(ChatLinkPreviewsService);
@@ -184,6 +194,40 @@ describe('ChatLinkPreviewsService: pictures', () => {
 		expect(previews[0]()?.imageUrl).toBeNull();
 		expect(previews[previews.length - 1]()?.imageUrl).toBe(`blob:picture-${CHAT_LINK_PREVIEW_PICTURES_MAX}`);
 		expect(revoke).toHaveBeenCalledTimes(1);
+	});
+
+	it('keeps asking for the pictures of other links when one link has none to serve (204)', async () => {
+		picture.mockImplementationOnce(() => of(null)).mockImplementation(() => of(new Blob(['bytes'], { type: 'image/png' })));
+		const first = service.preview(LINK);
+		await flush();
+		const second = service.preview('https://www.example.com/other');
+		await flush();
+		expect(picture).toHaveBeenCalledTimes(2);
+		expect(first()?.imageUrl).toBeNull();
+		expect(second()?.imageUrl).toBe('blob:picture');
+	});
+
+	it('drops what it kept when the person or the organization changes, and the answers still on their way', async () => {
+		const revoke = (URL as unknown as { revokeObjectURL: jest.Mock }).revokeObjectURL;
+		const before = service.preview(LINK);
+		await flush();
+		expect(before()?.imageUrl).toBe('blob:picture');
+		// An answer for the old scope still on its way when the scope changes.
+		const late = new Subject<Blob>();
+		picture.mockImplementationOnce(() => late);
+		const slow = service.preview('https://www.example.com/slow');
+		await flush();
+		scope$.next({ userId: 'u1', organizationId: 'o2' });
+		expect(revoke).toHaveBeenCalledWith('blob:picture');
+		expect(before()?.imageUrl).toBeNull();
+		late.next(new Blob(['late'], { type: 'image/png' }));
+		late.complete();
+		expect(slow()?.imageUrl ?? null).toBeNull();
+		// The new scope asks again.
+		const after = service.preview(LINK);
+		expect(after).not.toBe(before);
+		await flush();
+		expect(after()?.title).toBe('A post');
 	});
 
 	it('asks for no more pictures once the platform says it serves none', async () => {

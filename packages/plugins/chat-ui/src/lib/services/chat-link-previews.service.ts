@@ -1,6 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { inject, Injectable, Signal, signal, WritableSignal } from '@angular/core';
 import { ChatLinkPreviewStatusEnum, IChatLinkPreview } from '@gauzy/contracts';
+import { ChatAvailabilityService } from './chat-availability.service';
 import { ChatUiService } from './chat-ui.service';
 
 /** What a link card shows of a preview: the page's own words, as text, and its picture once the platform served it. */
@@ -36,13 +37,20 @@ type Ask = { url: string; attempt: number; kind: 'preview' | 'image' };
  * - `pending`, or a failure that may pass (no connection, 429, 5xx): asked again after 2, 4 and 6 seconds, then given
  *   up on; the card stays as it is meanwhile.
  * - `unavailable`, another refusal: the card stays as it is (the link alone).
- * - 404 for a preview: the platform's previews are off; 404 for a picture: its pictures are off (or it has none for
- *   that link). Nothing more of that kind is asked this session, after the first 404 of the pictures route for a link
- *   with a ready picture.
+ * - 404 for a preview: the platform's previews are off; 404 for a picture: its pictures are off. Nothing more of that
+ *   kind is asked until the person or the organization changes. A link with no picture to serve answers 204: that link
+ *   only stays text.
+ *
+ * Everything is kept per person and organization (the chat's scope): when either changes, the previews and pictures
+ * kept are dropped (their `blob:` URLs revoked), the switches read again, and answers still on their way for the old
+ * scope are not applied.
  */
 @Injectable({ providedIn: 'root' })
 export class ChatLinkPreviewsService {
 	private readonly api = inject(ChatUiService);
+	private readonly availability = inject(ChatAvailabilityService);
+	/** Counts the scopes seen: an answer to an ask of an earlier one is dropped. */
+	private generation = 0;
 	private readonly previews = new Map<string, WritableSignal<ChatLinkPreviewText | null>>();
 	private readonly waiting: Ask[] = [];
 	private running = 0;
@@ -53,6 +61,11 @@ export class ChatLinkPreviewsService {
 	/** The pictures kept, by link, the least recently shown first (a `Map` keeps insertion order). */
 	private readonly pictures = new Map<string, { objectUrl: string; bytes: number }>();
 	private pictureBytes = 0;
+
+	constructor() {
+		// The service lives as long as the app: so does this subscription.
+		this.availability.scope$.subscribe(() => this.reset());
+	}
 
 	/**
 	 * The preview text of a link: `null` until (and unless) the platform has one. The first call for a link asks for
@@ -85,10 +98,13 @@ export class ChatLinkPreviewsService {
 		}
 	}
 
+	/** Asks the platform for a link's preview, and applies the answer to its card (in the scope it was asked in). */
 	private ask({ url, attempt }: Ask): void {
 		const done = this.started();
+		const generation = this.generation;
 		this.api.linkPreview(url).subscribe({
 			next: (answer) => {
+				if (generation !== this.generation) return done();
 				const text = answer?.status === ChatLinkPreviewStatusEnum.READY ? textOf(answer) : null;
 				if (text) {
 					this.previews.get(url)?.set(text);
@@ -98,6 +114,7 @@ export class ChatLinkPreviewsService {
 				done();
 			},
 			error: (error: unknown) => {
+				if (generation !== this.generation) return done();
 				if (error instanceof HttpErrorResponse && error.status === 404) {
 					// The platform's previews are off: nothing more is asked this session.
 					this.off = true;
@@ -112,10 +129,14 @@ export class ChatLinkPreviewsService {
 		});
 	}
 
+	/** Asks the platform for a preview's picture, and shows it on the card from a `blob:` URL of the answer. */
 	private askImage({ url, attempt }: Ask): void {
 		const done = this.started();
+		const generation = this.generation;
 		this.api.linkPreviewImage(url).subscribe({
 			next: (blob) => {
+				if (generation !== this.generation) return done();
+				// No body (204): this link has no picture to serve; the card stays text.
 				const preview = this.previews.get(url);
 				const current = preview?.();
 				if (preview && current && blob?.size) {
@@ -126,10 +147,9 @@ export class ChatLinkPreviewsService {
 				done();
 			},
 			error: (error: unknown) => {
+				if (generation !== this.generation) return done();
 				if (error instanceof HttpErrorResponse && error.status === 404) {
-					// No picture for this link, or the platform serves none: the card stays text. The pictures route
-					// answers 404 for every link while its switch is off, so a 404 for a link whose preview names a picture
-					// stops the picture asks for the session.
+					// The platform serves no pictures (its switch is off): none is asked for again in this scope.
 					this.imagesOff = true;
 				} else if (isPassing(error)) {
 					this.retry({ url, attempt, kind: 'image' });
@@ -171,6 +191,19 @@ export class ChatLinkPreviewsService {
 		if (preview && current?.imageUrl === picture.objectUrl) preview.set({ ...current, imageUrl: null });
 	}
 
+	/**
+	 * Drops everything kept for the scope that ended (previews, pictures and their `blob:` URLs, the asks waiting) and
+	 * reads the switches again; an answer already on its way is dropped when it comes (`generation`).
+	 */
+	private reset(): void {
+		this.generation++;
+		for (const url of [...this.pictures.keys()]) this.releasePicture(url);
+		this.previews.clear();
+		this.waiting.length = 0;
+		this.off = false;
+		this.imagesOff = false;
+	}
+
 	/** Counts an ask as running; answers the function that counts it done (once). */
 	private started(): () => void {
 		this.running++;
@@ -186,8 +219,9 @@ export class ChatLinkPreviewsService {
 	/** Asks again later (each time a little later), while there are asks left. */
 	private retry(ask: Ask): void {
 		if (ask.attempt >= CHAT_LINK_PREVIEW_RETRIES) return;
+		const generation = this.generation;
 		setTimeout(() => {
-			if (this.off) return;
+			if (this.off || generation !== this.generation) return;
 			this.waiting.push({ ...ask, attempt: ask.attempt + 1 });
 			this.next();
 		}, CHAT_LINK_PREVIEW_RETRY_MS * (ask.attempt + 1));
