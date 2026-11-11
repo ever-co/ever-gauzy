@@ -32,6 +32,10 @@ export class EventOutboxDispatchWorker extends QueueWorkerHost {
 	private readonly logger = new Logger(EventOutboxDispatchWorker.name);
 	private readonly dispatcher: EventOutboxDispatcher;
 
+	/**
+	 * @param eventOutboxService The outbox the pass claims from and records in.
+	 * @param registry The consumers the pass hands each event to.
+	 */
 	constructor(eventOutboxService: EventOutboxService, registry: EventConsumerRegistry) {
 		super();
 		// Built here rather than injected, so the worker keeps the two collaborators the scheduler's

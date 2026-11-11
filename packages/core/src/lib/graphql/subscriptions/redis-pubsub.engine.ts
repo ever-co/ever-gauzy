@@ -93,6 +93,10 @@ export class RedisGraphqlPubSubEngine implements GraphqlPubSubEngine {
 	private listening = false;
 	private closed = false;
 
+	/**
+	 * @param options The two connections and the channel prefix; the engine listens to the connections' events at
+	 * once and subscribes when {@link start} is called.
+	 */
 	constructor(private readonly options: RedisGraphqlPubSubEngineOptions) {
 		this.options.subscriber.on('pmessage', (_pattern, channel, message) => this.receive(channel, message));
 		this.options.subscriber.on('error', (error) => this.logger.warn(`Redis subscriber: ${error.message}`));
@@ -121,6 +125,13 @@ export class RedisGraphqlPubSubEngine implements GraphqlPubSubEngine {
 		this.listening = true;
 	}
 
+	/**
+	 * Publishes one payload to every process through Redis, and to this process's sockets directly while this
+	 * process does not hear Redis or Redis refuses the publish.
+	 *
+	 * @param topic The topic, `<eventName>:<tenantId>`.
+	 * @param payload The envelope.
+	 */
 	async publish(topic: string, payload: unknown): Promise<void> {
 		if (this.closed) {
 			return;
@@ -150,6 +161,12 @@ export class RedisGraphqlPubSubEngine implements GraphqlPubSubEngine {
 		}
 	}
 
+	/**
+	 * Opens a stream of one topic, served by this process's broker (which Redis messages feed).
+	 *
+	 * @param topic The topic.
+	 * @returns The iterator.
+	 */
 	asyncIterableIterator<T>(topic: string): AsyncIterableIterator<T> {
 		return this.local.asyncIterableIterator<T>(topic);
 	}
@@ -159,6 +176,9 @@ export class RedisGraphqlPubSubEngine implements GraphqlPubSubEngine {
 		return this.local.topics().reduce((total, topic) => total + this.local.subscriberCount(topic), 0);
 	}
 
+	/**
+	 * Ends every open stream and closes both connections, once.
+	 */
 	close(): void {
 		if (this.closed) {
 			return;
@@ -169,6 +189,12 @@ export class RedisGraphqlPubSubEngine implements GraphqlPubSubEngine {
 		void this.options.publisher.quit().catch(() => undefined);
 	}
 
+	/**
+	 * Hands a message heard on Redis to this process's broker, under the topic the channel names.
+	 *
+	 * @param channel The Redis channel, `<prefix><topic>`.
+	 * @param message The encoded payload.
+	 */
 	private receive(channel: string, message: string): void {
 		if (this.closed || !channel.startsWith(this.options.channelPrefix)) {
 			return;

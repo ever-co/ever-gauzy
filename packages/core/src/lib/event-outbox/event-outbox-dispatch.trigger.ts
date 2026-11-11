@@ -57,10 +57,12 @@ abstract class AppendDrivenDispatch implements OnModuleInit, OnModuleDestroy {
 
 	constructor(protected readonly signal: EventOutboxAppendSignal) {}
 
+	/** Starts listening to appends, and reports this process's delivery mode through the signal. */
 	onModuleInit(): void {
 		this.unlisten = this.signal.listen(() => this.request(), this.mode);
 	}
 
+	/** Stops listening and cancels the timers that are armed. */
 	onModuleDestroy(): void {
 		this.stopped = true;
 		this.unlisten?.();
@@ -101,6 +103,11 @@ abstract class AppendDrivenDispatch implements OnModuleInit, OnModuleDestroy {
 		}
 	}
 
+	/**
+	 * Asks for one drain, logging (never throwing) a failure to ask.
+	 *
+	 * @param followUp Whether this is the second ask, a second after the first.
+	 */
 	private fire(followUp: boolean): void {
 		if (this.stopped) {
 			return;
@@ -138,6 +145,7 @@ export class EventOutboxQueueDispatchTrigger extends AppendDrivenDispatch {
 		super(signal);
 	}
 
+	/** Listens to appends only where there is a queue service to ask. */
 	override onModuleInit(): void {
 		// Without a queue service there is nothing to ask, and claiming the `queue` mode would report a
 		// prompt delivery this process cannot make.
@@ -146,6 +154,12 @@ export class EventOutboxQueueDispatchTrigger extends AppendDrivenDispatch {
 		}
 	}
 
+	/**
+	 * Enqueues one draining pass on the outbox queue, under a job id shared by every request in the same quarter
+	 * second.
+	 *
+	 * @param followUp Whether this is the second ask, a second after the first.
+	 */
 	protected async dispatch(followUp: boolean): Promise<void> {
 		if (!this.queue) {
 			return;
@@ -192,12 +206,14 @@ export class EventOutboxInlineDispatch extends AppendDrivenDispatch implements O
 		super(signal);
 	}
 
+	/** Starts the sweep once the application is up, from the root async context. */
 	onApplicationBootstrap(): void {
 		this.sweepTimer = this.root.runInAsyncScope(() =>
 			unref(setInterval(() => void this.dispatch(), EVENT_OUTBOX_INLINE_SWEEP_MS))
 		);
 	}
 
+	/** Stops listening, cancels the timers and the sweep. */
 	override onModuleDestroy(): void {
 		super.onModuleDestroy();
 		clearInterval(this.sweepTimer);
