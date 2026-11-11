@@ -49,7 +49,7 @@ export const BULK_DELETE_CONCURRENCY = 4;
 export const SHORTCUT_SEQUENCE_TIMEOUT_MS = 1_200;
 
 /** The relations a page of tasks carries (the platform's allowlist). */
-export const TASK_VIEWS_RELATIONS = ['members', 'members.user', 'tags', 'project', 'taskStatus', 'taskPriority', 'taskSize'];
+export const TASK_VIEWS_RELATIONS = ['members', 'members.user', 'tags', 'project', 'teams', 'organizationSprint', 'taskStatus', 'taskPriority', 'taskSize'];
 
 /** The most manual-order entries a view keeps (the platform's limit). */
 export const TASK_VIEW_ORDER_MAX = 5000;

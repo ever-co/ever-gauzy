@@ -93,8 +93,9 @@ export class GoToTaskBoxComponent {
 		} finally {
 			this.busy.set(false);
 		}
-		if (!result.opened) {
-			this.message.set({ key: result.messageKey, params: result.params });
+		if (result.opened === false) {
+			const refused = result as Extract<GoToResult, { opened: false }>;
+			this.message.set({ key: refused.messageKey, params: refused.params });
 			return;
 		}
 		if (result.outcome?.kind === 'moved') {
