@@ -1,5 +1,11 @@
 import { Test } from '@nestjs/testing';
-import { GraphqlPubSub, SubscriptionCatalogue } from '@gauzy/core';
+import {
+	FeatureFlagGuard,
+	GraphqlPubSub,
+	PermissionGuard,
+	SubscriptionCatalogue,
+	TenantPermissionGuard
+} from '@gauzy/core';
 import { RealtimeAudience } from '../realtime-audience';
 import { RealtimeResolver } from './realtime.resolver';
 
@@ -23,7 +29,15 @@ describe('RealtimeResolver, as Nest builds it', () => {
 				},
 				RealtimeResolver
 			]
-		}).compile();
+		})
+			// The guards run per request; what is under test is how the resolver itself is built.
+			.overrideGuard(TenantPermissionGuard)
+			.useValue({ canActivate: () => true })
+			.overrideGuard(PermissionGuard)
+			.useValue({ canActivate: () => true })
+			.overrideGuard(FeatureFlagGuard)
+			.useValue({ canActivate: () => true })
+			.compile();
 
 		const resolver = moduleRef.get(RealtimeResolver);
 		const catalogue = moduleRef.get(SubscriptionCatalogue);
