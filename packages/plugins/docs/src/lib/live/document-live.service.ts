@@ -236,10 +236,12 @@ export class DocumentLiveService implements OnModuleInit, OnModuleDestroy, IDocu
 		this.unregister?.();
 		this.events?.unsubscribe();
 		for (const live of Array.from(this.live.values())) {
-			await this.enqueue(live, () => this.drain(live));
+			// The sessions close first, so no edit arrives while the page drains; their request contexts stay
+			// usable for the save.
 			for (const session of Array.from(live.sessions.values())) {
 				this.close(live, session, DocumentLiveReasonEnum.SHUTDOWN);
 			}
+			await this.enqueue(live, () => this.drain(live));
 			this.unload(live);
 		}
 	}
@@ -860,7 +862,8 @@ export class DocumentLiveService implements OnModuleInit, OnModuleDestroy, IDocu
 	private async drain(live: ILiveDocument): Promise<void> {
 		for (let attempt = 0; attempt < 3; attempt += 1) {
 			try {
-				if (await this.persist(live)) {
+				// Until nothing is left: an edit that came in while a save ran is saved too.
+				if ((await this.persist(live)) && !live.dirty) {
 					return;
 				}
 			} catch (error) {
@@ -868,15 +871,30 @@ export class DocumentLiveService implements OnModuleInit, OnModuleDestroy, IDocu
 					`The live document of ${live.documentId} was not saved at shutdown: ${messageOf(error)}`
 				);
 			}
+			if (!live.dirty) {
+				return;
+			}
 			await sleep(500 * (attempt + 1));
 		}
 		try {
 			const row = await this.readRow(live.documentId, live.tenantId);
+			const revision = row ? liveRevisionOf(row.contentRevision) : 0;
 			const stored = row ? decodeLiveState(row.contentBinary as Buffer | null) : null;
-			const sameLineage = !stored || stored.meta.lineage === live.lineage;
+			// Kept only when it holds the page's latest write: the stored state of this lineage for the revision the
+			// page is at (merged in first), or, with no live state stored, a page still at the revision this process
+			// last stored. A state of another lineage, or one a later write has not reached, is not overwritten.
+			let current = false;
+			// A revision this process claimed for a save that failed is no write of anyone else's.
+			const ours = live.claimedRevision === revision;
+			if (stored && stored.meta.lineage === live.lineage && (stored.meta.revision === revision || ours)) {
+				Y.applyUpdate(live.doc, Y.encodeStateAsUpdate(stored.doc), STORAGE);
+				current = true;
+			} else if (!stored && (revision === live.revision || ours)) {
+				current = true;
+			}
 			stored?.doc.destroy();
-			if (row && !row.deletedAt && sameLineage) {
-				const meta = { lineage: live.lineage, revision: liveRevisionOf(row.contentRevision) };
+			if (row && !row.deletedAt && current) {
+				const meta = { lineage: live.lineage, revision };
 				const result = await this.storeState(
 					live.documentId,
 					live.tenantId,
@@ -992,13 +1010,19 @@ export class DocumentLiveService implements OnModuleInit, OnModuleDestroy, IDocu
 			}
 
 			let next: number;
-			try {
-				next = await claimNextContentRevision(this.documents.typeOrmDocumentRepository, row);
-			} catch (error) {
-				if (error instanceof ConflictException) {
-					continue;
+			if (ours) {
+				// The revision a failed save of this process claimed is still its own: the save takes it, rather than
+				// claiming one more for every retry.
+				next = revision;
+			} else {
+				try {
+					next = await claimNextContentRevision(this.documents.typeOrmDocumentRepository, row);
+				} catch (error) {
+					if (error instanceof ConflictException) {
+						continue;
+					}
+					throw error;
 				}
-				throw error;
 			}
 			live.selfSaving = true;
 			live.claimedRevision = next;
