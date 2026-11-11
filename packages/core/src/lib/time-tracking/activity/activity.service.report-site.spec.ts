@@ -1,5 +1,6 @@
 import '../../core/entities/internal';
 
+import { DatabaseTypeEnum, getConfig } from '@gauzy/config';
 import { knex as createKnex, Knex } from 'knex';
 import { DataSource, EntitySchema } from 'typeorm';
 import { RequestContext } from '../../core/context';
@@ -90,6 +91,8 @@ function serviceOn(typeOrmRepository: unknown, mikroOrmRepository: unknown): Act
 }
 
 function actAs(ormType: MultiORMEnum) {
+	// The stores here are SQLite: the reads must speak its dialect, whatever DB_TYPE the run was started with
+	jest.replaceProperty(getConfig().dbConnectionOptions as { type: string }, 'type', DatabaseTypeEnum.betterSqlite3);
 	jest.spyOn(CrudService.prototype, 'ormType', 'get').mockReturnValue(ormType);
 	jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue('tenant-1');
 	jest.spyOn(RequestContext, 'hasPermission').mockReturnValue(true);
