@@ -194,6 +194,44 @@ describe('RealtimeSocket', () => {
 		expect(client.status$.value).toBe('idle');
 	});
 
+	it('replaces the socket when the user or organization changed, and starts its subscriptions again', async () => {
+		let params: Record<string, unknown> = { authorization: 'Bearer t', 'organization-id': 'org-1' };
+		const client = new RealtimeSocket({
+			url: () => 'wss://api.example.com/graphql',
+			connectionParams: () => params,
+			createSocket: (url, protocol) => new FakeSocket(url, protocol),
+			pingIntervalMs: 0,
+			ackTimeoutMs: 0,
+			setTimeout: (fn, ms) => {
+				const timer = { fn, ms };
+				timers.push(timer);
+				return timer;
+			},
+			clearTimeout: (handle) => {
+				timers = timers.filter((timer) => timer !== handle);
+			}
+		});
+		const done = jest.fn();
+		client.subscribe('subscription { a }').subscribe({ complete: done });
+		FakeSocket.all[0].open();
+		FakeSocket.all[0].say({ type: 'connection_ack' });
+
+		client.refresh();
+		expect(FakeSocket.all).toHaveLength(1);
+
+		params = { authorization: 'Bearer t', 'organization-id': 'org-2' };
+		client.refresh();
+		await flush();
+
+		expect(FakeSocket.all[0].closedWith).toBe(1000);
+		expect(done).not.toHaveBeenCalled();
+		const next = FakeSocket.all[1];
+		next.open();
+		expect(next.sent[0]).toEqual({ type: 'connection_init', payload: params });
+		next.say({ type: 'connection_ack' });
+		expect(next.subscribed()).toHaveLength(1);
+	});
+
 	it('answers a ping with a pong', () => {
 		const connection = new GraphqlWsConnection({
 			url: 'wss://x/graphql',
