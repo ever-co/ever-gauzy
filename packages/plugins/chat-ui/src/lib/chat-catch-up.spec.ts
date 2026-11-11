@@ -1,5 +1,5 @@
 import { IChatMessage } from '@gauzy/contracts';
-import { applyCatchUp, reconcileWithNewest, reconcileWithOldest } from './chat-catch-up';
+import { applyCatchUp, reconcileWithNewest, reconcileWithOldest, rootWithMyFields } from './chat-catch-up';
 
 type Message = Pick<IChatMessage, 'id' | 'createdAt' | 'body'> & IChatMessage;
 
@@ -94,5 +94,24 @@ describe('applyCatchUp', () => {
 		const result = applyCatchUp(replies, was, new Set(['r2']), (settled) => reconcileWithOldest(settled, page));
 		expect(ids(result.messages)).toEqual(['r1', 'r3', 'r4']);
 		expect(ids(result.added)).toEqual(['r4']);
+	});
+});
+
+describe('rootWithMyFields', () => {
+	const root = { id: 'r', body: 'edited by someone', replyCount: 4, lastReplyAt: new Date('2026-11-11T10:05:00Z'), following: false } as never as Parameters<typeof rootWithMyFields>[0];
+
+	it('takes the root the catch-up read (an edit) with only my own fields on top', () => {
+		const next = rootWithMyFields(root, { following: true });
+		expect(next.body).toBe('edited by someone');
+		expect(next.following).toBe(true);
+		expect(next.replyCount).toBe(4);
+	});
+
+	it('never puts the reply count or the last reply behind what either side knows', () => {
+		const mine = { replyCount: 3, lastReplyAt: new Date('2026-11-11T10:01:00Z'), following: true };
+		const next = rootWithMyFields(root, mine);
+		expect(next.replyCount).toBe(4);
+		expect(next.lastReplyAt).toEqual(new Date('2026-11-11T10:05:00Z'));
+		expect(rootWithMyFields(root, { replyCount: 6, lastReplyAt: new Date('2026-11-11T10:09:00Z') }).replyCount).toBe(6);
 	});
 });
