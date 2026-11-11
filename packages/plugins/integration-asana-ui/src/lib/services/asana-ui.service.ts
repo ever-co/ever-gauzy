@@ -4,8 +4,8 @@ import { catchError, map, Observable, of } from 'rxjs';
 import { API_PREFIX } from '@gauzy/ui-core/common';
 
 const BASE = `${API_PREFIX}/integration/asana`;
-/** The most task titles one read asks for (the task list's page limit). */
-export const TASK_TITLES_MAX = 100;
+/** The most task titles one read asks for (the task list's `filters[ids]` takes 25 ids). */
+export const TASK_TITLES_MAX = 25;
 
 export interface AsanaConnectionSummary {
 	id: string;

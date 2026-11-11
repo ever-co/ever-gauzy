@@ -369,7 +369,7 @@ export class AsanaConflictsComponent implements OnChanges {
 			});
 	}
 
-	/** The titles of the tasks not asked for yet, in one read per hundred. */
+	/** The titles of the tasks not asked for yet, in one read per 25. */
 	private readTitles(conflicts: readonly AsanaConflict[]): void {
 		const first = conflicts.find((conflict) => conflict.tenantId && conflict.organizationId);
 		const missing = [...new Set(conflicts.map((conflict) => conflict.taskId))].filter((taskId) => taskId && !this.titlesAsked.has(taskId));

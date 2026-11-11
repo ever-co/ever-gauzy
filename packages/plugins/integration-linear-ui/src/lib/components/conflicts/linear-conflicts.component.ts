@@ -369,7 +369,7 @@ export class LinearConflictsComponent implements OnChanges {
 			});
 	}
 
-	/** The titles of the tasks not asked for yet, in one read per hundred. */
+	/** The titles of the tasks not asked for yet, in one read per 25. */
 	private readTitles(conflicts: readonly LinearConflict[]): void {
 		const first = conflicts.find((conflict) => conflict.tenantId && conflict.organizationId);
 		const missing = [...new Set(conflicts.map((conflict) => conflict.taskId))].filter((taskId) => taskId && !this.titlesAsked.has(taskId));

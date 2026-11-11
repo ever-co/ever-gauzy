@@ -1,7 +1,7 @@
 import { HttpTestingController } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { firstValueFrom } from 'rxjs';
-import { AsanaUiService } from './asana-ui.service';
+import { AsanaUiService, TASK_TITLES_MAX } from './asana-ui.service';
 
 const INTEGRATION = 'int-1';
 
@@ -56,6 +56,14 @@ describe('AsanaUiService (conflicts)', () => {
 		expect(request.request.params.get('take')).toBe('2');
 		request.flush({ items: [{ id: 'task-1', title: '  Fix login  ' }, { id: 'task-2', title: '' }], total: 2 });
 		await expect(titles).resolves.toEqual({ 'task-1': 'Fix login' });
+	});
+
+	it('asks for no more ids than the task filter takes', () => {
+		void firstValueFrom(api.taskTitles({ tenantId: 'tenant-1', organizationId: 'org-1' }, Array.from({ length: 30 }, (_, index) => `task-${index}`)));
+		const request = http.expectOne((item) => item.url.endsWith('/api/tasks'));
+		expect(request.request.params.get(`filters[ids][${TASK_TITLES_MAX - 1}]`)).toBe(`task-${TASK_TITLES_MAX - 1}`);
+		expect(request.request.params.has(`filters[ids][${TASK_TITLES_MAX}]`)).toBe(false);
+		request.flush({ items: [] });
 	});
 
 	it('answers no titles when the read fails, and reads nothing for no task', async () => {

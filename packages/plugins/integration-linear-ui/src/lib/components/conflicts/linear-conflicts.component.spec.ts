@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { of, Subject, throwError } from 'rxjs';
-import { LinearConflict, LinearUiService } from '../../services/linear-ui.service';
+import { LinearConflict, LinearUiService, TASK_TITLES_MAX } from '../../services/linear-ui.service';
 import { CONFLICTS_MAX, CONFLICTS_PAGE, LinearConflictsComponent } from './linear-conflicts.component';
 
 function conflict(overrides: Partial<LinearConflict> = {}): LinearConflict {
@@ -85,6 +85,14 @@ describe('LinearConflictsComponent', () => {
 		expect(el.querySelectorAll('[data-test^="keep-external-"]').length).toBe(3);
 		// A short list is the whole list.
 		expect(find('more-conflicts')).toBeNull();
+	});
+
+	it('reads the titles of many tasks a few dozen at a time, as the task filter takes them', () => {
+		api.conflicts.mockReturnValue(of(Array.from({ length: TASK_TITLES_MAX + 5 }, (_, index) => conflict({ id: `c-${index}`, taskId: `task-${index}` }))));
+		render();
+		expect(api.taskTitles).toHaveBeenCalledTimes(2);
+		expect(api.taskTitles.mock.calls[0][1]).toHaveLength(TASK_TITLES_MAX);
+		expect(api.taskTitles.mock.calls[1][1]).toEqual(Array.from({ length: 5 }, (_, index) => `task-${TASK_TITLES_MAX + index}`));
 	});
 
 	it('a long value is cut, and shown whole on request (no tooltip needed)', () => {
