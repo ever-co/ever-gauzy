@@ -51,12 +51,20 @@ const ACTIVITIES: ReadonlyArray<{ title: string; type: string; metaData: string 
 	{ title: 'example.net', type: 'URL', metaData: JSON.stringify({ title: 'Example' }) },
 	{ title: 'null.example', type: 'URL', metaData: JSON.stringify({ title: 'Null', url: null }) },
 	{ title: 'number.example', type: 'URL', metaData: JSON.stringify({ title: 'Number', url: 42 }) },
-	{ title: 'docs.example.org', type: 'URL', metaData: 'not json' }
+	{ title: 'docs.example.org', type: 'URL', metaData: 'not json' },
+	// An app recorded under a site's title: `MAX` keeps the title one row, a site's
+	{ title: 'example.net', type: 'APP', metaData: null }
 ];
 
 const READS = ['getDailyActivitiesReport', 'getDailyActivities'] as const;
 type Read = (typeof READS)[number];
 type Rows = Map<string, any>;
+
+/** The rows by title, once each title is known to be one row: a Map would hide a group the read split in two. */
+function byTitle(rows: any[]): Rows {
+	expect(new Set(rows.map((row) => row.title)).size).toBe(rows.length);
+	return new Map(rows.map((row) => [row.title, row]));
+}
 
 function expectAppOrSite(rows: Rows) {
 	expect(rows.size).toBe(7);
@@ -165,7 +173,7 @@ describe.each(READS)(
 				startDate: '2026-11-11',
 				endDate: '2026-11-11'
 			} as any);
-			return new Map(rows.map((row) => [row.title, row]));
+			return byTitle(rows);
 		};
 
 		it('says whether each row is an app or a site, the grouping by title kept', async () => {
@@ -294,7 +302,7 @@ describe.each(READS)('ActivityService.%s (TypeORM) tells an app from a site, wit
 			startDate: '2026-11-11 00:00:00',
 			endDate: '2026-11-11 23:59:59'
 		} as any);
-		return new Map(rows.map((row) => [row.title, row]));
+		return byTitle(rows);
 	};
 
 	it('says whether each row is an app or a site, the grouping by title kept', async () => {
