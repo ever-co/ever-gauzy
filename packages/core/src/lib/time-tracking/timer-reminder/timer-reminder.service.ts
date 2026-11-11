@@ -87,35 +87,61 @@ interface ITimerReminderClaim {
 export class TimerReminderService {
 	private readonly logger = new Logger(TimerReminderService.name);
 
+	/**
+	 * The last running log the last sweep read. The next sweep resumes after it, and wraps round to the oldest once it
+	 * reaches the end, so a list longer than one sweep's budget (the logs of employees who turned the reminders off stay
+	 * in it) is read through in turn, not from its start every time. Kept by each process: the claims make two processes
+	 * that read the same log harmless.
+	 */
+	private cursor: ITimerReminderLogRow | null = null;
+
 	constructor(
 		private readonly dataSource: DataSource,
 		private readonly notifications: EmployeeNotificationService
 	) {}
 
 	/**
-	 * Files the reminders that are due: reads the running time logs, oldest first, a page at a time, until none is left
-	 * or the time budget of the pass is spent.
+	 * Files the reminders that are due: reads the running time logs a page at a time, in the order they started, from
+	 * where the last sweep stopped to the end, then from the oldest round to where it began, until the list is read or
+	 * the time budget of the pass is spent.
 	 *
 	 * @param now The moment the reminders are due at.
+	 * @param budgetMs How long the pass may keep reading pages.
 	 */
-	async sweep(now: Date = new Date()): Promise<ITimerReminderSweepReport> {
+	async sweep(
+		now: Date = new Date(),
+		budgetMs: number = TIMER_REMINDER_SWEEP_TIME_BUDGET_MS
+	): Promise<ITimerReminderSweepReport> {
 		const report: ITimerReminderSweepReport = { checked: 0, reminded: 0, recovered: 0, failed: 0 };
 		const startedAt = Date.now();
-		let after: ITimerReminderLogRow | null = null;
+		const start = this.cursor;
+		let after = start;
+		let hasWrapped = false;
 
 		for (;;) {
-			const page = await this.runningLogs(after, TIMER_REMINDER_SWEEP_PAGE_SIZE, now);
+			// Once wrapped round to the oldest, the pass reads up to where it began
+			const page = await this.runningLogs(after, TIMER_REMINDER_SWEEP_PAGE_SIZE, now, hasWrapped ? start : null);
 			report.checked += page.length;
 			if (page.length) {
 				await this.remindPage(page, now, report);
+				after = page[page.length - 1];
+				this.cursor = after;
 			}
-			if (
-				page.length < TIMER_REMINDER_SWEEP_PAGE_SIZE ||
-				Date.now() - startedAt >= TIMER_REMINDER_SWEEP_TIME_BUDGET_MS
-			) {
+			const isOutOfTime = Date.now() - startedAt >= budgetMs;
+			if (page.length < TIMER_REMINDER_SWEEP_PAGE_SIZE) {
+				// The end of the list. A pass that began after the oldest log reads the ones before, with the time left.
+				if (start !== null && !hasWrapped && !isOutOfTime) {
+					hasWrapped = true;
+					after = null;
+					continue;
+				}
+				// Read through, or the oldest logs are next: the next pass starts with them
+				this.cursor = null;
 				break;
 			}
-			after = page[page.length - 1];
+			if (isOutOfTime) {
+				break;
+			}
 		}
 
 		if (report.reminded || report.failed) {
@@ -134,7 +160,8 @@ export class TimerReminderService {
 	private async runningLogs(
 		after: ITimerReminderLogRow | null,
 		limit: number,
-		now: Date
+		now: Date,
+		until: ITimerReminderLogRow | null = null
 	): Promise<ITimerReminderLogRow[]> {
 		const query = this.dataSource
 			.getRepository(TimeLog)
@@ -184,6 +211,15 @@ export class TimerReminderService {
 					next
 						.where('log.startedAt > :afterStartedAt', { afterStartedAt: after.startedAt })
 						.orWhere('log.startedAt = :afterStartedAt AND log.id > :afterId', { afterId: after.id })
+				)
+			);
+		}
+		if (until) {
+			query.andWhere(
+				new Brackets((upTo) =>
+					upTo
+						.where('log.startedAt < :untilStartedAt', { untilStartedAt: until.startedAt })
+						.orWhere('log.startedAt = :untilStartedAt AND log.id <= :untilId', { untilId: until.id })
 				)
 			);
 		}

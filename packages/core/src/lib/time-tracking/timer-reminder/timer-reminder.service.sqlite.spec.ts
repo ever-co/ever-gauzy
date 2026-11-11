@@ -406,6 +406,38 @@ describe('TimerReminderService on SQLite', () => {
 		expect((await claims()).map(({ timeLogId, level }) => [timeLogId, level])).toEqual([[log, 1]]);
 	});
 
+	it('resumes where the last sweep ran out of time, so a due run further down the list is reminded', async () => {
+		// A whole page of runs no reminder is due for (their employee turned the reminders off) comes first
+		const off = await employee({ preferences: { timerReminderHours: null } });
+		for (let index = 0; index < TIMER_REMINDER_SWEEP_PAGE_SIZE; index++) {
+			await runningLog(off, { ranFor: 30 * HOUR });
+		}
+		const due = await runningLog(await employee(), { ranFor: 9 * HOUR });
+
+		// Out of time after the first page, then again after the first page of the next sweep
+		expect(await service.sweep(NOW, 0)).toMatchObject({ checked: TIMER_REMINDER_SWEEP_PAGE_SIZE, reminded: 0 });
+		expect(await service.sweep(NOW, 0)).toMatchObject({ checked: 1, reminded: 1 });
+
+		expect(filed.map(({ input }) => input.entityId)).toEqual([due]);
+	});
+
+	it('wraps round to the oldest runs within one sweep, up to where it began', async () => {
+		const off = await employee({ preferences: { timerReminderHours: null } });
+		for (let index = 0; index < TIMER_REMINDER_SWEEP_PAGE_SIZE; index++) {
+			await runningLog(off, { ranFor: 20 * HOUR });
+		}
+		const due = await runningLog(await employee(), { ranFor: 9 * HOUR });
+		await service.sweep(NOW, 0);
+		// A due run that started before every other one: before where the next sweep resumes
+		const oldest = await runningLog(await employee(), { ranFor: 21 * HOUR });
+
+		const report = await service.sweep(NOW);
+
+		// The run after where it resumed, then the oldest round to where it began
+		expect(report).toMatchObject({ checked: TIMER_REMINDER_SWEEP_PAGE_SIZE + 2, reminded: 2 });
+		expect(filed.map(({ input }) => input.entityId)).toEqual([due, oldest]);
+	});
+
 	it('files each reminder once when two sweeps run at the same time', async () => {
 		for (let index = 0; index < 5; index++) {
 			await runningLog(await employee(), { ranFor: 9 * HOUR });
