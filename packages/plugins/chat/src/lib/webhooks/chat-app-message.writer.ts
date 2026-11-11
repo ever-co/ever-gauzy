@@ -118,7 +118,8 @@ export class ChatAppMessageWriter {
 	async replaceOnce(messageId: ID, interactionId: ID, content: IChatWebhookContent): Promise<{ message: ChatMessage; events: IChatEvent[] } | null> {
 		const editedAt = new Date();
 		const blocks = content.blocks.length ? JSON.stringify(content.blocks) : null;
-		return inWriteTransaction(this.dataSource, async (manager) => {
+		const nothingChanged = new Error('nothing changed');
+		const replaced = inWriteTransaction(this.dataSource, async (manager) => {
 			const message = await manager.getRepository(ChatMessage).findOne({ where: { id: messageId } });
 			if (!message) return null;
 			const conversation = await manager.getRepository(ChatConversation).findOne({ select: { id: true, archivedAt: true }, where: { id: message.conversationId } });
@@ -127,13 +128,19 @@ export class ChatAppMessageWriter {
 				.getRepository(ChatWebhookInteraction)
 				.update({ id: interactionId, replyAppliedAt: IsNull() }, { replyAppliedAt: editedAt } as never);
 			if (!(claim.affected ?? 0)) return null;
-			await manager.getRepository(ChatMessage).update({ id: message.id as ID, deletedAt: IsNull() }, { body: content.body, blocks, editedAt } as never);
+			const written = await manager.getRepository(ChatMessage).update({ id: message.id as ID, deletedAt: IsNull() }, { body: content.body, blocks, editedAt } as never);
+			// Deleted meanwhile: the claim rolls back with the transaction, and nobody is told.
+			if (!(written.affected ?? 0)) throw nothingChanged;
 			const members = await this.access.members(message.tenantId as ID, message.conversationId, manager);
 			const events = [await this.realtime.append(manager, this.realtime.messageFact(CHAT_EVENT_NAMES.MESSAGE_UPDATED, message, members.map((m) => m.userId)))];
 			message.body = content.body;
 			message.blocks = blocks;
 			message.editedAt = editedAt;
 			return { message, events };
+		});
+		return replaced.catch((error) => {
+			if (error === nothingChanged) return null;
+			throw error;
 		});
 	}
 

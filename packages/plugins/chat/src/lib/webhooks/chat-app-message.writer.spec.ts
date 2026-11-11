@@ -31,7 +31,7 @@ import { ChatAppMessageWriter } from './chat-app-message.writer';
 const E1 = '7b1a3c0e-0000-4000-8000-000000000001';
 const E2 = '7b1a3c0e-0000-4000-8000-000000000002';
 
-function setup(options: { existing?: Record<string, unknown> | null; stored?: Record<string, unknown> | null; archived?: boolean; claimed?: boolean } = {}) {
+function setup(options: { existing?: Record<string, unknown> | null; stored?: Record<string, unknown> | null; archived?: boolean; claimed?: boolean; deletedMeanwhile?: boolean } = {}) {
 	const members = [
 		{ id: 'mb1', employeeId: E1, userId: 'u1', readCount: 3, mentionCount: 0, notifyLevel: 'all', isFavorite: false, conversationId: 'c1', tenantId: 'ten' },
 		{ id: 'mb2', employeeId: E2, userId: 'u2', readCount: 1, mentionCount: 2, notifyLevel: 'all', isFavorite: false, conversationId: 'c1', tenantId: 'ten' }
@@ -43,7 +43,7 @@ function setup(options: { existing?: Record<string, unknown> | null; stored?: Re
 			findOne: jest.fn(async (query: { where: Record<string, unknown> }) =>
 				'nonce' in query.where ? (options.existing ?? null) : options.stored === undefined ? { id: 'm1', conversationId: 'c1', tenantId: 'ten', kind: 'app', body: 'old' } : options.stored
 			),
-			update: jest.fn(async () => ({ affected: 1 }))
+			update: jest.fn(async () => ({ affected: options.deletedMeanwhile ? 0 : 1 }))
 		},
 		ChatConversation: {
 			increment: jest.fn(async () => ({ affected: 1 })),
@@ -142,6 +142,12 @@ describe('ChatAppMessageWriter', () => {
 				expect(run.repositories.ChatWebhookInteraction.update).not.toHaveBeenCalled();
 				expect(run.repositories.ChatMessage.update).not.toHaveBeenCalled();
 			}
+		});
+
+		it('answers nothing and appends nothing when the message was deleted between the read and the write', async () => {
+			const { writer, realtime } = setup({ deletedMeanwhile: true });
+			expect(await writer.replaceOnce('m1', 'i-1', content)).toBeNull();
+			expect(realtime.messageFact).not.toHaveBeenCalled();
 		});
 
 		it('leaves the message alone when the reply of this interaction was applied already', async () => {

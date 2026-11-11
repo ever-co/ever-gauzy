@@ -167,11 +167,13 @@ export class ChatWebhookService {
 		const webhook = await this.webhookForManager(caller, webhookId);
 		if (webhook.revokedAt) throw new BadRequestException('A revoked webhook cannot be changed.');
 		const before = { name: webhook.name, iconUrl: webhook.iconUrl ?? null, interactionUrl: webhook.interactionUrl ?? null, canBroadcast: !!webhook.canBroadcast };
-		const after = { ...before };
-		if (input.name !== undefined) after.name = this.validName(input.name);
-		if (input.iconUrl !== undefined) after.iconUrl = this.validIconUrl(input.iconUrl);
-		if (input.interactionUrl !== undefined) after.interactionUrl = await this.validInteractionUrl(input.interactionUrl);
-		if (input.canBroadcast !== undefined) after.canBroadcast = !!input.canBroadcast;
+		// Only the fields the request names are written: two managers changing different fields at once keep both changes.
+		const changes: Partial<typeof before> = {};
+		if (input.name !== undefined) changes.name = this.validName(input.name);
+		if (input.iconUrl !== undefined) changes.iconUrl = this.validIconUrl(input.iconUrl);
+		if (input.interactionUrl !== undefined) changes.interactionUrl = await this.validInteractionUrl(input.interactionUrl);
+		if (input.canBroadcast !== undefined) changes.canBroadcast = !!input.canBroadcast;
+		const after = { ...before, ...changes };
 		let signingSecret: string | undefined;
 		if (after.interactionUrl && !webhook.signingSecret) {
 			if (!this.box.usable()) throw new BadRequestException(new ChatWebhookSecretError(this.box.problem() ?? 'no_secret').message);
@@ -180,7 +182,7 @@ export class ChatWebhookService {
 		const sealed = signingSecret ? this.box.seal(signingSecret, webhook.id as ID) : null;
 		await this.dataSource
 			.getRepository(ChatWebhook)
-			.update({ id: webhook.id as ID, tenantId: caller.tenantId }, { ...after, ...(sealed ? { signingSecret: sealed } : {}) } as never);
+			.update({ id: webhook.id as ID, tenantId: caller.tenantId }, { ...changes, ...(sealed ? { signingSecret: sealed } : {}) } as never);
 		const changed = Object.assign(webhook, after, sealed ? { signingSecret: sealed } : {});
 		this.log(ActionTypeEnum.Updated, changed, after, before);
 		return { webhook: webhookView(changed), ...(signingSecret ? { signingSecret } : {}) };

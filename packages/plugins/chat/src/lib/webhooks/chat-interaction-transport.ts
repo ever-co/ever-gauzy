@@ -33,6 +33,8 @@ export function signedCallback(secret: string, interactionId: string, attempt: n
 		body,
 		headers: {
 			'Content-Type': 'application/json; charset=utf-8',
+			// An uncompressed reply: a reply that breaks off is then always seen as incomplete (`response.complete`).
+			'Accept-Encoding': 'identity',
 			'User-Agent': CHAT_INTERACTION_USER_AGENT,
 			[WebhookHeader.SIGNATURE]: signature.header,
 			[WebhookHeader.ATTEMPT]: String(attempt),

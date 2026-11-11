@@ -221,9 +221,11 @@ describe('ChatWebhookService', () => {
 		});
 
 		it('renames with the previous values in the log, and hides the routes when webhooks are off', async () => {
-			const { service, activityLog } = setup();
+			const { service, activityLog, repositories } = setup();
 			const result = await service.update(manager, 'w1', { name: 'Releases' });
 			expect(result.webhook.name).toBe('Releases');
+			// Only the named field is written: a concurrent change of another field is kept.
+			expect(repositories.ChatWebhook.update).toHaveBeenCalledWith({ id: 'w1', tenantId: 'ten' }, { name: 'Releases' });
 			expect(activityLog.logActivity).toHaveBeenCalledWith(
 				BaseEntityEnum.ChatWebhook,
 				ActionTypeEnum.Updated,

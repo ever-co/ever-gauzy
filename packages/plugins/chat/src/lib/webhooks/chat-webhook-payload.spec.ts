@@ -201,6 +201,33 @@ describe('chat webhook payloads', () => {
 			expect(findButton(content.blocks, 'rollback')).toBeNull();
 		});
 
+		it('never hands out a block id the payload named, and keeps generated action ids short', () => {
+			const content = normalizeWebhookPayload(
+				{
+					text: 'x',
+					blocks: [
+						{ type: 'actions', block_id: '_block-1', elements: [{ type: 'button', action_id: 'go', text: 'One' }] },
+						{ type: 'actions', elements: [{ type: 'button', action_id: 'go', text: 'Two' }, { type: 'button', text: 'Three' }] },
+						{ type: 'actions', block_id: 'b'.repeat(255), elements: [{ type: 'button', text: 'Four' }] }
+					]
+				},
+				{ canBroadcast: false }
+			);
+			const actions = content.blocks as Array<{ blockId: string; elements: Array<{ actionId: string }> }>;
+			expect(actions.map((block) => block.blockId)).toEqual(['_block-1', '_block-1-1', 'b'.repeat(255)]);
+			expect(actions[1].elements.map((button) => button.actionId)).toEqual(['go', '_action-1']);
+			expect(actions[2].elements[0].actionId).toBe('_action-0');
+			expect(findButton(content.blocks, 'go', '_block-1-1')?.button.text).toBe('Two');
+		});
+
+		it('tells apart ids that a delimiter would run together', () => {
+			const blocks = [
+				{ type: 'actions', block_id: 'a::b', elements: [{ type: 'button', action_id: 'c', text: 'One' }] },
+				{ type: 'actions', block_id: 'a', elements: [{ type: 'button', action_id: 'b::c', text: 'Two' }] }
+			];
+			expect(codeOf(() => normalizeWebhookPayload({ text: 'x', blocks }, { canBroadcast: false }))).toBeNull();
+		});
+
 		it('falls back to the attachment fallback for the body when nothing else has text', () => {
 			const content = normalizeWebhookPayload({ attachments: [{ fallback: 'Only a fallback', color: '#f00' }] }, { canBroadcast: false });
 			expect(content).toEqual({ body: 'Only a fallback', blocks: [], nonce: null });

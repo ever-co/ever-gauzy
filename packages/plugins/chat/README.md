@@ -128,7 +128,7 @@ the flag is exactly `true` (and chat is on): every route below answers 404.
   used chat-bot shape: `text`, `blocks` (header, section with text and fields, divider, context, actions with
   buttons; any other type shows as its text), legacy `attachments`. Everything is plain text (HTML dropped);
   `username`, `icon_url` and `channel` are ignored. A `nonce` (or `Idempotency-Key`) makes a retry post once.
-  Answers `200 ok`, `404 no_webhook`, `410 channel_is_archived`, `422 invalid_payload | payload_too_large (64 KiB) |
+  Answers `200 ok`, `404 no_webhook`, `410 channel_is_archived`, `422 invalid_payload | payload_too_large (64 KiB; over 128 KiB the API's body parser answers 413 before reading it) |
   too_many_blocks (50) | invalid_blocks | no_text`, `429 rate_limited` with `Retry-After` (per webhook 60/min and 20
   per 10 s, per organization 600/min and 100 per 10 s; `GAUZY_CHAT_WEBHOOK_*` in `.env.sample`).
 - **The message**: `kind: app`, no employee author, `webhookId`, `appName`, `appIconUrl`, `blocks`; counted and
