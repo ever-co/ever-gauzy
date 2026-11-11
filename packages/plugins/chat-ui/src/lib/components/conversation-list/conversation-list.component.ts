@@ -4,6 +4,7 @@ import { RouterLink } from '@angular/router';
 import { NbButtonModule, NbIconModule, NbTooltipModule } from '@nebular/theme';
 import { TranslatePipe } from '@ngx-translate/core';
 import { ChatConversationKindEnum, ChatVisibilityEnum, IChatCategory, IChatConversationWithState } from '@gauzy/contracts';
+import { sortCategories } from '../../chat-categories';
 import { CHAT_LINK, CHAT_THREADS_PATH, CHAT_UNREADS_PATH } from '../../chat-ui.constants';
 import { conversationTitle, isUnread } from '../../chat-ui.helpers';
 import { ChatPeople } from '../../services/chat-people.service';
@@ -63,6 +64,11 @@ export type ChatListView = 'conversation' | 'unreads' | 'threads';
 			<button nbButton ghost size="tiny" class="browse" data-test="browse-channels" (click)="browse.emit()">
 				<nb-icon icon="search-outline"></nb-icon> {{ 'CHAT.LIST.BROWSE' | translate }}
 			</button>
+			@if (canManageCategories()) {
+				<button nbButton ghost size="tiny" class="browse" data-test="manage-categories" (click)="manageCategories.emit()">
+					<nb-icon icon="folder-outline"></nb-icon> {{ 'CHAT.CATEGORIES.TITLE' | translate }}
+				</button>
+			}
 
 			<h6 class="section">{{ 'CHAT.LIST.DIRECT' | translate }}</h6>
 			@for (conversation of direct(); track conversation.id) {
@@ -192,10 +198,13 @@ export class ConversationListComponent {
 	readonly view = input<ChatListView>('conversation');
 	readonly threadCount = input(0);
 	readonly untitled = input('Conversation');
+	/** `CHAT_MANAGE`: offers the categories of the channels to manage. */
+	readonly canManageCategories = input(false);
 
 	readonly newChannel = output<void>();
 	readonly newDirect = output<void>();
 	readonly browse = output<void>();
+	readonly manageCategories = output<void>();
 
 	protected readonly unreadsLink = `${CHAT_LINK}/${CHAT_UNREADS_PATH}`;
 	protected readonly threadsLink = `${CHAT_LINK}/${CHAT_THREADS_PATH}`;
@@ -214,7 +223,8 @@ export class ConversationListComponent {
 	protected readonly channelGroups = computed(() => {
 		const channels = this.channels();
 		if (channels.length === 0) return [];
-		const categories = [...this.categories()].sort((a, b) => a.position - b.position);
+		// The order the categories dialog shows and moves them in.
+		const categories = sortCategories(this.categories());
 		const groups: { key: string; name: string | null; conversations: IChatConversationWithState[] }[] = [];
 		const uncategorized = channels.filter((conversation) => !conversation.categoryId);
 		if (uncategorized.length > 0) groups.push({ key: 'none', name: null, conversations: uncategorized });

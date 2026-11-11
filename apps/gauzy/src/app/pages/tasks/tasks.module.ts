@@ -46,6 +46,8 @@ import {
 // Record-side Documents panel (spec 00 §6.14 R-LNK-02). Standalone, so it is
 // imported directly — the Documents hub module is never pulled in here.
 import { DocumentLinksPanelComponent } from '@gauzy/plugin-docs-ui';
+// The extension slot plugins add their actions to the task page through ("Send to chat"). Standalone.
+import { PageExtensionSlotComponent } from '@gauzy/plugin-ui';
 // The employee page's hours chart, which the task page draws for the task. Standalone.
 import { EmployeeHoursChartComponent } from '../employees/view-employee/employee-hours-chart/employee-hours-chart.component';
 // The project page's board and activity feed, which the task page draws for the task and its subtasks. Standalone.
@@ -120,6 +122,7 @@ import { SprintTaskComponent } from './components/task/tasks-layouts/tasks-sprin
 		TaskStatusSelectModule,
 		TaskNumberFieldModule,
 		DocumentLinksPanelComponent,
+		PageExtensionSlotComponent,
 		EmployeeHoursChartComponent,
 		ProjectBoardComponent,
 		ProjectActivityComponent,

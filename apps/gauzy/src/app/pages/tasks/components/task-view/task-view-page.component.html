@@ -48,6 +48,8 @@
 				appearance="ghost"
 				spacing="list"
 			></ngx-favorite-toggle>
+			<!-- What plugins add to a task's page (the chat's "Send to chat"); each reads the task from the route. -->
+			<ga-page-extension-slot [slotId]="taskActionsSlot"></ga-page-extension-slot>
 		</div>
 	}
 	@if (task) {

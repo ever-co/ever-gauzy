@@ -42,6 +42,11 @@ export const CHAT_PAGE_SIZE = 50;
 /** Where a task card leads. */
 export const CHAT_TASK_LINK = '/pages/tasks/view';
 
+/** The extension slot of a task's page the "Send to chat" button goes in (`PAGE_EXTENSION_SLOTS.TASK_VIEW_ACTIONS`). */
+export const CHAT_TASK_ACTIONS_SLOT = 'task-view-actions';
+/** Id of that extension. */
+export const CHAT_SEND_TASK_EXTENSION_ID = 'chat-send-task';
+
 /** The most people the `@` suggestions show. */
 export const CHAT_MENTION_SUGGESTIONS = 8;
 

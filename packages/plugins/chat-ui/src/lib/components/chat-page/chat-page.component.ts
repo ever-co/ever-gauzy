@@ -17,6 +17,7 @@ import { ChatLiveService, isTabVisible } from '../../services/chat-live.service'
 import { ChatPeople, ChatPeopleService, EMPTY_PEOPLE } from '../../services/chat-people.service';
 import { ChatFollowedThread, ChatMessagePatch, ChatUiService } from '../../services/chat-ui.service';
 import { BrowseChannelsDialogComponent, NewChannelDialogComponent, NewDirectDialogComponent } from '../../dialogs/chat-dialogs.component';
+import { CategoriesDialogComponent } from '../../dialogs/chat-settings-dialogs.component';
 import { ChatListView, ConversationListComponent } from '../conversation-list/conversation-list.component';
 import { ConversationViewComponent } from '../conversation-view/conversation-view.component';
 import { ThreadPaneComponent } from '../thread-pane/thread-pane.component';
@@ -79,6 +80,8 @@ const UNDO_MS = 55_000;
 									[view]="listView()"
 									[threadCount]="threadUnreadCount()"
 									[untitled]="'CHAT.UNNAMED' | translate"
+									[canManageCategories]="isAdmin()"
+									(manageCategories)="openCategories()"
 									(newChannel)="openNewChannel()"
 									(newDirect)="openNewDirect()"
 									(browse)="openBrowse()"
@@ -163,6 +166,10 @@ const UNDO_MS = 55_000;
 												[meUserId]="meUserId()"
 												[isAdmin]="isAdmin()"
 												[canAttach]="canAttach()"
+												[canCreateTask]="canCreateTask()"
+												[categories]="categories()"
+												[organizationId]="organizationId()"
+												[tenantId]="tenantId()"
 												[untitled]="'CHAT.UNNAMED' | translate"
 												[highlightId]="highlightId()"
 												[patch]="rootPatch()"
@@ -195,6 +202,9 @@ const UNDO_MS = 55_000;
 											[meUserId]="meUserId()"
 											[readOnly]="!!selected()?.archivedAt || !selected()?.state"
 											[canAttach]="canAttach()"
+											[canCreateTask]="canCreateTask()"
+											[organizationId]="organizationId()"
+											[tenantId]="tenantId()"
 											(closed)="closeThread()"
 											(rootChanged)="onRootChanged($event)"
 										></ngx-chat-thread-pane>
@@ -390,6 +400,17 @@ export class ChatPageComponent implements OnInit {
 	protected readonly isAdmin = this.permission(PermissionsEnum.CHAT_MANAGE);
 	/** Attachments are stored as documents: uploading them needs `DOCS_CREATE`. */
 	protected readonly canAttach = this.permission(PermissionsEnum.DOCS_CREATE);
+	/** A task is created from a message with `ORG_TASK_ADD` (the API checks it too). */
+	protected readonly canCreateTask = this.permission(PermissionsEnum.ORG_TASK_ADD);
+	private readonly organization = toSignal(this.store.selectedOrganization$ as Observable<IOrganization | null>, { initialValue: null });
+	protected readonly organizationId = computed(() => {
+		const id = this.organization()?.id;
+		return id ? String(id) : null;
+	});
+	protected readonly tenantId = computed(() => {
+		const tenantId = this.organization()?.tenantId ?? this.user()?.tenantId;
+		return tenantId ? String(tenantId) : null;
+	});
 
 	protected readonly people = toSignal(
 		combineLatest([
@@ -662,6 +683,16 @@ export class ChatPageComponent implements OnInit {
 			.open(NewDirectDialogComponent, { context: { people: this.people(), meEmployeeId: this.meEmployeeId() } })
 			.onClose.pipe(takeUntilDestroyed(this.destroyRef))
 			.subscribe((conversation: IChatConversationWithState | null) => this.open(conversation));
+	}
+
+	/** The categories of the channels (`CHAT_MANAGE`); the lists are read again after a change. */
+	protected openCategories(): void {
+		this.dialog
+			.open(CategoriesDialogComponent, { context: { categories: this.categories() } })
+			.onClose.pipe(takeUntilDestroyed(this.destroyRef))
+			.subscribe((changed: boolean | undefined) => {
+				if (changed) this.api.notifyChanged();
+			});
 	}
 
 	protected openBrowse(): void {
