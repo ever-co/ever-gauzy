@@ -174,10 +174,12 @@ describe('deletePermission', () => {
 
 	it('refuses a row that does not exist, with the lookup’s message in the 400 body', async () => {
 		// The real lookup raises NotFound on a miss; the failure was that the 400 carried the exception object (`{}`).
-		const { service, remove } = deleting(ROLES.admin);
+		const { service, read, remove } = deleting(ROLES.admin);
+		read.mockRejectedValue(new NotFoundException('The requested record was not found'));
 
 		const error = await service.deletePermission('p-missing').catch((e) => e);
 
+		expect(read).toHaveBeenCalled();
 		expect(error).toBeInstanceOf(BadRequestException);
 		expect(error.message).toBe('The requested record was not found');
 		expect(remove).not.toHaveBeenCalled();
