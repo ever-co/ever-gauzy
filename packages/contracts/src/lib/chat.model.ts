@@ -561,4 +561,43 @@ export interface IChatInteractionCallback {
 	/** Who clicked: the employee id and the display name only. */
 	actor: { employeeId: ID; name: string };
 	action: { actionId: string; blockId: string | null; value: string | null; text: string };
+
+// ------------------------------------------------------------------ link previews
+
+/** Where a link preview stands (`GET /chat/link-preview?url=`). */
+export enum ChatLinkPreviewStatusEnum {
+	/** Being fetched in the background: ask again in a couple of seconds. */
+	PENDING = 'pending',
+	/** Fetched: the fields are what the page says about itself in its `<head>`. */
+	READY = 'ready',
+	/** No preview: the page is not on a public address, could not be fetched, or says nothing usable. Show the link. */
+	UNAVAILABLE = 'unavailable'
+}
+
+/** The longest link a preview is asked for. */
+export const CHAT_LINK_PREVIEW_URL_MAX_LENGTH = 2048;
+
+/**
+ * A link preview, fetched by the server (never by the browser) from a public address and cached. Every string is
+ * plain text the server sanitized: render it as text, never as HTML. `image` and `icon` are absolute `https:` URLs.
+ */
+export interface IChatLinkPreview {
+	/** The link the preview is of, normalized (no fragment). */
+	url: string;
+	status: ChatLinkPreviewStatusEnum;
+	title?: string | null;
+	description?: string | null;
+	siteName?: string | null;
+	image?: string | null;
+	imageAlt?: string | null;
+	imageWidth?: number | null;
+	imageHeight?: number | null;
+	icon?: string | null;
+	/** When the page was last fetched. */
+	fetchedAt?: Date | null;
+}
+
+/** `GET /chat/link-preview?url=`. */
+export interface IChatLinkPreviewQuery {
+	url: string;
 }

@@ -6,6 +6,14 @@ import { Employee } from './../core/entities/internal';
 import { getDefaultOrganization } from './../organization/organization.seed';
 
 /**
+ * The start date of a seeded user whose default entry gives none: the default super admins and admins, which have
+ * no entry (Ever Teams' demo signs in with them), and any entry that leaves it out. The EmployeeSubscriber turns
+ * time tracking on only for an employee who has started work, so without a date they could not track time
+ * (ever-co/ever-teams#5015). The default employee's own start date.
+ */
+const DEFAULT_STARTED_WORK_ON = '2018-03-20';
+
+/**
  * Creates default employees for the given organization.
  *
  * @param dataSource - The data source to interact with the database.
@@ -44,7 +52,7 @@ export const createDefaultEmployees = async (
 			tenant,
 			user,
 			employeeLevel: defaultEmployee?.employeeLevel,
-			startedWorkOn: parseDate(defaultEmployee?.startedWorkOn),
+			startedWorkOn: parseDate(defaultEmployee?.startedWorkOn ?? DEFAULT_STARTED_WORK_ON),
 			endWork: parseDate(defaultEmployee?.endWork),
 			payPeriod: faker.helpers.arrayElement(Object.values(PayPeriodEnum)),
 			billRateValue,

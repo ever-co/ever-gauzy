@@ -83,7 +83,7 @@ export class DocumentReviewService {
 		});
 		// §8/§9.4 — whoever asked for the review is the person who needs to hear about its
 		// outcome, so the request itself subscribes them to the document.
-		this.documentService.subscribeRequesterToDocument(document, EntitySubscriptionTypeEnum.MANUAL);
+		void this.documentService.subscribeRequesterToDocument(document, EntitySubscriptionTypeEnum.MANUAL);
 		this.emit(document, previous, DocumentReviewStatusEnum.PENDING);
 		// The reviewers named hear of the request in their Inbox (best effort).
 		void this.documentNotifier.notifyReviewRequested(document, reviewerEmployeeIds, input.reason ?? null);
