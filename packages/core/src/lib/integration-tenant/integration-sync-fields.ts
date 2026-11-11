@@ -1,3 +1,5 @@
+import { sanitizeRichHtml } from '../core/html-sanitizer';
+
 /**
  * The task fields the task integrations (Linear, Asana, Trello) keep in sync both ways, and the three-way merge an
  * inbound apply runs on them: the value both sides last agreed on (what the provider sent the last time the item was
@@ -62,11 +64,15 @@ function instant(value: Date | string | null | undefined): string | null {
 	return new Date(Math.floor(time / 1000) * 1000).toISOString();
 }
 
-/** The synced fields of a task or an item, as compared and stored. */
+/**
+ * The synced fields of a task or an item, as compared and stored. A description is taken in the form the task
+ * store keeps it (`TaskService` passes it through `sanitizeRichHtml`, which is idempotent): a provider's raw text and
+ * the task's saved copy of it then compare equal, and a stored conflict value matches the task's.
+ */
 export function syncedValuesOf(input: SyncedTaskFieldsInput): SyncedTaskValues {
 	return {
 		title: text(input.title),
-		description: text(input.description),
+		description: text(typeof input.description === 'string' ? sanitizeRichHtml(input.description) : input.description),
 		status: text(input.status),
 		priority: text(input.priority),
 		dueDate: instant(input.dueDate)

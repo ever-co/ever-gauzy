@@ -86,12 +86,15 @@ cards / lists) and their own webhook scheme, one webhook per mapping at
 - **Attention**: a refused token sets the connection's `attention_reason` and the run fails; nothing is retried
   until a person connects again. The Inbox notice (one per connection, resolved when the token works again) goes to
   the person who connected and to the organization's integration managers: active members whose role grants
-  `INTEGRATION_ADD` or `INTEGRATION_EDIT` (`IntegrationTenantService.findManagerUserIds`, core).
+  `INTEGRATION_ADD` or `INTEGRATION_EDIT` (`IntegrationTenantService.findManagerUserIds`, core). When the managers
+  cannot be read, an open notice goes to the people known without removing anyone and is not recorded as filed, so the
+  sweep files it again with them.
 - **Conflicts** (T15): an inbound apply merges the synced fields (title, description, status, priority, due date)
   three ways with the values the provider sent the last time the item was applied (`integration_<provider>_*_baseline`,
   one row per item): changed only by the provider → applied; only on the platform → the task keeps it; on both sides
   to different values → the provider's value is applied and the task's recorded in `integration_<provider>_sync_conflict`
-  (with the task's own columns to restore). `GET …/conflicts` lists them, `GET …/runs` counts them per run,
+  (with the task's own columns to restore). The conflicts are written before the task (taken back if its write
+  fails), the baseline after it; descriptions are compared as the task store keeps them (`sanitizeRichHtml`). `GET …/conflicts` lists them, `GET …/runs` counts them per run,
   `POST …/conflicts/:id/resolve` keeps the provider's value or writes the task's back through `TaskUpdateCommand` (its
   event sends it out on an outbound mapping; refused when the task's field changed since). The merge itself is core's
   `mergeSyncedFields` (`integration-tenant/integration-sync-fields.ts`), shared by the three plugins. An item with no

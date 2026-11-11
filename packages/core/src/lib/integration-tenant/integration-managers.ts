@@ -23,7 +23,7 @@ export async function findIntegrationManagerUserIds(manager: EntityManager, scop
 			isArchived: false,
 			user: {
 				isActive: true,
-				role: { rolePermissions: { permission: In([...INTEGRATION_MANAGER_PERMISSIONS]), enabled: true } }
+				role: { tenantId: scope.tenantId, rolePermissions: { tenantId: scope.tenantId, permission: In([...INTEGRATION_MANAGER_PERMISSIONS]), enabled: true } }
 			}
 		},
 		select: { id: true, userId: true },

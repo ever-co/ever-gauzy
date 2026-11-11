@@ -539,20 +539,22 @@ export class TrelloSyncService {
 			...(tags === undefined ? {} : { tags })
 		};
 		const write = withoutKeptFields(entity as Record<string, unknown>, merge?.keepPlatform ?? []) as unknown as ITaskCreateInput | ITaskUpdateInput;
-		const map: IIntegrationMap = await this.commandBus.execute(new IntegrationMapSyncTaskCommand({ entity: write, sourceId: card.id, integrationId, ...scope }, false));
+		// The conflicts are recorded while the task still holds its own values: a failure after the write cannot lose them.
+		const recorded = await this.conflicts.record({ ...scope, integrationId, mappingId: mapping.id as ID, runId: context.runId, sourceId: card.id, merge });
+		let map: IIntegrationMap;
+		try {
+			map = await this.commandBus.execute(new IntegrationMapSyncTaskCommand({ entity: write, sourceId: card.id, integrationId, ...scope }, false));
+		} catch (caught) {
+			// Not written: the task keeps its values, and the conflicts recorded for them are taken back.
+			await this.conflicts
+				.discard(recorded)
+				.catch((error: unknown) => this.logger.warn(`The conflicts recorded for card ${card.id} could not be taken back: ${this.describe(error)}`));
+			throw caught;
+		}
 		if (map?.gauzyId) {
-			// The card's values become what both sides agreed on; a failure here fails the card, so the next import reads it again.
-			context.conflicts += await this.conflicts.settle({
-				...scope,
-				integrationId,
-				mappingId: mapping.id as ID,
-				runId: context.runId,
-				sourceId: card.id,
-				taskId: map.gauzyId as ID,
-				external,
-				// A merge read against another task (the mapped one was gone and is re-created) records nothing.
-				merge: merge && String(merge.task?.['id'] ?? '') === String(map.gauzyId) ? merge : null
-			});
+			// The card's values become what both sides agreed on; a failure here fails the card (its conflicts stay recorded) and the next import writes it again.
+			await this.conflicts.settle({ ...scope, integrationId, sourceId: card.id, taskId: map.gauzyId as ID, external, recorded });
+			context.conflicts += recorded.length;
 		}
 		return { outcome: existing ? 'updated' : 'created', taskId: (map?.gauzyId as ID | undefined) ?? null };
 	}

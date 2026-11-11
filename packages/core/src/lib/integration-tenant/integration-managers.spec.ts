@@ -12,7 +12,7 @@ import { findIntegrationManagerUserIds, INTEGRATION_MANAGERS_LIMIT } from './int
 describe('findIntegrationManagerUserIds', () => {
 	const scope = { tenantId: 'tenant-1', organizationId: 'org-1' };
 
-	it('reads active members of the organization whose role may add or edit integrations', async () => {
+	it('reads active members of the organization whose role (in the tenant) may add or edit integrations', async () => {
 		const find = jest.fn().mockResolvedValue([{ userId: 'u-1' }, { userId: 'u-2' }]);
 		const ids = await findIntegrationManagerUserIds({ find } as never, scope);
 		expect(ids).toEqual(['u-1', 'u-2']);
@@ -26,7 +26,10 @@ describe('findIntegrationManagerUserIds', () => {
 					isArchived: false,
 					user: {
 						isActive: true,
-						role: { rolePermissions: { permission: In([PermissionsEnum.INTEGRATION_ADD, PermissionsEnum.INTEGRATION_EDIT]), enabled: true } }
+						role: {
+							tenantId: 'tenant-1',
+							rolePermissions: { tenantId: 'tenant-1', permission: In([PermissionsEnum.INTEGRATION_ADD, PermissionsEnum.INTEGRATION_EDIT]), enabled: true }
+						}
 					}
 				},
 				take: INTEGRATION_MANAGERS_LIMIT

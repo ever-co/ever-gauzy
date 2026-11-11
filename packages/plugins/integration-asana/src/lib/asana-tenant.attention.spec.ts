@@ -12,7 +12,7 @@ function harness(options: { connectedBy?: string | null; managers?: string[] | E
 	const settings: Array<{ id: string; settingsName: string; settingsValue: string }> = [{ id: 'set-token', settingsName: AsanaSettingName.ACCESS_TOKEN, settingsValue: 'token-1' }];
 	if (options.connectedBy !== null) settings.push({ id: 'set-user', settingsName: AsanaSettingName.CONNECTED_BY_USER_ID, settingsValue: options.connectedBy ?? 'user-connector' });
 	const row = { id: 'int-1', tenantId: 'tenant-1', organizationId: 'org-1', settings };
-	const findManagerUserIds = jest.fn(async () => {
+	const findManagerUserIds = jest.fn(async (_scope: { tenantId: string; organizationId: string }): Promise<string[]> => {
 		if (options.managers instanceof Error) throw options.managers;
 		return options.managers ?? [];
 	});
@@ -22,7 +22,7 @@ function harness(options: { connectedBy?: string | null; managers?: string[] | E
 		update: jest.fn(async () => ({ affected: 1 })),
 		create: jest.fn(async (input: Record<string, unknown>) => ({ id: `set-new-${++created}`, ...input }))
 	};
-	const inbox = { upsertExternal: jest.fn(async () => ({ id: 'item-1' })) };
+	const inbox = { upsertExternal: jest.fn(async (_item: Record<string, unknown>) => ({ id: 'item-1' })) };
 	const service = new AsanaTenantService({} as never, integrationTenantService as never, integrationSettingService as never, {} as never, inbox as never);
 	return { service, row, inbox, findManagerUserIds };
 }
@@ -53,10 +53,21 @@ describe('AsanaTenantService — the refused-token notice', () => {
 		expect((inbox.upsertExternal.mock.calls[0][0] as { recipients: Array<{ userId: string }> }).recipients.map((recipient) => recipient.userId)).toEqual(['user-manager']);
 	});
 
-	it('still tells the person who connected when the managers cannot be read', async () => {
-		const { service, row, inbox } = harness({ managers: new Error('store down') });
-		await service.setAttention(row as never, 'token_refused', 'token-1');
-		expect((inbox.upsertExternal.mock.calls[0][0] as { recipients: Array<{ userId: string }> }).recipients.map((recipient) => recipient.userId)).toEqual(['user-connector']);
+	it('still tells the person who connected when the managers cannot be read, removing nobody, and leaves it to the sweep', async () => {
+		const harnessed = harness({ managers: new Error('store down') });
+		await harnessed.service.setAttention(harnessed.row as never, 'token_refused', 'token-1');
+		const item = harnessed.inbox.upsertExternal.mock.calls[0][0] as { recipients: Array<{ userId: string }>; replaceRecipients: boolean };
+		expect(item.recipients.map((recipient) => recipient.userId)).toEqual(['user-connector']);
+		// Partial: the managers who already had the notice keep it, and the filing is not recorded.
+		expect(item.replaceRecipients).toBe(false);
+		expect(harnessed.row.settings.some((setting) => setting.settingsName === AsanaSettingName.ATTENTION_NOTICE_AT)).toBe(false);
+		// The sweep files it again once the managers can be read: with them, and recorded.
+		harnessed.findManagerUserIds.mockResolvedValue(['user-manager']);
+		await harnessed.service.ensureAttentionFiled(harnessed.row as never);
+		const refiled = harnessed.inbox.upsertExternal.mock.calls[1][0] as { recipients: Array<{ userId: string }>; replaceRecipients: boolean };
+		expect(refiled.recipients.map((recipient) => recipient.userId)).toEqual(['user-connector', 'user-manager']);
+		expect(refiled.replaceRecipients).toBe(true);
+		expect(harnessed.row.settings.some((setting) => setting.settingsName === AsanaSettingName.ATTENTION_NOTICE_AT)).toBe(true);
 	});
 
 	it('files nothing, and records nothing, with nobody to tell (the sweep tries again)', async () => {

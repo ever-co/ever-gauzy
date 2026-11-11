@@ -541,25 +541,25 @@ export class LinearSyncService {
 			...(issue.parent?.id ? {} : { parentId: null })
 		};
 		const write = withoutKeptFields(entity as Record<string, unknown>, merge?.keepPlatform ?? []) as unknown as ITaskCreateInput | ITaskUpdateInput;
-		const map: IIntegrationMap = await this.commandBus.execute(
-			new IntegrationMapSyncIssueCommand({ entity: write, sourceId: issue.id, integrationId, ...scope }, false)
-		);
+		// The conflicts are recorded while the task still holds its own values: a failure after the write cannot lose them.
+		const recorded = await this.conflicts.record({ ...scope, integrationId, mappingId: mapping.id as ID, runId: context.runId, sourceId: issue.id, merge });
+		let map: IIntegrationMap;
+		try {
+			map = await this.commandBus.execute(new IntegrationMapSyncIssueCommand({ entity: write, sourceId: issue.id, integrationId, ...scope }, false));
+		} catch (caught) {
+			// Not written: the task keeps its values, and the conflicts recorded for them are taken back.
+			await this.conflicts
+				.discard(recorded)
+				.catch((error: unknown) => this.logger.warn(`The conflicts recorded for issue ${issue.id} could not be taken back: ${this.describe(error)}`));
+			throw caught;
+		}
 		if (issue.parent?.id && map?.gauzyId) {
 			context.pendingParents.push({ taskId: map.gauzyId as ID, parentSourceId: issue.parent.id });
 		}
 		if (map?.gauzyId) {
-			// The issue's values become what both sides agreed on; a failure here fails the issue, so the next import reads it again.
-			context.conflicts += await this.conflicts.settle({
-				...scope,
-				integrationId,
-				mappingId: mapping.id as ID,
-				runId: context.runId,
-				sourceId: issue.id,
-				taskId: map.gauzyId as ID,
-				external,
-				// A merge read against another task (the mapped one was gone and is re-created) records nothing.
-				merge: merge && String(merge.task?.['id'] ?? '') === String(map.gauzyId) ? merge : null
-			});
+			// The issue's values become what both sides agreed on; a failure here fails the issue (its conflicts stay recorded) and the next import writes it again.
+			await this.conflicts.settle({ ...scope, integrationId, sourceId: issue.id, taskId: map.gauzyId as ID, external, recorded });
+			context.conflicts += recorded.length;
 		}
 		return { outcome: existing ? 'updated' : 'created', taskId: (map?.gauzyId as ID | undefined) ?? null };
 	}

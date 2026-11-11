@@ -15,7 +15,8 @@ function harness() {
 		findOne: jest.fn(),
 		find: jest.fn().mockResolvedValue([]),
 		update: jest.fn().mockResolvedValue({ affected: 1 }),
-		save: jest.fn(async (rows: unknown) => rows),
+		save: jest.fn(async (rows: Array<Record<string, unknown>>) => rows.map((row, index) => ({ ...row, id: `c-new-${index + 1}` }))),
+		delete: jest.fn().mockResolvedValue({ affected: 1 }),
 		manager: { findOne: jest.fn() }
 	};
 	const baselines = {
@@ -55,7 +56,7 @@ describe('TrelloSyncConflictService', () => {
 			expect(conflicts.manager.findOne.mock.calls[0][1].where).toEqual({ id: 'task-1', ...scope });
 		});
 
-		it('applies everything when the baseline was written for another task (the card\'s task was re-created)', async () => {
+		it('applies everything when the baseline was written for another task (the mapped task was re-created)', async () => {
 			const { service, baselines, conflicts } = harness();
 			baselines.findOne.mockResolvedValue({ taskId: 'task-old', syncedFields: JSON.stringify(agreed) });
 			conflicts.manager.findOne.mockResolvedValue(taskOf({ title: 'Platform title' }));
@@ -64,34 +65,19 @@ describe('TrelloSyncConflictService', () => {
 		});
 	});
 
-	describe('settle (after the task was written)', () => {
-		it('makes the card\'s values the baseline: written once, updated after', async () => {
-			const { service, baselines } = harness();
-			const input = { ...scope, integrationId: 'int-1', mappingId: 'map-1', runId: 'run-1', sourceId: 'card-1', taskId: 'task-1', external: agreed, merge: null };
-			expect(await service.settle(input)).toBe(0);
-			expect(baselines.save).toHaveBeenCalledWith(expect.objectContaining({ ...scope, integrationId: 'int-1', sourceId: 'card-1', taskId: 'task-1', syncedFields: JSON.stringify(agreed) }));
-			baselines.findOne.mockResolvedValue({ id: 'base-1' });
-			await service.settle({ ...input, external: { ...agreed, title: 'Next' } });
-			expect(baselines.update).toHaveBeenCalledWith({ id: 'base-1' }, expect.objectContaining({ taskId: 'task-1', syncedFields: JSON.stringify({ ...agreed, title: 'Next' }) }));
-		});
-
-		it('records each conflict with the task\'s columns, superseding an older open one on the same task and field', async () => {
+	describe('record (before the task is written), discard and settle (after)', () => {
+		it('records each conflict with the task\'s value and columns as read before the write', async () => {
 			const { service, conflicts } = harness();
 			const task = taskOf({ status: 'In Review', taskStatusId: 's-review' });
-			const found = await service.settle({
+			const recorded = await service.record({
 				...scope,
 				integrationId: 'int-1',
 				mappingId: 'map-1',
 				runId: 'run-1',
 				sourceId: 'card-1',
-				taskId: 'task-1',
-				external: { ...agreed, status: 'Done' },
 				merge: { keepPlatform: [], conflicts: [{ field: 'status', synced: 'Todo', platform: 'In Review', external: 'Done' }], task }
 			});
-			expect(found).toBe(1);
-			const [criteria, change] = conflicts.update.mock.calls[0];
-			expect(criteria).toMatchObject({ integrationId: 'int-1', taskId: 'task-1', status: TrelloSyncConflictStatus.OPEN, tenantId: 'tenant-1' });
-			expect(change).toMatchObject({ status: TrelloSyncConflictStatus.RESOLVED, resolution: TrelloSyncConflictResolution.SUPERSEDED });
+			expect(recorded).toEqual([{ id: 'c-new-1', field: 'status' }]);
 			expect(conflicts.save.mock.calls[0][0]).toEqual([
 				expect.objectContaining({
 					...scope,
@@ -108,6 +94,44 @@ describe('TrelloSyncConflictService', () => {
 					status: TrelloSyncConflictStatus.OPEN
 				})
 			]);
+			// Nothing superseded yet: the task is not written.
+			expect(conflicts.update).not.toHaveBeenCalled();
+		});
+
+		it('records nothing for a merge without conflicts, or without a task', async () => {
+			const { service, conflicts } = harness();
+			const base = { ...scope, integrationId: 'int-1', mappingId: 'map-1', runId: 'run-1', sourceId: 'card-1' };
+			expect(await service.record({ ...base, merge: null })).toEqual([]);
+			expect(await service.record({ ...base, merge: { keepPlatform: ['title'], conflicts: [], task: taskOf() } })).toEqual([]);
+			expect(conflicts.save).not.toHaveBeenCalled();
+		});
+
+		it('takes the recorded conflicts back when the task could not be written', async () => {
+			const { service, conflicts } = harness();
+			await service.discard([]);
+			expect(conflicts.delete).not.toHaveBeenCalled();
+			await service.discard([{ id: 'c-new-1', field: 'status' }]);
+			expect(conflicts.delete).toHaveBeenCalledTimes(1);
+		});
+
+		it('makes the card\'s values the baseline: written once, updated after', async () => {
+			const { service, baselines, conflicts } = harness();
+			const input = { ...scope, integrationId: 'int-1', sourceId: 'card-1', taskId: 'task-1', external: agreed, recorded: [] };
+			await service.settle(input);
+			expect(baselines.save).toHaveBeenCalledWith(expect.objectContaining({ ...scope, integrationId: 'int-1', sourceId: 'card-1', taskId: 'task-1', syncedFields: JSON.stringify(agreed) }));
+			baselines.findOne.mockResolvedValue({ id: 'base-1' });
+			await service.settle({ ...input, external: { ...agreed, title: 'Next' } });
+			expect(baselines.update).toHaveBeenCalledWith({ id: 'base-1' }, expect.objectContaining({ taskId: 'task-1', syncedFields: JSON.stringify({ ...agreed, title: 'Next' }) }));
+			expect(conflicts.update).not.toHaveBeenCalled();
+		});
+
+		it('supersedes an older open conflict on a field just recorded, never the new one', async () => {
+			const { service, conflicts } = harness();
+			await service.settle({ ...scope, integrationId: 'int-1', sourceId: 'card-1', taskId: 'task-1', external: agreed, recorded: [{ id: 'c-new-1', field: 'status' }] });
+			const [criteria, change] = conflicts.update.mock.calls[0];
+			expect(criteria).toMatchObject({ integrationId: 'int-1', taskId: 'task-1', status: TrelloSyncConflictStatus.OPEN, tenantId: 'tenant-1' });
+			expect(criteria.id).toBeDefined();
+			expect(change).toMatchObject({ status: TrelloSyncConflictStatus.RESOLVED, resolution: TrelloSyncConflictResolution.SUPERSEDED });
 		});
 	});
 

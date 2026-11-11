@@ -1,3 +1,4 @@
+import { sanitizeRichHtml } from '../core/html-sanitizer';
 import {
 	mergeSyncedFields,
 	parseSyncedValues,
@@ -25,6 +26,14 @@ describe('integration sync fields', () => {
 				priority: null,
 				dueDate: '2026-11-10T08:09:10.000Z'
 			});
+		});
+
+		it('takes a description in the form the task store keeps it, so a raw value and its saved copy compare equal', () => {
+			const raw = 'Fish & chips <a href="https://example.com" onclick="steal()">menu</a><script>x()</script>';
+			const saved = sanitizeRichHtml(raw);
+			expect(saved).not.toBe(raw);
+			expect(syncedValuesOf({ description: raw }).description).toBe(syncedValuesOf({ description: saved }).description);
+			expect(syncedValuesOf({ description: raw }).description).toBe(saved.trim());
 		});
 
 		it('reads an unreadable due date as none', () => {

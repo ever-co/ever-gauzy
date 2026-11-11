@@ -15,7 +15,14 @@ export interface TrelloAttentionTenant {
  * until someone connects again — or, with no reason, that the connection works again (the same item, resolved).
  * One item per connection: a second refusal updates it rather than filing another.
  */
-export function attentionItemOf(tenant: TrelloAttentionTenant, reason: string | null, recipientUserIds: readonly ID[], resurface = true): IInboxItemUpsertInput {
+export function attentionItemOf(
+	tenant: TrelloAttentionTenant,
+	reason: string | null,
+	recipientUserIds: readonly ID[],
+	resurface = true,
+	/** The recipients are known to be partial (the managers could not be read): add them, remove nobody. */
+	partial = false
+): IInboxItemUpsertInput {
 	const open = !!reason;
 	return {
 		tenantId: tenant.tenantId,
@@ -33,8 +40,8 @@ export function attentionItemOf(tenant: TrelloAttentionTenant, reason: string | 
 		externalSource: TRELLO_INBOX_SOURCE,
 		externalId: `${tenant.id}:attention`,
 		// An open notice is for the current connecting user and the current managers alone (a former one is not told of a refusal that is not theirs);
-		// a resolution keeps everyone the notice reached.
-		replaceRecipients: open,
+		// a resolution keeps everyone the notice reached, and so does a filing whose recipients are partial.
+		replaceRecipients: open && !partial,
 		// A new refusal re-surfaces the notice: the recipient reads it again, from the inbox it may have archived it from.
 		// (a retry of a filing that was taken but not recorded names the recipient without touching their read state).
 		recipients: recipientUserIds.map((userId) => (open && resurface ? { userId, isRead: false, isArchived: false } : { userId }))

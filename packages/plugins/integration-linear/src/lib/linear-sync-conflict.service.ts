@@ -1,6 +1,6 @@
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
-import { In } from 'typeorm';
+import { In, Not } from 'typeorm';
 import { ID, IIntegrationTenant, ITaskUpdateInput } from '@gauzy/contracts';
 import {
 	mergeSyncedFields,
@@ -33,17 +33,33 @@ export interface LinearApplyMerge extends SyncedFieldsMerge {
 	task: Record<string, unknown> | null;
 }
 
-/** One issue applied: what to record once its task is written. */
-export interface LinearApplySettlement {
+/** The conflicts of an issue's merge, recorded before its task is written. */
+export interface LinearApplyRecord {
 	tenantId: ID;
 	organizationId: ID;
 	integrationId: ID;
 	mappingId: ID | null;
 	runId: ID | null;
 	sourceId: string;
+	merge: LinearApplyMerge | null;
+}
+
+/** A conflict recorded for an issue's apply: its id and field. */
+export interface LinearRecordedConflict {
+	id: ID;
+	field: SyncedTaskField;
+}
+
+/** One issue applied: what to settle once its task is written. */
+export interface LinearApplySettlement {
+	tenantId: ID;
+	organizationId: ID;
+	integrationId: ID;
+	sourceId: string;
 	taskId: ID;
 	external: SyncedTaskValues;
-	merge: LinearApplyMerge | null;
+	/** The conflicts {@link LinearSyncConflictService.record} recorded for this apply. */
+	recorded: readonly LinearRecordedConflict[];
 }
 
 /** Filters of the conflict list. */
@@ -59,9 +75,11 @@ export interface LinearConflictQuery {
  * The conflicts between Linear and the platform, and the baseline they are found against.
  *
  * An inbound apply asks {@link prepare} before writing the task (which fields the task keeps, which changed on both
- * sides) and calls {@link settle} after (the issue's values become the baseline, the conflicts are recorded). A
- * manager lists them and resolves each: Linear's value stays, or the task's is written back — through the platform's
- * task update, so a mapping that sends changes out sends it to the issue.
+ * sides), records the conflicts with {@link record} while the task still holds its own values (a failure after the
+ * write cannot lose them), takes them back with {@link discard} when the write fails, and calls {@link settle} after
+ * it (the issue's values become the baseline; an older open conflict on the same field is superseded). A manager
+ * lists them and resolves each: Linear's value stays, or the task's is written back — through the platform's task
+ * update, so a mapping that sends changes out sends it to the issue.
  */
 @Injectable()
 export class LinearSyncConflictService {
@@ -90,33 +108,23 @@ export class LinearSyncConflictService {
 	}
 
 	/**
-	 * After the task was written: the issue's values become the baseline, and each conflict is recorded (an older open
-	 * one on the same task and field is superseded: the task's value it kept was replaced since).
+	 * Before the task is written: each conflict of the merge is recorded with the task's value and its own columns
+	 * (read before the write), so nothing the task held is lost if anything after the write fails. Answers what was
+	 * recorded.
 	 */
-	async settle(input: LinearApplySettlement): Promise<number> {
-		const scope = { tenantId: input.tenantId, organizationId: input.organizationId };
-		const syncedFields = JSON.stringify(input.external);
-		const existing = await this.baselines.findOne({ where: { integrationId: input.integrationId, sourceId: input.sourceId, tenantId: input.tenantId } });
-		if (existing) {
-			await this.baselines.update({ id: existing.id }, { taskId: input.taskId, syncedFields, updatedAt: new Date() } as never);
-		} else {
-			await this.baselines.save(Object.assign(new LinearIssueBaseline(), { ...scope, integrationId: input.integrationId, sourceId: input.sourceId, taskId: input.taskId, syncedFields }));
-		}
+	async record(input: LinearApplyRecord): Promise<LinearRecordedConflict[]> {
 		const found = input.merge?.conflicts ?? [];
-		if (!found.length) return 0;
-		await this.conflicts.update(
-			{ integrationId: input.integrationId, taskId: input.taskId, field: In(found.map((conflict) => conflict.field)), status: LinearSyncConflictStatus.OPEN, tenantId: input.tenantId } as never,
-			{ status: LinearSyncConflictStatus.RESOLVED, resolution: LinearSyncConflictResolution.SUPERSEDED, resolvedAt: new Date(), updatedAt: new Date() } as never
-		);
-		const task = input.merge?.task ?? {};
-		await this.conflicts.save(
+		const task = input.merge?.task;
+		if (!found.length || !task?.['id']) return [];
+		const saved = await this.conflicts.save(
 			found.map((conflict) =>
 				Object.assign(new LinearSyncConflict(), {
-					...scope,
+					tenantId: input.tenantId,
+					organizationId: input.organizationId,
 					integrationId: input.integrationId,
 					mappingId: input.mappingId,
 					runId: input.runId,
-					taskId: input.taskId,
+					taskId: task['id'] as ID,
 					sourceId: input.sourceId,
 					field: conflict.field,
 					syncedValue: conflict.synced,
@@ -127,7 +135,49 @@ export class LinearSyncConflictService {
 				})
 			)
 		);
-		return found.length;
+		return saved.map((row) => ({ id: row.id as ID, field: row.field as SyncedTaskField }));
+	}
+
+	/** The task could not be written: the conflicts recorded for the apply are taken back (it keeps its values). */
+	async discard(recorded: readonly LinearRecordedConflict[]): Promise<void> {
+		if (!recorded.length) return;
+		await this.conflicts.delete({ id: In(recorded.map((conflict) => conflict.id)) } as never);
+	}
+
+	/**
+	 * After the task was written: the issue's values become the baseline, and an older open conflict on a field just
+	 * recorded is superseded (the task's value it kept was replaced since). A failure here leaves the conflicts
+	 * recorded; the next apply of the issue writes the baseline again.
+	 */
+	async settle(input: LinearApplySettlement): Promise<void> {
+		const syncedFields = JSON.stringify(input.external);
+		const existing = await this.baselines.findOne({ where: { integrationId: input.integrationId, sourceId: input.sourceId, tenantId: input.tenantId } });
+		if (existing) {
+			await this.baselines.update({ id: existing.id }, { taskId: input.taskId, syncedFields, updatedAt: new Date() } as never);
+		} else {
+			await this.baselines.save(
+				Object.assign(new LinearIssueBaseline(), {
+					tenantId: input.tenantId,
+					organizationId: input.organizationId,
+					integrationId: input.integrationId,
+					sourceId: input.sourceId,
+					taskId: input.taskId,
+					syncedFields
+				})
+			);
+		}
+		if (!input.recorded.length) return;
+		await this.conflicts.update(
+			{
+				integrationId: input.integrationId,
+				taskId: input.taskId,
+				field: In(input.recorded.map((conflict) => conflict.field)),
+				id: Not(In(input.recorded.map((conflict) => conflict.id))),
+				status: LinearSyncConflictStatus.OPEN,
+				tenantId: input.tenantId
+			} as never,
+			{ status: LinearSyncConflictStatus.RESOLVED, resolution: LinearSyncConflictResolution.SUPERSEDED, resolvedAt: new Date(), updatedAt: new Date() } as never
+		);
 	}
 
 	// ---------------------------------------------------------------- routes

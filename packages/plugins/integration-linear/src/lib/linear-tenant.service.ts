@@ -338,20 +338,24 @@ export class LinearTenantService {
 		const settings = this.settingsOf(current);
 		if ((settings[LinearSettingName.ATTENTION_REASON] || null) !== (reason || null)) return;
 		const userId = settings[LinearSettingName.CONNECTED_BY_USER_ID];
-		const managers = await this.integrationTenantService
-			.findManagerUserIds({ tenantId: current.tenantId as ID, organizationId: current.organizationId as ID })
-			.catch((error: unknown) => {
-				this.logger.warn(`The integration managers of connection ${tenant.id} could not be read: ${(error as Error)?.message ?? error}`);
-				return [] as ID[];
-			});
-		const recipients = [...new Set([userId, ...managers, ...alsoUserIds].filter(Boolean).map(String))] as ID[];
+		let managers: ID[] | null = null;
+		try {
+			managers = await this.integrationTenantService.findManagerUserIds({ tenantId: current.tenantId as ID, organizationId: current.organizationId as ID });
+		} catch (error) {
+			this.logger.warn(`The integration managers of connection ${tenant.id} could not be read: ${(error as Error)?.message ?? error}`);
+		}
+		// Without the managers an open notice is filed for the people known (nobody is removed from it) and not recorded
+		// as filed, so the sweep files it again with the managers.
+		const partial = !!reason && managers === null;
+		const recipients = [...new Set([userId, ...(managers ?? []), ...alsoUserIds].filter(Boolean).map(String))] as ID[];
 		if (!recipients.length) return;
 		try {
-			await this.inbox.upsertExternal(attentionItemOf({ id: tenant.id as ID, tenantId: tenant.tenantId as ID, organizationId: tenant.organizationId as ID }, reason, recipients, resurface));
+			await this.inbox.upsertExternal(attentionItemOf({ id: tenant.id as ID, tenantId: tenant.tenantId as ID, organizationId: tenant.organizationId as ID }, reason, recipients, resurface, partial));
 		} catch (error) {
 			this.logger.warn(`The attention of connection ${tenant.id} could not be filed in the Inbox: ${(error as Error).message}`);
 			return;
 		}
+		if (partial) return;
 		try {
 			await this.writeSetting(tenant, LinearSettingName.ATTENTION_NOTICE_AT, reason ? new Date().toISOString() : '');
 		} catch (error) {
