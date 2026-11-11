@@ -575,6 +575,9 @@ describe('ActivityResolver — which members the surface exposes, and which it r
 		expect(row).toMatch(/\bdurationPercentage: Float\b/);
 		expect(row).toMatch(/\bduration: Int\b/);
 		expect(row).toMatch(/\bprojectId: ID\b/);
+		// What a client draws the row's icon from (ever-co/ever-teams#5023)
+		expect(row).toMatch(/\btype: String\b/);
+		expect(row).toMatch(/\burl: String\b/);
 		// The share is a percentage of the group it was computed over, and the SDL says which group.
 		expect(printed).toMatch(/share of the tracked time of the group it is nested under, \*\*as a percentage\*\*/);
 		expect(row).not.toMatch(/\bduration: Decimal\b/);
