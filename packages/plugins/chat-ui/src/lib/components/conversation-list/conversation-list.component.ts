@@ -4,6 +4,7 @@ import { RouterLink } from '@angular/router';
 import { NbButtonModule, NbIconModule, NbTooltipModule } from '@nebular/theme';
 import { TranslatePipe } from '@ngx-translate/core';
 import { ChatConversationKindEnum, ChatVisibilityEnum, IChatCategory, IChatConversationWithState } from '@gauzy/contracts';
+import { sortCategories } from '../../chat-categories';
 import { CHAT_LINK, CHAT_THREADS_PATH, CHAT_UNREADS_PATH } from '../../chat-ui.constants';
 import { conversationTitle, isUnread } from '../../chat-ui.helpers';
 import { ChatPeople } from '../../services/chat-people.service';
@@ -222,7 +223,8 @@ export class ConversationListComponent {
 	protected readonly channelGroups = computed(() => {
 		const channels = this.channels();
 		if (channels.length === 0) return [];
-		const categories = [...this.categories()].sort((a, b) => a.position - b.position);
+		// The order the categories dialog shows and moves them in.
+		const categories = sortCategories(this.categories());
 		const groups: { key: string; name: string | null; conversations: IChatConversationWithState[] }[] = [];
 		const uncategorized = channels.filter((conversation) => !conversation.categoryId);
 		if (uncategorized.length > 0) groups.push({ key: 'none', name: null, conversations: uncategorized });

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, DestroyRef, inject, OnInit, signal } from '@angular/core';
+import { AfterViewInit, ChangeDetectionStrategy, Component, computed, DestroyRef, ElementRef, inject, OnInit, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { NbButtonModule, NbCardModule, NbCheckboxModule, NbDialogRef, NbIconModule, NbInputModule, NbSelectModule, NbSpinnerModule, NbTooltipModule } from '@nebular/theme';
@@ -100,6 +100,8 @@ export interface ChannelSettingsContext {
 	meEmployeeId: string | null;
 	/** Whether I manage the conversation (`CHAT_MANAGE`, its manager, or its creator): the fields can be changed. */
 	canManage: boolean;
+	/** Where the dialog opens: the fields (default), or the members (from the member count). */
+	section?: 'settings' | 'members';
 }
 
 /** One member as the settings list it. */
@@ -163,7 +165,7 @@ interface MemberRow {
 					</nb-checkbox>
 				}
 
-				<h6 class="section">{{ 'CHAT.SETTINGS.MEMBERS' | translate: { count: members().length } }}</h6>
+				<h6 class="section" tabindex="-1" data-test="settings-members-heading">{{ 'CHAT.SETTINGS.MEMBERS' | translate: { count: members().length } }}</h6>
 				@if (loadingMembers()) {
 					<div class="loading" [nbSpinner]="true"></div>
 				} @else {
@@ -222,8 +224,9 @@ interface MemberRow {
 	`,
 	styles: [SETTINGS_DIALOG_STYLES]
 })
-export class ChannelSettingsDialogComponent implements OnInit {
+export class ChannelSettingsDialogComponent implements OnInit, AfterViewInit {
 	protected readonly ref = inject<NbDialogRef<ChannelSettingsDialogComponent>>(NbDialogRef);
+	private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
 	private readonly api = inject(ChatUiService);
 	private readonly translate = inject(TranslateService);
 	private readonly destroyRef = inject(DestroyRef);
@@ -248,6 +251,8 @@ export class ChannelSettingsDialogComponent implements OnInit {
 	protected readonly error = signal<string | null>(null);
 	/** The conversation as the API last answered it (after a member change). */
 	private changed: IChatConversationWithState | null = null;
+	/** Counts the conversation reads after member changes: only the latest one's answer is kept. */
+	private refreshRun = 0;
 
 	protected readonly isChannel = computed(() => this.context.conversation?.kind === ChatConversationKindEnum.CHANNEL);
 	protected readonly categories = computed(() => sortCategories(this.context.categories ?? []));
@@ -346,12 +351,28 @@ export class ChannelSettingsDialogComponent implements OnInit {
 		this.ref.close(this.changed);
 	}
 
-	/** The conversation again after a member change (its member count and avatars), for the page. */
+	/** The conversation again after a member change (its member count and avatars), for the page; the latest read wins. */
 	private refreshConversation(): void {
+		const run = ++this.refreshRun;
 		this.api
 			.getConversation(this.context.conversation.id)
 			.pipe(takeUntilDestroyed(this.destroyRef))
-			.subscribe({ next: (conversation) => (this.changed = conversation), error: () => undefined });
+			.subscribe({
+				next: (conversation) => {
+					if (run === this.refreshRun) this.changed = conversation;
+				},
+				error: () => undefined
+			});
+	}
+
+	/** Opened from the member count: the members are brought into view and take the focus. */
+	ngAfterViewInit(): void {
+		if (this.context.section !== 'members') return;
+		queueMicrotask(() => {
+			const heading = this.host.nativeElement.querySelector<HTMLElement>('[data-test="settings-members-heading"]');
+			heading?.scrollIntoView?.({ block: 'start' });
+			heading?.focus?.();
+		});
 	}
 
 	private run<T>(request: Observable<T>, done: (answer: T) => void): void {
@@ -403,10 +424,10 @@ export class ChannelSettingsDialogComponent implements OnInit {
 								(blur)="saveName(category)"
 								maxlength="80"
 							/>
-							<button nbButton ghost size="tiny" type="button" [disabled]="first || busy()" [nbTooltip]="'CHAT.CATEGORIES.UP' | translate" [attr.aria-label]="'CHAT.CATEGORIES.UP' | translate" (click)="move(category.id, -1)">
+							<button nbButton ghost size="tiny" type="button" [disabled]="first || busy() || stale()" [nbTooltip]="'CHAT.CATEGORIES.UP' | translate" [attr.aria-label]="'CHAT.CATEGORIES.UP' | translate" (click)="move(category.id, -1)">
 								<nb-icon icon="arrow-upward-outline"></nb-icon>
 							</button>
-							<button nbButton ghost size="tiny" type="button" [disabled]="last || busy()" [nbTooltip]="'CHAT.CATEGORIES.DOWN' | translate" [attr.aria-label]="'CHAT.CATEGORIES.DOWN' | translate" (click)="move(category.id, 1)">
+							<button nbButton ghost size="tiny" type="button" [disabled]="last || busy() || stale()" [nbTooltip]="'CHAT.CATEGORIES.DOWN' | translate" [attr.aria-label]="'CHAT.CATEGORIES.DOWN' | translate" (click)="move(category.id, 1)">
 								<nb-icon icon="arrow-downward-outline"></nb-icon>
 							</button>
 							<button nbButton ghost size="tiny" type="button" [attr.data-test]="'category-delete-' + category.id" [disabled]="busy()" [nbTooltip]="'CHAT.CATEGORIES.DELETE' | translate" [attr.aria-label]="'CHAT.CATEGORIES.DELETE' | translate" (click)="remove(category)">
@@ -422,11 +443,16 @@ export class ChannelSettingsDialogComponent implements OnInit {
 					<button nbButton size="small" status="basic" type="button" data-test="category-add" [disabled]="!newName().trim() || busy()" (click)="create()">{{ 'CHAT.CATEGORIES.ADD' | translate }}</button>
 				</div>
 				@if (error()) {
-					<p class="error" role="alert">{{ error() }}</p>
+					<p class="error" role="alert">
+						{{ error() }}
+						@if (stale()) {
+							<button nbButton ghost size="tiny" type="button" data-test="categories-reload" [disabled]="busy()" (click)="reload()">{{ 'CHAT.RETRY' | translate }}</button>
+						}
+					</p>
 				}
 			</nb-card-body>
 			<nb-card-footer class="footer">
-				<button nbButton status="primary" type="button" (click)="ref.close(changedAny)">{{ 'CHAT.DIALOG.CLOSE' | translate }}</button>
+				<button nbButton status="primary" type="button" data-test="categories-close" (click)="close()">{{ 'CHAT.DIALOG.CLOSE' | translate }}</button>
 			</nb-card-footer>
 		</nb-card>
 	`,
@@ -447,7 +473,11 @@ export class CategoriesDialogComponent implements OnInit {
 	protected readonly busy = signal(false);
 	protected readonly error = signal<string | null>(null);
 	protected readonly ordered = computed(() => sortCategories(this.list()));
+	/** A move failed part way and the list could not be read again: moves wait for a successful read. */
+	protected readonly stale = signal(false);
 	protected changedAny = false;
+	/** Close was asked for while a write ran: the dialog closes once it ends. */
+	private closing = false;
 
 	ngOnInit(): void {
 		this.list.set([...(this.categories ?? [])]);
@@ -465,7 +495,7 @@ export class CategoriesDialogComponent implements OnInit {
 
 	protected move(id: string, direction: -1 | 1): void {
 		const moves = moveCategory(this.list(), id, direction);
-		if (!moves.length || this.busy()) return;
+		if (!moves.length || this.busy() || this.stale()) return;
 		// The positions are written one by one: when one fails, some may have been written, so the list is read again.
 		this.run(
 			forkJoin(moves.map((move) => this.api.updateCategory(move.id, { position: move.position }))),
@@ -496,8 +526,21 @@ export class CategoriesDialogComponent implements OnInit {
 		this.names.set(names);
 	}
 
-	/** The categories as the API has them now (after a move that failed half way). */
-	private reload(): void {
+	/** Closes with whether anything changed; while a write (or its recovery read) runs, once it ends. */
+	protected close(): void {
+		if (this.busy()) {
+			this.closing = true;
+			return;
+		}
+		this.ref.close(this.changedAny);
+	}
+
+	/**
+	 * The categories as the API has them now, after a move that failed half way: the actions stay blocked until this
+	 * read ends; if it fails too, moves wait for a successful one (Retry).
+	 */
+	protected reload(): void {
+		this.busy.set(true);
 		this.api
 			.categories()
 			.pipe(takeUntilDestroyed(this.destroyRef))
@@ -505,10 +548,15 @@ export class CategoriesDialogComponent implements OnInit {
 				next: (categories) => {
 					this.list.set([...categories]);
 					this.names.set({});
+					this.stale.set(false);
 					this.changedAny = true;
 					this.api.notifyChanged();
+					this.settle();
 				},
-				error: () => undefined
+				error: () => {
+					this.stale.set(true);
+					this.settle();
+				}
 			});
 	}
 
@@ -517,16 +565,26 @@ export class CategoriesDialogComponent implements OnInit {
 		this.error.set(null);
 		request.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
 			next: (answer) => {
-				this.busy.set(false);
 				this.changedAny = true;
 				this.api.notifyChanged();
 				done(answer);
+				this.settle();
 			},
 			error: (error) => {
-				this.busy.set(false);
 				this.error.set(apiErrorMessage(error) ?? this.translate.instant('CHAT.DIALOG.FAILED'));
-				failed?.();
+				// The recovery read keeps the dialog busy until it ends.
+				if (failed) failed();
+				else this.settle();
 			}
 		});
+	}
+
+	/** A write (or its recovery read) ended: the actions are free again, and a Close asked for meanwhile happens. */
+	private settle(): void {
+		this.busy.set(false);
+		if (this.closing) {
+			this.closing = false;
+			this.ref.close(this.changedAny);
+		}
 	}
 }

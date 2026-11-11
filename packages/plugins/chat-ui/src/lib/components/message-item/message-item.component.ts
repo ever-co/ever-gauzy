@@ -294,7 +294,7 @@ export type MessageAction =
 			.task-status {
 				padding: 0 0.375rem;
 				border-radius: 999px;
-				background: rgba(127, 127, 127, 0.15);
+				background: var(--background-basic-color-3);
 				font-size: 0.6875rem;
 			}
 			.reactions {

@@ -11,6 +11,7 @@ import { applyCatchUp, reconcileWithOldest } from '../../chat-catch-up';
 import { CHAT_LIVE_AUDIT_MS, CHAT_THREAD_POLL_MS } from '../../chat-ui.constants';
 import { apiErrorMessage, continuesGroup, mergeMessages, newNonce } from '../../chat-ui.helpers';
 import { ChatHint } from '../../services/chat-live';
+import { withTaskReference } from '../../chat-tasks';
 import { ChatCreateTaskFlow } from '../../dialogs/chat-task-dialogs.component';
 import { ChatFilesStore } from '../../services/chat-files.store';
 import { ChatTasksService } from '../../services/chat-tasks.service';
@@ -559,9 +560,12 @@ export class ThreadPaneComponent {
 				this.createTaskFlow
 					.open({ message, people: this.people(), conversationNames: this.conversationNames(), organizationId: this.organizationId(), tenantId: this.tenantId() })
 					.pipe(takeUntilDestroyed(this.destroyRef))
-					.subscribe((updated) => {
-						// Only the reference is new: put it on the message as shown now (it may have changed meanwhile).
-						if (updated && this.isCurrent(id)) this.replace({ id: message.id, taskReferences: updated.taskReferences });
+					.subscribe((reference) => {
+						if (!reference || !this.isCurrent(id)) return;
+						// Added to the message as shown now (another reference may have come meanwhile).
+						const root = this.root();
+						const current = (root && root.id === message.id ? root : this.replies().find((item) => item.id === message.id)) ?? message;
+						this.replace({ id: message.id, taskReferences: withTaskReference(current, reference).taskReferences });
 					});
 				return;
 			case 'pin':

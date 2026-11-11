@@ -2,7 +2,7 @@
 jest.mock('@gauzy/ui-core/core', () => ({ Store: class Store {}, ToastrService: class ToastrService {} }));
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { NbDialogRef } from '@nebular/theme';
-import { of } from 'rxjs';
+import { of, Subject, throwError } from 'rxjs';
 import {
 	ChatConversationKindEnum,
 	ChatMemberRoleEnum,
@@ -50,12 +50,20 @@ describe('ChannelSettingsDialogComponent', () => {
 	let close: jest.Mock;
 
 	async function open(context: Partial<ChannelSettingsContext>): Promise<void> {
+		// The API's member count, as the member changes leave it.
+		let memberCount = members.length;
 		api = {
 			members: jest.fn(() => of(members)),
 			updateConversation: jest.fn((_id, input) => of({ conversation: channel(input), events: [] })),
-			addMembers: jest.fn((_id, ids: string[]) => of({ members: [...members, ...ids.map((employeeId) => ({ employeeId, userId: `u-${employeeId}`, role: ChatMemberRoleEnum.MEMBER }))], events: [] })),
-			removeMember: jest.fn(() => of({ events: [] })),
-			getConversation: jest.fn(() => of(channel({ memberCount: 3 }))),
+			addMembers: jest.fn((_id, ids: string[]) => {
+				memberCount += ids.length;
+				return of({ members: [...members, ...ids.map((employeeId) => ({ employeeId, userId: `u-${employeeId}`, role: ChatMemberRoleEnum.MEMBER }))], events: [] });
+			}),
+			removeMember: jest.fn(() => {
+				memberCount -= 1;
+				return of({ events: [] });
+			}),
+			getConversation: jest.fn(() => of(channel({ memberCount }))),
 			notifyChanged: jest.fn()
 		};
 		close = jest.fn();
@@ -114,7 +122,8 @@ describe('ChannelSettingsDialogComponent', () => {
 		dialog().remove(dialog().members().find((member: { employeeId: string }) => member.employeeId === ANNA));
 		expect(api.removeMember).toHaveBeenCalledWith('c1', ANNA);
 		dialog().close();
-		expect(close).toHaveBeenCalledWith(expect.objectContaining({ memberCount: 3 }));
+		// Two added-then-removed changes: the conversation as read after the last one.
+		expect(close).toHaveBeenCalledWith(expect.objectContaining({ memberCount: 2 }));
 	});
 
 	it('changes nothing for a member who does not manage it', async () => {
@@ -194,6 +203,37 @@ describe('CategoriesDialogComponent', () => {
 		expect(order()).toEqual(['People', 'Projects', 'Partners']);
 		fixture.nativeElement.querySelector('nb-card-footer button').click();
 		expect(close).toHaveBeenCalledWith(true);
+	});
+
+	it('closes only once a write under way ended', () => {
+		const write = new Subject<IChatCategory>();
+		api['updateCategory'].mockReturnValueOnce(write);
+		dialog().rename('a', 'People');
+		dialog().saveName(categories[0]);
+		fixture.nativeElement.querySelector('[data-test="categories-close"]').click();
+		expect(close).not.toHaveBeenCalled();
+		write.next({ ...categories[0], name: 'People' });
+		write.complete();
+		expect(close).toHaveBeenCalledWith(true);
+	});
+
+	it('reads the categories again after a move failed part way, and blocks moves until a read succeeds', () => {
+		api['updateCategory'].mockReturnValueOnce(of({ ...categories[2], position: 1 })).mockReturnValueOnce(throwError(() => ({ error: { message: 'busy' } })));
+		const read = new Subject<IChatCategory[]>();
+		api['categories'] = jest.fn(() => read);
+		dialog().move('c', -1);
+		// The recovery read keeps the dialog busy.
+		expect(dialog().busy()).toBe(true);
+		read.error(new Error('offline'));
+		expect(dialog().busy()).toBe(false);
+		expect(dialog().stale()).toBe(true);
+		dialog().move('b', -1);
+		expect(api['updateCategory']).toHaveBeenCalledTimes(2);
+
+		api['categories'] = jest.fn(() => of([{ id: 'a', name: 'Teams', position: 0 }, { id: 'c', name: 'Projects', position: 1 }, { id: 'b', name: 'Clients', position: 1 }] as IChatCategory[]));
+		dialog().reload();
+		expect(dialog().stale()).toBe(false);
+		expect(order()).toEqual(['Teams', 'Clients', 'Projects']);
 	});
 
 	it('writes nothing for an unchanged name', () => {

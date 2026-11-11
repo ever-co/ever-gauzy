@@ -52,7 +52,8 @@ The UI has no switch of its own. It follows the API:
   text of each conversation and thread is kept while the page lives. A message offers reply in thread, reactions, pin,
   edit and delete (own messages, or managers) and "Create task from message"
   (users with `ORG_TASK_ADD`), and shows its task cards (key, title and status
-  where the reader may see the task, `GET /api/tasks/:id`), its
+  where the reader may see the task, read through `GET /api/tasks?where[id]=…`,
+  which records no visit, unlike `GET /api/tasks/:id`), its
   files and a card for each web link (made from the link alone: nothing is
   fetched from the linked site).
 - **Files**: the paperclip, a drop on the composer or a paste attaches files

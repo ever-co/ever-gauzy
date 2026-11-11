@@ -5,9 +5,9 @@ import { NbButtonModule, NbCardModule, NbDialogRef, NbDialogService, NbIconModul
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { forkJoin, Observable, of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
-import { IChatConversationWithState, IChatCreateTaskResult, IChatMessageWithRelations, IOrganization, IUser } from '@gauzy/contracts';
+import { IChatConversationWithState, IChatCreateTaskResult, IChatMessageWithRelations, IChatTaskReference, IOrganization, IUser } from '@gauzy/contracts';
 import { Store, ToastrService } from '@gauzy/ui-core/core';
-import { ChatTaskSummary, conversationChoices, sendToChatBody, taskTitleFromBody, withTaskReference } from '../chat-tasks';
+import { ChatTaskSummary, conversationChoices, sendToChatBody, taskTitleFromBody } from '../chat-tasks';
 import { apiErrorMessage, conversationTitle, newNonce } from '../chat-ui.helpers';
 import { ChatPeople, ChatPeopleService, EMPTY_PEOPLE } from '../services/chat-people.service';
 import { ChatProjectChoice, ChatTasksService } from '../services/chat-tasks.service';
@@ -205,19 +205,20 @@ export class CreateTaskDialogComponent implements OnInit {
 
 /**
  * "Create task from message" for the conversation and the thread alike: the dialog, a toast once the task exists, and
- * the message with the task's reference to put in place of the shown one (null when nothing was created).
+ * the message's new task reference (null when nothing was created). The caller adds it to the message as shown then
+ * (`withTaskReference`), not to the message the dialog opened with, which may have changed meanwhile.
  */
 @Injectable({ providedIn: 'root' })
 export class ChatCreateTaskFlow {
 	private readonly dialog = inject(NbDialogService);
 	private readonly toastr = inject(ToastrService);
 
-	open(context: CreateTaskDialogContext): Observable<IChatMessageWithRelations | null> {
+	open(context: CreateTaskDialogContext): Observable<IChatTaskReference | null> {
 		return this.dialog.open(CreateTaskDialogComponent, { context: { context } }).onClose.pipe(
 			map((result: IChatCreateTaskResult | null | undefined) => {
 				if (!result?.task) return null;
 				this.toastr.success('CHAT.TASKS.CREATED', { title: result.task.title });
-				return withTaskReference(context.message, result.reference);
+				return result.reference;
 			})
 		);
 	}
@@ -256,6 +257,11 @@ export interface SendTaskToChatResult {
 				</label>
 				@if (loading()) {
 					<div class="loading" [nbSpinner]="true"></div>
+				} @else if (loadFailed()) {
+					<p class="error" role="alert">
+						{{ 'CHAT.ERROR' | translate }}
+						<button nbButton ghost size="tiny" type="button" data-test="send-task-retry" (click)="load()">{{ 'CHAT.RETRY' | translate }}</button>
+					</p>
 				} @else {
 					<ul class="choices" role="listbox" [attr.aria-label]="'CHAT.TASKS.SEND_TO' | translate">
 						@for (conversation of choices(); track conversation.id) {
@@ -313,29 +319,44 @@ export class SendTaskToChatDialogComponent implements OnInit {
 	protected readonly note = signal('');
 	protected readonly selectedId = signal<string | null>(null);
 	protected readonly loading = signal(true);
+	protected readonly loadFailed = signal(false);
 	protected readonly busy = signal(false);
 	protected readonly error = signal<string | null>(null);
 	private meEmployeeId: string | null = null;
 
 	protected readonly choices = computed(() => conversationChoices(this.conversations(), this.query(), (conversation) => this.titleOf(conversation)));
-	protected readonly canSend = computed(() => !!this.selectedId() && !this.busy() && !!this.taskId);
+	/** The picked conversation, only while the list shows it: a search that hides it leaves nothing to send to. */
+	protected readonly target = computed(() => this.choices().find((conversation) => conversation.id === this.selectedId()) ?? null);
+	protected readonly canSend = computed(() => !!this.target() && !this.busy() && !!this.taskId);
 
 	ngOnInit(): void {
 		const user = this.store.user as (IUser & { employee?: { id?: string }; employeeId?: string }) | null;
 		this.meEmployeeId = user?.employee?.id ? String(user.employee.id) : user?.employeeId ? String(user.employeeId) : null;
+		this.load();
+	}
+
+	/** My conversations, the people (for their titles) and the task's summary; a failed list offers to try again. */
+	protected load(): void {
+		const user = this.store.user as (IUser & { employee?: { id?: string }; employeeId?: string }) | null;
 		const organization = this.store.selectedOrganization as IOrganization | null;
 		const tenantId = organization?.tenantId ?? user?.tenantId ?? null;
+		this.loading.set(true);
+		this.loadFailed.set(false);
 		forkJoin({
-			list: this.api.listMine().pipe(catchError(() => of({ conversations: [], categories: [] }))),
+			list: this.api.listMine().pipe(catchError(() => of(null))),
 			people: organization?.id && tenantId ? this.peopleService.people(organization.id, tenantId) : of(EMPTY_PEOPLE),
 			summary: this.taskId ? this.tasks.summary(this.taskId) : of(null)
 		})
 			.pipe(takeUntilDestroyed(this.destroyRef))
 			.subscribe(({ list, people, summary }) => {
 				this.people.set(people);
-				this.conversations.set(list.conversations);
-				this.summary.set(summary);
+				this.summary.set(summary ?? null);
 				this.loading.set(false);
+				if (!list) {
+					this.loadFailed.set(true);
+					return;
+				}
+				this.conversations.set(list.conversations);
 			});
 	}
 
@@ -344,9 +365,9 @@ export class SendTaskToChatDialogComponent implements OnInit {
 	}
 
 	protected send(): void {
-		const conversationId = this.selectedId();
-		if (!conversationId || this.busy() || !this.taskId) return;
-		const conversation = this.conversations().find((item) => item.id === conversationId);
+		const conversation = this.target();
+		if (!conversation || this.busy() || !this.taskId) return;
+		const conversationId = String(conversation.id);
 		this.busy.set(true);
 		this.error.set(null);
 		this.api

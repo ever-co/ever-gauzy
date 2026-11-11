@@ -1,4 +1,4 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { DestroyRef, inject, Injectable, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { from, Observable, of } from 'rxjs';
@@ -60,6 +60,11 @@ export class ChatTasksService {
 			)
 			.subscribe(([id, summary]) => {
 				if (scope !== this.scope) return;
+				// A passing failure is asked again by the next message that shows the task.
+				if (summary === undefined) {
+					this.asked.delete(id);
+					return;
+				}
 				const next = new Map(this.known());
 				next.set(id, summary);
 				this.known.set(next);
@@ -76,11 +81,12 @@ export class ChatTasksService {
 	}
 
 	/**
-	 * One task's summary, or null when the reader may not see it (or it is gone). Read through the task list
+	 * One task's summary; null when the reader may not see it or it is gone (the list does not hold it, or a 401 /
+	 * 403 / 404); undefined after a passing failure (worth asking again). Read through the task list
 	 * (`GET /api/tasks?where[id]=…`), not `GET /api/tasks/:id`: that read counts as a visit and would put every task a
 	 * conversation shows into the reader's recent items.
 	 */
-	summary(id: ID): Observable<ChatTaskSummary | null> {
+	summary(id: ID): Observable<ChatTaskSummary | null | undefined> {
 		const where = { id: String(id), ...(this.organizationId ? { organizationId: this.organizationId } : {}) };
 		return this.http
 			.get<IPagination<ITask>>(`${API_PREFIX}/tasks`, { params: toParams({ where, relations: ['taskStatus'], take: 1 }) })
@@ -89,7 +95,7 @@ export class ChatTasksService {
 					const task = (page?.items ?? []).find((item) => String(item?.id) === String(id));
 					return task ? taskSummaryOf(task) : null;
 				}),
-				catchError(() => of(null))
+				catchError((error: HttpErrorResponse) => of(error?.status === 401 || error?.status === 403 || error?.status === 404 ? null : undefined))
 			);
 	}
 

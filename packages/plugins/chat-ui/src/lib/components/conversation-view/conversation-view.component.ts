@@ -30,6 +30,7 @@ import {
 import { ToastrService } from '@gauzy/ui-core/core';
 import { applyCatchUp, reconcileWithNewest } from '../../chat-catch-up';
 import { canManageConversation } from '../../chat-categories';
+import { withTaskReference } from '../../chat-tasks';
 import { CHAT_LIVE_AUDIT_MS, CHAT_MESSAGES_POLL_MS } from '../../chat-ui.constants';
 import { apiErrorMessage, continuesGroup, conversationTitle, mergeMessages, newNonce } from '../../chat-ui.helpers';
 import { ChatCreateTaskFlow } from '../../dialogs/chat-task-dialogs.component';
@@ -84,7 +85,7 @@ const NEAR_BOTTOM_PX = 80;
 					@if (conversation().topic) {
 						<span class="topic">{{ conversation().topic }}</span>
 					}
-					<button type="button" class="members" data-test="members" [disabled]="!isMember()" [attr.aria-label]="'CHAT.SETTINGS.TITLE' | translate" (click)="openSettings()">
+					<button type="button" class="members" data-test="members" [disabled]="!isMember()" [attr.aria-label]="'CHAT.SETTINGS.MEMBERS_OPEN' | translate" (click)="openSettings('members')">
 						{{ 'CHAT.LIST.MEMBERS' | translate: { count: conversation().memberCount } }}
 					</button>
 				</div>
@@ -958,21 +959,24 @@ export class ConversationViewComponent {
 				tenantId: this.tenantId()
 			})
 			.pipe(takeUntilDestroyed(this.destroyRef))
-			.subscribe((updated) => {
-				// Only the reference is new: put it on the message as shown now (it may have changed meanwhile).
-				if (updated && this.isCurrent(id)) this.replace({ id: message.id, taskReferences: updated.taskReferences });
+			.subscribe((reference) => {
+				if (!reference || !this.isCurrent(id)) return;
+				// Added to the message as shown now (another reference may have come meanwhile).
+				const current = this.messages().find((item) => item.id === message.id) ?? message;
+				this.replace({ id: message.id, taskReferences: withTaskReference(current, reference).taskReferences });
 			});
 	}
 
-	/** The conversation's settings and members; a change comes back as the conversation the API answered. */
-	protected openSettings(): void {
+	/** The conversation's settings and members (`section`: where the dialog opens); a change comes back as the conversation. */
+	protected openSettings(section: 'settings' | 'members' = 'settings'): void {
 		const id = String(this.conversation().id);
 		const context: ChannelSettingsContext = {
 			conversation: { ...this.conversation(), state: this.state() },
 			categories: this.categories(),
 			people: this.people(),
 			meEmployeeId: this.meEmployeeId(),
-			canManage: this.canManage()
+			canManage: this.canManage(),
+			section
 		};
 		this.dialog
 			.open(ChannelSettingsDialogComponent, { context: { context } })

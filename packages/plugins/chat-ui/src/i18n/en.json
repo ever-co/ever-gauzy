@@ -128,6 +128,7 @@
 	},
 	"SETTINGS": {
 		"TITLE": "Conversation settings",
+		"MEMBERS_OPEN": "Members of the conversation",
 		"TOPIC": "Topic",
 		"CATEGORY": "Sidebar category",
 		"NO_CATEGORY": "No category",
