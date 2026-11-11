@@ -310,6 +310,21 @@ describe('switching it on', () => {
 		expect(graphqlPubSubChannelPrefix({ ...resolved, host: 'DB.internal' }, 'https://api.example')).toBe(
 			graphqlPubSubChannelPrefix(resolved, 'https://api.example')
 		);
+		// Port 0 (or none) is the driver's default port: the same database as an explicit 5432.
+		const previous = process.env['PGPORT'];
+		try {
+			delete process.env['PGPORT'];
+			expect(graphqlPubSubChannelPrefix({ ...resolved, port: 0 }, 'https://api.example')).toBe(
+				graphqlPubSubChannelPrefix(resolved, 'https://api.example')
+			);
+			process.env['PGPORT'] = '6432';
+			expect(graphqlPubSubChannelPrefix({ ...resolved, port: 0 }, 'https://api.example')).toBe(
+				graphqlPubSubChannelPrefix({ ...resolved, port: 6432 }, 'https://api.example')
+			);
+		} finally {
+			if (previous === undefined) delete process.env['PGPORT'];
+			else process.env['PGPORT'] = previous;
+		}
 		// The default settings resolve to one value, so an unset DB_PORT and DB_PORT=5432 hash alike.
 		expect(graphqlPubSubChannelPrefix()).toBe(graphqlPubSubChannelPrefix());
 

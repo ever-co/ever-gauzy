@@ -242,17 +242,39 @@ export function graphqlPubSubChannelPrefix(
 		return explicit.endsWith(':') ? explicit : `${explicit}:`;
 	}
 
-	const port = Number(connection?.['port']);
+	const type = String(connection?.['type'] ?? '');
 	const identity = [
-		`type=${String(connection?.['type'] ?? '')}`,
+		`type=${type}`,
 		`host=${String(connection?.['host'] ?? '').toLowerCase()}`,
-		`port=${Number.isFinite(port) && port > 0 ? port : ''}`,
+		`port=${effectivePort(type, connection?.['port'])}`,
 		`database=${String(connection?.['database'] ?? '')}`,
 		`api=${String(apiBaseUrl ?? '').replace(/\/+$/, '')}`
 	].join('|');
 	const digest = createHash('sha256').update(identity).digest('hex').slice(0, 12);
 
 	return `gauzy:graphql:${digest}:`;
+}
+
+/**
+ * The port a driver actually connects to: the configured one, or — for an unset, zero or invalid port, which every
+ * driver reads as "my default" — that default (`PGPORT` or 5432 for PostgreSQL, 3306 for MySQL).
+ *
+ * @param type The database type.
+ * @param configured The configured port.
+ */
+function effectivePort(type: string, configured: unknown): number | '' {
+	const port = Number(configured);
+	if (Number.isInteger(port) && port > 0) {
+		return port;
+	}
+	if (type === 'postgres') {
+		const fallback = Number(process.env['PGPORT']);
+		return Number.isInteger(fallback) && fallback > 0 ? fallback : 5432;
+	}
+	if (type === 'mysql') {
+		return 3306;
+	}
+	return '';
 }
 
 /**
