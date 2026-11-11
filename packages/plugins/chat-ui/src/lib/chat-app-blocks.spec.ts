@@ -1,0 +1,46 @@
+import { ChatAppBlockTypeEnum, ChatInteractionStatusEnum, ChatMessageKindEnum, IChatAppBlock } from '@gauzy/contracts';
+import { appBlocksOf, blocksText, bodyRepeatsBlocks, buttonKey, buttonStateOf, safeButtonUrl, safeIconUrl } from './chat-app-blocks';
+
+const BLOCKS: IChatAppBlock[] = [
+	{ type: ChatAppBlockTypeEnum.HEADER, text: 'CPU high' },
+	{ type: ChatAppBlockTypeEnum.SECTION, text: 'api-1 at 97%', fields: ['Env\nprod', 'Since 10:02'] },
+	{ type: ChatAppBlockTypeEnum.DIVIDER },
+	{ type: ChatAppBlockTypeEnum.CONTEXT, elements: ['monitor 7', 'eu-west'] },
+	{ type: ChatAppBlockTypeEnum.ACTIONS, blockId: 'a', elements: [{ actionId: 'ack', text: 'Acknowledge' }] }
+];
+
+describe('chat app blocks', () => {
+	it('reads the blocks of an app message only, and skips types it does not know', () => {
+		const blocks = [...BLOCKS, { type: 'video' } as unknown as IChatAppBlock, null as unknown as IChatAppBlock];
+		expect(appBlocksOf({ kind: ChatMessageKindEnum.APP, blocks })).toEqual(BLOCKS);
+		expect(appBlocksOf({ kind: ChatMessageKindEnum.MESSAGE, blocks })).toEqual([]);
+		expect(appBlocksOf({ kind: ChatMessageKindEnum.APP, blocks: null })).toEqual([]);
+		expect(appBlocksOf(null)).toEqual([]);
+	});
+
+	it('knows a body that only repeats the blocks (the API derived it from them)', () => {
+		expect(blocksText(BLOCKS)).toBe('CPU high\napi-1 at 97%\nEnv\nprod\nSince 10:02\nmonitor 7 · eu-west');
+		expect(bodyRepeatsBlocks('CPU high\napi-1 at 97%\nEnv\nprod\nSince 10:02\nmonitor 7 · eu-west', BLOCKS)).toBe(true);
+		expect(bodyRepeatsBlocks('CPU high on api-1', BLOCKS)).toBe(false);
+		expect(bodyRepeatsBlocks('anything', [])).toBe(false);
+	});
+
+	it('opens https links only', () => {
+		expect(safeButtonUrl({ url: 'https://monitor.example.com/7' })).toBe('https://monitor.example.com/7');
+		expect(safeButtonUrl({ url: 'http://monitor.example.com/7' })).toBeNull();
+		expect(safeButtonUrl({ url: 'javascript:alert(1)' })).toBeNull();
+		expect(safeButtonUrl({ url: 'not a url' })).toBeNull();
+		expect(safeButtonUrl({ url: null })).toBeNull();
+		expect(safeIconUrl('https://cdn.example.com/a.png')).toBe('https://cdn.example.com/a.png');
+		expect(safeIconUrl('data:image/png;base64,AAAA')).toBeNull();
+	});
+
+	it('keys a button by its block and action, and maps interaction states to button states', () => {
+		expect(buttonKey('a', 'ack')).not.toBe(buttonKey('b', 'ack'));
+		expect(buttonKey(null, 'ack')).toBe(buttonKey(undefined, 'ack'));
+		expect(buttonStateOf(ChatInteractionStatusEnum.DELIVERED)).toBe('done');
+		expect(buttonStateOf(ChatInteractionStatusEnum.FAILED)).toBe('failed');
+		expect(buttonStateOf(ChatInteractionStatusEnum.RETRYING)).toBe('pending');
+		expect(buttonStateOf(ChatInteractionStatusEnum.PENDING)).toBe('pending');
+	});
+});

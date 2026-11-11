@@ -13,6 +13,7 @@ import {
 } from '@gauzy/contracts';
 import { ChatPerson } from '../chat-ui.helpers';
 import { ChatUiService } from '../services/chat-ui.service';
+import { ChatWebhooksService } from '../services/chat-webhooks.service';
 import { CategoriesDialogComponent, ChannelSettingsContext, ChannelSettingsDialogComponent } from './chat-settings-dialogs.component';
 
 const ME = 'e-me';
@@ -48,8 +49,11 @@ describe('ChannelSettingsDialogComponent', () => {
 	let fixture: ComponentFixture<ChannelSettingsDialogComponent>;
 	let api: Record<string, jest.Mock>;
 	let close: jest.Mock;
+	let webhooksApi: { list: jest.Mock };
 
-	async function open(context: Partial<ChannelSettingsContext>): Promise<void> {
+	async function open(context: Partial<ChannelSettingsContext>, webhooks: 'off' | 'on' = 'off'): Promise<void> {
+		// Where the API serves no webhooks, their list answers 404.
+		webhooksApi = { list: jest.fn(() => (webhooks === 'on' ? of([]) : throwError(() => ({ status: 404 })))) };
 		// The API's member count, as the member changes leave it.
 		let memberCount = members.length;
 		api = {
@@ -71,6 +75,7 @@ describe('ChannelSettingsDialogComponent', () => {
 			imports: [ChannelSettingsDialogComponent],
 			providers: [
 				{ provide: ChatUiService, useValue: api },
+				{ provide: ChatWebhooksService, useValue: webhooksApi },
 				{ provide: NbDialogRef, useValue: { close } }
 			]
 		}).compileComponents();
@@ -82,6 +87,28 @@ describe('ChannelSettingsDialogComponent', () => {
 	// The dialog's members are protected: the spec reaches them as the template does.
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	const dialog = () => fixture.componentInstance as unknown as Record<string, any>;
+
+	it('offers an Integrations tab to a channel manager where the API serves webhooks, and none where it answers 404', async () => {
+		await open({}, 'on');
+		expect(webhooksApi.list).toHaveBeenCalledWith('c1');
+		const tab = fixture.nativeElement.querySelector('[data-test="tab-integrations"]') as HTMLButtonElement;
+		expect(tab).not.toBeNull();
+		tab.click();
+		fixture.detectChanges();
+		expect(fixture.nativeElement.querySelector('[data-test="webhooks-panel"]')).not.toBeNull();
+		expect(fixture.nativeElement.querySelector('[data-test="settings-members"]')).toBeNull();
+	});
+
+	it('shows no Integrations tab where webhooks are off', async () => {
+		await open({});
+		expect(fixture.nativeElement.querySelector('[data-test="settings-tabs"]')).toBeNull();
+	});
+
+	it('does not ask for webhooks of a channel I do not manage', async () => {
+		await open({ canManage: false }, 'on');
+		expect(webhooksApi.list).not.toHaveBeenCalled();
+		expect(fixture.nativeElement.querySelector('[data-test="settings-tabs"]')).toBeNull();
+	});
 
 	it('lists the members, managers first, and offers the people not in yet', async () => {
 		await open({});
