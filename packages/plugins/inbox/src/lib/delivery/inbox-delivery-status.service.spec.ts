@@ -34,7 +34,12 @@ interface IHistoryRow {
 function build(answer: () => Promise<unknown>, history: IHistoryRow[] | (() => Promise<IHistoryRow[]>) = []) {
 	const clock = { now: Date.parse('2026-11-11T12:00:00Z') };
 	const sender = { getEmailInstance: jest.fn(answer) };
-	const find = jest.fn(async () => (typeof history === 'function' ? history() : history));
+	// The log as the query reads it: newest `updatedAt` first, then the limit.
+	const find = jest.fn(async (options?: { take?: number }) => {
+		const rows = typeof history === 'function' ? await history() : history;
+		const newestFirst = [...rows].sort((a, b) => (b.updatedAt?.getTime() ?? 0) - (a.updatedAt?.getTime() ?? 0));
+		return newestFirst.slice(0, options?.take ?? newestFirst.length);
+	});
 	const dataSource = { getRepository: () => ({ find }) };
 	const service = new InboxDeliveryStatusService(sender as never, dataSource as never);
 	(service as unknown as { now: () => number }).now = () => clock.now;
@@ -50,7 +55,14 @@ const failed = (error = 'Invalid API key', at?: Date, userId = 'person-1'): IHis
 	lastError: error,
 	attempts: 1
 });
-const sent = (): IHistoryRow => ({ sentAt: new Date('2026-11-11T11:00:00Z'), lastError: null, attempts: 1 });
+/** A send that went out, at `at` (by default before every failure the other helpers make). */
+const sent = (at = new Date('2026-11-11T07:00:00Z'), userId = 'person-1'): IHistoryRow => ({
+	userId,
+	updatedAt: at,
+	sentAt: at,
+	lastError: null,
+	attempts: 1
+});
 const skipped = (): IHistoryRow => ({ sentAt: null, lastError: 'The person has no email address', attempts: 0 });
 
 describe('InboxDeliveryStatusService', () => {
@@ -188,8 +200,13 @@ describe('InboxDeliveryStatusService', () => {
 	});
 
 	it('keeps email available after a failure or two, after a send that went out since, and over skipped deliveries', async () => {
-		expect((await build(async () => ({}), [failed(), failed(), sent(), failed(), failed()]).service.status()).email.available).toBe(true);
-		expect((await build(async () => ({}), [failed('Recipient refused'), sent()]).service.status()).email.available).toBe(true);
+		const at = (time: string) => new Date(`2026-11-11T${time}:00Z`);
+		// Two failures, then (older) a send that went out, then older failures: only the two newest count.
+		const history = [failed('x', at('10:50')), failed('x', at('10:40')), sent(at('10:30')), failed('x', at('10:20')), failed('x', at('10:10'))];
+		expect((await build(async () => ({}), history).service.status()).email.available).toBe(true);
+		expect((await build(async () => ({}), [failed('Recipient refused', at('10:50')), sent(at('10:00'))]).service.status()).email.available).toBe(true);
+		// The query's order decides, not the order rows come in: the same rows shuffled answer the same.
+		expect((await build(async () => ({}), [...history].reverse()).service.status()).email.available).toBe(true);
 		expect((await build(async () => ({}), [skipped(), skipped(), skipped(), failed()]).service.status()).email.available).toBe(true);
 	});
 
