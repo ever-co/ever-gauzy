@@ -1,3 +1,4 @@
+// cspell:ignore virtualfs bolditalics
 import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import * as pdfmake from 'pdfmake';

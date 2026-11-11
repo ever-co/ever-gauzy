@@ -45,10 +45,13 @@ import { IImportArchiveLimits, ImportArchiveError, openImportArchive } from './i
 import { importArchiveLimits } from './import-limits';
 import { buildImportPlan, detectImportLayout } from './import-plan';
 
+/** C0 control characters and DEL (built from code points: a literal range in a pattern is a lint error). */
+const CONTROL_CHARACTERS = new RegExp(`[${String.fromCharCode(0)}-${String.fromCharCode(0x1f)}${String.fromCharCode(0x7f)}]`, 'g');
+
 /** A file name as data: no path, no control characters, at most 255 characters. */
 function safeFileName(name: unknown): string {
 	const base = String(name ?? '').split(/[\\/]/).pop() ?? '';
-	return base.replace(/[\u0000-\u001f\u007f]/g, '').trim().slice(0, 255) || 'import.zip';
+	return base.replace(CONTROL_CHARACTERS, '').trim().slice(0, 255) || 'import.zip';
 }
 
 /**

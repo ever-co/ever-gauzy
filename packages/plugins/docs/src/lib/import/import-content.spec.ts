@@ -1,3 +1,4 @@
+// cspell:ignore gzimport
 import { DocumentImportLayoutEnum } from '@gauzy/contracts';
 import { IDocNode } from '../services/document-markdown';
 import {

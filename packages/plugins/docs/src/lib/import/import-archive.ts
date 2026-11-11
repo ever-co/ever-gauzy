@@ -68,7 +68,7 @@ const UNIX_SYMLINK = 0o120000;
 
 /**
  * The entry's path, normalized, or null when it is unsafe: absolute (`/…`), with a drive letter (`C:…`), a NUL byte or
- * a `..` segment. Backslashes (written by some Windows archivers) are separators; `.` and empty segments are dropped.
+ * a `..` segment. Backslashes (written by some Windows archive tools) are separators; `.` and empty segments are dropped.
  * An empty result (the archive's root) is returned as `''`.
  *
  * @param raw The path as the central directory names it.
@@ -203,7 +203,10 @@ function addParents(directories: Set<string>, path: string, isDirectory: boolean
 	}
 }
 
+/** C0 control characters and DEL (built from code points: a literal range in a pattern is a lint error). */
+const CONTROL_CHARACTERS = new RegExp(`[${String.fromCharCode(0)}-${String.fromCharCode(0x1f)}${String.fromCharCode(0x7f)}]`, 'g');
+
 /** A path as a message may show it: control characters out, at most 200 characters. */
 function printable(path: unknown): string {
-	return JSON.stringify(String(path ?? '').replace(/[\u0000-\u001f\u007f]/g, '?').slice(0, 200));
+	return JSON.stringify(String(path ?? '').replace(CONTROL_CHARACTERS, '?').slice(0, 200));
 }

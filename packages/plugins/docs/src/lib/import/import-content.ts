@@ -1,3 +1,4 @@
+// cspell:ignore gzimport createdat
 import * as sanitizeHtml from 'sanitize-html';
 import { DocumentImportLayoutEnum } from '@gauzy/contracts';
 import { createTurndown } from '../knowledge/extraction/html.extractor';
@@ -64,7 +65,7 @@ const KEPT_LINK_SCHEMES = /^(https?:|mailto:|tel:)/i;
 const KEPT_IMAGE_SCHEMES = /^https?:/i;
 
 /** One emoji (with its modifiers and joiners), the only thing an icon may be. */
-const EMOJI_ICON = /^(?:\p{Extended_Pictographic}|\p{Regional_Indicator})(?:[\u{FE0F}\u{200D}\u{20E3}\u{1F3FB}-\u{1F3FF}]|\p{Extended_Pictographic}|\p{Regional_Indicator})*$/u;
+const EMOJI_ICON = /^(?:\p{Extended_Pictographic}|\p{Regional_Indicator})(?:\u{FE0F}|\u{200D}|\u{20E3}|\p{Emoji_Modifier}|\p{Extended_Pictographic}|\p{Regional_Indicator})*$/u;
 
 /** An icon as stored: one emoji, or nothing. */
 export function emojiIconOf(value: unknown): string | undefined {
@@ -111,8 +112,8 @@ function htmlText(fragment: string): string {
  * which is all the metadata an export writes there. Returns the metadata and the body after it.
  */
 export function readFrontMatter(text: string): { fields: Record<string, string>; body: string } {
-	const match = /^﻿?---[ \t]*\r?\n([\s\S]*?)\r?\n(?:---|\.\.\.)[ \t]*(?:\r?\n|$)/.exec(text);
-	if (!match) return { fields: {}, body: text.replace(/^﻿/, '') };
+	const match = /^\uFEFF?---[ \t]*\r?\n([\s\S]*?)\r?\n(?:---|\.\.\.)[ \t]*(?:\r?\n|$)/.exec(text);
+	if (!match) return { fields: {}, body: text.replace(/^\uFEFF/, '') };
 	const fields: Record<string, string> = {};
 	for (const line of match[1].split(/\r?\n/)) {
 		const field = /^([A-Za-z_][\w -]{0,40}):[ \t]*(.*)$/.exec(line);
@@ -522,7 +523,8 @@ class ImportContentWalk {
 /** A text node without its link mark. */
 function withoutLink(node: IDocNode): IDocNode {
 	const marks = (node.marks ?? []).filter((mark) => mark.type !== 'link');
-	const { marks: _drop, ...rest } = node;
+	const rest: IDocNode = { ...node };
+	delete rest.marks;
 	return marks.length ? { ...rest, marks } : rest;
 }
 

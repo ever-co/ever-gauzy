@@ -1,3 +1,4 @@
+// cspell:ignore bolditalics Ähre Привет
 import { PDFParse } from 'pdf-parse';
 import { TINY_PNG } from '../import/__fixtures__/import-zip.fixture';
 import { anchorOfPage, buildPdfDefinition, DOCS_PDF_FONT, pdfDateOf, pdfFileNameOf, pdfFonts, preparePdfImage, renderPdf } from './pdf-render';

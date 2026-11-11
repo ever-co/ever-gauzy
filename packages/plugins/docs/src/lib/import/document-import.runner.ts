@@ -55,9 +55,13 @@ export interface IImportRunOutcome {
 	failedCount: number;
 }
 
-/** The options of a row; anything missing falls back to the safe values (no quota known = unlimited is NOT assumed). */
+/**
+ * The options of a row. What is missing (a row written before a field existed) takes the default the request thread
+ * would have written: the quota `0` (the platform's "unlimited"), no knowledge import, the default per-file limit, the
+ * installation's archive limits.
+ */
 export function parseImportOptions(raw: string | null | undefined, fallbackLimits: IImportArchiveLimits): IImportOptions {
-	let parsed: Partial<IImportOptions> = {};
+	let parsed: Partial<IImportOptions>;
 	try {
 		parsed = raw ? JSON.parse(raw) : {};
 	} catch {

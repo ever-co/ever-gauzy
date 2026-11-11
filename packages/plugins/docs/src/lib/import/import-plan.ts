@@ -50,7 +50,7 @@ const EXPORT_ID = /[\s_-]([0-9a-f]{32})$/i;
 /** A folder an export wraps everything in (`Export-<uuid>`), unwrapped when it is the only top-level entry. */
 const EXPORT_WRAPPER = /^export[-_ ][0-9a-f-]{8,}$/i;
 
-/** Files archivers and desktops leave behind. */
+/** Files archive tools and desktops leave behind. */
 const IGNORED_NAMES = new Set(['thumbs.db', 'desktop.ini']);
 
 /** A file's extension, lower-cased, without the dot. */

@@ -1,3 +1,4 @@
+// cspell:ignore endobj
 import { deflateRawSync } from 'node:zlib';
 import { crc32 } from '../../knowledge/extraction/__fixtures__/zip.util';
 

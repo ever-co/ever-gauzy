@@ -103,4 +103,4 @@ export interface IDocsReconcileJob {
  * Payload of `docs.import`: the base snapshot, whose `documentId` is the `document_import` id (`reason: 'import'`,
  * so the queue serves it below interactive work).
  */
-export interface IDocsImportJob extends IDocsJobBase {}
+export type IDocsImportJob = IDocsJobBase;

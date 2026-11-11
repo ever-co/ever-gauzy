@@ -2,7 +2,7 @@
 
 **Feature ID**: `docs-import-export`
 **Plan**: `./plan.md`
-**Status**: `In Progress`
+**Status**: `In Progress` — phases 1 and 2 in ever-gauzy #11803
 **Last updated**: 2026-11-11
 
 ---
@@ -10,22 +10,22 @@
 ## Phase 1 — Spec, contracts, import server (ever-gauzy PR 1)
 
 - [x] **T1**. Spec, plan, tasks; `docs/specs/README.md` row
-- [ ] **T2**. Contracts: import enums and interfaces, PDF export options
-- [ ] **T3**. Flags and limits in `docs.config.ts` / `docs.constants.ts`; `.env.sample`
-- [ ] **T4**. Entity `DocumentImport`, TypeORM + MikroORM repositories, migration `1791000007420` (PostgreSQL, MySQL, SQLite)
-- [ ] **T5**. `import-archive.ts`: limits, ratio, traversal, symlinks, counted inflation (+spec)
-- [ ] **T6**. `import-plan.ts`: layout detection, tree, folder pages, titles / icons / dates, hidden files (+spec)
-- [ ] **T7**. `import-content.ts`: wiki links and embeds, relative links, HTML sanitizing → Markdown → JSON, link rewriting, schema fallback (+spec)
-- [ ] **T8**. `DocumentImportRunner`: tree and content phases, attachments through the upload checks, resume by provenance, progress, report (+spec)
-- [ ] **T9**. `docs.import` stage on the queue (worker handler, inline dispatch, dead-letter), stale resume on read and at startup (+spec)
-- [ ] **T10**. `DocumentImportController` + DTO: `GET /imports`, `POST /imports`, `GET /imports/:id`; permissions, scoping
+- [x] **T2**. Contracts: import enums and interfaces, PDF export options
+- [x] **T3**. Flags and limits in `docs.config.ts` / `docs.constants.ts`; `.env.sample`
+- [x] **T4**. Entity `DocumentImport`, TypeORM + MikroORM repositories, migration `1791000007420` (PostgreSQL, MySQL, SQLite)
+- [x] **T5**. `import-archive.ts`: limits, ratio, traversal, symlinks, counted inflation (+spec)
+- [x] **T6**. `import-plan.ts`: layout detection, tree, folder pages, titles / icons / dates, hidden files (+spec)
+- [x] **T7**. `import-content.ts`: wiki links and embeds, relative links, HTML sanitizing → Markdown → JSON, link rewriting, schema fallback (+spec)
+- [x] **T8**. `DocumentImportRunner`: tree and content phases, attachments through the upload checks, resume by provenance, progress, report (+spec)
+- [x] **T9**. `docs.import` stage on the queue (worker handler, inline dispatch, dead-letter), stale resume on read and at startup (+spec)
+- [x] **T10**. `DocumentImportController` + DTO: `GET /imports`, `POST /imports`, `GET /imports/:id`; permissions, scoping
 
 ## Phase 2 — PDF export server (ever-gauzy PR 1)
 
-- [ ] **T11**. `pdf/tiptap-pdf.ts`: TipTap JSON → pdfmake content for every node type (+spec)
-- [ ] **T12**. `DocumentPdfService`: page, subtree with a table of contents, zip of PDFs; images from storage; header and footer (+spec on a real buffer)
-- [ ] **T13**. `DocumentPdfController`: `GET /exports/pdf` probe, `GET /documents/:id/export.pdf`
-- [ ] **T14**. Plugin README section; bot threads answered
+- [x] **T11**. `pdf/tiptap-pdf.ts`: TipTap JSON → pdfmake content for every node type (+spec)
+- [x] **T12**. `DocumentPdfService`: page, subtree with a table of contents, zip of PDFs; images from storage; header and footer (+spec on a real buffer)
+- [x] **T13**. `DocumentPdfController`: `GET /exports/pdf` probe, `GET /documents/:id/export.pdf`
+- [ ] **T14**. Plugin README section (done); bot threads answered
 
 ## Phase 3 — Angular docs-ui (ever-gauzy PR 2)
 
