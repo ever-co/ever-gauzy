@@ -122,6 +122,7 @@ import { TermsAcceptanceService } from '../terms-acceptance/terms-acceptance.ser
 import { passwordResetConsumeWhere } from '../shared/single-use/claim-criteria';
 import { LoginAttemptScope, LoginAttemptService } from './login-attempt.service';
 import { assertFirstPartyRequest } from './oauth-app-first-party';
+import { IWorkspaceOpening, WORKSPACE_ADDRESS_UNPROVEN_MESSAGE } from './open-workspace';
 import {
 	buildOAuthAppTokenGrant,
 	narrowPermissionsToOAuthAppScopes,
@@ -3254,6 +3255,106 @@ export class AuthService extends SocialAuthService {
 			// For unexpected errors, return null to maintain backward compatibility
 			return null;
 		}
+	}
+
+	/**
+	 * Opens another workspace for the signed-in person (ever-co/ever-teams#5025), without signing them out of the one
+	 * they are in. Answers the account the workspace is created with, as a workspace sign-in token: the app exchanges it
+	 * at `/auth/signin.workspace`, then creates the tenant, the organization, the employee and the first team through
+	 * the routes a sign-up uses, and switches to it.
+	 *
+	 * The account is the caller's address in no tenant yet: active, its address proven like the caller's, and without
+	 * a password, so a password sign-in never lands on it before it has a workspace (it is reached by the workspace
+	 * switch, an e-mail code or a social sign-in). Only a caller whose address is proven may open one: only they reach
+	 * the other workspaces of that address (see sharesProvenAddress). An account an earlier attempt left without a
+	 * workspace is answered again rather than another one created.
+	 *
+	 * @throws ForbiddenException for a third-party application token or an API-token session, or an unproven address.
+	 * @throws UnauthorizedException without a signed-in user.
+	 */
+	async openWorkspace(): Promise<IWorkspaceOpening> {
+		// The answer is a token that signs in as the new account
+		assertFirstPartyRequest('Opening a workspace');
+
+		const current = RequestContext.currentUser();
+		if (!current?.id) {
+			throw new UnauthorizedException();
+		}
+		// The caller's own record, for the address and its proof: the request's user may be a cached subset
+		const caller = await this.findActiveUser({
+			id: current.id,
+			tenantId: current.tenantId ?? RequestContext.currentTenantId()
+		});
+		if (!caller?.email) {
+			throw new UnauthorizedException();
+		}
+		if (!this.sharesProvenAddress(caller)) {
+			throw new ForbiddenException(WORKSPACE_ADDRESS_UNPROVEN_MESSAGE);
+		}
+
+		const account =
+			(await this.findActiveUser({ email: caller.email, tenantId: IsNull(), hash: IsNull() })) ??
+			(await this.createWorkspaceAccount(caller));
+		return { email: account.email, token: this.generateToken(account, '') };
+	}
+
+	/** One active user matching `where`, the most recent first, read on the configured ORM. */
+	private async findActiveUser(where: Record<string, unknown>): Promise<User | null> {
+		const options = {
+			where: { ...where, isActive: true, isArchived: false },
+			order: { createdAt: 'DESC' as const }
+		};
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM: {
+				const parsed = parseTypeORMFindToMikroOrm<User>(options as never);
+				return ((await this.mikroOrmUserRepository.findOne(parsed.where, parsed.mikroOptions)) as User) ?? null;
+			}
+			case MultiORMEnum.TypeORM:
+				return (await this.typeOrmUserRepository.findOne(options as never)) ?? null;
+			default:
+				throw new Error(`Method not implemented for ORM type: ${this.ormType}`);
+		}
+	}
+
+	/**
+	 * The account a new workspace of the caller is created with: their address, name, picture, time zone and language,
+	 * no tenant, no role and no password, and the address proven as theirs is (the column is written after the insert,
+	 * which leaves it out).
+	 */
+	private async createWorkspaceAccount(caller: User): Promise<User> {
+		const fields = {
+			email: caller.email,
+			firstName: caller.firstName,
+			lastName: caller.lastName,
+			imageUrl: caller.imageUrl,
+			timeZone: caller.timeZone,
+			preferredLanguage: caller.preferredLanguage,
+			isActive: true,
+			isArchived: false
+		};
+		let account: User;
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM: {
+				const entity = this.mikroOrmUserRepository.create(fields as never);
+				await this.mikroOrmUserRepository.persistAndFlush(entity);
+				await this.mikroOrmUserRepository.nativeUpdate(entity.id, { emailVerifiedAt: caller.emailVerifiedAt });
+				account = this.serialize(entity) as User;
+				break;
+			}
+			case MultiORMEnum.TypeORM: {
+				account = await this.typeOrmUserRepository.save(this.typeOrmUserRepository.create(fields));
+				await this.typeOrmUserRepository.update(
+					{ id: account.id },
+					{ emailVerifiedAt: caller.emailVerifiedAt }
+				);
+				break;
+			}
+			default:
+				throw new Error(`Method not implemented for ORM type: ${this.ormType}`);
+		}
+		account.emailVerifiedAt = caller.emailVerifiedAt;
+		this.logger.log(`Workspace account opened for user ${caller.id}`);
+		return account;
 	}
 
 	/**
