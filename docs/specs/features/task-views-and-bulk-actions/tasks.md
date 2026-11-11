@@ -3,7 +3,7 @@
 **Feature ID**: `task-views-and-bulk-actions`
 **Plan**: `./plan.md`
 **Status**: `In review`
-**Last updated**: 2026-11-07
+**Last updated**: 2026-11-11
 
 ---
 
@@ -45,3 +45,14 @@
   (plan §7.2)
 - [x] **T16**. Keep a moved task's former references and resolve them (plan
   §7.3)
+
+## Phase 3 — Angular UI (`@gauzy/plugin-task-views-ui`, plan §8)
+
+- [ ] **T17**. Plugin scaffold: availability probe, `/pages/task-views`, the Tasks nav item, `TASK_VIEWS` translations, the app's registration and build lists
+- [ ] **T18**. Saved views: switcher (built-in, personal, team, project, organization), save / save as / rename / delete / visibility, 409 conflict with Reload and Overwrite
+- [ ] **T19**. Filter-tree editor (the API's fields and operators, and / or groups, relative dates), group-by with the counts, cursor paging, invalid filters shown on their conditions
+- [ ] **T20**. Manual order: drag and drop, `PUT /task-views/:id/order` with the version
+- [ ] **T21**. Bulk: checkboxes, Shift-click range, all on the page (100 at most), the toolbar (status, priority, size, assignees, labels, project, due date, archive, delete), the Undo toast (10 s)
+- [ ] **T22**. Keyboard: the registry service over `uiPreferences.keyboard`, list keys, `G` sequences, the `?` help, Settings → Keyboard shortcuts; the Quick Actions bridge
+- [ ] **T23**. Project keys: `KEY-123` on rows and on the task's page, the go-to-task box
+- [ ] **T24**. Specs: registry, selection, undo, filter-tree model, conflict handling
