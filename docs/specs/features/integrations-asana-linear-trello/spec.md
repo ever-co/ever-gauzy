@@ -149,7 +149,7 @@ settings UI pattern, so Ever Teams and the Angular app configure them the same w
 
 ## 8. Open Questions
 
-- `[NEEDS CLARIFICATION: default conflict policy — external wins for imported fields vs last-writer-wins (proposed: external wins for mapped fields, platform wins for platform-only fields)]`
+- `[NEEDS CLARIFICATION: default conflict policy — external wins for imported fields vs last-writer-wins (proposed: external wins for mapped fields, platform wins for platform-only fields)]` — T15 (2026-11-11) implements the proposal on inbound applies; see plan §4.
 
 ## 9. Constitution Gates
 

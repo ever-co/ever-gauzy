@@ -12,6 +12,8 @@ import {
 	PluginCommonModule,
 	RolePermissionModule
 } from '@gauzy/core';
+import { AsanaTaskBaseline, MikroOrmAsanaTaskBaselineRepository, TypeOrmAsanaTaskBaselineRepository } from './entities/asana-task-baseline.entity';
+import { AsanaSyncConflict, MikroOrmAsanaSyncConflictRepository, TypeOrmAsanaSyncConflictRepository } from './entities/asana-sync-conflict.entity';
 import { AsanaSyncRun, MikroOrmAsanaSyncRunRepository, TypeOrmAsanaSyncRunRepository } from './entities/asana-sync-run.entity';
 import { AsanaProjectMapping, MikroOrmAsanaProjectMappingRepository, TypeOrmAsanaProjectMappingRepository } from './entities/asana-project-mapping.entity';
 import { AsanaAuthorizationController } from './asana-authorization.controller';
@@ -19,6 +21,7 @@ import { AsanaCatalogService } from './asana-catalog.service';
 import { readAsanaConfig } from './asana-config';
 import { AsanaMappingService } from './asana-mapping.service';
 import { AsanaOAuthStateService } from './asana-oauth-state.service';
+import { AsanaSyncConflictService } from './asana-sync-conflict.service';
 import { AsanaSyncRunService } from './asana-sync-run.service';
 import { AsanaTenantService } from './asana-tenant.service';
 import { AsanaWebhookController } from './asana-webhook.controller';
@@ -31,7 +34,7 @@ import { AsanaTaskDetailsService } from './sync/asana-task-details.service';
 import { AsanaImportSweepService } from './maintenance/asana-import-sweep.service';
 
 /** Every table the plugin owns (its migration creates them). */
-export const ASANA_ENTITIES = [AsanaProjectMapping, AsanaSyncRun];
+export const ASANA_ENTITIES = [AsanaProjectMapping, AsanaSyncRun, AsanaSyncConflict, AsanaTaskBaseline];
 
 /**
  * The Asana integration module (`@gauzy/plugin-integration-asana`). Loaded only when `ASANA_ENABLED=true`
@@ -62,6 +65,7 @@ export const ASANA_ENTITIES = [AsanaProjectMapping, AsanaSyncRun];
 		AsanaTenantService,
 		AsanaMappingService,
 		AsanaSyncRunService,
+		AsanaSyncConflictService,
 		AsanaSyncService,
 		AsanaTaskDetailsService,
 		AsanaImportSweepService,
@@ -70,6 +74,10 @@ export const ASANA_ENTITIES = [AsanaProjectMapping, AsanaSyncRun];
 		MikroOrmAsanaProjectMappingRepository,
 		TypeOrmAsanaSyncRunRepository,
 		MikroOrmAsanaSyncRunRepository,
+		TypeOrmAsanaSyncConflictRepository,
+		MikroOrmAsanaSyncConflictRepository,
+		TypeOrmAsanaTaskBaselineRepository,
+		MikroOrmAsanaTaskBaselineRepository,
 		{
 			provide: ASANA_CONFIG,
 			useFactory: () => {

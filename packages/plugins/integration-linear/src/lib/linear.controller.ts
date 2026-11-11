@@ -17,12 +17,23 @@ import {
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ID, PermissionsEnum } from '@gauzy/contracts';
 import { PermissionGuard, Permissions, RequestContext, TenantPermissionGuard, UUIDValidationPipe, UseValidationPipe } from '@gauzy/core';
-import { CreateLinearMappingDTO, LinearImportDTO, LinearInstallStateDTO, LinearRunsQueryDTO, LinearStatusQueryDTO, UpdateLinearMappingDTO } from './dto/linear.dto';
+import {
+	CreateLinearMappingDTO,
+	LinearConflictsQueryDTO,
+	LinearImportDTO,
+	LinearInstallStateDTO,
+	LinearRunsQueryDTO,
+	LinearStatusQueryDTO,
+	ResolveLinearConflictDTO,
+	UpdateLinearMappingDTO
+} from './dto/linear.dto';
+import { LinearSyncConflict } from './entities/linear-sync-conflict.entity';
 import { LinearSyncRun } from './entities/linear-sync-run.entity';
 import { LinearTeamMapping } from './entities/linear-team-mapping.entity';
 import { isLinearConfigured, LinearConfig } from './linear-config';
 import { LinearMappingService } from './linear-mapping.service';
 import { LinearOAuthStateService } from './linear-oauth-state.service';
+import { LinearSyncConflictService } from './linear-sync-conflict.service';
 import { LinearSyncRunService } from './linear-sync-run.service';
 import { LinearConnectionSummary, LinearTenantService } from './linear-tenant.service';
 import { LINEAR_CONFIG, LINEAR_NOT_CONFIGURED, LINEAR_NOT_CONNECTED, LINEAR_OAUTH_AUTHORIZE_URL, LINEAR_OAUTH_SCOPES, LINEAR_ROUTE_PREFIX } from './linear.constants';
@@ -57,7 +68,8 @@ export class LinearController {
 		private readonly mappings: LinearMappingService,
 		private readonly runs: LinearSyncRunService,
 		private readonly sync: LinearSyncService,
-		private readonly oauthState: LinearOAuthStateService
+		private readonly oauthState: LinearOAuthStateService,
+		private readonly conflicts: LinearSyncConflictService
 	) {}
 
 	/** Whether the OAuth application is configured, and the organization's connection if any. */
@@ -202,12 +214,45 @@ export class LinearController {
 		return { accepted: true, run };
 	}
 
+	/** The latest runs, each with how many conflicts it found (the sync log). */
 	@ApiOperation({ summary: 'The latest runs of a connection' })
 	@Permissions(PermissionsEnum.INTEGRATION_VIEW, PermissionsEnum.INTEGRATION_ADD, PermissionsEnum.INTEGRATION_EDIT)
 	@Get('/:integrationId/runs')
 	@UseValidationPipe({ whitelist: true, transform: true })
-	async listRuns(@Param('integrationId', UUIDValidationPipe) integrationId: ID, @Query() query: LinearRunsQueryDTO): Promise<LinearSyncRun[]> {
+	async listRuns(@Param('integrationId', UUIDValidationPipe) integrationId: ID, @Query() query: LinearRunsQueryDTO): Promise<Array<LinearSyncRun & { conflictCount: number }>> {
 		const tenant = await this.tenants.requireById(integrationId);
-		return this.runs.list(tenant, query.take ?? 50);
+		const runs = await this.runs.list(tenant, query.take ?? 50);
+		const counts = await this.conflicts.countByRun(tenant, runs.map((run) => run.id as ID));
+		return runs.map((run) => Object.assign(run, { conflictCount: counts.get(String(run.id)) ?? 0 }));
+	}
+
+	/**
+	 * The fields changed both in Linear and on the platform to different values: Linear's value was applied, the
+	 * task's is kept in the record. Open ones by default.
+	 */
+	@ApiOperation({ summary: 'The sync conflicts of a connection' })
+	@Permissions(PermissionsEnum.INTEGRATION_VIEW, PermissionsEnum.INTEGRATION_ADD, PermissionsEnum.INTEGRATION_EDIT)
+	@Get('/:integrationId/conflicts')
+	@UseValidationPipe({ whitelist: true, transform: true })
+	async listConflicts(@Param('integrationId', UUIDValidationPipe) integrationId: ID, @Query() query: LinearConflictsQueryDTO): Promise<LinearSyncConflict[]> {
+		const tenant = await this.tenants.requireById(integrationId);
+		return this.conflicts.list(tenant, query);
+	}
+
+	/**
+	 * Resolves a conflict: `keep: external` leaves Linear's value; `keep: platform` writes the task's value back
+	 * (and a mapping that sends changes out sends it to the issue). 409 when the task changed since.
+	 */
+	@ApiOperation({ summary: 'Resolve a sync conflict' })
+	@Post('/:integrationId/conflicts/:conflictId/resolve')
+	@HttpCode(HttpStatus.OK)
+	@UseValidationPipe({ whitelist: true })
+	async resolveConflict(
+		@Param('integrationId', UUIDValidationPipe) integrationId: ID,
+		@Param('conflictId', UUIDValidationPipe) conflictId: ID,
+		@Body() body: ResolveLinearConflictDTO
+	): Promise<LinearSyncConflict> {
+		const tenant = await this.tenants.requireById(integrationId);
+		return this.conflicts.resolve(tenant, conflictId, body.keep, (RequestContext.currentUserId() as ID) ?? null);
 	}
 }
