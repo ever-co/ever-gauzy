@@ -24,12 +24,13 @@ export class IssueTypeSubscriber extends BaseEntityEventSubscriber<IssueType> {
 	 */
 	async afterEntityLoad(entity: IssueType): Promise<void> {
 		try {
-			// Update the fullIconUrl if an icon is present
+			// Use the fullUrl from the image property if available
 			if (Object.prototype.hasOwnProperty.call(entity, 'image')) {
-				// Use the fullUrl from the image property if available
 				await this.setImageUrl(entity);
-			} else if (Object.prototype.hasOwnProperty.call(entity, 'icon')) {
-				// Otherwise, generate the full URL for the icon
+			}
+			// Otherwise, generate the full URL for the icon. The image is an eager relation, so it is an own property
+			// (null) of nearly every loaded issue type: an issue type without one still shows its icon
+			if (!entity.fullIconUrl && Object.prototype.hasOwnProperty.call(entity, 'icon')) {
 				await this.setFullIconUrl(entity);
 			}
 		} catch (error) {
