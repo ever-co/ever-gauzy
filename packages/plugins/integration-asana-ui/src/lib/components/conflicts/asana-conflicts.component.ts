@@ -8,7 +8,7 @@ import {
 	Input,
 	OnChanges,
 	Output,
-	SimpleChanges
+	type SimpleChanges
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DatePipe } from '@angular/common';
