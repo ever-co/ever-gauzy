@@ -34,12 +34,19 @@ export interface IDocumentMarkdownUpdateResult {
 	changed: boolean;
 }
 
-/** A page of a subtree export: its place in the zip, and the page. */
+/** A page, a folder or a file of a subtree export: its place in the zip, and the document. */
 interface ISubtreeEntry {
 	document: Document;
 	path: string;
 	hasChildren: boolean;
+	/** A page is a Markdown file, a file is copied as it is, a folder is a folder of the zip (no file of its own). */
+	kind: 'page' | 'folder' | 'file';
+	/** The entry this one is under (`null` for the root and the root's children). */
+	parentId: string | null;
 }
+
+/** The longest name of a file copied into a zip. */
+const ZIP_FILE_NAME_MAX_LENGTH = 120;
 
 /**
  * Markdown in and out of pages (the docs spec, phase 2: FR-12 export, FR-13 update).
@@ -74,12 +81,21 @@ export class DocumentMarkdownService {
 	 * A page and the pages under it as a zip, written to `output`: the root as `index.md` at the top, every page the
 	 * caller may read at `<slug>.md` (or `<slug>/index.md` when it has children of its own) under its parent's folder,
 	 * links between the pages relative, the files they show under `assets/`.
+	 *
+	 * A folder exports the same way, its files included: every file under it the caller may read is copied beside the
+	 * pages of its folder (its own name), a page's link to it points there, and the root `index.md` lists what the zip
+	 * holds. A file past the export's byte budget is listed with its API link instead.
 	 */
-	async writeSubtreeZip(root: Document, organizationId: ID | undefined, output: NodeJS.WritableStream): Promise<{ fileName: string; pages: number }> {
-		const entries = await this.collectSubtree(root, organizationId);
+	async writeSubtreeZip(root: Document, organizationId: ID | undefined, output: NodeJS.WritableStream): Promise<{ fileName: string; pages: number; files: number }> {
+		const isFolder = root.kind === DocumentKindEnum.FOLDER;
+		const tree = await this.collectSubtree(root, organizationId, isFolder);
+		const entries = tree.filter((entry) => entry.kind === 'page');
+		// The folder's files first, then the files the pages show: one byte budget for both.
+		const attachments = await this.readAttachments(tree.filter((entry) => entry.kind === 'file'), organizationId);
 		const pathOf = new Map(entries.map((entry) => [String(entry.document.id), entry.path]));
-		// The files first: a link is rewritten to `assets/` only for a file that was read; the others keep the API's URL.
-		const assets = await this.readAssets(entries, organizationId);
+		const filePathOf = new Map(tree.filter((entry) => attachments.has(String(entry.document.id))).map((entry) => [String(entry.document.id), entry.path]));
+		// A link is rewritten to `assets/` only for a file that was read; the others keep the API's URL.
+		const assets = await this.readAssets(entries, organizationId, new Set(filePathOf.keys()), totalBytesOf(attachments));
 		const archive = new ZipArchive({ zlib: { level: 9 } });
 		const done = new Promise<void>((resolve, reject) => {
 			archive.on('error', (error: Error) => reject(error));
@@ -96,16 +112,35 @@ export class DocumentMarkdownService {
 					const target = pathOf.get(documentId);
 					return target ? posix.relative(from, target) || '.' : `/pages/documents?id=${encodeURIComponent(documentId)}`;
 				},
-				linkOfFile: (documentId, url) => (assets.has(documentId) ? posix.relative(from, `assets/${assets.get(documentId)!.name}`) : url)
+				linkOfFile: (documentId, url) => {
+					const inZip = filePathOf.get(documentId);
+					if (inZip) return posix.relative(from, inZip);
+					return assets.has(documentId) ? posix.relative(from, `assets/${assets.get(documentId)!.name}`) : url;
+				}
 			});
 			archive.append(Buffer.from(markdown, 'utf8'), { name: entry.path });
+		}
+		if (isFolder) {
+			archive.append(Buffer.from(folderIndexMarkdown(root, tree, attachments), 'utf8'), { name: 'index.md' });
+		}
+		for (const [id, buffer] of attachments) {
+			archive.append(buffer, { name: filePathOf.get(id)! });
 		}
 		for (const asset of assets.values()) {
 			archive.append(asset.buffer, { name: `assets/${asset.name}` });
 		}
 		await Promise.resolve(archive.finalize());
 		await done;
-		return { fileName: markdownFileNameOf(root.name, 'pages').replace(/\.md$/, '.zip'), pages: entries.length };
+		return { fileName: markdownFileNameOf(root.name, 'pages').replace(/\.md$/, '.zip'), pages: entries.length, files: attachments.size };
+	}
+
+	/** The root of a subtree export: a page or a folder the caller may read (409 `DOCS_NOT_A_PAGE` for a file). */
+	async requireExportRoot(id: ID, organizationId?: ID): Promise<Document> {
+		const document = await this.documents.findOneScoped(id, [], organizationId);
+		if (document.kind !== DocumentKindEnum.PAGE && document.kind !== DocumentKindEnum.FOLDER) {
+			throw new ConflictException({ message: 'A Markdown export is of a page or a folder', code: DOCS_NOT_A_PAGE });
+		}
+		return document;
 	}
 
 	/**
@@ -188,18 +223,22 @@ export class DocumentMarkdownService {
 
 	/**
 	 * The root and, breadth first, what is under it that the caller may read: pages become files, folders become
-	 * folders of the zip (a folder has no file of its own), and one the caller may not read is left out with its
-	 * subtree. The names are unique within their folder.
+	 * folders of the zip (a folder has no file of its own), files (`withFiles`, a folder's export) are copied, and one
+	 * the caller may not read is left out with its subtree. The names are unique within their folder. A folder root
+	 * has no entry of its own (the zip's `index.md` lists what it holds).
 	 */
-	private async collectSubtree(root: Document, organizationId?: ID): Promise<ISubtreeEntry[]> {
-		const entries: ISubtreeEntry[] = [{ document: root, path: 'index.md', hasChildren: false }];
+	private async collectSubtree(root: Document, organizationId?: ID, withFiles = false): Promise<ISubtreeEntry[]> {
+		const isFolder = root.kind === DocumentKindEnum.FOLDER;
+		const entries: ISubtreeEntry[] = isFolder ? [] : [{ document: root, path: 'index.md', hasChildren: false, kind: 'page', parentId: null }];
 		const folderOf = new Map<string, string>([[String(root.id), '']]);
-		const taken = new Map<string, Set<string>>();
+		// The top of the zip has its `index.md` and its `assets/` folder already.
+		const taken = new Map<string, Set<string>>([['', new Set(['index', 'index.md', 'assets'])]]);
+		const kinds = withFiles ? [DocumentKindEnum.PAGE, DocumentKindEnum.FOLDER, DocumentKindEnum.FILE] : [DocumentKindEnum.PAGE, DocumentKindEnum.FOLDER];
 		let frontier: Document[] = [root];
 		while (frontier.length && entries.length < DOCS_MARKDOWN_SUBTREE_MAX_PAGES) {
 			const children = await this.repository.find({
 				select: { id: true, parentId: true, index: true },
-				where: { parentId: In(frontier.map((node) => node.id as ID)), tenantId: root.tenantId as ID, kind: In([DocumentKindEnum.PAGE, DocumentKindEnum.FOLDER]) } as never,
+				where: { parentId: In(frontier.map((node) => node.id as ID)), tenantId: root.tenantId as ID, kind: In(kinds) } as never,
 				order: { index: 'ASC', createdAt: 'ASC' } as never
 			});
 			const next: Document[] = [];
@@ -214,24 +253,58 @@ export class DocumentMarkdownService {
 				const parentFolder = folderOf.get(String(child.parentId)) ?? '';
 				const parent = entries.find((entry) => String(entry.document.id) === String(child.parentId));
 				if (parent) parent.hasChildren = true;
-				const slug = markdownFileNameOf(node.name, String(node.id).slice(0, 8)).replace(/\.md$/, '');
 				const used = taken.get(parentFolder) ?? new Set<string>();
-				let name = slug;
-				for (let n = 2; used.has(name); n += 1) name = `${slug}-${n}`;
-				used.add(name);
 				taken.set(parentFolder, used);
+				const parentId = String(child.parentId) === String(root.id) ? null : String(child.parentId);
+				if (node.kind === DocumentKindEnum.FILE) {
+					// A file has nothing under it: it is copied under its own name.
+					entries.push({ document: node, path: posix.join(parentFolder, uniqueFileName(zipFileNameOf(node), used)), hasChildren: false, kind: 'file', parentId });
+					continue;
+				}
+				const slug = markdownFileNameOf(node.name, String(node.id).slice(0, 8)).replace(/\.md$/, '');
+				let name = slug;
+				for (let n = 2; used.has(name) || used.has(`${name}.md`); n += 1) name = `${slug}-${n}`;
+				used.add(name);
+				used.add(`${name}.md`);
 				const folder = posix.join(parentFolder, name);
 				folderOf.set(String(node.id), folder);
-				if (node.kind === DocumentKindEnum.PAGE) entries.push({ document: node, path: posix.join(folder, 'index.md'), hasChildren: false });
+				entries.push({ document: node, path: posix.join(folder, 'index.md'), hasChildren: false, kind: node.kind === DocumentKindEnum.PAGE ? 'page' : 'folder', parentId });
 				next.push(node);
 			}
 			frontier = next;
 		}
-		// A page without children of its own is a file, not a folder with an index.
 		for (const entry of entries) {
-			if (entry !== entries[0] && !entry.hasChildren) entry.path = `${posix.dirname(entry.path)}.md`;
+			const isRootPage = !isFolder && entry === entries[0];
+			// A page without children of its own is a file, not a folder with an index; a folder is its folder.
+			if (entry.kind === 'page' && !isRootPage && !entry.hasChildren) entry.path = `${posix.dirname(entry.path)}.md`;
+			if (entry.kind === 'folder') entry.path = posix.dirname(entry.path);
 		}
 		return entries;
+	}
+
+	/**
+	 * The bytes of a folder export's files, read with the selected organization, within the export's byte budget
+	 * (`DOCS_MARKDOWN_ASSETS_MAX_BYTES`, held in memory until the zip is written); one that cannot be read or does not
+	 * fit is left out (the zip's `index.md` lists it with its API link).
+	 */
+	private async readAttachments(files: ISubtreeEntry[], organizationId?: ID): Promise<Map<string, Buffer>> {
+		const read = new Map<string, Buffer>();
+		let totalBytes = 0;
+		for (const entry of files) {
+			const id = String(entry.document.id);
+			try {
+				const file = await this.uploads.getRawFile(id as ID, organizationId);
+				if (totalBytes + file.buffer.length > DOCS_MARKDOWN_ASSETS_MAX_BYTES) {
+					this.logger.warn(`Markdown export: file ${id} was not added (the export's asset budget of ${DOCS_MARKDOWN_ASSETS_MAX_BYTES} bytes is reached)`);
+					continue;
+				}
+				totalBytes += file.buffer.length;
+				read.set(id, file.buffer);
+			} catch (error) {
+				this.logger.warn(`Markdown export: file ${id} was not added (${(error as Error)?.message ?? error})`);
+			}
+		}
+		return read;
 	}
 
 	/**
@@ -239,11 +312,21 @@ export class DocumentMarkdownService {
 	 * export past its asset budget (`DOCS_MARKDOWN_ASSETS_MAX_BYTES`, held in memory until the zip is written), keeps
 	 * its API link.
 	 */
-	private async readAssets(entries: ISubtreeEntry[], organizationId?: ID): Promise<Map<string, { name: string; buffer: Buffer }>> {
+	private async readAssets(
+		entries: ISubtreeEntry[],
+		organizationId?: ID,
+		inZip: ReadonlySet<string> = new Set(),
+		usedBytes = 0
+	): Promise<Map<string, { name: string; buffer: Buffer }>> {
 		const assets = new Map<string, { name: string; buffer: Buffer }>();
 		const ids = new Set<string>();
-		for (const entry of entries) for (const id of collectFileIds(docOf(entry.document.contentJson))) ids.add(id);
-		let totalBytes = 0;
+		for (const entry of entries) {
+			for (const id of collectFileIds(docOf(entry.document.contentJson))) {
+				// A file the zip already holds (a folder's file) is linked where it is, not copied again.
+				if (!inZip.has(id)) ids.add(id);
+			}
+		}
+		let totalBytes = usedBytes;
 		for (const id of ids) {
 			try {
 				const file = await this.uploads.getRawFile(id as ID, organizationId);
@@ -260,6 +343,74 @@ export class DocumentMarkdownService {
 		}
 		return assets;
 	}
+}
+
+/** The bytes a set of read files holds. */
+function totalBytesOf(buffers: ReadonlyMap<string, Buffer>): number {
+	let total = 0;
+	for (const buffer of buffers.values()) total += buffer.length;
+	return total;
+}
+
+/** The name a file has in a zip: its uploaded name (else its display name), without what a path or a zip refuses. */
+export function zipFileNameOf(document: Pick<Document, 'originalFilename' | 'name' | 'id'>): string {
+	const fallback = String(document.id).slice(0, 8);
+	const raw = String(document.originalFilename || document.name || fallback);
+	// Control characters and the characters a path or a file system refuses become `-`.
+	const clean = raw
+		.replace(/[\u0000-\u001f\u007f/\\:*?"<>|]+/g, '-')
+		.replace(/^[.\s-]+/, '')
+		.trim();
+	if (!clean) return fallback;
+	if (clean.length <= ZIP_FILE_NAME_MAX_LENGTH) return clean;
+	const extension = posix.extname(clean).slice(0, 16);
+	return `${clean.slice(0, ZIP_FILE_NAME_MAX_LENGTH - extension.length)}${extension}`;
+}
+
+/** A name not yet used in its folder (`report.pdf`, then `report-2.pdf`), recorded as used. */
+function uniqueFileName(name: string, used: Set<string>): string {
+	const extension = posix.extname(name);
+	const stem = extension ? name.slice(0, -extension.length) : name;
+	let candidate = name;
+	for (let n = 2; used.has(candidate.toLowerCase()); n += 1) candidate = `${stem}-${n}${extension}`;
+	used.add(candidate.toLowerCase());
+	return candidate;
+}
+
+/**
+ * The `index.md` of a folder's zip: the folder's name and description, then what the zip holds as a nested list of
+ * relative links (pages, folders, files); a file that was not copied is linked to the API.
+ */
+export function folderIndexMarkdown(
+	root: Pick<Document, 'name' | 'description'>,
+	entries: ReadonlyArray<Pick<ISubtreeEntry, 'document' | 'path' | 'kind' | 'parentId'>>,
+	copied: ReadonlyMap<string, unknown>
+): string {
+	const lines: string[] = [`# ${plainMarkdownText(String(root.name || 'Folder'))}`, ''];
+	if (root.description) lines.push(plainMarkdownText(String(root.description)), '');
+	const linkOf = (path: string) => path.split('/').map((part) => encodeURIComponent(part)).join('/');
+	const write = (parentId: string | null, depth: number): void => {
+		for (const entry of entries.filter((candidate) => candidate.parentId === parentId)) {
+			const label = plainMarkdownText(String(entry.document.name || entry.document.originalFilename || entry.path));
+			const indent = '  '.repeat(depth);
+			if (entry.kind === 'folder') {
+				lines.push(`${indent}- ${label}/`);
+			} else if (entry.kind === 'file' && !copied.has(String(entry.document.id))) {
+				lines.push(`${indent}- [${label}](/api/plugins/docs/documents/${encodeURIComponent(String(entry.document.id))}/download) (not included)`);
+			} else {
+				lines.push(`${indent}- [${label}](${linkOf(entry.path)})`);
+			}
+			write(String(entry.document.id), depth + 1);
+		}
+	};
+	write(null, 0);
+	if (!entries.length) lines.push('_This folder is empty._');
+	return `${lines.join('\n').trimEnd()}\n`;
+}
+
+/** Text that reads as itself in Markdown: no emphasis, link, code or heading by accident, on one line. */
+function plainMarkdownText(text: string): string {
+	return text.replace(/[\\`*_[\]<>#|]/g, (character) => `\\${character}`).replace(/\s+/g, ' ').trim();
 }
 
 /** The document of a stored column value (the pages' JSON may be text on SQLite). */

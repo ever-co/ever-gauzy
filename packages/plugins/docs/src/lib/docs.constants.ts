@@ -57,6 +57,14 @@ export const DOCS_INBOUND_SENDER_NOT_ALLOWED = 'DOCS_INBOUND_SENDER_NOT_ALLOWED'
 export const DOCS_INBOUND_NO_ATTACHMENTS = 'DOCS_INBOUND_NO_ATTACHMENTS';
 /** The submitted `contentJson` is not a schema-valid TipTap document (`08` §6.1). */
 export const DOCS_CONTENT_SCHEMA_INVALID = 'DOCS_CONTENT_SCHEMA_INVALID';
+/** 404: the comment named is not a comment of this page (`…/comments/:commentId/anchor`). */
+export const DOCS_COMMENT_NOT_FOUND = 'DOCS_COMMENT_NOT_FOUND';
+/** 400: a comment anchor that cannot be stored (block id, offsets, quote, context or relative positions). */
+export const DOCS_COMMENT_ANCHOR_INVALID = 'DOCS_COMMENT_ANCHOR_INVALID';
+/** 400: a reply is on its thread's place and has no anchor of its own. */
+export const DOCS_COMMENT_ANCHOR_REPLY = 'DOCS_COMMENT_ANCHOR_REPLY';
+/** 403: only the author of a comment sets or removes its anchor. */
+export const DOCS_COMMENT_ANCHOR_FORBIDDEN = 'DOCS_COMMENT_ANCHOR_FORBIDDEN';
 /** 404: the collaboration feature (team spaces, follows, Markdown routes) is off on this installation. */
 export const DOCS_COLLAB_DISABLED = 'DOCS_COLLAB_DISABLED';
 /** 400: a TEAM document names no team. */

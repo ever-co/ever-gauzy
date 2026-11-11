@@ -193,12 +193,14 @@ export class DocumentController {
 	/**
 	 * A page as Markdown (the stored subset), or with `subtree=true` the page and the pages under it the caller may
 	 * read as a zip (`index.md` for the root, one file per page, relative links, the files they show under
-	 * `assets/`). Declared before `GET /:id` so the static segment is never swallowed by it.
+	 * `assets/`). A folder exports with `subtree=true` too: its pages, folders and files (copied as they are, beside
+	 * the pages of their folder) and an `index.md` listing them. Declared before `GET /:id` so the static segment is
+	 * never swallowed by it.
 	 */
-	@ApiOperation({ summary: 'Export a page as Markdown, or a subtree as a zip of Markdown files.' })
+	@ApiOperation({ summary: 'Export a page as Markdown, or a page or folder subtree as a zip of Markdown files (and files).' })
 	@ApiResponse({ status: HttpStatus.OK, description: 'The Markdown (text/markdown) or the zip (application/zip).' })
 	@ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Document not found.' })
-	@ApiResponse({ status: HttpStatus.CONFLICT, description: 'Not a page.' })
+	@ApiResponse({ status: HttpStatus.CONFLICT, description: 'Not a page (a folder exports with subtree=true only).' })
 	@Permissions(PermissionsEnum.DOCS_READ)
 	@UseValidationPipe({ whitelist: true, transform: true })
 	// A subtree export reads up to 500 pages and the files they show in one request, as the bulk route fans out.
@@ -215,7 +217,8 @@ export class DocumentController {
 		if (subtree === 'true' || subtree === '1') {
 			// The root is read (and refused) before any byte of the zip goes out — a 404 or a 409 is still an answer — and
 			// handed to the writer, so the zip is of the page that was checked rather than of a second read of it.
-			const root = await this.markdown.requirePage(id, query?.organizationId);
+			// A page or a folder (its pages, folders and files); a file is 409 `DOCS_NOT_A_PAGE`.
+			const root = await this.markdown.requireExportRoot(id, query?.organizationId);
 			const fileName = markdownFileNameOf(root.name).replace(/\.md$/, '.zip');
 			res.setHeader('Content-Type', 'application/zip');
 			res.setHeader('Content-Disposition', `attachment; filename="${fileName}"; filename*=UTF-8''${encodeURIComponent(fileName)}`);

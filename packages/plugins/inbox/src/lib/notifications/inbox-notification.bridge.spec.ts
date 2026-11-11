@@ -124,6 +124,35 @@ describe('InboxNotificationBridge.fileNotification', () => {
 		await task.service.fileNotification(notification as never);
 		expect(task.comments.findOne).not.toHaveBeenCalled();
 	});
+
+	it('files a comment on a followed page as an entry about the comment, the page in its metadata, with no lookup', async () => {
+		const { comments, inbox, service } = commentBridge(null);
+		await service.fileNotification({ ...notification, type: 'Comment', entity: 'Document', entityId: 'page-1', commentId: 'c7' } as never);
+		expect(comments.findOne).not.toHaveBeenCalled();
+		expect(inbox.upsertExternal).toHaveBeenCalledWith(
+			expect.objectContaining({
+				entity: 'Comment',
+				entityId: 'c7',
+				taskId: null,
+				metadata: expect.objectContaining({ commentId: 'c7', parentEntity: 'Document', parentEntityId: 'page-1', notificationType: 'Comment' })
+			})
+		);
+	});
+});
+
+describe('notificationItemInput with a comment', () => {
+	it('opens the task at the comment for a comment on a followed task', () => {
+		const input = notificationItemInput({ ...notification, type: 'Comment', entity: 'Task', entityId: 't1', commentId: 'c1' } as never, 'u2');
+		expect(input).toMatchObject({ entity: 'Comment', entityId: 'c1', taskId: 't1', metadata: { parentEntity: 'Task', parentEntityId: 't1', commentId: 'c1' } });
+	});
+
+	it('keeps a mention on its record (its twins are found by it), and a notification without a comment as before', () => {
+		const mention = notificationItemInput({ ...notification, type: 'Mention', entity: 'Document', entityId: 'page-1', commentId: 'c1' } as never, 'u2');
+		expect(mention).toMatchObject({ entity: 'Document', entityId: 'page-1' });
+		const plain = notificationItemInput({ ...notification, type: 'Comment', entity: 'Document', entityId: 'page-1' } as never, 'u2');
+		expect(plain).toMatchObject({ entity: 'Document', entityId: 'page-1', taskId: null });
+		expect(plain?.metadata).not.toHaveProperty('commentId');
+	});
 });
 
 describe('isDedupedNotification / notificationTypeOf', () => {

@@ -1,0 +1,70 @@
+import { UseGuards } from '@nestjs/common';
+import { Args, Context, ID, Mutation, Parent, Query, ResolveField, Resolver } from '@nestjs/graphql';
+import { FeatureFlag } from '@gauzy/common';
+import { FeatureEnum, ID as Id, IComment, IDocumentCommentAnchorInput, IDocumentCommentAnchorList, IDocumentCommentAnchorResolved, PermissionsEnum } from '@gauzy/contracts';
+import { FEATURE_GRAPHQL, FeatureFlagGuard, PermissionGuard, Permissions, TenantPermissionGuard } from '@gauzy/core';
+import { DocumentCommentAnchorService, IAnchorContent } from '../services/document-comment-anchor.service';
+
+/**
+ * The comment anchors of Docs pages over GraphQL: the same service, the same rules and the same permission as the
+ * REST routes of `DocumentCommentAnchorController` (`DOCS_READ`, the page's own access, the comment's author).
+ */
+@Resolver()
+@UseGuards(TenantPermissionGuard, PermissionGuard, FeatureFlagGuard)
+@FeatureFlag(FEATURE_GRAPHQL)
+@FeatureFlag(FeatureEnum.FEATURE_DOCUMENTS)
+export class DocsCommentAnchorResolver {
+	constructor(private readonly anchors: DocumentCommentAnchorService) {}
+
+	@Permissions(PermissionsEnum.DOCS_READ)
+	@Query('documentCommentAnchors')
+	documentCommentAnchors(
+		@Args('documentId', { type: () => ID }) documentId: Id,
+		@Args('organizationId', { type: () => ID, nullable: true }) organizationId?: Id
+	): Promise<IDocumentCommentAnchorList> {
+		return this.anchors.list(documentId, organizationId ?? undefined);
+	}
+
+	@Permissions(PermissionsEnum.DOCS_READ)
+	@Mutation('setDocumentCommentAnchor')
+	setDocumentCommentAnchor(
+		@Args('documentId', { type: () => ID }) documentId: Id,
+		@Args('commentId', { type: () => ID }) commentId: Id,
+		@Args('input') input: IDocumentCommentAnchorInput,
+		@Args('organizationId', { type: () => ID, nullable: true }) organizationId?: Id
+	): Promise<IDocumentCommentAnchorResolved> {
+		return this.anchors.set(documentId, commentId, input, organizationId ?? undefined);
+	}
+
+	@Permissions(PermissionsEnum.DOCS_READ)
+	@Mutation('removeDocumentCommentAnchor')
+	removeDocumentCommentAnchor(
+		@Args('documentId', { type: () => ID }) documentId: Id,
+		@Args('commentId', { type: () => ID }) commentId: Id,
+		@Args('organizationId', { type: () => ID, nullable: true }) organizationId?: Id
+	): Promise<boolean> {
+		return this.anchors.remove(documentId, commentId, organizationId ?? undefined);
+	}
+}
+
+/** The pages one GraphQL request has read for its comments' anchors, so a list of comments reads each page once. */
+const PAGES_OF_REQUEST = Symbol('docsCommentAnchorPages');
+
+/**
+ * `Comment.documentAnchor`: the range of a comment of a Docs page, beside the platform's own comment fields. The
+ * comment was read under the comment API's rules; its page is read again under the page's (no range for a page the
+ * caller may not read).
+ */
+@Resolver('Comment')
+export class DocsCommentAnchorFieldResolver {
+	constructor(private readonly anchors: DocumentCommentAnchorService) {}
+
+	@ResolveField('documentAnchor')
+	documentAnchor(@Parent() comment: IComment, @Context() context: Record<string | symbol, unknown>): Promise<IDocumentCommentAnchorResolved | null> {
+		const holder = (context ?? {}) as Record<symbol, Map<string, Promise<IAnchorContent | null>>>;
+		if (!holder[PAGES_OF_REQUEST]) {
+			holder[PAGES_OF_REQUEST] = new Map();
+		}
+		return this.anchors.ofComment(comment, holder[PAGES_OF_REQUEST]).catch(() => null);
+	}
+}
