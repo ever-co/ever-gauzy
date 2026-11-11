@@ -26,6 +26,12 @@ export const PAGE_EXTENSION_SLOTS = {
 	 */
 	TASK_VIEW_ACTIONS: 'task-view-actions',
 
+	/**
+	 * Actions on an employee's own page (`/pages/employees/view/:id`), beside Edit: small buttons. The employee is
+	 * the one of the page's route (`ActivatedRoute` param `id`), which an extension component injects.
+	 */
+	EMPLOYEE_VIEW_ACTIONS: 'employee-view-actions',
+
 	/** Top-level page sections (alternative to page-sections routes). */
 	PAGE_SECTIONS: 'page-sections',
 
