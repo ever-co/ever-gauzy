@@ -1,7 +1,6 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { NbDialogService } from '@nebular/theme';
-import { TranslateService } from '@ngx-translate/core';
+import { NbDialogRef, NbDialogService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { combineLatest, firstValueFrom } from 'rxjs';
 import { distinctUntilChanged, filter, first, map } from 'rxjs/operators';
@@ -115,7 +114,17 @@ const NO_CHARTS: IIncomeCharts = {
 	// The project page's page layout: headline, then two columns.
 	host: { class: 'is-page' }
 })
-export class IncomeViewPageComponent extends TranslationBaseComponent implements OnInit {
+export class IncomeViewPageComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
+	// The base class injects the TranslateService itself.
+	private readonly route = inject(ActivatedRoute);
+	private readonly router = inject(Router);
+	private readonly dialogService = inject(NbDialogService);
+	private readonly incomeService = inject(IncomeService);
+	private readonly toastrService = inject(ToastrService);
+	private readonly errorHandler = inject(ErrorHandlingService);
+	private readonly store = inject(Store);
+	private readonly cdr = inject(ChangeDetectorRef);
+
 	readonly PermissionsEnum = PermissionsEnum;
 	readonly favoriteEntity = BaseEntityEnum.Income;
 	readonly backLink = INCOME_LIST_LINK;
@@ -161,20 +170,8 @@ export class IncomeViewPageComponent extends TranslationBaseComponent implements
 	private clientIncomes: IIncome[] = [];
 	private paymentIncomes: IIncome[] = [];
 	private monthIncomes: IIncome[] = [];
-
-	constructor(
-		public readonly translateService: TranslateService,
-		private readonly route: ActivatedRoute,
-		private readonly router: Router,
-		private readonly dialogService: NbDialogService,
-		private readonly incomeService: IncomeService,
-		private readonly toastrService: ToastrService,
-		private readonly errorHandler: ErrorHandlingService,
-		private readonly store: Store,
-		private readonly cdr: ChangeDetectorRef
-	) {
-		super(translateService);
-	}
+	/** The edit, duplicate or delete dialog that is open: closed when the page turns to another income or organization. */
+	private openDialog: NbDialogRef<unknown> | null = null;
 
 	ngOnInit(): void {
 		// The component is reused across `view/:id` navigations, and the page follows the header's
@@ -191,6 +188,8 @@ export class IncomeViewPageComponent extends TranslationBaseComponent implements
 		combineLatest([id$, organization$])
 			.pipe(untilDestroyed(this))
 			.subscribe(([id, organization]) => {
+				// A dialog opened on the previous income must not act on it once the page shows another.
+				this.openDialog?.close();
 				this.incomeId = id;
 				this.organization = organization;
 				void this.load();
@@ -200,6 +199,11 @@ export class IncomeViewPageComponent extends TranslationBaseComponent implements
 			this.describe();
 			this.cdr.markForCheck();
 		});
+	}
+
+	ngOnDestroy(): void {
+		// Leaving the page closes its dialog: an answer given after that would act on an income no longer shown.
+		this.openDialog?.close();
 	}
 
 	/** Loads (or reloads, after an error) the income the URL names. */
@@ -247,9 +251,8 @@ export class IncomeViewPageComponent extends TranslationBaseComponent implements
 	async edit(): Promise<void> {
 		const income = this.income;
 		if (!income || this.busy) return;
-		const dialog = this.dialogService.open(IncomeMutationComponent, { context: { income } });
-		const edited = await firstValueFrom(dialog.onClose.pipe(first()));
-		if (!edited || this.income?.id !== income.id) return;
+		const edited = await this.ask<any>(this.dialogService.open(IncomeMutationComponent, { context: { income } }), income);
+		if (!edited) return;
 		this.setBusy(true);
 		try {
 			// As the list saves it: the income's own employee, not the form's employee control.
@@ -278,8 +281,7 @@ export class IncomeViewPageComponent extends TranslationBaseComponent implements
 	async duplicate(): Promise<void> {
 		const income = this.income;
 		if (!income || this.busy) return;
-		const dialog = this.dialogService.open(IncomeMutationComponent, { context: { income } });
-		const copy = await firstValueFrom(dialog.onClose.pipe(first()));
+		const copy = await this.ask<any>(this.dialogService.open(IncomeMutationComponent, { context: { income } }), income);
 		if (!copy) return;
 		this.setBusy(true);
 		try {
@@ -315,7 +317,7 @@ export class IncomeViewPageComponent extends TranslationBaseComponent implements
 		const dialog = this.dialogService.open(DeleteConfirmationComponent, {
 			context: { recordType: this.getTranslation('INCOME_PAGE.INCOME') }
 		});
-		const confirmed = await firstValueFrom(dialog.onClose.pipe(first()));
+		const confirmed = await this.ask<boolean>(dialog, income);
 		if (!confirmed) return;
 		this.setBusy(true);
 		try {
@@ -362,6 +364,24 @@ export class IncomeViewPageComponent extends TranslationBaseComponent implements
 	}
 
 	/* ── Reading and describing ── */
+
+	/**
+	 * What an action's dialog closes with — or nothing when, by then, the page has turned to another income or
+	 * organization (or been left): the answer was given for the income the dialog was opened on, which the page no
+	 * longer shows. The page closes such a dialog when it turns.
+	 */
+	private async ask<T>(dialog: NbDialogRef<unknown>, income: IIncome): Promise<T | null> {
+		const sequence = this.loadSequence;
+		const organizationId = this.organization?.id;
+		this.openDialog = dialog;
+		const answer = (await firstValueFrom(dialog.onClose.pipe(first()))) as T;
+		if (this.openDialog === dialog) {
+			this.openDialog = null;
+		}
+		const current =
+			sequence === this.loadSequence && this.income?.id === income.id && this.organization?.id === organizationId;
+		return current && answer ? answer : null;
+	}
 
 	/** The actions wait on a save that starts and ends after a dialog closes: the page is drawn again with it. */
 	private setBusy(busy: boolean): void {
