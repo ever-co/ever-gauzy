@@ -57,7 +57,7 @@ function gifSize(bytes: Buffer): IImageDimensions | null {
 
 function bmpSize(bytes: Buffer): IImageDimensions | null {
 	if (bytes.length < 26 || bytes.toString('ascii', 0, 2) !== 'BM') return null;
-	// BITMAPINFOHEADER and later: signed 32-bit sides (a negative height is a top-down bitmap).
+	// The info header (40 bytes and later versions): signed 32-bit sides (a negative height is a top-down bitmap).
 	return { width: Math.abs(bytes.readInt32LE(18)), height: Math.abs(bytes.readInt32LE(22)) };
 }
 
