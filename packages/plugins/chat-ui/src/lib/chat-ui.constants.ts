@@ -47,6 +47,11 @@ export const CHAT_TASK_ACTIONS_SLOT = 'task-view-actions';
 /** Id of that extension. */
 export const CHAT_SEND_TASK_EXTENSION_ID = 'chat-send-task';
 
+/** The extension slot of an employee's page the "Message" button goes in (`PAGE_EXTENSION_SLOTS.EMPLOYEE_VIEW_ACTIONS`). */
+export const CHAT_EMPLOYEE_ACTIONS_SLOT = 'employee-view-actions';
+/** Id of that extension. */
+export const CHAT_MESSAGE_EMPLOYEE_EXTENSION_ID = 'chat-message-employee';
+
 /** The most people the `@` suggestions show. */
 export const CHAT_MENTION_SUGGESTIONS = 8;
 
