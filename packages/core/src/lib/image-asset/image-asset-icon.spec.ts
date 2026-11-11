@@ -146,6 +146,10 @@ describe('image asset icons', () => {
 			],
 			['a file with an encoded dot segment', { url: `uploads/icons/${otherTenantId}/%2e%2e/${tenantId}/a.png` }],
 			['a file below the tenant folder rather than in it', { url: `uploads/${tenantId}/icons/a.png` }],
+			[
+				'a key whose URL would end at a query',
+				{ url: `uploads/icons/${otherTenantId}/a.png?x=/${tenantId}/a.png` }
+			],
 			['a file outside the tenant upload folders', { url: `uploads/task_property_icons/${otherTenantId}/a.png` }],
 			['a file of an unknown provider', { storageProvider: null }],
 			['a file name too long for the icon column', { url: `uploads/icons/${tenantId}/${'a'.repeat(200)}.png` }]
@@ -195,7 +199,10 @@ describe('image asset icons', () => {
 			`uploads/icons/${tenantId}/../${otherTenantId}/a.png`,
 			`uploads/icons/${otherTenantId}/../${tenantId}/a.png`,
 			`uploads/icons/${otherTenantId}/%2e%2e/${tenantId}/a.png`,
-			`uploads/${tenantId}/icons/a.png`
+			`uploads/${tenantId}/icons/a.png`,
+			`uploads/icons/${otherTenantId}/a.png?x=/${tenantId}/a.png`,
+			`uploads/icons/${otherTenantId}/a.png#/${tenantId}/a.png`,
+			`uploads/icons/${otherTenantId}/a.png%3Fx=/${tenantId}/a.png`
 		])('builds no URL for the key %s', async (traversing) => {
 			const provider = jest.fn().mockReturnValue({ url: jest.fn().mockResolvedValue(signed) });
 

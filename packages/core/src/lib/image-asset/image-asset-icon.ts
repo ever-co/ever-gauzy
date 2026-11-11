@@ -86,7 +86,10 @@ export function imageAssetIconValue(asset: { id: ID; storageProvider: string; ur
 	return `${IMAGE_ASSET_ICON_SCHEME}${asset.id}:${asset.storageProvider}:${asset.url}`;
 }
 
-/** An empty or dot segment, as is or percent-encoded (`%2e%2e`), which a URL would resolve into another folder. */
+/**
+ * A segment a URL would not keep as a plain folder or file name: empty, a dot segment, or one holding a query or
+ * fragment delimiter (the path of the URL would end there), as is or percent-encoded (`%2e%2e`, `%3F`).
+ */
 function isUnsafeSegment(segment: string): boolean {
 	let decoded: string;
 	try {
@@ -95,7 +98,7 @@ function isUnsafeSegment(segment: string): boolean {
 		// A malformed escape is in no file name the upload gives
 		return true;
 	}
-	return !decoded || decoded === '.' || decoded === '..';
+	return !decoded || decoded === '.' || decoded === '..' || /[?#]/.test(segment) || /[?#]/.test(decoded);
 }
 
 /**
