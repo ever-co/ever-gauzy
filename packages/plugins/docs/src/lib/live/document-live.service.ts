@@ -237,7 +237,9 @@ export class DocumentLiveService implements OnModuleInit, OnModuleDestroy, IDocu
 		this.events?.unsubscribe();
 		for (const live of Array.from(this.live.values())) {
 			// The sessions close first, so no edit arrives while the page drains; their request contexts stay
-			// usable for the save.
+			// usable for the save. One is kept as the save's context even when this process only received relayed
+			// edits (no editor here wrote), so those are saved too rather than dropped with the page.
+			live.lastWriter ??= Array.from(live.sessions.values())[0];
 			for (const session of Array.from(live.sessions.values())) {
 				this.close(live, session, DocumentLiveReasonEnum.SHUTDOWN);
 			}
@@ -863,7 +865,7 @@ export class DocumentLiveService implements OnModuleInit, OnModuleDestroy, IDocu
 		for (let attempt = 0; attempt < 3; attempt += 1) {
 			try {
 				// Until nothing is left: an edit that came in while a save ran is saved too.
-				if ((await this.persist(live)) && !live.dirty) {
+				if ((await this.persist(live)) && !live.dirty && !live.dirtyRemote) {
 					return;
 				}
 			} catch (error) {
@@ -871,7 +873,7 @@ export class DocumentLiveService implements OnModuleInit, OnModuleDestroy, IDocu
 					`The live document of ${live.documentId} was not saved at shutdown: ${messageOf(error)}`
 				);
 			}
-			if (!live.dirty) {
+			if (!live.dirty && !live.dirtyRemote) {
 				return;
 			}
 			await sleep(500 * (attempt + 1));
@@ -1010,19 +1012,15 @@ export class DocumentLiveService implements OnModuleInit, OnModuleDestroy, IDocu
 			}
 
 			let next: number;
-			if (ours) {
-				// The revision a failed save of this process claimed is still its own: the save takes it, rather than
-				// claiming one more for every retry.
-				next = revision;
-			} else {
-				try {
-					next = await claimNextContentRevision(this.documents.typeOrmDocumentRepository, row);
-				} catch (error) {
-					if (error instanceof ConflictException) {
-						continue;
-					}
-					throw error;
+			// Every attempt claims its revision in the guarded write, a retry after a failed save too: a revision a
+			// failed save claimed is not reused, since another process may have moved the page past it meanwhile.
+			try {
+				next = await claimNextContentRevision(this.documents.typeOrmDocumentRepository, row);
+			} catch (error) {
+				if (error instanceof ConflictException) {
+					continue;
 				}
+				throw error;
 			}
 			live.selfSaving = true;
 			live.claimedRevision = next;
