@@ -1,0 +1,90 @@
+const mockContext: { userId: string | null; jwtEmployeeId: string | null } = {
+	userId: 'user-1',
+	jwtEmployeeId: 'employee-of-org-a'
+};
+
+jest.mock('@gauzy/core', () => ({
+	Employee: class Employee {},
+	OrganizationTeamEmployee: class OrganizationTeamEmployee {},
+	RolePermission: class RolePermission {},
+	User: class User {},
+	RequestContext: {
+		currentUserId: () => mockContext.userId,
+		currentUser: () => (mockContext.jwtEmployeeId ? { employeeId: mockContext.jwtEmployeeId } : null),
+		hasPermission: () => false
+	}
+}));
+jest.mock('../repositories/type-orm-document-share.repository', () => ({
+	TypeOrmDocumentShareRepository: class TypeOrmDocumentShareRepository {}
+}));
+
+import { DocumentAccessService } from './document-access.service';
+
+/** The access service over a stub employee table: user-1 is an employee of org-a and org-b (inactive in org-c). */
+function buildService() {
+	const employees = [
+		{
+			id: 'employee-of-org-a',
+			userId: 'user-1',
+			organizationId: 'org-a',
+			tenantId: 'tenant-1',
+			isActive: true,
+			isArchived: false
+		},
+		{
+			id: 'employee-of-org-b',
+			userId: 'user-1',
+			organizationId: 'org-b',
+			tenantId: 'tenant-1',
+			isActive: true,
+			isArchived: false
+		},
+		{
+			id: 'old-employee-of-org-c',
+			userId: 'user-1',
+			organizationId: 'org-c',
+			tenantId: 'tenant-1',
+			isActive: false,
+			isArchived: false
+		}
+	];
+	const manager = {
+		findOne: jest.fn(
+			async (_entity: unknown, { where }: { where: Record<string, unknown> }) =>
+				employees.find((row) =>
+					Object.entries(where).every(([key, value]) => (row as Record<string, unknown>)[key] === value)
+				) ?? null
+		)
+	};
+	return new DocumentAccessService({ manager } as never);
+}
+
+describe('DocumentAccessService.currentEmployeeIdIn', () => {
+	afterEach(() => {
+		mockContext.userId = 'user-1';
+		mockContext.jwtEmployeeId = 'employee-of-org-a';
+	});
+
+	it("answers the user's employee in the page's organization, not the one in the token", async () => {
+		await expect(buildService().currentEmployeeIdIn('org-b' as never, 'tenant-1' as never)).resolves.toBe(
+			'employee-of-org-b'
+		);
+		await expect(buildService().currentEmployeeIdIn('org-a' as never, 'tenant-1' as never)).resolves.toBe(
+			'employee-of-org-a'
+		);
+	});
+
+	it('passes over an inactive employee and falls back to the token employee', async () => {
+		await expect(buildService().currentEmployeeIdIn('org-c' as never, 'tenant-1' as never)).resolves.toBe(
+			'employee-of-org-a'
+		);
+	});
+
+	it('falls back to the token employee without a scope or a user', async () => {
+		await expect(buildService().currentEmployeeIdIn(null, 'tenant-1' as never)).resolves.toBe('employee-of-org-a');
+		mockContext.userId = null;
+		await expect(buildService().currentEmployeeIdIn('org-b' as never, 'tenant-1' as never)).resolves.toBe(
+			'employee-of-org-a'
+		);
+	});
+});

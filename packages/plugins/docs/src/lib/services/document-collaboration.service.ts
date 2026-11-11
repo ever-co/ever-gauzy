@@ -141,7 +141,7 @@ export class DocumentCollaborationService {
 	async followState(id: ID, organizationId?: ID): Promise<IDocumentFollowState> {
 		this.assertEnabled();
 		const document = await this.documentService.findOneScoped(id, [], organizationId);
-		const employeeId = this.documentAccessService.currentEmployeeId();
+		const employeeId = await this.documentAccessService.currentEmployeeIdIn(document.organizationId, document.tenantId);
 		if (!employeeId) return { following: false, muted: false };
 		const following = await this.typeOrmDocumentRepository.manager.count(EntitySubscription, {
 			where: { entity: BaseEntityEnum.Document, entityId: document.id as ID, employeeId, tenantId: document.tenantId }
@@ -153,7 +153,7 @@ export class DocumentCollaborationService {
 	async follow(id: ID, organizationId?: ID): Promise<IDocumentFollowState> {
 		this.assertEnabled();
 		const document = await this.documentService.findOneScoped(id, [], organizationId);
-		const employeeId = this.documentAccessService.currentEmployeeId();
+		const employeeId = await this.documentAccessService.currentEmployeeIdIn(document.organizationId, document.tenantId);
 		if (!employeeId) return { following: false, muted: false };
 		if (isMutedBy(document.metadata, employeeId)) {
 			await this.setMuted(document, employeeId, false);
@@ -175,7 +175,7 @@ export class DocumentCollaborationService {
 	async unfollow(id: ID, organizationId?: ID): Promise<IDocumentFollowState> {
 		this.assertEnabled();
 		const document = await this.documentService.findOneScoped(id, [], organizationId);
-		const employeeId = this.documentAccessService.currentEmployeeId();
+		const employeeId = await this.documentAccessService.currentEmployeeIdIn(document.organizationId, document.tenantId);
 		if (!employeeId) return { following: false, muted: false };
 		await this.deleteSubscriptions(document, employeeId);
 		return { following: false, muted: isMutedBy(document.metadata, employeeId) };
@@ -185,7 +185,7 @@ export class DocumentCollaborationService {
 	async mute(id: ID, organizationId?: ID): Promise<IDocumentFollowState> {
 		this.assertEnabled();
 		const document = await this.documentService.findOneScoped(id, [], organizationId);
-		const employeeId = this.documentAccessService.currentEmployeeId();
+		const employeeId = await this.documentAccessService.currentEmployeeIdIn(document.organizationId, document.tenantId);
 		if (!employeeId) return { following: false, muted: false };
 		await this.deleteSubscriptions(document, employeeId);
 		await this.setMuted(document, employeeId, true);
@@ -196,7 +196,7 @@ export class DocumentCollaborationService {
 	async unmute(id: ID, organizationId?: ID): Promise<IDocumentFollowState> {
 		this.assertEnabled();
 		const document = await this.documentService.findOneScoped(id, [], organizationId);
-		const employeeId = this.documentAccessService.currentEmployeeId();
+		const employeeId = await this.documentAccessService.currentEmployeeIdIn(document.organizationId, document.tenantId);
 		if (!employeeId) return { following: false, muted: false };
 		await this.setMuted(document, employeeId, false);
 		return this.followState(id, organizationId);

@@ -124,7 +124,14 @@ export class DocumentNotifierService {
 	 */
 	private async publish(document: Document, receiverEmployeeIds: readonly ID[], kind: DocumentNotificationKind, type: EmployeeNotificationTypeEnum, title: string): Promise<number> {
 		if (!getDocsConfig().collabEnabled) return 0;
-		const actorEmployeeId = (RequestContext.currentUser()?.employeeId as ID | undefined) ?? RequestContext.currentEmployeeId() ?? null;
+		// The actor as the page's organization knows them (a user employed in several organizations carries their last
+		// organization's employee in the token), so they are left out of their own notification there.
+		const actorUserId = RequestContext.currentUserId() as ID | null;
+		const actorEmployeeId =
+			(actorUserId ? await this.employeeOfUserIn(actorUserId, document) : null) ??
+			(RequestContext.currentUser()?.employeeId as ID | undefined) ??
+			RequestContext.currentEmployeeId() ??
+			null;
 		const receivers = notifiableReceivers(receiverEmployeeIds, document.metadata, actorEmployeeId);
 		if (!receivers.length) return 0;
 		const message = DOCUMENT_NOTIFICATION_MESSAGE[kind];
@@ -185,10 +192,27 @@ export class DocumentNotifierService {
 	/** The employee record of the page's creator (a user without one gets no Inbox entry). */
 	private async creatorEmployeeId(document: Document): Promise<ID | null> {
 		if (!document.createdByUserId) return null;
+		// The creator's employee in the page's organization (the one a mute of it is held by), then any of theirs.
+		const inOrganization = await this.employeeOfUserIn(document.createdByUserId as ID, document);
+		if (inOrganization) return inOrganization;
 		const employee = await this.typeOrmDocumentRepository.manager.findOne(Employee, {
 			select: { id: true },
 			where: { userId: document.createdByUserId as ID, tenantId: document.tenantId }
 		});
 		return (employee?.id as ID) ?? null;
+	}
+
+	/** A user's active, unarchived employee in the page's organization; null when they have none there. */
+	private async employeeOfUserIn(userId: ID, document: Document): Promise<ID | null> {
+		if (!document.organizationId) return null;
+		try {
+			const employee = await this.typeOrmDocumentRepository.manager.findOne(Employee, {
+				select: { id: true },
+				where: { userId, organizationId: document.organizationId as ID, tenantId: document.tenantId, isActive: true, isArchived: false }
+			});
+			return (employee?.id as ID) ?? null;
+		} catch {
+			return null;
+		}
 	}
 }

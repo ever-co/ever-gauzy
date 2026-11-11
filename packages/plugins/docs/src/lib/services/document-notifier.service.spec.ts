@@ -8,7 +8,7 @@ jest.mock('@gauzy/core', () => ({
 	EmployeeCreateNotificationEvent: class EmployeeCreateNotificationEvent {
 		constructor(public readonly input: Record<string, unknown>) {}
 	},
-	RequestContext: { currentUser: () => mockActor, currentEmployeeId: () => mockActor.employeeId }
+	RequestContext: { currentUser: () => mockActor, currentUserId: () => 'actor-user', currentEmployeeId: () => mockActor.employeeId }
 }));
 jest.mock('../docs.config', () => ({ getDocsConfig: () => mockConfig }));
 jest.mock('../repositories/type-orm-document.repository', () => ({ TypeOrmDocumentRepository: class TypeOrmDocumentRepository {} }));
@@ -31,7 +31,13 @@ function buildNotifier() {
 			const receivers = new Set(((where['receiverEmployeeId'] as { value?: unknown[] })?.value ?? []).map(String));
 			return rows.filter((row) => row['entityId'] === where['entityId'] && row['type'] === where['type'] && row['message'] === where['message'] && receivers.has(String(row['receiverEmployeeId'])));
 		}),
-		findOne: jest.fn(async () => ({ id: 'creator-employee' }))
+		// Each user's employee: in the page's organization when the read names one, else the tenant's first.
+		findOne: jest.fn(async (_entity: unknown, options: { where: Record<string, unknown> }) => {
+			const { userId, organizationId } = options.where;
+			if (userId === 'actor-user') return { id: 'actor-employee' };
+			if (userId === 'creator-user') return organizationId ? { id: 'creator-employee' } : { id: 'creator-employee-elsewhere' };
+			return null;
+		})
 	};
 	const eventBus = {
 		publish: jest.fn((event: { input: Record<string, unknown> }) => {
@@ -81,5 +87,28 @@ describe('DocumentNotifierService', () => {
 			mockConfig.collabEnabled = true;
 		}
 		expect(published).toHaveLength(0);
+	});
+
+	it('tells the creator as the employee of the page organization, active and unarchived', async () => {
+		const { notifier, published, manager } = buildNotifier();
+
+		expect(await notifier.notifyReviewDecided(DOCUMENT, DocumentReviewStatusEnum.APPROVED, null)).toBe(1);
+
+		expect(published[0]['receiverEmployeeId']).toBe('creator-employee');
+		expect(manager.findOne).toHaveBeenCalledWith(expect.anything(), {
+			select: { id: true },
+			where: { userId: 'creator-user', organizationId: 'org-1', tenantId: 'tenant-1', isActive: true, isArchived: false }
+		});
+	});
+
+	it('leaves the actor out by their employee in the page organization, not only the one in their token', async () => {
+		const { notifier, published } = buildNotifier();
+		mockActor.employeeId = 'actor-employee-of-another-organization';
+		try {
+			expect(await notifier.notifyReviewRequested(DOCUMENT, ['actor-employee', 'reviewer'], 'please')).toBe(1);
+			expect(published.map((entry) => entry['receiverEmployeeId'])).toEqual(['reviewer']);
+		} finally {
+			mockActor.employeeId = 'actor-employee';
+		}
 	});
 });
