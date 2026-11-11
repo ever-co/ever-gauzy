@@ -1,5 +1,15 @@
 import * as moment from 'moment';
-import { IExpense } from '@gauzy/contracts';
+
+/**
+ * What the charts read of a record: an amount on a date, in a currency. An expense is one, and so is an income —
+ * the income page draws its client's months and payments with these same helpers.
+ */
+export interface IChartAmountRecord {
+	id?: string;
+	amount?: number | string;
+	currency?: string;
+	valueDate?: Date | string;
+}
 
 /** How many months the category chart covers, ending with the expense's own month. */
 export const CATEGORY_CHART_MONTHS = 6;
@@ -27,11 +37,16 @@ const EARLIEST = moment.utc('1970-01-01');
  * The dates the category chart reads: from the first month of its longest span to the end of the expense's own
  * month. The months are the viewer's, as the bars group them. None for an expense without a date.
  */
-export function categoryReadRange(expense: IExpense, months = CATEGORY_CHART_READ_MONTHS): IExpenseDateRange | null {
+export function categoryReadRange(
+	expense: IChartAmountRecord,
+	months = CATEGORY_CHART_READ_MONTHS
+): IExpenseDateRange | null {
 	if (!expense?.valueDate) {
 		return null;
 	}
-	const start = moment(expense.valueDate).startOf('month').subtract(months - 1, 'months');
+	const start = moment(expense.valueDate)
+		.startOf('month')
+		.subtract(months - 1, 'months');
 	return { startDate: apiDate(start), endDate: apiDate(moment(expense.valueDate).endOf('month')) };
 }
 
@@ -39,7 +54,7 @@ export function categoryReadRange(expense: IExpense, months = CATEGORY_CHART_REA
  * The dates of the payments up to the expense, its own day included: the vendor chart reads the latest of them,
  * newest first. None for an expense without a date.
  */
-export function vendorReadRange(expense: IExpense): IExpenseDateRange | null {
+export function vendorReadRange(expense: IChartAmountRecord): IExpenseDateRange | null {
 	return expense?.valueDate ? { startDate: apiDate(EARLIEST), endDate: apiDate(moment(expense.valueDate)) } : null;
 }
 
@@ -69,7 +84,7 @@ export interface IExpenseMonthShare {
  * summed with it — and the expense itself as the page read it, whether or not the list returned it, so an edit
  * just saved shows at once.
  */
-export function comparableExpenses(expenses: IExpense[], expense: IExpense): IExpense[] {
+export function comparableExpenses(expenses: IChartAmountRecord[], expense: IChartAmountRecord): IChartAmountRecord[] {
 	const currency = expense?.currency ?? null;
 	const others = (expenses ?? []).filter(
 		(item) => item?.id !== expense?.id && item?.valueDate && (item.currency ?? null) === currency
@@ -82,8 +97,8 @@ export function comparableExpenses(expenses: IExpense[], expense: IExpense): IEx
  * highlighted bar.
  */
 export function categoryMonthBars(
-	expenses: IExpense[],
-	expense: IExpense,
+	expenses: IChartAmountRecord[],
+	expense: IChartAmountRecord,
 	locale = 'en',
 	months = CATEGORY_CHART_MONTHS
 ): IExpenseChartBar[] {
@@ -114,8 +129,8 @@ export function categoryMonthBars(
  * the ones leading up to it, so the expense itself is always one of the bars.
  */
 export function vendorPaymentBars(
-	expenses: IExpense[],
-	expense: IExpense,
+	expenses: IChartAmountRecord[],
+	expense: IChartAmountRecord,
 	locale = 'en',
 	limit = VENDOR_CHART_PAYMENTS
 ): IExpenseChartBar[] {
@@ -136,7 +151,7 @@ export function vendorPaymentBars(
 }
 
 /** The expense's share of its category's spending in its month. None for an expense with no amount or date. */
-export function monthShareOf(expenses: IExpense[], expense: IExpense): IExpenseMonthShare | null {
+export function monthShareOf(expenses: IChartAmountRecord[], expense: IChartAmountRecord): IExpenseMonthShare | null {
 	const amount = amountOf(expense);
 	if (!expense?.valueDate || amount <= 0) {
 		return null;
@@ -157,7 +172,7 @@ export function monthShareOf(expenses: IExpense[], expense: IExpense): IExpenseM
 	};
 }
 
-function amountOf(expense: IExpense): number {
+function amountOf(expense: IChartAmountRecord): number {
 	const amount = Number(expense?.amount);
 	return Number.isFinite(amount) && amount > 0 ? amount : 0;
 }
