@@ -359,7 +359,11 @@
 		"MARKDOWN_HINT": "Downloads this page as a .md file",
 		"PRINT": "Print / PDF",
 		"PRINT_HINT": "Opens the print dialog — choose \"Save as PDF\" there",
-		"NOTHING_TO_EXPORT": "There is nothing to export yet"
+		"NOTHING_TO_EXPORT": "There is nothing to export yet",
+		"PDF": "Export as PDF",
+		"PDF_WITH_SUBPAGES": "Export as PDF with sub-pages",
+		"PDF_FAILED": "The PDF could not be created",
+		"PDF_TOO_MANY_PAGES": "This page has too many sub-pages for one PDF"
 	},
 	"PREVIEW": {
 		"TITLE": "Preview",
@@ -751,5 +755,60 @@
 		"MUTE": "Mute this page",
 		"UNMUTE": "Unmute this page",
 		"FAILED": "The page could not be updated. Try again."
+	},
+	"IMPORT": {
+		"BUTTON": "Import",
+		"TITLE": "Import pages",
+		"INTRO": "Choose a zip exported from another workspace: a Markdown vault (folders of .md pages and their attachments) or an HTML export zip. Up to {{limit}}.",
+		"CHOOSE_FILE": "Choose a zip",
+		"NO_FILE": "No file chosen",
+		"TARGET": "Import into",
+		"UNDER": "Under \"{{name}}\"",
+		"START": "Start import",
+		"CLOSE": "Close",
+		"UPLOADING": "Uploading the zip…",
+		"PROGRESS": "{{done}} of {{total}} steps",
+		"BACKGROUND_HINT": "The import runs in the background: you can close this dialog, it goes on.",
+		"SUMMARY": "{{imported}} imported, {{skipped}} skipped, {{failed}} failed",
+		"UNRESOLVED": "{{count}} links point to pages the zip does not hold; their text was kept.",
+		"PAGES": "Imported pages",
+		"MORE": "and {{count}} more",
+		"NOT_IMPORTED": "Not imported",
+		"TRUNCATED": "The report lists the first items only; the counts above are complete.",
+		"LAYOUT": {
+			"MARKDOWN_VAULT": "Read as a Markdown vault",
+			"HTML_EXPORT": "Read as an HTML export zip"
+		},
+		"PHASE": {
+			"QUEUED": "Waiting to start…",
+			"PLANNING": "Reading the zip…",
+			"TREE": "Creating folders, pages and files…",
+			"CONTENT": "Writing the pages…",
+			"DONE": "Done"
+		},
+		"REASON": {
+			"ENCRYPTED": "Encrypted in the zip",
+			"TOO_LARGE": "Too large",
+			"UNSUPPORTED_TYPE": "File type not accepted",
+			"QUOTA_EXCEEDED": "Storage quota reached",
+			"PARENT_MISSING": "Its folder could not be created",
+			"READ_FAILED": "Could not be read",
+			"CREATE_FAILED": "Could not be created",
+			"CONVERSION_FAILED": "Could not be converted",
+			"PLAIN_TEXT": "Imported as plain text",
+			"OTHER": "Not imported"
+		},
+		"ERROR": {
+			"FILE_REQUIRED": "Choose a zip file to import",
+			"TOO_LARGE": "The zip is larger than the import accepts ({{limit}})",
+			"NOT_A_ZIP": "This is not a zip file",
+			"TOO_MANY_ENTRIES": "The zip holds more files than the import accepts",
+			"UNSAFE_PATH": "The zip names a path outside itself and was refused",
+			"SYMLINK": "The zip holds a symbolic link and was refused",
+			"ZIP_BOMB": "The zip unpacks to far more than its size and was refused",
+			"NO_PAGES": "The zip holds no pages: it is not an exported workspace",
+			"STALLED": "The import stopped and could not be resumed",
+			"FAILED": "The import failed"
+		}
 	}
 }

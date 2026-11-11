@@ -1,11 +1,11 @@
-import { Component, ElementRef, HostListener, OnDestroy, OnInit, ViewChild, ChangeDetectionStrategy } from '@angular/core';
+import { Component, ElementRef, HostListener, OnDestroy, OnInit, ViewChild, ChangeDetectionStrategy, inject } from '@angular/core';
 import { ActivatedRoute, Params, Router } from '@angular/router';
 import { NbDialogService, NbMenuItem, NbMenuService, NbToastrService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Actions } from '@ngneat/effects-ng';
 import { TranslateService } from '@ngx-translate/core';
 import { firstValueFrom, Subject } from 'rxjs';
-import { debounceTime, distinctUntilChanged, filter, take, tap } from 'rxjs/operators';
+import { debounceTime, distinctUntilChanged, filter, switchMap, take, tap } from 'rxjs/operators';
 import {
 	ComponentLayoutStyleEnum,
 	DocumentKindEnum,
@@ -36,6 +36,8 @@ import {
 	IDocsUploadDialogResult
 } from '../../dialogs/classification-dialog.component';
 import { CreateDialogComponent } from '../../dialogs/create-dialog.component';
+import { DocsImportDialogComponent, IDocsImportDialogResult } from '../../dialogs/docs-import-dialog.component';
+import { DocsImportService } from '../../services/docs-import.service';
 import {
 	createInitialDocsFilterState,
 	DocsFilterState,
@@ -92,6 +94,9 @@ export class DocsBrowsePageComponent extends PaginationFilterBaseComponent imple
 	public canCreate = false;
 	/** Ancestor chain of the current tree location, rendered in the page header. */
 	public breadcrumb: IDocsCardsCrumb[] = [];
+	/** The largest zip the import takes, or `null` while import is unavailable (the probe answered 404) — hides the button. */
+	public importMaxZipBytes: number | null = null;
+	private readonly importService = inject(DocsImportService);
 	/** Live query params, handed to the saved-views control (UX spec §5). */
 	public urlParams: Params = {};
 	/** Nebular menu tag of the `New ▾` split menu. */
@@ -161,6 +166,18 @@ export class DocsBrowsePageComponent extends PaginationFilterBaseComponent imple
 				untilDestroyed(this)
 			)
 			.subscribe();
+
+		// 5b) The Import action follows the import probe of the selected organization (hidden while it answers 404).
+		this.store.selectedOrganization$
+			.pipe(
+				filter((organization) => !!organization),
+				distinctUntilChange(),
+				switchMap(() => this.importService.probeImport()),
+				untilDestroyed(this)
+			)
+			.subscribe((probe) => {
+				this.importMaxZipBytes = probe ? Number(probe.maxZipBytes) || 0 : null;
+			});
 
 		// 6) Cards breadcrumb follows the tree location.
 		this.documentsQuery.folderId$
@@ -712,6 +729,26 @@ export class DocsBrowsePageComponent extends PaginationFilterBaseComponent imple
 		if (!created) return;
 		this.documentTreeStore.invalidate(folderId);
 		this.actions.dispatch(DocumentsActions.loadDocuments());
+	}
+
+	/**
+	 * Import of an exported workspace (`docs-import-export` spec FR-17): the dialog defaults to the current folder or
+	 * page; when it closes after an import, the tree and the list are read again, and a page picked in its report opens.
+	 */
+	async openImportDialog(): Promise<void> {
+		if (this.importMaxZipBytes === null) return;
+		const folderId = this.documentsQuery.folderId;
+		const parentName = folderId ? (this.breadcrumb[this.breadcrumb.length - 1]?.name ?? null) : null;
+		const result: IDocsImportDialogResult | undefined = await firstValueFrom(
+			this.dialogService.open(DocsImportDialogComponent, {
+				context: { parentId: folderId ?? null, parentName, maxZipBytes: this.importMaxZipBytes },
+				closeOnBackdropClick: false
+			}).onClose
+		);
+		if (!result?.import) return;
+		this.documentTreeStore.invalidateAll();
+		this.actions.dispatch(DocumentsActions.loadDocuments());
+		if (result.openPageId) this.router.navigate(['page', result.openPageId], { relativeTo: this.route });
 	}
 
 	goToReviewQueue(): void {
