@@ -55,7 +55,8 @@ DATA_ENTRY roles, `CHAT_MANAGE` for SUPER_ADMIN, ADMIN and MANAGER; a grant a
 tenant switched off by hand stays off). A direct or group conversation is
 unique per organization by its `directKey` (unique index `tenantId`,
 `organizationId`, `directKey`; migration `1791000006600` replaced the
-per-tenant one).
+per-tenant one). The link preview cache, `chat_link_preview` (migration
+`1791000006710`), is described under [Link previews](#link-previews-off-unless-gauzy_chat_link_previews_enabledtrue).
 
 ## Routes (`/api/chat`, `CHAT_VIEW`; writes `CHAT_SEND`; 404 for a conversation the caller is not in)
 
@@ -82,6 +83,7 @@ per-tenant one).
 | `POST /messages/:id/create-task { projectId?, organizationTeamId?, title?, assigneeEmployeeIds? }` | a task from a message (`ORG_TASK_ADD` too), in the team named (a team of the conversation's organization, so its lists show the task): its first line as the title unless given, the text as the description (HTML); the message keeps a `created` reference — a 500 that names the task id means the task exists but could not be linked |
 | `POST` / `DELETE /messages/:id/reactions/:emoji` | reactions |
 | `GET /threads` · `POST /read-all` · `POST /read-restore { snapshotId }` | followed threads; mark all read with a one-minute undo |
+| `GET /link-preview?url=` | the preview of a link (below); 404 unless `GAUZY_CHAT_LINK_PREVIEWS_ENABLED=true` |
 | `GET /search?q=&conversationId=&limit=&skip=` | the messages of my conversations that match, best first (the search plugin's `chat_message` index — a private declaration the generic `/search` routes leave out — filtered to the memberships I have not left) |
 
 Mention tokens in a body: `<@employeeId>`, `<#conversationId>`, `<!channel>`,
@@ -104,14 +106,54 @@ plugin's `extensions` and named in the field-binding gate (`tools/scripts/graphq
 guards (`CHAT_VIEW`, the tenant's `FEATURE_CHAT`, and the GraphQL capability `FEATURE_GRAPHQL`); the page query is
 validated with the route's DTO. Enumerated values are strings holding the REST values. The writes stay REST.
 
+## Link previews (off unless `GAUZY_CHAT_LINK_PREVIEWS_ENABLED=true`)
+
+`GET /link-preview?url=` (`CHAT_VIEW`, rate-limited per user) answers the preview of a link posted in chat, the chat
+spec FR-20. The server fetches it, never the browser, and caches it per tenant in `chat_link_preview` (migration
+`1791000006710`: `urlHash` = SHA-256 of the normalized link, unique with `tenantId`; `url`, `status`, `data` as JSON
+text, `fetchedAt`). The answer is `IChatLinkPreview` of `@gauzy/contracts`:
+
+| `status` | Means | The client |
+| --- | --- | --- |
+| `ready` | `title`, `description`, `siteName`, `image`, `imageAlt`, `imageWidth`, `imageHeight`, `icon` as the page states them (each optional) | renders a card; every string is plain text, `image` and `icon` are `https:` URLs |
+| `pending` | the server is fetching it | asks again in about two seconds, a few times |
+| `unavailable` | no preview: not a public address, not fetched, not HTML, or nothing to show | shows the link only |
+
+A value that is not an `http(s)` link (or carries credentials, or is longer than 2,048 characters) answers 400; with
+previews off the route answers 404.
+
+**The egress guard** (`link-preview/`): `http` and `https` only, the ports 80, 443, 8080 and 8443, no credentials. A
+host named `localhost`, a single label, or under an internal or special-use suffix (`.local`, `.internal`,
+`.home.arpa`, `.svc`, `.test`, ...) is refused before it is resolved. Every address a host resolves to must be public;
+one that is not refuses the host. That covers loopback, the private ranges, link-local (with the metadata service at
+`169.254.169.254`), carrier-grade NAT, multicast and the documentation and benchmarking ranges. For IPv6 only global
+unicast passes, and IPv4-mapped, NAT64 and 6to4 addresses are judged by the IPv4 address they carry. The connection is
+made to exactly the addresses judged, so a second lookup (DNS rebinding) never happens. Every redirect (at most 3) is
+judged again the same way. One fetch takes at most 5 s, reads at most 512 KB (compressed and decompressed both
+counted), stops at the end of `<head>` and reads only an HTML answer. It sends no cookie, no credential, no referrer,
+only a generic user agent. Only the `<head>` is parsed: Open Graph, then the Twitter card, then `<title>`, the
+description and the icon link. Scripts, styles and comments are dropped first. Strings are decoded and stripped of
+markup, control and bidirectional characters, then cut to their limits. Image and icon URLs are kept only when
+`https:` and not on an internal host. Nothing of the page but these fields is stored.
+
+**Refresh**: a `ready` preview is served for a day, and after that it is still served while it is fetched again. An
+`unavailable` one is fetched again after an hour, and a `pending` one after two minutes (a fetch that never reported
+back). **Where the fetch runs**: with a queue root (`REDIS_ENABLED=true`) it is a job on the `chat-link-preview` queue,
+one per tenant and link at a time (the job id), taken by `ChatLinkPreviewWorker` in the API processes, and the first
+ask answers `pending`. Without one it runs in the process that was asked, at most 4 at a time, and the route waits for
+it.
+
+On, the API makes outbound requests to whatever sites the links posted in chat point at, on someone's ask. Off, it
+makes none.
+
 ## Enabling
 
 ```env
 GAUZY_CHAT_ENABLED=true
 FEATURE_CHAT=true            # or switch the feature on per tenant in Settings → Features
+GAUZY_CHAT_LINK_PREVIEWS_ENABLED=true   # optional: link previews (outbound requests to the linked sites)
 ```
 
 ## Not yet in this plugin (next slices)
 
-Link previews, incoming webhooks, GraphQL twins, the Ever Teams client
-(in progress).
+Incoming webhooks, the Ever Teams client (in progress).
