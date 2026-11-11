@@ -291,7 +291,7 @@ function normalizeBlock(block: unknown): IChatAppBlock[] {
 			const out: IChatAppBlock[] = [];
 			if (text || fields.length) out.push({ type: ChatAppBlockTypeEnum.SECTION, text, fields: fields.length ? fields : null });
 			const accessory = block['accessory'];
-			const button = isRecord(accessory) ? buttonOf(accessory, '_accessory') : null;
+			const button = isRecord(accessory) ? buttonsWithIds([accessory], '_accessory')[0] ?? null : null;
 			if (button) out.push({ type: ChatAppBlockTypeEnum.ACTIONS, blockId: blockIdOf(block), elements: [button] });
 			return out;
 		}
@@ -307,9 +307,7 @@ function normalizeBlock(block: unknown): IChatAppBlock[] {
 		case 'actions': {
 			const raw = Array.isArray(block['elements']) ? (block['elements'] as unknown[]) : [];
 			const blockId = blockIdOf(block);
-			const buttons = raw
-				.map((element, index) => (isRecord(element) ? buttonOf(element, `_action-${index}`) : null))
-				.filter((button): button is IChatAppButton => !!button);
+			const buttons = buttonsWithIds(raw, '_action');
 			if (buttons.length > CHAT_WEBHOOK_MAX_BUTTONS) {
 				throw new ChatWebhookPayloadError('invalid_blocks', `An actions block carries at most ${CHAT_WEBHOOK_MAX_BUTTONS} buttons.`);
 			}
@@ -328,13 +326,33 @@ function normalizeBlock(block: unknown): IChatAppBlock[] {
 	}
 }
 
+/**
+ * The buttons of a row, each with an action id: its own, or one generated (`<prefix>-<index>`, suffixed while the row
+ * already uses it) for a button that names none. The ids the payload named are reserved first, so a generated id
+ * never takes one of them.
+ */
+function buttonsWithIds(elements: readonly unknown[], prefix: string): IChatAppButton[] {
+	const parsed = elements.map((element) => (isRecord(element) ? buttonOf(element) : null)).filter((entry): entry is { button: IChatAppButton; supplied: boolean } => !!entry);
+	const taken = new Set(parsed.filter((entry) => entry.supplied).map((entry) => entry.button.actionId));
+	parsed.forEach((entry, index) => {
+		if (entry.supplied) return;
+		const base = parsed.length === 1 && prefix === '_accessory' ? prefix : `${prefix}-${index}`;
+		let id = base;
+		for (let n = 1; taken.has(id); n += 1) id = `${base}-${n}`;
+		taken.add(id);
+		entry.button.actionId = id;
+	});
+	return parsed.map((entry) => entry.button);
+}
+
 /** A button element (`{ type: 'button', action_id, text, value, url, style }`, or our own shape), else null. */
-function buttonOf(element: Record<string, unknown>, fallbackId: string): IChatAppButton | null {
+function buttonOf(element: Record<string, unknown>): { button: IChatAppButton; supplied: boolean } | null {
 	if (element['type'] !== undefined && element['type'] !== 'button') return null;
 	const text = plainText(textOf(element), CHAT_APP_TEXT_LIMITS.buttonText);
 	if (!text) return null;
 	const rawId = element['action_id'] ?? element['actionId'] ?? element['name'];
-	const actionId = typeof rawId === 'string' && rawId.trim() ? cut(rawId.trim().replace(CONTROL, ''), CHAT_APP_TEXT_LIMITS.id) : fallbackId;
+	const supplied = typeof rawId === 'string' && !!rawId.trim();
+	const actionId = supplied ? cut((rawId as string).trim().replace(CONTROL, ''), CHAT_APP_TEXT_LIMITS.id) : '';
 	const rawValue = element['value'];
 	const value = typeof rawValue === 'string' ? rawValue.replace(CONTROL, '').slice(0, CHAT_APP_TEXT_LIMITS.buttonValue) : null;
 	const url = typeof element['url'] === 'string' ? element['url'].trim() : null;
@@ -342,7 +360,7 @@ function buttonOf(element: Record<string, unknown>, fallbackId: string): IChatAp
 		throw new ChatWebhookPayloadError('invalid_blocks', 'A button link must be an https URL of a public host.');
 	}
 	const style = element['style'] === 'primary' || element['style'] === 'danger' ? (element['style'] as ChatAppButtonStyle) : null;
-	return { actionId, text, value, url: url || null, style };
+	return { button: { actionId, text, value, url: url || null, style }, supplied };
 }
 
 function blockIdOf(block: Record<string, unknown>): string | null {
@@ -417,9 +435,7 @@ function attachmentBlocks(attachment: Record<string, unknown>): IChatAppBlock[] 
 		.filter(Boolean);
 	if (text || fields.length) out.push({ type: ChatAppBlockTypeEnum.SECTION, text, fields: fields.length ? fields : null });
 	const actions = Array.isArray(attachment['actions']) ? (attachment['actions'] as unknown[]) : [];
-	const buttons = actions
-		.map((action, index) => (isRecord(action) ? buttonOf(action, `_action-${index}`) : null))
-		.filter((button): button is IChatAppButton => !!button);
+	const buttons = buttonsWithIds(actions, '_action');
 	if (buttons.length > CHAT_WEBHOOK_MAX_BUTTONS) {
 		throw new ChatWebhookPayloadError('invalid_blocks', `An attachment carries at most ${CHAT_WEBHOOK_MAX_BUTTONS} buttons.`);
 	}

@@ -561,6 +561,7 @@ export interface IChatInteractionCallback {
 	/** Who clicked: the employee id and the display name only. */
 	actor: { employeeId: ID; name: string };
 	action: { actionId: string; blockId: string | null; value: string | null; text: string };
+}
 
 // ------------------------------------------------------------------ link previews
 
