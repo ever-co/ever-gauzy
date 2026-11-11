@@ -9,26 +9,48 @@ import { catchError, distinctUntilChanged, exhaustMap, map } from 'rxjs/operator
 import { CHAT_MESSAGE_MAX_LENGTH, IChatConversationWithState, IChatMessageWithRelations, IUser } from '@gauzy/contracts';
 import { Store, ToastrService } from '@gauzy/ui-core/core';
 import { CHAT_LINK, CHAT_MESSAGES_POLL_MS } from '../../chat-ui.constants';
-import { ChatPerson, mergeMessages, newNonce, plainBody } from '../../chat-ui.helpers';
+import { ChatPerson, continuesGroup, isSameDay, mergeMessages, newNonce, plainBody, userName } from '../../chat-ui.helpers';
 import { ChatDockService } from '../../services/chat-dock.service';
 import { ChatUiService } from '../../services/chat-ui.service';
 import { PersonAvatarComponent } from '../person-avatar/person-avatar.component';
 
-/** A message as the card shows it: its text, whose it is, and whether it opens a new run of one author. */
-interface DockMessage {
+/**
+ * The label of a day above its first run: "Today" is left out (a card opened to write someone needs no date for
+ * what was just said), "Yesterday" is named, and an older day shows its date.
+ */
+function dayOf(at: Date | string): DockRun['day'] {
+	const now = new Date();
+	if (isSameDay(at, now)) return null;
+	const yesterday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
+	return { key: isSameDay(at, yesterday) ? 'CHAT.VIEW.YESTERDAY' : null, at };
+}
+
+/** One message of a run: its text and when it was written. */
+interface DockLine {
 	id: string;
 	text: string;
-	mine: boolean;
 	deleted: boolean;
 	at: Date | string | undefined;
-	/** The first of consecutive messages of one author: it carries the author's name. */
-	first: boolean;
+}
+
+/**
+ * Consecutive messages of one author written close together, shown under one heading (picture, name, time), as the
+ * chat itself groups them.
+ */
+interface DockRun {
+	id: string;
+	author: ChatPerson;
+	mine: boolean;
+	at: Date | string | undefined;
+	/** Set on the first run of a day that is not today: the day it was written on, as a quiet label above it. */
+	day: { key: string | null; at: Date | string | undefined } | null;
+	lines: DockLine[];
 }
 
 /**
  * The docked message card (`ChatDockService`): a small card at the bottom right of the screen to write one person
  * directly. A box to write and a way to the full conversation, as a quick-message card; above them, who it is and,
- * once there is something to read, the latest messages of our conversation as plain lines. The conversation is found
+ * once there is something to read, the latest messages of our conversation, grouped by author as the chat shows them. The conversation is found
  * (or created) when the card opens, read again every few seconds, and marked read as its messages show.
  */
 @Component({
@@ -48,15 +70,26 @@ interface DockMessage {
 
 				@if (failed()) {
 					<p class="note">{{ 'CHAT.ERROR' | translate }}</p>
-				} @else if (rows().length > 0) {
+				} @else if (runs().length > 0) {
 					<div #scroller class="messages" data-test="chat-dock-messages">
-						@for (row of rows(); track row.id) {
-							@if (row.first) {
-								<span class="by">{{ row.mine ? ('CHAT.PROFILE.YOU' | translate) : who.name }}</span>
+						@for (run of runs(); track run.id) {
+							@if (run.day; as day) {
+								<div class="day">{{ day.key ? (day.key | translate) : (day.at | date: 'mediumDate') }}</div>
 							}
-							<span class="text" [class.deleted]="row.deleted" [attr.title]="row.at | date: 'medium'">
-								{{ row.deleted ? ('CHAT.MESSAGE.DELETED' | translate) : row.text }}
-							</span>
+							<div class="run">
+								<ngx-chat-person-avatar [person]="run.author" size="small" [round]="true"></ngx-chat-person-avatar>
+								<div class="run-body">
+									<div class="run-head">
+										<span class="by">{{ run.mine ? ('CHAT.PROFILE.YOU' | translate) : run.author.name }}</span>
+										<time class="time" [attr.title]="run.at | date: 'medium'">{{ run.at | date: 'shortTime' }}</time>
+									</div>
+									@for (line of run.lines; track line.id) {
+										<p class="text" [class.deleted]="line.deleted" [attr.title]="line.at | date: 'medium'">
+											{{ line.deleted ? ('CHAT.MESSAGE.DELETED' | translate) : line.text }}
+										</p>
+									}
+								</div>
+							</div>
 						}
 					</div>
 				}
@@ -177,25 +210,63 @@ interface DockMessage {
 			.open nb-icon {
 				color: var(--gauzy-text-color-2, inherit);
 			}
-			/* The latest messages as plain lines, the author's name over each run; the newest stays in sight. */
+			/*
+			 * The latest messages between two hairlines, grouped as the chat groups them: a picture, the name and the
+			 * time, then what they wrote under the name. The newest stays in sight.
+			 */
 			.messages {
 				display: flex;
 				flex-direction: column;
-				gap: 0.125rem;
-				max-height: min(14rem, calc(100vh - 16rem));
-				padding: 0.25rem 0.5rem;
+				gap: 0.75rem;
+				max-height: min(15rem, calc(100vh - 16rem));
+				margin: 0 -0.75rem;
+				padding: 0.75rem;
+				border-top: 1px solid var(--gauzy-border-default-color, rgba(127, 127, 127, 0.25));
+				border-bottom: 1px solid var(--gauzy-border-default-color, rgba(127, 127, 127, 0.25));
 				overflow-y: auto;
 			}
-			.by {
-				margin-top: 0.375rem;
+			.day {
 				color: var(--gauzy-text-color-2, inherit);
-				font-size: 0.75rem;
+				font-size: 0.6875rem;
 				line-height: 1rem;
+				text-align: center;
 			}
-			.by:first-child {
-				margin-top: 0;
+			.run {
+				display: flex;
+				align-items: flex-start;
+				gap: 0.5rem;
+				min-width: 0;
+			}
+			.run-body {
+				flex: 1 1 auto;
+				display: flex;
+				flex-direction: column;
+				gap: 0.125rem;
+				min-width: 0;
+			}
+			/* The name's line is as tall as the picture beside it. */
+			.run-head {
+				display: flex;
+				align-items: baseline;
+				gap: 0.375rem;
+				min-width: 0;
+				line-height: 1.5rem;
+			}
+			.by {
+				overflow: hidden;
+				font-size: 0.8125rem;
+				font-weight: 600;
+				white-space: nowrap;
+				text-overflow: ellipsis;
+			}
+			.time {
+				flex: 0 0 auto;
+				color: var(--gauzy-text-color-2, inherit);
+				font-size: 0.6875rem;
+				font-variant-numeric: tabular-nums;
 			}
 			.text {
+				margin: 0;
 				font-size: 0.8125rem;
 				line-height: 1.25rem;
 				overflow-wrap: anywhere;
@@ -259,10 +330,20 @@ export class ChatDockComponent {
 	protected readonly max = CHAT_MESSAGE_MAX_LENGTH;
 	protected readonly person = this.dock.person;
 
-	private readonly myUserId = toSignal(
+	/** Me, as my own messages show me: my name and picture. */
+	private readonly me = toSignal(
 		(inject(Store).user$ as Observable<IUser | null | undefined>).pipe(
-			map((user) => (user?.id ? String(user.id) : null)),
-			distinctUntilChanged()
+			map((user): ChatPerson | null =>
+				user?.id
+					? {
+							employeeId: String(user.employee?.id ?? user.employeeId ?? ''),
+							userId: String(user.id),
+							name: userName(user),
+							imageUrl: user.imageUrl ?? null
+						}
+					: null
+			),
+			distinctUntilChanged((a, b) => a?.userId === b?.userId && a?.name === b?.name && a?.imageUrl === b?.imageUrl)
 		),
 		{ initialValue: null }
 	);
@@ -273,25 +354,38 @@ export class ChatDockComponent {
 	protected readonly sending = signal(false);
 	protected readonly draft = signal('');
 
-	/** The messages as lines, oldest first. */
-	protected readonly rows = computed<DockMessage[]>(() => {
-		const me = this.myUserId();
+	/** The messages as runs of one author, oldest first. */
+	protected readonly runs = computed<DockRun[]>(() => {
+		const me = this.me();
 		const who = this.person();
 		const people = new Map<string, ChatPerson>(who ? [[who.employeeId, who]] : []);
-		let previous: string | null = null;
-		return this.messages().map((message) => {
-			const author = String(message.authorUserId ?? '');
-			const first = author !== previous;
-			previous = author;
-			return {
+		const unknown: ChatPerson = { employeeId: '', userId: null, name: '', imageUrl: null };
+		const runs: DockRun[] = [];
+		let previous: IChatMessageWithRelations | undefined;
+		for (const message of this.messages()) {
+			const line: DockLine = {
 				id: String(message.id),
 				text: plainBody(message.body ?? '', people, new Map()),
-				mine: !!me && author === me,
 				deleted: !!message.deletedAt,
-				at: message.createdAt,
-				first
+				at: message.createdAt
 			};
-		});
+			const newDay = !previous || !isSameDay(previous.createdAt as Date, message.createdAt as Date);
+			if (!newDay && continuesGroup(previous, message)) {
+				runs[runs.length - 1].lines.push(line);
+			} else {
+				const mine = !!me?.userId && String(message.authorUserId ?? '') === me.userId;
+				runs.push({
+					id: line.id,
+					author: mine && me ? me : (who ?? unknown),
+					mine,
+					at: message.createdAt,
+					day: newDay ? dayOf(message.createdAt as Date) : null,
+					lines: [line]
+				});
+			}
+			previous = message;
+		}
+		return runs;
 	});
 
 	/** The request of the person the card shows; a change of person drops it. */
@@ -307,7 +401,7 @@ export class ChatDockComponent {
 		});
 		// New lines keep the newest in sight.
 		effect(() => {
-			this.rows();
+			this.runs();
 			setTimeout(() => {
 				const element = this.scroller()?.nativeElement;
 				if (element) element.scrollTop = element.scrollHeight;
@@ -362,7 +456,7 @@ export class ChatDockComponent {
 		if (incoming.length === 0) return;
 		this.messages.set(mergeMessages(this.messages(), incoming));
 		const conversation = this.conversation();
-		const me = this.myUserId();
+		const me = this.me()?.userId ?? null;
 		if (!conversation || !incoming.some((message) => String(message.authorUserId ?? '') !== me)) return;
 		this.api
 			.read(conversation.id)
