@@ -223,8 +223,11 @@ export class EventOutboxDispatchWorker extends QueueWorkerHost implements OnModu
 		}
 	}
 
-	/** Whether this process consumes the dispatch queue: the BullMQ worker is attached and running. */
-	private consumesQueue(): boolean {
+	/**
+	 * Whether this process consumes the dispatch queue: the BullMQ worker is attached and running. The in-process
+	 * worker of an API without a queue (`EventOutboxInlineDispatchWorker`) answers true.
+	 */
+	protected consumesQueue(): boolean {
 		try {
 			return this.worker?.isRunning() === true;
 		} catch {

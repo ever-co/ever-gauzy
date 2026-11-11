@@ -39,9 +39,31 @@ Nothing new is invented for transport:
   answered is still ahead of it; `resync` is answered only when a retention
   removed rows after the cursor (the `realtime_replay_watermark` table).
 
-Multi-replica deployments set `GRAPHQL_PUBSUB_ENGINE` (a Redis-backed engine) so
-a subscriber on one API replica sees the events of another; a single instance
-uses the in-process engine.
+### How fast an event arrives
+
+A commit that appended wakes the dispatch worker right away instead of waiting
+for the per-minute tick (`GAUZY_EVENT_OUTBOX_DISPATCH_ON_COMMIT=false` turns
+that off):
+
+- **With a queue**: the API's queue worker runs the passes; the per-minute tick
+  stays as the safety net.
+- **No queue** (`REDIS_ENABLED` not `true`): the API runs the same worker
+  in-process (`EventOutboxInlineDispatchModule`), woken by each commit and by a
+  15 s sweep. Before, nothing dispatched at all in this mode.
+  `EVENT_OUTBOX_INLINE_DISPATCH=false` turns it off.
+
+With Redis on, subscription events travel through Redis pub/sub between every
+API and worker process (`RedisGraphqlPubSubEngine`), so a pass run in one
+process reaches a socket held by another. `GRAPHQL_PUBSUB_REDIS=false` keeps the
+in-process engine; `GRAPHQL_PUBSUB_CHANNEL_PREFIX` names the channels (by
+default derived from the database and `API_BASE_URL`, so installations that
+share one Redis stay apart).
+
+`GET /api/realtime/status` reports this as `delivery: { dispatch, shared,
+singleProcess, prompt }`. A client may stop polling only when `prompt` is true:
+dispatched right after the write, and reaching the socket whichever process
+dispatched it — the pub/sub is shared (Redis), or there is one API process
+(SQLite, or `GAUZY_API_SINGLE_PROCESS=true`). Several API replicas need Redis.
 
 ## Events
 

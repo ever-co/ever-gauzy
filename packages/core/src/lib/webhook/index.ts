@@ -14,6 +14,7 @@ export * from './webhook-constant';
 export * from './webhook-retry.scheduler';
 export * from './webhook-retry.worker';
 export * from './webhook-maintenance.module';
+export * from './webhook-inline-retry';
 export * from './dto';
 export * from './repository/type-orm-webhook-subscription.repository';
 export * from './repository/mikro-orm-webhook-subscription.repository';

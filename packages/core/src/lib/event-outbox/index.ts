@@ -12,6 +12,7 @@ export * from './event-outbox-dispatch.scheduler';
 export * from './event-outbox-dispatch.worker';
 export * from './event-outbox-commit.signal';
 export * from './event-outbox-maintenance.module';
+export * from './event-outbox-inline-dispatch';
 export * from './dto';
 export * from './repository/type-orm-event-outbox.repository';
 export * from './repository/mikro-orm-event-outbox.repository';

@@ -63,3 +63,9 @@ export const EVENT_OUTBOX_DISPATCH_ON_COMMIT_ENV = 'GAUZY_EVENT_OUTBOX_DISPATCH_
  * pass claims it.
  */
 export const EVENT_OUTBOX_COMMIT_PASS_LIMIT = 10;
+
+/**
+ * How often an API without a queue sweeps the outbox without being woken: rows whose retry came due, rows whose
+ * lease expired and rows another process appended. The per-minute schedule does that where there is a queue.
+ */
+export const EVENT_OUTBOX_INLINE_SWEEP_MS = 15_000;
