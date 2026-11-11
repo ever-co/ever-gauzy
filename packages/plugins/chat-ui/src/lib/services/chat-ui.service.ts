@@ -271,6 +271,14 @@ export class ChatUiService {
 		return this.http.get<IChatLinkPreview>(`${CHAT}/link-preview`, { params: toParams({ url }) });
 	}
 
+	/**
+	 * The picture of a link's preview, served by the platform from its own fetch (so the browser never loads it from the
+	 * linked site). Answers 404 while the platform serves no pictures, and for a link with no ready preview or picture.
+	 */
+	linkPreviewImage(url: string): Observable<Blob> {
+		return this.http.get(`${CHAT}/link-preview/image`, { params: toParams({ url }), responseType: 'blob' });
+	}
+
 	// ---------------------------------------------------------------- files
 
 	/** The files of a conversation (what its messages carry), newest first. */

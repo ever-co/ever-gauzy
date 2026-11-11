@@ -85,6 +85,7 @@ per-tenant one). The link preview cache, `chat_link_preview` (migration
 | `POST` / `DELETE /messages/:id/reactions/:emoji` | reactions |
 | `GET /threads` · `POST /read-all` · `POST /read-restore { snapshotId }` | followed threads; mark all read with a one-minute undo |
 | `GET /link-preview?url=` | the preview of a link (below); 404 unless `GAUZY_CHAT_LINK_PREVIEWS_ENABLED=true` |
+| `GET /link-preview/image?url=` | the picture of a link's ready preview, served by the platform; 404 unless `GAUZY_CHAT_LINK_PREVIEW_IMAGES_ENABLED=true` |
 | `GET /search?q=&conversationId=&limit=&skip=` | the messages of my conversations that match, best first (the search plugin's `chat_message` index — a private declaration the generic `/search` routes leave out — filtered to the memberships I have not left) |
 
 Mention tokens in a body: `<@employeeId>`, `<#conversationId>`, `<!channel>`,
@@ -163,6 +164,18 @@ id), taken by `ChatLinkPreviewWorker` in the API processes, and the first ask
 answers `pending`. Without one it runs in the process that was asked, at most 4
 at a time, and the route waits for it.
 
+**Pictures** (`GET /link-preview/image?url=`, chat T30; off unless
+`GAUZY_CHAT_LINK_PREVIEW_IMAGES_ENABLED=true` as well): the picture a `ready`
+preview of the tenant names, fetched through the same guard and served by the
+platform, so a client shows it without the reader's browser loading it from the
+linked site. The route takes the link, never the picture's address, so it fetches
+nothing a preview did not name. Only PNG, JPEG, GIF, WebP or AVIF is served, by
+the bytes (never SVG), at most 1 MiB, with `X-Content-Type-Options: nosniff`, a
+`sandbox` CSP and `Cache-Control: private, max-age=86400`. Pictures are kept in
+memory per process (256 pictures, 32 MiB, a day each; a picture that could not
+be fetched is not asked for again for ten minutes) and spend from the same
+budget. 404 for a link with no ready preview or no picture.
+
 On, the API makes outbound requests to whatever sites the links posted in chat
 point at, on someone's ask. Off, it makes none.
 
@@ -172,6 +185,7 @@ point at, on someone's ask. Off, it makes none.
 GAUZY_CHAT_ENABLED=true
 FEATURE_CHAT=true            # or switch the feature on per tenant in Settings → Features
 GAUZY_CHAT_LINK_PREVIEWS_ENABLED=true   # optional: link previews (outbound requests to the linked sites)
+GAUZY_CHAT_LINK_PREVIEW_IMAGES_ENABLED=true   # optional, with the previews: their pictures, served by the platform
 ```
 
 ## Not yet in this plugin (next slices)

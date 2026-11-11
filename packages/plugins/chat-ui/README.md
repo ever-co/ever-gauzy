@@ -57,9 +57,11 @@ The UI has no switch of its own. It follows the API:
   files and a card for each web link: the site and the path, and, once the
   platform has a preview of the page (`GET /api/chat/link-preview`, which the
   platform fetches; on only with `GAUZY_CHAT_LINK_PREVIEWS_ENABLED=true`), the
-  page's site name, title and description as text. Nothing is loaded from the
-  linked site by the reader's browser: not the page, not its picture, not its
-  icon. A pending preview, or one a failure that may pass held up (no
+  page's site name, title and description as text, and its picture when the
+  platform serves it (`GET /api/chat/link-preview/image`, on only with
+  `GAUZY_CHAT_LINK_PREVIEW_IMAGES_ENABLED=true`; shown from a `blob:` URL of
+  the platform's answer). Nothing is loaded from the linked site by the
+  reader's browser: not the page, not its picture, not its icon. A pending preview, or one a failure that may pass held up (no
   connection, 429, 5xx), is asked again after 2, 4 and 6 seconds, and a 404
   (previews off) stops the asks for the session.
 - **Files**: the paperclip, a drop on the composer or a paste attaches files
@@ -125,9 +127,7 @@ and asks again.
 
 ## Not yet in this plugin
 
-The picture and the icon of a link preview (showing them needs the platform to
-serve them, so the reader's browser never loads them from the linked site),
-changing a task's status or assignee from its card
+The icon of a link preview (the platform serves pictures only), changing a task's status or assignee from its card
 (FR-14), search (`GET /chat/search` exists), presence and typing.
 
 ## Tests

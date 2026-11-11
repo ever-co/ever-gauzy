@@ -21,25 +21,31 @@ const ready = (url: string, fields: Partial<IChatLinkPreview> = {}): IChatLinkPr
 
 describe('ChatLinkPreviewsService', () => {
 	let answer: (url: string) => Observable<IChatLinkPreview>;
+	let picture: (url: string) => Observable<Blob>;
 	let linkPreview: jest.Mock;
+	let linkPreviewImage: jest.Mock;
 	let service: ChatLinkPreviewsService;
 
 	const flush = () => new Promise<void>((resolve) => queueMicrotask(resolve));
 
 	beforeEach(() => {
 		answer = (url) => of(ready(url));
+		// The platform's pictures are off unless a spec says otherwise.
+		picture = () => throwError(() => new HttpErrorResponse({ status: 404 }));
 		linkPreview = jest.fn((url: string) => answer(url));
-		TestBed.configureTestingModule({ providers: [{ provide: ChatUiService, useValue: { linkPreview } }] });
+		linkPreviewImage = jest.fn((url: string) => picture(url));
+		(URL as unknown as { createObjectURL: (blob: Blob) => string }).createObjectURL = jest.fn(() => 'blob:picture');
+		TestBed.configureTestingModule({ providers: [{ provide: ChatUiService, useValue: { linkPreview, linkPreviewImage } }] });
 		service = TestBed.inject(ChatLinkPreviewsService);
 	});
 
 	afterEach(() => jest.useRealTimers());
 
-	it('asks once per link, and answers the text only: no picture, no icon', async () => {
+	it('asks once per link, and answers its text: never the address of the picture or icon of the linked site', async () => {
 		const first = service.preview(LINK);
 		expect(first()).toBeNull();
 		await flush();
-		expect(first()).toEqual({ siteName: 'Example', title: 'A post', description: 'About it' });
+		expect(first()).toEqual({ siteName: 'Example', title: 'A post', description: 'About it', imageUrl: null, imageAlt: null });
 		expect(service.preview(LINK)()).toEqual(first());
 		expect(linkPreview).toHaveBeenCalledTimes(1);
 		expect(linkPreview).toHaveBeenCalledWith(LINK);
@@ -134,9 +140,57 @@ describe('ChatLinkPreviewsService', () => {
 	});
 });
 
+describe('ChatLinkPreviewsService: pictures', () => {
+	let picture: jest.Mock;
+	let service: ChatLinkPreviewsService;
+	const flush = async () => {
+		for (let n = 0; n < 3; n++) await new Promise<void>((resolve) => queueMicrotask(resolve));
+	};
+
+	beforeEach(() => {
+		picture = jest.fn(() => of(new Blob(['bytes'], { type: 'image/png' })));
+		(URL as unknown as { createObjectURL: (blob: Blob) => string }).createObjectURL = jest.fn(() => 'blob:picture');
+		TestBed.configureTestingModule({
+			providers: [
+				{
+					provide: ChatUiService,
+					useValue: { linkPreview: (url: string) => of(ready(url, { imageAlt: 'A cover' })), linkPreviewImage: picture }
+				}
+			]
+		});
+		service = TestBed.inject(ChatLinkPreviewsService);
+	});
+
+	it('shows the picture the platform served, as a blob URL of its own fetch', async () => {
+		const preview = service.preview(LINK);
+		await flush();
+		expect(picture).toHaveBeenCalledWith(LINK);
+		expect(preview()).toMatchObject({ title: 'A post', imageUrl: 'blob:picture', imageAlt: 'A cover' });
+		expect(preview()?.imageUrl).not.toContain('cdn.example.com');
+	});
+
+	it('asks for no more pictures once the platform says it serves none', async () => {
+		picture.mockImplementation(() => throwError(() => new HttpErrorResponse({ status: 404 })));
+		const first = service.preview(LINK);
+		await flush();
+		const second = service.preview('https://www.example.com/other');
+		await flush();
+		expect(picture).toHaveBeenCalledTimes(1);
+		expect(first()?.imageUrl).toBeNull();
+		expect(second()?.title).toBe('A post');
+		expect(second()?.imageUrl).toBeNull();
+	});
+});
+
 describe('textOf', () => {
 	it('keeps the site, the title and the description, trimmed', () => {
-		expect(textOf(ready(LINK, { siteName: ' Site ', title: ' T ', description: undefined }))).toEqual({ siteName: 'Site', title: 'T', description: null });
+		expect(textOf(ready(LINK, { siteName: ' Site ', title: ' T ', description: undefined }))).toEqual({
+			siteName: 'Site',
+			title: 'T',
+			description: null,
+			imageUrl: null,
+			imageAlt: null
+		});
 		expect(textOf(ready(LINK, { title: null, description: null }))).toBeNull();
 	});
 });

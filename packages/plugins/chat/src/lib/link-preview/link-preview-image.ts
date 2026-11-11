@@ -1,0 +1,48 @@
+// cspell:ignore ftypavif ftypavis WEBPVP
+import {
+	CHAT_LINK_PREVIEW_IMAGE_MAX_BYTES,
+	CHAT_LINK_PREVIEW_IMAGE_TYPES
+} from './chat-link-preview.constants';
+import { DEFAULT_LINK_PREVIEW_FETCH_OPTIONS, fetchGuardedBody, ILinkPreviewFetchOptions, LinkPreviewFetchFailure } from './link-preview-fetcher';
+
+/** A preview's picture as the platform serves it: its bytes and the type they really are. */
+export type LinkPreviewImageOutcome =
+	| { ok: true; type: string; body: Buffer }
+	| { ok: false; reason: LinkPreviewFetchFailure; status?: number };
+
+/**
+ * Fetches the picture a preview names, through the same egress guard as the page (every hop judged, the connection
+ * pinned, one deadline), so a client can show it without the reader's browser loading it from the linked site.
+ *
+ * Only a raster picture is taken, and only by what its bytes are: PNG, JPEG, GIF, WebP or AVIF, at most
+ * `CHAT_LINK_PREVIEW_IMAGE_MAX_BYTES`. An answer that says it is something else (SVG, which can carry script, among
+ * them), is larger, or whose bytes are not one of those types, gives no picture.
+ *
+ * @returns The picture, or why there is none. Never throws.
+ */
+export async function fetchPreviewImage(link: string | URL, overrides: Partial<ILinkPreviewFetchOptions> = {}): Promise<LinkPreviewImageOutcome> {
+	const options: ILinkPreviewFetchOptions = { ...DEFAULT_LINK_PREVIEW_FETCH_OPTIONS, maxBytes: CHAT_LINK_PREVIEW_IMAGE_MAX_BYTES, ...overrides };
+	// One byte more than the limit is read, to tell a picture of exactly the limit from a larger one.
+	const outcome = await fetchGuardedBody(link, { ...options, maxBytes: options.maxBytes + 1 }, {
+		accept: `${CHAT_LINK_PREVIEW_IMAGE_TYPES.join(',')};q=0.9`,
+		allows: (mediaType) => !mediaType || CHAT_LINK_PREVIEW_IMAGE_TYPES.includes(mediaType) || mediaType === 'application/octet-stream'
+	});
+	if (!outcome.ok) return outcome;
+	if (outcome.body.length > options.maxBytes) return { ok: false, reason: 'size' };
+	const type = sniffImageType(outcome.body);
+	if (!type) return { ok: false, reason: 'type' };
+	return { ok: true, type, body: outcome.body };
+}
+
+/** What a picture's first bytes say it is (PNG, JPEG, GIF, WebP, AVIF), or null for anything else. */
+export function sniffImageType(body: Buffer): string | null {
+	if (!body || body.length < 12) return null;
+	const starts = (bytes: number[], at = 0) => bytes.every((byte, index) => body[at + index] === byte);
+	if (starts([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])) return 'image/png';
+	if (starts([0xff, 0xd8, 0xff])) return 'image/jpeg';
+	if (body.toString('latin1', 0, 6) === 'GIF87a' || body.toString('latin1', 0, 6) === 'GIF89a') return 'image/gif';
+	if (body.toString('latin1', 0, 4) === 'RIFF' && body.toString('latin1', 8, 12) === 'WEBP') return 'image/webp';
+	const brand = body.toString('latin1', 4, 12);
+	if (brand === 'ftypavif' || brand === 'ftypavis') return 'image/avif';
+	return null;
+}
