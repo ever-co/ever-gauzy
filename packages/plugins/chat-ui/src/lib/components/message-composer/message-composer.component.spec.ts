@@ -87,8 +87,8 @@ describe('MessageComposerComponent', () => {
 		it('opens the list again once the text changes after an Escape', () => {
 			type(':thu');
 			press('Escape');
-			type(':thum');
-			box().dispatchEvent(new KeyboardEvent('keyup', { key: 'm', bubbles: true }));
+			type(':thumb');
+			box().dispatchEvent(new KeyboardEvent('keyup', { key: 'b', bubbles: true }));
 			fixture.detectChanges();
 			expect(fixture.nativeElement.querySelector('[data-test="emoji-suggestions"]')?.textContent).toContain('👍');
 		});
