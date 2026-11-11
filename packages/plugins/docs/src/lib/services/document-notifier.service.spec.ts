@@ -8,7 +8,7 @@ jest.mock('@gauzy/core', () => ({
 	EmployeeCreateNotificationEvent: class EmployeeCreateNotificationEvent {
 		constructor(public readonly input: Record<string, unknown>) {}
 	},
-	RequestContext: { currentUser: () => mockActor, currentEmployeeId: () => mockActor.employeeId }
+	RequestContext: { currentUser: () => mockActor, currentUserId: () => 'actor-user', currentEmployeeId: () => mockActor.employeeId }
 }));
 jest.mock('../docs.config', () => ({ getDocsConfig: () => mockConfig }));
 jest.mock('../repositories/type-orm-document.repository', () => ({ TypeOrmDocumentRepository: class TypeOrmDocumentRepository {} }));
@@ -28,10 +28,31 @@ function buildNotifier() {
 	const manager = {
 		find: jest.fn(async (_entity: unknown, options: { where: Record<string, unknown> }) => {
 			const { where } = options;
+			// A user's employees in the tenant.
+			if (where['userId'] === 'creator-user') {
+				return [
+					{ id: 'creator-employee', isActive: true, isArchived: false },
+					{ id: 'creator-employee-elsewhere', isActive: true, isArchived: false }
+				];
+			}
+			if (where['userId'] === 'creator-without-org-employee') {
+				return [
+					{ id: 'creator-old-employee', isActive: false, isArchived: false },
+					{ id: 'creator-archived-employee', isActive: true, isArchived: true },
+					{ id: 'creator-active-employee', isActive: true, isArchived: false }
+				];
+			}
+			if (where['userId']) return [];
 			const receivers = new Set(((where['receiverEmployeeId'] as { value?: unknown[] })?.value ?? []).map(String));
 			return rows.filter((row) => row['entityId'] === where['entityId'] && row['type'] === where['type'] && row['message'] === where['message'] && receivers.has(String(row['receiverEmployeeId'])));
 		}),
-		findOne: jest.fn(async () => ({ id: 'creator-employee' }))
+		// Each user's employee in the page's organization.
+		findOne: jest.fn(async (_entity: unknown, options: { where: Record<string, unknown> }) => {
+			const { userId } = options.where;
+			if (userId === 'actor-user') return { id: 'actor-employee' };
+			if (userId === 'creator-user') return { id: 'creator-employee' };
+			return null;
+		})
 	};
 	const eventBus = {
 		publish: jest.fn((event: { input: Record<string, unknown> }) => {
@@ -81,5 +102,44 @@ describe('DocumentNotifierService', () => {
 			mockConfig.collabEnabled = true;
 		}
 		expect(published).toHaveLength(0);
+	});
+
+	it('tells the creator as the employee of the page organization, active and unarchived', async () => {
+		const { notifier, published, manager } = buildNotifier();
+
+		expect(await notifier.notifyReviewDecided(DOCUMENT, DocumentReviewStatusEnum.APPROVED, null)).toBe(1);
+
+		expect(published[0]['receiverEmployeeId']).toBe('creator-employee');
+		expect(manager.findOne).toHaveBeenCalledWith(expect.anything(), {
+			select: { id: true },
+			where: { userId: 'creator-user', organizationId: 'org-1', tenantId: 'tenant-1', isActive: true, isArchived: false }
+		});
+	});
+
+	it('tells the creator nothing when a mute of the page is held by another of their employees', async () => {
+		const { notifier, published } = buildNotifier();
+		const muted = { ...(DOCUMENT as object), metadata: { collaboration: { mutedEmployeeIds: ['creator-employee-elsewhere'] } } } as never;
+
+		expect(await notifier.notifyReviewDecided(muted, DocumentReviewStatusEnum.REJECTED, null)).toBe(0);
+		expect(published).toHaveLength(0);
+	});
+
+	it('falls back to an active, unarchived employee of the creator elsewhere in the tenant', async () => {
+		const { notifier, published } = buildNotifier();
+		const elsewhere = { ...(DOCUMENT as object), createdByUserId: 'creator-without-org-employee' } as never;
+
+		expect(await notifier.notifyReviewDecided(elsewhere, DocumentReviewStatusEnum.APPROVED, null)).toBe(1);
+		expect(published[0]['receiverEmployeeId']).toBe('creator-active-employee');
+	});
+
+	it('leaves the actor out by their employee in the page organization, not only the one in their token', async () => {
+		const { notifier, published } = buildNotifier();
+		mockActor.employeeId = 'actor-employee-of-another-organization';
+		try {
+			expect(await notifier.notifyReviewRequested(DOCUMENT, ['actor-employee', 'reviewer'], 'please')).toBe(1);
+			expect(published.map((entry) => entry['receiverEmployeeId'])).toEqual(['reviewer']);
+		} finally {
+			mockActor.employeeId = 'actor-employee';
+		}
 	});
 });
