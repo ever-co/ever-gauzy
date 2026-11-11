@@ -203,6 +203,14 @@ describe('TimerReminderService on SQLite', () => {
 	const notificationCount = async () =>
 		Number((await dataSource.query(`SELECT COUNT(*) AS "count" FROM "employee_notification"`))[0].count);
 
+	/** Lets the sweeps under way run until `isTrue` holds. */
+	async function until(isTrue: () => boolean): Promise<void> {
+		for (let turn = 0; turn < 500 && !isTrue(); turn++) {
+			await new Promise((resolve) => setImmediate(resolve));
+		}
+		expect(isTrue()).toBe(true);
+	}
+
 	/** A claim as a process that stopped between its claim and its filing leaves it. */
 	async function strandedClaim(log: string, level: 1 | 2, claimedAt: Date): Promise<string> {
 		const employeeNotificationId = randomUUID();
@@ -463,6 +471,38 @@ describe('TimerReminderService on SQLite', () => {
 		await service.sweep(NOW);
 		expect(filed.map(({ input }) => input.entityId)).toEqual([log]);
 		expect(await claims()).toHaveLength(1);
+	});
+
+	it('gives a claim back only while it still holds it: a filing that hung past a takeover leaves the claim be', async () => {
+		await runningLog(await employee(), { ranFor: 9 * HOUR });
+		let failFirst: (error: Error) => void = () => undefined;
+		let finishSecond: () => void = () => undefined;
+		notifications.create
+			// The first process's filing hangs past the takeover time, then fails
+			.mockImplementationOnce(() => new Promise((_resolve, reject) => (failFirst = reject)))
+			// The process that took the claim over files it, a moment later
+			.mockImplementationOnce(async (input: IEmployeeNotificationCreateInput & { id?: string }) => {
+				await new Promise<void>((resolve) => (finishSecond = resolve));
+				filed.push({ input, contextTenantId: TENANT, contextOrganizationId: ORGANIZATION });
+				await write(input);
+				return { ...input };
+			});
+		const other = new TimerReminderService(dataSource, notifications as never);
+
+		const first = service.sweep(NOW);
+		await until(() => notifications.create.mock.calls.length === 1);
+		const second = other.sweep(new Date(NOW.getTime() + TIMER_REMINDER_STALE_CLAIM_MS + 60_000));
+		await until(() => notifications.create.mock.calls.length === 2);
+
+		failFirst(new Error('connection reset'));
+		expect(await first).toMatchObject({ reminded: 0, failed: 1 });
+		// Still there: the claim is the other process's now
+		expect(await claims()).toHaveLength(1);
+
+		finishSecond();
+		expect(await second).toMatchObject({ reminded: 1, recovered: 1 });
+		await service.sweep(new Date(NOW.getTime() + 3 * TIMER_REMINDER_STALE_CLAIM_MS));
+		expect(await notificationCount()).toBe(1);
 	});
 
 	it('keeps, as filed, the claim of a notification written before its filing failed: no second filing', async () => {

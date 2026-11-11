@@ -49,6 +49,14 @@ export interface ITimerReminderLogRow {
 	taskTitle: string | null;
 }
 
+/**
+ * A claim's time, to the second. It is also its holder's token: a process gives a claim back only while the claim still
+ * holds the time it wrote, and one that takes a claim over writes its own. MySQL keeps no fraction of a second.
+ */
+function claimTimeOf(now: Date): Date {
+	return new Date(Math.floor(now.getTime() / 1000) * 1000);
+}
+
 /** A reminder's claim, as the sweep reads it. */
 interface ITimerReminderClaim {
 	id: ID;
@@ -325,11 +333,12 @@ export class TimerReminderService {
 		level: TimerReminderLevel,
 		now: Date
 	): Promise<ITimerReminderClaim | null> {
+		const claimedAt = claimTimeOf(now);
 		const claim: ITimerReminderClaim = {
 			id: randomUUID(),
 			level,
 			employeeNotificationId: randomUUID(),
-			claimedAt: now
+			claimedAt
 		};
 		try {
 			await this.dataSource.getRepository(TimeLogReminder).insert({
@@ -339,7 +348,7 @@ export class TimerReminderService {
 				timeLogId: log.id,
 				level,
 				employeeNotificationId: claim.employeeNotificationId,
-				claimedAt: now
+				claimedAt
 			});
 			return claim;
 		} catch (error) {
@@ -351,19 +360,25 @@ export class TimerReminderService {
 	}
 
 	/**
-	 * Takes over a claim left unfiled past TIMER_REMINDER_STALE_CLAIM_MS: true for the one process whose update moved its
-	 * time, false when another took it over first or it was filed meanwhile.
+	 * Takes over a claim left unfiled past TIMER_REMINDER_STALE_CLAIM_MS: true for the one process whose update wrote its
+	 * own time, which the claim then holds as this process's token; false when another took it over first or it was
+	 * filed meanwhile.
 	 */
 	private async takeOver(claim: ITimerReminderClaim, now: Date): Promise<boolean> {
+		const claimedAt = claimTimeOf(now);
 		const result = await this.dataSource.getRepository(TimeLogReminder).update(
 			{
 				id: claim.id,
 				filedAt: IsNull(),
 				claimedAt: LessThanOrEqual(new Date(now.getTime() - TIMER_REMINDER_STALE_CLAIM_MS))
 			},
-			{ claimedAt: now }
+			{ claimedAt }
 		);
-		return result.affected === 1;
+		if (result.affected !== 1) {
+			return false;
+		}
+		claim.claimedAt = claimedAt;
+		return true;
 	}
 
 	/** Whether a notification of that id exists in the tenant, deleted since or not. */
@@ -390,10 +405,15 @@ export class TimerReminderService {
 		}
 	}
 
-	/** Gives a claim back, so the next sweep files the reminder. */
+	/**
+	 * Gives a claim back, so the next sweep files the reminder: only while it still holds the time this process wrote. A
+	 * filing that outlasted TIMER_REMINDER_STALE_CLAIM_MS may have seen its claim taken over meanwhile; the claim is then
+	 * the other process's, which files it, and giving it back would let a later sweep file the reminder a second time.
+	 */
 	private async release(claim: ITimerReminderClaim): Promise<void> {
+		const claimedAt = claim.claimedAt instanceof Date ? claim.claimedAt : new Date(instantOf(claim.claimedAt));
 		try {
-			await this.dataSource.getRepository(TimeLogReminder).delete({ id: claim.id });
+			await this.dataSource.getRepository(TimeLogReminder).delete({ id: claim.id, claimedAt, filedAt: IsNull() });
 		} catch (error) {
 			this.logger.warn(
 				`The claim ${claim.id} of timer reminder ${claim.level} was not given back: ${(error as Error)?.message ?? error}`
