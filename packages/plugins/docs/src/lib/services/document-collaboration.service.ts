@@ -10,6 +10,7 @@ import {
 	ID,
 	IDocumentFollowState,
 	IDocumentSpace,
+	JsonData,
 	PermissionsEnum
 } from '@gauzy/contracts';
 import { CreateEntitySubscriptionEvent, EntitySubscription, OrganizationTeam, OrganizationTeamEmployee, RequestContext, prepareSQLQuery as p } from '@gauzy/core';
@@ -137,27 +138,35 @@ export class DocumentCollaborationService {
 
 	// ---------------------------------------------------------------- follow / mute
 
-	/** Whether the caller follows the page, and whether they muted it. */
+	/**
+	 * Whether the caller follows the page, and whether they muted it.
+	 *
+	 * The follow and the mute belong to the caller's employee in the page's organization. A choice made before that
+	 * was saved under another employee of theirs (the one in their token at the time), so every employee of the caller
+	 * in the tenant is read, and cleared by an unfollow or an unmute: nobody's earlier follow or mute disappears because
+	 * the identity it was saved under changed, and none outlives an unmute. An earlier choice is also carried over to
+	 * the page organization's employee here (see {@link carryOverEarlierChoices}).
+	 */
 	async followState(id: ID, organizationId?: ID): Promise<IDocumentFollowState> {
 		this.assertEnabled();
 		const document = await this.documentService.findOneScoped(id, [], organizationId);
-		const employeeId = this.documentAccessService.currentEmployeeId();
-		if (!employeeId) return { following: false, muted: false };
+		const followers = await this.followersOf(document);
+		const { employeeIds } = followers;
+		if (!employeeIds.length) return { following: false, muted: false };
+		await this.carryOverEarlierChoices(document, followers);
 		const following = await this.typeOrmDocumentRepository.manager.count(EntitySubscription, {
-			where: { entity: BaseEntityEnum.Document, entityId: document.id as ID, employeeId, tenantId: document.tenantId }
+			where: { entity: BaseEntityEnum.Document, entityId: document.id as ID, employeeId: In(employeeIds), tenantId: document.tenantId }
 		});
-		return { following: following > 0, muted: isMutedBy(document.metadata, employeeId) };
+		return { following: following > 0, muted: employeeIds.some((employeeId) => isMutedBy(document.metadata, employeeId)) };
 	}
 
-	/** Follows the page (and lifts its mute). */
+	/** Follows the page (and lifts its mute, wherever it was saved). */
 	async follow(id: ID, organizationId?: ID): Promise<IDocumentFollowState> {
 		this.assertEnabled();
 		const document = await this.documentService.findOneScoped(id, [], organizationId);
-		const employeeId = this.documentAccessService.currentEmployeeId();
+		const { employeeId, employeeIds } = await this.followersOf(document);
 		if (!employeeId) return { following: false, muted: false };
-		if (isMutedBy(document.metadata, employeeId)) {
-			await this.setMuted(document, employeeId, false);
-		}
+		await this.unmuteAll(document, employeeIds);
 		this.eventBus.publish(
 			new CreateEntitySubscriptionEvent({
 				entity: BaseEntityEnum.Document,
@@ -171,54 +180,119 @@ export class DocumentCollaborationService {
 		return { following: true, muted: false };
 	}
 
-	/** Stops following the page (the mute, if any, stays). */
+	/** Stops following the page, a follow saved under another employee of the caller included (the mute, if any, stays). */
 	async unfollow(id: ID, organizationId?: ID): Promise<IDocumentFollowState> {
 		this.assertEnabled();
 		const document = await this.documentService.findOneScoped(id, [], organizationId);
-		const employeeId = this.documentAccessService.currentEmployeeId();
-		if (!employeeId) return { following: false, muted: false };
-		await this.deleteSubscriptions(document, employeeId);
-		return { following: false, muted: isMutedBy(document.metadata, employeeId) };
+		const { employeeIds } = await this.followersOf(document);
+		if (!employeeIds.length) return { following: false, muted: false };
+		await this.deleteSubscriptions(document, employeeIds);
+		return { following: false, muted: employeeIds.some((employeeId) => isMutedBy(document.metadata, employeeId)) };
 	}
 
 	/** Mutes the page: no follow, and none re-created by the plugin's own paths, until unmuted. */
 	async mute(id: ID, organizationId?: ID): Promise<IDocumentFollowState> {
 		this.assertEnabled();
 		const document = await this.documentService.findOneScoped(id, [], organizationId);
-		const employeeId = this.documentAccessService.currentEmployeeId();
+		const { employeeId, employeeIds } = await this.followersOf(document);
 		if (!employeeId) return { following: false, muted: false };
-		await this.deleteSubscriptions(document, employeeId);
+		await this.deleteSubscriptions(document, employeeIds);
 		await this.setMuted(document, employeeId, true);
 		return { following: false, muted: true };
 	}
 
-	/** Lifts the mute of the page (without following it again). */
+	/** Lifts the mute of the page, wherever it was saved (without following it again). */
 	async unmute(id: ID, organizationId?: ID): Promise<IDocumentFollowState> {
 		this.assertEnabled();
 		const document = await this.documentService.findOneScoped(id, [], organizationId);
-		const employeeId = this.documentAccessService.currentEmployeeId();
-		if (!employeeId) return { following: false, muted: false };
-		await this.setMuted(document, employeeId, false);
+		const { employeeIds } = await this.followersOf(document);
+		if (!employeeIds.length) return { following: false, muted: false };
+		await this.unmuteAll(document, employeeIds);
 		return this.followState(id, organizationId);
+	}
+
+	/**
+	 * The caller as a follower of the page: their employee in the page's organization, which new follows and mutes are
+	 * saved under, and every employee of theirs in the tenant (the token's included), which earlier choices may have
+	 * been saved under; the same set the review notices check. A lookup that fails fails the call rather than acting as
+	 * another employee.
+	 */
+	private async followersOf(document: Document): Promise<{ employeeId: ID | null; employeeIds: ID[] }> {
+		const [employeeId, tenantEmployeeIds] = await Promise.all([
+			this.documentAccessService.currentEmployeeIdIn(document.organizationId, document.tenantId),
+			this.documentAccessService.currentUserEmployeeIdsIn(document.tenantId)
+		]);
+		const tokenEmployeeId = this.documentAccessService.currentEmployeeId();
+		const employeeIds = [...new Set([employeeId, tokenEmployeeId, ...tenantEmployeeIds].filter((candidate): candidate is ID => !!candidate))];
+		return { employeeId, employeeIds };
+	}
+
+	/**
+	 * Carries a follow or a mute saved under another employee of the caller over to the page organization's employee, the one
+	 * that organization's comment fan-out and the plugin's notices read: a page shown as followed keeps delivering its
+	 * notices, and a muted one stays quiet. Safe to repeat (creating a subscription that exists returns it); the
+	 * earlier record is left for an unfollow or an unmute to clear.
+	 */
+	private async carryOverEarlierChoices(document: Document, { employeeId, employeeIds }: { employeeId: ID | null; employeeIds: ID[] }): Promise<void> {
+		const earlier = employeeIds.filter((candidate) => candidate !== employeeId);
+		if (!employeeId || !earlier.length) return;
+		const manager = this.typeOrmDocumentRepository.manager;
+		const scope = { entity: BaseEntityEnum.Document, entityId: document.id as ID, tenantId: document.tenantId };
+		const [own, inherited] = await Promise.all([
+			manager.count(EntitySubscription, { where: { ...scope, employeeId } }),
+			manager.findOne(EntitySubscription, { select: { id: true, type: true }, where: { ...scope, employeeId: In(earlier) } })
+		]);
+		if (!own && inherited) {
+			this.eventBus.publish(
+				new CreateEntitySubscriptionEvent({
+					...scope,
+					employeeId,
+					type: inherited.type ?? EntitySubscriptionTypeEnum.MANUAL,
+					organizationId: document.organizationId
+				})
+			);
+		}
+		// The mute is decided again on the locked row: an unmute that ran while this read waited is never undone.
+		if (earlier.some((candidate) => isMutedBy(document.metadata, candidate))) {
+			await this.changeMutes(document, (metadata) =>
+				!isMutedBy(metadata, employeeId) && earlier.some((candidate) => isMutedBy(metadata, candidate)) ? withMuted(metadata, employeeId, true) : null
+			);
+		}
 	}
 
 	// ---------------------------------------------------------------- helpers
 
-	private async deleteSubscriptions(document: Document, employeeId: ID): Promise<void> {
+	private async deleteSubscriptions(document: Document, employeeIds: readonly ID[]): Promise<void> {
+		if (!employeeIds.length) return;
 		await this.typeOrmDocumentRepository.manager.delete(EntitySubscription, {
 			entity: BaseEntityEnum.Document,
 			entityId: document.id as ID,
-			employeeId,
+			employeeId: In([...employeeIds]),
 			tenantId: document.tenantId
 		});
+	}
+
+	/** Mutes the page for one employee, or lifts their mute. */
+	private async setMuted(document: Document, employeeId: ID, muted: boolean): Promise<void> {
+		await this.changeMutes(document, (metadata) => withMuted(metadata, employeeId, muted));
+	}
+
+	/** Lifts the mute of the page for every one of the given employees (one write, none when none muted it). */
+	private async unmuteAll(document: Document, employeeIds: readonly ID[]): Promise<void> {
+		await this.changeMutes(document, (metadata) =>
+			employeeIds.some((employeeId) => isMutedBy(metadata, employeeId))
+				? employeeIds.reduce((next, employeeId) => withMuted(next, employeeId, false), metadata)
+				: null
+		);
 	}
 
 	/**
 	 * Changes the muted list of the page in one transaction that re-reads the metadata under a row lock (where the
 	 * database has one; SQLite serialises its writers itself), so two people muting at once, or a mute beside a
-	 * review note, never overwrite each other's change.
+	 * review note, never overwrite each other's change. `change` sees the locked row's metadata and answers the
+	 * metadata to write, or null to write nothing.
 	 */
-	private async setMuted(document: Document, employeeId: ID, muted: boolean): Promise<void> {
+	private async changeMutes(document: Document, change: (metadata: JsonData | null | undefined) => JsonData | null): Promise<void> {
 		const embedded = isSqlite() || isBetterSqlite3();
 		const metadata = await this.typeOrmDocumentRepository.manager.transaction(async (manager) => {
 			const current = await manager.findOne(Document, {
@@ -226,7 +300,9 @@ export class DocumentCollaborationService {
 				where: { id: document.id as ID, tenantId: document.tenantId },
 				...(embedded ? {} : { lock: { mode: 'pessimistic_write' as const } })
 			});
-			const next = withMuted(current?.metadata ?? document.metadata, employeeId, muted);
+			const latest = current ? current.metadata : document.metadata;
+			const next = change(latest);
+			if (next === null) return latest;
 			await manager.update(Document, { id: document.id as ID, tenantId: document.tenantId }, { metadata: next as never });
 			return next;
 		});
