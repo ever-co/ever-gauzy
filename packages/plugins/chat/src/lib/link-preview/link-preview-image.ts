@@ -3,7 +3,13 @@ import {
 	CHAT_LINK_PREVIEW_IMAGE_MAX_BYTES,
 	CHAT_LINK_PREVIEW_IMAGE_TYPES
 } from './chat-link-preview.constants';
-import { DEFAULT_LINK_PREVIEW_FETCH_OPTIONS, fetchGuardedBody, ILinkPreviewFetchOptions, LinkPreviewFetchFailure } from './link-preview-fetcher';
+import {
+	DEFAULT_LINK_PREVIEW_FETCH_OPTIONS,
+	fetchGuardedBody,
+	ILinkPreviewFetchOptions,
+	LinkPreviewFetchFailed,
+	LinkPreviewFetchFailure
+} from './link-preview-fetcher';
 
 /** A preview's picture as the platform serves it: its bytes and the type they really are. */
 export type LinkPreviewImageOutcome =
@@ -29,7 +35,7 @@ export async function fetchPreviewImage(link: string | URL, overrides: Partial<I
 		allows: (mediaType) => !mediaType || CHAT_LINK_PREVIEW_IMAGE_TYPES.includes(mediaType) || mediaType === 'application/octet-stream',
 		whole: true
 	});
-	if (!outcome.ok) return outcome;
+	if (!outcome.ok) return outcome as LinkPreviewFetchFailed;
 	if (outcome.body.length > options.maxBytes) return { ok: false, reason: 'size' };
 	const type = sniffImageType(outcome.body);
 	if (!type) return { ok: false, reason: 'type' };

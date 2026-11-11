@@ -13,7 +13,7 @@ import {
 	CHAT_LINK_PREVIEW_READY_TTL_MS,
 	CHAT_LINK_PREVIEW_UNAVAILABLE_TTL_MS
 } from './chat-link-preview.constants';
-import { fetchPreviewPage, isTransientFailure, LinkPreviewFetchOutcome } from './link-preview-fetcher';
+import { fetchPreviewPage, isTransientFailure, LinkPreviewFetchFailed, LinkPreviewFetchOutcome } from './link-preview-fetcher';
 import { decodePage, ILinkPreviewData, parsePreviewHead } from './link-preview-parser';
 import { LinkPreviewUrlError, normalizePreviewUrl, previewTargetRefusal, previewUrlHash } from './link-preview-url';
 
@@ -174,7 +174,7 @@ export class ChatLinkPreviewService {
 			data = parsePreviewHead(decodePage(outcome.body, outcome.charset), outcome.url);
 		} else {
 			// The reason only: a link can carry a secret (a share token), so it is never logged.
-			this.logger.debug(`A link preview was not fetched (${outcome.reason}).`);
+			this.logger.debug(`A link preview was not fetched (${(outcome as LinkPreviewFetchFailed).reason}).`);
 			if (isTransientFailure(outcome)) {
 				// The site is slow, down or busy for now: a good preview it has is kept, and tried again after the
 				// "unavailable" time rather than a whole day (its fetch time is set back to make it so).
