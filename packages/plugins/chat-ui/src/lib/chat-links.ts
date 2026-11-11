@@ -40,8 +40,9 @@ export function withoutUnbalancedEnd(raw: string): string {
 
 /**
  * The web links of a message body that get a card, in the order written, each once, a few at most. The card is
- * made from the link alone: a preview with the page's title, text and picture needs the platform to fetch it
- * (never the reader's browser, so a link cannot learn who read it), which it does not do yet.
+ * made from the link, and shows the page's title and text once the platform has fetched a preview of it
+ * (`ChatLinkPreviewsService`). The reader's browser never fetches anything from the linked site, so a link cannot learn
+ * who read it.
  *
  * Left out: links inside code, links that are not `http(s)`, task links (the message shows the task's card
  * instead), and anything that does not parse as a URL.

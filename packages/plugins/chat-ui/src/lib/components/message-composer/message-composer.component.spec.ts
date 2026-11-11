@@ -94,6 +94,33 @@ describe('MessageComposerComponent', () => {
 		});
 	});
 
+	describe('suggestions and the emoji grid', () => {
+		const person = (employeeId: string, name: string) => ({ employeeId, userId: null, name, imageUrl: null });
+		const peopleOf = (...list: ReturnType<typeof person>[]) => ({ byEmployee: new Map(list.map((p) => [p.employeeId, p])), byUser: new Map(), list });
+
+		it('picks the first person with Enter when the list shrank under the highlight', () => {
+			fixture.componentRef.setInput('people', peopleOf(person('e1', 'Ada Lovelace'), person('e2', 'Alan Turing')));
+			fixture.detectChanges();
+			type('hi @a');
+			press('ArrowDown');
+			// The people list changes while the query stays open: one person left, the highlight was on the second.
+			fixture.componentRef.setInput('people', peopleOf(person('e1', 'Ada Lovelace')));
+			fixture.detectChanges();
+			expect(() => press('Enter')).not.toThrow();
+			expect(text()).toBe('hi @Ada Lovelace ');
+			expect(sent).toEqual([]);
+		});
+
+		it('shows the emoji grid in place of an open `:` list', () => {
+			type(':thu');
+			expect(fixture.nativeElement.querySelector('[data-test="emoji-suggestions"]')).not.toBeNull();
+			(fixture.nativeElement.querySelector('[aria-label="CHAT.COMPOSER.EMOJI"]') as HTMLButtonElement).click();
+			fixture.detectChanges();
+			expect(fixture.nativeElement.querySelector('[data-test="composer-emoji"]')).not.toBeNull();
+			expect(fixture.nativeElement.querySelector('[data-test="emoji-suggestions"]')).toBeNull();
+		});
+	});
+
 	describe('attachments', () => {
 		beforeEach(() => {
 			fixture.componentRef.setInput('canAttach', true);

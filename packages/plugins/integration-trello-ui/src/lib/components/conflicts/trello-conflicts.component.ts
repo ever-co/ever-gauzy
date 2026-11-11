@@ -8,7 +8,7 @@ import {
 	Input,
 	OnChanges,
 	Output,
-	SimpleChanges
+	type SimpleChanges
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DatePipe } from '@angular/common';
@@ -118,6 +118,8 @@ export type ConflictSide = 'platform' | 'external';
 								<td class="value" [attr.data-test]="side + '-value'" [attr.title]="view.full || null">
 									@if (view.empty) {
 										<em class="note">{{ 'TRELLO.CONFLICTS.EMPTY_VALUE' | translate }}</em>
+									} @else if (view.date && view.dateOnly) {
+										{{ view.date | date: 'mediumDate' }}
 									} @else if (view.date) {
 										{{ view.date | date: 'medium' }}
 									} @else {

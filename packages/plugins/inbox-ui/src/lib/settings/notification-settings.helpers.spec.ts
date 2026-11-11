@@ -2,6 +2,7 @@ import { EmployeeNotificationTypeEnum } from '@gauzy/contracts';
 import {
 	defaultEmailModeOf,
 	digestHourOf,
+	emailDeliveryNoticeOf,
 	emailModeOf,
 	hourLabelOf,
 	isKindOn,
@@ -49,5 +50,25 @@ describe('notification settings helpers', () => {
 		expect(withPreferencePatch(current, { emailByType: { Mention: undefined } }).emailByType).toEqual({});
 		expect(withPreferencePatch(current, { dnd: null }).dnd).toBeNull();
 		expect(withPreferencePatch({}, { digestHour: 9 })).toEqual({ digestHour: 9 });
+	});
+});
+
+describe('emailDeliveryNoticeOf', () => {
+	const status = (enabled: boolean, available: boolean) => ({
+		email: { enabled, available },
+		push: { enabled: false, available: false },
+		checkedAt: '2026-11-11T12:00:00.000Z'
+	});
+
+	it('says OFF when the server sends no notification emails, UNAVAILABLE when none can go out, else nothing', () => {
+		expect(emailDeliveryNoticeOf(status(false, false))).toBe('OFF');
+		expect(emailDeliveryNoticeOf(status(true, false))).toBe('UNAVAILABLE');
+		expect(emailDeliveryNoticeOf(status(true, true))).toBeNull();
+	});
+
+	it('says nothing when the server does not say', () => {
+		expect(emailDeliveryNoticeOf(null)).toBeNull();
+		expect(emailDeliveryNoticeOf(undefined)).toBeNull();
+		expect(emailDeliveryNoticeOf({} as never)).toBeNull();
 	});
 });
