@@ -48,9 +48,12 @@ export interface IImportArchiveEntry {
 	readonly encrypted: boolean;
 	/**
 	 * Inflates the entry, counting as it goes: refused past the size the entry declares, and past the archive's
-	 * remaining budget (the declared sizes are the archive's word, not a fact).
+	 * remaining budget (the declared sizes are the archive's word, not a fact). An entry is charged to the budget once,
+	 * however often it is read (the import reads a page for its metadata, then for its content).
 	 */
 	read(): Promise<Buffer>;
+	/** Inflates the entry through the same counting, keeping nothing: what {@link verifyImportArchive} runs. */
+	verify(): Promise<void>;
 }
 
 /** The files of an archive, its folders, and what its central directory declares. */
@@ -162,36 +165,65 @@ export async function openImportArchive(buffer: Buffer, limits: IImportArchiveLi
 		);
 	}
 
-	const budget = { remaining: limits.maxUncompressedBytes };
+	const budget: IArchiveBudget = { remaining: limits.maxUncompressedBytes, charged: new Set<string>() };
 	const entries: IImportArchiveEntry[] = files.map((record, index) => ({
 		path: paths[index],
 		size: Math.max(0, Number(record.uncompressedSize) || 0),
 		compressedSize: Math.max(0, Number(record.compressedSize) || 0),
 		encrypted: (Number(record.flags) & 0x1) === 1,
-		read: () => readCounted(record, paths[index], budget)
+		read: async () => (await readCounted(record, paths[index], budget, true)) as Buffer,
+		verify: async () => {
+			await readCounted(record, paths[index], budget, false);
+		}
 	}));
 	return { entries, directories: [...directories].sort(), declaredBytes };
 }
 
-/** Inflates one record through a stream that counts what it writes against the declared size and the archive budget. */
-async function readCounted(record: unzipper.File, path: string, budget: { remaining: number }): Promise<Buffer> {
+/**
+ * Inflates every readable entry once, keeping nothing, so that an archive whose entries inflate past what they declare
+ * (or past the archive's limit) is refused before the import creates anything (`docs-import-export` spec FR-2).
+ * Encrypted entries are left to the import, which skips them.
+ *
+ * @throws ImportArchiveError `DOCS_IMPORT_ZIP_BOMB` on the first entry that lies.
+ */
+export async function verifyImportArchive(archive: IImportArchive): Promise<void> {
+	for (const entry of archive.entries) {
+		if (!entry.encrypted) await entry.verify();
+	}
+}
+
+/** What an archive may still inflate to, and the entries already charged to it. */
+interface IArchiveBudget {
+	remaining: number;
+	charged: Set<string>;
+}
+
+/**
+ * Inflates one record through a sink that counts what it writes against the declared size and, on the record's first
+ * read, the archive budget; returns the bytes when `keep`.
+ */
+async function readCounted(record: unzipper.File, path: string, budget: IArchiveBudget, keep: boolean): Promise<Buffer | null> {
 	const declared = Math.max(0, Number(record.uncompressedSize) || 0);
+	const firstRead = !budget.charged.has(path);
 	const chunks: Buffer[] = [];
 	let written = 0;
 	const counted = new Writable({
 		write(chunk: Buffer, _encoding, callback) {
 			written += chunk.length;
-			if (written > declared || written > budget.remaining) {
+			if (written > declared || (firstRead && written > budget.remaining)) {
 				callback(new ImportArchiveError(DOCS_IMPORT_ZIP_BOMB, `The entry ${printable(path)} inflates past the size it declares.`, 413));
 				return;
 			}
-			chunks.push(chunk);
+			if (keep) chunks.push(chunk);
 			callback();
 		}
 	});
 	await pipeline(record.stream(), counted);
-	budget.remaining -= written;
-	return Buffer.concat(chunks);
+	if (firstRead) {
+		budget.charged.add(path);
+		budget.remaining -= written;
+	}
+	return keep ? Buffer.concat(chunks) : null;
 }
 
 /** Adds every folder above `path` (and `path` itself when it is a folder). */

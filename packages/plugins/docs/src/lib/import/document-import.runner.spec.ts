@@ -63,6 +63,14 @@ class MemoryStore implements IDocumentImportStore {
 	async load(id: ID): Promise<IImportRow | null> {
 		return id === this.row.id ? { ...this.row } : null;
 	}
+	claims = 0;
+	async claim(_id: ID, _scope: IImportScope, staleBefore: Date, patch: Partial<IImportRow>): Promise<boolean> {
+		const stale = this.row.status === DocumentImportStatusEnum.RUNNING && (this.row.lastProgressAt ?? new Date(0)) < staleBefore;
+		if (this.row.status !== DocumentImportStatusEnum.QUEUED && !stale) return false;
+		this.claims += 1;
+		this.row = { ...this.row, ...patch };
+		return true;
+	}
 	async update(_id: ID, _scope: IImportScope, patch: Partial<IImportRow>): Promise<void> {
 		this.updates.push(patch);
 		this.row = { ...this.row, ...patch };
@@ -186,7 +194,7 @@ describe('DocumentImportRunner', () => {
 		const runner = new DocumentImportRunner(store);
 
 		await expect(runner.run('import-1', SCOPE, LIMITS, false)).rejects.toThrow('database went away');
-		expect(store.row.status).toBe(DocumentImportStatusEnum.RUNNING);
+		expect(store.row.status).toBe(DocumentImportStatusEnum.QUEUED);
 		const createdBefore = store.documents.length;
 		expect(createdBefore).toBe(3);
 
@@ -270,6 +278,39 @@ describe('DocumentImportRunner', () => {
 		expect(report.items.find((item: any) => item.path === 'Vault')).toMatchObject({ status: DocumentImportItemStatusEnum.FAILED, reason: DOCS_IMPORT_REASONS.CREATE_FAILED });
 		// What was under the folder that failed has no parent to go under.
 		expect(report.items.find((item: any) => item.path === 'Vault/Home.md')).toMatchObject({ status: DocumentImportItemStatusEnum.SKIPPED, reason: DOCS_IMPORT_REASONS.PARENT_MISSING });
+	});
+
+	it('writes every page when the report stops keeping items, and keeps the counts exact', async () => {
+		const store = new MemoryStore(createImportZip(VAULT));
+		const runner = new DocumentImportRunner(store);
+		runner.reportMaxItems = 2;
+		const outcome = await runner.run('import-1', SCOPE, LIMITS);
+		expect(outcome).toMatchObject({ importedCount: 7, skippedCount: 1 });
+		expect(store.byName('Release checklist').contentJson).toBeDefined();
+		const report = JSON.parse(store.row.reportJson as string);
+		expect(report.items).toHaveLength(2);
+		expect(report.truncated).toBe(true);
+	});
+
+	it('refuses an archive whose entry lies about its size before creating anything', async () => {
+		const store = new MemoryStore(createImportZip([{ name: 'Home.md', data: 'x' }, { name: 'liar.md', data: Buffer.alloc(4096, 0x62), deflate: true, declaredSize: 10 }]));
+		await new DocumentImportRunner(store).run('import-1', SCOPE, LIMITS);
+		expect(store.row.errorCode).toBe('DOCS_IMPORT_ZIP_BOMB');
+		expect(store.documents).toHaveLength(0);
+	});
+
+	it('does not start while another run holds the import', async () => {
+		const store = new MemoryStore(createImportZip(VAULT), { status: DocumentImportStatusEnum.RUNNING, lastProgressAt: new Date() });
+		expect(await new DocumentImportRunner(store).run('import-1', SCOPE, LIMITS)).toBeNull();
+		expect(store.documents).toHaveLength(0);
+		expect(store.claims).toBe(0);
+	});
+
+	it('puts a retried import back to QUEUED, so the retry can claim it', async () => {
+		const store = new MemoryStore(createImportZip(VAULT));
+		store.failOnCreate = 2;
+		await expect(new DocumentImportRunner(store).run('import-1', SCOPE, LIMITS, false)).rejects.toThrow();
+		expect(store.row.status).toBe(DocumentImportStatusEnum.QUEUED);
 	});
 
 	it('does not run a finished import again, nor one it cannot find', async () => {

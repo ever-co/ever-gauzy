@@ -19,6 +19,7 @@ import {
 import { docsRateLimit, getDocsConfig } from '../docs.config';
 import { CreateDocumentImportDTO } from '../dto/document-import.dto';
 import { DocumentScopeQueryDTO } from '../dto/document-scope-query.dto';
+import { DeleteUploadsOnErrorInterceptor } from '../import/delete-uploads-on-error.interceptor';
 import { DocsImportEnabledGuard } from '../import/docs-flags.guard';
 import { DocumentImportService } from '../import/document-import.service';
 import { LazyFilesInterceptor, UploadedFilesStorage } from '../interceptors';
@@ -78,7 +79,9 @@ export class DocumentImportController {
 		LazyFilesInterceptor('file', 1, {
 			storage: importsStorage,
 			limits: { files: 1, fileSize: getDocsConfig().importMaxZipBytes }
-		})
+		}),
+		// After the upload: a body the validation refuses (or any later error) deletes the zip it stored.
+		DeleteUploadsOnErrorInterceptor
 	)
 	@Post('/')
 	public async start(@Body() input: CreateDocumentImportDTO, @UploadedFilesStorage() files: UploadedFile[]): Promise<IDocumentImport> {

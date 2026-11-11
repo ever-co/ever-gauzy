@@ -56,8 +56,20 @@ function build() {
 			return row;
 		}),
 		find: jest.fn(async () => rows),
-		findOne: jest.fn(async ({ where }: any) => rows.find((row) => row.id === where.id && row.tenantId === where.tenantId) ?? null),
-		update: jest.fn(async (where: any, patch: any) => Object.assign(rows.find((row) => row.id === where.id) ?? {}, patch))
+		// A copy, as a database read is: two readers each hold their own row.
+		findOne: jest.fn(async ({ where }: any) => {
+			const row = rows.find((candidate) => candidate.id === where.id && candidate.tenantId === where.tenantId);
+			return row ? { ...row } : null;
+		}),
+		// The conditional update of a resume: `status IN (…)` and `lastProgressAt < …` as the real criteria read them.
+		update: jest.fn(async (where: any, patch: any) => {
+			const row = rows.find((candidate) => candidate.id === where.id);
+			const statusOk = !where.status?.value || where.status.value.includes(row?.status);
+			const staleOk = !where.lastProgressAt?.value || (row?.lastProgressAt && row.lastProgressAt < where.lastProgressAt.value);
+			if (!row || !statusOk || !staleOk) return { affected: 0 };
+			Object.assign(row, patch);
+			return { affected: 1 };
+		})
 	};
 	const parent = { id: 'parent-1', kind: DocumentKindEnum.PAGE, visibility: DocumentVisibilityEnum.TEAM, organizationTeamId: 'team-1' };
 	const documents: any = {
@@ -186,6 +198,15 @@ describe('DocumentImportService', () => {
 		const read = await service.get(view.id as string);
 		expect(read.status).toBe(DocumentImportStatusEnum.QUEUED);
 		expect(queue.enqueue).toHaveBeenCalledWith(DOCS_JOB_IMPORT, expect.anything(), { jobId: expect.stringMatching(/^docs:import:import-1:resume-\d+$/) });
+	});
+
+	it('resumes a stalled import once when two readers find it at the same time', async () => {
+		const { service, rows, queue } = build();
+		const view = await service.start(upload('vault9', VAULT), {});
+		Object.assign(rows[0], { status: DocumentImportStatusEnum.RUNNING, lastProgressAt: new Date(0), attempts: 1 });
+		queue.enqueue.mockClear();
+		await Promise.all([service.get(view.id as string), service.get(view.id as string)]);
+		expect(queue.enqueue).toHaveBeenCalledTimes(1);
 	});
 
 	it('gives up a stalled import that has had its runs', async () => {

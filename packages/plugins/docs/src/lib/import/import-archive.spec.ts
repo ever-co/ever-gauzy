@@ -7,7 +7,7 @@ import {
 	DOCS_IMPORT_ZIP_BOMB
 } from '../docs.constants';
 import { createImportZip } from './__fixtures__/import-zip.fixture';
-import { IImportArchiveLimits, ImportArchiveError, isSymlinkRecord, normalizeArchivePath, openImportArchive } from './import-archive';
+import { IImportArchiveLimits, ImportArchiveError, isSymlinkRecord, normalizeArchivePath, openImportArchive, verifyImportArchive } from './import-archive';
 
 const LIMITS: IImportArchiveLimits = { maxEntries: 50, maxUncompressedBytes: 1024 * 1024, maxRatio: 200, ratioMinBytes: 64 * 1024 };
 
@@ -122,6 +122,22 @@ describe('openImportArchive', () => {
 		const archive = await openImportArchive(zip, LIMITS);
 		const error = await refusal(archive.entries[0].read());
 		expect(error.code).toBe(DOCS_IMPORT_ZIP_BOMB);
+	});
+
+	it('refuses a lying entry when the archive is verified, before anything reads it', async () => {
+		const zip = createImportZip([
+			{ name: 'ok.md', data: 'fine' },
+			{ name: 'liar.md', data: Buffer.alloc(4096, 0x62), deflate: true, declaredSize: 10 }
+		]);
+		const error = await refusal(verifyImportArchive(await openImportArchive(zip, LIMITS)));
+		expect(error.code).toBe(DOCS_IMPORT_ZIP_BOMB);
+	});
+
+	it('charges an entry to the budget once, however often it is read', async () => {
+		const archive = await openImportArchive(createImportZip([{ name: 'a.md', data: Buffer.alloc(600, 0x61) }]), { ...LIMITS, maxUncompressedBytes: 1000 });
+		await verifyImportArchive(archive);
+		await archive.entries[0].read();
+		expect((await archive.entries[0].read()).length).toBe(600);
 	});
 
 	it('flags an encrypted entry', async () => {

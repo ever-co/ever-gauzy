@@ -15,7 +15,8 @@ import {
 	DOCS_IMPORT_MAX_PAGE_BYTES,
 	DOCS_IMPORT_NO_PAGES,
 	DOCS_IMPORT_PROGRESS_EVERY,
-	DOCS_IMPORT_REPORT_MAX_ITEMS
+	DOCS_IMPORT_REPORT_MAX_ITEMS,
+	DOCS_IMPORT_STALE_MINUTES
 } from '../docs.constants';
 import { sniffFile } from '../services/file-sniffer';
 import {
@@ -26,7 +27,7 @@ import {
 	IImportRow,
 	IImportScope
 } from './document-import.types';
-import { IImportArchiveEntry, IImportArchiveLimits, ImportArchiveError, openImportArchive } from './import-archive';
+import { IImportArchiveEntry, IImportArchiveLimits, ImportArchiveError, openImportArchive, verifyImportArchive } from './import-archive';
 import { convertImportedPage, IImportPageMeta, IImportPageSource, readImportPage } from './import-content';
 import { buildImportPlan, detectImportLayout, externalIdOf, IImportPlan, IImportPlanNode, ImportLinkIndex } from './import-plan';
 
@@ -76,17 +77,19 @@ export function parseImportOptions(raw: string | null | undefined, fallbackLimit
 	};
 }
 
-/** The report of a run, item by item, with exact counts past the item cap. */
+/** The report of a run, item by item (at most `max` kept), with exact counts past the cap. */
 class ImportReport {
 	private readonly items = new Map<string, IDocumentImportReportItem>();
+	/** Every item's latest status, kept items or not: the counts are made from this. */
+	private readonly statusOf = new Map<string, DocumentImportItemStatusEnum>();
 	private truncated = false;
 
 	constructor(private readonly max: number) {}
 
 	set(key: string, item: IDocumentImportReportItem): void {
+		this.statusOf.set(key, item.status);
 		if (!this.items.has(key) && this.items.size >= this.max) {
 			this.truncated = true;
-			this.overflow[item.status] += 1;
 			return;
 		}
 		this.items.set(key, item);
@@ -96,15 +99,9 @@ class ImportReport {
 		return this.items.get(key);
 	}
 
-	private readonly overflow: Record<DocumentImportItemStatusEnum, number> = {
-		[DocumentImportItemStatusEnum.IMPORTED]: 0,
-		[DocumentImportItemStatusEnum.SKIPPED]: 0,
-		[DocumentImportItemStatusEnum.FAILED]: 0
-	};
-
 	count(status: DocumentImportItemStatusEnum): number {
-		let total = this.overflow[status];
-		for (const item of this.items.values()) if (item.status === status) total += 1;
+		let total = 0;
+		for (const value of this.statusOf.values()) if (value === status) total += 1;
 		return total;
 	}
 
@@ -132,6 +129,8 @@ class ImportReport {
 @Injectable()
 export class DocumentImportRunner {
 	private readonly logger = new Logger(DocumentImportRunner.name);
+	/** The items a report keeps (the counts are always complete). */
+	public reportMaxItems = DOCS_IMPORT_REPORT_MAX_ITEMS;
 
 	constructor(@Inject(DOCS_IMPORT_STORE) private readonly store: IDocumentImportStore) {}
 
@@ -153,7 +152,9 @@ export class DocumentImportRunner {
 			return { status: row.status, importedCount: row.importedCount ?? 0, skippedCount: row.skippedCount ?? 0, failedCount: row.failedCount ?? 0 };
 		}
 		const options = parseImportOptions(row.optionsJson, fallbackLimits);
-		await this.store.update(row.id, scope, {
+		// One run at a time: the row is claimed by a conditional update (QUEUED, or RUNNING without progress for the stale
+		// window), so two jobs for one import — a resume racing a retry, two sweeps — cannot both run it.
+		const claimed = await this.store.claim(row.id, scope, new Date(Date.now() - DOCS_IMPORT_STALE_MINUTES * 60_000), {
 			status: DocumentImportStatusEnum.RUNNING,
 			phase: DocumentImportPhaseEnum.PLANNING,
 			attempts: (row.attempts ?? 0) + 1,
@@ -162,6 +163,10 @@ export class DocumentImportRunner {
 			errorCode: null,
 			errorMessage: null
 		});
+		if (!claimed) {
+			this.logger.log(`docs.import ${row.id}: another run holds the import — this one stops`);
+			return null;
+		}
 
 		try {
 			const outcome = await this.execute(row, scope, options, finalAttempt);
@@ -175,7 +180,8 @@ export class DocumentImportRunner {
 			const archiveError = error instanceof ImportArchiveError ? error : null;
 			if (!archiveError && !finalAttempt) {
 				this.logger.warn(`docs.import ${row.id} failed, the queue retries it: ${(error as Error)?.message ?? error}`);
-				await this.store.update(row.id, scope, { lastProgressAt: new Date() }).catch(() => undefined);
+				// Back to QUEUED, so the retry can claim it.
+				await this.store.update(row.id, scope, { status: DocumentImportStatusEnum.QUEUED, lastProgressAt: new Date() }).catch(() => undefined);
 				throw error;
 			}
 			const code = archiveError?.code ?? DOCS_IMPORT_FAILED;
@@ -202,9 +208,12 @@ export class DocumentImportRunner {
 		if (!layout) {
 			throw new ImportArchiveError(DOCS_IMPORT_NO_PAGES, 'The archive holds no page file: it is not an exported workspace.');
 		}
+		// Every entry inflated once before anything is created: an entry that lies about its size refuses the archive here,
+		// instead of being met halfway through the tree.
+		await verifyImportArchive(archive);
 		const plan = buildImportPlan(paths, archive.directories, layout);
 		const entries = new Map(archive.entries.map((entry) => [entry.path, entry]));
-		const run = new ImportRun(row, scope, options, plan, entries, this.store, finalAttempt);
+		const run = new ImportRun(row, scope, options, plan, entries, this.store, finalAttempt, this.reportMaxItems);
 		// Every node once for the tree, every page once more for its content.
 		const totalItems = plan.nodes.length + plan.nodes.filter((node) => node.kind === DocumentKindEnum.PAGE).length;
 		await this.store.update(row.id, scope, { layout, totalItems, processedItems: 0, phase: DocumentImportPhaseEnum.TREE, lastProgressAt: new Date() });
@@ -246,7 +255,9 @@ class ImportRun {
 	private readonly metaOf = new Map<string, IImportPageMeta>();
 	/** The page that first shows each attachment (by node key). */
 	private readonly firstPageOf = new Map<string, string>();
-	private readonly report = new ImportReport(DOCS_IMPORT_REPORT_MAX_ITEMS);
+	/** The pages created and readable, whose content the content phase writes (the report may stop keeping items). */
+	private readonly pagesToWrite = new Set<string>();
+	private readonly report: ImportReport;
 	private readonly links: ImportLinkIndex;
 	private readonly externalSource: string;
 	private readonly visibility: DocumentVisibilityEnum;
@@ -266,8 +277,10 @@ class ImportRun {
 		 * run so the queue retries it (a resumed run finds what this one made); on the last one the item is reported
 		 * FAILED and the import goes on, so one bad entry cannot sink the rest.
 		 */
-		private readonly finalAttempt: boolean
+		private readonly finalAttempt: boolean,
+		reportMaxItems: number
 	) {
+		this.report = new ImportReport(reportMaxItems);
 		this.links = new ImportLinkIndex(plan);
 		this.externalSource = `${DOCS_IMPORT_EXTERNAL_SOURCE_PREFIX}${row.id}`;
 		this.visibility = row.visibility ?? DocumentVisibilityEnum.ORGANIZATION;
@@ -308,8 +321,8 @@ class ImportRun {
 		for (const node of this.plan.nodes) {
 			if (node.kind !== DocumentKindEnum.PAGE) continue;
 			const document = this.created.get(node.key);
-			const item = this.report.get(node.key);
-			if (!document || item?.status !== DocumentImportItemStatusEnum.IMPORTED) continue;
+			if (!document || !this.pagesToWrite.has(node.key)) continue;
+			const item = this.report.get(node.key) ?? this.item(node, DocumentImportItemStatusEnum.IMPORTED, { documentId: document.id, name: document.name });
 			try {
 				const source = await this.readPage(node);
 				if (!source) continue;
@@ -326,14 +339,14 @@ class ImportRun {
 				await this.store.writePage(document, this.scope, result.contentJson, this.owner);
 				await this.store.linkPages(document.id, result.mentionedDocumentIds.filter((id) => id !== document.id) as ID[], this.scope);
 				this.report.set(node.key, {
-					...(item as IDocumentImportReportItem),
+					...item,
 					...(result.unresolvedLinks ? { unresolvedLinks: result.unresolvedLinks } : {}),
 					...(result.schemaFallback ? { reason: DOCS_IMPORT_REASONS.PLAIN_TEXT } : {})
 				});
 			} catch (error) {
 				if (!this.finalAttempt) throw error;
 				this.logger.warn(`docs.import ${this.row.id}: page ${node.key} could not be converted: ${(error as Error)?.message ?? error}`);
-				this.report.set(node.key, { ...(item as IDocumentImportReportItem), status: DocumentImportItemStatusEnum.FAILED, reason: DOCS_IMPORT_REASONS.CONVERSION_FAILED });
+				this.report.set(node.key, { ...item, status: DocumentImportItemStatusEnum.FAILED, reason: DOCS_IMPORT_REASONS.CONVERSION_FAILED });
 			}
 			await this.tick();
 		}
@@ -386,6 +399,7 @@ class ImportRun {
 					metadata: { import: { importId: this.row.id, path: node.key } }
 				}));
 			this.created.set(node.key, document);
+			if (node.kind === DocumentKindEnum.PAGE && !pageProblem) this.pagesToWrite.add(node.key);
 			// A page whose file could not be read is still created (its sub-pages and links need it), empty, and failed.
 			this.report.set(
 				node.key,

@@ -1,8 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
-import { In } from 'typeorm';
+import { In, LessThan } from 'typeorm';
 import {
 	BaseEntityEnum,
+	DocumentImportStatusEnum,
 	DocumentKindEnum,
 	DocumentKnowledgeStatusEnum,
 	DocumentReviewStatusEnum,
@@ -64,6 +65,18 @@ export class DocumentImportStore implements IDocumentImportStore {
 
 	async load(id: ID, scope: IImportScope): Promise<IImportRow | null> {
 		return (await this.imports.findOne({ where: { id, tenantId: scope.tenantId, organizationId: scope.organizationId } })) as IImportRow | null;
+	}
+
+	async claim(id: ID, scope: IImportScope, staleBefore: Date, patch: Partial<IImportRow>): Promise<boolean> {
+		const base = { id, tenantId: scope.tenantId, organizationId: scope.organizationId };
+		for (const where of [
+			{ ...base, status: DocumentImportStatusEnum.QUEUED },
+			{ ...base, status: DocumentImportStatusEnum.RUNNING, lastProgressAt: LessThan(staleBefore) }
+		]) {
+			const result = await this.imports.createQueryBuilder().update(DocumentImport).set(patch as never).where(where).callListeners(false).execute();
+			if ((result.affected ?? 0) > 0) return true;
+		}
+		return false;
 	}
 
 	async update(id: ID, scope: IImportScope, patch: Partial<IImportRow>): Promise<void> {

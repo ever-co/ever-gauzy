@@ -86,6 +86,14 @@ describe('buildImportPlan', () => {
 		});
 	});
 
+	it('gives a page to one folder only: an index page and a folder named like it keep their trees', () => {
+		expect(shape(['Team/index.md', 'Team/index/Child.md'], ['Team', 'Team/index'], DocumentImportLayoutEnum.MARKDOWN_VAULT)).toEqual({
+			'Team/index.md': [DocumentKindEnum.PAGE, null, 'Team'],
+			'Team/index': [DocumentKindEnum.FOLDER, 'Team/index.md', 'index'],
+			'Team/index/Child.md': [DocumentKindEnum.PAGE, 'Team/index', 'Child']
+		});
+	});
+
 	it('reads an HTML export: ids stripped, the page holds its folder, HTML pages are pages', () => {
 		const tree = shape(
 			[`Roadmap ${ID}.html`, `Roadmap ${ID}/Q1 ${ID2}.html`, `Roadmap ${ID}/image.png`],

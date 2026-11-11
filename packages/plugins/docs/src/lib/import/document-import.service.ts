@@ -208,20 +208,31 @@ export class DocumentImportService {
 	private async resumeIfStale(row: IImportRow, now: Date = new Date()): Promise<IImportRow> {
 		const action = importStaleAction(row, now);
 		if (action === 'none') return row;
-		const scope = { id: row.id, tenantId: row.tenantId, organizationId: row.organizationId };
-		if (action === 'fail') {
-			const patch = {
-				status: DocumentImportStatusEnum.FAILED,
-				errorCode: 'DOCS_IMPORT_STALLED',
-				errorMessage: `The import stopped making progress ${row.attempts ?? 0} times and was given up.`,
-				finishedAt: now
-			};
-			await this.imports.update(scope as never, patch as never);
-			return { ...row, ...patch };
-		}
-		await this.imports.update(scope as never, { status: DocumentImportStatusEnum.QUEUED, lastProgressAt: now } as never);
-		await this.enqueue(row, `:resume-${now.getTime()}`);
-		return { ...row, status: DocumentImportStatusEnum.QUEUED, lastProgressAt: now };
+		const patch =
+			action === 'fail'
+				? {
+						status: DocumentImportStatusEnum.FAILED,
+						errorCode: 'DOCS_IMPORT_STALLED',
+						errorMessage: `The import stopped making progress ${row.attempts ?? 0} times and was given up.`,
+						finishedAt: now
+					}
+				: { status: DocumentImportStatusEnum.QUEUED, lastProgressAt: now };
+		// A conditional update: of two readers (or a reader and the sweep) that both found the import stalled, one wins;
+		// the other sees no row changed and enqueues nothing.
+		const staleBefore = new Date(now.getTime() - DOCS_IMPORT_STALE_MINUTES * 60_000);
+		const result = await this.imports.update(
+			{
+				id: row.id,
+				tenantId: row.tenantId,
+				organizationId: row.organizationId,
+				status: In([DocumentImportStatusEnum.QUEUED, DocumentImportStatusEnum.RUNNING]),
+				lastProgressAt: LessThan(staleBefore)
+			} as never,
+			patch as never
+		);
+		if (!result?.affected) return row;
+		if (action === 'resume') await this.enqueue(row, `:resume-${now.getTime()}`);
+		return { ...row, ...patch };
 	}
 
 	/** Enqueues the `docs.import` job of a row (a run-unique id for a resume, so a retained finished job cannot swallow it). */

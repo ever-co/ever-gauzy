@@ -160,16 +160,28 @@ export function buildImportPlan(paths: readonly string[], directories: readonly 
 		const key = `${posix.dirname(path)}|${stemOf(path)}`;
 		if (!pageByFolderAndStem.has(key)) pageByFolderAndStem.set(key, path);
 	}
-	// The page each folder becomes, when it becomes one.
+	// The page each folder becomes, when it becomes one. A page stands for one folder at most: first the folder it is the
+	// index or the folder note of (`Team/index.md`), then — for the pages still free — the folder beside it of the same
+	// name (`Roadmap.md` + `Roadmap/`). Claimed twice (`Team/index.md` + a folder `Team/index/`), a page would be its
+	// own parent and its whole tree unreachable.
 	const pageOfFolder = new Map<string, string>();
-	for (const folder of folders) {
-		if (strip && `${folder}/` === strip) continue;
-		const parent = posix.dirname(folder);
+	const claimed = new Set<string>();
+	const candidates = [...folders].filter((folder) => !(strip && `${folder}/` === strip));
+	for (const folder of candidates) {
 		const base = posix.basename(folder);
-		const sibling = pageByFolderAndStem.get(`${parent}|${base}`);
-		const inside = ['index.md', 'index.html', `${base}.md`].map((name) => `${folder}/${name}`).find((path) => pageSet.has(path));
-		const page = sibling ?? inside;
-		if (page) pageOfFolder.set(folder, page);
+		const inside = ['index.md', 'index.html', `${base}.md`].map((name) => `${folder}/${name}`).find((path) => pageSet.has(path) && !claimed.has(path));
+		if (inside) {
+			pageOfFolder.set(folder, inside);
+			claimed.add(inside);
+		}
+	}
+	for (const folder of candidates) {
+		if (pageOfFolder.has(folder)) continue;
+		const sibling = pageByFolderAndStem.get(`${posix.dirname(folder)}|${posix.basename(folder)}`);
+		if (sibling && !claimed.has(sibling)) {
+			pageOfFolder.set(folder, sibling);
+			claimed.add(sibling);
+		}
 	}
 	const folderOfPage = new Map<string, string>([...pageOfFolder].map(([folder, page]) => [page, folder]));
 
@@ -229,6 +241,15 @@ export function buildImportPlan(paths: readonly string[], directories: readonly 
 		frontier = next;
 		depth += 1;
 	}
+	// Belt and braces: a node the walk could not reach (a parent cycle the rules above should never produce) is imported at
+	// the top rather than silently left out.
+	const stranded = nodes.filter((item) => !visited.has(item.key)).sort(byName);
+	stranded.forEach((item, index) => {
+		item.parentKey = null;
+		item.index = (byParent.get(null)?.length ?? 0) + index;
+		item.depth = 0;
+		ordered.push(item);
+	});
 	return { layout, nodes: ordered, ignored };
 }
 

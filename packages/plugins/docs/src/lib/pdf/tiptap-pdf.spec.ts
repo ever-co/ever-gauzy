@@ -81,6 +81,27 @@ describe('tiptapToPdfContent', () => {
 		expect(out[0].table.body[1][0]).toMatchObject({ colSpan: 2 });
 	});
 
+	it('lays merged cells on the grid: a rowspan leaves a placeholder in the rows below', () => {
+		const cell = (text: string, attrs: Record<string, unknown> = {}) => ({ type: 'tableCell', attrs, content: [p(t(text))] });
+		const out = tiptapToPdfContent(
+			doc({
+				type: 'table',
+				content: [
+					{ type: 'tableRow', content: [cell('tall', { rowspan: 2 }), cell('b1')] },
+					{ type: 'tableRow', content: [cell('b2')] },
+					{ type: 'tableRow', content: [cell('c1'), cell('c2')] }
+				]
+			}),
+			ctx
+		) as any[];
+		const body = out[0].table.body;
+		expect(body[0][0]).toMatchObject({ rowSpan: 2 });
+		expect(body[1][0]).toEqual({});
+		expect(body[1][1].stack[0].text).toEqual([{ text: 'b2' }]);
+		expect(body[2].map((item: any) => item.stack[0].text[0].text)).toEqual(['c1', 'c2']);
+		expect(out[0].table.widths).toEqual(['*', '*']);
+	});
+
 	it('renders quotes, callouts and code as boxes, rules as lines, toggles, math, mentions and cards as text', () => {
 		const out = tiptapToPdfContent(
 			doc(
