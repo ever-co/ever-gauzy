@@ -105,6 +105,19 @@ describe('ChannelSettingsDialogComponent', () => {
 		expect(close).toHaveBeenCalledWith(expect.objectContaining({ id: 'c1', visibility: ChatVisibilityEnum.PRIVATE }));
 	});
 
+	it('closes with the conversation of the latest read after a member change, waiting for it', async () => {
+		await open({});
+		const read = new Subject<IChatConversationWithState>();
+		api['getConversation'].mockReturnValueOnce(read);
+		dialog().toAdd.set([BOB]);
+		dialog().add();
+		dialog().close();
+		expect(close).not.toHaveBeenCalled();
+		read.next(channel({ memberCount: 3 }));
+		read.complete();
+		expect(close).toHaveBeenCalledWith(expect.objectContaining({ memberCount: 3 }));
+	});
+
 	it('needs a name for a channel', async () => {
 		await open({});
 		dialog().name.set(' # ');
@@ -234,6 +247,17 @@ describe('CategoriesDialogComponent', () => {
 		dialog().reload();
 		expect(dialog().stale()).toBe(false);
 		expect(order()).toEqual(['Teams', 'Clients', 'Projects']);
+	});
+
+	it('keeps a name typed while its rename was being saved', () => {
+		const write = new Subject<IChatCategory>();
+		api['updateCategory'].mockReturnValueOnce(write);
+		dialog().rename('a', 'People');
+		dialog().saveName(categories[0]);
+		dialog().rename('a', 'People team');
+		write.next({ ...categories[0], name: 'People' });
+		write.complete();
+		expect(dialog().names()['a']).toBe('People team');
 	});
 
 	it('writes nothing for an unchanged name', () => {

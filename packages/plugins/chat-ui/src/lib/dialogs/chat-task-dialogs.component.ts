@@ -53,7 +53,7 @@ const TASK_DIALOG_STYLES = `
 		}
 		.choice:hover,
 		.choice.selected {
-			background: rgba(127, 127, 127, 0.12);
+			background: var(--background-basic-color-2);
 		}
 		.choice.selected {
 			font-weight: 600;
@@ -77,7 +77,7 @@ const TASK_DIALOG_STYLES = `
 		}
 		.error {
 			margin: 0.5rem 0 0;
-			color: var(--color-danger-default, #e4493f);
+			color: var(--color-danger-default);
 			font-size: 0.8125rem;
 		}
 		.footer {
@@ -323,6 +323,11 @@ export class SendTaskToChatDialogComponent implements OnInit {
 	protected readonly busy = signal(false);
 	protected readonly error = signal<string | null>(null);
 	private meEmployeeId: string | null = null;
+	/**
+	 * The idempotency key of the last send, with what it sent: a retry of the same message to the same conversation
+	 * (the answer lost, the message maybe stored) reuses it, so the platform answers the stored message, not a copy.
+	 */
+	private attempt: { key: string; nonce: string } | null = null;
 
 	protected readonly choices = computed(() => conversationChoices(this.conversations(), this.query(), (conversation) => this.titleOf(conversation)));
 	/** The picked conversation, only while the list shows it: a search that hides it leaves nothing to send to. */
@@ -368,10 +373,14 @@ export class SendTaskToChatDialogComponent implements OnInit {
 		const conversation = this.target();
 		if (!conversation || this.busy() || !this.taskId) return;
 		const conversationId = String(conversation.id);
+		const body = sendToChatBody(this.note(), this.summary());
+		const key = `${conversationId}|${body}`;
+		if (this.attempt?.key !== key) this.attempt = { key, nonce: newNonce() };
+		const nonce = this.attempt.nonce;
 		this.busy.set(true);
 		this.error.set(null);
 		this.api
-			.send(conversationId, { body: sendToChatBody(this.note(), this.summary()), nonce: newNonce(), taskId: this.taskId })
+			.send(conversationId, { body, nonce, taskId: this.taskId })
 			.pipe(takeUntilDestroyed(this.destroyRef))
 			.subscribe({
 				next: () => {

@@ -79,7 +79,7 @@ const SETTINGS_DIALOG_STYLES = `
 		}
 		.error {
 			margin: 0.5rem 0 0;
-			color: var(--color-danger-default, #e4493f);
+			color: var(--color-danger-default);
 			font-size: 0.8125rem;
 		}
 		.footer {
@@ -253,6 +253,10 @@ export class ChannelSettingsDialogComponent implements OnInit, AfterViewInit {
 	private changed: IChatConversationWithState | null = null;
 	/** Counts the conversation reads after member changes: only the latest one's answer is kept. */
 	private refreshRun = 0;
+	/** Whether the latest of those reads is still under way (Close then waits for it). */
+	private refreshing = false;
+	/** Close was asked for while that read ran: the dialog closes with its answer. */
+	private closeAfterRefresh = false;
 
 	protected readonly isChannel = computed(() => this.context.conversation?.kind === ChatConversationKindEnum.CHANNEL);
 	protected readonly categories = computed(() => sortCategories(this.context.categories ?? []));
@@ -347,21 +351,36 @@ export class ChannelSettingsDialogComponent implements OnInit, AfterViewInit {
 		});
 	}
 
+	/** Closes with the conversation as last read; while a read after a member change runs, once it answers. */
 	protected close(): void {
+		if (this.refreshing) {
+			this.closeAfterRefresh = true;
+			return;
+		}
 		this.ref.close(this.changed);
 	}
 
 	/** The conversation again after a member change (its member count and avatars), for the page; the latest read wins. */
 	private refreshConversation(): void {
 		const run = ++this.refreshRun;
+		this.refreshing = true;
+		const settled = (): void => {
+			if (run !== this.refreshRun) return;
+			this.refreshing = false;
+			if (this.closeAfterRefresh) {
+				this.closeAfterRefresh = false;
+				this.ref.close(this.changed);
+			}
+		};
 		this.api
 			.getConversation(this.context.conversation.id)
 			.pipe(takeUntilDestroyed(this.destroyRef))
 			.subscribe({
 				next: (conversation) => {
 					if (run === this.refreshRun) this.changed = conversation;
+					settled();
 				},
-				error: () => undefined
+				error: () => settled()
 			});
 	}
 
@@ -519,11 +538,15 @@ export class CategoriesDialogComponent implements OnInit {
 		});
 	}
 
+	/** Puts the API's category in place; a name typed since the write was sent stays in the box. */
 	private replace(category: IChatCategory): void {
 		this.list.set(this.list().map((item) => (item.id === category.id ? { ...item, ...category } : item)));
-		const names = { ...this.names() };
-		delete names[category.id];
-		this.names.set(names);
+		const draft = this.names()[category.id];
+		if (draft === undefined || draft.trim() === (category.name ?? '').trim()) {
+			const names = { ...this.names() };
+			delete names[category.id];
+			this.names.set(names);
+		}
 	}
 
 	/** Closes with whether anything changed; while a write (or its recovery read) runs, once it ends. */
