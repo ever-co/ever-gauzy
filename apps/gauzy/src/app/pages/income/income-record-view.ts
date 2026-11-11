@@ -8,8 +8,8 @@ import { IRecordViewRouteData, IRecordViewScope, IRecordViewSection } from '@gau
 export const INCOME_VIEW_RELATIONS = ['employee', 'employee.user', 'tags', 'organization', 'client'];
 
 /**
- * An income, described for `ngx-record-view` — the grid columns read vertically. Shared by the income
- * drawer (a quick look) and the income's full-width page (`/pages/accounting/income/view/:id`).
+ * An income, described for `ngx-record-view` — the grid columns read vertically. Used by the income drawer (a
+ * quick look); the income's own page (`/pages/accounting/income/view/:id`) lays the same facts out in its columns.
  */
 export function buildIncomeViewSections(): IRecordViewSection[] {
 	return [
@@ -38,19 +38,27 @@ export function buildIncomeViewSections(): IRecordViewSection[] {
 	];
 }
 
+/**
+ * Reads one income with everything its page shows, within the organization selected in the header. The income
+ * API's `GET /income/:id` takes no relations, so the list read filtered by id is the one that brings the client,
+ * employee and tags along. The employee is mapped as the grid maps it, for the person renderer.
+ */
+export async function loadIncome(service: IncomeService, id: string, scope: IRecordViewScope): Promise<IIncome | null> {
+	const { items } = await service.getAll(INCOME_VIEW_RELATIONS, {
+		id,
+		organizationId: scope.organizationId,
+		tenantId: scope.tenantId
+	} as any);
+	const income = items?.find((item) => item.id === id);
+	// The grid's person shape stands in for the employee entity: not an `IEmployee`, hence the cast via `unknown`.
+	return income ? ({ ...income, employee: { ...employeeMapper(income) } } as unknown as IIncome) : null;
+}
+
 /** `/pages/accounting/income/view/:id` — one income, full width (what an income favorite opens). */
 export const INCOME_RECORD_VIEW: IRecordViewRouteData<IIncome> = {
 	heading: 'INCOME_PAGE.INCOME',
 	backLink: '/pages/accounting/income',
-	load: async (id: string, injector: Injector, scope: IRecordViewScope) => {
-		const { items } = await injector.get(IncomeService).getAll(INCOME_VIEW_RELATIONS, {
-			id,
-			organizationId: scope.organizationId,
-			tenantId: scope.tenantId
-		} as any);
-		const income = items?.find((item) => item.id === id);
-		return income ? ({ ...income, employee: { ...employeeMapper(income) } } as any) : null;
-	},
+	load: (id: string, injector: Injector, scope: IRecordViewScope) => loadIncome(injector.get(IncomeService), id, scope),
 	sections: () => buildIncomeViewSections(),
 	subtitle: (income) => income.client?.name,
 	favorite: { entity: BaseEntityEnum.Income, name: (income) => income.client?.name }
