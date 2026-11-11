@@ -118,8 +118,12 @@ export class CommentParentAccessService implements OnModuleInit {
 			);
 		}
 
-		const parent =
-			typeof entityId === 'string' && isUUID(entityId) ? await policy.findAccessibleParent(entityId as ID) : null;
+		// A write follows the policy's write rule where it has one (some readers may only read), else its read rule.
+		const find =
+			access === 'write' && policy.findWritableParent
+				? policy.findWritableParent.bind(policy)
+				: policy.findAccessibleParent.bind(policy);
+		const parent = typeof entityId === 'string' && isUUID(entityId) ? await find(entityId as ID) : null;
 		if (!parent) {
 			throw new NotFoundException(`${policy.entity} not found.`);
 		}

@@ -192,3 +192,40 @@ describe('CommentParentAccessService', () => {
 		);
 	});
 });
+
+describe('CommentParentAccessService write rule', () => {
+	afterEach(() => jest.restoreAllMocks());
+
+	@CommentParentAccessPolicy()
+	@Injectable()
+	class SharedPagePolicy implements ICommentParentAccessPolicy {
+		readonly entity = BaseEntityEnum.Document;
+		readonly readPermissions = [PermissionsEnum.DOCS_READ];
+		readonly writePermissions = [PermissionsEnum.DOCS_READ];
+		// The caller reads the page (shared with them to view) but may not write its comments.
+		findAccessibleParent = jest.fn(async (id: string): Promise<ICommentParent | null> => ({ id, organizationId: 'org-1' }));
+		findWritableParent = jest.fn(async (): Promise<ICommentParent | null> => null);
+	}
+
+	it("checks a write with the policy's write rule, and a read with its read rule", async () => {
+		jest.spyOn(RequestContext, 'hasAnyPermission').mockReturnValue(true);
+		const policy = new SharedPagePolicy();
+		const service = new CommentParentAccessService();
+		service.register(policy);
+
+		await expect(service.assertMay('read', BaseEntityEnum.Document, CONTACT_ID)).resolves.toEqual({ id: CONTACT_ID, organizationId: 'org-1' });
+		await expect(service.assertMay('write', BaseEntityEnum.Document, CONTACT_ID)).rejects.toBeInstanceOf(NotFoundException);
+		expect(policy.findWritableParent).toHaveBeenCalledTimes(1);
+		expect(policy.findAccessibleParent).toHaveBeenCalledTimes(1);
+	});
+
+	it('checks a write with the read rule when the policy has no write rule', async () => {
+		jest.spyOn(RequestContext, 'hasAnyPermission').mockReturnValue(true);
+		const policy = new ContactPolicy();
+		const service = new CommentParentAccessService();
+		service.register(policy);
+
+		await expect(service.assertMay('write', BaseEntityEnum.OrganizationContact, CONTACT_ID)).resolves.toEqual({ id: CONTACT_ID, organizationId: 'org-1' });
+		expect(policy.findAccessibleParent).toHaveBeenCalledWith(CONTACT_ID);
+	});
+});
