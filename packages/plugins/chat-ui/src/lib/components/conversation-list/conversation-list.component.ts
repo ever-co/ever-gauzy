@@ -37,6 +37,23 @@ function readCollapsed(): Set<string> {
 	}
 }
 
+/**
+ * Whether the browser runs on a Mac or an iOS device (the shortcut label then reads ⌘K): from the User-Agent Client
+ * Hints where the browser has them, else from the deprecated `navigator.platform`.
+ */
+function isApplePlatform(): boolean {
+	if (typeof navigator === 'undefined') return false;
+	const hinted = (navigator as Navigator & { userAgentData?: { platform?: string } }).userAgentData?.platform;
+	return /Mac|iP(hone|ad|od)/i.test(hinted || navigator.platform || '');
+}
+
+/** Whether a key went to a place that edits text (an input, a text box, a select, an editable element). */
+function isEditable(target: EventTarget | null): boolean {
+	const element = target as HTMLElement | null;
+	if (!element?.tagName) return false;
+	return /^(INPUT|TEXTAREA|SELECT)$/.test(element.tagName) || element.isContentEditable;
+}
+
 function writeCollapsed(keys: ReadonlySet<string>): void {
 	try {
 		const remembered = [...keys].filter((key) => !OPEN_ON_LOAD_SECTIONS.has(key));
@@ -606,7 +623,7 @@ export class ConversationListComponent {
 	protected readonly threadsLink = `${CHAT_LINK}/${CHAT_THREADS_PATH}`;
 	protected readonly privateVisibility = ChatVisibilityEnum.PRIVATE;
 	protected readonly mutedLevel = ChatNotifyLevelEnum.MUTED;
-	protected readonly shortcut = typeof navigator !== 'undefined' && /Mac|iP(hone|ad|od)/.test(navigator.platform ?? '') ? '⌘K' : 'Ctrl K';
+	protected readonly shortcut = isApplePlatform() ? '⌘K' : 'Ctrl K';
 
 	protected readonly query = signal('');
 	private readonly collapsed = signal<ReadonlySet<string>>(readCollapsed());
@@ -786,6 +803,8 @@ export class ConversationListComponent {
 			return;
 		}
 		if (event.altKey && !event.ctrlKey && !event.metaKey && (event.key === 'ArrowUp' || event.key === 'ArrowDown')) {
+			// In a text box Alt+↑/↓ moves the caret (and leaving would drop a draft): only the "Jump to" box keeps the shortcut.
+			if (isEditable(event.target) && event.target !== this.search()?.nativeElement) return;
 			const order = this.visibleOrder();
 			if (order.length === 0) return;
 			event.preventDefault();
