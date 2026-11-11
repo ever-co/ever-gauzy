@@ -737,12 +737,13 @@ export class ChatPageComponent implements OnInit {
 	/**
 	 * The active view below the page (`CHAT_VIEW_ROUTES`), read again after every navigation. The page is ONE route
 	 * above its views, so it lives on while the person moves between conversations, Unreads and Threads; the view's
-	 * `:conversationId` and `data.view` are on that child, not on the page's own route.
+	 * `:conversationId` and `data.view` are on that child, not on the page's own route. Read through the page's own
+	 * snapshot: the child route may exist before its snapshot is assigned (opening the chat from another page).
 	 */
 	private readonly activeView$ = this.router.events.pipe(
 		filter((event): event is NavigationEnd => event instanceof NavigationEnd),
 		startWith(null),
-		map(() => this.viewRoute().snapshot)
+		map(() => this.route.snapshot.firstChild ?? this.route.snapshot)
 	);
 
 	/** `:conversationId`, `?thread=`, `?message=` and the view's name, as signals. */
@@ -1153,12 +1154,15 @@ export class ChatPageComponent implements OnInit {
 		if (this.card() && !this.cardElement()?.contains(event.target as Node)) this.hideCard();
 	}
 
-	/** Escape closes the card; when the focus was in it, it goes back to the person the card belongs to. */
+	/**
+	 * Escape closes the card; when the focus was in it, it goes back to the person the card belongs to. The focus moves
+	 * first, while the card still belongs to that person (their focusin then only keeps it), and the card closes after.
+	 */
 	protected onEscapeForCard(): void {
 		if (!this.card()) return;
 		const trigger = this.cardHasFocus() ? this.cardTrigger : null;
-		this.hideCard();
 		if (trigger instanceof HTMLElement && trigger.isConnected) trigger.focus();
+		this.hideCard();
 	}
 
 	/**
