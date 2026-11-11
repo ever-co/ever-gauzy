@@ -11,6 +11,7 @@ import { reconcileWithOldest } from '../../chat-catch-up';
 import { CHAT_LIVE_AUDIT_MS, CHAT_THREAD_POLL_MS } from '../../chat-ui.constants';
 import { apiErrorMessage, continuesGroup, mergeMessages, newNonce } from '../../chat-ui.helpers';
 import { ChatHint } from '../../services/chat-live';
+import { ChatCreateTaskFlow } from '../../dialogs/chat-task-dialogs.component';
 import { ChatFilesStore } from '../../services/chat-files.store';
 import { ChatTasksService } from '../../services/chat-tasks.service';
 import { ChatLiveService, isTabVisible } from '../../services/chat-live.service';
@@ -55,6 +56,7 @@ import { MessageAction, MessageItemComponent } from '../message-item/message-ite
 						[people]="people()"
 						[files]="files()"
 						[tasks]="tasks()"
+						[canCreateTask]="canCreateTask() && !readOnly()"
 						[conversationNames]="conversationNames()"
 						[meEmployeeId]="meEmployeeId()"
 						[meUserId]="meUserId()"
@@ -71,6 +73,7 @@ import { MessageAction, MessageItemComponent } from '../message-item/message-ite
 							[people]="people()"
 							[files]="files()"
 							[tasks]="tasks()"
+							[canCreateTask]="canCreateTask() && !readOnly()"
 							[conversationNames]="conversationNames()"
 							[meEmployeeId]="meEmployeeId()"
 							[meUserId]="meUserId()"
@@ -170,6 +173,7 @@ export class ThreadPaneComponent {
 	private readonly live = inject(ChatLiveService);
 	private readonly filesStore = inject(ChatFilesStore);
 	private readonly taskStore = inject(ChatTasksService);
+	private readonly createTaskFlow = inject(ChatCreateTaskFlow);
 	private readonly toastr = inject(ToastrService);
 	private readonly translate = inject(TranslateService);
 	private readonly destroyRef = inject(DestroyRef);
@@ -183,6 +187,11 @@ export class ThreadPaneComponent {
 	readonly readOnly = input(false);
 	/** `DOCS_CREATE`: may attach files (stored as documents). */
 	readonly canAttach = input(false);
+	/** `ORG_TASK_ADD`: may create a task from the root or a reply. */
+	readonly canCreateTask = input(false);
+	/** The selected organization and its tenant, for the projects a task can be created in. */
+	readonly organizationId = input<string | null>(null);
+	readonly tenantId = input<string | null>(null);
 
 	readonly closed = output<void>();
 	/**
@@ -511,6 +520,14 @@ export class ThreadPaneComponent {
 							if (this.isCurrent(id)) this.replace({ ...message, body: '', deletedAt: new Date() });
 						},
 						error: (error) => this.fail(error)
+					});
+				return;
+			case 'createTask':
+				this.createTaskFlow
+					.open({ message, people: this.people(), conversationNames: this.conversationNames(), organizationId: this.organizationId(), tenantId: this.tenantId() })
+					.pipe(takeUntilDestroyed(this.destroyRef))
+					.subscribe((updated) => {
+						if (updated && this.isCurrent(id)) this.replace(updated);
 					});
 				return;
 			case 'pin':

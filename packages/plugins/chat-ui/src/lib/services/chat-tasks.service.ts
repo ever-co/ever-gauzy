@@ -34,12 +34,14 @@ export class ChatTasksService {
 	readonly summaries = this.known.asReadonly();
 	private readonly asked = new Set<string>();
 	private scope = 0;
+	private organizationId: string | null = null;
 
 	constructor() {
 		inject(ChatAvailabilityService)
 			.scope$.pipe(takeUntilDestroyed(this.destroyRef))
-			.subscribe(() => {
+			.subscribe((scope) => {
 				this.scope += 1;
+				this.organizationId = scope?.organizationId ?? null;
 				this.asked.clear();
 				this.known.set(new Map());
 			});
@@ -73,12 +75,20 @@ export class ChatTasksService {
 		this.known.set(next);
 	}
 
-	/** One task's summary, or null when the reader may not see it (or it is gone). */
+	/**
+	 * One task's summary, or null when the reader may not see it (or it is gone). Read through the task list
+	 * (`GET /api/tasks?where[id]=…`), not `GET /api/tasks/:id`: that read counts as a visit and would put every task a
+	 * conversation shows into the reader's recent items.
+	 */
 	summary(id: ID): Observable<ChatTaskSummary | null> {
+		const where = { id: String(id), ...(this.organizationId ? { organizationId: this.organizationId } : {}) };
 		return this.http
-			.get<ITask>(`${API_PREFIX}/tasks/${encodeURIComponent(String(id))}`, { params: toParams({ relations: ['taskStatus'] }) })
+			.get<IPagination<ITask>>(`${API_PREFIX}/tasks`, { params: toParams({ where, relations: ['taskStatus'], take: 1 }) })
 			.pipe(
-				map((task) => (task?.id ? taskSummaryOf(task) : null)),
+				map((page) => {
+					const task = (page?.items ?? []).find((item) => String(item?.id) === String(id));
+					return task ? taskSummaryOf(task) : null;
+				}),
 				catchError(() => of(null))
 			);
 	}

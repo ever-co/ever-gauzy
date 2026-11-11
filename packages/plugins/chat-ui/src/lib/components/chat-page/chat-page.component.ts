@@ -201,6 +201,9 @@ const UNDO_MS = 55_000;
 											[meUserId]="meUserId()"
 											[readOnly]="!!selected()?.archivedAt || !selected()?.state"
 											[canAttach]="canAttach()"
+											[canCreateTask]="canCreateTask()"
+											[organizationId]="organizationId()"
+											[tenantId]="tenantId()"
 											(closed)="closeThread()"
 											(rootChanged)="onRootChanged($event)"
 										></ngx-chat-thread-pane>

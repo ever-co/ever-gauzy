@@ -1,13 +1,13 @@
-import { ChangeDetectionStrategy, Component, computed, DestroyRef, inject, OnInit, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, DestroyRef, inject, Injectable, OnInit, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
-import { NbButtonModule, NbCardModule, NbDialogRef, NbIconModule, NbInputModule, NbSelectModule, NbSpinnerModule } from '@nebular/theme';
+import { NbButtonModule, NbCardModule, NbDialogRef, NbDialogService, NbIconModule, NbInputModule, NbSelectModule, NbSpinnerModule } from '@nebular/theme';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
-import { forkJoin, of } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { forkJoin, Observable, of } from 'rxjs';
+import { catchError, map } from 'rxjs/operators';
 import { IChatConversationWithState, IChatCreateTaskResult, IChatMessageWithRelations, IOrganization, IUser } from '@gauzy/contracts';
-import { Store } from '@gauzy/ui-core/core';
-import { ChatTaskSummary, conversationChoices, sendToChatBody, taskTitleFromBody } from '../chat-tasks';
+import { Store, ToastrService } from '@gauzy/ui-core/core';
+import { ChatTaskSummary, conversationChoices, sendToChatBody, taskTitleFromBody, withTaskReference } from '../chat-tasks';
 import { apiErrorMessage, conversationTitle, newNonce } from '../chat-ui.helpers';
 import { ChatPeople, ChatPeopleService, EMPTY_PEOPLE } from '../services/chat-people.service';
 import { ChatProjectChoice, ChatTasksService } from '../services/chat-tasks.service';
@@ -200,6 +200,26 @@ export class CreateTaskDialogComponent implements OnInit {
 					this.error.set(apiErrorMessage(error) ?? this.translate.instant('CHAT.DIALOG.FAILED'));
 				}
 			});
+	}
+}
+
+/**
+ * "Create task from message" for the conversation and the thread alike: the dialog, a toast once the task exists, and
+ * the message with the task's reference to put in place of the shown one (null when nothing was created).
+ */
+@Injectable({ providedIn: 'root' })
+export class ChatCreateTaskFlow {
+	private readonly dialog = inject(NbDialogService);
+	private readonly toastr = inject(ToastrService);
+
+	open(context: CreateTaskDialogContext): Observable<IChatMessageWithRelations | null> {
+		return this.dialog.open(CreateTaskDialogComponent, { context: { context } }).onClose.pipe(
+			map((result: IChatCreateTaskResult | null | undefined) => {
+				if (!result?.task) return null;
+				this.toastr.success('CHAT.TASKS.CREATED', { title: result.task.title });
+				return withTaskReference(context.message, result.reference);
+			})
+		);
 	}
 }
 

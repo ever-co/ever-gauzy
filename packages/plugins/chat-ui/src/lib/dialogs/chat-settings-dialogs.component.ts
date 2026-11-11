@@ -466,7 +466,12 @@ export class CategoriesDialogComponent implements OnInit {
 	protected move(id: string, direction: -1 | 1): void {
 		const moves = moveCategory(this.list(), id, direction);
 		if (!moves.length || this.busy()) return;
-		this.run(forkJoin(moves.map((move) => this.api.updateCategory(move.id, { position: move.position }))), (saved) => saved.forEach((category) => this.replace(category)));
+		// The positions are written one by one: when one fails, some may have been written, so the list is read again.
+		this.run(
+			forkJoin(moves.map((move) => this.api.updateCategory(move.id, { position: move.position }))),
+			(saved) => saved.forEach((category) => this.replace(category)),
+			() => this.reload()
+		);
 	}
 
 	protected remove(category: IChatCategory): void {
@@ -491,7 +496,23 @@ export class CategoriesDialogComponent implements OnInit {
 		this.names.set(names);
 	}
 
-	private run<T>(request: Observable<T>, done: (answer: T) => void): void {
+	/** The categories as the API has them now (after a move that failed half way). */
+	private reload(): void {
+		this.api
+			.categories()
+			.pipe(takeUntilDestroyed(this.destroyRef))
+			.subscribe({
+				next: (categories) => {
+					this.list.set([...categories]);
+					this.names.set({});
+					this.changedAny = true;
+					this.api.notifyChanged();
+				},
+				error: () => undefined
+			});
+	}
+
+	private run<T>(request: Observable<T>, done: (answer: T) => void, failed?: () => void): void {
 		this.busy.set(true);
 		this.error.set(null);
 		request.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
@@ -504,6 +525,7 @@ export class CategoriesDialogComponent implements OnInit {
 			error: (error) => {
 				this.busy.set(false);
 				this.error.set(apiErrorMessage(error) ?? this.translate.instant('CHAT.DIALOG.FAILED'));
+				failed?.();
 			}
 		});
 	}

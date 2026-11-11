@@ -24,17 +24,15 @@ import {
 	ChatNotifyLevelEnum,
 	IChatCategory,
 	IChatConversationWithState,
-	IChatCreateTaskResult,
 	IChatMemberState,
 	IChatMessageWithRelations
 } from '@gauzy/contracts';
 import { ToastrService } from '@gauzy/ui-core/core';
 import { reconcileWithNewest } from '../../chat-catch-up';
 import { canManageConversation } from '../../chat-categories';
-import { withTaskReference } from '../../chat-tasks';
 import { CHAT_LIVE_AUDIT_MS, CHAT_MESSAGES_POLL_MS } from '../../chat-ui.constants';
 import { apiErrorMessage, continuesGroup, conversationTitle, mergeMessages, newNonce } from '../../chat-ui.helpers';
-import { CreateTaskDialogComponent, CreateTaskDialogContext } from '../../dialogs/chat-task-dialogs.component';
+import { ChatCreateTaskFlow } from '../../dialogs/chat-task-dialogs.component';
 import { ChannelSettingsContext, ChannelSettingsDialogComponent } from '../../dialogs/chat-settings-dialogs.component';
 import { ChatFilesStore } from '../../services/chat-files.store';
 import { ChatLiveService, isTabVisible } from '../../services/chat-live.service';
@@ -324,6 +322,7 @@ export class ConversationViewComponent {
 	private readonly filesStore = inject(ChatFilesStore);
 	private readonly taskStore = inject(ChatTasksService);
 	private readonly dialog = inject(NbDialogService);
+	private readonly createTaskFlow = inject(ChatCreateTaskFlow);
 	private readonly toastr = inject(ToastrService);
 	private readonly translate = inject(TranslateService);
 	private readonly destroyRef = inject(DestroyRef);
@@ -939,22 +938,18 @@ export class ConversationViewComponent {
 	/** "Create task from message": the dialog, then the message shows the task's card. */
 	private openCreateTask(message: IChatMessageWithRelations): void {
 		const id = String(this.conversation().id);
-		const context: CreateTaskDialogContext = {
-			message,
-			people: this.people(),
-			conversationNames: this.conversationNames(),
-			organizationId: this.organizationId() ?? (this.conversation().organizationId ? String(this.conversation().organizationId) : null),
-			tenantId: this.tenantId()
-		};
-		this.dialog
-			.open(CreateTaskDialogComponent, { context: { context } })
-			.onClose.pipe(takeUntilDestroyed(this.destroyRef))
-			.subscribe((result: IChatCreateTaskResult | null | undefined) => {
-				if (!result?.task) return;
-				this.toastr.success('CHAT.TASKS.CREATED', { title: result.task.title });
-				if (!this.isCurrent(id)) return;
-				const current = this.messages().find((item) => item.id === message.id) ?? message;
-				this.replace(withTaskReference(current, result.reference));
+		this.createTaskFlow
+			.open({
+				message,
+				people: this.people(),
+				conversationNames: this.conversationNames(),
+				organizationId: this.organizationId() ?? (this.conversation().organizationId ? String(this.conversation().organizationId) : null),
+				tenantId: this.tenantId()
+			})
+			.pipe(takeUntilDestroyed(this.destroyRef))
+			.subscribe((updated) => {
+				// Only the reference is new: put it on the message as shown now (it may have changed meanwhile).
+				if (updated && this.isCurrent(id)) this.replace({ id: message.id, taskReferences: updated.taskReferences });
 			});
 	}
 
