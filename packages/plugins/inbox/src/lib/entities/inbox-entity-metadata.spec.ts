@@ -14,6 +14,7 @@ jest.mock('@gauzy/core', () => {
 			mockColumns.push({ target, property, options });
 		},
 		MultiORMEntity: () => () => undefined,
+		SkipExport: () => () => undefined,
 		TenantOrganizationBaseEntity: BaseEntity,
 		MikroOrmBaseEntityRepository: class {}
 	};
@@ -22,14 +23,15 @@ jest.mock('@gauzy/core', () => {
 import 'reflect-metadata';
 import { InboxItem } from './inbox-item.entity';
 import { InboxItemRecipient } from './inbox-item-recipient.entity';
+import { InboxSweepCheckpoint } from './inbox-sweep-checkpoint.entity';
 
 /** The design types TypeORM and MikroORM map on Postgres, MySQL and SQLite. */
 const MAPPABLE: unknown[] = [String, Number, Boolean, Date];
 
 describe('Inbox entity metadata', () => {
-	it('declares the columns of both entities', () => {
+	it('declares the columns of the entities', () => {
 		const owners = new Set(mockColumns.map((column) => column.target));
-		expect(owners).toEqual(new Set([InboxItem.prototype, InboxItemRecipient.prototype]));
+		expect(owners).toEqual(new Set([InboxItem.prototype, InboxItemRecipient.prototype, InboxSweepCheckpoint.prototype]));
 		expect(mockColumns.length).toBeGreaterThan(20);
 	});
 

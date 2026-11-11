@@ -144,8 +144,8 @@ app, Ever Teams (web, mobile, desktop), the MCP server and the SDKs.
   followed thread MUST create an Inbox entry for the recipient (subject to their
   preferences). Reading the conversation MUST mark the mention and direct-message entries
   read; a followed-thread reply's entry MUST be marked read when the member reads that
-  thread, not when they read the conversation (the conversation read still clears it
-  today, see plan §14.3).
+  thread, not when they read the conversation (a mention in a thread-only reply is filed
+  against the conversation and still clears with it, see plan §14.3).
 - **FR-18** Every message, edit, deletion, reaction, pin, read-state change, thread change
   and conversation change MUST be published on the real-time channel to the right audience.
 

@@ -147,6 +147,44 @@ export function heldKeysOf(project: { taskKey?: string | null; taskKeyHistory?: 
 }
 
 /**
+ * How a project answers to a key another project wants: as its key (`current`), as one of its former keys (`former`,
+ * old references keep resolving to it), or as the key derived from its name (`derived`, what its tasks keep answering
+ * to). Null when it does not answer to the key. The key is compared upper-cased.
+ */
+export type ProjectKeyHold = 'current' | 'former' | 'derived';
+
+export function projectKeyHold(
+	project: { name?: string | null; taskKey?: string | null; taskKeyHistory?: string[] | string | null },
+	key: string
+): ProjectKeyHold | null {
+	const wanted = String(key ?? '').toUpperCase();
+	if (!wanted) return null;
+	if (normalizeTaskKey(project.taskKey) === wanted) return 'current';
+	if (heldKeysOf({ taskKeyHistory: project.taskKeyHistory }).includes(wanted)) return 'former';
+	if (derivedProjectKey(project.name) === wanted) return 'derived';
+	return null;
+}
+
+/**
+ * The project of a list that a key may not be given beside, and how it holds the key: a project holding it as its key
+ * first, then one that held it before, then one whose name derives it. Null when the key is free.
+ */
+export function holderOfProjectKey<P extends { name?: string | null; taskKey?: string | null; taskKeyHistory?: string[] | string | null }>(
+	projects: Iterable<P>,
+	key: string
+): { project: P; hold: ProjectKeyHold } | null {
+	const order: ProjectKeyHold[] = ['current', 'former', 'derived'];
+	let found: { project: P; hold: ProjectKeyHold } | null = null;
+	for (const project of projects) {
+		const hold = projectKeyHold(project, key);
+		if (!hold) continue;
+		if (!found || order.indexOf(hold) < order.indexOf(found.hold)) found = { project, hold };
+		if (hold === 'current') break;
+	}
+	return found;
+}
+
+/**
  * The keys no new key of the organization may take: every key held or held before, and the key derived from the
  * name of every project that keeps answering to it — its tasks still answer to that alias (`DPR Website` keyed
  * `SITE` still opens `DPR-1`), so giving it to another project would make those references ambiguous.

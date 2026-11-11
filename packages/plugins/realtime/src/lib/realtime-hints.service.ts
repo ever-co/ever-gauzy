@@ -34,7 +34,10 @@ export interface IRealtimeHintInput {
 	hint: IRealtimeChangeHint;
 }
 
-/** The hint a task event becomes. */
+/**
+ * The hint a task event becomes: organization-wide on the outbox; who receives it is decided at delivery by the task
+ * read rule (`RealtimeAudience`).
+ */
 export function taskHint(
 	task: { id?: ID; tenantId?: ID; organizationId?: ID | null; projectId?: ID | null } | null | undefined,
 	action: RealtimeChangeAction,
@@ -60,7 +63,10 @@ export function taskHint(
 	};
 }
 
-/** The hint a comment event becomes: addressed to nobody, it names the record whose comments changed. */
+/**
+ * The hint a comment event becomes: addressed to nobody, it names the record whose comments changed; who receives
+ * it is decided at delivery by that record's read rule (`RealtimeAudience`).
+ */
 export function commentHint(event: Pick<CommentEvent, 'type' | 'comment' | 'actorUserId'>): IRealtimeHintInput | null {
 	const comment = event.comment;
 	if (!comment?.id || !comment.tenantId || !comment.organizationId) return null;
@@ -134,7 +140,10 @@ export function notificationHint(
 	};
 }
 
-/** The hint a document event becomes (always `document.updated`; the action says what happened). */
+/**
+ * The hint a document event becomes (always `document.updated`; the action says what happened). Who receives it is
+ * decided at delivery by the Docs read rule — visibility, team space, shares (`RealtimeAudience`).
+ */
 export function documentHint(
 	document: { id?: ID; tenantId?: ID; organizationId?: ID | null } | null | undefined,
 	action: RealtimeChangeAction,
@@ -171,10 +180,21 @@ export function coalesceKey(input: Pick<IRealtimeHintInput, 'name' | 'aggregateI
  * `inbox_item.created`: a lost hint costs a subscriber the instant update, never the write. Repeated
  * `*.updated` hints of one aggregate within {@link REALTIME_HINT_COALESCE_MS} are folded: the first at once,
  * the latest of the rest when the window closes. A fact without its organization produces no organization-wide
- * hint, so a partial save result never reaches the whole tenant.
+ * hint, so a partial save result never reaches the whole tenant. The task, comment and document hints name no
+ * recipients: their readers are decided when the hint is delivered, by `RealtimeAudience`.
  *
- * Other plugins file their own hints through {@link appendHint} (the chat plugin, for its messages) so the
- * addressing and scoping rules live in one place.
+ * **Why these hints stay best effort, after the commit.** The facts reach this service after their write committed:
+ * `TaskEvent` is published by the task command handlers and `TaskService` once `save`/`update` returned, `CommentEvent`
+ * by `CommentService` after its write, `DocumentEvent` by the Docs services, and the mention and notification events
+ * after their rows were saved — none of them hands over a transaction, and most of those writes run in none of their
+ * own (a repository `update` is one auto-committed statement). Appending inside them would mean changing the task,
+ * comment, mention and notification write paths of the platform core, which production depends on, for hints that
+ * are refetch triggers carrying no data: a lost one costs a subscriber the instant refresh of one record (its next
+ * read, a focus refetch or a reconnect still shows the change), never the write. A TypeORM entity subscriber would
+ * join `save` transactions but not the `update`/`delete` statements most of these writes are, and the coalesced
+ * trailing hint is appended after its window by design. So the loss window — a crash between the commit and the
+ * append, or an append that fails (logged) — stays, for these hints only; the chat plugin, whose writes run in
+ * transactions of its own, appends its facts inside them (`ChatRealtime.append`).
  */
 @Injectable()
 export class RealtimeHintsService implements OnModuleInit, OnModuleDestroy {
@@ -240,7 +260,7 @@ export class RealtimeHintsService implements OnModuleInit, OnModuleDestroy {
 	 *
 	 * Repeated `updated` hints of one aggregate inside the coalescing window are folded: the first is appended at
 	 * once and the latest of the rest is appended when the window closes (trailing edge), so a burst of edits costs
-	 * two rows and a subscriber that refetched on the first still learns of the last.
+	 * two rows and a subscriber that read again on the first still learns of the last.
 	 *
 	 * @param input The hint, or `null` for a fact that produces none.
 	 * @returns True when a row was appended now.

@@ -22,8 +22,16 @@ export function actorDisplayName(user: { firstName?: string; lastName?: string; 
 	return parts.length ? parts.join(' ') : user.name || user.email || 'Someone';
 }
 
-/** The kinds of Inbox entry this feature files; each is deduped on its own. */
+/** The kinds of Inbox entry this feature files. */
 export type DocumentNotificationKind = 'shared' | 'review-requested' | 'review-approved' | 'review-rejected';
+
+/**
+ * The kinds the dedupe window applies to: a repeated share (the Inbox rules keep the window for mentions, which the
+ * platform's mention service files, and for repeated shares). Every review request and decision is an entry of its
+ * own: a request only moves a page that is not pending to pending, and a decision only moves a pending one on, so
+ * each is a distinct review round — a second round within the window is news, not a repeat.
+ */
+export const DEDUPED_DOCUMENT_NOTIFICATION_KINDS: ReadonlySet<DocumentNotificationKind> = new Set<DocumentNotificationKind>(['shared']);
 
 /** The short line under the title, which also tells one kind from another with the same notification type. */
 export const DOCUMENT_NOTIFICATION_MESSAGE: Record<DocumentNotificationKind, string> = {
@@ -58,9 +66,10 @@ export function documentNotificationTitle(
  * unified Inbox lists): a page shared with me, a review asked of me, a decision on a page of mine. Mentions and the
  * comments on a page I follow are the platform's own doing (the mention service and the follower fan-out).
  *
- * The same person is told of the same thing on one page once per {@link DOCS_NOTIFICATION_DEDUPE_MINUTES}; the
- * people who muted the page, and the actor, are never told. Best effort throughout: a notification is never a
- * reason to fail the write that caused it.
+ * The same person is told of a share of one page once per {@link DOCS_NOTIFICATION_DEDUPE_MINUTES}; every review
+ * request and decision is an entry of its own ({@link DEDUPED_DOCUMENT_NOTIFICATION_KINDS}). The people who muted
+ * the page, and the actor, are never told. Best effort throughout: a notification is never a reason to fail the
+ * write that caused it.
  */
 @Injectable()
 export class DocumentNotifierService {
@@ -109,8 +118,9 @@ export class DocumentNotifierService {
 	// ---------------------------------------------------------------- helpers
 
 	/**
-	 * Publishes one notification per receiver that was not told the same kind of thing recently; answers how many.
-	 * Nothing is sent while the collaboration feature is off: the share and review routes keep working as before.
+	 * Publishes one notification per receiver (for a deduped kind, per receiver not told the same kind of thing
+	 * recently); answers how many. Nothing is sent while the collaboration feature is off: the share and review routes
+	 * keep working as before.
 	 */
 	private async publish(document: Document, receiverEmployeeIds: readonly ID[], kind: DocumentNotificationKind, type: EmployeeNotificationTypeEnum, title: string): Promise<number> {
 		if (!getDocsConfig().collabEnabled) return 0;
@@ -118,7 +128,7 @@ export class DocumentNotifierService {
 		const receivers = notifiableReceivers(receiverEmployeeIds, document.metadata, actorEmployeeId);
 		if (!receivers.length) return 0;
 		const message = DOCUMENT_NOTIFICATION_MESSAGE[kind];
-		const recent = await this.recentlyNotified(document, receivers, type, message);
+		const recent = DEDUPED_DOCUMENT_NOTIFICATION_KINDS.has(kind) ? await this.recentlyNotified(document, receivers, type, message) : new Set<string>();
 		let sent = 0;
 		for (const receiverEmployeeId of receivers) {
 			if (recent.has(String(receiverEmployeeId))) continue;

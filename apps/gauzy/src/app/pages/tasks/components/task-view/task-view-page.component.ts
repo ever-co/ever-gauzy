@@ -9,6 +9,7 @@ import { distinctUntilChanged, filter, first, map } from 'rxjs/operators';
 import * as moment from 'moment-timezone';
 import {
 	BaseEntityEnum,
+	FeatureEnum,
 	ID,
 	IOrganization,
 	IPagination,
@@ -91,9 +92,9 @@ export const HOURS_DAYS = 14;
 export const ENTRIES_DAYS = 30;
 
 /** The page's tabs, as the project page's; the open one is in the URL (`?tab=`). */
-export type TaskViewTab = 'overview' | 'board' | 'activity' | 'comments';
+export type TaskViewTab = 'overview' | 'board' | 'activity' | 'comments' | 'documents';
 
-const TABS: TaskViewTab[] = ['overview', 'board', 'activity', 'comments'];
+const TABS: TaskViewTab[] = ['overview', 'board', 'activity', 'comments', 'documents'];
 
 /** One subtask, as the Subtasks panel lists it. */
 export interface ISubtaskRow {
@@ -159,9 +160,16 @@ export class TaskViewPageComponent extends TranslationBaseComponent implements O
 		{ id: 'overview', label: 'PROJECT_VIEW.TABS.OVERVIEW', icon: 'home-outline' },
 		{ id: 'board', label: 'PROJECT_VIEW.TABS.BOARD', icon: 'grid-outline' },
 		{ id: 'activity', label: 'PROJECT_VIEW.TABS.ACTIVITY', icon: 'list-outline' },
-		{ id: 'comments', label: 'PROJECT_VIEW.TABS.COMMENTS', icon: 'message-square-outline' }
+		{ id: 'comments', label: 'PROJECT_VIEW.TABS.COMMENTS', icon: 'message-square-outline' },
+		{ id: 'documents', label: 'PROJECT_VIEW.TABS.DOCUMENTS', icon: 'file-text-outline' }
 	];
 	tab: TaskViewTab = 'overview';
+	/**
+	 * The Overview loads when first opened for the task on screen, then stays mounted behind the other tabs: it reads
+	 * the time worked and who worked it, the hours per day, the month's time entries and the linked issues, which a page
+	 * opened on another tab — the Board, most often — has no use for.
+	 */
+	overviewOpened = false;
 	/**
 	 * The Board — the subtasks as the project board — loads when first opened, then stays mounted behind the
 	 * Overview: a move still saving when the user leaves it must still reach the Subtasks panel when it lands.
@@ -191,6 +199,18 @@ export class TaskViewPageComponent extends TranslationBaseComponent implements O
 	readonly commentEntity = BaseEntityEnum.Task;
 	/** The comment the URL points at (`?comment=`, an Inbox notification's link): the Comments tab opens on it. */
 	highlightCommentId: ID | null = null;
+
+	/** The Documents load when first opened, then stay mounted, so an upload in flight is not cut off. */
+	documentsOpened = false;
+	/** The task's attached documents, as the Documents tab last counted them. */
+	documentCount = 0;
+	/** Entity type the Documents tab attaches its links to. */
+	readonly documentEntity = BaseEntityEnum.Task;
+	/**
+	 * Whether the Documents tab is offered; worked out when the permissions or the feature flags change, not on
+	 * every check of the template.
+	 */
+	canSeeDocuments = false;
 
 	task: ITask = null;
 	status: IRecordViewStatus = null;
@@ -236,6 +256,11 @@ export class TaskViewPageComponent extends TranslationBaseComponent implements O
 	private openingSubtask = false;
 	/** Bumped by every load; a load that is no longer the latest one when it answers is discarded. */
 	private loadSequence = 0;
+	/**
+	 * The sequence of the refresh still reading the task, if any. The Overview opened meanwhile reads nothing itself:
+	 * the task on screen is about to be replaced, and the refresh reads the panels for the one that replaces it.
+	 */
+	private refreshSequence: number | null = null;
 	private readonly hashNumberPipe = new HashNumberPipe();
 
 	constructor(
@@ -290,16 +315,23 @@ export class TaskViewPageComponent extends TranslationBaseComponent implements O
 			)
 			.subscribe((canCreateTasks) => (this.canCreateTasks = canCreateTasks));
 		// The open tab follows the URL, so a tab can be bookmarked, shared and reached with Back. A link that names a
-		// comment (`?comment=`, as an Inbox notification's does) opens the Comments tab on it, tab or no tab.
-		this.route.queryParamMap
-			.pipe(
+		// comment (`?comment=`, as an Inbox notification's does) opens the Comments tab on it, tab or no tab. It is
+		// checked again when the permissions and feature flags land: they arrive after the page, and gate the Documents tab.
+		combineLatest([
+			this.route.queryParamMap.pipe(
 				map((params) => ({ tab: params.get('tab') as TaskViewTab, comment: params.get('comment')?.trim() || null })),
-				distinctUntilChanged((a, b) => a.tab === b.tab && a.comment === b.comment),
-				untilDestroyed(this)
-			)
-			.subscribe(({ tab, comment }) => {
+				distinctUntilChanged((a, b) => a.tab === b.tab && a.comment === b.comment)
+			),
+			this.store.userRolePermissions$,
+			this.store.featureOrganizations$,
+			this.store.featureTenant$,
+			this.store.featureToggles$
+		])
+			.pipe(untilDestroyed(this))
+			.subscribe(([{ tab, comment }]) => {
+				this.canSeeDocuments = this.hasDocumentsAccess();
 				this.highlightCommentId = comment;
-				this.openTab(TABS.includes(tab) ? tab : comment ? 'comments' : 'overview');
+				this.openTab(TABS.includes(tab) && this.canOpenTab(tab) ? tab : comment ? 'comments' : 'overview');
 			});
 		// The estimate is spelled out in the viewer's language.
 		this.translateService.onLangChange.pipe(untilDestroyed(this)).subscribe(() => this.show());
@@ -320,8 +352,15 @@ export class TaskViewPageComponent extends TranslationBaseComponent implements O
 		this.boardOpened = this.tab === 'board';
 		// Nor its comments, which read every page and look up each attached image.
 		this.commentsOpened = this.tab === 'comments';
+		// Nor its documents; the tab counts them again once opened.
+		this.documentsOpened = this.tab === 'documents';
+		this.documentCount = 0;
 		this.tracking = loading(null);
 		this.workers = [];
+		// The Overview's other panels too: opened later, it shows none of the previous task's figures meanwhile.
+		this.hours = loading([]);
+		this.entries = loading([]);
+		this.links = loading([]);
 		this.statuses = [];
 		this.currentStatusId = null;
 		this.commentCount = 0;
@@ -336,6 +375,9 @@ export class TaskViewPageComponent extends TranslationBaseComponent implements O
 			if (!task?.id || (task.organizationId && task.organizationId !== organizationId)) {
 				throw { status: 404 };
 			}
+			// Another task, or organization, starts with the Overview unopened unless it is the tab on screen. Set here
+			// and not with the resets above: the first load starts before the URL has named the tab.
+			this.overviewOpened = this.tab === 'overview';
 			this.task = task;
 			this.show();
 			this.state = 'ready';
@@ -357,6 +399,7 @@ export class TaskViewPageComponent extends TranslationBaseComponent implements O
 	private async refresh(taskId: string): Promise<void> {
 		if (this.state !== 'ready' || this.task?.id !== taskId) return;
 		const sequence = ++this.loadSequence;
+		this.refreshSequence = sequence;
 		try {
 			const task = await this.tasksService.getById(taskId, TASK_PAGE_RELATIONS);
 			if (sequence !== this.loadSequence) return;
@@ -376,6 +419,8 @@ export class TaskViewPageComponent extends TranslationBaseComponent implements O
 		} catch {
 			// The page keeps the task it showed; its panels, whose reads the new sequence discarded, read again.
 			if (sequence === this.loadSequence) this.reloadPanels(sequence);
+		} finally {
+			if (this.refreshSequence === sequence) this.refreshSequence = null;
 		}
 	}
 
@@ -400,8 +445,36 @@ export class TaskViewPageComponent extends TranslationBaseComponent implements O
 
 	private openTab(tab: TaskViewTab): void {
 		this.tab = tab;
+		if (tab === 'overview' && !this.overviewOpened) {
+			this.overviewOpened = true;
+			// Opened once the task is on screen: its panels read now. Opened while it loads, or while a refresh reads it
+			// again, that read fills them: panels read now for the task it replaces would share its sequence, and an
+			// answer of theirs landing last would show the old task's figures — its estimate, its time left.
+			if (this.task && this.state === 'ready' && this.refreshSequence !== this.loadSequence) {
+				this.loadOverview(this.task, this.loadSequence);
+			}
+		}
 		if (tab === 'board') this.boardOpened = true;
 		if (tab === 'comments') this.commentsOpened = true;
+		if (tab === 'documents') this.documentsOpened = true;
+	}
+
+	/**
+	 * Whether the Documents tab is offered: the same gates as its panel — DOCS_READ and the
+	 * organization's Documents feature — so the tab never opens on an empty pane.
+	 */
+	private hasDocumentsAccess(): boolean {
+		return this.store.hasPermission(PermissionsEnum.DOCS_READ) && this.store.hasFeatureEnabled(FeatureEnum.FEATURE_DOCUMENTS);
+	}
+
+	/** Whether a tab named in the URL may open; the others fall back to the Overview. */
+	private canOpenTab(tab: TaskViewTab): boolean {
+		return tab !== 'documents' || this.canSeeDocuments;
+	}
+
+	/** The count the Documents tab reports after each load, upload or removal. */
+	onDocumentCount(count: number): void {
+		this.documentCount = count;
 	}
 
 	/** The count the Comments tab reports each time it reads its list, after a post or a delete among others. */
@@ -661,14 +734,23 @@ export class TaskViewPageComponent extends TranslationBaseComponent implements O
 
 	/* ── Reads ── */
 
-	/** Every panel reads on its own; a failure (most often a 403) blanks only its panel. */
+	/**
+	 * Every panel reads on its own; a failure (most often a 403) blanks only its panel. The Overview's read only once it
+	 * is open: a page on another tab reads them when the Overview is first opened.
+	 */
 	private loadPanels(task: ITask, sequence: number): void {
+		if (this.overviewOpened) this.loadOverview(task, sequence);
+		// The status menu's choices — in the header, and with the Board's filters — and the status a new subtask
+		// starts in: on every tab.
+		if (this.canEdit || this.canAddSubtask) void this.loadStatuses(task, sequence);
+	}
+
+	/** The Overview's panels: the time worked and who worked it, the hours per day, the time entries, the links. */
+	private loadOverview(task: ITask, sequence: number): void {
 		void this.loadTime(task, sequence);
 		void this.loadHours(task, sequence);
 		void this.loadEntries(task, sequence);
 		void this.loadLinks(task, sequence);
-		// The status menu's choices, and the status a new subtask starts in.
-		if (this.canEdit || this.canAddSubtask) void this.loadStatuses(task, sequence);
 	}
 
 	/**

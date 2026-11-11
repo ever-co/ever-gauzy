@@ -2,7 +2,7 @@ import { IBaseEntityModel } from './base-entity.model';
 
 /**
  * The products whose news the changelog carries. One installation's `changelog` table can feed several
- * products: Ever Teams runs on the Gauzy API (api.ever.team shares its database with api.gauzy.co), and
+ * products: Ever Teams runs on the Gauzy API (the Ever Teams API shares its database with Gauzy's), and
  * other Ever products read their "What's new" entries from the same public endpoint. Every entry names the
  * product it belongs to, and every reader asks for its own product's entries only.
  *

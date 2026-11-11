@@ -123,43 +123,15 @@ export class EmployeeNotificationService extends TenantAwareCrudService<Employee
 			const organizationId = input.organizationId;
 			const employeeId = input.receiverEmployeeId;
 
-			// Search for the receiver notification setting
-			let employeeNotificationSetting: IEmployeeNotificationSetting;
+			// The receiver's settings: created with every kind on when they have none, so the delivery rules find them.
+			// Best effort: the notification is saved whether or not they could be read or created (in-app is always on).
+			const employeeNotificationSetting = await this.receiverSettingsOf(employeeId, organizationId, tenantId);
 
-			// The RECEIVER's settings, whoever sends: the plain reads / writes of the setting service are
-			// limited to the caller's own employee, so an employee or manager sender used to be checked
-			// against their own settings row (and a missing row was created for them, not the receiver).
-			try {
-				employeeNotificationSetting = await this._employeeNotificationSettingService.findByEmployee({
-					employeeId,
-					organizationId,
-					tenantId
-				});
-			} catch (error) {
-				if (error instanceof NotFoundException) {
-					employeeNotificationSetting = await this._employeeNotificationSettingService.createForEmployee({
-						assignment: true,
-						comment: true,
-						invitation: true,
-						mention: true,
-						message: true,
-						payment: true,
-						preferences: { email: true, inApp: true },
-						employeeId,
-						organizationId,
-						tenantId
-					});
-				}
-			}
-
-			// Check if the receiver employee has activated the notification for the current notification type
-			const isAllowedNotification = this.shouldCreateEmployeeNotification(
-				employeeNotificationSetting,
-				input.type
-			);
-
-			if (!isAllowedNotification) {
-				return undefined; // Do nothing if notification is not allowed
+			// In-app is always on (Inbox spec FR-10 / T17, owner decision 2026-11-10): the row, and with it the bell item
+			// and the Inbox entry, is saved whatever the receiver's per-type switches say. The switches decide only
+			// e-mail and push, which the Inbox delivery rules apply (`kindSwitchOf`). An unknown type is still refused.
+			if (!this.kindSwitchOf(employeeNotificationSetting ?? {}, input.type)) {
+				this.logger.debug(`Notification of type ${input.type} saved in-app only: its receiver switched the kind off.`);
 			}
 
 			// Opt-in (no caller sets it today): a redelivered/duplicated EmployeeCreateNotificationEvent must not
@@ -203,7 +175,8 @@ export class EmployeeNotificationService extends TenantAwareCrudService<Employee
 	 *   notification. The relation objects and the read-state flags are not taken either.
 	 *
 	 * @param input - The notification the caller asked for.
-	 * @returns The created notification, or `undefined` when the receiver has switched this kind off.
+	 * @returns The created notification (saved whatever the receiver's per-type switches say: they decide only
+	 *          e-mail and push).
 	 * @throws ForbiddenException when the caller has no employee record, or names another receiver
 	 * without `CHANGE_SELECTED_EMPLOYEE`, or names a receiver outside the notification's organization.
 	 */
@@ -539,13 +512,59 @@ export class EmployeeNotificationService extends TenantAwareCrudService<Employee
 	}
 
 	/**
-	 * Determines whether a employee notification should be created based on the employee's notification settings and the notification type.
-	 *
-	 * @param employeeNotificationSetting - The employee's notification settings.
-	 * @param type - The type of notification.
-	 * @returns {boolean} True if a employee notification should be created, false otherwise.
+	 * The RECEIVER's notification settings, whoever sends (the plain reads and writes of the setting service are
+	 * limited to the caller's own employee, so an employee or manager sender used to be checked against their own
+	 * row, and a missing row was created for them, not the receiver). A receiver without settings gets them, every kind
+	 * on; two notifications arriving together for such a receiver both miss the read, and the one whose insert loses
+	 * the race reads the winner's row instead. Settings that cannot be read or created are logged and answered as
+	 * none: they are not what decides whether a notification is saved.
 	 */
-	private shouldCreateEmployeeNotification(
+	private async receiverSettingsOf(employeeId: ID, organizationId: ID, tenantId: ID): Promise<IEmployeeNotificationSetting | undefined> {
+		const find = () => this._employeeNotificationSettingService.findByEmployee({ employeeId, organizationId, tenantId });
+		try {
+			return await find();
+		} catch (error) {
+			if (!(error instanceof NotFoundException)) {
+				this.logger.warn(`The notification settings of employee ${employeeId} were not read: ${(error as Error)?.message}`);
+				return undefined;
+			}
+		}
+		try {
+			return await this._employeeNotificationSettingService.createForEmployee({
+				assignment: true,
+				comment: true,
+				invitation: true,
+				mention: true,
+				message: true,
+				payment: true,
+				preferences: { email: true, inApp: true },
+				employeeId,
+				organizationId,
+				tenantId
+			});
+		} catch (createError) {
+			// Another notification created them meanwhile (the one-row-per-employee constraint refused this insert).
+			try {
+				return await find();
+			} catch (error) {
+				this.logger.warn(
+					`The notification settings of employee ${employeeId} were not created: ${(createError as Error)?.message}; nor read: ${(error as Error)?.message}`
+				);
+				return undefined;
+			}
+		}
+	}
+
+	/**
+	 * The receiver's per-type switch for a notification type: true when it is on. It no longer decides whether the
+	 * notification is saved (in-app is always on); the Inbox delivery rules apply the same switch to e-mail and push.
+	 *
+	 * @param employeeNotificationSetting - The receiver's notification settings.
+	 * @param type - The type of notification.
+	 * @returns {boolean} Whether the receiver takes this kind by e-mail and push.
+	 * @throws Error for a type it does not know, so a new kind must add its case.
+	 */
+	private kindSwitchOf(
 		employeeNotificationSetting: IEmployeeNotificationSetting,
 		type: EmployeeNotificationTypeEnum
 	): boolean {

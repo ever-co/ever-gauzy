@@ -8,16 +8,20 @@ import { respondsWithPayRate } from './employee-pay-rate-scrub';
 
 /**
  * A response body with nothing to serialise: a primitive (`instanceToPlain` returns it unchanged), nothing at all,
- * or bytes - a Buffer, a stream or a `StreamableFile` - which `instanceToPlain` would have copied property by
- * property into a plain object.
+ * bytes - a Buffer, a stream or a `StreamableFile` - or the event stream a GraphQL subscription field answers with,
+ * which `instanceToPlain` would have copied property by property into a plain object. A copied event stream has
+ * lost `Symbol.asyncIterator` and its methods, so graphql-js refuses it ("Subscription field must return Async
+ * Iterable") and the socket closes with 4500 before the subscriber receives anything; each event the stream yields
+ * is resolved, and serialised, on its own.
  */
-function isPassedThrough(data: unknown): boolean {
+export function isPassedThrough(data: unknown): boolean {
 	return (
 		data === null ||
 		typeof data !== 'object' ||
 		Buffer.isBuffer(data) ||
 		data instanceof StreamableFile ||
-		typeof (data as { pipe?: unknown }).pipe === 'function'
+		typeof (data as { pipe?: unknown }).pipe === 'function' ||
+		typeof (data as { [Symbol.asyncIterator]?: unknown })[Symbol.asyncIterator] === 'function'
 	);
 }
 

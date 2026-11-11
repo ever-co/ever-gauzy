@@ -194,7 +194,7 @@ export function registerDocsTools(server: McpServer, access: { read: boolean; wr
 	registerCollaborationTool<{ pageId: string; markdown: string; expectedRevision: number }>(
 		server,
 		'update_page_markdown',
-		"Applies a Markdown text to a page: only the blocks whose Markdown changed are replaced (formatting the Markdown cannot carry stays on the others), editors with the page open see it live. `expectedRevision` (from get_page) is required: a page that moved on answers a conflict with its current revision instead of writing. Writes PUT /plugins/docs/documents/:id/content/markdown.",
+		"Applies a Markdown text to a page: only the blocks whose Markdown changed are replaced (formatting the Markdown cannot carry stays on the others, also on a block the text moved), editors with the page open see it live. `expectedRevision` (from get_page) is required: a page that moved on answers a conflict with its current revision instead of writing. A text that adds, removes or moves one of identical blocks a comment is anchored to answers a conflict with the `blockIds` concerned, nothing written. Writes PUT /plugins/docs/documents/:id/content/markdown.",
 		{
 			pageId: z.string().uuid().describe('The page'),
 			markdown: z.string().max(2_000_000).describe('The whole page as Markdown, as get_page answered it with your changes'),
@@ -211,8 +211,19 @@ export function registerDocsTools(server: McpServer, access: { read: boolean; wr
 			} catch (error) {
 				const { status, body } = describeError(error);
 				if (status === 409) {
-					const current = (body as { currentRevision?: unknown } | null)?.currentRevision;
-					return answer({ conflict: true, currentRevision: typeof current === 'number' ? current : null, message: 'The page changed since the revision stated; read it again (get_page) and apply your change to the current text.' });
+					const conflict = body as { currentRevision?: unknown; code?: unknown; blockIds?: unknown } | null;
+					const current = typeof conflict?.currentRevision === 'number' ? conflict.currentRevision : null;
+					if (conflict?.code === 'DOCS_MARKDOWN_AMBIGUOUS') {
+						// Not a stale read: reading the page again gives the same answer for the same text.
+						return answer({
+							conflict: true,
+							currentRevision: current,
+							blockIds: Array.isArray(conflict.blockIds) ? conflict.blockIds : [],
+							message:
+								'Nothing was written: the text adds, removes or moves a block that has an identical twin, so which of the twins a comment belongs to cannot be told. Keep the commented blocks where they are (or make their texts differ) and apply the change again.'
+						});
+					}
+					return answer({ conflict: true, currentRevision: current, message: 'The page changed since the revision stated; read it again (get_page) and apply your change to the current text.' });
 				}
 				throw error;
 			}

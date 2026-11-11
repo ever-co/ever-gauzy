@@ -60,4 +60,18 @@ describe('OrganizationContactCommentAccessPolicy: who may read and write a conta
 			failure
 		);
 	});
+
+	it('answers the reachable contacts of many ids in one tenant-scoped read (the real-time catch-up)', async () => {
+		const find = jest.fn().mockResolvedValue([{ id: CONTACT_ID, organizationId: 'org-1' }]);
+		const policy = new OrganizationContactCommentAccessPolicy({ find } as any);
+
+		await expect(policy.findAccessibleParents([CONTACT_ID, 'other-id' as any])).resolves.toEqual([
+			{ id: CONTACT_ID, organizationId: 'org-1' }
+		]);
+		// The service's own scoped list read (tenant and organization boundary), nothing that widens it.
+		expect(find).toHaveBeenCalledTimes(1);
+		expect(find.mock.calls[0][0]).toMatchObject({ select: { id: true, organizationId: true } });
+		await expect(policy.findAccessibleParents([])).resolves.toEqual([]);
+		expect(find).toHaveBeenCalledTimes(1);
+	});
 });

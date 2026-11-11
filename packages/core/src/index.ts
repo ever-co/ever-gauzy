@@ -69,6 +69,9 @@ export {
 	toPositionalStatement
 } from './lib/database/database.helper';
 export type { IPositionalStatement } from './lib/database/database.helper';
+// The learn-more links of the What's New entries seeded for the other Ever products: deployment settings, not code.
+export { WHATS_NEW_LINK_SETTINGS, whatsNewLinkUrl } from './lib/database/whats-new-links';
+export type { WhatsNewLink } from './lib/database/whats-new-links';
 // The probes a migration needs to add a `CHECK` safely: a rule about a populated table is added on its
 // own tick, long after the file that created the table, and every package that adds one needs the same
 // four probes — the table, the columns the rule reads, the constraint's own absence, and the embedded
@@ -171,9 +174,15 @@ export {
 } from './lib/organization-contact';
 // The comment-access policy contract, for a package whose records carry comments that must follow the record's own
 // access rules: it declares a provider with `@CommentParentAccessPolicy()` implementing the interface, and the
-// comment API applies it (see `OrganizationContactCommentAccessPolicy`, which governs a contact's notes).
+// comment API applies it (see `OrganizationContactCommentAccessPolicy`, which governs a contact's notes). The registry
+// is exported for a package that hands comment facts to subscribers (the real-time channel) and must apply the same
+// read rule at delivery.
 export * from './lib/comment/events';
-export { CommentParentAccessPolicy } from './lib/comment/parent-access';
+export {
+	CommentParentAccessPolicy,
+	CommentParentAccessService,
+	isSpellingOfRecordType
+} from './lib/comment/parent-access';
 export type { ICommentParent, ICommentParentAccessPolicy } from './lib/comment/parent-access';
 export {
 	OrganizationProjectCreateCommand,
@@ -229,9 +238,28 @@ export {
 	IntegrationSettingModule,
 	IntegrationSettingService
 } from './lib/integration-setting';
-export type { IIntegrationSyncCompletion } from './lib/integration-tenant';
+export type {
+	IIntegrationSyncCompletion,
+	IntegrationManagers,
+	SyncedFieldConflict,
+	SyncedFieldsMerge,
+	SyncedTaskField,
+	SyncedTaskFieldsInput,
+	SyncedTaskValues
+} from './lib/integration-tenant';
 export {
+	findIntegrationManagers,
+	INTEGRATION_MANAGER_PERMISSIONS,
+	INTEGRATION_MANAGERS_LIMIT,
 	INTEGRATION_TENANT_SYNCED,
+	mergeSyncedFields,
+	parseSyncedValues,
+	sameSyncedValue,
+	SYNCED_TASK_COLUMNS,
+	SYNCED_TASK_FIELDS,
+	syncedValuesOf,
+	taskPatchOf,
+	withoutKeptFields,
 	IntegrationTenantGetCommand,
 	IntegrationTenantModule,
 	IntegrationTenantService,
@@ -393,6 +421,7 @@ export * from './lib/event-outbox';
  */
 export {
 	currentSubscriberScope,
+	currentSubscriberUserId,
 	declareStreamedEvents,
 	deliverPayloadAsIs,
 	observableToAsyncIterable,
@@ -407,6 +436,11 @@ export {
 	SubscriptionCatalogue,
 	isEventNameShaped,
 	matchesEventSelection
+} from './lib/graphql/subscriptions/subscription-catalogue';
+export type {
+	SubscriptionAudienceCheck,
+	SubscriptionAudienceEvent,
+	SubscriptionAudienceSubscriber
 } from './lib/graphql/subscriptions/subscription-catalogue';
 export { GraphqlSubscriptionConsumer } from './lib/graphql/subscriptions/subscription-consumer';
 export { GraphqlSubscriptionBusBridge } from './lib/graphql/subscriptions/subscription-bus-bridge';

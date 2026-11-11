@@ -81,8 +81,9 @@ unreachable, every feature keeps working with its documented polling.
   MUST reject anonymous connections.
 - **FR-2** Every replayable event MUST carry a stable event id, a topic (its name) and
   its position in one cursor order per organization: append time, then event id.
-  Clients MUST be able to reconnect with the cursor of the last event they applied and
-  receive all later events of their scope in that order. (The outbox's per-aggregate
+  Clients MUST be able to reconnect with the last cursor the catch-up answered them and
+  receive all later events of their scope in that order (a streamed event is no resume
+  position: the stream delivers neither in commit order nor at once, plan §15.6). (The outbox's per-aggregate
   `sequence` orders one aggregate's events only and is not a reconnect cursor.)
 - **FR-3** The platform MUST keep a replay window of at least the newest 1,000 events per
   organization or the last 24 hours, whichever is larger, and MUST answer a reconnect
@@ -100,8 +101,9 @@ unreachable, every feature keeps working with its documented polling.
   clients can refetch only what changed.
 - **FR-7** Clients MUST be able to send presence (`active`, `idle`, `away`) and typing
   signals; the platform MUST merge presence across a user's connections and publish one
-  presence state per employee to the organization. (Not met yet: presence is
-  last-write-wins per employee, see plan §15.2.)
+  presence state per employee to the organization. (Met for clients that name their
+  connection, plan §15.2; a client that names none shares one connection per employee,
+  last report wins.)
 - **FR-8** The platform MUST re-check a connection's authorization at least every fifteen
   seconds and immediately on session revocation, organization removal or suspension.
 - **FR-9** The platform MUST publish events after the originating write is committed,

@@ -1,14 +1,23 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { DeleteResult, FindOptionsWhere, SaveOptions, UpdateResult } from 'typeorm';
-import { ID, IReaction, IReactionCreateInput, IReactionUpdateInput, ReactionEntityEnum } from '@gauzy/contracts';
+import { ID, IPagination, IReaction, IReactionCreateInput, IReactionUpdateInput } from '@gauzy/contracts';
 import { TenantAwareCrudService } from './../core/crud/tenant-aware-crud.service';
 import { IFindOneOptions } from '../core/crud/icrud.service';
 import { RequestContext } from '../core/context/request-context';
+import { LegacyFindManyOptions, LegacyFindOneOptions } from '../core/utils';
 import { EmployeeService } from '../employee/employee.service';
 import { Reaction } from './reaction.entity';
+import { CHAT_REACTIONS_REFUSAL, isChatReaction, withoutChatReactions } from './reaction-chat-scope';
 import { TypeOrmReactionRepository } from './repository/type-orm-reaction.repository';
 import { MikroOrmReactionRepository } from './repository/mikro-orm-reaction.repository';
 
+/**
+ * The generic reaction surface (`/reaction` and the `reaction*` GraphQL fields): every kind of reaction but a chat
+ * message's. A chat message's reactions are read and written through the chat API only, which checks the caller's
+ * membership of the conversation (its service reads the `reaction` rows itself, never through this one). Here they
+ * are left out of every list and count, read by id as reactions that do not exist (so withdrawing or restoring one
+ * answers 404), refused to `create` and `update` (400), and not deleted by `delete`.
+ */
 @Injectable()
 export class ReactionService extends TenantAwareCrudService<Reaction> {
 	constructor(
@@ -17,6 +26,48 @@ export class ReactionService extends TenantAwareCrudService<Reaction> {
 		private readonly _employeeService: EmployeeService
 	) {
 		super(typeOrmReactionRepository, mikroOrmReactionRepository);
+	}
+
+	/**
+	 * Lists reactions (`GET /reaction`, `reactions`) — never a chat message's. See {@link withoutChatReactions}.
+	 *
+	 * @param filter - The caller's options; their condition is kept.
+	 * @returns The reactions.
+	 */
+	public async findAll(filter?: LegacyFindManyOptions<Reaction>): Promise<IPagination<Reaction>> {
+		return super.findAll({ ...(filter ?? {}), where: withoutChatReactions(filter?.where) });
+	}
+
+	/**
+	 * Lists a page of reactions (`GET /reaction/pagination`) — never a chat message's.
+	 *
+	 * @param filter - The caller's options; their condition is kept.
+	 * @returns The page.
+	 */
+	public async paginate(filter?: LegacyFindManyOptions<Reaction>): Promise<IPagination<Reaction>> {
+		return super.paginate({ ...(filter ?? {}), where: withoutChatReactions(filter?.where) });
+	}
+
+	/**
+	 * Counts reactions (`GET /reaction/count`, `reactionCount`) — never a chat message's.
+	 *
+	 * @param options - The caller's condition; it is kept.
+	 * @returns The count.
+	 */
+	public async countBy(options?: FindOptionsWhere<Reaction>): Promise<number> {
+		return super.countBy(withoutChatReactions(options));
+	}
+
+	/**
+	 * Reads one reaction (`GET /reaction/:id`, `reaction`, and the ownership read of withdrawing and restoring one):
+	 * a chat message's answers 404, as a reaction that does not exist.
+	 *
+	 * @param id - The reaction.
+	 * @param options - The caller's options; their condition is kept.
+	 * @returns The reaction.
+	 */
+	public async findOneByIdString(id: ID, options?: LegacyFindOneOptions<Reaction>): Promise<Reaction> {
+		return super.findOneByIdString(id, { ...(options ?? {}), where: withoutChatReactions(options?.where) });
 	}
 
 	/**
@@ -29,8 +80,8 @@ export class ReactionService extends TenantAwareCrudService<Reaction> {
 	async create(input: IReactionCreateInput): Promise<IReaction> {
 		// A chat message's reactions are written through the chat API only, which checks the caller's membership of
 		// the conversation; the generic route knows nothing of that and refuses the kind.
-		if (String(input?.entity) === String(ReactionEntityEnum.ChatMessage)) {
-			throw new BadRequestException('Reactions to chat messages are managed through the chat API.');
+		if (isChatReaction(input)) {
+			throw new BadRequestException(CHAT_REACTIONS_REFUSAL);
 		}
 		try {
 			// Extract the tenantId from the input data or the current request context
@@ -121,10 +172,17 @@ export class ReactionService extends TenantAwareCrudService<Reaction> {
 				console.error(`[ReactionUpdate] Reaction not found for id: ${id} and employeeId: ${employeeId}`);
 				throw new BadRequestException('Reaction not found');
 			}
+			// Even the caller's own reaction to a chat message: the chat API checks they are still in the conversation.
+			if (isChatReaction(reaction)) {
+				throw new BadRequestException(CHAT_REACTIONS_REFUSAL);
+			}
 
 			// Update the reaction using the provided input along with the employee and tenant IDs.
 			return await super.update(id, { ...input, employeeId, tenantId });
 		} catch (error) {
+			if (error instanceof BadRequestException && error.message === CHAT_REACTIONS_REFUSAL) {
+				throw error;
+			}
 			console.error('[ReactionUpdate] Error during reaction update process:', error);
 			throw new BadRequestException('Reaction update failed', error);
 		}
@@ -150,8 +208,9 @@ export class ReactionService extends TenantAwareCrudService<Reaction> {
 				throw new BadRequestException('Employee ID is missing from the request context.');
 			}
 
-			// Execute the deletion using the parent class method, scoped by tenant and employee.
-			return await super.delete(id, { where: { employeeId, tenantId } });
+			// Execute the deletion using the parent class method, scoped by tenant and employee. A reaction to a chat
+			// message is taken back through the chat API, and is left alone here as one that does not exist.
+			return await super.delete(id, { where: withoutChatReactions<Reaction>({ employeeId, tenantId }) });
 		} catch (error) {
 			// The id is an argument, not part of the format string: a `%` in it must not read as a placeholder.
 			console.error('[ReactionDelete] Failed to delete reaction with id: %s. Error:', id, error);

@@ -7,7 +7,7 @@ import {
 	REALTIME_SUBSCRIBABLE_EVENTS
 } from '@gauzy/contracts';
 import { matchesEventSelection } from '@gauzy/core';
-import type { SubscriptionEnvelope } from '@gauzy/core';
+import type { SubscriptionAudienceEvent, SubscriptionEnvelope } from '@gauzy/core';
 
 /** The largest value the schema's `Int` carries. A sequence past it is served as null, never truncated. */
 const GRAPHQL_INT_MAX = 2 ** 31 - 1;
@@ -93,6 +93,17 @@ export function toRealtimeEnvelope(payload: SubscriptionEnvelope | undefined): I
 				? sequence
 				: null,
 		data: withoutRecipients(payload.data ?? {}) as JsonData
+	};
+}
+
+/** A hub envelope as the audience checks read it (see `RealtimeAudience`). */
+export function audienceEventOfEnvelope(payload: SubscriptionEnvelope): SubscriptionAudienceEvent {
+	const data = payload?.data;
+	return {
+		name: String(payload?.name ?? ''),
+		aggregateType: String(payload?.aggregate?.type ?? ''),
+		aggregateId: String(payload?.aggregate?.id ?? ''),
+		data: data !== null && typeof data === 'object' && !Array.isArray(data) ? (data as Record<string, unknown>) : {}
 	};
 }
 

@@ -856,14 +856,25 @@ export class DocumentService extends TenantAwareCrudService<Document> {
 	 * list path uses). The tree operations hand it to `DocumentTreeService` so a subtree
 	 * archive, unarchive, delete or reorder never reaches a document the caller cannot see.
 	 *
+	 * The real-time channel asks it too, in the subscriber's context, before it hands a `document.updated` fact to a
+	 * connection — with `withDeleted`, since a `deleted` fact names a page that is now in the trash.
+	 *
 	 * @param ids The candidate document ids.
 	 * @param organizationId The organization to filter in — the saved document's own scope.
+	 * @param options `withDeleted`: soft-deleted (trashed) rows are candidates too, under the same read scope.
 	 * @returns The subset that resolves inside the read scope.
 	 */
-	public async filterReadableDocumentIds(ids: ID[], organizationId: ID): Promise<ID[]> {
+	public async filterReadableDocumentIds(
+		ids: ID[],
+		organizationId: ID,
+		options: { withDeleted?: boolean } = {}
+	): Promise<ID[]> {
 		const tenantId = RequestContext.currentTenantId();
 
 		const qb = this.typeOrmRepository.createQueryBuilder('document');
+		if (options.withDeleted) {
+			qb.withDeleted();
+		}
 		qb.select('document.id', 'id');
 		qb.where(p(`"document"."tenantId" = :tenantId`), { tenantId });
 		qb.andWhere(p(`"document"."organizationId" = :organizationId`), { organizationId });

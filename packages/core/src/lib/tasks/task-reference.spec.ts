@@ -10,6 +10,8 @@ import {
 	proposedProjectKey,
 	assignProjectKeys,
 	heldKeysOf,
+	holderOfProjectKey,
+	projectKeyHold,
 	takenProjectKeys
 } from './task-reference';
 
@@ -129,5 +131,28 @@ describe('project keys for projects without one', () => {
 	it('numbers past 999 while the key fits in ten characters', () => {
 		const taken = new Set(['PRO', ...Array.from({ length: 998 }, (_, index) => `PRO${index + 2}`)]);
 		expect(uniqueProjectKey('Project 1000', taken)).toBe('PRO1000');
+	});
+
+	it('tells how a project answers to a key another project wants', () => {
+		const project = { name: 'Apiary', taskKey: 'BEE', taskKeyHistory: ['HIVE'] };
+		expect(projectKeyHold(project, 'BEE')).toBe('current');
+		expect(projectKeyHold(project, 'bee')).toBe('current');
+		expect(projectKeyHold(project, 'HIVE')).toBe('former');
+		expect(projectKeyHold(project, 'API')).toBe('derived');
+		expect(projectKeyHold(project, 'OPS')).toBeNull();
+		// SQLite hands the history back as JSON text.
+		expect(projectKeyHold({ name: 'Zoo', taskKey: null, taskKeyHistory: '["API"]' }, 'API')).toBe('former');
+		// A keyless project still answers to its derived key.
+		expect(projectKeyHold({ name: 'Apiary', taskKey: null }, 'API')).toBe('derived');
+	});
+
+	it('names the project that holds a key, a current holder before a former one before a derived one', () => {
+		const derived = { id: 'd', name: 'Apiary', taskKey: 'BEE' };
+		const former = { id: 'f', name: 'Systems', taskKey: 'SYS', taskKeyHistory: ['API'] };
+		const current = { id: 'c', name: 'Gateway', taskKey: 'API' };
+		expect(holderOfProjectKey([derived, former, current], 'API')).toEqual({ project: current, hold: 'current' });
+		expect(holderOfProjectKey([derived, former], 'API')).toEqual({ project: former, hold: 'former' });
+		expect(holderOfProjectKey([derived], 'API')).toEqual({ project: derived, hold: 'derived' });
+		expect(holderOfProjectKey([derived, former, current], 'OPS')).toBeNull();
 	});
 });

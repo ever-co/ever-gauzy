@@ -2033,7 +2033,11 @@
 			"SORT_BY": "Sorteren op {{ name }}",
 			"SORT_LABEL": "Sorteren op",
 			"SORT_ASCENDING": "Oplopend",
-			"SORT_DESCENDING": "Aflopend"
+			"SORT_DESCENDING": "Aflopend",
+			"FILTER_PLACEHOLDER": "Medewerkers filteren",
+			"CLEAR_FILTER": "Filter wissen",
+			"FILTERED_COUNT": "{{ shown }} van {{ total }}",
+			"NO_MATCHES": "Geen medewerkers komen overeen met \"{{ term }}\""
 		},
 		"SELECT_A_MONTH_AND_EMPLOYEE": "Selecteer alstublieft een maand en medewerker uit het bovenstaande menu",
 		"INSERT_TEXT_FOR_NOT_AUTHENTICATED_USERS": "Voer tekst in voor niet-geregistreerde gebruikers.",

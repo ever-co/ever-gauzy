@@ -148,6 +148,7 @@
 		"graphql-tools": "^9.0.38",
 		"handlebars": "^4.7.10",
 		"helmet": "^8.3.0",
+		"ioredis": "^6.0.0",
 		"jimp": "^1.6.1",
 		"jsonwebtoken": "^9.0.3",
 		"kafkajs": "^2.2.4",

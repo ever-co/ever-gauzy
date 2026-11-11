@@ -257,6 +257,21 @@ export interface ITaskReferenceResolution {
 	status?: TaskStatusEnum;
 	/** The key the task is addressed by today (the project's current key). */
 	currentKey?: string;
+	/** The number the task holds today: another than `number` when it was resolved by a former reference. */
+	currentNumber?: number;
+	/** Resolved by a reference the task held before it moved to another project. */
+	formerReference?: boolean;
+}
+
+/**
+ * A reference a task held before it moved to another project (`API-42`): the project it left, and its number and
+ * prefix there. Kept so the reference keeps resolving to the task, and so the number is not given to another task.
+ */
+export interface ITaskFormerReference extends IBasePerTenantAndOrganizationEntityModel, IRelationalOrganizationProject {
+	task?: ITask;
+	taskId: ID;
+	number: number;
+	prefix?: string | null;
 }
 
 /** The views the platform computes without saving: my tasks, this week, overdue, due soon. */

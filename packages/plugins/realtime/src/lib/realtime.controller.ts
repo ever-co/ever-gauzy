@@ -10,11 +10,20 @@ import {
 	REALTIME_MAX_TYPING_RECIPIENTS,
 	REALTIME_SIGNAL_EVENTS
 } from '@gauzy/contracts';
-import { PermissionGuard, Permissions, SubscriptionCatalogue, TenantPermissionGuard, UseValidationPipe } from '@gauzy/core';
+import {
+	eventOutboxDispatchMode,
+	GraphqlPubSub,
+	PermissionGuard,
+	Permissions,
+	SubscriptionCatalogue,
+	TenantPermissionGuard,
+	UseValidationPipe
+} from '@gauzy/core';
 import { RealtimeCatchUpQueryDTO, RealtimePresenceDTO, RealtimeTypingDTO } from './dto/realtime.dto';
 import { collaborationEventNames, collaborationReplayNames } from './graphql/realtime-envelope';
 import { RealtimeCatalogue } from './realtime-catalogue';
 import { RealtimeCatchUpService } from './realtime-catch-up.service';
+import { describeRealtimeDelivery, isSingleApiProcess } from './realtime-delivery';
 import { RealtimeSignalsService } from './realtime-signals.service';
 import { REALTIME_ROUTE_PREFIX } from './realtime.constants';
 
@@ -33,7 +42,8 @@ export class RealtimeController {
 		private readonly catalogue: RealtimeCatalogue,
 		private readonly signals: RealtimeSignalsService,
 		private readonly catchUp: RealtimeCatchUpService,
-		@Optional() private readonly subscriptions?: SubscriptionCatalogue
+		@Optional() private readonly subscriptions?: SubscriptionCatalogue,
+		@Optional() private readonly pubSub?: GraphqlPubSub
 	) {}
 
 	@Get('/status')
@@ -49,7 +59,13 @@ export class RealtimeController {
 			subscriptions: this.catalogue.servesSubscriptions,
 			events: collaborationReplayNames(declared),
 			signals: collaborationEventNames(declared).filter((name) => signals.has(name)),
-			maxTypingRecipients: REALTIME_MAX_TYPING_RECIPIENTS
+			maxTypingRecipients: REALTIME_MAX_TYPING_RECIPIENTS,
+			// Whether a client may rely on pushed events instead of polling (see `describeRealtimeDelivery`).
+			delivery: describeRealtimeDelivery(
+				eventOutboxDispatchMode(),
+				this.pubSub?.sharedAcrossProcesses ?? false,
+				isSingleApiProcess()
+			)
 		};
 	}
 

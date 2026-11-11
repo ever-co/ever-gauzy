@@ -3,12 +3,14 @@ import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ID, PermissionsEnum } from '@gauzy/contracts';
 import { PermissionGuard, Permissions, RequestContext, TenantPermissionGuard, UUIDValidationPipe, UseValidationPipe } from '@gauzy/core';
 import { TrelloApiClient, TrelloApiError } from './client/trello-api.client';
-import { CreateTrelloMappingDTO, TrelloConnectDTO, TrelloImportDTO, TrelloInstallStateDTO, TrelloRunsQueryDTO, TrelloStatusQueryDTO, UpdateTrelloMappingDTO } from './dto/trello.dto';
+import { CreateTrelloMappingDTO, TrelloConnectDTO, TrelloImportDTO, TrelloInstallStateDTO, TrelloRunsQueryDTO, TrelloConflictsQueryDTO, ResolveTrelloConflictDTO, TrelloStatusQueryDTO, UpdateTrelloMappingDTO } from './dto/trello.dto';
+import { TrelloSyncConflict } from './entities/trello-sync-conflict.entity';
 import { TrelloSyncRun } from './entities/trello-sync-run.entity';
 import { TrelloBoardMapping, TrelloSyncDirection } from './entities/trello-board-mapping.entity';
 import { isTrelloConfigured, TrelloConfig, trelloWebhooksEnabled } from './trello-config';
 import { TrelloConnectStateService } from './trello-connect-state.service';
 import { TrelloMappingService } from './trello-mapping.service';
+import { TrelloSyncConflictService } from './trello-sync-conflict.service';
 import { TrelloSyncRunService } from './trello-sync-run.service';
 import { TrelloConnectionSummary, TrelloTenantService } from './trello-tenant.service';
 import {
@@ -55,6 +57,7 @@ export class TrelloController {
 		private readonly mappings: TrelloMappingService,
 		private readonly runs: TrelloSyncRunService,
 		private readonly sync: TrelloSyncService,
+		private readonly conflicts: TrelloSyncConflictService,
 		private readonly connectState: TrelloConnectStateService
 	) {}
 
@@ -290,9 +293,42 @@ export class TrelloController {
 	@Permissions(PermissionsEnum.INTEGRATION_VIEW, PermissionsEnum.INTEGRATION_ADD, PermissionsEnum.INTEGRATION_EDIT)
 	@Get('/:integrationId/runs')
 	@UseValidationPipe({ whitelist: true, transform: true })
-	async listRuns(@Param('integrationId', UUIDValidationPipe) integrationId: ID, @Query() query: TrelloRunsQueryDTO): Promise<TrelloSyncRun[]> {
+	async listRuns(@Param('integrationId', UUIDValidationPipe) integrationId: ID, @Query() query: TrelloRunsQueryDTO): Promise<Array<TrelloSyncRun & { conflictCount: number }>> {
 		const tenant = await this.tenants.requireById(integrationId);
-		return this.runs.list(tenant, query.take ?? 50);
+		const runs = await this.runs.list(tenant, query.take ?? 50);
+		// Each run with how many conflicts it found (the sync log).
+		const counts = await this.conflicts.countByRun(tenant, runs.map((run) => run.id as ID));
+		return runs.map((run) => Object.assign(run, { conflictCount: counts.get(String(run.id)) ?? 0 }));
+	}
+
+	/**
+	 * The fields changed both in Trello and on the platform to different values: Trello's value was applied, the
+	 * task's is kept in the record. Open ones by default.
+	 */
+	@ApiOperation({ summary: 'The sync conflicts of a connection' })
+	@Permissions(PermissionsEnum.INTEGRATION_VIEW, PermissionsEnum.INTEGRATION_ADD, PermissionsEnum.INTEGRATION_EDIT)
+	@Get('/:integrationId/conflicts')
+	@UseValidationPipe({ whitelist: true, transform: true })
+	async listConflicts(@Param('integrationId', UUIDValidationPipe) integrationId: ID, @Query() query: TrelloConflictsQueryDTO): Promise<TrelloSyncConflict[]> {
+		const tenant = await this.tenants.requireById(integrationId);
+		return this.conflicts.list(tenant, query);
+	}
+
+	/**
+	 * Resolves a conflict: `keep: external` leaves Trello's value; `keep: platform` writes the task's value back
+	 * (and a mapping that sends changes out sends it to the card). 409 when the task changed since.
+	 */
+	@ApiOperation({ summary: 'Resolve a sync conflict' })
+	@Post('/:integrationId/conflicts/:conflictId/resolve')
+	@HttpCode(HttpStatus.OK)
+	@UseValidationPipe({ whitelist: true })
+	async resolveConflict(
+		@Param('integrationId', UUIDValidationPipe) integrationId: ID,
+		@Param('conflictId', UUIDValidationPipe) conflictId: ID,
+		@Body() body: ResolveTrelloConflictDTO
+	): Promise<TrelloSyncConflict> {
+		const tenant = await this.tenants.requireById(integrationId);
+		return this.conflicts.resolve(tenant, conflictId, body.keep, (RequestContext.currentUserId() as ID) ?? null);
 	}
 
 	private organizationIdOf(body: { organizationId?: ID; organization?: { id?: ID } }): ID {

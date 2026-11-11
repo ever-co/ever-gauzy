@@ -4,6 +4,7 @@ import { BaseEntityEnum, EntitySubscriptionTypeEnum, IUser } from '@gauzy/contra
 import { TenantAwareCrudService } from '../core/crud';
 import { asTenantUser, createTenantFixture } from '../core/testing/tenant-isolation/tenant-isolation.fixtures';
 import { TaskService } from './task.service';
+import { stubTaskUpdateManager } from './testing/task-update-manager.stub';
 
 /**
  * `TaskService.update` unsubscribes the members a save removed from the task. It computed them as "the task's
@@ -36,6 +37,7 @@ describe('TaskService.update — assignee subscriptions', () => {
 			async (entity) => ({ ...stored, ...entity }) as never
 		);
 		service = Object.create(TaskService.prototype);
+		Object.defineProperty(service, 'typeOrmRepository', { value: { manager: stubTaskUpdateManager().manager }, configurable: true });
 		Object.assign(service, {
 			_entitySubscriptionService: entitySubscriptionService,
 			_activityLogService: { logActivity: jest.fn() },

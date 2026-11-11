@@ -1,6 +1,7 @@
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
-import { Observable, Subject } from 'rxjs';
+import { Observable, Subject, throwError } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 import {
 	IEmployeeNotification,
 	IInboxItemCounts,
@@ -18,6 +19,8 @@ import { INBOX_UI_PAGE_SIZE } from '../inbox-ui.constants';
 
 const INBOX = `${API_PREFIX}/inbox/items`;
 const NOTIFICATIONS = `${API_PREFIX}/employee-notification`;
+/** Who sent each notification: the Notifications tab shows the sender's picture and name. */
+const NOTIFICATION_SENDER_RELATIONS = ['sentByEmployee', 'sentByEmployee.user'];
 
 /**
  * The Inbox routes of the API (`@gauzy/plugin-inbox`, `/api/inbox/items*`). They exist only where the API
@@ -105,14 +108,19 @@ export class InboxNotificationsService {
 			receiverEmployeeId: input.receiverEmployeeId
 		};
 		if (input.organizationId) where['organizationId'] = input.organizationId;
-		return this.http.get<IPagination<IEmployeeNotification>>(NOTIFICATIONS, {
-			params: toParams({
-				where,
-				order: { createdAt: 'DESC' },
-				skip: input.skip ?? 0,
-				take: input.take ?? INBOX_UI_PAGE_SIZE
+		const query = { where, order: { createdAt: 'DESC' }, skip: input.skip ?? 0, take: input.take ?? INBOX_UI_PAGE_SIZE };
+		// The sender's name and picture for each row. An API that refuses the join still answers the list without it.
+		return this.http
+			.get<IPagination<IEmployeeNotification>>(NOTIFICATIONS, {
+				params: toParams({ ...query, relations: NOTIFICATION_SENDER_RELATIONS })
 			})
-		});
+			.pipe(
+				catchError((error: HttpErrorResponse) =>
+					error?.status === 400 || error?.status === 403
+						? this.http.get<IPagination<IEmployeeNotification>>(NOTIFICATIONS, { params: toParams(query) })
+						: throwError(() => error)
+				)
+			);
 	}
 
 	markRead(id: string): Observable<IEmployeeNotification> {

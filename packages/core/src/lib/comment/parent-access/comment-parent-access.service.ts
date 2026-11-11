@@ -1,3 +1,4 @@
+// cspell:ignore organizationcontact
 import {
 	BadRequestException,
 	ForbiddenException,
@@ -13,6 +14,11 @@ import { RequestContext } from '../../core/context';
 import { COMMENT_PARENT_ACCESS_POLICY } from './comment-parent-access-policy.decorator';
 import { CommentParentAccess, ICommentParent, ICommentParentAccessPolicy } from './comment-parent-access.types';
 import { isSpellingOfRecordType } from './record-type-spelling';
+
+/** The most records one batch read of a policy names (`readableParentIds`), far from any bound-parameter limit. */
+export const COMMENT_PARENT_BATCH = 500;
+/** The records read at a time when a policy has no batch read. */
+export const COMMENT_PARENT_READ_CONCURRENCY = 8;
 
 /**
  * The registry of comment-parent policies, and the check every governed comment read or write goes through.
@@ -119,6 +125,35 @@ export class CommentParentAccessService implements OnModuleInit {
 		}
 
 		return parent;
+	}
+
+	/**
+	 * The records among `entityIds`, of one record type, whose comments the caller may read: what
+	 * `assertMay('read', entity, id)` admits, for many records at once — through the policy's batch read when it has
+	 * one (one read per {@link COMMENT_PARENT_BATCH} records), else {@link COMMENT_PARENT_READ_CONCURRENCY} reads at a
+	 * time. A record type without a policy, a caller without its read permissions, or an id that is not a UUID answers
+	 * none. A read that fails throws (the caller refuses rather than guesses).
+	 */
+	async readableParentIds(entity: unknown, entityIds: readonly unknown[]): Promise<Set<string>> {
+		const readable = new Set<string>();
+		const policy = this.policyFor(entity);
+		if (!policy || !this.holdsPermission('read', entity)) {
+			return readable;
+		}
+		const ids = [...new Set(entityIds.filter((id): id is string => typeof id === 'string' && isUUID(id)))];
+		const asked = new Set(ids);
+		const batchRead = policy.findAccessibleParents?.bind(policy);
+		const size = batchRead ? COMMENT_PARENT_BATCH : COMMENT_PARENT_READ_CONCURRENCY;
+		for (let start = 0; start < ids.length; start += size) {
+			const slice = ids.slice(start, start + size) as ID[];
+			const parents = batchRead
+				? await batchRead(slice)
+				: await Promise.all(slice.map((id) => policy.findAccessibleParent(id)));
+			for (const parent of parents) {
+				if (parent && asked.has(String(parent.id))) readable.add(String(parent.id));
+			}
+		}
+		return readable;
 	}
 
 	/**

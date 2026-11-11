@@ -168,16 +168,18 @@ export const plugins = resolvePluginLoadOrder([
 	 */
 	...(isTrelloEnabled(process.env, (message) => console.warn(message)) ? [IntegrationTrelloPlugin] : []),
 	/**
-	 * The Inbox — hosted with what writes into it, and only when both are switched on: the Ever Works sync (this
-	 * process runs it as often as the API does, whoever holds the connection's lease, and it writes Ever Works inbox
-	 * items through the Inbox's writer), the notification delivery (its sweep reads the entries), and a task
-	 * integration whose scheduled import met a refused token (the notice to the person who connected is filed
-	 * through the same writer; without the Inbox here that notice would never be filed). It owns no queue or
-	 * schedule of its own.
+	 * The Inbox — hosted whenever it is switched on, for its own schedule: the recovery sweep that files the
+	 * notifications the API's live filing missed (a process that stopped between a notification's commit and its
+	 * filing; the Inbox spec's "no lost entries"). A `@ScheduledJob` fires only here, so without the Inbox in this
+	 * process the sweep would never run. It also serves what writes into it here: the Ever Works sync (this process
+	 * runs it as often as the API does, whoever holds the connection's lease, and it writes Ever Works inbox items
+	 * through the Inbox's writer), the notification delivery (its sweep reads the entries), and a task integration
+	 * whose scheduled import met a refused token (the notice to the person who connected is filed through the same
+	 * writer). With no queue root the plugin does not import its schedule at all.
 	 *
-	 * 🛑 Off unless `GAUZY_INBOX_ENABLED` is exactly `true` as well, so a worker is unchanged by default.
+	 * 🛑 Off unless `GAUZY_INBOX_ENABLED` is exactly `true`, so a worker is unchanged by default.
 	 */
-	...((everWorksEnabled || inboxDeliveryEnabled || isAsanaEnabled(process.env) || isLinearEnabled(process.env) || isTrelloEnabled(process.env)) && isInboxEnabled(process.env, (message) => console.warn(message)) ? [InboxPlugin] : []),
+	...(isInboxEnabled(process.env, (message) => console.warn(message)) ? [InboxPlugin] : []),
 	/**
 	 * Email delivery of the Inbox's notifications (immediate or digest per kind, the Inbox spec FR-10–FR-12): the
 	 * sweep that decides and sends runs here, on the worker's queue root, every minute.

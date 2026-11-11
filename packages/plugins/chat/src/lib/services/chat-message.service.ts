@@ -45,6 +45,7 @@ import { ChatMessage } from '../entities/chat-message.entity';
 import { ChatTaskReference } from '../entities/chat-task-reference.entity';
 import { ChatThreadFollow } from '../entities/chat-thread-follow.entity';
 import { ChatRealtime } from '../realtime/chat-realtime';
+import { inWriteTransaction } from '../realtime/chat-write-transaction';
 import { ChatAccessService, IChatCaller } from './chat-access.service';
 import { ChatNotifierService } from './chat-notifier.service';
 
@@ -258,9 +259,11 @@ export class ChatMessageService {
 	}
 
 	/**
-	 * Marks a followed thread read for the caller: its unread replies go to zero and the inbox notifications about
-	 * its replies are read too (the conversation's own unread state is untouched). A thread the caller does not
-	 * follow, or a root the caller may not read, changes nothing.
+	 * Marks a thread read for the caller: a followed thread's unread replies go to zero, and the inbox notifications
+	 * about its replies are read whether or not the caller still follows it (someone who unfollowed after a reply
+	 * notified them would otherwise keep that notification unread for good, since reading the conversation leaves
+	 * thread-only replies to the thread). The conversation's own unread state is untouched; a root the caller may not
+	 * read changes nothing (`messageForCaller` refuses it).
 	 */
 	async markThreadRead(caller: IChatCaller, rootMessageId: ID): Promise<IChatThreadReadResult> {
 		if (!caller.employeeId) return { updated: false };
@@ -269,9 +272,7 @@ export class ChatMessageService {
 			.getRepository(ChatThreadFollow)
 			.update({ rootMessageId: root.id as ID, employeeId: caller.employeeId, tenantId: caller.tenantId }, { unreadReplies: 0, lastReadReplyAt: new Date() });
 		const updated = (result.affected ?? 0) > 0;
-		if (updated) {
-			void this.notifier.markThreadRead(root.id as ID, { tenantId: caller.tenantId, employeeId: caller.employeeId });
-		}
+		void this.notifier.markThreadRead(root.id as ID, { tenantId: caller.tenantId, employeeId: caller.employeeId });
 		return { updated };
 	}
 
@@ -330,9 +331,10 @@ export class ChatMessageService {
 		const now = new Date();
 
 		let message: ChatMessage;
-		let readCount: number;
+		let followers: ChatMember[];
+		let events: IChatEvent[];
 		try {
-			const written = await this.dataSource.transaction(async (manager) => {
+			const written = await inWriteTransaction(this.dataSource, async (manager) => {
 				const repository = manager.getRepository(ChatMessage);
 				const created = await repository.save(
 					repository.create({
@@ -405,10 +407,24 @@ export class ChatMessageService {
 					);
 				}
 				await this.linkAttachments(manager, caller, conversation, created.id as ID, attachmentIds, false);
-				return { created, count };
+				// The facts commit with the message: the message itself, the thread's new reply count (to the followers of
+				// the thread who are members), and the sender's own read position. Every other member's counters follow
+				// after the commit (see below).
+				const threadFollowers = root ? await this.activeFollowers(caller.tenantId, root.id as ID, members, manager) : [];
+				const facts: IChatEvent[] = [await this.realtime.append(manager, this.realtime.messageFact(CHAT_EVENT_NAMES.MESSAGE_CREATED, created, members.map((m) => m.userId)))];
+				if (root) {
+					facts.push(
+						await this.realtime.append(manager, this.realtime.threadFact({ ...root, replyCount: (root.replyCount ?? 0) + 1 }, threadFollowers.map((follower) => follower.userId)))
+					);
+				}
+				if (timeline) {
+					facts.push(await this.realtime.append(manager, this.realtime.memberStateFact({ ...member, readCount: count, lastReadMessageId: created.id as ID })));
+				}
+				return { created, threadFollowers, facts };
 			});
 			message = written.created;
-			readCount = written.count;
+			followers = written.threadFollowers;
+			events = written.facts;
 		} catch (error) {
 			// A retry that raced its first attempt: the unique (author, nonce) key refused the second row, and the
 			// first is the answer.
@@ -418,30 +434,24 @@ export class ChatMessageService {
 			return { message: answer, events: [] };
 		}
 
-		// Notifications and real time, after the write (best effort). The followers of a thread hear of a reply only
-		// while they are members of the conversation, and by their notify level.
+		// Notifications after the write (best effort). The followers of a thread hear of a reply only while they are
+		// members of the conversation, and by their notify level.
 		this.notifier.notifyMentions(message, conversation, mentioned);
-		const followers = root ? await this.activeFollowers(caller.tenantId, root.id as ID, members) : [];
 		if (root) {
 			this.notifier.notifyThread(message, conversation, followers, mentioned);
 		} else {
 			this.notifier.notifyDirect(message, conversation, members, mentioned);
 		}
-		const recipients = members.map((m) => m.userId);
-		const events: IChatEvent[] = [await this.realtime.publish(this.realtime.messageFact(CHAT_EVENT_NAMES.MESSAGE_CREATED, message, recipients))];
-		if (root) {
-			events.push(await this.realtime.publish(this.realtime.threadFact({ ...root, replyCount: (root.replyCount ?? 0) + 1 }, followers.map((follower) => follower.userId))));
-		}
 		if (timeline) {
-			// Every other member's state reaches them on their own addressed stream, nobody else's; the sender's own
-			// comes back in the answer.
+			// Every other member's state reaches them on their own addressed stream, nobody else's (the sender's own is in
+			// the answer). After the commit and best effort: one row per member would hold the conversation's row lock
+			// for as long as they take to write, and the message's own fact already reached every member.
 			for (const m of members) {
 				if (String(m.id) === String(member.id)) continue;
 				await this.realtime.publish(
 					this.realtime.memberStateFact({ ...m, mentionCount: (m.mentionCount ?? 0) + (broadcast || mentioned.includes(String(m.employeeId)) ? 1 : 0) })
 				);
 			}
-			events.push(await this.realtime.publish(this.realtime.memberStateFact({ ...member, readCount, lastReadMessageId: message.id as ID })));
 		}
 		const [withRelations] = await this.withRelations(caller, [message]);
 		return { message: withRelations, events };
@@ -472,10 +482,11 @@ export class ChatMessageService {
 		// written with the body and the attachment links in one transaction, whose row lock makes a second edit wait — a
 		// message never shows one edit's text with another's attachments or task cards, and an edit is never half done.
 		const taskMentions = await this.mentionedTaskIds(caller, conversation, body, await this.keptTaskReferences(caller, message));
-		await this.dataSource.transaction(async (manager) => {
+		const events = await inWriteTransaction(this.dataSource, async (manager) => {
 			await manager.getRepository(ChatMessage).save(message);
 			if (attachments) await this.linkAttachments(manager, caller, conversation, message.id as ID, attachments, true);
 			await this.writeTaskMentions(manager, caller, conversation, message, taskMentions);
+			return [await this.realtime.append(manager, this.realtime.messageFact(CHAT_EVENT_NAMES.MESSAGE_UPDATED, message, members.map((m) => m.userId)))];
 		});
 		// A mention the edit added or took away moves the badge of a member who has not read the message yet.
 		if (inTimeline(message) && (added.length || removed.length)) {
@@ -490,7 +501,6 @@ export class ChatMessageService {
 		}
 		// Only the newly mentioned are told.
 		this.notifier.notifyMentions(message, conversation, added);
-		const events = [await this.realtime.publish(this.realtime.messageFact(CHAT_EVENT_NAMES.MESSAGE_UPDATED, message, members.map((m) => m.userId)))];
 		const [withRelations] = await this.withRelations(caller, [message]);
 		return { message: withRelations, events };
 	}
@@ -506,7 +516,7 @@ export class ChatMessageService {
 		const broadcast = !!message.mentionsChannel || !!message.mentionsHere;
 		const timeline = inTimeline(message);
 		const position = timeline ? await this.timelinePosition(caller.tenantId, message.conversationId, message, true) : 0;
-		const deleted = await this.dataSource.transaction(async (manager) => {
+		const events = await inWriteTransaction(this.dataSource, async (manager): Promise<IChatEvent[] | null> => {
 			// Only a message still there is deleted, and only the request that deleted it moves the counters: two deletes
 			// of the same message can both pass the check above, and the second would take the conversation's count and
 			// the members' read positions down a second time (unread badges too low). Its UPDATE waits for the first's row
@@ -518,7 +528,7 @@ export class ChatMessageService {
 				mentionEmployeeIds: null,
 				deletedAt: new Date()
 			} as never);
-			if (!(result.affected ?? 0)) return false;
+			if (!(result.affected ?? 0)) return null;
 			await manager.getRepository<ObjectLiteral>('DocumentLink').delete({ entity: BaseEntityEnum.ChatMessage, entityId: message.id, tenantId: caller.tenantId } as never);
 			if (timeline) {
 				// The timeline is one message shorter: the conversation's count follows, a read position past the end
@@ -541,12 +551,10 @@ export class ChatMessageService {
 					}
 				}
 			}
-			return true;
+			return [await this.realtime.append(manager, this.realtime.messageFact(CHAT_EVENT_NAMES.MESSAGE_DELETED, message, members.map((m) => m.userId)))];
 		});
 		// Deleted by a concurrent request: that one moved the counters and told the members.
-		if (!deleted) return { events: [] };
-		const events = [await this.realtime.publish(this.realtime.messageFact(CHAT_EVENT_NAMES.MESSAGE_DELETED, message, members.map((m) => m.userId)))];
-		return { events };
+		return { events: events ?? [] };
 	}
 
 	async pin(caller: IChatCaller, messageId: ID, pinned: boolean): Promise<IChatSendResult> {
@@ -554,12 +562,14 @@ export class ChatMessageService {
 		if (pinned && message.deletedAt) throw new BadRequestException('A deleted message cannot be pinned.');
 		const pinnedAt = pinned ? (message.pinnedAt ?? new Date()) : null;
 		const pinnedByEmployeeId = pinned ? (caller.employeeId ?? null) : null;
-		// Unpinning writes NULL: `save` would leave an undefined member untouched.
-		await this.dataSource.getRepository(ChatMessage).update({ id: message.id }, { pinnedAt, pinnedByEmployeeId } as never);
+		const members = await this.access.members(caller.tenantId, message.conversationId);
+		const events = await inWriteTransaction(this.dataSource, async (manager) => {
+			// Unpinning writes NULL: `save` would leave an undefined member untouched.
+			await manager.getRepository(ChatMessage).update({ id: message.id }, { pinnedAt, pinnedByEmployeeId } as never);
+			return [await this.realtime.append(manager, this.realtime.messageFact(CHAT_EVENT_NAMES.MESSAGE_UPDATED, message, members.map((m) => m.userId)))];
+		});
 		message.pinnedAt = pinnedAt ?? undefined;
 		message.pinnedByEmployeeId = pinnedByEmployeeId ?? undefined;
-		const members = await this.access.members(caller.tenantId, message.conversationId);
-		const events = [await this.realtime.publish(this.realtime.messageFact(CHAT_EVENT_NAMES.MESSAGE_UPDATED, message, members.map((m) => m.userId)))];
 		const [withRelations] = await this.withRelations(caller, [message]);
 		return { message: withRelations, events };
 	}
@@ -571,18 +581,20 @@ export class ChatMessageService {
 		if (add && message.deletedAt) throw new BadRequestException('A deleted message cannot be reacted to.');
 		const value = (emoji ?? '').trim();
 		if (!value || value.length > 32) throw new BadRequestException('State an emoji.');
-		const repository = this.dataSource.getRepository(Reaction);
 		const where = { entity: ReactionEntityEnum.ChatMessage, entityId: message.id as ID, emoji: value, employeeId: caller.employeeId, tenantId: caller.tenantId };
-		const existing = await repository.findOne({ where });
-		if (add && !existing) {
-			await repository.save(
-				repository.create({ ...where, actorType: ActorTypeEnum.User, organizationId: message.organizationId ?? caller.organizationId ?? undefined } as never)
-			);
-		} else if (!add && existing) {
-			await repository.remove(existing);
-		}
 		const members = await this.access.members(caller.tenantId, message.conversationId);
-		const events = [await this.realtime.publish(this.realtime.messageFact(CHAT_EVENT_NAMES.MESSAGE_UPDATED, message, members.map((m) => m.userId)))];
+		const events = await inWriteTransaction(this.dataSource, async (manager) => {
+			const repository = manager.getRepository(Reaction);
+			const existing = await repository.findOne({ where });
+			if (add && !existing) {
+				await repository.save(
+					repository.create({ ...where, actorType: ActorTypeEnum.User, organizationId: message.organizationId ?? caller.organizationId ?? undefined } as never)
+				);
+			} else if (!add && existing) {
+				await repository.remove(existing);
+			}
+			return [await this.realtime.append(manager, this.realtime.messageFact(CHAT_EVENT_NAMES.MESSAGE_UPDATED, message, members.map((m) => m.userId)))];
+		});
 		const [withRelations] = await this.withRelations(caller, [message]);
 		return { message: withRelations, events };
 	}
@@ -626,18 +638,17 @@ export class ChatMessageService {
 		}
 		const now = new Date();
 		const patch = { readCount: Math.max(member.readCount ?? 0, readCount), mentionCount, lastReadMessageId, lastReadAt: now };
-		// The read columns only: a preference or a counter written since the row was read is not written back.
-		await this.dataSource.getRepository(ChatMember).update({ id: member.id }, patch as never);
 		Object.assign(member, { ...patch, lastReadMessageId: lastReadMessageId ?? undefined });
-		// Thread replies the caller follows in this conversation are read too when reading everything.
-		if (!messageId) {
-			const followIds = await this.followIdsIn(caller, conversationId);
-			if (followIds.length) {
-				await this.dataSource.getRepository(ChatThreadFollow).update({ id: In(followIds) }, { unreadReplies: 0, lastReadReplyAt: now });
-			}
-		}
+		const events = await inWriteTransaction(this.dataSource, async (manager) => {
+			// The read columns only: a preference or a counter written since the row was read is not written back.
+			await manager.getRepository(ChatMember).update({ id: member.id }, patch as never);
+			return [await this.realtime.append(manager, this.realtime.memberStateFact(member))];
+		});
+		// Reading everything reads the replies of the followed threads that were also sent to the conversation; a reply
+		// that lives in its thread only stays unread until the thread is read (as its notification does).
+		if (!messageId) await this.readFollowedRepliesIn(caller, conversationId);
 		void this.notifier.markConversationRead(conversationId, { tenantId: caller.tenantId, employeeId: caller.employeeId }, anchor);
-		return { events: [await this.realtime.publish(this.realtime.memberStateFact(member))] };
+		return { events };
 	}
 
 	/** Marks the conversation unread from a message on (the message itself included); its mentions come back. */
@@ -650,9 +661,12 @@ export class ChatMessageService {
 			mentionCount: await this.countMentions(caller.tenantId, message.conversationId, caller.employeeId, message, true),
 			lastReadMessageId: null
 		};
-		await this.dataSource.getRepository(ChatMember).update({ id: member.id }, patch as never);
 		Object.assign(member, { ...patch, lastReadMessageId: undefined });
-		return { events: [await this.realtime.publish(this.realtime.memberStateFact(member))] };
+		const events = await inWriteTransaction(this.dataSource, async (manager) => {
+			await manager.getRepository(ChatMember).update({ id: member.id }, patch as never);
+			return [await this.realtime.append(manager, this.realtime.memberStateFact(member))];
+		});
+		return { events };
 	}
 
 	/** Marks every conversation of the caller read; answers an undo handle valid for a minute (on any replica). */
@@ -663,19 +677,22 @@ export class ChatMessageService {
 			: [];
 		const counts = new Map(conversations.map((c) => [String(c.id), c.messageCount ?? 0]));
 		const snapshot: ReadSnapshot = { v: 1, tenantId: caller.tenantId, userId: caller.userId, employeeId: caller.employeeId, at: Date.now(), rows: [], follows: [] };
-		const events: IChatEvent[] = [];
 		const now = new Date();
-		let updated = 0;
-		for (const member of members) {
-			const total = counts.get(String(member.conversationId)) ?? 0;
-			if ((member.readCount ?? 0) >= total && !(member.mentionCount > 0)) continue;
-			snapshot.rows.push({ id: member.id as ID, readCount: member.readCount ?? 0, mentionCount: member.mentionCount ?? 0, lastReadMessageId: member.lastReadMessageId ?? null });
-			const patch = { readCount: total, mentionCount: 0, lastReadAt: now };
-			await this.dataSource.getRepository(ChatMember).update({ id: member.id }, patch);
-			Object.assign(member, patch);
-			events.push(await this.realtime.publish(this.realtime.memberStateFact(member)));
-			updated += 1;
-		}
+		// Every conversation's read state and its fact commit together: all read, or none.
+		const events = await inWriteTransaction(this.dataSource, async (manager) => {
+			const facts: IChatEvent[] = [];
+			for (const member of members) {
+				const total = counts.get(String(member.conversationId)) ?? 0;
+				if ((member.readCount ?? 0) >= total && !(member.mentionCount > 0)) continue;
+				snapshot.rows.push({ id: member.id as ID, readCount: member.readCount ?? 0, mentionCount: member.mentionCount ?? 0, lastReadMessageId: member.lastReadMessageId ?? null });
+				const patch = { readCount: total, mentionCount: 0, lastReadAt: now };
+				await manager.getRepository(ChatMember).update({ id: member.id }, patch);
+				Object.assign(member, patch);
+				facts.push(await this.realtime.append(manager, this.realtime.memberStateFact(member)));
+			}
+			return facts;
+		});
+		const updated = events.length;
 		const follows = await this.dataSource.getRepository(ChatThreadFollow).find({
 			where: { tenantId: caller.tenantId, employeeId: caller.employeeId },
 			take: CHAT_MAX_PAGE_SIZE
@@ -706,18 +723,21 @@ export class ChatMessageService {
 		) {
 			throw new NotFoundException('Nothing to undo.');
 		}
-		const repository = this.dataSource.getRepository(ChatMember);
-		const events: IChatEvent[] = [];
-		let restored = 0;
-		for (const row of snapshot.rows) {
-			const member = await repository.findOne({ where: { id: row.id, tenantId: caller.tenantId, employeeId: caller.employeeId } });
-			if (!member) continue;
-			const patch = { readCount: Math.max(0, Number(row.readCount) || 0), mentionCount: Math.max(0, Number(row.mentionCount) || 0), lastReadMessageId: row.lastReadMessageId ?? null };
-			await repository.update({ id: member.id }, patch as never);
-			Object.assign(member, { ...patch, lastReadMessageId: row.lastReadMessageId ?? undefined });
-			events.push(await this.realtime.publish(this.realtime.memberStateFact(member)));
-			restored += 1;
-		}
+		const employeeId: ID = caller.employeeId;
+		const events = await inWriteTransaction(this.dataSource, async (manager) => {
+			const repository = manager.getRepository(ChatMember);
+			const facts: IChatEvent[] = [];
+			for (const row of snapshot.rows) {
+				const member = await repository.findOne({ where: { id: row.id, tenantId: caller.tenantId, employeeId } });
+				if (!member) continue;
+				const patch = { readCount: Math.max(0, Number(row.readCount) || 0), mentionCount: Math.max(0, Number(row.mentionCount) || 0), lastReadMessageId: row.lastReadMessageId ?? null };
+				await repository.update({ id: member.id }, patch as never);
+				Object.assign(member, { ...patch, lastReadMessageId: row.lastReadMessageId ?? undefined });
+				facts.push(await this.realtime.append(manager, this.realtime.memberStateFact(member)));
+			}
+			return facts;
+		});
+		const restored = events.length;
 		const follows = this.dataSource.getRepository(ChatThreadFollow);
 		for (const row of snapshot.follows) {
 			await follows.update(
@@ -864,20 +884,29 @@ export class ChatMessageService {
 				members
 			} as unknown as ITaskCreateInput)
 		);
-		const repository = this.dataSource.getRepository(ChatTaskReference);
+		const conversationMembers = await this.access.members(caller.tenantId, message.conversationId);
 		let saved: ChatTaskReference;
+		let events: IChatEvent[];
 		try {
-			saved = await repository.save(
-				repository.create({ messageId: message.id as ID, taskId: task.id as ID, kind: ChatTaskReferenceKindEnum.CREATED, tenantId: caller.tenantId, organizationId })
-			);
+			// The reference and its fact commit together.
+			const written = await inWriteTransaction(this.dataSource, async (manager) => {
+				const repository = manager.getRepository(ChatTaskReference);
+				const reference = await repository.save(
+					repository.create({ messageId: message.id as ID, taskId: task.id as ID, kind: ChatTaskReferenceKindEnum.CREATED, tenantId: caller.tenantId, organizationId })
+				);
+				const facts: IChatEvent[] = [
+					await this.realtime.append(manager, this.realtime.messageFact(CHAT_EVENT_NAMES.MESSAGE_UPDATED, message, conversationMembers.map((m) => m.userId)))
+				];
+				return { reference, facts };
+			});
+			saved = written.reference;
+			events = written.facts;
 		} catch (error) {
 			// The task exists (its own transaction committed) but the message does not point to it: said with the task's
 			// id, so the person links it by hand rather than creating it again.
 			this.logger.error(`Task ${task.id} was created from message ${message.id}, but the reference could not be saved: ${error instanceof Error ? error.message : String(error)}`);
 			throw new InternalServerErrorException({ message: `The task was created (${task.id}) but the message could not be linked to it; link it by hand rather than creating it again`, taskId: task.id });
 		}
-		const members2 = await this.access.members(caller.tenantId, message.conversationId);
-		const events = [await this.realtime.publish(this.realtime.messageFact(CHAT_EVENT_NAMES.MESSAGE_UPDATED, message, members2.map((m) => m.userId)))];
 		return { task, reference: { messageId: saved.messageId, taskId: saved.taskId, kind: saved.kind }, events };
 	}
 
@@ -967,6 +996,55 @@ export class ChatMessageService {
 	}
 
 	/** The caller's follows of the threads of a conversation (object criteria: every name quoted for the dialect). */
+	/**
+	 * A full read of a conversation, for the threads the caller follows in it: of a follow's unread replies, only the
+	 * ones that live in the thread only (not also sent to the conversation) stay unread — the others were just read in
+	 * the conversation. Thread-only replies are counted from the follow's read mark (`lastReadReplyAt`, which a new
+	 * follow starts with, see `follow`), and the mark does not move (the thread itself was not read). The counter only
+	 * goes down, by a compare-and-set on the value read: a reply counted meanwhile, or another read of the same follow
+	 * (a second tab) that got there first, makes the write miss, and the follow is read and counted again — so two reads
+	 * never both subtract, and a reply arriving meanwhile still counts.
+	 */
+	private async readFollowedRepliesIn(caller: IChatCaller & { employeeId: ID }, conversationId: ID): Promise<void> {
+		const followIds = await this.followIdsIn(caller, conversationId);
+		if (!followIds.length) return;
+		const follows = this.dataSource.getRepository(ChatThreadFollow);
+		const select = { id: true, rootMessageId: true, unreadReplies: true, lastReadReplyAt: true } as const;
+		const unreadFollows = await follows.find({ select, where: { id: In(followIds), tenantId: caller.tenantId, unreadReplies: MoreThan(0) } });
+		for (const unreadFollow of unreadFollows) {
+			let follow: ChatThreadFollow | null = unreadFollow;
+			for (let attempt = 0; attempt < 3 && follow && (follow.unreadReplies ?? 0) > 0; attempt += 1) {
+				const unread = follow.unreadReplies ?? 0;
+				const stillUnread = Math.min(unread, await this.threadOnlyRepliesSince(caller, follow));
+				if (stillUnread >= unread) break;
+				const written = await follows.update({ id: follow.id as ID, tenantId: caller.tenantId, unreadReplies: unread }, { unreadReplies: stillUnread });
+				if ((written.affected ?? 0) > 0) break;
+				follow = await follows.findOne({ select, where: { id: follow.id as ID, tenantId: caller.tenantId } });
+			}
+		}
+	}
+
+	/** The replies to a followed thread that live in the thread only, by others, since the follow's read mark. */
+	private async threadOnlyRepliesSince(caller: IChatCaller & { employeeId: ID }, follow: Pick<ChatThreadFollow, 'rootMessageId' | 'lastReadReplyAt'>): Promise<number> {
+		const replies = this.dataSource
+			.getRepository(ChatMessage)
+			.createQueryBuilder('reply')
+			.where('reply.threadRootId = :rootMessageId', { rootMessageId: follow.rootMessageId })
+			.andWhere('reply.tenantId = :tenantId', { tenantId: caller.tenantId })
+			.andWhere(
+				new Brackets((place) => {
+					place.where('reply.alsoInConversation IS NULL').orWhere('reply.alsoInConversation = :alsoInConversation', { alsoInConversation: false });
+				})
+			)
+			.andWhere(
+				new Brackets((by) => {
+					by.where('reply.authorEmployeeId IS NULL').orWhere('reply.authorEmployeeId != :employeeId', { employeeId: caller.employeeId });
+				})
+			);
+		if (follow.lastReadReplyAt) replies.andWhere('reply.createdAt > :since', { since: follow.lastReadReplyAt });
+		return replies.getCount();
+	}
+
 	private async followIdsIn(caller: IChatCaller & { employeeId: ID }, conversationId: ID): Promise<ID[]> {
 		const follows = await this.dataSource.getRepository(ChatThreadFollow).find({
 			select: { id: true, rootMessageId: true },
@@ -991,8 +1069,8 @@ export class ChatMessageService {
 	}
 
 	/** The members of the conversation who follow a thread (a follower who left the conversation is not one). */
-	private async activeFollowers(tenantId: ID, rootMessageId: ID, members: readonly ChatMember[]): Promise<ChatMember[]> {
-		const follows = await this.dataSource.getRepository(ChatThreadFollow).find({ select: { employeeId: true }, where: { rootMessageId, tenantId } });
+	private async activeFollowers(tenantId: ID, rootMessageId: ID, members: readonly ChatMember[], manager?: EntityManager): Promise<ChatMember[]> {
+		const follows = await (manager ?? this.dataSource).getRepository(ChatThreadFollow).find({ select: { employeeId: true }, where: { rootMessageId, tenantId } });
 		const following = new Set(follows.map((follow) => String(follow.employeeId)));
 		return members.filter((member) => following.has(String(member.employeeId)));
 	}
@@ -1131,7 +1209,10 @@ export class ChatMessageService {
 		return count;
 	}
 
-	/** Follows a thread for an employee (upsert); a new follow starts with nothing unread when `read` is true. */
+	/**
+	 * Follows a thread for an employee (upsert); a new follow starts with nothing unread when `read` is true, and
+	 * otherwise counts the replies from this one on (its read mark is the thread's previous reply, or the root).
+	 */
 	private async follow(
 		manager: EntityManager,
 		root: ChatMessage,
@@ -1150,7 +1231,9 @@ export class ChatMessageService {
 				employeeId: who.employeeId,
 				userId: who.userId,
 				unreadReplies: 0,
-				lastReadReplyAt: read ? new Date() : undefined,
+				// A follow that starts unread (the root author's, when someone replies) starts after the replies before this
+				// one: those were never counted on it, so reading the conversation must not count them as still unread.
+				lastReadReplyAt: read ? new Date() : (root.lastReplyAt ?? root.createdAt ?? undefined),
 				tenantId: who.tenantId,
 				organizationId: root.organizationId ?? who.organizationId ?? undefined
 			})

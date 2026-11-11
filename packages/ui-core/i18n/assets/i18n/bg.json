@@ -2107,7 +2107,11 @@
 			"SORT_BY": "Сортиране по {{ name }}",
 			"SORT_LABEL": "Сортиране по",
 			"SORT_ASCENDING": "Възходящо",
-			"SORT_DESCENDING": "Низходящо"
+			"SORT_DESCENDING": "Низходящо",
+			"FILTER_PLACEHOLDER": "Филтриране на служители",
+			"CLEAR_FILTER": "Изчистване на филтъра",
+			"FILTERED_COUNT": "{{ shown }} от {{ total }}",
+			"NO_MATCHES": "Няма служители, отговарящи на \"{{ term }}\""
 		},
 		"SELECT_A_MONTH_AND_EMPLOYEE": "Моля, изберете един месец и служител от менюто по-горе",
 		"INSERT_TEXT_FOR_NOT_AUTHENTICATED_USERS": "Добави текст за неаутентикирани потребители",

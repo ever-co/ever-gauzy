@@ -3,6 +3,7 @@ import { GauzyCorePlugin as Plugin, IOnPluginBootstrap, IOnPluginDestroy } from 
 import { REALTIME_MIGRATIONS } from './database/realtime-migrations';
 import { RealtimeResolver } from './graphql/realtime.resolver';
 import { realtimeSchemaExtensions } from './graphql/realtime.schema';
+import { REALTIME_ENTITIES } from './realtime.entities';
 import { RealtimeModule } from './realtime.module';
 
 export { REALTIME_MIGRATIONS };
@@ -12,12 +13,13 @@ export { REALTIME_MIGRATIONS };
  *
  * Gauzy is production: the plugin is listed by `apps/api/src/plugins.ts` only when `GAUZY_REALTIME_ENABLED` is
  * exactly `true` (`isRealtimeEnabled`). Off (the default) it is not loaded at all: no route, no GraphQL field,
- * no outbox row, no role grant (its migration is not even registered).
+ * no outbox row, no role grant, no table (its migrations are not even registered).
  */
 @Plugin({
 	imports: [RealtimeModule],
-	// No table of its own: hints live on the platform's event outbox, presence on the employee.
-	entities: [],
+	// Hints live on the platform's event outbox; the plugin's own tables hold per-connection presence and the replay
+	// watermark. Arrays, not factories: the platform resolves a factory for migrations but not for entities.
+	entities: [...REALTIME_ENTITIES],
 	migrations: [...REALTIME_MIGRATIONS],
 	// `Subscription.collaborationEvents`, served only with the plugin.
 	extensions: {

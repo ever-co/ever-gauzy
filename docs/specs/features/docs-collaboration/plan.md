@@ -25,7 +25,7 @@ the same API.
 | --- | --- | --- |
 | Visibility and shares | `visibility` column, `document_share`, `document-access.predicate.ts` + `.sql.ts` (one rule, two surfaces) | `TEAM` added to both surfaces; team membership resolved at query time like team shares |
 | Following | the platform's `EntitySubscription` (`CreateEntitySubscriptionEvent`), the comment fan-out and the mention service | follow = a `MANUAL` subscription; mentions are told by the mention service; comments on followed pages are told by the core follower fan-out (`FollowerFanOutService`), which runs only with `GAUZY_NOTIFICATION_FANOUT_ENABLED=true` (default off): a deployment that enables Docs collaboration must enable it too, or FR-10's follower-comment entries are not created |
-| Notifications | `EmployeeCreateNotificationEvent` → the unified Inbox (`inbox` spec) | share / review entries, dedupe per receiver, page and kind |
+| Notifications | `EmployeeCreateNotificationEvent` → the unified Inbox (`inbox` spec) | share / review entries, shares deduped per receiver and page |
 | Concurrency | `expectedUpdatedAt` on the content save (409 `DOCS_CONTENT_CONFLICT`) | `expectedRevision` beside it; `contentRevision` moves on every content change |
 | Tree operations | `DocumentTreeService.collectVisibleSubtree` | a space move takes the descendants the caller may write |
 | HTML → Markdown | `turndown` (already a plugin dependency), the `contentHtml` render cache | export (phase 2) |
@@ -61,12 +61,12 @@ adds the live-session module (`GAUZY_DOCS_LIVE_ENABLED`, limits, access re-check
 - **Follow / mute**: a mute removes the caller's subscriptions and keeps them out of the plugin's own
   notifications until they unmute; a direct mention subscribes them again, as everywhere on the platform.
 - **Notifications**: `DocumentNotifierService.publish` files share, review-request and review-decision entries;
-  the actor and the people who muted the page are never told. The same person is told of the same kind on the
-  same page once per `DOCS_NOTIFICATION_DEDUPE_MINUTES` (10; `recentlyNotified` compares type and message
-  line). Known limitation: the window applies to every kind, so a second review request (or a second
-  decision) for the same person and page within ten minutes files no entry, even when the first review was
-  already completed; the Inbox spec meant the window for mentions. Follow-up: keep the window for shares
-  only, or key review entries by review round (the review's request time).
+  the actor and the people who muted the page are never told. The same person is told of a share of the same
+  page once per `DOCS_NOTIFICATION_DEDUPE_MINUTES` (10; `recentlyNotified` compares type and message line).
+  The window is for shares only (`DEDUPED_DOCUMENT_NOTIFICATION_KINDS`): every review request and decision is a
+  review round of its own (a request only moves a page that is not pending to pending, a decision only moves a
+  pending one on), so a second round for the same person and page within ten minutes is an entry too
+  (`document-notifier.service.spec`).
 - **Revision**: `contentRevision` starts at 1 for every existing page and moves on every content change; a stale
   `expectedRevision` is 409 with the current one, nothing written.
 - **Flag off**: `TEAM` writes and the collaboration routes answer 404 `DOCS_COLLAB_DISABLED`; existing TEAM pages
@@ -80,19 +80,23 @@ adds the live-session module (`GAUZY_DOCS_LIVE_ENABLED`, limits, access re-check
   receiver.
 - **Markdown merge** (`mergeMarkdownUpdate` in `services/document-markdown.ts`, behind
   `PUT /documents/:id/content/markdown`, merged with phase 2): the stored blocks and the incoming ones are
-  matched by their Markdown, in order (a longest common subsequence; a greedy in-order match above
-  `MARKDOWN_DIFF_MAX_CELLS`); a matched block keeps its stored JSON (attributes, marks, comment anchors), an
-  unmatched incoming block is built from the Markdown, an unmatched stored block is dropped. Known limitations:
-  blocks carry no identity in Markdown, so (1) among identical blocks the earliest stored ones are kept:
-  removing the first of two identical paragraphs keeps the first's stored block and drops the second's,
-  comments included; (2) a reorder keeps only the blocks of the longest common subsequence: `[A, B]` →
-  `[B, A]` keeps one of them and rebuilds the other from its Markdown, losing its attributes and comment
-  anchors. Neither case is refused yet. Follow-up: stable block ids round-tripped in the exported Markdown
-  (or targeted block edits) with move-aware matching, and a 409 for an update that cannot keep a changed,
-  duplicated or moved block's comments.
+  matched by their Markdown, wherever they moved, in O((n + m) log(n + m)): a text found once on each side is
+  the same block (moved or not); the longest run of those that kept their order are anchors, and a text with an
+  identical twin is matched gap by gap between the anchors (a gap with as many incoming twins as stored ones
+  pairs them in order). A matched block keeps its stored JSON (attributes, marks, block ids, so comment
+  anchors), an unmatched incoming block is built from the Markdown, an unmatched stored block is dropped. When
+  twins were added, removed or moved so that which is which is a guess (`ambiguousBlockIds`), and a comment is
+  anchored to one of them (the `[[block:<blockId>]]` first line of an editor block thread), the update is
+  refused with 409 `DOCS_MARKDOWN_AMBIGUOUS` (`currentRevision`, `blockIds`), nothing written; the MCP
+  `update_page_markdown` tool answers that conflict without sending the client to read the page again. Known
+  limitations: blocks still carry no identity in Markdown, so (1) the twin rule is conservative: removing one of
+  two adjacent identical commented paragraphs is refused even when the intent is plain to a reader; (2) a block
+  whose text changed is rebuilt from its Markdown, so its block id (and the anchor of a comment on it) goes, as
+  before. Follow-up: stable block ids round-tripped in the exported Markdown (or targeted block edits).
 
 ## 5. Tests
 
 `document-access.predicate.spec` (TEAM rows), `document-collaboration.helpers.spec`; the migration follows the
-tested style of `1791000004700`. Phase 2: `document-markdown.spec` (round trip, block diff). The in-cluster build
-runs the plugin suite on `develop`.
+tested style of `1791000004700`. Phase 2: `document-markdown.spec` (round trip, block diff, moved and identical
+blocks), `document-markdown.service.spec` (the 409 for a commented twin), `document-notifier.service.spec` (the
+share-only dedupe window). The in-cluster build runs the plugin suite on `develop`.

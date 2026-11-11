@@ -54,7 +54,7 @@ entries, files, tasks, search, the outbox and the subscription surface, presence
 | Table | Columns (beyond the tenant/organization base) |
 | ----- | --------------------------------------------- |
 | `chat_category` | `name`, `position` |
-| `chat_conversation` | `kind` (channel/direct/group), `name`, `topic`, `visibility` (public/private), `categoryId`, `position`, `isDefault`, `archivedAt`, `createdByEmployeeId`, `messageCount` (int), `lastMessageAt`, `directKey` (direct/group: SHA-256 of the sorted, deduplicated user ids, `directKeyOf` in `chat-direct-key.ts`; unique index (`tenantId`, `directKey`); the default channel stores `default:<organizationId>`). Not organization-scoped yet: see §14.1 |
+| `chat_conversation` | `kind` (channel/direct/group), `name`, `topic`, `visibility` (public/private), `categoryId`, `position`, `isDefault`, `archivedAt`, `createdByEmployeeId`, `messageCount` (int), `lastMessageAt`, `directKey` (direct/group: SHA-256 of the sorted, deduplicated user ids, `directKeyOf` in `chat-direct-key.ts`; unique index (`tenantId`, `organizationId`, `directKey`), so the same people have one conversation per organization they share — migration `1791000006600` replaced the per-tenant (`tenantId`, `directKey`) index; the default channel stores `default:<organizationId>`) |
 | `chat_member` | `conversationId`, `employeeId`, `userId`, `role` (member/manager), `notifyLevel` (all/mentions/muted), `isFavorite`, `readCount` (int), `mentionCount` (int), `lastReadMessageId`, `lastReadAt`, `joinedAt`, `leftAt`; unique (conversationId, employeeId) |
 | `chat_message` | `conversationId`, `authorEmployeeId`, `authorUserId`, `kind` (message/system/app), `body` (text), `mentionEmployeeIds` (json), `mentionsChannel`, `mentionsHere`, `replyToId`, `threadRootId`, `alsoInConversation`, `replyCount` (int), `lastReplyAt`, `pinnedAt`, `pinnedByEmployeeId`, `editedAt`, `attachmentIds` (json), `nonce`; indexes (conversationId, createdAt), (threadRootId), unique (authorUserId, nonce) |
 | `chat_thread_follow` | `rootMessageId`, `employeeId`, `userId`, `unreadReplies` (int), `lastReadReplyAt`; unique (rootMessageId, employeeId) |
@@ -84,7 +84,7 @@ Contracts: `packages/contracts/src/lib/chat.model.ts` (enums, interfaces, inputs
 | `POST` | `/chat/conversations/:id/messages` | SEND | `{ body, nonce, replyToId?, threadRootId?, alsoInConversation?, attachmentIds?, mentionEmployeeIds?, taskId? }` → message + the events it caused |
 | `PATCH` | `/chat/messages/:id` · `DELETE` | author / MANAGE | edit (editedAt), delete (tombstone when replies exist) |
 | `POST` | `/chat/messages/:id/pin` · `/unpin` · `/unread` | VIEW | pin; mark unread from here |
-| `POST` / `DELETE` | `/chat/messages/:id/reactions/:emoji` | VIEW | core reactions with membership check |
+| `POST` / `DELETE` | `/chat/messages/:id/reactions/:emoji` | VIEW | core reactions with membership check (the generic `/reaction` routes leave chat reactions out, §14.2) |
 | `GET` | `/chat/messages/:id/thread` · `POST /:id/thread/read` · `POST /:id/follow` · `/:id/unfollow` | VIEW | thread replies (same anchor paging), mark the thread read (clears its reply notifications), follow state |
 | `POST` | `/chat/messages/:id/create-task` | SEND + task create | `{ projectId, title?, assigneeIds? }` → task + reference |
 | `GET` | `/chat/states` · `POST /chat/read-all` · `POST /chat/read-restore` | VIEW | all member states; mark all read (returns a snapshot id); undo within 60 s |
@@ -107,10 +107,11 @@ Non-members get 404.
 Inbox: `@employee` mention → `MentionService.publishMention` (existing MENTION notification → Inbox item);
 direct message → `EmployeeNotificationTypeEnum.MESSAGE` through `publishNotificationEvent`; reply in a followed
 thread → `MESSAGE` too (subject names the thread). Reading a conversation
-(`ChatNotifierService.markConversationRead`) marks the notifications of its messages and its mentions read;
-reading a thread (`markThreadRead`, `POST /chat/messages/:id/thread/read`) marks the notifications of that
-thread's replies read. Known gap: the conversation read also clears thread-only replies (§14.3). Typing and
-presence: realtime plugin signals.
+(`ChatNotifierService.markConversationRead`) marks the notifications of its messages and its mentions read,
+leaving out replies that live in a thread only (`threadRootId` set, `alsoInConversation` false); reading a thread
+(`markThreadRead`, `POST /chat/messages/:id/thread/read`) marks the notifications of that thread's replies read.
+A mention is filed against the conversation, not the reply, so a mention in a thread-only reply still clears
+with the conversation read (§14.3). Typing and presence: realtime plugin signals.
 
 ## 6. UI Surface
 
@@ -151,29 +152,41 @@ I plugin · II scoped · III tri-dialect additive migrations, MikroORM repositor
 | Risk | Mitigation |
 | --- | --- |
 | Counter drift under concurrent writes | increments in one UPDATE statement; nightly repair |
-| Direct conversation duplicates | unique (`tenantId`, `directKey`), the loser of a race answers the winner's conversation; to be scoped per organization (§14.1) |
+| Direct conversation duplicates | unique (`tenantId`, `organizationId`, `directKey`), the loser of a race answers the winner's conversation of its organization (§14.1) |
 | Large histories | cursor paging on (createdAt, id); indexes |
-| Reactions through the generic `/reaction` route bypassing membership | `ReactionService.create` refuses `ReactionEntityEnum.ChatMessage` (400, "managed through the chat API"); chat routes write reactions with the membership check. Reads and the emoji update through `/reaction` are not filtered yet (§14.2) |
+| Reactions through the generic `/reaction` route bypassing membership | `ReactionService.create` refuses `ReactionEntityEnum.ChatMessage` (400, "managed through the chat API"); chat routes write reactions with the membership check. The other generic reads and writes leave chat reactions out (§14.2) |
 
 ## 14. Known limitations / follow-ups
 
-What the merged code (ever-gauzy #11683 and its follow-ups) does not do yet; each item names the code.
+What the merged code (ever-gauzy #11683 and its follow-ups) did not do; each item names the code. Items 1–3
+were fixed together (branch `fix/chat-direct-org-thread-read-reactions`); what is still open is said in each.
 
-1. **`directKey` is unique per tenant, not per organization.** `ChatConversationService.direct` looks up
-   `{ tenantId, directKey }` and the unique index is (`tenantId`, `directKey`), while `directKeyOf` hashes
-   user ids only. A user can be an employee of several organizations of one tenant; once two people have
-   a direct (or group) conversation in one organization, `POST /chat/direct` for the same people in
-   another organization finds that conversation and answers 404 (`ChatAccessService.conversation` refuses
-   another organization's row), so they can never talk there. Follow-up: add `organizationId` to the
-   lookup and to the unique index (migration: drop and recreate the index as (`tenantId`,
-   `organizationId`, `directKey`)), or hash the organization into the key.
-2. **The generic reaction routes still read and edit chat reactions.** Only `ReactionService.create`
-   refuses `ChatMessage`; `GET /reaction` and `GET /reaction/:id` (core `ReactionController`, tenant-scoped
-   only) list chat reactions (emoji, employee, message id) to non-members, and `PUT /reaction/:id` changes
-   the emoji of the caller's own chat reaction without the membership check. Follow-up: exclude or refuse
-   `entity = ChatMessage` in `findAll`, `findOneByIdString` and `update` of `ReactionService`.
-3. **Reading a conversation also clears followed-thread replies.** `markConversationRead` selects the
-   notifications of every message of the conversation, thread-only replies included, so opening the
-   conversation clears a followed-thread entry the member has not read (spec FR-17). Follow-up: leave out
-   replies that are not also in the conversation (`threadRootId IS NOT NULL AND alsoInConversation = false`)
-   in the conversation read; the thread read already clears them.
+1. **Fixed: `directKey` is unique per organization.** It was unique per tenant: `ChatConversationService.direct`
+   looked up `{ tenantId, directKey }` under the unique index (`tenantId`, `directKey`), while `directKeyOf`
+   hashes user ids only, so two people who share two organizations of a tenant found the first
+   organization's conversation from the second, and `POST /chat/direct` answered 404 there
+   (`ChatAccessService.conversation` refuses another organization's row). `direct` now looks up — and its
+   race fallback re-reads — `{ tenantId, organizationId, directKey }`, and migration
+   `ScopeChatDirectKeyToOrganization1791000006600` replaces the index with
+   `UQ_chat_conversation_organization_direct_key` (`tenantId`, `organizationId`, `directKey`), partial on
+   `directKey IS NOT NULL` on Postgres and SQLite, created before the old one is dropped (every existing row
+   satisfies it; no data step). Its `down` restores the per-tenant index, which the database refuses while
+   the same people have a conversation in two organizations. Still open: a caller the request scopes to no
+   organization keeps the tenant-wide lookup (their reach is tenant-wide in chat), and a conversation it
+   creates has no organization, so the index (NULLs distinct) does not guard two such first requests racing.
+2. **Fixed: the generic reaction routes leave chat reactions out.** Only `ReactionService.create` refused
+   `ChatMessage`; `GET /reaction`, `/reaction/pagination`, `/reaction/count`, `GET /reaction/:id` and the
+   `reactions`, `reaction`, `reactionCount` fields listed chat reactions (emoji, employee, message id) to
+   non-members, and `PUT /reaction/:id` (`updateReaction`) changed the emoji of the caller's own chat reaction
+   without the membership check. `ReactionService` now adds `entity <> 'ChatMessage'` to every list, count and
+   read by id (`withoutChatReactions` in `reaction-chat-scope.ts`, keeping the caller's own condition on
+   `entity`), so a chat reaction reads as one that does not exist (404, also for withdrawing or restoring it);
+   `update` refuses one with the same 400 as `create`, and `delete` does not delete one. The chat plugin reads
+   the `reaction` rows itself, never through this service, so the chat routes are unchanged.
+3. **Fixed: reading a conversation leaves followed-thread replies to the thread read.** `markConversationRead`
+   selected the notifications of every message of the conversation, thread-only replies included, so opening
+   the conversation cleared a followed-thread entry the member had not read (spec FR-17). It now leaves out
+   replies that live in a thread only (`threadRootId IS NOT NULL AND alsoInConversation = false`); the thread
+   read clears them. Still open: an `@mention` is filed against the conversation (`MentionService`, parent =
+   conversation), not the reply, so the conversation read still clears a mention made in a thread-only reply,
+   and the thread read does not.

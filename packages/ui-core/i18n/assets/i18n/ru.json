@@ -2082,7 +2082,11 @@
 			"SORT_BY": "Сортировать по {{ name }}",
 			"SORT_LABEL": "Сортировать по",
 			"SORT_ASCENDING": "По возрастанию",
-			"SORT_DESCENDING": "По убыванию"
+			"SORT_DESCENDING": "По убыванию",
+			"FILTER_PLACEHOLDER": "Фильтр сотрудников",
+			"CLEAR_FILTER": "Сбросить фильтр",
+			"FILTERED_COUNT": "{{ shown }} из {{ total }}",
+			"NO_MATCHES": "Нет сотрудников, соответствующих \"{{ term }}\""
 		},
 		"SELECT_A_MONTH_AND_EMPLOYEE": "Пожалуйста, выберите месяц и сотрудника из меню выше",
 		"INSERT_TEXT_FOR_NOT_AUTHENTICATED_USERS": "Вставить текст для неавторизованных пользователей",

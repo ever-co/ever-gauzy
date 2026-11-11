@@ -2499,7 +2499,11 @@
 			"SORT_BY": "Sort by {{ name }}",
 			"SORT_LABEL": "Sort by",
 			"SORT_ASCENDING": "Ascending",
-			"SORT_DESCENDING": "Descending"
+			"SORT_DESCENDING": "Descending",
+			"FILTER_PLACEHOLDER": "Filter employees",
+			"CLEAR_FILTER": "Clear filter",
+			"FILTERED_COUNT": "{{ shown }} of {{ total }}",
+			"NO_MATCHES": "No employees match \"{{ term }}\""
 		},
 		"SELECT_A_MONTH_AND_EMPLOYEE": "Please select a month and employee from the menu above",
 		"INSERT_TEXT_FOR_NOT_AUTHENTICATED_USERS": "Insert text for not authenticated users",

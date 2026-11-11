@@ -2032,7 +2032,11 @@
 			"SORT_BY": "الترتيب حسب {{ name }}",
 			"SORT_LABEL": "ترتيب حسب",
 			"SORT_ASCENDING": "تصاعدي",
-			"SORT_DESCENDING": "تنازلي"
+			"SORT_DESCENDING": "تنازلي",
+			"FILTER_PLACEHOLDER": "تصفية الموظفين",
+			"CLEAR_FILTER": "مسح التصفية",
+			"FILTERED_COUNT": "{{ shown }} من {{ total }}",
+			"NO_MATCHES": "لا يوجد موظفون يطابقون \"{{ term }}\""
 		},
 		"SELECT_A_MONTH_AND_EMPLOYEE": "يرجى تحديد شهر وموظف من القائمة أعلاه",
 		"INSERT_TEXT_FOR_NOT_AUTHENTICATED_USERS": "أدخل النص للمستخدمين غير المصادق عليهم",

@@ -11,6 +11,7 @@ import {
 import { RolePermissionModule } from '@gauzy/core';
 import { InboxItem } from './entities/inbox-item.entity';
 import { InboxItemRecipient } from './entities/inbox-item-recipient.entity';
+import { InboxSweepCheckpoint } from './entities/inbox-sweep-checkpoint.entity';
 import { InboxController } from './inbox.controller';
 import { InboxResolver } from './graphql/inbox.resolver';
 import { InboxItemFeed } from './inbox-item-feed';
@@ -18,9 +19,10 @@ import { InboxService } from './inbox.service';
 import { InboxSourceHandlerRegistry } from './inbox-source-handler.registry';
 import { InboxRealtime } from './realtime/inbox-realtime';
 import { INBOX_NOTIFICATION_HANDLERS, InboxNotificationBridge } from './notifications/inbox-notification.bridge';
+import { InboxNotificationSweepService } from './notifications/inbox-notification-sweep.service';
 
 /** Every table the plugin owns (its migrations create them). */
-export const INBOX_ENTITIES = [InboxItem, InboxItemRecipient];
+export const INBOX_ENTITIES = [InboxItem, InboxItemRecipient, InboxSweepCheckpoint];
 
 /**
  * The Inbox module (`@gauzy/plugin-inbox`), loaded only when `GAUZY_INBOX_ENABLED=true`.
@@ -46,6 +48,8 @@ export const INBOX_ENTITIES = [InboxItem, InboxItemRecipient];
 		// The unified inbox: platform notifications filed as NOTIFICATION items, read state kept one both ways.
 		InboxNotificationBridge,
 		...INBOX_NOTIFICATION_HANDLERS,
+		// Files the notifications the live filing missed; run by `InboxMaintenanceModule`'s schedule where a queue root exists.
+		InboxNotificationSweepService,
 		InboxSourceHandlerRegistry,
 		InboxService,
 		// Listed here as well as in the plugin's `extensions`: a resolver only the plugin metadata names is never
@@ -63,6 +67,7 @@ export const INBOX_ENTITIES = [InboxItem, InboxItemRecipient];
 	exports: [
 		InboxSourceHandlerRegistry,
 		InboxService,
+		InboxNotificationSweepService,
 		InboxItemFeed,
 		INBOX_SOURCE_HANDLER_REGISTRY,
 		INBOX_ITEM_WRITER,
