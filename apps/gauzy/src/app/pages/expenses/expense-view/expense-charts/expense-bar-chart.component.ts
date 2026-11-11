@@ -41,7 +41,7 @@ import { IExpenseChartBar } from '../expense-view-charts';
 	selector: 'ga-expense-bar-chart',
 	template: `
 		<ul class="legend">
-			<li><span class="swatch" [style.background-color]="palette().expenses"></span>{{ highlightLabel() }}</li>
+			<li><span class="swatch" [style.background-color]="palette()[accent()]"></span>{{ highlightLabel() }}</li>
 			<li><span class="swatch" [style.background-color]="palette().bonus"></span>{{ otherLabel() }}</li>
 		</ul>
 		<div class="canvas" aria-hidden="true">
@@ -121,6 +121,9 @@ export class ExpenseBarChartComponent implements OnInit, AfterViewInit, OnDestro
 	/** Formats an amount for the tooltip, in the expense's currency. */
 	readonly formatValue = input<(value: number) => string>((value) => String(value));
 
+	/** The chart colour of the highlighted bar: the expenses colour, or the revenue one on the income page. */
+	readonly accent = input<'expenses' | 'revenue'>('expenses');
+
 	/** The theme's colours, and the options built from them: both set again on every theme change. */
 	readonly palette = signal<IEmployeeChartPalette>(resolveEmployeeChartPalette({} as NbJSThemeOptions));
 	readonly options = signal<ChartConfiguration<'bar'>['options']>(undefined);
@@ -128,7 +131,8 @@ export class ExpenseBarChartComponent implements OnInit, AfterViewInit, OnDestro
 	readonly data = computed<ChartConfiguration<'bar'>['data']>(() => {
 		const bars = this.bars();
 		const palette = this.palette();
-		const colours = bars.map((bar) => (bar.highlight ? palette.expenses : palette.bonus));
+		const highlight = palette[this.accent()];
+		const colours = bars.map((bar) => (bar.highlight ? highlight : palette.bonus));
 		return {
 			labels: bars.map((bar) => bar.label),
 			datasets: [
