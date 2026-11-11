@@ -110,6 +110,23 @@ describe('CommentService — the edit marker and the reaction hint', () => {
 		});
 	});
 
+	describe('create', () => {
+		it('drops an editedAt the body states: a new comment was never edited', async () => {
+			as('employee-me');
+
+			await service.create({
+				comment: 'First words',
+				entity: BaseEntityEnum.Task,
+				entityId: 'task-1',
+				organizationId: ORGANIZATION,
+				editedAt: new Date('2001-01-01T00:00:00Z')
+			} as never);
+
+			expect(written().comment).toBe('First words');
+			expect(written()).not.toHaveProperty('editedAt');
+		});
+	});
+
 	describe('announceReactionChange', () => {
 		it('publishes comment.updated for the comment, with its record and no text', async () => {
 			as('employee-me');
