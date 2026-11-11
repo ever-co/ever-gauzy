@@ -220,6 +220,15 @@ describe('chat webhook payloads', () => {
 			expect(findButton(content.blocks, 'go', '_block-1-1')?.button.text).toBe('Two');
 		});
 
+		it('never generates an action id a button of the row named', () => {
+			const content = normalizeWebhookPayload(
+				{ text: 'x', blocks: [{ type: 'actions', block_id: 'b', elements: [{ type: 'button', action_id: '_action-1', text: 'One' }, { type: 'button', text: 'Two' }] }] },
+				{ canBroadcast: false }
+			);
+			const [row] = content.blocks as Array<{ elements: Array<{ actionId: string }> }>;
+			expect(row.elements.map((button) => button.actionId)).toEqual(['_action-1', '_action-1-1']);
+		});
+
 		it('tells apart ids that a delimiter would run together', () => {
 			const blocks = [
 				{ type: 'actions', block_id: 'a::b', elements: [{ type: 'button', action_id: 'c', text: 'One' }] },
