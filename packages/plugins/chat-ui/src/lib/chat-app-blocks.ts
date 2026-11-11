@@ -66,6 +66,6 @@ export function buttonStateOf(status: ChatInteractionStatusEnum | string | null 
 	return 'pending';
 }
 
-/** How often, and how many times, the page asks again about a click whose callback is being retried (~45 s). */
+/** How often, and how many times, the page asks again about a click whose callback is being retried (60 s: the API retries for about 47 s). */
 export const APP_INTERACTION_POLL_MS = 3000;
-export const APP_INTERACTION_POLL_MAX = 15;
+export const APP_INTERACTION_POLL_MAX = 20;
