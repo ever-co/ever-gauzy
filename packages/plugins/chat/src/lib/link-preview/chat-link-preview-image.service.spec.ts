@@ -21,7 +21,7 @@ import { NotFoundException } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 import { ChatLinkPreviewStatusEnum } from '@gauzy/contracts';
 import type { IChatCaller } from '../services/chat-access.service';
-import { CHAT_LINK_PREVIEW_IMAGE_CACHE_ENTRIES, CHAT_LINK_PREVIEW_IMAGE_FAILURE_TTL_MS } from './chat-link-preview.constants';
+import { CHAT_LINK_PREVIEW_IMAGE_CACHE_ENTRIES, CHAT_LINK_PREVIEW_IMAGE_CONCURRENCY, CHAT_LINK_PREVIEW_IMAGE_FAILURE_TTL_MS } from './chat-link-preview.constants';
 import { ChatLinkPreviewImageFetcher, ChatLinkPreviewImageService } from './chat-link-preview-image.service';
 import { ChatLinkPreviewService } from './chat-link-preview.service';
 import { previewUrlHash } from './link-preview-url';
@@ -104,6 +104,32 @@ describe('ChatLinkPreviewImageService', () => {
 		await expect(service.image(caller(), LINK)).rejects.toMatchObject({ status: 429 });
 		expect(previews.spendFetch).toHaveBeenCalledTimes(1);
 		expect(fetcher).not.toHaveBeenCalled();
+	});
+
+	it('fetches a few pictures at once at most, and answers 503 beyond that', async () => {
+		const { service, ready } = setup({ fetcher: () => new Promise(() => undefined) });
+		const links = Array.from({ length: CHAT_LINK_PREVIEW_IMAGE_CONCURRENCY + 1 }, (_, n) => `https://www.example.com/slow/${n}`);
+		links.forEach((link) => ready(link, IMAGE));
+		for (const link of links.slice(0, CHAT_LINK_PREVIEW_IMAGE_CONCURRENCY)) void service.image(caller(), link);
+		await new Promise((resolve) => setImmediate(resolve));
+		await expect(service.image(caller(), links[links.length - 1])).rejects.toMatchObject({ status: 503 });
+	});
+
+	it('does not hand a refreshed preview the picture its old one named', async () => {
+		let finishOld: () => void = () => undefined;
+		const fetcher: ChatLinkPreviewImageFetcher = async (url) => {
+			if (url === IMAGE) await new Promise<void>((resolve) => (finishOld = resolve));
+			return { ok: true, type: 'image/png', body: Buffer.from(url) };
+		};
+		const { service, rows, ready } = setup({ fetcher });
+		ready(LINK, IMAGE);
+		const old = service.image(caller(), LINK);
+		await new Promise((resolve) => setImmediate(resolve));
+		// The preview was refreshed meanwhile and names another picture.
+		rows[0].data = JSON.stringify({ title: 'T', image: 'https://cdn.example.com/new.png' });
+		await expect(service.image(caller(), LINK)).resolves.toEqual({ type: 'image/png', body: Buffer.from('https://cdn.example.com/new.png') });
+		finishOld();
+		await expect(old).resolves.toEqual({ type: 'image/png', body: Buffer.from(IMAGE) });
 	});
 
 	it('holds a bounded number of pictures, the least recently served dropped first', async () => {

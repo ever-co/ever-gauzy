@@ -50,3 +50,5 @@ export const CHAT_LINK_PREVIEW_IMAGE_CACHE_ENTRIES = 256;
 export const CHAT_LINK_PREVIEW_IMAGE_CACHE_BYTES = 32 * 1024 * 1024;
 export const CHAT_LINK_PREVIEW_IMAGE_TTL_MS = 24 * 60 * 60 * 1000;
 export const CHAT_LINK_PREVIEW_IMAGE_FAILURE_TTL_MS = 10 * 60 * 1000;
+/** How many pictures one process fetches at once (beyond that the route answers 503 until one finished). */
+export const CHAT_LINK_PREVIEW_IMAGE_CONCURRENCY = 4;

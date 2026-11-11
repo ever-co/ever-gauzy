@@ -1,10 +1,11 @@
-import { BadRequestException, HttpException, HttpStatus, Inject, Injectable, NotFoundException, Optional } from '@nestjs/common';
+import { BadRequestException, HttpException, HttpStatus, Inject, Injectable, NotFoundException, Optional, ServiceUnavailableException } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 import { ChatLinkPreview } from '../entities/chat-link-preview.entity';
 import type { IChatCaller } from '../services/chat-access.service';
 import {
 	CHAT_LINK_PREVIEW_IMAGE_CACHE_BYTES,
 	CHAT_LINK_PREVIEW_IMAGE_CACHE_ENTRIES,
+	CHAT_LINK_PREVIEW_IMAGE_CONCURRENCY,
 	CHAT_LINK_PREVIEW_IMAGE_FAILURE_TTL_MS,
 	CHAT_LINK_PREVIEW_IMAGE_TTL_MS
 } from './chat-link-preview.constants';
@@ -38,7 +39,9 @@ interface ICachedImage {
  * (`fetchPreviewImage`), taken only as PNG, JPEG, GIF, WebP or AVIF by its bytes and at most 1 MiB, and kept in a
  * per-process cache (a day; a picture that could not be fetched is not asked for again for ten minutes), at most
  * `CHAT_LINK_PREVIEW_IMAGE_CACHE_ENTRIES` pictures and `CHAT_LINK_PREVIEW_IMAGE_CACHE_BYTES` in all, the least recently
- * served dropped first. A fetch spends from the same per-person budget as the previews.
+ * served dropped first. A fetch spends from the same per-person budget as the previews, and at most
+ * `CHAT_LINK_PREVIEW_IMAGE_CONCURRENCY` run at once in a process (the bytes a running one holds count against no cache):
+ * beyond that the route answers 503, which a client asks again after a moment.
  */
 @Injectable()
 export class ChatLinkPreviewImageService {
@@ -84,13 +87,18 @@ export class ChatLinkPreviewImageService {
 			this.touch(key, cached);
 			return found(cached.picture);
 		}
-		let running = this.inFlight.get(key);
+		// Shared by link and picture: a refreshed preview that names another picture does not join the old one's fetch.
+		const fetchKey = `${key}|${image}`;
+		let running = this.inFlight.get(fetchKey);
 		if (!running) {
+			if (this.inFlight.size >= CHAT_LINK_PREVIEW_IMAGE_CONCURRENCY) {
+				throw new ServiceUnavailableException('Too many link preview pictures are being fetched; ask again in a moment.');
+			}
 			if (!this.previews.spendFetch(caller)) {
 				throw new HttpException('Too many link previews were asked for; ask again in a minute.', HttpStatus.TOO_MANY_REQUESTS);
 			}
-			running = this.fetchAndKeep(key, image).finally(() => this.inFlight.delete(key));
-			this.inFlight.set(key, running);
+			running = this.fetchAndKeep(key, image).finally(() => this.inFlight.delete(fetchKey));
+			this.inFlight.set(fetchKey, running);
 		}
 		return found(await running);
 	}

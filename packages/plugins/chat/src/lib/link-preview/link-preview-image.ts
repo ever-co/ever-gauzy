@@ -22,10 +22,12 @@ export type LinkPreviewImageOutcome =
  */
 export async function fetchPreviewImage(link: string | URL, overrides: Partial<ILinkPreviewFetchOptions> = {}): Promise<LinkPreviewImageOutcome> {
 	const options: ILinkPreviewFetchOptions = { ...DEFAULT_LINK_PREVIEW_FETCH_OPTIONS, maxBytes: CHAT_LINK_PREVIEW_IMAGE_MAX_BYTES, ...overrides };
-	// One byte more than the limit is read, to tell a picture of exactly the limit from a larger one.
+	// One byte more than the limit may be read, so a picture of exactly the limit reads to its end and a larger one is
+	// cut (refused as `size`). Only a picture read to its end is taken: a cut or broken one is never served.
 	const outcome = await fetchGuardedBody(link, { ...options, maxBytes: options.maxBytes + 1 }, {
 		accept: `${CHAT_LINK_PREVIEW_IMAGE_TYPES.join(',')};q=0.9`,
-		allows: (mediaType) => !mediaType || CHAT_LINK_PREVIEW_IMAGE_TYPES.includes(mediaType) || mediaType === 'application/octet-stream'
+		allows: (mediaType) => !mediaType || CHAT_LINK_PREVIEW_IMAGE_TYPES.includes(mediaType) || mediaType === 'application/octet-stream',
+		whole: true
 	});
 	if (!outcome.ok) return outcome;
 	if (outcome.body.length > options.maxBytes) return { ok: false, reason: 'size' };

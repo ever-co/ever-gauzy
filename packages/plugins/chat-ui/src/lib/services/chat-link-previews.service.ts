@@ -17,6 +17,12 @@ export interface ChatLinkPreviewText {
 export const CHAT_LINK_PREVIEW_CONCURRENCY = 4;
 export const CHAT_LINK_PREVIEW_RETRY_MS = 2000;
 export const CHAT_LINK_PREVIEW_RETRIES = 3;
+/**
+ * The pictures kept in the page (as `blob:` URLs): at most this many and this many bytes, the least recently shown
+ * released first (its URL revoked, its card back to text).
+ */
+export const CHAT_LINK_PREVIEW_PICTURES_MAX = 60;
+export const CHAT_LINK_PREVIEW_PICTURE_BYTES_MAX = 24 * 1024 * 1024;
 
 type Ask = { url: string; attempt: number; kind: 'preview' | 'image' };
 
@@ -44,6 +50,9 @@ export class ChatLinkPreviewsService {
 	private off = false;
 	/** Set once the pictures route answered 404: the platform serves no pictures. */
 	private imagesOff = false;
+	/** The pictures kept, by link, the least recently shown first (a `Map` keeps insertion order). */
+	private readonly pictures = new Map<string, { objectUrl: string; bytes: number }>();
+	private pictureBytes = 0;
 
 	/**
 	 * The preview text of a link: `null` until (and unless) the platform has one. The first call for a link asks for
@@ -51,6 +60,7 @@ export class ChatLinkPreviewsService {
 	 * starts on a microtask, never during the read.
 	 */
 	preview(url: string): Signal<ChatLinkPreviewText | null> {
+		this.touchPicture(url);
 		let preview = this.previews.get(url);
 		if (!preview) {
 			preview = signal<ChatLinkPreviewText | null>(null);
@@ -109,7 +119,9 @@ export class ChatLinkPreviewsService {
 				const preview = this.previews.get(url);
 				const current = preview?.();
 				if (preview && current && blob?.size) {
-					preview.set({ ...current, imageUrl: URL.createObjectURL(blob) });
+					const objectUrl = URL.createObjectURL(blob);
+					preview.set({ ...current, imageUrl: objectUrl });
+					this.keepPicture(url, objectUrl, blob.size);
 				}
 				done();
 			},
@@ -126,6 +138,37 @@ export class ChatLinkPreviewsService {
 			},
 			complete: done
 		});
+	}
+
+	/** Keeps a picture, releasing the least recently shown ones while too many, or too many bytes, are kept. */
+	private keepPicture(url: string, objectUrl: string, bytes: number): void {
+		this.releasePicture(url);
+		this.pictures.set(url, { objectUrl, bytes });
+		this.pictureBytes += bytes;
+		for (const oldest of this.pictures.keys()) {
+			if (this.pictures.size <= CHAT_LINK_PREVIEW_PICTURES_MAX && this.pictureBytes <= CHAT_LINK_PREVIEW_PICTURE_BYTES_MAX) break;
+			if (oldest !== url) this.releasePicture(oldest);
+		}
+	}
+
+	/** A card shows a link's preview again: its picture is the most recently shown. */
+	private touchPicture(url: string): void {
+		const picture = this.pictures.get(url);
+		if (!picture) return;
+		this.pictures.delete(url);
+		this.pictures.set(url, picture);
+	}
+
+	/** Releases a picture: its URL revoked, its card back to text. */
+	private releasePicture(url: string): void {
+		const picture = this.pictures.get(url);
+		if (!picture) return;
+		this.pictures.delete(url);
+		this.pictureBytes -= picture.bytes;
+		URL.revokeObjectURL(picture.objectUrl);
+		const preview = this.previews.get(url);
+		const current = preview?.();
+		if (preview && current?.imageUrl === picture.objectUrl) preview.set({ ...current, imageUrl: null });
 	}
 
 	/** Counts an ask as running; answers the function that counts it done (once). */

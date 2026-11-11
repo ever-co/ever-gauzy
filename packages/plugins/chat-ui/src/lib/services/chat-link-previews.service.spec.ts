@@ -4,7 +4,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { TestBed } from '@angular/core/testing';
 import { Observable, of, Subject, throwError } from 'rxjs';
 import { ChatLinkPreviewStatusEnum, IChatLinkPreview } from '@gauzy/contracts';
-import { CHAT_LINK_PREVIEW_CONCURRENCY, CHAT_LINK_PREVIEW_RETRY_MS, ChatLinkPreviewsService, textOf } from './chat-link-previews.service';
+import { CHAT_LINK_PREVIEW_CONCURRENCY, CHAT_LINK_PREVIEW_PICTURES_MAX, CHAT_LINK_PREVIEW_RETRY_MS, ChatLinkPreviewsService, textOf } from './chat-link-previews.service';
 import { ChatUiService } from './chat-ui.service';
 
 const LINK = 'https://www.example.com/post';
@@ -167,6 +167,23 @@ describe('ChatLinkPreviewsService: pictures', () => {
 		expect(picture).toHaveBeenCalledWith(LINK);
 		expect(preview()).toMatchObject({ title: 'A post', imageUrl: 'blob:picture', imageAlt: 'A cover' });
 		expect(preview()?.imageUrl).not.toContain('cdn.example.com');
+	});
+
+	it('keeps a bounded number of pictures: the least recently shown is released, its URL revoked and its card back to text', async () => {
+		let made = 0;
+		(URL as unknown as { createObjectURL: (blob: Blob) => string }).createObjectURL = jest.fn(() => `blob:picture-${made++}`);
+		const revoke = jest.fn();
+		(URL as unknown as { revokeObjectURL: (url: string) => void }).revokeObjectURL = revoke;
+		const links = Array.from({ length: CHAT_LINK_PREVIEW_PICTURES_MAX + 1 }, (_, n) => `https://www.example.com/${n}`);
+		const previews = [];
+		for (const link of links) {
+			previews.push(service.preview(link));
+			await flush();
+		}
+		expect(revoke).toHaveBeenCalledWith('blob:picture-0');
+		expect(previews[0]()?.imageUrl).toBeNull();
+		expect(previews[previews.length - 1]()?.imageUrl).toBe(`blob:picture-${CHAT_LINK_PREVIEW_PICTURES_MAX}`);
+		expect(revoke).toHaveBeenCalledTimes(1);
 	});
 
 	it('asks for no more pictures once the platform says it serves none', async () => {

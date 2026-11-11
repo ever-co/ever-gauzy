@@ -11,7 +11,7 @@ import {
 	EgressResolver,
 	guardedRequest,
 	IEgressPolicy,
-	readLimitedBody,
+	readBody,
 	firstHeaderValue,
 	systemResolver
 } from '../egress/egress-guard';
@@ -101,6 +101,11 @@ export interface IGuardedBodyRead {
 	/** Whether an answer of this media type (lower case, null when it named none) is read. */
 	allows: (mediaType: string | null) => boolean;
 	stop?: (piece: Buffer) => boolean;
+	/**
+	 * Only a whole body will do (a picture): a body the byte limit cut is refused as `size`, one the connection broke as
+	 * `error`. Without it, the start of a body is kept (a page's head).
+	 */
+	whole?: boolean;
 }
 
 /**
@@ -142,7 +147,8 @@ export async function fetchGuardedBody(link: string | URL, options: ILinkPreview
 				response.destroy();
 				return { ok: false, reason: 'type' };
 			}
-			const body = await readLimitedBody(response, { maxBytes: options.maxBytes, signal: controller.signal, stop: read.stop });
+			const { body, end } = await readBody(response, { maxBytes: options.maxBytes, signal: controller.signal, stop: read.stop });
+			if (read.whole && end !== 'end') return { ok: false, reason: end === 'limit' ? 'size' : 'error' };
 			return { ok: true, url: current.href, contentType: mediaType, charset: charsetOf(contentType), body };
 		}
 	} catch (error) {

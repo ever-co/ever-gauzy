@@ -45,6 +45,12 @@ describe('fetchPreviewImage', () => {
 		else if (request.url === '/a.svg') send('image/svg+xml', SVG);
 		else if (request.url === '/page') send('text/html', Buffer.from('<html></html>'));
 		else if (request.url === '/large.png') send('image/png', Buffer.concat([PNG, Buffer.alloc(2048)]));
+		else if (request.url === '/broken.png') {
+			// A picture that promises more than it sends: the connection breaks after its first bytes.
+			response.writeHead(200, { 'content-type': 'image/png', 'content-length': '4096' });
+			response.write(PNG);
+			setTimeout(() => response.socket?.destroy(), 50);
+		}
 		else if (request.url === '/inward') {
 			// On the server's own port, so it is the address that is refused, not the port.
 			const own = (request.headers.host ?? '').split(':')[1];
@@ -92,6 +98,10 @@ describe('fetchPreviewImage', () => {
 		await expect(fetchImage('/a.svg')).resolves.toEqual({ ok: false, reason: 'type' });
 		await expect(fetchImage('/page')).resolves.toEqual({ ok: false, reason: 'type' });
 		await expect(fetchImage('/lying.png')).resolves.toEqual({ ok: false, reason: 'type' });
+	});
+
+	it('refuses a picture whose download broke off, never serving what came of it', async () => {
+		await expect(fetchImage('/broken.png')).resolves.toEqual({ ok: false, reason: 'error' });
 	});
 
 	it('refuses a picture larger than its limit', async () => {
