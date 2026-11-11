@@ -58,6 +58,8 @@ export class DocumentTreeStore {
 
 	/** The space the top level lists (`GAUZY_DOCS_COLLAB_ENABLED`); `null` lists them all. */
 	private space: IDocsSpaceFilter | null = null;
+	/** Bumps on every space selection, so a read started for the previous one is dropped. */
+	private spaceSelection = 0;
 
 	private readonly _nodes$ = new BehaviorSubject<IDocsTreeNode[]>([]);
 	/** Root-level nodes (reference refreshed on every cache change). */
@@ -79,6 +81,8 @@ export class DocumentTreeStore {
 		// browse (`parentId` present) already defaults to `index ASC` server-side.
 		// The roots of the selected space; a folder's children are its children, whatever space they are in.
 		const space = parentId ? null : this.space;
+		// A space selected while this read runs makes its answer stale: it is not cached, nor shown.
+		const selection = this.spaceSelection;
 		const { items } = await firstValueFrom(
 			this.documentsService.getAll({
 				parentId: parentId ?? 'root',
@@ -93,6 +97,7 @@ export class DocumentTreeStore {
 			})
 		);
 		const nodes = (items ?? []).map((doc) => this.toNode(doc));
+		if (selection !== this.spaceSelection) return this._children.get(key) ?? [];
 		this._children.set(key, nodes);
 		nodes.forEach((node) => this._byId.set(String(node.id), node));
 		this.emit();
@@ -115,6 +120,7 @@ export class DocumentTreeStore {
 	 */
 	async selectSpace(space: IDocsSpaceFilter | null): Promise<IDocsTreeNode[]> {
 		this.space = space ? { kind: space.kind, organizationTeamId: space.organizationTeamId } : null;
+		this.spaceSelection += 1;
 		this._children.clear();
 		this._byId.clear();
 		this.emit();

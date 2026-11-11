@@ -257,3 +257,12 @@
 		background: var(--color-primary-default);
 	}
 }
+
+/* A space row is a native button (Enter and Space select it), drawn as the links around it. */
+.docs-tree-space {
+	width: 100%;
+	border: 0;
+	background: none;
+	font: inherit;
+	text-align: left;
+}

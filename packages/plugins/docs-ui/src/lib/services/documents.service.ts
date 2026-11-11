@@ -199,7 +199,10 @@ export class DocumentsService {
 
 	/** Follows or unfollows the page, or mutes it or lifts the mute; answers the new state. */
 	setFollow(id: ID, action: 'follow' | 'unfollow' | 'mute' | 'unmute'): Observable<IDocumentFollowState> {
-		return this.http.post<IDocumentFollowState>(`${this.API_URL}/documents/${id}/${action}`, this.organizationScope());
+		// The scope travels as query params, as on the follow read: the routes read the page in the selected organization.
+		return this.http.post<IDocumentFollowState>(`${this.API_URL}/documents/${id}/${action}`, {}, {
+			params: toParams(this.organizationScope())
+		});
 	}
 
 	// ─── Documents: write ────────────────────────────────────────

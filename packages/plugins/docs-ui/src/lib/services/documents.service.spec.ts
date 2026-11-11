@@ -441,14 +441,12 @@ describe('DocumentsService — backend wire contract', () => {
 
 			await firstValueFrom(service.getFollowState(DOCUMENT_ID));
 			expect(http.last).toMatchObject({ method: 'GET', url: `/api/plugins/docs/documents/${DOCUMENT_ID}/follow` });
+			expect(http.params.get('organizationId')).toBe(ORGANIZATION_ID);
 
 			for (const action of ['follow', 'unfollow', 'mute', 'unmute'] as const) {
 				await firstValueFrom(service.setFollow(DOCUMENT_ID, action));
-				expect(http.last).toMatchObject({
-					method: 'POST',
-					url: `/api/plugins/docs/documents/${DOCUMENT_ID}/${action}`,
-					body: { organizationId: ORGANIZATION_ID, tenantId: TENANT_ID }
-				});
+				expect(http.last).toMatchObject({ method: 'POST', url: `/api/plugins/docs/documents/${DOCUMENT_ID}/${action}` });
+				expect(http.params.get('organizationId')).toBe(ORGANIZATION_ID);
 			}
 		});
 
