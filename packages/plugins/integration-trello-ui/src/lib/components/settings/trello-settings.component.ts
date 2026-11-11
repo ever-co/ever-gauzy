@@ -22,10 +22,16 @@ import {
 import { errorText, listMapOf } from '../shared/trello-ui.utils';
 import { TrelloConflictsComponent } from '../conflicts/trello-conflicts.component';
 
-/** Whether a run that was running is not any more (done, failed, or gone from the list) in the newer read. */
+/**
+ * Whether the newer runs read holds a run that finished since the older one: one that was running and is not any
+ * more (done, failed, or gone from the list), or one first seen already finished with conflicts (it started and ended
+ * between two reads).
+ */
 export function finishedRuns(before: readonly TrelloRun[], after: readonly TrelloRun[]): boolean {
+	const earlier = new Set(before.map((run) => run.id));
 	const now = new Map(after.map((run) => [run.id, run.status]));
-	return before.some((run) => run.status === 'running' && now.get(run.id) !== 'running');
+	if (before.some((run) => run.status === 'running' && now.get(run.id) !== 'running')) return true;
+	return after.some((run) => !earlier.has(run.id) && run.status !== 'running' && (run.conflictCount ?? 0) > 0);
 }
 
 const DIRECTIONS: TrelloDirection[] = ['inbound', 'outbound', 'both'];

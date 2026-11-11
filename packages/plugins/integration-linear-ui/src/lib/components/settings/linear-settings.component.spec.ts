@@ -124,5 +124,8 @@ describe('LinearSettingsComponent (sync log and conflicts)', () => {
 		expect(finishedRuns([run({ status: 'running' })], [run({ status: 'failed' })])).toBe(true);
 		expect(finishedRuns([run({ status: 'running' })], [])).toBe(true);
 		expect(finishedRuns([run({ status: 'done' })], [run({ status: 'done' }), run({ id: 'run-9', status: 'running' })])).toBe(false);
+		// Started and ended between two reads: finished, when it found conflicts.
+		expect(finishedRuns([run({ status: 'done' })], [run({ status: 'done' }), run({ id: 'run-9', status: 'done', conflictCount: 2 })])).toBe(true);
+		expect(finishedRuns([run({ status: 'done' })], [run({ status: 'done' }), run({ id: 'run-9', status: 'done', conflictCount: 0 })])).toBe(false);
 	});
 });
