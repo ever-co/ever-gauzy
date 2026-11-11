@@ -34,7 +34,9 @@ import { spaceKeyOf, spaceOfDocument, visibilityOfSpace } from './move-space.uti
 				}
 			</nb-card-body>
 			<nb-card-footer class="docs-dialog-footer">
-				<button nbButton ghost (click)="cancel()">{{ 'DOCS.UPLOAD.CANCEL' | translate }}</button>
+				<button nbButton ghost [disabled]="saving" (click)="cancel()">
+					{{ 'DOCS.UPLOAD.CANCEL' | translate }}
+				</button>
 				<button
 					nbButton
 					status="primary"
@@ -148,6 +150,8 @@ export class MoveSpaceDialogComponent extends TranslationBaseComponent implement
 	}
 
 	cancel(): void {
+		// A move under way finishes first: closing now would leave the page unaware of a move that lands.
+		if (this.saving) return;
 		this.dialogRef.close(null);
 	}
 }

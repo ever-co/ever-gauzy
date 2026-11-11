@@ -667,15 +667,24 @@ export class DocumentPageComponent implements OnInit, OnDestroy {
 	async openMoveSpaceDialog(): Promise<void> {
 		if (!this.document) return;
 		this.menuOpen = false;
-		// Pending edits are saved first, under the token they were made against: the move writes the row too.
-		await this.editorComponent?.flush();
+		// Every edit is saved first (a save in flight included), under the token it was made against: the move
+		// writes the row too.
+		if (this.editorComponent && !(await this.editorComponent.settleSaves())) {
+			this.toastrService.warning(this.translate.instant('DOCS.SPACE.SAVE_FIRST'));
+			return;
+		}
 		this.dialogService
-			.open(MoveSpaceDialogComponent, { context: { document: this.document } })
+			.open(MoveSpaceDialogComponent, {
+				context: { document: this.document },
+				// The dialog closes itself (it waits for the move): no backdrop or Esc close while it runs.
+				closeOnBackdropClick: false,
+				closeOnEsc: false
+			})
 			.onClose.subscribe((moved: IDocument | null) => {
 				if (!moved) return;
-				// The move stamped the row: the autosave continues from the moved row's token (as after a lock
-				// toggle), or its next save would be a 409 although nobody else changed the content.
-				this.editorComponent?.lockReleased(moved);
+				// The move stamped the row: the autosave continues from the moved row's token, or its next save
+				// would be a 409 although nobody else changed the content.
+				this.editorComponent?.rebaseSaveToken(moved);
 				void this.load();
 			});
 	}
