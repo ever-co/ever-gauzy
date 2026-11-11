@@ -1,6 +1,8 @@
 import '../core/entities/internal';
 
+import { RolesEnum } from '@gauzy/contracts';
 import { IsNull } from 'typeorm';
+import { RequestContext } from '../core/context';
 import { CrudService } from '../core/crud/crud.service';
 import { ApiErrorCode } from '../core/errors/api-error-codes';
 import { ApiException } from '../core/errors/api-exception';
@@ -8,6 +10,8 @@ import { MultiORMEnum } from '../core/utils';
 import { asTenantUser, createCrossTenantFixture } from '../core/testing/tenant-isolation/tenant-isolation.fixtures';
 import { OrganizationTeamTagBulkCreateCommand } from './commands/organization-team-tag-bulk-create.command';
 import { OrganizationTeamTagBulkCreateHandler } from './commands/handlers/organization-team-tag-bulk-create.handler';
+import { MikroOrmTagRepository } from './repository/mikro-orm-tag.repository';
+import { TypeOrmTagRepository } from './repository/type-orm-tag.repository';
 import { tagNameKeyOf, TEAM_STARTER_TAGS } from './tag-name';
 import { TagService } from './tag.service';
 
@@ -18,8 +22,12 @@ import { TagService } from './tag.service';
  */
 describe('TagService names', () => {
 	const { tenantA } = createCrossTenantFixture();
+	// The caller's organization (their token's): the one the organization boundary keeps them in
 	const organizationId = tenantA.organizationId;
+	// Another organization of the same tenant
+	const otherOrganizationId = 'organization-b';
 	const teamId = 'team-1';
+	const scopeColumns = ['tenantId', 'organizationId', 'organizationTeamId'];
 
 	let restore: () => void;
 	let typeOrmFind: jest.Mock;
@@ -34,10 +42,16 @@ describe('TagService names', () => {
 		useOrm(MultiORMEnum.TypeORM);
 		typeOrmFind = jest.fn().mockResolvedValue([]);
 		mikroOrmFind = jest.fn().mockResolvedValue([]);
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		service = new TagService(
-			{ metadata: { tableName: 'tag' }, find: typeOrmFind } as any,
-			{ find: mikroOrmFind } as any
+			{
+				// The columns the scoping reads, the organization boundary's among them
+				metadata: {
+					tableName: 'tag',
+					hasColumnWithPropertyPath: (path: string) => scopeColumns.includes(path)
+				},
+				find: typeOrmFind
+			} as unknown as TypeOrmTagRepository,
+			{ find: mikroOrmFind } as unknown as MikroOrmTagRepository
 		);
 		createMany = jest.spyOn(service, 'createMany').mockImplementation(async (entities) => entities as never);
 	});
@@ -134,6 +148,33 @@ describe('TagService names', () => {
 
 			expect(typeOrmFind).not.toHaveBeenCalled();
 		});
+
+		it('reads no names of an organization the caller cannot reach: the write refuses it, a 409 would tell', async () => {
+			typeOrmFind.mockResolvedValue([{ id: 'tag-1', name: 'Bug' }]);
+
+			await expect(
+				service.assertNameIsFree({
+					name: 'Bug',
+					organizationId: otherOrganizationId,
+					organizationTeamId: teamId
+				})
+			).resolves.toBeUndefined();
+			await expect(
+				service.assertNameIsFree({ name: 'Bug', organization: { id: otherOrganizationId } })
+			).resolves.toBeUndefined();
+			expect(typeOrmFind).not.toHaveBeenCalled();
+		});
+
+		it('checks a tenant admin, who reaches every organization, in any of them', async () => {
+			jest.spyOn(RequestContext, 'hasRoles').mockReturnValue(true);
+			typeOrmFind.mockResolvedValue([{ id: 'tag-1', name: 'Bug' }]);
+
+			await expect(
+				service.assertNameIsFree({ name: 'bug', organizationId: otherOrganizationId })
+			).rejects.toBeInstanceOf(ApiException);
+			expect(typeOrmFind.mock.calls[0][0].where).toMatchObject({ organizationId: otherOrganizationId });
+			expect(RequestContext.hasRoles).toHaveBeenCalledWith([RolesEnum.SUPER_ADMIN, RolesEnum.ADMIN]);
+		});
 	});
 
 	describe('assertChangeIsFree', () => {
@@ -156,6 +197,37 @@ describe('TagService names', () => {
 			typeOrmFind.mockReset().mockResolvedValue([]);
 			await service.assertChangeIsFree(stored, { organizationTeamId: 'team-2' }, 'tag-2');
 			expect(typeOrmFind.mock.calls[0][0].where).toMatchObject({ organizationId, organizationTeamId: 'team-2' });
+		});
+
+		it('checks a change naming an organization the caller cannot reach where the tag stays: the update leaves it out', async () => {
+			typeOrmFind.mockResolvedValue([{ id: 'tag-1', name: 'Feature' }]);
+
+			// A rename: checked in the tag's own organization, which it keeps
+			await expect(
+				service.assertChangeIsFree(stored, { name: 'feature', organizationId: otherOrganizationId }, 'tag-2')
+			).rejects.toBeInstanceOf(ApiException);
+			expect(typeOrmFind).toHaveBeenCalledTimes(1);
+			expect(typeOrmFind.mock.calls[0][0].where).toMatchObject({ organizationId, organizationTeamId: teamId });
+
+			// Nothing else: no change at all, nor is clearing the organization one
+			await expect(
+				service.assertChangeIsFree(stored, { organization: { id: otherOrganizationId } }, 'tag-2')
+			).resolves.toBeUndefined();
+			await expect(
+				service.assertChangeIsFree(stored, { organizationId: null }, 'tag-2')
+			).resolves.toBeUndefined();
+			expect(typeOrmFind).toHaveBeenCalledTimes(1);
+		});
+
+		it('checks a move to another organization by a tenant admin there', async () => {
+			jest.spyOn(RequestContext, 'hasRoles').mockReturnValue(true);
+
+			await service.assertChangeIsFree(stored, { organizationId: otherOrganizationId }, 'tag-2');
+
+			expect(typeOrmFind.mock.calls[0][0].where).toMatchObject({
+				organizationId: otherOrganizationId,
+				organizationTeamId: teamId
+			});
 		});
 	});
 

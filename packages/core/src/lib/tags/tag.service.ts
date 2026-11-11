@@ -6,7 +6,7 @@ import { getConfig } from '@gauzy/config';
 import { RequestContext } from '../core/context';
 import { ApiErrorCode } from '../core/errors/api-error-codes';
 import { ApiException } from '../core/errors/api-exception';
-import { TenantAwareCrudService } from '../core/crud';
+import { isWithinOrganizationBoundary, TenantAwareCrudService } from '../core/crud';
 import { mikroOrmContains, MultiORMEnum, parseFindOptionsRelations } from '../core/utils';
 import { LIKE_OPERATOR } from '../core/util';
 import { Tag } from './tag.entity';
@@ -124,6 +124,9 @@ export class TagService extends TenantAwareCrudService<Tag> {
 	 * as {@link tagNameKeyOf} reads them. The scope is read from the ids or from the relation objects a body may send
 	 * instead (`organization: { id }`).
 	 *
+	 * An organization outside the caller's organization boundary is not read: the write refuses it anyway, and a 409
+	 * there would tell the caller whether that organization has a tag of the name.
+	 *
 	 * The check is the service's, not the database's: two requests racing on one name can still both pass it. A unique
 	 * index on the normalized name would close that, after a migration resolving the duplicates filed before.
 	 *
@@ -135,10 +138,14 @@ export class TagService extends TenantAwareCrudService<Tag> {
 		if (!key) {
 			return;
 		}
+		const organizationId = organizationIdOf(input);
+		if (!isWithinOrganizationBoundary(organizationId, this.organizationBoundary())) {
+			return;
+		}
 		const tenantId = RequestContext.currentTenantId();
 		const names = await this.namesInScope({
 			tenantId,
-			organizationId: organizationIdOf(input),
+			organizationId,
 			organizationTeamId: organizationTeamIdOf(input)
 		});
 		const isTaken = names.some((tag) => tag.id !== exceptId && tagNameKeyOf(tag.name) === key);
@@ -153,6 +160,25 @@ export class TagService extends TenantAwareCrudService<Tag> {
 	}
 
 	/**
+	 * Whether a change moves the tag to the organization it names, be it only to clear it. For a caller confined to
+	 * their organization, the update leaves out any other (`TenantAwareCrudService.withoutScopeChanges`): such a change
+	 * keeps the tag where it is, and is checked there.
+	 *
+	 * @param changes What the request changes.
+	 */
+	private movesOrganization(changes: TagNameInput): boolean {
+		if (!hasScopeField(changes, 'organization')) {
+			return false;
+		}
+		const boundary = this.organizationBoundary();
+		return (
+			!boundary ||
+			(isNotEmpty(boundary.organizationId) &&
+				String(organizationIdOf(changes)) === String(boundary.organizationId))
+		);
+	}
+
+	/**
 	 * The check of a change to a tag: only a new name or a new scope is checked. A tag that shares its name with an
 	 * older one (filed before names were checked) can still have its colour, icon or description changed.
 	 *
@@ -163,7 +189,7 @@ export class TagService extends TenantAwareCrudService<Tag> {
 	async assertChangeIsFree(existing: ITag, changes: TagNameInput, id: ID): Promise<void> {
 		const next: TagNameInput = {
 			name: changes.name ?? existing.name,
-			organizationId: hasScopeField(changes, 'organization')
+			organizationId: this.movesOrganization(changes)
 				? organizationIdOf(changes)
 				: (existing.organizationId ?? null),
 			organizationTeamId: hasScopeField(changes, 'organizationTeam')
