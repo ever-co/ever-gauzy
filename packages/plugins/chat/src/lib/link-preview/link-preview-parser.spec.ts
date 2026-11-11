@@ -1,3 +1,4 @@
+// cspell:ignore Lineone
 import { cleanText, cleanUrl, decodeEntities, decodePage, parsePreviewHead } from './link-preview-parser';
 
 const PAGE = 'https://www.example.com/articles/one?ref=chat';

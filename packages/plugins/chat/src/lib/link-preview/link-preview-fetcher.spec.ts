@@ -1,7 +1,7 @@
 import { createServer, IncomingMessage, Server, ServerResponse } from 'node:http';
 import type { AddressInfo, Socket } from 'node:net';
 import { gzipSync } from 'node:zlib';
-import { isPublicAddress } from './link-preview-address';
+import { isPublicAddress } from '../egress/egress-address';
 import { fetchPreviewPage, ILinkPreviewFetchOptions, LinkPreviewResolver } from './link-preview-fetcher';
 
 /**
@@ -124,7 +124,7 @@ function resolverOf(table: Record<string, string[][]>): jest.Mock<ReturnType<Lin
 function fetchFrom(link: string, resolver: LinkPreviewResolver, overrides: Partial<ILinkPreviewFetchOptions> = {}) {
 	return fetchPreviewPage(link, {
 		resolver,
-		policy: { isAllowedAddress: (address) => address === LOOPBACK || isPublicAddress(address), allowedPorts: [port] },
+		policy: { isAllowedAddress: (address) => address === LOOPBACK || isPublicAddress(address), allowedPorts: [port], allowedProtocols: ['http:', 'https:'] },
 		timeoutMs: 2000,
 		...overrides
 	});
@@ -192,7 +192,7 @@ describe('fetchPreviewPage: private address literals', () => {
 		// The real policy (only the port widened): the server below is on 127.0.0.1, so a fetch that got through would show in its log.
 		const outcome = await fetchPreviewPage(`http://${LOOPBACK}:${port}/page`, {
 			resolver: resolverOf(SITE),
-			policy: { isAllowedAddress: isPublicAddress, allowedPorts: [port] }
+			policy: { isAllowedAddress: isPublicAddress, allowedPorts: [port], allowedProtocols: ['http:', 'https:'] }
 		});
 		expect(outcome).toEqual({ ok: false, reason: 'blocked' });
 		expect(requests).toEqual([]);

@@ -14,6 +14,7 @@ export * from './lib/services/chat-notifier.service';
 export * from './lib/controllers/chat-conversation.controller';
 export * from './lib/controllers/chat-message.controller';
 export * from './lib/controllers/chat-link-preview.controller';
+export * from './lib/egress';
 export * from './lib/link-preview/chat-link-preview-enabled';
 export * from './lib/link-preview/chat-link-preview.service';
 export * from './lib/link-preview/chat-link-preview.module';

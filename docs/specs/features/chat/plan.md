@@ -201,7 +201,7 @@ were fixed together (branch `fix/chat-direct-org-thread-read-reactions`); what i
   non-public address literal answers `unavailable` without a fetch or a row.
 - **Refresh policy**: `ready` is served for 24 h and then served while it is fetched again; `unavailable` is fetched
   again after 1 h; `pending` is fetched again after 2 min (a fetch that never reported back).
-- **Fetch** (`fetchPreviewPage`): per hop, the URL is judged first (`http`/`https`, ports 80/443/8080/8443, no
+- **Fetch** (`fetchPreviewPage`, on the plugin's reusable egress guard `egress/egress-guard.ts`: `guardedRequest`, `resolveAllowedAddresses`, `pinnedLookup`, `readLimitedBody`, which the incoming webhooks' callbacks reuse): per hop, the URL is judged first (`http`/`https`, ports 80/443/8080/8443, no
   internal host names), then every address the host resolves to must be public (`isPublicAddress`: IPv4
   special-purpose ranges refused; for IPv6 only global unicast outside its special blocks, and the IPv4 that
   mapped/NAT64/6to4 addresses carry is judged too). The connection's `lookup` answers exactly the judged addresses
@@ -209,7 +209,7 @@ were fixed together (branch `fix/chat-direct-org-thread-read-reactions`); what i
   one 5 s deadline, at most 512 KiB read (raw and decompressed), the read stops at the end of `<head>`, and only an
   HTML answer is read. No cookies, credentials or referrer are sent.
 - **Parse** (`parsePreviewHead`): `<head>` only, scripts/styles/comments dropped; Open Graph, then the Twitter card,
-  then `<title>` / description / icon link. Strings are decoded, stripped of markup and control/bidi characters and
+  then `<title>` / description / icon link. Strings are decoded, stripped of markup, control and bidirectional characters and
   cut to limits. Image and icon URLs must be `https:` and not internal. Only these fields are stored.
 - **Where it runs**: with a queue root (`isSchedulerQueueRootEnabled()`) the fetch is a `chat.link-preview.fetch` job
   on `chat-link-preview` (job id per tenant and link), consumed by `ChatLinkPreviewWorker` in the API processes, and

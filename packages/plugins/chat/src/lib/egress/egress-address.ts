@@ -1,10 +1,11 @@
+// cspell:ignore localdomain
 import { BlockList, isIP } from 'node:net';
 
 /**
- * Which addresses and host names a link preview may reach: public ones only.
+ * Which addresses and host names an outbound request of the chat plugin may reach: public ones only.
  *
- * The server fetches a page because a person posted its link, so the link is someone's input and the fetch must never
- * reach what only the server can reach: loopback, the private networks, link-local addresses (the cloud metadata
+ * The server makes such a request for someone else's input (a link a person posted, a callback an integration named),
+ * so it must never reach what only the server can reach: loopback, the private networks, link-local addresses (the cloud metadata
  * service at 169.254.169.254 among them), the carrier-grade NAT range, and the special-purpose ranges of IPv4 and IPv6
  * that are never a public web site. IPv6 is judged as strictly: only global unicast (`2000::/3`) outside its
  * special-purpose blocks passes, and an IPv6 address that carries an IPv4 one (IPv4-mapped, NAT64, 6to4) is judged by
@@ -40,7 +41,7 @@ for (const [network, prefix] of IPV4_NOT_PUBLIC) {
 }
 
 /**
- * Whether an IP address (no brackets) is a public unicast address a preview may connect to. Anything that is not a
+ * Whether an IP address (no brackets) is a public unicast address an outbound request may connect to. Anything that is not a
  * well-formed address, and any address with a zone id (`fe80::1%eth0`), is not.
  */
 export function isPublicAddress(address: string): boolean {
@@ -98,7 +99,7 @@ const REFUSED_SUFFIXES = [
 	'onion'
 ];
 
-/** Whether a URL's host name (lower case, IPv6 in brackets or not) is one a preview never reaches by name. */
+/** Whether a URL's host name (lower case, IPv6 in brackets or not) is one an outbound request never reaches by name. */
 export function isRefusedHostname(hostname: string): boolean {
 	const host = String(hostname ?? '')
 		.trim()

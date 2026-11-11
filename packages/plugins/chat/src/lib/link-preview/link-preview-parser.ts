@@ -1,6 +1,7 @@
+// cspell:ignore itemprop precomposed ndash hellip lsquo rsquo sbquo ldquo rdquo bdquo laquo raquo middot
 import { isIP } from 'node:net';
 import { CHAT_LINK_PREVIEW_LIMITS } from './chat-link-preview.constants';
-import { isPublicAddress, isRefusedHostname } from './link-preview-address';
+import { isPublicAddress, isRefusedHostname } from '../egress/egress-address';
 
 /** What a page says about itself, as a preview keeps it: sanitized plain text and absolute `https:` URLs only. */
 export interface ILinkPreviewData {

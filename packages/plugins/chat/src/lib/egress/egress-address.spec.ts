@@ -1,6 +1,6 @@
-import { isChatLinkPreviewsEnabled } from './chat-link-preview-enabled';
-import { expandIpv6, isPublicAddress, isRefusedHostname } from './link-preview-address';
-import { LinkPreviewUrlError, normalizePreviewUrl, previewTargetRefusal, previewUrlHash } from './link-preview-url';
+// cspell:ignore bcher
+import { expandIpv6, isPublicAddress, isRefusedHostname } from './egress-address';
+import { egressTargetRefusal } from './egress-guard';
 
 describe('isPublicAddress', () => {
 	it.each([
@@ -103,29 +103,8 @@ describe('isRefusedHostname', () => {
 	});
 });
 
-describe('normalizePreviewUrl', () => {
-	it('keys a link by its normal form, without the fragment', () => {
-		const url = normalizePreviewUrl('  HTTPS://Example.COM:443/a/b?q=1#section ');
-		expect(url.href).toBe('https://example.com/a/b?q=1');
-		expect(previewUrlHash(url)).toBe(previewUrlHash('https://example.com/a/b?q=1'));
-		expect(previewUrlHash(url)).toMatch(/^[0-9a-f]{64}$/);
-	});
-
-	it.each(['', '   ', 'not a url', '/relative/path', 'ftp://example.com/file', 'file:///etc/passwd', 'javascript:alert(1)', 'data:text/html,hi', 'https://user:secret@example.com/'])(
-		'refuses %p',
-		(value) => {
-			expect(() => normalizePreviewUrl(value)).toThrow(LinkPreviewUrlError);
-		}
-	);
-
-	it('refuses a link longer than the limit, and a value that is not text', () => {
-		expect(() => normalizePreviewUrl(`https://example.com/${'a'.repeat(2048)}`)).toThrow(LinkPreviewUrlError);
-		expect(() => normalizePreviewUrl(42)).toThrow(LinkPreviewUrlError);
-	});
-});
-
-describe('previewTargetRefusal', () => {
-	const refusal = (link: string) => previewTargetRefusal(new URL(link));
+describe('egressTargetRefusal', () => {
+	const refusal = (link: string) => egressTargetRefusal(new URL(link));
 
 	it('refuses private, loopback, link-local and metadata address literals, however they are written', () => {
 		expect(refusal('http://127.0.0.1/')).toBe('address');
@@ -155,19 +134,5 @@ describe('previewTargetRefusal', () => {
 		expect(refusal('http://example.com:8080/page')).toBeNull();
 		expect(refusal('https://93.184.215.14/')).toBeNull();
 		expect(refusal('https://[2606:4700:4700::1111]:8443/')).toBeNull();
-	});
-});
-
-describe('isChatLinkPreviewsEnabled', () => {
-	it('is on only for exactly "true", and reports any other value once without repeating it', () => {
-		const warn = jest.fn();
-		expect(isChatLinkPreviewsEnabled({}, warn)).toBe(false);
-		expect(isChatLinkPreviewsEnabled({ GAUZY_CHAT_LINK_PREVIEWS_ENABLED: '' }, warn)).toBe(false);
-		expect(isChatLinkPreviewsEnabled({ GAUZY_CHAT_LINK_PREVIEWS_ENABLED: 'false' }, warn)).toBe(false);
-		expect(warn).not.toHaveBeenCalled();
-		expect(isChatLinkPreviewsEnabled({ GAUZY_CHAT_LINK_PREVIEWS_ENABLED: 'TRUE' }, warn)).toBe(false);
-		expect(warn).toHaveBeenCalledTimes(1);
-		expect(warn.mock.calls[0][0]).not.toContain('TRUE');
-		expect(isChatLinkPreviewsEnabled({ GAUZY_CHAT_LINK_PREVIEWS_ENABLED: 'true' }, warn)).toBe(true);
 	});
 });

@@ -122,7 +122,7 @@ text, `fetchedAt`). The answer is `IChatLinkPreview` of `@gauzy/contracts`:
 A value that is not an `http(s)` link (or carries credentials, or is longer than 2,048 characters) answers 400; with
 previews off the route answers 404.
 
-**The egress guard** (`link-preview/`): `http` and `https` only, the ports 80, 443, 8080 and 8443, no credentials. A
+**The egress guard** (`egress/egress-guard.ts`, exported for the plugin's other outbound requests: `guardedRequest`, `resolveAllowedAddresses`, `pinnedLookup`, `readLimitedBody`, `isPublicAddress`, `isRefusedHostname`): `http` and `https` only, the ports 80, 443, 8080 and 8443, no credentials. A
 host named `localhost`, a single label, or under an internal or special-use suffix (`.local`, `.internal`,
 `.home.arpa`, `.svc`, `.test`, ...) is refused before it is resolved. Every address a host resolves to must be public;
 one that is not refuses the host. That covers loopback, the private ranges, link-local (with the metadata service at
