@@ -9,7 +9,7 @@
  *   GAUZY_API_URL=https://api.example.com/api \
  *   GAUZY_TOKEN=<access token> GAUZY_TENANT_ID=<tenant> GAUZY_ORGANIZATION_ID=<organization> \
  *   GAUZY_TASK_ID=<a task the user may update> \
- *   node tools/scripts/realtime-live-check.mjs
+ *   node tools/scripts/realtime-live-probe.mjs
  *
  * Optional: `GAUZY_WS_URL` (default: the API URL's origin on ws(s) + `/graphql`), `GAUZY_LIVE_TARGET_MS` (default
  * 1000, the spec's target), `GAUZY_LIVE_WAIT_MS` (default 90000). Live events ride the outbox dispatcher, which runs a
@@ -164,7 +164,7 @@ async function main() {
 	return liveOk && replayed ? 0 : 1;
 }
 
-if (import.meta.url === `file://${process.argv[1]}` || process.argv[1]?.endsWith('realtime-live-check.mjs')) {
+if (import.meta.url === `file://${process.argv[1]}` || process.argv[1]?.endsWith('realtime-live-probe.mjs')) {
 	main().then(
 		(code) => process.exit(code),
 		(error) => {

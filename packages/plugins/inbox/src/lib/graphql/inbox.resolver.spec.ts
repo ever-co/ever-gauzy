@@ -14,6 +14,8 @@ jest.mock('@gauzy/core', () => {
 		ExportRedacted: decorator,
 		MultiORMColumn: decorator,
 		MultiORMEntity: decorator,
+		// The sweep checkpoint entity opts out of the account export with it.
+		SkipExport: decorator,
 		UseValidationPipe: decorator,
 		TenantOrganizationBaseEntity: class {},
 		MikroOrmBaseEntityRepository: class {},
