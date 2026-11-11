@@ -327,6 +327,8 @@ describe('OrganizationPermissionGuard placement', () => {
 const DELIBERATELY_OPEN: ReadonlyArray<string> = Object.freeze([
 	// AuthController: acts on the session of the caller and nobody else
 	'AuthController.logout',
+	// a new account for the caller's own proven address only, and only while tenant registration is open (open-workspace.ts)
+	'AuthController.openWorkspace',
 	'AuthController.switchWorkspace',
 	// AuthZitadelController (auth-zitadel plugin): Ever ID account links of the caller only: each route requires a signed-in
 	// user (currentUserId() throws 401 without one) and ZitadelLinkService scopes every step to that user
