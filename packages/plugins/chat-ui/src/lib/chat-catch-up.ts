@@ -1,4 +1,4 @@
-import { IChatMessage, IChatMessagePage } from '@gauzy/contracts';
+import { IChatMessage, IChatMessagePage, IChatMessageWithRelations } from '@gauzy/contracts';
 import { mergeMessages } from './chat-ui.helpers';
 
 /** How the API orders messages: by creation time, then by id. */
@@ -74,4 +74,17 @@ export function applyCatchUp<T extends IChatMessage, R extends { messages: T[]; 
 	const kept = current.filter((message) => !before.has(String(message.id)) || !untouched(message));
 	const result = reconcile(current.filter((message) => before.has(String(message.id))));
 	return { ...result, messages: mergeMessages(result.messages.filter(untouched), kept), added: result.added.filter(untouched) };
+}
+
+/**
+ * The root a catch-up read, with the fields my own actions changed meanwhile on top: the follow state as I set it, and
+ * the reply count and last reply never behind what my own reply made them (the read may predate it, or count more).
+ */
+export function rootWithMyFields(root: IChatMessageWithRelations, mine: Partial<IChatMessageWithRelations>): IChatMessageWithRelations {
+	const next: IChatMessageWithRelations = { ...root, ...mine };
+	if (mine.replyCount !== undefined) next.replyCount = Math.max(root.replyCount ?? 0, mine.replyCount);
+	if (mine.lastReplyAt && root.lastReplyAt) {
+		next.lastReplyAt = new Date(mine.lastReplyAt).getTime() >= new Date(root.lastReplyAt).getTime() ? mine.lastReplyAt : root.lastReplyAt;
+	}
+	return next;
 }

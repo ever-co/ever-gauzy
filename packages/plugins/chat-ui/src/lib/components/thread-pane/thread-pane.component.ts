@@ -7,7 +7,7 @@ import { EMPTY, merge, Subject, Subscription } from 'rxjs';
 import { auditTime, catchError, filter, switchMap } from 'rxjs/operators';
 import { CHAT_EVENT_NAMES, IChatMessageWithRelations } from '@gauzy/contracts';
 import { ToastrService } from '@gauzy/ui-core/core';
-import { applyCatchUp, reconcileWithOldest } from '../../chat-catch-up';
+import { applyCatchUp, reconcileWithOldest, rootWithMyFields } from '../../chat-catch-up';
 import { CHAT_LIVE_AUDIT_MS, CHAT_THREAD_POLL_MS } from '../../chat-ui.constants';
 import { apiErrorMessage, continuesGroup, mergeMessages, newNonce } from '../../chat-ui.helpers';
 import { ChatHint } from '../../services/chat-live';
@@ -214,6 +214,11 @@ export class ThreadPaneComponent {
 	private readAfterNewer = false;
 	/** The messages changed here since the latest catch-up began (a refresh, a deletion, my own action): its page does not overrule them. */
 	private readonly touched = new Set<string>();
+	/**
+	 * The root's fields my own actions changed since the latest catch-up began (a reply sent: the reply count and the
+	 * last reply; a follow change): the catch-up's root is applied with these on top, its other fields (an edit) kept.
+	 */
+	private rootFields: ChatMessagePatch = {};
 	/** Counts the visits of this pane (every root switch): a reply belongs to the visit it was made in. */
 	private visit = 0;
 	/** The last reply a thread read was sent for, so the same read is not sent twice. */
@@ -358,6 +363,7 @@ export class ThreadPaneComponent {
 		if (!this.isCurrent(id) || this.loading()) return;
 		const run = ++this.catchUpRun;
 		this.touched.clear();
+		this.rootFields = {};
 		const before = new Set(this.replies().map((reply) => String(reply.id)));
 		const wasComplete = !this.hasAfter();
 		this.api
@@ -366,7 +372,7 @@ export class ThreadPaneComponent {
 			.subscribe({
 				next: (page) => {
 					if (!this.isCurrent(id) || run !== this.catchUpRun) return;
-					if (!this.touched.has(String(page.root.id))) this.replace(page.root, false);
+					if (!this.touched.has(String(page.root.id))) this.replace(rootWithMyFields(page.root, this.rootFields), false);
 					const replies = { hasAfter: page.hasAfter, messages: page.messages.filter((message) => message.id !== page.root.id) };
 					const result = applyCatchUp(this.replies(), before, this.touched, (loaded) => reconcileWithOldest(loaded, replies));
 					this.replies.set(result.messages);
@@ -457,8 +463,8 @@ export class ThreadPaneComponent {
 					this.api.notifyChanged();
 					if (!this.isCurrent(id)) return;
 					const next = { ...root, following };
-					// A running catch-up does not overrule it.
-					this.touched.add(String(root.id));
+					// A running catch-up does not overrule the follow state (only that field).
+					this.rootFields = { ...this.rootFields, following };
 					this.root.set(next);
 					this.rootChanged.emit(threadFieldsOf(next));
 				},
@@ -493,9 +499,9 @@ export class ThreadPaneComponent {
 						this.replies.set(mergeMessages(this.replies(), [result.message]));
 						const current = this.root() ?? root;
 						const next = { ...current, replyCount: current.replyCount + 1, lastReplyAt: result.message.createdAt, following: true };
-						// A running catch-up overrules neither the root nor the new reply.
-						this.touched.add(String(current.id));
+						// A running catch-up overrules neither the new reply nor the root's reply fields (its other fields it may).
 						this.touched.add(String(result.message.id));
+						this.rootFields = { ...this.rootFields, replyCount: next.replyCount, lastReplyAt: next.lastReplyAt, following: true };
 						this.root.set(next);
 						this.rootChanged.emit(threadFieldsOf(next));
 						this.lastMarkedId = String(result.message.id);
