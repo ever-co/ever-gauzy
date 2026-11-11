@@ -91,9 +91,18 @@ function isKeyOfTenant(key: string, tenantId: ID | null | undefined): boolean {
 	return Boolean(tenantId) && key.split('/').includes(tenantId as string);
 }
 
-function isRasterKey(key: string): boolean {
-	const dot = key.lastIndexOf('.');
-	return dot >= 0 && RASTER_EXTENSIONS.has(key.slice(dot).toLowerCase());
+/**
+ * Whether a key names a raster image file, by its extension. A Cloudinary key is the asset's public id, which the image
+ * upload names with no extension (Cloudinary keeps the format apart): one without any is taken for Cloudinary alone. A
+ * key whose extension is not a raster image's is refused whatever the provider.
+ */
+function isRasterKey(key: string, storageProvider: string): boolean {
+	const name = key.slice(key.lastIndexOf('/') + 1);
+	const dot = name.lastIndexOf('.');
+	if (dot < 0) {
+		return storageProvider === FileStorageProviderEnum.CLOUDINARY;
+	}
+	return RASTER_EXTENSIONS.has(name.slice(dot).toLowerCase());
 }
 
 /**
@@ -129,7 +138,12 @@ export async function toStoredImageAssetIcon(value: string, sources: ImageAssetI
 	// A key the local provider stored on Windows has backslashes; a URL path has none
 	const key = (asset.url ?? '').replace(/\\/g, '/');
 	const storageProvider = asset.storageProvider ?? '';
-	if (!key || !PROVIDERS.has(storageProvider) || !isRasterKey(key) || !isKeyOfTenant(key, tenantId)) {
+	if (
+		!key ||
+		!PROVIDERS.has(storageProvider) ||
+		!isRasterKey(key, storageProvider) ||
+		!isKeyOfTenant(key, tenantId)
+	) {
 		throw new BadRequestException('This image cannot be used as an icon.');
 	}
 

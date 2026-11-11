@@ -119,8 +119,27 @@ describe('image asset icons', () => {
 			expect(findAsset).not.toHaveBeenCalled();
 		});
 
+		// The image upload names a Cloudinary file by a public id with no extension: the format is kept apart
+		it('stores an image Cloudinary holds under a public id with no extension', async () => {
+			const publicId = `uploads/task_property_icons/${tenantId}/file-1731340000-${randomUUID()}`;
+			const cloudinaryAsset = { id: assetId, url: publicId, storageProvider: FileStorageProviderEnum.CLOUDINARY };
+
+			await expect(
+				toStoredImageAssetIcon(`image-asset:${assetId}`, {
+					tenantId,
+					findAsset: assetsOf(tenantId, cloudinaryAsset)
+				})
+			).resolves.toBe(`image-asset:${assetId}:CLOUDINARY:${publicId}`);
+		});
+
 		it.each([
 			['a file that is not a raster image', { url: key.replace(/\.png$/, '.svg') }],
+			[
+				'a Cloudinary file that is not a raster image',
+				{ url: key.replace(/\.png$/, '.svg'), storageProvider: 'CLOUDINARY' }
+			],
+			['a file with no extension, outside Cloudinary', { url: key.replace(/\.png$/, '') }],
+			['a file whose folder has a dot but whose name has none', { url: `uploads/v1.png/${tenantId}/image` }],
 			['a file outside the tenant upload folders', { url: `uploads/task_property_icons/${otherTenantId}/a.png` }],
 			['a file of an unknown provider', { storageProvider: null }],
 			['a file name too long for the icon column', { url: `uploads/icons/${tenantId}/${'a'.repeat(200)}.png` }]
