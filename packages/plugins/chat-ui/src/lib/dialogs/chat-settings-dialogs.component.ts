@@ -12,13 +12,16 @@ import {
 	IChatCategory,
 	IChatConversationUpdateInput,
 	IChatConversationWithState,
-	IChatMemberSummary
+	IChatMemberSummary,
+	IChatWebhook
 } from '@gauzy/contracts';
 import { moveCategory, nextCategoryPosition, sortCategories } from '../chat-categories';
 import { apiErrorMessage, ChatPerson } from '../chat-ui.helpers';
 import { ChatPeople, EMPTY_PEOPLE } from '../services/chat-people.service';
 import { ChatUiService } from '../services/chat-ui.service';
 import { PersonAvatarComponent } from '../components/person-avatar/person-avatar.component';
+import { ChatWebhooksService } from '../services/chat-webhooks.service';
+import { ChatWebhooksPanelComponent } from './chat-webhooks-panel.component';
 
 const SETTINGS_DIALOG_STYLES = `
 		.dialog {
@@ -90,6 +93,25 @@ const SETTINGS_DIALOG_STYLES = `
 		.loading {
 			min-height: 3rem;
 		}
+		.tabs {
+			display: flex;
+			gap: 0.25rem;
+			margin-bottom: 0.75rem;
+			border-bottom: 1px solid rgba(127, 127, 127, 0.25);
+		}
+		.tab {
+			padding: 0.375rem 0.75rem;
+			border: 0;
+			border-bottom: 2px solid transparent;
+			background: transparent;
+			color: inherit;
+			font-size: 0.8125rem;
+			cursor: pointer;
+		}
+		.tab.active {
+			border-bottom-color: var(--color-primary-default, #3366ff);
+			font-weight: 600;
+		}
 	`;
 
 /** What the conversation passes to its settings. */
@@ -134,12 +156,26 @@ interface MemberRow {
 		NbSpinnerModule,
 		NbTooltipModule,
 		TranslatePipe,
-		PersonAvatarComponent
+		PersonAvatarComponent,
+		ChatWebhooksPanelComponent
 	],
 	template: `
 		<nb-card class="dialog" data-test="channel-settings-dialog">
 			<nb-card-header>{{ 'CHAT.SETTINGS.TITLE' | translate }}</nb-card-header>
 			<nb-card-body>
+				@if (webhooks() !== null) {
+					<div class="tabs" role="tablist" data-test="settings-tabs">
+						<button type="button" role="tab" class="tab" [class.active]="tab() === 'settings'" [attr.aria-selected]="tab() === 'settings'" data-test="tab-settings" (click)="tab.set('settings')">
+							{{ 'CHAT.SETTINGS.TAB_SETTINGS' | translate }}
+						</button>
+						<button type="button" role="tab" class="tab" [class.active]="tab() === 'integrations'" [attr.aria-selected]="tab() === 'integrations'" data-test="tab-integrations" (click)="tab.set('integrations')">
+							{{ 'CHAT.SETTINGS.TAB_INTEGRATIONS' | translate }}
+						</button>
+					</div>
+				}
+				@if (tab() === 'integrations' && webhooks() !== null) {
+					<ngx-chat-webhooks-panel [conversationId]="context.conversation.id" [people]="context.people" [initial]="webhooks()"></ngx-chat-webhooks-panel>
+				} @else {
 				@if (isChannel()) {
 					<label class="field">
 						<span>{{ 'CHAT.DIALOG.CHANNEL_NAME' | translate }}</span>
@@ -210,6 +246,7 @@ interface MemberRow {
 						<p class="note">{{ 'CHAT.SETTINGS.DEFAULT_NOTE' | translate }}</p>
 					}
 				}
+				}
 				@if (error()) {
 					<p class="error" role="alert">{{ error() }}</p>
 				}
@@ -240,6 +277,11 @@ export class ChannelSettingsDialogComponent implements OnInit, AfterViewInit {
 		canManage: false
 	};
 
+	private readonly webhooksApi = inject(ChatWebhooksService);
+	/** Which tab shows: the settings, or the channel's incoming webhooks (for its managers, where webhooks are on). */
+	protected readonly tab = signal<'settings' | 'integrations'>('settings');
+	/** The channel's webhooks as first read; null while unknown, or where the API answers 404 (webhooks off): no tab. */
+	protected readonly webhooks = signal<IChatWebhook[] | null>(null);
 	protected readonly name = signal('');
 	protected readonly topic = signal('');
 	protected readonly isPrivate = signal(false);
@@ -308,6 +350,13 @@ export class ChannelSettingsDialogComponent implements OnInit, AfterViewInit {
 		this.topic.set(conversation.topic ?? '');
 		this.isPrivate.set(conversation.visibility === ChatVisibilityEnum.PRIVATE);
 		this.categoryId.set(conversation.categoryId ? String(conversation.categoryId) : null);
+		// The Integrations tab, for a channel's managers, where the API serves webhooks (a 404 there means they are off).
+		if (this.context.canManage && conversation.kind === ChatConversationKindEnum.CHANNEL) {
+			this.webhooksApi
+				.list(conversation.id)
+				.pipe(takeUntilDestroyed(this.destroyRef))
+				.subscribe({ next: (webhooks) => this.webhooks.set(webhooks), error: () => this.webhooks.set(null) });
+		}
 		this.api
 			.members(conversation.id)
 			.pipe(takeUntilDestroyed(this.destroyRef))

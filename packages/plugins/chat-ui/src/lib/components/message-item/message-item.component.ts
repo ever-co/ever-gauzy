@@ -5,10 +5,12 @@ import { RouterLink } from '@angular/router';
 import { NbButtonModule, NbIconModule, NbTooltipModule } from '@nebular/theme';
 import { TranslatePipe } from '@ngx-translate/core';
 import { ChatMessageKindEnum, IChatFile, IChatMessageWithRelations } from '@gauzy/contracts';
+import { appBlocksOf, bodyRepeatsBlocks, safeIconUrl } from '../../chat-app-blocks';
 import { ChatTaskSummary } from '../../chat-tasks';
 import { CHAT_QUICK_REACTIONS, CHAT_TASK_LINK } from '../../chat-ui.constants';
 import { renderBodyHtml } from '../../chat-ui.helpers';
 import { ChatPeople } from '../../services/chat-people.service';
+import { AppBlocksComponent } from '../app-blocks/app-blocks.component';
 import { LinkCardsComponent } from '../link-cards/link-cards.component';
 import { MessageAttachmentsComponent } from '../message-attachments/message-attachments.component';
 import { PersonAvatarComponent } from '../person-avatar/person-avatar.component';
@@ -22,7 +24,9 @@ export type MessageAction =
 	| { kind: 'react'; emoji: string; on: boolean }
 	| { kind: 'unread' }
 	| { kind: 'follow'; following: boolean }
-	| { kind: 'createTask' };
+	| { kind: 'createTask' }
+	/** An app's reply to a click replaced the message (an incoming webhook's post). */
+	| { kind: 'replaced'; message: IChatMessageWithRelations };
 
 /**
  * One message: the author header (unless it continues the previous author's group), the body with mention
@@ -33,7 +37,7 @@ export type MessageAction =
 @Component({
 	selector: 'ngx-chat-message-item',
 	changeDetection: ChangeDetectionStrategy.OnPush,
-	imports: [DatePipe, RouterLink, NbButtonModule, NbIconModule, NbTooltipModule, TranslatePipe, LinkCardsComponent, MessageAttachmentsComponent, PersonAvatarComponent],
+	imports: [DatePipe, RouterLink, NbButtonModule, NbIconModule, NbTooltipModule, TranslatePipe, AppBlocksComponent, LinkCardsComponent, MessageAttachmentsComponent, PersonAvatarComponent],
 	template: `
 		<article
 			class="message"
@@ -45,14 +49,18 @@ export type MessageAction =
 			[attr.data-message-id]="message().id"
 		>
 			@if (!continued()) {
-				<ngx-chat-person-avatar class="avatar" [person]="author()" [fallbackName]="authorName()"></ngx-chat-person-avatar>
+				@if (appIcon(); as icon) {
+					<img class="avatar app-icon" [src]="icon" alt="" referrerpolicy="no-referrer" loading="lazy" data-test="app-icon" />
+				} @else {
+					<ngx-chat-person-avatar class="avatar" [person]="author()" [fallbackName]="authorName()"></ngx-chat-person-avatar>
+				}
 			}
 			<div class="content">
 				@if (!continued()) {
 					<header class="header">
 						<span class="author">{{ authorName() }}</span>
-						@if (message().kind === 'app' && message().appName) {
-							<span class="tag">{{ 'CHAT.MESSAGE.APP' | translate }} · {{ message().appName }}</span>
+						@if (message().kind === 'app') {
+							<span class="tag app" data-test="app-badge">{{ 'CHAT.MESSAGE.APP' | translate }}</span>
 						}
 						<time class="time" [attr.datetime]="message().createdAt">{{ message().createdAt | date: 'shortTime' }}</time>
 						@if (message().pinnedAt) {
@@ -66,7 +74,12 @@ export type MessageAction =
 				@if (message().deletedAt) {
 					<p class="deleted">{{ 'CHAT.MESSAGE.DELETED' | translate }}</p>
 				} @else {
-					<div class="body" data-test="message-body" [innerHTML]="html()"></div>
+					@if (!bodyHidden()) {
+						<div class="body" data-test="message-body" [innerHTML]="html()"></div>
+					}
+					@if (appBlocks().length) {
+						<ngx-chat-app-blocks [message]="message()" [readOnly]="readOnly()" (replaced)="act({ kind: 'replaced', message: $event })"></ngx-chat-app-blocks>
+					}
 					@if (message().editedAt) {
 						<span class="edited">({{ 'CHAT.MESSAGE.EDITED' | translate }})</span>
 					}
@@ -197,6 +210,13 @@ export type MessageAction =
 			.avatar {
 				grid-column: 1;
 				padding-top: 0.125rem;
+			}
+			.app-icon {
+				width: 2rem;
+				height: 2rem;
+				border-radius: 0.375rem;
+				object-fit: cover;
+				padding-top: 0;
 			}
 			.content {
 				grid-column: 2;
@@ -432,6 +452,12 @@ export class MessageItemComponent {
 		const meUser = this.meUserId();
 		return (!!me && String(message.authorEmployeeId) === me) || (!!meUser && String(message.authorUserId) === meUser);
 	});
+	/** The blocks of an app message (none for a member's message). */
+	protected readonly appBlocks = computed(() => appBlocksOf(this.message()));
+	/** An app message whose body only repeats its blocks shows the blocks alone. */
+	protected readonly bodyHidden = computed(() => bodyRepeatsBlocks(this.message().body, this.appBlocks()));
+	/** The icon of the app that posted the message (https only), shown in place of an avatar. */
+	protected readonly appIcon = computed(() => (this.message().kind === ChatMessageKindEnum.APP ? safeIconUrl(this.message().appIconUrl) : null));
 	protected readonly html = computed(() =>
 		renderBodyHtml(this.message().body ?? '', this.people().byEmployee, this.conversationNames(), this.meEmployeeId(), this.sanitizer)
 	);
