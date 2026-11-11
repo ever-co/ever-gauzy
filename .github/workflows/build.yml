@@ -697,6 +697,7 @@ jobs:
           # A run with no GitHub Actions run behind it (the in-cluster ci-builds runner) has no artifact
           # list to read: the listing answers 404 and there is nothing of this run to delete. Any other
           # failure stays a failure, with gh's own message.
+          # cspell:words mktemp
           err=$(mktemp)
           if ! ids=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/artifacts"             --jq '.artifacts[] | select(.name=="build-node-modules") | .id' 2>"$err"); then
             if grep -q 'HTTP 404' "$err"; then
