@@ -67,6 +67,8 @@ describe('OrganizationTeamEmployeeService.updateMember — who may switch a memb
 	let publish: jest.Mock;
 	let service: OrganizationTeamEmployeeService;
 	let restore: () => void = () => undefined;
+	/** Runs once, right after the membership is first read with its roles: lets a test change the row before the write. */
+	let afterMembershipRead: (row: ReturnType<typeof membership>) => void;
 
 	/** Stands in for nestjs-cls, where the employee-filter bypass is stored per request. */
 	const requestStorage = new AsyncLocalStorage<Map<string, unknown>>();
@@ -107,14 +109,19 @@ describe('OrganizationTeamEmployeeService.updateMember — who may switch a memb
 		];
 		updated = [];
 		publish = jest.fn();
+		afterMembershipRead = () => undefined;
 
 		jest.spyOn(CrudService.prototype, 'findOneByWhereOptions').mockImplementation(async (where) => {
 			const row = rows.find((candidate) => matches(candidate, where));
 			if (!row) throw new Error('not found');
 			return row as never;
 		});
+		// Records the write, and stores it in the row it names
 		jest.spyOn(CrudService.prototype, 'update').mockImplementation(async (id, changes) => {
 			updated.push({ id, changes: changes as Record<string, unknown> });
+			const rowId = typeof id === 'object' && id !== null ? (id as { id?: unknown }).id : id;
+			const row = rows.find((candidate) => candidate.id === rowId);
+			if (row) Object.assign(row, changes);
 			return { affected: 1 } as never;
 		});
 
@@ -125,9 +132,17 @@ describe('OrganizationTeamEmployeeService.updateMember — who may switch a memb
 				// eslint-disable-next-line @typescript-eslint/no-explicit-any
 				exists: async ({ where }: { where: any[] }) =>
 					where.some((condition) => rows.some((row) => matches(row, condition))),
-				// The membership read with its roles
+				// The membership read with its roles: the row as it is now
 				// eslint-disable-next-line @typescript-eslint/no-explicit-any
-				findOne: async ({ where }: { where: any }) => rows.find((row) => matches(row, where)) ?? null
+				findOne: async ({ where }: { where: any }) => {
+					const row = rows.find((candidate) => matches(candidate, where));
+					if (!row) return null;
+					const read = { ...row };
+					const changeAfterRead = afterMembershipRead;
+					afterMembershipRead = () => undefined;
+					changeAfterRead(row);
+					return read;
+				}
 				// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			} as any,
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -255,18 +270,40 @@ describe('OrganizationTeamEmployeeService.updateMember — who may switch a memb
 			expect(updated[0].changes).toEqual({ ...scope, order: 3 });
 		});
 
-		it('lets a manager send their own switch back unchanged', async () => {
+		it('lets a manager send their own switch back unchanged, and saves the rest without it', async () => {
 			await expect(
 				updateAs('manager', 'row-manager', { isTrackingEnabled: true, order: 1 })
 			).resolves.toBeDefined();
 
 			expect(updated).toHaveLength(1);
+			expect(updated[0].changes).toEqual({ ...scope, order: 1 });
+		});
+
+		it('still writes the switch an admin sends back unchanged: they may turn it', async () => {
+			await expect(updateAs('admin', 'row-manager', { isTrackingEnabled: true })).resolves.toBeDefined();
+
+			expect(updated[0].changes).toEqual({ ...scope, isTrackingEnabled: true });
 		});
 
 		it('still refuses a member changing another membership, as before', async () => {
 			await expect(updateAs('member', 'row-other-member', { order: 3 })).rejects.toThrow(ForbiddenException);
 
 			expect(updated).toEqual([]);
+		});
+	});
+
+	describe('a switch the caller may not turn is never written', () => {
+		it("does not write a manager's stale value over an admin's change made after the check read the switch", async () => {
+			// The manager's screen still shows their tracking on; an admin turns it off once the check has read it
+			afterMembershipRead = (row) => {
+				if (row.id === 'row-manager') row.isTrackingEnabled = false;
+			};
+
+			await expect(
+				updateAs('manager', 'row-manager', { isTrackingEnabled: true, order: 2 })
+			).resolves.toBeDefined();
+
+			expect(rowOf('row-manager')).toMatchObject({ isTrackingEnabled: false, order: 2 });
 		});
 	});
 });

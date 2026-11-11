@@ -2,8 +2,8 @@ import { ForbiddenException } from '@nestjs/common';
 import { RolesEnum } from '@gauzy/contracts';
 import { RequestContext } from '../../core/context';
 import {
-	assertMayTurnTrackingOf,
 	callerRoleRank,
+	keepsTrackingSwitch,
 	mayTurnTrackingOf,
 	rankInTeam,
 	rankOfRole,
@@ -71,12 +71,21 @@ describe('tracking switch rule', () => {
 		});
 	});
 
-	describe('assertMayTurnTrackingOf', () => {
-		it('refuses with a 403 what the rule does not allow, and lets the rest through', () => {
-			expect(() => assertMayTurnTrackingOf(MANAGER, MANAGER)).toThrow(ForbiddenException);
-			expect(() => assertMayTurnTrackingOf(MEMBER, MEMBER)).toThrow(ForbiddenException);
-			expect(() => assertMayTurnTrackingOf(MANAGER, MEMBER)).not.toThrow();
-			expect(() => assertMayTurnTrackingOf(ADMIN, ADMIN)).not.toThrow();
+	describe('keepsTrackingSwitch', () => {
+		it('refuses with a 403 a change the rule does not allow', () => {
+			expect(() => keepsTrackingSwitch(MANAGER, MANAGER, true)).toThrow(ForbiddenException);
+			expect(() => keepsTrackingSwitch(MEMBER, MEMBER, true)).toThrow(ForbiddenException);
+		});
+
+		it('writes the switch of someone the caller may switch, changed or not', () => {
+			expect(keepsTrackingSwitch(MANAGER, MEMBER, true)).toBe(true);
+			expect(keepsTrackingSwitch(MANAGER, MEMBER, false)).toBe(true);
+			expect(keepsTrackingSwitch(ADMIN, ADMIN, false)).toBe(true);
+		});
+
+		it('leaves out a switch sent back unchanged by a caller who may not switch it, so it cannot overwrite a change', () => {
+			expect(keepsTrackingSwitch(MANAGER, MANAGER, false)).toBe(false);
+			expect(keepsTrackingSwitch(MEMBER, ADMIN, false)).toBe(false);
 		});
 	});
 

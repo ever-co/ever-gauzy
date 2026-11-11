@@ -23,6 +23,8 @@ describe('EmployeeUpdateHandler — who may switch an employee’s tracking', ()
 	let create: jest.Mock;
 	let publish: jest.Mock;
 	let handler: EmployeeUpdateHandler;
+	/** Runs once, right after the handler first reads the employee: lets a test change the row before the save. */
+	let afterEmployeeRead: (row: Record<string, unknown>) => void;
 
 	/** The caller: by default the user of the employee `SELF`, holding the given role. */
 	const asCaller = (role: RolesEnum, employeeId = SELF) => {
@@ -48,8 +50,17 @@ describe('EmployeeUpdateHandler — who may switch an employee’s tracking', ()
 
 	beforeEach(() => {
 		publish = jest.fn();
-		create = jest.fn(async (entity) => entity);
-		const employeeService = { findOneByIdString: jest.fn(async () => stored), create };
+		afterEmployeeRead = () => undefined;
+		// The save stores what it is given in the row, as the repository would
+		create = jest.fn(async (entity) => Object.assign(stored, entity));
+		const findOneByIdString = jest.fn(async () => {
+			const read = { ...stored };
+			const changeAfterRead = afterEmployeeRead;
+			afterEmployeeRead = () => undefined;
+			changeAfterRead(stored);
+			return read;
+		});
+		const employeeService = { findOneByIdString, create };
 		handler = new EmployeeUpdateHandler(employeeService as never, {} as never, { publish } as never);
 
 		jest.spyOn(RequestContext, 'hasPermission').mockImplementation(
@@ -167,7 +178,7 @@ describe('EmployeeUpdateHandler — who may switch an employee’s tracking', ()
 		expect(create).toHaveBeenCalledWith(expect.objectContaining({ id: SELF, isTrackingEnabled: true }));
 	});
 
-	it('lets anyone save the switch back as it is, and the other fields with it', async () => {
+	it('saves the other fields of a caller who may not switch the employee, without the switch they sent back', async () => {
 		asCaller(RolesEnum.EMPLOYEE);
 		storeEmployee(OTHER, RolesEnum.ADMIN, true);
 
@@ -175,6 +186,30 @@ describe('EmployeeUpdateHandler — who may switch an employee’s tracking', ()
 		await save(OTHER, { short_description: 'Lead' } as IEmployeeUpdateInput);
 
 		expect(create).toHaveBeenCalledTimes(2);
+		expect(create.mock.calls[0][0]).toMatchObject({ short_description: 'Designer' });
+		expect(create.mock.calls[0][0]).not.toHaveProperty('isTrackingEnabled');
+	});
+
+	it('still saves the switch an admin sends back unchanged: they may turn it', async () => {
+		asCaller(RolesEnum.ADMIN);
+		storeEmployee(OTHER, RolesEnum.EMPLOYEE, true);
+
+		await save(OTHER, { isTrackingEnabled: true } as IEmployeeUpdateInput);
+
+		expect(create).toHaveBeenCalledWith(expect.objectContaining({ id: OTHER, isTrackingEnabled: true }));
+	});
+
+	it("does not save a stale switch over an admin's change made after the handler read the employee", async () => {
+		asCaller(RolesEnum.MANAGER);
+		storeEmployee(SELF, RolesEnum.MANAGER, true);
+		// Their form still shows tracking on; an admin turns it off once the handler has read the employee
+		afterEmployeeRead = (row) => {
+			row.isTrackingEnabled = false;
+		};
+
+		await save(SELF, { isTrackingEnabled: true, short_description: 'Lead' } as IEmployeeUpdateInput);
+
+		expect(stored).toMatchObject({ isTrackingEnabled: false, short_description: 'Lead' });
 	});
 
 	it('reads anything but true as off, as the timer does: a null for an employee who is off changes nothing', async () => {
@@ -184,5 +219,6 @@ describe('EmployeeUpdateHandler — who may switch an employee’s tracking', ()
 		await save(SELF, { isTrackingEnabled: null } as unknown as IEmployeeUpdateInput);
 
 		expect(create).toHaveBeenCalledTimes(1);
+		expect(create.mock.calls[0][0]).not.toHaveProperty('isTrackingEnabled');
 	});
 });

@@ -77,14 +77,26 @@ export function callerRoleRank(): TrackingSwitchRank {
 }
 
 /**
- * Refuses a tracking switch the rule does not allow.
+ * Whether a write carries the person's tracking switch. Someone who may turn it writes it, changed or not. Anyone else
+ * may only send it back as it is stored, and then it is left out of the write: it was read before the write, and a
+ * change made in between by someone who may make it must not be overwritten by that copy.
  *
- * @param actor The rank of the person changing the switch.
- * @param target The rank of the person whose switch changes.
- * @throws ForbiddenException When `actor` may not turn the tracking of `target` on or off.
+ * @param actor The rank of the person writing.
+ * @param target The rank of the person whose switch it is.
+ * @param changesSwitch Whether the written value differs from the stored one.
+ * @returns True when the write carries the switch, false when the switch is left out of it.
+ * @throws ForbiddenException When `actor` may not turn the tracking of `target` on or off and the value differs.
  */
-export function assertMayTurnTrackingOf(actor: TrackingSwitchRank, target: TrackingSwitchRank): void {
-	if (!mayTurnTrackingOf(actor, target)) {
+export function keepsTrackingSwitch(
+	actor: TrackingSwitchRank,
+	target: TrackingSwitchRank,
+	changesSwitch: boolean
+): boolean {
+	if (mayTurnTrackingOf(actor, target)) {
+		return true;
+	}
+	if (changesSwitch) {
 		throw new ForbiddenException(TRACKING_SWITCH_REFUSED);
 	}
+	return false;
 }

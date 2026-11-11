@@ -18,11 +18,7 @@ import {
 } from './../../agent-exit-logout-restriction';
 import { assertOwnRatesMayChange, isSameId, removeOwnRateFields, withStoredOwnRates } from './../../own-rates';
 import { TrackingTurnedOffEvent } from './../../../time-tracking/timer/events/tracking-turned-off.event';
-import {
-	assertMayTurnTrackingOf,
-	callerRoleRank,
-	rankOfRole
-} from './../../../time-tracking/timer/tracking-switch-rule';
+import { callerRoleRank, keepsTrackingSwitch, rankOfRole } from './../../../time-tracking/timer/tracking-switch-rule';
 
 /** Whether the save turned the employee's time tracking off: it was on before, and the saved row has it off. */
 function turnsTrackingOff(before: IEmployee, saved: IEmployee): boolean {
@@ -35,26 +31,31 @@ function turnsTrackingOff(before: IEmployee, saved: IEmployee): boolean {
 type EmployeeUpdateWithTracking = IEmployeeUpdateInput & Partial<Pick<IEmployee, 'isTrackingEnabled'>>;
 
 /**
- * Refuses a save that turns the employee's time tracking on or off when the caller's role is not above theirs: an admin
- * acts on anyone, admins included; a MANAGER on the other roles only; anyone else on no one. This switch counts in
- * every team of the organization, so only the tenant roles rank here. A save that leaves it as it is passes, since
- * edit forms send the stored value back.
+ * The input as the caller may save it. The employee's time tracking switch is the caller's to write only when their
+ * role is above the employee's: an admin acts on anyone, admins included; a MANAGER on the other roles only; anyone
+ * else on no one. This switch counts in every team of the organization, so only the tenant roles rank here.
+ *
+ * Anyone else is refused a change of the switch. When they send it back as stored, as edit forms do, it is left out of
+ * the save: it was read before, and an admin may have changed it since, which that copy would overwrite.
  *
  * @param employee The employee as stored, with their user's role.
  * @param input The changes the save writes.
- * @throws ForbiddenException When the caller may not turn this employee's tracking on or off.
+ * @returns The changes the caller may save.
+ * @throws ForbiddenException When the caller may not turn this employee's tracking on or off and the save would.
  */
-function assertMayChangeTracking(employee: IEmployee, input: EmployeeUpdateWithTracking): void {
+function withTrackingSwitchAllowed(employee: IEmployee, input: EmployeeUpdateWithTracking): EmployeeUpdateWithTracking {
 	if (input.isTrackingEnabled === undefined) {
-		return;
+		return input;
 	}
 	// Anything but true reads as off, as the timer reads it
 	const turnsOn = input.isTrackingEnabled === true;
 	const isOn = employee?.isTrackingEnabled === true;
-	if (turnsOn === isOn) {
-		return;
+	if (keepsTrackingSwitch(callerRoleRank(), rankOfRole(employee?.user?.role?.name), turnsOn !== isOn)) {
+		return input;
 	}
-	assertMayTurnTrackingOf(callerRoleRank(), rankOfRole(employee?.user?.role?.name));
+	const changes = { ...input };
+	delete changes.isTrackingEnabled;
+	return changes;
 }
 
 @CommandHandler(EmployeeUpdateCommand)
@@ -96,7 +97,8 @@ export class EmployeeUpdateHandler implements ICommandHandler<EmployeeUpdateComm
 			relations: { organization: { contact: true }, user: { role: true }, contact: true }
 		});
 
-		assertMayChangeTracking(employee, input);
+		// Decided before anything is written: a refused switch stops the whole save
+		const allowedInput = withTrackingSwitchAllowed(employee, input);
 
 		const editsOwnRecord = isSameId(user?.employeeId, id);
 		const changesOwnRates = RequestContext.hasPermission(PermissionsEnum.CHANGE_OWN_RATES);
@@ -115,7 +117,7 @@ export class EmployeeUpdateHandler implements ICommandHandler<EmployeeUpdateComm
 		}
 
 		// The acknowledgement is a request flag, not an employee column.
-		const changes: IEmployeeUpdateInput = { ...input };
+		const changes: IEmployeeUpdateInput = { ...allowedInput };
 		delete changes.acknowledgeAgentExitLogoutRestriction;
 
 		const keepsStoredRates = editsOwnRecord && !changesOwnRates;
