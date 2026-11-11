@@ -18,13 +18,15 @@ const CONVERSATION = '11111111-1111-4111-8111-111111111111';
 const MESSAGE = '22222222-2222-4222-8222-222222222222';
 const ROOT = '33333333-3333-4333-8333-333333333333';
 
+const DELIVERY = { dispatch: 'inline', shared: false, singleProcess: true, prompt: true } as const;
+
 const STATUS: IRealtimeStatus = {
 	enabled: true,
 	subscriptions: true,
 	events: ['task.created', 'chat_message.created', 'chat_message.updated', 'chat_member.state_changed'],
 	signals: ['typing.signalled'],
 	maxTypingRecipients: 50,
-	delivery: { dispatch: 'inline', shared: false, singleProcess: true, prompt: true }
+	delivery: DELIVERY
 };
 
 const TIMING: ChatLiveTiming = { settleMs: 100, retryMinMs: 1_000, retryMaxMs: 4_000, statusRetryMs: 500, statusRetries: 2 };
@@ -38,7 +40,8 @@ function platform(status: () => Observable<IRealtimeStatus | null> = () => of(ST
 	const scope$ = new BehaviorSubject<string | null>('user-1:org-1');
 	const socketStatus$ = new BehaviorSubject<ChatSocketStatus>('connected');
 	const streams: Subject<{ collaborationEvents: Partial<IRealtimeEventEnvelope> }>[] = [];
-	const subscribe = jest.fn((_query: string, _variables: Record<string, unknown>) => {
+	const subscribe = jest.fn((...call: [string, Record<string, unknown>]) => {
+		expect(call).toHaveLength(2);
 		const stream = new Subject<{ collaborationEvents: Partial<IRealtimeEventEnvelope> }>();
 		streams.push(stream);
 		return stream.asObservable();
@@ -101,7 +104,7 @@ describe('servesChatEvents / deliversPromptly', () => {
 
 	it('counts only an explicit prompt delivery (an older API answers none)', () => {
 		expect(deliversPromptly(STATUS)).toBe(true);
-		expect(deliversPromptly({ ...STATUS, delivery: { ...STATUS.delivery!, prompt: false } })).toBe(false);
+		expect(deliversPromptly({ ...STATUS, delivery: { ...DELIVERY, prompt: false } })).toBe(false);
 		expect(deliversPromptly({ ...STATUS, delivery: undefined })).toBe(false);
 	});
 });
@@ -156,7 +159,7 @@ describe('ChatLiveChannel', () => {
 	});
 
 	it('keeps polling where delivery is not prompt, while the hints still arrive', () => {
-		const { channel, streams, watching } = platform(() => of({ ...STATUS, delivery: { ...STATUS.delivery!, prompt: false } }));
+		const { channel, streams, watching } = platform(() => of({ ...STATUS, delivery: { ...DELIVERY, prompt: false } }));
 		const hints: ChatHint[] = [];
 		watching.add(channel.hints$.subscribe((hint) => hints.push(hint)));
 		jest.advanceTimersByTime(TIMING.settleMs * 10);
