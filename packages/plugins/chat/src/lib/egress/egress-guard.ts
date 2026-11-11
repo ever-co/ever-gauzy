@@ -201,14 +201,14 @@ export async function guardedRequest(url: URL, options: IGuardedRequestOptions =
 
 /**
  * The body of a response, decompressed when it is gzip, deflate or brotli, at most `maxBytes` (counted before and after
- * decompression), and no further than `stop` says (it is given the last few hundred characters read, as latin1). The
+ * decompression), and no further than `stop` says (it is given each piece read, in order, once decompressed). The
  * connection is closed as soon as that is read. A read that broke off after some bytes keeps them.
  *
  * @throws EgressEncodingError for another content encoding; the signal's reason when it aborts first.
  */
 export function readLimitedBody(
 	response: http.IncomingMessage,
-	options: { maxBytes: number; signal?: AbortSignal; stop?: (window: string) => boolean }
+	options: { maxBytes: number; signal?: AbortSignal; stop?: (piece: Buffer) => boolean }
 ): Promise<Buffer> {
 	const { maxBytes, signal, stop } = options;
 	const encoding = String(firstHeaderValue(response.headers['content-encoding']) ?? '').trim().toLowerCase();
@@ -224,7 +224,6 @@ export function readLimitedBody(
 		const chunks: Buffer[] = [];
 		let total = 0;
 		let raw = 0;
-		let tail = '';
 		let settled = false;
 		const close = () => {
 			settled = true;
@@ -262,9 +261,7 @@ export function readLimitedBody(
 			const piece = chunk.length > maxBytes - total ? chunk.subarray(0, maxBytes - total) : chunk;
 			chunks.push(piece);
 			total += piece.length;
-			const window = tail + piece.toString('latin1');
-			tail = window.slice(-256);
-			if (total >= maxBytes || (stop && stop(window))) finish();
+			if (total >= maxBytes || (stop && stop(piece))) finish();
 		});
 		stream.on('end', finish);
 		stream.on('error', fail);
