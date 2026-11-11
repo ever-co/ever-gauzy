@@ -199,12 +199,23 @@ export function chordKeyOf(event: Pick<KeyboardEvent, 'key' | 'code'> & { shiftK
 
 /** The chord a key press is, or null for a modifier alone. Punctuation carries its own Shift (`?` is one key). */
 export function chordOfEvent(
-	event: Pick<KeyboardEvent, 'key' | 'code' | 'metaKey' | 'ctrlKey' | 'shiftKey' | 'altKey'>
+	event: Pick<KeyboardEvent, 'key' | 'code' | 'metaKey' | 'ctrlKey' | 'shiftKey' | 'altKey'>,
+	platform?: 'mac' | 'other'
 ): ShortcutChord | null {
 	const key = chordKeyOf(event);
 	if (!key || MODIFIER_NAMES.has(key) || key === 'dead' || key === 'unidentified' || key === 'process') return null;
 	const shift = isPrintablePunctuation(key) ? false : !!event.shiftKey;
-	return { key, mod: !!(event.metaKey || event.ctrlKey), shift, alt: !!event.altKey };
+	// `mod` is the platform's command key: ⌘ on a Mac, Ctrl elsewhere. The other one (Control on a Mac, the Windows
+	// key elsewhere) is in no binding, so a chord holding it is no chord of the app's (Control+S on a Mac is not ⌘S).
+	if (platform === 'mac' && event.ctrlKey) return null;
+	if (platform === 'other' && event.metaKey) return null;
+	const mod =
+		platform === 'mac'
+			? !!event.metaKey
+			: platform === 'other'
+				? !!event.ctrlKey
+				: !!(event.metaKey || event.ctrlKey);
+	return { key, mod, shift, alt: !!event.altKey };
 }
 
 /** Whether two chords are the same keys. */
@@ -454,6 +465,36 @@ export function isTypingTarget(target: EventTarget | null): boolean {
 	return (
 		typeof element.closest === 'function' &&
 		!!element.closest('[contenteditable="true"], .ProseMirror, .cm-editor, .ck-editor')
+	);
+}
+
+/** Whether a chord is Enter or Space alone: what activates a focused control. */
+export function isActivationKey(chord: ShortcutChord): boolean {
+	return (chord.key === 'enter' || chord.key === 'space') && !chord.mod && !chord.alt;
+}
+
+/**
+ * Whether the key press is on a control the key activates: a button, a link, a select, for Enter and Space; a check
+ * box or a radio for Space only (Enter does nothing on them, so the list's Enter still opens the row).
+ */
+export function isControlTarget(target: EventTarget | null, key: 'enter' | 'space' | string = 'enter'): boolean {
+	const element = target as HTMLElement | null;
+	if (!element || typeof element.tagName !== 'string') return false;
+	const tag = element.tagName.toUpperCase();
+	if (tag === 'BUTTON' || tag === 'A' || tag === 'SELECT' || tag === 'SUMMARY' || tag === 'NB-SELECT') return true;
+	if (tag === 'INPUT') {
+		const type = String((element as HTMLInputElement).type ?? '').toLowerCase();
+		if (type === 'checkbox' || type === 'radio') return key === 'space';
+		return NON_TEXT_INPUTS.has(type);
+	}
+	const role = element.getAttribute?.('role');
+	return (
+		role === 'button' ||
+		role === 'link' ||
+		role === 'checkbox' ||
+		role === 'menuitem' ||
+		role === 'option' ||
+		role === 'tab'
 	);
 }
 

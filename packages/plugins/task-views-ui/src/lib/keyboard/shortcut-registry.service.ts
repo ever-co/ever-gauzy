@@ -11,6 +11,8 @@ import {
 	hotkeysShortcutOf,
 	isDialogOpen,
 	isMacPlatform,
+	isActivationKey,
+	isControlTarget,
 	isTypingTarget,
 	matchKeys,
 	overridesOf,
@@ -202,8 +204,10 @@ export class ShortcutRegistryService implements OnDestroy {
 	/** Handles one key press (the window listener calls it; public for the specs). */
 	handleKeydown(event: KeyboardEvent): void {
 		if (this.pausedState() || event.defaultPrevented || event.isComposing) return;
-		const chord = chordOfEvent(event);
+		const chord = chordOfEvent(event, this.isMac ? 'mac' : 'other');
 		if (!chord) return;
+		// Enter and Space on a focused button, link or box do what that control does.
+		if (!this.pending.length && isActivationKey(chord) && isControlTarget(event.target, chord.key)) return;
 		if (isTypingTarget(event.target) && !chord.mod) {
 			// Letters typed into a field are text: a sequence started before the person moved into it is dropped.
 			this.clearPending();

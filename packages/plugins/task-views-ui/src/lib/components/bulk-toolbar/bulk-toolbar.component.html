@@ -58,7 +58,7 @@
 	@if (picker(); as kind) {
 		<div
 			class="panel"
-			role="dialog"
+			role="group"
 			[attr.aria-label]="pickerKey(kind) | translate"
 			(keydown)="onPanelKeydown($event)"
 			data-test="bulk-panel"
@@ -90,14 +90,13 @@
 				</div>
 			} @else {
 				@if (kind === 'assignees' || kind === 'labels') {
-					<div class="mode" role="radiogroup">
+					<div class="mode" role="group" [attr.aria-label]="pickerKey(kind) | translate">
 						<button
 							nbButton
 							size="tiny"
 							type="button"
 							[status]="listMode() === 'add' ? 'primary' : 'basic'"
-							[attr.aria-checked]="listMode() === 'add'"
-							role="radio"
+							[attr.aria-pressed]="listMode() === 'add'"
 							(click)="listMode.set('add')"
 						>
 							{{ 'TASK_VIEWS.BULK.ADD' | translate }}
@@ -107,8 +106,7 @@
 							size="tiny"
 							type="button"
 							[status]="listMode() === 'remove' ? 'primary' : 'basic'"
-							[attr.aria-checked]="listMode() === 'remove'"
-							role="radio"
+							[attr.aria-pressed]="listMode() === 'remove'"
 							(click)="listMode.set('remove')"
 						>
 							{{ 'TASK_VIEWS.BULK.REMOVE' | translate }}
@@ -122,11 +120,12 @@
 					fieldSize="small"
 					type="search"
 					autocomplete="off"
+					[attr.aria-label]="'TASK_VIEWS.BULK.SEARCH' | translate"
 					[placeholder]="'TASK_VIEWS.BULK.SEARCH' | translate"
 					[ngModel]="search()"
 					(ngModelChange)="search.set($event)"
 				/>
-				<ul class="choices" role="listbox">
+				<ul class="choices">
 					@if (kind === 'project') {
 						<li>
 							<button type="button" class="choice muted" (click)="clearProject()">
@@ -139,7 +138,6 @@
 							<button
 								type="button"
 								class="choice"
-								role="option"
 								[attr.data-option]="option.id"
 								(click)="choose(option)"
 							>

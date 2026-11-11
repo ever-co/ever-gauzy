@@ -136,6 +136,18 @@ describe('ShortcutRegistryService', () => {
 		expect(help).toHaveBeenCalledWith(expect.objectContaining({ commandId: 'helpOpen', extend: false }));
 	});
 
+	it('leaves Enter on a focused button to the button', () => {
+		const open = jest.fn();
+		registry.register('listOpen', { run: open });
+		registry.mount();
+		const button = document.createElement('button');
+		document.body.appendChild(button);
+		const enter = keydown('Enter', 'Enter');
+		button.dispatchEvent(enter);
+		expect(open).not.toHaveBeenCalled();
+		expect(enter.defaultPrevented).toBe(false);
+	});
+
 	it('passes Shift beyond a row key as extend', () => {
 		const select = jest.fn();
 		registry.register('listSelect', { run: select });

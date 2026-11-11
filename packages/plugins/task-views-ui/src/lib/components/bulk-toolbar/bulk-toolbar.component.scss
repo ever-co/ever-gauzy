@@ -10,9 +10,9 @@
   align-items: center;
   gap: 0.375rem;
   padding: 0.5rem 0.75rem;
-  border-radius: 0.375rem;
-  background: var(--color-primary-transparent-100, rgba(51, 102, 255, 0.08));
-  border: 1px solid var(--border-primary-color-1, #c6d6ff);
+  border-radius: var(--border-radius);
+  background: var(--color-primary-transparent-100);
+  border: 1px solid var(--border-primary-color-1);
 }
 
 .count {
@@ -21,13 +21,13 @@
 
 .limit {
   font-size: 0.8125rem;
-  color: var(--text-warning-color, #b86e00);
+  color: var(--text-warning-color);
 }
 
 .separator {
   width: 1px;
   align-self: stretch;
-  background: var(--border-basic-color-4, #d0d5dd);
+  background: var(--border-basic-color-4);
   margin: 0 0.25rem;
 }
 
@@ -42,10 +42,10 @@
   z-index: 20;
   width: min(20rem, 90vw);
   padding: 0.5rem;
-  border-radius: 0.375rem;
-  background: var(--background-basic-color-1, #fff);
-  border: 1px solid var(--border-basic-color-4, #d0d5dd);
-  box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.12);
+  border-radius: var(--border-radius);
+  background: var(--background-basic-color-1);
+  border: 1px solid var(--border-basic-color-4);
+  box-shadow: var(--card-shadow);
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
@@ -78,7 +78,7 @@
   width: 100%;
   padding: 0.375rem 0.5rem;
   border: 0;
-  border-radius: 0.25rem;
+  border-radius: var(--border-radius);
   background: transparent;
   color: inherit;
   text-align: left;
@@ -87,12 +87,12 @@
 
   &:hover,
   &:focus-visible {
-    background: var(--background-basic-color-2, #f7f9fc);
+    background: var(--background-basic-color-2);
     outline: none;
   }
 
   &.muted {
-    color: var(--text-hint-color, #8f9bb3);
+    color: var(--text-hint-color);
     text-transform: none;
   }
 }
@@ -105,6 +105,6 @@
 
 .empty {
   padding: 0.375rem 0.5rem;
-  color: var(--text-hint-color, #8f9bb3);
+  color: var(--text-hint-color);
   font-size: 0.8125rem;
 }

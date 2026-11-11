@@ -72,6 +72,7 @@ export type SaveViewDialogResult = TaskViewPlacement | null | undefined;
 					@if (visibility() === shared) {
 						<div class="field shared-scope">
 							<span class="label">{{ 'TASK_VIEWS.DIALOG.SHARED_WITH' | translate }}</span>
+							<p class="hint">{{ 'TASK_VIEWS.DIALOG.SHARED_HINT' | translate }}</p>
 							<nb-select
 								fullWidth
 								name="scope"
@@ -156,8 +157,13 @@ export type SaveViewDialogResult = TaskViewPlacement | null | undefined;
 			.shared-scope nb-select + nb-select {
 				margin-top: 0.5rem;
 			}
+			.hint {
+				margin: 0 0 0.5rem;
+				font-size: 0.8125rem;
+				color: var(--text-hint-color);
+			}
 			.error {
-				color: var(--color-danger-default, #d33);
+				color: var(--color-danger-default);
 				margin: -0.5rem 0 1rem;
 				font-size: 0.875rem;
 			}

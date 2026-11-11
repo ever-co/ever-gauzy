@@ -17,9 +17,9 @@
   position: sticky;
   top: 1rem;
   padding: 0.75rem;
-  border-radius: 0.5rem;
-  background: var(--background-basic-color-1, #fff);
-  box-shadow: var(--card-shadow, 0 0.25rem 0.5rem rgba(44, 51, 73, 0.1));
+  border-radius: var(--border-radius);
+  background: var(--background-basic-color-1);
+  box-shadow: var(--card-shadow);
 
   .switcher-head {
     display: flex;
@@ -39,7 +39,7 @@
     font-size: 0.6875rem;
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    color: var(--text-hint-color, #8f9bb3);
+    color: var(--text-hint-color);
   }
 
   ul {
@@ -51,8 +51,8 @@
   a {
     display: block;
     padding: 0.3125rem 0.5rem;
-    border-radius: 0.25rem;
-    color: var(--text-basic-color, #222b45);
+    border-radius: var(--border-radius);
+    color: var(--text-basic-color);
     text-decoration: none;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -60,13 +60,13 @@
 
     &:hover,
     &:focus-visible {
-      background: var(--background-basic-color-2, #f7f9fc);
+      background: var(--background-basic-color-2);
     }
 
     &.active {
       font-weight: 600;
-      color: var(--color-primary-default, #3366ff);
-      background: var(--color-primary-transparent-100, rgba(51, 102, 255, 0.08));
+      color: var(--color-primary-default);
+      background: var(--color-primary-transparent-100);
     }
   }
 
@@ -77,7 +77,7 @@
   .switcher-empty {
     margin: 0.75rem 0 0;
     font-size: 0.8125rem;
-    color: var(--text-hint-color, #8f9bb3);
+    color: var(--text-hint-color);
   }
 }
 
@@ -120,20 +120,20 @@
 .badge {
   padding: 0.0625rem 0.5rem;
   border-radius: 1rem;
-  background: var(--background-basic-color-3, #edf1f7);
+  background: var(--background-basic-color-3);
 
   &.personal {
-    background: var(--color-info-transparent-100, rgba(0, 149, 255, 0.08));
+    background: var(--color-info-transparent-100);
   }
 }
 
 .unsaved {
-  color: var(--text-warning-color, #b86e00);
+  color: var(--text-warning-color);
   font-weight: 600;
 }
 
 .count {
-  color: var(--text-hint-color, #8f9bb3);
+  color: var(--text-hint-color);
 }
 
 .view-body {
@@ -156,7 +156,7 @@
   gap: 0.375rem;
   margin: 0;
   font-size: 0.8125rem;
-  color: var(--text-hint-color, #8f9bb3);
+  color: var(--text-hint-color);
 }
 
 .pill {
@@ -164,8 +164,8 @@
   padding: 0 0.375rem;
   border-radius: 1rem;
   font-size: 0.6875rem;
-  background: var(--color-primary-default, #3366ff);
-  color: #fff;
+  background: var(--color-primary-default);
+  color: var(--text-control-color);
 }
 
 .properties {
@@ -176,17 +176,17 @@
 
 .property {
   padding: 0.125rem 0.5rem;
-  border: 1px solid var(--border-basic-color-4, #d0d5dd);
+  border: 1px solid var(--border-basic-color-4);
   border-radius: 1rem;
   background: transparent;
-  color: var(--text-hint-color, #8f9bb3);
+  color: var(--text-hint-color);
   font-size: 0.75rem;
   cursor: pointer;
 
   &.on {
-    border-color: var(--color-primary-default, #3366ff);
-    color: var(--color-primary-default, #3366ff);
-    background: var(--color-primary-transparent-100, rgba(51, 102, 255, 0.08));
+    border-color: var(--color-primary-default);
+    color: var(--color-primary-default);
+    background: var(--color-primary-transparent-100);
   }
 }
 
@@ -196,9 +196,9 @@
   align-items: center;
   gap: 0.5rem;
   padding: 0.625rem 0.75rem;
-  border-radius: 0.375rem;
-  border: 1px solid var(--color-warning-default, #ffaa00);
-  background: var(--color-warning-transparent-100, rgba(255, 170, 0, 0.08));
+  border-radius: var(--border-radius);
+  border: 1px solid var(--color-warning-default);
+  background: var(--color-warning-transparent-100);
 
   .conflict-text {
     display: flex;
@@ -214,15 +214,15 @@
 .error {
   margin: 0;
   font-size: 0.8125rem;
-  color: var(--text-hint-color, #8f9bb3);
+  color: var(--text-hint-color);
 
   &.warning {
-    color: var(--text-warning-color, #b86e00);
+    color: var(--text-warning-color);
   }
 }
 
 .error {
-  color: var(--color-danger-default, #d33);
+  color: var(--color-danger-default);
 }
 
 .paging {
@@ -233,7 +233,7 @@
 
   .shown {
     font-size: 0.8125rem;
-    color: var(--text-hint-color, #8f9bb3);
+    color: var(--text-hint-color);
   }
 }
 
@@ -247,10 +247,10 @@
   align-items: center;
   gap: 0.75rem;
   padding: 0.625rem 0.75rem 0.625rem 1rem;
-  border-radius: 0.5rem;
-  background: var(--background-alternative-color-1, #222b45);
-  color: var(--text-alternate-color, #fff);
-  box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.25);
+  border-radius: var(--border-radius);
+  background: var(--background-alternative-color-1);
+  color: var(--text-alternate-color);
+  box-shadow: var(--card-shadow);
   max-width: calc(100vw - 2rem);
 }
 

@@ -124,6 +124,22 @@ describe('view definition', () => {
 		).toBe(VisibilityLevelEnum.ORGANIZATION);
 	});
 
+	it('moves the visibility level with where the view is listed', () => {
+		const view = {
+			id: 'v' as ID,
+			name: 'A',
+			version: 2,
+			organizationTeamId: null,
+			projectId: 'p' as ID
+		} as unknown as ITaskView;
+		const scope = { organizationId: 'org' as ID };
+		expect(placementInput(view, { organizationTeamId: 't' as ID }, scope).visibilityLevel).toBe(
+			VisibilityLevelEnum.TEAM_AND_PROJECT
+		);
+		expect(placementInput(view, { projectId: null }, scope).visibilityLevel).toBe(VisibilityLevelEnum.ORGANIZATION);
+		expect(placementInput(view, { name: 'B' }, scope).visibilityLevel).toBeUndefined();
+	});
+
 	it('saves and renames stating the version read', () => {
 		const view = { id: 'v' as ID, name: 'A', version: 3, filterOptions: {}, properties: {} } as ITaskView;
 		expect(saveInput(view, DEFAULT_DEFINITION, { organizationId: 'org' as ID }).expectedVersion).toBe(3);

@@ -221,10 +221,7 @@ export function createInput(
 		...(scope.tenantId ? { tenantId: scope.tenantId } : {}),
 		name: placement.name,
 		visibility: placement.visibility,
-		visibilityLevel:
-			placement.organizationTeamId || placement.projectId
-				? VisibilityLevelEnum.TEAM_AND_PROJECT
-				: VisibilityLevelEnum.ORGANIZATION,
+		visibilityLevel: visibilityLevelOf(placement),
 		organizationTeamId: placement.organizationTeamId ?? null,
 		projectId: placement.projectId ?? null,
 		filterOptions: filterOptionsOf(definition, from?.filterOptions),
@@ -249,7 +246,21 @@ export function saveInput(
 	};
 }
 
-/** The body that renames a view or changes who sees it, stating the version it was read at. */
+/** The visibility level of where a view is listed: a team's or a project's, else the organization's. */
+export function visibilityLevelOf(placement: {
+	organizationTeamId?: ID | null;
+	projectId?: ID | null;
+}): VisibilityLevelEnum {
+	return placement.organizationTeamId || placement.projectId
+		? VisibilityLevelEnum.TEAM_AND_PROJECT
+		: VisibilityLevelEnum.ORGANIZATION;
+}
+
+/**
+ * The body that renames a view or changes who sees it, stating the version it was read at. A change of where the
+ * view is listed (team, project) moves its visibility level with it, from the team and project in effect after the
+ * change (what the change leaves out is the view's own).
+ */
 export function placementInput(
 	view: ITaskView,
 	change: Partial<TaskViewPlacement>,
@@ -262,6 +273,17 @@ export function placementInput(
 		...(change.visibility !== undefined ? { visibility: change.visibility } : {}),
 		...(change.organizationTeamId !== undefined ? { organizationTeamId: change.organizationTeamId } : {}),
 		...(change.projectId !== undefined ? { projectId: change.projectId } : {}),
+		...(change.organizationTeamId !== undefined || change.projectId !== undefined
+			? {
+					visibilityLevel: visibilityLevelOf({
+						organizationTeamId:
+							change.organizationTeamId !== undefined
+								? change.organizationTeamId
+								: view.organizationTeamId,
+						projectId: change.projectId !== undefined ? change.projectId : view.projectId
+					})
+				}
+			: {}),
 		expectedVersion: versionOf(view)
 	};
 }

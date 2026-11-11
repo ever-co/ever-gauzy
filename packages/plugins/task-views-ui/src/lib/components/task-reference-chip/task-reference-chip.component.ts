@@ -46,7 +46,7 @@ export const TASK_VIEW_ID_PARAM = 'id';
 	styles: [
 		`
 			.reference-chip {
-				font-family: var(--font-family-monospace, ui-monospace, monospace);
+				font-family: var(--font-family-monospace, monospace);
 				letter-spacing: 0.02em;
 			}
 			.reference-text {

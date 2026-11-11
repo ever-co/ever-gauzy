@@ -9,6 +9,7 @@ import {
 	sanitizeChanges,
 	statusChanges,
 	summarizeOutcome,
+	undoLosses,
 	undoRequest
 } from './bulk-undo';
 
@@ -98,6 +99,18 @@ describe('bulk request and undo', () => {
 					{ taskId: 'b', changes: { setTagIds: ['t9'] } }
 				]
 			});
+		});
+
+		it('counts the tasks an undo puts back only in part (an old name the platform does not take)', () => {
+			expect(undoLosses(outcome)).toBe(1);
+			expect(
+				undoLosses({
+					applied: 1,
+					refused: 0,
+					results: [{ taskId: 'a' as ID, ok: true, previous: { status: null } }]
+				})
+			).toBe(0);
+			expect(undoLosses(null)).toBe(0);
 		});
 
 		it('has nothing to undo when nothing changed', () => {

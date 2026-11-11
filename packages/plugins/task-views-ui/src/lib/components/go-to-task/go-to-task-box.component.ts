@@ -1,6 +1,7 @@
 import {
 	ChangeDetectionStrategy,
 	Component,
+	DestroyRef,
 	ElementRef,
 	EventEmitter,
 	inject,
@@ -76,7 +77,7 @@ import { GoToResult, TaskReferenceNavigatorService } from '../../services/task-r
 			.go-to-message {
 				margin: 0.25rem 0 0;
 				font-size: 0.8125rem;
-				color: var(--text-hint-color, #8f9bb3);
+				color: var(--text-hint-color);
 			}
 		`
 	]
@@ -92,9 +93,16 @@ export class GoToTaskBoxComponent {
 
 	@ViewChild('field') private field?: ElementRef<HTMLInputElement>;
 
+	/** The box went away (its dialog closed): a lookup still under way opens nothing. */
+	private destroyed = false;
+
 	protected readonly text = signal('');
 	protected readonly busy = signal(false);
 	protected readonly message = signal<{ key: string; params?: Record<string, unknown> } | null>(null);
+
+	constructor() {
+		inject(DestroyRef).onDestroy(() => (this.destroyed = true));
+	}
 
 	focus(): void {
 		this.field?.nativeElement.focus();
@@ -108,10 +116,11 @@ export class GoToTaskBoxComponent {
 		let result: GoToResult;
 		try {
 			const scope = await firstValueFrom(this.availability.scope$);
-			result = await this.navigator.goTo(text, scope);
+			result = await this.navigator.goTo(text, scope, () => this.destroyed);
 		} finally {
 			this.busy.set(false);
 		}
+		if (this.destroyed) return;
 		if (result.opened === false) {
 			const refused = result as Extract<GoToResult, { opened: false }>;
 			this.message.set({ key: refused.messageKey, params: refused.params });

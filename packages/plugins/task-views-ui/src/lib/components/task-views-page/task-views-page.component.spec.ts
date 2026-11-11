@@ -248,6 +248,38 @@ describe('TaskViewsPageComponent', () => {
 		expect(component.conflict()).toBeNull();
 	});
 
+	it('applies no late answer of a view left and opened again (another opening)', async () => {
+		await create();
+		component.setGroupBy('status');
+		const answer = new Subject<ITaskView>();
+		api.updateView.mockReturnValueOnce(answer);
+		const saving = component.save();
+		// v1 -> v2 -> v1: the view opened again read version 7 meanwhile.
+		await component.open({ kind: 'saved', id: 'v2' });
+		api.getView.mockReturnValueOnce(of(savedView({ version: 7 })));
+		await component.open({ kind: 'saved', id: 'v1' });
+		expect(component.savedView().version).toBe(7);
+		answer.next(savedView({ version: 4 }));
+		answer.complete();
+		await saving;
+		expect(component.savedView().version).toBe(7);
+	});
+
+	it('keeps the selection of rows past the first page when it reads the first page again, and drops deleted tasks', async () => {
+		await create(savedView(), page(rows, { nextCursor: 'next', total: 10 }));
+		component.selection.set({ ids: ['t1', 'far'], anchor: null });
+		await component.reload();
+		expect(component.selection().ids).toEqual(['t1', 'far']);
+		const dialogs = TestBed.inject(NbDialogService) as unknown as { open: jest.Mock };
+		dialogs.open.mockReturnValue({ onClose: of(true) });
+		api.deleteTask.mockImplementation((id: string) =>
+			id === 'far' ? throwError(() => new HttpErrorResponse({ status: 403 })) : of({})
+		);
+		await component.deleteSelected();
+		expect(component.selection().ids).toEqual(['far']);
+		expect(toastr.warning).toHaveBeenCalledWith('TASK_VIEWS.BULK.DELETE_PARTIAL', { applied: 1, refused: 1 });
+	});
+
 	it('Reload takes the latest view and drops the edit', async () => {
 		await create();
 		component.setGroupBy('priority');

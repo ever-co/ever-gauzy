@@ -19,7 +19,9 @@ export class ShortcutRecorder {
 	constructor(
 		private readonly maxChords = 2,
 		private readonly waitMs = 1_200,
-		private readonly now: () => number = () => Date.now()
+		private readonly now: () => number = () => Date.now(),
+		/** The platform the keys are read for (⌘ is `mod` on a Mac, Ctrl elsewhere); absent, either is. */
+		private readonly platform?: 'mac' | 'other'
 	) {}
 
 	/** The chords recorded so far. */
@@ -35,7 +37,7 @@ export class ShortcutRecorder {
 
 	/** Takes one key press. */
 	press(event: Pick<KeyboardEvent, 'key' | 'code' | 'metaKey' | 'ctrlKey' | 'shiftKey' | 'altKey'>): RecorderStep {
-		const chord = chordOfEvent(event);
+		const chord = chordOfEvent(event, this.platform);
 		if (!chord) return { state: 'ignored' };
 		if (chord.key === 'escape' && !chord.mod && !chord.alt && !chord.shift) {
 			this.reset();

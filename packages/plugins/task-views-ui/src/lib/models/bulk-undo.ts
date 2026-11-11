@@ -131,6 +131,25 @@ export function undoRequest(
 	return items.length ? { ...scopeOf(scope), items } : null;
 }
 
+/**
+ * How many tasks an undo puts back only in part: their previous status, priority or size name is not one the
+ * platform's bulk route takes (an older client wrote it), so the undo restores the record (`taskStatusId`, …) and
+ * leaves the name as the change set it. Said to the person rather than reported as a full undo.
+ */
+export function undoLosses(outcome: ITaskBulkUpdateOutcome | null | undefined): number {
+	let lossy = 0;
+	for (const result of outcome?.results ?? []) {
+		if (!result.ok || !result.previous) continue;
+		const previous = result.previous as Record<string, unknown>;
+		const dropped = (['status', 'priority', 'size'] as const).some(
+			(key) =>
+				previous[key] !== undefined && previous[key] !== null && !ENUM_VALUES[key].has(String(previous[key]))
+		);
+		if (dropped) lossy += 1;
+	}
+	return lossy;
+}
+
 /** An outcome summed up for the toast: how many changed, and which were refused and why. */
 export interface BulkSummary {
 	applied: number;

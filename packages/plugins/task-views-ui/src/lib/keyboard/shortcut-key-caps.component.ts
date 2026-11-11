@@ -40,17 +40,17 @@ import { bindingKeyCaps, ShortcutBinding } from './shortcut-registry';
 				display: inline-block;
 				min-width: 1.5rem;
 				padding: 0.0625rem 0.375rem;
-				border: 1px solid var(--border-basic-color-4, #d0d5dd);
+				border: 1px solid var(--border-basic-color-4);
 				border-bottom-width: 2px;
-				border-radius: 0.25rem;
-				background: var(--background-basic-color-2, #f7f9fc);
-				font: 600 0.75rem/1.25rem var(--font-family-monospace, ui-monospace, monospace);
+				border-radius: var(--border-radius);
+				background: var(--background-basic-color-2);
+				font: 600 0.75rem/1.25rem var(--font-family-monospace, monospace);
 				text-align: center;
 			}
 			.then,
 			.none {
 				font-size: 0.75rem;
-				color: var(--text-hint-color, #8f9bb3);
+				color: var(--text-hint-color);
 			}
 		`
 	]

@@ -1,6 +1,7 @@
 import { inject, Injectable } from '@angular/core';
 import { Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
+import { ID } from '@gauzy/contracts';
 import { TASK_PAGE_LINK } from '../task-views-ui.constants';
 import { outcomeOfResolution, parseGoToInput, ReferenceOutcome } from '../models/task-reference';
 import { TaskViewsApiService, TaskViewsScope } from './task-views-api.service';
@@ -20,12 +21,19 @@ export class TaskReferenceNavigatorService {
 	private readonly api = inject(TaskViewsApiService);
 	private readonly router = inject(Router);
 
-	async goTo(text: string, scope: TaskViewsScope | null): Promise<GoToResult> {
+	/**
+	 * Looks the text up and opens the task. `cancelled` is asked before opening it (the box went away: its dialog
+	 * closed), so a slow lookup never opens a task the person no longer asked for.
+	 */
+	async goTo(
+		text: string,
+		scope: TaskViewsScope | null,
+		cancelled: () => boolean = () => false
+	): Promise<GoToResult> {
 		const input = parseGoToInput(text);
 		if (input.kind === 'invalid') return { opened: false, messageKey: 'TASK_VIEWS.GOTO.INVALID' };
 		if (input.kind === 'id') {
-			await this.router.navigate([TASK_PAGE_LINK, input.id]);
-			return { opened: true };
+			return this.open(input.id, undefined, cancelled);
 		}
 		if (!scope) return { opened: false, messageKey: 'TASK_VIEWS.GOTO.FAILED' };
 		let outcome: ReferenceOutcome;
@@ -38,8 +46,7 @@ export class TaskReferenceNavigatorService {
 		switch (outcome.kind) {
 			case 'open':
 			case 'moved':
-				await this.router.navigate([TASK_PAGE_LINK, outcome.taskId]);
-				return { opened: true, outcome };
+				return this.open(outcome.taskId, outcome, cancelled);
 			case 'ambiguous':
 				return {
 					opened: false,
@@ -52,6 +59,23 @@ export class TaskReferenceNavigatorService {
 					messageKey: 'TASK_VIEWS.GOTO.NOT_FOUND',
 					params: { reference: outcome.reference }
 				};
+		}
+	}
+
+	/** Opens the task's page; a navigation the router refused or that failed is said as such. */
+	private async open(
+		taskId: ID,
+		outcome: ReferenceOutcome | undefined,
+		cancelled: () => boolean
+	): Promise<GoToResult> {
+		if (cancelled()) return { opened: false, messageKey: 'TASK_VIEWS.GOTO.CANCELLED' };
+		try {
+			// `null` is a navigation to the page already open: the task is open.
+			const navigated = await this.router.navigate([TASK_PAGE_LINK, taskId]);
+			if (navigated === false) return { opened: false, messageKey: 'TASK_VIEWS.GOTO.FAILED' };
+			return { opened: true, ...(outcome ? { outcome } : {}) };
+		} catch {
+			return { opened: false, messageKey: 'TASK_VIEWS.GOTO.FAILED' };
 		}
 	}
 }

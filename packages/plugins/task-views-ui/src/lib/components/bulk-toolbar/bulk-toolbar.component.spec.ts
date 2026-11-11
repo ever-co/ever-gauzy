@@ -56,13 +56,28 @@ describe('BulkToolbarComponent', () => {
 		expect(host().querySelector('[data-test="bulk-panel"]')).toBeNull();
 	});
 
+	it('picks the first match on Enter in the search only; Enter on an option is that option', () => {
+		click('[data-picker="status"]');
+		const panel = () => host().querySelector('[data-test="bulk-panel"]') as HTMLElement;
+		const second = panel().querySelector('[data-option="s2"]') as HTMLElement;
+		second.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }));
+		expect(applied).toEqual([]);
+		const search = panel().querySelector('input[type="search"]') as HTMLInputElement;
+		search.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }));
+		expect(applied).toEqual([
+			{ action: 'status', changes: { taskStatusId: 's1', status: TaskStatusEnum.IN_PROGRESS } }
+		]);
+	});
+
 	it('adds or removes a label', () => {
 		fixture.componentInstance.openPicker('labels');
 		fixture.detectChanges();
 		click('[data-option="t1"]');
 		fixture.componentInstance.openPicker('labels');
 		fixture.detectChanges();
-		(host().querySelectorAll('[role="radio"]')[1] as HTMLElement).click();
+		const remove = host().querySelectorAll('.mode button')[1] as HTMLElement;
+		expect(remove.getAttribute('aria-pressed')).toBe('false');
+		remove.click();
 		fixture.detectChanges();
 		click('[data-option="t2"]');
 		expect(applied).toEqual([

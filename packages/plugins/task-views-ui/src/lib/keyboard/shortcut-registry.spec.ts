@@ -6,6 +6,8 @@ import {
 	effectiveBindings,
 	formatBinding,
 	hotkeysShortcutOf,
+	isActivationKey,
+	isControlTarget,
 	isBrowserReserved,
 	isDialogOpen,
 	isTypingTarget,
@@ -58,6 +60,13 @@ describe('shortcut registry', () => {
 				alt: false
 			});
 			expect(chordOfEvent(key('ShiftLeft', 'Shift', { shiftKey: true }))).toBeNull();
+		});
+
+		it('reads mod as the platform command key: ⌘ on a Mac, Ctrl elsewhere, and nothing with the other one', () => {
+			expect(chordOfEvent(key('KeyS', 's', { metaKey: true }), 'mac')?.mod).toBe(true);
+			expect(chordOfEvent(key('KeyS', 's', { ctrlKey: true }), 'mac')).toBeNull();
+			expect(chordOfEvent(key('KeyS', 's', { ctrlKey: true }), 'other')?.mod).toBe(true);
+			expect(chordOfEvent(key('KeyS', 's', { metaKey: true }), 'other')).toBeNull();
 		});
 
 		it('writes a chord the way the header Quick Actions name keys', () => {
@@ -221,6 +230,18 @@ describe('shortcut registry', () => {
 			search.type = 'search';
 			expect(isTypingTarget(search)).toBe(true);
 			expect(isTypingTarget(null)).toBe(false);
+		});
+
+		it('leaves Enter and Space to a focused control, and Enter on a box to the list', () => {
+			const button = document.createElement('button');
+			const box = document.createElement('input');
+			box.type = 'checkbox';
+			expect(isActivationKey(parseBinding('enter')![0])).toBe(true);
+			expect(isActivationKey(parseBinding('mod+enter')![0])).toBe(false);
+			expect(isControlTarget(button, 'enter')).toBe(true);
+			expect(isControlTarget(box, 'space')).toBe(true);
+			expect(isControlTarget(box, 'enter')).toBe(false);
+			expect(isControlTarget(document.createElement('div'), 'enter')).toBe(false);
 		});
 
 		it('knows an open dialog', () => {

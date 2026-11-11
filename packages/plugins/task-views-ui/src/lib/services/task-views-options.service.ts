@@ -1,7 +1,7 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { forkJoin, Observable, of } from 'rxjs';
-import { catchError, map, shareReplay } from 'rxjs/operators';
+import { catchError, map, shareReplay, tap } from 'rxjs/operators';
 import { ID, IPagination, TaskViewFilterField } from '@gauzy/contracts';
 import { API_PREFIX } from '@gauzy/ui-core/common';
 import { TaskViewsScope, scopeParams, whereParams } from './task-views-api.service';
@@ -92,11 +92,21 @@ export class TaskViewsOptionsService {
 	private readonly http = inject(HttpClient);
 	private readonly cache = new Map<string, Observable<TaskViewOptions>>();
 
-	options(scope: TaskViewsScope): Observable<TaskViewOptions> {
-		const key = `${scope.tenantId ?? ''}:${scope.organizationId}`;
+	/**
+	 * The records of the scope, read once per signed-in user and organization (another user never gets the lists
+	 * read for the previous one). A list that could not be read is empty this time and read again next time.
+	 */
+	options(scope: TaskViewsScope & { userId?: string }): Observable<TaskViewOptions> {
+		const key = `${scope.userId ?? ''}:${scope.tenantId ?? ''}:${scope.organizationId}`;
 		let cached = this.cache.get(key);
 		if (!cached) {
-			cached = this.load(scope).pipe(shareReplay({ bufferSize: 1, refCount: false }));
+			const failed = { any: false };
+			cached = this.load(scope, failed).pipe(
+				tap(() => {
+					if (failed.any) this.cache.delete(key);
+				}),
+				shareReplay({ bufferSize: 1, refCount: false })
+			);
 			this.cache.set(key, cached);
 		}
 		return cached;
@@ -107,14 +117,21 @@ export class TaskViewsOptionsService {
 		this.cache.clear();
 	}
 
-	private load(scope: TaskViewsScope): Observable<TaskViewOptions> {
+	private load(scope: TaskViewsScope, failed: { any: boolean }): Observable<TaskViewOptions> {
 		const get = <T>(url: string, params: HttpParams) =>
 			this.http.get<IPagination<T> | T[]>(url, { params }).pipe(
 				map((answer) => itemsOf<T>(answer)),
-				catchError(() => of([] as T[]))
+				catchError(() => {
+					failed.any = true;
+					return of([] as T[]);
+				})
 			);
-		const flat = scopeParams(scope);
-		const nested = whereParams(scope);
+		const organization: TaskViewsScope = {
+			organizationId: scope.organizationId,
+			...(scope.tenantId ? { tenantId: scope.tenantId } : {})
+		};
+		const flat = scopeParams(organization);
+		const nested = whereParams(organization);
 		const named = (records: Named[], withValue = false) =>
 			records
 				.filter((record) => !!record.id)
@@ -135,7 +152,7 @@ export class TaskViewsOptionsService {
 			team: get<Named>(`${API_PREFIX}/organization-team`, nested),
 			sprint: get<Named>(
 				`${API_PREFIX}/organization-sprint`,
-				new HttpParams().set('data', JSON.stringify({ findInput: scope }))
+				new HttpParams().set('data', JSON.stringify({ findInput: organization }))
 			)
 		}).pipe(
 			map((lists) => ({

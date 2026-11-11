@@ -69,6 +69,8 @@ export class BulkToolbarComponent {
 	@ViewChild('dueField') private dueField?: ElementRef<HTMLInputElement>;
 
 	private readonly host = inject(ElementRef<HTMLElement>);
+	private opener: HTMLElement | null = null;
+	private lastPicker: BulkPicker | null = null;
 
 	protected readonly picker = signal<BulkPicker | null>(null);
 	protected readonly search = signal('');
@@ -99,9 +101,13 @@ export class BulkToolbarComponent {
 	openPicker(picker: BulkPicker): void {
 		if (!this.canEdit() || this.busy()) return;
 		if (this.picker() === picker) {
-			this.closePicker();
+			this.closePicker(true);
 			return;
 		}
+		// The control that opened the picker gets the focus back when it closes (its trigger, or what had the focus).
+		const active = (this.host.nativeElement as HTMLElement).ownerDocument?.activeElement as HTMLElement | null;
+		this.opener = active && active !== document.body ? active : null;
+		this.lastPicker = picker;
 		this.picker.set(picker);
 		this.search.set('');
 		this.listMode.set('add');
@@ -109,8 +115,15 @@ export class BulkToolbarComponent {
 		setTimeout(() => (picker === 'dueDate' ? this.dueField : this.searchField)?.nativeElement.focus());
 	}
 
-	closePicker(): void {
+	/** Closes the picker; `restoreFocus` gives the focus back to what opened it (else the picker's own trigger). */
+	closePicker(restoreFocus = false): void {
+		if (this.picker() === null) return;
 		this.picker.set(null);
+		if (!restoreFocus) return;
+		const root = this.host.nativeElement as HTMLElement;
+		const opener = this.opener && this.opener.isConnected ? this.opener : null;
+		const trigger = this.lastPicker ? root.querySelector<HTMLElement>(`[data-picker="${this.lastPicker}"]`) : null;
+		setTimeout(() => (opener ?? trigger)?.focus());
 	}
 
 	get isPickerOpen(): boolean {
@@ -170,12 +183,11 @@ export class BulkToolbarComponent {
 	protected onPanelKeydown(event: KeyboardEvent): void {
 		if (event.key === 'Escape') {
 			event.stopPropagation();
-			this.closePicker();
-			(this.host.nativeElement as HTMLElement)
-				.querySelector<HTMLElement>(`[data-picker="${this.pickers[0]}"]`)
-				?.focus();
+			this.closePicker(true);
+			return;
 		}
-		if (event.key === 'Enter' && this.picker() !== 'dueDate') {
+		// Enter in the search picks the first match; Enter on a focused button does what that button does.
+		if (event.key === 'Enter' && this.picker() !== 'dueDate' && event.target === this.searchField?.nativeElement) {
 			const [first] = this.choices();
 			if (first) {
 				event.preventDefault();
@@ -185,7 +197,7 @@ export class BulkToolbarComponent {
 	}
 
 	private emit(action: BulkAction, changes: ITaskBulkChanges): void {
-		this.closePicker();
+		this.closePicker(true);
 		this.applied.emit({ action, changes });
 	}
 }

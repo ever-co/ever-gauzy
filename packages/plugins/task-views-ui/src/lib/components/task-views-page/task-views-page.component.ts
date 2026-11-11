@@ -23,7 +23,7 @@ import {
 	NbTooltipModule
 } from '@nebular/theme';
 import { TranslatePipe } from '@ngx-translate/core';
-import { combineLatest, firstValueFrom } from 'rxjs';
+import { combineLatest, firstValueFrom, Observable, of } from 'rxjs';
 import { distinctUntilChanged, filter, map, switchMap } from 'rxjs/operators';
 import {
 	ID,
@@ -64,6 +64,7 @@ import {
 	changedTaskIds,
 	deleteOutcome,
 	summarizeOutcome,
+	undoLosses,
 	undoRequest
 } from '../../models/bulk-undo';
 import { isMove, moveItem, orderAfterDrop } from '../../models/manual-order';
@@ -136,6 +137,8 @@ interface PendingUndo {
 	messageKey: string;
 	params: Record<string, unknown>;
 	request: ITaskBulkUpdateInput | null;
+	/** Tasks the undo puts back only in part (an old status, priority or size name the platform does not take). */
+	lossy: number;
 }
 
 /** How long an edit of the filter waits before the tasks are read again. */
@@ -227,6 +230,11 @@ export class TaskViewsPageComponent implements OnInit {
 	protected readonly undo = signal<PendingUndo | null>(null);
 	protected readonly filtersOpen = signal(true);
 
+	/** The signed-in user's permissions as the store holds them: the checks below follow it when it loads or changes. */
+	private readonly rolePermissions = toSignal(
+		(this.store.userRolePermissions$ as Observable<unknown> | undefined) ?? of(null),
+		{ initialValue: null }
+	);
 	protected readonly canAdd = computed(() =>
 		this.permitted(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TASK_ADD)
 	);
@@ -295,6 +303,8 @@ export class TaskViewsPageComponent implements OnInit {
 	});
 
 	private generation = 0;
+	/** Bumped each time a view is opened: a write answers for the opening it was sent from, not a later one. */
+	private opening = 0;
 	private lastSent: ApplicableTree | null = null;
 	private filterTimer: ReturnType<typeof setTimeout> | null = null;
 	private undoTimer: ReturnType<typeof setTimeout> | null = null;
@@ -362,6 +372,7 @@ export class TaskViewsPageComponent implements OnInit {
 	private async open(ref: ViewRef): Promise<void> {
 		const scope = this.scope();
 		if (!scope) return;
+		this.opening += 1;
 		this.selection.set(EMPTY_SELECTION);
 		this.focusedId.set(null);
 		this.conflict.set(null);
@@ -490,15 +501,23 @@ export class TaskViewsPageComponent implements OnInit {
 			this.counts.set(page.groups ?? null);
 			this.countedBy.set(page.groupBy ?? 'none');
 			this.invalid.set(invalidByPath(page.invalid ?? [], this.lastSent));
-			this.selection.update((selection) =>
-				retainSelection(
-					selection,
-					items.map((row) => row.id as ID)
-				)
-			);
+			// Only a read of every row can say a selected task is gone; a first page says nothing about the others.
+			if (!this.isMoreAfter(page, items.length)) {
+				this.selection.update((selection) =>
+					retainSelection(
+						selection,
+						items.map((row) => row.id as ID)
+					)
+				);
+			}
 			const focused = this.focusedId();
 			if (focused && !items.some((row) => row.id === focused)) this.focusedId.set(null);
 		}
+	}
+
+	/** Whether rows of the view lie beyond the ones read (a next cursor, or fewer rows than the total). */
+	private isMoreAfter(page: { nextCursor: string | null; total: number }, read: number): boolean {
+		return this.isSaved() ? !!page.nextCursor : read < page.total;
 	}
 
 	private groupLabel(key: string): string {
@@ -585,30 +604,34 @@ export class TaskViewsPageComponent implements OnInit {
 	}
 
 	private async sendUpdate(id: ID, input: ITaskViewUpdateInput, kind: 'save' | 'placement'): Promise<void> {
+		const opening = this.opening;
 		this.saving.set(true);
 		try {
 			const saved = await firstValueFrom(this.api.updateView(id, input));
 			this.api.notify('views');
 			this.toastr.success('TASK_VIEWS.VIEW.SAVED');
 			// Another view opened meanwhile: the answer is that view's no more (the page shows the one opened).
-			if (!this.isOpen(id)) return;
+			if (!this.isOpen(id, opening)) return;
 			this.conflict.set(null);
 			this.savedView.set(saved);
 			// The ordering is the view's own: a saved new one changes the rows.
 			if (kind === 'save') void this.reload();
 		} catch (error) {
 			const conflict = conflictOf(error, input, kind);
-			if (conflict && this.isOpen(id)) this.conflict.set(conflict);
+			if (conflict && this.isOpen(id, opening)) this.conflict.set(conflict);
 			else if (!conflict) this.toastr.danger(this.errorMessage(error, 'TASK_VIEWS.VIEW.SAVE_FAILED'));
 		} finally {
 			this.saving.set(false);
 		}
 	}
 
-	/** Whether the saved view a write was for is still the one the page shows. */
-	private isOpen(id: ID): boolean {
+	/**
+	 * Whether the saved view a write was for is still the one the page shows, in the same opening: a view left and
+	 * opened again is another opening (it read its own version), so a late answer to the first one is not applied.
+	 */
+	private isOpen(id: ID, opening: number): boolean {
 		const current = this.current();
-		return current.kind === 'saved' && current.id === id && this.savedView()?.id === id;
+		return opening === this.opening && current.kind === 'saved' && current.id === id && this.savedView()?.id === id;
 	}
 
 	/** Conflict → Reload: the latest view replaces the edit. */
@@ -627,7 +650,9 @@ export class TaskViewsPageComponent implements OnInit {
 		const view = this.savedView();
 		if (!conflict || !view) return;
 		const input = overwriteInput(conflict);
-		this.savedView.set({ ...view, version: conflict.latest.version });
+		// The latest view as read (its columns and its version together): a failed overwrite leaves nothing stale
+		// that a later save could write over another client's change. The draft keeps the edit.
+		this.savedView.set(conflict.latest);
 		if (conflict.kind === 'order') {
 			await this.sendOrder(view.id as ID, input as ITaskViewOrderInput);
 		} else {
@@ -752,16 +777,17 @@ export class TaskViewsPageComponent implements OnInit {
 	}
 
 	private async sendOrder(id: ID, input: ITaskViewOrderInput): Promise<void> {
+		const opening = this.opening;
 		this.saving.set(true);
 		try {
 			const saved = await firstValueFrom(this.api.setOrder(id, input));
-			if (!this.isOpen(id)) return;
+			if (!this.isOpen(id, opening)) return;
 			this.conflict.set(null);
 			this.savedView.set(saved);
 		} catch (error) {
 			const conflict = conflictOf(error, input, 'order');
 			if (!conflict) this.toastr.danger(this.errorMessage(error, 'TASK_VIEWS.ORDER.FAILED'));
-			if (!this.isOpen(id)) return;
+			if (!this.isOpen(id, opening)) return;
 			if (conflict) this.conflict.set(conflict);
 			void this.reload();
 		} finally {
@@ -817,7 +843,8 @@ export class TaskViewsPageComponent implements OnInit {
 			this.offerUndo(
 				this.summaryMessage(summary),
 				{ ...this.summaryParams(summary), action: apply.action },
-				undoRequest(outcome, scope)
+				undoRequest(outcome, scope),
+				undoLosses(outcome)
 			);
 			if (summary.refused)
 				this.toastr.warning('TASK_VIEWS.BULK.REFUSED', {
@@ -847,6 +874,7 @@ export class TaskViewsPageComponent implements OnInit {
 					refused: summary.refused
 				});
 			else this.toastr.success('TASK_VIEWS.BULK.UNDONE');
+			if (pending.lossy) this.toastr.warning('TASK_VIEWS.BULK.UNDO_LOSSY', { count: pending.lossy });
 			this.api.notify('tasks');
 			await this.reload();
 		} catch (error) {
@@ -882,6 +910,13 @@ export class TaskViewsPageComponent implements OnInit {
 				);
 			}
 			const summary = deleteOutcome(results);
+			const deleted = new Set(results.filter((result) => result.ok).map((result) => result.taskId));
+			this.selection.update((selection) =>
+				retainSelection(
+					selection,
+					selection.ids.filter((id) => !deleted.has(id))
+				)
+			);
 			if (summary.refused)
 				this.toastr.warning('TASK_VIEWS.BULK.DELETE_PARTIAL', {
 					applied: summary.applied,
@@ -895,9 +930,14 @@ export class TaskViewsPageComponent implements OnInit {
 		}
 	}
 
-	private offerUndo(messageKey: string, params: Record<string, unknown>, request: ITaskBulkUpdateInput | null): void {
+	private offerUndo(
+		messageKey: string,
+		params: Record<string, unknown>,
+		request: ITaskBulkUpdateInput | null,
+		lossy = 0
+	): void {
 		this.clearUndo();
-		this.undo.set({ messageKey, params, request });
+		this.undo.set({ messageKey, params, request, lossy });
 		this.undoTimer = setTimeout(() => this.undo.set(null), BULK_UNDO_WINDOW_MS);
 	}
 
@@ -951,7 +991,7 @@ export class TaskViewsPageComponent implements OnInit {
 			},
 			listClear: {
 				run: () => {
-					if (this.toolbar?.isPickerOpen) this.toolbar.closePicker();
+					if (this.toolbar?.isPickerOpen) this.toolbar.closePicker(true);
 					else this.clearSelection();
 				},
 				enabled: () => this.selection().ids.length > 0 || !!this.toolbar?.isPickerOpen
@@ -1003,6 +1043,8 @@ export class TaskViewsPageComponent implements OnInit {
 	// ---------------------------------------------------------------- helpers
 
 	private permitted(...permissions: PermissionsEnum[]): boolean {
+		// Read for the dependency: a computed check runs again when the permissions arrive or change.
+		this.rolePermissions();
 		try {
 			return this.store.hasAnyPermission(...permissions);
 		} catch {

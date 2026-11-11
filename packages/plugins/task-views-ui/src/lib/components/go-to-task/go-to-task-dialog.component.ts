@@ -29,7 +29,7 @@ import { GoToTaskBoxComponent } from './go-to-task-box.component';
 			}
 			.hint {
 				margin: 0 0 0.75rem;
-				color: var(--text-hint-color, #8f9bb3);
+				color: var(--text-hint-color);
 			}
 			.actions {
 				display: flex;

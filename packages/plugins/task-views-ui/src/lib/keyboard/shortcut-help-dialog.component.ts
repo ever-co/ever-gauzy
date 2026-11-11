@@ -97,7 +97,7 @@ export function commandKey(commandId: string): string {
 				font-size: 0.8125rem;
 				text-transform: uppercase;
 				letter-spacing: 0.04em;
-				color: var(--text-hint-color, #8f9bb3);
+				color: var(--text-hint-color);
 			}
 			dl {
 				margin: 0;
@@ -122,7 +122,7 @@ export function commandKey(commandId: string): string {
 			.note {
 				column-span: all;
 				font-size: 0.8125rem;
-				color: var(--text-hint-color, #8f9bb3);
+				color: var(--text-hint-color);
 				margin: 0.5rem 0 0;
 			}
 			.footer {

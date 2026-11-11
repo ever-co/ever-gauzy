@@ -1,4 +1,14 @@
-import { ChangeDetectionStrategy, Component, computed, DestroyRef, inject, OnDestroy, signal } from '@angular/core';
+import {
+	ChangeDetectionStrategy,
+	Component,
+	computed,
+	DestroyRef,
+	effect,
+	inject,
+	OnDestroy,
+	signal,
+	untracked
+} from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { NbButtonModule, NbCardModule, NbIconModule, NbSpinnerModule } from '@nebular/theme';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
@@ -42,255 +52,8 @@ interface Candidate {
 	selector: 'ngx-task-views-keyboard-settings',
 	changeDetection: ChangeDetectionStrategy.OnPush,
 	imports: [NbButtonModule, NbCardModule, NbIconModule, NbSpinnerModule, TranslatePipe, ShortcutKeyCapsComponent],
-	template: `
-		<nb-card class="keyboard-settings" data-test="keyboard-settings" [nbSpinner]="saving()" nbSpinnerSize="small">
-			<nb-card-header class="header">
-				<div>
-					<h4>{{ 'TASK_VIEWS.SHORTCUTS.PAGE_TITLE' | translate }}</h4>
-					<p class="intro">{{ 'TASK_VIEWS.SHORTCUTS.PAGE_INTRO' | translate }}</p>
-				</div>
-				@if (available()) {
-					<button
-						nbButton
-						size="small"
-						status="basic"
-						type="button"
-						data-test="reset-all"
-						[disabled]="saving() || !hasOverrides()"
-						(click)="resetAll()"
-					>
-						{{ 'TASK_VIEWS.SHORTCUTS.RESET_ALL' | translate }}
-					</button>
-				}
-			</nb-card-header>
-			<nb-card-body>
-				@if (!available()) {
-					<p class="unavailable" data-test="keyboard-unavailable">
-						{{ 'TASK_VIEWS.SHORTCUTS.UNAVAILABLE' | translate }}
-					</p>
-				} @else {
-					@for (section of sections(); track section.context) {
-						<section class="section">
-							<h5>{{ contextKey(section.context) | translate }}</h5>
-							<table class="table">
-								<tbody>
-									@for (row of section.rows; track row.command.id) {
-										<tr
-											[attr.data-command]="row.command.id"
-											[class.recording]="recordingId() === row.command.id"
-										>
-											<th scope="row">{{ commandKey(row.command.id) | translate }}</th>
-											<td class="binding">
-												@if (recordingId() === row.command.id) {
-													<span class="recording-hint" role="status" aria-live="polite">
-														@if (recorded().length) {
-															<ngx-task-views-key-caps
-																[binding]="recorded()"
-																[isMac]="isMac"
-															></ngx-task-views-key-caps>
-														} @else {
-															{{ 'TASK_VIEWS.SHORTCUTS.RECORD' | translate }}
-														}
-													</span>
-												} @else if (candidate()?.commandId === row.command.id) {
-													<ngx-task-views-key-caps
-														[binding]="candidate()!.binding"
-														[isMac]="isMac"
-													></ngx-task-views-key-caps>
-												} @else {
-													<ngx-task-views-key-caps
-														[binding]="row.binding"
-														[isMac]="isMac"
-													></ngx-task-views-key-caps>
-													@if (row.overridden) {
-														<span class="badge">{{
-															'TASK_VIEWS.SHORTCUTS.CHANGED' | translate
-														}}</span>
-													}
-												}
-											</td>
-											<td class="actions">
-												@if (row.command.fixed) {
-													<span class="fixed">{{
-														'TASK_VIEWS.SHORTCUTS.FIXED' | translate
-													}}</span>
-												} @else if (candidate()?.commandId === row.command.id) {
-													@if (candidate()!.refusal; as refusal) {
-														<span class="problem" role="alert">{{
-															refusalKey(refusal) | translate
-														}}</span>
-													} @else if (candidate()!.conflicts.length) {
-														<span class="problem" role="alert">{{
-															'TASK_VIEWS.SHORTCUTS.CONFLICT'
-																| translate
-																	: {
-																			commands: conflictNames(
-																				candidate()!.conflicts
-																			)
-																	  }
-														}}</span>
-													}
-													<button
-														nbButton
-														size="tiny"
-														status="primary"
-														type="button"
-														data-test="save-binding"
-														[disabled]="
-															!!candidate()!.refusal ||
-															candidate()!.conflicts.length > 0 ||
-															saving()
-														"
-														(click)="saveCandidate()"
-													>
-														{{ 'TASK_VIEWS.SHORTCUTS.SAVE' | translate }}
-													</button>
-													<button
-														nbButton
-														size="tiny"
-														status="basic"
-														type="button"
-														(click)="candidate.set(null)"
-													>
-														{{ 'TASK_VIEWS.SHORTCUTS.CANCEL' | translate }}
-													</button>
-												} @else if (recordingId() === row.command.id) {
-													<span class="hint">{{
-														'TASK_VIEWS.SHORTCUTS.RECORD_HINT' | translate
-													}}</span>
-													<button
-														nbButton
-														size="tiny"
-														status="basic"
-														type="button"
-														(click)="stopRecording()"
-													>
-														{{ 'TASK_VIEWS.SHORTCUTS.CANCEL' | translate }}
-													</button>
-												} @else {
-													<button
-														nbButton
-														size="tiny"
-														status="basic"
-														type="button"
-														data-test="change-binding"
-														[disabled]="saving() || !!recordingId()"
-														(click)="startRecording(row.command.id)"
-													>
-														{{ 'TASK_VIEWS.SHORTCUTS.CHANGE' | translate }}
-													</button>
-													<button
-														nbButton
-														size="tiny"
-														ghost
-														type="button"
-														[disabled]="saving() || !row.overridden"
-														(click)="save(row.command.id, 'default')"
-													>
-														{{ 'TASK_VIEWS.SHORTCUTS.RESET' | translate }}
-													</button>
-													<button
-														nbButton
-														size="tiny"
-														ghost
-														type="button"
-														[disabled]="saving() || !row.binding"
-														(click)="save(row.command.id, null)"
-													>
-														{{ 'TASK_VIEWS.SHORTCUTS.REMOVE' | translate }}
-													</button>
-												}
-											</td>
-										</tr>
-									}
-								</tbody>
-							</table>
-						</section>
-					}
-					<p class="note">{{ 'TASK_VIEWS.SHORTCUTS.QUICK_ACTIONS_NOTE' | translate }}</p>
-				}
-			</nb-card-body>
-		</nb-card>
-	`,
-	styles: [
-		`
-			.header {
-				display: flex;
-				align-items: flex-start;
-				justify-content: space-between;
-				gap: 1rem;
-			}
-			.header h4 {
-				margin: 0;
-			}
-			.intro,
-			.note,
-			.hint,
-			.fixed {
-				color: var(--text-hint-color, #8f9bb3);
-				font-size: 0.8125rem;
-			}
-			.intro {
-				margin: 0.25rem 0 0;
-			}
-			.section {
-				margin-bottom: 1.5rem;
-			}
-			h5 {
-				margin: 0 0 0.5rem;
-				font-size: 0.8125rem;
-				text-transform: uppercase;
-				letter-spacing: 0.04em;
-				color: var(--text-hint-color, #8f9bb3);
-			}
-			.table {
-				width: 100%;
-				border-collapse: collapse;
-			}
-			.table th,
-			.table td {
-				padding: 0.5rem 0.5rem 0.5rem 0;
-				border-bottom: 1px solid var(--border-basic-color-3, #edf1f7);
-				vertical-align: middle;
-				text-align: left;
-				font-weight: normal;
-			}
-			.table th {
-				width: 40%;
-			}
-			.binding {
-				white-space: nowrap;
-			}
-			.actions {
-				text-align: right;
-				white-space: nowrap;
-			}
-			.actions button + button {
-				margin-left: 0.25rem;
-			}
-			tr.recording {
-				background: var(--background-basic-color-2, #f7f9fc);
-			}
-			.badge {
-				margin-left: 0.5rem;
-				font-size: 0.6875rem;
-				text-transform: uppercase;
-				color: var(--color-primary-default, #3366ff);
-			}
-			.problem {
-				margin-right: 0.5rem;
-				font-size: 0.8125rem;
-				color: var(--color-danger-default, #d33);
-				white-space: normal;
-			}
-			.hint {
-				margin-right: 0.5rem;
-			}
-			.unavailable {
-				margin: 0;
-			}
-		`
-	],
+	templateUrl: './keyboard-settings-page.component.html',
+	styleUrl: './keyboard-settings-page.component.scss',
 	host: {
 		'(window:keydown)': 'onRecordKeydown($event)'
 	}
@@ -312,7 +75,12 @@ export class KeyboardSettingsPageComponent implements OnDestroy {
 	protected readonly recorded = signal<ShortcutBinding>([]);
 	protected readonly candidate = signal<Candidate | null>(null);
 
-	private readonly recorder = new ShortcutRecorder(2, SHORTCUT_SEQUENCE_TIMEOUT_MS);
+	private readonly recorder = new ShortcutRecorder(
+		2,
+		SHORTCUT_SEQUENCE_TIMEOUT_MS,
+		() => Date.now(),
+		this.registry.isMac ? 'mac' : 'other'
+	);
 	private recordTimer: ReturnType<typeof setTimeout> | null = null;
 
 	protected readonly hasOverrides = computed(() => {
@@ -340,6 +108,15 @@ export class KeyboardSettingsPageComponent implements OnDestroy {
 
 	constructor() {
 		this.destroyRef.onDestroy(() => this.stopRecording());
+		// The views went away (another organization, the switch off): a recording under way ends, so neither the
+		// registry nor the Quick Actions stay paused behind a page that no longer offers Cancel.
+		effect(() => {
+			if (this.available()) return;
+			untracked(() => {
+				this.stopRecording();
+				this.candidate.set(null);
+			});
+		});
 	}
 
 	ngOnDestroy(): void {
@@ -397,14 +174,20 @@ export class KeyboardSettingsPageComponent implements OnDestroy {
 
 	private finish(commandId: string, binding: ShortcutBinding): void {
 		this.stopRecording();
+		const checked = this.check(commandId, binding);
+		if (checked) this.candidate.set(checked);
+	}
+
+	/** A recorded binding with what stands in its way against the bindings in force now. */
+	private check(commandId: string, binding: ShortcutBinding): Candidate | null {
 		const command = this.registry.commands.find((item) => item.id === commandId);
-		if (!command) return;
-		this.candidate.set({
+		if (!command) return null;
+		return {
 			commandId,
 			binding,
 			refusal: refusalOf(command, binding),
 			conflicts: conflictsOf(commandId, binding, this.registry.commands, this.registry.bindings())
-		});
+		};
 	}
 
 	protected conflictNames(commands: ShortcutCommand[]): string {
@@ -412,19 +195,28 @@ export class KeyboardSettingsPageComponent implements OnDestroy {
 	}
 
 	protected async saveCandidate(): Promise<void> {
-		const candidate = this.candidate();
-		if (!candidate || candidate.refusal || candidate.conflicts.length) return;
-		await this.save(candidate.commandId, candidate.binding);
-		this.candidate.set(null);
+		const recorded = this.candidate();
+		if (!recorded) return;
+		// Checked again: the bindings may have changed since it was recorded (Restore all defaults, another tab).
+		const candidate = this.check(recorded.commandId, recorded.binding);
+		if (!candidate || candidate.refusal || candidate.conflicts.length) {
+			this.candidate.set(candidate);
+			return;
+		}
+		// Kept when the save fails, so it can be saved again without recording it again.
+		if (await this.save(candidate.commandId, candidate.binding)) this.candidate.set(null);
 	}
 
-	protected async save(commandId: string, binding: ShortcutBinding | null | 'default'): Promise<void> {
+	/** Saves a binding; answers whether it was saved. */
+	protected async save(commandId: string, binding: ShortcutBinding | null | 'default'): Promise<boolean> {
 		this.saving.set(true);
 		try {
 			await this.registry.saveBinding(commandId, binding);
 			this.toastr.success('TASK_VIEWS.SHORTCUTS.SAVED');
+			return true;
 		} catch {
 			this.toastr.danger('TASK_VIEWS.SHORTCUTS.FAILED');
+			return false;
 		} finally {
 			this.saving.set(false);
 		}

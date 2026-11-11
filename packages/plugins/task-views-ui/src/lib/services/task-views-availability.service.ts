@@ -1,6 +1,6 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
-import { combineLatest, defer, Observable, of, throwError, timer } from 'rxjs';
+import { combineLatest, concat, defer, Observable, of, throwError, timer } from 'rxjs';
 import { catchError, distinctUntilChanged, map, retry, shareReplay, switchMap } from 'rxjs/operators';
 import { IOrganization, IUser, TaskBuiltInViewEnum } from '@gauzy/contracts';
 import { Store } from '@gauzy/ui-core/core';
@@ -62,16 +62,20 @@ export class TaskViewsAvailabilityService {
 		switchMap((scope) =>
 			!scope
 				? of(false)
-				: defer(() => this.api.builtIn(TaskBuiltInViewEnum.MINE, scope, 0, 1)).pipe(
-						retry({
-							count: TASK_VIEWS_AVAILABILITY_RETRIES,
-							delay: (error: HttpErrorResponse, attempt: number) =>
-								isFinalRefusal(error)
-									? throwError(() => error)
-									: timer(TASK_VIEWS_AVAILABILITY_RETRY_MS * 2 ** (attempt - 1))
-						}),
-						map(() => true),
-						catchError(() => of(false))
+				: // `false` first: a new scope (another organization) is not served until it has answered itself.
+					concat(
+						of(false),
+						defer(() => this.api.builtIn(TaskBuiltInViewEnum.MINE, scope, 0, 1)).pipe(
+							retry({
+								count: TASK_VIEWS_AVAILABILITY_RETRIES,
+								delay: (error: HttpErrorResponse, attempt: number) =>
+									isFinalRefusal(error)
+										? throwError(() => error)
+										: timer(TASK_VIEWS_AVAILABILITY_RETRY_MS * 2 ** (attempt - 1))
+							}),
+							map(() => true),
+							catchError(() => of(false))
+						)
 					)
 		),
 		distinctUntilChanged(),

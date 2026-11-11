@@ -1,4 +1,4 @@
-import { Injector } from '@angular/core';
+import { Injector, Type } from '@angular/core';
 import { Router } from '@angular/router';
 import { NbDialogRef, NbDialogService } from '@nebular/theme';
 import { TaskBuiltInViewEnum } from '@gauzy/contracts';
@@ -29,8 +29,19 @@ export function registerGlobalShortcuts(injector: Injector): () => void {
 	const registry = injector.get(ShortcutRegistryService);
 	const router = injector.get(Router);
 	const dialogs = injector.get(NbDialogService);
-	let help: NbDialogRef<unknown> | null = null;
-	let goTo: NbDialogRef<unknown> | null = null;
+	// A dialog, or the import of one under way (a second press meanwhile opens nothing more).
+	const open: Record<'help' | 'goTo', NbDialogRef<unknown> | 'opening' | null> = { help: null, goTo: null };
+	const show = (which: 'help' | 'goTo', load: () => Promise<Type<unknown>>) => {
+		open[which] = 'opening';
+		load().then(
+			(component) => {
+				const ref = dialogs.open(component, { closeOnEsc: true }) as NbDialogRef<unknown>;
+				open[which] = ref;
+				ref.onClose.subscribe(() => (open[which] = null));
+			},
+			() => (open[which] = null)
+		);
+	};
 
 	const links = Object.fromEntries(
 		Object.entries(GO_TO_LINKS).map(([commandId, link]) => [commandId, () => void router.navigateByUrl(link)])
@@ -39,21 +50,19 @@ export function registerGlobalShortcuts(injector: Injector): () => void {
 	return registry.registerAll({
 		...links,
 		helpOpen: () => {
+			const help = open.help;
+			if (help === 'opening') return;
 			if (help) {
 				help.close();
 				return;
 			}
-			void import('./shortcut-help-dialog.component').then(({ ShortcutHelpDialogComponent }) => {
-				help = dialogs.open(ShortcutHelpDialogComponent, { closeOnEsc: true }) as NbDialogRef<unknown>;
-				help.onClose.subscribe(() => (help = null));
-			});
+			show('help', () => import('./shortcut-help-dialog.component').then((m) => m.ShortcutHelpDialogComponent));
 		},
 		taskGoTo: () => {
-			if (goTo) return;
-			void import('../components/go-to-task/go-to-task-dialog.component').then(({ GoToTaskDialogComponent }) => {
-				goTo = dialogs.open(GoToTaskDialogComponent, { closeOnEsc: true }) as NbDialogRef<unknown>;
-				goTo.onClose.subscribe(() => (goTo = null));
-			});
+			if (open.goTo) return;
+			show('goTo', () =>
+				import('../components/go-to-task/go-to-task-dialog.component').then((m) => m.GoToTaskDialogComponent)
+			);
 		}
 	});
 }

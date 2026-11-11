@@ -51,7 +51,7 @@
 		"VISIBILITY": "Who sees it",
 		"PERSONAL": "Only me",
 		"SHARED": "Shared",
-		"SHARED_WITH": "Shared with",
+		"SHARED_WITH": "Listed under",
 		"ORGANIZATION": "The whole organization",
 		"TEAM": "A team",
 		"PROJECT": "A project",
@@ -62,7 +62,8 @@
 		"CREATE": "Create",
 		"SAVE": "Save",
 		"CONFIRM": "Confirm",
-		"CLOSE": "Close"
+		"CLOSE": "Close",
+		"SHARED_HINT": "A shared view is visible to everyone in the organization who may see tasks; a team or a project only decides where it is listed."
 	},
 	"CONFLICT": {
 		"TITLE": "Someone else saved this view meanwhile.",
@@ -211,7 +212,8 @@
 		"UNDO_FAILED": "The undo could not be applied.",
 		"DELETE_CONFIRM": "Delete {{count}} tasks? This cannot be undone.",
 		"DELETED": "{{count}} tasks deleted.",
-		"DELETE_PARTIAL": "{{applied}} tasks deleted, {{refused}} could not be deleted."
+		"DELETE_PARTIAL": "{{applied}} tasks deleted, {{refused}} could not be deleted.",
+		"UNDO_LOSSY": "{{count}} tasks got their old status, priority or size back by its record only: their old name is not one the platform takes."
 	},
 	"GOTO": {
 		"TITLE": "Go to task",
@@ -222,7 +224,8 @@
 		"NOT_FOUND": "No task {{reference}} that you may see.",
 		"AMBIGUOUS": "{{reference}} names tasks in more than one project.",
 		"MOVED": "{{reference}} moved: it is now {{current}}.",
-		"FAILED": "The reference could not be looked up."
+		"FAILED": "The reference could not be looked up.",
+		"CANCELLED": "The lookup was cancelled."
 	},
 	"REFERENCE": {
 		"COPY": "Copy {{reference}}",
