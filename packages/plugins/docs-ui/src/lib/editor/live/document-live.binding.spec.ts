@@ -187,6 +187,45 @@ describe('createLiveBinding', () => {
 		binding.destroy();
 	});
 
+	it('sends the waiting edits when asked before leaving, and says so', async () => {
+		const server = serverPage('Hello');
+		const binding = bind();
+		streams[0].next(server.sync());
+		await runTimers();
+		const text = (binding.doc.getXmlFragment('default').get(0) as Y.XmlElement).get(0) as Y.XmlText;
+
+		text.insert(5, '!');
+		expect(binding.hasPending()).toBe(true);
+		await expect(binding.flush(1000)).resolves.toBe(true);
+		expect(binding.hasPending()).toBe(false);
+		expect(postUpdate).toHaveBeenCalledTimes(1);
+
+		// The network is down: the edit is still waiting at the deadline, so the leave guard asks.
+		postUpdate.mockRejectedValue({ status: 0 });
+		text.insert(6, '?');
+		await expect(binding.flush(300)).resolves.toBe(false);
+		expect(binding.hasPending()).toBe(true);
+		binding.destroy();
+	});
+
+	it('waits for the retry after a failed send instead of sending again at once', async () => {
+		const server = serverPage('Hello');
+		const binding = bind();
+		streams[0].next(server.sync());
+		await runTimers();
+		const text = (binding.doc.getXmlFragment('default').get(0) as Y.XmlElement).get(0) as Y.XmlText;
+
+		postUpdate.mockRejectedValueOnce({ status: 0 });
+		text.insert(5, '!');
+		timers.shift()!.fn();
+		await Promise.resolve();
+		await Promise.resolve();
+
+		// Only the 2 s retry is scheduled, not another 50 ms batch of the same edit.
+		expect(timers.map((timer) => timer.ms)).toEqual([2000]);
+		binding.destroy();
+	});
+
 	it('opens the session again when the server no longer holds it, and retries after a network failure', async () => {
 		const server = serverPage('Hello');
 		const binding = bind();

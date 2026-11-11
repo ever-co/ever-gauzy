@@ -258,7 +258,8 @@ export class DocumentPageComponent implements OnInit, OnDestroy {
 
 	/** True while the editor holds edits the server has not acknowledged. */
 	get hasUnsavedChanges(): boolean {
-		return !!this.editorComponent?.autosave.isDirty;
+		// Autosave content not saved yet, or (on a live page) edits not sent yet.
+		return !!this.editorComponent?.hasUnsavedChanges;
 	}
 
 	/**
@@ -274,7 +275,7 @@ export class DocumentPageComponent implements OnInit, OnDestroy {
 	/** Flush while dirty on tab close (spec 05 §9.2 beforeunload guard). */
 	@HostListener('window:beforeunload', ['$event'])
 	onBeforeUnload(event: BeforeUnloadEvent): void {
-		if (this.editorComponent?.autosave.isDirty) {
+		if (this.editorComponent?.hasUnsavedChanges) {
 			void this.editorComponent.flush();
 			event.preventDefault();
 		}

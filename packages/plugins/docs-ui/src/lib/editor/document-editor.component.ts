@@ -229,8 +229,14 @@ export class DocumentEditorComponent implements OnChanges, OnDestroy {
 
 	/** Manual flush (Ctrl/Cmd+S, route leave). A live page is saved by the server: nothing to flush here. */
 	flush(options: { forceSnapshot?: boolean } = {}): Promise<boolean> {
-		if (this.liveBinding) return Promise.resolve(true);
+		// A live page is saved by the server; what is left here is the edits not sent yet.
+		if (this.liveBinding) return this.liveBinding.flush();
 		return this.autosave.flush(options);
+	}
+
+	/** Whether the editor holds edits the server has not taken: unsaved autosave content, or live edits not sent yet. */
+	get hasUnsavedChanges(): boolean {
+		return this.liveBinding ? this.liveBinding.hasPending() : this.autosave.isDirty;
 	}
 
 	/** Whether the editor is bound to a live session of the page. */
@@ -360,7 +366,13 @@ export class DocumentEditorComponent implements OnChanges, OnDestroy {
 			.then((available) => (available ? import('./live/document-live.binding') : null))
 			.catch(() => null)
 			.then((runtime) => {
-				if (generation !== this.buildGeneration || this.document !== document) return;
+				if (generation !== this.buildGeneration) return;
+				if (String(this.document?.id ?? '') !== String(document.id)) {
+					// Another page came in while this one was loading, and no editor existed yet for `ngOnChanges` to
+					// rebuild: build for the page the input holds now.
+					this.createEditor();
+					return;
+				}
 				if (!runtime) {
 					this.buildEditor(null);
 					return;

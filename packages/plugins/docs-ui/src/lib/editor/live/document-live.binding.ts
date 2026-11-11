@@ -77,6 +77,13 @@ export interface ILiveBinding {
 	/** `Collaboration` on the document, and the co-editors' cursors. */
 	readonly extensions: Extension[];
 	start(): void;
+	/** Whether local edits are waiting to be sent (or being sent). */
+	hasPending(): boolean;
+	/**
+	 * Sends the waiting edits now and resolves once the server took them: `false` when some are still waiting at the
+	 * deadline (the network, a session that ended), so a leave guard can ask before they are dropped.
+	 */
+	flush(timeoutMs?: number): Promise<boolean>;
 	destroy(): void;
 }
 
@@ -245,10 +252,36 @@ export function createLiveBinding(options: ILiveBindingOptions): ILiveBinding {
 			}
 		} finally {
 			sending = false;
-			if (pending.length) {
+			// A failed batch waits for its retry; only edits made meanwhile go on the normal schedule.
+			if (pending.length && retryTimer === null) {
 				scheduleFlush();
 			}
 		}
+	};
+
+	/** Sends what is waiting now, and resolves once nothing is (or the time is up): `false` when edits are left. */
+	const flushNow = async (timeoutMs: number): Promise<boolean> => {
+		const deadline = Date.now() + timeoutMs;
+		while ((pending.length || sending) && Date.now() < deadline && !destroyed && state.phase === 'live') {
+			if (flushTimer !== null) {
+				clearTimer(flushTimer);
+				flushTimer = null;
+			}
+			if (retryTimer !== null) {
+				clearTimer(retryTimer);
+				retryTimer = null;
+			}
+			if (sending) {
+				await new Promise((resolve) => setTimeout(resolve, 25));
+			} else {
+				await flush();
+				if (pending.length) {
+					// The send failed: try again shortly, until the deadline.
+					await new Promise((resolve) => setTimeout(resolve, 250));
+				}
+			}
+		}
+		return !pending.length && !sending;
 	};
 
 	const sendAwareness = () => {
@@ -296,6 +329,8 @@ export function createLiveBinding(options: ILiveBindingOptions): ILiveBinding {
 		awareness,
 		extensions: [Collaboration.configure({ document: doc, field: 'default' }) as unknown as Extension, cursor],
 		start: () => open(),
+		hasPending: () => pending.length > 0 || sending,
+		flush: (timeoutMs = 4000) => flushNow(timeoutMs),
 		destroy: () => {
 			destroyed = true;
 			stopStream();
