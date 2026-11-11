@@ -34,6 +34,7 @@ import {
 	VENDOR_CHART_PAYMENT_OPTIONS,
 	VENDOR_CHART_READ_PAYMENTS
 } from '../../expenses/expense-view/expense-view-charts';
+import { ExpenseChartKind } from '../../expenses/expense-view/expense-charts/expense-bar-chart.component';
 import { loadIncome } from '../income-record-view';
 
 /** The page size of the charts' paged reads: the most the income API serves at once. */
@@ -41,6 +42,15 @@ const CHART_READ_PAGE = 100;
 
 /** Where the income page's back button leads, and where a deleted income's page goes. */
 export const INCOME_LIST_LINK = '/pages/accounting/income';
+
+/** The chart panels whose drawing can be switched: the client's months, and the client's payments. */
+export type IncomeChartPanel = 'client' | 'payments';
+
+/** The switch in a chart panel's header: one icon button per way of drawing the amounts. */
+export const INCOME_CHART_KIND_OPTIONS: ReadonlyArray<{ kind: ExpenseChartKind; icon: string; label: string }> = [
+	{ kind: 'bar', icon: 'bar-chart-outline', label: 'INCOME_VIEW.BAR_CHART' },
+	{ kind: 'line', icon: 'activity-outline', label: 'INCOME_VIEW.LINE_CHART' }
+];
 
 /** The income's headline, worked out once per load. */
 export interface IIncomeHeadline {
@@ -130,6 +140,9 @@ export class IncomeViewPageComponent extends TranslationBaseComponent implements
 	clientPayments = VENDOR_CHART_PAYMENTS;
 	readonly clientMonthOptions = CATEGORY_CHART_MONTH_OPTIONS;
 	readonly clientPaymentOptions = VENDOR_CHART_PAYMENT_OPTIONS;
+	/** How each chart panel draws its amounts: bars or a line, switched in the panel's header. */
+	chartKinds: Record<IncomeChartPanel, ExpenseChartKind> = { client: 'bar', payments: 'bar' };
+	readonly chartKindOptions = INCOME_CHART_KIND_OPTIONS;
 	/** Formats an amount in the income's currency. */
 	readonly formatAmount = (value: number): string =>
 		formatExpenseMoney(value, this.income?.currency, this.translateService.getCurrentLang() || undefined);
@@ -341,6 +354,11 @@ export class IncomeViewPageComponent extends TranslationBaseComponent implements
 	setClientPayments(payments: number): void {
 		this.clientPayments = payments;
 		this.describeCharts();
+	}
+
+	/** Draws a chart panel as bars or as a line; the amounts stay as read. */
+	setChartKind(panel: IncomeChartPanel, kind: ExpenseChartKind): void {
+		this.chartKinds = { ...this.chartKinds, [panel]: kind };
 	}
 
 	/* ── Reading and describing ── */
