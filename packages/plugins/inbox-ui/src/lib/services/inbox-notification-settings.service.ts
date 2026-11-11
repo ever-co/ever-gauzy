@@ -44,7 +44,12 @@ export class InboxNotificationSettingsService {
 		return this.http
 			.get<IInboxDeliveryStatus>(DELIVERY_STATUS)
 			.pipe(
-				map((status) => (status && typeof status === 'object' && status.email ? status : null)),
+				// Both email fields are needed: a partial answer is "unknown", never "off".
+				map((status) =>
+					status && typeof status === 'object' && typeof status.email?.enabled === 'boolean' && typeof status.email?.available === 'boolean'
+						? status
+						: null
+				),
 				catchError(() => of(null))
 			);
 	}

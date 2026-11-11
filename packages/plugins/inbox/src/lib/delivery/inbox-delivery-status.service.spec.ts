@@ -2,6 +2,10 @@ const mockContext: { tenantId: string | null; organizationId: string | null } = 
 
 jest.mock('@gauzy/core', () => ({
 	EmailSendService: class EmailSendService {},
+	MikroOrmBaseEntityRepository: class MikroOrmBaseEntityRepository {},
+	MultiORMColumn: () => () => undefined,
+	MultiORMEntity: () => () => undefined,
+	TenantOrganizationBaseEntity: class TenantOrganizationBaseEntity {},
 	RequestContext: {
 		currentTenantId: () => mockContext.tenantId,
 		currentOrganizationId: () => mockContext.organizationId
@@ -17,14 +21,26 @@ import {
 
 const FLAGS = ['GAUZY_INBOX_NOTIFICATION_EMAIL_ENABLED', 'GAUZY_INBOX_WEB_PUSH_ENABLED', 'GAUZY_INBOX_VAPID_PUBLIC_KEY', 'GAUZY_INBOX_VAPID_PRIVATE_KEY', 'GAUZY_INBOX_ENABLED'];
 
-/** The service over a stub transport lookup and a clock the spec moves. */
-function build(answer: () => Promise<unknown>) {
+interface IHistoryRow {
+	sentAt?: Date | null;
+	lastError?: string | null;
+	attempts?: number;
+}
+
+/** The service over a stub transport lookup, a delivery log (newest first) and a clock the spec moves. */
+function build(answer: () => Promise<unknown>, history: IHistoryRow[] | (() => Promise<IHistoryRow[]>) = []) {
 	const clock = { now: Date.parse('2026-11-11T12:00:00Z') };
 	const sender = { getEmailInstance: jest.fn(answer) };
-	const service = new InboxDeliveryStatusService(sender as never);
+	const find = jest.fn(async () => (typeof history === 'function' ? history() : history));
+	const dataSource = { getRepository: () => ({ find }) };
+	const service = new InboxDeliveryStatusService(sender as never, dataSource as never);
 	(service as unknown as { now: () => number }).now = () => clock.now;
-	return { service, sender, clock };
+	return { service, sender, clock, find };
 }
+
+const failed = (error = 'Invalid API key'): IHistoryRow => ({ sentAt: null, lastError: error, attempts: 1 });
+const sent = (): IHistoryRow => ({ sentAt: new Date('2026-11-11T11:00:00Z'), lastError: null, attempts: 1 });
+const skipped = (): IHistoryRow => ({ sentAt: null, lastError: 'The person has no email address', attempts: 0 });
 
 describe('InboxDeliveryStatusService', () => {
 	const saved: Record<string, string | undefined> = {};
@@ -145,5 +161,32 @@ describe('InboxDeliveryStatusService', () => {
 
 		expect((await service.status()).email).toEqual({ enabled: true, available: false });
 		expect(sender.getEmailInstance).not.toHaveBeenCalled();
+	});
+
+	it('reports email as unavailable when the latest sends of the scope keep failing, though the transport answers', async () => {
+		// A provider account answers without a check of its own: a revoked key shows only when it sends.
+		const { service, find } = build(async () => ({}), [failed(), failed(), failed(), sent()]);
+
+		expect((await service.status()).email).toEqual({ enabled: true, available: false });
+		expect(find).toHaveBeenCalledWith(
+			expect.objectContaining({
+				where: expect.objectContaining({ tenantId: 'tenant-1', organizationId: 'org-1', channel: 'email' }),
+				order: { updatedAt: 'DESC' }
+			})
+		);
+	});
+
+	it('keeps email available after a failure or two, after a send that went out since, and over skipped deliveries', async () => {
+		expect((await build(async () => ({}), [failed(), failed(), sent(), failed(), failed()]).service.status()).email.available).toBe(true);
+		expect((await build(async () => ({}), [failed('Recipient refused'), sent()]).service.status()).email.available).toBe(true);
+		expect((await build(async () => ({}), [skipped(), skipped(), skipped(), failed()]).service.status()).email.available).toBe(true);
+	});
+
+	it('lets the transport answer stand when the delivery log cannot be read', async () => {
+		const { service } = build(async () => ({}), async () => {
+			throw new Error('relation "inbox_delivery" does not exist');
+		});
+
+		expect((await service.status()).email).toEqual({ enabled: true, available: true });
 	});
 });
