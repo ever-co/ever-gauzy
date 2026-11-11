@@ -6,6 +6,7 @@ import type { ChatMember } from './chat-member.entity';
 import type { ChatMessage } from './chat-message.entity';
 import type { ChatThreadFollow } from './chat-thread-follow.entity';
 import type { ChatTaskReference } from './chat-task-reference.entity';
+import type { ChatLinkPreview } from './chat-link-preview.entity';
 
 /** The MikroORM repositories the entities name (the services themselves run on TypeORM's `DataSource`). */
 @Injectable()
@@ -25,3 +26,6 @@ export class MikroOrmChatThreadFollowRepository extends MikroOrmBaseEntityReposi
 
 @Injectable()
 export class MikroOrmChatTaskReferenceRepository extends MikroOrmBaseEntityRepository<ChatTaskReference> {}
+
+@Injectable()
+export class MikroOrmChatLinkPreviewRepository extends MikroOrmBaseEntityRepository<ChatLinkPreview> {}

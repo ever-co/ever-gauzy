@@ -93,6 +93,13 @@ None of Gauzy's other features calls an Ever server by default. The egress audit
 on every published build, with both modules off: no Ever host is looked up or requested by the API or
 by the web app.
 
+Chat link previews (`GAUZY_CHAT_LINK_PREVIEWS_ENABLED=true`, off by default, and only with chat on)
+fetch the page of a link a person posted in chat, on that person's ask, from whatever public host
+the link names. That is an Ever site only when an Ever link was posted. The previews never call Ever
+Platform on their own, send nothing about the person or the installation (a generic user agent, no
+cookie, no credential), and with the setting off make no request at all
+([the chat plugin's README](../../packages/plugins/chat/README.md)).
+
 ## How it is checked
 
 - **At run time**, the [egress audit](../../tools/egress-audit/README.md) runs the published API and
