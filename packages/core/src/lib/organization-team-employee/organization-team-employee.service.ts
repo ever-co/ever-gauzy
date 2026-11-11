@@ -25,6 +25,13 @@ import { MikroOrmOrganizationTeamEmployeeRepository } from './repository/mikro-o
 import { IWorkingEmployeeLookup } from '../employee/former-employees';
 import { mayFlagTeamManagers, teamRoleAfterEdit } from './team-manager-membership';
 import { TrackingTurnedOffEvent } from '../time-tracking/timer/events/tracking-turned-off.event';
+import {
+	assertMayTurnTrackingOf,
+	callerRoleRank,
+	rankInTeam,
+	rankOfRole,
+	TrackingSwitchRank
+} from '../time-tracking/timer/tracking-switch-rule';
 
 @Injectable()
 export class OrganizationTeamEmployeeService extends TenantAwareCrudService<OrganizationTeamEmployee> {
@@ -519,7 +526,8 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 	/**
 	 * Updates a team member, as {@link update} does, and when the update turns their time tracking off for the team,
 	 * stops the timer they still have running for that team. Without it the timer kept counting: the clients hide it
-	 * once tracking is off.
+	 * once tracking is off. An update that turns their tracking on or off is refused to a caller whose rank in the team
+	 * is not above theirs (see {@link assertMayChangeTracking}).
 	 *
 	 * @param memberId The membership to update.
 	 * @param entity The changes, scoped by organization and team as for {@link update}.
@@ -529,6 +537,7 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 		memberId: ID,
 		entity: IOrganizationTeamEmployeeUpdateInput
 	): Promise<OrganizationTeamEmployee | UpdateResult> {
+		await this.assertMayChangeTracking(memberId, entity);
 		const membershipTurnedOff = await this.membershipTrackingTurnsOff(memberId, entity);
 		const result = await this.update(memberId, entity);
 		if (membershipTurnedOff) {
@@ -566,5 +575,69 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 		} catch {
 			return null;
 		}
+	}
+
+	/**
+	 * Refuses an update that turns the member's time tracking on or off when the caller's rank in the team is not above
+	 * the member's: an admin acts on anyone, admins included; a team manager on the team's members only, never on
+	 * themselves or another manager; a member on no one. A rank in a team is the tenant role's (SUPER_ADMIN and ADMIN,
+	 * then MANAGER, then any other role), raised to MANAGER for a manager of the team: the MANAGER role or the manager
+	 * flag on the membership.
+	 *
+	 * An update that leaves the switch as it is passes, as one that names no membership of the team: `update` changes
+	 * no row then. The membership is read with its roles past the employee filter, as a team manager's change reads it.
+	 *
+	 * @param memberId The membership to update.
+	 * @param entity The changes, scoped by organization and team as for {@link update}.
+	 * @throws ForbiddenException When the caller may not turn this member's tracking on or off.
+	 */
+	private async assertMayChangeTracking(memberId: ID, entity: IOrganizationTeamEmployeeUpdateInput): Promise<void> {
+		if (entity.isTrackingEnabled === undefined) {
+			return;
+		}
+		const tenantId = RequestContext.currentTenantId() || entity.tenantId;
+		const { organizationId, organizationTeamId } = entity;
+		const membership = await this.typeOrmOrganizationTeamEmployeeRepository.findOne({
+			where: { id: memberId, tenantId, organizationId, organizationTeamId },
+			relations: { role: true, employee: { user: { role: true } } }
+		});
+		if (!membership) {
+			return;
+		}
+
+		// NULL reads as on, as the timer reads it: a null sent for a member switched off would turn them back on
+		const turnsOn = entity.isTrackingEnabled !== false;
+		const isOn = membership.isTrackingEnabled !== false;
+		if (turnsOn === isOn) {
+			return;
+		}
+
+		const managesTeam = membership.isManager === true || membership.role?.name === RolesEnum.MANAGER;
+		const memberRank = rankInTeam(rankOfRole(membership.employee?.user?.role?.name), managesTeam);
+		// The membership's own team, never the body's: without a team the manager check would match any team
+		const callerRank = await this.callerRankInTeam({
+			tenantId,
+			organizationId: membership.organizationId,
+			organizationTeamId: membership.organizationTeamId
+		});
+		assertMayTurnTrackingOf(callerRank, memberRank);
+	}
+
+	/**
+	 * The caller's rank in a team: their role's, raised to MANAGER when they manage the team. Their employee is read off
+	 * the user, since `currentEmployeeId` answers nothing to a holder of CHANGE_SELECTED_EMPLOYEE.
+	 *
+	 * @param team The team's tenant, organization and id.
+	 */
+	private async callerRankInTeam(
+		team: Pick<FindOptionsWhere<OrganizationTeamEmployee>, 'tenantId' | 'organizationId' | 'organizationTeamId'>
+	): Promise<TrackingSwitchRank> {
+		const roleRank = callerRoleRank();
+		if (roleRank === TrackingSwitchRank.ADMIN) {
+			return roleRank;
+		}
+		const callerEmployeeId = RequestContext.currentUser()?.employeeId ?? undefined;
+		const managesTeam = await this.isTeamManager(callerEmployeeId, team);
+		return rankInTeam(roleRank, managesTeam);
 	}
 }

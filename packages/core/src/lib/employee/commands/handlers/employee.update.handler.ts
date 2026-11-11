@@ -18,12 +18,43 @@ import {
 } from './../../agent-exit-logout-restriction';
 import { assertOwnRatesMayChange, isSameId, removeOwnRateFields, withStoredOwnRates } from './../../own-rates';
 import { TrackingTurnedOffEvent } from './../../../time-tracking/timer/events/tracking-turned-off.event';
+import {
+	assertMayTurnTrackingOf,
+	callerRoleRank,
+	rankOfRole
+} from './../../../time-tracking/timer/tracking-switch-rule';
 
 /** Whether the save turned the employee's time tracking off: it was on before, and the saved row has it off. */
 function turnsTrackingOff(before: IEmployee, saved: IEmployee): boolean {
 	const wasTracking = before?.isTrackingEnabled === true;
 	const isNowOff = saved?.isTrackingEnabled === false;
 	return wasTracking && isNowOff;
+}
+
+/** The input with the tracking switch, which the bodies of `PUT /employee/:id` and `updateEmployee` carry. */
+type EmployeeUpdateWithTracking = IEmployeeUpdateInput & Partial<Pick<IEmployee, 'isTrackingEnabled'>>;
+
+/**
+ * Refuses a save that turns the employee's time tracking on or off when the caller's role is not above theirs: an admin
+ * acts on anyone, admins included; a MANAGER on the other roles only; anyone else on no one. This switch counts in
+ * every team of the organization, so only the tenant roles rank here. A save that leaves it as it is passes, since
+ * edit forms send the stored value back.
+ *
+ * @param employee The employee as stored, with their user's role.
+ * @param input The changes the save writes.
+ * @throws ForbiddenException When the caller may not turn this employee's tracking on or off.
+ */
+function assertMayChangeTracking(employee: IEmployee, input: EmployeeUpdateWithTracking): void {
+	if (input.isTrackingEnabled === undefined) {
+		return;
+	}
+	// Anything but true reads as off, as the timer reads it
+	const turnsOn = input.isTrackingEnabled === true;
+	const isOn = employee?.isTrackingEnabled === true;
+	if (turnsOn === isOn) {
+		return;
+	}
+	assertMayTurnTrackingOf(callerRoleRank(), rankOfRole(employee?.user?.role?.name));
 }
 
 @CommandHandler(EmployeeUpdateCommand)
@@ -62,8 +93,10 @@ export class EmployeeUpdateHandler implements ICommandHandler<EmployeeUpdateComm
 		// Issue #9873: in EEA/UK a worker must always be able to exit and log out of the agent;
 		// elsewhere restricting either requires an explicit acknowledgement, recorded against the admin.
 		const employee: IEmployee = await this._employeeService.findOneByIdString(id, {
-			relations: { organization: { contact: true }, user: true, contact: true }
+			relations: { organization: { contact: true }, user: { role: true }, contact: true }
 		});
+
+		assertMayChangeTracking(employee, input);
 
 		const editsOwnRecord = isSameId(user?.employeeId, id);
 		const changesOwnRates = RequestContext.hasPermission(PermissionsEnum.CHANGE_OWN_RATES);
