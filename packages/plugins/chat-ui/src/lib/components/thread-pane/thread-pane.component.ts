@@ -11,7 +11,10 @@ import { applyCatchUp, reconcileWithOldest, rootWithMyFields } from '../../chat-
 import { CHAT_LIVE_AUDIT_MS, CHAT_THREAD_POLL_MS } from '../../chat-ui.constants';
 import { apiErrorMessage, continuesGroup, mergeMessages, newNonce } from '../../chat-ui.helpers';
 import { ChatHint } from '../../services/chat-live';
+import { withTaskReference } from '../../chat-tasks';
+import { ChatCreateTaskFlow } from '../../dialogs/chat-task-dialogs.component';
 import { ChatFilesStore } from '../../services/chat-files.store';
+import { ChatTasksService } from '../../services/chat-tasks.service';
 import { ChatLiveService, isTabVisible } from '../../services/chat-live.service';
 import { ChatPeople } from '../../services/chat-people.service';
 import { ChatMessagePatch, ChatThreadPage, ChatUiService, threadFieldsOf } from '../../services/chat-ui.service';
@@ -53,6 +56,8 @@ import { MessageAction, MessageItemComponent } from '../message-item/message-ite
 						[message]="root"
 						[people]="people()"
 						[files]="files()"
+						[tasks]="tasks()"
+						[canCreateTask]="canCreateTask() && !readOnly()"
 						[conversationNames]="conversationNames()"
 						[meEmployeeId]="meEmployeeId()"
 						[meUserId]="meUserId()"
@@ -68,6 +73,8 @@ import { MessageAction, MessageItemComponent } from '../message-item/message-ite
 							[message]="reply"
 							[people]="people()"
 							[files]="files()"
+							[tasks]="tasks()"
+							[canCreateTask]="canCreateTask() && !readOnly()"
 							[conversationNames]="conversationNames()"
 							[meEmployeeId]="meEmployeeId()"
 							[meUserId]="meUserId()"
@@ -166,6 +173,8 @@ export class ThreadPaneComponent {
 	private readonly api = inject(ChatUiService);
 	private readonly live = inject(ChatLiveService);
 	private readonly filesStore = inject(ChatFilesStore);
+	private readonly taskStore = inject(ChatTasksService);
+	private readonly createTaskFlow = inject(ChatCreateTaskFlow);
 	private readonly toastr = inject(ToastrService);
 	private readonly translate = inject(TranslateService);
 	private readonly destroyRef = inject(DestroyRef);
@@ -179,6 +188,11 @@ export class ThreadPaneComponent {
 	readonly readOnly = input(false);
 	/** `DOCS_CREATE`: may attach files (stored as documents). */
 	readonly canAttach = input(false);
+	/** `ORG_TASK_ADD`: may create a task from the root or a reply. */
+	readonly canCreateTask = input(false);
+	/** The selected organization and its tenant, for the projects a task can be created in. */
+	readonly organizationId = input<string | null>(null);
+	readonly tenantId = input<string | null>(null);
 
 	readonly closed = output<void>();
 	/**
@@ -203,6 +217,8 @@ export class ThreadPaneComponent {
 	protected readonly replyCount = computed(() => this.replies().length);
 	/** The conversation's files read so far, for the attachments of the root and the replies. */
 	protected readonly files = this.filesStore.byDocument;
+	/** The task summaries read so far, for the task cards. */
+	protected readonly tasks = this.taskStore.summaries;
 	protected readonly draftKey = computed(() => `thread:${this.rootMessageId()}`);
 
 	private poll: Subscription | null = null;
@@ -242,7 +258,10 @@ export class ThreadPaneComponent {
 			const id = this.conversationId();
 			const root = this.root();
 			const messages = (root ? [root, ...this.replies()] : this.replies()).filter((message) => String(message.conversationId) === id);
-			untracked(() => this.filesStore.ensureFor(id, messages));
+			untracked(() => {
+				this.filesStore.ensureFor(id, messages);
+				this.taskStore.ensure(messages.flatMap((message) => (message.taskReferences ?? []).map((reference) => String(reference.taskId))));
+			});
 		});
 		this.destroyRef.onDestroy(() => this.stopPolling());
 	}
@@ -558,6 +577,18 @@ export class ThreadPaneComponent {
 							if (this.isCurrent(id)) this.replace({ ...message, body: '', deletedAt: new Date() });
 						},
 						error: (error) => this.fail(error)
+					});
+				return;
+			case 'createTask':
+				this.createTaskFlow
+					.open({ message, people: this.people(), conversationNames: this.conversationNames(), organizationId: this.organizationId(), tenantId: this.tenantId() })
+					.pipe(takeUntilDestroyed(this.destroyRef))
+					.subscribe((reference) => {
+						if (!reference || !this.isCurrent(id)) return;
+						// Added to the message as shown now (another reference may have come meanwhile).
+						const root = this.root();
+						const current = (root && root.id === message.id ? root : this.replies().find((item) => item.id === message.id)) ?? message;
+						this.replace({ id: message.id, taskReferences: withTaskReference(current, reference).taskReferences });
 					});
 				return;
 			case 'pin':
