@@ -200,12 +200,21 @@ describe('TagService names', () => {
 			]);
 		});
 
-		it('reads no names of a team sent with no organization when its organization is out of reach', async () => {
+		it("checks only the team's shared tags when a team sent with no organization is in one out of reach", async () => {
 			teamFind.mockResolvedValue({ organizationId: otherOrganizationId });
 			typeOrmFind.mockResolvedValue([{ id: 'tag-1', name: 'Bug' }]);
 
-			await expect(service.assertNameIsFree({ name: 'Bug', organizationTeamId: teamId })).resolves.toBeUndefined();
-			expect(typeOrmFind).not.toHaveBeenCalled();
+			// A shared tag (no organization) of the team has the name: still refused
+			await expect(service.assertNameIsFree({ name: 'bug', organizationTeamId: teamId })).rejects.toBeInstanceOf(
+				ApiException
+			);
+			// The other organization's tags are never read: only the team's tags of no organization
+			expect(typeOrmFind.mock.calls[0][0].where).toEqual({
+				tenantId: tenantA.tenantId,
+				organizationId: IsNull(),
+				organizationTeamId: teamId,
+				isSystem: false
+			});
 		});
 
 		it('places a team tag sent with no organization the same way on MikroORM', async () => {

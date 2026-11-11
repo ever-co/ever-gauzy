@@ -186,10 +186,16 @@ export class TagService extends TenantAwareCrudService<Tag> {
 		const tenantId = RequestContext.currentTenantId();
 		// A team tag sent with no organization is listed with the team's other labels, those of its organization
 		// included: check it there. The team is read in the caller's tenant only.
-		const organizationId =
-			organizationIdOf(input) ?? (await this.organizationOfTeam(tenantId, organizationTeamId));
+		const statedOrganizationId = organizationIdOf(input);
+		let organizationId = statedOrganizationId ?? (await this.organizationOfTeam(tenantId, organizationTeamId));
 		if (!isWithinOrganizationBoundary(organizationId, this.organizationBoundary())) {
-			return;
+			if (statedOrganizationId) {
+				// An organization the caller named and cannot reach: the write refuses it anyway
+				return;
+			}
+			// The team's organization is out of the caller's reach: its tags there are not read, the team's tags of no
+			// organization (shared across the tenant, and writable) still are
+			organizationId = null;
 		}
 		const names = await this.namesInScope({ tenantId, organizationId, organizationTeamId });
 		const isTaken = names.some((tag) => tag.id !== exceptId && tagNameKeyOf(tag.name) === key);
