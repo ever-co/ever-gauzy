@@ -325,7 +325,7 @@ export class CommentService extends TenantAwareCrudService<Comment> {
 		}
 
 		await this._parentAccess.assertMay('read', stored.entity, stored.entityId);
-		if (parseToBoolean(options?.withDeleted) && !this.mayReadWithdrawnOf([stored.entity])) {
+		if (parseToBoolean(options?.withDeleted) && !(await this.mayReadWithdrawnOf([{ entity: stored.entity, entityId: stored.entityId }]))) {
 			// A withdrawn note is its author's, as a withdrawn comment is everywhere else (see mayReadWithdrawnOf),
 			// and what the read would join beside it includes other authors' withdrawn comments.
 			assertReadsCommentsOnly(pinned?.where, pinned);
@@ -617,7 +617,7 @@ export class CommentService extends TenantAwareCrudService<Comment> {
 		const keptToAuthor =
 			scope.parents.length > 0 &&
 			parseToBoolean(options?.withDeleted) &&
-			!this.mayReadWithdrawnOf(scope.parents.map(({ entity }) => entity));
+			!(await this.mayReadWithdrawnOf(scope.parents));
 		if (keptToAuthor && !scope.onlyGovernedParents) {
 			throw new BadRequestException(
 				'A read that includes withdrawn comments of a governed record reads that record alone, unless you may edit its comments.'
@@ -745,7 +745,11 @@ export class CommentService extends TenantAwareCrudService<Comment> {
 			if (!(await mayReadRecord(type, stored.entityId))) {
 				return false;
 			}
-			return !stored.deletedAt || this.mayReadWithdrawnOf([type]) || this.isCallerAuthorOf(stored);
+			return (
+				!stored.deletedAt ||
+				this.isCallerAuthorOf(stored) ||
+				(await this.mayReadWithdrawnOf([{ entity: type, entityId: stored.entityId }]))
+			);
 		};
 	}
 
@@ -762,16 +766,22 @@ export class CommentService extends TenantAwareCrudService<Comment> {
 	}
 
 	/**
-	 * Whether the caller may read every author's withdrawn comments of these governed record types: a holder of
-	 * CHANGE_SELECTED_EMPLOYEE, who may act on any comment, or of the permission each type's policy asks to write its
-	 * comments, which withdraws and restores them. Anyone else reads only their own withdrawn comments, as they do on
+	 * Whether the caller may read every author's withdrawn comments of these governed records: a holder of
+	 * CHANGE_SELECTED_EMPLOYEE, who may act on any comment, or someone who may write each record's comments (the
+	 * permission its policy asks, and its write rule for that record where it has one: a page shared to view only does
+	 * not count), which withdraws and restores them. Anyone else reads only their own withdrawn comments, as they do on
 	 * every other record.
 	 */
-	private mayReadWithdrawnOf(entities: ReadonlyArray<string>): boolean {
-		return (
-			RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE) ||
-			entities.every((entity) => this._parentAccess.holdsPermission('write', entity))
-		);
+	private async mayReadWithdrawnOf(parents: ReadonlyArray<{ entity: unknown; entityId: unknown }>): Promise<boolean> {
+		if (RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
+			return true;
+		}
+		for (const { entity, entityId } of parents) {
+			if (!(await this._parentAccess.mayWrite(entity, entityId))) {
+				return false;
+			}
+		}
+		return true;
 	}
 
 	/**

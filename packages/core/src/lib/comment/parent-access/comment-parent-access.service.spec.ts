@@ -219,6 +219,21 @@ describe('CommentParentAccessService write rule', () => {
 		expect(policy.findAccessibleParent).toHaveBeenCalledTimes(1);
 	});
 
+	it('answers whether the caller may write one record: the permission, then the write rule where there is one', async () => {
+		const permissions = jest.spyOn(RequestContext, 'hasAnyPermission').mockReturnValue(true);
+		const shared = new SharedPagePolicy();
+		const service = new CommentParentAccessService();
+		service.register(shared);
+		service.register(new ContactPolicy());
+
+		await expect(service.mayWrite(BaseEntityEnum.Document, CONTACT_ID)).resolves.toBe(false);
+		await expect(service.mayWrite(BaseEntityEnum.OrganizationContact, CONTACT_ID)).resolves.toBe(true);
+		await expect(service.mayWrite(BaseEntityEnum.Document, 'not-a-uuid')).resolves.toBe(false);
+		await expect(service.mayWrite(BaseEntityEnum.OrganizationProject, CONTACT_ID)).resolves.toBe(false);
+		permissions.mockReturnValue(false);
+		await expect(service.mayWrite(BaseEntityEnum.OrganizationContact, CONTACT_ID)).resolves.toBe(false);
+	});
+
 	it('checks a write with the read rule when the policy has no write rule', async () => {
 		jest.spyOn(RequestContext, 'hasAnyPermission').mockReturnValue(true);
 		const policy = new ContactPolicy();

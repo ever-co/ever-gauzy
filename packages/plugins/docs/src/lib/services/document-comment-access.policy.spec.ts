@@ -5,8 +5,23 @@ const mockSubject: { userId: string; employeeId: string | null; teamIds: string[
 	manage: false
 };
 
-jest.mock('@gauzy/core', () => ({
-	CommentParentAccessPolicy: () => () => undefined
+const mockBoundary: { refuse: null | 'forbidden' | 'bad-request' } = { refuse: null };
+const mockTenant: { id: string | null } = { id: 'tenant-1' };
+
+jest.mock('@gauzy/core', () => {
+	const { BadRequestException, ForbiddenException } = jest.requireActual('@nestjs/common');
+	return {
+		CommentParentAccessPolicy: () => () => undefined,
+		RequestContext: { currentTenantId: () => mockTenant.id },
+		// The platform's organization boundary: a tenant admin reaches every organization, anyone else their own.
+		assertCurrentUserBelongsToOrganization: jest.fn(async () => {
+			if (mockBoundary.refuse === 'forbidden') throw new ForbiddenException('You are not a member of this organization');
+			if (mockBoundary.refuse === 'bad-request') throw new BadRequestException('organizationId is required');
+		})
+	};
+});
+jest.mock('../repositories/type-orm-document.repository', () => ({
+	TypeOrmDocumentRepository: class TypeOrmDocumentRepository {}
 }));
 jest.mock('../entities/document.entity', () => ({ Document: class Document {} }));
 jest.mock('./document.service', () => ({ DocumentService: class DocumentService {} }));
@@ -50,7 +65,17 @@ function build(page: Page | null, options: { share?: DocumentShareAccessEnum | n
 		),
 		canWrite: jest.fn(async () => !!options.writable)
 	};
-	return { policy: new DocumentCommentAccessPolicy(documentService as never, access as never), documentService, access };
+	// The page located in the tenant, by id, before the boundary and the scoped read.
+	const manager = {
+		findOne: jest.fn(async (_entity: unknown, { where }: { where: { id: string; tenantId: string } }) =>
+			page && page.id === where.id && where.tenantId === 'tenant-1' ? { id: page.id, organizationId: page.organizationId } : null
+		)
+	};
+	return {
+		policy: new DocumentCommentAccessPolicy(documentService as never, access as never, { manager } as never),
+		documentService,
+		access
+	};
 }
 
 const privatePage = (owner = 'someone-else'): Page => ({
@@ -61,6 +86,28 @@ const privatePage = (owner = 'someone-else'): Page => ({
 });
 
 describe('DocumentCommentAccessPolicy', () => {
+	afterEach(() => {
+		mockBoundary.refuse = null;
+		mockTenant.id = 'tenant-1';
+	});
+
+	it("reads the page in the page's own organization, not the one the request names", async () => {
+		const { policy, documentService } = build({ ...privatePage(), organizationId: 'org-of-page' });
+
+		await expect(policy.findAccessibleParent(PAGE as never)).resolves.toEqual({ id: PAGE, organizationId: 'org-of-page' });
+		expect(documentService.findOneScoped).toHaveBeenCalledWith(PAGE, [], 'org-of-page');
+	});
+
+	it("answers as missing a page of an organization the caller may not reach, or without a tenant", async () => {
+		mockBoundary.refuse = 'forbidden';
+		await expect(build(privatePage()).policy.findAccessibleParent(PAGE as never)).resolves.toBeNull();
+		mockBoundary.refuse = 'bad-request';
+		await expect(build(privatePage()).policy.findWritableParent(PAGE as never)).resolves.toBeNull();
+		mockBoundary.refuse = null;
+		mockTenant.id = null;
+		await expect(build(privatePage()).policy.findAccessibleParent(PAGE as never)).resolves.toBeNull();
+	});
+
 	it('governs the comments of a Docs page with the Docs read permission', () => {
 		const { policy } = build(null);
 		expect(policy.entity).toBe(BaseEntityEnum.Document);

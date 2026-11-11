@@ -423,6 +423,30 @@ describe('CommentService — the comments of a governed record follow its policy
 				});
 			});
 
+			it("keeps other authors' withdrawn notes from a reader whom the record's write rule refuses", async () => {
+				// They hold the write permission, but this record admits them only to read (a page shared to view).
+				as([PermissionsEnum.ORG_CONTACT_VIEW, PermissionsEnum.ORG_CONTACT_EDIT]);
+				const findWritableParent = jest.fn(async () => null);
+				Object.assign(policy, { findWritableParent });
+				const findAll = listed();
+
+				await service.findAll(notesWithDeleted as any);
+
+				expect(findWritableParent).toHaveBeenCalledWith(CONTACT_ID);
+				expect(findAll).toHaveBeenCalledWith({
+					where: [
+						{ entity: CONTACT, entityId: CONTACT_ID, deletedAt: IsNull() },
+						{
+							entity: CONTACT,
+							entityId: CONTACT_ID,
+							deletedAt: Not(IsNull()),
+							employeeId: Equal('employee-me')
+						}
+					],
+					withDeleted: true
+				});
+			});
+
 			it('keeps what the criteria state about the withdrawal beside the added condition', async () => {
 				as([PermissionsEnum.ORG_CONTACT_VIEW]);
 				const count = jest.spyOn(TenantAwareCrudService.prototype, 'count').mockResolvedValue(0);

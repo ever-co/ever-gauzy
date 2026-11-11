@@ -161,6 +161,25 @@ export class CommentParentAccessService implements OnModuleInit {
 	}
 
 	/**
+	 * Whether the caller may write the comments of one record: the policy's write permission, and its write rule for
+	 * that record where it has one (a reader the record admits only to read is refused). A record type without a
+	 * policy, or a record the caller may not reach, answers `false`; a read that fails throws.
+	 */
+	async mayWrite(entity: unknown, entityId: unknown): Promise<boolean> {
+		const policy = this.policyFor(entity);
+		if (!policy || !this.holdsPermission('write', entity)) {
+			return false;
+		}
+		if (!policy.findWritableParent) {
+			return true;
+		}
+		if (typeof entityId !== 'string' || !isUUID(entityId)) {
+			return false;
+		}
+		return (await policy.findWritableParent(entityId as ID)) !== null;
+	}
+
+	/**
 	 * Whether the caller holds one of the permissions the policy of `entity` asks for the access. No record is read;
 	 * a record type without a policy answers `false`.
 	 */
