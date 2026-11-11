@@ -366,7 +366,7 @@ export class EntityCommentsComponent implements OnChanges, OnDestroy {
 	/** Keeps the summaries and works out each comment's chips, their tooltips in the reader's language. */
 	private showReactions(summaries: IReactionSummary[]): void {
 		this._summaries = summaries ?? [];
-		const locale = this._translate.currentLang || this._translate.getDefaultLang?.() || 'en';
+		const locale = this._translate.getCurrentLang?.() || this._translate.getFallbackLang?.() || 'en';
 		const words = {
 			meEmployeeId: this.myEmployeeId(),
 			you: this._translate.instant('COMMENT_REACTIONS.YOU'),
