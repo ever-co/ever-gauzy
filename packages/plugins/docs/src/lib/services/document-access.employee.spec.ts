@@ -49,6 +49,12 @@ function buildService(lookupFails = false) {
 		}
 	];
 	const manager = {
+		find: jest.fn(async (_entity: unknown, { where }: { where: Record<string, unknown> }) => {
+			if (lookupFails) throw new Error('database unavailable');
+			return employees.filter((row) =>
+				Object.entries(where).every(([key, value]) => (row as Record<string, unknown>)[key] === value)
+			);
+		}),
 		findOne: jest.fn(async (_entity: unknown, { where }: { where: Record<string, unknown> }) => {
 			if (lookupFails) throw new Error('database unavailable');
 			return (
@@ -94,5 +100,25 @@ describe('DocumentAccessService.currentEmployeeIdIn', () => {
 		await expect(buildService(true).currentEmployeeIdIn('org-b' as never, 'tenant-1' as never)).rejects.toThrow(
 			'database unavailable'
 		);
+	});
+});
+
+describe('DocumentAccessService.currentUserEmployeeIdsIn', () => {
+	afterEach(() => {
+		mockContext.userId = 'user-1';
+	});
+
+	it("answers every employee of the user in the tenant, an inactive one included", async () => {
+		await expect(buildService().currentUserEmployeeIdsIn('tenant-1' as never)).resolves.toEqual([
+			'employee-of-org-a',
+			'employee-of-org-b',
+			'old-employee-of-org-c'
+		]);
+	});
+
+	it('answers nothing without a user, and throws when the read fails', async () => {
+		await expect(buildService(true).currentUserEmployeeIdsIn('tenant-1' as never)).rejects.toThrow('database unavailable');
+		mockContext.userId = null;
+		await expect(buildService().currentUserEmployeeIdsIn('tenant-1' as never)).resolves.toEqual([]);
 	});
 });

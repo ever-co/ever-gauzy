@@ -10,6 +10,7 @@ import {
 	ID,
 	IDocumentFollowState,
 	IDocumentSpace,
+	JsonData,
 	PermissionsEnum
 } from '@gauzy/contracts';
 import { CreateEntitySubscriptionEvent, EntitySubscription, OrganizationTeam, OrganizationTeamEmployee, RequestContext, prepareSQLQuery as p } from '@gauzy/core';
@@ -141,9 +142,10 @@ export class DocumentCollaborationService {
 	 * Whether the caller follows the page, and whether they muted it.
 	 *
 	 * The follow and the mute belong to the caller's employee in the page's organization. A choice made before that
-	 * was saved under the employee in the caller's token, so both are read (and cleared by an unfollow or an unmute):
-	 * nobody's earlier follow or mute disappears because the identity it was saved under changed. An earlier choice is
-	 * also carried over to the page organization's employee here (see {@link carryOverEarlierChoices}).
+	 * was saved under another employee of theirs (the one in their token at the time), so every employee of the caller
+	 * in the tenant is read, and cleared by an unfollow or an unmute: nobody's earlier follow or mute disappears because
+	 * the identity it was saved under changed, and none outlives an unmute. An earlier choice is also carried over to
+	 * the page organization's employee here (see {@link carryOverEarlierChoices}).
 	 */
 	async followState(id: ID, organizationId?: ID): Promise<IDocumentFollowState> {
 		this.assertEnabled();
@@ -164,9 +166,7 @@ export class DocumentCollaborationService {
 		const document = await this.documentService.findOneScoped(id, [], organizationId);
 		const { employeeId, employeeIds } = await this.followersOf(document);
 		if (!employeeId) return { following: false, muted: false };
-		for (const muted of employeeIds.filter((candidate) => isMutedBy(document.metadata, candidate))) {
-			await this.setMuted(document, muted, false);
-		}
+		await this.unmuteAll(document, employeeIds);
 		this.eventBus.publish(
 			new CreateEntitySubscriptionEvent({
 				entity: BaseEntityEnum.Document,
@@ -180,7 +180,7 @@ export class DocumentCollaborationService {
 		return { following: true, muted: false };
 	}
 
-	/** Stops following the page, a follow saved under the token's employee included (the mute, if any, stays). */
+	/** Stops following the page, a follow saved under another employee of the caller included (the mute, if any, stays). */
 	async unfollow(id: ID, organizationId?: ID): Promise<IDocumentFollowState> {
 		this.assertEnabled();
 		const document = await this.documentService.findOneScoped(id, [], organizationId);
@@ -207,26 +207,28 @@ export class DocumentCollaborationService {
 		const document = await this.documentService.findOneScoped(id, [], organizationId);
 		const { employeeIds } = await this.followersOf(document);
 		if (!employeeIds.length) return { following: false, muted: false };
-		for (const muted of employeeIds.filter((candidate) => isMutedBy(document.metadata, candidate))) {
-			await this.setMuted(document, muted, false);
-		}
+		await this.unmuteAll(document, employeeIds);
 		return this.followState(id, organizationId);
 	}
 
 	/**
 	 * The caller as a follower of the page: their employee in the page's organization, which new follows and mutes are
-	 * saved under, and the employee in their token too when it is another (the one earlier choices were saved under).
-	 * A lookup that fails fails the call rather than acting as another employee.
+	 * saved under, and every employee of theirs in the tenant (the token's included), which earlier choices may have
+	 * been saved under; the same set the review notices check. A lookup that fails fails the call rather than acting as
+	 * another employee.
 	 */
 	private async followersOf(document: Document): Promise<{ employeeId: ID | null; employeeIds: ID[] }> {
-		const employeeId = await this.documentAccessService.currentEmployeeIdIn(document.organizationId, document.tenantId);
+		const [employeeId, tenantEmployeeIds] = await Promise.all([
+			this.documentAccessService.currentEmployeeIdIn(document.organizationId, document.tenantId),
+			this.documentAccessService.currentUserEmployeeIdsIn(document.tenantId)
+		]);
 		const tokenEmployeeId = this.documentAccessService.currentEmployeeId();
-		const employeeIds = [...new Set([employeeId, tokenEmployeeId].filter((candidate): candidate is ID => !!candidate))];
+		const employeeIds = [...new Set([employeeId, tokenEmployeeId, ...tenantEmployeeIds].filter((candidate): candidate is ID => !!candidate))];
 		return { employeeId, employeeIds };
 	}
 
 	/**
-	 * Carries a follow or a mute saved under the token's employee over to the page organization's employee, the one
+	 * Carries a follow or a mute saved under another employee of the caller over to the page organization's employee, the one
 	 * that organization's comment fan-out and the plugin's notices read: a page shown as followed keeps delivering its
 	 * notices, and a muted one stays quiet. Safe to repeat (creating a subscription that exists returns it); the
 	 * earlier record is left for an unfollow or an unmute to clear.
@@ -250,8 +252,11 @@ export class DocumentCollaborationService {
 				})
 			);
 		}
-		if (!isMutedBy(document.metadata, employeeId) && earlier.some((candidate) => isMutedBy(document.metadata, candidate))) {
-			await this.setMuted(document, employeeId, true);
+		// The mute is decided again on the locked row: an unmute that ran while this read waited is never undone.
+		if (earlier.some((candidate) => isMutedBy(document.metadata, candidate))) {
+			await this.changeMutes(document, (metadata) =>
+				!isMutedBy(metadata, employeeId) && earlier.some((candidate) => isMutedBy(metadata, candidate)) ? withMuted(metadata, employeeId, true) : null
+			);
 		}
 	}
 
@@ -267,12 +272,27 @@ export class DocumentCollaborationService {
 		});
 	}
 
+	/** Mutes or unmutes the page for one employee. */
+	private async setMuted(document: Document, employeeId: ID, muted: boolean): Promise<void> {
+		await this.changeMutes(document, (metadata) => withMuted(metadata, employeeId, muted));
+	}
+
+	/** Lifts the mute of the page for every one of the given employees (one write, none when none muted it). */
+	private async unmuteAll(document: Document, employeeIds: readonly ID[]): Promise<void> {
+		await this.changeMutes(document, (metadata) =>
+			employeeIds.some((employeeId) => isMutedBy(metadata, employeeId))
+				? employeeIds.reduce((next, employeeId) => withMuted(next, employeeId, false), metadata)
+				: null
+		);
+	}
+
 	/**
 	 * Changes the muted list of the page in one transaction that re-reads the metadata under a row lock (where the
 	 * database has one; SQLite serialises its writers itself), so two people muting at once, or a mute beside a
-	 * review note, never overwrite each other's change.
+	 * review note, never overwrite each other's change. `change` sees the locked row's metadata and answers the
+	 * metadata to write, or null to write nothing.
 	 */
-	private async setMuted(document: Document, employeeId: ID, muted: boolean): Promise<void> {
+	private async changeMutes(document: Document, change: (metadata: JsonData | null | undefined) => JsonData | null): Promise<void> {
 		const embedded = isSqlite() || isBetterSqlite3();
 		const metadata = await this.typeOrmDocumentRepository.manager.transaction(async (manager) => {
 			const current = await manager.findOne(Document, {
@@ -280,7 +300,9 @@ export class DocumentCollaborationService {
 				where: { id: document.id as ID, tenantId: document.tenantId },
 				...(embedded ? {} : { lock: { mode: 'pessimistic_write' as const } })
 			});
-			const next = withMuted(current?.metadata ?? document.metadata, employeeId, muted);
+			const latest = current ? current.metadata : document.metadata;
+			const next = change(latest);
+			if (next === null) return latest;
 			await manager.update(Document, { id: document.id as ID, tenantId: document.tenantId }, { metadata: next as never });
 			return next;
 		});

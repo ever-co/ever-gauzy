@@ -31,26 +31,37 @@ interface Setup {
 	subscriptions?: string[];
 	muted?: string[];
 	lookupFails?: boolean;
+	/** Further employees of the caller in the tenant (besides the page organization's and the token's). */
+	otherEmployees?: string[];
+	/** Runs while the follow state is being read, as a request overlapping it would. */
+	duringRead?: (row: { metadata: Record<string, unknown> }) => void;
 }
 
 /**
  * The collaboration service for a user employed in two organizations: the page's organization knows them as
  * PAGE_EMPLOYEE, their token carries TOKEN_EMPLOYEE (the identity follows and mutes were saved under before).
  */
-function build({ subscriptions = [], muted = [], lookupFails = false }: Setup = {}) {
+function build({ subscriptions = [], muted = [], lookupFails = false, otherEmployees = [], duringRead }: Setup = {}) {
 	const document = {
 		id: 'page-1',
 		tenantId: 'tenant-1',
 		organizationId: 'org-b',
 		metadata: { collaboration: { mutedEmployeeIds: [...muted] } } as Record<string, unknown>
 	};
+	// The stored row: what a locked read inside a transaction sees.
+	const row = { metadata: document.metadata };
 	const rows = subscriptions.map((employeeId) => ({ employeeId }));
+	let overlapped = false;
 	const named = (where: Record<string, unknown>): Set<string> => {
 		const value = where['employeeId'] as { value?: unknown[] } | string;
 		return new Set((typeof value === 'object' && value?.value ? value.value : [value]).map(String));
 	};
 	const manager = {
 		count: jest.fn(async (_entity: unknown, { where }: { where: Record<string, unknown> }) => {
+			if (duringRead && !overlapped) {
+				overlapped = true;
+				duringRead(row);
+			}
 			const ids = named(where);
 			return rows.filter((row) => ids.has(row.employeeId)).length;
 		}),
@@ -66,8 +77,10 @@ function build({ subscriptions = [], muted = [], lookupFails = false }: Setup = 
 		}),
 		transaction: jest.fn(async (work: (manager: unknown) => Promise<unknown>) =>
 			work({
-				findOne: async () => ({ id: document.id, metadata: document.metadata }),
-				update: async () => undefined
+				findOne: async () => ({ id: document.id, metadata: row.metadata }),
+				update: async (_entity: unknown, _where: unknown, { metadata }: { metadata: Record<string, unknown> }) => {
+					row.metadata = metadata;
+				}
 			})
 		)
 	};
@@ -80,7 +93,8 @@ function build({ subscriptions = [], muted = [], lookupFails = false }: Setup = 
 			if (lookupFails) throw new Error('database unavailable');
 			return PAGE_EMPLOYEE;
 		}),
-		currentEmployeeId: () => TOKEN_EMPLOYEE
+		currentEmployeeId: () => TOKEN_EMPLOYEE,
+		currentUserEmployeeIdsIn: jest.fn(async () => [PAGE_EMPLOYEE, TOKEN_EMPLOYEE, ...otherEmployees])
 	};
 	const service = new DocumentCollaborationService(
 		{ manager } as never,
@@ -89,7 +103,7 @@ function build({ subscriptions = [], muted = [], lookupFails = false }: Setup = 
 		{} as never,
 		eventBus as never
 	);
-	const mutedIds = () => (document.metadata['collaboration'] as { mutedEmployeeIds: string[] }).mutedEmployeeIds;
+	const mutedIds = () => (row.metadata['collaboration'] as { mutedEmployeeIds: string[] }).mutedEmployeeIds;
 	return { service, rows, eventBus, mutedIds };
 }
 
@@ -114,6 +128,27 @@ describe('DocumentCollaborationService follows across the identity change', () =
 		expect(mutedIds()).toEqual([TOKEN_EMPLOYEE, PAGE_EMPLOYEE]);
 		expect(eventBus.publish).not.toHaveBeenCalled();
 		await expect(service.unmute('page-1' as never)).resolves.toEqual({ following: false, muted: false });
+		expect(mutedIds()).toEqual([]);
+	});
+
+	it('unmutes a mute held by any employee of the caller in the tenant', async () => {
+		const third = 'employee-of-a-third-org';
+		const { service, mutedIds } = build({ muted: [third], otherEmployees: [third] });
+
+		await expect(service.followState('page-1' as never)).resolves.toEqual({ following: false, muted: true });
+		await expect(service.unmute('page-1' as never)).resolves.toEqual({ following: false, muted: false });
+		expect(mutedIds()).toEqual([]);
+	});
+
+	it('never puts back a mute that an overlapping unmute removed while the state was read', async () => {
+		const { service, mutedIds } = build({
+			muted: [TOKEN_EMPLOYEE],
+			duringRead: (row) => {
+				row.metadata = { collaboration: { mutedEmployeeIds: [] } };
+			}
+		});
+
+		await service.followState('page-1' as never);
 		expect(mutedIds()).toEqual([]);
 	});
 

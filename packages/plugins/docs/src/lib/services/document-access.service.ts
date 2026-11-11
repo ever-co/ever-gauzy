@@ -79,6 +79,27 @@ export class DocumentAccessService {
 	}
 
 	/**
+	 * Every employee of the requesting user in the tenant, whatever their state: the identities a follow or a mute of
+	 * theirs may have been saved under. Empty without a user; a failed read throws.
+	 *
+	 * @param tenantId The tenant.
+	 */
+	public async currentUserEmployeeIdsIn(tenantId: ID | null | undefined): Promise<ID[]> {
+		const userId = RequestContext.currentUserId();
+		if (!userId || !tenantId) return [];
+		try {
+			const employees = await this.typeOrmDocumentShareRepository.manager.find(Employee, {
+				select: { id: true },
+				where: { userId: userId as ID, tenantId }
+			});
+			return employees.map((employee) => employee.id as ID).filter(Boolean);
+		} catch (error) {
+			this.logger.warn(`The employees of user ${userId} were not read: ${(error as Error)?.message}`);
+			throw error;
+		}
+	}
+
+	/**
 	 * The employee id of the requesting user.
 	 *
 	 * `RequestContext.currentEmployeeId()` deliberately returns `null` for users holding
