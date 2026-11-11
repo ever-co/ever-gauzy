@@ -1769,7 +1769,8 @@
 		"TOOLONGKEY",
 		"unfollowing",
 		"sqljs",
-		"refetched"
+		"refetched",
+		"hugeicons"
 	],
 	"useGitignore": true,
 	"ignorePaths": [

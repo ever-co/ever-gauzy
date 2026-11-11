@@ -58,6 +58,10 @@
   (`DocumentLiveBridge`: an API / Markdown save and a restore are applied
   block by block and stored for the new revision; a duplicate saves the
   live document first)
-- [ ] **T18**. Ever Teams and the Angular Docs UI: spaces in the tree, follow / mute, live editing after T15
+- [x] **T18**. Ever Teams and the Angular Docs UI: spaces in the tree, follow /
+  mute, live editing after T15 (Angular: ui-core socket #11785, live editor
+  #11786, spaces in the tree and follow / mute #11787, move to space #11793;
+  Ever Teams: ever-teams #5049 behind `NEXT_PUBLIC_DOCS_LIVE_ENABLED`; a run
+  against a platform with `GAUZY_DOCS_LIVE_ENABLED=true` is still to do)
 
 **Status 2026-11-07:** phase 1 in ever-gauzy `feat/docs-collaboration` (PR opened with the lane; bot threads next).
