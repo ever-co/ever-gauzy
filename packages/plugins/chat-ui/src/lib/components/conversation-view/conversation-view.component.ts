@@ -86,7 +86,7 @@ const NEAR_BOTTOM_PX = 80;
 					@if (conversation().topic) {
 						<span class="topic">{{ conversation().topic }}</span>
 					}
-					<button type="button" class="members" data-test="members" [attr.aria-label]="'CHAT.SETTINGS.TITLE' | translate" (click)="openSettings()">
+					<button type="button" class="members" data-test="members" [disabled]="!isMember()" [attr.aria-label]="'CHAT.SETTINGS.TITLE' | translate" (click)="openSettings()">
 						{{ 'CHAT.LIST.MEMBERS' | translate: { count: conversation().memberCount } }}
 					</button>
 				</div>
@@ -254,8 +254,11 @@ const NEAR_BOTTOM_PX = 80;
 				color: inherit;
 				cursor: pointer;
 			}
-			.members:hover,
-			.members:focus-visible {
+			.members:disabled {
+				cursor: default;
+			}
+			.members:not(:disabled):hover,
+			.members:not(:disabled):focus-visible {
 				text-decoration: underline;
 				opacity: 1;
 			}
