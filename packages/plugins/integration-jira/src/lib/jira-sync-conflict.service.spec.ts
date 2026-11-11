@@ -8,7 +8,7 @@ import { JiraSyncConflictService, restorePatchOf } from './jira-sync-conflict.se
 const scope = { tenantId: 'tenant-1', organizationId: 'org-1' };
 const tenant = { id: 'int-1', ...scope } as never;
 /** What the issue and its task last agreed on. */
-const agreed = syncedValuesOf({ title: 'Agreed', description: 'Body', status: 'Todo', priority: 'Low', dueDate: null });
+const agreed = syncedValuesOf({ title: 'Agreed', description: '<p>Body</p>', status: 'Todo', priority: 'Low', dueDate: null });
 
 /** The service over doubles of its two tables, the task store and the command bus. */
 function harness() {
@@ -32,7 +32,7 @@ function harness() {
 
 /** A task as the store answers it. */
 function taskOf(fields: Record<string, unknown> = {}) {
-	return { id: 'task-1', title: 'Agreed', description: 'Body', status: 'Todo', taskStatusId: 's-todo', priority: 'Low', taskPriorityId: 'p-low', dueDate: null, ...fields };
+	return { id: 'task-1', title: 'Agreed', description: '<p>Body</p>', status: 'Todo', taskStatusId: 's-todo', priority: 'Low', taskPriorityId: 'p-low', dueDate: null, ...fields };
 }
 
 describe('JiraSyncConflictService', () => {
@@ -55,6 +55,23 @@ describe('JiraSyncConflictService', () => {
 			// Scoped reads: the issue's baseline in the tenant, the task in its tenant and organization.
 			expect(baselines.findOne).toHaveBeenCalledWith({ where: { integrationId: 'int-1', sourceId: 'issue-1', tenantId: 'tenant-1' } });
 			expect(conflicts.manager.findOne.mock.calls[0][1].where).toEqual({ id: 'task-1', ...scope });
+		});
+
+		it('compares a description in its Jira reading: one sent to Jira and read back is no change on both sides', async () => {
+			const { service, baselines, conflicts } = harness();
+			const old = syncedValuesOf({ ...agreed, description: '<p>Old</p>' });
+			baselines.findOne.mockResolvedValue({ taskId: 'task-1', syncedFields: JSON.stringify(old) });
+			// The task's own spelling (the editor's `<b>`), and the same text as Jira reads it back (ADF → `<strong>`).
+			conflicts.manager.findOne.mockResolvedValue(taskOf({ description: '<p><b>Hi</b> there</p>' }));
+			const back = await service.prepare({ ...scope, integrationId: 'int-1', sourceId: 'issue-1', taskId: 'task-1', external: { ...old, description: '<p><strong>Hi</strong> there</p>' } });
+			expect(back?.conflicts).toEqual([]);
+			expect(back?.keepPlatform).toEqual([]);
+			// Changed only on the platform (Jira still has the old text): the task keeps it.
+			const kept = await service.prepare({ ...scope, integrationId: 'int-1', sourceId: 'issue-1', taskId: 'task-1', external: old });
+			expect(kept?.keepPlatform).toEqual(['description']);
+			// Changed in Jira to another text as well: a conflict, the task's value recorded as Jira reads it.
+			const both = await service.prepare({ ...scope, integrationId: 'int-1', sourceId: 'issue-1', taskId: 'task-1', external: { ...old, description: '<p>Other</p>' } });
+			expect(both?.conflicts).toEqual([{ field: 'description', synced: '<p>Old</p>', platform: '<p><strong>Hi</strong> there</p>', external: '<p>Other</p>' }]);
 		});
 
 		it('applies everything when the baseline was written for another task (the issue\'s task was re-created)', async () => {

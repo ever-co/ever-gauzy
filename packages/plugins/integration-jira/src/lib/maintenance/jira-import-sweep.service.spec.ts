@@ -7,6 +7,7 @@ import { JiraSyncRunService } from '../jira-sync-run.service';
 import { JiraTenantService } from '../jira-tenant.service';
 import { JiraProjectMapping, JiraSyncDirection, TypeOrmJiraProjectMappingRepository } from '../entities/jira-project-mapping.entity';
 import { JiraSyncService } from '../sync/jira-sync.service';
+import { JiraWebhookService } from '../sync/jira-webhook.service';
 import { JiraImportSweepService } from './jira-import-sweep.service';
 
 const now = new Date('2026-11-07T12:00:00.000Z');
@@ -36,21 +37,24 @@ function sweep(config: Partial<JiraCloudConfig> = {}) {
 	);
 	const ensureAttentionFiled = jest.fn(async (_tenant: { id: string }) => undefined);
 	const findRefusedUnfiled = jest.fn(async () => [] as Array<{ id: string }>);
-	const summaryOf = jest.fn((tenant: { id: string }) => ({ attentionReason: attention.has(tenant.id) ? 'token_refused' : null }));
+	const findAllConnected = jest.fn(async () => [] as Array<{ id: string; tenantId: string; organizationId: string }>);
+	const ensure = jest.fn(async () => 'unchanged');
+	const summaryOf = jest.fn((tenant: { id: string }) => ({ attentionReason: attention.has(tenant.id) ? 'token_refused' : null, siteRequired: false }));
 	const claimImport = jest.fn(async (_tenant: unknown, mapping: JiraProjectMapping, _input: { full?: boolean; requestedByUserId?: string | null }) => ({ id: `run-${mapping.id}`, mappingId: mapping.id }));
 	const importMapping = jest.fn().mockResolvedValue(undefined);
 	const service = new JiraImportSweepService(
 		{ find, findOne } as unknown as TypeOrmJiraProjectMappingRepository,
-		{ findAnyById, summaryOf, ensureAttentionFiled, findRefusedUnfiled } as unknown as JiraTenantService,
+		{ findAnyById, summaryOf, ensureAttentionFiled, findRefusedUnfiled, findAllConnected } as unknown as JiraTenantService,
 		{ claimImport } as unknown as JiraSyncRunService,
 		{ importMapping } as unknown as JiraSyncService,
-		{ importIntervalMinutes: 15, webhookSecret: null, ...config } as JiraCloudConfig
+		{ importIntervalMinutes: 15, clientId: 'id', clientSecret: 's', redirectUrl: 'https://api.example.com/cb', webhookBaseUrl: null, ...config } as JiraCloudConfig,
+		{ ensure } as unknown as JiraWebhookService
 	);
 	const list = (mappings: JiraProjectMapping[]) => {
 		lastListed = mappings;
 		find.mockResolvedValue(mappings);
 	};
-	return { service, find, findOne, findOneAnswers, list, findAnyById, summaryOf, ensureAttentionFiled, findRefusedUnfiled, attention, gone, claimImport, importMapping, tenantsSeen };
+	return { service, find, findOne, findOneAnswers, list, findAnyById, summaryOf, ensureAttentionFiled, findRefusedUnfiled, findAllConnected, ensure, attention, gone, claimImport, importMapping, tenantsSeen };
 }
 
 beforeEach(() => {
@@ -72,13 +76,36 @@ describe('JiraImportSweepService', () => {
 		expect(outcome.attention).toBe(1);
 	});
 
+	it('keeps the webhook of every working connection (refreshed before its expiry), whatever the interval, in its own tenant', async () => {
+		const { service, findAllConnected, ensure, attention } = sweep({ importIntervalMinutes: 0, webhookBaseUrl: 'https://api.example.com/api/integration/jira/webhook' });
+		findAllConnected.mockResolvedValue([
+			{ id: 'int-a', tenantId: 'tenant-a', organizationId: 'org-1' },
+			{ id: 'int-b', tenantId: 'tenant-b', organizationId: 'org-1' }
+		]);
+		attention.add('int-b');
+		ensure.mockImplementation(async () => {
+			expect(RequestContext.currentTenantId()).toBe('tenant-a');
+			return 'refreshed';
+		});
+		expect(await service.run(now)).toMatchObject({ webhooks: 1, due: 0 });
+		expect(ensure).toHaveBeenCalledTimes(1);
+		expect(ensure.mock.calls[0]).toEqual([expect.objectContaining({ id: 'int-a' }), now.getTime()]);
+	});
+
+	it('looks at no webhook while webhooks are off', async () => {
+		const { service, findAllConnected, ensure } = sweep();
+		findAllConnected.mockResolvedValue([{ id: 'int-a', tenantId: 'tenant-a', organizationId: 'org-1' }]);
+		await service.run(now);
+		expect(ensure).not.toHaveBeenCalled();
+	});
+
 	it('does nothing at all when the interval is 0', async () => {
 		const { service, find } = sweep({ importIntervalMinutes: 0 });
-		expect(await service.run(now)).toEqual({ attention: 0, due: 0, imported: 0, skipped: 0, failed: 0 });
+		expect(await service.run(now)).toEqual({ attention: 0, webhooks: 0, due: 0, imported: 0, skipped: 0, failed: 0 });
 		expect(find).not.toHaveBeenCalled();
 	});
 
-	it('reads every inbound mapping that is due: never imported, or older than the interval — four intervals when the application takes webhooks', async () => {
+	it('reads every inbound mapping that is due: never imported, or older than the interval — four intervals when the connections take webhooks', async () => {
 		const { service, find } = sweep();
 		await service.findDue(now);
 		expect(find).toHaveBeenCalledTimes(1);
@@ -93,7 +120,7 @@ describe('JiraImportSweepService', () => {
 		expect(query.where[0]['lastImportedAt']).toEqual(IsNull());
 		expect(query.where[1]['lastImportedAt']).toEqual(LessThan(new Date(now.getTime() - 15 * 60_000 + JIRA_IMPORT_SWEEP_SLACK_MS)));
 
-		const withWebhooks = sweep({ webhookSecret: 's' });
+		const withWebhooks = sweep({ webhookBaseUrl: 'https://api.example.com/api/integration/jira/webhook' });
 		await withWebhooks.service.findDue(now);
 		const reconcile = withWebhooks.find.mock.calls[0][0] as { where: Array<Record<string, FindOperator<unknown>>> };
 		expect(reconcile.where[1]['lastImportedAt']).toEqual(LessThan(new Date(now.getTime() - 15 * JIRA_IMPORT_WEBHOOK_STRIDE * 60_000 + JIRA_IMPORT_SWEEP_SLACK_MS)));
@@ -103,7 +130,7 @@ describe('JiraImportSweepService', () => {
 		const { service, list, findAnyById, claimImport, importMapping, tenantsSeen } = sweep();
 		list([mappingOf('m-1', 'tenant-1'), mappingOf('m-2', 'tenant-2')]);
 
-		expect(await service.run(now)).toEqual({ attention: 0, due: 2, imported: 2, skipped: 0, failed: 0 });
+		expect(await service.run(now)).toEqual({ attention: 0, webhooks: 0, due: 2, imported: 2, skipped: 0, failed: 0 });
 
 		expect(findAnyById.mock.calls.map((call) => call[0])).toEqual(['int-tenant-1', 'int-tenant-2']);
 		expect(tenantsSeen).toEqual(['tenant-1', 'tenant-2']);
@@ -121,7 +148,7 @@ describe('JiraImportSweepService', () => {
 		attention.add('int-refused');
 		gone.add('int-gone');
 
-		expect(await service.run(now)).toEqual({ attention: 0, due: 1, imported: 1, skipped: 0, failed: 0 });
+		expect(await service.run(now)).toEqual({ attention: 0, webhooks: 0, due: 1, imported: 1, skipped: 0, failed: 0 });
 		// Each connection is read once, whatever its number of mappings.
 		expect(findAnyById).toHaveBeenCalledTimes(3);
 		expect(importMapping).toHaveBeenCalledTimes(1);
@@ -150,7 +177,7 @@ describe('JiraImportSweepService', () => {
 		findOneAnswers.set('outbound', { ...mappingOf('outbound'), direction: JiraSyncDirection.OUTBOUND });
 		findOneAnswers.set('removed', null);
 
-		expect(await service.run(now)).toEqual({ attention: 0, due: 5, imported: 1, skipped: 4, failed: 0 });
+		expect(await service.run(now)).toEqual({ attention: 0, webhooks: 0, due: 5, imported: 1, skipped: 4, failed: 0 });
 		expect(claimImport).toHaveBeenCalledTimes(2);
 		expect(importMapping).toHaveBeenCalledTimes(1);
 		expect(importMapping.mock.calls[0][1].id).toBe('fine');
@@ -163,7 +190,7 @@ describe('JiraImportSweepService', () => {
 			throw new Error('connection lost');
 		});
 
-		expect(await service.run(now)).toEqual({ attention: 0, due: 2, imported: 1, skipped: 0, failed: 1 });
+		expect(await service.run(now)).toEqual({ attention: 0, webhooks: 0, due: 2, imported: 1, skipped: 0, failed: 1 });
 		expect(importMapping).toHaveBeenCalledTimes(1);
 		expect(importMapping.mock.calls[0][1].id).toBe('fine');
 	});

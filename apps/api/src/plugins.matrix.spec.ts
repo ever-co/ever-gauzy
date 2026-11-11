@@ -17,6 +17,7 @@ const STUBBED = Array.from(PLUGINS_SOURCE.matchAll(/from '((?:@gauzy\/plugin-|\.
 		name !== '@gauzy/plugin-ever-connect' &&
 		name !== '@gauzy/plugin-integration-ever-works' &&
 		name !== '@gauzy/plugin-integration-linear' &&
+		name !== '@gauzy/plugin-integration-jira' &&
 		name !== '@gauzy/plugin-integration-asana' &&
 		name !== '@gauzy/plugin-integration-trello' &&
 		name !== '@gauzy/plugin-inbox' &&
@@ -36,6 +37,8 @@ class EverStatsPlugin {}
 class EverConnectPlugin {}
 class IntegrationEverWorksPlugin {}
 class IntegrationLinearPlugin {}
+class IntegrationJiraPlugin {}
+class IntegrationJiraCloudPlugin {}
 class IntegrationAsanaPlugin {}
 class IntegrationTrelloPlugin {}
 class InboxPlugin {}
@@ -100,6 +103,11 @@ function loadPlugins(env: Record<string, string | undefined>, before?: () => voi
 			jest.doMock('@gauzy/plugin-integration-linear', () => ({
 				IntegrationLinearPlugin,
 				isLinearEnabled: jest.requireActual('../../../packages/plugins/integration-linear/src/lib/linear-enabled').isLinearEnabled
+			}));
+			jest.doMock('@gauzy/plugin-integration-jira', () => ({
+				IntegrationJiraPlugin,
+				IntegrationJiraCloudPlugin,
+				isJiraEnabled: jest.requireActual('../../../packages/plugins/integration-jira/src/lib/jira-enabled').isJiraEnabled
 			}));
 			jest.doMock('@gauzy/plugin-integration-asana', () => ({
 				IntegrationAsanaPlugin,
@@ -343,6 +351,37 @@ describe('API plugin list: Linear integration', () => {
 			const plugins = loadPlugins({ LINEAR_ENABLED: value });
 			expect(plugins.includes(IntegrationLinearPlugin)).toBe(loaded);
 			expect(warn.mock.calls.filter(([message]) => String(message).includes('LINEAR_ENABLED'))).toHaveLength(lines);
+		} finally {
+			warn.mockRestore();
+		}
+	});
+});
+
+describe('API plugin list: Jira integration', () => {
+	it.each([
+		['unset (the default)', undefined, false, 0],
+		['empty', '', false, 0],
+		['false', 'false', false, 0],
+		['true', 'true', true, 0],
+		['TRUE', 'TRUE', false, 1],
+		['1', '1', false, 1]
+	])('JIRA_ENABLED %s: sync loaded %s, %i log line(s); the Connect descriptor routes always', (_name, value, loaded, lines) => {
+		const warn = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+		try {
+			const plugins = loadPlugins({ JIRA_ENABLED: value });
+			expect(plugins.includes(IntegrationJiraPlugin)).toBe(true);
+			expect(plugins.includes(IntegrationJiraCloudPlugin)).toBe(loaded);
+			expect(warn.mock.calls.filter(([message]) => String(message).includes('JIRA_ENABLED'))).toHaveLength(lines);
+		} finally {
+			warn.mockRestore();
+		}
+	});
+
+	it('lists the sync right after the Connect plugin, whose routes under the same prefix must be registered first', () => {
+		const warn = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+		try {
+			const plugins = loadPlugins({ JIRA_ENABLED: 'true' });
+			expect(plugins.indexOf(IntegrationJiraCloudPlugin)).toBe(plugins.indexOf(IntegrationJiraPlugin) + 1);
 		} finally {
 			warn.mockRestore();
 		}

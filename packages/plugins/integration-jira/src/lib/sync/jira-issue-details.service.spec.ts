@@ -8,16 +8,27 @@ import { JiraDetailsContext, JiraIssueDetailsService } from './jira-issue-detail
 
 const scope = { tenantId: 'tenant-1', organizationId: 'org-1' };
 
-function comment(overrides: Partial<JiraComment> = {}): JiraComment {
-	return { id: 'cm-1', body: 'Looks good', createdAt: '2026-11-07T10:00:00.000Z', updatedAt: '2026-11-07T10:00:00.000Z', user: { id: 'u-1', name: 'ada', displayName: 'Ada', email: 'ada@example.com' }, parent: null, ...overrides };
+/** A comment body as Jira sends it (ADF): one paragraph of text. */
+const adf = (text: string) => ({ type: 'doc' as const, version: 1 as const, content: [{ type: 'paragraph', content: [{ type: 'text', text }] }] });
+
+function comment(overrides: Partial<Omit<JiraComment, 'body'>> & { body?: string } = {}): JiraComment {
+	const { body, ...rest } = overrides;
+	return {
+		id: 'cm-1',
+		body: adf(body ?? 'Looks good'),
+		created: '2026-11-07T10:00:00.000+0000',
+		updated: '2026-11-07T10:00:00.000+0000',
+		author: { accountId: 'acc-ada', displayName: 'Ada', emailAddress: 'ada@example.com' },
+		...rest
+	};
 }
 
 function attachment(overrides: Partial<JiraAttachment> = {}): JiraAttachment {
-	return { id: 'at-1', title: 'Design', url: 'https://www.figma.com/file/1', ...overrides };
+	return { id: 'at-1', filename: 'Design', content: 'https://site.atlassian.net/rest/api/3/attachment/content/1', ...overrides };
 }
 
 function issue(comments: JiraComment[] = [], attachments: JiraAttachment[] = []): JiraIssue {
-	return { id: 'i-1', identifier: 'ENG-1', comments: { nodes: comments }, attachments: { nodes: attachments } } as unknown as JiraIssue;
+	return { id: 'i-1', key: 'ENG-1', fields: { comment: { comments }, attachment: attachments } } as unknown as JiraIssue;
 }
 
 /** A repository double that remembers what was saved and answers the finds the service makes. */
@@ -72,9 +83,9 @@ afterEach(() => {
 });
 
 describe('JiraIssueDetailsService', () => {
-	it('keeps a comment once, attributed to the employee with the author e-mail, a reply under its parent, and maps them', async () => {
+	it('keeps a comment once (its ADF body as HTML), attributed to the employee with the author e-mail, and maps them', async () => {
 		const { service, context, comments, execute, findAll } = details();
-		await service.apply(context, issue([comment(), comment({ id: 'cm-2', body: 'Agreed', parent: { id: 'cm-1' } })]), 'task-1');
+		await service.apply(context, issue([comment(), comment({ id: 'cm-2', body: 'Agreed <b>' })]), 'task-1');
 		expect(comments.save).toHaveBeenCalledTimes(2);
 		expect(comments.rows[0]).toMatchObject({
 			entity: BaseEntityEnum.Task,
@@ -83,11 +94,10 @@ describe('JiraIssueDetailsService', () => {
 			actorType: ActorTypeEnum.User,
 			employeeId: 'emp-ada',
 			createdByUserId: 'user-ada',
-			parentId: undefined,
 			tenantId: 'tenant-1',
 			organizationId: 'org-1'
 		});
-		expect(comments.rows[1]).toMatchObject({ comment: '<p>Agreed</p>', parentId: comments.rows[0]['id'] });
+		expect(comments.rows[1]).toMatchObject({ comment: '<p>Agreed &lt;b&gt;</p>' });
 		const command = execute.mock.calls[0][0] as IntegrationMapSyncEntityCommand;
 		expect(command).toBeInstanceOf(IntegrationMapSyncEntityCommand);
 		expect(command.input).toMatchObject({ entity: IntegrationEntity.COMMENT, sourceId: 'cm-1', gauzyId: comments.rows[0]['id'], integrationId: 'int-1', ...scope });
@@ -98,7 +108,7 @@ describe('JiraIssueDetailsService', () => {
 
 	it('keeps a comment of nobody here as the connecting user\'s, marked System and named after its author', async () => {
 		const { service, context, comments } = details();
-		await service.apply(context, issue([comment({ user: { id: 'u-2', name: 'grace', displayName: 'Grace Hopper', email: 'grace@elsewhere.example' } })]), 'task-1');
+		await service.apply(context, issue([comment({ author: { accountId: 'acc-grace', displayName: 'Grace Hopper', emailAddress: 'grace@elsewhere.example' } })]), 'task-1');
 		expect(comments.rows[0]).toMatchObject({ comment: '<p><strong>Grace Hopper</strong> (Jira)</p><p>Looks good</p>', actorType: ActorTypeEnum.System, employeeId: undefined, createdByUserId: 'user-owner' });
 	});
 
@@ -125,16 +135,16 @@ describe('JiraIssueDetailsService', () => {
 	it('keeps an attachment as a mapped link of the task, reuses a link a person added with the same address, and follows a retitle', async () => {
 		const { service, context, links, execute } = details();
 		links.rows.push({ id: 'link-person', tenantId: 'tenant-1', entity: BaseEntityEnum.Task, entityId: 'task-1', url: 'https://p/notes' });
-		await service.apply(context, issue([], [attachment(), attachment({ id: 'at-2', title: 'notes', url: 'https://p/notes' })]), 'task-1');
+		await service.apply(context, issue([], [attachment(), attachment({ id: 'at-2', filename: 'notes', content: 'https://p/notes' })]), 'task-1');
 		expect(links.save).toHaveBeenCalledTimes(1);
-		expect(links.rows[1]).toMatchObject({ entity: BaseEntityEnum.Task, entityId: 'task-1', title: 'Design', url: 'https://www.figma.com/file/1', createdByUserId: 'user-owner' });
+		expect(links.rows[1]).toMatchObject({ entity: BaseEntityEnum.Task, entityId: 'task-1', title: 'Design', url: 'https://site.atlassian.net/rest/api/3/attachment/content/1', createdByUserId: 'user-owner' });
 		expect((execute.mock.calls[0][0] as IntegrationMapSyncEntityCommand).input).toMatchObject({ entity: IntegrationEntity.ATTACHMENT, sourceId: 'at-1' });
 		expect(context.details).toEqual({ comments: 0, links: 1, failed: 0 });
 
 		const retitled = details({ maps: [{ entity: IntegrationEntity.ATTACHMENT, sourceId: 'at-1', gauzyId: 'link-row-1' }] });
-		retitled.links.rows.push({ id: 'link-row-1', tenantId: 'tenant-1', title: 'Design', url: 'https://www.figma.com/file/1' });
-		await retitled.service.apply(retitled.context, issue([], [attachment({ title: 'Design v2' })]), 'task-1');
-		expect(retitled.links.update).toHaveBeenCalledWith({ id: 'link-row-1' }, { title: 'Design v2', url: 'https://www.figma.com/file/1' });
+		retitled.links.rows.push({ id: 'link-row-1', tenantId: 'tenant-1', title: 'Design', url: 'https://site.atlassian.net/rest/api/3/attachment/content/1' });
+		await retitled.service.apply(retitled.context, issue([], [attachment({ filename: 'Design v2' })]), 'task-1');
+		expect(retitled.links.update).toHaveBeenCalledWith({ id: 'link-row-1' }, { title: 'Design v2', url: 'https://site.atlassian.net/rest/api/3/attachment/content/1' });
 	});
 
 	it('counts a comment that could not be kept as a failure of the run and goes on with the rest', async () => {

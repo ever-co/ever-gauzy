@@ -18,6 +18,7 @@ import { EmailProviderSendGridPlugin, isSendGridEnabled } from '@gauzy/plugin-em
 import { EmailProviderSesPlugin, isSesEnabled } from '@gauzy/plugin-email-provider-ses';
 import { IntegrationEverWorksPlugin, isEverWorksEnabled } from '@gauzy/plugin-integration-ever-works';
 import { IntegrationAsanaPlugin, isAsanaEnabled } from '@gauzy/plugin-integration-asana';
+import { IntegrationJiraCloudPlugin, isJiraEnabled } from '@gauzy/plugin-integration-jira';
 import { IntegrationLinearPlugin, isLinearEnabled } from '@gauzy/plugin-integration-linear';
 import { IntegrationTrelloPlugin, isTrelloEnabled } from '@gauzy/plugin-integration-trello';
 import { InventoryPlugin } from '@gauzy/plugin-inventory';
@@ -167,6 +168,16 @@ export const plugins = resolvePluginLoadOrder([
 	 * 🛑 Off unless `TRELLO_ENABLED` is exactly `true` — the same switch as the API's list.
 	 */
 	...(isTrelloEnabled(process.env, (message) => console.warn(message)) ? [IntegrationTrelloPlugin] : []),
+	/**
+	 * The Jira Cloud sync — hosted here, behind its switch, for the sweep it owns: the scheduled import, the refresh of
+	 * each connection's dynamic webhook before Jira's 30-day expiry, and the refused-token notices. A `@ScheduledJob`
+	 * fires only in this process (its webhooks and "import now" are the API's). The sweep is registered by the plugin
+	 * only where a queue root exists, so a worker without Redis is unchanged. The Connect descriptor plugin
+	 * (`IntegrationJiraPlugin`) is the API's alone: it owns no queue and no schedule.
+	 *
+	 * 🛑 Off unless `JIRA_ENABLED` is exactly `true` — the same switch as the API's list.
+	 */
+	...(isJiraEnabled(process.env, (message) => console.warn(message)) ? [IntegrationJiraCloudPlugin] : []),
 	/**
 	 * The Inbox — hosted whenever it is switched on, for its own schedule: the recovery sweep that files the
 	 * notifications the API's live filing missed (a process that stopped between a notification's commit and its
