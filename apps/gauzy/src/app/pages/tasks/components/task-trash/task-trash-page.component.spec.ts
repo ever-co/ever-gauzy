@@ -1,3 +1,11 @@
+// The services the page injects, as DI tokens: the real barrel pulls the whole app (cookies, auth) into the test.
+jest.mock('@gauzy/ui-core/core', () => ({
+	Store: class Store {},
+	TaskTrashService: class TaskTrashService {},
+	ToastrService: class ToastrService {},
+	TASK_TRASH_PAGE_SIZE: 50
+}));
+
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { BehaviorSubject } from 'rxjs';

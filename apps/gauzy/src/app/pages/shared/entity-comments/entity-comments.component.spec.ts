@@ -1,3 +1,12 @@
+// The services the component injects, as DI tokens: the real barrel pulls the whole app (cookies, auth) into the test.
+jest.mock('@gauzy/ui-core/core', () => ({
+	CommentService: class CommentService {},
+	CommentReactionService: class CommentReactionService {},
+	ImageAssetService: class ImageAssetService {},
+	Store: class Store {},
+	ToastrService: class ToastrService {}
+}));
+
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { BaseEntityEnum, IComment, IReactionSummary, PermissionsEnum, ReactionEntityEnum } from '@gauzy/contracts';
 import { CommentReactionService, CommentService, ImageAssetService, Store, ToastrService } from '@gauzy/ui-core/core';

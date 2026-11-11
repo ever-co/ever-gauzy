@@ -1,11 +1,11 @@
-import { ChangeDetectionStrategy, Component, inject, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, inject, OnInit } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { NbButtonModule, NbCardModule, NbIconModule, NbSpinnerModule, NbTooltipModule } from '@nebular/theme';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
-import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { combineLatest } from 'rxjs';
 import { debounceTime, distinctUntilChanged, filter, startWith } from 'rxjs/operators';
 import * as moment from 'moment-timezone';
@@ -52,7 +52,6 @@ export function trashStateOf(error: unknown): TaskTrashState {
  * task by title or number; Load more reads the next page. The page is reached from the tasks page, which offers it
  * only where the platform keeps a trash (`GAUZY_TASK_TRASH_ENABLED`) and to those who may delete tasks.
  */
-@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-task-trash-page',
 	standalone: true,
@@ -76,6 +75,7 @@ export class TaskTrashPageComponent implements OnInit {
 	private readonly _trash = inject(TaskTrashService);
 	private readonly _toastr = inject(ToastrService);
 	private readonly _translate = inject(TranslateService);
+	private readonly _destroyRef = inject(DestroyRef);
 
 	protected readonly searchControl = new FormControl<string>('', { nonNullable: true });
 	protected state: TaskTrashState = 'loading';
@@ -97,7 +97,7 @@ export class TaskTrashPageComponent implements OnInit {
 			this._store.selectedProject$.pipe(startWith(null as IOrganizationProject | null)),
 			this.searchControl.valueChanges.pipe(startWith(''), debounceTime(300), distinctUntilChanged())
 		])
-			.pipe(untilDestroyed(this))
+			.pipe(takeUntilDestroyed(this._destroyRef))
 			.subscribe(([organization, project]) => {
 				this._organization = organization;
 				// "All projects" is a pseudo-project without an id.
