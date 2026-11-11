@@ -64,19 +64,35 @@ describe('AsanaTenantService — the refused-token notice', () => {
 		expect(filed(0).recipients.map((recipient) => recipient.userId)).toEqual(['user-manager']);
 	});
 
-	it('still tells the person who connected when the managers cannot be read, removing nobody, and leaves it to the sweep', async () => {
-		const { service, row, findManagers, filed, noticedAt } = harness({ managers: new Error('store down') });
+	it('defers an open notice to the sweep when the managers cannot be read: nothing filed, nothing recorded', async () => {
+		const { service, row, inbox, findManagers, filed, noticedAt } = harness({ managers: new Error('store down') });
 		await service.setAttention(row as never, 'token_refused', 'token-1');
-		expect(filed(0).recipients.map((recipient) => recipient.userId)).toEqual(['user-connector']);
-		// Partial: the managers who already had the notice keep it, and the filing is not recorded.
-		expect(filed(0).replaceRecipients).toBe(false);
+		expect(inbox.upsertExternal).not.toHaveBeenCalled();
 		expect(noticedAt()).toBeFalsy();
-		// The sweep files it again once the managers can be read: with them, and recorded.
+		// The sweep files it once the managers can be read: with them, replacing the recipients, and recorded.
 		findManagers.mockResolvedValue({ userIds: ['user-manager'], truncated: false });
 		await service.ensureAttentionFiled(row as never);
-		expect(filed(1).recipients.map((recipient) => recipient.userId)).toEqual(['user-connector', 'user-manager']);
-		expect(filed(1).replaceRecipients).toBe(true);
+		expect(filed(0).recipients.map((recipient) => recipient.userId)).toEqual(['user-connector', 'user-manager']);
+		expect(filed(0).replaceRecipients).toBe(true);
 		expect(noticedAt()).toBeTruthy();
+	});
+
+	it('across a reconnect, a refusal whose managers cannot be read reaches nobody until the sweep replaces the recipients without the former connector', async () => {
+		const { service, row, inbox, findManagers, filed } = harness({ connectedBy: 'user-former', managers: ['user-manager'] });
+		await service.setAttention(row as never, 'token_refused', 'token-1');
+		expect(filed(0).recipients.map((recipient) => recipient.userId)).toEqual(['user-former', 'user-manager']);
+		// Someone else connects again: the notice is resolved, and the connection is theirs now.
+		await service.setAttention(row as never, null);
+		const connector = row.settings.find((setting) => setting.settingsName === AsanaSettingName.CONNECTED_BY_USER_ID);
+		if (connector) connector.settingsValue = 'user-new';
+		// The new token is refused while the managers cannot be read: the shared item is not reopened for anyone.
+		findManagers.mockRejectedValueOnce(new Error('store down'));
+		await service.setAttention(row as never, 'token_refused', 'token-1');
+		expect(inbox.upsertExternal).toHaveBeenCalledTimes(2);
+		// The sweep files it for the new connector and the managers, replacing the recipients: the former connector is dropped.
+		await service.ensureAttentionFiled(row as never);
+		expect(filed(2).recipients.map((recipient) => recipient.userId)).toEqual(['user-new', 'user-manager']);
+		expect(filed(2).replaceRecipients).toBe(true);
 	});
 
 	it('files for the managers read without removing anyone when the read was cut at the limit, and records it', async () => {
@@ -91,7 +107,7 @@ describe('AsanaTenantService — the refused-token notice', () => {
 	describe('a new refusal never inherits the filing timestamp of an earlier one', () => {
 		const earlier = '2026-11-01T00:00:00.000Z';
 
-		it('when the notice could only be filed partially', async () => {
+		it('when the managers cannot be read', async () => {
 			const { service, row, noticedAt } = harness({ managers: new Error('store down'), noticedAt: earlier });
 			await service.setAttention(row as never, 'token_refused', 'token-1');
 			expect(noticedAt()).toBe('');

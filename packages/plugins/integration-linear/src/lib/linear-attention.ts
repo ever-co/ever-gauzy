@@ -20,7 +20,7 @@ export function attentionItemOf(
 	reason: string | null,
 	recipientUserIds: readonly ID[],
 	resurface = true,
-	/** The recipients are known to be partial (the managers could not be read): add them, remove nobody. */
+	/** The recipients are known to be partial (the managers' read was cut at its limit): add them, remove nobody. */
 	partial = false
 ): IInboxItemUpsertInput {
 	const open = !!reason;

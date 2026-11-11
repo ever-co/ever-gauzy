@@ -62,8 +62,7 @@ Off by default. The plugin is loaded only when `TRELLO_ENABLED=true` (exactly); 
 - **A refused token.** When Trello refuses the connection's token (a 401), the connection is marked — the page asks for
   a reconnect, the lookups answer `TRELLO_TOKEN_REFUSED`, the scheduled import leaves its mappings alone — and, with the
   Inbox plugin loaded, the person who connected and the organization's integration managers (members whose role may
-  add or edit integrations; when they cannot be read the notice goes to the people known, removing nobody, and the
-  sweep files it again) get a high-priority Inbox notice (one per connection; resolved when a
+  add or edit integrations; when they cannot be read the open notice waits for the sweep, which files it with them) get a high-priority Inbox notice (one per connection; resolved when a
   renewed token works or someone connects again).
 - **Conflicts.** Each card applied is compared field by field (title, description — as the task store keeps it, sanitized —, status, priority, due date)
   with what it and its task last agreed on (`integration_trello_card_baseline`, the values Trello sent the last time the card was

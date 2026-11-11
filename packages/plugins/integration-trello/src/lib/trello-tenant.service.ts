@@ -257,10 +257,11 @@ export class TrelloTenantService {
 		if (truncated) {
 			this.logger.warn(`Connection ${tenant.id}: the organization has more than ${INTEGRATION_MANAGERS_LIMIT} integration manager memberships; the notice goes to the first ones and removes nobody`);
 		}
-		// Without the managers an open notice is filed for the people known (nobody is removed from it) and not recorded
-		// as filed, so the sweep files it again with the managers.
-		const unread = !!reason && managers === null;
-		const partial = unread || (!!reason && truncated);
+		// Without the managers an open notice is not filed at all: a partial list could neither drop a former connector
+		// from the shared item nor keep a current manager on it. Nothing is recorded, so the sweep files it with them
+		// (a new refusal starts with no filing timestamp: see setAttention).
+		if (reason && managers === null) return;
+		const partial = !!reason && truncated;
 		const recipients = [...new Set([userId, ...(managers ?? []), ...alsoUserIds].filter(Boolean).map(String))] as ID[];
 		if (!recipients.length) return;
 		try {
@@ -269,7 +270,6 @@ export class TrelloTenantService {
 			this.logger.warn(`The attention of connection ${tenant.id} could not be filed in the Inbox: ${(error as Error).message}`);
 			return;
 		}
-		if (unread) return;
 		try {
 			await this.writeSetting(tenant, TrelloSettingName.ATTENTION_NOTICE_AT, reason ? new Date().toISOString() : '');
 		} catch (error) {
