@@ -1,6 +1,6 @@
 import '../core/entities/internal';
 
-import { BadRequestException, ForbiddenException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { PermissionsEnum, RolesEnum } from '@gauzy/contracts';
 import { RequestContext } from '../core/context';
 import { CrudService } from '../core/crud/crud.service';
@@ -45,7 +45,14 @@ function actingAs(callerRole: { id: string; name: RolesEnum }, canChangeRoles = 
 	const service = new RolePermissionService({} as never, {} as never, roleService as never, {} as never);
 	const read = jest
 		.spyOn(service, 'findOneByOptions')
-		.mockImplementation(async (options: any) => ROWS[options?.where?.id] as never);
+		.mockImplementation(async (options: any) => {
+			// Like the real `findOneByOptions`: a miss raises, it never answers `undefined`.
+			const row = ROWS[options?.where?.id];
+			if (!row) {
+				throw new NotFoundException('The requested record was not found');
+			}
+			return row as never;
+		});
 	const softRemove = jest.spyOn(CrudService.prototype, 'softRemove').mockImplementation(async (id: any) => ROWS[id] as never);
 	const softRecover = jest.spyOn(CrudService.prototype, 'softRecover').mockImplementation(async (id: any) => ROWS[id] as never);
 	const update = jest.spyOn(TenantAwareCrudService.prototype, 'update').mockResolvedValue({ affected: 1 } as never);
@@ -129,8 +136,9 @@ describe('any other role', () => {
 });
 
 /**
- * `deletePermission` shares the rule. It used to read `.role.name` of a row that may not exist (a TypeError, reported
- * as an empty 400 body) and answered nothing at all to a caller that is neither SUPER_ADMIN nor ADMIN.
+ * `deletePermission` shares the rule. It answered nothing at all to a caller that is neither SUPER_ADMIN nor ADMIN,
+ * read `.role.name` of a row whose role could not be read, and put the exception object (serialised as `{}`) in its
+ * 400 body instead of the message.
  */
 describe('deletePermission', () => {
 	function deleting(callerRole: { id: string; name: RolesEnum }, canChangeRoles = true) {
@@ -164,10 +172,22 @@ describe('deletePermission', () => {
 		expect(remove).not.toHaveBeenCalled();
 	});
 
-	it('refuses a row that does not exist with a message, not a TypeError', async () => {
+	it('refuses a row that does not exist, with the lookup’s message in the 400 body', async () => {
+		// The real lookup raises NotFound on a miss; the failure was that the 400 carried the exception object (`{}`).
 		const { service, remove } = deleting(ROLES.admin);
 
 		const error = await service.deletePermission('p-missing').catch((e) => e);
+
+		expect(error).toBeInstanceOf(BadRequestException);
+		expect(error.message).toBe('The requested record was not found');
+		expect(remove).not.toHaveBeenCalled();
+	});
+
+	it('refuses a row whose role cannot be read, even if the lookup answers nothing', async () => {
+		const { service, read, remove } = deleting(ROLES.admin);
+		read.mockResolvedValue(undefined as never);
+
+		const error = await service.deletePermission('p-employee').catch((e) => e);
 
 		expect(error).toBeInstanceOf(BadRequestException);
 		expect(error.message).toContain('You can not delete the permissions of this role');

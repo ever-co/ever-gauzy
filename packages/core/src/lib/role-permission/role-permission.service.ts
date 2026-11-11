@@ -304,9 +304,9 @@ export class RolePermissionService extends TenantAwareCrudService<RolePermission
 	 */
 	public async deletePermission(id: string) {
 		try {
-			// The same role rule as every other permission write. A row that does not exist (or is not the
-			// tenant's) used to reach `.role.name` on `undefined`, a TypeError reported as an empty 400 body; and a
-			// caller that is neither SUPER_ADMIN nor ADMIN fell through with no answer at all.
+			// The same role rule as every other permission write (one copy, not four). A caller that is neither
+			// SUPER_ADMIN nor ADMIN used to fall through with no answer at all, and a row without a readable role
+			// reached `.role.name` on `undefined`. `findOneByOptions` raises NotFound for a missing row.
 			const permRecord = await this.findOneByOptions({
 				where: { id },
 				relations: { role: true }
