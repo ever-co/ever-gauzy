@@ -7,6 +7,7 @@ import { CHAT_ROUTE_PREFIX } from '../chat.constants';
 import { ChatInteractionDTO, ChatWebhookCreateDTO, ChatWebhookUpdateDTO } from '../dto/chat-webhook.dto';
 import { ChatAccessService } from '../services/chat-access.service';
 import { ChatInteractionService } from '../webhooks/chat-interaction.service';
+import { ChatWebhooksEnabledGuard } from '../webhooks/chat-webhooks-enabled.guard';
 import { ChatWebhookService } from '../webhooks/chat-webhook.service';
 
 /**
@@ -19,7 +20,7 @@ import { ChatWebhookService } from '../webhooks/chat-webhook.service';
  */
 @ApiTags('Chat')
 @ApiBearerAuth()
-@UseGuards(TenantPermissionGuard, PermissionGuard, FeatureFlagGuard)
+@UseGuards(ChatWebhooksEnabledGuard, TenantPermissionGuard, PermissionGuard, FeatureFlagGuard)
 @FeatureFlag(FeatureEnum.FEATURE_CHAT)
 @Permissions(PermissionsEnum.CHAT_VIEW)
 @Controller(CHAT_ROUTE_PREFIX)

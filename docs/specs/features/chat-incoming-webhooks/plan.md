@@ -40,7 +40,7 @@ member messages already use (Principle VII).
 
 | Concern | Choice | Rationale |
 | ------- | ------ | --------- |
-| Flag | `GAUZY_CHAT_WEBHOOKS_ENABLED` (exactly `true`; needs `GAUZY_CHAT_ENABLED`), read per request by `isChatWebhooksEnabled`; off, every webhook route answers 404 and nothing posts or calls out | Principle IV; same contract as `isChatEnabled` |
+| Flag | `GAUZY_CHAT_WEBHOOKS_ENABLED` (exactly `true`; needs `GAUZY_CHAT_ENABLED`), read per request by `isChatWebhooksEnabled`: the management and interaction routes' first guard (`ChatWebhooksEnabledGuard`) and the services; the public route answers its own `404 no_webhook`; nothing posts or calls out | Principle IV; same contract as `isChatEnabled` |
 | Tables | `chat_webhook`, `chat_webhook_interaction`, three nullable `chat_message` columns; migration `1791000006730`, tri-dialect and idempotent (`migration-helpers.ts`) | Principle III; the tables ship with the chat plugin, the routes with the flag |
 | URL secret | 32 random bytes (base64url) after the prefix `gzcwh_`, in the URL path; stored as SHA-256 only (`tokenHash`, unique), last four characters kept as a hint; shown once | NFR "secrets hashed at rest"; a hash lookup needs no scan |
 | Signing secret | a second 32-byte secret, shown once, sealed at rest (AES-256-GCM, key from `ENCRYPTION_KEY`, else derived from a non-default `JWT_SECRET`, bound to the webhook row) | the platform signs callbacks, so it must read the key back; a database copy alone cannot sign |
@@ -48,12 +48,12 @@ member messages already use (Principle VII).
 | Egress | the chat plugin's egress guard (`src/lib/egress`, link-preview lane, ever-gauzy #11796): URL judged, every resolved address public, connection pinned to them, no redirect, `https:` only here, 5 s deadline, 64 KiB read cap | FR-5, no second SSRF guard in the plugin |
 | Payload | `text` (markdown subset, mention tokens), `blocks` (header, section text + fields, divider, context, actions with buttons; any other type → its text as a plain `text` block), legacy `attachments` (pretext, title, text, fields, footer → blocks); JSON or a form body with a `payload` field | FR-2; existing senders work unchanged |
 | Sanitizing | every block string is plain text: HTML tags removed, `&lt;` `&gt;` `&amp;` decoded, `<url\|label>` links rewritten (`[label](url)` in the body, `label (url)` in blocks), control characters dropped, lengths capped; button URLs `https:` and public hosts only | Principle VI, FR-5 |
-| Limits | raw body ≤ 64 KiB, ≤ 50 blocks, ≤ 10 fields per section, ≤ 10 buttons per actions block, body ≤ 4,000 characters (longer text is cut with an ellipsis) | spec §2.2 |
-| Rate limits | fixed windows through the platform's throttler storage (Redis when configured, shared by replicas; in-process otherwise): per webhook 60/min and 20 per 10 s (burst), per organization 600/min and 100 per 10 s; all four from env; `429 rate_limited` + `Retry-After` | FR-6 |
+| Limits | raw body ≤ 64 KiB (`422 payload_too_large`; over 128 KiB the platform's body parser refuses it with 413 before reading it: core `SMALL_BODY_ROUTES`), ≤ 50 blocks, ≤ 10 fields per section, ≤ 10 buttons per actions block, body ≤ 4,000 characters (longer text is cut with an ellipsis) | spec §2.2 |
+| Rate limits | fixed windows through the platform's throttler storage: shared by every replica where the platform's throttler runs on Redis (`THROTTLE_ENABLED` with Redis), per process otherwise — the same reach as every other platform limit; per webhook 60/min and 20 per 10 s (burst), per organization 600/min and 100 per 10 s; all four from env; `429 rate_limited` + `Retry-After` | FR-6 |
 | Idempotency | payload `nonce` or the `Idempotency-Key` header (≤ 64 chars) becomes the message nonce; unique (`webhookId`, `nonce`); a repeat answers `200 ok` and posts nothing | NFR reliability |
 | Broadcast | `<!channel>` / `<!here>` count only when the webhook has `canBroadcast` (off by default; a manager sets it); otherwise they stay as plain `@channel` text | FR-3 |
 | Author | `authorEmployeeId`/`authorUserId` null, `kind: app`, `webhookId`, `appName` + `appIconUrl` copied from the webhook at post time; `username` / `icon_url` / `channel` in a payload are ignored | FR-3; a payload cannot pose as someone else or another channel |
-| Interactions | one `chat_webhook_interaction` row per click (its id is the `interactionId`); first attempt inline, then 3 retries (2 s, 10 s, 30 s), each re-signed with a fresh timestamp, same `interactionId` and `Idempotency-Key`; a 2xx JSON reply with `text`/`blocks`/`attachments` replaces the message once per interaction (`replyAppliedAt` compare-and-set) unless `replace_original: false` | FR-4, NFR reliability |
+| Interactions | one `chat_webhook_interaction` row per click (its id is the `interactionId`); first attempt inline, then 3 retries (2 s, 10 s, 30 s), each re-signed with a fresh timestamp, same `interactionId` and `Idempotency-Key`; a reply that cannot be read is retried; a 2xx JSON reply with `text`/`blocks`/`attachments` replaces the message once per interaction (`replyAppliedAt` claimed in the same transaction as the message write) unless `replace_original: false`; an actions block without a `block_id` gets `_block-<index>`, so (block id, action id) names one button | FR-4, NFR reliability |
 | Who manages | channel managers, the channel's creator and `CHAT_MANAGE` holders (`ChatAccessService.requireManager`); `CHAT_SEND` on the write routes | spec §8 open question, answered with the proposal |
 | Activity log | `ActivityLogService.logActivity` on `BaseEntityEnum.ChatWebhook`: Created, Updated (rename, icon, interaction URL, broadcast), Deleted (revoke) | FR-7 |
 | Counters | `acceptedCount`, `rejectedCount`, `rateLimitedCount`, `callbackFailureCount`, `lastUsedAt` on the webhook row (atomic increments), shown in the list | NFR observability, FR-1 "last used" |
@@ -95,8 +95,9 @@ settings read; the REST surface is the contract).
 - A webhook post appends `chat_message.created` (kind `app`, `authorUserId: null`) to every member, then each
   member's `chat_member.state_changed` (their unread and mention counts) after the commit, exactly like a send.
 - A reply that replaces a message appends `chat_message.updated`.
-- Mentions: `<@employeeId>` of members → `MentionService.publishMention` (no author employee); broadcasts only
-  with `canBroadcast`. No direct-message notification (webhooks post to channels only, FR-8).
+- Mentions: `<@employeeId>` of members count like a member's (the mention badges, `mentionEmployeeIds`); broadcasts
+  only with `canBroadcast`. No inbox notification is filed for a webhook's mention yet (§12). No direct-message
+  notification (webhooks post to channels only, FR-8).
 
 ## 6. UI Surface
 
@@ -151,5 +152,8 @@ revoke and refusals · X spec unchanged · XI no third-party product named.
 ## 12. Known limitations / follow-ups
 
 - No `response_url` for late replies; a sender updates the message only through its synchronous reply.
+- A webhook's `<@employee>` mention moves the badge but files no inbox notification: the platform's mention and
+  notification writes (`MentionService`, `EmployeeNotificationService.create`) take the author and the tenant from a
+  signed-in user, and the public route has none. Needs a system-actor path in core.
 - Mention tokens count in `text` only, not inside blocks.
-- Retries are in the process that took the click (no queue).
+- Retries are in the process that took the click (no queue): a restart drops the pending ones, and a process that starts marks interactions left pending or retrying for longer than twice the retry schedule as failed (`process_restarted`). A durable queue is a follow-up.

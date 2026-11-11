@@ -1,3 +1,4 @@
+import { formatDate } from '@angular/common';
 import {
 	ChangeDetectionStrategy,
 	Component,
@@ -7,14 +8,15 @@ import {
 	ElementRef,
 	inject,
 	input,
+	LOCALE_ID,
 	output,
 	signal,
 	untracked,
 	viewChild
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { FormsModule } from '@angular/forms';
-import { NbButtonModule, NbDialogService, NbIconModule, NbSelectModule, NbSpinnerModule, NbTooltipModule } from '@nebular/theme';
+import { RouterLink } from '@angular/router';
+import { NbDialogService, NbIconModule, NbSpinnerModule, NbTooltipModule } from '@nebular/theme';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { EMPTY, merge, Subscription } from 'rxjs';
 import { auditTime, catchError, filter, switchMap } from 'rxjs/operators';
@@ -22,6 +24,7 @@ import {
 	CHAT_EVENT_NAMES,
 	ChatConversationKindEnum,
 	ChatNotifyLevelEnum,
+	ChatVisibilityEnum,
 	IChatCategory,
 	IChatConversationWithState,
 	IChatMemberState,
@@ -31,8 +34,8 @@ import { ToastrService } from '@gauzy/ui-core/core';
 import { applyCatchUp, reconcileWithNewest } from '../../chat-catch-up';
 import { canManageConversation } from '../../chat-categories';
 import { withTaskReference } from '../../chat-tasks';
-import { CHAT_LIVE_AUDIT_MS, CHAT_MESSAGES_POLL_MS } from '../../chat-ui.constants';
-import { apiErrorMessage, continuesGroup, conversationTitle, mergeMessages, newNonce } from '../../chat-ui.helpers';
+import { CHAT_LINK, CHAT_LIVE_AUDIT_MS, CHAT_MESSAGES_POLL_MS } from '../../chat-ui.constants';
+import { apiErrorMessage, continuesGroup, conversationPerson, conversationTitle, isSameDay, memberEmployeeIds, mergeMessages, newNonce } from '../../chat-ui.helpers';
 import { ChatCreateTaskFlow } from '../../dialogs/chat-task-dialogs.component';
 import { ChannelSettingsContext, ChannelSettingsDialogComponent } from '../../dialogs/chat-settings-dialogs.component';
 import { ChatFilesStore } from '../../services/chat-files.store';
@@ -43,15 +46,52 @@ import { ChatEvents, ChatMessagePatch, ChatUiService, memberStateFromEvents } fr
 import { FilesPanelComponent } from '../files-panel/files-panel.component';
 import { clearDraft, ComposerSubmission, MessageComposerComponent } from '../message-composer/message-composer.component';
 import { MessageAction, MessageItemComponent } from '../message-item/message-item.component';
+import { PersonAvatarComponent } from '../person-avatar/person-avatar.component';
 
 /** How close to the bottom (px) counts as "reading the latest", for auto-scroll and read-on-view. */
 const NEAR_BOTTOM_PX = 80;
 
+/** One row of the message list: the message, the day divider above it, and whether the "New" line goes above it. */
+interface MessageRow {
+	message: IChatMessageWithRelations;
+	day: string | null;
+	isNew: boolean;
+	continued: boolean;
+}
+
+/** The header menus (one open at a time). */
+type HeaderMenu = 'notify' | 'more' | null;
+
 /**
- * One conversation: its header (title, members, favourite, notifications, join / leave, archive, pins), the
- * messages (newest page first, older on scroll, newer as the chat events announce them), and the composer. Reading
- * the latest loaded message marks the conversation read up to it (never past what is shown); "mark unread from
- * here" is explicit.
+ * Where the "New" line goes when a conversation opens: before the first message after my read position, or,
+ * when that position is not on the loaded page, before the last `unreadCount` messages that are not deleted (the
+ * server counts none of those; a deleted thread root stays in the list). Null when nothing is unread.
+ */
+export function unreadMarkerId(messages: readonly IChatMessageWithRelations[], state: IChatMemberState | null): string | null {
+	const unread = state?.unreadCount ?? 0;
+	if (!state || unread <= 0 || messages.length === 0) return null;
+	const lastRead = state.lastReadMessageId ? String(state.lastReadMessageId) : null;
+	if (lastRead) {
+		const at = messages.findIndex((message) => String(message.id) === lastRead);
+		if (at >= 0) return messages[at + 1] ? String(messages[at + 1].id) : null;
+	}
+	let left = unread;
+	for (let at = messages.length - 1; at >= 0; at -= 1) {
+		if (messages[at].deletedAt) continue;
+		left -= 1;
+		if (left === 0) return String(messages[at].id);
+	}
+	// More unread than loaded: the line goes above the first loaded message.
+	return String((messages.find((message) => !message.deletedAt) ?? messages[0]).id);
+}
+
+/**
+ * One conversation, laid out as chat apps do: the header (the channel's icon or the person's avatar, the title,
+ * the topic, the member count that opens the members, favourite, notifications, the pins, the files and the
+ * settings; leave / archive in a "more" menu), the messages (newest page first, older on scroll, newer as the chat
+ * events announce them) with day dividers, a "New" line above the first unread message and a welcome block at the
+ * very beginning, and the composer, or a join bar for a channel I am not in. Reading the latest loaded message marks
+ * the conversation read up to it (never past what is shown); "mark unread from here" is explicit.
  *
  * Live: a message created in the conversation fetches the newer ones, a message changed or deleted (an edit, a
  * reaction, a pin, a reply to its thread) is read again, and after a reconnect the newest page is read again (the
@@ -65,83 +105,196 @@ const NEAR_BOTTOM_PX = 80;
 @Component({
 	selector: 'ngx-chat-conversation-view',
 	changeDetection: ChangeDetectionStrategy.OnPush,
+	host: {
+		'(document:click)': 'onDocumentClick()',
+		'(document:keydown.escape)': 'onEscape()'
+	},
 	imports: [
-		FormsModule,
-		NbButtonModule,
+		RouterLink,
 		NbIconModule,
-		NbSelectModule,
 		NbSpinnerModule,
 		NbTooltipModule,
 		TranslatePipe,
 		FilesPanelComponent,
 		MessageComposerComponent,
-		MessageItemComponent
+		MessageItemComponent,
+		PersonAvatarComponent
 	],
 	template: `
 		<section class="view" data-test="conversation-view">
 			<header class="header">
+				<a class="back icon-button" [routerLink]="chatLink" [attr.aria-label]="'CHAT.VIEW.BACK' | translate"><nb-icon icon="arrow-back-outline"></nb-icon></a>
 				<div class="heading">
-					<h5 class="title">{{ title() }}</h5>
+					<div class="title-line">
+						<span class="title-icon">
+							@if (isChannel()) {
+								<nb-icon [icon]="isPrivate() ? 'lock-outline' : 'hash-outline'"></nb-icon>
+							} @else if (person(); as person) {
+								<ngx-chat-person-avatar [person]="person" size="small"></ngx-chat-person-avatar>
+							} @else {
+								<nb-icon icon="people-outline"></nb-icon>
+							}
+						</span>
+						<h5 class="title">{{ plainTitle() }}</h5>
+						<!-- A favourite is a member's own setting: none to set for a conversation I am not in. -->
+						@if (isMember()) {
+							<!-- A toggle: its name stays, aria-pressed tells its state (the tooltip names the action). -->
+							<button
+								type="button"
+								class="star"
+								data-test="favorite"
+								[class.on]="state()?.isFavorite"
+								[nbTooltip]="(state()?.isFavorite ? 'CHAT.VIEW.UNFAVORITE' : 'CHAT.VIEW.FAVORITE') | translate"
+								[attr.aria-label]="'CHAT.VIEW.FAVORITE' | translate"
+								[attr.aria-pressed]="!!state()?.isFavorite"
+								(click)="toggleFavorite()"
+							>
+								<nb-icon [icon]="state()?.isFavorite ? 'star' : 'star-outline'"></nb-icon>
+							</button>
+						}
+					</div>
 					@if (conversation().topic) {
-						<span class="topic">{{ conversation().topic }}</span>
+						<span class="topic" [attr.title]="conversation().topic">{{ conversation().topic }}</span>
 					}
-					<button type="button" class="members" data-test="members" [disabled]="!isMember()" [attr.aria-label]="'CHAT.SETTINGS.MEMBERS_OPEN' | translate" (click)="openSettings('members')">
-						{{ 'CHAT.LIST.MEMBERS' | translate: { count: conversation().memberCount } }}
-					</button>
 				</div>
 				<div class="actions">
-					<button nbButton ghost size="tiny" type="button" data-test="favorite" [nbTooltip]="(state()?.isFavorite ? 'CHAT.VIEW.UNFAVORITE' : 'CHAT.VIEW.FAVORITE') | translate" [attr.aria-label]="(state()?.isFavorite ? 'CHAT.VIEW.UNFAVORITE' : 'CHAT.VIEW.FAVORITE') | translate" (click)="toggleFavorite()">
-						<nb-icon [icon]="state()?.isFavorite ? 'star' : 'star-outline'"></nb-icon>
+					<button
+						type="button"
+						class="members"
+						data-test="members"
+						[disabled]="!isMember()"
+						[nbTooltip]="'CHAT.VIEW.MEMBERS' | translate"
+						[attr.aria-label]="'CHAT.SETTINGS.MEMBERS_OPEN' | translate"
+						(click)="openSettings('members')"
+					>
+						<nb-icon icon="people-outline"></nb-icon>
+						<span>{{ conversation().memberCount }}</span>
 					</button>
 					@if (isMember()) {
-						<nb-select size="tiny" data-test="notify-level" [selected]="state()?.notifyLevel ?? 'all'" (selectedChange)="setNotifyLevel($event)" [placeholder]="'CHAT.VIEW.NOTIFY' | translate">
-							<nb-option value="all">{{ 'CHAT.VIEW.NOTIFY_ALL' | translate }}</nb-option>
-							<nb-option value="mentions">{{ 'CHAT.VIEW.NOTIFY_MENTIONS' | translate }}</nb-option>
-							<nb-option value="muted">{{ 'CHAT.VIEW.NOTIFY_MUTED' | translate }}</nb-option>
-						</nb-select>
+						<div class="menu-anchor" (click)="$event.stopPropagation()">
+							<button
+								type="button"
+								class="icon-button"
+								data-test="notify-level"
+								[class.on]="menu() === 'notify'"
+								[nbTooltip]="'CHAT.VIEW.NOTIFY' | translate"
+								[attr.aria-label]="'CHAT.VIEW.NOTIFY' | translate"
+								[attr.aria-expanded]="menu() === 'notify'"
+								(click)="toggleMenu('notify')"
+							>
+								<nb-icon [icon]="notifyIcon()"></nb-icon>
+							</button>
+							@if (menu() === 'notify') {
+								<div class="menu" role="menu">
+									<h6 class="menu-title">{{ 'CHAT.VIEW.NOTIFY' | translate }}</h6>
+									@for (level of notifyLevels; track level.value) {
+										<button type="button" class="menu-item" role="menuitemradio" [attr.aria-checked]="currentNotifyLevel() === level.value" (click)="setNotifyLevel(level.value); menu.set(null)">
+											<nb-icon [icon]="level.icon"></nb-icon>
+											<span>{{ level.labelKey | translate }}</span>
+											@if (currentNotifyLevel() === level.value) {
+												<nb-icon class="check" icon="checkmark-outline"></nb-icon>
+											}
+										</button>
+									}
+								</div>
+							}
+						</div>
 					}
-					<button nbButton ghost size="tiny" type="button" data-test="pins" [class.active]="pinsOpen()" [nbTooltip]="'CHAT.VIEW.PINNED' | translate" [attr.aria-label]="'CHAT.VIEW.PINNED' | translate" (click)="togglePins()">
+					<button
+						type="button"
+						class="icon-button"
+						data-test="pins"
+						[class.on]="pinsOpen()"
+						[nbTooltip]="'CHAT.VIEW.PINNED' | translate"
+						[attr.aria-label]="'CHAT.VIEW.PINNED' | translate"
+						[attr.aria-expanded]="pinsOpen()"
+						(click)="$event.stopPropagation(); togglePins()"
+					>
 						<nb-icon icon="pin-outline"></nb-icon>
 					</button>
-					<button nbButton ghost size="tiny" type="button" data-test="files" [class.active]="filesOpen()" [nbTooltip]="'CHAT.FILES.TITLE' | translate" [attr.aria-label]="'CHAT.FILES.TITLE' | translate" (click)="filesOpen.set(!filesOpen())">
+					<button
+						type="button"
+						class="icon-button"
+						data-test="files"
+						[class.on]="filesOpen()"
+						[nbTooltip]="'CHAT.FILES.TITLE' | translate"
+						[attr.aria-label]="'CHAT.FILES.TITLE' | translate"
+						[attr.aria-expanded]="filesOpen()"
+						(click)="filesOpen.set(!filesOpen())"
+					>
 						<nb-icon icon="attach-2-outline"></nb-icon>
 					</button>
-					@if (!isMember()) {
-						<button nbButton status="primary" size="tiny" type="button" data-test="join" (click)="join()">{{ 'CHAT.VIEW.JOIN' | translate }}</button>
-					} @else if (canLeave()) {
-						<button nbButton ghost size="tiny" type="button" data-test="leave" (click)="leave()">{{ 'CHAT.VIEW.LEAVE' | translate }}</button>
-					}
 					@if (isMember()) {
-						<button nbButton ghost size="tiny" type="button" data-test="settings" [nbTooltip]="'CHAT.SETTINGS.TITLE' | translate" [attr.aria-label]="'CHAT.SETTINGS.TITLE' | translate" (click)="openSettings()">
+						<button
+							type="button"
+							class="icon-button"
+							data-test="settings"
+							[nbTooltip]="'CHAT.SETTINGS.TITLE' | translate"
+							[attr.aria-label]="'CHAT.SETTINGS.TITLE' | translate"
+							(click)="openSettings()"
+						>
 							<nb-icon icon="settings-2-outline"></nb-icon>
 						</button>
 					}
-					@if (canManage() && conversation().kind === 'channel') {
-						<button nbButton ghost size="tiny" type="button" data-test="archive" (click)="toggleArchived()">
-							{{ (conversation().archivedAt ? 'CHAT.VIEW.UNARCHIVE' : 'CHAT.VIEW.ARCHIVE') | translate }}
-						</button>
+					@if (canLeave() || (canManage() && isChannel())) {
+						<div class="menu-anchor" (click)="$event.stopPropagation()">
+							<button
+								type="button"
+								class="icon-button"
+								data-test="more"
+								[class.on]="menu() === 'more'"
+								[nbTooltip]="'CHAT.VIEW.MORE' | translate"
+								[attr.aria-label]="'CHAT.VIEW.MORE' | translate"
+								[attr.aria-expanded]="menu() === 'more'"
+								(click)="toggleMenu('more')"
+							>
+								<nb-icon icon="more-vertical-outline"></nb-icon>
+							</button>
+							@if (menu() === 'more') {
+								<div class="menu" role="menu">
+									@if (canManage() && isChannel()) {
+										<button type="button" class="menu-item" role="menuitem" data-test="archive" (click)="menu.set(null); toggleArchived()">
+											<nb-icon icon="archive-outline"></nb-icon>
+											<span>{{ (conversation().archivedAt ? 'CHAT.VIEW.UNARCHIVE' : 'CHAT.VIEW.ARCHIVE') | translate }}</span>
+										</button>
+									}
+									@if (canLeave()) {
+										<button type="button" class="menu-item danger" role="menuitem" data-test="leave" (click)="menu.set(null); leave()">
+											<nb-icon icon="log-out-outline"></nb-icon>
+											<span>{{ 'CHAT.VIEW.LEAVE' | translate }}</span>
+										</button>
+									}
+								</div>
+							}
+						</div>
 					}
 				</div>
 			</header>
 
 			@if (pinsOpen()) {
-				<aside class="pins" data-test="pins-panel">
-					<h6>{{ 'CHAT.VIEW.PINNED' | translate }}</h6>
-					@for (pin of pins(); track pin.id) {
-						<ngx-chat-message-item
-							[message]="pin"
-							[people]="people()"
-							[files]="files()"
-							[tasks]="tasks()"
-							[conversationNames]="conversationNames()"
-							[meEmployeeId]="meEmployeeId()"
-							[meUserId]="meUserId()"
-							[readOnly]="true"
-							[showThreadSummary]="false"
-						></ngx-chat-message-item>
-					} @empty {
-						<p class="empty">{{ 'CHAT.VIEW.NO_PINS' | translate }}</p>
-					}
+				<aside class="pins" data-test="pins-panel" (click)="$event.stopPropagation()">
+					<header class="pins-header">
+						<nb-icon icon="pin-outline"></nb-icon>
+						<h6>{{ 'CHAT.VIEW.PINNED' | translate }}</h6>
+						<button type="button" class="icon-button" [attr.aria-label]="'CHAT.VIEW.CLOSE' | translate" (click)="pinsOpen.set(false)"><nb-icon icon="close-outline"></nb-icon></button>
+					</header>
+					<div class="pins-body">
+						@for (pin of pins(); track pin.id) {
+							<ngx-chat-message-item
+								[message]="pin"
+								[people]="people()"
+								[files]="files()"
+								[tasks]="tasks()"
+								[conversationNames]="conversationNames()"
+								[meEmployeeId]="meEmployeeId()"
+								[meUserId]="meUserId()"
+								[readOnly]="true"
+								[showThreadSummary]="false"
+							></ngx-chat-message-item>
+						} @empty {
+							<p class="empty">{{ 'CHAT.VIEW.NO_PINS' | translate }}</p>
+						}
+					</div>
 				</aside>
 			}
 
@@ -151,20 +304,49 @@ const NEAR_BOTTOM_PX = 80;
 
 			<div #scroller class="messages" data-test="messages" (scroll)="onScroll()">
 				@if (hasBefore()) {
-					<button nbButton ghost size="tiny" type="button" class="older" data-test="load-older" [disabled]="loadingOlder()" (click)="loadOlder()">
+					<button type="button" class="pill older" data-test="load-older" [disabled]="loadingOlder()" (click)="loadOlder()">
 						{{ 'CHAT.VIEW.LOAD_OLDER' | translate }}
 					</button>
+				} @else if (!loading() && !error()) {
+					<div class="intro" data-test="conversation-intro">
+						<div class="intro-icon">
+							@if (isChannel()) {
+								<nb-icon [icon]="isPrivate() ? 'lock-outline' : 'hash-outline'"></nb-icon>
+							} @else if (person(); as person) {
+								<ngx-chat-person-avatar [person]="person" size="large"></ngx-chat-person-avatar>
+							} @else {
+								<nb-icon icon="people-outline"></nb-icon>
+							}
+						</div>
+						@if (isChannel()) {
+							<h3>{{ 'CHAT.VIEW.WELCOME_CHANNEL' | translate: { name: title() } }}</h3>
+							<p>{{ 'CHAT.VIEW.WELCOME_CHANNEL_TEXT' | translate: { name: title() } }}</p>
+						} @else {
+							<h3>{{ title() }}</h3>
+							<p>{{ 'CHAT.VIEW.WELCOME_DIRECT_TEXT' | translate: { name: title() } }}</p>
+						}
+						@if (conversation().topic) {
+							<p class="intro-topic">{{ conversation().topic }}</p>
+						}
+						@if (messages().length === 0) {
+							<p class="intro-empty">{{ 'CHAT.VIEW.EMPTY' | translate }}</p>
+						}
+					</div>
 				}
 				@if (loading()) {
 					<div class="loading" [nbSpinner]="true"></div>
 				} @else if (error()) {
-					<p class="empty">{{ 'CHAT.ERROR' | translate }} <button nbButton ghost size="tiny" type="button" (click)="reload()">{{ 'CHAT.RETRY' | translate }}</button></p>
-				} @else if (messages().length === 0) {
-					<p class="empty">{{ 'CHAT.VIEW.EMPTY' | translate }}</p>
+					<p class="empty">{{ 'CHAT.ERROR' | translate }} <button type="button" class="link-button" (click)="reload()">{{ 'CHAT.RETRY' | translate }}</button></p>
 				}
-				@for (message of messages(); track message.id; let index = $index) {
+				@for (row of rows(); track row.message.id) {
+					@if (row.day) {
+						<div class="day-divider" role="separator"><span>{{ row.day }}</span></div>
+					}
+					@if (row.isNew) {
+						<div class="new-divider" role="separator" data-test="new-divider"><span>{{ 'CHAT.VIEW.NEW' | translate }}</span></div>
+					}
 					<ngx-chat-message-item
-						[message]="message"
+						[message]="row.message"
 						[people]="people()"
 						[files]="files()"
 						[tasks]="tasks()"
@@ -172,35 +354,40 @@ const NEAR_BOTTOM_PX = 80;
 						[conversationNames]="conversationNames()"
 						[meEmployeeId]="meEmployeeId()"
 						[meUserId]="meUserId()"
-						[continued]="continues(index)"
+						[continued]="row.continued"
 						[canManage]="canManage()"
 						[readOnly]="readOnly()"
-						[highlighted]="message.id === highlightId()"
-						(action)="onAction(message, $event)"
+						[highlighted]="row.message.id === highlightId()"
+						(action)="onAction(row.message, $event)"
 					></ngx-chat-message-item>
 				}
 				@if (hasAfter()) {
-					<button nbButton ghost size="tiny" type="button" class="older" data-test="jump-to-latest" (click)="jumpToLatest()">
+					<button type="button" class="pill older" data-test="jump-to-latest" (click)="jumpToLatest()">
 						{{ 'CHAT.VIEW.JUMP_TO_LATEST' | translate }}
 					</button>
 				}
+				<div class="bottom-space"></div>
 			</div>
 
 			@if (newBelow()) {
-				<button nbButton status="primary" size="tiny" type="button" class="new-below" data-test="new-below" (click)="scrollToBottom(true)">
-					<nb-icon icon="arrow-downward-outline"></nb-icon> {{ 'CHAT.VIEW.NEW_MESSAGES' | translate }}
+				<button type="button" class="new-below" data-test="new-below" (click)="scrollToBottom(true)">
+					<span>{{ 'CHAT.VIEW.NEW_MESSAGES' | translate }}</span>
+					<nb-icon icon="arrow-downward-outline"></nb-icon>
 				</button>
 			}
 
 			<footer class="footer">
 				@if (conversation().archivedAt) {
-					<p class="notice">{{ 'CHAT.VIEW.ARCHIVED' | translate }}</p>
+					<p class="bar notice"><nb-icon icon="archive-outline"></nb-icon> {{ 'CHAT.VIEW.ARCHIVED' | translate }}</p>
 				} @else if (isMember()) {
 					<ngx-chat-message-composer
 						[people]="people()"
 						[conversationNames]="conversationNames()"
 						[placeholder]="'CHAT.COMPOSER.PLACEHOLDER' | translate: { name: title() }"
 						[disabled]="sending()"
+						[everyone]="isChannel()"
+						[memberIds]="memberIds()"
+						[meEmployeeId]="meEmployeeId()"
 						[editing]="editing() !== null"
 						[initialBody]="editing()?.body ?? null"
 						[draftKey]="draftKey()"
@@ -209,57 +396,102 @@ const NEAR_BOTTOM_PX = 80;
 						(submitted)="onSubmit($event)"
 						(editCancelled)="editing.set(null)"
 					></ngx-chat-message-composer>
+				} @else {
+					<div class="bar join-bar">
+						<span>{{ 'CHAT.VIEW.NOT_MEMBER' | translate: { name: title() } }}</span>
+						<button type="button" class="join" data-test="join" (click)="join()">{{ 'CHAT.VIEW.JOIN' | translate }}</button>
+					</div>
 				}
 			</footer>
 		</section>
 	`,
 	styles: [
 		`
+			:host {
+				display: block;
+				height: 100%;
+				min-height: 0;
+			}
 			.view {
 				position: relative;
 				display: flex;
 				flex-direction: column;
 				height: 100%;
 				min-height: 0;
+				background: var(--chat-bg, transparent);
 			}
 			.header {
 				display: flex;
 				align-items: center;
-				justify-content: space-between;
-				gap: 0.5rem;
-				padding: 0.5rem 0.75rem;
-				border-bottom: 1px solid rgba(127, 127, 127, 0.2);
+				gap: 0.75rem;
+				min-height: var(--chat-header-height, 3.5rem);
+				padding: 0.375rem 0.75rem 0.375rem 1.25rem;
+				border-bottom: 1px solid var(--chat-border, rgba(127, 127, 127, 0.2));
+				flex: 0 0 auto;
+			}
+			.back {
+				display: none !important;
+				margin-left: -0.5rem;
 			}
 			.heading {
 				display: flex;
-				align-items: baseline;
-				gap: 0.5rem;
+				flex-direction: column;
+				justify-content: center;
+				flex: 1 1 auto;
 				min-width: 0;
-				flex-wrap: wrap;
+			}
+			.title-line {
+				display: flex;
+				align-items: center;
+				gap: 0.375rem;
+				min-width: 0;
+			}
+			.title-icon {
+				display: inline-flex;
+				align-items: center;
+				color: var(--chat-text, inherit);
+			}
+			.title-icon nb-icon {
+				font-size: 1rem;
 			}
 			.title {
 				margin: 0;
-				font-size: 1rem;
+				overflow: hidden;
+				text-overflow: ellipsis;
+				white-space: nowrap;
+				color: var(--chat-text, inherit);
+				font-size: 0.9375rem;
+				font-weight: 800;
+				line-height: 1.5rem;
 			}
-			.topic,
-			.members {
-				font-size: 0.75rem;
-				opacity: 0.7;
-			}
-			.members {
-				padding: 0;
+			.star {
+				display: inline-flex;
+				align-items: center;
+				justify-content: center;
+				width: 1.5rem;
+				height: 1.5rem;
 				border: 0;
+				border-radius: 0.375rem;
 				background: transparent;
-				color: inherit;
+				color: var(--chat-muted, inherit);
 				cursor: pointer;
 			}
-			.members:disabled {
-				cursor: default;
+			.star nb-icon {
+				font-size: 1rem;
 			}
-			.members:not(:disabled):hover,
-			.members:not(:disabled):focus-visible {
-				text-decoration: underline;
-				opacity: 1;
+			.star:hover,
+			.star:focus-visible {
+				background: var(--chat-hover, rgba(127, 127, 127, 0.12));
+			}
+			.star.on {
+				color: #f2c744;
+			}
+			.topic {
+				overflow: hidden;
+				text-overflow: ellipsis;
+				white-space: nowrap;
+				color: var(--chat-muted, inherit);
+				font-size: 0.75rem;
 			}
 			.actions {
 				display: flex;
@@ -267,52 +499,359 @@ const NEAR_BOTTOM_PX = 80;
 				gap: 0.25rem;
 				flex: 0 0 auto;
 			}
-			.pins {
-				max-height: 40%;
-				overflow-y: auto;
-				padding: 0.5rem 0;
-				border-bottom: 1px solid rgba(127, 127, 127, 0.2);
-				background: rgba(127, 127, 127, 0.05);
-			}
-			.pins h6 {
-				margin: 0 0.75rem 0.25rem;
+			.members {
+				display: inline-flex;
+				align-items: center;
+				gap: 0.25rem;
+				height: 1.75rem;
+				margin-right: 0.25rem;
+				padding: 0 0.5rem;
+				border: 1px solid var(--chat-border, rgba(127, 127, 127, 0.25));
+				border-radius: 0.5rem;
+				background: transparent;
+				color: var(--chat-muted, inherit);
+				font: inherit;
 				font-size: 0.75rem;
+				font-weight: 700;
+				cursor: pointer;
+			}
+			.members:disabled {
+				cursor: default;
+			}
+			.members:not(:disabled):hover,
+			.members:not(:disabled):focus-visible {
+				background: var(--chat-hover, rgba(127, 127, 127, 0.12));
+				color: var(--chat-text, inherit);
+			}
+			.members nb-icon {
+				font-size: 1rem;
+			}
+			.icon-button {
+				display: inline-flex;
+				align-items: center;
+				justify-content: center;
+				width: 2rem;
+				height: 2rem;
+				border: 0;
+				border-radius: 0.5rem;
+				background: transparent;
+				color: var(--chat-muted, inherit);
+				cursor: pointer;
+				text-decoration: none;
+				transition: background-color 0.1s ease, color 0.1s ease;
+			}
+			.icon-button nb-icon {
+				font-size: 1.125rem;
+			}
+			.icon-button:hover,
+			.icon-button:focus-visible,
+			.icon-button.on {
+				background: var(--chat-hover, rgba(127, 127, 127, 0.12));
+				color: var(--chat-text, inherit);
+			}
+			.menu-anchor {
+				position: relative;
+			}
+			.menu {
+				position: absolute;
+				top: calc(100% + 0.375rem);
+				right: 0;
+				z-index: 30;
+				display: flex;
+				flex-direction: column;
+				min-width: 13rem;
+				padding: 0.375rem;
+				border: 1px solid var(--chat-border, rgba(127, 127, 127, 0.25));
+				border-radius: 0.5rem;
+				background: var(--chat-raised, #fff);
+				box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.18);
+			}
+			.menu-title {
+				margin: 0.25rem 0.5rem 0.375rem;
+				color: var(--chat-muted, inherit);
+				font-size: 0.625rem;
+				font-weight: 700;
 				text-transform: uppercase;
-				opacity: 0.7;
+				letter-spacing: 0.04em;
+			}
+			.menu-item {
+				display: flex;
+				align-items: center;
+				gap: 0.625rem;
+				padding: 0.4375rem 0.625rem;
+				border: 0;
+				border-radius: 0.375rem;
+				background: transparent;
+				color: var(--chat-text, inherit);
+				font: inherit;
+				font-size: 0.8125rem;
+				text-align: left;
+				cursor: pointer;
+			}
+			.menu-item nb-icon {
+				font-size: 1rem;
+			}
+			.menu-item span {
+				flex: 1 1 auto;
+			}
+			.menu-item:hover,
+			.menu-item:focus-visible {
+				background: var(--chat-accent, #3366ff);
+				color: var(--chat-on-accent, #fff);
+			}
+			.menu-item.danger {
+				color: var(--chat-danger, #e4493f);
+			}
+			.menu-item.danger:hover,
+			.menu-item.danger:focus-visible {
+				background: var(--chat-danger, #e4493f);
+				color: #fff;
+			}
+			.pins {
+				position: absolute;
+				top: calc(var(--chat-header-height, 3.5rem) + 0.25rem);
+				right: 0.75rem;
+				z-index: 25;
+				display: flex;
+				flex-direction: column;
+				width: min(28rem, calc(100% - 1.5rem));
+				max-height: 60%;
+				border: 1px solid var(--chat-border, rgba(127, 127, 127, 0.25));
+				border-radius: 0.5rem;
+				background: var(--chat-raised, #fff);
+				box-shadow: 0 0.75rem 2rem rgba(0, 0, 0, 0.2);
+				overflow: hidden;
+			}
+			.pins-header {
+				display: flex;
+				align-items: center;
+				gap: 0.5rem;
+				padding: 0.375rem 0.375rem 0.375rem 1rem;
+				border-bottom: 1px solid var(--chat-border, rgba(127, 127, 127, 0.2));
+			}
+			.pins-header h6 {
+				flex: 1 1 auto;
+				margin: 0;
+				font-size: 0.875rem;
+				font-weight: 800;
+			}
+			.pins-body {
+				overflow-y: auto;
+				padding-bottom: 0.5rem;
 			}
 			.messages {
+				position: relative;
 				flex: 1 1 auto;
 				min-height: 0;
 				overflow-y: auto;
-				padding: 0.5rem 0;
+				overflow-x: hidden;
+				padding-top: 0.5rem;
+				scrollbar-width: thin;
 			}
-			.older {
-				display: block;
-				margin: 0 auto 0.5rem;
+			.bottom-space {
+				height: 0.75rem;
+			}
+			.intro {
+				padding: 2rem 1.25rem 1rem;
+			}
+			.intro-icon {
+				display: inline-flex;
+				align-items: center;
+				justify-content: center;
+				width: 3.5rem;
+				height: 3.5rem;
+				margin-bottom: 0.75rem;
+				border-radius: 0.875rem;
+				background: var(--chat-accent-soft, rgba(51, 102, 255, 0.12));
+				color: var(--chat-accent, #3366ff);
+			}
+			.intro-icon nb-icon {
+				font-size: 1.75rem;
+			}
+			.intro h3 {
+				margin: 0 0 0.25rem;
+				color: var(--chat-text, inherit);
+				font-size: 1.25rem;
+				font-weight: 800;
+				letter-spacing: -0.01em;
+			}
+			.intro p {
+				margin: 0;
+				color: var(--chat-muted, inherit);
+				font-size: 0.8125rem;
+			}
+			.intro .intro-topic {
+				margin-top: 0.5rem;
+				color: var(--chat-text, inherit);
+			}
+			.intro .intro-empty {
+				margin-top: 1rem;
 			}
 			.loading {
 				min-height: 6rem;
 			}
 			.empty {
-				margin: 1rem 0.75rem;
-				font-size: 0.875rem;
-				opacity: 0.7;
+				margin: 1rem 1.25rem;
+				color: var(--chat-muted, inherit);
+				font-size: 0.8125rem;
+			}
+			.link-button {
+				border: 0;
+				background: transparent;
+				color: var(--chat-link, #1d9bd1);
+				font: inherit;
+				cursor: pointer;
+			}
+			.link-button:hover {
+				text-decoration: underline;
+			}
+			.pill {
+				display: block;
+				margin: 0.5rem auto;
+				padding: 0.25rem 0.875rem;
+				border: 1px solid var(--chat-border, rgba(127, 127, 127, 0.25));
+				border-radius: 999px;
+				background: var(--chat-raised, transparent);
+				color: var(--chat-text, inherit);
+				font: inherit;
+				font-size: 0.75rem;
+				font-weight: 600;
+				cursor: pointer;
+			}
+			.pill:hover:not(:disabled) {
+				background: var(--chat-hover, rgba(127, 127, 127, 0.12));
+			}
+			.pill:disabled {
+				opacity: 0.6;
+				cursor: default;
+			}
+			/* The day a group of messages was sent: a rule with a pill that sticks to the top while its day scrolls by. */
+			.day-divider {
+				position: sticky;
+				top: 0.25rem;
+				z-index: 2;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				margin: 1rem 0 0.25rem;
+				pointer-events: none;
+			}
+			.day-divider::before {
+				content: '';
+				position: absolute;
+				left: 0;
+				right: 0;
+				top: 50%;
+				border-top: 1px solid var(--chat-border, rgba(127, 127, 127, 0.2));
+				z-index: -1;
+			}
+			.day-divider span {
+				padding: 0.1875rem 0.875rem;
+				border: 1px solid var(--chat-border, rgba(127, 127, 127, 0.25));
+				border-radius: 999px;
+				background: var(--chat-bg, #fff);
+				color: var(--chat-text, inherit);
+				font-size: 0.6875rem;
+				font-weight: 700;
+				box-shadow: 0 0.0625rem 0.25rem rgba(0, 0, 0, 0.06);
+			}
+			/* The first unread message: a red rule labelled "New". */
+			.new-divider {
+				position: relative;
+				display: flex;
+				justify-content: flex-end;
+				margin: 0.75rem 1.25rem 0;
+				border-top: 1px solid var(--chat-danger, #e4493f);
+			}
+			.new-divider span {
+				position: absolute;
+				top: -0.5625rem;
+				right: 0;
+				padding: 0 0.375rem;
+				border-radius: 0.25rem;
+				background: var(--chat-danger, #e4493f);
+				color: #fff;
+				font-size: 0.625rem;
+				font-weight: 800;
+				line-height: 1.125rem;
+				text-transform: uppercase;
+				letter-spacing: 0.04em;
 			}
 			.new-below {
 				position: absolute;
 				left: 50%;
-				bottom: 6rem;
-				transform: translateX(-50%);
+				bottom: 8.5rem;
 				z-index: 5;
+				display: inline-flex;
+				align-items: center;
+				gap: 0.375rem;
+				padding: 0.375rem 0.875rem;
+				border: 0;
+				border-radius: 999px;
+				background: var(--chat-accent, #3366ff);
+				color: var(--chat-on-accent, #fff);
+				font: inherit;
+				font-size: 0.75rem;
+				font-weight: 700;
+				box-shadow: 0 0.375rem 1rem rgba(0, 0, 0, 0.2);
+				transform: translateX(-50%);
+				cursor: pointer;
 			}
 			.footer {
-				padding: 0.5rem 0.75rem 0.75rem;
-				border-top: 1px solid rgba(127, 127, 127, 0.2);
+				padding: 0 1.25rem 0.5rem;
+				flex: 0 0 auto;
 			}
-			.notice {
-				margin: 0;
+			.bar {
+				display: flex;
+				align-items: center;
+				gap: 0.75rem;
+				margin: 0 0 0.75rem;
+				padding: 0.875rem 1rem;
+				border: 1px solid var(--chat-border, rgba(127, 127, 127, 0.25));
+				border-radius: 0.5rem;
+				background: var(--chat-sidebar-bg, rgba(127, 127, 127, 0.05));
+				color: var(--chat-muted, inherit);
 				font-size: 0.8125rem;
-				opacity: 0.7;
+			}
+			.join-bar {
+				justify-content: space-between;
+				color: var(--chat-text, inherit);
+			}
+			.join {
+				flex: 0 0 auto;
+				height: 1.875rem;
+				padding: 0 1rem;
+				border: 0;
+				border-radius: 0.375rem;
+				background: var(--chat-send, #007a5a);
+				color: #fff;
+				font: inherit;
+				font-weight: 700;
+				cursor: pointer;
+			}
+			.join:hover {
+				filter: brightness(1.08);
+			}
+			@media (max-width: 960px) {
+				.back {
+					display: inline-flex !important;
+				}
+			}
+			@media (max-width: 600px) {
+				.header {
+					padding-left: 0.75rem;
+				}
+				.members,
+				.topic {
+					display: none;
+				}
+				.footer {
+					padding: 0 0.75rem 0.5rem;
+				}
+				.intro {
+					padding-left: 0.75rem;
+					padding-right: 0.75rem;
+				}
 			}
 		`
 	]
@@ -327,6 +866,7 @@ export class ConversationViewComponent {
 	private readonly toastr = inject(ToastrService);
 	private readonly translate = inject(TranslateService);
 	private readonly destroyRef = inject(DestroyRef);
+	private readonly locale = inject(LOCALE_ID);
 
 	readonly conversation = input.required<IChatConversationWithState>();
 	readonly people = input.required<ChatPeople>();
@@ -386,6 +926,49 @@ export class ConversationViewComponent {
 	protected readonly readOnly = computed(() => !!this.conversation().archivedAt || !this.isMember());
 	protected readonly draftKey = computed(() => `conversation:${this.conversation().id}`);
 
+	protected readonly chatLink = CHAT_LINK;
+	protected readonly isChannel = computed(() => this.conversation().kind === ChatConversationKindEnum.CHANNEL);
+	/** Who is in the conversation, for the `@` list (members first, the others marked). */
+	protected readonly memberIds = computed(() => memberEmployeeIds(this.conversation()));
+	protected readonly isPrivate = computed(() => this.conversation().visibility === ChatVisibilityEnum.PRIVATE);
+	/** The title without the channel's `#` (the header draws its own icon). */
+	protected readonly plainTitle = computed(() => (this.isChannel() ? this.title().replace(/^#/, '') : this.title()));
+	/** The person a direct conversation is with, for the header and the intro. */
+	protected readonly person = computed(() => conversationPerson(this.conversation(), this.people().byEmployee, this.meEmployeeId()));
+
+	/** The open header menu. */
+	protected readonly menu = signal<HeaderMenu>(null);
+	protected readonly notifyLevels: readonly { value: ChatNotifyLevelEnum; icon: string; labelKey: string }[] = [
+		{ value: ChatNotifyLevelEnum.ALL, icon: 'bell-outline', labelKey: 'CHAT.VIEW.NOTIFY_ALL' },
+		{ value: ChatNotifyLevelEnum.MENTIONS, icon: 'message-circle-outline', labelKey: 'CHAT.VIEW.NOTIFY_MENTIONS' },
+		{ value: ChatNotifyLevelEnum.MUTED, icon: 'bell-off-outline', labelKey: 'CHAT.VIEW.NOTIFY_MUTED' }
+	];
+	protected readonly currentNotifyLevel = computed(() => this.state()?.notifyLevel ?? ChatNotifyLevelEnum.ALL);
+	protected readonly notifyIcon = computed(() => (this.currentNotifyLevel() === ChatNotifyLevelEnum.MUTED ? 'bell-off-outline' : 'bell-outline'));
+
+	/** The message the "New" line goes above, fixed when the conversation opens (reading it does not move it). */
+	protected readonly unreadMarker = signal<string | null>(null);
+
+	/** The messages with their day dividers, the "New" line, and whether each continues the previous author's group. */
+	protected readonly rows = computed<MessageRow[]>(() => {
+		const messages = this.messages();
+		const marker = this.unreadMarker();
+		const today = new Date();
+		const yesterday = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 1);
+		return messages.map((message, index) => {
+			const previous = messages[index - 1];
+			const at = new Date(message.createdAt as Date);
+			const newDay = !previous || !isSameDay(previous.createdAt as Date, at);
+			const isNew = !!marker && String(message.id) === marker;
+			return {
+				message,
+				day: newDay ? this.dayLabel(at, today, yesterday) : null,
+				isNew,
+				continued: !newDay && !isNew && continuesGroup(previous, message)
+			};
+		});
+	});
+
 	private poll: Subscription | null = null;
 	private loadedId: string | null = null;
 	/** Counts the visits of this view (every conversation switch): a send belongs to the visit it was made in. */
@@ -408,6 +991,7 @@ export class ConversationViewComponent {
 					this.stopPolling();
 					this.editing.set(null);
 					this.pinsOpen.set(false);
+					this.menu.set(null);
 					this.filesOpen.set(false);
 					this.newBelow.set(false);
 					this.loadingOlder.set(false);
@@ -448,6 +1032,8 @@ export class ConversationViewComponent {
 		this.error.set(false);
 		this.messages.set([]);
 		this.hasAfter.set(false);
+		this.unreadMarker.set(null);
+		const stateWhenOpened = this.state();
 		const highlight = this.highlightId();
 		this.api
 			.messages(id, highlight ? { around: highlight } : {})
@@ -456,6 +1042,7 @@ export class ConversationViewComponent {
 				next: (page) => {
 					if (!this.isCurrent(id)) return;
 					this.messages.set(mergeMessages([], page.messages));
+					this.unreadMarker.set(highlight ? null : unreadMarkerId(this.messages(), stateWhenOpened));
 					this.hasBefore.set(page.hasBefore);
 					this.hasAfter.set(page.hasAfter);
 					this.loading.set(false);
@@ -661,6 +1248,31 @@ export class ConversationViewComponent {
 		else this.scrollToBottom(false);
 	}
 
+	/** "Today", "Yesterday", or the date (with the year when it is not this year's). */
+	private dayLabel(at: Date, today: Date, yesterday: Date): string {
+		if (isSameDay(at, today)) return this.translate.instant('CHAT.VIEW.TODAY');
+		if (isSameDay(at, yesterday)) return this.translate.instant('CHAT.VIEW.YESTERDAY');
+		return formatDate(at, at.getFullYear() === today.getFullYear() ? 'EEEE, MMMM d' : 'EEEE, MMMM d, y', this.locale);
+	}
+
+	// ---------------------------------------------------------------- header menus
+
+	protected toggleMenu(menu: Exclude<HeaderMenu, null>): void {
+		this.pinsOpen.set(false);
+		this.menu.set(this.menu() === menu ? null : menu);
+	}
+
+	/** A click elsewhere closes the open menu and the pins panel (their own clicks do not reach here). */
+	protected onDocumentClick(): void {
+		if (this.menu()) this.menu.set(null);
+		if (this.pinsOpen()) this.pinsOpen.set(false);
+	}
+
+	protected onEscape(): void {
+		this.menu.set(null);
+		this.pinsOpen.set(false);
+	}
+
 	protected continues(index: number): boolean {
 		const list = this.messages();
 		return continuesGroup(list[index - 1], list[index]);
@@ -786,6 +1398,7 @@ export class ConversationViewComponent {
 	}
 
 	protected togglePins(): void {
+		this.menu.set(null);
 		const open = !this.pinsOpen();
 		this.pinsOpen.set(open);
 		if (open) this.loadPins();
@@ -847,6 +1460,8 @@ export class ConversationViewComponent {
 					this.api.notifyChanged();
 					if (this.isCurrent(id)) {
 						this.messages.set(mergeMessages(this.messages(), [result.message]));
+						// Writing means everything above was read: the "New" line goes, as in chat apps.
+						this.unreadMarker.set(null);
 						queueMicrotask(() => this.scrollToBottom(true));
 					}
 					if (visit !== this.visit) {

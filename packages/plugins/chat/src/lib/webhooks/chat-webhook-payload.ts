@@ -145,6 +145,7 @@ export function normalizeWebhookPayload(payload: Record<string, unknown>, option
 	if (blocks.length > CHAT_WEBHOOK_MAX_BLOCKS) {
 		throw new ChatWebhookPayloadError('too_many_blocks', `A post carries at most ${CHAT_WEBHOOK_MAX_BLOCKS} blocks.`);
 	}
+	identifyActionBlocks(blocks);
 	assertUniqueActions(blocks);
 
 	const text = typeof payload['text'] === 'string' ? bodyText(payload['text'], options.canBroadcast) : '';
@@ -290,7 +291,7 @@ function normalizeBlock(block: unknown): IChatAppBlock[] {
 			const out: IChatAppBlock[] = [];
 			if (text || fields.length) out.push({ type: ChatAppBlockTypeEnum.SECTION, text, fields: fields.length ? fields : null });
 			const accessory = block['accessory'];
-			const button = isRecord(accessory) ? buttonOf(accessory, `${blockIdOf(block) ?? 'section'}-accessory`) : null;
+			const button = isRecord(accessory) ? buttonOf(accessory, '_accessory') : null;
 			if (button) out.push({ type: ChatAppBlockTypeEnum.ACTIONS, blockId: blockIdOf(block), elements: [button] });
 			return out;
 		}
@@ -307,7 +308,7 @@ function normalizeBlock(block: unknown): IChatAppBlock[] {
 			const raw = Array.isArray(block['elements']) ? (block['elements'] as unknown[]) : [];
 			const blockId = blockIdOf(block);
 			const buttons = raw
-				.map((element, index) => (isRecord(element) ? buttonOf(element, `${blockId ?? 'actions'}-${index}`) : null))
+				.map((element, index) => (isRecord(element) ? buttonOf(element, `_action-${index}`) : null))
 				.filter((button): button is IChatAppButton => !!button);
 			if (buttons.length > CHAT_WEBHOOK_MAX_BUTTONS) {
 				throw new ChatWebhookPayloadError('invalid_blocks', `An actions block carries at most ${CHAT_WEBHOOK_MAX_BUTTONS} buttons.`);
@@ -349,16 +350,39 @@ function blockIdOf(block: Record<string, unknown>): string | null {
 	return typeof raw === 'string' && raw.trim() ? cut(raw.trim().replace(CONTROL, ''), CHAT_APP_TEXT_LIMITS.id) : null;
 }
 
-/** Two buttons of one actions block may not share an action id: a click could not say which one it was. */
+/** The block id an actions block without one is given: its place in the message (stable, distinct per message). */
+export function generatedBlockId(index: number): string {
+	return `_block-${index}`;
+}
+
+/**
+ * Gives every actions block a block id (`_block-<index>` when the payload named none), so a click names its button
+ * by (block id, action id) without doubt — two legacy attachments may well reuse one button name.
+ */
+function identifyActionBlocks(blocks: IChatAppBlock[]): void {
+	// The ids the payload named are kept, and never handed out again.
+	const taken = new Set<string>();
+	for (const block of blocks) if (block.type === ChatAppBlockTypeEnum.ACTIONS && block.blockId) taken.add(block.blockId);
+	blocks.forEach((block, index) => {
+		if (block.type !== ChatAppBlockTypeEnum.ACTIONS || block.blockId) return;
+		let id = generatedBlockId(index);
+		for (let n = 1; taken.has(id); n += 1) id = `${generatedBlockId(index)}-${n}`;
+		taken.add(id);
+		block.blockId = id;
+	});
+}
+
+/** No two buttons may share a block id and an action id: a click could not say which one it was. */
 function assertUniqueActions(blocks: readonly IChatAppBlock[]): void {
+	const ids = new Set<string>();
 	for (const block of blocks) {
 		if (block.type !== ChatAppBlockTypeEnum.ACTIONS) continue;
-		const ids = new Set<string>();
 		for (const button of block.elements) {
-			if (ids.has(button.actionId)) {
-				throw new ChatWebhookPayloadError('invalid_blocks', 'Two buttons of one actions block share an action id.');
+			const key = JSON.stringify([block.blockId ?? '', button.actionId]);
+			if (ids.has(key)) {
+				throw new ChatWebhookPayloadError('invalid_blocks', 'Two buttons share a block id and an action id.');
 			}
-			ids.add(button.actionId);
+			ids.add(key);
 		}
 	}
 }
@@ -394,7 +418,7 @@ function attachmentBlocks(attachment: Record<string, unknown>): IChatAppBlock[] 
 	if (text || fields.length) out.push({ type: ChatAppBlockTypeEnum.SECTION, text, fields: fields.length ? fields : null });
 	const actions = Array.isArray(attachment['actions']) ? (attachment['actions'] as unknown[]) : [];
 	const buttons = actions
-		.map((action, index) => (isRecord(action) ? buttonOf(action, `attachment-${index}`) : null))
+		.map((action, index) => (isRecord(action) ? buttonOf(action, `_action-${index}`) : null))
 		.filter((button): button is IChatAppButton => !!button);
 	if (buttons.length > CHAT_WEBHOOK_MAX_BUTTONS) {
 		throw new ChatWebhookPayloadError('invalid_blocks', `An attachment carries at most ${CHAT_WEBHOOK_MAX_BUTTONS} buttons.`);
@@ -418,15 +442,19 @@ export function blocksText(blocks: readonly IChatAppBlock[]): string {
 	return lines.join('\n').trim();
 }
 
-/** The stored button a click names: by action id, and by block id when given. */
+/**
+ * The stored button a click names: by block id and action id; by action id alone only while it names one button (a
+ * click that could mean two buttons names none).
+ */
 export function findButton(blocks: readonly IChatAppBlock[], actionId: string, blockId?: string | null): { button: IChatAppButton; blockId: string | null } | null {
+	const found: Array<{ button: IChatAppButton; blockId: string | null }> = [];
 	for (const block of blocks) {
 		if (block.type !== ChatAppBlockTypeEnum.ACTIONS) continue;
 		if (blockId && block.blockId !== blockId) continue;
 		const button = block.elements.find((element) => element.actionId === actionId);
-		if (button) return { button, blockId: block.blockId ?? null };
+		if (button) found.push({ button, blockId: block.blockId ?? null });
 	}
-	return null;
+	return found.length === 1 ? found[0] : null;
 }
 
 /** The blocks stored on a message (JSON text), or none. */

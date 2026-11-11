@@ -6,10 +6,10 @@ import { ChatConversation } from '../entities/chat-conversation.entity';
 import { ChatMember } from '../entities/chat-member.entity';
 import { ChatMessage } from '../entities/chat-message.entity';
 import { ChatWebhook } from '../entities/chat-webhook.entity';
+import { ChatWebhookInteraction } from '../entities/chat-webhook-interaction.entity';
 import { ChatRealtime } from '../realtime/chat-realtime';
 import { inWriteTransaction } from '../realtime/chat-write-transaction';
 import { ChatAccessService } from '../services/chat-access.service';
-import { ChatNotifierService } from '../services/chat-notifier.service';
 import { IChatWebhookContent } from './chat-webhook-payload';
 
 /** What a post wrote. */
@@ -32,8 +32,7 @@ export class ChatAppMessageWriter {
 	constructor(
 		private readonly dataSource: DataSource,
 		private readonly access: ChatAccessService,
-		private readonly realtime: ChatRealtime,
-		private readonly notifier: ChatNotifierService
+		private readonly realtime: ChatRealtime
 	) {}
 
 	async post(webhook: ChatWebhook, conversation: ChatConversation, content: IChatWebhookContent): Promise<IChatAppPost> {
@@ -95,8 +94,9 @@ export class ChatAppMessageWriter {
 			return { message: existing, duplicate: true, events: [] };
 		}
 
-		// After the commit, best effort, as a send does: the mentions, and every member's own counters.
-		this.notifier.notifyMentions(message, conversation, mentioned);
+		// After the commit, best effort, as a send does: every member's own counters. The mentions count (badges) as a
+		// member's do; no inbox notification is filed for them: the platform's mention and notification writes take the
+		// author and the tenant from a signed-in user, and a webhook post has none (plan §12).
 		for (const member of members) {
 			await this.realtime.publish(
 				this.realtime.memberStateFact({
@@ -109,22 +109,39 @@ export class ChatAppMessageWriter {
 	}
 
 	/**
-	 * Replaces the content of an app message with the sender's reply to an interaction: body and blocks, marked
-	 * edited. Its mentions stay those of the post (a reply does not notify anyone again). Answers the facts it caused.
+	 * Replaces the content of an app message with the sender's reply to an interaction — body and blocks, marked edited
+	 * — at most once per interaction: the interaction's `replyAppliedAt` is claimed (a compare-and-set), the message
+	 * written and its `chat_message.updated` fact appended in one transaction, so the marker is set only when the
+	 * message really changed. Null when nothing changed: the message is gone, its conversation archived meanwhile, or
+	 * the reply of this interaction was applied already. Its mentions stay those of the post (no one is told again).
 	 */
-	async replace(message: ChatMessage, content: IChatWebhookContent): Promise<{ message: ChatMessage; events: IChatEvent[] }> {
-		const members = await this.access.members(message.tenantId as ID, message.conversationId);
+	async replaceOnce(messageId: ID, interactionId: ID, content: IChatWebhookContent): Promise<{ message: ChatMessage; events: IChatEvent[] } | null> {
 		const editedAt = new Date();
-		const events = await inWriteTransaction(this.dataSource, async (manager) => {
-			await manager
-				.getRepository(ChatMessage)
-				.update({ id: message.id as ID, deletedAt: IsNull() }, { body: content.body, blocks: content.blocks.length ? JSON.stringify(content.blocks) : null, editedAt } as never);
-			return [await this.realtime.append(manager, this.realtime.messageFact(CHAT_EVENT_NAMES.MESSAGE_UPDATED, message, members.map((m) => m.userId)))];
+		const blocks = content.blocks.length ? JSON.stringify(content.blocks) : null;
+		const nothingChanged = new Error('nothing changed');
+		const replaced = inWriteTransaction(this.dataSource, async (manager) => {
+			const message = await manager.getRepository(ChatMessage).findOne({ where: { id: messageId } });
+			if (!message) return null;
+			const conversation = await manager.getRepository(ChatConversation).findOne({ select: { id: true, archivedAt: true }, where: { id: message.conversationId } });
+			if (!conversation || conversation.archivedAt) return null;
+			const claim = await manager
+				.getRepository(ChatWebhookInteraction)
+				.update({ id: interactionId, replyAppliedAt: IsNull() }, { replyAppliedAt: editedAt } as never);
+			if (!(claim.affected ?? 0)) return null;
+			const written = await manager.getRepository(ChatMessage).update({ id: message.id as ID, deletedAt: IsNull() }, { body: content.body, blocks, editedAt } as never);
+			// Deleted meanwhile: the claim rolls back with the transaction, and nobody is told.
+			if (!(written.affected ?? 0)) throw nothingChanged;
+			const members = await this.access.members(message.tenantId as ID, message.conversationId, manager);
+			const events = [await this.realtime.append(manager, this.realtime.messageFact(CHAT_EVENT_NAMES.MESSAGE_UPDATED, message, members.map((m) => m.userId)))];
+			message.body = content.body;
+			message.blocks = blocks;
+			message.editedAt = editedAt;
+			return { message, events };
 		});
-		message.body = content.body;
-		message.blocks = content.blocks.length ? JSON.stringify(content.blocks) : null;
-		message.editedAt = editedAt;
-		return { message, events };
+		return replaced.catch((error) => {
+			if (error === nothingChanged) return null;
+			throw error;
+		});
 	}
 
 	private postedWithNonce(webhook: ChatWebhook, nonce: string): Promise<ChatMessage | null> {

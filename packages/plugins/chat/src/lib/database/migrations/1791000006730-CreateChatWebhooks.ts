@@ -7,11 +7,11 @@ import {
 	dialectOf,
 	dropIndexIfExists,
 	dropTableIfExists,
+	isColumnRaceRefusal,
 	lockMigrations,
 	q,
 	TableSpec
 } from '../migration-helpers';
-import { isColumnRaceRefusal } from './1791000006400-AddChatMessageAssistedBy';
 
 /** The webhook tables, in dependency order (a webhook before its interactions). */
 export const CHAT_WEBHOOK_TABLES: TableSpec[] = [

@@ -177,10 +177,55 @@ describe('chat webhook payloads', () => {
 				{ type: ChatAppBlockTypeEnum.CONTEXT, elements: ['ci'] },
 				{ type: ChatAppBlockTypeEnum.HEADER, text: 'Deploy 412 (https://ci.example.com/412)' },
 				{ type: ChatAppBlockTypeEnum.SECTION, text: 'All checks passed', fields: ['Env\nprod'] },
-				{ type: ChatAppBlockTypeEnum.ACTIONS, blockId: null, elements: [{ actionId: 'rollback', text: 'Roll back', value: '412', url: null, style: null }] },
+				{ type: ChatAppBlockTypeEnum.ACTIONS, blockId: '_block-4', elements: [{ actionId: 'rollback', text: 'Roll back', value: '412', url: null, style: null }] },
 				{ type: ChatAppBlockTypeEnum.CONTEXT, elements: ['ci bot'] }
 			]);
 			expect(content.body.startsWith('New deploy')).toBe(true);
+		});
+
+		it('tells apart two attachments whose buttons share a name: each actions block gets its own id', () => {
+			const content = normalizeWebhookPayload(
+				{
+					text: 'Two deploys',
+					attachments: [
+						{ text: 'api', actions: [{ type: 'button', name: 'rollback', text: 'Roll back', value: 'api' }] },
+						{ text: 'web', actions: [{ type: 'button', name: 'rollback', text: 'Roll back', value: 'web' }] }
+					]
+				},
+				{ canBroadcast: false }
+			);
+			const ids = content.blocks.filter((block) => block.type === ChatAppBlockTypeEnum.ACTIONS).map((block) => (block as { blockId: string }).blockId);
+			expect(ids).toEqual(['_block-1', '_block-3']);
+			expect(findButton(content.blocks, 'rollback', '_block-3')?.button.value).toBe('web');
+			// Without its block the click could mean either button: it names none.
+			expect(findButton(content.blocks, 'rollback')).toBeNull();
+		});
+
+		it('never hands out a block id the payload named, and keeps generated action ids short', () => {
+			const content = normalizeWebhookPayload(
+				{
+					text: 'x',
+					blocks: [
+						{ type: 'actions', block_id: '_block-1', elements: [{ type: 'button', action_id: 'go', text: 'One' }] },
+						{ type: 'actions', elements: [{ type: 'button', action_id: 'go', text: 'Two' }, { type: 'button', text: 'Three' }] },
+						{ type: 'actions', block_id: 'b'.repeat(255), elements: [{ type: 'button', text: 'Four' }] }
+					]
+				},
+				{ canBroadcast: false }
+			);
+			const actions = content.blocks as Array<{ blockId: string; elements: Array<{ actionId: string }> }>;
+			expect(actions.map((block) => block.blockId)).toEqual(['_block-1', '_block-1-1', 'b'.repeat(255)]);
+			expect(actions[1].elements.map((button) => button.actionId)).toEqual(['go', '_action-1']);
+			expect(actions[2].elements[0].actionId).toBe('_action-0');
+			expect(findButton(content.blocks, 'go', '_block-1-1')?.button.text).toBe('Two');
+		});
+
+		it('tells apart ids that a delimiter would run together', () => {
+			const blocks = [
+				{ type: 'actions', block_id: 'a::b', elements: [{ type: 'button', action_id: 'c', text: 'One' }] },
+				{ type: 'actions', block_id: 'a', elements: [{ type: 'button', action_id: 'b::c', text: 'Two' }] }
+			];
+			expect(codeOf(() => normalizeWebhookPayload({ text: 'x', blocks }, { canBroadcast: false }))).toBeNull();
 		});
 
 		it('falls back to the attachment fallback for the body when nothing else has text', () => {

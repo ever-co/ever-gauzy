@@ -36,7 +36,8 @@ export class ChatWebhookReceiveController {
 		@Req() request: RawBodyRequest,
 		@Res() response: Response
 	): Promise<void> {
-		const rawLength = request.rawBody?.length ?? Buffer.byteLength(JSON.stringify(body ?? null) ?? '');
+		// The bytes as received (the platform keeps them for signature checks); without them, what the sender declared.
+		const rawLength = request.rawBody?.length ?? (Number(request.headers['content-length']) || 0);
 		const receipt = await this.webhooks.receive(token, body, rawLength, idempotencyKey ?? null);
 		response.setHeader('Cache-Control', 'no-store');
 		if (receipt.status === 429) response.setHeader('Retry-After', String(receipt.retryAfterSeconds));

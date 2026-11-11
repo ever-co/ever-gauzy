@@ -33,6 +33,8 @@ export function signedCallback(secret: string, interactionId: string, attempt: n
 		body,
 		headers: {
 			'Content-Type': 'application/json; charset=utf-8',
+			// An uncompressed reply: a reply that breaks off is then always seen as incomplete (`response.complete`).
+			'Accept-Encoding': 'identity',
 			'User-Agent': CHAT_INTERACTION_USER_AGENT,
 			[WebhookHeader.SIGNATURE]: signature.header,
 			[WebhookHeader.ATTEMPT]: String(attempt),
@@ -96,7 +98,18 @@ export class ChatInteractionTransport {
 			});
 			const status = response.statusCode ?? 0;
 			if (status >= 200 && status < 300) {
-				const reply = await readLimitedBody(response, { maxBytes: CHAT_INTERACTION_REPLY_MAX_BYTES, signal }).catch(() => Buffer.alloc(0));
+				// The reply is part of the answer: a read that fails or breaks off (the deadline, a dropped connection) is
+				// retried, so the receiver can answer again under the same interaction id. A reply over the cap is read to
+				// the cap and then refused as a reply (not JSON), not retried.
+				let reply: Buffer;
+				try {
+					reply = await readLimitedBody(response, { maxBytes: CHAT_INTERACTION_REPLY_MAX_BYTES, signal });
+				} catch {
+					return { outcome: 'retry', status, error: signal.aborted ? 'timeout' : 'reply_unreadable' };
+				}
+				if (!response.complete && reply.length < CHAT_INTERACTION_REPLY_MAX_BYTES) {
+					return { outcome: 'retry', status, error: signal.aborted ? 'timeout' : 'reply_unreadable' };
+				}
 				const contentType = response.headers['content-type'];
 				return { outcome: 'delivered', status, body: reply, contentType: typeof contentType === 'string' ? contentType : null };
 			}

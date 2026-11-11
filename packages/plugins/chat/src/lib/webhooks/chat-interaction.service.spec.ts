@@ -54,6 +54,8 @@ interface ISetup {
 	webhook?: Record<string, unknown> | null;
 	attempts?: ChatInteractionAttempt[];
 	notMember?: boolean;
+	/** A `CHAT_MANAGE` holder reading a channel they are not in: the access rule answers no membership. */
+	noMembership?: boolean;
 }
 
 function setup(options: ISetup = {}) {
@@ -69,7 +71,7 @@ function setup(options: ISetup = {}) {
 			: { id: 'w1', tenantId: 'ten', name: 'Monitor', interactionUrl: 'https://hooks.example.com/interact', signingSecret: box.seal('signing-secret', 'w1'), canBroadcast: false, revokedAt: null, ...options.webhook };
 	const interactions: Record<string, unknown>[] = [];
 	const interactionUpdates: Array<{ where: Record<string, unknown>; patch: Record<string, unknown> }> = [];
-	let replyApplied = false;
+	const applied = new Set<string>();
 	const repositories = {
 		ChatMessage: { findOne: jest.fn(async () => (message ? { ...message } : null)) },
 		ChatWebhook: { findOne: jest.fn(async () => (webhook ? { ...webhook } : null)), increment: jest.fn(async () => ({ affected: 1 })) },
@@ -77,17 +79,12 @@ function setup(options: ISetup = {}) {
 		ChatWebhookInteraction: {
 			create: jest.fn((row: Record<string, unknown>) => row),
 			save: jest.fn(async (row: Record<string, unknown>) => {
-				const saved = { ...row, id: 'i-1', createdAt: new Date('2026-11-11T10:00:00Z') };
+				const saved = { ...row, id: `i-${interactions.length + 1}`, createdAt: new Date('2026-11-11T10:00:00Z') };
 				interactions.push(saved);
 				return saved;
 			}),
 			update: jest.fn(async (where: Record<string, unknown>, patch: Record<string, unknown>) => {
 				interactionUpdates.push({ where, patch });
-				// The compare-and-set of the reply: only the first claim matches.
-				if ('replyAppliedAt' in where) {
-					if (replyApplied) return { affected: 0 };
-					replyApplied = true;
-				}
 				return { affected: 1 };
 			}),
 			findOne: jest.fn(async () => interactions[0] ?? null)
@@ -99,13 +96,18 @@ function setup(options: ISetup = {}) {
 	const access = {
 		requireMember: jest.fn(async () => {
 			if (options.notMember) throw new NotFoundException('The requested record was not found');
-			return { conversation: { id: 'c1', name: 'alerts', archivedAt: null }, member: { id: 'mb1' } };
+			return { conversation: { id: 'c1', name: 'alerts', archivedAt: null }, member: options.noMembership ? null : { id: 'mb1' } };
 		})
 	} as unknown as ChatAccessService;
 	const messages = { withRelations: jest.fn(async (_caller: unknown, rows: unknown[]) => rows) } as unknown as ChatMessageService;
+	// The writer's claim of replyAppliedAt: one reply per interaction id.
 	const writer = {
-		replace: jest.fn(async (row: Record<string, unknown>, content: { body: string }) => ({ message: { ...row, body: content.body }, events: [{ name: 'chat_message.updated', data: {} }] }))
-	} as unknown as ChatAppMessageWriter & { replace: jest.Mock };
+		replaceOnce: jest.fn(async (_messageId: string, interactionId: string, content: { body: string }) => {
+			if (applied.has(interactionId)) return null;
+			applied.add(interactionId);
+			return { message: { ...message, body: content.body, editedAt: new Date() }, events: [{ name: 'chat_message.updated', data: {} }] };
+		})
+	} as unknown as ChatAppMessageWriter & { replaceOnce: jest.Mock };
 	const queue = [...(options.attempts ?? [{ outcome: 'delivered', status: 200, body: Buffer.from(''), contentType: 'application/json' }])];
 	const sent: Array<{ url: string; headers: Record<string, string>; body: string }> = [];
 	const transport = {
@@ -178,8 +180,8 @@ describe('ChatInteractionService', () => {
 		const reply = Buffer.from(JSON.stringify({ text: 'Acknowledged by Ana', blocks: [{ type: 'context', elements: [{ type: 'plain_text', text: 'by Ana' }] }] }));
 		const { service, writer } = setup({ attempts: [{ outcome: 'delivered', status: 200, body: reply, contentType: 'application/json' }] });
 		const result = await service.interact(member, 'm1', { actionId: 'ack' });
-		expect(writer.replace).toHaveBeenCalledTimes(1);
-		expect(writer.replace.mock.calls[0][1]).toEqual({ body: 'Acknowledged by Ana', blocks: [{ type: ChatAppBlockTypeEnum.CONTEXT, elements: ['by Ana'] }], nonce: null });
+		expect(writer.replaceOnce).toHaveBeenCalledTimes(1);
+		expect(writer.replaceOnce.mock.calls[0][2]).toEqual({ body: 'Acknowledged by Ana', blocks: [{ type: ChatAppBlockTypeEnum.CONTEXT, elements: ['by Ana'] }], nonce: null });
 		expect(result.interaction.replyApplied).toBe(true);
 		expect(result.message?.body).toBe('Acknowledged by Ana');
 		expect(result.events).toEqual([{ name: 'chat_message.updated', data: {} }]);
@@ -207,25 +209,47 @@ describe('ChatInteractionService', () => {
 		expect(sent).toHaveLength(1);
 	});
 
-	it('applies a reply at most once, even when a retry is answered again after a lost answer', async () => {
+	it('applies a reply at most once per interaction, and once for each separate click', async () => {
 		const reply = Buffer.from(JSON.stringify({ text: 'Done' }));
-		const { service, writer } = setup({
-			attempts: [
-				{ outcome: 'retry', status: 0, error: 'timeout' },
-				{ outcome: 'delivered', status: 200, body: reply, contentType: 'application/json' }
-			]
-		});
-		await service.interact(member, 'm1', { actionId: 'ack' });
+		const delivered: ChatInteractionAttempt = { outcome: 'delivered', status: 200, body: reply, contentType: 'application/json' };
+		// One interaction whose earlier answer was lost: the retry is answered again, and the writer's claim decides.
+		const retried = setup({ attempts: [{ outcome: 'retry', status: 0, error: 'timeout' }, delivered] });
+		await retried.service.interact(member, 'm1', { actionId: 'ack' });
 		await retriesDone();
-		expect(writer.replace).toHaveBeenCalledTimes(1);
-		// The interaction row already has its reply (an earlier attempt's answer arrived after all): the compare-and-set
-		// on replyAppliedAt misses, and the message is left alone.
-		expect(writer.replace).toHaveBeenCalledTimes(1);
-		const claims = setup({ attempts: [{ outcome: 'delivered', status: 200, body: reply, contentType: 'application/json' }, { outcome: 'delivered', status: 200, body: reply, contentType: 'application/json' }] });
-		await claims.service.interact(member, 'm1', { actionId: 'ack' });
-		const second = await claims.service.interact(member, 'm1', { actionId: 'ack' });
-		expect(claims.writer.replace).toHaveBeenCalledTimes(1);
-		expect(second.message).toBeUndefined();
+		expect(retried.writer.replaceOnce).toHaveBeenCalledTimes(1);
+		expect(retried.writer.replaceOnce.mock.calls[0][1]).toBe('i-1');
+		// Two clicks are two interactions, each with its own id, and each reply applies.
+		const clicks = setup({ attempts: [delivered, delivered] });
+		const first = await clicks.service.interact(member, 'm1', { actionId: 'ack' });
+		const second = await clicks.service.interact(member, 'm1', { actionId: 'ack' });
+		expect(first.interaction.interactionId).not.toBe(second.interaction.interactionId);
+		expect(clicks.writer.replaceOnce.mock.calls.map((call) => call[1])).toEqual([first.interaction.interactionId, second.interaction.interactionId]);
+		expect(second.interaction.replyApplied).toBe(true);
+		// The same interaction answered twice (the double's claim already taken): the message is left alone.
+		const again = await clicks.service['applyReply']({ interaction: { id: first.interaction.interactionId }, message: { id: 'm1' }, webhook: { canBroadcast: false } } as never, reply);
+		expect(again).toEqual([]);
+	});
+
+	it('keeps a click delivered when its reply cannot be written', async () => {
+		const reply = Buffer.from(JSON.stringify({ text: 'Done' }));
+		const { service, writer, interactionUpdates } = setup({ attempts: [{ outcome: 'delivered', status: 200, body: reply, contentType: 'application/json' }] });
+		writer.replaceOnce.mockRejectedValueOnce(new Error('deadlock'));
+		const result = await service.interact(member, 'm1', { actionId: 'ack' });
+		expect(result.interaction).toEqual(expect.objectContaining({ status: ChatInteractionStatusEnum.DELIVERED, error: 'reply_failed', replyApplied: false }));
+		expect(interactionUpdates[interactionUpdates.length - 1].patch).toEqual({ lastError: 'reply_failed' });
+	});
+
+	it('answers 404 to a chat manager who reads the channel without being in it', async () => {
+		await expect(setup({ noMembership: true }).service.interact(member, 'm1', { actionId: 'ack' })).rejects.toThrow(NotFoundException);
+	});
+
+	it('marks interactions a stopped process left under way as failed, only the stale ones', async () => {
+		const { service, repositories } = setup();
+		await service.onModuleInit();
+		const [where, patch] = repositories.ChatWebhookInteraction.update.mock.calls[0] as [Record<string, { _type?: string }>, Record<string, unknown>];
+		expect(patch).toEqual({ status: ChatInteractionStatusEnum.FAILED, lastError: 'process_restarted' });
+		expect(where['status']?._type).toBe('in');
+		expect(where['updatedAt']?._type).toBe('lessThan');
 	});
 
 	it('answers the state of a click to the person who clicked only', async () => {

@@ -1,5 +1,5 @@
-import { BadRequestException, ConflictException, Injectable, Logger, NotFoundException, OnModuleDestroy } from '@nestjs/common';
-import { DataSource, IsNull } from 'typeorm';
+import { BadRequestException, ConflictException, Injectable, Logger, NotFoundException, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
+import { DataSource, In, LessThan } from 'typeorm';
 import {
 	ChatInteractionStatusEnum,
 	ChatMessageKindEnum,
@@ -11,7 +11,6 @@ import {
 	IChatInteractionResult
 } from '@gauzy/contracts';
 import { RequestContext } from '@gauzy/core';
-import { ChatConversation } from '../entities/chat-conversation.entity';
 import { ChatMessage } from '../entities/chat-message.entity';
 import { ChatWebhook } from '../entities/chat-webhook.entity';
 import { ChatWebhookInteraction } from '../entities/chat-webhook-interaction.entity';
@@ -60,7 +59,7 @@ interface ICallbackContext {
  *   content replaces the message once per interaction (`replyAppliedAt`, a compare-and-set).
  */
 @Injectable()
-export class ChatInteractionService implements OnModuleDestroy {
+export class ChatInteractionService implements OnModuleInit, OnModuleDestroy {
 	private readonly logger = new Logger(ChatInteractionService.name);
 	private readonly box = new ChatWebhookSecretBox();
 	private readonly timers = new Set<NodeJS.Timeout>();
@@ -75,6 +74,24 @@ export class ChatInteractionService implements OnModuleDestroy {
 		private readonly transport: ChatInteractionTransport
 	) {}
 
+	/**
+	 * Retries run in the process that took the click (plan §12): an interaction a process left pending or retrying when
+	 * it stopped would read as under way for good. On start, the ones untouched for longer than twice the whole retry
+	 * schedule are marked failed (`process_restarted`); the recent ones may belong to another API process's retries.
+	 */
+	async onModuleInit(): Promise<void> {
+		const scheduleMs = 5_000 + this.retryDelaysMs.reduce((total, delay) => total + delay + 5_000, 0);
+		try {
+			await this.dataSource.getRepository(ChatWebhookInteraction).update(
+				{ status: In([ChatInteractionStatusEnum.PENDING, ChatInteractionStatusEnum.RETRYING]), updatedAt: LessThan(new Date(Date.now() - 2 * scheduleMs)) } as never,
+				{ status: ChatInteractionStatusEnum.FAILED, lastError: 'process_restarted' } as never
+			);
+		} catch (error) {
+			// The table may not exist yet (a host that runs the migrations after the modules start): nothing to sweep.
+			this.logger.debug(`Stale interactions were not swept: ${(error as Error)?.message}`);
+		}
+	}
+
 	onModuleDestroy(): void {
 		for (const timer of this.timers) clearTimeout(timer);
 		this.timers.clear();
@@ -84,7 +101,9 @@ export class ChatInteractionService implements OnModuleDestroy {
 		if (!isChatWebhooksEnabled()) throw new NotFoundException('The requested record was not found');
 		const message = await this.dataSource.getRepository(ChatMessage).findOne({ where: { id: messageId, tenantId: caller.tenantId } });
 		if (!message) throw new NotFoundException('The requested record was not found');
-		const { conversation } = await this.access.requireMember(message.conversationId, caller);
+		const { conversation, member } = await this.access.requireMember(message.conversationId, caller);
+		// A click is a member's: a `CHAT_MANAGE` holder who reads a channel without being in it does not act in it.
+		if (!member) throw new NotFoundException('The requested record was not found');
 		if (message.kind !== ChatMessageKindEnum.APP || !message.webhookId) throw new NotFoundException('The requested record was not found');
 		const found = findButton(blocksOf(message.blocks), String(input.actionId ?? ''), input.blockId ?? null);
 		if (!found) throw new NotFoundException('The requested record was not found');
@@ -168,7 +187,16 @@ export class ChatInteractionService implements OnModuleDestroy {
 			interaction.deliveredAt = new Date();
 			interaction.lastError = null;
 			await repository.update({ id: interaction.id as ID }, { status: interaction.status, attempts: attempt, lastStatusCode: result.status, deliveredAt: interaction.deliveredAt, lastError: null } as never);
-			return this.applyReply(context, result.body);
+			try {
+				return await this.applyReply(context, result.body);
+			} catch (error) {
+				// The app ran the action: the click is delivered whatever happens to its reply. A retried click would be a new
+				// interaction id, and the app would act twice.
+				this.logger.warn(`The reply to interaction ${interaction.id} was not applied: ${(error as Error)?.message}`);
+				interaction.lastError = 'reply_failed';
+				await repository.update({ id: interaction.id as ID }, { lastError: 'reply_failed' } as never).catch(() => undefined);
+				return [];
+			}
 		}
 		const last = attempt > this.retryDelaysMs.length;
 		const failed = result.outcome === 'refused' || last;
@@ -226,8 +254,9 @@ export class ChatInteractionService implements OnModuleDestroy {
 	}
 
 	/**
-	 * Applies the sender's reply to the message, at most once per interaction: a compare-and-set on `replyAppliedAt`
-	 * decides which attempt (of a retried callback whose earlier answer was lost) gets to apply it.
+	 * Applies the sender's reply to the message, at most once per interaction: the writer claims `replyAppliedAt` (a
+	 * compare-and-set) and changes the message in one transaction, so which attempt of a retried callback gets to apply
+	 * it is decided there, and the marker is never set for a message that did not change.
 	 */
 	private async applyReply(context: ICallbackContext, raw: Buffer): Promise<IChatEvent[]> {
 		const text = raw.toString('utf8').trim();
@@ -243,18 +272,10 @@ export class ChatInteractionService implements OnModuleDestroy {
 			return [];
 		}
 		if (!content) return [];
-		const appliedAt = new Date();
-		const claim = await this.dataSource
-			.getRepository(ChatWebhookInteraction)
-			.update({ id: context.interaction.id as ID, replyAppliedAt: IsNull() }, { replyAppliedAt: appliedAt } as never);
-		if (!(claim.affected ?? 0)) return [];
-		context.interaction.replyAppliedAt = appliedAt;
-		const fresh = await this.dataSource.getRepository(ChatMessage).findOne({ where: { id: context.message.id as ID } });
-		if (!fresh) return [];
-		const conversation = await this.dataSource.getRepository(ChatConversation).findOne({ select: { id: true, archivedAt: true }, where: { id: fresh.conversationId } });
-		if (conversation?.archivedAt) return [];
-		const { message, events } = await this.writer.replace(fresh, content);
-		context.message = message;
-		return events;
+		const replaced = await this.writer.replaceOnce(context.message.id as ID, context.interaction.id as ID, content);
+		if (!replaced) return [];
+		context.interaction.replyAppliedAt = replaced.message.editedAt ?? new Date();
+		context.message = replaced.message;
+		return replaced.events;
 	}
 }

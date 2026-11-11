@@ -185,7 +185,7 @@ describe('chat webhook security', () => {
 		let server: Server;
 		let port: number;
 		const received: Array<{ headers: IncomingMessage['headers']; body: string }> = [];
-		let answer: { status: number; body: string; headers?: Record<string, string> } = { status: 200, body: '' };
+		let answer: { status: number; body: string; headers?: Record<string, string>; breakOff?: boolean } = { status: 200, body: '' };
 
 		beforeAll(async () => {
 			server = createServer((request, response) => {
@@ -193,6 +193,13 @@ describe('chat webhook security', () => {
 				request.on('data', (chunk) => (body += chunk));
 				request.on('end', () => {
 					received.push({ headers: request.headers, body });
+					if (answer.breakOff) {
+						// The headers and half the reply, then the connection drops.
+						response.writeHead(answer.status, { 'Content-Type': 'application/json', 'Content-Length': String(answer.body.length * 2) });
+						response.write(answer.body);
+						setTimeout(() => response.socket?.destroy(), 20);
+						return;
+					}
 					response.writeHead(answer.status, { 'Content-Type': 'application/json', ...(answer.headers ?? {}) });
 					response.end(answer.body);
 				});
@@ -226,6 +233,12 @@ describe('chat webhook security', () => {
 			expect(last.body).toBe(body);
 			expect(last.headers['idempotency-key']).toBe('i-9');
 			expect(verifyWebhookSignature('secret-1', last.body, String(last.headers['x-signature']))).toBe(true);
+		});
+
+		it('retries a 2xx whose reply breaks off, so the app can answer again under the same interaction id', async () => {
+			answer = { status: 200, body: '{"text":"Acknowledged', breakOff: true };
+			const attempt = await localTransport().post(`http://hooks.example.com:${port}/x`, {}, '{}');
+			expect(attempt.outcome).toBe('retry');
 		});
 
 		it('retries a 5xx or 429, refuses a 4xx, and never follows a redirect', async () => {
