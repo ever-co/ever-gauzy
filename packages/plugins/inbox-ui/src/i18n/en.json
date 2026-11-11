@@ -197,7 +197,8 @@
 			"Message": "Message",
 			"Broadcast": "Announcement",
 			"RateChangeRequest": "Rate change request",
-			"TaskUpdate": "Task update"
+			"TaskUpdate": "Task update",
+			"TimerReminder": "Timer reminder"
 		}
 	},
 	"SETTINGS": {
