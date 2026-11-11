@@ -54,8 +54,13 @@ The UI has no switch of its own. It follows the API:
   (users with `ORG_TASK_ADD`), and shows its task cards (key, title and status
   where the reader may see the task, read through `GET /api/tasks?where[id]=…`,
   which records no visit, unlike `GET /api/tasks/:id`), its
-  files and a card for each web link (made from the link alone: nothing is
-  fetched from the linked site).
+  files and a card for each web link: the site and the path, and, once the
+  platform has a preview of the page (`GET /api/chat/link-preview`, which the
+  platform fetches; on only with `GAUZY_CHAT_LINK_PREVIEWS_ENABLED=true`), the
+  page's site name, title and description as text. Nothing is loaded from the
+  linked site by the reader's browser: not the page, not its picture, not its
+  icon. A pending preview is asked again after two seconds (three times at
+  most), and a 404 (previews off) stops the asks for the session.
 - **Files**: the paperclip, a drop on the composer or a paste attaches files
   (for users with `DOCS_CREATE`). Each is stored at once through the Docs
   plugin (`POST /api/plugins/docs/documents/upload`) as the sender's private
@@ -119,9 +124,9 @@ and asks again.
 
 ## Not yet in this plugin
 
-Link previews with the page's title, text and picture (the API has no
-`GET /chat/link-preview` yet: a preview must be fetched by the platform, never
-by the reader's browser), changing a task's status or assignee from its card
+The picture and the icon of a link preview (showing them needs the platform to
+serve them, so the reader's browser never loads them from the linked site),
+changing a task's status or assignee from its card
 (FR-14), search (`GET /chat/search` exists), presence and typing.
 
 ## Tests
@@ -130,7 +135,7 @@ by the reader's browser), changing a task's status or assignee from its card
 sorting, grouping, merging, labels), `chat-ui.plugin.spec.ts` (routes,
 nav entry and badge following the availability), `services/chat-live.spec.ts`
 (the hints, when the channel is live or falls back, reconnects, retries, the
-poll periods), `chat-emoji.spec.ts`, `chat-links.spec.ts`,
+poll periods), `chat-emoji.spec.ts`, `chat-links.spec.ts`, `chat-link-previews.service.spec.ts`, `link-cards.component.spec.ts`,
 `chat-attachments.spec.ts`, `services/chat-files.store.spec.ts` and
 `components/message-composer/message-composer.component.spec.ts` (emoji
 suggestions and replacement, uploads and what a message with files sends),
