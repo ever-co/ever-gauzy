@@ -173,12 +173,22 @@ export class FileStorage {
 
 let localProviderInstance: Provider<any> | null | undefined;
 
+/** A value with a URI scheme of its own: `hugeicons:<key>`, an icon Ever Teams draws from its library, is no file. */
+const SCHEME = /^[a-z][a-z\d+.-]*:/i;
+const FILE_SCHEME = /^(https?|data):/i;
+
 /**
  * The public URL under which the LOCAL provider serves `path` (an icon of a tag, task status, priority, size,
  * version, issue type, feature or report). Entity load hooks used to build a new `FileStorage` for every row to
  * compute it; the LOCAL provider is a stateless singleton, so it is resolved once.
+ *
+ * A URL (`http`, `https`, `data`) is returned as it is, and a value of another scheme, such as a library icon, gives
+ * no URL: building one would point clients at a file that does not exist (`/public/hugeicons:done`).
  */
-export function localFileUrl(path: string): Promise<string> {
+export function localFileUrl(path: string): Promise<string | null> {
+	if (path && SCHEME.test(path)) {
+		return Promise.resolve(FILE_SCHEME.test(path) ? path : null);
+	}
 	if (localProviderInstance === undefined) {
 		localProviderInstance = new FileStorage().setProvider(FileStorageProviderEnum.LOCAL).getProviderInstance();
 	}

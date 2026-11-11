@@ -41,6 +41,7 @@ import {
 import { RegisterUserDTO, UserEmailDTO, UserLoginDTO, UserSigninWorkspaceDTO } from './../user/dto';
 import { AuthService } from './auth.service';
 import { RegistrationPolicyService, SelfRegistrationGuard } from './auth-switches';
+import { IWorkspaceOpening } from './open-workspace';
 import {
 	AuthLoginCommand,
 	AuthRegisterCommand,
@@ -408,6 +409,34 @@ export class AuthController {
 	@UseGuards(TenantPermissionGuard)
 	async getUserWorkspaces(@Query('includeTeams') includeTeams?: string): Promise<IUserSigninWorkspaceResponse> {
 		return await this.authService.getUserWorkspaces(parseToBoolean(includeTeams));
+	}
+
+	/**
+	 * Open another workspace for the signed-in person (ever-co/ever-teams#5025), without signing them out.
+	 *
+	 * Answers the account the workspace is created with, as a workspace sign-in token for `POST /auth/signin.workspace`.
+	 * The new workspace counts as a new tenant: refused when the operator has closed tenant registration.
+	 */
+	@ApiOperation({
+		summary: 'Open another workspace',
+		description:
+			'Answers a workspace sign-in for a new account of the signed-in person, with no tenant yet: exchanged at /auth/signin.workspace, it creates the workspace (tenant, organization, team) through the sign-up routes. The caller must have confirmed their e-mail address.'
+	})
+	@ApiResponse({
+		status: HttpStatus.CREATED,
+		description: 'The e-mail address and the workspace sign-in token of the new account.'
+	})
+	@ApiResponse({
+		status: HttpStatus.FORBIDDEN,
+		description:
+			'Tenant registration is closed, the e-mail address is not confirmed, or the token is not first-party.'
+	})
+	@Post('/workspaces')
+	@UseGuards(TenantPermissionGuard)
+	@Throttle({ default: { limit: 5, ttl: 60000 } })
+	async openWorkspace(): Promise<IWorkspaceOpening> {
+		await this.registrationPolicyService.assertTenantRegistrationOpen();
+		return await this.authService.openWorkspace();
 	}
 
 	/**
