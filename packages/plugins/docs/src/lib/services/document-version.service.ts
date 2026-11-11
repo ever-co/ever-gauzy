@@ -1,4 +1,4 @@
-import { ConflictException, HttpException, HttpStatus, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { ConflictException, HttpException, HttpStatus, Injectable, Logger, NotFoundException, Optional } from '@nestjs/common';
 import { IsNull, MoreThan } from 'typeorm';
 import { DocumentKindEnum, ID, IPagination } from '@gauzy/contracts';
 import { BaseQueryDTO, RequestContext, TenantAwareCrudService } from '@gauzy/core';
@@ -9,7 +9,9 @@ import { DocumentVersion } from '../entities/document-version.entity';
 import { MikroOrmDocumentVersionRepository } from '../repositories/mikro-orm-document-version.repository';
 import { TypeOrmDocumentRepository } from '../repositories/type-orm-document.repository';
 import { TypeOrmDocumentVersionRepository } from '../repositories/type-orm-document-version.repository';
+import { decodeLiveState } from '../live/document-live.yjs';
 import { claimNextContentRevision } from './document.service';
+import { DocumentLiveBridge } from './document-live.bridge';
 
 @Injectable()
 export class DocumentVersionService extends TenantAwareCrudService<DocumentVersion> {
@@ -18,7 +20,9 @@ export class DocumentVersionService extends TenantAwareCrudService<DocumentVersi
 	constructor(
 		public readonly typeOrmDocumentVersionRepository: TypeOrmDocumentVersionRepository,
 		public readonly mikroOrmDocumentVersionRepository: MikroOrmDocumentVersionRepository,
-		private readonly typeOrmDocumentRepository: TypeOrmDocumentRepository
+		private readonly typeOrmDocumentRepository: TypeOrmDocumentRepository,
+		// Live editing sessions (`GAUZY_DOCS_LIVE_ENABLED=true`); optional so a hand-built service in a spec needs none.
+		@Optional() private readonly liveBridge?: DocumentLiveBridge
 	) {
 		super(typeOrmDocumentVersionRepository, mikroOrmDocumentVersionRepository);
 	}
@@ -169,17 +173,38 @@ export class DocumentVersionService extends TenantAwareCrudService<DocumentVersi
 		// Snapshot the current content first — restore never destroys history
 		await this.captureSnapshotIfNeeded(document, { force: true });
 
+		// The page as it was, for the live sessions, which apply the restore to the page's live document.
+		const previous = { ...document } as Document;
+		// While the page has a live state, the live sessions keep it and apply the restored content to it: the
+		// version's own binary is another lineage (or an editor's seed), and would fork the page open editors hold.
+		const keepsLiveState = this.liveBridge?.enabled === true && holdsLiveStateAt(document);
+
 		// Copy the target snapshot onto the document (entity save so subscribers run — SQLite JSON)
 		document.name = version.name;
 		document.contentJson = version.contentJson ?? null;
 		document.contentHtml = version.contentHtml ?? null;
-		document.contentBinary = version.contentBinary ?? null;
+		if (!keepsLiveState) {
+			document.contentBinary = version.contentBinary ?? null;
+		}
 		// A restore is a content change like any other for the writers that hold a revision: the revision is claimed in
 		// one guarded write, so a save landing at the same moment gets the 409 instead of sharing the number.
 		document.contentRevision = await claimNextContentRevision(this.typeOrmDocumentRepository, document);
 		const restored = await this.typeOrmDocumentRepository.save(document);
+		// Open editors see the restored content at once.
+		await this.liveBridge?.contentWritten(previous, restored);
 
 		this.logger.log(`Restored document ${document.id} to version ${versionId}`);
 		return restored;
 	}
+}
+
+/**
+ * Whether a page's stored `contentBinary` is its live state for the revision it is at.
+ *
+ * @param document The page.
+ */
+function holdsLiveStateAt(document: Pick<Document, 'contentBinary' | 'contentRevision'>): boolean {
+	const state = decodeLiveState(document.contentBinary as Buffer | null);
+	state?.doc.destroy();
+	return !!state && state.meta.revision === (Number(document.contentRevision) || 1);
 }

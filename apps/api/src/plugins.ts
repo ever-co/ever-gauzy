@@ -20,7 +20,7 @@ import { AiProviderLocalAiPlugin } from '@gauzy/plugin-ai-provider-localai';
 import { AiProviderWhisperCppPlugin } from '@gauzy/plugin-ai-provider-whisper-cpp';
 import { AiProviderOpenAiCompatiblePlugin } from '@gauzy/plugin-ai-provider-openai-compatible';
 import { ChangelogPlugin } from '@gauzy/plugin-changelog';
-import { DocsPlugin } from '@gauzy/plugin-docs';
+import { DocsLivePlugin, DocsPlugin, isDocsLiveEnabled } from '@gauzy/plugin-docs';
 import { EverConnectPlugin, isEverConnectEnabled } from '@gauzy/plugin-ever-connect';
 import { EverStatsPlugin, isEverStatsEnabled } from '@gauzy/plugin-ever-stats';
 import { IntegrationAIPlugin } from '@gauzy/plugin-integration-ai';
@@ -232,6 +232,10 @@ export const plugins = [
 	AiProviderElevenLabsPlugin,
 	// Documents hub plugin — registered after the AI chat/provider plugins so the provider registry is populated first.
 	DocsPlugin,
+	// Live co-editing of Docs pages (per-page Yjs sessions over the GraphQL subscription channel, the edits saved back
+	// to the page's content). Off unless GAUZY_DOCS_LIVE_ENABLED=true; when off it is not loaded at all (no route, no
+	// GraphQL field) and the editor keeps its single-writer autosave. Listed after DocsPlugin, whose services it uses.
+	...(isDocsLiveEnabled(process.env) ? [DocsLivePlugin] : []),
 	// Indicates the inclusion or intention to use the ChangelogPlugin in the codebase.
 	ChangelogPlugin,
 	// Indicates the inclusion or intention to use the IntegrationActivepiecesPlugin in the codebase.
