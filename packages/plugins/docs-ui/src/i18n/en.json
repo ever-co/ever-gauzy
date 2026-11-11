@@ -42,7 +42,8 @@
 		"ORGANIZATION": "Organization",
 		"PRIVATE": "Private",
 		"LABEL": "Visibility",
-		"HINT": "Private documents are visible to you, admins and people you share them with"
+		"HINT": "Private documents are visible to you, admins and people you share them with",
+		"TEAM": "Team"
 	},
 	"REVIEW": {
 		"NONE": "Not reviewed",
@@ -502,6 +503,17 @@
 		},
 		"EMBED": {
 			"OPEN": "Open link"
+		},
+		"LIVE": {
+			"ON": "Live",
+			"CONNECTING": "Connecting to the live session…",
+			"OFF": "Not live: changes save automatically",
+			"EDITING": "{{ count }} editing",
+			"READ_ONLY": "Read-only",
+			"READ_ONLY_NO_ACCESS": "Read-only: you can view this page",
+			"READ_ONLY_LOCKED": "Read-only: the page is locked",
+			"READ_ONLY_FULL": "Read-only: the page has as many editors as it takes",
+			"READ_ONLY_SIZE": "Read-only: the page is at its size limit"
 		}
 	},
 	"DIALOGS": {
