@@ -1,0 +1,149 @@
+const mockContext: { tenantId: string | null; organizationId: string | null } = { tenantId: 'tenant-1', organizationId: 'org-1' };
+
+jest.mock('@gauzy/core', () => ({
+	EmailSendService: class EmailSendService {},
+	RequestContext: {
+		currentTenantId: () => mockContext.tenantId,
+		currentOrganizationId: () => mockContext.organizationId
+	}
+}));
+
+import {
+	INBOX_DELIVERY_STATUS_AVAILABLE_TTL_MS,
+	INBOX_DELIVERY_STATUS_CHECK_TIMEOUT_MS,
+	INBOX_DELIVERY_STATUS_UNAVAILABLE_TTL_MS,
+	InboxDeliveryStatusService
+} from './inbox-delivery-status.service';
+
+const FLAGS = ['GAUZY_INBOX_NOTIFICATION_EMAIL_ENABLED', 'GAUZY_INBOX_WEB_PUSH_ENABLED', 'GAUZY_INBOX_VAPID_PUBLIC_KEY', 'GAUZY_INBOX_VAPID_PRIVATE_KEY', 'GAUZY_INBOX_ENABLED'];
+
+/** The service over a stub transport lookup and a clock the spec moves. */
+function build(answer: () => Promise<unknown>) {
+	const clock = { now: Date.parse('2026-11-11T12:00:00Z') };
+	const sender = { getEmailInstance: jest.fn(answer) };
+	const service = new InboxDeliveryStatusService(sender as never);
+	(service as unknown as { now: () => number }).now = () => clock.now;
+	return { service, sender, clock };
+}
+
+describe('InboxDeliveryStatusService', () => {
+	const saved: Record<string, string | undefined> = {};
+
+	beforeEach(() => {
+		for (const name of FLAGS) saved[name] = process.env[name];
+		process.env['GAUZY_INBOX_ENABLED'] = 'true';
+		process.env['GAUZY_INBOX_NOTIFICATION_EMAIL_ENABLED'] = 'true';
+		delete process.env['GAUZY_INBOX_WEB_PUSH_ENABLED'];
+		delete process.env['GAUZY_INBOX_VAPID_PUBLIC_KEY'];
+		delete process.env['GAUZY_INBOX_VAPID_PRIVATE_KEY'];
+	});
+
+	afterEach(() => {
+		for (const name of FLAGS) {
+			if (saved[name] === undefined) delete process.env[name];
+			else process.env[name] = saved[name];
+		}
+		mockContext.tenantId = 'tenant-1';
+		mockContext.organizationId = 'org-1';
+		jest.useRealTimers();
+	});
+
+	it('reports email as available when a transport answers for the tenant and organization', async () => {
+		const { service, sender } = build(async () => ({ send: jest.fn() }));
+
+		const status = await service.status();
+
+		expect(status.email).toEqual({ enabled: true, available: true });
+		expect(status.push).toEqual({ enabled: false, available: false });
+		expect(status.checkedAt).toBe('2026-11-11T12:00:00.000Z');
+		expect(sender.getEmailInstance).toHaveBeenCalledWith({ tenantId: 'tenant-1', organizationId: 'org-1' });
+	});
+
+	it('reports email as unavailable when no transport answers, without revealing why', async () => {
+		const { service } = build(async () => {
+			throw new Error('connect ECONNREFUSED smtp.internal:25');
+		});
+
+		const status = await service.status();
+
+		expect(status.email).toEqual({ enabled: true, available: false });
+		expect(JSON.stringify(status)).not.toContain('smtp.internal');
+	});
+
+	it('checks nothing while the email flag is off', async () => {
+		process.env['GAUZY_INBOX_NOTIFICATION_EMAIL_ENABLED'] = 'false';
+		const { service, sender } = build(async () => ({}));
+
+		expect((await service.status()).email).toEqual({ enabled: false, available: false });
+		expect(sender.getEmailInstance).not.toHaveBeenCalled();
+	});
+
+	it('caches a check per scope, and checks a missing transport again sooner than a working one', async () => {
+		let works = true;
+		const { service, sender, clock } = build(async () => {
+			if (!works) throw new Error('down');
+			return {};
+		});
+
+		await service.status();
+		await service.status();
+		expect(sender.getEmailInstance).toHaveBeenCalledTimes(1);
+
+		// Another organization is its own scope.
+		mockContext.organizationId = 'org-2';
+		await service.status();
+		expect(sender.getEmailInstance).toHaveBeenCalledTimes(2);
+
+		mockContext.organizationId = 'org-1';
+		works = false;
+		clock.now += INBOX_DELIVERY_STATUS_AVAILABLE_TTL_MS + 1;
+		expect((await service.status()).email.available).toBe(false);
+		expect(sender.getEmailInstance).toHaveBeenCalledTimes(3);
+
+		works = true;
+		clock.now += INBOX_DELIVERY_STATUS_UNAVAILABLE_TTL_MS + 1;
+		expect((await service.status()).email.available).toBe(true);
+		expect(sender.getEmailInstance).toHaveBeenCalledTimes(4);
+	});
+
+	it('runs one check at a time per scope', async () => {
+		let release: (value: unknown) => void = () => undefined;
+		const { service, sender } = build(() => new Promise((resolve) => (release = resolve)));
+
+		const first = service.status();
+		const second = service.status();
+		release({});
+
+		expect((await first).email.available).toBe(true);
+		expect((await second).email.available).toBe(true);
+		expect(sender.getEmailInstance).toHaveBeenCalledTimes(1);
+	});
+
+	it('counts a transport that does not answer in time as unavailable', async () => {
+		jest.useFakeTimers();
+		const { service } = build(() => new Promise(() => undefined));
+
+		const pending = service.status();
+		await jest.advanceTimersByTimeAsync(INBOX_DELIVERY_STATUS_CHECK_TIMEOUT_MS + 1);
+
+		expect((await pending).email).toEqual({ enabled: true, available: false });
+	});
+
+	it('reports web push as available only with the flag and both keys', async () => {
+		process.env['GAUZY_INBOX_WEB_PUSH_ENABLED'] = 'true';
+		const { service } = build(async () => ({}));
+		expect((await service.status()).push).toEqual({ enabled: true, available: false });
+
+		process.env['GAUZY_INBOX_VAPID_PUBLIC_KEY'] = 'public';
+		process.env['GAUZY_INBOX_VAPID_PRIVATE_KEY'] = 'private';
+		expect((await service.status()).push).toEqual({ enabled: true, available: true });
+	});
+
+	it('answers without a check when the request has no tenant', async () => {
+		mockContext.tenantId = null;
+		const { service, sender } = build(async () => ({}));
+
+		expect((await service.status()).email).toEqual({ enabled: true, available: false });
+		expect(sender.getEmailInstance).not.toHaveBeenCalled();
+	});
+});

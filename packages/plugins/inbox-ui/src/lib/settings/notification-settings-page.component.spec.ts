@@ -9,7 +9,7 @@ import { InboxNotificationSettingsPageComponent } from './notification-settings-
 
 /** Settings -> Notifications: the switches, the email modes, the quiet hours and the digest hour. */
 describe('InboxNotificationSettingsPageComponent', () => {
-	const api = { forEmployee: jest.fn(), create: jest.fn(), update: jest.fn() };
+	const api = { forEmployee: jest.fn(), create: jest.fn(), update: jest.fn(), deliveryStatus: jest.fn() };
 	const toastr = { danger: jest.fn(), success: jest.fn() };
 	let employee: { id: string } | null = { id: 'e1' };
 
@@ -42,6 +42,46 @@ describe('InboxNotificationSettingsPageComponent', () => {
 	beforeEach(() => {
 		jest.resetAllMocks();
 		employee = { id: 'e1' };
+		// The server says nothing about delivery unless a test says otherwise.
+		api.deliveryStatus.mockReturnValue(of(null));
+	});
+
+	it('says in the email section when the server sends no notification emails, or none can go out for the organization', () => {
+		api.forEmployee.mockReturnValue(of({ id: 's1', preferences: {} }));
+		const status = (enabled: boolean, available: boolean) => ({
+			email: { enabled, available },
+			push: { enabled: false, available: false },
+			checkedAt: '2026-11-11T12:00:00.000Z'
+		});
+
+		api.deliveryStatus.mockReturnValue(of(status(false, false)));
+		let rendered = render();
+		rendered.fixture.detectChanges();
+		expect(rendered.component.emailNotice()).toBe('OFF');
+		expect(rendered.fixture.nativeElement.querySelector('[data-test="email-notice-OFF"]')).not.toBeNull();
+
+		api.deliveryStatus.mockReturnValue(of(status(true, false)));
+		rendered = render();
+		rendered.fixture.detectChanges();
+		expect(rendered.component.emailNotice()).toBe('UNAVAILABLE');
+		expect(rendered.fixture.nativeElement.querySelector('[data-test="email-notice-UNAVAILABLE"]')).not.toBeNull();
+
+		api.deliveryStatus.mockReturnValue(of(status(true, true)));
+		rendered = render();
+		rendered.fixture.detectChanges();
+		expect(rendered.component.emailNotice()).toBeNull();
+		expect(rendered.fixture.nativeElement.querySelector('[data-test^="email-notice"]')).toBeNull();
+	});
+
+	it('shows no notice when the server does not say, and ignores an answer for an organization that is no longer the page\'s', () => {
+		api.forEmployee.mockReturnValue(of({ id: 's1', preferences: {} }));
+		const late = new Subject<unknown>();
+		api.deliveryStatus.mockReturnValue(late);
+		const { component } = render();
+		expect(component.emailNotice()).toBeNull();
+		(component as unknown as { scope: { employeeId: string } | null }).scope = { employeeId: 'other' } as never;
+		late.next({ email: { enabled: false, available: false }, push: { enabled: false, available: false }, checkedAt: '' });
+		expect(component.emailNotice()).toBeNull();
 	});
 
 	it("loads the employee's row for the selected organization", () => {

@@ -5,6 +5,8 @@ import { EmailSendModule, RolePermissionModule } from '@gauzy/core';
 import { InboxDelivery } from './inbox-delivery.entity';
 import { InboxDeliveryMailer } from './inbox-delivery-mailer';
 import { InboxDeliveryService } from './inbox-delivery.service';
+import { InboxDeliveryStatusController } from './inbox-delivery-status.controller';
+import { InboxDeliveryStatusService } from './inbox-delivery-status.service';
 import { InboxDeliveryPusher } from './push/inbox-delivery-pusher';
 import { InboxPushController } from './push/inbox-push.controller';
 import { InboxPushSubscription } from './push/inbox-push-subscription.entity';
@@ -23,8 +25,9 @@ export const INBOX_DELIVERY_ENTITIES = [InboxDelivery, InboxPushSubscription];
 		RolePermissionModule
 	],
 	// The push routes (the caller's devices) answer 404 where web push is off; the sweep's push step reads the same store.
-	controllers: [InboxPushController],
-	providers: [InboxDeliveryMailer, InboxDeliveryPusher, InboxPushSubscriptionService, InboxDeliveryService],
+	// The delivery status (which channels can deliver for the caller's organization) answers wherever this module is.
+	controllers: [InboxPushController, InboxDeliveryStatusController],
+	providers: [InboxDeliveryMailer, InboxDeliveryPusher, InboxPushSubscriptionService, InboxDeliveryService, InboxDeliveryStatusService],
 	exports: [InboxDeliveryService, InboxPushSubscriptionService]
 })
 export class InboxDeliveryModule {}
