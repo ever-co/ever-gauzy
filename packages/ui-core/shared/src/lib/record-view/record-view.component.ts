@@ -156,6 +156,12 @@ export class RecordViewComponent implements OnChanges {
 		switch (type) {
 			case 'tags':
 				row.tagsHost = { tags: Array.isArray(value) ? value : [] };
+				if (field.tagStyle === 'tinted') {
+					row.tagChips = row.tagsHost.tags.map((tag: any) => ({
+						name: tag?.name ?? '',
+						color: RecordViewComponent.tagColor(tag?.color)
+					}));
+				}
 				break;
 			case 'person':
 				row.person = RecordViewComponent.toPerson(value);
@@ -214,6 +220,19 @@ export class RecordViewComponent implements OnChanges {
 			return true;
 		}
 		return Array.isArray(value) && value.length === 0;
+	}
+
+	/**
+	 * A tag's colour as CSS, read as the tag picker reads it: a stored hex may lack its `#`, and an unreadable
+	 * colour falls back to black.
+	 */
+	private static tagColor(color: string | null | undefined): string {
+		const value = typeof color === 'string' ? color.trim() : '';
+		if (/^[0-9a-f]{6}$/i.test(value)) {
+			return `#${value}`;
+		}
+		const valid = !!value && (typeof CSS === 'undefined' || CSS.supports('color', value));
+		return valid ? value : '#000000';
 	}
 
 	/**
