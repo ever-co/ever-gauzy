@@ -4,6 +4,8 @@ import { catchError, map, Observable, of } from 'rxjs';
 import { API_PREFIX } from '@gauzy/ui-core/common';
 
 const BASE = `${API_PREFIX}/integration/asana`;
+/** The most task titles one read asks for (the task list's page limit). */
+export const TASK_TITLES_MAX = 100;
 
 export interface AsanaConnectionSummary {
 	id: string;
@@ -102,6 +104,8 @@ export type AsanaConflictKeep = 'external' | 'platform';
 /** A field changed both in Asana and on the platform to different values: Asana's was applied, the task's is kept here. */
 export interface AsanaConflict {
 	id: string;
+	tenantId: string;
+	organizationId: string;
 	integrationId: string;
 	mappingId: string | null;
 	runId: string | null;
@@ -218,11 +222,31 @@ export class AsanaUiService {
 		return this.http.post<AsanaConflict>(`${this.connection(integrationId)}/conflicts/${encodeURIComponent(conflictId)}/resolve`, { keep });
 	}
 
-	/** The title of a task a conflict names; null when it cannot be read (deleted, or not visible to the caller). */
-	taskTitle(taskId: string): Observable<string | null> {
-		return this.http.get<{ title?: string | null }>(`${API_PREFIX}/tasks/${encodeURIComponent(taskId)}`).pipe(
-			map((task) => (typeof task?.title === 'string' && task.title.trim() ? task.title.trim() : null)),
-			catchError(() => of(null))
+	/**
+	 * The titles of the tasks conflicts name, by id, in one read of the organization's tasks (`GET /tasks` with the
+	 * `ids` filter: unlike `GET /tasks/:id`, it records no visit). A task that cannot be read (deleted, not visible to
+	 * the caller) is left out; a failed read answers none.
+	 */
+	taskTitles(scope: { tenantId: string; organizationId: string }, taskIds: readonly string[]): Observable<Record<string, string>> {
+		const ids = [...new Set(taskIds.filter(Boolean))].slice(0, TASK_TITLES_MAX);
+		if (!ids.length) return of({});
+		let params = new HttpParams()
+			.set('where[tenantId]', scope.tenantId)
+			.set('where[organizationId]', scope.organizationId)
+			.set('select[id]', 'true')
+			.set('select[title]', 'true')
+			.set('take', String(ids.length));
+		ids.forEach((id, index) => (params = params.set(`filters[ids][${index}]`, id)));
+		return this.http.get<{ items?: Array<{ id?: string; title?: string | null }> }>(`${API_PREFIX}/tasks`, { params }).pipe(
+			map((page) => {
+				const titles: Record<string, string> = {};
+				for (const task of page?.items ?? []) {
+					const title = typeof task?.title === 'string' ? task.title.trim() : '';
+					if (task?.id && title) titles[task.id] = title;
+				}
+				return titles;
+			}),
+			catchError(() => of({}))
 		);
 	}
 }

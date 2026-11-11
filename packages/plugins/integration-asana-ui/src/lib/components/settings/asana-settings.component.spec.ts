@@ -6,7 +6,7 @@ import { ActivatedRoute, convertToParamMap, Router } from '@angular/router';
 import { of } from 'rxjs';
 import { OrganizationProjectsService, Store } from '@gauzy/ui-core/core';
 import { AsanaRun, AsanaUiService } from '../../services/asana-ui.service';
-import { AsanaSettingsComponent } from './asana-settings.component';
+import { finishedRuns, AsanaSettingsComponent } from './asana-settings.component';
 
 const ORGANIZATION = { id: 'org-1', tenantId: 'tenant-1' };
 
@@ -46,7 +46,7 @@ describe('AsanaSettingsComponent (sync log and conflicts)', () => {
 		runs: jest.fn(),
 		conflicts: jest.fn(),
 		resolveConflict: jest.fn(),
-		taskTitle: jest.fn()
+		taskTitles: jest.fn()
 	};
 
 	function render() {
@@ -72,7 +72,7 @@ describe('AsanaSettingsComponent (sync log and conflicts)', () => {
 		api.mappings.mockReturnValue(of([]));
 		api.runs.mockReturnValue(of([run(), run({ id: 'run-2', conflictCount: 3 })]));
 		api.conflicts.mockReturnValue(of([]));
-		api.taskTitle.mockReturnValue(of(null));
+		api.taskTitles.mockReturnValue(of({}));
 	});
 
 	it("shows each run's conflict count, and a count lists that run's conflicts", async () => {
@@ -85,13 +85,13 @@ describe('AsanaSettingsComponent (sync log and conflicts)', () => {
 		const count = el.querySelector('[data-test="run-conflicts-run-2"] button') as HTMLButtonElement;
 		expect(count.textContent?.trim()).toBe('3');
 		// The conflict list is there, every run.
-		expect(api.conflicts).toHaveBeenCalledWith('int-1', { status: 'open', runId: null });
+		expect(api.conflicts).toHaveBeenCalledWith('int-1', { status: 'open', runId: null, take: 50 });
 
 		count.click();
 		fixture.detectChanges();
 
 		expect(fixture.componentInstance.conflictRunId).toBe('run-2');
-		expect(api.conflicts).toHaveBeenLastCalledWith('int-1', { status: 'open', runId: 'run-2' });
+		expect(api.conflicts).toHaveBeenLastCalledWith('int-1', { status: 'open', runId: 'run-2', take: 50 });
 		expect(el.querySelector('[data-test="run-filter"]')).not.toBeNull();
 	});
 
@@ -105,5 +105,26 @@ describe('AsanaSettingsComponent (sync log and conflicts)', () => {
 		fixture.detectChanges();
 
 		expect(api.conflicts).toHaveBeenCalledTimes(2);
+	});
+
+	it('a run that finishes while another still runs reads the conflicts again', async () => {
+		api.runs
+			.mockReturnValueOnce(of([run({ id: 'run-1', status: 'running' }), run({ id: 'run-2', status: 'running' })]))
+			.mockReturnValueOnce(of([run({ id: 'run-1', status: 'done', conflictCount: 2 }), run({ id: 'run-2', status: 'running' })]));
+		const fixture = render();
+		await settle(fixture);
+		expect(api.conflicts).toHaveBeenCalledTimes(1);
+
+		fixture.componentInstance.loadRuns();
+		fixture.detectChanges();
+
+		expect(api.conflicts).toHaveBeenCalledTimes(2);
+	});
+
+	it('tells a finished run from one still running, a new one, or one gone from the list', () => {
+		expect(finishedRuns([run({ status: 'running' })], [run({ status: 'running' })])).toBe(false);
+		expect(finishedRuns([run({ status: 'running' })], [run({ status: 'failed' })])).toBe(true);
+		expect(finishedRuns([run({ status: 'running' })], [])).toBe(true);
+		expect(finishedRuns([run({ status: 'done' })], [run({ status: 'done' }), run({ id: 'run-9', status: 'running' })])).toBe(false);
 	});
 });

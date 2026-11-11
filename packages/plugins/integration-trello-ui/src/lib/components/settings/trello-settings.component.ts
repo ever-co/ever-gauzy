@@ -22,6 +22,12 @@ import {
 import { errorText, listMapOf } from '../shared/trello-ui.utils';
 import { TrelloConflictsComponent } from '../conflicts/trello-conflicts.component';
 
+/** Whether a run that was running is not any more (done, failed, or gone from the list) in the newer read. */
+export function finishedRuns(before: readonly TrelloRun[], after: readonly TrelloRun[]): boolean {
+	const now = new Map(after.map((run) => [run.id, run.status]));
+	return before.some((run) => run.status === 'running' && now.get(run.id) !== 'running');
+}
+
 const DIRECTIONS: TrelloDirection[] = ['inbound', 'outbound', 'both'];
 /** How often the runs are read again while one is running. */
 const RUNS_POLL_MS = 10_000;
@@ -365,8 +371,8 @@ export class TrelloSettingsComponent implements OnInit {
 	private readonly destroyRef = inject(DestroyRef);
 
 	/** The conflict list (read again when a run finishes) and its host (scrolled to when a run's count opens it). */
-	@ViewChild(TrelloConflictsComponent) private conflictList?: TrelloConflictsComponent;
-	@ViewChild(TrelloConflictsComponent, { read: ElementRef }) private conflictHost?: ElementRef<HTMLElement>;
+	@ViewChild(TrelloConflictsComponent) private readonly conflictList?: TrelloConflictsComponent;
+	@ViewChild(TrelloConflictsComponent, { read: ElementRef }) private readonly conflictHost?: ElementRef<HTMLElement>;
 
 	readonly directions = DIRECTIONS;
 
@@ -398,6 +404,8 @@ export class TrelloSettingsComponent implements OnInit {
 		])
 			.pipe(
 				switchMap(([integrationId, organizationId]) => {
+					// Another connection: the run filter of the last one means nothing here.
+					if (integrationId !== this.integrationId) this.conflictRunId = null;
 					this.integrationId = integrationId;
 					this.organizationId = organizationId;
 					this.loading = true;
@@ -456,10 +464,10 @@ export class TrelloSettingsComponent implements OnInit {
 		if (!this.integrationId) return;
 		this.api.runs(this.integrationId).subscribe({
 			next: (runs) => {
-				const wasRunning = this.runs.some((run) => run.status === 'running');
+				const finished = finishedRuns(this.runs, runs);
 				this.runs = runs;
-				// A run that just finished may have found conflicts.
-				if (wasRunning && !runs.some((run) => run.status === 'running')) this.conflictList?.load(true);
+				// A run that just finished (another may still run) may have found conflicts.
+				if (finished) this.conflictList?.load(true);
 				this.cdr.markForCheck();
 			},
 			error: () => undefined

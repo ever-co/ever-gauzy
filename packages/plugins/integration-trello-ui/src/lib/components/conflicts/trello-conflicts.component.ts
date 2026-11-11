@@ -15,15 +15,16 @@ import { DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { NbAlertModule, NbButtonModule, NbSelectModule } from '@nebular/theme';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
-import { from, map, mergeMap, Subscription } from 'rxjs';
-import { TrelloConflict, TrelloConflictKeep, TrelloConflictStatus, TrelloUiService } from '../../services/trello-ui.service';
+import { Subscription } from 'rxjs';
+import { TrelloConflict, TrelloConflictKeep, TrelloConflictStatus, TrelloUiService, TASK_TITLES_MAX } from '../../services/trello-ui.service';
 import { conflictValueView, ConflictValueView, errorCode, errorText, isNotFound } from '../shared/trello-ui.utils';
 
 /** The platform's page of a task (`/pages/tasks/view/:id`): a conflict's task opens there. */
 export const TASK_VIEW_LINK = '/pages/tasks/view';
 
-/** How many task titles are read at once. */
-const TITLE_CONCURRENCY = 4;
+/** How many conflicts a read asks for, and how many more "Show more" adds, up to the route's limit. */
+export const CONFLICTS_PAGE = 50;
+export const CONFLICTS_MAX = 200;
 
 /** The translated message of the API's conflict refusals; anything else shows the API's own message. */
 const ERROR_KEYS: Record<string, string> = {
@@ -46,11 +47,16 @@ export function conflictRowOf(conflict: TrelloConflict): TrelloConflictRow {
 	};
 }
 
+/** Which side of a conflict a value cell shows. */
+export type ConflictSide = 'platform' | 'external';
+
 /**
  * The sync conflicts of a Trello connection: fields changed both in Trello and on the platform to different values
  * since they last agreed. Trello's value was applied to the task and the task's is kept; a manager keeps Trello's
  * value, or writes the task's back (`POST …/conflicts/:id/resolve`, `keep: external | platform`). Open ones by
- * default, resolved ones on request; `runId` narrows the list to what one run found (the sync log opens it so).
+ * default, resolved ones on request; `runId` narrows the list to what one run found (the sync log opens it so). The
+ * newest {@link CONFLICTS_PAGE} are read, "Show more" reads more up to the route's limit, and the list is read again
+ * after each resolve, so the older ones come up as the newer ones are resolved.
  */
 @Component({
 	selector: 'ngx-trello-conflicts',
@@ -59,7 +65,7 @@ export function conflictRowOf(conflict: TrelloConflict): TrelloConflictRow {
 	template: `
 		<h5>
 			{{ 'TRELLO.CONFLICTS.TITLE' | translate }}
-			<button nbButton ghost size="tiny" type="button" data-test="refresh-conflicts" [disabled]="loading" (click)="load()">
+			<button nbButton ghost size="tiny" type="button" data-test="refresh-conflicts" [disabled]="loading || !!resolving" (click)="load()">
 				{{ 'TRELLO.COMMON.REFRESH' | translate }}
 			</button>
 		</h5>
@@ -107,24 +113,32 @@ export function conflictRowOf(conflict: TrelloConflict): TrelloConflictRow {
 								<small class="note">{{ 'TRELLO.CONFLICTS.ITEM' | translate: { id: row.conflict.sourceId } }}</small>
 							</td>
 							<td data-test="field">{{ 'TRELLO.CONFLICTS.FIELDS.' + row.conflict.field | translate }}</td>
-							<td class="value" data-test="platform-value" [attr.title]="row.platform.full || null">
-								@if (row.platform.empty) {
-									<em class="note">{{ 'TRELLO.CONFLICTS.EMPTY_VALUE' | translate }}</em>
-								} @else if (row.platform.date) {
-									{{ row.platform.date | date: 'medium' }}
-								} @else {
-									{{ row.platform.text }}
-								}
-							</td>
-							<td class="value" data-test="external-value" [attr.title]="row.external.full || null">
-								@if (row.external.empty) {
-									<em class="note">{{ 'TRELLO.CONFLICTS.EMPTY_VALUE' | translate }}</em>
-								} @else if (row.external.date) {
-									{{ row.external.date | date: 'medium' }}
-								} @else {
-									{{ row.external.text }}
-								}
-							</td>
+							@for (side of sides; track side) {
+								@let view = side === 'platform' ? row.platform : row.external;
+								<td class="value" [attr.data-test]="side + '-value'" [attr.title]="view.full || null">
+									@if (view.empty) {
+										<em class="note">{{ 'TRELLO.CONFLICTS.EMPTY_VALUE' | translate }}</em>
+									} @else if (view.date) {
+										{{ view.date | date: 'medium' }}
+									} @else {
+										<span class="text">{{ isExpanded(row, side) ? view.full : view.text }}</span>
+										@if (view.full !== view.text) {
+											<button
+												nbButton
+												ghost
+												size="tiny"
+												type="button"
+												class="more"
+												[attr.data-test]="side + '-toggle'"
+												[attr.aria-expanded]="isExpanded(row, side)"
+												(click)="toggle(row, side)"
+											>
+												{{ (isExpanded(row, side) ? 'TRELLO.CONFLICTS.SHOW_LESS' : 'TRELLO.CONFLICTS.SHOW_FULL') | translate }}
+											</button>
+										}
+									}
+								</td>
+							}
 							<td>{{ row.conflict.createdAt ? (row.conflict.createdAt | date: 'short') : '—' }}</td>
 							@if (row.conflict.status === 'open') {
 								<td class="actions">
@@ -163,6 +177,11 @@ export function conflictRowOf(conflict: TrelloConflict): TrelloConflictRow {
 					}
 				</tbody>
 			</table>
+			@if (canShowMore) {
+				<button nbButton ghost size="small" type="button" data-test="more-conflicts" [disabled]="loading || !!resolving" (click)="showMore()">
+					{{ 'TRELLO.CONFLICTS.SHOW_MORE' | translate }}
+				</button>
+			}
 		}
 	`,
 	styles: [
@@ -191,6 +210,13 @@ export function conflictRowOf(conflict: TrelloConflict): TrelloConflictRow {
 				max-width: 20rem;
 				overflow-wrap: anywhere;
 			}
+			.value .text {
+				white-space: pre-wrap;
+			}
+			.value .more {
+				display: block;
+				padding-left: 0;
+			}
 			.actions {
 				white-space: nowrap;
 			}
@@ -214,25 +240,42 @@ export class TrelloConflictsComponent implements OnChanges {
 	@Output() readonly runIdChange = new EventEmitter<string | null>();
 
 	readonly statuses: TrelloConflictStatus[] = ['open', 'resolved'];
+	readonly sides: ConflictSide[] = ['platform', 'external'];
 	readonly taskLink = TASK_VIEW_LINK;
 
 	status: TrelloConflictStatus = 'open';
 	rows: TrelloConflictRow[] = [];
+	/** How many conflicts the list reads. */
+	take = CONFLICTS_PAGE;
 	loading = false;
 	/** The conflict being resolved (one at a time). */
 	resolving: string | null = null;
 	error: string | null = null;
 	notice: string | null = null;
 
-	/** Task titles by id, each read once (null: not readable, the link says "Open the task"). */
-	private readonly titles = new Map<string, string | null>();
+	/** Task titles by id, each read once (missing: not readable, the link says "Open the task"). */
+	private readonly titles = new Map<string, string>();
+	private readonly titlesAsked = new Set<string>();
+	/** The value cells shown whole (`<conflict id>:<side>`). */
+	private readonly expanded = new Set<string>();
 	private listing: Subscription | null = null;
 
-	ngOnChanges(changes: SimpleChanges): void {
-		if (changes['integrationId'] || changes['runId']) this.load();
+	/** Whether the route may hold more than the list read (it read a full page, below the route's limit). */
+	get canShowMore(): boolean {
+		return this.rows.length >= this.take && this.take < CONFLICTS_MAX;
 	}
 
-	/** Reads the list again (the filters as they are). `keepMessages`: the line a resolve just wrote stays. */
+	ngOnChanges(changes: SimpleChanges): void {
+		if (changes['integrationId'] || changes['runId']) {
+			this.take = CONFLICTS_PAGE;
+			this.load();
+		}
+	}
+
+	/**
+	 * Reads the list again (the filters as they are). A read in flight is dropped first, so an older answer never
+	 * replaces a newer one. `keepMessages`: the line a resolve just wrote stays.
+	 */
 	load(keepMessages = false): void {
 		if (!this.integrationId) return;
 		this.listing?.unsubscribe();
@@ -243,7 +286,7 @@ export class TrelloConflictsComponent implements OnChanges {
 		}
 		this.cdr.markForCheck();
 		this.listing = this.api
-			.conflicts(this.integrationId, { status: this.status, runId: this.runId })
+			.conflicts(this.integrationId, { status: this.status, runId: this.runId, take: this.take })
 			.pipe(takeUntilDestroyed(this.destroyRef))
 			.subscribe({
 				next: (conflicts) => {
@@ -265,7 +308,14 @@ export class TrelloConflictsComponent implements OnChanges {
 		if (status === this.status) return;
 		this.status = status;
 		this.rows = [];
+		this.take = CONFLICTS_PAGE;
 		this.load();
+	}
+
+	showMore(): void {
+		if (!this.canShowMore) return;
+		this.take = Math.min(this.take + CONFLICTS_PAGE, CONFLICTS_MAX);
+		this.load(true);
 	}
 
 	clearRun(): void {
@@ -276,9 +326,21 @@ export class TrelloConflictsComponent implements OnChanges {
 		return this.titles.get(taskId) ?? null;
 	}
 
+	isExpanded(row: TrelloConflictRow, side: ConflictSide): boolean {
+		return this.expanded.has(`${row.conflict.id}:${side}`);
+	}
+
+	/** Shows a cut value whole, or cut again. */
+	toggle(row: TrelloConflictRow, side: ConflictSide): void {
+		const key = `${row.conflict.id}:${side}`;
+		if (!this.expanded.delete(key)) this.expanded.add(key);
+		this.cdr.markForCheck();
+	}
+
 	/**
 	 * Keeps Trello's value (`external`) or writes the task's back (`platform`). Refused when the task changed since
 	 * (409: the list says why and keeps the conflict) or when it is resolved already (404: the list is read again).
+	 * Resolved, the conflict leaves the list and the list is read again (the next older one comes up).
 	 */
 	resolve(row: TrelloConflictRow, keep: TrelloConflictKeep): void {
 		if (!this.integrationId || this.resolving) return;
@@ -295,7 +357,7 @@ export class TrelloConflictsComponent implements OnChanges {
 					this.resolving = null;
 					this.rows = this.rows.filter((item) => item.conflict.id !== id);
 					this.notice = this.translate.instant(keep === 'platform' ? 'TRELLO.CONFLICTS.KEPT_PLATFORM' : 'TRELLO.CONFLICTS.KEPT_EXTERNAL');
-					this.cdr.markForCheck();
+					this.load(true);
 				},
 				error: (error) => {
 					this.resolving = null;
@@ -307,19 +369,21 @@ export class TrelloConflictsComponent implements OnChanges {
 			});
 	}
 
-	/** The titles of the tasks not read yet, a few at a time. */
+	/** The titles of the tasks not asked for yet, in one read per hundred. */
 	private readTitles(conflicts: readonly TrelloConflict[]): void {
-		const missing = [...new Set(conflicts.map((conflict) => conflict.taskId))].filter((taskId) => taskId && !this.titles.has(taskId));
-		if (!missing.length) return;
-		for (const taskId of missing) this.titles.set(taskId, null);
-		from(missing)
-			.pipe(
-				mergeMap((taskId) => this.api.taskTitle(taskId).pipe(map((title) => [taskId, title] as const)), TITLE_CONCURRENCY),
-				takeUntilDestroyed(this.destroyRef)
-			)
-			.subscribe(([taskId, title]) => {
-				this.titles.set(taskId, title);
-				this.cdr.markForCheck();
-			});
+		const first = conflicts.find((conflict) => conflict.tenantId && conflict.organizationId);
+		const missing = [...new Set(conflicts.map((conflict) => conflict.taskId))].filter((taskId) => taskId && !this.titlesAsked.has(taskId));
+		if (!first || !missing.length) return;
+		for (const taskId of missing) this.titlesAsked.add(taskId);
+		const scope = { tenantId: first.tenantId, organizationId: first.organizationId };
+		for (let start = 0; start < missing.length; start += TASK_TITLES_MAX) {
+			this.api
+				.taskTitles(scope, missing.slice(start, start + TASK_TITLES_MAX))
+				.pipe(takeUntilDestroyed(this.destroyRef))
+				.subscribe((titles) => {
+					for (const [taskId, title] of Object.entries(titles)) this.titles.set(taskId, title);
+					this.cdr.markForCheck();
+				});
+		}
 	}
 }

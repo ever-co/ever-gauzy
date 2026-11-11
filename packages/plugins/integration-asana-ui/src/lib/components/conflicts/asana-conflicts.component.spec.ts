@@ -1,11 +1,13 @@
 import { TestBed } from '@angular/core/testing';
 import { of, Subject, throwError } from 'rxjs';
 import { AsanaConflict, AsanaUiService } from '../../services/asana-ui.service';
-import { AsanaConflictsComponent } from './asana-conflicts.component';
+import { CONFLICTS_MAX, CONFLICTS_PAGE, AsanaConflictsComponent } from './asana-conflicts.component';
 
 function conflict(overrides: Partial<AsanaConflict> = {}): AsanaConflict {
 	return {
 		id: 'c-1',
+		tenantId: 'tenant-1',
+		organizationId: 'org-1',
 		integrationId: 'int-1',
 		mappingId: 'map-1',
 		runId: 'run-1',
@@ -24,9 +26,11 @@ function conflict(overrides: Partial<AsanaConflict> = {}): AsanaConflict {
 	};
 }
 
+const page = (count: number) => Array.from({ length: count }, (_, index) => conflict({ id: `c-${index}`, taskId: `task-${index % 3}` }));
+
 /** The conflict list: what changed on both sides, and the two ways to resolve it. */
 describe('AsanaConflictsComponent', () => {
-	const api = { conflicts: jest.fn(), resolveConflict: jest.fn(), taskTitle: jest.fn() };
+	const api = { conflicts: jest.fn(), resolveConflict: jest.fn(), taskTitles: jest.fn() };
 
 	function render(inputs: { runId?: string | null } = {}) {
 		TestBed.configureTestingModule({
@@ -44,7 +48,7 @@ describe('AsanaConflictsComponent', () => {
 
 	beforeEach(() => {
 		jest.resetAllMocks();
-		api.taskTitle.mockReturnValue(of('Fix login'));
+		api.taskTitles.mockReturnValue(of({ 'task-1': 'Fix login' }));
 	});
 
 	it('lists the open conflicts: the task, the field, both values, when', () => {
@@ -55,12 +59,12 @@ describe('AsanaConflictsComponent', () => {
 				conflict({ id: 'c-3', taskId: 'task-2', field: 'dueDate', platformValue: '2026-11-20T09:00:00.000Z', externalValue: '2026-11-21T09:00:00.000Z' })
 			])
 		);
-		api.taskTitle.mockImplementation((taskId: string) => of(taskId === 'task-1' ? 'Fix login' : null));
 		const { el, find } = render();
 
-		expect(api.conflicts).toHaveBeenCalledWith('int-1', { status: 'open', runId: null });
-		// One read per task, not per conflict.
-		expect(api.taskTitle).toHaveBeenCalledTimes(2);
+		expect(api.conflicts).toHaveBeenCalledWith('int-1', { status: 'open', runId: null, take: CONFLICTS_PAGE });
+		// One read for the titles of every task listed, in the conflicts' organization.
+		expect(api.taskTitles).toHaveBeenCalledTimes(1);
+		expect(api.taskTitles).toHaveBeenCalledWith({ tenantId: 'tenant-1', organizationId: 'org-1' }, ['task-1', 'task-2']);
 		const first = find('conflict-c-1') as HTMLElement;
 		expect(first.querySelector('[data-test="task"]')?.textContent).toContain('Fix login');
 		expect(first.querySelector('[data-test="task"]')?.getAttribute('href')).toBe('/pages/tasks/view/task-1');
@@ -79,6 +83,26 @@ describe('AsanaConflictsComponent', () => {
 		expect(due.querySelector('[data-test="task"]')?.textContent).toContain('ASANA.CONFLICTS.OPEN_TASK');
 		expect(due.querySelector('[data-test="platform-value"]')?.textContent).toContain('2026');
 		expect(el.querySelectorAll('[data-test^="keep-external-"]').length).toBe(3);
+		// A short list is the whole list.
+		expect(find('more-conflicts')).toBeNull();
+	});
+
+	it('a long value is cut, and shown whole on request (no tooltip needed)', () => {
+		const long = 'word '.repeat(80).trim();
+		api.conflicts.mockReturnValue(of([conflict({ field: 'description', platformValue: long })]));
+		const { fixture, find } = render();
+		const cell = () => find('conflict-c-1')?.querySelector('[data-test="platform-value"] .text')?.textContent ?? '';
+
+		expect(cell().length).toBeLessThan(long.length);
+		const toggle = find('conflict-c-1')?.querySelector('[data-test="platform-toggle"]') as HTMLButtonElement;
+		expect(toggle.getAttribute('aria-expanded')).toBe('false');
+		expect(find('conflict-c-1')?.querySelector('[data-test="external-toggle"]')).toBeNull();
+
+		toggle.click();
+		fixture.detectChanges();
+		expect(cell()).toBe(long);
+		expect(toggle.getAttribute('aria-expanded')).toBe('true');
+		expect(toggle.textContent).toContain('ASANA.CONFLICTS.SHOW_LESS');
 	});
 
 	it('nothing open: says so', () => {
@@ -86,10 +110,11 @@ describe('AsanaConflictsComponent', () => {
 		const { find } = render();
 		expect(find('no-conflicts')?.textContent).toContain('ASANA.CONFLICTS.EMPTY');
 		expect(find('conflict-list')).toBeNull();
+		expect(api.taskTitles).not.toHaveBeenCalled();
 	});
 
-	it("keeps Asana's value: the conflict leaves the list with a notice", () => {
-		api.conflicts.mockReturnValue(of([conflict(), conflict({ id: 'c-2', field: 'status' })]));
+	it("keeps Asana's value: the conflict leaves the list, a notice says so, and the list is read again", () => {
+		api.conflicts.mockReturnValueOnce(of([conflict(), conflict({ id: 'c-2', field: 'status' })])).mockReturnValue(of([conflict({ id: 'c-2', field: 'status' }), conflict({ id: 'c-9' })]));
 		api.resolveConflict.mockReturnValue(of(conflict({ status: 'resolved', resolution: 'kept_external' })));
 		const { fixture, find } = render();
 
@@ -99,10 +124,15 @@ describe('AsanaConflictsComponent', () => {
 		expect(api.resolveConflict).toHaveBeenCalledWith('int-1', 'c-1', 'external');
 		expect(find('conflict-c-1')).toBeNull();
 		expect(find('conflict-c-2')).not.toBeNull();
+		// The next older one comes up.
+		expect(api.conflicts).toHaveBeenCalledTimes(2);
+		expect(find('conflict-c-9')).not.toBeNull();
 		expect(find('conflicts-notice')?.textContent).toContain('ASANA.CONFLICTS.KEPT_EXTERNAL');
+		// The titles already read are not read again.
+		expect(api.taskTitles).toHaveBeenCalledTimes(1);
 	});
 
-	it("restores the task's value; while it runs, nothing else can be resolved", () => {
+	it("restores the task's value; while it runs, nothing else can be resolved or read again", () => {
 		api.conflicts.mockReturnValue(of([conflict(), conflict({ id: 'c-2' })]));
 		const pending = new Subject<AsanaConflict>();
 		api.resolveConflict.mockReturnValue(pending);
@@ -112,13 +142,32 @@ describe('AsanaConflictsComponent', () => {
 		fixture.detectChanges();
 		expect(api.resolveConflict).toHaveBeenCalledWith('int-1', 'c-1', 'platform');
 		expect((find('keep-external-c-2') as HTMLButtonElement).disabled).toBe(true);
+		expect((find('refresh-conflicts') as HTMLButtonElement).disabled).toBe(true);
 
+		api.conflicts.mockReturnValue(of([conflict({ id: 'c-2' })]));
 		pending.next(conflict({ status: 'resolved', resolution: 'kept_platform' }));
 		pending.complete();
 		fixture.detectChanges();
 		expect(find('conflict-c-1')).toBeNull();
 		expect(find('conflicts-notice')?.textContent).toContain('ASANA.CONFLICTS.KEPT_PLATFORM');
 		expect((find('keep-external-c-2') as HTMLButtonElement).disabled).toBe(false);
+	});
+
+	it('a read in flight when a resolve lands never brings the resolved conflict back', () => {
+		const stale = new Subject<AsanaConflict[]>();
+		api.conflicts.mockReturnValueOnce(of([conflict(), conflict({ id: 'c-2' })])).mockReturnValueOnce(stale).mockReturnValue(of([conflict({ id: 'c-2' })]));
+		api.resolveConflict.mockReturnValue(of(conflict({ status: 'resolved' })));
+		const { fixture, component, find } = render();
+
+		component.load();
+		find('keep-external-c-1')?.click();
+		fixture.detectChanges();
+		// The older read answers late, with the conflict still open: it was dropped.
+		stale.next([conflict(), conflict({ id: 'c-2' })]);
+		fixture.detectChanges();
+
+		expect(find('conflict-c-1')).toBeNull();
+		expect(stale.observed).toBe(false);
 	});
 
 	it('the task changed since (409): says why and keeps the conflict', () => {
@@ -158,10 +207,27 @@ describe('AsanaConflictsComponent', () => {
 		expect(find('conflicts-error')?.textContent).toContain('Forbidden resource');
 	});
 
+	it('a full page offers the older ones, up to the route limit', () => {
+		api.conflicts.mockReturnValueOnce(of(page(CONFLICTS_PAGE))).mockReturnValue(of(page(CONFLICTS_PAGE + 10)));
+		const { fixture, component, find } = render();
+
+		find('more-conflicts')?.click();
+		fixture.detectChanges();
+
+		expect(api.conflicts).toHaveBeenLastCalledWith('int-1', { status: 'open', runId: null, take: CONFLICTS_PAGE * 2 });
+		expect(find('conflict-c-59')).not.toBeNull();
+		// Fewer than asked: that is all of them.
+		expect(find('more-conflicts')).toBeNull();
+
+		component.take = CONFLICTS_MAX;
+		component.rows = page(CONFLICTS_MAX).map((item) => ({ conflict: item }) as never);
+		expect(component.canShowMore).toBe(false);
+	});
+
 	it("one run's conflicts: filtered by the run, and Show all clears the filter", () => {
 		api.conflicts.mockReturnValue(of([conflict()]));
 		const { fixture, component, find } = render({ runId: 'run-1' });
-		expect(api.conflicts).toHaveBeenCalledWith('int-1', { status: 'open', runId: 'run-1' });
+		expect(api.conflicts).toHaveBeenCalledWith('int-1', { status: 'open', runId: 'run-1', take: CONFLICTS_PAGE });
 		const cleared = jest.fn();
 		component.runIdChange.subscribe(cleared);
 
@@ -170,7 +236,7 @@ describe('AsanaConflictsComponent', () => {
 
 		fixture.componentRef.setInput('runId', null);
 		fixture.detectChanges();
-		expect(api.conflicts).toHaveBeenLastCalledWith('int-1', { status: 'open', runId: null });
+		expect(api.conflicts).toHaveBeenLastCalledWith('int-1', { status: 'open', runId: null, take: CONFLICTS_PAGE });
 		expect(find('run-filter')).toBeNull();
 	});
 
@@ -183,11 +249,10 @@ describe('AsanaConflictsComponent', () => {
 		component.changeStatus('resolved');
 		fixture.detectChanges();
 
-		expect(api.conflicts).toHaveBeenLastCalledWith('int-1', { status: 'resolved', runId: null });
+		expect(api.conflicts).toHaveBeenLastCalledWith('int-1', { status: 'resolved', runId: null, take: CONFLICTS_PAGE });
 		expect(find('resolution')?.textContent).toContain('ASANA.CONFLICTS.RESOLUTIONS.superseded');
 		expect(find('keep-external-c-1')).toBeNull();
-		// The titles already read are not read again.
-		expect(api.taskTitle).toHaveBeenCalledTimes(1);
+		expect(api.taskTitles).toHaveBeenCalledTimes(1);
 	});
 
 	it('the list cannot be read: shows the error', () => {
