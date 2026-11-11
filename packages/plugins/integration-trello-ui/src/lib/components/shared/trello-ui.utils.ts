@@ -51,8 +51,9 @@ export interface ConflictValueView {
 	/** A due date: the ISO date-time the date pipe formats (null for any other field). */
 	date: string | null;
 	/**
-	 * The due date names a day, not a moment (`2026-11-20`, or midnight UTC as a provider's day is stored): shown as that
-	 * day in UTC, so a reader west of UTC does not see the day before.
+	 * The due date names a day, not a moment (`2026-11-20`, or midnight UTC as a provider's day is stored). `date` is
+	 * then the bare day (`YYYY-MM-DD`), which the date pipe reads as that day in the reader's own zone: the same day for
+	 * a reader east or west of UTC.
 	 */
 	dateOnly: boolean;
 	/** The text shown, cut to a line or two. */
@@ -70,7 +71,10 @@ export function conflictValueView(field: string, value: string | null | undefine
 	if (value === null || value === undefined) return empty;
 	const raw = String(value).trim();
 	if (!raw) return empty;
-	if (field === 'dueDate' && !Number.isNaN(new Date(raw).getTime())) return { empty: false, date: raw, dateOnly: isDateOnly(raw), text: raw, full: raw };
+	if (field === 'dueDate' && !Number.isNaN(new Date(raw).getTime())) {
+		const dateOnly = isDateOnly(raw);
+		return { empty: false, date: dateOnly ? raw.slice(0, 10) : raw, dateOnly, text: raw, full: raw };
+	}
 	const full = field === 'description' ? plainText(raw) : raw;
 	if (!full) return empty;
 	const text = full.length > CONFLICT_VALUE_MAX ? `${full.slice(0, CONFLICT_VALUE_MAX - 1).trimEnd()}…` : full;

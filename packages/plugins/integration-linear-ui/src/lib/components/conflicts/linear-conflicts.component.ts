@@ -119,7 +119,7 @@ export type ConflictSide = 'platform' | 'external';
 									@if (view.empty) {
 										<em class="note">{{ 'LINEAR.CONFLICTS.EMPTY_VALUE' | translate }}</em>
 									} @else if (view.date && view.dateOnly) {
-										{{ view.date | date: 'mediumDate' : 'UTC' }}
+										{{ view.date | date: 'mediumDate' }}
 									} @else if (view.date) {
 										{{ view.date | date: 'medium' }}
 									} @else {
