@@ -1,3 +1,4 @@
+// cspell:ignore pids replayer
 /**
  * A delivery replay against the outbox retention's delete, on a real PostgreSQL, two connections (the follow-up to
  * task T23, ever-co/ever-gauzy#11763).
