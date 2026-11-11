@@ -48,13 +48,26 @@ function buildService(lookupFails = false) {
 			isArchived: false
 		}
 	];
+	const softDeleted = [
+		{
+			id: 'deleted-employee-of-org-d',
+			userId: 'user-1',
+			organizationId: 'org-d',
+			tenantId: 'tenant-1',
+			isActive: false,
+			isArchived: false
+		}
+	];
 	const manager = {
-		find: jest.fn(async (_entity: unknown, { where }: { where: Record<string, unknown> }) => {
-			if (lookupFails) throw new Error('database unavailable');
-			return employees.filter((row) =>
-				Object.entries(where).every(([key, value]) => (row as Record<string, unknown>)[key] === value)
-			);
-		}),
+		// A soft-deleted row is read only with `withDeleted`, as TypeORM does.
+		find: jest.fn(
+			async (_entity: unknown, { where, withDeleted }: { where: Record<string, unknown>; withDeleted?: boolean }) => {
+				if (lookupFails) throw new Error('database unavailable');
+				return [...employees, ...(withDeleted ? softDeleted : [])].filter((row) =>
+					Object.entries(where).every(([key, value]) => (row as Record<string, unknown>)[key] === value)
+				);
+			}
+		),
 		findOne: jest.fn(async (_entity: unknown, { where }: { where: Record<string, unknown> }) => {
 			if (lookupFails) throw new Error('database unavailable');
 			return (
@@ -108,11 +121,12 @@ describe('DocumentAccessService.currentUserEmployeeIdsIn', () => {
 		mockContext.userId = 'user-1';
 	});
 
-	it("answers every employee of the user in the tenant, an inactive one included", async () => {
+	it('answers every employee of the user in the tenant, an inactive and a soft-deleted one included', async () => {
 		await expect(buildService().currentUserEmployeeIdsIn('tenant-1' as never)).resolves.toEqual([
 			'employee-of-org-a',
 			'employee-of-org-b',
-			'old-employee-of-org-c'
+			'old-employee-of-org-c',
+			'deleted-employee-of-org-d'
 		]);
 	});
 

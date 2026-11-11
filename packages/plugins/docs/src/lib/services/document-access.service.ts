@@ -79,8 +79,9 @@ export class DocumentAccessService {
 	}
 
 	/**
-	 * Every employee of the requesting user in the tenant, whatever their state: the identities a follow or a mute of
-	 * theirs may have been saved under. Empty without a user; a failed read throws.
+	 * Every employee of the requesting user in the tenant, whatever their state (inactive, archived or soft-deleted
+	 * included): the identities a follow or a mute of theirs may have been saved under. Empty without a user; a failed
+	 * read throws.
 	 *
 	 * @param tenantId The tenant.
 	 */
@@ -90,7 +91,8 @@ export class DocumentAccessService {
 		try {
 			const employees = await this.typeOrmDocumentShareRepository.manager.find(Employee, {
 				select: { id: true },
-				where: { userId: userId as ID, tenantId }
+				where: { userId: userId as ID, tenantId },
+				withDeleted: true
 			});
 			return employees.map((employee) => employee.id as ID).filter(Boolean);
 		} catch (error) {
