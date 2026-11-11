@@ -1,6 +1,7 @@
 import { Logger } from '@nestjs/common';
 import { createHash } from 'node:crypto';
 import { Redis } from 'ioredis';
+import { dbTypeOrmConnectionConfig } from '@gauzy/config';
 import { resolveBullConnection } from '@gauzy/scheduler';
 import { GraphqlPubSubEngine, GraphqlTopicBroker } from './graphql-pubsub.service';
 
@@ -223,20 +224,32 @@ export function isRedisGraphqlPubSubEnabled(): boolean {
 /**
  * The channel prefix of this installation.
  *
- * `GRAPHQL_PUBSUB_CHANNEL_PREFIX` when set. Otherwise derived from what makes an installation itself —
- * its database and its public API address — because Redis pub/sub ignores the database index: two
- * environments sharing one Redis would otherwise hear each other's events (and a stage restored from a
- * production copy has the same tenant ids).
+ * `GRAPHQL_PUBSUB_CHANNEL_PREFIX` when set. Otherwise derived from what makes an installation itself — the database
+ * it connects to and its public API address — because Redis pub/sub ignores the database index: two environments
+ * sharing one Redis would otherwise hear each other's events (and a stage restored from a production copy has the
+ * same tenant ids). The database part is the platform's resolved connection settings, not the raw environment, so
+ * replicas that spell the same database differently (`DB_PORT` unset, or set to the default) share their channels.
+ *
+ * @param connection The resolved database connection settings.
+ * @param apiBaseUrl The public API address.
  */
-export function graphqlPubSubChannelPrefix(): string {
+export function graphqlPubSubChannelPrefix(
+	connection: Readonly<Record<string, unknown>> = dbTypeOrmConnectionConfig as unknown as Record<string, unknown>,
+	apiBaseUrl: string | undefined = process.env['API_BASE_URL']
+): string {
 	const explicit = process.env['GRAPHQL_PUBSUB_CHANNEL_PREFIX']?.trim();
 	if (explicit) {
 		return explicit.endsWith(':') ? explicit : `${explicit}:`;
 	}
 
-	const identity = ['DB_TYPE', 'DB_HOST', 'DB_PORT', 'DB_NAME', 'DB_PATH', 'API_BASE_URL']
-		.map((name) => `${name}=${process.env[name] ?? ''}`)
-		.join('|');
+	const port = Number(connection?.['port']);
+	const identity = [
+		`type=${String(connection?.['type'] ?? '')}`,
+		`host=${String(connection?.['host'] ?? '').toLowerCase()}`,
+		`port=${Number.isFinite(port) && port > 0 ? port : ''}`,
+		`database=${String(connection?.['database'] ?? '')}`,
+		`api=${String(apiBaseUrl ?? '').replace(/\/+$/, '')}`
+	].join('|');
 	const digest = createHash('sha256').update(identity).digest('hex').slice(0, 12);
 
 	return `gauzy:graphql:${digest}:`;

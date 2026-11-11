@@ -165,6 +165,7 @@ import {
 	EventOutboxInlineDispatchModule,
 	isEventOutboxInlineDispatchEnabled
 } from '../event-outbox/event-outbox-inline-dispatch';
+import { WebhookInlineRetryModule } from '../webhook/webhook-inline-retry';
 import { WebhookMaintenanceModule } from '../webhook/webhook-maintenance.module';
 import { OperationModule } from '../operation/operation.module';
 import { WebhookModule } from '../webhook/webhook.module';
@@ -697,7 +698,9 @@ if (environment.EVER_TEAMS_CLIENT_IP_SECRET?.trim() && !clientIpSecretOf(environ
 			  // single-container or dev setup delivers subscriptions, search updates and webhooks instead of
 			  // appending events nobody hands on. `EVENT_OUTBOX_INLINE_DISPATCH=false` turns it off.
 			  isEventOutboxInlineDispatchEnabled()
-			  ? [EventOutboxInlineDispatchModule]
+			  ? // The outbox dispatch, and the retries of the webhook deliveries it makes (the queue's per-minute
+			    // `WebhookMaintenanceModule` job, asked by an in-process sweep instead).
+			    [EventOutboxInlineDispatchModule, WebhookInlineRetryModule]
 			  : []),
 		//Token cleanup scheduler is disabled by default; enable when ready
 		TokenModule.forRoot({ enableScheduler: false }),

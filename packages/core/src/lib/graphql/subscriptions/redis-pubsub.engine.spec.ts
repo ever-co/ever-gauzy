@@ -291,14 +291,27 @@ describe('switching it on', () => {
 
 	it('names its channels after the installation, so two environments on one Redis stay apart', () => {
 		delete process.env['GRAPHQL_PUBSUB_CHANNEL_PREFIX'];
-		process.env['DB_NAME'] = 'gauzy';
-		process.env['API_BASE_URL'] = 'https://api.stage.example';
-		const stage = graphqlPubSubChannelPrefix();
-		process.env['API_BASE_URL'] = 'https://api.example';
-		const prod = graphqlPubSubChannelPrefix();
+		const db = { type: 'postgres', host: 'db.internal', port: 5432, database: 'gauzy' };
+		const stage = graphqlPubSubChannelPrefix(db, 'https://api.stage.example');
+		const prod = graphqlPubSubChannelPrefix(db, 'https://api.example');
 
 		expect(stage).toMatch(/^gauzy:graphql:[0-9a-f]{12}:$/);
 		expect(stage).not.toBe(prod);
+		expect(graphqlPubSubChannelPrefix({ ...db, database: 'gauzy_stage' }, 'https://api.example')).not.toBe(prod);
+	});
+
+	it('gives replicas of one installation the same channels, however they spell the same settings', () => {
+		delete process.env['GRAPHQL_PUBSUB_CHANNEL_PREFIX'];
+		const resolved = { type: 'postgres', host: 'db.internal', port: 5432, database: 'gauzy' };
+
+		expect(graphqlPubSubChannelPrefix({ ...resolved, port: '5432' }, 'https://api.example/')).toBe(
+			graphqlPubSubChannelPrefix(resolved, 'https://api.example')
+		);
+		expect(graphqlPubSubChannelPrefix({ ...resolved, host: 'DB.internal' }, 'https://api.example')).toBe(
+			graphqlPubSubChannelPrefix(resolved, 'https://api.example')
+		);
+		// The default settings resolve to one value, so an unset DB_PORT and DB_PORT=5432 hash alike.
+		expect(graphqlPubSubChannelPrefix()).toBe(graphqlPubSubChannelPrefix());
 
 		process.env['GRAPHQL_PUBSUB_CHANNEL_PREFIX'] = 'teams-dev';
 		expect(graphqlPubSubChannelPrefix()).toBe('teams-dev:');
