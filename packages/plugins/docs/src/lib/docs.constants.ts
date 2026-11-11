@@ -73,6 +73,28 @@ export const DOCS_TEAM_NOT_MEMBER = 'DOCS_TEAM_NOT_MEMBER';
 export const DOCS_MARKDOWN_AMBIGUOUS = 'DOCS_MARKDOWN_AMBIGUOUS';
 /** The same person is not told twice of the same thing on one page within this window. */
 export const DOCS_NOTIFICATION_DEDUPE_MINUTES = 10;
+/** 404: importing exported workspaces is off on this installation (`GAUZY_DOCS_IMPORT_ENABLED`). */
+export const DOCS_IMPORT_DISABLED = 'DOCS_IMPORT_DISABLED';
+/** 400: an import request carries no zip file (multipart field `file`). */
+export const DOCS_IMPORT_FILE_REQUIRED = 'DOCS_IMPORT_FILE_REQUIRED';
+/** 413: the zip, or what it unpacks to, is over the import's limits. */
+export const DOCS_IMPORT_TOO_LARGE = 'DOCS_IMPORT_TOO_LARGE';
+/** 400: the uploaded file is not a zip archive. */
+export const DOCS_IMPORT_NOT_A_ZIP = 'DOCS_IMPORT_NOT_A_ZIP';
+/** 413: the zip holds more entries than the import accepts. */
+export const DOCS_IMPORT_TOO_MANY_ENTRIES = 'DOCS_IMPORT_TOO_MANY_ENTRIES';
+/** 400: an entry of the zip names a path outside the archive (absolute, drive letter, NUL, `..`). */
+export const DOCS_IMPORT_UNSAFE_PATH = 'DOCS_IMPORT_UNSAFE_PATH';
+/** 400: the zip holds a symbolic link. */
+export const DOCS_IMPORT_SYMLINK = 'DOCS_IMPORT_SYMLINK';
+/** 413: an entry inflates far past its compressed size, or past the size it declares (a zip bomb). */
+export const DOCS_IMPORT_ZIP_BOMB = 'DOCS_IMPORT_ZIP_BOMB';
+/** 400: the zip holds no page file — it is not an exported workspace. */
+export const DOCS_IMPORT_NO_PAGES = 'DOCS_IMPORT_NO_PAGES';
+/** 404: PDF export is off on this installation (`GAUZY_DOCS_PDF_EXPORT_ENABLED`). */
+export const DOCS_PDF_EXPORT_DISABLED = 'DOCS_PDF_EXPORT_DISABLED';
+/** 413: a subtree PDF would hold more pages than `GAUZY_DOCS_PDF_MAX_PAGES`. */
+export const DOCS_PDF_TOO_MANY_PAGES = 'DOCS_PDF_TOO_MANY_PAGES';
 /** The submitted `contentBinary` exceeds `GAUZY_DOCS_MAX_BINARY_BYTES` (`10` §7.1 P6). */
 export const DOCS_CONTENT_BINARY_TOO_LARGE = 'DOCS_CONTENT_BINARY_TOO_LARGE';
 
@@ -142,12 +164,28 @@ export const ENV_GAUZY_DOCS_INBOUND_EMAIL_ENABLED = 'GAUZY_DOCS_INBOUND_EMAIL_EN
 export const ENV_GAUZY_DOCS_INBOUND_WEBHOOK_SECRET = 'GAUZY_DOCS_INBOUND_WEBHOOK_SECRET';
 export const ENV_GAUZY_DOCS_INBOUND_MAX_MESSAGE_BYTES = 'GAUZY_DOCS_INBOUND_MAX_MESSAGE_BYTES';
 export const ENV_GAUZY_DOCS_INBOUND_DOMAIN = 'GAUZY_DOCS_INBOUND_DOMAIN';
+/** `true` switches on the import of exported workspaces (a Markdown vault or an HTML export zip). Off by default. */
+export const ENV_GAUZY_DOCS_IMPORT_ENABLED = 'GAUZY_DOCS_IMPORT_ENABLED';
+/** The largest zip an import accepts, in bytes. */
+export const ENV_GAUZY_DOCS_IMPORT_MAX_ZIP_BYTES = 'GAUZY_DOCS_IMPORT_MAX_ZIP_BYTES';
+/** The most entries one import zip may hold. */
+export const ENV_GAUZY_DOCS_IMPORT_MAX_ENTRIES = 'GAUZY_DOCS_IMPORT_MAX_ENTRIES';
+/** The most bytes one import zip may unpack to. */
+export const ENV_GAUZY_DOCS_IMPORT_MAX_UNCOMPRESSED_BYTES = 'GAUZY_DOCS_IMPORT_MAX_UNCOMPRESSED_BYTES';
+/** `true` switches on the PDF export of a page or a subtree. Off by default. */
+export const ENV_GAUZY_DOCS_PDF_EXPORT_ENABLED = 'GAUZY_DOCS_PDF_EXPORT_ENABLED';
+/** The most pages one subtree PDF export takes. */
+export const ENV_GAUZY_DOCS_PDF_MAX_PAGES = 'GAUZY_DOCS_PDF_MAX_PAGES';
 
 /**
  * Defaults for the environment variables above.
  */
 export const DEFAULT_DOCS_MAX_FILE_SIZE = 52428800; // 50 MB
 export const DEFAULT_DOCS_MAX_BINARY_BYTES = 10485760; // 10 MB
+export const DEFAULT_DOCS_IMPORT_MAX_ZIP_BYTES = 104857600; // 100 MiB
+export const DEFAULT_DOCS_IMPORT_MAX_ENTRIES = 5000;
+export const DEFAULT_DOCS_IMPORT_MAX_UNCOMPRESSED_BYTES = 1073741824; // 1 GiB
+export const DEFAULT_DOCS_PDF_MAX_PAGES = 200;
 export const DEFAULT_DOCS_EMBEDDING_MODEL = 'text-embedding-3-small';
 export const DEFAULT_DOCS_VERSION_DEBOUNCE_MINUTES = 10;
 export const DEFAULT_DOCS_QUEUE_CONCURRENCY = 2;
@@ -322,3 +360,24 @@ export const DOCS_INBOUND_DNS_TIMEOUT_MS = 5_000;
  * comparison ambiguous, which is exactly what routing depends on here.
  */
 export const DOCS_INBOUND_LOCAL_PART_PATTERN = /^[a-z0-9]([a-z0-9._-]{0,62}[a-z0-9])?$/;
+
+/**
+ * Import from exported workspaces (`docs-import-export` plan §5).
+ *
+ * `DOCS_IMPORT_STALE_MINUTES`: a QUEUED or RUNNING import that has not moved for this long is resumed (its reader or
+ * the startup sweep re-enqueues it); `DOCS_IMPORT_MAX_RUNS`: the runs an import gets before it stays FAILED;
+ * `DOCS_IMPORT_REPORT_MAX_ITEMS`: the items the report keeps (the counts are always complete);
+ * `DOCS_IMPORT_MAX_PAGE_BYTES`: the text one page file may hold; `DOCS_IMPORT_PROGRESS_EVERY`: progress is saved after
+ * this many items; `DOCS_IMPORT_MAX_RATIO`: the inflation ratio past which an entry above
+ * `DOCS_IMPORT_RATIO_MIN_BYTES` is a zip bomb; `DOCS_IMPORT_LIST_LIMIT`: the imports `GET /imports` lists.
+ */
+export const DOCS_IMPORT_STALE_MINUTES = 10;
+export const DOCS_IMPORT_MAX_RUNS = 3;
+export const DOCS_IMPORT_REPORT_MAX_ITEMS = 5000;
+export const DOCS_IMPORT_MAX_PAGE_BYTES = 2 * 1024 * 1024;
+export const DOCS_IMPORT_PROGRESS_EVERY = 25;
+export const DOCS_IMPORT_MAX_RATIO = 200;
+export const DOCS_IMPORT_RATIO_MIN_BYTES = 1024 * 1024;
+export const DOCS_IMPORT_LIST_LIMIT = 10;
+/** The `externalSource` prefix of every document an import creates: `docs-import:<importId>`. */
+export const DOCS_IMPORT_EXTERNAL_SOURCE_PREFIX = 'docs-import:';
