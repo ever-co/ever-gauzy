@@ -30,17 +30,17 @@ export interface ILinkPreviewData {
  * @param pageUrl The URL the page was read from (relative URLs resolve against it).
  */
 export function parsePreviewHead(html: string, pageUrl: string): ILinkPreviewData | null {
-	const head = headOf(html);
+	const head = scanHead(html);
 	const meta = new Map<string, string>();
-	for (const tag of head.match(META_TAG) ?? []) {
-		const attributes = attributesOf(tag);
-		const key = (attributes.get('property') ?? attributes.get('name') ?? attributes.get('itemprop') ?? '').trim().toLowerCase();
-		const content = attributes.get('content');
+	for (const tag of head.tags) {
+		if (tag.name !== 'meta') continue;
+		const key = (tag.attributes.get('property') ?? tag.attributes.get('name') ?? tag.attributes.get('itemprop') ?? '').trim().toLowerCase();
+		const content = tag.attributes.get('content');
 		// The first of each wins (a page lists its main image first).
 		if (key && content !== undefined && !meta.has(key)) meta.set(key, content);
 	}
 	const first = (...keys: string[]) => keys.map((key) => meta.get(key)).find((value) => value !== undefined && value.trim() !== '');
-	const titleTag = /<title\b[^>]*>([\s\S]*?)<\/title\s*>/i.exec(head)?.[1];
+	const titleTag = head.title;
 
 	const data: ILinkPreviewData = {};
 	const title = cleanText(first('og:title', 'twitter:title') ?? titleTag, CHAT_LINK_PREVIEW_LIMITS.title);
@@ -61,67 +61,130 @@ export function parsePreviewHead(html: string, pageUrl: string): ILinkPreviewDat
 			data.imageHeight = height;
 		}
 	}
-	const icon = iconOf(head, pageUrl);
+	const icon = iconOf(head.tags, pageUrl);
 	if (icon) data.icon = icon;
 	if (!data.title && !data.description && !data.image) return null;
 	return data;
 }
 
-/**
- * Tags read whole: up to the `>` that closes the tag, never one inside a quoted attribute value
- * (`<meta content="Forecast > sunny">`).
- */
-const META_TAG = /<meta\b(?:[^>"']|"[^"]*"|'[^']*')*>/gi;
-const LINK_TAG = /<link\b(?:[^>"']|"[^"]*"|'[^']*')*>/gi;
-/** Where a comment, or an element whose content is not markup, starts: what it holds is never read as a tag. */
-const INERT_START = /<!--|<(script|style|template|noscript|textarea|xmp)\b(?:[^>"']|"[^"]*"|'[^']*')*>/gi;
-/** The same, the title included (its text may hold anything, `</head>` too). */
-const INERT_OR_TITLE_START = /<!--|<(script|style|template|noscript|textarea|xmp|title)\b(?:[^>"']|"[^"]*"|'[^']*')*>/gi;
-/** Where the `<head>` of a page ends: its closing tag, or the start of the body. */
-const HEAD_END = /<\/head\s*>|<body[\s>/]/i;
-
-/**
- * The page with its comments and raw-text elements (scripts, styles, ...) taken out, read in document order, so the
- * text inside them is never read as a tag, whichever of them comes first (a `<!--` inside a script, a `</script>`
- * inside a comment). One that is not closed yet (a page read only so far) is taken out to the end.
- */
-function withoutInert(html: string, withTitle = false): string {
-	const text = String(html ?? '');
-	const lower = text.toLowerCase();
-	const start = new RegExp((withTitle ? INERT_OR_TITLE_START : INERT_START).source, 'gi');
-	let out = '';
-	let at = 0;
-	let match: RegExpExecArray | null;
-	while ((match = start.exec(text))) {
-		out += `${text.slice(at, match.index)} `;
-		let end: number;
-		if (match[0] === '<!--') {
-			const close = lower.indexOf('-->', match.index + 4);
-			end = close < 0 ? text.length : close + 3;
-		} else {
-			const close = lower.indexOf(`</${match[1].toLowerCase()}`, start.lastIndex);
-			const after = close < 0 ? -1 : lower.indexOf('>', close);
-			end = after < 0 ? text.length : after + 1;
-		}
-		at = end;
-		start.lastIndex = end;
-	}
-	return out + text.slice(at);
+/** One start tag of a page's head, its attributes read. */
+interface IHeadTag {
+	name: string;
+	attributes: Map<string, string>;
 }
 
-/** The head of a page: up to the end of `<head>` or the start of `<body>`, without scripts, styles and comments. */
-function headOf(html: string): string {
-	const text = withoutInert(html);
-	const end = text.search(HEAD_END);
-	return end >= 0 ? text.slice(0, end) : text;
+/** What the head of a page holds, as far as it was read: its start tags, its title's text, and whether it ended. */
+export interface IHeadScan {
+	tags: IHeadTag[];
+	title?: string;
+	ended: boolean;
+}
+
+/** Elements whose content is not markup: what they hold is never read as a tag (the title is read, as its text). */
+const RAW_TEXT = new Set(['script', 'style', 'template', 'noscript', 'textarea', 'xmp', 'title']);
+/** The most tags of a head that are read (a real head has a few dozen). */
+const MAX_HEAD_TAGS = 2000;
+
+/**
+ * Reads the head of a page in one pass, in document order, as a browser's tokenizer would for what a preview needs:
+ * a comment, a raw-text element (script, style, ...) and a quoted attribute value are skipped whole, so a `</head>`,
+ * a `<body>` or a tag written inside one of them is never read as one. The head ends at a real `</head>` or `<body>`.
+ *
+ * Linear in the length of the page: every character is looked at a bounded number of times, and a comment, element or
+ * tag that is not closed yet (a page read only so far) ends the scan there, with nothing after it read. No regular
+ * expression is run over the page itself, so no page can make the scan backtrack.
+ */
+export function scanHead(html: string): IHeadScan {
+	const text = String(html ?? '');
+	const lower = text.toLowerCase();
+	const tags: IHeadTag[] = [];
+	let title: string | undefined;
+	let at = 0;
+	while (at < text.length) {
+		const open = text.indexOf('<', at);
+		if (open < 0) break;
+		if (lower.startsWith('<!--', open)) {
+			const close = lower.indexOf('-->', open + 4);
+			if (close < 0) break;
+			at = close + 3;
+			continue;
+		}
+		if (lower.startsWith('</', open)) {
+			const name = tagNameAt(lower, open + 2);
+			if (name === 'head') return { tags, title, ended: true };
+			if (!name) {
+				at = open + 1;
+				continue;
+			}
+			const close = lower.indexOf('>', open + 2 + name.length);
+			if (close < 0) break;
+			at = close + 1;
+			continue;
+		}
+		const name = tagNameAt(lower, open + 1);
+		if (!name) {
+			// A `<` that opens no tag is text.
+			at = open + 1;
+			continue;
+		}
+		if (name === 'body') return { tags, title, ended: true };
+		const end = startTagEnd(text, open + 1 + name.length);
+		if (end < 0) break;
+		at = end + 1;
+		if (RAW_TEXT.has(name)) {
+			const close = lower.indexOf(`</${name}`, at);
+			if (close < 0) break;
+			if (name === 'title' && title === undefined) title = text.slice(at, close);
+			const after = lower.indexOf('>', close);
+			if (after < 0) break;
+			at = after + 1;
+			continue;
+		}
+		if (tags.length < MAX_HEAD_TAGS) tags.push({ name, attributes: attributesOf(text.slice(open, end + 1)) });
+	}
+	return { tags, title, ended: false };
 }
 
 /**
  * Whether the start of a page read so far holds the end of its head: a real `</head>` or `<body>`, not one written
- * inside a script, a style, a comment or the title (which may hold any text). The fetch stops reading there.
+ * inside a script, a style, a comment, the title or a quoted attribute value. The fetch stops reading there.
  */
 export function headEnded(html: string): boolean {
-	return HEAD_END.test(withoutInert(html, true));
+	return scanHead(html).ended;
+}
+
+/** The tag name (lower case) that starts at `at`, when a delimiter follows it (space, `/`, `>`, or the end); else null. */
+function tagNameAt(lower: string, at: number): string | null {
+	const first = lower.charCodeAt(at);
+	if (!(first >= 97 && first <= 122)) return null;
+	let end = at + 1;
+	while (end < lower.length) {
+		const code = lower.charCodeAt(end);
+		const isNameChar = (code >= 97 && code <= 122) || (code >= 48 && code <= 57) || code === 45 || code === 58;
+		if (!isNameChar) break;
+		end++;
+	}
+	if (end < lower.length) {
+		const next = lower[end];
+		if (next !== '>' && next !== '/' && next.trim() !== '') return null;
+	}
+	return lower.slice(at, end);
+}
+
+/** The index of the `>` that closes a start tag whose attributes begin at `from` (quoted values skipped), or -1. */
+function startTagEnd(text: string, from: number): number {
+	let quote: string | null = null;
+	for (let index = from; index < text.length; index++) {
+		const char = text[index];
+		if (quote) {
+			if (char === quote) quote = null;
+		} else if (char === '"' || char === "'") {
+			quote = char;
+		} else if (char === '>') {
+			return index;
+		}
+	}
+	return -1;
 }
 
 /** The attributes of one start tag, names lower-cased, values as written (decoded once, where they are used). */
@@ -138,10 +201,11 @@ function attributesOf(tag: string): Map<string, string> {
 }
 
 /** The page's icon: the first `<link rel="icon">` (or `shortcut icon`), else its touch icon. */
-function iconOf(head: string, pageUrl: string): string | undefined {
+function iconOf(tags: IHeadTag[], pageUrl: string): string | undefined {
 	let touch: string | undefined;
-	for (const tag of head.match(LINK_TAG) ?? []) {
-		const attributes = attributesOf(tag);
+	for (const tag of tags) {
+		if (tag.name !== 'link') continue;
+		const attributes = tag.attributes;
 		const rel = (attributes.get('rel') ?? '').toLowerCase().split(/\s+/);
 		const href = attributes.get('href');
 		if (!href) continue;
@@ -161,10 +225,12 @@ const UNSAFE_CHARACTERS = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F-\u009F\
 /** Plain text: decoded, without markup or unsafe characters, whitespace collapsed, at most `limit` characters. */
 export function cleanText(value: string | undefined, limit: number): string | undefined {
 	if (value === undefined || value === null) return undefined;
-	let text = decodeEntities(String(value));
+	// Only as much of the value as can make up the limit (character references and markup included): the rest is never
+	// read, so no value can make the cleaning below slow.
+	let text = decodeEntities(String(value).slice(0, limit * 8));
 	// Markup in a title or a description is text a page should not have put there: dropped, never kept as markup. A `<`
 	// left over could open a tag where the text lands next to other markup, so it goes too; a lone `>` cannot, and stays.
-	text = text.replace(/<[^>]*>/g, ' ').replace(/</g, '');
+	text = withoutMarkup(text);
 	text = text.replace(UNSAFE_CHARACTERS, '').replace(/[\s\u2028\u2029\u00A0]+/g, ' ').trim();
 	if (!text) return undefined;
 	if (text.length <= limit) return text;
@@ -181,7 +247,7 @@ export function cleanText(value: string | undefined, limit: number): string | un
  */
 export function cleanUrl(value: string | undefined, pageUrl: string): string | undefined {
 	if (value === undefined || value === null) return undefined;
-	const text = decodeEntities(String(value)).replace(UNSAFE_CHARACTERS, '').trim();
+	const text = decodeEntities(String(value).slice(0, CHAT_LINK_PREVIEW_LIMITS.url * 4)).replace(UNSAFE_CHARACTERS, '').trim();
 	if (!text) return undefined;
 	let url: URL;
 	try {
@@ -194,6 +260,25 @@ export function cleanUrl(value: string | undefined, pageUrl: string): string | u
 	if (isIP(host) ? !isPublicAddress(host) : isRefusedHostname(host)) return undefined;
 	const href = url.href;
 	return href.length <= CHAT_LINK_PREVIEW_LIMITS.url ? href : undefined;
+}
+
+/**
+ * Text without anything tag-like: each `<` up to the next `>` becomes a space, and a `<` with no `>` after it is
+ * dropped. One pass, linear in the length.
+ */
+function withoutMarkup(text: string): string {
+	let out = '';
+	let at = 0;
+	while (at < text.length) {
+		const open = text.indexOf('<', at);
+		if (open < 0) return out + text.slice(at);
+		out += text.slice(at, open);
+		const close = text.indexOf('>', open + 1);
+		if (close < 0) return out + text.slice(open + 1).split('<').join('');
+		out += ' ';
+		at = close + 1;
+	}
+	return out;
 }
 
 /** A positive pixel size no larger than the limit, or undefined. */

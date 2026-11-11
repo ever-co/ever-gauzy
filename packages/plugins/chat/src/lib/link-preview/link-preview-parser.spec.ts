@@ -1,5 +1,5 @@
 // cspell:ignore Lineone
-import { cleanText, cleanUrl, decodeEntities, decodePage, headEnded, parsePreviewHead } from './link-preview-parser';
+import { cleanText, cleanUrl, decodeEntities, decodePage, headEnded, parsePreviewHead, scanHead } from './link-preview-parser';
 
 const PAGE = 'https://www.example.com/articles/one?ref=chat';
 const char = (code: number) => String.fromCodePoint(code);
@@ -134,6 +134,28 @@ describe('headEnded', () => {
 		// Read only so far: a script not closed yet holds everything after it.
 		expect(headEnded('<head><script>var a = "</head>')).toBe(false);
 		expect(headEnded('<head><script>var a = 1;</script></head>')).toBe(true);
+		// Nor one inside a quoted attribute value.
+		expect(headEnded('<head><meta name="x" content="</head><body> here">')).toBe(false);
+		expect(headEnded("<head><link title='<body>' href='/a'></head>")).toBe(true);
+	});
+
+	it('reads any page in time linear in its length: no input makes it backtrack', () => {
+		const half = 256 * 1024;
+		for (const unit of ['<script ', '<meta content="', "<link title='", '<', '<!--', '<a', '</', '<title>', '<meta a="b" ']) {
+			const page = unit.repeat(Math.ceil(half / unit.length));
+			const started = Date.now();
+			scanHead(page);
+			headEnded(page);
+			parsePreviewHead(page, PAGE);
+			expect(Date.now() - started).toBeLessThan(1000);
+		}
+	});
+
+	it('cleans a huge value in time linear in its length', () => {
+		const started = Date.now();
+		expect(cleanText('<'.repeat(512 * 1024), 1000)).toBeUndefined();
+		cleanText(`${'<a'.repeat(100000)}x`, 300);
+		expect(Date.now() - started).toBeLessThan(1000);
 	});
 });
 

@@ -242,6 +242,31 @@ describe('ChatLinkPreviewService: inline (no queue root)', () => {
 		expect(fetcher).toHaveBeenCalledTimes(CHAT_LINK_PREVIEW_FETCHES_PER_MINUTE + 1);
 	});
 
+	it('spends the budget only on a fetch it starts: not on an ask that joins one, nor one answered "pending"', async () => {
+		let release: () => void = () => undefined;
+		const gate = new Promise<void>((resolve) => (release = resolve));
+		const { service, fetcher } = setup({
+			fetcher: async (url) => {
+				if (url.includes('/hung/')) return new Promise(() => undefined);
+				await gate;
+				return { ok: true, url, contentType: 'text/html', charset: null, body: PAGE };
+			}
+		});
+		// The same link asked for many times while its one fetch runs: they all wait for it.
+		const joined = Array.from({ length: CHAT_LINK_PREVIEW_FETCHES_PER_MINUTE + 10 }, () => service.preview(caller(), LINK));
+		await settle();
+		// Every slot taken: more links answer "pending" without starting (or paying for) a fetch.
+		for (let n = 0; n < 3; n++) void service.preview(caller(), `https://www.example.com/hung/${n}`);
+		await settle();
+		for (let n = 0; n < CHAT_LINK_PREVIEW_FETCHES_PER_MINUTE + 10; n++) {
+			await expect(service.preview(caller(), `https://www.example.com/full/${n}`)).resolves.toMatchObject({ status: ChatLinkPreviewStatusEnum.PENDING });
+		}
+		release();
+		const answers = await Promise.all(joined);
+		expect(answers.every((answer) => answer.status === ChatLinkPreviewStatusEnum.READY)).toBe(true);
+		expect(fetcher).toHaveBeenCalledTimes(4);
+	});
+
 	it('answers only the preview fields of what it stored', async () => {
 		const { service, repo } = setup();
 		repo.rows.push({

@@ -73,6 +73,11 @@ function route(request: IncomingMessage, response: ServerResponse): void {
 		response.writeHead(200, { 'content-type': 'text/html' });
 		response.write('<html><head><script>var a = "</head><body>";</script><!-- <body> -->');
 		setTimeout(() => response.end('<meta property="og:title" content="Late"></head><body>body</body></html>'), 100);
+	} else if (path === '/quoted-split') {
+		// A `</head><body>` inside a quoted attribute value arrives first; the real metadata a moment later.
+		response.writeHead(200, { 'content-type': 'text/html' });
+		response.write('<html><head><meta name="x" content="</head><body> here">');
+		setTimeout(() => response.end('<meta property="og:title" content="Quoted late"></head><body>body</body></html>'), 100);
 	} else if (path === '/hang') {
 		// Never answers.
 	} else if (path === '/drip') {
@@ -174,6 +179,8 @@ describe('fetchPreviewPage: what it reads', () => {
 		const outcome = await fetchFrom(`${base}/script-split`, resolverOf(SITE));
 		expect(outcome.ok).toBe(true);
 		expect(outcome.ok && outcome.body.toString()).toContain('content="Late"');
+		const quoted = await fetchFrom(`${base}/quoted-split`, resolverOf(SITE));
+		expect(quoted.ok && quoted.body.toString()).toContain('content="Quoted late"');
 	});
 
 	it('refuses an answer that is not HTML, in an encoding it does not read, or not a success', async () => {

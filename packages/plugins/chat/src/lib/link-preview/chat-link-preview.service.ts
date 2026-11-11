@@ -85,6 +85,8 @@ export class ChatLinkPreviewService {
 	private readonly inFlight = new Map<string, Promise<IChatLinkPreview>>();
 	/** When each person (tenant and user) last started fetches, for the per-person budget. */
 	private readonly fetchesStarted = new Map<string, number[]>();
+	/** When a fetch of each tenant and link was last queued (refreshes are not queued again within the pending time). */
+	private readonly queuedAt = new Map<string, number>();
 	private queueFailureReported = false;
 
 	constructor(
@@ -120,20 +122,18 @@ export class ChatLinkPreviewService {
 		if (action === 'wait') return answer(href, ChatLinkPreviewStatusEnum.PENDING);
 		if (row && action === 'refresh') {
 			// The stale preview now, the new one on the next ask (unless the caller's budget is spent: then only the stale one).
-			if (this.spendFetch(caller)) void this.dispatch(tenantId, href, false).catch(() => undefined);
+			void this.dispatch(caller, href, false).catch(() => undefined);
 			return fromRow(href, row);
 		}
-		if (!this.spendFetch(caller)) {
-			throw new HttpException('Too many link previews were asked for; ask again in a minute.', HttpStatus.TOO_MANY_REQUESTS);
-		}
-		return this.dispatch(tenantId, href, true);
+		return this.dispatch(caller, href, true);
 	}
 
 	/**
 	 * Takes one fetch from the caller's budget for the minute, or answers false when it is spent. Only a fetch is counted
 	 * (a link the cache answers costs nothing), and the budget holds whether or not the platform's rate limiter is on
 	 * (`THROTTLE_ENABLED`): each fetch is an outbound request, so one person must not start them without bound. Kept per
-	 * process, like the inline fetches.
+	 * process, like the inline fetches. Spent when a fetch is admitted (queued, or started inline), never by an ask that
+	 * joins a fetch already running, waits for one, or is answered `pending` because too many run.
 	 */
 	private spendFetch(caller: IChatCaller): boolean {
 		const key = `${caller.tenantId}:${caller.userId}`;
@@ -189,9 +189,21 @@ export class ChatLinkPreviewService {
 		return { ...(data ?? {}), url: href, status, fetchedAt };
 	}
 
-	/** Puts a fetch on the queue, or runs it here; answers what the asker gets now. */
-	private async dispatch(tenantId: ID, href: string, waitInline: boolean): Promise<IChatLinkPreview> {
+	/**
+	 * Puts a fetch on the queue, or runs it here; answers what the asker gets now. `waitInline`: the asker has no preview
+	 * to be served meanwhile (a first fetch), so an inline fetch is waited for and a spent budget answers 429; otherwise
+	 * (a stale preview being served) the fetch runs behind it, or not at all when the budget is spent.
+	 *
+	 * @throws HttpException 429 when a first fetch would be admitted and the caller's budget is spent.
+	 */
+	private async dispatch(caller: IChatCaller, href: string, waitInline: boolean): Promise<IChatLinkPreview> {
+		const tenantId = caller.tenantId;
+		const key = `${tenantId}:${previewUrlHash(href)}`;
 		if (this.options.queued && this.queue) {
+			// A refresh queued a moment ago is not queued again (BullMQ would ignore the job id anyway): the asks of a
+			// stale preview do not spend the budget, nor a call to the queue, for every reader.
+			if (!waitInline && this.recentlyQueued(key)) return answer(href, ChatLinkPreviewStatusEnum.PENDING);
+			if (!this.admit(caller, waitInline)) return answer(href, ChatLinkPreviewStatusEnum.PENDING);
 			try {
 				if (waitInline) await this.store(tenantId, href, { status: ChatLinkPreviewStatusEnum.PENDING });
 				await this.queue.enqueue<IChatLinkPreviewFetchJob>({
@@ -207,31 +219,56 @@ export class ChatLinkPreviewService {
 						removeOnFail: true
 					}
 				});
+				this.queuedAt.set(key, Date.now());
 				return answer(href, ChatLinkPreviewStatusEnum.PENDING);
 			} catch (error) {
 				if (!this.queueFailureReported) {
 					this.queueFailureReported = true;
 					this.logger.warn(`The link preview queue refused a fetch; fetching in this process instead: ${(error as Error)?.message}`);
 				}
+				// Admitted (and spent) already: the inline fetch below is the same fetch.
+				return this.inline(caller, href, waitInline, true);
 			}
 		}
-		const run = this.inline(tenantId, href);
-		if (!waitInline) {
-			void run.catch(() => undefined);
-			return answer(href, ChatLinkPreviewStatusEnum.PENDING);
-		}
-		return run;
+		return this.inline(caller, href, waitInline, false);
 	}
 
-	/** An inline fetch: joined when one for the same tenant and link runs, `pending` when too many run already. */
-	private inline(tenantId: ID, href: string): Promise<IChatLinkPreview> {
-		const key = `${tenantId}:${previewUrlHash(href)}`;
+	/**
+	 * An inline fetch: joined when one for the same tenant and link runs, `pending` when too many run already, and only
+	 * then admitted against the caller's budget.
+	 */
+	private inline(caller: IChatCaller, href: string, waitInline: boolean, admitted: boolean): Promise<IChatLinkPreview> {
+		const pending = () => Promise.resolve(answer(href, ChatLinkPreviewStatusEnum.PENDING));
+		const key = `${caller.tenantId}:${previewUrlHash(href)}`;
 		const running = this.inFlight.get(key);
-		if (running) return running;
-		if (this.inFlight.size >= CHAT_LINK_PREVIEW_INLINE_CONCURRENCY) return Promise.resolve(answer(href, ChatLinkPreviewStatusEnum.PENDING));
-		const run = this.refresh(tenantId, href).finally(() => this.inFlight.delete(key));
+		if (running) return waitInline ? running : pending();
+		if (this.inFlight.size >= CHAT_LINK_PREVIEW_INLINE_CONCURRENCY) return pending();
+		if (!admitted && !this.admit(caller, waitInline)) return pending();
+		const run = this.refresh(caller.tenantId, href).finally(() => this.inFlight.delete(key));
 		this.inFlight.set(key, run);
-		return run;
+		if (waitInline) return run;
+		void run.catch(() => undefined);
+		return pending();
+	}
+
+	/**
+	 * Admits a fetch against the caller's budget: true when it may start. A first fetch over the budget is refused with
+	 * 429; a refresh over it is simply not made (the stale preview is served).
+	 */
+	private admit(caller: IChatCaller, waitInline: boolean): boolean {
+		if (this.spendFetch(caller)) return true;
+		if (waitInline) throw new HttpException('Too many link previews were asked for; ask again in a minute.', HttpStatus.TOO_MANY_REQUESTS);
+		return false;
+	}
+
+	/** Whether a fetch of this tenant and link was queued within the pending time (and forgets the old ones). */
+	private recentlyQueued(key: string): boolean {
+		const now = Date.now();
+		const at = this.queuedAt.get(key);
+		if (this.queuedAt.size > 10_000) {
+			for (const [queued, when] of this.queuedAt) if (now - when >= CHAT_LINK_PREVIEW_PENDING_TTL_MS) this.queuedAt.delete(queued);
+		}
+		return at !== undefined && now - at < CHAT_LINK_PREVIEW_PENDING_TTL_MS;
 	}
 
 	/** Writes the row of a tenant and link: updated when it is there, created when not (a racing creation updated). */
