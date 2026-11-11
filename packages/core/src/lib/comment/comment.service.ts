@@ -766,17 +766,19 @@ export class CommentService extends TenantAwareCrudService<Comment> {
 	}
 
 	/**
-	 * Whether the caller may read every author's withdrawn comments of these governed records: a holder of
-	 * CHANGE_SELECTED_EMPLOYEE, who may act on any comment, or someone who may write each record's comments (the
-	 * permission its policy asks, and its write rule for that record where it has one: a page shared to view only does
-	 * not count), which withdraws and restores them. Anyone else reads only their own withdrawn comments, as they do on
-	 * every other record.
+	 * Whether the caller may read every author's withdrawn comments of these governed records: someone who may write
+	 * each record's comments (the permission its policy asks, and its write rule for that record where it has one: a
+	 * page shared to view only does not count), which withdraws and restores them. A holder of CHANGE_SELECTED_EMPLOYEE,
+	 * who may act on any comment, skips that check only for records whose comments the permission alone governs: a
+	 * record with a write rule of its own is decided by that rule, as the record refuses that holder's comment writes
+	 * too. Anyone else reads only their own withdrawn comments, as they do on every other record.
 	 */
 	private async mayReadWithdrawnOf(parents: ReadonlyArray<{ entity: unknown; entityId: unknown }>): Promise<boolean> {
-		if (RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
-			return true;
-		}
+		const actsOnAnyComment = RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE);
 		for (const { entity, entityId } of parents) {
+			if (actsOnAnyComment && !this._parentAccess.hasWriteRule(entity)) {
+				continue;
+			}
 			if (!(await this._parentAccess.mayWrite(entity, entityId))) {
 				return false;
 			}

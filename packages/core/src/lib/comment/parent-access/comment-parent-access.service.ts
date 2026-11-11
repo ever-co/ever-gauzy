@@ -170,13 +170,22 @@ export class CommentParentAccessService implements OnModuleInit {
 		if (!policy || !this.holdsPermission('write', entity)) {
 			return false;
 		}
-		if (!policy.findWritableParent) {
-			return true;
-		}
 		if (typeof entityId !== 'string' || !isUUID(entityId)) {
 			return false;
 		}
-		return (await policy.findWritableParent(entityId as ID)) !== null;
+		// As `assertMay('write', …)` decides it: the write rule where the policy has one, else the read rule.
+		const parent = policy.findWritableParent
+			? await policy.findWritableParent(entityId as ID)
+			: await policy.findAccessibleParent(entityId as ID);
+		return parent !== null;
+	}
+
+	/**
+	 * Whether the policy of `entity` has a write rule of its own for each record (a page shared to view only takes no
+	 * comments), beyond the permission it asks. A record type without a policy answers `false`.
+	 */
+	hasWriteRule(entity: unknown): boolean {
+		return typeof this.policyFor(entity)?.findWritableParent === 'function';
 	}
 
 	/**

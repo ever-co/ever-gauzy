@@ -230,6 +230,12 @@ describe('CommentParentAccessService write rule', () => {
 		await expect(service.mayWrite(BaseEntityEnum.OrganizationContact, CONTACT_ID)).resolves.toBe(true);
 		await expect(service.mayWrite(BaseEntityEnum.Document, 'not-a-uuid')).resolves.toBe(false);
 		await expect(service.mayWrite(BaseEntityEnum.OrganizationProject, CONTACT_ID)).resolves.toBe(false);
+		// Without a write rule the read rule decides, as for `assertMay('write', …)`: an id it cannot reach is refused.
+		await expect(service.mayWrite(BaseEntityEnum.OrganizationContact, 'not-a-uuid')).resolves.toBe(false);
+		await expect(service.mayWrite(BaseEntityEnum.OrganizationContact, '6f0c2b1e-8c4d-4a5e-9b7f-1d2e3f4a5b6c')).resolves.toBe(false);
+		expect(service.hasWriteRule(BaseEntityEnum.Document)).toBe(true);
+		expect(service.hasWriteRule(BaseEntityEnum.OrganizationContact)).toBe(false);
+		expect(service.hasWriteRule(BaseEntityEnum.OrganizationProject)).toBe(false);
 		permissions.mockReturnValue(false);
 		await expect(service.mayWrite(BaseEntityEnum.OrganizationContact, CONTACT_ID)).resolves.toBe(false);
 	});
