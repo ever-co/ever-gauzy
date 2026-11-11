@@ -1,23 +1,43 @@
-import { describeRealtimeDelivery } from './realtime-delivery';
+import { describeRealtimeDelivery, isSingleApiProcess } from './realtime-delivery';
 
 /**
  * What the status route tells a client about delivery decides whether the client stops polling. Saying
  * "prompt" where an event can reach the socket a minute late (or never) leaves a chat that looks frozen.
  */
 describe('describeRealtimeDelivery', () => {
-	it('is prompt when this process dispatches right after the append', () => {
-		expect(describeRealtimeDelivery('inline', false)).toEqual({ dispatch: 'inline', shared: false, prompt: true });
-		expect(describeRealtimeDelivery('inline', true).prompt).toBe(true);
+	it('is prompt when the pub/sub reaches every process, however the pass is asked for', () => {
+		expect(describeRealtimeDelivery('queue', true, false)).toEqual({
+			dispatch: 'queue',
+			shared: true,
+			singleProcess: false,
+			prompt: true
+		});
+		expect(describeRealtimeDelivery('inline', true, false).prompt).toBe(true);
 	});
 
-	it('is prompt through the queue only when the pub/sub reaches every process', () => {
-		expect(describeRealtimeDelivery('queue', true)).toEqual({ dispatch: 'queue', shared: true, prompt: true });
-		// The pass may run in a process that does not hold the socket.
-		expect(describeRealtimeDelivery('queue', false).prompt).toBe(false);
+	it('is prompt without a shared pub/sub only where one API process holds every socket', () => {
+		expect(describeRealtimeDelivery('inline', false, true).prompt).toBe(true);
+		expect(describeRealtimeDelivery('queue', false, true).prompt).toBe(true);
+		// Several replicas on one database: a pass run by one of them reaches its own sockets only.
+		expect(describeRealtimeDelivery('inline', false, false).prompt).toBe(false);
+		expect(describeRealtimeDelivery('queue', false, false).prompt).toBe(false);
 	});
 
 	it('is never prompt when only a schedule dispatches', () => {
-		expect(describeRealtimeDelivery('none', true).prompt).toBe(false);
-		expect(describeRealtimeDelivery('none', false).prompt).toBe(false);
+		expect(describeRealtimeDelivery('none', true, true).prompt).toBe(false);
+		expect(describeRealtimeDelivery('none', false, false).prompt).toBe(false);
+	});
+});
+
+describe('isSingleApiProcess', () => {
+	it('holds on SQLite, whose database belongs to one process', () => {
+		expect(isSingleApiProcess('better-sqlite3', undefined)).toBe(true);
+		expect(isSingleApiProcess('sqlite', undefined)).toBe(true);
+	});
+
+	it('holds elsewhere only when the deployment says so', () => {
+		expect(isSingleApiProcess('postgres', undefined)).toBe(false);
+		expect(isSingleApiProcess('postgres', 'false')).toBe(false);
+		expect(isSingleApiProcess('postgres', 'true')).toBe(true);
 	});
 });

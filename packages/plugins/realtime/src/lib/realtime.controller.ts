@@ -24,7 +24,7 @@ import { RealtimeCatchUpQueryDTO, RealtimePresenceDTO, RealtimeTypingDTO } from 
 import { collaborationEventNames, collaborationReplayNames } from './graphql/realtime-envelope';
 import { RealtimeCatalogue } from './realtime-catalogue';
 import { RealtimeCatchUpService } from './realtime-catch-up.service';
-import { describeRealtimeDelivery } from './realtime-delivery';
+import { describeRealtimeDelivery, isSingleApiProcess } from './realtime-delivery';
 import { RealtimeSignalsService } from './realtime-signals.service';
 import { REALTIME_ROUTE_PREFIX } from './realtime.constants';
 
@@ -65,7 +65,8 @@ export class RealtimeController {
 			// Whether a client may rely on pushed events instead of polling (see `describeRealtimeDelivery`).
 			delivery: describeRealtimeDelivery(
 				this.appendSignal()?.deliveryMode() ?? 'none',
-				this.pubSub?.sharedAcrossProcesses ?? false
+				this.pubSub?.sharedAcrossProcesses ?? false,
+				isSingleApiProcess()
 			)
 		};
 	}

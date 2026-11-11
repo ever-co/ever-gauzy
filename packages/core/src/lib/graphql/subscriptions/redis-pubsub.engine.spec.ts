@@ -172,6 +172,44 @@ describe('RedisGraphqlPubSubEngine', () => {
 		expect(await next(socket)).toEqual(envelope());
 	});
 
+	it('serves its own sockets directly while its subscriber connection is down, and once only when it is back', async () => {
+		const server = new FakeRedisServer();
+		const { engine, subscriber } = engineOn(server);
+		await engine.start();
+		const socket = engine.asyncIterableIterator(topic);
+
+		// The subscriber connection drops; publishing (another connection) still works.
+		server.clients.delete(subscriber);
+		subscriber.emit('close');
+		await engine.publish(topic, envelope());
+		expect(await next(socket)).toEqual(envelope());
+
+		// Back: ioredis re-subscribed before saying it is ready. No second copy from the direct path.
+		server.clients.add(subscriber);
+		subscriber.emit('ready');
+		await engine.publish(topic, { ...envelope(), eventId: 'e-2' });
+		expect((await next(socket)) as { eventId: string }).toMatchObject({ eventId: 'e-2' });
+		expect(await next(socket)).toBeUndefined();
+	});
+
+	it('stops calling itself shared while publishing to Redis fails, so clients keep polling', async () => {
+		const server = new FakeRedisServer();
+		const { engine } = engineOn(server);
+		await engine.start();
+		expect(engine.shared).toBe(true);
+
+		server.down = true;
+		await engine.publish(topic, envelope());
+		expect(engine.shared).toBe(false);
+
+		server.down = false;
+		await engine.publish(topic, envelope());
+		expect(engine.shared).toBe(true);
+
+		engine.close();
+		expect(engine.shared).toBe(false);
+	});
+
 	it('ends every stream and closes both connections on shutdown', async () => {
 		const server = new FakeRedisServer();
 		const { engine, publisher, subscriber } = engineOn(server);

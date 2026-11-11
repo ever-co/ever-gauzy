@@ -12,6 +12,10 @@ export interface RedisPubSubClient {
 	psubscribe(...patterns: string[]): Promise<unknown>;
 	on(event: 'pmessage', listener: (pattern: string, channel: string, message: string) => void): unknown;
 	on(event: 'error', listener: (error: Error) => void): unknown;
+	/** The connection is up (again); ioredis re-subscribes on its own right before it says so. */
+	on(event: 'ready', listener: () => void): unknown;
+	/** The connection went away; nothing published meanwhile reaches this client. */
+	on(event: 'close' | 'end', listener: () => void): unknown;
 	quit(): Promise<unknown>;
 }
 
@@ -70,27 +74,40 @@ export function decodePubSubPayload(message: string): unknown {
  *
  * **How.** Every publish goes to Redis on `<prefix><topic>`; every process listens to `<prefix>*` and
  * hands what arrives to its own in-process broker, which serves its own sockets exactly as before. The
- * topic (`<eventName>:<tenantId>`) and every check around it are unchanged. Until Redis acknowledged the
- * subscription (at boot) a publish also goes to this process's broker directly.
+ * topic (`<eventName>:<tenantId>`) and every check around it are unchanged. While this process does not
+ * hear Redis — before the subscription is acknowledged at boot, and from the moment its subscriber
+ * connection drops until it is back — a publish also goes to this process's broker directly, so its own
+ * sockets never miss what it publishes.
  *
  * **When Redis is unreachable** a publish falls back to this process's own broker, so a single process
  * keeps delivering, and the failure is logged once per outage. Subscribers miss nothing they can't
  * get back: a client catches up from the outbox after a gap.
  */
 export class RedisGraphqlPubSubEngine implements GraphqlPubSubEngine {
-	/** Reaches the subscribers of every process, not only this one's. */
-	readonly shared = true;
-
 	private readonly logger = new Logger(RedisGraphqlPubSubEngine.name);
 	private readonly local = new GraphqlTopicBroker();
 	private publishFailing = false;
-	private subscribed = false;
+	/** The subscription was acknowledged once; ioredis keeps it across reconnects. */
+	private started = false;
+	/** This process hears Redis now: subscribed, and the subscriber connection is up. */
+	private listening = false;
 	private closed = false;
 
 	constructor(private readonly options: RedisGraphqlPubSubEngineOptions) {
 		this.options.subscriber.on('pmessage', (_pattern, channel, message) => this.receive(channel, message));
 		this.options.subscriber.on('error', (error) => this.logger.warn(`Redis subscriber: ${error.message}`));
+		this.options.subscriber.on('close', () => (this.listening = false));
+		this.options.subscriber.on('end', () => (this.listening = false));
+		this.options.subscriber.on('ready', () => (this.listening = this.started));
 		this.options.publisher.on('error', (error) => this.logger.debug(`Redis publisher: ${error.message}`));
+	}
+
+	/**
+	 * Whether a publish reaches the subscribers of every process: not while publishing to Redis fails (it then
+	 * reaches this process's sockets only), and not once the engine is closed.
+	 */
+	get shared(): boolean {
+		return !this.closed && !this.publishFailing;
 	}
 
 	/**
@@ -98,7 +115,8 @@ export class RedisGraphqlPubSubEngine implements GraphqlPubSubEngine {
 	 */
 	async start(): Promise<void> {
 		await this.options.subscriber.psubscribe(`${this.options.channelPrefix}*`);
-		this.subscribed = true;
+		this.started = true;
+		this.listening = true;
 	}
 
 	async publish(topic: string, payload: unknown): Promise<void> {
@@ -108,8 +126,9 @@ export class RedisGraphqlPubSubEngine implements GraphqlPubSubEngine {
 
 		try {
 			await this.options.publisher.publish(`${this.options.channelPrefix}${topic}`, encodePubSubPayload(payload));
-			if (!this.subscribed) {
-				// Booting: this process does not hear Redis yet, so its own sockets are served directly.
+			if (!this.listening) {
+				// This process does not hear Redis now (booting, or its subscriber connection dropped): its
+				// own sockets are served directly. Other processes still get the event through Redis.
 				this.local.publish(topic, payload);
 			}
 			if (this.publishFailing) {
@@ -220,6 +239,9 @@ export function createGraphqlPubSubEngineFromEnv(): GraphqlPubSubEngine | null {
 			lazyConnect: false,
 			enableOfflineQueue: false,
 			maxRetriesPerRequest: 1,
+			// A Redis that keeps the connection open and stops answering would otherwise hold the publish,
+			// and the dispatch pass behind it, forever; a timeout reaches the fallback instead.
+			commandTimeout: 2_000,
 			connectionName: 'gauzy-graphql-publish'
 		} as any) as unknown as RedisPubSubClient;
 		const subscriber = new Redis({

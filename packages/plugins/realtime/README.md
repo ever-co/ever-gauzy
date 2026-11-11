@@ -58,10 +58,10 @@ default derived from the database and `API_BASE_URL`, so installations that
 share one Redis stay apart).
 
 `GET /api/realtime/status` reports this as `delivery: { dispatch, shared,
-prompt }`. A client may stop polling only when `prompt` is true: dispatched
-right after the write, and reaching every process (`inline`, or `queue` with a
-shared engine). One API process without Redis counts as prompt; several API
-replicas need Redis.
+singleProcess, prompt }`. A client may stop polling only when `prompt` is true:
+dispatched right after the write, and reaching the socket whichever process
+dispatched it — the pub/sub is shared (Redis), or there is one API process
+(SQLite, or `GAUZY_API_SINGLE_PROCESS=true`). Several API replicas need Redis.
 
 ## Events
 

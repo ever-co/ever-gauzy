@@ -1,3 +1,4 @@
+import { AsyncResource } from 'node:async_hooks';
 import {
 	Injectable,
 	Logger,
@@ -35,10 +36,19 @@ export function isEventOutboxInlineDispatchEnabled(): boolean {
  * Turns appends into a prompt pass: waits a moment for the caller's commit and for the rest of a
  * burst, asks for one pass, and asks once more a second later in case the first one ran before the
  * commit. The two modes differ only in how a pass is asked for.
+ *
+ * **Every timer starts from a root async context taken when the provider is built, at boot.** An
+ * append happens inside a request and, usually, inside its transaction; a timer armed there would
+ * carry that request's async-local state into the pass — its user, tenant and organization for every
+ * consumer of every event in the batch, and on SQLite the writer's open transaction, which the claim
+ * would join instead of waiting for the commit. A pass must run as the platform, the way a queue
+ * worker runs it.
  */
 abstract class AppendDrivenDispatch implements OnModuleInit, OnModuleDestroy {
 	protected abstract readonly mode: 'inline' | 'queue';
 	protected readonly logger = new Logger(this.constructor.name);
+	/** The async context timers start from: the one this provider was built in, outside any request. */
+	protected readonly root = new AsyncResource('EventOutboxAppendDrivenDispatch');
 
 	private unlisten?: () => void;
 	private debounceTimer?: ReturnType<typeof setTimeout>;
@@ -69,20 +79,24 @@ abstract class AppendDrivenDispatch implements OnModuleInit, OnModuleDestroy {
 		}
 
 		if (!this.debounceTimer) {
-			this.debounceTimer = unref(
-				setTimeout(() => {
-					this.debounceTimer = undefined;
-					this.fire(false);
-				}, EVENT_OUTBOX_APPEND_DEBOUNCE_MS)
+			this.debounceTimer = this.root.runInAsyncScope(() =>
+				unref(
+					setTimeout(() => {
+						this.debounceTimer = undefined;
+						this.fire(false);
+					}, EVENT_OUTBOX_APPEND_DEBOUNCE_MS)
+				)
 			);
 		}
 
 		if (!this.followUpTimer) {
-			this.followUpTimer = unref(
-				setTimeout(() => {
-					this.followUpTimer = undefined;
-					this.fire(true);
-				}, EVENT_OUTBOX_APPEND_FOLLOW_UP_MS)
+			this.followUpTimer = this.root.runInAsyncScope(() =>
+				unref(
+					setTimeout(() => {
+						this.followUpTimer = undefined;
+						this.fire(true);
+					}, EVENT_OUTBOX_APPEND_FOLLOW_UP_MS)
+				)
 			);
 		}
 	}
@@ -179,7 +193,9 @@ export class EventOutboxInlineDispatch extends AppendDrivenDispatch implements O
 	}
 
 	onApplicationBootstrap(): void {
-		this.sweepTimer = unref(setInterval(() => void this.dispatch(), EVENT_OUTBOX_INLINE_SWEEP_MS));
+		this.sweepTimer = this.root.runInAsyncScope(() =>
+			unref(setInterval(() => void this.dispatch(), EVENT_OUTBOX_INLINE_SWEEP_MS))
+		);
 	}
 
 	override onModuleDestroy(): void {

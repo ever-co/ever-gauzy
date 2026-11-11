@@ -1,0 +1,136 @@
+/**
+ * 🛑 This import must stay FIRST, before any import that pulls a core service (see the ORM parity suite).
+ */
+import '../core/entities/internal';
+
+import { Logger } from '@nestjs/common';
+import { DataSource } from 'typeorm';
+import { IEventEnvelope, IOutboxWriteInput } from '@gauzy/contracts';
+import { TYPEORM_INVALID_WHERE_VALUES_BEHAVIOR } from '@gauzy/config';
+import { coreEntities } from '../core/entities';
+import { createPlatformDataSource } from '../database/embedded-transaction-queue';
+import { CreateEventOutboxTables1791000000020 } from '../database/migrations/1791000000020-CreateEventOutboxTables';
+import { EVENT_OUTBOX_APPEND_DEBOUNCE_MS } from './event-outbox-constant';
+import { EventConsumerRegistry } from './event-consumer.registry';
+import { EventDelivery } from './event-delivery.entity';
+import { EventOutboxAppendSignal } from './event-outbox-append.signal';
+import { EventOutboxInlineDispatch } from './event-outbox-dispatch.trigger';
+import { EventOutboxDispatcher } from './event-outbox-dispatcher';
+import { EventOutbox } from './event-outbox.entity';
+import { EventOutboxService } from './event-outbox.service';
+import { TypeOrmEventDeliveryRepository } from './repository/type-orm-event-delivery.repository';
+import { TypeOrmEventOutboxRepository } from './repository/type-orm-event-outbox.repository';
+
+/**
+ * The in-process drain on SQLite, against a real database with the platform's transaction queue.
+ *
+ * An append happens inside the writer's transaction, and the drain follows it moments later. Started from the
+ * writer's async context, the drain's claim belonged to the writer's connection claim: it ran inside that open
+ * transaction, read the uncommitted row, and handed it to the consumers — a subscription event or a webhook for a
+ * change the writer then rolled back. Started from the platform's own context, the claim waits in the connection
+ * queue for the writer's transaction to end.
+ */
+
+const TENANT = '7f0c9b0e-0000-4000-8000-000000000001';
+const ORG = '7f0c9b0e-0000-4000-8000-000000000002';
+const ORDER = '7f0c9b0e-0000-4000-8000-000000000003';
+
+const placed = (): IOutboxWriteInput => ({
+	name: 'order.placed',
+	aggregateType: 'Order',
+	aggregateId: ORDER,
+	data: { orderId: ORDER },
+	tenantId: TENANT,
+	organizationId: ORG
+});
+
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+describe('EventOutboxInlineDispatch on SQLite', () => {
+	let dataSource: DataSource;
+	let service: EventOutboxService;
+	let inline: EventOutboxInlineDispatch;
+	let received: IEventEnvelope[];
+
+	beforeEach(async () => {
+		jest.spyOn(Logger.prototype, 'log').mockImplementation(() => undefined);
+		jest.spyOn(Logger.prototype, 'debug').mockImplementation(() => undefined);
+		jest.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined);
+
+		dataSource = await createPlatformDataSource({
+			type: 'better-sqlite3',
+			database: ':memory:',
+			entities: coreEntities,
+			synchronize: false,
+			logging: false,
+			invalidWhereValuesBehavior: TYPEORM_INVALID_WHERE_VALUES_BEHAVIOR
+		});
+		await dataSource.initialize();
+
+		const runner = dataSource.createQueryRunner();
+		await new CreateEventOutboxTables1791000000020().sqliteUpQueryRunner(runner);
+		await runner.query(`CREATE TABLE "outbox_probe_state" ("id" varchar PRIMARY KEY NOT NULL)`);
+		await runner.release();
+
+		const signal = new EventOutboxAppendSignal();
+		service = new EventOutboxService(
+			new TypeOrmEventOutboxRepository(dataSource.getRepository(EventOutbox)),
+			{} as never,
+			new TypeOrmEventDeliveryRepository(dataSource.getRepository(EventDelivery)),
+			{} as never,
+			undefined,
+			signal
+		);
+		const registry = new EventConsumerRegistry(service);
+		received = [];
+		registry.register({
+			key: 'inline-sqlite.probe',
+			events: ['order.placed'],
+			handle: async (event: IEventEnvelope) => {
+				received.push(event);
+			}
+		});
+
+		inline = new EventOutboxInlineDispatch(signal, new EventOutboxDispatcher(service, registry));
+		inline.onModuleInit();
+	});
+
+	afterEach(async () => {
+		inline.onModuleDestroy();
+		// Let a drain in progress finish before the database goes away.
+		await sleep(50);
+		await dataSource.destroy();
+		jest.restoreAllMocks();
+	});
+
+	it('hands nothing to a consumer for a transaction that rolls back after the drain was due', async () => {
+		const refused = dataSource.manager.transaction(async (manager) => {
+			await manager.query(`INSERT INTO "outbox_probe_state" ("id") VALUES (?)`, ['refused']);
+			await service.append(manager, placed());
+			// The writer is still busy when the drain comes due.
+			await sleep(EVENT_OUTBOX_APPEND_DEBOUNCE_MS + 200);
+			throw new Error('the state change was refused');
+		});
+
+		await expect(refused).rejects.toThrow('the state change was refused');
+		await sleep(300);
+
+		expect(received).toEqual([]);
+		expect(await dataSource.query(`SELECT COUNT(*) AS "n" FROM "event_outbox"`)).toEqual([{ n: 0 }]);
+	});
+
+	it('delivers the event once the writer commits, even when the commit comes after the drain was due', async () => {
+		await dataSource.manager.transaction(async (manager) => {
+			await manager.query(`INSERT INTO "outbox_probe_state" ("id") VALUES (?)`, ['kept']);
+			await service.append(manager, placed());
+			await sleep(EVENT_OUTBOX_APPEND_DEBOUNCE_MS + 200);
+		});
+
+		for (let waited = 0; received.length === 0 && waited < 3_000; waited += 50) {
+			await sleep(50);
+		}
+
+		expect(received).toHaveLength(1);
+		expect(received[0]).toMatchObject({ name: 'order.placed', aggregate: { type: 'Order', id: ORDER } });
+	});
+});

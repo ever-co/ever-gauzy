@@ -257,9 +257,15 @@ export interface IRealtimeDelivery {
 	/** Whether a published event reaches the sockets of every API process, not only one. */
 	shared: boolean;
 	/**
+	 * Whether the installation runs one API process: on SQLite, or where the deployment declares it
+	 * (`GAUZY_API_SINGLE_PROCESS=true`).
+	 */
+	singleProcess: boolean;
+	/**
 	 * True when a client may rely on pushed events instead of polling: the event is dispatched right
-	 * after it is written, and reaches the socket whichever process dispatches it. A client still
-	 * catches up now and then, which bounds what a lost push can cost.
+	 * after it is written, and reaches the socket whichever process dispatches it (the pub/sub is
+	 * shared, or there is one API process). A client still catches up now and then, which bounds what
+	 * a lost push can cost.
 	 */
 	prompt: boolean;
 }
