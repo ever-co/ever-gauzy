@@ -59,8 +59,10 @@ The UI has no switch of its own. It follows the API:
   page's preview (`GET /api/chat/link-preview?url=`, fetched and cached server
   side; the reader's browser never fetches the linked page), one request per
   distinct link for the page: icon and site name, title, description (two
-  lines), and the picture at its own aspect ratio (lazy, no referrer); texts
-  are shown as text. `pending` is asked again every 2 s, three times at most;
+  lines), and the picture at its own aspect ratio; texts are shown as text.
+  The picture and the icon are loaded from where the page points them
+  (`https` only, lazily, without a referrer): their host sees the reader's
+  address, as for any embedded picture. `pending` is asked again every 2 s, three times at most;
   `unavailable` or a 400 keeps the link-only card (site and path) for the
   session. The first request is a probe: a 404 (previews off, the platform's
   `GAUZY_CHAT_LINK_PREVIEWS_ENABLED`) keeps every card link-only for the

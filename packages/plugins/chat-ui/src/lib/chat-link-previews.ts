@@ -1,5 +1,5 @@
-import { asyncScheduler, defer, Observable, of, ReplaySubject, SchedulerLike, timer } from 'rxjs';
-import { catchError, shareReplay, switchMap, take } from 'rxjs/operators';
+import { asyncScheduler, defer, Observable, of, ReplaySubject, SchedulerLike, Subject, timer } from 'rxjs';
+import { catchError, defaultIfEmpty, shareReplay, switchMap, take, takeUntil } from 'rxjs/operators';
 
 /** Where the platform stands on a link: still being fetched, read, or nothing to show (private host, no page, refused). */
 export type ChatLinkPreviewStatus = 'pending' | 'ready' | 'unavailable';
@@ -96,6 +96,8 @@ export class ChatLinkPreviewCache {
 	private generation = 0;
 	private known = new ReplaySubject<ProbeOutcome>(1);
 	private readonly entries = new Map<string, Observable<ChatLinkPreview | null>>();
+	/** Ends every request and retry under way: on a reset, and when previews turn off. */
+	private stop = new Subject<void>();
 
 	constructor(
 		private readonly fetch: (url: string) => Observable<ChatLinkPreview>,
@@ -117,13 +119,16 @@ export class ChatLinkPreviewCache {
 		let entry = this.entries.get(url);
 		if (!entry) {
 			const generation = this.generation;
-			entry = this.whenServed().pipe(
+			entry = this.whenServed(generation).pipe(
 				switchMap((outcome) => {
 					if (outcome === 'on') return this.ask(url, 0, generation);
 					// The probe failed for a passing reason: this card stays link-only, the next message asks again.
 					if (outcome === 'failed') this.forget(url, generation);
 					return of(null);
 				}),
+				// A reset or previews turning off ends the request or the retry under way: the card stays link-only.
+				takeUntil(this.stop),
+				defaultIfEmpty(null),
 				shareReplay({ bufferSize: 1, refCount: false })
 			);
 			this.entries.set(url, entry);
@@ -133,6 +138,8 @@ export class ChatLinkPreviewCache {
 
 	/** Forgets every preview and what the platform said (another user or organization). */
 	reset(): void {
+		this.stop.next();
+		this.stop = new Subject<void>();
 		this.generation += 1;
 		this.availability = 'unknown';
 		this.probing = false;
@@ -140,9 +147,13 @@ export class ChatLinkPreviewCache {
 		this.entries.clear();
 	}
 
-	/** Lets one request through as the probe while it is not known whether previews are served; the others wait for it. */
-	private whenServed(): Observable<ProbeOutcome> {
+	/**
+	 * Lets one request through as the probe while it is not known whether previews are served; the others wait for it.
+	 * An entry made before a reset and subscribed after it asks nothing (it would probe for a session that is gone).
+	 */
+	private whenServed(generation: number): Observable<ProbeOutcome> {
 		return defer(() => {
+			if (generation !== this.generation) return of<ProbeOutcome>('off');
 			if (this.availability === 'on') return of<ProbeOutcome>('on');
 			if (this.availability === 'off') return of<ProbeOutcome>('off');
 			if (!this.probing) {
@@ -156,10 +167,13 @@ export class ChatLinkPreviewCache {
 	}
 
 	private ask(url: string, attempt: number, generation: number): Observable<ChatLinkPreview | null> {
-		return this.fetch(url).pipe(
+		// Nothing is asked for a session that is gone, or once previews are off (a retry that comes after either).
+		const current = () => generation === this.generation && this.availability !== 'off';
+		return defer(() => (current() ? this.fetch(url) : of(null))).pipe(
 			switchMap((preview) => {
+				if (!preview || !current()) return of(null);
 				this.settle('on', generation);
-				if (preview?.status === 'pending') {
+				if (preview.status === 'pending') {
 					return attempt < this.timing.pendingRetries
 						? timer(this.timing.pendingRetryMs, this.scheduler).pipe(switchMap(() => this.ask(url, attempt + 1, generation)))
 						: of(null);
@@ -199,7 +213,11 @@ export class ChatLinkPreviewCache {
 		this.availability = availability;
 		this.probing = false;
 		this.known.next(availability);
-		if (availability === 'off') this.entries.clear();
+		if (availability === 'off') {
+			this.entries.clear();
+			// Every other request and retry under way ends: nothing more is asked this session.
+			this.stop.next();
+		}
 	}
 }
 

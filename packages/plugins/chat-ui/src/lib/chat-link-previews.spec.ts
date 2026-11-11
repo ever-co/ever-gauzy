@@ -141,6 +141,38 @@ describe('ChatLinkPreviewCache', () => {
 		expect(fetch).toHaveBeenCalledTimes(2);
 	});
 
+	it('ends a pending retry on a reset, and asks nothing for the session that is gone', () => {
+		const { answers, fetch, cache, seen } = platform();
+		answers.push(() => of({ url: A, status: 'pending' }));
+		const values = seen(A);
+		cache.reset();
+		expect(values).toEqual([null]);
+		jest.advanceTimersByTime(10_000);
+		expect(fetch).toHaveBeenCalledTimes(1);
+	});
+
+	it('ends the retries under way when another link turns previews off', () => {
+		const { answers, fetch, cache, seen } = platform();
+		answers.push(() => of({ url: A, status: 'pending' }));
+		answers.push(refusal(404));
+		const a = seen(A);
+		expect(seen(B)).toEqual([null]);
+		expect(cache.off).toBe(true);
+		expect(a).toEqual([null]);
+		jest.advanceTimersByTime(10_000);
+		expect(fetch).toHaveBeenCalledTimes(2);
+	});
+
+	it('asks nothing for an entry made before a reset and subscribed after it', () => {
+		const { fetch, cache } = platform();
+		const early = cache.preview(A);
+		cache.reset();
+		const values: Array<ChatLinkPreview | null> = [];
+		early.subscribe((value) => values.push(value));
+		expect(values).toEqual([null]);
+		expect(fetch).not.toHaveBeenCalled();
+	});
+
 	it('drops an answer that comes after a reset', () => {
 		const { answers, cache, seen } = platform();
 		const late = new Subject<ChatLinkPreview>();
