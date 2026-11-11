@@ -449,6 +449,15 @@ export function isUnread(conversation: Pick<IChatConversationWithState, 'state'>
 	return (conversation.state?.unreadCount ?? 0) > 0 || (conversation.state?.mentionCount ?? 0) > 0;
 }
 
+/**
+ * Whether anything was ever written in a conversation. A direct or group conversation exists from the moment it is
+ * opened (from a person's page, the "New message" dialog), but the sidebar lists it only once it holds a message.
+ * My read marker counts too: it moves as soon as my own first message is sent, before the list is read again.
+ */
+export function hasMessages(conversation: Pick<IChatConversationWithState, 'messageCount' | 'lastMessageAt' | 'state'>): boolean {
+	return (conversation.messageCount ?? 0) > 0 || !!conversation.lastMessageAt || !!conversation.state?.lastReadMessageId;
+}
+
 /** The conversations in sidebar order: favourites, then by the newest message. */
 export function sortConversations(conversations: readonly IChatConversationWithState[]): IChatConversationWithState[] {
 	return [...conversations].sort((a, b) => {
