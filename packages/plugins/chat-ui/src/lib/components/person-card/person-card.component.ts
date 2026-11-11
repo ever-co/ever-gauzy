@@ -294,13 +294,21 @@ export class PersonCardComponent {
 	});
 
 	private readonly personId = computed(() => this.person().employeeId);
+	/** The person the box's draft was typed for. */
+	private draftFor: string | null = null;
 
 	constructor() {
 		// A draft belongs to the person it was typed for: the box empties whenever the card shows someone else.
 		effect(() => {
-			this.personId();
-			untracked(() => this.clear());
+			const id = this.personId();
+			untracked(() => this.keepDraftFor(id));
 		});
+	}
+
+	private keepDraftFor(employeeId: string): void {
+		if (employeeId === this.draftFor) return;
+		this.draftFor = employeeId;
+		this.clear();
 	}
 
 	/** Empties the box once the page sent its text. */

@@ -356,10 +356,9 @@ export interface ChatMemberIds {
 
 /** The employees of a conversation, or null when the conversation does not carry its members. */
 export function memberEmployeeIds(conversation: Pick<IChatConversationWithState, 'members' | 'memberCount'> | null | undefined): ChatMemberIds | null {
-	const members = conversation?.members;
-	if (!members) return null;
-	const ids = new Set(members.map((member) => String(member.employeeId)));
-	const count = conversation?.memberCount;
+	if (!conversation?.members) return null;
+	const ids = new Set(conversation.members.map((member) => String(member.employeeId)));
+	const count = conversation.memberCount;
 	return { ids, complete: typeof count !== 'number' || ids.size >= count };
 }
 
