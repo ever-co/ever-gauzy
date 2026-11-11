@@ -24,3 +24,49 @@ export function sectionMapOf(entries: ReadonlyArray<{ gid: string; status: strin
 	}
 	return map;
 }
+
+/** The code of an API error (`ASANA_CONFLICT_STALE`, …) when the API gave one. */
+export function errorCode(error: unknown): string | null {
+	const body = (error as Partial<HttpErrorResponse> | null | undefined)?.error as { code?: unknown; error?: { code?: unknown } } | string | null | undefined;
+	if (!body || typeof body !== 'object') return null;
+	const code = body.code ?? body.error?.code;
+	return typeof code === 'string' && code ? code : null;
+}
+
+/** How much of a value the conflict list shows; the whole value is its tooltip. */
+const CONFLICT_VALUE_MAX = 160;
+
+/** A conflict's value as the list shows it. */
+export interface ConflictValueView {
+	/** The field was empty on that side. */
+	empty: boolean;
+	/** A due date: the ISO date-time the date pipe formats (null for any other field). */
+	date: string | null;
+	/** The text shown, cut to a line or two. */
+	text: string;
+	/** The whole text (the tooltip). */
+	full: string;
+}
+
+/**
+ * A stored conflict value for the list: a description (kept as the task store's sanitized HTML) as its plain text,
+ * a due date as a date, anything long cut. Never HTML: the list shows text only.
+ */
+export function conflictValueView(field: string, value: string | null | undefined): ConflictValueView {
+	const empty: ConflictValueView = { empty: true, date: null, text: '', full: '' };
+	if (value === null || value === undefined) return empty;
+	const raw = String(value).trim();
+	if (!raw) return empty;
+	if (field === 'dueDate' && !Number.isNaN(new Date(raw).getTime())) return { empty: false, date: raw, text: raw, full: raw };
+	const full = field === 'description' ? plainText(raw) : raw;
+	if (!full) return empty;
+	const text = full.length > CONFLICT_VALUE_MAX ? `${full.slice(0, CONFLICT_VALUE_MAX - 1).trimEnd()}…` : full;
+	return { empty: false, date: null, text, full };
+}
+
+/** The text of an HTML fragment: block ends and line breaks become spaces, tags go, entities are read, spaces collapse. */
+export function plainText(html: string): string {
+	const spaced = html.replace(/<(br|\/p|\/div|\/li|\/h[1-6]|\/tr|\/blockquote|\/pre)\b[^>]*>/gi, ' $&');
+	const text = typeof DOMParser === 'undefined' ? spaced.replace(/<[^>]*>/g, ' ') : (new DOMParser().parseFromString(spaced, 'text/html').body.textContent ?? '');
+	return text.replace(/\s+/g, ' ').trim();
+}
