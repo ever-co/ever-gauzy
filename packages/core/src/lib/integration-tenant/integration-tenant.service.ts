@@ -12,7 +12,7 @@ import {
 } from '@gauzy/contracts';
 import { RequestContext } from '../core/context/request-context';
 import { TenantAwareCrudService } from '../core/crud/tenant-aware-crud.service';
-import { findIntegrationManagerUserIds } from './integration-managers';
+import { findIntegrationManagers, IntegrationManagers } from './integration-managers';
 import { IntegrationTenant } from './integration-tenant.entity';
 import { MikroOrmIntegrationTenantRepository } from './repository/mikro-orm-integration-tenant.repository';
 import { TypeOrmIntegrationTenantRepository } from './repository/type-orm-integration-tenant.repository';
@@ -48,10 +48,11 @@ export class IntegrationTenantService extends TenantAwareCrudService<Integration
 
 	/**
 	 * The users who manage the organization's integrations (they may connect one again): the people an integration
-	 * tells in their Inbox when a provider refuses its token. Works with no request context.
+	 * tells in their Inbox when a provider refuses its token, and whether the read left some out. Works with no
+	 * request context.
 	 */
-	async findManagerUserIds(scope: { tenantId: ID; organizationId: ID }): Promise<ID[]> {
-		return findIntegrationManagerUserIds(this.typeOrmRepository.manager, scope);
+	async findManagers(scope: { tenantId: ID; organizationId: ID }): Promise<IntegrationManagers> {
+		return findIntegrationManagers(this.typeOrmRepository.manager, scope);
 	}
 
 	/**

@@ -290,6 +290,15 @@ export class LinearTenantService {
 			this.logger.warn(`The attention reason of connection ${tenant.id} could not be written: ${(error as Error).message}`);
 			return;
 		}
+		// A new refusal is not filed until its own filing records it: the timestamp an earlier refusal left (a resolution
+		// whose filing failed) is cleared first, so every way the filing below can stop leaves it to the sweep.
+		if (reason && before !== reason && noticed) {
+			try {
+				await this.writeSetting(tenant, LinearSettingName.ATTENTION_NOTICE_AT, '');
+			} catch (error) {
+				this.logger.warn(`The filing timestamp of connection ${tenant.id} could not be cleared: ${(error as Error).message}`);
+			}
+		}
 		// Filed when the reason changed — and again when an earlier filing (or resolution) did not get through: the
 		// item is keyed by the connection, so a second filing updates it rather than adding one.
 		const changed = reason ? before !== reason : !!before;
@@ -340,15 +349,17 @@ export class LinearTenantService {
 		if ((settings[LinearSettingName.ATTENTION_REASON] || null) !== (reason || null)) return;
 		const userId = settings[LinearSettingName.CONNECTED_BY_USER_ID];
 		let managers: ID[] | null = null;
+		let truncated = false;
 		try {
-			managers = await this.integrationTenantService.findManagerUserIds({ tenantId: current.tenantId as ID, organizationId: current.organizationId as ID });
+			const found = await this.integrationTenantService.findManagers({ tenantId: current.tenantId as ID, organizationId: current.organizationId as ID });
+			managers = found.userIds;
+			truncated = found.truncated;
 		} catch (error) {
 			this.logger.warn(`The integration managers of connection ${tenant.id} could not be read: ${(error as Error)?.message ?? error}`);
 		}
-		// The lookup stops at INTEGRATION_MANAGERS_LIMIT: a full page may leave managers out, so it replaces nobody either.
-		const truncated = !!managers && managers.length >= INTEGRATION_MANAGERS_LIMIT;
+		// The lookup stops at INTEGRATION_MANAGERS_LIMIT memberships: when it left managers out, the notice replaces nobody either.
 		if (truncated) {
-			this.logger.warn(`Connection ${tenant.id}: the organization has at least ${INTEGRATION_MANAGERS_LIMIT} integration managers; the notice goes to the first ones and removes nobody`);
+			this.logger.warn(`Connection ${tenant.id}: the organization has more than ${INTEGRATION_MANAGERS_LIMIT} integration manager memberships; the notice goes to the first ones and removes nobody`);
 		}
 		// Without the managers an open notice is filed for the people known (nobody is removed from it) and not recorded
 		// as filed, so the sweep files it again with the managers.
@@ -362,16 +373,7 @@ export class LinearTenantService {
 			this.logger.warn(`The attention of connection ${tenant.id} could not be filed in the Inbox: ${(error as Error).message}`);
 			return;
 		}
-		if (unread) {
-			// An earlier refusal's timestamp (a resolution whose filing failed) must not mark this partial filing as
-			// complete: it is cleared, so the sweep files the notice again with the managers.
-			if (settings[LinearSettingName.ATTENTION_NOTICE_AT]) {
-				await this.writeSetting(current, LinearSettingName.ATTENTION_NOTICE_AT, '').catch((error: unknown) => {
-					this.logger.warn(`The filing timestamp of connection ${tenant.id} could not be cleared: ${(error as Error)?.message ?? error}`);
-				});
-			}
-			return;
-		}
+		if (unread) return;
 		try {
 			await this.writeSetting(tenant, LinearSettingName.ATTENTION_NOTICE_AT, reason ? new Date().toISOString() : '');
 		} catch (error) {

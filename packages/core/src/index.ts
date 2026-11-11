@@ -240,6 +240,7 @@ export {
 } from './lib/integration-setting';
 export type {
 	IIntegrationSyncCompletion,
+	IntegrationManagers,
 	SyncedFieldConflict,
 	SyncedFieldsMerge,
 	SyncedTaskField,
@@ -247,7 +248,7 @@ export type {
 	SyncedTaskValues
 } from './lib/integration-tenant';
 export {
-	findIntegrationManagerUserIds,
+	findIntegrationManagers,
 	INTEGRATION_MANAGER_PERMISSIONS,
 	INTEGRATION_MANAGERS_LIMIT,
 	INTEGRATION_TENANT_SYNCED,
