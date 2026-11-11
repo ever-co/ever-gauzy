@@ -53,7 +53,7 @@ export function safeIconUrl(url: string | null | undefined): string | null {
 
 /** The key of one button within one message: its actions block and its action id. */
 export function buttonKey(blockId: string | null | undefined, actionId: string): string {
-	return `${blockId ?? ''}::${actionId}`;
+	return JSON.stringify([blockId ?? '', actionId]);
 }
 
 /** What a button shows while and after it is clicked. */
