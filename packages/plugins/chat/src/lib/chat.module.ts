@@ -7,6 +7,7 @@ import { MentionModule, RolePermissionModule , TaskModule } from '@gauzy/core';
 import { ChatConversationController } from './controllers/chat-conversation.controller';
 import { ChatMessageController } from './controllers/chat-message.controller';
 import { ChatResolver } from './graphql/chat.resolver';
+import { ChatAttachmentDraft } from './entities/chat-attachment-draft.entity';
 import { ChatCategory } from './entities/chat-category.entity';
 import { ChatConversation } from './entities/chat-conversation.entity';
 import { ChatMember } from './entities/chat-member.entity';
@@ -16,12 +17,15 @@ import { ChatThreadFollow } from './entities/chat-thread-follow.entity';
 import { ChatRealtime } from './realtime/chat-realtime';
 import { ChatAccessService } from './services/chat-access.service';
 import { ChatConversationService } from './services/chat-conversation.service';
+import { ChatDraftUploadService } from './services/chat-draft-upload.service';
 import { ChatMessageService } from './services/chat-message.service';
 import { ChatSearchService } from './services/chat-search.service';
 import { ChatNotifierService } from './services/chat-notifier.service';
+import { ChatTaskCardService } from './services/chat-task-card.service';
+import { ChatTypingService } from './services/chat-typing.service';
 
 /** Every table the plugin owns (its migrations create them). */
-export const CHAT_ENTITIES = [ChatCategory, ChatConversation, ChatMember, ChatMessage, ChatThreadFollow, ChatTaskReference];
+export const CHAT_ENTITIES = [ChatCategory, ChatConversation, ChatMember, ChatMessage, ChatThreadFollow, ChatTaskReference, ChatAttachmentDraft];
 
 /**
  * The chat module (`@gauzy/plugin-chat`), loaded only when `GAUZY_CHAT_ENABLED=true`.
@@ -43,7 +47,18 @@ export const CHAT_ENTITIES = [ChatCategory, ChatConversation, ChatMember, ChatMe
 	controllers: [ChatConversationController, ChatMessageController],
 	// The resolver is listed here as well as in the plugin's `extensions`: a resolver only the plugin metadata names is
 	// never registered, and the schema would advertise fields nothing resolves.
-	providers: [ChatAccessService, ChatRealtime, ChatNotifierService, ChatConversationService, ChatMessageService, ChatSearchService, ChatResolver],
+	providers: [
+		ChatAccessService,
+		ChatRealtime,
+		ChatNotifierService,
+		ChatDraftUploadService,
+		ChatConversationService,
+		ChatMessageService,
+		ChatSearchService,
+		ChatTaskCardService,
+		ChatTypingService,
+		ChatResolver
+	],
 	exports: [ChatAccessService, ChatConversationService, ChatMessageService, ChatRealtime]
 })
 export class ChatModule {}

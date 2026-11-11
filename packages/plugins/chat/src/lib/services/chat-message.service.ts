@@ -47,6 +47,7 @@ import { ChatThreadFollow } from '../entities/chat-thread-follow.entity';
 import { ChatRealtime } from '../realtime/chat-realtime';
 import { inWriteTransaction } from '../realtime/chat-write-transaction';
 import { ChatAccessService, IChatCaller } from './chat-access.service';
+import { ChatDraftUploadService } from './chat-draft-upload.service';
 import { ChatNotifierService } from './chat-notifier.service';
 
 /**
@@ -90,6 +91,28 @@ export function idsOf(json: string | null | undefined): ID[] {
 	}
 }
 
+/** The most characters `attachmentNames` keeps (ten names of a reasonable length; longer lists are cut). */
+export const CHAT_ATTACHMENT_NAMES_MAX = 2000;
+
+/**
+ * The names of a message's files in the order attached, one per line, each on one line and cut to 255 characters;
+ * null when there are none. A file without a name of its own is `file`.
+ */
+export function attachmentNamesOf(
+	documentIds: readonly ID[],
+	documents: ReadonlyArray<{ id: ID; name?: string | null; originalFilename?: string | null }>
+): string | null {
+	if (!documentIds.length) return null;
+	const byId = new Map(documents.map((document) => [String(document.id), document]));
+	const names = documentIds.map((id) => {
+		const document = byId.get(String(id));
+		const name = ((document?.name ?? '').trim() || (document?.originalFilename ?? '').trim() || 'file').replace(/[\r\n]+/g, ' ');
+		return name.length > 255 ? `${name.slice(0, 254)}…` : name;
+	});
+	const joined = names.join('\n');
+	return joined.length > CHAT_ATTACHMENT_NAMES_MAX ? `${joined.slice(0, CHAT_ATTACHMENT_NAMES_MAX - 1)}…` : joined;
+}
+
 /** Whether a message belongs to the conversation's timeline (not a thread reply kept inside its thread). */
 export function inTimeline(message: Pick<ChatMessage, 'threadRootId' | 'alsoInConversation'>): boolean {
 	return !message.threadRootId || !!message.alsoInConversation;
@@ -112,7 +135,8 @@ export class ChatMessageService {
 		private readonly realtime: ChatRealtime,
 		private readonly notifier: ChatNotifierService,
 		private readonly tasks: TaskService,
-		private readonly commandBus: CommandBus
+		private readonly commandBus: CommandBus,
+		private readonly drafts: ChatDraftUploadService
 	) {}
 
 	// ---------------------------------------------------------------- reads
@@ -282,8 +306,9 @@ export class ChatMessageService {
 		const { conversation, member } = await this.access.requireMember(conversationId, caller);
 		if (!member) throw new NotFoundException('The requested record was not found');
 		if (conversation.archivedAt) throw new BadRequestException('This conversation is archived.');
-		const body = this.validBody(input.body);
 		const attachmentIds = this.validAttachments(input.attachmentIds);
+		// A message of files only has no text: the body may be empty when it carries an attachment.
+		const body = this.validBody(input.body, attachmentIds.length > 0);
 
 		// The same send twice (a retry, however late, the message since deleted or not) answers the same message, so
 		// the unique (author, nonce) key never refuses a retry — before the files are checked: a file deleted since
@@ -295,7 +320,7 @@ export class ChatMessageService {
 				return { message, events: [] };
 			}
 		}
-		await this.requireOwnFiles(caller, attachmentIds);
+		const attachmentNames = await this.requireOwnFiles(caller, attachmentIds);
 
 		let root: ChatMessage | null = null;
 		if (input.threadRootId) {
@@ -351,6 +376,7 @@ export class ChatMessageService {
 						alsoInConversation: !!root && !!input.alsoInConversation,
 						replyCount: 0,
 						attachmentIds: attachmentIds.length ? JSON.stringify(attachmentIds) : null,
+						attachmentNames,
 						nonce: input.nonce ?? null,
 						// Shown beside the message: the person wrote it with an assistant. Never changed by an edit.
 						assistedBy: assistedByOf(input.assistedBy),
@@ -407,6 +433,8 @@ export class ChatMessageService {
 					);
 				}
 				await this.linkAttachments(manager, caller, conversation, created.id as ID, attachmentIds, false);
+				// The files are a message's now, no longer drafts the sweep would take.
+				await this.drafts.consume(manager, caller.tenantId, attachmentIds);
 				// The facts commit with the message: the message itself, the thread's new reply count (to the followers of
 				// the thread who are members), and the sender's own read position. Every other member's counters follow
 				// after the commit (see below).
@@ -461,7 +489,9 @@ export class ChatMessageService {
 		const { message, conversation } = await this.messageForWrite(caller, messageId);
 		if (String(message.authorUserId ?? '') !== String(caller.userId)) throw new ForbiddenException('Only the author can edit a message.');
 		if (message.deletedAt) throw new BadRequestException('A deleted message cannot be edited.');
-		const body = this.validBody(input.body);
+		const attachments = input.attachmentIds ? this.validAttachments(input.attachmentIds) : null;
+		// The text may go when the message keeps (or now carries) a file.
+		const body = this.validBody(input.body, (attachments ?? idsOf(message.attachmentIds)).length > 0);
 		const members = await this.access.members(caller.tenantId, message.conversationId);
 		const before = idsOf(message.mentionEmployeeIds);
 		const mentioned = mentionedEmployees(body, input.mentionEmployeeIds, members.map((m) => m.employeeId), caller.employeeId);
@@ -472,9 +502,8 @@ export class ChatMessageService {
 		message.mentionEmployeeIds = mentioned.length ? JSON.stringify(mentioned) : null;
 		message.mentionsChannel = parsed.channel;
 		message.mentionsHere = parsed.here;
-		const attachments = input.attachmentIds ? this.validAttachments(input.attachmentIds) : null;
 		if (attachments) {
-			await this.requireOwnFiles(caller, attachments);
+			message.attachmentNames = await this.requireOwnFiles(caller, attachments);
 			message.attachmentIds = attachments.length ? JSON.stringify(attachments) : null;
 		}
 		message.editedAt = new Date();
@@ -484,7 +513,10 @@ export class ChatMessageService {
 		const taskMentions = await this.mentionedTaskIds(caller, conversation, body, await this.keptTaskReferences(caller, message));
 		const events = await inWriteTransaction(this.dataSource, async (manager) => {
 			await manager.getRepository(ChatMessage).save(message);
-			if (attachments) await this.linkAttachments(manager, caller, conversation, message.id as ID, attachments, true);
+			if (attachments) {
+				await this.linkAttachments(manager, caller, conversation, message.id as ID, attachments, true);
+				await this.drafts.consume(manager, caller.tenantId, attachments);
+			}
 			await this.writeTaskMentions(manager, caller, conversation, message, taskMentions);
 			return [await this.realtime.append(manager, this.realtime.messageFact(CHAT_EVENT_NAMES.MESSAGE_UPDATED, message, members.map((m) => m.userId)))];
 		});
@@ -525,6 +557,7 @@ export class ChatMessageService {
 				// A thread root keeps its row as a tombstone; a plain message is withdrawn.
 				body: '',
 				attachmentIds: null,
+				attachmentNames: null,
 				mentionEmployeeIds: null,
 				deletedAt: new Date()
 			} as never);
@@ -795,7 +828,7 @@ export class ChatMessageService {
 		const documentIds = [...new Set(page.map((row) => String(row.documentId)))];
 		const documents = documentIds.length
 			? ((await this.dataSource.getRepository<ObjectLiteral>('Document').find({
-					select: { id: true, name: true, originalFilename: true, mimeType: true, fileSize: true, status: true, storageProvider: true, storageKey: true, thumbKey: true },
+					select: { id: true, name: true, originalFilename: true, mimeType: true, fileSize: true, status: true, storageProvider: true, storageKey: true, thumbKey: true, metadata: true },
 					where: { id: In(documentIds), tenantId: caller.tenantId }
 			  } as never)) as IChatFileDocument[])
 			: [];
@@ -804,14 +837,20 @@ export class ChatMessageService {
 		return { files, hasMore: rows.length > limit };
 	}
 
-	/** Every attachment must be a file the caller uploaded (kind FILE, created by the caller's user) in the tenant. */
-	private async requireOwnFiles(caller: IChatCaller, documentIds: readonly ID[]): Promise<void> {
-		if (!documentIds.length) return;
+	/**
+	 * Every attachment must be a file the caller uploaded (kind FILE, created by the caller's user) in the tenant.
+	 *
+	 * @returns The files' names in the order attached, one per line (what a message of files only reads as), or null
+	 * without attachments.
+	 */
+	private async requireOwnFiles(caller: IChatCaller, documentIds: readonly ID[]): Promise<string | null> {
+		if (!documentIds.length) return null;
 		const rows = (await this.dataSource.getRepository<ObjectLiteral>('Document').find({
-			select: { id: true },
+			select: { id: true, name: true, originalFilename: true },
 			where: { id: In([...documentIds]), tenantId: caller.tenantId, kind: DocumentKindEnum.FILE, createdByUserId: caller.userId }
-		} as never)) as Array<{ id: ID }>;
+		} as never)) as Array<{ id: ID; name?: string | null; originalFilename?: string | null }>;
 		if (rows.length !== documentIds.length) throw new BadRequestException('Every attachment must be a file you uploaded.');
+		return attachmentNamesOf(documentIds, rows);
 	}
 
 	/**
@@ -1144,9 +1183,9 @@ export class ChatMessageService {
 		}));
 	}
 
-	private validBody(body: string | undefined): string {
+	private validBody(body: string | undefined, hasAttachments = false): string {
 		const value = (body ?? '').replace(/\r\n/g, '\n').trim();
-		if (!value) throw new BadRequestException('A message needs a body.');
+		if (!value && !hasAttachments) throw new BadRequestException('A message needs a body or an attachment.');
 		if (value.length > CHAT_MESSAGE_MAX_LENGTH) throw new BadRequestException(`A message holds at most ${CHAT_MESSAGE_MAX_LENGTH} characters.`);
 		return value;
 	}

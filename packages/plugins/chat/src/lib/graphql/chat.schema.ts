@@ -108,7 +108,7 @@ export const chatSchemaExtensions = gql`
 		authorEmployeeId: ID
 		authorUserId: ID
 		kind: String!
-		"Markdown subset with mention tokens; empty for a deleted message."
+		"Markdown subset with mention tokens; empty for a deleted message and for a message of files only."
 		body: String!
 		mentionEmployeeIds: [ID!]
 		mentionsChannel: Boolean!
@@ -122,6 +122,8 @@ export const chatSchemaExtensions = gql`
 		pinnedByEmployeeId: ID
 		editedAt: DateTime
 		attachmentIds: [ID!]
+		"The names the attached files had when the message was sent or last edited, one per line."
+		attachmentNames: String
 		nonce: String
 		appName: String
 		assistedBy: String
