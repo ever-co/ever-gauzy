@@ -538,7 +538,8 @@ export class ThreadPaneComponent {
 					.open({ message, people: this.people(), conversationNames: this.conversationNames(), organizationId: this.organizationId(), tenantId: this.tenantId() })
 					.pipe(takeUntilDestroyed(this.destroyRef))
 					.subscribe((updated) => {
-						if (updated && this.isCurrent(id)) this.replace(updated);
+						// Only the reference is new: put it on the message as shown now (it may have changed meanwhile).
+						if (updated && this.isCurrent(id)) this.replace({ id: message.id, taskReferences: updated.taskReferences });
 					});
 				return;
 			case 'pin':
@@ -568,7 +569,7 @@ export class ThreadPaneComponent {
 		}
 	}
 
-	private replace(message: IChatMessageWithRelations): void {
+	private replace(message: ChatMessagePatch): void {
 		const root = this.root();
 		if (root && root.id === message.id) {
 			const next = { ...root, ...message };

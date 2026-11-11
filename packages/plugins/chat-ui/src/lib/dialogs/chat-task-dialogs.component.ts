@@ -257,9 +257,9 @@ export interface SendTaskToChatResult {
 				@if (loading()) {
 					<div class="loading" [nbSpinner]="true"></div>
 				} @else {
-					<ul class="choices" role="listbox">
+					<ul class="choices" role="listbox" [attr.aria-label]="'CHAT.TASKS.SEND_TO' | translate">
 						@for (conversation of choices(); track conversation.id) {
-							<li>
+							<li role="none">
 								<button
 									type="button"
 									class="choice"
@@ -274,7 +274,7 @@ export interface SendTaskToChatResult {
 								</button>
 							</li>
 						} @empty {
-							<li class="empty">{{ 'CHAT.TASKS.NO_CONVERSATIONS' | translate }}</li>
+							<li class="empty" role="none">{{ 'CHAT.TASKS.NO_CONVERSATIONS' | translate }}</li>
 						}
 					</ul>
 				}
