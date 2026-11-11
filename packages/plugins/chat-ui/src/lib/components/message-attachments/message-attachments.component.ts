@@ -59,9 +59,9 @@ import { fileSizeLabel, messageAttachments } from '../../chat-attachments';
 			}
 			.image {
 				display: block;
-				border-radius: 0.375rem;
+				border-radius: var(--border-radius);
 				overflow: hidden;
-				border: 1px solid rgba(127, 127, 127, 0.25);
+				border: 1px solid var(--border-basic-color-3);
 				line-height: 0;
 			}
 			.image img {
@@ -81,11 +81,16 @@ import { fileSizeLabel, messageAttachments } from '../../chat-attachments';
 				gap: 0.375rem;
 				max-width: 100%;
 				padding: 0.25rem 0.5rem;
-				border: 1px solid rgba(127, 127, 127, 0.3);
-				border-radius: 0.375rem;
+				border: 1px solid var(--border-basic-color-3);
+				border-radius: var(--border-radius);
+				background: var(--background-basic-color-1);
 				font-size: 0.8125rem;
 				color: inherit;
 				text-decoration: none;
+			}
+			a.file:hover,
+			a.file:focus-visible {
+				background: var(--background-basic-color-2);
 			}
 			.name {
 				overflow: hidden;
@@ -94,12 +99,12 @@ import { fileSizeLabel, messageAttachments } from '../../chat-attachments';
 			}
 			.size {
 				font-size: 0.6875rem;
-				opacity: 0.7;
+				color: var(--text-hint-color);
 			}
 			.unknown {
 				margin: 0.25rem 0 0;
 				font-size: 0.75rem;
-				opacity: 0.7;
+				color: var(--text-hint-color);
 			}
 		`
 	]

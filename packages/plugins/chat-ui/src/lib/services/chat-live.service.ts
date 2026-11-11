@@ -29,7 +29,7 @@ export class ChatLiveService {
 	readonly mode$: Observable<ChatLiveMode>;
 	/**
 	 * When to catch up with what the stream may have missed: the mode became `live` (first time, after a reconnect)
-	 * or the tab was shown again.
+	 * while the tab is shown, or the tab was shown again (which also covers a reconnect while it was hidden).
 	 */
 	readonly catchUp$: Observable<void>;
 
@@ -59,7 +59,7 @@ export class ChatLiveService {
 						filter(() => isTabVisible()),
 						map(() => undefined)
 					);
-		this.catchUp$ = merge(this.channel.resumed$, shown$);
+		this.catchUp$ = merge(this.channel.resumed$.pipe(filter(() => isTabVisible())), shown$);
 	}
 
 	/**

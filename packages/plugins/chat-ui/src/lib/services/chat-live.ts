@@ -1,6 +1,6 @@
-import { asyncScheduler, BehaviorSubject, defer, merge, NEVER, Observable, of, SchedulerLike, Subject, Subscription, timer } from 'rxjs';
+import { asyncScheduler, BehaviorSubject, defer, merge, NEVER, Observable, of, OperatorFunction, SchedulerLike, Subject, Subscription, timer } from 'rxjs';
 import { catchError, distinctUntilChanged, filter, finalize, ignoreElements, map, repeat, retry, share, switchMap, tap } from 'rxjs/operators';
-import { CHAT_EVENT_NAMES, ChatEventName, IRealtimeEventEnvelope, IRealtimeStatus } from '@gauzy/contracts';
+import { CHAT_EVENT_NAMES, CHAT_STREAMED_EVENTS, ChatEventName, IRealtimeEventEnvelope, IRealtimeStatus } from '@gauzy/contracts';
 
 /**
  * The chat families of the platform's collaboration events (`packages/plugins/realtime/README.md`): what the chat
@@ -76,6 +76,15 @@ export function chatHintOf(envelope: Partial<IRealtimeEventEnvelope> | null | un
 export function servesChatEvents(status: IRealtimeStatus | null | undefined): boolean {
 	if (!status || status.subscriptions === false) return false;
 	return (status.events ?? []).some((name) => typeof name === 'string' && name.startsWith('chat_message.'));
+}
+
+/**
+ * Whether the platform offers every chat event the page follows (`CHAT_STREAMED_EVENTS`): with part of them only, the
+ * others would wait for the safety poll, so the polls keep their pace (the offered ones still arrive as hints).
+ */
+export function coversChatEvents(status: IRealtimeStatus | null | undefined): boolean {
+	const offered = new Set((status?.events ?? []).map(String));
+	return CHAT_STREAMED_EVENTS.every((name) => offered.has(name));
 }
 
 /**
@@ -187,7 +196,7 @@ export class ChatLiveChannel {
 			return this.status().pipe(
 				switchMap((status) => {
 					if (!servesChatEvents(status)) return NEVER;
-					state.prompt = deliversPromptly(status);
+					state.prompt = deliversPromptly(status) && coversChatEvents(status);
 					const socket$ = this.source.socketStatus$.pipe(
 						tap((status) => {
 							state.connected = status === 'connected';
@@ -234,6 +243,47 @@ export class ChatLiveChannel {
 	private backoff(attempt: number): number {
 		return Math.min(this.timing.retryMaxMs, this.timing.retryMinMs * 2 ** Math.max(0, attempt - 1));
 	}
+}
+
+/**
+ * Runs a read for each trigger without ever cancelling one under way: a trigger that comes while a read runs asks for
+ * one more read after it (however many came), so a steady stream of events cannot keep the reads from finishing.
+ * Unsubscribing (a change of scope) cancels the read under way.
+ */
+export function coalesceReads<T>(read: () => Observable<T>): OperatorFunction<unknown, T> {
+	return (source) =>
+		new Observable<T>((subscriber) => {
+			let running: Subscription | null = null;
+			let again = false;
+			let ended = false;
+			const start = (): void => {
+				again = false;
+				let finished = false;
+				const done = (): void => {
+					finished = true;
+					running = null;
+					if (again) start();
+					else if (ended) subscriber.complete();
+				};
+				const current = read().subscribe({ next: (value) => subscriber.next(value), error: done, complete: done });
+				if (!finished) running = current;
+			};
+			const triggers = source.subscribe({
+				next: () => {
+					if (running) again = true;
+					else start();
+				},
+				error: (error) => subscriber.error(error),
+				complete: () => {
+					ended = true;
+					if (!running) subscriber.complete();
+				}
+			});
+			return () => {
+				triggers.unsubscribe();
+				running?.unsubscribe();
+			};
+		});
 }
 
 /**

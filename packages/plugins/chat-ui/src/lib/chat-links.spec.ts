@@ -1,4 +1,4 @@
-import { CHAT_LINK_CARDS_MAX, linkCardsOf } from './chat-links';
+import { CHAT_LINK_CARDS_MAX, linkCardsOf, withoutUnbalancedEnd } from './chat-links';
 
 describe('linkCardsOf', () => {
 	it('makes a card of each web link, in order, from the link alone', () => {
@@ -13,6 +13,14 @@ describe('linkCardsOf', () => {
 			'https://example.com/a',
 			'https://example.com/guide'
 		]);
+	});
+
+	it('keeps the balanced parentheses of a URL and leaves out the one closing the sentence', () => {
+		expect(linkCardsOf('See https://en.wikipedia.org/wiki/Function_(mathematics).').map((card) => card.url)).toEqual([
+			'https://en.wikipedia.org/wiki/Function_(mathematics)'
+		]);
+		expect(linkCardsOf('(more at https://example.com/a)').map((card) => card.url)).toEqual(['https://example.com/a']);
+		expect(withoutUnbalancedEnd('https://example.com/x_(y))).')).toBe('https://example.com/x_(y)');
 	});
 
 	it('gives one card per link, a few at most', () => {

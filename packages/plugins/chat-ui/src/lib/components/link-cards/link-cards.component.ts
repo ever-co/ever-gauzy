@@ -38,16 +38,16 @@ import { linkCardsOf } from '../../chat-links';
 				gap: 0.5rem;
 				max-width: min(28rem, 100%);
 				padding: 0.375rem 0.625rem;
-				border-left: 3px solid var(--color-primary-default, #3366ff);
-				border-radius: 0.25rem;
-				background: rgba(127, 127, 127, 0.08);
+				border: 1px solid var(--border-basic-color-3);
+				border-radius: var(--border-radius);
+				background: var(--background-basic-color-1);
 				color: inherit;
 				text-decoration: none;
 				font-size: 0.8125rem;
 			}
 			.card:hover,
 			.card:focus-visible {
-				background: rgba(127, 127, 127, 0.15);
+				background: var(--background-basic-color-2);
 			}
 			.text {
 				display: flex;
@@ -59,14 +59,14 @@ import { linkCardsOf } from '../../chat-links';
 			}
 			.path {
 				font-size: 0.75rem;
-				opacity: 0.7;
+				color: var(--text-hint-color);
 				overflow: hidden;
 				text-overflow: ellipsis;
 				white-space: nowrap;
 			}
 			.out {
 				flex: 0 0 auto;
-				opacity: 0.6;
+				color: var(--text-hint-color);
 			}
 		`
 	]

@@ -342,6 +342,8 @@ export class ThreadPaneComponent {
 	/** The root and the first page again (the events of the gap are not replayed), then the newer replies. */
 	private catchUp(id: string): void {
 		if (!this.isCurrent(id) || this.loading()) return;
+		// A reply shown while the read runs (a live event, my own reply) stays whatever the page says.
+		const before = new Set(this.replies().map((reply) => String(reply.id)));
 		this.api
 			.thread(id)
 			.pipe(takeUntilDestroyed(this.destroyRef))
@@ -349,8 +351,12 @@ export class ThreadPaneComponent {
 				next: (page) => {
 					if (!this.isCurrent(id)) return;
 					this.replace(page.root);
-					const result = reconcileWithOldest(this.replies(), { hasAfter: page.hasAfter, messages: page.messages.filter((message) => message.id !== page.root.id) });
-					this.replies.set(result.messages);
+					const arrived = this.replies().filter((reply) => !before.has(String(reply.id)));
+					const result = reconcileWithOldest(
+						this.replies().filter((reply) => before.has(String(reply.id))),
+						{ hasAfter: page.hasAfter, messages: page.messages.filter((message) => message.id !== page.root.id) }
+					);
+					this.replies.set(mergeMessages(result.messages, arrived));
 					if (!result.beyond) this.hasAfter.set(page.hasAfter);
 					if (result.added.length) this.markRead();
 					this.newerNow.next();
@@ -359,7 +365,10 @@ export class ThreadPaneComponent {
 			});
 	}
 
-	/** Reads the root or one loaded reply again: the root through the thread's first page, a reply through the window around it. */
+	/**
+	 * Reads the root or one loaded reply again: the root through the thread's first page, a reply through the window
+	 * around it. A deleted reply leaves the list (a thread read leaves it out); a deleted root stays as its tombstone.
+	 */
 	private refreshMessage(id: string, hint: ChatHint): void {
 		const messageId = String(hint.messageId);
 		const isRoot = messageId === id;
@@ -371,7 +380,9 @@ export class ThreadPaneComponent {
 				next: (page) => {
 					if (!this.isCurrent(id)) return;
 					const fresh = isRoot ? page.root : page.messages.find((message) => String(message.id) === messageId);
-					if (fresh) this.replace(fresh);
+					if (!fresh) return;
+					if (!isRoot && fresh.deletedAt) this.replies.set(this.replies().filter((reply) => String(reply.id) !== messageId));
+					else this.replace(fresh);
 				},
 				error: () => undefined
 			});

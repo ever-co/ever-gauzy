@@ -56,14 +56,14 @@ export const CHAT_FILES_PAGE = 30;
 				max-height: 40%;
 				overflow-y: auto;
 				padding: 0.5rem 0.75rem;
-				border-bottom: 1px solid rgba(127, 127, 127, 0.2);
-				background: rgba(127, 127, 127, 0.05);
+				border-bottom: 1px solid var(--border-basic-color-3);
+				background: var(--background-basic-color-2);
 			}
 			h6 {
 				margin: 0 0 0.25rem;
 				font-size: 0.75rem;
 				text-transform: uppercase;
-				opacity: 0.7;
+				color: var(--text-hint-color);
 			}
 			.row {
 				display: flex;
@@ -84,12 +84,12 @@ export const CHAT_FILES_PAGE = 30;
 			.meta {
 				flex: 0 0 auto;
 				font-size: 0.6875rem;
-				opacity: 0.7;
+				color: var(--text-hint-color);
 			}
 			.empty {
 				margin: 0.25rem 0;
 				font-size: 0.8125rem;
-				opacity: 0.7;
+				color: var(--text-hint-color);
 			}
 			.loading {
 				min-height: 3rem;
@@ -140,8 +140,15 @@ export class FilesPanelComponent {
 			.subscribe({
 				next: (result) => {
 					if (this.conversationId() !== id) return;
+					// One entry per document, within this page too (two messages may carry one document).
 					const seen = new Set(this.files().map((file) => String(file.documentId)));
-					this.files.set([...this.files(), ...result.files.filter((file) => !seen.has(String(file.documentId)))]);
+					const fresh = result.files.filter((file) => {
+						const id = String(file.documentId);
+						if (seen.has(id)) return false;
+						seen.add(id);
+						return true;
+					});
+					this.files.set([...this.files(), ...fresh]);
 					this.hasMore.set(result.hasMore);
 					// A full page (more follows) read exactly the page size of rows; the last page, what it answered.
 					this.consumed = skip + (result.hasMore ? CHAT_FILES_PAGE : result.files.length);
