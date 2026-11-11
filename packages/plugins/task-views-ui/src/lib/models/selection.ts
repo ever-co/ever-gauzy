@@ -58,7 +58,10 @@ export function selectAllOnPage(selection: TaskSelection, order: readonly ID[], 
 /** Unselects every row of the page, keeping what was selected elsewhere. */
 export function unselectPage(selection: TaskSelection, order: readonly ID[]): TaskSelection {
 	const page = new Set(order);
-	return { ids: selection.ids.filter((id) => !page.has(id)), anchor: selection.anchor && page.has(selection.anchor) ? null : selection.anchor };
+	return {
+		ids: selection.ids.filter((id) => !page.has(id)),
+		anchor: selection.anchor && page.has(selection.anchor) ? null : selection.anchor
+	};
 }
 
 /** How much of the page is selected: what the "select all" checkbox shows. */

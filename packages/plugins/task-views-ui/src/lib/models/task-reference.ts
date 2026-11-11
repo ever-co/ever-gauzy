@@ -37,7 +37,10 @@ export function taskReferenceOf(task: TaskReferenceSource | null | undefined): s
 }
 
 /** What the go-to box was given: a reference to resolve, a task id to open as it is, or nothing it understands. */
-export type GoToInput = { kind: 'reference'; reference: string; key: string; number: number } | { kind: 'id'; id: ID } | { kind: 'invalid' };
+export type GoToInput =
+	| { kind: 'reference'; reference: string; key: string; number: number }
+	| { kind: 'id'; id: ID }
+	| { kind: 'invalid' };
 
 /** Reads what was typed or pasted into the go-to box: `API-42`, `#api-42`, a task id, or a task link of this app. */
 export function parseGoToInput(text: string | null | undefined): GoToInput {
@@ -62,12 +65,17 @@ export type ReferenceOutcome =
 	| { kind: 'not-found'; reference: string };
 
 /** The outcome of one resolution the API answered. */
-export function outcomeOfResolution(resolution: ITaskReferenceResolution | null | undefined, reference: string): ReferenceOutcome {
+export function outcomeOfResolution(
+	resolution: ITaskReferenceResolution | null | undefined,
+	reference: string
+): ReferenceOutcome {
 	if (!resolution) return { kind: 'not-found', reference };
 	if (resolution.ambiguous) return { kind: 'ambiguous', reference };
 	if (!resolution.resolved || !resolution.taskId) return { kind: 'not-found', reference };
 	const current =
-		resolution.currentKey && resolution.currentNumber ? `${resolution.currentKey}-${resolution.currentNumber}` : null;
+		resolution.currentKey && resolution.currentNumber
+			? `${resolution.currentKey}-${resolution.currentNumber}`
+			: null;
 	if (resolution.formerReference && current && current !== reference) {
 		return { kind: 'moved', taskId: resolution.taskId, reference, current, title: resolution.title };
 	}

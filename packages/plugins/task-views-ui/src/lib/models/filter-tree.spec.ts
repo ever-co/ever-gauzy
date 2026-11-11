@@ -37,12 +37,23 @@ describe('filter tree model', () => {
 	describe('conditions', () => {
 		it('starts a record field on "is any of" with nothing picked, a date field on this week', () => {
 			expect(newCondition('priority')).toEqual({ field: 'priority', operator: 'in', values: [] });
-			expect(newCondition('dueDate')).toEqual({ field: 'dueDate', operator: 'relative', relative: { unit: 'week', direction: 'current' } });
+			expect(newCondition('dueDate')).toEqual({
+				field: 'dueDate',
+				operator: 'relative',
+				relative: { unit: 'week', direction: 'current' }
+			});
 		});
 
 		it('offers the operators the platform takes for each kind of field', () => {
 			expect(operatorsOf('labels')).toEqual(['in', 'notIn', 'isEmpty', 'isNotEmpty']);
-			expect(operatorsOf('createdAt')).toEqual(['relative', 'before', 'after', 'between', 'isEmpty', 'isNotEmpty']);
+			expect(operatorsOf('createdAt')).toEqual([
+				'relative',
+				'before',
+				'after',
+				'between',
+				'isEmpty',
+				'isNotEmpty'
+			]);
 		});
 
 		it('starts over when the field changes (the ids named other records), and keeps it when it does not', () => {
@@ -53,12 +64,21 @@ describe('filter tree model', () => {
 		});
 
 		it('keeps the ids between "is any of" and "is none of", and drops them for the empties', () => {
-			expect(withOperator(statusIn(A, B), 'notIn')).toEqual({ field: 'status', operator: 'notIn', values: [A, B] });
+			expect(withOperator(statusIn(A, B), 'notIn')).toEqual({
+				field: 'status',
+				operator: 'notIn',
+				values: [A, B]
+			});
 			expect(withOperator(statusIn(A), 'isEmpty')).toEqual({ field: 'status', operator: 'isEmpty' });
 		});
 
 		it('keeps the date bounds the new operator reads, and refuses an operator the field does not take', () => {
-			const between: ITaskViewFilterCondition = { field: 'dueDate', operator: 'between', from: '2026-11-01T00:00:00.000Z', to: '2026-11-10T00:00:00.000Z' };
+			const between: ITaskViewFilterCondition = {
+				field: 'dueDate',
+				operator: 'between',
+				from: '2026-11-01T00:00:00.000Z',
+				to: '2026-11-10T00:00:00.000Z'
+			};
 			expect(withOperator(between, 'after')).toEqual({ field: 'dueDate', operator: 'after', from: between.from });
 			expect(withOperator(between, 'before')).toEqual({ field: 'dueDate', operator: 'before', to: between.to });
 			expect(withOperator(statusIn(A), 'before')).toEqual(statusIn(A));
@@ -67,8 +87,15 @@ describe('filter tree model', () => {
 		it('picks each id once, and bounds a relative amount to what the platform takes', () => {
 			expect(withValues(statusIn(), [A, A, B]).values).toEqual([A, B]);
 			const relative = newCondition('dueDate');
-			expect(withRelative(relative, { unit: 'day', direction: 'past', amount: 999 }).relative).toEqual({ unit: 'day', direction: 'past', amount: 366 });
-			expect(withRelative(relative, { unit: 'month', direction: 'current', amount: 4 }).relative).toEqual({ unit: 'month', direction: 'current' });
+			expect(withRelative(relative, { unit: 'day', direction: 'past', amount: 999 }).relative).toEqual({
+				unit: 'day',
+				direction: 'past',
+				amount: 366
+			});
+			expect(withRelative(relative, { unit: 'month', direction: 'current', amount: 4 }).relative).toEqual({
+				unit: 'month',
+				direction: 'current'
+			});
 		});
 
 		it('says which conditions are complete enough to apply', () => {
@@ -85,7 +112,10 @@ describe('filter tree model', () => {
 			expect(tree).toEqual({ op: 'and', conditions: [statusIn(A)] });
 			tree = addGroup(tree, [], 'or', labelsIn(B));
 			tree = addCondition(tree, [1], labelsIn(C));
-			expect(tree).toEqual({ op: 'and', conditions: [statusIn(A), { op: 'or', conditions: [labelsIn(B), labelsIn(C)] }] });
+			expect(tree).toEqual({
+				op: 'and',
+				conditions: [statusIn(A), { op: 'or', conditions: [labelsIn(B), labelsIn(C)] }]
+			});
 			expect(nodeAt(tree, [1, 1])).toEqual(labelsIn(C));
 			expect(nodeAt(tree, [3])).toBeNull();
 		});
@@ -102,7 +132,12 @@ describe('filter tree model', () => {
 
 		it('replaces a node, and changes how a group joins', () => {
 			const tree = addGroup(addCondition(null, [], statusIn(A)), [], 'or', labelsIn(B));
-			expect(nodeAt(updateNode(tree, [1, 0], () => labelsIn(C)), [1, 0])).toEqual(labelsIn(C));
+			expect(
+				nodeAt(
+					updateNode(tree, [1, 0], () => labelsIn(C)),
+					[1, 0]
+				)
+			).toEqual(labelsIn(C));
 			expect((nodeAt(setGroupOp(tree, [1], 'and'), [1]) as ITaskViewFilterGroup).op).toBe('and');
 		});
 
@@ -137,10 +172,18 @@ describe('filter tree model', () => {
 		it('sends only what is complete, and maps each node sent back to its place in the editor', () => {
 			const tree: ITaskViewFilterGroup = {
 				op: 'and',
-				conditions: [statusIn(), labelsIn(A), { op: 'or', conditions: [statusIn(), statusIn(B)] }, { op: 'or', conditions: [labelsIn()] }]
+				conditions: [
+					statusIn(),
+					labelsIn(A),
+					{ op: 'or', conditions: [statusIn(), statusIn(B)] },
+					{ op: 'or', conditions: [labelsIn()] }
+				]
 			};
 			const sent = applicableTree(tree);
-			expect(sent.tree).toEqual({ op: 'and', conditions: [labelsIn(A), { op: 'or', conditions: [statusIn(B)] }] });
+			expect(sent.tree).toEqual({
+				op: 'and',
+				conditions: [labelsIn(A), { op: 'or', conditions: [statusIn(B)] }]
+			});
 			expect(sent.paths.get('filter.conditions.0')).toEqual([1]);
 			expect(sent.paths.get('filter.conditions.1')).toEqual([2]);
 			expect(sent.paths.get('filter.conditions.1.conditions.0')).toEqual([2, 1]);
@@ -150,32 +193,50 @@ describe('filter tree model', () => {
 		it('places the invalid filters the platform reported on the conditions of the editor', () => {
 			const tree: ITaskViewFilterGroup = { op: 'and', conditions: [statusIn(), labelsIn(A, B)] };
 			const sent = applicableTree(tree);
-			const byPath = invalidByPath([{ path: 'filter.conditions.0', field: 'labels', reason: 'deleted-reference', values: [B] }], sent);
+			const byPath = invalidByPath(
+				[{ path: 'filter.conditions.0', field: 'labels', reason: 'deleted-reference', values: [B] }],
+				sent
+			);
 			expect([...byPath.keys()]).toEqual(['1']);
 			// Without what was sent (a stored tree read as it is), the platform path is the editor path.
-			expect([...invalidByPath([{ path: 'filter.conditions.0', reason: 'malformed' }], null).keys()]).toEqual(['0']);
+			expect([...invalidByPath([{ path: 'filter.conditions.0', reason: 'malformed' }], null).keys()]).toEqual([
+				'0'
+			]);
 		});
 	});
 
 	describe('fixing invalid filters', () => {
 		it('keeps the records that still exist and removes the condition when none does', () => {
 			const tree: ITaskViewFilterGroup = { op: 'and', conditions: [labelsIn(A, B), statusIn(C)] };
-			const fixed = withoutInvalid(tree, new Map([['0', [{ path: 'filter.conditions.0', reason: 'deleted-reference' as const, values: [B] }]]]));
+			const fixed = withoutInvalid(
+				tree,
+				new Map([['0', [{ path: 'filter.conditions.0', reason: 'deleted-reference' as const, values: [B] }]]])
+			);
 			expect(fixed).toEqual({ op: 'and', conditions: [labelsIn(A), statusIn(C)] });
-			const gone = withoutInvalid(tree, new Map([['1', [{ path: 'filter.conditions.1', reason: 'deleted-reference' as const, values: [C] }]]]));
+			const gone = withoutInvalid(
+				tree,
+				new Map([['1', [{ path: 'filter.conditions.1', reason: 'deleted-reference' as const, values: [C] }]]])
+			);
 			expect(gone).toEqual({ op: 'and', conditions: [labelsIn(A, B)] });
 		});
 
 		it('removes the other invalid conditions, later ones first, so no fix moves another', () => {
 			const tree: ITaskViewFilterGroup = {
 				op: 'and',
-				conditions: [statusIn(A), { op: 'or', conditions: [{ field: 'nope' as never, operator: 'in', values: [A] }, labelsIn(B)] }, { field: 'status', operator: 'between' }]
+				conditions: [
+					statusIn(A),
+					{ op: 'or', conditions: [{ field: 'nope' as never, operator: 'in', values: [A] }, labelsIn(B)] },
+					{ field: 'status', operator: 'between' }
+				]
 			};
 			const invalid = new Map([
 				['1.0', [{ path: 'filter.conditions.1.conditions.0', reason: 'unknown-field' as const }]],
 				['2', [{ path: 'filter.conditions.2', reason: 'unknown-operator' as const }]]
 			]);
-			expect(withoutInvalid(tree, invalid)).toEqual({ op: 'and', conditions: [statusIn(A), { op: 'or', conditions: [labelsIn(B)] }] });
+			expect(withoutInvalid(tree, invalid)).toEqual({
+				op: 'and',
+				conditions: [statusIn(A), { op: 'or', conditions: [labelsIn(B)] }]
+			});
 		});
 	});
 
@@ -183,7 +244,9 @@ describe('filter tree model', () => {
 		it('keeps the shape of a tree and nothing else', () => {
 			expect(treeOf(null)).toBeNull();
 			expect(treeOf({ op: 'and', conditions: [] })).toBeNull();
-			expect(treeOf({ op: 'xor', conditions: [statusIn(A), 42, null, { op: 'or', conditions: [labelsIn(B)] }] })).toEqual({
+			expect(
+				treeOf({ op: 'xor', conditions: [statusIn(A), 42, null, { op: 'or', conditions: [labelsIn(B)] }] })
+			).toEqual({
 				op: 'and',
 				conditions: [statusIn(A), { op: 'or', conditions: [labelsIn(B)] }]
 			});

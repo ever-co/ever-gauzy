@@ -2,7 +2,12 @@ import { Injector } from '@angular/core';
 import { Routes } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { PermissionsEnum } from '@gauzy/contracts';
-import { defineDeclarativePlugin, PageExtensionDefinition, PluginRouteInput, PluginUiDefinition } from '@gauzy/plugin-ui';
+import {
+	defineDeclarativePlugin,
+	PageExtensionDefinition,
+	PluginRouteInput,
+	PluginUiDefinition
+} from '@gauzy/plugin-ui';
 import { NavMenuBuilderService, PermissionsGuard } from '@gauzy/ui-core/core';
 import {
 	KEYBOARD_SETTINGS_LINK,
@@ -23,7 +28,8 @@ import { ShortcutRegistryService } from './keyboard/shortcut-registry.service';
 import { TaskViewsAvailabilityService } from './services/task-views-availability.service';
 import en from '../i18n/en.json';
 
-const loadPage = () => import('./components/task-views-page/task-views-page.component').then((m) => m.TaskViewsPageComponent);
+const loadPage = () =>
+	import('./components/task-views-page/task-views-page.component').then((m) => m.TaskViewsPageComponent);
 
 /** The page (standalone, loaded on first visit): a built-in view by key, or a saved view by id. */
 export const TASK_VIEWS_CHILD_ROUTES: Routes = [
@@ -57,7 +63,8 @@ export const TASK_VIEWS_PAGE_ROUTE: PluginRouteInput = {
 export const KEYBOARD_SETTINGS_ROUTE: PluginRouteInput = {
 	location: 'settings-sections',
 	path: KEYBOARD_SETTINGS_PATH,
-	loadComponent: () => import('./keyboard/keyboard-settings-page.component').then((m) => m.KeyboardSettingsPageComponent),
+	loadComponent: () =>
+		import('./keyboard/keyboard-settings-page.component').then((m) => m.KeyboardSettingsPageComponent),
 	data: {
 		selectors: {
 			project: false,
@@ -73,7 +80,10 @@ export const KEYBOARD_SETTINGS_ROUTE: PluginRouteInput = {
 export const TASK_REFERENCE_EXTENSION: PageExtensionDefinition = {
 	id: TASK_REFERENCE_EXTENSION_ID,
 	slotId: TASK_VIEW_ACTIONS_SLOT,
-	loadComponent: () => import('./components/task-reference-chip/task-reference-chip.component').then((m) => m.TaskReferenceChipComponent),
+	loadComponent: () =>
+		import('./components/task-reference-chip/task-reference-chip.component').then(
+			(m) => m.TaskReferenceChipComponent
+		),
 	permissions: [PermissionsEnum.ORG_TASK_VIEW],
 	order: 10,
 	metadata: { title: 'Task reference', icon: 'hash-outline' }
@@ -121,8 +131,14 @@ export function registerTaskViewsEntryPoints(injector: Injector): Subscription {
 			state.navAdded = true;
 			const nav = injector.get(NavMenuBuilderService);
 			const hide = () => !state.available;
-			nav.addNavMenuItems([{ ...TASK_VIEWS_NAV_ITEM, data: { ...TASK_VIEWS_NAV_ITEM.data, hide } }] as never, TASK_VIEWS_NAV_SECTION_ID);
-			nav.addNavMenuItems([{ ...KEYBOARD_SETTINGS_NAV_ITEM, data: { ...KEYBOARD_SETTINGS_NAV_ITEM.data, hide } }] as never, SETTINGS_NAV_SECTION_ID);
+			nav.addNavMenuItems(
+				[{ ...TASK_VIEWS_NAV_ITEM, data: { ...TASK_VIEWS_NAV_ITEM.data, hide } }] as never,
+				TASK_VIEWS_NAV_SECTION_ID
+			);
+			nav.addNavMenuItems(
+				[{ ...KEYBOARD_SETTINGS_NAV_ITEM, data: { ...KEYBOARD_SETTINGS_NAV_ITEM.data, hide } }] as never,
+				SETTINGS_NAV_SECTION_ID
+			);
 		}
 		const registry = injector.get(ShortcutRegistryService);
 		if (available && !state.removeShortcuts) {

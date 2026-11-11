@@ -55,7 +55,12 @@ export function sanitizeChanges(changes: ITaskBulkChanges | null | undefined): I
 	for (const key of CHANGE_KEYS) {
 		const value = changes?.[key];
 		if (value === undefined) continue;
-		if ((key === 'status' || key === 'priority' || key === 'size') && value !== null && !ENUM_VALUES[key].has(String(value))) continue;
+		if (
+			(key === 'status' || key === 'priority' || key === 'size') &&
+			value !== null &&
+			!ENUM_VALUES[key].has(String(value))
+		)
+			continue;
 		result[key] = value;
 	}
 	return result as ITaskBulkChanges;
@@ -73,7 +78,10 @@ export function statusChanges(status: Pick<ITaskStatus, 'id' | 'value' | 'name'>
 
 /** The changes that set a priority: its id, and its name where it is one of the platform's values. */
 export function priorityChanges(priority: Pick<ITaskPriority, 'id' | 'value' | 'name'>): ITaskBulkChanges {
-	return sanitizeChanges({ taskPriorityId: priority.id as ID, priority: (priority.value ?? priority.name) as TaskPriorityEnum });
+	return sanitizeChanges({
+		taskPriorityId: priority.id as ID,
+		priority: (priority.value ?? priority.name) as TaskPriorityEnum
+	});
 }
 
 /** The changes that set a size: its id, and its name where it is one of the platform's values. */
@@ -110,7 +118,10 @@ export function bulkRequest(
  * The request that undoes an outcome: for every task that changed, its previous values as that task's changes
  * (`items`, the platform's undo form). Null when nothing changed, or nothing can be put back.
  */
-export function undoRequest(outcome: ITaskBulkUpdateOutcome | null | undefined, scope: { organizationId?: ID; tenantId?: ID }): ITaskBulkUpdateInput | null {
+export function undoRequest(
+	outcome: ITaskBulkUpdateOutcome | null | undefined,
+	scope: { organizationId?: ID; tenantId?: ID }
+): ITaskBulkUpdateInput | null {
 	const items: ITaskBulkUpdateItem[] = [];
 	for (const result of outcome?.results ?? []) {
 		if (!result.ok || !result.previous) continue;
@@ -129,7 +140,9 @@ export interface BulkSummary {
 
 export function summarizeOutcome(outcome: ITaskBulkUpdateOutcome | null | undefined): BulkSummary {
 	const results = outcome?.results ?? [];
-	const refusals = results.filter((result) => !result.ok).map((result) => ({ taskId: result.taskId, error: result.error ?? '' }));
+	const refusals = results
+		.filter((result) => !result.ok)
+		.map((result) => ({ taskId: result.taskId, error: result.error ?? '' }));
 	return {
 		applied: outcome?.applied ?? results.filter((result) => result.ok).length,
 		refused: outcome?.refused ?? refusals.length,
@@ -144,7 +157,9 @@ export function changedTaskIds(outcome: ITaskBulkUpdateOutcome | null | undefine
 
 /** The outcome of deleting tasks one by one, in the shape the toast reads. */
 export function deleteOutcome(results: Array<{ taskId: ID; ok: boolean; error?: string }>): BulkSummary {
-	const refusals = results.filter((result) => !result.ok).map((result) => ({ taskId: result.taskId, error: result.error ?? '' }));
+	const refusals = results
+		.filter((result) => !result.ok)
+		.map((result) => ({ taskId: result.taskId, error: result.error ?? '' }));
 	return { applied: results.length - refusals.length, refused: refusals.length, refusals };
 }
 

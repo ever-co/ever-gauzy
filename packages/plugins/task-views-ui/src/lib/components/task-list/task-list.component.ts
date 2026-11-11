@@ -1,6 +1,15 @@
 import { CdkDrag, CdkDragDrop, CdkDragHandle, CdkDropList } from '@angular/cdk/drag-drop';
 import { DatePipe } from '@angular/common';
-import { afterRenderEffect, ChangeDetectionStrategy, Component, computed, ElementRef, inject, input, output } from '@angular/core';
+import {
+	afterRenderEffect,
+	ChangeDetectionStrategy,
+	Component,
+	computed,
+	ElementRef,
+	inject,
+	input,
+	output
+} from '@angular/core';
 import { NbIconModule, NbTooltipModule } from '@nebular/theme';
 import { TranslatePipe } from '@ngx-translate/core';
 import { ID, ITask } from '@gauzy/contracts';
@@ -99,7 +108,9 @@ export class TaskListComponent {
 		afterRenderEffect(() => {
 			const id = String(this.focusedId() ?? '');
 			if (!/^[\w-]+$/.test(id)) return;
-			const row = (this.host.nativeElement as HTMLElement).querySelector?.(`[data-task-id="${id}"]`) as HTMLElement | null;
+			const row = (this.host.nativeElement as HTMLElement).querySelector?.(
+				`[data-task-id="${id}"]`
+			) as HTMLElement | null;
 			row?.scrollIntoView?.({ block: 'nearest' });
 		});
 	}
@@ -115,9 +126,10 @@ export class TaskListComponent {
 	protected onCheck(event: MouseEvent, id: ID | undefined): void {
 		if (!id) return;
 		event.stopPropagation();
-		// The checkbox state follows the selection the page answers, not the click.
-		event.preventDefault();
 		this.toggled.emit({ id, shift: event.shiftKey });
+		// The box shows the selection the page answers (a full selection refuses the row), not the click: once the
+		// page has answered, the box is set to it, since a binding whose value did not change does not touch the DOM.
+		this.syncBox(event.target, () => this.selected(id));
 	}
 
 	protected onRowClick(event: MouseEvent, id: ID | undefined): void {
@@ -136,8 +148,21 @@ export class TaskListComponent {
 	}
 
 	protected togglePage(event: Event): void {
-		event.preventDefault();
 		this.pageToggled.emit(this.pageState() !== 'all');
+		this.syncBox(
+			event.target,
+			() => this.pageState() === 'all',
+			() => this.pageState() === 'some'
+		);
+	}
+
+	private syncBox(target: EventTarget | null, checked: () => boolean, indeterminate?: () => boolean): void {
+		const box = target as HTMLInputElement | null;
+		if (!box || typeof box.checked !== 'boolean') return;
+		setTimeout(() => {
+			box.checked = checked();
+			if (indeterminate) box.indeterminate = indeterminate();
+		});
 	}
 
 	protected drop(event: CdkDragDrop<unknown>): void {

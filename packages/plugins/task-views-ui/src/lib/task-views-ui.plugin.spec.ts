@@ -55,7 +55,10 @@ function injectorWith(available$: Subject<boolean>) {
 describe('TaskViewsUiPlugin', () => {
 	it('serves the page, its built-in and saved views, and Settings > Keyboard shortcuts', () => {
 		expect(TASK_VIEWS_PAGE_ROUTE).toMatchObject({ location: 'page-sections', path: 'task-views' });
-		expect(TASK_VIEWS_PAGE_ROUTE.data?.['permissions'].only).toEqual([PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_TASK_VIEW]);
+		expect(TASK_VIEWS_PAGE_ROUTE.data?.['permissions'].only).toEqual([
+			PermissionsEnum.ALL_ORG_VIEW,
+			PermissionsEnum.ORG_TASK_VIEW
+		]);
 		expect(TASK_VIEWS_CHILD_ROUTES.map((route) => route.path)).toEqual(['', 'built-in/:key', ':viewId']);
 		expect(KEYBOARD_SETTINGS_ROUTE).toMatchObject({ location: 'settings-sections', path: 'keyboard-shortcuts' });
 		expect(TaskViewsUiPlugin.extensions).toEqual([TASK_REFERENCE_EXTENSION]);
@@ -76,8 +79,14 @@ describe('TaskViewsUiPlugin', () => {
 		const { injector, nav, registry, removeAll } = injectorWith(available$);
 		registerTaskViewsEntryPoints(injector);
 		available$.next(true);
-		expect(nav.addNavMenuItems).toHaveBeenCalledWith([expect.objectContaining({ id: TASK_VIEWS_NAV_ID })], TASK_VIEWS_NAV_SECTION_ID);
-		expect(nav.addNavMenuItems).toHaveBeenCalledWith([expect.objectContaining({ id: KEYBOARD_SETTINGS_NAV_ID })], SETTINGS_NAV_SECTION_ID);
+		expect(nav.addNavMenuItems).toHaveBeenCalledWith(
+			[expect.objectContaining({ id: TASK_VIEWS_NAV_ID })],
+			TASK_VIEWS_NAV_SECTION_ID
+		);
+		expect(nav.addNavMenuItems).toHaveBeenCalledWith(
+			[expect.objectContaining({ id: KEYBOARD_SETTINGS_NAV_ID })],
+			SETTINGS_NAV_SECTION_ID
+		);
 		const [[[item]]] = nav.addNavMenuItems.mock.calls as unknown as [[[{ data: { hide: () => boolean } }]]];
 		expect(item.data.hide()).toBe(false);
 		expect(registry.mount).toHaveBeenCalledTimes(1);
@@ -95,7 +104,9 @@ describe('TaskViewsUiPlugin', () => {
 		registerTaskViewsEntryPoints(injector);
 		available$.next(true);
 		const handlers = (registry.registerAll.mock.calls as unknown as [[Record<string, () => void>]])[0][0];
-		const globals = SHORTCUT_COMMANDS.filter((command) => command.context === 'global').map((command) => command.id);
+		const globals = SHORTCUT_COMMANDS.filter((command) => command.context === 'global').map(
+			(command) => command.id
+		);
 		expect(Object.keys(handlers).sort()).toEqual([...globals].sort());
 		handlers['goMine']();
 		expect(router.navigateByUrl).toHaveBeenCalledWith(GO_TO_LINKS['goMine']);

@@ -36,7 +36,10 @@ describe('ShortcutRegistryService', () => {
 
 	beforeEach(() => {
 		store = new StoreStub();
-		store.user = { id: 'u1', uiPreferences: { aiChat: { open: true }, keyboard: { bindings: { goViews: 'g x', paletteOpen: 'mod+p' } } } } as unknown as IUser;
+		store.user = {
+			id: 'u1',
+			uiPreferences: { aiChat: { open: true }, keyboard: { bindings: { goViews: 'g x', paletteOpen: 'mod+p' } } }
+		} as unknown as IUser;
 		users = { updateUiPreferences: jest.fn() };
 		bridge = { run: jest.fn(() => true) };
 		quickActions = { setEditing: jest.fn() };
@@ -182,9 +185,14 @@ describe('ShortcutRegistryService', () => {
 	});
 
 	it('saves a binding into the keyboard preferences, keeping the other clients overrides, and follows it at once', async () => {
-		users.updateUiPreferences.mockResolvedValue({ aiChat: { open: true }, keyboard: { bindings: { goViews: 'g x', paletteOpen: 'mod+p', goTasks: 'g y' } } });
+		users.updateUiPreferences.mockResolvedValue({
+			aiChat: { open: true },
+			keyboard: { bindings: { goViews: 'g x', paletteOpen: 'mod+p', goTasks: 'g y' } }
+		});
 		await registry.saveBinding('goTasks', parseBinding('g y'));
-		expect(users.updateUiPreferences).toHaveBeenCalledWith({ keyboard: { bindings: { goViews: 'g x', paletteOpen: 'mod+p', goTasks: 'g y' } } });
+		expect(users.updateUiPreferences).toHaveBeenCalledWith({
+			keyboard: { bindings: { goViews: 'g x', paletteOpen: 'mod+p', goTasks: 'g y' } }
+		});
 		expect(formatBinding(registry.bindingOf('goTasks')!)).toBe('g y');
 		expect((store.user!.uiPreferences as Record<string, unknown>)['aiChat']).toEqual({ open: true });
 	});

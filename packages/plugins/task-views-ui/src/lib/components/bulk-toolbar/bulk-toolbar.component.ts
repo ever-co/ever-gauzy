@@ -1,4 +1,14 @@
-import { ChangeDetectionStrategy, Component, computed, ElementRef, inject, input, output, signal, ViewChild } from '@angular/core';
+import {
+	ChangeDetectionStrategy,
+	Component,
+	computed,
+	ElementRef,
+	inject,
+	input,
+	output,
+	signal,
+	ViewChild
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { NbButtonModule, NbIconModule, NbInputModule, NbTooltipModule } from '@nebular/theme';
 import { TranslatePipe } from '@ngx-translate/core';
@@ -65,7 +75,15 @@ export class BulkToolbarComponent {
 	protected readonly listMode = signal<'add' | 'remove'>('add');
 	protected readonly due = signal('');
 
-	protected readonly pickers: readonly BulkPicker[] = ['status', 'priority', 'size', 'assignees', 'labels', 'project', 'dueDate'];
+	protected readonly pickers: readonly BulkPicker[] = [
+		'status',
+		'priority',
+		'size',
+		'assignees',
+		'labels',
+		'project',
+		'dueDate'
+	];
 
 	protected readonly choices = computed(() => {
 		const picker = this.picker();
@@ -117,10 +135,16 @@ export class BulkToolbarComponent {
 				this.emit('project', { projectId: option.id });
 				break;
 			case 'assignees':
-				this.emit('assignees', this.listMode() === 'add' ? { addMemberIds: [option.id] } : { removeMemberIds: [option.id] });
+				this.emit(
+					'assignees',
+					this.listMode() === 'add' ? { addMemberIds: [option.id] } : { removeMemberIds: [option.id] }
+				);
 				break;
 			case 'labels':
-				this.emit('labels', this.listMode() === 'add' ? { addTagIds: [option.id] } : { removeTagIds: [option.id] });
+				this.emit(
+					'labels',
+					this.listMode() === 'add' ? { addTagIds: [option.id] } : { removeTagIds: [option.id] }
+				);
 				break;
 		}
 	}
@@ -147,7 +171,9 @@ export class BulkToolbarComponent {
 		if (event.key === 'Escape') {
 			event.stopPropagation();
 			this.closePicker();
-			(this.host.nativeElement as HTMLElement).querySelector<HTMLElement>(`[data-picker="${this.pickers[0]}"]`)?.focus();
+			(this.host.nativeElement as HTMLElement)
+				.querySelector<HTMLElement>(`[data-picker="${this.pickers[0]}"]`)
+				?.focus();
 		}
 		if (event.key === 'Enter' && this.picker() !== 'dueDate') {
 			const [first] = this.choices();

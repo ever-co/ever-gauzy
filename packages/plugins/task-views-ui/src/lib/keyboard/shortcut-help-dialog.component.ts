@@ -29,7 +29,14 @@ export function commandKey(commandId: string): string {
 		<nb-card class="shortcut-help" data-test="shortcut-help" role="dialog" aria-labelledby="shortcut-help-title">
 			<nb-card-header class="header">
 				<h2 id="shortcut-help-title">{{ 'TASK_VIEWS.SHORTCUTS.TITLE' | translate }}</h2>
-				<button nbButton ghost size="small" type="button" [attr.aria-label]="'TASK_VIEWS.DIALOG.CLOSE' | translate" (click)="close()">
+				<button
+					nbButton
+					ghost
+					size="small"
+					type="button"
+					[attr.aria-label]="'TASK_VIEWS.DIALOG.CLOSE' | translate"
+					(click)="close()"
+				>
 					<nb-icon icon="close-outline"></nb-icon>
 				</button>
 			</nb-card-header>
@@ -41,7 +48,12 @@ export function commandKey(commandId: string): string {
 							@for (row of section.rows; track row.id) {
 								<div class="row" [class.idle]="!row.runnable" [attr.data-command]="row.id">
 									<dt>{{ commandKey(row.id) | translate }}</dt>
-									<dd><ngx-task-views-key-caps [binding]="row.binding" [isMac]="isMac"></ngx-task-views-key-caps></dd>
+									<dd>
+										<ngx-task-views-key-caps
+											[binding]="row.binding"
+											[isMac]="isMac"
+										></ngx-task-views-key-caps>
+									</dd>
 								</div>
 							}
 						</dl>
@@ -50,7 +62,9 @@ export function commandKey(commandId: string): string {
 				<p class="note">{{ 'TASK_VIEWS.SHORTCUTS.QUICK_ACTIONS_NOTE' | translate }}</p>
 			</nb-card-body>
 			<nb-card-footer class="footer">
-				<a nbButton status="basic" size="small" [routerLink]="settingsLink" (click)="close()">{{ 'TASK_VIEWS.SHORTCUTS.SETTINGS' | translate }}</a>
+				<a nbButton status="basic" size="small" [routerLink]="settingsLink" (click)="close()">{{
+					'TASK_VIEWS.SHORTCUTS.SETTINGS' | translate
+				}}</a>
 			</nb-card-footer>
 		</nb-card>
 	`,
@@ -134,7 +148,11 @@ export class ShortcutHelpDialogComponent {
 			context,
 			rows: this.registry.commands
 				.filter((command) => command.context === context)
-				.map((command) => ({ id: command.id, binding: bindings.get(command.id) ?? null, runnable: this.registry.isRunnable(command.id) }))
+				.map((command) => ({
+					id: command.id,
+					binding: bindings.get(command.id) ?? null,
+					runnable: this.registry.isRunnable(command.id)
+				}))
 		}));
 	});
 

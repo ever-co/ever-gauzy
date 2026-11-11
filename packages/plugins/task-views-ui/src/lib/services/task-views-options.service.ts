@@ -17,7 +17,10 @@ export interface TaskViewOption {
 }
 
 /** The records of an organization the editor and the toolbar pick from, by the field that names them. */
-export type TaskViewOptions = Record<'status' | 'priority' | 'size' | 'labels' | 'assignees' | 'project' | 'team' | 'sprint', TaskViewOption[]>;
+export type TaskViewOptions = Record<
+	'status' | 'priority' | 'size' | 'labels' | 'assignees' | 'project' | 'team' | 'sprint',
+	TaskViewOption[]
+>;
 
 export const EMPTY_OPTIONS: TaskViewOptions = {
 	status: [],
@@ -37,10 +40,26 @@ export function optionsOfField(options: TaskViewOptions, field: TaskViewFilterFi
 
 /** A status, priority or size name for people (`in-progress` → `in progress`). */
 export function humanize(name: string | null | undefined): string {
-	return String(name ?? '').replace(/[-_]+/g, ' ').trim();
+	return String(name ?? '')
+		.replace(/[-_]+/g, ' ')
+		.trim();
 }
 
-type Named = { id?: ID; name?: string | null; value?: string | null; color?: string | null; imageUrl?: string | null; fullName?: string | null; user?: { name?: string | null; firstName?: string | null; lastName?: string | null; email?: string | null; imageUrl?: string | null } | null };
+type Named = {
+	id?: ID;
+	name?: string | null;
+	value?: string | null;
+	color?: string | null;
+	imageUrl?: string | null;
+	fullName?: string | null;
+	user?: {
+		name?: string | null;
+		firstName?: string | null;
+		lastName?: string | null;
+		email?: string | null;
+		imageUrl?: string | null;
+	} | null;
+};
 
 function itemsOf<T>(answer: IPagination<T> | T[] | null | undefined): T[] {
 	if (Array.isArray(answer)) return answer;
@@ -54,7 +73,12 @@ function byLabel(a: TaskViewOption, b: TaskViewOption): number {
 /** A person's name as the lists show it. */
 export function personName(record: Named): string {
 	const user = record.user;
-	const name = record.fullName || user?.name || [user?.firstName, user?.lastName].filter(Boolean).join(' ') || user?.email || '';
+	const name =
+		record.fullName ||
+		user?.name ||
+		[user?.firstName, user?.lastName].filter(Boolean).join(' ') ||
+		user?.email ||
+		'';
 	return String(name).trim();
 }
 
@@ -109,7 +133,10 @@ export class TaskViewsOptionsService {
 			assignees: get<Named>(`${API_PREFIX}/employee`, nested.append('relations[]', 'user')),
 			project: get<Named>(`${API_PREFIX}/organization-projects`, nested),
 			team: get<Named>(`${API_PREFIX}/organization-team`, nested),
-			sprint: get<Named>(`${API_PREFIX}/organization-sprint`, new HttpParams().set('data', JSON.stringify({ findInput: scope })))
+			sprint: get<Named>(
+				`${API_PREFIX}/organization-sprint`,
+				new HttpParams().set('data', JSON.stringify({ findInput: scope }))
+			)
 		}).pipe(
 			map((lists) => ({
 				status: named(lists.status, true),
@@ -118,11 +145,28 @@ export class TaskViewsOptionsService {
 				labels: named(lists.labels),
 				assignees: lists.assignees
 					.filter((record) => !!record.id)
-					.map((record) => ({ id: record.id as ID, label: personName(record) || String(record.id), imageUrl: record.user?.imageUrl ?? null }))
+					.map((record) => ({
+						id: record.id as ID,
+						label: personName(record) || String(record.id),
+						imageUrl: record.user?.imageUrl ?? null
+					}))
 					.sort(byLabel),
-				project: lists.project.filter((record) => !!record.id).map((record) => ({ id: record.id as ID, label: String(record.name ?? ''), imageUrl: record.imageUrl ?? null })).sort(byLabel),
-				team: lists.team.filter((record) => !!record.id).map((record) => ({ id: record.id as ID, label: String(record.name ?? '') })).sort(byLabel),
-				sprint: lists.sprint.filter((record) => !!record.id).map((record) => ({ id: record.id as ID, label: String(record.name ?? '') })).sort(byLabel)
+				project: lists.project
+					.filter((record) => !!record.id)
+					.map((record) => ({
+						id: record.id as ID,
+						label: String(record.name ?? ''),
+						imageUrl: record.imageUrl ?? null
+					}))
+					.sort(byLabel),
+				team: lists.team
+					.filter((record) => !!record.id)
+					.map((record) => ({ id: record.id as ID, label: String(record.name ?? '') }))
+					.sort(byLabel),
+				sprint: lists.sprint
+					.filter((record) => !!record.id)
+					.map((record) => ({ id: record.id as ID, label: String(record.name ?? '') }))
+					.sort(byLabel)
 			}))
 		);
 	}

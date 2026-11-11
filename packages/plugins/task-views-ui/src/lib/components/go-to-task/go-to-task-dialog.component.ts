@@ -16,7 +16,9 @@ import { GoToTaskBoxComponent } from './go-to-task-box.component';
 				<ngx-task-views-go-to-box size="medium" (opened)="close()"></ngx-task-views-go-to-box>
 			</nb-card-body>
 			<nb-card-footer class="actions">
-				<button nbButton status="basic" type="button" (click)="close()">{{ 'TASK_VIEWS.DIALOG.CANCEL' | translate }}</button>
+				<button nbButton status="basic" type="button" (click)="close()">
+					{{ 'TASK_VIEWS.DIALOG.CANCEL' | translate }}
+				</button>
 			</nb-card-footer>
 		</nb-card>
 	`,

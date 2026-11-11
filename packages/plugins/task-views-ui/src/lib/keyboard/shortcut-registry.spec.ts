@@ -1,3 +1,4 @@
+// cspell:ignore arrowdown arrowup arrowleft arrowright
 import {
 	bindingKeyCaps,
 	chordOfEvent,
@@ -42,10 +43,20 @@ describe('shortcut registry', () => {
 		it('reads letters by their physical key and punctuation by the character typed', () => {
 			// A layout where the J key prints something else still answers J.
 			expect(chordOfEvent(key('KeyJ', 'о'))).toEqual({ key: 'j', mod: false, shift: false, alt: false });
-			expect(chordOfEvent(key('Slash', '?', { shiftKey: true }))).toEqual({ key: '?', mod: false, shift: false, alt: false });
+			expect(chordOfEvent(key('Slash', '?', { shiftKey: true }))).toEqual({
+				key: '?',
+				mod: false,
+				shift: false,
+				alt: false
+			});
 			// `/` is Shift+7 on a German layout.
 			expect(chordOfEvent(key('Digit7', '/', { shiftKey: true }))?.key).toBe('/');
-			expect(chordOfEvent(key('KeyS', 's', { ctrlKey: true }))).toEqual({ key: 's', mod: true, shift: false, alt: false });
+			expect(chordOfEvent(key('KeyS', 's', { ctrlKey: true }))).toEqual({
+				key: 's',
+				mod: true,
+				shift: false,
+				alt: false
+			});
 			expect(chordOfEvent(key('ShiftLeft', 'Shift', { shiftKey: true }))).toBeNull();
 		});
 
@@ -59,14 +70,33 @@ describe('shortcut registry', () => {
 		it('never clash with one another', () => {
 			const bindings = defaults();
 			for (const item of SHORTCUT_COMMANDS) {
-				expect({ id: item.id, conflicts: conflictsOf(item.id, bindings.get(item.id)!, SHORTCUT_COMMANDS, bindings).map((other) => other.id) }).toEqual({ id: item.id, conflicts: [] });
+				expect({
+					id: item.id,
+					conflicts: conflictsOf(item.id, bindings.get(item.id)!, SHORTCUT_COMMANDS, bindings).map(
+						(other) => other.id
+					)
+				}).toEqual({ id: item.id, conflicts: [] });
 				expect(refusalOf(item, bindings.get(item.id)!)).toBe(item.fixed ? 'listKey' : null);
 			}
 		});
 
 		it('use the Ever Teams command ids for the commands both clients have', () => {
 			const ids = SHORTCUT_COMMANDS.map((item) => item.id);
-			expect(ids).toEqual(expect.arrayContaining(['helpOpen', 'goTasks', 'goInbox', 'goChat', 'goDocs', 'listDown', 'listUp', 'listSelect', 'listOpen', 'listSaveView', 'taskStatus']));
+			expect(ids).toEqual(
+				expect.arrayContaining([
+					'helpOpen',
+					'goTasks',
+					'goInbox',
+					'goChat',
+					'goDocs',
+					'listDown',
+					'listUp',
+					'listSelect',
+					'listOpen',
+					'listSaveView',
+					'taskStatus'
+				])
+			);
 			expect(formatBinding(defaults().get('goTasks')!)).toBe('g t');
 		});
 	});
@@ -83,12 +113,18 @@ describe('shortcut registry', () => {
 
 		it('counts a binding that starts another as a clash, and Shift with a row key as the row key', () => {
 			const bindings = defaults();
-			expect(conflictsOf('taskGoTo', parseBinding('g')!, SHORTCUT_COMMANDS, bindings).map((item) => item.id)).toEqual(
-				expect.arrayContaining(['goTasks', 'goViews'])
-			);
-			expect(conflictsOf('listSaveView', parseBinding('shift+j')!, SHORTCUT_COMMANDS, bindings).map((item) => item.id)).toEqual(['listDown']);
+			expect(
+				conflictsOf('taskGoTo', parseBinding('g')!, SHORTCUT_COMMANDS, bindings).map((item) => item.id)
+			).toEqual(expect.arrayContaining(['goTasks', 'goViews']));
+			expect(
+				conflictsOf('listSaveView', parseBinding('shift+j')!, SHORTCUT_COMMANDS, bindings).map(
+					(item) => item.id
+				)
+			).toEqual(['listDown']);
 			// The list and the selected tasks are one context: S for the next row clashes with S for the status.
-			expect(conflictsOf('listDown', parseBinding('s')!, SHORTCUT_COMMANDS, bindings).map((item) => item.id)).toEqual(['taskStatus']);
+			expect(
+				conflictsOf('listDown', parseBinding('s')!, SHORTCUT_COMMANDS, bindings).map((item) => item.id)
+			).toEqual(['taskStatus']);
 		});
 	});
 
@@ -113,7 +149,10 @@ describe('shortcut registry', () => {
 
 		it('writes an override, a removal and the default back, keeping other clients commands', () => {
 			const stored = { paletteOpen: 'mod+p', goTasks: 'g x' };
-			expect(withOverride(stored, command('goTasks'), parseBinding('g y'))).toEqual({ paletteOpen: 'mod+p', goTasks: 'g y' });
+			expect(withOverride(stored, command('goTasks'), parseBinding('g y'))).toEqual({
+				paletteOpen: 'mod+p',
+				goTasks: 'g y'
+			});
 			expect(withOverride(stored, command('goTasks'), parseBinding('g t'))).toEqual({ paletteOpen: 'mod+p' });
 			expect(withOverride(stored, command('goTasks'), null)).toEqual({ paletteOpen: 'mod+p', goTasks: '' });
 			expect(withOverride(stored, command('goTasks'), 'default')).toEqual({ paletteOpen: 'mod+p' });
@@ -133,7 +172,10 @@ describe('shortcut registry', () => {
 			const bindings = defaults();
 			expect(matchKeys([chord('g')], SHORTCUT_COMMANDS, bindings)).toEqual({ match: null, pending: true });
 			expect(matchKeys([chord('g'), chord('t')], SHORTCUT_COMMANDS, bindings).match?.command.id).toBe('goTasks');
-			expect(matchKeys([chord('g'), chord('z')], SHORTCUT_COMMANDS, bindings)).toEqual({ match: null, pending: false });
+			expect(matchKeys([chord('g'), chord('z')], SHORTCUT_COMMANDS, bindings)).toEqual({
+				match: null,
+				pending: false
+			});
 		});
 
 		it('matches only the commands it is given (the runnable ones)', () => {
@@ -145,8 +187,14 @@ describe('shortcut registry', () => {
 
 		it('takes Shift with a row key as that key extending, and the list keys whatever the bindings', () => {
 			const bindings = effectiveBindings(SHORTCUT_COMMANDS, { listDown: 'n' });
-			expect(matchKeys([chord('shift+n')], SHORTCUT_COMMANDS, bindings).match).toMatchObject({ command: { id: 'listDown' }, extend: true });
-			expect(matchKeys([chord('shift+x')], SHORTCUT_COMMANDS, bindings).match).toMatchObject({ command: { id: 'listSelect' }, extend: true });
+			expect(matchKeys([chord('shift+n')], SHORTCUT_COMMANDS, bindings).match).toMatchObject({
+				command: { id: 'listDown' },
+				extend: true
+			});
+			expect(matchKeys([chord('shift+x')], SHORTCUT_COMMANDS, bindings).match).toMatchObject({
+				command: { id: 'listSelect' },
+				extend: true
+			});
 			expect(matchKeys([chord('arrowdown')], SHORTCUT_COMMANDS, bindings).match?.command.id).toBe('listDown');
 			expect(matchKeys([chord('o')], SHORTCUT_COMMANDS, bindings).match?.command.id).toBe('listOpen');
 			expect(matchKeys([chord('?')], SHORTCUT_COMMANDS, bindings).match?.command.id).toBe('helpOpen');

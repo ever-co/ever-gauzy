@@ -8,7 +8,15 @@ import { TaskViewsAvailabilityService } from '../services/task-views-availabilit
 import { commandKey, contextKey } from './shortcut-help-dialog.component';
 import { ShortcutKeyCapsComponent } from './shortcut-key-caps.component';
 import { ShortcutRecorder } from './shortcut-recorder';
-import { conflictsOf, formatBinding, parseBinding, refusalOf, SHORTCUT_CONTEXTS, ShortcutBinding, ShortcutCommand } from './shortcut-registry';
+import {
+	conflictsOf,
+	formatBinding,
+	parseBinding,
+	refusalOf,
+	SHORTCUT_CONTEXTS,
+	ShortcutBinding,
+	ShortcutCommand
+} from './shortcut-registry';
 import { ShortcutRegistryService } from './shortcut-registry.service';
 
 /** The i18n key of why a binding is refused. */
@@ -42,14 +50,24 @@ interface Candidate {
 					<p class="intro">{{ 'TASK_VIEWS.SHORTCUTS.PAGE_INTRO' | translate }}</p>
 				</div>
 				@if (available()) {
-					<button nbButton size="small" status="basic" type="button" data-test="reset-all" [disabled]="saving() || !hasOverrides()" (click)="resetAll()">
+					<button
+						nbButton
+						size="small"
+						status="basic"
+						type="button"
+						data-test="reset-all"
+						[disabled]="saving() || !hasOverrides()"
+						(click)="resetAll()"
+					>
 						{{ 'TASK_VIEWS.SHORTCUTS.RESET_ALL' | translate }}
 					</button>
 				}
 			</nb-card-header>
 			<nb-card-body>
 				@if (!available()) {
-					<p class="unavailable" data-test="keyboard-unavailable">{{ 'TASK_VIEWS.SHORTCUTS.UNAVAILABLE' | translate }}</p>
+					<p class="unavailable" data-test="keyboard-unavailable">
+						{{ 'TASK_VIEWS.SHORTCUTS.UNAVAILABLE' | translate }}
+					</p>
 				} @else {
 					@for (section of sections(); track section.context) {
 						<section class="section">
@@ -57,50 +75,128 @@ interface Candidate {
 							<table class="table">
 								<tbody>
 									@for (row of section.rows; track row.command.id) {
-										<tr [attr.data-command]="row.command.id" [class.recording]="recordingId() === row.command.id">
+										<tr
+											[attr.data-command]="row.command.id"
+											[class.recording]="recordingId() === row.command.id"
+										>
 											<th scope="row">{{ commandKey(row.command.id) | translate }}</th>
 											<td class="binding">
 												@if (recordingId() === row.command.id) {
 													<span class="recording-hint" role="status" aria-live="polite">
 														@if (recorded().length) {
-															<ngx-task-views-key-caps [binding]="recorded()" [isMac]="isMac"></ngx-task-views-key-caps>
+															<ngx-task-views-key-caps
+																[binding]="recorded()"
+																[isMac]="isMac"
+															></ngx-task-views-key-caps>
 														} @else {
 															{{ 'TASK_VIEWS.SHORTCUTS.RECORD' | translate }}
 														}
 													</span>
 												} @else if (candidate()?.commandId === row.command.id) {
-													<ngx-task-views-key-caps [binding]="candidate()!.binding" [isMac]="isMac"></ngx-task-views-key-caps>
+													<ngx-task-views-key-caps
+														[binding]="candidate()!.binding"
+														[isMac]="isMac"
+													></ngx-task-views-key-caps>
 												} @else {
-													<ngx-task-views-key-caps [binding]="row.binding" [isMac]="isMac"></ngx-task-views-key-caps>
+													<ngx-task-views-key-caps
+														[binding]="row.binding"
+														[isMac]="isMac"
+													></ngx-task-views-key-caps>
 													@if (row.overridden) {
-														<span class="badge">{{ 'TASK_VIEWS.SHORTCUTS.CHANGED' | translate }}</span>
+														<span class="badge">{{
+															'TASK_VIEWS.SHORTCUTS.CHANGED' | translate
+														}}</span>
 													}
 												}
 											</td>
 											<td class="actions">
 												@if (row.command.fixed) {
-													<span class="fixed">{{ 'TASK_VIEWS.SHORTCUTS.FIXED' | translate }}</span>
+													<span class="fixed">{{
+														'TASK_VIEWS.SHORTCUTS.FIXED' | translate
+													}}</span>
 												} @else if (candidate()?.commandId === row.command.id) {
 													@if (candidate()!.refusal; as refusal) {
-														<span class="problem" role="alert">{{ refusalKey(refusal) | translate }}</span>
+														<span class="problem" role="alert">{{
+															refusalKey(refusal) | translate
+														}}</span>
 													} @else if (candidate()!.conflicts.length) {
-														<span class="problem" role="alert">{{ 'TASK_VIEWS.SHORTCUTS.CONFLICT' | translate: { commands: conflictNames(candidate()!.conflicts) } }}</span>
+														<span class="problem" role="alert">{{
+															'TASK_VIEWS.SHORTCUTS.CONFLICT'
+																| translate
+																	: {
+																			commands: conflictNames(
+																				candidate()!.conflicts
+																			)
+																	  }
+														}}</span>
 													}
-													<button nbButton size="tiny" status="primary" type="button" data-test="save-binding" [disabled]="!!candidate()!.refusal || candidate()!.conflicts.length > 0 || saving()" (click)="saveCandidate()">
+													<button
+														nbButton
+														size="tiny"
+														status="primary"
+														type="button"
+														data-test="save-binding"
+														[disabled]="
+															!!candidate()!.refusal ||
+															candidate()!.conflicts.length > 0 ||
+															saving()
+														"
+														(click)="saveCandidate()"
+													>
 														{{ 'TASK_VIEWS.SHORTCUTS.SAVE' | translate }}
 													</button>
-													<button nbButton size="tiny" status="basic" type="button" (click)="candidate.set(null)">{{ 'TASK_VIEWS.SHORTCUTS.CANCEL' | translate }}</button>
+													<button
+														nbButton
+														size="tiny"
+														status="basic"
+														type="button"
+														(click)="candidate.set(null)"
+													>
+														{{ 'TASK_VIEWS.SHORTCUTS.CANCEL' | translate }}
+													</button>
 												} @else if (recordingId() === row.command.id) {
-													<span class="hint">{{ 'TASK_VIEWS.SHORTCUTS.RECORD_HINT' | translate }}</span>
-													<button nbButton size="tiny" status="basic" type="button" (click)="stopRecording()">{{ 'TASK_VIEWS.SHORTCUTS.CANCEL' | translate }}</button>
+													<span class="hint">{{
+														'TASK_VIEWS.SHORTCUTS.RECORD_HINT' | translate
+													}}</span>
+													<button
+														nbButton
+														size="tiny"
+														status="basic"
+														type="button"
+														(click)="stopRecording()"
+													>
+														{{ 'TASK_VIEWS.SHORTCUTS.CANCEL' | translate }}
+													</button>
 												} @else {
-													<button nbButton size="tiny" status="basic" type="button" data-test="change-binding" [disabled]="saving() || !!recordingId()" (click)="startRecording(row.command.id)">
+													<button
+														nbButton
+														size="tiny"
+														status="basic"
+														type="button"
+														data-test="change-binding"
+														[disabled]="saving() || !!recordingId()"
+														(click)="startRecording(row.command.id)"
+													>
 														{{ 'TASK_VIEWS.SHORTCUTS.CHANGE' | translate }}
 													</button>
-													<button nbButton size="tiny" ghost type="button" [disabled]="saving() || !row.overridden" (click)="save(row.command.id, 'default')">
+													<button
+														nbButton
+														size="tiny"
+														ghost
+														type="button"
+														[disabled]="saving() || !row.overridden"
+														(click)="save(row.command.id, 'default')"
+													>
 														{{ 'TASK_VIEWS.SHORTCUTS.RESET' | translate }}
 													</button>
-													<button nbButton size="tiny" ghost type="button" [disabled]="saving() || !row.binding" (click)="save(row.command.id, null)">
+													<button
+														nbButton
+														size="tiny"
+														ghost
+														type="button"
+														[disabled]="saving() || !row.binding"
+														(click)="save(row.command.id, null)"
+													>
 														{{ 'TASK_VIEWS.SHORTCUTS.REMOVE' | translate }}
 													</button>
 												}
@@ -234,7 +330,9 @@ export class KeyboardSettingsPageComponent implements OnDestroy {
 				.map((command) => {
 					const binding = bindings.get(command.id) ?? null;
 					const byDefault = formatBinding(parseBinding(command.defaultBinding) ?? []);
-					const overridden = command.id in overrides && (binding === null ? overrides[command.id] === '' : formatBinding(binding) !== byDefault);
+					const overridden =
+						command.id in overrides &&
+						(binding === null ? overrides[command.id] === '' : formatBinding(binding) !== byDefault);
 					return { command, binding, overridden };
 				})
 		}));

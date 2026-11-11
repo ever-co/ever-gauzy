@@ -6,7 +6,9 @@ import { outcomeOfResolution, parseGoToInput, ReferenceOutcome } from '../models
 import { TaskViewsApiService, TaskViewsScope } from './task-views-api.service';
 
 /** What the go-to box shows after a lookup: the task opened, or why not (an i18n key and its parameters). */
-export type GoToResult = { opened: true; outcome?: ReferenceOutcome } | { opened: false; messageKey: string; params?: Record<string, unknown> };
+export type GoToResult =
+	| { opened: true; outcome?: ReferenceOutcome }
+	| { opened: false; messageKey: string; params?: Record<string, unknown> };
 
 /**
  * Resolves what was typed into a go-to box (`API-42`, `#api-42`, a task id or link) and opens the task: through the
@@ -39,9 +41,17 @@ export class TaskReferenceNavigatorService {
 				await this.router.navigate([TASK_PAGE_LINK, outcome.taskId]);
 				return { opened: true, outcome };
 			case 'ambiguous':
-				return { opened: false, messageKey: 'TASK_VIEWS.GOTO.AMBIGUOUS', params: { reference: outcome.reference } };
+				return {
+					opened: false,
+					messageKey: 'TASK_VIEWS.GOTO.AMBIGUOUS',
+					params: { reference: outcome.reference }
+				};
 			default:
-				return { opened: false, messageKey: 'TASK_VIEWS.GOTO.NOT_FOUND', params: { reference: outcome.reference } };
+				return {
+					opened: false,
+					messageKey: 'TASK_VIEWS.GOTO.NOT_FOUND',
+					params: { reference: outcome.reference }
+				};
 		}
 	}
 }

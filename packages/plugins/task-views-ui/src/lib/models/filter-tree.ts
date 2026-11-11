@@ -35,9 +35,20 @@ export const FILTER_FIELDS: readonly TaskViewFilterField[] = [
 	'createdAt',
 	'updatedAt'
 ];
-export const DATE_FIELDS: ReadonlySet<TaskViewFilterField> = new Set<TaskViewFilterField>(['dueDate', 'createdAt', 'updatedAt']);
+export const DATE_FIELDS: ReadonlySet<TaskViewFilterField> = new Set<TaskViewFilterField>([
+	'dueDate',
+	'createdAt',
+	'updatedAt'
+]);
 export const RECORD_OPERATORS: readonly TaskViewFilterOperator[] = ['in', 'notIn', 'isEmpty', 'isNotEmpty'];
-export const DATE_OPERATORS: readonly TaskViewFilterOperator[] = ['relative', 'before', 'after', 'between', 'isEmpty', 'isNotEmpty'];
+export const DATE_OPERATORS: readonly TaskViewFilterOperator[] = [
+	'relative',
+	'before',
+	'after',
+	'between',
+	'isEmpty',
+	'isNotEmpty'
+];
 
 /** The platform's limits: nodes in one tree (groups count), and how deep groups nest. */
 export const FILTER_MAX_NODES = 100;
@@ -78,7 +89,10 @@ export function withField(condition: ITaskViewFilterCondition, field: TaskViewFi
  * The condition with another operator: ids are kept between "is any of" and "is none of", dates are kept where the
  * new operator reads them, and the empties take nothing.
  */
-export function withOperator(condition: ITaskViewFilterCondition, operator: TaskViewFilterOperator): ITaskViewFilterCondition {
+export function withOperator(
+	condition: ITaskViewFilterCondition,
+	operator: TaskViewFilterOperator
+): ITaskViewFilterCondition {
 	if (!operatorsOf(condition.field).includes(operator)) return condition;
 	const next: ITaskViewFilterCondition = { field: condition.field, operator };
 	switch (operator) {
@@ -109,13 +123,26 @@ export function withValues(condition: ITaskViewFilterCondition, values: readonly
 }
 
 /** The condition with a relative window (`amount` only counts for the past and the future). */
-export function withRelative(condition: ITaskViewFilterCondition, relative: ITaskViewRelativeDate): ITaskViewFilterCondition {
-	const amount = relative.direction === 'current' ? undefined : Math.min(366, Math.max(1, Math.round(Number(relative.amount) || 1)));
-	return { ...condition, relative: { unit: relative.unit, direction: relative.direction, ...(amount ? { amount } : {}) } };
+export function withRelative(
+	condition: ITaskViewFilterCondition,
+	relative: ITaskViewRelativeDate
+): ITaskViewFilterCondition {
+	const amount =
+		relative.direction === 'current'
+			? undefined
+			: Math.min(366, Math.max(1, Math.round(Number(relative.amount) || 1)));
+	return {
+		...condition,
+		relative: { unit: relative.unit, direction: relative.direction, ...(amount ? { amount } : {}) }
+	};
 }
 
 /** The condition with a bound changed: an ISO instant, or nothing. */
-export function withBound(condition: ITaskViewFilterCondition, bound: 'from' | 'to', instant: string | null): ITaskViewFilterCondition {
+export function withBound(
+	condition: ITaskViewFilterCondition,
+	bound: 'from' | 'to',
+	instant: string | null
+): ITaskViewFilterCondition {
 	const next = { ...condition };
 	if (instant) next[bound] = instant;
 	else delete next[bound];
@@ -142,24 +169,47 @@ export function countNodes(tree: ITaskViewFilterGroup | null): number {
  * Whether a condition, or a group with its first condition, fits the tree (the platform's node budget), and a group
  * may nest that deep in the group at the path.
  */
-export function canAdd(tree: ITaskViewFilterGroup | null, kind: 'condition' | 'group', groupPath: FilterPath = []): boolean {
+export function canAdd(
+	tree: ITaskViewFilterGroup | null,
+	kind: 'condition' | 'group',
+	groupPath: FilterPath = []
+): boolean {
 	const needed = kind === 'group' ? 2 : 1;
 	if (countNodes(tree ?? emptyGroup()) + needed > FILTER_MAX_NODES) return false;
 	return kind === 'condition' || groupPath.length + 1 <= FILTER_MAX_DEPTH;
 }
 
 /** The tree with a condition added at the end of the group at the path (the root is made when there is none). */
-export function addCondition(tree: ITaskViewFilterGroup | null, groupPath: FilterPath, condition: ITaskViewFilterCondition): ITaskViewFilterGroup {
-	return updateGroup(tree ?? emptyGroup(), groupPath, (group) => ({ ...group, conditions: [...group.conditions, condition] }));
+export function addCondition(
+	tree: ITaskViewFilterGroup | null,
+	groupPath: FilterPath,
+	condition: ITaskViewFilterCondition
+): ITaskViewFilterGroup {
+	return updateGroup(tree ?? emptyGroup(), groupPath, (group) => ({
+		...group,
+		conditions: [...group.conditions, condition]
+	}));
 }
 
 /** The tree with a nested group added at the end of the group at the path, holding one condition to start with. */
-export function addGroup(tree: ITaskViewFilterGroup | null, groupPath: FilterPath, op: 'and' | 'or', first: ITaskViewFilterCondition): ITaskViewFilterGroup {
-	return updateGroup(tree ?? emptyGroup(), groupPath, (group) => ({ ...group, conditions: [...group.conditions, { op, conditions: [first] }] }));
+export function addGroup(
+	tree: ITaskViewFilterGroup | null,
+	groupPath: FilterPath,
+	op: 'and' | 'or',
+	first: ITaskViewFilterCondition
+): ITaskViewFilterGroup {
+	return updateGroup(tree ?? emptyGroup(), groupPath, (group) => ({
+		...group,
+		conditions: [...group.conditions, { op, conditions: [first] }]
+	}));
 }
 
 /** The tree with the node at the path replaced by what `change` makes of it. */
-export function updateNode(tree: ITaskViewFilterGroup, path: FilterPath, change: (node: FilterNode) => FilterNode): ITaskViewFilterGroup {
+export function updateNode(
+	tree: ITaskViewFilterGroup,
+	path: FilterPath,
+	change: (node: FilterNode) => FilterNode
+): ITaskViewFilterGroup {
 	if (!path.length) {
 		const root = change(tree);
 		return isFilterGroup(root) ? root : tree;
@@ -189,7 +239,10 @@ export function removeNode(tree: ITaskViewFilterGroup | null, path: FilterPath):
 	if (!path.length) return null;
 	const parentPath = path.slice(0, -1);
 	const index = path[path.length - 1];
-	let next = updateGroup(tree, parentPath, (group) => ({ ...group, conditions: group.conditions.filter((_node, at) => at !== index) }));
+	let next = updateGroup(tree, parentPath, (group) => ({
+		...group,
+		conditions: group.conditions.filter((_node, at) => at !== index)
+	}));
 	// Climb: a nested group the removal emptied goes as well.
 	let at = parentPath;
 	while (at.length) {
@@ -197,7 +250,10 @@ export function removeNode(tree: ITaskViewFilterGroup | null, path: FilterPath):
 		if (!isFilterGroup(group) || group.conditions.length) break;
 		const parent = at.slice(0, -1);
 		const groupIndex = at[at.length - 1];
-		next = updateGroup(next, parent, (owner) => ({ ...owner, conditions: owner.conditions.filter((_node, i) => i !== groupIndex) }));
+		next = updateGroup(next, parent, (owner) => ({
+			...owner,
+			conditions: owner.conditions.filter((_node, i) => i !== groupIndex)
+		}));
 		at = parent;
 	}
 	return next.conditions.length ? next : null;
@@ -258,7 +314,11 @@ export interface ApplicableTree {
 
 export function applicableTree(tree: ITaskViewFilterGroup | null): ApplicableTree {
 	const paths = new Map<string, number[]>();
-	const visit = (group: ITaskViewFilterGroup, editorPath: number[], sentPath: number[]): ITaskViewFilterGroup | null => {
+	const visit = (
+		group: ITaskViewFilterGroup,
+		editorPath: number[],
+		sentPath: number[]
+	): ITaskViewFilterGroup | null => {
 		const conditions: FilterNode[] = [];
 		group.conditions.forEach((node, index) => {
 			const at = [...editorPath, index];
@@ -283,7 +343,10 @@ export function applicableTree(tree: ITaskViewFilterGroup | null): ApplicableTre
 }
 
 /** The invalid filters the platform reported, by the editor path (`pathKey`) of the condition each names. */
-export function invalidByPath(invalid: readonly ITaskViewInvalidFilter[] | null | undefined, sent: ApplicableTree | null): Map<string, ITaskViewInvalidFilter[]> {
+export function invalidByPath(
+	invalid: readonly ITaskViewInvalidFilter[] | null | undefined,
+	sent: ApplicableTree | null
+): Map<string, ITaskViewInvalidFilter[]> {
 	const byPath = new Map<string, ITaskViewInvalidFilter[]>();
 	for (const entry of invalid ?? []) {
 		const editorPath = sent?.paths.get(entry.path) ?? pathOfApi(entry.path);
@@ -298,7 +361,10 @@ export function invalidByPath(invalid: readonly ITaskViewInvalidFilter[] | null 
  * The tree with the invalid filters fixed the way the person asked: a condition on deleted records keeps the ids
  * that still exist (it goes when none does), any other invalid condition goes.
  */
-export function withoutInvalid(tree: ITaskViewFilterGroup | null, invalid: ReadonlyMap<string, ITaskViewInvalidFilter[]>): ITaskViewFilterGroup | null {
+export function withoutInvalid(
+	tree: ITaskViewFilterGroup | null,
+	invalid: ReadonlyMap<string, ITaskViewInvalidFilter[]>
+): ITaskViewFilterGroup | null {
 	if (!tree) return null;
 	// In reverse reading order (a node before the group holding it), so a fix never moves a node still to be fixed.
 	const paths = [...invalid.keys()].map((key) => (key === '' ? [] : key.split('.').map(Number))).sort(compareDesc);
@@ -308,10 +374,17 @@ export function withoutInvalid(tree: ITaskViewFilterGroup | null, invalid: Reado
 		const node = nodeAt(next, path);
 		if (!node) continue;
 		const entries = invalid.get(pathKey(path)) ?? [];
-		const deleted = entries.filter((entry) => entry.reason === 'deleted-reference').flatMap((entry) => entry.values ?? []);
+		const deleted = entries
+			.filter((entry) => entry.reason === 'deleted-reference')
+			.flatMap((entry) => entry.values ?? []);
 		const onlyDeleted = entries.length > 0 && entries.every((entry) => entry.reason === 'deleted-reference');
 		if (!isFilterGroup(node) && onlyDeleted && (node.values ?? []).some((id) => !deleted.includes(id))) {
-			next = updateNode(next, path, (current) => withValues(current as ITaskViewFilterCondition, ((current as ITaskViewFilterCondition).values ?? []).filter((id) => !deleted.includes(id))));
+			next = updateNode(next, path, (current) =>
+				withValues(
+					current as ITaskViewFilterCondition,
+					((current as ITaskViewFilterCondition).values ?? []).filter((id) => !deleted.includes(id))
+				)
+			);
 			continue;
 		}
 		next = removeNode(next, path);
@@ -320,7 +393,9 @@ export function withoutInvalid(tree: ITaskViewFilterGroup | null, invalid: Reado
 }
 
 /** Every condition of a tree with its path, in reading order: what a summary or a check walks. */
-export function conditionsOf(tree: ITaskViewFilterGroup | null): Array<{ path: number[]; condition: ITaskViewFilterCondition }> {
+export function conditionsOf(
+	tree: ITaskViewFilterGroup | null
+): Array<{ path: number[]; condition: ITaskViewFilterCondition }> {
 	const found: Array<{ path: number[]; condition: ITaskViewFilterCondition }> = [];
 	const visit = (group: ITaskViewFilterGroup, path: number[]) =>
 		group.conditions.forEach((node, index) => {
@@ -338,14 +413,28 @@ export function treeOf(value: unknown): ITaskViewFilterGroup | null {
 	const visit = (group: ITaskViewFilterGroup, depth: number): ITaskViewFilterGroup => ({
 		op: group.op === 'or' ? 'or' : 'and',
 		conditions: group.conditions
-			.filter((node) => isFilterGroup(node) || (!!node && typeof node === 'object' && typeof (node as ITaskViewFilterCondition).field === 'string'))
-			.map((node) => (isFilterGroup(node) ? (depth < FILTER_MAX_DEPTH ? visit(node, depth + 1) : node) : { ...(node as ITaskViewFilterCondition) }))
+			.filter(
+				(node) =>
+					isFilterGroup(node) ||
+					(!!node && typeof node === 'object' && typeof (node as ITaskViewFilterCondition).field === 'string')
+			)
+			.map((node) =>
+				isFilterGroup(node)
+					? depth < FILTER_MAX_DEPTH
+						? visit(node, depth + 1)
+						: node
+					: { ...(node as ITaskViewFilterCondition) }
+			)
 	});
 	const tree = visit(value, 0);
 	return tree.conditions.length ? tree : null;
 }
 
-function updateGroup(tree: ITaskViewFilterGroup, path: FilterPath, change: (group: ITaskViewFilterGroup) => ITaskViewFilterGroup): ITaskViewFilterGroup {
+function updateGroup(
+	tree: ITaskViewFilterGroup,
+	path: FilterPath,
+	change: (group: ITaskViewFilterGroup) => ITaskViewFilterGroup
+): ITaskViewFilterGroup {
 	if (!path.length) return change(tree);
 	const [index, ...rest] = path;
 	const child = tree.conditions[index];

@@ -16,12 +16,22 @@ import {
 	versionOf
 } from './view-definition';
 
-const tree = { op: 'and' as const, conditions: [{ field: 'status' as const, operator: 'in' as const, values: ['11111111-1111-4111-8111-111111111111' as ID] }] };
+const tree = {
+	op: 'and' as const,
+	conditions: [
+		{ field: 'status' as const, operator: 'in' as const, values: ['11111111-1111-4111-8111-111111111111' as ID] }
+	]
+};
 
 describe('view definition', () => {
 	it('reads a view with every default in place', () => {
 		expect(definitionOf(null)).toEqual(DEFAULT_DEFINITION);
-		expect(definitionOf({ filterOptions: { filter: tree, groupBy: 'label', orderBy: { field: 'title' } }, properties: { size: true, bogus: 'x' as never } })).toEqual({
+		expect(
+			definitionOf({
+				filterOptions: { filter: tree, groupBy: 'label', orderBy: { field: 'title' } },
+				properties: { size: true, bogus: 'x' as never }
+			})
+		).toEqual({
 			filter: tree,
 			groupBy: 'label',
 			orderBy: { field: 'title', direction: 'asc' },
@@ -30,7 +40,9 @@ describe('view definition', () => {
 	});
 
 	it('reads the JSON text SQLite may answer, and falls back on what it does not know', () => {
-		expect(definitionOf({ filterOptions: JSON.stringify({ filter: tree, groupBy: 'colour' }) as never }).filter).toEqual(tree);
+		expect(
+			definitionOf({ filterOptions: JSON.stringify({ filter: tree, groupBy: 'colour' }) as never }).filter
+		).toEqual(tree);
 		expect(definitionOf({ filterOptions: '{not json' as never }).groupBy).toBe('none');
 		expect(orderingOf({ field: 'priority' })).toEqual({ field: 'createdAt', direction: 'desc' });
 		expect(orderingOf({ field: 'dueDate', direction: 'desc' })).toEqual({ field: 'dueDate', direction: 'desc' });
@@ -38,7 +50,12 @@ describe('view definition', () => {
 
 	it('writes the definition over what the view held, keeping the keys another client stores there', () => {
 		const definition = { ...DEFAULT_DEFINITION, filter: tree, groupBy: 'status' as const };
-		expect(filterOptionsOf(definition, { status: ['open'], filter: null })).toEqual({ status: ['open'], filter: tree, groupBy: 'status', orderBy: DEFAULT_DEFINITION.orderBy });
+		expect(filterOptionsOf(definition, { status: ['open'], filter: null })).toEqual({
+			status: ['open'],
+			filter: tree,
+			groupBy: 'status',
+			orderBy: DEFAULT_DEFINITION.orderBy
+		});
 	});
 
 	it('compares what two definitions show, properties by their effect', () => {
@@ -75,8 +92,17 @@ describe('view definition', () => {
 	});
 
 	it('creates a view for who it is for, copying the columns of the view it is saved from', () => {
-		const from = { filterOptions: { status: ['open'] }, properties: { size: true }, displayOptions: { layout: 'board' } } as Partial<ITaskView>;
-		const input = createInput({ ...DEFAULT_DEFINITION, filter: tree }, { name: 'Team bugs', visibility: TaskViewVisibilityEnum.SHARED, organizationTeamId: 't' as ID }, { organizationId: 'org' as ID, tenantId: 'ten' as ID }, from);
+		const from = {
+			filterOptions: { status: ['open'] },
+			properties: { size: true },
+			displayOptions: { layout: 'board' }
+		} as Partial<ITaskView>;
+		const input = createInput(
+			{ ...DEFAULT_DEFINITION, filter: tree },
+			{ name: 'Team bugs', visibility: TaskViewVisibilityEnum.SHARED, organizationTeamId: 't' as ID },
+			{ organizationId: 'org' as ID, tenantId: 'ten' as ID },
+			from
+		);
 		expect(input).toMatchObject({
 			organizationId: 'org',
 			tenantId: 'ten',
@@ -89,13 +115,23 @@ describe('view definition', () => {
 			properties: { size: true },
 			displayOptions: { layout: 'board' }
 		});
-		expect(createInput(DEFAULT_DEFINITION, { name: 'Mine', visibility: TaskViewVisibilityEnum.PERSONAL }, { organizationId: 'org' as ID }).visibilityLevel).toBe(VisibilityLevelEnum.ORGANIZATION);
+		expect(
+			createInput(
+				DEFAULT_DEFINITION,
+				{ name: 'Mine', visibility: TaskViewVisibilityEnum.PERSONAL },
+				{ organizationId: 'org' as ID }
+			).visibilityLevel
+		).toBe(VisibilityLevelEnum.ORGANIZATION);
 	});
 
 	it('saves and renames stating the version read', () => {
 		const view = { id: 'v' as ID, name: 'A', version: 3, filterOptions: {}, properties: {} } as ITaskView;
 		expect(saveInput(view, DEFAULT_DEFINITION, { organizationId: 'org' as ID }).expectedVersion).toBe(3);
-		expect(placementInput(view, { name: 'B' }, { organizationId: 'org' as ID })).toEqual({ organizationId: 'org', name: 'B', expectedVersion: 3 });
+		expect(placementInput(view, { name: 'B' }, { organizationId: 'org' as ID })).toEqual({
+			organizationId: 'org',
+			name: 'B',
+			expectedVersion: 3
+		});
 		expect(versionOf({ version: 0 })).toBe(1);
 		expect(versionOf(null)).toBe(1);
 	});

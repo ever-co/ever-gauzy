@@ -68,7 +68,9 @@ export class ShortcutRegistryService implements OnDestroy {
 	/** The person's overrides as stored (other clients' commands included). */
 	readonly overrides = this.overridesState.asReadonly();
 	/** The bindings in force, by command id (`null`: the person removed the key). */
-	readonly bindings = computed<Map<string, ShortcutBinding | null>>(() => effectiveBindings(this.commands, this.overridesState()));
+	readonly bindings = computed<Map<string, ShortcutBinding | null>>(() =>
+		effectiveBindings(this.commands, this.overridesState())
+	);
 
 	private readonly pausedState = signal(false);
 	/** True while a binding is being recorded: no command runs. */
@@ -90,7 +92,10 @@ export class ShortcutRegistryService implements OnDestroy {
 			this.store.user$
 				.pipe(
 					map((user: IUser | null | undefined) => keyboardOverridesOf(user)),
-					distinctUntilChanged((a: Record<string, string>, b: Record<string, string>) => JSON.stringify(a) === JSON.stringify(b))
+					distinctUntilChanged(
+						(a: Record<string, string>, b: Record<string, string>) =>
+							JSON.stringify(a) === JSON.stringify(b)
+					)
 				)
 				.subscribe((overrides: Record<string, string>) => this.overridesState.set(overrides))
 		);
@@ -217,7 +222,9 @@ export class ShortcutRegistryService implements OnDestroy {
 	}
 
 	private runnableCommands(dialogOpen: boolean): ShortcutCommand[] {
-		return this.commands.filter((command) => (!dialogOpen || DIALOG_SAFE_COMMANDS.has(command.id)) && !!this.handlerOf(command.id));
+		return this.commands.filter(
+			(command) => (!dialogOpen || DIALOG_SAFE_COMMANDS.has(command.id)) && !!this.handlerOf(command.id)
+		);
 	}
 
 	private handlerOf(commandId: string): ShortcutHandler | null {
@@ -266,13 +273,17 @@ export class ShortcutRegistryService implements OnDestroy {
 	private async saveOverrides(bindings: Record<string, string>): Promise<void> {
 		const user = this.store.user as IUser | null | undefined;
 		if (!user) return;
-		const stored = ((user.uiPreferences as IUserUiPreferences | undefined)?.keyboard ?? {}) as IKeyboardUiPreferences;
+		const stored = ((user.uiPreferences as IUserUiPreferences | undefined)?.keyboard ??
+			{}) as IKeyboardUiPreferences;
 		const keyboard: IKeyboardUiPreferences = { ...stored, bindings };
 		const merged = await this.users.updateUiPreferences({ keyboard });
 		// The user may have changed while the request was in flight.
 		const current = this.store.user as IUser | null | undefined;
 		if (!current || current.id !== user.id) return;
-		const answered = merged && typeof merged === 'object' && !Array.isArray(merged) ? (merged as IUserUiPreferences).keyboard : undefined;
+		const answered =
+			merged && typeof merged === 'object' && !Array.isArray(merged)
+				? (merged as IUserUiPreferences).keyboard
+				: undefined;
 		this.store.user = {
 			...current,
 			uiPreferences: { ...((current.uiPreferences as IUserUiPreferences) ?? {}), keyboard: answered ?? keyboard }

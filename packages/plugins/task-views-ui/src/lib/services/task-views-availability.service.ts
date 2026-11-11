@@ -41,11 +41,15 @@ export class TaskViewsAvailabilityService {
 				? {
 						userId: String(user.id),
 						organizationId: organization.id,
-						...(organization.tenantId || user.tenantId ? { tenantId: (organization.tenantId ?? user.tenantId) as string } : {})
+						...(organization.tenantId || user.tenantId
+							? { tenantId: (organization.tenantId ?? user.tenantId) as string }
+							: {})
 					}
 				: null
 		),
-		distinctUntilChanged((a, b) => a?.userId === b?.userId && a?.organizationId === b?.organizationId && a?.tenantId === b?.tenantId),
+		distinctUntilChanged(
+			(a, b) => a?.userId === b?.userId && a?.organizationId === b?.organizationId && a?.tenantId === b?.tenantId
+		),
 		shareReplay({ bufferSize: 1, refCount: false })
 	);
 
@@ -62,7 +66,9 @@ export class TaskViewsAvailabilityService {
 						retry({
 							count: TASK_VIEWS_AVAILABILITY_RETRIES,
 							delay: (error: HttpErrorResponse, attempt: number) =>
-								isFinalRefusal(error) ? throwError(() => error) : timer(TASK_VIEWS_AVAILABILITY_RETRY_MS * 2 ** (attempt - 1))
+								isFinalRefusal(error)
+									? throwError(() => error)
+									: timer(TASK_VIEWS_AVAILABILITY_RETRY_MS * 2 ** (attempt - 1))
 						}),
 						map(() => true),
 						catchError(() => of(false))

@@ -13,8 +13,16 @@ import { TranslatePipe } from '@ngx-translate/core';
 				<p class="message">{{ messageKey | translate: params }}</p>
 			</nb-card-body>
 			<nb-card-footer class="actions">
-				<button nbButton status="basic" type="button" (click)="close(false)">{{ 'TASK_VIEWS.DIALOG.CANCEL' | translate }}</button>
-				<button nbButton [status]="danger ? 'danger' : 'primary'" type="button" data-test="confirm" (click)="close(true)">
+				<button nbButton status="basic" type="button" (click)="close(false)">
+					{{ 'TASK_VIEWS.DIALOG.CANCEL' | translate }}
+				</button>
+				<button
+					nbButton
+					[status]="danger ? 'danger' : 'primary'"
+					type="button"
+					data-test="confirm"
+					(click)="close(true)"
+				>
 					{{ confirmKey | translate }}
 				</button>
 			</nb-card-footer>

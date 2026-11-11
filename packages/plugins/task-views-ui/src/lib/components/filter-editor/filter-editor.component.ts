@@ -35,11 +35,18 @@ import {
 	withoutInvalid
 } from '../../models/filter-tree';
 import { dayOfInstant, instantOfDay } from '../../models/date-input';
-import { EMPTY_OPTIONS, optionsOfField, TaskViewOption, TaskViewOptions } from '../../services/task-views-options.service';
+import {
+	EMPTY_OPTIONS,
+	optionsOfField,
+	TaskViewOption,
+	TaskViewOptions
+} from '../../services/task-views-options.service';
 
 /** The i18n key of a field, an operator, an invalid reason. */
-export const fieldKey = (field: string) => `TASK_VIEWS.FILTER.FIELDS.${field.replace(/[A-Z]/g, (letter) => `_${letter}`).toUpperCase()}`;
-export const operatorKey = (operator: string) => `TASK_VIEWS.FILTER.OPERATORS.${operator.replace(/[A-Z]/g, (letter) => `_${letter}`).toUpperCase()}`;
+export const fieldKey = (field: string) =>
+	`TASK_VIEWS.FILTER.FIELDS.${field.replace(/[A-Z]/g, (letter) => `_${letter}`).toUpperCase()}`;
+export const operatorKey = (operator: string) =>
+	`TASK_VIEWS.FILTER.OPERATORS.${operator.replace(/[A-Z]/g, (letter) => `_${letter}`).toUpperCase()}`;
 export const invalidKey = (reason: string) => `TASK_VIEWS.FILTER.INVALID.${reason.replace(/-/g, '_').toUpperCase()}`;
 
 /**
@@ -52,7 +59,16 @@ export const invalidKey = (reason: string) => `TASK_VIEWS.FILTER.INVALID.${reaso
 @Component({
 	selector: 'ngx-task-views-filter-editor',
 	changeDetection: ChangeDetectionStrategy.OnPush,
-	imports: [NgTemplateOutlet, FormsModule, NbButtonModule, NbIconModule, NbInputModule, NbSelectModule, NbTooltipModule, TranslatePipe],
+	imports: [
+		NgTemplateOutlet,
+		FormsModule,
+		NbButtonModule,
+		NbIconModule,
+		NbInputModule,
+		NbSelectModule,
+		NbTooltipModule,
+		TranslatePipe
+	],
 	template: `
 		<div class="filter-editor" data-test="filter-editor">
 			@if (tree(); as root) {
@@ -60,13 +76,28 @@ export const invalidKey = (reason: string) => `TASK_VIEWS.FILTER.INVALID.${reaso
 			} @else {
 				<p class="empty">{{ 'TASK_VIEWS.FILTER.NONE' | translate }}</p>
 				@if (!disabled()) {
-					<button nbButton size="tiny" status="basic" type="button" data-test="add-first-filter" (click)="add([])">
+					<button
+						nbButton
+						size="tiny"
+						status="basic"
+						type="button"
+						data-test="add-first-filter"
+						(click)="add([])"
+					>
 						<nb-icon icon="plus-outline"></nb-icon>{{ 'TASK_VIEWS.FILTER.ADD' | translate }}
 					</button>
 				}
 			}
 			@if (invalid().size && !disabled()) {
-				<button nbButton size="tiny" status="warning" ghost type="button" data-test="fix-invalid" (click)="fixAll()">
+				<button
+					nbButton
+					size="tiny"
+					status="warning"
+					ghost
+					type="button"
+					data-test="fix-invalid"
+					(click)="fixAll()"
+				>
 					{{ 'TASK_VIEWS.FILTER.INVALID.FIX_ALL' | translate }}
 				</button>
 			}
@@ -87,7 +118,14 @@ export const invalidKey = (reason: string) => `TASK_VIEWS.FILTER.INVALID.${reaso
 						<nb-option value="or">{{ 'TASK_VIEWS.FILTER.OR' | translate }}</nb-option>
 					</nb-select>
 					@if (path.length > 0 && !disabled()) {
-						<button nbButton ghost size="tiny" type="button" [attr.aria-label]="'TASK_VIEWS.FILTER.REMOVE_GROUP' | translate" (click)="remove(path)">
+						<button
+							nbButton
+							ghost
+							size="tiny"
+							type="button"
+							[attr.aria-label]="'TASK_VIEWS.FILTER.REMOVE_GROUP' | translate"
+							(click)="remove(path)"
+						>
 							<nb-icon icon="close-outline"></nb-icon>
 						</button>
 					}
@@ -96,20 +134,44 @@ export const invalidKey = (reason: string) => `TASK_VIEWS.FILTER.INVALID.${reaso
 					@for (node of group.conditions; track $index; let index = $index) {
 						<li>
 							@if (isGroup(node)) {
-								<ng-container *ngTemplateOutlet="groupTemplate; context: { $implicit: node, path: child(path, index) }"></ng-container>
+								<ng-container
+									*ngTemplateOutlet="
+										groupTemplate;
+										context: { $implicit: node, path: child(path, index) }
+									"
+								></ng-container>
 							} @else {
-								<ng-container *ngTemplateOutlet="conditionTemplate; context: { $implicit: node, path: child(path, index) }"></ng-container>
+								<ng-container
+									*ngTemplateOutlet="
+										conditionTemplate;
+										context: { $implicit: node, path: child(path, index) }
+									"
+								></ng-container>
 							}
 						</li>
 					}
 				</ol>
 				@if (!disabled()) {
 					<div class="group-actions">
-						<button nbButton size="tiny" ghost type="button" [disabled]="!canAddCondition()" (click)="add(path)">
+						<button
+							nbButton
+							size="tiny"
+							ghost
+							type="button"
+							[disabled]="!canAddCondition()"
+							(click)="add(path)"
+						>
 							<nb-icon icon="plus-outline"></nb-icon>{{ 'TASK_VIEWS.FILTER.ADD' | translate }}
 						</button>
 						@if (path.length + 1 <= maxDepth) {
-							<button nbButton size="tiny" ghost type="button" [disabled]="!canAddGroup(path)" (click)="addNested(path, group.op)">
+							<button
+								nbButton
+								size="tiny"
+								ghost
+								type="button"
+								[disabled]="!canAddGroup(path)"
+								(click)="addNested(path, group.op)"
+							>
 								<nb-icon icon="layers-outline"></nb-icon>{{ 'TASK_VIEWS.FILTER.ADD_GROUP' | translate }}
 							</button>
 						}
@@ -119,38 +181,101 @@ export const invalidKey = (reason: string) => `TASK_VIEWS.FILTER.INVALID.${reaso
 		</ng-template>
 
 		<ng-template #conditionTemplate let-condition let-path="path">
-			<div class="condition" [class.invalid]="invalidAt(path).length" [attr.data-path]="key(path)" data-test="filter-condition">
-				<nb-select size="tiny" class="field" [disabled]="disabled()" [selected]="condition.field" (selectedChange)="setField(path, $event)" [attr.aria-label]="'TASK_VIEWS.FILTER.FIELD' | translate">
+			<div
+				class="condition"
+				[class.invalid]="invalidAt(path).length"
+				[attr.data-path]="key(path)"
+				data-test="filter-condition"
+			>
+				<nb-select
+					size="tiny"
+					class="field"
+					[disabled]="disabled()"
+					[selected]="condition.field"
+					(selectedChange)="setField(path, $event)"
+					[attr.aria-label]="'TASK_VIEWS.FILTER.FIELD' | translate"
+				>
 					@for (field of fields; track field) {
 						<nb-option [value]="field">{{ fieldKey(field) | translate }}</nb-option>
 					}
 				</nb-select>
-				<nb-select size="tiny" class="operator" [disabled]="disabled()" [selected]="condition.operator" (selectedChange)="setOperator(path, $event)" [attr.aria-label]="'TASK_VIEWS.FILTER.OPERATOR' | translate">
+				<nb-select
+					size="tiny"
+					class="operator"
+					[disabled]="disabled()"
+					[selected]="condition.operator"
+					(selectedChange)="setOperator(path, $event)"
+					[attr.aria-label]="'TASK_VIEWS.FILTER.OPERATOR' | translate"
+				>
 					@for (operator of operatorsOf(condition.field); track operator) {
 						<nb-option [value]="operator">{{ operatorKey(operator) | translate }}</nb-option>
 					}
 				</nb-select>
 				@switch (condition.operator) {
 					@case ('in') {
-						<ng-container *ngTemplateOutlet="valuesTemplate; context: { $implicit: condition, path: path }"></ng-container>
+						<ng-container
+							*ngTemplateOutlet="valuesTemplate; context: { $implicit: condition, path: path }"
+						></ng-container>
 					}
 					@case ('notIn') {
-						<ng-container *ngTemplateOutlet="valuesTemplate; context: { $implicit: condition, path: path }"></ng-container>
+						<ng-container
+							*ngTemplateOutlet="valuesTemplate; context: { $implicit: condition, path: path }"
+						></ng-container>
 					}
 					@case ('before') {
-						<input nbInput fieldSize="tiny" type="date" [disabled]="disabled()" [value]="day(condition.to, 'before')" (change)="setBound(path, 'to', $any($event.target).value, 'before')" [attr.aria-label]="'TASK_VIEWS.FILTER.DATE_TO' | translate" />
+						<input
+							nbInput
+							fieldSize="tiny"
+							type="date"
+							[disabled]="disabled()"
+							[value]="day(condition.to, 'before')"
+							(change)="setBound(path, 'to', $any($event.target).value, 'before')"
+							[attr.aria-label]="'TASK_VIEWS.FILTER.DATE_TO' | translate"
+						/>
 					}
 					@case ('after') {
-						<input nbInput fieldSize="tiny" type="date" [disabled]="disabled()" [value]="day(condition.from, 'from')" (change)="setBound(path, 'from', $any($event.target).value, 'from')" [attr.aria-label]="'TASK_VIEWS.FILTER.DATE_FROM' | translate" />
+						<input
+							nbInput
+							fieldSize="tiny"
+							type="date"
+							[disabled]="disabled()"
+							[value]="day(condition.from, 'from')"
+							(change)="setBound(path, 'from', $any($event.target).value, 'from')"
+							[attr.aria-label]="'TASK_VIEWS.FILTER.DATE_FROM' | translate"
+						/>
 					}
 					@case ('between') {
-						<input nbInput fieldSize="tiny" type="date" [disabled]="disabled()" [value]="day(condition.from, 'from')" (change)="setBound(path, 'from', $any($event.target).value, 'from')" [attr.aria-label]="'TASK_VIEWS.FILTER.DATE_FROM' | translate" />
+						<input
+							nbInput
+							fieldSize="tiny"
+							type="date"
+							[disabled]="disabled()"
+							[value]="day(condition.from, 'from')"
+							(change)="setBound(path, 'from', $any($event.target).value, 'from')"
+							[attr.aria-label]="'TASK_VIEWS.FILTER.DATE_FROM' | translate"
+						/>
 						<span class="and">{{ 'TASK_VIEWS.FILTER.JOIN_AND' | translate }}</span>
-						<input nbInput fieldSize="tiny" type="date" [disabled]="disabled()" [value]="day(condition.to, 'until')" (change)="setBound(path, 'to', $any($event.target).value, 'until')" [attr.aria-label]="'TASK_VIEWS.FILTER.DATE_TO' | translate" />
+						<input
+							nbInput
+							fieldSize="tiny"
+							type="date"
+							[disabled]="disabled()"
+							[value]="day(condition.to, 'until')"
+							(change)="setBound(path, 'to', $any($event.target).value, 'until')"
+							[attr.aria-label]="'TASK_VIEWS.FILTER.DATE_TO' | translate"
+						/>
 					}
 					@case ('relative') {
-						<nb-select size="tiny" class="direction" [disabled]="disabled()" [selected]="condition.relative?.direction ?? 'current'" (selectedChange)="setRelative(path, condition, { direction: $event })">
-							<nb-option value="current">{{ 'TASK_VIEWS.FILTER.RELATIVE.CURRENT' | translate }}</nb-option>
+						<nb-select
+							size="tiny"
+							class="direction"
+							[disabled]="disabled()"
+							[selected]="condition.relative?.direction ?? 'current'"
+							(selectedChange)="setRelative(path, condition, { direction: $event })"
+						>
+							<nb-option value="current">{{
+								'TASK_VIEWS.FILTER.RELATIVE.CURRENT' | translate
+							}}</nb-option>
 							<nb-option value="past">{{ 'TASK_VIEWS.FILTER.RELATIVE.PAST' | translate }}</nb-option>
 							<nb-option value="future">{{ 'TASK_VIEWS.FILTER.RELATIVE.FUTURE' | translate }}</nb-option>
 						</nb-select>
@@ -168,7 +293,13 @@ export const invalidKey = (reason: string) => `TASK_VIEWS.FILTER.INVALID.${reaso
 								[attr.aria-label]="'TASK_VIEWS.FILTER.RELATIVE.AMOUNT' | translate"
 							/>
 						}
-						<nb-select size="tiny" class="unit" [disabled]="disabled()" [selected]="condition.relative?.unit ?? 'week'" (selectedChange)="setRelative(path, condition, { unit: $event })">
+						<nb-select
+							size="tiny"
+							class="unit"
+							[disabled]="disabled()"
+							[selected]="condition.relative?.unit ?? 'week'"
+							(selectedChange)="setRelative(path, condition, { unit: $event })"
+						>
 							<nb-option value="day">{{ 'TASK_VIEWS.FILTER.RELATIVE.DAY' | translate }}</nb-option>
 							<nb-option value="week">{{ 'TASK_VIEWS.FILTER.RELATIVE.WEEK' | translate }}</nb-option>
 							<nb-option value="month">{{ 'TASK_VIEWS.FILTER.RELATIVE.MONTH' | translate }}</nb-option>
@@ -176,7 +307,16 @@ export const invalidKey = (reason: string) => `TASK_VIEWS.FILTER.INVALID.${reaso
 					}
 				}
 				@if (!disabled()) {
-					<button nbButton ghost size="tiny" type="button" class="remove" data-test="remove-condition" [attr.aria-label]="'TASK_VIEWS.FILTER.REMOVE' | translate" (click)="remove(path)">
+					<button
+						nbButton
+						ghost
+						size="tiny"
+						type="button"
+						class="remove"
+						data-test="remove-condition"
+						[attr.aria-label]="'TASK_VIEWS.FILTER.REMOVE' | translate"
+						(click)="remove(path)"
+					>
 						<nb-icon icon="trash-2-outline"></nb-icon>
 					</button>
 				}
@@ -185,7 +325,9 @@ export const invalidKey = (reason: string) => `TASK_VIEWS.FILTER.INVALID.${reaso
 						<nb-icon icon="alert-triangle-outline" status="warning"></nb-icon>
 						{{ invalidKey(problem.reason) | translate: { count: problem.values?.length ?? 0 } }}
 						@if (!disabled()) {
-							<button nbButton ghost size="tiny" status="warning" type="button" (click)="fixOne(path)">{{ 'TASK_VIEWS.FILTER.INVALID.FIX' | translate }}</button>
+							<button nbButton ghost size="tiny" status="warning" type="button" (click)="fixOne(path)">
+								{{ 'TASK_VIEWS.FILTER.INVALID.FIX' | translate }}
+							</button>
 						}
 					</p>
 				}
@@ -204,7 +346,9 @@ export const invalidKey = (reason: string) => `TASK_VIEWS.FILTER.INVALID.${reaso
 				[attr.aria-label]="'TASK_VIEWS.FILTER.VALUES' | translate"
 			>
 				@for (option of choicesOf(condition); track option.id) {
-					<nb-option [value]="option.id">{{ option.label || ('TASK_VIEWS.FILTER.UNKNOWN' | translate) }}</nb-option>
+					<nb-option [value]="option.id">{{
+						option.label || ('TASK_VIEWS.FILTER.UNKNOWN' | translate)
+					}}</nb-option>
 				}
 			</nb-select>
 		</ng-template>
@@ -289,7 +433,11 @@ export class FilterEditorComponent {
 		this.change(path, (condition) => withBound(condition, bound, instantOfDay(day, kind)));
 	}
 
-	protected setRelative(path: FilterPath, condition: ITaskViewFilterCondition, change: Partial<ITaskViewRelativeDate>): void {
+	protected setRelative(
+		path: FilterPath,
+		condition: ITaskViewFilterCondition,
+		change: Partial<ITaskViewRelativeDate>
+	): void {
 		const current: ITaskViewRelativeDate = condition.relative ?? { unit: 'week', direction: 'current' };
 		this.change(path, (node) => withRelative(node, { ...current, ...change }));
 	}

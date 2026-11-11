@@ -23,8 +23,24 @@ export interface TaskViewDefinition {
 	properties: Record<string, boolean>;
 }
 
-export const TASK_VIEW_GROUPINGS: readonly TaskViewGroupBy[] = ['none', 'status', 'priority', 'size', 'project', 'sprint', 'assignee', 'team', 'label'];
-export const TASK_VIEW_ORDER_FIELDS: readonly TaskViewOrderField[] = ['createdAt', 'updatedAt', 'dueDate', 'title', 'manual'];
+export const TASK_VIEW_GROUPINGS: readonly TaskViewGroupBy[] = [
+	'none',
+	'status',
+	'priority',
+	'size',
+	'project',
+	'sprint',
+	'assignee',
+	'team',
+	'label'
+];
+export const TASK_VIEW_ORDER_FIELDS: readonly TaskViewOrderField[] = [
+	'createdAt',
+	'updatedAt',
+	'dueDate',
+	'title',
+	'manual'
+];
 
 /** The row properties the list can show, and whether each shows when a view says nothing about it. */
 export const ROW_PROPERTIES: Readonly<Record<string, boolean>> = {
@@ -41,8 +57,15 @@ export const ROW_PROPERTIES: Readonly<Record<string, boolean>> = {
 /** The ordering the platform uses when a view names none (and the direction of each field when none is named). */
 export function orderingOf(value: unknown): Required<ITaskViewOrdering> {
 	const raw = (value ?? {}) as Partial<ITaskViewOrdering>;
-	const field = TASK_VIEW_ORDER_FIELDS.includes(raw.field as TaskViewOrderField) ? (raw.field as TaskViewOrderField) : 'createdAt';
-	const direction = raw.direction === 'asc' || raw.direction === 'desc' ? raw.direction : field === 'dueDate' || field === 'title' ? 'asc' : 'desc';
+	const field = TASK_VIEW_ORDER_FIELDS.includes(raw.field as TaskViewOrderField)
+		? (raw.field as TaskViewOrderField)
+		: 'createdAt';
+	const direction =
+		raw.direction === 'asc' || raw.direction === 'desc'
+			? raw.direction
+			: field === 'dueDate' || field === 'title'
+				? 'asc'
+				: 'desc';
 	return { field, direction };
 }
 
@@ -71,7 +94,9 @@ export function jsonObjectOf(raw: unknown): Record<string, unknown> {
 }
 
 /** What a saved view shows, read from its columns with every default in place. */
-export function definitionOf(view: Pick<ITaskView, 'filterOptions' | 'properties'> | null | undefined): TaskViewDefinition {
+export function definitionOf(
+	view: Pick<ITaskView, 'filterOptions' | 'properties'> | null | undefined
+): TaskViewDefinition {
 	if (!view) return { ...DEFAULT_DEFINITION, properties: {} };
 	const options = jsonObjectOf(view.filterOptions);
 	const properties: Record<string, boolean> = {};
@@ -116,7 +141,8 @@ export function isPropertyShown(definition: TaskViewDefinition, property: string
 
 /** Whether two definitions show the same list. */
 export function isSameDefinition(first: TaskViewDefinition, second: TaskViewDefinition): boolean {
-	const properties = (definition: TaskViewDefinition) => Object.keys(ROW_PROPERTIES).map((key) => isPropertyShown(definition, key));
+	const properties = (definition: TaskViewDefinition) =>
+		Object.keys(ROW_PROPERTIES).map((key) => isPropertyShown(definition, key));
 	return (
 		JSON.stringify(first.filter ?? null) === JSON.stringify(second.filter ?? null) &&
 		first.groupBy === second.groupBy &&
@@ -149,7 +175,8 @@ export interface GroupedViews {
 export function groupViews(views: readonly ITaskView[]): GroupedViews {
 	const grouped: GroupedViews = { personal: [], team: [], project: [], organization: [] };
 	for (const view of views) grouped[scopeOfView(view)].push(view);
-	const byName = (a: ITaskView, b: ITaskView) => (a.name ?? '').localeCompare(b.name ?? '', undefined, { sensitivity: 'base' });
+	const byName = (a: ITaskView, b: ITaskView) =>
+		(a.name ?? '').localeCompare(b.name ?? '', undefined, { sensitivity: 'base' });
 	for (const list of Object.values(grouped)) list.sort(byName);
 	return grouped;
 }
@@ -194,7 +221,10 @@ export function createInput(
 		...(scope.tenantId ? { tenantId: scope.tenantId } : {}),
 		name: placement.name,
 		visibility: placement.visibility,
-		visibilityLevel: placement.organizationTeamId || placement.projectId ? VisibilityLevelEnum.TEAM_AND_PROJECT : VisibilityLevelEnum.ORGANIZATION,
+		visibilityLevel:
+			placement.organizationTeamId || placement.projectId
+				? VisibilityLevelEnum.TEAM_AND_PROJECT
+				: VisibilityLevelEnum.ORGANIZATION,
 		organizationTeamId: placement.organizationTeamId ?? null,
 		projectId: placement.projectId ?? null,
 		filterOptions: filterOptionsOf(definition, from?.filterOptions),
@@ -205,7 +235,11 @@ export function createInput(
 }
 
 /** The body that saves a definition into a view, stating the version it was read at. */
-export function saveInput(view: ITaskView, definition: TaskViewDefinition, scope: { organizationId: ID; tenantId?: ID }): ITaskViewUpdateInput {
+export function saveInput(
+	view: ITaskView,
+	definition: TaskViewDefinition,
+	scope: { organizationId: ID; tenantId?: ID }
+): ITaskViewUpdateInput {
 	return {
 		organizationId: scope.organizationId,
 		...(scope.tenantId ? { tenantId: scope.tenantId } : {}),
@@ -216,7 +250,11 @@ export function saveInput(view: ITaskView, definition: TaskViewDefinition, scope
 }
 
 /** The body that renames a view or changes who sees it, stating the version it was read at. */
-export function placementInput(view: ITaskView, change: Partial<TaskViewPlacement>, scope: { organizationId: ID; tenantId?: ID }): ITaskViewUpdateInput {
+export function placementInput(
+	view: ITaskView,
+	change: Partial<TaskViewPlacement>,
+	scope: { organizationId: ID; tenantId?: ID }
+): ITaskViewUpdateInput {
 	return {
 		organizationId: scope.organizationId,
 		...(scope.tenantId ? { tenantId: scope.tenantId } : {}),

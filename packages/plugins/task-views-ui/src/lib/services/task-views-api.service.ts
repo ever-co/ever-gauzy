@@ -119,14 +119,21 @@ export class TaskViewsApiService {
 			.set('relations', TASK_VIEWS_RELATIONS.join(','));
 		if (request.cursor) params = params.set('cursor', request.cursor);
 		if (request.groupBy) params = params.set('groupBy', request.groupBy);
-		if (request.filter !== undefined) params = params.set('filter', JSON.stringify(request.filter ?? { op: 'and', conditions: [] }));
+		if (request.filter !== undefined)
+			params = params.set('filter', JSON.stringify(request.filter ?? { op: 'and', conditions: [] }));
 		return this.http.get<ITaskViewTasksPage>(`${VIEWS}/${path(id)}/tasks`, { params });
 	}
 
 	// ---------------------------------------------------------------- built-in views
 
 	/** A page of a built-in view, computed by the platform in the caller's time zone (offset paging). */
-	builtIn(key: TaskBuiltInViewEnum, scope: TaskViewsScope, skip = 0, take = TASK_VIEWS_PAGE_SIZE, timeZone = browserTimeZone()): Observable<IPagination<ITask>> {
+	builtIn(
+		key: TaskBuiltInViewEnum,
+		scope: TaskViewsScope,
+		skip = 0,
+		take = TASK_VIEWS_PAGE_SIZE,
+		timeZone = browserTimeZone()
+	): Observable<IPagination<ITask>> {
 		let params = scopeParams(scope).set('skip', String(skip)).set('take', String(take)).set('timeZone', timeZone);
 		for (const relation of TASK_VIEWS_RELATIONS) params = params.append('relations[]', relation);
 		return this.http.get<IPagination<ITask>>(`${TASKS}/built-in/${path(key)}`, { params });

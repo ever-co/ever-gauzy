@@ -1,4 +1,14 @@
-import { ChangeDetectionStrategy, Component, ElementRef, EventEmitter, inject, Input, Output, signal, ViewChild } from '@angular/core';
+import {
+	ChangeDetectionStrategy,
+	Component,
+	ElementRef,
+	EventEmitter,
+	inject,
+	Input,
+	Output,
+	signal,
+	ViewChild
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { NbButtonModule, NbIconModule, NbInputModule } from '@nebular/theme';
 import { TranslatePipe } from '@ngx-translate/core';
@@ -32,12 +42,21 @@ import { GoToResult, TaskReferenceNavigatorService } from '../../services/task-r
 				(ngModelChange)="text.set($event); message.set(null)"
 				[disabled]="busy()"
 			/>
-			<button nbButton ghost [size]="size" type="submit" [disabled]="busy() || !text().trim()" [attr.aria-label]="'TASK_VIEWS.GOTO.OPEN' | translate">
+			<button
+				nbButton
+				ghost
+				[size]="size"
+				type="submit"
+				[disabled]="busy() || !text().trim()"
+				[attr.aria-label]="'TASK_VIEWS.GOTO.OPEN' | translate"
+			>
 				<nb-icon icon="arrow-forward-outline"></nb-icon>
 			</button>
 		</form>
 		@if (message(); as shown) {
-			<p class="go-to-message" role="status" data-test="go-to-message">{{ shown.key | translate: shown.params }}</p>
+			<p class="go-to-message" role="status" data-test="go-to-message">
+				{{ shown.key | translate: shown.params }}
+			</p>
 		}
 	`,
 	styles: [

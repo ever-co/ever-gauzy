@@ -1,3 +1,4 @@
+// cspell:ignore arrowdown arrowup arrowleft arrowright
 /**
  * The app's shortcut registry: every command with its context, its default binding and the key names the help and
  * the settings page show. Pure: no Angular, no DOM listener.
@@ -81,7 +82,20 @@ const OVERLAPPING_CONTEXTS: ReadonlySet<ShortcutContext> = new Set(['list', 'tas
 const MODIFIER_NAMES = new Set(['mod', 'ctrl', 'cmd', 'meta', 'shift', 'alt', 'option', 'control', 'os']);
 
 /** Key combinations the browser keeps for itself: a binding on one of them is refused. */
-const BROWSER_RESERVED = new Set(['mod+w', 'mod+t', 'mod+n', 'mod+q', 'mod+r', 'mod+l', 'mod+shift+t', 'mod+shift+n', 'mod+shift+w', 'f5', 'f11', 'f12']);
+const BROWSER_RESERVED = new Set([
+	'mod+w',
+	'mod+t',
+	'mod+n',
+	'mod+q',
+	'mod+r',
+	'mod+l',
+	'mod+shift+t',
+	'mod+shift+n',
+	'mod+shift+w',
+	'f5',
+	'f11',
+	'f12'
+]);
 
 /** The keys the list keeps whatever the bindings, by the command they run: the arrows, Enter and O, Esc. */
 const LIST_BUILT_IN_KEYS: ReadonlyMap<string, string> = new Map([
@@ -101,7 +115,8 @@ export function parseChord(text: string): ShortcutChord | null {
 	if (!parts.length) return null;
 	const chord: ShortcutChord = { key: '', mod: false, shift: false, alt: false };
 	for (const part of parts) {
-		if (part === 'mod' || part === 'ctrl' || part === 'cmd' || part === 'meta' || part === 'control') chord.mod = true;
+		if (part === 'mod' || part === 'ctrl' || part === 'cmd' || part === 'meta' || part === 'control')
+			chord.mod = true;
 		else if (part === 'shift') chord.shift = true;
 		else if (part === 'alt' || part === 'option') chord.alt = true;
 		else if (chord.key) return null;
@@ -125,7 +140,12 @@ export function parseBinding(text: string | null | undefined): ShortcutBinding |
 export function formatBinding(binding: ShortcutBinding): string {
 	return binding
 		.map((chord) =>
-			[chord.mod ? 'mod' : '', chord.shift ? 'shift' : '', chord.alt ? 'alt' : '', chord.key === '+' ? PLUS_KEY_NAME : chord.key]
+			[
+				chord.mod ? 'mod' : '',
+				chord.shift ? 'shift' : '',
+				chord.alt ? 'alt' : '',
+				chord.key === '+' ? PLUS_KEY_NAME : chord.key
+			]
 				.filter(Boolean)
 				.join('+')
 		)
@@ -178,7 +198,9 @@ export function chordKeyOf(event: Pick<KeyboardEvent, 'key' | 'code'> & { shiftK
 }
 
 /** The chord a key press is, or null for a modifier alone. Punctuation carries its own Shift (`?` is one key). */
-export function chordOfEvent(event: Pick<KeyboardEvent, 'key' | 'code' | 'metaKey' | 'ctrlKey' | 'shiftKey' | 'altKey'>): ShortcutChord | null {
+export function chordOfEvent(
+	event: Pick<KeyboardEvent, 'key' | 'code' | 'metaKey' | 'ctrlKey' | 'shiftKey' | 'altKey'>
+): ShortcutChord | null {
 	const key = chordKeyOf(event);
 	if (!key || MODIFIER_NAMES.has(key) || key === 'dead' || key === 'unidentified' || key === 'process') return null;
 	const shift = isPrintablePunctuation(key) ? false : !!event.shiftKey;
@@ -187,7 +209,9 @@ export function chordOfEvent(event: Pick<KeyboardEvent, 'key' | 'code' | 'metaKe
 
 /** Whether two chords are the same keys. */
 export function sameChord(first: ShortcutChord, second: ShortcutChord): boolean {
-	return first.key === second.key && first.mod === second.mod && first.shift === second.shift && first.alt === second.alt;
+	return (
+		first.key === second.key && first.mod === second.mod && first.shift === second.shift && first.alt === second.alt
+	);
 }
 
 /** Whether a binding has a chord the browser keeps (`mod+w`, or `mod+w t`: the sequence could never be finished). */
@@ -385,13 +409,17 @@ export function matchKeys(
 
 /** The chord in the syntax of the header's Quick Actions keys (hotkeys-js: `shift+g`), for the fallback. */
 export function hotkeysShortcutOf(chord: ShortcutChord): string {
-	return [chord.mod ? 'ctrl' : '', chord.alt ? 'alt' : '', chord.shift ? 'shift' : '', chord.key].filter(Boolean).join('+');
+	return [chord.mod ? 'ctrl' : '', chord.alt ? 'alt' : '', chord.shift ? 'shift' : '', chord.key]
+		.filter(Boolean)
+		.join('+');
 }
 
 /** Whether a modal dialog is open on the page: its form has the keys then, not the app's commands. */
 export function isDialogOpen(doc: Pick<Document, 'querySelectorAll'> | null | undefined): boolean {
 	if (!doc) return false;
-	for (const element of Array.from(doc.querySelectorAll('nb-dialog-container, [role="dialog"], [aria-modal="true"]'))) {
+	for (const element of Array.from(
+		doc.querySelectorAll('nb-dialog-container, [role="dialog"], [aria-modal="true"]')
+	)) {
 		const dialog = element as HTMLElement;
 		if (dialog.hidden || dialog.getAttribute('aria-hidden') === 'true') continue;
 		if (typeof dialog.getClientRects !== 'function' || dialog.getClientRects().length > 0) return true;
@@ -409,7 +437,10 @@ export function isTypingTarget(target: EventTarget | null): boolean {
 	const editable = element.getAttribute?.('contenteditable');
 	if (editable === '' || editable === 'true' || editable === 'plaintext-only') return true;
 	// A rich editor marks an ancestor (ProseMirror, CodeMirror, ckeditor): keys typed inside it are text.
-	return typeof element.closest === 'function' && !!element.closest('[contenteditable="true"], .ProseMirror, .cm-editor, .ck-editor');
+	return (
+		typeof element.closest === 'function' &&
+		!!element.closest('[contenteditable="true"], .ProseMirror, .cm-editor, .ck-editor')
+	);
 }
 
 /** Whether the person is on a Mac (⌘ is `mod` there). */

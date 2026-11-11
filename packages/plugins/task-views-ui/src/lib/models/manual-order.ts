@@ -15,7 +15,11 @@ export function moveItem<T>(list: readonly T[], from: number, to: number): T[] {
  * the view's order names that are not on the page, in the order they had (they were further down: a page holds the
  * first rows). Each task once, at most `max`.
  */
-export function orderAfterDrop(previousOrder: readonly ID[] | null | undefined, pageAfterDrop: readonly ID[], max: number): ID[] {
+export function orderAfterDrop(
+	previousOrder: readonly ID[] | null | undefined,
+	pageAfterDrop: readonly ID[],
+	max: number
+): ID[] {
 	const seen = new Set<ID>();
 	const order: ID[] = [];
 	for (const id of [...pageAfterDrop, ...(previousOrder ?? [])]) {

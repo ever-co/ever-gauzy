@@ -1,6 +1,13 @@
 import { ChangeDetectionStrategy, Component, inject, Input, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { NbButtonModule, NbCardModule, NbDialogRef, NbInputModule, NbRadioModule, NbSelectModule } from '@nebular/theme';
+import {
+	NbButtonModule,
+	NbCardModule,
+	NbDialogRef,
+	NbInputModule,
+	NbRadioModule,
+	NbSelectModule
+} from '@nebular/theme';
 import { TranslatePipe } from '@ngx-translate/core';
 import { ID, TaskViewVisibilityEnum } from '@gauzy/contracts';
 import { TASK_VIEW_NAME_MAX } from '../../task-views-ui.constants';
@@ -49,16 +56,31 @@ export type SaveViewDialogResult = TaskViewPlacement | null | undefined;
 					}
 					<fieldset class="field">
 						<legend class="label">{{ 'TASK_VIEWS.DIALOG.VISIBILITY' | translate }}</legend>
-						<nb-radio-group name="visibility" [ngModel]="visibility()" (ngModelChange)="visibility.set($event)">
-							<nb-radio [value]="personal" data-test="visibility-personal">{{ 'TASK_VIEWS.DIALOG.PERSONAL' | translate }}</nb-radio>
-							<nb-radio [value]="shared" data-test="visibility-shared">{{ 'TASK_VIEWS.DIALOG.SHARED' | translate }}</nb-radio>
+						<nb-radio-group
+							name="visibility"
+							[ngModel]="visibility()"
+							(ngModelChange)="visibility.set($event)"
+						>
+							<nb-radio [value]="personal" data-test="visibility-personal">{{
+								'TASK_VIEWS.DIALOG.PERSONAL' | translate
+							}}</nb-radio>
+							<nb-radio [value]="shared" data-test="visibility-shared">{{
+								'TASK_VIEWS.DIALOG.SHARED' | translate
+							}}</nb-radio>
 						</nb-radio-group>
 					</fieldset>
 					@if (visibility() === shared) {
 						<div class="field shared-scope">
 							<span class="label">{{ 'TASK_VIEWS.DIALOG.SHARED_WITH' | translate }}</span>
-							<nb-select fullWidth name="scope" [selected]="sharedScope()" (selectedChange)="sharedScope.set($event)">
-								<nb-option value="organization">{{ 'TASK_VIEWS.DIALOG.ORGANIZATION' | translate }}</nb-option>
+							<nb-select
+								fullWidth
+								name="scope"
+								[selected]="sharedScope()"
+								(selectedChange)="sharedScope.set($event)"
+							>
+								<nb-option value="organization">{{
+									'TASK_VIEWS.DIALOG.ORGANIZATION' | translate
+								}}</nb-option>
 								@if (teams.length) {
 									<nb-option value="team">{{ 'TASK_VIEWS.DIALOG.TEAM' | translate }}</nb-option>
 								}
@@ -100,8 +122,16 @@ export type SaveViewDialogResult = TaskViewPlacement | null | undefined;
 				</form>
 			</nb-card-body>
 			<nb-card-footer class="actions">
-				<button nbButton status="basic" type="button" (click)="cancel()">{{ 'TASK_VIEWS.DIALOG.CANCEL' | translate }}</button>
-				<button nbButton status="primary" type="submit" form="task-views-save-form" data-test="save-view-submit">
+				<button nbButton status="basic" type="button" (click)="cancel()">
+					{{ 'TASK_VIEWS.DIALOG.CANCEL' | translate }}
+				</button>
+				<button
+					nbButton
+					status="primary"
+					type="submit"
+					form="task-views-save-form"
+					data-test="save-view-submit"
+				>
 					{{ (mode === 'rename' ? 'TASK_VIEWS.DIALOG.SAVE' : 'TASK_VIEWS.DIALOG.CREATE') | translate }}
 				</button>
 			</nb-card-footer>
@@ -168,7 +198,11 @@ export class SaveViewDialogComponent implements OnInit {
 	}
 
 	protected titleKey(): string {
-		return this.mode === 'rename' ? 'TASK_VIEWS.DIALOG.RENAME_TITLE' : this.mode === 'saveAs' ? 'TASK_VIEWS.DIALOG.SAVE_AS_TITLE' : 'TASK_VIEWS.DIALOG.CREATE_TITLE';
+		return this.mode === 'rename'
+			? 'TASK_VIEWS.DIALOG.RENAME_TITLE'
+			: this.mode === 'saveAs'
+				? 'TASK_VIEWS.DIALOG.SAVE_AS_TITLE'
+				: 'TASK_VIEWS.DIALOG.CREATE_TITLE';
 	}
 
 	protected validName(): boolean {

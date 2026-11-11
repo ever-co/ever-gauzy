@@ -32,7 +32,9 @@ export function registerGlobalShortcuts(injector: Injector): () => void {
 	let help: NbDialogRef<unknown> | null = null;
 	let goTo: NbDialogRef<unknown> | null = null;
 
-	const links = Object.fromEntries(Object.entries(GO_TO_LINKS).map(([commandId, link]) => [commandId, () => void router.navigateByUrl(link)]));
+	const links = Object.fromEntries(
+		Object.entries(GO_TO_LINKS).map(([commandId, link]) => [commandId, () => void router.navigateByUrl(link)])
+	);
 
 	return registry.registerAll({
 		...links,

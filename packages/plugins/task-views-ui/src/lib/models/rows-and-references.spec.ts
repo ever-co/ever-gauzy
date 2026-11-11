@@ -19,7 +19,13 @@ describe('manual order', () => {
 	});
 
 	it('keeps the tasks not on the page after it, in the order they had, each once', () => {
-		expect(orderAfterDrop(['a', 'b', 'c', 'x', 'y'] as ID[], ['b', 'a', 'c'] as ID[], 5000)).toEqual(['b', 'a', 'c', 'x', 'y']);
+		expect(orderAfterDrop(['a', 'b', 'c', 'x', 'y'] as ID[], ['b', 'a', 'c'] as ID[], 5000)).toEqual([
+			'b',
+			'a',
+			'c',
+			'x',
+			'y'
+		]);
 		// A task new to the view (not in the stored order) is ordered where it was dropped.
 		expect(orderAfterDrop(['a', 'x'] as ID[], ['n', 'a'] as ID[], 5000)).toEqual(['n', 'a', 'x']);
 		expect(orderAfterDrop(null, ['b', 'a'] as ID[], 1)).toEqual(['b']);
@@ -41,11 +47,16 @@ describe('row groups', () => {
 	});
 
 	it('groups the rows in the order the platform counted, keeping counted groups with no row loaded yet', () => {
-		const groups = groupRows(rows, 'status', [
-			{ key: 's2' as ID, label: 'in-progress', count: 4 },
-			{ key: 's3' as ID, label: null, count: 2 },
-			{ key: 's1' as ID, label: 'open', count: 2 }
-		], (key) => (key === 's3' ? 'Blocked' : ''));
+		const groups = groupRows(
+			rows,
+			'status',
+			[
+				{ key: 's2' as ID, label: 'in-progress', count: 4 },
+				{ key: 's3' as ID, label: null, count: 2 },
+				{ key: 's1' as ID, label: 'open', count: 2 }
+			],
+			(key) => (key === 's3' ? 'Blocked' : '')
+		);
 		expect(groups.map((group) => [group.key, group.label, group.count, group.rows.map((row) => row.id)])).toEqual([
 			['s2', 'in-progress', 4, ['t2']],
 			['s3', 'Blocked', 2, []],
@@ -56,7 +67,8 @@ describe('row groups', () => {
 	it('shows a task under each of its assignees, and walks every task once', () => {
 		const groups = groupRows(rows, 'assignee', null);
 		expect(groups.map((group) => group.key)).toEqual(['e1', 'e2', '']);
-		expect(visibleOrder(groups)).toEqual(['t1', 't3', 't2']);
+		expect(groups[2].rows.map((row) => row.id)).toEqual(['t2', 't3']);
+		expect(visibleOrder(groups)).toEqual(['t1', 't2', 't3']);
 		expect(groupRows(rows, 'none', null)).toEqual([{ key: '', label: '', count: null, rows }]);
 	});
 
@@ -70,14 +82,20 @@ describe('row groups', () => {
 	});
 
 	it('appends a page without listing a task twice', () => {
-		expect(appendRows([task('a'), task('b')], [task('b'), task('c')]).map((row) => row.id)).toEqual(['a', 'b', 'c']);
+		expect(appendRows([task('a'), task('b')], [task('b'), task('c')]).map((row) => row.id)).toEqual([
+			'a',
+			'b',
+			'c'
+		]);
 	});
 });
 
 describe('task references', () => {
 	it('shows the project key and the number, else what the task was always shown with', () => {
 		expect(taskReferenceOf({ number: 42, prefix: 'Api', project: { taskKey: 'API' } })).toBe('API-42');
-		expect(taskReferenceOf({ number: 42, prefix: 'Api', taskNumber: 'Api-42', project: { taskKey: 'bad key' } })).toBe('Api-42');
+		expect(
+			taskReferenceOf({ number: 42, prefix: 'Api', taskNumber: 'Api-42', project: { taskKey: 'bad key' } })
+		).toBe('Api-42');
 		expect(taskReferenceOf({ number: 7, prefix: 'Ful' })).toBe('Ful-7');
 		expect(taskReferenceOf({ number: undefined, prefix: 'Ful' })).toBeNull();
 		expect(taskReferenceOf(null)).toBeNull();
@@ -85,7 +103,9 @@ describe('task references', () => {
 
 	it('reads what was typed into the go-to box', () => {
 		expect(parseGoToInput(' #api-42 ')).toEqual({ kind: 'reference', reference: 'API-42', key: 'API', number: 42 });
-		expect(parseGoToInput('https://app.gauzy.co/#/pages/tasks/view/5F0D2A58-1C6B-4A8A-9C4B-6E0C9D2B3A11?x=1')).toEqual({ kind: 'id', id: '5f0d2a58-1c6b-4a8a-9c4b-6e0c9d2b3a11' });
+		expect(
+			parseGoToInput('https://app.gauzy.co/#/pages/tasks/view/5F0D2A58-1C6B-4A8A-9C4B-6E0C9D2B3A11?x=1')
+		).toEqual({ kind: 'id', id: '5f0d2a58-1c6b-4a8a-9c4b-6e0c9d2b3a11' });
 		expect(parseGoToInput('5f0d2a58-1c6b-4a8a-9c4b-6e0c9d2b3a11').kind).toBe('id');
 		expect(parseGoToInput('API-0').kind).toBe('invalid');
 		expect(parseGoToInput('A-1').kind).toBe('invalid');
@@ -94,18 +114,52 @@ describe('task references', () => {
 	});
 
 	it('opens a resolved task, says when it moved, and refuses to guess', () => {
-		expect(outcomeOfResolution({ reference: 'API-42', key: 'API', number: 42, resolved: true, taskId: 't' as ID, currentKey: 'API', currentNumber: 42 }, 'API-42')).toEqual({
+		expect(
+			outcomeOfResolution(
+				{
+					reference: 'API-42',
+					key: 'API',
+					number: 42,
+					resolved: true,
+					taskId: 't' as ID,
+					currentKey: 'API',
+					currentNumber: 42
+				},
+				'API-42'
+			)
+		).toEqual({
 			kind: 'open',
 			taskId: 't',
 			reference: 'API-42',
 			title: undefined
 		});
-		expect(outcomeOfResolution({ reference: 'API-42', key: 'API', number: 42, resolved: true, taskId: 't' as ID, formerReference: true, currentKey: 'SYS', currentNumber: 3 }, 'API-42')).toMatchObject({
+		expect(
+			outcomeOfResolution(
+				{
+					reference: 'API-42',
+					key: 'API',
+					number: 42,
+					resolved: true,
+					taskId: 't' as ID,
+					formerReference: true,
+					currentKey: 'SYS',
+					currentNumber: 3
+				},
+				'API-42'
+			)
+		).toMatchObject({
 			kind: 'moved',
 			current: 'SYS-3'
 		});
-		expect(outcomeOfResolution({ reference: 'API-42', key: 'API', number: 42, resolved: false, ambiguous: true }, 'API-42').kind).toBe('ambiguous');
-		expect(outcomeOfResolution({ reference: 'API-42', key: 'API', number: 42, resolved: false }, 'API-42').kind).toBe('not-found');
+		expect(
+			outcomeOfResolution(
+				{ reference: 'API-42', key: 'API', number: 42, resolved: false, ambiguous: true },
+				'API-42'
+			).kind
+		).toBe('ambiguous');
+		expect(
+			outcomeOfResolution({ reference: 'API-42', key: 'API', number: 42, resolved: false }, 'API-42').kind
+		).toBe('not-found');
 		expect(outcomeOfResolution(undefined, 'API-42').kind).toBe('not-found');
 	});
 });

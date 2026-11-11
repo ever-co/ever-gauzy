@@ -1,12 +1,30 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { ChangeDetectionStrategy, Component, computed, DestroyRef, inject, OnInit, signal, ViewChild } from '@angular/core';
+import {
+	ChangeDetectionStrategy,
+	Component,
+	computed,
+	DestroyRef,
+	inject,
+	OnInit,
+	signal,
+	ViewChild
+} from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink, RouterLinkActive } from '@angular/router';
-import { NbButtonModule, NbCardModule, NbDialogService, NbIconModule, NbInputModule, NbSelectModule, NbSpinnerModule, NbTooltipModule } from '@nebular/theme';
+import {
+	NbButtonModule,
+	NbCardModule,
+	NbDialogService,
+	NbIconModule,
+	NbInputModule,
+	NbSelectModule,
+	NbSpinnerModule,
+	NbTooltipModule
+} from '@nebular/theme';
 import { TranslatePipe } from '@ngx-translate/core';
 import { combineLatest, firstValueFrom } from 'rxjs';
-import { distinctUntilChanged, filter, map } from 'rxjs/operators';
+import { distinctUntilChanged, filter, map, switchMap } from 'rxjs/operators';
 import {
 	ID,
 	IPagination,
@@ -40,7 +58,14 @@ import {
 	TASK_VIEWS_PAGE_SIZE
 } from '../../task-views-ui.constants';
 import { applicableTree, ApplicableTree, conditionsOf, invalidByPath } from '../../models/filter-tree';
-import { bulkRequest, BulkSummary, changedTaskIds, deleteOutcome, summarizeOutcome, undoRequest } from '../../models/bulk-undo';
+import {
+	bulkRequest,
+	BulkSummary,
+	changedTaskIds,
+	deleteOutcome,
+	summarizeOutcome,
+	undoRequest
+} from '../../models/bulk-undo';
 import { isMove, moveItem, orderAfterDrop } from '../../models/manual-order';
 import { appendRows, groupRows, nextFocus, visibleOrder } from '../../models/row-groups';
 import {
@@ -74,12 +99,21 @@ import {
 import { ShortcutRegistryService } from '../../keyboard/shortcut-registry.service';
 import { browserTimeZone, TaskViewsApiService, TaskViewsScope } from '../../services/task-views-api.service';
 import { TaskViewsAvailabilityService } from '../../services/task-views-availability.service';
-import { EMPTY_OPTIONS, humanize, TaskViewOptions, TaskViewsOptionsService } from '../../services/task-views-options.service';
+import {
+	EMPTY_OPTIONS,
+	humanize,
+	TaskViewOptions,
+	TaskViewsOptionsService
+} from '../../services/task-views-options.service';
 import { BulkApply, BulkPicker, BulkToolbarComponent } from '../bulk-toolbar/bulk-toolbar.component';
 import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog.component';
 import { FilterEditorComponent } from '../filter-editor/filter-editor.component';
 import { GoToTaskBoxComponent } from '../go-to-task/go-to-task-box.component';
-import { SaveViewDialogComponent, SaveViewDialogMode, SaveViewDialogResult } from '../save-view-dialog/save-view-dialog.component';
+import {
+	SaveViewDialogComponent,
+	SaveViewDialogMode,
+	SaveViewDialogResult
+} from '../save-view-dialog/save-view-dialog.component';
 import { RowDrop, RowToggle, TaskListComponent } from '../task-list/task-list.component';
 
 /** The view the page shows: one the platform computes, or a saved one. */
@@ -92,8 +126,10 @@ export function builtInKey(key: string): string {
 
 /** The i18n key of a grouping, an ordering field. */
 export const groupingKey = (groupBy: string) => `TASK_VIEWS.GROUP.${groupBy.toUpperCase()}`;
-export const orderFieldKey = (field: string) => `TASK_VIEWS.ORDER.${field.replace(/[A-Z]/g, (letter) => `_${letter}`).toUpperCase()}`;
-export const propertyKey = (property: string) => `TASK_VIEWS.LIST.COLUMNS.${property.replace(/[A-Z]/g, (letter) => `_${letter}`).toUpperCase()}`;
+export const orderFieldKey = (field: string) =>
+	`TASK_VIEWS.ORDER.${field.replace(/[A-Z]/g, (letter) => `_${letter}`).toUpperCase()}`;
+export const propertyKey = (property: string) =>
+	`TASK_VIEWS.LIST.COLUMNS.${property.replace(/[A-Z]/g, (letter) => `_${letter}`).toUpperCase()}`;
 
 /** The undo the page offers after a bulk change, until it runs out. */
 interface PendingUndo {
@@ -191,13 +227,21 @@ export class TaskViewsPageComponent implements OnInit {
 	protected readonly undo = signal<PendingUndo | null>(null);
 	protected readonly filtersOpen = signal(true);
 
-	protected readonly canAdd = computed(() => this.permitted(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TASK_ADD));
-	protected readonly canEdit = computed(() => this.permitted(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TASK_EDIT));
-	protected readonly canDeleteTasks = computed(() => this.permitted(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TASK_DELETE));
+	protected readonly canAdd = computed(() =>
+		this.permitted(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TASK_ADD)
+	);
+	protected readonly canEdit = computed(() =>
+		this.permitted(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TASK_EDIT)
+	);
+	protected readonly canDeleteTasks = computed(() =>
+		this.permitted(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TASK_DELETE)
+	);
 
 	protected readonly isSaved = computed(() => this.current().kind === 'saved');
 	protected readonly savedDefinition = computed(() => definitionOf(this.savedView()));
-	protected readonly dirty = computed(() => this.isSaved() && !!this.savedView() && !isSameDefinition(this.draft(), this.savedDefinition()));
+	protected readonly dirty = computed(
+		() => this.isSaved() && !!this.savedView() && !isSameDefinition(this.draft(), this.savedDefinition())
+	);
 	/** The ordering applies once saved: the platform reads a view's own ordering. */
 	protected readonly orderingPending = computed(() => {
 		const saved = this.savedDefinition().orderBy;
@@ -206,11 +250,18 @@ export class TaskViewsPageComponent implements OnInit {
 	});
 	protected readonly groupedViews = computed(() => {
 		const words = this.viewSearch().trim().toLowerCase().split(/\s+/).filter(Boolean);
-		const views = words.length ? this.views().filter((view) => words.every((word) => (view.name ?? '').toLowerCase().includes(word))) : this.views();
+		const views = words.length
+			? this.views().filter((view) => words.every((word) => (view.name ?? '').toLowerCase().includes(word)))
+			: this.views();
 		return groupViews(views);
 	});
 	protected readonly rowGroups = computed(() =>
-		groupRows(this.items(), this.isSaved() ? this.countedBy() : 'none', this.isSaved() ? this.counts() : null, (key) => this.groupLabel(key))
+		groupRows(
+			this.items(),
+			this.isSaved() ? this.countedBy() : 'none',
+			this.isSaved() ? this.counts() : null,
+			(key) => this.groupLabel(key)
+		)
 	);
 	protected readonly order = computed(() => visibleOrder(this.rowGroups()));
 	protected readonly shownProperties = computed(() => {
@@ -230,11 +281,13 @@ export class TaskViewsPageComponent implements OnInit {
 			JSON.stringify(saved.filter ?? null) === JSON.stringify(draft.filter ?? null)
 		);
 	});
-	protected readonly hasMore = computed(() => (this.isSaved() ? !!this.nextCursor() : this.items().length < this.total()));
+	protected readonly hasMore = computed(() =>
+		this.isSaved() ? !!this.nextCursor() : this.items().length < this.total()
+	);
 	protected readonly filterCount = computed(() => conditionsOf(this.draft().filter).length);
 	protected readonly title = computed(() => {
 		const current = this.current();
-		return current.kind === 'saved' ? this.savedView()?.name ?? '' : '';
+		return current.kind === 'saved' ? (this.savedView()?.name ?? '') : '';
 	});
 	protected readonly viewScope = computed(() => {
 		const view = this.savedView();
@@ -259,22 +312,28 @@ export class TaskViewsPageComponent implements OnInit {
 				if (this.scope()) void this.open(ref);
 			});
 
-		combineLatest([this.availability.available$, this.availability.scope$])
+		const scope$ = combineLatest([this.availability.available$, this.availability.scope$]).pipe(
+			filter(([available, scope]) => available && !!scope),
+			map(([, scope]) => scope as TaskViewsScope),
+			distinctUntilChanged((a, b) => a.organizationId === b.organizationId && a.tenantId === b.tenantId),
+			takeUntilDestroyed(this.destroyRef)
+		);
+		scope$.subscribe((scope) => {
+			this.scope.set({
+				organizationId: scope.organizationId,
+				...(scope.tenantId ? { tenantId: scope.tenantId } : {})
+			});
+			this.options.set(EMPTY_OPTIONS);
+			void this.loadViews();
+			void this.open(this.current());
+		});
+		// The organization's records the editor and the toolbar pick from: those of the scope shown, read once each.
+		scope$
 			.pipe(
-				filter(([available, scope]) => available && !!scope),
-				map(([, scope]) => scope as TaskViewsScope),
-				distinctUntilChanged((a, b) => a.organizationId === b.organizationId && a.tenantId === b.tenantId),
+				switchMap((scope) => this.optionsService.options(scope)),
 				takeUntilDestroyed(this.destroyRef)
 			)
-			.subscribe((scope) => {
-				this.scope.set({ organizationId: scope.organizationId, ...(scope.tenantId ? { tenantId: scope.tenantId } : {}) });
-				this.optionsService
-					.options(scope)
-					.pipe(takeUntilDestroyed(this.destroyRef))
-					.subscribe((options) => this.options.set(options));
-				void this.loadViews();
-				void this.open(this.current());
-			});
+			.subscribe((options) => this.options.set(options));
 
 		this.api.changed$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((kind) => {
 			if (kind === 'views') void this.loadViews();
@@ -295,7 +354,9 @@ export class TaskViewsPageComponent implements OnInit {
 	}
 
 	protected linkOf(ref: ViewRef): string[] {
-		return ref.kind === 'saved' ? [TASK_VIEWS_LINK, String(ref.id)] : [TASK_VIEWS_LINK, TASK_VIEWS_BUILT_IN_SEGMENT, ref.key];
+		return ref.kind === 'saved'
+			? [TASK_VIEWS_LINK, String(ref.id)]
+			: [TASK_VIEWS_LINK, TASK_VIEWS_BUILT_IN_SEGMENT, ref.key];
 	}
 
 	private async open(ref: ViewRef): Promise<void> {
@@ -369,12 +430,24 @@ export class TaskViewsPageComponent implements OnInit {
 		}
 	}
 
-	private async fetchPage(scope: TaskViewsScope, cursor: string | null): Promise<{ items: ITask[]; total: number; nextCursor: string | null; groups?: ITaskViewGroupCount[] | null; groupBy?: TaskViewGroupBy; invalid?: ITaskViewInvalidFilter[] }> {
+	private async fetchPage(
+		scope: TaskViewsScope,
+		cursor: string | null
+	): Promise<{
+		items: ITask[];
+		total: number;
+		nextCursor: string | null;
+		groups?: ITaskViewGroupCount[] | null;
+		groupBy?: TaskViewGroupBy;
+		invalid?: ITaskViewInvalidFilter[];
+	}> {
 		const current = this.current();
 		const timeZone = (this.store.user as IUser | undefined)?.timeZone || browserTimeZone();
 		if (current.kind === 'built-in') {
 			const skip = cursor ? Number(cursor) || 0 : 0;
-			const page: IPagination<ITask> = await firstValueFrom(this.api.builtIn(current.key, scope, skip, TASK_VIEWS_PAGE_SIZE, timeZone));
+			const page: IPagination<ITask> = await firstValueFrom(
+				this.api.builtIn(current.key, scope, skip, TASK_VIEWS_PAGE_SIZE, timeZone)
+			);
 			const items = page.items ?? [];
 			return { items, total: page.total ?? items.length, nextCursor: null };
 		}
@@ -388,10 +461,27 @@ export class TaskViewsPageComponent implements OnInit {
 				timeZone
 			})
 		);
-		return { items: page.items ?? [], total: page.total ?? 0, nextCursor: page.nextCursor ?? null, groups: page.groups, groupBy: page.groupBy, invalid: page.invalidFilters };
+		return {
+			items: page.items ?? [],
+			total: page.total ?? 0,
+			nextCursor: page.nextCursor ?? null,
+			groups: page.groups,
+			groupBy: page.groupBy,
+			invalid: page.invalidFilters
+		};
 	}
 
-	private applyPage(page: { items: ITask[]; total: number; nextCursor: string | null; groups?: ITaskViewGroupCount[] | null; groupBy?: TaskViewGroupBy; invalid?: ITaskViewInvalidFilter[] }, replace: boolean): void {
+	private applyPage(
+		page: {
+			items: ITask[];
+			total: number;
+			nextCursor: string | null;
+			groups?: ITaskViewGroupCount[] | null;
+			groupBy?: TaskViewGroupBy;
+			invalid?: ITaskViewInvalidFilter[];
+		},
+		replace: boolean
+	): void {
 		const items = replace ? page.items : appendRows(this.items(), page.items);
 		this.items.set(items);
 		this.total.set(page.total);
@@ -400,7 +490,12 @@ export class TaskViewsPageComponent implements OnInit {
 			this.counts.set(page.groups ?? null);
 			this.countedBy.set(page.groupBy ?? 'none');
 			this.invalid.set(invalidByPath(page.invalid ?? [], this.lastSent));
-			this.selection.update((selection) => retainSelection(selection, items.map((row) => row.id as ID)));
+			this.selection.update((selection) =>
+				retainSelection(
+					selection,
+					items.map((row) => row.id as ID)
+				)
+			);
 			const focused = this.focusedId();
 			if (focused && !items.some((row) => row.id === focused)) this.focusedId.set(null);
 		}
@@ -430,7 +525,7 @@ export class TaskViewsPageComponent implements OnInit {
 		if (!scope) return;
 		const views: ITaskView[] = [];
 		try {
-			for (let skip = 0; skip < SAVED_VIEWS_MAX; ) {
+			for (let skip = 0; skip < SAVED_VIEWS_MAX;) {
 				const page = await firstValueFrom(this.api.listViews(scope, skip, SAVED_VIEWS_PAGE_SIZE));
 				views.push(...(page.items ?? []));
 				skip += page.items?.length ?? 0;
@@ -456,15 +551,24 @@ export class TaskViewsPageComponent implements OnInit {
 	}
 
 	protected setOrderField(field: TaskViewOrderField): void {
-		this.draft.update((draft) => ({ ...draft, orderBy: { field, direction: field === 'dueDate' || field === 'title' ? 'asc' : 'desc' } }));
+		this.draft.update((draft) => ({
+			...draft,
+			orderBy: { field, direction: field === 'dueDate' || field === 'title' ? 'asc' : 'desc' }
+		}));
 	}
 
 	protected toggleDirection(): void {
-		this.draft.update((draft) => ({ ...draft, orderBy: { ...draft.orderBy, direction: draft.orderBy.direction === 'asc' ? 'desc' : 'asc' } }));
+		this.draft.update((draft) => ({
+			...draft,
+			orderBy: { ...draft.orderBy, direction: draft.orderBy.direction === 'asc' ? 'desc' : 'asc' }
+		}));
 	}
 
 	protected toggleProperty(property: string): void {
-		this.draft.update((draft) => ({ ...draft, properties: { ...draft.properties, [property]: !isPropertyShown(draft, property) } }));
+		this.draft.update((draft) => ({
+			...draft,
+			properties: { ...draft.properties, [property]: !isPropertyShown(draft, property) }
+		}));
 	}
 
 	protected discard(): void {
@@ -520,7 +624,11 @@ export class TaskViewsPageComponent implements OnInit {
 			await this.sendOrder(view.id as ID, input as ITaskViewOrderInput);
 		} else {
 			// The latest view's own keys of `filterOptions` (another client's) are kept: the save is rebuilt on it.
-			const rebuilt = conflict.kind === 'save' && this.scope() ? saveInput(conflict.latest, this.draft(), this.scope()!) : (input as ITaskViewUpdateInput);
+			const scope = this.scope();
+			const rebuilt =
+				conflict.kind === 'save' && scope
+					? saveInput(conflict.latest, this.draft(), scope)
+					: (input as ITaskViewUpdateInput);
 			await this.sendUpdate(view.id as ID, rebuilt, conflict.kind);
 		}
 	}
@@ -533,12 +641,17 @@ export class TaskViewsPageComponent implements OnInit {
 		const scope = this.scope();
 		if (!scope || !this.canAdd()) return;
 		const view = this.savedView();
-		const placement = await this.askPlacement(mode, mode === 'saveAs' && view ? { name: view.name, visibility: TaskViewVisibilityEnum.PERSONAL } : null);
+		const placement = await this.askPlacement(
+			mode,
+			mode === 'saveAs' && view ? { name: view.name, visibility: TaskViewVisibilityEnum.PERSONAL } : null
+		);
 		if (!placement) return;
 		const definition = mode === 'saveAs' ? this.draft() : { ...DEFAULT_DEFINITION, properties: {} };
 		this.saving.set(true);
 		try {
-			const created = await firstValueFrom(this.api.createView(createInput(definition, placement, scope, mode === 'saveAs' ? view : null)));
+			const created = await firstValueFrom(
+				this.api.createView(createInput(definition, placement, scope, mode === 'saveAs' ? view : null))
+			);
 			this.api.notify('views');
 			this.toastr.success('TASK_VIEWS.VIEW.CREATED');
 			await this.router.navigate([TASK_VIEWS_LINK, String(created.id)]);
@@ -567,14 +680,21 @@ export class TaskViewsPageComponent implements OnInit {
 		const view = this.savedView();
 		const scope = this.scope();
 		if (!view || !scope || !this.canEdit()) return;
-		const visibility = view.visibility === TaskViewVisibilityEnum.PERSONAL ? TaskViewVisibilityEnum.SHARED : TaskViewVisibilityEnum.PERSONAL;
+		const visibility =
+			view.visibility === TaskViewVisibilityEnum.PERSONAL
+				? TaskViewVisibilityEnum.SHARED
+				: TaskViewVisibilityEnum.PERSONAL;
 		await this.sendUpdate(view.id as ID, placementInput(view, { visibility }, scope), 'placement');
 	}
 
 	protected async deleteView(): Promise<void> {
 		const view = this.savedView();
 		if (!view || !this.canEdit()) return;
-		const confirmed = await this.confirm('TASK_VIEWS.VIEW.DELETE_CONFIRM', { name: view.name }, 'TASK_VIEWS.VIEW.DELETE');
+		const confirmed = await this.confirm(
+			'TASK_VIEWS.VIEW.DELETE_CONFIRM',
+			{ name: view.name },
+			'TASK_VIEWS.VIEW.DELETE'
+		);
 		if (!confirmed) return;
 		try {
 			await firstValueFrom(this.api.deleteView(view.id as ID));
@@ -586,7 +706,10 @@ export class TaskViewsPageComponent implements OnInit {
 		}
 	}
 
-	private async askPlacement(mode: SaveViewDialogMode, initial: Partial<TaskViewPlacement> | null): Promise<TaskViewPlacement | null> {
+	private async askPlacement(
+		mode: SaveViewDialogMode,
+		initial: Partial<TaskViewPlacement> | null
+	): Promise<TaskViewPlacement | null> {
 		const ref = this.dialogs.open(SaveViewDialogComponent, {
 			context: { mode, initial, teams: this.options().team, projects: this.options().project },
 			closeOnBackdropClick: false
@@ -596,7 +719,9 @@ export class TaskViewsPageComponent implements OnInit {
 	}
 
 	private async confirm(messageKey: string, params: Record<string, unknown>, confirmKey: string): Promise<boolean> {
-		const ref = this.dialogs.open(ConfirmDialogComponent, { context: { messageKey, params, confirmKey, danger: true } });
+		const ref = this.dialogs.open(ConfirmDialogComponent, {
+			context: { messageKey, params, confirmKey, danger: true }
+		});
 		return (await firstValueFrom(ref.onClose)) === true;
 	}
 
@@ -610,7 +735,11 @@ export class TaskViewsPageComponent implements OnInit {
 		if (!isMove(event.from, event.to, rows.length)) return;
 		const moved = moveItem(rows, event.from, event.to);
 		this.items.set(moved);
-		const taskIds = orderAfterDrop(view.manualOrder ?? [], moved.map((row) => row.id as ID), TASK_VIEW_ORDER_MAX);
+		const taskIds = orderAfterDrop(
+			view.manualOrder ?? [],
+			moved.map((row) => row.id as ID),
+			TASK_VIEW_ORDER_MAX
+		);
 		await this.sendOrder(view.id as ID, { ...scope, taskIds, expectedVersion: view.version ?? 1 });
 	}
 
@@ -633,7 +762,9 @@ export class TaskViewsPageComponent implements OnInit {
 	// ---------------------------------------------------------------- selection
 
 	protected onToggle(event: RowToggle): void {
-		const change = event.shift ? selectRange(this.selection(), this.order(), event.id, TASK_SELECTION_LIMIT) : toggleSelection(this.selection(), event.id, TASK_SELECTION_LIMIT);
+		const change = event.shift
+			? selectRange(this.selection(), this.order(), event.id, TASK_SELECTION_LIMIT)
+			: toggleSelection(this.selection(), event.id, TASK_SELECTION_LIMIT);
 		this.selection.set(change.selection);
 		this.focusedId.set(event.id);
 		if (change.limited) this.toastr.warning('TASK_VIEWS.BULK.LIMIT', { limit: TASK_SELECTION_LIMIT });
@@ -665,15 +796,24 @@ export class TaskViewsPageComponent implements OnInit {
 		if (!scope || this.busy()) return;
 		const built = bulkRequest(this.selection().ids, apply.changes, scope, TASK_SELECTION_LIMIT);
 		if ('refusal' in built) {
-			if (built.refusal === 'limit') this.toastr.warning('TASK_VIEWS.BULK.LIMIT', { limit: TASK_SELECTION_LIMIT });
+			if (built.refusal === 'limit')
+				this.toastr.warning('TASK_VIEWS.BULK.LIMIT', { limit: TASK_SELECTION_LIMIT });
 			return;
 		}
 		this.busy.set(true);
 		try {
 			const outcome = await firstValueFrom(this.api.bulkUpdate(built.request));
 			const summary = summarizeOutcome(outcome);
-			this.offerUndo(this.summaryMessage(summary), { ...this.summaryParams(summary), action: apply.action }, undoRequest(outcome, scope));
-			if (summary.refused) this.toastr.warning('TASK_VIEWS.BULK.REFUSED', { count: summary.refused, errors: this.refusalText(summary) });
+			this.offerUndo(
+				this.summaryMessage(summary),
+				{ ...this.summaryParams(summary), action: apply.action },
+				undoRequest(outcome, scope)
+			);
+			if (summary.refused)
+				this.toastr.warning('TASK_VIEWS.BULK.REFUSED', {
+					count: summary.refused,
+					errors: this.refusalText(summary)
+				});
 			if (changedTaskIds(outcome).length) this.api.notify('tasks');
 			await this.reload();
 		} catch (error) {
@@ -691,7 +831,11 @@ export class TaskViewsPageComponent implements OnInit {
 		try {
 			const outcome = await firstValueFrom(this.api.bulkUpdate(pending.request));
 			const summary = summarizeOutcome(outcome);
-			if (summary.refused) this.toastr.warning('TASK_VIEWS.BULK.UNDO_PARTIAL', { applied: summary.applied, refused: summary.refused });
+			if (summary.refused)
+				this.toastr.warning('TASK_VIEWS.BULK.UNDO_PARTIAL', {
+					applied: summary.applied,
+					refused: summary.refused
+				});
 			else this.toastr.success('TASK_VIEWS.BULK.UNDONE');
 			this.api.notify('tasks');
 			await this.reload();
@@ -705,7 +849,11 @@ export class TaskViewsPageComponent implements OnInit {
 	protected async deleteSelected(): Promise<void> {
 		const ids = [...this.selection().ids];
 		if (!ids.length || this.busy()) return;
-		const confirmed = await this.confirm('TASK_VIEWS.BULK.DELETE_CONFIRM', { count: ids.length }, 'TASK_VIEWS.BULK.DELETE');
+		const confirmed = await this.confirm(
+			'TASK_VIEWS.BULK.DELETE_CONFIRM',
+			{ count: ids.length },
+			'TASK_VIEWS.BULK.DELETE'
+		);
 		if (!confirmed) return;
 		this.busy.set(true);
 		const results: Array<{ taskId: ID; ok: boolean; error?: string }> = [];
@@ -724,7 +872,11 @@ export class TaskViewsPageComponent implements OnInit {
 				);
 			}
 			const summary = deleteOutcome(results);
-			if (summary.refused) this.toastr.warning('TASK_VIEWS.BULK.DELETE_PARTIAL', { applied: summary.applied, refused: summary.refused });
+			if (summary.refused)
+				this.toastr.warning('TASK_VIEWS.BULK.DELETE_PARTIAL', {
+					applied: summary.applied,
+					refused: summary.refused
+				});
 			else this.toastr.success('TASK_VIEWS.BULK.DELETED', { count: summary.applied });
 			this.api.notify('tasks');
 			await this.reload();
@@ -809,8 +961,16 @@ export class TaskViewsPageComponent implements OnInit {
 		const from = this.focusedId();
 		this.focusedId.set(next);
 		if (extend) {
-			const base = from && !this.selection().ids.includes(from) ? toggleSelection(this.selection(), from, TASK_SELECTION_LIMIT).selection : this.selection();
-			const change = selectRange(base.anchor ? base : { ...base, anchor: from ?? next }, this.order(), next, TASK_SELECTION_LIMIT);
+			const base =
+				from && !this.selection().ids.includes(from)
+					? toggleSelection(this.selection(), from, TASK_SELECTION_LIMIT).selection
+					: this.selection();
+			const change = selectRange(
+				base.anchor ? base : { ...base, anchor: from ?? next },
+				this.order(),
+				next,
+				TASK_SELECTION_LIMIT
+			);
 			this.selection.set(change.selection);
 			if (change.limited) this.toastr.warning('TASK_VIEWS.BULK.LIMIT', { limit: TASK_SELECTION_LIMIT });
 		}
@@ -826,7 +986,9 @@ export class TaskViewsPageComponent implements OnInit {
 	}
 
 	protected openHelp(): void {
-		void import('../../keyboard/shortcut-help-dialog.component').then(({ ShortcutHelpDialogComponent }) => this.dialogs.open(ShortcutHelpDialogComponent));
+		void import('../../keyboard/shortcut-help-dialog.component').then(({ ShortcutHelpDialogComponent }) =>
+			this.dialogs.open(ShortcutHelpDialogComponent)
+		);
 	}
 
 	// ---------------------------------------------------------------- helpers
@@ -843,11 +1005,13 @@ export class TaskViewsPageComponent implements OnInit {
 		const response = error as HttpErrorResponse | undefined;
 		const body = response?.error as { message?: unknown } | undefined;
 		const message = Array.isArray(body?.message) ? body?.message.join(', ') : body?.message;
-		return typeof message === 'string' && message ? message : response?.message ?? '';
+		return typeof message === 'string' && message ? message : (response?.message ?? '');
 	}
 
 	private errorMessage(error: unknown, fallbackKey: string): string {
 		const text = this.errorText(error);
-		return text && (error as HttpErrorResponse)?.status && (error as HttpErrorResponse).status < 500 ? text : fallbackKey;
+		return text && (error as HttpErrorResponse)?.status && (error as HttpErrorResponse).status < 500
+			? text
+			: fallbackKey;
 	}
 }

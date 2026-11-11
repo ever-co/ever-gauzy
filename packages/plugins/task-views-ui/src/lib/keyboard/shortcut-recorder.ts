@@ -1,7 +1,11 @@
 import { chordOfEvent, ShortcutBinding, ShortcutChord } from './shortcut-registry';
 
 /** What a key press did to a recording. */
-export type RecorderStep = { state: 'recording'; binding: ShortcutBinding } | { state: 'done'; binding: ShortcutBinding } | { state: 'cancelled' } | { state: 'ignored' };
+export type RecorderStep =
+	| { state: 'recording'; binding: ShortcutBinding }
+	| { state: 'done'; binding: ShortcutBinding }
+	| { state: 'cancelled' }
+	| { state: 'ignored' };
 
 /**
  * Records a binding from key presses: one chord, or two in a row (a sequence, `G` then `T`) when the second comes
