@@ -180,6 +180,20 @@ export class TagService extends TenantAwareCrudService<Tag> {
 	}
 
 	/**
+	 * Refuses to recover a tag whose name its scope gave to another tag after it was deleted (409, as for a create).
+	 * A system tag is recovered as it is.
+	 *
+	 * @param id The soft-deleted tag.
+	 */
+	async assertRecoveryIsFree(id: ID): Promise<void> {
+		const tag = await this.findOneByIdString(id, { withDeleted: true });
+		if (tag.isSystem) {
+			return;
+		}
+		await this.assertNameIsFree(tag, id);
+	}
+
+	/**
 	 * Gives a new team the starter labels ({@link TEAM_STARTER_TAGS}) as its own tags. A name the team has already is
 	 * left as it is, so running it again adds nothing; a failure is logged and the team keeps working without them.
 	 *

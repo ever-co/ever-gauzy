@@ -93,6 +93,7 @@ function surfaces() {
 		countBy: jest.fn().mockResolvedValue(ROWS.length),
 		assertNameIsFree: jest.fn().mockResolvedValue(undefined),
 		assertChangeIsFree: jest.fn().mockResolvedValue(undefined),
+		assertRecoveryIsFree: jest.fn().mockResolvedValue(undefined),
 		create: jest.fn().mockResolvedValue(ROWS[0]),
 		update: jest.fn().mockResolvedValue({ affected: 1 }),
 		delete: jest.fn().mockResolvedValue({ affected: 1 }),
@@ -546,6 +547,7 @@ describe('TagResolver — one concept, two protocols, the same operations', () =
 		expect(tagService.softRemove).toHaveBeenCalledWith(BUG);
 
 		expect(await resolver.recoverTag(BUG)).toBe(ROWS[0]);
+		expect(tagService.assertRecoveryIsFree).toHaveBeenCalledWith(BUG);
 		expect(tagService.softRecover).toHaveBeenCalledWith(BUG);
 	});
 

@@ -246,6 +246,8 @@ export class TagController extends CrudController<Tag> {
 	@Put(':id/recover')
 	@UsePipes(new AbstractValidationPipe({ whitelist: true }, { query: TenantOrganizationBaseDTO }))
 	async softRecover(@Param('id', UUIDValidationPipe) id: ID, ...options: any[]): Promise<Tag> {
+		// Its name may have gone to another tag of the scope since it was deleted
+		await this.tagService.assertRecoveryIsFree(id);
 		return super.softRecover(id, ...options);
 	}
 }

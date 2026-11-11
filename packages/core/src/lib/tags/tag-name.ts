@@ -4,7 +4,8 @@
  * label to anyone reading it (ever-co/ever-teams#5016).
  */
 export function tagNameKeyOf(name: string | null | undefined): string {
-	return (name ?? '').trim().toLowerCase().replace(/-/g, ' ').replace(/\s+/g, ' ');
+	// Trimmed last: a leading or trailing dash becomes a space, which must not tell two names apart
+	return (name ?? '').toLowerCase().replace(/-/g, ' ').replace(/\s+/g, ' ').trim();
 }
 
 /**

@@ -319,6 +319,8 @@ export class TagResolver {
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TAGS_EDIT, PermissionsEnum.ORG_TAGS_DELETE)
 	async recoverTag(@Args('id', { type: () => ID }) id: Id): Promise<Tag> {
+		// The check of `PUT /tags/:id/recover`: its name may have gone to another tag since it was deleted
+		await this.tagService.assertRecoveryIsFree(id);
 		return await this.tagService.softRecover(id);
 	}
 

@@ -19,6 +19,8 @@ describe('TagController names', () => {
 		const tagService = {
 			assertNameIsFree: jest.fn(async () => undefined),
 			assertChangeIsFree: jest.fn(async () => undefined),
+			assertRecoveryIsFree: jest.fn(async () => undefined),
+			softRecover: jest.fn(async (id: string) => ({ id })),
 			create: jest.fn(async (body: Record<string, unknown>) => ({ id: 'tag-new', ...body })),
 			update: jest.fn(async () => ({ affected: 1 })),
 			findOneByIdString: jest.fn(async () => existing)
@@ -54,5 +56,18 @@ describe('TagController names', () => {
 		tagService.assertChangeIsFree.mockRejectedValueOnce(taken);
 		await expect(controller.update('tag-1', { name: 'Feature' } as never)).rejects.toBe(taken);
 		expect(tagService.update).not.toHaveBeenCalled();
+	});
+
+	it('checks a recovery before it brings the tag back, and recovers nothing when the name is taken', async () => {
+		const { controller, tagService } = controllerWith();
+
+		await controller.softRecover('tag-1');
+		expect(tagService.assertRecoveryIsFree).toHaveBeenCalledWith('tag-1');
+		expect(tagService.softRecover).toHaveBeenCalledWith('tag-1', []);
+
+		tagService.softRecover.mockClear();
+		tagService.assertRecoveryIsFree.mockRejectedValueOnce(taken);
+		await expect(controller.softRecover('tag-1')).rejects.toBe(taken);
+		expect(tagService.softRecover).not.toHaveBeenCalled();
 	});
 });

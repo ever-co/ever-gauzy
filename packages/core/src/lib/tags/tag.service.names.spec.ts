@@ -53,6 +53,11 @@ describe('TagService names', () => {
 			expect(tagNameKeyOf('follow   UP')).toBe('follow up');
 			expect(tagNameKeyOf(null)).toBe('');
 		});
+
+		it('trims after the dashes become spaces, so a leading or trailing dash tells no names apart', () => {
+			expect(tagNameKeyOf('Bug-')).toBe('bug');
+			expect(tagNameKeyOf('-bug ')).toBe('bug');
+		});
 	});
 
 	describe('assertNameIsFree', () => {
@@ -151,6 +156,31 @@ describe('TagService names', () => {
 			typeOrmFind.mockReset().mockResolvedValue([]);
 			await service.assertChangeIsFree(stored, { organizationTeamId: 'team-2' }, 'tag-2');
 			expect(typeOrmFind.mock.calls[0][0].where).toMatchObject({ organizationId, organizationTeamId: 'team-2' });
+		});
+	});
+
+	describe('assertRecoveryIsFree', () => {
+		it('refuses to bring back a tag whose name its scope gave to another tag after it was deleted', async () => {
+			const deleted = { id: 'tag-1', name: 'Bug', isSystem: false, organizationId, organizationTeamId: teamId };
+			const findOne = jest.spyOn(service, 'findOneByIdString').mockResolvedValue(deleted as never);
+			typeOrmFind.mockResolvedValue([{ id: 'tag-9', name: 'bug' }]);
+
+			await expect(service.assertRecoveryIsFree('tag-1')).rejects.toBeInstanceOf(ApiException);
+			expect(findOne).toHaveBeenCalledWith('tag-1', { withDeleted: true });
+
+			typeOrmFind.mockResolvedValue([]);
+			await expect(service.assertRecoveryIsFree('tag-1')).resolves.toBeUndefined();
+		});
+
+		it('recovers a system tag as it is', async () => {
+			jest.spyOn(service, 'findOneByIdString').mockResolvedValue({
+				id: 'tag-1',
+				name: 'Bug',
+				isSystem: true
+			} as never);
+
+			await expect(service.assertRecoveryIsFree('tag-1')).resolves.toBeUndefined();
+			expect(typeOrmFind).not.toHaveBeenCalled();
 		});
 	});
 
