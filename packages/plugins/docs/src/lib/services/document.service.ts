@@ -6,7 +6,8 @@ import {
 	HttpStatus,
 	Injectable,
 	Logger,
-	NotFoundException
+	NotFoundException,
+	Optional
 } from '@nestjs/common';
 import { CommandBus, EventBus as CqrsEventBus } from '@nestjs/cqrs';
 import { Brackets, FindOneOptions, In, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
@@ -72,6 +73,8 @@ import { DocumentEvent, IDocumentEventContext } from '../events/document.event';
 import { MikroOrmDocumentRepository } from '../repositories/mikro-orm-document.repository';
 import { TypeOrmDocumentRepository } from '../repositories/type-orm-document.repository';
 import { TypeOrmDocumentLinkRepository } from '../repositories/type-orm-document-link.repository';
+// Deep import: the pure Yjs helpers of the live sessions, not the live module (which imports this one).
+import { isLiveStateFor } from '../live/document-live.yjs';
 import {
 	collectDocumentMentionIds,
 	generateDocumentHtml,
@@ -80,6 +83,8 @@ import {
 } from '../validation';
 import { assertContentSearchQueryLength } from './content-search.guard';
 import { DocumentAccessService } from './document-access.service';
+import { DocumentLiveBridge } from './document-live.bridge';
+import { collectEmployeeMentionIds } from './document-markdown';
 import { DocumentSettingsService } from './document-settings.service';
 import { DocumentVersionService } from './document-version.service';
 
@@ -195,7 +200,9 @@ export class DocumentService extends TenantAwareCrudService<Document> {
 		// above — the two are different buses and `DocumentEvent` travels on the other.
 		private readonly _cqrsEventBus: CqrsEventBus,
 		private readonly _commandBus: CommandBus,
-		private readonly _mentionService: MentionService
+		private readonly _mentionService: MentionService,
+		// Live editing sessions (`GAUZY_DOCS_LIVE_ENABLED=true`); optional so a hand-built service in a spec needs none.
+		@Optional() private readonly liveBridge?: DocumentLiveBridge
 	) {
 		super(typeOrmDocumentRepository, mikroOrmDocumentRepository);
 	}
@@ -680,7 +687,9 @@ export class DocumentService extends TenantAwareCrudService<Document> {
 			// leaves the render cache describing the PREVIOUS revision, which is what read-only
 			// views render and what `searchIn=content` matches on.
 			contentHtml: this.resolveContentHtml(input.contentHtml, contentJson, document.contentHtml ?? null),
-			...(input.contentBinary !== undefined
+			// While the page has a live state, that state is the page's CRDT and the live sessions write it (they apply
+			// this save to it below); the seed an editor sends with an autosave would replace it with another lineage.
+			...(input.contentBinary !== undefined && !this.holdsLiveState(document)
 				? { contentBinary: this.decodeContentBinary(input.contentBinary) }
 				: {}),
 			metadata: this.mergeContentMetadata(document, input)
@@ -693,8 +702,57 @@ export class DocumentService extends TenantAwareCrudService<Document> {
 		await this.syncMentions(document.id, input.mentionEmployeeIds, document.organizationId);
 		// The `+` cross-link half of the same idea (`05-editor-spec.md` §7.2).
 		await this.syncDocumentLinks(updated, contentJson);
+		// Open editors see a save that did not come through their session (an API or MCP client, a Markdown update).
+		await this.liveBridge?.contentWritten(document, updated);
 
 		this.emitDocumentEvent(updated, 'updated', { phase: 'crud' }, input as any);
+		return updated;
+	}
+
+	/**
+	 * Whether the page's stored `contentBinary` is the state of its live document (written by the live sessions for
+	 * the revision the page is at), with live sessions served by this process.
+	 *
+	 * @param document The page.
+	 */
+	public holdsLiveState(document: Pick<Document, 'contentBinary' | 'contentRevision'>): boolean {
+		return this.liveBridge?.enabled === true && isLiveStateFor(document.contentBinary as Buffer | null, document.contentRevision);
+	}
+
+	/**
+	 * Persists the merged state of a live document (`DocumentLiveService`): the content columns, the claimed
+	 * revision, the version snapshot, the mention and cross-link sync and the `updated` event, as a content save
+	 * does. The caller has claimed `contentRevision` in the guarded write the save path uses, so two writers of the
+	 * same page cannot both land.
+	 *
+	 * Runs in the request context of the session whose edits are saved, which is who the version, the mentions and
+	 * the activity entry are attributed to.
+	 *
+	 * @param document The page as loaded for this write.
+	 * @param input The live document's content, its stored state (`null` when the state is over the size limit: the
+	 * content is still saved, and the page has no live state to reload) and the claimed revision.
+	 * @returns The saved page.
+	 */
+	async saveLiveContent(document: Document, input: { contentJson: unknown; contentBinary: Buffer | null; contentRevision: number }): Promise<Document> {
+		const contentJson = this.validateContentJson(input.contentJson);
+		const maxBinaryBytes = getDocsConfig().maxBinaryBytes;
+		if (input.contentBinary && input.contentBinary.length > maxBinaryBytes) {
+			throw new BadRequestException({ message: `The collaboration state exceeds the ${maxBinaryBytes} byte limit`, code: DOCS_CONTENT_BINARY_TOO_LARGE });
+		}
+		await this.documentVersionService.captureSnapshotIfNeeded(document, { force: false });
+		const { updatedAt: loadedToken, ...current } = document;
+		const updated = await this.save({
+			...current,
+			id: document.id,
+			updatedAt: nextContentToken(loadedToken),
+			contentRevision: input.contentRevision,
+			contentJson,
+			contentHtml: this.resolveContentHtml(undefined, contentJson, document.contentHtml ?? null),
+			contentBinary: input.contentBinary
+		});
+		await this.syncMentions(document.id, collectEmployeeMentionIds(contentJson) as ID[], document.organizationId);
+		await this.syncDocumentLinks(updated, contentJson);
+		this.emitDocumentEvent(updated, 'updated', { phase: 'crud' });
 		return updated;
 	}
 

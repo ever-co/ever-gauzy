@@ -178,7 +178,10 @@ Angular app and for Ever Teams through the same API:
 
 ## 8. Open Questions
 
-- `[NEEDS CLARIFICATION: where the live editing service runs — inside the API process or the worker app (proposed: the API, horizontally scaled through the shared bus; worker for compaction jobs)]`
+- Resolved (phase 3): the live editing sessions run in the API process
+  (`DocsLivePlugin`), horizontally scaled through the shared GraphQL pub/sub
+  (Redis); no compaction job yet (Yjs garbage-collects deleted content in the
+  stored state).
 
 ## 9. Constitution Gates
 
