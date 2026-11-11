@@ -17,6 +17,7 @@ export * from './lib/controllers/chat-link-preview.controller';
 export * from './lib/egress';
 export * from './lib/link-preview/chat-link-preview-enabled';
 export * from './lib/link-preview/chat-link-preview.service';
+export * from './lib/link-preview/chat-link-preview-image.service';
 export * from './lib/link-preview/chat-link-preview.module';
 export * from './lib/graphql/chat.schema';
 export * from './lib/graphql/chat.resolver';

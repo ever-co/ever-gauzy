@@ -1,10 +1,11 @@
 import '../core/entities/internal';
 
-import { BadRequestException, ForbiddenException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { PermissionsEnum, RolesEnum } from '@gauzy/contracts';
 import { RequestContext } from '../core/context';
 import { CrudService } from '../core/crud/crud.service';
 import { TenantAwareCrudService } from '../core/crud/tenant-aware-crud.service';
+import { DATABASE_UNAVAILABLE_MESSAGE } from '../core/errors/database-unavailable';
 import { RolePermissionService } from './role-permission.service';
 
 /**
@@ -45,7 +46,14 @@ function actingAs(callerRole: { id: string; name: RolesEnum }, canChangeRoles = 
 	const service = new RolePermissionService({} as never, {} as never, roleService as never, {} as never);
 	const read = jest
 		.spyOn(service, 'findOneByOptions')
-		.mockImplementation(async (options: any) => ROWS[options?.where?.id] as never);
+		.mockImplementation(async (options: any) => {
+			// Like the real `findOneByOptions`: a miss raises, it never answers `undefined`.
+			const row = ROWS[options?.where?.id];
+			if (!row) {
+				throw new NotFoundException('The requested record was not found');
+			}
+			return row as never;
+		});
 	const softRemove = jest.spyOn(CrudService.prototype, 'softRemove').mockImplementation(async (id: any) => ROWS[id] as never);
 	const softRecover = jest.spyOn(CrudService.prototype, 'softRecover').mockImplementation(async (id: any) => ROWS[id] as never);
 	const update = jest.spyOn(TenantAwareCrudService.prototype, 'update').mockResolvedValue({ affected: 1 } as never);
@@ -125,6 +133,117 @@ describe('any other role', () => {
 
 		await expect(service.softRemove('p-employee')).rejects.toBeInstanceOf(ForbiddenException);
 		expect(softRemove).not.toHaveBeenCalled();
+	});
+});
+
+/**
+ * `deletePermission` shares the rule. It answered nothing at all to a caller that is neither SUPER_ADMIN nor ADMIN,
+ * read `.role.name` of a row whose role could not be read, and put the error object in its 400 body instead of the
+ * message (a plain `Error`, such as that TypeError, serialised as `{}`).
+ */
+describe('deletePermission', () => {
+	function deleting(callerRole: { id: string; name: RolesEnum }, canChangeRoles = true) {
+		const ctx = actingAs(callerRole, canChangeRoles);
+		const remove = jest.spyOn(ctx.service, 'delete').mockResolvedValue({ affected: 1 } as never);
+		return { ...ctx, remove };
+	}
+
+	it('deletes a lower role’s row for an ADMIN, and an ADMIN row for a SUPER_ADMIN', async () => {
+		const admin = deleting(ROLES.admin);
+		await admin.service.deletePermission('p-employee');
+		expect(admin.remove).toHaveBeenCalledWith('p-employee');
+		jest.restoreAllMocks();
+
+		const superAdmin = deleting(ROLES.super);
+		await superAdmin.service.deletePermission('p-admin');
+		expect(superAdmin.remove).toHaveBeenCalledWith('p-admin');
+	});
+
+	it.each(['p-super', 'p-admin'])('an ADMIN may not delete a %s row', async (id) => {
+		const { service, remove } = deleting(ROLES.admin);
+
+		await expect(service.deletePermission(id)).rejects.toBeInstanceOf(BadRequestException);
+		expect(remove).not.toHaveBeenCalled();
+	});
+
+	it('a SUPER_ADMIN may not delete a SUPER_ADMIN row', async () => {
+		const { service, remove } = deleting(ROLES.super);
+
+		await expect(service.deletePermission('p-super')).rejects.toBeInstanceOf(BadRequestException);
+		expect(remove).not.toHaveBeenCalled();
+	});
+
+	it('refuses a row that does not exist, with the lookup’s message in the 400 body', async () => {
+		// The real lookup raises NotFound on a miss; the 400 body used to be that exception object itself.
+		const { service, read, remove } = deleting(ROLES.admin);
+		read.mockRejectedValue(new NotFoundException('The requested record was not found'));
+
+		const error = await service.deletePermission('p-missing').catch((e) => e);
+
+		expect(read).toHaveBeenCalled();
+		expect(error).toBeInstanceOf(BadRequestException);
+		expect(error.message).toBe('The requested record was not found');
+		// `message` read the same before; the body is what changed, and only this checks it
+		expect(error.getResponse()).toEqual({
+			statusCode: 400,
+			message: 'The requested record was not found',
+			error: 'Bad Request'
+		});
+		expect(remove).not.toHaveBeenCalled();
+	});
+
+	it('never puts the database driver’s own text in the 400 body', async () => {
+		const { service, remove } = deleting(ROLES.admin);
+		const driverError = Object.assign(new Error('relation "role_permission" does not exist'), {
+			driverError: { code: '42P01' },
+			code: '42P01'
+		});
+		remove.mockRejectedValue(driverError);
+
+		const error = await service.deletePermission('p-employee').catch((e) => e);
+
+		expect(error).toBeInstanceOf(BadRequestException);
+		expect(error.message).not.toContain('role_permission');
+	});
+
+	it('never puts the address of a database it cannot reach in the 400 body', async () => {
+		const { service, read, remove } = deleting(ROLES.admin);
+		read.mockRejectedValue(
+			Object.assign(new Error('connect ECONNREFUSED 10.1.2.3:5432'), {
+				code: 'ECONNREFUSED',
+				syscall: 'connect',
+				address: '10.1.2.3',
+				port: 5432
+			})
+		);
+
+		const error = await service.deletePermission('p-employee').catch((e) => e);
+
+		expect(error).toBeInstanceOf(BadRequestException);
+		expect(error.message).toBe(DATABASE_UNAVAILABLE_MESSAGE);
+		expect(remove).not.toHaveBeenCalled();
+	});
+
+	it('refuses a row whose role cannot be read, even if the lookup answers nothing', async () => {
+		const { service, read, remove } = deleting(ROLES.admin);
+		read.mockResolvedValue(undefined as never);
+
+		const error = await service.deletePermission('p-employee').catch((e) => e);
+
+		expect(error).toBeInstanceOf(BadRequestException);
+		expect(error.message).toContain('You can not delete the permissions of this role');
+		expect(remove).not.toHaveBeenCalled();
+	});
+
+	it('refuses any other role, and an ADMIN without CHANGE_ROLES_PERMISSIONS', async () => {
+		const employee = deleting(ROLES.employee);
+		await expect(employee.service.deletePermission('p-employee')).rejects.toBeInstanceOf(BadRequestException);
+		expect(employee.remove).not.toHaveBeenCalled();
+		jest.restoreAllMocks();
+
+		const noRight = deleting(ROLES.admin, false);
+		await expect(noRight.service.deletePermission('p-employee')).rejects.toBeInstanceOf(BadRequestException);
+		expect(noRight.remove).not.toHaveBeenCalled();
 	});
 });
 

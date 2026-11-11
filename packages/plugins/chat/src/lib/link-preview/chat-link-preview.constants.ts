@@ -38,3 +38,17 @@ export const CHAT_LINK_PREVIEW_LIMITS = {
 
 /** How the server introduces itself to the pages it previews. */
 export const CHAT_LINK_PREVIEW_USER_AGENT = 'Mozilla/5.0 (compatible; GauzyLinkPreview/1.0)';
+
+/**
+ * Preview pictures (`GET /chat/link-preview/image?url=`): the types taken (by their bytes; never SVG), the largest
+ * picture, and the per-process cache of the pictures served (by count and by bytes, a day each; a picture that could
+ * not be fetched is not asked for again for ten minutes).
+ */
+export const CHAT_LINK_PREVIEW_IMAGE_TYPES: readonly string[] = ['image/avif', 'image/webp', 'image/png', 'image/jpeg', 'image/gif'];
+export const CHAT_LINK_PREVIEW_IMAGE_MAX_BYTES = 1024 * 1024;
+export const CHAT_LINK_PREVIEW_IMAGE_CACHE_ENTRIES = 256;
+export const CHAT_LINK_PREVIEW_IMAGE_CACHE_BYTES = 32 * 1024 * 1024;
+export const CHAT_LINK_PREVIEW_IMAGE_TTL_MS = 24 * 60 * 60 * 1000;
+export const CHAT_LINK_PREVIEW_IMAGE_FAILURE_TTL_MS = 10 * 60 * 1000;
+/** How many pictures one process fetches at once (beyond that the route answers 503 until one finished). */
+export const CHAT_LINK_PREVIEW_IMAGE_CONCURRENCY = 4;

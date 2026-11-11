@@ -47,6 +47,15 @@ describe('LinkCardsComponent', () => {
 		expect(fixture.nativeElement.querySelector('img')).toBeNull();
 	});
 
+	it('shows the picture the platform served, from its blob URL only', () => {
+		const fixture = render('https://www.example.com/pic');
+		previews.get('https://www.example.com/pic')!.set({ siteName: null, title: 'With a picture', description: null, imageUrl: 'blob:picture', imageAlt: 'A cover' });
+		fixture.detectChanges();
+		const image = fixture.nativeElement.querySelector('[data-test="link-preview-image"]') as HTMLImageElement;
+		expect(image.getAttribute('src')).toBe('blob:picture');
+		expect(image.getAttribute('alt')).toBe('A cover');
+	});
+
 	it('renders a page title as text, never as markup', () => {
 		const fixture = render('https://www.example.com/x');
 		previews.get('https://www.example.com/x')!.set({ siteName: null, title: '<b>bold</b><img src=x>', description: null });

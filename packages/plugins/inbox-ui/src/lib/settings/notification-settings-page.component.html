@@ -70,6 +70,11 @@
 				<section class="group" data-test="email">
 					<h5>{{ 'INBOX.NOTIFICATION_SETTINGS.EMAIL_TITLE' | translate }}</h5>
 					<p class="hint">{{ 'INBOX.NOTIFICATION_SETTINGS.EMAIL_HINT' | translate }}</p>
+					@if (emailNotice(); as notice) {
+						<nb-alert status="warning" class="notice" role="status" [attr.data-test]="'email-notice-' + notice">
+							{{ 'INBOX.NOTIFICATION_SETTINGS.EMAIL_NOTICE.' + notice | translate }}
+						</nb-alert>
+					}
 					<div class="row" data-test="email-default">
 						<div class="text">
 							<span class="label">{{ 'INBOX.NOTIFICATION_SETTINGS.DEFAULT_LABEL' | translate }}</span>

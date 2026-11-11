@@ -11,7 +11,7 @@ import {
 	EgressResolver,
 	guardedRequest,
 	IEgressPolicy,
-	readLimitedBody,
+	readBody,
 	firstHeaderValue,
 	systemResolver
 } from '../egress/egress-guard';
@@ -32,7 +32,7 @@ import { headEnded } from './link-preview-parser';
  */
 
 /** Why a fetch gave no page. The caller stores all of them as "no preview" and tells the asker nothing more. */
-export type LinkPreviewFetchFailure = 'blocked' | 'redirects' | 'timeout' | 'status' | 'type' | 'error';
+export type LinkPreviewFetchFailure = 'blocked' | 'redirects' | 'timeout' | 'status' | 'type' | 'size' | 'error';
 
 export type LinkPreviewFetchOutcome =
 	| {
@@ -52,6 +52,12 @@ export type LinkPreviewFetchOutcome =
 			/** The answer's HTTP status, when the page answered one that is not a success (`status`). */
 			status?: number;
 	  };
+
+/**
+ * The failed half of {@link LinkPreviewFetchOutcome}. The API and worker builds compile this plugin with
+ * `strictNullChecks` off, where `if (!outcome.ok)` does not narrow the union, so a failure is read through this type.
+ */
+export type LinkPreviewFetchFailed = Extract<LinkPreviewFetchOutcome, { ok: false }>;
 
 /** Resolves a host name to its addresses. A seam: specs answer without a network. */
 export type LinkPreviewResolver = EgressResolver;
@@ -85,8 +91,34 @@ const HTML_TYPES = new Set(['text/html', 'application/xhtml+xml']);
  * @param overrides Bounds and seams; the server passes none.
  * @returns The page's start, or why there is none. Never throws.
  */
-export async function fetchPreviewPage(link: string | URL, overrides: Partial<ILinkPreviewFetchOptions> = {}): Promise<LinkPreviewFetchOutcome> {
-	const options: ILinkPreviewFetchOptions = { ...DEFAULT_LINK_PREVIEW_FETCH_OPTIONS, ...overrides };
+export function fetchPreviewPage(link: string | URL, overrides: Partial<ILinkPreviewFetchOptions> = {}): Promise<LinkPreviewFetchOutcome> {
+	// The read stops at a real end of the head: not a `</head>` written in a script, a comment or the title.
+	let page = '';
+	return fetchGuardedBody(link, { ...DEFAULT_LINK_PREVIEW_FETCH_OPTIONS, ...overrides }, {
+		accept: 'text/html,application/xhtml+xml;q=0.9,*/*;q=0.1',
+		allows: (mediaType) => !mediaType || HTML_TYPES.has(mediaType),
+		stop: (piece) => headEnded((page += piece.toString('latin1')))
+	});
+}
+
+/** What one kind of fetch reads: the media types it asks for and takes, and where its read may stop early. */
+export interface IGuardedBodyRead {
+	accept: string;
+	/** Whether an answer of this media type (lower case, null when it named none) is read. */
+	allows: (mediaType: string | null) => boolean;
+	stop?: (piece: Buffer) => boolean;
+	/**
+	 * Only a whole body will do (a picture): a body the byte limit cut is refused as `size`, one the connection broke as
+	 * `error`. Without it, the start of a body is kept (a page's head).
+	 */
+	whole?: boolean;
+}
+
+/**
+ * A GET through the guard, redirects followed by hand (each hop a new `guardedRequest`), one deadline for the whole of
+ * it, and the body of the last hop read within `maxBytes` when its type is one the read takes.
+ */
+export async function fetchGuardedBody(link: string | URL, options: ILinkPreviewFetchOptions, read: IGuardedBodyRead): Promise<LinkPreviewFetchOutcome> {
 	const controller = new AbortController();
 	const timer = setTimeout(() => controller.abort(), options.timeoutMs);
 	timer.unref?.();
@@ -95,11 +127,7 @@ export async function fetchPreviewPage(link: string | URL, overrides: Partial<IL
 		current.hash = '';
 		for (let hop = 0; ; hop++) {
 			const response = await guardedRequest(current, {
-				headers: {
-					'user-agent': options.userAgent,
-					accept: 'text/html,application/xhtml+xml;q=0.9,*/*;q=0.1',
-					'accept-encoding': 'gzip, deflate, br'
-				},
+				headers: { 'user-agent': options.userAgent, accept: read.accept, 'accept-encoding': 'gzip, deflate, br' },
 				signal: controller.signal,
 				resolver: options.resolver,
 				policy: options.policy
@@ -121,17 +149,12 @@ export async function fetchPreviewPage(link: string | URL, overrides: Partial<IL
 			}
 			const contentType = firstHeaderValue(response.headers['content-type']);
 			const mediaType = contentType ? contentType.split(';')[0].trim().toLowerCase() : null;
-			if (mediaType && !HTML_TYPES.has(mediaType)) {
+			if (!read.allows(mediaType)) {
 				response.destroy();
 				return { ok: false, reason: 'type' };
 			}
-			// The read stops at a real end of the head: not a `</head>` written in a script, a comment or the title.
-			let page = '';
-			const body = await readLimitedBody(response, {
-				maxBytes: options.maxBytes,
-				signal: controller.signal,
-				stop: (piece) => headEnded((page += piece.toString('latin1')))
-			});
+			const { body, end } = await readBody(response, { maxBytes: options.maxBytes, signal: controller.signal, stop: read.stop });
+			if (read.whole && end !== 'end') return { ok: false, reason: end === 'limit' ? 'size' : 'error' };
 			return { ok: true, url: current.href, contentType: mediaType, charset: charsetOf(contentType), body };
 		}
 	} catch (error) {
@@ -159,6 +182,7 @@ export function charsetOf(contentType: string | null | undefined): string | null
  */
 export function isTransientFailure(outcome: LinkPreviewFetchOutcome): boolean {
 	if (outcome.ok) return false;
-	if (outcome.reason === 'timeout' || outcome.reason === 'error') return true;
-	return outcome.reason === 'status' && !!outcome.status && (outcome.status >= 500 || outcome.status === 429);
+	const { reason, status } = outcome as LinkPreviewFetchFailed;
+	if (reason === 'timeout' || reason === 'error') return true;
+	return reason === 'status' && !!status && (status >= 500 || status === 429);
 }
