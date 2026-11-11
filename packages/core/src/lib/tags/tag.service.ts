@@ -126,11 +126,14 @@ export class TagService extends TenantAwareCrudService<Tag> {
 	}
 
 	/**
-	 * Refuses a name another tag of the same scope already has (409, `UNIQUE_CONSTRAINT_VIOLATION` on `name`): the
-	 * same team, or for a tag of no team the same organization. Ever Teams tells a team's labels apart by name, in its
-	 * task filters and pickers, so two labels of one name would collide there (ever-co/ever-teams#5016). Names compare
-	 * as {@link tagNameKeyOf} reads them. The scope is read from the ids or from the relation objects a body may send
-	 * instead (`organization: { id }`).
+	 * Refuses a name another tag of the same team already has (409, `UNIQUE_CONSTRAINT_VIOLATION` on `name`). Ever
+	 * Teams tells a team's labels apart by name, in its task filters and pickers, so two labels of one name would
+	 * collide there (ever-co/ever-teams#5016). Names compare as {@link tagNameKeyOf} reads them. The scope is read from
+	 * the ids or from the relation objects a body may send instead (`organization: { id }`).
+	 *
+	 * Only a team's own tags are checked. A tag of no team (an organization's or the tenant's) is filed as before, a
+	 * name its organization has already included: such tags are typed per entity (invoices, tasks, equipment…), and
+	 * one name may serve several types.
 	 *
 	 * An organization outside the caller's organization boundary is not read: the write refuses it anyway, and a 409
 	 * there would tell the caller whether that organization has a tag of the name.
@@ -146,16 +149,17 @@ export class TagService extends TenantAwareCrudService<Tag> {
 		if (!key) {
 			return;
 		}
+		const organizationTeamId = organizationTeamIdOf(input);
+		if (!organizationTeamId) {
+			// A tag of no team: names stay free, as they were before names were checked
+			return;
+		}
 		const organizationId = organizationIdOf(input);
 		if (!isWithinOrganizationBoundary(organizationId, this.organizationBoundary())) {
 			return;
 		}
 		const tenantId = RequestContext.currentTenantId();
-		const names = await this.namesInScope({
-			tenantId,
-			organizationId,
-			organizationTeamId: organizationTeamIdOf(input)
-		});
+		const names = await this.namesInScope({ tenantId, organizationId, organizationTeamId });
 		const isTaken = names.some((tag) => tag.id !== exceptId && tagNameKeyOf(tag.name) === key);
 		if (isTaken) {
 			throw new ApiException(

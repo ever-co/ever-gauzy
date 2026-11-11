@@ -17,8 +17,9 @@ import { TagService } from './tag.service';
 
 /**
  * Ever Teams tells a team's labels apart by name, in its task filters and pickers (ever-co/ever-teams#5016): a tag
- * may not take a name its team (or, for a tag of no team, its organization) has already, whatever its case, dashes
- * or spaces. A new team starts with a few common labels, as its own tags.
+ * of a team may not take a name its team has already, whatever its case, dashes or spaces. A tag of no team (an
+ * organization's or the tenant's) is filed as before, any name included. A new team asked for them starts with a few
+ * common labels, as its own tags.
  */
 describe('TagService names', () => {
 	const { tenantA } = createCrossTenantFixture();
@@ -107,13 +108,25 @@ describe('TagService names', () => {
 			).resolves.toBeUndefined();
 		});
 
-		it('compares a tag of no team with the tags of no team of its organization', async () => {
-			await service.assertNameIsFree({ name: 'Bug', organizationId });
+		it('checks no name of a tag of no team: an organization or tenant tag may share a name, as before', async () => {
+			// An "Urgent" tag for invoices and another for tasks, in one organization or for the whole tenant
+			typeOrmFind.mockResolvedValue([{ id: 'tag-1', name: 'Urgent' }]);
+
+			await expect(service.assertNameIsFree({ name: 'urgent', organizationId })).resolves.toBeUndefined();
+			await expect(
+				service.assertNameIsFree({ name: 'Urgent', organization: { id: organizationId }, organizationTeam: null })
+			).resolves.toBeUndefined();
+			await expect(service.assertNameIsFree({ name: 'Urgent', organizationId: null })).resolves.toBeUndefined();
+			expect(typeOrmFind).not.toHaveBeenCalled();
+		});
+
+		it('reads the team from the team object a body may send instead of its id', async () => {
+			await service.assertNameIsFree({ name: 'Bug', organizationId, organizationTeam: { id: teamId } });
 
 			expect(typeOrmFind.mock.calls[0][0].where).toEqual({
 				tenantId: tenantA.tenantId,
 				organizationId,
-				organizationTeamId: IsNull(),
+				organizationTeamId: teamId,
 				isSystem: false
 			});
 		});
@@ -170,7 +183,7 @@ describe('TagService names', () => {
 			typeOrmFind.mockResolvedValue([{ id: 'tag-1', name: 'Bug' }]);
 
 			await expect(
-				service.assertNameIsFree({ name: 'bug', organizationId: otherOrganizationId })
+				service.assertNameIsFree({ name: 'bug', organizationId: otherOrganizationId, organizationTeamId: teamId })
 			).rejects.toBeInstanceOf(ApiException);
 			expect(typeOrmFind.mock.calls[0][0].where).toMatchObject({ organizationId: otherOrganizationId });
 			expect(RequestContext.hasRoles).toHaveBeenCalledWith([RolesEnum.SUPER_ADMIN, RolesEnum.ADMIN]);
@@ -220,9 +233,10 @@ describe('TagService names', () => {
 		});
 
 		it('reads the organization of a change as the update does: the id first, even null', async () => {
-			// A tag of the tenant, renamed with a body that clears its organization by id and names the caller's by object:
-			// the update reads the id, leaves the organization out and keeps the tag the tenant's, where the name is checked
-			const tenantTag = { id: 'tag-3', name: 'Bug', organizationId: null, organizationTeamId: null } as never;
+			// A team tag stored with no organization, renamed with a body that clears its organization by id and names the
+			// caller's by object: the update reads the id, leaves the organization out and keeps the tag where it is, where
+			// the name is checked
+			const tenantTag = { id: 'tag-3', name: 'Bug', organizationId: null, organizationTeamId: teamId } as never;
 			typeOrmFind.mockResolvedValue([{ id: 'tag-1', name: 'Feature' }]);
 
 			await expect(
@@ -234,8 +248,21 @@ describe('TagService names', () => {
 			).rejects.toBeInstanceOf(ApiException);
 			expect(typeOrmFind.mock.calls[0][0].where).toMatchObject({
 				organizationId: IsNull(),
-				organizationTeamId: IsNull()
+				organizationTeamId: teamId
 			});
+		});
+
+		it('lets a tag of no team be renamed to a name its organization has, and lets a team tag leave its team', async () => {
+			typeOrmFind.mockResolvedValue([{ id: 'tag-1', name: 'Feature' }]);
+			const organizationTag = { id: 'tag-4', name: 'Bug', organizationId, organizationTeamId: null } as never;
+
+			await expect(
+				service.assertChangeIsFree(organizationTag, { name: 'feature' }, 'tag-4')
+			).resolves.toBeUndefined();
+			await expect(
+				service.assertChangeIsFree(stored, { name: 'feature', organizationTeamId: null }, 'tag-2')
+			).resolves.toBeUndefined();
+			expect(typeOrmFind).not.toHaveBeenCalled();
 		});
 
 		it('checks a move to another organization by a tenant admin there', async () => {
@@ -261,6 +288,20 @@ describe('TagService names', () => {
 
 			typeOrmFind.mockResolvedValue([]);
 			await expect(service.assertRecoveryIsFree('tag-1')).resolves.toBeUndefined();
+		});
+
+		it('recovers a tag of no team as it is, whatever names its organization has', async () => {
+			jest.spyOn(service, 'findOneByIdString').mockResolvedValue({
+				id: 'tag-1',
+				name: 'Bug',
+				isSystem: false,
+				organizationId,
+				organizationTeamId: null
+			} as never);
+			typeOrmFind.mockResolvedValue([{ id: 'tag-9', name: 'bug' }]);
+
+			await expect(service.assertRecoveryIsFree('tag-1')).resolves.toBeUndefined();
+			expect(typeOrmFind).not.toHaveBeenCalled();
 		});
 
 		it('recovers a system tag as it is', async () => {

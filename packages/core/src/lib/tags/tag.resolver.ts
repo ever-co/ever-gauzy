@@ -246,7 +246,7 @@ export class TagResolver {
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TAGS_ADD)
 	async createTag(@Args('input') input: ICreateTagInput): Promise<Tag> {
-		// The name check of `POST /tags`: a name the tag's team (or organization) has already is refused
+		// The name check of `POST /tags`: a name the tag's team has already is refused
 		await this.tagService.assertNameIsFree(input as never);
 		return await this.tagService.create(input as unknown as Tag);
 	}

@@ -90,7 +90,7 @@ export class TagController extends CrudController<Tag> {
 	@Post('/')
 	@UseValidationPipe({ whitelist: true })
 	async create(@Body() entity: CreateTagDTO): Promise<ITag> {
-		// A name the same team (or organization) has already is refused with 409, here and for each bulk item
+		// A name the tag's team has already is refused with 409, here and for each bulk item (tags of no team: unchecked)
 		await this.tagService.assertNameIsFree(entity);
 		return await this.tagService.create(entity);
 	}
