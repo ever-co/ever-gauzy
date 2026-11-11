@@ -15,7 +15,14 @@ import {
 } from './docs-live.config';
 import { DocumentLiveService } from './document-live.service';
 import { IDocumentLiveFrame } from './document-live.types';
-import { decodeLiveState, LIVE_FRAGMENT, liveDocumentJson, normaliseNode } from './document-live.yjs';
+import {
+	decodeLiveState,
+	encodeLiveState,
+	LIVE_FRAGMENT,
+	liveDocumentJson,
+	normaliseNode,
+	serverWriteChange
+} from './document-live.yjs';
 
 /** Who the code under test runs as: the stand-in of the request context, kept in an AsyncLocalStorage as nestjs-cls does. */
 const who = new AsyncLocalStorage<{ userId: string; tenantId: string; organizationId: string }>();
@@ -685,6 +692,95 @@ describe('DocumentLiveService', () => {
 			normaliseNode({ type: 'doc', content: [paragraph('Hello world')] } as never)
 		);
 		await until(() => as('ann', () => service.status()).documents === 0);
+	});
+
+	it('keeps unsaved edits in the stored state when the process stops and cannot save, and saves them on the next open', async () => {
+		table.add('page-1', [paragraph('Hello')], { readers: ['ann'], writers: ['ann'] });
+		const stopping = slowSaving();
+		const ann = new Editor('ann', 'tab-ann-0001');
+		await ann.open(stopping, 'page-1');
+		await ann.type(stopping, 'page-1', ' world');
+		table.failSaves = 10;
+
+		await stopping.onModuleDestroy();
+		services.splice(services.indexOf(stopping), 1);
+		expect(table.saves).toHaveLength(0);
+		expect(normaliseNode(table.rows.get('page-1')!.contentJson as never)).toEqual(
+			normaliseNode({ type: 'doc', content: [paragraph('Hello')] } as never)
+		);
+
+		// The next process loads the kept state, and its first editor saves it.
+		table.failSaves = 0;
+		const next = process_();
+		const again = new Editor('ann', 'tab-ann-0002');
+		await again.open(next, 'page-1');
+		expect(again.text()).toEqual(normaliseNode({ type: 'doc', content: [paragraph('Hello world')] } as never));
+		await until(() => table.saves.length === 1);
+		expect(normaliseNode(table.rows.get('page-1')!.contentJson as never)).toEqual(
+			normaliseNode({ type: 'doc', content: [paragraph('Hello world')] } as never)
+		);
+
+		await again.close();
+	}, 20_000);
+
+	it('refuses an awareness update it cannot read whole, and leaves the client id free', async () => {
+		table.add('page-1', [paragraph('Hello')], { readers: ['ann', 'bob'], writers: ['ann', 'bob'] });
+		const service = process_();
+		const ann = new Editor('ann', 'tab-ann-0001');
+		const bob = new Editor('bob', 'tab-bob-0001');
+		await ann.open(service, 'page-1');
+		await bob.open(service, 'page-1');
+
+		const cursor = new Awareness(bob.doc);
+		cursor.setLocalState({ user: { name: 'Bob' } });
+		const good = Buffer.from(encodeAwarenessUpdate(cursor, [cursor.clientID]));
+		// The same entry with its state cut short: not JSON.
+		const broken = Buffer.concat([good.subarray(0, good.length - 3), Buffer.from([0x7b, 0x7b, 0x7b])]);
+		await expect(
+			as('ann', () => service.applyClientAwareness('page-1', 'tab-ann-0001', broken.toString('base64')))
+		).rejects.toMatchObject({
+			response: { code: DOCS_LIVE_UPDATE_INVALID }
+		});
+		// Bob can still report his own id.
+		await expect(
+			as('bob', () => service.applyClientAwareness('page-1', 'tab-bob-0001', good.toString('base64')))
+		).resolves.toMatchObject({
+			accepted: true
+		});
+
+		cursor.destroy();
+		await ann.close();
+		await bob.close();
+	});
+
+	it('works a server-side write out against the stored state after another process moved the page', async () => {
+		table.add('page-1', [paragraph('One'), paragraph('Two')], { readers: ['ann'], writers: ['ann'] });
+		const service = slowSaving();
+		const ann = new Editor('ann', 'tab-ann-0001');
+		await ann.open(service, 'page-1');
+
+		// Another process wrote the page (revision 2) and stored its state; this one heard nothing.
+		const other = decodeLiveState(table.rows.get('page-1')!.contentBinary)!;
+		const elsewhere = table.writeOutside('page-1', [paragraph('One'), paragraph('Two, elsewhere')]);
+		const moved = serverWriteChange(Y.encodeStateAsUpdate(other.doc), elsewhere.updated.contentJson);
+		table.rows.get('page-1')!.contentBinary = encodeLiveState(moved.state, {
+			lineage: other.meta.lineage,
+			revision: 2
+		});
+		other.doc.destroy();
+		Y.applyUpdate(ann.doc, moved.change);
+		await as('ann', () =>
+			service.applyClientUpdate('page-1', 'tab-ann-0001', Buffer.from(moved.change).toString('base64'))
+		);
+
+		// Now an API write on this process, from revision 2: only its own change is applied.
+		const { previous, updated } = table.writeOutside('page-1', [paragraph('Three'), paragraph('Two, elsewhere')]);
+		await as('api', () => service.contentWritten(previous as never, updated as never));
+
+		await until(() => JSON.stringify(ann.text()).includes('Three'));
+		expect(ann.text()).toEqual(normaliseNode(updated.contentJson as never));
+
+		await ann.close();
 	});
 
 	describe('with several API processes', () => {

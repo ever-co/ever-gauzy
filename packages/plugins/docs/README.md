@@ -196,6 +196,10 @@ Migration `1791000004800` adds `document.organizationTeamId` (foreign key to `or
 Off by default (exactly `true` turns it on). Off, `DocsLivePlugin` is not loaded: no route, no GraphQL field, and the
 editor keeps its single-writer autosave with the revision check. On:
 
+The server half is described here; an editor co-edits only once its client binds to it (the Angular Docs editor in
+`docs-ui` and the Ever Teams editor do, in their own changes). A client that does not keeps its autosave, and its saves
+reach the live editors as server-side writes.
+
 - **The session.** `Subscription.documentLive(documentId, connectionId)` (the platform's GraphQL subscription
   channel, the same socket as `collaborationEvents`) opens a live session of a page the caller may read
   (`DOCS_READ`; 404 otherwise). Its frames carry base64 payloads: `sync` first (the page's Yjs state, its state

@@ -27,7 +27,8 @@
   keys every project without one, oldest first, from the first letters of
   its name, unique within the organization against held, former and derived
   keys; a new project gets one on create; keys stay editable). Exceptions: a
-  project whose name proposes no key (fewer than two letters or digits) and a
+  project whose name proposes no key (its first characters are not a key and it
+  has fewer than two letters: `3D`, `1A`, `9`) and a
   project with a blank or malformed stored key are left as they are, for a
   manager; a project created with `taskKey: null`, or when the key lookup
   cannot run (no organization scope, a failed read), is created without one

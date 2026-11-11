@@ -128,8 +128,10 @@ interface ILiveDocument {
 	readonly topic: string;
 	/** The revision the state was last stored under. */
 	revision: number;
-	/** The state stored for `revision`: what a server-side write is worked out against. */
+	/** A state stored for the page (`baseRevision`): what a server-side write is worked out against. */
 	baseState: Uint8Array;
+	/** The revision `baseState` was stored under. */
+	baseRevision: number;
 	relay?: AsyncIterableIterator<ILiveRelay>;
 	/** Edits of this process's sessions that are not stored yet. */
 	dirty: boolean;
@@ -143,6 +145,8 @@ interface ILiveDocument {
 	claimedRevision?: number;
 	/** The state is over the size limit: the content is saved without it, and the sessions are read-only. */
 	oversized: boolean;
+	/** The loaded state holds edits the page's content does not (kept by a process that stopped): not saved yet. */
+	recovered: boolean;
 	persistTimer?: NodeJS.Timeout;
 	recheckTimer?: NodeJS.Timeout;
 	recheckSoon?: NodeJS.Timeout;
@@ -232,11 +236,7 @@ export class DocumentLiveService implements OnModuleInit, OnModuleDestroy, IDocu
 		this.unregister?.();
 		this.events?.unsubscribe();
 		for (const live of Array.from(this.live.values())) {
-			await this.enqueue(live, () => this.persist(live)).catch((error) =>
-				this.logger.error(
-					`The live document of ${live.documentId} was not saved at shutdown: ${messageOf(error)}`
-				)
-			);
+			await this.enqueue(live, () => this.drain(live));
 			for (const session of Array.from(live.sessions.values())) {
 				this.close(live, session, DocumentLiveReasonEnum.SHUTDOWN);
 			}
@@ -309,6 +309,15 @@ export class DocumentLiveService implements OnModuleInit, OnModuleDestroy, IDocu
 		};
 		this.decideMode(live, session, document.isLocked === true, live.sessions.size);
 		live.sessions.set(connectionId, session);
+		if (live.recovered && !session.readOnly) {
+			// Edits kept by a process that stopped before it could save them: the first editor saves them.
+			live.recovered = false;
+			live.lastWriter = session;
+			live.editSequence += 1;
+			live.dirty = true;
+			live.firstDirtyAt = Date.now();
+			this.schedulePersist(live);
+		}
 
 		const clients = Array.from(live.awareness.getStates().keys());
 		session.stream.push({
@@ -392,24 +401,30 @@ export class DocumentLiveService implements OnModuleInit, OnModuleDestroy, IDocu
 				if (local.revision >= revision) {
 					return;
 				}
-				// Worked out against the state the write found, so the edits made since stay where the write did not go.
-				// Without that state at hand the page is rewritten against what editors hold now.
+				// Worked out against the state the write found, so the edits made since stay where the write did not go:
+				// the stored state of the previous revision first (another process may have moved the page since this
+				// one last stored it), then the state this process stored for it. Without either at hand the page is
+				// rewritten against what editors hold now.
 				const base =
-					(local.revision === previousRevision
-						? local.baseState
-						: this.storedStateOf(previous, local.lineage)) ?? Y.encodeStateAsUpdate(local.doc);
+					this.storedStateOf(previous, local.lineage) ??
+					(local.baseRevision === previousRevision ? local.baseState : null) ??
+					Y.encodeStateAsUpdate(local.doc);
 				const { change, state } = serverWriteChange(base, updated.contentJson);
 				// The revision first: the relayed change carries it, so the other processes learn where the page is.
 				local.revision = revision;
 				Y.applyUpdate(local.doc, change, SERVER);
 				local.baseState = state;
-				await this.storeState(
+				local.baseRevision = revision;
+				const result = await this.storeState(
 					local.documentId,
 					local.tenantId,
 					state,
 					{ lineage: local.lineage, revision },
 					updated.updatedAt
 				);
+				if (result === 'too-large') {
+					this.markOversized(local);
+				}
 			});
 			return;
 		}
@@ -539,12 +554,15 @@ export class DocumentLiveService implements OnModuleInit, OnModuleDestroy, IDocu
 			topic: liveTopic(String(row.id)),
 			revision: meta.revision,
 			baseState: state,
+			baseRevision: meta.revision,
 			dirty: false,
 			dirtyRemote: false,
 			firstDirtyAt: 0,
 			editSequence: 0,
 			failures: 0,
 			oversized: oversized || state.length > getDocsConfig().maxBinaryBytes,
+			// A stored state whose content is not the page's: edits a stopping process kept in it (see `drain`).
+			recovered: !sameContent(liveDocumentJson(doc), row.contentJson),
 			chain: Promise.resolve(),
 			size: state.length,
 			selfSaving: false,
@@ -671,12 +689,17 @@ export class DocumentLiveService implements OnModuleInit, OnModuleDestroy, IDocu
 				code: DOCS_LIVE_UPDATE_INVALID
 			});
 		}
+		// Every entry was read whole above (its state parsed), so the claims below are not left behind by a bad payload.
+		const claimed = clients.filter((client) => !live.awarenessOwners.has(client));
 		for (const client of clients) {
 			live.awarenessOwners.set(client, session);
 		}
 		try {
 			applyAwarenessUpdate(live.awareness, bytes, session);
 		} catch {
+			for (const client of claimed) {
+				live.awarenessOwners.delete(client);
+			}
 			throw new BadRequestException({
 				message: 'The awareness update cannot be read',
 				code: DOCS_LIVE_UPDATE_INVALID
@@ -829,6 +852,54 @@ export class DocumentLiveService implements OnModuleInit, OnModuleDestroy, IDocu
 	}
 
 	/**
+	 * Saves a page as the process stops: a few tries, then, when the content still cannot be saved, the state alone is
+	 * stored for the revision the page is at. That is a live state the next process to open the page loads, unsaved
+	 * edits included, and its first editor saves them (see `recovered`). Only when even that fails are they lost, which
+	 * is logged as an error.
+	 */
+	private async drain(live: ILiveDocument): Promise<void> {
+		for (let attempt = 0; attempt < 3; attempt += 1) {
+			try {
+				if (await this.persist(live)) {
+					return;
+				}
+			} catch (error) {
+				this.logger.warn(
+					`The live document of ${live.documentId} was not saved at shutdown: ${messageOf(error)}`
+				);
+			}
+			await sleep(500 * (attempt + 1));
+		}
+		try {
+			const row = await this.readRow(live.documentId, live.tenantId);
+			const stored = row ? decodeLiveState(row.contentBinary as Buffer | null) : null;
+			const sameLineage = !stored || stored.meta.lineage === live.lineage;
+			stored?.doc.destroy();
+			if (row && !row.deletedAt && sameLineage) {
+				const meta = { lineage: live.lineage, revision: liveRevisionOf(row.contentRevision) };
+				const result = await this.storeState(
+					live.documentId,
+					live.tenantId,
+					Y.encodeStateAsUpdate(live.doc),
+					meta,
+					row.updatedAt
+				);
+				if (result === 'stored') {
+					this.logger.warn(
+						`The live document of ${live.documentId} kept its unsaved edits in its stored state; the next editor saves them.`
+					);
+					return;
+				}
+			}
+		} catch (error) {
+			this.logger.warn(`The live state of ${live.documentId} could not be kept: ${messageOf(error)}`);
+		}
+		this.logger.error(
+			`The live document of ${live.documentId} could not be saved at shutdown; its unsaved edits are lost.`
+		);
+	}
+
+	/**
 	 * Saves the page's edits, in the request context of the editor whose edit came last.
 	 *
 	 * @returns Whether nothing is left to save.
@@ -865,7 +936,14 @@ export class DocumentLiveService implements OnModuleInit, OnModuleDestroy, IDocu
 					await sleep(250 * (attempt + 1));
 					continue;
 				}
-				Y.applyUpdate(live.doc, Y.encodeStateAsUpdate(stored.doc), STORAGE);
+				const storedState = Y.encodeStateAsUpdate(stored.doc);
+				Y.applyUpdate(live.doc, storedState, STORAGE);
+				if (stored.meta.revision === revision && revision >= live.baseRevision) {
+					// The state stored for the page's revision (another process may have moved it): the base a later
+					// outside write is worked out against.
+					live.baseState = storedState;
+					live.baseRevision = revision;
+				}
 				stored.doc.destroy();
 			} else {
 				stored?.doc.destroy();
@@ -880,6 +958,7 @@ export class DocumentLiveService implements OnModuleInit, OnModuleDestroy, IDocu
 				const { change, state } = serverWriteChange(live.baseState, row.contentJson);
 				Y.applyUpdate(live.doc, change, SERVER);
 				live.baseState = state;
+				live.baseRevision = revision;
 			}
 			live.revision = Math.max(live.revision, revision);
 
@@ -906,6 +985,7 @@ export class DocumentLiveService implements OnModuleInit, OnModuleDestroy, IDocu
 					this.markOversized(live);
 				} else {
 					live.baseState = state;
+					live.baseRevision = revision;
 				}
 				this.settled(live, sequence);
 				return true;
@@ -935,6 +1015,7 @@ export class DocumentLiveService implements OnModuleInit, OnModuleDestroy, IDocu
 			live.claimedRevision = undefined;
 			live.revision = next;
 			live.baseState = state;
+			live.baseRevision = next;
 			live.size = state.length;
 			if (!fits) {
 				this.markOversized(live);
@@ -1428,9 +1509,11 @@ export function liveTopic(documentId: string): string {
 }
 
 /**
- * The client ids an awareness update writes (y-protocols encoding: a count, then per client its id, clock and state).
+ * The client ids an awareness update writes (y-protocols encoding: a count, then per client its id, clock and state),
+ * reading every entry whole: a state that is not JSON, or bytes left over, refuse the update.
  *
  * @param update The awareness update.
+ * @throws Error when the update cannot be read whole.
  */
 export function awarenessClientsOf(update: Uint8Array): number[] {
 	const decoder = decoding.createDecoder(update);
@@ -1439,7 +1522,10 @@ export function awarenessClientsOf(update: Uint8Array): number[] {
 	for (let index = 0; index < count; index += 1) {
 		clients.push(decoding.readVarUint(decoder));
 		decoding.readVarUint(decoder);
-		decoding.readVarString(decoder);
+		JSON.parse(decoding.readVarString(decoder));
+	}
+	if (decoding.hasContent(decoder)) {
+		throw new Error('bytes after the last awareness entry');
 	}
 	return clients;
 }
