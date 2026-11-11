@@ -28,6 +28,7 @@ import {
 	IChatMessageWithRelations
 } from '@gauzy/contracts';
 import { ToastrService } from '@gauzy/ui-core/core';
+import { reconcileWithNewest } from '../../chat-catch-up';
 import { CHAT_LIVE_AUDIT_MS, CHAT_MESSAGES_POLL_MS } from '../../chat-ui.constants';
 import { apiErrorMessage, continuesGroup, conversationTitle, mergeMessages, newNonce } from '../../chat-ui.helpers';
 import { ChatFilesStore } from '../../services/chat-files.store';
@@ -540,8 +541,9 @@ export class ConversationViewComponent {
 
 	/**
 	 * After a reconnect, or when the tab is shown again: the newest page, read again. Where it still reaches the last
-	 * loaded message it updates the overlap and appends the rest; where it does not (more was written meanwhile than a
-	 * page holds), it replaces the list, the older messages a scroll away again.
+	 * loaded message it is the truth over its span (edits, reactions and pins of the gap applied, deleted messages
+	 * gone, new ones appended; see `reconcileWithNewest`); where it does not (more was written meanwhile than a page
+	 * holds), it replaces the list, the older messages a scroll away again. Older loaded messages stay as they were.
 	 */
 	private catchUp(id: string): void {
 		if (!this.isCurrent(id) || this.hasAfter() || this.loading()) return;
@@ -551,17 +553,11 @@ export class ConversationViewComponent {
 			.subscribe({
 				next: (page) => {
 					if (!this.isCurrent(id) || this.hasAfter()) return;
-					const last = this.messages()[this.messages().length - 1];
-					const reaches = !last || page.messages.some((message) => String(message.id) === String(last.id));
-					if (reaches) {
-						const added = page.messages.filter((message) => !this.messages().some((item) => item.id === message.id));
-						this.messages.set(this.messages().map((item) => page.messages.find((message) => message.id === item.id) ?? item));
-						if (added.length) this.showNewer(added);
-						return;
-					}
 					const wasNearBottom = this.isNearBottom();
-					this.messages.set(mergeMessages([], page.messages));
-					this.hasBefore.set(page.hasBefore);
+					const result = reconcileWithNewest(this.messages(), page);
+					this.messages.set(result.messages);
+					if (result.replaced) this.hasBefore.set(page.hasBefore);
+					if (!result.added.length) return;
 					if (wasNearBottom) {
 						queueMicrotask(() => this.scrollToBottom(false));
 						this.markReadIfVisible();

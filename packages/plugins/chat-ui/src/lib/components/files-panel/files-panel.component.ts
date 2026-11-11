@@ -109,6 +109,11 @@ export class FilesPanelComponent {
 	protected readonly hasMore = signal(false);
 	protected readonly loading = signal(false);
 	protected readonly failed = signal(false);
+	/**
+	 * How many of the API's rows (attachment links, one per message carrying a file) were read: the next page's
+	 * `skip`. Not the files shown, which name each document once.
+	 */
+	private consumed = 0;
 
 	constructor() {
 		effect(() => {
@@ -116,13 +121,14 @@ export class FilesPanelComponent {
 			untracked(() => {
 				this.files.set([]);
 				this.hasMore.set(false);
+				this.consumed = 0;
 				this.load(id, 0);
 			});
 		});
 	}
 
 	protected more(): void {
-		this.load(this.conversationId(), this.files().length);
+		this.load(this.conversationId(), this.consumed);
 	}
 
 	private load(id: string, skip: number): void {
@@ -137,6 +143,8 @@ export class FilesPanelComponent {
 					const seen = new Set(this.files().map((file) => String(file.documentId)));
 					this.files.set([...this.files(), ...result.files.filter((file) => !seen.has(String(file.documentId)))]);
 					this.hasMore.set(result.hasMore);
+					// A full page (more follows) read exactly the page size of rows; the last page, what it answered.
+					this.consumed = skip + (result.hasMore ? CHAT_FILES_PAGE : result.files.length);
 					this.loading.set(false);
 					this.store.add(result.files);
 				},

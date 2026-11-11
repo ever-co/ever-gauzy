@@ -46,8 +46,10 @@ describe('MessageComposerComponent', () => {
 		fixture.detectChanges();
 	}
 
+	/** A key as the browser sends it: down, then up (the box reads the caret again on every keyup). */
 	function press(key: string): void {
 		box().dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true }));
+		box().dispatchEvent(new KeyboardEvent('keyup', { key, bubbles: true, cancelable: true }));
 		fixture.detectChanges();
 	}
 
@@ -74,12 +76,21 @@ describe('MessageComposerComponent', () => {
 			expect(text()).toBe('done ✅ :not_an_emoji_name:');
 		});
 
-		it('closes the list with Escape, and Enter then sends', () => {
+		it('closes the list with Escape (its keyup does not open it again), and Enter then sends', () => {
 			type(':thu');
 			press('Escape');
 			expect(fixture.nativeElement.querySelector('[data-test="emoji-suggestions"]')).toBeNull();
 			press('Enter');
 			expect(sent).toEqual([{ body: ':thu', mentionEmployeeIds: [], attachmentIds: [] }]);
+		});
+
+		it('opens the list again once the text changes after an Escape', () => {
+			type(':thu');
+			press('Escape');
+			type(':thum');
+			box().dispatchEvent(new KeyboardEvent('keyup', { key: 'm', bubbles: true }));
+			fixture.detectChanges();
+			expect(fixture.nativeElement.querySelector('[data-test="emoji-suggestions"]')?.textContent).toContain('👍');
 		});
 	});
 

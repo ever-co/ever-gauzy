@@ -1,6 +1,6 @@
 import { DatePipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { ChangeDetectionStrategy, Component, computed, DestroyRef, inject, OnInit, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, DestroyRef, inject, OnInit, Signal, signal } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { NbAlertModule, NbButtonModule, NbCardModule, NbDialogService, NbIconModule, NbSpinnerModule } from '@nebular/theme';
@@ -386,9 +386,9 @@ export class ChatPageComponent implements OnInit {
 		return user?.employee?.id ? String(user.employee.id) : user?.employeeId ? String(user.employeeId) : null;
 	});
 	protected readonly meUserId = computed(() => (this.user()?.id ? String(this.user()!.id) : null));
-	protected readonly isAdmin = computed(() => this.store.hasPermission(PermissionsEnum.CHAT_MANAGE));
+	protected readonly isAdmin = this.permission(PermissionsEnum.CHAT_MANAGE);
 	/** Attachments are stored as documents: uploading them needs `DOCS_CREATE`. */
-	protected readonly canAttach = computed(() => this.store.hasPermission(PermissionsEnum.DOCS_CREATE));
+	protected readonly canAttach = this.permission(PermissionsEnum.DOCS_CREATE);
 
 	protected readonly people = toSignal(
 		combineLatest([
@@ -420,6 +420,17 @@ export class ChatPageComponent implements OnInit {
 		})
 	);
 	protected readonly threadUnreadCount = computed(() => (this.states()?.threads ?? []).filter((thread) => thread.unreadReplies > 0).length);
+
+	/** Whether I hold a permission, following my role's permissions as they load and change. */
+	private permission(permission: PermissionsEnum): Signal<boolean> {
+		return toSignal(
+			(this.store.userRolePermissions$ as Observable<unknown>).pipe(
+				map(() => this.store.hasPermission(permission)),
+				distinctUntilChanged()
+			),
+			{ initialValue: this.store.hasPermission(permission) }
+		);
+	}
 
 	/** Counts up at every scope change and every list refresh, so a late answer of an earlier one is dropped. */
 	private scopeToken = 0;

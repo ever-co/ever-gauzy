@@ -310,6 +310,11 @@ export class MessageComposerComponent {
 	protected readonly dragging = signal(false);
 	private readonly uploads = new Map<number, Subscription>();
 	private nextKey = 0;
+	/**
+	 * Where Escape closed the suggestions: they stay closed while the text and the caret are as they were then (the
+	 * Escape's own keyup, a click on the same spot), and open again once either changes.
+	 */
+	private dismissed: { text: string; caret: number } | null = null;
 
 	protected readonly suggestions = computed(() => {
 		const query = this.query();
@@ -436,6 +441,12 @@ export class MessageComposerComponent {
 		const element = this.box()?.nativeElement;
 		if (!element) return;
 		const caret = element.selectionStart ?? this.text.length;
+		if (this.dismissed && this.dismissed.text === this.text && this.dismissed.caret === caret) {
+			this.query.set(null);
+			this.emojiQuery.set(null);
+			return;
+		}
+		this.dismissed = null;
 		const next = mentionQueryAt(this.text, caret);
 		const current = this.query();
 		const emoji = next ? null : emojiQueryAt(this.text, caret);
@@ -463,7 +474,7 @@ export class MessageComposerComponent {
 			}
 			if (event.key === 'Escape') {
 				event.preventDefault();
-				this.emojiQuery.set(null);
+				this.dismiss();
 				return;
 			}
 		}
@@ -486,7 +497,7 @@ export class MessageComposerComponent {
 			}
 			if (event.key === 'Escape') {
 				event.preventDefault();
-				this.query.set(null);
+				this.dismiss();
 				return;
 			}
 		}
@@ -519,6 +530,14 @@ export class MessageComposerComponent {
 			element.focus();
 			element.setSelectionRange(position, position);
 		});
+	}
+
+	/** Closes the open suggestions until the text or the caret changes. */
+	private dismiss(): void {
+		const element = this.box()?.nativeElement;
+		this.dismissed = { text: this.text, caret: element?.selectionStart ?? this.text.length };
+		this.query.set(null);
+		this.emojiQuery.set(null);
 	}
 
 	/** Puts the emoji in place of the `:` query and moves the caret after it. */

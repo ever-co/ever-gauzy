@@ -3,10 +3,11 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { NbButtonModule, NbCheckboxModule, NbIconModule, NbSpinnerModule, NbTooltipModule } from '@nebular/theme';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
-import { EMPTY, merge, Subscription } from 'rxjs';
+import { EMPTY, merge, Subject, Subscription } from 'rxjs';
 import { auditTime, catchError, filter, switchMap } from 'rxjs/operators';
 import { CHAT_EVENT_NAMES, IChatMessageWithRelations } from '@gauzy/contracts';
 import { ToastrService } from '@gauzy/ui-core/core';
+import { reconcileWithOldest } from '../../chat-catch-up';
 import { CHAT_LIVE_AUDIT_MS, CHAT_THREAD_POLL_MS } from '../../chat-ui.constants';
 import { apiErrorMessage, continuesGroup, mergeMessages, newNonce } from '../../chat-ui.helpers';
 import { ChatHint } from '../../services/chat-live';
@@ -205,6 +206,8 @@ export class ThreadPaneComponent {
 	protected readonly draftKey = computed(() => `thread:${this.rootMessageId()}`);
 
 	private poll: Subscription | null = null;
+	/** Asks the poll for the newer replies now (after a catch-up). */
+	private readonly newerNow = new Subject<void>();
 	/** Counts the visits of this pane (every root switch): a reply belongs to the visit it was made in. */
 	private visit = 0;
 	/** The last reply a thread read was sent for, so the same read is not sent twice. */
@@ -288,8 +291,9 @@ export class ThreadPaneComponent {
 
 	/**
 	 * Newer replies than the last loaded one, while every loaded page is shown: on a tick of the poll (every 5 s, or
-	 * once a minute while live), when a reply is created or the thread changes, and after a reconnect. A reply or the
-	 * root changed elsewhere (edited, deleted, reacted to, pinned) is read again.
+	 * once a minute while live) and when a reply is created or the thread changes. A reply or the root changed
+	 * elsewhere (edited, deleted, reacted to, pinned) is read again. After a reconnect (or the tab shown again) the
+	 * root and the first page are read again and reconciled with what is loaded, then the newer replies.
 	 */
 	private startPolling(): void {
 		this.stopPolling();
@@ -299,7 +303,7 @@ export class ThreadPaneComponent {
 			filter((hint) => hint.name === CHAT_EVENT_NAMES.MESSAGE_CREATED || hint.name === CHAT_EVENT_NAMES.THREAD_CHANGED),
 			auditTime(CHAT_LIVE_AUDIT_MS)
 		);
-		const poll = merge(this.live.ticks(CHAT_THREAD_POLL_MS), newer$, this.live.catchUp$)
+		const poll = merge(this.live.ticks(CHAT_THREAD_POLL_MS), newer$, this.newerNow)
 			.pipe(
 				filter(() => isTabVisible()),
 				filter(() => !this.hasAfter()),
@@ -331,7 +335,28 @@ export class ThreadPaneComponent {
 				)
 				.subscribe((hint) => this.refreshMessage(id, hint))
 		);
+		poll.add(this.live.catchUp$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => this.catchUp(id)));
 		this.poll = poll;
+	}
+
+	/** The root and the first page again (the events of the gap are not replayed), then the newer replies. */
+	private catchUp(id: string): void {
+		if (!this.isCurrent(id) || this.loading()) return;
+		this.api
+			.thread(id)
+			.pipe(takeUntilDestroyed(this.destroyRef))
+			.subscribe({
+				next: (page) => {
+					if (!this.isCurrent(id)) return;
+					this.replace(page.root);
+					const result = reconcileWithOldest(this.replies(), { hasAfter: page.hasAfter, messages: page.messages.filter((message) => message.id !== page.root.id) });
+					this.replies.set(result.messages);
+					if (!result.beyond) this.hasAfter.set(page.hasAfter);
+					if (result.added.length) this.markRead();
+					this.newerNow.next();
+				},
+				error: () => undefined
+			});
 	}
 
 	/** Reads the root or one loaded reply again: the root through the thread's first page, a reply through the window around it. */
