@@ -735,7 +735,14 @@
 	"SPACE": {
 		"ORGANIZATION": "Organization",
 		"TEAM": "Team",
-		"PRIVATE": "Private"
+		"PRIVATE": "Private",
+		"MOVE_ACTION": "Move to space…",
+		"MOVE_TITLE": "Move to another space",
+		"MOVE_SUBTREE": "Also move the pages under it",
+		"MOVE_CONFIRM": "Move",
+		"MOVED": "Page moved",
+		"MOVE_FAILED": "The page could not be moved. Only its owner (or a documents manager) can move it between spaces.",
+		"NONE": "No other space is available."
 	},
 	"FOLLOW": {
 		"FOLLOW": "Follow this page",

@@ -45,6 +45,7 @@ import { DocsSaveState } from '../../editor/services/document-autosave.service';
 import { DocumentStaticViewComponent } from '../../editor/read-only/document-static-view.component';
 import { VersionHistoryPanelComponent } from '../../editor/version-history/version-history-panel.component';
 import { MoveDialogComponent } from '../../dialogs/move-dialog.component';
+import { MoveSpaceDialogComponent } from '../../dialogs/move-space-dialog.component';
 import { RequestReviewDialogComponent } from '../../dialogs/request-review-dialog.component';
 import { DocumentShareDialogComponent } from '../../dialogs/share-dialog.component';
 import { DocsExportService } from '../../services/docs-export.service';
@@ -660,6 +661,17 @@ export class DocumentPageComponent implements OnInit, OnDestroy {
 		} catch {
 			this.toastrService.danger(this.translate.instant('DOCS.ERRORS.GENERIC_RETRY'));
 		}
+	}
+
+	/** Moves the page (and, by default, the pages under it) to another space (`GAUZY_DOCS_COLLAB_ENABLED`). */
+	openMoveSpaceDialog(): void {
+		if (!this.document) return;
+		this.menuOpen = false;
+		this.dialogService
+			.open(MoveSpaceDialogComponent, { context: { document: this.document } })
+			.onClose.subscribe((moved) => {
+				if (moved) void this.load();
+			});
 	}
 
 	openMoveDialog(): void {
