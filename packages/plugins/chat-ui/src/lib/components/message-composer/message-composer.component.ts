@@ -58,7 +58,7 @@ let nextComposerId = 0;
 	},
 	imports: [FormsModule, NbIconModule, NbTooltipModule, TranslatePipe, PersonAvatarComponent],
 	template: `
-		<div class="composer" data-test="composer" [class.editing]="editing()">
+		<div class="composer" data-test="composer" [class.editing]="editing()" (keydown.escape)="onComposerEscape($event)">
 			@if (suggestions().length > 0) {
 				<div class="composer-popover suggestions" data-test="mention-suggestions">
 					<ul class="suggestion-list" role="listbox" [id]="listId" [attr.aria-label]="'CHAT.COMPOSER.MENTION' | translate">
@@ -183,7 +183,7 @@ let nextComposerId = 0;
 						[attr.aria-label]="'CHAT.COMPOSER.EMOJI' | translate"
 						[attr.aria-expanded]="emojiOpen()"
 						(mousedown)="$event.preventDefault()"
-						(click)="emojiOpen.set(!emojiOpen())"
+						(click)="toggleEmoji($event)"
 					>
 						<nb-icon icon="smiling-face-outline"></nb-icon>
 					</button>
@@ -859,6 +859,24 @@ export class MessageComposerComponent {
 		const before = this.text.slice(0, start);
 		const insertion = before && !/\s$/.test(before) ? ' @' : '@';
 		this.replaceRange(start, end, insertion, start + insertion.length, start + insertion.length);
+	}
+
+	/**
+	 * Opens or closes the emoji panel. Opened from the keyboard (a click with no pointer: `detail` 0), the focus moves
+	 * to its first emoji, since the panel sits above the box, far behind the toggle in Tab order; a mouse keeps the box's focus.
+	 */
+	protected toggleEmoji(event: MouseEvent): void {
+		const open = !this.emojiOpen();
+		this.emojiOpen.set(open);
+		if (open && event.detail === 0) this.afterRender(() => this.host.nativeElement.querySelector<HTMLElement>('.emoji-grid .emoji')?.focus());
+	}
+
+	/** Escape anywhere in the composer (the box, the emoji toggle, an emoji) closes the emoji panel and returns to the box. */
+	protected onComposerEscape(event: Event): void {
+		if (!this.emojiOpen()) return;
+		event.preventDefault();
+		this.emojiOpen.set(false);
+		this.focus();
 	}
 
 	/** A press outside the composer closes its emoji panel. */
