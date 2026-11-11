@@ -236,7 +236,7 @@ describe('chat webhook security', () => {
 		});
 
 		it('retries a 2xx whose reply breaks off, so the app can answer again under the same interaction id', async () => {
-			answer = { status: 200, body: '{"text":"Ackno', breakOff: true };
+			answer = { status: 200, body: '{"text":"Acknowledged', breakOff: true };
 			const attempt = await localTransport().post(`http://hooks.example.com:${port}/x`, {}, '{}');
 			expect(attempt.outcome).toBe('retry');
 		});
