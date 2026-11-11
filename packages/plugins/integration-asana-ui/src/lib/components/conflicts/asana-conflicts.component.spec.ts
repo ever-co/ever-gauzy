@@ -95,6 +95,19 @@ describe('AsanaConflictsComponent', () => {
 		expect(api.taskTitles.mock.calls[1][1]).toEqual(Array.from({ length: 5 }, (_, index) => `task-${TASK_TITLES_MAX + index}`));
 	});
 
+	it('titles that could not be read are asked again on the next read of the list', () => {
+		api.conflicts.mockReturnValue(of([conflict()]));
+		api.taskTitles.mockReturnValueOnce(of(null)).mockReturnValue(of({ 'task-1': 'Fix login' }));
+		const { fixture, component, find } = render();
+		expect(find('conflict-c-1')?.querySelector('[data-test="task"]')?.textContent).toContain('ASANA.CONFLICTS.OPEN_TASK');
+
+		component.load();
+		fixture.detectChanges();
+
+		expect(api.taskTitles).toHaveBeenCalledTimes(2);
+		expect(find('conflict-c-1')?.querySelector('[data-test="task"]')?.textContent).toContain('Fix login');
+	});
+
 	it('a long value is cut, and shown whole on request (no tooltip needed)', () => {
 		const long = 'word '.repeat(80).trim();
 		api.conflicts.mockReturnValue(of([conflict({ field: 'description', platformValue: long })]));

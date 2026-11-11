@@ -377,10 +377,16 @@ export class LinearConflictsComponent implements OnChanges {
 		for (const taskId of missing) this.titlesAsked.add(taskId);
 		const scope = { tenantId: first.tenantId, organizationId: first.organizationId };
 		for (let start = 0; start < missing.length; start += TASK_TITLES_MAX) {
+			const chunk = missing.slice(start, start + TASK_TITLES_MAX);
 			this.api
-				.taskTitles(scope, missing.slice(start, start + TASK_TITLES_MAX))
+				.taskTitles(scope, chunk)
 				.pipe(takeUntilDestroyed(this.destroyRef))
 				.subscribe((titles) => {
+					// The read failed: these titles are asked again on the next read of the list.
+					if (!titles) {
+						for (const taskId of chunk) this.titlesAsked.delete(taskId);
+						return;
+					}
 					for (const [taskId, title] of Object.entries(titles)) this.titles.set(taskId, title);
 					this.cdr.markForCheck();
 				});

@@ -3,7 +3,7 @@ jest.mock('@gauzy/ui-core/core', () => ({ Store: class Store {}, OrganizationPro
 
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap, Router } from '@angular/router';
-import { of } from 'rxjs';
+import { of, Subject } from 'rxjs';
 import { OrganizationProjectsService, Store } from '@gauzy/ui-core/core';
 import { TrelloRun, TrelloUiService } from '../../services/trello-ui.service';
 import { finishedRuns, TrelloSettingsComponent } from './trello-settings.component';
@@ -129,5 +129,18 @@ describe('TrelloSettingsComponent (sync log and conflicts)', () => {
 		// Started and ended between two reads: finished, when it found conflicts.
 		expect(finishedRuns([run({ status: 'done' })], [run({ status: 'done' }), run({ id: 'run-9', status: 'done', conflictCount: 2 })])).toBe(true);
 		expect(finishedRuns([run({ status: 'done' })], [run({ status: 'done' }), run({ id: 'run-9', status: 'done', conflictCount: 0 })])).toBe(false);
+	});
+
+	it('a runs read answered after the page moved to another connection is dropped', async () => {
+		const fixture = render();
+		await settle(fixture);
+		const late = new Subject<TrelloRun[]>();
+		api.runs.mockReturnValueOnce(late);
+		fixture.componentInstance.loadRuns();
+		fixture.componentInstance.integrationId = 'int-2';
+
+		late.next([run({ id: 'run-of-int-1' })]);
+
+		expect(fixture.componentInstance.runs.map((item) => item.id)).toEqual(['run-1', 'run-2']);
 	});
 });

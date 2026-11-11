@@ -225,9 +225,9 @@ export class AsanaUiService {
 	/**
 	 * The titles of the tasks conflicts name, by id, in one read of the organization's tasks (`GET /tasks` with the
 	 * `ids` filter: unlike `GET /tasks/:id`, it records no visit). A task that cannot be read (deleted, not visible to
-	 * the caller) is left out; a failed read answers none.
+	 * the caller) is left out; a failed read answers null (the titles are asked again on a later read).
 	 */
-	taskTitles(scope: { tenantId: string; organizationId: string }, taskIds: readonly string[]): Observable<Record<string, string>> {
+	taskTitles(scope: { tenantId: string; organizationId: string }, taskIds: readonly string[]): Observable<Record<string, string> | null> {
 		const ids = [...new Set(taskIds.filter(Boolean))].slice(0, TASK_TITLES_MAX);
 		if (!ids.length) return of({});
 		let params = new HttpParams()
@@ -246,7 +246,7 @@ export class AsanaUiService {
 				}
 				return titles;
 			}),
-			catchError(() => of({}))
+			catchError(() => of(null))
 		);
 	}
 }

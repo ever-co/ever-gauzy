@@ -467,9 +467,12 @@ export class TrelloSettingsComponent implements OnInit {
 	}
 
 	loadRuns(): void {
-		if (!this.integrationId) return;
-		this.api.runs(this.integrationId).subscribe({
+		const integrationId = this.integrationId;
+		if (!integrationId) return;
+		this.api.runs(integrationId).subscribe({
 			next: (runs) => {
+				// The page moved to another connection meanwhile: this read is not its sync log.
+				if (integrationId !== this.integrationId) return;
 				const finished = finishedRuns(this.runs, runs);
 				this.runs = runs;
 				// A run that just finished (another may still run) may have found conflicts.

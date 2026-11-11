@@ -66,10 +66,10 @@ describe('LinearUiService (conflicts)', () => {
 		request.flush({ items: [] });
 	});
 
-	it('answers no titles when the read fails, and reads nothing for no task', async () => {
+	it('answers null when the read fails (asked again later), and reads nothing for no task', async () => {
 		const failed = firstValueFrom(api.taskTitles({ tenantId: 'tenant-1', organizationId: 'org-1' }, ['task-1']));
-		http.expectOne((item) => item.url.endsWith('/api/tasks')).flush({ message: 'Forbidden' }, { status: 403, statusText: 'Forbidden' });
-		await expect(failed).resolves.toEqual({});
+		http.expectOne((item) => item.url.endsWith('/api/tasks')).flush({ message: 'Down' }, { status: 503, statusText: 'Unavailable' });
+		await expect(failed).resolves.toBeNull();
 
 		await expect(firstValueFrom(api.taskTitles({ tenantId: 'tenant-1', organizationId: 'org-1' }, []))).resolves.toEqual({});
 		http.expectNone((item) => item.url.endsWith('/api/tasks'));
