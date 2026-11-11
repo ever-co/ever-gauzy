@@ -273,16 +273,7 @@ export class TagResolver {
 
 		// The name check of `PUT /tags/:id`, in the scope the tag will have after the write
 		const existing = await this.tagService.findOneByIdString(id);
-		const changes = values as { name?: string; organizationId?: string; organizationTeamId?: string | null };
-		await this.tagService.assertNameIsFree(
-			{
-				name: changes.name ?? existing.name,
-				organizationId: 'organizationId' in changes ? changes.organizationId : existing.organizationId,
-				organizationTeamId:
-					'organizationTeamId' in changes ? changes.organizationTeamId : existing.organizationTeamId
-			},
-			id
-		);
+		await this.tagService.assertChangeIsFree(existing, values as never, id);
 		await this.tagService.update(id, values as unknown as QueryDeepPartialEntity<Tag>);
 
 		return await this.tagService.findOneByIdString(id);

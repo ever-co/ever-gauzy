@@ -7,7 +7,7 @@ import { TagController } from './tag.controller';
 
 /**
  * `POST /tags` and `PUT /tags/:id` check the name against the tag's scope before writing (ever-co/ever-teams#5016):
- * a create with a taken name writes nothing, and a rename is checked in the scope the tag will have after it.
+ * a create with a taken name writes nothing, and a change is checked against the stored tag before the write.
  */
 describe('TagController names', () => {
 	const organizationId = 'organization-1';
@@ -18,6 +18,7 @@ describe('TagController names', () => {
 	function controllerWith(existing?: Record<string, unknown>) {
 		const tagService = {
 			assertNameIsFree: jest.fn(async () => undefined),
+			assertChangeIsFree: jest.fn(async () => undefined),
 			create: jest.fn(async (body: Record<string, unknown>) => ({ id: 'tag-new', ...body })),
 			update: jest.fn(async () => ({ affected: 1 })),
 			findOneByIdString: jest.fn(async () => existing)
@@ -39,24 +40,18 @@ describe('TagController names', () => {
 		expect(tagService.create).not.toHaveBeenCalled();
 	});
 
-	it('checks a rename, or a move to another team, in the scope the tag will have, leaving the tag itself out', async () => {
+	it('checks a change against the stored tag before it writes, and writes nothing when the name is taken', async () => {
 		const existing = { id: 'tag-1', name: 'Bug', organizationId, organizationTeamId: 'team-1' };
 		const { controller, tagService } = controllerWith(existing);
+		const changes = { name: 'Feature', organizationTeamId: 'team-2' };
 
-		await controller.update('tag-1', { color: '#000000' } as never);
-		expect(tagService.assertNameIsFree).toHaveBeenLastCalledWith(
-			{ name: 'Bug', organizationId, organizationTeamId: 'team-1' },
-			'tag-1'
-		);
-
-		await controller.update('tag-1', { name: 'Feature', organizationTeamId: 'team-2' } as never);
-		expect(tagService.assertNameIsFree).toHaveBeenLastCalledWith(
-			{ name: 'Feature', organizationId, organizationTeamId: 'team-2' },
-			'tag-1'
-		);
+		await controller.update('tag-1', changes as never);
+		expect(tagService.findOneByIdString).toHaveBeenCalledWith('tag-1');
+		expect(tagService.assertChangeIsFree).toHaveBeenCalledWith(existing, changes, 'tag-1');
+		expect(tagService.update).toHaveBeenCalledWith('tag-1', changes);
 
 		tagService.update.mockClear();
-		tagService.assertNameIsFree.mockRejectedValueOnce(taken);
+		tagService.assertChangeIsFree.mockRejectedValueOnce(taken);
 		await expect(controller.update('tag-1', { name: 'Feature' } as never)).rejects.toBe(taken);
 		expect(tagService.update).not.toHaveBeenCalled();
 	});

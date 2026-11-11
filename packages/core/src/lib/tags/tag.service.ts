@@ -56,6 +56,28 @@ export interface TagScope {
 	organizationTeamId: ID | null;
 }
 
+/** A tag's name and the fields of a body that place it: the ids, or the relation objects a body may send instead. */
+export interface TagNameInput {
+	name?: string | null;
+	organizationId?: ID | null;
+	organization?: { id?: ID | null } | null;
+	organizationTeamId?: ID | null;
+	organizationTeam?: { id?: ID | null } | null;
+}
+
+function organizationIdOf(input: TagNameInput): ID | null {
+	return input.organizationId ?? input.organization?.id ?? null;
+}
+
+function organizationTeamIdOf(input: TagNameInput): ID | null {
+	return input.organizationTeamId ?? input.organizationTeam?.id ?? null;
+}
+
+/** Whether a change names the tag's organization (or team), by id or by object, be it only to clear it. */
+function hasScopeField(changes: TagNameInput, field: 'organization' | 'organizationTeam'): boolean {
+	return `${field}Id` in changes || field in changes;
+}
+
 @Injectable()
 export class TagService extends TenantAwareCrudService<Tag> {
 	private readonly logger = new Logger(TagService.name);
@@ -96,17 +118,19 @@ export class TagService extends TenantAwareCrudService<Tag> {
 	}
 
 	/**
-	 * Refuses a name another tag of the same scope already has (409, `UNIQUE_CONSTRAINT_VIOLATION` on `name`): the same team, or for a tag of no team the same
-	 * organization. Ever Teams tells a team's labels apart by name, in its task filters and pickers, so two labels of
-	 * one name would collide there (ever-co/ever-teams#5016). Names compare as {@link tagNameKeyOf} reads them.
+	 * Refuses a name another tag of the same scope already has (409, `UNIQUE_CONSTRAINT_VIOLATION` on `name`): the
+	 * same team, or for a tag of no team the same organization. Ever Teams tells a team's labels apart by name, in its
+	 * task filters and pickers, so two labels of one name would collide there (ever-co/ever-teams#5016). Names compare
+	 * as {@link tagNameKeyOf} reads them. The scope is read from the ids or from the relation objects a body may send
+	 * instead (`organization: { id }`).
+	 *
+	 * The check is the service's, not the database's: two requests racing on one name can still both pass it. A unique
+	 * index on the normalized name would close that, after a migration resolving the duplicates filed before.
 	 *
 	 * @param input The tag's name and scope; the tenant is the caller's.
 	 * @param exceptId The tag being renamed, which keeps its own name.
 	 */
-	async assertNameIsFree(
-		input: { name?: string | null; organizationId?: ID | null; organizationTeamId?: ID | null },
-		exceptId?: ID
-	): Promise<void> {
+	async assertNameIsFree(input: TagNameInput, exceptId?: ID): Promise<void> {
 		const key = tagNameKeyOf(input.name);
 		if (!key) {
 			return;
@@ -114,8 +138,8 @@ export class TagService extends TenantAwareCrudService<Tag> {
 		const tenantId = RequestContext.currentTenantId();
 		const names = await this.namesInScope({
 			tenantId,
-			organizationId: input.organizationId ?? null,
-			organizationTeamId: input.organizationTeamId ?? null
+			organizationId: organizationIdOf(input),
+			organizationTeamId: organizationTeamIdOf(input)
 		});
 		const isTaken = names.some((tag) => tag.id !== exceptId && tagNameKeyOf(tag.name) === key);
 		if (isTaken) {
@@ -126,6 +150,33 @@ export class TagService extends TenantAwareCrudService<Tag> {
 				{ field: 'name' }
 			);
 		}
+	}
+
+	/**
+	 * The check of a change to a tag: only a new name or a new scope is checked. A tag that shares its name with an
+	 * older one (filed before names were checked) can still have its colour, icon or description changed.
+	 *
+	 * @param existing The tag as stored.
+	 * @param changes What the request changes.
+	 * @param id The tag.
+	 */
+	async assertChangeIsFree(existing: ITag, changes: TagNameInput, id: ID): Promise<void> {
+		const next: TagNameInput = {
+			name: changes.name ?? existing.name,
+			organizationId: hasScopeField(changes, 'organization')
+				? organizationIdOf(changes)
+				: (existing.organizationId ?? null),
+			organizationTeamId: hasScopeField(changes, 'organizationTeam')
+				? organizationTeamIdOf(changes)
+				: (existing.organizationTeamId ?? null)
+		};
+		const isSameName = tagNameKeyOf(next.name) === tagNameKeyOf(existing.name);
+		const isSameOrganization = next.organizationId === (existing.organizationId ?? null);
+		const isSameTeam = next.organizationTeamId === (existing.organizationTeamId ?? null);
+		if (isSameName && isSameOrganization && isSameTeam) {
+			return;
+		}
+		await this.assertNameIsFree(next, id);
 	}
 
 	/**

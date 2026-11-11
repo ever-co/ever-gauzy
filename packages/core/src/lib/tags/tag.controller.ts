@@ -174,15 +174,7 @@ export class TagController extends CrudController<Tag> {
 	): Promise<ITag | UpdateResult> {
 		// A rename (or a move to another team) may not take a name the tag's scope has already
 		const existing = await this.tagService.findOneByIdString(id);
-		await this.tagService.assertNameIsFree(
-			{
-				name: entity.name ?? existing.name,
-				organizationId: 'organizationId' in entity ? entity.organizationId : existing.organizationId,
-				organizationTeamId:
-					'organizationTeamId' in entity ? entity.organizationTeamId : existing.organizationTeamId
-			},
-			id
-		);
+		await this.tagService.assertChangeIsFree(existing, entity, id);
 		return await this.tagService.update(id, entity);
 	}
 

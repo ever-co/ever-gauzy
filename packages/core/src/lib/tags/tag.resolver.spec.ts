@@ -92,6 +92,7 @@ function surfaces() {
 		findOneByIdString: jest.fn().mockResolvedValue(ROWS[0]),
 		countBy: jest.fn().mockResolvedValue(ROWS.length),
 		assertNameIsFree: jest.fn().mockResolvedValue(undefined),
+		assertChangeIsFree: jest.fn().mockResolvedValue(undefined),
 		create: jest.fn().mockResolvedValue(ROWS[0]),
 		update: jest.fn().mockResolvedValue({ affected: 1 }),
 		delete: jest.fn().mockResolvedValue({ affected: 1 }),
@@ -522,10 +523,7 @@ describe('TagResolver — one concept, two protocols, the same operations', () =
 		expect(tagService.assertNameIsFree).toHaveBeenCalledWith(input);
 
 		await resolver.updateTag({ id: BUG, name: 'Defect' });
-		expect(tagService.assertNameIsFree).toHaveBeenLastCalledWith(
-			{ name: 'Defect', organizationId: ORGANIZATION, organizationTeamId: undefined },
-			BUG
-		);
+		expect(tagService.assertChangeIsFree).toHaveBeenLastCalledWith(ROWS[0], { name: 'Defect' }, BUG);
 
 		tagService.create.mockClear();
 		tagService.assertNameIsFree.mockRejectedValueOnce(new ConflictException('taken'));

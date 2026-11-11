@@ -99,6 +99,16 @@ describe('TagService names', () => {
 			});
 		});
 
+		it('reads the scope from the organization object a body may send instead of its id', async () => {
+			await service.assertNameIsFree({
+				name: 'Bug',
+				organization: { id: organizationId },
+				organizationTeamId: teamId
+			});
+
+			expect(typeOrmFind.mock.calls[0][0].where).toMatchObject({ organizationId, organizationTeamId: teamId });
+		});
+
 		it('reads the same scope on MikroORM', async () => {
 			useOrm(MultiORMEnum.MikroORM);
 			mikroOrmFind.mockResolvedValue([{ id: 'tag-1', name: 'Bug' }]);
@@ -118,6 +128,29 @@ describe('TagService names', () => {
 			await service.assertNameIsFree({ name: '  ', organizationId, organizationTeamId: teamId });
 
 			expect(typeOrmFind).not.toHaveBeenCalled();
+		});
+	});
+
+	describe('assertChangeIsFree', () => {
+		const stored = { id: 'tag-2', name: 'Bug', organizationId, organizationTeamId: teamId } as never;
+
+		it('lets a tag that shares its name with an older one change its colour, icon or description', async () => {
+			typeOrmFind.mockResolvedValue([{ id: 'tag-1', name: 'Bug' }]);
+
+			await expect(service.assertChangeIsFree(stored, { name: 'bug' }, 'tag-2')).resolves.toBeUndefined();
+			await expect(service.assertChangeIsFree(stored, {}, 'tag-2')).resolves.toBeUndefined();
+			expect(typeOrmFind).not.toHaveBeenCalled();
+		});
+
+		it('checks a new name, and a move to another team in that team, leaving the tag itself out', async () => {
+			typeOrmFind.mockResolvedValue([{ id: 'tag-1', name: 'Feature' }]);
+			await expect(service.assertChangeIsFree(stored, { name: 'feature' }, 'tag-2')).rejects.toBeInstanceOf(
+				ApiException
+			);
+
+			typeOrmFind.mockReset().mockResolvedValue([]);
+			await service.assertChangeIsFree(stored, { organizationTeamId: 'team-2' }, 'tag-2');
+			expect(typeOrmFind.mock.calls[0][0].where).toMatchObject({ organizationId, organizationTeamId: 'team-2' });
 		});
 	});
 
