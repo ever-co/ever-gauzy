@@ -1,4 +1,16 @@
 <div class="gz-document-editor" [class.gz-document-editor--readonly]="!editable">
+	<!-- Live session (docs-collaboration T18): who else is on the page, and whether this editor writes -->
+	@if (liveState) {
+		<div class="gz-live-bar" role="status" aria-live="polite" [class.gz-live-bar--on]="liveState.phase === 'live'">
+			<span class="gz-live-dot" aria-hidden="true"></span>
+			<span class="gz-live-text">{{ liveStatusText }}</span>
+			@for (person of liveState.editors; track person.clientId) {
+				<span class="gz-live-avatar" [style.background]="person.color" [attr.title]="person.name">{{
+					(person.name || '?').charAt(0)
+				}}</span>
+			}
+		</div>
+	}
 	<!-- ProseMirror mounts here -->
 	<div #editorHost class="gz-editor-mount"></div>
 

@@ -16,24 +16,34 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
-import { NbIconModule, NbSpinnerModule, NbTooltipModule } from '@nebular/theme';
+import { NbDialogService, NbIconModule, NbSpinnerModule, NbTooltipModule } from '@nebular/theme';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
-import { EMPTY, Subscription, timer } from 'rxjs';
-import { catchError, filter, switchMap } from 'rxjs/operators';
+import { EMPTY, merge, Subscription } from 'rxjs';
+import { auditTime, catchError, filter, switchMap } from 'rxjs/operators';
 import {
+	CHAT_EVENT_NAMES,
 	ChatConversationKindEnum,
-	ChatMemberRoleEnum,
 	ChatNotifyLevelEnum,
 	ChatVisibilityEnum,
+	IChatCategory,
 	IChatConversationWithState,
 	IChatMemberState,
 	IChatMessageWithRelations
 } from '@gauzy/contracts';
 import { ToastrService } from '@gauzy/ui-core/core';
-import { CHAT_LINK, CHAT_MESSAGES_POLL_MS } from '../../chat-ui.constants';
+import { applyCatchUp, reconcileWithNewest } from '../../chat-catch-up';
+import { canManageConversation } from '../../chat-categories';
+import { withTaskReference } from '../../chat-tasks';
+import { CHAT_LINK, CHAT_LIVE_AUDIT_MS, CHAT_MESSAGES_POLL_MS } from '../../chat-ui.constants';
 import { apiErrorMessage, continuesGroup, conversationPerson, conversationTitle, isSameDay, memberEmployeeIds, mergeMessages, newNonce } from '../../chat-ui.helpers';
+import { ChatCreateTaskFlow } from '../../dialogs/chat-task-dialogs.component';
+import { ChannelSettingsContext, ChannelSettingsDialogComponent } from '../../dialogs/chat-settings-dialogs.component';
+import { ChatFilesStore } from '../../services/chat-files.store';
+import { ChatLiveService, isTabVisible } from '../../services/chat-live.service';
 import { ChatPeople } from '../../services/chat-people.service';
+import { ChatTasksService } from '../../services/chat-tasks.service';
 import { ChatEvents, ChatMessagePatch, ChatUiService, memberStateFromEvents } from '../../services/chat-ui.service';
+import { FilesPanelComponent } from '../files-panel/files-panel.component';
 import { clearDraft, ComposerSubmission, MessageComposerComponent } from '../message-composer/message-composer.component';
 import { MessageAction, MessageItemComponent } from '../message-item/message-item.component';
 import { PersonAvatarComponent } from '../person-avatar/person-avatar.component';
@@ -70,11 +80,16 @@ export function unreadMarkerId(messages: readonly IChatMessageWithRelations[], s
 
 /**
  * One conversation, laid out as chat apps do: the header (the channel's icon or the person's avatar, the title,
- * the topic, the member count, favourite, notifications and the pins; leave / archive in a "more" menu), the
- * messages (newest page first, older on scroll, newer by polling) with day dividers, a "New" line above the first
- * unread message and a welcome block at the very beginning, and the composer, or a join bar for a channel I am
- * not in. Reading the latest loaded message marks the conversation read up to it (never past what is shown);
- * "mark unread from here" is explicit.
+ * the topic, the member count that opens the members, favourite, notifications, the pins, the files and the
+ * settings; leave / archive in a "more" menu), the messages (newest page first, older on scroll, newer as the chat
+ * events announce them) with day dividers, a "New" line above the first unread message and a welcome block at the
+ * very beginning, and the composer, or a join bar for a channel I am not in. Reading the latest loaded message marks
+ * the conversation read up to it (never past what is shown); "mark unread from here" is explicit.
+ *
+ * Live: a message created in the conversation fetches the newer ones, a message changed or deleted (an edit, a
+ * reaction, a pin, a reply to its thread) is read again, and after a reconnect the newest page is read again (the
+ * events of the gap are not replayed). Polling stays the fallback: every 5 s as before while the events do not
+ * arrive live (`ChatLiveService.mode$`), once a minute as a safety net while they do.
  *
  * Every request captures the conversation it was made for and drops its answer when another one is open by
  * then; the poll stops the moment the conversation changes. A send also captures the visit it was made in, so a
@@ -87,7 +102,17 @@ export function unreadMarkerId(messages: readonly IChatMessageWithRelations[], s
 		'(document:click)': 'onDocumentClick()',
 		'(document:keydown.escape)': 'onEscape()'
 	},
-	imports: [RouterLink, NbIconModule, NbSpinnerModule, NbTooltipModule, TranslatePipe, MessageComposerComponent, MessageItemComponent, PersonAvatarComponent],
+	imports: [
+		RouterLink,
+		NbIconModule,
+		NbSpinnerModule,
+		NbTooltipModule,
+		TranslatePipe,
+		FilesPanelComponent,
+		MessageComposerComponent,
+		MessageItemComponent,
+		PersonAvatarComponent
+	],
 	template: `
 		<section class="view" data-test="conversation-view">
 			<header class="header">
@@ -126,10 +151,18 @@ export function unreadMarkerId(messages: readonly IChatMessageWithRelations[], s
 					}
 				</div>
 				<div class="actions">
-					<span class="members" [nbTooltip]="'CHAT.VIEW.MEMBERS' | translate">
+					<button
+						type="button"
+						class="members"
+						data-test="members"
+						[disabled]="!isMember()"
+						[nbTooltip]="'CHAT.VIEW.MEMBERS' | translate"
+						[attr.aria-label]="'CHAT.SETTINGS.MEMBERS_OPEN' | translate"
+						(click)="openSettings('members')"
+					>
 						<nb-icon icon="people-outline"></nb-icon>
 						<span>{{ conversation().memberCount }}</span>
-					</span>
+					</button>
 					@if (isMember()) {
 						<div class="menu-anchor" (click)="$event.stopPropagation()">
 							<button
@@ -172,6 +205,30 @@ export function unreadMarkerId(messages: readonly IChatMessageWithRelations[], s
 					>
 						<nb-icon icon="pin-outline"></nb-icon>
 					</button>
+					<button
+						type="button"
+						class="icon-button"
+						data-test="files"
+						[class.on]="filesOpen()"
+						[nbTooltip]="'CHAT.FILES.TITLE' | translate"
+						[attr.aria-label]="'CHAT.FILES.TITLE' | translate"
+						[attr.aria-expanded]="filesOpen()"
+						(click)="filesOpen.set(!filesOpen())"
+					>
+						<nb-icon icon="attach-2-outline"></nb-icon>
+					</button>
+					@if (isMember()) {
+						<button
+							type="button"
+							class="icon-button"
+							data-test="settings"
+							[nbTooltip]="'CHAT.SETTINGS.TITLE' | translate"
+							[attr.aria-label]="'CHAT.SETTINGS.TITLE' | translate"
+							(click)="openSettings()"
+						>
+							<nb-icon icon="settings-2-outline"></nb-icon>
+						</button>
+					}
 					@if (canLeave() || (canManage() && isChannel())) {
 						<div class="menu-anchor" (click)="$event.stopPropagation()">
 							<button
@@ -219,6 +276,8 @@ export function unreadMarkerId(messages: readonly IChatMessageWithRelations[], s
 							<ngx-chat-message-item
 								[message]="pin"
 								[people]="people()"
+								[files]="files()"
+								[tasks]="tasks()"
 								[conversationNames]="conversationNames()"
 								[meEmployeeId]="meEmployeeId()"
 								[meUserId]="meUserId()"
@@ -230,6 +289,10 @@ export function unreadMarkerId(messages: readonly IChatMessageWithRelations[], s
 						}
 					</div>
 				</aside>
+			}
+
+			@if (filesOpen()) {
+				<ngx-chat-files-panel [conversationId]="conversationIdText()" [people]="people()"></ngx-chat-files-panel>
 			}
 
 			<div #scroller class="messages" data-test="messages" (scroll)="onScroll()">
@@ -278,6 +341,9 @@ export function unreadMarkerId(messages: readonly IChatMessageWithRelations[], s
 					<ngx-chat-message-item
 						[message]="row.message"
 						[people]="people()"
+						[files]="files()"
+						[tasks]="tasks()"
+						[canCreateTask]="canCreateTask() && !readOnly()"
 						[conversationNames]="conversationNames()"
 						[meEmployeeId]="meEmployeeId()"
 						[meUserId]="meUserId()"
@@ -319,6 +385,7 @@ export function unreadMarkerId(messages: readonly IChatMessageWithRelations[], s
 						[initialBody]="editing()?.body ?? null"
 						[draftKey]="draftKey()"
 						[resetToken]="resetToken()"
+						[canAttach]="canAttach()"
 						(submitted)="onSubmit($event)"
 						(editCancelled)="editing.set(null)"
 					></ngx-chat-message-composer>
@@ -434,9 +501,20 @@ export function unreadMarkerId(messages: readonly IChatMessageWithRelations[], s
 				padding: 0 0.5rem;
 				border: 1px solid var(--chat-border, rgba(127, 127, 127, 0.25));
 				border-radius: 0.5rem;
+				background: transparent;
 				color: var(--chat-muted, inherit);
+				font: inherit;
 				font-size: 0.75rem;
 				font-weight: 700;
+				cursor: pointer;
+			}
+			.members:disabled {
+				cursor: default;
+			}
+			.members:not(:disabled):hover,
+			.members:not(:disabled):focus-visible {
+				background: var(--chat-hover, rgba(127, 127, 127, 0.12));
+				color: var(--chat-text, inherit);
 			}
 			.members nb-icon {
 				font-size: 1rem;
@@ -773,6 +851,11 @@ export function unreadMarkerId(messages: readonly IChatMessageWithRelations[], s
 })
 export class ConversationViewComponent {
 	private readonly api = inject(ChatUiService);
+	private readonly live = inject(ChatLiveService);
+	private readonly filesStore = inject(ChatFilesStore);
+	private readonly taskStore = inject(ChatTasksService);
+	private readonly dialog = inject(NbDialogService);
+	private readonly createTaskFlow = inject(ChatCreateTaskFlow);
 	private readonly toastr = inject(ToastrService);
 	private readonly translate = inject(TranslateService);
 	private readonly destroyRef = inject(DestroyRef);
@@ -785,6 +868,15 @@ export class ConversationViewComponent {
 	readonly meUserId = input<string | null>(null);
 	/** `CHAT_MANAGE`: acts as a manager everywhere. */
 	readonly isAdmin = input(false);
+	/** `DOCS_CREATE`: may attach files (stored as documents). */
+	readonly canAttach = input(false);
+	/** `ORG_TASK_ADD`: may create a task from a message. */
+	readonly canCreateTask = input(false);
+	/** The organization's sidebar categories (a channel's settings put it under one). */
+	readonly categories = input<readonly IChatCategory[]>([]);
+	/** The selected organization and its tenant, for the projects a task can be created in. */
+	readonly organizationId = input<string | null>(null);
+	readonly tenantId = input<string | null>(null);
 	readonly untitled = input('Conversation');
 	/** A message to scroll to and highlight (a deep link): the page around it is shown, nothing is marked read. */
 	readonly highlightId = input<string | null>(null);
@@ -811,13 +903,19 @@ export class ConversationViewComponent {
 	protected readonly newBelow = signal(false);
 	protected readonly pinsOpen = signal(false);
 	protected readonly pins = signal<IChatMessageWithRelations[]>([]);
+	protected readonly filesOpen = signal(false);
+	/** The conversation's files read so far, for the attachments of the messages shown. */
+	protected readonly files = this.filesStore.byDocument;
+	/** The task summaries read so far, for the task cards. */
+	protected readonly tasks = this.taskStore.summaries;
+	protected readonly conversationIdText = computed(() => String(this.conversation().id));
 	/** The caller's state, kept here so a read / favourite change shows at once. */
 	protected readonly state = signal<IChatMemberState | null>(null);
 
 	protected readonly title = computed(() => conversationTitle(this.conversation(), this.people().byEmployee, this.meEmployeeId(), this.untitled()));
 	protected readonly isMember = computed(() => this.state() !== null);
 	protected readonly canLeave = computed(() => this.isMember() && !this.conversation().isDefault && this.conversation().kind !== ChatConversationKindEnum.DIRECT);
-	protected readonly canManage = computed(() => this.isAdmin() || this.state()?.role === ChatMemberRoleEnum.MANAGER);
+	protected readonly canManage = computed(() => canManageConversation({ ...this.conversation(), state: this.state() }, this.meEmployeeId(), this.isAdmin()));
 	protected readonly readOnly = computed(() => !!this.conversation().archivedAt || !this.isMember());
 	protected readonly draftKey = computed(() => `conversation:${this.conversation().id}`);
 
@@ -868,6 +966,10 @@ export class ConversationViewComponent {
 	private loadedId: string | null = null;
 	/** Counts the visits of this view (every conversation switch): a send belongs to the visit it was made in. */
 	private visit = 0;
+	/** Counts the catch-ups: only the latest one's answer is applied. */
+	private catchUpRun = 0;
+	/** The messages changed here since the latest catch-up began (a refresh, a deletion, my own action): its page does not overrule them. */
+	private readonly touched = new Set<string>();
 	/** The last message a read was asked up to, so the same read is not sent twice. */
 	private lastMarkedId: string | null = null;
 
@@ -883,6 +985,7 @@ export class ConversationViewComponent {
 					this.editing.set(null);
 					this.pinsOpen.set(false);
 					this.menu.set(null);
+					this.filesOpen.set(false);
 					this.newBelow.set(false);
 					this.loadingOlder.set(false);
 					this.sending.set(false);
@@ -894,6 +997,16 @@ export class ConversationViewComponent {
 		effect(() => {
 			const message = this.patch();
 			if (message) untracked(() => this.replace(message));
+		});
+		// A message that names a file not read yet reads the conversation's files (the pins too); only the messages of
+		// the open conversation count (a switch shows the previous one's for a moment).
+		effect(() => {
+			const id = String(this.conversation().id);
+			const messages = [...this.messages(), ...this.pins()].filter((message) => String(message.conversationId) === id);
+			untracked(() => {
+				this.filesStore.ensureFor(id, messages);
+				this.taskStore.ensure(messages.flatMap((message) => (message.taskReferences ?? []).map((reference) => String(reference.taskId))));
+			});
 		});
 		this.destroyRef.onDestroy(() => this.stopPolling());
 	}
@@ -982,12 +1095,21 @@ export class ConversationViewComponent {
 			});
 	}
 
+	/**
+	 * Newer messages: on a tick of the poll (every 5 s, or once a minute while live) and when a message is created in
+	 * the conversation; a changed message is read again; a reconnect reads the newest page again.
+	 */
 	private startPolling(): void {
 		this.stopPolling();
 		const id = String(this.conversation().id);
-		this.poll = timer(CHAT_MESSAGES_POLL_MS, CHAT_MESSAGES_POLL_MS)
+		const hints$ = this.live.hints$.pipe(filter((hint) => hint.conversationId === id));
+		const created$ = hints$.pipe(
+			filter((hint) => hint.name === CHAT_EVENT_NAMES.MESSAGE_CREATED),
+			auditTime(CHAT_LIVE_AUDIT_MS)
+		);
+		const poll = merge(this.live.ticks(CHAT_MESSAGES_POLL_MS), created$)
 			.pipe(
-				filter(() => typeof document === 'undefined' || !document.hidden),
+				filter(() => isTabVisible()),
 				// A view around an old message is not followed: the newest page is a jump away.
 				filter(() => !this.hasAfter()),
 				switchMap(() => {
@@ -998,14 +1120,88 @@ export class ConversationViewComponent {
 			)
 			.subscribe((page) => {
 				if (!this.isCurrent(id) || page.messages.length === 0) return;
-				const wasNearBottom = this.isNearBottom();
-				this.messages.set(mergeMessages(this.messages(), page.messages));
-				if (wasNearBottom) {
-					queueMicrotask(() => this.scrollToBottom(false));
-					this.markReadIfVisible();
-				} else {
-					this.newBelow.set(true);
-				}
+				this.showNewer(page.messages);
+			});
+		poll.add(
+			hints$
+				.pipe(
+					filter((hint) => hint.name !== CHAT_EVENT_NAMES.MESSAGE_CREATED && !!hint.messageId),
+					filter(() => isTabVisible()),
+					takeUntilDestroyed(this.destroyRef)
+				)
+				.subscribe((hint) => this.refreshMessage(id, String(hint.messageId)))
+		);
+		poll.add(this.live.catchUp$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => this.catchUp(id)));
+		this.poll = poll;
+	}
+
+	/** Appends newer messages: followed to the bottom when the person reads the latest, announced otherwise. */
+	private showNewer(messages: IChatMessageWithRelations[]): void {
+		const wasNearBottom = this.isNearBottom();
+		this.messages.set(mergeMessages(this.messages(), messages));
+		if (wasNearBottom) {
+			queueMicrotask(() => this.scrollToBottom(false));
+			this.markReadIfVisible();
+		} else {
+			this.newBelow.set(true);
+		}
+	}
+
+	/**
+	 * Reads one loaded message again (edited, deleted, reacted to, pinned, its thread changed): the window around it
+	 * answers it with its relations. A message deleted without replies leaves the list, as a reload would show it.
+	 */
+	private refreshMessage(conversationId: string, messageId: string): void {
+		if (!this.messages().some((message) => String(message.id) === messageId)) return;
+		this.api
+			.messages(conversationId, { around: messageId, limit: 2 })
+			.pipe(takeUntilDestroyed(this.destroyRef))
+			.subscribe({
+				next: (page) => {
+					if (!this.isCurrent(conversationId)) return;
+					const fresh = page.messages.find((message) => String(message.id) === messageId);
+					if (!fresh) return;
+					if (fresh.deletedAt && !fresh.replyCount) {
+						this.touched.add(messageId);
+						this.messages.set(this.messages().filter((message) => String(message.id) !== messageId));
+					} else this.replace(fresh);
+				},
+				error: () => undefined
+			});
+	}
+
+	/**
+	 * After a reconnect, or when the tab is shown again: the newest page, read again. Where it still reaches the last
+	 * loaded message it is the truth over its span (edits, reactions and pins of the gap applied, deleted messages
+	 * gone, new ones appended; see `reconcileWithNewest`); where it does not (more was written meanwhile than a page
+	 * holds), it replaces the list, the older messages a scroll away again. Older loaded messages stay as they were.
+	 */
+	private catchUp(id: string): void {
+		if (!this.isCurrent(id) || this.hasAfter() || this.loading()) return;
+		// What is loaded when the read starts: a message shown while it runs (a live event, my own send), or changed
+		// here meanwhile (refreshed, deleted, my own edit), is newer than the page may know and stays as it is now.
+		const run = ++this.catchUpRun;
+		this.touched.clear();
+		const before = new Set(this.messages().map((message) => String(message.id)));
+		this.api
+			.messages(id, {})
+			.pipe(takeUntilDestroyed(this.destroyRef))
+			.subscribe({
+				next: (page) => {
+					if (!this.isCurrent(id) || this.hasAfter() || run !== this.catchUpRun) return;
+					const wasNearBottom = this.isNearBottom();
+					const result = applyCatchUp(this.messages(), before, this.touched, (loaded) => reconcileWithNewest(loaded, page));
+					this.messages.set(result.messages);
+					if (result.replaced) this.hasBefore.set(page.hasBefore);
+					if (!result.added.length) return;
+					if (wasNearBottom) {
+						queueMicrotask(() => this.scrollToBottom(false));
+						this.markReadIfVisible();
+					} else {
+						this.newBelow.set(true);
+					}
+				},
+				error: () => undefined
 			});
 	}
 
@@ -1245,7 +1441,12 @@ export class ConversationViewComponent {
 			return;
 		}
 		this.api
-			.send(id, { body: submission.body, nonce: newNonce(), mentionEmployeeIds: submission.mentionEmployeeIds })
+			.send(id, {
+				body: submission.body,
+				nonce: newNonce(),
+				mentionEmployeeIds: submission.mentionEmployeeIds,
+				...(submission.attachmentIds.length ? { attachmentIds: submission.attachmentIds } : {})
+			})
 			.pipe(takeUntilDestroyed(this.destroyRef))
 			.subscribe({
 				next: (result) => {
@@ -1335,6 +1536,9 @@ export class ConversationViewComponent {
 						error: (error) => this.fail(error)
 					});
 				return;
+			case 'createTask':
+				this.openCreateTask(message);
+				return;
 			case 'follow':
 				this.api
 					.setFollowing(message.id, action.following)
@@ -1351,8 +1555,49 @@ export class ConversationViewComponent {
 		}
 	}
 
+	/** "Create task from message": the dialog, then the message shows the task's card. */
+	private openCreateTask(message: IChatMessageWithRelations): void {
+		const id = String(this.conversation().id);
+		this.createTaskFlow
+			.open({
+				message,
+				people: this.people(),
+				conversationNames: this.conversationNames(),
+				organizationId: this.organizationId() ?? (this.conversation().organizationId ? String(this.conversation().organizationId) : null),
+				tenantId: this.tenantId()
+			})
+			.pipe(takeUntilDestroyed(this.destroyRef))
+			.subscribe((reference) => {
+				if (!reference || !this.isCurrent(id)) return;
+				// Added to the message as shown now (another reference may have come meanwhile).
+				const current = this.messages().find((item) => item.id === message.id) ?? message;
+				this.replace({ id: message.id, taskReferences: withTaskReference(current, reference).taskReferences });
+			});
+	}
+
+	/** The conversation's settings and members (`section`: where the dialog opens); a change comes back as the conversation. */
+	protected openSettings(section: 'settings' | 'members' = 'settings'): void {
+		const id = String(this.conversation().id);
+		const context: ChannelSettingsContext = {
+			conversation: { ...this.conversation(), state: this.state() },
+			categories: this.categories(),
+			people: this.people(),
+			meEmployeeId: this.meEmployeeId(),
+			canManage: this.canManage(),
+			section
+		};
+		this.dialog
+			.open(ChannelSettingsDialogComponent, { context: { context } })
+			.onClose.pipe(takeUntilDestroyed(this.destroyRef))
+			.subscribe((conversation: IChatConversationWithState | null | undefined) => {
+				if (conversation && this.isCurrent(id)) this.conversationChanged.emit(conversation);
+			});
+	}
+
 	/** Puts the API's version of a message (or the fields of it that changed) in place of ours. */
 	private replace(message: ChatMessagePatch): void {
+		// A running catch-up does not overrule it.
+		if (message.id) this.touched.add(String(message.id));
 		this.messages.set(this.messages().map((item) => (item.id === message.id ? { ...item, ...message } : item)));
 	}
 

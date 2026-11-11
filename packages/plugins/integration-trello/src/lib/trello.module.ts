@@ -12,12 +12,15 @@ import {
 	PluginCommonModule,
 	RolePermissionModule
 } from '@gauzy/core';
+import { TrelloCardBaseline, MikroOrmTrelloCardBaselineRepository, TypeOrmTrelloCardBaselineRepository } from './entities/trello-card-baseline.entity';
+import { TrelloSyncConflict, MikroOrmTrelloSyncConflictRepository, TypeOrmTrelloSyncConflictRepository } from './entities/trello-sync-conflict.entity';
 import { TrelloSyncRun, MikroOrmTrelloSyncRunRepository, TypeOrmTrelloSyncRunRepository } from './entities/trello-sync-run.entity';
 import { TrelloBoardMapping, MikroOrmTrelloBoardMappingRepository, TypeOrmTrelloBoardMappingRepository } from './entities/trello-board-mapping.entity';
 import { TrelloCatalogService } from './trello-catalog.service';
 import { readTrelloConfig } from './trello-config';
 import { TrelloConnectStateService } from './trello-connect-state.service';
 import { TrelloMappingService } from './trello-mapping.service';
+import { TrelloSyncConflictService } from './trello-sync-conflict.service';
 import { TrelloSyncRunService } from './trello-sync-run.service';
 import { TrelloTenantService } from './trello-tenant.service';
 import { TrelloWebhookController } from './trello-webhook.controller';
@@ -30,7 +33,7 @@ import { TrelloCardDetailsService } from './sync/trello-card-details.service';
 import { TrelloImportSweepService } from './maintenance/trello-import-sweep.service';
 
 /** Every table the plugin owns (its migration creates them). */
-export const TRELLO_ENTITIES = [TrelloBoardMapping, TrelloSyncRun];
+export const TRELLO_ENTITIES = [TrelloBoardMapping, TrelloSyncRun, TrelloSyncConflict, TrelloCardBaseline];
 
 /**
  * The Trello integration module (`@gauzy/plugin-integration-trello`). Loaded only when `TRELLO_ENABLED=true`
@@ -61,6 +64,7 @@ export const TRELLO_ENTITIES = [TrelloBoardMapping, TrelloSyncRun];
 		TrelloTenantService,
 		TrelloMappingService,
 		TrelloSyncRunService,
+		TrelloSyncConflictService,
 		TrelloSyncService,
 		TrelloCardDetailsService,
 		TrelloImportSweepService,
@@ -69,6 +73,10 @@ export const TRELLO_ENTITIES = [TrelloBoardMapping, TrelloSyncRun];
 		MikroOrmTrelloBoardMappingRepository,
 		TypeOrmTrelloSyncRunRepository,
 		MikroOrmTrelloSyncRunRepository,
+		TypeOrmTrelloSyncConflictRepository,
+		MikroOrmTrelloSyncConflictRepository,
+		TypeOrmTrelloCardBaselineRepository,
+		MikroOrmTrelloCardBaselineRepository,
 		{
 			provide: TRELLO_CONFIG,
 			useFactory: () => {

@@ -4,10 +4,13 @@ import { DomSanitizer } from '@angular/platform-browser';
 import { RouterLink } from '@angular/router';
 import { NbIconModule, NbTooltipModule } from '@nebular/theme';
 import { TranslatePipe } from '@ngx-translate/core';
-import { ChatMessageKindEnum, IChatMessageWithRelations } from '@gauzy/contracts';
+import { ChatMessageKindEnum, IChatFile, IChatMessageWithRelations } from '@gauzy/contracts';
+import { ChatTaskSummary } from '../../chat-tasks';
 import { CHAT_QUICK_REACTIONS, CHAT_TASK_LINK, CHAT_TOOLBAR_REACTIONS } from '../../chat-ui.constants';
 import { mentionsMe, renderBodyHtml } from '../../chat-ui.helpers';
 import { ChatPeople } from '../../services/chat-people.service';
+import { LinkCardsComponent } from '../link-cards/link-cards.component';
+import { MessageAttachmentsComponent } from '../message-attachments/message-attachments.component';
 import { PersonAvatarComponent } from '../person-avatar/person-avatar.component';
 
 /** What a message's toolbar asks of the conversation. */
@@ -18,19 +21,21 @@ export type MessageAction =
 	| { kind: 'pin'; pinned: boolean }
 	| { kind: 'react'; emoji: string; on: boolean }
 	| { kind: 'unread' }
-	| { kind: 'follow'; following: boolean };
+	| { kind: 'follow'; following: boolean }
+	| { kind: 'createTask' };
 
 /**
  * One message, laid out as chat apps do: the avatar in a gutter (the time there instead when it continues the
- * previous author's group), the author and time, the body with mention chips, the task cards, the reactions with
+ * previous author's group), the author and time, the body with mention chips, its web links as cards, its files
+ * (pictures inline), the task cards (key, title and status where the reader may see the task), the reactions with
  * an add-reaction pill, the thread summary, and a floating toolbar shown on hover and on keyboard focus (a few
- * one-click reactions, the reaction picker, reply, pin, edit, delete, mark unread). A pinned message, and one
- * that mentions me, are tinted.
+ * one-click reactions, the reaction picker, create a task, reply, pin, edit, delete, mark unread). A pinned message,
+ * and one that mentions me, are tinted.
  */
 @Component({
 	selector: 'ngx-chat-message-item',
 	changeDetection: ChangeDetectionStrategy.OnPush,
-	imports: [DatePipe, RouterLink, NbIconModule, NbTooltipModule, TranslatePipe, PersonAvatarComponent],
+	imports: [DatePipe, RouterLink, NbIconModule, NbTooltipModule, TranslatePipe, LinkCardsComponent, MessageAttachmentsComponent, PersonAvatarComponent],
 	template: `
 		<article
 			class="message"
@@ -98,6 +103,7 @@ export type MessageAction =
 							<span class="edited" [attr.title]="message().editedAt | date: 'medium'">({{ 'CHAT.MESSAGE.EDITED' | translate }})</span>
 						}
 					</div>
+					<ngx-chat-link-cards [body]="message().body ?? ''"></ngx-chat-link-cards>
 				}
 
 				@if (message().taskReferences?.length) {
@@ -106,8 +112,22 @@ export type MessageAction =
 							<a class="task-card" [routerLink]="taskLink(reference.taskId)" data-test="task-card" [attr.title]="'CHAT.MESSAGE.OPEN_TASK' | translate">
 								<span class="task-icon"><nb-icon icon="checkmark-square-2-outline"></nb-icon></span>
 								<span class="task-text">
-									<strong>{{ 'CHAT.MESSAGE.TASK' | translate }}</strong>
-									<span class="task-id">{{ reference.taskId }}</span>
+									@if (tasks().get(reference.taskId); as task) {
+										<strong class="task-title">{{ task.title }}</strong>
+										@if (task.key || task.status) {
+											<span class="task-meta">
+												@if (task.key) {
+													<span class="task-id">{{ task.key }}</span>
+												}
+												@if (task.status) {
+													<span class="task-status">{{ task.status }}</span>
+												}
+											</span>
+										}
+									} @else {
+										<strong>{{ 'CHAT.MESSAGE.TASK' | translate }}</strong>
+										<span class="task-id">{{ reference.taskId }}</span>
+									}
 								</span>
 								<nb-icon class="task-go" icon="arrow-ios-forward-outline"></nb-icon>
 							</a>
@@ -115,8 +135,8 @@ export type MessageAction =
 					</div>
 				}
 
-				@if (message().attachmentIds?.length) {
-					<p class="attachments"><nb-icon icon="attach-outline"></nb-icon> {{ 'CHAT.MESSAGE.ATTACHMENTS' | translate: { count: message().attachmentIds!.length } }}</p>
+				@if (message().attachmentIds?.length && !message().deletedAt) {
+					<ngx-chat-message-attachments [documentIds]="message().attachmentIds" [files]="files()"></ngx-chat-message-attachments>
 				}
 
 				@if (message().reactions?.length) {
@@ -169,6 +189,11 @@ export type MessageAction =
 					<button type="button" class="tool" [class.on]="picking()" [nbTooltip]="'CHAT.MESSAGE.REACT' | translate" [attr.aria-label]="'CHAT.MESSAGE.REACT' | translate" [attr.aria-expanded]="picking()" (click)="picking.set(!picking())" data-test="react">
 						<nb-icon icon="smiling-face-outline"></nb-icon>
 					</button>
+					@if (canCreateTask()) {
+						<button type="button" class="tool" [nbTooltip]="'CHAT.TASKS.CREATE_TITLE' | translate" [attr.aria-label]="'CHAT.TASKS.CREATE_TITLE' | translate" (click)="act({ kind: 'createTask' })" data-test="create-task">
+							<nb-icon icon="checkmark-square-outline"></nb-icon>
+						</button>
+					}
 					@if (canReply()) {
 						<button type="button" class="tool" [nbTooltip]="'CHAT.MESSAGE.REPLY' | translate" [attr.aria-label]="'CHAT.MESSAGE.REPLY' | translate" (click)="act({ kind: 'reply' })" data-test="reply">
 							<nb-icon icon="message-square-outline"></nb-icon>
@@ -486,13 +511,24 @@ export type MessageAction =
 			.task-go {
 				color: var(--chat-muted, inherit);
 			}
-			.attachments {
+			.task-title {
+				max-width: 24rem;
+				overflow: hidden;
+				text-overflow: ellipsis;
+				white-space: nowrap;
+			}
+			.task-meta {
 				display: flex;
 				align-items: center;
-				gap: 0.25rem;
-				margin: 0.375rem 0 0;
+				gap: 0.375rem;
+				min-width: 0;
+			}
+			.task-status {
+				padding: 0 0.375rem;
+				border-radius: 999px;
+				background: var(--chat-hover, var(--background-basic-color-3));
 				color: var(--chat-muted, inherit);
-				font-size: 0.75rem;
+				font-size: 0.6875rem;
 			}
 			.reactions {
 				display: flex;
@@ -708,6 +744,12 @@ export class MessageItemComponent {
 	readonly message = input.required<IChatMessageWithRelations>();
 	readonly people = input.required<ChatPeople>();
 	readonly conversationNames = input<ReadonlyMap<string, string>>(new Map());
+	/** The conversation's files read so far, by document id (what the attachments show). */
+	readonly files = input<ReadonlyMap<string, IChatFile>>(new Map());
+	/** The task summaries read so far (null: a task the reader may not see), for the task cards. */
+	readonly tasks = input<ReadonlyMap<string, ChatTaskSummary | null>>(new Map());
+	/** Offers "Create task from message" (`ORG_TASK_ADD`, a member of a conversation that is not archived). */
+	readonly canCreateTask = input(false);
 	readonly meEmployeeId = input<string | null>(null);
 	readonly meUserId = input<string | null>(null);
 	readonly continued = input(false);

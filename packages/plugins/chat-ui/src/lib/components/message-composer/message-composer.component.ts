@@ -1,17 +1,43 @@
-import { ChangeDetectionStrategy, Component, computed, effect, ElementRef, inject, input, output, signal, untracked, viewChild } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
+import { ChangeDetectionStrategy, Component, computed, DestroyRef, effect, ElementRef, inject, input, output, signal, untracked, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { NbIconModule, NbTooltipModule } from '@nebular/theme';
 import { TranslatePipe } from '@ngx-translate/core';
-import { CHAT_MESSAGE_MAX_LENGTH } from '@gauzy/contracts';
+import { Subscription } from 'rxjs';
+import { CHAT_MESSAGE_MAX_ATTACHMENTS, CHAT_MESSAGE_MAX_LENGTH } from '@gauzy/contracts';
+import {
+	attachmentRoom,
+	bodyWithAttachments,
+	fileSizeLabel,
+	filesOfTransfer,
+	PendingAttachment,
+	readyAttachmentIds,
+	uploadOutcome
+} from '../../chat-attachments';
+import { ChatEmoji, emojiQueryAt, replaceShortcodeBefore, suggestEmoji } from '../../chat-emoji';
 import { CHAT_COMPOSER_EMOJI, CHAT_MENTION_SUGGESTIONS } from '../../chat-ui.constants';
-import { ChatMemberIds, markMentions, matchParts, mentionQueryAt, MentionSuggestion, namesToTokens, rankMentions, tokensToNames, uniqueLabel } from '../../chat-ui.helpers';
+import {
+	apiErrorMessage,
+	ChatMemberIds,
+	markMentions,
+	matchParts,
+	mentionQueryAt,
+	MentionSuggestion,
+	namesToTokens,
+	rankMentions,
+	tokensToNames,
+	uniqueLabel
+} from '../../chat-ui.helpers';
 import { ChatPeople } from '../../services/chat-people.service';
+import { ChatUiService } from '../../services/chat-ui.service';
 import { PersonAvatarComponent } from '../person-avatar/person-avatar.component';
 
-/** What the composer hands over: the body with mention tokens, and the employees it mentions. */
+/** What the composer hands over: the body with mention tokens, the employees it mentions, and the files it carries. */
 export interface ComposerSubmission {
 	body: string;
 	mentionEmployeeIds: string[];
+	/** The stored documents to attach (empty in edit mode: the files of a message stay as they are). */
+	attachmentIds: string[];
 }
 
 /** The unsent text of each conversation and thread, kept while the page lives (a switch and back finds it again). */
@@ -39,16 +65,22 @@ const EVERYONE_MENTIONS: readonly { key: 'channel' | 'here'; labelKey: string }[
 /** The text box grows with what is typed up to this height (px), then scrolls. */
 const MAX_BOX_HEIGHT_PX = 240;
 
-/** Gives each composer's `@` list its own id (a conversation and its thread show two composers at once). */
+/** Gives each composer's suggestion list (`@` or `:`) its own id (a conversation and its thread show two composers at once). */
 let nextComposerId = 0;
 
 /**
  * The text box of a conversation or a thread, framed as chat apps do: a formatting bar (bold, italic, strike,
  * code, link, list, quote: the Markdown the API stores), the box (it grows with its text), and a bottom bar with
- * the emoji and mention buttons and the send button. Enter sends, Shift+Enter breaks the line, `@` opens the
- * people suggestions (arrows, Enter, Escape). In edit mode it starts with the message's text and offers Save /
- * Cancel. Mentions show as `@Name` (`#channel`) while writing and go out as tokens; each label stands for one id,
- * so two people of one name never swap. The length that counts is the tokenized body's, the one the API measures.
+ * the attach, emoji and mention buttons and the send button. Enter sends, Shift+Enter breaks the line, `@` opens the
+ * people suggestions and `:` the emoji ones (arrows, Enter, Escape; a complete `:name:` becomes its emoji as it is
+ * typed). In edit mode it starts with the message's text and offers Save / Cancel. Mentions show as `@Name`
+ * (`#channel`) while writing and go out as tokens; each label stands for one id, so two people of one name never
+ * swap. The length that counts is the tokenized body's, the one the API measures.
+ *
+ * Files (where the person may upload documents): picked with the paperclip, dropped on the composer, or pasted.
+ * Each is stored at once through the Docs plugin as the sender's own private file, shown as a chip that can be
+ * taken off, and goes out with the message; sending waits until every file is stored. A message of files alone
+ * carries their names as its text (the platform needs one).
  */
 @Component({
 	selector: 'ngx-chat-message-composer',
@@ -58,10 +90,48 @@ let nextComposerId = 0;
 	},
 	imports: [FormsModule, NbIconModule, NbTooltipModule, TranslatePipe, PersonAvatarComponent],
 	template: `
-		<div class="composer" data-test="composer" [class.editing]="editing()" (keydown.escape)="onComposerEscape($event)">
+		<div
+			class="composer"
+			data-test="composer"
+			[class.editing]="editing()"
+			[class.dragging]="dragging()"
+			(keydown.escape)="onComposerEscape($event)"
+			(dragover)="onDragOver($event)"
+			(dragleave)="dragging.set(false)"
+			(drop)="onDrop($event)"
+		>
+			@if (emojiSuggestions().length > 0 && suggestions().length === 0) {
+				<div class="composer-popover suggestions" data-test="emoji-suggestions">
+					<ul class="suggestion-list" role="listbox" [id]="listId" [attr.aria-label]="'CHAT.COMPOSER.EMOJI_SUGGESTIONS' | translate">
+						@for (emoji of emojiSuggestions(); track emoji.code; let index = $index) {
+							<li
+								class="option"
+								role="option"
+								[id]="optionId(index)"
+								[attr.data-index]="index"
+								[attr.aria-selected]="index === highlighted()"
+								[class.highlighted]="index === highlighted()"
+								(mouseenter)="highlighted.set(index)"
+								(mousedown)="$event.preventDefault(); pickEmoji(emoji)"
+							>
+								<span class="emoji-glyph" aria-hidden="true">{{ emoji.emoji }}</span>
+								<span class="option-name">:{{ emoji.code }}:</span>
+								@if (index === highlighted()) {
+									<kbd class="option-key" aria-hidden="true">↵</kbd>
+								}
+							</li>
+						}
+					</ul>
+					<div class="suggestion-hint" aria-hidden="true">
+						<span><kbd>↑</kbd><kbd>↓</kbd> {{ 'CHAT.COMPOSER.KEY_NAVIGATE' | translate }}</span>
+						<span><kbd>Tab</kbd> / <kbd>↵</kbd> {{ 'CHAT.COMPOSER.KEY_SELECT' | translate }}</span>
+						<span><kbd>Esc</kbd> {{ 'CHAT.COMPOSER.KEY_DISMISS' | translate }}</span>
+					</div>
+				</div>
+			}
 			@if (suggestions().length > 0) {
 				<div class="composer-popover suggestions" data-test="mention-suggestions">
-					<ul class="suggestion-list" role="listbox" [id]="listId" [attr.aria-label]="'CHAT.COMPOSER.MENTION' | translate">
+					<ul class="suggestion-list" role="listbox" [id]="listId" [attr.aria-label]="'CHAT.COMPOSER.MENTION_SUGGESTIONS' | translate">
 						@for (choice of suggestions(); track choice.key; let index = $index) {
 							@if (choice.kind === 'person' && index === 0) {
 								<li class="group" role="presentation">{{ 'CHAT.COMPOSER.PEOPLE' | translate }}</li>
@@ -72,7 +142,7 @@ let nextComposerId = 0;
 							<li
 								class="option"
 								role="option"
-								[id]="listId + '-' + index"
+								[id]="optionId(index)"
 								[attr.data-index]="index"
 								[attr.aria-selected]="index === highlighted()"
 								[class.highlighted]="index === highlighted()"
@@ -106,7 +176,7 @@ let nextComposerId = 0;
 					</div>
 				</div>
 			}
-			@if (emojiOpen()) {
+			@if (emojiOpen() && !listOpen()) {
 				<div class="composer-popover emoji-grid" role="menu" data-test="composer-emoji">
 					@for (emoji of emojiChoices; track emoji) {
 						<button type="button" class="emoji" role="menuitem" [attr.aria-label]="emoji" (mousedown)="$event.preventDefault()" (click)="insertEmoji(emoji)">{{ emoji }}</button>
@@ -159,9 +229,11 @@ let nextComposerId = 0;
 					[placeholder]="placeholder()"
 					[disabled]="disabled()"
 					[attr.aria-label]="placeholder()"
+					role="combobox"
 					aria-autocomplete="list"
-					[attr.aria-controls]="suggestions().length ? listId : null"
-					[attr.aria-activedescendant]="suggestions().length ? listId + '-' + highlighted() : null"
+					[attr.aria-expanded]="listOpen()"
+					[attr.aria-controls]="listOpen() ? listId : null"
+					[attr.aria-activedescendant]="listOpen() ? optionId(highlighted()) : null"
 					[attr.maxlength]="max"
 					[(ngModel)]="text"
 					(ngModelChange)="onInput()"
@@ -171,9 +243,45 @@ let nextComposerId = 0;
 					(focus)="focused.set(true)"
 					(blur)="focused.set(false)"
 					(scroll)="syncMirror()"
+					(paste)="onPaste($event)"
 				></textarea>
 				</div>
+				@if (attachments().length > 0 && !editing()) {
+					<ul class="attachments" data-test="composer-attachments">
+						@for (item of attachments(); track item.key) {
+							<li class="attachment" [class.failed]="item.status === 'failed'" [attr.data-status]="item.status">
+								<nb-icon [icon]="item.status === 'failed' ? 'alert-circle-outline' : item.status === 'uploading' ? 'cloud-upload-outline' : 'attach-outline'"></nb-icon>
+								<span class="attachment-name" [title]="item.name">{{ item.name }}</span>
+								@if (item.status === 'uploading') {
+									<span class="attachment-meta">{{ 'CHAT.COMPOSER.UPLOADING' | translate }}</span>
+								} @else if (item.status === 'failed') {
+									<span class="attachment-meta">{{ item.error ?? 'CHAT.COMPOSER.UPLOAD_FAILED' | translate }}</span>
+								} @else {
+									<span class="attachment-meta">{{ size(item.size) }}</span>
+								}
+								<button type="button" class="attachment-remove" [attr.aria-label]="'CHAT.COMPOSER.REMOVE_FILE' | translate: { name: item.name }" (click)="removeAttachment(item.key)">
+									<nb-icon icon="close-outline"></nb-icon>
+								</button>
+							</li>
+						}
+					</ul>
+				}
 				<div class="bottom-bar">
+					@if (canAttach() && !editing()) {
+						<input #picker type="file" multiple hidden data-test="composer-file-input" (change)="onPicked($event)" />
+						<button
+							type="button"
+							class="tool"
+							data-test="composer-attach"
+							[disabled]="disabled() || room() === 0"
+							[nbTooltip]="'CHAT.COMPOSER.ATTACH' | translate"
+							[attr.aria-label]="'CHAT.COMPOSER.ATTACH' | translate"
+							(mousedown)="$event.preventDefault()"
+							(click)="picker.click()"
+						>
+							<nb-icon icon="attach-outline"></nb-icon>
+						</button>
+					}
 					<button
 						type="button"
 						class="tool"
@@ -222,9 +330,11 @@ let nextComposerId = 0;
 					}
 				</div>
 			</div>
-			<div class="hint" [class.over]="isTooLong()">
+			<div class="hint" [class.over]="isTooLong() || skippedFiles() > 0" aria-live="polite">
 				@if (isTooLong()) {
 					{{ 'CHAT.COMPOSER.TOO_LONG' | translate: { max: max } }}
+				} @else if (skippedFiles() > 0) {
+					{{ 'CHAT.COMPOSER.TOO_MANY_FILES' | translate: { max: maxFiles, count: skippedFiles() } }}
 				} @else {
 					{{ 'CHAT.COMPOSER.HINT' | translate }}
 				}
@@ -264,6 +374,10 @@ let nextComposerId = 0;
 			.frame.focused {
 				border-color: var(--chat-text-soft, rgba(127, 127, 127, 0.7));
 				box-shadow: 0 0.0625rem 0.375rem rgba(0, 0, 0, 0.08);
+			}
+			.composer.dragging .frame {
+				outline: 2px dashed var(--chat-accent, var(--color-primary-default, #3366ff));
+				outline-offset: 2px;
 			}
 			.composer.editing .frame {
 				border-color: var(--chat-accent, #3366ff);
@@ -601,6 +715,61 @@ let nextComposerId = 0;
 				font-size: 0.8125rem;
 				font-weight: 700;
 			}
+			.emoji-glyph {
+				flex: 0 0 auto;
+				width: 1.5rem;
+				text-align: center;
+				font-size: 1.125rem;
+			}
+			.attachments {
+				display: flex;
+				flex-wrap: wrap;
+				gap: 0.25rem;
+				margin: 0;
+				padding: 0 0.75rem 0.375rem;
+				list-style: none;
+			}
+			.attachment {
+				display: inline-flex;
+				align-items: center;
+				gap: 0.375rem;
+				max-width: 100%;
+				padding: 0.125rem 0.25rem 0.125rem 0.5rem;
+				border: 1px solid var(--chat-border, var(--border-basic-color-3, rgba(127, 127, 127, 0.3)));
+				border-radius: 0.375rem;
+				background: var(--chat-composer-bar, var(--background-basic-color-1, transparent));
+				color: var(--chat-text, inherit);
+				font-size: 0.75rem;
+			}
+			.attachment.failed {
+				border-color: var(--chat-danger, var(--color-danger-default, #e4493f));
+			}
+			.attachment-name {
+				max-width: 12rem;
+				overflow: hidden;
+				text-overflow: ellipsis;
+				white-space: nowrap;
+			}
+			.attachment-meta {
+				color: var(--chat-muted, var(--text-hint-color, inherit));
+			}
+			.attachment-remove {
+				display: inline-flex;
+				align-items: center;
+				justify-content: center;
+				width: 1.25rem;
+				height: 1.25rem;
+				padding: 0;
+				border: 0;
+				border-radius: 0.25rem;
+				background: transparent;
+				color: inherit;
+				cursor: pointer;
+			}
+			.attachment-remove:hover,
+			.attachment-remove:focus-visible {
+				background: var(--chat-hover, var(--background-basic-color-3, rgba(127, 127, 127, 0.15)));
+			}
 			.emoji-grid {
 				display: grid;
 				grid-template-columns: repeat(8, 2.25rem);
@@ -623,7 +792,8 @@ let nextComposerId = 0;
 				transform: scale(1.12);
 			}
 			@media (max-width: 600px) {
-				.hint {
+				/* The usual hint goes on a phone; a warning (too long, files left out) stays. */
+				.hint:not(.over) {
 					display: none;
 				}
 				.send {
@@ -640,6 +810,9 @@ let nextComposerId = 0;
 	]
 })
 export class MessageComposerComponent {
+	private readonly api = inject(ChatUiService);
+	private readonly destroyRef = inject(DestroyRef);
+
 	readonly people = input.required<ChatPeople>();
 	readonly conversationNames = input<ReadonlyMap<string, string>>(new Map());
 	readonly placeholder = input('');
@@ -657,6 +830,8 @@ export class MessageComposerComponent {
 	readonly draftKey = input<string | null>(null);
 	/** Clears the box (and the draft of the key) after this submission counter changes (the parent sent it). */
 	readonly resetToken = input(0);
+	/** Whether the person may attach files (`DOCS_CREATE`: they are stored as documents). */
+	readonly canAttach = input(false);
 
 	readonly submitted = output<ComposerSubmission>();
 	/** The person left edit mode without saving. */
@@ -666,8 +841,8 @@ export class MessageComposerComponent {
 	private readonly mirror = viewChild<ElementRef<HTMLDivElement>>('mirror');
 
 	protected readonly max = CHAT_MESSAGE_MAX_LENGTH;
-	/** The `@` list's id; each option's is this plus its index (the box points at the highlighted one). */
-	protected readonly listId = `chat-mentions-${++nextComposerId}`;
+	/** The open suggestion list's id (`@` or `:`); each option's is this plus its index (the box points at the highlighted one). */
+	protected readonly listId = `chat-composer-suggestions-${++nextComposerId}`;
 	protected text = '';
 	/** `@label` → employee id and `#label` → conversation id, as shown in the box. */
 	private picked = new Map<string, string>();
@@ -675,9 +850,24 @@ export class MessageComposerComponent {
 	/** Whether the person typed since the box was last filled (a late people list must not overwrite that). */
 	private dirty = false;
 	private lastReset = 0;
+	private filledKey: string | null = null;
 	protected readonly length = signal(0);
 	protected readonly query = signal<{ query: string; start: number } | null>(null);
 	protected readonly highlighted = signal(0);
+	/** The `:` query under the caret (only when no `@` query is open). */
+	protected readonly emojiQuery = signal<{ query: string; start: number } | null>(null);
+	protected readonly attachments = signal<PendingAttachment[]>([]);
+	/** How many files of the last pick, drop or paste did not fit the message (it holds {@link maxFiles}). */
+	protected readonly skippedFiles = signal(0);
+	protected readonly maxFiles = CHAT_MESSAGE_MAX_ATTACHMENTS;
+	protected readonly dragging = signal(false);
+	private readonly uploads = new Map<number, Subscription>();
+	private nextKey = 0;
+	/**
+	 * Where Escape closed the suggestions: they stay closed while the text and the caret are as they were then (the
+	 * Escape's own keyup, a click on the same spot), and open again once either changes.
+	 */
+	private dismissed: { text: string; caret: number } | null = null;
 	protected readonly focused = signal(false);
 	protected readonly emojiOpen = signal(false);
 	/** The box's text cut into plain runs and mentions, for the tinted layer under it. */
@@ -715,16 +905,36 @@ export class MessageComposerComponent {
 			: [];
 		return [...people, ...everyone];
 	});
+	protected readonly emojiSuggestions = computed(() => {
+		const query = this.emojiQuery();
+		return query ? suggestEmoji(query.query, CHAT_MENTION_SUGGESTIONS) : ([] as ChatEmoji[]);
+	});
+	/** Whether a suggestion list is shown (the box is then a combobox that owns it). */
+	protected readonly listOpen = computed(() => this.suggestions().length > 0 || this.emojiSuggestions().length > 0);
 	protected readonly isTooLong = computed(() => this.length() > this.max);
-	protected readonly canSend = computed(() => this.length() > 0 && !this.isTooLong() && !this.disabled());
+	protected readonly uploading = computed(() => this.attachments().some((item) => item.status === 'uploading'));
+	protected readonly room = computed(() => attachmentRoom(this.attachments()));
+	protected readonly canSend = computed(() => {
+		const editing = this.editing();
+		const hasFiles = !editing && readyAttachmentIds(this.attachments()).length > 0;
+		// A file that was not stored is taken off (or picked again) first: the message never goes out without it.
+		const refused = !editing && this.attachments().some((item) => item.status === 'failed');
+		return (this.length() > 0 || hasFiles) && !this.isTooLong() && !this.disabled() && (editing || (!this.uploading() && !refused));
+	});
 
 	constructor() {
 		// The box is filled when the edited message or the place changes: with the message's text, or the draft of the place.
 		effect(() => {
 			const initial = this.initialBody();
 			const key = this.draftKey();
-			untracked(() => this.fill(initial, key));
+			untracked(() => {
+				// The files picked belong to the place they were picked in.
+				if (key !== this.filledKey) this.dropAttachments();
+				this.filledKey = key;
+				this.fill(initial, key);
+			});
 		});
+		this.destroyRef.onDestroy(() => this.dropAttachments());
 		// Names that arrive after the box was filled replace the `…` labels, as long as nothing was typed since.
 		effect(() => {
 			this.people();
@@ -763,6 +973,8 @@ export class MessageComposerComponent {
 		}
 		this.dirty = false;
 		this.query.set(null);
+		this.emojiQuery.set(null);
+		this.dismissed = null;
 		this.measure();
 		this.afterRender(() => this.autosize());
 	}
@@ -777,7 +989,9 @@ export class MessageComposerComponent {
 		this.length.set(0);
 		this.marked.set([]);
 		this.query.set(null);
+		this.emojiQuery.set(null);
 		this.emojiOpen.set(false);
+		this.dropAttachments();
 		this.afterRender(() => this.autosize());
 	}
 
@@ -913,26 +1127,68 @@ export class MessageComposerComponent {
 
 	protected onInput(): void {
 		this.dirty = true;
+		this.replaceShortcode();
 		this.measure();
 		this.keepDraft();
 		this.autosize();
 		this.onCaretMove();
 	}
 
+	/** A complete `:name:` just typed becomes its emoji, the caret right after it. */
+	private replaceShortcode(): void {
+		const element = this.box()?.nativeElement;
+		if (!element) return;
+		const replaced = replaceShortcodeBefore(this.text, element.selectionStart ?? this.text.length);
+		if (!replaced) return;
+		this.text = replaced.text;
+		element.value = replaced.text;
+		element.setSelectionRange(replaced.caret, replaced.caret);
+	}
+
 	protected onCaretMove(): void {
 		const element = this.box()?.nativeElement;
 		if (!element) return;
-		const next = mentionQueryAt(this.text, element.selectionStart ?? this.text.length);
+		const caret = element.selectionStart ?? this.text.length;
+		if (this.dismissed && this.dismissed.text === this.text && this.dismissed.caret === caret) {
+			this.query.set(null);
+			this.emojiQuery.set(null);
+			return;
+		}
+		this.dismissed = null;
+		const next = mentionQueryAt(this.text, caret);
 		const current = this.query();
-		if (next?.query !== current?.query || next?.start !== current?.start) {
+		const emoji = next ? null : emojiQueryAt(this.text, caret);
+		const currentEmoji = this.emojiQuery();
+		if (next?.query !== current?.query || next?.start !== current?.start || emoji?.query !== currentEmoji?.query || emoji?.start !== currentEmoji?.start) {
 			this.query.set(next);
+			this.emojiQuery.set(emoji);
 			this.highlighted.set(0);
 		}
 	}
 
 	protected onKeyDown(event: KeyboardEvent): void {
-		// Keys that belong to an IME composition (Enter confirms it) neither pick a mention nor send.
+		// Keys that belong to an IME composition (Enter confirms it) neither pick a suggestion nor send.
 		if (event.isComposing || event.keyCode === 229) return;
+		const emojis = this.suggestions().length === 0 ? this.emojiSuggestions() : [];
+		if (emojis.length > 0) {
+			if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+				event.preventDefault();
+				const step = event.key === 'ArrowDown' ? 1 : -1;
+				this.highlighted.set((this.highlighted() + step + emojis.length) % emojis.length);
+				this.afterRender(() => this.revealHighlighted());
+				return;
+			}
+			if (event.key === 'Enter' || event.key === 'Tab') {
+				event.preventDefault();
+				this.pickEmoji(emojis[this.highlighted()] ?? emojis[0]);
+				return;
+			}
+			if (event.key === 'Escape') {
+				event.preventDefault();
+				this.dismiss();
+				return;
+			}
+		}
 		const suggestions = this.suggestions();
 		if (suggestions.length > 0) {
 			if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
@@ -949,7 +1205,7 @@ export class MessageComposerComponent {
 			}
 			if (event.key === 'Escape') {
 				event.preventDefault();
-				this.query.set(null);
+				this.dismiss();
 				return;
 			}
 		}
@@ -1001,10 +1257,129 @@ export class MessageComposerComponent {
 		});
 	}
 
+	protected optionId(index: number): string {
+		return `${this.listId}-${index}`;
+	}
+
+	/** Closes the open suggestions until the text or the caret changes. */
+	private dismiss(): void {
+		const element = this.box()?.nativeElement;
+		this.dismissed = { text: this.text, caret: element?.selectionStart ?? this.text.length };
+		this.query.set(null);
+		this.emojiQuery.set(null);
+	}
+
+	/** Puts the emoji in place of the `:` query and moves the caret after it. */
+	protected pickEmoji(emoji: ChatEmoji): void {
+		const query = this.emojiQuery();
+		const element = this.box()?.nativeElement;
+		if (!query || !element) return;
+		const caret = element.selectionStart ?? this.text.length;
+		const insertion = `${emoji.emoji} `;
+		this.text = `${this.text.slice(0, query.start)}${insertion}${this.text.slice(caret)}`;
+		this.dirty = true;
+		this.measure();
+		this.keepDraft();
+		this.emojiQuery.set(null);
+		const position = query.start + insertion.length;
+		this.afterRender(() => {
+			element.focus();
+			element.setSelectionRange(position, position);
+			this.autosize();
+		});
+	}
+
 	protected send(): void {
 		if (!this.canSend()) return;
-		const body = this.tokenized();
+		const editing = this.editing();
+		const text = this.tokenized();
+		const attachmentIds = editing ? [] : readyAttachmentIds(this.attachments());
+		const body = editing ? text : bodyWithAttachments(text, this.attachments());
 		const mentionEmployeeIds = [...new Set([...this.picked.values()].filter((id) => body.includes(`<@${id}>`)))];
-		this.submitted.emit({ body, mentionEmployeeIds });
+		this.submitted.emit({ body, mentionEmployeeIds, attachmentIds });
+	}
+
+	// ---------------------------------------------------------------- files
+
+	protected size(bytes: number): string {
+		return fileSizeLabel(bytes);
+	}
+
+	protected onPicked(event: Event): void {
+		const picker = event.target as HTMLInputElement | null;
+		this.addFiles(Array.from(picker?.files ?? []));
+		// The same file can be picked again after it was taken off.
+		if (picker) picker.value = '';
+	}
+
+	protected onDragOver(event: DragEvent): void {
+		if (!this.canAttach() || this.editing() || !Array.from(event.dataTransfer?.types ?? []).includes('Files')) return;
+		event.preventDefault();
+		this.dragging.set(true);
+	}
+
+	protected onDrop(event: DragEvent): void {
+		this.dragging.set(false);
+		const files = filesOfTransfer(event.dataTransfer);
+		if (!files.length || !this.canAttach() || this.editing()) return;
+		event.preventDefault();
+		this.addFiles(files);
+	}
+
+	/** A pasted picture (or file) is attached; pasted text is left to the box. */
+	protected onPaste(event: ClipboardEvent): void {
+		const files = filesOfTransfer(event.clipboardData);
+		if (!files.length || !this.canAttach() || this.editing()) return;
+		event.preventDefault();
+		this.addFiles(files);
+	}
+
+	/** Stores each file at once (as many as the message can still take, the rest said), one request per file. */
+	addFiles(files: readonly File[]): void {
+		if (!this.canAttach() || this.editing() || this.disabled()) return;
+		const room = this.room();
+		this.skippedFiles.set(Math.max(0, files.length - room));
+		for (const file of files.slice(0, room)) {
+			this.nextKey += 1;
+			const key = this.nextKey;
+			this.attachments.update((list) => [
+				...list,
+				{ key, name: file.name || 'file', size: file.size, mimeType: file.type, status: 'uploading', documentId: null, error: null }
+			]);
+			const upload = this.api.uploadFile(file).subscribe({
+				next: (answer) => {
+					const outcome = uploadOutcome(answer);
+					this.patchAttachment(key, 'documentId' in outcome ? { status: 'ready', documentId: outcome.documentId } : { status: 'failed', error: outcome.error });
+				},
+				error: (error: HttpErrorResponse) => {
+					// No Docs plugin (or no right to upload) answers 404 / 403: attachments are not available here.
+					const unavailable = error?.status === 404 || error?.status === 403;
+					this.patchAttachment(key, {
+						status: 'failed',
+						error: unavailable ? 'CHAT.COMPOSER.ATTACH_UNAVAILABLE' : (apiErrorMessage(error) ?? 'CHAT.COMPOSER.UPLOAD_FAILED')
+					});
+				}
+			});
+			if (this.attachments().some((item) => item.key === key && item.status === 'uploading')) this.uploads.set(key, upload);
+		}
+	}
+
+	protected removeAttachment(key: number): void {
+		this.skippedFiles.set(0);
+		this.uploads.get(key)?.unsubscribe();
+		this.uploads.delete(key);
+		this.attachments.update((list) => list.filter((item) => item.key !== key));
+	}
+
+	private patchAttachment(key: number, patch: Partial<PendingAttachment>): void {
+		this.uploads.delete(key);
+		this.attachments.update((list) => list.map((item) => (item.key === key ? { ...item, ...patch } : item)));
+	}
+
+	private dropAttachments(): void {
+		this.skippedFiles.set(0);
+		for (const upload of this.uploads.values()) upload.unsubscribe();
+		this.uploads.clear();
+		if (this.attachments().length) this.attachments.set([]);
 	}
 }

@@ -203,6 +203,37 @@ export class DocumentAutosaveService implements OnDestroy {
 	}
 
 	/**
+	 * Waits until nothing is left to save: a save in flight lands, and edits made meanwhile are saved too.
+	 *
+	 * @param timeoutMs The longest to wait.
+	 * @returns `true` when nothing is left unsaved; `false` on a freeze (conflict, lock), a failed save, or the deadline.
+	 */
+	async settle(timeoutMs = 10_000): Promise<boolean> {
+		const deadline = Date.now() + timeoutMs;
+		while (Date.now() < deadline) {
+			if (this.frozen) return false;
+			if (this.inFlight) {
+				await new Promise((resolve) => setTimeout(resolve, 50));
+				continue;
+			}
+			if (!this.dirty) return true;
+			if (!(await this.flush()) && !this.inFlight) return false;
+		}
+		return !this.dirty && !this.inFlight;
+	}
+
+	/**
+	 * The row was written by a metadata change of this page (a move to another space), which stamps `updatedAt`:
+	 * the next save states the new token, edits still waiting included. A conflict or lock freeze stays as it is.
+	 *
+	 * @param updatedAt The row's `updatedAt` after the write.
+	 */
+	rebase(updatedAt: string | Date | undefined): void {
+		if (!this.documentId || !updatedAt) return;
+		this.expectedUpdatedAt = new Date(updatedAt).toISOString();
+	}
+
+	/**
 	 * The lock was released (the page's own lock toggle, or a refetch that came
 	 * back unlocked). A 423 freeze has no self-clearing path, so without this the
 	 * editor stays read-only until a full reload (spec 05 §9.2 "lock respect").

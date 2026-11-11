@@ -241,4 +241,31 @@ export interface IRealtimeStatus {
 	events: string[];
 	signals: string[];
 	maxTypingRecipients: number;
+	/** How promptly events are pushed. Absent from an API older than this field: treat it as not prompt. */
+	delivery?: IRealtimeDelivery;
+}
+
+/**
+ * How promptly a written fact reaches an open subscription.
+ */
+export interface IRealtimeDelivery {
+	/**
+	 * Who hands an appended event to the subscriptions: this API process right after the append
+	 * (`inline`), a queue job asked for right after the append (`queue`), or only a schedule (`none`).
+	 */
+	dispatch: 'inline' | 'queue' | 'none';
+	/** Whether a published event reaches the sockets of every API process, not only one. */
+	shared: boolean;
+	/**
+	 * Whether the installation runs one API process: on SQLite, or where the deployment declares it
+	 * (`GAUZY_API_SINGLE_PROCESS=true`).
+	 */
+	singleProcess: boolean;
+	/**
+	 * True when a client may rely on pushed events instead of polling: the event is dispatched right
+	 * after it is written, and reaches the socket whichever process dispatches it (the pub/sub is
+	 * shared, or there is one API process). A client still catches up now and then, which bounds what
+	 * a lost push can cost.
+	 */
+	prompt: boolean;
 }

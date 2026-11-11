@@ -20,3 +20,24 @@ export function isRealtimeEnabled(
 	warn('GAUZY_REALTIME_ENABLED is neither "true" nor "false"; the real-time channel stays off (the default).');
 	return false;
 }
+
+/**
+ * Whether the real-time plugin prunes the collaboration events it no longer needs to replay (`RealtimeRetentionService`).
+ * Off unless `GAUZY_REALTIME_RETENTION_ENABLED` is exactly `true`, whatever `GAUZY_REALTIME_ENABLED` says: it deletes
+ * outbox rows, so an installation turns it on deliberately (on production, only after checking its database's backups).
+ * Any other value keeps it off and is reported through `warn`, which never repeats the value.
+ */
+export function isRealtimeRetentionEnabled(
+	env: Record<string, string | undefined> = process.env,
+	warn: (message: string) => void = () => undefined
+): boolean {
+	const raw = env['GAUZY_REALTIME_RETENTION_ENABLED'];
+	if (raw === undefined || raw === '' || raw === 'false') {
+		return false;
+	}
+	if (raw === 'true') {
+		return true;
+	}
+	warn('GAUZY_REALTIME_RETENTION_ENABLED is neither "true" nor "false"; the outbox retention stays off (the default).');
+	return false;
+}

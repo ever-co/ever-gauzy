@@ -1,15 +1,15 @@
 import { DatePipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { ChangeDetectionStrategy, Component, computed, DestroyRef, ElementRef, inject, NgZone, OnInit, signal, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, DestroyRef, ElementRef, inject, NgZone, OnInit, Signal, signal, viewChild } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, NavigationEnd, Router, RouterLink } from '@angular/router';
 import { NbCardModule, NbDialogService, NbIconModule, NbSpinnerModule } from '@nebular/theme';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { combineLatest, EMPTY, forkJoin, merge, Observable, of, Subscription, timer } from 'rxjs';
-import { catchError, distinctUntilChanged, filter, map, startWith, switchMap } from 'rxjs/operators';
+import { auditTime, catchError, distinctUntilChanged, filter, map, startWith, switchMap } from 'rxjs/operators';
 import { ChatConversationKindEnum, IChatCategory, IChatConversationWithState, IChatMemberState, IChatMessageWithRelations, IChatStates, IOrganization, IUser, PermissionsEnum } from '@gauzy/contracts';
 import { Store, ToastrService } from '@gauzy/ui-core/core';
-import { CHAT_LINK, CHAT_LIST_POLL_MS } from '../../chat-ui.constants';
+import { CHAT_LINK, CHAT_LIST_POLL_MS, CHAT_LIVE_LIST_AUDIT_MS } from '../../chat-ui.constants';
 import {
 	cardPlace,
 	ChatPerson,
@@ -24,9 +24,12 @@ import {
 	sortConversations
 } from '../../chat-ui.helpers';
 import { ChatAvailabilityService, isFinalRefusal } from '../../services/chat-availability.service';
+import { coalesceReads } from '../../services/chat-live';
+import { ChatLiveService, isTabVisible } from '../../services/chat-live.service';
 import { ChatPeople, ChatPeopleService, EMPTY_PEOPLE } from '../../services/chat-people.service';
 import { ChatFollowedThread, ChatMessagePatch, ChatUiService } from '../../services/chat-ui.service';
 import { BrowseChannelsDialogComponent, NewChannelDialogComponent, NewDirectDialogComponent } from '../../dialogs/chat-dialogs.component';
+import { CategoriesDialogComponent } from '../../dialogs/chat-settings-dialogs.component';
 import { ChatListView, ConversationListComponent } from '../conversation-list/conversation-list.component';
 import { ConversationViewComponent } from '../conversation-view/conversation-view.component';
 import { PersonAvatarComponent } from '../person-avatar/person-avatar.component';
@@ -54,8 +57,9 @@ function viewportSize(): { width: number; height: number } {
 
 /**
  * `/pages/chat`: the conversations on the left (channels by category, direct messages, favourites, Unreads and
- * Threads), the open conversation in the middle, and a thread on the right. The lists refresh every 30 s while the
- * tab is visible and at once after a write; the open conversation polls for newer messages on its own.
+ * Threads), the open conversation in the middle, and a thread on the right. The lists refresh when a chat event
+ * arrives (live, `ChatLiveService`), at once after a write, and every 30 s while the tab is visible as the fallback
+ * (once a minute while the events arrive live); the open conversation follows its own messages.
  *
  * The page asks the API first (`/chat/states`) for the signed-in user in the selected organization: a 404 means
  * this installation does not serve the chat, and the page says so and makes no other request. When the user or
@@ -118,6 +122,8 @@ function viewportSize(): { width: number; height: number } {
 									[view]="listView()"
 									[threadCount]="threadUnreadCount()"
 									[untitled]="'CHAT.UNNAMED' | translate"
+									[canManageCategories]="isAdmin()"
+									(manageCategories)="openCategories()"
 									(newChannel)="openNewChannel()"
 									(newDirect)="openNewDirect()"
 									(browse)="openBrowse()"
@@ -227,6 +233,11 @@ function viewportSize(): { width: number; height: number } {
 												[meEmployeeId]="meEmployeeId()"
 												[meUserId]="meUserId()"
 												[isAdmin]="isAdmin()"
+												[canAttach]="canAttach()"
+												[canCreateTask]="canCreateTask()"
+												[categories]="categories()"
+												[organizationId]="organizationId()"
+												[tenantId]="tenantId()"
 												[untitled]="'CHAT.UNNAMED' | translate"
 												[highlightId]="highlightId()"
 												[patch]="rootPatch()"
@@ -272,6 +283,10 @@ function viewportSize(): { width: number; height: number } {
 											[meUserId]="meUserId()"
 											[readOnly]="!!selected()?.archivedAt || !selected()?.state"
 											[memberIds]="selectedMemberIds()"
+											[canAttach]="canAttach()"
+											[canCreateTask]="canCreateTask()"
+											[organizationId]="organizationId()"
+											[tenantId]="tenantId()"
 											(closed)="closeThread()"
 											(rootChanged)="onRootChanged($event)"
 										></ngx-chat-thread-pane>
@@ -709,6 +724,7 @@ function viewportSize(): { width: number; height: number } {
 })
 export class ChatPageComponent implements OnInit {
 	private readonly api = inject(ChatUiService);
+	private readonly live = inject(ChatLiveService);
 	private readonly availability = inject(ChatAvailabilityService);
 	private readonly peopleService = inject(ChatPeopleService);
 	private readonly store = inject(Store);
@@ -769,7 +785,20 @@ export class ChatPageComponent implements OnInit {
 		return user?.employee?.id ? String(user.employee.id) : user?.employeeId ? String(user.employeeId) : null;
 	});
 	protected readonly meUserId = computed(() => (this.user()?.id ? String(this.user()!.id) : null));
-	protected readonly isAdmin = computed(() => this.store.hasPermission(PermissionsEnum.CHAT_MANAGE));
+	protected readonly isAdmin = this.permission(PermissionsEnum.CHAT_MANAGE);
+	/** Attachments are stored as documents: uploading them needs `DOCS_CREATE`. */
+	protected readonly canAttach = this.permission(PermissionsEnum.DOCS_CREATE);
+	/** A task is created from a message with `ORG_TASK_ADD` (the API checks it too). */
+	protected readonly canCreateTask = this.permission(PermissionsEnum.ORG_TASK_ADD);
+	private readonly organization = toSignal(this.store.selectedOrganization$ as Observable<IOrganization | null>, { initialValue: null });
+	protected readonly organizationId = computed(() => {
+		const id = this.organization()?.id;
+		return id ? String(id) : null;
+	});
+	protected readonly tenantId = computed(() => {
+		const tenantId = this.organization()?.tenantId ?? this.user()?.tenantId;
+		return tenantId ? String(tenantId) : null;
+	});
 
 	protected readonly people = toSignal(
 		combineLatest([
@@ -843,6 +872,17 @@ export class ChatPageComponent implements OnInit {
 		})
 	);
 	protected readonly threadUnreadCount = computed(() => (this.states()?.threads ?? []).filter((thread) => thread.unreadReplies > 0).length);
+
+	/** Whether I hold a permission, following my role's permissions as they load and change. */
+	private permission(permission: PermissionsEnum): Signal<boolean> {
+		return toSignal(
+			(this.store.userRolePermissions$ as Observable<unknown>).pipe(
+				map(() => this.store.hasPermission(permission)),
+				distinctUntilChanged()
+			),
+			{ initialValue: this.store.hasPermission(permission) }
+		);
+	}
 
 	/** Counts up at every scope change and every list refresh, so a late answer of an earlier one is dropped. */
 	private scopeToken = 0;
@@ -928,14 +968,22 @@ export class ChatPageComponent implements OnInit {
 		this.checkAvailability();
 	}
 
-	/** The lists on a timer while the tab is visible, and at once after every write of the page. */
+	/**
+	 * The lists: at once, after every write of the page, for the chat events (any of them can move a conversation,
+	 * a count or a followed thread; a burst is read once; none while the tab is hidden, which catches up when shown),
+	 * after a reconnect, and on the poll's ticks. A read under way is never cancelled by the next trigger: triggers that
+	 * come meanwhile ask for one more read after it.
+	 */
 	private startListPolling(): void {
 		this.listPolling?.unsubscribe();
 		const token = this.scopeToken;
-		const tick$ = timer(0, CHAT_LIST_POLL_MS).pipe(filter(() => typeof document === 'undefined' || !document.hidden));
-		this.listPolling = merge(tick$, this.api.changed$)
+		const events$ = this.live.hints$.pipe(
+			filter(() => isTabVisible()),
+			auditTime(CHAT_LIVE_LIST_AUDIT_MS)
+		);
+		this.listPolling = merge(timer(0), this.live.ticks(CHAT_LIST_POLL_MS), this.api.changed$, events$, this.live.catchUp$)
 			.pipe(
-				switchMap(() => {
+				coalesceReads(() => {
 					const scope = ++this.listScope;
 					return forkJoin({ list: this.api.listMine(), states: this.api.states(), threads: this.api.threads().pipe(catchError(() => of([] as ChatFollowedThread[]))) }).pipe(
 						map((answer) => ({ ...answer, scope })),
@@ -1076,6 +1124,16 @@ export class ChatPageComponent implements OnInit {
 			.open(NewDirectDialogComponent, { context: { people: this.people(), meEmployeeId: this.meEmployeeId() } })
 			.onClose.pipe(takeUntilDestroyed(this.destroyRef))
 			.subscribe((conversation: IChatConversationWithState | null) => this.open(conversation));
+	}
+
+	/** The categories of the channels (`CHAT_MANAGE`); the lists are read again after a change. */
+	protected openCategories(): void {
+		this.dialog
+			.open(CategoriesDialogComponent, { context: { categories: this.categories() } })
+			.onClose.pipe(takeUntilDestroyed(this.destroyRef))
+			.subscribe((changed: boolean | undefined) => {
+				if (changed) this.api.notifyChanged();
+			});
 	}
 
 	protected openBrowse(): void {

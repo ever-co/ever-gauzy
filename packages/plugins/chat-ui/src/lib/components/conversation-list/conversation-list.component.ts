@@ -4,6 +4,7 @@ import { Router, RouterLink } from '@angular/router';
 import { NbIconModule, NbTooltipModule } from '@nebular/theme';
 import { TranslatePipe } from '@ngx-translate/core';
 import { ChatConversationKindEnum, ChatNotifyLevelEnum, ChatVisibilityEnum, IChatCategory, IChatConversationWithState } from '@gauzy/contracts';
+import { sortCategories } from '../../chat-categories';
 import { CHAT_COLLAPSED_SECTIONS_KEY, CHAT_LINK, CHAT_THREADS_PATH, CHAT_UNREADS_PATH } from '../../chat-ui.constants';
 import { ChatPerson, conversationPerson, conversationTitle, groupShortTitle, isUnread, otherMemberCount } from '../../chat-ui.helpers';
 import { ChatPeople } from '../../services/chat-people.service';
@@ -181,6 +182,12 @@ function writeCollapsed(keys: ReadonlySet<string>): void {
 										<span class="row-icon add-icon"><nb-icon icon="search-outline"></nb-icon></span>
 										<span class="title">{{ 'CHAT.LIST.BROWSE' | translate }}</span>
 									</button>
+									@if (canManageCategories()) {
+										<button type="button" class="row add-row" data-test="manage-categories" (click)="manageCategories.emit()">
+											<span class="row-icon add-icon"><nb-icon icon="folder-outline"></nb-icon></span>
+											<span class="title">{{ 'CHAT.CATEGORIES.TITLE' | translate }}</span>
+										</button>
+									}
 								}
 								@if (section.key === 'direct') {
 									<button type="button" class="row add-row" (click)="newDirect.emit()">
@@ -612,10 +619,13 @@ export class ConversationListComponent {
 	readonly view = input<ChatListView>('conversation');
 	readonly threadCount = input(0);
 	readonly untitled = input('Conversation');
+	/** `CHAT_MANAGE`: offers the categories of the channels to manage. */
+	readonly canManageCategories = input(false);
 
 	readonly newChannel = output<void>();
 	readonly newDirect = output<void>();
 	readonly browse = output<void>();
+	readonly manageCategories = output<void>();
 
 	private readonly search = viewChild<ElementRef<HTMLInputElement>>('search');
 
@@ -643,7 +653,8 @@ export class ConversationListComponent {
 	protected readonly channelGroups = computed(() => {
 		const channels = this.channels();
 		if (channels.length === 0) return [];
-		const categories = [...this.categories()].sort((a, b) => a.position - b.position);
+		// The order the categories dialog shows and moves them in.
+		const categories = sortCategories(this.categories());
 		const groups: { key: string; name: string | null; conversations: IChatConversationWithState[] }[] = [];
 		const uncategorized = channels.filter((conversation) => !conversation.categoryId);
 		if (uncategorized.length > 0) groups.push({ key: 'none', name: null, conversations: uncategorized });

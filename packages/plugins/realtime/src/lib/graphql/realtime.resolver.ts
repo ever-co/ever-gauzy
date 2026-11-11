@@ -1,4 +1,4 @@
-import { BadRequestException, Optional, UseGuards } from '@nestjs/common';
+import { BadRequestException, Inject, Optional, UseGuards } from '@nestjs/common';
 import { Args, ID, Resolver, Subscription } from '@nestjs/graphql';
 import { FeatureFlag } from '@gauzy/common';
 import { IRealtimeEventEnvelope, PermissionsEnum } from '@gauzy/contracts';
@@ -42,7 +42,10 @@ import {
 export class RealtimeResolver {
 	constructor(
 		private readonly pubSub: GraphqlPubSub,
-		@Optional() private readonly catalogue: SubscriptionCatalogue | undefined,
+		// The token is named: the type `SubscriptionCatalogue | undefined` is emitted as `Object`, which Nest cannot
+		// resolve, so the optional catalogue was always undefined and the field offered the built-in names only —
+		// every chat and inbox selection was refused and the subscription completed at once.
+		@Optional() @Inject(SubscriptionCatalogue) private readonly catalogue: SubscriptionCatalogue | undefined,
 		private readonly audience: RealtimeAudience
 	) {}
 

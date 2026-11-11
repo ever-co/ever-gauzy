@@ -20,6 +20,12 @@ export const PAGE_EXTENSION_SLOTS = {
 	/** Integrations list items (e.g. integration tiles). */
 	INTEGRATIONS_LIST: 'integrations-list',
 
+	/**
+	 * Actions on a task's own page (`/pages/tasks/view/:id`), beside Edit and Copy link: small buttons. The task is
+	 * the one of the page's route (`ActivatedRoute` param `id`), which an extension component injects.
+	 */
+	TASK_VIEW_ACTIONS: 'task-view-actions',
+
 	/** Top-level page sections (alternative to page-sections routes). */
 	PAGE_SECTIONS: 'page-sections',
 

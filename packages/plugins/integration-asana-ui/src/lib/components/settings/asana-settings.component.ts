@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, inject, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, ElementRef, inject, OnInit, ViewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -21,6 +21,19 @@ import {
 	AsanaWorkspace
 } from '../../services/asana-ui.service';
 import { errorText, sectionMapOf } from '../shared/asana-ui.utils';
+import { AsanaConflictsComponent } from '../conflicts/asana-conflicts.component';
+
+/**
+ * Whether the newer runs read holds a run that finished since the older one: one that was running and is not any
+ * more (done, failed, or gone from the list), or one first seen already finished with conflicts (it started and ended
+ * between two reads).
+ */
+export function finishedRuns(before: readonly AsanaRun[], after: readonly AsanaRun[]): boolean {
+	const earlier = new Set(before.map((run) => run.id));
+	const now = new Map(after.map((run) => [run.id, run.status]));
+	if (before.some((run) => run.status === 'running' && now.get(run.id) !== 'running')) return true;
+	return after.some((run) => !earlier.has(run.id) && run.status !== 'running' && (run.conflictCount ?? 0) > 0);
+}
 
 const DIRECTIONS: AsanaDirection[] = ['inbound', 'outbound', 'both'];
 /** How often the runs are read again while one is running. */
@@ -46,7 +59,8 @@ interface MappingDraft {
 /**
  * The settings of an Asana connection: the account it is (and a way to disconnect), the Asana project ↔ project
  * mappings (add with a section → status map, change the direction or the switch, register the webhook again,
- * import now, remove), and the latest runs.
+ * import now, remove), the sync conflicts
+ * to resolve, and the latest runs with how many conflicts each found (a count opens the conflicts of its run).
  */
 /** A mapping as the list shows it: the stored mapping and how many refused changes its row took (see `restore`). */
 type AsanaMappingRow = AsanaMapping & { rowVersion?: number };
@@ -54,7 +68,18 @@ type AsanaMappingRow = AsanaMapping & { rowVersion?: number };
 @Component({
 	selector: 'ngx-asana-settings',
 	changeDetection: ChangeDetectionStrategy.OnPush,
-	imports: [DatePipe, FormsModule, NbAlertModule, NbButtonModule, NbCardModule, NbCheckboxModule, NbInputModule, NbSelectModule, TranslatePipe],
+	imports: [
+		DatePipe,
+		FormsModule,
+		NbAlertModule,
+		NbButtonModule,
+		NbCardModule,
+		NbCheckboxModule,
+		NbInputModule,
+		NbSelectModule,
+		TranslatePipe,
+		AsanaConflictsComponent
+	],
 	template: `
 		<nb-card>
 			<nb-card-header class="header">
@@ -240,6 +265,10 @@ type AsanaMappingRow = AsanaMapping & { rowVersion?: number };
 						</form>
 					</section>
 
+					<section class="conflicts">
+						<ngx-asana-conflicts [integrationId]="connection.id" [(runId)]="conflictRunId" />
+					</section>
+
 					<section class="runs">
 						<h5>
 							{{ 'ASANA.RUNS.TITLE' | translate }}
@@ -256,6 +285,7 @@ type AsanaMappingRow = AsanaMapping & { rowVersion?: number };
 										<th>{{ 'ASANA.RUNS.STARTED' | translate }}</th>
 										<th>{{ 'ASANA.RUNS.FINISHED' | translate }}</th>
 										<th>{{ 'ASANA.RUNS.COUNTS' | translate }}</th>
+										<th>{{ 'ASANA.RUNS.CONFLICTS' | translate }}</th>
 										<th>{{ 'ASANA.RUNS.ERROR' | translate }}</th>
 									</tr>
 								</thead>
@@ -267,6 +297,23 @@ type AsanaMappingRow = AsanaMapping & { rowVersion?: number };
 											<td>{{ run.startedAt ? (run.startedAt | date: 'short') : '—' }}</td>
 											<td>{{ run.finishedAt ? (run.finishedAt | date: 'short') : '—' }}</td>
 											<td>{{ run.createdCount }} / {{ run.updatedCount }} / {{ run.skippedCount }} / {{ run.failedCount }}</td>
+											<td [attr.data-test]="'run-conflicts-' + run.id">
+												@if (run.conflictCount) {
+													<button
+														nbButton
+														ghost
+														size="tiny"
+														status="warning"
+														type="button"
+														[attr.title]="'ASANA.RUNS.SHOW_CONFLICTS' | translate"
+														(click)="showRunConflicts(run)"
+													>
+														{{ run.conflictCount }}
+													</button>
+												} @else {
+													0
+												}
+											</td>
 											<td class="error-cell" [attr.title]="run.lastError">{{ run.lastError || '' }}</td>
 										</tr>
 									}
@@ -344,6 +391,10 @@ export class AsanaSettingsComponent implements OnInit {
 	private readonly cdr = inject(ChangeDetectorRef);
 	private readonly destroyRef = inject(DestroyRef);
 
+	/** The conflict list (read again when a run finishes) and its host (scrolled to when a run's count opens it). */
+	@ViewChild(AsanaConflictsComponent) private readonly conflictList?: AsanaConflictsComponent;
+	@ViewChild(AsanaConflictsComponent, { read: ElementRef }) private readonly conflictHost?: ElementRef<HTMLElement>;
+
 	readonly directions = DIRECTIONS;
 
 	integrationId: string | null = null;
@@ -356,6 +407,8 @@ export class AsanaSettingsComponent implements OnInit {
 	projects: IOrganizationProject[] = [];
 	mappings: AsanaMappingRow[] = [];
 	runs: AsanaRun[] = [];
+	/** The run whose conflicts the list shows (a run's count in the sync log sets it); null: every run. */
+	conflictRunId: string | null = null;
 	draft: MappingDraft = this.emptyDraft();
 	loading = true;
 	loadingProjects = false;
@@ -374,6 +427,8 @@ export class AsanaSettingsComponent implements OnInit {
 		])
 			.pipe(
 				switchMap(([integrationId, organizationId]) => {
+					// Another connection: the run filter of the last one means nothing here.
+					if (integrationId !== this.integrationId) this.conflictRunId = null;
 					this.integrationId = integrationId;
 					this.organizationId = organizationId;
 					this.loading = true;
@@ -432,14 +487,27 @@ export class AsanaSettingsComponent implements OnInit {
 	}
 
 	loadRuns(): void {
-		if (!this.integrationId) return;
-		this.api.runs(this.integrationId).subscribe({
+		const integrationId = this.integrationId;
+		if (!integrationId) return;
+		this.api.runs(integrationId).subscribe({
 			next: (runs) => {
+				// The page moved to another connection meanwhile: this read is not its sync log.
+				if (integrationId !== this.integrationId) return;
+				const finished = finishedRuns(this.runs, runs);
 				this.runs = runs;
+				// A run that just finished (another may still run) may have found conflicts.
+				if (finished) this.conflictList?.load(true);
 				this.cdr.markForCheck();
 			},
 			error: () => undefined
 		});
+	}
+
+	/** The sync log's count of a run: the conflict list shows what that run found. */
+	showRunConflicts(run: AsanaRun): void {
+		this.conflictRunId = run.id;
+		this.cdr.markForCheck();
+		this.conflictHost?.nativeElement.scrollIntoView?.({ behavior: 'smooth', block: 'start' });
 	}
 
 	loadMappings(): void {

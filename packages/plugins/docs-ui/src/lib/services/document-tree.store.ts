@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable, firstValueFrom } from 'rxjs';
-import { DocumentKindEnum, DocumentKnowledgeStatusEnum, ID, IDocument } from '@gauzy/contracts';
+import { DocumentKindEnum, DocumentKnowledgeStatusEnum, DocumentSpaceKindEnum, ID, IDocument } from '@gauzy/contracts';
 import { DocumentsService } from './documents.service';
 
 /** Children fetched per branch — the query DTO caps `take` at 100. */
@@ -43,12 +43,25 @@ export interface IDocsTreeNode {
  * deliberately — nodes are shared by the tree, the move dialog and breadcrumbs.
  * Invalidated by move/create/archive mutation events from the browse page.
  */
+/** The space the tree's top level is narrowed to. */
+export interface IDocsSpaceFilter {
+	kind: DocumentSpaceKindEnum;
+	organizationTeamId?: ID;
+}
+
 @Injectable()
 export class DocumentTreeStore {
 	/** parentId (or '' for root) → children (undefined = not loaded yet). */
 	private readonly _children = new Map<string, IDocsTreeNode[]>();
 	/** id → node (flat index across everything loaded so far). */
 	private readonly _byId = new Map<string, IDocsTreeNode>();
+
+	/** The space the top level lists (`GAUZY_DOCS_COLLAB_ENABLED`); `null` lists them all. */
+	private space: IDocsSpaceFilter | null = null;
+	/** Bumps on every space selection, so a read started for the previous one is dropped. */
+	private spaceSelection = 0;
+	/** Root reads running now. */
+	private rootsLoading = 0;
 
 	private readonly _nodes$ = new BehaviorSubject<IDocsTreeNode[]>([]);
 	/** Root-level nodes (reference refreshed on every cache change). */
@@ -68,10 +81,31 @@ export class DocumentTreeStore {
 		// whole tree, and the literal string "null" fails the DTO's `@IsUUID`. No
 		// `sort` either — `index` is not in the DTO's `@IsIn` allowlist, and tree
 		// browse (`parentId` present) already defaults to `index ASC` server-side.
-		const { items } = await firstValueFrom(
-			this.documentsService.getAll({ parentId: parentId ?? 'root', archived: false, take: DOCS_TREE_PAGE_SIZE })
-		);
+		// The roots of the selected space; a folder's children are its children, whatever space they are in.
+		const space = parentId ? null : this.space;
+		// A space selected while this read runs makes its answer stale: it is not cached, nor shown.
+		const selection = this.spaceSelection;
+		if (!parentId) this.rootsLoading += 1;
+		let items: IDocument[] | undefined;
+		try {
+			({ items } = await firstValueFrom(
+				this.documentsService.getAll({
+					parentId: parentId ?? 'root',
+					archived: false,
+					take: DOCS_TREE_PAGE_SIZE,
+					...(space
+						? {
+								space: space.kind,
+								...(space.organizationTeamId ? { organizationTeamId: space.organizationTeamId } : {})
+							}
+						: {})
+				})
+			));
+		} finally {
+			if (!parentId) this.rootsLoading -= 1;
+		}
 		const nodes = (items ?? []).map((doc) => this.toNode(doc));
+		if (selection !== this.spaceSelection) return this._children.get(key) ?? [];
 		this._children.set(key, nodes);
 		nodes.forEach((node) => this._byId.set(String(node.id), node));
 		this.emit();
@@ -80,6 +114,25 @@ export class DocumentTreeStore {
 
 	async loadRoots(): Promise<IDocsTreeNode[]> {
 		return this.loadChildren(null);
+	}
+
+	/** The space whose pages the tree lists at its top level; `null` lists every space. */
+	get selectedSpace(): IDocsSpaceFilter | null {
+		return this.space;
+	}
+
+	/**
+	 * Lists one space at the tree's top level (or every space with `null`) and reloads the roots.
+	 *
+	 * @param space The space, as `GET /documents/spaces` answers it.
+	 */
+	async selectSpace(space: IDocsSpaceFilter | null): Promise<IDocsTreeNode[]> {
+		this.space = space ? { kind: space.kind, organizationTeamId: space.organizationTeamId } : null;
+		this.spaceSelection += 1;
+		this._children.clear();
+		this._byId.clear();
+		this.emit();
+		return this.loadRoots();
 	}
 
 	// ─── Queries ─────────────────────────────────────────────────
@@ -143,7 +196,10 @@ export class DocumentTreeStore {
 
 	/** Full cache reset (org switch, bulk mutations) — the roots are reloaded. */
 	invalidateAll(): void {
-		const hadRoots = this._children.has('');
+		// A read still running belongs to the cache being dropped.
+		this.spaceSelection += 1;
+		// Roots that were loaded, or were loading (that read is dropped below), are read again.
+		const hadRoots = this._children.has('') || this.rootsLoading > 0;
 		this._children.clear();
 		this._byId.clear();
 		this.emit();

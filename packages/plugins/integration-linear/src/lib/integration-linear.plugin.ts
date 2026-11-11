@@ -2,11 +2,12 @@ import { ApplicationPluginConfig } from '@gauzy/common';
 import { GauzyCorePlugin as Plugin, IOnPluginBootstrap, IOnPluginDestroy } from '@gauzy/plugin';
 import { isSchedulerQueueRootEnabled } from '@gauzy/scheduler';
 import { CreateIntegrationLinearTables1791000004900 } from './database/migrations/1791000004900-CreateIntegrationLinearTables';
+import { CreateIntegrationLinearConflictTables1791000007010 } from './database/migrations/1791000007010-CreateIntegrationLinearConflictTables';
 import { LINEAR_ENTITIES, LinearModule } from './linear.module';
 import { LinearMaintenanceModule } from './maintenance/linear-maintenance.module';
 
 /** The plugin's migrations, oldest first (ordered with the platform's by their timestamps). */
-export const LINEAR_MIGRATIONS = [CreateIntegrationLinearTables1791000004900];
+export const LINEAR_MIGRATIONS = [CreateIntegrationLinearTables1791000004900, CreateIntegrationLinearConflictTables1791000007010];
 
 /**
  * The Linear integration (`@gauzy/plugin-integration-linear`): connect a Linear workspace with OAuth, map

@@ -39,9 +39,31 @@ Nothing new is invented for transport:
   answered is still ahead of it; `resync` is answered only when a retention
   removed rows after the cursor (the `realtime_replay_watermark` table).
 
-Multi-replica deployments set `GRAPHQL_PUBSUB_ENGINE` (a Redis-backed engine) so
-a subscriber on one API replica sees the events of another; a single instance
-uses the in-process engine.
+### How fast an event arrives
+
+A commit that appended wakes the dispatch worker right away instead of waiting
+for the per-minute tick (`GAUZY_EVENT_OUTBOX_DISPATCH_ON_COMMIT=false` turns
+that off):
+
+- **With a queue**: the API's queue worker runs the passes; the per-minute tick
+  stays as the safety net.
+- **No queue** (`REDIS_ENABLED` not `true`): the API runs the same worker
+  in-process (`EventOutboxInlineDispatchModule`), woken by each commit and by a
+  15 s sweep. Before, nothing dispatched at all in this mode.
+  `EVENT_OUTBOX_INLINE_DISPATCH=false` turns it off.
+
+With Redis on, subscription events travel through Redis pub/sub between every
+API and worker process (`RedisGraphqlPubSubEngine`), so a pass run in one
+process reaches a socket held by another. `GRAPHQL_PUBSUB_REDIS=false` keeps the
+in-process engine; `GRAPHQL_PUBSUB_CHANNEL_PREFIX` names the channels (by
+default derived from the database and `API_BASE_URL`, so installations that
+share one Redis stay apart).
+
+`GET /api/realtime/status` reports this as `delivery: { dispatch, shared,
+singleProcess, prompt }`. A client may stop polling only when `prompt` is true:
+dispatched right after the write, and reaching the socket whichever process
+dispatched it — the pub/sub is shared (Redis), or there is one API process
+(SQLite, or `GAUZY_API_SINGLE_PROCESS=true`). Several API replicas need Redis.
 
 ## Events
 
@@ -126,7 +148,8 @@ Over `graphql-ws`, with the user's JWT in the `connection_init` payload
 every platform subscription. Keep as the resume position the `cursor` and
 `cursorId` of the last catch-up answer — **not** the newest event applied: the
 stream delivers neither in commit order nor at once (the outbox dispatcher runs
-every minute and retries), so a streamed event is no proof that the events
+right after each commit and every minute, and retries), so a streamed event is
+no proof that the events
 stamped before it have arrived. On every reconnect (and, while connected, every
 minute or so, to keep the position fresh) call `GET
 /api/realtime/events?after=&afterId=`, apply the answer by `eventId` (events
@@ -152,6 +175,38 @@ GAUZY_REALTIME_ENABLED=true
 The plugin's migration grants `REALTIME_SUBSCRIBE` to SUPER_ADMIN, ADMIN,
 MANAGER and EMPLOYEE of every tenant the first time the plugin loads; new
 tenants get it from the default role permissions.
+
+### Outbox retention (off by default)
+
+```env
+GAUZY_REALTIME_RETENTION_ENABLED=true
+```
+
+Once an hour, the dispatched collaboration events older than 24 hours and
+beyond the newest 1,000 of each organization (and of the tenant-wide events)
+are removed from the event outbox, at most 500 per organization per pass, and
+the replay watermark moves with them in the same transaction: a client whose
+catch-up cursor falls behind it is answered `resync`. Pending, failed and dead
+rows, other domains' events, rows without a tenant, the newest row of each
+aggregate (its numbering continues from it) and rows a consumer has not
+acknowledged (a dead delivery is replayed from its outbox row) are never
+removed. A delivery whose outbox row was removed is not replayable: the replay
+answers not found.
+
+A replay and a pass that meet on one row do not lose it: the replay holds the
+row (`FOR UPDATE`) while it resets the delivery and re-queues the row, so either
+the delete lands first and the replay answers not found with the delivery
+untouched, or the delete waits and then keeps the row the replay re-queued. Both
+orders run on PostgreSQL, with the replay on TypeORM and on MikroORM, in
+`realtime-retention.replay-lock.postgres.spec.ts`:
+`REALTIME_TEST_POSTGRES_URL=postgres://… yarn nx run plugin-realtime:test-postgres`
+(a disposable database; without the URL the suite is skipped).
+
+It deletes rows, so it is a separate switch: on production, turn it on only
+after checking the database's backups. On a large outbox, also run `EXPLAIN`
+on the pass's scope query (a `GROUP BY` of `event_outbox` by tenant and
+organization) first, and add a composite index on `tenantId`,
+`organizationId`, `eventName` and `createdAt` if it is slow.
 
 ## For other plugins
 

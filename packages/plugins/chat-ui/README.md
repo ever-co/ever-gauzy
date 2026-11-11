@@ -40,22 +40,75 @@ The UI has no switch of its own. It follows the API:
   category, the direct and group messages, with unread and mention counts;
   New channel, New message and Browse channels open dialogs.
 - **A conversation** (middle): its header (title, topic, members, favourite,
-  notification level, join / leave, archive for managers, pinned messages),
-  the messages newest page first (older on scroll, newer every 5 s while the
-  tab is visible), and the composer: Enter sends, Shift+Enter breaks the line,
-  `@` suggests people (the body carries rename-safe `<@employeeId>` tokens).
+  notification level, join / leave, archive for managers, pinned messages,
+  files, settings),
+  the messages newest page first (older on scroll, newer live — see below),
+  and the composer: Enter sends, Shift+Enter breaks the line, `@` suggests
+  people (the body carries rename-safe `<@employeeId>` tokens), `:` and two
+  letters suggest emoji (a complete `:name:` becomes its emoji as it is typed;
+  the body stores the emoji itself).
   Showing the latest loaded message marks the conversation read up to it
   (never past what is shown); "mark unread from here" is explicit. The unsent
   text of each conversation and thread is kept while the page lives. A message offers reply in thread, reactions, pin,
-  edit and delete (own messages, or managers), and shows its task cards.
+  edit and delete (own messages, or managers) and "Create task from message"
+  (users with `ORG_TASK_ADD`), and shows its task cards (key, title and status
+  where the reader may see the task, read through `GET /api/tasks?where[id]=…`,
+  which records no visit, unlike `GET /api/tasks/:id`), its
+  files and a card for each web link (made from the link alone: nothing is
+  fetched from the linked site).
+- **Files**: the paperclip, a drop on the composer or a paste attaches files
+  (for users with `DOCS_CREATE`). Each is stored at once through the Docs
+  plugin (`POST /api/plugins/docs/documents/upload`) as the sender's private
+  FILE document (`source: CHAT`, kept out of the knowledge base and of the AI
+  classification) and goes out with the message as `attachmentIds`; a message
+  of files alone carries their names as its text (the API needs a body).
+  Messages show pictures inline and other files as links, read through the
+  conversation's files (`GET /api/chat/conversations/:id/files`, members
+  only), which the header's Files pane lists too.
+- **Create task from message**: title (the message's first line to start
+  with), project (optional, the organization's projects) and assignees
+  (optional; the platform assigns the creator too). The task's description is
+  the message (`POST /api/chat/messages/:id/create-task`), and the message
+  shows the task's card.
+- **Send to chat** on a task's page (`/pages/tasks/view/:id`, users with
+  `CHAT_SEND` where the chat is served): a button in the page's actions (the
+  `task-view-actions` extension slot, `PAGE_EXTENSION_SLOTS.TASK_VIEW_ACTIONS`)
+  opens a picker of my conversations (favourites first, then the latest) with
+  an optional note, and posts the task's card there in my name (`taskId` on the
+  send; without a note the text is the task's key and title).
+- **Conversation settings** (the gear, or the member count): for a channel its
+  name, topic, public or private and sidebar category; for a direct or group
+  conversation its topic; and the members, which a manager (`CHAT_MANAGE`, the
+  conversation's manager, or its creator) adds and removes (not in a direct
+  conversation or the default channel). Every member sees them.
+- **Channel categories** (`CHAT_MANAGE`, under Browse channels): add, rename,
+  move up or down, delete (the channels stay, uncategorized).
 - **A thread** (right, `?thread=<rootMessageId>`): the root, the replies
-  (a page at a time, newer ones every 5 s), follow / unfollow, and a composer
+  (a page at a time, newer ones live), follow / unfollow, and a composer
   with "also send to the conversation"; showing the replies marks the thread read.
 - **Unreads**: the conversations holding something unread, newest first, with
   "Mark all as read" and a one-minute Undo (the API's snapshot).
 - **Threads**: the followed threads with their unread replies.
 - **The header badge**: how many conversations and threads hold something
-  unread, read every 60 s and at once after a write on the page.
+  unread, read at once after a write on the page and when a chat event moves a
+  count, and every 60 s.
+
+**Live.** Where the API runs the realtime plugin (`GAUZY_REALTIME_ENABLED=true`)
+and `GET /api/realtime/status` offers the chat events, the tab opens one
+subscription, `collaborationEvents(names: ["chat_message.*",
+"chat_conversation.*", "chat_member.*", "chat_thread.*"])`, over the shared
+socket (`RealtimeSocketService` of `@gauzy/ui-core/core`). The events are
+hints: a message created fetches the newer messages, a message changed or
+deleted (an edit, a reaction, a pin, a thread reply) is read again, and the
+lists and the badge read the states again. Polling stays the fallback: as
+before (messages and replies every 5 s, lists every 30 s, badge every 60 s)
+until the subscription has run on a connected socket with prompt delivery
+(`delivery.prompt` of the status), while the socket reconnects, after the
+subscription failed (`RealtimeSocketUnavailableError`, a GraphQL error; it is
+opened again after a growing wait), and wherever there is no realtime channel;
+once a minute as a safety net while live. Events of a gap are not replayed, so
+a reconnect, and showing the tab again, reads the open conversation, the open
+thread and the lists again.
 
 Bodies render the API's Markdown subset through `marked` and Angular's HTML
 sanitizer, images left out; mention tokens become chips. Names and pictures
@@ -66,13 +119,22 @@ and asks again.
 
 ## Not yet in this plugin
 
-The live channel (the realtime plugin's subscriptions; the page polls until
-then), attachments, link previews, emoji autocomplete, send-to-chat from a
-task and create-task-from-message, categories management, channel settings,
-presence and typing.
+Link previews with the page's title, text and picture (the API has no
+`GET /chat/link-preview` yet: a preview must be fetched by the platform, never
+by the reader's browser), changing a task's status or assignee from its card
+(FR-14), search (`GET /chat/search` exists), presence and typing.
 
 ## Tests
 
 `chat-ui.helpers.spec.ts` (mention tokens, previews, suggestions, titles,
-sorting, grouping, merging, labels) and `chat-ui.plugin.spec.ts` (routes,
-nav entry and badge following the availability).
+sorting, grouping, merging, labels), `chat-ui.plugin.spec.ts` (routes,
+nav entry and badge following the availability), `services/chat-live.spec.ts`
+(the hints, when the channel is live or falls back, reconnects, retries, the
+poll periods), `chat-emoji.spec.ts`, `chat-links.spec.ts`,
+`chat-attachments.spec.ts`, `services/chat-files.store.spec.ts` and
+`components/message-composer/message-composer.component.spec.ts` (emoji
+suggestions and replacement, uploads and what a message with files sends),
+`chat-catch-up.spec.ts`, `chat-tasks.spec.ts`, `chat-categories.spec.ts`,
+`chat-ui.extensions.spec.ts` (the task-page extension) and
+`dialogs/chat-settings-dialogs.component.spec.ts` (what the settings save,
+members, categories).

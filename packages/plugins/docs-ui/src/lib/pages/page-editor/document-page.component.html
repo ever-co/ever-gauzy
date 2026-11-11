@@ -70,6 +70,36 @@
 					></ngx-favorite-toggle>
 				}
 
+				<!-- Follow / mute (docs-collaboration): only when the platform answers the follow state -->
+				@if (document && followState) {
+					<button
+						nbButton
+						ghost
+						size="small"
+						type="button"
+						[disabled]="followBusy"
+						[attr.aria-pressed]="followState.following"
+						[attr.aria-label]="'DOCS.FOLLOW.FOLLOW' | translate"
+						[nbTooltip]="(followState.following ? 'DOCS.FOLLOW.UNFOLLOW' : 'DOCS.FOLLOW.FOLLOW') | translate"
+						(click)="toggleFollow()"
+					>
+						<nb-icon [icon]="followState.following ? 'bell' : 'bell-outline'"></nb-icon>
+					</button>
+					<button
+						nbButton
+						ghost
+						size="small"
+						type="button"
+						[disabled]="followBusy"
+						[attr.aria-pressed]="followState.muted"
+						[attr.aria-label]="'DOCS.FOLLOW.MUTE' | translate"
+						[nbTooltip]="(followState.muted ? 'DOCS.FOLLOW.UNMUTE' : 'DOCS.FOLLOW.MUTE') | translate"
+						(click)="toggleMute()"
+					>
+						<nb-icon [icon]="followState.muted ? 'bell-off' : 'bell-off-outline'"></nb-icon>
+					</button>
+				}
+
 				<!-- Lock/unlock is **own**-scoped below ADMIN (spec 08 §1.8), so the permission
         gate carries the ownership half with it. -->
 				<ng-container *ngxPermissionsOnly="PermissionsEnum.DOCS_UPDATE">
@@ -179,6 +209,12 @@
 										<nb-icon icon="corner-down-right-outline"></nb-icon
 										>{{ 'DOCS.TREE.MOVE' | translate }}
 									</button>
+									<!-- Collaboration on (the follow state answered): the page can change space. -->
+									@if (followState) {
+										<button type="button" role="menuitem" (click)="openMoveSpaceDialog()">
+											<nb-icon icon="people-outline"></nb-icon>{{ 'DOCS.SPACE.MOVE_ACTION' | translate }}
+										</button>
+									}
 									<!-- Manual review request (spec 01 §11) — the only route into the
                   review queue when AI is disabled. Already-PENDING shows the
                   state instead of an action the backend would no-op. -->

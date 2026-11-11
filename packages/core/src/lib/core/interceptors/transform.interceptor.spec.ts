@@ -28,7 +28,7 @@ function eventStream<T>(values: T[]): AsyncIterableIterator<T> {
 
 /**
  * The serialization interceptor is registered for the whole application, so the event stream a GraphQL subscription
- * field returns passes through it too. Serialising the stream itself turns it into a plain object graphql-js refuses
+ * field returns passes through it too. Copying the stream itself turns it into a plain object graphql-js refuses
  * ("Subscription field must return Async Iterable"), which closes every subscriber's socket with 4500 right after
  * the connection is acknowledged.
  */
