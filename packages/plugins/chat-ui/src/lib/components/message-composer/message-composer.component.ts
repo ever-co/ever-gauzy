@@ -963,7 +963,7 @@ export class MessageComposerComponent {
 			this.editCancelled.emit();
 			return;
 		}
-		if (event.key === 'Enter' && !event.shiftKey && !event.isComposing) {
+		if (event.key === 'Enter' && !event.shiftKey) {
 			event.preventDefault();
 			this.send();
 		}
