@@ -213,6 +213,14 @@ type DailyActivity {
 	date: String
 	"The activity title the group is for."
 	title: String
+	"Whether the group's activities are an app's (`APP`) or a site's (`URL`), so a client can draw the right icon."
+	type: String
+	"""
+	An address the group's site was visited at, from the metadata of one of its `URL` activities, so a client can
+	draw the site's icon. Null for an app, even when its entry holds the page a browser showed, and for a site
+	whose activities recorded no address.
+	"""
+	url: String
 }
 
 """

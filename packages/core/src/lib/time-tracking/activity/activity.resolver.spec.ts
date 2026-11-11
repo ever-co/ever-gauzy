@@ -549,6 +549,9 @@ describe('ActivityResolver — which members the surface exposes, and which it r
 		expect(body).toMatch(/\bemployeeId: ID\b/);
 		expect(body).toMatch(/\bdate: String\b/);
 		expect(body).toMatch(/\btitle: String\b/);
+		// What a client draws the group's icon from (ever-co/ever-teams#5023)
+		expect(body).toMatch(/\btype: String\b/);
+		expect(body).toMatch(/\burl: String\b/);
 
 		// `IDailyActivity` declares three further members and the delivered aggregation fills none of
 		// them: it groups five columns, so a member for any of the three would answer null on every row.

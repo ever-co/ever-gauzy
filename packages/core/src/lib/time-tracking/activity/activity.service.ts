@@ -49,6 +49,7 @@ export class ActivityService extends TenantAwareCrudService<Activity> {
 	}
 
 	async getDailyActivities(request: IGetActivitiesInput): Promise<IDailyActivity[]> {
+		const databaseType = config.dbConnectionOptions.type as DatabaseTypeEnum;
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM: {
 				// MikroORM: Use Knex raw query for SQL aggregation (COUNT, SUM, GROUP BY)
@@ -67,7 +68,10 @@ export class ActivityService extends TenantAwareCrudService<Activity> {
 						knex.raw('SUM("activity"."duration") as duration'),
 						'activity.employeeId as employeeId',
 						'activity.date as date',
-						'activity.title as title'
+						'activity.title as title',
+						// What a client needs for the row's icon: an app's or a site's, and the site's address
+						knex.raw(`${activityTypeSelect('activity', databaseType)} as type`),
+						knex.raw(`${visitedAddressSelect('activity', databaseType)} as url`)
 					])
 					.where('activity.tenantId', tenantId)
 					.andWhere('activity.organizationId', organizationId)
@@ -117,6 +121,9 @@ export class ActivityService extends TenantAwareCrudService<Activity> {
 						);
 				}
 				query.addSelect(p(`"${query.alias}"."title"`), `title`);
+				// What a client needs for the row's icon: an app's or a site's, and the site's address
+				query.addSelect(activityTypeSelect(query.alias, databaseType), `type`);
+				query.addSelect(visitedAddressSelect(query.alias, databaseType), `url`);
 				query.groupBy(p(`"${query.alias}"."date"`));
 
 				switch (config.dbConnectionOptions.type as DatabaseTypeEnum) {
