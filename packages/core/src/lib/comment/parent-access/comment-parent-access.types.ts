@@ -35,6 +35,12 @@ export interface ICommentParentAccessPolicy {
 	readonly writePermissions: ReadonlyArray<PermissionsEnum>;
 	findAccessibleParent(entityId: ID): Promise<ICommentParent | null>;
 	/**
+	 * Optional, for a record whose comments some readers may read but not write (a page shared with them to view
+	 * only): the record when the caller may write its comments, and `null` when they may not or it does not exist.
+	 * Without it a write is checked with {@link findAccessibleParent}, as a read is.
+	 */
+	findWritableParent?(entityId: ID): Promise<ICommentParent | null>;
+	/**
 	 * Optional, for checks over many records at once (the real-time channel's catch-up): the records among
 	 * `entityIds` the caller may reach, by the same rule as {@link findAccessibleParent}, in one read. Without it the
 	 * records are read one by one (a few at a time).
