@@ -14,7 +14,7 @@ import {
 	NbToggleModule
 } from '@nebular/theme';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
-import { EMPTY, forkJoin, Subject } from 'rxjs';
+import { EMPTY, forkJoin, Subject, Subscription } from 'rxjs';
 import { catchError, distinctUntilChanged, filter, map, switchMap } from 'rxjs/operators';
 import {
 	ID,
@@ -595,8 +595,20 @@ export class TaskAutomationsPageComponent implements OnInit {
 
 	/** Loads the page again (another organization, a retry). */
 	private readonly load$ = new Subject<void>();
+	/** The pickers' requests of the current organization (an answer for the previous one is dropped). */
+	private directorySubscription?: Subscription;
+	private tasksSubscription?: Subscription;
+	/** The open rule's history and test requests (another rule's late answer is dropped). */
+	private runsSubscription?: Subscription;
+	private testSubscription?: Subscription;
 
 	ngOnInit(): void {
+		this.destroyRef.onDestroy(() => {
+			this.directorySubscription?.unsubscribe();
+			this.tasksSubscription?.unsubscribe();
+			this.runsSubscription?.unsubscribe();
+			this.testSubscription?.unsubscribe();
+		});
 		this.load$
 			.pipe(
 				switchMap(() => {
@@ -641,8 +653,10 @@ export class TaskAutomationsPageComponent implements OnInit {
 	private loadDirectory(): void {
 		const organizationId = this.organizationId();
 		const tenantId = (this.store.user?.tenantId as ID) ?? null;
+		this.directorySubscription?.unsubscribe();
+		this.tasksSubscription?.unsubscribe();
 		if (!organizationId || !tenantId) return;
-		forkJoin({
+		this.directorySubscription = forkJoin({
 			statuses: this.directoryApi.statuses(organizationId, tenantId),
 			priorities: this.directoryApi.priorities(organizationId, tenantId),
 			tags: this.directoryApi.tags(organizationId, tenantId),
@@ -652,7 +666,7 @@ export class TaskAutomationsPageComponent implements OnInit {
 		})
 			.pipe(takeUntilDestroyed(this.destroyRef))
 			.subscribe((directory) => this.directory.set(directory));
-		this.directoryApi
+		this.tasksSubscription = this.directoryApi
 			.tasks(organizationId, tenantId)
 			.pipe(takeUntilDestroyed(this.destroyRef))
 			.subscribe((tasks) => this.tasks.set(tasks));
@@ -784,13 +798,17 @@ export class TaskAutomationsPageComponent implements OnInit {
 	}
 
 	loadRuns(rule: ITaskAutomationRule): void {
+		const ruleId = rule.id as ID;
+		this.runsSubscription?.unsubscribe();
 		this.runsState.set('loading');
-		this.api.runs(rule.id as ID, TASK_AUTOMATIONS_RUNS_SHOWN, this.organizationId()).subscribe({
+		this.runsSubscription = this.api.runs(ruleId, TASK_AUTOMATIONS_RUNS_SHOWN, this.organizationId()).subscribe({
 			next: (runs) => {
+				if (this.selectedId() !== ruleId) return;
 				this.runs.set(runs ?? []);
 				this.runsState.set('ready');
 			},
 			error: () => {
+				if (this.selectedId() !== ruleId) return;
 				this.runs.set([]);
 				this.runsState.set('error');
 			}
@@ -800,12 +818,15 @@ export class TaskAutomationsPageComponent implements OnInit {
 	runTest(rule: ITaskAutomationRule): void {
 		const taskId = this.testTaskId();
 		if (!taskId) return;
+		const ruleId = rule.id as ID;
+		this.testSubscription?.unsubscribe();
 		this.testing.set(true);
 		this.testResult.set(null);
-		this.api.test(rule.id as ID, taskId, this.organizationId()).subscribe({
+		this.testSubscription = this.api.test(ruleId, taskId, this.organizationId()).subscribe({
 			next: (result) => {
 				this.testing.set(false);
-				this.testResult.set(result);
+				// An answer for a rule that is no longer open is not this one's.
+				if (this.selectedId() === ruleId) this.testResult.set(result);
 			},
 			error: (error: unknown) => {
 				this.testing.set(false);
