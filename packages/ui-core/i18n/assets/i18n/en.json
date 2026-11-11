@@ -4976,6 +4976,7 @@
 		"TASK_ADDED": "Task was added",
 		"TASK_UPDATED": "Task was changed",
 		"TASK_DELETED": "Task was removed",
+		"TASK_MOVED_TO_TRASH": "Task moved to the trash",
 		"TASKS_PROJECT": "Project",
 		"TASKS_CREATOR": "Created By",
 		"TASK_MEMBERS": "Employees",
@@ -5014,7 +5015,30 @@
 		"ARE_YOU_SURE": "Are you sure you want delete sprint",
 		"SETTINGS": "Settings",
 		"MODULE": "Module",
-		"SELECT_MODULE": "Module(s)"
+		"SELECT_MODULE": "Module(s)",
+		"TRASH": {
+			"TITLE": "Trash",
+			"BACK": "Back to tasks",
+			"SEARCH": "Search by title or number",
+			"HINT": "Deleted tasks stay here until they are restored or deleted for good.",
+			"RESTORE": "Restore",
+			"RESTORED": "“{{ title }}” is back",
+			"DELETE_FOREVER": "Delete forever",
+			"DELETE_FOREVER_CONFIRM": "Delete for good? This cannot be undone.",
+			"DELETED_FOREVER": "“{{ title }}” was deleted for good",
+			"DELETED_BY": "Deleted by {{ name }} · {{ date }}",
+			"DELETED_AT": "Deleted {{ date }}",
+			"LOAD_MORE": "Load more ({{ shown }} of {{ total }})",
+			"LOAD_FAILED": "The trash could not be loaded.",
+			"EMPTY_TITLE": "The trash is empty",
+			"EMPTY_TEXT": "Deleted tasks appear here.",
+			"NO_MATCH_TITLE": "No deleted task matches",
+			"NO_MATCH_TEXT": "Try another title or number.",
+			"UNAVAILABLE_TITLE": "The trash is not available",
+			"UNAVAILABLE_TEXT": "This server does not keep deleted tasks yet. Ask an administrator to turn the task trash on.",
+			"FORBIDDEN_TITLE": "You may not see this trash",
+			"FORBIDDEN_TEXT": "Ask someone who can delete tasks to restore a task."
+		}
 	},
 	"JOBS": {
 		"EMPLOYEE": "Employee",
@@ -9194,5 +9218,13 @@
 		"NO_TIME_ENTRIES": "No time entries lately",
 		"RUNNING": "Running",
 		"ACTIVITY_LEVEL": "Activity: keyboard and mouse use while tracking"
+	},
+	"COMMENT_REACTIONS": {
+		"ADD": "Add reaction",
+		"REACT_WITH": "React with {{ emoji }}",
+		"REACTED_WITH": "{{ people }} reacted with {{ emoji }}",
+		"YOU": "You",
+		"OTHERS": "{{ count }} more",
+		"FAILED": "The reaction was not saved."
 	}
 }

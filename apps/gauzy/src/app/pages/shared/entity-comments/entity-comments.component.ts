@@ -18,8 +18,8 @@ import { A11yModule } from '@angular/cdk/a11y';
 import { NbButtonModule, NbIconModule, NbSpinnerModule, NbTooltipModule } from '@nebular/theme';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import * as moment from 'moment-timezone';
-import { BaseEntityEnum, IComment, ID, IImageAsset, PermissionsEnum } from '@gauzy/contracts';
-import { CommentService, ImageAssetService, Store, ToastrService } from '@gauzy/ui-core/core';
+import { BaseEntityEnum, IComment, ID, IImageAsset, IReactionSummary, PermissionsEnum } from '@gauzy/contracts';
+import { CommentReactionService, CommentService, ImageAssetService, Store, ToastrService } from '@gauzy/ui-core/core';
 import {
 	IPersonChip,
 	Loadable,
@@ -29,6 +29,13 @@ import {
 	personOf
 } from '../../projects/components/project-view/project-view.utils';
 import { ICommentImage, parseCommentImages, withCommentImages } from './comment-images.util';
+import {
+	IReactionChip,
+	QUICK_REACTIONS,
+	reactorsText,
+	summariesByComment,
+	toggledSummaries
+} from './comment-reactions.util';
 
 /**
  * The texts that name what the comments are (translation keys): a contact's "notes" are a project's "comments".
@@ -166,6 +173,11 @@ export class EntityCommentsComponent implements OnChanges, OnDestroy {
 	@Input() canWrite = true;
 	/** A comment to show: marked, scrolled to, and its thread opened when it is a reply (an Inbox notification's link). */
 	@Input() highlightCommentId: ID | null = null;
+	/**
+	 * Whether the comments show emoji reactions (the task page). They show only where the platform answers the
+	 * summary (`GET /api/reaction/comments`): an older platform keeps the comments as they were.
+	 */
+	@Input() reactions = false;
 	/** What the comments are called; see {@link IEntityCommentsLabels}. */
 	@Input() set labels(labels: Partial<IEntityCommentsLabels> | null | undefined) {
 		this.text = { ...DEFAULT_ENTITY_COMMENTS_LABELS, ...(labels ?? {}) };
@@ -196,6 +208,16 @@ export class EntityCommentsComponent implements OnChanges, OnDestroy {
 	protected viewing: IViewedImage | null = null;
 	/** Each attached image's addresses by asset; `null` once a lookup failed (deleted, or not readable here). */
 	protected imageUrls = new Map<ID, IImageUrls | null>();
+	/** Whether reactions show: asked for, and the platform answered the summary. */
+	protected reactionsShown = false;
+	/** Each comment's reaction chips. */
+	protected reactionChips = new Map<ID, IReactionChip[]>();
+	/** The comment whose emoji palette is open; one at a time. */
+	protected pickerFor: ID | null = null;
+	protected readonly quickReactions = QUICK_REACTIONS;
+	private _summaries: IReactionSummary[] = [];
+	/** Numbers each reaction read, so only the latest one is applied. */
+	private _reactionSequence = 0;
 
 	private readonly _commentService = inject(CommentService);
 	private readonly _host = inject<ElementRef<HTMLElement>>(ElementRef);
@@ -203,6 +225,7 @@ export class EntityCommentsComponent implements OnChanges, OnDestroy {
 	private readonly _toastr = inject(ToastrService);
 	private readonly _translate = inject(TranslateService);
 	private readonly _imageAssets = inject(ImageAssetService);
+	private readonly _reactions = inject(CommentReactionService);
 	/** Numbers each read, so only the latest one is applied: a post and a delete can each refresh at once. */
 	private _sequence = 0;
 	/** The comment last revealed: a refresh after a post or a delete does not scroll back to it. */
@@ -277,12 +300,100 @@ export class EntityCommentsComponent implements OnChanges, OnDestroy {
 			this.threads = loaded(threads);
 			this.countChange.emit(items.length);
 			void this.lookUpImages(threads);
+			void this.loadReactions();
 			this.reveal();
 		} catch {
 			if (sequence !== this._sequence) return;
 			// A failed read shows a retry, never "no comments" or a stale list.
 			this.threads = failed([]);
 		}
+	}
+
+	/**
+	 * Reads the reactions on the record's comments, when they are asked for. A platform without the summary (404) or a
+	 * failed read hides them; the comments do not depend on it.
+	 */
+	protected async loadReactions(): Promise<void> {
+		if (!this.reactions) return;
+		const sequence = ++this._reactionSequence;
+		try {
+			const summaries = await this._reactions.getForRecord(this.entity, this.entityId, this.scope());
+			if (sequence !== this._reactionSequence) return;
+			this.showReactions(summaries);
+			this.reactionsShown = true;
+		} catch {
+			if (sequence !== this._reactionSequence) return;
+			this.reactionsShown = false;
+		}
+	}
+
+	/** Whether the reader can react: with an employee of their own (the platform refuses anyone else). */
+	protected get canReact(): boolean {
+		return this.canWrite && !!this.myEmployeeId();
+	}
+
+	/** Opens a comment's emoji palette, or closes it when it is open. */
+	protected togglePicker(commentId: ID): void {
+		this.pickerFor = this.pickerFor === commentId ? null : commentId;
+	}
+
+	/**
+	 * Adds the reader's reaction to a comment, or takes it back: the chip changes at once, the toggle is sent, and the
+	 * summary is read again; a refused toggle puts the chips back and says so.
+	 */
+	protected async toggleReaction(commentId: ID, emoji: string): Promise<void> {
+		const employeeId = this.myEmployeeId();
+		if (!this.reactionsShown || !employeeId) return;
+		this.pickerFor = null;
+		const before = this._summaries;
+		const me = { employeeId, name: this._store.user?.name ?? '', imageUrl: this._store.user?.imageUrl ?? null };
+		this.showReactions(toggledSummaries(before, commentId, emoji, me));
+		// A read already under way would answer the state before this toggle.
+		this._reactionSequence++;
+		try {
+			await this._reactions.toggle(commentId, emoji, this.scope());
+		} catch {
+			this.showReactions(before);
+			this._toastr.danger(
+				this._translate.instant('COMMENT_REACTIONS.FAILED'),
+				this._translate.instant('TOASTR.TITLE.ERROR')
+			);
+			return;
+		}
+		await this.loadReactions();
+	}
+
+	/** Keeps the summaries and works out each comment's chips, their tooltips in the reader's language. */
+	private showReactions(summaries: IReactionSummary[]): void {
+		this._summaries = summaries ?? [];
+		const locale = this._translate.currentLang || this._translate.getDefaultLang?.() || 'en';
+		const words = {
+			meEmployeeId: this.myEmployeeId(),
+			you: this._translate.instant('COMMENT_REACTIONS.YOU'),
+			someone: this._translate.instant('GOALS_PAGE.COMMENT_THREAD.UNKNOWN_AUTHOR'),
+			others: (count: number) => this._translate.instant('COMMENT_REACTIONS.OTHERS', { count })
+		};
+		const chips = new Map<ID, IReactionChip[]>();
+		for (const [commentId, list] of summariesByComment(this._summaries)) {
+			chips.set(
+				commentId,
+				list.map((summary) => ({
+					emoji: summary.emoji,
+					count: summary.count,
+					mine: summary.reactedByMe,
+					label: this._translate.instant('COMMENT_REACTIONS.REACTED_WITH', {
+						people: reactorsText(summary, words, locale),
+						emoji: summary.emoji
+					})
+				}))
+			);
+		}
+		this.reactionChips = chips;
+	}
+
+	private myEmployeeId(): ID | null {
+		const user = this._store.user;
+		return user?.employee?.id ?? user?.employeeId ?? null;
 	}
 
 	/** Posts the comment box's text, with its images, on the record. */

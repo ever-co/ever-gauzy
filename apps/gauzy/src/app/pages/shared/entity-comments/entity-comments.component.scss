@@ -680,3 +680,106 @@ a.comment-author:hover {
   border-radius: 0.25rem;
   box-shadow: inset 3px 0 0 var(--color-primary-default, #3366ff);
 }
+
+/* Reactions (the task page): chips under a comment, the reader's own in the primary tone; the smiley opens a palette
+   of a few emojis. Touch screens get taller chips: nothing here is hover-only. */
+.comment-reactions {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.25rem;
+	margin-top: 0.375rem;
+}
+
+.reaction-chip {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.25rem;
+	min-width: 2.5rem;
+	height: 1.5rem;
+	padding: 0 0.5rem;
+	border: 1px solid var(--border-basic-color-3);
+	border-radius: 999px;
+	background: var(--background-basic-color-2);
+	color: var(--text-basic-color);
+	font-size: 0.75rem;
+	line-height: 1;
+	cursor: pointer;
+
+	&:hover:not(:disabled) {
+		background: var(--background-basic-color-3);
+	}
+
+	&:focus-visible {
+		outline: 2px solid var(--color-primary-default);
+		outline-offset: 1px;
+	}
+
+	&:disabled {
+		cursor: default;
+	}
+
+	&.is-mine {
+		border-color: var(--color-primary-default);
+		background: var(--color-primary-transparent-default);
+		color: var(--color-primary-default);
+		font-weight: 600;
+	}
+
+	@media (pointer: coarse) {
+		height: 2rem;
+	}
+}
+
+.reaction-emoji {
+	font-size: 0.875rem;
+}
+
+.reaction-count {
+	font-variant-numeric: tabular-nums;
+}
+
+.reaction-add-wrap {
+	position: relative;
+	display: inline-flex;
+}
+
+.reaction-add {
+	min-width: 0;
+	color: var(--text-hint-color);
+
+	nb-icon {
+		width: 0.875rem;
+		height: 0.875rem;
+	}
+}
+
+.reaction-palette {
+	position: absolute;
+	bottom: calc(100% + 0.25rem);
+	left: 0;
+	z-index: 10;
+	display: flex;
+	gap: 0.125rem;
+	padding: 0.25rem;
+	border: 1px solid var(--border-basic-color-3);
+	border-radius: 0.75rem;
+	background: var(--background-basic-color-1);
+	box-shadow: 0 0.25rem 1rem rgb(0 0 0 / 12%);
+}
+
+.reaction-pick {
+	width: 2rem;
+	height: 2rem;
+	border: 0;
+	border-radius: 0.5rem;
+	background: transparent;
+	font-size: 1rem;
+	cursor: pointer;
+
+	&:hover,
+	&:focus-visible {
+		background: var(--background-basic-color-2);
+		outline: none;
+	}
+}

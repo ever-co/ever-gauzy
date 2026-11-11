@@ -1,12 +1,14 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { firstValueFrom, Observable, throwError } from 'rxjs';
-import { tap, catchError } from 'rxjs/operators';
+import { firstValueFrom, from, Observable, throwError } from 'rxjs';
+import { tap, catchError, switchMap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { ITask, IGetTaskOptions, IGetTaskByEmployeeOptions, IPagination, IEmployee } from '@gauzy/contracts';
 import { API_PREFIX, toParams } from '@gauzy/ui-core/common';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { ToastrService } from '../notification';
+import { Store } from '../store/store.service';
+import { TaskTrashService } from './task-trash.service';
 
 @Injectable({
 	providedIn: 'root'
@@ -17,7 +19,9 @@ export class TasksService extends TranslationBaseComponent {
 	constructor(
 		private readonly _http: HttpClient,
 		private readonly toastrService: ToastrService,
-		translateService: TranslateService
+		translateService: TranslateService,
+		private readonly _store: Store,
+		private readonly _trash: TaskTrashService
 	) {
 		super(translateService);
 	}
@@ -90,9 +94,25 @@ export class TasksService extends TranslationBaseComponent {
 		);
 	}
 
+	/**
+	 * Deletes a task: to the trash where the platform keeps one (`GAUZY_TASK_TRASH_ENABLED`, learned from one read of
+	 * the trash per organization), for good otherwise, as before.
+	 */
 	deleteTask(id: string): Observable<void> {
-		return this._http.delete<void>(`${this.API_URL}/${id}`).pipe(
-			tap(() => this.toastrService.success('TASKS_PAGE.TASK_DELETED')),
+		const organization = this._store?.selectedOrganization;
+		const hasTrash = this._trash
+			? this._trash.isEnabled(organization?.id, organization?.tenantId ?? this._store?.user?.tenantId)
+			: Promise.resolve(false);
+		return from(hasTrash).pipe(
+			switchMap((toTrash) =>
+				this._http
+					.delete<void>(toTrash ? `${this.API_URL}/${id}/soft` : `${this.API_URL}/${id}`)
+					.pipe(
+						tap(() =>
+							this.toastrService.success(toTrash ? 'TASKS_PAGE.TASK_MOVED_TO_TRASH' : 'TASKS_PAGE.TASK_DELETED')
+						)
+					)
+			),
 			catchError((error) => this.errorHandler(error))
 		);
 	}
