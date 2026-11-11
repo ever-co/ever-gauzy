@@ -1,6 +1,6 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
+import { catchError, map, Observable, of } from 'rxjs';
 import { API_PREFIX } from '@gauzy/ui-core/common';
 
 const BASE = `${API_PREFIX}/integration/trello`;
@@ -84,6 +84,46 @@ export interface TrelloRun {
 	skippedCount: number;
 	failedCount: number;
 	lastError: string | null;
+	/** How many conflicts the run found (the runs list says it; a run just started has none yet). */
+	conflictCount?: number;
+}
+
+/** The task fields a conflict can name. */
+export type TrelloConflictField = 'title' | 'description' | 'status' | 'priority' | 'dueDate';
+export type TrelloConflictStatus = 'open' | 'resolved';
+export type TrelloConflictResolution = 'kept_external' | 'kept_platform' | 'superseded';
+/** What a resolve keeps: Trello's value (already the task's), or the task's value written back. */
+export type TrelloConflictKeep = 'external' | 'platform';
+
+/** A field changed both in Trello and on the platform to different values: Trello's was applied, the task's is kept here. */
+export interface TrelloConflict {
+	id: string;
+	integrationId: string;
+	mappingId: string | null;
+	runId: string | null;
+	taskId: string;
+	/** The Trello card's id. */
+	sourceId: string;
+	field: TrelloConflictField;
+	syncedValue: string | null;
+	/** The task's value, replaced by Trello's. */
+	platformValue: string | null;
+	/** Trello's value, applied to the task. */
+	externalValue: string | null;
+	status: TrelloConflictStatus;
+	resolution: TrelloConflictResolution | null;
+	resolvedAt: string | null;
+	resolvedByUserId: string | null;
+	createdAt: string | null;
+}
+
+/** Filters of the conflict list (open ones by default). */
+export interface TrelloConflictQuery {
+	status?: TrelloConflictStatus;
+	runId?: string | null;
+	mappingId?: string | null;
+	taskId?: string | null;
+	take?: number;
 }
 
 /** The HTTP client of the Trello integration's routes (`/api/integration/trello`). */
@@ -153,7 +193,32 @@ export class TrelloUiService {
 		return this.http.post<{ accepted: true; run: TrelloRun }>(`${this.connection(integrationId)}/mappings/${encodeURIComponent(mappingId)}/import`, { full });
 	}
 
+	/** The latest runs, each with how many conflicts it found. */
 	runs(integrationId: string, take = 50): Observable<TrelloRun[]> {
 		return this.http.get<TrelloRun[]>(`${this.connection(integrationId)}/runs`, { params: new HttpParams().set('take', String(take)) });
+	}
+
+	/** The connection's conflicts, newest first: open ones unless the query says otherwise. */
+	conflicts(integrationId: string, query: TrelloConflictQuery = {}): Observable<TrelloConflict[]> {
+		let params = new HttpParams();
+		if (query.status) params = params.set('status', query.status);
+		if (query.runId) params = params.set('runId', query.runId);
+		if (query.mappingId) params = params.set('mappingId', query.mappingId);
+		if (query.taskId) params = params.set('taskId', query.taskId);
+		if (query.take) params = params.set('take', String(query.take));
+		return this.http.get<TrelloConflict[]>(`${this.connection(integrationId)}/conflicts`, { params });
+	}
+
+	/** Resolves an open conflict (409 when the task changed since, 404 when it is resolved already). */
+	resolveConflict(integrationId: string, conflictId: string, keep: TrelloConflictKeep): Observable<TrelloConflict> {
+		return this.http.post<TrelloConflict>(`${this.connection(integrationId)}/conflicts/${encodeURIComponent(conflictId)}/resolve`, { keep });
+	}
+
+	/** The title of a task a conflict names; null when it cannot be read (deleted, or not visible to the caller). */
+	taskTitle(taskId: string): Observable<string | null> {
+		return this.http.get<{ title?: string | null }>(`${API_PREFIX}/tasks/${encodeURIComponent(taskId)}`).pipe(
+			map((task) => (typeof task?.title === 'string' && task.title.trim() ? task.title.trim() : null)),
+			catchError(() => of(null))
+		);
 	}
 }

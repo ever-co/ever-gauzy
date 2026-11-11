@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, inject, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, ElementRef, inject, OnInit, ViewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -19,6 +19,7 @@ import {
 	LinearUiService
 } from '../../services/linear-ui.service';
 import { errorText, LINEAR_STATE_KINDS, LinearStateKind } from '../shared/linear-ui.utils';
+import { LinearConflictsComponent } from '../conflicts/linear-conflicts.component';
 
 /** The task status each Linear state kind becomes unless the mapping says otherwise (the API's defaults). */
 const DEFAULT_STATE_MAP: Record<LinearStateKind, string> = {
@@ -45,12 +46,24 @@ interface MappingDraft {
 
 /**
  * The settings of a Linear connection: the workspace it opens (and a way to disconnect), the team ↔ project
- * mappings (add, change the direction or the switch, import now, remove), and the latest runs.
+ * mappings (add, change the direction or the switch, import now, remove), the sync conflicts to resolve, and the
+ * latest runs with how many conflicts each found (a count opens the conflicts of its run).
  */
 @Component({
 	selector: 'ngx-linear-settings',
 	changeDetection: ChangeDetectionStrategy.OnPush,
-	imports: [DatePipe, FormsModule, NbAlertModule, NbButtonModule, NbCardModule, NbCheckboxModule, NbInputModule, NbSelectModule, TranslatePipe],
+	imports: [
+		DatePipe,
+		FormsModule,
+		NbAlertModule,
+		NbButtonModule,
+		NbCardModule,
+		NbCheckboxModule,
+		NbInputModule,
+		NbSelectModule,
+		TranslatePipe,
+		LinearConflictsComponent
+	],
 	template: `
 		<nb-card>
 			<nb-card-header class="header">
@@ -196,6 +209,10 @@ interface MappingDraft {
 						</form>
 					</section>
 
+					<section class="conflicts">
+						<ngx-linear-conflicts [integrationId]="connection.id" [(runId)]="conflictRunId" />
+					</section>
+
 					<section class="runs">
 						<h5>
 							{{ 'LINEAR.RUNS.TITLE' | translate }}
@@ -212,17 +229,35 @@ interface MappingDraft {
 										<th>{{ 'LINEAR.RUNS.STARTED' | translate }}</th>
 										<th>{{ 'LINEAR.RUNS.FINISHED' | translate }}</th>
 										<th>{{ 'LINEAR.RUNS.COUNTS' | translate }}</th>
+										<th>{{ 'LINEAR.RUNS.CONFLICTS' | translate }}</th>
 										<th>{{ 'LINEAR.RUNS.ERROR' | translate }}</th>
 									</tr>
 								</thead>
 								<tbody>
 									@for (run of runs; track run.id) {
 										<tr>
-											<td>{{ 'LINEAR.RUNS.KINDS.' + run.kind | translate }}{{ run.full ? ' (full)' : '' }}</td>
+											<td>{{ 'LINEAR.RUNS.KINDS.' + run.kind | translate }}{{ run.full ? ' ' + ('LINEAR.RUNS.FULL' | translate) : '' }}</td>
 											<td>{{ 'LINEAR.RUNS.STATUSES.' + run.status | translate }}</td>
 											<td>{{ run.startedAt ? (run.startedAt | date: 'short') : '—' }}</td>
 											<td>{{ run.finishedAt ? (run.finishedAt | date: 'short') : '—' }}</td>
 											<td>{{ run.createdCount }} / {{ run.updatedCount }} / {{ run.skippedCount }} / {{ run.failedCount }}</td>
+											<td [attr.data-test]="'run-conflicts-' + run.id">
+												@if (run.conflictCount) {
+													<button
+														nbButton
+														ghost
+														size="tiny"
+														status="warning"
+														type="button"
+														[attr.title]="'LINEAR.RUNS.SHOW_CONFLICTS' | translate"
+														(click)="showRunConflicts(run)"
+													>
+														{{ run.conflictCount }}
+													</button>
+												} @else {
+													0
+												}
+											</td>
 											<td class="error-cell" [attr.title]="run.lastError">{{ run.lastError || '' }}</td>
 										</tr>
 									}
@@ -300,6 +335,10 @@ export class LinearSettingsComponent implements OnInit {
 	private readonly cdr = inject(ChangeDetectorRef);
 	private readonly destroyRef = inject(DestroyRef);
 
+	/** The conflict list (read again when a run finishes) and its host (scrolled to when a run's count opens it). */
+	@ViewChild(LinearConflictsComponent) private conflictList?: LinearConflictsComponent;
+	@ViewChild(LinearConflictsComponent, { read: ElementRef }) private conflictHost?: ElementRef<HTMLElement>;
+
 	readonly directions = DIRECTIONS;
 	readonly stateKinds = LINEAR_STATE_KINDS;
 
@@ -310,6 +349,8 @@ export class LinearSettingsComponent implements OnInit {
 	projects: IOrganizationProject[] = [];
 	mappings: LinearMapping[] = [];
 	runs: LinearRun[] = [];
+	/** The run whose conflicts the list shows (a run's count in the sync log sets it); null: every run. */
+	conflictRunId: string | null = null;
 	draft: MappingDraft = this.emptyDraft();
 	loading = true;
 	busy = false;
@@ -382,7 +423,10 @@ export class LinearSettingsComponent implements OnInit {
 		if (!this.integrationId) return;
 		this.api.runs(this.integrationId).subscribe({
 			next: (runs) => {
+				const wasRunning = this.runs.some((run) => run.status === 'running');
 				this.runs = runs;
+				// A run that just finished may have found conflicts.
+				if (wasRunning && !runs.some((run) => run.status === 'running')) this.conflictList?.load(true);
 				this.cdr.markForCheck();
 			},
 			error: () => undefined
@@ -398,6 +442,13 @@ export class LinearSettingsComponent implements OnInit {
 			},
 			error: (error) => this.showError(error)
 		});
+	}
+
+	/** The sync log's count of a run: the conflict list shows what that run found. */
+	showRunConflicts(run: LinearRun): void {
+		this.conflictRunId = run.id;
+		this.cdr.markForCheck();
+		this.conflictHost?.nativeElement.scrollIntoView?.({ behavior: 'smooth', block: 'start' });
 	}
 
 	/** The teams not mapped yet (the add form offers those). */
