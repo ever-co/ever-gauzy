@@ -18,9 +18,15 @@ describe('linear-ui.utils', () => {
 		expect(conflictValueView('dueDate', '2026-11-20T09:00:00.000Z')).toEqual({
 			empty: false,
 			date: '2026-11-20T09:00:00.000Z',
+			dateOnly: false,
 			text: '2026-11-20T09:00:00.000Z',
 			full: '2026-11-20T09:00:00.000Z'
 		});
+		// A day, not a moment: shown as that day in UTC.
+		expect(conflictValueView('dueDate', '2026-11-20')).toMatchObject({ date: '2026-11-20', dateOnly: true });
+		expect(conflictValueView('dueDate', '2026-11-20T00:00:00.000Z')).toMatchObject({ dateOnly: true });
+		expect(conflictValueView('dueDate', '2026-11-20T00:00:00+00:00')).toMatchObject({ dateOnly: true });
+		expect(conflictValueView('dueDate', '2026-11-20T00:00:00+02:00')).toMatchObject({ dateOnly: false });
 		// Not a date: shown as the text it is.
 		expect(conflictValueView('dueDate', 'soon')).toMatchObject({ date: null, text: 'soon' });
 	});
