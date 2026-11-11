@@ -168,10 +168,18 @@ describe('date fields of the filter editor', () => {
 	it('turns a picked day into the bound the condition holds, and back', () => {
 		const from = instantOfDay('2026-11-20', 'from') as string;
 		expect(new Date(from).getDate()).toBe(20);
-		const until = instantOfDay('2026-11-20', 'until') as string;
-		expect(new Date(until).getDate()).toBe(21);
+		// The platform reads the upper bound of "between" with <=: the last instant of the day, never the next midnight.
+		const until = new Date(instantOfDay('2026-11-20', 'until') as string);
+		expect([
+			until.getDate(),
+			until.getHours(),
+			until.getMinutes(),
+			until.getSeconds(),
+			until.getMilliseconds()
+		]).toEqual([20, 23, 59, 59, 999]);
+		expect(until.getTime() + 1).toBe(new Date(2026, 10, 21).getTime());
 		expect(dayOfInstant(from, 'from')).toBe('2026-11-20');
-		expect(dayOfInstant(until, 'until')).toBe('2026-11-20');
+		expect(dayOfInstant(until.toISOString(), 'until')).toBe('2026-11-20');
 		expect(instantOfDay('20/11/2026', 'from')).toBeNull();
 		expect(dayOfInstant('nope', 'from')).toBe('');
 	});

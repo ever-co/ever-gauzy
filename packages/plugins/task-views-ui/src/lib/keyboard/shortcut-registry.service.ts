@@ -204,7 +204,11 @@ export class ShortcutRegistryService implements OnDestroy {
 		if (this.pausedState() || event.defaultPrevented || event.isComposing) return;
 		const chord = chordOfEvent(event);
 		if (!chord) return;
-		if (isTypingTarget(event.target) && !chord.mod && !this.pending.length) return;
+		if (isTypingTarget(event.target) && !chord.mod) {
+			// Letters typed into a field are text: a sequence started before the person moved into it is dropped.
+			this.clearPending();
+			return;
+		}
 		const dialogOpen = isDialogOpen(this.document);
 		const runnable = this.runnableCommands(dialogOpen);
 		const pressed = [...this.pending, chord];
@@ -261,13 +265,17 @@ export class ShortcutRegistryService implements OnDestroy {
 		this.pendingTimer = setTimeout(() => this.fallBack(), SHORTCUT_SEQUENCE_TIMEOUT_MS);
 	}
 
-	/** Gives the first key of an unfinished sequence to the Quick Action it is bound to, and forgets the sequence. */
+	/**
+	 * Gives the first key of an unfinished sequence to the Quick Action it is bound to, and forgets the sequence;
+	 * not when the person has meanwhile moved into a field or a dialog opened (the key would not have reached the
+	 * Quick Actions there either).
+	 */
 	private fallBack(): void {
 		const [first] = this.pending;
 		this.clearPending();
-		if (first && this.bridge) {
-			this.zone.run(() => this.bridge?.run(hotkeysShortcutOf(first)));
-		}
+		if (!first || !this.bridge || this.pausedState()) return;
+		if (isTypingTarget(this.document?.activeElement ?? null) || isDialogOpen(this.document)) return;
+		this.zone.run(() => this.bridge?.run(hotkeysShortcutOf(first)));
 	}
 
 	private clearPending(): void {

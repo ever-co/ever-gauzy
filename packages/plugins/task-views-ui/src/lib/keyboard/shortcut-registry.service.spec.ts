@@ -169,6 +169,35 @@ describe('ShortcutRegistryService', () => {
 		expect(bridge.run).toHaveBeenCalledWith('g');
 	});
 
+	it('drops a sequence when the person moves into a field: the next letter is typed, and no Quick Action runs', () => {
+		jest.useFakeTimers();
+		const goTasks = jest.fn();
+		registry.register('goTasks', { run: goTasks });
+		registry.mount();
+		document.body.dispatchEvent(keydown('KeyG', 'g'));
+		const input = document.createElement('input');
+		document.body.appendChild(input);
+		input.focus();
+		const typed = keydown('KeyT', 't');
+		input.dispatchEvent(typed);
+		expect(goTasks).not.toHaveBeenCalled();
+		expect(typed.defaultPrevented).toBe(false);
+		jest.advanceTimersByTime(SHORTCUT_SEQUENCE_TIMEOUT_MS + 1);
+		expect(bridge.run).not.toHaveBeenCalled();
+	});
+
+	it('runs no Quick Action when the wait ends in a field', () => {
+		jest.useFakeTimers();
+		registry.register('goTasks', { run: jest.fn() });
+		registry.mount();
+		document.body.dispatchEvent(keydown('KeyG', 'g'));
+		const input = document.createElement('input');
+		document.body.appendChild(input);
+		input.focus();
+		jest.advanceTimersByTime(SHORTCUT_SEQUENCE_TIMEOUT_MS + 1);
+		expect(bridge.run).not.toHaveBeenCalled();
+	});
+
 	it('gives G back when the next key starts no sequence, and reads that key on its own', () => {
 		const listDown = jest.fn();
 		registry.registerAll({ goTasks: jest.fn(), listDown });

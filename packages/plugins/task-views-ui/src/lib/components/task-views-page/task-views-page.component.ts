@@ -588,19 +588,27 @@ export class TaskViewsPageComponent implements OnInit {
 		this.saving.set(true);
 		try {
 			const saved = await firstValueFrom(this.api.updateView(id, input));
-			this.conflict.set(null);
-			this.savedView.set(saved);
 			this.api.notify('views');
 			this.toastr.success('TASK_VIEWS.VIEW.SAVED');
+			// Another view opened meanwhile: the answer is that view's no more (the page shows the one opened).
+			if (!this.isOpen(id)) return;
+			this.conflict.set(null);
+			this.savedView.set(saved);
 			// The ordering is the view's own: a saved new one changes the rows.
 			if (kind === 'save') void this.reload();
 		} catch (error) {
 			const conflict = conflictOf(error, input, kind);
-			if (conflict) this.conflict.set(conflict);
-			else this.toastr.danger(this.errorMessage(error, 'TASK_VIEWS.VIEW.SAVE_FAILED'));
+			if (conflict && this.isOpen(id)) this.conflict.set(conflict);
+			else if (!conflict) this.toastr.danger(this.errorMessage(error, 'TASK_VIEWS.VIEW.SAVE_FAILED'));
 		} finally {
 			this.saving.set(false);
 		}
+	}
+
+	/** Whether the saved view a write was for is still the one the page shows. */
+	private isOpen(id: ID): boolean {
+		const current = this.current();
+		return current.kind === 'saved' && current.id === id && this.savedView()?.id === id;
 	}
 
 	/** Conflict → Reload: the latest view replaces the edit. */
@@ -747,12 +755,14 @@ export class TaskViewsPageComponent implements OnInit {
 		this.saving.set(true);
 		try {
 			const saved = await firstValueFrom(this.api.setOrder(id, input));
+			if (!this.isOpen(id)) return;
 			this.conflict.set(null);
 			this.savedView.set(saved);
 		} catch (error) {
 			const conflict = conflictOf(error, input, 'order');
+			if (!conflict) this.toastr.danger(this.errorMessage(error, 'TASK_VIEWS.ORDER.FAILED'));
+			if (!this.isOpen(id)) return;
 			if (conflict) this.conflict.set(conflict);
-			else this.toastr.danger(this.errorMessage(error, 'TASK_VIEWS.ORDER.FAILED'));
 			void this.reload();
 		} finally {
 			this.saving.set(false);

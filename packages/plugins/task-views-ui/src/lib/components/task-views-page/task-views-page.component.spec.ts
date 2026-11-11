@@ -11,7 +11,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap, Router } from '@angular/router';
 import { NbDialogService } from '@nebular/theme';
-import { BehaviorSubject, of, throwError } from 'rxjs';
+import { BehaviorSubject, of, Subject, throwError } from 'rxjs';
 import { ID, ITask, ITaskView, ITaskViewTasksPage, TaskStatusEnum } from '@gauzy/contracts';
 import { Store, ToastrService } from '@gauzy/ui-core/core';
 import { ShortcutRegistryService } from '../../keyboard/shortcut-registry.service';
@@ -229,6 +229,23 @@ describe('TaskViewsPageComponent', () => {
 		});
 		expect(component.conflict()).toBeNull();
 		expect(component.savedView().version).toBe(6);
+	});
+
+	it('leaves the view opened meanwhile alone when a save of the previous one answers', async () => {
+		await create();
+		component.setGroupBy('status');
+		const answer = new Subject<ITaskView>();
+		api.updateView.mockReturnValueOnce(answer);
+		const saving = component.save();
+		// Another view opens before the save of v1 answers.
+		const other = savedView({ id: 'v2' as ID, name: 'Other', version: 1 });
+		component.current.set({ kind: 'saved', id: 'v2' });
+		component.savedView.set(other);
+		answer.next(savedView({ version: 4 }));
+		answer.complete();
+		await saving;
+		expect(component.savedView()).toBe(other);
+		expect(component.conflict()).toBeNull();
 	});
 
 	it('Reload takes the latest view and drops the edit', async () => {

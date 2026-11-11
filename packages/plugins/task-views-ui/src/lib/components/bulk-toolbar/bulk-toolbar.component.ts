@@ -65,7 +65,7 @@ export class BulkToolbarComponent {
 	readonly deleted = output<void>();
 	readonly cleared = output<void>();
 
-	@ViewChild('search') private searchField?: ElementRef<HTMLInputElement>;
+	@ViewChild('searchInput') private searchField?: ElementRef<HTMLInputElement>;
 	@ViewChild('dueField') private dueField?: ElementRef<HTMLInputElement>;
 
 	private readonly host = inject(ElementRef<HTMLElement>);
