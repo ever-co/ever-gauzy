@@ -223,6 +223,10 @@ export class ThreadPaneComponent {
 	private poll: Subscription | null = null;
 	/** Asks the poll for the newer replies now (after a catch-up). */
 	private readonly newerNow = new Subject<void>();
+	/** Counts the catch-ups: only the latest one's answer is applied. */
+	private catchUpRun = 0;
+	/** The messages changed here since the latest catch-up began (a refresh, a deletion, my own action): its page does not overrule them. */
+	private readonly touched = new Set<string>();
 	/** Counts the visits of this pane (every root switch): a reply belongs to the visit it was made in. */
 	private visit = 0;
 	/** The last reply a thread read was sent for, so the same read is not sent twice. */
@@ -357,25 +361,36 @@ export class ThreadPaneComponent {
 		this.poll = poll;
 	}
 
-	/** The root and the first page again (the events of the gap are not replayed), then the newer replies. */
+	/**
+	 * The root and the first page again (the events of the gap are not replayed), then the newer replies. Only the
+	 * latest catch-up's answer is applied, and it does not overrule what changed here while it ran: a reply shown
+	 * meanwhile (a live event, my own reply), a reply refreshed or deleted by an event, the root refreshed. When every
+	 * reply was loaded before, the newer ones are read from the last loaded reply, closing the gap however long.
+	 */
 	private catchUp(id: string): void {
 		if (!this.isCurrent(id) || this.loading()) return;
-		// A reply shown while the read runs (a live event, my own reply) stays whatever the page says.
+		const run = ++this.catchUpRun;
+		this.touched.clear();
 		const before = new Set(this.replies().map((reply) => String(reply.id)));
+		const wasComplete = !this.hasAfter();
 		this.api
 			.thread(id)
 			.pipe(takeUntilDestroyed(this.destroyRef))
 			.subscribe({
 				next: (page) => {
-					if (!this.isCurrent(id)) return;
-					this.replace(page.root);
-					const arrived = this.replies().filter((reply) => !before.has(String(reply.id)));
-					const result = reconcileWithOldest(
-						this.replies().filter((reply) => before.has(String(reply.id))),
-						{ hasAfter: page.hasAfter, messages: page.messages.filter((message) => message.id !== page.root.id) }
-					);
-					this.replies.set(mergeMessages(result.messages, arrived));
-					if (!result.beyond) this.hasAfter.set(page.hasAfter);
+					if (!this.isCurrent(id) || run !== this.catchUpRun) return;
+					const untouched = (message: IChatMessageWithRelations) => !this.touched.has(String(message.id));
+					if (untouched(page.root)) this.replace(page.root, false);
+					const current = this.replies();
+					const settled = current.filter((reply) => before.has(String(reply.id)) && untouched(reply));
+					const kept = current.filter((reply) => !before.has(String(reply.id)) || !untouched(reply));
+					const result = reconcileWithOldest(settled, {
+						hasAfter: page.hasAfter,
+						messages: page.messages.filter((message) => message.id !== page.root.id && untouched(message))
+					});
+					this.replies.set(mergeMessages(result.messages, kept));
+					// Every reply was loaded: the poll reads from the last one. Otherwise the first page says what follows.
+					if (!wasComplete && !result.beyond) this.hasAfter.set(page.hasAfter);
 					if (result.added.length) this.markRead();
 					this.newerNow.next();
 				},
@@ -399,8 +414,10 @@ export class ThreadPaneComponent {
 					if (!this.isCurrent(id)) return;
 					const fresh = isRoot ? page.root : page.messages.find((message) => String(message.id) === messageId);
 					if (!fresh) return;
-					if (!isRoot && fresh.deletedAt) this.replies.set(this.replies().filter((reply) => String(reply.id) !== messageId));
-					else this.replace(fresh);
+					if (!isRoot && fresh.deletedAt) {
+						this.touched.add(messageId);
+						this.replies.set(this.replies().filter((reply) => String(reply.id) !== messageId));
+					} else this.replace(fresh);
 				},
 				error: () => undefined
 			});
@@ -569,7 +586,9 @@ export class ThreadPaneComponent {
 		}
 	}
 
-	private replace(message: ChatMessagePatch): void {
+	/** Puts a newer version of the root or a reply in place; `touch` keeps a running catch-up from overruling it. */
+	private replace(message: ChatMessagePatch, touch = true): void {
+		if (touch && message.id) this.touched.add(String(message.id));
 		const root = this.root();
 		if (root && root.id === message.id) {
 			const next = { ...root, ...message };

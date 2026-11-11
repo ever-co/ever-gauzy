@@ -132,18 +132,22 @@ describe('MessageComposerComponent', () => {
 			expect(sent).toEqual([{ body: 'The report', mentionEmployeeIds: [], attachmentIds: ['doc-1'] }]);
 		});
 
-		it('shows a refused file, sends without it, and lets it be taken off', () => {
+		it('shows a refused file, and sends nothing until it is taken off', () => {
 			uploadFile.mockReturnValueOnce(throwError(() => ({ status: 404 })));
 			fixture.componentInstance.addFiles([pdf()]);
 			fixture.detectChanges();
 			const failed = fixture.nativeElement.querySelector('[data-status="failed"]');
 			expect(failed?.textContent).toContain('CHAT.COMPOSER.ATTACH_UNAVAILABLE');
-			// Nothing to send: no text, no stored file.
+			// Text written beside it does not send the message without the file.
+			type('Here is the file');
 			expect(sendButton().disabled).toBe(true);
+			press('Enter');
+			expect(sent).toEqual([]);
 
 			failed.querySelector('button').click();
 			fixture.detectChanges();
 			expect(fixture.nativeElement.querySelector('[data-test="composer-attachments"]')).toBeNull();
+			expect(sendButton().disabled).toBe(false);
 		});
 
 		it('drops the files picked in another place, and stops their uploads', () => {

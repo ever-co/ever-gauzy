@@ -45,6 +45,8 @@ export const CHAT_FILES_PAGE = 30;
 			}
 			@if (loading()) {
 				<div class="loading" [nbSpinner]="true"></div>
+			} @else if (failed()) {
+				<button nbButton ghost size="tiny" type="button" data-test="files-retry" (click)="more()">{{ 'CHAT.RETRY' | translate }}</button>
 			} @else if (hasMore()) {
 				<button nbButton ghost size="tiny" type="button" data-test="files-more" (click)="more()">{{ 'CHAT.FILES.MORE' | translate }}</button>
 			}
@@ -132,6 +134,8 @@ export class FilesPanelComponent {
 	}
 
 	private load(id: string, skip: number): void {
+		// The scope the read is made for: a late answer for another user or organization is dropped.
+		const scope = this.store.currentScope;
 		this.loading.set(true);
 		this.failed.set(false);
 		this.api
@@ -139,7 +143,7 @@ export class FilesPanelComponent {
 			.pipe(takeUntilDestroyed(this.destroyRef))
 			.subscribe({
 				next: (result) => {
-					if (this.conversationId() !== id) return;
+					if (this.conversationId() !== id || scope !== this.store.currentScope) return;
 					// One entry per document, within this page too (two messages may carry one document).
 					const seen = new Set(this.files().map((file) => String(file.documentId)));
 					const fresh = result.files.filter((file) => {
@@ -153,7 +157,7 @@ export class FilesPanelComponent {
 					// A full page (more follows) read exactly the page size of rows; the last page, what it answered.
 					this.consumed = skip + (result.hasMore ? CHAT_FILES_PAGE : result.files.length);
 					this.loading.set(false);
-					this.store.add(result.files);
+					this.store.add(result.files, scope);
 				},
 				error: () => {
 					if (this.conversationId() !== id) return;

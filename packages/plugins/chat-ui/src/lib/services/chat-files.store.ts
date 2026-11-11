@@ -64,9 +64,14 @@ export class ChatFilesStore {
 		this.read(conversationId, documentIds);
 	}
 
-	/** Files read elsewhere (the files pane): kept for the messages too. */
-	add(files: readonly IChatFile[]): void {
-		if (!files.length) return;
+	/** The user / organization the store holds files for; a read made for an earlier one is dropped (see {@link add}). */
+	get currentScope(): number {
+		return this.scope;
+	}
+
+	/** Files read elsewhere (the files pane): kept for the messages too, unless read for an earlier scope. */
+	add(files: readonly IChatFile[], scope = this.scope): void {
+		if (!files.length || scope !== this.scope) return;
 		const next = new Map(this.files());
 		for (const file of files) next.set(String(file.documentId), file);
 		this.files.set(next);
