@@ -304,9 +304,10 @@ export class RolePermissionService extends TenantAwareCrudService<RolePermission
 	 */
 	public async deletePermission(id: string) {
 		try {
-			// The same role rule as every other permission write (one copy, not four). A caller that is neither
-			// SUPER_ADMIN nor ADMIN used to fall through with no answer at all, and a row without a readable role
-			// reached `.role.name` on `undefined`. `findOneByOptions` raises NotFound for a missing row.
+			// The role rule `updatePermission`, `softRemove` and `softRecover` already apply, instead of a copy of
+			// `createPermission`'s branches. A caller that is neither SUPER_ADMIN nor ADMIN used to fall through
+			// with no answer at all, and a row without a readable role reached `.role.name` on `undefined`.
+			// `findOneByOptions` raises NotFound for a missing row.
 			const permRecord = await this.findOneByOptions({
 				where: { id },
 				relations: { role: true }
@@ -314,7 +315,8 @@ export class RolePermissionService extends TenantAwareCrudService<RolePermission
 			await this.assertMayChangePermissionsOf(permRecord?.role, 'delete');
 			return await this.delete(id);
 		} catch (error /*: WriteError*/) {
-			// An `Error` passed as the response serialises to `{}`: send its message.
+			// The message, not the error, is the response: a plain `Error` (such as that TypeError) serialised to
+			// `{}`. Still a 400, as every refusal of this method has been.
 			throw new BadRequestException(error?.message);
 		}
 	}

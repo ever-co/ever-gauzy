@@ -137,8 +137,8 @@ describe('any other role', () => {
 
 /**
  * `deletePermission` shares the rule. It answered nothing at all to a caller that is neither SUPER_ADMIN nor ADMIN,
- * read `.role.name` of a row whose role could not be read, and put the exception object (serialised as `{}`) in its
- * 400 body instead of the message.
+ * read `.role.name` of a row whose role could not be read, and put the error object in its 400 body instead of the
+ * message (a plain `Error`, such as that TypeError, serialised as `{}`).
  */
 describe('deletePermission', () => {
 	function deleting(callerRole: { id: string; name: RolesEnum }, canChangeRoles = true) {
@@ -173,7 +173,7 @@ describe('deletePermission', () => {
 	});
 
 	it('refuses a row that does not exist, with the lookup’s message in the 400 body', async () => {
-		// The real lookup raises NotFound on a miss; the failure was that the 400 carried the exception object (`{}`).
+		// The real lookup raises NotFound on a miss; the 400 body used to be that exception object itself.
 		const { service, read, remove } = deleting(ROLES.admin);
 		read.mockRejectedValue(new NotFoundException('The requested record was not found'));
 
@@ -182,6 +182,12 @@ describe('deletePermission', () => {
 		expect(read).toHaveBeenCalled();
 		expect(error).toBeInstanceOf(BadRequestException);
 		expect(error.message).toBe('The requested record was not found');
+		// `message` read the same before; the body is what changed, and only this checks it
+		expect(error.getResponse()).toEqual({
+			statusCode: 400,
+			message: 'The requested record was not found',
+			error: 'Bad Request'
+		});
 		expect(remove).not.toHaveBeenCalled();
 	});
 
