@@ -41,6 +41,7 @@ export class DocumentAccessService {
 	 * follow, an automatic subscription, a mute or a review notification of a page belongs to the employee of the
 	 * page's organization, which is the one that organization's fan-out and Inbox read. Falls back to the token's
 	 * employee (see {@link currentEmployeeId}) when the user has no active employee there, or the scope is unknown.
+	 * A lookup that fails throws: acting as another organization's employee is never the answer to a failed read.
 	 *
 	 * @param organizationId The page's organization.
 	 * @param tenantId The page's tenant.
@@ -57,7 +58,8 @@ export class DocumentAccessService {
 
 	/**
 	 * A user's employee in one organization: the active, unarchived one, so a follow, a subscription or a mute is
-	 * held by the employee the fan-out and the Inbox of that organization read. `null` when the user has none there.
+	 * held by the employee the fan-out and the Inbox of that organization read. `null` when the user has none there;
+	 * a failed read throws, so a caller can tell "no employee" from "not known".
 	 *
 	 * @param userId The user.
 	 * @param organizationId The organization (a page's).
@@ -72,7 +74,7 @@ export class DocumentAccessService {
 			return (employee?.id as ID) ?? null;
 		} catch (error) {
 			this.logger.warn(`The employee of user ${userId} in organization ${organizationId} was not read: ${(error as Error)?.message}`);
-			return null;
+			throw error;
 		}
 	}
 

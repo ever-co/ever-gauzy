@@ -137,26 +137,32 @@ export class DocumentCollaborationService {
 
 	// ---------------------------------------------------------------- follow / mute
 
-	/** Whether the caller follows the page, and whether they muted it. */
+	/**
+	 * Whether the caller follows the page, and whether they muted it.
+	 *
+	 * The follow and the mute belong to the caller's employee in the page's organization. A choice made before that
+	 * was saved under the employee in the caller's token, so both are read (and cleared by an unfollow or an unmute):
+	 * nobody's earlier follow or mute disappears because the identity it was saved under changed.
+	 */
 	async followState(id: ID, organizationId?: ID): Promise<IDocumentFollowState> {
 		this.assertEnabled();
 		const document = await this.documentService.findOneScoped(id, [], organizationId);
-		const employeeId = await this.documentAccessService.currentEmployeeIdIn(document.organizationId, document.tenantId);
-		if (!employeeId) return { following: false, muted: false };
+		const { employeeIds } = await this.followersOf(document);
+		if (!employeeIds.length) return { following: false, muted: false };
 		const following = await this.typeOrmDocumentRepository.manager.count(EntitySubscription, {
-			where: { entity: BaseEntityEnum.Document, entityId: document.id as ID, employeeId, tenantId: document.tenantId }
+			where: { entity: BaseEntityEnum.Document, entityId: document.id as ID, employeeId: In(employeeIds), tenantId: document.tenantId }
 		});
-		return { following: following > 0, muted: isMutedBy(document.metadata, employeeId) };
+		return { following: following > 0, muted: employeeIds.some((employeeId) => isMutedBy(document.metadata, employeeId)) };
 	}
 
-	/** Follows the page (and lifts its mute). */
+	/** Follows the page (and lifts its mute, wherever it was saved). */
 	async follow(id: ID, organizationId?: ID): Promise<IDocumentFollowState> {
 		this.assertEnabled();
 		const document = await this.documentService.findOneScoped(id, [], organizationId);
-		const employeeId = await this.documentAccessService.currentEmployeeIdIn(document.organizationId, document.tenantId);
+		const { employeeId, employeeIds } = await this.followersOf(document);
 		if (!employeeId) return { following: false, muted: false };
-		if (isMutedBy(document.metadata, employeeId)) {
-			await this.setMuted(document, employeeId, false);
+		for (const muted of employeeIds.filter((candidate) => isMutedBy(document.metadata, candidate))) {
+			await this.setMuted(document, muted, false);
 		}
 		this.eventBus.publish(
 			new CreateEntitySubscriptionEvent({
@@ -171,44 +177,59 @@ export class DocumentCollaborationService {
 		return { following: true, muted: false };
 	}
 
-	/** Stops following the page (the mute, if any, stays). */
+	/** Stops following the page, a follow saved under the token's employee included (the mute, if any, stays). */
 	async unfollow(id: ID, organizationId?: ID): Promise<IDocumentFollowState> {
 		this.assertEnabled();
 		const document = await this.documentService.findOneScoped(id, [], organizationId);
-		const employeeId = await this.documentAccessService.currentEmployeeIdIn(document.organizationId, document.tenantId);
-		if (!employeeId) return { following: false, muted: false };
-		await this.deleteSubscriptions(document, employeeId);
-		return { following: false, muted: isMutedBy(document.metadata, employeeId) };
+		const { employeeIds } = await this.followersOf(document);
+		if (!employeeIds.length) return { following: false, muted: false };
+		await this.deleteSubscriptions(document, employeeIds);
+		return { following: false, muted: employeeIds.some((employeeId) => isMutedBy(document.metadata, employeeId)) };
 	}
 
 	/** Mutes the page: no follow, and none re-created by the plugin's own paths, until unmuted. */
 	async mute(id: ID, organizationId?: ID): Promise<IDocumentFollowState> {
 		this.assertEnabled();
 		const document = await this.documentService.findOneScoped(id, [], organizationId);
-		const employeeId = await this.documentAccessService.currentEmployeeIdIn(document.organizationId, document.tenantId);
+		const { employeeId, employeeIds } = await this.followersOf(document);
 		if (!employeeId) return { following: false, muted: false };
-		await this.deleteSubscriptions(document, employeeId);
+		await this.deleteSubscriptions(document, employeeIds);
 		await this.setMuted(document, employeeId, true);
 		return { following: false, muted: true };
 	}
 
-	/** Lifts the mute of the page (without following it again). */
+	/** Lifts the mute of the page, wherever it was saved (without following it again). */
 	async unmute(id: ID, organizationId?: ID): Promise<IDocumentFollowState> {
 		this.assertEnabled();
 		const document = await this.documentService.findOneScoped(id, [], organizationId);
-		const employeeId = await this.documentAccessService.currentEmployeeIdIn(document.organizationId, document.tenantId);
-		if (!employeeId) return { following: false, muted: false };
-		await this.setMuted(document, employeeId, false);
+		const { employeeIds } = await this.followersOf(document);
+		if (!employeeIds.length) return { following: false, muted: false };
+		for (const muted of employeeIds.filter((candidate) => isMutedBy(document.metadata, candidate))) {
+			await this.setMuted(document, muted, false);
+		}
 		return this.followState(id, organizationId);
+	}
+
+	/**
+	 * The caller as a follower of the page: their employee in the page's organization, which new follows and mutes are
+	 * saved under, and the employee in their token too when it is another (the one earlier choices were saved under).
+	 * A lookup that fails fails the call rather than acting as another employee.
+	 */
+	private async followersOf(document: Document): Promise<{ employeeId: ID | null; employeeIds: ID[] }> {
+		const employeeId = await this.documentAccessService.currentEmployeeIdIn(document.organizationId, document.tenantId);
+		const tokenEmployeeId = this.documentAccessService.currentEmployeeId();
+		const employeeIds = [...new Set([employeeId, tokenEmployeeId].filter((candidate): candidate is ID => !!candidate))];
+		return { employeeId, employeeIds };
 	}
 
 	// ---------------------------------------------------------------- helpers
 
-	private async deleteSubscriptions(document: Document, employeeId: ID): Promise<void> {
+	private async deleteSubscriptions(document: Document, employeeIds: readonly ID[]): Promise<void> {
+		if (!employeeIds.length) return;
 		await this.typeOrmDocumentRepository.manager.delete(EntitySubscription, {
 			entity: BaseEntityEnum.Document,
 			entityId: document.id as ID,
-			employeeId,
+			employeeId: In([...employeeIds]),
 			tenantId: document.tenantId
 		});
 	}

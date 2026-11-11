@@ -560,13 +560,15 @@ export class DocumentService extends TenantAwareCrudService<Document> {
 	public async subscribeRequesterToDocument(document: Document, type: EntitySubscriptionTypeEnum): Promise<void> {
 		// The requester's employee in the page's organization: the one that organization's fan-out and Inbox read
 		// (a user employed in several organizations carries their last organization's employee in the token).
-		let employeeId: ID | null = null;
+		// When that read fails the subscription is skipped: one saved under another organization's employee would
+		// outlive the failure.
+		let employeeId: ID | null;
 		try {
 			employeeId = await this.documentAccessService.currentEmployeeIdIn(document.organizationId, document.tenantId);
-		} catch {
-			employeeId = null;
+		} catch (error) {
+			this.logger.warn(`Document ${document.id}: the requester was not subscribed: ${(error as Error)?.message}`);
+			return;
 		}
-		employeeId ??= RequestContext.currentEmployeeId();
 		if (!employeeId) {
 			return; // no employee identity on this request — there is nobody to subscribe
 		}

@@ -21,7 +21,7 @@ jest.mock('../repositories/type-orm-document-share.repository', () => ({
 import { DocumentAccessService } from './document-access.service';
 
 /** The access service over a stub employee table: user-1 is an employee of org-a and org-b (inactive in org-c). */
-function buildService() {
+function buildService(lookupFails = false) {
 	const employees = [
 		{
 			id: 'employee-of-org-a',
@@ -49,12 +49,14 @@ function buildService() {
 		}
 	];
 	const manager = {
-		findOne: jest.fn(
-			async (_entity: unknown, { where }: { where: Record<string, unknown> }) =>
+		findOne: jest.fn(async (_entity: unknown, { where }: { where: Record<string, unknown> }) => {
+			if (lookupFails) throw new Error('database unavailable');
+			return (
 				employees.find((row) =>
 					Object.entries(where).every(([key, value]) => (row as Record<string, unknown>)[key] === value)
 				) ?? null
-		)
+			);
+		})
 	};
 	return new DocumentAccessService({ manager } as never);
 }
@@ -85,6 +87,12 @@ describe('DocumentAccessService.currentEmployeeIdIn', () => {
 		mockContext.userId = null;
 		await expect(buildService().currentEmployeeIdIn('org-b' as never, 'tenant-1' as never)).resolves.toBe(
 			'employee-of-org-a'
+		);
+	});
+
+	it('throws when the lookup fails, rather than acting as the token employee', async () => {
+		await expect(buildService(true).currentEmployeeIdIn('org-b' as never, 'tenant-1' as never)).rejects.toThrow(
+			'database unavailable'
 		);
 	});
 });

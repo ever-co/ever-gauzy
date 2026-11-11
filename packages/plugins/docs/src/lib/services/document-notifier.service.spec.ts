@@ -28,14 +28,17 @@ function buildNotifier() {
 	const manager = {
 		find: jest.fn(async (_entity: unknown, options: { where: Record<string, unknown> }) => {
 			const { where } = options;
+			// A user's employees in the tenant.
+			if (where['userId'] === 'creator-user') return [{ id: 'creator-employee' }, { id: 'creator-employee-elsewhere' }];
+			if (where['userId']) return [];
 			const receivers = new Set(((where['receiverEmployeeId'] as { value?: unknown[] })?.value ?? []).map(String));
 			return rows.filter((row) => row['entityId'] === where['entityId'] && row['type'] === where['type'] && row['message'] === where['message'] && receivers.has(String(row['receiverEmployeeId'])));
 		}),
-		// Each user's employee: in the page's organization when the read names one, else the tenant's first.
+		// Each user's employee in the page's organization.
 		findOne: jest.fn(async (_entity: unknown, options: { where: Record<string, unknown> }) => {
-			const { userId, organizationId } = options.where;
+			const { userId } = options.where;
 			if (userId === 'actor-user') return { id: 'actor-employee' };
-			if (userId === 'creator-user') return organizationId ? { id: 'creator-employee' } : { id: 'creator-employee-elsewhere' };
+			if (userId === 'creator-user') return { id: 'creator-employee' };
 			return null;
 		})
 	};
@@ -99,6 +102,14 @@ describe('DocumentNotifierService', () => {
 			select: { id: true },
 			where: { userId: 'creator-user', organizationId: 'org-1', tenantId: 'tenant-1', isActive: true, isArchived: false }
 		});
+	});
+
+	it('tells the creator nothing when a mute of the page is held by another of their employees', async () => {
+		const { notifier, published } = buildNotifier();
+		const muted = { ...(DOCUMENT as object), metadata: { collaboration: { mutedEmployeeIds: ['creator-employee-elsewhere'] } } } as never;
+
+		expect(await notifier.notifyReviewDecided(muted, DocumentReviewStatusEnum.REJECTED, null)).toBe(0);
+		expect(published).toHaveLength(0);
 	});
 
 	it('leaves the actor out by their employee in the page organization, not only the one in their token', async () => {
