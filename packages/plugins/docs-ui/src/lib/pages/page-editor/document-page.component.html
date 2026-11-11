@@ -209,6 +209,12 @@
 										<nb-icon icon="corner-down-right-outline"></nb-icon
 										>{{ 'DOCS.TREE.MOVE' | translate }}
 									</button>
+									<!-- Collaboration on (the follow state answered): the page can change space. -->
+									@if (followState) {
+										<button type="button" role="menuitem" (click)="openMoveSpaceDialog()">
+											<nb-icon icon="people-outline"></nb-icon>{{ 'DOCS.SPACE.MOVE_ACTION' | translate }}
+										</button>
+									}
 									<!-- Manual review request (spec 01 §11) — the only route into the
                   review queue when AI is disabled. Already-PENDING shows the
                   state instead of an action the backend would no-op. -->

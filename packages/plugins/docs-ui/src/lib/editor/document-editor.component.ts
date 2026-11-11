@@ -239,6 +239,26 @@ export class DocumentEditorComponent implements OnChanges, OnDestroy {
 		return this.liveBinding ? this.liveBinding.hasPending() : this.autosave.isDirty;
 	}
 
+	/**
+	 * Waits until the page holds no unsaved edit: the autosave's save in flight lands and what came after is saved,
+	 * or, live, the waiting edits are sent.
+	 *
+	 * @returns `false` when some are still unsaved (a freeze, a failure, the deadline).
+	 */
+	settleSaves(): Promise<boolean> {
+		return this.liveBinding ? this.liveBinding.flush() : this.autosave.settle();
+	}
+
+	/**
+	 * The page's row was written by a metadata change (a move to another space): the autosave continues from its new
+	 * `updatedAt`. A live page has no token to move.
+	 *
+	 * @param document The row as written.
+	 */
+	rebaseSaveToken(document: IDocument): void {
+		if (!this.liveBinding) this.autosave.rebase(document?.updatedAt as never);
+	}
+
 	/** Whether the editor is bound to a live session of the page. */
 	get isLive(): boolean {
 		return !!this.liveBinding && this.liveState?.phase === 'live';

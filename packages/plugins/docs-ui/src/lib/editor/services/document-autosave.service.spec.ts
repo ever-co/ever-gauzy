@@ -195,4 +195,43 @@ describe('DocumentAutosaveService', () => {
 			expect(Object.keys(updateContent.mock.calls[0][1])).not.toContain('contentBinary');
 		}));
 	});
+
+	describe('around a metadata write of the page (a move to another space)', () => {
+		it('settles: waits for the save in flight and saves what came after it', async () => {
+			const inFlight = new Subject<IDocument>();
+			updateContent.mockReturnValueOnce(inFlight);
+			service.init('doc-1', LOADED_AT, payload);
+			service.markDirty();
+			void service.flush();
+			// An edit while the first save is in flight.
+			service.markDirty();
+
+			const settled = service.settle(2_000);
+			inFlight.next({ id: 'doc-1', updatedAt: SAVED_AT } as unknown as IDocument);
+			inFlight.complete();
+
+			await expect(settled).resolves.toBe(true);
+			expect(updateContent).toHaveBeenCalledTimes(2);
+			expect(service.isDirty).toBe(false);
+		});
+
+		it('does not settle a frozen session', async () => {
+			updateContent.mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 409 })));
+			service.init('doc-1', LOADED_AT, payload);
+			service.markDirty();
+
+			await expect(service.settle(500)).resolves.toBe(false);
+		});
+
+		it('rebases the token, so the next save states the row after the move', async () => {
+			service.init('doc-1', LOADED_AT, payload);
+			const moved = '2026-01-01T00:01:00.000Z';
+
+			service.rebase(moved);
+			service.markDirty();
+			await service.flush();
+
+			expect(updateContent.mock.calls[0][1].expectedUpdatedAt).toBe(moved);
+		});
+	});
 });

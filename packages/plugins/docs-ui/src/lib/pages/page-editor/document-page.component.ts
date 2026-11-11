@@ -45,6 +45,7 @@ import { DocsSaveState } from '../../editor/services/document-autosave.service';
 import { DocumentStaticViewComponent } from '../../editor/read-only/document-static-view.component';
 import { VersionHistoryPanelComponent } from '../../editor/version-history/version-history-panel.component';
 import { MoveDialogComponent } from '../../dialogs/move-dialog.component';
+import { MoveSpaceDialogComponent } from '../../dialogs/move-space-dialog.component';
 import { RequestReviewDialogComponent } from '../../dialogs/request-review-dialog.component';
 import { DocumentShareDialogComponent } from '../../dialogs/share-dialog.component';
 import { DocsExportService } from '../../services/docs-export.service';
@@ -660,6 +661,32 @@ export class DocumentPageComponent implements OnInit, OnDestroy {
 		} catch {
 			this.toastrService.danger(this.translate.instant('DOCS.ERRORS.GENERIC_RETRY'));
 		}
+	}
+
+	/** Moves the page (and, by default, the pages under it) to another space (`GAUZY_DOCS_COLLAB_ENABLED`). */
+	async openMoveSpaceDialog(): Promise<void> {
+		if (!this.document) return;
+		this.menuOpen = false;
+		// Every edit is saved first (a save in flight included), under the token it was made against: the move
+		// writes the row too.
+		if (this.editorComponent && !(await this.editorComponent.settleSaves())) {
+			this.toastrService.warning(this.translate.instant('DOCS.SPACE.SAVE_FIRST'));
+			return;
+		}
+		this.dialogService
+			.open(MoveSpaceDialogComponent, {
+				context: { document: this.document },
+				// The dialog closes itself (it waits for the move): no backdrop or Esc close while it runs.
+				closeOnBackdropClick: false,
+				closeOnEsc: false
+			})
+			.onClose.subscribe((moved: IDocument | null) => {
+				if (!moved) return;
+				// The move stamped the row: the autosave continues from the moved row's token, or its next save
+				// would be a 409 although nobody else changed the content.
+				this.editorComponent?.rebaseSaveToken(moved);
+				void this.load();
+			});
 	}
 
 	openMoveDialog(): void {
