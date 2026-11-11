@@ -87,9 +87,11 @@ cards / lists) and their own webhook scheme, one webhook per mapping at
   until a person connects again. The Inbox notice (one per connection, resolved when the token works again) goes to
   the person who connected and to the organization's integration managers: active members whose role grants
   `INTEGRATION_ADD` or `INTEGRATION_EDIT` (`IntegrationTenantService.findManagerUserIds`, core). When the managers
-  cannot be read, an open notice is not filed (nor recorded): the sweep files it with them; a new refusal clears the
-  previous refusal's filing timestamp first, so every early return is retried. The lookup reads at most 100 managers; a full page is filed (and recorded) without
-  removing anyone, and logged.
+  cannot be read, an open notice is not filed: its timestamp is marked `deferred`, and the sweep files it with them and
+  re-surfaces it (a retry of a filing the Inbox took does not re-surface); a new refusal clears the previous refusal's
+  filing timestamp first, so every early return is retried. The lookup reads at most 100 memberships plus one, to know
+  whether more exist: a read of exactly 100 is complete and replaces the recipients; a cut read is filed (and recorded)
+  without removing anyone, and logged.
 - **Conflicts** (T15): an inbound apply merges the synced fields (title, description, status, priority, due date)
   three ways with the values the provider sent the last time the item was applied (`integration_<provider>_*_baseline`,
   one row per item): changed only by the provider → applied; only on the platform → the task keeps it; on both sides

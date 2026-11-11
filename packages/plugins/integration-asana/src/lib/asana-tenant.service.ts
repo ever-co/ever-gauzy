@@ -3,7 +3,7 @@ import { CommandBus } from '@nestjs/cqrs';
 import { ID, IInboxItemWriter, IIntegrationSetting, IIntegrationTenant, INBOX_ITEM_WRITER, IntegrationEntity } from '@gauzy/contracts';
 import { Integration, INTEGRATION_MANAGERS_LIMIT, IntegrationSettingService, IntegrationTenantService, IntegrationTenantUpdateOrCreateCommand, RequestContext } from '@gauzy/core';
 import { AsanaApiClient, AsanaOAuthToken, refreshAsanaToken } from './client/asana-api.client';
-import { attentionItemOf } from './asana-attention';
+import { ATTENTION_NOTICE_DEFERRED, attentionItemOf } from './asana-attention';
 import { AsanaConfig } from './asana-config';
 import { ASANA_CONFIG, ASANA_INTEGRATION_NAME, ASANA_NOT_CONNECTED, ASANA_OAUTH_TOKEN_URL, ASANA_TOKEN_REFRESH_AHEAD_MS, AsanaSettingName } from './asana.constants';
 
@@ -218,7 +218,7 @@ export class AsanaTenantService {
 		}
 		const settings = this.settingsOf(tenant);
 		const before = settings[AsanaSettingName.ATTENTION_REASON] || null;
-		const noticed = !!settings[AsanaSettingName.ATTENTION_NOTICE_AT];
+		const noticed = !!settings[AsanaSettingName.ATTENTION_NOTICE_AT] && settings[AsanaSettingName.ATTENTION_NOTICE_AT] !== ATTENTION_NOTICE_DEFERRED;
 		try {
 			await this.writeSetting(tenant, AsanaSettingName.ATTENTION_REASON, reason ?? '');
 		} catch (error) {
@@ -228,7 +228,7 @@ export class AsanaTenantService {
 		}
 		// A new refusal is not filed until its own filing records it: the timestamp an earlier refusal left (a resolution
 		// whose filing failed) is cleared first, so every way the filing below can stop leaves it to the sweep.
-		if (reason && before !== reason && noticed) {
+		if (reason && before !== reason && settings[AsanaSettingName.ATTENTION_NOTICE_AT]) {
 			try {
 				await this.writeSetting(tenant, AsanaSettingName.ATTENTION_NOTICE_AT, '');
 			} catch (error) {
@@ -250,8 +250,10 @@ export class AsanaTenantService {
 	async ensureAttentionFiled(tenant: IIntegrationTenant): Promise<void> {
 		const settings = this.settingsOf(tenant);
 		const reason = settings[AsanaSettingName.ATTENTION_REASON] || null;
-		if (!reason || settings[AsanaSettingName.ATTENTION_NOTICE_AT]) return;
-		await this.fileAttention(tenant, reason, [], false);
+		const noticeAt = settings[AsanaSettingName.ATTENTION_NOTICE_AT] || '';
+		if (!reason || (noticeAt && noticeAt !== ATTENTION_NOTICE_DEFERRED)) return;
+		// A deferred notice was never filed: its first filing re-surfaces it; a retry of a filing taken does not.
+		await this.fileAttention(tenant, reason, [], noticeAt === ATTENTION_NOTICE_DEFERRED);
 	}
 
 	/** The connections of this integration that wait for a person and whose notice did not get through yet: the sweep files those again. */
@@ -264,7 +266,7 @@ export class AsanaTenantService {
 			})) as IIntegrationTenant[];
 		return rows.filter((row) => {
 			const settings = this.settingsOf(row);
-			return !!settings[AsanaSettingName.ATTENTION_REASON] && !settings[AsanaSettingName.ATTENTION_NOTICE_AT];
+			return !!settings[AsanaSettingName.ATTENTION_REASON] && (!settings[AsanaSettingName.ATTENTION_NOTICE_AT] || settings[AsanaSettingName.ATTENTION_NOTICE_AT] === ATTENTION_NOTICE_DEFERRED);
 		});
 	}
 
@@ -300,7 +302,15 @@ export class AsanaTenantService {
 		// Without the managers an open notice is not filed at all: a partial list could neither drop a former connector
 		// from the shared item nor keep a current manager on it. Nothing is recorded, so the sweep files it with them
 		// (a new refusal starts with no filing timestamp: see setAttention).
-		if (reason && managers === null) return;
+		if (reason && managers === null) {
+			// Marked deferred, so the sweep's filing re-surfaces it for the recipients it reaches (it is a new refusal to them).
+			if (settings[AsanaSettingName.ATTENTION_NOTICE_AT] !== ATTENTION_NOTICE_DEFERRED) {
+				await this.writeSetting(tenant, AsanaSettingName.ATTENTION_NOTICE_AT, ATTENTION_NOTICE_DEFERRED).catch((error: unknown) => {
+					this.logger.warn(`The deferred notice of connection ${tenant.id} could not be marked: ${(error as Error)?.message ?? error}`);
+				});
+			}
+			return;
+		}
 		const partial = !!reason && truncated;
 		const recipients = [...new Set([userId, ...(managers ?? []), ...alsoUserIds].filter(Boolean).map(String))] as ID[];
 		if (!recipients.length) return;

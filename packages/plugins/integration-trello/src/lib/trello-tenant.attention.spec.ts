@@ -1,10 +1,10 @@
 import { Logger } from '@nestjs/common';
 import { InboxItemStatusEnum } from '@gauzy/contracts';
-import { TRELLO_INBOX_SOURCE } from './trello-attention';
+import { ATTENTION_NOTICE_DEFERRED, TRELLO_INBOX_SOURCE } from './trello-attention';
 import { TrelloTenantService } from './trello-tenant.service';
 import { TrelloSettingName } from './trello.constants';
 
-type Recipients = { recipients: Array<{ userId: string }>; replaceRecipients: boolean; status: string; externalSource: string };
+type Recipients = { recipients: Array<{ userId: string; isRead?: boolean; isArchived?: boolean }>; replaceRecipients: boolean; status: string; externalSource: string };
 
 /**
  * A refused token is told in the Inbox to the integration's managers (FR-10): the person who connected and every
@@ -20,7 +20,7 @@ function harness(options: { connectedBy?: string | null; managers?: string[] | E
 		if (options.managers instanceof Error) throw options.managers;
 		return { userIds: options.managers ?? [], truncated: !!options.truncated };
 	});
-	const integrationTenantService = { typeOrmRepository: { findOne: jest.fn(async () => row) }, findManagers };
+	const integrationTenantService = { typeOrmRepository: { findOne: jest.fn(async () => row), find: jest.fn(async () => [row]) }, findManagers };
 	let created = 0;
 	const integrationSettingService = {
 		update: jest.fn(async () => ({ affected: 1 })),
@@ -64,17 +64,31 @@ describe('TrelloTenantService — the refused-token notice', () => {
 		expect(filed(0).recipients.map((recipient) => recipient.userId)).toEqual(['user-manager']);
 	});
 
-	it('defers an open notice to the sweep when the managers cannot be read: nothing filed, nothing recorded', async () => {
+	it('defers an open notice to the sweep when the managers cannot be read: nothing filed, marked deferred', async () => {
 		const { service, row, inbox, findManagers, filed, noticedAt } = harness({ managers: new Error('store down') });
 		await service.setAttention(row as never, 'token_refused', 'token-1');
 		expect(inbox.upsertExternal).not.toHaveBeenCalled();
-		expect(noticedAt()).toBeFalsy();
-		// The sweep files it once the managers can be read: with them, replacing the recipients, and recorded.
+		expect(noticedAt()).toBe(ATTENTION_NOTICE_DEFERRED);
+		expect(await service.findRefusedUnfiled()).toHaveLength(1);
+		// The sweep files it once the managers can be read: with them, replacing the recipients, re-surfaced (the
+		// refusal is new to them, even to one who archived an earlier notice), and recorded.
 		findManagers.mockResolvedValue({ userIds: ['user-manager'], truncated: false });
 		await service.ensureAttentionFiled(row as never);
-		expect(filed(0).recipients.map((recipient) => recipient.userId)).toEqual(['user-connector', 'user-manager']);
+		expect(filed(0).recipients).toEqual([
+			{ userId: 'user-connector', isRead: false, isArchived: false },
+			{ userId: 'user-manager', isRead: false, isArchived: false }
+		]);
 		expect(filed(0).replaceRecipients).toBe(true);
+		expect(noticedAt()).not.toBe(ATTENTION_NOTICE_DEFERRED);
 		expect(noticedAt()).toBeTruthy();
+	});
+
+	it('does not re-surface a retry of a filing that was taken but whose timestamp was not recorded', async () => {
+		const { service, row, inbox, filed } = harness({ managers: ['user-manager'] });
+		inbox.upsertExternal.mockRejectedValueOnce(new Error('inbox down'));
+		await service.setAttention(row as never, 'token_refused', 'token-1');
+		await service.ensureAttentionFiled(row as never);
+		expect(filed(1).recipients).toEqual([{ userId: 'user-connector' }, { userId: 'user-manager' }]);
 	});
 
 	it('across a reconnect, a refusal whose managers cannot be read reaches nobody until the sweep replaces the recipients without the former connector', async () => {
@@ -110,7 +124,7 @@ describe('TrelloTenantService — the refused-token notice', () => {
 		it('when the managers cannot be read', async () => {
 			const { service, row, noticedAt } = harness({ managers: new Error('store down'), noticedAt: earlier });
 			await service.setAttention(row as never, 'token_refused', 'token-1');
-			expect(noticedAt()).toBe('');
+			expect(noticedAt()).toBe(ATTENTION_NOTICE_DEFERRED);
 		});
 
 		it('when there is nobody to tell', async () => {

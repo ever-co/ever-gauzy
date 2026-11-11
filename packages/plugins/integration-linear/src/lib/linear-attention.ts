@@ -3,6 +3,12 @@ import { ID, IInboxItemUpsertInput, InboxItemBodyFormatEnum, InboxItemKindEnum, 
 /** The `externalSource` of the Inbox items the integration files (one per connection: keyed by it). */
 export const LINEAR_INBOX_SOURCE = 'integration-linear';
 
+/**
+ * The value of a connection's `attention_notice_at` while its open notice waits to be filed for the first time (the
+ * managers could not be read): the sweep files it then, re-surfacing it as the first filing of a refusal does.
+ */
+export const ATTENTION_NOTICE_DEFERRED = 'deferred';
+
 /** The connection the item is about: its id and where it lives. */
 export interface LinearAttentionTenant {
 	id: ID;
