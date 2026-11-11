@@ -1,5 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { inject, Injectable, Signal, signal, WritableSignal } from '@angular/core';
+import { inject, Injectable, type Signal, signal, type WritableSignal } from '@angular/core';
 import { ChatLinkPreviewStatusEnum, IChatLinkPreview } from '@gauzy/contracts';
 import { ChatAvailabilityService } from './chat-availability.service';
 import { ChatUiService } from './chat-ui.service';
