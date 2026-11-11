@@ -86,9 +86,31 @@ export function imageAssetIconValue(asset: { id: ID; storageProvider: string; ur
 	return `${IMAGE_ASSET_ICON_SCHEME}${asset.id}:${asset.storageProvider}:${asset.url}`;
 }
 
-/** Every image asset upload is stored under `uploads/<folder>/<tenant id>/`: the key names the tenant it belongs to. */
+/** An empty or dot segment, as is or percent-encoded (`%2e%2e`), which a URL would resolve into another folder. */
+function isUnsafeSegment(segment: string): boolean {
+	let decoded: string;
+	try {
+		decoded = decodeURIComponent(segment);
+	} catch {
+		// A malformed escape is in no file name the upload gives
+		return true;
+	}
+	return !decoded || decoded === '.' || decoded === '..';
+}
+
+/**
+ * Every image asset upload is stored in `uploads/<folder>/<tenant id>/`: a key is the tenant's when its file lies
+ * directly in that tenant's folder, and no segment of it could move the file elsewhere once resolved as a URL.
+ */
 function isKeyOfTenant(key: string, tenantId: ID | null | undefined): boolean {
-	return Boolean(tenantId) && key.split('/').includes(tenantId as string);
+	if (!tenantId) {
+		return false;
+	}
+	const segments = key.split('/');
+	if (segments.some(isUnsafeSegment)) {
+		return false;
+	}
+	return segments.length >= 2 && segments[segments.length - 2] === tenantId;
 }
 
 /**

@@ -140,6 +140,12 @@ describe('image asset icons', () => {
 			],
 			['a file with no extension, outside Cloudinary', { url: key.replace(/\.png$/, '') }],
 			['a file whose folder has a dot but whose name has none', { url: `uploads/v1.png/${tenantId}/image` }],
+			[
+				'a file that names the tenant but resolves into another folder',
+				{ url: `uploads/icons/${otherTenantId}/../${tenantId}/a.png` }
+			],
+			['a file with an encoded dot segment', { url: `uploads/icons/${otherTenantId}/%2e%2e/${tenantId}/a.png` }],
+			['a file below the tenant folder rather than in it', { url: `uploads/${tenantId}/icons/a.png` }],
 			['a file outside the tenant upload folders', { url: `uploads/task_property_icons/${otherTenantId}/a.png` }],
 			['a file of an unknown provider', { storageProvider: null }],
 			['a file name too long for the icon column', { url: `uploads/icons/${tenantId}/${'a'.repeat(200)}.png` }]
@@ -181,6 +187,21 @@ describe('image asset icons', () => {
 			await expect(imageAssetIconUrl(`image-asset:${assetId}`, tenantId, provider)).resolves.toBeNull();
 			await expect(imageAssetIconUrl(stored, otherTenantId, provider)).resolves.toBeNull();
 			await expect(imageAssetIconUrl(stored, undefined, provider)).resolves.toBeNull();
+			expect(provider).not.toHaveBeenCalled();
+		});
+
+		// A value written past the services: its key names the tenant, but resolves into another tenant's folder
+		it.each([
+			`uploads/icons/${tenantId}/../${otherTenantId}/a.png`,
+			`uploads/icons/${otherTenantId}/../${tenantId}/a.png`,
+			`uploads/icons/${otherTenantId}/%2e%2e/${tenantId}/a.png`,
+			`uploads/${tenantId}/icons/a.png`
+		])('builds no URL for the key %s', async (traversing) => {
+			const provider = jest.fn().mockReturnValue({ url: jest.fn().mockResolvedValue(signed) });
+
+			await expect(
+				imageAssetIconUrl(`image-asset:${assetId}:LOCAL:${traversing}`, tenantId, provider)
+			).resolves.toBeNull();
 			expect(provider).not.toHaveBeenCalled();
 		});
 
