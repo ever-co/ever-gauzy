@@ -116,6 +116,11 @@ export interface ICreateImportedFile extends Omit<ICreateImportedNode, 'kind' | 
  */
 export interface IDocumentImportStore {
 	load(id: ID, scope: IImportScope): Promise<IImportRow | null>;
+	/**
+	 * Claims the import for one run: applies `patch` only where the row is QUEUED, or RUNNING with no progress since
+	 * `staleBefore` (a run that died), in one conditional update. True when this caller won it.
+	 */
+	claim(id: ID, scope: IImportScope, staleBefore: Date, patch: Partial<IImportRow>): Promise<boolean>;
 	update(id: ID, scope: IImportScope, patch: Partial<IImportRow>): Promise<void>;
 	/** The uploaded zip, bounded by the import's limit. */
 	readArchive(row: IImportRow): Promise<Buffer>;

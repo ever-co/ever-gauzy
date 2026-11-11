@@ -1,6 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsEnum, IsOptional, IsString, IsUUID } from 'class-validator';
 import { JoinColumn, RelationId } from 'typeorm';
+import { isMySQL } from '@gauzy/config';
 import {
 	DocumentImportLayoutEnum,
 	DocumentImportPhaseEnum,
@@ -153,10 +154,13 @@ export class DocumentImport extends TenantOrganizationBaseEntity implements Omit
 	@MultiORMColumn({ type: 'text', nullable: true })
 	optionsJson?: string | null;
 
-	/** The report (`IDocumentImportReport`) as JSON text. */
+	/**
+	 * The report (`IDocumentImportReport`) as JSON text. `longtext` on MySQL, whose `text` stops at 64 KiB — a report of a
+	 * thousand pages is past that; PostgreSQL and SQLite `text` have no such limit.
+	 */
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
-	@MultiORMColumn({ type: 'text', nullable: true })
+	@MultiORMColumn({ type: isMySQL() ? 'longtext' : 'text', nullable: true })
 	reportJson?: string | null;
 
 	@ApiPropertyOptional({ type: () => Date })

@@ -243,30 +243,64 @@ function box(stack: PdfContent[], fill: string | null, leftRule: string | null, 
 	};
 }
 
-/** A table: header cells bold, `colspan` honoured (pdfmake wants a placeholder for each spanned column). */
+/**
+ * A table: header cells bold, `colspan` and `rowspan` honoured. pdfmake wants a placeholder (`{}`) in every grid
+ * position a span covers — beside a cell for its columns, in the rows below for its rows — so the cells of each row
+ * are laid on a grid that remembers which columns a span from above still covers.
+ */
 function tableBlock(node: IDocNode, ctx: IPdfRenderContext): PdfContent | null {
 	const rows = childrenOf(node).filter((row) => row.type === 'tableRow');
 	if (!rows.length) return null;
-	const body = rows.map((row) => {
+	const clamp = (value: unknown, max: number) => Math.max(1, Math.min(max, Number(value) || 1));
+	/** How many more rows each column is covered by a span from above. */
+	const covered: number[] = [];
+	const body = rows.map((row, rowIndex) => {
 		const cells: Record<string, unknown>[] = [];
+		let column = 0;
+		const skipCovered = () => {
+			while ((covered[column] ?? 0) > 0) {
+				cells.push({});
+				covered[column] -= 1;
+				column += 1;
+			}
+		};
 		for (const cell of childrenOf(row)) {
-			const span = Math.max(1, Math.min(20, Number(attrsOf(cell)['colspan']) || 1));
+			skipCovered();
+			const colSpan = clamp(attrsOf(cell)['colspan'], 20);
+			const rowSpan = clamp(attrsOf(cell)['rowspan'], rows.length - rowIndex);
 			const content = blocksOf(childrenOf(cell), ctx);
-			cells.push({ stack: content.length ? content : [{ text: ' ' }], bold: cell.type === 'tableHeader', ...(span > 1 ? { colSpan: span } : {}) });
-			for (let i = 1; i < span; i++) cells.push({});
+			cells.push({
+				stack: content.length ? content : [{ text: ' ' }],
+				bold: cell.type === 'tableHeader',
+				...(colSpan > 1 ? { colSpan } : {}),
+				...(rowSpan > 1 ? { rowSpan } : {})
+			});
+			for (let i = 1; i < colSpan; i++) cells.push({});
+			for (let i = 0; i < colSpan; i++) covered[column + i] = Math.max(covered[column + i] ?? 0, rowSpan - 1);
+			column += colSpan;
+		}
+		// Columns after this row's last cell that a span from above still covers.
+		for (; column < covered.length; column++) {
+			if ((covered[column] ?? 0) > 0) {
+				cells.push({});
+				covered[column] -= 1;
+			} else {
+				cells.push({ text: '' });
+			}
 		}
 		return cells;
 	});
 	const width = Math.max(...body.map((row) => row.length), 1);
 	for (const row of body) while (row.length < width) row.push({ text: '' });
+	const headerRow = childrenOf(rows[0]).length > 0 && childrenOf(rows[0]).every((cell) => cell.type === 'tableHeader');
 	return {
-		table: { headerRows: rows[0] && childrenOf(rows[0]).every((cell) => cell.type === 'tableHeader') ? 1 : 0, widths: Array(width).fill('*'), body },
+		table: { headerRows: headerRow ? 1 : 0, widths: Array(width).fill('*'), body },
 		layout: {
 			hLineColor: () => RULE,
 			vLineColor: () => RULE,
 			hLineWidth: () => 0.5,
 			vLineWidth: () => 0.5,
-			fillColor: (rowIndex: number) => (rowIndex === 0 && childrenOf(rows[0]).every((cell) => cell.type === 'tableHeader') ? '#f6f7f9' : null)
+			fillColor: (rowIndex: number) => (rowIndex === 0 && headerRow ? '#f6f7f9' : null)
 		},
 		margin: [0, 4, 0, 8]
 	};

@@ -125,7 +125,8 @@ export class DocsProcessingWorker extends QueueWorkerHost {
 	 */
 	@QueueJobHandler(DOCS_JOB_IMPORT)
 	public async handleImport(job: Job<IDocsImportJob>): Promise<void> {
-		await this.pipeline.handleImport(fromBullJob(job));
+		// Through `runStage`, so the `FEATURE_DOCUMENTS` gate parks an import whose tenant switched Docs off.
+		await this.pipeline.runStage(DOCS_JOB_IMPORT, fromBullJob(job));
 	}
 
 	/** `docs.reconcile` → {@link DocsPipelineService.handleReconcile}. */

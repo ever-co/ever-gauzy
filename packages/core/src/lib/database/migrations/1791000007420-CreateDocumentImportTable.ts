@@ -153,7 +153,8 @@ const COLUMNS: Record<Dialect, string> = {
 		'`errorCode` varchar(64) NULL',
 		'`errorMessage` varchar(500) NULL',
 		'`optionsJson` text NULL',
-		'`reportJson` text NULL',
+		// `text` stops at 64 KiB on MySQL; a report of a thousand pages is past that.
+		'`reportJson` longtext NULL',
 		'`startedAt` datetime NULL',
 		'`finishedAt` datetime NULL',
 		'`lastProgressAt` datetime NULL'
