@@ -6,12 +6,13 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { NbAlertModule, NbButtonModule, NbCardModule, NbDialogService, NbIconModule, NbSpinnerModule } from '@nebular/theme';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { combineLatest, EMPTY, forkJoin, merge, Observable, of, Subscription, timer } from 'rxjs';
-import { catchError, distinctUntilChanged, filter, map, switchMap } from 'rxjs/operators';
+import { auditTime, catchError, distinctUntilChanged, map, switchMap } from 'rxjs/operators';
 import { IChatCategory, IChatConversationWithState, IChatMemberState, IChatMessageWithRelations, IChatStates, IOrganization, IUser, PermissionsEnum } from '@gauzy/contracts';
 import { Store, ToastrService } from '@gauzy/ui-core/core';
-import { CHAT_LINK, CHAT_LIST_POLL_MS } from '../../chat-ui.constants';
+import { CHAT_LINK, CHAT_LIST_POLL_MS, CHAT_LIVE_LIST_AUDIT_MS } from '../../chat-ui.constants';
 import { conversationTitle, isUnread, plainBody, sortConversations } from '../../chat-ui.helpers';
 import { ChatAvailabilityService, isFinalRefusal } from '../../services/chat-availability.service';
+import { ChatLiveService } from '../../services/chat-live.service';
 import { ChatPeople, ChatPeopleService, EMPTY_PEOPLE } from '../../services/chat-people.service';
 import { ChatFollowedThread, ChatMessagePatch, ChatUiService } from '../../services/chat-ui.service';
 import { BrowseChannelsDialogComponent, NewChannelDialogComponent, NewDirectDialogComponent } from '../../dialogs/chat-dialogs.component';
@@ -27,8 +28,9 @@ const UNDO_MS = 55_000;
 
 /**
  * `/pages/chat`: the conversations on the left (channels by category, direct messages, favourites, Unreads and
- * Threads), the open conversation in the middle, and a thread on the right. The lists refresh every 30 s while the
- * tab is visible and at once after a write; the open conversation polls for newer messages on its own.
+ * Threads), the open conversation in the middle, and a thread on the right. The lists refresh when a chat event
+ * arrives (live, `ChatLiveService`), at once after a write, and every 30 s while the tab is visible as the fallback
+ * (once a minute while the events arrive live); the open conversation follows its own messages.
  *
  * The page asks the API first (`/chat/states`) for the signed-in user in the selected organization: a 404 means
  * this installation does not serve the chat, and the page says so and makes no other request. When the user or
@@ -337,6 +339,7 @@ const UNDO_MS = 55_000;
 })
 export class ChatPageComponent implements OnInit {
 	private readonly api = inject(ChatUiService);
+	private readonly live = inject(ChatLiveService);
 	private readonly availability = inject(ChatAvailabilityService);
 	private readonly peopleService = inject(ChatPeopleService);
 	private readonly store = inject(Store);
@@ -487,12 +490,15 @@ export class ChatPageComponent implements OnInit {
 		this.checkAvailability();
 	}
 
-	/** The lists on a timer while the tab is visible, and at once after every write of the page. */
+	/**
+	 * The lists: at once, after every write of the page, for the chat events (any of them can move a conversation,
+	 * a count or a followed thread; a burst is read once), after a reconnect, and on the poll's ticks.
+	 */
 	private startListPolling(): void {
 		this.listPolling?.unsubscribe();
 		const token = this.scopeToken;
-		const tick$ = timer(0, CHAT_LIST_POLL_MS).pipe(filter(() => typeof document === 'undefined' || !document.hidden));
-		this.listPolling = merge(tick$, this.api.changed$)
+		const events$ = this.live.hints$.pipe(auditTime(CHAT_LIVE_LIST_AUDIT_MS));
+		this.listPolling = merge(timer(0), this.live.ticks(CHAT_LIST_POLL_MS), this.api.changed$, events$, this.live.catchUp$)
 			.pipe(
 				switchMap(() => {
 					const scope = ++this.listScope;

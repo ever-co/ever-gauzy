@@ -26,6 +26,15 @@ export const CHAT_LIST_POLL_MS = 30_000;
 export const CHAT_MESSAGES_POLL_MS = 5_000;
 /** The open thread asks for newer replies this often while the tab is visible. */
 export const CHAT_THREAD_POLL_MS = 5_000;
+/**
+ * While the chat events arrive live, the polls above run this often instead: a safety net for an event lost on the
+ * way (the realtime README asks a live client to catch up about once a minute).
+ */
+export const CHAT_LIVE_SAFETY_POLL_MS = 60_000;
+/** Events that arrive close together are applied once, this long after the first. */
+export const CHAT_LIVE_AUDIT_MS = 300;
+/** The lists (conversations, states, threads) refetch at most this often for events. */
+export const CHAT_LIVE_LIST_AUDIT_MS = 1_000;
 
 /** The newest page a conversation opens with (the API's default is 50, its maximum 200). */
 export const CHAT_PAGE_SIZE = 50;

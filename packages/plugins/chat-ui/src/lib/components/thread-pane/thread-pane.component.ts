@@ -3,20 +3,24 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { NbButtonModule, NbCheckboxModule, NbIconModule, NbSpinnerModule, NbTooltipModule } from '@nebular/theme';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
-import { EMPTY, Subscription, timer } from 'rxjs';
-import { catchError, filter, switchMap } from 'rxjs/operators';
-import { IChatMessageWithRelations } from '@gauzy/contracts';
+import { EMPTY, merge, Subscription } from 'rxjs';
+import { auditTime, catchError, filter, switchMap } from 'rxjs/operators';
+import { CHAT_EVENT_NAMES, IChatMessageWithRelations } from '@gauzy/contracts';
 import { ToastrService } from '@gauzy/ui-core/core';
-import { CHAT_THREAD_POLL_MS } from '../../chat-ui.constants';
+import { CHAT_LIVE_AUDIT_MS, CHAT_THREAD_POLL_MS } from '../../chat-ui.constants';
 import { apiErrorMessage, continuesGroup, mergeMessages, newNonce } from '../../chat-ui.helpers';
+import { ChatHint } from '../../services/chat-live';
+import { ChatLiveService, isTabVisible } from '../../services/chat-live.service';
 import { ChatPeople } from '../../services/chat-people.service';
 import { ChatMessagePatch, ChatThreadPage, ChatUiService, threadFieldsOf } from '../../services/chat-ui.service';
 import { clearDraft, ComposerSubmission, MessageComposerComponent } from '../message-composer/message-composer.component';
 import { MessageAction, MessageItemComponent } from '../message-item/message-item.component';
 
 /**
- * A thread: its root message, the replies (the first page, more on request, newer ones by polling), follow /
- * unfollow, and a composer with "also send to the conversation". Showing the replies marks the thread read.
+ * A thread: its root message, the replies (the first page, more on request, newer ones as the chat events announce
+ * them, polling as the fallback), follow / unfollow, and a composer with "also send to the conversation". Showing
+ * the replies marks the thread read. A reply or the root changed elsewhere is read again; a reconnect reads the
+ * newer replies and the root again.
  * Every request captures the root it was made for and drops its answer when another thread is open by then.
  */
 @Component({
@@ -155,6 +159,7 @@ import { MessageAction, MessageItemComponent } from '../message-item/message-ite
 })
 export class ThreadPaneComponent {
 	private readonly api = inject(ChatUiService);
+	private readonly live = inject(ChatLiveService);
 	private readonly toastr = inject(ToastrService);
 	private readonly translate = inject(TranslateService);
 	private readonly destroyRef = inject(DestroyRef);
@@ -265,13 +270,22 @@ export class ThreadPaneComponent {
 			});
 	}
 
-	/** Newer replies than the last loaded one, while every loaded page is shown. */
+	/**
+	 * Newer replies than the last loaded one, while every loaded page is shown: on a tick of the poll (every 5 s, or
+	 * once a minute while live), when a reply is created or the thread changes, and after a reconnect. A reply or the
+	 * root changed elsewhere (edited, deleted, reacted to, pinned) is read again.
+	 */
 	private startPolling(): void {
 		this.stopPolling();
 		const id = this.rootMessageId();
-		this.poll = timer(CHAT_THREAD_POLL_MS, CHAT_THREAD_POLL_MS)
+		const hints$ = this.live.hints$.pipe(filter((hint) => hint.threadRootId === id || hint.messageId === id));
+		const newer$ = hints$.pipe(
+			filter((hint) => hint.name === CHAT_EVENT_NAMES.MESSAGE_CREATED || hint.name === CHAT_EVENT_NAMES.THREAD_CHANGED),
+			auditTime(CHAT_LIVE_AUDIT_MS)
+		);
+		const poll = merge(this.live.ticks(CHAT_THREAD_POLL_MS), newer$, this.live.catchUp$)
 			.pipe(
-				filter(() => typeof document === 'undefined' || !document.hidden),
+				filter(() => isTabVisible()),
 				filter(() => !this.hasAfter()),
 				switchMap(() => {
 					const last = this.replies()[this.replies().length - 1];
@@ -291,6 +305,34 @@ export class ThreadPaneComponent {
 					this.rootChanged.emit(threadFieldsOf(next));
 				}
 				if (this.replies().length !== before) this.markRead();
+			});
+		poll.add(
+			hints$
+				.pipe(
+					filter((hint) => hint.name === CHAT_EVENT_NAMES.MESSAGE_UPDATED || hint.name === CHAT_EVENT_NAMES.MESSAGE_DELETED),
+					filter(() => isTabVisible()),
+					takeUntilDestroyed(this.destroyRef)
+				)
+				.subscribe((hint) => this.refreshMessage(id, hint))
+		);
+		this.poll = poll;
+	}
+
+	/** Reads the root or one loaded reply again: the root through the thread's first page, a reply through the window around it. */
+	private refreshMessage(id: string, hint: ChatHint): void {
+		const messageId = String(hint.messageId);
+		const isRoot = messageId === id;
+		if (!isRoot && !this.replies().some((reply) => String(reply.id) === messageId)) return;
+		this.api
+			.thread(id, isRoot ? { limit: 1 } : { around: messageId, limit: 2 })
+			.pipe(takeUntilDestroyed(this.destroyRef))
+			.subscribe({
+				next: (page) => {
+					if (!this.isCurrent(id)) return;
+					const fresh = isRoot ? page.root : page.messages.find((message) => String(message.id) === messageId);
+					if (fresh) this.replace(fresh);
+				},
+				error: () => undefined
 			});
 	}
 

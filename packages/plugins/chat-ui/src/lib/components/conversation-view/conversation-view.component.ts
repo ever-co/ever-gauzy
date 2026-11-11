@@ -16,9 +16,10 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { NbButtonModule, NbIconModule, NbSelectModule, NbSpinnerModule, NbTooltipModule } from '@nebular/theme';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
-import { EMPTY, Subscription, timer } from 'rxjs';
-import { catchError, filter, switchMap } from 'rxjs/operators';
+import { EMPTY, merge, Subscription } from 'rxjs';
+import { auditTime, catchError, filter, switchMap } from 'rxjs/operators';
 import {
+	CHAT_EVENT_NAMES,
 	ChatConversationKindEnum,
 	ChatMemberRoleEnum,
 	ChatNotifyLevelEnum,
@@ -27,8 +28,9 @@ import {
 	IChatMessageWithRelations
 } from '@gauzy/contracts';
 import { ToastrService } from '@gauzy/ui-core/core';
-import { CHAT_MESSAGES_POLL_MS } from '../../chat-ui.constants';
+import { CHAT_LIVE_AUDIT_MS, CHAT_MESSAGES_POLL_MS } from '../../chat-ui.constants';
 import { apiErrorMessage, continuesGroup, conversationTitle, mergeMessages, newNonce } from '../../chat-ui.helpers';
+import { ChatLiveService, isTabVisible } from '../../services/chat-live.service';
 import { ChatPeople } from '../../services/chat-people.service';
 import { ChatEvents, ChatMessagePatch, ChatUiService, memberStateFromEvents } from '../../services/chat-ui.service';
 import { clearDraft, ComposerSubmission, MessageComposerComponent } from '../message-composer/message-composer.component';
@@ -39,8 +41,14 @@ const NEAR_BOTTOM_PX = 80;
 
 /**
  * One conversation: its header (title, members, favourite, notifications, join / leave, archive, pins), the
- * messages (newest page first, older on scroll, newer by polling), and the composer. Reading the latest loaded
- * message marks the conversation read up to it (never past what is shown); "mark unread from here" is explicit.
+ * messages (newest page first, older on scroll, newer as the chat events announce them), and the composer. Reading
+ * the latest loaded message marks the conversation read up to it (never past what is shown); "mark unread from
+ * here" is explicit.
+ *
+ * Live: a message created in the conversation fetches the newer ones, a message changed or deleted (an edit, a
+ * reaction, a pin, a reply to its thread) is read again, and after a reconnect the newest page is read again (the
+ * events of the gap are not replayed). Polling stays the fallback: every 5 s as before while the events do not
+ * arrive live (`ChatLiveService.mode$`), once a minute as a safety net while they do.
  *
  * Every request captures the conversation it was made for and drops its answer when another one is open by
  * then; the poll stops the moment the conversation changes. A send also captures the visit it was made in, so a
@@ -257,6 +265,7 @@ const NEAR_BOTTOM_PX = 80;
 })
 export class ConversationViewComponent {
 	private readonly api = inject(ChatUiService);
+	private readonly live = inject(ChatLiveService);
 	private readonly toastr = inject(ToastrService);
 	private readonly translate = inject(TranslateService);
 	private readonly destroyRef = inject(DestroyRef);
@@ -418,12 +427,21 @@ export class ConversationViewComponent {
 			});
 	}
 
+	/**
+	 * Newer messages: on a tick of the poll (every 5 s, or once a minute while live) and when a message is created in
+	 * the conversation; a changed message is read again; a reconnect reads the newest page again.
+	 */
 	private startPolling(): void {
 		this.stopPolling();
 		const id = String(this.conversation().id);
-		this.poll = timer(CHAT_MESSAGES_POLL_MS, CHAT_MESSAGES_POLL_MS)
+		const hints$ = this.live.hints$.pipe(filter((hint) => hint.conversationId === id));
+		const created$ = hints$.pipe(
+			filter((hint) => hint.name === CHAT_EVENT_NAMES.MESSAGE_CREATED),
+			auditTime(CHAT_LIVE_AUDIT_MS)
+		);
+		const poll = merge(this.live.ticks(CHAT_MESSAGES_POLL_MS), created$)
 			.pipe(
-				filter(() => typeof document === 'undefined' || !document.hidden),
+				filter(() => isTabVisible()),
 				// A view around an old message is not followed: the newest page is a jump away.
 				filter(() => !this.hasAfter()),
 				switchMap(() => {
@@ -434,14 +452,86 @@ export class ConversationViewComponent {
 			)
 			.subscribe((page) => {
 				if (!this.isCurrent(id) || page.messages.length === 0) return;
-				const wasNearBottom = this.isNearBottom();
-				this.messages.set(mergeMessages(this.messages(), page.messages));
-				if (wasNearBottom) {
-					queueMicrotask(() => this.scrollToBottom(false));
-					this.markReadIfVisible();
-				} else {
-					this.newBelow.set(true);
-				}
+				this.showNewer(page.messages);
+			});
+		poll.add(
+			hints$
+				.pipe(
+					filter((hint) => hint.name !== CHAT_EVENT_NAMES.MESSAGE_CREATED && !!hint.messageId),
+					filter(() => isTabVisible()),
+					takeUntilDestroyed(this.destroyRef)
+				)
+				.subscribe((hint) => this.refreshMessage(id, String(hint.messageId)))
+		);
+		poll.add(this.live.catchUp$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => this.catchUp(id)));
+		this.poll = poll;
+	}
+
+	/** Appends newer messages: followed to the bottom when the person reads the latest, announced otherwise. */
+	private showNewer(messages: IChatMessageWithRelations[]): void {
+		const wasNearBottom = this.isNearBottom();
+		this.messages.set(mergeMessages(this.messages(), messages));
+		if (wasNearBottom) {
+			queueMicrotask(() => this.scrollToBottom(false));
+			this.markReadIfVisible();
+		} else {
+			this.newBelow.set(true);
+		}
+	}
+
+	/**
+	 * Reads one loaded message again (edited, deleted, reacted to, pinned, its thread changed): the window around it
+	 * answers it with its relations. A message deleted without replies leaves the list, as a reload would show it.
+	 */
+	private refreshMessage(conversationId: string, messageId: string): void {
+		if (!this.messages().some((message) => String(message.id) === messageId)) return;
+		this.api
+			.messages(conversationId, { around: messageId, limit: 2 })
+			.pipe(takeUntilDestroyed(this.destroyRef))
+			.subscribe({
+				next: (page) => {
+					if (!this.isCurrent(conversationId)) return;
+					const fresh = page.messages.find((message) => String(message.id) === messageId);
+					if (!fresh) return;
+					if (fresh.deletedAt && !fresh.replyCount) this.messages.set(this.messages().filter((message) => String(message.id) !== messageId));
+					else this.replace(fresh);
+				},
+				error: () => undefined
+			});
+	}
+
+	/**
+	 * After a reconnect, or when the tab is shown again: the newest page, read again. Where it still reaches the last
+	 * loaded message it updates the overlap and appends the rest; where it does not (more was written meanwhile than a
+	 * page holds), it replaces the list, the older messages a scroll away again.
+	 */
+	private catchUp(id: string): void {
+		if (!this.isCurrent(id) || this.hasAfter() || this.loading()) return;
+		this.api
+			.messages(id, {})
+			.pipe(takeUntilDestroyed(this.destroyRef))
+			.subscribe({
+				next: (page) => {
+					if (!this.isCurrent(id) || this.hasAfter()) return;
+					const last = this.messages()[this.messages().length - 1];
+					const reaches = !last || page.messages.some((message) => String(message.id) === String(last.id));
+					if (reaches) {
+						const added = page.messages.filter((message) => !this.messages().some((item) => item.id === message.id));
+						this.messages.set(this.messages().map((item) => page.messages.find((message) => message.id === item.id) ?? item));
+						if (added.length) this.showNewer(added);
+						return;
+					}
+					const wasNearBottom = this.isNearBottom();
+					this.messages.set(mergeMessages([], page.messages));
+					this.hasBefore.set(page.hasBefore);
+					if (wasNearBottom) {
+						queueMicrotask(() => this.scrollToBottom(false));
+						this.markReadIfVisible();
+					} else {
+						this.newBelow.set(true);
+					}
+				},
+				error: () => undefined
 			});
 	}
 

@@ -5,11 +5,12 @@ import { RouterLink } from '@angular/router';
 import { NbBadgeModule, NbIconModule } from '@nebular/theme';
 import { TranslatePipe } from '@ngx-translate/core';
 import { EMPTY, merge, Subject, timer } from 'rxjs';
-import { catchError, filter, switchMap, takeUntil } from 'rxjs/operators';
-import { IChatStates } from '@gauzy/contracts';
-import { CHAT_BADGE_POLL_MS, CHAT_LINK } from '../../chat-ui.constants';
+import { auditTime, catchError, filter, switchMap, takeUntil } from 'rxjs/operators';
+import { CHAT_EVENT_NAMES, IChatStates } from '@gauzy/contracts';
+import { CHAT_BADGE_POLL_MS, CHAT_LINK, CHAT_LIVE_LIST_AUDIT_MS } from '../../chat-ui.constants';
 import { badgeText } from '../../chat-ui.helpers';
 import { ChatAvailabilityService, isFinalRefusal } from '../../services/chat-availability.service';
+import { ChatLiveService } from '../../services/chat-live.service';
 import { ChatUiService } from '../../services/chat-ui.service';
 
 /** How many conversations hold unread messages, plus the followed threads with unread replies. */
@@ -52,6 +53,7 @@ export function unreadOf(states: IChatStates | null | undefined): number {
 })
 export class ChatHeaderBadgeComponent implements OnInit {
 	private readonly api = inject(ChatUiService);
+	private readonly live = inject(ChatLiveService);
 	private readonly availability = inject(ChatAvailabilityService);
 	private readonly destroyRef = inject(DestroyRef);
 	/** A final refusal (the chat went away for this scope) stops the polling until the scope changes. */
@@ -65,15 +67,21 @@ export class ChatHeaderBadgeComponent implements OnInit {
 		this.startPolling();
 	}
 
-	/** Reads my states on a timer and after every write of the page, anew for every scope the chat is served in. */
+	/**
+	 * Reads my states, anew for every scope the chat is served in: at once, after every write of the page, when a chat
+	 * event that moves a count arrives (live; a burst is read once), after a reconnect, and on a timer as the fallback.
+	 */
 	private startPolling(): void {
 		this.availability.scope$
 			.pipe(
 				switchMap((scope) => {
 					this.show(0);
 					if (!scope) return EMPTY;
-					const tick$ = timer(0, CHAT_BADGE_POLL_MS).pipe(filter(() => typeof document === 'undefined' || !document.hidden));
-					return merge(tick$, this.api.changed$).pipe(
+					const events$ = this.live.hints$.pipe(
+						filter((hint) => hint.name === CHAT_EVENT_NAMES.MEMBER_STATE_CHANGED || hint.name === CHAT_EVENT_NAMES.MESSAGE_CREATED || hint.name === CHAT_EVENT_NAMES.THREAD_CHANGED),
+						auditTime(CHAT_LIVE_LIST_AUDIT_MS)
+					);
+					return merge(timer(0), this.live.ticks(CHAT_BADGE_POLL_MS), this.api.changed$, events$, this.live.catchUp$).pipe(
 						switchMap(() => this.readStates()),
 						takeUntil(this.refused$)
 					);
