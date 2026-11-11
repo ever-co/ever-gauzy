@@ -73,6 +73,14 @@ function organizationTeamIdOf(input: TagNameInput): ID | null {
 	return input.organizationTeamId ?? input.organizationTeam?.id ?? null;
 }
 
+/**
+ * The organization a change states, read as the update reads it (`TenantAwareCrudService.statedOrganizationId`): the
+ * id whenever the body sends one, `null` included, else the object's.
+ */
+function statedOrganizationIdOf(changes: TagNameInput): ID | null | undefined {
+	return changes.organizationId !== undefined ? changes.organizationId : changes.organization?.id;
+}
+
 /** Whether a change names the tag's organization (or team), by id or by object, be it only to clear it. */
 function hasScopeField(changes: TagNameInput, field: 'organization' | 'organizationTeam'): boolean {
 	return `${field}Id` in changes || field in changes;
@@ -174,7 +182,7 @@ export class TagService extends TenantAwareCrudService<Tag> {
 		return (
 			!boundary ||
 			(isNotEmpty(boundary.organizationId) &&
-				String(organizationIdOf(changes)) === String(boundary.organizationId))
+				String(statedOrganizationIdOf(changes)) === String(boundary.organizationId))
 		);
 	}
 

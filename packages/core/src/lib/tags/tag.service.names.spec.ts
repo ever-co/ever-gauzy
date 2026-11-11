@@ -219,6 +219,25 @@ describe('TagService names', () => {
 			expect(typeOrmFind).toHaveBeenCalledTimes(1);
 		});
 
+		it('reads the organization of a change as the update does: the id first, even null', async () => {
+			// A tag of the tenant, renamed with a body that clears its organization by id and names the caller's by object:
+			// the update reads the id, leaves the organization out and keeps the tag the tenant's, where the name is checked
+			const tenantTag = { id: 'tag-3', name: 'Bug', organizationId: null, organizationTeamId: null } as never;
+			typeOrmFind.mockResolvedValue([{ id: 'tag-1', name: 'Feature' }]);
+
+			await expect(
+				service.assertChangeIsFree(
+					tenantTag,
+					{ name: 'feature', organizationId: null, organization: { id: organizationId } },
+					'tag-3'
+				)
+			).rejects.toBeInstanceOf(ApiException);
+			expect(typeOrmFind.mock.calls[0][0].where).toMatchObject({
+				organizationId: IsNull(),
+				organizationTeamId: IsNull()
+			});
+		});
+
 		it('checks a move to another organization by a tenant admin there', async () => {
 			jest.spyOn(RequestContext, 'hasRoles').mockReturnValue(true);
 
