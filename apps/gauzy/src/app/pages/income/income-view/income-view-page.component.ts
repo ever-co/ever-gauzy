@@ -5,7 +5,15 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { combineLatest, firstValueFrom } from 'rxjs';
 import { distinctUntilChanged, filter, first, map } from 'rxjs/operators';
 import * as moment from 'moment';
-import { BaseEntityEnum, IEmployee, IIncome, IOrganization, PermissionsEnum } from '@gauzy/contracts';
+import {
+	BaseEntityEnum,
+	IEmployee,
+	IIncome,
+	IOrganization,
+	IOrganizationContact,
+	ITag,
+	PermissionsEnum
+} from '@gauzy/contracts';
 import { ErrorHandlingService, IncomeService, Store, ToastrService } from '@gauzy/ui-core/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import {
@@ -50,6 +58,19 @@ export const INCOME_CHART_KIND_OPTIONS: ReadonlyArray<{ kind: ExpenseChartKind; 
 	{ kind: 'bar', icon: 'bar-chart-outline', label: 'INCOME_VIEW.BAR_CHART' },
 	{ kind: 'line', icon: 'activity-outline', label: 'INCOME_VIEW.LINE_CHART' }
 ];
+
+/** What the income form closes with on save: its raw value, one field per control (`IncomeMutationComponent`). */
+export interface IIncomeFormAnswer {
+	amount: number;
+	organizationContact: IOrganizationContact | null;
+	valueDate: Date;
+	notes?: string;
+	currency?: string;
+	isBonus: boolean;
+	tags: ITag[];
+	/** The form's employee control: an employee, or the "All employees" entry. */
+	employee?: Partial<IEmployee> | null;
+}
 
 /** The income's headline, worked out once per load. */
 export interface IIncomeHeadline {
@@ -202,6 +223,9 @@ export class IncomeViewPageComponent extends TranslationBaseComponent implements
 	}
 
 	ngOnDestroy(): void {
+		// Reads still in flight are discarded when they answer, and stop requesting pages: no page owns them now.
+		this.loadSequence++;
+		this.chartsSequence++;
 		// Leaving the page closes its dialog: an answer given after that would act on an income no longer shown.
 		this.openDialog?.close();
 	}
@@ -251,7 +275,10 @@ export class IncomeViewPageComponent extends TranslationBaseComponent implements
 	async edit(): Promise<void> {
 		const income = this.income;
 		if (!income || this.busy) return;
-		const edited = await this.ask<any>(this.dialogService.open(IncomeMutationComponent, { context: { income } }), income);
+		const edited = await this.ask<IIncomeFormAnswer>(
+			this.dialogService.open(IncomeMutationComponent, { context: { income } }),
+			income
+		);
 		if (!edited) return;
 		this.setBusy(true);
 		try {
@@ -281,7 +308,10 @@ export class IncomeViewPageComponent extends TranslationBaseComponent implements
 	async duplicate(): Promise<void> {
 		const income = this.income;
 		if (!income || this.busy) return;
-		const copy = await this.ask<any>(this.dialogService.open(IncomeMutationComponent, { context: { income } }), income);
+		const copy = await this.ask<IIncomeFormAnswer>(
+			this.dialogService.open(IncomeMutationComponent, { context: { income } }),
+			income
+		);
 		if (!copy) return;
 		this.setBusy(true);
 		try {

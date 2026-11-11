@@ -125,6 +125,26 @@ describe('IncomeViewPageComponent charts', () => {
 		expect(page.charts.clientTotal).toBe(20);
 		expect(page.charts.share).toEqual({ amount: 20, rest: 0, total: 20, percent: 100 });
 	});
+
+	it('stops reading pages, and draws nothing, once the page is destroyed', async () => {
+		let release: () => void;
+		const gate = new Promise<void>((resolve) => (release = resolve));
+		const clientIncomes = Array.from({ length: 250 }, (_, index) => income(`c${index}`, '2026-03-05', 1));
+		const isClientMonths = (query: IQuery) => !!query.where.clientId && !!query.order?.id;
+		const { page, loadCharts, queries } = setup(async (query) => {
+			await gate;
+			return pageOf(isClientMonths(query) ? clientIncomes : [], query);
+		});
+
+		const charts = loadCharts(income('current', '2026-03-10', 10));
+		page.ngOnDestroy();
+		release();
+		await charts;
+
+		// The first page was already asked for; the second never is.
+		expect(queries().filter(isClientMonths).map((query) => query.skip)).toEqual([1]);
+		expect(page.charts.clientTotal).toBeNull();
+	});
 });
 
 describe('IncomeViewPageComponent dialogs', () => {
