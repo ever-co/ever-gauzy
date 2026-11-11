@@ -3,11 +3,12 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { ITreeOptions, TreeComponent, TreeModel, TreeNode, TREE_ACTIONS } from '@ali-hm/angular-tree-component';
 import { NbDialogService, NbMenuItem, NbMenuService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { ofType } from '@ngneat/effects';
 import { Actions } from '@ngneat/effects-ng';
 import { TranslateService } from '@ngx-translate/core';
 import { NgxPermissionsService } from 'ngx-permissions';
-import { filter, firstValueFrom, map, Observable } from 'rxjs';
-import { DocumentKindEnum, ID, IDocument, PermissionsEnum } from '@gauzy/contracts';
+import { debounceTime, distinctUntilChanged, filter, firstValueFrom, map, Observable, skip } from 'rxjs';
+import { DocumentKindEnum, DocumentSpaceKindEnum, ID, IDocument, IDocumentSpace, PermissionsEnum } from '@gauzy/contracts';
 import { FavoriteStoreService, Store, ToastrService } from '@gauzy/ui-core/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { DocumentsActions } from '../../+state/documents.actions';
@@ -74,6 +75,9 @@ export class DocsTreeComponent extends TranslationBaseComponent implements OnIni
 
 	public nodes: IDocsTreeNode[] = [];
 	public recents: IRecentEntry[] = [];
+	/** The spaces of the tree (`GAUZY_DOCS_COLLAB_ENABLED`); empty when team spaces are off. */
+	public spaces: IDocumentSpace[] = [];
+	private spacesRequest = 0;
 	public favorites$: Observable<{ title: string; link?: string; icon?: unknown }[]>;
 	public readonly kindEnum = DocumentKindEnum;
 	protected readonly actionMenuClass = DOCS_ACTION_MENU_CLASS;
@@ -188,6 +192,28 @@ export class DocsTreeComponent extends TranslationBaseComponent implements OnIni
 		// the same degradation the store already applies to its own reloads
 		// (`document-tree.store.ts` `invalidate` / `invalidateAll`).
 		void this.treeStore.loadRoots().catch(() => undefined);
+		this.loadSpaces();
+		// Another organization: its spaces, and the tree of every space (a selected team is the old organization's).
+		this.store.selectedOrganization$
+			.pipe(
+				map((organization) => organization?.id ?? null),
+				distinctUntilChanged(),
+				skip(1),
+				untilDestroyed(this)
+			)
+			.subscribe(() => {
+				this.spaces = [];
+				void this.treeStore.selectSpace(null).catch(() => undefined);
+				this.loadSpaces();
+			});
+		// A create, a move, an archive, a bulk action changes what a space lists: its counts are read again.
+		this.actions
+			.pipe(
+				ofType(DocumentsActions.rowChanged, DocumentsActions.rowRemoved, DocumentsActions.bulkCompleted),
+				debounceTime(500),
+				untilDestroyed(this)
+			)
+			.subscribe(() => this.loadSpaces());
 
 		// Starred documents from the shared favorites store, filtered to Documents links.
 		this.favorites$ = this.favoriteStore.favoriteItems$.pipe(
@@ -229,9 +255,84 @@ export class DocsTreeComponent extends TranslationBaseComponent implements OnIni
 		}
 	}
 
-	/** Section title / root crumb — clears the folder scope back to "All documents". */
+	/** Section title / root crumb — clears the folder scope (and the space) back to "All documents". */
 	goToRoot(): void {
+		if (this.treeStore.selectedSpace) {
+			void this.treeStore.selectSpace(null).catch(() => undefined);
+		}
 		this.actions.dispatch(DocumentsActions.folderChanged(null));
+	}
+
+	// ─── Spaces (`GAUZY_DOCS_COLLAB_ENABLED`) ─────────────────────
+
+	/**
+	 * The spaces the caller sees: the organization's, each of their teams', their private one. Empty — and the
+	 * section hidden — when team spaces are off on the platform (the route answers 404).
+	 */
+	loadSpaces(): void {
+		// Only the latest read is shown: an earlier one (another organization, an older count) is dropped.
+		const request = ++this.spacesRequest;
+		this.documentsService
+			.getSpaces()
+			.pipe(untilDestroyed(this))
+			.subscribe({
+				next: (spaces: IDocumentSpace[]) => {
+					if (request === this.spacesRequest) this.spaces = spaces ?? [];
+				},
+				error: () => {
+					if (request === this.spacesRequest) this.spaces = [];
+				}
+			});
+	}
+
+	/**
+	 * A space button took the focus: the tree lets go of its keyboard, whose body-level handler would otherwise take
+	 * Enter and Space from the button.
+	 */
+	releaseTreeFocus(): void {
+		this.tree?.treeModel?.setFocus(false);
+	}
+
+	/** Narrows the tree's top level to a space, or back to every space when it is the one already selected. */
+	selectSpace(space: IDocumentSpace): void {
+		const next = this.isSelectedSpace(space) ? null : space;
+		void this.treeStore.selectSpace(next).catch(() => undefined);
+		this.actions.dispatch(DocumentsActions.folderChanged(null));
+	}
+
+	isSelectedSpace(space: IDocumentSpace): boolean {
+		const selected = this.treeStore.selectedSpace;
+		return (
+			!!selected &&
+			selected.kind === space.kind &&
+			(selected.organizationTeamId ?? null) === (space.organizationTeamId ?? null)
+		);
+	}
+
+	spaceLabel(space: IDocumentSpace): string {
+		switch (space.kind) {
+			case DocumentSpaceKindEnum.ORGANIZATION:
+				return this.getTranslation('DOCS.SPACE.ORGANIZATION');
+			case DocumentSpaceKindEnum.PRIVATE:
+				return this.getTranslation('DOCS.SPACE.PRIVATE');
+			default:
+				return space.name || this.getTranslation('DOCS.SPACE.TEAM');
+		}
+	}
+
+	spaceIcon(space: IDocumentSpace): string {
+		switch (space.kind) {
+			case DocumentSpaceKindEnum.ORGANIZATION:
+				return 'briefcase-outline';
+			case DocumentSpaceKindEnum.PRIVATE:
+				return 'lock-outline';
+			default:
+				return 'people-outline';
+		}
+	}
+
+	spaceKey(space: IDocumentSpace): string {
+		return `${space.kind}:${space.organizationTeamId ?? ''}`;
 	}
 
 	// ─── Root-level create (empty tree) ──────────────────────────

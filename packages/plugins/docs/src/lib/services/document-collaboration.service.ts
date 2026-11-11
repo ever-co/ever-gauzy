@@ -138,9 +138,9 @@ export class DocumentCollaborationService {
 	// ---------------------------------------------------------------- follow / mute
 
 	/** Whether the caller follows the page, and whether they muted it. */
-	async followState(id: ID): Promise<IDocumentFollowState> {
+	async followState(id: ID, organizationId?: ID): Promise<IDocumentFollowState> {
 		this.assertEnabled();
-		const document = await this.documentService.findOneScoped(id);
+		const document = await this.documentService.findOneScoped(id, [], organizationId);
 		const employeeId = this.documentAccessService.currentEmployeeId();
 		if (!employeeId) return { following: false, muted: false };
 		const following = await this.typeOrmDocumentRepository.manager.count(EntitySubscription, {
@@ -149,10 +149,10 @@ export class DocumentCollaborationService {
 		return { following: following > 0, muted: isMutedBy(document.metadata, employeeId) };
 	}
 
-	/** Follows the page (and unmutes it). */
-	async follow(id: ID): Promise<IDocumentFollowState> {
+	/** Follows the page (and lifts its mute). */
+	async follow(id: ID, organizationId?: ID): Promise<IDocumentFollowState> {
 		this.assertEnabled();
-		const document = await this.documentService.findOneScoped(id);
+		const document = await this.documentService.findOneScoped(id, [], organizationId);
 		const employeeId = this.documentAccessService.currentEmployeeId();
 		if (!employeeId) return { following: false, muted: false };
 		if (isMutedBy(document.metadata, employeeId)) {
@@ -172,9 +172,9 @@ export class DocumentCollaborationService {
 	}
 
 	/** Stops following the page (the mute, if any, stays). */
-	async unfollow(id: ID): Promise<IDocumentFollowState> {
+	async unfollow(id: ID, organizationId?: ID): Promise<IDocumentFollowState> {
 		this.assertEnabled();
-		const document = await this.documentService.findOneScoped(id);
+		const document = await this.documentService.findOneScoped(id, [], organizationId);
 		const employeeId = this.documentAccessService.currentEmployeeId();
 		if (!employeeId) return { following: false, muted: false };
 		await this.deleteSubscriptions(document, employeeId);
@@ -182,9 +182,9 @@ export class DocumentCollaborationService {
 	}
 
 	/** Mutes the page: no follow, and none re-created by the plugin's own paths, until unmuted. */
-	async mute(id: ID): Promise<IDocumentFollowState> {
+	async mute(id: ID, organizationId?: ID): Promise<IDocumentFollowState> {
 		this.assertEnabled();
-		const document = await this.documentService.findOneScoped(id);
+		const document = await this.documentService.findOneScoped(id, [], organizationId);
 		const employeeId = this.documentAccessService.currentEmployeeId();
 		if (!employeeId) return { following: false, muted: false };
 		await this.deleteSubscriptions(document, employeeId);
@@ -192,14 +192,14 @@ export class DocumentCollaborationService {
 		return { following: false, muted: true };
 	}
 
-	/** Unmutes the page (without following it again). */
-	async unmute(id: ID): Promise<IDocumentFollowState> {
+	/** Lifts the mute of the page (without following it again). */
+	async unmute(id: ID, organizationId?: ID): Promise<IDocumentFollowState> {
 		this.assertEnabled();
-		const document = await this.documentService.findOneScoped(id);
+		const document = await this.documentService.findOneScoped(id, [], organizationId);
 		const employeeId = this.documentAccessService.currentEmployeeId();
 		if (!employeeId) return { following: false, muted: false };
 		await this.setMuted(document, employeeId, false);
-		return this.followState(id);
+		return this.followState(id, organizationId);
 	}
 
 	// ---------------------------------------------------------------- helpers

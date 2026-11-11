@@ -1,4 +1,5 @@
 import {
+	DocumentSpaceKindEnum,
 	DocumentKindEnum,
 	DocumentKnowledgeStatusEnum,
 	DocumentReviewStatusEnum,
@@ -58,6 +59,10 @@ export interface IDocumentFindInput {
 	categoryIds?: ID[];
 	tagIds?: ID[];
 	visibility?: DocumentVisibilityEnum;
+	/** The space to list (`GAUZY_DOCS_COLLAB_ENABLED`): the organization's, a team's (with `organizationTeamId`), or the caller's private one. */
+	space?: DocumentSpaceKindEnum;
+	/** With `space: team`: the team. */
+	organizationTeamId?: ID;
 	/** `true`/`false` are mapped to `only`/`exclude`. */
 	archived?: boolean | DocumentArchivedFilter;
 	searchable?: boolean;
@@ -99,6 +104,8 @@ export interface IDocumentsQueryParams {
 	categoryIds?: ID[];
 	tagIds?: ID[];
 	visibility?: DocumentVisibilityEnum;
+	space?: DocumentSpaceKindEnum;
+	organizationTeamId?: ID;
 	archived?: DocumentArchivedFilter;
 	searchable?: boolean;
 	parentId?: ID | 'root';
@@ -224,6 +231,8 @@ export function toDocumentsQueryParams(input: IDocumentFindInput = {}): IDocumen
 		categoryIds: listOrUndefined(input.categoryIds),
 		tagIds: listOrUndefined(input.tagIds),
 		visibility: input.visibility,
+		space: input.space,
+		organizationTeamId: textOrUndefined(input.organizationTeamId) as ID | undefined,
 		archived: normalizeArchived(input.archived),
 		searchable: typeof input.searchable === 'boolean' ? input.searchable : undefined,
 		// `null` means "no folder scope" (flat search); only `'root'` is the top level.
