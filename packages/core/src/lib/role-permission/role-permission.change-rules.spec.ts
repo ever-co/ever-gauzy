@@ -5,6 +5,7 @@ import { PermissionsEnum, RolesEnum } from '@gauzy/contracts';
 import { RequestContext } from '../core/context';
 import { CrudService } from '../core/crud/crud.service';
 import { TenantAwareCrudService } from '../core/crud/tenant-aware-crud.service';
+import { DATABASE_UNAVAILABLE_MESSAGE } from '../core/errors/database-unavailable';
 import { RolePermissionService } from './role-permission.service';
 
 /**
@@ -203,6 +204,24 @@ describe('deletePermission', () => {
 
 		expect(error).toBeInstanceOf(BadRequestException);
 		expect(error.message).not.toContain('role_permission');
+	});
+
+	it('never puts the address of a database it cannot reach in the 400 body', async () => {
+		const { service, read, remove } = deleting(ROLES.admin);
+		read.mockRejectedValue(
+			Object.assign(new Error('connect ECONNREFUSED 10.1.2.3:5432'), {
+				code: 'ECONNREFUSED',
+				syscall: 'connect',
+				address: '10.1.2.3',
+				port: 5432
+			})
+		);
+
+		const error = await service.deletePermission('p-employee').catch((e) => e);
+
+		expect(error).toBeInstanceOf(BadRequestException);
+		expect(error.message).toBe(DATABASE_UNAVAILABLE_MESSAGE);
+		expect(remove).not.toHaveBeenCalled();
 	});
 
 	it('refuses a row whose role cannot be read, even if the lookup answers nothing', async () => {
