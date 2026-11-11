@@ -229,6 +229,27 @@ describe('chat webhook payloads', () => {
 			expect(row.elements.map((button) => button.actionId)).toEqual(['_action-1', '_action-1-1']);
 		});
 
+		it('keeps generated action ids unique across rows that share a block id', () => {
+			const content = normalizeWebhookPayload(
+				{
+					text: 'x',
+					blocks: [
+						{ type: 'actions', block_id: 'b', elements: [{ type: 'button', text: 'One' }] },
+						{ type: 'actions', block_id: 'b', elements: [{ type: 'static_select' }, { type: 'button', text: 'Two' }] }
+					]
+				},
+				{ canBroadcast: false }
+			);
+			const ids = (content.blocks as Array<{ elements: Array<{ actionId: string }> }>).flatMap((row) => row.elements.map((button) => button.actionId));
+			expect(ids).toEqual(['_action-0', '_action-0-1']);
+			// Two buttons that name the same id in rows of the same block id still cannot be told apart.
+			const twins = [
+				{ type: 'actions', block_id: 'b', elements: [{ type: 'button', action_id: 'go', text: 'One' }] },
+				{ type: 'actions', block_id: 'b', elements: [{ type: 'button', action_id: 'go', text: 'Two' }] }
+			];
+			expect(codeOf(() => normalizeWebhookPayload({ text: 'x', blocks: twins }, { canBroadcast: false }))).toBe('invalid_blocks');
+		});
+
 		it('tells apart ids that a delimiter would run together', () => {
 			const blocks = [
 				{ type: 'actions', block_id: 'a::b', elements: [{ type: 'button', action_id: 'c', text: 'One' }] },

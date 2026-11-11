@@ -187,7 +187,10 @@ the flag is exactly `true` (and chat is on): every route below answers 404.
   `GET|POST /api/chat/conversations/:id/webhooks`, `PATCH|DELETE /api/chat/webhooks/:id` (`DELETE` revokes; the row
   stays), `POST /api/chat/webhooks/:id/secret` (a new signing secret). Channels only, at most ten active per channel.
   The create answer holds the URL and the signing secret, shown that once: the URL secret is stored as its SHA-256,
-  the signing secret encrypted (`ENCRYPTION_KEY`). Creating, changing and revoking are written to the activity log.
+  the signing secret encrypted with a key from `ENCRYPTION_KEY` (or, when it is unset, derived from a `JWT_SECRET`
+  that is not a published default). With neither, a webhook without an interaction URL is still created but its
+  answer has no signing secret, and an interaction URL is refused (400) until a key is set; `POST …/secret` then
+  makes one. Creating, changing and revoking are written to the activity log.
 - **Post**: `POST /api/chat/hooks/:secret`, public, a JSON body (or a form body with a `payload` field) in the widely
   used chat-bot shape: `text`, `blocks` (header, section with text and fields, divider, context, actions with
   buttons; any other type shows as its text), legacy `attachments`. Everything is plain text (HTML dropped);

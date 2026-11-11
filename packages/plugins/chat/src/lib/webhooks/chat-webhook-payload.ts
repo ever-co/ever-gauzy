@@ -146,6 +146,7 @@ export function normalizeWebhookPayload(payload: Record<string, unknown>, option
 		throw new ChatWebhookPayloadError('too_many_blocks', `A post carries at most ${CHAT_WEBHOOK_MAX_BLOCKS} blocks.`);
 	}
 	identifyActionBlocks(blocks);
+	uniquifyGeneratedActions(blocks);
 	assertUniqueActions(blocks);
 
 	const text = typeof payload['text'] === 'string' ? bodyText(payload['text'], options.canBroadcast) : '';
@@ -326,6 +327,9 @@ function normalizeBlock(block: unknown): IChatAppBlock[] {
 	}
 }
 
+/** The buttons whose action id was generated (the payload named none), for the message-wide pass that keeps them unique. */
+const GENERATED_ACTIONS = new WeakSet<IChatAppButton>();
+
 /**
  * The buttons of a row, each with an action id: its own, or one generated (`<prefix>-<index>`, suffixed while the row
  * already uses it) for a button that names none. The ids the payload named are reserved first, so a generated id
@@ -341,6 +345,7 @@ function buttonsWithIds(elements: readonly unknown[], prefix: string): IChatAppB
 		for (let n = 1; taken.has(id); n += 1) id = `${base}-${n}`;
 		taken.add(id);
 		entry.button.actionId = id;
+		GENERATED_ACTIONS.add(entry.button);
 	});
 	return parsed.map((entry) => entry.button);
 }
@@ -388,6 +393,33 @@ function identifyActionBlocks(blocks: IChatAppBlock[]): void {
 		taken.add(id);
 		block.blockId = id;
 	});
+}
+
+/**
+ * Generated action ids are unique across the whole message within each block id: two rows may share a block id (the
+ * payload named the same one twice), and their unnamed buttons must not collide. The ids the payload named are
+ * reserved first; a generated one already in use gets a suffix.
+ */
+function uniquifyGeneratedActions(blocks: readonly IChatAppBlock[]): void {
+	const taken = new Map<string, Set<string>>();
+	const idsOf = (blockId: string) => {
+		let ids = taken.get(blockId);
+		if (!ids) taken.set(blockId, (ids = new Set<string>()));
+		return ids;
+	};
+	const rows = blocks.filter((block): block is Extract<IChatAppBlock, { type: ChatAppBlockTypeEnum.ACTIONS }> => block.type === ChatAppBlockTypeEnum.ACTIONS);
+	for (const row of rows) for (const button of row.elements) if (!GENERATED_ACTIONS.has(button)) idsOf(row.blockId ?? '').add(button.actionId);
+	for (const row of rows) {
+		const ids = idsOf(row.blockId ?? '');
+		for (const button of row.elements) {
+			if (!GENERATED_ACTIONS.has(button)) continue;
+			const base = button.actionId;
+			let id = base;
+			for (let n = 1; ids.has(id); n += 1) id = `${base}-${n}`;
+			ids.add(id);
+			button.actionId = id;
+		}
+	}
 }
 
 /** No two buttons may share a block id and an action id: a click could not say which one it was. */
