@@ -1,3 +1,4 @@
+// cspell:ignore subsup
 /**
  * Atlassian Document Format (ADF, the rich text of Jira Cloud's API v3) to and from the HTML the platform's task store
  * keeps (`Task.description`, the shared rich-text editor's subset of HTML).

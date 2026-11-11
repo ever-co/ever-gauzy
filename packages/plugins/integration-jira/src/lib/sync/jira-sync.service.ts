@@ -1,3 +1,4 @@
+// cspell:ignore issuetype issuelinks duedate Cloners duplicat
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { createHash } from 'node:crypto';
 import { CommandBus } from '@nestjs/cqrs';
@@ -519,7 +520,7 @@ export class JiraSyncService {
 	 * refusal of the API stops the run. Answers whether the issue itself went in.
 	 */
 	private async applyOne(context: ApplyContext, issue: JiraIssue): Promise<boolean> {
-		let taskId: ID | null = null;
+		let taskId: ID | null;
 		try {
 			const result = await this.applyIssue(context, issue);
 			context.counts[result.outcome] += 1;

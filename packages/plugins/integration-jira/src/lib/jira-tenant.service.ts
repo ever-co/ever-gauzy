@@ -4,7 +4,6 @@ import { ID, IInboxItemWriter, IIntegrationSetting, IIntegrationTenant, INBOX_IT
 import {
 	Integration,
 	INTEGRATION_MANAGERS_LIMIT,
-	IntegrationSettingGetManyCommand,
 	IntegrationSettingService,
 	IntegrationTenantService,
 	IntegrationTenantUpdateOrCreateCommand,

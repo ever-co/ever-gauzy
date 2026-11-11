@@ -1,3 +1,4 @@
+// cspell:ignore subsup
 import { AdfDocument, AdfNode, adfToHtml, adfToText, canonicalHtml, decodeEntities, htmlToAdf, parseHtml, safeHref, textToAdf } from './jira-adf';
 
 const doc = (...content: AdfNode[]): AdfDocument => ({ type: 'doc', version: 1, content });

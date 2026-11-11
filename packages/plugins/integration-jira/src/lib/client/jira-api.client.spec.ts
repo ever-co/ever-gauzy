@@ -1,3 +1,4 @@
+// cspell:ignore issuetype issuelinks
 import { accessibleJiraSites, errorMessageOf, exchangeJiraCode, JiraApiClient, JiraApiError, refreshJiraToken, retryAfterSecondsOf } from './jira-api.client';
 
 type Answer = { status: number; body?: unknown; headers?: Record<string, string> };

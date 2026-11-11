@@ -1,3 +1,4 @@
+<!-- cspell:ignore issuetype -->
 # Implementation Plan: Integration — Jira Cloud
 
 **Feature ID**: `integration-jira` · **Spec**: [`spec.md`](./spec.md) · **Branches**: `feat/integration-jira-parity`, `feat/integration-jira-ui`, Ever Teams `feat/integration-jira` · **Status**: platform in review (ever-gauzy #11812) (updated 2026-11-11)

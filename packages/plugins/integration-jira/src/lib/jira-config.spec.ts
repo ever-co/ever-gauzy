@@ -16,7 +16,7 @@ describe('readJiraConfig', () => {
 		expect(config.tokenUrl).toBe('https://auth.atlassian.com/oauth/token');
 		expect(isJiraConfigured(config)).toBe(true);
 		expect(jiraWebhooksEnabled(config)).toBe(true);
-		expect(jiraWebhookTargetOf(config, 'c0ffee')).toBe('https://api.example.com/api/integration/jira/webhook/c0ffee');
+		expect(jiraWebhookTargetOf(config, 'abc123')).toBe('https://api.example.com/api/integration/jira/webhook/abc123');
 	});
 
 	it('reads the import interval as whole minutes, 0 switching the scheduled import off, and keeps the default otherwise', () => {

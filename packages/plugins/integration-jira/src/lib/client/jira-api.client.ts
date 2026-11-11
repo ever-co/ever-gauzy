@@ -1,3 +1,4 @@
+// cspell:ignore issuetype issuelinks duedate Cloners duplicat
 import { JIRA_API_GATEWAY_URL, JIRA_ISSUES_PAGE_SIZE, JIRA_REQUIRED_SITE_SCOPE } from '../jira.constants';
 import { AdfDocument } from '../sync/jira-adf';
 
@@ -500,9 +501,10 @@ async function postTokenRequest(tokenUrl: string, body: Record<string, string>, 
 		signal: timeoutSignal(CALL_TIMEOUT_MS)
 	});
 	const text = await response.text();
-	let parsed: { access_token?: string; token_type?: string; expires_in?: number; scope?: string; refresh_token?: string } | null = null;
+	type TokenBody = { access_token?: string; token_type?: string; expires_in?: number; scope?: string; refresh_token?: string };
+	let parsed: TokenBody | null;
 	try {
-		parsed = text ? JSON.parse(text) : null;
+		parsed = text ? (JSON.parse(text) as TokenBody) : null;
 	} catch {
 		parsed = null;
 	}

@@ -124,7 +124,7 @@ keep answering as before, whether or not the sync is on.
 ## 6. Out of Scope
 
 - Jira Server / Data Center, and Jira Service Management request types.
-- Sprints, boards, versions and worklogs.
+- Sprints, boards, versions and work logs.
 - Outbound comments, labels and attachments.
 - Removing a platform link when the Jira link is removed.
 

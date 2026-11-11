@@ -44,7 +44,7 @@ export function normaliseJiraUrl(raw: string | undefined, name: string, warn: (m
 	if (!value) {
 		return null;
 	}
-	let url: URL | null = null;
+	let url: URL | null;
 	try {
 		url = new URL(value);
 	} catch {

@@ -1,3 +1,4 @@
+// cspell:ignore issuetype issuelinks duedate Cloners duplicat
 import { TaskPriorityEnum, TaskRelatedIssuesRelationEnum, TaskStatusEnum } from '@gauzy/contracts';
 import {
 	JIRA_STATUS_CATEGORIES,
