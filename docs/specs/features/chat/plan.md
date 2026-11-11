@@ -218,6 +218,11 @@ were fixed together (branch `fix/chat-direct-org-thread-read-reactions`); what i
   on `chat-link-preview` (job id per tenant and link), consumed by `ChatLinkPreviewWorker` in the API processes, and
   the first ask answers `pending`. Without one (or when the queue refuses) it runs inline, at most 4 at a time per
   process, and the route waits for it.
+- **Pictures** (chat T30, `GAUZY_CHAT_LINK_PREVIEW_IMAGES_ENABLED`, default off): `GET /chat/link-preview/image?url=`
+  takes the link, looks up the tenant's ready preview, and fetches the picture it names through the same guard
+  (`fetchPreviewImage`: raster types by their bytes, never SVG, at most 1 MiB). It serves the bytes with `nosniff`, a
+  `sandbox` CSP and `no-store` (204 when the link has no picture to serve, 404 only while the switch is off), keeps them in a per-process LRU (256 entries / 32 MiB, 24 h; failures 10 min),
+  and spends from the previews' per-person budget. Clients show it from a `blob:` URL of that answer.
 - **Egress**: this is the one chat feature that makes outbound requests, to the hosts of the links people post and
   only on their ask. It is not an Ever Platform call (the egress audit's outbound-calls contract lists those only),
   and with previews off, the default, the API makes none.

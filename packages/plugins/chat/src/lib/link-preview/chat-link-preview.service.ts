@@ -22,6 +22,8 @@ export interface IChatLinkPreviewOptions {
 	enabled: boolean;
 	/** A queue root exists and the preview queue is registered: fetches travel on it. */
 	queued: boolean;
+	/** The platform also serves the previews' pictures (`GAUZY_CHAT_LINK_PREVIEW_IMAGES_ENABLED`). */
+	images?: boolean;
 }
 export const CHAT_LINK_PREVIEW_OPTIONS = 'CHAT_LINK_PREVIEW_OPTIONS';
 
@@ -133,9 +135,10 @@ export class ChatLinkPreviewService {
 	 * (a link the cache answers costs nothing), and the budget holds whether or not the platform's rate limiter is on
 	 * (`THROTTLE_ENABLED`): each fetch is an outbound request, so one person must not start them without bound. Kept per
 	 * process, like the inline fetches. Spent when a fetch is admitted (queued, or started inline), never by an ask that
-	 * joins a fetch already running, waits for one, or is answered `pending` because too many run.
+	 * joins a fetch already running, waits for one, or is answered `pending` because too many run. The preview pictures
+	 * spend from the same budget.
 	 */
-	private spendFetch(caller: IChatCaller): boolean {
+	spendFetch(caller: IChatCaller): boolean {
 		const key = `${caller.tenantId}:${caller.userId}`;
 		const now = Date.now();
 		const recent = (this.fetchesStarted.get(key) ?? []).filter((at) => now - at < 60_000);
@@ -302,6 +305,17 @@ export class ChatLinkPreviewService {
 /** An answer with no preview fields. */
 function answer(url: string, status: ChatLinkPreviewStatusEnum): IChatLinkPreview {
 	return { url, status };
+}
+
+/** The picture a cached row's preview names, when the row is `ready` and its data reads back. */
+export function imageOfRow(row: Pick<ChatLinkPreview, 'status' | 'data'> | null): string | null {
+	if (!row || row.status !== ChatLinkPreviewStatusEnum.READY) return null;
+	try {
+		const data = JSON.parse(String(row.data ?? '')) as ILinkPreviewData;
+		return data && typeof data.image === 'string' && data.image ? data.image : null;
+	} catch {
+		return null;
+	}
 }
 
 /** The answer a cached row gives: its fields when it is `ready` and its data reads back, else "unavailable". */

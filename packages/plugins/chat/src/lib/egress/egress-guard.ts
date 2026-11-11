@@ -199,17 +199,22 @@ export async function guardedRequest(url: URL, options: IGuardedRequestOptions =
 	});
 }
 
+/** How a body read ended: the answer's own end, the byte limit, the caller's `stop`, or a broken stream. */
+export type BodyReadEnd = 'end' | 'limit' | 'stop' | 'error';
+
 /**
  * The body of a response, decompressed when it is gzip, deflate or brotli, at most `maxBytes` (counted before and after
  * decompression), and no further than `stop` says (it is given each piece read, in order, once decompressed). The
- * connection is closed as soon as that is read. A read that broke off after some bytes keeps them.
+ * connection is closed as soon as that is read. Answers the bytes and how the read ended: a read that broke off after
+ * some bytes keeps them (`error`), so a caller that needs the whole body checks for `end`.
  *
- * @throws EgressEncodingError for another content encoding; the signal's reason when it aborts first.
+ * @throws EgressEncodingError for another content encoding; the signal's reason when it aborts first; the stream's
+ * error when it broke before any byte.
  */
-export function readLimitedBody(
+export function readBody(
 	response: http.IncomingMessage,
 	options: { maxBytes: number; signal?: AbortSignal; stop?: (piece: Buffer) => boolean }
-): Promise<Buffer> {
+): Promise<{ body: Buffer; end: BodyReadEnd }> {
 	const { maxBytes, signal, stop } = options;
 	const encoding = String(firstHeaderValue(response.headers['content-encoding']) ?? '').trim().toLowerCase();
 	let stream: Readable = response;
@@ -220,7 +225,7 @@ export function readLimitedBody(
 		response.destroy();
 		return Promise.reject(new EgressEncodingError());
 	}
-	return new Promise<Buffer>((resolve, reject) => {
+	return new Promise<{ body: Buffer; end: BodyReadEnd }>((resolve, reject) => {
 		const chunks: Buffer[] = [];
 		let total = 0;
 		let raw = 0;
@@ -231,14 +236,14 @@ export function readLimitedBody(
 			if (stream !== response) stream.destroy();
 			response.destroy();
 		};
-		const finish = () => {
+		const finish = (end: BodyReadEnd) => {
 			if (settled) return;
 			close();
-			resolve(Buffer.concat(chunks, total));
+			resolve({ body: Buffer.concat(chunks, total), end });
 		};
 		const fail = (error: unknown) => {
 			if (settled) return;
-			if (total > 0) return finish();
+			if (total > 0) return finish('error');
 			close();
 			reject(error);
 		};
@@ -252,7 +257,7 @@ export function readLimitedBody(
 		if (stream !== response) {
 			response.on('data', (chunk: Buffer) => {
 				raw += chunk.length;
-				if (raw >= maxBytes) finish();
+				if (raw >= maxBytes) finish('limit');
 			});
 			response.on('error', fail);
 		}
@@ -261,11 +266,20 @@ export function readLimitedBody(
 			const piece = chunk.length > maxBytes - total ? chunk.subarray(0, maxBytes - total) : chunk;
 			chunks.push(piece);
 			total += piece.length;
-			if (total >= maxBytes || (stop && stop(piece))) finish();
+			if (total >= maxBytes) finish('limit');
+			else if (stop && stop(piece)) finish('stop');
 		});
-		stream.on('end', finish);
+		stream.on('end', () => finish('end'));
 		stream.on('error', fail);
 	});
+}
+
+/** `readBody`, the bytes only: what a caller that may use the start of a body reads (a page's head). */
+export async function readLimitedBody(
+	response: http.IncomingMessage,
+	options: { maxBytes: number; signal?: AbortSignal; stop?: (piece: Buffer) => boolean }
+): Promise<Buffer> {
+	return (await readBody(response, options)).body;
 }
 
 /** Waits for a promise, giving up as soon as the signal aborts (with its reason). */
