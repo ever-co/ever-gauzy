@@ -14,15 +14,16 @@ describe('the daily report row of an app or a site', () => {
 
 	it("reads a site's address from its URL activities only, with each dialect's JSON functions", () => {
 		expect(visitedAddressSelect('activity', DatabaseTypeEnum.postgres)).toBe(
-			`MAX(CASE WHEN "activity"."type" = 'URL' THEN "activity"."metaData" ->> 'url' END)`
+			`MAX(CASE WHEN "activity"."type" = 'URL' AND json_typeof("activity"."metaData" -> 'url') = 'string' THEN "activity"."metaData" ->> 'url' END)`
 		);
+		// Only a JSON string: JSON_UNQUOTE answers the text "null" for a JSON null
 		expect(visitedAddressSelect('activity', DatabaseTypeEnum.mysql)).toBe(
-			"MAX(CASE WHEN `activity`.`type` = 'URL' THEN JSON_UNQUOTE(JSON_EXTRACT(`activity`.`metaData`, '$.url')) END)"
+			"MAX(CASE WHEN `activity`.`type` = 'URL' AND JSON_TYPE(JSON_EXTRACT(`activity`.`metaData`, '$.url')) = 'STRING' THEN JSON_UNQUOTE(JSON_EXTRACT(`activity`.`metaData`, '$.url')) END)"
 		);
 		for (const sqlite of [DatabaseTypeEnum.sqlite, DatabaseTypeEnum.betterSqlite3]) {
 			// A text column there: a value that is not JSON is left out instead of failing the report
 			expect(visitedAddressSelect('activity', sqlite)).toBe(
-				`MAX(CASE WHEN "activity"."type" = 'URL' AND json_valid("activity"."metaData") THEN json_extract("activity"."metaData", '$.url') END)`
+				`MAX(CASE WHEN "activity"."type" = 'URL' AND json_valid("activity"."metaData") THEN CASE WHEN json_type("activity"."metaData", '$.url') = 'text' THEN json_extract("activity"."metaData", '$.url') END END)`
 			);
 		}
 	});
