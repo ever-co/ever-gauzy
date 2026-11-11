@@ -99,7 +99,7 @@ export class LinearSyncConflictService {
 			this.conflicts.manager.findOne(Task, {
 				where: { id: input.taskId, tenantId: input.tenantId, organizationId: input.organizationId } as never,
 				select: TASK_SELECT as never
-			}) as Promise<Record<string, unknown> | null>
+			}) as unknown as Promise<Record<string, unknown> | null>
 		]);
 		// A baseline of another task (the issue's task was re-created) says nothing about this one.
 		const synced = baseline && String(baseline.taskId) === String(input.taskId) ? parseSyncedValues(baseline.syncedFields) : null;
@@ -234,7 +234,7 @@ export class LinearSyncConflictService {
 			const task = (await this.conflicts.manager.findOne(Task, {
 				where: { id: conflict.taskId, tenantId: conflict.tenantId, organizationId: conflict.organizationId } as never,
 				select: TASK_SELECT as never
-			})) as Record<string, unknown> | null;
+			})) as unknown as Record<string, unknown> | null;
 			const current = task ? syncedValuesOf(task as never)[field] : null;
 			if (!task || !sameSyncedValue(field, current, conflict.externalValue ?? null)) {
 				throw new ConflictException({ message: 'The task changed since the conflict was found; its value is not overwritten', code: LINEAR_CONFLICT_STALE });
