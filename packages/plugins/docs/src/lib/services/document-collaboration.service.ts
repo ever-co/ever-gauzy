@@ -272,7 +272,7 @@ export class DocumentCollaborationService {
 		});
 	}
 
-	/** Mutes or unmutes the page for one employee. */
+	/** Mutes the page for one employee, or lifts their mute. */
 	private async setMuted(document: Document, employeeId: ID, muted: boolean): Promise<void> {
 		await this.changeMutes(document, (metadata) => withMuted(metadata, employeeId, muted));
 	}

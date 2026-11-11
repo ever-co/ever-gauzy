@@ -131,7 +131,7 @@ describe('DocumentCollaborationService follows across the identity change', () =
 		expect(mutedIds()).toEqual([]);
 	});
 
-	it('unmutes a mute held by any employee of the caller in the tenant', async () => {
+	it('lifts a mute held by any employee of the caller in the tenant', async () => {
 		const third = 'employee-of-a-third-org';
 		const { service, mutedIds } = build({ muted: [third], otherEmployees: [third] });
 
