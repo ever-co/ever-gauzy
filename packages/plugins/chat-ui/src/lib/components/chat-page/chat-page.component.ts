@@ -161,6 +161,7 @@ const UNDO_MS = 55_000;
 												[meEmployeeId]="meEmployeeId()"
 												[meUserId]="meUserId()"
 												[isAdmin]="isAdmin()"
+												[canAttach]="canAttach()"
 												[untitled]="'CHAT.UNNAMED' | translate"
 												[highlightId]="highlightId()"
 												[patch]="rootPatch()"
@@ -192,6 +193,7 @@ const UNDO_MS = 55_000;
 											[meEmployeeId]="meEmployeeId()"
 											[meUserId]="meUserId()"
 											[readOnly]="!!selected()?.archivedAt || !selected()?.state"
+											[canAttach]="canAttach()"
 											(closed)="closeThread()"
 											(rootChanged)="onRootChanged($event)"
 										></ngx-chat-thread-pane>
@@ -385,6 +387,8 @@ export class ChatPageComponent implements OnInit {
 	});
 	protected readonly meUserId = computed(() => (this.user()?.id ? String(this.user()!.id) : null));
 	protected readonly isAdmin = computed(() => this.store.hasPermission(PermissionsEnum.CHAT_MANAGE));
+	/** Attachments are stored as documents: uploading them needs `DOCS_CREATE`. */
+	protected readonly canAttach = computed(() => this.store.hasPermission(PermissionsEnum.DOCS_CREATE));
 
 	protected readonly people = toSignal(
 		combineLatest([

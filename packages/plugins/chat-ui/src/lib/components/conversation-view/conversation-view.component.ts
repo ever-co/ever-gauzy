@@ -30,9 +30,11 @@ import {
 import { ToastrService } from '@gauzy/ui-core/core';
 import { CHAT_LIVE_AUDIT_MS, CHAT_MESSAGES_POLL_MS } from '../../chat-ui.constants';
 import { apiErrorMessage, continuesGroup, conversationTitle, mergeMessages, newNonce } from '../../chat-ui.helpers';
+import { ChatFilesStore } from '../../services/chat-files.store';
 import { ChatLiveService, isTabVisible } from '../../services/chat-live.service';
 import { ChatPeople } from '../../services/chat-people.service';
 import { ChatEvents, ChatMessagePatch, ChatUiService, memberStateFromEvents } from '../../services/chat-ui.service';
+import { FilesPanelComponent } from '../files-panel/files-panel.component';
 import { clearDraft, ComposerSubmission, MessageComposerComponent } from '../message-composer/message-composer.component';
 import { MessageAction, MessageItemComponent } from '../message-item/message-item.component';
 
@@ -57,7 +59,18 @@ const NEAR_BOTTOM_PX = 80;
 @Component({
 	selector: 'ngx-chat-conversation-view',
 	changeDetection: ChangeDetectionStrategy.OnPush,
-	imports: [FormsModule, NbButtonModule, NbIconModule, NbSelectModule, NbSpinnerModule, NbTooltipModule, TranslatePipe, MessageComposerComponent, MessageItemComponent],
+	imports: [
+		FormsModule,
+		NbButtonModule,
+		NbIconModule,
+		NbSelectModule,
+		NbSpinnerModule,
+		NbTooltipModule,
+		TranslatePipe,
+		FilesPanelComponent,
+		MessageComposerComponent,
+		MessageItemComponent
+	],
 	template: `
 		<section class="view" data-test="conversation-view">
 			<header class="header">
@@ -82,6 +95,9 @@ const NEAR_BOTTOM_PX = 80;
 					<button nbButton ghost size="tiny" type="button" data-test="pins" [class.active]="pinsOpen()" [nbTooltip]="'CHAT.VIEW.PINNED' | translate" [attr.aria-label]="'CHAT.VIEW.PINNED' | translate" (click)="togglePins()">
 						<nb-icon icon="pin-outline"></nb-icon>
 					</button>
+					<button nbButton ghost size="tiny" type="button" data-test="files" [class.active]="filesOpen()" [nbTooltip]="'CHAT.FILES.TITLE' | translate" [attr.aria-label]="'CHAT.FILES.TITLE' | translate" (click)="filesOpen.set(!filesOpen())">
+						<nb-icon icon="attach-2-outline"></nb-icon>
+					</button>
 					@if (!isMember()) {
 						<button nbButton status="primary" size="tiny" type="button" data-test="join" (click)="join()">{{ 'CHAT.VIEW.JOIN' | translate }}</button>
 					} @else if (canLeave()) {
@@ -102,6 +118,7 @@ const NEAR_BOTTOM_PX = 80;
 						<ngx-chat-message-item
 							[message]="pin"
 							[people]="people()"
+							[files]="files()"
 							[conversationNames]="conversationNames()"
 							[meEmployeeId]="meEmployeeId()"
 							[meUserId]="meUserId()"
@@ -112,6 +129,10 @@ const NEAR_BOTTOM_PX = 80;
 						<p class="empty">{{ 'CHAT.VIEW.NO_PINS' | translate }}</p>
 					}
 				</aside>
+			}
+
+			@if (filesOpen()) {
+				<ngx-chat-files-panel [conversationId]="conversationIdText()" [people]="people()"></ngx-chat-files-panel>
 			}
 
 			<div #scroller class="messages" data-test="messages" (scroll)="onScroll()">
@@ -131,6 +152,7 @@ const NEAR_BOTTOM_PX = 80;
 					<ngx-chat-message-item
 						[message]="message"
 						[people]="people()"
+						[files]="files()"
 						[conversationNames]="conversationNames()"
 						[meEmployeeId]="meEmployeeId()"
 						[meUserId]="meUserId()"
@@ -167,6 +189,7 @@ const NEAR_BOTTOM_PX = 80;
 						[initialBody]="editing()?.body ?? null"
 						[draftKey]="draftKey()"
 						[resetToken]="resetToken()"
+						[canAttach]="canAttach()"
 						(submitted)="onSubmit($event)"
 						(editCancelled)="editing.set(null)"
 					></ngx-chat-message-composer>
@@ -266,6 +289,7 @@ const NEAR_BOTTOM_PX = 80;
 export class ConversationViewComponent {
 	private readonly api = inject(ChatUiService);
 	private readonly live = inject(ChatLiveService);
+	private readonly filesStore = inject(ChatFilesStore);
 	private readonly toastr = inject(ToastrService);
 	private readonly translate = inject(TranslateService);
 	private readonly destroyRef = inject(DestroyRef);
@@ -277,6 +301,8 @@ export class ConversationViewComponent {
 	readonly meUserId = input<string | null>(null);
 	/** `CHAT_MANAGE`: acts as a manager everywhere. */
 	readonly isAdmin = input(false);
+	/** `DOCS_CREATE`: may attach files (stored as documents). */
+	readonly canAttach = input(false);
 	readonly untitled = input('Conversation');
 	/** A message to scroll to and highlight (a deep link): the page around it is shown, nothing is marked read. */
 	readonly highlightId = input<string | null>(null);
@@ -303,6 +329,10 @@ export class ConversationViewComponent {
 	protected readonly newBelow = signal(false);
 	protected readonly pinsOpen = signal(false);
 	protected readonly pins = signal<IChatMessageWithRelations[]>([]);
+	protected readonly filesOpen = signal(false);
+	/** The conversation's files read so far, for the attachments of the messages shown. */
+	protected readonly files = this.filesStore.byDocument;
+	protected readonly conversationIdText = computed(() => String(this.conversation().id));
 	/** The caller's state, kept here so a read / favourite change shows at once. */
 	protected readonly state = signal<IChatMemberState | null>(null);
 
@@ -331,6 +361,7 @@ export class ConversationViewComponent {
 					this.stopPolling();
 					this.editing.set(null);
 					this.pinsOpen.set(false);
+					this.filesOpen.set(false);
 					this.newBelow.set(false);
 					this.loadingOlder.set(false);
 					this.sending.set(false);
@@ -342,6 +373,13 @@ export class ConversationViewComponent {
 		effect(() => {
 			const message = this.patch();
 			if (message) untracked(() => this.replace(message));
+		});
+		// A message that names a file not read yet reads the conversation's files (the pins too); only the messages of
+		// the open conversation count (a switch shows the previous one's for a moment).
+		effect(() => {
+			const id = String(this.conversation().id);
+			const messages = [...this.messages(), ...this.pins()].filter((message) => String(message.conversationId) === id);
+			untracked(() => this.filesStore.ensureFor(id, messages));
 		});
 		this.destroyRef.onDestroy(() => this.stopPolling());
 	}
@@ -745,7 +783,12 @@ export class ConversationViewComponent {
 			return;
 		}
 		this.api
-			.send(id, { body: submission.body, nonce: newNonce(), mentionEmployeeIds: submission.mentionEmployeeIds })
+			.send(id, {
+				body: submission.body,
+				nonce: newNonce(),
+				mentionEmployeeIds: submission.mentionEmployeeIds,
+				...(submission.attachmentIds.length ? { attachmentIds: submission.attachmentIds } : {})
+			})
 			.pipe(takeUntilDestroyed(this.destroyRef))
 			.subscribe({
 				next: (result) => {

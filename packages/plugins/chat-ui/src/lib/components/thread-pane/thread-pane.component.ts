@@ -10,6 +10,7 @@ import { ToastrService } from '@gauzy/ui-core/core';
 import { CHAT_LIVE_AUDIT_MS, CHAT_THREAD_POLL_MS } from '../../chat-ui.constants';
 import { apiErrorMessage, continuesGroup, mergeMessages, newNonce } from '../../chat-ui.helpers';
 import { ChatHint } from '../../services/chat-live';
+import { ChatFilesStore } from '../../services/chat-files.store';
 import { ChatLiveService, isTabVisible } from '../../services/chat-live.service';
 import { ChatPeople } from '../../services/chat-people.service';
 import { ChatMessagePatch, ChatThreadPage, ChatUiService, threadFieldsOf } from '../../services/chat-ui.service';
@@ -50,6 +51,7 @@ import { MessageAction, MessageItemComponent } from '../message-item/message-ite
 					<ngx-chat-message-item
 						[message]="root"
 						[people]="people()"
+						[files]="files()"
 						[conversationNames]="conversationNames()"
 						[meEmployeeId]="meEmployeeId()"
 						[meUserId]="meUserId()"
@@ -64,6 +66,7 @@ import { MessageAction, MessageItemComponent } from '../message-item/message-ite
 						<ngx-chat-message-item
 							[message]="reply"
 							[people]="people()"
+							[files]="files()"
 							[conversationNames]="conversationNames()"
 							[meEmployeeId]="meEmployeeId()"
 							[meUserId]="meUserId()"
@@ -93,6 +96,7 @@ import { MessageAction, MessageItemComponent } from '../message-item/message-ite
 						[initialBody]="editing()?.body ?? null"
 						[draftKey]="draftKey()"
 						[resetToken]="resetToken()"
+						[canAttach]="canAttach()"
 						(submitted)="onSubmit($event)"
 						(editCancelled)="editing.set(null)"
 					></ngx-chat-message-composer>
@@ -160,6 +164,7 @@ import { MessageAction, MessageItemComponent } from '../message-item/message-ite
 export class ThreadPaneComponent {
 	private readonly api = inject(ChatUiService);
 	private readonly live = inject(ChatLiveService);
+	private readonly filesStore = inject(ChatFilesStore);
 	private readonly toastr = inject(ToastrService);
 	private readonly translate = inject(TranslateService);
 	private readonly destroyRef = inject(DestroyRef);
@@ -171,6 +176,8 @@ export class ThreadPaneComponent {
 	readonly meEmployeeId = input<string | null>(null);
 	readonly meUserId = input<string | null>(null);
 	readonly readOnly = input(false);
+	/** `DOCS_CREATE`: may attach files (stored as documents). */
+	readonly canAttach = input(false);
 
 	readonly closed = output<void>();
 	/**
@@ -193,6 +200,8 @@ export class ThreadPaneComponent {
 	protected alsoInConversation = false;
 
 	protected readonly replyCount = computed(() => this.replies().length);
+	/** The conversation's files read so far, for the attachments of the root and the replies. */
+	protected readonly files = this.filesStore.byDocument;
 	protected readonly draftKey = computed(() => `thread:${this.rootMessageId()}`);
 
 	private poll: Subscription | null = null;
@@ -213,6 +222,13 @@ export class ThreadPaneComponent {
 				this.lastMarkedId = null;
 				this.reload();
 			});
+		});
+		// A reply (or the root) that names a file not read yet reads the conversation's files.
+		effect(() => {
+			const id = this.conversationId();
+			const root = this.root();
+			const messages = (root ? [root, ...this.replies()] : this.replies()).filter((message) => String(message.conversationId) === id);
+			untracked(() => this.filesStore.ensureFor(id, messages));
 		});
 		this.destroyRef.onDestroy(() => this.stopPolling());
 	}
@@ -409,7 +425,8 @@ export class ThreadPaneComponent {
 					nonce: newNonce(),
 					threadRootId: root.id,
 					alsoInConversation: this.alsoInConversation,
-					mentionEmployeeIds: submission.mentionEmployeeIds
+					mentionEmployeeIds: submission.mentionEmployeeIds,
+					...(submission.attachmentIds.length ? { attachmentIds: submission.attachmentIds } : {})
 				});
 		request.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
 			next: (result) => {

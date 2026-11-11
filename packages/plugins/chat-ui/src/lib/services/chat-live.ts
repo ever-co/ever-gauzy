@@ -122,7 +122,7 @@ export const CHAT_LIVE_TIMING: ChatLiveTiming = {
  * opened only where the platform streams them (`GAUZY_REALTIME_ENABLED=true`, the chat events declared).
  *
  * - `hints$` streams the events as {@link ChatHint}s; subscribing to it opens the subscription, the last
- *   unsubscriber closes it.
+ *   listener to leave closes it.
  * - `mode$` says whether the parts may slow their polls: `live` once the subscription has run on a connected socket
  *   for a moment and the platform delivers promptly; `fallback` before that, while the socket reconnects, after the
  *   subscription failed (`RealtimeSocketUnavailableError`, a GraphQL error), and where there is no channel at all.

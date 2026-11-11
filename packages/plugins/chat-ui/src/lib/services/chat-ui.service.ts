@@ -5,12 +5,16 @@ import {
 	CHAT_EVENT_NAMES,
 	ChatMemberRoleEnum,
 	ChatNotifyLevelEnum,
+	DocumentSourceEnum,
+	DocumentVisibilityEnum,
 	IChatCategory,
 	IChatConversationCreateInput,
 	IChatConversationList,
 	IChatConversationUpdateInput,
 	IChatConversationWithState,
 	IChatEvent,
+	IChatFilesQuery,
+	IChatFilesResult,
 	IChatMemberState,
 	IChatMemberStateInput,
 	IChatMemberSummary,
@@ -58,6 +62,18 @@ export interface ChatPersonRecord {
 	name: string;
 	imageUrl: string | null;
 }
+
+/**
+ * What the Docs plugin answers an upload (`POST /api/plugins/docs/documents/upload`): the documents it stored, and
+ * the files it refused with why. Only the members chat reads are named here.
+ */
+export interface ChatUploadAnswer {
+	results: Array<{ document: { id: ID; name?: string | null; mimeType?: string | null; fileSize?: number | null } }>;
+	rejected: Array<{ fileName: string; code: string; message: string }>;
+}
+
+/** Where the Docs plugin takes uploads: every attachment is a FILE document of its uploader. */
+export const CHAT_UPLOAD_URL = `${API_PREFIX}/plugins/docs/documents/upload`;
 
 /** What `chat_member.state_changed` carries. */
 interface MemberStateChangedData {
@@ -219,6 +235,28 @@ export class ChatUiService {
 	react(messageId: ID, emoji: string, on: boolean): Observable<IChatSendResult> {
 		const url = `${CHAT}/messages/${path(messageId)}/reactions/${encodeURIComponent(emoji)}`;
 		return on ? this.http.post<IChatSendResult>(url, {}) : this.http.delete<IChatSendResult>(url);
+	}
+
+	// ---------------------------------------------------------------- files
+
+	/** The files of a conversation (what its messages carry), newest first. */
+	files(conversationId: ID, query: IChatFilesQuery = {}): Observable<IChatFilesResult> {
+		return this.http.get<IChatFilesResult>(`${CHAT}/conversations/${path(conversationId)}/files`, { params: toParams({ ...query }) });
+	}
+
+	/**
+	 * Stores one file to attach through the Docs plugin: a private FILE document of the sender, marked as coming from
+	 * the chat, kept out of the knowledge base and of the AI classification. The members of the conversation reach it
+	 * through the conversation's files (membership-checked), never through the document's own visibility.
+	 */
+	uploadFile(file: File): Observable<ChatUploadAnswer> {
+		const form = new FormData();
+		form.append('files', file, file.name);
+		form.append('visibility', DocumentVisibilityEnum.PRIVATE);
+		form.append('source', DocumentSourceEnum.CHAT);
+		form.append('importToKnowledge', 'false');
+		form.append('classifyWithAi', 'false');
+		return this.http.post<ChatUploadAnswer>(CHAT_UPLOAD_URL, form);
 	}
 
 	// ---------------------------------------------------------------- threads and read state
