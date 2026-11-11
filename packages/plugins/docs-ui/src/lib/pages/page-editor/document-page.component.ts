@@ -390,6 +390,9 @@ export class DocumentPageComponent implements OnInit, OnDestroy {
 			this.toastrService.danger(this.translate.instant('DOCS.FOLLOW.FAILED'));
 		} finally {
 			this.followBusy = false;
+			// A read started meanwhile (a reload of the page) may have answered with the state before this action:
+			// the state is read again now that the action is done.
+			if (request !== this.followRequest && String(this.document?.id) === String(id)) this.loadFollowState(id);
 			this.cdr.markForCheck();
 		}
 	}

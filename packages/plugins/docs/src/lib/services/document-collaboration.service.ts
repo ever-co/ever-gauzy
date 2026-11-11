@@ -12,7 +12,7 @@ import {
 	IDocumentSpace,
 	PermissionsEnum
 } from '@gauzy/contracts';
-import { CreateEntitySubscriptionEvent, Employee, EntitySubscription, OrganizationTeam, OrganizationTeamEmployee, RequestContext, prepareSQLQuery as p } from '@gauzy/core';
+import { CreateEntitySubscriptionEvent, EntitySubscription, OrganizationTeam, OrganizationTeamEmployee, RequestContext, prepareSQLQuery as p } from '@gauzy/core';
 import { getDocsConfig } from '../docs.config';
 import { DOCS_COLLAB_DISABLED, DOCS_WRITE_FORBIDDEN } from '../docs.constants';
 import { MoveDocumentSpaceDTO } from '../dto/document-space.dto';
@@ -141,7 +141,7 @@ export class DocumentCollaborationService {
 	async followState(id: ID, organizationId?: ID): Promise<IDocumentFollowState> {
 		this.assertEnabled();
 		const document = await this.documentService.findOneScoped(id, [], organizationId);
-		const employeeId = await this.employeeIdIn(document);
+		const employeeId = this.documentAccessService.currentEmployeeId();
 		if (!employeeId) return { following: false, muted: false };
 		const following = await this.typeOrmDocumentRepository.manager.count(EntitySubscription, {
 			where: { entity: BaseEntityEnum.Document, entityId: document.id as ID, employeeId, tenantId: document.tenantId }
@@ -153,7 +153,7 @@ export class DocumentCollaborationService {
 	async follow(id: ID, organizationId?: ID): Promise<IDocumentFollowState> {
 		this.assertEnabled();
 		const document = await this.documentService.findOneScoped(id, [], organizationId);
-		const employeeId = await this.employeeIdIn(document);
+		const employeeId = this.documentAccessService.currentEmployeeId();
 		if (!employeeId) return { following: false, muted: false };
 		if (isMutedBy(document.metadata, employeeId)) {
 			await this.setMuted(document, employeeId, false);
@@ -175,7 +175,7 @@ export class DocumentCollaborationService {
 	async unfollow(id: ID, organizationId?: ID): Promise<IDocumentFollowState> {
 		this.assertEnabled();
 		const document = await this.documentService.findOneScoped(id, [], organizationId);
-		const employeeId = await this.employeeIdIn(document);
+		const employeeId = this.documentAccessService.currentEmployeeId();
 		if (!employeeId) return { following: false, muted: false };
 		await this.deleteSubscriptions(document, employeeId);
 		return { following: false, muted: isMutedBy(document.metadata, employeeId) };
@@ -185,7 +185,7 @@ export class DocumentCollaborationService {
 	async mute(id: ID, organizationId?: ID): Promise<IDocumentFollowState> {
 		this.assertEnabled();
 		const document = await this.documentService.findOneScoped(id, [], organizationId);
-		const employeeId = await this.employeeIdIn(document);
+		const employeeId = this.documentAccessService.currentEmployeeId();
 		if (!employeeId) return { following: false, muted: false };
 		await this.deleteSubscriptions(document, employeeId);
 		await this.setMuted(document, employeeId, true);
@@ -196,35 +196,13 @@ export class DocumentCollaborationService {
 	async unmute(id: ID, organizationId?: ID): Promise<IDocumentFollowState> {
 		this.assertEnabled();
 		const document = await this.documentService.findOneScoped(id, [], organizationId);
-		const employeeId = await this.employeeIdIn(document);
+		const employeeId = this.documentAccessService.currentEmployeeId();
 		if (!employeeId) return { following: false, muted: false };
 		await this.setMuted(document, employeeId, false);
 		return this.followState(id, organizationId);
 	}
 
 	// ---------------------------------------------------------------- helpers
-
-	/**
-	 * The caller's employee in the page's organization. A user who is an employee of several organizations carries
-	 * the one of their last organization in the token; the follow and the mute of a page belong to the employee of
-	 * the page's organization, whichever organization is selected. Falls back to the token's employee.
-	 */
-	private async employeeIdIn(document: Document): Promise<ID | null> {
-		const fallback = this.documentAccessService.currentEmployeeId();
-		const userId = RequestContext.currentUserId();
-		if (!userId || !document.organizationId) {
-			return fallback;
-		}
-		try {
-			const employee = await this.typeOrmDocumentRepository.manager.findOne(Employee, {
-				select: { id: true },
-				where: { userId: userId as ID, organizationId: document.organizationId as ID, tenantId: document.tenantId as ID }
-			});
-			return (employee?.id as ID) ?? fallback;
-		} catch {
-			return fallback;
-		}
-	}
 
 	private async deleteSubscriptions(document: Document, employeeId: ID): Promise<void> {
 		await this.typeOrmDocumentRepository.manager.delete(EntitySubscription, {

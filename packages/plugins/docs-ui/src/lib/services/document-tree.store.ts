@@ -60,6 +60,8 @@ export class DocumentTreeStore {
 	private space: IDocsSpaceFilter | null = null;
 	/** Bumps on every space selection, so a read started for the previous one is dropped. */
 	private spaceSelection = 0;
+	/** Root reads running now. */
+	private rootsLoading = 0;
 
 	private readonly _nodes$ = new BehaviorSubject<IDocsTreeNode[]>([]);
 	/** Root-level nodes (reference refreshed on every cache change). */
@@ -83,19 +85,25 @@ export class DocumentTreeStore {
 		const space = parentId ? null : this.space;
 		// A space selected while this read runs makes its answer stale: it is not cached, nor shown.
 		const selection = this.spaceSelection;
-		const { items } = await firstValueFrom(
-			this.documentsService.getAll({
-				parentId: parentId ?? 'root',
-				archived: false,
-				take: DOCS_TREE_PAGE_SIZE,
-				...(space
-					? {
-							space: space.kind,
-							...(space.organizationTeamId ? { organizationTeamId: space.organizationTeamId } : {})
-						}
-					: {})
-			})
-		);
+		if (!parentId) this.rootsLoading += 1;
+		let items: IDocument[] | undefined;
+		try {
+			({ items } = await firstValueFrom(
+				this.documentsService.getAll({
+					parentId: parentId ?? 'root',
+					archived: false,
+					take: DOCS_TREE_PAGE_SIZE,
+					...(space
+						? {
+								space: space.kind,
+								...(space.organizationTeamId ? { organizationTeamId: space.organizationTeamId } : {})
+							}
+						: {})
+				})
+			));
+		} finally {
+			if (!parentId) this.rootsLoading -= 1;
+		}
 		const nodes = (items ?? []).map((doc) => this.toNode(doc));
 		if (selection !== this.spaceSelection) return this._children.get(key) ?? [];
 		this._children.set(key, nodes);
@@ -190,7 +198,8 @@ export class DocumentTreeStore {
 	invalidateAll(): void {
 		// A read still running belongs to the cache being dropped.
 		this.spaceSelection += 1;
-		const hadRoots = this._children.has('');
+		// Roots that were loaded, or were loading (that read is dropped below), are read again.
+		const hadRoots = this._children.has('') || this.rootsLoading > 0;
 		this._children.clear();
 		this._byId.clear();
 		this.emit();
