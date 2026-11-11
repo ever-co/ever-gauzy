@@ -5,11 +5,13 @@ import { RouterLink } from '@angular/router';
 import { NbBadgeModule, NbIconModule } from '@nebular/theme';
 import { TranslatePipe } from '@ngx-translate/core';
 import { EMPTY, merge, Subject, timer } from 'rxjs';
-import { catchError, filter, switchMap, takeUntil } from 'rxjs/operators';
-import { IChatStates } from '@gauzy/contracts';
-import { CHAT_BADGE_POLL_MS, CHAT_LINK } from '../../chat-ui.constants';
+import { auditTime, catchError, filter, switchMap, takeUntil } from 'rxjs/operators';
+import { CHAT_EVENT_NAMES, IChatStates } from '@gauzy/contracts';
+import { CHAT_BADGE_POLL_MS, CHAT_LINK, CHAT_LIVE_LIST_AUDIT_MS } from '../../chat-ui.constants';
 import { badgeText } from '../../chat-ui.helpers';
 import { ChatAvailabilityService, isFinalRefusal } from '../../services/chat-availability.service';
+import { ChatHint, coalesceReads } from '../../services/chat-live';
+import { ChatLiveService, isTabVisible } from '../../services/chat-live.service';
 import { ChatUiService } from '../../services/chat-ui.service';
 
 /** How many conversations hold unread messages, plus the followed threads with unread replies. */
@@ -17,6 +19,20 @@ export function unreadOf(states: IChatStates | null | undefined): number {
 	const conversations = (states?.states ?? []).filter((state) => (state.unreadCount ?? 0) > 0 || (state.mentionCount ?? 0) > 0).length;
 	const threads = (states?.threads ?? []).filter((thread) => (thread.unreadReplies ?? 0) > 0).length;
 	return conversations + threads;
+}
+
+/** The chat events that can move the badge's count: my state, a message created or deleted, a thread, a membership. */
+const BADGE_EVENTS = new Set<string>([
+	CHAT_EVENT_NAMES.MEMBER_STATE_CHANGED,
+	CHAT_EVENT_NAMES.MESSAGE_CREATED,
+	CHAT_EVENT_NAMES.MESSAGE_DELETED,
+	CHAT_EVENT_NAMES.THREAD_CHANGED,
+	CHAT_EVENT_NAMES.CONVERSATION_CHANGED
+]);
+
+/** Whether a chat event can change how many conversations and threads hold something unread. */
+export function movesBadge(hint: Pick<ChatHint, 'name'>): boolean {
+	return BADGE_EVENTS.has(hint.name);
 }
 
 /** The chat icon of the header with the count of conversations and threads holding something unread. */
@@ -52,6 +68,7 @@ export function unreadOf(states: IChatStates | null | undefined): number {
 })
 export class ChatHeaderBadgeComponent implements OnInit {
 	private readonly api = inject(ChatUiService);
+	private readonly live = inject(ChatLiveService);
 	private readonly availability = inject(ChatAvailabilityService);
 	private readonly destroyRef = inject(DestroyRef);
 	/** A final refusal (the chat went away for this scope) stops the polling until the scope changes. */
@@ -65,16 +82,23 @@ export class ChatHeaderBadgeComponent implements OnInit {
 		this.startPolling();
 	}
 
-	/** Reads my states on a timer and after every write of the page, anew for every scope the chat is served in. */
+	/**
+	 * Reads my states, anew for every scope the chat is served in: at once, after every write of the page, when a chat
+	 * event that moves a count arrives (live; a burst is read once), after a reconnect, and on a timer as the fallback.
+	 */
 	private startPolling(): void {
 		this.availability.scope$
 			.pipe(
 				switchMap((scope) => {
 					this.show(0);
 					if (!scope) return EMPTY;
-					const tick$ = timer(0, CHAT_BADGE_POLL_MS).pipe(filter(() => typeof document === 'undefined' || !document.hidden));
-					return merge(tick$, this.api.changed$).pipe(
-						switchMap(() => this.readStates()),
+					const events$ = this.live.hints$.pipe(
+						filter((hint) => movesBadge(hint) && isTabVisible()),
+						auditTime(CHAT_LIVE_LIST_AUDIT_MS)
+					);
+					return merge(timer(0), this.live.ticks(CHAT_BADGE_POLL_MS), this.api.changed$, events$, this.live.catchUp$).pipe(
+						// A read under way finishes; triggers meanwhile ask for one more after it.
+						coalesceReads(() => this.readStates()),
 						takeUntil(this.refused$)
 					);
 				}),

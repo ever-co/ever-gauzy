@@ -87,14 +87,27 @@
 	},
 	"COMPOSER": {
 		"PLACEHOLDER": "Message {{name}}",
-		"HINT": "Enter to send, Shift+Enter for a new line, @ to mention",
+		"HINT": "Enter to send, Shift+Enter for a new line, @ to mention, : for emoji",
 		"SEND": "Send",
 		"SAVE": "Save",
 		"CANCEL": "Cancel",
 		"TOO_LONG": "A message holds at most {{max}} characters.",
 		"SEND_FAILED": "The message could not be sent.",
 		"MENTION_EVERYONE": "everyone in the conversation",
-		"MENTION_HERE": "everyone here now"
+		"MENTION_HERE": "everyone here now",
+		"ATTACH": "Attach files",
+		"UPLOADING": "Uploading…",
+		"UPLOAD_FAILED": "Not uploaded",
+		"ATTACH_UNAVAILABLE": "Attachments are not available here",
+		"REMOVE_FILE": "Remove {{name}}",
+		"TOO_MANY_FILES": "A message holds at most {{max}} files: {{count}} not added.",
+		"MENTION_SUGGESTIONS": "People to mention",
+		"EMOJI_SUGGESTIONS": "Emoji"
+	},
+	"FILES": {
+		"TITLE": "Files",
+		"EMPTY": "No files in this conversation yet.",
+		"MORE": "Show more files"
 	},
 	"DIALOG": {
 		"NEW_CHANNEL": "New channel",

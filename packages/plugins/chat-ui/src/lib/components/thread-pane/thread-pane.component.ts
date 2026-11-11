@@ -3,20 +3,26 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { NbButtonModule, NbCheckboxModule, NbIconModule, NbSpinnerModule, NbTooltipModule } from '@nebular/theme';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
-import { EMPTY, Subscription, timer } from 'rxjs';
-import { catchError, filter, switchMap } from 'rxjs/operators';
-import { IChatMessageWithRelations } from '@gauzy/contracts';
+import { EMPTY, merge, Subject, Subscription } from 'rxjs';
+import { auditTime, catchError, filter, switchMap } from 'rxjs/operators';
+import { CHAT_EVENT_NAMES, IChatMessageWithRelations } from '@gauzy/contracts';
 import { ToastrService } from '@gauzy/ui-core/core';
-import { CHAT_THREAD_POLL_MS } from '../../chat-ui.constants';
+import { applyCatchUp, reconcileWithOldest, rootWithMyFields } from '../../chat-catch-up';
+import { CHAT_LIVE_AUDIT_MS, CHAT_THREAD_POLL_MS } from '../../chat-ui.constants';
 import { apiErrorMessage, continuesGroup, mergeMessages, newNonce } from '../../chat-ui.helpers';
+import { ChatHint } from '../../services/chat-live';
+import { ChatFilesStore } from '../../services/chat-files.store';
+import { ChatLiveService, isTabVisible } from '../../services/chat-live.service';
 import { ChatPeople } from '../../services/chat-people.service';
 import { ChatMessagePatch, ChatThreadPage, ChatUiService, threadFieldsOf } from '../../services/chat-ui.service';
 import { clearDraft, ComposerSubmission, MessageComposerComponent } from '../message-composer/message-composer.component';
 import { MessageAction, MessageItemComponent } from '../message-item/message-item.component';
 
 /**
- * A thread: its root message, the replies (the first page, more on request, newer ones by polling), follow /
- * unfollow, and a composer with "also send to the conversation". Showing the replies marks the thread read.
+ * A thread: its root message, the replies (the first page, more on request, newer ones as the chat events announce
+ * them, polling as the fallback), follow / unfollow, and a composer with "also send to the conversation". Showing
+ * the replies marks the thread read. A reply or the root changed elsewhere is read again; a reconnect reads the
+ * newer replies and the root again.
  * Every request captures the root it was made for and drops its answer when another thread is open by then.
  */
 @Component({
@@ -46,6 +52,7 @@ import { MessageAction, MessageItemComponent } from '../message-item/message-ite
 					<ngx-chat-message-item
 						[message]="root"
 						[people]="people()"
+						[files]="files()"
 						[conversationNames]="conversationNames()"
 						[meEmployeeId]="meEmployeeId()"
 						[meUserId]="meUserId()"
@@ -60,6 +67,7 @@ import { MessageAction, MessageItemComponent } from '../message-item/message-ite
 						<ngx-chat-message-item
 							[message]="reply"
 							[people]="people()"
+							[files]="files()"
 							[conversationNames]="conversationNames()"
 							[meEmployeeId]="meEmployeeId()"
 							[meUserId]="meUserId()"
@@ -89,6 +97,7 @@ import { MessageAction, MessageItemComponent } from '../message-item/message-ite
 						[initialBody]="editing()?.body ?? null"
 						[draftKey]="draftKey()"
 						[resetToken]="resetToken()"
+						[canAttach]="canAttach()"
 						(submitted)="onSubmit($event)"
 						(editCancelled)="editing.set(null)"
 					></ngx-chat-message-composer>
@@ -155,6 +164,8 @@ import { MessageAction, MessageItemComponent } from '../message-item/message-ite
 })
 export class ThreadPaneComponent {
 	private readonly api = inject(ChatUiService);
+	private readonly live = inject(ChatLiveService);
+	private readonly filesStore = inject(ChatFilesStore);
 	private readonly toastr = inject(ToastrService);
 	private readonly translate = inject(TranslateService);
 	private readonly destroyRef = inject(DestroyRef);
@@ -166,6 +177,8 @@ export class ThreadPaneComponent {
 	readonly meEmployeeId = input<string | null>(null);
 	readonly meUserId = input<string | null>(null);
 	readonly readOnly = input(false);
+	/** `DOCS_CREATE`: may attach files (stored as documents). */
+	readonly canAttach = input(false);
 
 	readonly closed = output<void>();
 	/**
@@ -188,9 +201,24 @@ export class ThreadPaneComponent {
 	protected alsoInConversation = false;
 
 	protected readonly replyCount = computed(() => this.replies().length);
+	/** The conversation's files read so far, for the attachments of the root and the replies. */
+	protected readonly files = this.filesStore.byDocument;
 	protected readonly draftKey = computed(() => `thread:${this.rootMessageId()}`);
 
 	private poll: Subscription | null = null;
+	/** Asks the poll for the newer replies now (after a catch-up). */
+	private readonly newerNow = new Subject<void>();
+	/** Counts the catch-ups: only the latest one's answer is applied. */
+	private catchUpRun = 0;
+	/** A catch-up added replies: the thread is marked read after the newer replies were read too. */
+	private readAfterNewer = false;
+	/** The messages changed here since the latest catch-up began (a refresh, a deletion, my own action): its page does not overrule them. */
+	private readonly touched = new Set<string>();
+	/**
+	 * The root's fields my own actions changed since the latest catch-up began (a reply sent: the reply count and the
+	 * last reply; a follow change): the catch-up's root is applied with these on top, its other fields (an edit) kept.
+	 */
+	private rootFields: ChatMessagePatch = {};
 	/** Counts the visits of this pane (every root switch): a reply belongs to the visit it was made in. */
 	private visit = 0;
 	/** The last reply a thread read was sent for, so the same read is not sent twice. */
@@ -208,6 +236,13 @@ export class ThreadPaneComponent {
 				this.lastMarkedId = null;
 				this.reload();
 			});
+		});
+		// A reply (or the root) that names a file not read yet reads the conversation's files.
+		effect(() => {
+			const id = this.conversationId();
+			const root = this.root();
+			const messages = (root ? [root, ...this.replies()] : this.replies()).filter((message) => String(message.conversationId) === id);
+			untracked(() => this.filesStore.ensureFor(id, messages));
 		});
 		this.destroyRef.onDestroy(() => this.stopPolling());
 	}
@@ -265,13 +300,23 @@ export class ThreadPaneComponent {
 			});
 	}
 
-	/** Newer replies than the last loaded one, while every loaded page is shown. */
+	/**
+	 * Newer replies than the last loaded one, while every loaded page is shown: on a tick of the poll (every 5 s, or
+	 * once a minute while live) and when a reply is created or the thread changes. A reply or the root changed
+	 * elsewhere (edited, deleted, reacted to, pinned) is read again. After a reconnect (or the tab shown again) the
+	 * root and the first page are read again and reconciled with what is loaded, then the newer replies.
+	 */
 	private startPolling(): void {
 		this.stopPolling();
 		const id = this.rootMessageId();
-		this.poll = timer(CHAT_THREAD_POLL_MS, CHAT_THREAD_POLL_MS)
+		const hints$ = this.live.hints$.pipe(filter((hint) => hint.threadRootId === id || hint.messageId === id));
+		const newer$ = hints$.pipe(
+			filter((hint) => hint.name === CHAT_EVENT_NAMES.MESSAGE_CREATED || hint.name === CHAT_EVENT_NAMES.THREAD_CHANGED),
+			auditTime(CHAT_LIVE_AUDIT_MS)
+		);
+		const poll = merge(this.live.ticks(CHAT_THREAD_POLL_MS), newer$, this.newerNow)
 			.pipe(
-				filter(() => typeof document === 'undefined' || !document.hidden),
+				filter(() => isTabVisible()),
 				filter(() => !this.hasAfter()),
 				switchMap(() => {
 					const last = this.replies()[this.replies().length - 1];
@@ -290,7 +335,96 @@ export class ThreadPaneComponent {
 					this.root.set(next);
 					this.rootChanged.emit(threadFieldsOf(next));
 				}
-				if (this.replies().length !== before) this.markRead();
+				if (this.replies().length !== before || this.readAfterNewer) {
+					this.readAfterNewer = false;
+					this.markRead();
+				}
+			});
+		poll.add(
+			hints$
+				.pipe(
+					filter((hint) => hint.name === CHAT_EVENT_NAMES.MESSAGE_UPDATED || hint.name === CHAT_EVENT_NAMES.MESSAGE_DELETED),
+					filter(() => isTabVisible()),
+					takeUntilDestroyed(this.destroyRef)
+				)
+				.subscribe((hint) => this.refreshMessage(id, hint))
+		);
+		poll.add(this.live.catchUp$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => this.catchUp(id)));
+		this.poll = poll;
+	}
+
+	/**
+	 * The root and the first page again (the events of the gap are not replayed), then the newer replies. Only the
+	 * latest catch-up's answer is applied, and it does not overrule what changed here while it ran: a reply shown
+	 * meanwhile (a live event, my own reply), a reply refreshed or deleted by an event, the root refreshed. When every
+	 * reply was loaded before, the newer ones are read from the last loaded reply, closing the gap however long.
+	 */
+	private catchUp(id: string): void {
+		if (!this.isCurrent(id) || this.loading()) return;
+		const run = ++this.catchUpRun;
+		this.touched.clear();
+		this.rootFields = {};
+		const before = new Set(this.replies().map((reply) => String(reply.id)));
+		const wasComplete = !this.hasAfter();
+		this.api
+			.thread(id)
+			.pipe(takeUntilDestroyed(this.destroyRef))
+			.subscribe({
+				next: (page) => {
+					if (!this.isCurrent(id) || run !== this.catchUpRun) return;
+					if (!this.touched.has(String(page.root.id))) this.replace(rootWithMyFields(page.root, this.rootFields), false);
+					// My reply went out while the read ran: neither count knows both, so the root's are read again now.
+					if (this.rootFields.replyCount !== undefined) this.refreshRootCounts(id);
+					const replies = { hasAfter: page.hasAfter, messages: page.messages.filter((message) => message.id !== page.root.id) };
+					const result = applyCatchUp(this.replies(), before, this.touched, (loaded) => reconcileWithOldest(loaded, replies));
+					this.replies.set(result.messages);
+					// Every reply was loaded: the poll reads from the last one. Otherwise the first page says what follows.
+					if (!wasComplete && !result.beyond) this.hasAfter.set(page.hasAfter);
+					// The thread is marked read once the newer replies are in too (the poll's answer), never before.
+					if (result.added.length) this.readAfterNewer = true;
+					this.newerNow.next();
+				},
+				error: () => undefined
+			});
+	}
+
+	/** The root's reply count and last reply as the API has them now (after a reply crossed a catch-up). */
+	private refreshRootCounts(id: string): void {
+		this.api
+			.thread(id, { limit: 1 })
+			.pipe(takeUntilDestroyed(this.destroyRef))
+			.subscribe({
+				next: (page) => {
+					const root = this.root();
+					if (!this.isCurrent(id) || !root) return;
+					this.replace({ id: root.id, replyCount: page.root.replyCount, lastReplyAt: page.root.lastReplyAt }, false);
+				},
+				error: () => undefined
+			});
+	}
+
+	/**
+	 * Reads the root or one loaded reply again: the root through the thread's first page, a reply through the window
+	 * around it. A deleted reply leaves the list (a thread read leaves it out); a deleted root stays as its tombstone.
+	 */
+	private refreshMessage(id: string, hint: ChatHint): void {
+		const messageId = String(hint.messageId);
+		const isRoot = messageId === id;
+		if (!isRoot && !this.replies().some((reply) => String(reply.id) === messageId)) return;
+		this.api
+			.thread(id, isRoot ? { limit: 1 } : { around: messageId, limit: 2 })
+			.pipe(takeUntilDestroyed(this.destroyRef))
+			.subscribe({
+				next: (page) => {
+					if (!this.isCurrent(id)) return;
+					const fresh = isRoot ? page.root : page.messages.find((message) => String(message.id) === messageId);
+					if (!fresh) return;
+					if (!isRoot && fresh.deletedAt) {
+						this.touched.add(messageId);
+						this.replies.set(this.replies().filter((reply) => String(reply.id) !== messageId));
+					} else this.replace(fresh);
+				},
+				error: () => undefined
 			});
 	}
 
@@ -346,6 +480,8 @@ export class ThreadPaneComponent {
 					this.api.notifyChanged();
 					if (!this.isCurrent(id)) return;
 					const next = { ...root, following };
+					// A running catch-up does not overrule the follow state (only that field).
+					this.rootFields = { ...this.rootFields, following };
 					this.root.set(next);
 					this.rootChanged.emit(threadFieldsOf(next));
 				},
@@ -367,7 +503,8 @@ export class ThreadPaneComponent {
 					nonce: newNonce(),
 					threadRootId: root.id,
 					alsoInConversation: this.alsoInConversation,
-					mentionEmployeeIds: submission.mentionEmployeeIds
+					mentionEmployeeIds: submission.mentionEmployeeIds,
+					...(submission.attachmentIds.length ? { attachmentIds: submission.attachmentIds } : {})
 				});
 		request.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
 			next: (result) => {
@@ -379,6 +516,9 @@ export class ThreadPaneComponent {
 						this.replies.set(mergeMessages(this.replies(), [result.message]));
 						const current = this.root() ?? root;
 						const next = { ...current, replyCount: current.replyCount + 1, lastReplyAt: result.message.createdAt, following: true };
+						// A running catch-up overrules neither the new reply nor the root's reply fields (its other fields it may).
+						this.touched.add(String(result.message.id));
+						this.rootFields = { ...this.rootFields, replyCount: next.replyCount, lastReplyAt: next.lastReplyAt, following: true };
 						this.root.set(next);
 						this.rootChanged.emit(threadFieldsOf(next));
 						this.lastMarkedId = String(result.message.id);
@@ -447,7 +587,9 @@ export class ThreadPaneComponent {
 		}
 	}
 
-	private replace(message: IChatMessageWithRelations): void {
+	/** Puts a newer version of the root or a reply in place; `touch` keeps a running catch-up from overruling it. */
+	private replace(message: ChatMessagePatch, touch = true): void {
+		if (touch && message.id) this.touched.add(String(message.id));
 		const root = this.root();
 		if (root && root.id === message.id) {
 			const next = { ...root, ...message };

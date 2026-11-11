@@ -16,9 +16,10 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { NbButtonModule, NbIconModule, NbSelectModule, NbSpinnerModule, NbTooltipModule } from '@nebular/theme';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
-import { EMPTY, Subscription, timer } from 'rxjs';
-import { catchError, filter, switchMap } from 'rxjs/operators';
+import { EMPTY, merge, Subscription } from 'rxjs';
+import { auditTime, catchError, filter, switchMap } from 'rxjs/operators';
 import {
+	CHAT_EVENT_NAMES,
 	ChatConversationKindEnum,
 	ChatMemberRoleEnum,
 	ChatNotifyLevelEnum,
@@ -27,10 +28,14 @@ import {
 	IChatMessageWithRelations
 } from '@gauzy/contracts';
 import { ToastrService } from '@gauzy/ui-core/core';
-import { CHAT_MESSAGES_POLL_MS } from '../../chat-ui.constants';
+import { applyCatchUp, reconcileWithNewest } from '../../chat-catch-up';
+import { CHAT_LIVE_AUDIT_MS, CHAT_MESSAGES_POLL_MS } from '../../chat-ui.constants';
 import { apiErrorMessage, continuesGroup, conversationTitle, mergeMessages, newNonce } from '../../chat-ui.helpers';
+import { ChatFilesStore } from '../../services/chat-files.store';
+import { ChatLiveService, isTabVisible } from '../../services/chat-live.service';
 import { ChatPeople } from '../../services/chat-people.service';
 import { ChatEvents, ChatMessagePatch, ChatUiService, memberStateFromEvents } from '../../services/chat-ui.service';
+import { FilesPanelComponent } from '../files-panel/files-panel.component';
 import { clearDraft, ComposerSubmission, MessageComposerComponent } from '../message-composer/message-composer.component';
 import { MessageAction, MessageItemComponent } from '../message-item/message-item.component';
 
@@ -39,8 +44,14 @@ const NEAR_BOTTOM_PX = 80;
 
 /**
  * One conversation: its header (title, members, favourite, notifications, join / leave, archive, pins), the
- * messages (newest page first, older on scroll, newer by polling), and the composer. Reading the latest loaded
- * message marks the conversation read up to it (never past what is shown); "mark unread from here" is explicit.
+ * messages (newest page first, older on scroll, newer as the chat events announce them), and the composer. Reading
+ * the latest loaded message marks the conversation read up to it (never past what is shown); "mark unread from
+ * here" is explicit.
+ *
+ * Live: a message created in the conversation fetches the newer ones, a message changed or deleted (an edit, a
+ * reaction, a pin, a reply to its thread) is read again, and after a reconnect the newest page is read again (the
+ * events of the gap are not replayed). Polling stays the fallback: every 5 s as before while the events do not
+ * arrive live (`ChatLiveService.mode$`), once a minute as a safety net while they do.
  *
  * Every request captures the conversation it was made for and drops its answer when another one is open by
  * then; the poll stops the moment the conversation changes. A send also captures the visit it was made in, so a
@@ -49,7 +60,18 @@ const NEAR_BOTTOM_PX = 80;
 @Component({
 	selector: 'ngx-chat-conversation-view',
 	changeDetection: ChangeDetectionStrategy.OnPush,
-	imports: [FormsModule, NbButtonModule, NbIconModule, NbSelectModule, NbSpinnerModule, NbTooltipModule, TranslatePipe, MessageComposerComponent, MessageItemComponent],
+	imports: [
+		FormsModule,
+		NbButtonModule,
+		NbIconModule,
+		NbSelectModule,
+		NbSpinnerModule,
+		NbTooltipModule,
+		TranslatePipe,
+		FilesPanelComponent,
+		MessageComposerComponent,
+		MessageItemComponent
+	],
 	template: `
 		<section class="view" data-test="conversation-view">
 			<header class="header">
@@ -74,6 +96,9 @@ const NEAR_BOTTOM_PX = 80;
 					<button nbButton ghost size="tiny" type="button" data-test="pins" [class.active]="pinsOpen()" [nbTooltip]="'CHAT.VIEW.PINNED' | translate" [attr.aria-label]="'CHAT.VIEW.PINNED' | translate" (click)="togglePins()">
 						<nb-icon icon="pin-outline"></nb-icon>
 					</button>
+					<button nbButton ghost size="tiny" type="button" data-test="files" [class.active]="filesOpen()" [nbTooltip]="'CHAT.FILES.TITLE' | translate" [attr.aria-label]="'CHAT.FILES.TITLE' | translate" (click)="filesOpen.set(!filesOpen())">
+						<nb-icon icon="attach-2-outline"></nb-icon>
+					</button>
 					@if (!isMember()) {
 						<button nbButton status="primary" size="tiny" type="button" data-test="join" (click)="join()">{{ 'CHAT.VIEW.JOIN' | translate }}</button>
 					} @else if (canLeave()) {
@@ -94,6 +119,7 @@ const NEAR_BOTTOM_PX = 80;
 						<ngx-chat-message-item
 							[message]="pin"
 							[people]="people()"
+							[files]="files()"
 							[conversationNames]="conversationNames()"
 							[meEmployeeId]="meEmployeeId()"
 							[meUserId]="meUserId()"
@@ -104,6 +130,10 @@ const NEAR_BOTTOM_PX = 80;
 						<p class="empty">{{ 'CHAT.VIEW.NO_PINS' | translate }}</p>
 					}
 				</aside>
+			}
+
+			@if (filesOpen()) {
+				<ngx-chat-files-panel [conversationId]="conversationIdText()" [people]="people()"></ngx-chat-files-panel>
 			}
 
 			<div #scroller class="messages" data-test="messages" (scroll)="onScroll()">
@@ -123,6 +153,7 @@ const NEAR_BOTTOM_PX = 80;
 					<ngx-chat-message-item
 						[message]="message"
 						[people]="people()"
+						[files]="files()"
 						[conversationNames]="conversationNames()"
 						[meEmployeeId]="meEmployeeId()"
 						[meUserId]="meUserId()"
@@ -159,6 +190,7 @@ const NEAR_BOTTOM_PX = 80;
 						[initialBody]="editing()?.body ?? null"
 						[draftKey]="draftKey()"
 						[resetToken]="resetToken()"
+						[canAttach]="canAttach()"
 						(submitted)="onSubmit($event)"
 						(editCancelled)="editing.set(null)"
 					></ngx-chat-message-composer>
@@ -257,6 +289,8 @@ const NEAR_BOTTOM_PX = 80;
 })
 export class ConversationViewComponent {
 	private readonly api = inject(ChatUiService);
+	private readonly live = inject(ChatLiveService);
+	private readonly filesStore = inject(ChatFilesStore);
 	private readonly toastr = inject(ToastrService);
 	private readonly translate = inject(TranslateService);
 	private readonly destroyRef = inject(DestroyRef);
@@ -268,6 +302,8 @@ export class ConversationViewComponent {
 	readonly meUserId = input<string | null>(null);
 	/** `CHAT_MANAGE`: acts as a manager everywhere. */
 	readonly isAdmin = input(false);
+	/** `DOCS_CREATE`: may attach files (stored as documents). */
+	readonly canAttach = input(false);
 	readonly untitled = input('Conversation');
 	/** A message to scroll to and highlight (a deep link): the page around it is shown, nothing is marked read. */
 	readonly highlightId = input<string | null>(null);
@@ -294,6 +330,10 @@ export class ConversationViewComponent {
 	protected readonly newBelow = signal(false);
 	protected readonly pinsOpen = signal(false);
 	protected readonly pins = signal<IChatMessageWithRelations[]>([]);
+	protected readonly filesOpen = signal(false);
+	/** The conversation's files read so far, for the attachments of the messages shown. */
+	protected readonly files = this.filesStore.byDocument;
+	protected readonly conversationIdText = computed(() => String(this.conversation().id));
 	/** The caller's state, kept here so a read / favourite change shows at once. */
 	protected readonly state = signal<IChatMemberState | null>(null);
 
@@ -308,6 +348,10 @@ export class ConversationViewComponent {
 	private loadedId: string | null = null;
 	/** Counts the visits of this view (every conversation switch): a send belongs to the visit it was made in. */
 	private visit = 0;
+	/** Counts the catch-ups: only the latest one's answer is applied. */
+	private catchUpRun = 0;
+	/** The messages changed here since the latest catch-up began (a refresh, a deletion, my own action): its page does not overrule them. */
+	private readonly touched = new Set<string>();
 	/** The last message a read was asked up to, so the same read is not sent twice. */
 	private lastMarkedId: string | null = null;
 
@@ -322,6 +366,7 @@ export class ConversationViewComponent {
 					this.stopPolling();
 					this.editing.set(null);
 					this.pinsOpen.set(false);
+					this.filesOpen.set(false);
 					this.newBelow.set(false);
 					this.loadingOlder.set(false);
 					this.sending.set(false);
@@ -333,6 +378,13 @@ export class ConversationViewComponent {
 		effect(() => {
 			const message = this.patch();
 			if (message) untracked(() => this.replace(message));
+		});
+		// A message that names a file not read yet reads the conversation's files (the pins too); only the messages of
+		// the open conversation count (a switch shows the previous one's for a moment).
+		effect(() => {
+			const id = String(this.conversation().id);
+			const messages = [...this.messages(), ...this.pins()].filter((message) => String(message.conversationId) === id);
+			untracked(() => this.filesStore.ensureFor(id, messages));
 		});
 		this.destroyRef.onDestroy(() => this.stopPolling());
 	}
@@ -418,12 +470,21 @@ export class ConversationViewComponent {
 			});
 	}
 
+	/**
+	 * Newer messages: on a tick of the poll (every 5 s, or once a minute while live) and when a message is created in
+	 * the conversation; a changed message is read again; a reconnect reads the newest page again.
+	 */
 	private startPolling(): void {
 		this.stopPolling();
 		const id = String(this.conversation().id);
-		this.poll = timer(CHAT_MESSAGES_POLL_MS, CHAT_MESSAGES_POLL_MS)
+		const hints$ = this.live.hints$.pipe(filter((hint) => hint.conversationId === id));
+		const created$ = hints$.pipe(
+			filter((hint) => hint.name === CHAT_EVENT_NAMES.MESSAGE_CREATED),
+			auditTime(CHAT_LIVE_AUDIT_MS)
+		);
+		const poll = merge(this.live.ticks(CHAT_MESSAGES_POLL_MS), created$)
 			.pipe(
-				filter(() => typeof document === 'undefined' || !document.hidden),
+				filter(() => isTabVisible()),
 				// A view around an old message is not followed: the newest page is a jump away.
 				filter(() => !this.hasAfter()),
 				switchMap(() => {
@@ -434,14 +495,88 @@ export class ConversationViewComponent {
 			)
 			.subscribe((page) => {
 				if (!this.isCurrent(id) || page.messages.length === 0) return;
-				const wasNearBottom = this.isNearBottom();
-				this.messages.set(mergeMessages(this.messages(), page.messages));
-				if (wasNearBottom) {
-					queueMicrotask(() => this.scrollToBottom(false));
-					this.markReadIfVisible();
-				} else {
-					this.newBelow.set(true);
-				}
+				this.showNewer(page.messages);
+			});
+		poll.add(
+			hints$
+				.pipe(
+					filter((hint) => hint.name !== CHAT_EVENT_NAMES.MESSAGE_CREATED && !!hint.messageId),
+					filter(() => isTabVisible()),
+					takeUntilDestroyed(this.destroyRef)
+				)
+				.subscribe((hint) => this.refreshMessage(id, String(hint.messageId)))
+		);
+		poll.add(this.live.catchUp$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => this.catchUp(id)));
+		this.poll = poll;
+	}
+
+	/** Appends newer messages: followed to the bottom when the person reads the latest, announced otherwise. */
+	private showNewer(messages: IChatMessageWithRelations[]): void {
+		const wasNearBottom = this.isNearBottom();
+		this.messages.set(mergeMessages(this.messages(), messages));
+		if (wasNearBottom) {
+			queueMicrotask(() => this.scrollToBottom(false));
+			this.markReadIfVisible();
+		} else {
+			this.newBelow.set(true);
+		}
+	}
+
+	/**
+	 * Reads one loaded message again (edited, deleted, reacted to, pinned, its thread changed): the window around it
+	 * answers it with its relations. A message deleted without replies leaves the list, as a reload would show it.
+	 */
+	private refreshMessage(conversationId: string, messageId: string): void {
+		if (!this.messages().some((message) => String(message.id) === messageId)) return;
+		this.api
+			.messages(conversationId, { around: messageId, limit: 2 })
+			.pipe(takeUntilDestroyed(this.destroyRef))
+			.subscribe({
+				next: (page) => {
+					if (!this.isCurrent(conversationId)) return;
+					const fresh = page.messages.find((message) => String(message.id) === messageId);
+					if (!fresh) return;
+					if (fresh.deletedAt && !fresh.replyCount) {
+						this.touched.add(messageId);
+						this.messages.set(this.messages().filter((message) => String(message.id) !== messageId));
+					} else this.replace(fresh);
+				},
+				error: () => undefined
+			});
+	}
+
+	/**
+	 * After a reconnect, or when the tab is shown again: the newest page, read again. Where it still reaches the last
+	 * loaded message it is the truth over its span (edits, reactions and pins of the gap applied, deleted messages
+	 * gone, new ones appended; see `reconcileWithNewest`); where it does not (more was written meanwhile than a page
+	 * holds), it replaces the list, the older messages a scroll away again. Older loaded messages stay as they were.
+	 */
+	private catchUp(id: string): void {
+		if (!this.isCurrent(id) || this.hasAfter() || this.loading()) return;
+		// What is loaded when the read starts: a message shown while it runs (a live event, my own send), or changed
+		// here meanwhile (refreshed, deleted, my own edit), is newer than the page may know and stays as it is now.
+		const run = ++this.catchUpRun;
+		this.touched.clear();
+		const before = new Set(this.messages().map((message) => String(message.id)));
+		this.api
+			.messages(id, {})
+			.pipe(takeUntilDestroyed(this.destroyRef))
+			.subscribe({
+				next: (page) => {
+					if (!this.isCurrent(id) || this.hasAfter() || run !== this.catchUpRun) return;
+					const wasNearBottom = this.isNearBottom();
+					const result = applyCatchUp(this.messages(), before, this.touched, (loaded) => reconcileWithNewest(loaded, page));
+					this.messages.set(result.messages);
+					if (result.replaced) this.hasBefore.set(page.hasBefore);
+					if (!result.added.length) return;
+					if (wasNearBottom) {
+						queueMicrotask(() => this.scrollToBottom(false));
+						this.markReadIfVisible();
+					} else {
+						this.newBelow.set(true);
+					}
+				},
+				error: () => undefined
 			});
 	}
 
@@ -655,7 +790,12 @@ export class ConversationViewComponent {
 			return;
 		}
 		this.api
-			.send(id, { body: submission.body, nonce: newNonce(), mentionEmployeeIds: submission.mentionEmployeeIds })
+			.send(id, {
+				body: submission.body,
+				nonce: newNonce(),
+				mentionEmployeeIds: submission.mentionEmployeeIds,
+				...(submission.attachmentIds.length ? { attachmentIds: submission.attachmentIds } : {})
+			})
 			.pipe(takeUntilDestroyed(this.destroyRef))
 			.subscribe({
 				next: (result) => {
@@ -761,6 +901,8 @@ export class ConversationViewComponent {
 
 	/** Puts the API's version of a message (or the fields of it that changed) in place of ours. */
 	private replace(message: ChatMessagePatch): void {
+		// A running catch-up does not overrule it.
+		if (message.id) this.touched.add(String(message.id));
 		this.messages.set(this.messages().map((item) => (item.id === message.id ? { ...item, ...message } : item)));
 	}
 

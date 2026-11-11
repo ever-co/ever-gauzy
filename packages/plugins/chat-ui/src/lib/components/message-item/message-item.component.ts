@@ -4,10 +4,12 @@ import { DomSanitizer } from '@angular/platform-browser';
 import { RouterLink } from '@angular/router';
 import { NbButtonModule, NbIconModule, NbTooltipModule } from '@nebular/theme';
 import { TranslatePipe } from '@ngx-translate/core';
-import { ChatMessageKindEnum, IChatMessageWithRelations } from '@gauzy/contracts';
+import { ChatMessageKindEnum, IChatFile, IChatMessageWithRelations } from '@gauzy/contracts';
 import { CHAT_QUICK_REACTIONS, CHAT_TASK_LINK } from '../../chat-ui.constants';
 import { renderBodyHtml } from '../../chat-ui.helpers';
 import { ChatPeople } from '../../services/chat-people.service';
+import { LinkCardsComponent } from '../link-cards/link-cards.component';
+import { MessageAttachmentsComponent } from '../message-attachments/message-attachments.component';
 import { PersonAvatarComponent } from '../person-avatar/person-avatar.component';
 
 /** What a message's toolbar asks of the conversation. */
@@ -22,13 +24,13 @@ export type MessageAction =
 
 /**
  * One message: the author header (unless it continues the previous author's group), the body with mention
- * chips, the task cards, the reactions, the thread summary, and a toolbar shown on hover and on keyboard focus
+ * chips, its web links as cards, its files (pictures inline), the task cards, the reactions, the thread summary, and a toolbar shown on hover and on keyboard focus
  * (reply, react, pin, edit, delete, mark unread).
  */
 @Component({
 	selector: 'ngx-chat-message-item',
 	changeDetection: ChangeDetectionStrategy.OnPush,
-	imports: [DatePipe, RouterLink, NbButtonModule, NbIconModule, NbTooltipModule, TranslatePipe, PersonAvatarComponent],
+	imports: [DatePipe, RouterLink, NbButtonModule, NbIconModule, NbTooltipModule, TranslatePipe, LinkCardsComponent, MessageAttachmentsComponent, PersonAvatarComponent],
 	template: `
 		<article
 			class="message"
@@ -65,6 +67,7 @@ export type MessageAction =
 					@if (message().editedAt) {
 						<span class="edited">({{ 'CHAT.MESSAGE.EDITED' | translate }})</span>
 					}
+					<ngx-chat-link-cards [body]="message().body ?? ''"></ngx-chat-link-cards>
 				}
 
 				@for (reference of message().taskReferences ?? []; track reference.taskId) {
@@ -75,8 +78,8 @@ export type MessageAction =
 					</a>
 				}
 
-				@if (message().attachmentIds?.length) {
-					<p class="attachments"><nb-icon icon="attach-outline"></nb-icon> {{ 'CHAT.MESSAGE.ATTACHMENTS' | translate: { count: message().attachmentIds!.length } }}</p>
+				@if (message().attachmentIds?.length && !message().deletedAt) {
+					<ngx-chat-message-attachments [documentIds]="message().attachmentIds" [files]="files()"></ngx-chat-message-attachments>
 				}
 
 				@if (message().reactions?.length) {
@@ -264,11 +267,6 @@ export type MessageAction =
 				font-size: 0.6875rem;
 				opacity: 0.7;
 			}
-			.attachments {
-				margin: 0.25rem 0 0;
-				font-size: 0.75rem;
-				opacity: 0.7;
-			}
 			.reactions {
 				display: flex;
 				flex-wrap: wrap;
@@ -361,6 +359,8 @@ export class MessageItemComponent {
 	readonly message = input.required<IChatMessageWithRelations>();
 	readonly people = input.required<ChatPeople>();
 	readonly conversationNames = input<ReadonlyMap<string, string>>(new Map());
+	/** The conversation's files read so far, by document id (what the attachments show). */
+	readonly files = input<ReadonlyMap<string, IChatFile>>(new Map());
 	readonly meEmployeeId = input<string | null>(null);
 	readonly meUserId = input<string | null>(null);
 	readonly continued = input(false);
