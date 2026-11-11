@@ -247,21 +247,21 @@ describe("AuthService.openWorkspace, the address's lock on Postgres and MySQL", 
 			},
 			logger: logger()
 		});
-		Object.assign(manager, {
-			getRepository: () => ({
-				findOne: jest.fn(async () => null),
-				create: jest.fn((fields) => ({ ...fields })),
-				save: jest.fn(async (entity) => ({ ...entity, id: 'new-account' })),
-				update: jest.fn(async () => ({ affected: 1 }))
-			})
-		});
+		/** The user table, as the transaction reads and writes it. */
+		const users = {
+			findOne: jest.fn(async () => null),
+			create: jest.fn((fields) => ({ ...fields })),
+			save: jest.fn(async (entity) => ({ ...entity, id: 'new-account' })),
+			update: jest.fn(async () => ({ affected: 1 }))
+		};
+		Object.assign(manager, { getRepository: () => users });
 		signedInAs({ id: CALLER.id, tenantId: CALLER.tenantId });
-		return service;
+		return { service, users };
 	}
 
 	it('Postgres: the transaction takes an advisory lock named after a digest of the address, before reading', async () => {
 		const manager: Record<string, unknown> = { query: jest.fn(async () => []) };
-		const service = serviceOn(
+		const { service, users } = serviceOn(
 			{ options: { type: 'postgres' }, transaction: jest.fn(async (work) => await work(manager)) },
 			manager
 		);
@@ -274,6 +274,8 @@ describe("AuthService.openWorkspace, the address's lock on Postgres and MySQL", 
 		expect(sql).toBe('SELECT pg_advisory_xact_lock(hashtextextended($1, 0))');
 		expect(name).toMatch(/^workspace-opening:[0-9a-f]{32}$/);
 		expect(name).not.toContain(CALLER.email);
+		// Held before an unfinished account is looked up: an opening waiting for it then finds the one just created
+		expect(query.mock.invocationCallOrder[0]).toBeLessThan(users.findOne.mock.invocationCallOrder[0]);
 	});
 
 	it("MySQL: a named lock on the transaction's own connection, taken before it starts and released after", async () => {
@@ -293,7 +295,7 @@ describe("AuthService.openWorkspace, the address's lock on Postgres and MySQL", 
 			rollbackTransaction: jest.fn(async () => steps.push('rollback')),
 			release: jest.fn(async () => steps.push('release'))
 		};
-		const service = serviceOn({ options: { type: 'mysql' }, createQueryRunner: () => runner }, manager);
+		const { service } = serviceOn({ options: { type: 'mysql' }, createQueryRunner: () => runner }, manager);
 
 		await service.openWorkspace();
 
@@ -313,7 +315,7 @@ describe("AuthService.openWorkspace, the address's lock on Postgres and MySQL", 
 			rollbackTransaction: jest.fn(),
 			release: jest.fn(async () => undefined)
 		};
-		const service = serviceOn({ options: { type: 'mysql' }, createQueryRunner: () => runner }, manager);
+		const { service } = serviceOn({ options: { type: 'mysql' }, createQueryRunner: () => runner }, manager);
 
 		await expect(service.openWorkspace()).rejects.toBeInstanceOf(ConflictException);
 		expect(runner.startTransaction).not.toHaveBeenCalled();
