@@ -119,6 +119,9 @@ describe('mention tokens', () => {
 		expect(personTriggerOf(chip)?.employeeId).toBe(BOB);
 		expect(personTriggerOf(none)).toBeNull();
 		expect(personTriggerOf(null)).toBeNull();
+		// Only an id of the shape the page writes counts as a person.
+		host.innerHTML = '<span data-person-id="a b&quot;c">x</span>';
+		expect(personTriggerOf(host.firstElementChild)).toBeNull();
 		expect(nameHue('Anna Ivanova')).toBe(nameHue('Anna Ivanova'));
 		expect(nameHue('Anna Ivanova')).toBeGreaterThanOrEqual(0);
 		expect(nameHue('Anna Ivanova')).toBeLessThan(360);

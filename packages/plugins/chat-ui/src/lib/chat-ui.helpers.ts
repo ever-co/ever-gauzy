@@ -99,7 +99,8 @@ export function personTriggerOf(target: EventTarget | null): { element: Element;
 	const marked = element.getAttribute('data-person-id');
 	const fromClass = [...element.classList].find((name) => name.startsWith(CHAT_PERSON_CLASS_PREFIX))?.slice(CHAT_PERSON_CLASS_PREFIX.length);
 	const employeeId = marked || fromClass || null;
-	return employeeId ? { element, employeeId } : null;
+	// The same shape `renderBodyHtml` writes: anything else read from the page is not a person.
+	return employeeId && PERSON_ID.test(employeeId) ? { element, employeeId } : null;
 }
 
 /** The profile card's width in px (`PersonCardComponent`, 18.5rem), and its distance from the person and the window edges. */
