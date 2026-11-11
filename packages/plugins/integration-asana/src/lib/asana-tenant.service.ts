@@ -1,7 +1,7 @@
 import { BadRequestException, Inject, Injectable, InternalServerErrorException, Logger, NotFoundException, Optional } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { ID, IInboxItemWriter, IIntegrationSetting, IIntegrationTenant, INBOX_ITEM_WRITER, IntegrationEntity } from '@gauzy/contracts';
-import { Integration, IntegrationSettingService, IntegrationTenantService, IntegrationTenantUpdateOrCreateCommand, RequestContext } from '@gauzy/core';
+import { Integration, INTEGRATION_MANAGERS_LIMIT, IntegrationSettingService, IntegrationTenantService, IntegrationTenantUpdateOrCreateCommand, RequestContext } from '@gauzy/core';
 import { AsanaApiClient, AsanaOAuthToken, refreshAsanaToken } from './client/asana-api.client';
 import { attentionItemOf } from './asana-attention';
 import { AsanaConfig } from './asana-config';
@@ -281,9 +281,15 @@ export class AsanaTenantService {
 		} catch (error) {
 			this.logger.warn(`The integration managers of connection ${tenant.id} could not be read: ${(error as Error)?.message ?? error}`);
 		}
+		// The lookup stops at INTEGRATION_MANAGERS_LIMIT: a full page may leave managers out, so it replaces nobody either.
+		const truncated = !!managers && managers.length >= INTEGRATION_MANAGERS_LIMIT;
+		if (truncated) {
+			this.logger.warn(`Connection ${tenant.id}: the organization has at least ${INTEGRATION_MANAGERS_LIMIT} integration managers; the notice goes to the first ones and removes nobody`);
+		}
 		// Without the managers an open notice is filed for the people known (nobody is removed from it) and not recorded
 		// as filed, so the sweep files it again with the managers.
-		const partial = !!reason && managers === null;
+		const unread = !!reason && managers === null;
+		const partial = unread || (!!reason && truncated);
 		const recipients = [...new Set([userId, ...(managers ?? []), ...alsoUserIds].filter(Boolean).map(String))] as ID[];
 		if (!recipients.length) return;
 		try {
@@ -292,7 +298,7 @@ export class AsanaTenantService {
 			this.logger.warn(`The attention of connection ${tenant.id} could not be filed in the Inbox: ${(error as Error).message}`);
 			return;
 		}
-		if (partial) return;
+		if (unread) return;
 		try {
 			await this.writeSetting(tenant, AsanaSettingName.ATTENTION_NOTICE_AT, reason ? new Date().toISOString() : '');
 		} catch (error) {

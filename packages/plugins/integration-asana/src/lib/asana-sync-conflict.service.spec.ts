@@ -1,4 +1,5 @@
 import { ConflictException, NotFoundException } from '@nestjs/common';
+import { In, Not } from 'typeorm';
 import { syncedValuesOf, TaskUpdateCommand } from '@gauzy/core';
 import { AsanaSyncConflictResolution, AsanaSyncConflictStatus } from './entities/asana-sync-conflict.entity';
 import { ASANA_CONFLICT_NOT_FOUND, ASANA_CONFLICT_STALE } from './asana.constants';
@@ -130,7 +131,8 @@ describe('AsanaSyncConflictService', () => {
 			await service.settle({ ...scope, integrationId: 'int-1', sourceId: 'gid-1', taskId: 'task-1', external: agreed, recorded: [{ id: 'c-new-1', field: 'status' }] });
 			const [criteria, change] = conflicts.update.mock.calls[0];
 			expect(criteria).toMatchObject({ integrationId: 'int-1', taskId: 'task-1', status: AsanaSyncConflictStatus.OPEN, tenantId: 'tenant-1' });
-			expect(criteria.id).toBeDefined();
+			expect(criteria.id).toEqual(Not(In(['c-new-1'])));
+			expect(criteria.field).toEqual(In(['status']));
 			expect(change).toMatchObject({ status: AsanaSyncConflictStatus.RESOLVED, resolution: AsanaSyncConflictResolution.SUPERSEDED });
 		});
 	});

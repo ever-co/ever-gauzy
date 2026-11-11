@@ -1,5 +1,6 @@
 import { Logger } from '@nestjs/common';
 import { InboxItemStatusEnum } from '@gauzy/contracts';
+import { INTEGRATION_MANAGERS_LIMIT } from '@gauzy/core';
 import { LINEAR_INBOX_SOURCE } from './linear-attention';
 import { LinearTenantService } from './linear-tenant.service';
 import { LinearSettingName } from './linear.constants';
@@ -68,6 +69,17 @@ describe('LinearTenantService — the refused-token notice', () => {
 		expect(refiled.recipients.map((recipient) => recipient.userId)).toEqual(['user-connector', 'user-manager']);
 		expect(refiled.replaceRecipients).toBe(true);
 		expect(harnessed.row.settings.some((setting) => setting.settingsName === LinearSettingName.ATTENTION_NOTICE_AT)).toBe(true);
+	});
+
+	it('files for the first managers without removing anyone when the lookup is full (the cap), and records it', async () => {
+		const many = Array.from({ length: INTEGRATION_MANAGERS_LIMIT }, (_, index) => `user-manager-${index}`);
+		const { service, row, inbox } = harness({ managers: many });
+		await service.setAttention(row as never, 'token_refused', 'token-1');
+		const item = inbox.upsertExternal.mock.calls[0][0] as { recipients: Array<{ userId: string }>; replaceRecipients: boolean };
+		expect(item.recipients).toHaveLength(INTEGRATION_MANAGERS_LIMIT + 1);
+		expect(item.replaceRecipients).toBe(false);
+		// Recorded: the sweep does not file it again every five minutes.
+		expect(row.settings.some((setting) => setting.settingsName === LinearSettingName.ATTENTION_NOTICE_AT)).toBe(true);
 	});
 
 	it('files nothing, and records nothing, with nobody to tell (the sweep tries again)', async () => {

@@ -1,4 +1,5 @@
 import { ConflictException, NotFoundException } from '@nestjs/common';
+import { In, Not } from 'typeorm';
 import { syncedValuesOf, TaskUpdateCommand } from '@gauzy/core';
 import { LinearSyncConflictResolution, LinearSyncConflictStatus } from './entities/linear-sync-conflict.entity';
 import { LINEAR_CONFLICT_NOT_FOUND, LINEAR_CONFLICT_STALE } from './linear.constants';
@@ -130,7 +131,8 @@ describe('LinearSyncConflictService', () => {
 			await service.settle({ ...scope, integrationId: 'int-1', sourceId: 'issue-1', taskId: 'task-1', external: agreed, recorded: [{ id: 'c-new-1', field: 'status' }] });
 			const [criteria, change] = conflicts.update.mock.calls[0];
 			expect(criteria).toMatchObject({ integrationId: 'int-1', taskId: 'task-1', status: LinearSyncConflictStatus.OPEN, tenantId: 'tenant-1' });
-			expect(criteria.id).toBeDefined();
+			expect(criteria.id).toEqual(Not(In(['c-new-1'])));
+			expect(criteria.field).toEqual(In(['status']));
 			expect(change).toMatchObject({ status: LinearSyncConflictStatus.RESOLVED, resolution: LinearSyncConflictResolution.SUPERSEDED });
 		});
 	});

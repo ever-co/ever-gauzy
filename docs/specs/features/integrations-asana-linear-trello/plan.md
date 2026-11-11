@@ -88,7 +88,8 @@ cards / lists) and their own webhook scheme, one webhook per mapping at
   the person who connected and to the organization's integration managers: active members whose role grants
   `INTEGRATION_ADD` or `INTEGRATION_EDIT` (`IntegrationTenantService.findManagerUserIds`, core). When the managers
   cannot be read, an open notice goes to the people known without removing anyone and is not recorded as filed, so the
-  sweep files it again with them.
+  sweep files it again with them. The lookup reads at most 100 managers; a full page is filed (and recorded) without
+  removing anyone, and logged.
 - **Conflicts** (T15): an inbound apply merges the synced fields (title, description, status, priority, due date)
   three ways with the values the provider sent the last time the item was applied (`integration_<provider>_*_baseline`,
   one row per item): changed only by the provider → applied; only on the platform → the task keeps it; on both sides
