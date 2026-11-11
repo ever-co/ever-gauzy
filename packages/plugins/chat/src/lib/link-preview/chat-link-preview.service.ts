@@ -200,10 +200,12 @@ export class ChatLinkPreviewService {
 		const tenantId = caller.tenantId;
 		const key = `${tenantId}:${previewUrlHash(href)}`;
 		if (this.options.queued && this.queue) {
-			// A refresh queued a moment ago is not queued again (BullMQ would ignore the job id anyway): the asks of a
-			// stale preview do not spend the budget, nor a call to the queue, for every reader.
-			if (!waitInline && this.recentlyQueued(key)) return answer(href, ChatLinkPreviewStatusEnum.PENDING);
+			// A fetch queued a moment ago (or being queued right now) is not queued again (BullMQ would ignore the job id
+			// anyway): the asks of a stale preview, and a burst of first asks, spend neither the budget nor a call to the
+			// queue for every reader. The key is reserved before anything is awaited, so a concurrent ask sees it.
+			if (this.recentlyQueued(key)) return answer(href, ChatLinkPreviewStatusEnum.PENDING);
 			if (!this.admit(caller, waitInline)) return answer(href, ChatLinkPreviewStatusEnum.PENDING);
+			this.queuedAt.set(key, Date.now());
 			try {
 				if (waitInline) await this.store(tenantId, href, { status: ChatLinkPreviewStatusEnum.PENDING });
 				await this.queue.enqueue<IChatLinkPreviewFetchJob>({
@@ -219,9 +221,10 @@ export class ChatLinkPreviewService {
 						removeOnFail: true
 					}
 				});
-				this.queuedAt.set(key, Date.now());
 				return answer(href, ChatLinkPreviewStatusEnum.PENDING);
 			} catch (error) {
+				// Not queued after all: the reservation goes, and the inline fetch below (already admitted) takes over.
+				this.queuedAt.delete(key);
 				if (!this.queueFailureReported) {
 					this.queueFailureReported = true;
 					this.logger.warn(`The link preview queue refused a fetch; fetching in this process instead: ${(error as Error)?.message}`);

@@ -139,6 +139,21 @@ describe('headEnded', () => {
 		expect(headEnded("<head><link title='<body>' href='/a'></head>")).toBe(true);
 	});
 
+	it('keeps its place in a page with letters whose lower case is longer', () => {
+		// A capital dotted I lower-cases to two code units: offsets read from a lower-cased copy would shift.
+		const dotted = String.fromCodePoint(0x130);
+		const html = `<head><title>${dotted.repeat(4)}</title><meta property="og:description" content="After the title"></head>`;
+		expect(parsePreviewHead(html, PAGE)).toEqual({ title: dotted.repeat(4), description: 'After the title' });
+		expect(headEnded(`<head><meta name="${dotted}" content="x"></head>`)).toBe(true);
+	});
+
+	it('ends a raw-text element only at its own closing tag, not one with a longer name', () => {
+		const html = '<head><script>const s = "</scripture>";</script><title>Real</title></head>';
+		expect(parsePreviewHead(html, PAGE)).toEqual({ title: 'Real' });
+		expect(headEnded('<head><script>var a = "</scripts></head>";')).toBe(false);
+		expect(headEnded('<head><script>var a = 1;</SCRIPT ></head>')).toBe(true);
+	});
+
 	it('reads any page in time linear in its length: no input makes it backtrack', () => {
 		const half = 256 * 1024;
 		for (const unit of ['<script ', '<meta content="', "<link title='", '<', '<!--', '<a', '</', '<title>', '<meta a="b" ']) {

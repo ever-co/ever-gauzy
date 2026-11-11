@@ -96,7 +96,9 @@ const MAX_HEAD_TAGS = 2000;
  */
 export function scanHead(html: string): IHeadScan {
 	const text = String(html ?? '');
-	const lower = text.toLowerCase();
+	// ASCII letters only, so every offset found in `lower` is the same in `text` (a full lowercasing can change the
+	// length: `İ` becomes two code units).
+	const lower = asciiLower(text);
 	const tags: IHeadTag[] = [];
 	let title: string | undefined;
 	let at = 0;
@@ -132,7 +134,7 @@ export function scanHead(html: string): IHeadScan {
 		if (end < 0) break;
 		at = end + 1;
 		if (RAW_TEXT.has(name)) {
-			const close = lower.indexOf(`</${name}`, at);
+			const close = closingTagAt(lower, name, at);
 			if (close < 0) break;
 			if (name === 'title' && title === undefined) title = text.slice(at, close);
 			const after = lower.indexOf('>', close);
@@ -151,6 +153,28 @@ export function scanHead(html: string): IHeadScan {
  */
 export function headEnded(html: string): boolean {
 	return scanHead(html).ended;
+}
+
+/** The text with its ASCII capitals in lower case and nothing else changed: the same length, the same offsets. */
+function asciiLower(text: string): string {
+	return text.replace(/[A-Z]+/g, (capitals) => capitals.toLowerCase());
+}
+
+/**
+ * Where the closing tag of a raw-text element starts (`</script` followed by a space, `/` or `>`), searching from
+ * `from`, or -1 when it is not there (yet). A longer name (`</scripture`) is text inside the element, not its end.
+ */
+function closingTagAt(lower: string, name: string, from: number): number {
+	const needle = `</${name}`;
+	let at = lower.indexOf(needle, from);
+	while (at >= 0) {
+		const next = lower[at + needle.length];
+		// Read only so far: whether this closes the element is not known yet.
+		if (next === undefined) return -1;
+		if (next === '>' || next === '/' || next.trim() === '') return at;
+		at = lower.indexOf(needle, at + 1);
+	}
+	return -1;
 }
 
 /** The tag name (lower case) that starts at `at`, when a delimiter follows it (space, `/`, `>`, or the end); else null. */

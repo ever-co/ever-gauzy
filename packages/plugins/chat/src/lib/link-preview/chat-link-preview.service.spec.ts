@@ -326,9 +326,35 @@ describe('ChatLinkPreviewService: queued', () => {
 		await expect(service.preview(caller(), LINK)).resolves.toMatchObject({ status: ChatLinkPreviewStatusEnum.PENDING });
 		expect(enqueue).toHaveBeenCalledTimes(1);
 
-		// A fetch that never reported back is queued again.
-		repo.rows[0].updatedAt = new Date(Date.now() - CHAT_LINK_PREVIEW_PENDING_TTL_MS - 1000);
-		await service.preview(caller(), LINK);
+		// A fetch that never reported back is queued again, once the pending time has passed.
+		jest.useFakeTimers({ now: Date.now() + CHAT_LINK_PREVIEW_PENDING_TTL_MS + 1000, doNotFake: ['queueMicrotask', 'nextTick', 'setImmediate'] });
+		try {
+			await service.preview(caller(), LINK);
+			expect(enqueue).toHaveBeenCalledTimes(2);
+		} finally {
+			jest.useRealTimers();
+		}
+	});
+
+	it('queues one refresh for a burst of asks: the key is reserved before the queue is called, and only one fetch is paid', async () => {
+		let finish: () => void = () => undefined;
+		// The first call to the queue is slow (the burst arrives while it runs); later ones answer at once.
+		const enqueue = jest.fn(async () => undefined).mockImplementationOnce(() => new Promise<undefined>((resolve) => (finish = () => resolve(undefined))));
+		const { service, repo } = setup({ queued: true, queue: { enqueue } });
+		repo.rows.push({
+			tenantId: 'tenant-a',
+			urlHash: previewUrlHash(LINK),
+			url: LINK,
+			status: ChatLinkPreviewStatusEnum.READY,
+			data: JSON.stringify({ title: 'Stale' }),
+			fetchedAt: new Date(Date.now() - CHAT_LINK_PREVIEW_READY_TTL_MS - 1000)
+		});
+		const answers = await Promise.all(Array.from({ length: CHAT_LINK_PREVIEW_FETCHES_PER_MINUTE + 5 }, () => service.preview(caller(), LINK)));
+		expect(answers.every((answer) => answer.title === 'Stale')).toBe(true);
+		finish();
+		expect(enqueue).toHaveBeenCalledTimes(1);
+		// The budget was paid once: a new link is still fetched.
+		await expect(service.preview(caller(), 'https://www.example.com/new')).resolves.toMatchObject({ status: ChatLinkPreviewStatusEnum.PENDING });
 		expect(enqueue).toHaveBeenCalledTimes(2);
 	});
 
