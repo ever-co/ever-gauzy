@@ -527,7 +527,8 @@ export class IncomeViewPageComponent extends TranslationBaseComponent implements
 				icon: 'file-text-outline',
 				fields: [
 					{ label: 'SM_TABLE.NOTES', key: 'notes', type: 'multiline', wide: true },
-					{ label: 'SM_TABLE.TAGS', key: 'tags', type: 'tags', wide: true }
+					// The tags as the income dialog's tag picker shows them.
+					{ label: 'SM_TABLE.TAGS', key: 'tags', type: 'tags', wide: true, tagStyle: 'tinted' }
 				]
 			}
 		];
