@@ -16,6 +16,14 @@ export interface IWorkspaceOpening {
 /** Why a caller whose address is not proven cannot open a workspace: they would not even see it among theirs. */
 export const WORKSPACE_ADDRESS_UNPROVEN_MESSAGE = 'Confirm your email address before opening another workspace';
 
+/**
+ * Why an opening was refused where the sign-up has a paywall: the address holds no entitlement to the product. A new
+ * workspace is a new tenant, which the paywall is there for (the register route's SubscriptionRequiredGuard).
+ */
+export const WORKSPACE_SUBSCRIPTION_REQUIRED_MESSAGE =
+	'A subscription is required before you can open another workspace. ' +
+	'Choose a plan to start your free trial, then try again.';
+
 /** Why an opening was refused: another one for the same address holds its lock (MySQL, after 10 seconds). */
 export const WORKSPACE_OPENING_IN_PROGRESS_MESSAGE = 'Another workspace is being opened for this address';
 

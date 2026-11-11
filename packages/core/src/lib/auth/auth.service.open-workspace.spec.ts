@@ -9,7 +9,8 @@ import { Column, CreateDateColumn, DataSource, Entity, IsNull, PrimaryGeneratedC
 import { RequestContext } from '../core/context';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
-import { WORKSPACE_ADDRESS_UNPROVEN_MESSAGE } from './open-workspace';
+import { EntitlementResult } from '../shared/billing/stripe-subscription.service';
+import { WORKSPACE_ADDRESS_UNPROVEN_MESSAGE, WORKSPACE_SUBSCRIPTION_REQUIRED_MESSAGE } from './open-workspace';
 
 /**
  * ever-co/ever-teams#5025: a signed-in person opens another workspace without signing out. `POST /auth/workspaces`
@@ -229,6 +230,56 @@ describe('AuthService.openWorkspace, on a database', () => {
 
 		await expect(service.openWorkspace()).rejects.toBeInstanceOf(UnauthorizedException);
 		expect(await unfinishedAccounts()).toHaveLength(0);
+	});
+
+	describe('where the sign-up has a paywall (a new workspace is a new tenant)', () => {
+		const stripe = { isSignupPaywallEnabled: jest.fn(), getEntitlement: jest.fn() };
+
+		beforeEach(() => {
+			stripe.isSignupPaywallEnabled.mockReset().mockReturnValue(true);
+			stripe.getEntitlement.mockReset();
+			Object.assign(service, { stripeSubscriptionService: stripe });
+		});
+
+		it("opens nothing for an address without the product, and answers the sign-up's checkout to buy it", async () => {
+			stripe.getEntitlement.mockResolvedValue(EntitlementResult.NOT_ENTITLED);
+
+			const refusal = await service.openWorkspace().catch((error: ForbiddenException) => error);
+
+			expect(refusal).toBeInstanceOf(ForbiddenException);
+			expect((refusal as ForbiddenException).getResponse()).toEqual({
+				statusCode: 403,
+				message: WORKSPACE_SUBSCRIPTION_REQUIRED_MESSAGE,
+				checkoutUrl: expect.stringContaining('email=ada%40ever.co')
+			});
+			expect(stripe.getEntitlement).toHaveBeenCalledWith(CALLER.email);
+			expect(await unfinishedAccounts()).toHaveLength(0);
+		});
+
+		it('opens one for an address that holds the product', async () => {
+			stripe.getEntitlement.mockResolvedValue(EntitlementResult.ENTITLED);
+
+			await service.openWorkspace();
+
+			expect(await unfinishedAccounts()).toHaveLength(1);
+		});
+
+		it('opens one when Stripe cannot answer, as the sign-up does', async () => {
+			stripe.getEntitlement.mockResolvedValue(EntitlementResult.UNKNOWN);
+
+			await service.openWorkspace();
+
+			expect(await unfinishedAccounts()).toHaveLength(1);
+		});
+
+		it('asks Stripe nothing where there is no paywall (self-hosted, Ever Teams)', async () => {
+			stripe.isSignupPaywallEnabled.mockReturnValue(false);
+
+			await service.openWorkspace();
+
+			expect(stripe.getEntitlement).not.toHaveBeenCalled();
+			expect(await unfinishedAccounts()).toHaveLength(1);
+		});
 	});
 });
 

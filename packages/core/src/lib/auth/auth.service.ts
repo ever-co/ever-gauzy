@@ -120,6 +120,8 @@ import { createClient } from 'redis';
 import { EVER_REDIS_CLIENT } from '../redis/redis.module';
 import { OAuthClientService } from './oauth-client/oauth-client.service';
 import { OAuthClient } from './oauth-client/oauth-client.entity';
+import { EntitlementResult, StripeSubscriptionService } from '../shared/billing/stripe-subscription.service';
+import { paywallCheckoutUrl } from '../shared/guards/subscription-required.guard';
 import { TermsAcceptanceService } from '../terms-acceptance/terms-acceptance.service';
 import { passwordResetConsumeWhere } from '../shared/single-use/claim-criteria';
 import { LoginAttemptScope, LoginAttemptService } from './login-attempt.service';
@@ -129,6 +131,7 @@ import {
 	unfinishedAccountWhere,
 	WORKSPACE_ADDRESS_UNPROVEN_MESSAGE,
 	WORKSPACE_OPENING_IN_PROGRESS_MESSAGE,
+	WORKSPACE_SUBSCRIPTION_REQUIRED_MESSAGE,
 	WorkspaceAccounts,
 	workspaceAccountFieldsOf
 } from './open-workspace';
@@ -181,7 +184,9 @@ export class AuthService extends SocialAuthService {
 		private readonly mikroOrmPasswordResetRepository: MikroOrmPasswordResetRepository,
 		private readonly oauthClientService: OAuthClientService,
 		private readonly termsAcceptanceService: TermsAcceptanceService,
-		private readonly loginAttemptService: LoginAttemptService
+		private readonly loginAttemptService: LoginAttemptService,
+		// The signup paywall, which opening a workspace honours too (inert unless billing is configured)
+		@Optional() private readonly stripeSubscriptionService?: StripeSubscriptionService
 	) {
 		super();
 	}
@@ -3284,6 +3289,7 @@ export class AuthService extends SocialAuthService {
 	 * @throws ForbiddenException for a third-party application token or an API-token session, or an unproven address.
 	 * @throws UnauthorizedException without a signed-in user.
 	 * @throws ConflictException when another opening for the address keeps its lock (MySQL, after 10 seconds).
+	 * @throws ForbiddenException with `checkoutUrl` where the sign-up has a paywall and the address holds no entitlement.
 	 */
 	async openWorkspace(): Promise<IWorkspaceOpening> {
 		// The answer is a token that signs in as the new account
@@ -3304,6 +3310,7 @@ export class AuthService extends SocialAuthService {
 		if (!this.sharesProvenAddress(caller)) {
 			throw new ForbiddenException(WORKSPACE_ADDRESS_UNPROVEN_MESSAGE);
 		}
+		await this.assertWorkspaceEntitlement(caller.email);
 
 		const account = await this.withWorkspaceOpeningLock(caller.email, async (accounts) => {
 			const unfinished = await accounts.findUnfinished(caller.email);
@@ -3335,6 +3342,28 @@ export class AuthService extends SocialAuthService {
 				return (await this.typeOrmUserRepository.findOne(options as never)) ?? null;
 			default:
 				throw new Error(`Method not implemented for ORM type: ${this.ormType}`);
+		}
+	}
+
+	/**
+	 * Where the sign-up has a paywall (`isSignupPaywallEnabled`), refuses the opening to an address without an
+	 * entitlement to the product, with the sign-up's own answer (SubscriptionRequiredGuard): 403 and the checkout to buy
+	 * it. A new workspace is a new tenant, which is what the paywall is for. As for the sign-up, Stripe not answering
+	 * lets it through.
+	 *
+	 * @throws ForbiddenException with `checkoutUrl` when the address holds no entitlement.
+	 */
+	private async assertWorkspaceEntitlement(email: string): Promise<void> {
+		if (!this.stripeSubscriptionService?.isSignupPaywallEnabled()) {
+			return;
+		}
+		const entitlement = await this.stripeSubscriptionService.getEntitlement(email);
+		if (entitlement === EntitlementResult.NOT_ENTITLED) {
+			throw new ForbiddenException({
+				statusCode: 403,
+				message: WORKSPACE_SUBSCRIPTION_REQUIRED_MESSAGE,
+				checkoutUrl: paywallCheckoutUrl(email)
+			});
 		}
 	}
 
