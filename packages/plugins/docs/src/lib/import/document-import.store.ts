@@ -1,0 +1,235 @@
+import { Injectable, Logger } from '@nestjs/common';
+import { randomUUID } from 'node:crypto';
+import { In } from 'typeorm';
+import {
+	BaseEntityEnum,
+	DocumentKindEnum,
+	DocumentKnowledgeStatusEnum,
+	DocumentReviewStatusEnum,
+	DocumentSourceEnum,
+	DocumentStatusEnum,
+	FileStorageProviderEnum,
+	ID
+} from '@gauzy/contracts';
+import { isBetterSqlite3, isSqlite } from '@gauzy/config';
+import { FileStorage, readStorageFileAsBuffer, sanitizeRichHtml } from '@gauzy/core';
+import { getDocsConfig } from '../docs.config';
+import { Document } from '../entities/document.entity';
+import { DocumentImport } from '../entities/document-import.entity';
+import { DocumentLink } from '../entities/document-link.entity';
+import { TypeOrmDocumentImportRepository } from '../repositories/type-orm-document-import.repository';
+import { TypeOrmDocumentLinkRepository } from '../repositories/type-orm-document-link.repository';
+import { TypeOrmDocumentRepository } from '../repositories/type-orm-document.repository';
+import { IDocNode } from '../services/document-markdown';
+import { DocumentProcessingService } from '../services/document-processing.service';
+import { DocumentQuotaService } from '../services/document-quota.service';
+import { canonicalExtension } from '../services/file-sniffer';
+import { generateDocumentHtml } from '../validation/tiptap-html.serializer';
+import { stripTransientAttributes, validateTiptapDocument } from '../validation/tiptap-schema.validator';
+import { ICreateImportedFile, ICreateImportedNode, IDocumentImportStore, IImportedDocumentRef, IImportRow, IImportScope } from './document-import.types';
+
+/** A JSON value as its column takes it: text on SQLite, an object elsewhere. */
+function jsonColumn(value: unknown): unknown {
+	return value && typeof value === 'object' && (isSqlite() || isBetterSqlite3()) ? JSON.stringify(value) : value;
+}
+
+/** A path segment from an id: the ids are UUIDs, but a storage key segment is never built from an unchecked value. */
+const segment = (value: unknown): string => String(value ?? '').replace(/[^a-zA-Z0-9-]/g, '') || randomUUID();
+
+/** The storage key of an uploaded import zip: the shape of the upload endpoint's keys, under `imports/`. */
+export function importArchiveKeyOf(scope: IImportScope): string {
+	return `documents/${segment(scope.tenantId)}/${segment(scope.organizationId)}/imports/${randomUUID()}.zip`;
+}
+
+/**
+ * The persistence and storage seam of the import runner (`IDocumentImportStore`) over TypeORM and the platform's file
+ * storage. Every query carries the job's tenant / organization snapshot — a queue thread has no request context.
+ *
+ * 🛑 The platform's base subscriber stamps `createdByUserId` from the request context on insert, which a queue thread
+ * does not have: an imported PRIVATE page would belong to no one and be readable by no one but a Docs manager. Every
+ * created row is therefore re-stamped with the importing member (and the export's created date) by an update that
+ * runs without listeners.
+ */
+@Injectable()
+export class DocumentImportStore implements IDocumentImportStore {
+	private readonly logger = new Logger(DocumentImportStore.name);
+
+	constructor(
+		private readonly imports: TypeOrmDocumentImportRepository,
+		private readonly documents: TypeOrmDocumentRepository,
+		private readonly links: TypeOrmDocumentLinkRepository,
+		private readonly processing: DocumentProcessingService,
+		private readonly quota: DocumentQuotaService
+	) {}
+
+	async load(id: ID, scope: IImportScope): Promise<IImportRow | null> {
+		return (await this.imports.findOne({ where: { id, tenantId: scope.tenantId, organizationId: scope.organizationId } })) as IImportRow | null;
+	}
+
+	async update(id: ID, scope: IImportScope, patch: Partial<IImportRow>): Promise<void> {
+		await this.imports
+			.createQueryBuilder()
+			.update(DocumentImport)
+			.set(patch as never)
+			.where({ id, tenantId: scope.tenantId, organizationId: scope.organizationId })
+			.callListeners(false)
+			.execute();
+	}
+
+	async readArchive(row: IImportRow): Promise<Buffer> {
+		if (!row.storageKey) throw new Error('The import has no stored archive');
+		const provider = new FileStorage().setProvider(row.storageProvider ?? undefined).getProviderInstance();
+		return readStorageFileAsBuffer(provider, row.storageKey, { maxBytes: Math.max(getDocsConfig().importMaxZipBytes, Number(row.fileSize) || 0) });
+	}
+
+	async discardArchive(row: IImportRow): Promise<void> {
+		if (!row.storageKey) return;
+		const provider = new FileStorage().setProvider(row.storageProvider ?? undefined).getProviderInstance();
+		await provider.deleteFile(row.storageKey);
+		await this.imports
+			.createQueryBuilder()
+			.update(DocumentImport)
+			.set({ storageKey: null } as never)
+			.where({ id: row.id, tenantId: row.tenantId, organizationId: row.organizationId })
+			.callListeners(false)
+			.execute();
+	}
+
+	async findImported(scope: IImportScope, externalSource: string, externalId: string): Promise<IImportedDocumentRef | null> {
+		const found = await this.documents.findOne({
+			select: { id: true, kind: true, name: true, mimeType: true, fileSize: true },
+			where: { tenantId: scope.tenantId, organizationId: scope.organizationId, externalSource, externalId } as never,
+			withDeleted: true
+		});
+		return found ? { id: found.id as ID, kind: found.kind, name: found.name, mimeType: found.mimeType ?? null, fileSize: found.fileSize ?? null } : null;
+	}
+
+	async createNode(input: ICreateImportedNode): Promise<IImportedDocumentRef> {
+		const saved = await this.documents.save(
+			this.documents.create({
+				tenantId: input.scope.tenantId,
+				organizationId: input.scope.organizationId,
+				kind: input.kind,
+				name: input.name,
+				parentId: input.parentId ?? null,
+				index: input.index,
+				...(input.icon ? { icon: input.icon } : {}),
+				visibility: input.visibility,
+				organizationTeamId: input.organizationTeamId ?? null,
+				status: DocumentStatusEnum.READY,
+				source: DocumentSourceEnum.IMPORT,
+				knowledgeStatus: DocumentKnowledgeStatusEnum.NONE,
+				reviewStatus: DocumentReviewStatusEnum.NONE,
+				externalSource: input.externalSource,
+				externalId: input.externalId,
+				...(input.kind === DocumentKindEnum.PAGE ? { contentJson: jsonColumn({ type: 'doc', content: [{ type: 'paragraph' }] }) } : {}),
+				metadata: jsonColumn(input.metadata)
+			} as Partial<Document> as Document)
+		);
+		await this.stamp(saved.id as ID, input.ownerUserId, input.createdAt);
+		return { id: saved.id as ID, kind: input.kind, name: input.name };
+	}
+
+	async createFile(input: ICreateImportedFile): Promise<IImportedDocumentRef> {
+		const provider = new FileStorage().getProvider();
+		const key = `documents/${segment(input.scope.tenantId)}/${segment(input.scope.organizationId)}/${randomUUID()}.${canonicalExtension(input.mimeType)}`;
+		const stored = await provider.putFile(input.buffer, key);
+		let saved: Document;
+		try {
+			saved = await this.documents.save(
+				this.documents.create({
+					tenantId: input.scope.tenantId,
+					organizationId: input.scope.organizationId,
+					kind: DocumentKindEnum.FILE,
+					name: input.name,
+					parentId: input.parentId ?? null,
+					index: input.index,
+					visibility: input.visibility,
+					organizationTeamId: input.organizationTeamId ?? null,
+					status: DocumentStatusEnum.UPLOADED,
+					source: DocumentSourceEnum.IMPORT,
+					knowledgeStatus: input.importToKnowledge ? DocumentKnowledgeStatusEnum.QUEUED : DocumentKnowledgeStatusEnum.NONE,
+					reviewStatus: DocumentReviewStatusEnum.NONE,
+					storageProvider: provider.name.toUpperCase() as FileStorageProviderEnum,
+					storageKey: stored.key,
+					mimeType: input.mimeType,
+					fileSize: input.buffer.length,
+					sha256: input.sha256,
+					originalFilename: input.name,
+					version: 1,
+					externalSource: input.externalSource,
+					externalId: input.externalId,
+					metadata: jsonColumn({ ...input.metadata, upload: { canonicalExtension: canonicalExtension(input.mimeType) } })
+				} as Partial<Document> as Document)
+			);
+		} catch (error) {
+			// The row is the only thing that names the blob: without it the blob would be stored forever.
+			await provider.deleteFile(stored.key).catch(() => undefined);
+			throw error;
+		}
+		await this.stamp(saved.id as ID, input.ownerUserId, input.createdAt);
+		try {
+			await this.processing.enqueueExtract(saved, 'import');
+		} catch (error) {
+			// The recovery sweep re-drives an UPLOADED row that has no job.
+			this.logger.warn(`Import: docs.extract could not be enqueued for ${saved.id}: ${(error as Error)?.message ?? error}`);
+		}
+		return { id: saved.id as ID, kind: DocumentKindEnum.FILE, name: input.name, mimeType: input.mimeType, fileSize: input.buffer.length };
+	}
+
+	async writePage(document: IImportedDocumentRef, scope: IImportScope, contentJson: IDocNode, ownerUserId: ID | null): Promise<void> {
+		const valid = stripTransientAttributes(validateTiptapDocument(contentJson));
+		let contentHtml: string | null = null;
+		try {
+			contentHtml = sanitizeRichHtml(generateDocumentHtml(valid));
+		} catch (error) {
+			this.logger.warn(`Import: the HTML of page ${document.id} could not be derived: ${(error as Error)?.message ?? error}`);
+		}
+		await this.documents
+			.createQueryBuilder()
+			.update(Document)
+			.set({ contentJson: jsonColumn(valid), contentHtml, ...(ownerUserId ? { updatedByUserId: ownerUserId } : {}) } as never)
+			.where({ id: document.id, tenantId: scope.tenantId, organizationId: scope.organizationId })
+			.callListeners(false)
+			.execute();
+	}
+
+	async linkPages(documentId: ID, mentionedIds: ID[], scope: IImportScope): Promise<void> {
+		if (!mentionedIds.length) return;
+		const existing = await this.links.find({
+			select: { entityId: true },
+			where: { documentId, entity: BaseEntityEnum.Document, entityId: In(mentionedIds), tenantId: scope.tenantId, organizationId: scope.organizationId }
+		});
+		const have = new Set(existing.map((link) => String(link.entityId)));
+		for (const entityId of new Set(mentionedIds)) {
+			if (have.has(String(entityId))) continue;
+			await this.links.save(
+				this.links.create({
+					tenantId: scope.tenantId,
+					organizationId: scope.organizationId,
+					documentId,
+					entity: BaseEntityEnum.Document,
+					entityId,
+					metadata: jsonColumn({ origin: 'editor-mention' })
+				} as Partial<DocumentLink> as DocumentLink)
+			);
+		}
+	}
+
+	async usedBytes(scope: IImportScope): Promise<number> {
+		return this.quota.getUsedBytes(scope.organizationId);
+	}
+
+	/** The owner and the export's created date, written past the listeners that would stamp the (absent) request user. */
+	private async stamp(id: ID, ownerUserId: ID | null, createdAt?: Date): Promise<void> {
+		const set: Record<string, unknown> = {};
+		if (ownerUserId) {
+			set['createdByUserId'] = ownerUserId;
+			set['updatedByUserId'] = ownerUserId;
+		}
+		if (createdAt) set['createdAt'] = createdAt;
+		if (!Object.keys(set).length) return;
+		await this.documents.createQueryBuilder().update(Document).set(set as never).where({ id }).callListeners(false).execute();
+	}
+}
+

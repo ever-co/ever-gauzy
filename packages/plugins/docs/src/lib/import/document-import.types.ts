@@ -7,8 +7,8 @@ import {
 	FileStorageProviderEnum,
 	ID
 } from '@gauzy/contracts';
-import { IDocNode } from '../services/document-markdown';
-import { IImportArchiveLimits } from './import-archive';
+import type { IDocNode } from '../services/document-markdown';
+import type { IImportArchiveLimits } from './import-archive';
 
 /** Injection token of the import's persistence and storage seam ({@link IDocumentImportStore}). */
 export const DOCS_IMPORT_STORE = 'DOCS_IMPORT_STORE';
@@ -134,8 +134,3 @@ export interface IDocumentImportStore {
 	usedBytes(scope: IImportScope): Promise<number>;
 }
 
-/** The `docs.import` job payload's own fields (the queue's base payload carries the import id as `documentId`). */
-export interface IDocsImportJobData {
-	/** The import id (the base payload's `documentId` slot carries the same id for the queue's dedupe and gates). */
-	importId: ID;
-}

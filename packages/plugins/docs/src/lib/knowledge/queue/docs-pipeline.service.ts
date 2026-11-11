@@ -1,5 +1,5 @@
 import { createHash } from 'crypto';
-import { Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger, Optional } from '@nestjs/common';
 import { DocumentKnowledgeStatusEnum } from '@gauzy/contracts';
 import { DOCS_FEATURE_DISABLED_PARK_DELAY_MS } from '../../docs.constants';
 import { Document } from '../../entities/document.entity';
@@ -10,11 +10,15 @@ import { DocumentIndexService } from '../indexing/document-index.service';
 import { isTransientError } from '../errors';
 import { DocumentThumbnailService } from '../thumbnail/document-thumbnail.service';
 import { isThumbnailableMime } from '../thumbnail/thumbnail.constants';
+import type { DocumentImportRunner } from '../../import/document-import.runner';
+import { DOCS_IMPORT_RUNNER } from '../../import/document-import.types';
+import { importArchiveLimits } from '../../import/import-limits';
 import {
 	DOCS_JOB_CHUNK,
 	DOCS_JOB_CLASSIFY,
 	DOCS_JOB_EMBED,
 	DOCS_JOB_EXTRACT,
+	DOCS_JOB_IMPORT,
 	DOCS_JOB_INDEX,
 	DOCS_JOB_RECONCILE,
 	DOCS_JOB_THUMBNAIL
@@ -24,6 +28,7 @@ import {
 	IDocsClassifyJob,
 	IDocsEmbedJob,
 	IDocsExtractJob,
+	IDocsImportJob,
 	IDocsIndexJob,
 	IDocsJobBase,
 	IDocsReconcileJob,
@@ -69,7 +74,11 @@ export class DocsPipelineService implements IDocsPipelineRunner {
 		private readonly classifierService: DocumentClassifierService,
 		private readonly documentIndexService: DocumentIndexService,
 		private readonly thumbnailService: DocumentThumbnailService,
-		private readonly docsFeatureService: DocsFeatureService
+		private readonly docsFeatureService: DocsFeatureService,
+		// OPTIONAL BY DESIGN: the import runner (`docs.import`) lives in the same module, but a pipeline built without
+		// it (the stage specs) simply cannot run imports. Resolved by token so this file does not load the runner's
+		// storage and ORM graph at import time.
+		@Optional() @Inject(DOCS_IMPORT_RUNNER) private readonly importRunner?: DocumentImportRunner
 	) {}
 
 	/**
@@ -103,6 +112,8 @@ export class DocsPipelineService implements IDocsPipelineRunner {
 				return this.handleThumbnail(job as IDocsStageJob<IDocsThumbnailJob>);
 			case DOCS_JOB_RECONCILE:
 				return this.handleReconcile(job as unknown as IDocsStageJob<IDocsReconcileJob>);
+			case DOCS_JOB_IMPORT:
+				return this.handleImport(job as IDocsStageJob<IDocsImportJob>);
 			default:
 				throw new Error(`No handler found for docs pipeline stage "${jobName}".`);
 		}
@@ -301,6 +312,25 @@ export class DocsPipelineService implements IDocsPipelineRunner {
 	public async handleReconcile(job: IDocsStageJob<IDocsReconcileJob>): Promise<void> {
 		this.logger.log(`Reconcile sweep requested at ${job.data?.requestedAt ?? 'unknown'}`);
 		await this.recoveryService.runScan('reconcile');
+	}
+
+	/**
+	 * `docs.import` — one run (or resume) of an import from an exported workspace (`docs-import-export` plan §5). The
+	 * payload's `documentId` is the import id. The runner owns the import's terminal states: it rethrows a transient
+	 * failure only while the queue has attempts left, so BullMQ's retry resumes it.
+	 */
+	public async handleImport(job: IDocsStageJob<IDocsImportJob>): Promise<void> {
+		if (!this.importRunner) {
+			this.logger.warn(`docs.import for import ${job.data?.documentId} skipped — no import runner is registered in this process.`);
+			return;
+		}
+		const finalAttempt = (job.attemptsMade ?? 0) + 1 >= (job.attempts ?? 1);
+		await this.importRunner.run(
+			job.data.documentId,
+			{ tenantId: job.data.tenantId, organizationId: job.data.organizationId },
+			importArchiveLimits(),
+			finalAttempt
+		);
 	}
 
 	/**
@@ -536,7 +566,8 @@ export class DocsPipelineService implements IDocsPipelineRunner {
 				`${(error as Error)?.message ?? String(error)}`
 		);
 
-		if (jobName === DOCS_JOB_RECONCILE || !payload?.documentId) {
+		// `docs.import` carries an import, not a document: its runner already recorded the failure on the import row.
+		if (jobName === DOCS_JOB_RECONCILE || jobName === DOCS_JOB_IMPORT || !payload?.documentId) {
 			return;
 		}
 

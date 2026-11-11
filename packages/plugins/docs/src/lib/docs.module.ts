@@ -15,6 +15,11 @@ import { DOCS_INBOUND_ADDRESS_RESOLVER, DOCS_INBOUND_EMAIL_ADAPTER } from './cap
 import { CommandHandlers } from './commands/handlers';
 import { Controllers } from './controllers';
 import { ALL_DOC_ENTITIES } from './entities';
+import { DocumentImportRunner } from './import/document-import.runner';
+import { DocumentImportService } from './import/document-import.service';
+import { DocumentImportStore } from './import/document-import.store';
+import { DOCS_IMPORT_RUNNER, DOCS_IMPORT_STORE } from './import/document-import.types';
+import { DocumentPdfService } from './pdf/document-pdf.service';
 import { DocsAiService } from './knowledge/ai/docs-ai.service';
 import { DocsChatToolsService } from './knowledge/chat-tools/docs-chat-tools.service';
 import { DOCS_KNOWLEDGE_SEARCH_SERVICE } from './knowledge/chat-tools/docs-knowledge-search.types';
@@ -125,6 +130,15 @@ const QUEUE_WORKER_ENABLED = isDocsQueueWorkerEnabled();
 		// pure producer.
 		...(QUEUE_WORKER_ENABLED ? [DocsProcessingWorker] : []),
 		DocsRecoveryService,
+		// Import of exported workspaces (`GAUZY_DOCS_IMPORT_ENABLED`): the request side, the `docs.import` runner the
+		// pipeline resolves by token, and its persistence / storage seam.
+		DocumentImportService,
+		DocumentImportStore,
+		{ provide: DOCS_IMPORT_STORE, useExisting: DocumentImportStore },
+		DocumentImportRunner,
+		{ provide: DOCS_IMPORT_RUNNER, useExisting: DocumentImportRunner },
+		// PDF export of a page or a subtree (`GAUZY_DOCS_PDF_EXPORT_ENABLED`).
+		DocumentPdfService,
 		// Registers docs_search / docs_read with the AI chat engine's tool registry
 		// (no-op when @gauzy/plugin-ai-chat is absent or GAUZY_DOCS_AI_ENABLED is false).
 		DocsChatToolsService,
@@ -155,6 +169,8 @@ const QUEUE_WORKER_ENABLED = isDocsQueueWorkerEnabled();
 		DocsQueueService,
 		DocsPipelineService,
 		DocsRecoveryService,
+		DocumentImportService,
+		DocumentPdfService,
 		RetrievalLogService,
 		DOCS_RETRIEVAL_LOG,
 		InboundAddressService,

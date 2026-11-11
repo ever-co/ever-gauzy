@@ -35,7 +35,7 @@ export interface IDocumentMarkdownUpdateResult {
 }
 
 /** A page of a subtree export: its place in the zip, and the page. */
-interface ISubtreeEntry {
+export interface ISubtreeEntry {
 	document: Document;
 	path: string;
 	hasChildren: boolean;
@@ -189,9 +189,9 @@ export class DocumentMarkdownService {
 	/**
 	 * The root and, breadth first, what is under it that the caller may read: pages become files, folders become
 	 * folders of the zip (a folder has no file of its own), and one the caller may not read is left out with its
-	 * subtree. The names are unique within their folder.
+	 * subtree. The names are unique within their folder. The PDF export reads its subtree here too.
 	 */
-	private async collectSubtree(root: Document, organizationId?: ID): Promise<ISubtreeEntry[]> {
+	async collectSubtree(root: Document, organizationId?: ID): Promise<ISubtreeEntry[]> {
 		const entries: ISubtreeEntry[] = [{ document: root, path: 'index.md', hasChildren: false }];
 		const folderOf = new Map<string, string>([[String(root.id), '']]);
 		const taken = new Map<string, Set<string>>();
