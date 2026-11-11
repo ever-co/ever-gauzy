@@ -1,3 +1,5 @@
+<!-- cspell:ignore gzcwh -->
+
 # Implementation Plan: Chat incoming webhooks
 
 > Translates an approved `spec.md` into architecture and tech choices. The plan owns
@@ -45,7 +47,7 @@ member messages already use (Principle VII).
 | Signature | `X-Signature: t=<unix-seconds>,v1=<hex HMAC-SHA256 of "<t>.<body>">` through core `signWebhookPayload`; receivers verify with a 300 s window (`verifyWebhookSignature`) | the platform's outgoing-webhook contract, one verifier for both |
 | Egress | the chat plugin's egress guard (`src/lib/egress`, link-preview lane, ever-gauzy #11796): URL judged, every resolved address public, connection pinned to them, no redirect, `https:` only here, 5 s deadline, 64 KiB read cap | FR-5, no second SSRF guard in the plugin |
 | Payload | `text` (markdown subset, mention tokens), `blocks` (header, section text + fields, divider, context, actions with buttons; any other type → its text as a plain `text` block), legacy `attachments` (pretext, title, text, fields, footer → blocks); JSON or a form body with a `payload` field | FR-2; existing senders work unchanged |
-| Sanitising | every block string is plain text: HTML tags removed, `&lt;` `&gt;` `&amp;` decoded, `<url\|label>` links rewritten (`[label](url)` in the body, `label (url)` in blocks), control characters dropped, lengths capped; button URLs `https:` and public hosts only | Principle VI, FR-5 |
+| Sanitizing | every block string is plain text: HTML tags removed, `&lt;` `&gt;` `&amp;` decoded, `<url\|label>` links rewritten (`[label](url)` in the body, `label (url)` in blocks), control characters dropped, lengths capped; button URLs `https:` and public hosts only | Principle VI, FR-5 |
 | Limits | raw body ≤ 64 KiB, ≤ 50 blocks, ≤ 10 fields per section, ≤ 10 buttons per actions block, body ≤ 4,000 characters (longer text is cut with an ellipsis) | spec §2.2 |
 | Rate limits | fixed windows through the platform's throttler storage (Redis when configured, shared by replicas; in-process otherwise): per webhook 60/min and 20 per 10 s (burst), per organization 600/min and 100 per 10 s; all four from env; `429 rate_limited` + `Retry-After` | FR-6 |
 | Idempotency | payload `nonce` or the `Idempotency-Key` header (≤ 64 chars) becomes the message nonce; unique (`webhookId`, `nonce`); a repeat answers `200 ok` and posts nothing | NFR reliability |

@@ -55,7 +55,9 @@ DATA_ENTRY roles, `CHAT_MANAGE` for SUPER_ADMIN, ADMIN and MANAGER; a grant a
 tenant switched off by hand stays off). A direct or group conversation is
 unique per organization by its `directKey` (unique index `tenantId`,
 `organizationId`, `directKey`; migration `1791000006600` replaced the
-per-tenant one).
+per-tenant one). Incoming webhooks (`1791000006730`): `chat_webhook`,
+`chat_webhook_interaction`, and `chat_message.webhookId` / `appIconUrl` /
+`blocks` with a unique (`webhookId`, `nonce`).
 
 ## Routes (`/api/chat`, `CHAT_VIEW`; writes `CHAT_SEND`; 404 for a conversation the caller is not in)
 
@@ -109,9 +111,37 @@ validated with the route's DTO. Enumerated values are strings holding the REST v
 ```env
 GAUZY_CHAT_ENABLED=true
 FEATURE_CHAT=true            # or switch the feature on per tenant in Settings → Features
+GAUZY_CHAT_WEBHOOKS_ENABLED=true   # optional: incoming webhooks
 ```
+
+## Incoming webhooks (`GAUZY_CHAT_WEBHOOKS_ENABLED=true`)
+
+Automation posts into a channel through a per-channel URL (`docs/specs/features/chat-incoming-webhooks/`). Off unless
+the flag is exactly `true` (and chat is on): every route below answers 404.
+
+- **Manage** (a manager of the channel, its creator or `CHAT_MANAGE`; writes need `CHAT_SEND`):
+  `GET|POST /api/chat/conversations/:id/webhooks`, `PATCH|DELETE /api/chat/webhooks/:id` (`DELETE` revokes; the row
+  stays), `POST /api/chat/webhooks/:id/secret` (a new signing secret). Channels only, at most ten active per channel.
+  The create answer holds the URL and the signing secret, shown that once: the URL secret is stored as its SHA-256,
+  the signing secret encrypted (`ENCRYPTION_KEY`). Creating, changing and revoking are written to the activity log.
+- **Post**: `POST /api/chat/hooks/:secret`, public, a JSON body (or a form body with a `payload` field) in the widely
+  used chat-bot shape: `text`, `blocks` (header, section with text and fields, divider, context, actions with
+  buttons; any other type shows as its text), legacy `attachments`. Everything is plain text (HTML dropped);
+  `username`, `icon_url` and `channel` are ignored. A `nonce` (or `Idempotency-Key`) makes a retry post once.
+  Answers `200 ok`, `404 no_webhook`, `410 channel_is_archived`, `422 invalid_payload | payload_too_large (64 KiB) |
+  too_many_blocks (50) | invalid_blocks | no_text`, `429 rate_limited` with `Retry-After` (per webhook 60/min and 20
+  per 10 s, per organization 600/min and 100 per 10 s; `GAUZY_CHAT_WEBHOOK_*` in `.env.sample`).
+- **The message**: `kind: app`, no employee author, `webhookId`, `appName`, `appIconUrl`, `blocks`; counted, mentioned
+  and streamed like a member's message. `<!channel>` / `<!here>` notify only when the webhook may broadcast.
+- **Buttons**: `POST /api/chat/messages/:id/interactions` `{ actionId, blockId? }` (members; 404 otherwise) posts a
+  signed callback to the webhook's interaction URL: `X-Signature: t=<unix>,v1=<hex HMAC-SHA256 of "<t>.<body>">` (the
+  platform's outgoing-webhook signature; verify within 300 s), `Idempotency-Key` = `X-Interaction-Id` = the
+  `interactionId`, the same on the three retries (2 s, 10 s, 30 s), each signed afresh. The body names the actor
+  (employee id and name only), the message, the action id and its stored value. A 2xx JSON reply with `text` /
+  `blocks` / `attachments` replaces the message once (`"replace_original": false` leaves it). The interaction URL
+  must be `https:` on a public host; it is resolved when saved and at every attempt through the plugin's egress
+  guard (`src/lib/egress`), no redirect followed. `GET /api/chat/interactions/:id` answers the clicker the state.
 
 ## Not yet in this plugin (next slices)
 
-Link previews, incoming webhooks, GraphQL twins, the Ever Teams client
-(in progress).
+The Ever Teams client (in progress); incoming webhooks: a later-reply URL, mentions inside blocks.

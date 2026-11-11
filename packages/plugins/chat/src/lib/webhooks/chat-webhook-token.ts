@@ -1,3 +1,4 @@
+// cspell:ignore gzcwh gzcws
 import { createHash, randomBytes, timingSafeEqual } from 'node:crypto';
 
 /** The prefix of a webhook URL secret: recognisable to secret scanners, and checked before any lookup. */

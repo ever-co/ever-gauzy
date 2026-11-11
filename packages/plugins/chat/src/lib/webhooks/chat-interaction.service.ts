@@ -202,16 +202,26 @@ export class ChatInteractionService implements OnModuleDestroy {
 	private async retry(context: ICallbackContext, attempt: number): Promise<void> {
 		try {
 			const webhook = await this.dataSource.getRepository(ChatWebhook).findOne({ where: { id: context.webhook.id as ID } });
-			if (!webhook || webhook.revokedAt || !webhook.interactionUrl) {
+			if (!webhook || webhook.revokedAt || !webhook.interactionUrl || !webhook.signingSecret) {
 				await this.dataSource
 					.getRepository(ChatWebhookInteraction)
 					.update({ id: context.interaction.id as ID }, { status: ChatInteractionStatusEnum.FAILED, lastError: 'webhook_revoked' } as never);
 				return;
 			}
+			// The secret as it is now: a rotation between two attempts signs the next one with the new secret.
+			if (webhook.signingSecret !== context.webhook.signingSecret) {
+				context.secret = this.box.open(webhook.signingSecret, webhook.id as ID);
+			}
 			context.webhook = webhook;
 			await this.attempt(context, attempt);
 		} catch (error) {
+			// A retry that cannot run (the secret no longer opens, the database refused) ends the interaction as failed,
+			// never as retrying for good.
 			this.logger.warn(`Interaction ${context.interaction.id} retry ${attempt} failed: ${(error as Error)?.message}`);
+			await this.dataSource
+				.getRepository(ChatWebhookInteraction)
+				.update({ id: context.interaction.id as ID }, { status: ChatInteractionStatusEnum.FAILED, lastError: error instanceof ChatWebhookSecretError ? 'secret_unreadable' : 'retry_failed' } as never)
+				.catch(() => undefined);
 		}
 	}
 

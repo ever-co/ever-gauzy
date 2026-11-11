@@ -2,32 +2,32 @@
 
 **Feature ID**: `chat-incoming-webhooks`
 **Plan**: `./plan.md`
-**Status**: `In progress`
+**Status**: `In progress` (server: ever-gauzy #11799)
 **Last updated**: 2026-11-11
 
 ---
 
 ## Phase 1 — Contracts, entities, migration (PR 1)
 
-- [ ] **T1**. Contracts in `chat.model.ts`: block union, button, webhook records and inputs, the created answer (URL and signing secret once), interaction input / result / state and status enum, limits; `IChatMessage.webhookId` / `appIconUrl` / `blocks`; `BaseEntityEnum.ChatWebhook` (+ the two ui-core favourite maps)
-- [ ] **T2**. `isChatWebhooksEnabled` (`GAUZY_CHAT_WEBHOOKS_ENABLED`), `.env.sample` entries (flag, rate limits)
-- [ ] **T3**. Entities `ChatWebhook`, `ChatWebhookInteraction` (MultiORM + MikroORM repositories); `ChatMessage.webhookId` / `appIconUrl` / `blocks`
-- [ ] **T4**. Migration `1791000006730-CreateChatWebhooks`: both tables, the three `chat_message` columns, unique (`webhookId`, `nonce`); tri-dialect, idempotent, reversible
+- [x] **T1**. Contracts in `chat.model.ts`: block union, button, webhook records and inputs, the created answer (URL and signing secret once), interaction input / result / state and status enum, limits; `IChatMessage.webhookId` / `appIconUrl` / `blocks`; `BaseEntityEnum.ChatWebhook` (+ the two ui-core favourite maps)
+- [x] **T2**. `isChatWebhooksEnabled` (`GAUZY_CHAT_WEBHOOKS_ENABLED`), `.env.sample` entries (flag, rate limits)
+- [x] **T3**. Entities `ChatWebhook`, `ChatWebhookInteraction` (MultiORM + MikroORM repositories); `ChatMessage.webhookId` / `appIconUrl` / `blocks`
+- [x] **T4**. Migration `1791000006730-CreateChatWebhooks`: both tables, the three `chat_message` columns, unique (`webhookId`, `nonce`); tri-dialect, idempotent, reversible
 
 ## Phase 2 — Receive (PR 1)
 
-- [ ] **T5**. `chat-webhook-payload.ts`: `text` / `blocks` / `attachments` (and a form `payload`) → body + normalised blocks; unknown types as text; plain-text sanitising; limits (64 KiB, 50 blocks, fields, buttons); `422` codes
-- [ ] **T6**. `chat-webhook-token.ts`: URL secret generation, SHA-256, hint; `chat-webhook-secret-box.ts`: sealed signing secret
-- [ ] **T7**. `ChatWebhookRateLimiter`: per webhook and per organization windows over the throttler storage; env overrides; `Retry-After`
-- [ ] **T8**. `POST /api/chat/hooks/:token` (`@Public()`): flag, token lookup, revoked → 404, tenant `FEATURE_CHAT`, archived → 410, limits → 429, payload → 422, nonce / `Idempotency-Key`, `200 ok`; counters and `lastUsedAt`
-- [ ] **T9**. App message write: `kind: app`, webhook name + icon, counters, mentions (`canBroadcast` for `@channel` / `@here`), outbox facts as a send; channels only
+- [x] **T5**. `chat-webhook-payload.ts`: `text` / `blocks` / `attachments` (and a form `payload`) → body + normalised blocks; unknown types as text; plain-text sanitizing; limits (64 KiB, 50 blocks, fields, buttons); `422` codes
+- [x] **T6**. `chat-webhook-token.ts`: URL secret generation, SHA-256, hint; `chat-webhook-secret-box.ts`: sealed signing secret
+- [x] **T7**. `ChatWebhookRateLimiter`: per webhook and per organization windows over the throttler storage; env overrides; `Retry-After`
+- [x] **T8**. `POST /api/chat/hooks/:token` (`@Public()`): flag, token lookup, revoked → 404, tenant `FEATURE_CHAT`, archived → 410, limits → 429, payload → 422, nonce / `Idempotency-Key`, `200 ok`; counters and `lastUsedAt`
+- [x] **T9**. App message write: `kind: app`, webhook name + icon, counters, mentions (`canBroadcast` for `@channel` / `@here`), outbox facts as a send; channels only
 
 ## Phase 3 — Management and interactions (PR 1)
 
-- [ ] **T10**. Management routes (list, create ≤ 10 per channel, update, rotate secret, revoke) for managers / creator / `CHAT_MANAGE`; interaction URL judged by the egress guard (resolution included); activity log entries
-- [ ] **T11**. `POST /api/chat/messages/:id/interactions` + `GET /api/chat/interactions/:id`: membership (404), button lookup in the stored blocks, interaction row, signed POST through the egress guard (`X-Signature`, `Idempotency-Key`), inline attempt + 3 re-signed retries, reply applied once (`replyAppliedAt`), `chat_message.updated`
-- [ ] **T12**. GraphQL `ChatMessage.webhookId` / `appIconUrl` / `blocks`; README section; plan §4 routes in Swagger
-- [ ] **T13**. Specs: payload validation and sanitising, token hashing, signing (header, window, retry re-sign), rate limits, revoke → 404, archived → 410, SSRF refusal of interaction URLs, non-member click → 404, reply applied once, migration idempotency
+- [x] **T10**. Management routes (list, create ≤ 10 per channel, update, rotate secret, revoke) for managers / creator / `CHAT_MANAGE`; interaction URL judged by the egress guard (resolution included); activity log entries
+- [x] **T11**. `POST /api/chat/messages/:id/interactions` + `GET /api/chat/interactions/:id`: membership (404), button lookup in the stored blocks, interaction row, signed POST through the egress guard (`X-Signature`, `Idempotency-Key`), inline attempt + 3 re-signed retries, reply applied once (`replyAppliedAt`), `chat_message.updated`
+- [x] **T12**. GraphQL `ChatMessage.webhookId` / `appIconUrl` / `blocks`; README section; plan §4 routes in Swagger (the public receive route is left out of Swagger, like the platform's other inbound webhook routes)
+- [x] **T13**. Specs: payload validation and sanitizing, token hashing, signing (header, window, retry re-sign), rate limits, revoke → 404, archived → 410, SSRF refusal of interaction URLs, non-member click → 404, reply applied once, migration idempotency
 
 ## Phase 4 — UI
 

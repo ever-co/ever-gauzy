@@ -1,3 +1,4 @@
+// cspell:ignore safetxt
 import { CHAT_MESSAGE_MAX_LENGTH, ChatAppBlockTypeEnum, IChatAppBlock } from '@gauzy/contracts';
 import {
 	assertPayloadSize,

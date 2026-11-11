@@ -65,6 +65,8 @@ export const CHAT_APP_MAX_CONTEXT_ELEMENTS = 10;
 export const CHAT_WEBHOOK_MAX_NONCE_LENGTH = 64;
 
 const UUID = '[0-9a-fA-F-]{36}';
+// Control characters (and the bidi overrides) are exactly what this pattern exists to find.
+// eslint-disable-next-line no-control-regex
 const CONTROL = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F\u202A-\u202E\u2066-\u2069]/g;
 const HTML_TAG = /^\/?[a-zA-Z][\w:-]*(\s[^>]*)?\/?$/;
 
@@ -162,7 +164,9 @@ export function normalizeInteractionReply(reply: unknown, options: Pick<IChatWeb
 	if (reply['replace_original'] === false || reply['replaceOriginal'] === false) return null;
 	const hasContent = ['text', 'blocks', 'attachments'].some((key) => reply[key] !== undefined && reply[key] !== null);
 	if (!hasContent) return null;
-	const { nonce: _ignored, ...rest } = reply;
+	// A reply is not a post: it carries no idempotency key of its own (the interaction id is the key).
+	const rest: Record<string, unknown> = { ...reply };
+	delete rest['nonce'];
 	return normalizeWebhookPayload(rest, { canBroadcast: options.canBroadcast });
 }
 
@@ -439,6 +443,7 @@ export function blocksOf(json: string | null | undefined): IChatAppBlock[] {
 function nonceOf(raw: unknown, header: string | null | undefined): string | null {
 	const value = typeof raw === 'string' && raw.trim() ? raw.trim() : typeof header === 'string' && header.trim() ? header.trim() : null;
 	if (value === null) return null;
+	// eslint-disable-next-line no-control-regex -- a nonce of printable characters only
 	if (value.length > CHAT_WEBHOOK_MAX_NONCE_LENGTH || /[\u0000-\u001F\u007F]/.test(value)) {
 		throw new ChatWebhookPayloadError('invalid_payload', `A nonce holds at most ${CHAT_WEBHOOK_MAX_NONCE_LENGTH} printable characters.`);
 	}

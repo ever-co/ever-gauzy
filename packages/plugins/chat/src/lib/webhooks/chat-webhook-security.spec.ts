@@ -1,3 +1,4 @@
+// cspell:ignore gzcwh xxcwh
 /**
  * The security pieces of incoming webhooks: the URL secret and its hash, the sealed signing secret, the signature of
  * an interaction callback (the platform's own `X-Signature` contract, verified with core's verifier), the rate limits,
