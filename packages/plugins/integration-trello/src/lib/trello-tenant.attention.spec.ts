@@ -37,7 +37,7 @@ function harness(options: { connectedBy?: string | null; managers?: string[] | E
 	const filed = (index: number) => inbox.upsertExternal.mock.calls[index][0] as unknown as Recipients;
 	/** The recorded filing timestamp ('' when cleared, undefined when never written). */
 	const noticedAt = () => row.settings.find((setting) => setting.settingsName === TrelloSettingName.ATTENTION_NOTICE_AT)?.settingsValue;
-	return { service, row, inbox, findManagers, filed, noticedAt };
+	return { service, row, inbox, findManagers, filed, noticedAt, settingsWriter: integrationSettingService };
 }
 
 beforeEach(() => {
@@ -83,10 +83,27 @@ describe('TrelloTenantService — the refused-token notice', () => {
 		expect(noticedAt()).toBeTruthy();
 	});
 
-	it('does not re-surface a retry of a filing that was taken but whose timestamp was not recorded', async () => {
-		const { service, row, inbox, filed } = harness({ managers: ['user-manager'] });
+	it('re-surfaces a refusal the Inbox did not take when the sweep files it', async () => {
+		const { service, row, inbox, filed, noticedAt } = harness({ managers: ['user-manager'] });
 		inbox.upsertExternal.mockRejectedValueOnce(new Error('inbox down'));
 		await service.setAttention(row as never, 'token_refused', 'token-1');
+		expect(noticedAt()).toBe(ATTENTION_NOTICE_DEFERRED);
+		await service.ensureAttentionFiled(row as never);
+		expect(filed(1).recipients).toEqual([
+			{ userId: 'user-connector', isRead: false, isArchived: false },
+			{ userId: 'user-manager', isRead: false, isArchived: false }
+		]);
+	});
+
+	it('does not re-surface a retry of a filing the Inbox took but whose timestamp was not recorded', async () => {
+		const { service, row, filed, settingsWriter } = harness({ managers: ['user-manager'] });
+		// The Inbox takes the filing; recording its timestamp fails.
+		settingsWriter.create.mockImplementation(async (input: Record<string, unknown>) => {
+			if (input['settingsName'] === TrelloSettingName.ATTENTION_NOTICE_AT) throw new Error('store down');
+			return { id: `set-${String(input['settingsName'])}`, ...input };
+		});
+		await service.setAttention(row as never, 'token_refused', 'token-1');
+		expect(filed(0).recipients[0]).toMatchObject({ isRead: false });
 		await service.ensureAttentionFiled(row as never);
 		expect(filed(1).recipients).toEqual([{ userId: 'user-connector' }, { userId: 'user-manager' }]);
 	});
@@ -138,7 +155,8 @@ describe('TrelloTenantService — the refused-token notice', () => {
 			const { service, row, inbox, noticedAt } = harness({ managers: ['user-manager'], noticedAt: earlier, inboxFails: true });
 			await service.setAttention(row as never, 'token_refused', 'token-1');
 			expect(inbox.upsertExternal).toHaveBeenCalledTimes(1);
-			expect(noticedAt()).toBe('');
+			// Not the earlier timestamp: marked deferred, so the sweep files it and re-surfaces it.
+			expect(noticedAt()).toBe(ATTENTION_NOTICE_DEFERRED);
 		});
 	});
 

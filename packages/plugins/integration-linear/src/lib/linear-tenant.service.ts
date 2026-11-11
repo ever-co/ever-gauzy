@@ -382,6 +382,11 @@ export class LinearTenantService {
 			await this.inbox.upsertExternal(attentionItemOf({ id: tenant.id as ID, tenantId: tenant.tenantId as ID, organizationId: tenant.organizationId as ID }, reason, recipients, resurface, partial));
 		} catch (error) {
 			this.logger.warn(`The attention of connection ${tenant.id} could not be filed in the Inbox: ${(error as Error).message}`);
+			// An open notice the Inbox did not take has not reached anyone yet: marked deferred, so the sweep's filing
+			// re-surfaces it (a retry of a filing the Inbox did take is not marked, and does not re-surface).
+			if (reason && resurface && settings[LinearSettingName.ATTENTION_NOTICE_AT] !== ATTENTION_NOTICE_DEFERRED) {
+				await this.writeSetting(tenant, LinearSettingName.ATTENTION_NOTICE_AT, ATTENTION_NOTICE_DEFERRED).catch(() => undefined);
+			}
 			return;
 		}
 		try {
