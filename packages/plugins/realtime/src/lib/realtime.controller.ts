@@ -1,5 +1,4 @@
 import { Body, Controller, Get, Header, HttpCode, HttpStatus, Optional, Post, Query, UseGuards } from '@nestjs/common';
-import { ModuleRef } from '@nestjs/core';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import {
@@ -12,7 +11,7 @@ import {
 	REALTIME_SIGNAL_EVENTS
 } from '@gauzy/contracts';
 import {
-	EventOutboxAppendSignal,
+	eventOutboxDispatchMode,
 	GraphqlPubSub,
 	PermissionGuard,
 	Permissions,
@@ -44,8 +43,7 @@ export class RealtimeController {
 		private readonly signals: RealtimeSignalsService,
 		private readonly catchUp: RealtimeCatchUpService,
 		@Optional() private readonly subscriptions?: SubscriptionCatalogue,
-		@Optional() private readonly pubSub?: GraphqlPubSub,
-		@Optional() private readonly moduleRef?: ModuleRef
+		@Optional() private readonly pubSub?: GraphqlPubSub
 	) {}
 
 	@Get('/status')
@@ -64,20 +62,11 @@ export class RealtimeController {
 			maxTypingRecipients: REALTIME_MAX_TYPING_RECIPIENTS,
 			// Whether a client may rely on pushed events instead of polling (see `describeRealtimeDelivery`).
 			delivery: describeRealtimeDelivery(
-				this.appendSignal()?.deliveryMode() ?? 'none',
+				eventOutboxDispatchMode(),
 				this.pubSub?.sharedAcrossProcesses ?? false,
 				isSingleApiProcess()
 			)
 		};
-	}
-
-	/** The outbox's append signal, held by the kernel module rather than one this module imports. */
-	private appendSignal(): EventOutboxAppendSignal | undefined {
-		try {
-			return this.moduleRef?.get(EventOutboxAppendSignal, { strict: false }) ?? undefined;
-		} catch {
-			return undefined;
-		}
 	}
 
 	@Get('/events')

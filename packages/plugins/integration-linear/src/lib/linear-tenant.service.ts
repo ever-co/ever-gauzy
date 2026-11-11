@@ -3,6 +3,7 @@ import { CommandBus } from '@nestjs/cqrs';
 import { ID, IInboxItemWriter, IIntegrationSetting, IIntegrationTenant, INBOX_ITEM_WRITER, IntegrationEntity } from '@gauzy/contracts';
 import {
 	Integration,
+	INTEGRATION_MANAGERS_LIMIT,
 	IntegrationSettingGetManyCommand,
 	IntegrationSettingService,
 	IntegrationTenantService,
@@ -10,7 +11,7 @@ import {
 	RequestContext
 } from '@gauzy/core';
 import { LinearApiClient, LinearOAuthToken, LinearViewer, refreshLinearToken } from './client/linear-api.client';
-import { attentionItemOf } from './linear-attention';
+import { ATTENTION_NOTICE_DEFERRED, attentionItemOf } from './linear-attention';
 import { LinearConfig } from './linear-config';
 import {
 	LINEAR_CONFIG,
@@ -55,7 +56,7 @@ export class LinearTenantService {
 		private readonly integrationTenantService: IntegrationTenantService,
 		private readonly integrationSettingService: IntegrationSettingService,
 		@Inject(LINEAR_CONFIG) private readonly config: LinearConfig,
-		/** The Inbox, when its plugin is loaded: the person who connected hears there of a refused token. */
+		/** The Inbox, when its plugin is loaded: the person who connected and the integration's managers hear there of a refused token. */
 		@Optional() @Inject(INBOX_ITEM_WRITER) private readonly inbox?: IInboxItemWriter | null
 	) {}
 
@@ -265,7 +266,8 @@ export class LinearTenantService {
 
 	/**
 	 * Records why the connection needs a person (a refused token), or clears it — and tells the person who connected
-	 * in their Inbox, once per refusal (the item is keyed by the connection) and once more when it works again.
+	 * and the organization's integration managers in their Inbox, once per refusal (the item is keyed by the
+	 * connection) and once more when it works again.
 	 */
 	async setAttention(tenant: IIntegrationTenant, reason: string | null, refusedToken?: string | null): Promise<void> {
 		// A refusal names the token it was for: when the row holds another one by now (reconnected meanwhile), the
@@ -280,13 +282,22 @@ export class LinearTenantService {
 		}
 		const settings = this.settingsOf(tenant);
 		const before = settings[LinearSettingName.ATTENTION_REASON] || null;
-		const noticed = !!settings[LinearSettingName.ATTENTION_NOTICE_AT];
+		const noticed = !!settings[LinearSettingName.ATTENTION_NOTICE_AT] && settings[LinearSettingName.ATTENTION_NOTICE_AT] !== ATTENTION_NOTICE_DEFERRED;
 		try {
 			await this.writeSetting(tenant, LinearSettingName.ATTENTION_REASON, reason ?? '');
 		} catch (error) {
 			// Not filed either: the Inbox must not say the imports are paused while the sweep still runs them.
 			this.logger.warn(`The attention reason of connection ${tenant.id} could not be written: ${(error as Error).message}`);
 			return;
+		}
+		// A new refusal is not filed until its own filing records it: the timestamp an earlier refusal left (a resolution
+		// whose filing failed) is cleared first, so every way the filing below can stop leaves it to the sweep.
+		if (reason && before !== reason && settings[LinearSettingName.ATTENTION_NOTICE_AT]) {
+			try {
+				await this.writeSetting(tenant, LinearSettingName.ATTENTION_NOTICE_AT, '');
+			} catch (error) {
+				this.logger.warn(`The filing timestamp of connection ${tenant.id} could not be cleared: ${(error as Error).message}`);
+			}
 		}
 		// Filed when the reason changed — and again when an earlier filing (or resolution) did not get through: the
 		// item is keyed by the connection, so a second filing updates it rather than adding one.
@@ -303,8 +314,10 @@ export class LinearTenantService {
 	async ensureAttentionFiled(tenant: IIntegrationTenant): Promise<void> {
 		const settings = this.settingsOf(tenant);
 		const reason = settings[LinearSettingName.ATTENTION_REASON] || null;
-		if (!reason || settings[LinearSettingName.ATTENTION_NOTICE_AT]) return;
-		await this.fileAttention(tenant, reason, [], false);
+		const noticeAt = settings[LinearSettingName.ATTENTION_NOTICE_AT] || '';
+		if (!reason || (noticeAt && noticeAt !== ATTENTION_NOTICE_DEFERRED)) return;
+		// A deferred notice was never filed: its first filing re-surfaces it; a retry of a filing taken does not.
+		await this.fileAttention(tenant, reason, [], noticeAt === ATTENTION_NOTICE_DEFERRED);
 	}
 
 	/** The connections of this integration that wait for a person and whose notice did not get through yet: the sweep files those again. */
@@ -317,13 +330,15 @@ export class LinearTenantService {
 			})) as IIntegrationTenant[];
 		return rows.filter((row) => {
 			const settings = this.settingsOf(row);
-			return !!settings[LinearSettingName.ATTENTION_REASON] && !settings[LinearSettingName.ATTENTION_NOTICE_AT];
+			return !!settings[LinearSettingName.ATTENTION_REASON] && (!settings[LinearSettingName.ATTENTION_NOTICE_AT] || settings[LinearSettingName.ATTENTION_NOTICE_AT] === ATTENTION_NOTICE_DEFERRED);
 		});
 	}
 
 	/**
 	 * Files (or resolves) the Inbox item about the connection and remembers that it got through; nothing without
-	 * the Inbox plugin or a connecting user. A filing that failed is tried again by the next {@link setAttention}
+	 * the Inbox plugin, or with nobody to tell. The item goes to the person who connected and to the organization's
+	 * integration managers (the people whose role may add or edit integrations: they can connect again); a manager
+	 * list that cannot be read leaves the person who connected, and the next filing reads it again. A filing that failed is tried again by the next {@link setAttention}
 	 * and by the sweep ({@link ensureAttentionFiled}). The two writes are separate: an item that was taken but whose
 	 * timestamp was not written is logged as such, and a retry re-files it without re-surfacing it.
 	 */
@@ -335,12 +350,43 @@ export class LinearTenantService {
 		const settings = this.settingsOf(current);
 		if ((settings[LinearSettingName.ATTENTION_REASON] || null) !== (reason || null)) return;
 		const userId = settings[LinearSettingName.CONNECTED_BY_USER_ID];
-		const recipients = [...new Set([userId, ...alsoUserIds].filter(Boolean).map(String))] as ID[];
+		let managers: ID[] | null = null;
+		let truncated = false;
+		try {
+			const found = await this.integrationTenantService.findManagers({ tenantId: current.tenantId as ID, organizationId: current.organizationId as ID });
+			managers = found.userIds;
+			truncated = found.truncated;
+		} catch (error) {
+			this.logger.warn(`The integration managers of connection ${tenant.id} could not be read: ${(error as Error)?.message ?? error}`);
+		}
+		// The lookup stops at INTEGRATION_MANAGERS_LIMIT memberships: when it left managers out, the notice replaces nobody either.
+		if (truncated) {
+			this.logger.warn(`Connection ${tenant.id}: the organization has more than ${INTEGRATION_MANAGERS_LIMIT} integration manager memberships; the notice goes to the first ones and removes nobody`);
+		}
+		// Without the managers an open notice is not filed at all: a partial list could neither drop a former connector
+		// from the shared item nor keep a current manager on it. Nothing is recorded, so the sweep files it with them
+		// (a new refusal starts with no filing timestamp: see setAttention).
+		if (reason && managers === null) {
+			// Marked deferred, so the sweep's filing re-surfaces it for the recipients it reaches (it is a new refusal to them).
+			if (settings[LinearSettingName.ATTENTION_NOTICE_AT] !== ATTENTION_NOTICE_DEFERRED) {
+				await this.writeSetting(tenant, LinearSettingName.ATTENTION_NOTICE_AT, ATTENTION_NOTICE_DEFERRED).catch((error: unknown) => {
+					this.logger.warn(`The deferred notice of connection ${tenant.id} could not be marked: ${(error as Error)?.message ?? error}`);
+				});
+			}
+			return;
+		}
+		const partial = !!reason && truncated;
+		const recipients = [...new Set([userId, ...(managers ?? []), ...alsoUserIds].filter(Boolean).map(String))] as ID[];
 		if (!recipients.length) return;
 		try {
-			await this.inbox.upsertExternal(attentionItemOf({ id: tenant.id as ID, tenantId: tenant.tenantId as ID, organizationId: tenant.organizationId as ID }, reason, recipients, resurface));
+			await this.inbox.upsertExternal(attentionItemOf({ id: tenant.id as ID, tenantId: tenant.tenantId as ID, organizationId: tenant.organizationId as ID }, reason, recipients, resurface, partial));
 		} catch (error) {
 			this.logger.warn(`The attention of connection ${tenant.id} could not be filed in the Inbox: ${(error as Error).message}`);
+			// An open notice the Inbox did not take has not reached anyone yet: marked deferred, so the sweep's filing
+			// re-surfaces it (a retry of a filing the Inbox did take is not marked, and does not re-surface).
+			if (reason && resurface && settings[LinearSettingName.ATTENTION_NOTICE_AT] !== ATTENTION_NOTICE_DEFERRED) {
+				await this.writeSetting(tenant, LinearSettingName.ATTENTION_NOTICE_AT, ATTENTION_NOTICE_DEFERRED).catch(() => undefined);
+			}
 			return;
 		}
 		try {

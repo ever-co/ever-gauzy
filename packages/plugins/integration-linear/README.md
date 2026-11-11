@@ -65,8 +65,19 @@ without the last two a comment or an attachment reaches Gauzy only with the sche
   created or updated, as the issue it belongs to, which is read again.
 - **A refused token.** When Linear refuses the connection's token (a 401), the connection is marked — the page asks for
   a reconnect, the lookups answer `LINEAR_TOKEN_REFUSED`, the scheduled import leaves its mappings alone — and, with the
-  Inbox plugin loaded, the person who connected gets a high-priority Inbox notice (one per connection; resolved when a
+  Inbox plugin loaded, the person who connected and the organization's integration managers (members whose role may
+  add or edit integrations; when they cannot be read the open notice waits for the sweep, which files it with them) get a high-priority Inbox notice (one per connection; resolved when a
   renewed token works or someone connects again).
+- **Conflicts.** Each issue applied is compared field by field (title, description — as the task store keeps it, sanitized —, status, priority, due date)
+  with what it and its task last agreed on (`integration_linear_issue_baseline`, the values Linear sent the last time the issue was
+  applied): a field changed only in Linear is applied, one changed only on the platform keeps the task's value, and one
+  changed on both sides to different values takes Linear's value and is recorded as a conflict with the task's value
+  (`integration_linear_sync_conflict`). `GET …/conflicts` lists them (open ones by default; `status`, `mappingId`,
+  `taskId`, `runId`, `take`) and `GET …/runs` counts them per run (`conflictCount`). `POST …/conflicts/:conflictId/resolve`
+  with `{ "keep": "external" }` leaves Linear's value; `{ "keep": "platform" }` writes the task's value back through
+  the platform's task update (a mapping that sends changes out sends it to the issue), and is refused (`409`) when the
+  task's field changed since. A newer conflict on the same task and field supersedes an older open one. An outbound
+  push sends the task's values as they are; a change made in Linear meanwhile is overwritten, not recorded.
 - **Scheduled import.** Every five minutes the worker process (`apps/worker`, the one whose scheduler root is
   enabled) sweeps the mappings that bring issues in: one whose last import is older than
   `LINEAR_IMPORT_INTERVAL_MINUTES` (or that was never imported) is imported again, the changes since its position,
@@ -85,7 +96,8 @@ without the last two a comment or an attachment reaches Gauzy only with the sche
 ## Tables
 
 `integration_linear_team_mapping` and `integration_linear_sync_run`, created by the plugin's own migration
-(`1791000004900`), idempotent on PostgreSQL, MySQL and SQLite.
+(`1791000004900`), idempotent on PostgreSQL, MySQL and SQLite. The conflict records, `integration_linear_sync_conflict` and `integration_linear_issue_baseline`, come with
+migration `1791000007010`.
 
 ## Build
 

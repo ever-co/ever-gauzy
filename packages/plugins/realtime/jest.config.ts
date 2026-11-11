@@ -13,6 +13,8 @@ module.exports = {
 			}
 		]
 	},
+	// The PostgreSQL suites have a config of their own (`jest.postgres.config.ts`, `nx run plugin-realtime:test-postgres`).
+	testPathIgnorePatterns: ['/node_modules/', String.raw`\.postgres\.spec\.ts$`],
 	moduleFileExtensions: ['ts', 'js', 'json', 'html'],
 	coverageDirectory: '../../../coverage/packages/plugins/realtime'
 };

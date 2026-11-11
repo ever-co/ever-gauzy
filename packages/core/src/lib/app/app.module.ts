@@ -164,7 +164,7 @@ import { EventOutboxMaintenanceModule } from '../event-outbox/event-outbox-maint
 import {
 	EventOutboxInlineDispatchModule,
 	isEventOutboxInlineDispatchEnabled
-} from '../event-outbox/event-outbox-dispatch.trigger';
+} from '../event-outbox/event-outbox-inline-dispatch';
 import { WebhookMaintenanceModule } from '../webhook/webhook-maintenance.module';
 import { OperationModule } from '../operation/operation.module';
 import { WebhookModule } from '../webhook/webhook.module';
@@ -683,8 +683,7 @@ if (environment.EVER_TEAMS_CLIENT_IP_SECRET?.trim() && !clientIpSecretOf(environ
 					// consumers, so GraphQL subscriptions, the search index and every outbound webhook go
 					// quiet while `event_outbox` grows. Appending still works and no writer sees an error —
 					// which is exactly why this is called out here rather than left to be discovered. The tick
-					// comes from the worker process; an append also asks for a pass at once
-					// (`EventOutboxQueueDispatchTrigger`), so delivery does not wait for the tick.
+					// comes from the worker process; a commit that appended wakes this process's worker at once.
 					EventOutboxMaintenanceModule,
 					// The per-minute pass that re-attempts a delivery the ladder says is due. It is the
 					// second half of the outbound surface: the fan-out above makes the first attempt, and
@@ -694,7 +693,7 @@ if (environment.EVER_TEAMS_CLIENT_IP_SECRET?.trim() && !clientIpSecretOf(environ
 					// that event again.
 					WebhookMaintenanceModule
 			  ]
-			: // No queue: the API drains the outbox itself, right after each append and on a short sweep, so a
+			: // No queue: the API runs the dispatch worker itself, woken by each commit and on a short sweep, so a
 			  // single-container or dev setup delivers subscriptions, search updates and webhooks instead of
 			  // appending events nobody hands on. `EVENT_OUTBOX_INLINE_DISPATCH=false` turns it off.
 			  isEventOutboxInlineDispatchEnabled()

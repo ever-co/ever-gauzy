@@ -6,7 +6,6 @@ import { EventDelivery } from './event-delivery.entity';
 import { EventOutbox } from './event-outbox.entity';
 import { EventConsumerRegistry } from './event-consumer.registry';
 import { EventOutboxService } from './event-outbox.service';
-import { EventOutboxAppendSignal } from './event-outbox-append.signal';
 import { EventDeliveryEventPublisher } from './event-delivery.publisher';
 import { EventOutboxController } from './event-outbox.controller';
 import { EventDeliveryController } from './event-delivery.controller';
@@ -59,9 +58,6 @@ import { MikroOrmEventOutboxRepository } from './repository/mikro-orm-event-outb
 	providers: [
 		EventOutboxService,
 		EventConsumerRegistry,
-		// What a pass is asked for by, right after an append: the module that drains the outbox in this
-		// process listens to it (see `EventOutboxMaintenanceModule` and `EventOutboxInlineDispatchModule`).
-		EventOutboxAppendSignal,
 		// The streamed fact's producer collaborator: it declares the event at bootstrap and publishes
 		// each move the service makes.
 		EventDeliveryEventPublisher,
@@ -76,7 +72,6 @@ import { MikroOrmEventOutboxRepository } from './repository/mikro-orm-event-outb
 	exports: [
 		EventOutboxService,
 		EventConsumerRegistry,
-		EventOutboxAppendSignal,
 		EventDeliveryEventPublisher,
 		EventOutboxResolver,
 		TypeOrmEventOutboxRepository,

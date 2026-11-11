@@ -44,35 +44,28 @@ export const EVENT_OUTBOX_DISPATCH_BATCH_SIZE = 100;
 export const EVENT_OUTBOX_DISPATCH_LEASE_MS = 5 * 60 * 1000;
 
 /**
- * The most passes one drain runs.
+ * The switch for the pass that runs right after a commit (realtime-channel plan §15.9, T28).
  *
- * A drain follows an append and keeps going while each pass publishes something, because a pass
- * claims the head of each aggregate's queue only. The bound keeps one request from holding a worker
- * for long: twenty-five passes of a hundred heads each is far beyond any burst a person produces, and
- * whatever is left is the next request's or the next tick's.
+ * On unless set to `false`. With it on, a process that consumes the dispatch queue also runs a pass as
+ * soon as a transaction that appended an event commits, so a live subscriber gets the event within the
+ * time of one pass rather than up to a minute later. The scheduled pass still runs either way, and it
+ * is what retries, so turning this off only brings back the old latency.
  */
-export const EVENT_OUTBOX_DRAIN_MAX_PASSES = 25;
+export const EVENT_OUTBOX_DISPATCH_ON_COMMIT_ENV = 'GAUZY_EVENT_OUTBOX_DISPATCH_ON_COMMIT';
 
 /**
- * How long an append-driven request waits before it asks for a pass.
+ * The most passes one wake runs back to back while each claims something.
  *
- * `append` runs inside the caller's transaction, so the row is not visible until that commits. The
- * wait lets the commit happen first and coalesces a burst of appends into one pass.
+ * A claim takes only the head of each partition, so a transaction that appended several events of one
+ * aggregate needs one pass per event, and a burst larger than a batch needs a few. Both are drained
+ * here rather than left for the scheduled pass, and the bound keeps a steady flood of appends from
+ * holding the process in passes. Whatever the bound leaves is due, so the next wake or the scheduled
+ * pass claims it.
  */
-export const EVENT_OUTBOX_APPEND_DEBOUNCE_MS = 75;
+export const EVENT_OUTBOX_COMMIT_PASS_LIMIT = 10;
 
 /**
- * When an append-driven request asks again, in case the first pass ran before the caller committed.
- *
- * Cheap — one claim that usually matches nothing — and it bounds the delay a slow commit can cause
- * to about a second instead of the next per-minute tick.
- */
-export const EVENT_OUTBOX_APPEND_FOLLOW_UP_MS = 1_000;
-
-/**
- * How often a process that drains the outbox in-process sweeps it without being asked.
- *
- * Only for a process without a queue, where nothing else drains: rows appended by another process,
- * rows whose retry came due and rows whose lease expired are picked up here.
+ * How often an API without a queue sweeps the outbox without being woken: rows whose retry came due, rows whose
+ * lease expired and rows another process appended. The per-minute schedule does that where there is a queue.
  */
 export const EVENT_OUTBOX_INLINE_SWEEP_MS = 15_000;

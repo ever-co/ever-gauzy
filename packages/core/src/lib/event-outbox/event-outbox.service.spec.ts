@@ -2,7 +2,6 @@ import { EventOutboxStatus, ID, IOutboxWriteInput } from '@gauzy/contracts';
 import { EventDelivery } from './event-delivery.entity';
 import { EventOutbox } from './event-outbox.entity';
 import { EventOutboxService, describeFailure } from './event-outbox.service';
-import { EventOutboxAppendSignal } from './event-outbox-append.signal';
 import { RequestContext } from '../core/context/request-context';
 import { TypeOrmEventDeliveryRepository } from './repository/type-orm-event-delivery.repository';
 import { TypeOrmEventOutboxRepository } from './repository/type-orm-event-outbox.repository';
@@ -338,7 +337,7 @@ const T0 = new Date('2026-03-01T10:00:00Z');
 const CONSUMER = 'subscriber:notification.order-confirmation';
 
 /** The service under test, with the tables and the manager it writes through. */
-function outbox(appendSignal?: EventOutboxAppendSignal) {
+function outbox() {
 	const db = new Database(
 		new Map<unknown, (row: Row) => string>([
 			[EventOutbox, (row) => String(row.eventId)],
@@ -354,9 +353,7 @@ function outbox(appendSignal?: EventOutboxAppendSignal) {
 		events as unknown as TypeOrmEventOutboxRepository,
 		{} as never,
 		deliveries as unknown as TypeOrmEventDeliveryRepository,
-		{} as never,
-		undefined,
-		appendSignal
+		{} as never
 	);
 
 	return { service, db, calls, events: db.tableOf(EventOutbox), deliveries: db.tableOf(EventDelivery) };
@@ -381,45 +378,6 @@ beforeEach(() => {
 afterEach(() => {
 	jest.useRealTimers();
 	jest.restoreAllMocks();
-});
-
-describe('appending tells the dispatcher an event is waiting', () => {
-	it('announces each append once the row is written, so a pass starts in moments rather than at the next tick', async () => {
-		const signal = new EventOutboxAppendSignal();
-		const { service, db } = outbox(signal);
-		const written: number[] = [];
-
-		signal.listen(() => written.push(db.tableOf(EventOutbox).rows.length), 'inline');
-
-		await db.manager.transaction(async (manager) => {
-			await service.append(manager, placed());
-			await service.append(manager, placed({ aggregateId: OTHER_ORDER }));
-		});
-
-		// Once per append, and each time after its own row was written in the caller's unit of work.
-		expect(written).toEqual([1, 2]);
-	});
-
-	it('still stores the event when whatever listens fails', async () => {
-		const signal = new EventOutboxAppendSignal();
-		const { service, db } = outbox(signal);
-
-		signal.listen(() => {
-			throw new Error('the dispatcher is gone');
-		}, 'inline');
-
-		await db.manager.transaction((manager) => service.append(manager, placed()));
-
-		expect(db.tableOf(EventOutbox).rows).toHaveLength(1);
-	});
-
-	it('appends exactly as before where nothing listens', async () => {
-		const { service, db } = outbox();
-
-		await db.manager.transaction((manager) => service.append(manager, placed()));
-
-		expect(db.tableOf(EventOutbox).rows).toHaveLength(1);
-	});
 });
 
 describe('appending inside the caller’s transaction', () => {

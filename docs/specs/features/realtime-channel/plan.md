@@ -301,7 +301,15 @@ location; none of them changes the flag-off default.
    row a retention job removed, per scope, with `resync` whenever the client's cursor precedes that position
    in (`createdAt`, `eventId`) order (a cursor `(t, A)` when `(t, B)` was pruned is behind it); until a job
    exists, never.
-9. **Live events wait for the outbox dispatcher.** A hint reaches subscribers
+9. ~~**Live events wait for the outbox dispatcher.**~~ Resolved (T28): a
+   process that consumes the outbox dispatch queue runs a pass right after each
+   commit that appended an event (`EventOutboxCommitSignal`, raised from the
+   ORM's after-commit hook for the transaction the append used; the pass is
+   `EventOutboxDispatchWorker.wake`, coalesced so commits during a pass cost
+   one more pass). The outbox row is still written in the caller's transaction
+   and stays the replay and webhook record; the per-minute pass still runs and
+   retries. Off with `GAUZY_EVENT_OUTBOX_DISPATCH_ON_COMMIT=false`. Original:
+   a hint reaches subscribers
    when the dispatch pass hands its row to `GraphqlSubscriptionConsumer`, and
    that pass runs every minute (`EventOutboxDispatchScheduler`,
    `CronExpression.EVERY_MINUTE`), so a live event arrives up to about a

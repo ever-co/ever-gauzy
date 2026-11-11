@@ -3,6 +3,12 @@ import { ID, IInboxItemUpsertInput, InboxItemBodyFormatEnum, InboxItemKindEnum, 
 /** The `externalSource` of the Inbox items the integration files (one per connection: keyed by it). */
 export const ASANA_INBOX_SOURCE = 'integration-asana';
 
+/**
+ * The value of a connection's `attention_notice_at` while its open notice waits to be filed for the first time (the
+ * managers could not be read): the sweep files it then, re-surfacing it as the first filing of a refusal does.
+ */
+export const ATTENTION_NOTICE_DEFERRED = 'deferred';
+
 /** The connection the item is about: its id and where it lives. */
 export interface AsanaAttentionTenant {
 	id: ID;
@@ -11,11 +17,18 @@ export interface AsanaAttentionTenant {
 }
 
 /**
- * The Inbox item that tells the person who connected that Asana refused the connection's token — imports, webhooks and the scheduled sync of its Asana mappings are paused
+ * The Inbox item that tells the person who connected, and the organization's integration managers, that Asana refused the connection's token — imports, webhooks and the scheduled sync of its Asana mappings are paused
  * until someone connects again — or, with no reason, that the connection works again (the same item, resolved).
  * One item per connection: a second refusal updates it rather than filing another.
  */
-export function attentionItemOf(tenant: AsanaAttentionTenant, reason: string | null, recipientUserIds: readonly ID[], resurface = true): IInboxItemUpsertInput {
+export function attentionItemOf(
+	tenant: AsanaAttentionTenant,
+	reason: string | null,
+	recipientUserIds: readonly ID[],
+	resurface = true,
+	/** The recipients are known to be partial (the managers' read was cut at its limit): add them, remove nobody. */
+	partial = false
+): IInboxItemUpsertInput {
 	const open = !!reason;
 	return {
 		tenantId: tenant.tenantId,
@@ -32,9 +45,9 @@ export function attentionItemOf(tenant: AsanaAttentionTenant, reason: string | n
 		metadata: { integrationId: tenant.id, reason },
 		externalSource: ASANA_INBOX_SOURCE,
 		externalId: `${tenant.id}:attention`,
-		// An open notice is the current connecting user's alone (a former one is not told of a refusal that is not theirs);
-		// a resolution keeps everyone the notice reached.
-		replaceRecipients: open,
+		// An open notice is for the current connecting user and the current managers alone (a former one is not told of a refusal that is not theirs);
+		// a resolution keeps everyone the notice reached, and so does a filing whose recipients are partial.
+		replaceRecipients: open && !partial,
 		// A new refusal re-surfaces the notice: the recipient reads it again, from the inbox it may have archived it from.
 		// (a retry of a filing that was taken but not recorded names the recipient without touching their read state).
 		recipients: recipientUserIds.map((userId) => (open && resurface ? { userId, isRead: false, isArchived: false } : { userId }))

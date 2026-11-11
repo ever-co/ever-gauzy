@@ -12,6 +12,8 @@ import {
 	PluginCommonModule,
 	RolePermissionModule
 } from '@gauzy/core';
+import { LinearIssueBaseline, MikroOrmLinearIssueBaselineRepository, TypeOrmLinearIssueBaselineRepository } from './entities/linear-issue-baseline.entity';
+import { LinearSyncConflict, MikroOrmLinearSyncConflictRepository, TypeOrmLinearSyncConflictRepository } from './entities/linear-sync-conflict.entity';
 import { LinearSyncRun, MikroOrmLinearSyncRunRepository, TypeOrmLinearSyncRunRepository } from './entities/linear-sync-run.entity';
 import { LinearTeamMapping, MikroOrmLinearTeamMappingRepository, TypeOrmLinearTeamMappingRepository } from './entities/linear-team-mapping.entity';
 import { LinearAuthorizationController } from './linear-authorization.controller';
@@ -19,6 +21,7 @@ import { LinearCatalogService } from './linear-catalog.service';
 import { readLinearConfig } from './linear-config';
 import { LinearMappingService } from './linear-mapping.service';
 import { LinearOAuthStateService } from './linear-oauth-state.service';
+import { LinearSyncConflictService } from './linear-sync-conflict.service';
 import { LinearSyncRunService } from './linear-sync-run.service';
 import { LinearTenantService } from './linear-tenant.service';
 import { LinearWebhookController } from './linear-webhook.controller';
@@ -31,7 +34,7 @@ import { LinearIssueDetailsService } from './sync/linear-issue-details.service';
 import { LinearImportSweepService } from './maintenance/linear-import-sweep.service';
 
 /** Every table the plugin owns (its migration creates them). */
-export const LINEAR_ENTITIES = [LinearTeamMapping, LinearSyncRun];
+export const LINEAR_ENTITIES = [LinearTeamMapping, LinearSyncRun, LinearSyncConflict, LinearIssueBaseline];
 
 /**
  * The Linear integration module (`@gauzy/plugin-integration-linear`). Loaded only when `LINEAR_ENABLED=true`
@@ -66,6 +69,7 @@ export const LINEAR_ENTITIES = [LinearTeamMapping, LinearSyncRun];
 		LinearTenantService,
 		LinearMappingService,
 		LinearSyncRunService,
+		LinearSyncConflictService,
 		LinearSyncService,
 		LinearIssueDetailsService,
 		LinearImportSweepService,
@@ -74,6 +78,10 @@ export const LINEAR_ENTITIES = [LinearTeamMapping, LinearSyncRun];
 		MikroOrmLinearTeamMappingRepository,
 		TypeOrmLinearSyncRunRepository,
 		MikroOrmLinearSyncRunRepository,
+		TypeOrmLinearSyncConflictRepository,
+		MikroOrmLinearSyncConflictRepository,
+		TypeOrmLinearIssueBaselineRepository,
+		MikroOrmLinearIssueBaselineRepository,
 		{
 			provide: LINEAR_CONFIG,
 			useFactory: () => {

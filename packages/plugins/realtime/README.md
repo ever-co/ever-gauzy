@@ -41,14 +41,16 @@ Nothing new is invented for transport:
 
 ### How fast an event arrives
 
-An append asks for a dispatch pass right away instead of waiting for the
-per-minute tick:
+A commit that appended wakes the dispatch worker right away instead of waiting
+for the per-minute tick (`GAUZY_EVENT_OUTBOX_DISPATCH_ON_COMMIT=false` turns
+that off):
 
-- **No queue** (`REDIS_ENABLED` not `true`): the API drains the outbox itself,
-  about 75 ms after an append, once more a second later, and every 15 s as a
-  sweep. `EVENT_OUTBOX_INLINE_DISPATCH=false` turns this off.
-- **With a queue**: the append enqueues a draining pass on the outbox queue;
-  the per-minute tick stays as the safety net.
+- **With a queue**: the API's queue worker runs the passes; the per-minute tick
+  stays as the safety net.
+- **No queue** (`REDIS_ENABLED` not `true`): the API runs the same worker
+  in-process (`EventOutboxInlineDispatchModule`), woken by each commit and by a
+  15 s sweep. Before, nothing dispatched at all in this mode.
+  `EVENT_OUTBOX_INLINE_DISPATCH=false` turns it off.
 
 With Redis on, subscription events travel through Redis pub/sub between every
 API and worker process (`RedisGraphqlPubSubEngine`), so a pass run in one
@@ -146,7 +148,8 @@ Over `graphql-ws`, with the user's JWT in the `connection_init` payload
 every platform subscription. Keep as the resume position the `cursor` and
 `cursorId` of the last catch-up answer — **not** the newest event applied: the
 stream delivers neither in commit order nor at once (the outbox dispatcher runs
-every minute and retries), so a streamed event is no proof that the events
+right after each commit and every minute, and retries), so a streamed event is
+no proof that the events
 stamped before it have arrived. On every reconnect (and, while connected, every
 minute or so, to keep the position fresh) call `GET
 /api/realtime/events?after=&afterId=`, apply the answer by `eventId` (events
@@ -189,6 +192,15 @@ aggregate (its numbering continues from it) and rows a consumer has not
 acknowledged (a dead delivery is replayed from its outbox row) are never
 removed. A delivery whose outbox row was removed is not replayable: the replay
 answers not found.
+
+A replay and a pass that meet on one row do not lose it: the replay holds the
+row (`FOR UPDATE`) while it resets the delivery and re-queues the row, so either
+the delete lands first and the replay answers not found with the delivery
+untouched, or the delete waits and then keeps the row the replay re-queued. Both
+orders run on PostgreSQL, with the replay on TypeORM and on MikroORM, in
+`realtime-retention.replay-lock.postgres.spec.ts`:
+`REALTIME_TEST_POSTGRES_URL=postgres://… yarn nx run plugin-realtime:test-postgres`
+(a disposable database; without the URL the suite is skipped).
 
 It deletes rows, so it is a separate switch: on production, turn it on only
 after checking the database's backups. On a large outbox, also run `EXPLAIN`

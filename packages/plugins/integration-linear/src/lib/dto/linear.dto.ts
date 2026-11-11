@@ -1,8 +1,9 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
-import { IsBoolean, IsEnum, IsInt, IsObject, IsOptional, IsString, IsUUID, Max, MaxLength, Min } from 'class-validator';
+import { IsBoolean, IsEnum, IsIn, IsInt, IsObject, IsOptional, IsString, IsUUID, Max, MaxLength, Min } from 'class-validator';
 import { ID } from '@gauzy/contracts';
 import { TenantOrganizationBaseDTO } from '@gauzy/core';
+import { LinearSyncConflictStatus } from '../entities/linear-sync-conflict.entity';
 import { LinearSyncDirection } from '../entities/linear-team-mapping.entity';
 
 /**
@@ -104,4 +105,42 @@ export class LinearRunsQueryDTO {
 	@Min(1)
 	@Max(200)
 	take?: number;
+}
+
+/** `GET …/conflicts`: open ones by default; by mapping, task or run. */
+export class LinearConflictsQueryDTO {
+	@ApiPropertyOptional({ enum: LinearSyncConflictStatus })
+	@IsOptional()
+	@IsEnum(LinearSyncConflictStatus)
+	status?: LinearSyncConflictStatus;
+
+	@ApiPropertyOptional({ type: String })
+	@IsOptional()
+	@IsUUID()
+	mappingId?: ID;
+
+	@ApiPropertyOptional({ type: String })
+	@IsOptional()
+	@IsUUID()
+	taskId?: ID;
+
+	@ApiPropertyOptional({ type: String })
+	@IsOptional()
+	@IsUUID()
+	runId?: ID;
+
+	@ApiPropertyOptional({ type: Number })
+	@IsOptional()
+	@Transform(({ value }) => (value === undefined || value === '' ? undefined : Number(value)))
+	@IsInt()
+	@Min(1)
+	@Max(200)
+	take?: number;
+}
+
+/** `POST …/conflicts/:conflictId/resolve`: keep Linear's value (already the task's), or write the task's back. */
+export class ResolveLinearConflictDTO {
+	@ApiProperty({ enum: ['external', 'platform'] })
+	@IsIn(['external', 'platform'])
+	keep!: 'external' | 'platform';
 }

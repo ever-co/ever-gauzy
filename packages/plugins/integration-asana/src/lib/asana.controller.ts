@@ -3,12 +3,14 @@ import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ID, PermissionsEnum } from '@gauzy/contracts';
 import { PermissionGuard, Permissions, RequestContext, TenantPermissionGuard, UUIDValidationPipe, UseValidationPipe } from '@gauzy/core';
 import { AsanaApiClient, AsanaApiError } from './client/asana-api.client';
-import { AsanaImportDTO, AsanaInstallStateDTO, AsanaRunsQueryDTO, AsanaStatusQueryDTO, CreateAsanaMappingDTO, UpdateAsanaMappingDTO } from './dto/asana.dto';
+import { AsanaImportDTO, AsanaInstallStateDTO, AsanaRunsQueryDTO, AsanaConflictsQueryDTO, ResolveAsanaConflictDTO, AsanaStatusQueryDTO, CreateAsanaMappingDTO, UpdateAsanaMappingDTO } from './dto/asana.dto';
+import { AsanaSyncConflict } from './entities/asana-sync-conflict.entity';
 import { AsanaSyncRun } from './entities/asana-sync-run.entity';
 import { AsanaProjectMapping, AsanaSyncDirection } from './entities/asana-project-mapping.entity';
 import { AsanaConfig, isAsanaConfigured } from './asana-config';
 import { AsanaMappingService } from './asana-mapping.service';
 import { AsanaOAuthStateService } from './asana-oauth-state.service';
+import { AsanaSyncConflictService } from './asana-sync-conflict.service';
 import { AsanaSyncRunService } from './asana-sync-run.service';
 import { AsanaConnectionSummary, AsanaTenantService } from './asana-tenant.service';
 import { ASANA_CONFIG, ASANA_MAPPING_NOT_INBOUND, ASANA_NOT_CONFIGURED, ASANA_NOT_CONNECTED, ASANA_OAUTH_AUTHORIZE_URL, ASANA_REQUEST_REFUSED, ASANA_ROUTE_PREFIX, ASANA_TOKEN_REFUSED, ASANA_UNAVAILABLE, ASANA_WEBHOOK_NOT_REMOVED, AsanaSettingName } from './asana.constants';
@@ -44,6 +46,7 @@ export class AsanaController {
 		private readonly mappings: AsanaMappingService,
 		private readonly runs: AsanaSyncRunService,
 		private readonly sync: AsanaSyncService,
+		private readonly conflicts: AsanaSyncConflictService,
 		private readonly oauthState: AsanaOAuthStateService
 	) {}
 
@@ -244,8 +247,41 @@ export class AsanaController {
 	@Permissions(PermissionsEnum.INTEGRATION_VIEW, PermissionsEnum.INTEGRATION_ADD, PermissionsEnum.INTEGRATION_EDIT)
 	@Get('/:integrationId/runs')
 	@UseValidationPipe({ whitelist: true, transform: true })
-	async listRuns(@Param('integrationId', UUIDValidationPipe) integrationId: ID, @Query() query: AsanaRunsQueryDTO): Promise<AsanaSyncRun[]> {
+	async listRuns(@Param('integrationId', UUIDValidationPipe) integrationId: ID, @Query() query: AsanaRunsQueryDTO): Promise<Array<AsanaSyncRun & { conflictCount: number }>> {
 		const tenant = await this.tenants.requireById(integrationId);
-		return this.runs.list(tenant, query.take ?? 50);
+		const runs = await this.runs.list(tenant, query.take ?? 50);
+		// Each run with how many conflicts it found (the sync log).
+		const counts = await this.conflicts.countByRun(tenant, runs.map((run) => run.id as ID));
+		return runs.map((run) => Object.assign(run, { conflictCount: counts.get(String(run.id)) ?? 0 }));
+	}
+
+	/**
+	 * The fields changed both in Asana and on the platform to different values: Asana's value was applied, the
+	 * task's is kept in the record. Open ones by default.
+	 */
+	@ApiOperation({ summary: 'The sync conflicts of a connection' })
+	@Permissions(PermissionsEnum.INTEGRATION_VIEW, PermissionsEnum.INTEGRATION_ADD, PermissionsEnum.INTEGRATION_EDIT)
+	@Get('/:integrationId/conflicts')
+	@UseValidationPipe({ whitelist: true, transform: true })
+	async listConflicts(@Param('integrationId', UUIDValidationPipe) integrationId: ID, @Query() query: AsanaConflictsQueryDTO): Promise<AsanaSyncConflict[]> {
+		const tenant = await this.tenants.requireById(integrationId);
+		return this.conflicts.list(tenant, query);
+	}
+
+	/**
+	 * Resolves a conflict: `keep: external` leaves Asana's value; `keep: platform` writes the task's value back
+	 * (and a mapping that sends changes out sends it to the task). 409 when the task changed since.
+	 */
+	@ApiOperation({ summary: 'Resolve a sync conflict' })
+	@Post('/:integrationId/conflicts/:conflictId/resolve')
+	@HttpCode(HttpStatus.OK)
+	@UseValidationPipe({ whitelist: true })
+	async resolveConflict(
+		@Param('integrationId', UUIDValidationPipe) integrationId: ID,
+		@Param('conflictId', UUIDValidationPipe) conflictId: ID,
+		@Body() body: ResolveAsanaConflictDTO
+	): Promise<AsanaSyncConflict> {
+		const tenant = await this.tenants.requireById(integrationId);
+		return this.conflicts.resolve(tenant, conflictId, body.keep, (RequestContext.currentUserId() as ID) ?? null);
 	}
 }

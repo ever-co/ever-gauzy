@@ -24,7 +24,7 @@ import {
 	EventDeliveryEventPublisher
 } from './event-delivery.publisher';
 import { EventOutboxMikroOrmStore, IDeliveryReplayMove, isMikroOrmEntityManager } from './event-outbox-mikro-orm.store';
-import { EventOutboxAppendSignal } from './event-outbox-append.signal';
+import { EventOutboxCommitSignal } from './event-outbox-commit.signal';
 import { TypeOrmEventDeliveryRepository } from './repository/type-orm-event-delivery.repository';
 import { TypeOrmEventOutboxRepository } from './repository/type-orm-event-outbox.repository';
 import { MikroOrmEventDeliveryRepository } from './repository/mikro-orm-event-delivery.repository';
@@ -167,6 +167,13 @@ export class EventOutboxService extends CrudService<EventOutbox> {
 	/** The MikroORM half of every operation, over the same two repositories the CRUD base holds. */
 	private readonly mikroOrmStore: EventOutboxMikroOrmStore;
 
+	/**
+	 * Raised after the commit of each transaction that appended an event, so the dispatch worker can
+	 * hand the event over at once rather than on the next scheduled pass (T28). One per service, which
+	 * `EventOutboxModule` makes one per process.
+	 */
+	readonly commitSignal = new EventOutboxCommitSignal();
+
 	constructor(
 		readonly typeOrmEventOutboxRepository: TypeOrmEventOutboxRepository,
 		readonly mikroOrmEventOutboxRepository: MikroOrmEventOutboxRepository,
@@ -189,18 +196,20 @@ export class EventOutboxService extends CrudService<EventOutbox> {
 		 * that does serve the endpoint always has one, which its own suite asserts.
 		 */
 		@Optional()
-		private readonly deliveryPublisher?: EventDeliveryEventPublisher,
-		/**
-		 * What a pass is asked for by, right after an append, so an event is delivered in moments rather
-		 * than at the next per-minute tick. Optional for the same reason as the publisher: a suite or a
-		 * process that drains nothing appends exactly the same rows without it.
-		 */
-		@Optional()
-		private readonly appendSignal?: EventOutboxAppendSignal
+		private readonly deliveryPublisher?: EventDeliveryEventPublisher
 	) {
 		super(typeOrmEventOutboxRepository, mikroOrmEventOutboxRepository);
 
 		this.mikroOrmStore = new EventOutboxMikroOrmStore(mikroOrmEventOutboxRepository, mikroOrmEventDeliveryRepository);
+
+		// `em.transactional` copies the root manager's subscribers into each transaction's fork when the
+		// transaction starts, so the commit hook goes on the root manager before any transaction exists.
+		// A process that runs on TypeORM alone has no MikroORM manager to watch.
+		try {
+			this.commitSignal.watchMikroOrm(mikroOrmEventOutboxRepository?.getEntityManager?.()?.getEventManager?.());
+		} catch {
+			// Nothing to watch: an append under MikroORM registers the hook on its own manager instead.
+		}
 	}
 
 	/**
@@ -217,6 +226,10 @@ export class EventOutboxService extends CrudService<EventOutbox> {
 	 * repository's manager while the transaction is open, and otherwise the request's fork. Either way
 	 * the row joins the caller's unit of work and leaves with it on a rollback.
 	 *
+	 * **The append is watched until its transaction commits.** {@link commitSignal} fires after that
+	 * commit, not here, so the dispatch worker can hand the event over at once (T28) and a rollback
+	 * raises nothing. Watching adds no statement and no I/O to the caller's transaction.
+	 *
 	 * @param manager The caller's transaction manager, of either ORM.
 	 * @param input What changed.
 	 * @returns The stored row, including the `eventId` and `sequence` consumers will see.
@@ -224,11 +237,28 @@ export class EventOutboxService extends CrudService<EventOutbox> {
 	async append(manager: EntityManager | MikroOrmEntityManager, input: IOutboxWriteInput): Promise<EventOutbox> {
 		if (isMikroOrmEntityManager(manager)) {
 			const appended = await this.mikroOrmStore.append(manager, input);
-			this.appendSignal?.notify();
+
+			// The store inserted through the manager's own context, so that context is the one to watch.
+			this.commitSignal.appendedWithMikroOrm(manager.getContext(false));
 
 			return appended;
 		}
 
+		const saved = await this.appendWithTypeOrm(manager, input);
+
+		this.commitSignal.appendedWithTypeOrm(manager);
+
+		return saved;
+	}
+
+	/**
+	 * The TypeORM half of {@link append}.
+	 *
+	 * @param manager The caller's TypeORM manager.
+	 * @param input What changed.
+	 * @returns The stored row.
+	 */
+	private async appendWithTypeOrm(manager: EntityManager, input: IOutboxWriteInput): Promise<EventOutbox> {
 		// The ordering key defaults to the aggregate, because per-aggregate ordering is the only
 		// ordering the platform promises.
 		const partitionKey = input.partitionKey ?? `${input.aggregateType}:${input.aggregateId}`;
@@ -253,12 +283,7 @@ export class EventOutboxService extends CrudService<EventOutbox> {
 			organizationId: input.tenantWide ? undefined : (input.organizationId ?? RequestContext.currentOrganizationId())
 		} as Partial<EventOutbox>);
 
-		const saved = await manager.save(EventOutbox, event);
-		// After the write and before the caller commits: whoever listens waits a moment before it asks for
-		// a pass, and asks again a second later, so a commit that lands in between is still delivered.
-		this.appendSignal?.notify();
-
-		return saved;
+		return manager.save(EventOutbox, event);
 	}
 
 	/**
