@@ -7978,7 +7978,10 @@
 		"THIS_INCOME": "Deze inkomsten",
 		"THIS_MONTH": "Maand van deze inkomsten",
 		"MONTH_SHARE": "Aandeel in de maand",
-		"MONTH_SHARE_CAPTION": "Alle inkomsten in {{ month }}"
+		"MONTH_SHARE_CAPTION": "Alle inkomsten in {{ month }}",
+		"CHART_TYPE": "Grafiektype",
+		"BAR_CHART": "Staafdiagram",
+		"LINE_CHART": "Lijndiagram"
 	},
 	"TASK_VIEW": {
 		"PROJECT": "Project",

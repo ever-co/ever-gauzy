@@ -7975,7 +7975,10 @@
 		"THIS_INCOME": "Ce revenu",
 		"THIS_MONTH": "Mois de ce revenu",
 		"MONTH_SHARE": "Part du mois",
-		"MONTH_SHARE_CAPTION": "Tous les revenus de {{ month }}"
+		"MONTH_SHARE_CAPTION": "Tous les revenus de {{ month }}",
+		"CHART_TYPE": "Type de graphique",
+		"BAR_CHART": "Graphique à barres",
+		"LINE_CHART": "Graphique linéaire"
 	},
 	"TASK_VIEW": {
 		"PROJECT": "Projet",

@@ -7986,7 +7986,10 @@
 		"THIS_INCOME": "הכנסה זו",
 		"THIS_MONTH": "החודש של הכנסה זו",
 		"MONTH_SHARE": "חלק מהחודש",
-		"MONTH_SHARE_CAPTION": "כל ההכנסות ב-{{ month }}"
+		"MONTH_SHARE_CAPTION": "כל ההכנסות ב-{{ month }}",
+		"CHART_TYPE": "סוג תרשים",
+		"BAR_CHART": "תרשים עמודות",
+		"LINE_CHART": "תרשים קווי"
 	},
 	"TASK_VIEW": {
 		"PROJECT": "פרויקט",

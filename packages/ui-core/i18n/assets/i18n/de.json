@@ -7974,7 +7974,10 @@
 		"THIS_INCOME": "Diese Einnahme",
 		"THIS_MONTH": "Monat dieser Einnahme",
 		"MONTH_SHARE": "Anteil am Monat",
-		"MONTH_SHARE_CAPTION": "Alle Einnahmen im {{ month }}"
+		"MONTH_SHARE_CAPTION": "Alle Einnahmen im {{ month }}",
+		"CHART_TYPE": "Diagrammtyp",
+		"BAR_CHART": "Balkendiagramm",
+		"LINE_CHART": "Liniendiagramm"
 	},
 	"TASK_VIEW": {
 		"PROJECT": "Projekt",

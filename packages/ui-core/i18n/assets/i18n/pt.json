@@ -7978,7 +7978,10 @@
 		"THIS_INCOME": "Esta receita",
 		"THIS_MONTH": "Mês desta receita",
 		"MONTH_SHARE": "Parcela do mês",
-		"MONTH_SHARE_CAPTION": "Todas as receitas de {{ month }}"
+		"MONTH_SHARE_CAPTION": "Todas as receitas de {{ month }}",
+		"CHART_TYPE": "Tipo de gráfico",
+		"BAR_CHART": "Gráfico de barras",
+		"LINE_CHART": "Gráfico de linhas"
 	},
 	"TASK_VIEW": {
 		"PROJECT": "Projeto",

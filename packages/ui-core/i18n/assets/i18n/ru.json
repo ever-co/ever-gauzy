@@ -7994,7 +7994,10 @@
 		"THIS_INCOME": "Этот доход",
 		"THIS_MONTH": "Месяц этого дохода",
 		"MONTH_SHARE": "Доля в месяце",
-		"MONTH_SHARE_CAPTION": "Весь доход за {{ month }}"
+		"MONTH_SHARE_CAPTION": "Весь доход за {{ month }}",
+		"CHART_TYPE": "Тип диаграммы",
+		"BAR_CHART": "Столбчатая диаграмма",
+		"LINE_CHART": "Линейная диаграмма"
 	},
 	"TASK_VIEW": {
 		"PROJECT": "Проект",

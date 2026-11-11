@@ -7970,7 +7970,10 @@
 		"THIS_INCOME": "هذا الدخل",
 		"THIS_MONTH": "شهر هذا الدخل",
 		"MONTH_SHARE": "الحصة من الشهر",
-		"MONTH_SHARE_CAPTION": "كل الدخل في {{ month }}"
+		"MONTH_SHARE_CAPTION": "كل الدخل في {{ month }}",
+		"CHART_TYPE": "نوع الرسم البياني",
+		"BAR_CHART": "مخطط شريطي",
+		"LINE_CHART": "مخطط خطي"
 	},
 	"TASK_VIEW": {
 		"PROJECT": "المشروع",

@@ -6975,7 +6975,10 @@
 		"THIS_INCOME": "This income",
 		"THIS_MONTH": "This income's month",
 		"MONTH_SHARE": "Share of the month",
-		"MONTH_SHARE_CAPTION": "All income in {{ month }}"
+		"MONTH_SHARE_CAPTION": "All income in {{ month }}",
+		"CHART_TYPE": "Chart type",
+		"BAR_CHART": "Bar chart",
+		"LINE_CHART": "Line chart"
 	},
 	"TASK_VIEW": {
 		"PROJECT": "Project",

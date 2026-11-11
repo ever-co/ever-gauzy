@@ -8021,7 +8021,10 @@
 		"THIS_INCOME": "Този приход",
 		"THIS_MONTH": "Месецът на този приход",
 		"MONTH_SHARE": "Дял от месеца",
-		"MONTH_SHARE_CAPTION": "Всички приходи през {{ month }}"
+		"MONTH_SHARE_CAPTION": "Всички приходи през {{ month }}",
+		"CHART_TYPE": "Тип диаграма",
+		"BAR_CHART": "Стълбовидна диаграма",
+		"LINE_CHART": "Линейна диаграма"
 	},
 	"TASK_VIEW": {
 		"PROJECT": "Проект",

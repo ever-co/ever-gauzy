@@ -9192,7 +9192,10 @@
 		"THIS_INCOME": "此收入",
 		"THIS_MONTH": "此收入所在月份",
 		"MONTH_SHARE": "当月占比",
-		"MONTH_SHARE_CAPTION": "{{ month }} 的全部收入"
+		"MONTH_SHARE_CAPTION": "{{ month }} 的全部收入",
+		"CHART_TYPE": "图表类型",
+		"BAR_CHART": "柱状图",
+		"LINE_CHART": "折线图"
 	},
 	"TASK_VIEW": {
 		"PROJECT": "项目",

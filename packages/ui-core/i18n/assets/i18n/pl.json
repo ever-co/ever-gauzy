@@ -7977,7 +7977,10 @@
 		"THIS_INCOME": "Ten przychód",
 		"THIS_MONTH": "Miesiąc tego przychodu",
 		"MONTH_SHARE": "Udział w miesiącu",
-		"MONTH_SHARE_CAPTION": "Wszystkie przychody w {{ month }}"
+		"MONTH_SHARE_CAPTION": "Wszystkie przychody w {{ month }}",
+		"CHART_TYPE": "Typ wykresu",
+		"BAR_CHART": "Wykres słupkowy",
+		"LINE_CHART": "Wykres liniowy"
 	},
 	"TASK_VIEW": {
 		"PROJECT": "Projekt",
