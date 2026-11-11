@@ -126,21 +126,21 @@ export class TaskAutomationRunStore {
 	/** A rule's runs, newest first (at most the shown limit). */
 	async history(ruleId: ID, limit: number = TASK_AUTOMATION_LIMITS.runsShown): Promise<ITaskAutomationRun[]> {
 		const take = Math.max(1, Math.min(Number(limit) || TASK_AUTOMATION_LIMITS.runsShown, TASK_AUTOMATION_LIMITS.runsShown));
-		const rows = await this.runs.find({ where: { ruleId } as never, order: { createdAt: 'DESC' } as never, take });
+		const rows = await this.runs.find({ where: { ruleId } as never, order: { createdAt: 'DESC', id: 'DESC' } as never, take });
 		return rows.map(runFromRow);
 	}
 
-	/** Deletes a rule's runs beyond the newest it keeps. */
+	/** Deletes a rule's runs beyond the newest it keeps (by id: runs written in the same instant are not lumped together). */
 	async prune(ruleId: ID, keep: number = TASK_AUTOMATION_LIMITS.runsKept): Promise<number> {
-		const [boundary] = await this.runs.find({
+		const beyond = await this.runs.find({
 			where: { ruleId } as never,
-			order: { createdAt: 'DESC' } as never,
+			order: { createdAt: 'DESC', id: 'DESC' } as never,
 			skip: keep,
-			take: 1,
-			select: { id: true, createdAt: true } as never
+			take: 500,
+			select: { id: true } as never
 		});
-		if (!boundary) return 0;
-		const result = await this.runs.delete({ ruleId, createdAt: LessThanOrEqual(boundary.createdAt) } as never);
-		return result.affected ?? 0;
+		if (!beyond.length) return 0;
+		const result = await this.runs.delete({ id: In(beyond.map((row) => row.id)) } as never);
+		return result.affected ?? beyond.length;
 	}
 }
