@@ -5,7 +5,6 @@ import { IUser, PermissionsEnum } from '@gauzy/contracts';
 import { RequestContext } from '../core/context';
 import { CrudService } from '../core/crud/crud.service';
 import { TenantAwareCrudService } from '../core/crud';
-import { MultiORMEnum } from '../core/utils';
 import { asTenantUser, createTenantFixture } from '../core/testing/tenant-isolation/tenant-isolation.fixtures';
 import { BaseEntityEventTypeEnum } from '../event-bus/base-entity-event';
 import { TaskEvent } from '../event-bus/events';
@@ -55,8 +54,7 @@ describe('TaskService — the trash', () => {
 		service = Object.create(TaskService.prototype);
 		Object.assign(service, {
 			_domainEventBus: { publish },
-			_managedEmployeeService: { isManagerOfTeamsOrProjects: isManager },
-			ormType: MultiORMEnum.TypeORM
+			_managedEmployeeService: { isManagerOfTeamsOrProjects: isManager }
 		});
 		jest.spyOn(TenantAwareCrudService.prototype, 'findOneByIdString').mockResolvedValue(trashed as never);
 		baseFindAll = jest
