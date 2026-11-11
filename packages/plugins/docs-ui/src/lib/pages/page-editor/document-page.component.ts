@@ -664,13 +664,19 @@ export class DocumentPageComponent implements OnInit, OnDestroy {
 	}
 
 	/** Moves the page (and, by default, the pages under it) to another space (`GAUZY_DOCS_COLLAB_ENABLED`). */
-	openMoveSpaceDialog(): void {
+	async openMoveSpaceDialog(): Promise<void> {
 		if (!this.document) return;
 		this.menuOpen = false;
+		// Pending edits are saved first, under the token they were made against: the move writes the row too.
+		await this.editorComponent?.flush();
 		this.dialogService
 			.open(MoveSpaceDialogComponent, { context: { document: this.document } })
-			.onClose.subscribe((moved) => {
-				if (moved) void this.load();
+			.onClose.subscribe((moved: IDocument | null) => {
+				if (!moved) return;
+				// The move stamped the row: the autosave continues from the moved row's token (as after a lock
+				// toggle), or its next save would be a 409 although nobody else changed the content.
+				this.editorComponent?.lockReleased(moved);
+				void this.load();
 			});
 	}
 
