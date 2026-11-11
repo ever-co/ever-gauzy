@@ -1770,7 +1770,11 @@
 		"unfollowing",
 		"sqljs",
 		"refetched",
-		"hugeicons"
+		"hugeicons",
+		"Abebe",
+		"haspopup",
+		"menuitemradio",
+		"popout"
 	],
 	"useGitignore": true,
 	"ignorePaths": [
