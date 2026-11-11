@@ -223,8 +223,8 @@ export class RecordViewComponent implements OnChanges {
 	}
 
 	/**
-	 * A tag's colour as CSS, read as the tag picker reads it: a stored hex may lack its `#`, and an unreadable
-	 * colour falls back to black.
+	 * A tag's colour as CSS, read as the tag picker reads it: a stored hex may lack its `#`. A tag with no readable
+	 * colour takes the theme's secondary text colour, so its chip follows the light and the dark theme.
 	 */
 	private static tagColor(color: string | null | undefined): string {
 		const value = typeof color === 'string' ? color.trim() : '';
@@ -232,7 +232,7 @@ export class RecordViewComponent implements OnChanges {
 			return `#${value}`;
 		}
 		const valid = !!value && (typeof CSS === 'undefined' || CSS.supports('color', value));
-		return valid ? value : '#000000';
+		return valid ? value : 'var(--gauzy-text-color-2)';
 	}
 
 	/**
