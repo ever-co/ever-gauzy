@@ -3,10 +3,11 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { ITreeOptions, TreeComponent, TreeModel, TreeNode, TREE_ACTIONS } from '@ali-hm/angular-tree-component';
 import { NbDialogService, NbMenuItem, NbMenuService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { ofType } from '@ngneat/effects';
 import { Actions } from '@ngneat/effects-ng';
 import { TranslateService } from '@ngx-translate/core';
 import { NgxPermissionsService } from 'ngx-permissions';
-import { filter, firstValueFrom, map, Observable } from 'rxjs';
+import { debounceTime, distinctUntilChanged, filter, firstValueFrom, map, Observable, skip } from 'rxjs';
 import { DocumentKindEnum, DocumentSpaceKindEnum, ID, IDocument, IDocumentSpace, PermissionsEnum } from '@gauzy/contracts';
 import { FavoriteStoreService, Store, ToastrService } from '@gauzy/ui-core/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
@@ -76,6 +77,7 @@ export class DocsTreeComponent extends TranslationBaseComponent implements OnIni
 	public recents: IRecentEntry[] = [];
 	/** The spaces of the tree (`GAUZY_DOCS_COLLAB_ENABLED`); empty when team spaces are off. */
 	public spaces: IDocumentSpace[] = [];
+	private spacesRequest = 0;
 	public favorites$: Observable<{ title: string; link?: string; icon?: unknown }[]>;
 	public readonly kindEnum = DocumentKindEnum;
 	protected readonly actionMenuClass = DOCS_ACTION_MENU_CLASS;
@@ -191,6 +193,27 @@ export class DocsTreeComponent extends TranslationBaseComponent implements OnIni
 		// (`document-tree.store.ts` `invalidate` / `invalidateAll`).
 		void this.treeStore.loadRoots().catch(() => undefined);
 		this.loadSpaces();
+		// Another organization: its spaces, and the tree of every space (a selected team is the old organization's).
+		this.store.selectedOrganization$
+			.pipe(
+				map((organization) => organization?.id ?? null),
+				distinctUntilChanged(),
+				skip(1),
+				untilDestroyed(this)
+			)
+			.subscribe(() => {
+				this.spaces = [];
+				void this.treeStore.selectSpace(null).catch(() => undefined);
+				this.loadSpaces();
+			});
+		// A create, a move, an archive, a bulk action changes what a space lists: its counts are read again.
+		this.actions
+			.pipe(
+				ofType(DocumentsActions.rowChanged, DocumentsActions.rowRemoved, DocumentsActions.bulkCompleted),
+				debounceTime(500),
+				untilDestroyed(this)
+			)
+			.subscribe(() => this.loadSpaces());
 
 		// Starred documents from the shared favorites store, filtered to Documents links.
 		this.favorites$ = this.favoriteStore.favoriteItems$.pipe(
@@ -247,13 +270,27 @@ export class DocsTreeComponent extends TranslationBaseComponent implements OnIni
 	 * section hidden — when team spaces are off on the platform (the route answers 404).
 	 */
 	loadSpaces(): void {
+		// Only the latest read is shown: an earlier one (another organization, an older count) is dropped.
+		const request = ++this.spacesRequest;
 		this.documentsService
 			.getSpaces()
 			.pipe(untilDestroyed(this))
 			.subscribe({
-				next: (spaces: IDocumentSpace[]) => (this.spaces = spaces ?? []),
-				error: () => (this.spaces = [])
+				next: (spaces: IDocumentSpace[]) => {
+					if (request === this.spacesRequest) this.spaces = spaces ?? [];
+				},
+				error: () => {
+					if (request === this.spacesRequest) this.spaces = [];
+				}
 			});
+	}
+
+	/**
+	 * A space button took the focus: the tree lets go of its keyboard, whose body-level handler would otherwise take
+	 * Enter and Space from the button.
+	 */
+	releaseTreeFocus(): void {
+		this.tree?.treeModel?.setFocus(false);
 	}
 
 	/** Narrows the tree's top level to a space, or back to every space when it is the one already selected. */

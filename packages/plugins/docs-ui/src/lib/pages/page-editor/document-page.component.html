@@ -79,6 +79,7 @@
 						type="button"
 						[disabled]="followBusy"
 						[attr.aria-pressed]="followState.following"
+						[attr.aria-label]="'DOCS.FOLLOW.FOLLOW' | translate"
 						[nbTooltip]="(followState.following ? 'DOCS.FOLLOW.UNFOLLOW' : 'DOCS.FOLLOW.FOLLOW') | translate"
 						(click)="toggleFollow()"
 					>
@@ -91,6 +92,7 @@
 						type="button"
 						[disabled]="followBusy"
 						[attr.aria-pressed]="followState.muted"
+						[attr.aria-label]="'DOCS.FOLLOW.MUTE' | translate"
 						[nbTooltip]="(followState.muted ? 'DOCS.FOLLOW.UNMUTE' : 'DOCS.FOLLOW.MUTE') | translate"
 						(click)="toggleMute()"
 					>

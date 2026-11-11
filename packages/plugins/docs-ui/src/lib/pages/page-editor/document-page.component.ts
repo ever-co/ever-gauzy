@@ -127,6 +127,8 @@ export class DocumentPageComponent implements OnInit, OnDestroy {
 	/** Whether the caller follows / muted the page; `null` hides the buttons (collaboration off, or unknown). */
 	public followState: IDocumentFollowState | null = null;
 	public followBusy = false;
+	/** Bumps on every follow read and action; an answer to an older one is dropped. */
+	private followRequest = 0;
 	public versionsOpen = false;
 	public menuOpen = false;
 	public iconPickerOpen = false;
@@ -353,9 +355,12 @@ export class DocumentPageComponent implements OnInit, OnDestroy {
 	 */
 	loadFollowState(id: ID): void {
 		this.followState = null;
+		// Only the latest read or action decides the state: an older read (an earlier visit to the same page) that
+		// answers late does not overwrite what a later one confirmed.
+		const request = ++this.followRequest;
 		this.documentsService.getFollowState(id).subscribe({
 			next: (state) => {
-				if (String(this.document?.id) !== String(id)) return;
+				if (request !== this.followRequest || String(this.document?.id) !== String(id)) return;
 				this.followState = state;
 				this.cdr.markForCheck();
 			},
@@ -377,9 +382,10 @@ export class DocumentPageComponent implements OnInit, OnDestroy {
 		const id = this.document?.id;
 		if (!id || this.followBusy) return;
 		this.followBusy = true;
+		const request = ++this.followRequest;
 		try {
 			const state = await firstValueFrom(this.documentsService.setFollow(id, action));
-			if (String(this.document?.id) === String(id)) this.followState = state;
+			if (request === this.followRequest && String(this.document?.id) === String(id)) this.followState = state;
 		} catch {
 			this.toastrService.danger(this.translate.instant('DOCS.FOLLOW.FAILED'));
 		} finally {

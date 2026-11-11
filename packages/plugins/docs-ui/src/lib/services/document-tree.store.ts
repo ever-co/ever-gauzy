@@ -188,6 +188,8 @@ export class DocumentTreeStore {
 
 	/** Full cache reset (org switch, bulk mutations) — the roots are reloaded. */
 	invalidateAll(): void {
+		// A read still running belongs to the cache being dropped.
+		this.spaceSelection += 1;
 		const hadRoots = this._children.has('');
 		this._children.clear();
 		this._byId.clear();
