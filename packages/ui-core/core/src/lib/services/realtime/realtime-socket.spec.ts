@@ -232,6 +232,40 @@ describe('RealtimeSocket', () => {
 		expect(next.subscribed()).toHaveLength(1);
 	});
 
+	it('fails the open subscriptions at once on sign-out, even while a reconnect waits', async () => {
+		let params: Record<string, unknown> | null = { authorization: 'Bearer t' };
+		const client = new RealtimeSocket({
+			url: () => 'wss://api.example.com/graphql',
+			connectionParams: () => params,
+			createSocket: (url, protocol) => new FakeSocket(url, protocol),
+			pingIntervalMs: 0,
+			ackTimeoutMs: 0,
+			random: () => 1,
+			setTimeout: (fn, ms) => {
+				const timer = { fn, ms };
+				timers.push(timer);
+				return timer;
+			},
+			clearTimeout: (handle) => {
+				timers = timers.filter((timer) => timer !== handle);
+			}
+		});
+		const failed = jest.fn();
+		client.subscribe('subscription { a }').subscribe({ error: failed });
+		FakeSocket.all[0].open();
+		FakeSocket.all[0].say({ type: 'connection_ack' });
+		FakeSocket.all[0].drop(1006);
+		await flush();
+		expect(timers).toHaveLength(1);
+
+		params = null;
+		client.refresh();
+
+		expect(failed).toHaveBeenCalledWith(expect.any(RealtimeSocketUnavailableError));
+		expect(timers).toHaveLength(0);
+		expect(client.status$.value).toBe('stopped');
+	});
+
 	it('answers a ping with a pong', () => {
 		const connection = new GraphqlWsConnection({
 			url: 'wss://x/graphql',

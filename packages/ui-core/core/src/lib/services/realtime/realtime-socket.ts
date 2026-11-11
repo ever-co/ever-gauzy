@@ -112,12 +112,13 @@ export class RealtimeSocket {
 	 * previous ones would keep streaming their events. Every open subscription starts again on the new socket.
 	 */
 	refresh(): void {
-		if (!this.connection) {
+		const params = this.options.connectionParams();
+		// Signed out: fail what is open now (also while a reconnect waits in its backoff, with no socket).
+		if (!params && (this.connection || this.reconnectTimer !== null || this.operations.size > 0)) {
+			this.stopWith(new RealtimeSocketUnavailableError('Not signed in.'));
 			return;
 		}
-		const params = this.options.connectionParams();
-		if (!params) {
-			this.stopWith(new RealtimeSocketUnavailableError('Not signed in.'));
+		if (!this.connection || !params) {
 			return;
 		}
 		if (JSON.stringify(params) === this.connectedParams) {
