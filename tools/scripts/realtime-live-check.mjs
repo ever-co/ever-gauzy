@@ -6,7 +6,7 @@
  *
  * It needs a signed-in user's credential, which the operator provides — this script never signs in:
  *
- *   GAUZY_API_URL=https://apidemo.gauzy.co/api \
+ *   GAUZY_API_URL=https://api.example.com/api \
  *   GAUZY_TOKEN=<access token> GAUZY_TENANT_ID=<tenant> GAUZY_ORGANIZATION_ID=<organization> \
  *   GAUZY_TASK_ID=<a task the user may update> \
  *   node tools/scripts/realtime-live-check.mjs

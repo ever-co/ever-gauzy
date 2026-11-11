@@ -1,3 +1,4 @@
+// cspell:ignore pmessage psubscribe PGPORT
 import { Logger } from '@nestjs/common';
 import { createHash } from 'node:crypto';
 import { Redis } from 'ioredis';
