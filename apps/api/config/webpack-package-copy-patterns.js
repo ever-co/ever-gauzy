@@ -49,6 +49,7 @@ const SKIP_PACKAGES = new Set([
 	'plugin-integration-linear-ui',
 	'plugin-integration-asana-ui',
 	'plugin-integration-trello-ui',
+	'plugin-integration-jira-ui',
 	'plugin-auth-zitadel-ui',
 	'plugin-ever-stats-ui',
 	'plugin-ever-connect-ui',
