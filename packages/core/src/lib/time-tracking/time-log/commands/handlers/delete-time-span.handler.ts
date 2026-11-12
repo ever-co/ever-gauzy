@@ -249,9 +249,10 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 			try {
 				this.debug(() => `update stoppedAt time to ${start}`);
 
-				// Update the stoppedAt time, releasing the slots after it
+				// Update the stoppedAt time, releasing the slots after it. With its own start too: an update naming none
+				// files the log under the current week's timesheet (as the split does below)
 				let timeLog: ITimeLog = await this._commandBus.execute(
-					new TimeLogUpdateCommand({ stoppedAt: start }, log, true, forceDelete)
+					new TimeLogUpdateCommand({ startedAt, stoppedAt: start }, log, true, forceDelete)
 				);
 
 				// Check if there are any remaining time slots

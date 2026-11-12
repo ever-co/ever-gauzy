@@ -1060,10 +1060,9 @@ describe('DeleteTimeSpanHandler when a cut at one end or a delete fails (#11823)
 			{ range: '08:00-09:00', isRunning: false, slots: slotStarts('08:00', '09:00') },
 			{ range: '09:55-10:30', isRunning: false, slots: slotStarts('09:55', '10:30') }
 		]);
-		// A cut at the end names no start, so the update files the log under the current week's timesheet: both
-		// timesheets are recalculated.
+		// A cut at the end names the log's own start, so the log stays under its own week's timesheet.
 		expect(store.recalculated()).toEqual({
-			timesheets: [timesheetOf(at('08:00')), timesheetOf()],
+			timesheets: [timesheetOf(at('08:00'))],
 			employees: [EMPLOYEE_ID]
 		});
 		expect(outcome).toBe('The unlink failed');
