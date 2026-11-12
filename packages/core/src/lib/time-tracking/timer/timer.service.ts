@@ -67,6 +67,8 @@ import {
 	teamIdForEntry
 } from '../time-log/organization-tracking-requirements';
 import { isTrackerSource } from '../time-log/tracker-source';
+import { TimeSlotDurationRecalculateCommand } from '../time-slot/commands';
+import { timeSlotIdsReachedBy } from '../time-slot/utils';
 import { TypeOrmTimeLogRepository } from '../time-log/repository/type-orm-time-log.repository';
 import { MikroOrmTimeLogRepository } from '../time-log/repository/mikro-orm-time-log.repository';
 import { TypeOrmEmployeeRepository } from '../../employee/repository/type-orm-employee.repository';
@@ -629,6 +631,8 @@ export class TimerService {
 			// Validate the date range and check if the timer is running
 			validateDateRange(lastLog.startedAt, lastLog.stoppedAt);
 
+			const logOrganizationId = organizationId || lastLog.organizationId;
+
 			// Retrieve conflicting time logs
 			const conflicts = await this._commandBus.execute(
 				new IGetConflictTimeLogCommand({
@@ -636,7 +640,7 @@ export class TimerService {
 					startDate: lastLog.startedAt,
 					endDate: lastLog.stoppedAt,
 					employeeId: lastLog.employeeId,
-					organizationId: organizationId || lastLog.organizationId,
+					organizationId: logOrganizationId,
 					tenantId
 				})
 			);
@@ -649,7 +653,7 @@ export class TimerService {
 						startDate: lastLog.startedAt,
 						endDate: lastLog.stoppedAt,
 						employeeId: lastLog.employeeId,
-						organizationId: organizationId || lastLog.organizationId,
+						organizationId: logOrganizationId,
 						tenantId
 					})}`
 			);
@@ -660,10 +664,21 @@ export class TimerService {
 					start: new Date(lastLog.startedAt),
 					end: new Date(lastLog.stoppedAt)
 				};
+				const sharedTimeSlotsIds = timeSlotIdsReachedBy(times, conflicts);
 
 				for (const timeLog of conflicts) {
 					await this._commandBus.execute(new DeleteTimeSpanCommand(times, timeLog, undefined, forceDelete));
 				}
+
+				// Saving the stopped log summed its time with theirs in the slots they share, overlap included
+				await this._commandBus.execute(
+					new TimeSlotDurationRecalculateCommand({
+						organizationId: logOrganizationId,
+						employeeId: lastLog.employeeId,
+						tenantId,
+						timeSlotsIds: sharedTimeSlotsIds
+					})
+				);
 			}
 		} catch (error) {
 			this.logger.warn(`Error while handling conflicts in time logs: ${error?.message}`);

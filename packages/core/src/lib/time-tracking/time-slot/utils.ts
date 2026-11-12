@@ -1,5 +1,5 @@
 import * as moment from 'moment';
-import { ITimeSlot } from '@gauzy/contracts';
+import { ID, IDateRange, ITimeLog, ITimeSlot } from '@gauzy/contracts';
 
 /** A time slot covers the ten minutes from its start, as `TimeSlotSubscriber` sets its `stoppedAt`. */
 const TIME_SLOT_MINUTES = 10;
@@ -39,6 +39,19 @@ export function timeInTimeSlot(timeSlot: ITimeSlot, from: Date, to: Date): numbe
 	const timeEnd = moment.min(moment(timeSlotEnd(timeSlot)), moment(to));
 	const milliseconds = timeEnd.diff(timeStart);
 	return Math.max(milliseconds, 0);
+}
+
+/**
+ * The ids of the time slots the logs hold whose ten minutes the span reaches, each once.
+ *
+ * @param span - The span.
+ * @param timeLogs - The logs, with their time slots.
+ */
+export function timeSlotIdsReachedBy(span: IDateRange, timeLogs: ITimeLog[] = []): ID[] {
+	const timeSlots = timeLogs.flatMap((timeLog) => timeLog.timeSlots ?? []);
+	const reached = timeSlots.filter((timeSlot) => reachesTimeSlot(timeSlot, span.start, span.end));
+	const ids = reached.map((timeSlot) => timeSlot.id);
+	return [...new Set(ids)];
 }
 
 /**
