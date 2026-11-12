@@ -18,9 +18,9 @@ import {
 	isUnread,
 	memberEmployeeIds,
 	membershipOf,
+	messagePreview,
 	newNonce,
 	personTriggerOf,
-	plainBody,
 	sortConversations
 } from '../../chat-ui.helpers';
 import { ChatAvailabilityService, isFinalRefusal } from '../../services/chat-availability.service';
@@ -1373,7 +1373,7 @@ export class ChatPageComponent implements OnInit {
 	}
 
 	protected preview(thread: ChatFollowedThread): string {
-		return plainBody(thread.body ?? '', this.people().byEmployee, this.conversationNames());
+		return messagePreview(thread, this.people().byEmployee, this.conversationNames());
 	}
 
 	protected link(conversationId: string): string {

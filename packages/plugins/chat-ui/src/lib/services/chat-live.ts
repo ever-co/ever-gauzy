@@ -1,6 +1,6 @@
 import { asyncScheduler, BehaviorSubject, defer, merge, NEVER, Observable, of, OperatorFunction, SchedulerLike, Subject, Subscription, timer } from 'rxjs';
 import { catchError, distinctUntilChanged, filter, finalize, ignoreElements, map, repeat, retry, share, switchMap, tap } from 'rxjs/operators';
-import { CHAT_EVENT_NAMES, CHAT_STREAMED_EVENTS, ChatEventName, IRealtimeEventEnvelope, IRealtimeStatus } from '@gauzy/contracts';
+import { CHAT_EVENT_NAMES, CHAT_STREAMED_EVENTS, CHAT_TYPING_TTL_MS, ChatEventName, IRealtimeEventEnvelope, IRealtimeStatus, REALTIME_EVENT_NAMES } from '@gauzy/contracts';
 
 /**
  * The chat families of the platform's collaboration events (`packages/plugins/realtime/README.md`): what the chat
@@ -40,6 +40,42 @@ export interface ChatHint {
 	threadRootId: string | null;
 	/** What changed of a conversation (`created`, `updated`, `archived`, `members`, `removed`). */
 	change: string | null;
+	/** Who wrote the message (a new message ends its author's "is typing"). */
+	authorUserId?: string | null;
+}
+
+/** Someone typing in a conversation (or one of its threads), until `expiresAt` (this tab's clock) unless told again. */
+export interface ChatTypingSignal {
+	conversationId: string;
+	threadRootId: string | null;
+	userId: string;
+	employeeId: string | null;
+	expiresAt: number;
+}
+
+/** The longest a typing signal is shown without being told again, whatever it asks. */
+export const CHAT_TYPING_MAX_TTL_MS = 30_000;
+
+/**
+ * Reads one envelope as a typing signal (the realtime channel's `typing.signalled`), or null. The time it holds is
+ * counted from its arrival on this tab's clock (never from the sender's), for what the signal asks (`expiresInMs`,
+ * bounded) or the chat's own few seconds.
+ */
+export function chatTypingOf(envelope: Partial<IRealtimeEventEnvelope> | null | undefined, now: number = Date.now()): ChatTypingSignal | null {
+	if (!envelope || envelope.eventName !== REALTIME_EVENT_NAMES.TYPING_SIGNALLED) return null;
+	const raw = envelope.data;
+	const data = raw !== null && typeof raw === 'object' && !Array.isArray(raw) ? (raw as Record<string, unknown>) : {};
+	const conversationId = idOf(data['conversationId']);
+	const userId = idOf(data['userId']);
+	if (!conversationId || !userId) return null;
+	const asked = data['expiresInMs'];
+	const ttl = typeof asked === 'number' && Number.isFinite(asked) && asked > 0 ? Math.min(asked, CHAT_TYPING_MAX_TTL_MS) : CHAT_TYPING_TTL_MS;
+	return { conversationId, threadRootId: idOf(data['threadRootId']), userId, employeeId: idOf(data['employeeId']), expiresAt: now + ttl };
+}
+
+/** Whether the platform offers the typing signal on the subscription (its realtime status lists it). */
+export function servesTyping(status: IRealtimeStatus | null | undefined): boolean {
+	return (status?.signals ?? []).some((name) => name === REALTIME_EVENT_NAMES.TYPING_SIGNALLED);
 }
 
 const CHAT_NAMES = new Set<string>(Object.values(CHAT_EVENT_NAMES));
@@ -68,7 +104,8 @@ export function chatHintOf(envelope: Partial<IRealtimeEventEnvelope> | null | un
 		conversationId,
 		messageId,
 		threadRootId,
-		change: typeof data['change'] === 'string' ? (data['change'] as string) : null
+		change: typeof data['change'] === 'string' ? (data['change'] as string) : null,
+		authorUserId: idOf(data['authorUserId'])
 	};
 }
 
@@ -144,6 +181,10 @@ export const CHAT_LIVE_TIMING: ChatLiveTiming = {
  */
 export class ChatLiveChannel {
 	readonly hints$: Observable<ChatHint>;
+	/** The typing signals of the members (where the platform offers them), on the same subscription. */
+	readonly typing$: Observable<ChatTypingSignal>;
+	/** The subscription's envelopes, shared by `hints$` and `typing$`. */
+	private readonly envelopes$: Observable<Partial<IRealtimeEventEnvelope>>;
 
 	private readonly modes = new BehaviorSubject<ChatLiveMode>('fallback');
 	private readonly resumes = new Subject<void>();
@@ -155,10 +196,18 @@ export class ChatLiveChannel {
 		private readonly timing: ChatLiveTiming = CHAT_LIVE_TIMING,
 		private readonly scheduler: SchedulerLike = asyncScheduler
 	) {
-		this.hints$ = source.scope$.pipe(
+		this.envelopes$ = source.scope$.pipe(
 			distinctUntilChanged(),
 			switchMap((scope) => (scope ? this.follow() : this.idle())),
 			share()
+		);
+		this.hints$ = this.envelopes$.pipe(
+			map((envelope) => chatHintOf(envelope)),
+			filter((hint): hint is ChatHint => hint !== null)
+		);
+		this.typing$ = this.envelopes$.pipe(
+			map((envelope) => chatTypingOf(envelope)),
+			filter((signal): signal is ChatTypingSignal => signal !== null)
 		);
 	}
 
@@ -167,13 +216,13 @@ export class ChatLiveChannel {
 		return this.modes.value;
 	}
 
-	private idle(): Observable<ChatHint> {
+	private idle(): Observable<Partial<IRealtimeEventEnvelope>> {
 		this.modes.next('fallback');
 		return NEVER;
 	}
 
 	/** One scope: ask whether the chat events are streamed, then keep a subscription open while anyone listens. */
-	private follow(): Observable<ChatHint> {
+	private follow(): Observable<Partial<IRealtimeEventEnvelope>> {
 		return defer(() => {
 			const state = { prompt: false, connected: false, streaming: false };
 			let settle: Subscription | null = null;
@@ -204,7 +253,9 @@ export class ChatLiveChannel {
 						}),
 						ignoreElements()
 					);
-					const stream$ = defer(() => this.source.subscribe(CHAT_EVENTS_SUBSCRIPTION, { names: [...CHAT_LIVE_SELECTION] })).pipe(
+					// The typing signal rides on the same subscription, where the platform offers it.
+					const names = [...CHAT_LIVE_SELECTION, ...(servesTyping(status) ? [REALTIME_EVENT_NAMES.TYPING_SIGNALLED] : [])];
+					const stream$ = defer(() => this.source.subscribe(CHAT_EVENTS_SUBSCRIPTION, { names })).pipe(
 						tap({
 							subscribe: () => {
 								state.streaming = true;
@@ -218,8 +269,8 @@ export class ChatLiveChannel {
 						// A subscription the platform ended, or that failed, is opened again after a growing wait.
 						repeat({ delay: () => timer(this.timing.retryMinMs, this.scheduler) }),
 						retry({ delay: (_error: unknown, attempt: number) => timer(this.backoff(attempt), this.scheduler), resetOnSuccess: true }),
-						map((data) => chatHintOf(data?.collaborationEvents)),
-						filter((hint): hint is ChatHint => hint !== null)
+						map((data) => data?.collaborationEvents ?? null),
+						filter((envelope): envelope is Partial<IRealtimeEventEnvelope> => !!envelope)
 					);
 					return merge(socket$, stream$);
 				}),

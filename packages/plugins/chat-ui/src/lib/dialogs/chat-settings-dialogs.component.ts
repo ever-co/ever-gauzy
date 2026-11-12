@@ -3,7 +3,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { NbButtonModule, NbCardModule, NbCheckboxModule, NbDialogRef, NbIconModule, NbInputModule, NbSelectModule, NbSpinnerModule, NbTooltipModule } from '@nebular/theme';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
-import { forkJoin, Observable } from 'rxjs';
+import { Observable } from 'rxjs';
 import {
 	ChatConversationKindEnum,
 	ChatMemberRoleEnum,
@@ -15,7 +15,7 @@ import {
 	IChatMemberSummary,
 	IChatWebhook
 } from '@gauzy/contracts';
-import { moveCategory, nextCategoryPosition, sortCategories } from '../chat-categories';
+import { movedCategoryOrder, nextCategoryPosition, sortCategories } from '../chat-categories';
 import { apiErrorMessage, ChatPerson } from '../chat-ui.helpers';
 import { ChatPeople, EMPTY_PEOPLE } from '../services/chat-people.service';
 import { ChatUiService } from '../services/chat-ui.service';
@@ -712,14 +712,20 @@ export class CategoriesDialogComponent implements OnInit {
 	}
 
 	protected move(id: string, direction: -1 | 1): void {
-		const moves = moveCategory(this.list(), id, direction);
-		if (!moves.length || this.busy() || this.stale()) return;
-		// The positions are written one by one: when one fails, some may have been written, so the list is read again.
+		const order = movedCategoryOrder(this.list(), id, direction);
+		if (!order || this.busy() || this.stale()) return;
+		// One call saves the whole order in one transaction (all of it or none); after a failure the list is read again.
 		this.run(
-			forkJoin(moves.map((move) => this.api.updateCategory(move.id, { position: move.position }))),
-			(saved) => saved.forEach((category) => this.replace(category)),
+			this.api.reorderCategories({ categoryIds: order }),
+			(result) => this.placeAll(result.categories ?? []),
 			() => this.reload()
 		);
+	}
+
+	/** Puts the positions the platform saved on the categories shown (one created meanwhile shows on the next read). */
+	private placeAll(saved: readonly IChatCategory[]): void {
+		const positions = new Map(saved.map((category) => [String(category.id), category.position]));
+		this.list.set(this.list().map((item) => (positions.has(String(item.id)) ? { ...item, position: positions.get(String(item.id)) as number } : item)));
 	}
 
 	protected remove(category: IChatCategory): void {
