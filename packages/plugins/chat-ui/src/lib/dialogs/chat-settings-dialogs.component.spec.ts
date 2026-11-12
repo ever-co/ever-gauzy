@@ -243,6 +243,31 @@ describe('ChannelSettingsDialogComponent', () => {
 		expect(fixture.nativeElement.querySelector('[data-test="webhooks-error"]')?.textContent).toContain('public host');
 	});
 
+	it('stays open on a webhook error that came before a Save running alongside it', async () => {
+		await open({}, 'on');
+		const write = new Subject<IChatWebhookWriteResult>();
+		const saved = new Subject<{ conversation: IChatConversationWithState; events: never[] }>();
+		webhooksApi.update.mockReturnValueOnce(write);
+		api['updateConversation'].mockReturnValueOnce(saved);
+		tabTo('integrations');
+		panel().startEdit(webhook('w-1', 'CI'));
+		panel().patch({ name: 'CI builds' });
+		panel().saveEdit(webhook('w-1', 'CI'));
+		tabTo('settings');
+		dialog().topic.set('Pixels and fonts');
+		dialog().save();
+		// The webhook write fails first; then the settings are saved.
+		write.error({ error: { message: 'The interaction URL must name a public host.' } });
+		saved.next({ conversation: channel({ topic: 'Pixels and fonts' }), events: [] });
+		saved.complete();
+		fixture.detectChanges();
+		expect(close).not.toHaveBeenCalled();
+		expect(dialog().tab()).toBe('integrations');
+		expect(fixture.nativeElement.querySelector('[data-test="webhooks-error"]')?.textContent).toContain('public host');
+		dialog().close();
+		expect(close).toHaveBeenCalledWith(expect.objectContaining({ topic: 'Pixels and fonts' }));
+	});
+
 	it('closes once a webhook write that made no secret ended', async () => {
 		await open({}, 'on');
 		const write = new Subject<IChatWebhookWriteResult>();

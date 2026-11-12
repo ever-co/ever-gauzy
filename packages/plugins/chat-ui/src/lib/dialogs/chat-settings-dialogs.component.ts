@@ -349,6 +349,8 @@ export class ChannelSettingsDialogComponent implements OnInit, AfterViewInit {
 	private readonly saved = signal<IChatConversationWithState | null>(null);
 	/** A webhook URL or signing secret is on screen, not yet dismissed: a Save does not close the dialog over it. */
 	protected secretOnScreen = false;
+	/** The last webhook write failed and its error is on screen (until the next write): a Save does not close over it. */
+	private webhookError = false;
 	/** The webhook list could not be read for another reason than webhooks being off (a 404): the tab offers a retry. */
 	protected readonly webhooksFailed = signal(false);
 	/** Whether the Integrations tab shows: webhooks are served here, or their list failed for another reason. */
@@ -453,8 +455,9 @@ export class ChannelSettingsDialogComponent implements OnInit, AfterViewInit {
 			this.refreshing = false;
 			this.changed = answer.conversation;
 			this.saved.set(answer.conversation);
-			// A secret shown while the save ran (or before it) stays on screen: the manager closes once it is copied.
-			if (!this.secretOnScreen) this.closeRequested.set(true);
+			// A secret, or a webhook write's error, shown while the save ran (or before it) stays on screen: the manager
+			// closes once it is read.
+			if (!this.secretOnScreen && !this.webhookError) this.closeRequested.set(true);
 		});
 	}
 
@@ -532,11 +535,14 @@ export class ChannelSettingsDialogComponent implements OnInit, AfterViewInit {
 	/** The Integrations tab started or ended a webhook write; a close asked for meanwhile happens once it ended. */
 	protected webhookWriting(busy: boolean): void {
 		this.webhookBusy = busy;
+		// A new write clears the last one's error in the panel.
+		if (busy) this.webhookError = false;
 		if (!busy) this.closeIfRequested();
 	}
 
 	/** A webhook write failed: its tab comes forward with the error, and a close asked for meanwhile is dropped. */
 	protected showWebhookFailure(): void {
+		this.webhookError = true;
 		this.tab.set('integrations');
 		this.closeRequested.set(false);
 	}
