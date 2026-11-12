@@ -70,6 +70,12 @@ describe('front matter and metadata', () => {
 		expect(page.markdown).toBe('# Roadmap / 2024\n\nFirst paragraph');
 	});
 
+	it('keeps a first paragraph of `Key: value` lines that are not the export properties', () => {
+		const page = readMarkdownPage('# Plan\n\nGoal: ship v2\nOwner: Ana\n\nDetails', EXPORT);
+		expect(page.meta.title).toBe('Plan');
+		expect(page.markdown).toBe('# Plan\n\nGoal: ship v2\nOwner: Ana\n\nDetails');
+	});
+
 	it('accepts only an emoji as an icon, and only a sensible date', () => {
 		expect(emojiIconOf('🚀')).toBe('🚀');
 		expect(emojiIconOf('👩🏽‍💻')).toBe('👩🏽‍💻');
@@ -97,6 +103,12 @@ describe('HTML pages', () => {
 		expect(page.meta.title).toBe('Roadmap & goals');
 		expect(page.meta.icon).toBe('🗺️');
 		expect(page.meta.createdAt?.getFullYear()).toBe(2024);
+	});
+
+	it('reads the created date from the export properties only, never from a table of the body', () => {
+		const withoutProperty = `<html><head><title>Notes</title></head><body><article><header><h1 class="page-title">Notes</h1></header>
+<div class="page-body"><table><tr><th>Created</th><td>2024-01-01</td></tr></table></div></article></body></html>`;
+		expect(readHtmlPage(withoutProperty).meta.createdAt).toBeUndefined();
 	});
 
 	it('turns the body into Markdown without the header, scripts, handlers, javascript: links or data: images', () => {

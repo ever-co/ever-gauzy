@@ -20,6 +20,12 @@ jest.mock('@gauzy/core', () => ({
 				}
 			};
 		}
+		setProvider() {
+			return this;
+		}
+		getProviderInstance() {
+			return this.getProvider();
+		}
 	},
 	readStorageFileAsBuffer: async (provider: { getFile(key: string): Promise<Buffer> }, key: string) => provider.getFile(key),
 	RequestContext: {
@@ -38,7 +44,17 @@ jest.mock('../knowledge/queue/docs-queue.service', () => ({ DocsQueueService: cl
 
 import { HttpException, NotFoundException } from '@nestjs/common';
 import { DocumentImportLayoutEnum, DocumentImportStatusEnum, DocumentKindEnum, DocumentVisibilityEnum } from '@gauzy/contracts';
-import { DOCS_IMPORT_DISABLED, DOCS_IMPORT_FILE_REQUIRED, DOCS_IMPORT_NO_PAGES, DOCS_IMPORT_UNSAFE_PATH, ENV_GAUZY_DOCS_IMPORT_ENABLED } from '../docs.constants';
+import {
+	DOCS_IMPORT_DISABLED,
+	DOCS_IMPORT_FILE_REQUIRED,
+	DOCS_IMPORT_NO_PAGES,
+	DOCS_IMPORT_REPORT_MAX_ITEMS,
+	DOCS_IMPORT_STALE_MINUTES,
+	DOCS_IMPORT_TOO_MANY_ENTRIES,
+	DOCS_IMPORT_UNSAFE_PATH,
+	DOCS_RECOVERY_STARTUP_DELAY_MS,
+	ENV_GAUZY_DOCS_IMPORT_ENABLED
+} from '../docs.constants';
 import { DOCS_JOB_IMPORT } from '../knowledge/queue/constants';
 import { createImportZip } from './__fixtures__/import-zip.fixture';
 import { DocumentImportService } from './document-import.service';
@@ -85,8 +101,10 @@ function build() {
 	const settings: any = { getDefaults: jest.fn(async () => ({ importToKnowledgeDefault: true, defaultVisibility: DocumentVisibilityEnum.PRIVATE })) };
 	const quota: any = { getQuotaBytes: jest.fn(async () => 123456) };
 	const queue: any = { enqueue: jest.fn(async () => true), jobIdFor: (job: string, id: string) => `docs:${job.slice(5)}:${id}` };
-	const service = new DocumentImportService(imports, documents, settings, quota, queue);
-	return { service, rows, imports, documents, settings, queue };
+	// The tenant's storage settings applied to background storage work: here, the work as it is.
+	const tenantStorage: any = { run: jest.fn(async (_tenantId: string, work: () => Promise<unknown>) => work()) };
+	const service = new DocumentImportService(imports, documents, settings, quota, queue, tenantStorage);
+	return { service, rows, imports, documents, settings, queue, tenantStorage };
 }
 
 function upload(name: string, zip: Buffer) {
@@ -210,11 +228,51 @@ describe('DocumentImportService', () => {
 	});
 
 	it('gives up a stalled import that has had its runs', async () => {
-		const { service, rows } = build();
+		const { service, rows, tenantStorage } = build();
 		const view = await service.start(upload('vault7', VAULT), {});
 		Object.assign(rows[0], { status: DocumentImportStatusEnum.RUNNING, lastProgressAt: new Date(0), attempts: 3 });
+		const key = rows[0].storageKey;
+		storage.deleted = [];
 		const read = await service.get(view.id as string);
 		expect(read).toMatchObject({ status: DocumentImportStatusEnum.FAILED, errorCode: 'DOCS_IMPORT_STALLED' });
+		// No run will clean up after an import given up: its zip goes now, from the tenant's own storage.
+		expect(storage.deleted).toEqual([key]);
+		expect(tenantStorage.run).toHaveBeenCalledWith('tenant-1', expect.any(Function));
+		expect(rows[0].storageKey).toBeNull();
+	});
+
+	it('sweeps stalled imports after the settle delay, then every stale window, until destroyed', () => {
+		jest.useFakeTimers();
+		try {
+			const { service } = build();
+			const sweep = jest.spyOn(service, 'resumeStale').mockResolvedValue(0);
+			service.scheduleStartupResume();
+			jest.advanceTimersByTime(DOCS_RECOVERY_STARTUP_DELAY_MS);
+			expect(sweep).toHaveBeenCalledTimes(1);
+			jest.advanceTimersByTime(DOCS_IMPORT_STALE_MINUTES * 60_000);
+			expect(sweep).toHaveBeenCalledTimes(2);
+			jest.advanceTimersByTime(DOCS_IMPORT_STALE_MINUTES * 60_000);
+			expect(sweep).toHaveBeenCalledTimes(3);
+			service.cancelStartupResume();
+			jest.advanceTimersByTime(10 * DOCS_IMPORT_STALE_MINUTES * 60_000);
+			expect(sweep).toHaveBeenCalledTimes(3);
+		} finally {
+			jest.useRealTimers();
+		}
+	});
+
+	it('refuses an archive that plans more items than the report keeps, and deletes it', async () => {
+		const { service, rows } = build();
+		// Each page in its own folder: two items per page.
+		const pages = Math.floor(DOCS_IMPORT_REPORT_MAX_ITEMS / 2) + 1;
+		const zip = createImportZip(Array.from({ length: pages }, (_, index) => ({ name: `Vault/f${index}/Page.md`, data: 'x' })));
+		const file = upload('wide', zip);
+		await expect(service.start(file, {})).rejects.toMatchObject({
+			response: { code: DOCS_IMPORT_TOO_MANY_ENTRIES },
+			status: 413
+		});
+		expect(storage.deleted).toContain(file.key);
+		expect(rows).toHaveLength(0);
 	});
 
 	it('sweeps stalled imports at startup', async () => {

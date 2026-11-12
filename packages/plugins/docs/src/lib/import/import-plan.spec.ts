@@ -156,6 +156,16 @@ describe('ImportLinkIndex', () => {
 		expect(links.resolveWiki('Archive/Release checklist', 'Vault/Home.md')).toEqual({ kind: 'page', key: 'Vault/Archive/Release checklist.md' });
 	});
 
+	it('honours the folder of a path-qualified link over the linking page folder', () => {
+		const twins = new ImportLinkIndex(
+			buildImportPlan(['Vault/A/Home.md', 'Vault/A/Page.md', 'Vault/B/Page.md'], [], DocumentImportLayoutEnum.MARKDOWN_VAULT)
+		);
+		expect(twins.resolveWiki('B/Page', 'Vault/A/Home.md')).toEqual({ kind: 'page', key: 'Vault/B/Page.md' });
+		expect(twins.resolveWiki('A/Page', 'Vault/A/Home.md')).toEqual({ kind: 'page', key: 'Vault/A/Page.md' });
+		// Unqualified, the linking page folder still wins.
+		expect(twins.resolveWiki('Page', 'Vault/A/Home.md')).toEqual({ kind: 'page', key: 'Vault/A/Page.md' });
+	});
+
 	it('resolves an embed to an attachment by its file name, preferring the same folder', () => {
 		expect(links.resolveWiki('diagram.png', 'Vault/Projects/Plan.md', true)).toEqual({ kind: 'file', key: 'Vault/Projects/diagram.png' });
 		expect(links.resolveWiki('spec.pdf', 'Vault/Home.md', true)).toEqual({ kind: 'file', key: 'Vault/spec.pdf' });

@@ -121,18 +121,40 @@ export interface IDocumentImportStore {
 	 * `staleBefore` (a run that died), in one conditional update. True when this caller won it.
 	 */
 	claim(id: ID, scope: IImportScope, staleBefore: Date, patch: Partial<IImportRow>): Promise<boolean>;
-	update(id: ID, scope: IImportScope, patch: Partial<IImportRow>): Promise<void>;
+	/**
+	 * Applies `patch` to the import. With `fence` (the `attempts` a run's claim wrote), only while the import is still
+	 * that run's and RUNNING: a run taken over by a later claim (it stalled past the stale window), or one the stalled
+	 * import sweep sent back to QUEUED or gave up, changes nothing. True when the row was written.
+	 */
+	update(id: ID, scope: IImportScope, patch: Partial<IImportRow>, fence?: number): Promise<boolean>;
 	/** The uploaded zip, bounded by the import's limit. */
 	readArchive(row: IImportRow): Promise<Buffer>;
-	/** Deletes the uploaded zip (best-effort; the import is over). */
-	discardArchive(row: IImportRow): Promise<void>;
+	/**
+	 * Deletes the uploaded zip (best-effort; the import is over). With `fence`, only while the import is still that
+	 * run's: a run taken over never deletes the zip its replacement reads.
+	 */
+	discardArchive(row: IImportRow, fence?: number): Promise<void>;
 	/** The document this import already created for an archive entry (any kind), if any. */
 	findImported(scope: IImportScope, externalSource: string, externalId: string): Promise<IImportedDocumentRef | null>;
+	/**
+	 * Gives a document an earlier run created back to the importing member (and the export's created date): a run that
+	 * stopped between creating a row and stamping it would otherwise leave a PRIVATE page no one can read.
+	 */
+	adoptImported(id: ID, ownerUserId: ID | null, createdAt?: Date): Promise<void>;
 	createNode(input: ICreateImportedNode): Promise<IImportedDocumentRef>;
 	/** Stores the bytes, creates the FILE document and enqueues its processing (`docs.extract`). */
 	createFile(input: ICreateImportedFile): Promise<IImportedDocumentRef>;
-	/** Writes a page's content: the JSON (schema-valid), the derived and sanitized HTML. */
-	writePage(document: IImportedDocumentRef, scope: IImportScope, contentJson: IDocNode, ownerUserId: ID | null): Promise<void>;
+	/**
+	 * Writes a page's content (the JSON, schema-valid; the derived and sanitized HTML) as a claimed content revision,
+	 * only while the page is as the import created it: false when it was saved meanwhile (by a member, or by an earlier
+	 * run of this import), and it is then left as it is. An editor that loaded the empty page sees the revision moved.
+	 */
+	writePage(document: IImportedDocumentRef, scope: IImportScope, contentJson: IDocNode, ownerUserId: ID | null): Promise<boolean>;
+	/**
+	 * The ids of the pages a page's saved content mentions: for a page saved meanwhile, whose links follow what it holds,
+	 * not what the import would have written.
+	 */
+	mentionsOf(documentId: ID, scope: IImportScope): Promise<Set<string>>;
 	/** The `document → document` links of the pages a page mentions. */
 	linkPages(documentId: ID, mentionedIds: ID[], scope: IImportScope): Promise<void>;
 	/** The bytes the organization stores today. */

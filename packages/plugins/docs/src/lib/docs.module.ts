@@ -18,6 +18,7 @@ import { ALL_DOC_ENTITIES } from './entities';
 import { DocumentImportRunner } from './import/document-import.runner';
 import { DocumentImportService } from './import/document-import.service';
 import { DocumentImportStore } from './import/document-import.store';
+import { ImportTenantStorage } from './import/import-tenant-storage';
 import { DOCS_IMPORT_RUNNER, DOCS_IMPORT_STORE } from './import/document-import.types';
 import { DocumentPdfService } from './pdf/document-pdf.service';
 import { DocsAiService } from './knowledge/ai/docs-ai.service';
@@ -135,6 +136,8 @@ const QUEUE_WORKER_ENABLED = isDocsQueueWorkerEnabled();
 		DocumentImportService,
 		DocumentImportStore,
 		{ provide: DOCS_IMPORT_STORE, useExisting: DocumentImportStore },
+		// The tenant's own storage settings for the import's background reads and writes (no request carries them).
+		ImportTenantStorage,
 		DocumentImportRunner,
 		{ provide: DOCS_IMPORT_RUNNER, useExisting: DocumentImportRunner },
 		// PDF export of a page or a subtree (`GAUZY_DOCS_PDF_EXPORT_ENABLED`).

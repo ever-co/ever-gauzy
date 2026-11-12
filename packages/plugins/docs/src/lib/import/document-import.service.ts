@@ -25,8 +25,10 @@ import {
 	DOCS_IMPORT_FILE_REQUIRED,
 	DOCS_IMPORT_LIST_LIMIT,
 	DOCS_IMPORT_NO_PAGES,
+	DOCS_IMPORT_REPORT_MAX_ITEMS,
 	DOCS_IMPORT_STALE_MINUTES,
 	DOCS_IMPORT_TOO_LARGE,
+	DOCS_IMPORT_TOO_MANY_ENTRIES,
 	DOCS_PARENT_NOT_CONTAINER,
 	DOCS_RECOVERY_STARTUP_DELAY_MS
 } from '../docs.constants';
@@ -44,6 +46,7 @@ import { importStaleAction, toImportView } from './document-import.view';
 import { IImportArchiveLimits, ImportArchiveError, openImportArchive } from './import-archive';
 import { importArchiveLimits } from './import-limits';
 import { buildImportPlan, detectImportLayout } from './import-plan';
+import { ImportTenantStorage } from './import-tenant-storage';
 
 /** C0 control characters and DEL (built from code points: a literal range in a pattern is a lint error). */
 const CONTROL_CHARACTERS = new RegExp(`[${String.fromCharCode(0)}-${String.fromCharCode(0x1f)}${String.fromCharCode(0x7f)}]`, 'g');
@@ -63,19 +66,22 @@ function safeFileName(name: unknown): string {
  *   created and deleted when it is refused; the organization's quota and knowledge default are resolved here, where
  *   there is a request context, and stored on the row; then the `docs.import` job.
  * - **read**: the caller's own imports only (a Docs manager reads any of the organization's); a stalled one is resumed.
- * - **startup sweep**: stalled imports are resumed once the process has settled.
+ * - **sweep**: stalled imports are resumed once the process has settled, then every stale window (an import whose job
+ *   is lost while the process runs is resumed without anyone opening it).
  */
 @Injectable()
 export class DocumentImportService {
 	private readonly logger = new Logger(DocumentImportService.name);
 	private startupTimer?: ReturnType<typeof setTimeout>;
+	private sweepTimer?: ReturnType<typeof setInterval>;
 
 	constructor(
 		private readonly imports: TypeOrmDocumentImportRepository,
 		private readonly documentService: DocumentService,
 		private readonly settings: DocumentSettingsService,
 		private readonly quota: DocumentQuotaService,
-		private readonly queue: DocsQueueService
+		private readonly queue: DocsQueueService,
+		private readonly storage: ImportTenantStorage
 	) {}
 
 	/** 404 `DOCS_IMPORT_DISABLED` while `GAUZY_DOCS_IMPORT_ENABLED` is off. */
@@ -174,18 +180,26 @@ export class DocumentImportService {
 		return toImportView(await this.resumeIfStale(row));
 	}
 
-	/** Schedules the startup sweep of stalled imports (after the settle delay the recovery scan uses). */
+	/**
+	 * Schedules the sweep of stalled imports: once after the settle delay the recovery scan uses, then every stale
+	 * window. A sweep and a read that find the same import stalled resume it once (the conditional update).
+	 */
 	scheduleStartupResume(): void {
 		if (!getDocsConfig().importEnabled) return;
-		this.startupTimer = setTimeout(() => {
+		const sweep = () => {
 			this.resumeStale().catch((error: Error) => this.logger.error(`Import resume sweep failed: ${error.message}`));
-		}, DOCS_RECOVERY_STARTUP_DELAY_MS);
+		};
+		this.startupTimer = setTimeout(sweep, DOCS_RECOVERY_STARTUP_DELAY_MS);
 		this.startupTimer.unref?.();
+		this.sweepTimer = setInterval(sweep, DOCS_IMPORT_STALE_MINUTES * 60_000);
+		this.sweepTimer.unref?.();
 	}
 
 	cancelStartupResume(): void {
 		if (this.startupTimer) clearTimeout(this.startupTimer);
+		if (this.sweepTimer) clearInterval(this.sweepTimer);
 		this.startupTimer = undefined;
+		this.sweepTimer = undefined;
 	}
 
 	/** Resumes (or fails) every stalled import — every tenant's: a sweep runs without a request context. */
@@ -232,7 +246,28 @@ export class DocumentImportService {
 		);
 		if (!result?.affected) return row;
 		if (action === 'resume') await this.enqueue(row, `:resume-${now.getTime()}`);
-		return { ...row, ...patch };
+		// Given up: no run will clean up after it, so its uploaded zip goes now.
+		else await this.discardArchive(row);
+		return { ...row, ...patch, ...(action === 'fail' ? { storageKey: null } : {}) };
+	}
+
+	/** Deletes the uploaded zip of an import through the storage it was written to, and forgets its key. */
+	private async discardArchive(row: IImportRow): Promise<void> {
+		if (!row.storageKey) return;
+		const key = row.storageKey;
+		try {
+			// The sweep runs without a request: the tenant's own storage settings name the bucket the zip went to.
+			await this.storage.run(row.tenantId, async () => {
+				const provider = new FileStorage().setProvider(row.storageProvider ?? undefined).getProviderInstance();
+				await provider.deleteFile(key);
+			});
+			await this.imports.update(
+				{ id: row.id, tenantId: row.tenantId, organizationId: row.organizationId } as never,
+				{ storageKey: null } as never
+			);
+		} catch (error) {
+			this.logger.warn(`docs.import ${row.id}: the uploaded zip could not be deleted: ${(error as Error)?.message ?? error}`);
+		}
 	}
 
 	/** Enqueues the `docs.import` job of a row (a run-unique id for a resume, so a retained finished job cannot swallow it). */
@@ -289,6 +324,14 @@ export class DocumentImportService {
 			throw new ImportArchiveError(DOCS_IMPORT_NO_PAGES, 'The archive holds no page file: it is not an exported workspace.');
 		}
 		const plan = buildImportPlan(paths, archive.directories, layout);
+		// The report keeps an outcome for every item it plans (folders included): an archive that plans more is refused.
+		if (plan.nodes.length > DOCS_IMPORT_REPORT_MAX_ITEMS) {
+			throw new ImportArchiveError(
+				DOCS_IMPORT_TOO_MANY_ENTRIES,
+				`The archive makes ${plan.nodes.length} folders, pages and files; an import takes at most ${DOCS_IMPORT_REPORT_MAX_ITEMS}.`,
+				413
+			);
+		}
 		const pages = plan.nodes.filter((node) => node.kind === DocumentKindEnum.PAGE).length;
 		return { layout, totalItems: plan.nodes.length + pages };
 	}

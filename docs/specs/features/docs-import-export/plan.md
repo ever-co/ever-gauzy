@@ -128,7 +128,7 @@ task boxes as `[x]` / `[ ]`), quotes and callouts as shaded single-cell tables, 
 text, images from the page's files (read through `DocumentUploadService.getRawFile`, re-encoded with `sharp` to at
 most 1,600 px, a 64 MiB budget per export). The header carries the title and the export date, the footer
 `page / pages`. The subtree is `DocumentMarkdownService.collectSubtree` (readable pages only, at most
-`GAUZY_DOCS_PDF_MAX_PAGES`, 200): one document with a `toc` and a `tocItem` heading per page from a new sheet, or a
+`GAUZY_DOCS_PDF_MAX_PAGES`, 200, at most 499 since the collection reads at most 500 pages): one document with a `toc` and a `tocItem` heading per page from a new sheet, or a
 zip with one PDF per page at the Markdown export's paths. The bundled Roboto font is registered with buffers (no
 file access), the URL access policy denies every URL, and the local access policy is left to the platform's.
 
