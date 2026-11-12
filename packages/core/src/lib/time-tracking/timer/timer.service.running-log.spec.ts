@@ -855,17 +855,35 @@ describe.each([MultiORMEnum.TypeORM, MultiORMEnum.MikroORM])(
 				});
 			});
 
-			it('leaves a run the update did not stop to the cleanup, which stops it as before', async () => {
+			it('sends the update once more when the first failed before writing, so the run is not cut to ten seconds', async () => {
 				const rows = [run('replaced', TimeLogSourceEnum.WEB_TIMER, TWO_HOURS_AGO)];
-				const { service, logger } = setup(rows);
+				const { service, logger, updates } = setup(rows);
 				const tried = failUpdatesOf(service, rows, 'replaced', { failures: 1, afterWrite: false });
 
 				await startOnDesktop(service);
 
-				expect(tried).toHaveLength(1);
+				const stop = { isRunning: false, startedAt: TWO_HOURS_AGO, stoppedAt: NOW };
+				expect(tried.map((command) => command.input)).toEqual([stop, stop]);
+				expect(updates.map((command) => [logIdOf(command), command.input])).toEqual([['replaced', stop]]);
+				expect(rows[0]).toMatchObject({ isRunning: false, stoppedAt: NOW });
+				expect(logger.warn).toHaveBeenCalledWith(
+					expect.stringContaining('Stopped the replaced time log replaced on a second try')
+				);
+			});
+
+			it('leaves a run neither try stopped to the cleanup, which stops it as before', async () => {
+				const rows = [run('replaced', TimeLogSourceEnum.WEB_TIMER, TWO_HOURS_AGO)];
+				const { service, logger } = setup(rows);
+				const tried = failUpdatesOf(service, rows, 'replaced', { failures: 2, afterWrite: false });
+
+				await startOnDesktop(service);
+
+				expect(tried).toHaveLength(2);
 				expect(rows[0]).toMatchObject({ isRunning: false, stoppedAt: new Date('2026-10-24T00:00:10.000Z') });
 				expect(logger.warn).toHaveBeenCalledWith(
-					expect.stringContaining('Failed to stop the replaced time log replaced, left to the cleanup')
+					expect.stringContaining(
+						'Failed to stop the replaced time log replaced on a second try, left to the cleanup'
+					)
 				);
 			});
 		});
