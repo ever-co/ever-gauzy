@@ -178,9 +178,16 @@ export class TaskTrashPageComponent implements OnInit {
 		return row.task.id;
 	}
 
+	/**
+	 * Takes a restored or deleted task off the list. Another list may have been read while the action ran (another
+	 * project, another search): its total changes only when it held the task, so its Load more stays right.
+	 */
 	private drop(row: ITrashRow): void {
+		const shown = this.rows.length;
 		this.rows = this.rows.filter((candidate) => candidate.task.id !== row.task.id);
-		this.total = Math.max(this.total - 1, 0);
+		if (this.rows.length < shown) {
+			this.total = Math.max(this.total - 1, 0);
+		}
 	}
 
 	private toRow(task: ITrashedTask): ITrashRow {

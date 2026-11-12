@@ -411,7 +411,7 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 				tap(([organization, employee, project, team]) => {
 					this.organization = organization;
 					void this._taskTrash
-						.isEnabled(organization.id, organization.tenantId)
+						.isEnabledOrFalse(organization.id, organization.tenantId)
 						.then((hasTrash) => (this.hasTrash = hasTrash));
 					this.selectedEmployeeId = employee?.id || null;
 					this.selectedProject = project;

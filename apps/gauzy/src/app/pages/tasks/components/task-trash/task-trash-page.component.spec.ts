@@ -126,6 +126,23 @@ describe('TaskTrashPageComponent', () => {
 		expect(state(fixture).confirmingId).toBeNull();
 	});
 
+	it('leaves a list read meanwhile as it is when it does not hold the restored task', async () => {
+		const fixture = await render();
+		let finish: () => void = () => undefined;
+		trash.restore.mockImplementation(() => new Promise<void>((resolve) => (finish = resolve)));
+		const restoring = state(fixture).restore(state(fixture).rows[0]);
+
+		// Another project's trash is read while the restore runs: 50 of 51 shown, Load more must stay.
+		trash.list.mockResolvedValueOnce({ items: [trashed('p1'), trashed('p2')], total: 51 });
+		await state(fixture).load(true);
+		finish();
+		await restoring;
+		fixture.detectChanges();
+
+		expect(rowIds(fixture)).toEqual(['p1', 'p2']);
+		expect(state(fixture).total).toBe(51);
+	});
+
 	it('keeps a task and says so when the platform refuses the restore', async () => {
 		trash.restore.mockRejectedValue({ status: 403, error: { message: 'Only a manager' } });
 		const fixture = await render();

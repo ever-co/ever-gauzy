@@ -16,6 +16,7 @@ import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { A11yModule } from '@angular/cdk/a11y';
 import { NbButtonModule, NbIconModule, NbSpinnerModule, NbTooltipModule } from '@nebular/theme';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import * as moment from 'moment-timezone';
 import { BaseEntityEnum, IComment, ID, IImageAsset, IReactionSummary, PermissionsEnum } from '@gauzy/contracts';
@@ -283,6 +284,14 @@ export class EntityCommentsComponent implements OnChanges, OnDestroy {
 		});
 	}
 
+	constructor() {
+		// The chips' tooltips and screen-reader labels are worded in the reader's language: a change of language words
+		// them again.
+		this._translate.onLangChange.pipe(takeUntilDestroyed()).subscribe(() => {
+			if (this.reactionsShown) this.showReactions(this._summaries);
+		});
+	}
+
 	ngOnDestroy(): void {
 		// An unsent box's uploads go with it.
 		this.clearImages('comment');
@@ -339,26 +348,24 @@ export class EntityCommentsComponent implements OnChanges, OnDestroy {
 
 	/**
 	 * Adds the reader's reaction to a comment, or takes it back: the chip changes at once, the toggle is sent, and the
-	 * summary is read again; a refused toggle puts the chips back and says so.
+	 * summary is read again. A refused toggle says so and reads the summary again too: another toggle sent meanwhile
+	 * may have landed, so the chips show what the platform holds, never the state from before that one.
 	 */
 	protected async toggleReaction(commentId: ID, emoji: string): Promise<void> {
 		const employeeId = this.myEmployeeId();
 		if (!this.reactionsShown || !employeeId) return;
 		this.pickerFor = null;
-		const before = this._summaries;
 		const me = { employeeId, name: this._store.user?.name ?? '', imageUrl: this._store.user?.imageUrl ?? null };
-		this.showReactions(toggledSummaries(before, commentId, emoji, me));
+		this.showReactions(toggledSummaries(this._summaries, commentId, emoji, me));
 		// A read already under way would answer the state before this toggle.
 		this._reactionSequence++;
 		try {
 			await this._reactions.toggle(commentId, emoji, this.scope());
 		} catch {
-			this.showReactions(before);
 			this._toastr.danger(
 				this._translate.instant('COMMENT_REACTIONS.FAILED'),
 				this._translate.instant('TOASTR.TITLE.ERROR')
 			);
-			return;
 		}
 		await this.loadReactions();
 	}

@@ -96,7 +96,8 @@ export class TasksService extends TranslationBaseComponent {
 
 	/**
 	 * Deletes a task: to the trash where the platform keeps one (`GAUZY_TASK_TRASH_ENABLED`, learned from one read of
-	 * the trash per organization), for good otherwise, as before.
+	 * the trash per organization), for good otherwise, as before. When the platform gives no clear answer about its
+	 * trash, nothing is deleted and the error is shown: a passing failure never deletes a task for good.
 	 */
 	deleteTask(id: string): Observable<void> {
 		const organization = this._store?.selectedOrganization;

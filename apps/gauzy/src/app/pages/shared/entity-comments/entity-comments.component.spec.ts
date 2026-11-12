@@ -8,6 +8,7 @@ jest.mock('@gauzy/ui-core/core', () => ({
 }));
 
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { TranslateService } from '@ngx-translate/core';
 import { BaseEntityEnum, IComment, IReactionSummary, PermissionsEnum, ReactionEntityEnum } from '@gauzy/contracts';
 import { CommentReactionService, CommentService, ImageAssetService, Store, ToastrService } from '@gauzy/ui-core/core';
 import { DEFAULT_ENTITY_COMMENTS_LABELS, EntityCommentsComponent } from './entity-comments.component';
@@ -302,6 +303,36 @@ describe('EntityCommentsComponent', () => {
 
 			expect(chips(fixture).map((chip) => chip.textContent.replace(/\s+/g, ''))).toEqual(['👍1']);
 			expect(toastr.danger).toHaveBeenCalledWith('COMMENT_REACTIONS.FAILED', 'TOASTR.TITLE.ERROR');
+		});
+
+		it('shows what the platform holds after a refused toggle, keeping a toggle that landed meanwhile', async () => {
+			summaries = [thumbs()];
+			const fixture = await render({ entity: BaseEntityEnum.Task, reactions: true });
+			await fixture.whenStable();
+			reactions.toggle.mockRejectedValueOnce(new Error('503'));
+			// The heart sent meanwhile landed: the platform holds it, the refused rocket not.
+			summaries = [thumbs(), thumbs({ emoji: '❤️', reactedByMe: true })];
+
+			await state(fixture).toggleReaction('first', '🚀');
+			fixture.detectChanges();
+
+			expect(chips(fixture).map((chip) => chip.textContent.replace(/\s+/g, ''))).toEqual(['👍1', '❤️1']);
+			expect(reactions.getForRecord).toHaveBeenCalledTimes(2);
+			expect(toastr.danger).toHaveBeenCalledWith('COMMENT_REACTIONS.FAILED', 'TOASTR.TITLE.ERROR');
+		});
+
+		it('words the chips again in the reader’s new language', async () => {
+			summaries = [thumbs()];
+			const fixture = await render({ entity: BaseEntityEnum.Task, reactions: true });
+			await fixture.whenStable();
+			const translate = TestBed.inject(TranslateService);
+			translate.setTranslation('es', { COMMENT_REACTIONS: { REACTED_WITH: 'Reacted in Spanish {{emoji}}: {{people}}' } });
+
+			translate.use('es');
+			await fixture.whenStable();
+			fixture.detectChanges();
+
+			expect(chips(fixture)[0].getAttribute('aria-label')).toContain('Reacted in Spanish');
 		});
 
 		it('hides reactions on a platform without the summary', async () => {

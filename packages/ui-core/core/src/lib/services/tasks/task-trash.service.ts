@@ -36,8 +36,11 @@ export class TaskTrashService {
 	/**
 	 * Whether the platform keeps a trash for this organization's tasks: the list answers (a 403 too: the reader may
 	 * not list it, but it is kept). 404 says the trash is off, and a platform without the route answers 400 (its
-	 * `/tasks/:id` read): both are remembered as no trash. Any other failure is not remembered, so the next call asks
-	 * again.
+	 * `/tasks/:id` read): both are remembered as no trash.
+	 *
+	 * Any other failure (no network, a timeout, a 5xx) is no answer: it is not remembered and the promise rejects
+	 * with it, so a delete that asked stops instead of deleting a task for good where the platform keeps a trash. The
+	 * header link reads that as no link (see {@link isEnabledOrFalse}).
 	 */
 	isEnabled(organizationId: ID | null | undefined, tenantId?: ID | null): Promise<boolean> {
 		if (!organizationId) return Promise.resolve(false);
@@ -54,11 +57,16 @@ export class TaskTrashService {
 					// Forbidden is still a trash (the reader may not list it); anything else is asked again later.
 					if (error?.status === 403) return true;
 					this._enabled.delete(organizationId);
-					return false;
+					throw error;
 				});
 			this._enabled.set(organizationId, probe);
 		}
 		return probe;
+	}
+
+	/** {@link isEnabled}, with no answer read as no trash: for what only decides whether to show a link. */
+	isEnabledOrFalse(organizationId: ID | null | undefined, tenantId?: ID | null): Promise<boolean> {
+		return this.isEnabled(organizationId, tenantId).catch(() => false);
 	}
 
 	/** A page of the organization's trash (optionally of one project), most recently deleted first. */
