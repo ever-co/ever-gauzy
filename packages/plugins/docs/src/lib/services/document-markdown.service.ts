@@ -4,7 +4,7 @@ import { posix } from 'node:path';
 import { In, Like } from 'typeorm';
 import { BaseEntityEnum, DocumentKindEnum, ID, IDocument } from '@gauzy/contracts';
 import { Comment } from '@gauzy/core';
-import { DOCS_CONTENT_CONFLICT, DOCS_LOCKED, DOCS_MARKDOWN_AMBIGUOUS, DOCS_NOT_A_PAGE } from '../docs.constants';
+import { DOCS_CONTENT_CONFLICT, DOCS_LOCKED, DOCS_MARKDOWN_AMBIGUOUS, DOCS_MARKDOWN_TOO_MANY_PAGES, DOCS_NOT_A_PAGE } from '../docs.constants';
 import { UpdateDocumentContentDTO } from '../dto/update-document-content.dto';
 import { UpdateDocumentMarkdownDTO } from '../dto/update-document-markdown.dto';
 import { Document } from '../entities/document.entity';
@@ -55,6 +55,12 @@ export interface ISubtreeCollection {
 	truncated: boolean;
 }
 
+/**
+ * The most nodes a subtree walk reads, folders and unreadable nodes included: a tree of folders alone (which the page
+ * limit does not count) is bounded too.
+ */
+const SUBTREE_MAX_NODES = 4 * DOCS_MARKDOWN_SUBTREE_MAX_PAGES;
+
 /** The longest name of a file copied into a zip. */
 const ZIP_FILE_NAME_MAX_LENGTH = 120;
 
@@ -98,7 +104,18 @@ export class DocumentMarkdownService {
 	 */
 	async writeSubtreeZip(root: Document, organizationId: ID | undefined, output: NodeJS.WritableStream): Promise<{ fileName: string; pages: number; files: number }> {
 		const isFolder = root.kind === DocumentKindEnum.FOLDER;
-		const { entries: tree } = await this.collectTree(root, organizationId, DOCS_MARKDOWN_SUBTREE_MAX_PAGES, isFolder);
+		const { entries: tree, truncated } = await this.collectTree(root, organizationId, DOCS_MARKDOWN_SUBTREE_MAX_PAGES, isFolder);
+		// A zip that leaves out part of the subtree would read as the whole of it: refused (413) before any byte goes out.
+		if (truncated) {
+			throw new HttpException(
+				{
+					statusCode: HttpStatus.PAYLOAD_TOO_LARGE,
+					message: `The export takes at most ${DOCS_MARKDOWN_SUBTREE_MAX_PAGES} pages and files; this one holds more`,
+					code: DOCS_MARKDOWN_TOO_MANY_PAGES
+				},
+				HttpStatus.PAYLOAD_TOO_LARGE
+			);
+		}
 		const entries = tree.filter((entry) => entry.kind === 'page');
 		// The folder's files first, then the files the pages show: one byte budget for both.
 		const attachments = await this.readAttachments(tree.filter((entry) => entry.kind === 'file'), organizationId);
@@ -268,6 +285,9 @@ export class DocumentMarkdownService {
 		const entries: ISubtreeEntry[] = isFolder ? [] : [{ document: root, path: 'index.md', hasChildren: false, kind: 'page', parentId: null, depth: 0 }];
 		/** The pages and files collected: what the limit counts. */
 		let counted = entries.length;
+		/** Every node read, folders and unreadable ones included ({@link SUBTREE_MAX_NODES}). */
+		let visited = 0;
+		const entryById = new Map<string, ISubtreeEntry>(entries.map((entry) => [String(entry.document.id), entry]));
 		const folderOf = new Map<string, string>([[String(root.id), '']]);
 		const depthOf = new Map<string, number>([[String(root.id), 0]]);
 		/** Every readable node's readable children (folders too), in their order: the tree the depth-first order reads. */
@@ -285,10 +305,11 @@ export class DocumentMarkdownService {
 			});
 			const next: Document[] = [];
 			for (const child of children) {
-				if (counted >= max) {
+				if (counted >= max || visited >= SUBTREE_MAX_NODES) {
 					truncated = true;
 					break;
 				}
+				visited += 1;
 				let node: Document;
 				try {
 					node = await this.documents.findOneScoped(child.id as ID, [], organizationId);
@@ -297,7 +318,7 @@ export class DocumentMarkdownService {
 				}
 				const parentKey = String(child.parentId);
 				const parentFolder = folderOf.get(parentKey) ?? '';
-				const parent = entries.find((entry) => String(entry.document.id) === parentKey);
+				const parent = entryById.get(parentKey);
 				if (parent) parent.hasChildren = true;
 				const used = taken.get(parentFolder) ?? new Set<string>();
 				taken.set(parentFolder, used);
@@ -307,6 +328,7 @@ export class DocumentMarkdownService {
 				if (node.kind === DocumentKindEnum.FILE) {
 					// A file has nothing under it: it is copied under its own name.
 					entries.push({ document: node, path: posix.join(parentFolder, uniqueFileName(zipFileNameOf(node), used)), hasChildren: false, kind: 'file', parentId, depth });
+					entryById.set(String(node.id), entries[entries.length - 1]);
 					counted += 1;
 					continue;
 				}
@@ -322,13 +344,22 @@ export class DocumentMarkdownService {
 				depthOf.set(String(node.id), depth);
 				const kind = node.kind === DocumentKindEnum.PAGE ? 'page' : 'folder';
 				entries.push({ document: node, path: posix.join(folder, 'index.md'), hasChildren: false, kind, parentId, depth });
+				entryById.set(String(node.id), entries[entries.length - 1]);
 				if (kind === 'page') counted += 1;
 				next.push(node);
 			}
 			frontier = next;
 		}
-		// Stopped at the limit with nodes whose children were not read: there may be more pages.
-		if (counted >= max && frontier.length) truncated = true;
+		// Stopped at the limit with nodes whose children were not read: more only when one of them has a child (a last level
+		// of leaves exactly at the limit is the whole subtree).
+		if (!truncated && (counted >= max || visited >= SUBTREE_MAX_NODES) && frontier.length) {
+			const more = await this.repository.find({
+				select: { id: true },
+				where: { parentId: In(frontier.map((node) => node.id as ID)), tenantId: root.tenantId as ID, kind: In(kinds) } as never,
+				take: 1
+			});
+			truncated = more.length > 0;
+		}
 		const orderOf = new Map<string, number>();
 		const visit = (id: string) => {
 			orderOf.set(id, orderOf.size);
@@ -355,6 +386,12 @@ export class DocumentMarkdownService {
 		let totalBytes = 0;
 		for (const entry of files) {
 			const id = String(entry.document.id);
+			// The stored size first: a file known not to fit is never read into memory.
+			const knownSize = Number(entry.document.fileSize);
+			if (Number.isFinite(knownSize) && knownSize > 0 && totalBytes + knownSize > DOCS_MARKDOWN_ASSETS_MAX_BYTES) {
+				this.logger.warn(`Markdown export: file ${id} was not added (the export's asset budget of ${DOCS_MARKDOWN_ASSETS_MAX_BYTES} bytes is reached)`);
+				continue;
+			}
 			try {
 				const file = await this.uploads.getRawFile(id as ID, organizationId);
 				if (totalBytes + file.buffer.length > DOCS_MARKDOWN_ASSETS_MAX_BYTES) {
@@ -466,7 +503,7 @@ export function folderIndexMarkdown(
 			if (entry.kind === 'folder') {
 				lines.push(`${indent}- ${label}/`);
 			} else if (entry.kind === 'file' && !copied.has(String(entry.document.id))) {
-				lines.push(`${indent}- [${label}](/api/plugins/docs/documents/${encodeURIComponent(String(entry.document.id))}/download) (not included)`);
+				lines.push(`${indent}- [${label}](/api/plugins/docs/documents/${encodeURIComponent(String(entry.document.id))}/raw) (not included)`);
 			} else {
 				lines.push(`${indent}- [${label}](${encodePathSegments(entry.path)})`);
 			}

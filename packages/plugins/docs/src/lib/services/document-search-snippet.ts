@@ -53,9 +53,10 @@ export function plainTextOfJson(contentJson: unknown): string {
 	const parts: string[] = [];
 	let length = 0;
 	const visit = (node: ISnippetJsonNode | null | undefined): void => {
-		if (!node || typeof node !== 'object' || length > DOCS_SEARCH_SNIPPET_MAX_TEXT) return;
+		if (!node || typeof node !== 'object' || length >= DOCS_SEARCH_SNIPPET_MAX_TEXT) return;
 		if (node.type === 'text') {
-			const text = typeof node.text === 'string' ? node.text : '';
+			// Only what still fits: one long pasted paragraph is cut at the limit like the page.
+			const text = (typeof node.text === 'string' ? node.text : '').slice(0, DOCS_SEARCH_SNIPPET_MAX_TEXT - length);
 			parts.push(text);
 			length += text.length;
 			return;
@@ -109,6 +110,15 @@ function termOf(q: string | null | undefined): string {
 	return collapseWhitespace(String(q ?? ''));
 }
 
+/** The first case-insensitive match of `term` in `text`, or null. */
+export function firstMatchOf(text: string, term: string): IDocumentSearchMatchRange | null {
+	const needle = termOf(term);
+	if (!needle || !text) return null;
+	const pattern = new RegExp(needle.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'iu');
+	const match = pattern.exec(text);
+	return match && match[0].length > 0 ? { start: match.index, end: match.index + match[0].length } : null;
+}
+
 /** Every case-insensitive match of `term` in `text`, as offsets into `text`. */
 export function matchRangesOf(text: string, term: string): IDocumentSearchMatchRange[] {
 	const needle = termOf(term);
@@ -142,17 +152,22 @@ export interface ISnippetSources {
  */
 export function searchSnippetOf(q: string | null | undefined, sources: ISnippetSources, length = DOCS_SEARCH_SNIPPET_LENGTH): IDocumentSearchSnippet {
 	const term = termOf(q);
-	const content = plainTextOfJson(sources.contentJson) || plainTextOfHtml(sources.contentHtml);
+	const jsonText = plainTextOfJson(sources.contentJson);
+	// The content search matches the HTML cache: when the JSON's text does not hold the term, the HTML's may.
+	const htmlText = !jsonText || !firstMatchOf(jsonText, term) ? plainTextOfHtml(sources.contentHtml) : '';
 	const candidates: Array<[DocumentSearchSnippetSourceEnum, string]> = [
-		[DocumentSearchSnippetSourceEnum.CONTENT, content],
+		[DocumentSearchSnippetSourceEnum.CONTENT, jsonText],
+		[DocumentSearchSnippetSourceEnum.CONTENT, htmlText],
 		[DocumentSearchSnippetSourceEnum.EXTRACTED_TEXT, collapseWhitespace(String(sources.extractedText ?? '').slice(0, DOCS_SEARCH_SNIPPET_MAX_TEXT))],
 		[DocumentSearchSnippetSourceEnum.DESCRIPTION, collapseWhitespace(String(sources.description ?? ''))]
 	];
 	const nameMatches = matchRangesOf(String(sources.name ?? ''), term);
 	for (const [source, text] of candidates) {
-		const matches = matchRangesOf(text, term);
-		if (matches.length) {
-			return { source, nameMatches, ...windowAround(text, matches, length) };
+		const first = firstMatchOf(text, term);
+		if (first) {
+			// The window around the first match, then the matches inside it: never every match of a long text.
+			const cut = windowAround(text, [first], length);
+			return { source, nameMatches, ...cut, matches: matchRangesOf(cut.text, term) };
 		}
 	}
 	const leading = candidates.find(([, text]) => text.length > 0)?.[1] ?? '';

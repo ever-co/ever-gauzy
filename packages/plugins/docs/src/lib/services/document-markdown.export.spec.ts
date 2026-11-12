@@ -8,7 +8,7 @@ jest.mock('../dto/update-document-markdown.dto', () => ({}));
 import { ConflictException, NotFoundException } from '@nestjs/common';
 import { Writable } from 'node:stream';
 import { DocumentKindEnum } from '@gauzy/contracts';
-import { DOCS_NOT_A_PAGE } from '../docs.constants';
+import { DOCS_MARKDOWN_TOO_MANY_PAGES, DOCS_NOT_A_PAGE } from '../docs.constants';
 import { openOfficePackage } from '../knowledge/extraction/office-package.util';
 import { DocumentMarkdownService, folderIndexMarkdown, zipFileNameOf } from './document-markdown.service';
 
@@ -107,7 +107,7 @@ describe('DocumentMarkdownService subtree export of a folder', () => {
 		const { result, zip } = await zipOf(service, TREE[0].id);
 		expect(result.files).toBe(1);
 		expect(zip.has('logo-final-.png')).toBe(false);
-		expect(zip.readText('index.md')).toContain('(/api/plugins/docs/documents/a0000000-0000-4000-8000-000000000006/download) (not included)');
+		expect(zip.readText('index.md')).toContain('(/api/plugins/docs/documents/a0000000-0000-4000-8000-000000000006/raw) (not included)');
 	});
 
 	it('keeps the export of a page as it was: no files of the tree, the page as index.md', async () => {
@@ -160,6 +160,47 @@ describe('DocumentMarkdownService subtree export of a folder', () => {
 		const { zip } = await zipOf(service, TREE[0].id);
 		expect(zip.readText('report final#1.pdf')).toBe('%PDF-report');
 		expect(zip.readText('notes.md')).toContain('](report%20final%231.pdf)');
+	});
+
+	it('refuses (413) a subtree past the limit before any byte goes out, and takes one exactly at it', async () => {
+		const pages = (count: number): INode[] =>
+			Array.from({ length: count }, (_, at) => ({
+				id: `p${String(at).padStart(7, '0')}-0000-4000-8000-000000000099`,
+				kind: DocumentKindEnum.PAGE,
+				name: `Page ${at}`,
+				parentId: TREE[0].id,
+				index: at,
+				contentJson: { type: 'doc', content: [text(`Page ${at}`)] }
+			}));
+		const over = buildService([TREE[0], ...pages(501)]);
+		const written: Buffer[] = [];
+		const output = new Writable({
+			write(chunk, _encoding, callback) {
+				written.push(Buffer.from(chunk));
+				callback();
+			}
+		});
+		const refusal = await over.service.writeSubtreeZip((await over.service.requireExportRoot(TREE[0].id as never)) as never, undefined, output).catch((error) => error);
+		expect(refusal.getStatus?.()).toBe(413);
+		expect(refusal.getResponse().code).toBe(DOCS_MARKDOWN_TOO_MANY_PAGES);
+		expect(written).toHaveLength(0);
+
+		const { result } = await zipOf(buildService([TREE[0], ...pages(500)]).service, TREE[0].id);
+		expect(result.pages).toBe(500);
+	});
+
+	it('bounds a walk through folders alone (413 past the node limit)', async () => {
+		const folders: INode[] = Array.from({ length: 2001 }, (_, at) => ({
+			id: `d${String(at).padStart(7, '0')}-0000-4000-8000-000000000098`,
+			kind: DocumentKindEnum.FOLDER,
+			name: `Folder ${at}`,
+			parentId: TREE[0].id,
+			index: at
+		}));
+		const { service } = buildService([TREE[0], ...folders]);
+		const root = await service.requireExportRoot(TREE[0].id as never);
+		const refusal = await service.writeSubtreeZip(root, undefined, new Writable({ write: (_chunk, _encoding, callback) => callback() })).catch((error) => error);
+		expect(refusal.getStatus?.()).toBe(413);
 	});
 
 	it('zips an empty folder as an index that says so', async () => {

@@ -201,6 +201,7 @@ export class DocumentController {
 	@ApiResponse({ status: HttpStatus.OK, description: 'The Markdown (text/markdown) or the zip (application/zip).' })
 	@ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Document not found.' })
 	@ApiResponse({ status: HttpStatus.CONFLICT, description: 'Not a page (a folder exports with subtree=true only).' })
+	@ApiResponse({ status: HttpStatus.PAYLOAD_TOO_LARGE, description: 'A subtree holding more pages and files than the export takes (refused, never cut).' })
 	@Permissions(PermissionsEnum.DOCS_READ)
 	@UseValidationPipe({ whitelist: true, transform: true })
 	// A subtree export reads up to 500 pages and the files they show in one request, as the bulk route fans out.

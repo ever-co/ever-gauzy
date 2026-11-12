@@ -1,5 +1,5 @@
 import { DocumentSearchSnippetSourceEnum } from '@gauzy/contracts';
-import { DOCS_SEARCH_SNIPPET_LENGTH, matchRangesOf, plainTextOfHtml, plainTextOfJson, searchSnippetOf } from './document-search-snippet';
+import { DOCS_SEARCH_SNIPPET_LENGTH, DOCS_SEARCH_SNIPPET_MAX_TEXT, firstMatchOf, matchRangesOf, plainTextOfHtml, plainTextOfJson, searchSnippetOf } from './document-search-snippet';
 
 const page = (...paragraphs: string[]) => ({
 	type: 'doc',
@@ -95,6 +95,29 @@ describe('document search snippets', () => {
 			expect(matched(snippet)).toEqual(['finale']);
 			expect(snippet.truncatedEnd).toBe(false);
 			expect(snippet.text.endsWith('finale')).toBe(true);
+		});
+
+		it('reads at most the limit of one very long text node', () => {
+			const text = plainTextOfJson(page('a'.repeat(DOCS_SEARCH_SNIPPET_MAX_TEXT + 5000)));
+			expect(text.length).toBeLessThanOrEqual(DOCS_SEARCH_SNIPPET_MAX_TEXT);
+		});
+
+		it("takes the HTML cache's text when only it holds the term (the content search matches the HTML)", () => {
+			const snippet = searchSnippetOf('published', { contentJson: page('A draft text'), contentHtml: '<p>The published text</p>' });
+			expect(snippet.source).toBe(DocumentSearchSnippetSourceEnum.CONTENT);
+			expect(matched(snippet)).toEqual(['published']);
+			// The JSON's text wins when it holds the term.
+			expect(searchSnippetOf('draft', { contentJson: page('A draft text'), contentHtml: '<p>Other</p>' }).text).toBe('A draft text');
+		});
+
+		it('marks the matches of the window only, however many the text holds', () => {
+			const snippet = searchSnippetOf('abc', { contentJson: page('abc '.repeat(20_000)) });
+			expect(snippet.text.length).toBeLessThanOrEqual(DOCS_SEARCH_SNIPPET_LENGTH);
+			expect(snippet.matches.length).toBeGreaterThan(0);
+			expect(snippet.matches.length).toBeLessThanOrEqual(Math.ceil(DOCS_SEARCH_SNIPPET_LENGTH / 4));
+			expect(matched(snippet).every((text) => text.toLowerCase() === 'abc')).toBe(true);
+			expect(firstMatchOf('xx ABC', 'abc')).toEqual({ start: 3, end: 6 });
+			expect(firstMatchOf('nothing', 'abc')).toBeNull();
 		});
 	});
 });

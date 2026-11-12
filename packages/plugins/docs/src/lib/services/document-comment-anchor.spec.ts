@@ -140,6 +140,19 @@ describe('document comment anchors', () => {
 		});
 	});
 
+	describe('the work budget of a read', () => {
+		it('stops looking for approximate quotes once the budget is spent: the anchor falls back to its block', () => {
+			const anchor = { blockId: 'b1', start: 0, end: 10, quote: 'betta gama' };
+			const blocks = [{ blockId: 'b1', text: 'alpha beta gamma delta' }];
+			const budget = { cells: 10 * blocks[0].text.length };
+			expect(resolveCommentAnchor(anchor, blocks, null, budget)).toMatchObject({ status: DocumentCommentAnchorStatusEnum.MOVED, method: DocumentCommentAnchorMethodEnum.FUZZY });
+			expect(budget.cells).toBe(0);
+			expect(resolveCommentAnchor(anchor, blocks, null, budget)).toMatchObject({ status: DocumentCommentAnchorStatusEnum.BLOCK });
+			// Without a budget nothing is counted.
+			expect(resolveCommentAnchor(anchor, blocks)).toMatchObject({ method: DocumentCommentAnchorMethodEnum.FUZZY });
+		});
+	});
+
 	describe('editDistanceWithin', () => {
 		it('answers the distance within the limit, and null past it', () => {
 			expect(editDistanceWithin('kitten', 'sitting', 3)).toBe(3);

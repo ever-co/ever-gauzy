@@ -16,7 +16,8 @@ import { Document } from './document.entity';
  */
 @MultiORMEntity('document_comment_anchor', { mikroOrmRepository: () => MikroOrmDocumentCommentAnchorRepository })
 @ColumnIndex('IDX_document_comment_anchor_comment', ['commentId'], { unique: true })
-@ColumnIndex('IDX_document_comment_anchor_tenant_org_doc', ['tenantId', 'organizationId', 'documentId'])
+// The page's anchors (`GET /documents/:id/comment-anchors` reads by tenant and page).
+@ColumnIndex('IDX_document_comment_anchor_tenant_doc', ['tenantId', 'documentId'])
 export class DocumentCommentAnchor extends TenantOrganizationBaseEntity {
 	/** The block the range is in (its `blockId` attribute). */
 	@ApiProperty({ type: () => String })

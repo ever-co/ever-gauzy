@@ -24,6 +24,7 @@ import { TypeOrmDocumentCommentAnchorRepository } from '../repositories/type-orm
 import {
 	anchorBlocksOf,
 	DOCS_ANCHOR_CONTEXT_MAX_LENGTH,
+	DOCS_ANCHOR_FUZZY_BUDGET,
 	DOCS_ANCHOR_QUOTE_MAX_LENGTH,
 	DOCS_ANCHOR_RELATIVE_MAX_LENGTH,
 	IAnchorBlock,
@@ -44,6 +45,8 @@ export interface IAnchorContent {
 	blocks: IAnchorBlock[];
 	live: LiveAnchorResolver | null;
 	revision: number;
+	/** The approximate-match work left for the anchors found again in it (one read: a list, or one GraphQL request). */
+	budget: { cells: number };
 }
 
 /**
@@ -216,15 +219,15 @@ export class DocumentCommentAnchorService {
 		const state = document.contentBinary ? decodeLiveState(document.contentBinary) : null;
 		// A live state of an earlier revision is behind the JSON a save wrote since: the JSON is the page then.
 		if (state && state.meta.revision === revision) {
-			return { blocks: anchorBlocksOf(liveDocumentJson(state.doc)), live: liveAnchorResolverOf(state.doc), revision };
+			return { blocks: anchorBlocksOf(liveDocumentJson(state.doc)), live: liveAnchorResolverOf(state.doc), revision, budget: { cells: DOCS_ANCHOR_FUZZY_BUDGET } };
 		}
 		state?.doc.destroy();
-		return { blocks: anchorBlocksOf(document.contentJson), live: null, revision };
+		return { blocks: anchorBlocksOf(document.contentJson), live: null, revision, budget: { cells: DOCS_ANCHOR_FUZZY_BUDGET } };
 	}
 
 	private resolved(row: DocumentCommentAnchor, content: IAnchorContent): IDocumentCommentAnchorResolved {
 		const anchor = anchorOfRow(row);
-		return { ...anchor, position: resolveCommentAnchor(anchor, content.blocks, content.live) };
+		return { ...anchor, position: resolveCommentAnchor(anchor, content.blocks, content.live, content.budget) };
 	}
 }
 

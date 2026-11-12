@@ -65,7 +65,16 @@ interface IRow {
 
 /** The service over one page, a table of anchors and a table of comments. */
 function buildService(
-	options: { contentJson?: unknown; contentBinary?: Buffer | null; revision?: number; comments?: Array<Record<string, unknown>>; rows?: IRow[]; takesComments?: boolean } = {}
+	options: {
+		contentJson?: unknown;
+		contentBinary?: Buffer | null;
+		revision?: number;
+		comments?: Array<Record<string, unknown>>;
+		rows?: IRow[];
+		takesComments?: boolean;
+		/** The page exists but the caller may not read it (the page route's 404). */
+		readable?: boolean;
+	} = {}
 ) {
 	const page = {
 		id: PAGE_ID,
@@ -108,7 +117,7 @@ function buildService(
 	};
 	const documents = {
 		findOneScoped: jest.fn(async (id: string) => {
-			if (id !== PAGE_ID) throw new NotFoundException();
+			if (id !== PAGE_ID || options.readable === false) throw new NotFoundException();
 			return page;
 		})
 	};
@@ -226,6 +235,21 @@ describe('DocumentCommentAnchorService', () => {
 		const { service } = buildService();
 		await expect(service.set('00000000-0000-4000-8000-000000000000', COMMENT_ID, anchorInput)).rejects.toBeInstanceOf(NotFoundException);
 		await expect(service.list('00000000-0000-4000-8000-000000000000')).rejects.toBeInstanceOf(NotFoundException);
+	});
+
+	it('answers an existing page the caller may not read as missing, writing and showing nothing', async () => {
+		const rows: IRow[] = [
+			{ id: 'a1', tenantId: 'tenant-1', organizationId: 'org-1', commentId: COMMENT_ID, documentId: PAGE_ID, blockId: 'b1', startOffset: 10, endOffset: 19, quote: 'brown fox' }
+		];
+		const { service, repository, commentAccess } = buildService({ rows, readable: false });
+		await expect(service.list(PAGE_ID)).rejects.toBeInstanceOf(NotFoundException);
+		await expect(service.set(PAGE_ID, COMMENT_ID, anchorInput)).rejects.toBeInstanceOf(NotFoundException);
+		await expect(service.remove(PAGE_ID, COMMENT_ID)).rejects.toBeInstanceOf(NotFoundException);
+		expect(await service.ofComment({ id: COMMENT_ID, entity: BaseEntityEnum.Document, entityId: PAGE_ID, tenantId: 'tenant-1' })).toBeNull();
+		expect(repository.save).not.toHaveBeenCalled();
+		expect(repository.delete).not.toHaveBeenCalled();
+		expect(commentAccess.findWritableParent).not.toHaveBeenCalled();
+		expect(rows).toHaveLength(1);
 	});
 
 	it('lists the anchors of comments that are still there, found again in the edited page', async () => {
