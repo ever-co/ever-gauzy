@@ -159,9 +159,9 @@ export class ChatTaskCardService {
 	/** The record of the task's scope whose value or name is this one (any case): the most specific scope first. */
 	private async recordNamed(entity: 'TaskStatus' | 'TaskPriority', name: string, scope: ChatTaskRecordScope): Promise<IChatTaskRecord | null> {
 		const records = (await this.dataSource.getRepository<ObjectLiteral>(entity).find({
-			select: { id: true, name: true, value: true, organizationId: true, projectId: true, organizationTeamId: true },
+			select: { id: true, name: true, value: true, tenantId: true, organizationId: true, projectId: true, organizationTeamId: true },
 			where: scopeOf(scope)
-		} as never)) as Array<IChatTaskRecord & { organizationId?: ID | null; projectId?: ID | null; organizationTeamId?: ID | null }>;
+		} as never)) as Array<IChatTaskRecord & { tenantId?: ID | null; organizationId?: ID | null; projectId?: ID | null; organizationTeamId?: ID | null }>;
 		const wanted = name.trim().toLowerCase();
 		const ofProject = (record: { projectId?: ID | null }) => !!scope.projectId && String(record.projectId ?? '') === String(scope.projectId);
 		const matching = records.filter(
@@ -171,23 +171,28 @@ export class ChatTaskCardService {
 				!record.organizationTeamId &&
 				[record.value, record.name].some((text) => typeof text === 'string' && text.trim().toLowerCase() === wanted)
 		);
-		const rank = (record: { organizationId?: ID | null; projectId?: ID | null }) => (ofProject(record) ? 0 : record.organizationId ? 1 : 2);
+		// The project's own, then the organization's, then the tenant's shared ones, then the platform's defaults.
+		const rank = (record: { tenantId?: ID | null; organizationId?: ID | null; projectId?: ID | null }) =>
+			ofProject(record) ? 0 : record.organizationId ? 1 : record.tenantId ? 2 : 3;
 		return matching.sort((a, b) => rank(a) - rank(b))[0] ?? null;
 	}
 
 	/**
 	 * A record a change names (a status, a priority) must be one the task may take: the task organization's, the
-	 * tenant's shared one (no organization), or a platform default (no tenant, no organization). Another organization's
-	 * record reads as not found. Null clears it and needs no check.
+	 * tenant's shared one (no organization), or a platform default (no tenant, no organization), and not another
+	 * project's. Another organization's or project's record reads as not found. A team's record is the client's choice
+	 * (it lists its team's statuses). Null clears it and needs no check.
 	 *
 	 * @returns The record (its name and value), or null when none is named.
 	 */
 	private async requireRecord(entity: 'TaskStatus' | 'TaskPriority', id: ID | null | undefined, scope: ChatTaskRecordScope, missing: string): Promise<IChatTaskRecord | null> {
 		if (!id) return null;
 		const where = scopeOf(scope).map((clause) => ({ id, ...clause }));
-		const found = (await this.dataSource.getRepository<ObjectLiteral>(entity).findOne({ select: { id: true, name: true, value: true }, where } as never)) as IChatTaskRecord | null;
-		if (!found) throw new NotFoundException(missing);
-		return found;
+		const found = (await this.dataSource.getRepository<ObjectLiteral>(entity).findOne({ select: { id: true, name: true, value: true, projectId: true }, where } as never)) as
+			| (IChatTaskRecord & { projectId?: ID | null })
+			| null;
+		if (!found || (found.projectId && String(found.projectId) !== String(scope.projectId ?? ''))) throw new NotFoundException(missing);
+		return { id: found.id, name: found.name, value: found.value };
 	}
 
 	/**

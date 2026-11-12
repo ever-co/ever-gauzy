@@ -40,7 +40,16 @@ import { ChatTaskCardService, taskPatchOf } from './chat-task-card.service';
 const caller: IChatCaller = { tenantId: 'ten', organizationId: 'org', userId: 'u1', employeeId: 'e1', canManage: false };
 
 function over(
-	options: { reference?: boolean; task?: boolean; taskOrganization?: string; employees?: number; status?: boolean; archived?: boolean; member?: boolean } = {}
+	options: {
+		reference?: boolean;
+		task?: boolean;
+		taskOrganization?: string;
+		employees?: number;
+		status?: boolean;
+		statusProject?: string;
+		archived?: boolean;
+		member?: boolean;
+	} = {}
 ) {
 	const message = { id: 'm1', conversationId: 'c1', kind: 'message', tenantId: 'ten', organizationId: 'org', deletedAt: null };
 	const repositories: Record<string, Record<string, jest.Mock>> = {
@@ -58,15 +67,17 @@ function over(
 			})
 		},
 		TaskStatus: {
-			findOne: jest.fn(async () => (options.status === false ? null : { id: 's1', name: 'Done', value: 'done' })),
+			findOne: jest.fn(async () => (options.status === false ? null : { id: 's1', name: 'Done', value: 'done', projectId: options.statusProject ?? null })),
 			// The statuses of the task's scope: the organization's, its project's own twin, and another project's.
 			find: jest.fn(async () => [
 				{ id: 's-org', name: 'In Review', value: 'in-review', organizationId: 'org', projectId: null },
 				{ id: 's-project', name: 'In Review', value: 'in-review', organizationId: 'org', projectId: 'p1' },
 				{ id: 's-other', name: 'Blocked', value: 'blocked', organizationId: 'org', projectId: 'p9' },
 				// A team's own status: a name alone never takes it (whose team would it be?).
-				{ id: 's-team', name: 'Done', value: 'done', organizationId: 'org', projectId: null, organizationTeamId: 'team-9' },
-				{ id: 's-default', name: 'Done', value: 'done', organizationId: null, projectId: null, organizationTeamId: null }
+				{ id: 's-team', name: 'Done', value: 'done', tenantId: 'ten', organizationId: 'org', projectId: null, organizationTeamId: 'team-9' },
+				// The platform's default and the tenant's shared record of one name: the tenant's wins.
+				{ id: 's-default', name: 'Done', value: 'done', tenantId: null, organizationId: null, projectId: null, organizationTeamId: null },
+				{ id: 's-tenant', name: 'Done', value: 'done', tenantId: 'ten', organizationId: null, projectId: null, organizationTeamId: null }
 			])
 		},
 		TaskPriority: {
@@ -150,8 +161,8 @@ describe('ChatTaskCardService.update', () => {
 		// A name no record of the scope holds clears the record, so the card never shows the one it had.
 		expect(await run({ status: 'Blocked' })).toEqual({ status: 'Blocked', taskStatusId: null });
 		expect(await run({ status: 'Someday' })).toEqual({ status: 'Someday', taskStatusId: null });
-		// Another team's record of that name is passed over for the shared one.
-		expect(await run({ status: 'Done' })).toEqual({ status: 'done', taskStatusId: 's-default' });
+		// Another team's record of that name is passed over for the shared one: the tenant's before the platform's.
+		expect(await run({ status: 'Done' })).toEqual({ status: 'done', taskStatusId: 's-tenant' });
 		// A record cleared leaves the name as given.
 		expect(await run({ status: 'Someday', taskStatusId: null })).toEqual({ status: 'Someday', taskStatusId: null });
 	});
@@ -211,6 +222,8 @@ describe('ChatTaskCardService.update', () => {
 			[{ reference: false }, { status: 'done' }],
 			[{ task: false }, { status: 'done' }],
 			[{ taskOrganization: 'other' }, { status: 'done' }],
+			// A status record of another project of the organization.
+			[{ statusProject: 'p9' }, { taskStatusId: 's1' }],
 			[{ status: false }, { taskStatusId: 's9' }],
 			[{ employees: 1 }, { assigneeEmployeeIds: ['e1', 'e9'] }]
 		];
