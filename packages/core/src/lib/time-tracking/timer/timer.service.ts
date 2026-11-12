@@ -571,6 +571,9 @@ export class TimerService {
 			throw new NotAcceptableException(`No running log found. Can't stop timer because it was already stopped.`);
 		}
 
+		// A stop meant for another run is refused before anything is written, and the running log goes on
+		this.assertStopIsForRunningLog(request, lastLog);
+
 		// Calculate stoppedAt date or use current date if not provided
 		const stoppedAt = await this.calculateStoppedAt(request, lastLog);
 		this.debug(() => `last stopped at: ${stoppedAt}`);
@@ -609,6 +612,38 @@ export class TimerService {
 
 		// Return the last log
 		return lastLog;
+	}
+
+	/**
+	 * Refuses a stop that cannot be for the running log: one asking to stop it before it started. Such a stop comes
+	 * from a view still showing an earlier run, which a start on another device or tab has replaced since, and it
+	 * carries that run's dates: it used to close the newer run, at zero duration. It is refused with 406, as a stop
+	 * with nothing running is, so a client takes it as "already stopped", and nothing is written.
+	 *
+	 * Only the time the client asks for is checked: the end a desktop stop gets from its time slots
+	 * (`calculateStoppedAt`) may fall before the start, and that stop still closes the log, as before.
+	 *
+	 * @param request - The stop, as the client sent it.
+	 * @param runningLog - The employee's running log, the one the stop would end.
+	 * @throws NotAcceptableException when the requested `stoppedAt` is before the running log's `startedAt`.
+	 */
+	private assertStopIsForRunningLog(request: ITimerToggleInput, runningLog: ITimeLog): void {
+		const asksForStopTime = isNotEmpty(request.stoppedAt);
+		if (!asksForStopTime) {
+			return;
+		}
+
+		const requestedStoppedAt = moment.utc(request.stoppedAt);
+		const runningSince = moment.utc(runningLog.startedAt);
+		const stopsBeforeStart = requestedStoppedAt.isBefore(runningSince);
+		if (stopsBeforeStart) {
+			this.logger.warn(
+				`Stop at ${requestedStoppedAt.toISOString()} refused: the running log ${runningLog.id} started after it, at ${runningSince.toISOString()}.`
+			);
+			throw new NotAcceptableException(
+				'No running log found for this stop: the running timer started after the requested stop time.'
+			);
+		}
 	}
 
 	/**
