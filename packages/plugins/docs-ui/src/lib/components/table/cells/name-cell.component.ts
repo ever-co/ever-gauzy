@@ -117,8 +117,8 @@ import { IDocsSnippetSegment, searchSnippetLineOf } from '../../../models/docs-s
 			}
 			.docs-name-snippet mark {
 				padding: 0 0.0625rem;
-				border-radius: 0.125rem;
-				background: var(--color-warning-transparent-200, rgba(255, 170, 0, 0.24));
+				border-radius: calc(var(--border-radius) / 4);
+				background: var(--color-warning-transparent-200);
 				color: var(--docs-text, var(--text-basic-color));
 			}
 			.docs-name-cell ::ng-deep nb-badge {
