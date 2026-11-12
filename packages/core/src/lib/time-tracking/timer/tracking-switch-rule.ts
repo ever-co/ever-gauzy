@@ -1,5 +1,6 @@
 import { ForbiddenException } from '@nestjs/common';
 import { RolesEnum } from '@gauzy/contracts';
+import { narrowRolesToOAuthAppScopes } from '../../auth/oauth-app-scope';
 import { RequestContext } from '../../core/context';
 
 /**
@@ -74,6 +75,19 @@ export function callerRoleRank(): TrackingSwitchRank {
 		return TrackingSwitchRank.MANAGER;
 	}
 	return TrackingSwitchRank.MEMBER;
+}
+
+/**
+ * Whether the caller's token may act with the rank of a team its user manages. A first-party caller may. A token of a
+ * third-party OAuth app acts with the manager role only where an approved scope allows that role (none does today),
+ * as the role checks hold it, so managing a team does not raise it either.
+ */
+export function mayActAsTeamManager(): boolean {
+	const oauthAppScopes = RequestContext.currentOAuthAppScopes();
+	if (oauthAppScopes === null) {
+		return true;
+	}
+	return narrowRolesToOAuthAppScopes([RolesEnum.MANAGER], oauthAppScopes).length > 0;
 }
 
 /**

@@ -230,6 +230,19 @@ describe('OrganizationTeamEmployeeService.updateMember — who may switch a memb
 			expect(updated).toEqual([]);
 			expect(publish).not.toHaveBeenCalled();
 		});
+
+		it("refuses a third-party OAuth app token of the team's manager switching a member, and writes nothing", async () => {
+			// The token was approved for writes, which grants no manager role
+			jest.spyOn(RequestContext, 'currentOAuthAppScopes').mockReturnValue(['zap:write']);
+
+			await expect(updateAs('manager', 'row-member', { isTrackingEnabled: false })).rejects.toThrow(
+				new ForbiddenException(TRACKING_SWITCH_REFUSED)
+			);
+
+			expect(rowOf('row-member').isTrackingEnabled).toBe(true);
+			expect(updated).toEqual([]);
+			expect(publish).not.toHaveBeenCalled();
+		});
 	});
 
 	describe('turning tracking back on', () => {

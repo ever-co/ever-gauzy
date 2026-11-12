@@ -28,6 +28,7 @@ import { TrackingTurnedOffEvent } from '../time-tracking/timer/events/tracking-t
 import {
 	callerRoleRank,
 	keepsTrackingSwitch,
+	mayActAsTeamManager,
 	rankInTeam,
 	rankOfRole,
 	TrackingSwitchRank
@@ -642,6 +643,10 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 	): Promise<TrackingSwitchRank> {
 		const roleRank = callerRoleRank();
 		if (roleRank === TrackingSwitchRank.ADMIN) {
+			return roleRank;
+		}
+		// A third-party OAuth app's token keeps its role's rank: managing the team does not raise it
+		if (!mayActAsTeamManager()) {
 			return roleRank;
 		}
 		const callerEmployeeId = RequestContext.currentUser()?.employeeId ?? undefined;

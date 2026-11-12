@@ -4,6 +4,7 @@ import { RequestContext } from '../../core/context';
 import {
 	callerRoleRank,
 	keepsTrackingSwitch,
+	mayActAsTeamManager,
 	mayTurnTrackingOf,
 	rankInTeam,
 	rankOfRole,
@@ -119,6 +120,24 @@ describe('tracking switch rule', () => {
 			asCaller({ name: RolesEnum.ADMIN });
 
 			expect(callerRoleRank()).toBe(MEMBER);
+		});
+	});
+
+	describe('mayActAsTeamManager', () => {
+		afterEach(() => jest.restoreAllMocks());
+
+		it('lets a first-party caller act with the rank of a team its user manages', () => {
+			jest.spyOn(RequestContext, 'currentOAuthAppScopes').mockReturnValue(null);
+
+			expect(mayActAsTeamManager()).toBe(true);
+		});
+
+		it('never lets a third-party OAuth app token act as a team manager, whatever scopes were approved', () => {
+			jest.spyOn(RequestContext, 'currentOAuthAppScopes').mockReturnValue(['zap:write']);
+			expect(mayActAsTeamManager()).toBe(false);
+
+			jest.spyOn(RequestContext, 'currentOAuthAppScopes').mockReturnValue([]);
+			expect(mayActAsTeamManager()).toBe(false);
 		});
 	});
 });
