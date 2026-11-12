@@ -68,16 +68,23 @@
 
 ## Phase 4 — Platform gaps found by the Ever Teams Docs lane (ever-gauzy #11813)
 
-- [x] **T19**. Text-range comment anchors (FR-16): contracts, table `document_comment_anchor` (migration
-  `1791000007530`, both ORMs), REST (`GET …/comment-anchors`, `PUT|DELETE …/comments/:commentId/anchor`) and GraphQL
-  (`Comment.documentAnchor`, `documentCommentAnchors`, set / remove), behind `GAUZY_DOCS_COLLAB_ENABLED`; the
-  comment API's write rule for a page
-- [x] **T20**. Follower notifications name the comment (FR-17): `employee_notification.commentId` (migration
-  `1791000007540`), the fan-out, the Inbox entry about the comment
+- [x] **T19**. Text-range comment anchors (FR-16): contracts, table
+      `document_comment_anchor` (migration `1791000007530`, both ORMs), REST
+      (`GET …/comment-anchors`, `PUT|DELETE …/comments/:commentId/anchor`) and
+      GraphQL (`Comment.documentAnchor`, `documentCommentAnchors`, set /
+      remove), behind `GAUZY_DOCS_COLLAB_ENABLED`; the comment API's write rule
+      for a page
+- [x] **T20**. Follower notifications name the comment (FR-17):
+      `employee_notification.commentId` (migration `1791000007540`), the
+      fan-out, the Inbox entry about the comment
 - [x] **T21**. Search snippets (FR-18): `searchSnippet` on `GET /documents?q=…`
-- [x] **T22**. Folder zip export (FR-19): `…/export/markdown?subtree=true` on a folder
-- [x] **T23**. Ever Teams: range comments (highlight, panel, live relative positions), the anchor proxies, the folder
-  zip export (ever-teams `feat/docs-platform-gaps`)
-- [ ] **T24**. The Angular Docs UI: range comments, snippets in the search results, the folder zip export
-- [ ] **T25**. Manual check on dev with `GAUZY_DOCS_COLLAB_ENABLED=true` (a range found again after edits, live and
-  saved; a follower's Inbox entry opens the thread; a folder's zip opened)
+- [x] **T22**. Folder zip export (FR-19): `…/export/markdown?subtree=true` on a
+      folder
+- [x] **T23**. Ever Teams: range comments (highlight, panel, live relative
+      positions), the anchor proxies, the folder zip export (ever-teams
+      `feat/docs-platform-gaps`)
+- [ ] **T24**. The Angular Docs UI: range comments, snippets in the search
+      results, the folder zip export
+- [ ] **T25**. Manual check on dev with `GAUZY_DOCS_COLLAB_ENABLED=true` (a
+      range found again after edits, live and saved; a follower's Inbox entry
+      opens the thread; a folder's zip opened)

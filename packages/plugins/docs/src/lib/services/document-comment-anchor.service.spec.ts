@@ -19,6 +19,7 @@ jest.mock('./document.service', () => ({ DocumentService: class DocumentService 
 /** The plugin's configuration as the service reads it (Docs collaboration on unless a test turns it off). */
 const mockConfig = { collabEnabled: true };
 jest.mock('../docs.config', () => ({ getDocsConfig: () => mockConfig }));
+jest.mock('./docs-feature.service', () => ({ DocsFeatureService: class DocsFeatureService {} }));
 jest.mock('./document-comment-access.policy', () => ({ DocumentCommentAccessPolicy: class DocumentCommentAccessPolicy {} }));
 jest.mock('../repositories/type-orm-document-comment-anchor.repository', () => ({
 	TypeOrmDocumentCommentAnchorRepository: class TypeOrmDocumentCommentAnchorRepository {}
@@ -74,6 +75,8 @@ function buildService(
 		takesComments?: boolean;
 		/** The page exists but the caller may not read it (the page route's 404). */
 		readable?: boolean;
+		/** FEATURE_DOCUMENTS for the page's organization (on unless a test turns it off). */
+		docsEnabled?: boolean;
 	} = {}
 ) {
 	const page = {
@@ -125,8 +128,9 @@ function buildService(
 	const commentAccess = {
 		findWritableParent: jest.fn(async (id: string) => (options.takesComments === false || id !== PAGE_ID ? null : { id, organizationId: 'org-1' }))
 	};
-	const service = new DocumentCommentAnchorService(documents as never, repository as never, commentAccess as never);
-	return { service, documents, repository, rows, page, commentAccess };
+	const docsFeature = { isEnabledFor: jest.fn(async () => options.docsEnabled !== false) };
+	const service = new DocumentCommentAnchorService(documents as never, repository as never, commentAccess as never, docsFeature as never);
+	return { service, documents, repository, rows, page, commentAccess, docsFeature };
 }
 
 /** The response body of the exception a promise rejects with. */
@@ -312,6 +316,16 @@ describe('DocumentCommentAnchorService', () => {
 		const { service, documents } = buildService({ rows });
 		reachable.clear();
 		expect(await service.ofComment({ id: COMMENT_ID, entity: BaseEntityEnum.Document, entityId: PAGE_ID, tenantId: 'tenant-1' })).toBeNull();
+		expect(documents.findOneScoped).not.toHaveBeenCalled();
+	});
+
+	it("answers no anchor for the GraphQL field where Docs is off for the page's organization (no guard runs on a field)", async () => {
+		const rows: IRow[] = [
+			{ id: 'a1', tenantId: 'tenant-1', organizationId: 'org-1', commentId: COMMENT_ID, documentId: PAGE_ID, blockId: 'b1', startOffset: 10, endOffset: 19, quote: 'brown fox' }
+		];
+		const { service, documents, docsFeature } = buildService({ rows, docsEnabled: false });
+		expect(await service.ofComment({ id: COMMENT_ID, entity: BaseEntityEnum.Document, entityId: PAGE_ID, tenantId: 'tenant-1' })).toBeNull();
+		expect(docsFeature.isEnabledFor).toHaveBeenCalledWith('tenant-1', 'org-1');
 		expect(documents.findOneScoped).not.toHaveBeenCalled();
 	});
 

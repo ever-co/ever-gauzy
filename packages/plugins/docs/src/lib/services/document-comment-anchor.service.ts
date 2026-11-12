@@ -32,6 +32,7 @@ import {
 	liveAnchorResolverOf,
 	resolveCommentAnchor
 } from './document-comment-anchor';
+import { DocsFeatureService } from './docs-feature.service';
 import { DocumentCommentAccessPolicy } from './document-comment-access.policy';
 import { DocumentService } from './document.service';
 
@@ -70,7 +71,8 @@ export class DocumentCommentAnchorService {
 	constructor(
 		private readonly documents: DocumentService,
 		private readonly repository: TypeOrmDocumentCommentAnchorRepository,
-		private readonly commentAccess: DocumentCommentAccessPolicy
+		private readonly commentAccess: DocumentCommentAccessPolicy,
+		private readonly docsFeature: DocsFeatureService
 	) {}
 
 	/** The anchors of the page's comments that are still there, each found again in the page as it is now. */
@@ -109,11 +111,16 @@ export class DocumentCommentAnchorService {
 		}
 		const key = String(row.documentId);
 		if (!pages.has(key)) {
-			// The page in its own organization, which the caller must reach (the comment policy's boundary).
+			// The page in its own organization, which the caller must reach (the comment policy's boundary), and where Docs is
+			// on: a field resolver runs no guard, so the feature code the REST routes and queries carry is checked here.
 			pages.set(
 				key,
 				this.assertOrganization(row.organizationId as ID)
-					.then(() => this.documents.findOneScoped(row.documentId, [], row.organizationId as ID))
+					.then(() => this.docsFeature.isEnabledFor(tenantId, row.organizationId as ID))
+					.then((enabled) => {
+						if (!enabled) throw new NotFoundException();
+						return this.documents.findOneScoped(row.documentId, [], row.organizationId as ID);
+					})
 					.then((document) => this.contentOf(document))
 					.catch(() => null)
 			);
