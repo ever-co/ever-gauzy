@@ -60,7 +60,9 @@ export class JiraWebhookController {
 		if (!Buffer.isBuffer(raw) || raw.length === 0) throw new BadRequestException('The raw request body is required.');
 		if (raw.length > JIRA_WEBHOOK_MAX_BYTES) throw new BadRequestException('The webhook body is too large.');
 		const check = verifyJiraWebhookToken(this.config.clientSecret, authorization);
-		if (!check.valid) throw new UnauthorizedException(`Invalid or missing Jira webhook token (${check.reason}).`);
+		// `=== false`, not `!check.valid`: the images compile plugin sources without strictNullChecks, where a negation
+		// does not narrow this union and `check.reason` would not compile.
+		if (check.valid === false) throw new UnauthorizedException(`Invalid or missing Jira webhook token (${check.reason}).`);
 		let payload: JiraWebhookPayload;
 		try {
 			payload = JSON.parse(raw.toString('utf8'));
