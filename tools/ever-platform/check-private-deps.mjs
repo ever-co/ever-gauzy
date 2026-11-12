@@ -174,11 +174,8 @@ export async function isPublicOnGitHub(repo, fetchImpl = fetch, waitMs = 2000, l
 		if (response.status === 200) return true;
 		if (response.status === 404) return false;
 		if (attempt < ATTEMPTS) {
-			const retryAfter = Number(response.headers?.get?.('retry-after'));
-			const wait = Math.min(
-				MAX_WAIT_MS,
-				Number.isFinite(retryAfter) && retryAfter > 0 ? retryAfter * 1000 : waitMs * 2 ** (attempt - 1)
-			);
+			const asked = retryAfterMs(response.headers?.get?.('retry-after'));
+			const wait = Math.min(MAX_WAIT_MS, asked > 0 ? asked : waitMs * 2 ** (attempt - 1));
 			log(
 				`${OWNER}/${repo}: GitHub answered ${response.status}; asking again in ${Math.ceil(wait / 1000)} s (${attempt + 1} of ${ATTEMPTS})`
 			);
@@ -189,6 +186,21 @@ export async function isPublicOnGitHub(repo, fetchImpl = fetch, waitMs = 2000, l
 		}
 	}
 	return null;
+}
+
+/**
+ * The pause a Retry-After header asks for, in ms. RFC 9110 allows two forms: delay-seconds, or an
+ * HTTP-date measured from `now`. Answers null when there is no header or it cannot be read.
+ */
+export function retryAfterMs(value, now = Date.now()) {
+	const text = value == null ? '' : String(value).trim();
+	if (!text) return null;
+	if (/^\d+$/.test(text)) return Number(text) * 1000;
+	// An HTTP-date names its weekday and month ("Thu, 12 Nov 2026 20:00:00 GMT"); Date.parse alone
+	// would also read "-5" as a year.
+	if (!/[A-Za-z]/.test(text)) return null;
+	const at = Date.parse(text);
+	return Number.isNaN(at) ? null : Math.max(0, at - now);
 }
 
 /** How many times a repository's page is asked before the check calls it inconclusive. */

@@ -2,7 +2,15 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { test } from 'node:test';
-import { ATTEMPTS, check, findRefs, isPublicOnGitHub, MAX_WAIT_MS, repoOfSpec } from './check-private-deps.mjs';
+import {
+	ATTEMPTS,
+	check,
+	findRefs,
+	isPublicOnGitHub,
+	MAX_WAIT_MS,
+	repoOfSpec,
+	retryAfterMs
+} from './check-private-deps.mjs';
 
 const fixture = (name) => readFileSync(new URL(`./fixtures/private-deps/${name}`, import.meta.url), 'utf8');
 
@@ -152,11 +160,11 @@ test('a rate-limited ask is repeated with growing pauses, honouring Retry-After,
 		`ever-co/x: GitHub answered 429; asking again in 1 s (3 of ${ATTEMPTS})`
 	]);
 
-	// Never anything but 429: ATTEMPTS asks, then inconclusive, the last answer named.
+	// Never anything but 429: ATTEMPTS asks with doubling pauses, then inconclusive, the last answer named.
 	let asks = 0;
 	const last = [];
-	assert.equal(
-		await isPublicOnGitHub(
+	const { result: exhausted, waits: backoff } = await withWaits(() =>
+		isPublicOnGitHub(
 			'x',
 			async () => {
 				asks += 1;
@@ -164,32 +172,57 @@ test('a rate-limited ask is repeated with growing pauses, honouring Retry-After,
 			},
 			1,
 			(line) => last.push(line)
-		),
-		null
+		)
 	);
+	assert.equal(exhausted, null);
 	assert.equal(asks, ATTEMPTS);
+	assert.deepEqual(backoff, [1, 2, 4, 8, 16]);
 	assert.equal(last.at(-1), `ever-co/x: GitHub answered 429 to the last of ${ATTEMPTS} asks`);
 
-	// Retry-After is taken in seconds and capped at MAX_WAIT_MS.
+	// Retry-After as delay-seconds and as an HTTP-date, each capped at MAX_WAIT_MS.
+	const headers = (value) => ({ get: (name) => (name === 'retry-after' ? value : null) });
+	const inNinety = new Date(Date.now() + 90_000).toUTCString();
+	const inTen = new Date(Date.now() + 10_000).toUTCString();
+	const replies = [
+		{ status: 429, headers: headers('3') },
+		{ status: 429, headers: headers('3600') },
+		{ status: 429, headers: headers(inNinety) },
+		{ status: 429, headers: headers(inTen) },
+		{ status: 404 }
+	];
+	const { result, waits } = await withWaits(() => isPublicOnGitHub('x', async () => replies.shift(), 1));
+	assert.equal(result, false);
+	assert.deepEqual(waits.slice(0, 3), [3000, MAX_WAIT_MS, MAX_WAIT_MS]);
+	// An HTTP-date is measured from now, to the second it names.
+	assert.ok(waits[3] > 8_000 && waits[3] <= 10_000, `${waits[3]}`);
+});
+
+test('Retry-After is read as delay-seconds or an HTTP-date; anything else names no pause', () => {
+	const now = Date.parse('Thu, 12 Nov 2026 20:00:00 GMT');
+	assert.equal(retryAfterMs('120', now), 120_000);
+	assert.equal(retryAfterMs(' 7 ', now), 7_000);
+	assert.equal(retryAfterMs('Thu, 12 Nov 2026 20:01:30 GMT', now), 90_000);
+	assert.equal(retryAfterMs('Thu, 12 Nov 2026 19:59:00 GMT', now), 0); // already past
+	assert.equal(retryAfterMs(null, now), null);
+	assert.equal(retryAfterMs('', now), null);
+	assert.equal(retryAfterMs('soon', now), null);
+	assert.equal(retryAfterMs('-5', now), null);
+});
+
+/** Runs `fn` with setTimeout recording each pause and firing at once: {result, waits}. */
+async function withWaits(fn) {
 	const waits = [];
 	const realSetTimeout = globalThis.setTimeout;
-	globalThis.setTimeout = (fn, ms) => {
+	globalThis.setTimeout = (callback, ms) => {
 		waits.push(ms);
-		return realSetTimeout(fn, 0);
+		return realSetTimeout(callback, 0);
 	};
 	try {
-		const headers = (value) => ({ get: (name) => (name === 'retry-after' ? value : null) });
-		const replies = [
-			{ status: 429, headers: headers('3') },
-			{ status: 429, headers: headers('3600') },
-			{ status: 404 }
-		];
-		assert.equal(await isPublicOnGitHub('x', async () => replies.shift(), 1), false);
+		return { result: await fn(), waits };
 	} finally {
 		globalThis.setTimeout = realSetTimeout;
 	}
-	assert.deepEqual(waits, [3000, MAX_WAIT_MS]);
-});
+}
 
 test('the request carries no credentials', async () => {
 	let seen;
