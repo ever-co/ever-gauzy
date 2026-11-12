@@ -5,7 +5,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Actions } from '@ngneat/effects-ng';
 import { TranslateService } from '@ngx-translate/core';
 import { firstValueFrom, Subject } from 'rxjs';
-import { debounceTime, distinctUntilChanged, filter, switchMap, take, tap } from 'rxjs/operators';
+import { debounceTime, distinctUntilChanged, filter, map, skip, switchMap, take, tap } from 'rxjs/operators';
 import {
 	ComponentLayoutStyleEnum,
 	DocumentImportStatusEnum,
@@ -189,6 +189,17 @@ export class DocsBrowsePageComponent extends PaginationFilterBaseComponent imple
 				untilDestroyed(this)
 			)
 			.subscribe();
+
+		// 5a) An import run belongs to the organization it started in: a switch puts it away (the import goes on there).
+		this.store.selectedOrganization$
+			.pipe(
+				filter((organization) => !!organization),
+				map((organization) => String(organization.id)),
+				distinctUntilChanged(),
+				skip(1),
+				untilDestroyed(this)
+			)
+			.subscribe(() => this.importRun.reset());
 
 		// 5b) The Import action follows the import probe of the selected organization (hidden while it answers 404).
 		this.store.selectedOrganization$

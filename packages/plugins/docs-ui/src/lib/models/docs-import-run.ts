@@ -44,6 +44,8 @@ export class DocsImportRun {
 	public requestError: string | null = null;
 	/** The progress could not be read for a while (or was refused for good). */
 	public trackingError = false;
+	/** The read was refused for good (the import is gone, or not the reader's): nothing runs here any more. */
+	public refused = false;
 
 	private readonly changed = new Subject<void>();
 	/** Emits on every change, for the view to check. */
@@ -59,9 +61,9 @@ export class DocsImportRun {
 		private readonly onFinished: (finished: IDocumentImport) => void = () => undefined
 	) {}
 
-	/** An upload, or an import that is not over yet: closing the dialog keeps it. */
+	/** An upload, or an import that is not over yet (and still readable): closing the dialog keeps it. */
 	get inProgress(): boolean {
-		return this.step === 'uploading' || this.step === 'running';
+		return this.step === 'uploading' || (this.step === 'running' && !this.refused);
 	}
 
 	/** Uploads the zip and follows the import it starts. */
@@ -72,6 +74,7 @@ export class DocsImportRun {
 		this.uploadPercent = 0;
 		this.requestError = null;
 		this.trackingError = false;
+		this.refused = false;
 		this.emit();
 		this.upload = this.client.start(file, target).subscribe({
 			next: (event) => {
@@ -95,12 +98,16 @@ export class DocsImportRun {
 	retryRead(): void {
 		if (this.step !== 'running' || !this.current) return;
 		this.trackingError = false;
+		this.refused = false;
 		this.failures = 0;
 		this.emit();
 		this.follow(this.current, 0);
 	}
 
-	/** Forgets the run, for the dialog's next opening to start afresh. */
+	/**
+	 * Forgets the run, for the dialog's next opening to start afresh (an upload under way is cancelled: its answer would
+	 * belong to a run that is gone, another organization's when the page resets it on a switch).
+	 */
 	reset(): void {
 		this.stop();
 		this.step = 'pick';
@@ -108,6 +115,7 @@ export class DocsImportRun {
 		this.current = null;
 		this.requestError = null;
 		this.trackingError = false;
+		this.refused = false;
 		this.failures = 0;
 		this.emit();
 	}
@@ -141,7 +149,10 @@ export class DocsImportRun {
 				}
 				this.failures += 1;
 				const permanent = isPermanentRefusal(error);
-				if (permanent) this.poll?.unsubscribe();
+				if (permanent) {
+					this.refused = true;
+					this.poll?.unsubscribe();
+				}
 				if (permanent || this.failures >= DOCS_IMPORT_TRACKING_FAILURES) {
 					this.trackingError = true;
 					this.emit();

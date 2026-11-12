@@ -96,6 +96,8 @@ describe('DocsImportRun', () => {
 		expect(run.trackingError).toBe(true);
 		jest.advanceTimersByTime(15000);
 		expect(client.get).toHaveBeenCalledTimes(1);
+		// Nothing runs here any more: closing the dialog puts the run away.
+		expect(run.inProgress).toBe(false);
 
 		client.get.mockReturnValue(of(completed()));
 		run.retryRead();
@@ -114,6 +116,18 @@ describe('DocsImportRun', () => {
 		client.start.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 413 })));
 		run.start(zip(), TARGET);
 		expect(run.requestError).toBe('DOCS.IMPORT.ERROR.TOO_LARGE');
+	});
+
+	it('drops an upload that answers after the run was put away (an organization switch)', () => {
+		const { run, client, onFinished } = build();
+		const events = new Subject<any>();
+		client.start.mockReturnValue(events);
+		run.start(zip(), TARGET);
+		run.reset();
+		expect(events.observed).toBe(false);
+		events.next(new HttpResponse({ body: running(1) }));
+		expect(run).toMatchObject({ step: 'pick', current: null });
+		expect(onFinished).not.toHaveBeenCalled();
 	});
 
 	it('forgets a finished run, and stops its requests with its owner', () => {
