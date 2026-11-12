@@ -460,6 +460,10 @@
 		},
 		"EMAIL_TITLE": "Email",
 		"EMAIL_HINT": "How a kind reaches you by email unless its own select says otherwise.",
+		"EMAIL_NOTICE": {
+			"OFF": "This server sends no notification emails. Your choices are kept and apply once it does.",
+			"UNAVAILABLE": "No mail server answers for this organization right now, so notification emails cannot go out. Your choices are kept."
+		},
 		"DEFAULT_LABEL": "Every kind",
 		"DEFAULT_TEXT": "At once, in the daily digest, or never.",
 		"QUIET_TITLE": "Quiet hours and digest",

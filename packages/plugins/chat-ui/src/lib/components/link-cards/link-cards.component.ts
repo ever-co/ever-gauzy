@@ -6,8 +6,9 @@ import { ChatLinkPreviewsService } from '../../services/chat-link-previews.servi
 /**
  * A card under a message for each web link it holds (a few at most), opening in a new tab. The card shows the site
  * and the path, and once the platform has a preview of the page (it fetches it, `GET /chat/link-preview`), the page's
- * own site name, title and description as text. Nothing is loaded from the linked site by the reader's browser: not
- * the page, not its picture, not its icon.
+ * own site name, title and description as text, and its picture when the platform serves it (from its own fetch, as a
+ * `blob:` URL). Nothing is loaded from the linked site by the reader's browser: not the page, not its picture, not its
+ * icon.
  */
 @Component({
 	selector: 'ngx-chat-link-cards',
@@ -38,6 +39,9 @@ import { ChatLinkPreviewsService } from '../../services/chat-link-previews.servi
 						<span class="path">{{ card.path }}</span>
 					}
 				</span>
+				@if (preview?.imageUrl) {
+					<img class="thumb" data-test="link-preview-image" [src]="preview?.imageUrl" [alt]="preview?.imageAlt || ''" />
+				}
 				<nb-icon class="out" icon="external-link-outline"></nb-icon>
 			</a>
 		}
@@ -108,6 +112,13 @@ import { ChatLinkPreviewsService } from '../../services/chat-link-previews.servi
 				overflow: hidden;
 				text-overflow: ellipsis;
 				white-space: nowrap;
+			}
+			.thumb {
+				flex: 0 0 auto;
+				width: 4.5rem;
+				height: 4.5rem;
+				object-fit: cover;
+				border-radius: var(--border-radius);
 			}
 			.out {
 				flex: 0 0 auto;

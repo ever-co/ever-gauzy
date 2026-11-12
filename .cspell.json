@@ -1774,7 +1774,9 @@
 		"Abebe",
 		"haspopup",
 		"menuitemradio",
-		"popout"
+		"popout",
+		"Ivanova",
+		"multiselectable"
 	],
 	"useGitignore": true,
 	"ignorePaths": [

@@ -13,7 +13,7 @@ import {
 	CHAT_LINK_PREVIEW_READY_TTL_MS,
 	CHAT_LINK_PREVIEW_UNAVAILABLE_TTL_MS
 } from './chat-link-preview.constants';
-import { fetchPreviewPage, isTransientFailure, LinkPreviewFetchOutcome } from './link-preview-fetcher';
+import { fetchPreviewPage, isTransientFailure, LinkPreviewFetchFailed, LinkPreviewFetchOutcome } from './link-preview-fetcher';
 import { decodePage, ILinkPreviewData, parsePreviewHead } from './link-preview-parser';
 import { LinkPreviewUrlError, normalizePreviewUrl, previewTargetRefusal, previewUrlHash } from './link-preview-url';
 
@@ -22,6 +22,8 @@ export interface IChatLinkPreviewOptions {
 	enabled: boolean;
 	/** A queue root exists and the preview queue is registered: fetches travel on it. */
 	queued: boolean;
+	/** The platform also serves the previews' pictures (`GAUZY_CHAT_LINK_PREVIEW_IMAGES_ENABLED`). */
+	images?: boolean;
 }
 export const CHAT_LINK_PREVIEW_OPTIONS = 'CHAT_LINK_PREVIEW_OPTIONS';
 
@@ -133,9 +135,10 @@ export class ChatLinkPreviewService {
 	 * (a link the cache answers costs nothing), and the budget holds whether or not the platform's rate limiter is on
 	 * (`THROTTLE_ENABLED`): each fetch is an outbound request, so one person must not start them without bound. Kept per
 	 * process, like the inline fetches. Spent when a fetch is admitted (queued, or started inline), never by an ask that
-	 * joins a fetch already running, waits for one, or is answered `pending` because too many run.
+	 * joins a fetch already running, waits for one, or is answered `pending` because too many run. The preview pictures
+	 * spend from the same budget.
 	 */
-	private spendFetch(caller: IChatCaller): boolean {
+	spendFetch(caller: IChatCaller): boolean {
 		const key = `${caller.tenantId}:${caller.userId}`;
 		const now = Date.now();
 		const recent = (this.fetchesStarted.get(key) ?? []).filter((at) => now - at < 60_000);
@@ -171,7 +174,7 @@ export class ChatLinkPreviewService {
 			data = parsePreviewHead(decodePage(outcome.body, outcome.charset), outcome.url);
 		} else {
 			// The reason only: a link can carry a secret (a share token), so it is never logged.
-			this.logger.debug(`A link preview was not fetched (${outcome.reason}).`);
+			this.logger.debug(`A link preview was not fetched (${(outcome as LinkPreviewFetchFailed).reason}).`);
 			if (isTransientFailure(outcome)) {
 				// The site is slow, down or busy for now: a good preview it has is kept, and tried again after the
 				// "unavailable" time rather than a whole day (its fetch time is set back to make it so).
@@ -302,6 +305,17 @@ export class ChatLinkPreviewService {
 /** An answer with no preview fields. */
 function answer(url: string, status: ChatLinkPreviewStatusEnum): IChatLinkPreview {
 	return { url, status };
+}
+
+/** The picture a cached row's preview names, when the row is `ready` and its data reads back. */
+export function imageOfRow(row: Pick<ChatLinkPreview, 'status' | 'data'> | null): string | null {
+	if (!row || row.status !== ChatLinkPreviewStatusEnum.READY) return null;
+	try {
+		const data = JSON.parse(String(row.data ?? '')) as ILinkPreviewData;
+		return data && typeof data.image === 'string' && data.image ? data.image : null;
+	} catch {
+		return null;
+	}
 }
 
 /** The answer a cached row gives: its fields when it is `ready` and its data reads back, else "unavailable". */

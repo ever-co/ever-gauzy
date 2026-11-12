@@ -88,6 +88,7 @@ Incoming webhooks (`1791000006730`): `chat_webhook`,
 | `POST` / `DELETE /messages/:id/reactions/:emoji` | reactions |
 | `GET /threads` · `POST /read-all` · `POST /read-restore { snapshotId }` | followed threads; mark all read with a one-minute undo |
 | `GET /link-preview?url=` | the preview of a link (below); 404 unless `GAUZY_CHAT_LINK_PREVIEWS_ENABLED=true` |
+| `GET /link-preview/image?url=` | the picture of a link's ready preview, served by the platform; 404 unless `GAUZY_CHAT_LINK_PREVIEW_IMAGES_ENABLED=true` |
 | `GET /search?q=&conversationId=&limit=&skip=` | the messages of my conversations that match, best first (the search plugin's `chat_message` index — a private declaration the generic `/search` routes leave out — filtered to the memberships I have not left) |
 
 Mention tokens in a body: `<@employeeId>`, `<#conversationId>`, `<!channel>`,
@@ -166,6 +167,19 @@ id), taken by `ChatLinkPreviewWorker` in the API processes, and the first ask
 answers `pending`. Without one it runs in the process that was asked, at most 4
 at a time, and the route waits for it.
 
+**Pictures** (`GET /link-preview/image?url=`, chat T30; off unless
+`GAUZY_CHAT_LINK_PREVIEW_IMAGES_ENABLED=true` as well): the picture a `ready`
+preview of the tenant names, fetched through the same guard and served by the
+platform, so a client shows it without the reader's browser loading it from the
+linked site. The route takes the link, never the picture's address, so it fetches
+nothing a preview did not name. Only PNG, JPEG, GIF, WebP or AVIF is served, by
+the bytes (never SVG), at most 1 MiB, with `X-Content-Type-Options: nosniff`, a
+`sandbox` CSP and `Cache-Control: no-store`. Pictures are kept in
+memory per process (256 pictures, 32 MiB, a day each; a picture that could not
+be fetched is not asked for again for ten minutes) and spend from the same
+budget. 204 for a link with no ready preview, no picture, or one that could not
+be fetched; 404 only while the pictures are off.
+
 On, the API makes outbound requests to whatever sites the links posted in chat
 point at, on someone's ask. Off, it makes none.
 
@@ -175,6 +189,7 @@ point at, on someone's ask. Off, it makes none.
 GAUZY_CHAT_ENABLED=true
 FEATURE_CHAT=true            # or switch the feature on per tenant in Settings → Features
 GAUZY_CHAT_LINK_PREVIEWS_ENABLED=true   # optional: link previews (outbound requests to the linked sites)
+GAUZY_CHAT_LINK_PREVIEW_IMAGES_ENABLED=true   # optional, with the previews: their pictures, served by the platform
 GAUZY_CHAT_WEBHOOKS_ENABLED=true   # optional: incoming webhooks
 ```
 
@@ -187,7 +202,10 @@ the flag is exactly `true` (and chat is on): every route below answers 404.
   `GET|POST /api/chat/conversations/:id/webhooks`, `PATCH|DELETE /api/chat/webhooks/:id` (`DELETE` revokes; the row
   stays), `POST /api/chat/webhooks/:id/secret` (a new signing secret). Channels only, at most ten active per channel.
   The create answer holds the URL and the signing secret, shown that once: the URL secret is stored as its SHA-256,
-  the signing secret encrypted (`ENCRYPTION_KEY`). Creating, changing and revoking are written to the activity log.
+  the signing secret encrypted with a key from `ENCRYPTION_KEY` (or, when it is unset, derived from a `JWT_SECRET`
+  that is not a published default). With neither, a webhook without an interaction URL is still created but its
+  answer has no signing secret, and an interaction URL is refused (400) until a key is set; `POST …/secret` then
+  makes one. Creating, changing and revoking are written to the activity log.
 - **Post**: `POST /api/chat/hooks/:secret`, public, a JSON body (or a form body with a `payload` field) in the widely
   used chat-bot shape: `text`, `blocks` (header, section with text and fields, divider, context, actions with
   buttons; any other type shows as its text), legacy `attachments`. Everything is plain text (HTML dropped);

@@ -58,13 +58,16 @@ function visibilityFor(granted: PermissionsEnum[]): FieldVisibility {
 function surfaces(options: { granted?: PermissionsEnum[] } = {}) {
 	const writes: string[] = [];
 	const tagService = {
-		create: jest.fn(async (body: Record<string, unknown>) => {
+		// The name check runs before each create: its 409 for a name the team has, whichever surface asked, so the
+		// row is never handed to `create`
+		assertNameIsFree: jest.fn(async (body: Record<string, unknown>) => {
 			if (body.name === 'Taken') {
-				// The refusal the service raises for a row it will not write, whichever surface asked.
 				throw new ApiException(409, ApiErrorCode.UNIQUE_CONSTRAINT_VIOLATION, 'A tag with this name exists.', {
 					field: 'name'
 				});
 			}
+		}),
+		create: jest.fn(async (body: Record<string, unknown>) => {
 			writes.push(String(body.name));
 
 			return { id: `tag-${String(body.name)}`, ...body };
@@ -233,8 +236,9 @@ describe('bulkCreateTags — the same batch over GraphQL, each item `createTag`'
 
 		const payload = await resolver.bulkCreateTags({ items });
 
-		// The service is handed what `createTag` hands it for the same input.
-		expect(tagService.create.mock.calls.map(([body]) => body)).toEqual(items);
+		// Each item is checked as `createTag` checks one; the taken name is refused there and never written
+		expect(tagService.assertNameIsFree.mock.calls.map(([body]) => body)).toEqual(items);
+		expect(tagService.create.mock.calls.map(([body]) => body)).toEqual([items[0]]);
 		expect(payload).toMatchObject({ succeeded: 1, failed: 1, total: 2 });
 		expect(payload.results[0]).toMatchObject({ index: 0, ok: true, id: 'tag-Bug', resource: 'tag' });
 		expect(payload.results[1]).toMatchObject({

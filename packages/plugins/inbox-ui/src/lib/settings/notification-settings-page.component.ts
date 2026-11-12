@@ -4,7 +4,14 @@ import { NbAlertModule, NbButtonModule, NbCardModule, NbInputModule, NbSelectMod
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { combineLatest, Observable, Subscription } from 'rxjs';
 import { distinctUntilChanged, filter, map } from 'rxjs/operators';
-import { EmployeeNotificationEmailMode, EmployeeNotificationTypeEnum, ID, IEmployeeNotificationPreferences, IEmployeeNotificationSetting } from '@gauzy/contracts';
+import {
+	EmployeeNotificationEmailMode,
+	EmployeeNotificationTypeEnum,
+	ID,
+	IEmployeeNotificationPreferences,
+	IEmployeeNotificationSetting,
+	IInboxDeliveryStatus
+} from '@gauzy/contracts';
 import { Store, ToastrService } from '@gauzy/ui-core/core';
 import {
 	IInboxNotificationSettingInput,
@@ -18,6 +25,7 @@ import {
 	DEFAULT_QUIET_HOURS,
 	defaultEmailModeOf,
 	digestHourOf,
+	emailDeliveryNoticeOf,
 	emailModeOf,
 	hourLabelOf,
 	isKindOn,
@@ -44,7 +52,8 @@ const HOURS = Array.from({ length: 24 }, (_, hour) => hour);
  * updated optimistically where it exists and comes back with the API's words when it refuses (a refused first save
  * reloads, so the controls show what is stored). A change of organization cancels what was loading, and an answer
  * from a scope that is no longer the page's is ignored. The delivery itself is the API's
- * (`GAUZY_INBOX_NOTIFICATION_EMAIL_ENABLED`); the preferences are kept either way.
+ * (`GAUZY_INBOX_NOTIFICATION_EMAIL_ENABLED`); the preferences are kept either way, and the email section says so when
+ * the server reports that no email can go out for the organization (`GET /inbox/delivery/status`).
  */
 @Component({
 	selector: 'ngx-inbox-notification-settings-page',
@@ -83,9 +92,13 @@ export class InboxNotificationSettingsPageComponent implements OnInit {
 	readonly quietHours = computed(() => quietHoursOf(this.preferences()));
 	readonly digestHour = computed(() => digestHourOf(this.preferences()));
 	readonly timeZone = computed(() => this.quietHours()?.timeZone || browserTimeZone());
+	/** What the server says about delivery for the organization; null while unknown or unsaid. */
+	readonly deliveryStatus = signal<IInboxDeliveryStatus | null>(null);
+	readonly emailNotice = computed(() => emailDeliveryNoticeOf(this.deliveryStatus()));
 
 	private scope: IInboxNotificationSettingScope | null = null;
 	private loading?: Subscription;
+	private loadingStatus?: Subscription;
 
 	ngOnInit(): void {
 		this.scopes()
@@ -93,13 +106,16 @@ export class InboxNotificationSettingsPageComponent implements OnInit {
 			.subscribe((scope) => {
 				// A load of the scope before is cancelled: its answer would be another organization's.
 				this.loading?.unsubscribe();
+				this.loadingStatus?.unsubscribe();
 				this.scope = scope;
 				this.setting.set(null);
+				this.deliveryStatus.set(null);
 				if (!scope) {
 					this.view.set('no-employee');
 					return;
 				}
 				this.load();
+				this.loadDeliveryStatus(scope);
 			});
 	}
 
@@ -135,6 +151,17 @@ export class InboxNotificationSettingsPageComponent implements OnInit {
 					const view = viewOfLoadError(error);
 					this.view.set(view === 'unavailable' ? 'error' : view);
 				}
+			});
+	}
+
+	/** The delivery status of the scope; an answer for a scope that is no longer the page's is ignored. */
+	private loadDeliveryStatus(scope: IInboxNotificationSettingScope): void {
+		this.loadingStatus = this.api
+			.deliveryStatus()
+			.pipe(takeUntilDestroyed(this.destroyRef))
+			.subscribe((status) => {
+				if (this.scope !== scope) return;
+				this.deliveryStatus.set(status);
 			});
 	}
 
