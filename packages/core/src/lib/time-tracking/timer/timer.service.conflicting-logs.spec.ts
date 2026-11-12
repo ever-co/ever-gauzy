@@ -11,7 +11,7 @@ import { TimerService } from './timer.service';
  * resolved once per time slot of the other log, each pass deleting the slot it was given: the other log lost every
  * slot and, with the last one, was deleted, and the slots it shared with the stopped log went with it.
  */
-describe('TimerService — the logs a stopped timer overlaps', () => {
+describe('TimerService: the logs a stopped timer overlaps', () => {
 	beforeEach(() => {
 		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(SPAN_TENANT_ID);
 		jest.spyOn(console, 'log').mockImplementation(() => undefined);

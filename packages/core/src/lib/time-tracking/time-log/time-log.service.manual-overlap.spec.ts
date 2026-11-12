@@ -35,7 +35,7 @@ function slotStarts(from: string, to: string): string[] {
 	return starts;
 }
 
-describe('TimeLogService — manual time over another entry of the same member', () => {
+describe('TimeLogService: manual time over another entry of the same member', () => {
 	let store: TimeSpanStore;
 	let service: TimeLogService;
 
@@ -164,7 +164,7 @@ describe('TimeLogService — manual time over another entry of the same member',
 	});
 
 	it('an entry the new one does not reach keeps its time and the slot it shares with the entry it does', async () => {
-		// 10:00–10:05 and 10:05–11:00 share the 10:00 slot; the new entry sits in the middle of the second one.
+		// 10:00 to 10:05 and 10:05 to 11:00 share the 10:00 slot; the new entry sits in the middle of the second one.
 		store.addTimeLog('untouched', '10:00', '10:05', MANUAL_ENTRY);
 		store.addTimeLog('overlapped', '10:05', '11:00', MANUAL_ENTRY);
 
