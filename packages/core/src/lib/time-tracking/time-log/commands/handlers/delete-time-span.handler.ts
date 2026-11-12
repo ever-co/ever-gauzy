@@ -154,10 +154,13 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 	 * only this log holds goes, one another log shares stays with that log. The slots after the new range stay (the
 	 * command's own slot used to be deleted here as well, whatever its time).
 	 *
+	 * A failure is logged and raised, so that the caller does not record the new range over a log it could not cut.
+	 *
 	 * @param log - The time log to update or delete.
 	 * @param end - The end of the new range, the log's new start.
 	 * @param stoppedAt - The current stopped time of the log.
 	 * @param forceDelete - Whether to hard delete what goes (default: false).
+	 * @throws The error of the update or of the delete.
 	 */
 	private async updateStartTimeOrDelete(
 		log: ITimeLog,
@@ -192,6 +195,7 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 				}
 			} catch (error) {
 				this.logger.warn(`Error while updating startedAt time: ${error?.message ?? error}`, { stack: error?.stack });
+				throw error;
 			}
 		} else {
 			// Delete the time log if remaining duration is 0
@@ -204,12 +208,13 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 	 * Updates the stoppedAt time for a given time log, or deletes it if the remaining duration is 0.
 	 *
 	 * As for a new start (see `updateStartTimeOrDelete`), the update releases the slots inside the new range and keeps
-	 * the ones before it.
+	 * the ones before it, and a failure is logged and raised.
 	 *
 	 * @param log - The time log to update or delete.
 	 * @param start - The start of the new range, the log's new end.
 	 * @param startedAt - The original start time of the time log.
 	 * @param forceDelete - Whether to hard delete what goes (default: false).
+	 * @throws The error of the update or of the delete.
 	 */
 	private async updateStopTimeOrDelete(
 		log: ITimeLog,
@@ -244,6 +249,7 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 				}
 			} catch (error) {
 				this.logger.warn(`Error while updating stoppedAt time: ${error?.message ?? error}`, { stack: error?.stack });
+				throw error;
 			}
 		} else {
 			this.debug(() => 'Remaining duration is 0, so we are deleting the time log during update stoppedAt time');
@@ -351,11 +357,12 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 	}
 
 	/**
-	 * Deletes a time log if it overlaps the entire time range.
+	 * Deletes a time log if it overlaps the entire time range. A failure is logged and raised, as for a cut.
 	 *
 	 * @param timeLog - The log to delete.
 	 * @param forceDelete - Whether to hard delete (default: false).
 	 * @returns Promise<void> - Resolves when deletion is complete.
+	 * @throws The error of the delete.
 	 */
 
 	private async deleteTimeLog(timeLog: ITimeLog, forceDelete: boolean = false): Promise<void> {
@@ -368,6 +375,7 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 				`Error while deleting the time log overlapping the entire time for ID: ${timeLog.id}: ${error?.message ?? error}`,
 				{ stack: error?.stack }
 			);
+			throw error;
 		}
 	}
 

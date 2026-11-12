@@ -1,6 +1,7 @@
 // Must stay first: loads the entity graph before any handler pulls an entity (see activity.controller.spec.ts).
 import '../../../../core/entities/internal';
 
+import { BadRequestException } from '@nestjs/common';
 import { ITimeSlot, TimeLogSourceEnum, TimeLogType } from '@gauzy/contracts';
 import { RequestContext } from '../../../../core/context';
 import { moment } from '../../../../core/moment-extend';
@@ -10,7 +11,10 @@ import { TimeSlotBulkDeleteCommand } from '../../../time-slot/commands';
 import { TimeSlotBulkDeleteHandler } from '../../../time-slot/commands/handlers/time-slot-bulk-delete.handler';
 import { generateTimeSlots } from '../../../time-slot/utils';
 import { TimeLog } from '../../time-log.entity';
+import { TimeLogService } from '../../time-log.service';
 import { DeleteTimeSpanCommand } from '../delete-time-span.command';
+import { IGetConflictTimeLogCommand } from '../get-conflict-time-log.command';
+import { TimeLogCreateCommand } from '../time-log-create.command';
 import { TimeLogDeleteCommand } from '../time-log-delete.command';
 import { TimeLogUpdateCommand } from '../time-log-update.command';
 import { UpdateEmployeeTotalWorkedHoursCommand } from '../update-employee-total-worked-hours.command';
@@ -141,6 +145,9 @@ const hhmm = (date: Date) => date.toISOString().slice(11, 16);
 const slotStarts = (start: string, stop: string) =>
 	generateTimeSlots(at(start), at(stop)).map((slot) => hhmm(new Date(slot.startedAt)));
 
+/** What an operation ended with: the message of the error it raised, or nothing when it raised none. */
+const raised = (outcome: unknown) => (outcome instanceof Error ? outcome.message : undefined);
+
 /** The timesheet of a date's week, as `TimesheetFirstOrCreateCommand` finds it (no date: the current week's). */
 const timesheetOf = (date?: Date) => `timesheet-${moment.utc(date).startOf('week').format('YYYY-MM-DD')}`;
 
@@ -161,8 +168,11 @@ interface IStoredLog {
 	deletedAt?: Date;
 }
 
-/** The writes of the store a spec can make fail: a log created, a log's columns updated, a slot unlinked from a log. */
-type StoreWrite = 'insert' | 'update' | 'unlink';
+/**
+ * The writes of the store a spec can make fail: a log created, a log's columns updated, a slot unlinked from a log,
+ * slots removed.
+ */
+type StoreWrite = 'insert' | 'update' | 'unlink' | 'slotRemoval';
 
 interface IStoredSlot {
 	id: string;
@@ -221,18 +231,23 @@ function createStore() {
 	/** The ids of a `where` id: one, or the values of an `In(...)`. */
 	const idsOf = (id: unknown): string[] => [].concat((id as { value?: unknown })?.value ?? id);
 
-	/** For each kind of write made to fail, how many of its calls succeed before the one that fails. */
-	const failing: Partial<Record<StoreWrite, number>> = {};
+	/** For each kind of write made to fail: how many of its calls succeed first, then how many fail. */
+	const failing: Partial<Record<StoreWrite, { succeeding: number; times: number }>> = {};
 	/** Fails this write when its turn has come, as a lost connection or a lock timeout would. */
 	const failIfDue = (write: StoreWrite) => {
-		if (failing[write] === undefined) {
+		const failure = failing[write];
+		if (!failure) {
 			return;
 		}
-		if (failing[write] === 0) {
-			delete failing[write];
-			throw new Error(`The ${write} failed`);
+		if (failure.succeeding > 0) {
+			failure.succeeding--;
+			return;
 		}
-		failing[write]--;
+		failure.times--;
+		if (failure.times <= 0) {
+			delete failing[write];
+		}
+		throw new Error(`The ${write} failed`);
 	};
 
 	const timeLogRepository = {
@@ -343,6 +358,7 @@ function createStore() {
 			return builder;
 		},
 		softRemove: jest.fn(async (removed: ITimeSlot[]) => {
+			failIfDue('slotRemoval');
 			for (const slot of slots.filter(({ id }) => removed.some((entity) => entity.id === id))) {
 				slot.deletedAt = new Date();
 			}
@@ -375,12 +391,82 @@ function createStore() {
 	});
 	const handler = new DeleteTimeSpanHandler(timeLogRepository as any, timeSlotRepository as any, commandBus as any);
 
+	/** The logs the conflict lookup reads for a range: those it overlaps, with their slots (the TypeORM lookup joins them). */
+	const conflictsOver = (range: { start: Date; end: Date }) =>
+		logs
+			.filter((log) => !log.deletedAt && log.startedAt < range.end && log.stoppedAt > range.start)
+			.map((log) => logEntity(log, true))
+			.filter((log) => log.timeSlots.length > 0);
+
+	/**
+	 * `TimeLogService.addManualTime` over this store: the conflict lookup reads it, the cleanup is the handler, and the
+	 * create writes the new log into it.
+	 */
+	const manualTimeService = () => {
+		const employee = {
+			id: EMPLOYEE_ID,
+			organizationId: ORGANIZATION_ID,
+			organization: { id: ORGANIZATION_ID, futureDateAllowed: false, allowManualTime: true }
+		};
+		const bus = {
+			execute: async (command: unknown) => {
+				if (command instanceof IGetConflictTimeLogCommand) {
+					const { startDate, endDate } = command.input;
+					return conflictsOver({ start: new Date(startDate), end: new Date(endDate) });
+				}
+				if (command instanceof DeleteTimeSpanCommand) {
+					return handler.execute(command);
+				}
+				if (command instanceof TimeLogCreateCommand) {
+					const { startedAt, stoppedAt } = command.input;
+					const log = {
+						id: `manual-${++created}`,
+						tenantId: TENANT_ID,
+						organizationId: ORGANIZATION_ID,
+						employeeId: EMPLOYEE_ID,
+						timesheetId: timesheetOf(startedAt),
+						startedAt,
+						stoppedAt,
+						isRunning: false,
+						source: TimeLogSourceEnum.WEB_TIMER,
+						logType: TimeLogType.MANUAL
+					};
+					logs.push(log);
+					return log;
+				}
+				return commandBus.execute(command);
+			}
+		};
+		const service = new TimeLogService(
+			{} as never,
+			{} as never,
+			{ findOne: async () => employee } as never,
+			{} as never,
+			{} as never,
+			bus as never,
+			{ canManageEmployee: async () => true } as never
+		);
+		// The employee filter is the CRUD base's request-scoped switch, which has no request here.
+		jest.spyOn(service as any, 'withoutEmployeeFilter').mockImplementation((callback: () => Promise<unknown>) =>
+			callback()
+		);
+		return service;
+	};
+
 	return {
 		executed,
-		/** Makes a write fail, after `succeeding` calls of it have gone through. */
-		fail(write: StoreWrite, succeeding = 0) {
-			failing[write] = succeeding;
+		/** Makes a write fail `times` times in a row, after `succeeding` calls of it have gone through. */
+		fail(write: StoreWrite, succeeding = 0, times = 1) {
+			failing[write] = { succeeding, times };
 		},
+		/** Records manual time over `start`–`stop` for the employee, as `POST /timesheet/time-log` does. */
+		addManualTime: (start: string, stop: string) =>
+			manualTimeService().addManualTime({
+				employeeId: EMPLOYEE_ID,
+				organizationId: ORGANIZATION_ID,
+				startedAt: at(start),
+				stoppedAt: at(stop)
+			}),
 		/** A log of the employee over `start`–`stop`, with a slot for every ten minutes of it. */
 		addLog(id: string, start: string, stop: string, columns: Partial<IStoredLog> = {}) {
 			logs.push({
@@ -433,12 +519,8 @@ function createStore() {
 		 */
 		async cleanUp(start: string, stop: string, order: 'earliest first' | 'latest first' = 'earliest first') {
 			const range = { start: at(start), end: at(stop) };
-			const conflicts = logs
-				.filter((log) => !log.deletedAt && log.startedAt < range.end && log.stoppedAt > range.start)
-				.map((log) => logEntity(log, true))
-				.filter((log) => log.timeSlots.length > 0);
 			const results: boolean[] = [];
-			for (const timeLog of conflicts) {
+			for (const timeLog of conflictsOver(range)) {
 				const timeSlots = order === 'latest first' ? [...timeLog.timeSlots].reverse() : timeLog.timeSlots;
 				for (const timeSlot of timeSlots) {
 					results.push(await handler.execute(new DeleteTimeSpanCommand(range, timeLog, timeSlot)));
@@ -693,9 +775,6 @@ describe('DeleteTimeSpanHandler when a split fails (#11823)', () => {
 
 	afterEach(() => jest.restoreAllMocks());
 
-	/** What the cleanup ended with: the message of the error it raised, or nothing when it raised none. */
-	const raised = (outcome: unknown) => (outcome instanceof Error ? outcome.message : undefined);
-
 	/** The log as it was before the split: 08:00 to 11:00 with its 18 slots, and no other log. */
 	const AS_IT_WAS = [{ range: '08:00-11:00', isRunning: false, slots: slotStarts('08:00', '11:00') }];
 
@@ -763,5 +842,50 @@ describe('DeleteTimeSpanHandler and two cleanups of one log at once (#11823)', (
 			{ range: '08:00-09:00', isRunning: false, slots: slotStarts('08:00', '09:00') },
 			{ range: '10:00-11:00', isRunning: false, slots: slotStarts('10:00', '11:00') }
 		]);
+	});
+});
+
+/**
+ * A cut at one end of a log, or the delete of a log the range covers, that fails must not let the caller record the
+ * new range over the log either: the error is raised, as a failed split's is, and the caller writes nothing.
+ */
+describe('DeleteTimeSpanHandler when a cut at one end or a delete fails (#11823)', () => {
+	beforeEach(() => {
+		jest.spyOn(console, 'log').mockImplementation(() => undefined);
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT_ID);
+	});
+
+	afterEach(() => jest.restoreAllMocks());
+
+	/** The log of 08:00 to 10:00 with its 12 slots, as it was. */
+	const AS_IT_WAS = [{ range: '08:00-10:00', isRunning: false, slots: slotStarts('08:00', '10:00') }];
+
+	it.each([
+		['takes its end', '09:00', '11:00', 'update'],
+		['takes its start', '07:00', '09:00', 'update'],
+		['covers it', '07:00', '11:00', 'slotRemoval']
+	] as const)(
+		'leaves the log as it was and raises the error when the range %s and the cleanup cannot write',
+		async (_shape, start, stop, write) => {
+			const store = createStore();
+			store.addLog('tracked', '08:00', '10:00');
+			store.fail(write);
+
+			const outcome = await store.cleanUp(start, stop).then(raised, raised);
+
+			expect(store.timeline()).toEqual(AS_IT_WAS);
+			expect(outcome).toBe(`The ${write} failed`);
+		}
+	);
+
+	it('fails addManualTime, writing nothing, when the cut of the log it overlaps fails', async () => {
+		const store = createStore();
+		store.addLog('tracked', '08:00', '10:00');
+		store.fail('update', 0, Infinity);
+
+		const refusal = await store.addManualTime('09:00', '11:00').catch((thrown) => thrown);
+
+		expect(store.timeline()).toEqual(AS_IT_WAS);
+		expect(refusal).toBeInstanceOf(BadRequestException);
 	});
 });
