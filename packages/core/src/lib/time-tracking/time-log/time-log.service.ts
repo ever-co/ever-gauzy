@@ -1,6 +1,7 @@
 import {
 	Injectable,
 	BadRequestException,
+	ConflictException,
 	ForbiddenException,
 	HttpException,
 	NotAcceptableException,
@@ -84,6 +85,9 @@ import {
 	projectIdForEntry,
 	teamIdForEntry
 } from './organization-tracking-requirements';
+
+/** The code of the refusal of manual time over a timer that is still running (409). */
+export const RUNNING_TIMER_OVERLAP = 'RUNNING_TIMER_OVERLAP';
 
 @Injectable()
 export class TimeLogService extends TenantAwareCrudService<TimeLog> {
@@ -1978,6 +1982,26 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 	}
 
 	/**
+	 * Refuses manual time over a timer that is still running.
+	 *
+	 * The overlap cleanup never cuts a running log (`DeleteTimeSpanHandler`), so recording the time anyway would count
+	 * those minutes twice, on the new log and on the running one, whose ten-minute slots the new log would also share.
+	 * The request is refused instead, before anything is trimmed or written. The desktop timer and the agent keep an
+	 * upload refused this way and send it again at their next sync: their offline time is recorded once that timer stops.
+	 *
+	 * @param conflicts The logs the new range overlaps.
+	 * @throws ConflictException with the code RUNNING_TIMER_OVERLAP.
+	 */
+	private assertNoRunningTimerIn(conflicts: ITimeLog[] | null | undefined): void {
+		if ((conflicts ?? []).some((log) => log.isRunning)) {
+			throw new ConflictException({
+				message: 'A timer is running over this time range. Stop it first, or choose a range outside it.',
+				code: RUNNING_TIMER_OVERLAP
+			});
+		}
+	}
+
+	/**
 	 * The manual entry as it is recorded under its organization's switches: the team and the project filled where they
 	 * can be (see `teamIdForEntry` and `projectIdForEntry`), and refused when a required field is still missing, unless
 	 * a tracker uploaded it. The employee is the one the time is for, so the team is theirs, not the caller's.
@@ -2072,6 +2096,9 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 					...(request.id && { ignoreId: request.id }) // Simplified ternary check
 				})
 			);
+
+			// A running timer in the range is refused, never cut
+			this.assertNoRunningTimerIn(conflicts);
 
 			// Resolve conflicts by deleting conflicting time slots
 			if (conflicts?.length) {
@@ -2180,6 +2207,9 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 					...(id && { ignoreId: id }) // Simplified check for id
 				})
 			);
+
+			// A running timer in the range is refused, never cut (the edited log itself is not among the conflicts)
+			this.assertNoRunningTimerIn(conflicts);
 
 			// Resolve conflicts by deleting conflicting time slots
 			if (conflicts?.length) {
