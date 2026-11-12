@@ -1,5 +1,5 @@
 import { ChatConversationKindEnum, ChatTaskReferenceKindEnum, ChatVisibilityEnum, IChatConversationWithState, IChatMessageWithRelations, TaskStatusEnum } from '@gauzy/contracts';
-import { conversationChoices, sendToChatBody, taskSummaryOf, taskTitleFromBody, withTaskReference } from './chat-tasks';
+import { conversationChoices, sendToChatBody, statusChoicesOf, taskSummaryOf, taskTitleFromBody, toggledAssignees, withTaskReference } from './chat-tasks';
 import { ChatPerson } from './chat-ui.helpers';
 
 const ANNA = '11111111-1111-4111-8111-111111111111';
@@ -35,6 +35,45 @@ describe('chat tasks', () => {
 		});
 		expect(taskSummaryOf({ id: 't2', title: 'No prefix', number: 7, status: TaskStatusEnum.OPEN })).toMatchObject({ key: '#7', status: TaskStatusEnum.OPEN });
 		expect(taskSummaryOf({ id: 't3', title: 'Draft' })).toMatchObject({ key: null, status: null });
+	});
+
+	it('reads what a card changes: the status record, the priority, the assignees, the project', () => {
+		expect(
+			taskSummaryOf({
+				id: 't1',
+				title: 'Fix login',
+				status: TaskStatusEnum.OPEN,
+				taskStatus: { id: 's1', name: 'Open' } as never,
+				priority: 'high' as never,
+				members: [{ id: 'e1' }, { id: 'e2' }, {}] as never,
+				projectId: 'p1',
+				organizationId: 'o1'
+			})
+		).toMatchObject({ status: 'Open', statusId: 's1', priority: 'high', assigneeIds: ['e1', 'e2'], projectId: 'p1', organizationId: 'o1' });
+		expect(taskSummaryOf({ id: 't2', title: 'x', taskStatusId: 's2' } as never).statusId).toBe('s2');
+	});
+
+	it("offers the project's statuses in their order, each name once, and never hides the task's own", () => {
+		const records = [
+			{ id: 's2', name: 'In Review', order: 2 },
+			{ id: 's1', name: 'Open', order: 1 },
+			{ id: 's3', name: 'open', order: 3 },
+			{ id: 's4', value: 'done', order: 4 },
+			{ id: null, name: '  ', order: 0 }
+		];
+		expect(statusChoicesOf(records, 'Open')).toEqual([
+			{ name: 'Open', id: 's1' },
+			{ name: 'In Review', id: 's2' },
+			{ name: 'done', id: 's4' }
+		]);
+		expect(statusChoicesOf(records, 'Blocked')[0]).toEqual({ name: 'Blocked', id: null });
+		expect(statusChoicesOf([], null)).toEqual([]);
+	});
+
+	it('adds or takes off one assignee at a time, keeping the others', () => {
+		expect(toggledAssignees(['e1', 'e2'], 'e3')).toEqual(['e1', 'e2', 'e3']);
+		expect(toggledAssignees(['e1', 'e2', 'e1'], 'e1')).toEqual(['e2']);
+		expect(toggledAssignees(undefined, 'e1')).toEqual(['e1']);
 	});
 
 	describe('taskTitleFromBody', () => {
