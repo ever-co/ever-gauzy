@@ -219,21 +219,12 @@ export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateComman
 	}
 
 	/**
-	 * Retrieves a time log by its ID or directly returns the instance if provided.
-	 *
-	 * If the `id` parameter is already a `TimeLog` instance, it is returned as is. Otherwise, it fetches
-	 * the time log from the repository using the provided `id`.
-	 *
-	 * @param id - The time log ID or an instance of `TimeLog`.
-	 * @returns A promise that resolves to the `ITimeLog` instance.
-	 */
-	/**
 	 * Whether an update gives the log the time slots of its range. The web timer posts none, so its runs always get
 	 * them. A run of a client that posts a slot on each heartbeat (HEARTBEAT_SLOT_SOURCES) gets them only when it has
 	 * none, one that never sent a heartbeat, which the day's worked time otherwise leaves out (#11843); one that has
 	 * slots keeps those it posted. Desktop and the other trackers post their own.
 	 *
-	 * @param timeLog - The log being updated, as stored.
+	 * @param timeLog - The log as the update will store it: the stored row with the update's changes on top.
 	 */
 	private async takesSlotsOfItsRange(timeLog: ITimeLog): Promise<boolean> {
 		if (timeLog.source === TimeLogSourceEnum.WEB_TIMER) {
@@ -275,6 +266,15 @@ export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateComman
 		}
 	}
 
+	/**
+	 * Retrieves a time log by its ID or directly returns the instance if provided.
+	 *
+	 * If the `id` parameter is already a `TimeLog` instance, it is returned as is. Otherwise, it fetches
+	 * the time log from the repository using the provided `id`.
+	 *
+	 * @param id - The time log ID or an instance of `TimeLog`.
+	 * @returns A promise that resolves to the `ITimeLog` instance.
+	 */
 	private async getTimeLogByIdOrInstance(id: ID | TimeLog): Promise<ITimeLog> {
 		if (id instanceof TimeLog) {
 			return id;
