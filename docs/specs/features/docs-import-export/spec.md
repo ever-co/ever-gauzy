@@ -225,7 +225,8 @@ both stay invisible where an installation has not switched them on.
 - [x] V Contracts and API first.
 - [x] VI Permissions, privacy, security — archive guards, sanitizing, the page schema, the upload checks, export access checks.
 - [x] VII Real-time through the event bus — progress is polled; created pages emit the usual document events where a request context exists.
-- [x] VIII i18n and accessibility — dialog and menu strings in every locale.
+- [ ] VIII i18n and accessibility — dialog and menu strings in every locale (open until the clients land: the Angular
+  dialog and menu in the docs-ui PR, Ever Teams after it).
 - [x] IX Tests accompany the change.
 - [x] X Behaviour-first (this document).
 - [x] XI Documentation describes our platform only.

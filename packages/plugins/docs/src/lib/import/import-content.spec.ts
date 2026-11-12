@@ -99,6 +99,12 @@ describe('HTML pages', () => {
 		expect(page.meta.createdAt?.getFullYear()).toBe(2024);
 	});
 
+	it('reads the created date from the export properties only, never from a table of the body', () => {
+		const withoutProperty = `<html><head><title>Notes</title></head><body><article><header><h1 class="page-title">Notes</h1></header>
+<div class="page-body"><table><tr><th>Created</th><td>2024-01-01</td></tr></table></div></article></body></html>`;
+		expect(readHtmlPage(withoutProperty).meta.createdAt).toBeUndefined();
+	});
+
 	it('turns the body into Markdown without the header, scripts, handlers, javascript: links or data: images', () => {
 		const { markdown } = readHtmlPage(html);
 		expect(markdown).toContain('## Goals');

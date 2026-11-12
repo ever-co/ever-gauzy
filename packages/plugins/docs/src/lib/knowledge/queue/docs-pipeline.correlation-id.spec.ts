@@ -23,7 +23,7 @@ jest.mock('../thumbnail/document-thumbnail.service', () => ({ DocumentThumbnailS
 jest.mock('../../services/docs-feature.service', () => ({ DocsFeatureService: class {} }));
 
 import { DocumentKnowledgeStatusEnum } from '@gauzy/contracts';
-import { DOCS_JOB_CLASSIFY, DOCS_JOB_EXTRACT } from './constants';
+import { DOCS_JOB_CLASSIFY, DOCS_JOB_EXTRACT, DOCS_JOB_IMPORT } from './constants';
 import { DocsPipelineService } from './docs-pipeline.service';
 import { inlineStageJob } from './docs-pipeline.types';
 
@@ -234,6 +234,15 @@ describe('DocsPipelineService — correlation id on worker-stage outcome and err
 		expect(parked.logger.warn).toHaveBeenCalledWith(
 			'Could not park docs.classify for document doc-1 (correlationId correlation-abc): redis down'
 		);
+
+		// An import is not completed when its parking fails: the job rejects and is tried again.
+		const parkedImport = buildPipeline({
+			featureEnabled: false,
+			enqueue: jest.fn().mockRejectedValue(new Error('redis down'))
+		});
+		await expect(
+			parkedImport.pipeline.runStage(DOCS_JOB_IMPORT, inlineStageJob('docs:import:imp-1', PAYLOAD_WITH_CORRELATION_ID))
+		).rejects.toThrow('redis down');
 
 		const thumbnail = buildPipeline({
 			mimeType: 'image/png',

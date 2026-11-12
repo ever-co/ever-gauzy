@@ -381,11 +381,22 @@ export class ImportLinkIndex {
 		return null;
 	}
 
-	/** Of several candidates: the one in `fromFolder`, then one whose path ends with the target, then the shortest path. */
+	/**
+	 * Of several candidates: for a path-qualified target (`B/Page`), the one at that path; then the one in `fromFolder`,
+	 * then one whose path ends with the target, then the shortest path.
+	 */
 	private pick(keys: string[] | undefined, fromFolder: string, target: string): string | null {
 		if (!keys?.length) return null;
 		if (keys.length === 1) return keys[0];
 		const pathOf = (key: string) => this.pathOfKey.get(key) ?? key;
+		if (target.includes('/')) {
+			const wanted = fold(target.replace(/\.[^/.]+$/, ''));
+			const atPath = keys.find((key) => {
+				const stem = fold(pathOf(key)).replace(/\.[^/.]+$/, '');
+				return stem === wanted || stem.endsWith(`/${wanted}`);
+			});
+			if (atPath) return atPath;
+		}
 		const sameFolder = keys.find((key) => posix.dirname(pathOf(key)) === fromFolder);
 		if (sameFolder) return sameFolder;
 		const suffix = keys.find((key) => fold(pathOf(key)).includes(`/${fold(target)}`));

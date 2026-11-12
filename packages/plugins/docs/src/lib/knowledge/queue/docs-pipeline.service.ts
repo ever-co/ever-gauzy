@@ -376,6 +376,10 @@ export class DocsPipelineService implements IDocsPipelineRunner {
 				`Could not park ${jobName} for document ${payload.documentId}${this.correlationTag(payload)}: ` +
 					`${(error as Error).message}`
 			);
+			// An import is not a document row the recovery sweep re-drives: completing its job would leave the
+			// import queued with no run. The job rejects, so the queue tries it again (and the import sweep
+			// resumes it once it stalls).
+			if (jobName === DOCS_JOB_IMPORT) throw error;
 		}
 		return true;
 	}

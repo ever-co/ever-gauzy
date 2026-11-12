@@ -173,7 +173,10 @@ export function readHtmlPage(html: string): IImportPageSource {
 	const iconBlock = /<(?:div|span)\b[^>]*class="[^"]*\bpage-header-icon\b[^"]*"[^>]*>([\s\S]*?)<\/(?:div|span)>\s*(?:<\/div>)?/i.exec(text);
 	const icon = iconBlock ? emojiIconOf(htmlText(iconBlock[1])) : undefined;
 	if (icon) meta.icon = icon;
-	for (const row of text.matchAll(/<tr\b[^>]*>([\s\S]*?)<\/tr>/gi)) {
+	// The created date is the export's own property: its properties table (else its header), never a row of the body.
+	const properties = [...text.matchAll(/<table\b[^>]*class="[^"]*\bproperties\b[^"]*"[^>]*>([\s\S]*?)<\/table>/gi)].map((match) => match[1]);
+	const propertyScope = properties.length ? properties.join('') : (/<header\b[^>]*>([\s\S]*?)<\/header>/i.exec(text)?.[1] ?? '');
+	for (const row of propertyScope.matchAll(/<tr\b[^>]*>([\s\S]*?)<\/tr>/gi)) {
 		const head = /<th\b[^>]*>([\s\S]*?)<\/th>/i.exec(row[1]);
 		const cell = /<td\b[^>]*>([\s\S]*?)<\/td>/i.exec(row[1]);
 		if (head && cell && /^created( time| at)?$/i.test(htmlText(head[1]))) {

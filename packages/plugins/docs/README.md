@@ -110,7 +110,10 @@ Spec: [`docs/specs/features/docs-import-export/`](../../../docs/specs/features/d
   entry count, declared and actual uncompressed size, a 200:1 inflation cap above 1 MiB, absolute / drive / NUL / `..`
   paths and symbolic links refused, at least one page file), resolves the target as a page create does (a parent the
   caller may write, whose space the pages take; or a space), and queues `docs.import` (the `docs-processing` queue, or
-  inline). A refused zip is deleted and answered 400 / 413 with its `code`.
+  inline). A refused zip is deleted and answered 400 / 413 with its `code`. The request checks what the archive
+  declares (its central directory); an entry that inflates past its declared size is caught when the run reads it,
+  and the import then ends `FAILED` with `DOCS_IMPORT_ZIP_BOMB` (the zip deleted) rather than the request answering
+  413.
 - `GET /plugins/docs/imports/:id` answers the state, the phase (PLANNING → TREE → CONTENT → DONE), the progress and the
   report (imported, skipped and failed items with reasons; unresolved links per page) — to its starter, or to a Docs
   manager. `GET /plugins/docs/imports` lists the caller's last ten and the zip limit (the clients' probe).
