@@ -37,7 +37,7 @@
   &.head {
     position: sticky;
     top: 0;
-    z-index: 3;
+    z-index: 4;
     height: 2.75rem;
     background: var(--background-basic-color-2);
     font-size: 0.75rem;
@@ -52,10 +52,11 @@
   }
 }
 
+// The titles stay above the calendar scrolled under them: each track is a layer of its own, beneath them.
 .title-cell {
   position: sticky;
   left: 0;
-  z-index: 2;
+  z-index: 3;
   flex: 0 0 auto;
   display: flex;
   align-items: center;
@@ -111,6 +112,7 @@
 .track {
   position: relative;
   flex: 0 0 auto;
+  isolation: isolate;
 }
 
 .head .track {
@@ -142,6 +144,7 @@
   position: absolute;
   top: 0;
   bottom: 0;
+  z-index: 0;
   pointer-events: none;
 
   .grid-line {

@@ -262,9 +262,29 @@ describe('TaskViewsPageComponent', () => {
 		expect(api.updateView.mock.calls[0][1]).toMatchObject({ expectedVersion: 3 });
 
 		// A built-in view is always the list.
+		component.setLayout('timeline');
 		component.current.set({ kind: 'built-in', key: 'mine' });
 		component.draft.update((draft: object) => ({ ...draft, layout: 'timeline' }));
 		expect(component.isTimeline()).toBe(false);
+	});
+
+	it('keeps the row keys to the list: on a timeline only a selection takes the task keys', async () => {
+		await create(savedView({ displayOptions: { layout: 'timeline' } }));
+		const keys = (TestBed.inject(ShortcutRegistryService).registerAll as jest.Mock).mock.calls[0][0];
+		component.focusedId.set('t1');
+		expect(keys.listDown.enabled()).toBe(false);
+		expect(keys.listOpen.enabled()).toBe(false);
+		expect(keys.taskStatus.enabled()).toBe(false);
+
+		component.onToggle({ id: 't2', shift: false });
+		expect(keys.taskStatus.enabled()).toBe(true);
+
+		component.setLayout('list');
+		expect(keys.listDown.enabled()).toBe(true);
+		expect(keys.listOpen.enabled()).toBe(true);
+		// Back to the timeline: no focused row.
+		component.setLayout('timeline');
+		expect(component.focusedId()).toBeNull();
 	});
 
 	it('shows a stale save as a conflict, and Overwrite saves the edit on the latest version keeping its other keys', async () => {

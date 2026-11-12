@@ -622,6 +622,8 @@ export class TaskViewsPageComponent implements OnInit {
 	/** The layout is the view's: shown at once, saved with the view. */
 	protected setLayout(layout: TaskViewLayout): void {
 		this.draft.update((draft) => ({ ...draft, layout }));
+		// The timeline shows no focused row; a selection stays, for the bulk toolbar.
+		if (layout === 'timeline') this.focusedId.set(null);
 	}
 
 	protected setGroupBy(groupBy: TaskViewGroupBy): void {
@@ -1068,24 +1070,26 @@ export class TaskViewsPageComponent implements OnInit {
 	// ---------------------------------------------------------------- the keys of the list
 
 	private registerShortcuts(): void {
-		const hasRows = () => this.order().length > 0;
-		const hasTarget = () => this.canEdit() && (this.selection().ids.length > 0 || !!this.focusedId());
+		// The timeline shows no focused row: the row keys are the list's, and a task key acts on a selection only.
+		const hasRows = () => !this.isTimeline() && this.order().length > 0;
+		const focusedRow = () => (this.isTimeline() ? null : this.focusedId());
+		const hasTarget = () => this.canEdit() && (this.selection().ids.length > 0 || !!focusedRow());
 		const remove = this.registry.registerAll({
 			listDown: { run: ({ extend }) => this.moveFocus(1, extend), enabled: hasRows },
 			listUp: { run: ({ extend }) => this.moveFocus(-1, extend), enabled: hasRows },
 			listSelect: {
 				run: ({ extend }) => {
-					const id = this.focusedId();
+					const id = focusedRow();
 					if (id) this.onToggle({ id, shift: extend });
 				},
-				enabled: () => !!this.focusedId()
+				enabled: () => !!focusedRow()
 			},
 			listOpen: {
 				run: () => {
-					const id = this.focusedId();
+					const id = focusedRow();
 					if (id) this.openTask(id);
 				},
-				enabled: () => !!this.focusedId()
+				enabled: () => !!focusedRow()
 			},
 			listClear: {
 				run: () => {
@@ -1125,7 +1129,7 @@ export class TaskViewsPageComponent implements OnInit {
 	}
 
 	private openPicker(picker: BulkPicker): void {
-		const focused = this.focusedId();
+		const focused = this.isTimeline() ? null : this.focusedId();
 		if (!this.selection().ids.length && focused) {
 			this.selection.set(toggleSelection(EMPTY_SELECTION, focused, TASK_SELECTION_LIMIT).selection);
 		}
