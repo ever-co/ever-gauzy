@@ -76,7 +76,8 @@ async function zipOf(service: DocumentMarkdownService, rootId: string) {
 		}
 	});
 	const result = await service.writeSubtreeZip(root, undefined, output);
-	return { result, zip: openOfficePackage(Buffer.concat(chunks)) };
+	const raw = Buffer.concat(chunks);
+	return { result, zip: openOfficePackage(raw), raw };
 }
 
 describe('DocumentMarkdownService subtree export of a folder', () => {
@@ -124,6 +125,41 @@ describe('DocumentMarkdownService subtree export of a folder', () => {
 		await expect(service.requireExportRoot(TREE[4].id as never)).rejects.toBeInstanceOf(ConflictException);
 		await service.requireExportRoot(TREE[4].id as never).catch((error: ConflictException) => expect((error.getResponse() as { code: string }).code).toBe(DOCS_NOT_A_PAGE));
 		await expect(service.requireExportRoot(TREE[6].id as never)).rejects.toBeInstanceOf(NotFoundException);
+	});
+
+	it('writes every folder as an entry, so an empty sub-folder is still there once extracted', async () => {
+		const { service } = buildService([TREE[0], { id: 'f0000000-0000-4000-8000-000000000008', kind: DocumentKindEnum.FOLDER, name: 'Drafts', parentId: TREE[0].id, index: 0 }]);
+		const { zip, raw } = await zipOf(service, TREE[0].id);
+		// The reader skips directory entries; the zip's own directory names them.
+		expect(raw.includes(Buffer.from('drafts/'))).toBe(true);
+		expect(zip.readText('index.md')).toContain('- Drafts/');
+	});
+
+	it("never gives a child the path of its page's own index.md", async () => {
+		const intro = 'p0000000-0000-4000-8000-000000000010';
+		const { service } = buildService([
+			TREE[0],
+			{ id: intro, kind: DocumentKindEnum.PAGE, name: 'Intro', parentId: TREE[0].id, index: 0, contentJson: { type: 'doc', content: [text('The intro page')] } },
+			{ id: 'a0000000-0000-4000-8000-000000000011', kind: DocumentKindEnum.FILE, name: 'Index', originalFilename: 'index.md', parentId: intro, index: 0, bytes: 'a file named index.md' },
+			{ id: 'p0000000-0000-4000-8000-000000000012', kind: DocumentKindEnum.PAGE, name: 'Index', parentId: intro, index: 1, contentJson: { type: 'doc', content: [text('A page named Index')] } }
+		]);
+		const { zip } = await zipOf(service, TREE[0].id);
+		const names = zip.names();
+		expect(new Set(names).size).toBe(names.length);
+		expect(zip.readText('intro/index.md')).toContain('The intro page');
+		expect(names.filter((name) => name.startsWith('intro/')).sort()).toEqual(['intro/index-2.md', 'intro/index-3.md', 'intro/index.md']);
+	});
+
+	it('links a copied file by its encoded name', async () => {
+		const report = 'a0000000-0000-4000-8000-000000000013';
+		const { service } = buildService([
+			TREE[0],
+			{ id: 'p0000000-0000-4000-8000-000000000014', kind: DocumentKindEnum.PAGE, name: 'Notes', parentId: TREE[0].id, index: 0, contentJson: { type: 'doc', content: [fileLink(report, 'the report')] } },
+			{ id: report, kind: DocumentKindEnum.FILE, name: 'Report', originalFilename: 'report final#1.pdf', parentId: TREE[0].id, index: 1, bytes: '%PDF-report' }
+		]);
+		const { zip } = await zipOf(service, TREE[0].id);
+		expect(zip.readText('report final#1.pdf')).toBe('%PDF-report');
+		expect(zip.readText('notes.md')).toContain('](report%20final%231.pdf)');
 	});
 
 	it('zips an empty folder as an index that says so', async () => {

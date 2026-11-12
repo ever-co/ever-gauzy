@@ -7,6 +7,7 @@ import {
 	anchorContextOf,
 	approximateMatch,
 	blockTextOf,
+	editDistanceWithin,
 	liveAnchorResolverOf,
 	occurrencesOf,
 	resolveCommentAnchor
@@ -127,6 +128,24 @@ describe('document comment anchors', () => {
 		it('refuses a match that differs too much, and quotes too short to tell', () => {
 			expect(approximateMatch('alpha beta gamma', 'zzzzzzzzzz')).toBeNull();
 			expect(approximateMatch('alpha beta', 'bets')).toBeNull();
+		});
+
+		it('checks the whole of a quote longer than the compared part, not only its beginning', () => {
+			const quote = 'the river runs past the old mill and the green field '.repeat(8);
+			const edited = `Intro. ${quote.slice(0, 300)}${quote.slice(300).replace('mill', 'mall')}`;
+			expect(approximateMatch(edited, quote)).toMatchObject({ start: 7, end: 7 + quote.length, distance: 1 });
+			// The beginning kept, the rest replaced: not the quote any more.
+			const replaced = `Intro. ${quote.slice(0, 256)}${'x'.repeat(quote.length - 256)}`;
+			expect(approximateMatch(replaced, quote)).toBeNull();
+		});
+	});
+
+	describe('editDistanceWithin', () => {
+		it('answers the distance within the limit, and null past it', () => {
+			expect(editDistanceWithin('kitten', 'sitting', 3)).toBe(3);
+			expect(editDistanceWithin('kitten', 'sitting', 2)).toBeNull();
+			expect(editDistanceWithin('same', 'same', 0)).toBe(0);
+			expect(editDistanceWithin('short', 'a much longer text', 4)).toBeNull();
 		});
 	});
 

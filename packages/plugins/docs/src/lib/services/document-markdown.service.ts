@@ -124,7 +124,8 @@ export class DocumentMarkdownService {
 				},
 				linkOfFile: (documentId, url) => {
 					const inZip = filePathOf.get(documentId);
-					if (inZip) return posix.relative(from, inZip);
+					// A copied file keeps its own name (spaces, `#`): each segment of the link is encoded.
+					if (inZip) return encodePathSegments(posix.relative(from, inZip));
 					return assets.has(documentId) ? posix.relative(from, `assets/${assets.get(documentId)!.name}`) : url;
 				}
 			});
@@ -132,6 +133,10 @@ export class DocumentMarkdownService {
 		}
 		if (isFolder) {
 			archive.append(Buffer.from(folderIndexMarkdown(root, tree, attachments), 'utf8'), { name: 'index.md' });
+		}
+		// Every folder is an entry of its own, so an empty one is still there once the zip is extracted.
+		for (const entry of tree) {
+			if (entry.kind === 'folder') archive.append(Buffer.alloc(0), { name: `${entry.path}/` });
 		}
 		for (const [id, buffer] of attachments) {
 			archive.append(buffer, { name: filePathOf.get(id)! });
@@ -312,6 +317,8 @@ export class DocumentMarkdownService {
 				used.add(`${name}.md`);
 				const folder = posix.join(parentFolder, name);
 				folderOf.set(String(node.id), folder);
+				// A page with children is `<folder>/index.md`: none of its children may take that name in its folder.
+				if (node.kind === DocumentKindEnum.PAGE) taken.set(folder, new Set(['index', 'index.md']));
 				depthOf.set(String(node.id), depth);
 				const kind = node.kind === DocumentKindEnum.PAGE ? 'page' : 'folder';
 				entries.push({ document: node, path: posix.join(folder, 'index.md'), hasChildren: false, kind, parentId, depth });
@@ -401,6 +408,14 @@ export class DocumentMarkdownService {
 	}
 }
 
+/** A relative path with each segment encoded, as a Markdown link destination takes it. */
+function encodePathSegments(path: string): string {
+	return path
+		.split('/')
+		.map((part) => (part === '.' || part === '..' ? part : encodeURIComponent(part)))
+		.join('/');
+}
+
 /** The bytes a set of read files holds. */
 function totalBytesOf(buffers: ReadonlyMap<string, Buffer>): number {
 	let total = 0;
@@ -444,7 +459,6 @@ export function folderIndexMarkdown(
 ): string {
 	const lines: string[] = [`# ${plainMarkdownText(String(root.name || 'Folder'))}`, ''];
 	if (root.description) lines.push(plainMarkdownText(String(root.description)), '');
-	const linkOf = (path: string) => path.split('/').map((part) => encodeURIComponent(part)).join('/');
 	const write = (parentId: string | null, depth: number): void => {
 		for (const entry of entries.filter((candidate) => candidate.parentId === parentId)) {
 			const label = plainMarkdownText(String(entry.document.name || entry.document.originalFilename || entry.path));
@@ -454,7 +468,7 @@ export function folderIndexMarkdown(
 			} else if (entry.kind === 'file' && !copied.has(String(entry.document.id))) {
 				lines.push(`${indent}- [${label}](/api/plugins/docs/documents/${encodeURIComponent(String(entry.document.id))}/download) (not included)`);
 			} else {
-				lines.push(`${indent}- [${label}](${linkOf(entry.path)})`);
+				lines.push(`${indent}- [${label}](${encodePathSegments(entry.path)})`);
 			}
 			write(String(entry.document.id), depth + 1);
 		}

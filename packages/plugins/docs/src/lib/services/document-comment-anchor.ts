@@ -340,10 +340,37 @@ export function approximateMatch(text: string, quote: string): { start: number; 
 			best.end = j;
 		}
 	}
-	if (!best) return null;
-	// A quote longer than the compared part: the match runs on by what was not compared, inside the text.
+	if (!best || best.end <= best.start) return null;
+	if (quote.length === pattern.length) return best;
+	// A quote longer than the compared part: the match runs on by what was not compared, inside the text, and the whole
+	// run must be as close to the whole quote (a tail edited past the limit is not the quote any more).
 	const end = Math.min(text.length, best.end + (quote.length - pattern.length));
-	return best.end > best.start ? { start: best.start, end, distance: best.distance } : null;
+	const distance = editDistanceWithin(text.slice(best.start, end), quote, Math.floor(quote.length * DOCS_ANCHOR_FUZZY_MAX_ERROR_RATE));
+	return distance === null ? null : { start: best.start, end, distance };
+}
+
+/**
+ * The edit distance (insertions, deletions, substitutions) between `a` and `b` when it is at most `limit`, else null.
+ * Only a band of `limit` cells around the diagonal is computed, so it costs O(|a| · limit).
+ */
+export function editDistanceWithin(a: string, b: string, limit: number): number | null {
+	if (limit < 0 || Math.abs(a.length - b.length) > limit) return null;
+	const beyond = limit + 1;
+	let previous = new Array<number>(b.length + 1);
+	for (let j = 0; j <= b.length; j += 1) previous[j] = j <= limit ? j : beyond;
+	for (let i = 1; i <= a.length; i += 1) {
+		const current = new Array<number>(b.length + 1).fill(beyond);
+		current[0] = i <= limit ? i : beyond;
+		let rowBest = current[0];
+		for (let j = Math.max(1, i - limit); j <= Math.min(b.length, i + limit); j += 1) {
+			const cost = Math.min(previous[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1), previous[j] + 1, current[j - 1] + 1);
+			current[j] = Math.min(cost, beyond);
+			if (current[j] < rowBest) rowBest = current[j];
+		}
+		if (rowBest > limit) return null;
+		previous = current;
+	}
+	return previous[b.length] <= limit ? previous[b.length] : null;
 }
 
 /** The context an editor stores beside a quote: the text right before and after the range. */

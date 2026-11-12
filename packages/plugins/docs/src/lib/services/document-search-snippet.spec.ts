@@ -82,7 +82,7 @@ describe('document search snippets', () => {
 			const snippet = searchSnippetOf('roadmap', { name: 'Roadmap 2027', contentJson: page(long.replace('roadmap', 'plan')) });
 			expect(snippet.source).toBe(DocumentSearchSnippetSourceEnum.LEADING);
 			expect(snippet.matches).toEqual([]);
-			expect(snippet.text.startsWith('Lorem ipsum')).toBe(true);
+			expect(snippet.text.startsWith('Words fill the page before.')).toBe(true);
 			expect(snippet.truncatedStart).toBe(false);
 			expect(snippet.truncatedEnd).toBe(true);
 			expect(snippet.nameMatches).toEqual([{ start: 0, end: 7 }]);
