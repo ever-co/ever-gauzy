@@ -397,7 +397,7 @@
 					@if (error()) {
 						<p class="error" role="alert">
 							{{ 'TASK_VIEWS.ERROR' | translate }}
-							<button nbButton size="tiny" status="basic" type="button" (click)="reload()">
+							<button nbButton size="tiny" status="basic" type="button" (click)="retry()">
 								{{ 'TASK_VIEWS.RETRY' | translate }}
 							</button>
 						</p>
@@ -429,7 +429,7 @@
 									status="basic"
 									type="button"
 									data-test="load-more"
-									[disabled]="loadingMore()"
+									[disabled]="loadingMore() || loading()"
 									(click)="loadMore()"
 								>
 									{{ 'TASK_VIEWS.LIST.LOAD_MORE' | translate }}

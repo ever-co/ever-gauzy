@@ -381,7 +381,12 @@ export class TaskViewsPageComponent implements OnInit {
 	private async open(ref: ViewRef): Promise<void> {
 		const scope = this.scope();
 		if (!scope) return;
-		this.opening += 1;
+		const opening = ++this.opening;
+		// An edit of the view left that was still to be read applies to it, not to the view opened now.
+		if (this.filterTimer) {
+			clearTimeout(this.filterTimer);
+			this.filterTimer = null;
+		}
 		this.selection.set(EMPTY_SELECTION);
 		this.focusedId.set(null);
 		this.conflict.set(null);
@@ -395,7 +400,7 @@ export class TaskViewsPageComponent implements OnInit {
 			await this.reload();
 			return;
 		}
-		const generation = ++this.generation;
+		this.generation += 1;
 		this.loadingMore.set(false);
 		// The view left is not the page's any more while the next one loads: nothing saves it (or its draft) meanwhile.
 		this.savedView.set(null);
@@ -403,12 +408,13 @@ export class TaskViewsPageComponent implements OnInit {
 		this.loading.set(true);
 		try {
 			const view = await firstValueFrom(this.api.getView(ref.id, scope));
-			if (generation !== this.generation) return;
+			// Only another opening supersedes this one: a read of the rows meanwhile does not (it is read again below).
+			if (opening !== this.opening) return;
 			this.savedView.set(view);
 			this.draft.set(definitionOf(view));
 			await this.reload();
 		} catch (error) {
-			if (generation !== this.generation) return;
+			if (opening !== this.opening) return;
 			this.loading.set(false);
 			this.savedView.set(null);
 			this.items.set([]);
@@ -416,6 +422,15 @@ export class TaskViewsPageComponent implements OnInit {
 			if (isViewGone(error)) this.gone.set(true);
 			else this.error.set(true);
 		}
+	}
+
+	/**
+	 * The error's Try again: a saved view that could not be read is opened again (its rows alone would be read
+	 * without its filter); otherwise its rows are read again.
+	 */
+	protected retry(): void {
+		if (this.isSaved() && !this.savedView()) void this.open(this.current());
+		else void this.reload();
 	}
 
 	/** Reads the first page of the open view again (after an edit of the filter, a bulk change, a reload). */
@@ -442,7 +457,8 @@ export class TaskViewsPageComponent implements OnInit {
 
 	protected async loadMore(): Promise<void> {
 		const scope = this.scope();
-		if (!scope || this.loadingMore() || !this.hasMore()) return;
+		// Not while the rows are read anew: the cursor shown is the previous read's.
+		if (!scope || this.loading() || this.loadingMore() || !this.hasMore()) return;
 		const generation = this.generation;
 		this.loadingMore.set(true);
 		try {
@@ -861,6 +877,7 @@ export class TaskViewsPageComponent implements OnInit {
 				this.toastr.warning('TASK_VIEWS.BULK.LIMIT', { limit: TASK_SELECTION_LIMIT });
 			return;
 		}
+		const opening = this.opening;
 		this.busy.set(true);
 		try {
 			const outcome = await firstValueFrom(this.api.bulkUpdate(built.request));
@@ -879,7 +896,7 @@ export class TaskViewsPageComponent implements OnInit {
 					errors: this.refusalText(summary)
 				});
 			if (changedTaskIds(outcome).length) this.api.notify('tasks');
-			await this.reload();
+			await this.reloadIfOpen(opening);
 		} catch (error) {
 			this.toastr.danger(this.errorMessage(error, 'TASK_VIEWS.BULK.FAILED'));
 		} finally {
@@ -895,6 +912,7 @@ export class TaskViewsPageComponent implements OnInit {
 	protected async undoLast(): Promise<void> {
 		const pending = this.undo();
 		if (!pending?.request || this.busy()) return;
+		const opening = this.opening;
 		this.busy.set(true);
 		try {
 			const outcome = await firstValueFrom(this.api.bulkUpdate(pending.request));
@@ -910,10 +928,10 @@ export class TaskViewsPageComponent implements OnInit {
 			const lossy = restoredInPart(pending.lossy, outcome);
 			if (lossy) this.toastr.warning('TASK_VIEWS.BULK.UNDO_LOSSY', { count: lossy });
 			this.api.notify('tasks');
-			await this.reload();
+			await this.reloadIfOpen(opening);
 		} catch (error) {
 			this.toastr.danger(this.errorMessage(error, 'TASK_VIEWS.BULK.UNDO_FAILED'));
-			await this.reload();
+			await this.reloadIfOpen(opening);
 		} finally {
 			this.busy.set(false);
 		}
@@ -964,10 +982,18 @@ export class TaskViewsPageComponent implements OnInit {
 				});
 			else this.toastr.success('TASK_VIEWS.BULK.DELETED', { count: summary.applied });
 			this.api.notify('tasks');
-			await this.reload();
+			await this.reloadIfOpen(opening);
 		} finally {
 			this.busy.set(false);
 		}
+	}
+
+	/**
+	 * Reads the rows again after a change made in an opening, while that opening lasts: another view opened since
+	 * reads its own rows (and a read now would supersede its opening's).
+	 */
+	private async reloadIfOpen(opening: number): Promise<void> {
+		if (opening === this.opening) await this.reload();
 	}
 
 	private offerUndo(

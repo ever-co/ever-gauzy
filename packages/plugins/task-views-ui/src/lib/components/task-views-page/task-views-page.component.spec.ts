@@ -493,6 +493,8 @@ describe('TaskViewsPageComponent', () => {
 		await create(savedView(), page(rows, { nextCursor: 'next' }));
 		component.setGroupBy('status');
 		expect(component.dirty()).toBe(true);
+		// The rows of the new grouping are read first (no Load more while they are).
+		await flush();
 		const more = new Subject<ITaskViewTasksPage>();
 		api.viewTasks.mockReturnValueOnce(more);
 		const loading = component.loadMore();
@@ -511,6 +513,76 @@ describe('TaskViewsPageComponent', () => {
 		next.complete();
 		await opening;
 		expect(component.savedView().id).toBe('v2');
+	});
+
+	it('lets an undo that fails after another view opened leave that opening alone', async () => {
+		await create();
+		component.onToggle({ id: 't1', shift: false });
+		api.bulkUpdate.mockReturnValueOnce(
+			of({ applied: 1, refused: 0, results: [{ taskId: 't1', ok: true, previous: { isArchived: false } }] })
+		);
+		jest.useFakeTimers();
+		await component.applyBulk({ action: 'archive', changes: { isArchived: true } });
+		const undoAnswer = new Subject<unknown>();
+		api.bulkUpdate.mockReturnValueOnce(undoAnswer);
+		const undoing = component.undoLast();
+		const view = new Subject<ITaskView>();
+		api.getView.mockReturnValueOnce(view);
+		const opening = component.open({ kind: 'saved', id: 'v2' });
+		const reads = api.viewTasks.mock.calls.length;
+		undoAnswer.error(new HttpErrorResponse({ status: 503 }));
+		await undoing;
+		expect(api.viewTasks.mock.calls.length).toBe(reads);
+		view.next(savedView({ id: 'v2' as ID, name: 'Other' }));
+		view.complete();
+		await opening;
+		expect(component.savedView()?.id).toBe('v2');
+	});
+
+	it('drops an edit of the filter still to be read when another view opens', async () => {
+		await create();
+		jest.useFakeTimers();
+		component.setFilter({ op: 'and', conditions: [{ field: 'labels', operator: 'in', values: [LABEL] }] });
+		const view = new Subject<ITaskView>();
+		api.getView.mockReturnValueOnce(view);
+		const opening = component.open({ kind: 'saved', id: 'v2' });
+		const reads = api.viewTasks.mock.calls.length;
+		jest.advanceTimersByTime(1_000);
+		expect(api.viewTasks.mock.calls.length).toBe(reads);
+		view.next(savedView({ id: 'v2' as ID, name: 'Other' }));
+		view.complete();
+		await opening;
+		expect(component.savedView()?.id).toBe('v2');
+		expect(api.viewTasks.mock.calls.length).toBe(reads + 1);
+	});
+
+	it('reads no next page while the rows are being read anew', async () => {
+		await create(savedView(), page(rows, { nextCursor: 'next' }));
+		const fresh = new Subject<ITaskViewTasksPage>();
+		api.viewTasks.mockReturnValueOnce(fresh);
+		const reloading = component.reload();
+		const reads = api.viewTasks.mock.calls.length;
+		await component.loadMore();
+		expect(api.viewTasks.mock.calls.length).toBe(reads);
+		fresh.next(page(rows));
+		fresh.complete();
+		await reloading;
+		expect(component.loading()).toBe(false);
+	});
+
+	it('opens a saved view again when Try again follows a failed read of it', async () => {
+		await create();
+		api.getView.mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 503 })));
+		await component.open({ kind: 'saved', id: 'v1' });
+		expect(component.error()).toBe(true);
+		expect(component.savedView()).toBeNull();
+		const reads = api.getView.mock.calls.length;
+		component.retry();
+		await flush();
+		await flush();
+		expect(api.getView.mock.calls.length).toBe(reads + 1);
+		expect(component.savedView()?.id).toBe('v1');
+		expect(component.error()).toBe(false);
 	});
 
 	it('does not drag a view grouped or ordered otherwise', async () => {
