@@ -5031,6 +5031,7 @@
 			"DELETE_FOREVER": "永久删除",
 			"DELETE_FOREVER_CONFIRM": "要永久删除吗？此操作无法撤销。",
 			"DELETED_FOREVER": "“{{ title }}”已永久删除",
+			"NO_LONGER_IN_TRASH": "“{{ title }}”已不在回收站中：它已被恢复或删除。列表已刷新。",
 			"DELETED_BY": "由 {{ name }} 删除 · {{ date }}",
 			"DELETED_AT": "删除于 {{ date }}",
 			"LOAD_MORE": "加载更多（{{ shown }}/{{ total }}）",

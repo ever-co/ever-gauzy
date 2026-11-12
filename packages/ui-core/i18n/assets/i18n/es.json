@@ -4501,6 +4501,7 @@
 			"DELETE_FOREVER": "Eliminar para siempre",
 			"DELETE_FOREVER_CONFIRM": "¿Eliminar para siempre? No se puede deshacer.",
 			"DELETED_FOREVER": "«{{ title }}» se eliminó para siempre",
+			"NO_LONGER_IN_TRASH": "«{{ title }}» ya no está en la papelera: se restauró o se eliminó mientras tanto. La lista se ha actualizado.",
 			"DELETED_BY": "Eliminada por {{ name }} · {{ date }}",
 			"DELETED_AT": "Eliminada {{ date }}",
 			"LOAD_MORE": "Cargar más ({{ shown }} de {{ total }})",

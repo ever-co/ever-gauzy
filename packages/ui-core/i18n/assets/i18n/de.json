@@ -4495,6 +4495,7 @@
 			"DELETE_FOREVER": "Endgültig löschen",
 			"DELETE_FOREVER_CONFIRM": "Endgültig löschen? Das kann nicht rückgängig gemacht werden.",
 			"DELETED_FOREVER": "„{{ title }}“ wurde endgültig gelöscht",
+			"NO_LONGER_IN_TRASH": "„{{ title }}“ ist nicht mehr im Papierkorb: Sie wurde inzwischen wiederhergestellt oder gelöscht. Die Liste wurde aktualisiert.",
 			"DELETED_BY": "Gelöscht von {{ name }} · {{ date }}",
 			"DELETED_AT": "Gelöscht {{ date }}",
 			"LOAD_MORE": "Mehr laden ({{ shown }} von {{ total }})",

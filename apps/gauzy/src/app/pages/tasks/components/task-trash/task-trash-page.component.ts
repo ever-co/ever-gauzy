@@ -56,6 +56,14 @@ export function trashStateOf(error: unknown): TaskTrashState {
 }
 
 /**
+ * Whether a Delete forever failed because the task is no longer in the trash: someone restored it, or deleted it, since
+ * the list was read. The platform deletes a task only while it is in the trash and answers 404 otherwise.
+ */
+export function isNoLongerInTrash(error: unknown): boolean {
+	return (error as HttpErrorResponse)?.status === 404;
+}
+
+/**
  * The organization's deleted tasks (`/pages/tasks/trash`), most recently deleted first, kept to the selected project
  * when one is selected: each can be restored or deleted for good, after an inline confirmation. A search box finds a
  * task by title or number; Load more reads the next page. The page is reached from the tasks page, which offers it
@@ -175,16 +183,25 @@ export class TaskTrashPageComponent implements OnInit {
 		}
 	}
 
-	/** Deletes a task for good, once its row's confirmation is accepted. */
+	/**
+	 * Deletes a task for good, once its row's confirmation is accepted, and only while it is still in the trash: a task
+	 * someone restored or deleted since the list was read is left alone, the reader is told, and the list is read again.
+	 */
 	protected async deleteForever(row: ITrashRow): Promise<void> {
-		if (this.busyId) return;
+		const organization = this._organization;
+		if (this.busyId || !organization) return;
 		this.busyId = row.task.id;
 		try {
-			await this._trash.deleteForever(row.task.id);
+			await this._trash.deleteForever(row.task.id, organization.id, organization.tenantId);
 			this.afterChange(row);
 			this._toastr.success(this._translate.instant('TASKS_PAGE.TRASH.DELETED_FOREVER', { title: row.task.title }));
 		} catch (error) {
-			this._toastr.danger(this.messageOf(error), this._translate.instant('TOASTR.TITLE.ERROR'));
+			if (isNoLongerInTrash(error)) {
+				this._toastr.warning(this._translate.instant('TASKS_PAGE.TRASH.NO_LONGER_IN_TRASH', { title: row.task.title }));
+				void this.load(true);
+			} else {
+				this._toastr.danger(this.messageOf(error), this._translate.instant('TOASTR.TITLE.ERROR'));
+			}
 		} finally {
 			this.busyId = null;
 			this.confirmingId = null;

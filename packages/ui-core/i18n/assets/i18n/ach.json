@@ -4319,6 +4319,7 @@
 			"DELETE_FOREVER": "Delete forever",
 			"DELETE_FOREVER_CONFIRM": "Delete for good? This cannot be undone.",
 			"DELETED_FOREVER": "“{{ title }}” was deleted for good",
+			"NO_LONGER_IN_TRASH": "“{{ title }}” is no longer in the trash: it was restored or deleted meanwhile. The list was refreshed.",
 			"DELETED_BY": "Deleted by {{ name }} · {{ date }}",
 			"DELETED_AT": "Deleted {{ date }}",
 			"LOAD_MORE": "Load more ({{ shown }} of {{ total }})",

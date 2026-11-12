@@ -55,6 +55,13 @@ The comment, reaction and soft-delete APIs exist, but three things kept both UIs
   task again (a soft delete already published `DELETED`).
 - `DELETE /tasks/:id` (delete permanently) also finds a task that is in the trash, for a team manager too, and
   publishes `DELETED` only when the task was live (the trash already published it once).
+- `DELETE /tasks/:id/trashed?organizationId=` (Delete forever, the trash pages' action): deletes a task for good
+  only while it is in the trash. One `DELETE` statement decides it, on both ORMs, with `deletedAt IS NOT NULL`, the
+  task, the caller's tenant and the stated organization in its WHERE; nothing is read first to decide it. A task that
+  is not there (restored by someone else since the trash was read, already deleted, live, or another tenant's or
+  organization's) answers 404 and is left as it is: the trash pages had called `DELETE /tasks/:id`, which deleted a
+  restored, live task for good. Same grants and team-manager check as the restore, behind the flag; no `DELETED`
+  event (the task published it when it went to the trash).
 
 ## Not changed
 

@@ -4528,6 +4528,7 @@
 			"DELETE_FOREVER": "Удалить навсегда",
 			"DELETE_FOREVER_CONFIRM": "Удалить навсегда? Это действие нельзя отменить.",
 			"DELETED_FOREVER": "«{{ title }}» удалена навсегда",
+			"NO_LONGER_IN_TRASH": "«{{ title }}» больше нет в корзине: её уже восстановили или удалили. Список обновлён.",
 			"DELETED_BY": "Удалил(а) {{ name }} · {{ date }}",
 			"DELETED_AT": "Удалена {{ date }}",
 			"LOAD_MORE": "Загрузить ещё ({{ shown }} из {{ total }})",

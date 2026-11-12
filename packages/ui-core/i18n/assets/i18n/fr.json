@@ -4500,6 +4500,7 @@
 			"DELETE_FOREVER": "Supprimer définitivement",
 			"DELETE_FOREVER_CONFIRM": "Supprimer définitivement ? Cette action est irréversible.",
 			"DELETED_FOREVER": "« {{ title }} » a été supprimée définitivement",
+			"NO_LONGER_IN_TRASH": "« {{ title }} » n’est plus dans la corbeille : elle a été restaurée ou supprimée entre-temps. La liste a été actualisée.",
 			"DELETED_BY": "Supprimée par {{ name }} · {{ date }}",
 			"DELETED_AT": "Supprimée {{ date }}",
 			"LOAD_MORE": "Charger plus ({{ shown }} sur {{ total }})",

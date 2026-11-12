@@ -207,7 +207,7 @@ sequenceDiagram
 | `GAUZY_NOTIFICATION_FANOUT_ENABLED` (follower notifications: comments on followed tasks and pages, followed-task updates) | deployment | off |
 | `GAUZY_DOCS_COLLAB_ENABLED` + `FEATURE_DOCUMENTS` (exists) | deployment + tenant | off |
 | `GAUZY_TASK_VIEWS_ENABLED` | deployment | off |
-| `GAUZY_TASK_TRASH_ENABLED` (the task trash list; trashing and restoring work either way) | deployment | off |
+| `GAUZY_TASK_TRASH_ENABLED` (the task trash list and its Delete forever; trashing and restoring work either way) | deployment | off |
 | `ASANA_ENABLED`, `LINEAR_ENABLED`, `TRELLO_ENABLED` (as `EVER_WORKS_ENABLED`) | deployment | off |
 | MCP tool groups `GAUZY_MCP_TOOLS_{CHAT,DOCS,INBOX}` | MCP server | off |
 

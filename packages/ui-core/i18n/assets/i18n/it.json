@@ -4499,6 +4499,7 @@
 			"DELETE_FOREVER": "Elimina definitivamente",
 			"DELETE_FOREVER_CONFIRM": "Eliminare definitivamente? L’operazione non si può annullare.",
 			"DELETED_FOREVER": "«{{ title }}» è stata eliminata definitivamente",
+			"NO_LONGER_IN_TRASH": "«{{ title }}» non è più nel cestino: nel frattempo è stata ripristinata o eliminata. L’elenco è stato aggiornato.",
 			"DELETED_BY": "Eliminata da {{ name }} · {{ date }}",
 			"DELETED_AT": "Eliminata {{ date }}",
 			"LOAD_MORE": "Carica altro ({{ shown }} di {{ total }})",

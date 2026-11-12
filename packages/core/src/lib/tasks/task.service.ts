@@ -63,7 +63,7 @@ import {
 } from '@gauzy/contracts';
 import { isEmpty, isNotEmpty } from '@gauzy/utils';
 import { isMySQL, isPostgres, isSqlite } from '@gauzy/config';
-import { TenantAwareCrudService, BaseQueryDTO } from './../core/crud';
+import { TenantAwareCrudService, BaseQueryDTO, isWithinOrganizationBoundary } from './../core/crud';
 import { IPartialEntity } from './../core/crud/icrud.service';
 import { sanitizeRichHtml } from './../core/html-sanitizer';
 import {
@@ -141,6 +141,9 @@ function teamIdsOfTaskOrganization(task: Pick<Task, 'organizationId' | 'teams'>)
 
 /** At most this many trashed tasks per page (`TaskTrashQueryDTO` caps `take` at the same). */
 const TRASH_PAGE_SIZE = 100;
+
+/** The 404 of a delete from the trash that found no such task there: it was restored, or is already deleted. */
+const TASK_NOT_IN_TRASH = 'TASK_NOT_IN_TRASH: no task with that id is in the trash (it was restored or deleted).';
 
 @FavoriteService(BaseEntityEnum.Task)
 @Injectable()
@@ -745,6 +748,76 @@ export class TaskService extends TenantAwareCrudService<Task> {
 
 		if (!isTeamManager) {
 			throw new ForbiddenException('You can only delete a task of a team you manage.');
+		}
+	}
+
+	/**
+	 * Deletes a task for good only while it is in the trash (`DELETE /tasks/:id/trashed`, the Delete forever of the
+	 * trash pages), under the grants of a delete (see {@link assertMayRemoveTask}).
+	 *
+	 * The DELETE statement itself decides whether the task is in the trash: its WHERE names the task, the caller's
+	 * tenant, the stated organization and `deletedAt IS NOT NULL`. A task someone restored after the trash was read
+	 * (`PUT /tasks/:id/recover`) is live, so the statement matches no row and the caller is told so (404), where
+	 * `DELETE /tasks/:id` deletes the live task. Reading the task first and deleting it afterwards would only narrow
+	 * that window, so nothing is read to decide it: a team manager's check reads the task's teams, which says who may
+	 * delete the task, not whether it is still in the trash.
+	 *
+	 * No `DELETED` event is published: the task published it when it went to the trash (as {@link deleteTask} does
+	 * for a trashed task).
+	 *
+	 * @param id - The task
+	 * @param organizationId - The organization whose trash holds the task
+	 * @returns The deletion, of one row
+	 * @throws BadRequestException when no organization is stated
+	 * @throws NotFoundException when no task with that id is in the trash of the caller's tenant and that organization
+	 * @throws ForbiddenException when the caller may not delete that task
+	 */
+	async deleteTrashedTask(id: ID, organizationId: ID | null | undefined): Promise<DeleteResult> {
+		if (!isNotEmpty(organizationId)) {
+			throw new BadRequestException('A task is deleted from the trash of one organization: state organizationId.');
+		}
+		const tenantId = RequestContext.currentTenantId();
+		// The statement is kept to the caller's tenant and organization boundary: outside them the caller has no trash.
+		if (!isNotEmpty(tenantId) || !isWithinOrganizationBoundary(organizationId)) {
+			throw new NotFoundException(TASK_NOT_IN_TRASH);
+		}
+
+		await this.assertMayRemoveTask(id, true);
+
+		const affected = await this.deleteInTrash(id, tenantId, organizationId);
+		if (!affected) {
+			throw new NotFoundException(TASK_NOT_IN_TRASH);
+		}
+		return { raw: [], affected };
+	}
+
+	/**
+	 * The one statement of {@link deleteTrashedTask}:
+	 * `DELETE FROM task WHERE id = ? AND tenantId = ? AND organizationId = ? AND deletedAt IS NOT NULL`.
+	 *
+	 * MikroORM applies its soft-delete filter (`deletedAt IS NULL`) to a native delete as it does to a read, which
+	 * would match no trashed task at all, so the filter is lifted for this statement.
+	 *
+	 * @returns How many rows it deleted: one, or none when the task is not in that trash
+	 */
+	private async deleteInTrash(id: ID, tenantId: ID, organizationId: ID): Promise<number> {
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM:
+				return await this.mikroOrmRepository.nativeDelete(
+					{ id, tenantId, organizationId, deletedAt: { $ne: null } } as never,
+					{ filters: { [SOFT_DELETABLE_FILTER]: false } }
+				);
+			case MultiORMEnum.TypeORM: {
+				const result = await this.typeOrmRepository.delete({
+					id,
+					tenantId,
+					organizationId,
+					deletedAt: Not(IsNull())
+				} as FindOptionsWhere<Task>);
+				return result?.affected ?? 0;
+			}
+			default:
+				throw new Error(`Not implemented for ${this.ormType}`);
 		}
 	}
 

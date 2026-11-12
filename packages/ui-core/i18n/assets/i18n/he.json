@@ -4521,6 +4521,7 @@
 			"DELETE_FOREVER": "מחיקה לצמיתות",
 			"DELETE_FOREVER_CONFIRM": "למחוק לצמיתות? אי אפשר לבטל זאת.",
 			"DELETED_FOREVER": "\"{{ title }}\" נמחקה לצמיתות",
+			"NO_LONGER_IN_TRASH": "\"{{ title }}\" כבר לא בסל המחזור: היא שוחזרה או נמחקה בינתיים. הרשימה עודכנה.",
 			"DELETED_BY": "נמחקה על ידי {{ name }} · {{ date }}",
 			"DELETED_AT": "נמחקה {{ date }}",
 			"LOAD_MORE": "טעינת עוד ({{ shown }} מתוך {{ total }})",
