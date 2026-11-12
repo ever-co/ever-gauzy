@@ -1,5 +1,6 @@
 /**
- * `ChatConversationService.reorderCategories`: one transaction, only what changed written, moved channels told.
+ * `ChatConversationService.reorderCategories`: one transaction, only what changed written, moved channels told; the
+ * positions compared are read in that transaction, under the rows' locks.
  *
  * `@gauzy/core` is doubled at the module boundary (its barrel boots the whole application).
  */
@@ -12,7 +13,11 @@ jest.mock('@gauzy/core', () => {
 		TenantOrganizationBaseEntity: class {},
 		MikroOrmBaseEntityRepository: class {}
 	};
-	return new Proxy(explicit, { get: (target, name) => (name in target ? target[name as string] : function Anything() {}) });
+	// Any other export: a stand-in nothing here calls.
+	const anything = function Anything() {
+		return undefined;
+	};
+	return new Proxy(explicit, { get: (target, name) => (name in target ? target[name as string] : anything) });
 });
 
 import { BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
@@ -23,22 +28,29 @@ import { ChatConversationService } from './chat-conversation.service';
 
 const manager: IChatCaller = { tenantId: 'ten', organizationId: 'org', userId: 'u1', employeeId: 'e1', canManage: true };
 
-function over() {
+function over(options: { databaseType?: string } = {}) {
+	// Stored out of their order, as a database returns rows ordered by id for the lock.
 	const categories = [
-		{ id: 'k1', name: 'A', position: 0 },
-		{ id: 'k2', name: 'B', position: 1 },
-		{ id: 'k3', name: 'C', position: 2 }
+		{ id: 'k3', name: 'C', position: 2, organizationId: 'org' },
+		{ id: 'k1', name: 'A', position: 0, organizationId: 'org' },
+		{ id: 'k2', name: 'B', position: 1, organizationId: 'org' },
+		{ id: 'k4', name: 'D', position: 0, organizationId: 'org2' }
 	];
 	const channels = [
 		{ id: 'c1', kind: 'channel', categoryId: 'k1', position: 0, tenantId: 'ten', organizationId: 'org' },
 		{ id: 'c2', kind: 'channel', categoryId: 'k1', position: 1, tenantId: 'ten', organizationId: 'org' },
-		{ id: 'c3', kind: 'channel', categoryId: null, position: 0, tenantId: 'ten', organizationId: 'org' }
+		{ id: 'c3', kind: 'channel', categoryId: null, position: 0, tenantId: 'ten', organizationId: 'org' },
+		{ id: 'c4', kind: 'channel', categoryId: null, position: 0, tenantId: 'ten', organizationId: 'org2' }
 	];
 	const writes: Array<{ table: string; id: string; patch: Record<string, unknown> }> = [];
-	const repository = (table: string, rows: Array<{ id: string }>) => ({
-		find: jest.fn(async ({ where }: { where: { id?: { _value?: string[] } } }) => {
+	const reads: Array<{ table: string; lock?: unknown }> = [];
+	const repository = (table: string, rows: Array<{ id: string; organizationId?: string }>) => ({
+		find: jest.fn(async ({ where, lock }: { where: { id?: { _value?: string[] }; organizationId?: string }; lock?: unknown }) => {
+			reads.push({ table, lock });
 			const wanted = where?.id?._value;
-			return rows.filter((row) => !wanted || wanted.includes(row.id)).map((row) => ({ ...row }));
+			return rows
+				.filter((row) => (!wanted || wanted.includes(row.id)) && (!where?.organizationId || row.organizationId === where.organizationId))
+				.map((row) => ({ ...row }));
 		}),
 		update: jest.fn(async (criteria: { id: string }, patch: Record<string, unknown>) => {
 			writes.push({ table, id: criteria.id, patch });
@@ -47,13 +59,20 @@ function over() {
 	});
 	const repositories: Record<string, unknown> = { ChatCategory: repository('category', categories), ChatConversation: repository('conversation', channels) };
 	const em = { getRepository: (entity: { name?: string }) => repositories[String(entity?.name)] };
-	const dataSource = { ...em, transaction: jest.fn(async (work: (m: typeof em) => Promise<unknown>) => work(em)) } as unknown as DataSource;
+	const dataSource = {
+		options: { type: options.databaseType ?? 'postgres' },
+		// Every read the reorder compares against is the transaction's.
+		getRepository: () => {
+			throw new Error('read outside the transaction');
+		},
+		transaction: jest.fn(async (work: (m: typeof em) => Promise<unknown>) => work(em))
+	} as unknown as DataSource;
 	const access = { members: jest.fn(async (_tenantId: string, id: string) => [{ userId: `${id}-member` }]) } as unknown as ChatAccessService;
 	const realtime = {
 		conversationFact: jest.fn((conversation: { id: string }, change: string, recipients: string[]) => ({ id: conversation.id, change, recipients })),
 		append: jest.fn(async (_m: unknown, fact: { id: string; change: string; recipients: string[] }) => ({ name: 'chat_conversation.changed', data: fact }))
 	};
-	return { service: new ChatConversationService(dataSource, access, realtime as unknown as ChatRealtime), writes, dataSource };
+	return { service: new ChatConversationService(dataSource, access, realtime as unknown as ChatRealtime), writes, reads, dataSource };
 }
 
 describe('ChatConversationService.reorderCategories', () => {
@@ -85,6 +104,34 @@ describe('ChatConversationService.reorderCategories', () => {
 			{ id: 'c3', categoryId: 'k2', position: 0 }
 		]);
 		expect(result.events.map((event) => (event.data as { id: string; recipients: string[] }).recipients)).toEqual([['c2-member'], ['c1-member'], ['c3-member']]);
+	});
+
+	it('reads the positions it compares in its transaction, locking the categories then the channels (not on SQLite)', async () => {
+		const { service, reads } = over();
+		await service.reorderCategories(manager, { categoryIds: ['k2', 'k1', 'k3'], channels: [{ categoryId: 'k1', conversationIds: ['c2', 'c1'] }] });
+		expect(reads).toEqual([
+			{ table: 'category', lock: { mode: 'pessimistic_write' } },
+			{ table: 'conversation', lock: { mode: 'pessimistic_write' } }
+		]);
+		const sqlite = over({ databaseType: 'sqlite' });
+		await sqlite.service.reorderCategories(manager, { categoryIds: ['k2', 'k1', 'k3'] });
+		expect(sqlite.reads).toEqual([{ table: 'category', lock: undefined }]);
+	});
+
+	it("never files a channel under another organization's category, even for a caller managing the whole tenant", async () => {
+		const tenantWide: IChatCaller = { ...manager, organizationId: null as never };
+		const { service, writes } = over();
+		await expect(
+			service.reorderCategories(tenantWide, { categoryIds: ['k1', 'k2', 'k3', 'k4'], channels: [{ categoryId: 'k1', conversationIds: ['c1', 'c4'] }] })
+		).rejects.toBeInstanceOf(BadRequestException);
+		expect(writes).toEqual([]);
+		// Its own organization's category, and none at all, are fine.
+		await expect(
+			over().service.reorderCategories(tenantWide, { categoryIds: ['k1', 'k2', 'k3', 'k4'], channels: [{ categoryId: 'k4', conversationIds: ['c4'] }] })
+		).resolves.toBeDefined();
+		await expect(
+			over().service.reorderCategories(tenantWide, { categoryIds: ['k1', 'k2', 'k3', 'k4'], channels: [{ categoryId: null, conversationIds: ['c1', 'c4'] }] })
+		).resolves.toBeDefined();
 	});
 
 	it('keeps a category the order leaves out after the named ones, and writes nothing when nothing moves', async () => {

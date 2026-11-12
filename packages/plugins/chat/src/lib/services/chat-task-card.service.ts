@@ -24,7 +24,12 @@ export function taskPatchOf(input: IChatTaskUpdateInput, assignees: Array<{ id: 
 		patch['status'] = status;
 	}
 	if (input.taskStatusId !== undefined) patch['taskStatusId'] = input.taskStatusId ?? null;
-	if (input.priority !== undefined) patch['priority'] = typeof input.priority === 'string' && input.priority.trim() ? input.priority.trim() : null;
+	if (input.priority !== undefined) {
+		const priority = typeof input.priority === 'string' && input.priority.trim() ? input.priority.trim() : null;
+		patch['priority'] = priority;
+		// A cleared priority takes its record with it, unless the change names the record itself.
+		if (priority === null && input.taskPriorityId === undefined) patch['taskPriorityId'] = null;
+	}
 	if (input.taskPriorityId !== undefined) patch['taskPriorityId'] = input.taskPriorityId ?? null;
 	if (assignees) patch['members'] = assignees;
 	if (!Object.keys(patch).length) throw new BadRequestException('Name what to change: the status, the priority or the assignees.');
@@ -38,13 +43,14 @@ export function taskPatchOf(input: IChatTaskUpdateInput, assignees: Array<{ id: 
  * `PUT /tasks/:id/status` run), so the same service writes it, the same activity log entry records it, the same
  * subscriptions follow the assignees and the same `task.updated` hint reaches everyone who may read the task. The same
  * permission is asked (`ORG_TASK_EDIT` or `ALL_ORG_EDIT`), and the card's own rules on top: the caller is a member of
- * the message's conversation (not archived), may view tasks, and the message refers to that task — a task of the
- * conversation's organization. A status or priority record named must be the tenant's; an assignee, an employee of the
- * task's organization.
+ * the message's conversation (a channel manager who has not joined it is not), the conversation is not archived, the
+ * caller may view tasks, and the message refers to that task — a task of the conversation's organization. A status or
+ * priority record named must be the task organization's or a shared one (no organization; the platform's defaults
+ * have no tenant either); an assignee, an active employee of the task's organization.
  *
  * Every conversation that shows the task in a message hears `chat_message.updated` for those messages (the newest
  * {@link CHAT_TASK_CARD_FANOUT}), so an open card reads the task again; a client that listens to `task.updated` hears it
- * too.
+ * too. The answer carries only the events of conversations the caller is a member of.
  */
 @Injectable()
 export class ChatTaskCardService {
@@ -69,7 +75,9 @@ export class ChatTaskCardService {
 
 		const message = await this.dataSource.getRepository(ChatMessage).findOne({ where: { id: messageId, tenantId: caller.tenantId }, withDeleted: true });
 		if (!message) throw new NotFoundException('The requested record was not found');
-		const { conversation } = await this.access.requireMember(message.conversationId, caller);
+		const { conversation, member } = await this.access.requireMember(message.conversationId, caller);
+		// A channel manager reads a channel without joining it; changing its cards is for its members, as sending is.
+		if (!member) throw new NotFoundException('The requested record was not found');
 		if (conversation.archivedAt) throw new BadRequestException('This conversation is archived.');
 		if (message.deletedAt) throw new BadRequestException('A deleted message has no task card.');
 
@@ -82,30 +90,44 @@ export class ChatTaskCardService {
 		} as never)) as { id: ID; organizationId?: ID | null } | null;
 		if (!task) throw new NotFoundException('The task was not found');
 
-		await this.requireRecord('TaskStatus', input.taskStatusId, caller.tenantId, 'The status was not found');
-		await this.requireRecord('TaskPriority', input.taskPriorityId, caller.tenantId, 'The priority was not found');
-		const assignees = input.assigneeEmployeeIds ? await this.assignees(caller.tenantId, (task.organizationId ?? organizationId) as ID | null, input.assigneeEmployeeIds) : null;
+		const taskOrganizationId = (task.organizationId ?? organizationId) as ID | null;
+		await this.requireRecord('TaskStatus', input.taskStatusId, caller.tenantId, taskOrganizationId, 'The status was not found');
+		await this.requireRecord('TaskPriority', input.taskPriorityId, caller.tenantId, taskOrganizationId, 'The priority was not found');
+		const assignees = input.assigneeEmployeeIds ? await this.assignees(caller.tenantId, taskOrganizationId, input.assigneeEmployeeIds) : null;
 		const patch = taskPatchOf(input, assignees);
 
 		const updated: ITask = await this.commandBus.execute(new TaskUpdateCommand(taskId, patch as ITaskUpdateInput));
-		return { task: updated, events: await this.tellCards(caller.tenantId, taskId) };
+		return { task: updated, events: await this.tellCards(caller, taskId) };
 	}
 
-	/** A record a change names (a status, a priority) must be the tenant's; null clears it and needs no check. */
-	private async requireRecord(entity: string, id: ID | null | undefined, tenantId: ID, missing: string): Promise<void> {
+	/**
+	 * A record a change names (a status, a priority) must be one the task may take: the task organization's, the
+	 * tenant's shared one (no organization), or a platform default (no tenant, no organization). Another organization's
+	 * record reads as not found. Null clears it and needs no check.
+	 */
+	private async requireRecord(entity: string, id: ID | null | undefined, tenantId: ID, organizationId: ID | null, missing: string): Promise<void> {
 		if (!id) return;
-		const found = await this.dataSource.getRepository<ObjectLiteral>(entity).findOne({ select: { id: true }, where: { id, tenantId } } as never);
+		const where = [
+			...(organizationId ? [{ id, tenantId, organizationId }] : []),
+			{ id, tenantId, organizationId: IsNull() },
+			{ id, tenantId: IsNull(), organizationId: IsNull() }
+		];
+		const found = await this.dataSource.getRepository<ObjectLiteral>(entity).findOne({ select: { id: true }, where } as never);
 		if (!found) throw new NotFoundException(missing);
 	}
 
-	/** The assignees named, each an active employee of the organization (an unknown one is refused, not dropped). */
+	/**
+	 * The assignees named, each an active, unarchived employee of the organization (the platform's working-employee
+	 * rule; End Work clears it). An unknown or inactive one is refused, not dropped.
+	 */
 	private async assignees(tenantId: ID, organizationId: ID | null, employeeIds: readonly ID[]): Promise<Array<{ id: ID }>> {
 		const ids = [...new Set(employeeIds.map(String))];
 		if (!ids.length) return [];
-		const rows = await this.dataSource
-			.getRepository<ObjectLiteral>('Employee')
-			.find({ select: { id: true }, where: { id: In(ids), tenantId, ...(organizationId ? { organizationId } : {}) } } as never);
-		if (rows.length !== ids.length) throw new NotFoundException('An assignee is not an employee of the organization');
+		const rows = await this.dataSource.getRepository<ObjectLiteral>('Employee').find({
+			select: { id: true },
+			where: { id: In(ids), tenantId, isActive: true, isArchived: false, ...(organizationId ? { organizationId } : {}) }
+		} as never);
+		if (rows.length !== ids.length) throw new NotFoundException('An assignee is not an active employee of the organization');
 		return ids.map((id) => ({ id: id as ID }));
 	}
 
@@ -113,8 +135,12 @@ export class ChatTaskCardService {
 	 * Tells every conversation that shows the task in a message — its members, through `chat_message.updated` — that
 	 * those messages changed, so their cards read the task again. After the task's own commit and best effort: the task
 	 * changed whether or not this is told.
+	 *
+	 * @returns The events of the conversations the caller is a member of (the others are told, never shown to the caller:
+	 * their ids are not the caller's to learn).
 	 */
-	private async tellCards(tenantId: ID, taskId: ID): Promise<IChatEvent[]> {
+	private async tellCards(caller: IChatCaller, taskId: ID): Promise<IChatEvent[]> {
+		const tenantId = caller.tenantId;
 		try {
 			const references = await this.dataSource
 				.getRepository(ChatTaskReference)
@@ -132,7 +158,8 @@ export class ChatTaskCardService {
 				for (const message of messages) {
 					const recipients = members.get(String(message.conversationId)) ?? [];
 					if (!recipients.length) continue;
-					facts.push(await this.realtime.append(manager, this.realtime.messageFact(CHAT_EVENT_NAMES.MESSAGE_UPDATED, message, recipients)));
+					const fact = await this.realtime.append(manager, this.realtime.messageFact(CHAT_EVENT_NAMES.MESSAGE_UPDATED, message, recipients));
+					if (recipients.some((userId) => String(userId) === String(caller.userId))) facts.push(fact);
 				}
 				return facts;
 			});

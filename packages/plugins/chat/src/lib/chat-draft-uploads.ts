@@ -86,7 +86,7 @@ export function storedKeysOf(document: Pick<IChatDraftDocument, 'storageKey' | '
  */
 export function isSafeStoredKey(key: string): boolean {
 	const normalized = String(key ?? '').replace(/\\/g, '/');
-	if (!normalized || /[\u0000-\u001F\u007F]/.test(normalized)) return false;
+	if (!normalized || [...normalized].some((character) => character.charCodeAt(0) < 0x20 || character.charCodeAt(0) === 0x7f)) return false;
 	if (normalized.startsWith('/') || /^[A-Za-z]:/.test(normalized)) return false;
 	return !normalized.split('/').includes('..');
 }

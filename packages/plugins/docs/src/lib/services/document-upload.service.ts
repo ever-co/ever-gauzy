@@ -612,7 +612,15 @@ export class DocumentUploadService {
 				throw new BadRequestException({ message: sniff.message, code: sniff.code });
 			}
 
-			await this.persistReplacedFile(document, file, fileName, sniff, createHash('sha256').update(buffer).digest('hex'), provider);
+			await this.persistReplacedFile(
+				document,
+				file,
+				fileName,
+				sniff,
+				createHash('sha256').update(buffer).digest('hex'),
+				provider,
+				imageDimensions(buffer, sniff.type.mimeType)
+			);
 		} catch (error) {
 			await this.cleanupOne(provider, file);
 			throw error;
@@ -647,6 +655,9 @@ export class DocumentUploadService {
 	 * Writes the replacement's columns onto the existing row and mirrors them onto the in-memory
 	 * entity. Everything the spec calls "extraction state" is reset here, so the document cannot
 	 * keep serving text that describes the file it no longer holds.
+	 *
+	 * @param image The replacement picture's size, recorded as `metadata.upload.image` as a new
+	 * upload's is (the previous file's size goes with it); null for anything else.
 	 */
 	private async persistReplacedFile(
 		document: Document,
@@ -654,7 +665,8 @@ export class DocumentUploadService {
 		fileName: string,
 		sniff: ISniffResult,
 		sha256: string,
-		provider: any
+		provider: any,
+		image: IImageDimensions | null = null
 	): Promise<void> {
 		const existingMetadata = (
 			document.metadata && typeof document.metadata === 'object' ? document.metadata : {}
@@ -664,7 +676,8 @@ export class DocumentUploadService {
 			upload: {
 				declaredMimeType: file.mimetype ?? null,
 				canonicalExtension: canonicalExtension(sniff.type.mimeType),
-				replacedAt: new Date().toISOString()
+				replacedAt: new Date().toISOString(),
+				...(image ? { image: { width: image.width, height: image.height } } : {})
 			}
 		};
 

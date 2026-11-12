@@ -24,21 +24,31 @@ import { ChatUiService } from '../../services/chat-ui.service';
 	changeDetection: ChangeDetectionStrategy.OnPush,
 	imports: [RouterLink, NbIconModule, TranslatePipe],
 	template: `
-		<span class="task-card" data-test="task-card" [class.busy]="saving()">
-			<a class="task-link" [routerLink]="link()">
-				<nb-icon icon="checkmark-square-2-outline"></nb-icon>
-				@if (summary(); as task) {
-					@if (task.key) {
-						<span class="task-id">{{ task.key }}</span>
+		<div class="task-card" data-test="task-card" [class.busy]="saving()">
+			<a class="task-main" [routerLink]="link()" [attr.title]="'CHAT.MESSAGE.OPEN_TASK' | translate">
+				<span class="task-icon"><nb-icon icon="checkmark-square-2-outline"></nb-icon></span>
+				<span class="task-text">
+					@if (summary(); as task) {
+						<strong class="task-title">{{ task.title }}</strong>
+						@if (task.key || (task.status && !canEdit())) {
+							<span class="task-meta">
+								@if (task.key) {
+									<span class="task-id">{{ task.key }}</span>
+								}
+								@if (task.status && !canEdit()) {
+									<span class="task-status">{{ task.status }}</span>
+								}
+							</span>
+						}
+					} @else {
+						<strong>{{ 'CHAT.MESSAGE.TASK' | translate }}</strong>
+						<span class="task-id">{{ taskId() }}</span>
 					}
-					<span class="task-title">{{ task.title }}</span>
-				} @else {
-					<span>{{ 'CHAT.MESSAGE.TASK' | translate }}</span>
-					<span class="task-id">{{ taskId() }}</span>
-				}
+				</span>
+				<nb-icon class="task-go" icon="arrow-ios-forward-outline"></nb-icon>
 			</a>
-			@if (summary(); as task) {
-				@if (canEdit()) {
+			@if (canEdit() && summary(); as task) {
+				<span class="task-edit">
 					<select
 						class="task-select"
 						data-test="task-status"
@@ -51,6 +61,9 @@ import { ChatUiService } from '../../services/chat-ui.service';
 						}
 						@for (choice of statuses(); track choice.name) {
 							<option [value]="choice.name" [selected]="choice.name === task.status">{{ choice.name }}</option>
+						}
+						@if (task.status && !hasStatus(task.status)) {
+							<option [value]="task.status" selected>{{ task.status }}</option>
 						}
 					</select>
 					<select
@@ -77,14 +90,12 @@ import { ChatUiService } from '../../services/chat-ui.service';
 							<option [value]="person.employeeId">{{ isAssigned(person.employeeId) ? '✓ ' : '' }}{{ person.name }}</option>
 						}
 					</select>
-				} @else if (task.status) {
-					<span class="task-status">{{ task.status }}</span>
-				}
+				</span>
 			}
 			@if (error(); as message) {
 				<span class="task-error" role="alert" data-test="task-error">{{ message }}</span>
 			}
-		</span>
+		</div>
 	`,
 	styles: [
 		`
@@ -94,30 +105,51 @@ import { ChatUiService } from '../../services/chat-ui.service';
 			}
 			.task-card {
 				display: inline-flex;
-				flex-wrap: wrap;
-				align-items: center;
+				flex-direction: column;
 				gap: 0.375rem;
-				margin: 0.25rem 0.25rem 0 0;
-				padding: 0.25rem 0.5rem;
-				border: 1px solid rgba(127, 127, 127, 0.3);
+				min-width: 14rem;
+				max-width: 100%;
+				padding: 0.5rem 0.625rem;
+				border: 1px solid var(--chat-border, rgba(127, 127, 127, 0.3));
+				border-left: 4px solid var(--chat-accent, #3366ff);
 				border-radius: 0.375rem;
-				font-size: 0.8125rem;
+				background: var(--chat-bg, transparent);
+				transition: border-color 0.12s ease, background-color 0.12s ease;
+			}
+			.task-card:hover {
+				background: var(--chat-hover, rgba(127, 127, 127, 0.08));
 			}
 			.task-card.busy {
 				opacity: 0.7;
 			}
-			.task-link {
-				display: inline-flex;
+			.task-main {
+				display: flex;
 				align-items: center;
-				gap: 0.375rem;
+				gap: 0.625rem;
 				min-width: 0;
 				color: inherit;
 				text-decoration: none;
 			}
-			.task-id {
-				font-family: monospace;
-				font-size: 0.6875rem;
-				opacity: 0.7;
+			.task-main:hover {
+				text-decoration: none;
+			}
+			.task-icon {
+				display: inline-flex;
+				flex: 0 0 auto;
+				align-items: center;
+				justify-content: center;
+				width: 2rem;
+				height: 2rem;
+				border-radius: 0.375rem;
+				background: var(--chat-accent-soft, rgba(51, 102, 255, 0.12));
+				color: var(--chat-accent, #3366ff);
+			}
+			.task-text {
+				display: flex;
+				flex-direction: column;
+				flex: 1 1 auto;
+				min-width: 0;
+				font-size: 0.75rem;
 			}
 			.task-title {
 				max-width: 24rem;
@@ -125,22 +157,48 @@ import { ChatUiService } from '../../services/chat-ui.service';
 				text-overflow: ellipsis;
 				white-space: nowrap;
 			}
+			.task-meta {
+				display: flex;
+				align-items: center;
+				gap: 0.375rem;
+				min-width: 0;
+			}
+			.task-id {
+				overflow: hidden;
+				text-overflow: ellipsis;
+				white-space: nowrap;
+				color: var(--chat-muted, inherit);
+				font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+				font-size: 0.6875rem;
+			}
 			.task-status {
 				padding: 0 0.375rem;
 				border-radius: 999px;
-				background: var(--background-basic-color-3);
+				background: var(--chat-hover, var(--background-basic-color-3));
+				color: var(--chat-muted, inherit);
 				font-size: 0.6875rem;
+			}
+			.task-go {
+				flex: 0 0 auto;
+				color: var(--chat-muted, inherit);
+			}
+			.task-edit {
+				display: flex;
+				flex-wrap: wrap;
+				gap: 0.375rem;
+				padding-left: 2.625rem;
 			}
 			.task-select {
 				max-width: 9rem;
-				padding: 0 0.25rem;
-				border: 1px solid rgba(127, 127, 127, 0.3);
+				padding: 0.125rem 0.25rem;
+				border: 1px solid var(--chat-border, rgba(127, 127, 127, 0.3));
 				border-radius: 0.25rem;
 				background: transparent;
 				color: inherit;
 				font-size: 0.6875rem;
 			}
 			.task-error {
+				padding-left: 2.625rem;
 				font-size: 0.6875rem;
 				color: var(--color-danger-default, #d33);
 			}
@@ -190,6 +248,11 @@ export class TaskCardComponent {
 
 	protected link(): string {
 		return `${CHAT_TASK_LINK}/${encodeURIComponent(this.taskId())}`;
+	}
+
+	/** Whether the status list offers the task's status (a status the project no longer lists is still shown). */
+	protected hasStatus(name: string): boolean {
+		return this.statuses().some((choice) => choice.name === name);
 	}
 
 	protected isAssigned(employeeId: string): boolean {

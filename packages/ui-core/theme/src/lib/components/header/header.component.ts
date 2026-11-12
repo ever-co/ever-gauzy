@@ -1,4 +1,4 @@
-import { Component, Input, OnDestroy, OnInit, AfterViewInit, ChangeDetectorRef, ChangeDetectionStrategy } from '@angular/core';
+import { Component, Input, OnDestroy, OnInit, AfterViewInit, ChangeDetectorRef, ChangeDetectionStrategy, inject } from '@angular/core';
 import { Router, NavigationEnd } from '@angular/router';
 import { NbSidebarService, NbThemeService, NbMenuItem, NbDialogService, NbDialogRef } from '@nebular/theme';
 import { combineLatest, firstValueFrom, Observable, Subject } from 'rxjs';
@@ -40,6 +40,7 @@ import {
 	OrganizationTeamsService,
 	OrganizationsService,
 	QUICK_ACTIONS_DIALOG_SHORTCUT,
+	QuickActionShortcutBridge,
 	QuickActionsPreferencesService,
 	SelectorBuilderService,
 	START_TIMER_QUICK_ACTION,
@@ -108,6 +109,10 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 	private registeredQuickActions: string | null = null;
 
 	quickActionsRef: NbDialogRef<QuickActionsComponent> | null;
+
+	/** Hands a Quick Actions key back from a plugin's shortcut registry that took it first (`QuickActionShortcutBridge`). */
+	private readonly quickActionShortcutBridge = inject(QuickActionShortcutBridge);
+	private unregisterQuickActionRunner: (() => void) | null = null;
 
 	/**
 	 * The built-in shortcuts: `quickActions` toggles the Quick Actions dialog, every other key is a
@@ -295,6 +300,8 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 	 */
 	private setupShortcuts() {
 		hotkeys('*', { scope: SHORTCUTS_SCOPE }, this.onShortcut);
+		this.unregisterQuickActionRunner?.();
+		this.unregisterQuickActionRunner = this.quickActionShortcutBridge.register((shortcut) => this.runQuickActionShortcut(shortcut));
 
 		// -- register the shortcuts: the defaults merged with the user's customization, again on every change
 		this.quickActionsPreferencesService.preferences$
@@ -336,6 +343,25 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 			this.shortcutsMap.get(pressedKeys)();
 		}
 	};
+
+	/**
+	 * Runs the Quick Action a shortcut is bound to, as a key press of it would (for `QuickActionShortcutBridge`):
+	 * nothing while the Quick Actions are being customized, or when no action is bound to it.
+	 *
+	 * @param shortcut The shortcut, in canonical spelling.
+	 * @returns Whether an action ran.
+	 */
+	private runQuickActionShortcut(shortcut: string): boolean {
+		if (this.quickActionsPreferencesService.editing()) return false;
+		const pressedKeys = normalizeShortcut(shortcut);
+		const action = this.shortcutsMap.get(pressedKeys);
+		if (!action) return false;
+		if (this.quickActionsRef && pressedKeys !== normalizeShortcut(this.defaultShortcuts.quickActions)) {
+			this.quickActionsRef.close();
+		}
+		action();
+		return true;
+	}
 
 	/**
 	 * Register shortcut
@@ -1189,5 +1215,7 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 		// -- a later header (after signing in again) registers its own: never leave two listening
 		this.unregisterShortcuts();
 		hotkeys.unbind('*', SHORTCUTS_SCOPE, this.onShortcut);
+		this.unregisterQuickActionRunner?.();
+		this.unregisterQuickActionRunner = null;
 	}
 }

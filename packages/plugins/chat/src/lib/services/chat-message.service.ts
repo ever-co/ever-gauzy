@@ -49,6 +49,7 @@ import { inWriteTransaction } from '../realtime/chat-write-transaction';
 import { ChatAccessService, IChatCaller } from './chat-access.service';
 import { ChatDraftUploadService } from './chat-draft-upload.service';
 import { ChatNotifierService } from './chat-notifier.service';
+import { blocksOf } from '../webhooks/chat-webhook-payload';
 
 /**
  * The read state a mark-all-read replaced, so it can be undone for a minute. It travels inside the undo handle
@@ -91,8 +92,14 @@ export function idsOf(json: string | null | undefined): ID[] {
 	}
 }
 
-/** The most characters `attachmentNames` keeps (ten names of a reasonable length; longer lists are cut). */
-export const CHAT_ATTACHMENT_NAMES_MAX = 2000;
+/** The longest name `attachmentNames` keeps of one file (a longer one is cut, with `…`). */
+export const CHAT_ATTACHMENT_NAME_MAX = 255;
+
+/**
+ * The most characters `attachmentNames` holds: every name of the most files a message carries, each at its longest,
+ * one per line — so no name is ever left out (a file-only message is found by any of its names).
+ */
+export const CHAT_ATTACHMENT_NAMES_MAX = CHAT_MESSAGE_MAX_ATTACHMENTS * (CHAT_ATTACHMENT_NAME_MAX + 1);
 
 /**
  * The names of a message's files in the order attached, one per line, each on one line and cut to 255 characters;
@@ -107,10 +114,17 @@ export function attachmentNamesOf(
 	const names = documentIds.map((id) => {
 		const document = byId.get(String(id));
 		const name = ((document?.name ?? '').trim() || (document?.originalFilename ?? '').trim() || 'file').replace(/[\r\n]+/g, ' ');
-		return name.length > 255 ? `${name.slice(0, 254)}…` : name;
+		return name.length > CHAT_ATTACHMENT_NAME_MAX ? `${name.slice(0, CHAT_ATTACHMENT_NAME_MAX - 1)}…` : name;
 	});
-	const joined = names.join('\n');
-	return joined.length > CHAT_ATTACHMENT_NAMES_MAX ? `${joined.slice(0, CHAT_ATTACHMENT_NAMES_MAX - 1)}…` : joined;
+	// Whole names only: a list longer than a message may carry (never, past the attachment check) keeps the first ones.
+	const kept: string[] = [];
+	let length = 0;
+	for (const name of names) {
+		if (length + name.length + (kept.length ? 1 : 0) > CHAT_ATTACHMENT_NAMES_MAX) break;
+		length += name.length + (kept.length ? 1 : 0);
+		kept.push(name);
+	}
+	return kept.join('\n');
 }
 
 /** Whether a message belongs to the conversation's timeline (not a thread reply kept inside its thread). */
@@ -432,9 +446,10 @@ export class ChatMessageService {
 						})
 					);
 				}
-				await this.linkAttachments(manager, caller, conversation, created.id as ID, attachmentIds, false);
-				// The files are a message's now, no longer drafts the sweep would take.
+				// The files are a message's now, no longer drafts the sweep would take: held until the commit, and refused
+				// when a discard or the sweep removed one first. Before the links, whose keys would otherwise fail on it.
 				await this.drafts.consume(manager, caller.tenantId, attachmentIds);
+				await this.linkAttachments(manager, caller, conversation, created.id as ID, attachmentIds, false);
 				// The facts commit with the message: the message itself, the thread's new reply count (to the followers of
 				// the thread who are members), and the sender's own read position. Every other member's counters follow
 				// after the commit (see below).
@@ -514,8 +529,8 @@ export class ChatMessageService {
 		const events = await inWriteTransaction(this.dataSource, async (manager) => {
 			await manager.getRepository(ChatMessage).save(message);
 			if (attachments) {
-				await this.linkAttachments(manager, caller, conversation, message.id as ID, attachments, true);
 				await this.drafts.consume(manager, caller.tenantId, attachments);
+				await this.linkAttachments(manager, caller, conversation, message.id as ID, attachments, true);
 			}
 			await this.writeTaskMentions(manager, caller, conversation, message, taskMentions);
 			return [await this.realtime.append(manager, this.realtime.messageFact(CHAT_EVENT_NAMES.MESSAGE_UPDATED, message, members.map((m) => m.userId)))];
@@ -559,6 +574,8 @@ export class ChatMessageService {
 				attachmentIds: null,
 				attachmentNames: null,
 				mentionEmployeeIds: null,
+				// An app message's layout goes with its text (a deleted thread root stays as a tombstone).
+				blocks: null,
 				deletedAt: new Date()
 			} as never);
 			if (!(result.affected ?? 0)) return null;
@@ -1177,6 +1194,8 @@ export class ChatMessageService {
 			...(row as unknown as IChatMessageWithRelations),
 			mentionEmployeeIds: idsOf(row.mentionEmployeeIds),
 			attachmentIds: idsOf(row.attachmentIds),
+			// An app message's layout, parsed from its JSON column (none for a member's message).
+			blocks: row.blocks && !row.deletedAt ? blocksOf(row.blocks) : null,
 			reactions: [...(reactionsOf.get(String(row.id))?.values() ?? [])],
 			taskReferences: referencesOf.get(String(row.id)) ?? [],
 			following: followed.has(String(row.id))

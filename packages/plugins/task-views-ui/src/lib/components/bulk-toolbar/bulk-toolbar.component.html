@@ -1,0 +1,157 @@
+<div
+	class="bulk-toolbar"
+	role="toolbar"
+	[attr.aria-label]="'TASK_VIEWS.BULK.TOOLBAR' | translate"
+	data-test="bulk-toolbar"
+>
+	<span class="count" data-test="bulk-count">{{ 'TASK_VIEWS.BULK.SELECTED' | translate: { count: count() } }}</span>
+	@if (count() >= limit()) {
+		<span class="limit" role="status">{{ 'TASK_VIEWS.BULK.LIMIT' | translate: { limit: limit() } }}</span>
+	}
+	<span class="separator" aria-hidden="true"></span>
+	@if (canEdit()) {
+		@for (kind of pickers; track kind) {
+			<button
+				nbButton
+				size="tiny"
+				status="basic"
+				type="button"
+				[attr.data-picker]="kind"
+				[attr.aria-expanded]="picker() === kind"
+				[disabled]="busy()"
+				(click)="openPicker(kind)"
+			>
+				{{ pickerKey(kind) | translate }}
+				<nb-icon icon="chevron-down-outline"></nb-icon>
+			</button>
+		}
+		<button
+			nbButton
+			size="tiny"
+			status="basic"
+			type="button"
+			data-test="bulk-archive"
+			[disabled]="busy()"
+			(click)="archive()"
+		>
+			<nb-icon icon="archive-outline"></nb-icon>{{ 'TASK_VIEWS.BULK.ARCHIVE' | translate }}
+		</button>
+	}
+	@if (canDelete()) {
+		<button
+			nbButton
+			size="tiny"
+			status="danger"
+			ghost
+			type="button"
+			data-test="bulk-delete"
+			[disabled]="busy()"
+			(click)="deleted.emit()"
+		>
+			<nb-icon icon="trash-2-outline"></nb-icon>{{ 'TASK_VIEWS.BULK.DELETE' | translate }}
+		</button>
+	}
+	<button nbButton size="tiny" ghost type="button" class="clear" data-test="bulk-clear" (click)="cleared.emit()">
+		<nb-icon icon="close-outline"></nb-icon>{{ 'TASK_VIEWS.BULK.CLEAR' | translate }}
+	</button>
+
+	@if (picker(); as kind) {
+		<div
+			class="panel"
+			role="group"
+			[attr.aria-label]="pickerKey(kind) | translate"
+			(keydown)="onPanelKeydown($event)"
+			data-test="bulk-panel"
+		>
+			@if (kind === 'dueDate') {
+				<div class="due">
+					<input
+						#dueField
+						nbInput
+						fieldSize="small"
+						type="date"
+						[ngModel]="due()"
+						(ngModelChange)="due.set($event)"
+						[attr.aria-label]="'TASK_VIEWS.BULK.DUE_DATE' | translate"
+					/>
+					<button
+						nbButton
+						size="small"
+						status="primary"
+						type="button"
+						[disabled]="!due()"
+						(click)="applyDue()"
+					>
+						{{ 'TASK_VIEWS.BULK.APPLY' | translate }}
+					</button>
+					<button nbButton size="small" ghost type="button" (click)="applyDue(true)">
+						{{ 'TASK_VIEWS.BULK.CLEAR_DUE' | translate }}
+					</button>
+				</div>
+			} @else {
+				@if (kind === 'assignees' || kind === 'labels') {
+					<div class="mode" role="group" [attr.aria-label]="pickerKey(kind) | translate">
+						<button
+							nbButton
+							size="tiny"
+							type="button"
+							[status]="listMode() === 'add' ? 'primary' : 'basic'"
+							[attr.aria-pressed]="listMode() === 'add'"
+							(click)="listMode.set('add')"
+						>
+							{{ 'TASK_VIEWS.BULK.ADD' | translate }}
+						</button>
+						<button
+							nbButton
+							size="tiny"
+							type="button"
+							[status]="listMode() === 'remove' ? 'primary' : 'basic'"
+							[attr.aria-pressed]="listMode() === 'remove'"
+							(click)="listMode.set('remove')"
+						>
+							{{ 'TASK_VIEWS.BULK.REMOVE' | translate }}
+						</button>
+					</div>
+				}
+				<input
+					#searchInput
+					nbInput
+					fullWidth
+					fieldSize="small"
+					type="search"
+					autocomplete="off"
+					[attr.aria-label]="'TASK_VIEWS.BULK.SEARCH' | translate"
+					[placeholder]="'TASK_VIEWS.BULK.SEARCH' | translate"
+					[ngModel]="search()"
+					(ngModelChange)="search.set($event)"
+				/>
+				<ul class="choices">
+					@if (kind === 'project') {
+						<li>
+							<button type="button" class="choice muted" (click)="clearProject()">
+								{{ 'TASK_VIEWS.BULK.NO_PROJECT' | translate }}
+							</button>
+						</li>
+					}
+					@for (option of choices(); track option.id) {
+						<li>
+							<button
+								type="button"
+								class="choice"
+								[attr.data-option]="option.id"
+								(click)="choose(option)"
+							>
+								@if (option.color) {
+									<span class="swatch" [style.background]="option.color"></span>
+								}
+								{{ option.label }}
+							</button>
+						</li>
+					} @empty {
+						<li class="empty">{{ 'TASK_VIEWS.BULK.NO_MATCH' | translate }}</li>
+					}
+				</ul>
+			}
+		</div>
+	}
+</div>

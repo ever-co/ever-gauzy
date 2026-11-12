@@ -22,7 +22,11 @@ jest.mock('@gauzy/core', () => {
 			) {}
 		}
 	};
-	return new Proxy(explicit, { get: (target, name) => (name in target ? target[name as string] : function Anything() {}) });
+	// Any other export: a stand-in nothing here calls.
+	const anything = function Anything() {
+		return undefined;
+	};
+	return new Proxy(explicit, { get: (target, name) => (name in target ? target[name as string] : anything) });
 });
 
 import { BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
@@ -35,7 +39,9 @@ import { ChatTaskCardService, taskPatchOf } from './chat-task-card.service';
 
 const caller: IChatCaller = { tenantId: 'ten', organizationId: 'org', userId: 'u1', employeeId: 'e1', canManage: false };
 
-function over(options: { reference?: boolean; task?: boolean; employees?: number; status?: boolean; archived?: boolean } = {}) {
+function over(
+	options: { reference?: boolean; task?: boolean; taskOrganization?: string; employees?: number; status?: boolean; archived?: boolean; member?: boolean } = {}
+) {
 	const message = { id: 'm1', conversationId: 'c1', kind: 'message', tenantId: 'ten', organizationId: 'org', deletedAt: null };
 	const repositories: Record<string, Record<string, jest.Mock>> = {
 		ChatMessage: { findOne: jest.fn(async () => message), find: jest.fn(async () => [message, { ...message, id: 'm2', conversationId: 'c2' }]) },
@@ -43,7 +49,14 @@ function over(options: { reference?: boolean; task?: boolean; employees?: number
 			findOne: jest.fn(async () => (options.reference === false ? null : { messageId: 'm1', taskId: 't1' })),
 			find: jest.fn(async () => [{ messageId: 'm1' }, { messageId: 'm2' }])
 		},
-		Task: { findOne: jest.fn(async () => (options.task === false ? null : { id: 't1', organizationId: 'org' })) },
+		// The stored task is found only by a lookup that keeps to its organization (or to none).
+		Task: {
+			findOne: jest.fn(async ({ where }: { where: { organizationId?: string } }) => {
+				if (options.task === false) return null;
+				const task = { id: 't1', organizationId: options.taskOrganization ?? 'org' };
+				return !where.organizationId || where.organizationId === task.organizationId ? task : null;
+			})
+		},
 		TaskStatus: { findOne: jest.fn(async () => (options.status === false ? null : { id: 's1' })) },
 		TaskPriority: { findOne: jest.fn(async () => ({ id: 'p1' })) },
 		Employee: { find: jest.fn(async () => Array.from({ length: options.employees ?? 2 }, (_, index) => ({ id: `e${index + 1}` }))) }
@@ -54,7 +67,10 @@ function over(options: { reference?: boolean; task?: boolean; employees?: number
 		transaction: jest.fn(async (work: (m: typeof manager) => Promise<unknown>) => work(manager))
 	} as unknown as DataSource;
 	const access = {
-		requireMember: jest.fn(async () => ({ conversation: { id: 'c1', organizationId: 'org', archivedAt: options.archived ? new Date() : undefined }, member: { id: 'mb1' } })),
+		requireMember: jest.fn(async () => ({
+			conversation: { id: 'c1', organizationId: 'org', archivedAt: options.archived ? new Date() : undefined },
+			member: options.member === false ? null : { id: 'mb1' }
+		})),
 		members: jest.fn(async (_tenantId: string, conversationId: string) => (conversationId === 'c1' ? [{ userId: 'u1' }, { userId: 'u2' }] : [{ userId: 'u3' }]))
 	} as unknown as ChatAccessService;
 	const realtime = {
@@ -63,7 +79,7 @@ function over(options: { reference?: boolean; task?: boolean; employees?: number
 	};
 	const commandBus = { execute: jest.fn(async (command: { id: string; input: Record<string, unknown> }) => ({ id: command.id, ...command.input })) };
 	const service = new ChatTaskCardService(dataSource, access, realtime as unknown as ChatRealtime, commandBus as unknown as CommandBus);
-	return { service, commandBus, repositories };
+	return { service, commandBus, repositories, realtime };
 }
 
 describe('taskPatchOf', () => {
@@ -71,6 +87,13 @@ describe('taskPatchOf', () => {
 		expect(taskPatchOf({ status: ' In Review ', taskStatusId: 's1' }, null)).toEqual({ status: 'In Review', taskStatusId: 's1' });
 		expect(taskPatchOf({ priority: '', taskPriorityId: null }, null)).toEqual({ priority: null, taskPriorityId: null });
 		expect(taskPatchOf({}, [])).toEqual({ members: [] });
+	});
+
+	it('clears the priority record with the priority, unless the change names the record', () => {
+		expect(taskPatchOf({ priority: null }, null)).toEqual({ priority: null, taskPriorityId: null });
+		expect(taskPatchOf({ priority: '  ' }, null)).toEqual({ priority: null, taskPriorityId: null });
+		expect(taskPatchOf({ priority: 'high' }, null)).toEqual({ priority: 'high' });
+		expect(taskPatchOf({ priority: 'high', taskPriorityId: 'p1' }, null)).toEqual({ priority: 'high', taskPriorityId: 'p1' });
 	});
 
 	it('refuses a change that names nothing, or a nameless status', () => {
@@ -86,17 +109,44 @@ describe('ChatTaskCardService.update', () => {
 	});
 
 	it("runs the task page's update command, then tells every conversation that shows the task", async () => {
-		const { service, commandBus } = over();
+		const { service, commandBus, realtime } = over();
 		const result = await service.update(caller, 'm1', 't1', { status: 'done', taskStatusId: 's1', assigneeEmployeeIds: ['e1', 'e2', 'e1'] });
 		expect(commandBus.execute).toHaveBeenCalledTimes(1);
 		expect(commandBus.execute.mock.calls[0][0]).toEqual(
 			expect.objectContaining({ id: 't1', input: { status: 'done', taskStatusId: 's1', members: [{ id: 'e1' }, { id: 'e2' }] } })
 		);
 		expect(result.task).toEqual(expect.objectContaining({ id: 't1', status: 'done' }));
-		expect(result.events).toEqual([
-			{ name: 'chat_message.updated', data: { messageId: 'm1', to: ['u1', 'u2'] } },
-			{ name: 'chat_message.updated', data: { messageId: 'm2', to: ['u3'] } }
-		]);
+		// Both conversations are told; the answer shows only the caller's own (c2 is not the caller's to learn of).
+		expect(realtime.append).toHaveBeenCalledTimes(2);
+		expect(result.events).toEqual([{ name: 'chat_message.updated', data: { messageId: 'm1', to: ['u1', 'u2'] } }]);
+	});
+
+	it('refuses a channel manager who has not joined the channel, before the task is changed', async () => {
+		const { service, commandBus } = over({ member: false });
+		await expect(service.update(caller, 'm1', 't1', { status: 'done' })).rejects.toBeInstanceOf(NotFoundException);
+		expect(commandBus.execute).not.toHaveBeenCalled();
+	});
+
+	it("takes a status or priority of the task's organization, a shared one or a platform default, never another organization's", async () => {
+		const { service, repositories } = over();
+		await service.update(caller, 'm1', 't1', { taskStatusId: 's1', taskPriorityId: 'p1' });
+		for (const entity of ['TaskStatus', 'TaskPriority']) {
+			const where = repositories[entity]['findOne'].mock.calls[0][0].where as Array<Record<string, unknown>>;
+			expect(where).toHaveLength(3);
+			expect(where[0]).toEqual({ id: entity === 'TaskStatus' ? 's1' : 'p1', tenantId: 'ten', organizationId: 'org' });
+			expect(where[1]).toEqual(expect.objectContaining({ tenantId: 'ten', organizationId: expect.objectContaining({ _type: 'isNull' }) }));
+			expect(where[2]).toEqual(
+				expect.objectContaining({ tenantId: expect.objectContaining({ _type: 'isNull' }), organizationId: expect.objectContaining({ _type: 'isNull' }) })
+			);
+		}
+	});
+
+	it('assigns only active, unarchived employees of the organization', async () => {
+		const { service, repositories } = over();
+		await service.update(caller, 'm1', 't1', { assigneeEmployeeIds: ['e1', 'e2'] });
+		expect(repositories['Employee']['find'].mock.calls[0][0].where).toEqual(
+			expect.objectContaining({ tenantId: 'ten', organizationId: 'org', isActive: true, isArchived: false })
+		);
 	});
 
 	it("asks the task page's permission, and task view", async () => {
@@ -114,6 +164,7 @@ describe('ChatTaskCardService.update', () => {
 		const cases: Array<[Parameters<typeof over>[0], IChatTaskUpdateInput]> = [
 			[{ reference: false }, { status: 'done' }],
 			[{ task: false }, { status: 'done' }],
+			[{ taskOrganization: 'other' }, { status: 'done' }],
 			[{ status: false }, { taskStatusId: 's9' }],
 			[{ employees: 1 }, { assigneeEmployeeIds: ['e1', 'e9'] }]
 		];

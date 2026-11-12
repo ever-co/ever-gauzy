@@ -7,6 +7,9 @@ import type { ChatMessage } from './chat-message.entity';
 import type { ChatThreadFollow } from './chat-thread-follow.entity';
 import type { ChatTaskReference } from './chat-task-reference.entity';
 import type { ChatAttachmentDraft } from './chat-attachment-draft.entity';
+import type { ChatLinkPreview } from './chat-link-preview.entity';
+import type { ChatWebhook } from './chat-webhook.entity';
+import type { ChatWebhookInteraction } from './chat-webhook-interaction.entity';
 
 /** The MikroORM repositories the entities name (the services themselves run on TypeORM's `DataSource`). */
 @Injectable()
@@ -29,3 +32,12 @@ export class MikroOrmChatTaskReferenceRepository extends MikroOrmBaseEntityRepos
 
 @Injectable()
 export class MikroOrmChatAttachmentDraftRepository extends MikroOrmBaseEntityRepository<ChatAttachmentDraft> {}
+
+@Injectable()
+export class MikroOrmChatLinkPreviewRepository extends MikroOrmBaseEntityRepository<ChatLinkPreview> {}
+
+@Injectable()
+export class MikroOrmChatWebhookRepository extends MikroOrmBaseEntityRepository<ChatWebhook> {}
+
+@Injectable()
+export class MikroOrmChatWebhookInteractionRepository extends MikroOrmBaseEntityRepository<ChatWebhookInteraction> {}

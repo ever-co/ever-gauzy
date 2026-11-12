@@ -1,11 +1,12 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Observable, of, throwError } from 'rxjs';
-import { map, switchMap } from 'rxjs/operators';
-import { ID, IEmployeeNotificationSetting, IPagination } from '@gauzy/contracts';
+import { catchError, map, switchMap } from 'rxjs/operators';
+import { ID, IEmployeeNotificationSetting, IInboxDeliveryStatus, IPagination } from '@gauzy/contracts';
 import { API_PREFIX, toParams } from '@gauzy/ui-core/common';
 
 const SETTINGS = `${API_PREFIX}/employee-notification-setting`;
+const DELIVERY_STATUS = `${API_PREFIX}/inbox/delivery/status`;
 
 /** What a save sends: the per-kind switches and / or the preferences (`employeeId` is the caller's own, set by the API). */
 export type IInboxNotificationSettingInput = Partial<
@@ -32,6 +33,26 @@ export interface IInboxNotificationSettingScope {
 @Injectable({ providedIn: 'root' })
 export class InboxNotificationSettingsService {
 	private readonly http = inject(HttpClient);
+
+	/**
+	 * Which channels the Inbox can deliver through for the selected organization (`GET /inbox/delivery/status`), or
+	 * null when the server does not say: an older one, or one without the delivery plugin (404), or a failed read.
+	 * Null changes nothing on the page. The organization is the request's own (its header, checked by the API), so the
+	 * caller asks again whenever the selected organization changes.
+	 */
+	deliveryStatus(): Observable<IInboxDeliveryStatus | null> {
+		return this.http
+			.get<IInboxDeliveryStatus>(DELIVERY_STATUS)
+			.pipe(
+				// Both email fields are needed: a partial answer is "unknown", never "off".
+				map((status) =>
+					status && typeof status === 'object' && typeof status.email?.enabled === 'boolean' && typeof status.email?.available === 'boolean'
+						? status
+						: null
+				),
+				catchError(() => of(null))
+			);
+	}
 
 	/** The employee's row, or null when they never changed a preference. */
 	forEmployee(scope: IInboxNotificationSettingScope): Observable<IEmployeeNotificationSetting | null> {

@@ -3,7 +3,8 @@ import { MultiORMColumn, MultiORMEntity, TenantOrganizationBaseEntity } from '@g
 import { MikroOrmChatMessageRepository } from './chat.repositories';
 
 /**
- * `chat_message`: a message of a conversation, a thread reply (`threadRootId`), a system row or an app post.
+ * `chat_message`: a message of a conversation, a thread reply (`threadRootId`), a system row or an app post (an incoming webhook's,
+ * with `webhookId`, `appIconUrl` and its `blocks`).
  * The body is a markdown subset with mention tokens (`<@employeeId>`, `<#conversationId>`, `<!channel>`,
  * `<!here>`); `mentionEmployeeIds` and `attachmentIds` are JSON arrays stored as text (the same on the three
  * databases). A deleted message keeps its row (soft delete through the base `deletedAt`) with an empty body when
@@ -74,6 +75,18 @@ export class ChatMessage extends TenantOrganizationBaseEntity {
 
 	@MultiORMColumn({ type: 'varchar', length: 120, nullable: true })
 	appName?: string | null;
+
+	/** The incoming webhook that posted an app message (`kind: app`). */
+	@MultiORMColumn({ nullable: true })
+	webhookId?: ID | null;
+
+	/** The icon of the webhook at the time of the post (https). */
+	@MultiORMColumn({ type: 'varchar', length: 2048, nullable: true })
+	appIconUrl?: string | null;
+
+	/** JSON `IChatAppBlock[]`: the structured layout of an app message, plain text throughout. */
+	@MultiORMColumn({ type: 'text', nullable: true })
+	blocks?: string | null;
 
 	/** The assistant the author wrote the message with (an AI client posting in their name). */
 	@MultiORMColumn({ type: 'varchar', length: 120, nullable: true })

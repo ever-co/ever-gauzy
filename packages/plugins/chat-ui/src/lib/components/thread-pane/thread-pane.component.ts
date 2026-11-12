@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, DestroyRef, effect, inject, input, output, signal, untracked } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
-import { NbButtonModule, NbCheckboxModule, NbIconModule, NbSpinnerModule, NbTooltipModule } from '@nebular/theme';
+import { NbCheckboxModule, NbIconModule, NbSpinnerModule, NbTooltipModule } from '@nebular/theme';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { EMPTY, merge, Subject, Subscription } from 'rxjs';
 import { auditTime, catchError, filter, switchMap } from 'rxjs/operators';
@@ -9,7 +9,7 @@ import { CHAT_EVENT_NAMES, IChatMessageWithRelations } from '@gauzy/contracts';
 import { ToastrService } from '@gauzy/ui-core/core';
 import { applyCatchUp, reconcileWithOldest, rootWithMyFields } from '../../chat-catch-up';
 import { CHAT_LIVE_AUDIT_MS, CHAT_THREAD_POLL_MS } from '../../chat-ui.constants';
-import { apiErrorMessage, continuesGroup, mergeMessages, newNonce } from '../../chat-ui.helpers';
+import { apiErrorMessage, ChatMemberIds, continuesGroup, mergeMessages, newNonce } from '../../chat-ui.helpers';
 import { ChatHint } from '../../services/chat-live';
 import { withTaskReference } from '../../chat-tasks';
 import { ChatCreateTaskFlow } from '../../dialogs/chat-task-dialogs.component';
@@ -31,18 +31,31 @@ import { MessageAction, MessageItemComponent } from '../message-item/message-ite
 @Component({
 	selector: 'ngx-chat-thread-pane',
 	changeDetection: ChangeDetectionStrategy.OnPush,
-	imports: [FormsModule, NbButtonModule, NbCheckboxModule, NbIconModule, NbSpinnerModule, NbTooltipModule, TranslatePipe, MessageComposerComponent, MessageItemComponent],
+	imports: [FormsModule, NbCheckboxModule, NbIconModule, NbSpinnerModule, NbTooltipModule, TranslatePipe, MessageComposerComponent, MessageItemComponent],
 	template: `
 		<aside class="thread" data-test="thread-pane">
 			<header class="header">
-				<h6 class="title">{{ 'CHAT.THREADS.TITLE' | translate }}</h6>
+				<div class="heading">
+					<h6 class="title">{{ 'CHAT.THREADS.TITLE' | translate }}</h6>
+					@if (channelName(); as name) {
+						<span class="subtitle">#{{ name }}</span>
+					}
+				</div>
 				@if (root(); as root) {
-					<button nbButton ghost size="tiny" type="button" data-test="follow" (click)="toggleFollow()">
-						<nb-icon [icon]="root.following ? 'bell-off-outline' : 'bell-outline'"></nb-icon>
-						{{ (root.following ? 'CHAT.THREADS.UNFOLLOW' : 'CHAT.THREADS.FOLLOW') | translate }}
+					<button
+						type="button"
+						class="icon-button"
+						data-test="follow"
+						[class.on]="root.following"
+						[nbTooltip]="(root.following ? 'CHAT.THREADS.UNFOLLOW' : 'CHAT.THREADS.FOLLOW') | translate"
+						[attr.aria-label]="'CHAT.THREADS.FOLLOW' | translate"
+						[attr.aria-pressed]="!!root.following"
+						(click)="toggleFollow()"
+					>
+						<nb-icon [icon]="root.following ? 'bell' : 'bell-outline'"></nb-icon>
 					</button>
 				}
-				<button nbButton ghost size="tiny" type="button" data-test="close-thread" [nbTooltip]="'CHAT.THREADS.CLOSE' | translate" [attr.aria-label]="'CHAT.THREADS.CLOSE' | translate" (click)="closed.emit()">
+				<button type="button" class="icon-button" data-test="close-thread" [nbTooltip]="'CHAT.THREADS.CLOSE' | translate" [attr.aria-label]="'CHAT.THREADS.CLOSE' | translate" (click)="closed.emit()">
 					<nb-icon icon="close-outline"></nb-icon>
 				</button>
 			</header>
@@ -50,7 +63,7 @@ import { MessageAction, MessageItemComponent } from '../message-item/message-ite
 				@if (loading()) {
 					<div class="loading" [nbSpinner]="true"></div>
 				} @else if (error()) {
-					<p class="empty">{{ 'CHAT.ERROR' | translate }} <button nbButton ghost size="tiny" type="button" (click)="reload()">{{ 'CHAT.RETRY' | translate }}</button></p>
+					<p class="empty">{{ 'CHAT.ERROR' | translate }} <button type="button" class="link-button" (click)="reload()">{{ 'CHAT.RETRY' | translate }}</button></p>
 				} @else if (root(); as root) {
 					<ngx-chat-message-item
 						[message]="root"
@@ -67,7 +80,15 @@ import { MessageAction, MessageItemComponent } from '../message-item/message-ite
 						[readOnly]="readOnly()"
 						(action)="onAction(root, $event)"
 					></ngx-chat-message-item>
-					<hr class="divider" />
+					<div class="divider" role="separator">
+						<span>
+							@if (root.replyCount === 1) {
+								{{ 'CHAT.THREADS.REPLY_ONE' | translate }}
+							} @else {
+								{{ 'CHAT.THREADS.REPLIES' | translate: { count: root.replyCount } }}
+							}
+						</span>
+					</div>
 					@for (reply of replies(); track reply.id; let index = $index) {
 						<ngx-chat-message-item
 							[message]="reply"
@@ -87,7 +108,7 @@ import { MessageAction, MessageItemComponent } from '../message-item/message-ite
 						></ngx-chat-message-item>
 					}
 					@if (hasAfter()) {
-						<button nbButton ghost size="tiny" type="button" class="more" data-test="load-more-replies" [disabled]="loadingMore()" (click)="loadMore()">
+						<button type="button" class="pill" data-test="load-more-replies" [disabled]="loadingMore()" (click)="loadMore()">
 							{{ 'CHAT.THREADS.LOAD_MORE' | translate }}
 						</button>
 					}
@@ -100,6 +121,9 @@ import { MessageAction, MessageItemComponent } from '../message-item/message-ite
 						[conversationNames]="conversationNames()"
 						[placeholder]="'CHAT.THREADS.REPLY_PLACEHOLDER' | translate"
 						[disabled]="sending()"
+						[everyone]="channelName() !== null"
+						[memberIds]="memberIds()"
+						[meEmployeeId]="meEmployeeId()"
 						[editing]="editing() !== null"
 						[initialBody]="editing()?.body ?? null"
 						[draftKey]="draftKey()"
@@ -108,62 +132,142 @@ import { MessageAction, MessageItemComponent } from '../message-item/message-ite
 						(submitted)="onSubmit($event)"
 						(editCancelled)="editing.set(null)"
 					></ngx-chat-message-composer>
-					<nb-checkbox class="also" data-test="also-send" [(ngModel)]="alsoInConversation">{{ 'CHAT.THREADS.ALSO_SEND' | translate }}</nb-checkbox>
+					<nb-checkbox class="also" data-test="also-send" [(ngModel)]="alsoInConversation">
+						{{ 'CHAT.THREADS.ALSO_SEND' | translate }}
+						@if (channelName(); as name) {
+							<strong>#{{ name }}</strong>
+						}
+					</nb-checkbox>
 				</footer>
 			}
 		</aside>
 	`,
 	styles: [
 		`
+			:host {
+				display: block;
+				height: 100%;
+				min-height: 0;
+			}
 			.thread {
 				display: flex;
 				flex-direction: column;
 				height: 100%;
 				min-height: 0;
-				border-left: 1px solid rgba(127, 127, 127, 0.2);
+				border-left: 1px solid var(--chat-border, rgba(127, 127, 127, 0.2));
+				background: var(--chat-bg, transparent);
 			}
 			.header {
 				display: flex;
 				align-items: center;
 				gap: 0.25rem;
-				padding: 0.5rem 0.75rem;
-				border-bottom: 1px solid rgba(127, 127, 127, 0.2);
+				min-height: var(--chat-header-height, 3.5rem);
+				padding: 0.375rem 0.625rem 0.375rem 1rem;
+				border-bottom: 1px solid var(--chat-border, rgba(127, 127, 127, 0.2));
+				flex: 0 0 auto;
+			}
+			.heading {
+				display: flex;
+				align-items: baseline;
+				gap: 0.5rem;
+				flex: 1 1 auto;
+				min-width: 0;
 			}
 			.title {
-				flex: 1 1 auto;
 				margin: 0;
-				font-size: 0.875rem;
+				color: var(--chat-text, inherit);
+				font-size: 0.9375rem;
+				font-weight: 800;
+			}
+			.subtitle {
+				overflow: hidden;
+				text-overflow: ellipsis;
+				white-space: nowrap;
+				color: var(--chat-muted, inherit);
+				font-size: 0.75rem;
+			}
+			.icon-button {
+				display: inline-flex;
+				align-items: center;
+				justify-content: center;
+				width: 2rem;
+				height: 2rem;
+				border: 0;
+				border-radius: 0.5rem;
+				background: transparent;
+				color: var(--chat-muted, inherit);
+				cursor: pointer;
+			}
+			.icon-button nb-icon {
+				font-size: 1.125rem;
+			}
+			.icon-button:hover,
+			.icon-button:focus-visible {
+				background: var(--chat-hover, rgba(127, 127, 127, 0.12));
+				color: var(--chat-text, inherit);
+			}
+			.icon-button.on {
+				color: var(--chat-accent, #3366ff);
 			}
 			.body {
 				flex: 1 1 auto;
 				min-height: 0;
 				overflow-y: auto;
-				padding: 0.5rem 0;
+				padding: 0.25rem 0 0.75rem;
+				scrollbar-width: thin;
 			}
 			.divider {
-				margin: 0.5rem 0.75rem;
-				border: 0;
-				border-top: 1px solid rgba(127, 127, 127, 0.2);
+				display: flex;
+				align-items: center;
+				gap: 0.75rem;
+				margin: 0.75rem 1.25rem 0.25rem;
+				color: var(--chat-muted, inherit);
+				font-size: 0.75rem;
+				white-space: nowrap;
 			}
-			.more {
+			.divider::after {
+				content: '';
+				flex: 1 1 auto;
+				border-top: 1px solid var(--chat-border, rgba(127, 127, 127, 0.2));
+			}
+			.pill {
 				display: block;
-				margin: 0.5rem auto;
+				margin: 0.75rem auto;
+				padding: 0.25rem 0.875rem;
+				border: 1px solid var(--chat-border, rgba(127, 127, 127, 0.25));
+				border-radius: 999px;
+				background: transparent;
+				color: var(--chat-text, inherit);
+				font: inherit;
+				font-size: 0.75rem;
+				font-weight: 600;
+				cursor: pointer;
+			}
+			.pill:hover:not(:disabled) {
+				background: var(--chat-hover, rgba(127, 127, 127, 0.12));
 			}
 			.loading {
 				min-height: 6rem;
 			}
 			.empty {
-				margin: 1rem 0.75rem;
-				font-size: 0.875rem;
-				opacity: 0.7;
+				margin: 1rem;
+				color: var(--chat-muted, inherit);
+				font-size: 0.8125rem;
+			}
+			.link-button {
+				border: 0;
+				background: transparent;
+				color: var(--chat-link, #1d9bd1);
+				font: inherit;
+				cursor: pointer;
 			}
 			.footer {
-				padding: 0.5rem 0.75rem 0.75rem;
-				border-top: 1px solid rgba(127, 127, 127, 0.2);
+				padding: 0 1rem 0.5rem;
+				flex: 0 0 auto;
 			}
 			.also {
 				display: block;
-				margin-top: 0.25rem;
+				margin-top: 0.125rem;
 				font-size: 0.75rem;
 			}
 		`
@@ -186,6 +290,8 @@ export class ThreadPaneComponent {
 	readonly meEmployeeId = input<string | null>(null);
 	readonly meUserId = input<string | null>(null);
 	readonly readOnly = input(false);
+	/** Who is in the thread's conversation, for the `@` list (null when not known). */
+	readonly memberIds = input<ChatMemberIds | null>(null);
 	/** `DOCS_CREATE`: may attach files (stored as documents). */
 	readonly canAttach = input(false);
 	/** `ORG_TASK_ADD`: may create a task from the root or a reply. */
@@ -220,6 +326,8 @@ export class ThreadPaneComponent {
 	/** The task summaries read so far, for the task cards. */
 	protected readonly tasks = this.taskStore.summaries;
 	protected readonly draftKey = computed(() => `thread:${this.rootMessageId()}`);
+	/** The channel the thread is in (direct conversations have no name to show). */
+	protected readonly channelName = computed(() => this.conversationNames().get(String(this.conversationId())) ?? null);
 
 	private poll: Subscription | null = null;
 	/** Asks the poll for the newer replies now (after a catch-up). */
@@ -590,6 +698,10 @@ export class ThreadPaneComponent {
 						const current = (root && root.id === message.id ? root : this.replies().find((item) => item.id === message.id)) ?? message;
 						this.replace({ id: message.id, taskReferences: withTaskReference(current, reference).taskReferences });
 					});
+				return;
+			case 'replaced':
+				// An app's reply to a click on one of its buttons: the message as the reply left it.
+				if (this.isCurrent(id)) this.replace(action.message);
 				return;
 			case 'pin':
 				this.api
