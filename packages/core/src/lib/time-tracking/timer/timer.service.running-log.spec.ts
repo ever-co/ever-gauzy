@@ -6,6 +6,7 @@ import { ITimeLog, ITimerStatus, ITimerStatusInput, ITimerToggleInput, TimeLogSo
 import { FindOperator } from 'typeorm';
 import { MultiORMEnum } from '../../core/utils';
 import { asTenantUser, createTenantFixture } from '../../core/testing/tenant-isolation/tenant-isolation.fixtures';
+import { IGetConflictTimeLogCommand, TimeLogCreateCommand, TimeLogUpdateCommand } from '../time-log/commands';
 import { ScheduleTimeLogEntriesCommand } from '../time-log/commands/schedule-time-log-entries.command';
 import { ScheduleTimeLogEntriesHandler } from '../time-log/commands/handlers/schedule-time-log-entries.handler';
 import { TimerService } from './timer.service';
@@ -214,6 +215,83 @@ function wireCleanup(
 		logger
 	});
 	return logger;
+}
+
+/**
+ * Wires the real start and stop over `rows`: the cleanup as `wireCleanup` wires it, and stand-ins for the other
+ * commands they send. `TimeLogUpdateCommand`, the update an explicit stop makes, writes its input on the row; the rest
+ * of it (the web timer's time slots, the timesheet and worked hours) is `TimeLogUpdateHandler`'s and does not run
+ * here. `TimeLogCreateCommand` adds the new run; the stop's conflict lookup finds none. The running logs carry their
+ * `timeSlots` only when the query asks for them, as each ORM loads a relation.
+ *
+ * @returns The service's logger and the `TimeLogUpdateCommand`s sent.
+ */
+function wireTimer(
+	service: TimerService,
+	ormType: MultiORMEnum,
+	rows: TimeLogRow[],
+	timeSlots: Record<string, TimeSlotRow[]> = {}
+) {
+	const logger = wireCleanup(service, ormType, rows, timeSlots);
+	const cleanupBus = (service as unknown as { _commandBus: { execute: (command: unknown) => Promise<unknown> } })
+		._commandBus;
+	const updates: TimeLogUpdateCommand[] = [];
+
+	const slotsOf = (row: TimeLogRow) => timeSlots[row.id] ?? [];
+	const repositories = service as unknown as {
+		typeOrmTimeLogRepository: { find: (options: { relations?: { timeSlots?: boolean } }) => Promise<TimeLogRow[]> };
+		mikroOrmTimeLogRepository: {
+			findAll: (options: { populate?: string[] }) => Promise<{ toJSON: () => TimeLogRow }[]>;
+		};
+	};
+	const typeOrmFind = repositories.typeOrmTimeLogRepository.find;
+	repositories.typeOrmTimeLogRepository.find = async (options) => {
+		const found = await typeOrmFind(options);
+		return options.relations?.timeSlots ? found.map((row) => ({ ...row, timeSlots: slotsOf(row) })) : found;
+	};
+	const mikroOrmFindAll = repositories.mikroOrmTimeLogRepository.findAll;
+	repositories.mikroOrmTimeLogRepository.findAll = async (options) => {
+		const found = await mikroOrmFindAll(options);
+		if (!options.populate?.includes('timeSlots')) {
+			return found;
+		}
+		return found.map((entity) => {
+			const row = entity.toJSON();
+			return { toJSON: () => ({ ...row, timeSlots: slotsOf(row) }) };
+		});
+	};
+
+	const execute = async (command: unknown) => {
+		if (command instanceof TimeLogUpdateCommand) {
+			updates.push(command);
+			const row = rows.find((candidate) => candidate.id === command.id);
+			if (!row) {
+				throw new Error(`No time log "${command.id}"`);
+			}
+			return Object.assign(row, command.input);
+		}
+		if (command instanceof TimeLogCreateCommand) {
+			const row = {
+				...command.input,
+				id: 'new-run',
+				createdAt: command.input.startedAt
+			} as unknown as TimeLogRow;
+			rows.push(row);
+			return row;
+		}
+		if (command instanceof IGetConflictTimeLogCommand) {
+			return [];
+		}
+		return cleanupBus.execute(command);
+	};
+
+	Object.assign(service, {
+		_commandBus: { execute },
+		_employeeService: { update: jest.fn(async () => undefined) },
+		startTimer: TimerService.prototype.startTimer,
+		stopTimer: TimerService.prototype.stopTimer
+	});
+	return { logger, updates };
 }
 
 describe.each([MultiORMEnum.TypeORM, MultiORMEnum.MikroORM])(
@@ -436,6 +514,244 @@ describe.each([MultiORMEnum.TypeORM, MultiORMEnum.MikroORM])(
 
 			expect(await (service as any).getLastRunningLog()).toBeNull();
 			expect((await getTimerStatus(service)).running).toBe(false);
+		});
+	}
+);
+
+/**
+ * A start ended the runs still going the way the desktop's runs end: ten seconds after their start when they had no
+ * time slot and started over ten minutes ago, or where their time slots added up to, and without the update an
+ * explicit stop makes, so a web timer or Ever Teams run lost its hours. A run from a client that is not a tracker now
+ * ends through that update: at its last heartbeat (its `stoppedAt`, which the time slots its client posts move
+ * forward), or where the new run starts when it never had one. A desktop run keeps the end its time slots give it.
+ */
+describe.each([MultiORMEnum.TypeORM, MultiORMEnum.MikroORM])(
+	'TimerService ending the runs a new run replaces (%s)',
+	(ormType) => {
+		const fixture = createTenantFixture();
+		const TWO_HOURS_AGO = new Date('2026-10-24T00:00:00.000Z');
+		const ONE_HOUR_AGO = new Date('2026-10-24T01:00:00.000Z');
+
+		/** Three ten-minute time slots from 00:00: a run with them ends at 00:30 by its time slots. */
+		const threeSlots: TimeSlotRow[] = [0, 10, 20].map((minute) => ({
+			startedAt: new Date(TWO_HOURS_AGO.getTime() + minute * 60 * 1000),
+			duration: 600
+		}));
+
+		/**
+		 * A run of the employee, as a timer start writes it: running, its `stoppedAt` at its start until a heartbeat
+		 * moves it to `lastHeartbeat`.
+		 */
+		const run = (
+			id: string,
+			source: TimeLogSourceEnum,
+			startedAt: Date,
+			lastHeartbeat: Date | null = startedAt
+		): TimeLogRow => ({
+			id,
+			employeeId: EMPLOYEE_ID,
+			tenantId: fixture.tenantId,
+			organizationId: fixture.organizationId,
+			source,
+			isActive: true,
+			isArchived: false,
+			isRunning: true,
+			startedAt,
+			stoppedAt: lastHeartbeat,
+			createdAt: startedAt,
+			duration: 0
+		});
+
+		/** The service over `rows` with its real start and stop, for an employee whose tracking is on. */
+		const setup = (rows: TimeLogRow[], timeSlots: Record<string, TimeSlotRow[]> = {}) => {
+			const { service } = createService(ormType, rows, fixture.organizationId);
+			const { logger, updates } = wireTimer(service, ormType, rows, timeSlots);
+			const employee = { id: EMPLOYEE_ID, organizationId: fixture.organizationId, isTrackingEnabled: true };
+			Object.assign(service, { findEmployee: jest.fn().mockResolvedValue(employee) });
+			jest.spyOn(console, 'log').mockImplementation(() => undefined);
+			return { service, logger, updates };
+		};
+
+		/** The employee moves to the desktop app and starts its timer, at `startedAt` when the start names one. */
+		const startOnDesktop = (service: TimerService, startedAt?: Date): Promise<ITimeLog> =>
+			service.startTimer({
+				source: TimeLogSourceEnum.DESKTOP,
+				...(startedAt ? { startedAt } : {})
+			} as ITimerToggleInput);
+
+		let restore: () => void;
+
+		beforeAll(() => defineConfig({ dbConnectionOptions: { type: DatabaseTypeEnum.postgres } }));
+
+		beforeEach(() => {
+			({ restore } = asTenantUser(fixture));
+			jest.spyOn(Date, 'now').mockReturnValue(NOW.getTime());
+		});
+
+		afterEach(() => {
+			restore();
+			jest.restoreAllMocks();
+		});
+
+		it.each([TimeLogSourceEnum.WEB_TIMER, TimeLogSourceEnum.TEAMS])(
+			'ends a %s run started two hours ago that never had a heartbeat where the new run starts, as a stop would',
+			async (source) => {
+				const rows = [run('replaced', source, TWO_HOURS_AGO)];
+				const { service, logger, updates } = setup(rows);
+
+				const started = await startOnDesktop(service);
+
+				// 02:00, where the new run starts, not 00:00:10
+				expect(started.startedAt).toEqual(NOW);
+				expect(rows[0]).toMatchObject({ isRunning: false, stoppedAt: NOW });
+				expect(updates).toEqual([
+					expect.objectContaining({ id: 'replaced', input: { isRunning: false, stoppedAt: NOW } })
+				]);
+				expect(logger.warn).not.toHaveBeenCalled();
+			}
+		);
+
+		it('ends it at the start the new run names', async () => {
+			const rows = [run('replaced', TimeLogSourceEnum.WEB_TIMER, TWO_HOURS_AGO)];
+			const { service } = setup(rows);
+			const namedStart = new Date('2026-10-24T01:45:00.000Z');
+
+			await startOnDesktop(service, namedStart);
+
+			expect(rows[0]).toMatchObject({ isRunning: false, stoppedAt: namedStart });
+		});
+
+		it('ends an Ever Teams run at its last heartbeat, not where its time slots add up to nor at the new start', async () => {
+			const lastHeartbeat = new Date('2026-10-24T01:58:00.000Z');
+			const rows = [run('replaced', TimeLogSourceEnum.TEAMS, TWO_HOURS_AGO, lastHeartbeat)];
+			const { service, logger, updates } = setup(rows, { replaced: threeSlots });
+
+			await startOnDesktop(service);
+
+			// 01:58, not 00:30 where its slots add up to, nor 02:00
+			expect(rows[0]).toMatchObject({ isRunning: false, stoppedAt: lastHeartbeat });
+			expect(updates).toEqual([
+				expect.objectContaining({ id: 'replaced', input: { isRunning: false, stoppedAt: lastHeartbeat } })
+			]);
+			expect(logger.warn).not.toHaveBeenCalled();
+		});
+
+		it('leaves an Ever Teams run abandoned at 00:30 there, not credited up to a start at 02:00', async () => {
+			const abandonedAt = new Date('2026-10-24T00:30:00.000Z');
+			const rows = [run('replaced', TimeLogSourceEnum.TEAMS, TWO_HOURS_AGO, abandonedAt)];
+			const { service } = setup(rows, { replaced: threeSlots });
+
+			await startOnDesktop(service);
+
+			expect(rows[0]).toMatchObject({ isRunning: false, stoppedAt: abandonedAt });
+		});
+
+		it('never ends a run after the start the new run names', async () => {
+			const rows = [
+				run('replaced', TimeLogSourceEnum.TEAMS, TWO_HOURS_AGO, new Date('2026-10-24T01:58:00.000Z'))
+			];
+			const { service } = setup(rows, { replaced: threeSlots });
+			const namedStart = new Date('2026-10-24T01:45:00.000Z');
+
+			await startOnDesktop(service, namedStart);
+
+			expect(rows[0]).toMatchObject({ isRunning: false, stoppedAt: namedStart });
+		});
+
+		it('ends a run with time slots where its last slot ends when its stoppedAt never moved, not at the new start', async () => {
+			const rows = [run('replaced', TimeLogSourceEnum.TEAMS, TWO_HOURS_AGO)];
+			const { service } = setup(rows, { replaced: threeSlots });
+
+			await startOnDesktop(service);
+
+			// Its time slots say it had heartbeats: 00:30, where its last slot ends, not 00:00 nor 02:00
+			expect(rows[0]).toMatchObject({ isRunning: false, stoppedAt: new Date('2026-10-24T00:30:00.000Z') });
+		});
+
+		it('ends each run still going no later than the next one started, so no time counts twice', async () => {
+			const rows = [
+				run('first', TimeLogSourceEnum.TEAMS, TWO_HOURS_AGO, new Date('2026-10-24T01:30:00.000Z')),
+				run('second', TimeLogSourceEnum.WEB_TIMER, ONE_HOUR_AGO)
+			];
+			const { service } = setup(rows);
+
+			await startOnDesktop(service);
+
+			// The first one's heartbeats went on past 01:00, when the second one started
+			expect(rows[0]).toMatchObject({ isRunning: false, stoppedAt: ONE_HOUR_AGO });
+			expect(rows[1]).toMatchObject({ isRunning: false, stoppedAt: NOW });
+		});
+
+		it('never ends a run before its own start, when the new run names an earlier start', async () => {
+			const startedAfter = new Date('2026-10-24T01:50:00.000Z');
+			const rows = [run('replaced', TimeLogSourceEnum.WEB_TIMER, startedAfter)];
+			const { service } = setup(rows);
+
+			await startOnDesktop(service, new Date('2026-10-24T01:40:00.000Z'));
+
+			expect(rows[0]).toMatchObject({ isRunning: false, stoppedAt: startedAfter });
+		});
+
+		it('leaves a run stored without a stoppedAt to the cleanup, as before', async () => {
+			const rows = [run('replaced', TimeLogSourceEnum.WEB_TIMER, ONE_HOUR_AGO, null)];
+			const { service, updates } = setup(rows);
+
+			await startOnDesktop(service);
+
+			// No heartbeat to go by: the cleanup's end, ten seconds after its start, not 02:00
+			expect(rows[0]).toMatchObject({ isRunning: false, stoppedAt: new Date('2026-10-24T01:00:10.000Z') });
+			expect(updates).toEqual([]);
+		});
+
+		it('ends a run left going beside the one a stop ends where that one started', async () => {
+			const rows = [
+				run('left-going', TimeLogSourceEnum.WEB_TIMER, TWO_HOURS_AGO),
+				run('stopped', TimeLogSourceEnum.TEAMS, ONE_HOUR_AGO)
+			];
+			const { service, logger } = setup(rows);
+
+			await service.stopTimer({ stoppedAt: NOW } as ITimerToggleInput);
+
+			expect(rows[1]).toMatchObject({ isRunning: false, stoppedAt: NOW });
+			// 01:00, where the stopped run started: not 00:00:10, nor 02:00 over the stopped run's hour
+			expect(rows[0]).toMatchObject({ isRunning: false, stoppedAt: ONE_HOUR_AGO });
+			expect(logger.warn).not.toHaveBeenCalled();
+		});
+
+		it('ends a run left going beside the one a stop ends at its last heartbeat, when it had one', async () => {
+			const lastHeartbeat = new Date('2026-10-24T00:40:00.000Z');
+			const rows = [
+				run('left-going', TimeLogSourceEnum.TEAMS, TWO_HOURS_AGO, lastHeartbeat),
+				run('stopped', TimeLogSourceEnum.WEB_TIMER, ONE_HOUR_AGO)
+			];
+			const { service } = setup(rows);
+
+			await service.stopTimer({ stoppedAt: NOW } as ITimerToggleInput);
+
+			expect(rows[1]).toMatchObject({ isRunning: false, stoppedAt: NOW });
+			expect(rows[0]).toMatchObject({ isRunning: false, stoppedAt: lastHeartbeat });
+		});
+
+		describe('a desktop run, as before', () => {
+			it('keeps the ten-second end of one started two hours ago with no time slot', async () => {
+				const rows = [run('replaced', TimeLogSourceEnum.DESKTOP, TWO_HOURS_AGO)];
+				const { service, updates } = setup(rows);
+
+				await startOnDesktop(service);
+
+				expect(rows[0]).toMatchObject({ isRunning: false, stoppedAt: new Date('2026-10-24T00:00:10.000Z') });
+				expect(updates).toEqual([]);
+			});
+
+			it('keeps the end its time slots give it', async () => {
+				const rows = [run('replaced', TimeLogSourceEnum.DESKTOP, TWO_HOURS_AGO)];
+				const { service, updates } = setup(rows, { replaced: threeSlots });
+
+				await startOnDesktop(service);
+
+				expect(rows[0]).toMatchObject({ isRunning: false, stoppedAt: new Date('2026-10-24T00:30:00.000Z') });
+				expect(updates).toEqual([]);
+			});
 		});
 	}
 );

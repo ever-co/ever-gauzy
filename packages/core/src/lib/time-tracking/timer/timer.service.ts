@@ -395,8 +395,9 @@ export class TimerService {
 			assertRequiredContext(requirements, { taskId, organizationTeamId: teamIdToLog, projectId: projectIdToLog });
 		}
 
-		// Stop any previous running timers
-		await this.stopPreviousRunningTimers(employeeId, organizationId, tenantId);
+		// Stop any previous running timers: one from another client ends at its last heartbeat, or where this one
+		// starts when it never had one
+		await this.stopPreviousRunningTimers(employeeId, organizationId, tenantId, startedAt);
 
 		// Create a new time log entry using the command bus
 		const timeLog = await this._commandBus.execute(
@@ -590,6 +591,9 @@ export class TimerService {
 
 		this.debug(() => `partial time log: ${JSON.stringify(partialTimeLog)}`);
 
+		// A run still going beside this one started before it, so it ends no later than this one's start (below)
+		const stoppedRunStartedAt = lastLog.startedAt;
+
 		// Execute the command to update the time log entry
 		lastLog = await this._commandBus.execute(
 			new TimeLogUpdateCommand(partialTimeLog, lastLog.id, request.manualTimeSlot)
@@ -602,7 +606,7 @@ export class TimerService {
 		});
 
 		// Stop previous running timers
-		await this.stopPreviousRunningTimers(employeeId, organizationId, tenantId);
+		await this.stopPreviousRunningTimers(employeeId, organizationId, tenantId, stoppedRunStartedAt);
 
 		// Handle conflicting time logs
 		await this.handleConflictingTimeLogs(lastLog, tenantId, organizationId);
@@ -831,18 +835,42 @@ export class TimerService {
 	}
 
 	/**
-	 * Stops all previous running timers for the specified employee.
+	 * Stops all previous running timers for the specified employee: the runs still going when another run replaces
+	 * them (a timer that starts, or the run a stop just ended).
+	 *
+	 * A run from a client that is not a tracker ends through the update an explicit stop makes, so it gets its time
+	 * slots and counts in the worked time, where `replacedRunEnd` says: at its last heartbeat, or where the run after
+	 * it started when it never had one. A tracker's run (`isTrackerSource`: the desktop timer and the agent) keeps the
+	 * end its time slots give it (`ScheduleTimeLogEntriesCommand`), as does a run stored without a `stoppedAt`, which
+	 * has no heartbeat to go by; that command also stops a run whose stop here failed, as before.
 	 *
 	 * @param employeeId - The ID of the employee whose timers need to be stopped
 	 * @param organizationId - The ID of the organization to which the employee belongs
 	 * @param tenantId - The ID of the tenant context
+	 * @param replacedAt - When the run replacing them started; now by default
 	 */
-	async stopPreviousRunningTimers(employeeId: ID, organizationId: ID, tenantId: ID): Promise<void> {
+	async stopPreviousRunningTimers(
+		employeeId: ID,
+		organizationId: ID,
+		tenantId: ID,
+		replacedAt: Date = moment.utc().toDate()
+	): Promise<void> {
 		try {
 			this.debug(() => 'Start previous running timers...');
-			// Retrieve any existing running logs for the employee
-			const logs = await this.getLastRunningLogs();
+			// Retrieve any existing running logs for the employee, latest first, with their time slots
+			const includeTimeSlots = true;
+			const logs = await this.getLastRunningLogs(includeTimeSlots);
 			this.debug(() => `Last Running Logs Count: ${logs.length}`);
+
+			// The replacing run is the run after the latest, the latest the run after the one before it, and so on
+			let nextRunStartedAt = moment.utc(replacedAt);
+			for (const log of logs) {
+				const isStoppedHere = !isTrackerSource(log.source) && Boolean(log.stoppedAt);
+				if (isStoppedHere) {
+					await this.stopReplacedRun(log, this.replacedRunEnd(log, nextRunStartedAt));
+				}
+				nextRunStartedAt = moment.min(moment.utc(log.startedAt), nextRunStartedAt);
+			}
 
 			// If there are existing running logs, stop them before starting a new one
 			if (logs.length > 0) {
@@ -853,6 +881,47 @@ export class TimerService {
 		} catch (error) {
 			// Log the error or handle it appropriately
 			this.logger.warn(`Failed to stop previous running timers: ${error?.message}`);
+		}
+	}
+
+	/**
+	 * Where a run from a client that is not a tracker ends when the run after it started at `nextRunStartedAt`.
+	 *
+	 * One that has had heartbeats (its `stoppedAt` moved past its start, as the time slots its client posts move it,
+	 * or time slots of its own) ends at its last heartbeat: the later of its `stoppedAt` and the end of its last time
+	 * slot, so it never gets less than its time slots hold. A run left in a tab closed without a stop is not credited
+	 * with every hour up to the next start. One that never had a heartbeat (the web timer, the API clients) ends at
+	 * `nextRunStartedAt`, as an explicit stop then would. Never after `nextRunStartedAt`, so no time counts twice, and
+	 * never before its own start.
+	 *
+	 * @param log - The running log, with its time slots.
+	 * @param nextRunStartedAt - When the run after it started.
+	 * @returns Where it ends.
+	 */
+	private replacedRunEnd(log: ITimeLog, nextRunStartedAt: moment.Moment): Date {
+		const startedAt = moment.utc(log.startedAt);
+		const timeSlotEnds = (log.timeSlots ?? []).map((slot) =>
+			moment.utc(slot.startedAt).add(slot.duration, 'seconds')
+		);
+		const lastHeartbeat = moment.max(moment.utc(log.stoppedAt), ...timeSlotEnds);
+		const hasHadHeartbeat = lastHeartbeat.isAfter(startedAt) || timeSlotEnds.length > 0;
+		const end = hasHadHeartbeat ? moment.min(lastHeartbeat, nextRunStartedAt) : nextRunStartedAt;
+		return moment.max(startedAt, end).toDate();
+	}
+
+	/**
+	 * Stops a run replaced by another at the given time, as an explicit stop at that time would. A failure is logged
+	 * and leaves the run to `ScheduleTimeLogEntriesCommand`.
+	 *
+	 * @param log - The running log.
+	 * @param stoppedAt - Where it ends.
+	 */
+	private async stopReplacedRun(log: ITimeLog, stoppedAt: Date): Promise<void> {
+		const partialTimeLog: Partial<ITimeLog> = { isRunning: false, stoppedAt };
+		try {
+			await this._commandBus.execute(new TimeLogUpdateCommand(partialTimeLog, log.id));
+		} catch (error) {
+			this.logger.warn(`Failed to stop the replaced time log ${log.id}: ${error?.message}`);
 		}
 	}
 
@@ -914,11 +983,15 @@ export class TimerService {
 				const findOptions = parseTypeORMFindToMikroOrm<TimeLog>({
 					where: whereClause,
 					order: { startedAt: 'DESC', createdAt: 'DESC' } as any,
-					...(includeTimeSlots && !fetchAll ? { relations: { timeSlots: true } } : {})
+					...(includeTimeSlots ? { relations: { timeSlots: true } } : {})
 				});
 
 				if (fetchAll) {
-					const items = await this.mikroOrmTimeLogRepository.findAll(findOptions);
+					// `findAll` reads its options flat: the order and the time slots go beside `where`
+					const items = await this.mikroOrmTimeLogRepository.findAll({
+						where: findOptions.where,
+						...findOptions.mikroOptions
+					});
 					return items.map((entity: TimeLog) => wrapSerialize(entity)) as TimeLog[];
 				} else {
 					const item = await this.mikroOrmTimeLogRepository.findOne(
@@ -934,7 +1007,8 @@ export class TimerService {
 				return fetchAll
 					? await this.typeOrmTimeLogRepository.find({
 							where: whereClause,
-							order: { startedAt: 'DESC', createdAt: 'DESC' }
+							order: { startedAt: 'DESC', createdAt: 'DESC' },
+							...(includeTimeSlots && { relations: { timeSlots: true } })
 						})
 					: await this.typeOrmTimeLogRepository.findOne({
 							where: whereClause,
@@ -961,11 +1035,12 @@ export class TimerService {
 	/**
 	 * Get all pending running logs for the current employee
 	 *
+	 * @param includeTimeSlots - Set to `true` to include the associated time slots in the result
 	 * @returns An array of pending time logs
 	 */
-	private async getLastRunningLogs(): Promise<ITimeLog[]> {
+	private async getLastRunningLogs(includeTimeSlots: boolean = false): Promise<ITimeLog[]> {
 		// Retrieve the last running log by using the `getRunningLogs` method with `fetchAll` set to false
-		const logs = await this.getRunningLogs(true);
+		const logs = await this.getRunningLogs(true, includeTimeSlots);
 
 		// Ensure that the returned logs are of type ITimeLog[]
 		return logs as ITimeLog[];
