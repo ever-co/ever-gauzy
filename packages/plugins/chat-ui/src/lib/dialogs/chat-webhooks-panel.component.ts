@@ -81,7 +81,7 @@ export function webhookChanges(webhook: Pick<IChatWebhook, 'name' | 'iconUrl' | 
 							</span>
 						</label>
 					}
-					<button nbButton ghost size="small" type="button" data-test="secrets-done" (click)="secrets.set(null)">{{ 'CHAT.WEBHOOKS.DONE' | translate }}</button>
+					<button nbButton ghost size="small" type="button" data-test="secrets-done" (click)="dismissSecrets()">{{ 'CHAT.WEBHOOKS.DONE' | translate }}</button>
 				</div>
 			}
 
@@ -310,6 +310,8 @@ export class ChatWebhooksPanelComponent implements OnInit {
 	readonly busyChange = output<boolean>();
 	/** A write made a URL or signing secret, shown here this once: the dialog brings this tab forward and stays open. */
 	readonly secretsShown = output<void>();
+	/** The manager dismissed the URL or signing secret on screen ("I have copied them"). */
+	readonly secretsDismissed = output<void>();
 
 	protected readonly maxWebhooks = CHAT_WEBHOOK_MAX_PER_CONVERSATION;
 	protected readonly nameMax = CHAT_WEBHOOK_NAME_MAX_LENGTH;
@@ -405,6 +407,11 @@ export class ChatWebhooksPanelComponent implements OnInit {
 	protected revoke(webhook: IChatWebhook): void {
 		if (typeof window !== 'undefined' && !window.confirm(this.translate.instant('CHAT.WEBHOOKS.REVOKE_CONFIRM', { name: webhook.name }))) return;
 		this.run(this.api.revoke(webhook.id as ID), (result) => this.put(result.webhook));
+	}
+
+	protected dismissSecrets(): void {
+		this.secrets.set(null);
+		this.secretsDismissed.emit();
 	}
 
 	protected select(event: Event): void {

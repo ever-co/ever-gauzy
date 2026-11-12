@@ -171,6 +171,43 @@ describe('ChannelSettingsDialogComponent', () => {
 		expect(close).toHaveBeenCalledWith(expect.objectContaining({ id: 'c1', topic: 'Pixels and fonts' }));
 	});
 
+	it('stays open on a secret that came back before a Save running alongside it', async () => {
+		await open({}, 'on');
+		const write = new Subject<IChatWebhookWriteResult>();
+		const saved = new Subject<{ conversation: IChatConversationWithState; events: never[] }>();
+		webhooksApi.create.mockReturnValueOnce(write);
+		api['updateConversation'].mockReturnValueOnce(saved);
+		tabTo('integrations');
+		panel().patch({ name: 'CI' });
+		panel().create();
+		tabTo('settings');
+		dialog().topic.set('Pixels and fonts');
+		dialog().save();
+		// The webhook answers first, with its secret; then the settings.
+		write.next({ webhook: webhook('w-1', 'CI'), url: 'https://api.example.com/api/chat/hooks/s', signingSecret: 'k' });
+		write.complete();
+		saved.next({ conversation: channel({ topic: 'Pixels and fonts' }), events: [] });
+		saved.complete();
+		fixture.detectChanges();
+		expect(close).not.toHaveBeenCalled();
+		expect(fixture.nativeElement.querySelector('[data-test="webhook-secrets"]')).not.toBeNull();
+		dialog().close();
+		expect(close).toHaveBeenCalledWith(expect.objectContaining({ topic: 'Pixels and fonts' }));
+	});
+
+	it('closes on Save again once the secret was dismissed', async () => {
+		await open({}, 'on');
+		webhooksApi.create.mockReturnValueOnce(of({ webhook: webhook('w-1', 'CI'), url: 'https://api.example.com/api/chat/hooks/s', signingSecret: 'k' }));
+		tabTo('integrations');
+		panel().patch({ name: 'CI' });
+		panel().create();
+		fixture.detectChanges();
+		(fixture.nativeElement.querySelector('[data-test="secrets-done"]') as HTMLButtonElement).click();
+		dialog().topic.set('Pixels and fonts');
+		dialog().save();
+		expect(close).toHaveBeenCalledWith(expect.objectContaining({ topic: 'Pixels and fonts' }));
+	});
+
 	it('closes once a webhook write that made no secret ended', async () => {
 		await open({}, 'on');
 		const write = new Subject<IChatWebhookWriteResult>();

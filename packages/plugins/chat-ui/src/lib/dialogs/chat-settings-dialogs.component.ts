@@ -213,6 +213,7 @@ let channelSettingsDialogs = 0;
 						[initial]="webhooks()"
 						(busyChange)="webhookWriting($event)"
 						(secretsShown)="showWebhookSecrets()"
+						(secretsDismissed)="secretOnScreen = false"
 					></ngx-chat-webhooks-panel>
 				} @else if (webhooksFailed()) {
 					<!-- The list could not be read (not a 404, which means webhooks are off): the tab says so and offers a retry. -->
@@ -343,6 +344,8 @@ export class ChannelSettingsDialogComponent implements OnInit, AfterViewInit {
 	protected readonly webhooks = signal<IChatWebhook[] | null>(null);
 	/** Whether the Integrations tab has a webhook write under way (Close then waits for it). */
 	private webhookBusy = false;
+	/** A webhook URL or signing secret is on screen, not yet dismissed: a Save does not close the dialog over it. */
+	protected secretOnScreen = false;
 	/** The webhook list could not be read for another reason than webhooks being off (a 404): the tab offers a retry. */
 	protected readonly webhooksFailed = signal(false);
 	/** Whether the Integrations tab shows: webhooks are served here, or their list failed for another reason. */
@@ -445,7 +448,8 @@ export class ChannelSettingsDialogComponent implements OnInit, AfterViewInit {
 			this.refreshRun += 1;
 			this.refreshing = false;
 			this.changed = answer.conversation;
-			this.closeRequested.set(true);
+			// A secret shown while the save ran (or before it) stays on screen: the manager closes once it is copied.
+			if (!this.secretOnScreen) this.closeRequested.set(true);
 		});
 	}
 
@@ -528,6 +532,7 @@ export class ChannelSettingsDialogComponent implements OnInit, AfterViewInit {
 
 	/** A webhook write made a secret: its tab comes forward, and a close asked for meanwhile is dropped so it is read. */
 	protected showWebhookSecrets(): void {
+		this.secretOnScreen = true;
 		this.tab.set('integrations');
 		this.closeRequested.set(false);
 	}
