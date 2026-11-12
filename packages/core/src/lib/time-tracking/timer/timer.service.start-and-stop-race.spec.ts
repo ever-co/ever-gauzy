@@ -46,6 +46,8 @@ interface Hooks {
 	onUpdate?: (command: TimeLogUpdateCommand, employee: EmployeeStatus) => Promise<void> | void;
 	/** Runs when a `TimeLogCreateCommand` arrives, before the run is written. */
 	onCreate?: (command: TimeLogCreateCommand) => Promise<void> | void;
+	/** Runs when an `IGetConflictTimeLogCommand` arrives, before the overlapping logs are read. */
+	onConflictLookup?: () => Promise<void> | void;
 }
 
 const time = (value: Date | string | null): number => new Date(value).getTime();
@@ -157,6 +159,7 @@ function createService(
 			return copyOf(row);
 		}
 		if (command instanceof IGetConflictTimeLogCommand) {
+			await hooks.onConflictLookup?.();
 			const { ignoreId, startDate, endDate } = command.input;
 			return rows
 				.filter(
@@ -417,6 +420,33 @@ describe.each([MultiORMEnum.TypeORM, MultiORMEnum.MikroORM])(
 				await stop(service);
 
 				expect(timeSpanDeletes.map((command) => command.timeLog.id)).toEqual(['older']);
+			});
+
+			it('leaves alone the time slots of a run started between its read of the runs and of the overlaps', async () => {
+				const rows = [run('stopped', TimeLogSourceEnum.TEAMS, ONE_HOUR_AGO)];
+				// Started on another pod whose clock runs two minutes behind, with a heartbeat and its first time slot
+				const startedAt = new Date('2026-10-24T01:57:00.000Z');
+				const timeSlots = [{ startedAt, duration: 60 }];
+				const lastHeartbeat = new Date('2026-10-24T01:58:00.000Z');
+				const started = run('started-between', TimeLogSourceEnum.WEB_TIMER, startedAt, {
+					stoppedAt: lastHeartbeat,
+					timeSlots
+				});
+				const { service, timeSpanDeletes } = setup(rows, {
+					// The stop has read the runs going; the run is written before it reads the logs it overlaps
+					onConflictLookup: () => {
+						const isFirstLookup = !rows.includes(started);
+						if (isFirstLookup) {
+							rows.push(started);
+						}
+					}
+				});
+
+				await stop(service);
+
+				// The stopped run ends at 02:00, over the started run's minute: that minute stays the started run's
+				expect(timeSpanDeletes).toEqual([]);
+				expect(started).toMatchObject({ isRunning: true, startedAt, stoppedAt: lastHeartbeat, timeSlots });
 			});
 		});
 

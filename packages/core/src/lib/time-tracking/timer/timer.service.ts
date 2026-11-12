@@ -623,7 +623,13 @@ export class TimerService {
 		// The logs this run overlaps as the stop begins, up to the end written below. The overlap cleanup after the stop
 		// cuts those only: a log another client writes meanwhile keeps its time, whether it still runs or not.
 		const endToWrite = partialTimeLog.stoppedAt ?? lastLog.stoppedAt;
-		const overlappingAtStop = await this.findOverlappingLogIds(lastLog, endToWrite, tenantId, organizationId);
+		const overlappingAtStop = await this.findOverlappingLogIds(
+			lastLog,
+			endToWrite,
+			runningLogIds,
+			tenantId,
+			organizationId
+		);
 
 		// A run still going beside this one started before it, so it ends no later than this one's start (below)
 		const stoppedRunStartedAt = lastLog.startedAt;
@@ -734,8 +740,12 @@ export class TimerService {
 	 * logs that cleanup may cut. When they cannot be read, none: the cleanup is skipped rather than cut a log it cannot
 	 * tell from one written meanwhile.
 	 *
+	 * This read comes after the stop's read of the runs going (`runningAtStop`). A log running here that was not going
+	 * then was started in between, by another client: it is left out, as the runs started later are.
+	 *
 	 * @param run The running log the stop ends, as read when the stop began.
 	 * @param stoppedAt Where the stop ends it.
+	 * @param runningAtStop The runs going at the stop's first read.
 	 * @param tenantId The employee's tenant.
 	 * @param organizationId The employee's organization.
 	 * @returns The ids of the logs it overlaps.
@@ -743,6 +753,7 @@ export class TimerService {
 	private async findOverlappingLogIds(
 		run: ITimeLog,
 		stoppedAt: Date,
+		runningAtStop: ID[],
 		tenantId: ID,
 		organizationId: ID
 	): Promise<ID[]> {
@@ -758,7 +769,8 @@ export class TimerService {
 					tenantId
 				})
 			);
-			return (overlapping ?? []).map((log) => log.id);
+			const isFinishedOrRunningAtStop = (log: ITimeLog) => !log.isRunning || runningAtStop.includes(log.id);
+			return (overlapping ?? []).filter(isFinishedOrRunningAtStop).map((log) => log.id);
 		} catch (error) {
 			this.logger.warn(
 				`The overlap cleanup of time log ${run.id} is skipped, the logs it overlaps could not be read: ${error?.message}`
