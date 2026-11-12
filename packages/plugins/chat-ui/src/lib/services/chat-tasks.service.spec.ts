@@ -54,6 +54,22 @@ describe('ChatTasksService', () => {
 		expect(summary()?.title).toBe('Second');
 	});
 
+	it("keeps a card's read when a later read is still under way, and the later one's answer after it", () => {
+		tasks.ensure(['t1']);
+		taskReads()[0].flush(page('First', [{ id: 'e1' }]));
+		// A card changed the task and reads it again; a hint starts another read meanwhile.
+		let answered: unknown = 'nothing';
+		tasks.reload('t1').subscribe((value) => (answered = value));
+		tasks.refresh(['t1']);
+		const [cardRead, hintRead] = taskReads();
+		cardRead.flush(page('After the change', [{ id: 'e1' }, { id: 'e2' }]));
+		// The card's read is in place at once: the card may take a change again with the stored list.
+		expect(answered).toEqual(expect.objectContaining({ assigneeIds: ['e1', 'e2'] }));
+		expect(summary()?.assigneeIds).toEqual(['e1', 'e2']);
+		hintRead.flush(page('Later still', [{ id: 'e1' }, { id: 'e2' }, { id: 'e3' }]));
+		expect(summary()?.assigneeIds).toEqual(['e1', 'e2', 'e3']);
+	});
+
 	it('drops a read still under way when a newer summary was put in place', () => {
 		tasks.ensure(['t1']);
 		tasks.remember({ id: 't1', title: 'Created here' } as never);

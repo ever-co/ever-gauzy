@@ -175,7 +175,8 @@
 		"NO_PRIORITY": "No priority",
 		"ASSIGN": "Assignees",
 		"ASSIGNED": "{{count}} assigned",
-		"CHANGE_FAILED": "The task could not be changed."
+		"CHANGE_FAILED": "The task could not be changed.",
+		"READ_FAILED": "The task could not be read again."
 	},
 	"SETTINGS": {
 		"TITLE": "Conversation settings",

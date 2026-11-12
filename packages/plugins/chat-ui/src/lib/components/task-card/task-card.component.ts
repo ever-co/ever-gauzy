@@ -25,7 +25,7 @@ import { ChatUiService } from '../../services/chat-ui.service';
 	changeDetection: ChangeDetectionStrategy.OnPush,
 	imports: [RouterLink, NbIconModule, TranslatePipe],
 	template: `
-		<div class="task-card" data-test="task-card" [class.busy]="saving()">
+		<div class="task-card" data-test="task-card" [class.busy]="held()">
 			<a class="task-main" [routerLink]="link()" [attr.title]="'CHAT.MESSAGE.OPEN_TASK' | translate">
 				<span class="task-icon"><nb-icon icon="checkmark-square-2-outline"></nb-icon></span>
 				<span class="task-text">
@@ -55,7 +55,7 @@ import { ChatUiService } from '../../services/chat-ui.service';
 						class="task-select"
 						data-test="task-status"
 						[attr.aria-label]="'CHAT.TASKS.STATUS' | translate"
-						[disabled]="saving()"
+						[disabled]="held()"
 						(change)="pickStatus(statusSelect.value)"
 					>
 						@if (!task.status) {
@@ -73,7 +73,7 @@ import { ChatUiService } from '../../services/chat-ui.service';
 						class="task-select"
 						data-test="task-priority"
 						[attr.aria-label]="'CHAT.TASKS.PRIORITY' | translate"
-						[disabled]="saving()"
+						[disabled]="held()"
 						(change)="pickPriority(prioritySelect.value)"
 					>
 						<option value="" [selected]="!task.priority">{{ 'CHAT.TASKS.NO_PRIORITY' | translate }}</option>
@@ -86,7 +86,7 @@ import { ChatUiService } from '../../services/chat-ui.service';
 						class="task-select"
 						data-test="task-assignee"
 						[attr.aria-label]="'CHAT.TASKS.ASSIGN' | translate"
-						[disabled]="saving()"
+						[disabled]="held()"
 						(change)="toggleAssignee(assigneeSelect)"
 					>
 						<option value="" selected>{{ 'CHAT.TASKS.ASSIGNED' | translate: { count: task.assigneeIds?.length ?? 0 } }}</option>
@@ -98,6 +98,12 @@ import { ChatUiService } from '../../services/chat-ui.service';
 			}
 			@if (error(); as message) {
 				<span class="task-error" role="alert" data-test="task-error">{{ message }}</span>
+			}
+			@if (unsynced() && !saving()) {
+				<span class="task-error" role="alert" data-test="task-unsynced">
+					{{ 'CHAT.TASKS.READ_FAILED' | translate }}
+					<button type="button" class="task-retry" data-test="task-retry" (click)="retryRead()">{{ 'CHAT.RETRY' | translate }}</button>
+				</span>
 			}
 		</div>
 	`,
@@ -206,6 +212,16 @@ import { ChatUiService } from '../../services/chat-ui.service';
 				font-size: 0.6875rem;
 				color: var(--color-danger-default, #d33);
 			}
+			.task-retry {
+				margin-left: 0.25rem;
+				padding: 0;
+				border: 0;
+				background: none;
+				color: inherit;
+				font: inherit;
+				text-decoration: underline;
+				cursor: pointer;
+			}
 		`
 	]
 })
@@ -231,6 +247,13 @@ export class TaskCardComponent {
 		return current && !CHAT_TASK_PRIORITIES.includes(current) ? [current, ...CHAT_TASK_PRIORITIES] : [...CHAT_TASK_PRIORITIES];
 	});
 	protected readonly saving = signal(false);
+	/**
+	 * The card changed the task but could not read it again: what it holds may be older than what is stored, so it takes
+	 * no change (an assignee pick sends the whole list) until a read succeeds.
+	 */
+	protected readonly unsynced = signal(false);
+	/** Whether the controls are held still: a change on its way, or a card that could not read its task again. */
+	protected readonly held = computed(() => this.saving() || this.unsynced());
 	protected readonly error = signal<string | null>(null);
 	/** The task page's permission (the API checks it too). */
 	protected readonly canEdit = computed(
@@ -302,7 +325,16 @@ export class TaskCardComponent {
 			});
 	}
 
-	/** Reads the task again, the controls held still until the read ends (whatever its outcome). */
+	protected retryRead(): void {
+		this.saving.set(true);
+		this.readAgain();
+	}
+
+	/**
+	 * Reads the task again, the controls held still until the read ends. Once it answers, the summary in place is at least
+	 * as new as the change (the store keeps a read's answer unless a later read's is there); a failed read keeps the
+	 * controls held, and offers to read again.
+	 */
 	private readAgain(): void {
 		this.tasks
 			.reload(this.taskId())
@@ -310,6 +342,9 @@ export class TaskCardComponent {
 				finalize(() => this.saving.set(false)),
 				takeUntilDestroyed(this.destroyRef)
 			)
-			.subscribe({ error: () => undefined });
+			.subscribe({
+				next: (summary) => this.unsynced.set(summary === undefined),
+				error: () => this.unsynced.set(true)
+			});
 	}
 }

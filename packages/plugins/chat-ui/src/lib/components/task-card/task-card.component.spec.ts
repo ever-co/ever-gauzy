@@ -86,14 +86,21 @@ describe('TaskCardComponent', () => {
 		read.complete();
 		fixture.detectChanges();
 		expect(select('task-assignee')?.disabled).toBe(false);
-		// A read that fails lets go of the controls too, the summary shown as it was.
-		const failing = new Subject<ChatTaskSummary>();
-		tasks.reload.mockReturnValueOnce(failing);
-		pick('task-priority', 'low');
+	});
+
+	it('keeps the controls held after a change it could not read again, and offers to read again', () => {
+		// The change went through; the read after it failed (a passing failure answers undefined).
+		tasks.reload.mockReturnValueOnce(of(undefined));
+		pick('task-assignee', 'e2');
+		expect(updateTask).toHaveBeenCalledWith('m1', 't1', { assigneeEmployeeIds: ['e1', 'e2'] });
+		// What the card holds may be older than what is stored: no change until a read succeeds.
 		expect(select('task-assignee')?.disabled).toBe(true);
-		failing.error(new Error('offline'));
+		expect(element().querySelector('[data-test="task-unsynced"]')?.textContent).toContain('CHAT.TASKS.READ_FAILED');
+		(element().querySelector('[data-test="task-retry"]') as HTMLButtonElement).click();
 		fixture.detectChanges();
+		expect(tasks.reload).toHaveBeenCalledTimes(2);
 		expect(select('task-assignee')?.disabled).toBe(false);
+		expect(element().querySelector('[data-test="task-unsynced"]')).toBeNull();
 	});
 
 	it('clears the priority, and adds or takes off one assignee at a time', () => {
