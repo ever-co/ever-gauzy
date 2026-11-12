@@ -31,18 +31,31 @@ function inScope<T extends { projectId: string | null }>(rows: readonly T[], pro
 }
 
 /**
- * The `task_status` row a status reference names: by id, else by value — the project's own row first (the ref's
- * project unless one is given), then the organization's, never another project's.
+ * The row a reference's id names, unless it is stale: an update that set the value alone (the status route takes the
+ * value without the id) leaves the old row's id behind, and the value is then what the task holds.
+ */
+function rowOfId<T extends { id: string; value: string | null }>(
+	rows: readonly T[],
+	id: string | null | undefined,
+	value: string | null | undefined
+): T | undefined {
+	if (!id) return undefined;
+	const row = rows.find((candidate) => candidate.id === id);
+	if (!row) return undefined;
+	return value && row.value && lower(row.value) !== lower(value) ? undefined : row;
+}
+
+/**
+ * The `task_status` row a status reference names: by id (unless the value moved away from it), else by value — the
+ * project's own row first (the ref's project unless one is given), then the organization's, never another project's.
  */
 export function statusRowOf(
 	ref: ITaskAutomationStatusRef,
 	statuses: readonly ITaskAutomationStatusRow[],
 	projectId: string | null = ref.projectId ?? null
 ): ITaskAutomationStatusRow | undefined {
-	if (ref.taskStatusId) {
-		const byId = statuses.find((row) => row.id === ref.taskStatusId);
-		if (byId) return byId;
-	}
+	const byId = rowOfId(statuses, ref.taskStatusId, ref.status);
+	if (byId) return byId;
 	const value = lower(ref.status);
 	if (!value) return undefined;
 	return inScope(
@@ -94,19 +107,34 @@ export function statusMatches(
 ): boolean {
 	if (!list?.length) return false;
 	const row = statusRowOf(ref, statuses);
-	const own = new Set([lower(ref.status), lower(ref.taskStatusId), lower(row?.id), lower(row?.value), lower(row?.name)].filter(Boolean));
+	// A stale id (the value moved away from its row) is not the task's status any more.
+	const ownId = rowOfId(statuses, ref.taskStatusId, ref.status) || !statuses.some((one) => one.id === ref.taskStatusId) ? ref.taskStatusId : null;
+	const own = new Set([lower(ref.status), lower(ownId), lower(row?.id), lower(row?.value), lower(row?.name)].filter(Boolean));
 	return list.some((item) => own.has(lower(item)));
 }
 
-/** Whether a priority is one of a list (id, value or name, without regard to case). */
+/**
+ * Whether a priority is one of a list (id, value or name, without regard to case). The task's row is the one its id
+ * names (unless the value moved away from it), else the row of its value in its project or the organization.
+ */
 export function priorityMatches(
-	ref: { priority: string | null; taskPriorityId: string | null },
+	ref: { priority: string | null; taskPriorityId: string | null; projectId?: string | null },
 	list: readonly string[] | null | undefined,
 	priorities: readonly ITaskAutomationPriorityRow[]
 ): boolean {
 	if (!list?.length) return false;
-	const row = ref.taskPriorityId ? priorities.find((candidate) => candidate.id === ref.taskPriorityId) : undefined;
-	const own = new Set([lower(ref.priority), lower(ref.taskPriorityId), lower(row?.value), lower(row?.name)].filter(Boolean));
+	const byId = rowOfId(priorities, ref.taskPriorityId, ref.priority);
+	const value = lower(ref.priority);
+	const row =
+		byId ??
+		(value
+			? inScope(
+					priorities.filter((candidate) => lower(candidate.value) === value),
+					ref.projectId ?? null
+				)
+			: undefined);
+	const ownId = byId || !priorities.some((one) => one.id === ref.taskPriorityId) ? ref.taskPriorityId : null;
+	const own = new Set([lower(ref.priority), lower(ownId), lower(row?.id), lower(row?.value), lower(row?.name)].filter(Boolean));
 	return list.some((item) => own.has(lower(item)));
 }
 
@@ -147,13 +175,15 @@ export function resolveNamedStatus(
 	statuses: readonly ITaskAutomationStatusRow[]
 ): { value: string; id: string | null } | null {
 	const byId = statuses.find((row) => row.id === status);
-	if (byId && (!byId.projectId || byId.projectId === projectId)) return { value: byId.value ?? status, id: byId.id };
+	// A row without a value cannot be written (its id is no status value).
+	if (byId && !byId.value) return null;
+	if (byId && (!byId.projectId || byId.projectId === projectId)) return { value: byId.value as string, id: byId.id };
 	// Another project's own status stands for its value here: this project's (or the organization's) row of it.
 	const named = byId ? (byId.value ?? '') : status;
 	const row =
 		statusRowOf({ status: named, taskStatusId: null }, statuses, projectId) ??
 		(byId ? undefined : statusRowByName(named, statuses, projectId));
-	if (row) return { value: row.value ?? named, id: row.id };
+	if (row) return row.value ? { value: row.value, id: row.id } : null;
 	const value = lower(named);
 	return (Object.values(TaskStatusEnum) as string[]).includes(value) ? { value, id: null } : null;
 }
@@ -179,11 +209,12 @@ export function resolveNamedPriority(
 	priorities: readonly ITaskAutomationPriorityRow[]
 ): { value: string; id: string | null } | null {
 	const byId = priorities.find((row) => row.id === priority);
-	if (byId && (!byId.projectId || byId.projectId === projectId)) return { value: byId.value ?? priority, id: byId.id };
+	if (byId && !byId.value) return null;
+	if (byId && (!byId.projectId || byId.projectId === projectId)) return { value: byId.value as string, id: byId.id };
 	// Another project's own priority stands for its value here (this project's or the organization's row of it).
 	const value = lower(byId ? byId.value : priority);
 	const matching = priorities.filter((row) => lower(row.value) === value || (!byId && lower(row.name) === value));
 	const row = inScope(matching, projectId);
-	if (row) return { value: row.value ?? value, id: row.id };
+	if (row) return row.value ? { value: row.value, id: row.id } : null;
 	return (Object.values(TaskPriorityEnum) as string[]).includes(value) ? { value, id: null } : null;
 }

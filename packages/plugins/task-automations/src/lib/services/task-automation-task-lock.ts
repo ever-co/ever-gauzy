@@ -40,7 +40,8 @@ export class TaskAutomationTaskLock {
 	async run<T>(taskId: ID, work: () => Promise<T>, waitMs: number = TASK_AUTOMATION_TASK_LOCK_WAIT_MS): Promise<T> {
 		const deadline = Date.now() + Math.max(0, waitMs);
 		for (;;) {
-			const result = await this.lock.tryRun(`task:${taskId}`, async () => ({ value: await work() }));
+			// The deadline holds while waiting for a lock connection too.
+			const result = await this.lock.tryRun(`task:${taskId}`, async () => ({ value: await work() }), deadline);
 			if (result) return result.value;
 			if (Date.now() >= deadline) {
 				throw new TaskAutomationRetryLaterError(`Another automation run of the task ${taskId} is under way.`);

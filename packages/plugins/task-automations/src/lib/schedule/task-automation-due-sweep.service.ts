@@ -71,7 +71,8 @@ export class TaskAutomationDueSweepService {
 			tenantId: rule.tenantId as ID,
 			organizationId: rule.organizationId as ID,
 			projectId: rule.projectId ?? null,
-			organizationTeamId: rule.organizationTeamId ?? null
+			organizationTeamId: rule.organizationTeamId ?? null,
+			ruleId: rule.id as ID
 		};
 		let runs = 0;
 		let scanned = 0;

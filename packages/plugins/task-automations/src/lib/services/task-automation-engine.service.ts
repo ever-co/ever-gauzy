@@ -165,6 +165,21 @@ export class TaskAutomationEngine {
 				triggerMatches = false;
 				triggerNote = 'The trigger is not one the platform knows.';
 		}
+		const parentTrigger =
+			rule.trigger.type === TaskAutomationTriggerEnum.ALL_SUBTASKS_DONE || rule.trigger.type === TaskAutomationTriggerEnum.SUBTASK_REOPENED;
+		if (parentTrigger && !subject) {
+			// No task the rule would act on: nothing is planned, and nothing would be applied.
+			return {
+				ruleId: rule.id as ID,
+				taskId: task.id,
+				triggerMatches: false,
+				triggerNote,
+				subjectTaskId: null,
+				conditions: [],
+				changes: [],
+				outcome: TaskAutomationRunOutcomeEnum.NO_CHANGE
+			};
+		}
 		const target = subject ?? task;
 		if (subject && !inRuleScope(rule, subject)) {
 			triggerMatches = false;

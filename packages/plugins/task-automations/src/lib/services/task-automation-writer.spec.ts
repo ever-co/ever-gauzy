@@ -19,15 +19,26 @@ jest.mock('@gauzy/core', () => {
 		TaskUpdateCommand,
 		EmployeeCreateNotificationEvent,
 		RequestContext: {
+			// As the platform's context: the user stays the current one until the work it runs has settled, awaited
+			// work included.
 			runWithRequest: (request: { user: unknown }, fn: () => unknown) => {
 				mockContext.users.push(request.user);
 				const previous = current;
 				current = request.user;
+				let result: unknown;
 				try {
-					return fn();
-				} finally {
+					result = fn();
+				} catch (error) {
 					current = previous;
+					throw error;
 				}
+				if (result instanceof Promise) {
+					return result.finally(() => {
+						current = previous;
+					});
+				}
+				current = previous;
+				return result;
 			},
 			currentTenantId: () => (current as { tenantId?: string } | null)?.tenantId ?? null,
 			currentUser: () => current,
@@ -35,6 +46,9 @@ jest.mock('@gauzy/core', () => {
 		}
 	};
 });
+
+// The reader is injected by type only: its module graph (entities, repositories) stays out of this suite.
+jest.mock('./task-automation-task-reader.service', () => ({ TaskAutomationTaskReader: class TaskAutomationTaskReader {} }));
 
 import 'reflect-metadata';
 import { BaseEntityEnum, EmployeeNotificationTypeEnum, InboxItemKindEnum } from '@gauzy/contracts';
@@ -50,7 +64,16 @@ describe('TaskAutomationWriter', () => {
 	});
 
 	it('runs the task update as the rule’s system actor, with only the fields the plan changes', async () => {
-		const commandBus = { execute: jest.fn(async () => ({})) };
+		const { RequestContext } = jest.requireMock('@gauzy/core') as { RequestContext: { currentUser: () => unknown } };
+		const actors: unknown[] = [];
+		// The command reads the actor after an await, as the platform's handler does.
+		const commandBus = {
+			execute: jest.fn(async () => {
+				await Promise.resolve();
+				actors.push(RequestContext.currentUser());
+				return {};
+			})
+		};
 		const writer = new TaskAutomationWriter(commandBus as never, { publish: jest.fn() } as never, {} as never);
 		await writer.applyUpdate(task(), { status: 'done', taskStatusId: 'st-done', memberIds: ['e-1'], tagIds: ['t-1'] }, marker);
 		const [command] = commandBus.execute.mock.calls[0] as unknown as [{ id: string; input: Record<string, unknown> }];
@@ -65,6 +88,7 @@ describe('TaskAutomationWriter', () => {
 		// The last context opened is the rule's (a probe of the request-context store may come first).
 		expect(mockContext.users.at(-1)).toEqual(automationUser({ tenantId: 'tenant-1', organizationId: 'org-1' }, marker));
 		expect(mockContext.users.at(-1)).toMatchObject({ id: undefined, employeeId: undefined, permissions: [], name: 'Automation: Close parents' });
+		expect(actors).toEqual([automationUser({ tenantId: 'tenant-1', organizationId: 'org-1' }, marker)]);
 	});
 
 	it('files one Inbox notice per rule and change, addressed to the assignees’ users', async () => {

@@ -34,9 +34,29 @@ describe('status categories', () => {
 	});
 
 	it('finds a status row by id, else by value, the project’s own first', () => {
-		expect(statusRowOf({ status: 'x', taskStatusId: 'st-done' }, STATUSES)?.id).toBe('st-done');
+		expect(statusRowOf({ status: 'done', taskStatusId: 'st-done' }, STATUSES)?.id).toBe('st-done');
+		expect(statusRowOf({ status: null, taskStatusId: 'st-done' }, STATUSES)?.id).toBe('st-done');
 		expect(statusRowOf({ status: 'Done', taskStatusId: null }, STATUSES)?.id).toBe('st-done');
 		expect(statusRowOf({ status: 'nothing', taskStatusId: null }, STATUSES)).toBeUndefined();
+	});
+
+	it('reads the value when it moved away from the row its id names (a value-only update)', () => {
+		const reopened = { status: 'open', taskStatusId: 'st-done' };
+		expect(statusRowOf(reopened, STATUSES)?.id).toBe('st-open');
+		expect(classifyStatus(reopened, STATUSES)).toBe(TaskAutomationStatusCategoryEnum.TODO);
+		expect(isClosedStatus(reopened, STATUSES)).toBe(false);
+		expect(statusMatches(reopened, ['st-done'], STATUSES)).toBe(false);
+		expect(statusMatches(reopened, ['open'], STATUSES)).toBe(true);
+		expect(priorityMatches({ priority: 'low', taskPriorityId: 'pr-high' }, ['pr-high'], CATALOG.priorities)).toBe(false);
+		expect(priorityMatches({ priority: 'low', taskPriorityId: 'pr-high' }, ['pr-low'], CATALOG.priorities)).toBe(true);
+		// A value alone still finds its row, so a list of row ids matches it.
+		expect(priorityMatches({ priority: 'high', taskPriorityId: null }, ['pr-high'], CATALOG.priorities)).toBe(true);
+	});
+
+	it('never writes a row id as a value', () => {
+		const valueless = [{ id: 'st-blank', value: null, name: 'Blank', projectId: null, order: 1 }];
+		expect(resolveNamedStatus('st-blank', null, valueless)).toBeNull();
+		expect(resolveNamedPriority('pr-blank', null, [{ id: 'pr-blank', value: null, name: 'Blank', projectId: null }])).toBeNull();
 	});
 
 	it('never takes another project’s row for a value, a name or a category', () => {
