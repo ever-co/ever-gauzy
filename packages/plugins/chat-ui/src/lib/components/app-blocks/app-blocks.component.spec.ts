@@ -1,5 +1,5 @@
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
-import { of, throwError } from 'rxjs';
+import { of, Subject, throwError } from 'rxjs';
 import { ChatAppBlockTypeEnum, ChatInteractionStatusEnum, ChatMessageKindEnum, IChatInteraction, IChatInteractionResult, IChatMessageWithRelations } from '@gauzy/contracts';
 import { APP_INTERACTION_POLL_MAX, APP_INTERACTION_POLL_MS } from '../../chat-app-blocks';
 import { ChatWebhooksService } from '../../services/chat-webhooks.service';
@@ -129,15 +129,50 @@ describe('AppBlocksComponent', () => {
 		})();
 	});
 
-	it('does not read the message again when a retried callback was delivered without a reply', async () => {
+	it('asks once more about a delivery without its reply, and reads nothing when none came', async () => {
 		await render();
 		api.interact.mockReturnValue(of<IChatInteractionResult>({ interaction: interaction(ChatInteractionStatusEnum.RETRYING), events: [] }));
-		api.interaction.mockReturnValueOnce(of(interaction(ChatInteractionStatusEnum.DELIVERED)));
+		api.interaction.mockReturnValue(of(interaction(ChatInteractionStatusEnum.DELIVERED)));
 		fakeAsync(() => {
 			button('ack').click();
-			tick(APP_INTERACTION_POLL_MS);
+			tick(APP_INTERACTION_POLL_MS * 4);
 			fixture.detectChanges();
+			expect(api.interaction).toHaveBeenCalledTimes(2);
 			expect(api.message).not.toHaveBeenCalled();
+			expect(button('ack').querySelector('nb-icon')?.getAttribute('icon')).toBe('checkmark-outline');
+		})();
+	});
+
+	it('reads the reply the API applied just after it wrote the delivery', async () => {
+		await render();
+		const replaced = appMessage({ body: 'Acknowledged by Ana', blocks: [] });
+		api.interact.mockReturnValue(of<IChatInteractionResult>({ interaction: interaction(ChatInteractionStatusEnum.RETRYING), events: [] }));
+		api.interaction.mockReturnValueOnce(of(interaction(ChatInteractionStatusEnum.DELIVERED))).mockReturnValueOnce(of(interaction(ChatInteractionStatusEnum.DELIVERED, { replyApplied: true })));
+		api.message.mockReturnValue(of(replaced));
+		const emitted: IChatMessageWithRelations[] = [];
+		fixture.componentInstance.replaced.subscribe((message) => emitted.push(message));
+		fakeAsync(() => {
+			button('ack').click();
+			tick(APP_INTERACTION_POLL_MS * 2);
+			expect(api.message).toHaveBeenCalledTimes(1);
+			expect(emitted).toEqual([replaced]);
+		})();
+	});
+
+	it('waits for a slow answer instead of asking again over it', async () => {
+		await render();
+		const slow = new Subject<IChatInteraction>();
+		api.interact.mockReturnValue(of<IChatInteractionResult>({ interaction: interaction(ChatInteractionStatusEnum.RETRYING), events: [] }));
+		api.interaction.mockReturnValueOnce(slow).mockReturnValue(of(interaction(ChatInteractionStatusEnum.FAILED)));
+		fakeAsync(() => {
+			button('ack').click();
+			tick(APP_INTERACTION_POLL_MS * 3);
+			// One ask, still on its way: the next ticks were skipped, not used to cancel it.
+			expect(api.interaction).toHaveBeenCalledTimes(1);
+			slow.next(interaction(ChatInteractionStatusEnum.FAILED));
+			slow.complete();
+			fixture.detectChanges();
+			expect(element().querySelector('[data-test="app-failure"]')?.textContent).toContain('CHAT.APP.CALLBACK_FAILED');
 		})();
 	});
 

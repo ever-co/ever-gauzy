@@ -207,6 +207,60 @@ describe('ChannelSettingsDialogComponent', () => {
 		expect(close).toHaveBeenCalledWith(null);
 	});
 
+	it('shows a failed webhook list on the Integrations tab with a retry, unlike a 404', async () => {
+		await open({}, 'on');
+		// The first read failed for another reason than webhooks being off.
+		webhooksApi.list.mockReturnValueOnce(throwError(() => ({ status: 503 })));
+		dialog().loadWebhooks();
+		fixture.detectChanges();
+		expect(fixture.nativeElement.querySelector('[data-test="settings-tabs"]')).not.toBeNull();
+		tabTo('integrations');
+		expect(fixture.nativeElement.querySelector('[data-test="webhooks-load-failed"]')).not.toBeNull();
+		(fixture.nativeElement.querySelector('[data-test="webhooks-retry"]') as HTMLButtonElement).click();
+		fixture.detectChanges();
+		expect(fixture.nativeElement.querySelector('[data-test="webhooks-load-failed"]')).toBeNull();
+		expect(fixture.nativeElement.querySelector('[data-test="webhooks-panel"]')).not.toBeNull();
+	});
+
+	it('wires the tabs to their panels and moves between them with the arrow keys, Home and End', async () => {
+		await open({}, 'on');
+		const tabs = fixture.nativeElement.querySelector('[data-test="settings-tabs"]') as HTMLElement;
+		const settingsTab = fixture.nativeElement.querySelector('[data-test="tab-settings"]') as HTMLButtonElement;
+		const integrationsTab = fixture.nativeElement.querySelector('[data-test="tab-integrations"]') as HTMLButtonElement;
+		const panelId = settingsTab.getAttribute('aria-controls') as string;
+		expect(fixture.nativeElement.querySelector(`#${panelId}`)?.getAttribute('role')).toBe('tabpanel');
+		expect(settingsTab.getAttribute('tabindex')).toBe('0');
+		expect(integrationsTab.getAttribute('tabindex')).toBe('-1');
+		tabs.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
+		fixture.detectChanges();
+		expect(dialog().tab()).toBe('integrations');
+		expect(document.activeElement === integrationsTab || integrationsTab.getAttribute('tabindex') === '0').toBe(true);
+		const integrationsPanel = fixture.nativeElement.querySelector(`#${integrationsTab.getAttribute('aria-controls')}`) as HTMLElement;
+		expect(integrationsPanel.getAttribute('aria-labelledby')).toBe(integrationsTab.id);
+		tabs.dispatchEvent(new KeyboardEvent('keydown', { key: 'Home', bubbles: true }));
+		fixture.detectChanges();
+		expect(dialog().tab()).toBe('settings');
+		tabs.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowLeft', bubbles: true }));
+		expect(dialog().tab()).toBe('integrations');
+	});
+
+	it('closes with the saved settings even when a member change read, started before the save, answers after it', async () => {
+		await open({});
+		const read = new Subject<IChatConversationWithState>();
+		api['getConversation'].mockReturnValueOnce(read);
+		dialog().toAdd.set([BOB]);
+		dialog().add();
+		dialog().topic.set('Pixels and fonts');
+		dialog().save();
+		expect(close).toHaveBeenCalledTimes(1);
+		expect(close).toHaveBeenCalledWith(expect.objectContaining({ topic: 'Pixels and fonts' }));
+		// The older read answers last: it changes nothing any more.
+		read.next(channel({ memberCount: 3 }));
+		read.complete();
+		expect(close).toHaveBeenCalledTimes(1);
+		expect(dialog().changed).toEqual(expect.objectContaining({ topic: 'Pixels and fonts' }));
+	});
+
 	it('shows no Integrations tab where webhooks are off', async () => {
 		await open({});
 		expect(fixture.nativeElement.querySelector('[data-test="settings-tabs"]')).toBeNull();

@@ -115,10 +115,10 @@ export function webhookChanges(webhook: Pick<IChatWebhook, 'name' | 'iconUrl' | 
 								@if (webhook.revokedAt) {
 									<span class="badge">{{ 'CHAT.WEBHOOKS.REVOKED' | translate }}</span>
 								} @else {
-									<button nbButton ghost size="tiny" type="button" [attr.data-test]="'edit-webhook-' + webhook.id" [nbTooltip]="'CHAT.WEBHOOKS.EDIT' | translate" [attr.aria-label]="'CHAT.WEBHOOKS.EDIT_NAMED' | translate: { name: webhook.name }" [disabled]="busy()" (click)="startEdit(webhook)">
+									<button nbButton ghost size="tiny" type="button" [attr.data-test]="'edit-webhook-' + webhook.id" [nbTooltip]="'CHAT.WEBHOOKS.EDIT' | translate" [attr.aria-label]="'CHAT.WEBHOOKS.EDIT_NAMED' | translate: { name: webhook.name }" [disabled]="busy() || !!secrets()" (click)="startEdit(webhook)">
 										<nb-icon icon="edit-outline"></nb-icon>
 									</button>
-									<button nbButton ghost size="tiny" type="button" [attr.data-test]="'rotate-webhook-' + webhook.id" [nbTooltip]="'CHAT.WEBHOOKS.ROTATE' | translate" [attr.aria-label]="'CHAT.WEBHOOKS.ROTATE_NAMED' | translate: { name: webhook.name }" [disabled]="busy()" (click)="rotate(webhook)">
+									<button nbButton ghost size="tiny" type="button" [attr.data-test]="'rotate-webhook-' + webhook.id" [nbTooltip]="'CHAT.WEBHOOKS.ROTATE' | translate" [attr.aria-label]="'CHAT.WEBHOOKS.ROTATE_NAMED' | translate: { name: webhook.name }" [disabled]="busy() || !!secrets()" (click)="rotate(webhook)">
 										<nb-icon icon="refresh-outline"></nb-icon>
 									</button>
 									<button nbButton ghost size="tiny" status="danger" type="button" [attr.data-test]="'revoke-webhook-' + webhook.id" [nbTooltip]="'CHAT.WEBHOOKS.REVOKE' | translate" [attr.aria-label]="'CHAT.WEBHOOKS.REVOKE_NAMED' | translate: { name: webhook.name }" [disabled]="busy()" (click)="revoke(webhook)">
@@ -131,7 +131,7 @@ export function webhookChanges(webhook: Pick<IChatWebhook, 'name' | 'iconUrl' | 
 									<ng-container *ngTemplateOutlet="fields"></ng-container>
 									<div class="actions">
 										<button nbButton ghost size="small" type="button" (click)="cancelEdit()">{{ 'CHAT.DIALOG.CANCEL' | translate }}</button>
-										<button nbButton size="small" status="primary" type="submit" data-test="save-webhook" [disabled]="busy() || !form().name.trim()">{{ 'CHAT.SETTINGS.SAVE' | translate }}</button>
+										<button nbButton size="small" status="primary" type="submit" data-test="save-webhook" [disabled]="busy() || !!secrets() || !form().name.trim()">{{ 'CHAT.SETTINGS.SAVE' | translate }}</button>
 									</div>
 								</form>
 							}
@@ -146,11 +146,11 @@ export function webhookChanges(webhook: Pick<IChatWebhook, 'name' | 'iconUrl' | 
 						<ng-container *ngTemplateOutlet="fields"></ng-container>
 						<div class="actions">
 							<button nbButton ghost size="small" type="button" (click)="creating.set(false)">{{ 'CHAT.DIALOG.CANCEL' | translate }}</button>
-							<button nbButton size="small" status="primary" type="submit" data-test="create-webhook" [disabled]="busy() || !form().name.trim()">{{ 'CHAT.WEBHOOKS.CREATE' | translate }}</button>
+							<button nbButton size="small" status="primary" type="submit" data-test="create-webhook" [disabled]="busy() || !!secrets() || !form().name.trim()">{{ 'CHAT.WEBHOOKS.CREATE' | translate }}</button>
 						</div>
 					</form>
 				} @else if (!editingId()) {
-					<button nbButton size="small" status="basic" type="button" data-test="new-webhook" [disabled]="busy() || full()" (click)="startCreate()">
+					<button nbButton size="small" status="basic" type="button" data-test="new-webhook" [disabled]="busy() || full() || !!secrets()" (click)="startCreate()">
 						<nb-icon icon="plus-outline"></nb-icon>
 						{{ 'CHAT.WEBHOOKS.NEW' | translate }}
 					</button>
@@ -206,7 +206,7 @@ export function webhookChanges(webhook: Pick<IChatWebhook, 'name' | 'iconUrl' | 
 			}
 			.webhook {
 				padding: 0.5rem 0.25rem;
-				border-bottom: 1px solid rgba(127, 127, 127, 0.2);
+				border-bottom: 1px solid var(--border-basic-color-3);
 			}
 			.webhook.revoked {
 				opacity: 0.6;
@@ -236,20 +236,20 @@ export function webhookChanges(webhook: Pick<IChatWebhook, 'name' | 'iconUrl' | 
 				flex: 0 0 auto;
 				width: 2rem;
 				height: 2rem;
-				border-radius: 0.375rem;
+				border-radius: var(--border-radius);
 				object-fit: cover;
 			}
 			.icon.placeholder {
 				display: inline-flex;
 				align-items: center;
 				justify-content: center;
-				background: rgba(127, 127, 127, 0.15);
+				background: var(--background-basic-color-3);
 			}
 			.badge {
 				font-size: 0.6875rem;
 				padding: 0.125rem 0.375rem;
-				border-radius: 0.25rem;
-				background: rgba(127, 127, 127, 0.2);
+				border-radius: var(--border-radius);
+				background: var(--background-basic-color-3);
 			}
 			.form {
 				display: flex;
@@ -278,8 +278,8 @@ export function webhookChanges(webhook: Pick<IChatWebhook, 'name' | 'iconUrl' | 
 				flex-direction: column;
 				gap: 0.5rem;
 				padding: 0.75rem;
-				border-radius: 0.375rem;
-				background: rgba(255, 193, 7, 0.12);
+				border-radius: var(--border-radius);
+				background: var(--color-warning-transparent-100);
 			}
 			.secrets-title {
 				margin: 0;
@@ -367,7 +367,8 @@ export class ChatWebhooksPanelComponent implements OnInit {
 
 	protected create(): void {
 		const form = this.form();
-		if (!form.name.trim() || this.busy()) return;
+		// A URL or signing secret on screen is shown once: no write that may make another until it is dismissed.
+		if (!form.name.trim() || this.busy() || this.secrets()) return;
 		this.run(
 			this.api.create(this.conversationId(), {
 				name: form.name.trim(),
@@ -383,6 +384,7 @@ export class ChatWebhooksPanelComponent implements OnInit {
 	}
 
 	protected saveEdit(webhook: IChatWebhook): void {
+		if (this.secrets()) return;
 		const changes = webhookChanges(webhook, this.form());
 		if (!Object.keys(changes).length) {
 			this.editingId.set(null);
@@ -395,6 +397,7 @@ export class ChatWebhooksPanelComponent implements OnInit {
 	}
 
 	protected rotate(webhook: IChatWebhook): void {
+		if (this.secrets()) return;
 		if (typeof window !== 'undefined' && !window.confirm(this.translate.instant('CHAT.WEBHOOKS.ROTATE_CONFIRM', { name: webhook.name }))) return;
 		this.run(this.api.rotateSecret(webhook.id as ID), (result) => this.put(result.webhook));
 	}

@@ -270,6 +270,8 @@
 		"COPY": "Copy",
 		"COPIED": "Copied",
 		"COPY_FAILED": "Copying did not work; select the text and copy it by hand.",
+		"LOAD_FAILED": "The webhooks of this channel could not be loaded.",
+		"RETRY": "Try again",
 		"DONE": "I have copied them",
 		"CREATED_BY": "By {{name}} on {{date}}",
 		"LAST_USED": "last used {{date}}",

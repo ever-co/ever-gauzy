@@ -1,4 +1,4 @@
-import { AfterViewInit, ChangeDetectionStrategy, Component, computed, DestroyRef, ElementRef, HostListener, inject, OnInit, signal } from '@angular/core';
+import { AfterViewInit, ChangeDetectionStrategy, Component, computed, DestroyRef, ElementRef, inject, OnInit, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { NbButtonModule, NbCardModule, NbCheckboxModule, NbDialogRef, NbIconModule, NbInputModule, NbSelectModule, NbSpinnerModule, NbTooltipModule } from '@nebular/theme';
@@ -142,9 +142,14 @@ interface MemberRow {
  * changes them (`PATCH /chat/conversations/:id`, `POST` / `DELETE …/members`). Closes with the conversation as the
  * API answers it after the changes, or null when nothing changed.
  */
+/** Counts the settings dialogs opened, for ids unique per dialog. */
+let channelSettingsDialogs = 0;
+
 @Component({
 	selector: 'ngx-chat-channel-settings-dialog',
 	changeDetection: ChangeDetectionStrategy.OnPush,
+	// Escape closes through the dialog's own Close (the page opens it without Nebular's), which waits for a write.
+	host: { '(document:keyup.escape)': 'closeOnEscape()' },
 	imports: [
 		FormsModule,
 		NbButtonModule,
@@ -163,12 +168,35 @@ interface MemberRow {
 		<nb-card class="dialog" data-test="channel-settings-dialog">
 			<nb-card-header>{{ 'CHAT.SETTINGS.TITLE' | translate }}</nb-card-header>
 			<nb-card-body>
-				@if (webhooks() !== null) {
-					<div class="tabs" role="tablist" data-test="settings-tabs">
-						<button type="button" role="tab" class="tab" [class.active]="tab() === 'settings'" [attr.aria-selected]="tab() === 'settings'" data-test="tab-settings" (click)="tab.set('settings')">
+				@if (hasIntegrations()) {
+					<!-- Tabs as WAI-ARIA tabs: arrow keys, Home and End move between them; the active one is the tab stop. -->
+					<div class="tabs" role="tablist" data-test="settings-tabs" (keydown)="tabKey($event)">
+						<button
+							type="button"
+							role="tab"
+							class="tab"
+							[class.active]="tab() === 'settings'"
+							[attr.id]="idBase + '-tab-settings'"
+							[attr.aria-controls]="idBase + '-panel-settings'"
+							[attr.aria-selected]="tab() === 'settings'"
+							[attr.tabindex]="tab() === 'settings' ? 0 : -1"
+							data-test="tab-settings"
+							(click)="tab.set('settings')"
+						>
 							{{ 'CHAT.SETTINGS.TAB_SETTINGS' | translate }}
 						</button>
-						<button type="button" role="tab" class="tab" [class.active]="tab() === 'integrations'" [attr.aria-selected]="tab() === 'integrations'" data-test="tab-integrations" (click)="tab.set('integrations')">
+						<button
+							type="button"
+							role="tab"
+							class="tab"
+							[class.active]="tab() === 'integrations'"
+							[attr.id]="idBase + '-tab-integrations'"
+							[attr.aria-controls]="idBase + '-panel-integrations'"
+							[attr.aria-selected]="tab() === 'integrations'"
+							[attr.tabindex]="tab() === 'integrations' ? 0 : -1"
+							data-test="tab-integrations"
+							(click)="tab.set('integrations')"
+						>
 							{{ 'CHAT.SETTINGS.TAB_INTEGRATIONS' | translate }}
 						</button>
 					</div>
@@ -176,6 +204,9 @@ interface MemberRow {
 				<!-- Kept while the Settings tab shows, so its list and a write under way (and the secret it makes) survive. -->
 				@if (webhooks() !== null) {
 					<ngx-chat-webhooks-panel
+						role="tabpanel"
+						[attr.id]="idBase + '-panel-integrations'"
+						[attr.aria-labelledby]="idBase + '-tab-integrations'"
 						[hidden]="tab() !== 'integrations'"
 						[conversationId]="context.conversation.id"
 						[people]="context.people"
@@ -183,8 +214,26 @@ interface MemberRow {
 						(busyChange)="webhookWriting($event)"
 						(secretsShown)="showWebhookSecrets()"
 					></ngx-chat-webhooks-panel>
+				} @else if (webhooksFailed()) {
+					<!-- The list could not be read (not a 404, which means webhooks are off): the tab says so and offers a retry. -->
+					<div
+						role="tabpanel"
+						[attr.id]="idBase + '-panel-integrations'"
+						[attr.aria-labelledby]="idBase + '-tab-integrations'"
+						[hidden]="tab() !== 'integrations'"
+						data-test="webhooks-load-failed"
+					>
+						<p class="error" role="alert">{{ 'CHAT.WEBHOOKS.LOAD_FAILED' | translate }}</p>
+						<button nbButton size="small" status="basic" type="button" data-test="webhooks-retry" (click)="loadWebhooks()">{{ 'CHAT.WEBHOOKS.RETRY' | translate }}</button>
+					</div>
 				}
-				@if (tab() === 'settings' || webhooks() === null) {
+				@if (tab() === 'settings' || !hasIntegrations()) {
+				<div
+					class="settings-panel"
+					[attr.role]="hasIntegrations() ? 'tabpanel' : null"
+					[attr.id]="idBase + '-panel-settings'"
+					[attr.aria-labelledby]="hasIntegrations() ? idBase + '-tab-settings' : null"
+				>
 				@if (isChannel()) {
 					<label class="field">
 						<span>{{ 'CHAT.DIALOG.CHANNEL_NAME' | translate }}</span>
@@ -255,6 +304,7 @@ interface MemberRow {
 						<p class="note">{{ 'CHAT.SETTINGS.DEFAULT_NOTE' | translate }}</p>
 					}
 				}
+				</div>
 				}
 				@if (error()) {
 					<p class="error" role="alert">{{ error() }}</p>
@@ -293,6 +343,12 @@ export class ChannelSettingsDialogComponent implements OnInit, AfterViewInit {
 	protected readonly webhooks = signal<IChatWebhook[] | null>(null);
 	/** Whether the Integrations tab has a webhook write under way (Close then waits for it). */
 	private webhookBusy = false;
+	/** The webhook list could not be read for another reason than webhooks being off (a 404): the tab offers a retry. */
+	protected readonly webhooksFailed = signal(false);
+	/** Whether the Integrations tab shows: webhooks are served here, or their list failed for another reason. */
+	protected readonly hasIntegrations = computed(() => this.webhooks() !== null || this.webhooksFailed());
+	/** Ids that tie the tabs to their panels, unique per dialog. */
+	protected readonly idBase = `chat-settings-${++channelSettingsDialogs}`;
 	protected readonly name = signal('');
 	protected readonly topic = signal('');
 	protected readonly isPrivate = signal(false);
@@ -363,12 +419,7 @@ export class ChannelSettingsDialogComponent implements OnInit, AfterViewInit {
 		this.categoryId.set(conversation.categoryId ? String(conversation.categoryId) : null);
 		this.ref.onBackdropClick?.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => this.close());
 		// The Integrations tab, for a channel's managers, where the API serves webhooks (a 404 there means they are off).
-		if (this.context.canManage && conversation.kind === ChatConversationKindEnum.CHANNEL) {
-			this.webhooksApi
-				.list(conversation.id)
-				.pipe(takeUntilDestroyed(this.destroyRef))
-				.subscribe({ next: (webhooks) => this.webhooks.set(webhooks), error: () => this.webhooks.set(null) });
-		}
+		if (this.context.canManage && conversation.kind === ChatConversationKindEnum.CHANNEL) this.loadWebhooks();
 		this.api
 			.members(conversation.id)
 			.pipe(takeUntilDestroyed(this.destroyRef))
@@ -389,6 +440,10 @@ export class ChannelSettingsDialogComponent implements OnInit, AfterViewInit {
 		// Saved: the dialog closes with the conversation as saved, through the same wait as Close (a webhook write under
 		// way on the Integrations tab finishes first, and one that made a secret keeps the dialog open on it).
 		this.run(this.api.updateConversation(this.context.conversation.id, this.changes()), (answer) => {
+			// The saved answer is the newest copy: a conversation read after a member change still on its way is dropped
+			// (it started before the save), so it cannot put the old settings back.
+			this.refreshRun += 1;
+			this.refreshing = false;
 			this.changed = answer.conversation;
 			this.closeRequested.set(true);
 		});
@@ -431,9 +486,38 @@ export class ChannelSettingsDialogComponent implements OnInit, AfterViewInit {
 		this.ref.close(this.changed);
 	}
 
-	@HostListener('document:keyup.escape')
 	protected closeOnEscape(): void {
 		this.close();
+	}
+
+	/** Reads the channel's webhooks: a 404 means they are off here (no tab); any other failure shows on the tab, with a retry. */
+	protected loadWebhooks(): void {
+		this.webhooksFailed.set(false);
+		this.webhooksApi
+			.list(this.context.conversation.id)
+			.pipe(takeUntilDestroyed(this.destroyRef))
+			.subscribe({
+				next: (webhooks) => this.webhooks.set(webhooks),
+				error: (error: { status?: number } | null) => {
+					this.webhooks.set(null);
+					this.webhooksFailed.set(error?.status !== 404);
+				}
+			});
+	}
+
+	/** Arrow keys, Home and End move between the tabs (and the focus with them), as WAI-ARIA tabs do. */
+	protected tabKey(event: KeyboardEvent): void {
+		const order = ['settings', 'integrations'] as const;
+		const at = order.indexOf(this.tab());
+		let next: (typeof order)[number] | null = null;
+		if (event.key === 'ArrowRight') next = order[(at + 1) % order.length];
+		else if (event.key === 'ArrowLeft') next = order[(at + order.length - 1) % order.length];
+		else if (event.key === 'Home') next = order[0];
+		else if (event.key === 'End') next = order[order.length - 1];
+		if (!next) return;
+		event.preventDefault();
+		this.tab.set(next);
+		this.host.nativeElement.querySelector<HTMLElement>(`[data-test="tab-${next}"]`)?.focus();
 	}
 
 	/** The Integrations tab started or ended a webhook write; a close asked for meanwhile happens once it ended. */

@@ -3,7 +3,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NbIconModule } from '@nebular/theme';
 import { TranslatePipe } from '@ngx-translate/core';
 import { timer } from 'rxjs';
-import { switchMap, take, takeWhile } from 'rxjs/operators';
+import { exhaustMap, take, takeWhile } from 'rxjs/operators';
 import { ChatAppBlockTypeEnum, IChatAppBlock, IChatAppButton, IChatMessageWithRelations, ID } from '@gauzy/contracts';
 import { APP_INTERACTION_POLL_MAX, APP_INTERACTION_POLL_MS, appBlocksOf, AppButtonState, buttonKey, buttonStateOf, safeButtonUrl } from '../../chat-app-blocks';
 import { ChatWebhooksService } from '../../services/chat-webhooks.service';
@@ -98,7 +98,7 @@ import { ChatWebhooksService } from '../../services/chat-webhooks.service';
 				gap: 0.375rem;
 				margin: 0.25rem 0;
 				padding-left: 0.625rem;
-				border-left: 3px solid var(--color-primary-transparent-300, rgba(51, 102, 255, 0.32));
+				border-left: 3px solid var(--chat-border-strong);
 			}
 			.app-header {
 				margin: 0;
@@ -125,7 +125,7 @@ import { ChatWebhooksService } from '../../services/chat-webhooks.service';
 				width: 100%;
 				margin: 0.25rem 0;
 				border: 0;
-				border-top: 1px solid rgba(127, 127, 127, 0.3);
+				border-top: 1px solid var(--chat-border);
 			}
 			.app-context {
 				margin: 0;
@@ -143,8 +143,8 @@ import { ChatWebhooksService } from '../../services/chat-webhooks.service';
 				gap: 0.25rem;
 				min-height: 2rem;
 				padding: 0.25rem 0.75rem;
-				border: 1px solid rgba(127, 127, 127, 0.45);
-				border-radius: 0.375rem;
+				border: 1px solid var(--chat-border-strong);
+				border-radius: var(--border-radius);
 				background: transparent;
 				color: inherit;
 				font-size: 0.8125rem;
@@ -152,12 +152,12 @@ import { ChatWebhooksService } from '../../services/chat-webhooks.service';
 				cursor: pointer;
 			}
 			.app-button.primary {
-				border-color: var(--color-primary-default, #3366ff);
-				color: var(--color-primary-default, #3366ff);
+				border-color: var(--chat-accent);
+				color: var(--chat-accent);
 			}
 			.app-button.danger {
-				border-color: var(--color-danger-default, #ff3d71);
-				color: var(--color-danger-default, #ff3d71);
+				border-color: var(--chat-danger);
+				color: var(--chat-danger);
 			}
 			.app-button:disabled {
 				cursor: default;
@@ -167,7 +167,7 @@ import { ChatWebhooksService } from '../../services/chat-webhooks.service';
 				font-size: 0.875rem;
 			}
 			.state.failed {
-				color: var(--color-danger-default, #ff3d71);
+				color: var(--chat-danger);
 			}
 			.spin {
 				animation: app-spin 1s linear infinite;
@@ -185,7 +185,7 @@ import { ChatWebhooksService } from '../../services/chat-webhooks.service';
 			.app-failure {
 				margin: 0;
 				font-size: 0.75rem;
-				color: var(--color-danger-default, #ff3d71);
+				color: var(--chat-danger);
 			}
 		`
 	]
@@ -265,16 +265,27 @@ export class AppBlocksComponent {
 	/**
 	 * Asks again about a click whose callback is being retried, until it settles or the page stops asking. A retry the
 	 * app answered with a reply replaced the message on the server: the message is read again and handed up, so the
-	 * page shows the reply without waiting for realtime. When the asking stops first, the button clicks again and says
-	 * the app has not answered yet.
+	 * page shows the reply without waiting for realtime. The API writes a retry's delivery just before it applies the
+	 * reply, so a delivery without its reply is asked about once more. A slow answer is waited for (the next ask is
+	 * skipped, not the answer). When the asking stops first, the button clicks again and says the app has not answered
+	 * yet.
 	 */
 	private follow(key: string, blockId: string | null, interactionId: ID): void {
 		let settled = false;
+		let lookedAgain = false;
 		timer(APP_INTERACTION_POLL_MS, APP_INTERACTION_POLL_MS)
 			.pipe(
 				take(APP_INTERACTION_POLL_MAX),
-				switchMap(() => this.api.interaction(interactionId)),
-				takeWhile((interaction) => buttonStateOf(interaction.status) === 'pending', true),
+				exhaustMap(() => this.api.interaction(interactionId)),
+				takeWhile((interaction) => {
+					const state = buttonStateOf(interaction.status);
+					if (state === 'pending') return true;
+					if (state === 'done' && !interaction.replyApplied && !lookedAgain) {
+						lookedAgain = true;
+						return true;
+					}
+					return false;
+				}, true),
 				takeUntilDestroyed(this.destroyRef)
 			)
 			.subscribe({

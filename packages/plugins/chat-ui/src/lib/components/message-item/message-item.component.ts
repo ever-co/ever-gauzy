@@ -65,7 +65,7 @@ export type MessageAction =
 						<span class="system-icon"><nb-icon icon="info-outline"></nb-icon></span>
 					} @else if (appIcon(); as icon) {
 						<!-- An app (an incoming webhook): its https icon in place of an avatar. -->
-						<img class="app-icon" [src]="icon" alt="" referrerpolicy="no-referrer" loading="lazy" data-test="app-icon" />
+						<img class="app-icon" [src]="icon" alt="" referrerpolicy="no-referrer" loading="lazy" data-test="app-icon" (error)="iconFailed.set(icon)" />
 					} @else {
 						<!-- A person: hover, focus, Enter or Space opens their profile card (the chat page shows it). -->
 						<ngx-chat-person-avatar
@@ -116,7 +116,8 @@ export type MessageAction =
 					@if (appBlocks().length) {
 						<ngx-chat-app-blocks [message]="message()" [readOnly]="readOnly()" (replaced)="act({ kind: 'replaced', message: $event })"></ngx-chat-app-blocks>
 					}
-					<ngx-chat-link-cards [body]="message().body ?? ''"></ngx-chat-link-cards>
+					<!-- A body that only repeats the app blocks is not shown, nor are cards for its links. -->
+					<ngx-chat-link-cards [body]="bodyHidden() ? '' : (message().body ?? '')"></ngx-chat-link-cards>
 				}
 
 				@if (message().taskReferences?.length) {
@@ -307,7 +308,7 @@ export type MessageAction =
 			.app-icon {
 				width: 2.25rem;
 				height: 2.25rem;
-				border-radius: 0.5rem;
+				border-radius: var(--border-radius);
 				object-fit: cover;
 			}
 			.system-icon {
@@ -827,7 +828,12 @@ export class MessageItemComponent {
 	/** An app message whose body only repeats its blocks shows the blocks alone. */
 	protected readonly bodyHidden = computed(() => bodyRepeatsBlocks(this.message().body, this.appBlocks()));
 	/** The icon of the app that posted the message (https only), shown in place of an avatar. */
-	protected readonly appIcon = computed(() => (this.message().kind === ChatMessageKindEnum.APP ? safeIconUrl(this.message().appIconUrl) : null));
+	/** An app icon that did not load: the initials avatar shows instead (as for a person whose picture failed). */
+	protected readonly iconFailed = signal<string | null>(null);
+	protected readonly appIcon = computed(() => {
+		const icon = this.message().kind === ChatMessageKindEnum.APP ? safeIconUrl(this.message().appIconUrl) : null;
+		return icon && icon !== this.iconFailed() ? icon : null;
+	});
 	/** Someone else's message that names me (or everyone): tinted, as chat apps do. */
 	protected readonly mentioned = computed(() => {
 		const message = this.message();

@@ -109,6 +109,30 @@ describe('ChatWebhooksPanelComponent', () => {
 		confirm.mockRestore();
 	});
 
+	it('holds every write that may make a secret while one is on screen, until it is dismissed', async () => {
+		await open();
+		panel()['startCreate']();
+		panel()['patch']({ name: 'Monitor' });
+		panel()['create']();
+		fixture.detectChanges();
+		expect(element().querySelector('[data-test="webhook-secrets"]')).not.toBeNull();
+		expect((element().querySelector('[data-test="new-webhook"]') as HTMLButtonElement).disabled).toBe(true);
+		expect((element().querySelector('[data-test="rotate-webhook-w1"]') as HTMLButtonElement).disabled).toBe(true);
+		expect((element().querySelector('[data-test="edit-webhook-w1"]') as HTMLButtonElement).disabled).toBe(true);
+		// Called anyway (a stale click): nothing is written, so the first secret is not replaced.
+		const confirm = jest.spyOn(window, 'confirm').mockReturnValue(true);
+		panel()['rotate'](webhook());
+		panel()['create']();
+		expect(api['rotateSecret']).not.toHaveBeenCalled();
+		expect(api['create']).toHaveBeenCalledTimes(1);
+		(element().querySelector('[data-test="secrets-done"]') as HTMLButtonElement).click();
+		fixture.detectChanges();
+		expect((element().querySelector('[data-test="rotate-webhook-w1"]') as HTMLButtonElement).disabled).toBe(false);
+		panel()['rotate'](webhook());
+		expect(api['rotateSecret']).toHaveBeenCalledWith('w1');
+		confirm.mockRestore();
+	});
+
 	it('shows the API refusal', async () => {
 		await open();
 		api['update'].mockReturnValueOnce(throwError(() => ({ error: { message: 'The interaction URL must name a public host.' } })));
