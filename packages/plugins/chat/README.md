@@ -58,6 +58,9 @@ unique per organization by its `directKey` (unique index `tenantId`,
 per-tenant one). The link preview cache, `chat_link_preview` (migration
 `1791000006710`), is described under
 [Link previews](#link-previews-off-unless-gauzy_chat_link_previews_enabledtrue).
+Incoming webhooks (`1791000006730`): `chat_webhook`,
+`chat_webhook_interaction`, and `chat_message.webhookId` / `appIconUrl` /
+`blocks` with a unique (`webhookId`, `nonce`).
 
 ## Routes (`/api/chat`, `CHAT_VIEW`; writes `CHAT_SEND`; 404 for a conversation the caller is not in)
 
@@ -187,8 +190,41 @@ GAUZY_CHAT_ENABLED=true
 FEATURE_CHAT=true            # or switch the feature on per tenant in Settings → Features
 GAUZY_CHAT_LINK_PREVIEWS_ENABLED=true   # optional: link previews (outbound requests to the linked sites)
 GAUZY_CHAT_LINK_PREVIEW_IMAGES_ENABLED=true   # optional, with the previews: their pictures, served by the platform
+GAUZY_CHAT_WEBHOOKS_ENABLED=true   # optional: incoming webhooks
 ```
+
+## Incoming webhooks (`GAUZY_CHAT_WEBHOOKS_ENABLED=true`)
+
+Automation posts into a channel through a per-channel URL (`docs/specs/features/chat-incoming-webhooks/`). Off unless
+the flag is exactly `true` (and chat is on): every route below answers 404.
+
+- **Manage** (a manager of the channel, its creator or `CHAT_MANAGE`; writes need `CHAT_SEND`):
+  `GET|POST /api/chat/conversations/:id/webhooks`, `PATCH|DELETE /api/chat/webhooks/:id` (`DELETE` revokes; the row
+  stays), `POST /api/chat/webhooks/:id/secret` (a new signing secret). Channels only, at most ten active per channel.
+  The create answer holds the URL and the signing secret, shown that once: the URL secret is stored as its SHA-256,
+  the signing secret encrypted with a key from `ENCRYPTION_KEY` (or, when it is unset, derived from a `JWT_SECRET`
+  that is not a published default). With neither, a webhook without an interaction URL is still created but its
+  answer has no signing secret, and an interaction URL is refused (400) until a key is set; `POST …/secret` then
+  makes one. Creating, changing and revoking are written to the activity log.
+- **Post**: `POST /api/chat/hooks/:secret`, public, a JSON body (or a form body with a `payload` field) in the widely
+  used chat-bot shape: `text`, `blocks` (header, section with text and fields, divider, context, actions with
+  buttons; any other type shows as its text), legacy `attachments`. Everything is plain text (HTML dropped);
+  `username`, `icon_url` and `channel` are ignored. A `nonce` (or `Idempotency-Key`) makes a retry post once.
+  Answers `200 ok`, `404 no_webhook`, `410 channel_is_archived`, `422 invalid_payload | payload_too_large (64 KiB; over 128 KiB the API's body parser answers 413 before reading it) |
+  too_many_blocks (50) | invalid_blocks | no_text`, `429 rate_limited` with `Retry-After` (per webhook 60/min and 20
+  per 10 s, per organization 600/min and 100 per 10 s; `GAUZY_CHAT_WEBHOOK_*` in `.env.sample`).
+- **The message**: `kind: app`, no employee author, `webhookId`, `appName`, `appIconUrl`, `blocks`; counted and
+  streamed like a member's message; its mentions move the mention badges (no inbox notification yet: the platform's
+  notification writes need a signed-in author). `<!channel>` / `<!here>` count only when the webhook may broadcast.
+- **Buttons**: `POST /api/chat/messages/:id/interactions` `{ actionId, blockId? }` (members; 404 otherwise) posts a
+  signed callback to the webhook's interaction URL: `X-Signature: t=<unix>,v1=<hex HMAC-SHA256 of "<t>.<body>">` (the
+  platform's outgoing-webhook signature; verify within 300 s), `Idempotency-Key` = `X-Interaction-Id` = the
+  `interactionId`, the same on the three retries (2 s, 10 s, 30 s), each signed afresh. The body names the actor
+  (employee id and name only), the message, the action id and its stored value. A 2xx JSON reply with `text` /
+  `blocks` / `attachments` replaces the message once (`"replace_original": false` leaves it). The interaction URL
+  must be `https:` on a public host; it is resolved when saved and at every attempt through the plugin's egress
+  guard (`src/lib/egress`), no redirect followed. `GET /api/chat/interactions/:id` answers the clicker the state.
 
 ## Not yet in this plugin (next slices)
 
-Incoming webhooks, the Ever Teams client (in progress).
+The Ever Teams client (in progress); incoming webhooks: a later-reply URL, mentions inside blocks.
