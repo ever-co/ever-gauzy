@@ -605,7 +605,10 @@ describe.each([MultiORMEnum.TypeORM, MultiORMEnum.MikroORM])(
 				expect(started.startedAt).toEqual(NOW);
 				expect(rows[0]).toMatchObject({ isRunning: false, stoppedAt: NOW });
 				expect(updates).toEqual([
-					expect.objectContaining({ id: 'replaced', input: { isRunning: false, stoppedAt: NOW } })
+					expect.objectContaining({
+						id: 'replaced',
+						input: { isRunning: false, startedAt: TWO_HOURS_AGO, stoppedAt: NOW }
+					})
 				]);
 				expect(logger.warn).not.toHaveBeenCalled();
 			}
@@ -621,6 +624,23 @@ describe.each([MultiORMEnum.TypeORM, MultiORMEnum.MikroORM])(
 			expect(rows[0]).toMatchObject({ isRunning: false, stoppedAt: namedStart });
 		});
 
+		it('names the start of a run from last week, which keeps it in that week of the timesheet', async () => {
+			const lastWeek = new Date('2026-10-17T09:00:00.000Z');
+			const rows = [run('replaced', TimeLogSourceEnum.WEB_TIMER, lastWeek)];
+			const { service, updates } = setup(rows);
+
+			await startOnDesktop(service);
+
+			// An update naming no start files the log under the week of now (`TimesheetFirstOrCreateCommand`)
+			expect(updates).toEqual([
+				expect.objectContaining({
+					id: 'replaced',
+					input: { isRunning: false, startedAt: lastWeek, stoppedAt: NOW }
+				})
+			]);
+			expect(rows[0]).toMatchObject({ isRunning: false, startedAt: lastWeek, stoppedAt: NOW });
+		});
+
 		it('ends an Ever Teams run at its last heartbeat, not where its time slots add up to nor at the new start', async () => {
 			const lastHeartbeat = new Date('2026-10-24T01:58:00.000Z');
 			const rows = [run('replaced', TimeLogSourceEnum.TEAMS, TWO_HOURS_AGO, lastHeartbeat)];
@@ -631,7 +651,10 @@ describe.each([MultiORMEnum.TypeORM, MultiORMEnum.MikroORM])(
 			// 01:58, not 00:30 where its slots add up to, nor 02:00
 			expect(rows[0]).toMatchObject({ isRunning: false, stoppedAt: lastHeartbeat });
 			expect(updates).toEqual([
-				expect.objectContaining({ id: 'replaced', input: { isRunning: false, stoppedAt: lastHeartbeat } })
+				expect.objectContaining({
+					id: 'replaced',
+					input: { isRunning: false, startedAt: TWO_HOURS_AGO, stoppedAt: lastHeartbeat }
+				})
 			]);
 			expect(logger.warn).not.toHaveBeenCalled();
 		});

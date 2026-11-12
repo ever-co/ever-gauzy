@@ -922,7 +922,9 @@ export class TimerService {
 	 * @param stoppedAt - Where it ends.
 	 */
 	private async stopReplacedRun(log: ITimeLog, stoppedAt: Date): Promise<void> {
-		const partialTimeLog: Partial<ITimeLog> = { isRunning: false, stoppedAt };
+		// With its own start too: an update naming none files the log under the current week's timesheet
+		const startedAt = moment.utc(log.startedAt).toDate();
+		const partialTimeLog: Partial<ITimeLog> = { isRunning: false, startedAt, stoppedAt };
 		try {
 			await this._commandBus.execute(new TimeLogUpdateCommand(partialTimeLog, log.id));
 		} catch (error) {
