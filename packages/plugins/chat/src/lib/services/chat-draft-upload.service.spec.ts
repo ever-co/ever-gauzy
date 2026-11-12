@@ -72,7 +72,8 @@ function over(
 		links?: number;
 		shares?: number;
 		named?: number;
-		keyNamedElsewhere?: number;
+		/** Other document rows (any tenant, trashed included) and the keys they name. */
+		otherRows?: Array<{ storageKey?: string; thumbKey?: string }>;
 		claimed?: number;
 		deleteFails?: boolean;
 		databaseType?: string;
@@ -99,7 +100,10 @@ function over(
 				if (options.deleteFails) throw new Error('connection lost');
 				return { affected: 1 };
 			}),
-			count: jest.fn(async () => options.keyNamedElsewhere ?? 0)
+			// How many other rows name the key asked for, as the query's clauses (`storageKey` or `thumbKey`) say.
+			count: jest.fn(async ({ where }: { where: Array<{ storageKey?: string; thumbKey?: string }> }) =>
+				(options.otherRows ?? []).filter((row) => where.some((clause) => (clause.storageKey !== undefined && row.storageKey === clause.storageKey) || (clause.thumbKey !== undefined && row.thumbKey === clause.thumbKey))).length
+			)
 		},
 		DocumentLink: { count: jest.fn(async () => options.links ?? 0) },
 		DocumentShare: { count: jest.fn(async () => options.shares ?? 0) }
@@ -171,20 +175,29 @@ describe('ChatDraftUploadService', () => {
 		expect(provider.deleteFile.mock.calls).toEqual([['docs/d1.png'], ['docs/d1.thumb.webp']]);
 	});
 
-	it('keeps the stored bytes another document row still names (a version, a trashed twin)', async () => {
-		const { service, repositories } = over({ keyNamedElsewhere: 1 });
+	it('keeps the stored bytes another document row still names (a version, a trashed twin), and only those', async () => {
+		// Another row names the file's key (as its thumbnail, even): the file stays, the thumbnail goes.
+		const { service, repositories } = over({ otherRows: [{ thumbKey: 'docs/d1.png' }, { storageKey: 'docs/other.png', thumbKey: 'docs/other.thumb.webp' }] });
 		await expect(service.discard(caller, 'd1')).resolves.toEqual({ discarded: true });
 		expect(repositories['Document']['delete']).toHaveBeenCalled();
-		expect(provider.deleteFile).not.toHaveBeenCalled();
+		expect(provider.deleteFile.mock.calls).toEqual([['docs/d1.thumb.webp']]);
 	});
 
-	it('keeps a document a message carries, a link names, a share gives out, or its owner adopted in Docs', async () => {
+	it('frees both keys when the other rows name only other keys', async () => {
+		const { service } = over({ otherRows: [{ storageKey: 'docs/d1.png.bak' }, { thumbKey: 'docs/d1.thumb.png' }] });
+		await expect(service.discard(caller, 'd1')).resolves.toEqual({ discarded: true });
+		expect(provider.deleteFile.mock.calls).toEqual([['docs/d1.png'], ['docs/d1.thumb.webp']]);
+	});
+
+	it('keeps a document a message carries, a link names, a share gives out, or its owner adopted, archived or trashed in Docs', async () => {
 		for (const options of [
 			{ links: 1 },
 			{ shares: 1 },
 			{ named: 1 },
 			{ document: draftDocument({ parentId: 'folder' }) },
-			{ document: draftDocument({ visibility: DocumentVisibilityEnum.ORGANIZATION }) }
+			{ document: draftDocument({ visibility: DocumentVisibilityEnum.ORGANIZATION }) },
+			{ document: draftDocument({ isArchived: true }) },
+			{ document: draftDocument({ deletedAt: new Date('2026-11-02T00:00:00Z') }) }
 		]) {
 			const { service, repositories } = over(options);
 			await expect(service.discard(caller, 'd1')).resolves.toEqual({ discarded: false });

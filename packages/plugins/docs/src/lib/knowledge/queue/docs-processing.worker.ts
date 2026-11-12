@@ -8,6 +8,7 @@ import {
 	DOCS_JOB_CLASSIFY,
 	DOCS_JOB_EMBED,
 	DOCS_JOB_EXTRACT,
+	DOCS_JOB_IMPORT,
 	DOCS_JOB_INDEX,
 	DOCS_JOB_RECONCILE,
 	DOCS_JOB_THUMBNAIL,
@@ -18,6 +19,7 @@ import {
 	IDocsClassifyJob,
 	IDocsEmbedJob,
 	IDocsExtractJob,
+	IDocsImportJob,
 	IDocsIndexJob,
 	IDocsJobBase,
 	IDocsReconcileJob,
@@ -115,6 +117,16 @@ export class DocsProcessingWorker extends QueueWorkerHost {
 	@QueueJobHandler(DOCS_JOB_THUMBNAIL)
 	public async handleThumbnail(job: Job<IDocsThumbnailJob>): Promise<void> {
 		await this.pipeline.handleThumbnail(fromBullJob(job));
+	}
+
+	/**
+	 * `docs.import` → {@link DocsPipelineService.handleImport} — one run of an import from an exported workspace. It
+	 * rejects only while attempts are left (BullMQ retries, the run resumes); the last attempt ends the import FAILED.
+	 */
+	@QueueJobHandler(DOCS_JOB_IMPORT)
+	public async handleImport(job: Job<IDocsImportJob>): Promise<void> {
+		// Through `runStage`, so the `FEATURE_DOCUMENTS` gate parks an import whose tenant switched Docs off.
+		await this.pipeline.runStage(DOCS_JOB_IMPORT, fromBullJob(job));
 	}
 
 	/** `docs.reconcile` → {@link DocsPipelineService.handleReconcile}. */

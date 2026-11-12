@@ -43,6 +43,10 @@ describe('chat draft uploads', () => {
 		// Adopted in Docs: moved into a folder, or shared.
 		expect(isUntouchedDraft({ ...upload, parentId: 'folder' }, 'u1')).toBe(false);
 		expect(isUntouchedDraft({ ...upload, visibility: DocumentVisibilityEnum.ORGANIZATION }, 'u1')).toBe(false);
+		// Archived, or in the trash (Docs restores it from there).
+		expect(isUntouchedDraft({ ...upload, isArchived: true }, 'u1')).toBe(false);
+		expect(isUntouchedDraft({ ...upload, deletedAt: new Date() }, 'u1')).toBe(false);
+		expect(isUntouchedDraft({ ...upload, isArchived: false, deletedAt: null }, 'u1')).toBe(true);
 	});
 
 	it('frees each stored key once, and only a key a provider may be handed', () => {

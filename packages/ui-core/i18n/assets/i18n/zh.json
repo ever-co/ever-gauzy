@@ -4979,6 +4979,7 @@
 		"TASK_ADDED": "任务已添加",
 		"TASK_UPDATED": "任务被更改。",
 		"TASK_DELETED": "任务已被移除",
+		"TASK_MOVED_TO_TRASH": "任务已移至回收站",
 		"TASKS_PROJECT": "项目",
 		"TASKS_CREATOR": "创建者",
 		"TASK_MEMBERS": "员工",
@@ -5017,7 +5018,30 @@
 		"ARE_YOU_SURE": "你确定要删除冲刺吗？",
 		"SETTINGS": "设置",
 		"MODULE": "模块",
-		"SELECT_MODULE": "模块"
+		"SELECT_MODULE": "模块",
+		"TRASH": {
+			"TITLE": "回收站",
+			"BACK": "返回任务",
+			"SEARCH": "按标题或编号搜索",
+			"HINT": "已删除的任务会留在这里，直到被恢复或永久删除。",
+			"RESTORE": "恢复",
+			"RESTORED": "“{{ title }}”已恢复",
+			"DELETE_FOREVER": "永久删除",
+			"DELETE_FOREVER_CONFIRM": "要永久删除吗？此操作无法撤销。",
+			"DELETED_FOREVER": "“{{ title }}”已永久删除",
+			"DELETED_BY": "由 {{ name }} 删除 · {{ date }}",
+			"DELETED_AT": "删除于 {{ date }}",
+			"LOAD_MORE": "加载更多（{{ shown }}/{{ total }}）",
+			"LOAD_FAILED": "无法加载回收站。",
+			"EMPTY_TITLE": "回收站为空",
+			"EMPTY_TEXT": "已删除的任务会显示在这里。",
+			"NO_MATCH_TITLE": "没有匹配的已删除任务",
+			"NO_MATCH_TEXT": "请尝试其他标题或编号。",
+			"UNAVAILABLE_TITLE": "回收站不可用",
+			"UNAVAILABLE_TEXT": "此服务器尚未保留已删除的任务。请让管理员开启任务回收站。",
+			"FORBIDDEN_TITLE": "你无权查看此回收站",
+			"FORBIDDEN_TEXT": "请让有删除任务权限的人恢复任务。"
+		}
 	},
 	"JOBS": {
 		"EMPLOYEE": "员工",
@@ -9197,5 +9221,13 @@
 		"NO_TIME_ENTRIES": "最近没有时间记录",
 		"RUNNING": "进行中",
 		"ACTIVITY_LEVEL": "活跃度：跟踪期间键盘和鼠标的使用情况"
+	},
+	"COMMENT_REACTIONS": {
+		"ADD": "添加回应",
+		"REACT_WITH": "用 {{ emoji }} 回应",
+		"REACTED_WITH": "{{ people }} 用 {{ emoji }} 回应",
+		"YOU": "你",
+		"OTHERS": "另外 {{ count }} 人",
+		"FAILED": "回应未保存。"
 	}
 }

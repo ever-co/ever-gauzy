@@ -80,7 +80,7 @@ const ReactionRowSchema = new EntitySchema<IReactionRow>({
 	}
 });
 
-const idsOf = (rows: ReadonlyArray<{ id: string }>): string[] => rows.map((row) => row.id).sort();
+const idsOf = (rows: ReadonlyArray<{ id?: string }>): string[] => rows.map((row) => row.id as string).sort();
 
 describe('ReactionService — the generic routes leave chat messages’ reactions to the chat API', () => {
 	let dataSource: DataSource;

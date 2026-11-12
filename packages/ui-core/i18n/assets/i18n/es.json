@@ -4449,6 +4449,7 @@
 		"TASK_ADDED": "Se agregó la tarea",
 		"TASK_UPDATED": "La tarea fue cambiada.",
 		"TASK_DELETED": "La tarea fue eliminada.",
+		"TASK_MOVED_TO_TRASH": "Tarea movida a la papelera",
 		"TASKS_PROJECT": "Proyecto",
 		"TASKS_CREATOR": "Creado por",
 		"TASK_MEMBERS": "Empleados",
@@ -4487,7 +4488,30 @@
 		"ARE_YOU_SURE": "¿Estás seguro de que quieres eliminar sprint?",
 		"SETTINGS": "Ajustes",
 		"MODULE": "Módulo",
-		"SELECT_MODULE": "Módulo(s)"
+		"SELECT_MODULE": "Módulo(s)",
+		"TRASH": {
+			"TITLE": "Papelera",
+			"BACK": "Volver a las tareas",
+			"SEARCH": "Buscar por título o número",
+			"HINT": "Las tareas eliminadas se quedan aquí hasta que se restauran o se eliminan para siempre.",
+			"RESTORE": "Restaurar",
+			"RESTORED": "«{{ title }}» ha vuelto",
+			"DELETE_FOREVER": "Eliminar para siempre",
+			"DELETE_FOREVER_CONFIRM": "¿Eliminar para siempre? No se puede deshacer.",
+			"DELETED_FOREVER": "«{{ title }}» se eliminó para siempre",
+			"DELETED_BY": "Eliminada por {{ name }} · {{ date }}",
+			"DELETED_AT": "Eliminada {{ date }}",
+			"LOAD_MORE": "Cargar más ({{ shown }} de {{ total }})",
+			"LOAD_FAILED": "No se pudo cargar la papelera.",
+			"EMPTY_TITLE": "La papelera está vacía",
+			"EMPTY_TEXT": "Las tareas eliminadas aparecen aquí.",
+			"NO_MATCH_TITLE": "Ninguna tarea eliminada coincide",
+			"NO_MATCH_TEXT": "Prueba con otro título o número.",
+			"UNAVAILABLE_TITLE": "La papelera no está disponible",
+			"UNAVAILABLE_TEXT": "Este servidor todavía no guarda las tareas eliminadas. Pide a un administrador que active la papelera de tareas.",
+			"FORBIDDEN_TITLE": "No puedes ver esta papelera",
+			"FORBIDDEN_TEXT": "Pide a alguien que pueda eliminar tareas que restaure la tarea."
+		}
 	},
 	"JOBS": {
 		"EMPLOYEE": "Empleado",
@@ -7985,5 +8009,13 @@
 		"NO_TIME_ENTRIES": "Sin registros de tiempo recientes",
 		"RUNNING": "En curso",
 		"ACTIVITY_LEVEL": "Actividad: uso del teclado y del ratón durante el seguimiento"
+	},
+	"COMMENT_REACTIONS": {
+		"ADD": "Añadir reacción",
+		"REACT_WITH": "Reaccionar con {{ emoji }}",
+		"REACTED_WITH": "Reacción {{ emoji }}: {{ people }}",
+		"YOU": "Tú",
+		"OTHERS": "{{ count }} más",
+		"FAILED": "No se guardó la reacción."
 	}
 }

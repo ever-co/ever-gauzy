@@ -40,7 +40,16 @@ import { ChatTaskCardService, taskPatchOf } from './chat-task-card.service';
 const caller: IChatCaller = { tenantId: 'ten', organizationId: 'org', userId: 'u1', employeeId: 'e1', canManage: false };
 
 function over(
-	options: { reference?: boolean; task?: boolean; taskOrganization?: string; employees?: number; status?: boolean; archived?: boolean; member?: boolean } = {}
+	options: {
+		reference?: boolean;
+		task?: boolean;
+		taskOrganization?: string;
+		employees?: number;
+		status?: boolean;
+		statusProject?: string;
+		archived?: boolean;
+		member?: boolean;
+	} = {}
 ) {
 	const message = { id: 'm1', conversationId: 'c1', kind: 'message', tenantId: 'ten', organizationId: 'org', deletedAt: null };
 	const repositories: Record<string, Record<string, jest.Mock>> = {
@@ -53,12 +62,28 @@ function over(
 		Task: {
 			findOne: jest.fn(async ({ where }: { where: { organizationId?: string } }) => {
 				if (options.task === false) return null;
-				const task = { id: 't1', organizationId: options.taskOrganization ?? 'org' };
+				const task = { id: 't1', organizationId: options.taskOrganization ?? 'org', projectId: 'p1' };
 				return !where.organizationId || where.organizationId === task.organizationId ? task : null;
 			})
 		},
-		TaskStatus: { findOne: jest.fn(async () => (options.status === false ? null : { id: 's1' })) },
-		TaskPriority: { findOne: jest.fn(async () => ({ id: 'p1' })) },
+		TaskStatus: {
+			findOne: jest.fn(async () => (options.status === false ? null : { id: 's1', name: 'Done', value: 'done', projectId: options.statusProject ?? null })),
+			// The statuses of the task's scope: the organization's, its project's own twin, and another project's.
+			find: jest.fn(async () => [
+				{ id: 's-org', name: 'In Review', value: 'in-review', organizationId: 'org', projectId: null },
+				{ id: 's-project', name: 'In Review', value: 'in-review', organizationId: 'org', projectId: 'p1' },
+				{ id: 's-other', name: 'Blocked', value: 'blocked', organizationId: 'org', projectId: 'p9' },
+				// A team's own status: a name alone never takes it (whose team would it be?).
+				{ id: 's-team', name: 'Done', value: 'done', tenantId: 'ten', organizationId: 'org', projectId: null, organizationTeamId: 'team-9' },
+				// The platform's default and the tenant's shared record of one name: the tenant's wins.
+				{ id: 's-default', name: 'Done', value: 'done', tenantId: null, organizationId: null, projectId: null, organizationTeamId: null },
+				{ id: 's-tenant', name: 'Done', value: 'done', tenantId: 'ten', organizationId: null, projectId: null, organizationTeamId: null }
+			])
+		},
+		TaskPriority: {
+			findOne: jest.fn(async () => ({ id: 'pr1', name: 'High', value: 'high' })),
+			find: jest.fn(async () => [{ id: 'pr-high', name: 'High', value: 'high', organizationId: null, projectId: null }])
+		},
 		Employee: { find: jest.fn(async () => Array.from({ length: options.employees ?? 2 }, (_, index) => ({ id: `e${index + 1}` }))) }
 	};
 	const manager = { getRepository: (entity: string | { name?: string }) => repositories[typeof entity === 'string' ? entity : String(entity?.name)] };
@@ -115,10 +140,42 @@ describe('ChatTaskCardService.update', () => {
 		expect(commandBus.execute.mock.calls[0][0]).toEqual(
 			expect.objectContaining({ id: 't1', input: { status: 'done', taskStatusId: 's1', members: [{ id: 'e1' }, { id: 'e2' }] } })
 		);
+		expect(commandBus.execute.mock.calls[0][0].input).toEqual({ status: 'done', taskStatusId: 's1', members: [{ id: 'e1' }, { id: 'e2' }] });
 		expect(result.task).toEqual(expect.objectContaining({ id: 't1', status: 'done' }));
 		// Both conversations are told; the answer shows only the caller's own (c2 is not the caller's to learn of).
 		expect(realtime.append).toHaveBeenCalledTimes(2);
 		expect(result.events).toEqual([{ name: 'chat_message.updated', data: { messageId: 'm1', to: ['u1', 'u2'] } }]);
+	});
+
+	it('keeps a status and its record together, as the task page writes them', async () => {
+		const run = async (input: IChatTaskUpdateInput) => {
+			const { service, commandBus } = over();
+			await service.update(caller, 'm1', 't1', input);
+			return commandBus.execute.mock.calls[0][0].input;
+		};
+		// A record named gives its name.
+		expect(await run({ taskStatusId: 's1' })).toEqual({ taskStatusId: 's1', status: 'done' });
+		expect(await run({ status: 'Finished', taskStatusId: 's1' })).toEqual({ taskStatusId: 's1', status: 'done' });
+		// A name alone takes the matching record of the task's project first.
+		expect(await run({ status: 'in review' })).toEqual({ status: 'in-review', taskStatusId: 's-project' });
+		// A name no record of the scope holds clears the record, so the card never shows the one it had.
+		expect(await run({ status: 'Blocked' })).toEqual({ status: 'Blocked', taskStatusId: null });
+		expect(await run({ status: 'Someday' })).toEqual({ status: 'Someday', taskStatusId: null });
+		// Another team's record of that name is passed over for the shared one: the tenant's before the platform's.
+		expect(await run({ status: 'Done' })).toEqual({ status: 'done', taskStatusId: 's-tenant' });
+		// A record cleared leaves the name as given.
+		expect(await run({ status: 'Someday', taskStatusId: null })).toEqual({ status: 'Someday', taskStatusId: null });
+	});
+
+	it('keeps a priority and its record together too', async () => {
+		const run = async (input: IChatTaskUpdateInput) => {
+			const { service, commandBus } = over();
+			await service.update(caller, 'm1', 't1', input);
+			return commandBus.execute.mock.calls[0][0].input;
+		};
+		expect(await run({ priority: 'HIGH' })).toEqual({ priority: 'high', taskPriorityId: 'pr-high' });
+		expect(await run({ taskPriorityId: 'pr1' })).toEqual({ taskPriorityId: 'pr1', priority: 'high' });
+		expect(await run({ priority: null })).toEqual({ priority: null, taskPriorityId: null });
 	});
 
 	it('refuses a channel manager who has not joined the channel, before the task is changed', async () => {
@@ -165,6 +222,8 @@ describe('ChatTaskCardService.update', () => {
 			[{ reference: false }, { status: 'done' }],
 			[{ task: false }, { status: 'done' }],
 			[{ taskOrganization: 'other' }, { status: 'done' }],
+			// A status record of another project of the organization.
+			[{ statusProject: 'p9' }, { taskStatusId: 's1' }],
 			[{ status: false }, { taskStatusId: 's9' }],
 			[{ employees: 1 }, { assigneeEmployeeIds: ['e1', 'e9'] }]
 		];
