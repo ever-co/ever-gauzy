@@ -83,8 +83,10 @@
 - [x] **T23**. Ever Teams: range comments (highlight, panel, live relative
       positions), the anchor proxies, the folder zip export (ever-teams
       `feat/docs-platform-gaps`)
-- [ ] **T24**. The Angular Docs UI: range comments, snippets in the search
-      results, the folder zip export
+- [ ] **T24**. The Angular Docs UI: snippets in the search results and the zip
+      export of a folder or a page with sub-pages (`feat/docs-ui-platform-gaps`,
+      done); range comments in the Angular editor (open: its block comments
+      keep working, a range thread made in Ever Teams shows on its block)
 - [ ] **T25**. Manual check on dev with `GAUZY_DOCS_COLLAB_ENABLED=true` (a
       range found again after edits, live and saved; a follower's Inbox entry
       opens the thread; a folder's zip opened)
