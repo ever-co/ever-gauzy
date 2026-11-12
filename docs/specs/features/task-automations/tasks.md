@@ -31,7 +31,7 @@
 
 ## Phase 3 — Ever Teams (PR 3, ever-teams)
 
-- [ ] **T15**. Settings → Automations behind `NEXT_PUBLIC_TASK_AUTOMATIONS_ENABLED` (default off), hidden on 404; strings in all 13 locales; spec in `docs/specs/features/task-automations/`
+- [x] **T15**. Settings → Automations behind `NEXT_PUBLIC_TASK_AUTOMATIONS_ENABLED` (default off), hidden on 404; strings in all 13 locales; spec in `docs/specs/features/task-automations/` ([ever-teams#5073](https://github.com/ever-co/ever-teams/pull/5073), `b53891188a`)
 
 ## Follow-ups
 
