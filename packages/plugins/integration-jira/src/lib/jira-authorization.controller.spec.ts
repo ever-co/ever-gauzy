@@ -41,7 +41,11 @@ function setup(options: { sites: (typeof SITE_A)[]; existingSite: string | null;
 		summaryOf: jest.fn(() => ({ cloudId: options.existingSite })),
 		connect: jest.fn(async () => ({ id: 'int-1' }))
 	};
-	const mappings = { list: jest.fn(async () => Array.from({ length: options.mappings }, (_, index) => ({ id: `m-${index}` }))) };
+	const mappings = {
+		list: jest.fn(async () => Array.from({ length: options.mappings }, (_, index) => ({ id: `m-${index}` }))),
+		// The reconnect is written under the organization's mappings lock.
+		whileOrganizationMappingsLocked: jest.fn(async (_scope: unknown, work: () => Promise<unknown>) => work())
+	};
 	const oauthState = { consume: jest.fn(async () => SCOPE) };
 	(exchangeJiraCode as jest.Mock).mockResolvedValue({ accessToken: 'at', refreshToken: options.refreshToken === undefined ? 'rt' : options.refreshToken, tokenType: 'Bearer' });
 	(accessibleJiraSites as jest.Mock).mockResolvedValue(options.sites);
@@ -85,6 +89,16 @@ describe('GET /integration/jira/callback: the site of the connection', () => {
 	it('a reconnect of a connection with mappings whose token no longer reaches its site is refused (site_mismatch), nothing saved', async () => {
 		const { tenants, callback, sentTo } = setup({ sites: [SITE_A], existingSite: SITE_B.id, mappings: 1 });
 		await callback();
+		expect(tenants.connect).not.toHaveBeenCalled();
+		expect(sentTo().searchParams.get('error')).toBe('site_mismatch');
+	});
+
+	it('refuses a reconnect to another site when a mapping of the former site appeared while it ran (read again under the lock)', async () => {
+		const { tenants, mappings, callback, sentTo } = setup({ sites: [SITE_A], existingSite: SITE_B.id, mappings: 0 });
+		// No mapping when the callback first looks; one by the time it holds the lock.
+		mappings.list.mockResolvedValueOnce([]).mockResolvedValueOnce([{ id: 'm-new' }]);
+		await callback();
+		expect(mappings.whileOrganizationMappingsLocked).toHaveBeenCalledTimes(1);
 		expect(tenants.connect).not.toHaveBeenCalled();
 		expect(sentTo().searchParams.get('error')).toBe('site_mismatch');
 	});

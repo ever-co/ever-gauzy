@@ -127,7 +127,7 @@ describe('JiraTenantService — tokens and the site', () => {
 		expect(reused?.usesToken('at-3')).toBe(true);
 	});
 
-	it('keeps the pair another process stored while its own exchange ran, and drops its own', async () => {
+	it('keeps the pair another process stored while its own exchange ran: stores nothing, and goes on with its own fresh token', async () => {
 		const { service, row, stored, value } = harness({ [JiraSettingName.ACCESS_TOKEN]: 'at-1', [JiraSettingName.REFRESH_TOKEN]: 'rt-1', [JiraSettingName.EXPIRES_AT]: soon(), [JiraSettingName.JIRA_CLOUD_ID]: 'c' });
 		jest.spyOn(globalThis, 'fetch').mockImplementation(async () => {
 			// The other process wins the race: its pair is stored before this exchange answers.
@@ -138,7 +138,8 @@ describe('JiraTenantService — tokens and the site', () => {
 			return tokenAnswer({ access_token: 'at-mine', refresh_token: 'rt-mine', expires_in: 3600 });
 		});
 		const client = await service.refreshAccessToken(row as never);
-		expect(client?.usesToken('at-other')).toBe(true);
+		// The other pair may be half written: this call uses the access token its own exchange minted.
+		expect(client?.usesToken('at-mine')).toBe(true);
 		expect(value(JiraSettingName.ACCESS_TOKEN)).toBe('at-other');
 		expect(value(JiraSettingName.REFRESH_TOKEN)).toBe('rt-other');
 	});

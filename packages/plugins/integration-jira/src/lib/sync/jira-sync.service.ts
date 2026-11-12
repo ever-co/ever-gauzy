@@ -399,7 +399,8 @@ export class JiraSyncService {
 				// what the task store cannot keep, such as media): an edit of another field never rewrites it.
 				const keepDescription = await this.conflicts
 					.descriptionUnchangedSinceSync({ tenantId, integrationId: mapping.integrationId, sourceId: existing.sourceId, task: task as unknown as Record<string, unknown> })
-					.catch(() => false);
+					// Unknown (the read failed): kept, as an unchanged one is; a real edit goes out with the next push.
+					.catch(() => true);
 				const update = keepDescription ? withoutDescription(fields) : fields;
 				await this.call(holder, (client) => client.updateIssue(existing.sourceId, update));
 				await this.moveToStatus(holder, existing.sourceId, task.status ?? null, statusMap);

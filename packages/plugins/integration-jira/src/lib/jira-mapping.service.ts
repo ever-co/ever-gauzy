@@ -139,6 +139,17 @@ export class JiraMappingService extends TenantAwareCrudService<JiraProjectMappin
 	}
 
 	/**
+	 * Runs work while no mapping of the organization can be created or changed (the lock a creation takes): a reconnect
+	 * checks the site its mappings pin and writes the connection under it.
+	 */
+	async whileOrganizationMappingsLocked<T>(scope: { tenantId: ID; organizationId: ID }, work: () => Promise<T>): Promise<T> {
+		return this.dataSource.transaction(async (manager) => {
+			await this.lockMappingsOf(manager, scope as IIntegrationTenant);
+			return work();
+		});
+	}
+
+	/**
 	 * Runs work while no mapping of the connection's organization can be created or changed (the lock a creation takes),
 	 * handing it how many mappings the connection has: a site change checks and writes under it, so a mapping created
 	 * meanwhile for the former site can never stay behind on the new one.
