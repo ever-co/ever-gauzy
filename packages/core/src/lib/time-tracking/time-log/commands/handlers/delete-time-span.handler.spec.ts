@@ -706,6 +706,19 @@ describe('DeleteTimeSpanHandler and a stopped log the new range takes one end of
 			expect(store.slotCount()).toBe(6);
 		});
 	});
+
+	it('keeps the log and its slots after the range when that range takes its start and ends between seconds', async () => {
+		const store = createStore();
+		store.addLog('tracked', '08:00', '11:00');
+
+		// The end of a range a tracker sends carries milliseconds; a slot's start never does.
+		await store.cleanUp('07:00', '09:55:00.500');
+
+		expect(store.timeline()).toEqual([
+			{ range: '09:55-11:00', isRunning: false, slots: slotStarts('09:55', '11:00') }
+		]);
+		expect(store.slotCount()).toBe(7);
+	});
 });
 
 describe('DeleteTimeSpanHandler and a stopped log the new range falls inside (#11823)', () => {
