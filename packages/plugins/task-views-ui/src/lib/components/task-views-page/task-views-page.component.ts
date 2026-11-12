@@ -308,6 +308,8 @@ export class TaskViewsPageComponent implements OnInit {
 	private opening = 0;
 	/** Bumped at each read of the switcher's list: only the latest read is shown. */
 	private viewsRead = 0;
+	/** The latest opening of a view (its read and its rows): a write's refresh waits for it. */
+	private openingTask: Promise<void> = Promise.resolve();
 	private lastSent: ApplicableTree | null = null;
 	private filterTimer: ReturnType<typeof setTimeout> | null = null;
 	private undoTimer: ReturnType<typeof setTimeout> | null = null;
@@ -378,7 +380,13 @@ export class TaskViewsPageComponent implements OnInit {
 			: [TASK_VIEWS_LINK, TASK_VIEWS_BUILT_IN_SEGMENT, ref.key];
 	}
 
-	private async open(ref: ViewRef): Promise<void> {
+	private open(ref: ViewRef): Promise<void> {
+		const task = this.openView(ref);
+		this.openingTask = task.catch(() => undefined);
+		return task;
+	}
+
+	private async openView(ref: ViewRef): Promise<void> {
 		const scope = this.scope();
 		if (!scope) return;
 		const opening = ++this.opening;
@@ -877,10 +885,11 @@ export class TaskViewsPageComponent implements OnInit {
 				this.toastr.warning('TASK_VIEWS.BULK.LIMIT', { limit: TASK_SELECTION_LIMIT });
 			return;
 		}
-		const opening = this.opening;
 		this.busy.set(true);
+		let wrote = false;
 		try {
 			const outcome = await firstValueFrom(this.api.bulkUpdate(built.request));
+			wrote = true;
 			const summary = summarizeOutcome(outcome);
 			// Another organization opened meanwhile: its page offers no undo of this one's tasks.
 			if (this.scope() === scope)
@@ -896,12 +905,12 @@ export class TaskViewsPageComponent implements OnInit {
 					errors: this.refusalText(summary)
 				});
 			if (changedTaskIds(outcome).length) this.api.notify('tasks');
-			await this.reloadIfOpen(opening);
 		} catch (error) {
 			this.toastr.danger(this.errorMessage(error, 'TASK_VIEWS.BULK.FAILED'));
 		} finally {
 			this.busy.set(false);
 		}
+		if (wrote) await this.refreshAfterWrite(scope);
 	}
 
 	/**
@@ -911,8 +920,8 @@ export class TaskViewsPageComponent implements OnInit {
 	 */
 	protected async undoLast(): Promise<void> {
 		const pending = this.undo();
-		if (!pending?.request || this.busy()) return;
-		const opening = this.opening;
+		const scope = this.scope();
+		if (!pending?.request || !scope || this.busy()) return;
 		this.busy.set(true);
 		try {
 			const outcome = await firstValueFrom(this.api.bulkUpdate(pending.request));
@@ -928,18 +937,19 @@ export class TaskViewsPageComponent implements OnInit {
 			const lossy = restoredInPart(pending.lossy, outcome);
 			if (lossy) this.toastr.warning('TASK_VIEWS.BULK.UNDO_LOSSY', { count: lossy });
 			this.api.notify('tasks');
-			await this.reloadIfOpen(opening);
 		} catch (error) {
 			this.toastr.danger(this.errorMessage(error, 'TASK_VIEWS.BULK.UNDO_FAILED'));
-			await this.reloadIfOpen(opening);
 		} finally {
 			this.busy.set(false);
 		}
+		// Done or failed (a part may have gone through), the rows are read again.
+		await this.refreshAfterWrite(scope);
 	}
 
 	protected async deleteSelected(): Promise<void> {
 		const ids = [...this.selection().ids];
-		if (!ids.length || this.busy()) return;
+		const scope = this.scope();
+		if (!ids.length || !scope || this.busy()) return;
 		const opening = this.opening;
 		const confirmed = await this.confirm(
 			'TASK_VIEWS.BULK.DELETE_CONFIRM',
@@ -982,18 +992,24 @@ export class TaskViewsPageComponent implements OnInit {
 				});
 			else this.toastr.success('TASK_VIEWS.BULK.DELETED', { count: summary.applied });
 			this.api.notify('tasks');
-			await this.reloadIfOpen(opening);
 		} finally {
 			this.busy.set(false);
 		}
+		await this.refreshAfterWrite(scope);
 	}
 
 	/**
-	 * Reads the rows again after a change made in an opening, while that opening lasts: another view opened since
-	 * reads its own rows (and a read now would supersede its opening's).
+	 * Reads the rows again after a write, in the organization it was made in. A view opening meanwhile is waited
+	 * for first (the latest one, if several): its rows may have been read before the write ended, and a read during
+	 * its opening would only be superseded by the opening's own.
 	 */
-	private async reloadIfOpen(opening: number): Promise<void> {
-		if (opening === this.opening) await this.reload();
+	private async refreshAfterWrite(scope: TaskViewsScope): Promise<void> {
+		let opened: Promise<void> | null = null;
+		while (opened !== this.openingTask) {
+			opened = this.openingTask;
+			await opened;
+		}
+		if (this.scope() === scope) await this.reload();
 	}
 
 	private offerUndo(

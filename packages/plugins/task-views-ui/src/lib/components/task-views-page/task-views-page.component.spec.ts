@@ -515,7 +515,7 @@ describe('TaskViewsPageComponent', () => {
 		expect(component.savedView().id).toBe('v2');
 	});
 
-	it('lets an undo that fails after another view opened leave that opening alone', async () => {
+	it('reads the rows again after an undo that failed while another view opened, once that view is open', async () => {
 		await create();
 		component.onToggle({ id: 't1', shift: false });
 		api.bulkUpdate.mockReturnValueOnce(
@@ -531,12 +531,34 @@ describe('TaskViewsPageComponent', () => {
 		const opening = component.open({ kind: 'saved', id: 'v2' });
 		const reads = api.viewTasks.mock.calls.length;
 		undoAnswer.error(new HttpErrorResponse({ status: 503 }));
-		await undoing;
+		// Fake timers hold setTimeout: let the promises settle instead.
+		for (let tick = 0; tick < 20; tick += 1) await Promise.resolve();
+		// Nothing is read while the view opens (a read now would be superseded by the opening's own).
 		expect(api.viewTasks.mock.calls.length).toBe(reads);
+		expect(component.busy()).toBe(false);
 		view.next(savedView({ id: 'v2' as ID, name: 'Other' }));
 		view.complete();
 		await opening;
+		await undoing;
 		expect(component.savedView()?.id).toBe('v2');
+		// The opening's read, then the one after the undo.
+		expect(api.viewTasks.mock.calls.length).toBe(reads + 2);
+	});
+
+	it('reads the rows of a view opened during a bulk change again once the change answered', async () => {
+		await create();
+		component.onToggle({ id: 't1', shift: false });
+		const answer = new Subject<unknown>();
+		api.bulkUpdate.mockReturnValueOnce(answer);
+		jest.useFakeTimers();
+		const applying = component.applyBulk({ action: 'archive', changes: { isArchived: true } });
+		api.getView.mockReturnValueOnce(of(savedView({ id: 'v2' as ID, name: 'Other' })));
+		await component.open({ kind: 'saved', id: 'v2' });
+		const reads = api.viewTasks.mock.calls.length;
+		answer.next({ applied: 1, refused: 0, results: [{ taskId: 't1', ok: true, previous: { isArchived: false } }] });
+		answer.complete();
+		await applying;
+		expect(api.viewTasks.mock.calls.length).toBe(reads + 1);
 	});
 
 	it('drops an edit of the filter still to be read when another view opens', async () => {
