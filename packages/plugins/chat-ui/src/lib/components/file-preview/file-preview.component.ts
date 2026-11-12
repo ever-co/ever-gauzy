@@ -1,8 +1,10 @@
-import { afterNextRender, ChangeDetectionStrategy, Component, computed, ElementRef, inject, input, output, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, DestroyRef, effect, ElementRef, inject, input, output, signal, viewChild } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { NbIconModule } from '@nebular/theme';
 import { TranslatePipe } from '@ngx-translate/core';
-import { fileSizeLabel, PreviewableFile, previewKindOf } from '../../chat-attachments';
+import { fileSizeLabel, objectUrlOf, PreviewableFile, previewKindOf, releaseObjectUrl } from '../../chat-attachments';
+import { ChatUiService } from '../../services/chat-ui.service';
 
 /**
  * A file of a message (or one waiting in the composer), shown in a popup over the page: a picture, a video, a sound or a PDF as itself, any other
@@ -36,13 +38,13 @@ import { fileSizeLabel, PreviewableFile, previewKindOf } from '../../chat-attach
 			<div class="stage">
 				@switch (kind()) {
 					@case ('image') {
-						<img class="media" [src]="shown.fileUrl || shown.thumbUrl" [alt]="shown.name" />
+						<img class="media" [src]="address()" [alt]="shown.name" (error)="onLoadError()" />
 					}
 					@case ('video') {
-						<video class="media" controls [src]="shown.fileUrl"></video>
+						<video class="media" controls [src]="address()" (error)="onLoadError()"></video>
 					}
 					@case ('audio') {
-						<audio class="sound" controls [src]="shown.fileUrl"></audio>
+						<audio class="sound" controls [src]="address()" (error)="onLoadError()"></audio>
 					}
 					@case ('pdf') {
 						<iframe class="page" [src]="frameUrl()" [attr.title]="shown.name"></iframe>
@@ -180,6 +182,8 @@ import { fileSizeLabel, PreviewableFile, previewKindOf } from '../../chat-attach
 })
 export class FilePreviewComponent {
 	private readonly sanitizer = inject(DomSanitizer);
+	private readonly api = inject(ChatUiService);
+	private readonly destroyRef = inject(DestroyRef);
 
 	readonly file = input.required<PreviewableFile>();
 	/** The popup closed (Escape, its button, a press outside): the owner lets go of the file. */
@@ -187,7 +191,15 @@ export class FilePreviewComponent {
 
 	private readonly dialog = viewChild<ElementRef<HTMLDialogElement>>('dialog');
 
-	protected readonly kind = computed(() => previewKindOf(this.file()));
+	/** The file's bytes read through the API, after its own address did not load. */
+	private readonly readUrl = signal<string | null>(null);
+	/** The file could not be shown either way: it is named, with no preview. */
+	private readonly broken = signal(false);
+	private asked = false;
+
+	protected readonly kind = computed(() => (this.broken() ? 'none' : previewKindOf(this.file())));
+	/** What the picture, video or sound is loaded from. */
+	protected readonly address = computed(() => this.readUrl() ?? (this.file().fileUrl || this.file().thumbUrl || null));
 	protected readonly size = computed(() => fileSizeLabel(this.file().fileSize));
 	/** The PDF's address for the frame: only a stored file's own http(s) address is ever framed. */
 	protected readonly frameUrl = computed<SafeResourceUrl | null>(() => {
@@ -196,7 +208,9 @@ export class FilePreviewComponent {
 	});
 
 	constructor() {
-		afterNextRender(() => {
+		this.destroyRef.onDestroy(() => releaseObjectUrl(this.readUrl()));
+		// Opened as soon as the dialog element exists (the popup is created already asked for).
+		effect(() => {
 			const dialog = this.dialog()?.nativeElement;
 			// Where the browser has no modal dialogs, the element is shown in place.
 			if (dialog && !dialog.open) {
@@ -204,6 +218,30 @@ export class FilePreviewComponent {
 				else dialog.setAttribute('open', '');
 			}
 		});
+	}
+
+	/**
+	 * The file's own address did not load in the browser (a storage it cannot reach directly): a stored file's bytes
+	 * are read through the API as the signed-in person, once; failing that, the file is named with no preview.
+	 */
+	protected onLoadError(): void {
+		const id = this.file().documentId;
+		if (!id || this.asked) {
+			this.broken.set(true);
+			return;
+		}
+		this.asked = true;
+		this.api
+			.fileBytes(id)
+			.pipe(takeUntilDestroyed(this.destroyRef))
+			.subscribe({
+				next: (blob) => {
+					const url = objectUrlOf(blob);
+					if (url) this.readUrl.set(url);
+					else this.broken.set(true);
+				},
+				error: () => this.broken.set(true)
+			});
 	}
 
 	protected close(): void {
