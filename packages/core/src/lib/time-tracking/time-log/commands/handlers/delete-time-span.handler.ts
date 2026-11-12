@@ -278,6 +278,7 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 	 * @throws The error of the write that failed.
 	 */
 	private async splitAround(log: TimeLog, start: Date, end: Date, forceDelete: boolean = false): Promise<void> {
+		await this.assertNoSecondPartLeft(log);
 		const secondPart = await this.createSecondPart(log, end, log.stoppedAt);
 
 		try {
@@ -296,6 +297,30 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 				);
 			}
 			throw error;
+		}
+	}
+
+	/**
+	 * Refuses to split a log that already has a second part: a stopped log of the same employee inside it and ending
+	 * where it ends, which only a split leaves behind, when its cut failed and so did the recovery of that cut. Splitting
+	 * again would save one more copy of that time; the error stops the caller instead, as a failed split does, until one
+	 * of the two logs is deleted.
+	 *
+	 * @param log - The time log as stored.
+	 * @throws When such a second part is found.
+	 */
+	private async assertNoSecondPartLeft(log: TimeLog): Promise<void> {
+		const { id, employeeId, organizationId, tenantId, startedAt, stoppedAt } = log;
+		const endingWithIt = await this.typeOrmTimeLogRepository.find({
+			where: { employeeId, organizationId, tenantId, stoppedAt }
+		});
+		const secondPart = endingWithIt.find(
+			(other) => other.id !== id && !other.isRunning && moment(other.startedAt).isAfter(startedAt)
+		);
+		if (secondPart) {
+			throw new Error(
+				`Time log ${id} already has a second part (time log ${secondPart.id}) from a split that could not be undone; delete one of them first`
+			);
 		}
 	}
 

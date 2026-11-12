@@ -169,10 +169,10 @@ interface IStoredLog {
 }
 
 /**
- * The writes of the store a spec can make fail: a log created, a log's columns updated, a slot unlinked from a log,
- * slots removed, a timesheet's totals recalculated.
+ * The writes of the store a spec can make fail: a log created, a log's columns updated, a log deleted, a slot unlinked
+ * from a log, slots removed, a timesheet's totals recalculated.
  */
-type StoreWrite = 'insert' | 'update' | 'unlink' | 'slotRemoval' | 'recalculation';
+type StoreWrite = 'insert' | 'update' | 'delete' | 'unlink' | 'slotRemoval' | 'recalculation';
 
 interface IStoredSlot {
 	id: string;
@@ -261,6 +261,20 @@ function createStore() {
 			const log = liveLog(where.id);
 			return log && (!where.tenantId || where.tenantId === log.tenantId) ? logEntity(log, false) : null;
 		}),
+		// The logs whose columns equal those the `where` names (a date by its time).
+		find: jest.fn(async ({ where }: { where: Record<string, unknown> }) =>
+			logs
+				.filter((log) => !log.deletedAt)
+				.filter((log) =>
+					Object.entries(where).every(([column, value]) => {
+						const stored = log[column as keyof IStoredLog];
+						return value instanceof Date
+							? (stored as Date)?.getTime() === value.getTime()
+							: stored === value;
+					})
+				)
+				.map((log) => logEntity(log, false))
+		),
 		update: jest.fn(async (where: { id: string }, changes: Partial<TimeLog>) => {
 			failIfDue('update');
 			const log = liveLog(where.id);
@@ -298,6 +312,7 @@ function createStore() {
 		}),
 		// A hard delete, with the log's join rows (the foreign keys of `time_slot_time_logs` cascade).
 		delete: jest.fn(async ({ id }: { id: unknown }) => {
+			failIfDue('delete');
 			for (const logId of idsOf(id)) {
 				const index = logs.findIndex((log) => log.id === logId);
 				if (index >= 0) {
@@ -835,6 +850,28 @@ describe('DeleteTimeSpanHandler when a split fails (#11823)', () => {
 		]);
 		expect(store.slotCount()).toBe(12);
 		expect(outcome).toBe('The recalculation failed');
+	});
+
+	it('raises instead of splitting again a log whose failed recovery left its second part', async () => {
+		const store = createStore();
+		store.addLog('tracked', '08:00', '11:00');
+		// The cut fails, then so does the delete of the second part that would have undone the split.
+		store.fail('update');
+		store.fail('delete');
+
+		const first = await store.cleanUp('09:00', '10:00').then(raised, raised);
+		const leftBehind = store.timeline();
+		const retried = await store.cleanUp('09:00', '10:00').then(raised, raised);
+
+		// The log, whole, and the second part beside it, as the failed recovery left them...
+		expect(leftBehind).toEqual([
+			{ range: '08:00-11:00', isRunning: false, slots: slotStarts('08:00', '11:00') },
+			{ range: '10:00-11:00', isRunning: false, slots: slotStarts('10:00', '11:00') }
+		]);
+		expect(first).toBe('The update failed');
+		// ...and no further copy: the next cleanup of that log refuses to split it.
+		expect(store.timeline()).toEqual(leftBehind);
+		expect(retried).toContain('second part');
 	});
 });
 
