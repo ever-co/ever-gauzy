@@ -65,6 +65,9 @@ keep answering as before, whether or not the sync is on.
   refuses it, the connection waits for a person, and the person who connected and the organization's integration
   managers are told in their Inbox. Imports and webhooks of that connection pause until someone connects again.
 - **Several sites.** A token that reaches several sites never picks one by itself.
+- **Site of a mapped connection.** A connection with mappings keeps its site: it cannot be moved, and a reconnect
+  keeps it (a reconnect whose token no longer reaches it saves nothing and says so). A mapping names its Jira
+  project by an id only its site knows.
 - **Unknown status.** A Jira status the map does not name follows its status category.
 - **No reachable status.** When no transition the issue can take now reaches a status the task's status maps to,
   the issue's status is left as it is. The other fields are still sent.

@@ -24,7 +24,8 @@ export interface JiraDetailsContext {
 }
 
 /**
- * An issue's comments and attachments, brought in behind the issue itself (they come with it: no further read).
+ * An issue's comments and attachments, brought in behind the issue itself (they come with it; the sync reads the
+ * comments a search left out before it hands the issue over).
  * Every comment becomes a comment of the platform task once — attributed to the employee whose user has the
  * author's e-mail, else kept as the connecting user's, marked `System`, and named after its author in the text —
  * (its ADF body as HTML), and follows an edit in Jira; every attachment becomes a

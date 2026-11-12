@@ -133,7 +133,7 @@ export class JiraWebhookService {
 			return await make(client);
 		} catch (error) {
 			if (error instanceof JiraApiError && error.isUnauthorized) {
-				const renewed = await this.tenants.refreshAccessToken(tenant);
+				const renewed = await this.tenants.refreshAccessToken(tenant, client);
 				if (renewed) return make(renewed);
 			}
 			throw error;

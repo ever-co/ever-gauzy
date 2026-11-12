@@ -183,22 +183,28 @@ export class JiraTenantService {
 	 * Renews the connection's access token with its refresh token (one renewal at a time per connection; the
 	 * stored pair is rotated and the in-memory settings follow). Null when the connection has no refresh token
 	 * or Jira refused it — the caller then treats the token as refused.
+	 *
+	 * @param refused The client whose token Jira just refused (401), when that is why: the stored token is then
+	 * reused only when it is another one (renewed meanwhile by another process); the same token, even far from its
+	 * expiry, is renewed.
 	 */
-	refreshAccessToken(tenant: IIntegrationTenant): Promise<JiraApiClient | null> {
+	refreshAccessToken(tenant: IIntegrationTenant, refused?: JiraApiClient | null): Promise<JiraApiClient | null> {
 		const key = String(tenant.id);
 		const inFlight = this.refreshing.get(key);
 		if (inFlight) return inFlight;
-		const renewal = this.renew(tenant).finally(() => this.refreshing.delete(key));
+		const renewal = this.renew(tenant, refused ?? null).finally(() => this.refreshing.delete(key));
 		this.refreshing.set(key, renewal);
 		return renewal;
 	}
 
-	private async renew(tenant: IIntegrationTenant): Promise<JiraApiClient | null> {
+	private async renew(tenant: IIntegrationTenant, refused: JiraApiClient | null): Promise<JiraApiClient | null> {
 		// The row as it is now: another process may have renewed it meanwhile (the stored refresh token is then the new
 		// one; the one in memory is spent, and spending it again would be refused).
 		const current = await this.findAnyById(tenant.id as ID);
 		if (current) tenant.settings = current.settings;
-		if (current && !this.isExpiringSoon(current)) return this.clientOrNull(tenant);
+		const stored = this.settingsOf(tenant)[JiraSettingName.ACCESS_TOKEN];
+		const storedWasRefused = !!refused && refused.usesToken(stored);
+		if (current && !this.isExpiringSoon(current) && !storedWasRefused) return this.clientOrNull(tenant);
 		const settings = this.settingsOf(tenant);
 		const refreshToken = settings[JiraSettingName.REFRESH_TOKEN];
 		if (!refreshToken || !this.config.clientId || !this.config.clientSecret) return null;

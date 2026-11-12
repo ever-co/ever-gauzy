@@ -32,11 +32,14 @@ whose routes share the `/integration/jira` prefix and must be registered first.
   send them to. Atlassian sends them back to the public callback, which binds the connection to the state's tenant
   and organization (never to the query), exchanges the code once, and writes an `integration_tenant` named `Jira`
   with the tokens in its settings. No route answers a token. The access token is renewed before it expires, one
-  renewal at a time per connection, and the refresh token rotates on every renewal.
+  renewal at a time per connection, and the refresh token rotates on every renewal. A token Jira refuses before its
+  expiry is renewed at once (unless another process renewed it meanwhile).
 - **Site.** The callback reads the sites the token reaches (`accessible-resources`). With one site the connection uses
   it at once; with several it waits until someone picks one: `GET …/:integrationId/sites`, `PUT …/:integrationId/site`.
   Nothing syncs until a site is chosen. A connection that has mappings keeps its site (`409`
-  `JIRA_SITE_HAS_MAPPINGS`): a mapping names its Jira project by an id that is unique only on its site.
+  `JIRA_SITE_HAS_MAPPINGS`): a mapping names its Jira project by an id that is unique only on its site. A reconnect
+  keeps it too; when the new token no longer reaches that site, nothing is saved and the callback answers
+  `?error=site_mismatch`.
 - **Map.** `GET …/projects` lists the site's projects and `GET …/projects/:projectId` adds a project's issue types and
   statuses. `POST …/mappings` maps a Jira project to a platform project with a `direction` (`inbound`, `outbound`,
   `both`), a status map (the task status for each status category `new`, `indeterminate` and `done`, plus
@@ -48,7 +51,9 @@ whose routes share the `/integration/jira` prefix and must be registered first.
   Each issue becomes a task once and is updated by later runs: summary, description (Jira's rich text turned into the
   task store's HTML, escaped, link schemes allow-listed), status by the map, priority by name, the assignee matched by
   e-mail (a hidden e-mail leaves the members alone), labels as tags, due date, parent and sub-tasks, and issue links
-  (blocks, clones, duplicates, relates to). Comments come in as task comments and attachments as resource links. A
+  (blocks, clones, duplicates, relates to). Comments come in as task comments (the ones a search leaves out are read
+  page by page, up to 1,000 per issue) and attachments as resource links. An issue whose comment or attachment could
+  not be kept is read again by the next import. A
   run stopped early (the cap, an API error, an issue that failed) continues from the right place next time. Each run
   writes a report as it goes (pages, issues, comments, links, conflicts, failures by issue key): `GET …/runs`.
 - **Webhooks.** One Jira dynamic webhook per connection, for the inbound projects of its mappings, delivered to

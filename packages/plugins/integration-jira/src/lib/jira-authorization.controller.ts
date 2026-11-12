@@ -1,16 +1,18 @@
 import { Controller, Get, Inject, Logger, Query, Res } from '@nestjs/common';
 import { ApiExcludeController } from '@nestjs/swagger';
 import { Response } from 'express';
+import { ID } from '@gauzy/contracts';
 import { Public } from '@gauzy/common';
 import { accessibleJiraSites, exchangeJiraCode, JiraApiClient, JiraMyself, JiraOAuthToken, JiraSite } from './client/jira-api.client';
 import { isJiraConfigured, JiraCloudConfig } from './jira-config';
+import { JiraMappingService } from './jira-mapping.service';
 import { JiraOAuthStateService } from './jira-oauth-state.service';
 import { jiraSyncUser, runInJiraContext } from './jira-process';
 import { JiraTenantService } from './jira-tenant.service';
 import { JIRA_CONFIG, JIRA_ROUTE_PREFIX } from './jira.constants';
 
 /** Why the callback sent the person back without a connection. */
-type CallbackError = 'not_configured' | 'denied' | 'invalid_state' | 'exchange_failed' | 'no_site' | 'site_unreadable' | 'not_saved';
+type CallbackError = 'not_configured' | 'denied' | 'invalid_state' | 'exchange_failed' | 'no_site' | 'site_unreadable' | 'site_mismatch' | 'not_saved';
 
 /** Where the callback sends the person: the connection, and whether they must still choose its site. */
 type CallbackResult = { error: CallbackError } | { integrationId: string; organizationId: string; siteRequired?: 'true' };
@@ -20,8 +22,10 @@ type CallbackResult = { error: CallbackError } | { integrationId: string; organi
  * (the person arrives from Atlassian, not from the app), so everything rests on the single-use `state`: it names the
  * tenant and organization the connection belongs to; the query never does. The code is exchanged here, once; the
  * Jira sites the token reaches are read (`accessible-resources`): with one, it is the connection's site at once; with
- * several, the connection is stored and the person chooses its site on the app's Jira page (`siteRequired`). The
- * person is then sent to that page, always the server-side configured one.
+ * several, the connection is stored and the person chooses its site on the app's Jira page (`siteRequired`). A
+ * reconnect of a connection that has mappings keeps its site, whatever the token reaches besides: its mappings name
+ * Jira projects by ids only that site knows (`site_mismatch` when the token no longer reaches it). The person is then
+ * sent to that page, always the server-side configured one.
  */
 @ApiExcludeController()
 @Controller(JIRA_ROUTE_PREFIX)
@@ -31,7 +35,8 @@ export class JiraAuthorizationController {
 	constructor(
 		@Inject(JIRA_CONFIG) private readonly config: JiraCloudConfig,
 		private readonly oauthState: JiraOAuthStateService,
-		private readonly tenants: JiraTenantService
+		private readonly tenants: JiraTenantService,
+		private readonly mappings: JiraMappingService
 	) {}
 
 	@Public()
@@ -62,13 +67,8 @@ export class JiraAuthorizationController {
 			return this.back(response, { error: 'exchange_failed' });
 		}
 		let sites: JiraSite[];
-		let chosen: { site: JiraSite; myself: JiraMyself } | null = null;
 		try {
 			sites = await accessibleJiraSites(token.accessToken, { apiUrl: this.config.apiUrl });
-			if (sites.length === 1) {
-				const myself = await new JiraApiClient(token.accessToken, sites[0].id, { apiUrl: this.config.apiUrl, tokenType: token.tokenType }).myself();
-				chosen = { site: sites[0], myself };
-			}
 		} catch (error) {
 			this.logger.warn(`The Jira sites could not be read after connecting: ${error instanceof Error ? error.message : String(error)}`);
 			return this.back(response, { error: 'site_unreadable' });
@@ -76,10 +76,34 @@ export class JiraAuthorizationController {
 		if (!sites.length) {
 			return this.back(response, { error: 'no_site' });
 		}
+		// The request is public (no user, no tenant): the connection is read and written inside a request context built
+		// from the consumed state, so the platform's tenant-aware services scope it to that tenant.
+		const user = jiraSyncUser(scope, scope.userId ?? null);
+		let pinned: string | null;
 		try {
-			// The request is public (no user, no tenant): the connection is written inside a request context built from the
-			// consumed state, so the platform's tenant-aware services scope it to that tenant.
-			const tenant = await runInJiraContext(jiraSyncUser(scope, scope.userId ?? null), () => this.tenants.connect(scope, token, chosen));
+			pinned = await runInJiraContext(user, () => this.pinnedSiteOf(scope));
+		} catch (error) {
+			this.logger.error(`The Jira connection being replaced could not be read: ${error instanceof Error ? error.message : String(error)}`);
+			return this.back(response, { error: 'not_saved' });
+		}
+		// A connection with mappings keeps its site; otherwise the only site, or none yet (a person chooses).
+		const site = pinned ? (sites.find((candidate) => candidate.id === pinned) ?? null) : sites.length === 1 ? sites[0] : null;
+		if (pinned && !site) {
+			this.logger.warn(`A reconnect of the organization ${scope.organizationId} no longer reaches the Jira site its mappings name; not saved.`);
+			return this.back(response, { error: 'site_mismatch' });
+		}
+		let chosen: { site: JiraSite; myself: JiraMyself } | null = null;
+		if (site) {
+			try {
+				const myself = await new JiraApiClient(token.accessToken, site.id, { apiUrl: this.config.apiUrl, tokenType: token.tokenType }).myself();
+				chosen = { site, myself };
+			} catch (error) {
+				this.logger.warn(`The Jira site could not be read after connecting: ${error instanceof Error ? error.message : String(error)}`);
+				return this.back(response, { error: 'site_unreadable' });
+			}
+		}
+		try {
+			const tenant = await runInJiraContext(user, () => this.tenants.connect(scope, token, chosen));
 			return this.back(response, {
 				integrationId: String(tenant.id),
 				organizationId: String(scope.organizationId),
@@ -89,6 +113,17 @@ export class JiraAuthorizationController {
 			this.logger.error(`The Jira connection could not be saved: ${error instanceof Error ? error.message : String(error)}`);
 			return this.back(response, { error: 'not_saved' });
 		}
+	}
+
+	/**
+	 * The site the organization's connection must keep through a reconnect: its site when it has mappings (they name
+	 * Jira projects by ids only that site knows), else null (a reconnect may then move to another site).
+	 */
+	private async pinnedSiteOf(scope: { tenantId: ID; organizationId: ID }): Promise<string | null> {
+		const existing = await this.tenants.forOrganization(scope.organizationId, scope.tenantId);
+		const cloudId = existing ? this.tenants.summaryOf(existing).cloudId : null;
+		if (!existing || !cloudId) return null;
+		return (await this.mappings.list(existing)).length ? cloudId : null;
 	}
 
 	/** Sends the person to the app's Jira page (or answers JSON when no page is configured). */
