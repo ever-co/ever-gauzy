@@ -1,10 +1,11 @@
 import { CanActivate, Injectable, NotFoundException } from '@nestjs/common';
 
 /**
- * Whether the task trash is listed (`GET /tasks/trash`). Off unless `GAUZY_TASK_TRASH_ENABLED` is exactly `true`;
- * unset, empty and `false` keep it off silently, any other value keeps it off and is reported once through `warn`.
- * Moving a task to the trash and restoring it (`DELETE /tasks/:id/soft`, `PUT /tasks/:id/recover`) existed before
- * and are not behind it. Same contract as {@link isTaskViewsEnabled}.
+ * Whether the task trash is listed (`GET /tasks/trash`) and a task can be deleted for good from it
+ * (`DELETE /tasks/:id/trashed`). Off unless `GAUZY_TASK_TRASH_ENABLED` is exactly `true`; unset, empty and `false`
+ * keep it off silently, any other value keeps it off and is reported once through `warn`. Moving a task to the trash
+ * and restoring it (`DELETE /tasks/:id/soft`, `PUT /tasks/:id/recover`) existed before and are not behind it. Same
+ * contract as {@link isTaskViewsEnabled}.
  */
 export function isTaskTrashEnabled(
 	env: Record<string, string | undefined> = process.env,
@@ -24,8 +25,8 @@ export function isTaskTrashEnabled(
 let warnedOnce = false;
 
 /**
- * Guards the trash route: where the switch is off it answers 404, exactly as a build without it would, so a client
- * probes the route to learn whether to offer a trash (and to move deleted tasks there).
+ * Guards the trash routes: where the switch is off they answer 404, exactly as a build without them would, so a client
+ * probes the list to learn whether to offer a trash (and to move deleted tasks there).
  */
 @Injectable()
 export class TaskTrashEnabledGuard implements CanActivate {

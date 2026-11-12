@@ -237,6 +237,8 @@ export const TASK_AUTOMATION_LIMITS = Object.freeze({
 	conditionsPerRule: 10,
 	actionsPerRule: 10,
 	valuesPerList: 50,
+	/** `TITLE_CONTAINS`: the text's most characters. */
+	textLength: 200,
 	nameLength: 120,
 	descriptionLength: 2000,
 	messageLength: 1000,

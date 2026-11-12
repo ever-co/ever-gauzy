@@ -21,8 +21,8 @@ export type ITrashedTask = ITask & {
 /**
  * Client for the task trash (`GET /api/tasks/trash`, behind the platform's `GAUZY_TASK_TRASH_ENABLED`): its list,
  * moving a task there (`DELETE /api/tasks/:id/soft`), restoring it (`PUT /api/tasks/:id/recover`) and deleting it for
- * good (`DELETE /api/tasks/:id`). Whether the platform keeps a trash is learned once per organization, from one read
- * of the list: 404 means no trash, and deletes stay permanent.
+ * good while it is still there (`DELETE /api/tasks/:id/trashed`). Whether the platform keeps a trash is learned once
+ * per organization, from one read of the list: 404 means no trash, and deletes stay permanent.
  */
 @Injectable({
 	providedIn: 'root'
@@ -98,8 +98,16 @@ export class TaskTrashService {
 		return firstValueFrom(this._http.put(`${this.API_URL}/${id}/recover`, {}));
 	}
 
-	/** Deletes a task for good: it cannot be restored afterwards. */
-	deleteForever(id: ID): Promise<unknown> {
-		return firstValueFrom(this._http.delete(`${this.API_URL}/${id}`));
+	/**
+	 * Deletes a task for good, only while it is in the organization's trash: it cannot be restored afterwards. A task
+	 * someone restored (or deleted) since the trash was read is left alone, and the promise rejects with a 404
+	 * (`DELETE /api/tasks/:id` would delete a restored, live task).
+	 */
+	deleteForever(id: ID, organizationId: ID, tenantId?: ID | null): Promise<unknown> {
+		return firstValueFrom(
+			this._http.delete(`${this.API_URL}/${id}/trashed`, {
+				params: toParams({ organizationId, ...(tenantId ? { tenantId } : {}) })
+			})
+		);
 	}
 }

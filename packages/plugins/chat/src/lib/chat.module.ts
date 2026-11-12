@@ -3,7 +3,7 @@ import { CqrsModule } from '@nestjs/cqrs';
 import { SearchPluginModule } from '@gauzy/plugin-search';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { MentionModule, RolePermissionModule, TaskModule } from '@gauzy/core';
+import { MentionModule, RolePermissionModule, TaskModule, TenantSettingModule } from '@gauzy/core';
 import { ChatConversationController } from './controllers/chat-conversation.controller';
 import { ChatLinkPreviewController } from './controllers/chat-link-preview.controller';
 import { ChatMessageController } from './controllers/chat-message.controller';
@@ -59,6 +59,8 @@ export const CHAT_ENTITIES = [
 		MikroOrmModule.forFeature(CHAT_ENTITIES),
 		// The tenant and permission guards of the routes need the role permissions.
 		RolePermissionModule,
+		// The tenant's own storage settings, for the draft sweep's stored-bytes cleanup (it runs outside any request).
+		TenantSettingModule,
 		// Mentions go through the platform's mention service; message notifications through the CQRS bus.
 		MentionModule,
 		CqrsModule,

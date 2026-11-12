@@ -1,12 +1,12 @@
-import { Body, Controller, Delete, Get, Header, HttpCode, HttpStatus, Param, Patch, Post, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { Body, Controller, Delete, Get, Header, Headers, HttpCode, HttpStatus, Param, Patch, Post, UseGuards } from '@nestjs/common';
+import { ApiBearerAuth, ApiHeader, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { FeatureFlag } from '@gauzy/common';
 import { FeatureEnum, ID, PermissionsEnum } from '@gauzy/contracts';
 import { FeatureFlagGuard, PermissionGuard, Permissions, TenantPermissionGuard, UseValidationPipe, UUIDValidationPipe } from '@gauzy/core';
 import { CHAT_ROUTE_PREFIX } from '../chat.constants';
 import { ChatInteractionDTO, ChatWebhookCreateDTO, ChatWebhookUpdateDTO } from '../dto/chat-webhook.dto';
 import { ChatAccessService } from '../services/chat-access.service';
-import { ChatInteractionService } from '../webhooks/chat-interaction.service';
+import { CHAT_INTERACTION_KEY_HEADER, ChatInteractionService } from '../webhooks/chat-interaction.service';
 import { ChatWebhooksEnabledGuard } from '../webhooks/chat-webhooks-enabled.guard';
 import { ChatWebhookService } from '../webhooks/chat-webhook.service';
 
@@ -75,14 +75,27 @@ export class ChatWebhookController {
 		return this.webhooks.revoke(this.access.caller(), id);
 	}
 
+	/**
+	 * The click's idempotency key comes in the `Idempotency-Key` header, as on the receive route (`POST /hooks/:token`)
+	 * and on the platform's other retry-safe writes (it is in the API's CORS `allowedHeaders`): it qualifies the
+	 * request, not the button, so the body stays the click, a client's HTTP layer can set it on a retry without
+	 * rebuilding the body, and a proxy that forwards the request forwards it verbatim. It is stored on the
+	 * interaction row (not through the platform's `@Idempotent()` replay store): a repeat answers the click as it is
+	 * now — delivered, retrying, failed — not the first answer as it was.
+	 */
 	@Post('/messages/:id/interactions')
 	@Permissions(PermissionsEnum.CHAT_SEND)
 	@HttpCode(HttpStatus.OK)
 	@Header('Cache-Control', 'no-store')
 	@UseValidationPipe({ whitelist: true })
 	@ApiOperation({ summary: 'Click a button of an app message: a signed callback to the app, whose reply may replace the message.' })
-	interact(@Param('id', UUIDValidationPipe) id: ID, @Body() body: ChatInteractionDTO) {
-		return this.interactions.interact(this.access.employeeCaller(), id, body);
+	@ApiHeader({
+		name: CHAT_INTERACTION_KEY_HEADER,
+		required: false,
+		description: 'A key per click (a UUID; at most 64 printable characters), the same on each retry of that click: a repeat answers the first click as it is now and calls the app no second time; the same key for another button is refused (409).'
+	})
+	interact(@Param('id', UUIDValidationPipe) id: ID, @Body() body: ChatInteractionDTO, @Headers('idempotency-key') idempotencyKey?: string) {
+		return this.interactions.interact(this.access.employeeCaller(), id, body, idempotencyKey);
 	}
 
 	@Get('/interactions/:id')

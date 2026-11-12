@@ -94,7 +94,9 @@ export function normalizeConditions(conditions: unknown): ITaskAutomationConditi
 			case TaskAutomationConditionEnum.TITLE_CONTAINS: {
 				const text = String(condition.text ?? '').trim();
 				if (!text) throw new TaskAutomationValidationError(`${label} needs a text.`);
-				if (text.length > 200) throw new TaskAutomationValidationError(`${label}’s text is longer than 200 characters.`);
+				if (text.length > TASK_AUTOMATION_LIMITS.textLength) {
+					throw new TaskAutomationValidationError(`${label}’s text is longer than ${TASK_AUTOMATION_LIMITS.textLength} characters.`);
+				}
 				return { type: condition.type, text };
 			}
 			default:

@@ -16,6 +16,11 @@ export interface IEmployeeNotification extends IBasePerEntityType {
 	sentByEmployee?: IEmployee;
 	receiverEmployeeId?: ID;
 	receiverEmployee?: IEmployee;
+	/**
+	 * The comment the notification is about, when it is about one (a comment on a record the receiver follows): the
+	 * record itself stays in `entity` / `entityId`, so a client that knows no comments still opens the record.
+	 */
+	commentId?: ID;
 }
 
 /**

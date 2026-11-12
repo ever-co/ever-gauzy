@@ -76,7 +76,11 @@ export class FollowerFanOutService implements OnModuleInit, OnModuleDestroy {
 		this.taskEvents?.unsubscribe();
 	}
 
-	/** A comment was created on a record: its followers (not the author) are told. */
+	/**
+	 * A comment was created on a record: its followers (not the author) are told. The notification names the record
+	 * (`entity` / `entityId`, as before) and the comment (`commentId`), so a client opens the thread rather than the
+	 * record's comment list; the Inbox files it as an entry about the comment.
+	 */
 	async onCommentCreated(event: CommentEvent): Promise<void> {
 		if (!this.enabled || event.type !== 'created') {
 			return;
@@ -91,7 +95,8 @@ export class FollowerFanOutService implements OnModuleInit, OnModuleDestroy {
 			tenantId: comment.tenantId,
 			organizationId: comment.organizationId ?? undefined,
 			type: EmployeeNotificationTypeEnum.COMMENT,
-			action: NotificationActionTypeEnum.Commented
+			action: NotificationActionTypeEnum.Commented,
+			...(comment.id ? { commentId: comment.id } : {})
 		});
 	}
 
@@ -126,6 +131,8 @@ export class FollowerFanOutService implements OnModuleInit, OnModuleDestroy {
 		type: EmployeeNotificationTypeEnum;
 		action: NotificationActionTypeEnum;
 		entityName?: string | null;
+		/** The comment the notification is about, when it is about one. */
+		commentId?: ID;
 	}): Promise<number> {
 		try {
 			const actorEmployeeId = RequestContext.currentEmployeeId() ?? RequestContext.currentUser()?.employeeId ?? null;
@@ -145,7 +152,8 @@ export class FollowerFanOutService implements OnModuleInit, OnModuleDestroy {
 						receiverEmployeeId,
 						...(actorEmployeeId ? { sentByEmployeeId: actorEmployeeId } : {}),
 						organizationId: input.organizationId,
-						tenantId: input.tenantId
+						tenantId: input.tenantId,
+						...(input.commentId ? { commentId: input.commentId } : {})
 					},
 					input.action,
 					entityName,

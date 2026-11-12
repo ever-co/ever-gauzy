@@ -4,6 +4,7 @@ import { DocumentAccessService } from './document-access.service';
 import { DocumentCommentAccessPolicy } from './document-comment-access.policy';
 import { DocumentCategoryService } from './document-category.service';
 import { DocumentCollaborationService } from './document-collaboration.service';
+import { DocumentCommentAnchorService } from './document-comment-anchor.service';
 import { DocumentMarkdownService } from './document-markdown.service';
 import { DocumentKnowledgeService } from './document-knowledge.service';
 import { DocumentLinkService } from './document-link.service';
@@ -27,6 +28,9 @@ export * from './document-access.service';
 export * from './document-comment-access.policy';
 export * from './document-access.sql';
 export * from './document-category.service';
+export * from './document-comment-anchor';
+export * from './document-comment-anchor.service';
+export * from './document-search-snippet';
 export * from './document-knowledge.service';
 export * from './document-link.service';
 export * from './document-path.service';
@@ -63,6 +67,7 @@ export const Services = [
 	DocumentCategoryService,
 	DocumentVersionService,
 	DocumentLinkService,
+	DocumentCommentAnchorService,
 	DocumentShareService,
 	DocumentSettingsService,
 	DocumentStatsService,

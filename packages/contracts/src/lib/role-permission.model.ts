@@ -657,6 +657,7 @@ export const PermissionGroups = {
 		PermissionsEnum.ORG_TEAM_JOIN_REQUEST_EDIT,
 		/** Organization Team Permissions End */
 		PermissionsEnum.ORG_TASK_SETTING,
+		PermissionsEnum.TASK_AUTOMATION_MANAGE,
 		PermissionsEnum.ORG_CONTRACT_EDIT,
 		PermissionsEnum.EVENT_TYPES_VIEW,
 		PermissionsEnum.EVENT_TYPES_EDIT,

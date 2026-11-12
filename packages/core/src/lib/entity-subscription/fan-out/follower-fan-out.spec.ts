@@ -31,3 +31,53 @@ describe('actorDisplayName', () => {
 		expect(actorDisplayName(null)).toBe('Someone');
 	});
 });
+
+describe('FollowerFanOutService.onCommentCreated', () => {
+	const { FollowerFanOutService } = jest.requireActual('./follower-fan-out.service');
+	const { RequestContext } = jest.requireActual('../../core/context/request-context');
+	const { CommentEvent } = jest.requireActual('../../comment/events');
+
+	const previous = process.env.GAUZY_NOTIFICATION_FANOUT_ENABLED;
+	beforeEach(() => {
+		process.env.GAUZY_NOTIFICATION_FANOUT_ENABLED = 'true';
+		jest.spyOn(RequestContext, 'currentEmployeeId').mockReturnValue('employee-author');
+		jest.spyOn(RequestContext, 'currentUser').mockReturnValue({ firstName: 'Ada', lastName: 'Lovelace', employeeId: 'employee-author' });
+	});
+	afterEach(() => {
+		jest.restoreAllMocks();
+		process.env.GAUZY_NOTIFICATION_FANOUT_ENABLED = previous;
+	});
+
+	/** A fan-out over a record followed by the author and two others. */
+	function build() {
+		const subscriptions = [{ employeeId: 'employee-author' }, { employeeId: 'employee-1' }, { employeeId: 'employee-2' }];
+		const dataSource = {
+			getRepository: jest.fn(() => ({
+				find: jest.fn(async ({ select }: { select: Record<string, boolean> }) =>
+					select.employeeId ? subscriptions : subscriptions.map((row) => ({ id: row.employeeId }))
+				),
+				findOne: jest.fn(async () => null)
+			}))
+		};
+		const notifications = { publishNotificationEvent: jest.fn() };
+		return { service: new FollowerFanOutService(dataSource, notifications), notifications };
+	}
+
+	it('names the record and the comment, so the follower opens the thread', async () => {
+		const { service, notifications } = build();
+		await service.onCommentCreated(
+			new CommentEvent('created', { id: 'comment-1', entity: 'Document', entityId: 'page-1', tenantId: 'tenant-1', organizationId: 'org-1' })
+		);
+		expect(notifications.publishNotificationEvent).toHaveBeenCalledTimes(2);
+		for (const [input] of notifications.publishNotificationEvent.mock.calls) {
+			expect(input).toMatchObject({ entity: 'Document', entityId: 'page-1', commentId: 'comment-1', type: 'Comment', tenantId: 'tenant-1' });
+		}
+		expect(notifications.publishNotificationEvent.mock.calls.map(([input]: [{ receiverEmployeeId: string }]) => input.receiverEmployeeId)).toEqual(['employee-1', 'employee-2']);
+	});
+
+	it('names no comment on a task update', async () => {
+		const { service, notifications } = build();
+		await service.notifyFollowers({ entity: 'Task', entityId: 'task-1', tenantId: 'tenant-1', type: 'TaskUpdate', action: 'Updated', entityName: 'A task' });
+		expect(notifications.publishNotificationEvent.mock.calls[0][0]).not.toHaveProperty('commentId');
+	});
+});

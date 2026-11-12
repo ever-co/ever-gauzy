@@ -1,0 +1,40 @@
+{
+	"name": "plugin-task-automations-ui",
+	"$schema": "../../../node_modules/nx/schemas/project-schema.json",
+	"sourceRoot": "packages/plugins/task-automations-ui/src",
+	"prefix": "ngx",
+	"projectType": "library",
+	"tags": ["type:plugin"],
+	"implicitDependencies": ["contracts", "ui-config", "ui-core", "plugin-ui"],
+	"targets": {
+		"build": {
+			"executor": "@nx/angular:ng-packagr-lite",
+			"outputs": ["{workspaceRoot}/dist/{projectRoot}"],
+			"options": {
+				"project": "packages/plugins/task-automations-ui/ng-package.json",
+				"tsConfig": "packages/plugins/task-automations-ui/tsconfig.lib.json"
+			},
+			"configurations": {
+				"production": {
+					"tsConfig": "packages/plugins/task-automations-ui/tsconfig.lib.prod.json"
+				},
+				"development": {
+					"tsConfig": "packages/plugins/task-automations-ui/tsconfig.lib.json"
+				}
+			},
+			"defaultConfiguration": "development",
+			"dependsOn": ["^build"]
+		},
+		"test": {
+			"executor": "@nx/jest:jest",
+			"outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+			"options": {
+				"jestConfig": "packages/plugins/task-automations-ui/jest.config.ts",
+				"tsConfig": "packages/plugins/task-automations-ui/tsconfig.spec.json"
+			}
+		},
+		"lint": {
+			"executor": "@nx/eslint:lint"
+		}
+	}
+}
