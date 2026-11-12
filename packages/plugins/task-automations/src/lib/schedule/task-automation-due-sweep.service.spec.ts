@@ -60,6 +60,16 @@ describe('TaskAutomationDueSweepService', () => {
 		expect(run).toHaveBeenCalledWith(RULE, last.id, expect.objectContaining({ eventKey: dueEventKey(last.id, last.dueDate) }));
 	});
 
+	it('reads the whole window: thousands of reported tasks that stay open never hold back a later one', async () => {
+		const all = dueTasks(6_001);
+		const finished = new Set(all.slice(0, 6_000).map((task) => dueEventKey(task.id, task.dueDate)));
+		const run = jest.fn(async () => ({ outcome: TaskAutomationRunOutcomeEnum.APPLIED }));
+		const { service } = sweepOver(all, finished, run);
+
+		expect(await service.sweep(NOW)).toEqual({ rules: 1, runs: 1 });
+		expect(run).toHaveBeenCalledWith(RULE, all[6_000].id, expect.anything());
+	});
+
 	it('runs a rule for at most a batch of tasks a sweep', async () => {
 		const all = dueTasks(TASK_AUTOMATION_DUE_BATCH + 5);
 		const run = jest.fn(async () => ({ outcome: TaskAutomationRunOutcomeEnum.APPLIED }));
