@@ -344,6 +344,8 @@ export class ChannelSettingsDialogComponent implements OnInit, AfterViewInit {
 	protected readonly webhooks = signal<IChatWebhook[] | null>(null);
 	/** Whether the Integrations tab has a webhook write under way (Close then waits for it). */
 	private webhookBusy = false;
+	/** The conversation as the last Save answered it: later edits are compared with it (null before any save). */
+	private readonly saved = signal<IChatConversationWithState | null>(null);
 	/** A webhook URL or signing secret is on screen, not yet dismissed: a Save does not close the dialog over it. */
 	protected secretOnScreen = false;
 	/** The webhook list could not be read for another reason than webhooks being off (a 404): the tab offers a retry. */
@@ -394,7 +396,8 @@ export class ChannelSettingsDialogComponent implements OnInit, AfterViewInit {
 		return this.context.people.list.filter((person) => !inside.has(person.employeeId));
 	});
 	protected readonly changes = computed<IChatConversationUpdateInput>(() => {
-		const conversation = this.context.conversation;
+		// Compared with the conversation as last saved (the dialog may stay open after a Save, on a webhook secret).
+		const conversation = this.saved() ?? this.context.conversation;
 		const input: IChatConversationUpdateInput = {};
 		if (!conversation) return input;
 		const topic = this.topic().trim();
@@ -448,6 +451,7 @@ export class ChannelSettingsDialogComponent implements OnInit, AfterViewInit {
 			this.refreshRun += 1;
 			this.refreshing = false;
 			this.changed = answer.conversation;
+			this.saved.set(answer.conversation);
 			// A secret shown while the save ran (or before it) stays on screen: the manager closes once it is copied.
 			if (!this.secretOnScreen) this.closeRequested.set(true);
 		});

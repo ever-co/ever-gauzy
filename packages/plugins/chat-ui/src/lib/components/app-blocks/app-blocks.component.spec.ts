@@ -159,6 +159,26 @@ describe('AppBlocksComponent', () => {
 		})();
 	});
 
+	it('keeps the button pending, and so disabled, while it asks once more after a delivery', async () => {
+		await render();
+		const second = new Subject<IChatInteraction>();
+		api.interact.mockReturnValue(of<IChatInteractionResult>({ interaction: interaction(ChatInteractionStatusEnum.RETRYING), events: [] }));
+		api.interaction.mockReturnValueOnce(of(interaction(ChatInteractionStatusEnum.DELIVERED))).mockReturnValueOnce(second);
+		fakeAsync(() => {
+			button('ack').click();
+			tick(APP_INTERACTION_POLL_MS * 2);
+			fixture.detectChanges();
+			expect(button('ack').disabled).toBe(true);
+			button('ack').click();
+			expect(api.interact).toHaveBeenCalledTimes(1);
+			second.next(interaction(ChatInteractionStatusEnum.DELIVERED));
+			second.complete();
+			fixture.detectChanges();
+			expect(button('ack').disabled).toBe(false);
+			expect(button('ack').querySelector('nb-icon')?.getAttribute('icon')).toBe('checkmark-outline');
+		})();
+	});
+
 	it('waits for a slow answer instead of asking again over it', async () => {
 		await render();
 		const slow = new Subject<IChatInteraction>();

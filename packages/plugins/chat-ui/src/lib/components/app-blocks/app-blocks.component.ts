@@ -273,6 +273,8 @@ export class AppBlocksComponent {
 	private follow(key: string, blockId: string | null, interactionId: ID): void {
 		let settled = false;
 		let lookedAgain = false;
+		/** A delivery without its reply was seen, and the one more ask is under way. */
+		let deliveredSeen = false;
 		timer(APP_INTERACTION_POLL_MS, APP_INTERACTION_POLL_MS)
 			.pipe(
 				take(APP_INTERACTION_POLL_MAX),
@@ -291,19 +293,34 @@ export class AppBlocksComponent {
 			.subscribe({
 				next: (interaction) => {
 					const state = buttonStateOf(interaction.status);
-					this.setState(key, state);
 					if (state === 'pending') return;
+					// A delivery without its reply, with the one more ask still to come: the button stays pending (and so
+					// disabled) until that ask answers, so no second click starts while this one is followed.
+					if (state === 'done' && !interaction.replyApplied && !deliveredSeen) {
+						deliveredSeen = true;
+						return;
+					}
 					settled = true;
+					this.setState(key, state);
 					if (state === 'failed') this.setFailure(blockId, 'CHAT.APP.CALLBACK_FAILED');
 					if (interaction.replyApplied) this.readReplaced(interaction.conversationId, interaction.messageId);
 				},
 				error: () => {
 					settled = true;
+					// The click was delivered already: only the extra ask failed.
+					if (deliveredSeen) {
+						this.setState(key, 'done');
+						return;
+					}
 					this.setState(key, 'failed');
 					this.setFailure(blockId, 'CHAT.APP.CLICK_FAILED');
 				},
 				complete: () => {
 					if (settled) return;
+					if (deliveredSeen) {
+						this.setState(key, 'done');
+						return;
+					}
 					this.setState(key, null);
 					this.setFailure(blockId, 'CHAT.APP.NO_ANSWER_YET');
 				}

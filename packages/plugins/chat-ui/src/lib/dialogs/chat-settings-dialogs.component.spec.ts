@@ -195,6 +195,24 @@ describe('ChannelSettingsDialogComponent', () => {
 		expect(close).toHaveBeenCalledWith(expect.objectContaining({ topic: 'Pixels and fonts' }));
 	});
 
+	it('compares later edits with the settings as last saved while it stays open on a secret', async () => {
+		await open({}, 'on');
+		webhooksApi.create.mockReturnValueOnce(of({ webhook: webhook('w-1', 'CI'), url: 'https://api.example.com/api/chat/hooks/s', signingSecret: 'k' }));
+		tabTo('integrations');
+		panel().patch({ name: 'CI' });
+		panel().create();
+		tabTo('settings');
+		dialog().topic.set('Fonts');
+		dialog().save();
+		expect(close).not.toHaveBeenCalled();
+		// Back to the topic the dialog opened with: a change against the saved one.
+		dialog().topic.set('Pixels');
+		expect(dialog().changes()).toEqual({ topic: 'Pixels' });
+		expect(dialog().canSave()).toBe(true);
+		dialog().topic.set('Fonts');
+		expect(dialog().changes()).toEqual({});
+	});
+
 	it('closes on Save again once the secret was dismissed', async () => {
 		await open({}, 'on');
 		webhooksApi.create.mockReturnValueOnce(of({ webhook: webhook('w-1', 'CI'), url: 'https://api.example.com/api/chat/hooks/s', signingSecret: 'k' }));
