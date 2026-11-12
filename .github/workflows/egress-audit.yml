@@ -443,15 +443,19 @@ jobs:
       - name: The web app image serves its page (outside the audit, so a broken image is named here)
         run: |
           docker run -d --name webapp-smoke -e API_BASE_URL=http://api:3000 -e CLIENT_BASE_URL=http://webapp:4200 -p 127.0.0.1:4299:4200 "$GAUZY_WEBAPP_IMAGE" > /dev/null
+          # The image's entrypoint rewrites every bundle with sed before nginx starts: about 2 minutes on
+          # a fast machine, and more than 3 on the in-cluster runners' older CPUs (the port resets the
+          # connection until then). 10 minutes is a hang, not a slow start.
           ok=false
-          for i in $(seq 1 60); do
-            if curl -fsS -o /dev/null http://127.0.0.1:4299/; then ok=true; break; fi
+          start=$SECONDS
+          for i in $(seq 1 200); do
+            if curl -fsS -o /dev/null http://127.0.0.1:4299/ 2> /dev/null; then ok=true; break; fi
             sleep 3
           done
           docker logs webapp-smoke 2>&1 | grep -v '^+ ' | tail -20 || true
           docker rm -f webapp-smoke > /dev/null
-          if [ "$ok" != true ]; then echo "::error::the web app image did not serve its page within 3 minutes (port 4200 of the container, published as 127.0.0.1:4299)"; exit 1; fi
-          echo "The web app image serves its page."
+          if [ "$ok" != true ]; then echo "::error::the web app image did not serve its page within 10 minutes (port 4200 of the container, published as 127.0.0.1:4299)"; exit 1; fi
+          echo "The web app image serves its page (after $((SECONDS - start)) s)."
 
       - name: Write the API .env.local files of the modes, and a secret for this run
         run: |
