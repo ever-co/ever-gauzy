@@ -159,15 +159,16 @@ export class ChatTaskCardService {
 	/** The record of the task's scope whose value or name is this one (any case): the most specific scope first. */
 	private async recordNamed(entity: 'TaskStatus' | 'TaskPriority', name: string, scope: ChatTaskRecordScope): Promise<IChatTaskRecord | null> {
 		const records = (await this.dataSource.getRepository<ObjectLiteral>(entity).find({
-			select: { id: true, name: true, value: true, organizationId: true, projectId: true },
+			select: { id: true, name: true, value: true, organizationId: true, projectId: true, organizationTeamId: true },
 			where: scopeOf(scope)
-		} as never)) as Array<IChatTaskRecord & { organizationId?: ID | null; projectId?: ID | null }>;
+		} as never)) as Array<IChatTaskRecord & { organizationId?: ID | null; projectId?: ID | null; organizationTeamId?: ID | null }>;
 		const wanted = name.trim().toLowerCase();
 		const ofProject = (record: { projectId?: ID | null }) => !!scope.projectId && String(record.projectId ?? '') === String(scope.projectId);
 		const matching = records.filter(
 			(record) =>
-				// Another project's record is not the task's to take.
+				// Another project's record is not the task's to take, nor is a team's own (a name alone cannot say whose).
 				(!record.projectId || ofProject(record)) &&
+				!record.organizationTeamId &&
 				[record.value, record.name].some((text) => typeof text === 'string' && text.trim().toLowerCase() === wanted)
 		);
 		const rank = (record: { organizationId?: ID | null; projectId?: ID | null }) => (ofProject(record) ? 0 : record.organizationId ? 1 : 2);

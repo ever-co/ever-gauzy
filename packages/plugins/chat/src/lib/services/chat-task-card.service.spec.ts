@@ -63,7 +63,10 @@ function over(
 			find: jest.fn(async () => [
 				{ id: 's-org', name: 'In Review', value: 'in-review', organizationId: 'org', projectId: null },
 				{ id: 's-project', name: 'In Review', value: 'in-review', organizationId: 'org', projectId: 'p1' },
-				{ id: 's-other', name: 'Blocked', value: 'blocked', organizationId: 'org', projectId: 'p9' }
+				{ id: 's-other', name: 'Blocked', value: 'blocked', organizationId: 'org', projectId: 'p9' },
+				// A team's own status: a name alone never takes it (whose team would it be?).
+				{ id: 's-team', name: 'Done', value: 'done', organizationId: 'org', projectId: null, organizationTeamId: 'team-9' },
+				{ id: 's-default', name: 'Done', value: 'done', organizationId: null, projectId: null, organizationTeamId: null }
 			])
 		},
 		TaskPriority: {
@@ -147,6 +150,8 @@ describe('ChatTaskCardService.update', () => {
 		// A name no record of the scope holds clears the record, so the card never shows the one it had.
 		expect(await run({ status: 'Blocked' })).toEqual({ status: 'Blocked', taskStatusId: null });
 		expect(await run({ status: 'Someday' })).toEqual({ status: 'Someday', taskStatusId: null });
+		// Another team's record of that name is passed over for the shared one.
+		expect(await run({ status: 'Done' })).toEqual({ status: 'done', taskStatusId: 's-default' });
 		// A record cleared leaves the name as given.
 		expect(await run({ status: 'Someday', taskStatusId: null })).toEqual({ status: 'Someday', taskStatusId: null });
 	});
