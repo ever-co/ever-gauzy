@@ -102,6 +102,43 @@ with the flag off).
   two adjacent identical commented paragraphs is refused even when the intent is plain to a reader; (2) a block
   whose text changed is rebuilt from its Markdown, so its block id (and the anchor of a comment on it) goes, as
   before. Follow-up: stable block ids round-tripped in the exported Markdown (or targeted block edits).
+- **Comment anchors** (phase 4, `services/document-comment-anchor.ts` and `document-comment-anchor.service.ts`,
+  table `document_comment_anchor`, migration `1791000007530`): a root comment of a page may name a range of one
+  block's text: the block id, UTF-16 offsets into the block's text (every text node under the block, in order,
+  nothing between them), the quote (at most 1000 characters, its length the range's), up to 32 characters of
+  context a side, and in a live session the range's ends as base64 `Y.RelativePosition`s of the shared document.
+  One row per comment (unique `commentId`), removed with the comment and with the page (`CASCADE`); the comment's
+  `[[block:<blockId>]]` first line stays, so a client that knows no ranges keeps the block. Every read finds the
+  range again in the page as it is now, in this order: the live relative positions (when the page has a live state
+  for its revision), the stored offsets, the quote in its block (the occurrence whose context and place fit best),
+  then in the other blocks, the quote with at most a quarter of it edited (in its block, at least 6 characters),
+  the block alone; else the anchor is orphaned (`exact` / `moved` / `block` / `orphaned`, with the method). Ever
+  Teams applies the same rules in the editor (`docs-comment-anchors.ts`), so a range is found in the same place.
+  Access: reading the ranges is the page's read rule (`findOneScoped`); setting or removing one takes the comment's
+  author, a root comment of that page that is not withdrawn, and a page that takes the author's comments (the comment
+  API's write rule, `DocumentCommentAccessPolicy.findWritableParent`: a page reached through a `VIEW` share is
+  read-only). The ranges of withdrawn comments are not listed, and come back with the comment. `Comment.documentAnchor`
+  reads the page in its own organization only when the caller reaches it, and a GraphQL `organizationId` argument
+  must name an organization the caller reaches. The routes answer 404 `DOCS_COLLAB_DISABLED` while
+  `GAUZY_DOCS_COLLAB_ENABLED` is off (the field is null), and a client then keeps every thread on its block.
+- **Follower notifications name the comment** (phase 4, migration `1791000007540`): the follower fan-out writes the
+  comment's id in `employee_notification.commentId` (nullable, no foreign key, as `entityId`); `entity` /
+  `entityId` still name the record, so every reader of a notification keeps opening the record. The Inbox files
+  such a notification as an entry about the comment (entity `Comment`, the comment's id, the record in
+  `metadata.parentEntity` / `parentEntityId`, and in `taskId` for a task), the shape a mention in a comment already
+  has, so a client opens the thread. A mention keeps its record (the Inbox finds its twins by it).
+- **Search snippets** (phase 4, `services/document-search-snippet.ts`): `GET /documents?q=…` items carry
+  `searchSnippet`: about 160 characters of plain text around the first match (the page's text, else a file's
+  extracted text, else the description; the beginning of the first text there is when only the name matched), cut
+  at word boundaries, with every match as `[start, end)` offsets and the name's matches. Never HTML. A content search
+  reads the text of the first 50 results once more (a document that is not `searchable` keeps its content out of
+  its snippet, as the search does); a result whose text cannot be read has no snippet.
+- **Folder zip export** (phase 4): `GET /documents/:id/export/markdown?subtree=true` takes a folder too: its pages
+  (as a page's subtree export writes them), its sub-folders as folders of the zip, its files copied beside the pages
+  of their folder under their own names (within the export's byte budget, shared with the files the pages show; a
+  file past it, or unreadable, is listed with its API link), and an `index.md` listing what the zip holds. Every node
+  is read with the caller's access: an unreadable one is left out with its subtree. A page's export is unchanged; a
+  file is still 409 `DOCS_NOT_A_PAGE`. The PDF export keeps reading pages only (`collectSubtreeWithin`).
 
 ## 5. Tests
 
@@ -109,3 +146,10 @@ with the flag off).
 tested style of `1791000004700`. Phase 2: `document-markdown.spec` (round trip, block diff, moved and identical
 blocks), `document-markdown.service.spec` (the 409 for a commented twin), `document-notifier.service.spec` (the
 share-only dedupe window). The in-cluster build runs the plugin suite on `develop`.
+
+Phase 4: `document-comment-anchor.spec` (block text, finding a range again, the approximate match, Yjs relative
+positions over concurrent edits), `document-comment-anchor.service.spec` (author, reply, other page, a page that
+takes no comments, the organization boundary, the flag, live state, GraphQL field cache, validation),
+`document-search-snippet.spec`, `document-markdown.export.spec` (a folder's zip read back),
+`document-markdown.service.spec` (the PDF's page-only collection), `follower-fan-out.spec` (the comment id),
+`inbox-notification.bridge.spec` (the entry about the comment), `migration-timestamps.spec`.
