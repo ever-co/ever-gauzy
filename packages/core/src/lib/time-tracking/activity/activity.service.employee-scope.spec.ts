@@ -132,6 +132,8 @@ describe('ActivityService — the employees a caller reads the activity of', () 
 			table.string('date');
 			table.string('title');
 			table.integer('duration');
+			table.string('type').nullable();
+			table.text('metaData').nullable();
 			table.datetime('deletedAt').nullable();
 		});
 

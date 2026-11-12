@@ -1,6 +1,7 @@
 import { DocsFeatureService } from './docs-feature.service';
 import { DocumentService } from './document.service';
 import { DocumentAccessService } from './document-access.service';
+import { DocumentCommentAccessPolicy } from './document-comment-access.policy';
 import { DocumentCategoryService } from './document-category.service';
 import { DocumentCollaborationService } from './document-collaboration.service';
 import { DocumentCommentAnchorService } from './document-comment-anchor.service';
@@ -24,6 +25,7 @@ export * from './docs-feature.service';
 export * from './document.service';
 export * from './document-access.predicate';
 export * from './document-access.service';
+export * from './document-comment-access.policy';
 export * from './document-access.sql';
 export * from './document-category.service';
 export * from './document-comment-anchor';
@@ -56,6 +58,8 @@ export const Services = [
 	DocumentLiveBridge,
 	DocsFeatureService,
 	DocumentAccessService,
+	// Governs the comments of a page (`entity: Document`): found by the comment API at boot.
+	DocumentCommentAccessPolicy,
 	DocumentQuotaService,
 	DocumentService,
 	DocumentPathService,

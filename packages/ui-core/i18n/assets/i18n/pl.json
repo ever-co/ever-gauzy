@@ -4446,6 +4446,7 @@
 		"TASK_ADDED": "Zadanie zostało dodane",
 		"TASK_UPDATED": "Zadanie zostało zmienione",
 		"TASK_DELETED": "Zadanie zostało usunięte",
+		"TASK_MOVED_TO_TRASH": "Zadanie przeniesiono do kosza",
 		"TASKS_PROJECT": "Projekt",
 		"TASKS_CREATOR": "Stworzone przez",
 		"TASK_MEMBERS": "Pracownicy",
@@ -4484,7 +4485,30 @@
 		"ARE_YOU_SURE": "Jesteś pewien, że chcesz usunąć sprint?",
 		"SETTINGS": "Ustawienia",
 		"MODULE": "Moduł",
-		"SELECT_MODULE": "Moduły"
+		"SELECT_MODULE": "Moduły",
+		"TRASH": {
+			"TITLE": "Kosz",
+			"BACK": "Wróć do zadań",
+			"SEARCH": "Szukaj po tytule lub numerze",
+			"HINT": "Usunięte zadania zostają tutaj, dopóki nie zostaną przywrócone lub usunięte na zawsze.",
+			"RESTORE": "Przywróć",
+			"RESTORED": "„{{ title }}” wróciło",
+			"DELETE_FOREVER": "Usuń na zawsze",
+			"DELETE_FOREVER_CONFIRM": "Usunąć na zawsze? Tej operacji nie można cofnąć.",
+			"DELETED_FOREVER": "„{{ title }}” usunięto na zawsze",
+			"DELETED_BY": "Usunięte przez {{ name }} · {{ date }}",
+			"DELETED_AT": "Usunięte {{ date }}",
+			"LOAD_MORE": "Wczytaj więcej ({{ shown }} z {{ total }})",
+			"LOAD_FAILED": "Nie udało się wczytać kosza.",
+			"EMPTY_TITLE": "Kosz jest pusty",
+			"EMPTY_TEXT": "Tu pojawiają się usunięte zadania.",
+			"NO_MATCH_TITLE": "Brak pasującego usuniętego zadania",
+			"NO_MATCH_TEXT": "Spróbuj innego tytułu lub numeru.",
+			"UNAVAILABLE_TITLE": "Kosz jest niedostępny",
+			"UNAVAILABLE_TEXT": "Ten serwer nie przechowuje jeszcze usuniętych zadań. Poproś administratora o włączenie kosza zadań.",
+			"FORBIDDEN_TITLE": "Nie masz dostępu do tego kosza",
+			"FORBIDDEN_TEXT": "Poproś kogoś, kto może usuwać zadania, o przywrócenie zadania."
+		}
 	},
 	"JOBS": {
 		"EMPLOYEE": "Pracownik",
@@ -7982,5 +8006,13 @@
 		"NO_TIME_ENTRIES": "Ostatnio brak wpisów czasu",
 		"RUNNING": "W toku",
 		"ACTIVITY_LEVEL": "Aktywność: użycie klawiatury i myszy podczas śledzenia"
+	},
+	"COMMENT_REACTIONS": {
+		"ADD": "Dodaj reakcję",
+		"REACT_WITH": "Zareaguj {{ emoji }}",
+		"REACTED_WITH": "{{ people }} – reakcja {{ emoji }}",
+		"YOU": "Ty",
+		"OTHERS": "jeszcze {{ count }}",
+		"FAILED": "Reakcja nie została zapisana."
 	}
 }

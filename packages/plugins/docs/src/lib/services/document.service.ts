@@ -516,7 +516,7 @@ export class DocumentService extends TenantAwareCrudService<Document> {
 		// the field was whitelisted, parsed and silently dropped.
 		await this.syncMentions(document.id, input.mentionEmployeeIds, document.organizationId ?? organizationId);
 		await this.syncDocumentLinks(document, contentJson);
-		this.subscribeRequesterToDocument(document, EntitySubscriptionTypeEnum.CREATED_ENTITY);
+		void this.subscribeRequesterToDocument(document, EntitySubscriptionTypeEnum.CREATED_ENTITY);
 
 		this.emitDocumentEvent(document, 'created', { phase: 'crud' }, input);
 		return document;
@@ -558,8 +558,18 @@ export class DocumentService extends TenantAwareCrudService<Document> {
 	 * @param document The document to subscribe to.
 	 * @param type Why the subscription is created.
 	 */
-	public subscribeRequesterToDocument(document: Document, type: EntitySubscriptionTypeEnum): void {
-		const employeeId = RequestContext.currentEmployeeId();
+	public async subscribeRequesterToDocument(document: Document, type: EntitySubscriptionTypeEnum): Promise<void> {
+		// The requester's employee in the page's organization: the one that organization's fan-out and Inbox read
+		// (a user employed in several organizations carries their last organization's employee in the token).
+		// When that read fails the subscription is skipped: one saved under another organization's employee would
+		// outlive the failure.
+		let employeeId: ID | null;
+		try {
+			employeeId = await this.documentAccessService.currentEmployeeIdIn(document.organizationId, document.tenantId);
+		} catch (error) {
+			this.logger.warn(`Document ${document.id}: the requester was not subscribed: ${(error as Error)?.message}`);
+			return;
+		}
 		if (!employeeId) {
 			return; // no employee identity on this request — there is nobody to subscribe
 		}

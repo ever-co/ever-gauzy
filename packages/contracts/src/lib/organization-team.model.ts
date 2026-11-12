@@ -56,6 +56,11 @@ export interface IOrganizationTeamFindInput extends IBasePerTenantAndOrganizatio
 // Input interface for creating an organization team
 export interface IOrganizationTeamCreateInput extends IBaseTeamProperties, IMemberEntityBased {
 	projects?: IOrganizationProjectCreateInput[];
+	/**
+	 * Give the new team a few common labels (Bug, Feature, …) as its own tags. Off unless asked: a client that wants
+	 * them (Ever Teams) sends `true`; every other way of creating a team creates no tags, as before.
+	 */
+	withStarterTags?: boolean;
 }
 
 // Input interface for updating an organization team

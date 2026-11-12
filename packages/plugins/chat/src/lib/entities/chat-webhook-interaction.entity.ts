@@ -1,0 +1,52 @@
+import { ChatInteractionStatusEnum, ID } from '@gauzy/contracts';
+import { MultiORMColumn, MultiORMEntity, TenantOrganizationBaseEntity } from '@gauzy/core';
+import { MikroOrmChatWebhookInteractionRepository } from './chat.repositories';
+
+/**
+ * `chat_webhook_interaction`: one click on a button of an app message, and its callback. Its id is the
+ * `interactionId` the callback carries on every attempt; `replyAppliedAt` makes the sender's reply apply once.
+ */
+@MultiORMEntity('chat_webhook_interaction', { mikroOrmRepository: () => MikroOrmChatWebhookInteractionRepository })
+export class ChatWebhookInteraction extends TenantOrganizationBaseEntity {
+	@MultiORMColumn()
+	webhookId!: ID;
+
+	@MultiORMColumn()
+	messageId!: ID;
+
+	@MultiORMColumn()
+	conversationId!: ID;
+
+	@MultiORMColumn()
+	actorEmployeeId!: ID;
+
+	@MultiORMColumn()
+	actorUserId!: ID;
+
+	@MultiORMColumn({ type: 'varchar', length: 255 })
+	actionId!: string;
+
+	@MultiORMColumn({ type: 'varchar', length: 255, nullable: true })
+	blockId?: string | null;
+
+	@MultiORMColumn({ type: 'varchar', length: 2000, nullable: true })
+	value?: string | null;
+
+	@MultiORMColumn({ type: 'varchar', length: 16, default: ChatInteractionStatusEnum.PENDING })
+	status!: ChatInteractionStatusEnum;
+
+	@MultiORMColumn({ type: 'int', default: 0 })
+	attempts!: number;
+
+	@MultiORMColumn({ type: 'int', default: 0 })
+	lastStatusCode!: number;
+
+	@MultiORMColumn({ type: 'varchar', length: 255, nullable: true })
+	lastError?: string | null;
+
+	@MultiORMColumn({ nullable: true })
+	deliveredAt?: Date | null;
+
+	@MultiORMColumn({ nullable: true })
+	replyAppliedAt?: Date | null;
+}

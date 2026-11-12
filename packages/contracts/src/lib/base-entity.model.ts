@@ -100,6 +100,7 @@ export enum BaseEntityEnum {
 	Candidate = 'Candidate',
 	ChatConversation = 'ChatConversation',
 	ChatMessage = 'ChatMessage',
+	ChatWebhook = 'ChatWebhook',
 	Comment = 'Comment',
 	Contact = 'Contact',
 	Currency = 'Currency',

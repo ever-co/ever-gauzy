@@ -4447,6 +4447,7 @@
 		"TASK_ADDED": "A tarefa foi adicionada.",
 		"TASK_UPDATED": "A tarefa foi alterada.",
 		"TASK_DELETED": "A tarefa foi removida.",
+		"TASK_MOVED_TO_TRASH": "Tarefa movida para o lixo",
 		"TASKS_PROJECT": "Projeto",
 		"TASKS_CREATOR": "Criado por",
 		"TASK_MEMBERS": "Funcionários",
@@ -4485,7 +4486,30 @@
 		"ARE_YOU_SURE": "Você tem certeza de que deseja excluir a sprint?",
 		"SETTINGS": "Configurações",
 		"MODULE": "Módulo",
-		"SELECT_MODULE": "Módulo(s)"
+		"SELECT_MODULE": "Módulo(s)",
+		"TRASH": {
+			"TITLE": "Lixo",
+			"BACK": "Voltar às tarefas",
+			"SEARCH": "Pesquisar por título ou número",
+			"HINT": "As tarefas eliminadas ficam aqui até serem restauradas ou eliminadas definitivamente.",
+			"RESTORE": "Restaurar",
+			"RESTORED": "“{{ title }}” está de volta",
+			"DELETE_FOREVER": "Eliminar definitivamente",
+			"DELETE_FOREVER_CONFIRM": "Eliminar definitivamente? Não é possível anular.",
+			"DELETED_FOREVER": "“{{ title }}” foi eliminada definitivamente",
+			"DELETED_BY": "Eliminada por {{ name }} · {{ date }}",
+			"DELETED_AT": "Eliminada {{ date }}",
+			"LOAD_MORE": "Carregar mais ({{ shown }} de {{ total }})",
+			"LOAD_FAILED": "Não foi possível carregar o lixo.",
+			"EMPTY_TITLE": "O lixo está vazio",
+			"EMPTY_TEXT": "As tarefas eliminadas aparecem aqui.",
+			"NO_MATCH_TITLE": "Nenhuma tarefa eliminada corresponde",
+			"NO_MATCH_TEXT": "Tente outro título ou número.",
+			"UNAVAILABLE_TITLE": "O lixo não está disponível",
+			"UNAVAILABLE_TEXT": "Este servidor ainda não guarda tarefas eliminadas. Peça a um administrador para ativar o lixo de tarefas.",
+			"FORBIDDEN_TITLE": "Não pode ver este lixo",
+			"FORBIDDEN_TEXT": "Peça a alguém que possa eliminar tarefas para restaurar a tarefa."
+		}
 	},
 	"JOBS": {
 		"EMPLOYEE": "Funcionário",
@@ -7983,5 +8007,13 @@
 		"NO_TIME_ENTRIES": "Nenhum registro de tempo recente",
 		"RUNNING": "Em andamento",
 		"ACTIVITY_LEVEL": "Atividade: uso do teclado e do mouse durante o controle"
+	},
+	"COMMENT_REACTIONS": {
+		"ADD": "Adicionar reação",
+		"REACT_WITH": "Reagir com {{ emoji }}",
+		"REACTED_WITH": "Reação {{ emoji }}: {{ people }}",
+		"YOU": "Você",
+		"OTHERS": "mais {{ count }}",
+		"FAILED": "A reação não foi guardada."
 	}
 }

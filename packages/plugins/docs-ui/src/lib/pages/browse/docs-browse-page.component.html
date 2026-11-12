@@ -83,6 +83,13 @@
 					{{ 'DOCS.TREE.NEW' | translate }}
 					<nb-icon icon="chevron-down-outline"></nb-icon>
 				</button>
+				<!-- Import of an exported workspace (`docs-import-export`): hidden while the import probe answers 404. -->
+				@if (importMaxZipBytes !== null) {
+					<button nbButton size="small" appearance="outline" (click)="openImportDialog()">
+						<nb-icon icon="archive-outline"></nb-icon>
+						{{ 'DOCS.IMPORT.BUTTON' | translate }}
+					</button>
+				}
 				<button nbButton size="small" status="primary" (click)="openUploadFlow()">
 					<nb-icon icon="upload-outline"></nb-icon>
 					{{ 'DOCS.UPLOAD.BUTTON' | translate }}

@@ -63,3 +63,19 @@ export function plainExcerpt(body: string | null | undefined, max = 140): string
 		.trim();
 	return text.length > max ? `${text.slice(0, max - 1)}…` : text;
 }
+
+/**
+ * What a message reads as in one line (a notification, an inbox entry): its text, or — for a message of files only —
+ * a clip and the files' names (`📎 report.pdf, chart.png`), cut to `max`.
+ */
+export function messageExcerpt(message: { body?: string | null; attachmentNames?: string | null }, max = 140): string {
+	const text = plainExcerpt(message.body, max);
+	if (text) return text;
+	const names = (message.attachmentNames ?? '')
+		.split('\n')
+		.map((name) => name.trim())
+		.filter(Boolean);
+	if (!names.length) return '';
+	const line = `📎 ${names.join(', ')}`;
+	return line.length > max ? `${line.slice(0, max - 1)}…` : line;
+}

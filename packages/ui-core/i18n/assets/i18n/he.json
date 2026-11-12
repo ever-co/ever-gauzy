@@ -4473,6 +4473,7 @@
 		"TASK_ADDED": "Task was added",
 		"TASK_UPDATED": "Task was changed",
 		"TASK_DELETED": "Task was removed",
+		"TASK_MOVED_TO_TRASH": "המשימה הועברה לסל המחזור",
 		"TASKS_PROJECT": "פרויקטים",
 		"TASKS_CREATOR": "Created By",
 		"TASK_MEMBERS": "עובדים",
@@ -4507,7 +4508,30 @@
 		"ARE_YOU_SURE": "Are you sure you want delete sprint",
 		"SETTINGS": "הגדרות",
 		"MODULE": "מודול",
-		"SELECT_MODULE": "מודולים"
+		"SELECT_MODULE": "מודולים",
+		"TRASH": {
+			"TITLE": "סל המחזור",
+			"BACK": "חזרה למשימות",
+			"SEARCH": "חיפוש לפי כותרת או מספר",
+			"HINT": "משימות שנמחקו נשארות כאן עד שישוחזרו או יימחקו לצמיתות.",
+			"RESTORE": "שחזור",
+			"RESTORED": "\"{{ title }}\" חזרה",
+			"DELETE_FOREVER": "מחיקה לצמיתות",
+			"DELETE_FOREVER_CONFIRM": "למחוק לצמיתות? אי אפשר לבטל זאת.",
+			"DELETED_FOREVER": "\"{{ title }}\" נמחקה לצמיתות",
+			"DELETED_BY": "נמחקה על ידי {{ name }} · {{ date }}",
+			"DELETED_AT": "נמחקה {{ date }}",
+			"LOAD_MORE": "טעינת עוד ({{ shown }} מתוך {{ total }})",
+			"LOAD_FAILED": "לא ניתן היה לטעון את סל המחזור.",
+			"EMPTY_TITLE": "סל המחזור ריק",
+			"EMPTY_TEXT": "משימות שנמחקו מופיעות כאן.",
+			"NO_MATCH_TITLE": "אין משימה מחוקה תואמת",
+			"NO_MATCH_TEXT": "נסו כותרת או מספר אחרים.",
+			"UNAVAILABLE_TITLE": "סל המחזור אינו זמין",
+			"UNAVAILABLE_TEXT": "השרת הזה עדיין לא שומר משימות שנמחקו. בקשו ממנהל המערכת להפעיל את סל המחזור של המשימות.",
+			"FORBIDDEN_TITLE": "אין לך גישה לסל המחזור הזה",
+			"FORBIDDEN_TEXT": "בקשו ממי שיכול למחוק משימות לשחזר את המשימה."
+		}
 	},
 	"JOBS": {
 		"EMPLOYEE": "עובד",
@@ -7991,5 +8015,13 @@
 		"NO_TIME_ENTRIES": "אין רשומות זמן לאחרונה",
 		"RUNNING": "פועל",
 		"ACTIVITY_LEVEL": "פעילות: שימוש במקלדת ובעכבר בזמן המעקב"
+	},
+	"COMMENT_REACTIONS": {
+		"ADD": "הוספת תגובת אמוג׳י",
+		"REACT_WITH": "תגובה ב-{{ emoji }}",
+		"REACTED_WITH": "תגובה {{ emoji }}: {{ people }}",
+		"YOU": "את/ה",
+		"OTHERS": "עוד {{ count }}",
+		"FAILED": "התגובה לא נשמרה."
 	}
 }

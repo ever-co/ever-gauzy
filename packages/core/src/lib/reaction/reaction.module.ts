@@ -4,6 +4,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
 import { EmployeeModule } from '../employee/employee.module';
+import { CommentModule } from '../comment/comment.module';
 import { CommandHandlers } from './commands/handlers';
 import { ReactionService } from './reaction.service';
 import { ReactionController } from './reaction.controller';
@@ -18,7 +19,9 @@ import { MikroOrmReactionRepository } from './repository/mikro-orm-reaction.repo
 		TypeOrmModule.forFeature([Reaction]),
 		MikroOrmModule.forFeature([Reaction]),
 		RolePermissionModule,
-		EmployeeModule
+		EmployeeModule,
+		// Reading a comment before reacting to it, the summary of a record's comments, and the change hint.
+		CommentModule
 	],
 	controllers: [ReactionController],
 	providers: [

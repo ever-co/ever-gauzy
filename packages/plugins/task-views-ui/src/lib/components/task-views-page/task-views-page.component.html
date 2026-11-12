@@ -1,0 +1,501 @@
+@if (available() === false) {
+	<nb-card class="unavailable" data-test="task-views-unavailable">
+		<nb-card-body>
+			<p>{{ 'TASK_VIEWS.UNAVAILABLE' | translate }}</p>
+		</nb-card-body>
+	</nb-card>
+} @else if (available() === null) {
+	<nb-card class="checking" [nbSpinner]="true" nbSpinnerSize="large" nbSpinnerStatus="primary">
+		<nb-card-body></nb-card-body>
+	</nb-card>
+} @else {
+	<div class="task-views" data-test="task-views-page">
+		<!-- The views switcher -->
+		<nav class="switcher" [attr.aria-label]="'TASK_VIEWS.SWITCHER.TITLE' | translate" data-test="views-switcher">
+			<div class="switcher-head">
+				<h5>{{ 'TASK_VIEWS.SWITCHER.TITLE' | translate }}</h5>
+				@if (canAdd()) {
+					<button
+						nbButton
+						size="tiny"
+						status="primary"
+						ghost
+						type="button"
+						data-test="new-view"
+						[disabled]="saving()"
+						(click)="newView('create')"
+					>
+						<nb-icon icon="plus-outline"></nb-icon>{{ 'TASK_VIEWS.SWITCHER.NEW' | translate }}
+					</button>
+				}
+			</div>
+			@if (views().length > 8) {
+				<input
+					nbInput
+					fullWidth
+					fieldSize="tiny"
+					type="search"
+					class="switcher-search"
+					[placeholder]="'TASK_VIEWS.SWITCHER.SEARCH' | translate"
+					[ngModel]="viewSearch()"
+					(ngModelChange)="viewSearch.set($event)"
+				/>
+			}
+			<h6>{{ 'TASK_VIEWS.SWITCHER.BUILT_IN' | translate }}</h6>
+			<ul>
+				@for (key of builtInViews; track key) {
+					<li>
+						<a
+							[routerLink]="linkOf({ kind: 'built-in', key: key })"
+							routerLinkActive="active"
+							[attr.data-view]="key"
+							>{{ builtInKey(key) | translate }}</a
+						>
+					</li>
+				}
+			</ul>
+			@for (section of ['personal', 'team', 'project', 'organization']; track section) {
+				@if ($any(groupedViews())[section].length) {
+					<h6>{{ 'TASK_VIEWS.SWITCHER.' + section.toUpperCase() | translate }}</h6>
+					<ul>
+						@for (view of $any(groupedViews())[section]; track view.id) {
+							<li>
+								<a
+									[routerLink]="linkOf({ kind: 'saved', id: view.id })"
+									routerLinkActive="active"
+									[attr.data-view]="view.id"
+									>{{ view.name }}</a
+								>
+							</li>
+						}
+					</ul>
+				}
+			}
+			@if (!views().length) {
+				<p class="switcher-empty">{{ 'TASK_VIEWS.SWITCHER.EMPTY' | translate }}</p>
+			}
+		</nav>
+
+		<!-- The open view -->
+		<nb-card class="view" [nbSpinner]="loading()" nbSpinnerStatus="primary">
+			<nb-card-header class="view-head">
+				<div class="view-title">
+					<h4 data-test="view-title">
+						@if (current().kind === 'built-in') {
+							{{ builtInKey($any(current()).key) | translate }}
+						} @else {
+							{{ title() }}
+						}
+					</h4>
+					@if (savedView(); as view) {
+						<span
+							class="badge"
+							[class.personal]="view.visibility === 'personal'"
+							data-test="view-visibility"
+						>
+							{{
+								(view.visibility === 'personal'
+									? 'TASK_VIEWS.VIEW.PERSONAL_BADGE'
+									: 'TASK_VIEWS.VIEW.SHARED_BADGE'
+								) | translate
+							}}
+							@if (viewScope() === 'team' || viewScope() === 'project') {
+								· {{ 'TASK_VIEWS.SWITCHER.' + viewScope()!.toUpperCase() | translate }}
+							}
+						</span>
+					}
+					@if (dirty()) {
+						<span class="unsaved" data-test="view-unsaved">{{
+							'TASK_VIEWS.VIEW.UNSAVED' | translate
+						}}</span>
+					}
+					<span class="count">{{ 'TASK_VIEWS.VIEW.COUNT' | translate: { count: total() } }}</span>
+				</div>
+				<div class="view-actions">
+					<ngx-task-views-go-to-box size="small"></ngx-task-views-go-to-box>
+					<button
+						nbButton
+						ghost
+						size="small"
+						type="button"
+						data-test="shortcuts-help"
+						[nbTooltip]="'TASK_VIEWS.SHORTCUTS.TITLE' | translate"
+						[attr.aria-label]="'TASK_VIEWS.SHORTCUTS.TITLE' | translate"
+						(click)="openHelp()"
+					>
+						<nb-icon icon="keypad-outline"></nb-icon>
+					</button>
+				</div>
+			</nb-card-header>
+
+			<nb-card-body class="view-body">
+				@if (gone()) {
+					<p class="gone" data-test="view-gone">
+						{{ 'TASK_VIEWS.VIEW.GONE' | translate }}
+						<a [routerLink]="linkOf({ kind: 'built-in', key: 'mine' })">{{
+							'TASK_VIEWS.BUILT_IN.MINE' | translate
+						}}</a>
+					</p>
+				} @else {
+					@if (isSaved() && savedView()) {
+						<div class="view-toolbar">
+							@if (canEdit()) {
+								<button
+									nbButton
+									size="small"
+									status="primary"
+									type="button"
+									data-test="save-view"
+									[disabled]="!dirty() || saving()"
+									(click)="save()"
+								>
+									{{ 'TASK_VIEWS.VIEW.SAVE' | translate }}
+								</button>
+								@if (dirty()) {
+									<button
+										nbButton
+										size="small"
+										ghost
+										type="button"
+										data-test="discard-view"
+										(click)="discard()"
+									>
+										{{ 'TASK_VIEWS.VIEW.DISCARD' | translate }}
+									</button>
+								}
+							}
+							@if (canAdd()) {
+								<button
+									nbButton
+									size="small"
+									status="basic"
+									type="button"
+									data-test="save-as"
+									[disabled]="saving()"
+									(click)="newView('saveAs')"
+								>
+									{{ 'TASK_VIEWS.VIEW.SAVE_AS' | translate }}
+								</button>
+							}
+							@if (canEdit()) {
+								<button
+									nbButton
+									size="small"
+									ghost
+									type="button"
+									data-test="rename-view"
+									[disabled]="saving()"
+									(click)="rename()"
+								>
+									{{ 'TASK_VIEWS.VIEW.RENAME' | translate }}
+								</button>
+								<button
+									nbButton
+									size="small"
+									ghost
+									type="button"
+									data-test="toggle-visibility"
+									[disabled]="saving()"
+									(click)="toggleVisibility()"
+								>
+									{{
+										(savedView()!.visibility === 'personal'
+											? 'TASK_VIEWS.VIEW.SHARE'
+											: 'TASK_VIEWS.VIEW.MAKE_PERSONAL'
+										) | translate
+									}}
+								</button>
+								<button
+									nbButton
+									size="small"
+									ghost
+									status="danger"
+									type="button"
+									data-test="delete-view"
+									[disabled]="saving()"
+									(click)="deleteView()"
+								>
+									{{ 'TASK_VIEWS.VIEW.DELETE' | translate }}
+								</button>
+							}
+						</div>
+
+						@if (conflict(); as stale) {
+							<div class="conflict" role="alert" data-test="view-conflict">
+								<nb-icon icon="alert-circle-outline" status="warning"></nb-icon>
+								<div class="conflict-text">
+									<strong>{{
+										(stale.kind === 'order'
+											? 'TASK_VIEWS.CONFLICT.ORDER'
+											: 'TASK_VIEWS.CONFLICT.TITLE'
+										) | translate
+									}}</strong>
+									<span>{{
+										'TASK_VIEWS.CONFLICT.BODY' | translate: { version: stale.latest.version ?? 1 }
+									}}</span>
+								</div>
+								<button
+									nbButton
+									size="small"
+									status="basic"
+									type="button"
+									data-test="conflict-reload"
+									(click)="reloadLatest()"
+								>
+									{{ 'TASK_VIEWS.CONFLICT.RELOAD' | translate }}
+								</button>
+								<button
+									nbButton
+									size="small"
+									status="warning"
+									type="button"
+									data-test="conflict-overwrite"
+									[disabled]="saving()"
+									(click)="overwrite()"
+								>
+									{{ 'TASK_VIEWS.CONFLICT.OVERWRITE' | translate }}
+								</button>
+								<button
+									nbButton
+									size="small"
+									ghost
+									type="button"
+									[attr.aria-label]="'TASK_VIEWS.DIALOG.CLOSE' | translate"
+									(click)="dismissConflict()"
+								>
+									<nb-icon icon="close-outline"></nb-icon>
+								</button>
+							</div>
+						}
+
+						<div class="controls">
+							<label class="control">
+								<span>{{ 'TASK_VIEWS.LAYOUT.TITLE' | translate }}</span>
+								<nb-select
+									size="small"
+									data-test="layout"
+									[selected]="draft().layout"
+									(selectedChange)="setLayout($event)"
+								>
+									@for (layout of layouts; track layout) {
+										<nb-option [value]="layout">{{
+											'TASK_VIEWS.LAYOUT.' + layout.toUpperCase() | translate
+										}}</nb-option>
+									}
+								</nb-select>
+							</label>
+							<!-- A timeline is one calendar: no grouping, and no row properties to show. -->
+							@if (!isTimeline()) {
+								<label class="control">
+									<span>{{ 'TASK_VIEWS.GROUP.TITLE' | translate }}</span>
+									<nb-select
+										size="small"
+										data-test="group-by"
+										[selected]="draft().groupBy"
+										(selectedChange)="setGroupBy($event)"
+									>
+										@for (grouping of groupings; track grouping) {
+											<nb-option [value]="grouping">{{
+												groupingKey(grouping) | translate
+											}}</nb-option>
+										}
+									</nb-select>
+								</label>
+							}
+							<label class="control">
+								<span>{{ 'TASK_VIEWS.ORDER.LABEL' | translate }}</span>
+								<nb-select
+									size="small"
+									data-test="order-by"
+									[selected]="draft().orderBy.field"
+									(selectedChange)="setOrderField($event)"
+								>
+									@for (field of orderFields; track field) {
+										<nb-option [value]="field">{{ orderFieldKey(field) | translate }}</nb-option>
+									}
+								</nb-select>
+								@if (draft().orderBy.field !== 'manual') {
+									<button
+										nbButton
+										size="small"
+										ghost
+										type="button"
+										[attr.aria-label]="
+											(draft().orderBy.direction === 'asc'
+												? 'TASK_VIEWS.ORDER.ASC'
+												: 'TASK_VIEWS.ORDER.DESC'
+											) | translate
+										"
+										(click)="toggleDirection()"
+									>
+										<nb-icon
+											[icon]="
+												draft().orderBy.direction === 'asc'
+													? 'arrow-upward-outline'
+													: 'arrow-downward-outline'
+											"
+										></nb-icon>
+									</button>
+								}
+							</label>
+							<button
+								nbButton
+								size="small"
+								status="basic"
+								type="button"
+								data-test="toggle-filters"
+								[attr.aria-expanded]="filtersOpen()"
+								(click)="filtersOpen.set(!filtersOpen())"
+							>
+								<nb-icon icon="funnel-outline"></nb-icon>
+								{{ 'TASK_VIEWS.FILTER.TITLE' | translate }}
+								@if (filterCount()) {
+									<span class="pill">{{ filterCount() }}</span>
+								}
+							</button>
+							@if (!isTimeline()) {
+								<div
+									class="properties"
+									role="group"
+									[attr.aria-label]="'TASK_VIEWS.LIST.PROPERTIES' | translate"
+								>
+									@for (property of properties; track property) {
+										<button
+											type="button"
+											class="property"
+											[class.on]="shownProperties()[property]"
+											[attr.aria-pressed]="shownProperties()[property]"
+											(click)="toggleProperty(property)"
+										>
+											{{ propertyKey(property) | translate }}
+										</button>
+									}
+								</div>
+							}
+						</div>
+						@if (orderingPending()) {
+							<p class="hint" data-test="ordering-pending">
+								{{ 'TASK_VIEWS.ORDER.PENDING' | translate }}
+							</p>
+						} @else if (draft().orderBy.field === 'manual') {
+							<p class="hint">
+								{{
+									(draggable() ? 'TASK_VIEWS.ORDER.DRAG_HINT' : 'TASK_VIEWS.ORDER.DRAG_UNAVAILABLE')
+										| translate
+								}}
+							</p>
+						}
+
+						@if (filtersOpen()) {
+							<ngx-task-views-filter-editor
+								[tree]="draft().filter"
+								[options]="options()"
+								[invalid]="invalid()"
+								(treeChange)="setFilter($event)"
+							></ngx-task-views-filter-editor>
+						} @else if (invalid().size) {
+							<p class="hint warning" data-test="invalid-summary">
+								{{ 'TASK_VIEWS.FILTER.INVALID.SUMMARY' | translate: { count: invalid().size } }}
+							</p>
+						}
+					}
+
+					@if (selection().ids.length) {
+						<ngx-task-views-bulk-toolbar
+							[count]="selection().ids.length"
+							[limit]="selectionLimit"
+							[options]="options()"
+							[busy]="busy()"
+							[canEdit]="canEdit()"
+							[canDelete]="canDeleteTasks() || canEdit()"
+							(applied)="applyBulk($event)"
+							(deleted)="deleteSelected()"
+							(cleared)="clearSelection()"
+						></ngx-task-views-bulk-toolbar>
+					}
+
+					@if (error()) {
+						<p class="error" role="alert">
+							{{ 'TASK_VIEWS.ERROR' | translate }}
+							<button nbButton size="tiny" status="basic" type="button" (click)="retry()">
+								{{ 'TASK_VIEWS.RETRY' | translate }}
+							</button>
+						</p>
+					} @else if (!loading() && !items().length) {
+						<p class="empty" data-test="view-empty">{{ 'TASK_VIEWS.LIST.EMPTY' | translate }}</p>
+					} @else {
+						@if (isTimeline()) {
+							<ngx-task-views-timeline
+								[tasks]="items()"
+								(opened)="openTask($event)"
+							></ngx-task-views-timeline>
+						} @else {
+							<ngx-task-views-task-list
+								[groups]="rowGroups()"
+								[grouped]="isSaved() && countedBy() !== 'none'"
+								[selection]="selection()"
+								[focusedId]="focusedId()"
+								[shown]="shownProperties()"
+								[draggable]="draggable()"
+								[selectable]="canEdit() || canDeleteTasks()"
+								(toggled)="onToggle($event)"
+								(opened)="openTask($event)"
+								(focused)="focusedId.set($event)"
+								(dropped)="drop($event)"
+								(pageToggled)="onPageToggle($event)"
+							></ngx-task-views-task-list>
+						}
+						<div class="paging">
+							<span class="shown">{{
+								'TASK_VIEWS.LIST.SHOWING' | translate: { shown: items().length, total: total() }
+							}}</span>
+							@if (hasMore()) {
+								<button
+									nbButton
+									size="small"
+									status="basic"
+									type="button"
+									data-test="load-more"
+									[disabled]="loadingMore() || loading()"
+									(click)="loadMore()"
+								>
+									{{ 'TASK_VIEWS.LIST.LOAD_MORE' | translate }}
+								</button>
+							}
+						</div>
+					}
+				}
+			</nb-card-body>
+		</nb-card>
+	</div>
+
+	@if (undo(); as pending) {
+		<div class="undo-bar" role="status" aria-live="polite" data-test="undo-bar">
+			<span>{{ pending.messageKey | translate: pending.params }}</span>
+			@if (pending.request) {
+				<button
+					nbButton
+					size="small"
+					status="control"
+					type="button"
+					data-test="undo"
+					[disabled]="busy()"
+					(click)="undoLast()"
+				>
+					{{ 'TASK_VIEWS.BULK.UNDO' | translate }}
+				</button>
+			}
+			<button
+				nbButton
+				size="small"
+				ghost
+				status="control"
+				type="button"
+				[attr.aria-label]="'TASK_VIEWS.DIALOG.CLOSE' | translate"
+				(click)="clearUndo()"
+			>
+				<nb-icon icon="close-outline"></nb-icon>
+			</button>
+		</div>
+	}
+}

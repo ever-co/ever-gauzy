@@ -35,7 +35,7 @@ export interface IDocumentMarkdownUpdateResult {
 }
 
 /** A page, a folder or a file of a subtree export: its place in the zip, and the document. */
-interface ISubtreeEntry {
+export interface ISubtreeEntry {
 	document: Document;
 	path: string;
 	hasChildren: boolean;
@@ -43,6 +43,16 @@ interface ISubtreeEntry {
 	kind: 'page' | 'folder' | 'file';
 	/** The entry this one is under (`null` for the root and the root's children). */
 	parentId: string | null;
+	/** Levels below the root, folders counted (a page under a folder under the root is at 2). */
+	depth?: number;
+	/** The entry's place in the tree read depth first (parents before their children, siblings in their order). */
+	order?: number;
+}
+
+/** A subtree as collected: its readable entries, and whether the collection stopped at its limit with nodes left. */
+export interface ISubtreeCollection {
+	entries: ISubtreeEntry[];
+	truncated: boolean;
 }
 
 /** The longest name of a file copied into a zip. */
@@ -88,7 +98,7 @@ export class DocumentMarkdownService {
 	 */
 	async writeSubtreeZip(root: Document, organizationId: ID | undefined, output: NodeJS.WritableStream): Promise<{ fileName: string; pages: number; files: number }> {
 		const isFolder = root.kind === DocumentKindEnum.FOLDER;
-		const tree = await this.collectSubtree(root, organizationId, isFolder);
+		const { entries: tree } = await this.collectTree(root, organizationId, DOCS_MARKDOWN_SUBTREE_MAX_PAGES, isFolder);
 		const entries = tree.filter((entry) => entry.kind === 'page');
 		// The folder's files first, then the files the pages show: one byte budget for both.
 		const attachments = await this.readAttachments(tree.filter((entry) => entry.kind === 'file'), organizationId);
@@ -222,20 +232,47 @@ export class DocumentMarkdownService {
 	}
 
 	/**
-	 * The root and, breadth first, what is under it that the caller may read: pages become files, folders become
-	 * folders of the zip (a folder has no file of its own), files (`withFiles`, a folder's export) are copied, and one
-	 * the caller may not read is left out with its subtree. The names are unique within their folder. A folder root
-	 * has no entry of its own (the zip's `index.md` lists what it holds).
+	 * The root and, breadth first, the pages under it that the caller may read: pages become files, folders become
+	 * folders of the zip (a folder has no file of its own), and one the caller may not read is left out with its
+	 * subtree. The names are unique within their folder. The PDF export reads its subtree here too.
 	 */
-	private async collectSubtree(root: Document, organizationId?: ID, withFiles = false): Promise<ISubtreeEntry[]> {
+	async collectSubtree(root: Document, organizationId?: ID): Promise<ISubtreeEntry[]> {
+		return (await this.collectSubtreeWithin(root, organizationId)).entries;
+	}
+
+	/**
+	 * The readable pages of a subtree (at most `limit`, and never more than {@link DOCS_MARKDOWN_SUBTREE_MAX_PAGES}),
+	 * each with its depth (folders counted) and its depth-first place; `truncated` when the collection stopped at its
+	 * limit with nodes left to read, so a caller with a page limit of its own can refuse rather than export part of it.
+	 */
+	async collectSubtreeWithin(root: Document, organizationId?: ID, limit = DOCS_MARKDOWN_SUBTREE_MAX_PAGES): Promise<ISubtreeCollection> {
+		const { entries, truncated } = await this.collectTree(root, organizationId, limit, false);
+		return { entries: entries.filter((entry) => entry.kind === 'page'), truncated };
+	}
+
+	/**
+	 * The root and, breadth first, what is under it that the caller may read: pages, folders (a folder of the zip, no
+	 * file of its own) and, with `withFiles` (a folder's export), files (copied as they are); one the caller may not
+	 * read is left out with its subtree. The names are unique within their folder. A folder root has no entry of its
+	 * own (the zip's `index.md` lists what it holds). At most `limit` pages and files are collected (folders are not
+	 * counted), each with its depth and its depth-first place.
+	 */
+	private async collectTree(root: Document, organizationId: ID | undefined, limit: number, withFiles: boolean): Promise<ISubtreeCollection> {
+		const max = Math.max(1, Math.min(limit, DOCS_MARKDOWN_SUBTREE_MAX_PAGES));
 		const isFolder = root.kind === DocumentKindEnum.FOLDER;
-		const entries: ISubtreeEntry[] = isFolder ? [] : [{ document: root, path: 'index.md', hasChildren: false, kind: 'page', parentId: null }];
+		const entries: ISubtreeEntry[] = isFolder ? [] : [{ document: root, path: 'index.md', hasChildren: false, kind: 'page', parentId: null, depth: 0 }];
+		/** The pages and files collected: what the limit counts. */
+		let counted = entries.length;
 		const folderOf = new Map<string, string>([[String(root.id), '']]);
+		const depthOf = new Map<string, number>([[String(root.id), 0]]);
+		/** Every readable node's readable children (folders too), in their order: the tree the depth-first order reads. */
+		const childrenOf = new Map<string, string[]>();
 		// The top of the zip has its `index.md` and its `assets/` folder already.
 		const taken = new Map<string, Set<string>>([['', new Set(['index', 'index.md', 'assets'])]]);
 		const kinds = withFiles ? [DocumentKindEnum.PAGE, DocumentKindEnum.FOLDER, DocumentKindEnum.FILE] : [DocumentKindEnum.PAGE, DocumentKindEnum.FOLDER];
 		let frontier: Document[] = [root];
-		while (frontier.length && entries.length < DOCS_MARKDOWN_SUBTREE_MAX_PAGES) {
+		let truncated = false;
+		while (frontier.length && counted < max) {
 			const children = await this.repository.find({
 				select: { id: true, parentId: true, index: true },
 				where: { parentId: In(frontier.map((node) => node.id as ID)), tenantId: root.tenantId as ID, kind: In(kinds) } as never,
@@ -243,22 +280,29 @@ export class DocumentMarkdownService {
 			});
 			const next: Document[] = [];
 			for (const child of children) {
-				if (entries.length >= DOCS_MARKDOWN_SUBTREE_MAX_PAGES) break;
+				if (counted >= max) {
+					truncated = true;
+					break;
+				}
 				let node: Document;
 				try {
 					node = await this.documents.findOneScoped(child.id as ID, [], organizationId);
 				} catch {
 					continue; // not the caller's to read: left out, with what is under it
 				}
-				const parentFolder = folderOf.get(String(child.parentId)) ?? '';
-				const parent = entries.find((entry) => String(entry.document.id) === String(child.parentId));
+				const parentKey = String(child.parentId);
+				const parentFolder = folderOf.get(parentKey) ?? '';
+				const parent = entries.find((entry) => String(entry.document.id) === parentKey);
 				if (parent) parent.hasChildren = true;
 				const used = taken.get(parentFolder) ?? new Set<string>();
 				taken.set(parentFolder, used);
-				const parentId = String(child.parentId) === String(root.id) ? null : String(child.parentId);
+				const parentId = parentKey === String(root.id) ? null : parentKey;
+				const depth = (depthOf.get(parentKey) ?? 0) + 1;
+				childrenOf.set(parentKey, [...(childrenOf.get(parentKey) ?? []), String(node.id)]);
 				if (node.kind === DocumentKindEnum.FILE) {
 					// A file has nothing under it: it is copied under its own name.
-					entries.push({ document: node, path: posix.join(parentFolder, uniqueFileName(zipFileNameOf(node), used)), hasChildren: false, kind: 'file', parentId });
+					entries.push({ document: node, path: posix.join(parentFolder, uniqueFileName(zipFileNameOf(node), used)), hasChildren: false, kind: 'file', parentId, depth });
+					counted += 1;
 					continue;
 				}
 				const slug = markdownFileNameOf(node.name, String(node.id).slice(0, 8)).replace(/\.md$/, '');
@@ -268,18 +312,30 @@ export class DocumentMarkdownService {
 				used.add(`${name}.md`);
 				const folder = posix.join(parentFolder, name);
 				folderOf.set(String(node.id), folder);
-				entries.push({ document: node, path: posix.join(folder, 'index.md'), hasChildren: false, kind: node.kind === DocumentKindEnum.PAGE ? 'page' : 'folder', parentId });
+				depthOf.set(String(node.id), depth);
+				const kind = node.kind === DocumentKindEnum.PAGE ? 'page' : 'folder';
+				entries.push({ document: node, path: posix.join(folder, 'index.md'), hasChildren: false, kind, parentId, depth });
+				if (kind === 'page') counted += 1;
 				next.push(node);
 			}
 			frontier = next;
 		}
+		// Stopped at the limit with nodes whose children were not read: there may be more pages.
+		if (counted >= max && frontier.length) truncated = true;
+		const orderOf = new Map<string, number>();
+		const visit = (id: string) => {
+			orderOf.set(id, orderOf.size);
+			for (const childId of childrenOf.get(id) ?? []) visit(childId);
+		};
+		visit(String(root.id));
+		for (const entry of entries) entry.order = orderOf.get(String(entry.document.id)) ?? orderOf.size;
 		for (const entry of entries) {
 			const isRootPage = !isFolder && entry === entries[0];
 			// A page without children of its own is a file, not a folder with an index; a folder is its folder.
 			if (entry.kind === 'page' && !isRootPage && !entry.hasChildren) entry.path = `${posix.dirname(entry.path)}.md`;
 			if (entry.kind === 'folder') entry.path = posix.dirname(entry.path);
 		}
-		return entries;
+		return { entries, truncated };
 	}
 
 	/**

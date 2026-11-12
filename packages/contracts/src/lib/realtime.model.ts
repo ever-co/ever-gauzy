@@ -179,6 +179,11 @@ export interface IRealtimeTypingSignal {
 	employeeId?: ID | null;
 	userId: ID;
 	at: string;
+	/**
+	 * How long to show it, from `at`, unless the typist signals again (the chat's own typing route sets it; absent from
+	 * a signal sent through `POST /realtime/typing`, for which a client keeps its own few seconds).
+	 */
+	expiresInMs?: number;
 }
 
 /** Query of `GET /api/realtime/events`. */

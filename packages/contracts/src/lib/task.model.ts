@@ -114,6 +114,19 @@ export interface IGetTaskByEmployeeOptions extends IBaseRelationsEntityModel {
 
 export type IGetSprintsOptions = IGetTaskOptions;
 
+/**
+ * The trash of an organization, a team or a project (`GET /tasks/trash`): the soft-deleted tasks, most recently
+ * deleted first. A caller who may only manage teams names a team they manage.
+ */
+export interface ITaskTrashFindInput extends IBasePerTenantAndOrganizationEntityModel {
+	organizationTeamId?: ID;
+	projectId?: ID;
+	/** Part of the title, or the task number. */
+	search?: string;
+	skip?: number;
+	take?: number;
+}
+
 export interface ITaskCreateInput extends ITask, IMentionEmployeeIds {}
 
 export interface ITaskUpdateInput extends ITaskCreateInput {
