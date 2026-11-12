@@ -156,9 +156,14 @@ export function findRefs(text, file) {
  * Whether `ever-co/<repo>` is public, asked without credentials: the repository's page answers 200
  * to anyone when it is public and 404 when it is private (the web page, not the REST API, whose
  * anonymous rate limit shared CI addresses exhaust). true, false (404), or null (could not tell).
+ *
+ * The web page has an anonymous limit too. The in-cluster CI sends every build through one address,
+ * and three asks 2 and 4 s apart came back neither 200 nor 404 on develop cbb94ce8be. So the check
+ * asks up to ATTEMPTS times, doubling the pause each time (2, 4, 8, 16, 32 s by default) or waiting
+ * what GitHub's Retry-After says, at most MAX_WAIT_MS per pause, and reports what GitHub answered.
  */
-export async function isPublicOnGitHub(repo, fetchImpl = fetch, waitMs = 2000) {
-	for (let attempt = 1; attempt <= 3; attempt += 1) {
+export async function isPublicOnGitHub(repo, fetchImpl = fetch, waitMs = 2000, log = () => {}) {
+	for (let attempt = 1; attempt <= ATTEMPTS; attempt += 1) {
 		// One question at a time, with a pause between retries: this is a polite, anonymous check.
 		// eslint-disable-next-line no-await-in-loop
 		const response = await fetchImpl(`https://github.com/${OWNER}/${encodeURIComponent(repo)}`, {
@@ -168,11 +173,29 @@ export async function isPublicOnGitHub(repo, fetchImpl = fetch, waitMs = 2000) {
 		});
 		if (response.status === 200) return true;
 		if (response.status === 404) return false;
-		// eslint-disable-next-line no-await-in-loop
-		if (attempt < 3) await new Promise((r) => setTimeout(r, waitMs * attempt));
+		if (attempt < ATTEMPTS) {
+			const retryAfter = Number(response.headers?.get?.('retry-after'));
+			const wait = Math.min(
+				MAX_WAIT_MS,
+				Number.isFinite(retryAfter) && retryAfter > 0 ? retryAfter * 1000 : waitMs * 2 ** (attempt - 1)
+			);
+			log(
+				`${OWNER}/${repo}: GitHub answered ${response.status}; asking again in ${Math.ceil(wait / 1000)} s (${attempt + 1} of ${ATTEMPTS})`
+			);
+			// eslint-disable-next-line no-await-in-loop
+			await new Promise((r) => setTimeout(r, wait));
+		} else {
+			log(`${OWNER}/${repo}: GitHub answered ${response.status} to the last of ${ATTEMPTS} asks`);
+		}
 	}
 	return null;
 }
+
+/** How many times a repository's page is asked before the check calls it inconclusive. */
+export const ATTEMPTS = 6;
+
+/** The longest pause between two asks, also the most of GitHub's Retry-After that is honoured. */
+export const MAX_WAIT_MS = 60_000;
 
 /** The exit code of a verdict: 1 a private repository, 2 inconclusive, 0 all public. */
 function exitOf(privateRefs, unknown) {
@@ -202,7 +225,9 @@ async function main(argv) {
 	const at = argv.indexOf('--root');
 	const root = resolve(at >= 0 ? argv[at + 1] : '.');
 	const refs = dependencyFiles(root).flatMap((file) => findRefs(readFileSync(join(root, file), 'utf8'), file));
-	const result = await check(refs, (repo) => isPublicOnGitHub(repo));
+	const result = await check(refs, (repo) =>
+		isPublicOnGitHub(repo, fetch, 2000, (line) => process.stdout.write(`check-private-deps: ${line}\n`))
+	);
 	for (const r of result.privateRefs)
 		process.stdout.write(`${r.file}:${r.line}: depends on the private repository ${OWNER}/${r.repo}\n`);
 	for (const repo of result.unknown)
