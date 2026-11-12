@@ -34,7 +34,7 @@ const SITE_B = { id: 'cloud-b', name: 'B', url: 'https://b.atlassian.net', scope
 const SCOPE = { tenantId: 'tenant-1', organizationId: 'org-1', userId: 'user-1' };
 
 /** The callback over an organization whose connection (if any) works with `existingSite` and has `mappings` mappings. */
-function setup(options: { sites: (typeof SITE_A)[]; existingSite: string | null; mappings: number; postInstallUrl?: string; refreshToken?: string | null }) {
+function setup(options: { sites: (typeof SITE_A)[]; existingSite: string | null; mappings: number; synced?: boolean; postInstallUrl?: string; refreshToken?: string | null }) {
 	const existing = { id: 'int-1' };
 	const tenants = {
 		forOrganization: jest.fn(async () => existing),
@@ -43,6 +43,7 @@ function setup(options: { sites: (typeof SITE_A)[]; existingSite: string | null;
 	};
 	const mappings = {
 		list: jest.fn(async () => Array.from({ length: options.mappings }, (_, index) => ({ id: `m-${index}` }))),
+		hasIssueMaps: jest.fn(async () => !!options.synced),
 		// The reconnect is written under the organization's mappings lock.
 		whileOrganizationMappingsLocked: jest.fn(async (_scope: unknown, work: () => Promise<unknown>) => work())
 	};
@@ -114,6 +115,13 @@ describe('GET /integration/jira/callback: the site of the connection', () => {
 		const { callback, response } = setup({ sites: [SITE_A], existingSite: null, mappings: 0, postInstallUrl: 'https://app.example.test/#/pages/integrations/jira?mode=setup' });
 		await callback();
 		expect(String(response.redirect.mock.calls[0][0])).toBe('https://app.example.test/#/pages/integrations/jira?mode=setup&provider=jira&integrationId=int-1&organizationId=org-1');
+	});
+
+	it('a reconnect of a connection whose mappings are gone but whose synced issues name its site keeps that site', async () => {
+		const { tenants, callback, sentTo } = setup({ sites: [SITE_A], existingSite: SITE_B.id, mappings: 0, synced: true });
+		await callback();
+		expect(tenants.connect).not.toHaveBeenCalled();
+		expect(sentTo().searchParams.get('error')).toBe('site_mismatch');
 	});
 
 	it('a reconnect of a connection without mappings may move to the only site the token reaches', async () => {

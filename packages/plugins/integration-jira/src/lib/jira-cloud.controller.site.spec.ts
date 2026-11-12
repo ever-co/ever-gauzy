@@ -37,7 +37,7 @@ import { JIRA_SITE_HAS_MAPPINGS, JIRA_SITE_NOT_FOUND } from './jira.constants';
 const SITE_A = { id: 'cloud-a', name: 'Site A', url: 'https://a.atlassian.net', scopes: ['read:jira-work'] };
 const SITE_B = { id: 'cloud-b', name: 'Site B', url: 'https://b.atlassian.net', scopes: ['read:jira-work'] };
 
-function setup(options: { current: string | null; mappings: number }) {
+function setup(options: { current: string | null; mappings: number; synced?: boolean }) {
 	const tenant = { id: 'integration-1', tenantId: 'tenant-1', organizationId: 'org-1' };
 	const tenants = {
 		requireById: jest.fn(async () => tenant),
@@ -53,7 +53,7 @@ function setup(options: { current: string | null; mappings: number }) {
 	};
 	// The site is checked and written under the mappings' lock, which hands over how many the connection has.
 	const mappings = {
-		whileMappingsLocked: jest.fn(async (_tenant: unknown, work: (count: number) => Promise<unknown>) => work(options.mappings)),
+		whileMappingsLocked: jest.fn(async (_tenant: unknown, work: (count: number, synced: boolean) => Promise<unknown>) => work(options.mappings, !!options.synced)),
 		createMapping: jest.fn(async () => ({ id: 'mapping-new', statusMap: null, issueTypeIds: null }))
 	};
 	const webhooks = { remove: jest.fn(async () => undefined), ensure: jest.fn(async () => 'registered') };
@@ -93,6 +93,14 @@ describe('PUT /integration/jira/:integrationId/site', () => {
 	it('refuses a site to a connection that has mappings but no site (never the case once a site was chosen)', async () => {
 		const { controller, tenants } = setup({ current: null, mappings: 1 });
 		await expect(controller.selectSite('integration-1' as never, { cloudId: SITE_B.id } as never)).rejects.toBeInstanceOf(ConflictException);
+		expect(tenants.selectSite).not.toHaveBeenCalled();
+	});
+
+	it('refuses (409) to move a connection whose mappings are gone but whose synced issues name the former site', async () => {
+		const { controller, tenants, webhooks } = setup({ current: SITE_A.id, mappings: 0, synced: true });
+		const answer = controller.selectSite('integration-1' as never, { cloudId: SITE_B.id } as never);
+		await expect(answer).rejects.toMatchObject({ response: { code: JIRA_SITE_HAS_MAPPINGS } });
+		expect(webhooks.remove).not.toHaveBeenCalled();
 		expect(tenants.selectSite).not.toHaveBeenCalled();
 	});
 

@@ -120,10 +120,34 @@ describe('JiraImportSweepService', () => {
 		expect(query.where[0]['lastImportedAt']).toEqual(IsNull());
 		expect(query.where[1]['lastImportedAt']).toEqual(LessThan(new Date(now.getTime() - 15 * 60_000 + JIRA_IMPORT_SWEEP_SLACK_MS)));
 
+		// Webhooks on the server: the query still reads one interval; each connection decides whether it waits longer.
 		const withWebhooks = sweep({ webhookBaseUrl: 'https://api.example.com/api/integration/jira/webhook' });
 		await withWebhooks.service.findDue(now);
 		const reconcile = withWebhooks.find.mock.calls[0][0] as { where: Array<Record<string, FindOperator<unknown>>> };
-		expect(reconcile.where[1]['lastImportedAt']).toEqual(LessThan(new Date(now.getTime() - 15 * JIRA_IMPORT_WEBHOOK_STRIDE * 60_000 + JIRA_IMPORT_SWEEP_SLACK_MS)));
+		expect(reconcile.where[1]['lastImportedAt']).toEqual(LessThan(new Date(now.getTime() - 15 * 60_000 + JIRA_IMPORT_SWEEP_SLACK_MS)));
+	});
+
+	it('waits four intervals only for a connection whose webhook works; one whose webhook failed, lapsed or is missing follows Jira every interval', () => {
+		const { service, summaryOf } = sweep({ webhookBaseUrl: 'https://api.example.com/api/integration/jira/webhook' });
+		const twoIntervalsAgo = { lastImportedAt: new Date(now.getTime() - 2 * 15 * 60_000) };
+		const webhookIdsOf = jest.fn(() => ['2001']);
+		(service as unknown as { tenants: { webhookIdsOf: unknown } }).tenants.webhookIdsOf = webhookIdsOf;
+		const tenant = { id: 'int-1' } as never;
+		const live = { attentionReason: null, siteRequired: false, webhookError: null, webhookExpiresAt: new Date(now.getTime() + 20 * 86_400_000).toISOString() };
+
+		summaryOf.mockReturnValue(live as never);
+		expect(service.isDue(tenant, twoIntervalsAgo as never, now)).toBe(false);
+		expect(service.isDue(tenant, { lastImportedAt: new Date(now.getTime() - (JIRA_IMPORT_WEBHOOK_STRIDE + 1) * 15 * 60_000) } as never, now)).toBe(true);
+
+		summaryOf.mockReturnValue({ ...live, webhookError: 'Forbidden' } as never);
+		expect(service.isDue(tenant, twoIntervalsAgo as never, now)).toBe(true);
+		summaryOf.mockReturnValue({ ...live, webhookExpiresAt: new Date(now.getTime() - 60_000).toISOString() } as never);
+		expect(service.isDue(tenant, twoIntervalsAgo as never, now)).toBe(true);
+		summaryOf.mockReturnValue(live as never);
+		webhookIdsOf.mockReturnValue([]);
+		expect(service.isDue(tenant, twoIntervalsAgo as never, now)).toBe(true);
+		// Never imported: due at once.
+		expect(service.isDue(tenant, { lastImportedAt: null } as never, now)).toBe(true);
 	});
 
 	it('imports each due mapping in its own tenant context, as it is at claim time, with the claim "import now" takes and no requesting user', async () => {

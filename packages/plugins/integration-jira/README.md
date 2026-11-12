@@ -36,8 +36,9 @@ whose routes share the `/integration/jira` prefix and must be registered first.
   expiry is renewed at once (unless another process renewed it meanwhile).
 - **Site.** The callback reads the sites the token reaches (`accessible-resources`). With one site the connection uses
   it at once; with several it waits until someone picks one: `GET …/:integrationId/sites`, `PUT …/:integrationId/site`.
-  Nothing syncs until a site is chosen. A connection that has mappings keeps its site (`409`
-  `JIRA_SITE_HAS_MAPPINGS`): a mapping names its Jira project by an id that is unique only on its site. A reconnect
+  Nothing syncs until a site is chosen. A connection that has mappings, or issues it synced, keeps its site
+  (`409` `JIRA_SITE_HAS_MAPPINGS`): a mapping names its Jira project, and an id map its issue, by an id that is unique
+  only on its site. It moves to another site by a disconnect and a new connection. A reconnect
   keeps it too; when the new token no longer reaches that site, nothing is saved and the callback answers
   `?error=site_mismatch`.
 - **Map.** `GET …/projects` lists the site's projects and `GET …/projects/:projectId` adds a project's issue types and
@@ -78,7 +79,8 @@ whose routes share the `/integration/jira` prefix and must be registered first.
   again: its imports and webhooks pause and, with the Inbox plugin loaded, the person who connected and the
   organization's integration managers get an Inbox notice.
 - **Scheduled import.** Every five minutes the worker process (`apps/worker`) sweeps the inbound mappings whose last
-  import is older than `JIRA_IMPORT_INTERVAL_MINUTES`. Registered only where a queue root exists.
+  import is older than `JIRA_IMPORT_INTERVAL_MINUTES` (four intervals for a connection whose webhook works: registered,
+  unexpired, its last registration not failed). Registered only where a queue root exists.
 - **Disconnect.** `DELETE …/:integrationId` removes the connection's webhook from Jira (best effort), then the
   connection and its mappings. The tasks stay.
 

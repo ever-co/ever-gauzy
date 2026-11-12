@@ -137,27 +137,37 @@ export class JiraMappingService extends TenantAwareCrudService<JiraProjectMappin
 	 */
 	private async withMappingsLock<T>(scope: { tenantId?: ID | null; organizationId?: ID | null }, work: (manager: EntityManager) => Promise<T>): Promise<T> {
 		const key = `integration-jira:mappings:${scope.tenantId}:${scope.organizationId}`;
-		return this.dataSource.transaction(async (manager) => {
-			const dialect = manager.connection.options.type;
-			if (dialect === 'postgres') {
-				await manager.query('SELECT pg_advisory_xact_lock(hashtext($1))', [key]);
-				return work(manager);
-			}
-			if (dialect === 'mysql' || dialect === 'mariadb') {
-				// A lock name holds 64 characters at most.
-				const name = `ijm:${createHash('sha1').update(key).digest('hex')}`;
-				const [row] = (await manager.query('SELECT GET_LOCK(?, ?) AS acquired', [name, MYSQL_MAPPINGS_LOCK_WAIT_SECONDS])) as Array<{ acquired?: unknown }>;
+		const runner = this.dataSource.createQueryRunner();
+		await runner.connect();
+		const dialect = runner.connection.options.type;
+		// A lock name holds 64 characters at most.
+		const named = dialect === 'mysql' || dialect === 'mariadb' ? `ijm:${createHash('sha1').update(key).digest('hex')}` : null;
+		let held = false;
+		try {
+			// The named lock is taken before the transaction and released after its commit or rollback: a waiting writer
+			// never reads the mappings before this one's are visible.
+			if (named) {
+				const [row] = (await runner.query('SELECT GET_LOCK(?, ?) AS acquired', [named, MYSQL_MAPPINGS_LOCK_WAIT_SECONDS])) as Array<{ acquired?: unknown }>;
 				if (Number(row?.acquired) !== 1) {
 					throw new ConflictException({ message: 'Another change of these mappings is running; try again', code: JIRA_MAPPINGS_BUSY });
 				}
-				try {
-					return await work(manager);
-				} finally {
-					await manager.query('SELECT RELEASE_LOCK(?)', [name]).catch(() => undefined);
-				}
+				held = true;
 			}
-			return work(manager);
-		});
+			await runner.startTransaction();
+			try {
+				// Postgres: an advisory lock of the transaction, released by its commit or rollback.
+				if (dialect === 'postgres') await runner.query('SELECT pg_advisory_xact_lock(hashtext($1))', [key]);
+				const result = await work(runner.manager);
+				await runner.commitTransaction();
+				return result;
+			} catch (error) {
+				await runner.rollbackTransaction().catch(() => undefined);
+				throw error;
+			}
+		} finally {
+			if (named && held) await runner.query('SELECT RELEASE_LOCK(?)', [named]).catch(() => undefined);
+			await runner.release();
+		}
 	}
 
 	/**
@@ -170,14 +180,26 @@ export class JiraMappingService extends TenantAwareCrudService<JiraProjectMappin
 
 	/**
 	 * Runs work while no mapping of the connection's organization can be created or changed (the lock a creation takes),
-	 * handing it how many mappings the connection has: a site change checks and writes under it, so a mapping created
-	 * meanwhile for the former site can never stay behind on the new one.
+	 * handing it how many mappings the connection has and whether it holds issues it synced (their id maps): a site change
+	 * checks and writes under it, so a mapping created meanwhile for the former site can never stay behind on the new one.
 	 */
-	async whileMappingsLocked<T>(tenant: IIntegrationTenant, work: (mappings: number) => Promise<T>): Promise<T> {
+	async whileMappingsLocked<T>(tenant: IIntegrationTenant, work: (mappings: number, synced: boolean) => Promise<T>): Promise<T> {
 		return this.withMappingsLock(tenant, async (manager) => {
 			const mappings = await manager.count(JiraProjectMapping, { where: { integrationId: tenant.id as ID, tenantId: tenant.tenantId as ID } as never });
-			return work(mappings);
+			return work(mappings, await this.hasIssueMaps(tenant, manager));
 		});
+	}
+
+	/**
+	 * Whether the connection holds issues it synced (the platform's id maps of its issues). They name Jira issues by ids
+	 * only their site knows, so such a connection keeps its site, as one with mappings does, even once its mappings are
+	 * removed; it moves to another site by a disconnect (which removes its id maps) and a new connection.
+	 */
+	async hasIssueMaps(tenant: IIntegrationTenant, manager: EntityManager = this.dataSource.manager): Promise<boolean> {
+		const maps = await manager.count(IntegrationMap, {
+			where: { integrationId: tenant.id as ID, entity: IntegrationEntity.ISSUE, tenantId: tenant.tenantId as ID } as never
+		});
+		return maps > 0;
 	}
 
 	/**

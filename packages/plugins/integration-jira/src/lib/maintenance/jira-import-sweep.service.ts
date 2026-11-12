@@ -71,7 +71,7 @@ export class JiraImportSweepService {
 		outcome.webhooks = await this.keepWebhooks(now);
 		if (this.config.importIntervalMinutes <= 0) return outcome;
 		const due = waitingFirst(await this.findDue(now));
-		const batch = (await this.withConnections(due)).slice(0, JIRA_IMPORT_SWEEP_BATCH);
+		const batch = (await this.withConnections(due)).filter(({ tenant, mapping }) => this.isDue(tenant, mapping, now)).slice(0, JIRA_IMPORT_SWEEP_BATCH);
 		outcome.due = batch.length;
 		for (const { tenant, mapping } of batch) {
 			try {
@@ -88,17 +88,35 @@ export class JiraImportSweepService {
 		return outcome;
 	}
 
-	/** The inbound mappings whose last import is older than their interval, or that were never imported (the order is decided by the caller). */
+	/**
+	 * The inbound mappings whose last import is older than one interval, or that were never imported (the order is decided
+	 * by the caller). Whether one with a working webhook waits longer is decided per connection ({@link isDue}).
+	 */
 	async findDue(now: Date): Promise<JiraProjectMapping[]> {
 		const interval = this.config.importIntervalMinutes * 60_000;
-		const before = (factor: number) => new Date(now.getTime() - interval * factor + JIRA_IMPORT_SWEEP_SLACK_MS);
+		const before = new Date(now.getTime() - interval + JIRA_IMPORT_SWEEP_SLACK_MS);
 		const inbound = { syncEnabled: true, direction: Not(JiraSyncDirection.OUTBOUND) };
 		return this.mappings.find({
 			where: [
 				{ ...inbound, lastImportedAt: IsNull() },
-				{ ...inbound, lastImportedAt: LessThan(before(jiraWebhooksEnabled(this.config) ? JIRA_IMPORT_WEBHOOK_STRIDE : 1)) }
+				{ ...inbound, lastImportedAt: LessThan(before) }
 			] as never
 		});
+	}
+
+	/**
+	 * Whether a listed mapping is due now: never imported, or older than its interval. A mapping whose connection has a
+	 * working webhook (registered, unexpired, its last registration not failed) waits four intervals, a reconcile of
+	 * missed deliveries; any other follows Jira every interval, its only feed.
+	 */
+	isDue(tenant: IIntegrationTenant, mapping: Pick<JiraProjectMapping, 'lastImportedAt'>, now: Date): boolean {
+		if (!mapping.lastImportedAt) return true;
+		const summary = this.tenants.summaryOf(tenant);
+		const expiresAt = summary.webhookExpiresAt ? Date.parse(summary.webhookExpiresAt) : NaN;
+		const webhookWorks =
+			jiraWebhooksEnabled(this.config) && this.tenants.webhookIdsOf(tenant).length > 0 && !summary.webhookError && Number.isFinite(expiresAt) && expiresAt > now.getTime();
+		const factor = webhookWorks ? JIRA_IMPORT_WEBHOOK_STRIDE : 1;
+		return new Date(mapping.lastImportedAt).getTime() < now.getTime() - this.config.importIntervalMinutes * 60_000 * factor + JIRA_IMPORT_SWEEP_SLACK_MS;
 	}
 
 	/**

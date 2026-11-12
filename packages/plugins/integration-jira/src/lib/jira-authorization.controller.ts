@@ -137,13 +137,15 @@ export class JiraAuthorizationController {
 
 	/**
 	 * The site the organization's connection must keep through a reconnect: its site when it has mappings (they name
-	 * Jira projects by ids only that site knows), else null (a reconnect may then move to another site).
+	 * Jira projects by ids only that site knows) or issues it synced (their id maps name Jira issue ids of that site),
+	 * else null (a reconnect may then move to another site).
 	 */
 	private async pinnedSiteOf(scope: { tenantId: ID; organizationId: ID }): Promise<string | null> {
 		const existing = await this.tenants.forOrganization(scope.organizationId, scope.tenantId);
 		const cloudId = existing ? this.tenants.summaryOf(existing).cloudId : null;
 		if (!existing || !cloudId) return null;
-		return (await this.mappings.list(existing)).length ? cloudId : null;
+		if ((await this.mappings.list(existing)).length) return cloudId;
+		return (await this.mappings.hasIssueMaps(existing)) ? cloudId : null;
 	}
 
 	/** Sends the person to the app's Jira page (or answers JSON when no page is configured). */

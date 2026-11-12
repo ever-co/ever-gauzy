@@ -527,7 +527,6 @@ export class JiraTenantService {
 		await this.integrationTenantService.delete(tenant.id as ID);
 	}
 
-	/** Stores a renewed token pair (the refresh token rotated when Jira sent a new one) and clears the attention. */
 	/**
 	 * Stores a renewed pair. The rotated refresh token is written first: a stop between the two writes then leaves the
 	 * new refresh token with the former access token (renewed again on its next use), never the spent refresh token with

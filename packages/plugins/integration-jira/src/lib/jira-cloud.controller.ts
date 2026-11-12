@@ -158,12 +158,20 @@ export class JiraCloudController {
 		const myself = await this.tenants.clientForSite(tenant, site.id).myself();
 		// Checked and written while no mapping can be created: one made meanwhile for the former site never stays behind.
 		// The connection is read again under the lock: a site another request chose meanwhile is the current one.
-		const chosen = await this.mappings.whileMappingsLocked(tenant, async (mappings) => {
+		const chosen = await this.mappings.whileMappingsLocked(tenant, async (mappings, synced) => {
 			const fresh = (await this.tenants.findAnyById(tenant.id as ID)) ?? tenant;
 			const current = this.tenants.summaryOf(fresh).cloudId;
 			const moving = current !== site.id;
 			if (moving && mappings > 0) {
 				throw new ConflictException({ message: 'A connection with mappings keeps its Jira site; remove its mappings first', code: JIRA_SITE_HAS_MAPPINGS });
+			}
+			// Issues it synced name Jira issue ids of the former site (their id maps stay when the mappings go): another
+			// site's issue with the same id would update the wrong task. Moved by a disconnect and a new connection.
+			if (moving && current && synced) {
+				throw new ConflictException({
+					message: 'This connection has synced issues of its Jira site; disconnect it and connect again to work with another site',
+					code: JIRA_SITE_HAS_MAPPINGS
+				});
 			}
 			if (moving && current) await this.webhooks.remove(fresh);
 			return this.tenants.selectSite(fresh, site, myself);
