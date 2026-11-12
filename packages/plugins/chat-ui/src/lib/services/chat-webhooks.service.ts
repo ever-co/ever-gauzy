@@ -1,7 +1,18 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
-import { ID, IChatInteraction, IChatInteractionResult, IChatWebhook, IChatWebhookCreateInput, IChatWebhookUpdateInput, IChatWebhookWriteResult } from '@gauzy/contracts';
+import { map } from 'rxjs/operators';
+import {
+	ID,
+	IChatInteraction,
+	IChatInteractionResult,
+	IChatMessagePage,
+	IChatMessageWithRelations,
+	IChatWebhook,
+	IChatWebhookCreateInput,
+	IChatWebhookUpdateInput,
+	IChatWebhookWriteResult
+} from '@gauzy/contracts';
 import { API_PREFIX } from '@gauzy/ui-core/common';
 
 const CHAT = `${API_PREFIX}/chat`;
@@ -47,5 +58,15 @@ export class ChatWebhooksService {
 	/** The state of one of my clicks (while its callback is retried). */
 	interaction(interactionId: ID): Observable<IChatInteraction> {
 		return this.http.get<IChatInteraction>(`${CHAT}/interactions/${path(interactionId)}`);
+	}
+
+	/**
+	 * A message as it is now (after an app's reply replaced it on a retried callback): the timeline window around it,
+	 * which always holds the message itself. Null when it is not there any more.
+	 */
+	message(conversationId: ID, messageId: ID): Observable<IChatMessageWithRelations | null> {
+		return this.http
+			.get<IChatMessagePage>(`${CHAT}/conversations/${path(conversationId)}/messages`, { params: { around: String(messageId), limit: '1' } })
+			.pipe(map((page) => page.messages.find((message) => String(message.id) === String(messageId)) ?? null));
 	}
 }

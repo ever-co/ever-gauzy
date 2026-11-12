@@ -1,5 +1,5 @@
-import { ChatAppBlockTypeEnum, ChatInteractionStatusEnum, ChatMessageKindEnum, IChatAppBlock } from '@gauzy/contracts';
-import { appBlocksOf, blocksText, bodyRepeatsBlocks, buttonKey, buttonStateOf, safeButtonUrl, safeIconUrl } from './chat-app-blocks';
+import { CHAT_MESSAGE_MAX_LENGTH, ChatAppBlockTypeEnum, ChatInteractionStatusEnum, ChatMessageKindEnum, IChatAppBlock } from '@gauzy/contracts';
+import { appBlocksOf, blocksBody, blocksText, bodyRepeatsBlocks, buttonKey, buttonStateOf, safeButtonUrl, safeIconUrl } from './chat-app-blocks';
 
 const BLOCKS: IChatAppBlock[] = [
 	{ type: ChatAppBlockTypeEnum.HEADER, text: 'CPU high' },
@@ -23,6 +23,22 @@ describe('chat app blocks', () => {
 		expect(bodyRepeatsBlocks('CPU high\napi-1 at 97%\nEnv\nprod\nSince 10:02\nmonitor 7 · eu-west', BLOCKS)).toBe(true);
 		expect(bodyRepeatsBlocks('CPU high on api-1', BLOCKS)).toBe(false);
 		expect(bodyRepeatsBlocks('anything', [])).toBe(false);
+	});
+
+	it('knows a long blocks-only body the API cut to the message length, with its ellipsis', () => {
+		const long: IChatAppBlock[] = [
+			{ type: ChatAppBlockTypeEnum.HEADER, text: 'Nightly report' },
+			{ type: ChatAppBlockTypeEnum.SECTION, text: 'x '.repeat(1500).trim() },
+			{ type: ChatAppBlockTypeEnum.SECTION, text: 'y '.repeat(1500).trim() }
+		];
+		const text = blocksText(long);
+		expect(text.length).toBeGreaterThan(CHAT_MESSAGE_MAX_LENGTH);
+		const body = `${text.slice(0, CHAT_MESSAGE_MAX_LENGTH - 1).trimEnd()}…`;
+		expect(blocksBody(long)).toBe(body);
+		expect(body.length).toBeLessThanOrEqual(CHAT_MESSAGE_MAX_LENGTH);
+		expect(bodyRepeatsBlocks(body, long)).toBe(true);
+		expect(bodyRepeatsBlocks(text, long)).toBe(false);
+		expect(blocksBody(BLOCKS)).toBe(blocksText(BLOCKS));
 	});
 
 	it('opens https links only', () => {

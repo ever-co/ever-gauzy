@@ -1,4 +1,4 @@
-import { AfterViewInit, ChangeDetectionStrategy, Component, computed, DestroyRef, ElementRef, inject, OnInit, signal } from '@angular/core';
+import { AfterViewInit, ChangeDetectionStrategy, Component, computed, DestroyRef, ElementRef, HostListener, inject, OnInit, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { NbButtonModule, NbCardModule, NbCheckboxModule, NbDialogRef, NbIconModule, NbInputModule, NbSelectModule, NbSpinnerModule, NbTooltipModule } from '@nebular/theme';
@@ -173,9 +173,18 @@ interface MemberRow {
 						</button>
 					</div>
 				}
-				@if (tab() === 'integrations' && webhooks() !== null) {
-					<ngx-chat-webhooks-panel [conversationId]="context.conversation.id" [people]="context.people" [initial]="webhooks()"></ngx-chat-webhooks-panel>
-				} @else {
+				<!-- Kept while the Settings tab shows, so its list and a write under way (and the secret it makes) survive. -->
+				@if (webhooks() !== null) {
+					<ngx-chat-webhooks-panel
+						[hidden]="tab() !== 'integrations'"
+						[conversationId]="context.conversation.id"
+						[people]="context.people"
+						[initial]="webhooks()"
+						(busyChange)="webhookWriting($event)"
+						(secretsShown)="showWebhookSecrets()"
+					></ngx-chat-webhooks-panel>
+				}
+				@if (tab() === 'settings' || webhooks() === null) {
 				@if (isChannel()) {
 					<label class="field">
 						<span>{{ 'CHAT.DIALOG.CHANNEL_NAME' | translate }}</span>
@@ -282,6 +291,8 @@ export class ChannelSettingsDialogComponent implements OnInit, AfterViewInit {
 	protected readonly tab = signal<'settings' | 'integrations'>('settings');
 	/** The channel's webhooks as first read; null while unknown, or where the API answers 404 (webhooks off): no tab. */
 	protected readonly webhooks = signal<IChatWebhook[] | null>(null);
+	/** Whether the Integrations tab has a webhook write under way (Close then waits for it). */
+	private webhookBusy = false;
 	protected readonly name = signal('');
 	protected readonly topic = signal('');
 	protected readonly isPrivate = signal(false);
@@ -350,6 +361,7 @@ export class ChannelSettingsDialogComponent implements OnInit, AfterViewInit {
 		this.topic.set(conversation.topic ?? '');
 		this.isPrivate.set(conversation.visibility === ChatVisibilityEnum.PRIVATE);
 		this.categoryId.set(conversation.categoryId ? String(conversation.categoryId) : null);
+		this.ref.onBackdropClick?.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => this.close());
 		// The Integrations tab, for a channel's managers, where the API serves webhooks (a 404 there means they are off).
 		if (this.context.canManage && conversation.kind === ChatConversationKindEnum.CHANNEL) {
 			this.webhooksApi
@@ -402,19 +414,38 @@ export class ChannelSettingsDialogComponent implements OnInit, AfterViewInit {
 
 	/**
 	 * Closes with the conversation as last read. While a member write, or the read after it, is under way, Close waits
-	 * for both (and no new write starts), so the page gets the conversation as the last change left it.
+	 * for both (and no new write starts), so the page gets the conversation as the last change left it. It also waits
+	 * for a webhook write: one that makes a URL or a signing secret keeps the dialog open on that secret (shown once).
+	 * The backdrop and Escape close through here too (the page opens this dialog without Nebular's own closing).
 	 */
 	protected close(): void {
-		if (this.busy() || this.refreshing) {
+		if (this.busy() || this.refreshing || this.webhookBusy) {
 			this.closeRequested.set(true);
 			return;
 		}
 		this.ref.close(this.changed);
 	}
 
+	@HostListener('document:keyup.escape')
+	protected closeOnEscape(): void {
+		this.close();
+	}
+
+	/** The Integrations tab started or ended a webhook write; a close asked for meanwhile happens once it ended. */
+	protected webhookWriting(busy: boolean): void {
+		this.webhookBusy = busy;
+		if (!busy) this.closeIfRequested();
+	}
+
+	/** A webhook write made a secret: its tab comes forward, and a close asked for meanwhile is dropped so it is read. */
+	protected showWebhookSecrets(): void {
+		this.tab.set('integrations');
+		this.closeRequested.set(false);
+	}
+
 	/** A close asked for meanwhile happens once nothing is under way any more. */
 	private closeIfRequested(): void {
-		if (this.closeRequested() && !this.busy() && !this.refreshing) this.ref.close(this.changed);
+		if (this.closeRequested() && !this.busy() && !this.refreshing && !this.webhookBusy) this.ref.close(this.changed);
 	}
 
 	/** The conversation again after a member change (its member count and avatars), for the page; the latest read wins. */

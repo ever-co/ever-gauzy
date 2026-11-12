@@ -1,4 +1,4 @@
-import { ChatAppBlockTypeEnum, ChatInteractionStatusEnum, ChatMessageKindEnum, IChatAppBlock, IChatAppButton, IChatMessage } from '@gauzy/contracts';
+import { CHAT_MESSAGE_MAX_LENGTH, ChatAppBlockTypeEnum, ChatInteractionStatusEnum, ChatMessageKindEnum, IChatAppBlock, IChatAppButton, IChatMessage } from '@gauzy/contracts';
 
 /**
  * App messages (posted by an incoming webhook): their blocks as the page renders them, and the state of a click on
@@ -29,10 +29,20 @@ export function blocksText(blocks: readonly IChatAppBlock[]): string {
 	return lines.join('\n').trim();
 }
 
+/**
+ * The body the API derives from that text: cut to `CHAT_MESSAGE_MAX_LENGTH` with an ellipsis, as the server's `cut`
+ * does (a long blocks-only post keeps the start of its text as its body).
+ */
+export function blocksBody(blocks: readonly IChatAppBlock[]): string {
+	const text = blocksText(blocks);
+	if (text.length <= CHAT_MESSAGE_MAX_LENGTH) return text;
+	return `${text.slice(0, CHAT_MESSAGE_MAX_LENGTH - 1).trimEnd()}…`;
+}
+
 /** Whether the body of an app message only repeats its blocks (then the page shows the blocks alone). */
 export function bodyRepeatsBlocks(body: string | null | undefined, blocks: readonly IChatAppBlock[]): boolean {
 	if (!blocks.length) return false;
-	return (body ?? '').trim() === blocksText(blocks);
+	return (body ?? '').trim() === blocksBody(blocks);
 }
 
 /** A link a button may open: https only (the API refuses anything else; this is the second lock). */

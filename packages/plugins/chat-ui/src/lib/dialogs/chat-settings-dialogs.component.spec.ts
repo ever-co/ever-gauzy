@@ -1,6 +1,7 @@
 // The ui-core barrel boots half the app (and needs packages this spec does not): what the chat names from it is doubled.
 jest.mock('@gauzy/ui-core/core', () => ({ Store: class Store {}, ToastrService: class ToastrService {} }));
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { NbDialogRef } from '@nebular/theme';
 import { of, Subject, throwError } from 'rxjs';
 import {
@@ -9,12 +10,15 @@ import {
 	ChatVisibilityEnum,
 	IChatCategory,
 	IChatConversationWithState,
-	IChatMemberSummary
+	IChatMemberSummary,
+	IChatWebhook,
+	IChatWebhookWriteResult
 } from '@gauzy/contracts';
 import { ChatPerson } from '../chat-ui.helpers';
 import { ChatUiService } from '../services/chat-ui.service';
 import { ChatWebhooksService } from '../services/chat-webhooks.service';
 import { CategoriesDialogComponent, ChannelSettingsContext, ChannelSettingsDialogComponent } from './chat-settings-dialogs.component';
+import { ChatWebhooksPanelComponent } from './chat-webhooks-panel.component';
 
 const ME = 'e-me';
 const ANNA = 'e-anna';
@@ -49,11 +53,13 @@ describe('ChannelSettingsDialogComponent', () => {
 	let fixture: ComponentFixture<ChannelSettingsDialogComponent>;
 	let api: Record<string, jest.Mock>;
 	let close: jest.Mock;
-	let webhooksApi: { list: jest.Mock };
+	let backdrop: Subject<MouseEvent>;
+	let webhooksApi: { list: jest.Mock; create: jest.Mock; update: jest.Mock };
 
 	async function open(context: Partial<ChannelSettingsContext>, webhooks: 'off' | 'on' = 'off'): Promise<void> {
 		// Where the API serves no webhooks, their list answers 404.
-		webhooksApi = { list: jest.fn(() => (webhooks === 'on' ? of([]) : throwError(() => ({ status: 404 })))) };
+		webhooksApi = { list: jest.fn(() => (webhooks === 'on' ? of([]) : throwError(() => ({ status: 404 })))), create: jest.fn(), update: jest.fn() };
+		backdrop = new Subject<MouseEvent>();
 		// The API's member count, as the member changes leave it.
 		let memberCount = members.length;
 		api = {
@@ -76,7 +82,7 @@ describe('ChannelSettingsDialogComponent', () => {
 			providers: [
 				{ provide: ChatUiService, useValue: api },
 				{ provide: ChatWebhooksService, useValue: webhooksApi },
-				{ provide: NbDialogRef, useValue: { close } }
+				{ provide: NbDialogRef, useValue: { close, onBackdropClick: backdrop } }
 			]
 		}).compileComponents();
 		fixture = TestBed.createComponent(ChannelSettingsDialogComponent);
@@ -87,6 +93,13 @@ describe('ChannelSettingsDialogComponent', () => {
 	// The dialog's members are protected: the spec reaches them as the template does.
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	const dialog = () => fixture.componentInstance as unknown as Record<string, any>;
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	const panel = () => fixture.debugElement.query(By.directive(ChatWebhooksPanelComponent)).componentInstance as unknown as Record<string, any>;
+	const tabTo = (tab: 'settings' | 'integrations') => {
+		(fixture.nativeElement.querySelector(`[data-test="tab-${tab}"]`) as HTMLButtonElement).click();
+		fixture.detectChanges();
+	};
+	const webhook = (id: string, name: string): IChatWebhook => ({ id, conversationId: 'c1', name, canBroadcast: false }) as unknown as IChatWebhook;
 
 	it('offers an Integrations tab to a channel manager where the API serves webhooks, and none where it answers 404', async () => {
 		await open({}, 'on');
@@ -97,6 +110,78 @@ describe('ChannelSettingsDialogComponent', () => {
 		fixture.detectChanges();
 		expect(fixture.nativeElement.querySelector('[data-test="webhooks-panel"]')).not.toBeNull();
 		expect(fixture.nativeElement.querySelector('[data-test="settings-members"]')).toBeNull();
+	});
+
+	it('keeps the Integrations tab while Settings shows, so a webhook made there is still listed on return', async () => {
+		await open({}, 'on');
+		webhooksApi.create.mockReturnValue(of({ webhook: webhook('w-1', 'CI'), url: 'https://api.example.com/api/chat/hooks/s', signingSecret: 'k' }));
+		tabTo('integrations');
+		panel().patch({ name: 'CI' });
+		panel().create();
+		tabTo('settings');
+		expect(fixture.nativeElement.querySelector('[data-test="settings-members"]')).not.toBeNull();
+		expect((fixture.nativeElement.querySelector('ngx-chat-webhooks-panel') as HTMLElement).hidden).toBe(true);
+		tabTo('integrations');
+		expect(panel().webhooks().map((item: IChatWebhook) => item.name)).toEqual(['CI']);
+		expect(webhooksApi.list).toHaveBeenCalledTimes(1);
+	});
+
+	it('waits for a webhook write before closing, and stays open on the secret it made', async () => {
+		await open({}, 'on');
+		const write = new Subject<IChatWebhookWriteResult>();
+		webhooksApi.create.mockReturnValueOnce(write);
+		tabTo('integrations');
+		panel().patch({ name: 'CI' });
+		panel().create();
+		// Settings shows, and Close is asked for, while the write runs.
+		tabTo('settings');
+		dialog().close();
+		expect(close).not.toHaveBeenCalled();
+		write.next({ webhook: webhook('w-1', 'CI'), url: 'https://api.example.com/api/chat/hooks/s', signingSecret: 'k' });
+		write.complete();
+		fixture.detectChanges();
+		// The secret shows once: the dialog stays open on it, its tab brought forward.
+		expect(close).not.toHaveBeenCalled();
+		expect(dialog().tab()).toBe('integrations');
+		expect(fixture.nativeElement.querySelector('[data-test="webhook-secrets"]')).not.toBeNull();
+		dialog().close();
+		expect(close).toHaveBeenCalled();
+	});
+
+	it('closes once a webhook write that made no secret ended', async () => {
+		await open({}, 'on');
+		const write = new Subject<IChatWebhookWriteResult>();
+		webhooksApi.update.mockReturnValueOnce(write);
+		tabTo('integrations');
+		panel().startEdit(webhook('w-1', 'CI'));
+		panel().patch({ name: 'CI builds' });
+		panel().saveEdit(webhook('w-1', 'CI'));
+		dialog().close();
+		expect(close).not.toHaveBeenCalled();
+		write.next({ webhook: webhook('w-1', 'CI builds') });
+		write.complete();
+		expect(close).toHaveBeenCalled();
+	});
+
+	it('closes from the backdrop and Escape through its own Close, which waits for a write', async () => {
+		await open({});
+		const write = new Subject<{ members: IChatMemberSummary[]; events: never[] }>();
+		api['addMembers'].mockReturnValueOnce(write);
+		dialog().toAdd.set([BOB]);
+		dialog().add();
+		backdrop.next(new MouseEvent('click'));
+		document.dispatchEvent(new KeyboardEvent('keyup', { key: 'Escape' }));
+		expect(close).not.toHaveBeenCalled();
+		expect(dialog().closeRequested()).toBe(true);
+		write.next({ members, events: [] });
+		write.complete();
+		expect(close).toHaveBeenCalled();
+	});
+
+	it('closes at once from the backdrop when nothing is under way', async () => {
+		await open({});
+		backdrop.next(new MouseEvent('click'));
+		expect(close).toHaveBeenCalledWith(null);
 	});
 
 	it('shows no Integrations tab where webhooks are off', async () => {

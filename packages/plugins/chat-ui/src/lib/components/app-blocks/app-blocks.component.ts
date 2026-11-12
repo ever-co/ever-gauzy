@@ -262,8 +262,14 @@ export class AppBlocksComponent {
 			});
 	}
 
-	/** Asks again about a click whose callback is being retried, until it settles or the page stops asking. */
+	/**
+	 * Asks again about a click whose callback is being retried, until it settles or the page stops asking. A retry the
+	 * app answered with a reply replaced the message on the server: the message is read again and handed up, so the
+	 * page shows the reply without waiting for realtime. When the asking stops first, the button clicks again and says
+	 * the app has not answered yet.
+	 */
 	private follow(key: string, blockId: string | null, interactionId: ID): void {
+		let settled = false;
 		timer(APP_INTERACTION_POLL_MS, APP_INTERACTION_POLL_MS)
 			.pipe(
 				take(APP_INTERACTION_POLL_MAX),
@@ -275,15 +281,42 @@ export class AppBlocksComponent {
 				next: (interaction) => {
 					const state = buttonStateOf(interaction.status);
 					this.setState(key, state);
+					if (state === 'pending') return;
+					settled = true;
 					if (state === 'failed') this.setFailure(blockId, 'CHAT.APP.CALLBACK_FAILED');
+					if (interaction.replyApplied) this.readReplaced(interaction.conversationId, interaction.messageId);
 				},
-				error: () => this.setState(key, 'failed')
+				error: () => {
+					settled = true;
+					this.setState(key, 'failed');
+					this.setFailure(blockId, 'CHAT.APP.CLICK_FAILED');
+				},
+				complete: () => {
+					if (settled) return;
+					this.setState(key, null);
+					this.setFailure(blockId, 'CHAT.APP.NO_ANSWER_YET');
+				}
 			});
 	}
 
-	private setState(key: string, state: AppButtonState): void {
+	/** The message as an app's reply left it, read again and handed up. */
+	private readReplaced(conversationId: ID, messageId: ID): void {
+		this.api
+			.message(conversationId, messageId)
+			.pipe(takeUntilDestroyed(this.destroyRef))
+			.subscribe({
+				next: (message) => {
+					if (message) this.replaced.emit(message);
+				},
+				// The button already says the click was delivered; realtime or the next read shows the reply.
+				error: () => undefined
+			});
+	}
+
+	private setState(key: string, state: AppButtonState | null): void {
 		const next = new Map(this.states());
-		next.set(key, state);
+		if (state) next.set(key, state);
+		else next.delete(key);
 		this.states.set(next);
 	}
 

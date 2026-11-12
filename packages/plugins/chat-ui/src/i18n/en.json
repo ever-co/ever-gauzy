@@ -250,7 +250,8 @@
 		"CALLBACK_FAILED": "The app did not answer. Try again in a moment.",
 		"CLICK_FAILED": "The click could not be sent.",
 		"NO_INTERACTIONS": "This app no longer takes clicks.",
-		"GONE": "This button is no longer available."
+		"GONE": "This button is no longer available.",
+		"NO_ANSWER_YET": "The app has not answered yet. You can click again."
 	},
 	"WEBHOOKS": {
 		"INTRO": "Incoming webhooks let automation post into this channel. Each one has its own URL; its posts show its name with an App badge.",

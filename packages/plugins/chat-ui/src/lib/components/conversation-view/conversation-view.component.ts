@@ -1597,8 +1597,10 @@ export class ConversationViewComponent {
 			canManage: this.canManage(),
 			section
 		};
+		// The backdrop and Escape close through the dialog itself, which waits for a write under way (and keeps a new
+		// webhook's secret on screen) before it closes.
 		this.dialog
-			.open(ChannelSettingsDialogComponent, { context: { context } })
+			.open(ChannelSettingsDialogComponent, { context: { context }, closeOnBackdropClick: false, closeOnEsc: false })
 			.onClose.pipe(takeUntilDestroyed(this.destroyRef))
 			.subscribe((conversation: IChatConversationWithState | null | undefined) => {
 				if (conversation && this.isCurrent(id)) this.conversationChanged.emit(conversation);

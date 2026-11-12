@@ -1,7 +1,7 @@
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
 import { ChatAppBlockTypeEnum, ChatInteractionStatusEnum, ChatMessageKindEnum, IChatInteraction, IChatInteractionResult, IChatMessageWithRelations } from '@gauzy/contracts';
-import { APP_INTERACTION_POLL_MS } from '../../chat-app-blocks';
+import { APP_INTERACTION_POLL_MAX, APP_INTERACTION_POLL_MS } from '../../chat-app-blocks';
 import { ChatWebhooksService } from '../../services/chat-webhooks.service';
 import { AppBlocksComponent } from './app-blocks.component';
 
@@ -48,12 +48,12 @@ const interaction = (status: ChatInteractionStatusEnum, extra: Partial<IChatInte
 
 describe('AppBlocksComponent', () => {
 	let fixture: ComponentFixture<AppBlocksComponent>;
-	let api: { interact: jest.Mock; interaction: jest.Mock };
+	let api: { interact: jest.Mock; interaction: jest.Mock; message: jest.Mock };
 	const element = () => fixture.nativeElement as HTMLElement;
 	const button = (actionId: string) => element().querySelector<HTMLButtonElement>(`[data-test="app-button-${actionId}"]`) as HTMLButtonElement;
 
 	async function render(message = appMessage(), readOnly = false): Promise<void> {
-		api = { interact: jest.fn(), interaction: jest.fn() };
+		api = { interact: jest.fn(), interaction: jest.fn(), message: jest.fn() };
 		await TestBed.configureTestingModule({ imports: [AppBlocksComponent], providers: [{ provide: ChatWebhooksService, useValue: api }] }).compileComponents();
 		fixture = TestBed.createComponent(AppBlocksComponent);
 		fixture.componentRef.setInput('message', message);
@@ -107,6 +107,55 @@ describe('AppBlocksComponent', () => {
 			expect(element().querySelector('[data-test="app-failure"]')).not.toBeNull();
 			tick(APP_INTERACTION_POLL_MS * 3);
 			expect(api.interaction).toHaveBeenCalledTimes(2);
+		})();
+	});
+
+	it('reads the message again when a retried callback was answered with a reply, and hands it up', async () => {
+		await render();
+		const replaced = appMessage({ body: 'Acknowledged by Ana', blocks: [] });
+		api.interact.mockReturnValue(of<IChatInteractionResult>({ interaction: interaction(ChatInteractionStatusEnum.RETRYING), events: [] }));
+		api.interaction.mockReturnValueOnce(of(interaction(ChatInteractionStatusEnum.DELIVERED, { replyApplied: true })));
+		api.message.mockReturnValue(of(replaced));
+		const emitted: IChatMessageWithRelations[] = [];
+		fixture.componentInstance.replaced.subscribe((message) => emitted.push(message));
+		fakeAsync(() => {
+			button('ack').click();
+			fixture.detectChanges();
+			tick(APP_INTERACTION_POLL_MS);
+			fixture.detectChanges();
+			expect(api.message).toHaveBeenCalledWith('c1', 'm1');
+			expect(emitted).toEqual([replaced]);
+			expect(button('ack').querySelector('nb-icon')?.getAttribute('icon')).toBe('checkmark-outline');
+		})();
+	});
+
+	it('does not read the message again when a retried callback was delivered without a reply', async () => {
+		await render();
+		api.interact.mockReturnValue(of<IChatInteractionResult>({ interaction: interaction(ChatInteractionStatusEnum.RETRYING), events: [] }));
+		api.interaction.mockReturnValueOnce(of(interaction(ChatInteractionStatusEnum.DELIVERED)));
+		fakeAsync(() => {
+			button('ack').click();
+			tick(APP_INTERACTION_POLL_MS);
+			fixture.detectChanges();
+			expect(api.message).not.toHaveBeenCalled();
+		})();
+	});
+
+	it('lets the button click again, and says so, when the callback is still retried after the page stops asking', async () => {
+		await render();
+		api.interact.mockReturnValue(of<IChatInteractionResult>({ interaction: interaction(ChatInteractionStatusEnum.RETRYING), events: [] }));
+		api.interaction.mockReturnValue(of(interaction(ChatInteractionStatusEnum.RETRYING)));
+		fakeAsync(() => {
+			button('ack').click();
+			fixture.detectChanges();
+			tick(APP_INTERACTION_POLL_MS * APP_INTERACTION_POLL_MAX);
+			fixture.detectChanges();
+			expect(api.interaction).toHaveBeenCalledTimes(APP_INTERACTION_POLL_MAX);
+			expect(button('ack').disabled).toBe(false);
+			expect(button('ack').getAttribute('aria-busy')).toBe('false');
+			expect(element().querySelector('[data-test="app-failure"]')?.textContent).toContain('CHAT.APP.NO_ANSWER_YET');
+			tick(APP_INTERACTION_POLL_MS * 3);
+			expect(api.interaction).toHaveBeenCalledTimes(APP_INTERACTION_POLL_MAX);
 		})();
 	});
 

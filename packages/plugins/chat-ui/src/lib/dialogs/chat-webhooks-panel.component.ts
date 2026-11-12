@@ -1,6 +1,6 @@
 // cspell:ignore referrerpolicy
 import { DatePipe, NgTemplateOutlet } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, DestroyRef, inject, input, OnInit, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, DestroyRef, inject, input, OnInit, output, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { NbButtonModule, NbCheckboxModule, NbIconModule, NbInputModule, NbSpinnerModule, NbTooltipModule } from '@nebular/theme';
@@ -306,6 +306,10 @@ export class ChatWebhooksPanelComponent implements OnInit {
 	readonly people = input<ChatPeople>(EMPTY_PEOPLE);
 	/** The list the settings already read (to learn whether webhooks are on): shown without a second read. */
 	readonly initial = input<IChatWebhook[] | null>(null);
+	/** Whether a write (create, change, new secret, revoke) is under way: the dialog waits for it before it closes. */
+	readonly busyChange = output<boolean>();
+	/** A write made a URL or signing secret, shown here this once: the dialog brings this tab forward and stays open. */
+	readonly secretsShown = output<void>();
 
 	protected readonly maxWebhooks = CHAT_WEBHOOK_MAX_PER_CONVERSATION;
 	protected readonly nameMax = CHAT_WEBHOOK_NAME_MAX_LENGTH;
@@ -440,24 +444,33 @@ export class ChatWebhooksPanelComponent implements OnInit {
 		this.webhooks.set(this.webhooks().map((item) => (item.id === webhook.id ? webhook : item)));
 	}
 
-	/** Runs a write; whatever secret it made is shown (this once). */
+	/**
+	 * Runs a write; whatever secret it made is shown (this once). The dialog learns when a write starts and ends, and
+	 * when it made a secret, so it neither closes nor hides this tab before the secret shows.
+	 */
 	private run(request: Observable<IChatWebhookWriteResult>, done: (result: IChatWebhookWriteResult) => void): void {
-		this.busy.set(true);
+		this.setBusy(true);
 		this.error.set(null);
 		request.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
 			next: (result) => {
-				this.busy.set(false);
 				done(result);
 				if (result.url || result.signingSecret) {
 					this.copied.set(null);
 					this.secrets.set({ webhookId: result.webhook.id as ID, name: result.webhook.name, url: result.url, signingSecret: result.signingSecret });
+					this.secretsShown.emit();
 				}
+				this.setBusy(false);
 			},
 			error: (error) => {
-				this.busy.set(false);
 				this.fail(error);
+				this.setBusy(false);
 			}
 		});
+	}
+
+	private setBusy(busy: boolean): void {
+		this.busy.set(busy);
+		this.busyChange.emit(busy);
 	}
 
 	private fail(error: unknown): void {
