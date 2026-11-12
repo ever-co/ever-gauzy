@@ -130,6 +130,17 @@ Angular app and for Ever Teams through the same API:
 - **FR-14** Pages MUST expose a stable version that changes on every content change,
   for compare-and-set by API and MCP writers.
 
+### Comments and search (phase 4)
+
+- **FR-16** A member MUST be able to comment on a range of a page's text, not only on a block; every reader MUST see
+  the range found again in the page as it is now (moved with the text, approximately when it was edited, on its
+  block when its text is gone), and a client that knows no ranges MUST keep seeing the thread on its block.
+- **FR-17** A notification about a comment on a page or task a person follows MUST name the comment, so the Inbox
+  entry opens the thread; the record it is on stays named.
+- **FR-18** A search of pages MUST answer, for each result, a short plain-text snippet around the first match with the
+  matches marked by offsets.
+- **FR-19** A member MUST be able to export a folder, with its pages, sub-folders and files, as a zip with an index.
+
 ### Compatibility
 
 - **FR-15** Every existing Docs endpoint, entity field, permission and UI route MUST

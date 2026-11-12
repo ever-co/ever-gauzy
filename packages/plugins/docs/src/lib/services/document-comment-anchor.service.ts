@@ -9,7 +9,9 @@ import {
 	IDocumentCommentAnchorResolved
 } from '@gauzy/contracts';
 import { assertCurrentUserBelongsToOrganization, Comment, RequestContext } from '@gauzy/core';
+import { getDocsConfig } from '../docs.config';
 import {
+	DOCS_COLLAB_DISABLED,
 	DOCS_COMMENT_ANCHOR_FORBIDDEN,
 	DOCS_COMMENT_ANCHOR_INVALID,
 	DOCS_COMMENT_ANCHOR_REPLY,
@@ -56,6 +58,9 @@ export interface IAnchorContent {
  * or removes its anchor, and only while the page takes their comments (the comment API's write rule for a page,
  * `DocumentCommentAccessPolicy.findWritableParent`: a page reached through a `VIEW` share stays read-only). A reply has
  * none (it is on its thread's place).
+ *
+ * Part of Docs collaboration: while `GAUZY_DOCS_COLLAB_ENABLED` is off the routes answer 404 `DOCS_COLLAB_DISABLED`
+ * (a client keeps its threads on their blocks) and `Comment.documentAnchor` is null.
  */
 @Injectable()
 export class DocumentCommentAnchorService {
@@ -67,6 +72,7 @@ export class DocumentCommentAnchorService {
 
 	/** The anchors of the page's comments that are still there, each found again in the page as it is now. */
 	async list(documentId: ID, organizationId?: ID): Promise<IDocumentCommentAnchorList> {
+		assertCollabEnabled();
 		const document = await this.documents.findOneScoped(documentId, [], organizationId);
 		const rows = await this.repository.find({
 			where: { tenantId: document.tenantId as ID, documentId: document.id as ID },
@@ -90,7 +96,7 @@ export class DocumentCommentAnchorService {
 		comment: { id?: ID; entity?: string; entityId?: ID; tenantId?: ID },
 		pages: Map<string, Promise<IAnchorContent | null>> = new Map()
 	): Promise<IDocumentCommentAnchorResolved | null> {
-		if (!comment?.id || comment.entity !== BaseEntityEnum.Document || !comment.entityId) {
+		if (!getDocsConfig().collabEnabled || !comment?.id || comment.entity !== BaseEntityEnum.Document || !comment.entityId) {
 			return null;
 		}
 		const tenantId = (comment.tenantId ?? RequestContext.currentTenantId()) as ID;
@@ -118,6 +124,7 @@ export class DocumentCommentAnchorService {
 	 * so its length is the range's.
 	 */
 	async set(documentId: ID, commentId: ID, input: IDocumentCommentAnchorInput, organizationId?: ID): Promise<IDocumentCommentAnchorResolved> {
+		assertCollabEnabled();
 		const anchor = normaliseAnchorInput(input);
 		const document = await this.documents.findOneScoped(documentId, [], organizationId);
 		await this.ownRootComment(document, commentId);
@@ -144,6 +151,7 @@ export class DocumentCommentAnchorService {
 
 	/** Removes the anchor of a comment (its author only): the comment is on its block again. */
 	async remove(documentId: ID, commentId: ID, organizationId?: ID): Promise<boolean> {
+		assertCollabEnabled();
 		const document = await this.documents.findOneScoped(documentId, [], organizationId);
 		await this.ownRootComment(document, commentId);
 		await this.assertTakesComments(document);
@@ -217,6 +225,13 @@ export class DocumentCommentAnchorService {
 	private resolved(row: DocumentCommentAnchor, content: IAnchorContent): IDocumentCommentAnchorResolved {
 		const anchor = anchorOfRow(row);
 		return { ...anchor, position: resolveCommentAnchor(anchor, content.blocks, content.live) };
+	}
+}
+
+/** 404 `DOCS_COLLAB_DISABLED` while Docs collaboration is off (the routes are not there). */
+function assertCollabEnabled(): void {
+	if (!getDocsConfig().collabEnabled) {
+		throw new NotFoundException({ message: 'Docs collaboration is not enabled on this installation', code: DOCS_COLLAB_DISABLED });
 	}
 }
 

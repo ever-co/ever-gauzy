@@ -16,6 +16,9 @@ jest.mock('@gauzy/core', () => ({
 	}
 }));
 jest.mock('./document.service', () => ({ DocumentService: class DocumentService {} }));
+/** The plugin's configuration as the service reads it (Docs collaboration on unless a test turns it off). */
+const mockConfig = { collabEnabled: true };
+jest.mock('../docs.config', () => ({ getDocsConfig: () => mockConfig }));
 jest.mock('./document-comment-access.policy', () => ({ DocumentCommentAccessPolicy: class DocumentCommentAccessPolicy {} }));
 jest.mock('../repositories/type-orm-document-comment-anchor.repository', () => ({
 	TypeOrmDocumentCommentAnchorRepository: class TypeOrmDocumentCommentAnchorRepository {}
@@ -26,7 +29,13 @@ jest.mock('../entities/document.entity', () => ({ Document: class Document {} })
 import { BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
 import * as Y from 'yjs';
 import { BaseEntityEnum, DocumentCommentAnchorMethodEnum, DocumentCommentAnchorStatusEnum } from '@gauzy/contracts';
-import { DOCS_COMMENT_ANCHOR_FORBIDDEN, DOCS_COMMENT_ANCHOR_INVALID, DOCS_COMMENT_ANCHOR_REPLY, DOCS_COMMENT_NOT_FOUND } from '../docs.constants';
+import {
+	DOCS_COLLAB_DISABLED,
+	DOCS_COMMENT_ANCHOR_FORBIDDEN,
+	DOCS_COMMENT_ANCHOR_INVALID,
+	DOCS_COMMENT_ANCHOR_REPLY,
+	DOCS_COMMENT_NOT_FOUND
+} from '../docs.constants';
 import { encodeLiveState, LIVE_FRAGMENT, lineageOf, seedLiveDocument } from '../live/document-live.yjs';
 import { DocumentCommentAnchorService, normaliseAnchorInput } from './document-comment-anchor.service';
 
@@ -129,6 +138,23 @@ describe('DocumentCommentAnchorService', () => {
 		requestContext.employeeId = 'employee-1';
 		reachable.clear();
 		reachable.add('org-1');
+		mockConfig.collabEnabled = true;
+	});
+
+	it('is not there while Docs collaboration is off: 404 on the routes, no anchor on a comment', async () => {
+		mockConfig.collabEnabled = false;
+		const rows: IRow[] = [
+			{ id: 'a1', tenantId: 'tenant-1', organizationId: 'org-1', commentId: COMMENT_ID, documentId: PAGE_ID, blockId: 'b1', startOffset: 10, endOffset: 19, quote: 'brown fox' }
+		];
+		const { service, repository } = buildService({ rows });
+		for (const call of [service.list(PAGE_ID), service.set(PAGE_ID, COMMENT_ID, anchorInput), service.remove(PAGE_ID, COMMENT_ID)]) {
+			const { error, body } = await rejectionOf(call);
+			expect(error).toBeInstanceOf(NotFoundException);
+			expect(body.code).toBe(DOCS_COLLAB_DISABLED);
+		}
+		expect(await service.ofComment({ id: COMMENT_ID, entity: BaseEntityEnum.Document, entityId: PAGE_ID, tenantId: 'tenant-1' })).toBeNull();
+		expect(repository.save).not.toHaveBeenCalled();
+		expect(rows).toHaveLength(1);
 	});
 
 	it('stores the anchor of its author, and answers it found in the page', async () => {
