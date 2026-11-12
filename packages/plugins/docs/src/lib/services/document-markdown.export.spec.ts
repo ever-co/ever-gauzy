@@ -150,16 +150,28 @@ describe('DocumentMarkdownService subtree export of a folder', () => {
 		expect(names.filter((name) => name.startsWith('intro/')).sort()).toEqual(['intro/index-2.md', 'intro/index-3.md', 'intro/index.md']);
 	});
 
-	it('links a copied file by its encoded name', async () => {
+	it('links a copied file by its encoded name, parentheses included', async () => {
 		const report = 'a0000000-0000-4000-8000-000000000013';
 		const { service } = buildService([
 			TREE[0],
 			{ id: 'p0000000-0000-4000-8000-000000000014', kind: DocumentKindEnum.PAGE, name: 'Notes', parentId: TREE[0].id, index: 0, contentJson: { type: 'doc', content: [fileLink(report, 'the report')] } },
-			{ id: report, kind: DocumentKindEnum.FILE, name: 'Report', originalFilename: 'report final#1.pdf', parentId: TREE[0].id, index: 1, bytes: '%PDF-report' }
+			{ id: report, kind: DocumentKindEnum.FILE, name: 'Report', originalFilename: 'report (final)#1.pdf', parentId: TREE[0].id, index: 1, bytes: '%PDF-report' }
 		]);
 		const { zip } = await zipOf(service, TREE[0].id);
-		expect(zip.readText('report final#1.pdf')).toBe('%PDF-report');
-		expect(zip.readText('notes.md')).toContain('](report%20final%231.pdf)');
+		expect(zip.readText('report (final)#1.pdf')).toBe('%PDF-report');
+		expect(zip.readText('notes.md')).toContain('](report%20%28final%29%231.pdf)');
+		expect(zip.readText('index.md')).toContain('](report%20%28final%29%231.pdf)');
+	});
+
+	it('cuts a long file name between characters, never inside one', async () => {
+		const long = `${'a'.repeat(110)}${'\u{1F600}'.repeat(10)}.pdf`;
+		const name = zipFileNameOf({ id: 'x', originalFilename: long, name: '' } as never);
+		expect(name.length).toBeLessThanOrEqual(120);
+		expect(name.endsWith('.pdf')).toBe(true);
+		expect(() => encodeURIComponent(name)).not.toThrow();
+		const file = 'a0000000-0000-4000-8000-000000000015';
+		const { result } = await zipOf(buildService([TREE[0], { id: file, kind: DocumentKindEnum.FILE, name: 'Long', originalFilename: long, parentId: TREE[0].id, index: 0, bytes: '%PDF' }]).service, TREE[0].id);
+		expect(result.files).toBe(1);
 	});
 
 	it('refuses (413) a subtree past the limit before any byte goes out, and takes one exactly at it', async () => {
@@ -186,6 +198,20 @@ describe('DocumentMarkdownService subtree export of a folder', () => {
 		expect(written).toHaveLength(0);
 
 		const { result } = await zipOf(buildService([TREE[0], ...pages(500)]).service, TREE[0].id);
+		expect(result.pages).toBe(500);
+	});
+
+	it('counts only what the caller may read toward the limit: 500 readable pages and an unreadable one are exported', async () => {
+		const pages: INode[] = Array.from({ length: 501 }, (_, at) => ({
+			id: `p${String(at).padStart(7, '0')}-0000-4000-8000-000000000097`,
+			kind: DocumentKindEnum.PAGE,
+			name: `Page ${at}`,
+			parentId: TREE[0].id,
+			index: at,
+			contentJson: { type: 'doc', content: [text(`Page ${at}`)] },
+			...(at === 500 ? { readable: false } : {})
+		}));
+		const { result } = await zipOf(buildService([TREE[0], ...pages]).service, TREE[0].id);
 		expect(result.pages).toBe(500);
 	});
 

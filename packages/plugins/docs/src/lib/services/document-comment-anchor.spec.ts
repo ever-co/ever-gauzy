@@ -7,7 +7,7 @@ import {
 	anchorContextOf,
 	approximateMatch,
 	blockTextOf,
-	editDistanceWithin,
+	closestRunFrom,
 	liveAnchorResolverOf,
 	occurrencesOf,
 	resolveCommentAnchor
@@ -153,12 +153,24 @@ describe('document comment anchors', () => {
 		});
 	});
 
-	describe('editDistanceWithin', () => {
-		it('answers the distance within the limit, and null past it', () => {
-			expect(editDistanceWithin('kitten', 'sitting', 3)).toBe(3);
-			expect(editDistanceWithin('kitten', 'sitting', 2)).toBeNull();
-			expect(editDistanceWithin('same', 'same', 0)).toBe(0);
-			expect(editDistanceWithin('short', 'a much longer text', 4)).toBeNull();
+	describe('long quotes', () => {
+		it('lets text inserted in the tail move the end of the run', () => {
+			const quote = `${'a'.repeat(256)}${'b'.repeat(72)}${'c'.repeat(72)}`;
+			const text = `${'a'.repeat(256)}${'x'.repeat(100)}${'b'.repeat(72)}${'c'.repeat(72)}`;
+			expect(approximateMatch(text, quote)).toEqual({ start: 0, end: 500, distance: 100 });
+		});
+
+		it('tries the next place the beginning starts when the first one is not the quote', () => {
+			const quote = `${'a'.repeat(256)}${'b'.repeat(144)}`;
+			const first = `${'a'.repeat(256)}${'x'.repeat(144)}`;
+			const text = `${first} ${'a'.repeat(256)}${'b'.repeat(143)}c`;
+			expect(approximateMatch(text, quote)).toEqual({ start: first.length + 1, end: text.length, distance: 1 });
+		});
+
+		it('finds the closest run from a start, its end free within the limit', () => {
+			expect(closestRunFrom('xx kitten', 3, 'sitting', 3)).toEqual({ length: 6, distance: 3 });
+			expect(closestRunFrom('xx kitten', 3, 'sitting', 2)).toBeNull();
+			expect(closestRunFrom('same text', 0, 'same', 0)).toEqual({ length: 4, distance: 0 });
 		});
 	});
 

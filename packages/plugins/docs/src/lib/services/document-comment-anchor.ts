@@ -34,6 +34,8 @@ export const DOCS_ANCHOR_FUZZY_MAX_LENGTH = 256;
 export const DOCS_ANCHOR_FUZZY_MAX_TEXT = 20_000;
 /** At most this share of an approximate match may differ from the quote. */
 export const DOCS_ANCHOR_FUZZY_MAX_ERROR_RATE = 0.25;
+/** A long quote is compared in full at the closest this many places its beginning may start. */
+export const DOCS_ANCHOR_FUZZY_MAX_CANDIDATES = 8;
 /**
  * The approximate-match work (cells of the comparison) one read of a page's anchors may spend in all: a page with many
  * long quotes that are gone from long blocks falls back to the blocks rather than hold the read.
@@ -305,6 +307,10 @@ function bestOccurrence(text: string, quote: string, anchor: Pick<IDocumentComme
  * The substring of `text` closest to `quote` by edit distance (insertions, deletions, substitutions), when at most
  * {@link DOCS_ANCHOR_FUZZY_MAX_ERROR_RATE} of the quote differs. Of equally close substrings, the first, run on for as
  * long as it stays as close.
+ *
+ * A quote longer than {@link DOCS_ANCHOR_FUZZY_MAX_LENGTH} is looked for by its beginning, which gives the places it
+ * may start; each of the closest few ({@link DOCS_ANCHOR_FUZZY_MAX_CANDIDATES}) is then compared with the whole quote,
+ * its end free within the error rate (text inserted or removed in the tail moves it), and the closest one wins.
  */
 export function approximateMatch(text: string, quote: string): { start: number; end: number; distance: number } | null {
 	if (quote.length < DOCS_ANCHOR_FUZZY_MIN_LENGTH || !text) return null;
@@ -312,6 +318,7 @@ export function approximateMatch(text: string, quote: string): { start: number; 
 	const haystack = text.slice(0, DOCS_ANCHOR_FUZZY_MAX_TEXT);
 	const m = pattern.length;
 	const limit = Math.floor(m * DOCS_ANCHOR_FUZZY_MAX_ERROR_RATE);
+	const whole = quote.length === pattern.length;
 	// Sellers' algorithm: a match may start anywhere (row 0 is all zeroes); each cell keeps where its match started.
 	let cost = new Array<number>(m + 1);
 	let from = new Array<number>(m + 1);
@@ -320,6 +327,8 @@ export function approximateMatch(text: string, quote: string): { start: number; 
 		from[i] = 0;
 	}
 	let best: { start: number; end: number; distance: number } | null = null;
+	/** For a long quote: each place its beginning may start, with the closest distance found there. */
+	const starts = new Map<number, number>();
 	for (let j = 1; j <= haystack.length; j += 1) {
 		const nextCost = new Array<number>(m + 1);
 		const nextFrom = new Array<number>(m + 1);
@@ -342,6 +351,10 @@ export function approximateMatch(text: string, quote: string): { start: number; 
 		}
 		cost = nextCost;
 		from = nextFrom;
+		if (!whole) {
+			if (cost[m] <= limit && cost[m] < (starts.get(from[m]) ?? Infinity)) starts.set(from[m], cost[m]);
+			continue;
+		}
 		if (cost[m] <= limit && (!best || cost[m] < best.distance)) {
 			best = { start: from[m], end: j, distance: cost[m] };
 			if (cost[m] === 0) break;
@@ -350,37 +363,56 @@ export function approximateMatch(text: string, quote: string): { start: number; 
 			best.end = j;
 		}
 	}
-	if (!best || best.end <= best.start) return null;
-	if (quote.length === pattern.length) return best;
-	// A quote longer than the compared part: the match runs on by what was not compared, inside the text, and the whole
-	// run must be as close to the whole quote (a tail edited past the limit is not the quote any more).
-	const end = Math.min(text.length, best.end + (quote.length - pattern.length));
-	const distance = editDistanceWithin(text.slice(best.start, end), quote, Math.floor(quote.length * DOCS_ANCHOR_FUZZY_MAX_ERROR_RATE));
-	return distance === null ? null : { start: best.start, end, distance };
+	if (whole) return best && best.end > best.start ? best : null;
+	// The closest starts, each compared with the whole quote: the closest whole run wins (of equals, the first).
+	const fullLimit = Math.floor(quote.length * DOCS_ANCHOR_FUZZY_MAX_ERROR_RATE);
+	const candidates = [...starts.entries()]
+		.sort(([startA, distanceA], [startB, distanceB]) => distanceA - distanceB || startA - startB)
+		.slice(0, DOCS_ANCHOR_FUZZY_MAX_CANDIDATES);
+	let found: { start: number; end: number; distance: number } | null = null;
+	for (const [start] of candidates) {
+		const run = closestRunFrom(text, start, quote, fullLimit);
+		if (run && (!found || run.distance < found.distance || (run.distance === found.distance && start < found.start))) {
+			found = { start, end: start + run.length, distance: run.distance };
+		}
+	}
+	return found;
 }
 
 /**
- * The edit distance (insertions, deletions, substitutions) between `a` and `b` when it is at most `limit`, else null.
- * Only a band of `limit` cells around the diagonal is computed, so it costs O(|a| · limit).
+ * The run of `text` from `start` closest to the whole `quote` (its end free: text inserted or removed in it moves the
+ * end), when at most `limit` edits apart; of equally close ends, the one nearest the quote's own length. Only a band
+ * of `limit` cells around the diagonal is computed, so it costs O(|quote| · limit).
  */
-export function editDistanceWithin(a: string, b: string, limit: number): number | null {
-	if (limit < 0 || Math.abs(a.length - b.length) > limit) return null;
+export function closestRunFrom(text: string, start: number, quote: string, limit: number): { length: number; distance: number } | null {
+	if (limit < 0 || start < 0) return null;
+	const run = text.slice(start, start + quote.length + limit);
+	if (run.length < quote.length - limit) return null;
 	const beyond = limit + 1;
-	let previous = new Array<number>(b.length + 1);
-	for (let j = 0; j <= b.length; j += 1) previous[j] = j <= limit ? j : beyond;
-	for (let i = 1; i <= a.length; i += 1) {
-		const current = new Array<number>(b.length + 1).fill(beyond);
+	// previous[j]: the distance between the quote's first i characters and the run's first j.
+	let previous = new Array<number>(run.length + 1);
+	for (let j = 0; j <= run.length; j += 1) previous[j] = j <= limit ? j : beyond;
+	for (let i = 1; i <= quote.length; i += 1) {
+		const current = new Array<number>(run.length + 1).fill(beyond);
 		current[0] = i <= limit ? i : beyond;
 		let rowBest = current[0];
-		for (let j = Math.max(1, i - limit); j <= Math.min(b.length, i + limit); j += 1) {
-			const cost = Math.min(previous[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1), previous[j] + 1, current[j - 1] + 1);
+		for (let j = Math.max(1, i - limit); j <= Math.min(run.length, i + limit); j += 1) {
+			const cost = Math.min(previous[j - 1] + (quote[i - 1] === run[j - 1] ? 0 : 1), previous[j] + 1, current[j - 1] + 1);
 			current[j] = Math.min(cost, beyond);
 			if (current[j] < rowBest) rowBest = current[j];
 		}
 		if (rowBest > limit) return null;
 		previous = current;
 	}
-	return previous[b.length] <= limit ? previous[b.length] : null;
+	let best: { length: number; distance: number } | null = null;
+	for (let j = Math.max(1, quote.length - limit); j <= Math.min(run.length, quote.length + limit); j += 1) {
+		const distance = previous[j];
+		if (distance > limit) continue;
+		if (!best || distance < best.distance || (distance === best.distance && Math.abs(j - quote.length) < Math.abs(best.length - quote.length))) {
+			best = { length: j, distance };
+		}
+	}
+	return best;
 }
 
 /**
@@ -389,7 +421,11 @@ export function editDistanceWithin(a: string, b: string, limit: number): number 
  */
 function spendFuzzyWork(budget: { cells: number } | null | undefined, quote: string, text: string): boolean {
 	if (!budget || quote.length < DOCS_ANCHOR_FUZZY_MIN_LENGTH) return true;
-	const cost = Math.min(quote.length, DOCS_ANCHOR_FUZZY_MAX_LENGTH) * Math.min(text.length, DOCS_ANCHOR_FUZZY_MAX_TEXT);
+	let cost = Math.min(quote.length, DOCS_ANCHOR_FUZZY_MAX_LENGTH) * Math.min(text.length, DOCS_ANCHOR_FUZZY_MAX_TEXT);
+	// A long quote's few closest starts are each compared with the whole quote too.
+	if (quote.length > DOCS_ANCHOR_FUZZY_MAX_LENGTH) {
+		cost += DOCS_ANCHOR_FUZZY_MAX_CANDIDATES * quote.length * (2 * Math.floor(quote.length * DOCS_ANCHOR_FUZZY_MAX_ERROR_RATE) + 1);
+	}
 	if (cost > budget.cells) return false;
 	budget.cells -= cost;
 	return true;

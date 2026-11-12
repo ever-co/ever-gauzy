@@ -297,7 +297,7 @@ export class DocumentMarkdownService {
 		const kinds = withFiles ? [DocumentKindEnum.PAGE, DocumentKindEnum.FOLDER, DocumentKindEnum.FILE] : [DocumentKindEnum.PAGE, DocumentKindEnum.FOLDER];
 		let frontier: Document[] = [root];
 		let truncated = false;
-		while (frontier.length && counted < max) {
+		while (frontier.length && !truncated) {
 			const children = await this.repository.find({
 				select: { id: true, parentId: true, index: true },
 				where: { parentId: In(frontier.map((node) => node.id as ID)), tenantId: root.tenantId as ID, kind: In(kinds) } as never,
@@ -305,7 +305,7 @@ export class DocumentMarkdownService {
 			});
 			const next: Document[] = [];
 			for (const child of children) {
-				if (counted >= max || visited >= SUBTREE_MAX_NODES) {
+				if (visited >= SUBTREE_MAX_NODES) {
 					truncated = true;
 					break;
 				}
@@ -315,6 +315,11 @@ export class DocumentMarkdownService {
 					node = await this.documents.findOneScoped(child.id as ID, [], organizationId);
 				} catch {
 					continue; // not the caller's to read: left out, with what is under it
+				}
+				// Past the limit, a readable page or file is one too many (an unreadable one, or a folder, is not counted).
+				if (counted >= max && node.kind !== DocumentKindEnum.FOLDER) {
+					truncated = true;
+					break;
 				}
 				const parentKey = String(child.parentId);
 				const parentFolder = folderOf.get(parentKey) ?? '';
@@ -349,16 +354,6 @@ export class DocumentMarkdownService {
 				next.push(node);
 			}
 			frontier = next;
-		}
-		// Stopped at the limit with nodes whose children were not read: more only when one of them has a child (a last level
-		// of leaves exactly at the limit is the whole subtree).
-		if (!truncated && (counted >= max || visited >= SUBTREE_MAX_NODES) && frontier.length) {
-			const more = await this.repository.find({
-				select: { id: true },
-				where: { parentId: In(frontier.map((node) => node.id as ID)), tenantId: root.tenantId as ID, kind: In(kinds) } as never,
-				take: 1
-			});
-			truncated = more.length > 0;
 		}
 		const orderOf = new Map<string, number>();
 		const visit = (id: string) => {
@@ -445,12 +440,22 @@ export class DocumentMarkdownService {
 	}
 }
 
-/** A relative path with each segment encoded, as a Markdown link destination takes it. */
+/** A relative path with each segment encoded, as a Markdown link destination takes it (parentheses too). */
 function encodePathSegments(path: string): string {
 	return path
 		.split('/')
-		.map((part) => (part === '.' || part === '..' ? part : encodeURIComponent(part)))
+		.map((part) => (part === '.' || part === '..' ? part : encodeURIComponent(part).replace(/\(/g, '%28').replace(/\)/g, '%29')))
 		.join('/');
+}
+
+/** At most `max` UTF-16 units of `text`, never cutting a character in two (a lone surrogate cannot be encoded). */
+function cutAtCharacter(text: string, max: number): string {
+	let cut = '';
+	for (const character of text) {
+		if (cut.length + character.length > max) break;
+		cut += character;
+	}
+	return cut;
 }
 
 /** The bytes a set of read files holds. */
@@ -472,8 +477,8 @@ export function zipFileNameOf(document: Pick<Document, 'originalFilename' | 'nam
 		.trim();
 	if (!clean) return fallback;
 	if (clean.length <= ZIP_FILE_NAME_MAX_LENGTH) return clean;
-	const extension = posix.extname(clean).slice(0, 16);
-	return `${clean.slice(0, ZIP_FILE_NAME_MAX_LENGTH - extension.length)}${extension}`;
+	const extension = cutAtCharacter(posix.extname(clean), 16);
+	return `${cutAtCharacter(clean, ZIP_FILE_NAME_MAX_LENGTH - extension.length)}${extension}`;
 }
 
 /** A name not yet used in its folder (`report.pdf`, then `report-2.pdf`), recorded as used. */
