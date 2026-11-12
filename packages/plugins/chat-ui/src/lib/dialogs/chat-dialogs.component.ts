@@ -204,6 +204,11 @@ export class NewChannelDialogComponent implements OnInit, NewChannelContext {
 	protected readonly name = signal('');
 	/** The team names to offer for what is typed. */
 	protected readonly suggestions = computed(() => teamSuggestions(this.teams(), this.name(), this.channelNames));
+	protected readonly topic = signal('');
+	protected readonly isPrivate = signal(false);
+	protected readonly busy = signal(false);
+	protected readonly error = signal<string | null>(null);
+	protected readonly canCreate = computed(() => !!this.name().trim().replace(/^#/, '') && !this.busy());
 
 	ngOnInit(): void {
 		if (!this.organizationId || !this.tenantId) return;
@@ -215,12 +220,6 @@ export class NewChannelDialogComponent implements OnInit, NewChannelContext {
 			)
 			.subscribe((teams) => this.teams.set(teams));
 	}
-
-	protected readonly topic = signal('');
-	protected readonly isPrivate = signal(false);
-	protected readonly busy = signal(false);
-	protected readonly error = signal<string | null>(null);
-	protected readonly canCreate = computed(() => !!this.name().trim().replace(/^#/, '') && !this.busy());
 
 	protected create(): void {
 		const name = this.name().trim().replace(/^#/, '');
