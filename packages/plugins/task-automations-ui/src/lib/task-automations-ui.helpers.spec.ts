@@ -156,6 +156,18 @@ describe('task automations UI helpers', () => {
 		expect(draftErrors(draft as never)).toContain('TASK_AUTOMATIONS.ERRORS.TEXT_TOO_LONG');
 	});
 
+	it('holds every list to the platform’s 50 values', () => {
+		const many = Array.from({ length: 51 }, (_, index) => `v-${index}`);
+		const base = draftOfRule(rule);
+		expect(draftErrors({ ...base, trigger: { ...base.trigger, toStatuses: many } })).toContain('TASK_AUTOMATIONS.ERRORS.TOO_MANY_VALUES');
+		expect(
+			draftErrors({ ...base, conditions: [{ ...newCondition(TaskAutomationConditionEnum.HAS_LABEL), values: many }] })
+		).toContain('TASK_AUTOMATIONS.ERRORS.TOO_MANY_VALUES');
+		expect(draftErrors({ ...base, conditions: [{ ...newCondition(TaskAutomationConditionEnum.HAS_LABEL), values: many.slice(0, 50) }] })).not.toContain(
+			'TASK_AUTOMATIONS.ERRORS.TOO_MANY_VALUES'
+		);
+	});
+
 	it('applies an order to the rules as they are now, keeping what other writes made of them', () => {
 		const a = { ...rule, id: 'a', position: 0, isEnabled: false };
 		const b = { ...rule, id: 'b', position: 1 };

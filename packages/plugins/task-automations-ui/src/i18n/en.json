@@ -38,6 +38,7 @@
 		"TOO_MANY_ACTIONS": "A rule has at most 10 actions.",
 		"CONDITION_VALUE": "Each condition needs its value.",
 		"TEXT_TOO_LONG": "A title text is at most 200 characters.",
+		"TOO_MANY_VALUES": "A list holds at most 50 values.",
 		"ACTION_VALUE": "Each action needs what it sets."
 	},
 	"FORM": {

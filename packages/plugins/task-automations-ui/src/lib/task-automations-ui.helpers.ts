@@ -280,6 +280,15 @@ export function draftErrors(draft: ITaskAutomationDraft): string[] {
 	if (draft.conditions.some((condition) => condition.text.trim().length > TASK_AUTOMATION_LIMITS.textLength)) {
 		errors.push('TASK_AUTOMATIONS.ERRORS.TEXT_TOO_LONG');
 	}
+	const tooMany = (values: readonly string[] | null | undefined) => strings(values ?? []).length > TASK_AUTOMATION_LIMITS.valuesPerList;
+	if (
+		tooMany(draft.trigger.toStatuses) ||
+		tooMany(draft.trigger.fromStatuses) ||
+		draft.conditions.some((condition) => tooMany(condition.values)) ||
+		draft.actions.some((action) => tooMany(action.employeeIds) || tooMany(action.tagIds))
+	) {
+		errors.push('TASK_AUTOMATIONS.ERRORS.TOO_MANY_VALUES');
+	}
 	for (const action of draft.actions) {
 		const input = actionInput(action.type);
 		const missing =

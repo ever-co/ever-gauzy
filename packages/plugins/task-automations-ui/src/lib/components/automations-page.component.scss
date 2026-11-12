@@ -5,7 +5,7 @@
 	margin: 0.25rem 0 0;
 }
 .warn {
-	color: var(--color-warning-default, #b80);
+	color: var(--color-warning-default);
 	opacity: 1;
 }
 .loading {
@@ -21,8 +21,8 @@
 }
 .templates,
 .panel {
-	border: 1px solid var(--border-basic-color-3, #e4e9f2);
-	border-radius: 0.5rem;
+	border: 1px solid var(--border-basic-color-3);
+	border-radius: var(--border-radius);
 	padding: 1rem;
 	margin-bottom: 1rem;
 }
@@ -34,7 +34,7 @@
 	padding: 0.5rem 0;
 }
 .template + .template {
-	border-top: 1px solid var(--border-basic-color-3, #e4e9f2);
+	border-top: 1px solid var(--border-basic-color-3);
 }
 .template-name,
 .rule-name {
@@ -51,13 +51,13 @@
 	align-items: center;
 	gap: 1rem;
 	padding: 0.75rem;
-	border: 1px solid var(--border-basic-color-3, #e4e9f2);
-	border-radius: 0.5rem;
+	border: 1px solid var(--border-basic-color-3);
+	border-radius: var(--border-radius);
 	margin-bottom: 0.5rem;
 	cursor: grab;
 }
 .rule.selected {
-	border-color: var(--color-primary-default, #36f);
+	border-color: var(--color-primary-default);
 }
 .rule.dragging {
 	opacity: 0.5;
@@ -87,16 +87,16 @@
 	margin-right: 0.25rem;
 }
 .failed {
-	color: var(--color-danger-default, #d33);
+	color: var(--color-danger-default);
 }
 .outcome.success {
-	color: var(--color-success-default, #0a0);
+	color: var(--color-success-default);
 }
 .outcome.warning {
-	color: var(--color-warning-default, #b80);
+	color: var(--color-warning-default);
 }
 .outcome.danger {
-	color: var(--color-danger-default, #d33);
+	color: var(--color-danger-default);
 }
 .runs {
 	width: 100%;
@@ -108,5 +108,5 @@
 .runs td {
 	text-align: left;
 	padding: 0.25rem 0.5rem;
-	border-bottom: 1px solid var(--border-basic-color-3, #e4e9f2);
+	border-bottom: 1px solid var(--border-basic-color-3);
 }

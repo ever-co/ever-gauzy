@@ -244,6 +244,23 @@ describe('TaskAutomationsPageComponent', () => {
 		expect(api.reorder).not.toHaveBeenCalled();
 	});
 
+	it('opening another rule drops a dry run under way; picking another task clears the answer', () => {
+		api.test.mockReturnValue(new Subject());
+		api.runs.mockReturnValue(of([]));
+		const { component } = render();
+		component.open(component.rules()[0]);
+		component.pickTestTask('task-1');
+		component.runTest(component.rules()[0]);
+		component.open(component.rules()[1]);
+		expect(component.testing()).toBe(false);
+
+		api.test.mockReturnValue(of({ outcome: 'APPLIED', conditions: [], changes: [] }));
+		component.runTest(component.rules()[1]);
+		expect(component.testResult()).not.toBeNull();
+		component.pickTestTask('task-2');
+		expect(component.testResult()).toBeNull();
+	});
+
 	it('shows a dry run failure only for the rule still open', () => {
 		const failure$ = new Subject<never>();
 		api.test.mockReturnValue(failure$);

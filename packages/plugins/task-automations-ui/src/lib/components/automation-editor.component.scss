@@ -8,7 +8,7 @@
 	margin-bottom: 0.25rem;
 }
 .required {
-	color: var(--color-danger-default, #d33);
+	color: var(--color-danger-default);
 }
 .row {
 	display: flex;
@@ -38,7 +38,7 @@
 	margin: 0.25rem 0 0;
 }
 .errors {
-	color: var(--color-danger-default, #d33);
+	color: var(--color-danger-default);
 	font-size: 0.85rem;
 	padding-left: 1rem;
 }
@@ -46,4 +46,7 @@
 	display: flex;
 	gap: 0.5rem;
 	margin-top: 1rem;
+}
+.detail {
+	opacity: 0.7;
 }

@@ -208,7 +208,7 @@
 								data-test="test-task"
 								[placeholder]="'TASK_AUTOMATIONS.TEST.CHOOSE_TASK' | translate"
 								[selected]="testTaskId()"
-								(selectedChange)="testTaskId.set($event)"
+								(selectedChange)="pickTestTask($event)"
 							>
 								@for (task of filteredTasks(); track task.value) {
 									<nb-option [value]="task.value"

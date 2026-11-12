@@ -170,7 +170,12 @@
 						(selectedChange)="patchCondition(index, { values: $event })"
 					>
 						@for (choice of conditionChoices(condition); track choice.value) {
-							<nb-option [value]="choice.value">{{ choice.translate ? (choice.label | translate) : choice.label }}</nb-option>
+							<nb-option [value]="choice.value"
+								>{{ choice.translate ? (choice.label | translate) : choice.label
+								}}@if (choice.detail) {
+									<span class="detail"> · {{ choice.detail }}</span>
+								}</nb-option
+							>
 						}
 					</nb-select>
 				}
@@ -255,7 +260,11 @@
 						(selectedChange)="patchAction(index, { employeeIds: $event })"
 					>
 						@for (choice of employeesWith(action.employeeIds); track choice.value) {
-							<nb-option [value]="choice.value">{{ choice.label }}</nb-option>
+							<nb-option [value]="choice.value"
+								>{{ choice.label }}@if (choice.detail) {
+									<span class="detail"> · {{ choice.detail }}</span>
+								}</nb-option
+							>
 						}
 					</nb-select>
 				}

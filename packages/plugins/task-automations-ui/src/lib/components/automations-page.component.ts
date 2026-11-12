@@ -425,9 +425,20 @@ export class TaskAutomationsPageComponent implements OnInit {
 	/** Opens a rule's test and history (and reads the history). */
 	open(rule: ITaskAutomationRule): void {
 		this.editing.set(null);
+		if (this.selectedId() !== rule.id) {
+			// Another rule: a dry run still under way for the one before is dropped, and its Test button let go.
+			this.testSubscription?.unsubscribe();
+			this.testing.set(false);
+		}
 		this.selectedId.set(rule.id as ID);
 		this.testResult.set(null);
 		this.loadRuns(rule);
+	}
+
+	/** Picks the dry run's task: the answer shown for another task no longer applies. */
+	pickTestTask(taskId: ID | null): void {
+		this.testTaskId.set(taskId);
+		this.testResult.set(null);
 	}
 
 	loadRuns(rule: ITaskAutomationRule): void {
