@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto';
+import { Logger } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 
 /**
@@ -22,12 +23,36 @@ export function lockConnectionSlots(options: { poolSize?: number; extra?: { max?
 	return Math.min(4, Math.floor(poolSize / 2));
 }
 
-async function takeLockConnection(slots: number): Promise<void> {
+/**
+ * Takes a lock connection slot, waiting for one when all are held; `false` when `deadlineAt` (epoch ms) passes first
+ * (the caller then treats the lock as held).
+ */
+async function takeLockConnection(slots: number, deadlineAt?: number): Promise<boolean> {
 	while (LOCK_CONNECTIONS.inUse >= slots) {
-		await new Promise<void>((resolve) => LOCK_CONNECTIONS.waiting.push(resolve));
+		const left = deadlineAt === undefined ? undefined : deadlineAt - Date.now();
+		if (left !== undefined && left <= 0) return false;
+		await new Promise<void>((resolve) => {
+			const wake = () => {
+				if (timer) clearTimeout(timer);
+				resolve();
+			};
+			const timer =
+				left === undefined
+					? null
+					: setTimeout(() => {
+							const index = LOCK_CONNECTIONS.waiting.indexOf(wake);
+							if (index >= 0) LOCK_CONNECTIONS.waiting.splice(index, 1);
+							resolve();
+						}, left);
+			LOCK_CONNECTIONS.waiting.push(wake);
+		});
 	}
 	LOCK_CONNECTIONS.inUse++;
+	return true;
 }
+
+let smallPoolLogged = false;
+const logger = new Logger('TaskAutomationLocks');
 
 function releaseLockConnection(): void {
 	LOCK_CONNECTIONS.inUse--;
@@ -44,25 +69,38 @@ function releaseLockConnection(): void {
 export class TaskAutomationSweepLock {
 	constructor(private readonly dataSource: DataSource) {}
 
-	/** Runs `work` when the lock is free and answers its result, or `null` when another holder has it. */
-	async tryRun<T>(name: string, work: () => Promise<T>): Promise<T | null> {
+	/**
+	 * Runs `work` when the lock is free and answers its result, or `null` when another holder has it — or, with
+	 * `deadlineAt` (epoch ms), when no lock connection came free before it.
+	 */
+	async tryRun<T>(name: string, work: () => Promise<T>, deadlineAt?: number): Promise<T | null> {
 		if (HELD_IN_PROCESS.has(name)) return null;
 		HELD_IN_PROCESS.add(name);
 		try {
-			return await this.acrossProcesses(name, work);
+			return await this.acrossProcesses(name, work, deadlineAt);
 		} finally {
 			HELD_IN_PROCESS.delete(name);
 		}
 	}
 
-	private async acrossProcesses<T>(name: string, work: () => Promise<T>): Promise<T | null> {
+	private async acrossProcesses<T>(name: string, work: () => Promise<T>, deadlineAt?: number): Promise<T | null> {
 		const type = String(this.dataSource.options.type);
 		const postgres = type === 'postgres';
 		const mysql = type === 'mysql' || type === 'mariadb';
 		const slots = lockConnectionSlots(this.dataSource.options as never);
-		if ((!postgres && !mysql) || slots < 2) return work();
+		if (!postgres && !mysql) return work();
+		if (slots < 2) {
+			if (!smallPoolLogged) {
+				smallPoolLogged = true;
+				logger.warn(
+					'Task automations: the database pool is too small to spare lock connections (fewer than 4); runs and the ' +
+						'due-date sweep are kept one at a time in this process only. Run one API process, or raise DB_POOL_SIZE.'
+				);
+			}
+			return work();
+		}
 		const key = `gauzy-task-automations:${createHash('sha256').update(name).digest('hex').slice(0, 40)}`;
-		await takeLockConnection(slots);
+		if (!(await takeLockConnection(slots, deadlineAt))) return null;
 		const runner = this.dataSource.createQueryRunner();
 		try {
 			await runner.connect();
@@ -92,7 +130,19 @@ export class TaskAutomationSweepLock {
 			try {
 				return await work();
 			} finally {
-				await runner.query('SELECT RELEASE_LOCK(?)', [key]).catch(() => undefined);
+				// A named lock lives as long as its session: a session whose release is not confirmed is closed, never
+				// handed back to the pool still holding the lock.
+				const released = await runner
+					.query('SELECT RELEASE_LOCK(?) AS released', [key])
+					.then((rows: Array<{ released?: unknown }>) => Number(rows?.[0]?.released) === 1)
+					.catch(() => false);
+				if (!released) {
+					try {
+						(runner as unknown as { databaseConnection?: { destroy?: () => void } }).databaseConnection?.destroy?.();
+					} catch {
+						// The connection is going away either way.
+					}
+				}
 			}
 		} finally {
 			await runner.release().catch(() => undefined);

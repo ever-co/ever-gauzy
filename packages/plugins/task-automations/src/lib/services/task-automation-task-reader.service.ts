@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { DataSource, In, IsNull } from 'typeorm';
 import { ID } from '@gauzy/contracts';
 import { Employee, Tag, Task, TaskPriority, TaskStatus } from '@gauzy/core';
+import { TaskAutomationRun } from '../entities/task-automation-run.entity';
 import {
 	ITaskAutomationCatalog,
 	ITaskAutomationChildSnapshot,
@@ -135,10 +136,12 @@ export class TaskAutomationTaskReader {
 	/**
 	 * Open tasks whose due date passed in a window (the due-date sweep), of the rule's organization and scope, oldest
 	 * due first (then by id), one page at a time: `after` is the last task of the previous page. "Open" is decided by
-	 * the engine on each task; this only leaves out what is certainly closed.
+	 * the engine on each task; this only leaves out what is certainly closed, and — with `ruleId` — the tasks that rule
+	 * already reported since their due date (a finished run of the rule for the task, made at or after the due date),
+	 * so tasks that stay open after their notice never fill the pages.
 	 */
 	async dueTasks(
-		scope: { tenantId: ID; organizationId: ID; projectId?: ID | null; organizationTeamId?: ID | null },
+		scope: { tenantId: ID; organizationId: ID; projectId?: ID | null; organizationTeamId?: ID | null; ruleId?: ID | null },
 		window: { after: Date; until: Date },
 		limit: number,
 		after: { id: ID; dueDate: Date } | null = null
@@ -163,6 +166,18 @@ export class TaskAutomationTaskReader {
 				cursorDue: after.dueDate,
 				cursorId: after.id
 			});
+		}
+		if (scope.ruleId) {
+			const reported = query
+				.subQuery()
+				.select('1')
+				.from(TaskAutomationRun, 'run')
+				.where('run.ruleId = :ruleId')
+				.andWhere('run.taskId = task.id')
+				.andWhere('run.createdAt >= task.dueDate')
+				.andWhere('run.outcome <> :runningOutcome')
+				.getQuery();
+			query.andWhere(`NOT EXISTS ${reported}`, { ruleId: scope.ruleId, runningOutcome: 'RUNNING' });
 		}
 		if (scope.projectId) query.andWhere('task.projectId = :projectId', { projectId: scope.projectId });
 		if (scope.organizationTeamId) {

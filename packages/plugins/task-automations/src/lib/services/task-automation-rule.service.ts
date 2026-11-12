@@ -308,6 +308,9 @@ export class TaskAutomationRuleService {
 			if (!team) throw new BadRequestException('The team is not one of the organization.');
 		}
 		const refs = referencesOf(rule);
+		// A rule of one project names that project's own statuses and priorities or the organization's, never another
+		// project's (which it could not resolve on its tasks); a rule of the whole organization may name any.
+		const usable = (row: { projectId?: string | null }) => !rule.projectId || !row.projectId || row.projectId === rule.projectId;
 		if (refs.statuses.length) {
 			const rows = await this.dataSource.getRepository(TaskStatus).find({
 				where: [
@@ -317,7 +320,7 @@ export class TaskAutomationRuleService {
 			});
 			const known = new Set<string>([
 				...(Object.values(TaskStatusEnum) as string[]),
-				...rows.flatMap((row) => [lower(row.id), lower(row.value), lower(row.name)])
+				...rows.filter(usable).flatMap((row) => [lower(row.id), lower(row.value), lower(row.name)])
 			]);
 			const missing = refs.statuses.filter((status) => !known.has(lower(status)));
 			if (missing.length) throw new BadRequestException(`The status "${missing[0]}" is not one of the organization.`);
@@ -331,7 +334,7 @@ export class TaskAutomationRuleService {
 			});
 			const known = new Set<string>([
 				...(Object.values(TaskPriorityEnum) as string[]),
-				...rows.flatMap((row) => [lower(row.id), lower(row.value), lower(row.name)])
+				...rows.filter(usable).flatMap((row) => [lower(row.id), lower(row.value), lower(row.name)])
 			]);
 			const missing = refs.priorities.filter((priority) => !known.has(lower(priority)));
 			if (missing.length) throw new BadRequestException(`The priority "${missing[0]}" is not one of the organization.`);

@@ -653,6 +653,33 @@ describe('Task automations on SQLite', () => {
 		});
 	});
 
+	describe('due tasks a rule already reported', () => {
+		it('are left out of the read, so tasks that stay open never fill the pages; a run still going is not', async () => {
+			const rule = await rules.create(scope, { templateKey: 'due-date-notify-assignees' });
+			const due = new Date(Date.now() - 10 * 60_000);
+			const reported = await createTask({ dueDate: due });
+			const going = await createTask({ dueDate: due });
+			const fresh = await createTask({ dueDate: due });
+			const claim = (taskId: string) =>
+				runs.claim({
+					tenantId: TENANT,
+					organizationId: ORG,
+					ruleId: rule.id as string,
+					taskId,
+					eventKey: dueEventKey(taskId, due),
+					triggerType: TaskAutomationTriggerEnum.DUE_DATE_PASSED,
+					depth: 0
+				});
+			await runs.finish((await claim(reported))!, TaskAutomationRunOutcomeEnum.APPLIED);
+			await claim(going);
+			const window = { after: new Date(Date.now() - 60 * 60_000), until: new Date() };
+			const ids = (await reader.dueTasks({ tenantId: TENANT, organizationId: ORG, ruleId: rule.id as string }, window, 10)).map((task) => task.id);
+			expect(ids.sort()).toEqual([going, fresh].sort());
+			// Without the rule, every open due task is read.
+			expect((await reader.dueTasks({ tenantId: TENANT, organizationId: ORG }, window, 10)).length).toBe(3);
+		});
+	});
+
 	describe('task lock', () => {
 		it('runs one rule of a task at a time: a second run waits, or is put back for later', async () => {
 			const lock = new TaskAutomationTaskLock(dataSource);

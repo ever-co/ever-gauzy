@@ -137,6 +137,8 @@ function parseChanges(raw: unknown): ITaskAutomationChangeEvent['changes'] | nul
 		const field = value[key];
 		if (field === undefined) continue;
 		if (!field || typeof field !== 'object' || Array.isArray(field)) return null;
+		// Both ends are stated (null for "none"): a change with an end missing is not one the capture wrote.
+		if (!('from' in field) || !('to' in field)) return null;
 		const { from, to } = field as Record<string, unknown>;
 		if (!isTextOrNull(from) || !isTextOrNull(to)) return null;
 		changes[key] = { from: (from as string | null | undefined) ?? null, to: (to as string | null | undefined) ?? null };

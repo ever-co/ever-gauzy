@@ -87,6 +87,9 @@ describe('change capture', () => {
 		expect(parseChangeEvent({ ...base, changes: { status: 'done' } })).toBeNull();
 		expect(parseChangeEvent({ ...base, changes: { status: { from: 'open', to: { id: 1 } } } })).toBeNull();
 		expect(parseChangeEvent({ ...base, changes: [] })).toBeNull();
+		// Both ends must be stated (null for none).
+		expect(parseChangeEvent({ ...base, changes: { status: { from: 'open' } } })).toBeNull();
+		expect(parseChangeEvent({ ...base, changes: { status: { from: null, to: 'open' } } })).toMatchObject({ changes: { status: { from: null, to: 'open' } } });
 		expect(parseChangeEvent({ ...base, changes: { status: { from: 'open', to: 'done' }, other: 1 } })).toMatchObject({
 			changes: { status: { from: 'open', to: 'done' } }
 		});
