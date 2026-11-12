@@ -27,8 +27,7 @@ export type GlobalDialogLoaders = Readonly<Record<GlobalDialog, () => Promise<Ty
 
 export const GLOBAL_DIALOG_LOADERS: GlobalDialogLoaders = {
 	help: () => import('./shortcut-help-dialog.component').then((m) => m.ShortcutHelpDialogComponent),
-	goTo: () =>
-		import('../components/go-to-task/go-to-task-dialog.component').then((m) => m.GoToTaskDialogComponent)
+	goTo: () => import('../components/go-to-task/go-to-task-dialog.component').then((m) => m.GoToTaskDialogComponent)
 };
 
 /**

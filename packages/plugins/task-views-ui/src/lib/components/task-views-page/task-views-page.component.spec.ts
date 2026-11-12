@@ -256,7 +256,7 @@ describe('TaskViewsPageComponent', () => {
 		expect(component.conflict()).toMatchObject({ kind: 'save', latest: { version: 5 } });
 
 		api.updateView.mockReturnValueOnce(
-			of({ ...latest, version: 6, filterOptions: { ...latest.filterOptions, groupBy: 'status' } })
+			of({ ...latest, version: 6, filterOptions: { ...(latest.filterOptions as object), groupBy: 'status' } })
 		);
 		await component.overwrite();
 		expect(api.updateView.mock.calls[1][1]).toMatchObject({
@@ -339,7 +339,11 @@ describe('TaskViewsPageComponent', () => {
 		expect(component.selection().ids).toEqual(['t1', 'far']);
 		api.viewTasks.mockReturnValueOnce(of(page([{ id: 't5', title: 't5' } as ITask])));
 		await component.loadMore();
-		expect(api.viewTasks).toHaveBeenLastCalledWith('v1', expect.anything(), expect.objectContaining({ cursor: 'more' }));
+		expect(api.viewTasks).toHaveBeenLastCalledWith(
+			'v1',
+			expect.anything(),
+			expect.objectContaining({ cursor: 'more' })
+		);
 		expect(component.items().map((row: ITask) => row.id)).toEqual(['t1', 't2', 't3', 't4', 't5']);
 		expect(component.selection()).toEqual({ ids: ['t1'], anchor: null });
 	});

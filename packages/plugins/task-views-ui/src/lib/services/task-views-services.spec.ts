@@ -56,7 +56,10 @@ describe('task views services', () => {
 				const builtIn = jest.fn(answers);
 				TestBed.configureTestingModule({
 					providers: [
-						{ provide: Store, useValue: { user$: of({ id: 'u1' }), selectedOrganization$: of({ id: 'org' }) } },
+						{
+							provide: Store,
+							useValue: { user$: of({ id: 'u1' }), selectedOrganization$: of({ id: 'org' }) }
+						},
 						{ provide: TaskViewsApiService, useValue: { builtIn } }
 					]
 				});
@@ -87,7 +90,9 @@ describe('task views services', () => {
 				jest.useFakeTimers();
 				const { builtIn, seen } = probing(unavailable);
 				const rounds = TASK_VIEWS_AVAILABILITY_REPROBES + 1;
-				jest.advanceTimersByTime(rounds * ROUND_MS + TASK_VIEWS_AVAILABILITY_REPROBES * TASK_VIEWS_AVAILABILITY_REPROBE_MS);
+				jest.advanceTimersByTime(
+					rounds * ROUND_MS + TASK_VIEWS_AVAILABILITY_REPROBES * TASK_VIEWS_AVAILABILITY_REPROBE_MS
+				);
 				expect(builtIn).toHaveBeenCalledTimes(rounds * (TASK_VIEWS_AVAILABILITY_RETRIES + 1));
 				jest.advanceTimersByTime(24 * 60 * 60_000);
 				expect(builtIn).toHaveBeenCalledTimes(rounds * (TASK_VIEWS_AVAILABILITY_RETRIES + 1));

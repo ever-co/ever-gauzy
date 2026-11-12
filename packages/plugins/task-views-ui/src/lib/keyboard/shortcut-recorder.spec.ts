@@ -1,8 +1,14 @@
 import { formatBinding } from './shortcut-registry';
-import { ShortcutRecorder } from './shortcut-recorder';
+import { RecorderStep, ShortcutRecorder } from './shortcut-recorder';
 
 const press = (code: string, key: string, extra: Partial<KeyboardEvent> = {}) =>
 	({ code, key, metaKey: false, ctrlKey: false, shiftKey: false, altKey: false, ...extra }) as KeyboardEvent;
+
+/** The binding a step recorded (a spec fails on a step that has none). */
+const bindingOf = (step: RecorderStep) => {
+	if (!('binding' in step)) throw new Error(`No binding in a step ${step.state}`);
+	return step.binding;
+};
 
 describe('ShortcutRecorder', () => {
 	let now = 0;
@@ -16,7 +22,7 @@ describe('ShortcutRecorder', () => {
 		now = 400;
 		const step = rec.press(press('KeyT', 't'));
 		expect(step.state).toBe('done');
-		expect(formatBinding((step as { binding: never }).binding)).toBe('g t');
+		expect(formatBinding(bindingOf(step))).toBe('g t');
 	});
 
 	it('takes one key as the binding when the wait runs out', () => {
@@ -24,7 +30,7 @@ describe('ShortcutRecorder', () => {
 		rec.press(press('KeyJ', 'j'));
 		const step = rec.timeout();
 		expect(step.state).toBe('done');
-		expect(formatBinding((step as { binding: never }).binding)).toBe('j');
+		expect(formatBinding(bindingOf(step))).toBe('j');
 		expect(rec.timeout().state).toBe('cancelled');
 	});
 
@@ -34,13 +40,13 @@ describe('ShortcutRecorder', () => {
 		now = 5_000;
 		const step = rec.press(press('KeyT', 't'));
 		expect(step.state).toBe('recording');
-		expect(formatBinding((step as { binding: never }).binding)).toBe('t');
+		expect(formatBinding(bindingOf(step))).toBe('t');
 	});
 
 	it('ends at once on a chord with Ctrl/⌘ or Alt', () => {
 		const step = recorder().press(press('KeyS', 's', { metaKey: true }));
 		expect(step.state).toBe('done');
-		expect(formatBinding((step as { binding: never }).binding)).toBe('mod+s');
+		expect(formatBinding(bindingOf(step))).toBe('mod+s');
 	});
 
 	it('cancels on Esc and ignores a modifier alone', () => {

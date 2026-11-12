@@ -55,7 +55,7 @@ function injectorWith(available$: Subject<boolean>) {
 describe('TaskViewsUiPlugin', () => {
 	it('serves the page, its built-in and saved views, and Settings > Keyboard shortcuts', () => {
 		expect(TASK_VIEWS_PAGE_ROUTE).toMatchObject({ location: 'page-sections', path: 'task-views' });
-		expect(TASK_VIEWS_PAGE_ROUTE.data?.['permissions'].only).toEqual([
+		expect((TASK_VIEWS_PAGE_ROUTE.data?.['permissions'] as { only: PermissionsEnum[] }).only).toEqual([
 			PermissionsEnum.ALL_ORG_VIEW,
 			PermissionsEnum.ORG_TASK_VIEW
 		]);
