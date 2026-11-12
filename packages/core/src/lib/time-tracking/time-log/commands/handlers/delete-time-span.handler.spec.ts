@@ -411,6 +411,12 @@ function createStore() {
 					slots: slotsOf(log.id).map((slot) => hhmm(slot.startedAt))
 				}));
 		},
+		/** The employee's logs as stored, earliest first. */
+		rows: () =>
+			logs
+				.filter((log) => !log.deletedAt)
+				.sort((a, b) => a.startedAt.getTime() - b.startedAt.getTime())
+				.map((log) => ({ ...log })),
 		/** How many slots the employee still has. */
 		slotCount: () => liveSlots().length
 	};
@@ -534,5 +540,82 @@ describe('DeleteTimeSpanHandler and a stopped log the new range takes one end of
 			]);
 			expect(store.slotCount()).toBe(6);
 		});
+	});
+});
+
+describe('DeleteTimeSpanHandler and a stopped log the new range falls inside (#11823)', () => {
+	beforeEach(() => {
+		jest.spyOn(console, 'log').mockImplementation(() => undefined);
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT_ID);
+	});
+
+	afterEach(() => jest.restoreAllMocks());
+
+	describe.each(['earliest first', 'latest first'] as const)('its slots sent %s', (order) => {
+		it('splits a log of 08:00 to 11:00 with 18 slots, by 09:00 to 10:00, into two logs holding 12 slots', async () => {
+			const store = createStore();
+			store.addLog('tracked', '08:00', '11:00');
+
+			await store.cleanUp('09:00', '10:00', order);
+
+			expect(store.timeline()).toEqual([
+				{ range: '08:00-09:00', isRunning: false, slots: slotStarts('08:00', '09:00') },
+				{ range: '10:00-11:00', isRunning: false, slots: slotStarts('10:00', '11:00') }
+			]);
+			expect(store.slotCount()).toBe(12);
+		});
+
+		it('keeps with each part the slot its edge shares with a range off the ten-minute marks', async () => {
+			const store = createStore();
+			store.addLog('tracked', '08:00', '11:00');
+
+			await store.cleanUp('09:05', '09:55', order);
+
+			// 09:00 holds the first part's last five minutes and 09:50 the second part's first five.
+			expect(store.timeline()).toEqual([
+				{ range: '08:00-09:05', isRunning: false, slots: slotStarts('08:00', '09:05') },
+				{ range: '09:55-11:00', isRunning: false, slots: slotStarts('09:55', '11:00') }
+			]);
+			expect(store.slotCount()).toBe(14);
+		});
+	});
+
+	it('takes one slot out of the middle of a log, as the time-slot delete asks, splitting the log around it', async () => {
+		const store = createStore();
+		store.addLog('tracked', '08:00', '11:00');
+		const asRead = store.read('tracked');
+
+		// `DELETE /timesheet/time-slot` sends one command per log of the slot, over that slot's own ten minutes.
+		const slot = asRead.timeSlots.find((timeSlot) => hhmm(timeSlot.startedAt) === '09:00');
+		await store.send('09:00', '09:10', asRead, slot);
+
+		expect(store.timeline()).toEqual([
+			{ range: '08:00-09:00', isRunning: false, slots: slotStarts('08:00', '09:00') },
+			{ range: '09:10-11:00', isRunning: false, slots: slotStarts('09:10', '11:00') }
+		]);
+		expect(store.slotCount()).toBe(17);
+	});
+
+	it('gives the second part the fields of the log it was cut from, on the same timesheet', async () => {
+		const store = createStore();
+		const fields = { projectId: 'project-1', taskId: 'task-1', description: 'Planned work' };
+		store.addLog('tracked', '08:00', '11:00', fields);
+
+		await store.cleanUp('09:00', '10:00');
+
+		const [first, second] = store.rows();
+		const kept = {
+			tenantId: TENANT_ID,
+			organizationId: ORGANIZATION_ID,
+			employeeId: EMPLOYEE_ID,
+			timesheetId: timesheetOf(at('08:00')),
+			isRunning: false,
+			source: TimeLogSourceEnum.DESKTOP,
+			logType: TimeLogType.TRACKED,
+			...fields
+		};
+		expect(first).toMatchObject({ id: 'tracked', startedAt: at('08:00'), stoppedAt: at('09:00'), ...kept });
+		expect(second).toMatchObject({ startedAt: at('10:00'), stoppedAt: at('11:00'), ...kept });
+		expect(second.id).not.toBe('tracked');
 	});
 });

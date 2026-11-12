@@ -1,17 +1,14 @@
 import { Logger } from '@nestjs/common';
 import { ICommandHandler, CommandBus, CommandHandler } from '@nestjs/cqrs';
-import { Between } from 'typeorm';
 import { omit } from 'underscore';
-import { ID, ITimeLog, ITimeSlot } from '@gauzy/contracts';
-import { isEmpty, isNotEmpty } from '@gauzy/utils';
+import { ITimeLog } from '@gauzy/contracts';
+import { isEmpty } from '@gauzy/utils';
 import { moment } from '../../../../core/moment-extend';
-import { getDateRangeFormat } from '../../../../core/utils';
 import { TimeLog } from './../../time-log.entity';
 import { DeleteTimeSpanCommand } from '../delete-time-span.command';
 import { TimeLogUpdateCommand } from '../time-log-update.command';
 import { TimeLogDeleteCommand } from '../time-log-delete.command';
-import { TimeSlotBulkDeleteCommand } from './../../../time-slot/commands';
-import { getStartEndIntervals } from './../../../time-slot/utils';
+import { generateTimeSlots } from './../../../time-slot/utils';
 import { TypeOrmTimeLogRepository } from '../../repository/type-orm-time-log.repository';
 import { TypeOrmTimeSlotRepository } from '../../../time-slot/repository/type-orm-time-slot.repository';
 
@@ -32,7 +29,7 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 	 * @returns Promise<boolean>
 	 */
 	public async execute(command: DeleteTimeSpanCommand) {
-		const { newTime, timeLog, timeSlot, forceDelete } = command;
+		const { newTime, timeLog, forceDelete } = command;
 		const { id } = timeLog;
 		const { start, end } = newTime;
 
@@ -56,7 +53,7 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 			return false;
 		}
 
-		const { startedAt, stoppedAt, employeeId, organizationId } = log;
+		const { startedAt, stoppedAt } = log;
 
 		const newTimeRange = moment.range(start, end); // Calculate the new time rang
 		const dbTimeRange = moment.range(startedAt, stoppedAt); // Calculate the database time range
@@ -113,16 +110,7 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 				 *  		|--------------------------------------------------|
 				 */
 				this.debug(() => 'Split database time in two entries.');
-				await this.handleTimeLogSplitting(
-					timeLog,
-					timeSlot,
-					organizationId,
-					employeeId,
-					start,
-					end,
-					startedAt,
-					forceDelete
-				);
+				await this.splitAround(log, start, end, forceDelete);
 			}
 		}
 
@@ -234,116 +222,65 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 	}
 
 	/**
-	 * Handles splitting a time log into two entries and processing the associated time slots.
+	 * Splits a log the new range falls inside into the part before the range and the part after it.
 	 *
-	 * @param timeLog - The original time log to split.
-	 * @param timeSlot - The related time slot.
-	 * @param organizationId - The organization ID.
-	 * @param employeeId - The employee ID.
-	 * @param start - The new start time.
-	 * @param end - The new end time.
-	 * @param startedAt - The original start time of the time log.
+	 * The second part is created first, from the range's end to the log's original end, read before anything is cut.
+	 * Only then is the log cut back to the range's start, through the update, which releases the slots it no longer
+	 * covers: those inside the range go, those the second part now holds stay with it. A second part that cannot be
+	 * created leaves the log whole rather than cut without it. (The log used to be cut first and the second part built
+	 * from the cut log, so that part ended before it started and was never created.)
+	 *
+	 * @param log - The time log as stored, with its slots.
+	 * @param start - The start of the new range, the end of the first part.
+	 * @param end - The end of the new range, the start of the second part.
+	 * @param forceDelete - Whether to hard delete what goes (default: false).
 	 */
-	private async handleTimeLogSplitting(
-		timeLog: ITimeLog,
-		timeSlot: ITimeSlot,
-		organizationId: ID,
-		employeeId: ID,
-		start: Date,
-		end: Date,
-		startedAt: Date,
-		forceDelete: boolean = false
-	): Promise<void> {
-		const startedAtMoment = moment(startedAt); // Get the started at moment
-		const startMoment = moment(start); // Get the start moment
-		const remainingDuration = startMoment.diff(startedAtMoment, 'seconds'); // Calculate the remaining duration
-
-		// If there is remaining duration
-		if (remainingDuration > 0) {
-			try {
-				timeLog.stoppedAt = start;
-				await this.typeOrmTimeLogRepository.save(timeLog);
-			} catch (error) {
-				this.logger.error(
-					`Error while updating stoppedAt time for ID: ${timeLog.id}: ${error?.message ?? error}`,
-					error?.stack
-				);
-			}
-		} else {
-			// Delete the old time log if remaining duration is 0
-			await this.deleteTimeLog(timeLog, forceDelete);
+	private async splitAround(log: TimeLog, start: Date, end: Date, forceDelete: boolean = false): Promise<void> {
+		const secondPart = await this.createSecondPart(log, end, log.stoppedAt);
+		if (!secondPart) {
+			return;
 		}
 
 		try {
-			// Delete the associated time slots
-			const timeSlotsIds = [timeSlot.id];
-
-			// Bulk delete the time slots
+			// With its own start too: an update naming none files the log under the current week's timesheet
 			await this._commandBus.execute(
-				new TimeSlotBulkDeleteCommand(
-					{
-						organizationId,
-						employeeId,
-						timeLog,
-						timeSlotsIds
-					},
-					forceDelete,
-					true
-				)
+				new TimeLogUpdateCommand({ startedAt: log.startedAt, stoppedAt: start }, log, true, forceDelete)
 			);
 		} catch (error) {
-			this.logger.error(
-				`Error while splitting time entries: ${remainingDuration}: ${error?.message ?? error}`,
-				error?.stack
-			);
+			this.logger.error(`Error while cutting back time log ${log.id}: ${error?.message ?? error}`, error?.stack);
 		}
-
-		// Handle the creation of the new time log
-		await this.createAndSyncNewTimeLog(timeLog, end);
 	}
 
 	/**
-	 * Creates and syncs the new time log if the duration is greater than 0.
+	 * Creates the part of a split log after the new range: the log's fields over `end`–`stoppedAt`, holding the log's
+	 * slots from the ten-minute slot of `end` on.
 	 *
-	 * @param timeLog - The original time log (will be cloned).
-	 * @param end - The new start time for the new log.
+	 * @param log - The time log as stored, with its slots.
+	 * @param end - The end of the new range, the second part's start.
+	 * @param stoppedAt - The log's original end, the second part's end.
+	 * @returns The second part, or `null` when it could not be created.
 	 */
-	private async createAndSyncNewTimeLog(timeLog: ITimeLog, end: Date): Promise<void> {
-		const clone: TimeLog = omit(timeLog, ['createdAt', 'updatedAt', 'id']);
-		const newLog = clone;
-		newLog.startedAt = end;
+	private async createSecondPart(log: TimeLog, end: Date, stoppedAt: Date): Promise<TimeLog | null> {
+		// The slots of the second part, as the update computes a log's slots: the first one is the slot holding `end`
+		const [firstSlot] = generateTimeSlots(end, stoppedAt);
+		const from = moment(firstSlot?.startedAt ?? end);
+		const timeSlots = (log.timeSlots ?? []).filter((slot) => !moment(slot.startedAt).isBefore(from));
 
-		// Calculate the remaining duration of the new log
-		const newLogRemainingDuration = moment(newLog.stoppedAt).diff(moment(newLog.startedAt), 'seconds');
-
-		// If there is remaining duration
-		if (newLogRemainingDuration > 0) {
-			try {
-				await this.typeOrmTimeLogRepository.save(newLog);
-			} catch (error) {
-				this.logger.warn(`Error while creating new log: ${error?.message ?? error}`, { stack: error?.stack });
-			}
-
-			try {
-				// Sync time slots for the new time log
-				const slots = await this.syncTimeSlots(newLog);
-				this.debug(() => `sync time slots for new log ${JSON.stringify({ slots, newLog })}`);
-
-				// Assign the new log to time slots and save
-				if (isNotEmpty(slots)) {
-					// Assign the new log to time slots and save
-					for await (const ts of slots) {
-						ts.timeLogs = [newLog];
-					}
-
-					await this.typeOrmTimeSlotRepository.save(slots);
-				}
-			} catch (error) {
-				this.logger.error(
-					`Error while creating or syncing new log and time slots: ${error?.message ?? error}`,
-					error?.stack
-				);
-			}
+		try {
+			return await this.typeOrmTimeLogRepository.save(
+				new TimeLog({
+					...omit(log, ['id', 'createdAt', 'updatedAt', 'timeSlots', 'duration', 'isEdited']),
+					startedAt: end,
+					stoppedAt,
+					timeSlots
+				})
+			);
+		} catch (error) {
+			this.logger.error(
+				`Error while creating the second part of time log ${log.id}: ${error?.message ?? error}`,
+				error?.stack
+			);
+			return null;
 		}
 	}
 
@@ -366,36 +303,6 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 				{ stack: error?.stack }
 			);
 		}
-	}
-
-	/**
-	 * Synchronizes time slots for the provided time log.
-	 *
-	 * This method calculates the start and end intervals based on the `startedAt` and `stoppedAt`
-	 * values from the provided time log. It then retrieves the corresponding time slots for the
-	 * specified employee and organization within that time range.
-	 *
-	 * @param timeLog - The time log containing the data used to synchronize time slots (start, stop, employeeId, organizationId).
-	 * @returns A promise that resolves to the retrieved time slots within the specified range for the employee and organization.
-	 */
-	private async syncTimeSlots(timeLog: ITimeLog): Promise<ITimeSlot[]> {
-		const { startedAt, stoppedAt, employeeId, organizationId, tenantId } = timeLog;
-
-		// Calculate start and end intervals based on the time log's start and stop times
-		const { start, end } = getStartEndIntervals(moment(startedAt), moment(stoppedAt));
-		const range = getDateRangeFormat(moment.utc(start), moment.utc(end));
-
-		// Not TimeSlotService.getTimeSlots: it swaps the employee for the caller's own when the caller lacks
-		// CHANGE_SELECTED_EMPLOYEE, so a team manager's slots would be moved onto the member's log.
-		return await this.typeOrmTimeSlotRepository.find({
-			where: {
-				employeeId,
-				organizationId,
-				tenantId,
-				startedAt: Between(range.start as Date, range.end as Date),
-				timeLogs: { employeeId, organizationId, tenantId }
-			}
-		});
 	}
 
 	/**
