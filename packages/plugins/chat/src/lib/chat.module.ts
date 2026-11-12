@@ -10,6 +10,7 @@ import { ChatMessageController } from './controllers/chat-message.controller';
 import { ChatWebhookController } from './controllers/chat-webhook.controller';
 import { ChatWebhookReceiveController } from './controllers/chat-webhook-receive.controller';
 import { ChatResolver } from './graphql/chat.resolver';
+import { ChatAttachmentDraft } from './entities/chat-attachment-draft.entity';
 import { ChatCategory } from './entities/chat-category.entity';
 import { ChatConversation } from './entities/chat-conversation.entity';
 import { ChatLinkPreview } from './entities/chat-link-preview.entity';
@@ -23,9 +24,12 @@ import { CHAT_LINK_PREVIEWS_QUEUED, ChatLinkPreviewModule, ChatLinkPreviewQueueM
 import { ChatRealtime } from './realtime/chat-realtime';
 import { ChatAccessService } from './services/chat-access.service';
 import { ChatConversationService } from './services/chat-conversation.service';
+import { ChatDraftUploadService } from './services/chat-draft-upload.service';
 import { ChatMessageService } from './services/chat-message.service';
 import { ChatSearchService } from './services/chat-search.service';
 import { ChatNotifierService } from './services/chat-notifier.service';
+import { ChatTaskCardService } from './services/chat-task-card.service';
+import { ChatTypingService } from './services/chat-typing.service';
 import { ChatAppMessageWriter } from './webhooks/chat-app-message.writer';
 import { ChatInteractionService } from './webhooks/chat-interaction.service';
 import { ChatInteractionTransport } from './webhooks/chat-interaction-transport';
@@ -42,7 +46,8 @@ export const CHAT_ENTITIES = [
 	ChatTaskReference,
 	ChatLinkPreview,
 	ChatWebhook,
-	ChatWebhookInteraction
+	ChatWebhookInteraction,
+	ChatAttachmentDraft
 ];
 
 /**
@@ -74,9 +79,12 @@ export const CHAT_ENTITIES = [
 		ChatAccessService,
 		ChatRealtime,
 		ChatNotifierService,
+		ChatDraftUploadService,
 		ChatConversationService,
 		ChatMessageService,
 		ChatSearchService,
+		ChatTaskCardService,
+		ChatTypingService,
 		ChatResolver,
 		ChatAppMessageWriter,
 		ChatWebhookRateLimiter,

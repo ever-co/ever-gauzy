@@ -51,6 +51,7 @@ import { DocumentQuotaService } from './document-quota.service';
 import { DocumentService } from './document.service';
 import { DocumentSettingsService } from './document-settings.service';
 import { canonicalExtension, ISniffResult, sniffFile } from './file-sniffer';
+import { IImageDimensions, imageDimensions } from './image-dimensions';
 import { IDocumentQuotaState } from './quota.calculator';
 
 /** Sources a client may claim on the upload endpoint — everything else is reserved. */
@@ -365,7 +366,9 @@ export class DocumentUploadService {
 			const sha256 = createHash('sha256').update(buffer).digest('hex');
 			const duplicate = await this.findDuplicate(sha256, context);
 
-			const document = await this.storeAcceptedFile(file, fileName, sniff, sha256, context);
+			// A picture's size, read from its header while the bytes are here (a client reserves its space with it).
+			const image = imageDimensions(buffer, sniff.type.mimeType);
+			const document = await this.storeAcceptedFile(file, fileName, sniff, sha256, context, image);
 
 			return { result: { document, duplicateOfId: duplicate?.id } };
 		} catch (error) {
@@ -439,6 +442,7 @@ export class DocumentUploadService {
 	 * @param sniff The successful sniff result — its canonical MIME wins over the declared one.
 	 * @param sha256 The digest of the stored bytes.
 	 * @param context The per-batch context.
+	 * @param image A picture's size (width and height as shown), recorded as `metadata.upload.image`; null otherwise.
 	 * @returns The created document row.
 	 */
 	private async storeAcceptedFile(
@@ -446,7 +450,8 @@ export class DocumentUploadService {
 		fileName: string,
 		sniff: ISniffResult,
 		sha256: string,
-		context: IUploadBatchContext
+		context: IUploadBatchContext,
+		image: IImageDimensions | null = null
 	): Promise<Document> {
 		const { input } = context;
 
@@ -475,7 +480,8 @@ export class DocumentUploadService {
 			metadata: {
 				upload: {
 					declaredMimeType: file.mimetype ?? null,
-					canonicalExtension: canonicalExtension(sniff.type.mimeType)
+					canonicalExtension: canonicalExtension(sniff.type.mimeType),
+					...(image ? { image: { width: image.width, height: image.height } } : {})
 				}
 			}
 		});
@@ -606,7 +612,15 @@ export class DocumentUploadService {
 				throw new BadRequestException({ message: sniff.message, code: sniff.code });
 			}
 
-			await this.persistReplacedFile(document, file, fileName, sniff, createHash('sha256').update(buffer).digest('hex'), provider);
+			await this.persistReplacedFile(
+				document,
+				file,
+				fileName,
+				sniff,
+				createHash('sha256').update(buffer).digest('hex'),
+				provider,
+				imageDimensions(buffer, sniff.type.mimeType)
+			);
 		} catch (error) {
 			await this.cleanupOne(provider, file);
 			throw error;
@@ -641,6 +655,9 @@ export class DocumentUploadService {
 	 * Writes the replacement's columns onto the existing row and mirrors them onto the in-memory
 	 * entity. Everything the spec calls "extraction state" is reset here, so the document cannot
 	 * keep serving text that describes the file it no longer holds.
+	 *
+	 * @param image The replacement picture's size, recorded as `metadata.upload.image` as a new
+	 * upload's is (the previous file's size goes with it); null for anything else.
 	 */
 	private async persistReplacedFile(
 		document: Document,
@@ -648,7 +665,8 @@ export class DocumentUploadService {
 		fileName: string,
 		sniff: ISniffResult,
 		sha256: string,
-		provider: any
+		provider: any,
+		image: IImageDimensions | null = null
 	): Promise<void> {
 		const existingMetadata = (
 			document.metadata && typeof document.metadata === 'object' ? document.metadata : {}
@@ -658,7 +676,8 @@ export class DocumentUploadService {
 			upload: {
 				declaredMimeType: file.mimetype ?? null,
 				canonicalExtension: canonicalExtension(sniff.type.mimeType),
-				replacedAt: new Date().toISOString()
+				replacedAt: new Date().toISOString(),
+				...(image ? { image: { width: image.width, height: image.height } } : {})
 			}
 		};
 
