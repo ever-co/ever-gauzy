@@ -49,7 +49,7 @@ The platform's integration framework (`IntegrationTenant`, `IntegrationSetting`,
 | `jira-authorization.controller.ts`, `jira-oauth-state.service.ts` | The OAuth callback |
 | `jira-tenant.service.ts`, `jira-attention.ts` | The connection, its tokens, site and webhook settings; the Inbox notice |
 | `jira-cloud.controller.ts`, `dto/jira.dto.ts` | Management routes |
-| `jira-mapping.service.ts`, `entities/*`, `database/migrations/1791000007140-*` | Mappings, runs, conflicts, baselines |
+| `jira-mapping.service.ts`, `entities/*`, `database/migrations/1791000008140-*` | Mappings, runs, conflicts, baselines |
 | `sync/jira-sync.service.ts`, `sync/jira-issue.mapper.ts`, `sync/jira-adf.ts`, `sync/jira-issue-details.service.ts` | Import, webhook apply, outbound |
 | `sync/jira-webhook.service.ts`, `jira-webhook.controller.ts`, `jira-webhook.verification.ts`, `jira-webhook-dedupe.service.ts` | Webhooks |
 | `jira-sync-conflict.service.ts` | Conflicts (the description in its Jira reading) |
