@@ -1,5 +1,5 @@
 import { HttpClient } from '@angular/common/http';
-import { inject, Injectable } from '@angular/core';
+import { inject, Injectable, Injector } from '@angular/core';
 import { Observable, Subject } from 'rxjs';
 import {
 	CHAT_EVENT_NAMES,
@@ -40,6 +40,7 @@ import {
 	ID
 } from '@gauzy/contracts';
 import { API_PREFIX, toParams } from '@gauzy/ui-core/common';
+import { Store } from '@gauzy/ui-core/core';
 import { typingRefusalOf } from '../chat-typing';
 import { CHAT_PAGE_SIZE } from '../chat-ui.constants';
 
@@ -132,6 +133,8 @@ export function memberStateFromEvents(
 @Injectable({ providedIn: 'root' })
 export class ChatUiService {
 	private readonly http = inject(HttpClient);
+	/** Reaches the session's store only when a file is uploaded (the one call that names the organization itself). */
+	private readonly injector = inject(Injector);
 	/** The platform has no typing route: the composer stops asking (for the page). */
 	private typingOff = false;
 	/** The places (`conversation:thread`) that refused a typing signal. */
@@ -342,9 +345,21 @@ export class ChatUiService {
 	 * the chat, kept out of the knowledge base and of the AI classification. The members of the conversation reach it
 	 * through the conversation's files (membership-checked), never through the document's own visibility.
 	 */
+	/**
+	 * The bytes of a stored file, read through the Docs plugin as the signed-in person (the way the Documents page
+	 * shows a file): for a picture whose own address the browser cannot load. Answers 404 for a file the person may
+	 * not read there.
+	 */
+	fileBytes(documentId: ID): Observable<Blob> {
+		return this.http.get(`${API_PREFIX}/plugins/docs/documents/${path(documentId)}/raw`, { responseType: 'blob' });
+	}
+
 	uploadFile(file: File): Observable<ChatUploadAnswer> {
 		const form = new FormData();
 		form.append('files', file, file.name);
+		// The Docs upload names its organization in the form (it answers 400 without one): the one selected here.
+		const organizationId = this.injector.get(Store, null)?.selectedOrganization?.id;
+		if (organizationId) form.append('organizationId', String(organizationId));
 		form.append('visibility', DocumentVisibilityEnum.PRIVATE);
 		form.append('source', DocumentSourceEnum.CHAT);
 		form.append('importToKnowledge', 'false');
