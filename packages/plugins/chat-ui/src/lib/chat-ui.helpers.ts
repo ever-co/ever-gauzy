@@ -85,6 +85,52 @@ function escapeRegExp(text: string): string {
 	return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
+/** The class of a mention chip that names its person: `chat-person-<employeeId>`. */
+export const CHAT_PERSON_CLASS_PREFIX = 'chat-person-';
+const PERSON_ID = /^[A-Za-z0-9-]+$/;
+
+/**
+ * The person an element of the page stands for, for the profile card: an avatar or a name marked
+ * `data-person-id`, or a mention chip of a body (its `chat-person-<id>` class); the nearest one around the target.
+ */
+export function personTriggerOf(target: EventTarget | null): { element: Element; employeeId: string } | null {
+	const element = (target as Element | null)?.closest?.('[data-person-id], .chat-mention-person') ?? null;
+	if (!element) return null;
+	const marked = element.getAttribute('data-person-id');
+	const fromClass = [...element.classList].find((name) => name.startsWith(CHAT_PERSON_CLASS_PREFIX))?.slice(CHAT_PERSON_CLASS_PREFIX.length);
+	const employeeId = marked || fromClass || null;
+	// The same shape `renderBodyHtml` writes: anything else read from the page is not a person.
+	return employeeId && PERSON_ID.test(employeeId) ? { element, employeeId } : null;
+}
+
+/** The profile card's width in px (`PersonCardComponent`, 18.5rem), and its distance from the person and the window edges. */
+export const PERSON_CARD_WIDTH_PX = 296;
+export const PERSON_CARD_GAP_PX = 8;
+
+/**
+ * Where the profile card goes (viewport px): beside the person, right of them, else left of them, else over them
+ * held inside the window; its top level with theirs, moved up when it would run off the bottom.
+ */
+export function cardPlace(
+	rect: Pick<DOMRect, 'top' | 'left' | 'right'>,
+	height: number,
+	viewport: { width: number; height: number }
+): { top: number; left: number } {
+	const margin = PERSON_CARD_GAP_PX;
+	let left = rect.right + PERSON_CARD_GAP_PX;
+	if (left + PERSON_CARD_WIDTH_PX > viewport.width - margin) left = rect.left - PERSON_CARD_WIDTH_PX - PERSON_CARD_GAP_PX;
+	if (left < margin) left = Math.min(Math.max(rect.left, margin), viewport.width - PERSON_CARD_WIDTH_PX - margin);
+	const top = Math.max(margin, Math.min(rect.top, viewport.height - height - margin));
+	return { top: Math.round(top), left: Math.round(Math.max(margin, left)) };
+}
+
+/** A hue (0–359) picked from a name: the same name always gets the same colour (avatars, profile banners). */
+export function nameHue(name: string): number {
+	let hash = 0;
+	for (let at = 0; at < name.length; at += 1) hash = (hash * 31 + name.charCodeAt(at)) % 360;
+	return hash;
+}
+
 /** The elements that load a remote URL on sight; the stored subset has none, and Angular's sanitizer keeps them. */
 const REMOTE_MEDIA_TAGS = /<\/?(img|picture|source|video|audio|track)\b[^>]*>/gi;
 
@@ -106,7 +152,9 @@ export function renderBodyHtml(
 		.map((part) => {
 			if (part.kind === 'text') return part.text;
 			if (part.kind === 'mention') {
-				return `<span class="chat-mention${part.isMe ? ' chat-mention-me' : ''}">@${escapeHtml(part.label)}</span>`;
+				// The person rides in a class (the sanitizer drops `data-*`): the page opens their profile card on hover.
+				const person = PERSON_ID.test(part.employeeId) ? ` chat-mention-person ${CHAT_PERSON_CLASS_PREFIX}${part.employeeId}` : '';
+				return `<span class="chat-mention${part.isMe ? ' chat-mention-me' : ''}${person}">@${escapeHtml(part.label)}</span>`;
 			}
 			if (part.kind === 'channel') return `<span class="chat-mention">#${escapeHtml(part.label)}</span>`;
 			return `<span class="chat-mention chat-mention-me">@${escapeHtml(part.label)}</span>`;
@@ -176,6 +224,15 @@ export function tokensToNames(body: string, people: ReadonlyMap<string, ChatPers
 	return { text, people: picked, channels };
 }
 
+/** The Markdown marks the formatting bar puts around a selection (bold / italic, strike): a mention may sit inside them. */
+const MARKDOWN_MARKS = '*_~';
+
+/**
+ * Where a mention's label ends: not before a letter or a digit (`@Bob Stone` is not in `@Bob Stoned`), nor before an
+ * underscore that goes on into a word; an underscore that closes italics (`_@Bob Stone_`) still ends it.
+ */
+const MENTION_END = '(?![\\p{L}\\p{N}]|_[\\p{L}\\p{N}])';
+
 /**
  * `@Name` back into `<@employeeId>` and `#channel` into `<#conversationId>` for the labels that were picked
  * (longest first, a label never matched inside a longer word), plus `@channel` / `@here` into `<!channel>` / `<!here>`.
@@ -184,12 +241,12 @@ export function namesToTokens(text: string, people: ReadonlyMap<string, string>,
 	let out = text;
 	const byLength = (a: [string, string], b: [string, string]) => b[0].length - a[0].length;
 	for (const [label, id] of [...people.entries()].sort(byLength)) {
-		out = out.replace(new RegExp(`@${escapeRegExp(label)}(?![\\p{L}\\p{N}_])`, 'gu'), `<@${id}>`);
+		out = out.replace(new RegExp(`@${escapeRegExp(label)}${MENTION_END}`, 'gu'), `<@${id}>`);
 	}
 	for (const [label, id] of [...channels.entries()].sort(byLength)) {
-		out = out.replace(new RegExp(`#${escapeRegExp(label)}(?![\\p{L}\\p{N}_])`, 'gu'), `<#${id}>`);
+		out = out.replace(new RegExp(`#${escapeRegExp(label)}${MENTION_END}`, 'gu'), `<#${id}>`);
 	}
-	return out.replace(/(^|\s)@(channel|here)(?=\s|$|[.,!?])/g, '$1<!$2>');
+	return out.replace(new RegExp(`(^|[\\s${MARKDOWN_MARKS}])@(channel|here)(?=$|[\\s.,!?${MARKDOWN_MARKS}])`, 'gu'), '$1<!$2>');
 }
 
 /**
@@ -203,17 +260,124 @@ export function mentionQueryAt(text: string, caret: number): { query: string; st
 	return { query: match[2], start: caret - match[2].length - 1 };
 }
 
-/** The people whose name matches a query, the ones whose name starts with it first, a few at most. */
+/** The people whose name matches a query, best matches first (see `rankMentions`), a few at most. */
 export function suggestMentions(people: readonly ChatPerson[], query: string, limit = 8): ChatPerson[] {
+	return rankMentions(people, query, { limit }).map((suggestion) => suggestion.person);
+}
+
+/** Where a query matches a name: at its start (tier 0), at the start of a later word (1), inside a word (2), or not (-1). */
+function matchAt(name: string, needle: string): { at: number; tier: number } {
+	if (!needle) return { at: -1, tier: 0 };
+	const lower = name.toLowerCase();
+	if (lower.startsWith(needle)) return { at: 0, tier: 0 };
+	const word = new RegExp(`[\\s\\-'.(]${escapeRegExp(needle)}`, 'u').exec(lower);
+	if (word) return { at: word.index + 1, tier: 1 };
+	const at = lower.indexOf(needle);
+	return at < 0 ? { at: -1, tier: -1 } : { at, tier: 2 };
+}
+
+/** A name cut around the place a query matches it best (any case), so a suggestion list can bold the match. */
+export function matchParts(name: string, query: string): { before: string; match: string; after: string } {
 	const needle = query.trim().toLowerCase();
+	const { at } = matchAt(name, needle);
+	if (at < 0) return { before: name, match: '', after: '' };
+	return { before: name.slice(0, at), match: name.slice(at, at + needle.length), after: name.slice(at + needle.length) };
+}
+
+/** One person the `@` list offers: the part of the name that matched, and how they relate to the conversation. */
+export interface MentionSuggestion {
+	person: ChatPerson;
+	parts: ReturnType<typeof matchParts>;
+	/** Whether they are in the conversation (null when its member list cannot tell). */
+	member: boolean | null;
+	isMe: boolean;
+}
+
+/**
+ * The people an `@` query suggests, as a chat app ranks them: the name starting with the query first, then a later
+ * word starting with it, then a match inside a word; at each level the conversation's known members first, then
+ * the people its member list cannot tell about, then the ones known to be outside it; myself after the others of my
+ * group; then by name.
+ */
+export function rankMentions(
+	people: readonly ChatPerson[],
+	query: string,
+	options: { memberIds?: ChatMemberIds | null; meEmployeeId?: string | null; limit?: number } = {}
+): MentionSuggestion[] {
+	const needle = query.trim().toLowerCase();
+	const { memberIds = null, meEmployeeId = null, limit = 8 } = options;
+	const standing = (member: boolean | null) => (member === true ? 0 : member === null ? 1 : 2);
 	return people
-		.filter((person) => !needle || person.name.toLowerCase().includes(needle))
-		.sort((a, b) => {
-			const aStarts = a.name.toLowerCase().startsWith(needle) ? 0 : 1;
-			const bStarts = b.name.toLowerCase().startsWith(needle) ? 0 : 1;
-			return aStarts - bStarts || a.name.localeCompare(b.name);
-		})
-		.slice(0, limit);
+		.map((person) => ({ person, match: matchAt(person.name, needle) }))
+		.filter(({ match }) => match.tier >= 0)
+		.map(({ person, match }) => ({
+			person,
+			tier: match.tier,
+			member: membershipOf(memberIds, person.employeeId),
+			isMe: !!meEmployeeId && person.employeeId === meEmployeeId
+		}))
+		.sort(
+			(a, b) =>
+				a.tier - b.tier ||
+				standing(a.member) - standing(b.member) ||
+				Number(a.isMe) - Number(b.isMe) ||
+				a.person.name.localeCompare(b.person.name)
+		)
+		.slice(0, limit)
+		.map(({ person, member, isMe }) => ({ person, parts: matchParts(person.name, needle), member, isMe }));
+}
+
+/**
+ * The text of the box cut into plain runs and mentions (`@Name`, `#channel`, `@channel`, `@here`), so a layer under
+ * the box can tint each mention where it sits; a mention starts the text or follows a space, and no letter follows it.
+ */
+export function markMentions(text: string, labels: readonly string[]): { text: string; mention: boolean }[] {
+	const tokens = [...new Set([...labels, '@channel', '@here'])].filter(Boolean).sort((a, b) => b.length - a.length);
+	// The same edges as `namesToTokens`, so what is tinted is what goes out as a mention (inside Markdown marks too).
+	const pattern = new RegExp(`(?<=^|[\\s${MARKDOWN_MARKS}])(?:${tokens.map(escapeRegExp).join('|')})${MENTION_END}`, 'gu');
+	const parts: { text: string; mention: boolean }[] = [];
+	let last = 0;
+	for (let match = pattern.exec(text); match; match = pattern.exec(text)) {
+		if (match.index > last) parts.push({ text: text.slice(last, match.index), mention: false });
+		parts.push({ text: match[0], mention: true });
+		last = match.index + match[0].length;
+	}
+	if (last < text.length) parts.push({ text: text.slice(last), mention: false });
+	return parts;
+}
+
+/**
+ * The employees a conversation is known to hold, and whether that is all of them: a list entry may carry only a
+ * summary of its members (fewer than its `memberCount`), so someone missing from it may still be a member.
+ */
+export interface ChatMemberIds {
+	ids: ReadonlySet<string>;
+	complete: boolean;
+}
+
+/** The employees of a conversation, or null when the conversation does not carry its members. */
+export function memberEmployeeIds(conversation: Pick<IChatConversationWithState, 'members' | 'memberCount'> | null | undefined): ChatMemberIds | null {
+	if (!conversation?.members) return null;
+	const ids = new Set(conversation.members.map((member) => String(member.employeeId)));
+	const count = conversation.memberCount;
+	return { ids, complete: typeof count !== 'number' || ids.size >= count };
+}
+
+/** Whether someone is in a conversation: true or false when it is known, null when the member list cannot tell. */
+export function membershipOf(memberIds: ChatMemberIds | null | undefined, employeeId: string): boolean | null {
+	if (!memberIds) return null;
+	if (memberIds.ids.has(employeeId)) return true;
+	return memberIds.complete ? false : null;
+}
+
+/**
+ * A person's own picture: none for an empty link or Gauzy's generic silhouette (`avatar-default.svg`, set on users
+ * without a picture), so they show their initials as people without a picture do.
+ */
+export function ownPicture(url: string | null | undefined): string | null {
+	const trimmed = url?.trim();
+	if (!trimmed || /(^|\/)avatar-default\.svg([?#]|$)/i.test(trimmed)) return null;
+	return trimmed;
 }
 
 /** The name a conversation shows: its name, or the other people of a direct / group conversation. */
@@ -228,6 +392,56 @@ export function conversationTitle(
 	const names = others.map((member) => people.get(String(member.employeeId))?.name).filter((name): name is string => !!name);
 	if (names.length) return names.join(', ');
 	return conversation.name ?? fallback;
+}
+
+/** How many people a direct or group conversation holds besides me. */
+export function otherMemberCount(conversation: Pick<IChatConversationWithState, 'members'>, meEmployeeId: string | null): number {
+	return (conversation.members ?? []).filter((member) => String(member.employeeId) !== String(meEmployeeId ?? '')).length;
+}
+
+/**
+ * A group conversation's people besides me by first name ("Aster, Booster, Carter"): more of them fit a sidebar
+ * row than with full names. Null when none of them is known (yet).
+ */
+export function groupShortTitle(
+	conversation: Pick<IChatConversationWithState, 'members'>,
+	people: ReadonlyMap<string, ChatPerson>,
+	meEmployeeId: string | null
+): string | null {
+	const names = (conversation.members ?? [])
+		.filter((member) => String(member.employeeId) !== String(meEmployeeId ?? ''))
+		.map((member) => people.get(String(member.employeeId))?.name?.trim())
+		.filter((name): name is string => !!name)
+		.map((name) => name.split(/\s+/)[0]);
+	return names.length ? names.join(', ') : null;
+}
+
+/**
+ * The person a direct or group conversation's avatar shows: the first member who is not me, or me in a
+ * conversation with myself. Null for a channel, or when the person is not known (yet).
+ */
+export function conversationPerson(
+	conversation: Pick<IChatConversationWithState, 'kind' | 'members'>,
+	people: ReadonlyMap<string, ChatPerson>,
+	meEmployeeId: string | null
+): ChatPerson | null {
+	if (conversation.kind === ChatConversationKindEnum.CHANNEL) return null;
+	const members = conversation.members ?? [];
+	const other = members.find((member) => String(member.employeeId) !== String(meEmployeeId ?? '')) ?? members[0];
+	return other ? (people.get(String(other.employeeId)) ?? null) : null;
+}
+
+/** Whether a body mentions me by name, or everyone (`@channel`, `@here`). */
+export function mentionsMe(body: string, meEmployeeId: string | null): boolean {
+	if (/<!(channel|here)>/.test(body)) return true;
+	return !!meEmployeeId && mentionedEmployeeIds(body).includes(meEmployeeId);
+}
+
+/** Whether two instants fall on the same day of the local calendar. */
+export function isSameDay(a: Date | string | number, b: Date | string | number): boolean {
+	const first = new Date(a);
+	const second = new Date(b);
+	return first.getFullYear() === second.getFullYear() && first.getMonth() === second.getMonth() && first.getDate() === second.getDate();
 }
 
 /** Whether a conversation counts as unread for the list and the badges. */

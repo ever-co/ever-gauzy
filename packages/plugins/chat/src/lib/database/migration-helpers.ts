@@ -302,8 +302,8 @@ export async function dropColumnIfExists(queryRunner: QueryRunner, table: string
 /**
  * Whether an `ALTER TABLE` was refused because a concurrent run already made the change: MySQL's duplicate column
  * (1060) / can't drop a missing one (1091), SQLite's `duplicate column name` / `no such column`. Never on Postgres:
- * `lockMigrations` serializes the runs there, and a refused statement aborts the transaction, so the error is
- * raised as it is.
+ * `lockMigrations` serializes the runs there, and a refused statement aborts the transaction, so the error is raised
+ * as it is (a re-check would only fail with 25P02 and hide it). The same rule as migration `1791000006400`'s own.
  */
 export function isColumnRaceRefusal(dialect: ChatDialect, error: unknown, kind: 'duplicate' | 'missing'): boolean {
 	const failure = error as { errno?: unknown; code?: unknown; message?: unknown; driverError?: { errno?: unknown; code?: unknown } } | null;

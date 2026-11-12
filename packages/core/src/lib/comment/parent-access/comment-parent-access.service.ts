@@ -118,8 +118,12 @@ export class CommentParentAccessService implements OnModuleInit {
 			);
 		}
 
-		const parent =
-			typeof entityId === 'string' && isUUID(entityId) ? await policy.findAccessibleParent(entityId as ID) : null;
+		// A write follows the policy's write rule where it has one (some readers may only read), else its read rule.
+		const find =
+			access === 'write' && policy.findWritableParent
+				? policy.findWritableParent.bind(policy)
+				: policy.findAccessibleParent.bind(policy);
+		const parent = typeof entityId === 'string' && isUUID(entityId) ? await find(entityId as ID) : null;
 		if (!parent) {
 			throw new NotFoundException(`${policy.entity} not found.`);
 		}
@@ -154,6 +158,34 @@ export class CommentParentAccessService implements OnModuleInit {
 			}
 		}
 		return readable;
+	}
+
+	/**
+	 * Whether the caller may write the comments of one record: the policy's write permission, and its write rule for
+	 * that record where it has one (a reader the record admits only to read is refused). A record type without a
+	 * policy, or a record the caller may not reach, answers `false`; a read that fails throws.
+	 */
+	async mayWrite(entity: unknown, entityId: unknown): Promise<boolean> {
+		const policy = this.policyFor(entity);
+		if (!policy || !this.holdsPermission('write', entity)) {
+			return false;
+		}
+		if (typeof entityId !== 'string' || !isUUID(entityId)) {
+			return false;
+		}
+		// As `assertMay('write', …)` decides it: the write rule where the policy has one, else the read rule.
+		const parent = policy.findWritableParent
+			? await policy.findWritableParent(entityId as ID)
+			: await policy.findAccessibleParent(entityId as ID);
+		return parent !== null;
+	}
+
+	/**
+	 * Whether the policy of `entity` has a write rule of its own for each record (a page shared to view only takes no
+	 * comments), beyond the permission it asks. A record type without a policy answers `false`.
+	 */
+	hasWriteRule(entity: unknown): boolean {
+		return typeof this.policyFor(entity)?.findWritableParent === 'function';
 	}
 
 	/**

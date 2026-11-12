@@ -1,6 +1,6 @@
 import { IOrganizationTeamCreateInput } from "@gauzy/contracts";
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
-import { IsNotEmpty, IsOptional, IsString } from "class-validator";
+import { IsBoolean, IsNotEmpty, IsOptional, IsString } from "class-validator";
 import { IsTeamAlreadyExist } from "./../../shared/validators";
 import { OrganizationTeamDTO } from "./organization-team.dto";
 
@@ -19,4 +19,15 @@ export class CreateOrganizationTeamDTO extends OrganizationTeamDTO implements IO
     @IsOptional()
     @IsString()
     readonly profile_link?: string;
+
+    /**
+     * Give the new team a few common labels as its own tags (off unless `true`).
+     */
+    @ApiPropertyOptional({
+        type: () => Boolean,
+        description: 'Give the new team a few common labels (Bug, Feature, …) as its own tags. Off unless true.'
+    })
+    @IsOptional()
+    @IsBoolean()
+    readonly withStarterTags?: boolean;
 }

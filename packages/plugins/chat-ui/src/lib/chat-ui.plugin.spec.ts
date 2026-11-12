@@ -3,7 +3,7 @@ import { BehaviorSubject } from 'rxjs';
 import { PermissionsEnum } from '@gauzy/contracts';
 import { NavigationBuilderService, NavMenuBuilderService } from '@gauzy/ui-core/core';
 import { CHAT_HEADER_ACTION_ID, CHAT_LINK, CHAT_NAV_BEFORE, CHAT_NAV_ID, CHAT_THREADS_PATH, CHAT_UNREADS_PATH } from './chat-ui.constants';
-import { CHAT_CHILD_ROUTES, CHAT_PAGE_ROUTE, ChatUiPlugin, registerChatEntryPoints } from './chat-ui.plugin';
+import { CHAT_CHILD_ROUTES, CHAT_PAGE_ROUTE, CHAT_VIEW_ROUTES, ChatUiPlugin, registerChatEntryPoints } from './chat-ui.plugin';
 import { ChatAvailabilityService } from './services/chat-availability.service';
 
 describe('ChatUiPlugin', () => {
@@ -25,7 +25,14 @@ describe('ChatUiPlugin', () => {
 		expect(CHAT_PAGE_ROUTE.path).toBe('chat');
 		expect(CHAT_PAGE_ROUTE.location).toBe('page-sections');
 		expect((CHAT_PAGE_ROUTE.data as { permissions: { only: PermissionsEnum[] } }).permissions.only).toEqual([PermissionsEnum.CHAT_VIEW]);
-		expect(CHAT_CHILD_ROUTES.map((route) => route.path)).toEqual(['', CHAT_UNREADS_PATH, CHAT_THREADS_PATH, ':conversationId']);
+		// One page route above componentless views, so switching views keeps the page (and its sidebar) alive.
+		expect(CHAT_CHILD_ROUTES).toHaveLength(1);
+		expect(CHAT_CHILD_ROUTES[0].path).toBe('');
+		expect(CHAT_CHILD_ROUTES[0].loadComponent).toBeDefined();
+		expect(CHAT_CHILD_ROUTES[0].children).toBe(CHAT_VIEW_ROUTES);
+		expect(CHAT_VIEW_ROUTES.map((route) => route.path)).toEqual(['', CHAT_UNREADS_PATH, CHAT_THREADS_PATH, ':conversationId']);
+		expect(CHAT_VIEW_ROUTES.every((route) => !route.component && !route.loadComponent)).toBe(true);
+		expect(CHAT_VIEW_ROUTES.map((route) => route.data?.['view'] ?? null)).toEqual([null, 'unreads', 'threads', null]);
 		expect(ChatUiPlugin.id).toBe('chat');
 		expect(ChatUiPlugin.translationNamespace).toBe('CHAT');
 		expect(ChatUiPlugin.routes).toEqual([CHAT_PAGE_ROUTE]);

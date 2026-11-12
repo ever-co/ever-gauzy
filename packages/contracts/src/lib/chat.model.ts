@@ -216,6 +216,12 @@ export interface IChatMessage extends IBasePerTenantAndOrganizationEntityModel {
 	nonce?: string | null;
 	/** The name of the integration that posted an APP message. */
 	appName?: string | null;
+	/** The incoming webhook that posted an APP message. */
+	webhookId?: ID | null;
+	/** The icon of the integration that posted an APP message (https). */
+	appIconUrl?: string | null;
+	/** The structured layout of an APP message (plain text throughout); `body` is its text fallback. */
+	blocks?: IChatAppBlock[] | null;
 	/** The assistant a person wrote this message with (an AI client posting in their name), shown beside it. */
 	assistedBy?: string | null;
 	deletedAt?: Date;
@@ -494,4 +500,205 @@ export interface IChatCategoryReorderResult {
  */
 export interface IChatDraftDiscardResult {
 	discarded: boolean;
+}
+
+// ------------------------------------------------------------------ incoming webhooks (`GAUZY_CHAT_WEBHOOKS_ENABLED`)
+
+/** The most active webhooks one channel may have. */
+export const CHAT_WEBHOOK_MAX_PER_CONVERSATION = 10;
+/** The most bytes a webhook post may weigh (the raw body). */
+export const CHAT_WEBHOOK_MAX_PAYLOAD_BYTES = 64 * 1024;
+/** The most blocks one app message may carry (legacy attachments count by the blocks they become). */
+export const CHAT_WEBHOOK_MAX_BLOCKS = 50;
+/** The most fields one section block shows side by side. */
+export const CHAT_WEBHOOK_MAX_FIELDS = 10;
+/** The most buttons one actions block carries. */
+export const CHAT_WEBHOOK_MAX_BUTTONS = 10;
+/** The longest webhook name. */
+export const CHAT_WEBHOOK_NAME_MAX_LENGTH = 80;
+
+/**
+ * The blocks an app message renders. Every text is plain text (no HTML, no markup): clients render it as text.
+ * A block type outside this set arrives as a `text` block holding whatever text it had.
+ */
+export enum ChatAppBlockTypeEnum {
+	/** A title line. */
+	HEADER = 'header',
+	/** A paragraph, and/or short fields shown side by side. */
+	SECTION = 'section',
+	/** A horizontal rule. */
+	DIVIDER = 'divider',
+	/** Small, muted text (a footer, a source, a time). */
+	CONTEXT = 'context',
+	/** A row of buttons. */
+	ACTIONS = 'actions',
+	/** Plain text: what an unknown block type is rendered as. */
+	TEXT = 'text'
+}
+
+export type ChatAppButtonStyle = 'primary' | 'danger';
+
+/**
+ * A button of an actions block. With `url` it opens that page (https, public host) and calls nobody back; without it,
+ * a click is an interaction posted to the webhook's interaction URL.
+ */
+export interface IChatAppButton {
+	/** Unique within the message: the interaction names it. */
+	actionId: string;
+	text: string;
+	/** Sent back with the interaction (the stored value, never the client's). */
+	value?: string | null;
+	url?: string | null;
+	style?: ChatAppButtonStyle | null;
+}
+
+export type IChatAppBlock =
+	| { type: ChatAppBlockTypeEnum.HEADER; text: string }
+	| { type: ChatAppBlockTypeEnum.SECTION; text?: string | null; fields?: string[] | null }
+	| { type: ChatAppBlockTypeEnum.DIVIDER }
+	| { type: ChatAppBlockTypeEnum.CONTEXT; elements: string[] }
+	| { type: ChatAppBlockTypeEnum.ACTIONS; blockId?: string | null; elements: IChatAppButton[] }
+	| { type: ChatAppBlockTypeEnum.TEXT; text: string };
+
+/** One incoming webhook of a channel, as the management routes answer it (never its secrets). */
+export interface IChatWebhook extends IBasePerTenantAndOrganizationEntityModel {
+	conversationId: ID;
+	name: string;
+	iconUrl?: string | null;
+	/** Where button clicks are posted (signed). None: the webhook's buttons call nobody back. */
+	interactionUrl?: string | null;
+	/** The last characters of the URL secret, so two webhooks can be told apart. */
+	tokenHint: string;
+	/** Whether a signing secret exists (interactions need one). */
+	hasSigningSecret: boolean;
+	/** Whether `@channel` / `@here` in its posts notify the channel. */
+	canBroadcast: boolean;
+	createdByEmployeeId?: ID | null;
+	revokedAt?: Date | null;
+	revokedByEmployeeId?: ID | null;
+	lastUsedAt?: Date | null;
+	acceptedCount: number;
+	rejectedCount: number;
+	rateLimitedCount: number;
+	callbackFailureCount: number;
+}
+
+export interface IChatWebhookCreateInput {
+	name: string;
+	iconUrl?: string | null;
+	interactionUrl?: string | null;
+	canBroadcast?: boolean;
+}
+
+export interface IChatWebhookUpdateInput {
+	name?: string;
+	/** `null` clears it. */
+	iconUrl?: string | null;
+	/** `null` clears it. */
+	interactionUrl?: string | null;
+	canBroadcast?: boolean;
+}
+
+/** A webhook write's answer: the webhook, and the secrets made by this write (shown this once, never again). */
+export interface IChatWebhookWriteResult {
+	webhook: IChatWebhook;
+	/** The URL senders post to (holds the URL secret): only in the answer of the create. */
+	url?: string;
+	/** The key interaction callbacks are signed with: only in the answer of the write that made it. */
+	signingSecret?: string;
+}
+
+export enum ChatInteractionStatusEnum {
+	/** Being posted (the first attempt). */
+	PENDING = 'pending',
+	/** The interaction URL answered 2xx. */
+	DELIVERED = 'delivered',
+	/** An attempt failed; more follow. */
+	RETRYING = 'retrying',
+	/** Every attempt failed, or the target was refused. */
+	FAILED = 'failed'
+}
+
+/** `POST /chat/messages/:id/interactions`: the button clicked. */
+export interface IChatInteractionInput {
+	actionId: string;
+	/** The actions block of the button, when two blocks reuse an action id. */
+	blockId?: string;
+}
+
+/** The state of one click. */
+export interface IChatInteraction {
+	/** Created once per click, the same on every retry of its callback (also sent as `Idempotency-Key`). */
+	interactionId: ID;
+	messageId: ID;
+	conversationId: ID;
+	actionId: string;
+	status: ChatInteractionStatusEnum;
+	attempts: number;
+	/** Whether the sender's reply replaced the message. */
+	replyApplied: boolean;
+	/** Why the callback failed (no host, no address). */
+	error?: string | null;
+	createdAt?: Date;
+}
+
+export interface IChatInteractionResult {
+	interaction: IChatInteraction;
+	/** The message as the sender's reply left it (when it replied). */
+	message?: IChatMessageWithRelations;
+	events: IChatEvent[];
+}
+
+/** The body an interaction callback POSTs to the interaction URL (signed with `X-Signature`). */
+export interface IChatInteractionCallback {
+	type: 'block_actions';
+	interactionId: ID;
+	/** ISO time of the click. */
+	actionAt: string;
+	webhook: { id: ID; name: string };
+	conversation: { id: ID; name: string | null };
+	message: { id: ID; createdAt: string | null };
+	/** Who clicked: the employee id and the display name only. */
+	actor: { employeeId: ID; name: string };
+	action: { actionId: string; blockId: string | null; value: string | null; text: string };
+}
+
+// ------------------------------------------------------------------ link previews
+
+/** Where a link preview stands (`GET /chat/link-preview?url=`). */
+export enum ChatLinkPreviewStatusEnum {
+	/** Being fetched in the background: ask again in a couple of seconds. */
+	PENDING = 'pending',
+	/** Fetched: the fields are what the page says about itself in its `<head>`. */
+	READY = 'ready',
+	/** No preview: the page is not on a public address, could not be fetched, or says nothing usable. Show the link. */
+	UNAVAILABLE = 'unavailable'
+}
+
+/** The longest link a preview is asked for. */
+export const CHAT_LINK_PREVIEW_URL_MAX_LENGTH = 2048;
+
+/**
+ * A link preview, fetched by the server (never by the browser) from a public address and cached. Every string is
+ * plain text the server sanitized: render it as text, never as HTML. `image` and `icon` are absolute `https:` URLs.
+ */
+export interface IChatLinkPreview {
+	/** The link the preview is of, normalized (no fragment). */
+	url: string;
+	status: ChatLinkPreviewStatusEnum;
+	title?: string | null;
+	description?: string | null;
+	siteName?: string | null;
+	image?: string | null;
+	imageAlt?: string | null;
+	imageWidth?: number | null;
+	imageHeight?: number | null;
+	icon?: string | null;
+	/** When the page was last fetched. */
+	fetchedAt?: Date | null;
+}
+
+/** `GET /chat/link-preview?url=`. */
+export interface IChatLinkPreviewQuery {
+	url: string;
 }
