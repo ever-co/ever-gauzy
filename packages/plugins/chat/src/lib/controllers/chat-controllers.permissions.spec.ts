@@ -20,6 +20,7 @@ jest.mock('@gauzy/core', () => {
 		Permissions: (...permissions: string[]) => SetMetadata('permissions', permissions),
 		UUIDValidationPipe: class UUIDValidationPipe {},
 		MultiORMColumn: decorator,
+		ColumnIndex: decorator,
 		MultiORMEntity: decorator,
 		UseValidationPipe: decorator,
 		TenantOrganizationBaseEntity: class {},
@@ -38,6 +39,7 @@ jest.mock('@gauzy/core', () => {
 });
 jest.mock('@gauzy/common', () => ({ FeatureFlag: () => () => undefined }));
 jest.mock('@gauzy/plugin-search', () => ({ SearchService: class SearchService {} }));
+jest.mock('@gauzy/scheduler', () => ({ SchedulerQueueService: class SchedulerQueueService {} }));
 
 import { ForbiddenException } from '@nestjs/common';
 import { DataSource } from 'typeorm';
@@ -47,7 +49,10 @@ import { ChatAccessService } from '../services/chat-access.service';
 import { ChatConversationService } from '../services/chat-conversation.service';
 import { ChatMessageService } from '../services/chat-message.service';
 import { ChatSearchService } from '../services/chat-search.service';
+import { ChatLinkPreviewImageService } from '../link-preview/chat-link-preview-image.service';
+import { ChatLinkPreviewService } from '../link-preview/chat-link-preview.service';
 import { ChatConversationController } from './chat-conversation.controller';
+import { ChatLinkPreviewController } from './chat-link-preview.controller';
 import { ChatMessageController } from './chat-message.controller';
 
 const ID = '7b1a3c0e-0000-4000-8000-000000000001';
@@ -63,7 +68,7 @@ function handlersOf(controller: object): string[] {
 }
 
 /** Arguments that satisfy every handler's signature (ids, an emoji, a body, a query). */
-const ARGS = [ID, { employeeIds: [ID], name: 'x', body: 'x', q: 'x', snapshotId: ID }, ID];
+const ARGS = [ID, { employeeIds: [ID], name: 'x', body: 'x', q: 'x', snapshotId: ID, setHeader: () => undefined }, ID];
 
 function controllers() {
 	const reached: string[] = [];
@@ -73,7 +78,14 @@ function controllers() {
 		reached,
 		all: [
 			new ChatConversationController(access, serviceDouble<ChatConversationService>(reached), messages),
-			new ChatMessageController(access, messages, serviceDouble<ChatSearchService>(reached))
+			new ChatMessageController(access, messages, serviceDouble<ChatSearchService>(reached)),
+			new ChatLinkPreviewController(access, serviceDouble<ChatLinkPreviewService>(reached), {
+				// The picture route sends bytes: its double answers a picture.
+				image: () => {
+					reached.push('image');
+					return Promise.resolve({ type: 'image/png', body: Buffer.from('png') });
+				}
+			} as unknown as ChatLinkPreviewImageService)
 		] as object[]
 	};
 }
@@ -97,7 +109,7 @@ describe('chat routes need CHAT_VIEW, writes included', () => {
 	it('covers the write routes (handlers that state a permission of their own)', () => {
 		const handlers = controllers().all.flatMap(handlersOf);
 		expect(handlers).toEqual(
-			expect.arrayContaining(['send', 'createChannel', 'direct', 'createCategory', 'updateCategory', 'deleteCategory', 'addMembers', 'edit', 'remove', 'react', 'pin', 'createTask'])
+			expect.arrayContaining(['send', 'createChannel', 'direct', 'createCategory', 'updateCategory', 'deleteCategory', 'addMembers', 'edit', 'remove', 'react', 'pin', 'createTask', 'preview', 'image'])
 		);
 	});
 

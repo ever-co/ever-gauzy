@@ -136,8 +136,8 @@ async function createTable(
  * `GAUZY_TASK_AUTOMATIONS_ENABLED=true` loads the plugin. Idempotent (re-running issues no DDL), serialised on
  * Postgres (the API processes start together), reversible.
  */
-export class CreateTaskAutomationTables1791000007310 implements MigrationInterface {
-	name = 'CreateTaskAutomationTables1791000007310';
+export class CreateTaskAutomationTables1791000007810 implements MigrationInterface {
+	name = 'CreateTaskAutomationTables1791000007810';
 
 	public async up(queryRunner: QueryRunner): Promise<void> {
 		const d = dialectOf(queryRunner);

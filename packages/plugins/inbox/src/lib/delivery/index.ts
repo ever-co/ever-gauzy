@@ -3,6 +3,8 @@ export * from './inbox-delivery.entity';
 export * from './inbox-delivery-rules';
 export * from './inbox-delivery-mailer';
 export * from './inbox-delivery.service';
+export * from './inbox-delivery-status.service';
+export * from './inbox-delivery-status.controller';
 export * from './inbox-delivery.scheduler';
 export * from './inbox-delivery.worker';
 export * from './inbox-delivery.module';

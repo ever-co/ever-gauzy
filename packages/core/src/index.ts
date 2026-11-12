@@ -35,6 +35,7 @@ export {
 	thumbnailFileName,
 	videoUploadFileFilter,
 	RENDERABLE_KEY_EXTENSIONS,
+	runWithTenantStorageSettings,
 	toSafeStorageExtension
 } from './lib/core/file-storage';
 export type { ReadStorageFileOptions, StorageFileReadFailure, StoredFileContent } from './lib/core/file-storage';

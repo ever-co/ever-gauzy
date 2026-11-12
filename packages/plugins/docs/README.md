@@ -37,6 +37,12 @@ error, not a silent DOM fallback.
 | `GAUZY_DOCS_QUEUE_CONCURRENCY` | `2` | `docs-processing` worker concurrency per process (queued mode only) |
 | `GAUZY_DOCS_QUEUE_ENABLED` | *(follows `isSchedulerQueueRootEnabled()`)* | Register the BullMQ queue. Off ⇒ the pipeline runs **inline** |
 | `GAUZY_DOCS_QUEUE_WORKER_ENABLED` | `true` | Also run the `docs-processing` consumer here. Set `false` on the API when a dedicated `apps/worker` is deployed |
+| `GAUZY_DOCS_IMPORT_ENABLED` | `false` | Import of exported workspaces (a Markdown vault or an HTML export zip); off ⇒ `/plugins/docs/imports` answers 404 `DOCS_IMPORT_DISABLED` |
+| `GAUZY_DOCS_IMPORT_MAX_ZIP_BYTES` | `104857600` | The largest import zip (100 MiB) |
+| `GAUZY_DOCS_IMPORT_MAX_ENTRIES` | `5000` | The most entries one import zip may hold |
+| `GAUZY_DOCS_IMPORT_MAX_UNCOMPRESSED_BYTES` | `1073741824` | The most an import zip may unpack to (1 GiB) |
+| `GAUZY_DOCS_PDF_EXPORT_ENABLED` | `false` | PDF export of a page or a subtree; off ⇒ the PDF routes answer 404 `DOCS_PDF_EXPORT_DISABLED` |
+| `GAUZY_DOCS_PDF_MAX_PAGES` | `200` | The most pages one subtree PDF export takes (413 `DOCS_PDF_TOO_MANY_PAGES` past it); at most `499`, a larger value is read as `499` |
 
 ## Pipeline dispatch: queued vs inline
 
@@ -94,6 +100,43 @@ Run `yarn nx build plugin-docs` to build the library.
   callouts, details, files and embeds are written as text or links on export; what Markdown cannot say (alignment,
   colours, block ids) survives an update on the blocks it did not change. `services/document-markdown.ts` (pure, with a
   spec) does the two directions and the block diff; `marked` reads the Markdown, `archiver` writes the zip.
+
+## Import of exported workspaces (`GAUZY_DOCS_IMPORT_ENABLED`)
+
+Spec: [`docs/specs/features/docs-import-export/`](../../../docs/specs/features/docs-import-export/spec.md).
+
+- `POST /plugins/docs/imports` (multipart: `file` = one zip; `parentId`, or `visibility` + `organizationTeamId`;
+  `DOCS_CREATE`) stores the zip under `documents/<tenant>/<org>/imports/`, inspects it (`import/import-archive.ts`:
+  entry count, declared and actual uncompressed size, a 200:1 inflation cap above 1 MiB, absolute / drive / NUL / `..`
+  paths and symbolic links refused, at least one page file), resolves the target as a page create does (a parent the
+  caller may write, whose space the pages take; or a space), and queues `docs.import` (the `docs-processing` queue, or
+  inline). A refused zip is deleted and answered 400 / 413 with its `code`. The request checks what the archive
+  declares (its central directory); an entry that inflates past its declared size is caught when the run reads it,
+  and the import then ends `FAILED` with `DOCS_IMPORT_ZIP_BOMB` (the zip deleted) rather than the request answering
+  413.
+- `GET /plugins/docs/imports/:id` answers the state, the phase (PLANNING → TREE → CONTENT → DONE), the progress and the
+  report (imported, skipped and failed items with reasons; unresolved links per page) — to its starter, or to a Docs
+  manager. `GET /plugins/docs/imports` lists the caller's last ten and the zip limit (the clients' probe).
+- The run (`import/document-import.runner.ts`) detects the layout (`import/import-plan.ts`: an HTML export by the
+  trailing 32-hex ids of its files and folders, a Markdown vault otherwise), builds the tree (a page file and a folder
+  of the same name, a folder's `index.md` or its folder note are one page), creates folders and pages, then the
+  attachments through the upload checks (sniffing, the per-file limit, the organization quota) under the page that
+  first shows them, then converts every page (`import/import-content.ts`: front matter and the export header for the
+  title, emoji icon and created date; HTML sanitized and turned into Markdown; wiki links and embeds; relative links;
+  `markdownToDocument`; page links become page mentions, files become stored images or attachment cards) and writes it.
+  Every created document carries `externalSource = docs-import:<importId>` and a digest of its path, so a resumed run
+  (a queue retry, the read of a stalled import, the startup sweep) never creates anything twice.
+
+## PDF export (`GAUZY_DOCS_PDF_EXPORT_ENABLED`)
+
+- `GET /plugins/docs/documents/:id/export.pdf` answers a page as a PDF (`DOCS_READ`, the Markdown export's access);
+  `?subtree=true` the page and the readable pages under it as one PDF with a table of contents (each page from a new
+  sheet); `?subtree=true&format=zip` a zip with one PDF per page at the Markdown export's paths.
+  `GET /plugins/docs/exports/pdf` is the clients' probe.
+- `pdf/tiptap-pdf.ts` (pure) turns the stored JSON into pdfmake content; `pdf/pdf-render.ts` adds the header (title,
+  date) and footer (page numbers), embeds the page's images (read through the file's own access check, re-encoded with
+  `sharp`, 64 MiB per export) and renders with pdfmake and its bundled Roboto font (Latin, Greek, Cyrillic). The
+  renderer fetches nothing: every URL is denied and an external image is its alternative text.
 
 ## Running unit tests
 

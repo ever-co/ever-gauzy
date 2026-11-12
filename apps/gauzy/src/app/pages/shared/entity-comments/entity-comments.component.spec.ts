@@ -1,6 +1,16 @@
+// The services the component injects, as DI tokens: the real barrel pulls the whole app (cookies, auth) into the test.
+jest.mock('@gauzy/ui-core/core', () => ({
+	CommentService: class CommentService {},
+	CommentReactionService: class CommentReactionService {},
+	ImageAssetService: class ImageAssetService {},
+	Store: class Store {},
+	ToastrService: class ToastrService {}
+}));
+
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { BaseEntityEnum, IComment, PermissionsEnum } from '@gauzy/contracts';
-import { CommentService, ImageAssetService, Store, ToastrService } from '@gauzy/ui-core/core';
+import { TranslateService } from '@ngx-translate/core';
+import { BaseEntityEnum, IComment, IReactionSummary, PermissionsEnum, ReactionEntityEnum } from '@gauzy/contracts';
+import { CommentReactionService, CommentService, ImageAssetService, Store, ToastrService } from '@gauzy/ui-core/core';
 import { DEFAULT_ENTITY_COMMENTS_LABELS, EntityCommentsComponent } from './entity-comments.component';
 
 const CONTACT = 'aaaaaaaa-1111-4111-8111-111111111111';
@@ -31,6 +41,9 @@ describe('EntityCommentsComponent', () => {
 	let permissions: Set<PermissionsEnum>;
 	let comments: { getAll: jest.Mock; create: jest.Mock; delete: jest.Mock };
 	let toastr: { success: jest.Mock; danger: jest.Mock; warning: jest.Mock };
+	let reactions: { getForRecord: jest.Mock; toggle: jest.Mock };
+	let summaries: IReactionSummary[];
+	let user: Record<string, unknown> | null;
 
 	beforeEach(() => {
 		listed = NOTES;
@@ -41,8 +54,16 @@ describe('EntityCommentsComponent', () => {
 			delete: jest.fn(async () => undefined)
 		};
 		toastr = { success: jest.fn(), danger: jest.fn(), warning: jest.fn() };
+		summaries = [];
+		reactions = {
+			getForRecord: jest.fn(async () => summaries),
+			toggle: jest.fn(async () => undefined)
+		};
+		user = ME;
 		const store = {
-			user: ME,
+			get user() {
+				return user;
+			},
 			hasPermission: (permission: PermissionsEnum) => permissions.has(permission),
 			hasAllPermissions: (...required: PermissionsEnum[]) => required.every((p) => permissions.has(p)),
 			hasAnyPermission: (...required: PermissionsEnum[]) => required.some((p) => permissions.has(p))
@@ -52,6 +73,7 @@ describe('EntityCommentsComponent', () => {
 		TestBed.configureTestingModule({
 			providers: [
 				{ provide: CommentService, useValue: comments },
+				{ provide: CommentReactionService, useValue: reactions },
 				{ provide: Store, useValue: store },
 				{ provide: ToastrService, useValue: toastr }
 			]
@@ -213,5 +235,155 @@ describe('EntityCommentsComponent', () => {
 		const ids = [first, second].map((fixture) => element(fixture).querySelector('textarea').id);
 		expect(ids[0]).not.toEqual(ids[1]);
 		expect(ids.every((id) => id.endsWith('-comment'))).toBe(true);
+	});
+	describe('reactions (the task page)', () => {
+		const thumbs = (overrides: Partial<IReactionSummary> = {}): IReactionSummary => ({
+			entity: ReactionEntityEnum.Comment,
+			entityId: 'first',
+			emoji: '👍',
+			count: 1,
+			reactedByMe: false,
+			reactionId: null,
+			reactors: [{ employeeId: 'employee-ann', name: 'Ann Lee' }],
+			...overrides
+		});
+		const chips = (fixture: ComponentFixture<EntityCommentsComponent>) =>
+			Array.from(element(fixture).querySelectorAll<HTMLButtonElement>('li.comment > .comment-main .reaction-chip:not(.reaction-add)'));
+
+		it('asks for nothing where reactions are not asked for (a project, a contact)', async () => {
+			const fixture = await render();
+
+			expect(reactions.getForRecord).not.toHaveBeenCalled();
+			expect(element(fixture).querySelector('.comment-reactions')).toBeNull();
+		});
+
+		it('reads the reactions of the record and draws a chip per emoji, the reader’s own marked', async () => {
+			summaries = [thumbs(), thumbs({ emoji: '🎉', reactedByMe: true, reactors: [{ employeeId: 'employee-me', name: 'Me' }] })];
+			const fixture = await render({ entity: BaseEntityEnum.Task, reactions: true });
+			await fixture.whenStable();
+			fixture.detectChanges();
+
+			expect(reactions.getForRecord).toHaveBeenCalledWith(BaseEntityEnum.Task, CONTACT, {
+				organizationId: ORGANIZATION,
+				tenantId: TENANT
+			});
+			const drawn = chips(fixture);
+			expect(drawn.map((chip) => chip.textContent.replace(/\s+/g, ''))).toEqual(['👍1', '🎉1']);
+			expect(drawn.map((chip) => chip.getAttribute('aria-pressed'))).toEqual(['false', 'true']);
+			expect(drawn[0].getAttribute('aria-label')).toBe('COMMENT_REACTIONS.REACTED_WITH');
+		});
+
+		it('shows a toggle at once, sends it, and reads the summary again', async () => {
+			summaries = [thumbs()];
+			const fixture = await render({ entity: BaseEntityEnum.Task, reactions: true });
+			await fixture.whenStable();
+			let release: () => void = () => undefined;
+			reactions.toggle.mockImplementation(() => new Promise<void>((resolve) => (release = resolve)));
+
+			const pending = state(fixture).toggleReaction('first', '👍');
+			fixture.detectChanges();
+			expect(chips(fixture)[0].textContent.replace(/\s+/g, '')).toBe('👍2');
+			expect(chips(fixture)[0].getAttribute('aria-pressed')).toBe('true');
+
+			summaries = [thumbs({ count: 2, reactedByMe: true })];
+			release();
+			await pending;
+			expect(reactions.toggle).toHaveBeenCalledWith('first', '👍', { organizationId: ORGANIZATION, tenantId: TENANT });
+			expect(reactions.getForRecord).toHaveBeenCalledTimes(2);
+		});
+
+		it('puts the chips back and says so when the platform refuses a toggle', async () => {
+			summaries = [thumbs()];
+			const fixture = await render({ entity: BaseEntityEnum.Task, reactions: true });
+			await fixture.whenStable();
+			reactions.toggle.mockRejectedValue(new Error('404'));
+
+			await state(fixture).toggleReaction('first', '🚀');
+			fixture.detectChanges();
+
+			expect(chips(fixture).map((chip) => chip.textContent.replace(/\s+/g, ''))).toEqual(['👍1']);
+			expect(toastr.danger).toHaveBeenCalledWith('COMMENT_REACTIONS.FAILED', 'TOASTR.TITLE.ERROR');
+		});
+
+		it('shows what the platform holds after a refused toggle, keeping a toggle that landed meanwhile', async () => {
+			summaries = [thumbs()];
+			const fixture = await render({ entity: BaseEntityEnum.Task, reactions: true });
+			await fixture.whenStable();
+			reactions.toggle.mockRejectedValueOnce(new Error('503'));
+			// The heart sent meanwhile landed: the platform holds it, the refused rocket not.
+			summaries = [thumbs(), thumbs({ emoji: '❤️', reactedByMe: true })];
+
+			await state(fixture).toggleReaction('first', '🚀');
+			fixture.detectChanges();
+
+			expect(chips(fixture).map((chip) => chip.textContent.replace(/\s+/g, ''))).toEqual(['👍1', '❤️1']);
+			expect(reactions.getForRecord).toHaveBeenCalledTimes(2);
+			expect(toastr.danger).toHaveBeenCalledWith('COMMENT_REACTIONS.FAILED', 'TOASTR.TITLE.ERROR');
+		});
+
+		it('words the chips again in the reader’s new language', async () => {
+			summaries = [thumbs()];
+			const fixture = await render({ entity: BaseEntityEnum.Task, reactions: true });
+			await fixture.whenStable();
+			const translate = TestBed.inject(TranslateService);
+			translate.setTranslation('es', { COMMENT_REACTIONS: { REACTED_WITH: 'Reacted in Spanish {{emoji}}: {{people}}' } });
+
+			translate.use('es');
+			await fixture.whenStable();
+			fixture.detectChanges();
+
+			expect(chips(fixture)[0].getAttribute('aria-label')).toContain('Reacted in Spanish');
+		});
+
+		it('hides reactions on a platform without the summary', async () => {
+			reactions.getForRecord.mockRejectedValue({ status: 404 });
+			const fixture = await render({ entity: BaseEntityEnum.Task, reactions: true });
+			await fixture.whenStable();
+			fixture.detectChanges();
+
+			expect(element(fixture).querySelector('.comment-reactions')).toBeNull();
+			expect(texts(fixture, 'li.comment > .comment-main .comment-text')).toEqual(['Note first', 'Note second']);
+		});
+
+		it('lets a reader without an employee see the chips, not react', async () => {
+			user = { id: 'user-me' };
+			summaries = [thumbs()];
+			const fixture = await render({ entity: BaseEntityEnum.Task, reactions: true });
+			await fixture.whenStable();
+			fixture.detectChanges();
+
+			// Focusable, so a keyboard reader reaches its label (who reacted), but it does nothing.
+			expect(chips(fixture)[0].disabled).toBe(false);
+			expect(chips(fixture)[0].getAttribute('aria-disabled')).toBe('true');
+			expect(element(fixture).querySelector('.reaction-add')).toBeNull();
+			chips(fixture)[0].click();
+			await state(fixture).toggleReaction('first', '👍');
+			expect(reactions.toggle).not.toHaveBeenCalled();
+		});
+
+		it('gives the keyboard back to the smiley when the palette closes', async () => {
+			summaries = [thumbs()];
+			const fixture = await render({ entity: BaseEntityEnum.Task, reactions: true });
+			await fixture.whenStable();
+			fixture.detectChanges();
+			const opener = () => element(fixture).querySelector<HTMLButtonElement>('li.comment > .comment-main .reaction-add');
+
+			opener()?.click();
+			fixture.detectChanges();
+			const palette = element(fixture).querySelector<HTMLElement>('.reaction-palette');
+			expect(palette).not.toBeNull();
+			palette?.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+			fixture.detectChanges();
+			expect(element(fixture).querySelector('.reaction-palette')).toBeNull();
+			expect(document.activeElement).toBe(opener());
+
+			opener()?.click();
+			fixture.detectChanges();
+			element(fixture).querySelector<HTMLButtonElement>('.reaction-palette .reaction-pick')?.click();
+			await fixture.whenStable();
+			fixture.detectChanges();
+			expect(reactions.toggle).toHaveBeenCalledWith('first', '👍', { organizationId: ORGANIZATION, tenantId: TENANT });
+			expect(document.activeElement).toBe(opener());
+		});
 	});
 });

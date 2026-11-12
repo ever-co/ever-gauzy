@@ -56,6 +56,7 @@ const SKIP_PACKAGES = new Set([
 	'plugin-inbox-ui',
 	'plugin-chat-ui',
 	'plugin-task-automations-ui',
+	'plugin-task-views-ui',
 	'dashboard-time-track-angular-ui',
 	'dashboard-time-track-react-ui'
 ]);

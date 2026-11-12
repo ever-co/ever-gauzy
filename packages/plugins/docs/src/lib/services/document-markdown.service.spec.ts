@@ -81,3 +81,41 @@ describe('DocumentMarkdownService.updateFromMarkdown', () => {
 		expect(manager.find).not.toHaveBeenCalled();
 	});
 });
+
+describe('DocumentMarkdownService.collectSubtreeWithin', () => {
+	/** root → folder F → page A → page B; root → page C (F before C). */
+	const tree = [
+		{ id: 'root', parentId: null, kind: DocumentKindEnum.PAGE, name: 'Root', index: 0 },
+		{ id: 'f', parentId: 'root', kind: DocumentKindEnum.FOLDER, name: 'F', index: 0 },
+		{ id: 'c', parentId: 'root', kind: DocumentKindEnum.PAGE, name: 'C', index: 1 },
+		{ id: 'a', parentId: 'f', kind: DocumentKindEnum.PAGE, name: 'A', index: 0 },
+		{ id: 'b', parentId: 'a', kind: DocumentKindEnum.PAGE, name: 'B', index: 0 }
+	].map((node) => ({ ...node, tenantId: 'tenant-1' }));
+	const build = () => {
+		const documents = { findOneScoped: jest.fn(async (id: string) => tree.find((node) => node.id === id)) };
+		const repository = {
+			find: jest.fn(async ({ where }: { where: { parentId: { value: string[] } } }) =>
+				tree.filter((node) => node.parentId && where.parentId.value.includes(node.parentId)).sort((x, y) => x.index - y.index)
+			)
+		};
+		return new DocumentMarkdownService(documents as never, {} as never, repository as never);
+	};
+
+	it('gives each page its depth through folders, and its depth-first place', async () => {
+		const { entries, truncated } = await build().collectSubtreeWithin(tree[0] as never);
+		expect(truncated).toBe(false);
+		const byOrder = [...entries].sort((x, y) => (x.order ?? 0) - (y.order ?? 0));
+		expect(byOrder.map((entry) => [entry.document.name, entry.depth])).toEqual([
+			['Root', 0],
+			['A', 2],
+			['B', 3],
+			['C', 1]
+		]);
+	});
+
+	it('says when it stopped at its limit with pages left', async () => {
+		const { entries, truncated } = await build().collectSubtreeWithin(tree[0] as never, undefined, 2);
+		expect(entries).toHaveLength(2);
+		expect(truncated).toBe(true);
+	});
+});

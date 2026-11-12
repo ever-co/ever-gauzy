@@ -12,7 +12,7 @@
 - [ ] **T1**. Spec, plan, tasks (this folder)
 - [ ] **T2**. Contracts: `task-automation.model.ts` (triggers, conditions, actions, outcomes, rule, run, dry run, templates, events `task_automation.task_changed` / `task_link.closed`), `PermissionsEnum.TASK_AUTOMATION_MANAGE`, default role grants (super admin, admin, manager)
 - [ ] **T3**. Plugin scaffold `packages/plugins/task-automations` (package, project, tsconfig, jest, eslint), `isTaskAutomationsEnabled`, path mapping, `.env.sample`
-- [ ] **T4**. Entities + MikroORM repositories; migrations `1791000007310` (tables) and `1791000007320` (role grants), Postgres / MySQL / SQLite, idempotent
+- [ ] **T4**. Entities + MikroORM repositories; migrations `1791000007810` (tables) and `1791000007820` (role grants), Postgres / MySQL / SQLite, idempotent
 - [ ] **T5**. Engine (pure): triggers, conditions, action planning, status categories, loop guard, templates, change capture — unit specs for each
 - [ ] **T6**. Rule service: CRUD, validation of every referenced id against the organization, limits, reorder
 - [ ] **T7**. Runner + engine services: idempotent run claim, scope, rate limit, conditions on the re-read task, actions through `TaskUpdateCommand` in the system actor's context, notices, history pruning

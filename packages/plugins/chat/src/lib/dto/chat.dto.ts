@@ -17,6 +17,7 @@ import {
 } from 'class-validator';
 import {
 	CHAT_GROUP_MAX_MEMBERS,
+	CHAT_LINK_PREVIEW_URL_MAX_LENGTH,
 	CHAT_MESSAGE_MAX_ATTACHMENTS,
 	CHAT_MESSAGE_MAX_LENGTH,
 	ChatNotifyLevelEnum,
@@ -26,6 +27,7 @@ import {
 	IChatConversationUpdateInput,
 	IChatCreateTaskInput,
 	IChatFilesQuery,
+	IChatLinkPreviewQuery,
 	IChatSearchQuery,
 	IChatDirectInput,
 	IChatMemberStateInput,
@@ -288,6 +290,14 @@ export class ChatSearchQueryDTO implements IChatSearchQuery {
 	@IsInt()
 	@Min(0)
 	skip?: number;
+}
+
+export class ChatLinkPreviewQueryDTO implements IChatLinkPreviewQuery {
+	@ApiProperty({ type: () => String, maxLength: CHAT_LINK_PREVIEW_URL_MAX_LENGTH, description: 'The http(s) link to preview.' })
+	@IsString()
+	@MinLength(1)
+	@MaxLength(CHAT_LINK_PREVIEW_URL_MAX_LENGTH)
+	url!: string;
 }
 
 export class ChatMessagesQueryDTO implements IChatMessagesQuery {

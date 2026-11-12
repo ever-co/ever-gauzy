@@ -8,6 +8,7 @@ import { DocsUiPlugin } from '@gauzy/plugin-docs-ui';
 import { InboxUiPlugin } from '@gauzy/plugin-inbox-ui';
 import { ChatUiPlugin } from '@gauzy/plugin-chat-ui';
 import { TaskAutomationsUiPlugin } from '@gauzy/plugin-task-automations-ui';
+import { TaskViewsUiPlugin } from '@gauzy/plugin-task-views-ui';
 import { IntegrationUpworkPlugin } from '@gauzy/plugin-integration-upwork-ui';
 import { IntegrationPlanePlugin } from '@gauzy/plugin-integration-plane-ui';
 import { IntegrationEverAsyncPlugin } from '@gauzy/plugin-integration-ever-async-ui';
@@ -97,6 +98,11 @@ export const uiPluginConfig: PluginUiConfig = {
 		// automations (GAUZY_TASK_AUTOMATIONS_ENABLED=true) for a user with TASK_AUTOMATION_MANAGE; elsewhere (the
 		// default) the route only says it is off.
 		TaskAutomationsUiPlugin,
+
+		// Task views (/pages/task-views, Settings > Keyboard shortcuts, the KEY-123 chip on a task's page, the keyboard
+		// shortcuts). The nav entries, the shortcuts and the chip appear only where the API serves the task views
+		// extensions (GAUZY_TASK_VIEWS_ENABLED=true); elsewhere (the default) the routes only say they are off.
+		TaskViewsUiPlugin,
 
 		// Integration Plugins
 		IntegrationUpworkPlugin,

@@ -2,8 +2,22 @@ import {
 	EmployeeNotificationEmailMode,
 	EmployeeNotificationTypeEnum,
 	IEmployeeNotificationPreferences,
-	IEmployeeNotificationSetting
+	IEmployeeNotificationSetting,
+	IInboxDeliveryStatus
 } from '@gauzy/contracts';
+
+/**
+ * What the email section says about delivery, under `INBOX.NOTIFICATION_SETTINGS.EMAIL_NOTICE`: `OFF` when the server
+ * sends no notification emails, `UNAVAILABLE` when it does but no mail transport answers for the organization, and
+ * nothing when emails can go out or the server does not say.
+ */
+export type EmailDeliveryNotice = 'OFF' | 'UNAVAILABLE';
+
+export function emailDeliveryNoticeOf(status: IInboxDeliveryStatus | null | undefined): EmailDeliveryNotice | null {
+	if (!status?.email) return null;
+	if (!status.email.enabled) return 'OFF';
+	return status.email.available ? null : 'UNAVAILABLE';
+}
 
 /** The per-kind switches of the setting, in the order the page shows them, with the kind each one is about. */
 export type NotificationSettingKey = 'assignment' | 'mention' | 'comment' | 'invitation' | 'message' | 'payment';

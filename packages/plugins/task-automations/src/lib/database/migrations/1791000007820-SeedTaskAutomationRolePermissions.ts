@@ -26,8 +26,8 @@ function param(d: TaskAutomationDialect, n: number): string {
  * (no `createdByUserId` / `updatedByUserId`, not deleted, switched off: what a permission-reload migration writes for a
  * value a role lacks), which is switched on. Running it again changes nothing. (The Inbox's seed, the same rules.)
  */
-export class SeedTaskAutomationRolePermissions1791000007320 implements MigrationInterface {
-	name = 'SeedTaskAutomationRolePermissions1791000007320';
+export class SeedTaskAutomationRolePermissions1791000007820 implements MigrationInterface {
+	name = 'SeedTaskAutomationRolePermissions1791000007820';
 
 	public async up(queryRunner: QueryRunner): Promise<void> {
 		const d = dialectOf(queryRunner);

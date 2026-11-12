@@ -28,3 +28,10 @@ export const DOCS_JOB_RECONCILE = 'docs.reconcile';
 
 /** P1: thumbnail generation — images + PDF first page; writes `thumbKey`. */
 export const DOCS_JOB_THUMBNAIL = 'docs.thumbnail';
+
+/**
+ * One run of an import from an exported workspace (`docs-import-export` plan §5). The payload's `documentId` slot
+ * carries the `document_import` id, so the deterministic job id (`docs:import:<importId>`), the inline in-flight guard
+ * and the `FEATURE_DOCUMENTS` park gate apply unchanged.
+ */
+export const DOCS_JOB_IMPORT = 'docs.import';

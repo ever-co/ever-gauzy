@@ -3,6 +3,7 @@ import { SeederModule, skipExport } from '@gauzy/core';
 import { GauzyCorePlugin as Plugin, IOnPluginBootstrap, IOnPluginDestroy, IOnPluginSeedable } from '@gauzy/plugin';
 import { DocsModule } from './docs.module';
 import { ALL_DOC_ENTITIES, DocumentChunk, DocumentIndexState } from './entities';
+import { DocumentImportService } from './import/document-import.service';
 import { DocsRecoveryService } from './knowledge/queue/docs-recovery.service';
 import { DocsSeederService } from './seeds/docs-seeder.service';
 import { DocumentSubscriber } from './subscribers/document.subscriber';
@@ -44,7 +45,8 @@ export class DocsPlugin implements IOnPluginBootstrap, IOnPluginDestroy, IOnPlug
 
 	constructor(
 		private readonly docsSeederService: DocsSeederService,
-		private readonly docsRecoveryService: DocsRecoveryService
+		private readonly docsRecoveryService: DocsRecoveryService,
+		private readonly documentImportService: DocumentImportService
 	) {}
 
 	/**
@@ -57,6 +59,8 @@ export class DocsPlugin implements IOnPluginBootstrap, IOnPluginDestroy, IOnPlug
 			console.log(chalk.green(`${DocsPlugin.name} is being bootstrapped...`));
 		}
 		this.docsRecoveryService.scheduleStartupScan();
+		// Imports whose job was lost (a Redis flush, an inline run in a process that stopped) are resumed.
+		this.documentImportService.scheduleStartupResume();
 	}
 
 	/**
@@ -64,6 +68,7 @@ export class DocsPlugin implements IOnPluginBootstrap, IOnPluginDestroy, IOnPlug
 	 */
 	onPluginDestroy(): void | Promise<void> {
 		this.docsRecoveryService.cancelStartupScan();
+		this.documentImportService.cancelStartupResume();
 		if (this.logEnabled) {
 			console.log(chalk.red(`${DocsPlugin.name} is being destroyed...`));
 		}

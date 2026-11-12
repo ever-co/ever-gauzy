@@ -11,7 +11,7 @@
 		}
 	},
 	"tags": ["type:plugin"],
-	"implicitDependencies": ["common", "config", "contracts", "core", "plugin", "utils"],
+	"implicitDependencies": ["common", "config", "contracts", "core", "plugin", "scheduler", "utils"],
 	"targets": {
 		"build": {
 			"executor": "@nx/js:tsc",

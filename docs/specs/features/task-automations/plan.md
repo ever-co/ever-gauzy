@@ -48,7 +48,7 @@ hints behave exactly as for a person's change. The Gauzy app gets a lazy `@gauzy
 `ruleId` (the idempotency key), `triggerType`, `outcome` varchar(24), `depth` int, `details` text (JSON), `error` text,
 `durationMs` int. Indexes `(ruleId, createdAt)` (history) and `(taskId, createdAt)` (rate limit).
 
-Migrations: `1791000007310-CreateTaskAutomationTables`, `1791000007320-SeedTaskAutomationRolePermissions`
+Migrations: `1791000007810-CreateTaskAutomationTables`, `1791000007820-SeedTaskAutomationRolePermissions`
 (idempotent, Postgres-serialised, reversible table drop; the grant's `down` is a no-op as for the other seeds).
 
 ## 4. Event flow
