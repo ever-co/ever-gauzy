@@ -320,6 +320,8 @@ export class TaskAutomationsPageComponent implements OnInit {
 		const opened = this.editing();
 		const input = ruleInputOfDraft(draft);
 		const sent = draft.id && opened?.id === draft.id ? changedRuleInput(ruleInputOfDraft(opened), input) : input;
+		// The switch as the list shows it now: if it moves before the answer, a toggle made here moved it.
+		const enabledBefore = this.rules().find((rule) => rule.id === draft.id)?.isEnabled;
 		const request$ = draft.id
 			? this.api.update(draft.id, sent, organizationId)
 			: this.api.create({ ...input, ...(draft.templateKey ? { templateKey: draft.templateKey } : {}) }, organizationId);
@@ -329,13 +331,17 @@ export class TaskAutomationsPageComponent implements OnInit {
 			next: (saved) => {
 				this.saving.set(false);
 				if (!this.stillIn(organizationId)) return;
-				// The saved rule, but its switch and its place as the list has them unless this save set them: a toggle or a
-				// reorder that landed meanwhile keeps its result.
+				// The saved rule as the API answers it (another manager's switch included), but a toggle made here while the
+				// save was under way keeps its result, and so does the rule's place (a reorder).
 				this.rules.update((rules) =>
 					rules.some((rule) => rule.id === saved.id)
 						? rules.map((rule) =>
 								rule.id === saved.id
-									? { ...saved, isEnabled: 'isEnabled' in sent ? saved.isEnabled : rule.isEnabled, position: rule.position }
+									? {
+											...saved,
+											isEnabled: !('isEnabled' in sent) && rule.isEnabled !== enabledBefore ? rule.isEnabled : saved.isEnabled,
+											position: rule.position
+										}
 									: rule
 							)
 						: [...rules, saved]
@@ -444,8 +450,12 @@ export class TaskAutomationsPageComponent implements OnInit {
 		this.loadRuns(rule);
 	}
 
-	/** Picks the dry run's task: the answer shown for another task no longer applies. */
+	/** Picks the dry run's task: a dry run under way for another task is dropped, and the answer shown for it too. */
 	pickTestTask(taskId: ID | null): void {
+		if (taskId !== this.testTaskId()) {
+			this.testSubscription?.unsubscribe();
+			this.testing.set(false);
+		}
 		this.testTaskId.set(taskId);
 		this.testResult.set(null);
 	}
@@ -478,13 +488,14 @@ export class TaskAutomationsPageComponent implements OnInit {
 		this.testSubscription = this.api.test(ruleId, taskId, this.organizationId()).subscribe({
 			next: (result) => {
 				this.testing.set(false);
-				// An answer for a rule that is no longer open is not this one's.
-				if (this.selectedId() === ruleId) this.testResult.set(result);
+				// An answer for a rule or a task no longer picked is not this one's.
+				if (this.selectedId() === ruleId && this.testTaskId() === taskId) this.testResult.set(result);
 			},
 			error: (error: unknown) => {
 				this.testing.set(false);
-				// A failure for a rule that is no longer open is not this one's.
-				if (this.selectedId() === ruleId) this.actionError.set(apiErrorMessage(error) ?? 'TASK_AUTOMATIONS.ERRORS.TEST');
+				if (this.selectedId() === ruleId && this.testTaskId() === taskId) {
+					this.actionError.set(apiErrorMessage(error) ?? 'TASK_AUTOMATIONS.ERRORS.TEST');
+				}
 			}
 		});
 	}

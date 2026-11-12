@@ -214,6 +214,27 @@ describe('TaskAutomationsPageComponent', () => {
 		expect(component.rules()[0].name).toBe('Renamed');
 	});
 
+	it('takes another manager’s switch from a save’s answer when nothing was toggled here', () => {
+		const { component } = render();
+		api.update.mockReturnValue(of(rule('a', { name: 'Renamed', isEnabled: false })));
+		component.edit(component.rules()[0]);
+		component.save({ ...(component.editing() as ITaskAutomationDraft), name: 'Renamed' });
+		expect(component.rules()[0]).toMatchObject({ name: 'Renamed', isEnabled: false });
+	});
+
+	it('drops a dry run under way when another task is picked', () => {
+		const answer$ = new Subject<never>();
+		api.test.mockReturnValue(answer$);
+		api.runs.mockReturnValue(of([]));
+		const { component } = render();
+		component.open(component.rules()[0]);
+		component.pickTestTask('task-1');
+		component.runTest(component.rules()[0]);
+		component.pickTestTask('task-2');
+		expect(component.testing()).toBe(false);
+		expect(answer$.observed).toBe(false);
+	});
+
 	it('keeps a switch that landed while a name-only save was under way', () => {
 		const { component } = render();
 		const save$ = new Subject<ITaskAutomationRule>();
