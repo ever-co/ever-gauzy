@@ -1,6 +1,7 @@
 import * as fs from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
+import type { MikroORM as MikroOrmInstance } from '@mikro-orm/core';
 
 /**
  * Delete forever from the trash (`DELETE /tasks/:id/trashed`) on one SQLite database, through both ORMs.
@@ -66,7 +67,12 @@ interface IOrmRun {
 	remaining: string[];
 }
 
-type Connection = { execute(sql: string, params?: unknown[]): Promise<any> };
+type Connection = { execute(sql: string, params?: unknown[]): Promise<unknown> };
+
+/** One ORM's branch of the service, as this suite calls it. */
+interface ITrashedTaskDeleter {
+	deleteTrashedTask(id: string, organizationId: string): Promise<{ affected?: number }>;
+}
 
 async function measure(): Promise<{ mikroOrm: IOrmRun; typeOrm: IOrmRun }> {
 	const previous = process.env.DB_ORM;
@@ -106,7 +112,7 @@ async function measure(): Promise<{ mikroOrm: IOrmRun; typeOrm: IOrmRun }> {
 			});
 			await dataSource.initialize();
 
-			let orm: any;
+			let orm: MikroOrmInstance;
 			try {
 				await dataSource.synchronize();
 				orm = await MikroORM.init({
@@ -150,21 +156,26 @@ async function measure(): Promise<{ mikroOrm: IOrmRun; typeOrm: IOrmRun }> {
 				const typeOrm = Object.create(service);
 				Object.defineProperty(typeOrm, 'ormType', { value: 'typeorm' });
 
-				const connection: Connection = orm.em.getConnection();
+				const connection = orm.em.getConnection() as unknown as Connection;
 
-				const call = async (branch: any, id: string, organizationId: string): Promise<ICallOutcome> => {
+				const call = async (
+					branch: ITrashedTaskDeleter,
+					id: string,
+					organizationId: string
+				): Promise<ICallOutcome> => {
 					statements.length = 0;
 					let answer: ICallOutcome['answer'];
 					try {
 						const result = await branch.deleteTrashedTask(id, organizationId);
-						answer = { affected: result.affected };
+						answer = { affected: result.affected ?? 0 };
 					} catch (error) {
-						answer = { status: (error as any)?.getStatus?.() ?? 500, message: (error as Error).message };
+						const status = (error as { getStatus?: () => number })?.getStatus?.() ?? 500;
+						answer = { status, message: (error as Error).message };
 					}
 					return { answer, statements: [...statements] };
 				};
 
-				const run = async (branch: any): Promise<IOrmRun> => {
+				const run = async (branch: ITrashedTaskDeleter): Promise<IOrmRun> => {
 					await seed(connection);
 					const trashed = await call(branch, IDS.TASK.TRASHED, IDS.ORGANIZATION);
 					const trashedAgain = await call(branch, IDS.TASK.TRASHED, IDS.ORGANIZATION);
@@ -183,7 +194,7 @@ async function measure(): Promise<{ mikroOrm: IOrmRun; typeOrm: IOrmRun }> {
 						IDS.OTHER_ORGANIZATION
 					);
 					const otherTenant = await call(branch, IDS.TASK.OTHER_TENANT, IDS.ORGANIZATION);
-					const rows = await connection.execute('SELECT id FROM task ORDER BY id');
+					const rows = (await connection.execute('SELECT id FROM task ORDER BY id')) as Array<{ id: string }>;
 					return {
 						trashed,
 						trashedAgain,
@@ -192,7 +203,7 @@ async function measure(): Promise<{ mikroOrm: IOrmRun; typeOrm: IOrmRun }> {
 						otherOrganizationByOwnOrganization,
 						otherOrganizationStated,
 						otherTenant,
-						remaining: rows.map((row: { id: string }) => row.id)
+						remaining: rows.map((row) => row.id)
 					};
 				};
 
@@ -258,7 +269,9 @@ describe('TaskService.deleteTrashedTask on a database (DELETE /tasks/:id/trashed
 			expect(statements).toHaveLength(1);
 			expect(statements[0]).toMatch(/^\s*(\[query\]\s*)?delete from/i);
 			// MikroORM writes `deletedAt is not null`, TypeORM `NOT("deletedAt" IS NULL)`.
-			expect(statements[0]).toMatch(/[`"]?deletedAt[`"]? is not null|not\s*\(\s*[`"]?deletedAt[`"]? is null\s*\)/i);
+			expect(statements[0]).toMatch(
+				/[`"]?deletedAt[`"]? is not null|not\s*\(\s*[`"]?deletedAt[`"]? is null\s*\)/i
+			);
 			expect(statements[0]).toMatch(/[`"]?tenantId[`"]?\s*=/i);
 			expect(statements[0]).toMatch(/[`"]?organizationId[`"]?\s*=/i);
 		});

@@ -197,7 +197,9 @@ export class TaskTrashPageComponent implements OnInit {
 			this._toastr.success(this._translate.instant('TASKS_PAGE.TRASH.DELETED_FOREVER', { title: row.task.title }));
 		} catch (error) {
 			if (isNoLongerInTrash(error)) {
-				this._toastr.warning(this._translate.instant('TASKS_PAGE.TRASH.NO_LONGER_IN_TRASH', { title: row.task.title }));
+				this._toastr.warning(
+					this._translate.instant('TASKS_PAGE.TRASH.NO_LONGER_IN_TRASH', { title: row.task.title })
+				);
 				void this.load(true);
 			} else {
 				this._toastr.danger(this.messageOf(error), this._translate.instant('TOASTR.TITLE.ERROR'));

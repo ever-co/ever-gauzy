@@ -269,7 +269,7 @@ describe('TaskService — the trash', () => {
 		let nativeDelete: jest.Mock;
 
 		/** The criteria of the one TypeORM statement. */
-		const statement = () => typeOrmDelete.mock.calls[0][0] as Record<string, any>;
+		const statement = () => typeOrmDelete.mock.calls[0][0] as Record<string, unknown>;
 
 		beforeEach(() => {
 			typeOrmDelete = jest.fn().mockResolvedValue({ raw: [{ driver: 'detail' }], affected: 1 });
@@ -296,9 +296,10 @@ describe('TaskService — the trash', () => {
 				organizationId: fixture.organizationId
 			});
 			// `deletedAt IS NOT NULL`, in the statement's own WHERE.
-			expect(statement().deletedAt).toBeInstanceOf(FindOperator);
-			expect(statement().deletedAt.type).toBe('not');
-			expect(statement().deletedAt.child.type).toBe('isNull');
+			const deletedAt = statement().deletedAt as FindOperator<unknown>;
+			expect(deletedAt).toBeInstanceOf(FindOperator);
+			expect(deletedAt.type).toBe('not');
+			expect((deletedAt.child as FindOperator<unknown>).type).toBe('isNull');
 			expect(TenantAwareCrudService.prototype.findOneByIdString).not.toHaveBeenCalled();
 			// The task published DELETED when it went to the trash.
 			expect(published()).toEqual([]);

@@ -773,12 +773,14 @@ export class TaskService extends TenantAwareCrudService<Task> {
 	 * @throws ForbiddenException when the caller may not delete that task
 	 */
 	async deleteTrashedTask(id: ID, organizationId: ID | null | undefined): Promise<DeleteResult> {
-		if (!isNotEmpty(organizationId)) {
-			throw new BadRequestException('A task is deleted from the trash of one organization: state organizationId.');
+		if (!organizationId) {
+			throw new BadRequestException(
+				'A task is deleted from the trash of one organization: state organizationId.'
+			);
 		}
 		const tenantId = RequestContext.currentTenantId();
 		// The statement is kept to the caller's tenant and organization boundary: outside them the caller has no trash.
-		if (!isNotEmpty(tenantId) || !isWithinOrganizationBoundary(organizationId)) {
+		if (!tenantId || !isWithinOrganizationBoundary(organizationId)) {
 			throw new NotFoundException(TASK_NOT_IN_TRASH);
 		}
 
