@@ -1,12 +1,12 @@
 import { ApplicationPluginConfig } from '@gauzy/common';
 import { GauzyCorePlugin as Plugin, IOnPluginBootstrap, IOnPluginDestroy } from '@gauzy/plugin';
 import { isSchedulerQueueRootEnabled } from '@gauzy/scheduler';
-import { CreateIntegrationJiraTables1791000008140 } from './database/migrations/1791000008140-CreateIntegrationJiraTables';
+import { CreateIntegrationJiraTables1791000008400 } from './database/migrations/1791000008400-CreateIntegrationJiraTables';
 import { JIRA_ENTITIES, JiraCloudModule } from './jira-cloud.module';
 import { JiraMaintenanceModule } from './maintenance/jira-maintenance.module';
 
 /** The sync's migrations, oldest first (ordered with the platform's by their timestamps). */
-export const JIRA_MIGRATIONS = [CreateIntegrationJiraTables1791000008140];
+export const JIRA_MIGRATIONS = [CreateIntegrationJiraTables1791000008400];
 
 /**
  * The Jira Cloud sync (`@gauzy/plugin-integration-jira`): connect a Jira Cloud site with OAuth 2.0 (3LO), map its

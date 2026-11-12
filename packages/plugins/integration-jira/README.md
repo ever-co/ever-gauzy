@@ -85,7 +85,7 @@ whose routes share the `/integration/jira` prefix and must be registered first.
 ## Tables
 
 `integration_jira_project_mapping`, `integration_jira_sync_run`, `integration_jira_sync_conflict` and
-`integration_jira_issue_baseline`, created by the plugin's own migration (`1791000008140`), idempotent on PostgreSQL,
+`integration_jira_issue_baseline`, created by the plugin's own migration (`1791000008400`), idempotent on PostgreSQL,
 MySQL and SQLite.
 
 ## Build

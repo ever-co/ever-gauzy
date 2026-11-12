@@ -13,7 +13,7 @@
 - [x] **T2**. OAuth 2.0 (3LO): single-use state, `POST /install/state`, public `GET /callback` (code exchanged once, `accessible-resources` read, one site chosen at once or `siteRequired`), token refresh with rotation (+spec: rotation, one renewal in flight, a renewal another process made, a refused refresh)
 - [x] **T3**. Site choice: `GET /:id/sites`, `PUT /:id/site` (the former site's webhook removed)
 - [x] **T4**. API client (+spec): myself, projects, project issue types and statuses, priorities, the enhanced JQL search, issue, transitions, edit, transition, create, delete, dynamic webhooks; 401 / 403 / 404 / 429
-- [x] **T5**. Entities and migration `1791000008140` (postgres, mysql, sqlite): project mapping (status map, issue types, position), sync run (report), conflict, baseline; TypeORM + MikroORM repositories
+- [x] **T5**. Entities and migration `1791000008400` (postgres, mysql, sqlite): project mapping (status map, issue types, position), sync run (report), conflict, baseline; TypeORM + MikroORM repositories
 - [x] **T6**. Mappings routes with the status map (categories and `status:<id>`, unknown keys refused) and the issue-type filter
 - [x] **T7**. Import: streamed pages, resumable position (+spec), run report; summary, ADF description (+spec: conversion, sanitizing, round trip), status, priority, assignee by e-mail, labels, due date, parent, issue links, comments, attachments
 - [x] **T8**. Webhooks: registration per connection, refresh before the 30-day expiry, re-registration, removal (+spec); `POST /webhook/:id` verification (bearer JWT) and idempotency by the delivery identifier (+spec)
