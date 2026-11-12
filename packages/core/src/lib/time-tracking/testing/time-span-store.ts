@@ -72,7 +72,7 @@ function asDependency<T>(double: unknown): T {
 export class TimeSpanStore {
 	readonly timeLogs: TimeLog[] = [];
 	readonly timeSlots: StoredTimeSlot[] = [];
-	readonly execute = jest.fn(async (command: unknown) => this.dispatch(command));
+	readonly execute = jest.fn((command: unknown) => this.dispatch(command));
 
 	private createdTimeLogs = 0;
 	private createdTimeSlots = 0;
@@ -164,15 +164,17 @@ export class TimeSpanStore {
 
 	private shapeOf(log: TimeLog): TimeLogShape {
 		const starts = this.liveTimeSlotsOf(log.id).map((slot) => clock(slot.startedAt));
-		return [clock(log.startedAt), clock(log.stoppedAt), starts.sort()];
+		const sortedStarts = starts.sort((a, b) => a.localeCompare(b));
+		return [clock(log.startedAt), clock(log.stoppedAt), sortedStarts];
 	}
 
-	private async dispatch(command: unknown): Promise<unknown> {
+	/** Runs the command's route, as a command bus answers: through a promise. */
+	private dispatch(command: unknown): Promise<unknown> {
 		const route = this.routes.get((command as object).constructor);
 		if (!route) {
-			return undefined;
+			return Promise.resolve(undefined);
 		}
-		return route(command as never);
+		return Promise.resolve(route(command as never));
 	}
 
 	private liveTimeLog(id: string): TimeLog | undefined {
@@ -310,7 +312,7 @@ export class TimeSpanStore {
 			where: addParameters,
 			andWhere: addParameters,
 			getParameters: () => parameters,
-			getMany: async () => this.matchingTimeSlots(parameters),
+			getMany: () => Promise.resolve(this.matchingTimeSlots(parameters)),
 			relation: () => ({ of: (slotId: string) => this.linksOf(slotId) })
 		};
 		return query;
@@ -320,31 +322,32 @@ export class TimeSpanStore {
 	private linksOf(slotId: string) {
 		const slot = this.timeSlots.find((stored) => stored.id === slotId);
 		return {
-			remove: async (timeLogId: string) => {
+			remove: (timeLogId: string) => {
 				slot.timeLogs = slot.timeLogs.filter((link) => link.id !== timeLogId);
+				return Promise.resolve();
 			}
 		};
 	}
 
 	private timeLogRepository() {
 		return {
-			findOne: async ({ where }: { where: { id: string } }) => this.read(where.id),
-			findOneBy: async ({ id }: { id: string }) => this.liveTimeLog(id) ?? null,
-			update: async ({ id }: { id: string }, changes: Partial<TimeLog>) => {
+			findOne: ({ where }: { where: { id: string } }) => Promise.resolve(this.read(where.id)),
+			findOneBy: ({ id }: { id: string }) => Promise.resolve(this.liveTimeLog(id) ?? null),
+			update: ({ id }: { id: string }, changes: Partial<TimeLog>) => {
 				Object.assign(this.liveTimeLog(id), changes);
-				return { affected: 1 };
+				return Promise.resolve({ affected: 1 });
 			},
-			save: async (log: TimeLog) => this.saveTimeLog(log),
-			softDelete: async ({ id }: { id: { value: unknown } }) => this.deleteTimeLogs(id.value),
-			delete: async ({ id }: { id: { value: unknown } }) => this.deleteTimeLogs(id.value)
+			save: (log: TimeLog) => Promise.resolve(this.saveTimeLog(log)),
+			softDelete: ({ id }: { id: { value: unknown } }) => Promise.resolve(this.deleteTimeLogs(id.value)),
+			delete: ({ id }: { id: { value: unknown } }) => Promise.resolve(this.deleteTimeLogs(id.value))
 		};
 	}
 
 	private timeSlotRepository() {
 		return {
 			createQueryBuilder: () => this.timeSlotQuery(),
-			softRemove: async (removed: StoredTimeSlot | StoredTimeSlot[]) => this.removeTimeSlots(removed),
-			remove: async (removed: StoredTimeSlot | StoredTimeSlot[]) => this.removeTimeSlots(removed)
+			softRemove: (removed: StoredTimeSlot | StoredTimeSlot[]) => Promise.resolve(this.removeTimeSlots(removed)),
+			remove: (removed: StoredTimeSlot | StoredTimeSlot[]) => Promise.resolve(this.removeTimeSlots(removed))
 		};
 	}
 
