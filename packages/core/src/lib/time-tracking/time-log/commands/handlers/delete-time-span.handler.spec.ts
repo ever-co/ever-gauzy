@@ -743,3 +743,25 @@ describe('DeleteTimeSpanHandler when a split fails (#11823)', () => {
 		expect(outcome).toBe('The unlink failed');
 	});
 });
+
+describe('DeleteTimeSpanHandler and two cleanups of one log at once (#11823)', () => {
+	beforeEach(() => {
+		jest.spyOn(console, 'log').mockImplementation(() => undefined);
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT_ID);
+	});
+
+	afterEach(() => jest.restoreAllMocks());
+
+	it('splits the log once when two cleanups of the same range run at the same time', async () => {
+		const store = createStore();
+		store.addLog('tracked', '08:00', '11:00');
+
+		// Two requests over 09:00–10:00 (the same entry sent twice), both reading the log before either writes.
+		await Promise.all([store.cleanUp('09:00', '10:00'), store.cleanUp('09:00', '10:00')]);
+
+		expect(store.timeline()).toEqual([
+			{ range: '08:00-09:00', isRunning: false, slots: slotStarts('08:00', '09:00') },
+			{ range: '10:00-11:00', isRunning: false, slots: slotStarts('10:00', '11:00') }
+		]);
+	});
+});

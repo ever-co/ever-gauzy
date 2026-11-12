@@ -1,7 +1,7 @@
 import { Logger } from '@nestjs/common';
 import { ICommandHandler, CommandBus, CommandHandler } from '@nestjs/cqrs';
 import { omit } from 'underscore';
-import { ITimeLog } from '@gauzy/contracts';
+import { ID, ITimeLog } from '@gauzy/contracts';
 import { isEmpty } from '@gauzy/utils';
 import { moment } from '../../../../core/moment-extend';
 import { TimeLog } from './../../time-log.entity';
@@ -17,6 +17,14 @@ import { TypeOrmTimeSlotRepository } from '../../../time-slot/repository/type-or
 export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanCommand> {
 	private readonly logger = new Logger(DeleteTimeSpanHandler.name);
 
+	/**
+	 * The cleanups running in this process, by time log: each waits for the one before it to settle, then reads the
+	 * log afresh. Two requests over the same log (an entry sent twice, a stop during a manual edit) otherwise both read
+	 * it before either wrote, and both split it. The API pods do not share this order; nothing here locks a log across
+	 * them, as nothing locks the timer start and stop either.
+	 */
+	private readonly cleanups = new Map<ID, Promise<unknown>>();
+
 	constructor(
 		readonly typeOrmTimeLogRepository: TypeOrmTimeLogRepository,
 		readonly typeOrmTimeSlotRepository: TypeOrmTimeSlotRepository,
@@ -24,12 +32,33 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 	) {}
 
 	/**
-	 * Execute delete time span logic
+	 * Execute delete time span logic, once the cleanup of the same log before it in this process has settled.
 	 *
 	 * @param command - The command containing newTime, timeLog, and timeSlot
 	 * @returns Promise<boolean>
 	 */
-	public async execute(command: DeleteTimeSpanCommand) {
+	public async execute(command: DeleteTimeSpanCommand): Promise<boolean> {
+		const { id } = command.timeLog;
+		const previous = this.cleanups.get(id) ?? Promise.resolve();
+		const run = previous.then(() => this.cleanUp(command));
+		const settled = run.catch(() => undefined);
+		this.cleanups.set(id, settled);
+		try {
+			return await run;
+		} finally {
+			if (this.cleanups.get(id) === settled) {
+				this.cleanups.delete(id);
+			}
+		}
+	}
+
+	/**
+	 * Removes the new range from one time log, as the log is stored when this runs.
+	 *
+	 * @param command - The command containing newTime, timeLog, and timeSlot
+	 * @returns Whether the log was cut, split or deleted.
+	 */
+	private async cleanUp(command: DeleteTimeSpanCommand): Promise<boolean> {
 		const { newTime, timeLog, forceDelete } = command;
 		const { id } = timeLog;
 		const { start, end } = newTime;
