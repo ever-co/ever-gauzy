@@ -147,10 +147,13 @@ export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateComman
 			// moved, the previous employee may keep slots that no longer belong to it, and the error propagates.
 		} else {
 			// Whether the update gives the log the slots of its range (takesSlotsOfItsRange), read before anything is
-			// written: a failed read leaves the log as it was, never stopped without slots. A stop changes neither the
-			// log's source nor its slot links, so the stored log answers as the updated one would.
+			// written, so a failed read leaves the log as it was, never stopped without slots. It is asked of the log
+			// as the update will store it: an edit may change its source in the same body. The update does not touch
+			// the log's slot links, which are read from the stored row.
 			const takesRangeSlots =
-				needToUpdateTimeSlots && !manualTimeSlot && (await this.takesSlotsOfItsRange(timeLog));
+				needToUpdateTimeSlots &&
+				!manualTimeSlot &&
+				(await this.takesSlotsOfItsRange({ ...timeLog, ...changes }));
 
 			// Update the time log in the repository
 			await this.typeOrmTimeLogRepository.update(

@@ -23,7 +23,12 @@ const RANGE_SLOTS = [0, 10, 20].map((minutes) => ({ startedAt: minutesAfterStart
 /** Stops a run of `source` at 09:30, started at 09:00, that has slots or not. */
 async function stopRun(
 	source: TimeLogSourceEnum,
-	{ hasSlots = false, manualTimeSlot = false, slotReadFails = false } = {}
+	{
+		hasSlots = false,
+		manualTimeSlot = false,
+		slotReadFails = false,
+		edit = {} as { source?: TimeLogSourceEnum }
+	} = {}
 ) {
 	const run = {
 		id: 'run',
@@ -72,7 +77,7 @@ async function stopRun(
 	const save = jest.spyOn(handler as any, 'saveUpdatedTimeLog').mockImplementation(async (log) => log);
 
 	const stop = handler.execute(
-		new TimeLogUpdateCommand({ isRunning: false, stoppedAt: STOPPED }, 'run', manualTimeSlot)
+		new TimeLogUpdateCommand({ isRunning: false, stoppedAt: STOPPED, ...edit }, 'run', manualTimeSlot)
 	);
 	const outcome = await stop.then(
 		() => undefined,
@@ -137,6 +142,23 @@ describe('TimeLogUpdateHandler, the stop of a run that sent no heartbeat (#11843
 		expect(outcome).toEqual(new Error('the database is unreachable'));
 		expect(run).toMatchObject({ isRunning: true, stoppedAt: STARTED });
 		expect(bulkCreate).not.toHaveBeenCalled();
+	});
+
+	it('still gives a desktop log edited into a web timer run the slots of its range', async () => {
+		const { bulkCreate } = await stopRun(TimeLogSourceEnum.DESKTOP, {
+			edit: { source: TimeLogSourceEnum.WEB_TIMER }
+		});
+
+		expect(bulkCreate).toHaveBeenCalledTimes(1);
+	});
+
+	it('gives no slots to an Ever Teams log without slots edited into a desktop one', async () => {
+		const { bulkCreate, slotCount } = await stopRun(TimeLogSourceEnum.TEAMS, {
+			edit: { source: TimeLogSourceEnum.DESKTOP }
+		});
+
+		expect(bulkCreate).not.toHaveBeenCalled();
+		expect(slotCount).not.toHaveBeenCalled();
 	});
 
 	it('creates no slots for an update that brings its own manual slot', async () => {
