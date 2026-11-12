@@ -277,6 +277,22 @@ describe('token refresh refuses a deactivated employee', () => {
 		expect(userService.setCurrentRefreshToken).not.toHaveBeenCalled();
 	});
 
+	it('refuses a deactivated employee whose refresh token names an organization of theirs', async () => {
+		// The refresh keeps the organization of its refresh token (ever-co/ever-gauzy#11827); its access token is still
+		// minted by `getJwtAccessToken`, which refuses the deactivated employee.
+		const { service, generate, rotateRefreshToken, userService } = buildAuthService();
+		jest.spyOn(RequestContext, 'currentUser').mockReturnValue({
+			...DEACTIVATED,
+			refreshTokenOrganizationId: ORG_B
+		} as any);
+
+		await expect(service.rotateTokens('presented-refresh-token')).rejects.toBeInstanceOf(UnauthorizedException);
+
+		expect(userService.hasActiveOrganizationMembership).toHaveBeenCalledWith(DEACTIVATED.id, ORG_B, TENANT_A);
+		expect(generate).not.toHaveBeenCalled();
+		expect(rotateRefreshToken).not.toHaveBeenCalled();
+	});
+
 	it('getAccessTokenFromRefreshToken answers 401', async () => {
 		const { service, generate } = buildAuthService();
 		jest.spyOn(RequestContext, 'currentUser').mockReturnValue(DEACTIVATED as any);
