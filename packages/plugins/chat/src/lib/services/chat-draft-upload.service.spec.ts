@@ -5,7 +5,7 @@
  * out the provider double each test inspects.
  */
 /** Whether the code runs inside `runWithTenantStorageSettings`, and with which settings. */
-const storage = { inside: false, settings: [] as unknown[] };
+const storage = { inside: false, settings: [] as unknown[], made: [] as Array<{ provider: unknown; inside: boolean }> };
 const provider = { deleteFile: jest.fn(async (_key: string) => ({ inside: storage.inside })) };
 jest.mock('@gauzy/core', () => {
 	const decorator = () => () => undefined;
@@ -15,8 +15,10 @@ jest.mock('@gauzy/core', () => {
 		MultiORMEntity: decorator,
 		TenantOrganizationBaseEntity: class {},
 		MikroOrmBaseEntityRepository: class {},
+		// Records where each provider is made: a provider reads the tenant's settings when it is made.
 		FileStorage: class {
-			getProvider() {
+			getProvider(name?: unknown) {
+				storage.made.push({ provider: name, inside: storage.inside });
 				return provider;
 			}
 		},
@@ -164,6 +166,7 @@ describe('ChatDraftUploadService', () => {
 	beforeEach(() => {
 		provider.deleteFile.mockClear();
 		storage.settings = [];
+		storage.made = [];
 	});
 
 	it("records a chat composer upload in the document's own transaction, and nothing else", async () => {
@@ -203,7 +206,7 @@ describe('ChatDraftUploadService', () => {
 	});
 
 	it("frees the stored bytes in the tenant's own storage: the sweep has no request to carry its settings", async () => {
-		const { service, tenantSettings } = over();
+		const { service, tenantSettings } = over({ document: draftDocument({ storageProvider: 'S3' }) });
 		await expect(service.sweep(new Date('2026-11-03T00:00:00Z'))).resolves.toEqual({ purged: 1, kept: 0, gone: 0 });
 		expect(tenantSettings.getSettings).toHaveBeenCalledWith({ where: { tenantId: 'ten' } });
 		// A tenant with its own bucket kept the bytes: they were deleted from the deployment's bucket instead.
@@ -211,7 +214,22 @@ describe('ChatDraftUploadService', () => {
 			{ fileStorageProvider: 'S3', aws_bucket: 'tenant-bucket' },
 			{ fileStorageProvider: 'S3', aws_bucket: 'tenant-bucket' }
 		]);
+		// The provider is made inside the settings too (made outside, it would have read the deployment's).
+		expect(storage.made).toEqual([
+			{ provider: 'S3', inside: true },
+			{ provider: 'S3', inside: true }
+		]);
 		await expect(Promise.all(provider.deleteFile.mock.results.map((result) => result.value))).resolves.toEqual([{ inside: true }, { inside: true }]);
+	});
+
+	it('still purges the draft when freeing its bytes fails, and says so', async () => {
+		const { service } = over();
+		provider.deleteFile.mockRejectedValueOnce(new Error('bucket unreachable'));
+		const warn = jest.spyOn((service as unknown as { logger: { warn: (message: string) => void } }).logger, 'warn').mockImplementation(() => undefined);
+		await expect(service.sweep(new Date('2026-11-03T00:00:00Z'))).resolves.toEqual({ purged: 1, kept: 0, gone: 0 });
+		// The other key is still freed.
+		expect(provider.deleteFile.mock.calls).toEqual([['docs/d1.png'], ['docs/d1.thumb.webp']]);
+		expect(warn).toHaveBeenCalledWith(expect.stringContaining('bucket unreachable'));
 	});
 
 	it("deletes nothing from the deployment's storage when the tenant's settings cannot be read (the row still goes)", async () => {
@@ -224,6 +242,7 @@ describe('ChatDraftUploadService', () => {
 		await expect(service.sweep(new Date('2026-11-03T00:00:00Z'))).resolves.toEqual({ purged: 1, kept: 0, gone: 0 });
 		expect(repositories['Document']['delete']).toHaveBeenCalledWith({ id: 'd1', tenantId: 'ten' });
 		expect(provider.deleteFile).not.toHaveBeenCalled();
+		expect(storage.made).toEqual([]);
 		expect(warn).toHaveBeenCalledWith(expect.stringContaining('could not be read'));
 	});
 
