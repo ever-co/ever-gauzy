@@ -29,7 +29,7 @@ function harness(progress: boolean[], live = true) {
 		openContext: async () => ({ issueTypeIds: null }),
 		call: async (_holder: unknown, make: (client: unknown) => Promise<unknown>) => make({ searchIssues: async () => pages.shift() }),
 		applyOne: jest.fn(async () => true),
-		linkParents: async () => undefined,
+		linkParents: (async () => undefined) as (context: { linkFailedUpdated?: string | null }) => Promise<void>,
 		linkRelations: async () => undefined,
 		reportDetails: () => undefined,
 		logger: new Logger('spec'),
@@ -69,5 +69,35 @@ describe('an import run a later claim failed as abandoned', () => {
 		expect(self.applyOne).toHaveBeenCalledTimes(2);
 		expect(self.mappings.recordImport).not.toHaveBeenCalled();
 		expect(runs.finish).not.toHaveBeenCalled();
+	});
+});
+
+describe('an import whose parent or link could not be recorded', () => {
+	it('keeps the position at that issue, so the next import reads it again', async () => {
+		const { self, run } = harness([true, true]);
+		self.linkParents = async (context) => {
+			context.linkFailedUpdated = '2026-11-10T08:00:00.000Z';
+		};
+		await run();
+		expect(self.mappings.recordImport).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ cursor: '2026-11-10T08:00:00.000Z' }));
+	});
+});
+
+describe('an issue created in Jira whose id map could not be written', () => {
+	type CreateIssueOnce = (holder: unknown, mapping: unknown, taskId: string, scope: unknown, fields: unknown) => Promise<string | null>;
+	const createIssueOnce = (JiraSyncService.prototype as unknown as { createIssueOnce: CreateIssueOnce }).createIssueOnce;
+
+	it('is deleted again (else the next change of the task creates a second one), and the failure stands', async () => {
+		const client = { createIssue: jest.fn(async () => ({ id: '10077', key: 'ACME-77' })), deleteIssue: jest.fn(async () => undefined) };
+		const self = {
+			call: async (_holder: unknown, make: (api: typeof client) => Promise<unknown>) => make(client),
+			lockedTransaction: async () => {
+				throw new Error('map write failed');
+			},
+			logger: new Logger('spec'),
+			describe: (error: unknown) => String(error)
+		};
+		await expect(createIssueOnce.call(self, {}, { integrationId: 'int-1' }, 'task-1', {}, { summary: 'One' })).rejects.toThrow('map write failed');
+		expect(client.deleteIssue).toHaveBeenCalledWith('10077');
 	});
 });

@@ -214,6 +214,14 @@ export class JiraTenantService {
 				clientId: this.config.clientId,
 				clientSecret: this.config.clientSecret
 			});
+			// Another process may have renewed the connection while this exchange ran (Atlassian accepts a refresh token
+			// again within its reuse interval): its pair, stored first, is kept, and this one is dropped rather than
+			// written over a newer one.
+			const latest = await this.findAnyById(tenant.id as ID);
+			if (latest && this.settingsOf(latest)[JiraSettingName.REFRESH_TOKEN] !== refreshToken) {
+				tenant.settings = latest.settings;
+				return this.clientOrNull(tenant);
+			}
 			await this.writeToken(tenant, token);
 			return this.clientOrNull(tenant);
 		} catch (error) {

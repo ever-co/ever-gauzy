@@ -84,6 +84,19 @@ describe('what a delivery is about', () => {
 	});
 });
 
+describe('JiraWebhookController: what a delivery must be', () => {
+	it('answers 400 for a body that is JSON but no delivery object (null, an array, a bare value)', async () => {
+		const config = { clientId: 'id', clientSecret: SECRET, redirectUrl: 'https://api.example.com/cb', webhookBaseUrl: 'https://api.example.com/api/integration/jira/webhook' } as JiraCloudConfig;
+		const tenants = { findAnyById: jest.fn(), webhookIdsOf: jest.fn(() => []) };
+		const controller = new JiraWebhookController(config, tenants as never, {} as never, new JiraWebhookDedupeService(null));
+		const token = `Bearer ${signJiraWebhookToken(SECRET, { iat: Math.floor(Date.now() / 1000) })}`;
+		for (const body of ['null', '[]', '42']) {
+			await expect(controller.receive('0f8a4a0e-5b8a-4c2e-9d55-1f2a3b4c5d6e', { rawBody: Buffer.from(body) } as never, token, 'delivery-1')).rejects.toMatchObject({ status: 400 });
+		}
+		expect(tenants.findAnyById).not.toHaveBeenCalled();
+	});
+});
+
 describe('JiraWebhookDedupeService', () => {
 	it('claims a delivery once in this process, releases it for a retry, and forgets it after the window', async () => {
 		const deliveries = new JiraWebhookDedupeService(null);

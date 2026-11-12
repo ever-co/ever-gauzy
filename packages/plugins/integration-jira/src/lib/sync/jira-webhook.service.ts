@@ -130,10 +130,12 @@ export class JiraWebhookService {
 			try {
 				await this.tenants.recordWebhook(tenant, { ids: created, jql, url: target, expiresAt: new Date(now + JIRA_WEBHOOK_LIFETIME_MS).toISOString(), error: null });
 			} catch (error) {
-				// Registered but not recorded: the webhook goes again (its id would be lost, and the next look register another).
+				// Registered but not recorded: the webhook goes again (its id would be lost, and the next look register another),
+				// and the record says none, so a partly written record never claims the deleted webhook as current.
 				await this.call(tenant, (client) => client.deleteWebhooks(created)).catch((caught: unknown) => {
 					this.logger.warn(`The unrecorded Jira webhook of connection ${tenant.id} could not be removed: ${this.describe(caught)}`);
 				});
+				await this.tenants.recordWebhook(tenant, { ids: [], jql: '', url: '', expiresAt: null, error: this.describe(error) }).catch(() => undefined);
 				throw error;
 			}
 			return 'registered';

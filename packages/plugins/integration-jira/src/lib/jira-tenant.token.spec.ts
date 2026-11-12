@@ -127,6 +127,22 @@ describe('JiraTenantService — tokens and the site', () => {
 		expect(reused?.usesToken('at-3')).toBe(true);
 	});
 
+	it('keeps the pair another process stored while its own exchange ran, and drops its own', async () => {
+		const { service, row, stored, value } = harness({ [JiraSettingName.ACCESS_TOKEN]: 'at-1', [JiraSettingName.REFRESH_TOKEN]: 'rt-1', [JiraSettingName.EXPIRES_AT]: soon(), [JiraSettingName.JIRA_CLOUD_ID]: 'c' });
+		jest.spyOn(globalThis, 'fetch').mockImplementation(async () => {
+			// The other process wins the race: its pair is stored before this exchange answers.
+			for (const setting of stored.row.settings) {
+				if (setting.settingsName === JiraSettingName.ACCESS_TOKEN) setting.settingsValue = 'at-other';
+				if (setting.settingsName === JiraSettingName.REFRESH_TOKEN) setting.settingsValue = 'rt-other';
+			}
+			return tokenAnswer({ access_token: 'at-mine', refresh_token: 'rt-mine', expires_in: 3600 });
+		});
+		const client = await service.refreshAccessToken(row as never);
+		expect(client?.usesToken('at-other')).toBe(true);
+		expect(value(JiraSettingName.ACCESS_TOKEN)).toBe('at-other');
+		expect(value(JiraSettingName.REFRESH_TOKEN)).toBe('rt-other');
+	});
+
 	it('answers null when Atlassian refuses the refresh token (a person must connect again)', async () => {
 		const { service, row, value } = harness({ [JiraSettingName.ACCESS_TOKEN]: 'at-1', [JiraSettingName.REFRESH_TOKEN]: 'rt-1', [JiraSettingName.EXPIRES_AT]: soon(), [JiraSettingName.JIRA_CLOUD_ID]: 'c' });
 		jest.spyOn(globalThis, 'fetch').mockResolvedValue(tokenAnswer({ error: 'invalid_grant', error_description: 'Unknown or invalid refresh token.' }, 403));

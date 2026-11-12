@@ -1,7 +1,7 @@
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { DataSource, EntityManager } from 'typeorm';
 import { ID, IIntegrationTenant, IntegrationEntity } from '@gauzy/contracts';
-import { IntegrationMap, Organization, OrganizationProjectService, Task, TenantAwareCrudService } from '@gauzy/core';
+import { IntegrationMap, IntegrationSetting, Organization, OrganizationProjectService, Task, TenantAwareCrudService } from '@gauzy/core';
 import {
 	JiraSyncDirection,
 	JiraProjectMapping,
@@ -9,7 +9,15 @@ import {
 	TypeOrmJiraProjectMappingRepository
 } from './entities/jira-project-mapping.entity';
 import { JiraSyncRun } from './entities/jira-sync-run.entity';
-import { JIRA_MAPPING_EXISTS, JIRA_MAPPING_PROJECT_FIXED, JIRA_PROJECT_NOT_FOUND, JIRA_PROJECT_OUTBOUND_TAKEN, JIRA_STATUS_MAP_INVALID } from './jira.constants';
+import {
+	JIRA_MAPPING_EXISTS,
+	JIRA_MAPPING_PROJECT_FIXED,
+	JIRA_PROJECT_NOT_FOUND,
+	JIRA_PROJECT_OUTBOUND_TAKEN,
+	JIRA_SITE_CHANGED,
+	JIRA_STATUS_MAP_INVALID,
+	JiraSettingName
+} from './jira.constants';
 import { invalidStatusMapKeys, serializeIssueTypeIds, serializeStatusMap } from './sync/jira-issue.mapper';
 
 export interface JiraMappingInput {
@@ -68,7 +76,7 @@ export class JiraMappingService extends TenantAwareCrudService<JiraProjectMappin
 	 * connection at a time (an advisory lock on Postgres, the connection's mappings locked on MySQL / MariaDB; SQLite
 	 * serializes writers), and a unique-index violation that still gets through answers the same 409.
 	 */
-	async createMapping(tenant: IIntegrationTenant, input: JiraMappingInput): Promise<JiraProjectMapping> {
+	async createMapping(tenant: IIntegrationTenant, input: JiraMappingInput, expectedCloudId?: string): Promise<JiraProjectMapping> {
 		assertStatusMap(input.statusMap);
 		await this.requireProject(tenant, input.projectId);
 		const scope = { tenantId: tenant.tenantId as ID, organizationId: tenant.organizationId as ID };
@@ -77,6 +85,16 @@ export class JiraMappingService extends TenantAwareCrudService<JiraProjectMappin
 		try {
 			return await this.dataSource.transaction(async (manager) => {
 				await this.lockMappingsOf(manager, tenant);
+				// The Jira project id was chosen on the site the request read; a site changed meanwhile (under this lock, see
+				// `whileMappingsLocked`) could give it another project: refused, the person reads the new site's projects.
+				if (expectedCloudId !== undefined) {
+					const site = await manager.findOne(IntegrationSetting, {
+						where: { integrationId: tenant.id as ID, settingsName: JiraSettingName.JIRA_CLOUD_ID, tenantId: tenant.tenantId as ID } as never
+					});
+					if ((site?.settingsValue || '') !== expectedCloudId) {
+						throw new ConflictException({ message: 'The Jira site of the connection changed; choose the Jira project again', code: JIRA_SITE_CHANGED });
+					}
+				}
 				const existing = await manager.findOne(JiraProjectMapping, { where: where as never });
 				if (existing) throw this.mappedAlready(existing.id as ID);
 				await this.assertOutboundFree(tenant, input.projectId, direction, null, manager);

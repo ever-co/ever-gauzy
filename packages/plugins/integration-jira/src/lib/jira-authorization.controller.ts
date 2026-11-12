@@ -66,6 +66,12 @@ export class JiraAuthorizationController {
 			this.logger.warn(`The Jira code exchange failed: ${error instanceof Error ? error.message : String(error)}`);
 			return this.back(response, { error: 'exchange_failed' });
 		}
+		// The app asks for `offline_access`: a grant without a refresh token would stop working within the hour, and the
+		// scheduled import with it. It is not saved.
+		if (!token.refreshToken) {
+			this.logger.warn('The Jira code exchange answered no refresh token (offline_access not granted); the connection is not saved.');
+			return this.back(response, { error: 'exchange_failed' });
+		}
 		let sites: JiraSite[];
 		try {
 			sites = await accessibleJiraSites(token.accessToken, { apiUrl: this.config.apiUrl });
@@ -132,8 +138,10 @@ export class JiraAuthorizationController {
 			response.status('error' in result ? 400 : 200).json(result);
 			return;
 		}
-		// The page may host several integrations' returns: the provider is named so each reads only its own.
+		// The page may host several integrations' returns: the provider is named so each reads only its own. A route that
+		// carries a query of its own (`#/pages/integrations/jira?mode=setup`) gets the result added to it.
 		const params = new URLSearchParams({ provider: 'jira', ...(result as Record<string, string>) });
-		response.redirect(`${this.config.postInstallUrl}?${params.toString()}`);
+		const joiner = this.config.postInstallUrl.includes('?') ? '&' : '?';
+		response.redirect(`${this.config.postInstallUrl}${joiner}${params.toString()}`);
 	}
 }

@@ -183,8 +183,10 @@ export class JiraIssueDetailsService {
 				const employee = items[0] as { id?: ID; userId?: ID | null } | undefined;
 				context.authorsByEmail.set(key, employee?.id ? { employeeId: employee.id, userId: employee.userId ?? null } : null);
 			} catch (caught) {
+				// Not "nobody": the detail fails (and is read again by the next import), rather than being kept as a System
+				// comment for good when the author is an employee.
 				this.logger.warn(`The employee of ${key} could not be looked up: ${this.describe(caught)}`);
-				return null;
+				throw caught;
 			}
 		}
 		return context.authorsByEmail.get(key) ?? null;

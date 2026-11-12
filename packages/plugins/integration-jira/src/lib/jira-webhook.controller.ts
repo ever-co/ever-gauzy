@@ -69,6 +69,8 @@ export class JiraWebhookController {
 		} catch {
 			throw new BadRequestException('The webhook body is not JSON.');
 		}
+		// A delivery is a JSON object; `null`, an array or a bare value is not one.
+		if (!payload || typeof payload !== 'object' || Array.isArray(payload)) throw new BadRequestException('The webhook body is not a delivery.');
 		const tenant = await this.tenants.findAnyById(integrationId as ID);
 		if (!tenant) throw new NotFoundException();
 		// A delivery of a webhook the connection no longer holds (it was replaced): acknowledged, nothing applied.
