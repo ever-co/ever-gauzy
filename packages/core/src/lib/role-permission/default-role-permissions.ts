@@ -177,6 +177,8 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.CHAT_SEND,
 			PermissionsEnum.CHAT_MANAGE,
 			/** Chat Permissions End */
+			/** Task automations (`@gauzy/plugin-task-automations`) */
+			PermissionsEnum.TASK_AUTOMATION_MANAGE,
 			PermissionsEnum.IMPORT_ADD,
 			PermissionsEnum.EXPORT_ADD,
 			PermissionsEnum.FILE_STORAGE_VIEW,
@@ -651,6 +653,8 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.CHAT_SEND,
 			PermissionsEnum.CHAT_MANAGE,
 			/** Chat Permissions End */
+			/** Task automations (`@gauzy/plugin-task-automations`) */
+			PermissionsEnum.TASK_AUTOMATION_MANAGE,
 
 			PermissionsEnum.IMPORT_ADD,
 			PermissionsEnum.EXPORT_ADD,
@@ -1163,6 +1167,8 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.CHAT_SEND,
 			PermissionsEnum.CHAT_MANAGE,
 			/** Chat Permissions End */
+			/** Task automations (`@gauzy/plugin-task-automations`) */
+			PermissionsEnum.TASK_AUTOMATION_MANAGE,
 			// Plugin permissions
 			PermissionsEnum.PLUGIN_VIEW,
 			PermissionsEnum.PLUGIN_DISCOVER,

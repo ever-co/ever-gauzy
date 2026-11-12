@@ -193,6 +193,7 @@ export * from './lib/task-priority.model';
 export * from './lib/task-related-issue-type.model';
 export * from './lib/task-size.model';
 export * from './lib/task-status.model';
+export * from './lib/task-automation.model';
 export * from './lib/task-version.model';
 export * from './lib/task-view.model';
 export * from './lib/task.model';

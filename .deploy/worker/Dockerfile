@@ -123,6 +123,7 @@ COPY --chown=node:node packages/plugins/job-proposal/package.json ./packages/plu
 COPY --chown=node:node packages/plugins/soundshot/package.json ./packages/plugins/soundshot/
 COPY --chown=node:node packages/plugins/registry/package.json ./packages/plugins/registry/
 COPY --chown=node:node packages/plugins/realtime/package.json ./packages/plugins/realtime/
+COPY --chown=node:node packages/plugins/task-automations/package.json ./packages/plugins/task-automations/
 COPY --chown=node:node packages/plugins/ai-chat/package.json ./packages/plugins/ai-chat/
 COPY --chown=node:node packages/plugins/ai-provider-anthropic/package.json ./packages/plugins/ai-provider-anthropic/
 COPY --chown=node:node packages/plugins/ai-provider-openai/package.json ./packages/plugins/ai-provider-openai/
@@ -278,6 +279,7 @@ COPY --chown=node:node packages/plugins/job-proposal/package.json ./packages/plu
 COPY --chown=node:node packages/plugins/soundshot/package.json ./packages/plugins/soundshot/
 COPY --chown=node:node packages/plugins/registry/package.json ./packages/plugins/registry/
 COPY --chown=node:node packages/plugins/realtime/package.json ./packages/plugins/realtime/
+COPY --chown=node:node packages/plugins/task-automations/package.json ./packages/plugins/task-automations/
 COPY --chown=node:node packages/plugins/ai-chat/package.json ./packages/plugins/ai-chat/
 COPY --chown=node:node packages/plugins/ai-provider-anthropic/package.json ./packages/plugins/ai-provider-anthropic/
 COPY --chown=node:node packages/plugins/ai-provider-openai/package.json ./packages/plugins/ai-provider-openai/
@@ -493,6 +495,7 @@ RUN --mount=type=bind,from=prod-dependencies,source=/srv/gauzy/node_modules,targ
     if [ -d /mnt/packages/plugins/integration-ever-async/node_modules ]; then cp -r /mnt/packages/plugins/integration-ever-async/node_modules ./node_modules/@gauzy/plugin-integration-ever-async/; fi && \
     if [ -d /mnt/packages/plugins/integration-ever-works/node_modules ]; then cp -r /mnt/packages/plugins/integration-ever-works/node_modules ./node_modules/@gauzy/plugin-integration-ever-works/; fi && \
     if [ -d /mnt/packages/plugins/inbox/node_modules ]; then cp -r /mnt/packages/plugins/inbox/node_modules ./node_modules/@gauzy/plugin-inbox/; fi && \
+    if [ -d /mnt/packages/plugins/task-automations/node_modules ]; then cp -r /mnt/packages/plugins/task-automations/node_modules ./node_modules/@gauzy/plugin-task-automations/; fi && \
     if [ -d /mnt/packages/plugins/email-provider-resend/node_modules ]; then cp -r /mnt/packages/plugins/email-provider-resend/node_modules ./node_modules/@gauzy/plugin-email-provider-resend/; fi && \
     if [ -d /mnt/packages/plugins/email-provider-postmark/node_modules ]; then cp -r /mnt/packages/plugins/email-provider-postmark/node_modules ./node_modules/@gauzy/plugin-email-provider-postmark/; fi && \
     if [ -d /mnt/packages/plugins/email-provider-mailgun/node_modules ]; then cp -r /mnt/packages/plugins/email-provider-mailgun/node_modules ./node_modules/@gauzy/plugin-email-provider-mailgun/; fi && \
