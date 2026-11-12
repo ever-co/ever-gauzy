@@ -54,10 +54,11 @@
     again with the same key while it gets no answer (twice, after 1 s and
     3 s); the key kept for the button's next click after no answer or a
     server error; a repeat delivered without its reply asked about once
-    more; specs.
-- [ ] **T19**. Ever Teams: send the key from the app-message buttons and
-  forward it through the proxy-mode interaction route (ever-teams, after the
-  server merges).
+    more, and still shown delivered when that ask fails; specs.
+- [x] **T19**. Ever Teams: send the key from the app-message buttons and
+  forward it through the proxy-mode interaction route (ever-teams #5155):
+  the same client rules as `chat-ui`; `forwardToGauzy` forwards an allowlist
+  of request headers (never a session header); tests.
 
 ## Phase 5 — Verification
 

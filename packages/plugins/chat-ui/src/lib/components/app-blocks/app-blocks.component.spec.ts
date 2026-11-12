@@ -399,6 +399,47 @@ describe('AppBlocksComponent', () => {
 			})();
 		});
 
+		it('keeps a delivery the repeat already reported when the one more ask finds the click gone', async () => {
+			await render();
+			serve([{ interaction: interaction(ChatInteractionStatusEnum.DELIVERED), events: [], replayed: true }]);
+			api.interaction.mockReturnValue(throwError(() => ({ status: 404 })));
+			fakeAsync(() => {
+				button('ack').click();
+				tick(APP_INTERACTION_POLL_MS);
+				fixture.detectChanges();
+				expect(api.interaction).toHaveBeenCalledTimes(1);
+				expect(button('ack').querySelector('nb-icon')?.getAttribute('icon')).toBe('checkmark-outline');
+				expect(element().querySelector('[data-test="app-failure"]')).toBeNull();
+			})();
+		});
+
+		it('keeps a delivery the repeat already reported when every ask fails', async () => {
+			await render();
+			serve([{ interaction: interaction(ChatInteractionStatusEnum.DELIVERED), events: [], replayed: true }]);
+			api.interaction.mockReturnValue(throwError(() => ({ status: 503 })));
+			fakeAsync(() => {
+				button('ack').click();
+				tick(APP_INTERACTION_POLL_MS * APP_INTERACTION_POLL_MAX);
+				fixture.detectChanges();
+				expect(button('ack').querySelector('nb-icon')?.getAttribute('icon')).toBe('checkmark-outline');
+				expect(element().querySelector('[data-test="app-failure"]')).toBeNull();
+			})();
+		});
+
+		it('asks only once more after a repeat reported the delivery, and ends done without a reply', async () => {
+			await render();
+			serve([{ interaction: interaction(ChatInteractionStatusEnum.DELIVERED), events: [], replayed: true }]);
+			api.interaction.mockReturnValue(of(interaction(ChatInteractionStatusEnum.DELIVERED)));
+			fakeAsync(() => {
+				button('ack').click();
+				tick(APP_INTERACTION_POLL_MS * 3);
+				fixture.detectChanges();
+				expect(api.interaction).toHaveBeenCalledTimes(1);
+				expect(api.message).not.toHaveBeenCalled();
+				expect(button('ack').querySelector('nb-icon')?.getAttribute('icon')).toBe('checkmark-outline');
+			})();
+		});
+
 		it('does not ask again about a first answer delivered without a reply (the app sent none)', async () => {
 			await render();
 			serve([delivered()]);
