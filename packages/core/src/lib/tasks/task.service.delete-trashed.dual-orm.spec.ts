@@ -15,8 +15,10 @@ import type { MikroORM as MikroOrmInstance } from '@mikro-orm/core';
  *
  * The entities are the platform's own, imported under `DB_ORM=mikro-orm`; the tables are created from TypeORM's
  * mapping, and MikroORM opens them with the soft-delete extension the platform configures (whose filter applies to a
- * native delete as it does to a read). The pattern of `organization-project/testing/synced-projects.store.ts`:
- * everything is measured in `beforeAll` and asserted below.
+ * native delete as it does to a read). The rows are written with foreign keys off; every call runs with them
+ * enforced, so a task that a linked issue and a key result still point at (foreign keys with no delete rule of their
+ * own) is refused by the database, as on a real installation. The pattern of
+ * `organization-project/testing/synced-projects.store.ts`: everything is measured in `beforeAll` and asserted below.
  */
 
 const TIMEOUT = 15 * 60 * 1000;
@@ -37,8 +39,12 @@ const IDS = {
 		/** In the trash of another organization of the tenant. */
 		OTHER_ORGANIZATION: '7d000000-0000-4000-8000-000000000004',
 		/** In the trash of another tenant, under the same organization id. */
-		OTHER_TENANT: '7d000000-0000-4000-8000-000000000005'
-	}
+		OTHER_TENANT: '7d000000-0000-4000-8000-000000000005',
+		/** In the caller's trash, still linked from another task and from a key result. */
+		REFERENCED: '7d000000-0000-4000-8000-000000000006'
+	},
+	LINKED_ISSUE: '7e000000-0000-4000-8000-000000000001',
+	KEY_RESULT: '7f000000-0000-4000-8000-000000000001'
 } as const;
 
 const TASKS: ReadonlyArray<{ id: string; tenantId: string; organizationId: string; deleted: boolean }> = [
@@ -46,7 +52,8 @@ const TASKS: ReadonlyArray<{ id: string; tenantId: string; organizationId: strin
 	{ id: IDS.TASK.LIVE, tenantId: IDS.TENANT, organizationId: IDS.ORGANIZATION, deleted: false },
 	{ id: IDS.TASK.RESTORED, tenantId: IDS.TENANT, organizationId: IDS.ORGANIZATION, deleted: true },
 	{ id: IDS.TASK.OTHER_ORGANIZATION, tenantId: IDS.TENANT, organizationId: IDS.OTHER_ORGANIZATION, deleted: true },
-	{ id: IDS.TASK.OTHER_TENANT, tenantId: IDS.OTHER_TENANT, organizationId: IDS.ORGANIZATION, deleted: true }
+	{ id: IDS.TASK.OTHER_TENANT, tenantId: IDS.OTHER_TENANT, organizationId: IDS.ORGANIZATION, deleted: true },
+	{ id: IDS.TASK.REFERENCED, tenantId: IDS.TENANT, organizationId: IDS.ORGANIZATION, deleted: true }
 ];
 
 /** What one call answered, and the statements it sent. */
@@ -64,13 +71,18 @@ interface IOrmRun {
 	otherOrganizationByOwnOrganization: ICallOutcome;
 	otherOrganizationStated: ICallOutcome;
 	otherTenant: ICallOutcome;
+	referenced: ICallOutcome;
 	remaining: string[];
+	/** The linked issues and key results left pointing at the referenced task. */
+	references: { linkedIssues: number; keyResults: number };
+	/** `PRAGMA foreign_keys` on each connection while the calls ran. */
+	foreignKeys: { mikroOrm: number; typeOrm: number };
 }
 
 type Connection = { execute(sql: string, params?: unknown[]): Promise<unknown> };
 
 /** One ORM's branch of the service, as this suite calls it. */
-interface ITrashedTaskDeleter {
+interface ITrashDeleteBranch {
 	deleteTrashedTask(id: string, organizationId: string): Promise<{ affected?: number }>;
 }
 
@@ -111,6 +123,8 @@ async function measure(): Promise<{ mikroOrm: IOrmRun; typeOrm: IOrmRun }> {
 				}
 			});
 			await dataSource.initialize();
+			// Enforced on the connection TypeORM deletes through, as on a real database.
+			await dataSource.query('PRAGMA foreign_keys = ON');
 
 			let orm: MikroOrmInstance;
 			try {
@@ -159,7 +173,7 @@ async function measure(): Promise<{ mikroOrm: IOrmRun; typeOrm: IOrmRun }> {
 				const connection = orm.em.getConnection() as unknown as Connection;
 
 				const call = async (
-					branch: ITrashedTaskDeleter,
+					branch: ITrashDeleteBranch,
 					id: string,
 					organizationId: string
 				): Promise<ICallOutcome> => {
@@ -169,13 +183,13 @@ async function measure(): Promise<{ mikroOrm: IOrmRun; typeOrm: IOrmRun }> {
 						const result = await branch.deleteTrashedTask(id, organizationId);
 						answer = { affected: result.affected ?? 0 };
 					} catch (error) {
-						const status = (error as { getStatus?: () => number })?.getStatus?.() ?? 500;
-						answer = { status, message: (error as Error).message };
+						const failure = error as { getStatus?: () => number; message?: string } | null;
+						answer = { status: failure?.getStatus?.() ?? 500, message: String(failure?.message ?? '') };
 					}
 					return { answer, statements: [...statements] };
 				};
 
-				const run = async (branch: ITrashedTaskDeleter): Promise<IOrmRun> => {
+				const run = async (branch: ITrashDeleteBranch): Promise<IOrmRun> => {
 					await seed(connection);
 					const trashed = await call(branch, IDS.TASK.TRASHED, IDS.ORGANIZATION);
 					const trashedAgain = await call(branch, IDS.TASK.TRASHED, IDS.ORGANIZATION);
@@ -194,7 +208,14 @@ async function measure(): Promise<{ mikroOrm: IOrmRun; typeOrm: IOrmRun }> {
 						IDS.OTHER_ORGANIZATION
 					);
 					const otherTenant = await call(branch, IDS.TASK.OTHER_TENANT, IDS.ORGANIZATION);
+					const referenced = await call(branch, IDS.TASK.REFERENCED, IDS.ORGANIZATION);
 					const rows = (await connection.execute('SELECT id FROM task ORDER BY id')) as Array<{ id: string }>;
+					const count = async (sql: string) =>
+						((await connection.execute(sql, [IDS.TASK.REFERENCED])) as Array<{ n: number }>)[0].n;
+					const pragma = (await connection.execute('PRAGMA foreign_keys')) as Array<{ foreign_keys: number }>;
+					const typeOrmPragma = (await dataSource.query('PRAGMA foreign_keys')) as Array<{
+						foreign_keys: number;
+					}>;
 					return {
 						trashed,
 						trashedAgain,
@@ -203,7 +224,15 @@ async function measure(): Promise<{ mikroOrm: IOrmRun; typeOrm: IOrmRun }> {
 						otherOrganizationByOwnOrganization,
 						otherOrganizationStated,
 						otherTenant,
-						remaining: rows.map((row) => row.id)
+						referenced,
+						remaining: rows.map((row) => row.id),
+						references: {
+							linkedIssues: await count(
+								'SELECT COUNT(*) AS n FROM task_linked_issues WHERE taskFromId = ?'
+							),
+							keyResults: await count('SELECT COUNT(*) AS n FROM key_result WHERE taskId = ?')
+						},
+						foreignKeys: { mikroOrm: pragma[0].foreign_keys, typeOrm: typeOrmPragma[0].foreign_keys }
 					};
 				};
 
@@ -224,9 +253,14 @@ async function measure(): Promise<{ mikroOrm: IOrmRun; typeOrm: IOrmRun }> {
 	return measured;
 }
 
-/** The tasks, written straight to the table (over any left by a previous run). */
+/**
+ * The tasks, a linked issue and a key result that point at the referenced one, written straight to the tables (over
+ * any left by a previous run) with foreign keys off; they are enforced again before the calls.
+ */
 async function seed(connection: Connection): Promise<void> {
 	await connection.execute('PRAGMA foreign_keys = OFF');
+	await connection.execute('DELETE FROM task_linked_issues');
+	await connection.execute('DELETE FROM key_result');
 	await connection.execute('DELETE FROM task');
 	for (const task of TASKS) {
 		await connection.execute(
@@ -235,6 +269,18 @@ async function seed(connection: Connection): Promise<void> {
 			[task.id, task.tenantId, task.organizationId, `task ${task.id}`]
 		);
 	}
+	await connection.execute(
+		`INSERT INTO task_linked_issues (id, tenantId, organizationId, action, taskFromId, taskToId)
+		VALUES (?, ?, ?, 1, ?, ?)`,
+		[IDS.LINKED_ISSUE, IDS.TENANT, IDS.ORGANIZATION, IDS.TASK.REFERENCED, IDS.TASK.LIVE]
+	);
+	await connection.execute(
+		`INSERT INTO key_result (id, tenantId, organizationId, name, description, type, "update", progress, deadline,
+			status, ownerId, taskId)
+		VALUES (?, ?, ?, 'key result', '', 'TASK', 0, 0, 'No Custom Deadline', 'none', ?, ?)`,
+		[IDS.KEY_RESULT, IDS.TENANT, IDS.ORGANIZATION, IDS.USER, IDS.TASK.REFERENCED]
+	);
+	await connection.execute('PRAGMA foreign_keys = ON');
 }
 
 function removeFile(file: string): void {
@@ -304,9 +350,26 @@ describe('TaskService.deleteTrashedTask on a database (DELETE /tasks/:id/trashed
 			expect(run().remaining).toContain(IDS.TASK.OTHER_TENANT);
 		});
 
+		it('answers 409 for a trashed task other records still point at, and leaves it and them as they were', () => {
+			expect(run().foreignKeys).toEqual({ mikroOrm: 1, typeOrm: 1 });
+			expect(run().referenced.answer).toEqual({
+				status: 409,
+				message: expect.stringContaining('TASK_STILL_REFERENCED')
+			});
+			expect(onTask(run().referenced)).toHaveLength(1);
+			expect(run().remaining).toContain(IDS.TASK.REFERENCED);
+			expect(run().references).toEqual({ linkedIssues: 1, keyResults: 1 });
+		});
+
 		it('removes only the task that was in the trash', () => {
 			expect(run().remaining).toEqual(
-				[IDS.TASK.LIVE, IDS.TASK.RESTORED, IDS.TASK.OTHER_ORGANIZATION, IDS.TASK.OTHER_TENANT].sort()
+				[
+					IDS.TASK.LIVE,
+					IDS.TASK.RESTORED,
+					IDS.TASK.OTHER_ORGANIZATION,
+					IDS.TASK.OTHER_TENANT,
+					IDS.TASK.REFERENCED
+				].sort()
 			);
 		});
 	});

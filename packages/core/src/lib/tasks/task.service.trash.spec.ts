@@ -1,5 +1,11 @@
 import '../core/entities/internal';
-import { BadRequestException, ForbiddenException, NotFoundException, RequestMethod } from '@nestjs/common';
+import {
+	BadRequestException,
+	ConflictException,
+	ForbiddenException,
+	NotFoundException,
+	RequestMethod
+} from '@nestjs/common';
 import { GUARDS_METADATA, METHOD_METADATA, PATH_METADATA } from '@nestjs/common/constants';
 import { FindOperator } from 'typeorm';
 import { SOFT_DELETABLE_FILTER } from 'mikro-orm-soft-delete';
@@ -372,6 +378,35 @@ describe('TaskService — the trash', () => {
 			);
 
 			expect(typeOrmDelete).not.toHaveBeenCalled();
+		});
+
+		it('answers 409 when the database refuses the delete because other records still point at the task', async () => {
+			signIn([PermissionsEnum.ORG_TASK_DELETE]);
+			// TypeORM's QueryFailedError carries the driver's code; MikroORM throws its own exception class.
+			const refusals = [
+				Object.assign(new Error('update or delete on table "task" violates foreign key constraint'), {
+					code: '23503'
+				}),
+				{ name: 'QueryFailedError', message: 'failed', driverError: { code: 'ER_ROW_IS_REFERENCED_2' } },
+				Object.assign(new Error('FOREIGN KEY constraint failed'), {
+					name: 'ForeignKeyConstraintViolationException'
+				})
+			];
+
+			for (const refusal of refusals) {
+				typeOrmDelete.mockRejectedValueOnce(refusal);
+				const answer = service.deleteTrashedTask('task-1', fixture.organizationId);
+				await expect(answer).rejects.toBeInstanceOf(ConflictException);
+				await expect(answer).rejects.toThrow('TASK_STILL_REFERENCED');
+			}
+		});
+
+		it('lets any other failure of the statement through as it is', async () => {
+			signIn([PermissionsEnum.ORG_TASK_DELETE]);
+			const outage = Object.assign(new Error('connection terminated'), { code: 'ECONNRESET' });
+			typeOrmDelete.mockRejectedValueOnce(outage);
+
+			await expect(service.deleteTrashedTask('task-1', fixture.organizationId)).rejects.toBe(outage);
 		});
 
 		it('states the same statement on MikroORM, with the soft-delete filter lifted so a trashed row can match', async () => {

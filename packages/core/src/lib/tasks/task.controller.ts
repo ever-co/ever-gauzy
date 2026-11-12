@@ -600,6 +600,10 @@ export class TaskController extends CrudController<Task> {
 		description: 'No task with that id is in the trash of the organization, or the trash is not enabled.'
 	})
 	@ApiResponse({ status: HttpStatus.FORBIDDEN, description: 'Only a manager of one of the task teams may.' })
+	@ApiResponse({
+		status: HttpStatus.CONFLICT,
+		description: 'Other records (a linked issue, a key result) still point at the task; it stays in the trash.'
+	})
 	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TASK_DELETE, PermissionsEnum.ORG_TASK_EDIT)
 	@UseGuards(TaskTrashEnabledGuard)
 	@Delete('/:id/trashed')
