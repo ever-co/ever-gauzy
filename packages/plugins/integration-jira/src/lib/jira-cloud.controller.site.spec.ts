@@ -46,7 +46,8 @@ function setup(options: { current: string | null; mappings: number }) {
 		clientForSite: jest.fn(() => ({ myself: jest.fn(async () => ({ accountId: 'me' })) })),
 		selectSite: jest.fn(async () => tenant)
 	};
-	const mappings = { list: jest.fn(async () => Array.from({ length: options.mappings }, (_, index) => ({ id: `mapping-${index}` }))) };
+	// The site is checked and written under the mappings' lock, which hands over how many the connection has.
+	const mappings = { whileMappingsLocked: jest.fn(async (_tenant: unknown, work: (count: number) => Promise<unknown>) => work(options.mappings)) };
 	const webhooks = { remove: jest.fn(async () => undefined), ensure: jest.fn(async () => 'registered') };
 	const config = { apiUrl: 'https://api.example.test' } as JiraCloudConfig;
 	const controller = new JiraCloudController(config, tenants as never, mappings as never, {} as never, {} as never, webhooks as never, {} as never, {} as never);
@@ -57,10 +58,10 @@ function setup(options: { current: string | null; mappings: number }) {
 }
 
 describe('PUT /integration/jira/:integrationId/site', () => {
-	it('chooses the first site of a connection that has none, without reading its mappings', async () => {
+	it('chooses the first site of a connection that has none, under the mappings lock', async () => {
 		const { controller, tenants, mappings, webhooks } = setup({ current: null, mappings: 0 });
 		await controller.selectSite('integration-1' as never, { cloudId: SITE_B.id } as never);
-		expect(mappings.list).not.toHaveBeenCalled();
+		expect(mappings.whileMappingsLocked).toHaveBeenCalledTimes(1);
 		expect(webhooks.remove).not.toHaveBeenCalled();
 		expect(tenants.selectSite).toHaveBeenCalledWith(expect.anything(), SITE_B, { accountId: 'me' });
 	});
@@ -78,6 +79,12 @@ describe('PUT /integration/jira/:integrationId/site', () => {
 		await expect(answer).rejects.toBeInstanceOf(ConflictException);
 		await expect(answer).rejects.toMatchObject({ response: { code: JIRA_SITE_HAS_MAPPINGS } });
 		expect(webhooks.remove).not.toHaveBeenCalled();
+		expect(tenants.selectSite).not.toHaveBeenCalled();
+	});
+
+	it('refuses a site to a connection that has mappings but no site (never the case once a site was chosen)', async () => {
+		const { controller, tenants } = setup({ current: null, mappings: 1 });
+		await expect(controller.selectSite('integration-1' as never, { cloudId: SITE_B.id } as never)).rejects.toBeInstanceOf(ConflictException);
 		expect(tenants.selectSite).not.toHaveBeenCalled();
 	});
 

@@ -102,6 +102,14 @@ interface ApplyContext extends ClientHolder {
 	report: JiraSyncRunReport;
 }
 
+/** A later claim failed the run as abandoned: its import stops and writes neither the position nor its outcome. */
+class JiraRunSuperseded extends Error {
+	constructor(runId: ID) {
+		super(`Run ${runId} was failed as abandoned by a later claim of its mapping`);
+		this.name = 'JiraRunSuperseded';
+	}
+}
+
 /** A lookup that did not answer: the task's relation is left as it is, not emptied. */
 class ResolutionFailed extends Error {
 	constructor(what: string, cause: unknown) {
@@ -196,6 +204,8 @@ export class JiraSyncService {
 		let error: string | null = null;
 		let complete = false;
 		let applied = false;
+		/** A later claim failed this run as abandoned (no heartbeat for 30 minutes): its import stops and writes nothing more. */
+		let superseded = false;
 		try {
 			await runInJiraContext(user, async () => {
 				const context = await this.openContext(tenant, mapping, counts, run.id as ID, report);
@@ -212,7 +222,7 @@ export class JiraSyncService {
 						if (ok && updated) progress.lastAppliedUpdated = updated;
 					}
 					applied = true;
-					await this.runs.progress(run, counts, report);
+					if (!(await this.runs.progress(run, counts, report))) throw new JiraRunSuperseded(run.id as ID);
 					if (!page.nextPageToken || !page.issues.length) {
 						complete = true;
 						break;
@@ -230,27 +240,35 @@ export class JiraSyncService {
 				error = `The import stopped at ${JIRA_IMPORT_MAX_ISSUES} issues; the next import continues from the last one applied.`;
 			}
 		} catch (caught) {
+			superseded = caught instanceof JiraRunSuperseded;
 			error = this.describe(caught);
 			if (caught instanceof JiraApiError && caught.isUnauthorized) {
 				await this.tenants.setAttention(tenant, 'token_refused', this.tenants.settingsOf(tenant)[JiraSettingName.ACCESS_TOKEN] ?? null);
 			}
-			this.logger.warn(`Import of mapping ${mapping.id} failed: ${error}`);
+			if (!superseded) this.logger.warn(`Import of mapping ${mapping.id} failed: ${error}`);
 		} finally {
-			const cursor = applied || complete ? resumeCursorOf({ complete, runCursor, since, ...progress }) : since;
-			report.complete = complete && !counts.failed;
-			report.stoppedAt = cursor;
-			try {
-				await this.mappings.recordImport(mapping, { cursor, error });
-			} catch (caught) {
-				error = error ?? this.describe(caught);
-				this.logger.warn(`The import position of mapping ${mapping.id} could not be written: ${this.describe(caught)}`);
+			// The mapping is another run's now (a later claim failed this one as abandoned): neither its position nor this
+			// run's outcome is written, so the live run's are not overwritten.
+			if (!superseded) superseded = !(await this.runs.isLive(run).catch(() => true));
+			if (superseded) {
+				this.logger.warn(`Import run ${run.id} of mapping ${mapping.id} was superseded by a later claim; it stopped without writing the position.`);
+			} else {
+				const cursor = applied || complete ? resumeCursorOf({ complete, runCursor, since, ...progress }) : since;
+				report.complete = complete && !counts.failed;
+				report.stoppedAt = cursor;
+				try {
+					await this.mappings.recordImport(mapping, { cursor, error });
+				} catch (caught) {
+					error = error ?? this.describe(caught);
+					this.logger.warn(`The import position of mapping ${mapping.id} could not be written: ${this.describe(caught)}`);
+				}
+				// Always: a run row left RUNNING would block the mapping until it counts as abandoned.
+				await this.runs.finish(run, { counts, cursor, error, report }).catch((caught: unknown) => {
+					this.logger.warn(`Run ${run.id} could not be finished: ${this.describe(caught)}`);
+				});
 			}
-			// Always: a run row left RUNNING would block the mapping until it counts as abandoned.
-			await this.runs.finish(run, { counts, cursor, error, report }).catch((caught: unknown) => {
-				this.logger.warn(`Run ${run.id} could not be finished: ${this.describe(caught)}`);
-			});
 		}
-		if (!error) {
+		if (!error && !superseded) {
 			await this.integrationTenantSyncService
 				.recordSyncCompleted(tenant.id as ID, { tenantId: scope.tenantId, organizationId: scope.organizationId, counts: { issue: counts.created + counts.updated } })
 				.catch((caught: unknown) => this.logger.warn(`The sync completion of ${tenant.id} could not be recorded: ${this.describe(caught)}`));

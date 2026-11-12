@@ -62,12 +62,17 @@ export class IntegrationMapSyncIssueHandler implements ICommandHandler<Integrati
 			// Update the corresponding task with the new input data
 			await this._commandBus.execute(new TaskUpdateCommand(integrationMap.gauzyId, entity, triggeredEvent));
 		} else {
-			// The mapped task is gone: re-create it under the mapped id
+			// The mapped task is gone: re-create it under the mapped id. With the caller's `triggeredEvent`, as the two
+			// other branches: an inbound write that asked for no event (the two-way syncs) must not fire one here either,
+			// or the task re-created from an issue is sent straight back to it.
 			await this._commandBus.execute(
-				new TaskCreateCommand({
-					...entity,
-					id: integrationMap.gauzyId
-				})
+				new TaskCreateCommand(
+					{
+						...entity,
+						id: integrationMap.gauzyId
+					},
+					triggeredEvent
+				)
 			);
 		}
 		// Return the integration map

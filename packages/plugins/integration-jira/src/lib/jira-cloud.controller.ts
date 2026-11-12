@@ -14,7 +14,7 @@ import {
 	SelectJiraSiteDTO,
 	UpdateJiraMappingDTO
 } from './dto/jira.dto';
-import { JiraProjectMapping } from './entities/jira-project-mapping.entity';
+import { JiraProjectMapping, JiraSyncDirection } from './entities/jira-project-mapping.entity';
 import { JiraSyncConflict } from './entities/jira-sync-conflict.entity';
 import { JiraSyncRun } from './entities/jira-sync-run.entity';
 import { isJiraConfigured, JiraCloudConfig, jiraWebhooksEnabled } from './jira-config';
@@ -25,6 +25,7 @@ import { JiraSyncRunReport, JiraSyncRunService, parseRunReport } from './jira-sy
 import { JiraConnectionSummary, JiraTenantService } from './jira-tenant.service';
 import {
 	JIRA_CONFIG,
+	JIRA_MAPPING_NOT_INBOUND,
 	JIRA_NOT_CONFIGURED,
 	JIRA_NOT_CONNECTED,
 	JIRA_OAUTH_AUDIENCE,
@@ -154,14 +155,17 @@ export class JiraCloudController {
 		const sites = await accessibleJiraSites(await this.tenants.accessTokenReady(tenant), { apiUrl: this.config.apiUrl });
 		const site = sites.find((candidate) => candidate.id === body.cloudId);
 		if (!site) throw new NotFoundException({ message: 'The connection cannot reach that Jira site', code: JIRA_SITE_NOT_FOUND });
-		const current = this.tenants.summaryOf(tenant).cloudId;
-		const moving = !!current && current !== site.id;
-		if (moving && (await this.mappings.list(tenant)).length > 0) {
-			throw new ConflictException({ message: 'A connection with mappings keeps its Jira site; remove its mappings first', code: JIRA_SITE_HAS_MAPPINGS });
-		}
-		if (moving) await this.webhooks.remove(tenant);
 		const myself = await this.tenants.clientForSite(tenant, site.id).myself();
-		await this.tenants.selectSite(tenant, site, myself);
+		// Checked and written while no mapping can be created: one made meanwhile for the former site never stays behind.
+		await this.mappings.whileMappingsLocked(tenant, async (mappings) => {
+			const current = this.tenants.summaryOf(tenant).cloudId;
+			const moving = current !== site.id;
+			if (moving && mappings > 0) {
+				throw new ConflictException({ message: 'A connection with mappings keeps its Jira site; remove its mappings first', code: JIRA_SITE_HAS_MAPPINGS });
+			}
+			if (moving && current) await this.webhooks.remove(tenant);
+			await this.tenants.selectSite(tenant, site, myself);
+		});
 		this.ensureWebhookLater(tenant);
 		return this.tenants.summaryOf(tenant);
 	}
@@ -238,7 +242,8 @@ export class JiraCloudController {
 
 	/**
 	 * Starts an import of the mapping's issues: the mapping is claimed first (one run at a time, 409 while one is live),
-	 * the run is answered at once, and the import goes on behind the response.
+	 * the run is answered at once, and the import goes on behind the response. A mapping that brings nothing in
+	 * (switched off, or outbound only) is not imported (409 `JIRA_MAPPING_NOT_INBOUND`), as the scheduled import skips it.
 	 */
 	@ApiOperation({ summary: 'Import the issues of a mapped Jira project now' })
 	@Post('/:integrationId/mappings/:mappingId/import')
@@ -253,6 +258,9 @@ export class JiraCloudController {
 		// A connection waiting for its site cannot import: answered now (400 `JIRA_SITE_REQUIRED`), not in the run.
 		this.tenants.clientFor(tenant);
 		const mapping = await this.mappings.requireOne(tenant, mappingId);
+		if (!mapping.syncEnabled || mapping.direction === JiraSyncDirection.OUTBOUND) {
+			throw new ConflictException({ message: 'This mapping brings no issues in (it is switched off, or sends tasks out only)', code: JIRA_MAPPING_NOT_INBOUND });
+		}
 		const requestedByUserId = RequestContext.currentUserId() as ID;
 		const full = !!body.full;
 		const run = await this.runs.claimImport(tenant, mapping, { full, requestedByUserId });

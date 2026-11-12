@@ -165,6 +165,15 @@ describe('HTML → ADF', () => {
 		expect(htmlToAdf('<blockquote><h2>Head</h2><p>body</p><hr></blockquote>')).toEqual(doc({ type: 'blockquote', content: [p(text('Head', 'strong')), p(text('body'))] }));
 	});
 
+	it('keeps the words of a block a list item or a quote may not hold in ADF, as a paragraph of its text', () => {
+		expect(htmlToAdf('<ul><li><h3>Steps</h3></li></ul>')).toEqual(doc({ type: 'bulletList', content: [{ type: 'listItem', content: [p(text('Steps'))] }] }));
+		expect(htmlToAdf('<blockquote><blockquote><p>inner</p><p>quote</p></blockquote></blockquote>')).toEqual(
+			doc({ type: 'blockquote', content: [p(text('inner'), { type: 'hardBreak' }, text('quote'))] })
+		);
+		// A rule has no words: it goes.
+		expect(htmlToAdf('<ul><li><p>a</p><hr></li></ul>')).toEqual(doc({ type: 'bulletList', content: [{ type: 'listItem', content: [p(text('a'))] }] }));
+	});
+
 	it('reads tables with their header cells and spans', () => {
 		expect(htmlToAdf('<table><tbody><tr><th colspan="2"><p>H</p></th></tr><tr><td>x</td><td></td></tr></tbody></table>')).toEqual(
 			doc({

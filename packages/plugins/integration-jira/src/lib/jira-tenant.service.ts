@@ -275,6 +275,7 @@ export class JiraTenantService {
 			[JiraSettingName.WEBHOOK_IDS, sameSite ? previous[JiraSettingName.WEBHOOK_IDS] ?? '' : ''],
 			[JiraSettingName.WEBHOOK_JQL, sameSite ? previous[JiraSettingName.WEBHOOK_JQL] ?? '' : ''],
 			[JiraSettingName.WEBHOOK_EXPIRES_AT, sameSite ? previous[JiraSettingName.WEBHOOK_EXPIRES_AT] ?? '' : ''],
+			[JiraSettingName.WEBHOOK_URL, sameSite ? previous[JiraSettingName.WEBHOOK_URL] ?? '' : ''],
 			[JiraSettingName.WEBHOOK_ERROR, '']
 		].map(([settingsName, settingsValue]) => ({ settingsName, settingsValue, tenantId, organizationId }));
 		const entitySettings = [IntegrationEntity.PROJECT, IntegrationEntity.ISSUE, IntegrationEntity.LABEL].map((entity) => ({
@@ -301,7 +302,15 @@ export class JiraTenantService {
 		// The platform's settings writer reports a failed write instead of raising it, and answers the row without its
 		// settings: the connection is read back — the token checked, and the notice of the connection it replaces resolved.
 		const stored = await this.findAnyById(written.id as ID);
-		if (!stored || this.settingsOf(stored)[JiraSettingName.ACCESS_TOKEN] !== token.accessToken) {
+		const kept = stored ? this.settingsOf(stored) : null;
+		// Every setting the connection cannot work without: the token pair, and the site when one was chosen.
+		if (
+			!stored ||
+			!kept ||
+			kept[JiraSettingName.ACCESS_TOKEN] !== token.accessToken ||
+			(kept[JiraSettingName.REFRESH_TOKEN] ?? '') !== (token.refreshToken ?? '') ||
+			(kept[JiraSettingName.JIRA_CLOUD_ID] ?? '') !== (site?.site.id ?? '')
+		) {
 			throw new InternalServerErrorException({ message: 'The Jira connection could not be stored; connect again', code: JIRA_NOT_CONNECTED });
 		}
 		// The notice went to whoever connected before: they hear of the resolution too, whoever reconnected.
@@ -334,6 +343,20 @@ export class JiraTenantService {
 			// Not filed either: the Inbox must not say the imports are paused while the sweep still runs them.
 			this.logger.warn(`The attention reason of connection ${tenant.id} could not be written: ${(error as Error).message}`);
 			return;
+		}
+		// A reconnect may have stored another token between the check above and this write (it clears the reason, and
+		// this write would set it back on the new connection): read again, and undo the mark when it is so.
+		if (reason && refusedToken) {
+			const after = await this.findAnyById(tenant.id as ID);
+			const storedNow = after ? this.settingsOf(after)[JiraSettingName.ACCESS_TOKEN] : null;
+			if (after && storedNow && storedNow !== refusedToken) {
+				this.logger.log(`Connection ${tenant.id}: reconnected while its refusal was being marked; the mark is undone.`);
+				tenant.settings = after.settings;
+				await this.writeSetting(tenant, JiraSettingName.ATTENTION_REASON, '').catch((error: unknown) => {
+					this.logger.warn(`The attention reason of connection ${tenant.id} could not be cleared: ${(error as Error).message}`);
+				});
+				return;
+			}
 		}
 		// A new refusal is not filed until its own filing records it: the timestamp an earlier refusal left (a resolution
 		// whose filing failed) is cleared first, so every way the filing below can stop leaves it to the sweep.
@@ -465,9 +488,10 @@ export class JiraTenantService {
 	}
 
 	/** Records the connection's webhook as Jira has it now (or its absence), and why the last registration failed. */
-	async recordWebhook(tenant: IIntegrationTenant, webhook: { ids: readonly string[]; jql: string; expiresAt: string | null; error: string | null }): Promise<void> {
+	async recordWebhook(tenant: IIntegrationTenant, webhook: { ids: readonly string[]; jql: string; url?: string | null; expiresAt: string | null; error: string | null }): Promise<void> {
 		await this.writeSetting(tenant, JiraSettingName.WEBHOOK_IDS, webhook.ids.join(','));
 		await this.writeSetting(tenant, JiraSettingName.WEBHOOK_JQL, webhook.jql);
+		await this.writeSetting(tenant, JiraSettingName.WEBHOOK_URL, webhook.url ?? '');
 		await this.writeSetting(tenant, JiraSettingName.WEBHOOK_EXPIRES_AT, webhook.expiresAt ?? '');
 		await this.writeSetting(tenant, JiraSettingName.WEBHOOK_ERROR, (webhook.error ?? '').slice(0, 500));
 	}
@@ -493,9 +517,14 @@ export class JiraTenantService {
 	}
 
 	/** Stores a renewed token pair (the refresh token rotated when Jira sent a new one) and clears the attention. */
+	/**
+	 * Stores a renewed pair. The rotated refresh token is written first: a stop between the two writes then leaves the
+	 * new refresh token with the former access token (renewed again on its next use), never the spent refresh token with
+	 * the new access token (which could not be renewed once Atlassian's reuse interval is over).
+	 */
 	private async writeToken(tenant: IIntegrationTenant, token: JiraOAuthToken): Promise<void> {
-		await this.writeSetting(tenant, JiraSettingName.ACCESS_TOKEN, token.accessToken);
 		if (token.refreshToken) await this.writeSetting(tenant, JiraSettingName.REFRESH_TOKEN, token.refreshToken);
+		await this.writeSetting(tenant, JiraSettingName.ACCESS_TOKEN, token.accessToken);
 		await this.writeSetting(tenant, JiraSettingName.TOKEN_TYPE, token.tokenType);
 		await this.writeSetting(tenant, JiraSettingName.EXPIRES_AT, this.expiresAtOf(token));
 		await this.setAttention(tenant, null);

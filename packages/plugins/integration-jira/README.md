@@ -46,8 +46,9 @@ whose routes share the `/integration/jira` prefix and must be registered first.
   `status:<id>` entries for named statuses, which win over their category) and an optional issue-type filter. One
   mapping per Jira project of a connection.
 - **Import.** `POST …/mappings/:mappingId/import` (`{ "full": true }` for every issue, otherwise the ones changed
-  since the last import) claims the mapping (one run at a time, `409` while one is live) and goes on behind the
-  response. It reads Jira's enhanced JQL search page by page, oldest change first, with a relative `updated` window.
+  since the last import) claims the mapping (one run at a time, `409` while one is live; a mapping switched off or
+  outbound only answers `409` `JIRA_MAPPING_NOT_INBOUND`) and goes on behind the response. A run that a later claim
+  failed as abandoned (no progress for 30 minutes) stops and writes nothing more. It reads Jira's enhanced JQL search page by page, oldest change first, with a relative `updated` window.
   Each issue becomes a task once and is updated by later runs: summary, description (Jira's rich text turned into the
   task store's HTML, escaped, link schemes allow-listed), status by the map, priority by name, the assignee matched by
   e-mail (a hidden e-mail leaves the members alone), labels as tags, due date, parent and sub-tasks, and issue links
@@ -61,7 +62,7 @@ whose routes share the `/integration/jira` prefix and must be registered first.
   signed HS256 with the client secret (the algorithm pinned, `exp`/`nbf`/`iat` checked, a constant-time compare) and
   the connection's webhook among `matchedWebhookIds`. Each delivery (`X-Atlassian-Webhook-Identifier`) is applied once;
   a delivery whose apply failed is released, so Jira's retry goes through. The webhook follows a change of the
-  mappings or the site, `POST …/:integrationId/webhook` registers it again on demand, and the scheduled sweep
+  mappings, the site or the delivery address, `POST …/:integrationId/webhook` registers it again on demand, and the scheduled sweep
   refreshes it a week before Jira's 30-day expiry (and registers it again when Jira no longer knows it).
 - **Outbound.** When a mapping is `outbound` or `both`, a task change edits the issue's fields and moves its status by
   the transition whose target the task's status maps to (a status named on its own beats one reached by category,

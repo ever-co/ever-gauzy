@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { DataSource, In } from 'typeorm';
 import { ActorTypeEnum, BaseEntityEnum, ID, IntegrationEntity } from '@gauzy/contracts';
@@ -99,8 +99,9 @@ export class JiraIssueDetailsService {
 				organizationId: scope.organizationId
 			} as unknown as Comment)
 		);
-		await this.commandBus.execute(
-			new IntegrationMapSyncEntityCommand({ gauzyId: saved.id as ID, integrationId, sourceId: String(comment.id), entity: IntegrationEntity.COMMENT, ...scope })
+		await this.mapOrUndo(
+			new IntegrationMapSyncEntityCommand({ gauzyId: saved.id as ID, integrationId, sourceId: String(comment.id), entity: IntegrationEntity.COMMENT, ...scope }),
+			() => comments.delete({ id: saved.id } as never)
 		);
 		context.details.comments += 1;
 	}
@@ -133,18 +134,39 @@ export class JiraIssueDetailsService {
 				organizationId: scope.organizationId
 			} as unknown as ResourceLink)
 		);
-		await this.commandBus.execute(
-			new IntegrationMapSyncEntityCommand({ gauzyId: saved.id as ID, integrationId, sourceId: String(attachment.id), entity: IntegrationEntity.ATTACHMENT, ...scope })
+		await this.mapOrUndo(
+			new IntegrationMapSyncEntityCommand({ gauzyId: saved.id as ID, integrationId, sourceId: String(attachment.id), entity: IntegrationEntity.ATTACHMENT, ...scope }),
+			() => links.delete({ id: saved.id } as never)
 		);
 		context.details.links += 1;
 	}
 
 	/** The platform id a Jira record was kept as, or null. */
+	/**
+	 * The record a Jira comment or attachment is kept as, or null when it is not kept yet. Only a miss is "not kept": a
+	 * lookup that failed (a timeout, a lost connection) fails this detail, or the record would be kept a second time.
+	 */
 	private async mapOf(context: JiraDetailsContext, entity: IntegrationEntity, sourceId: string): Promise<ID | null> {
 		const map = await this.integrationMapService
 			.findOneByWhereOptions({ entity, sourceId, integrationId: context.integrationId, ...context.scope })
-			.catch(() => null);
+			.catch((error: unknown) => {
+				if (error instanceof NotFoundException) return null;
+				throw error;
+			});
 		return (map?.gauzyId as ID | undefined) ?? null;
+	}
+
+	/**
+	 * Records the id map of a record just kept; when that fails, the record goes again (best effort) and the failure
+	 * stands, so the next read of the issue keeps it once, with its map, instead of a second unmapped copy.
+	 */
+	private async mapOrUndo(command: IntegrationMapSyncEntityCommand, undo: () => Promise<unknown>): Promise<void> {
+		try {
+			await this.commandBus.execute(command);
+		} catch (error) {
+			await undo().catch((caught: unknown) => this.logger.warn(`A record whose id map failed could not be removed again: ${this.describe(caught)}`));
+			throw error;
+		}
 	}
 
 	/** The employee (and user) with the author's e-mail in the organization, once per e-mail per run; null when none (or no e-mail). */

@@ -1,4 +1,4 @@
-import { Logger } from '@nestjs/common';
+import { Logger, NotFoundException } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { DataSource } from 'typeorm';
 import { ActorTypeEnum, BaseEntityEnum, IntegrationEntity } from '@gauzy/contracts';
@@ -43,7 +43,11 @@ function repository() {
 		rows.push(row);
 		return row;
 	});
-	return { rows, findOne, update, create, save };
+	const remove = jest.fn(async ({ id }: { id: unknown }) => {
+		const index = rows.findIndex((row) => row['id'] === id);
+		if (index >= 0) rows.splice(index, 1);
+	});
+	return { rows, findOne, update, create, save, delete: remove };
 }
 
 function details(options: { employees?: Array<{ id: string; userId: string | null; email: string }>; maps?: Array<{ entity: string; sourceId: string; gauzyId: string }> } = {}) {
@@ -60,7 +64,8 @@ function details(options: { employees?: Array<{ id: string; userId: string | nul
 	const integrationMapService = {
 		findOneByWhereOptions: jest.fn(async (where: { entity: string; sourceId: string }) => {
 			const map = maps.find((candidate) => candidate.entity === where.entity && candidate.sourceId === where.sourceId);
-			if (!map) throw new Error('not found');
+			// A miss, as the platform's lookup answers it.
+			if (!map) throw new NotFoundException('The requested record was not found');
 			return map;
 		})
 	} as unknown as IntegrationMapService;
@@ -71,7 +76,7 @@ function details(options: { employees?: Array<{ id: string; userId: string | nul
 	});
 	const context: JiraDetailsContext = { scope, integrationId: 'int-1', connectedByUserId: 'user-owner', authorsByEmail: new Map(), details: { comments: 0, links: 0, failed: 0 } };
 	const service = new JiraIssueDetailsService(dataSource, { execute } as unknown as CommandBus, integrationMapService, { findAll } as unknown as EmployeeService);
-	return { service, context, comments, links, execute, findAll };
+	return { service, context, comments, links, execute, findAll, integrationMapService };
 }
 
 beforeEach(() => {
@@ -145,6 +150,26 @@ describe('JiraIssueDetailsService', () => {
 		retitled.links.rows.push({ id: 'link-row-1', tenantId: 'tenant-1', title: 'Design', url: 'https://site.atlassian.net/rest/api/3/attachment/content/1' });
 		await retitled.service.apply(retitled.context, issue([], [attachment({ filename: 'Design v2' })]), 'task-1');
 		expect(retitled.links.update).toHaveBeenCalledWith({ id: 'link-row-1' }, { title: 'Design v2', url: 'https://site.atlassian.net/rest/api/3/attachment/content/1' });
+	});
+
+	it('fails a detail whose map lookup failed (not a miss), keeping nothing twice', async () => {
+		const { service, context, comments, integrationMapService } = details();
+		(integrationMapService.findOneByWhereOptions as jest.Mock).mockRejectedValueOnce(new Error('connection lost'));
+		await service.apply(context, issue([comment()]), 'task-1');
+		expect(comments.save).not.toHaveBeenCalled();
+		expect(context.details).toEqual({ comments: 0, links: 0, failed: 1 });
+	});
+
+	it('removes a comment or a link whose id map could not be written, and counts the failure (the next read keeps it once)', async () => {
+		const { service, context, comments, links, execute } = details();
+		execute.mockRejectedValueOnce(new Error('map write failed')).mockRejectedValueOnce(new Error('map write failed'));
+		await service.apply(context, issue([comment()], [attachment()]), 'task-1');
+		expect(comments.save).toHaveBeenCalledTimes(1);
+		expect(comments.delete).toHaveBeenCalledTimes(1);
+		expect(links.delete).toHaveBeenCalledTimes(1);
+		expect(comments.rows).toHaveLength(0);
+		expect(links.rows).toHaveLength(0);
+		expect(context.details).toEqual({ comments: 0, links: 0, failed: 2 });
 	});
 
 	it('counts a comment that could not be kept as a failure of the run and goes on with the rest', async () => {
