@@ -265,6 +265,8 @@ export class JiraConflictsComponent implements OnChanges {
 	/** Task titles by id, each read once (missing: not readable, the link says "Open the task"). */
 	private readonly titles = new Map<string, string>();
 	private readonly titlesAsked = new Set<string>();
+	/** How many times a task's cached title was dropped: a read started before the last drop is not kept. */
+	private readonly titleGeneration = new Map<string, number>();
 	/** The value cells shown whole (`<conflict id>:<side>`). */
 	private readonly expanded = new Set<string>();
 	private listing: Subscription | null = null;
@@ -375,6 +377,7 @@ export class JiraConflictsComponent implements OnChanges {
 					if (keep === 'platform' && row.conflict.field === 'title') {
 						this.titles.delete(row.conflict.taskId);
 						this.titlesAsked.delete(row.conflict.taskId);
+						this.titleGeneration.set(row.conflict.taskId, (this.titleGeneration.get(row.conflict.taskId) ?? 0) + 1);
 					}
 					this.notice = this.translate.instant(keep === 'platform' ? 'JIRA.CONFLICTS.KEPT_PLATFORM' : 'JIRA.CONFLICTS.KEPT_EXTERNAL');
 					this.load(true);
@@ -398,16 +401,19 @@ export class JiraConflictsComponent implements OnChanges {
 		const scope = { tenantId: first.tenantId, organizationId: first.organizationId };
 		for (let start = 0; start < missing.length; start += TASK_TITLES_MAX) {
 			const chunk = missing.slice(start, start + TASK_TITLES_MAX);
+			const generations = new Map(chunk.map((taskId) => [taskId, this.titleGeneration.get(taskId) ?? 0]));
+			const current = (taskId: string) => (this.titleGeneration.get(taskId) ?? 0) === generations.get(taskId);
 			this.api
 				.taskTitles(scope, chunk)
 				.pipe(takeUntilDestroyed(this.destroyRef))
 				.subscribe((titles) => {
 					// The read failed: these titles are asked again on the next read of the list.
 					if (!titles) {
-						for (const taskId of chunk) this.titlesAsked.delete(taskId);
+						for (const taskId of chunk) if (current(taskId)) this.titlesAsked.delete(taskId);
 						return;
 					}
-					for (const [taskId, title] of Object.entries(titles)) this.titles.set(taskId, title);
+					// A title dropped since this read started (written back meanwhile) is not set from it.
+					for (const [taskId, title] of Object.entries(titles)) if (current(taskId)) this.titles.set(taskId, title);
 					this.cdr.markForCheck();
 				});
 		}

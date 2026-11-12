@@ -711,8 +711,12 @@ export class JiraSettingsComponent implements OnInit {
 
 	/** Brings the connection's webhook in line with its mappings now, and says what happened. */
 	registerWebhook(): void {
-		if (!this.integrationId) return;
-		this.request(this.api.registerWebhook(this.integrationId), ({ outcome, connection }) => {
+		const integrationId = this.integrationId;
+		const organizationId = this.organizationId;
+		if (!integrationId) return;
+		this.request(this.api.registerWebhook(integrationId), ({ outcome, connection }) => {
+			// The page moved to another connection or organization meanwhile: this answer is not its.
+			if (integrationId !== this.integrationId || organizationId !== this.organizationId) return;
 			this.connection = connection;
 			this.notice = this.translateKey(`JIRA.WEBHOOK.OUTCOMES.${outcome}`);
 		});
