@@ -15,6 +15,8 @@ export interface ChatPerson {
 	userId: string | null;
 	name: string;
 	imageUrl: string | null;
+	/** Their position in the organization (e.g. "Frontend Developer"), when one is set. */
+	position?: string | null;
 }
 
 /** One piece of a rendered body: plain text, or a mention chip. */

@@ -24,7 +24,7 @@ const ME = 'e-me';
 const ANNA = 'e-anna';
 const BOB = 'e-bob';
 const person = (employeeId: string, name: string): ChatPerson => ({ employeeId, userId: `u-${employeeId}`, name, imageUrl: null });
-const people = [person(ME, 'Me'), person(ANNA, 'Anna'), person(BOB, 'Bob')];
+const people = [{ ...person(ME, 'Me'), position: 'Designer' }, person(ANNA, 'Anna'), person(BOB, 'Bob')];
 const PEOPLE = { byEmployee: new Map(people.map((item) => [item.employeeId, item])), byUser: new Map(), list: people };
 
 function channel(extra: Partial<IChatConversationWithState> = {}): IChatConversationWithState {
@@ -45,7 +45,7 @@ function channel(extra: Partial<IChatConversationWithState> = {}): IChatConversa
 }
 
 const members: IChatMemberSummary[] = [
-	{ employeeId: ME, userId: 'u-me', role: ChatMemberRoleEnum.MANAGER, joinedAt: new Date('2026-03-12T10:00:00Z') },
+	{ employeeId: ME, userId: 'u-me', role: ChatMemberRoleEnum.MANAGER },
 	{ employeeId: ANNA, userId: 'u-anna', role: ChatMemberRoleEnum.MEMBER }
 ];
 
@@ -403,9 +403,9 @@ describe('ChannelSettingsDialogComponent', () => {
 		expect(api.members).toHaveBeenCalledWith('c1');
 		expect(dialog().members().map((member: { name: string }) => member.name)).toEqual(['Me', 'Anna']);
 		expect(dialog().addable().map((item: ChatPerson) => item.name)).toEqual(['Bob']);
-		// Each row says the role, and when they joined where the API says so.
-		expect(dialog().members().map((member: { joined: string | null }) => member.joined)).toEqual(['Mar 12, 2026', null]);
-		expect(fixture.nativeElement.querySelectorAll('[data-test="member-meta"]').length).toBe(2);
+		// Each row says the person's position where one is set, and their role.
+		const meta = [...fixture.nativeElement.querySelectorAll('[data-test="member-meta"]')].map((item) => (item as HTMLElement).textContent?.replace(/\s+/g, ' ').trim());
+		expect(meta).toEqual(['Designer · CHAT.SETTINGS.MANAGER', 'CHAT.SETTINGS.MEMBER']);
 		// I am not offered to remove myself (that is leaving).
 		expect(fixture.nativeElement.querySelector(`[data-test="remove-member-${ME}"]`)).toBeNull();
 		expect(fixture.nativeElement.querySelector(`[data-test="remove-member-${ANNA}"]`)).not.toBeNull();

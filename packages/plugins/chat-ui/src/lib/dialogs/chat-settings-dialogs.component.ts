@@ -1,5 +1,4 @@
-import { formatDate } from '@angular/common';
-import { AfterViewInit, ChangeDetectionStrategy, Component, computed, DestroyRef, ElementRef, inject, LOCALE_ID, OnInit, signal } from '@angular/core';
+import { AfterViewInit, ChangeDetectionStrategy, Component, computed, DestroyRef, ElementRef, inject, OnInit, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import {
@@ -457,18 +456,8 @@ interface MemberRow {
 	person: ChatPerson | null;
 	role: ChatMemberRoleEnum;
 	isMe: boolean;
-	/** When they joined, as a short date in the app's locale (null when the API does not say). */
-	joined: string | null;
-}
-
-/** A join date as a short date in `locale`, or null when there is none (or it does not read as a date). */
-function joinedOn(joinedAt: Date | string | null | undefined, locale: string): string | null {
-	if (!joinedAt) return null;
-	try {
-		return formatDate(joinedAt, 'mediumDate', locale);
-	} catch {
-		return null;
-	}
+	/** Their position in the organization (e.g. "Frontend Developer"), when one is set. */
+	position: string | null;
 }
 
 /**
@@ -697,10 +686,15 @@ let channelSettingsDialogs = 0;
 												}
 											</span>
 											<span class="member-meta" data-test="member-meta">
-												{{ (member.role === 'manager' ? 'CHAT.SETTINGS.MANAGER' : 'CHAT.SETTINGS.MEMBER') | translate }}
-												@if (member.joined) {
-													<span aria-hidden="true">·</span>
-													{{ 'CHAT.SETTINGS.JOINED' | translate: { date: member.joined } }}
+												<!-- Their position, then "Manager" for a manager; "Member" when neither says more. -->
+												@if (member.position) {
+													{{ member.position }}
+													@if (member.role === 'manager') {
+														<span aria-hidden="true">·</span>
+														{{ 'CHAT.SETTINGS.MANAGER' | translate }}
+													}
+												} @else {
+													{{ (member.role === 'manager' ? 'CHAT.SETTINGS.MANAGER' : 'CHAT.SETTINGS.MEMBER') | translate }}
 												}
 											</span>
 										</span>
@@ -751,7 +745,6 @@ export class ChannelSettingsDialogComponent implements OnInit, AfterViewInit {
 	private readonly api = inject(ChatUiService);
 	private readonly translate = inject(TranslateService);
 	private readonly destroyRef = inject(DestroyRef);
-	private readonly locale = inject(LOCALE_ID);
 
 	/** Set by `NbDialogService.open(…, { context })`. */
 	context: ChannelSettingsContext = {
@@ -818,7 +811,7 @@ export class ChannelSettingsDialogComponent implements OnInit, AfterViewInit {
 					person,
 					role: member.role,
 					isMe: !!this.context.meEmployeeId && String(member.employeeId) === this.context.meEmployeeId,
-					joined: joinedOn(member.joinedAt, this.locale)
+					position: person?.position || null
 				};
 			})
 			.sort((a, b) => Number(b.role === ChatMemberRoleEnum.MANAGER) - Number(a.role === ChatMemberRoleEnum.MANAGER) || a.name.localeCompare(b.name))

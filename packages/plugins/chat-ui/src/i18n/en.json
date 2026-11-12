@@ -187,7 +187,6 @@
 		"MEMBERS": "Members ({{count}})",
 		"MANAGER": "Manager",
 		"MEMBER": "Member",
-		"JOINED": "Joined {{date}}",
 		"REMOVE": "Remove from the conversation",
 		"REMOVE_NAMED": "Remove {{name}} from the conversation",
 		"REMOVE_CONFIRM": "Remove {{name}} from this conversation?",
