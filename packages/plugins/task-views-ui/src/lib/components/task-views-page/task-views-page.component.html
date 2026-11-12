@@ -270,20 +270,38 @@
 
 						<div class="controls">
 							<label class="control">
-								<span>{{ 'TASK_VIEWS.GROUP.TITLE' | translate }}</span>
+								<span>{{ 'TASK_VIEWS.LAYOUT.TITLE' | translate }}</span>
 								<nb-select
 									size="small"
-									data-test="group-by"
-									[selected]="draft().groupBy"
-									(selectedChange)="setGroupBy($event)"
+									data-test="layout"
+									[selected]="draft().layout"
+									(selectedChange)="setLayout($event)"
 								>
-									@for (grouping of groupings; track grouping) {
-										<nb-option [value]="grouping">{{
-											groupingKey(grouping) | translate
+									@for (layout of layouts; track layout) {
+										<nb-option [value]="layout">{{
+											'TASK_VIEWS.LAYOUT.' + layout.toUpperCase() | translate
 										}}</nb-option>
 									}
 								</nb-select>
 							</label>
+							<!-- A timeline is one calendar: no grouping, and no row properties to show. -->
+							@if (!isTimeline()) {
+								<label class="control">
+									<span>{{ 'TASK_VIEWS.GROUP.TITLE' | translate }}</span>
+									<nb-select
+										size="small"
+										data-test="group-by"
+										[selected]="draft().groupBy"
+										(selectedChange)="setGroupBy($event)"
+									>
+										@for (grouping of groupings; track grouping) {
+											<nb-option [value]="grouping">{{
+												groupingKey(grouping) | translate
+											}}</nb-option>
+										}
+									</nb-select>
+								</label>
+							}
 							<label class="control">
 								<span>{{ 'TASK_VIEWS.ORDER.LABEL' | translate }}</span>
 								<nb-select
@@ -335,23 +353,25 @@
 									<span class="pill">{{ filterCount() }}</span>
 								}
 							</button>
-							<div
-								class="properties"
-								role="group"
-								[attr.aria-label]="'TASK_VIEWS.LIST.PROPERTIES' | translate"
-							>
-								@for (property of properties; track property) {
-									<button
-										type="button"
-										class="property"
-										[class.on]="shownProperties()[property]"
-										[attr.aria-pressed]="shownProperties()[property]"
-										(click)="toggleProperty(property)"
-									>
-										{{ propertyKey(property) | translate }}
-									</button>
-								}
-							</div>
+							@if (!isTimeline()) {
+								<div
+									class="properties"
+									role="group"
+									[attr.aria-label]="'TASK_VIEWS.LIST.PROPERTIES' | translate"
+								>
+									@for (property of properties; track property) {
+										<button
+											type="button"
+											class="property"
+											[class.on]="shownProperties()[property]"
+											[attr.aria-pressed]="shownProperties()[property]"
+											(click)="toggleProperty(property)"
+										>
+											{{ propertyKey(property) | translate }}
+										</button>
+									}
+								</div>
+							}
 						</div>
 						@if (orderingPending()) {
 							<p class="hint" data-test="ordering-pending">
@@ -404,20 +424,27 @@
 					} @else if (!loading() && !items().length) {
 						<p class="empty" data-test="view-empty">{{ 'TASK_VIEWS.LIST.EMPTY' | translate }}</p>
 					} @else {
-						<ngx-task-views-task-list
-							[groups]="rowGroups()"
-							[grouped]="isSaved() && countedBy() !== 'none'"
-							[selection]="selection()"
-							[focusedId]="focusedId()"
-							[shown]="shownProperties()"
-							[draggable]="draggable()"
-							[selectable]="canEdit() || canDeleteTasks()"
-							(toggled)="onToggle($event)"
-							(opened)="openTask($event)"
-							(focused)="focusedId.set($event)"
-							(dropped)="drop($event)"
-							(pageToggled)="onPageToggle($event)"
-						></ngx-task-views-task-list>
+						@if (isTimeline()) {
+							<ngx-task-views-timeline
+								[tasks]="items()"
+								(opened)="openTask($event)"
+							></ngx-task-views-timeline>
+						} @else {
+							<ngx-task-views-task-list
+								[groups]="rowGroups()"
+								[grouped]="isSaved() && countedBy() !== 'none'"
+								[selection]="selection()"
+								[focusedId]="focusedId()"
+								[shown]="shownProperties()"
+								[draggable]="draggable()"
+								[selectable]="canEdit() || canDeleteTasks()"
+								(toggled)="onToggle($event)"
+								(opened)="openTask($event)"
+								(focused)="focusedId.set($event)"
+								(dropped)="drop($event)"
+								(pageToggled)="onPageToggle($event)"
+							></ngx-task-views-task-list>
+						}
 						<div class="paging">
 							<span class="shown">{{
 								'TASK_VIEWS.LIST.SHOWING' | translate: { shown: items().length, total: total() }

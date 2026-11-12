@@ -132,6 +132,25 @@
 			"SUMMARY": "{{count}} filters could not be applied. Open the filters to fix them."
 		}
 	},
+	"LAYOUT": {
+		"TITLE": "Layout",
+		"LIST": "List",
+		"TIMELINE": "Timeline"
+	},
+	"TIMELINE": {
+		"ZOOM": "Zoom",
+		"WEEKS": "Weeks",
+		"MONTHS": "Months",
+		"EMPTY": "No tasks match this view.",
+		"UNSCHEDULED": "Without dates ({{count}})",
+		"RANGE": "{{start}} – {{end}}",
+		"DUE_ONLY": "due date only",
+		"START_ONLY": "start date only",
+		"INVALID_RANGE": "due before it starts",
+		"OVERDUE": "overdue",
+		"BEFORE": "before the dates shown",
+		"AFTER": "after the dates shown"
+	},
 	"GROUP": {
 		"TITLE": "Group by",
 		"NONE": "No grouping",

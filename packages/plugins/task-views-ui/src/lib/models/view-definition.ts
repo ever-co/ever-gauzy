@@ -14,13 +14,19 @@ import {
 } from '@gauzy/contracts';
 import { treeOf } from './filter-tree';
 
-/** What a view shows: its filter tree, its grouping, its ordering and the properties the rows show. */
+/** How a view draws its tasks: as rows, or as bars on a calendar from their start to their due date. */
+export type TaskViewLayout = 'list' | 'timeline';
+
+export const TASK_VIEW_LAYOUTS: readonly TaskViewLayout[] = ['list', 'timeline'];
+
+/** What a view shows: its filter tree, its grouping, its ordering, the properties the rows show, and its layout. */
 export interface TaskViewDefinition {
 	filter: ITaskViewFilterGroup | null;
 	groupBy: TaskViewGroupBy;
 	orderBy: Required<ITaskViewOrdering>;
 	/** The row properties shown (property → shown); a property not named keeps its default. */
 	properties: Record<string, boolean>;
+	layout: TaskViewLayout;
 }
 
 export const TASK_VIEW_GROUPINGS: readonly TaskViewGroupBy[] = [
@@ -77,7 +83,8 @@ export const DEFAULT_DEFINITION: TaskViewDefinition = Object.freeze({
 	filter: null,
 	groupBy: 'none',
 	orderBy: { field: 'createdAt', direction: 'desc' },
-	properties: {}
+	properties: {},
+	layout: 'list'
 }) as TaskViewDefinition;
 
 /** A JSON column as an object (SQLite may answer its text), or an empty object. */
@@ -95,7 +102,7 @@ export function jsonObjectOf(raw: unknown): Record<string, unknown> {
 
 /** What a saved view shows, read from its columns with every default in place. */
 export function definitionOf(
-	view: Pick<ITaskView, 'filterOptions' | 'properties'> | null | undefined
+	view: Pick<ITaskView, 'filterOptions' | 'properties' | 'displayOptions'> | null | undefined
 ): TaskViewDefinition {
 	if (!view) return { ...DEFAULT_DEFINITION, properties: {} };
 	const options = jsonObjectOf(view.filterOptions);
@@ -107,8 +114,29 @@ export function definitionOf(
 		filter: treeOf(options['filter']),
 		groupBy: groupingOf(options['groupBy']),
 		orderBy: orderingOf(options['orderBy']),
-		properties
+		properties,
+		layout: layoutOf(view.displayOptions)
 	};
+}
+
+/**
+ * The layout a view's `displayOptions` names: the timeline, or else the list. Ever Teams writes the layout there too,
+ * only when it is not the list (`'board'` or `'timeline'`); a board, which this page does not draw, shows as the list.
+ */
+export function layoutOf(displayOptions: unknown): TaskViewLayout {
+	return jsonObjectOf(displayOptions)['layout'] === 'timeline' ? 'timeline' : 'list';
+}
+
+/**
+ * The `displayOptions` a definition is saved as, over what the view held: a timeline is written as such; the list
+ * clears a timeline (the list is the layout of a view that names none) and leaves a layout this page does not draw
+ * (an Ever Teams board) as it is. The other keys another client keeps there stay.
+ */
+export function displayOptionsOf(definition: TaskViewDefinition, previous?: unknown): JsonData {
+	const options = jsonObjectOf(previous);
+	if (definition.layout === 'timeline') return { ...options, layout: 'timeline' } as JsonData;
+	if (options['layout'] === 'timeline') delete options['layout'];
+	return options as JsonData;
 }
 
 /**
@@ -148,7 +176,8 @@ export function isSameDefinition(first: TaskViewDefinition, second: TaskViewDefi
 		first.groupBy === second.groupBy &&
 		first.orderBy.field === second.orderBy.field &&
 		first.orderBy.direction === second.orderBy.direction &&
-		JSON.stringify(properties(first)) === JSON.stringify(properties(second))
+		JSON.stringify(properties(first)) === JSON.stringify(properties(second)) &&
+		(first.layout ?? 'list') === (second.layout ?? 'list')
 	);
 }
 
@@ -226,7 +255,7 @@ export function createInput(
 		projectId: placement.projectId ?? null,
 		filterOptions: filterOptionsOf(definition, from?.filterOptions),
 		properties: propertiesOf(definition, from?.properties),
-		...(from?.displayOptions ? { displayOptions: jsonObjectOf(from.displayOptions) as JsonData } : {}),
+		...displayOptionsInput(definition, from?.displayOptions, !!from?.displayOptions),
 		...(from?.queryParams ? { queryParams: jsonObjectOf(from.queryParams) as JsonData } : {})
 	} as ITaskViewCreateInput;
 }
@@ -242,8 +271,20 @@ export function saveInput(
 		...(scope.tenantId ? { tenantId: scope.tenantId } : {}),
 		filterOptions: filterOptionsOf(definition, view.filterOptions),
 		properties: propertiesOf(definition, view.properties),
+		// The layout is written only when it changes: a save of the filters leaves the column as another client keeps it.
+		...displayOptionsInput(definition, view.displayOptions, false),
 		expectedVersion: versionOf(view)
 	};
+}
+
+/** `displayOptions` for a create or a save body: sent when `always`, or when the definition's layout needs writing. */
+function displayOptionsInput(
+	definition: TaskViewDefinition,
+	previous: unknown,
+	always: boolean
+): { displayOptions?: JsonData } {
+	if (!always && (definition.layout ?? 'list') === layoutOf(previous)) return {};
+	return { displayOptions: displayOptionsOf(definition, previous) };
 }
 
 /** The visibility level of where a view is listed: a team's or a project's, else the organization's. */
