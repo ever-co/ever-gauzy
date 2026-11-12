@@ -98,7 +98,14 @@ function isUnsafeSegment(segment: string): boolean {
 		// A malformed escape is in no file name the upload gives
 		return true;
 	}
-	return !decoded || decoded === '.' || decoded === '..' || /[?#]/.test(segment) || /[?#]/.test(decoded);
+	// A separator inside a segment (an encoded `/`, or a backslash a browser reads as `/`) could move the file once resolved
+	return (
+		!decoded ||
+		decoded === '.' ||
+		decoded === '..' ||
+		/[?#\\]/.test(segment) ||
+		/[?#/\\]/.test(decoded)
+	);
 }
 
 /**

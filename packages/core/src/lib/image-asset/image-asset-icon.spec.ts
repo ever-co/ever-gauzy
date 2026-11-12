@@ -202,7 +202,11 @@ describe('image asset icons', () => {
 			`uploads/${tenantId}/icons/a.png`,
 			`uploads/icons/${otherTenantId}/a.png?x=/${tenantId}/a.png`,
 			`uploads/icons/${otherTenantId}/a.png#/${tenantId}/a.png`,
-			`uploads/icons/${otherTenantId}/a.png%3Fx=/${tenantId}/a.png`
+			`uploads/icons/${otherTenantId}/a.png%3Fx=/${tenantId}/a.png`,
+			// A separator encoded inside one segment, or a backslash a browser reads as `/`
+			`uploads/icons/${tenantId}/a.png%2F..%2F..%2F${otherTenantId}%2Fx.png`,
+			`uploads/icons/${tenantId}/a.png%5C..%5C..%5C${otherTenantId}%5Cx.png`,
+			`uploads/icons/${tenantId}/..\\${otherTenantId}\\x.png`
 		])('builds no URL for the key %s', async (traversing) => {
 			const provider = jest.fn().mockReturnValue({ url: jest.fn().mockResolvedValue(signed) });
 
