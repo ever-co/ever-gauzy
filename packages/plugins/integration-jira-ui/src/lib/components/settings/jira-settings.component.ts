@@ -553,6 +553,13 @@ export class JiraSettingsComponent implements OnInit {
 		])
 			.pipe(
 				switchMap(([integrationId, organizationId]) => {
+					// Another organization selected: this connection is the former one's, so the page goes back to the Jira
+					// overview, which reads the new organization's connection.
+					if (this.organizationId && organizationId && organizationId !== this.organizationId) {
+						this.organizationId = organizationId;
+						void this.router.navigate([JIRA_LINK]);
+						return of(null);
+					}
 					// Another connection: the run filter of the last one means nothing here.
 					if (integrationId !== this.integrationId) this.conflictRunId = null;
 					this.integrationId = integrationId;

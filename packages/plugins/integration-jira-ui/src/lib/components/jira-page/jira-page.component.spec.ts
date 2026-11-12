@@ -93,6 +93,16 @@ describe('JiraPageComponent', () => {
 		expect(render({ error }).component.callbackError).toBe(shown);
 	});
 
+	it('a reconnect that cannot start says why, in the connected view too', () => {
+		api.status.mockReturnValue(of(status({ connection: { id: 'int-1', organizationId: ORGANIZATION.id, siteName: 'Acme', siteRequired: false, attentionReason: 'token_refused' } as never })));
+		api.installState.mockReturnValue(throwError(() => ({ status: 500, error: { message: 'State store down' } })));
+		const { component, find, fixture } = render();
+		expect(component.view).toBe('connected');
+		(find('reconnect') as HTMLButtonElement).click();
+		fixture.detectChanges();
+		expect(find('connect-error')?.textContent).toContain('State store down');
+	});
+
 	it('a connection still waiting for its site says so', () => {
 		api.status.mockReturnValue(of(status({ connection: { id: 'int-1', organizationId: ORGANIZATION.id, siteName: null, siteRequired: true, attentionReason: null } as never })));
 		const { find } = render();

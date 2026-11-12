@@ -34,6 +34,10 @@ const CALLBACK_ERRORS = new Set(['not_configured', 'denied', 'invalid_state', 'e
 				@if (callbackError) {
 					<nb-alert status="danger" role="alert" data-test="callback-error">{{ 'JIRA.CALLBACK_ERRORS.' + callbackError | translate }}</nb-alert>
 				}
+				<!-- Above every view: a connect started from the connected view (a reconnect) fails visibly too. -->
+				@if (connectError) {
+					<nb-alert status="danger" role="alert" data-test="connect-error">{{ connectError }}</nb-alert>
+				}
 				@switch (view) {
 					@case ('loading') {
 						<p data-test="loading">{{ 'JIRA.LOADING' | translate }}</p>
@@ -51,9 +55,6 @@ const CALLBACK_ERRORS = new Set(['not_configured', 'denied', 'invalid_state', 'e
 					@case ('connect') {
 						<h5 data-test="connect">{{ 'JIRA.CONNECT.TITLE' | translate }}</h5>
 						<p>{{ 'JIRA.CONNECT.TEXT' | translate }}</p>
-						@if (connectError) {
-							<nb-alert status="danger" role="alert" data-test="connect-error">{{ connectError }}</nb-alert>
-						}
 						<button nbButton status="primary" type="button" data-test="connect-button" [disabled]="connecting" (click)="connect()">
 							{{ (connecting ? 'JIRA.CONNECT.STARTING' : 'JIRA.CONNECT.BUTTON') | translate }}
 						</button>

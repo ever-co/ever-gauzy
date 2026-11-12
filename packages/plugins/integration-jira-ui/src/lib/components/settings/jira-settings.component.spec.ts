@@ -4,7 +4,7 @@ jest.mock('@gauzy/ui-core/core', () => ({ Store: class Store {}, OrganizationPro
 import { TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute, convertToParamMap, Router } from '@angular/router';
-import { of, Subject } from 'rxjs';
+import { BehaviorSubject, of, Subject } from 'rxjs';
 import { OrganizationProjectsService, Store } from '@gauzy/ui-core/core';
 import { JiraConnectionSummary, JiraMapping, JiraRun, JiraSite, JiraUiService } from '../../services/jira-ui.service';
 import { finishedRuns, JiraSettingsComponent } from './jira-settings.component';
@@ -354,6 +354,30 @@ describe('JiraSettingsComponent (site, webhook, mappings, reports)', () => {
 		expect(component.draft.jiraProjectId).toBe('');
 		expect(component.detail).toBeNull();
 		expect(api.mappings).toHaveBeenCalledTimes(2);
+	});
+
+	it("another organization selected: goes back to the Jira overview (this connection is the former one's)", async () => {
+		const organization$ = new BehaviorSubject<{ id: string; tenantId: string }>(ORGANIZATION);
+		const navigate = jest.fn().mockResolvedValue(true);
+		TestBed.configureTestingModule({
+			imports: [JiraSettingsComponent],
+			providers: [
+				{ provide: JiraUiService, useValue: api },
+				{ provide: Store, useValue: { selectedOrganization$: organization$, selectedOrganization: ORGANIZATION } },
+				{ provide: OrganizationProjectsService, useValue: { getAll: jest.fn().mockResolvedValue({ items: [] }) } },
+				{ provide: Router, useValue: { navigate } },
+				{ provide: ActivatedRoute, useValue: { paramMap: of(convertToParamMap({ integrationId: 'int-1' })) } }
+			]
+		});
+		const fixture = TestBed.createComponent(JiraSettingsComponent);
+		await settle(fixture);
+		expect(api.summary).toHaveBeenCalledTimes(1);
+
+		organization$.next({ id: 'org-2', tenantId: 'tenant-1' });
+		await settle(fixture);
+
+		expect(navigate).toHaveBeenCalledWith(['/pages/integrations/jira']);
+		expect(api.summary).toHaveBeenCalledTimes(1);
 	});
 
 	it('a project detail answered after the form moved to another Jira project is dropped', async () => {
