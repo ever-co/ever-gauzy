@@ -1,0 +1,112 @@
+.subtitle,
+.hint {
+	font-size: 0.85rem;
+	opacity: 0.75;
+	margin: 0.25rem 0 0;
+}
+.warn {
+	color: var(--color-warning-default);
+	opacity: 1;
+}
+.loading {
+	min-height: 6rem;
+}
+.loading.small {
+	min-height: 3rem;
+}
+.toolbar {
+	display: flex;
+	gap: 0.5rem;
+	margin-bottom: 1rem;
+}
+.templates,
+.panel {
+	border: 1px solid var(--border-basic-color-3);
+	border-radius: var(--border-radius);
+	padding: 1rem;
+	margin-bottom: 1rem;
+}
+.template {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	gap: 1rem;
+	padding: 0.5rem 0;
+}
+.template + .template {
+	border-top: 1px solid var(--border-basic-color-3);
+}
+.template-name,
+.rule-name {
+	font-weight: 600;
+}
+.rules {
+	list-style: none;
+	padding: 0;
+	margin: 0 0 1rem;
+}
+.rule {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	gap: 1rem;
+	padding: 0.75rem;
+	border: 1px solid var(--border-basic-color-3);
+	border-radius: var(--border-radius);
+	margin-bottom: 0.5rem;
+	cursor: grab;
+}
+.rule.selected {
+	border-color: var(--color-primary-default);
+}
+.rule.dragging {
+	opacity: 0.5;
+}
+.rule-main {
+	display: flex;
+	align-items: center;
+	gap: 0.75rem;
+}
+.rule-actions {
+	display: flex;
+	gap: 0.25rem;
+	flex-wrap: wrap;
+}
+.line {
+	display: flex;
+	gap: 0.5rem;
+	align-items: center;
+	flex-wrap: wrap;
+	margin-bottom: 0.75rem;
+}
+.task {
+	min-width: 18rem;
+}
+.detail {
+	opacity: 0.7;
+	margin-right: 0.25rem;
+}
+.failed {
+	color: var(--color-danger-default);
+}
+.outcome.success {
+	color: var(--color-success-default);
+}
+.outcome.warning {
+	color: var(--color-warning-default);
+}
+.outcome.danger {
+	color: var(--color-danger-default);
+}
+.runs {
+	width: 100%;
+	border-collapse: collapse;
+	font-size: 0.85rem;
+	margin-bottom: 0.75rem;
+}
+.runs th,
+.runs td {
+	text-align: left;
+	padding: 0.25rem 0.5rem;
+	border-bottom: 1px solid var(--border-basic-color-3);
+}
