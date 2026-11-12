@@ -283,9 +283,9 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 			try {
 				this.debug(() => `update stoppedAt time to ${start}`);
 
-				// Update the stoppedAt time
+				// The start is named too: an update without one files the log under the current week's timesheet.
 				const timeLog: ITimeLog = await this._commandBus.execute(
-					new TimeLogUpdateCommand({ stoppedAt: start }, log, true, forceDelete)
+					new TimeLogUpdateCommand({ startedAt, stoppedAt: start }, log, true, forceDelete)
 				);
 
 				await this.deleteSpanTimeSlots(timeLog, spanTimeSlots, organizationId, employeeId, forceDelete);

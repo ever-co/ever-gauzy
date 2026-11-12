@@ -8,7 +8,14 @@ import { MultiORMEnum } from '../../core/utils';
 import { ManagedEmployeeService } from '../../employee/managed-employee.service';
 import { TypeOrmEmployeeRepository } from '../../employee/repository/type-orm-employee.repository';
 import { mockRequestContext } from '../testing/recording-query-builder';
-import { at, SPAN_EMPLOYEE_ID, SPAN_ORGANIZATION_ID, SPAN_TENANT_ID, TimeSpanStore } from '../testing/time-span-store';
+import {
+	at,
+	SPAN_EMPLOYEE_ID,
+	SPAN_ORGANIZATION_ID,
+	SPAN_TENANT_ID,
+	SPAN_TIMESHEET_ID,
+	TimeSpanStore
+} from '../testing/time-span-store';
 import { TypeOrmTimeLogRepository } from './repository/type-orm-time-log.repository';
 import { TimeLogService } from './time-log.service';
 
@@ -25,6 +32,9 @@ const USER_ID = '2e4f6a8c-0b1d-4e3f-9a5b-7c9d1e3f5a71';
 
 /** A manual entry, as the web and the Angular UI save one. */
 const MANUAL_ENTRY = { logType: TimeLogType.MANUAL, source: TimeLogSourceEnum.WEB_TIMER };
+
+/** A moment of the week after the store's day, for the cases that need the current week to be a later one. */
+const NEXT_WEEK = new Date('2026-11-12T12:00:00.000Z');
 
 /** Every ten-minute start from `from` up to `to`, `to` excluded (`HH:mm`). */
 function slotStarts(from: string, to: string): string[] {
@@ -114,6 +124,15 @@ describe('TimeLogService: manual time over another entry of the same member', ()
 			['10:00', '11:30', slotStarts('10:00', '11:30')],
 			['11:30', '12:30', slotStarts('11:30', '12:30')]
 		]);
+	});
+
+	it('an entry of an earlier week overlapped at its end stays under the timesheet of its own week', async () => {
+		jest.spyOn(Date, 'now').mockReturnValue(NEXT_WEEK.getTime());
+		store.addTimeLog('manual', '10:00', '12:00', MANUAL_ENTRY);
+
+		await addManualTime('11:30', '12:30');
+
+		expect(store.read('manual').timesheetId).toBe(SPAN_TIMESHEET_ID);
 	});
 
 	it('an entry with the new one in its middle keeps its time before it and after it, each with its slots', async () => {

@@ -1,3 +1,4 @@
+import * as moment from 'moment';
 import { IGetTimeLogConflictInput, ITimeSlot, TimeLogSourceEnum, TimeLogType } from '@gauzy/contracts';
 import { MultiORMEnum } from '../../core/utils';
 import {
@@ -135,7 +136,9 @@ export class TimeSpanStore {
 		this.routes.set(TimeLogCreateCommand, (command: TimeLogCreateCommand) =>
 			this.createManualTimeLog(command.input)
 		);
-		this.routes.set(TimesheetFirstOrCreateCommand, () => ({ id: SPAN_TIMESHEET_ID }));
+		this.routes.set(TimesheetFirstOrCreateCommand, (command: TimesheetFirstOrCreateCommand) =>
+			this.timesheetOfWeek(command.date)
+		);
 		this.routes.set(TimesheetRecalculateCommand, () => undefined);
 		this.routes.set(UpdateEmployeeTotalWorkedHoursCommand, () => undefined);
 	}
@@ -468,5 +471,21 @@ export class TimeSpanStore {
 		this.timeLogs.push(log);
 		this.linkToItsTime(log);
 		return log;
+	}
+
+	/**
+	 * As TimesheetFirstOrCreateHandler: the employee's timesheet of the week the date falls in, the current week's
+	 * without a date. The store's day is in the week of SPAN_TIMESHEET_ID.
+	 *
+	 * @param date - The date the timesheet is asked for.
+	 */
+	private timesheetOfWeek(date: Date | undefined): { id: string } {
+		const week = moment.utc(date).startOf('week');
+		const storeWeek = moment.utc(at('00:00')).startOf('week');
+		if (week.isSame(storeWeek)) {
+			return { id: SPAN_TIMESHEET_ID };
+		}
+		const weekStart = week.format('YYYY-MM-DD');
+		return { id: `timesheet-${weekStart}` };
 	}
 }
