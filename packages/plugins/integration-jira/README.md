@@ -32,23 +32,29 @@ whose routes share the `/integration/jira` prefix and must be registered first.
   send them to. Atlassian sends them back to the public callback, which binds the connection to the state's tenant
   and organization (never to the query), exchanges the code once, and writes an `integration_tenant` named `Jira`
   with the tokens in its settings. No route answers a token. The access token is renewed before it expires, one
-  renewal at a time per connection, and the refresh token rotates on every renewal.
+  renewal at a time per connection, and the refresh token rotates on every renewal. A token Jira refuses before its
+  expiry is renewed at once (unless another process renewed it meanwhile).
 - **Site.** The callback reads the sites the token reaches (`accessible-resources`). With one site the connection uses
   it at once; with several it waits until someone picks one: `GET …/:integrationId/sites`, `PUT …/:integrationId/site`.
   Nothing syncs until a site is chosen. A connection that has mappings keeps its site (`409`
-  `JIRA_SITE_HAS_MAPPINGS`): a mapping names its Jira project by an id that is unique only on its site.
+  `JIRA_SITE_HAS_MAPPINGS`): a mapping names its Jira project by an id that is unique only on its site. A reconnect
+  keeps it too; when the new token no longer reaches that site, nothing is saved and the callback answers
+  `?error=site_mismatch`.
 - **Map.** `GET …/projects` lists the site's projects and `GET …/projects/:projectId` adds a project's issue types and
   statuses. `POST …/mappings` maps a Jira project to a platform project with a `direction` (`inbound`, `outbound`,
   `both`), a status map (the task status for each status category `new`, `indeterminate` and `done`, plus
   `status:<id>` entries for named statuses, which win over their category) and an optional issue-type filter. One
   mapping per Jira project of a connection.
 - **Import.** `POST …/mappings/:mappingId/import` (`{ "full": true }` for every issue, otherwise the ones changed
-  since the last import) claims the mapping (one run at a time, `409` while one is live) and goes on behind the
-  response. It reads Jira's enhanced JQL search page by page, oldest change first, with a relative `updated` window.
+  since the last import) claims the mapping (one run at a time, `409` while one is live; a mapping switched off or
+  outbound only answers `409` `JIRA_MAPPING_NOT_INBOUND`) and goes on behind the response. A run that a later claim
+  failed as abandoned (no progress for 30 minutes) stops and writes nothing more. It reads Jira's enhanced JQL search page by page, oldest change first, with a relative `updated` window.
   Each issue becomes a task once and is updated by later runs: summary, description (Jira's rich text turned into the
   task store's HTML, escaped, link schemes allow-listed), status by the map, priority by name, the assignee matched by
   e-mail (a hidden e-mail leaves the members alone), labels as tags, due date, parent and sub-tasks, and issue links
-  (blocks, clones, duplicates, relates to). Comments come in as task comments and attachments as resource links. A
+  (blocks, clones, duplicates, relates to). Comments come in as task comments (the ones a search leaves out are read
+  page by page, up to 1,000 per issue) and attachments as resource links. An issue whose comment or attachment could
+  not be kept is read again by the next import. A
   run stopped early (the cap, an API error, an issue that failed) continues from the right place next time. Each run
   writes a report as it goes (pages, issues, comments, links, conflicts, failures by issue key): `GET …/runs`.
 - **Webhooks.** One Jira dynamic webhook per connection, for the inbound projects of its mappings, delivered to
@@ -56,7 +62,7 @@ whose routes share the `/integration/jira` prefix and must be registered first.
   signed HS256 with the client secret (the algorithm pinned, `exp`/`nbf`/`iat` checked, a constant-time compare) and
   the connection's webhook among `matchedWebhookIds`. Each delivery (`X-Atlassian-Webhook-Identifier`) is applied once;
   a delivery whose apply failed is released, so Jira's retry goes through. The webhook follows a change of the
-  mappings or the site, `POST …/:integrationId/webhook` registers it again on demand, and the scheduled sweep
+  mappings, the site or the delivery address, `POST …/:integrationId/webhook` registers it again on demand, and the scheduled sweep
   refreshes it a week before Jira's 30-day expiry (and registers it again when Jira no longer knows it).
 - **Outbound.** When a mapping is `outbound` or `both`, a task change edits the issue's fields and moves its status by
   the transition whose target the task's status maps to (a status named on its own beats one reached by category,
@@ -79,7 +85,7 @@ whose routes share the `/integration/jira` prefix and must be registered first.
 ## Tables
 
 `integration_jira_project_mapping`, `integration_jira_sync_run`, `integration_jira_sync_conflict` and
-`integration_jira_issue_baseline`, created by the plugin's own migration (`1791000008140`), idempotent on PostgreSQL,
+`integration_jira_issue_baseline`, created by the plugin's own migration (`1791000008400`), idempotent on PostgreSQL,
 MySQL and SQLite.
 
 ## Build

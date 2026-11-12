@@ -1,5 +1,6 @@
 import { BaseEntityEnum, IBasePerTenantAndOrganizationEntityModel, ID, JsonData } from './base-entity.model';
 import { IEmployee } from './employee.model';
+import { IDocumentSearchSnippet } from './document-comment-anchor.model';
 import { FileStorageProviderEnum } from './file-provider';
 import { IOrganizationTeam } from './organization-team.model';
 import { ITag } from './tag.model';
@@ -200,6 +201,8 @@ export interface IDocument extends IBasePerTenantAndOrganizationEntityModel {
 	versions?: IDocumentVersion[];
 	shares?: IDocumentShare[];
 	links?: IDocumentLink[];
+	/** Virtual. A search's plain-text snippet with its match offsets (`GET /documents?q=…` only). */
+	readonly searchSnippet?: IDocumentSearchSnippet;
 }
 
 /**

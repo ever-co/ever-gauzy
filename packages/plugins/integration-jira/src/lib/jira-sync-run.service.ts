@@ -165,9 +165,10 @@ export class JiraSyncRunService extends TenantAwareCrudService<JiraSyncRun> {
 		return this.typeOrmJiraSyncRunRepository.save(run);
 	}
 
+	/** Finishes a running run (a run a later claim failed as abandoned keeps that outcome). */
 	async finish(run: JiraSyncRun, outcome: { counts: JiraSyncCounts; cursor?: string | null; error?: string | null; report?: JiraSyncRunReport | null }): Promise<void> {
 		await this.typeOrmJiraSyncRunRepository.update(
-			{ id: run.id },
+			{ id: run.id, status: JiraSyncRunStatus.RUNNING } as never,
 			{
 				status: outcome.error ? JiraSyncRunStatus.FAILED : JiraSyncRunStatus.DONE,
 				finishedAt: new Date(),
@@ -189,11 +190,15 @@ export class JiraSyncRunService extends TenantAwareCrudService<JiraSyncRun> {
 		}
 	}
 
-	/** Counts of a run in progress: the heartbeat that keeps it live (a long import shows its progress). */
-	async progress(run: JiraSyncRun, counts: JiraSyncCounts, report?: JiraSyncRunReport | null): Promise<void> {
-		await this.typeOrmJiraSyncRunRepository
+	/**
+	 * Counts of a run in progress: the heartbeat that keeps it live (a long import shows its progress). Answers whether
+	 * the run still holds its mapping: false once a later claim failed it as abandoned (no heartbeat for 30 minutes), and
+	 * its import must then stop, without writing the mapping's position. A heartbeat that could not be written keeps it.
+	 */
+	async progress(run: JiraSyncRun, counts: JiraSyncCounts, report?: JiraSyncRunReport | null): Promise<boolean> {
+		return this.typeOrmJiraSyncRunRepository
 			.update(
-				{ id: run.id },
+				{ id: run.id, status: JiraSyncRunStatus.RUNNING } as never,
 				{
 					createdCount: counts.created,
 					updatedCount: counts.updated,
@@ -203,6 +208,13 @@ export class JiraSyncRunService extends TenantAwareCrudService<JiraSyncRun> {
 					updatedAt: new Date()
 				} as never
 			)
-			.catch(() => undefined);
+			.then((result) => result.affected === undefined || result.affected === null || result.affected > 0)
+			.catch(() => true);
+	}
+
+	/** Whether a run still holds its mapping (it is running: no later claim failed it as abandoned). */
+	async isLive(run: JiraSyncRun): Promise<boolean> {
+		const count = await this.typeOrmJiraSyncRunRepository.count({ where: { id: run.id, status: JiraSyncRunStatus.RUNNING } as never });
+		return count > 0;
 	}
 }

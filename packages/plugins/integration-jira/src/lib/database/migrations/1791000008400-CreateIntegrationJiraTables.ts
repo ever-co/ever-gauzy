@@ -194,8 +194,8 @@ async function createTable(queryRunner: QueryRunner, table: TableSpec) {
  * only where `JIRA_ENABLED=true` loads the sync. Idempotent on every dialect (`IF NOT EXISTS` and probes), serialised
  * on Postgres with an advisory lock, and reversible.
  */
-export class CreateIntegrationJiraTables1791000008140 implements MigrationInterface {
-	name = 'CreateIntegrationJiraTables1791000008140';
+export class CreateIntegrationJiraTables1791000008400 implements MigrationInterface {
+	name = 'CreateIntegrationJiraTables1791000008400';
 
 	public async up(queryRunner: QueryRunner): Promise<void> {
 		await lockMigrations(queryRunner);

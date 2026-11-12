@@ -1,7 +1,7 @@
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { DataSource, EntityManager } from 'typeorm';
-import { ID, IIntegrationTenant } from '@gauzy/contracts';
-import { Organization, OrganizationProjectService, TenantAwareCrudService } from '@gauzy/core';
+import { ID, IIntegrationTenant, IntegrationEntity } from '@gauzy/contracts';
+import { IntegrationMap, Organization, OrganizationProjectService, Task, TenantAwareCrudService } from '@gauzy/core';
 import {
 	JiraSyncDirection,
 	JiraProjectMapping,
@@ -121,10 +121,24 @@ export class JiraMappingService extends TenantAwareCrudService<JiraProjectMappin
 	}
 
 	/**
+	 * Runs work while no mapping of the connection's organization can be created or changed (the lock a creation takes),
+	 * handing it how many mappings the connection has: a site change checks and writes under it, so a mapping created
+	 * meanwhile for the former site can never stay behind on the new one.
+	 */
+	async whileMappingsLocked<T>(tenant: IIntegrationTenant, work: (mappings: number) => Promise<T>): Promise<T> {
+		return this.dataSource.transaction(async (manager) => {
+			await this.lockMappingsOf(manager, tenant);
+			const mappings = await manager.count(JiraProjectMapping, { where: { integrationId: tenant.id as ID, tenantId: tenant.tenantId as ID } as never });
+			return work(mappings);
+		});
+	}
+
+	/**
 	 * Changes a mapping's project, direction, state map or switch: the mapping is read again under the same lock as
 	 * a creation, so the outbound check sees the latest row and two changes cannot both pass it. A mapping that has
-	 * imported or taken a webhook keeps its project (its tasks' id maps point into that project): remove it and map
-	 * the Jira project again instead.
+	 * synced keeps its project (its tasks' id maps point into that project): remove it and map the Jira project again
+	 * instead. "Synced" is read from what lasts: a run of the mapping, its import position, or a task of its project
+	 * that the connection's id map holds (a webhook's runs are pruned after a week; the id map stays).
 	 */
 	async updateMapping(tenant: IIntegrationTenant, mappingId: ID, input: Partial<JiraMappingInput>): Promise<JiraProjectMapping> {
 		assertStatusMap(input.statusMap);
@@ -136,8 +150,7 @@ export class JiraMappingService extends TenantAwareCrudService<JiraProjectMappin
 			if (!mapping) throw new NotFoundException({ message: 'The mapping was not found' });
 			const patch: Partial<JiraProjectMapping> = {};
 			if (input.projectId && input.projectId !== mapping.projectId) {
-				const runs = await manager.count(JiraSyncRun, { where: { mappingId: mapping.id, tenantId: tenant.tenantId as ID } as never });
-				if (runs > 0) {
+				if (await this.hasSynced(manager, tenant, mapping)) {
 					throw new ConflictException({ message: 'A mapping that has synced keeps its project; remove it and map the Jira project again', code: JIRA_MAPPING_PROJECT_FIXED, mappingId });
 				}
 				patch.projectId = input.projectId;
@@ -153,6 +166,22 @@ export class JiraMappingService extends TenantAwareCrudService<JiraProjectMappin
 			await manager.update(JiraProjectMapping, { id: mapping.id, tenantId: tenant.tenantId as ID }, patch as never);
 		});
 		return this.requireOne(tenant, mappingId);
+	}
+
+	/** Whether a mapping has brought anything in or sent anything out: a run, an import position, or a mapped task of its project. */
+	private async hasSynced(manager: EntityManager, tenant: IIntegrationTenant, mapping: JiraProjectMapping): Promise<boolean> {
+		if (mapping.lastImportedAt || mapping.lastCursor) return true;
+		const runs = await manager.count(JiraSyncRun, { where: { mappingId: mapping.id, tenantId: tenant.tenantId as ID } as never });
+		if (runs > 0) return true;
+		const mappedTasks = await manager
+			.createQueryBuilder(IntegrationMap, 'map')
+			.innerJoin(Task, 'task', 'task.id = map.gauzyId')
+			.where('map.integrationId = :integrationId', { integrationId: tenant.id })
+			.andWhere('map.entity = :entity', { entity: IntegrationEntity.ISSUE })
+			.andWhere('map.tenantId = :tenantId', { tenantId: tenant.tenantId })
+			.andWhere('task.projectId = :projectId', { projectId: mapping.projectId })
+			.getCount();
+		return mappedTasks > 0;
 	}
 
 	/** Removes a mapping for good (its tasks stay, with their id maps). */
@@ -217,12 +246,24 @@ export class JiraMappingService extends TenantAwareCrudService<JiraProjectMappin
 	}
 }
 
-/** A status map whose keys are not a status category or a status id is refused (400), rather than quietly dropped. */
+/**
+ * A status map whose keys are not a status category or a status id is refused (400), rather than quietly dropped; so
+ * is one whose value is not a task status name (blank, not text, or longer than 100), which would not be kept either.
+ */
 function assertStatusMap(statusMap: Record<string, string> | null | undefined): void {
 	const invalid = invalidStatusMapKeys(statusMap ?? null);
 	if (invalid.length) {
 		throw new BadRequestException({
 			message: `The status map names neither a status category (new, indeterminate, done) nor a status (status:<id>): ${invalid.slice(0, 5).join(', ')}`,
+			code: JIRA_STATUS_MAP_INVALID
+		});
+	}
+	const unusable = Object.entries(statusMap ?? {})
+		.filter(([, value]) => typeof value !== 'string' || !value.trim() || value.trim().length > 100)
+		.map(([key]) => key);
+	if (unusable.length) {
+		throw new BadRequestException({
+			message: `The status map gives no task status (a name of 1 to 100 characters) for: ${unusable.slice(0, 5).join(', ')}`,
 			code: JIRA_STATUS_MAP_INVALID
 		});
 	}

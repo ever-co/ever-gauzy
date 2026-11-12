@@ -59,6 +59,8 @@ export enum JiraSettingName {
 	WEBHOOK_IDS = 'webhook_ids',
 	WEBHOOK_JQL = 'webhook_jql',
 	WEBHOOK_EXPIRES_AT = 'webhook_expires_at',
+	/** The address the webhook delivers to: a changed address (`JIRA_WEBHOOK_URL`, `API_BASE_URL`) registers it again. */
+	WEBHOOK_URL = 'webhook_url',
 	/** Why the last registration or refresh of the webhook failed, or empty. */
 	WEBHOOK_ERROR = 'webhook_error'
 }
@@ -81,6 +83,9 @@ export const JIRA_WEBHOOK_LIFETIME_MS = 30 * 24 * 60 * 60 * 1000;
  * of one run (it then records how far it got, and the next run continues from there).
  */
 export const JIRA_ISSUES_PAGE_SIZE = 50;
+/** An issue's comments beyond those a search answers with it are read in pages of this size, up to the cap. */
+export const JIRA_COMMENTS_PAGE_SIZE = 100;
+export const JIRA_ISSUE_COMMENTS_MAX = 1_000;
 export const JIRA_IMPORT_MAX_ISSUES = 50_000;
 /** The import position is the run's start minus this margin: a change made while the pages were read is not skipped next time. */
 export const JIRA_IMPORT_CLOCK_SKEW_MS = 60_000;
@@ -119,6 +124,8 @@ export const JIRA_MAPPING_EXISTS = 'JIRA_MAPPING_EXISTS';
 export const JIRA_PROJECT_OUTBOUND_TAKEN = 'JIRA_PROJECT_OUTBOUND_TAKEN';
 export const JIRA_PROJECT_NOT_FOUND = 'JIRA_PROJECT_NOT_FOUND';
 export const JIRA_RUN_IN_PROGRESS = 'JIRA_RUN_IN_PROGRESS';
+/** An import was asked of a mapping that brings nothing in (switched off, or outbound only). */
+export const JIRA_MAPPING_NOT_INBOUND = 'JIRA_MAPPING_NOT_INBOUND';
 export const JIRA_MAPPING_PROJECT_FIXED = 'JIRA_MAPPING_PROJECT_FIXED';
 export const JIRA_STATUS_MAP_INVALID = 'JIRA_STATUS_MAP_INVALID';
 export const JIRA_CONFLICT_NOT_FOUND = 'JIRA_CONFLICT_NOT_FOUND';

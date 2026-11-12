@@ -79,6 +79,11 @@ export class JiraWebhookService {
 	}
 
 	private async ensureNow(tenant: IIntegrationTenant, now: number): Promise<JiraWebhookOutcome> {
+		// The connection as it is now: a look queued behind another reads what that one registered, never the settings its
+		// caller loaded before (it would register a second webhook and lose the first one's id).
+		const current = await this.tenants.findAnyById(tenant.id as ID);
+		if (!current) return 'off';
+		tenant.settings = current.settings;
 		const settings = this.tenants.settingsOf(tenant);
 		if (!settings[JiraSettingName.JIRA_CLOUD_ID] || settings[JiraSettingName.ATTENTION_REASON]) return 'off';
 		const target = jiraWebhookTargetOf(this.config, String(tenant.id));
@@ -93,19 +98,27 @@ export class JiraWebhookService {
 				await this.tenants.recordWebhook(tenant, { ids: [], jql: '', expiresAt: null, error: null });
 				return 'removed';
 			}
-			if (ids.length && settings[JiraSettingName.WEBHOOK_JQL] === jql) {
+			// The same filter to the same address: kept (refreshed when due). A changed address registers it again.
+			if (ids.length && settings[JiraSettingName.WEBHOOK_JQL] === jql && (settings[JiraSettingName.WEBHOOK_URL] ?? '') === target) {
 				if (!isWebhookRefreshDue(settings[JiraSettingName.WEBHOOK_EXPIRES_AT], now)) return 'unchanged';
 				try {
 					const expiresAt = (await this.call(tenant, (client) => client.refreshWebhooks(ids))) ?? new Date(now + JIRA_WEBHOOK_LIFETIME_MS).toISOString();
-					await this.tenants.recordWebhook(tenant, { ids, jql, expiresAt, error: null });
+					await this.tenants.recordWebhook(tenant, { ids, jql, url: target, expiresAt, error: null });
 					return 'refreshed';
 				} catch (error) {
 					// Jira no longer knows the webhook (it lapsed past its grace, or was removed): registered again below.
 					if (!(error instanceof JiraApiError) || (error.status !== 404 && error.status !== 400)) throw error;
 				}
 			}
-			// A new filter (or none registered yet): the former registration goes first, then the new one is made.
-			if (ids.length) await this.call(tenant, (client) => client.deleteWebhooks(ids)).catch(() => undefined);
+			// A new filter or address (or none registered yet): the former registration goes first, then the new one is made.
+			// A deletion Jira refuses stops the replacement (the ids are kept, the next look tries again): a new webhook
+			// beside an old one Jira still holds would use up its five per app and user. One Jira no longer knows is gone.
+			if (ids.length) {
+				await this.call(tenant, (client) => client.deleteWebhooks(ids)).catch((error: unknown) => {
+					if (error instanceof JiraApiError && error.status === 404) return undefined;
+					throw error;
+				});
+			}
 			const results = await this.call(tenant, (client) => client.registerWebhooks(target as string, [{ events: JIRA_WEBHOOK_EVENTS, jqlFilter: jql }]));
 			const created = results.map((result) => result.createdWebhookId).filter((id) => id !== undefined && id !== null).map(String);
 			if (!created.length) {
@@ -114,7 +127,15 @@ export class JiraWebhookService {
 				this.logger.warn(`The Jira webhook of connection ${tenant.id} was not registered: ${reason}`);
 				return 'failed';
 			}
-			await this.tenants.recordWebhook(tenant, { ids: created, jql, expiresAt: new Date(now + JIRA_WEBHOOK_LIFETIME_MS).toISOString(), error: null });
+			try {
+				await this.tenants.recordWebhook(tenant, { ids: created, jql, url: target, expiresAt: new Date(now + JIRA_WEBHOOK_LIFETIME_MS).toISOString(), error: null });
+			} catch (error) {
+				// Registered but not recorded: the webhook goes again (its id would be lost, and the next look register another).
+				await this.call(tenant, (client) => client.deleteWebhooks(created)).catch((caught: unknown) => {
+					this.logger.warn(`The unrecorded Jira webhook of connection ${tenant.id} could not be removed: ${this.describe(caught)}`);
+				});
+				throw error;
+			}
 			return 'registered';
 		} catch (error) {
 			this.logger.warn(`The Jira webhook of connection ${tenant.id} could not be kept: ${this.describe(error)}`);
@@ -133,7 +154,7 @@ export class JiraWebhookService {
 			return await make(client);
 		} catch (error) {
 			if (error instanceof JiraApiError && error.isUnauthorized) {
-				const renewed = await this.tenants.refreshAccessToken(tenant);
+				const renewed = await this.tenants.refreshAccessToken(tenant, client);
 				if (renewed) return make(renewed);
 			}
 			throw error;

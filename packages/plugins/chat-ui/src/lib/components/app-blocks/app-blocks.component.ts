@@ -3,9 +3,22 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NbIconModule } from '@nebular/theme';
 import { TranslatePipe } from '@ngx-translate/core';
 import { EMPTY, throwError, timer } from 'rxjs';
-import { catchError, exhaustMap, take, takeWhile } from 'rxjs/operators';
+import { catchError, exhaustMap, retry, take, takeWhile, timeout } from 'rxjs/operators';
 import { ChatAppBlockTypeEnum, IChatAppBlock, IChatAppButton, IChatMessageWithRelations, ID } from '@gauzy/contracts';
-import { APP_INTERACTION_POLL_MAX, APP_INTERACTION_POLL_MS, appBlocksOf, AppButtonState, buttonKey, buttonStateOf, safeButtonUrl } from '../../chat-app-blocks';
+import {
+	APP_INTERACTION_POLL_MAX,
+	APP_INTERACTION_POLL_MS,
+	APP_INTERACTION_RETRY_DELAYS_MS,
+	APP_INTERACTION_TIMEOUT_MS,
+	appBlocksOf,
+	AppButtonState,
+	buttonKey,
+	buttonStateOf,
+	isUnansweredClick,
+	keepsClickKey,
+	safeButtonUrl
+} from '../../chat-app-blocks';
+import { newNonce } from '../../chat-ui.helpers';
 import { ChatWebhooksService } from '../../services/chat-webhooks.service';
 
 /**
@@ -13,7 +26,8 @@ import { ChatWebhooksService } from '../../services/chat-webhooks.service';
  * small context text and buttons. Every text is plain text (Angular interpolation, never HTML). A link button opens
  * its https page; any other button is an interaction: it calls the chat API, which posts a signed callback to the
  * app, and shows pending until the callback is delivered (asking again while it is retried) or failed. The app's
- * reply, when it replaced the message, is handed up (`replaced`).
+ * reply, when it replaced the message, is handed up (`replaced`). Each click carries an idempotency key of its own,
+ * sent again with every retry of that click (see `click`), so a click is one interaction however often it is sent.
  */
 @Component({
 	selector: 'ngx-chat-app-blocks',
@@ -204,6 +218,8 @@ export class AppBlocksComponent {
 	private readonly states = signal<ReadonlyMap<string, AppButtonState>>(new Map());
 	/** Why the last click of an actions block failed, by block id (a translation key). */
 	private readonly failures = signal<ReadonlyMap<string, string>>(new Map());
+	/** The idempotency key of each button's click that got no answer yet (by button key): its next click sends it again. */
+	private readonly unanswered = new Map<string, string>();
 
 	protected readonly types = ChatAppBlockTypeEnum;
 
@@ -244,18 +260,40 @@ export class AppBlocksComponent {
 		if (this.readOnly() || this.states().get(key) === 'pending') return;
 		this.setState(key, 'pending');
 		this.setFailure(blockId, null);
+		// One key per click, sent again on each retry of it, and on the next click of a button whose click got no
+		// answer (the API may have taken it): the API answers a repeat with that click and calls the app no second time.
+		const idempotencyKey = this.unanswered.get(key) ?? newNonce();
+		this.unanswered.set(key, idempotencyKey);
 		this.api
-			.interact(this.message().id as ID, button.actionId, blockId)
-			.pipe(takeUntilDestroyed(this.destroyRef))
+			.interact(this.message().id as ID, button.actionId, blockId, idempotencyKey)
+			.pipe(
+				// A send still open after the deadline counts as unanswered (a timeout has no status). A click that got no
+				// answer is sent again (the same request, so the same key, each send with its own deadline); any answer
+				// settles it.
+				timeout(APP_INTERACTION_TIMEOUT_MS),
+				retry({
+					count: APP_INTERACTION_RETRY_DELAYS_MS.length,
+					delay: (error: { status?: number }, attempt: number) => (isUnansweredClick(error?.status) ? timer(APP_INTERACTION_RETRY_DELAYS_MS[attempt - 1]) : throwError(() => error))
+				}),
+				takeUntilDestroyed(this.destroyRef)
+			)
 			.subscribe({
 				next: (result) => {
+					this.unanswered.delete(key);
 					if (result.message) this.replaced.emit(result.message);
 					const state = buttonStateOf(result.interaction.status);
-					this.setState(key, state);
+					// A repeat answered as delivered without its reply: the first request may be applying the reply right
+					// now (the API writes the delivery just before), so it is asked about once more, as a retry's is, and
+					// the button stays pending (so disabled) until that ask answers.
+					const replyMayFollow = !!result.replayed && state === 'done' && !result.interaction.replyApplied;
+					this.setState(key, replyMayFollow ? 'pending' : state);
 					if (state === 'failed') this.setFailure(blockId, 'CHAT.APP.CALLBACK_FAILED');
-					if (state === 'pending') this.follow(key, blockId, result.interaction.interactionId);
+					if (state === 'pending' || replyMayFollow) this.follow(key, blockId, result.interaction.interactionId, replyMayFollow);
 				},
 				error: (error: { status?: number }) => {
+					// A refusal settles the click (the next one is a new click); a click with no answer, or a server error
+					// (the app may have been called), keeps its key for the button's next click.
+					if (!keepsClickKey(error?.status)) this.unanswered.delete(key);
 					this.setState(key, 'failed');
 					this.setFailure(blockId, error?.status === 409 ? 'CHAT.APP.NO_INTERACTIONS' : error?.status === 404 ? 'CHAT.APP.GONE' : 'CHAT.APP.CLICK_FAILED');
 				}
@@ -268,19 +306,25 @@ export class AppBlocksComponent {
 	 * page shows the reply without waiting for realtime. The API writes a retry's delivery just before it applies the
 	 * reply, so a delivery without its reply is asked about once more. A slow answer is waited for (the next ask is
 	 * skipped, not the answer). When the asking stops first, the button clicks again and says the app has not answered
-	 * yet.
+	 * yet. `delivered`: the click's own answer already said it was delivered (a repeat answered before its reply landed):
+	 * only the one more ask is left, and the button ends done whatever it answers.
 	 */
-	private follow(key: string, blockId: string | null, interactionId: ID): void {
+	private follow(key: string, blockId: string | null, interactionId: ID, delivered = false): void {
 		let settled = false;
-		let lookedAgain = false;
+		let lookedAgain = delivered;
 		/** A delivery without its reply was seen, and the one more ask is under way. */
-		let deliveredSeen = false;
+		let deliveredSeen = delivered;
 		timer(APP_INTERACTION_POLL_MS, APP_INTERACTION_POLL_MS)
 			.pipe(
 				take(APP_INTERACTION_POLL_MAX),
-				// A failed ask is asked again at the next tick (the click may still be delivered); a 404 (the click or the
-				// webhooks are gone) ends the asking.
-				exhaustMap(() => this.api.interaction(interactionId).pipe(catchError((error: { status?: number }) => (error?.status === 404 ? throwError(() => error) : EMPTY)))),
+				// A failed ask is asked again at the next tick (the click may still be delivered), and so is one still open
+				// after the deadline; a 404 (the click or the webhooks are gone) ends the asking.
+				exhaustMap(() =>
+					this.api.interaction(interactionId).pipe(
+						timeout(APP_INTERACTION_TIMEOUT_MS),
+						catchError((error: { status?: number }) => (error?.status === 404 ? throwError(() => error) : EMPTY))
+					)
+				),
 				takeWhile((interaction) => {
 					const state = buttonStateOf(interaction.status);
 					if (state === 'pending') return true;

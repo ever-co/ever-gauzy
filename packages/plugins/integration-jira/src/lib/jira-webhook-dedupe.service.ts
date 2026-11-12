@@ -37,8 +37,11 @@ export class JiraWebhookDedupeService {
 				return true;
 			}
 		}
+		// The map keeps its claims in the order they were made, so the lapsed ones are its first ones: they go, and the
+		// scan stops at the first live claim (a claim costs the claims that lapsed, not every claim of the hour).
 		for (const [claimedKey, at] of this.claimed) {
-			if (now - at > JIRA_WEBHOOK_DEDUPE_MS) this.claimed.delete(claimedKey);
+			if (now - at <= JIRA_WEBHOOK_DEDUPE_MS) break;
+			this.claimed.delete(claimedKey);
 		}
 		if (this.claimed.has(key)) return false;
 		this.claimed.set(key, now);

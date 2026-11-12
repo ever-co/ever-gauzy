@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable, Logger, NotFoundException, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { DataSource, EntityManager, EntitySubscriberInterface, In, InsertEvent, LessThan, ObjectLiteral } from 'typeorm';
 import { FileStorageProviderEnum, ID, IChatDraftDiscardResult } from '@gauzy/contracts';
-import { FileStorage } from '@gauzy/core';
+import { FileStorage, runWithTenantStorageSettings, TenantSettingService } from '@gauzy/core';
 import {
 	CHAT_DRAFT_SWEEP_BATCH,
 	CHAT_DRAFT_SWEEP_INTERVAL_MS,
@@ -87,7 +87,10 @@ export class ChatDraftUploadService implements OnModuleInit, OnModuleDestroy {
 		}
 	};
 
-	constructor(private readonly dataSource: DataSource) {}
+	constructor(
+		private readonly dataSource: DataSource,
+		private readonly tenantSettings: TenantSettingService
+	) {}
 
 	onModuleInit(): void {
 		// The listener sees every insert of the data source; it answers at once for any table but `document`.
@@ -215,8 +218,11 @@ export class ChatDraftUploadService implements OnModuleInit, OnModuleDestroy {
 			return { outcome: 'purged', document };
 		});
 		if (taken.outcome === 'purged' && taken.document) {
+			// The sweep runs on a timer, outside any request, so the tenant's own storage (its bucket and credentials,
+			// which the providers read from a request) is read from its settings here.
+			const settings = await this.storageSettingsOf(tenantId);
 			for (const key of storedKeysOf(taken.document)) {
-				await this.freeStoredKey(key, taken.document.storageProvider ?? null);
+				await this.freeStoredKey(key, taken.document.storageProvider ?? null, settings);
 			}
 		}
 		return taken.outcome;
@@ -242,15 +248,34 @@ export class ChatDraftUploadService implements OnModuleInit, OnModuleDestroy {
 		return named > 0;
 	}
 
-	/** Frees a stored key once no document row (trashed ones included) names it any more. Never throws. */
-	private async freeStoredKey(key: string, storageProvider: string | null): Promise<void> {
-		if (!isSafeStoredKey(key)) return;
+	/**
+	 * The tenant's own settings, as the settings middleware attaches them to a request; `null` when they cannot be read,
+	 * so nothing is deleted from the deployment's storage instead of the tenant's.
+	 */
+	private async storageSettingsOf(tenantId: ID): Promise<Record<string, unknown> | null> {
+		try {
+			return ((await this.tenantSettings.getSettings({ where: { tenantId } })) ?? {}) as Record<string, unknown>;
+		} catch (error) {
+			this.logger.warn(`The stored bytes of an unsent chat upload were not freed: the storage settings of its tenant could not be read: ${(error as Error)?.message}`);
+			return null;
+		}
+	}
+
+	/**
+	 * Frees a stored key once no document row (trashed ones included) names it any more, in the tenant's own storage
+	 * (`settings`; nothing is freed without them). Never throws.
+	 */
+	private async freeStoredKey(key: string, storageProvider: string | null, settings: Record<string, unknown> | null): Promise<void> {
+		if (!isSafeStoredKey(key) || !settings) return;
 		try {
 			const documents = this.dataSource.getRepository<ObjectLiteral>('Document');
 			const stillNamed = await documents.count({ where: [{ storageKey: key }, { thumbKey: key }], withDeleted: true } as never);
 			if (stillNamed > 0) return;
-			const provider = new FileStorage().getProvider((storageProvider ?? undefined) as FileStorageProviderEnum | undefined);
-			await provider.deleteFile(key);
+			// The provider is made inside the settings: it reads them when it is made.
+			await runWithTenantStorageSettings(settings, async () => {
+				const provider = new FileStorage().getProvider((storageProvider ?? undefined) as FileStorageProviderEnum | undefined);
+				await provider.deleteFile(key);
+			});
 		} catch (error) {
 			this.logger.warn(`The stored bytes of an unsent chat upload were not freed: ${(error as Error)?.message}`);
 		}

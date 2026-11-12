@@ -108,6 +108,25 @@ describe('JiraTenantService — tokens and the site', () => {
 		expect(service.settingsOf(row as never)[JiraSettingName.ACCESS_TOKEN]).toBe('at-other');
 	});
 
+	it('renews a token Jira refused even far from its expiry; reuses the stored one only when another process renewed it', async () => {
+		const { service, row, stored, value } = harness({ [JiraSettingName.ACCESS_TOKEN]: 'at-1', [JiraSettingName.REFRESH_TOKEN]: 'rt-1', [JiraSettingName.EXPIRES_AT]: later(), [JiraSettingName.JIRA_CLOUD_ID]: 'c' });
+		const fetch = jest.spyOn(globalThis, 'fetch').mockResolvedValue(tokenAnswer({ access_token: 'at-2', refresh_token: 'rt-2', expires_in: 3600 }));
+		const refused = service.clientFor(row as never);
+		expect(refused.usesToken('at-1')).toBe(true);
+
+		const renewed = await service.refreshAccessToken(row as never, refused);
+		expect(fetch).toHaveBeenCalledTimes(1);
+		expect(value(JiraSettingName.ACCESS_TOKEN)).toBe('at-2');
+		expect(renewed?.usesToken('at-2')).toBe(true);
+
+		// Refused again, but the row holds another token by now (renewed elsewhere): that one is used, nothing is spent.
+		for (const setting of stored.row.settings) if (setting.settingsName === JiraSettingName.ACCESS_TOKEN) setting.settingsValue = 'at-3';
+		fetch.mockClear();
+		const reused = await service.refreshAccessToken(row as never, renewed);
+		expect(fetch).not.toHaveBeenCalled();
+		expect(reused?.usesToken('at-3')).toBe(true);
+	});
+
 	it('answers null when Atlassian refuses the refresh token (a person must connect again)', async () => {
 		const { service, row, value } = harness({ [JiraSettingName.ACCESS_TOKEN]: 'at-1', [JiraSettingName.REFRESH_TOKEN]: 'rt-1', [JiraSettingName.EXPIRES_AT]: soon(), [JiraSettingName.JIRA_CLOUD_ID]: 'c' });
 		jest.spyOn(globalThis, 'fetch').mockResolvedValue(tokenAnswer({ error: 'invalid_grant', error_description: 'Unknown or invalid refresh token.' }, 403));

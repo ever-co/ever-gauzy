@@ -287,6 +287,8 @@ export function importJqlOf(input: { projectId: string; issueTypeIds?: readonly 
 export class JiraApiClient {
 	private readonly baseUrl: string;
 	private readonly authorization: string;
+	/** The access token this client sends: compared, never answered (see {@link usesToken}). */
+	private readonly accessToken: string;
 	private readonly fetchImpl: FetchLike;
 	private readonly timeoutMs: number;
 
@@ -294,8 +296,14 @@ export class JiraApiClient {
 		const gateway = (options.apiUrl ?? JIRA_API_GATEWAY_URL).replace(/\/+$/, '');
 		this.baseUrl = `${gateway}/ex/jira/${encodeURIComponent(cloudId)}/rest/api/3`;
 		this.authorization = `${options.tokenType || 'Bearer'} ${accessToken}`;
+		this.accessToken = accessToken;
 		this.fetchImpl = options.fetchImpl ?? ((globalThis as { fetch: FetchLike }).fetch as FetchLike);
 		this.timeoutMs = options.timeoutMs ?? CALL_TIMEOUT_MS;
+	}
+
+	/** Whether this client sends that access token (a refusal names the token it was for). */
+	usesToken(token: string | null | undefined): boolean {
+		return !!token && token === this.accessToken;
 	}
 
 	/** One call: JSON in and out, a refusal as a {@link JiraApiError}; an empty answer (204) is `null`. */
@@ -389,6 +397,14 @@ export class JiraApiClient {
 	async priorities(): Promise<JiraPriority[]> {
 		const data = await this.request<Array<{ id: string; name: string }>>('GET', '/priority');
 		return (data ?? []).map((priority) => ({ id: String(priority.id), name: priority.name }));
+	}
+
+	/** One page of an issue's comments, oldest first (`startAt` is an offset into them). */
+	async issueComments(issueId: string, startAt: number, maxResults: number): Promise<{ comments: JiraComment[]; total: number }> {
+		const query = new URLSearchParams({ startAt: String(startAt), maxResults: String(maxResults), orderBy: 'created' });
+		const data = await this.request<{ comments?: JiraComment[]; total?: number }>('GET', `/issue/${encodeURIComponent(issueId)}/comment?${query.toString()}`);
+		const comments = Array.isArray(data?.comments) ? data.comments : [];
+		return { comments, total: typeof data?.total === 'number' ? data.total : startAt + comments.length };
 	}
 
 	/** One page of issues of a JQL search (the enhanced search: a page token, never an offset). */

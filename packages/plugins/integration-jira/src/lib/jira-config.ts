@@ -104,8 +104,13 @@ export function jiraWebhooksEnabled(config: JiraCloudConfig): boolean {
 	return isJiraConfigured(config) && !!config.webhookBaseUrl && config.webhookBaseUrl.startsWith('https://');
 }
 
-/** The address Jira delivers a connection's webhooks to, or null when webhooks are off. */
+/**
+ * The address Jira delivers a connection's webhooks to, or null when webhooks are off. The connection's id extends the
+ * base address's path (a query or a fragment of the base stays where it is, after it).
+ */
 export function jiraWebhookTargetOf(config: JiraCloudConfig, integrationId: string): string | null {
 	if (!jiraWebhooksEnabled(config)) return null;
-	return `${config.webhookBaseUrl}/${encodeURIComponent(integrationId)}`;
+	const target = new URL(config.webhookBaseUrl as string);
+	target.pathname = `${target.pathname.replace(/\/+$/, '')}/${encodeURIComponent(integrationId)}`;
+	return target.toString();
 }

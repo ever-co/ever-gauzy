@@ -17,6 +17,9 @@ describe('readJiraConfig', () => {
 		expect(isJiraConfigured(config)).toBe(true);
 		expect(jiraWebhooksEnabled(config)).toBe(true);
 		expect(jiraWebhookTargetOf(config, 'abc123')).toBe('https://api.example.com/api/integration/jira/webhook/abc123');
+		// The id extends the path, never a query or a fragment of the base address.
+		const queried = readJiraConfig({ JIRA_CLIENT_ID: 'id', JIRA_CLIENT_SECRET: 'secret', API_BASE_URL: 'https://api.example.com', JIRA_WEBHOOK_URL: 'https://hooks.example.com/jira/?source=jira' });
+		expect(jiraWebhookTargetOf(queried, 'abc123')).toBe('https://hooks.example.com/jira/abc123?source=jira');
 	});
 
 	it('reads the import interval as whole minutes, 0 switching the scheduled import off, and keeps the default otherwise', () => {

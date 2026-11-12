@@ -6,6 +6,7 @@ import { JIRA_WEBHOOK_EVENTS, JIRA_WEBHOOK_LIFETIME_MS, JIRA_WEBHOOK_REFRESH_AHE
 import { isWebhookRefreshDue, JiraWebhookService, webhookJqlOf } from './jira-webhook.service';
 
 const NOW = Date.UTC(2026, 10, 11, 12, 0, 0);
+const TARGET = 'https://api.example.com/api/integration/jira/webhook/int-1';
 const config = {
 	clientId: 'id',
 	clientSecret: 'secret',
@@ -44,8 +45,10 @@ describe('JiraWebhookService', () => {
 			refreshWebhooks: jest.fn().mockResolvedValue('2026-12-11T12:00:00.000Z'),
 			deleteWebhooks: jest.fn().mockResolvedValue(undefined)
 		};
-		const recorded: Array<{ ids: readonly string[]; jql: string; expiresAt: string | null; error: string | null }> = [];
+		const recorded: Array<{ ids: readonly string[]; jql: string; url?: string | null; expiresAt: string | null; error: string | null }> = [];
 		const tenants = {
+			// Each look reads the connection again (the settings below are what the store holds).
+			findAnyById: jest.fn(async () => tenant),
 			settingsOf: jest.fn(() => settings),
 			webhookIdsOf: jest.fn(() => (settings[JiraSettingName.WEBHOOK_IDS] ?? '').split(',').filter(Boolean)),
 			clientReady: jest.fn(async () => client),
@@ -66,12 +69,19 @@ describe('JiraWebhookService', () => {
 		const { service, tenant, client, recorded } = harness({}, [mapping('10000'), mapping('10001', JiraSyncDirection.BOTH)]);
 		expect(await service.ensure(tenant as never, NOW)).toBe('registered');
 		expect(client.registerWebhooks).toHaveBeenCalledWith('https://api.example.com/api/integration/jira/webhook/int-1', [{ events: JIRA_WEBHOOK_EVENTS, jqlFilter: 'project in (10000, 10001)' }]);
-		expect(recorded).toEqual([{ ids: ['2001'], jql: 'project in (10000, 10001)', expiresAt: new Date(NOW + JIRA_WEBHOOK_LIFETIME_MS).toISOString(), error: null }]);
+		expect(recorded).toEqual([
+			{ ids: ['2001'], jql: 'project in (10000, 10001)', url: TARGET, expiresAt: new Date(NOW + JIRA_WEBHOOK_LIFETIME_MS).toISOString(), error: null }
+		]);
 	});
 
 	it('leaves a webhook alone while its filter holds and its expiry is far', async () => {
 		const { service, tenant, client } = harness(
-			{ [JiraSettingName.WEBHOOK_IDS]: '2001', [JiraSettingName.WEBHOOK_JQL]: 'project in (10000)', [JiraSettingName.WEBHOOK_EXPIRES_AT]: new Date(NOW + 20 * 86_400_000).toISOString() },
+			{
+				[JiraSettingName.WEBHOOK_IDS]: '2001',
+				[JiraSettingName.WEBHOOK_JQL]: 'project in (10000)',
+				[JiraSettingName.WEBHOOK_URL]: TARGET,
+				[JiraSettingName.WEBHOOK_EXPIRES_AT]: new Date(NOW + 20 * 86_400_000).toISOString()
+			},
 			[mapping('10000')]
 		);
 		expect(await service.ensure(tenant as never, NOW)).toBe('unchanged');
@@ -81,20 +91,63 @@ describe('JiraWebhookService', () => {
 
 	it('refreshes a webhook near its expiry, keeping its id', async () => {
 		const { service, tenant, client, recorded } = harness(
-			{ [JiraSettingName.WEBHOOK_IDS]: '2001', [JiraSettingName.WEBHOOK_JQL]: 'project in (10000)', [JiraSettingName.WEBHOOK_EXPIRES_AT]: new Date(NOW + 86_400_000).toISOString() },
+			{
+				[JiraSettingName.WEBHOOK_IDS]: '2001',
+				[JiraSettingName.WEBHOOK_JQL]: 'project in (10000)',
+				[JiraSettingName.WEBHOOK_URL]: TARGET,
+				[JiraSettingName.WEBHOOK_EXPIRES_AT]: new Date(NOW + 86_400_000).toISOString()
+			},
 			[mapping('10000')]
 		);
 		expect(await service.ensure(tenant as never, NOW)).toBe('refreshed');
 		expect(client.refreshWebhooks).toHaveBeenCalledWith(['2001']);
-		expect(recorded[0]).toEqual({ ids: ['2001'], jql: 'project in (10000)', expiresAt: '2026-12-11T12:00:00.000Z', error: null });
+		expect(recorded[0]).toEqual({ ids: ['2001'], jql: 'project in (10000)', url: TARGET, expiresAt: '2026-12-11T12:00:00.000Z', error: null });
 	});
 
 	it('registers the webhook again when Jira no longer knows the one it refreshes', async () => {
-		const { service, tenant, client } = harness({ [JiraSettingName.WEBHOOK_IDS]: '2001', [JiraSettingName.WEBHOOK_JQL]: 'project in (10000)' }, [mapping('10000')]);
+		const { service, tenant, client } = harness(
+			{ [JiraSettingName.WEBHOOK_IDS]: '2001', [JiraSettingName.WEBHOOK_JQL]: 'project in (10000)', [JiraSettingName.WEBHOOK_URL]: TARGET },
+			[mapping('10000')]
+		);
 		client.refreshWebhooks.mockRejectedValueOnce(new JiraApiError('Webhook not found', 404));
+		// Jira no longer knows it: deleting it answers 404 too, which is no reason to stop.
+		client.deleteWebhooks.mockRejectedValueOnce(new JiraApiError('Webhook not found', 404));
 		expect(await service.ensure(tenant as never, NOW)).toBe('registered');
 		expect(client.deleteWebhooks).toHaveBeenCalledWith(['2001']);
 		expect(client.registerWebhooks).toHaveBeenCalledTimes(1);
+	});
+
+	it('registers the webhook again when its address changed (JIRA_WEBHOOK_URL, API_BASE_URL), though its filter holds', async () => {
+		const { service, tenant, client, recorded } = harness(
+			{
+				[JiraSettingName.WEBHOOK_IDS]: '2001',
+				[JiraSettingName.WEBHOOK_JQL]: 'project in (10000)',
+				[JiraSettingName.WEBHOOK_URL]: 'https://old.example.com/api/integration/jira/webhook/int-1',
+				[JiraSettingName.WEBHOOK_EXPIRES_AT]: new Date(NOW + 20 * 86_400_000).toISOString()
+			},
+			[mapping('10000')]
+		);
+		expect(await service.ensure(tenant as never, NOW)).toBe('registered');
+		expect(client.deleteWebhooks).toHaveBeenCalledWith(['2001']);
+		expect(client.registerWebhooks.mock.calls[0][0]).toBe(TARGET);
+		expect(recorded[0]).toMatchObject({ ids: ['2001'], url: TARGET });
+	});
+
+	it('keeps the former webhook when Jira refuses to delete it: no second one is registered beside it', async () => {
+		const { service, tenant, client, recorded, tenants } = harness({ [JiraSettingName.WEBHOOK_IDS]: '2001', [JiraSettingName.WEBHOOK_JQL]: 'project in (10000)' }, [mapping('10000'), mapping('10005')]);
+		client.deleteWebhooks.mockRejectedValueOnce(new JiraApiError('Service unavailable', 503));
+		expect(await service.ensure(tenant as never, NOW)).toBe('failed');
+		expect(client.registerWebhooks).not.toHaveBeenCalled();
+		expect(recorded).toEqual([]);
+		expect(tenants.recordWebhookError).toHaveBeenCalled();
+	});
+
+	it('removes a webhook it registered but could not record (its id would be lost)', async () => {
+		const { service, tenant, client, tenants } = harness({}, [mapping('10000')]);
+		tenants.recordWebhook.mockRejectedValueOnce(new Error('store down'));
+		expect(await service.ensure(tenant as never, NOW)).toBe('failed');
+		expect(client.registerWebhooks).toHaveBeenCalledTimes(1);
+		expect(client.deleteWebhooks).toHaveBeenCalledWith(['2001']);
 	});
 
 	it('replaces the registration when the mappings change, and removes it when none brings issues in', async () => {
@@ -142,6 +195,7 @@ describe('JiraWebhookService', () => {
 			recorded.push(webhook);
 			(tenants.settingsOf() as Record<string, string>)[JiraSettingName.WEBHOOK_IDS] = webhook.ids.join(',');
 			(tenants.settingsOf() as Record<string, string>)[JiraSettingName.WEBHOOK_JQL] = webhook.jql;
+			(tenants.settingsOf() as Record<string, string>)[JiraSettingName.WEBHOOK_URL] = webhook.url ?? '';
 			(tenants.settingsOf() as Record<string, string>)[JiraSettingName.WEBHOOK_EXPIRES_AT] = webhook.expiresAt ?? '';
 		});
 		const outcomes = await Promise.all([service.ensure(tenant as never, NOW), service.ensure(tenant as never, NOW)]);

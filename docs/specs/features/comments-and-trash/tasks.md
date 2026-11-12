@@ -20,6 +20,9 @@
 - [ ] **P9**. `DELETE /tasks/:id` finds a trashed task, publishes `DELETED` only for a live one
 - [ ] **P10**. Specs: summary grouping, readability, reaction events, `editedAt`, trash scope, soft/restore grants, flag
 - [ ] **P11**. Bot threads answered; manual check on dev (react as two users, counts and names; edit marker; trash, restore, delete permanently)
+- [ ] **P12**. `DELETE /tasks/:id/trashed`: Delete forever deletes only a
+  task still in the trash, in one statement on both ORMs (a task restored
+  meanwhile answers 404); the Angular trash page and Ever Teams use it
 
 ## Clients
 

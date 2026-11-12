@@ -424,6 +424,25 @@ function paragraph(content: AdfNode[]): AdfNode {
 	return content.length ? { type: 'paragraph', content } : { type: 'paragraph' };
 }
 
+/** The blocks a list item or a quote may hold in ADF. */
+const NESTED_BLOCK_TYPES: readonly string[] = ['paragraph', 'bulletList', 'orderedList', 'codeBlock'];
+
+/**
+ * The blocks of a list item or a quote: one ADF does not allow there (a heading, a table, a quote in a quote) becomes a
+ * paragraph of its text, its lines kept as line breaks, so no word is lost; one without text (a rule) goes.
+ */
+function nestedBlocks(blocks: AdfNode[]): AdfNode[] {
+	return blocks.flatMap((block) => {
+		if (NESTED_BLOCK_TYPES.includes(block.type)) return [block];
+		const lines = adfToText(block)
+			.split('\n')
+			.map((line) => line.trim())
+			.filter(Boolean);
+		if (!lines.length) return [];
+		return [paragraph(lines.flatMap((text, index): AdfNode[] => (index ? [{ type: 'hardBreak' }, { type: 'text', text }] : [{ type: 'text', text }])))];
+	});
+}
+
 /** Whether a run of inline HTML is only the whitespace between blocks. */
 function isBlank(nodes: HtmlNode[]): boolean {
 	return nodes.every((node) => typeof node === 'string' && !node.trim());
@@ -465,7 +484,7 @@ function listItemsOf(element: HtmlElement): AdfNode[] {
 			if (content.length) items.push({ type: 'listItem', content: content[0].type === 'paragraph' ? content : [paragraph([]), ...content] });
 			continue;
 		}
-		const content = blockNodes(child.children).filter((block) => ['paragraph', 'bulletList', 'orderedList', 'codeBlock'].includes(block.type));
+		const content = nestedBlocks(blockNodes(child.children));
 		// An item starts with a paragraph (ADF requires it).
 		items.push({ type: 'listItem', content: content.length && content[0].type === 'paragraph' ? content : [paragraph([]), ...content] });
 	}
@@ -523,7 +542,7 @@ function blockOf(element: HtmlElement, context: 'doc' | 'quote' | 'cell'): AdfNo
 			return [text ? { type: 'codeBlock', content: [{ type: 'text', text }] } : { type: 'codeBlock' }];
 		}
 		case 'blockquote': {
-			const content = blockNodes(element.children, 'quote').filter((block) => ['paragraph', 'bulletList', 'orderedList', 'codeBlock'].includes(block.type));
+			const content = nestedBlocks(blockNodes(element.children, 'quote'));
 			return content.length ? [{ type: 'blockquote', content }] : [];
 		}
 		case 'hr':

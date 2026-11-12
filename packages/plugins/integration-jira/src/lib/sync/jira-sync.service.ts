@@ -19,7 +19,7 @@ import {
 	TaskUpdateCommand,
 	withoutKeptFields
 } from '@gauzy/core';
-import { importJqlOf, JiraApiClient, JiraApiError, JiraIssue, JiraIssueType, JiraPriority } from '../client/jira-api.client';
+import { importJqlOf, JiraApiClient, JiraApiError, JiraComment, JiraIssue, JiraIssueType, JiraPriority } from '../client/jira-api.client';
 import { JiraProjectMapping } from '../entities/jira-project-mapping.entity';
 import { JiraSyncRun } from '../entities/jira-sync-run.entity';
 import { JiraCloudConfig } from '../jira-config';
@@ -28,7 +28,16 @@ import { jiraSyncUser, runInJiraContext } from '../jira-process';
 import { JiraSyncConflictService } from '../jira-sync-conflict.service';
 import { emptyCounts, emptyReport, JiraSyncCounts, JiraSyncRunReport, JiraSyncRunService } from '../jira-sync-run.service';
 import { JiraTenantService } from '../jira-tenant.service';
-import { JIRA_CONFIG, JIRA_IMPORT_CLOCK_SKEW_MS, JIRA_IMPORT_MAX_ISSUES, JIRA_ISSUES_PAGE_SIZE, JIRA_REPORT_MAX_FAILURES, JiraSettingName } from '../jira.constants';
+import {
+	JIRA_COMMENTS_PAGE_SIZE,
+	JIRA_CONFIG,
+	JIRA_IMPORT_CLOCK_SKEW_MS,
+	JIRA_IMPORT_MAX_ISSUES,
+	JIRA_ISSUE_COMMENTS_MAX,
+	JIRA_ISSUES_PAGE_SIZE,
+	JIRA_REPORT_MAX_FAILURES,
+	JiraSettingName
+} from '../jira.constants';
 import { JiraAuthor, JiraIssueDetailsService } from './jira-issue-details.service';
 import {
 	chooseCreateIssueType,
@@ -91,6 +100,14 @@ interface ApplyContext extends ClientHolder {
 	details: { comments: number; links: number; failed: number };
 	counts: JiraSyncCounts;
 	report: JiraSyncRunReport;
+}
+
+/** A later claim failed the run as abandoned: its import stops and writes neither the position nor its outcome. */
+class JiraRunSuperseded extends Error {
+	constructor(runId: ID) {
+		super(`Run ${runId} was failed as abandoned by a later claim of its mapping`);
+		this.name = 'JiraRunSuperseded';
+	}
 }
 
 /** A lookup that did not answer: the task's relation is left as it is, not emptied. */
@@ -187,6 +204,8 @@ export class JiraSyncService {
 		let error: string | null = null;
 		let complete = false;
 		let applied = false;
+		/** A later claim failed this run as abandoned (no heartbeat for 30 minutes): its import stops and writes nothing more. */
+		let superseded = false;
 		try {
 			await runInJiraContext(user, async () => {
 				const context = await this.openContext(tenant, mapping, counts, run.id as ID, report);
@@ -203,7 +222,7 @@ export class JiraSyncService {
 						if (ok && updated) progress.lastAppliedUpdated = updated;
 					}
 					applied = true;
-					await this.runs.progress(run, counts, report);
+					if (!(await this.runs.progress(run, counts, report))) throw new JiraRunSuperseded(run.id as ID);
 					if (!page.nextPageToken || !page.issues.length) {
 						complete = true;
 						break;
@@ -221,27 +240,35 @@ export class JiraSyncService {
 				error = `The import stopped at ${JIRA_IMPORT_MAX_ISSUES} issues; the next import continues from the last one applied.`;
 			}
 		} catch (caught) {
+			superseded = caught instanceof JiraRunSuperseded;
 			error = this.describe(caught);
 			if (caught instanceof JiraApiError && caught.isUnauthorized) {
 				await this.tenants.setAttention(tenant, 'token_refused', this.tenants.settingsOf(tenant)[JiraSettingName.ACCESS_TOKEN] ?? null);
 			}
-			this.logger.warn(`Import of mapping ${mapping.id} failed: ${error}`);
+			if (!superseded) this.logger.warn(`Import of mapping ${mapping.id} failed: ${error}`);
 		} finally {
-			const cursor = applied || complete ? resumeCursorOf({ complete, runCursor, since, ...progress }) : since;
-			report.complete = complete && !counts.failed;
-			report.stoppedAt = cursor;
-			try {
-				await this.mappings.recordImport(mapping, { cursor, error });
-			} catch (caught) {
-				error = error ?? this.describe(caught);
-				this.logger.warn(`The import position of mapping ${mapping.id} could not be written: ${this.describe(caught)}`);
+			// The mapping is another run's now (a later claim failed this one as abandoned): neither its position nor this
+			// run's outcome is written, so the live run's are not overwritten.
+			if (!superseded) superseded = !(await this.runs.isLive(run).catch(() => true));
+			if (superseded) {
+				this.logger.warn(`Import run ${run.id} of mapping ${mapping.id} was superseded by a later claim; it stopped without writing the position.`);
+			} else {
+				const cursor = applied || complete ? resumeCursorOf({ complete, runCursor, since, ...progress }) : since;
+				report.complete = complete && !counts.failed;
+				report.stoppedAt = cursor;
+				try {
+					await this.mappings.recordImport(mapping, { cursor, error });
+				} catch (caught) {
+					error = error ?? this.describe(caught);
+					this.logger.warn(`The import position of mapping ${mapping.id} could not be written: ${this.describe(caught)}`);
+				}
+				// Always: a run row left RUNNING would block the mapping until it counts as abandoned.
+				await this.runs.finish(run, { counts, cursor, error, report }).catch((caught: unknown) => {
+					this.logger.warn(`Run ${run.id} could not be finished: ${this.describe(caught)}`);
+				});
 			}
-			// Always: a run row left RUNNING would block the mapping until it counts as abandoned.
-			await this.runs.finish(run, { counts, cursor, error, report }).catch((caught: unknown) => {
-				this.logger.warn(`Run ${run.id} could not be finished: ${this.describe(caught)}`);
-			});
 		}
-		if (!error) {
+		if (!error && !superseded) {
 			await this.integrationTenantSyncService
 				.recordSyncCompleted(tenant.id as ID, { tenantId: scope.tenantId, organizationId: scope.organizationId, counts: { issue: counts.created + counts.updated } })
 				.catch((caught: unknown) => this.logger.warn(`The sync completion of ${tenant.id} could not be recorded: ${this.describe(caught)}`));
@@ -517,7 +544,8 @@ export class JiraSyncService {
 
 	/**
 	 * One issue of a run, then its comments and attachments: a failure counts, is named in the report and logged; a
-	 * refusal of the API stops the run. Answers whether the issue itself went in.
+	 * refusal of the API stops the run. Answers whether the issue went in whole: a comment or attachment that could not
+	 * be read or kept answers false too, so the import position stays at the issue and the next import reads it again.
 	 */
 	private async applyOne(context: ApplyContext, issue: JiraIssue): Promise<boolean> {
 		let taskId: ID | null;
@@ -535,11 +563,14 @@ export class JiraSyncService {
 		// Behind the issue itself: its comments and attachments (they came with it), kept one run at a time per issue
 		// under the issue's own lock: a webhook and an import that meet on one issue would otherwise both find no mapped
 		// comment and keep it twice.
+		const detailsFailedBefore = context.details.failed;
 		if (taskId) {
 			const detailsContext = this.detailsContextOf(context);
 			const resolvedTaskId = taskId;
 			try {
-				await this.serializedDetails(`${context.mapping.integrationId}:${issue.id}`, () => this.issueDetails.apply(detailsContext, issue, resolvedTaskId));
+				// A search answers an issue with its first comments only: the rest are read before the details are kept.
+				const whole = await this.withAllComments(context, issue);
+				await this.serializedDetails(`${context.mapping.integrationId}:${issue.id}`, () => this.issueDetails.apply(detailsContext, whole, resolvedTaskId));
 			} catch (caught) {
 				// The API's refusal is the run's; a lock that could not be taken, or a store error, is this issue's details failing, and the run goes on.
 				if (caught instanceof JiraApiError) throw caught;
@@ -548,7 +579,27 @@ export class JiraSyncService {
 				this.logger.warn(`The details of issue ${issue.key} could not be kept: ${this.describe(caught)}`);
 			}
 		}
-		return true;
+		return context.details.failed === detailsFailedBefore;
+	}
+
+	/**
+	 * The issue with all its comments (up to {@link JIRA_ISSUE_COMMENTS_MAX}): a search answers the first ones and their
+	 * `total`; when that is more, the comments are read again from the start, page by page, oldest first.
+	 */
+	private async withAllComments(holder: ClientHolder, issue: JiraIssue): Promise<JiraIssue> {
+		const field = issue.fields?.comment;
+		const embedded = field?.comments ?? [];
+		const total = typeof field?.total === 'number' ? field.total : embedded.length;
+		if (total <= embedded.length) return issue;
+		const comments: JiraComment[] = [];
+		let known = total;
+		while (comments.length < Math.min(known, JIRA_ISSUE_COMMENTS_MAX)) {
+			const page = await this.call(holder, (client) => client.issueComments(issue.id, comments.length, JIRA_COMMENTS_PAGE_SIZE));
+			if (!page.comments.length) break;
+			comments.push(...page.comments);
+			known = page.total;
+		}
+		return { ...issue, fields: { ...issue.fields, comment: { comments: comments.slice(0, JIRA_ISSUE_COMMENTS_MAX), total: known } } };
 	}
 
 	private noteFailure(context: ApplyContext, key: string, error: unknown): void {
@@ -837,7 +888,7 @@ export class JiraSyncService {
 			}
 			if (caught instanceof JiraApiError && caught.isUnauthorized && !holder.renewed) {
 				holder.renewed = true;
-				const renewed = await this.tenants.refreshAccessToken(holder.tenant);
+				const renewed = await this.tenants.refreshAccessToken(holder.tenant, holder.client);
 				if (renewed) {
 					holder.client = renewed;
 					return make(holder.client);

@@ -35,7 +35,7 @@ export function attentionItemOf(
 		organizationId: tenant.organizationId,
 		kind: InboxItemKindEnum.NOTICE,
 		source: InboxItemSourceEnum.SYSTEM,
-		title: `Jira refused the connection's token`,
+		title: open ? `Jira refused the connection's token` : `Jira accepts the connection again`,
 		body: open
 			? `Until someone connects Jira again (Settings → Integrations → Jira), the organization's imports, webhooks and the scheduled sync of its Jira mappings are paused.`
 			: `Jira accepted the connection again; its imports go on.`,
