@@ -146,6 +146,12 @@ export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateComman
 			// (c) only then the previous employee's slots are released, below. If that fails, the log is fully
 			// moved, the previous employee may keep slots that no longer belong to it, and the error propagates.
 		} else {
+			// Whether the update gives the log the slots of its range (takesSlotsOfItsRange), read before anything is
+			// written: a failed read leaves the log as it was, never stopped without slots. A stop changes neither the
+			// log's source nor its slot links, so the stored log answers as the updated one would.
+			const takesRangeSlots =
+				needToUpdateTimeSlots && !manualTimeSlot && (await this.takesSlotsOfItsRange(timeLog));
+
 			// Update the time log in the repository
 			await this.typeOrmTimeLogRepository.update(
 				{ id: timeLog.id, tenantId },
@@ -160,11 +166,11 @@ export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateComman
 
 			if (needToUpdateTimeSlots) {
 				// Create new time slots if needed for Web Timer, and for a heartbeat-posting run that has none
-				// (takesSlotsOfItsRange). The answer is every slot of the employee at those starts — the ones created
+				// (takesRangeSlots, above). The answer is every slot of the employee at those starts — the ones created
 				// and the ones they already had there (another of their logs may share a ten-minute slot) — and, as
 				// TimeLogCreateHandler does, it becomes the log's slots, so the save links the log to each of them, an
 				// existing slot included.
-				if (!manualTimeSlot && (await this.takesSlotsOfItsRange(timeLog))) {
+				if (takesRangeSlots) {
 					timeLog.timeSlots = await this.bulkCreateTimeSlots(
 						updateTimeSlots,
 						timeLog,

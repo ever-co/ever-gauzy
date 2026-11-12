@@ -21,7 +21,10 @@ const minutesAfterStart = (minutes: number) => new Date(STARTED.getTime() + minu
 const RANGE_SLOTS = [0, 10, 20].map((minutes) => ({ startedAt: minutesAfterStart(minutes), duration: 600 }));
 
 /** Stops a run of `source` at 09:30, started at 09:00, that has slots or not. */
-async function stopRun(source: TimeLogSourceEnum, { hasSlots = false, manualTimeSlot = false } = {}) {
+async function stopRun(
+	source: TimeLogSourceEnum,
+	{ hasSlots = false, manualTimeSlot = false, slotReadFails = false } = {}
+) {
 	const run = {
 		id: 'run',
 		tenantId: TENANT,
@@ -32,16 +35,23 @@ async function stopRun(source: TimeLogSourceEnum, { hasSlots = false, manualTime
 		stoppedAt: STARTED,
 		isRunning: true
 	};
+	// The stored run: an update writes into it, and a read answers it as it now stands
 	const timeLogRepository = {
 		findOneBy: jest.fn(async () => ({ ...run })),
-		update: jest.fn(async () => ({ affected: 1 }))
+		update: jest.fn(async (_where: object, changes: object) => {
+			Object.assign(run, changes);
+			return { affected: 1 };
+		})
 	};
 	// The count of the slots linked to the run
 	const slotQuery = {
 		alias: 'time_slot',
 		innerJoin: jest.fn(() => slotQuery),
 		where: jest.fn(() => slotQuery),
-		getCount: jest.fn(async () => (hasSlots ? 2 : 0))
+		getCount: jest.fn(async () => {
+			if (slotReadFails) throw new Error('the database is unreachable');
+			return hasSlots ? 2 : 0;
+		})
 	};
 	const timeSlotRepository = { createQueryBuilder: jest.fn(() => slotQuery) };
 	const timeSlotService = {
@@ -61,10 +71,20 @@ async function stopRun(source: TimeLogSourceEnum, { hasSlots = false, manualTime
 	jest.spyOn(handler as any, 'recalculateTimesheetAndEmployeeHours').mockResolvedValue(undefined);
 	const save = jest.spyOn(handler as any, 'saveUpdatedTimeLog').mockImplementation(async (log) => log);
 
-	await handler.execute(new TimeLogUpdateCommand({ isRunning: false, stoppedAt: STOPPED }, 'run', manualTimeSlot));
+	const stop = handler.execute(
+		new TimeLogUpdateCommand({ isRunning: false, stoppedAt: STOPPED }, 'run', manualTimeSlot)
+	);
+	const outcome = await stop.then(
+		() => undefined,
+		(error: Error) => error
+	);
 
-	const savedRun = save.mock.calls[0]?.[0] as { timeSlots?: { startedAt: Date; timeLogId: string }[] };
-	return { bulkCreate: timeSlotService.bulkCreate, savedRun, slotCount: slotQuery.getCount };
+	const savedRun = save.mock.calls[0]?.[0] as {
+		isRunning: boolean;
+		stoppedAt: Date;
+		timeSlots?: { startedAt: Date; duration: number; timeLogId: string }[];
+	};
+	return { bulkCreate: timeSlotService.bulkCreate, savedRun, slotCount: slotQuery.getCount, run, outcome };
 }
 
 describe('TimeLogUpdateHandler, the stop of a run that sent no heartbeat (#11843)', () => {
@@ -79,7 +99,10 @@ describe('TimeLogUpdateHandler, the stop of a run that sent no heartbeat (#11843
 		async (source) => {
 			const { bulkCreate, savedRun } = await stopRun(source);
 
+			expect(savedRun).toMatchObject({ isRunning: false, stoppedAt: STOPPED });
 			expect(bulkCreate).toHaveBeenCalledTimes(1);
+			const seconds = savedRun.timeSlots?.reduce((sum, slot) => sum + slot.duration, 0);
+			expect(seconds).toBe(30 * 60);
 			expect(savedRun.timeSlots?.map((slot) => slot.startedAt)).toEqual(
 				RANGE_SLOTS.map((slot) => slot.startedAt)
 			);
@@ -106,6 +129,14 @@ describe('TimeLogUpdateHandler, the stop of a run that sent no heartbeat (#11843
 
 		expect(bulkCreate).not.toHaveBeenCalled();
 		expect(slotCount).not.toHaveBeenCalled();
+	});
+
+	it('reads the slots before writing the stop, so a failed read leaves the run going rather than stopped without slots', async () => {
+		const { run, outcome, bulkCreate } = await stopRun(TimeLogSourceEnum.TEAMS, { slotReadFails: true });
+
+		expect(outcome).toEqual(new Error('the database is unreachable'));
+		expect(run).toMatchObject({ isRunning: true, stoppedAt: STARTED });
+		expect(bulkCreate).not.toHaveBeenCalled();
 	});
 
 	it('creates no slots for an update that brings its own manual slot', async () => {
