@@ -1,7 +1,7 @@
 import { EventSubscriber } from 'typeorm';
 import { faker } from '@faker-js/faker';
 import { sluggable } from '@gauzy/utils';
-import { localFileUrl } from './../../core/file-storage/file-storage';
+import { iconFileUrl } from '../../image-asset/image-asset-icon';
 import { BaseEntityEventSubscriber } from '../../core/entities/subscribers/base-entity-event.subscriber';
 import { TaskSize } from './size.entity';
 
@@ -57,14 +57,15 @@ export class TaskSizeSubscriber extends BaseEntityEventSubscriber<TaskSize> {
 	}
 
 	/**
-	 * Sets the full icon URL for a `TaskSize` entity, as served by the LOCAL file storage provider.
+	 * Sets the full icon URL for a `TaskSize` entity: an uploaded icon from the provider that holds it, any other
+	 * icon as the LOCAL provider serves it (`iconFileUrl`).
 	 *
 	 * @param entity - The `TaskSize` entity whose `fullIconUrl` needs to be set.
 	 * @returns A promise that resolves when the `fullIconUrl` is successfully set.
 	 */
 	private async setFullIconUrl(entity: TaskSize): Promise<void> {
 		try {
-			entity.fullIconUrl = await localFileUrl(entity.icon);
+			entity.fullIconUrl = await iconFileUrl(entity.icon, entity.tenantId);
 		} catch (error) {
 			console.error('TaskSizeSubscriber: Error during the setImageUrl process:', error);
 			throw error;
