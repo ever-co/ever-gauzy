@@ -158,22 +158,7 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 		organizationId: ID,
 		forceDelete: boolean = false
 	): Promise<void> {
-		// Delete the associated time slots
-		const timeSlotsIds = [timeSlot.id];
-
-		// Bulk delete the time slots
-		await this._commandBus.execute(
-			new TimeSlotBulkDeleteCommand(
-				{
-					organizationId,
-					employeeId,
-					timeLog,
-					timeSlotsIds
-				},
-				forceDelete,
-				true
-			)
-		);
+		await this.deleteSpanTimeSlots(timeLog, [timeSlot.id], organizationId, employeeId, forceDelete);
 
 		// Recalculate the timesheet
 		await this._commandBus.execute(new TimesheetRecalculateCommand(timeLog.timesheetId));
@@ -208,38 +193,12 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 			try {
 				this.debug(() => `update startedAt time to ${end}`);
 				// Update the started at time
-				let timeLog: ITimeLog = await this._commandBus.execute(
+				const timeLog: ITimeLog = await this._commandBus.execute(
 					new TimeLogUpdateCommand({ startedAt: end }, log, true, forceDelete)
 				);
 
-				// Delete the associated time slots
-				const timeSlotsIds = [slot.id];
-
-				// Bulk delete the time slots
-				await this._commandBus.execute(
-					new TimeSlotBulkDeleteCommand(
-						{
-							organizationId,
-							employeeId,
-							timeLog,
-							timeSlotsIds
-						},
-						forceDelete,
-						true
-					)
-				);
-
-				// Check if there are any remaining time slots
-				timeLog = await this.typeOrmTimeLogRepository.findOne({
-					where: { id: timeLog.id },
-					relations: { timeSlots: true }
-				});
-
-				// If no remaining time slots, delete the time log
-				if (isEmpty(timeLog.timeSlots)) {
-					// Delete TimeLog if remaining timeSlots are 0
-					await this.deleteTimeLog(timeLog, forceDelete);
-				}
+				await this.deleteSpanTimeSlots(timeLog, [slot.id], organizationId, employeeId, forceDelete);
+				await this.deleteTimeLogWithoutTimeSlots(timeLog, forceDelete);
 			} catch (error) {
 				this.logger.warn(`Error while updating startedAt time: ${error?.message ?? error}`, { stack: error?.stack });
 			}
@@ -282,37 +241,12 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 				this.debug(() => `update stoppedAt time to ${start}`);
 
 				// Update the stoppedAt time
-				let timeLog: ITimeLog = await this._commandBus.execute(
+				const timeLog: ITimeLog = await this._commandBus.execute(
 					new TimeLogUpdateCommand({ stoppedAt: start }, log, true, forceDelete)
 				);
 
-				// Delete the associated time slots
-				const timeSlotsIds = [slot.id];
-
-				// Bulk delete the time slots
-				await this._commandBus.execute(
-					new TimeSlotBulkDeleteCommand(
-						{
-							organizationId,
-							employeeId,
-							timeLog,
-							timeSlotsIds
-						},
-						forceDelete,
-						true
-					)
-				);
-
-				// Check if there are any remaining time slots
-				timeLog = await this.typeOrmTimeLogRepository.findOne({
-					where: { id: timeLog.id },
-					relations: { timeSlots: true }
-				});
-
-				// If no remaining time slots, delete the time log
-				if (isEmpty(timeLog.timeSlots)) {
-					await this.deleteTimeLog(timeLog, forceDelete);
-				}
+				await this.deleteSpanTimeSlots(timeLog, [slot.id], organizationId, employeeId, forceDelete);
+				await this.deleteTimeLogWithoutTimeSlots(timeLog, forceDelete);
 			} catch (error) {
 				this.logger.warn(`Error while updating stoppedAt time: ${error?.message ?? error}`, { stack: error?.stack });
 			}
@@ -364,22 +298,7 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 		}
 
 		try {
-			// Delete the associated time slots
-			const timeSlotsIds = [timeSlot.id];
-
-			// Bulk delete the time slots
-			await this._commandBus.execute(
-				new TimeSlotBulkDeleteCommand(
-					{
-						organizationId,
-						employeeId,
-						timeLog,
-						timeSlotsIds
-					},
-					forceDelete,
-					true
-				)
-			);
+			await this.deleteSpanTimeSlots(timeLog, [timeSlot.id], organizationId, employeeId, forceDelete);
 		} catch (error) {
 			this.logger.error(
 				`Error while splitting time entries: ${remainingDuration}: ${error?.message ?? error}`,
@@ -454,6 +373,44 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 				`Error while deleting the time log overlapping the entire time for ID: ${timeLog.id}: ${error?.message ?? error}`,
 				{ stack: error?.stack }
 			);
+		}
+	}
+
+	/**
+	 * Deletes the time slots the span takes from the log, whatever other log holds them.
+	 *
+	 * @param timeLog - The log the span is taken from.
+	 * @param timeSlotsIds - The time slots to delete.
+	 * @param organizationId - The log's organization.
+	 * @param employeeId - The log's employee.
+	 * @param forceDelete - Hard delete (`true`) or soft delete (`false`).
+	 */
+	private async deleteSpanTimeSlots(
+		timeLog: ITimeLog,
+		timeSlotsIds: ID[],
+		organizationId: ID,
+		employeeId: ID,
+		forceDelete: boolean
+	): Promise<void> {
+		await this._commandBus.execute(
+			new TimeSlotBulkDeleteCommand({ organizationId, employeeId, timeLog, timeSlotsIds }, forceDelete, true)
+		);
+	}
+
+	/**
+	 * Deletes the log once it holds no time slot.
+	 *
+	 * @param timeLog - The log the span was taken from.
+	 * @param forceDelete - Hard delete (`true`) or soft delete (`false`).
+	 */
+	private async deleteTimeLogWithoutTimeSlots(timeLog: ITimeLog, forceDelete: boolean): Promise<void> {
+		const stored = await this.typeOrmTimeLogRepository.findOne({
+			where: { id: timeLog.id },
+			relations: { timeSlots: true }
+		});
+
+		if (isEmpty(stored.timeSlots)) {
+			await this.deleteTimeLog(stored, forceDelete);
 		}
 	}
 
