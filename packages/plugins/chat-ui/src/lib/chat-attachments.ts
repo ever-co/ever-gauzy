@@ -12,11 +12,80 @@ export interface PendingAttachment {
 	documentId: string | null;
 	/** Why the platform refused it (its own words), when it did. */
 	error: string | null;
+	/** A picture's preview, read from the picked file itself (an object URL: released when the file leaves the composer). */
+	previewUrl?: string | null;
+	/** The picked file itself, kept while it waits in the composer: what its preview popup shows. */
+	file?: File | null;
+}
+
+/** What the preview popup needs of a file: a stored file of a message, or one still waiting in the composer. */
+export interface PreviewableFile {
+	name: string;
+	mimeType?: string | null;
+	fileSize?: number | null;
+	fileUrl?: string | null;
+	thumbUrl?: string | null;
+}
+
+/** An address of the picked file for its preview popup (null where object URLs are not available). */
+export function objectUrlOf(file: File | null | undefined): string | null {
+	if (!file || typeof URL === 'undefined' || typeof URL.createObjectURL !== 'function') return null;
+	try {
+		return URL.createObjectURL(file);
+	} catch {
+		return null;
+	}
+}
+
+/** Lets go of an address made by {@link objectUrlOf}. */
+export function releaseObjectUrl(url: string | null | undefined): void {
+	if (url && typeof URL !== 'undefined' && typeof URL.revokeObjectURL === 'function') URL.revokeObjectURL(url);
+}
+
+/** A preview of a picked picture, straight from the file (null for other files, or where object URLs are not available). */
+export function previewUrlOf(file: Pick<File, 'type'>): string | null {
+	if (!isImageFile(file.type) || typeof URL === 'undefined' || typeof URL.createObjectURL !== 'function') return null;
+	try {
+		return URL.createObjectURL(file as File);
+	} catch {
+		return null;
+	}
+}
+
+/** Lets go of the previews of files that left the composer. */
+export function releasePreviews(attachments: readonly PendingAttachment[]): void {
+	if (typeof URL === 'undefined' || typeof URL.revokeObjectURL !== 'function') return;
+	for (const item of attachments) {
+		if (item.previewUrl) URL.revokeObjectURL(item.previewUrl);
+	}
 }
 
 /** Whether a file is shown as a picture (anything else is a link to the file). */
 export function isImageFile(mimeType: string | null | undefined): boolean {
 	return typeof mimeType === 'string' && /^image\/(png|jpe?g|gif|webp|avif|bmp)$/i.test(mimeType.trim());
+}
+
+/** How a file is shown in the preview popup: as itself where a browser can show it, else as its name alone. */
+export type FilePreviewKind = 'image' | 'video' | 'audio' | 'pdf' | 'none';
+
+/**
+ * The preview a file gets. Only a file with an address of its own is shown as itself: http(s) for a stored file,
+ * or the page's own `blob:` address of a file still waiting in the composer.
+ */
+export function previewKindOf(file: Pick<PreviewableFile, 'mimeType' | 'fileUrl' | 'thumbUrl'>): FilePreviewKind {
+	const mime = (file.mimeType ?? '').trim().toLowerCase();
+	const isWeb = (url: string | null | undefined) => typeof url === 'string' && /^(https?:\/\/|blob:)/i.test(url.trim());
+	if (isImageFile(mime)) return isWeb(file.fileUrl) || isWeb(file.thumbUrl) ? 'image' : 'none';
+	if (!isWeb(file.fileUrl)) return 'none';
+	if (/^video\/(mp4|webm|ogg)$/.test(mime)) return 'video';
+	if (/^audio\/(mpeg|mp3|ogg|wav|webm|aac|mp4|x-m4a)$/.test(mime)) return 'audio';
+	if (mime === 'application/pdf') return 'pdf';
+	return 'none';
+}
+
+/** Whether a click is a plain one (no modifier, main button): any other keeps the link's own way (a new tab, a download). */
+export function isPlainClick(event: Pick<MouseEvent, 'button' | 'ctrlKey' | 'metaKey' | 'shiftKey' | 'altKey'>): boolean {
+	return event.button === 0 && !event.ctrlKey && !event.metaKey && !event.shiftKey && !event.altKey;
 }
 
 /** A size for people: `512 B`, `12 KB`, `3.4 MB`; empty when unknown. */
