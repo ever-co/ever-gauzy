@@ -16,6 +16,7 @@ import {
 	SPAN_TIMESHEET_ID,
 	TimeSpanStore
 } from '../testing/time-span-store';
+import { TimeLogUpdateCommand } from './commands';
 import { TypeOrmTimeLogRepository } from './repository/type-orm-time-log.repository';
 import { TimeLogService } from './time-log.service';
 
@@ -145,6 +146,20 @@ describe('TimeLogService: manual time over another entry of the same member', ()
 			['11:00', '12:00', slotStarts('11:00', '12:00')],
 			['12:00', '13:00', slotStarts('12:00', '13:00')]
 		]);
+	});
+
+	/**
+	 * A split saves the copy of the entry's time after the new one, then shortens the entry. A failed shortening was
+	 * logged and the manual entry saved anyway, over an entry still holding that time.
+	 */
+	it('manual time is refused, and not saved, when the entry it splits cannot be shortened', async () => {
+		store.addTimeLog('manual', '10:00', '13:00', MANUAL_ENTRY);
+		store.failOn(TimeLogUpdateCommand);
+
+		await expect(addManualTime('11:00', '12:00')).rejects.toThrow('The database connection was lost');
+
+		const starts = store.shapes().map(([start]) => start);
+		expect(starts).not.toContain('11:00');
 	});
 
 	it('an entry starting inside the new one keeps its time after it', async () => {

@@ -338,6 +338,9 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 			await this.deleteSpanTimeSlots(log, spanTimeSlots, organizationId, employeeId, forceDelete);
 		} catch (error) {
 			this.logger.error(`Error while splitting time log ${log.id}: ${error?.message ?? error}`, error?.stack);
+			// Passed on: the copy may already be saved while the log still covers its time, so the caller must not go
+			// on as if the span were out of the log.
+			throw error;
 		}
 	}
 

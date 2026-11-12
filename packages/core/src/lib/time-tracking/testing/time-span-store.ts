@@ -194,6 +194,16 @@ export class TimeSpanStore {
 		return byStart.map((log) => this.shapeOf(log));
 	}
 
+	/**
+	 * Makes every command of the given class fail, as a write that loses the database connection.
+	 *
+	 * @param commandClass - The class of the commands that fail.
+	 */
+	failOn(commandClass: unknown): void {
+		const failure = new Error('The database connection was lost');
+		this.routes.set(commandClass, () => Promise.reject(failure));
+	}
+
 	/** Every slot not deleted, by start: its start (`HH:mm`) and its duration in seconds. */
 	timeSlotDurations(): Array<[string, number]> {
 		const live = this.timeSlots.filter((slot) => !slot.deletedAt);
