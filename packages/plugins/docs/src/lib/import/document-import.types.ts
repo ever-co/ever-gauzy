@@ -123,8 +123,8 @@ export interface IDocumentImportStore {
 	claim(id: ID, scope: IImportScope, staleBefore: Date, patch: Partial<IImportRow>): Promise<boolean>;
 	/**
 	 * Applies `patch` to the import. With `fence` (the `attempts` a run's claim wrote), only while the import is still
-	 * that run's: a run taken over by a later claim (it stalled past the stale window) changes nothing. True when the
-	 * row was written.
+	 * that run's and RUNNING: a run taken over by a later claim (it stalled past the stale window), or one the stalled
+	 * import sweep sent back to QUEUED or gave up, changes nothing. True when the row was written.
 	 */
 	update(id: ID, scope: IImportScope, patch: Partial<IImportRow>, fence?: number): Promise<boolean>;
 	/** The uploaded zip, bounded by the import's limit. */
@@ -150,6 +150,11 @@ export interface IDocumentImportStore {
 	 * run of this import), and it is then left as it is. An editor that loaded the empty page sees the revision moved.
 	 */
 	writePage(document: IImportedDocumentRef, scope: IImportScope, contentJson: IDocNode, ownerUserId: ID | null): Promise<boolean>;
+	/**
+	 * The ids of the pages a page's saved content mentions: for a page saved meanwhile, whose links follow what it holds,
+	 * not what the import would have written.
+	 */
+	mentionsOf(documentId: ID, scope: IImportScope): Promise<Set<string>>;
 	/** The `document → document` links of the pages a page mentions. */
 	linkPages(documentId: ID, mentionedIds: ID[], scope: IImportScope): Promise<void>;
 	/** The bytes the organization stores today. */

@@ -70,6 +70,12 @@ describe('front matter and metadata', () => {
 		expect(page.markdown).toBe('# Roadmap / 2024\n\nFirst paragraph');
 	});
 
+	it('keeps a first paragraph of `Key: value` lines that are not the export properties', () => {
+		const page = readMarkdownPage('# Plan\n\nGoal: ship v2\nOwner: Ana\n\nDetails', EXPORT);
+		expect(page.meta.title).toBe('Plan');
+		expect(page.markdown).toBe('# Plan\n\nGoal: ship v2\nOwner: Ana\n\nDetails');
+	});
+
 	it('accepts only an emoji as an icon, and only a sensible date', () => {
 		expect(emojiIconOf('🚀')).toBe('🚀');
 		expect(emojiIconOf('👩🏽‍💻')).toBe('👩🏽‍💻');

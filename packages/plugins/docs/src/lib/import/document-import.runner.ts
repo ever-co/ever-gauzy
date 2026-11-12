@@ -375,16 +375,20 @@ class ImportRun {
 						return ref ? { documentId: ref.id, name: ref.name, mimeType: ref.mimeType, size: ref.fileSize } : null;
 					}
 				});
-				// A page saved meanwhile (by a member, or by an earlier run of this import) keeps what it has.
-				await this.store.writePage(document, this.scope, result.contentJson, this.owner);
-				await this.store.linkPages(document.id, result.mentionedDocumentIds.filter((id) => id !== document.id) as ID[], this.scope);
+				const mentioned = result.mentionedDocumentIds.filter((id) => id !== document.id) as ID[];
+				// A page saved meanwhile (by a member, or by an earlier run of this import) keeps what it has, and is linked
+				// only to the pages it still mentions: a mention a member removed is not linked again, while a retry still
+				// links what an earlier run wrote before it stopped.
+				const written = await this.store.writePage(document, this.scope, result.contentJson, this.owner);
+				const saved = written ? null : await this.store.mentionsOf(document.id, this.scope);
+				await this.store.linkPages(document.id, saved ? mentioned.filter((id) => saved.has(String(id))) : mentioned, this.scope);
 				this.report.set(node.key, {
 					...item,
 					...(result.unresolvedLinks ? { unresolvedLinks: result.unresolvedLinks } : {}),
 					...(result.schemaFallback ? { reason: DOCS_IMPORT_REASONS.PLAIN_TEXT } : {})
 				});
 			} catch (error) {
-				if (!this.finalAttempt) throw error;
+				if (error instanceof ImportRunDisplacedError || !this.finalAttempt) throw error;
 				this.logger.warn(`docs.import ${this.row.id}: page ${node.key} could not be converted: ${(error as Error)?.message ?? error}`);
 				this.report.set(node.key, { ...item, status: DocumentImportItemStatusEnum.FAILED, reason: DOCS_IMPORT_REASONS.CONVERSION_FAILED });
 			}
@@ -451,7 +455,7 @@ class ImportRun {
 					: this.item(node, DocumentImportItemStatusEnum.IMPORTED, { documentId: document.id, name: document.name })
 			);
 		} catch (error) {
-			if (!this.finalAttempt) throw error;
+			if (error instanceof ImportRunDisplacedError || !this.finalAttempt) throw error;
 			this.logger.warn(`docs.import ${this.row.id}: ${node.kind} ${node.key} could not be created: ${(error as Error)?.message ?? error}`);
 			this.report.set(node.key, this.item(node, DocumentImportItemStatusEnum.FAILED, { reason: DOCS_IMPORT_REASONS.CREATE_FAILED }));
 		}
@@ -508,6 +512,8 @@ class ImportRun {
 			await this.tick();
 			return usedBytes + buffer.length;
 		} catch (error) {
+			// The run lost the import (its progress write was refused): it stops, as everywhere else.
+			if (error instanceof ImportRunDisplacedError) throw error;
 			if (error instanceof ImportArchiveError) return skip(DOCS_IMPORT_REASONS.TOO_LARGE);
 			if (!this.finalAttempt) throw error;
 			this.logger.warn(`docs.import ${this.row.id}: attachment ${node.key} failed: ${(error as Error)?.message ?? error}`);

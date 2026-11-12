@@ -101,8 +101,10 @@ function build() {
 	const settings: any = { getDefaults: jest.fn(async () => ({ importToKnowledgeDefault: true, defaultVisibility: DocumentVisibilityEnum.PRIVATE })) };
 	const quota: any = { getQuotaBytes: jest.fn(async () => 123456) };
 	const queue: any = { enqueue: jest.fn(async () => true), jobIdFor: (job: string, id: string) => `docs:${job.slice(5)}:${id}` };
-	const service = new DocumentImportService(imports, documents, settings, quota, queue);
-	return { service, rows, imports, documents, settings, queue };
+	// The tenant's storage settings applied to background storage work: here, the work as it is.
+	const tenantStorage: any = { run: jest.fn(async (_tenantId: string, work: () => Promise<unknown>) => work()) };
+	const service = new DocumentImportService(imports, documents, settings, quota, queue, tenantStorage);
+	return { service, rows, imports, documents, settings, queue, tenantStorage };
 }
 
 function upload(name: string, zip: Buffer) {
@@ -226,15 +228,16 @@ describe('DocumentImportService', () => {
 	});
 
 	it('gives up a stalled import that has had its runs', async () => {
-		const { service, rows } = build();
+		const { service, rows, tenantStorage } = build();
 		const view = await service.start(upload('vault7', VAULT), {});
 		Object.assign(rows[0], { status: DocumentImportStatusEnum.RUNNING, lastProgressAt: new Date(0), attempts: 3 });
 		const key = rows[0].storageKey;
 		storage.deleted = [];
 		const read = await service.get(view.id as string);
 		expect(read).toMatchObject({ status: DocumentImportStatusEnum.FAILED, errorCode: 'DOCS_IMPORT_STALLED' });
-		// No run will clean up after an import given up: its zip goes now.
+		// No run will clean up after an import given up: its zip goes now, from the tenant's own storage.
 		expect(storage.deleted).toEqual([key]);
+		expect(tenantStorage.run).toHaveBeenCalledWith('tenant-1', expect.any(Function));
 		expect(rows[0].storageKey).toBeNull();
 	});
 

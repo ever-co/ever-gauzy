@@ -42,7 +42,7 @@ error, not a silent DOM fallback.
 | `GAUZY_DOCS_IMPORT_MAX_ENTRIES` | `5000` | The most entries one import zip may hold |
 | `GAUZY_DOCS_IMPORT_MAX_UNCOMPRESSED_BYTES` | `1073741824` | The most an import zip may unpack to (1 GiB) |
 | `GAUZY_DOCS_PDF_EXPORT_ENABLED` | `false` | PDF export of a page or a subtree; off ⇒ the PDF routes answer 404 `DOCS_PDF_EXPORT_DISABLED` |
-| `GAUZY_DOCS_PDF_MAX_PAGES` | `200` | The most pages one subtree PDF export takes (413 `DOCS_PDF_TOO_MANY_PAGES` past it) |
+| `GAUZY_DOCS_PDF_MAX_PAGES` | `200` | The most pages one subtree PDF export takes (413 `DOCS_PDF_TOO_MANY_PAGES` past it); at most `499`, a larger value is read as `499` |
 
 ## Pipeline dispatch: queued vs inline
 

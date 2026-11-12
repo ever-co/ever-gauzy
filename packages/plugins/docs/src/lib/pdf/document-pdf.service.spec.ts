@@ -4,13 +4,13 @@
  * contents keeps each page under its parent through folders. Rendering itself is `pdf-render.spec.ts`'s.
  */
 jest.mock('../entities/document.entity', () => ({ Document: class {} }));
-jest.mock('../services/document-markdown.service', () => ({ DocumentMarkdownService: class {} }));
+jest.mock('../services/document-markdown.service', () => ({ DocumentMarkdownService: class {}, DOCS_MARKDOWN_SUBTREE_MAX_PAGES: 500 }));
 jest.mock('../services/document-upload.service', () => ({ DocumentUploadService: class {} }));
 
 import { HttpException } from '@nestjs/common';
 import { PassThrough } from 'node:stream';
-import { DOCS_PDF_TOO_MANY_PAGES } from '../docs.constants';
-import { DocumentPdfService, PdfExportCancelledError } from './document-pdf.service';
+import { DOCS_PDF_TOO_MANY_PAGES, ENV_GAUZY_DOCS_PDF_MAX_PAGES } from '../docs.constants';
+import { DOCS_PDF_MAX_PAGES_CEILING, DocumentPdfService, PdfExportCancelledError, pdfMaxPages } from './document-pdf.service';
 
 const page = (id: string, name: string, extra: Record<string, unknown> = {}) => ({
 	document: { id, name, contentJson: { type: 'doc', content: [] } },
@@ -71,6 +71,36 @@ describe('DocumentPdfService zip of PDFs', () => {
 		expect(render).not.toHaveBeenCalled();
 		// One page past the limit is asked for, so a subtree of exactly the limit passes.
 		expect(markdown.collectSubtreeWithin).toHaveBeenCalledWith(ROOT, undefined, expect.any(Number));
+	});
+
+	it('stops before rendering anything when the reader leaves while the pages are collected', async () => {
+		const output = new PassThrough();
+		output.resume();
+		const { service, render, markdown } = build([page('root', 'Root'), page('a', 'A')]);
+		markdown.collectSubtreeWithin.mockImplementation(async () => {
+			output.destroy();
+			await new Promise((resolve) => setImmediate(resolve));
+			return { entries: [page('root', 'Root'), page('a', 'A')], truncated: false };
+		});
+		await expect(service.writeSubtreeZip(ROOT, undefined, output)).rejects.toBeInstanceOf(PdfExportCancelledError);
+		expect(render).not.toHaveBeenCalled();
+	});
+
+	it('keeps a raised page limit within what the subtree collection reads', async () => {
+		const saved = process.env[ENV_GAUZY_DOCS_PDF_MAX_PAGES];
+		process.env[ENV_GAUZY_DOCS_PDF_MAX_PAGES] = '600';
+		try {
+			expect(pdfMaxPages()).toBe(DOCS_PDF_MAX_PAGES_CEILING);
+			const { service, markdown, render } = build([page('root', 'Root')]);
+			render.mockResolvedValue(Buffer.from('%PDF-1.7'));
+			expect(service.capabilities()).toEqual({ maxPages: DOCS_PDF_MAX_PAGES_CEILING });
+			// One page past the limit, and no more than the collection's own cap (500): a 550-page subtree is a 413.
+			await expect(service.renderSubtree(ROOT)).resolves.toBeDefined();
+			expect(markdown.collectSubtreeWithin).toHaveBeenCalledWith(ROOT, undefined, DOCS_PDF_MAX_PAGES_CEILING + 1);
+		} finally {
+			if (saved === undefined) delete process.env[ENV_GAUZY_DOCS_PDF_MAX_PAGES];
+			else process.env[ENV_GAUZY_DOCS_PDF_MAX_PAGES] = saved;
+		}
 	});
 
 	it('orders the table of contents depth first, each page under its parent through folders', async () => {

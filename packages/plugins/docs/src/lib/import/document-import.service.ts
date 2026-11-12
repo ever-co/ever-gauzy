@@ -46,6 +46,7 @@ import { importStaleAction, toImportView } from './document-import.view';
 import { IImportArchiveLimits, ImportArchiveError, openImportArchive } from './import-archive';
 import { importArchiveLimits } from './import-limits';
 import { buildImportPlan, detectImportLayout } from './import-plan';
+import { ImportTenantStorage } from './import-tenant-storage';
 
 /** C0 control characters and DEL (built from code points: a literal range in a pattern is a lint error). */
 const CONTROL_CHARACTERS = new RegExp(`[${String.fromCharCode(0)}-${String.fromCharCode(0x1f)}${String.fromCharCode(0x7f)}]`, 'g');
@@ -79,7 +80,8 @@ export class DocumentImportService {
 		private readonly documentService: DocumentService,
 		private readonly settings: DocumentSettingsService,
 		private readonly quota: DocumentQuotaService,
-		private readonly queue: DocsQueueService
+		private readonly queue: DocsQueueService,
+		private readonly storage: ImportTenantStorage
 	) {}
 
 	/** 404 `DOCS_IMPORT_DISABLED` while `GAUZY_DOCS_IMPORT_ENABLED` is off. */
@@ -252,9 +254,13 @@ export class DocumentImportService {
 	/** Deletes the uploaded zip of an import through the storage it was written to, and forgets its key. */
 	private async discardArchive(row: IImportRow): Promise<void> {
 		if (!row.storageKey) return;
+		const key = row.storageKey;
 		try {
-			const provider = new FileStorage().setProvider(row.storageProvider ?? undefined).getProviderInstance();
-			await provider.deleteFile(row.storageKey);
+			// The sweep runs without a request: the tenant's own storage settings name the bucket the zip went to.
+			await this.storage.run(row.tenantId, async () => {
+				const provider = new FileStorage().setProvider(row.storageProvider ?? undefined).getProviderInstance();
+				await provider.deleteFile(key);
+			});
 			await this.imports.update(
 				{ id: row.id, tenantId: row.tenantId, organizationId: row.organizationId } as never,
 				{ storageKey: null } as never

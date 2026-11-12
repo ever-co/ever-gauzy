@@ -26,8 +26,9 @@ import { DocumentProcessingService } from '../services/document-processing.servi
 import { DocumentQuotaService } from '../services/document-quota.service';
 import { canonicalExtension } from '../services/file-sniffer';
 import { generateDocumentHtml } from '../validation/tiptap-html.serializer';
-import { stripTransientAttributes, validateTiptapDocument } from '../validation/tiptap-schema.validator';
+import { collectDocumentMentionIds, stripTransientAttributes, validateTiptapDocument } from '../validation/tiptap-schema.validator';
 import { ICreateImportedFile, ICreateImportedNode, IDocumentImportStore, IImportedDocumentRef, IImportRow, IImportScope } from './document-import.types';
+import { ImportTenantStorage } from './import-tenant-storage';
 
 /** A JSON value as its column takes it: text on SQLite, an object elsewhere. */
 function jsonColumn(value: unknown): unknown {
@@ -53,6 +54,9 @@ export function importArchiveKeyOf(scope: IImportScope): string {
  * does not have: an imported PRIVATE page would belong to no one and be readable by no one but a Docs manager. Every
  * created row is therefore re-stamped with the importing member (and the export's created date) by an update that
  * runs without listeners.
+ *
+ * The storage reads and writes run with the tenant's own storage settings (`ImportTenantStorage`): a queue thread has
+ * no request to read a tenant's bucket and credentials from.
  */
 @Injectable()
 export class DocumentImportStore implements IDocumentImportStore {
@@ -63,7 +67,8 @@ export class DocumentImportStore implements IDocumentImportStore {
 		private readonly documents: TypeOrmDocumentRepository,
 		private readonly links: TypeOrmDocumentLinkRepository,
 		private readonly processing: DocumentProcessingService,
-		private readonly quota: DocumentQuotaService
+		private readonly quota: DocumentQuotaService,
+		private readonly storage: ImportTenantStorage
 	) {}
 
 	async load(id: ID, scope: IImportScope): Promise<IImportRow | null> {
@@ -83,20 +88,26 @@ export class DocumentImportStore implements IDocumentImportStore {
 	}
 
 	async update(id: ID, scope: IImportScope, patch: Partial<IImportRow>, fence?: number): Promise<boolean> {
+		// A fenced write also needs the import RUNNING: only a claim makes it RUNNING (and moves `attempts`), so a run the
+		// stalled-import sweep sent back to QUEUED, or gave up (FAILED), writes nothing more.
+		const fenced = fence === undefined ? {} : { attempts: fence, status: DocumentImportStatusEnum.RUNNING };
 		const result = await this.imports
 			.createQueryBuilder()
 			.update(DocumentImport)
 			.set(patch as never)
-			.where({ id, tenantId: scope.tenantId, organizationId: scope.organizationId, ...(fence === undefined ? {} : { attempts: fence }) })
+			.where({ id, tenantId: scope.tenantId, organizationId: scope.organizationId, ...fenced })
 			.callListeners(false)
 			.execute();
 		return (result.affected ?? 0) > 0;
 	}
 
 	async readArchive(row: IImportRow): Promise<Buffer> {
-		if (!row.storageKey) throw new Error('The import has no stored archive');
-		const provider = new FileStorage().setProvider(row.storageProvider ?? undefined).getProviderInstance();
-		return readStorageFileAsBuffer(provider, row.storageKey, { maxBytes: Math.max(getDocsConfig().importMaxZipBytes, Number(row.fileSize) || 0) });
+		const key = row.storageKey;
+		if (!key) throw new Error('The import has no stored archive');
+		return this.storage.run(row.tenantId, async () => {
+			const provider = new FileStorage().setProvider(row.storageProvider ?? undefined).getProviderInstance();
+			return readStorageFileAsBuffer(provider, key, { maxBytes: Math.max(getDocsConfig().importMaxZipBytes, Number(row.fileSize) || 0) });
+		});
 	}
 
 	async discardArchive(row: IImportRow, fence?: number): Promise<void> {
@@ -116,8 +127,11 @@ export class DocumentImportStore implements IDocumentImportStore {
 			.callListeners(false)
 			.execute();
 		if (!result.affected) return;
-		const provider = new FileStorage().setProvider(row.storageProvider ?? undefined).getProviderInstance();
-		await provider.deleteFile(row.storageKey);
+		const key = row.storageKey;
+		await this.storage.run(row.tenantId, async () => {
+			const provider = new FileStorage().setProvider(row.storageProvider ?? undefined).getProviderInstance();
+			await provider.deleteFile(key);
+		});
 	}
 
 	async findImported(scope: IImportScope, externalSource: string, externalId: string): Promise<IImportedDocumentRef | null> {
@@ -160,9 +174,13 @@ export class DocumentImportStore implements IDocumentImportStore {
 	}
 
 	async createFile(input: ICreateImportedFile): Promise<IImportedDocumentRef> {
-		const provider = new FileStorage().getProvider();
 		const key = `documents/${segment(input.scope.tenantId)}/${segment(input.scope.organizationId)}/${randomUUID()}.${canonicalExtension(input.mimeType)}`;
-		const stored = await provider.putFile(input.buffer, key);
+		// The tenant's provider and bucket, as an upload of the member would use.
+		const { providerName, stored } = await this.storage.run(input.scope.tenantId, async () => {
+			const provider = new FileStorage().getProvider();
+			return { providerName: String(provider.name), stored: await provider.putFile(input.buffer, key) };
+		});
+		const storageProvider = providerName.toUpperCase() as FileStorageProviderEnum;
 		let saved: Document;
 		try {
 			saved = await this.documents.save(
@@ -179,7 +197,7 @@ export class DocumentImportStore implements IDocumentImportStore {
 					source: DocumentSourceEnum.IMPORT,
 					knowledgeStatus: input.importToKnowledge ? DocumentKnowledgeStatusEnum.QUEUED : DocumentKnowledgeStatusEnum.NONE,
 					reviewStatus: DocumentReviewStatusEnum.NONE,
-					storageProvider: provider.name.toUpperCase() as FileStorageProviderEnum,
+					storageProvider,
 					storageKey: stored.key,
 					mimeType: input.mimeType,
 					fileSize: input.buffer.length,
@@ -193,7 +211,11 @@ export class DocumentImportStore implements IDocumentImportStore {
 			);
 		} catch (error) {
 			// The row is the only thing that names the blob: without it the blob would be stored forever.
-			await provider.deleteFile(stored.key).catch(() => undefined);
+			await this.storage
+				.run(input.scope.tenantId, async () => {
+					await new FileStorage().setProvider(storageProvider).getProviderInstance().deleteFile(stored.key);
+				})
+				.catch(() => undefined);
 			throw error;
 		}
 		await this.stamp(saved.id as ID, input.ownerUserId, input.createdAt);
@@ -230,6 +252,22 @@ export class DocumentImportStore implements IDocumentImportStore {
 			.callListeners(false)
 			.execute();
 		return (result.affected ?? 0) > 0;
+	}
+
+	async mentionsOf(documentId: ID, scope: IImportScope): Promise<Set<string>> {
+		const page = await this.documents.findOne({
+			select: { id: true, contentJson: true },
+			where: { id: documentId, tenantId: scope.tenantId, organizationId: scope.organizationId } as never
+		});
+		let content: unknown = page?.contentJson ?? null;
+		if (typeof content === 'string') {
+			try {
+				content = JSON.parse(content);
+			} catch {
+				content = null;
+			}
+		}
+		return new Set(collectDocumentMentionIds(content));
 	}
 
 	async linkPages(documentId: ID, mentionedIds: ID[], scope: IImportScope): Promise<void> {

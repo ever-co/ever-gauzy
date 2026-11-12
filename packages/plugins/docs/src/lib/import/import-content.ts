@@ -124,6 +124,9 @@ export function readFrontMatter(text: string): { fields: Record<string, string>;
 	return { fields, body: text.slice(match[0].length) };
 }
 
+/** The properties an HTML export writes under the title of a database page, by name. */
+const EXPORT_PROPERTY_NAME = /^(created( time| at| by)?|last edited( time| by)?|tags|status)$/i;
+
 /**
  * A Markdown page file: front matter (`title`, `icon` / `emoji`, `created` / `created_at` / `date`) out of the body;
  * in an HTML export, the property lines under the leading title (`Created: March 3, 2024 10:00 AM`) too.
@@ -142,9 +145,11 @@ export function readMarkdownPage(text: string, layout: DocumentImportLayoutEnum)
 		// The export's Markdown pages open with the full title (the file name is a shortened, id-suffixed copy of it).
 		const heading = /^#[ \t]+([^\n]+?)[ \t#]*\n/.exec(markdown);
 		if (heading && !meta.title) meta.title = heading[1].trim().slice(0, 255);
-		// `# Title` then a block of `Key: value` property lines, then a blank line.
+		// `# Title` then a block of `Key: value` property lines, then a blank line. The block is the export's only when it
+		// names one of the export's own properties: a first paragraph such as `Goal: ship v2` is page text, and stays.
 		const header = /^(#[ \t]+[^\n]+\n)\n?((?:[A-Za-z][\w ]{0,40}:[ \t]+[^\n]*\n)+)(?:\n|$)/.exec(markdown);
-		if (header) {
+		const exportProperties = !!header && header[2].split('\n').some((line) => EXPORT_PROPERTY_NAME.test((/^([A-Za-z][\w ]{0,40}):/.exec(line)?.[1] ?? '').trim()));
+		if (header && exportProperties) {
 			for (const line of header[2].split('\n')) {
 				const property = /^([A-Za-z][\w ]{0,40}):[ \t]+(.*)$/.exec(line);
 				if (property && /^created( time| at)?$/i.test(property[1].trim()) && !meta.createdAt) {

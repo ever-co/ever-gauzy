@@ -78,8 +78,9 @@ class MemoryStore implements IDocumentImportStore {
 		return true;
 	}
 	async update(_id: ID, _scope: IImportScope, patch: Partial<IImportRow>, fence?: number): Promise<boolean> {
-		// A fenced write lands only while the import is still that run's (no later claim moved `attempts`).
-		if (fence !== undefined && fence !== this.row.attempts) return false;
+		// A fenced write lands only while the import is still that run's (no later claim moved `attempts`) and RUNNING
+		// (the stalled-import sweep did not send it back to QUEUED, or give it up).
+		if (fence !== undefined && (fence !== this.row.attempts || this.row.status !== DocumentImportStatusEnum.RUNNING)) return false;
 		this.updates.push(patch);
 		this.row = { ...this.row, ...patch };
 		this.afterUpdate?.(patch);
@@ -132,6 +133,9 @@ class MemoryStore implements IDocumentImportStore {
 		doc.contentJson = contentJson;
 		doc.revision = 2;
 		return true;
+	}
+	async mentionsOf(documentId: ID): Promise<Set<string>> {
+		return new Set(all(this.byId(documentId)?.contentJson, 'documentMention').map((node) => String(node.attrs?.['id'])));
 	}
 	async linkPages(documentId: ID, mentionedIds: ID[]): Promise<void> {
 		(this.byId(documentId) as IStoredDocument).links = mentionedIds;
@@ -274,6 +278,71 @@ describe('DocumentImportRunner', () => {
 		expect(outcome?.status).toBe(DocumentImportStatusEnum.COMPLETED);
 		expect(store.byName('Home').contentJson).toBeUndefined();
 		expect(store.byName('Release checklist').contentJson).toBeDefined();
+	});
+
+	it('links a page saved meanwhile only to the pages it still mentions', async () => {
+		const store = new MemoryStore(createImportZip(VAULT));
+		// A member saves Home without the mention of the release page while the import builds the tree.
+		store.afterUpdate = (patch) => {
+			if (patch.phase !== DocumentImportPhaseEnum.CONTENT) return;
+			const home = store.byName('Home');
+			home.revision = 2;
+			home.contentJson = { type: 'doc', content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Rewritten' }] }] };
+		};
+		await new DocumentImportRunner(store).run('import-1', SCOPE, LIMITS);
+
+		expect(store.byName('Home').links).toEqual([]);
+		expect(store.byName('Release checklist').links).toEqual([store.byName('Home').id]);
+	});
+
+	it('links again what an earlier run wrote before it stopped', async () => {
+		const store = new MemoryStore(createImportZip(VAULT));
+		// An earlier run wrote Home (the same content, its mention included) and stopped before linking it.
+		store.afterUpdate = (patch) => {
+			if (patch.phase !== DocumentImportPhaseEnum.CONTENT) return;
+			const home = store.byName('Home');
+			home.revision = 2;
+			home.contentJson = {
+				type: 'doc',
+				content: [{ type: 'paragraph', content: [{ type: 'documentMention', attrs: { id: store.byName('Release checklist').id, label: 'Release checklist' } }] }]
+			};
+		};
+		await new DocumentImportRunner(store).run('import-1', SCOPE, LIMITS);
+
+		expect(store.byName('Home').links).toEqual([store.byName('Release checklist').id]);
+	});
+
+	it('stops a run, on its last attempt too, that loses the import while it stores the attachments', async () => {
+		const files = Array.from({ length: 30 }, (_, index) => ({ name: `assets/picture-${index}.png`, data: TINY_PNG }));
+		const store = new MemoryStore(createImportZip([{ name: 'Home.md', data: '# Home' }, ...files]));
+		const createFile = store.createFile.bind(store);
+		let stored = 0;
+		// Another worker claims the import (a stall past the stale window) after the tenth file.
+		store.createFile = async (input) => {
+			const created = await createFile(input);
+			if (++stored === 10) store.row = { ...store.row, attempts: (store.row.attempts ?? 0) + 1 };
+			return created;
+		};
+		const outcome = await new DocumentImportRunner(store).run('import-1', SCOPE, LIMITS, true);
+
+		expect(outcome).toBeNull();
+		// The first refused progress write stops it: the files after it are left to the run that owns the import.
+		expect(stored).toBeLessThan(30);
+		expect(store.row.status).toBe(DocumentImportStatusEnum.RUNNING);
+		expect(store.discarded).toBe(0);
+	});
+
+	it('stops a run the stalled-import sweep sent back to QUEUED', async () => {
+		const store = new MemoryStore(createImportZip(VAULT));
+		// The sweep found the import stalled and re-enqueued it (`attempts` unchanged) while this run was still alive.
+		store.afterUpdate = (patch) => {
+			if (patch.phase === DocumentImportPhaseEnum.TREE) store.row = { ...store.row, status: DocumentImportStatusEnum.QUEUED };
+		};
+		const outcome = await new DocumentImportRunner(store).run('import-1', SCOPE, LIMITS);
+
+		expect(outcome).toBeNull();
+		expect(store.row.status).toBe(DocumentImportStatusEnum.QUEUED);
+		expect(store.discarded).toBe(0);
 	});
 
 	it('skips the attachments past the quota and keeps the pages', async () => {

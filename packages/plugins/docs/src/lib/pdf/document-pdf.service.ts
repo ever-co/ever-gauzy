@@ -5,13 +5,26 @@ import { ID, IDocumentPdfExportCapabilities } from '@gauzy/contracts';
 import { getDocsConfig } from '../docs.config';
 import { DOCS_PDF_TOO_MANY_PAGES } from '../docs.constants';
 import { Document } from '../entities/document.entity';
-import { DocumentMarkdownService, ISubtreeEntry } from '../services/document-markdown.service';
+import { DOCS_MARKDOWN_SUBTREE_MAX_PAGES, DocumentMarkdownService, ISubtreeEntry } from '../services/document-markdown.service';
 import { DocumentUploadService } from '../services/document-upload.service';
 import { buildPdfDefinition, IPdfPage, pdfDateOf, pdfFileNameOf, preparePdfImage, renderPdf } from './pdf-render';
 import { collectImageIds, IPdfImage } from './tiptap-pdf';
 
 /** The most image bytes (after re-encoding) one PDF export holds; an image past the budget is its alternative text. */
 export const DOCS_PDF_IMAGES_MAX_BYTES = 64 * 1024 * 1024;
+
+/**
+ * The most pages a subtree PDF export can take, whatever `GAUZY_DOCS_PDF_MAX_PAGES` says: the subtree collection reads
+ * at most {@link DOCS_MARKDOWN_SUBTREE_MAX_PAGES} pages, and the export reads one page past its limit to tell a subtree
+ * at the limit from a larger one.
+ */
+export const DOCS_PDF_MAX_PAGES_CEILING = DOCS_MARKDOWN_SUBTREE_MAX_PAGES - 1;
+
+/** The page limit of a subtree PDF export: the configured one, within 1 … {@link DOCS_PDF_MAX_PAGES_CEILING}. */
+export function pdfMaxPages(): number {
+	const configured = Math.floor(Number(getDocsConfig().pdfMaxPages));
+	return Math.min(Math.max(Number.isFinite(configured) ? configured : 1, 1), DOCS_PDF_MAX_PAGES_CEILING);
+}
 
 /** The reader of a zip export went away before its end: the export stops. */
 export class PdfExportCancelledError extends Error {
@@ -49,7 +62,7 @@ export class DocumentPdfService {
 
 	/** What the clients' probe answers. */
 	capabilities(): IDocumentPdfExportCapabilities {
-		return { maxPages: getDocsConfig().pdfMaxPages };
+		return { maxPages: pdfMaxPages() };
 	}
 
 	/** The page the caller may read, as a page (the route's 404 / 409). */
@@ -74,11 +87,11 @@ export class DocumentPdfService {
 	/**
 	 * A page and the readable pages under it as a zip of PDFs, one per page, at the Markdown export's paths. One PDF is
 	 * rendered at a time: the next once the zip has taken this one (and, through the pipe, the reader the bytes before
-	 * it), so a slow reader holds at most one rendered page. A reader that goes away stops the export; a page that fails
-	 * to render aborts the zip (an answer already under way is cut, not left unfinished).
+	 * it), so a slow reader holds at most one rendered page. A reader that goes away stops the export, also while the
+	 * pages are collected; a page that fails to render aborts the zip (an answer already under way is cut, not left
+	 * unfinished).
 	 */
 	async writeSubtreeZip(root: Document, organizationId: ID | undefined, output: ExportOutput): Promise<{ fileName: string; pages: number }> {
-		const entries = await this.subtreeEntries(root, organizationId);
 		const archive = new ZipArchive({ zlib: { level: 6 } });
 		let finished = false;
 		let cancelled = false;
@@ -98,6 +111,10 @@ export class DocumentPdfService {
 		});
 		// Observed here; the loop and the end await it again.
 		done.catch(() => undefined);
+		// Collected once the reader is watched (one that leaves meanwhile stops the export before any page is rendered),
+		// and before the zip is piped: a subtree past the limit is still answered 413, not as a cut zip.
+		const entries = await this.subtreeEntries(root, organizationId);
+		if (cancelled) throw new PdfExportCancelledError();
 		archive.pipe(output);
 		try {
 			for (const entry of entries) {
@@ -133,11 +150,11 @@ export class DocumentPdfService {
 	}
 
 	/**
-	 * The readable pages of a subtree, depth first; 413 past `GAUZY_DOCS_PDF_MAX_PAGES`, counted on one more page than
-	 * the limit (and on a collection that stopped at its own cap), so a larger subtree is refused, never cut.
+	 * The readable pages of a subtree, depth first; 413 past the limit ({@link pdfMaxPages}), counted on one more page
+	 * than the limit (and on a collection that stopped at its own cap), so a larger subtree is refused, never cut.
 	 */
 	private async subtreeEntries(root: Document, organizationId?: ID): Promise<ISubtreeEntry[]> {
-		const max = getDocsConfig().pdfMaxPages;
+		const max = pdfMaxPages();
 		const { entries, truncated } = await this.markdown.collectSubtreeWithin(root, organizationId, max + 1);
 		if (truncated) this.assertPageCount(Math.max(entries.length, max) + 1);
 		this.assertPageCount(entries.length);
@@ -145,7 +162,7 @@ export class DocumentPdfService {
 	}
 
 	private assertPageCount(count: number): void {
-		const max = getDocsConfig().pdfMaxPages;
+		const max = pdfMaxPages();
 		if (count > max) {
 			throw new HttpException(
 				{ statusCode: HttpStatus.PAYLOAD_TOO_LARGE, message: `The page has ${count} readable pages; a PDF export takes at most ${max}`, code: DOCS_PDF_TOO_MANY_PAGES },
