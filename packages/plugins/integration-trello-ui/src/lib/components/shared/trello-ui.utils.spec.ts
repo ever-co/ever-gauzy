@@ -1,3 +1,4 @@
+import { DatePipe } from '@angular/common';
 import { conflictValueView, errorCode, errorText, isNotFound, listMapOf, plainText, tokenOfFragment } from './trello-ui.utils';
 
 describe('trello-ui.utils', () => {
@@ -42,9 +43,15 @@ describe('trello-ui.utils', () => {
 		expect(conflictValueView('dueDate', '2026-11-20T09:00:00.000Z')).toEqual({
 			empty: false,
 			date: '2026-11-20T09:00:00.000Z',
+			dateOnly: false,
 			text: '2026-11-20T09:00:00.000Z',
 			full: '2026-11-20T09:00:00.000Z'
 		});
+		// A day, not a moment: the bare day, which the date pipe shows as that day in any zone.
+		expect(conflictValueView('dueDate', '2026-11-20')).toMatchObject({ date: '2026-11-20', dateOnly: true });
+		expect(conflictValueView('dueDate', '2026-11-20T00:00:00.000Z')).toMatchObject({ date: '2026-11-20', dateOnly: true });
+		expect(conflictValueView('dueDate', '2026-11-20T00:00:00+00:00')).toMatchObject({ date: '2026-11-20', dateOnly: true });
+		expect(conflictValueView('dueDate', '2026-11-20T00:00:00+02:00')).toMatchObject({ dateOnly: false });
 		// Not a date: shown as the text it is.
 		expect(conflictValueView('dueDate', 'soon')).toMatchObject({ date: null, text: 'soon' });
 	});
@@ -66,5 +73,23 @@ describe('trello-ui.utils', () => {
 
 	it('reads the text of HTML with spaces at block ends', () => {
 		expect(plainText('<ul><li>one</li><li>two</li></ul>line<br>break')).toBe('one two line break');
+	});
+});
+
+describe('a date-only due date as the conflict list shows it', () => {
+	// The list renders `view.date | date: 'mediumDate'` for a date-only value: the same pipe call, in several zones.
+	const shown = (value: string) => new DatePipe('en-US').transform(conflictValueView('dueDate', value).date, 'mediumDate');
+
+	it.each(['America/Los_Angeles', 'Asia/Tokyo', 'Europe/Paris', 'UTC'])('keeps its day for a reader in %s', (zone) => {
+		const before = process.env['TZ'];
+		process.env['TZ'] = zone;
+		try {
+			expect(shown('2026-11-20')).toBe('Nov 20, 2026');
+			expect(shown('2026-11-21T00:00:00.000Z')).toBe('Nov 21, 2026');
+			expect(shown('2026-11-21T00:00:00+00:00')).toBe('Nov 21, 2026');
+		} finally {
+			if (before === undefined) delete process.env['TZ'];
+			else process.env['TZ'] = before;
+		}
 	});
 });

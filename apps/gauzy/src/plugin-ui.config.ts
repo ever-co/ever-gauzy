@@ -7,6 +7,7 @@ import { JobsPlugin } from '@gauzy/plugin-jobs-ui';
 import { DocsUiPlugin } from '@gauzy/plugin-docs-ui';
 import { InboxUiPlugin } from '@gauzy/plugin-inbox-ui';
 import { ChatUiPlugin } from '@gauzy/plugin-chat-ui';
+import { TaskViewsUiPlugin } from '@gauzy/plugin-task-views-ui';
 import { IntegrationUpworkPlugin } from '@gauzy/plugin-integration-upwork-ui';
 import { IntegrationPlanePlugin } from '@gauzy/plugin-integration-plane-ui';
 import { IntegrationEverAsyncPlugin } from '@gauzy/plugin-integration-ever-async-ui';
@@ -91,6 +92,11 @@ export const uiPluginConfig: PluginUiConfig = {
 		// Chat (/pages/chat, the header badge). The nav entry and the badge appear only where the API serves the
 		// chat (@gauzy/plugin-chat loaded and FEATURE_CHAT on); elsewhere the route only says it is off.
 		ChatUiPlugin,
+
+		// Task views (/pages/task-views, Settings > Keyboard shortcuts, the KEY-123 chip on a task's page, the keyboard
+		// shortcuts). The nav entries, the shortcuts and the chip appear only where the API serves the task views
+		// extensions (GAUZY_TASK_VIEWS_ENABLED=true); elsewhere (the default) the routes only say they are off.
+		TaskViewsUiPlugin,
 
 		// Integration Plugins
 		IntegrationUpworkPlugin,

@@ -1,0 +1,253 @@
+:host {
+  display: block;
+  font-size: 0.875rem;
+}
+
+.toolbar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 0.5rem;
+}
+
+.zoom {
+  display: inline-flex;
+  gap: 0.25rem;
+}
+
+.empty {
+  color: var(--text-hint-color);
+}
+
+.scroller {
+  overflow: auto;
+  max-height: 70vh;
+  border: 1px solid var(--border-basic-color-3);
+  border-radius: var(--border-radius);
+}
+
+.canvas {
+  position: relative;
+}
+
+.line {
+  display: flex;
+  height: 2.25rem;
+  border-bottom: 1px solid var(--border-basic-color-3);
+
+  &.head {
+    position: sticky;
+    top: 0;
+    z-index: 4;
+    height: 2.75rem;
+    background: var(--background-basic-color-2);
+    font-size: 0.75rem;
+    color: var(--text-hint-color);
+
+    .title-cell {
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      background: var(--background-basic-color-2);
+    }
+  }
+}
+
+// The titles stay above the calendar scrolled under them: each track is a layer of its own, beneath them.
+.title-cell {
+  position: sticky;
+  left: 0;
+  z-index: 3;
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  padding: 0 0.5rem;
+  overflow: hidden;
+  border-right: 1px solid var(--border-basic-color-3);
+  background: var(--background-basic-color-1);
+}
+
+.title {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  max-width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--text-basic-color);
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+
+  &:hover .text,
+  &:focus-visible .text {
+    text-decoration: underline;
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-primary-default);
+    outline-offset: 2px;
+  }
+
+  .text {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+.reference {
+  flex: 0 0 auto;
+  font-family: var(--font-family-monospace, monospace);
+  font-size: 0.75rem;
+  color: var(--text-hint-color);
+}
+
+.outside-mark {
+  flex: 0 0 auto;
+  font-weight: 700;
+  color: var(--text-hint-color);
+}
+
+.track {
+  position: relative;
+  flex: 0 0 auto;
+  isolation: isolate;
+}
+
+.head .track {
+  .major {
+    position: absolute;
+    top: 0.25rem;
+    padding-left: 0.25rem;
+    white-space: nowrap;
+    font-weight: 600;
+    color: var(--text-basic-color);
+  }
+
+  .day {
+    position: absolute;
+    bottom: 0.25rem;
+    text-align: center;
+
+    &.weekend {
+      color: var(--text-disabled-color);
+    }
+  }
+}
+
+.body {
+  position: relative;
+}
+
+.grid {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  z-index: 0;
+  pointer-events: none;
+
+  .grid-line {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 1px;
+    background: var(--border-basic-color-3);
+  }
+
+  .today {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    margin-left: -1px;
+    background: var(--color-primary-default);
+    z-index: 1;
+  }
+}
+
+.bar {
+  position: absolute;
+  top: 0.375rem;
+  height: 1.5rem;
+  display: flex;
+  align-items: center;
+  padding: 0 0.375rem;
+  overflow: hidden;
+  border: 1px solid var(--color-primary-transparent-400, var(--color-primary-default));
+  border-radius: calc(var(--border-radius) / 2);
+  background: var(--color-primary-transparent-200, var(--color-primary-transparent-100));
+  color: var(--text-basic-color);
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-align: start;
+  cursor: pointer;
+  z-index: 2;
+
+  &:focus-visible {
+    outline: 2px solid var(--color-primary-default);
+    outline-offset: 1px;
+  }
+
+  &.overdue {
+    border-color: var(--color-danger-default);
+    background: var(--color-danger-transparent-200, var(--color-danger-transparent-100));
+  }
+
+  &.single {
+    border-style: dashed;
+  }
+
+  &.clipped-start {
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+  }
+
+  &.clipped-end {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+  }
+
+  .text {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+.edge {
+  position: absolute;
+  top: 0.5rem;
+  bottom: 0.5rem;
+  width: 0.25rem;
+  border-radius: 0.125rem;
+  background: var(--text-hint-color);
+
+  &.before {
+    left: 0;
+  }
+
+  &.after {
+    right: 0;
+  }
+}
+
+.unscheduled {
+  margin-top: 1rem;
+
+  h6 {
+    margin: 0 0 0.5rem;
+    font-size: 0.8125rem;
+    color: var(--text-hint-color);
+  }
+
+  ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+}

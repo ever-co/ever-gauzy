@@ -48,6 +48,7 @@ import { ChatRealtime } from '../realtime/chat-realtime';
 import { inWriteTransaction } from '../realtime/chat-write-transaction';
 import { ChatAccessService, IChatCaller } from './chat-access.service';
 import { ChatNotifierService } from './chat-notifier.service';
+import { blocksOf } from '../webhooks/chat-webhook-payload';
 
 /**
  * The read state a mark-all-read replaced, so it can be undone for a minute. It travels inside the undo handle
@@ -526,6 +527,8 @@ export class ChatMessageService {
 				body: '',
 				attachmentIds: null,
 				mentionEmployeeIds: null,
+				// An app message's layout goes with its text (a deleted thread root stays as a tombstone).
+				blocks: null,
 				deletedAt: new Date()
 			} as never);
 			if (!(result.affected ?? 0)) return null;
@@ -1138,6 +1141,8 @@ export class ChatMessageService {
 			...(row as unknown as IChatMessageWithRelations),
 			mentionEmployeeIds: idsOf(row.mentionEmployeeIds),
 			attachmentIds: idsOf(row.attachmentIds),
+			// An app message's layout, parsed from its JSON column (none for a member's message).
+			blocks: row.blocks && !row.deletedAt ? blocksOf(row.blocks) : null,
 			reactions: [...(reactionsOf.get(String(row.id))?.values() ?? [])],
 			taskReferences: referencesOf.get(String(row.id)) ?? [],
 			following: followed.has(String(row.id))

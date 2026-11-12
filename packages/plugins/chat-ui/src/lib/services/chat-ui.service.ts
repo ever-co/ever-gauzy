@@ -18,6 +18,7 @@ import {
 	IChatEvent,
 	IChatFilesQuery,
 	IChatFilesResult,
+	IChatLinkPreview,
 	IChatMemberState,
 	IChatMemberStateInput,
 	IChatMemberSummary,
@@ -258,6 +259,24 @@ export class ChatUiService {
 	react(messageId: ID, emoji: string, on: boolean): Observable<IChatSendResult> {
 		const url = `${CHAT}/messages/${path(messageId)}/reactions/${encodeURIComponent(emoji)}`;
 		return on ? this.http.post<IChatSendResult>(url, {}) : this.http.delete<IChatSendResult>(url);
+	}
+
+	// ---------------------------------------------------------------- link previews
+
+	/**
+	 * The preview of a link, which the platform fetches and caches (`ready`, `pending`: ask again in a moment, or
+	 * `unavailable`). Answers 404 while the platform's link previews are off.
+	 */
+	linkPreview(url: string): Observable<IChatLinkPreview> {
+		return this.http.get<IChatLinkPreview>(`${CHAT}/link-preview`, { params: toParams({ url }) });
+	}
+
+	/**
+	 * The picture of a link's preview, served by the platform from its own fetch (so the browser never loads it from the
+	 * linked site). Answers 404 while the platform serves no pictures, and for a link with no ready preview or picture.
+	 */
+	linkPreviewImage(url: string): Observable<Blob> {
+		return this.http.get(`${CHAT}/link-preview/image`, { params: toParams({ url }), responseType: 'blob' });
 	}
 
 	// ---------------------------------------------------------------- files

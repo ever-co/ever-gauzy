@@ -1769,7 +1769,14 @@
 		"TOOLONGKEY",
 		"unfollowing",
 		"sqljs",
-		"refetched"
+		"refetched",
+		"hugeicons",
+		"Abebe",
+		"haspopup",
+		"menuitemradio",
+		"popout",
+		"Ivanova",
+		"multiselectable"
 	],
 	"useGitignore": true,
 	"ignorePaths": [
