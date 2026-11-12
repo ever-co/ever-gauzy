@@ -38,7 +38,7 @@ describe('ChatUiPlugin extensions', () => {
 		expect(CHAT_MESSAGE_EMPLOYEE_EXTENSION).toMatchObject({
 			id: CHAT_MESSAGE_EMPLOYEE_EXTENSION_ID,
 			slotId: PAGE_EXTENSION_SLOTS.EMPLOYEE_VIEW_ACTIONS,
-			permissions: [PermissionsEnum.CHAT_SEND],
+			permissions: [PermissionsEnum.CHAT_VIEW, PermissionsEnum.CHAT_SEND],
 			featureKey: FeatureEnum.FEATURE_CHAT
 		});
 		await expect(CHAT_MESSAGE_EMPLOYEE_EXTENSION.loadComponent?.()).resolves.toBe(MessageEmployeeButtonComponent);

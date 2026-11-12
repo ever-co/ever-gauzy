@@ -82,7 +82,7 @@ export const CHAT_SEND_TASK_EXTENSION: PageExtensionDefinition = {
 };
 
 /**
- * "Message" on an employee's page, for users who may send (`CHAT_SEND`) where the tenant has the chat on: opens my
+ * "Message" on an employee's page, for users who see the chat and may send (`CHAT_VIEW` and `CHAT_SEND`) where the tenant has the chat on: opens my
  * direct conversation with them, which the API finds or creates for senders only (`POST /chat/direct`). The button
  * itself shows only once the API serves the chat to the user.
  */
@@ -91,7 +91,8 @@ export const CHAT_MESSAGE_EMPLOYEE_EXTENSION: PageExtensionDefinition = {
 	slotId: CHAT_EMPLOYEE_ACTIONS_SLOT,
 	loadComponent: () =>
 		import('./components/message-employee-button/message-employee-button.component').then((m) => m.MessageEmployeeButtonComponent),
-	permissions: [PermissionsEnum.CHAT_SEND],
+	// Both: every chat route asks for `CHAT_VIEW`, and finding or creating the conversation for `CHAT_SEND` too.
+	permissions: [PermissionsEnum.CHAT_VIEW, PermissionsEnum.CHAT_SEND],
 	featureKey: FeatureEnum.FEATURE_CHAT,
 	order: 50,
 	metadata: { title: 'Message', icon: 'message-circle-outline' }
