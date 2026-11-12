@@ -359,6 +359,23 @@ function createStore() {
 				});
 			}
 		},
+		/** A log as the conflict lookup reads it now, with its slots. */
+		read: (id: string) => logEntity(liveLog(id), true),
+		/**
+		 * Another write leaves the stored log over `start`–`stop`: its slots outside that range go, as
+		 * `TimeLogUpdateHandler` releases them.
+		 */
+		cut(id: string, start: string, stop: string) {
+			const log = liveLog(id);
+			const kept = generateTimeSlots(at(start), at(stop)).map((slot) => new Date(slot.startedAt).getTime());
+			for (const slot of slotsOf(id).filter((slot) => !kept.includes(slot.startedAt.getTime()))) {
+				slot.deletedAt = new Date();
+			}
+			Object.assign(log, { startedAt: at(start), stoppedAt: at(stop) });
+		},
+		/** One command, for a new `start`–`stop` range, a log as its caller read it and one of that log's slots. */
+		send: (start: string, stop: string, timeLog: TimeLog, timeSlot: ITimeSlot) =>
+			handler.execute(new DeleteTimeSpanCommand({ start: at(start), end: at(stop) }, timeLog, timeSlot)),
 		/**
 		 * The cleanup for a new `start`–`stop` range, as its callers run it: the logs the conflict lookup reads (those the
 		 * range overlaps, with their slots: the TypeORM lookup joins them), then one command per slot of each, in turn.
@@ -429,5 +446,52 @@ describe('DeleteTimeSpanHandler and a running log (#11823)', () => {
 
 		expect(store.timeline()).toEqual([]);
 		expect(store.slotCount()).toBe(0);
+	});
+});
+
+describe('DeleteTimeSpanHandler acts on the log as it now stands (#11823)', () => {
+	beforeEach(() => {
+		jest.spyOn(console, 'log').mockImplementation(() => undefined);
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT_ID);
+	});
+
+	afterEach(() => jest.restoreAllMocks());
+
+	/** The six slots of 08:00–09:00. */
+	const BEFORE_NINE = ['08:00', '08:10', '08:20', '08:30', '08:40', '08:50'];
+
+	it('leaves a log the command for an earlier slot already cut back alone, with every slot it holds', async () => {
+		const store = createStore();
+		store.addLog('tracked', '08:00', '11:00');
+		// The log as the conflict lookup read it for manual time over 09:00–10:00, then as the command for its first
+		// slot left it: ending where that range starts.
+		const asRead = store.read('tracked');
+		store.cut('tracked', '08:00', '09:00');
+
+		const results: boolean[] = [];
+		for (const timeSlot of asRead.timeSlots.slice(1)) {
+			results.push(await store.send('09:00', '10:00', asRead, timeSlot));
+		}
+
+		expect(store.timeline()).toEqual([{ range: '08:00-09:00', isRunning: false, slots: BEFORE_NINE }]);
+		expect(store.executed).toEqual([]);
+		expect(results).toEqual(Array(17).fill(false));
+	});
+
+	it('cuts a log back from where it now ends, not from where the lookup read it', async () => {
+		const store = createStore();
+		store.addLog('tracked', '08:00', '11:00');
+		// Read for manual time over 09:00–10:00, then shortened to end at 09:30 by another write.
+		const asRead = store.read('tracked');
+		store.cut('tracked', '08:00', '09:30');
+
+		await store.send(
+			'09:00',
+			'10:00',
+			asRead,
+			asRead.timeSlots.find((slot) => hhmm(slot.startedAt) === '09:10')
+		);
+
+		expect(store.timeline()).toEqual([{ range: '08:00-09:00', isRunning: false, slots: BEFORE_NINE }]);
 	});
 });

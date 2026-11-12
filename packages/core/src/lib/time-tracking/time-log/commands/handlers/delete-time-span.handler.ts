@@ -6,7 +6,6 @@ import { ID, ITimeLog, ITimeSlot } from '@gauzy/contracts';
 import { isEmpty, isNotEmpty } from '@gauzy/utils';
 import { moment } from '../../../../core/moment-extend';
 import { getDateRangeFormat } from '../../../../core/utils';
-import { TimesheetRecalculateCommand } from './../../../timesheet/commands';
 import { TimeLog } from './../../time-log.entity';
 import { DeleteTimeSpanCommand } from '../delete-time-span.command';
 import { TimeLogUpdateCommand } from '../time-log-update.command';
@@ -62,14 +61,12 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 		const newTimeRange = moment.range(start, end); // Calculate the new time rang
 		const dbTimeRange = moment.range(startedAt, stoppedAt); // Calculate the database time range
 
-		/*
-		 * Check is overlapping time or not.
-		 */
+		// Nothing of the log is left in the new range: the command for an earlier slot of it already cut it back to the
+		// range's edge, or it only touches the range. It is left as it is, with every slot it holds; the cut below is
+		// decided from the log as it is stored now, never from the copy the command carries.
 		if (!newTimeRange.overlaps(dbTimeRange, { adjacent: false })) {
 			this.debug(() => `Not Overlapping ${JSON.stringify({ newTimeRange, dbTimeRange })}`);
-
-			// Handle non-overlapping time ranges
-			await this.handleNonOverlappingTimeRange(log, timeSlot, employeeId, organizationId, forceDelete);
+			return false;
 		}
 
 		if (moment(startedAt).isBetween(moment(start), moment(end), null, '[]')) {
@@ -105,7 +102,7 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 				);
 			}
 		} else {
-			if (moment(timeLog.stoppedAt).isBetween(moment(start), moment(end), null, '[]')) {
+			if (moment(stoppedAt).isBetween(moment(start), moment(end), null, '[]')) {
 				/*
 				 * Update stopped time
 				 * New Start time							New Stop time
@@ -147,44 +144,6 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 		}
 
 		return true;
-	}
-
-	/**
-	 * Handles non-overlapping time ranges by deleting the time log and associated time slots,
-	 * and recalculating the timesheet.
-	 *
-	 * @param timeLog - The time log associated with the non-overlapping time range.
-	 * @param timeSlot - The time slot to be deleted.
-	 * @param employeeId - The ID of the employee associated with the time log.
-	 * @param organizationId - The ID of the organization.
-	 * @param forceDelete - A flag indicating whether to perform a hard delete.
-	 */
-	private async handleNonOverlappingTimeRange(
-		timeLog: ITimeLog,
-		timeSlot: ITimeSlot,
-		employeeId: ID,
-		organizationId: ID,
-		forceDelete: boolean = false
-	): Promise<void> {
-		// Delete the associated time slots
-		const timeSlotsIds = [timeSlot.id];
-
-		// Bulk delete the time slots
-		await this._commandBus.execute(
-			new TimeSlotBulkDeleteCommand(
-				{
-					organizationId,
-					employeeId,
-					timeLog,
-					timeSlotsIds
-				},
-				forceDelete,
-				true
-			)
-		);
-
-		// Recalculate the timesheet
-		await this._commandBus.execute(new TimesheetRecalculateCommand(timeLog.timesheetId));
 	}
 
 	/**
