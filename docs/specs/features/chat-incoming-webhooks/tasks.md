@@ -31,8 +31,8 @@
 
 ## Phase 4 — UI
 
-- [ ] **T14**. Angular `chat-ui`: Integrations tab (create, URL + secret once with copy, list, rename, icon, interaction URL, broadcast, rotate, revoke), hidden on 404; app messages (badge, name, icon, blocks, buttons with pending / failed); strings in every locale; specs
-- [ ] **T15**. Ever Teams `apps/web` chat: app messages (badge, blocks, buttons → interaction route) behind `NEXT_PUBLIC_CHAT_WEBHOOKS_ENABLED`; strings in all 13 locales; tests
+- [x] **T14**. Angular `chat-ui`: Integrations tab (create, URL + secret once with copy, list, rename, icon, interaction URL, broadcast, rotate, revoke), hidden on 404; app messages (badge, name, icon, blocks, buttons with pending / failed); strings in every locale; specs ([#11808](https://github.com/ever-co/ever-gauzy/pull/11808), `1bffa230b6`)
+- [x] **T15**. Ever Teams `apps/web` chat: app messages (badge, blocks, buttons → interaction route) behind `NEXT_PUBLIC_CHAT_WEBHOOKS_ENABLED`; strings in all 13 locales; tests ([ever-teams#5071](https://github.com/ever-co/ever-teams/pull/5071), `c16f21b33e`)
 - [ ] **T16**. Ever Teams management UI (create / list / revoke webhooks) — follow-up unless time permits
 
 ## Phase 5 — Verification

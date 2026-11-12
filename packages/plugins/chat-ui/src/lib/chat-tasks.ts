@@ -9,20 +9,72 @@ export interface ChatTaskSummary {
 	title: string;
 	/** The status's name (the board column), or the task's own status. */
 	status: string | null;
+	/** The status record, when the status is one (what a change from the card writes with the name). */
+	statusId?: string | null;
+	/** The priority's name, or null. */
+	priority?: string | null;
+	/** The assignees (employee ids). */
+	assigneeIds?: string[];
+	/** The task's project and organization (where its statuses come from). */
+	projectId?: string | null;
+	organizationId?: string | null;
+}
+
+/** The priorities a card offers when the task has no priority records of its own: the platform's four. */
+export const CHAT_TASK_PRIORITIES: readonly string[] = ['urgent', 'high', 'medium', 'low'];
+
+/** A status a card offers: its name (what the task's `status` holds) and its record, when it is one. */
+export interface ChatTaskStatusChoice {
+	name: string;
+	id: string | null;
+}
+
+/**
+ * The statuses a card offers, from the platform's status records of the task's project (or organization): by their
+ * order, each name once; the task's own status first when the records do not hold it, so the card never hides it.
+ */
+export function statusChoicesOf(
+	records: ReadonlyArray<{ id?: string | null; name?: string | null; value?: string | null; order?: number | null }>,
+	current: string | null
+): ChatTaskStatusChoice[] {
+	const seen = new Set<string>();
+	const choices: ChatTaskStatusChoice[] = [];
+	for (const record of [...records].sort((a, b) => (a.order ?? 0) - (b.order ?? 0))) {
+		const name = (record.name ?? record.value ?? '').trim();
+		if (!name || seen.has(name.toLowerCase())) continue;
+		seen.add(name.toLowerCase());
+		choices.push({ name, id: record.id ? String(record.id) : null });
+	}
+	if (current && !seen.has(current.toLowerCase())) choices.unshift({ name: current, id: null });
+	return choices;
+}
+
+/** The assignees after a person is added or taken off (a card toggles one person at a time). */
+export function toggledAssignees(current: readonly string[] | undefined, employeeId: string): string[] {
+	const list = [...new Set((current ?? []).map(String))];
+	return list.includes(String(employeeId)) ? list.filter((id) => id !== String(employeeId)) : [...list, String(employeeId)];
 }
 
 /** The longest title a task made from a message gets (the first line, shortened). */
 export const CHAT_TASK_TITLE_MAX = 120;
 
 /** A task as its card shows it. */
-export function taskSummaryOf(task: Pick<ITask, 'id' | 'title' | 'number' | 'prefix' | 'status' | 'taskStatus'>): ChatTaskSummary {
+export function taskSummaryOf(
+	task: Pick<ITask, 'id' | 'title' | 'number' | 'prefix' | 'status' | 'taskStatus'> &
+		Partial<Pick<ITask, 'taskStatusId' | 'priority' | 'members' | 'projectId' | 'organizationId'>>
+): ChatTaskSummary {
 	const number = typeof task.number === 'number' && Number.isFinite(task.number) ? task.number : null;
 	const prefix = (task.prefix ?? '').trim();
 	return {
 		id: String(task.id),
 		key: number === null ? null : prefix ? `${prefix.toUpperCase()}-${number}` : `#${number}`,
 		title: (task.title ?? '').trim(),
-		status: task.taskStatus?.name?.trim() || (task.status ? String(task.status) : null)
+		status: task.taskStatus?.name?.trim() || (task.status ? String(task.status) : null),
+		statusId: task.taskStatusId ? String(task.taskStatusId) : (task.taskStatus?.id ? String(task.taskStatus.id) : null),
+		priority: task.priority ? String(task.priority) : null,
+		assigneeIds: (task.members ?? []).map((member) => String(member?.id)).filter((id) => !!id && id !== 'undefined'),
+		projectId: task.projectId ? String(task.projectId) : null,
+		organizationId: task.organizationId ? String(task.organizationId) : null
 	};
 }
 

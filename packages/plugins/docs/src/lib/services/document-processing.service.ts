@@ -22,6 +22,7 @@ import { DOCS_EXTRACTED_TEXT_EDITED, DOCS_NOT_A_FILE } from '../docs.constants';
 import { ReprocessDocumentDTO, UpdateExtractedTextDTO } from '../dto';
 import { Document } from '../entities/document.entity';
 import { DocumentEvent, IDocumentEventContext } from '../events/document.event';
+import { ImportTenantStorage, TenantStorageSettingsError } from '../import/import-tenant-storage';
 import { DocsPermanentError, DocsTransientError } from '../knowledge/errors';
 import { ExtractionRegistryService, IDocumentExtractionResult } from '../knowledge/extraction';
 import { DOCS_JOB_CHUNK, DOCS_JOB_EXTRACT } from '../knowledge/queue/constants';
@@ -48,7 +49,8 @@ export class DocumentProcessingService {
 		private readonly documentService: DocumentService,
 		private readonly docsQueueService: DocsQueueService,
 		private readonly extractionRegistry: ExtractionRegistryService,
-		private readonly _eventBus: EventBus
+		private readonly _eventBus: EventBus,
+		private readonly tenantStorage: ImportTenantStorage
 	) {}
 
 	/**
@@ -96,18 +98,26 @@ export class DocumentProcessingService {
 		// Load the blob through the provider recorded on the row, as bytes whatever the provider answers (the S3,
 		// Wasabi and DigitalOcean providers return the SDK's body stream). A failed read is a storage hiccup to
 		// retry: the providers swallow their errors, so "nothing returned" cannot tell a missing object from a
-		// network fault, and the last attempt dead-letters the row anyway.
-		const provider = new FileStorage().getProvider(document.storageProvider);
+		// network fault, and the last attempt dead-letters the row anyway. The read runs with the tenant's own storage
+		// settings: a queue thread has no request to carry them, and a tenant may keep its files in its own bucket.
+		const storageKey = document.storageKey;
 		let buffer: Buffer;
 		try {
-			buffer = await readStorageFileAsBuffer(provider, document.storageKey, {
-				maxBytes: Math.max(config.maxFileSize || 0, document.fileSize || 0)
+			buffer = await this.tenantStorage.run(job.tenantId ?? document.tenantId, async () => {
+				const provider = new FileStorage().getProvider(document.storageProvider);
+				return readStorageFileAsBuffer(provider, storageKey, {
+					maxBytes: Math.max(config.maxFileSize || 0, document.fileSize || 0)
+				});
 			});
 		} catch (error) {
 			if (error instanceof FileContentTooLargeError) {
 				throw new DocsPermanentError('The stored file is larger than the documents file size limit.');
 			}
 			if (error instanceof StorageFileReadError) {
+				throw new DocsTransientError(error.message, error);
+			}
+			if (error instanceof TenantStorageSettingsError) {
+				// Retried, never read from the deployment's bucket instead.
 				throw new DocsTransientError(error.message, error);
 			}
 			throw error;

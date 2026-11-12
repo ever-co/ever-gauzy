@@ -86,6 +86,11 @@
 		"VIEW": "View thread",
 		"LAST_REPLY": "Last reply {{time}}"
 	},
+	"TYPING": {
+		"ONE": "{{name}} is typing…",
+		"TWO": "{{first}} and {{second}} are typing…",
+		"MANY": "Several people are typing…"
+	},
 	"MESSAGE": {
 		"EDITED": "edited",
 		"DELETED": "This message was deleted.",
@@ -163,7 +168,15 @@
 		"NO_CONVERSATIONS": "No conversation matches.",
 		"NOTE": "Message (optional)",
 		"SEND": "Send",
-		"SENT": "Task sent to {{name}}."
+		"SENT": "Task sent to {{name}}.",
+		"STATUS": "Status",
+		"NO_STATUS": "No status",
+		"PRIORITY": "Priority",
+		"NO_PRIORITY": "No priority",
+		"ASSIGN": "Assignees",
+		"ASSIGNED": "{{count}} assigned",
+		"CHANGE_FAILED": "The task could not be changed.",
+		"READ_FAILED": "The task could not be read again."
 	},
 	"SETTINGS": {
 		"TITLE": "Conversation settings",

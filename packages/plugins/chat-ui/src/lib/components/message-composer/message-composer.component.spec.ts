@@ -1,7 +1,7 @@
 // The ui-core barrel boots half the app (and needs packages this spec does not): what the chat names from it is doubled.
 jest.mock('@gauzy/ui-core/core', () => ({ Store: class Store {}, ToastrService: class ToastrService {} }));
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Subject, throwError } from 'rxjs';
+import { of, Subject, throwError } from 'rxjs';
 import { ChatUiService, ChatUploadAnswer } from '../../services/chat-ui.service';
 import { clearDraft, ComposerSubmission, MessageComposerComponent } from './message-composer.component';
 
@@ -11,7 +11,9 @@ describe('MessageComposerComponent', () => {
 	let fixture: ComponentFixture<MessageComposerComponent>;
 	let uploads: Subject<ChatUploadAnswer>[];
 	let uploadFile: jest.Mock;
+	let discardAttachment: jest.Mock;
 	let sent: ComposerSubmission[];
+	let typed: number;
 
 	beforeEach(async () => {
 		// Drafts outlive a composer (the page keeps them): every case starts from an empty one.
@@ -23,15 +25,18 @@ describe('MessageComposerComponent', () => {
 			uploads.push(upload);
 			return upload.asObservable();
 		});
+		discardAttachment = jest.fn(() => of({ discarded: true }));
 		await TestBed.configureTestingModule({
 			imports: [MessageComposerComponent],
-			providers: [{ provide: ChatUiService, useValue: { uploadFile } }]
+			providers: [{ provide: ChatUiService, useValue: { uploadFile, discardAttachment } }]
 		}).compileComponents();
 		fixture = TestBed.createComponent(MessageComposerComponent);
 		fixture.componentRef.setInput('people', PEOPLE);
 		fixture.componentRef.setInput('draftKey', 'conversation:c1');
 		sent = [];
+		typed = 0;
 		fixture.componentInstance.submitted.subscribe((submission) => sent.push(submission));
+		fixture.componentInstance.typing.subscribe(() => (typed += 1));
 		fixture.detectChanges();
 	});
 
@@ -56,6 +61,49 @@ describe('MessageComposerComponent', () => {
 	function sendButton(): HTMLButtonElement {
 		return fixture.nativeElement.querySelector('[data-test="composer-send"]');
 	}
+
+	describe('typing', () => {
+		afterEach(() => jest.useRealTimers());
+
+		it('says the person is typing at most once every few seconds, and at once again after a send', () => {
+			jest.useFakeTimers({ now: new Date('2026-11-12T10:00:00Z') });
+			type('h');
+			type('he');
+			expect(typed).toBe(1);
+			jest.setSystemTime(new Date('2026-11-12T10:00:03.100Z'));
+			type('hey');
+			expect(typed).toBe(2);
+			press('Enter');
+			expect(sent).toHaveLength(1);
+			type('n');
+			expect(typed).toBe(3);
+		});
+
+		it('says nothing for an empty box, or while a message is edited', () => {
+			type('   ');
+			expect(typed).toBe(0);
+			fixture.componentRef.setInput('editing', true);
+			fixture.componentRef.setInput('initialBody', 'Old text');
+			fixture.detectChanges();
+			type('Old text, edited');
+			expect(typed).toBe(0);
+		});
+	});
+
+	describe('editing a message that keeps files', () => {
+		it('may save it with no text when the message keeps its files, never otherwise', () => {
+			fixture.componentRef.setInput('editing', true);
+			fixture.componentRef.setInput('initialBody', 'Old text');
+			fixture.detectChanges();
+			type('');
+			expect(sendButton().disabled).toBe(true);
+			fixture.componentRef.setInput('keepsFiles', true);
+			fixture.detectChanges();
+			expect(sendButton().disabled).toBe(false);
+			sendButton().click();
+			expect(sent).toEqual([{ body: '', mentionEmployeeIds: [], attachmentIds: [] }]);
+		});
+	});
 
 	describe('emoji', () => {
 		it('lists the emoji of a `:` query and puts the one picked with Enter in its place', async () => {
@@ -136,7 +184,7 @@ describe('MessageComposerComponent', () => {
 			expect(fixture.nativeElement.querySelector('[data-test="composer-attach"]')).toBeNull();
 		});
 
-		it('stores each file at once, waits for it, and sends its document with the file names as the text', () => {
+		it('stores each file at once, waits for it, and sends a message of files only with no text', () => {
 			fixture.componentInstance.addFiles([pdf()]);
 			fixture.detectChanges();
 			expect(uploadFile).toHaveBeenCalledTimes(1);
@@ -148,7 +196,74 @@ describe('MessageComposerComponent', () => {
 			fixture.detectChanges();
 			expect(sendButton().disabled).toBe(false);
 			sendButton().click();
-			expect(sent).toEqual([{ body: '📎 report.pdf', mentionEmployeeIds: [], attachmentIds: ['doc-1'] }]);
+			// The platform takes a message of files only and records their names itself.
+			expect(sent).toEqual([{ body: '', mentionEmployeeIds: [], attachmentIds: ['doc-1'] }]);
+			// The files went with the message: nothing is discarded.
+			expect(discardAttachment).not.toHaveBeenCalled();
+		});
+
+		it('discards a stored file taken off before sending, and the stored files left in another place', () => {
+			fixture.componentInstance.addFiles([pdf(), pdf()]);
+			uploads[0].next({ results: [{ document: { id: 'doc-1' } }], rejected: [] });
+			uploads[1].next({ results: [{ document: { id: 'doc-2' } }], rejected: [] });
+			fixture.detectChanges();
+			(fixture.nativeElement.querySelector('.attachment-remove') as HTMLButtonElement).click();
+			fixture.detectChanges();
+			expect(discardAttachment.mock.calls).toEqual([['doc-1']]);
+			fixture.componentRef.setInput('draftKey', 'conversation:c2');
+			fixture.detectChanges();
+			expect(discardAttachment.mock.calls).toEqual([['doc-1'], ['doc-2']]);
+		});
+
+		it('keeps the files of a send under way, and lets a refused send discard them', () => {
+			fixture.componentInstance.addFiles([pdf()]);
+			uploads[0].next({ results: [{ document: { id: 'doc-1' } }], rejected: [] });
+			fixture.detectChanges();
+			sendButton().click();
+			// The place sends (busy): taking the file off now discards nothing, the message may carry it.
+			fixture.componentRef.setInput('disabled', true);
+			fixture.detectChanges();
+			(fixture.nativeElement.querySelector('.attachment-remove') as HTMLButtonElement | null)?.click();
+			expect(discardAttachment).not.toHaveBeenCalled();
+		});
+
+		it('discards the files of a refused send once they are taken off', () => {
+			fixture.componentInstance.addFiles([pdf()]);
+			uploads[0].next({ results: [{ document: { id: 'doc-1' } }], rejected: [] });
+			fixture.detectChanges();
+			sendButton().click();
+			fixture.componentRef.setInput('disabled', true);
+			fixture.detectChanges();
+			// The send ends and the composer is not cleared: the place refused it.
+			fixture.componentRef.setInput('disabled', false);
+			fixture.detectChanges();
+			(fixture.nativeElement.querySelector('.attachment-remove') as HTMLButtonElement).click();
+			fixture.detectChanges();
+			expect(discardAttachment.mock.calls).toEqual([['doc-1']]);
+		});
+
+		it('discards nothing of a send that went out, nor of one the person moved on from', () => {
+			fixture.componentInstance.addFiles([pdf()]);
+			uploads[0].next({ results: [{ document: { id: 'doc-1' } }], rejected: [] });
+			fixture.detectChanges();
+			sendButton().click();
+			fixture.componentRef.setInput('disabled', true);
+			fixture.detectChanges();
+			// Another place while the send is under way: that send may still land.
+			fixture.componentRef.setInput('draftKey', 'conversation:c2');
+			fixture.componentRef.setInput('disabled', false);
+			fixture.detectChanges();
+			expect(discardAttachment).not.toHaveBeenCalled();
+		});
+
+		it('leaves a file still uploading to the platform, and a failed discard unnoticed', () => {
+			discardAttachment.mockReturnValueOnce(throwError(() => ({ status: 404 })));
+			fixture.componentInstance.addFiles([pdf(), pdf()]);
+			uploads[0].next({ results: [{ document: { id: 'doc-1' } }], rejected: [] });
+			fixture.detectChanges();
+			fixture.componentRef.setInput('draftKey', 'conversation:c2');
+			expect(() => fixture.detectChanges()).not.toThrow();
+			expect(discardAttachment.mock.calls).toEqual([['doc-1']]);
 		});
 
 		it('keeps the text written beside the files', () => {
