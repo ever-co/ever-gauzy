@@ -114,16 +114,42 @@ describe('TaskTrashPageComponent', () => {
 
 	it('asks before deleting a task for good, then deletes it', async () => {
 		const fixture = await render();
-		state(fixture).confirmingId = 't2';
-		fixture.detectChanges();
-		expect(element(fixture).querySelector('.task-trash__confirm')).not.toBeNull();
+		const row = () => element(fixture).querySelector<HTMLElement>('.task-trash__row[data-task-id="t2"]');
 
-		await state(fixture).deleteForever(state(fixture).rows[1]);
+		row()?.querySelector<HTMLButtonElement>('.task-trash__ask-delete')?.click();
+		fixture.detectChanges();
+		expect(trash.deleteForever).not.toHaveBeenCalled();
+		expect(row()?.querySelector('.task-trash__confirm')).not.toBeNull();
+
+		row()?.querySelector<HTMLButtonElement>('.task-trash__confirm-delete')?.click();
+		await fixture.whenStable();
+		await new Promise((resolve) => setTimeout(resolve));
 		fixture.detectChanges();
 
+		expect(trash.deleteForever).toHaveBeenCalledTimes(1);
 		expect(trash.deleteForever).toHaveBeenCalledWith('t2');
 		expect(rowIds(fixture)).toEqual(['t1']);
 		expect(state(fixture).confirmingId).toBeNull();
+	});
+
+	it('reads the list again when a restore ends while a read is under way, so the task cannot come back', async () => {
+		const fixture = await render();
+		let answer: (page: unknown) => void = () => undefined;
+		trash.list
+			.mockImplementationOnce(() => new Promise((resolve) => (answer = resolve)))
+			.mockResolvedValueOnce({ items: [trashed('t2')], total: 1 });
+
+		const stale = state(fixture).load(true);
+		await state(fixture).restore(state(fixture).rows[0]);
+		// The read that started before the restore answers with the restored task still in it.
+		answer({ items: [trashed('t1'), trashed('t2')], total: 2 });
+		await stale;
+		await fixture.whenStable();
+		await new Promise((resolve) => setTimeout(resolve));
+		fixture.detectChanges();
+
+		expect(rowIds(fixture)).toEqual(['t2']);
+		expect(state(fixture).total).toBe(1);
 	});
 
 	it('leaves a list read meanwhile as it is when it does not hold the restored task', async () => {

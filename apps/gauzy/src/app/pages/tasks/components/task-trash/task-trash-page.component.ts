@@ -4,7 +4,16 @@ import { CommonModule } from '@angular/common';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
-import { NbButtonModule, NbCardModule, NbIconModule, NbSpinnerModule, NbTooltipModule } from '@nebular/theme';
+import {
+	NbButtonModule,
+	NbCardModule,
+	NbFormFieldModule,
+	NbIconModule,
+	NbInputModule,
+	NbListModule,
+	NbSpinnerModule,
+	NbTooltipModule
+} from '@nebular/theme';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { combineLatest } from 'rxjs';
 import { debounceTime, distinctUntilChanged, filter, startWith } from 'rxjs/operators';
@@ -54,14 +63,16 @@ export function trashStateOf(error: unknown): TaskTrashState {
  */
 @Component({
 	selector: 'ga-task-trash-page',
-	standalone: true,
 	imports: [
 		CommonModule,
 		ReactiveFormsModule,
 		RouterModule,
 		NbCardModule,
 		NbButtonModule,
+		NbFormFieldModule,
 		NbIconModule,
+		NbInputModule,
+		NbListModule,
 		NbSpinnerModule,
 		NbTooltipModule,
 		TranslatePipe
@@ -90,6 +101,8 @@ export class TaskTrashPageComponent implements OnInit {
 	private _projectId: ID | null = null;
 	/** Numbers each read, so only the latest one is applied. */
 	private _sequence = 0;
+	/** Whether a read is under way: a restore or delete that ends meanwhile reads the list again (see afterChange). */
+	private _reading = false;
 
 	ngOnInit(): void {
 		combineLatest([
@@ -115,6 +128,7 @@ export class TaskTrashPageComponent implements OnInit {
 		const organization = this._organization;
 		if (!organization) return;
 		const sequence = ++this._sequence;
+		this._reading = true;
 		if (fromStart) {
 			this.state = 'loading';
 		} else {
@@ -139,7 +153,10 @@ export class TaskTrashPageComponent implements OnInit {
 			if (sequence !== this._sequence) return;
 			this.state = trashStateOf(error);
 		} finally {
-			if (sequence === this._sequence) this.loadingMore = false;
+			if (sequence === this._sequence) {
+				this.loadingMore = false;
+				this._reading = false;
+			}
 		}
 	}
 
@@ -149,7 +166,7 @@ export class TaskTrashPageComponent implements OnInit {
 		this.busyId = row.task.id;
 		try {
 			await this._trash.restore(row.task.id);
-			this.drop(row);
+			this.afterChange(row);
 			this._toastr.success(this._translate.instant('TASKS_PAGE.TRASH.RESTORED', { title: row.task.title }));
 		} catch (error) {
 			this._toastr.danger(this.messageOf(error), this._translate.instant('TOASTR.TITLE.ERROR'));
@@ -164,7 +181,7 @@ export class TaskTrashPageComponent implements OnInit {
 		this.busyId = row.task.id;
 		try {
 			await this._trash.deleteForever(row.task.id);
-			this.drop(row);
+			this.afterChange(row);
 			this._toastr.success(this._translate.instant('TASKS_PAGE.TRASH.DELETED_FOREVER', { title: row.task.title }));
 		} catch (error) {
 			this._toastr.danger(this.messageOf(error), this._translate.instant('TOASTR.TITLE.ERROR'));
@@ -176,6 +193,15 @@ export class TaskTrashPageComponent implements OnInit {
 
 	protected trackRow(_index: number, row: ITrashRow): ID {
 		return row.task.id;
+	}
+
+	/**
+	 * After a restore or a delete: the task leaves the list, and a read that started before it ended (a search, Load
+	 * more) may still hold the task, so the list is read again from the start instead of applying that read.
+	 */
+	private afterChange(row: ITrashRow): void {
+		this.drop(row);
+		if (this._reading) void this.load(true);
 	}
 
 	/**

@@ -409,10 +409,15 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 				distinctUntilChange(),
 				filter(([organization]) => !!organization),
 				tap(([organization, employee, project, team]) => {
+					if (this.organization?.id !== organization.id) this.hasTrash = false;
 					this.organization = organization;
+					// Only the answer for the organization still selected shows the link: a slower one for the previous
+					// organization changes nothing.
 					void this._taskTrash
 						.isEnabledOrFalse(organization.id, organization.tenantId)
-						.then((hasTrash) => (this.hasTrash = hasTrash));
+						.then((hasTrash) => {
+							if (this.organization?.id === organization.id) this.hasTrash = hasTrash;
+						});
 					this.selectedEmployeeId = employee?.id || null;
 					this.selectedProject = project;
 					this.selectedTeamIds = team?.id ? [team.id] : [];

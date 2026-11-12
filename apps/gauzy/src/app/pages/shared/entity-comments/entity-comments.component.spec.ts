@@ -352,10 +352,38 @@ describe('EntityCommentsComponent', () => {
 			await fixture.whenStable();
 			fixture.detectChanges();
 
-			expect(chips(fixture)[0].disabled).toBe(true);
+			// Focusable, so a keyboard reader reaches its label (who reacted), but it does nothing.
+			expect(chips(fixture)[0].disabled).toBe(false);
+			expect(chips(fixture)[0].getAttribute('aria-disabled')).toBe('true');
 			expect(element(fixture).querySelector('.reaction-add')).toBeNull();
+			chips(fixture)[0].click();
 			await state(fixture).toggleReaction('first', '👍');
 			expect(reactions.toggle).not.toHaveBeenCalled();
+		});
+
+		it('gives the keyboard back to the smiley when the palette closes', async () => {
+			summaries = [thumbs()];
+			const fixture = await render({ entity: BaseEntityEnum.Task, reactions: true });
+			await fixture.whenStable();
+			fixture.detectChanges();
+			const opener = () => element(fixture).querySelector<HTMLButtonElement>('li.comment > .comment-main .reaction-add');
+
+			opener()?.click();
+			fixture.detectChanges();
+			const palette = element(fixture).querySelector<HTMLElement>('.reaction-palette');
+			expect(palette).not.toBeNull();
+			palette?.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+			fixture.detectChanges();
+			expect(element(fixture).querySelector('.reaction-palette')).toBeNull();
+			expect(document.activeElement).toBe(opener());
+
+			opener()?.click();
+			fixture.detectChanges();
+			element(fixture).querySelector<HTMLButtonElement>('.reaction-palette .reaction-pick')?.click();
+			await fixture.whenStable();
+			fixture.detectChanges();
+			expect(reactions.toggle).toHaveBeenCalledWith('first', '👍', { organizationId: ORGANIZATION, tenantId: TENANT });
+			expect(document.activeElement).toBe(opener());
 		});
 	});
 });

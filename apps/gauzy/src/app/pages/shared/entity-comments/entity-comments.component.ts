@@ -346,6 +346,18 @@ export class EntityCommentsComponent implements OnChanges, OnDestroy {
 		this.pickerFor = this.pickerFor === commentId ? null : commentId;
 	}
 
+	/** Closes the palette and gives the keyboard back to the button that opened it (Escape, or a pick). */
+	protected closePicker(opener?: { focus(): void } | null): void {
+		this.pickerFor = null;
+		opener?.focus();
+	}
+
+	/** Reacts with an emoji of the palette: the palette closes, the focus goes back to its opener. */
+	protected pickReaction(commentId: ID, emoji: string, opener?: { focus(): void } | null): void {
+		this.closePicker(opener);
+		void this.toggleReaction(commentId, emoji);
+	}
+
 	/**
 	 * Adds the reader's reaction to a comment, or takes it back: the chip changes at once, the toggle is sent, and the
 	 * summary is read again. A refused toggle says so and reads the summary again too: another toggle sent meanwhile
@@ -353,7 +365,8 @@ export class EntityCommentsComponent implements OnChanges, OnDestroy {
 	 */
 	protected async toggleReaction(commentId: ID, emoji: string): Promise<void> {
 		const employeeId = this.myEmployeeId();
-		if (!this.reactionsShown || !employeeId) return;
+		// A read-only chip stays focusable (its label names who reacted) but does nothing.
+		if (!this.reactionsShown || !employeeId || !this.canReact) return;
 		this.pickerFor = null;
 		const me = { employeeId, name: this._store.user?.name ?? '', imageUrl: this._store.user?.imageUrl ?? null };
 		this.showReactions(toggledSummaries(this._summaries, commentId, emoji, me));

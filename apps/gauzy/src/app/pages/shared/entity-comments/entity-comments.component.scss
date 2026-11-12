@@ -698,16 +698,16 @@ a.comment-author:hover {
 	min-width: 2.5rem;
 	height: 1.5rem;
 	padding: 0 0.5rem;
-	border: 1px solid var(--border-basic-color-3);
+	border: 1px solid var(--gauzy-border-default-color, var(--border-basic-color-3));
 	border-radius: 999px;
-	background: var(--background-basic-color-2);
-	color: var(--text-basic-color);
+	background: var(--gauzy-card-1, var(--background-basic-color-2));
+	color: var(--gauzy-text-color-1, var(--text-basic-color));
 	font-size: 0.75rem;
 	line-height: 1;
 	cursor: pointer;
 
-	&:hover:not(:disabled) {
-		background: var(--background-basic-color-3);
+	&:hover:not([aria-disabled='true']) {
+		background: var(--gauzy-hover-tint, var(--background-basic-color-3));
 	}
 
 	&:focus-visible {
@@ -715,7 +715,8 @@ a.comment-author:hover {
 		outline-offset: 1px;
 	}
 
-	&:disabled {
+	// Read-only: focusable for its label, not clickable.
+	&[aria-disabled='true'] {
 		cursor: default;
 	}
 
@@ -746,7 +747,7 @@ a.comment-author:hover {
 
 .reaction-add {
 	min-width: 0;
-	color: var(--text-hint-color);
+	color: var(--gauzy-text-color-2, var(--text-hint-color));
 
 	nb-icon {
 		width: 0.875rem;
@@ -762,9 +763,9 @@ a.comment-author:hover {
 	display: flex;
 	gap: 0.125rem;
 	padding: 0.25rem;
-	border: 1px solid var(--border-basic-color-3);
-	border-radius: 0.75rem;
-	background: var(--background-basic-color-1);
+	border: 1px solid var(--gauzy-border-default-color, var(--border-basic-color-3));
+	border-radius: calc(var(--border-radius) * 1.5);
+	background: var(--gauzy-card-1, var(--background-basic-color-1));
 	box-shadow: 0 0.25rem 1rem rgb(0 0 0 / 12%);
 }
 
@@ -772,14 +773,14 @@ a.comment-author:hover {
 	width: 2rem;
 	height: 2rem;
 	border: 0;
-	border-radius: 0.5rem;
+	border-radius: var(--border-radius);
 	background: transparent;
 	font-size: 1rem;
 	cursor: pointer;
 
 	&:hover,
 	&:focus-visible {
-		background: var(--background-basic-color-2);
+		background: var(--gauzy-hover-tint, var(--background-basic-color-2));
 		outline: none;
 	}
 }

@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { BaseEntityEnum, ID, IReactionSummary, ReactionEntityEnum } from '@gauzy/contracts';
@@ -15,8 +15,7 @@ import { ICommentScope } from './comment.service';
 })
 export class CommentReactionService {
 	private readonly API_URL = `${API_PREFIX}/reaction`;
-
-	constructor(private readonly _http: HttpClient) {}
+	private readonly _http = inject(HttpClient);
 
 	/** The reactions on the comments of one record, one entry per comment and emoji. */
 	async getForRecord(entity: BaseEntityEnum, entityId: ID, scope: ICommentScope): Promise<IReactionSummary[]> {

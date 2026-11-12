@@ -6,16 +6,19 @@
 			</a>
 			<h4>{{ 'TASKS_PAGE.TRASH.TITLE' | translate }}</h4>
 		</div>
-		<label class="task-trash__search">
-			<nb-icon icon="search-outline" aria-hidden="true"></nb-icon>
+		<nb-form-field class="task-trash__search">
+			<nb-icon nbPrefix icon="search-outline" aria-hidden="true"></nb-icon>
 			<input
+				nbInput
+				fullWidth
+				fieldSize="small"
 				type="search"
 				[formControl]="searchControl"
 				maxlength="200"
 				[placeholder]="'TASKS_PAGE.TRASH.SEARCH' | translate"
 				[attr.aria-label]="'TASKS_PAGE.TRASH.SEARCH' | translate"
 			/>
-		</label>
+		</nb-form-field>
 	</nb-card-header>
 	<nb-card-body [nbSpinner]="state === 'loading'" nbSpinnerSize="medium" nbSpinnerStatus="basic">
 		<p class="task-trash__hint">{{ 'TASKS_PAGE.TRASH.HINT' | translate }}</p>
@@ -50,9 +53,9 @@
 						}
 					</div>
 				} @else {
-					<ul class="task-trash__list">
+					<nb-list class="task-trash__list">
 						@for (row of rows; track row.task.id) {
-							<li class="task-trash__row" [attr.data-task-id]="row.task.id">
+							<nb-list-item class="task-trash__row" [attr.data-task-id]="row.task.id">
 								<span class="task-trash__key">{{ row.key }}</span>
 								<div class="task-trash__main">
 									<span class="task-trash__name">{{ row.task.title }}</span>
@@ -74,7 +77,7 @@
 											<button type="button" nbButton size="tiny" status="basic" [disabled]="busyId === row.task.id" (click)="confirmingId = null">
 												{{ 'BUTTONS.CANCEL' | translate }}
 											</button>
-											<button type="button" nbButton size="tiny" status="danger" [disabled]="busyId === row.task.id" (click)="deleteForever(row)">
+											<button type="button" class="task-trash__confirm-delete" nbButton size="tiny" status="danger" [disabled]="busyId === row.task.id" (click)="deleteForever(row)">
 												{{ 'TASKS_PAGE.TRASH.DELETE_FOREVER' | translate }}
 											</button>
 										</span>
@@ -83,14 +86,14 @@
 											<nb-icon icon="undo-outline" aria-hidden="true"></nb-icon>
 											{{ 'TASKS_PAGE.TRASH.RESTORE' | translate }}
 										</button>
-										<button type="button" nbButton size="small" ghost status="danger" [disabled]="busyId === row.task.id" (click)="confirmingId = row.task.id">
+										<button type="button" class="task-trash__ask-delete" nbButton size="small" ghost status="danger" [disabled]="busyId === row.task.id" (click)="confirmingId = row.task.id">
 											{{ 'TASKS_PAGE.TRASH.DELETE_FOREVER' | translate }}
 										</button>
 									}
 								</div>
-							</li>
+							</nb-list-item>
 						}
-					</ul>
+					</nb-list>
 					@if (hasMore) {
 						<div class="task-trash__more">
 							<button type="button" nbButton size="small" status="basic" [disabled]="loadingMore" (click)="load(false)">

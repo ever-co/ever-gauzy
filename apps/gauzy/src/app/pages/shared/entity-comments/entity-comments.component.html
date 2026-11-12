@@ -238,7 +238,7 @@
 			[attr.aria-label]="chip.label"
 			[nbTooltip]="chip.label"
 			nbTooltipPlacement="top"
-			[disabled]="!canReact"
+			[attr.aria-disabled]="canReact ? null : true"
 			(click)="toggleReaction(entry.comment.id, chip.emoji)"
 		>
 			<span class="reaction-emoji">{{ chip.emoji }}</span>
@@ -248,6 +248,7 @@
 		@if (canReact) {
 		<span class="reaction-add-wrap">
 			<button
+				#reactionOpener
 				type="button"
 				class="reaction-chip reaction-add"
 				[attr.aria-expanded]="pickerFor === entry.comment.id"
@@ -260,13 +261,13 @@
 				<span aria-hidden="true">+</span>
 			</button>
 			@if (pickerFor === entry.comment.id) {
-			<span class="reaction-palette" role="group" [attr.aria-label]="'COMMENT_REACTIONS.ADD' | translate" (keydown.escape)="pickerFor = null">
+			<span class="reaction-palette" role="group" [attr.aria-label]="'COMMENT_REACTIONS.ADD' | translate" (keydown.escape)="closePicker(reactionOpener)">
 				@for (emoji of quickReactions; track emoji) {
 				<button
 					type="button"
 					class="reaction-pick"
 					[attr.aria-label]="'COMMENT_REACTIONS.REACT_WITH' | translate: { emoji: emoji }"
-					(click)="toggleReaction(entry.comment.id, emoji)"
+					(click)="pickReaction(entry.comment.id, emoji, reactionOpener)"
 				>
 					{{ emoji }}
 				</button>
