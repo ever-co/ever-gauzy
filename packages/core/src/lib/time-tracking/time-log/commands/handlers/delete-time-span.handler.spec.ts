@@ -523,6 +523,18 @@ function createStore() {
 			liveLog(id).deletedAt = new Date();
 		},
 		/**
+		 * Another log holds this slot too, as two logs meeting inside one ten-minute slot do: that log's own slot at the
+		 * same start goes, and it is linked to this one.
+		 */
+		share(slotId: string, logId: string) {
+			const slot = slots.find((stored) => stored.id === slotId);
+			slots.splice(
+				slots.findIndex((stored) => stored.id === `${logId}@${hhmm(slot.startedAt)}`),
+				1
+			);
+			slot.timeLogIds = [...slot.timeLogIds, logId];
+		},
+		/**
 		 * Another write leaves the stored log over `start`–`stop`: its slots outside that range go, as
 		 * `TimeLogUpdateHandler` releases them.
 		 */
@@ -827,16 +839,20 @@ describe('DeleteTimeSpanHandler when a split fails (#11823)', () => {
 		expect(outcome).toBe('The update failed');
 	});
 
-	it('puts the log back with every slot when the cut fails while taking its later slots off it', async () => {
+	it('finishes the split and raises the error when the cut fails while taking its later slots off it', async () => {
 		const store = createStore();
 		store.addLog('tracked', '08:00', '11:00');
-		// The cut takes the later slots, which the second part holds, off the log: the third of those fails.
+		// The cut deletes the range's own slots, then takes the later ones, which the second part holds, off the log:
+		// the third of those fails.
 		store.fail('unlink', 2);
 
 		const outcome = await store.cleanUp('09:00', '10:00').then(raised, raised);
 
-		expect(store.timeline()).toEqual(AS_IT_WAS);
-		expect(store.slotCount()).toBe(18);
+		expect(store.timeline()).toEqual([
+			{ range: '08:00-09:00', isRunning: false, slots: slotStarts('08:00', '09:00') },
+			{ range: '10:00-11:00', isRunning: false, slots: slotStarts('10:00', '11:00') }
+		]);
+		expect(store.slotCount()).toBe(12);
 		expect(outcome).toBe('The unlink failed');
 	});
 
@@ -977,5 +993,24 @@ describe('DeleteTimeSpanHandler when a cut at one end or a delete fails (#11823)
 
 		expect(store.timeline()).toEqual(AS_IT_WAS);
 		expect(refusal).toBeInstanceOf(BadRequestException);
+	});
+
+	it('deletes the slots only the log held outside its new end even when it cannot let go of a shared one', async () => {
+		const store = createStore();
+		store.addLog('tracked', '08:00', '09:55');
+		// The next log starts at 09:55, inside the 09:50 slot, which both logs hold.
+		store.addLog('next', '09:55', '10:30');
+		store.share('tracked@09:50', 'next');
+		// The cut back to 09:00 releases 09:00 to 09:50: taking the log off the shared 09:50 slot fails.
+		store.fail('unlink');
+
+		const outcome = await store.cleanUp('09:00', '09:55').then(raised, raised);
+
+		// No slot only `tracked` held is left beyond its new end; it keeps a link to the shared slot it could not drop.
+		expect(store.timeline()).toEqual([
+			{ range: '08:00-09:00', isRunning: false, slots: [...slotStarts('08:00', '09:00'), '09:50'] },
+			{ range: '09:55-10:30', isRunning: false, slots: slotStarts('09:55', '10:30') }
+		]);
+		expect(outcome).toBe('The unlink failed');
 	});
 });

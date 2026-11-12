@@ -368,14 +368,14 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 	/**
 	 * Leaves a split whose cut failed in one of its two whole states: the log as it was, or the split finished.
 	 *
-	 * The cut writes the log's new end, then takes the log off the slots other logs hold, then deletes in one go the
-	 * slots it alone held (see `TimeLogUpdateHandler.applyRelease`): that delete is its last write before the totals.
-	 * So a log already ending at `start` with one of its slots gone has had every write, and the split is kept as it is
-	 * (the restore the alternative would need cannot be done safely: the delete may be a hard one, and a soft one took
-	 * the slots' screenshots and activity with them). Otherwise nothing of the log was deleted, and the split is undone:
-	 * every slot the log held and lost goes back to it, the log gets its range and timesheet back, and the second part
-	 * is deleted with its join rows. In that order, so that a failure on the way leaves the time counted twice rather
-	 * than lost.
+	 * The cut writes the log's new end, then deletes in one go the slots the log alone held, then takes the log off the
+	 * slots other logs hold too (see `TimeLogUpdateHandler.applyRelease`). So a log already ending at `start` with one
+	 * of its slots gone has had that delete, which cannot be taken back safely (it may be a hard one, and a soft one
+	 * took the slots' screenshots and activity with them): the split is finished instead, by taking the log off the
+	 * slots it still holds from `start` on with another log, the second part among them. Otherwise nothing of the log
+	 * was deleted, and the split is undone: every slot the log held and lost goes back to it, the log gets its range and
+	 * timesheet back, and the second part is deleted with its join rows. In that order, so that a failure on the way
+	 * leaves the time counted twice rather than lost.
 	 *
 	 * @param log - The time log as it was read before the split, with its slots.
 	 * @param start - The start of the new range, the end the cut gives the log.
@@ -391,15 +391,26 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 				relations: { timeLogs: true }
 			});
 		}
+		const heldBy = (slot: ITimeSlot) => (slot.timeLogs ?? []).map((held) => held.id);
 		const stored = await this.typeOrmTimeLogRepository.findOne({ where: { id: log.id } });
 		const cut = moment(stored?.stoppedAt).isSame(start);
+
 		if (cut && slots.length < ids.length) {
+			const shared = slots
+				.filter((slot) => !moment(slot.startedAt).isBefore(start))
+				.filter((slot) => heldBy(slot).includes(log.id) && heldBy(slot).some((id) => id !== log.id))
+				.map((slot) => slot.id);
+			if (shared.length > 0) {
+				await this.typeOrmTimeSlotRepository
+					.createQueryBuilder()
+					.relation(TimeSlot, 'timeLogs')
+					.of(shared)
+					.remove(log.id);
+			}
 			return;
 		}
 
-		const lost = slots
-			.filter((slot) => !(slot.timeLogs ?? []).some((held) => held.id === log.id))
-			.map((slot) => slot.id);
+		const lost = slots.filter((slot) => !heldBy(slot).includes(log.id)).map((slot) => slot.id);
 		if (lost.length > 0) {
 			await this.typeOrmTimeSlotRepository
 				.createQueryBuilder()
