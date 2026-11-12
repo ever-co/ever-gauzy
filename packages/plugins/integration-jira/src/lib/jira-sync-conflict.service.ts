@@ -109,6 +109,19 @@ export class JiraSyncConflictService {
 	}
 
 	/**
+	 * Whether a task's description is still what its issue last sent (unchanged on the platform since the last apply).
+	 * An outbound push then leaves Jira's description alone: Jira's rich text can hold what the task store cannot (media,
+	 * for one), and sending the task's reading of it back would drop that on an edit of another field.
+	 */
+	async descriptionUnchangedSinceSync(input: { tenantId: ID; integrationId: ID; sourceId: string; task: Record<string, unknown> }): Promise<boolean> {
+		const baseline = await this.baselines.findOne({ where: { integrationId: input.integrationId, sourceId: input.sourceId, tenantId: input.tenantId } });
+		if (!baseline || String(baseline.taskId) !== String(input.task['id'])) return false;
+		const synced = parseSyncedValues(baseline.syncedFields);
+		if (!synced) return false;
+		return sameSyncedValue('description', platformValuesOf(input.task).description ?? null, synced.description ?? null);
+	}
+
+	/**
 	 * Before the task is written: each conflict of the merge is recorded with the task's value and its own columns
 	 * (read before the write), so nothing the task held is lost if anything after the write fails. Answers what was
 	 * recorded.

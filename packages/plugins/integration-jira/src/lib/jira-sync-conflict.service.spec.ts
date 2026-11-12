@@ -36,6 +36,26 @@ function taskOf(fields: Record<string, unknown> = {}) {
 }
 
 describe('JiraSyncConflictService', () => {
+	describe('descriptionUnchangedSinceSync (an outbound push leaves such a description to Jira)', () => {
+		const input = { tenantId: 'tenant-1', integrationId: 'int-1', sourceId: 'issue-1' };
+
+		it('answers true when the task holds the description the issue last sent', async () => {
+			const { service, baselines } = harness();
+			baselines.findOne.mockResolvedValue({ taskId: 'task-1', syncedFields: JSON.stringify(agreed) });
+			expect(await service.descriptionUnchangedSinceSync({ ...input, task: taskOf() })).toBe(true);
+		});
+
+		it('answers false when the task changed it, when no baseline is kept, or when the baseline is another task\'s', async () => {
+			const { service, baselines } = harness();
+			baselines.findOne.mockResolvedValue({ taskId: 'task-1', syncedFields: JSON.stringify(agreed) });
+			expect(await service.descriptionUnchangedSinceSync({ ...input, task: taskOf({ description: '<p>Edited</p>' }) })).toBe(false);
+			baselines.findOne.mockResolvedValue(null);
+			expect(await service.descriptionUnchangedSinceSync({ ...input, task: taskOf() })).toBe(false);
+			baselines.findOne.mockResolvedValue({ taskId: 'task-other', syncedFields: JSON.stringify(agreed) });
+			expect(await service.descriptionUnchangedSinceSync({ ...input, task: taskOf() })).toBe(false);
+		});
+	});
+
 	describe('prepare (before an issue is written to its task)', () => {
 		it('reads nothing for an issue with no task yet', async () => {
 			const { service, baselines, conflicts } = harness();

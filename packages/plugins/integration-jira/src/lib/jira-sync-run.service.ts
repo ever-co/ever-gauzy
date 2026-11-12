@@ -209,7 +209,8 @@ export class JiraSyncRunService extends TenantAwareCrudService<JiraSyncRun> {
 				} as never
 			)
 			.then((result) => result.affected === undefined || result.affected === null || result.affected > 0)
-			.catch(() => true);
+			// A heartbeat that could not be written: the run goes on only when it is known to hold its mapping still.
+			.catch(() => this.isLive(run).catch(() => false));
 	}
 
 	/** Whether a run still holds its mapping (it is running: no later claim failed it as abandoned). */

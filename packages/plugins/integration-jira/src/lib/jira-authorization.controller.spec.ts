@@ -34,7 +34,7 @@ const SITE_B = { id: 'cloud-b', name: 'B', url: 'https://b.atlassian.net', scope
 const SCOPE = { tenantId: 'tenant-1', organizationId: 'org-1', userId: 'user-1' };
 
 /** The callback over an organization whose connection (if any) works with `existingSite` and has `mappings` mappings. */
-function setup(options: { sites: (typeof SITE_A)[]; existingSite: string | null; mappings: number }) {
+function setup(options: { sites: (typeof SITE_A)[]; existingSite: string | null; mappings: number; postInstallUrl?: string; refreshToken?: string | null }) {
 	const existing = { id: 'int-1' };
 	const tenants = {
 		forOrganization: jest.fn(async () => existing),
@@ -43,14 +43,14 @@ function setup(options: { sites: (typeof SITE_A)[]; existingSite: string | null;
 	};
 	const mappings = { list: jest.fn(async () => Array.from({ length: options.mappings }, (_, index) => ({ id: `m-${index}` }))) };
 	const oauthState = { consume: jest.fn(async () => SCOPE) };
-	(exchangeJiraCode as jest.Mock).mockResolvedValue({ accessToken: 'at', refreshToken: 'rt', tokenType: 'Bearer' });
+	(exchangeJiraCode as jest.Mock).mockResolvedValue({ accessToken: 'at', refreshToken: options.refreshToken === undefined ? 'rt' : options.refreshToken, tokenType: 'Bearer' });
 	(accessibleJiraSites as jest.Mock).mockResolvedValue(options.sites);
-	const controller = new JiraAuthorizationController(config, oauthState as never, tenants as never, mappings as never);
+	const controller = new JiraAuthorizationController({ ...config, ...(options.postInstallUrl ? { postInstallUrl: options.postInstallUrl } : {}) }, oauthState as never, tenants as never, mappings as never);
 	const response: { redirect: jest.Mock; status: jest.Mock; json: jest.Mock } = { redirect: jest.fn(), status: jest.fn(), json: jest.fn() };
 	response.status.mockReturnValue(response);
 	const callback = () => controller.callback({ state: 'state-1', code: 'code-1' }, response as never);
 	const sentTo = () => new URL(String(response.redirect.mock.calls[0]?.[0]).replace('#/', ''));
-	return { tenants, mappings, callback, sentTo };
+	return { tenants, mappings, callback, sentTo, response };
 }
 
 beforeEach(() => {
@@ -87,6 +87,19 @@ describe('GET /integration/jira/callback: the site of the connection', () => {
 		await callback();
 		expect(tenants.connect).not.toHaveBeenCalled();
 		expect(sentTo().searchParams.get('error')).toBe('site_mismatch');
+	});
+
+	it('saves no grant without a refresh token (offline_access not granted): it would stop working within the hour', async () => {
+		const { tenants, callback, sentTo } = setup({ sites: [SITE_A], existingSite: null, mappings: 0, refreshToken: null });
+		await callback();
+		expect(tenants.connect).not.toHaveBeenCalled();
+		expect(sentTo().searchParams.get('error')).toBe('exchange_failed');
+	});
+
+	it('adds its result to a page route that carries a query of its own', async () => {
+		const { callback, response } = setup({ sites: [SITE_A], existingSite: null, mappings: 0, postInstallUrl: 'https://app.example.test/#/pages/integrations/jira?mode=setup' });
+		await callback();
+		expect(String(response.redirect.mock.calls[0][0])).toBe('https://app.example.test/#/pages/integrations/jira?mode=setup&provider=jira&integrationId=int-1&organizationId=org-1');
 	});
 
 	it('a reconnect of a connection without mappings may move to the only site the token reaches', async () => {

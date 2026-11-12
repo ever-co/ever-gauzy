@@ -28,7 +28,7 @@ jest.mock('./sync/jira-webhook.service', () => ({ JiraWebhookService: class Jira
 jest.mock('./sync/jira-issue.mapper', () => ({ DEFAULT_STATUS_MAP: {}, parseIssueTypeIds: () => [], parseStatusMap: () => ({}) }));
 jest.mock('./client/jira-api.client', () => ({ accessibleJiraSites: jest.fn() }));
 
-import { ConflictException, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
 import { accessibleJiraSites } from './client/jira-api.client';
 import { JiraCloudController } from './jira-cloud.controller';
 import { JiraCloudConfig } from './jira-config';
@@ -41,13 +41,21 @@ function setup(options: { current: string | null; mappings: number }) {
 	const tenant = { id: 'integration-1', tenantId: 'tenant-1', organizationId: 'org-1' };
 	const tenants = {
 		requireById: jest.fn(async () => tenant),
+		findAnyById: jest.fn(async () => tenant),
+		clientFor: jest.fn(() => {
+			if (!options.current) throw new BadRequestException({ message: 'Choose a site first', code: 'JIRA_SITE_REQUIRED' });
+			return {};
+		}),
 		accessTokenReady: jest.fn(async () => 'access-token'),
 		summaryOf: jest.fn(() => ({ id: tenant.id, cloudId: options.current })),
 		clientForSite: jest.fn(() => ({ myself: jest.fn(async () => ({ accountId: 'me' })) })),
 		selectSite: jest.fn(async () => tenant)
 	};
 	// The site is checked and written under the mappings' lock, which hands over how many the connection has.
-	const mappings = { whileMappingsLocked: jest.fn(async (_tenant: unknown, work: (count: number) => Promise<unknown>) => work(options.mappings)) };
+	const mappings = {
+		whileMappingsLocked: jest.fn(async (_tenant: unknown, work: (count: number) => Promise<unknown>) => work(options.mappings)),
+		createMapping: jest.fn(async () => ({ id: 'mapping-new', statusMap: null, issueTypeIds: null }))
+	};
 	const webhooks = { remove: jest.fn(async () => undefined), ensure: jest.fn(async () => 'registered') };
 	const config = { apiUrl: 'https://api.example.test' } as JiraCloudConfig;
 	const controller = new JiraCloudController(config, tenants as never, mappings as never, {} as never, {} as never, webhooks as never, {} as never, {} as never);
@@ -100,5 +108,19 @@ describe('PUT /integration/jira/:integrationId/site', () => {
 		const answer = controller.selectSite('integration-1' as never, { cloudId: 'cloud-z' } as never);
 		await expect(answer).rejects.toBeInstanceOf(NotFoundException);
 		await expect(answer).rejects.toMatchObject({ response: { code: JIRA_SITE_NOT_FOUND } });
+	});
+});
+
+describe('POST /integration/jira/:integrationId/mappings', () => {
+	it('refuses a mapping before a site is chosen: its Jira project id would mean nothing', async () => {
+		const { controller, mappings } = setup({ current: null, mappings: 0 });
+		await expect(controller.createMapping('integration-1' as never, { jiraProjectId: '10000', projectId: 'p-1' } as never)).rejects.toBeInstanceOf(BadRequestException);
+		expect(mappings.createMapping).not.toHaveBeenCalled();
+	});
+
+	it('creates it pinned to the site the request read (the lock refuses it if the site changed meanwhile)', async () => {
+		const { controller, mappings } = setup({ current: SITE_A.id, mappings: 0 });
+		await controller.createMapping('integration-1' as never, { jiraProjectId: '10000', projectId: 'p-1' } as never);
+		expect(mappings.createMapping).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ jiraProjectId: '10000' }), SITE_A.id);
 	});
 });

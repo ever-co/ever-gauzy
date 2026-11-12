@@ -71,6 +71,8 @@ interface PendingRelation {
 	fromSourceId: string;
 	toSourceId: string;
 	action: number;
+	/** When the issue it was read from changed (ISO): a link that could not be recorded keeps the import position there. */
+	updated?: string | null;
 }
 
 /** The caches of one run: the statuses and priorities of the project, the employees by e-mail, the tags by label. */
@@ -88,8 +90,10 @@ interface ApplyContext extends ClientHolder {
 	priorityIdsByName: Map<string, ID>;
 	employeeIdsByEmail: Map<string, ID | null>;
 	tagIdsByLabel: Map<string, ID | null>;
-	/** Children whose parent is linked once every issue of the run is in. */
-	pendingParents: Array<{ taskId: ID; parentSourceId: string }>;
+	/** Children whose parent is linked once every issue of the run is in (with when the child changed, ISO). */
+	pendingParents: Array<{ taskId: ID; parentSourceId: string; updated?: string | null }>;
+	/** The change time (ISO) of the earliest issue whose parent or link could not be recorded: the next import reads it again. */
+	linkFailedUpdated?: string | null;
 	/** Issue links recorded once every issue of the run is in. */
 	pendingRelations: PendingRelation[];
 	/** The user who connected: the comments nobody here wrote are theirs to own. */
@@ -100,6 +104,13 @@ interface ApplyContext extends ClientHolder {
 	details: { comments: number; links: number; failed: number };
 	counts: JiraSyncCounts;
 	report: JiraSyncRunReport;
+}
+
+/** An issue update without its description (left as Jira has it). */
+function withoutDescription<T extends { description?: unknown }>(fields: T): T {
+	const rest = { ...fields };
+	delete rest.description;
+	return rest;
 }
 
 /** A later claim failed the run as abandoned: its import stops and writes neither the position nor its outcome. */
@@ -232,6 +243,10 @@ export class JiraSyncService {
 				}
 				await this.linkParents(context);
 				await this.linkRelations(context);
+				// A parent or a link that could not be recorded: the next import reads its issue again (the pages come oldest
+				// change first, so the position goes back to it).
+				const linkFailed = context.linkFailedUpdated ?? null;
+				if (linkFailed && (!progress.firstFailedUpdated || linkFailed < progress.firstFailedUpdated)) progress.firstFailedUpdated = linkFailed;
 				this.reportDetails(context);
 			});
 			if (counts.failed > 0) {
@@ -249,7 +264,9 @@ export class JiraSyncService {
 		} finally {
 			// The mapping is another run's now (a later claim failed this one as abandoned): neither its position nor this
 			// run's outcome is written, so the live run's are not overwritten.
-			if (!superseded) superseded = !(await this.runs.isLive(run).catch(() => true));
+			// Unknown (the check failed) counts as superseded: a position written over a live run's would lose its progress;
+			// one not written is read again by the next import.
+			if (!superseded) superseded = !(await this.runs.isLive(run).catch(() => false));
 			if (superseded) {
 				this.logger.warn(`Import run ${run.id} of mapping ${mapping.id} was superseded by a later claim; it stopped without writing the position.`);
 			} else {
@@ -378,7 +395,13 @@ export class JiraSyncService {
 			const fields = issueUpdateOf(task, priorities);
 			const existing = await this.findIssueMap(task.id as ID, mapping.integrationId, scope);
 			if (existing?.sourceId) {
-				await this.call(holder, (client) => client.updateIssue(existing.sourceId, fields));
+				// A description the platform did not change since the issue last sent it stays Jira's (its rich text may hold
+				// what the task store cannot keep, such as media): an edit of another field never rewrites it.
+				const keepDescription = await this.conflicts
+					.descriptionUnchangedSinceSync({ tenantId, integrationId: mapping.integrationId, sourceId: existing.sourceId, task: task as unknown as Record<string, unknown> })
+					.catch(() => false);
+				const update = keepDescription ? withoutDescription(fields) : fields;
+				await this.call(holder, (client) => client.updateIssue(existing.sourceId, update));
 				await this.moveToStatus(holder, existing.sourceId, task.status ?? null, statusMap);
 				return;
 			}
@@ -471,6 +494,8 @@ export class JiraSyncService {
 		fields: Parameters<JiraApiClient['createIssue']>[0]
 	): Promise<string | null> {
 		const issue = await this.call(holder, (client) => client.createIssue(fields));
+		// The issue exists in Jira from here: when its id map cannot be written, it is deleted again (best effort), or the
+		// next change of the task, finding no map, would create a second issue.
 		const recorded = await this.lockedTransaction([`integration-jira:task:${taskId}`], async (manager) => {
 			const existing = await manager.findOne(IntegrationMap, {
 				where: { entity: IntegrationEntity.ISSUE, gauzyId: taskId, integrationId: mapping.integrationId, ...scope } as never
@@ -487,6 +512,11 @@ export class JiraSyncService {
 				})
 			);
 			return true;
+		}).catch(async (error: unknown) => {
+			await this.call(holder, (client) => client.deleteIssue(issue.id)).catch((caught: unknown) => {
+				this.logger.warn(`Issue ${issue.key} of task ${taskId} has no id map and could not be deleted: ${this.describe(caught)}`);
+			});
+			throw error;
 		});
 		if (!recorded) {
 			await this.call(holder, (client) => client.deleteIssue(issue.id)).catch((caught: unknown) => {
@@ -723,11 +753,11 @@ export class JiraSyncService {
 			throw caught;
 		}
 		if (issue.fields?.parent?.id && map?.gauzyId) {
-			context.pendingParents.push({ taskId: map.gauzyId as ID, parentSourceId: String(issue.fields.parent.id) });
+			context.pendingParents.push({ taskId: map.gauzyId as ID, parentSourceId: String(issue.fields.parent.id), updated: isoOf(issue.fields?.updated) });
 		}
 		for (const link of issue.fields?.issuelinks ?? []) {
 			const ends = linkEndsOf(issue.id, link);
-			if (ends) context.pendingRelations.push(ends);
+			if (ends) context.pendingRelations.push({ ...ends, updated: isoOf(issue.fields?.updated) });
 		}
 		if (map?.gauzyId) {
 			// The issue's values become what both sides agreed on; a failure here fails the issue (its conflicts stay recorded) and the next import writes it again.
@@ -744,8 +774,17 @@ export class JiraSyncService {
 			if (!parent || parent === pending.taskId) continue;
 			await this.commandBus
 				.execute(new TaskUpdateCommand(pending.taskId, { ...context.scope, parentId: parent } as ITaskUpdateInput, false))
-				.catch((caught: unknown) => this.logger.warn(`Task ${pending.taskId} could not be linked to its parent: ${this.describe(caught)}`));
+				.catch((caught: unknown) => {
+					this.logger.warn(`Task ${pending.taskId} could not be linked to its parent: ${this.describe(caught)}`);
+					this.noteLinkFailure(context, pending.updated ?? null);
+				});
 		}
+	}
+
+	/** A parent or a link that could not be recorded: a failure of the run, and the import position stays at its issue. */
+	private noteLinkFailure(context: ApplyContext, updated: string | null): void {
+		context.details.failed += 1;
+		if (updated && (!context.linkFailedUpdated || updated < context.linkFailedUpdated)) context.linkFailedUpdated = updated;
 	}
 
 	/**
@@ -772,6 +811,7 @@ export class JiraSyncService {
 				context.report.relations += 1;
 			} catch (caught) {
 				this.logger.warn(`The link ${key} could not be recorded: ${this.describe(caught)}`);
+				this.noteLinkFailure(context, pending.updated ?? null);
 			}
 		}
 	}

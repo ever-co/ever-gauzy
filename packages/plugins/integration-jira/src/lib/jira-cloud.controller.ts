@@ -157,17 +157,19 @@ export class JiraCloudController {
 		if (!site) throw new NotFoundException({ message: 'The connection cannot reach that Jira site', code: JIRA_SITE_NOT_FOUND });
 		const myself = await this.tenants.clientForSite(tenant, site.id).myself();
 		// Checked and written while no mapping can be created: one made meanwhile for the former site never stays behind.
-		await this.mappings.whileMappingsLocked(tenant, async (mappings) => {
-			const current = this.tenants.summaryOf(tenant).cloudId;
+		// The connection is read again under the lock: a site another request chose meanwhile is the current one.
+		const chosen = await this.mappings.whileMappingsLocked(tenant, async (mappings) => {
+			const fresh = (await this.tenants.findAnyById(tenant.id as ID)) ?? tenant;
+			const current = this.tenants.summaryOf(fresh).cloudId;
 			const moving = current !== site.id;
 			if (moving && mappings > 0) {
 				throw new ConflictException({ message: 'A connection with mappings keeps its Jira site; remove its mappings first', code: JIRA_SITE_HAS_MAPPINGS });
 			}
-			if (moving && current) await this.webhooks.remove(tenant);
-			await this.tenants.selectSite(tenant, site, myself);
+			if (moving && current) await this.webhooks.remove(fresh);
+			return this.tenants.selectSite(fresh, site, myself);
 		});
-		this.ensureWebhookLater(tenant);
-		return this.tenants.summaryOf(tenant);
+		this.ensureWebhookLater(chosen);
+		return this.tenants.summaryOf(chosen);
 	}
 
 	/** Who the token is on the connection's site. */
@@ -212,7 +214,11 @@ export class JiraCloudController {
 	@UseValidationPipe({ whitelist: true })
 	async createMapping(@Param('integrationId', UUIDValidationPipe) integrationId: ID, @Body() body: CreateJiraMappingDTO): Promise<JiraMappingView> {
 		const tenant = await this.tenants.requireById(integrationId);
-		const mapping = mappingView(await this.mappings.createMapping(tenant, body));
+		// A mapping names its Jira project by an id of the connection's site: none before a site is chosen (400
+		// `JIRA_SITE_REQUIRED`), and none on a site changed while this request ran (409 `JIRA_SITE_CHANGED`).
+		this.tenants.clientFor(tenant);
+		const cloudId = this.tenants.summaryOf(tenant).cloudId as string;
+		const mapping = mappingView(await this.mappings.createMapping(tenant, body, cloudId));
 		this.ensureWebhookLater(tenant);
 		return mapping;
 	}

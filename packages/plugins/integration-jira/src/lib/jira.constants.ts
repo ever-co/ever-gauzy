@@ -118,6 +118,8 @@ export const JIRA_SITE_REQUIRED = 'JIRA_SITE_REQUIRED';
 export const JIRA_SITE_NOT_FOUND = 'JIRA_SITE_NOT_FOUND';
 /** A connection with mappings keeps its site: a mapping names a project by an id that is only unique on its site. */
 export const JIRA_SITE_HAS_MAPPINGS = 'JIRA_SITE_HAS_MAPPINGS';
+/** A mapping was asked for on a site the connection no longer works with (it changed while the request ran). */
+export const JIRA_SITE_CHANGED = 'JIRA_SITE_CHANGED';
 export const JIRA_TOKEN_REFUSED = 'JIRA_TOKEN_REFUSED';
 export const JIRA_STATE_INVALID = 'JIRA_STATE_INVALID';
 export const JIRA_MAPPING_EXISTS = 'JIRA_MAPPING_EXISTS';

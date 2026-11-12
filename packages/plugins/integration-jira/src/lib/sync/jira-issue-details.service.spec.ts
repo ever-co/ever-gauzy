@@ -172,6 +172,16 @@ describe('JiraIssueDetailsService', () => {
 		expect(context.details).toEqual({ comments: 0, links: 0, failed: 2 });
 	});
 
+	it('fails a comment whose author could not be looked up, rather than keeping it as a System comment for good', async () => {
+		const { service, context, comments, findAll } = details();
+		findAll.mockRejectedValueOnce(new Error('connection lost'));
+		await service.apply(context, issue([comment()]), 'task-1');
+		expect(comments.save).not.toHaveBeenCalled();
+		expect(context.details).toEqual({ comments: 0, links: 0, failed: 1 });
+		// Not cached as nobody: the next read looks the author up again.
+		expect(context.authorsByEmail.has('ada@example.com')).toBe(false);
+	});
+
 	it('counts a comment that could not be kept as a failure of the run and goes on with the rest', async () => {
 		const { service, context, comments } = details();
 		comments.save.mockRejectedValueOnce(new Error('connection lost'));
