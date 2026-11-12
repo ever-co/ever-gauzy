@@ -120,6 +120,17 @@ describe('JiraApiClient', () => {
 		expect(calls[2]).toMatchObject({ method: 'DELETE', body: { webhookIds: [1001] } });
 	});
 
+	it('reads a refreshed expiry given as epoch milliseconds or as a date, and none from an unreadable one', async () => {
+		const { api } = client([
+			{ status: 200, body: { expirationDate: Date.UTC(2026, 11, 11, 12) } },
+			{ status: 200, body: { expirationDate: 'not a date' } },
+			{ status: 200, body: {} }
+		]);
+		expect(await api.refreshWebhooks(['1001'])).toBe('2026-12-11T12:00:00.000Z');
+		expect(await api.refreshWebhooks(['1001'])).toBeNull();
+		expect(await api.refreshWebhooks(['1001'])).toBeNull();
+	});
+
 	it('surfaces a refused token, a forbidden resource, a rate limit with its wait, and Jira’s own messages', async () => {
 		const { api } = client([
 			{ status: 401, body: '' },
