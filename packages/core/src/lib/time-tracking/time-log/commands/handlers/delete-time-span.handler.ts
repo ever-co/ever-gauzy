@@ -273,9 +273,10 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 	 * @returns The second part, with the slots it holds.
 	 */
 	private async createSecondPart(log: TimeLog, end: Date, stoppedAt: Date): Promise<TimeLog> {
-		// The slots of the second part, as the update computes a log's slots: the first one is the slot holding `end`
+		// The slots of the second part, as the update computes a log's slots: the first one is the slot holding `end`,
+		// taken at its whole minute (the helper keeps the milliseconds of `end`, and a stored slot's start has none)
 		const [firstSlot] = generateTimeSlots(end, stoppedAt);
-		const from = moment(firstSlot?.startedAt ?? end);
+		const from = moment(firstSlot?.startedAt ?? end).startOf('minute');
 		const timeSlots = (log.timeSlots ?? []).filter((slot) => !moment(slot.startedAt).isBefore(from));
 
 		return await this.typeOrmTimeLogRepository.save(

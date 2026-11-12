@@ -131,8 +131,8 @@ const TENANT_ID = '11823000-0000-4000-8000-0000000000aa';
 const ORGANIZATION_ID = '11823000-0000-4000-8000-0000000000bb';
 const EMPLOYEE_ID = '11823000-0000-4000-8000-0000000000cc';
 
-/** 2026-10-12 at `time`, UTC. */
-const at = (time: string) => new Date(`2026-10-12T${time}:00.000Z`);
+/** 2026-10-12 at `time` (`HH:mm`, or `HH:mm:ss.SSS`), UTC. */
+const at = (time: string) => new Date(`2026-10-12T${time.length === 5 ? `${time}:00.000` : time}Z`);
 
 /** The `HH:mm` of a date, UTC. */
 const hhmm = (date: Date) => date.toISOString().slice(11, 16);
@@ -624,6 +624,20 @@ describe('DeleteTimeSpanHandler and a stopped log the new range falls inside (#1
 			]);
 			expect(store.slotCount()).toBe(14);
 		});
+	});
+
+	it('gives the second part the slot holding the range end when that end falls between seconds', async () => {
+		const store = createStore();
+		store.addLog('tracked', '08:00', '11:00');
+
+		// The end of a range a tracker sends carries milliseconds; a slot's start never does.
+		await store.cleanUp('09:05', '09:55:00.500');
+
+		expect(store.timeline()).toEqual([
+			{ range: '08:00-09:05', isRunning: false, slots: slotStarts('08:00', '09:05') },
+			{ range: '09:55-11:00', isRunning: false, slots: slotStarts('09:55', '11:00') }
+		]);
+		expect(store.slotCount()).toBe(14);
 	});
 
 	it('takes one slot out of the middle of a log, as the time-slot delete asks, splitting the log around it', async () => {
