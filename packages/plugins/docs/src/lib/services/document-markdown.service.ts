@@ -466,6 +466,7 @@ export function zipFileNameOf(document: Pick<Document, 'originalFilename' | 'nam
 	const raw = String(document.originalFilename || document.name || fallback);
 	// Control characters and the characters a path or a file system refuses become `-`.
 	const clean = raw
+		// eslint-disable-next-line no-control-regex -- the control characters are what this removes
 		.replace(/[\u0000-\u001f\u007f/\\:*?"<>|]+/g, '-')
 		.replace(/^[.\s-]+/, '')
 		.trim();

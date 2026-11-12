@@ -303,16 +303,23 @@ export function normaliseAnchorInput(input: IDocumentCommentAnchorInput | null |
 	};
 }
 
+/** The caller's user and employee, or null outside a request. */
+function callerIdentity(): { userId: ID | null; employeeId: ID | null } | null {
+	try {
+		return {
+			userId: (RequestContext.currentUserId() as ID) ?? null,
+			employeeId: (RequestContext.currentUser()?.employeeId as ID) ?? null
+		};
+	} catch {
+		return null;
+	}
+}
+
 /** Whether the caller wrote the comment: their employee is its author, or their user posted it. */
 function isCallerAuthor(comment: Pick<Comment, 'employeeId' | 'createdByUserId'>): boolean {
-	let userId: ID | null = null;
-	let employeeId: ID | null = null;
-	try {
-		userId = (RequestContext.currentUserId() as ID) ?? null;
-		employeeId = (RequestContext.currentUser()?.employeeId as ID) ?? null;
-	} catch {
-		return false;
-	}
+	const caller = callerIdentity();
+	if (!caller) return false;
+	const { userId, employeeId } = caller;
 	if (employeeId && comment.employeeId && String(comment.employeeId) === String(employeeId)) return true;
 	return !!userId && !!comment.createdByUserId && String(comment.createdByUserId) === String(userId);
 }

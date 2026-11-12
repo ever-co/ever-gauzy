@@ -105,6 +105,17 @@ export interface ILiveAnchorPoint {
 /** Reads the relative positions of an anchor in a page's shared document. */
 export type LiveAnchorResolver = (relative: string) => ILiveAnchorPoint | null;
 
+/** The absolute position of a base64 relative position in `doc`; null for bytes that are not one. */
+function absolutePositionOf(doc: Y.Doc, relative: string): Y.AbsolutePosition | null {
+	try {
+		const bytes = Buffer.from(relative, 'base64');
+		if (!bytes.length) return null;
+		return Y.createAbsolutePositionFromRelativePosition(Y.decodeRelativePosition(new Uint8Array(bytes)), doc);
+	} catch {
+		return null;
+	}
+}
+
 /**
  * The resolver of relative positions in a page's shared document (fragment `default`, as y-prosemirror binds it).
  *
@@ -114,14 +125,7 @@ export type LiveAnchorResolver = (relative: string) => ILiveAnchorPoint | null;
 export function liveAnchorResolverOf(doc: Y.Doc): LiveAnchorResolver {
 	const fragment = doc.getXmlFragment(LIVE_FRAGMENT);
 	return (relative: string): ILiveAnchorPoint | null => {
-		let absolute: Y.AbsolutePosition | null = null;
-		try {
-			const bytes = Buffer.from(relative, 'base64');
-			if (!bytes.length) return null;
-			absolute = Y.createAbsolutePositionFromRelativePosition(Y.decodeRelativePosition(new Uint8Array(bytes)), doc);
-		} catch {
-			return null;
-		}
+		const absolute = absolutePositionOf(doc, relative);
 		if (!absolute || !isInside(absolute.type, fragment)) return null;
 		return pointOf(absolute.type, absolute.index);
 	};

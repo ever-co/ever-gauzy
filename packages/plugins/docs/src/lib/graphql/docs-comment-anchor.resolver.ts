@@ -57,9 +57,13 @@ const PAGES_OF_REQUEST = Symbol('docsCommentAnchorPages');
 /**
  * `Comment.documentAnchor`: the range of a comment of a Docs page, beside the platform's own comment fields. The
  * comment was read under the comment API's rules; its page is read again under the page's (no range for a page the
- * caller may not read).
+ * caller may not read). Behind the same feature codes as the anchor queries: a deployment without GraphQL or Docs has
+ * no such field to answer.
  */
 @Resolver('Comment')
+@UseGuards(TenantPermissionGuard, PermissionGuard, FeatureFlagGuard)
+@FeatureFlag(FEATURE_GRAPHQL)
+@FeatureFlag(FeatureEnum.FEATURE_DOCUMENTS)
 export class DocsCommentAnchorFieldResolver {
 	constructor(private readonly anchors: DocumentCommentAnchorService) {}
 
