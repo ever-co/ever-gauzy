@@ -1208,6 +1208,8 @@ export class ConversationViewComponent {
 					const wasNearBottom = this.isNearBottom();
 					const result = applyCatchUp(this.messages(), before, this.touched, (loaded) => reconcileWithNewest(loaded, page));
 					this.messages.set(result.messages);
+					// A task changed while no hint reached this tab (hidden, offline): its cards read it again.
+					this.taskStore.refreshAll([...result.messages, ...this.pins()]);
 					if (result.replaced) this.hasBefore.set(page.hasBefore);
 					if (!result.added.length) return;
 					if (wasNearBottom) {

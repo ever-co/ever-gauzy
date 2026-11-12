@@ -518,6 +518,9 @@ export class ThreadPaneComponent {
 					const replies = { hasAfter: page.hasAfter, messages: page.messages.filter((message) => message.id !== page.root.id) };
 					const result = applyCatchUp(this.replies(), before, this.touched, (loaded) => reconcileWithOldest(loaded, replies));
 					this.replies.set(result.messages);
+					// A task changed while no hint reached this tab (hidden, offline): its cards read it again (the replies new
+					// to the pane have their tasks read by the pane's own effect).
+					this.taskStore.refreshAll([this.root(), ...result.messages]);
 					// Every reply was loaded: the poll reads from the last one. Otherwise the first page says what follows.
 					if (!wasComplete && !result.beyond) this.hasAfter.set(page.hasAfter);
 					// The thread is marked read once the newer replies are in too (the poll's answer), never before.

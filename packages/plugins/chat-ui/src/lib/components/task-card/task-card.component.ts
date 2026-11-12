@@ -51,11 +51,12 @@ import { ChatUiService } from '../../services/chat-ui.service';
 			@if (canEdit() && summary(); as task) {
 				<span class="task-edit">
 					<select
+						#statusSelect
 						class="task-select"
 						data-test="task-status"
 						[attr.aria-label]="'CHAT.TASKS.STATUS' | translate"
 						[disabled]="saving()"
-						(change)="pickStatus($any($event.target).value)"
+						(change)="pickStatus(statusSelect.value)"
 					>
 						@if (!task.status) {
 							<option value="" selected>{{ 'CHAT.TASKS.NO_STATUS' | translate }}</option>
@@ -68,11 +69,12 @@ import { ChatUiService } from '../../services/chat-ui.service';
 						}
 					</select>
 					<select
+						#prioritySelect
 						class="task-select"
 						data-test="task-priority"
 						[attr.aria-label]="'CHAT.TASKS.PRIORITY' | translate"
 						[disabled]="saving()"
-						(change)="pickPriority($any($event.target).value)"
+						(change)="pickPriority(prioritySelect.value)"
 					>
 						<option value="" [selected]="!task.priority">{{ 'CHAT.TASKS.NO_PRIORITY' | translate }}</option>
 						@for (priority of priorities(); track priority) {
@@ -80,11 +82,12 @@ import { ChatUiService } from '../../services/chat-ui.service';
 						}
 					</select>
 					<select
+						#assigneeSelect
 						class="task-select"
 						data-test="task-assignee"
 						[attr.aria-label]="'CHAT.TASKS.ASSIGN' | translate"
 						[disabled]="saving()"
-						(change)="toggleAssignee($any($event.target))"
+						(change)="toggleAssignee(assigneeSelect)"
 					>
 						<option value="" selected>{{ 'CHAT.TASKS.ASSIGNED' | translate: { count: task.assigneeIds?.length ?? 0 } }}</option>
 						@for (person of people().list; track person.employeeId) {
@@ -113,7 +116,7 @@ import { ChatUiService } from '../../services/chat-ui.service';
 				padding: 0.5rem 0.625rem;
 				border: 1px solid var(--chat-border, rgba(127, 127, 127, 0.3));
 				border-left: 4px solid var(--chat-accent, #3366ff);
-				border-radius: 0.375rem;
+				border-radius: var(--border-radius);
 				background: var(--chat-bg, transparent);
 				transition: border-color 0.12s ease, background-color 0.12s ease;
 			}
@@ -141,7 +144,7 @@ import { ChatUiService } from '../../services/chat-ui.service';
 				justify-content: center;
 				width: 2rem;
 				height: 2rem;
-				border-radius: 0.375rem;
+				border-radius: var(--border-radius);
 				background: var(--chat-accent-soft, rgba(51, 102, 255, 0.12));
 				color: var(--chat-accent, #3366ff);
 			}
@@ -193,7 +196,7 @@ import { ChatUiService } from '../../services/chat-ui.service';
 				max-width: 9rem;
 				padding: 0.125rem 0.25rem;
 				border: 1px solid var(--chat-border, rgba(127, 127, 127, 0.3));
-				border-radius: 0.25rem;
+				border-radius: var(--border-radius);
 				background: transparent;
 				color: inherit;
 				font-size: 0.6875rem;

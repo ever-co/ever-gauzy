@@ -10,7 +10,7 @@ const signal = (userId: string, expiresAt: number, place: { conversationId?: str
 	expiresAt
 });
 
-const hint = (name: string, extra: Partial<ChatHint> = {}): ChatHint => ({
+const hint = (name: ChatHint['name'], extra: Partial<ChatHint> = {}): ChatHint => ({
 	eventId: 'e1',
 	name,
 	conversationId: 'c1',
