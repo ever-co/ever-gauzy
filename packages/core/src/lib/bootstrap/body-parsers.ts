@@ -17,8 +17,13 @@ export const DEFAULT_MAX_BODY = '50mb';
  *
  * - `POST /api/chat/hooks/:token` (the chat plugin's incoming webhooks): a post holds at most 64 KiB, which the route
  *   answers with `422 payload_too_large`; a body over twice that is refused here (413) before it is read.
+ * - `POST /api/integration/jira/webhook/:integrationId` (the Jira sync's dynamic webhooks): a delivery the route takes
+ *   weighs at most 2 MiB (`JIRA_WEBHOOK_MAX_BYTES`); a body over that is refused here (413) before it is read.
  */
-export const SMALL_BODY_ROUTES: ReadonlyArray<{ path: string; limit: number }> = [{ path: '/api/chat/hooks', limit: 128 * 1024 }];
+export const SMALL_BODY_ROUTES: ReadonlyArray<{ path: string; limit: number }> = [
+	{ path: '/api/chat/hooks', limit: 128 * 1024 },
+	{ path: '/api/integration/jira/webhook', limit: 2 * 1024 * 1024 }
+];
 
 /**
  * The path the GraphQL endpoint is served on, as the driver is configured with it (`graphqlConfigOptions.path`,
