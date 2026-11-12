@@ -505,6 +505,37 @@ describe('TimerReminderService on SQLite', () => {
 		expect(await notificationCount()).toBe(1);
 	});
 
+	it('never gives back a claim it took over: the process it was taken from may still file it, under its id', async () => {
+		await runningLog(await employee(), { ranFor: 9 * HOUR });
+		let finishFirst: () => void = () => undefined;
+		notifications.create
+			// The first process's filing hangs past the takeover time, then writes its notification
+			.mockImplementationOnce(async (input: IEmployeeNotificationCreateInput & { id?: string }) => {
+				await new Promise<void>((resolve) => (finishFirst = resolve));
+				filed.push({ input, contextTenantId: TENANT, contextOrganizationId: ORGANIZATION });
+				await write(input);
+				return { ...input };
+			})
+			// The process that took the claim over fails before it writes anything
+			.mockRejectedValueOnce(new Error('connection reset'));
+		const other = new TimerReminderService(dataSource, notifications as never);
+
+		const first = service.sweep(NOW);
+		await until(() => notifications.create.mock.calls.length === 1);
+		const takeover = new Date(NOW.getTime() + TIMER_REMINDER_STALE_CLAIM_MS + 60_000);
+		expect(await other.sweep(takeover)).toMatchObject({ reminded: 0, failed: 1 });
+		// Kept, though its filing failed: the first process may still write the notification under the claim's id
+		expect(await claims()).toHaveLength(1);
+
+		finishFirst();
+		expect(await first).toMatchObject({ reminded: 1 });
+		// The timer still runs: the next sweeps find the reminder filed, and file no second one under another id
+		await other.sweep(new Date(takeover.getTime() + 60_000));
+		await other.sweep(new Date(takeover.getTime() + 2 * TIMER_REMINDER_STALE_CLAIM_MS));
+		expect(await notificationCount()).toBe(1);
+		expect((await claims()).map(({ filedAt }) => filedAt)).toEqual([NOW]);
+	});
+
 	it('keeps, as filed, the claim of a notification written before its filing failed: no second filing', async () => {
 		await runningLog(await employee(), { ranFor: 9 * HOUR });
 		notifications.create.mockImplementationOnce(

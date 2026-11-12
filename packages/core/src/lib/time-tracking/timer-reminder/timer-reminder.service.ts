@@ -83,7 +83,9 @@ interface ITimerReminderClaim {
  *   violation and file nothing. The row records when its notification was filed. One left unfiled for a while
  *   (TIMER_REMINDER_STALE_CLAIM_MS: its process stopped in between) is taken over by a later sweep, which files it
  *   under the same id unless a notification of that id exists (written just before the stop), which it then records.
- *   A notification that could not be filed gives its row back for the next sweep, unless it was written after all.
+ *   A notification that could not be filed gives its row back for the next sweep, unless it was written after all, or
+ *   the row was taken over: the process it was taken from may still write the notification, so the row stays, stale,
+ *   and the next takeover files it under the same id or finds it written.
  * - **No needless duplicate.** Every reminder is filed unread. An open Ever Teams tab shows its own reminder (a toast,
  *   or a system notification when it is out of sight) and marks the platform's copy read through the notification API.
  *   The delivery lane holds a timer reminder's email and push a few minutes for that mark, and sends neither once the
@@ -280,7 +282,8 @@ export class TimerReminderService {
 	/**
 	 * Files a claimed reminder under the id its claim chose, then records it as filed. A claim taken over looks for a
 	 * notification of that id first: the process that stopped may have written it. A notification that could not be
-	 * filed gives its claim back, unless it was written after all (a failure past the write), when it is recorded.
+	 * filed gives its claim back, unless it was written after all (a failure past the write), when it is recorded, or
+	 * the claim was taken over: that one stays for a later takeover.
 	 */
 	private async file(
 		log: ITimerReminderLogRow,
@@ -313,7 +316,11 @@ export class TimerReminderService {
 			);
 		} catch (error) {
 			if (!(await this.isFiled(claim.employeeNotificationId, log.tenantId))) {
-				await this.release(claim);
+				// Only a claim this process inserted is given back. One it took over stays, to be taken over again once
+				// stale: the process it was taken from may still be filing, under the claim's id, which that sweep finds.
+				if (!takenOver) {
+					await this.release(claim);
+				}
 				throw error;
 			}
 		}
@@ -406,9 +413,10 @@ export class TimerReminderService {
 	}
 
 	/**
-	 * Gives a claim back, so the next sweep files the reminder: only while it still holds the time this process wrote. A
-	 * filing that outlasted TIMER_REMINDER_STALE_CLAIM_MS may have seen its claim taken over meanwhile; the claim is then
-	 * the other process's, which files it, and giving it back would let a later sweep file the reminder a second time.
+	 * Gives back a claim this process inserted, so the next sweep files the reminder: only while it still holds the time
+	 * this process wrote. A filing that outlasted TIMER_REMINDER_STALE_CLAIM_MS may have seen its claim taken over
+	 * meanwhile; the claim is then the other process's, which files it, and giving it back would let a later sweep file
+	 * the reminder a second time.
 	 */
 	private async release(claim: ITimerReminderClaim): Promise<void> {
 		const claimedAt = claim.claimedAt instanceof Date ? claim.claimedAt : new Date(instantOf(claim.claimedAt));
