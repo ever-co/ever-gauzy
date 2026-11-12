@@ -70,17 +70,23 @@ const UUID = '[0-9a-fA-F-]{36}';
 const CONTROL = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F\u202A-\u202E\u2066-\u2069]/g;
 const HTML_TAG = /^\/?[a-zA-Z][\w:-]*(\s[^>]*)?\/?$/;
 
+/** The fields a post's content is read from: a body holding any of them is the post itself, never a form wrapper. */
+const CONTENT_FIELDS = ['text', 'blocks', 'attachments'] as const;
+
 /**
  * The object a request body holds: a JSON body as parsed, or a form body's `payload` field (the form flavour of the
- * same shape) parsed as JSON. Anything else is refused.
+ * same shape) parsed as JSON. Other form fields beside `payload` are ignored; a body that carries content of its own
+ * (`text`, `blocks`, `attachments`) is read as it is, whatever string `payload` it also holds. Anything else is
+ * refused.
  *
  * @throws ChatWebhookPayloadError (`invalid_payload`).
  */
 export function payloadObjectOf(body: unknown): Record<string, unknown> {
 	let value = body;
-	if (isRecord(value) && typeof value['payload'] === 'string' && Object.keys(value).length === 1) {
+	const record = isRecord(body) ? body : null;
+	if (record && typeof record['payload'] === 'string' && !CONTENT_FIELDS.some((key) => record[key] !== undefined)) {
 		try {
-			value = JSON.parse(value['payload'] as string);
+			value = JSON.parse(record['payload']);
 		} catch {
 			throw new ChatWebhookPayloadError('invalid_payload', 'The payload field is not JSON.');
 		}
@@ -231,6 +237,8 @@ function rewriteAngles(value: string, mode: 'body' | 'plain', canBroadcast: bool
 		if (/^https?:\/\//i.test(target)) {
 			const url = target.trim();
 			if (!label) return url;
+			// A labelled link is a link only to an https page of a public host (as a button's): else its label, as text.
+			if (getUnsafeOutboundUrlReason(url) !== null) return label;
 			return mode === 'body' ? `[${label.replace(/[[\]]/g, '')}](${url.replace(/[()\s]/g, encodeURIComponent)})` : `${label} (${url})`;
 		}
 		if (/^mailto:/i.test(target)) return label || target.slice('mailto:'.length);
@@ -369,8 +377,10 @@ function buttonOf(element: Record<string, unknown>): { button: IChatAppButton; s
 	const text = plainText(textOf(element), CHAT_APP_TEXT_LIMITS.buttonText);
 	if (!text) return null;
 	const rawId = element['action_id'] ?? element['actionId'] ?? element['name'];
-	const supplied = typeof rawId === 'string' && !!rawId.trim();
-	const actionId = supplied ? cut((rawId as string).trim().replace(CONTROL, ''), CHAT_APP_TEXT_LIMITS.id) : '';
+	// Control characters go first: an id made of nothing else names no action, and the button is given one.
+	const cleanId = typeof rawId === 'string' ? rawId.replace(CONTROL, '').trim() : '';
+	const supplied = !!cleanId;
+	const actionId = supplied ? cut(cleanId, CHAT_APP_TEXT_LIMITS.id) : '';
 	const rawValue = element['value'];
 	const value = typeof rawValue === 'string' ? rawValue.replace(CONTROL, '').slice(0, CHAT_APP_TEXT_LIMITS.buttonValue) : null;
 	const url = typeof element['url'] === 'string' ? element['url'].trim() : null;
@@ -383,7 +393,8 @@ function buttonOf(element: Record<string, unknown>): { button: IChatAppButton; s
 
 function blockIdOf(block: Record<string, unknown>): string | null {
 	const raw = block['block_id'] ?? block['blockId'];
-	return typeof raw === 'string' && raw.trim() ? cut(raw.trim().replace(CONTROL, ''), CHAT_APP_TEXT_LIMITS.id) : null;
+	const clean = typeof raw === 'string' ? raw.replace(CONTROL, '').trim() : '';
+	return clean ? cut(clean, CHAT_APP_TEXT_LIMITS.id) : null;
 }
 
 /** The block id an actions block without one is given: its place in the message (stable, distinct per message). */
