@@ -303,6 +303,32 @@ describe('TaskAutomationsPageComponent', () => {
 		expect(component.rules().map((one) => one.id)).toEqual(['a', 'b']);
 	});
 
+	it('lets the Test button go when a switch of organization cancels a dry run under way', () => {
+		const { component } = render();
+		api.test.mockReturnValue(new Subject());
+		api.runs.mockReturnValue(of([]));
+		component.open(component.rules()[0]);
+		component.testTaskId.set('task-1');
+		component.runTest(component.rules()[0]);
+		expect(component.testing()).toBe(true);
+		(component as unknown as { cancelPending(): void }).cancelPending();
+		expect(component.testing()).toBe(false);
+	});
+
+	it('applies a late order to the rules as they are, keeping a switch saved meanwhile', () => {
+		const { component } = render();
+		const order$ = new Subject<ITaskAutomationRule[]>();
+		api.reorder.mockReturnValue(order$);
+		component.move(0, 1);
+		api.update.mockReturnValue(of(rule('a', { isEnabled: false })));
+		component.toggle(component.rules().find((one) => one.id === 'a') as ITaskAutomationRule, false);
+		order$.next([rule('b'), rule('a')]);
+		expect(component.rules().map((one) => [one.id, one.isEnabled])).toEqual([
+			['b', false],
+			['a', false]
+		]);
+	});
+
 	it('drops another rule’s late history', () => {
 		const late$ = new Subject<never[]>();
 		api.runs.mockReturnValueOnce(late$).mockReturnValue(of([]));

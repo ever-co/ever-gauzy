@@ -303,6 +303,17 @@ export function movedOrder(ids: readonly ID[], index: number, delta: number): ID
 }
 
 /** The ids in a new order: the rule dragged from `from` dropped at `to`. */
+/**
+ * The rules in an order: the ids named first, in their order, then the others as they were; each rule as it is now, its
+ * position its place. A rule no longer in the list is not brought back, a new one is kept.
+ */
+export function rulesInOrder(rules: readonly ITaskAutomationRule[], ids: readonly ID[]): ITaskAutomationRule[] {
+	const byId = new Map(rules.map((rule) => [rule.id as ID, rule]));
+	const named = ids.map((id) => byId.get(id)).filter((rule): rule is ITaskAutomationRule => !!rule);
+	const rest = rules.filter((rule) => !ids.includes(rule.id as ID));
+	return [...named, ...rest].map((rule, position) => ({ ...rule, position }));
+}
+
 export function droppedOrder(ids: readonly ID[], from: number, to: number): ID[] {
 	const next = [...ids];
 	if (from < 0 || from >= next.length || to < 0 || to >= next.length || from === to) return next;

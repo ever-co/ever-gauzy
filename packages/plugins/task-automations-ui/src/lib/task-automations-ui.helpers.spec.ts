@@ -22,6 +22,7 @@ import {
 	newCondition,
 	outcomeStatus,
 	ruleInputOfDraft,
+	rulesInOrder,
 	viewOfLoadError
 } from './task-automations-ui.helpers';
 import { employeeName, priorityChoices, statusChoices, taskChoice } from './services/task-automations-directory.service';
@@ -140,6 +141,19 @@ describe('task automations UI helpers', () => {
 		expect(droppedOrder(['a', 'b', 'c'], 0, 2)).toEqual(['b', 'c', 'a']);
 		expect(droppedOrder(['a', 'b', 'c'], 2, 0)).toEqual(['c', 'a', 'b']);
 		expect(droppedOrder(['a', 'b', 'c'], 1, 1)).toEqual(['a', 'b', 'c']);
+	});
+
+	it('applies an order to the rules as they are now, keeping what other writes made of them', () => {
+		const a = { ...rule, id: 'a', position: 0, isEnabled: false };
+		const b = { ...rule, id: 'b', position: 1 };
+		const created = { ...rule, id: 'c', position: 2 };
+		// `b` was deleted meanwhile and `c` created; `a` was switched off.
+		const ordered = rulesInOrder([a, created], ['b', 'a']);
+		expect(ordered.map((one) => [one.id, one.position, one.isEnabled])).toEqual([
+			['a', 0, false],
+			['c', 1, created.isEnabled]
+		]);
+		expect(rulesInOrder([a, b], ['b', 'a']).map((one) => one.id)).toEqual(['b', 'a']);
 	});
 
 	it('reads the API’s answers', () => {

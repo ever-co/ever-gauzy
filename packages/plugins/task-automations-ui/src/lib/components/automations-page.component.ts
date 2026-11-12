@@ -45,6 +45,7 @@ import {
 	movedOrder,
 	outcomeStatus,
 	ruleInputOfDraft,
+	rulesInOrder,
 	TaskAutomationsView,
 	templateDescriptionKey,
 	templateNameKey,
@@ -717,6 +718,8 @@ export class TaskAutomationsPageComponent implements OnInit {
 		]) {
 			subscription?.unsubscribe();
 		}
+		// A request cancelled here never answers: what it was holding is let go.
+		this.testing.set(false);
 		this.scopedChoices.set({ statuses: [], priorities: [] });
 	}
 
@@ -813,24 +816,29 @@ export class TaskAutomationsPageComponent implements OnInit {
 		this.reorder(droppedOrder(this.ruleIds(), from, index));
 	}
 
-	/** Sends a new order; the list shows it at once and takes the API's answer (or goes back) when it comes. */
+	/**
+	 * Sends a new order; the list shows it at once, and takes the API's order (or goes back to the one before) when the
+	 * answer comes. Only the order is applied, to the rules as they are then: a switch, a save, a delete or a new rule
+	 * made while the order was under way keeps its result.
+	 */
 	private reorder(ids: ID[]): void {
 		const current = this.ruleIds();
 		if (ids.every((id, index) => id === current[index])) return;
-		const previous = this.rules();
-		const byId = new Map(previous.map((rule) => [rule.id as ID, rule]));
-		this.rules.set(ids.map((id) => byId.get(id)).filter((rule): rule is ITaskAutomationRule => !!rule));
+		const previousOrder = [...current];
+		this.rules.update((rules) => rulesInOrder(rules, ids));
 		const organizationId = this.organizationId();
 		this.reordering.set(true);
 		this.api.reorder(ids, organizationId).subscribe({
 			next: (rules) => {
 				this.reordering.set(false);
-				if (this.stillIn(organizationId)) this.rules.set(rules ?? []);
+				if (!this.stillIn(organizationId)) return;
+				const order = (rules ?? []).map((rule) => rule.id as ID);
+				this.rules.update((now) => rulesInOrder(now, order));
 			},
 			error: (error: unknown) => {
 				this.reordering.set(false);
 				if (!this.stillIn(organizationId)) return;
-				this.rules.set(previous);
+				this.rules.update((now) => rulesInOrder(now, previousOrder));
 				this.actionError.set(apiErrorMessage(error) ?? 'TASK_AUTOMATIONS.ERRORS.REORDER');
 			}
 		});
