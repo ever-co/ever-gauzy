@@ -118,6 +118,24 @@ export class DocsImportService {
 		}
 	}
 
+	/**
+	 * Downloads a folder (its pages, sub-folders and files, with an `index.md`) or a page with its sub-pages as a zip of
+	 * Markdown files (`GET …/documents/:id/export/markdown?subtree=true`), named as the server names it. Resolves
+	 * `ok: false` when the server refused it.
+	 */
+	async downloadMarkdownZip(id: ID): Promise<{ ok: boolean; error?: HttpErrorResponse }> {
+		const params = { ...this.scope(), subtree: 'true' };
+		try {
+			const response = await firstValueFrom(
+				this.http.get(`${this.API_URL}/documents/${id}/export/markdown`, { params: toParams(params), observe: 'response', responseType: 'blob' })
+			);
+			this.save(response, 'pages.zip');
+			return { ok: true };
+		} catch (error) {
+			return { ok: false, error: error instanceof HttpErrorResponse ? error : undefined };
+		}
+	}
+
 	private save(response: HttpResponse<Blob>, fallback: string): void {
 		const blob = response.body;
 		if (!blob) return;

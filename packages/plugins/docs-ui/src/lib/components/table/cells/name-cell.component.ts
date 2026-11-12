@@ -1,11 +1,13 @@
 import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
 import { DocumentKindEnum, DocumentVisibilityEnum, IDocument } from '@gauzy/contracts';
 import { sanitizeMediaUrl } from '../../../editor/read-only/safe-url.util';
+import { IDocsSnippetSegment, searchSnippetLineOf } from '../../../models/docs-search-snippet.model';
 
 /**
  * Name cell: thumbnail or kind icon (Eva; per-mime variants for FILE), name with
  * summary/original-filename tooltip, and inline pills (archived, private,
- * locked, version).
+ * locked, version). A search result shows the server's snippet under its name: the text around the first match, the
+ * matches marked (plain text, never HTML).
  *
  * The leading slot is a FIXED-size box whatever it holds, so a row keeps its height and its
  * text alignment whether the document has a generated thumbnail or not — and gaining one on
@@ -44,6 +46,17 @@ import { sanitizeMediaUrl } from '../../../editor/read-only/safe-url.util';
 				<span class="docs-name-version">v{{ rowData.version }}</span>
 			}
 		</div>
+		@if (snippet; as segments) {
+			<div class="docs-name-snippet">
+				@for (segment of segments; track $index) {
+					@if (segment.match) {
+						<mark>{{ segment.text }}</mark>
+					} @else {
+						<span>{{ segment.text }}</span>
+					}
+				}
+			</div>
+		}
 	`,
 	styles: [
 		`
@@ -91,6 +104,23 @@ import { sanitizeMediaUrl } from '../../../editor/read-only/safe-url.util';
 				font-variant-numeric: tabular-nums;
 				color: var(--docs-text-muted, var(--text-hint-color));
 			}
+			.docs-name-snippet {
+				margin: 0.125rem 0 0 1.875rem;
+				overflow: hidden;
+				display: -webkit-box;
+				-webkit-line-clamp: 2;
+				-webkit-box-orient: vertical;
+				font-size: var(--docs-label-size, 0.75rem);
+				line-height: 1.35;
+				white-space: normal;
+				color: var(--docs-text-muted, var(--text-hint-color));
+			}
+			.docs-name-snippet mark {
+				padding: 0 0.0625rem;
+				border-radius: 0.125rem;
+				background: var(--color-warning-transparent-200, rgba(255, 170, 0, 0.24));
+				color: var(--docs-text, var(--text-basic-color));
+			}
 			.docs-name-cell ::ng-deep nb-badge {
 				position: static;
 				display: inline-flex;
@@ -118,6 +148,10 @@ export class NameCellComponent {
 	/** Set once the thumbnail failed to load (expired signed URL, deleted object). */
 	private thumbnailFailed = false;
 
+	/** The snippet whose runs are cached, and the runs. */
+	private snippetSource: IDocument['searchSnippet'] | null = null;
+	private snippetSegments: IDocsSnippetSegment[] | null = null;
+
 	/**
 	 * The row's preview image, or `null` when the kind icon should stand in.
 	 *
@@ -137,6 +171,16 @@ export class NameCellComponent {
 	/** Falls back to the kind icon instead of leaving a broken image in the column. */
 	onThumbnailError(): void {
 		this.thumbnailFailed = true;
+	}
+
+	/** The search snippet's runs (a search result only), cached per snippet object. */
+	get snippet(): IDocsSnippetSegment[] | null {
+		const snippet = this.rowData?.searchSnippet ?? null;
+		if (snippet !== this.snippetSource) {
+			this.snippetSource = snippet;
+			this.snippetSegments = searchSnippetLineOf(snippet);
+		}
+		return this.snippetSegments;
 	}
 
 	get tooltip(): string {
