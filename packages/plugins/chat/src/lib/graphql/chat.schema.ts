@@ -124,6 +124,12 @@ export const chatSchemaExtensions = gql`
 		attachmentIds: [ID!]
 		nonce: String
 		appName: String
+		"The incoming webhook that posted an app message."
+		webhookId: ID
+		"The icon of the app that posted the message (https)."
+		appIconUrl: String
+		"The layout of an app message (header, section, divider, context, actions, text blocks; plain text throughout)."
+		blocks: JSON
 		assistedBy: String
 		deletedAt: DateTime
 		createdAt: DateTime

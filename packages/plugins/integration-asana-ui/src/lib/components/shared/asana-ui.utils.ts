@@ -42,6 +42,12 @@ export interface ConflictValueView {
 	empty: boolean;
 	/** A due date: the ISO date-time the date pipe formats (null for any other field). */
 	date: string | null;
+	/**
+	 * The due date names a day, not a moment (`2026-11-20`, or midnight UTC as a provider's day is stored). `date` is
+	 * then the bare day (`YYYY-MM-DD`), which the date pipe reads as that day in the reader's own zone: the same day for
+	 * a reader east or west of UTC.
+	 */
+	dateOnly: boolean;
 	/** The text shown, cut to a line or two. */
 	text: string;
 	/** The whole text (the tooltip). */
@@ -53,15 +59,23 @@ export interface ConflictValueView {
  * a due date as a date, anything long cut. Never HTML: the list shows text only.
  */
 export function conflictValueView(field: string, value: string | null | undefined): ConflictValueView {
-	const empty: ConflictValueView = { empty: true, date: null, text: '', full: '' };
+	const empty: ConflictValueView = { empty: true, date: null, dateOnly: false, text: '', full: '' };
 	if (value === null || value === undefined) return empty;
 	const raw = String(value).trim();
 	if (!raw) return empty;
-	if (field === 'dueDate' && !Number.isNaN(new Date(raw).getTime())) return { empty: false, date: raw, text: raw, full: raw };
+	if (field === 'dueDate' && !Number.isNaN(new Date(raw).getTime())) {
+		const dateOnly = isDateOnly(raw);
+		return { empty: false, date: dateOnly ? raw.slice(0, 10) : raw, dateOnly, text: raw, full: raw };
+	}
 	const full = field === 'description' ? plainText(raw) : raw;
 	if (!full) return empty;
 	const text = full.length > CONFLICT_VALUE_MAX ? `${full.slice(0, CONFLICT_VALUE_MAX - 1).trimEnd()}…` : full;
-	return { empty: false, date: null, text, full };
+	return { empty: false, date: null, dateOnly: false, text, full };
+}
+
+/** Whether a stored due date names a day rather than a moment: a bare date, or exactly midnight UTC. */
+export function isDateOnly(value: string): boolean {
+	return /^\d{4}-\d{2}-\d{2}$/.test(value) || /^\d{4}-\d{2}-\d{2}T00:00(?::00(?:\.0+)?)?(?:Z|[+-]00:?00)$/.test(value);
 }
 
 /** The text of an HTML fragment: block ends and line breaks become spaces, tags go, entities are read, spaces collapse. */

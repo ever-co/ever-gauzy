@@ -246,6 +246,8 @@ export class TagResolver {
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TAGS_ADD)
 	async createTag(@Args('input') input: ICreateTagInput): Promise<Tag> {
+		// The name check of `POST /tags`: a name the tag's team has already is refused
+		await this.tagService.assertNameIsFree(input as never);
 		return await this.tagService.create(input as unknown as Tag);
 	}
 
@@ -269,6 +271,9 @@ export class TagResolver {
 	async updateTag(@Args('input') input: IUpdateTagInput): Promise<Tag> {
 		const { id, ...values } = input;
 
+		// The name check of `PUT /tags/:id`, in the scope the tag will have after the write
+		const existing = await this.tagService.findOneByIdString(id);
+		await this.tagService.assertChangeIsFree(existing, values as never, id);
 		await this.tagService.update(id, values as unknown as QueryDeepPartialEntity<Tag>);
 
 		return await this.tagService.findOneByIdString(id);
@@ -314,6 +319,8 @@ export class TagResolver {
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TAGS_EDIT, PermissionsEnum.ORG_TAGS_DELETE)
 	async recoverTag(@Args('id', { type: () => ID }) id: Id): Promise<Tag> {
+		// The check of `PUT /tags/:id/recover`: its name may have gone to another tag since it was deleted
+		await this.tagService.assertRecoveryIsFree(id);
 		return await this.tagService.softRecover(id);
 	}
 
