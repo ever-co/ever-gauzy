@@ -2,26 +2,26 @@
 
 **Feature ID**: `task-automations`
 **Plan**: `./plan.md`
-**Status**: `In progress`
-**Last updated**: 2026-11-11
+**Status**: `Phase 1 and 2 merged; Phase 3 (Ever Teams) in review`
+**Last updated**: 2026-11-12
 
 ---
 
 ## Phase 1 — Platform (PR 1)
 
-- [ ] **T1**. Spec, plan, tasks (this folder)
-- [ ] **T2**. Contracts: `task-automation.model.ts` (triggers, conditions, actions, outcomes, rule, run, dry run, templates, events `task_automation.task_changed` / `task_link.closed`), `PermissionsEnum.TASK_AUTOMATION_MANAGE`, default role grants (super admin, admin, manager)
-- [ ] **T3**. Plugin scaffold `packages/plugins/task-automations` (package, project, tsconfig, jest, eslint), `isTaskAutomationsEnabled`, path mapping, `.env.sample`
-- [ ] **T4**. Entities + MikroORM repositories; migrations `1791000007810` (tables) and `1791000007820` (role grants), Postgres / MySQL / SQLite, idempotent
-- [ ] **T5**. Engine (pure): triggers, conditions, action planning, status categories, loop guard, templates, change capture — unit specs for each
-- [ ] **T6**. Rule service: CRUD, validation of every referenced id against the organization, limits, reorder
-- [ ] **T7**. Runner + engine services: idempotent run claim, scope, rate limit, conditions on the re-read task, actions through `TaskUpdateCommand` in the system actor's context, notices, history pruning
-- [ ] **T8**. Capture (CQRS `ActivityLogEvent` → outbox) and consumer (`subscriber:task-automations`); activity attribution subscriber
-- [ ] **T9**. Due-date schedule: scheduler (worker), queue worker + sweep (API), advisory lock, in-process fallback without a queue
-- [ ] **T10**. REST controller + DTOs; dry run; run history
-- [ ] **T11**. GraphQL reads; `graphql-field-binding-check.mjs` entry
-- [ ] **T12**. Registration: `apps/api/src/plugins.ts` (`TaskAutomationsPlugin`), `apps/worker/src/plugins.ts` (`TaskAutomationsSchedulePlugin`), their specs
-- [ ] **T13**. Bot threads answered; merged into develop
+- [x] **T1**. Spec, plan, tasks (this folder)
+- [x] **T2**. Contracts: `task-automation.model.ts` (triggers, conditions, actions, outcomes, rule, run, dry run, templates, events `task_automation.task_changed` / `task_link.closed`), `PermissionsEnum.TASK_AUTOMATION_MANAGE`, default role grants (super admin, admin, manager)
+- [x] **T3**. Plugin scaffold `packages/plugins/task-automations` (package, project, tsconfig, jest, eslint), `isTaskAutomationsEnabled`, path mapping, `.env.sample`
+- [x] **T4**. Entities + MikroORM repositories; migrations `1791000007810` (tables) and `1791000007820` (role grants), Postgres / MySQL / SQLite, idempotent
+- [x] **T5**. Engine (pure): triggers, conditions, action planning, status categories, loop guard, templates, change capture — unit specs for each
+- [x] **T6**. Rule service: CRUD, validation of every referenced id against the organization, limits, reorder
+- [x] **T7**. Runner + engine services: idempotent run claim, scope, rate limit, conditions on the re-read task, actions through `TaskUpdateCommand` in the system actor's context, notices, history pruning
+- [x] **T8**. Capture (CQRS `ActivityLogEvent` → outbox) and consumer (`subscriber:task-automations`); activity attribution subscriber
+- [x] **T9**. Due-date schedule: scheduler (worker), queue worker + sweep (API), advisory lock, in-process fallback without a queue
+- [x] **T10**. REST controller + DTOs; dry run; run history
+- [x] **T11**. GraphQL reads; `graphql-field-binding-check.mjs` entry
+- [x] **T12**. Registration: `apps/api/src/plugins.ts` (`TaskAutomationsPlugin`), `apps/worker/src/plugins.ts` (`TaskAutomationsSchedulePlugin`), their specs
+- [x] **T13**. Bot threads answered; merged into develop
 
 ## Phase 2 — Gauzy app (PR 2)
 
