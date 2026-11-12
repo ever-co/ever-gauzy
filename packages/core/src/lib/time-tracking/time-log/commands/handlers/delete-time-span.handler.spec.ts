@@ -518,6 +518,10 @@ function createStore() {
 		},
 		/** A log as the conflict lookup reads it now, with its slots. */
 		read: (id: string) => logEntity(liveLog(id), true),
+		/** Someone deletes a log (a soft delete, as the time-log delete route does). */
+		discard(id: string) {
+			liveLog(id).deletedAt = new Date();
+		},
 		/**
 		 * Another write leaves the stored log over `start`–`stop`: its slots outside that range go, as
 		 * `TimeLogUpdateHandler` releases them.
@@ -872,6 +876,40 @@ describe('DeleteTimeSpanHandler when a split fails (#11823)', () => {
 		// ...and no further copy: the next cleanup of that log refuses to split it.
 		expect(store.timeline()).toEqual(leftBehind);
 		expect(retried).toContain('second part');
+	});
+
+	it('splits the log again once the second part a failed recovery left has been deleted', async () => {
+		const store = createStore();
+		store.addLog('tracked', '08:00', '11:00');
+		store.fail('update');
+		store.fail('delete');
+		await store.cleanUp('09:00', '10:00').then(raised, raised);
+		const [, leftBehind] = store.rows();
+		store.discard(leftBehind.id);
+
+		const retried = await store.cleanUp('09:00', '10:00').then(raised, raised);
+
+		expect(store.timeline()).toEqual([
+			{ range: '08:00-09:00', isRunning: false, slots: slotStarts('08:00', '09:00') },
+			{ range: '10:00-11:00', isRunning: false, slots: slotStarts('10:00', '11:00') }
+		]);
+		expect(retried).toBeUndefined();
+	});
+
+	it('splits a log that a separate log overlaps up to the same end, as older data can have them', async () => {
+		const store = createStore();
+		store.addLog('tracked', '08:00', '11:00');
+		// Not a part of `tracked`: a log of its own over the same last hour.
+		store.addLog('separate', '10:00', '11:00');
+
+		const outcome = await store.cleanUp('09:00', '09:30').then(raised, raised);
+
+		expect(store.timeline()).toEqual([
+			{ range: '08:00-09:00', isRunning: false, slots: slotStarts('08:00', '09:00') },
+			{ range: '09:30-11:00', isRunning: false, slots: slotStarts('09:30', '11:00') },
+			{ range: '10:00-11:00', isRunning: false, slots: slotStarts('10:00', '11:00') }
+		]);
+		expect(outcome).toBeUndefined();
 	});
 });
 

@@ -26,6 +26,13 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 	 */
 	private readonly cleanups = new Map<ID, Promise<unknown>>();
 
+	/**
+	 * The second part each split left behind in this process when neither its cut nor the undo of that cut went
+	 * through, by the log it was cut from. Nothing stored says which log a part was cut from, so this is how the next
+	 * split of that log knows it (see `assertNoSecondPartLeft`).
+	 */
+	private readonly secondPartsLeft = new Map<ID, ID>();
+
 	constructor(
 		readonly typeOrmTimeLogRepository: TypeOrmTimeLogRepository,
 		readonly typeOrmTimeSlotRepository: TypeOrmTimeSlotRepository,
@@ -291,6 +298,7 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 			try {
 				await this.recoverFailedSplit(log, start, secondPart);
 			} catch (recoveryError) {
+				this.secondPartsLeft.set(log.id, secondPart.id);
 				this.logger.error(
 					`Error while recovering the split of time log ${log.id} (second part ${secondPart.id}): ${recoveryError?.message ?? recoveryError}`,
 					recoveryError?.stack
@@ -301,27 +309,34 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 	}
 
 	/**
-	 * Refuses to split a log that already has a second part: a stopped log of the same employee inside it and ending
-	 * where it ends, which only a split leaves behind, when its cut failed and so did the recovery of that cut. Splitting
-	 * again would save one more copy of that time; the error stops the caller instead, as a failed split does, until one
-	 * of the two logs is deleted.
+	 * Refuses to split a log while the second part an earlier split of it left behind in this process (see
+	 * `secondPartsLeft`) still counts the same time: it is still there, inside the log and ending where the log ends.
+	 * Splitting again would save one more copy of that time; the error stops the caller instead, as a failed split
+	 * does. Once that part is deleted, or either log has changed, it is forgotten and the log splits as any other.
+	 *
+	 * Only that very part is looked for: another log ending where this one ends (older overlapping data has them) is
+	 * not a part of it, and never stops a split.
 	 *
 	 * @param log - The time log as stored.
-	 * @throws When such a second part is found.
+	 * @throws While the second part left behind still duplicates the log's time.
 	 */
 	private async assertNoSecondPartLeft(log: TimeLog): Promise<void> {
-		const { id, employeeId, organizationId, tenantId, startedAt, stoppedAt } = log;
-		const endingWithIt = await this.typeOrmTimeLogRepository.find({
-			where: { employeeId, organizationId, tenantId, stoppedAt }
-		});
-		const secondPart = endingWithIt.find(
-			(other) => other.id !== id && !other.isRunning && moment(other.startedAt).isAfter(startedAt)
-		);
-		if (secondPart) {
-			throw new Error(
-				`Time log ${id} already has a second part (time log ${secondPart.id}) from a split that could not be undone; delete one of them first`
-			);
+		const secondPartId = this.secondPartsLeft.get(log.id);
+		if (!secondPartId) {
+			return;
 		}
+		const secondPart = await this.typeOrmTimeLogRepository.findOne({ where: { id: secondPartId } });
+		const duplicatesLog =
+			!!secondPart &&
+			moment(secondPart.stoppedAt).isSame(log.stoppedAt) &&
+			moment(secondPart.startedAt).isAfter(log.startedAt);
+		if (!duplicatesLog) {
+			this.secondPartsLeft.delete(log.id);
+			return;
+		}
+		throw new Error(
+			`Time log ${log.id} still has the second part (time log ${secondPartId}) of a split that could not be undone; delete one of them first`
+		);
 	}
 
 	/**
