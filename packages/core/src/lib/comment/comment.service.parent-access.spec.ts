@@ -423,6 +423,61 @@ describe('CommentService — the comments of a governed record follow its policy
 				});
 			});
 
+			it("keeps other authors' withdrawn notes from a reader whom the record's write rule refuses", async () => {
+				// They hold the write permission, but this record admits them only to read (a page shared to view).
+				as([PermissionsEnum.ORG_CONTACT_VIEW, PermissionsEnum.ORG_CONTACT_EDIT]);
+				const findWritableParent = jest.fn(async () => null);
+				Object.assign(policy, { findWritableParent });
+				const findAll = listed();
+
+				await service.findAll(notesWithDeleted as any);
+
+				expect(findWritableParent).toHaveBeenCalledWith(CONTACT_ID);
+				expect(findAll).toHaveBeenCalledWith({
+					where: [
+						{ entity: CONTACT, entityId: CONTACT_ID, deletedAt: IsNull() },
+						{
+							entity: CONTACT,
+							entityId: CONTACT_ID,
+							deletedAt: Not(IsNull()),
+							employeeId: Equal('employee-me')
+						}
+					],
+					withDeleted: true
+				});
+			});
+
+			it("keeps other authors' withdrawn notes from a holder of CHANGE_SELECTED_EMPLOYEE whom the record's write rule refuses", async () => {
+				// Acting on any comment does not reach past a record that admits them only to read (a page shared to view).
+				as([PermissionsEnum.ORG_CONTACT_VIEW, PermissionsEnum.ORG_CONTACT_EDIT], {
+					employeeId: 'employee-me',
+					canChangeSelectedEmployee: true
+				});
+				const findWritableParent = jest.fn(async () => null);
+				Object.assign(policy, { findWritableParent });
+
+				await expect(
+					(service as unknown as { mayReadWithdrawnOf(parents: unknown[]): Promise<boolean> }).mayReadWithdrawnOf([
+						{ entity: CONTACT, entityId: CONTACT_ID }
+					])
+				).resolves.toBe(false);
+				expect(findWritableParent).toHaveBeenCalledWith(CONTACT_ID);
+
+				// The same holder reads them where the record's write rule admits them, and where the permission alone governs.
+				findWritableParent.mockResolvedValue({ id: CONTACT_ID, organizationId: 'org-1' } as never);
+				await expect(
+					(service as unknown as { mayReadWithdrawnOf(parents: unknown[]): Promise<boolean> }).mayReadWithdrawnOf([
+						{ entity: CONTACT, entityId: CONTACT_ID }
+					])
+				).resolves.toBe(true);
+				delete (policy as { findWritableParent?: unknown }).findWritableParent;
+				await expect(
+					(service as unknown as { mayReadWithdrawnOf(parents: unknown[]): Promise<boolean> }).mayReadWithdrawnOf([
+						{ entity: CONTACT, entityId: CONTACT_ID }
+					])
+				).resolves.toBe(true);
+			});
+
 			it('keeps what the criteria state about the withdrawal beside the added condition', async () => {
 				as([PermissionsEnum.ORG_CONTACT_VIEW]);
 				const count = jest.spyOn(TenantAwareCrudService.prototype, 'count').mockResolvedValue(0);

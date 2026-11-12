@@ -1,0 +1,164 @@
+<nb-card class="keyboard-settings" data-test="keyboard-settings" [nbSpinner]="saving()" nbSpinnerSize="small">
+	<nb-card-header class="header">
+		<div>
+			<h4>{{ 'TASK_VIEWS.SHORTCUTS.PAGE_TITLE' | translate }}</h4>
+			<p class="intro">{{ 'TASK_VIEWS.SHORTCUTS.PAGE_INTRO' | translate }}</p>
+		</div>
+		@if (available()) {
+			<button
+				nbButton
+				size="small"
+				status="basic"
+				type="button"
+				data-test="reset-all"
+				[disabled]="saving() || !hasOverrides()"
+				(click)="resetAll()"
+			>
+				{{ 'TASK_VIEWS.SHORTCUTS.RESET_ALL' | translate }}
+			</button>
+		}
+	</nb-card-header>
+	<nb-card-body>
+		@if (!available()) {
+			<p class="unavailable" data-test="keyboard-unavailable">
+				{{ 'TASK_VIEWS.SHORTCUTS.UNAVAILABLE' | translate }}
+			</p>
+		} @else {
+			@for (section of sections(); track section.context) {
+				<section class="section">
+					<h5>{{ contextKey(section.context) | translate }}</h5>
+					<table class="table">
+						<tbody>
+							@for (row of section.rows; track row.command.id) {
+								<tr
+									[attr.data-command]="row.command.id"
+									[class.recording]="recordingId() === row.command.id"
+								>
+									<th scope="row">{{ commandKey(row.command.id) | translate }}</th>
+									<td class="binding">
+										@if (recordingId() === row.command.id) {
+											<span class="recording-hint" role="status" aria-live="polite">
+												@if (recorded().length) {
+													<ngx-task-views-key-caps
+														[binding]="recorded()"
+														[isMac]="isMac"
+													></ngx-task-views-key-caps>
+												} @else {
+													{{ 'TASK_VIEWS.SHORTCUTS.RECORD' | translate }}
+												}
+											</span>
+										} @else if (candidate()?.commandId === row.command.id) {
+											<ngx-task-views-key-caps
+												[binding]="candidate()!.binding"
+												[isMac]="isMac"
+											></ngx-task-views-key-caps>
+										} @else {
+											<ngx-task-views-key-caps
+												[binding]="row.binding"
+												[isMac]="isMac"
+											></ngx-task-views-key-caps>
+											@if (row.overridden) {
+												<span class="badge">{{
+													'TASK_VIEWS.SHORTCUTS.CHANGED' | translate
+												}}</span>
+											}
+										}
+									</td>
+									<td class="actions">
+										@if (row.command.fixed) {
+											<span class="fixed">{{ 'TASK_VIEWS.SHORTCUTS.FIXED' | translate }}</span>
+										} @else if (candidate()?.commandId === row.command.id) {
+											@if (candidate()!.refusal; as refusal) {
+												<span class="problem" role="alert">{{
+													refusalKey(refusal) | translate
+												}}</span>
+											} @else if (candidate()!.conflicts.length) {
+												<span class="problem" role="alert">{{
+													'TASK_VIEWS.SHORTCUTS.CONFLICT'
+														| translate
+															: {
+																	commands: conflictNames(candidate()!.conflicts)
+															  }
+												}}</span>
+											}
+											<button
+												nbButton
+												size="tiny"
+												status="primary"
+												type="button"
+												data-test="save-binding"
+												[disabled]="
+													!!candidate()!.refusal ||
+													candidate()!.conflicts.length > 0 ||
+													saving()
+												"
+												(click)="saveCandidate()"
+											>
+												{{ 'TASK_VIEWS.SHORTCUTS.SAVE' | translate }}
+											</button>
+											<button
+												nbButton
+												size="tiny"
+												status="basic"
+												type="button"
+												(click)="candidate.set(null)"
+											>
+												{{ 'TASK_VIEWS.SHORTCUTS.CANCEL' | translate }}
+											</button>
+										} @else if (recordingId() === row.command.id) {
+											<span class="hint">{{
+												'TASK_VIEWS.SHORTCUTS.RECORD_HINT' | translate
+											}}</span>
+											<button
+												nbButton
+												size="tiny"
+												status="basic"
+												type="button"
+												(click)="stopRecording()"
+											>
+												{{ 'TASK_VIEWS.SHORTCUTS.CANCEL' | translate }}
+											</button>
+										} @else {
+											<button
+												nbButton
+												size="tiny"
+												status="basic"
+												type="button"
+												data-test="change-binding"
+												[disabled]="saving() || !!recordingId()"
+												(click)="startRecording(row.command.id)"
+											>
+												{{ 'TASK_VIEWS.SHORTCUTS.CHANGE' | translate }}
+											</button>
+											<button
+												nbButton
+												size="tiny"
+												ghost
+												type="button"
+												[disabled]="saving() || !row.overridden"
+												(click)="save(row.command.id, 'default')"
+											>
+												{{ 'TASK_VIEWS.SHORTCUTS.RESET' | translate }}
+											</button>
+											<button
+												nbButton
+												size="tiny"
+												ghost
+												type="button"
+												[disabled]="saving() || !row.binding"
+												(click)="save(row.command.id, null)"
+											>
+												{{ 'TASK_VIEWS.SHORTCUTS.REMOVE' | translate }}
+											</button>
+										}
+									</td>
+								</tr>
+							}
+						</tbody>
+					</table>
+				</section>
+			}
+			<p class="note">{{ 'TASK_VIEWS.SHORTCUTS.QUICK_ACTIONS_NOTE' | translate }}</p>
+		}
+	</nb-card-body>
+</nb-card>

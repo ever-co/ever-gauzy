@@ -77,6 +77,10 @@ export interface IDailyActivityReportRow {
 	readonly projectId?: Id;
 	readonly date?: string;
 	readonly title?: string;
+	/** `APP` or `URL`: whether the row is an app's or a site's. */
+	readonly type?: string;
+	/** An address the row's site was visited at, from its `URL` activities; null for an app. */
+	readonly url?: string | null;
 }
 
 /** The row a group was nested under, as the delivered report read merged it. */

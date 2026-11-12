@@ -18,6 +18,8 @@ import { environment } from '@gauzy/config';
 import { TenantAwareCrudService } from './../core/crud';
 import { IFindOneOptions } from './../core/crud/icrud.service';
 import { RequestContext } from './../core/context';
+import { safeErrorMessage } from './../core/errors/database-error';
+import { DATABASE_UNAVAILABLE_MESSAGE, isDatabaseUnavailableError } from './../core/errors/database-unavailable';
 import { MultiORMEnum } from '../core/utils';
 import { ImportRecordUpdateOrCreateCommand } from './../export-import/import-record';
 import { RolePermission } from './role-permission.entity';
@@ -304,61 +306,24 @@ export class RolePermissionService extends TenantAwareCrudService<RolePermission
 	 */
 	public async deletePermission(id: string) {
 		try {
-			const currentTenantId = RequestContext.currentTenantId();
-			const currentRoleId = RequestContext.currentRoleId();
-
-			/**
-			 * Find current user role
-			 */
-			const role = await this._roleService.findOneByWhereOptions({
-				id: currentRoleId,
-				tenantId: currentTenantId
-			});
-
-			/**
-			 * User try to delete permission for below role
-			 */
+			// The role rule `updatePermission`, `softRemove` and `softRecover` already apply, instead of a copy of
+			// `createPermission`'s branches. A caller that is neither SUPER_ADMIN nor ADMIN used to fall through
+			// with no answer at all, and a row without a readable role reached `.role.name` on `undefined`.
+			// `findOneByOptions` raises NotFound for a missing row.
 			const permRecord = await this.findOneByOptions({
 				where: { id },
 				relations: { role: true }
 			});
-			const wantToDeletePermissionForRole = permRecord?.role;
-			if (role.name === RolesEnum.SUPER_ADMIN) {
-				/**
-				 * Reject request, if SUPER ADMIN try to delete permissions for SUPER ADMIN role.
-				 */
-				if (
-					wantToDeletePermissionForRole.name === RolesEnum.SUPER_ADMIN ||
-					!RequestContext.hasPermission(PermissionsEnum.CHANGE_ROLES_PERMISSIONS)
-				) {
-					throw new NotAcceptableException('You can not delete your permissions to SUPER_ADMIN');
-				}
-				return await this.delete(id);
-			} else if (role.name === RolesEnum.ADMIN) {
-				/**
-				 * Reject request, if ADMIN try to update permissions for SUPER ADMIN role.
-				 */
-				if (wantToDeletePermissionForRole.name === RolesEnum.SUPER_ADMIN) {
-					throw new NotAcceptableException(
-						'You can not delete SUPER_ADMIN permission, please ask your SUPER_ADMIN to give you more permissions'
-					);
-				}
-
-				/**
-				 * Reject request, if ADMIN try to create permissions for ADMIN role.
-				 */
-				if (
-					wantToDeletePermissionForRole.name === RolesEnum.ADMIN ||
-					!RequestContext.hasPermission(PermissionsEnum.CHANGE_ROLES_PERMISSIONS)
-				) {
-					throw new NotAcceptableException(
-						'You can not delete your permissions to ADMIN, please ask your SUPER_ADMIN to give you more permissions'
-					);
-				}
-				return await this.delete(id);
-			}
+			await this.assertMayChangePermissionsOf(permRecord?.role, 'delete');
+			return await this.delete(id);
 		} catch (error /*: WriteError*/) {
-			throw new BadRequestException(error);
+			// The message, not the error, is the response: a plain `Error` (such as that TypeError) serialised to
+			// `{}`. A database error is described by its driver code, never by its own text (table and column
+			// names), and an unreachable database by the generic text, never by its host and port. Still a 400,
+			// as every refusal of this method has been.
+			throw new BadRequestException(
+				isDatabaseUnavailableError(error) ? DATABASE_UNAVAILABLE_MESSAGE : safeErrorMessage(error)
+			);
 		}
 	}
 

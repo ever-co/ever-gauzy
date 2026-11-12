@@ -484,6 +484,26 @@ export interface IInboxPushPublicKey {
 	publicKey: string;
 }
 
+/** One delivery channel: on for this server, and able to deliver for the caller's organization right now. */
+export interface IInboxDeliveryChannelStatus {
+	enabled: boolean;
+	available: boolean;
+}
+
+/**
+ * `GET /inbox/delivery/status`: which channels the Inbox can deliver through for the caller's tenant and organization,
+ * so a settings page shows the email or push options as unavailable instead of saving choices nothing will honour.
+ * The route exists only where the Inbox's delivery plugin is loaded; a 404 says nothing about the channels.
+ */
+export interface IInboxDeliveryStatus {
+	/** Notification emails: the email flag is on and a mail transport answers for the caller's tenant / organization. */
+	email: IInboxDeliveryChannelStatus;
+	/** Web push: the push flag is on and its VAPID keys are set. */
+	push: IInboxDeliveryChannelStatus;
+	/** When the mail transport was checked (ISO 8601); the answer is cached for a few minutes. */
+	checkedAt: string;
+}
+
 /** Tokens of the observer seam and of the recipient actions, provided by `@gauzy/plugin-inbox` when it is loaded. */
 export const INBOX_ITEM_FEED = 'INBOX_ITEM_FEED';
 export const INBOX_RECIPIENT_ACTIONS = 'INBOX_RECIPIENT_ACTIONS';

@@ -35,6 +35,73 @@ export class DocumentAccessService {
 	constructor(private readonly typeOrmDocumentShareRepository: TypeOrmDocumentShareRepository) {}
 
 	/**
+	 * The requesting user's employee in a page's organization.
+	 *
+	 * A user employed in several organizations carries one employee in the token (their last organization's); a
+	 * follow, an automatic subscription, a mute or a review notification of a page belongs to the employee of the
+	 * page's organization, which is the one that organization's fan-out and Inbox read. Falls back to the token's
+	 * employee (see {@link currentEmployeeId}) when the user has no active employee there, or the scope is unknown.
+	 * A lookup that fails throws: acting as another organization's employee is never the answer to a failed read.
+	 *
+	 * @param organizationId The page's organization.
+	 * @param tenantId The page's tenant.
+	 * @returns The employee id, or null.
+	 */
+	public async currentEmployeeIdIn(organizationId: ID | null | undefined, tenantId: ID | null | undefined): Promise<ID | null> {
+		const fallback = this.currentEmployeeId();
+		const userId = RequestContext.currentUserId();
+		if (!userId || !organizationId || !tenantId) {
+			return fallback;
+		}
+		return (await this.employeeIdOf(userId as ID, organizationId, tenantId)) ?? fallback;
+	}
+
+	/**
+	 * A user's employee in one organization: the active, unarchived one, so a follow, a subscription or a mute is
+	 * held by the employee the fan-out and the Inbox of that organization read. `null` when the user has none there;
+	 * a failed read throws, so a caller can tell "no employee" from "not known".
+	 *
+	 * @param userId The user.
+	 * @param organizationId The organization (a page's).
+	 * @param tenantId The tenant.
+	 */
+	public async employeeIdOf(userId: ID, organizationId: ID, tenantId: ID): Promise<ID | null> {
+		try {
+			const employee = await this.typeOrmDocumentShareRepository.manager.findOne(Employee, {
+				select: { id: true },
+				where: { userId, organizationId, tenantId, isActive: true, isArchived: false }
+			});
+			return (employee?.id as ID) ?? null;
+		} catch (error) {
+			this.logger.warn(`The employee of user ${userId} in organization ${organizationId} was not read: ${(error as Error)?.message}`);
+			throw error;
+		}
+	}
+
+	/**
+	 * Every employee of the requesting user in the tenant, whatever their state (inactive, archived or soft-deleted
+	 * included): the identities a follow or a mute of theirs may have been saved under. Empty without a user; a failed
+	 * read throws.
+	 *
+	 * @param tenantId The tenant.
+	 */
+	public async currentUserEmployeeIdsIn(tenantId: ID | null | undefined): Promise<ID[]> {
+		const userId = RequestContext.currentUserId();
+		if (!userId || !tenantId) return [];
+		try {
+			const employees = await this.typeOrmDocumentShareRepository.manager.find(Employee, {
+				select: { id: true },
+				where: { userId: userId as ID, tenantId },
+				withDeleted: true
+			});
+			return employees.map((employee) => employee.id as ID).filter(Boolean);
+		} catch (error) {
+			this.logger.warn(`The employees of user ${userId} were not read: ${(error as Error)?.message}`);
+			throw error;
+		}
+	}
+
+	/**
 	 * The employee id of the requesting user.
 	 *
 	 * `RequestContext.currentEmployeeId()` deliberately returns `null` for users holding

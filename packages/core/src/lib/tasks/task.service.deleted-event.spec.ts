@@ -46,7 +46,10 @@ describe('TaskService — TaskEvent DELETED', () => {
 		service = Object.create(TaskService.prototype);
 		Object.assign(service, {
 			_domainEventBus: { publish },
-			_managedEmployeeService: { isManagerOfTeamsOrProjects: jest.fn().mockResolvedValue(false) }
+			_managedEmployeeService: {
+				isManagerOfTeamsOrProjects: jest.fn().mockResolvedValue(false),
+				managesAnyTeam: jest.fn().mockResolvedValue(false)
+			}
 		});
 		jest.spyOn(TenantAwareCrudService.prototype, 'findOneByIdString').mockResolvedValue(stored as never);
 	});

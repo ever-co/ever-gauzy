@@ -4443,6 +4443,7 @@
 		"TASK_ADDED": "Die Aufgabe wurde hinzugefügt.",
 		"TASK_UPDATED": "Die Aufgabe wurde geändert.",
 		"TASK_DELETED": "Die Aufgabe wurde entfernt.",
+		"TASK_MOVED_TO_TRASH": "Aufgabe in den Papierkorb verschoben",
 		"TASKS_PROJECT": "Projekt",
 		"TASKS_CREATOR": "Erstellt von",
 		"TASK_MEMBERS": "Mitarbeiter",
@@ -4481,7 +4482,30 @@
 		"ARE_YOU_SURE": "Bist du sicher, dass du den Sprint löschen möchtest?",
 		"SETTINGS": "Einstellungen",
 		"MODULE": "Modul",
-		"SELECT_MODULE": "Module"
+		"SELECT_MODULE": "Module",
+		"TRASH": {
+			"TITLE": "Papierkorb",
+			"BACK": "Zurück zu den Aufgaben",
+			"SEARCH": "Nach Titel oder Nummer suchen",
+			"HINT": "Gelöschte Aufgaben bleiben hier, bis sie wiederhergestellt oder endgültig gelöscht werden.",
+			"RESTORE": "Wiederherstellen",
+			"RESTORED": "„{{ title }}“ ist zurück",
+			"DELETE_FOREVER": "Endgültig löschen",
+			"DELETE_FOREVER_CONFIRM": "Endgültig löschen? Das kann nicht rückgängig gemacht werden.",
+			"DELETED_FOREVER": "„{{ title }}“ wurde endgültig gelöscht",
+			"DELETED_BY": "Gelöscht von {{ name }} · {{ date }}",
+			"DELETED_AT": "Gelöscht {{ date }}",
+			"LOAD_MORE": "Mehr laden ({{ shown }} von {{ total }})",
+			"LOAD_FAILED": "Der Papierkorb konnte nicht geladen werden.",
+			"EMPTY_TITLE": "Der Papierkorb ist leer",
+			"EMPTY_TEXT": "Gelöschte Aufgaben erscheinen hier.",
+			"NO_MATCH_TITLE": "Keine gelöschte Aufgabe passt",
+			"NO_MATCH_TEXT": "Versuchen Sie einen anderen Titel oder eine andere Nummer.",
+			"UNAVAILABLE_TITLE": "Der Papierkorb ist nicht verfügbar",
+			"UNAVAILABLE_TEXT": "Dieser Server bewahrt gelöschte Aufgaben noch nicht auf. Bitten Sie eine Administratorin oder einen Administrator, den Aufgaben-Papierkorb einzuschalten.",
+			"FORBIDDEN_TITLE": "Sie dürfen diesen Papierkorb nicht sehen",
+			"FORBIDDEN_TEXT": "Bitten Sie jemanden, der Aufgaben löschen darf, die Aufgabe wiederherzustellen."
+		}
 	},
 	"JOBS": {
 		"EMPLOYEE": "Mitarbeiter",
@@ -7979,5 +8003,13 @@
 		"NO_TIME_ENTRIES": "Zuletzt keine Zeiteinträge",
 		"RUNNING": "Läuft",
 		"ACTIVITY_LEVEL": "Aktivität: Tastatur- und Mausnutzung während der Erfassung"
+	},
+	"COMMENT_REACTIONS": {
+		"ADD": "Reaktion hinzufügen",
+		"REACT_WITH": "Mit {{ emoji }} reagieren",
+		"REACTED_WITH": "Mit {{ emoji }} reagiert: {{ people }}",
+		"YOU": "Sie",
+		"OTHERS": "{{ count }} weitere",
+		"FAILED": "Die Reaktion wurde nicht gespeichert."
 	}
 }

@@ -4447,6 +4447,7 @@
 		"TASK_ADDED": "L'attività è stata aggiunta",
 		"TASK_UPDATED": "L'attività è stata modificata",
 		"TASK_DELETED": "Il compito è stato rimosso",
+		"TASK_MOVED_TO_TRASH": "Attività spostata nel cestino",
 		"TASKS_PROJECT": "Progetto",
 		"TASKS_CREATOR": "Creato Da",
 		"TASK_MEMBERS": "Dipendenti",
@@ -4485,7 +4486,30 @@
 		"ARE_YOU_SURE": "Sei sicuro di voler eliminare lo sprint?",
 		"SETTINGS": "Impostazioni",
 		"MODULE": "Modulo",
-		"SELECT_MODULE": "Modulo(i)"
+		"SELECT_MODULE": "Modulo(i)",
+		"TRASH": {
+			"TITLE": "Cestino",
+			"BACK": "Torna alle attività",
+			"SEARCH": "Cerca per titolo o numero",
+			"HINT": "Le attività eliminate restano qui finché non vengono ripristinate o eliminate definitivamente.",
+			"RESTORE": "Ripristina",
+			"RESTORED": "«{{ title }}» è tornata",
+			"DELETE_FOREVER": "Elimina definitivamente",
+			"DELETE_FOREVER_CONFIRM": "Eliminare definitivamente? L’operazione non si può annullare.",
+			"DELETED_FOREVER": "«{{ title }}» è stata eliminata definitivamente",
+			"DELETED_BY": "Eliminata da {{ name }} · {{ date }}",
+			"DELETED_AT": "Eliminata {{ date }}",
+			"LOAD_MORE": "Carica altro ({{ shown }} di {{ total }})",
+			"LOAD_FAILED": "Non è stato possibile caricare il cestino.",
+			"EMPTY_TITLE": "Il cestino è vuoto",
+			"EMPTY_TEXT": "Le attività eliminate compaiono qui.",
+			"NO_MATCH_TITLE": "Nessuna attività eliminata corrisponde",
+			"NO_MATCH_TEXT": "Prova un altro titolo o numero.",
+			"UNAVAILABLE_TITLE": "Il cestino non è disponibile",
+			"UNAVAILABLE_TEXT": "Questo server non conserva ancora le attività eliminate. Chiedi a un amministratore di attivare il cestino delle attività.",
+			"FORBIDDEN_TITLE": "Non puoi vedere questo cestino",
+			"FORBIDDEN_TEXT": "Chiedi a chi può eliminare attività di ripristinare l’attività."
+		}
 	},
 	"JOBS": {
 		"EMPLOYEE": "Dipendente",
@@ -7983,5 +8007,13 @@
 		"NO_TIME_ENTRIES": "Nessuna registrazione di tempo recente",
 		"RUNNING": "In corso",
 		"ACTIVITY_LEVEL": "Attività: uso di tastiera e mouse durante il monitoraggio"
+	},
+	"COMMENT_REACTIONS": {
+		"ADD": "Aggiungi reazione",
+		"REACT_WITH": "Reagisci con {{ emoji }}",
+		"REACTED_WITH": "Reazione {{ emoji }}: {{ people }}",
+		"YOU": "Tu",
+		"OTHERS": "altri {{ count }}",
+		"FAILED": "La reazione non è stata salvata."
 	}
 }
