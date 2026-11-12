@@ -395,42 +395,46 @@ export class TimerService {
 			assertRequiredContext(requirements, { taskId, organizationTeamId: teamIdToLog, projectId: projectIdToLog });
 		}
 
-		// Stop any previous running timers: one from another client ends at its last heartbeat, or where this one
-		// starts when it never had one
-		await this.stopPreviousRunningTimers(employeeId, organizationId, tenantId, startedAt);
+		// In this process, no other start or stop of the employee comes between closing the runs going and creating
+		// this one (inEmployeeTurn)
+		return await this.inEmployeeTurn(employeeId, async () => {
+			// Stop any previous running timers: one from another client ends at its last heartbeat, or where this one
+			// starts when it never had one
+			await this.stopPreviousRunningTimers(employeeId, organizationId, tenantId, startedAt);
 
-		// Create a new time log entry using the command bus
-		const timeLog = await this._commandBus.execute(
-			new TimeLogCreateCommand({
-				organizationId,
-				tenantId,
-				employeeId,
-				startedAt,
-				stoppedAt: startedAt,
-				duration: 0,
-				source: source || TimeLogSourceEnum.WEB_TIMER,
-				logType: logType || TimeLogType.TRACKED,
-				projectId: projectIdToLog || null,
-				taskId: taskId || null,
-				organizationContactId: organizationContactId || null,
-				organizationTeamId: teamIdToLog || null,
-				description: description || null,
-				isBillable: isBillable || false,
-				version: version || null,
-				isRunning: true
-			})
-		);
+			// Create a new time log entry using the command bus
+			const timeLog = await this._commandBus.execute(
+				new TimeLogCreateCommand({
+					organizationId,
+					tenantId,
+					employeeId,
+					startedAt,
+					stoppedAt: startedAt,
+					duration: 0,
+					source: source || TimeLogSourceEnum.WEB_TIMER,
+					logType: logType || TimeLogType.TRACKED,
+					projectId: projectIdToLog || null,
+					taskId: taskId || null,
+					organizationContactId: organizationContactId || null,
+					organizationTeamId: teamIdToLog || null,
+					description: description || null,
+					isBillable: isBillable || false,
+					version: version || null,
+					isRunning: true
+				})
+			);
 
-		// Update the employee's tracking status to reflect they are now tracking time
-		await this._employeeService.update(employeeId, {
-			isOnline: true,
-			isTrackingTime: true
+			// Update the employee's tracking status to reflect they are now tracking time
+			await this._employeeService.update(employeeId, {
+				isOnline: true,
+				isTrackingTime: true
+			});
+
+			this.debug(() => `last created time log: ${JSON.stringify(timeLog)}`);
+
+			// Return the newly created time log entry
+			return timeLog;
 		});
-
-		this.debug(() => `last created time log: ${JSON.stringify(timeLog)}`);
-
-		// Return the newly created time log entry
-		return timeLog;
 	}
 
 	/**
@@ -562,6 +566,28 @@ export class TimerService {
 		// Retrieve the employee ID and organization ID
 		const { id: employeeId, organizationId } = employee;
 
+		// With no other start or stop of the employee in between, in this process (inEmployeeTurn)
+		return await this.inEmployeeTurn(employeeId, () =>
+			this.stopRunningLog(request, employeeId, organizationId, tenantId)
+		);
+	}
+
+	/**
+	 * Stops the employee's running log, as `stopTimer` asks, then the runs left going beside it.
+	 *
+	 * @param request The stop request.
+	 * @param employeeId The employee stopping their timer.
+	 * @param organizationId The employee's organization.
+	 * @param tenantId The employee's tenant.
+	 * @returns The stopped log.
+	 * @throws NotAcceptableException when no log of the employee runs.
+	 */
+	private async stopRunningLog(
+		request: ITimerToggleInput,
+		employeeId: ID,
+		organizationId: ID,
+		tenantId: ID
+	): Promise<ITimeLog> {
 		// The runs going as this stop begins, latest first: the latest is the one it stops, any other was left going
 		// beside it. The cleanup after the stop handles those only, never a run another client starts meanwhile.
 		const includeTimeSlots = true;
@@ -846,6 +872,35 @@ export class TimerService {
 			return this.startTimer(request);
 		} else {
 			return this.stopTimer(request);
+		}
+	}
+
+	/** The starts and stops running in this process, by employee: each waits for the one before it to settle. */
+	private static readonly employeeTurns = new Map<ID, Promise<unknown>>();
+
+	/**
+	 * Runs `work`, a start or a stop of the employee's timer, once the start or stop of theirs before it in this
+	 * process has settled. Interleaved, a start read the run a stop was closing as still going and closed it a second
+	 * time, and two starts at once both found nothing going and both created a run.
+	 *
+	 * The API processes do not share this order: a start and a stop reaching two of them at once still interleave,
+	 * and the stop's cleanup then leaves the started run going (`stopRunningLog`).
+	 *
+	 * @param employeeId - The employee whose timer starts or stops.
+	 * @param work - The start or the stop.
+	 * @returns What `work` returns.
+	 */
+	private async inEmployeeTurn<T>(employeeId: ID, work: () => Promise<T>): Promise<T> {
+		const previous = TimerService.employeeTurns.get(employeeId) ?? Promise.resolve();
+		const run = previous.then(() => work());
+		const settled = run.catch(() => undefined);
+		TimerService.employeeTurns.set(employeeId, settled);
+		try {
+			return await run;
+		} finally {
+			if (TimerService.employeeTurns.get(employeeId) === settled) {
+				TimerService.employeeTurns.delete(employeeId);
+			}
 		}
 	}
 

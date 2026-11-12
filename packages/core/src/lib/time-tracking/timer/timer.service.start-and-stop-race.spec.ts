@@ -44,9 +44,14 @@ interface EmployeeStatus {
 interface Hooks {
 	/** Runs when a `TimeLogUpdateCommand` arrives, before its input is written. */
 	onUpdate?: (command: TimeLogUpdateCommand, employee: EmployeeStatus) => Promise<void> | void;
+	/** Runs when a `TimeLogCreateCommand` arrives, before the run is written. */
+	onCreate?: (command: TimeLogCreateCommand) => Promise<void> | void;
 }
 
 const time = (value: Date | string | null): number => new Date(value).getTime();
+
+/** Lets the event loop turn once, as a database round trip does. */
+const roundTrip = () => new Promise<void>((resolve) => setImmediate(resolve));
 
 /** The rows a `where` of plain values matches: the running-log reads of either ORM build no other. */
 function matching(rows: TimeLogRow[], where: Record<string, unknown>): TimeLogRow[] {
@@ -73,20 +78,24 @@ const copyOf = (row: TimeLogRow): TimeLogRow => ({ ...row });
 const loaded = (row: TimeLogRow) => ({ ...row, toJSON: () => ({ ...row }) });
 
 /**
- * A `TimerService` over `rows`, on the given ORM, with its real start and stop. The repositories answer from the
- * table. The cleanup runs through the real `ScheduleTimeLogEntriesHandler`, whose pending-log query (raw SQL, knex)
- * is replaced by the same predicate over the table: every log of the employee running with a `stoppedAt`, or with
- * none, whatever the command names. `TimeLogUpdateCommand` writes its input on the row; the rest of it (time slots,
- * timesheet, worked hours) is the handler's and does not run here. `TimeLogCreateCommand` adds a run. The conflict
- * lookup returns the other logs overlapping the range, with their time slots.
+ * A `TimerService` for `employeeId` over `rows`, on the given ORM, with its real start and stop. The repositories
+ * answer from the table. The cleanup runs through the real `ScheduleTimeLogEntriesHandler`, whose pending-log query
+ * (raw SQL, knex) is replaced by the same predicate over the table: every log of the employee running with a
+ * `stoppedAt`, or with none, whatever the command names. `TimeLogUpdateCommand` writes its input on the row; the rest
+ * of it (time slots, timesheet, worked hours) is the handler's and does not run here. `TimeLogCreateCommand` adds a
+ * run. The conflict lookup returns the other logs overlapping the range, with their time slots.
  */
 function createService(
 	ormType: MultiORMEnum,
 	ids: { tenantId: string; organizationId: string },
 	rows: TimeLogRow[],
-	hooks: Hooks = {}
+	hooks: Hooks = {},
+	employeeId: string = EMPLOYEE_ID
 ) {
 	const employee: EmployeeStatus = { isOnline: true, isTrackingTime: true };
+	const employeeUpdates = jest.fn(async (_employeeId: string, status: EmployeeStatus) =>
+		Object.assign(employee, status)
+	);
 	const updates: TimeLogUpdateCommand[] = [];
 	const timeSpanDeletes: DeleteTimeSpanCommand[] = [];
 	const logger = { debug: jest.fn(), warn: jest.fn() };
@@ -137,6 +146,7 @@ function createService(
 			return copyOf(write({ ...(command.input as Partial<TimeLogRow>), id: command.id as string }));
 		}
 		if (command instanceof TimeLogCreateCommand) {
+			await hooks.onCreate?.(command);
 			createdRuns += 1;
 			const row = {
 				...command.input,
@@ -188,18 +198,16 @@ function createService(
 			}
 		},
 		findEmployee: jest.fn(async () => ({
-			id: EMPLOYEE_ID,
+			id: employeeId,
 			organizationId: ids.organizationId,
 			tenantId: ids.tenantId,
 			isTrackingEnabled: true
 		})),
-		_employeeService: {
-			update: jest.fn(async (_employeeId: string, status: EmployeeStatus) => Object.assign(employee, status))
-		},
+		_employeeService: { update: employeeUpdates },
 		_commandBus: { execute }
 	});
 
-	return { service, employee, updates, timeSpanDeletes, logger };
+	return { service, employee, employeeUpdates, updates, timeSpanDeletes, logger };
 }
 
 /**
@@ -364,6 +372,154 @@ describe.each([MultiORMEnum.TypeORM, MultiORMEnum.MikroORM])(
 			expect(logger.warn).toHaveBeenCalledWith(
 				expect.stringContaining('Failed to read the running timers of employee employee-1')
 			);
+		});
+	}
+);
+
+/**
+ * A start closed the runs going, then created its own; a stop read the running log, then closed it. Two of them for
+ * one employee at once interleaved: two starts both found nothing going and both created a run, and a start read the
+ * run a stop was closing as still going and closed it a second time. In one API process they now run one after the
+ * other, each once the one before it has settled; another employee's start or stop does not wait.
+ */
+describe.each([MultiORMEnum.TypeORM, MultiORMEnum.MikroORM])(
+	'TimerService start and stop of one employee in one API process (%s)',
+	(ormType) => {
+		const fixture = createTenantFixture();
+
+		const setup = (rows: TimeLogRow[], hooks: Hooks = {}, employeeId: string = EMPLOYEE_ID) =>
+			createService(ormType, fixture, rows, hooks, employeeId);
+
+		/** The employee's running timer, started an hour ago from Ever Teams. */
+		const runningForAnHour = (): TimeLogRow => ({
+			id: 'stopped',
+			employeeId: EMPLOYEE_ID,
+			tenantId: fixture.tenantId,
+			organizationId: fixture.organizationId,
+			source: TimeLogSourceEnum.TEAMS,
+			isRunning: true,
+			startedAt: ONE_HOUR_AGO,
+			stoppedAt: ONE_HOUR_AGO,
+			createdAt: ONE_HOUR_AGO
+		});
+
+		const start = (service: TimerService, source: TimeLogSourceEnum) =>
+			service.startTimer({ source } as ITimerToggleInput);
+
+		let restore: () => void;
+
+		beforeAll(() => defineConfig({ dbConnectionOptions: { type: DatabaseTypeEnum.postgres } }));
+
+		beforeEach(() => {
+			({ restore } = asTenantUser(fixture));
+			jest.spyOn(Date, 'now').mockReturnValue(NOW.getTime());
+			jest.spyOn(console, 'log').mockImplementation(() => undefined);
+		});
+
+		afterEach(() => {
+			restore();
+			jest.restoreAllMocks();
+		});
+
+		it('leaves one running log after two starts sent at once', async () => {
+			const rows: TimeLogRow[] = [];
+			const { service, employee } = setup(rows, { onCreate: roundTrip });
+
+			await Promise.all([start(service, TimeLogSourceEnum.WEB_TIMER), start(service, TimeLogSourceEnum.DESKTOP)]);
+
+			// The second start closed the first one's run, as a start after it would
+			expect(rows.filter((row) => row.isRunning)).toHaveLength(1);
+			expect(rows).toHaveLength(2);
+			expect(rows[0]).toMatchObject({ id: 'run-1', isRunning: false, stoppedAt: NOW });
+			expect(employee).toEqual({ isOnline: true, isTrackingTime: true });
+		});
+
+		it('runs a start sent while a stop runs once the stop is done', async () => {
+			const rows = [runningForAnHour()];
+			const events: string[] = [];
+			let starting: Promise<unknown> | undefined;
+			const { service, employee, employeeUpdates } = setup(rows, {
+				onUpdate: async (command) => {
+					events.push(`update ${command.id}`);
+					const isStopsUpdate = !starting;
+					if (isStopsUpdate) {
+						// Another device starts the timer while the stop's update runs
+						starting = start(service, TimeLogSourceEnum.DESKTOP);
+					}
+					await roundTrip();
+					events.push(`updated ${command.id}`);
+				},
+				onCreate: () => {
+					events.push('create');
+				}
+			});
+
+			await service.stopTimer({ stoppedAt: NOW } as ITimerToggleInput);
+			await starting;
+
+			// The stopped run is updated once, by the stop: the start found it stopped
+			expect(events).toEqual(['update stopped', 'updated stopped', 'create']);
+			expect(employeeUpdates.mock.calls.map(([, status]) => status)).toEqual([
+				{ isOnline: false, isTrackingTime: false },
+				{ isOnline: true, isTrackingTime: true }
+			]);
+			expect(rows[0]).toMatchObject({ id: 'stopped', isRunning: false, stoppedAt: NOW });
+			expect(rows[1]).toMatchObject({ id: 'run-1', isRunning: true, startedAt: NOW });
+			expect(employee).toEqual({ isOnline: true, isTrackingTime: true });
+		});
+
+		it('lets the next start go on after one that failed', async () => {
+			const rows: TimeLogRow[] = [];
+			let creates = 0;
+			const { service } = setup(rows, {
+				onCreate: async () => {
+					creates += 1;
+					const isFirstCreate = creates === 1;
+					await roundTrip();
+					if (isFirstCreate) {
+						throw new Error('connection reset');
+					}
+				}
+			});
+
+			const [failed, started] = await Promise.allSettled([
+				start(service, TimeLogSourceEnum.WEB_TIMER),
+				start(service, TimeLogSourceEnum.DESKTOP)
+			]);
+
+			expect(failed).toMatchObject({
+				status: 'rejected',
+				reason: expect.objectContaining({ message: 'connection reset' })
+			});
+			expect(started).toMatchObject({ status: 'fulfilled', value: { id: 'run-1', isRunning: true } });
+			expect(rows).toEqual([expect.objectContaining({ id: 'run-1', isRunning: true })]);
+		});
+
+		it("does not hold up another employee's start while this one's stop runs", async () => {
+			const events: string[] = [];
+			let otherStarting: Promise<unknown> | undefined;
+			const other = setup(
+				[],
+				{
+					onCreate: () => {
+						events.push('other employee: create');
+					}
+				},
+				'employee-2'
+			);
+			const { service } = setup([runningForAnHour()], {
+				onUpdate: async () => {
+					events.push('update begins');
+					otherStarting = start(other.service, TimeLogSourceEnum.WEB_TIMER);
+					await roundTrip();
+					events.push('update ends');
+				}
+			});
+
+			await service.stopTimer({ stoppedAt: NOW } as ITimerToggleInput);
+			await otherStarting;
+
+			expect(events).toEqual(['update begins', 'other employee: create', 'update ends']);
 		});
 	}
 );
