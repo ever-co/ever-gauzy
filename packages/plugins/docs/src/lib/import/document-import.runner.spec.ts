@@ -28,6 +28,8 @@ interface IStoredDocument extends IImportedDocumentRef {
 	visibility: DocumentVisibilityEnum;
 	ownerUserId: ID | null;
 	contentJson?: IDocNode;
+	/** The content revision (1 as created; a save moves it). */
+	revision: number;
 	links: ID[];
 }
 
@@ -40,6 +42,10 @@ class MemoryStore implements IDocumentImportStore {
 	used = 0;
 	/** Throws on the n-th create (1-based), once. */
 	failOnCreate?: number;
+	/** Called after each write of the row (a test takes the import over, or edits a page, from here). */
+	afterUpdate?: (patch: Partial<IImportRow>) => void;
+	/** The documents an earlier run made, stamped again by a resumed run. */
+	adopted: ID[] = [];
 	private creates = 0;
 
 	constructor(
@@ -71,15 +77,23 @@ class MemoryStore implements IDocumentImportStore {
 		this.row = { ...this.row, ...patch };
 		return true;
 	}
-	async update(_id: ID, _scope: IImportScope, patch: Partial<IImportRow>): Promise<void> {
+	async update(_id: ID, _scope: IImportScope, patch: Partial<IImportRow>, fence?: number): Promise<boolean> {
+		// A fenced write lands only while the import is still that run's (no later claim moved `attempts`).
+		if (fence !== undefined && fence !== this.row.attempts) return false;
 		this.updates.push(patch);
 		this.row = { ...this.row, ...patch };
+		this.afterUpdate?.(patch);
+		return true;
 	}
 	async readArchive(): Promise<Buffer> {
 		return this.archive;
 	}
-	async discardArchive(): Promise<void> {
+	async discardArchive(_row: IImportRow, fence?: number): Promise<void> {
+		if (fence !== undefined && fence !== this.row.attempts) return;
 		this.discarded += 1;
+	}
+	async adoptImported(id: ID): Promise<void> {
+		this.adopted.push(id);
 	}
 	async findImported(_scope: IImportScope, externalSource: string, externalId: string): Promise<IImportedDocumentRef | null> {
 		return this.documents.find((doc) => doc.externalSource === externalSource && doc.externalId === externalId) ?? null;
@@ -93,23 +107,38 @@ class MemoryStore implements IDocumentImportStore {
 		return `${kind.toLowerCase()}-${this.documents.length + 1}`;
 	}
 	async createNode(input: ICreateImportedNode): Promise<IImportedDocumentRef> {
-		const doc: IStoredDocument = { ...pick(input), id: this.nextId(input.kind), kind: input.kind, name: input.name, links: [] };
+		const doc: IStoredDocument = { ...pick(input), id: this.nextId(input.kind), kind: input.kind, name: input.name, revision: 1, links: [] };
 		this.documents.push(doc);
 		return doc;
 	}
 	async createFile(input: ICreateImportedFile): Promise<IImportedDocumentRef> {
-		const doc: IStoredDocument = { ...pick(input), id: this.nextId('FILE'), kind: DocumentKindEnum.FILE, name: input.name, mimeType: input.mimeType, fileSize: input.buffer.length, links: [] };
+		const doc: IStoredDocument = {
+			...pick(input),
+			id: this.nextId('FILE'),
+			kind: DocumentKindEnum.FILE,
+			name: input.name,
+			mimeType: input.mimeType,
+			fileSize: input.buffer.length,
+			revision: 1,
+			links: []
+		};
 		this.documents.push(doc);
 		return doc;
 	}
-	async writePage(document: IImportedDocumentRef, _scope: IImportScope, contentJson: IDocNode): Promise<void> {
-		(this.byId(document.id) as IStoredDocument).contentJson = contentJson;
+	async writePage(document: IImportedDocumentRef, _scope: IImportScope, contentJson: IDocNode): Promise<boolean> {
+		const doc = this.byId(document.id) as IStoredDocument;
+		// The guarded content write: only a page as it was created.
+		if (doc.revision !== 1) return false;
+		doc.contentJson = contentJson;
+		doc.revision = 2;
+		return true;
 	}
 	async linkPages(documentId: ID, mentionedIds: ID[]): Promise<void> {
 		(this.byId(documentId) as IStoredDocument).links = mentionedIds;
 	}
+	/** What the organization stores: the bytes before the import, and every file stored since (this run's too). */
 	async usedBytes(): Promise<number> {
-		return this.used;
+		return this.used + this.documents.reduce((total, doc) => total + (doc.fileSize ?? 0), 0);
 	}
 	byId(id: ID): IStoredDocument | undefined {
 		return this.documents.find((doc) => doc.id === id);
@@ -206,6 +235,45 @@ describe('DocumentImportRunner', () => {
 		// Vault, assets, Home, Projects, Release checklist, diagram.png, spec.pdf (the .exe is skipped, the hidden file ignored).
 		expect(store.documents).toHaveLength(7);
 		expect(store.row.importedCount).toBe(7);
+	});
+
+	it('stops a run that a later claim took over: no more writes, and the zip left to the run that owns it', async () => {
+		const store = new MemoryStore(createImportZip(VAULT));
+		// Another worker claims the import (a stall past the stale window) as this run finishes its tree.
+		store.afterUpdate = (patch) => {
+			if (patch.phase === DocumentImportPhaseEnum.TREE) store.row = { ...store.row, attempts: (store.row.attempts ?? 0) + 1 };
+		};
+		const outcome = await new DocumentImportRunner(store).run('import-1', SCOPE, LIMITS);
+
+		expect(outcome).toBeNull();
+		// Neither COMPLETED nor FAILED nor QUEUED by the displaced run; its zip is not deleted.
+		expect(store.row.status).toBe(DocumentImportStatusEnum.RUNNING);
+		expect(store.row.phase).toBe(DocumentImportPhaseEnum.TREE);
+		expect(store.discarded).toBe(0);
+	});
+
+	it('stamps again the documents an earlier run made, when it resumes', async () => {
+		const store = new MemoryStore(createImportZip(VAULT));
+		store.failOnCreate = 4;
+		const runner = new DocumentImportRunner(store);
+		await expect(runner.run('import-1', SCOPE, LIMITS, false)).rejects.toThrow('database went away');
+		const madeBefore = store.documents.map((doc) => doc.id);
+
+		await runner.run('import-1', SCOPE, LIMITS, true);
+		expect(store.adopted).toEqual(expect.arrayContaining(madeBefore));
+	});
+
+	it('leaves a page saved meanwhile as it is, and writes the others', async () => {
+		const store = new MemoryStore(createImportZip(VAULT));
+		// A member saves Home while the import builds the tree.
+		store.afterUpdate = (patch) => {
+			if (patch.phase === DocumentImportPhaseEnum.CONTENT) store.byName('Home').revision = 2;
+		};
+		const outcome = await new DocumentImportRunner(store).run('import-1', SCOPE, LIMITS);
+
+		expect(outcome?.status).toBe(DocumentImportStatusEnum.COMPLETED);
+		expect(store.byName('Home').contentJson).toBeUndefined();
+		expect(store.byName('Release checklist').contentJson).toBeDefined();
 	});
 
 	it('skips the attachments past the quota and keeps the pages', async () => {

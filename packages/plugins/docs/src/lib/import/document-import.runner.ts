@@ -154,10 +154,13 @@ export class DocumentImportRunner {
 		const options = parseImportOptions(row.optionsJson, fallbackLimits);
 		// One run at a time: the row is claimed by a conditional update (QUEUED, or RUNNING without progress for the stale
 		// window), so two jobs for one import — a resume racing a retry, two sweeps — cannot both run it.
+		// The run's fence: the attempt number its claim writes. Every later write of the run states it, so a run that a
+		// later claim took over (it stalled past the stale window) changes neither the row nor the archive.
+		const fence = (row.attempts ?? 0) + 1;
 		const claimed = await this.store.claim(row.id, scope, new Date(Date.now() - DOCS_IMPORT_STALE_MINUTES * 60_000), {
 			status: DocumentImportStatusEnum.RUNNING,
 			phase: DocumentImportPhaseEnum.PLANNING,
-			attempts: (row.attempts ?? 0) + 1,
+			attempts: fence,
 			startedAt: row.startedAt ?? new Date(),
 			lastProgressAt: new Date(),
 			errorCode: null,
@@ -169,38 +172,61 @@ export class DocumentImportRunner {
 		}
 
 		try {
-			const outcome = await this.execute(row, scope, options, finalAttempt);
+			const outcome = await this.execute(row, scope, options, finalAttempt, fence);
 			this.logger.log(
 				`docs.import ${row.id} completed (tenant ${scope.tenantId}): imported ${outcome.importedCount}, ` +
 					`skipped ${outcome.skippedCount}, failed ${outcome.failedCount}`
 			);
-			await this.discard(row);
+			await this.discard(row, fence);
 			return outcome;
 		} catch (error) {
+			if (error instanceof ImportRunDisplacedError) {
+				this.logger.warn(`docs.import ${row.id}: another run took the import over — this one stops`);
+				return null;
+			}
 			const archiveError = error instanceof ImportArchiveError ? error : null;
 			if (!archiveError && !finalAttempt) {
 				this.logger.warn(`docs.import ${row.id} failed, the queue retries it: ${(error as Error)?.message ?? error}`);
-				// Back to QUEUED, so the retry can claim it.
-				await this.store.update(row.id, scope, { status: DocumentImportStatusEnum.QUEUED, lastProgressAt: new Date() }).catch(() => undefined);
+				// Back to QUEUED, so the retry can claim it (only while the import is still this run's).
+				await this.store.update(row.id, scope, { status: DocumentImportStatusEnum.QUEUED, lastProgressAt: new Date() }, fence).catch(() => false);
 				throw error;
 			}
 			const code = archiveError?.code ?? DOCS_IMPORT_FAILED;
 			const message = String(archiveError?.message ?? (error as Error)?.message ?? error).slice(0, 500);
 			this.logger.error(`docs.import ${row.id} failed (tenant ${scope.tenantId}): ${code} ${message}`);
-			await this.store.update(row.id, scope, {
-				status: DocumentImportStatusEnum.FAILED,
-				errorCode: code,
-				errorMessage: message,
-				finishedAt: new Date(),
-				lastProgressAt: new Date()
-			});
-			await this.discard(row);
+			const failed = await this.store.update(
+				row.id,
+				scope,
+				{
+					status: DocumentImportStatusEnum.FAILED,
+					errorCode: code,
+					errorMessage: message,
+					finishedAt: new Date(),
+					lastProgressAt: new Date()
+				},
+				fence
+			);
+			if (!failed) {
+				this.logger.warn(`docs.import ${row.id}: another run took the import over — its failure is not recorded`);
+				return null;
+			}
+			await this.discard(row, fence);
 			return { status: DocumentImportStatusEnum.FAILED, importedCount: 0, skippedCount: 0, failedCount: 0 };
 		}
 	}
 
 	/** The three phases; throws what ends or retries the run. */
-	private async execute(row: IImportRow, scope: IImportScope, options: IImportOptions, finalAttempt: boolean): Promise<IImportRunOutcome> {
+	private async execute(
+		row: IImportRow,
+		scope: IImportScope,
+		options: IImportOptions,
+		finalAttempt: boolean,
+		fence: number
+	): Promise<IImportRunOutcome> {
+		/** A write of this run: one the import no longer accepts (taken over) stops the run. */
+		const update = async (patch: Partial<IImportRow>) => {
+			if (!(await this.store.update(row.id, scope, patch, fence))) throw new ImportRunDisplacedError(row.id);
+		};
 		const buffer = await this.store.readArchive(row);
 		const archive = await openImportArchive(buffer, options.limits);
 		const paths = archive.entries.map((entry) => entry.path);
@@ -213,12 +239,12 @@ export class DocumentImportRunner {
 		await verifyImportArchive(archive);
 		const plan = buildImportPlan(paths, archive.directories, layout);
 		const entries = new Map(archive.entries.map((entry) => [entry.path, entry]));
-		const run = new ImportRun(row, scope, options, plan, entries, this.store, finalAttempt, this.reportMaxItems);
+		const run = new ImportRun(row, scope, options, plan, entries, this.store, finalAttempt, this.reportMaxItems, fence);
 		// Every node once for the tree, every page once more for its content.
 		const totalItems = plan.nodes.length + plan.nodes.filter((node) => node.kind === DocumentKindEnum.PAGE).length;
-		await this.store.update(row.id, scope, { layout, totalItems, processedItems: 0, phase: DocumentImportPhaseEnum.TREE, lastProgressAt: new Date() });
+		await update({ layout, totalItems, processedItems: 0, phase: DocumentImportPhaseEnum.TREE, lastProgressAt: new Date() });
 		await run.tree();
-		await this.store.update(row.id, scope, {
+		await update({
 			phase: DocumentImportPhaseEnum.CONTENT,
 			processedItems: run.processedItems,
 			lastProgressAt: new Date(),
@@ -227,7 +253,7 @@ export class DocumentImportRunner {
 		});
 		await run.content();
 		const counts = run.counts();
-		await this.store.update(row.id, scope, {
+		await update({
 			status: DocumentImportStatusEnum.COMPLETED,
 			phase: DocumentImportPhaseEnum.DONE,
 			processedItems: totalItems,
@@ -239,12 +265,20 @@ export class DocumentImportRunner {
 		return { status: DocumentImportStatusEnum.COMPLETED, ...counts };
 	}
 
-	private async discard(row: IImportRow): Promise<void> {
+	private async discard(row: IImportRow, fence: number): Promise<void> {
 		try {
-			await this.store.discardArchive(row);
+			await this.store.discardArchive(row, fence);
 		} catch (error) {
 			this.logger.warn(`docs.import ${row.id}: the uploaded zip could not be deleted: ${(error as Error)?.message ?? error}`);
 		}
+	}
+}
+
+/** A run whose import a later claim took over (it stalled past the stale window): it stops, writing nothing more. */
+export class ImportRunDisplacedError extends Error {
+	constructor(importId: ID) {
+		super(`Import ${importId} was taken over by another run`);
+		this.name = 'ImportRunDisplacedError';
 	}
 }
 
@@ -278,7 +312,9 @@ class ImportRun {
 		 * FAILED and the import goes on, so one bad entry cannot sink the rest.
 		 */
 		private readonly finalAttempt: boolean,
-		reportMaxItems: number
+		reportMaxItems: number,
+		/** The run's fence (the attempt its claim wrote): its progress writes state it. */
+		private readonly fence: number
 	) {
 		this.report = new ImportReport(reportMaxItems);
 		this.links = new ImportLinkIndex(plan);
@@ -310,9 +346,12 @@ class ImportRun {
 		for (const node of this.plan.nodes) {
 			if (node.kind !== DocumentKindEnum.FILE) await this.containerOrPage(node);
 		}
-		let usedBytes = this.options.quotaBytes > 0 ? await this.store.usedBytes(this.scope) : 0;
 		for (const node of this.plan.nodes) {
-			if (node.kind === DocumentKindEnum.FILE) usedBytes = await this.attachment(node, usedBytes);
+			if (node.kind !== DocumentKindEnum.FILE) continue;
+			// The usage is read again before each attachment, as an upload reads it: what another import (or upload) of
+			// the organization stored meanwhile counts, not only what this run stored.
+			const usedBytes = this.options.quotaBytes > 0 ? await this.store.usedBytes(this.scope) : 0;
+			await this.attachment(node, usedBytes);
 		}
 	}
 
@@ -336,6 +375,7 @@ class ImportRun {
 						return ref ? { documentId: ref.id, name: ref.name, mimeType: ref.mimeType, size: ref.fileSize } : null;
 					}
 				});
+				// A page saved meanwhile (by a member, or by an earlier run of this import) keeps what it has.
 				await this.store.writePage(document, this.scope, result.contentJson, this.owner);
 				await this.store.linkPages(document.id, result.mentionedDocumentIds.filter((id) => id !== document.id) as ID[], this.scope);
 				this.report.set(node.key, {
@@ -381,8 +421,11 @@ class ImportRun {
 		}
 		try {
 			const externalId = externalIdOf(node.key);
+			const existing = await this.store.findImported(this.scope, this.externalSource, externalId);
+			// Made by an earlier run, which may have stopped before stamping its owner: stamped again.
+			if (existing) await this.store.adoptImported(existing.id, this.owner, meta.createdAt);
 			const document =
-				(await this.store.findImported(this.scope, this.externalSource, externalId)) ??
+				existing ??
 				(await this.store.createNode({
 					scope: this.scope,
 					kind: node.kind as DocumentKindEnum.FOLDER | DocumentKindEnum.PAGE,
@@ -427,6 +470,7 @@ class ImportRun {
 		try {
 			const existing = await this.store.findImported(this.scope, this.externalSource, externalId);
 			if (existing) {
+				await this.store.adoptImported(existing.id, this.owner);
 				this.created.set(node.key, existing);
 				this.report.set(node.key, this.item(node, DocumentImportItemStatusEnum.IMPORTED, { documentId: existing.id, name: existing.name }));
 				await this.tick();
@@ -509,7 +553,13 @@ class ImportRun {
 	private async tick(): Promise<void> {
 		this.processed += 1;
 		if (this.processed % DOCS_IMPORT_PROGRESS_EVERY === 0) {
-			await this.store.update(this.row.id, this.scope, { processedItems: this.processed, lastProgressAt: new Date(), ...this.counts() });
+			const written = await this.store.update(
+				this.row.id,
+				this.scope,
+				{ processedItems: this.processed, lastProgressAt: new Date(), ...this.counts() },
+				this.fence
+			);
+			if (!written) throw new ImportRunDisplacedError(this.row.id);
 		}
 	}
 }
