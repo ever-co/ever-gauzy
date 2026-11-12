@@ -152,6 +152,18 @@ describe.each([MultiORMEnum.TypeORM, MultiORMEnum.MikroORM])(
 				expect(rows[1]).toMatchObject({ isRunning: true, stoppedAt: new Date('2026-11-12T10:30:00.000Z') });
 			});
 
+			it('answers 409 to a stop naming an empty time log id, which GraphQL lets through, and stops nothing', async () => {
+				const rows = [runningLog()];
+				const { service, execute, employeeService } = setup(rows);
+
+				const stop = service.stopTimer({ source: TimeLogSourceEnum.TEAMS, timeLogId: '' });
+
+				await expect(stop).rejects.toBeInstanceOf(ConflictException);
+				expect(execute).not.toHaveBeenCalled();
+				expect(employeeService.update).not.toHaveBeenCalled();
+				expect(rows[0]).toMatchObject({ isRunning: true });
+			});
+
 			it('stops the running log the stop names', async () => {
 				const rows = [finishedLog(), runningLog()];
 				const { service, execute } = setup(rows);
@@ -183,6 +195,15 @@ describe.each([MultiORMEnum.TypeORM, MultiORMEnum.MikroORM])(
 				const update = execute.mock.calls[0][0] as TimeLogUpdateCommand;
 				expect(update.id).toBe(RUNNING_LOG_ID);
 				expect(update.input).toEqual({ isRunning: false, stoppedAt: NOW });
+			});
+
+			it('takes a null time log id as no id, and stops the running log as before', async () => {
+				const rows = [runningLog()];
+				const { service, execute } = setup(rows);
+
+				await service.stopTimer({ source: TimeLogSourceEnum.TEAMS, timeLogId: null } as ITimerToggleInput);
+
+				expect((execute.mock.calls[0][0] as TimeLogUpdateCommand).id).toBe(RUNNING_LOG_ID);
 			});
 
 			it('still answers 406 when nothing runs, whether or not the stop names a log', async () => {
@@ -223,6 +244,29 @@ describe.each([MultiORMEnum.TypeORM, MultiORMEnum.MikroORM])(
 				).rejects.toBeInstanceOf(NotAcceptableException);
 				expect(startTimer).not.toHaveBeenCalled();
 				expect(execute).not.toHaveBeenCalled();
+			});
+
+			it('answers 406 to a toggle naming an empty time log id when nothing runs, and starts no timer', async () => {
+				const rows = [finishedLog()];
+				const { service, execute, startTimer } = setup(rows);
+
+				await expect(
+					toggle(service, { source: TimeLogSourceEnum.TEAMS, timeLogId: '' })
+				).rejects.toBeInstanceOf(NotAcceptableException);
+				expect(startTimer).not.toHaveBeenCalled();
+				expect(execute).not.toHaveBeenCalled();
+			});
+
+			it('answers 409 to a toggle naming an empty time log id while a log runs, and stops nothing', async () => {
+				const rows = [runningLog()];
+				const { service, execute, startTimer } = setup(rows);
+
+				await expect(
+					toggle(service, { source: TimeLogSourceEnum.TEAMS, timeLogId: '' })
+				).rejects.toBeInstanceOf(ConflictException);
+				expect(execute).not.toHaveBeenCalled();
+				expect(startTimer).not.toHaveBeenCalled();
+				expect(rows[0]).toMatchObject({ isRunning: true });
 			});
 
 			it('stops the running log a toggle names', async () => {

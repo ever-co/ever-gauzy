@@ -105,6 +105,15 @@ const PROJECT_FROM_TASK_SOURCES: ReadonlyArray<string> = [TimeLogSourceEnum.TEAM
  */
 const TEAM_TRACKING_SWITCH_SOURCES: ReadonlyArray<string> = [TimeLogSourceEnum.TEAMS, TimeLogSourceEnum.MOBILE];
 
+/**
+ * Whether a stop or a toggle names the time log it is for. Only a missing id (`undefined` or `null`) names none. An
+ * empty one, which the GraphQL `ID` input lets through where the REST body refuses it, still names a log, which is not
+ * the running one: the stop is refused instead of ending whatever runs.
+ */
+function isTimeLogNamed(input: ITimerToggleInput): boolean {
+	return input.timeLogId !== undefined && input.timeLogId !== null;
+}
+
 @Injectable()
 export class TimerService {
 	private readonly logger = new Logger(TimerService.name);
@@ -635,8 +644,7 @@ export class TimerService {
 	private assertStopIsForRunningLog(request: ITimerToggleInput, runningLog: ITimeLog): void {
 		// Time log ids are UUIDs, whose letters compare in either case
 		const namesAnotherLog =
-			isNotEmpty(request.timeLogId) &&
-			String(request.timeLogId).toLowerCase() !== String(runningLog.id).toLowerCase();
+			isTimeLogNamed(request) && String(request.timeLogId).toLowerCase() !== String(runningLog.id).toLowerCase();
 		if (namesAnotherLog) {
 			this.logger.warn(`Stop refused: it names another time log than the running one, ${runningLog.id}.`);
 			throw new ConflictException(
@@ -875,7 +883,7 @@ export class TimerService {
 
 		// A toggle naming a time log is a stop of that log: it never starts a timer in its place, and with nothing
 		// running it is refused as that stop is
-		const namesTimeLog = isNotEmpty(request.timeLogId);
+		const namesTimeLog = isTimeLogNamed(request);
 
 		// Start a new timer if no running log exists, otherwise stop the current timer
 		if (!lastLog && !namesTimeLog) {
