@@ -364,7 +364,10 @@
 		"PDF_WITH_SUB_PAGES": "Export as PDF with sub-pages",
 		"PDF_FAILED": "The PDF could not be created",
 		"PDF_UNSAVED": "The page has edits that are not saved yet, so nothing was exported. Try again once they are saved.",
-		"PDF_TOO_MANY_PAGES": "This page has too many sub-pages for one PDF"
+		"PDF_TOO_MANY_PAGES": "This page has too many sub-pages for one PDF",
+		"FOLDER_ZIP": "Export folder (zip)",
+		"ZIP_WITH_SUB_PAGES": "Export with sub-pages (zip)",
+		"ZIP_FAILED": "The zip could not be created"
 	},
 	"PREVIEW": {
 		"TITLE": "Preview",
