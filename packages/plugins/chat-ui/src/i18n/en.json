@@ -143,6 +143,7 @@
 		"UPLOAD_FAILED": "Not uploaded",
 		"ATTACH_UNAVAILABLE": "Attachments are not available here",
 		"REMOVE_FILE": "Remove {{name}}",
+		"PREVIEW_FILE": "Preview {{name}}",
 		"TOO_MANY_FILES": "A message holds at most {{max}} files: {{count}} not added.",
 		"MENTION_SUGGESTIONS": "People to mention",
 		"EMOJI_SUGGESTIONS": "Emoji"
@@ -150,7 +151,10 @@
 	"FILES": {
 		"TITLE": "Files",
 		"EMPTY": "No files in this conversation yet.",
-		"MORE": "Show more files"
+		"MORE": "Show more files",
+		"OPEN_IN_TAB": "Open in new tab",
+		"CLOSE_PREVIEW": "Close preview",
+		"NO_PREVIEW": "This file has no preview. Open it in a new tab to see it."
 	},
 	"TASKS": {
 		"CREATE_TITLE": "Create task from message",
