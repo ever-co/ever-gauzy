@@ -161,6 +161,9 @@ interface IStoredLog {
 	deletedAt?: Date;
 }
 
+/** The writes of the store a spec can make fail: a log created, a log's columns updated, a slot unlinked from a log. */
+type StoreWrite = 'insert' | 'update' | 'unlink';
+
 interface IStoredSlot {
 	id: string;
 	tenantId: string;
@@ -218,6 +221,20 @@ function createStore() {
 	/** The ids of a `where` id: one, or the values of an `In(...)`. */
 	const idsOf = (id: unknown): string[] => [].concat((id as { value?: unknown })?.value ?? id);
 
+	/** For each kind of write made to fail, how many of its calls succeed before the one that fails. */
+	const failing: Partial<Record<StoreWrite, number>> = {};
+	/** Fails this write when its turn has come, as a lost connection or a lock timeout would. */
+	const failIfDue = (write: StoreWrite) => {
+		if (failing[write] === undefined) {
+			return;
+		}
+		if (failing[write] === 0) {
+			delete failing[write];
+			throw new Error(`The ${write} failed`);
+		}
+		failing[write]--;
+	};
+
 	const timeLogRepository = {
 		findOne: jest.fn(
 			async ({ where, relations }: { where: { id: string }; relations?: { timeSlots?: boolean } }) => {
@@ -230,6 +247,7 @@ function createStore() {
 			return log && (!where.tenantId || where.tenantId === log.tenantId) ? logEntity(log, false) : null;
 		}),
 		update: jest.fn(async (where: { id: string }, changes: Partial<TimeLog>) => {
+			failIfDue('update');
 			const log = liveLog(where.id);
 			if (log) {
 				Object.assign(log, columnsOf(changes));
@@ -243,6 +261,7 @@ function createStore() {
 			if (log) {
 				Object.assign(log, columnsOf(entity));
 			} else {
+				failIfDue('insert');
 				log = { ...columnsOf(entity), id: entity.id ?? `created-${++created}` } as IStoredLog;
 				logs.push(log);
 				entity.id = log.id;
@@ -261,6 +280,19 @@ function createStore() {
 				log.deletedAt = new Date();
 			}
 			return { affected: 1 };
+		}),
+		// A hard delete, with the log's join rows (the foreign keys of `time_slot_time_logs` cascade).
+		delete: jest.fn(async ({ id }: { id: unknown }) => {
+			for (const logId of idsOf(id)) {
+				const index = logs.findIndex((log) => log.id === logId);
+				if (index >= 0) {
+					logs.splice(index, 1);
+				}
+				for (const slot of slots) {
+					slot.timeLogIds = slot.timeLogIds.filter((linked) => linked !== logId);
+				}
+			}
+			return { affected: 1 };
 		})
 	};
 
@@ -276,12 +308,22 @@ function createStore() {
 				andWhere: (_sql: string, values?: Record<string, unknown>) => (Object.assign(params, values), builder),
 				getParameters: () => params,
 				relation: () => ({
-					of: (slotId: string) => ({
-						remove: async (timeLogId: string) => {
-							const slot = slots.find((stored) => stored.id === slotId);
-							slot.timeLogIds = slot.timeLogIds.filter((id) => id !== timeLogId);
-						}
-					})
+					of: (slotIds: string | string[]) => {
+						const related = slots.filter((stored) => [].concat(slotIds).includes(stored.id));
+						return {
+							remove: async (timeLogId: string) => {
+								failIfDue('unlink');
+								for (const slot of related) {
+									slot.timeLogIds = slot.timeLogIds.filter((id) => id !== timeLogId);
+								}
+							},
+							add: async (timeLogId: string) => {
+								for (const slot of related) {
+									slot.timeLogIds = [...slot.timeLogIds, timeLogId];
+								}
+							}
+						};
+					}
 				}),
 				getMany: async () =>
 					liveSlots()
@@ -335,6 +377,10 @@ function createStore() {
 
 	return {
 		executed,
+		/** Makes a write fail, after `succeeding` calls of it have gone through. */
+		fail(write: StoreWrite, succeeding = 0) {
+			failing[write] = succeeding;
+		},
 		/** A log of the employee over `start`–`stop`, with a slot for every ten minutes of it. */
 		addLog(id: string, start: string, stop: string, columns: Partial<IStoredLog> = {}) {
 			logs.push({
@@ -617,5 +663,69 @@ describe('DeleteTimeSpanHandler and a stopped log the new range falls inside (#1
 		expect(first).toMatchObject({ id: 'tracked', startedAt: at('08:00'), stoppedAt: at('09:00'), ...kept });
 		expect(second).toMatchObject({ startedAt: at('10:00'), stoppedAt: at('11:00'), ...kept });
 		expect(second.id).not.toBe('tracked');
+	});
+});
+
+/**
+ * The split writes its two parts through separate handlers, with no transaction between them. A failed write must
+ * not leave the time counted twice, nor let the caller record the new range over the log: the split leaves the log as
+ * it was and raises the error, which stops the caller's loop and fails its request.
+ */
+describe('DeleteTimeSpanHandler when a split fails (#11823)', () => {
+	beforeEach(() => {
+		jest.spyOn(console, 'log').mockImplementation(() => undefined);
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT_ID);
+	});
+
+	afterEach(() => jest.restoreAllMocks());
+
+	/** What the cleanup ended with: the message of the error it raised, or nothing when it raised none. */
+	const raised = (outcome: unknown) => (outcome instanceof Error ? outcome.message : undefined);
+
+	/** The log as it was before the split: 08:00 to 11:00 with its 18 slots, and no other log. */
+	const AS_IT_WAS = [{ range: '08:00-11:00', isRunning: false, slots: slotStarts('08:00', '11:00') }];
+
+	it('leaves the log untouched and raises the error when the second part cannot be saved', async () => {
+		const store = createStore();
+		store.addLog('tracked', '08:00', '11:00');
+		store.fail('insert');
+
+		const outcome = await store.cleanUp('09:00', '10:00').then(raised, raised);
+
+		expect(store.timeline()).toEqual(AS_IT_WAS);
+		expect(store.slotCount()).toBe(18);
+		expect(outcome).toBe('The insert failed');
+	});
+
+	it('leaves no second part and raises the error when the cut fails', async () => {
+		const store = createStore();
+		store.addLog('tracked', '08:00', '11:00');
+		store.fail('update');
+
+		const outcome = await store.cleanUp('09:00', '10:00').then(raised, raised);
+
+		expect(store.timeline()).toEqual(AS_IT_WAS);
+		expect(store.rows().map((row) => row.id)).toEqual(['tracked']);
+		expect(outcome).toBe('The update failed');
+	});
+
+	it('gives the log back its range and later slots when the cut fails after releasing some of them', async () => {
+		const store = createStore();
+		store.addLog('tracked', '08:00', '11:00');
+		// The cut releases the range's own slots, then takes the later ones off the log: the third of those fails.
+		store.fail('unlink', 2);
+
+		const outcome = await store.cleanUp('09:00', '10:00').then(raised, raised);
+
+		// The range's own slots, released before the failure, stay released.
+		expect(store.timeline()).toEqual([
+			{
+				range: '08:00-11:00',
+				isRunning: false,
+				slots: [...slotStarts('08:00', '09:00'), ...slotStarts('10:00', '11:00')]
+			}
+		]);
+		expect(store.rows().map((row) => row.id)).toEqual(['tracked']);
+		expect(outcome).toBe('The unlink failed');
 	});
 });

@@ -9,6 +9,7 @@ import { DeleteTimeSpanCommand } from '../delete-time-span.command';
 import { TimeLogUpdateCommand } from '../time-log-update.command';
 import { TimeLogDeleteCommand } from '../time-log-delete.command';
 import { generateTimeSlots } from './../../../time-slot/utils';
+import { TimeSlot } from '../../../time-slot/time-slot.entity';
 import { TypeOrmTimeLogRepository } from '../../repository/type-orm-time-log.repository';
 import { TypeOrmTimeSlotRepository } from '../../../time-slot/repository/type-orm-time-slot.repository';
 
@@ -226,20 +227,22 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 	 *
 	 * The second part is created first, from the range's end to the log's original end, read before anything is cut.
 	 * Only then is the log cut back to the range's start, through the update, which releases the slots it no longer
-	 * covers: those inside the range go, those the second part now holds stay with it. A second part that cannot be
-	 * created leaves the log whole rather than cut without it. (The log used to be cut first and the second part built
-	 * from the cut log, so that part ended before it started and was never created.)
+	 * covers: those inside the range go, those the second part now holds stay with it. (The log used to be cut first and
+	 * the second part built from the cut log, so that part ended before it started and was never created.)
+	 *
+	 * The two writes cannot share a transaction: the cut goes through `TimeLogUpdateCommand`, whose handler writes
+	 * through its own repositories. So a failure of either one leaves the log as it was and is raised, which stops the
+	 * caller before it records the new range over the log: a second part that cannot be saved has written nothing, and
+	 * one saved before a failed cut is undone (see `undoSecondPart`).
 	 *
 	 * @param log - The time log as stored, with its slots.
 	 * @param start - The start of the new range, the end of the first part.
 	 * @param end - The end of the new range, the start of the second part.
 	 * @param forceDelete - Whether to hard delete what goes (default: false).
+	 * @throws The error of the write that failed.
 	 */
 	private async splitAround(log: TimeLog, start: Date, end: Date, forceDelete: boolean = false): Promise<void> {
 		const secondPart = await this.createSecondPart(log, end, log.stoppedAt);
-		if (!secondPart) {
-			return;
-		}
 
 		try {
 			// With its own start too: an update naming none files the log under the current week's timesheet
@@ -248,40 +251,73 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 			);
 		} catch (error) {
 			this.logger.error(`Error while cutting back time log ${log.id}: ${error?.message ?? error}`, error?.stack);
+			try {
+				await this.undoSecondPart(log, secondPart);
+			} catch (undoError) {
+				this.logger.error(
+					`Error while undoing the second part ${secondPart.id} of time log ${log.id}: ${undoError?.message ?? undoError}`,
+					undoError?.stack
+				);
+			}
+			throw error;
 		}
 	}
 
 	/**
 	 * Creates the part of a split log after the new range: the log's fields over `end`–`stoppedAt`, holding the log's
-	 * slots from the ten-minute slot of `end` on.
+	 * slots from the ten-minute slot of `end` on. One save, so a failure writes neither the log nor its join rows.
 	 *
 	 * @param log - The time log as stored, with its slots.
 	 * @param end - The end of the new range, the second part's start.
 	 * @param stoppedAt - The log's original end, the second part's end.
-	 * @returns The second part, or `null` when it could not be created.
+	 * @returns The second part, with the slots it holds.
 	 */
-	private async createSecondPart(log: TimeLog, end: Date, stoppedAt: Date): Promise<TimeLog | null> {
+	private async createSecondPart(log: TimeLog, end: Date, stoppedAt: Date): Promise<TimeLog> {
 		// The slots of the second part, as the update computes a log's slots: the first one is the slot holding `end`
 		const [firstSlot] = generateTimeSlots(end, stoppedAt);
 		const from = moment(firstSlot?.startedAt ?? end);
 		const timeSlots = (log.timeSlots ?? []).filter((slot) => !moment(slot.startedAt).isBefore(from));
 
-		try {
-			return await this.typeOrmTimeLogRepository.save(
-				new TimeLog({
-					...omit(log, ['id', 'createdAt', 'updatedAt', 'timeSlots', 'duration', 'isEdited']),
-					startedAt: end,
-					stoppedAt,
-					timeSlots
-				})
-			);
-		} catch (error) {
-			this.logger.error(
-				`Error while creating the second part of time log ${log.id}: ${error?.message ?? error}`,
-				error?.stack
-			);
-			return null;
+		return await this.typeOrmTimeLogRepository.save(
+			new TimeLog({
+				...omit(log, ['id', 'createdAt', 'updatedAt', 'timeSlots', 'duration', 'isEdited']),
+				startedAt: end,
+				stoppedAt,
+				timeSlots
+			})
+		);
+	}
+
+	/**
+	 * Undoes the second part of a split whose cut failed, leaving the log as it was before the split: the slots the
+	 * second part holds go back to the log (the cut may have taken some off it before failing), the log gets its range
+	 * and timesheet back, and the second part is deleted with its join rows. In that order, so that a failure on the way
+	 * leaves the time counted twice rather than lost. Slots of the range the cut had already released stay released.
+	 *
+	 * @param log - The time log as it was read before the split, with its slots.
+	 * @param secondPart - The second part, with the slots it holds.
+	 */
+	private async undoSecondPart(log: TimeLog, secondPart: TimeLog): Promise<void> {
+		const stored = await this.typeOrmTimeLogRepository.findOne({
+			where: { id: log.id },
+			relations: { timeSlots: true }
+		});
+		const held = new Set((stored?.timeSlots ?? []).map((slot) => slot.id));
+		const taken = (secondPart.timeSlots ?? []).map((slot) => slot.id).filter((id) => !held.has(id));
+		if (taken.length > 0) {
+			await this.typeOrmTimeSlotRepository
+				.createQueryBuilder()
+				.relation(TimeSlot, 'timeLogs')
+				.of(taken)
+				.add(log.id);
 		}
+
+		const { startedAt, stoppedAt, timesheetId } = log;
+		await this.typeOrmTimeLogRepository.update(
+			{ id: log.id, tenantId: log.tenantId },
+			{ startedAt, stoppedAt, timesheetId }
+		);
+		await this.typeOrmTimeLogRepository.delete({ id: secondPart.id });
 	}
 
 	/**
