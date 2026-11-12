@@ -28,11 +28,11 @@ import {
 	IChatCategory,
 	IChatConversationWithState,
 	IChatMemberState,
-	IChatMemberSummary,
 	IChatMessageWithRelations
 } from '@gauzy/contracts';
 import { ToastrService } from '@gauzy/ui-core/core';
 import { applyCatchUp, reconcileWithNewest } from '../../chat-catch-up';
+import { ChatMemberPreview } from '../../chat-member-preview';
 import { canManageConversation } from '../../chat-categories';
 import { withTaskReference } from '../../chat-tasks';
 import { CHAT_LINK, CHAT_LIVE_AUDIT_MS, CHAT_MESSAGES_POLL_MS } from '../../chat-ui.constants';
@@ -558,8 +558,8 @@ export function unreadMarkerId(messages: readonly IChatMessageWithRelations[], s
 				margin-left: -0.25rem;
 			}
 			.faces ngx-chat-person-avatar {
-				border-radius: 0.3125rem;
-				box-shadow: 0 0 0 2px var(--chat-bg, #fff);
+				border-radius: calc(var(--border-radius) * 0.625);
+				box-shadow: 0 0 0 2px var(--gauzy-card-1);
 			}
 			.faces ngx-chat-person-avatar + ngx-chat-person-avatar {
 				margin-left: -0.375rem;
@@ -973,17 +973,13 @@ export class ConversationViewComponent {
 	protected readonly plainTitle = computed(() => (this.isChannel() ? this.title().replace(/^#/, '') : this.title()));
 	/** The person a direct conversation is with, for the header and the intro. */
 	protected readonly person = computed(() => conversationPerson(this.conversation(), this.people().byEmployee, this.meEmployeeId()));
-	/** The members read for the member button when the conversation came without them (for the conversation `id`). */
-	private readonly readMembers = signal<{ id: string; members: readonly IChatMemberSummary[] } | null>(null);
-	/** The conversation whose members were asked for (asked once per visit). */
-	private membersReadFor: string | null = null;
+	/** The first members for the member button (a channel comes without them in the list, so they are read). */
+	private readonly memberPreview = new ChatMemberPreview((id) => this.api.members(id));
 	/** Up to three members for the header's member button (those with a picture first), as Slack shows them. */
 	protected readonly memberFaces = computed<ChatPerson[]>(() => {
 		const byEmployee = this.people().byEmployee;
-		const conversation = this.conversation();
-		const read = this.readMembers();
-		const members = conversation.members?.length ? conversation.members : read?.id === String(conversation.id) ? read.members : [];
-		const known = members
+		const known = this.memberPreview
+			.members(this.conversation())
 			.map((member) => byEmployee.get(String(member.employeeId)))
 			.filter((person): person is ChatPerson => !!person);
 		const withPicture = known.filter((person) => !!ownPicture(person.imageUrl));
@@ -1060,26 +1056,13 @@ export class ConversationViewComponent {
 			const message = this.patch();
 			if (message) untracked(() => this.replace(message));
 		});
-		// A conversation that came without its first members (a server that leaves them out for channels) reads
-		// them once, for the faces on the member button; only a member may read them.
+		// The faces on the member button follow the conversation: its members are read again when its count changes.
 		effect(() => {
 			const conversation = this.conversation();
-			const id = String(conversation.id);
-			const needed = this.isMember() && !conversation.members?.length && conversation.memberCount > 0;
-			untracked(() => {
-				if (!needed || this.readMembers()?.id === id || this.membersReadFor === id) return;
-				this.membersReadFor = id;
-				this.api
-					.members(conversation.id)
-					.pipe(
-						catchError(() => EMPTY),
-						takeUntilDestroyed(this.destroyRef)
-					)
-					.subscribe((members) => {
-						if (String(this.conversation().id) === id) this.readMembers.set({ id, members });
-					});
-			});
+			const isMember = this.isMember();
+			untracked(() => this.memberPreview.follow(conversation, isMember, () => this.conversation()));
 		});
+		this.destroyRef.onDestroy(() => this.memberPreview.destroy());
 		// A message that names a file not read yet reads the conversation's files (the pins too); only the messages of
 		// the open conversation count (a switch shows the previous one's for a moment).
 		effect(() => {
