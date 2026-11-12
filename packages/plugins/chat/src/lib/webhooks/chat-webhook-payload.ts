@@ -146,7 +146,7 @@ export function normalizeWebhookPayload(payload: Record<string, unknown>, option
 		throw new ChatWebhookPayloadError('too_many_blocks', `A post carries at most ${CHAT_WEBHOOK_MAX_BLOCKS} blocks.`);
 	}
 	identifyActionBlocks(blocks);
-	uniquifyGeneratedActions(blocks);
+	dedupeGeneratedActions(blocks);
 	assertUniqueActions(blocks);
 
 	const text = typeof payload['text'] === 'string' ? bodyText(payload['text'], options.canBroadcast) : '';
@@ -413,7 +413,7 @@ function identifyActionBlocks(blocks: IChatAppBlock[]): void {
  * payload named the same one twice), and their unnamed buttons must not collide. The ids the payload named are
  * reserved first; a generated one already in use gets a suffix.
  */
-function uniquifyGeneratedActions(blocks: readonly IChatAppBlock[]): void {
+function dedupeGeneratedActions(blocks: readonly IChatAppBlock[]): void {
 	const taken = new Map<string, Set<string>>();
 	const idsOf = (blockId: string) => {
 		let ids = taken.get(blockId);
