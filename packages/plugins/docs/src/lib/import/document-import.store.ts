@@ -111,24 +111,26 @@ export class DocumentImportStore implements IDocumentImportStore {
 	}
 
 	async discardArchive(row: IImportRow, fence?: number): Promise<void> {
-		if (!row.storageKey) return;
-		// The key is forgotten first, by the run that still owns the import: a run taken over deletes nothing.
-		const result = await this.imports
-			.createQueryBuilder()
-			.update(DocumentImport)
-			.set({ storageKey: null } as never)
-			.where({
-				id: row.id,
-				tenantId: row.tenantId,
-				organizationId: row.organizationId,
-				storageKey: row.storageKey,
-				...(fence === undefined ? {} : { attempts: fence })
-			})
-			.callListeners(false)
-			.execute();
-		if (!result.affected) return;
 		const key = row.storageKey;
+		if (!key) return;
+		// Inside the tenant's storage settings: when they cannot be read, the import keeps the key of the zip it could not
+		// delete.
 		await this.storage.run(row.tenantId, async () => {
+			// The key is forgotten first, by the run that still owns the import: a run taken over deletes nothing.
+			const result = await this.imports
+				.createQueryBuilder()
+				.update(DocumentImport)
+				.set({ storageKey: null } as never)
+				.where({
+					id: row.id,
+					tenantId: row.tenantId,
+					organizationId: row.organizationId,
+					storageKey: key,
+					...(fence === undefined ? {} : { attempts: fence })
+				})
+				.callListeners(false)
+				.execute();
+			if (!result.affected) return;
 			const provider = new FileStorage().setProvider(row.storageProvider ?? undefined).getProviderInstance();
 			await provider.deleteFile(key);
 		});

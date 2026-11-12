@@ -7,7 +7,7 @@ import {
 	DocumentVisibilityEnum,
 	ID
 } from '@gauzy/contracts';
-import { DOCS_IMPORT_NO_PAGES, DOCS_IMPORT_SYMLINK } from '../docs.constants';
+import { DOCS_IMPORT_NO_PAGES, DOCS_IMPORT_PROGRESS_EVERY, DOCS_IMPORT_SYMLINK } from '../docs.constants';
 import { IDocNode } from '../services/document-markdown';
 import { createImportZip, IImportZipEntry, TINY_PNG, TINY_PDF } from './__fixtures__/import-zip.fixture';
 import { DOCS_IMPORT_FAILED, DOCS_IMPORT_REASONS, DocumentImportRunner, parseImportOptions } from './document-import.runner';
@@ -327,7 +327,7 @@ describe('DocumentImportRunner', () => {
 
 		expect(outcome).toBeNull();
 		// The first refused progress write stops it: the files after it are left to the run that owns the import.
-		expect(stored).toBeLessThan(30);
+		expect(stored).toBeLessThanOrEqual(DOCS_IMPORT_PROGRESS_EVERY);
 		expect(store.row.status).toBe(DocumentImportStatusEnum.RUNNING);
 		expect(store.discarded).toBe(0);
 	});
