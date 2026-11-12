@@ -167,6 +167,12 @@ describe('document comment anchors', () => {
 			expect(approximateMatch(text, quote)).toEqual({ start: first.length + 1, end: text.length, distance: 1 });
 		});
 
+		it("admits a start whose beginning holds more than a quarter of it in edits, within the whole quote's limit", () => {
+			const quote = `${'a'.repeat(256)}${'b'.repeat(744)}`;
+			const text = `${'x'.repeat(65)}${'a'.repeat(191)}${'b'.repeat(744)}`;
+			expect(approximateMatch(text, quote)).toMatchObject({ start: 0, end: 1000, distance: 65 });
+		});
+
 		it('finds the closest run from a start, its end free within the limit', () => {
 			expect(closestRunFrom('xx kitten', 3, 'sitting', 3)).toEqual({ length: 6, distance: 3 });
 			expect(closestRunFrom('xx kitten', 3, 'sitting', 2)).toBeNull();

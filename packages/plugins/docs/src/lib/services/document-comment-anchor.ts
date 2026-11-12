@@ -319,6 +319,9 @@ export function approximateMatch(text: string, quote: string): { start: number; 
 	const m = pattern.length;
 	const limit = Math.floor(m * DOCS_ANCHOR_FUZZY_MAX_ERROR_RATE);
 	const whole = quote.length === pattern.length;
+	// A long quote's beginning may hold more of its edits than a quarter of the beginning: a start is admitted within the
+	// whole quote's limit, and the whole-quote comparison below decides.
+	const admit = whole ? limit : Math.min(m, Math.floor(quote.length * DOCS_ANCHOR_FUZZY_MAX_ERROR_RATE));
 	// Sellers' algorithm: a match may start anywhere (row 0 is all zeroes); each cell keeps where its match started.
 	let cost = new Array<number>(m + 1);
 	let from = new Array<number>(m + 1);
@@ -352,7 +355,7 @@ export function approximateMatch(text: string, quote: string): { start: number; 
 		cost = nextCost;
 		from = nextFrom;
 		if (!whole) {
-			if (cost[m] <= limit && cost[m] < (starts.get(from[m]) ?? Infinity)) starts.set(from[m], cost[m]);
+			if (cost[m] <= admit && cost[m] < (starts.get(from[m]) ?? Infinity)) starts.set(from[m], cost[m]);
 			continue;
 		}
 		if (cost[m] <= limit && (!best || cost[m] < best.distance)) {
