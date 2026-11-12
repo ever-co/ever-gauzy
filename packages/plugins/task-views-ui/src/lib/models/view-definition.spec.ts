@@ -3,11 +3,13 @@ import {
 	createInput,
 	DEFAULT_DEFINITION,
 	definitionOf,
+	displayOptionsOf,
 	filterOptionsOf,
 	groupViews,
 	isBuiltInViewKey,
 	isPropertyShown,
 	isSameDefinition,
+	layoutOf,
 	normalizedViewName,
 	orderingOf,
 	placementInput,
@@ -35,7 +37,8 @@ describe('view definition', () => {
 			filter: tree,
 			groupBy: 'label',
 			orderBy: { field: 'title', direction: 'asc' },
-			properties: { size: true }
+			properties: { size: true },
+			layout: 'list'
 		});
 	});
 
@@ -150,5 +153,52 @@ describe('view definition', () => {
 		});
 		expect(versionOf({ version: 0 })).toBe(1);
 		expect(versionOf(null)).toBe(1);
+	});
+});
+
+describe('the layout of a view', () => {
+	const scope = { organizationId: 'org' as ID };
+	const viewWith = (displayOptions: unknown) =>
+		({ id: 'v' as ID, name: 'A', version: 3, displayOptions }) as unknown as ITaskView;
+
+	it('reads a timeline, and anything else (none, a list, an Ever Teams board, unreadable) as the list', () => {
+		expect(layoutOf({ layout: 'timeline' })).toBe('timeline');
+		expect(layoutOf(JSON.stringify({ layout: 'timeline' }))).toBe('timeline');
+		for (const other of [null, undefined, {}, { layout: 'list' }, { layout: 'board' }, '{not json']) {
+			expect(layoutOf(other)).toBe('list');
+		}
+		expect(definitionOf(viewWith({ layout: 'timeline' })).layout).toBe('timeline');
+		expect(definitionOf(null).layout).toBe('list');
+	});
+
+	it('writes a timeline over the keys kept there; the list clears a timeline and leaves a board', () => {
+		const timeline = { ...DEFAULT_DEFINITION, layout: 'timeline' as const };
+		expect(displayOptionsOf(timeline, { zoom: 'month', layout: 'board' })).toEqual({
+			zoom: 'month',
+			layout: 'timeline'
+		});
+		expect(displayOptionsOf(DEFAULT_DEFINITION, { zoom: 'month', layout: 'timeline' })).toEqual({ zoom: 'month' });
+		expect(displayOptionsOf(DEFAULT_DEFINITION, { layout: 'board' })).toEqual({ layout: 'board' });
+	});
+
+	it('tells a changed layout apart, and saves it only when it changes', () => {
+		const timeline = { ...DEFAULT_DEFINITION, layout: 'timeline' as const };
+		expect(isSameDefinition(DEFAULT_DEFINITION, timeline)).toBe(false);
+		expect(saveInput(viewWith({ layout: 'board', zoom: 'month' }), timeline, scope).displayOptions).toEqual({
+			layout: 'timeline',
+			zoom: 'month'
+		});
+		expect(saveInput(viewWith({ layout: 'timeline' }), DEFAULT_DEFINITION, scope).displayOptions).toEqual({});
+		// A save that leaves the layout as it is does not touch the column (a board stays a board).
+		expect('displayOptions' in saveInput(viewWith({ layout: 'board' }), DEFAULT_DEFINITION, scope)).toBe(false);
+		expect('displayOptions' in saveInput(viewWith({ layout: 'timeline' }), timeline, scope)).toBe(false);
+	});
+
+	it('creates a timeline view with its layout, and a new list view without the column', () => {
+		const placement = { name: 'Plan', visibility: TaskViewVisibilityEnum.PERSONAL };
+		expect(createInput({ ...DEFAULT_DEFINITION, layout: 'timeline' }, placement, scope).displayOptions).toEqual({
+			layout: 'timeline'
+		});
+		expect('displayOptions' in createInput(DEFAULT_DEFINITION, placement, scope)).toBe(false);
 	});
 });

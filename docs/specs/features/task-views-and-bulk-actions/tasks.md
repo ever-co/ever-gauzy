@@ -73,6 +73,17 @@
   round trip, 409 on a stale save, a drop, bulk + undo, `G T`, `?`, a rebinding
   seen in Ever Teams, `API-42` in the go-to box)
 
+- [x] **T26**. Timeline layout of a saved view (Layout: List, Timeline, saved
+  as `displayOptions.layout = 'timeline'` like Ever Teams; a Teams board shows
+  as the list and stays a board): bars from start to due date by weeks or
+  months, today marked, overdue and single-date bars, tasks past the capped
+  calendar marked at its edge, the undated ones apart; grouping and row
+  properties hidden, manual order dragged in the list only. Same day rules as
+  the Ever Teams timeline (`models/timeline.ts`). Read only: dragging dates is
+  a later step
+- [ ] **T27**. Manual check of the timeline on dev (a view switched to
+  Timeline and back, the same view opened in Ever Teams)
+
 **Status 2026-11-11 (phase 3):** ever-gauzy
 [#11805](https://github.com/ever-co/ever-gauzy/pull/11805)
 (`feat/task-views-angular`): T17-T24 written with unit specs; T25 not done.

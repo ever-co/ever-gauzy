@@ -94,8 +94,10 @@ import {
 	saveInput,
 	scopeOfView,
 	TASK_VIEW_GROUPINGS,
+	TASK_VIEW_LAYOUTS,
 	TASK_VIEW_ORDER_FIELDS,
 	TaskViewDefinition,
+	TaskViewLayout,
 	TaskViewPlacement
 } from '../../models/view-definition';
 import { ShortcutRegistryService } from '../../keyboard/shortcut-registry.service';
@@ -117,6 +119,7 @@ import {
 	SaveViewDialogResult
 } from '../save-view-dialog/save-view-dialog.component';
 import { RowDrop, RowToggle, TaskListComponent } from '../task-list/task-list.component';
+import { TimelineComponent } from '../timeline/timeline.component';
 
 /** The view the page shows: one the platform computes, or a saved one. */
 export type ViewRef = { kind: 'built-in'; key: TaskBuiltInViewEnum } | { kind: 'saved'; id: ID };
@@ -170,7 +173,8 @@ const FILTER_DEBOUNCE_MS = 350;
 		BulkToolbarComponent,
 		FilterEditorComponent,
 		GoToTaskBoxComponent,
-		TaskListComponent
+		TaskListComponent,
+		TimelineComponent
 	],
 	templateUrl: './task-views-page.component.html',
 	styleUrl: './task-views-page.component.scss'
@@ -193,6 +197,7 @@ export class TaskViewsPageComponent implements OnInit {
 	protected readonly builtInSegment = TASK_VIEWS_BUILT_IN_SEGMENT;
 	protected readonly builtInViews = BUILT_IN_VIEWS;
 	protected readonly groupings = TASK_VIEW_GROUPINGS;
+	protected readonly layouts = TASK_VIEW_LAYOUTS;
 	protected readonly orderFields = TASK_VIEW_ORDER_FIELDS;
 	protected readonly properties = Object.keys(ROW_PROPERTIES);
 	protected readonly selectionLimit = TASK_SELECTION_LIMIT;
@@ -247,6 +252,8 @@ export class TaskViewsPageComponent implements OnInit {
 	);
 
 	protected readonly isSaved = computed(() => this.current().kind === 'saved');
+	/** A saved view drawn as a timeline (a built-in view is always the list). */
+	protected readonly isTimeline = computed(() => this.isSaved() && this.draft().layout === 'timeline');
 	protected readonly savedDefinition = computed(() => definitionOf(this.savedView()));
 	protected readonly dirty = computed(
 		() => this.isSaved() && !!this.savedView() && !isSameDefinition(this.draft(), this.savedDefinition())
@@ -284,6 +291,7 @@ export class TaskViewsPageComponent implements OnInit {
 		const saved = this.savedDefinition();
 		const draft = this.draft();
 		return (
+			draft.layout === 'list' &&
 			saved.orderBy.field === 'manual' &&
 			draft.orderBy.field === 'manual' &&
 			draft.groupBy === 'none' &&
@@ -609,6 +617,13 @@ export class TaskViewsPageComponent implements OnInit {
 		this.draft.update((draft) => ({ ...draft, filter: tree }));
 		if (this.filterTimer) clearTimeout(this.filterTimer);
 		this.filterTimer = setTimeout(() => void this.reload(), FILTER_DEBOUNCE_MS);
+	}
+
+	/** The layout is the view's: shown at once, saved with the view. */
+	protected setLayout(layout: TaskViewLayout): void {
+		this.draft.update((draft) => ({ ...draft, layout }));
+		// The timeline shows no focused row; a selection stays, for the bulk toolbar.
+		if (layout === 'timeline') this.focusedId.set(null);
 	}
 
 	protected setGroupBy(groupBy: TaskViewGroupBy): void {
@@ -1055,24 +1070,26 @@ export class TaskViewsPageComponent implements OnInit {
 	// ---------------------------------------------------------------- the keys of the list
 
 	private registerShortcuts(): void {
-		const hasRows = () => this.order().length > 0;
-		const hasTarget = () => this.canEdit() && (this.selection().ids.length > 0 || !!this.focusedId());
+		// The timeline shows no focused row: the row keys are the list's, and a task key acts on a selection only.
+		const hasRows = () => !this.isTimeline() && this.order().length > 0;
+		const focusedRow = () => (this.isTimeline() ? null : this.focusedId());
+		const hasTarget = () => this.canEdit() && (this.selection().ids.length > 0 || !!focusedRow());
 		const remove = this.registry.registerAll({
 			listDown: { run: ({ extend }) => this.moveFocus(1, extend), enabled: hasRows },
 			listUp: { run: ({ extend }) => this.moveFocus(-1, extend), enabled: hasRows },
 			listSelect: {
 				run: ({ extend }) => {
-					const id = this.focusedId();
+					const id = focusedRow();
 					if (id) this.onToggle({ id, shift: extend });
 				},
-				enabled: () => !!this.focusedId()
+				enabled: () => !!focusedRow()
 			},
 			listOpen: {
 				run: () => {
-					const id = this.focusedId();
+					const id = focusedRow();
 					if (id) this.openTask(id);
 				},
-				enabled: () => !!this.focusedId()
+				enabled: () => !!focusedRow()
 			},
 			listClear: {
 				run: () => {
@@ -1112,7 +1129,7 @@ export class TaskViewsPageComponent implements OnInit {
 	}
 
 	private openPicker(picker: BulkPicker): void {
-		const focused = this.focusedId();
+		const focused = this.isTimeline() ? null : this.focusedId();
 		if (!this.selection().ids.length && focused) {
 			this.selection.set(toggleSelection(EMPTY_SELECTION, focused, TASK_SELECTION_LIMIT).selection);
 		}

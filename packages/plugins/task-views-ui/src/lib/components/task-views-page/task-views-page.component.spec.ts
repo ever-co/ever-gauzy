@@ -243,6 +243,50 @@ describe('TaskViewsPageComponent', () => {
 		expect(toastr.warning).toHaveBeenCalledWith('TASK_VIEWS.BULK.UNDO_LOSSY', { count: 1 });
 	});
 
+	it('draws a saved view as its timeline, saves a change of layout with the view, and drags rows only in the list', async () => {
+		await create(savedView({ displayOptions: { layout: 'timeline', density: 'kept' } }));
+		expect(component.isTimeline()).toBe(true);
+		expect(component.dirty()).toBe(false);
+		// A manual order is dragged in the list only.
+		expect(component.draggable()).toBe(false);
+
+		component.setLayout('list');
+		expect(component.isTimeline()).toBe(false);
+		expect(component.dirty()).toBe(true);
+		expect(component.draggable()).toBe(true);
+
+		api.updateView.mockReturnValueOnce(of(savedView({ version: 4, displayOptions: { density: 'kept' } })));
+		await component.save();
+		// The list is the layout of a view that names none; the other keys of the column stay.
+		expect(api.updateView.mock.calls[0][1].displayOptions).toEqual({ density: 'kept' });
+		expect(api.updateView.mock.calls[0][1]).toMatchObject({ expectedVersion: 3 });
+
+		// A built-in view is always the list.
+		component.setLayout('timeline');
+		component.current.set({ kind: 'built-in', key: 'mine' });
+		component.draft.update((draft: object) => ({ ...draft, layout: 'timeline' }));
+		expect(component.isTimeline()).toBe(false);
+	});
+
+	it('keeps the row keys to the list: on a timeline only a selection takes the task keys', async () => {
+		await create(savedView({ displayOptions: { layout: 'timeline' } }));
+		const keys = (TestBed.inject(ShortcutRegistryService).registerAll as jest.Mock).mock.calls[0][0];
+		component.focusedId.set('t1');
+		expect(keys.listDown.enabled()).toBe(false);
+		expect(keys.listOpen.enabled()).toBe(false);
+		expect(keys.taskStatus.enabled()).toBe(false);
+
+		component.onToggle({ id: 't2', shift: false });
+		expect(keys.taskStatus.enabled()).toBe(true);
+
+		component.setLayout('list');
+		expect(keys.listDown.enabled()).toBe(true);
+		expect(keys.listOpen.enabled()).toBe(true);
+		// Back to the timeline: no focused row.
+		component.setLayout('timeline');
+		expect(component.focusedId()).toBeNull();
+	});
+
 	it('shows a stale save as a conflict, and Overwrite saves the edit on the latest version keeping its other keys', async () => {
 		await create();
 		component.setGroupBy('status');
