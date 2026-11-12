@@ -1,22 +1,24 @@
-import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input, signal } from '@angular/core';
 import { NbIconModule } from '@nebular/theme';
 import { TranslatePipe } from '@ngx-translate/core';
 import { IChatFile } from '@gauzy/contracts';
-import { fileSizeLabel, imageBox, messageAttachments } from '../../chat-attachments';
+import { fileSizeLabel, imageBox, isPlainClick, messageAttachments } from '../../chat-attachments';
+import { FilePreviewComponent } from '../file-preview/file-preview.component';
 
 /**
  * The files of a message: pictures shown inline (their thumbnail when the platform made one), other files as
- * links with their size, and a count of the ones not read yet. Each opens the stored file in a new tab.
+ * links with their size, and a count of the ones not read yet. A click shows the file in a popup over the page
+ * (a click with a modifier key keeps the link's way: the stored file in a new tab).
  */
 @Component({
 	selector: 'ngx-chat-message-attachments',
 	changeDetection: ChangeDetectionStrategy.OnPush,
-	imports: [NbIconModule, TranslatePipe],
+	imports: [NbIconModule, TranslatePipe, FilePreviewComponent],
 	template: `
 		@if (shown().images.length) {
 			<div class="images" data-test="attachment-images">
 				@for (file of shown().images; track file.documentId) {
-					<a class="image" [href]="file.fileUrl || file.thumbUrl" target="_blank" rel="noopener noreferrer" [attr.aria-label]="file.name" [title]="file.name">
+					<a class="image" [href]="file.fileUrl || file.thumbUrl" target="_blank" rel="noopener noreferrer" [attr.aria-label]="file.name" [title]="file.name" (click)="open(file, $event)">
 						<img
 							[src]="file.thumbUrl || file.fileUrl"
 							[alt]="file.name"
@@ -33,7 +35,7 @@ import { fileSizeLabel, imageBox, messageAttachments } from '../../chat-attachme
 			<div class="files" data-test="attachment-files">
 				@for (file of shown().files; track file.documentId) {
 					@if (file.fileUrl) {
-						<a class="file" [href]="file.fileUrl" target="_blank" rel="noopener noreferrer">
+						<a class="file" [href]="file.fileUrl" target="_blank" rel="noopener noreferrer" (click)="open(file, $event)">
 							<nb-icon icon="file-text-outline"></nb-icon>
 							<span class="name">{{ file.name }}</span>
 							@if (size(file)) {
@@ -51,6 +53,9 @@ import { fileSizeLabel, imageBox, messageAttachments } from '../../chat-attachme
 		}
 		@if (shown().unknown > 0) {
 			<p class="unknown"><nb-icon icon="attach-outline"></nb-icon> {{ 'CHAT.MESSAGE.ATTACHMENTS' | translate: { count: shown().unknown } }}</p>
+		}
+		@if (preview(); as file) {
+			<ngx-chat-file-preview [file]="file" (closed)="preview.set(null)"></ngx-chat-file-preview>
 		}
 	`,
 	styles: [
@@ -127,6 +132,16 @@ export class MessageAttachmentsComponent {
 	readonly files = input<ReadonlyMap<string, IChatFile>>(new Map());
 
 	protected readonly shown = computed(() => messageAttachments(this.documentIds(), this.files()));
+
+	/** The file shown in the popup. */
+	protected readonly preview = signal<IChatFile | null>(null);
+
+	/** A plain click shows the file in the popup; with a modifier key the link opens as links do. */
+	protected open(file: IChatFile, event: MouseEvent): void {
+		if (!isPlainClick(event)) return;
+		event.preventDefault();
+		this.preview.set(file);
+	}
 
 	protected size(file: IChatFile): string {
 		return fileSizeLabel(file.fileSize);
