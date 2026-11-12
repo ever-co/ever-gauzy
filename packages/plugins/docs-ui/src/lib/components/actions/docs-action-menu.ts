@@ -283,8 +283,9 @@ export function docsActionMenuSignature(target: IDocsActionTarget, context: IDoc
 		String(target.id),
 		target.kind,
 		target.isArchived ? '1' : '0',
-		// An empty container drops "Duplicate with children".
-		target.childrenCount === 0 ? '1' : '0',
+		// An empty container drops "Duplicate with children"; a page known to have children offers the zip: unknown, none
+		// and some are three keys.
+		typeof target.childrenCount !== 'number' ? 'u' : target.childrenCount > 0 ? 'n' : '0',
 		target.knowledgeStatus ?? '',
 		context.isFavorite ? '1' : '0',
 		context.canMutate === false ? '0' : '1',

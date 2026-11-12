@@ -310,9 +310,16 @@ describe('docsActionMenuSignature — the memo key the kebab bindings rely on', 
 		['kind', target({ kind: DocumentKindEnum.FILE })],
 		['archived', target({ isArchived: true })],
 		['knowledge status', target({ knowledgeStatus: DocumentKnowledgeStatusEnum.INDEXED })],
-		['empty-container state', target({ childrenCount: 0 })]
+		['empty-container state', target({ childrenCount: 0 })],
+		['known children (the zip of a page)', target({ childrenCount: 2 })]
 	])('changes when the %s changes', (_label, changed) => {
 		expect(docsActionMenuSignature(changed, context())).not.toBe(docsActionMenuSignature(target(), context()));
+	});
+
+	it('tells unknown, no and some children apart (the zip item follows them)', () => {
+		const keys = new Set([undefined, 0, 3].map((childrenCount) => docsActionMenuSignature(target({ childrenCount }), context())));
+		expect(keys.size).toBe(3);
+		expect(docsActionMenuSignature(target({ childrenCount: 3 }), context())).toBe(docsActionMenuSignature(target({ childrenCount: 7 }), context()));
 	});
 
 	it('changes when a permission, the star state or the surface changes', () => {
