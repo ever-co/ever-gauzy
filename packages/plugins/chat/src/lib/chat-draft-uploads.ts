@@ -30,6 +30,10 @@ export interface IChatDraftDocument {
 	storageProvider?: string | null;
 	storageKey?: string | null;
 	thumbKey?: string | null;
+	/** Archived in Docs: its owner kept it on purpose. */
+	isArchived?: boolean | null;
+	/** Moved to the Docs trash (recoverable there): never purged by the sweep. */
+	deletedAt?: Date | string | null;
 	/** An object, or its JSON on SQLite (whose text column takes no object). */
 	metadata?: unknown;
 }
@@ -62,8 +66,9 @@ export function isChatComposerUpload(document: IChatDraftDocument | null | undef
 
 /**
  * Whether a draft's document is still the upload its uploader left: a chat FILE of theirs, private, outside the
- * documents tree. A file its owner adopted in Docs since (moved into a folder, shared with the organization or a
- * team) is theirs to keep, and is never swept.
+ * documents tree, neither archived nor in the trash. A file its owner adopted in Docs since (moved into a folder,
+ * shared with the organization or a team, archived, or put in the trash, which Docs can restore it from) is theirs to
+ * keep, and is never swept.
  */
 export function isUntouchedDraft(document: IChatDraftDocument, uploaderUserId: ID): boolean {
 	return (
@@ -71,7 +76,9 @@ export function isUntouchedDraft(document: IChatDraftDocument, uploaderUserId: I
 		document.source === DocumentSourceEnum.CHAT &&
 		String(document.createdByUserId ?? '') === String(uploaderUserId) &&
 		document.visibility === DocumentVisibilityEnum.PRIVATE &&
-		!document.parentId
+		!document.parentId &&
+		!document.isArchived &&
+		!document.deletedAt
 	);
 }
 

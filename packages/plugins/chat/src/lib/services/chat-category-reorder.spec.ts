@@ -43,10 +43,10 @@ function over(options: { databaseType?: string } = {}) {
 		{ id: 'c4', kind: 'channel', categoryId: null, position: 0, tenantId: 'ten', organizationId: 'org2' }
 	];
 	const writes: Array<{ table: string; id: string; patch: Record<string, unknown> }> = [];
-	const reads: Array<{ table: string; lock?: unknown }> = [];
+	const reads: Array<{ table: string; lock?: unknown; order?: unknown }> = [];
 	const repository = (table: string, rows: Array<{ id: string; organizationId?: string }>) => ({
-		find: jest.fn(async ({ where, lock }: { where: { id?: { _value?: string[] }; organizationId?: string }; lock?: unknown }) => {
-			reads.push({ table, lock });
+		find: jest.fn(async ({ where, lock, order }: { where: { id?: { _value?: string[] }; organizationId?: string }; lock?: unknown; order?: unknown }) => {
+			reads.push({ table, lock, order });
 			const wanted = where?.id?._value;
 			return rows
 				.filter((row) => (!wanted || wanted.includes(row.id)) && (!where?.organizationId || row.organizationId === where.organizationId))
@@ -109,13 +109,14 @@ describe('ChatConversationService.reorderCategories', () => {
 	it('reads the positions it compares in its transaction, locking the categories then the channels (not on SQLite)', async () => {
 		const { service, reads } = over();
 		await service.reorderCategories(manager, { categoryIds: ['k2', 'k1', 'k3'], channels: [{ categoryId: 'k1', conversationIds: ['c2', 'c1'] }] });
+		// Every reorder takes the rows in one order (by id), so two of them never wait on each other in a cycle.
 		expect(reads).toEqual([
-			{ table: 'category', lock: { mode: 'pessimistic_write' } },
-			{ table: 'conversation', lock: { mode: 'pessimistic_write' } }
+			{ table: 'category', lock: { mode: 'pessimistic_write' }, order: { id: 'ASC' } },
+			{ table: 'conversation', lock: { mode: 'pessimistic_write' }, order: { id: 'ASC' } }
 		]);
 		const sqlite = over({ databaseType: 'sqlite' });
 		await sqlite.service.reorderCategories(manager, { categoryIds: ['k2', 'k1', 'k3'] });
-		expect(sqlite.reads).toEqual([{ table: 'category', lock: undefined }]);
+		expect(sqlite.reads).toEqual([{ table: 'category', lock: undefined, order: { id: 'ASC' } }]);
 	});
 
 	it("never files a channel under another organization's category, even for a caller managing the whole tenant", async () => {

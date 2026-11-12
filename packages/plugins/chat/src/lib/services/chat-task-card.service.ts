@@ -12,6 +12,34 @@ import { ChatAccessService, IChatCaller } from './chat-access.service';
 /** The most messages one change from a card tells their conversations about (the newest that show the task). */
 export const CHAT_TASK_CARD_FANOUT = 100;
 
+/** A status or priority record, as a card change reads it. */
+interface IChatTaskRecord {
+	id: ID;
+	name?: string | null;
+	value?: string | null;
+}
+
+/** Where a task's status and priority records may come from. */
+interface ChatTaskRecordScope {
+	tenantId: ID;
+	organizationId: ID | null;
+	projectId: ID | null;
+}
+
+/** The records a task may take: its organization's, the tenant's shared ones (no organization), the platform's defaults. */
+function scopeOf(scope: ChatTaskRecordScope): Array<Record<string, unknown>> {
+	return [
+		...(scope.organizationId ? [{ tenantId: scope.tenantId, organizationId: scope.organizationId }] : []),
+		{ tenantId: scope.tenantId, organizationId: IsNull() },
+		{ tenantId: IsNull(), organizationId: IsNull() }
+	];
+}
+
+/** The name a task holds for a record, as the task page writes it (`value || name`). */
+function recordName(record: IChatTaskRecord): string | null {
+	return (record.value ?? '').trim() || (record.name ?? '').trim() || null;
+}
+
 /**
  * The task update a card's change makes: only what the input names, as the task page writes it (`status` with its
  * `taskStatusId`, `priority` with its `taskPriorityId`, `members` for the assignees). Throws when it names nothing.
@@ -85,35 +113,80 @@ export class ChatTaskCardService {
 		if (!reference) throw new NotFoundException('The message shows no such task.');
 		const organizationId = (conversation.organizationId ?? caller.organizationId ?? null) as ID | null;
 		const task = (await this.dataSource.getRepository<ObjectLiteral>('Task').findOne({
-			select: { id: true, organizationId: true },
+			select: { id: true, organizationId: true, projectId: true },
 			where: { id: taskId, tenantId: caller.tenantId, ...(organizationId ? { organizationId } : {}) }
-		} as never)) as { id: ID; organizationId?: ID | null } | null;
+		} as never)) as { id: ID; organizationId?: ID | null; projectId?: ID | null } | null;
 		if (!task) throw new NotFoundException('The task was not found');
 
-		const taskOrganizationId = (task.organizationId ?? organizationId) as ID | null;
-		await this.requireRecord('TaskStatus', input.taskStatusId, caller.tenantId, taskOrganizationId, 'The status was not found');
-		await this.requireRecord('TaskPriority', input.taskPriorityId, caller.tenantId, taskOrganizationId, 'The priority was not found');
-		const assignees = input.assigneeEmployeeIds ? await this.assignees(caller.tenantId, taskOrganizationId, input.assigneeEmployeeIds) : null;
-		const patch = taskPatchOf(input, assignees);
+		const scope: ChatTaskRecordScope = { tenantId: caller.tenantId, organizationId: (task.organizationId ?? organizationId) as ID | null, projectId: task.projectId ?? null };
+		const statusRecord = await this.requireRecord('TaskStatus', input.taskStatusId, scope, 'The status was not found');
+		const priorityRecord = await this.requireRecord('TaskPriority', input.taskPriorityId, scope, 'The priority was not found');
+		const assignees = input.assigneeEmployeeIds ? await this.assignees(caller.tenantId, scope.organizationId, input.assigneeEmployeeIds) : null;
+		const patch = taskPatchOf(input, assignees) as Record<string, unknown>;
+		// The task page writes a status with its record, and a priority with its record: a card does too.
+		await this.pair(patch, 'status', 'taskStatusId', 'TaskStatus', statusRecord, scope);
+		await this.pair(patch, 'priority', 'taskPriorityId', 'TaskPriority', priorityRecord, scope);
 
-		const updated: ITask = await this.commandBus.execute(new TaskUpdateCommand(taskId, patch as ITaskUpdateInput));
+		const updated: ITask = await this.commandBus.execute(new TaskUpdateCommand(taskId, patch as unknown as ITaskUpdateInput));
 		return { task: updated, events: await this.tellCards(caller, taskId) };
+	}
+
+	/**
+	 * Keeps a name and its record together, as the task page writes them (`status: value || name` with `taskStatusId`):
+	 * a record named gives its name; a name given alone takes the matching record of the task's scope (its project's
+	 * first, then its organization's, the tenant's shared ones, the platform's defaults), or none — so a card never
+	 * leaves the task showing the record it had before. A record cleared (null) leaves the name as given.
+	 */
+	private async pair(
+		patch: Record<string, unknown>,
+		nameField: 'status' | 'priority',
+		idField: 'taskStatusId' | 'taskPriorityId',
+		entity: 'TaskStatus' | 'TaskPriority',
+		record: IChatTaskRecord | null,
+		scope: ChatTaskRecordScope
+	): Promise<void> {
+		if (record) {
+			patch[nameField] = recordName(record);
+			return;
+		}
+		const name = patch[nameField];
+		if (typeof name !== 'string' || !name || patch[idField] !== undefined) return;
+		const found = await this.recordNamed(entity, name, scope);
+		patch[idField] = found?.id ?? null;
+		if (found) patch[nameField] = recordName(found) ?? name;
+	}
+
+	/** The record of the task's scope whose value or name is this one (any case): the most specific scope first. */
+	private async recordNamed(entity: 'TaskStatus' | 'TaskPriority', name: string, scope: ChatTaskRecordScope): Promise<IChatTaskRecord | null> {
+		const records = (await this.dataSource.getRepository<ObjectLiteral>(entity).find({
+			select: { id: true, name: true, value: true, organizationId: true, projectId: true },
+			where: scopeOf(scope)
+		} as never)) as Array<IChatTaskRecord & { organizationId?: ID | null; projectId?: ID | null }>;
+		const wanted = name.trim().toLowerCase();
+		const ofProject = (record: { projectId?: ID | null }) => !!scope.projectId && String(record.projectId ?? '') === String(scope.projectId);
+		const matching = records.filter(
+			(record) =>
+				// Another project's record is not the task's to take.
+				(!record.projectId || ofProject(record)) &&
+				[record.value, record.name].some((text) => typeof text === 'string' && text.trim().toLowerCase() === wanted)
+		);
+		const rank = (record: { organizationId?: ID | null; projectId?: ID | null }) => (ofProject(record) ? 0 : record.organizationId ? 1 : 2);
+		return matching.sort((a, b) => rank(a) - rank(b))[0] ?? null;
 	}
 
 	/**
 	 * A record a change names (a status, a priority) must be one the task may take: the task organization's, the
 	 * tenant's shared one (no organization), or a platform default (no tenant, no organization). Another organization's
 	 * record reads as not found. Null clears it and needs no check.
+	 *
+	 * @returns The record (its name and value), or null when none is named.
 	 */
-	private async requireRecord(entity: string, id: ID | null | undefined, tenantId: ID, organizationId: ID | null, missing: string): Promise<void> {
-		if (!id) return;
-		const where = [
-			...(organizationId ? [{ id, tenantId, organizationId }] : []),
-			{ id, tenantId, organizationId: IsNull() },
-			{ id, tenantId: IsNull(), organizationId: IsNull() }
-		];
-		const found = await this.dataSource.getRepository<ObjectLiteral>(entity).findOne({ select: { id: true }, where } as never);
+	private async requireRecord(entity: 'TaskStatus' | 'TaskPriority', id: ID | null | undefined, scope: ChatTaskRecordScope, missing: string): Promise<IChatTaskRecord | null> {
+		if (!id) return null;
+		const where = scopeOf(scope).map((clause) => ({ id, ...clause }));
+		const found = (await this.dataSource.getRepository<ObjectLiteral>(entity).findOne({ select: { id: true, name: true, value: true }, where } as never)) as IChatTaskRecord | null;
 		if (!found) throw new NotFoundException(missing);
+		return found;
 	}
 
 	/**

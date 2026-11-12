@@ -34,7 +34,9 @@ const DRAFT_DOCUMENT_COLUMNS = {
 	createdByUserId: true,
 	storageProvider: true,
 	storageKey: true,
-	thumbKey: true
+	thumbKey: true,
+	isArchived: true,
+	deletedAt: true
 } as const;
 
 /**
@@ -64,9 +66,9 @@ const DRAFT_DOCUMENT_COLUMNS = {
  * never a row naming missing bytes).
  *
  * **The Docs rules hold.** Only a draft that is still the upload its uploader left is purged ({@link isUntouchedDraft}:
- * private, outside the documents tree, theirs) and only while nothing of the draft's own tenant carries it — no
- * document link of any record, no share, no message naming it; anything else keeps the document, as any upload was
- * kept before. Sent files keep the Docs plugin's soft delete. The purge is the row's hard delete (the document's own
+ * private, outside the documents tree, not archived, not in the trash, theirs) and only while nothing of the draft's
+ * own tenant carries it — no document link of any record, no share, no message naming it; anything else keeps the
+ * document, as any upload was kept before. Sent files keep the Docs plugin's soft delete. The purge is the row's hard delete (the document's own
  * tables follow by their `ON DELETE CASCADE` keys), and a stored key is freed only when no other document row — of any
  * tenant, trashed ones included — still names it, the rule the Docs plugin's own blob cleanup keeps.
  */
