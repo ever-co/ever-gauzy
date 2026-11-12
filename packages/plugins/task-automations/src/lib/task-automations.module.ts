@@ -15,6 +15,7 @@ import { TaskAutomationEngine } from './services/task-automation-engine.service'
 import { TaskAutomationRuleService } from './services/task-automation-rule.service';
 import { TaskAutomationRunStore } from './services/task-automation-run.store';
 import { TaskAutomationRunner } from './services/task-automation-runner.service';
+import { TaskAutomationTaskLock } from './services/task-automation-task-lock';
 import { TaskAutomationTaskReader } from './services/task-automation-task-reader.service';
 import { TaskAutomationWriter } from './services/task-automation-writer.service';
 import { TaskAutomationController } from './task-automation.controller';
@@ -45,6 +46,7 @@ import { TASK_AUTOMATION_MAINTENANCE_QUEUE_NAME } from './task-automation.consta
 		TaskAutomationTaskReader,
 		TaskAutomationRunStore,
 		TaskAutomationWriter,
+		TaskAutomationTaskLock,
 		TaskAutomationRunner,
 		TaskAutomationEngine,
 		TaskAutomationDueSweepService,

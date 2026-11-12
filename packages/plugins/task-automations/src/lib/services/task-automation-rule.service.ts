@@ -142,7 +142,10 @@ export class TaskAutomationRuleService {
 		return this.get(scope, saved.id as ID);
 	}
 
-	/** Edits a rule: only the fields the body states change. */
+	/**
+	 * Edits a rule: only the fields the body states change, and only those are written, so two edits of different
+	 * fields at once do not undo each other (the rule is validated whole, with the stored values for the rest).
+	 */
 	async update(scope: ITaskAutomationScope, id: ID, input: ITaskAutomationRuleUpdateInput): Promise<ITaskAutomationRule> {
 		const current = ruleFromRow(await this.row(scope, id));
 		const rule = this.validated({
@@ -155,14 +158,20 @@ export class TaskAutomationRuleService {
 		const projectId = input.projectId !== undefined ? input.projectId : (current.projectId ?? null);
 		const organizationTeamId = input.organizationTeamId !== undefined ? input.organizationTeamId : (current.organizationTeamId ?? null);
 		await this.checkReferences(scope, { ...rule, projectId, organizationTeamId });
-		await this.rules.update({ id, tenantId: scope.tenantId, organizationId: scope.organizationId } as never, {
-			name: rule.name,
-			description: rule.description,
-			projectId: projectId as never,
-			organizationTeamId: organizationTeamId as never,
+		const columns = ruleColumns(rule);
+		const changed: Record<string, unknown> = {
+			...(input.name !== undefined ? { name: rule.name } : {}),
+			...(input.description !== undefined ? { description: rule.description } : {}),
+			...(input.projectId !== undefined ? { projectId } : {}),
+			...(input.organizationTeamId !== undefined ? { organizationTeamId } : {}),
 			...(input.isEnabled !== undefined ? { isEnabled: !!input.isEnabled } : {}),
-			...ruleColumns(rule)
-		} as never);
+			...(input.trigger !== undefined ? { triggerType: columns.triggerType, triggerConfig: columns.triggerConfig } : {}),
+			...(input.conditions !== undefined ? { conditions: columns.conditions } : {}),
+			...(input.actions !== undefined ? { actions: columns.actions } : {})
+		};
+		if (Object.keys(changed).length) {
+			await this.rules.update({ id, tenantId: scope.tenantId, organizationId: scope.organizationId } as never, changed as never);
+		}
 		this.invalidate(scope.organizationId);
 		return this.get(scope, id);
 	}

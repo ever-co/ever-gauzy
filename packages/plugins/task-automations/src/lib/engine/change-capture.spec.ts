@@ -79,6 +79,17 @@ describe('change capture', () => {
 		expect(parseChangeEvent({ taskId: 'x', tenantId: 't', organizationId: 'o', action: 'deleted' })).toBeNull();
 		expect(parseChangeEvent({ tenantId: 't', organizationId: 'o', action: 'created' })).toBeNull();
 		expect(parseChangeEvent('nope')).toBeNull();
+		// Malformed changes are refused, never read as a trigger: a string where ids are due, a field that is not
+		// `{ from, to }` of text.
+		const base = { taskId: 'x', tenantId: 't', organizationId: 'o', action: 'updated' };
+		expect(parseChangeEvent({ ...base, changes: { membersAdded: 'x' } })).toBeNull();
+		expect(parseChangeEvent({ ...base, changes: { membersAdded: [1] } })).toBeNull();
+		expect(parseChangeEvent({ ...base, changes: { status: 'done' } })).toBeNull();
+		expect(parseChangeEvent({ ...base, changes: { status: { from: 'open', to: { id: 1 } } } })).toBeNull();
+		expect(parseChangeEvent({ ...base, changes: [] })).toBeNull();
+		expect(parseChangeEvent({ ...base, changes: { status: { from: 'open', to: 'done' }, other: 1 } })).toMatchObject({
+			changes: { status: { from: 'open', to: 'done' } }
+		});
 		expect(parseChangeEvent({ taskId: 'x', tenantId: 't', organizationId: 'o', action: 'created', depth: 'x' })).toMatchObject({ depth: 0, chain: [] });
 	});
 });

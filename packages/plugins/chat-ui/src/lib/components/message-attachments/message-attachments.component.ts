@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, input } from '@angular/co
 import { NbIconModule } from '@nebular/theme';
 import { TranslatePipe } from '@ngx-translate/core';
 import { IChatFile } from '@gauzy/contracts';
-import { fileSizeLabel, messageAttachments } from '../../chat-attachments';
+import { fileSizeLabel, imageBox, messageAttachments } from '../../chat-attachments';
 
 /**
  * The files of a message: pictures shown inline (their thumbnail when the platform made one), other files as
@@ -17,7 +17,14 @@ import { fileSizeLabel, messageAttachments } from '../../chat-attachments';
 			<div class="images" data-test="attachment-images">
 				@for (file of shown().images; track file.documentId) {
 					<a class="image" [href]="file.fileUrl || file.thumbUrl" target="_blank" rel="noopener noreferrer" [attr.aria-label]="file.name" [title]="file.name">
-						<img [src]="file.thumbUrl || file.fileUrl" [alt]="file.name" loading="lazy" />
+						<img
+							[src]="file.thumbUrl || file.fileUrl"
+							[alt]="file.name"
+							loading="lazy"
+							[attr.width]="box(file)?.width ?? null"
+							[attr.height]="box(file)?.height ?? null"
+							[class.sized]="!!box(file)"
+						/>
 					</a>
 				}
 			</div>
@@ -69,6 +76,10 @@ import { fileSizeLabel, messageAttachments } from '../../chat-attachments';
 				max-height: 15rem;
 				object-fit: contain;
 			}
+			/* A picture of known size keeps its box while it loads, and its proportions in a narrow column. */
+			.image img.sized {
+				height: auto;
+			}
 			.files {
 				display: flex;
 				flex-wrap: wrap;
@@ -119,5 +130,10 @@ export class MessageAttachmentsComponent {
 
 	protected size(file: IChatFile): string {
 		return fileSizeLabel(file.fileSize);
+	}
+
+	/** The space a picture reserves before it loads (null when its size is not known). */
+	protected box(file: IChatFile): { width: number; height: number } | null {
+		return imageBox(file);
 	}
 }

@@ -16,6 +16,7 @@ import { ITaskAutomationTaskSnapshot } from '../engine/task-snapshot';
 import { allChildrenClosed } from '../engine/triggers';
 import { TaskAutomationRuleService } from './task-automation-rule.service';
 import { TaskAutomationRunStore } from './task-automation-run.store';
+import { TaskAutomationTaskLock } from './task-automation-task-lock';
 import { TaskAutomationTaskReader } from './task-automation-task-reader.service';
 import { TaskAutomationWriter } from './task-automation-writer.service';
 
@@ -30,6 +31,8 @@ export interface ITaskAutomationRunOptions {
 	chain: ID[];
 	/** `ALL_SUBTASKS_DONE`: run only when every sub-task of the task is done. */
 	requiresAllChildrenDone?: boolean;
+	/** `SUBTASK_REOPENED`: run only while this sub-task of the task is still open. */
+	requiresOpenChildId?: ID;
 	/** `DUE_DATE_PASSED`: run only when the task is still open and still due at this instant (ISO). */
 	requiresOpenAndDue?: string;
 	now?: Date;
@@ -64,7 +67,11 @@ function failUpdateChanges(changes: ITaskAutomationChange[], reason: string): vo
  * once per change, holds to the loop guard, the conditions and the rate limit, applies the actions through the
  * platform's task update as the rule's system actor, sends its notices, and records the outcome. A failure of the
  * task update or a notice is the run's outcome, never an exception: the change that set the rule off is not
- * delivered again for it. A failure to claim or record is thrown, so the delivery is tried again.
+ * delivered again for it. A failure to claim or record is thrown, so the delivery is tried again, and so is
+ * `TaskAutomationRetryLaterError` (the task is busy with another run, or this run is still marked running).
+ *
+ * The whole run holds the task's lock (`TaskAutomationTaskLock`): the due sweep and the parent triggers reach a task
+ * from outside its own outbox partition, and two runs must not read the same labels and write two full lists.
  */
 @Injectable()
 export class TaskAutomationRunner {
@@ -74,10 +81,15 @@ export class TaskAutomationRunner {
 		private readonly rules: TaskAutomationRuleService,
 		private readonly runs: TaskAutomationRunStore,
 		private readonly reader: TaskAutomationTaskReader,
-		private readonly writer: TaskAutomationWriter
+		private readonly writer: TaskAutomationWriter,
+		private readonly taskLock: TaskAutomationTaskLock
 	) {}
 
 	async run(rule: ITaskAutomationRule, subjectTaskId: ID, options: ITaskAutomationRunOptions): Promise<ITaskAutomationRunResult> {
+		return this.taskLock.run(subjectTaskId, () => this.runLocked(rule, subjectTaskId, options));
+	}
+
+	private async runLocked(rule: ITaskAutomationRule, subjectTaskId: ID, options: ITaskAutomationRunOptions): Promise<ITaskAutomationRunResult> {
 		const now = options.now ?? new Date();
 		const tenantId = rule.tenantId as ID;
 		const organizationId = rule.organizationId as ID;
@@ -92,6 +104,13 @@ export class TaskAutomationRunner {
 		if (options.requiresOpenAndDue) {
 			const stillDue = !!subject.dueDate && subject.dueDate.toISOString() === options.requiresOpenAndDue;
 			if (!stillDue || isClosedStatus(subject, catalog.statuses)) return { outcome: null, reason: 'not-matched' };
+		}
+		if (options.requiresOpenChildId) {
+			// The sub-task may have been closed again (or moved) since its reopening was recorded.
+			const child = await this.reader.snapshot(tenantId, options.requiresOpenChildId);
+			if (!child || child.parentId !== subject.id || isClosedStatus(child, catalog.statuses)) {
+				return { outcome: null, reason: 'not-matched' };
+			}
 		}
 
 		const run = await this.runs.claim(
@@ -139,17 +158,29 @@ export class TaskAutomationRunner {
 
 			const marker = nextMarker({ id: rule.id as ID, name: rule.name }, run.id as ID, options.depth, options.chain);
 			let applied = false;
+			let updateFailed = false;
 			if (hasUpdate) {
 				try {
 					await this.writer.applyUpdate(subject, plan.update, marker);
 					applied = true;
 				} catch (error) {
+					updateFailed = true;
 					failUpdateChanges(plan.changes, this.writer.describe(error));
 				}
 			}
 			const notices = plan.changes.filter((change) => change.field === 'notice' && change.to !== undefined);
-			for (const [index, notice] of plan.notices.entries()) {
+			for (const [index, planned] of plan.notices.entries()) {
 				const line = notices[index];
+				// The update did not happen: the notice goes to the task's assignees as they are, never to people the
+				// failed update was to add.
+				const notice = updateFailed ? { ...planned, employeeIds: [...subject.memberIds] } : planned;
+				if (!notice.employeeIds.length) {
+					if (line) {
+						line.to = 0;
+						line.note = 'The task has no assignee.';
+					}
+					continue;
+				}
 				try {
 					const sent = await this.writer.notify(subject, notice, marker, options.eventKey);
 					if (line) {

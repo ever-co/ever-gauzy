@@ -1,5 +1,5 @@
 import { ChatMemberRoleEnum, IChatCategory, IChatConversationWithState } from '@gauzy/contracts';
-import { canManageConversation, moveCategory, nextCategoryPosition, sortCategories } from './chat-categories';
+import { canManageConversation, moveCategory, movedCategoryOrder, nextCategoryPosition, sortCategories } from './chat-categories';
 
 const category = (id: string, name: string, position: number): IChatCategory => ({ id, name, position }) as IChatCategory;
 
@@ -24,6 +24,16 @@ describe('chat categories', () => {
 		expect(moveCategory(list, 'b', -1)).toEqual([]);
 		expect(moveCategory(list, 'c', 1)).toEqual([]);
 		expect(moveCategory(list, 'nope', 1)).toEqual([]);
+	});
+
+	it('gives the whole order after a move, for the one reorder call', () => {
+		// Clients, Teams, Projects → Teams, Clients, Projects.
+		expect(movedCategoryOrder(list, 'a', -1)).toEqual(['a', 'b', 'c']);
+		expect(movedCategoryOrder(list, 'b', 1)).toEqual(['a', 'b', 'c']);
+		expect(movedCategoryOrder(list, 'c', -1)).toEqual(['b', 'c', 'a']);
+		expect(movedCategoryOrder(list, 'b', -1)).toBeNull();
+		expect(movedCategoryOrder(list, 'c', 1)).toBeNull();
+		expect(movedCategoryOrder(list, 'nope', 1)).toBeNull();
 	});
 
 	it('puts a new category after the last one', () => {

@@ -6,11 +6,25 @@ import { runWithTenantStorageSettings, TenantSettingService } from '@gauzy/core'
 export const IMPORT_TENANT_SETTINGS_TTL_MS = 60_000;
 
 /**
- * The storage of an import's tenant for work that runs without a signed-in request: the `docs.import` run (a queue
- * thread) and the stalled-import sweep. A tenant can keep its own bucket and credentials in its settings, which the
- * storage providers read from the request; here they are read from the database and applied to the work
- * (`runWithTenantStorageSettings`), so the run reads the zip from, and stores the attachments in, the bucket the upload
- * used.
+ * The tenant's storage settings could not be read, so the work did not run: run with the deployment's storage instead,
+ * it would read the wrong file or store the tenant's file in the wrong place. A hiccup to retry.
+ */
+export class TenantStorageSettingsError extends Error {
+	constructor(
+		readonly tenantId: ID,
+		public readonly cause?: unknown
+	) {
+		super(`The storage settings of tenant ${tenantId} could not be read: ${(cause as Error)?.message ?? cause}`);
+		this.name = 'TenantStorageSettingsError';
+	}
+}
+
+/**
+ * The storage of a tenant for Docs work that runs without a signed-in request: the `docs.import` run (a queue thread),
+ * the stalled-import sweep, the `docs.extract` and `docs.thumbnail` jobs, and the capture of a chat attachment. A
+ * tenant can keep its own bucket and credentials in its settings, which the storage providers read from the request;
+ * here they are read from the database and applied to the work (`runWithTenantStorageSettings`), so the work reads
+ * the file from, and stores what it makes in, the bucket the upload used.
  */
 @Injectable()
 export class ImportTenantStorage {
@@ -37,8 +51,9 @@ export class ImportTenantStorage {
 			this.cache.set(String(tenantId), { at: Date.now(), settings });
 			return settings;
 		} catch (error) {
-			this.logger.warn(`The storage settings of tenant ${tenantId} could not be read: ${(error as Error)?.message ?? error}`);
-			throw error;
+			const failure = new TenantStorageSettingsError(tenantId, error);
+			this.logger.warn(failure.message);
+			throw failure;
 		}
 	}
 }

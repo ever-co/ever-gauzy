@@ -14,6 +14,11 @@ export interface ITaskAutomationTriggerMatch {
 	subjectTaskId: ID;
 	/** `ALL_SUBTASKS_DONE`: the rule runs only when every sub-task of the subject is done. */
 	requiresAllChildrenDone?: boolean;
+	/**
+	 * `SUBTASK_REOPENED`: the rule runs only while this sub-task is still open when the rule runs (it may have been
+	 * closed again since the change was recorded).
+	 */
+	requiresOpenChildId?: ID;
 }
 
 /** The triggers a change event is fired for, whatever the organization's rules (the capture asks before it appends). */
@@ -58,20 +63,26 @@ export function statusChangeOf(
  *
  * @param trigger The rule's trigger.
  * @param change The change, as the capture recorded it.
- * @param changedTask The changed task as it is now (for its parent).
+ * @param changedTask The changed task as it is now (for its parent, and its project: a status is named by its
+ * project's row first).
  * @param statuses The organization's statuses (for the done / open tests).
  */
 export function matchChangeTrigger(
 	trigger: ITaskAutomationTrigger,
 	change: Pick<ITaskAutomationChangeEvent, 'taskId' | 'action' | 'changes'>,
-	changedTask: { parentId: ID | null } | null,
+	changedTask: { parentId: ID | null; projectId?: ID | null } | null,
 	statuses: readonly ITaskAutomationStatusRow[]
 ): ITaskAutomationTriggerMatch | null {
+	const projectId = changedTask?.projectId ?? null;
+	const statusChange = () => {
+		const moved = change.action === 'updated' ? statusChangeOf(change) : null;
+		return moved ? { from: { ...moved.from, projectId }, to: { ...moved.to, projectId } } : null;
+	};
 	switch (trigger?.type) {
 		case TaskAutomationTriggerEnum.TASK_CREATED:
 			return change.action === 'created' ? { subjectTaskId: change.taskId } : null;
 		case TaskAutomationTriggerEnum.STATUS_CHANGED: {
-			const moved = change.action === 'updated' ? statusChangeOf(change) : null;
+			const moved = statusChange();
 			if (!moved) return null;
 			if (trigger.toStatuses?.length && !statusMatches(moved.to, trigger.toStatuses, statuses)) return null;
 			if (trigger.fromStatuses?.length && !statusMatches(moved.from, trigger.fromStatuses, statuses)) return null;
@@ -82,7 +93,7 @@ export function matchChangeTrigger(
 				? { subjectTaskId: change.taskId }
 				: null;
 		case TaskAutomationTriggerEnum.ALL_SUBTASKS_DONE: {
-			const moved = change.action === 'updated' ? statusChangeOf(change) : null;
+			const moved = statusChange();
 			const parentId = changedTask?.parentId ?? null;
 			if (!moved || !parentId) return null;
 			// Only the move that closes a sub-task: a done sub-task edited again does not close the parent twice.
@@ -90,11 +101,11 @@ export function matchChangeTrigger(
 			return { subjectTaskId: parentId, requiresAllChildrenDone: true };
 		}
 		case TaskAutomationTriggerEnum.SUBTASK_REOPENED: {
-			const moved = change.action === 'updated' ? statusChangeOf(change) : null;
+			const moved = statusChange();
 			const parentId = changedTask?.parentId ?? null;
 			if (!moved || !parentId) return null;
 			if (!isClosedStatus(moved.from, statuses) || isClosedStatus(moved.to, statuses)) return null;
-			return { subjectTaskId: parentId };
+			return { subjectTaskId: parentId, requiresOpenChildId: change.taskId };
 		}
 		default:
 			// DUE_DATE_PASSED is the schedule's, LINK_CLOSED the link event's.

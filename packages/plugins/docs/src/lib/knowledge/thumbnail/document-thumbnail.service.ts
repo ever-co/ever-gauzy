@@ -3,6 +3,7 @@ import * as sharpModule from 'sharp';
 import { DocumentKindEnum } from '@gauzy/contracts';
 import { FileStorage, readStorageFileAsBuffer } from '@gauzy/core';
 import { Document } from '../../entities/document.entity';
+import { ImportTenantStorage } from '../../import/import-tenant-storage';
 import { TypeOrmDocumentRepository } from '../../repositories/type-orm-document.repository';
 import { PdfRasterizerService } from '../extraction/pdf-rasterizer.service';
 import { IDocsThumbnailJob } from '../queue/docs-job.types';
@@ -51,7 +52,8 @@ export class DocumentThumbnailService {
 
 	constructor(
 		private readonly typeOrmDocumentRepository: TypeOrmDocumentRepository,
-		private readonly rasterizer: PdfRasterizerService
+		private readonly rasterizer: PdfRasterizerService,
+		private readonly tenantStorage: ImportTenantStorage
 	) {}
 
 	/**
@@ -73,12 +75,16 @@ export class DocumentThumbnailService {
 				return 'skipped-existing';
 			}
 
-			const provider = new FileStorage().setProvider(document.storageProvider).getProviderInstance();
+			// The storage work runs with the tenant's own storage settings (a queue thread has no request to carry them):
+			// the source is read from, and the thumbnail stored in, the bucket the upload used.
+			const tenantId = job.tenantId ?? document.tenantId;
+			const storageKey = document.storageKey;
+			const providerOf = () => new FileStorage().setProvider(document.storageProvider).getProviderInstance();
 			// As bytes whatever the provider answers (the S3 family returns the SDK's body stream), up to the
 			// document's recorded size (the default bound when it has none); a failed read lands in the catch below.
-			const source = await readStorageFileAsBuffer(provider, document.storageKey, {
-				maxBytes: document.fileSize
-			});
+			const source = await this.tenantStorage.run(tenantId, () =>
+				readStorageFileAsBuffer(providerOf(), storageKey, { maxBytes: document.fileSize })
+			);
 
 			const pixels = await this.sourcePixels(document, source);
 			if (!pixels) {
@@ -95,8 +101,10 @@ export class DocumentThumbnailService {
 				.webp({ quality: DOCS_THUMBNAIL_QUALITY })
 				.toBuffer();
 
-			const destination = thumbnailKeyFor(document.storageKey);
-			const uploaded: any = await provider.putFile(thumbnail, destination);
+			const destination = thumbnailKeyFor(storageKey);
+			const uploaded: any = await this.tenantStorage.run(tenantId, async () =>
+				providerOf().putFile(thumbnail, destination)
+			);
 			// Providers that rewrite the key (S3 prefixes, the local provider's absolute path)
 			// report the effective one; fall back to what we asked for.
 			const thumbKey = uploaded?.key || destination;

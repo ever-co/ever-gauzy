@@ -1,8 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { EventsHandler, IEventHandler } from '@nestjs/cqrs';
 import { DataSource } from 'typeorm';
-import { TASK_AUTOMATION_EVENT_NAMES, TASK_AUTOMATION_LIMITS } from '@gauzy/contracts';
-import { ActivityLogEvent, EventOutboxService, RequestContext } from '@gauzy/core';
+import { IOutboxWriteInput, TASK_AUTOMATION_EVENT_NAMES, TASK_AUTOMATION_LIMITS } from '@gauzy/contracts';
+import { ActivityLogEvent, EventOutboxService, getORMType, MultiORMEnum, RequestContext } from '@gauzy/core';
 import { changeFromActivity, ITaskActivityFact } from '../engine/change-capture';
 import { triggersOfChange } from '../engine/triggers';
 import { currentAutomationMarker } from '../services/task-automation-context';
@@ -49,7 +49,7 @@ export class TaskAutomationChangeCapture implements IEventHandler<ActivityLogEve
 			if (!triggers.length) return;
 			const enabled = await this.rules.enabledTriggers(change.tenantId, change.organizationId);
 			if (!triggers.some((trigger) => enabled.has(trigger))) return;
-			await this.outbox.append(this.dataSource.manager, {
+			await this.append({
 				name: TASK_AUTOMATION_EVENT_NAMES.TASK_CHANGED,
 				aggregateType: TASK_AUTOMATION_AGGREGATE,
 				aggregateId: change.taskId,
@@ -65,6 +65,22 @@ export class TaskAutomationChangeCapture implements IEventHandler<ActivityLogEve
 		} catch (error) {
 			this.logger.warn(`A task change was not handed to the automations: ${(error as Error)?.message}`);
 		}
+	}
+
+	/**
+	 * Appends through the ORM `DB_ORM` configures (under MikroORM the outbox's TypeORM entity maps its base columns
+	 * only, so the row must be written through MikroORM), in a transaction of its own: the outbox's commit hook then
+	 * wakes the dispatch pass at once.
+	 */
+	private async append(input: IOutboxWriteInput): Promise<void> {
+		if (getORMType() === MultiORMEnum.MikroORM) {
+			const em = this.outbox.mikroOrmEventOutboxRepository?.getEntityManager?.();
+			if (em) {
+				await em.fork().transactional((transaction) => this.outbox.append(transaction as never, input));
+				return;
+			}
+		}
+		await this.dataSource.manager.transaction((manager) => this.outbox.append(manager, input));
 	}
 
 	private actor() {
