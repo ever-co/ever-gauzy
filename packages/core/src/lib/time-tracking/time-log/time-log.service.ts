@@ -50,6 +50,8 @@ import {
 	TimeLogDeleteCommand,
 	TimeLogUpdateCommand
 } from './commands';
+import { ITimeSlotDurationRecalculateInput, TimeSlotDurationRecalculateCommand } from '../time-slot/commands';
+import { timeSlotIdsReachedBy } from '../time-slot/utils';
 import {
 	getDateRangeFormat,
 	getDaysBetweenDates,
@@ -2018,6 +2020,19 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 	}
 
 	/**
+	 * Gives the slots manual time shares with the entries it overlapped the time those entries spend in them, once the
+	 * manual entry is saved. Manual time that overlapped no slot sends nothing.
+	 *
+	 * @param input The employee and the slots the overlapped entries held within the manual time.
+	 */
+	private async recalculateSharedTimeSlots(input: ITimeSlotDurationRecalculateInput): Promise<void> {
+		if (isEmpty(input.timeSlotsIds)) {
+			return;
+		}
+		await this.commandBus.execute(new TimeSlotDurationRecalculateCommand(input));
+	}
+
+	/**
 	 * Adds a manual time log entry.
 	 *
 	 * @param request The input data for the manual time log.
@@ -2073,12 +2088,14 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 				})
 			);
 
+			const times: IDateRange = {
+				start: new Date(startedAt),
+				end: new Date(stoppedAt)
+			};
+			const timeSlotsIds = timeSlotIdsReachedBy(times, conflicts);
+
 			// Resolve conflicts: each conflicting time log loses the new entry's time and keeps the rest
 			if (conflicts?.length) {
-				const times: IDateRange = {
-					start: new Date(startedAt),
-					end: new Date(stoppedAt)
-				};
 				for (const timeLog of conflicts) {
 					await this.commandBus.execute(new DeleteTimeSpanCommand(times, timeLog));
 				}
@@ -2086,9 +2103,14 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 
 			// Create the new time log entry. The handler reads it back through this service, whose employee
 			// filter would not find a log written for a member the caller manages.
-			return await this.withoutEmployeeFilter(() =>
+			const createdTimeLog = await this.withoutEmployeeFilter(() =>
 				this.commandBus.execute(new TimeLogCreateCommand({ ...entry, organizationId }))
 			);
+
+			// Those slots still count the overlapped time, and the new entry joined them without adding its own
+			await this.recalculateSharedTimeSlots({ organizationId, employeeId, tenantId, timeSlotsIds });
+
+			return createdTimeLog;
 		} catch (error) {
 			// Never swallow the reason: a blanket message here hid a real database failure indefinitely.
 			if (error instanceof HttpException) {
@@ -2176,10 +2198,11 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 				})
 			);
 
+			const times: IDateRange = { start: new Date(startedAt), end: new Date(stoppedAt) };
+			const timeSlotsIds = timeSlotIdsReachedBy(times, conflicts);
+
 			// Resolve conflicts: each conflicting time log loses the edited entry's time and keeps the rest
 			if (conflicts?.length) {
-				const times: IDateRange = { start: new Date(startedAt), end: new Date(stoppedAt) };
-
 				for (const conflict of conflicts) {
 					await this.commandBus.execute(new DeleteTimeSpanCommand(times, conflict));
 				}
@@ -2190,6 +2213,14 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 
 			// Execute the command to update the time log
 			await this.commandBus.execute(new TimeLogUpdateCommand(request, timeLog));
+
+			// Those slots still count the overlapped time, and the edited entry joined them without adding its own
+			await this.recalculateSharedTimeSlots({
+				organizationId: timeLog.organizationId,
+				employeeId,
+				tenantId,
+				timeSlotsIds
+			});
 
 			// Retrieve the updated time log entry (a member's log, for a manager: same scope as the read above)
 			return await this.withoutEmployeeFilter(() => this.findOneByIdString(id));

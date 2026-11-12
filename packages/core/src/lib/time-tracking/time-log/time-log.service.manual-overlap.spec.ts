@@ -189,4 +189,39 @@ describe('TimeLogService: manual time over another entry of the same member', ()
 			['11:00', '12:00', slotStarts('11:00', '12:00')]
 		]);
 	});
+
+	/**
+	 * The slot both entries hold kept the overlapped entry's duration from before the overlap was taken out of it, and
+	 * the entry saved over it joined the slot without adding its own time, which the slot creation leaves out of a
+	 * slot already stored (360 seconds for 480 seconds of entries, on a running API).
+	 */
+	it('a slot the new entry shares with what is left of an entry counts the time of both', async () => {
+		store.addTimeLog('manual', '13:32', '13:38', MANUAL_ENTRY);
+
+		await addManualTime('13:30', '13:36');
+
+		expect(store.shapes()).toEqual([
+			['13:30', '13:36', ['13:30']],
+			['13:36', '13:38', ['13:30']]
+		]);
+		expect(store.timeSlotDurations()).toEqual([['13:30', 480]]);
+	});
+
+	it('a slot an entry moved over another shares with what is left of it counts the time of both', async () => {
+		store.addTimeLog('moved', '09:00', '10:00', MANUAL_ENTRY);
+		store.addTimeLog('tracked', '10:32', '10:38');
+
+		await service.updateManualTime('moved', entry(at('10:00'), at('10:36')));
+
+		expect(store.shapes()).toEqual([
+			['10:00', '10:36', ['10:00', '10:10', '10:20', '10:30']],
+			['10:36', '10:38', ['10:30']]
+		]);
+		expect(store.timeSlotDurations()).toEqual([
+			['10:00', 600],
+			['10:10', 600],
+			['10:20', 600],
+			['10:30', 480]
+		]);
+	});
 });
