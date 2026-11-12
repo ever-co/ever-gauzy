@@ -284,6 +284,15 @@ describe('JiraSettingsComponent (site, webhook, mappings, reports)', () => {
 		expect(api.selectSite).not.toHaveBeenCalled();
 	});
 
+	it('offers no import for a mapping that brings no issues in (switched off, or outbound only)', async () => {
+		api.mappings.mockReturnValue(of([mapping({ id: 'map-on' }), mapping({ id: 'map-off', syncEnabled: false }), mapping({ id: 'map-out', jiraProjectId: '10001', direction: 'outbound' })]));
+		const { fixture, find } = render();
+		await settle(fixture);
+		expect((find('import-map-on') as HTMLButtonElement).disabled).toBe(false);
+		expect((find('import-map-off') as HTMLButtonElement).disabled).toBe(true);
+		expect((find('import-map-out') as HTMLButtonElement).disabled).toBe(true);
+	});
+
 	it('registers the webhook again and says what happened', async () => {
 		api.summary.mockReturnValue(of(connection({ webhookError: 'Forbidden' })));
 		api.registerWebhook.mockReturnValue(of({ outcome: 'registered', connection: connection({ webhookExpiresAt: '2026-12-12T00:00:00.000Z' }) }));

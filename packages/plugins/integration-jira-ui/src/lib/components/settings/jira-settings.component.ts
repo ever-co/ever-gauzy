@@ -219,10 +219,18 @@ interface MappingDraft {
 													}
 												</td>
 												<td class="actions">
-													<button nbButton size="tiny" status="primary" type="button" [disabled]="busy" (click)="importNow(mapping, false)">
+													<button
+														nbButton
+														size="tiny"
+														status="primary"
+														type="button"
+														[attr.data-test]="'import-' + mapping.id"
+														[disabled]="busy || !bringsIssuesIn(mapping)"
+														(click)="importNow(mapping, false)"
+													>
 														{{ 'JIRA.MAPPINGS.IMPORT' | translate }}
 													</button>
-													<button nbButton size="tiny" ghost type="button" [disabled]="busy" (click)="importNow(mapping, true)">
+													<button nbButton size="tiny" ghost type="button" [disabled]="busy || !bringsIssuesIn(mapping)" (click)="importNow(mapping, true)">
 														{{ 'JIRA.MAPPINGS.IMPORT_FULL' | translate }}
 													</button>
 													<button nbButton size="tiny" ghost status="danger" type="button" [disabled]="busy" (click)="remove(mapping)">
@@ -780,8 +788,13 @@ export class JiraSettingsComponent implements OnInit {
 		this.request(this.api.updateMapping(this.integrationId, mapping.id, { syncEnabled }), (updated) => this.replace(updated));
 	}
 
+	/** Whether the API imports a mapping: one that brings issues in (switched on, not outbound only). */
+	bringsIssuesIn(mapping: JiraMapping): boolean {
+		return mapping.syncEnabled && mapping.direction !== 'outbound';
+	}
+
 	importNow(mapping: JiraMapping, full: boolean): void {
-		if (!this.integrationId) return;
+		if (!this.integrationId || !this.bringsIssuesIn(mapping)) return;
 		this.request(this.api.importNow(this.integrationId, mapping.id, full), () => {
 			this.notice = this.translateKey('JIRA.MAPPINGS.IMPORT_STARTED');
 			this.loadRuns();
