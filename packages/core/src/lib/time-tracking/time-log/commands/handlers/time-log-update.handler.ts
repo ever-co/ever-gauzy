@@ -230,15 +230,20 @@ export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateComman
 	 * This method filters out time slots that have matching `startedAt` times in the new slots and returns
 	 * the start times of the slots that need to be removed.
 	 *
+	 * Two slots match by their whole minute. `generateTimeSlots` keeps the milliseconds of the start it is given on
+	 * every slot it computes, so a new start of 09:55:00.500 gave 09:50:00.500, 10:00:00.500 and so on, and a slot's
+	 * start never has milliseconds: compared exactly, no slot matched, and every one the log held was released, the ones
+	 * it keeps included.
+	 *
 	 * @param slots - The existing time slots.
 	 * @param newSlots - The newly generated time slots.
 	 * @returns An array of conflicting start times that need to be removed.
 	 */
 	private getConflictingStartTimes(slots: ITimeSlot[], newSlots: ITimeSlot[]): Date[] {
+		const minuteOf = (slot: ITimeSlot) => moment(slot.startedAt).startOf('minute').valueOf();
+		const kept = new Set(newSlots.map(minuteOf));
 		return slots
-			.filter(
-				(existingSlot) => !newSlots.some((newSlot) => moment(newSlot.startedAt).isSame(existingSlot.startedAt))
-			)
+			.filter((existingSlot) => !kept.has(minuteOf(existingSlot)))
 			.map((slot) => new Date(slot.startedAt));
 	}
 

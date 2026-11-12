@@ -66,6 +66,7 @@ interface IStoredLog {
 	organizationId: string;
 	startedAt: Date;
 	stoppedAt: Date;
+	isRunning?: boolean;
 }
 
 /**
@@ -352,6 +353,41 @@ describe('POST /timesheet/time-log/bulk — each item is POST /timesheet/time-lo
 			})
 		]);
 		expect(logs).toHaveLength(1);
+	});
+
+	it('refuses with 409 an item over a timer still running, alone, and trims nothing of that timer (#11823)', async () => {
+		const { controller, logs, trimmed } = surfaces();
+		// The employee's timer, running since 08:30 with its last heartbeat at 09:00.
+		const runningTimer = {
+			id: 'running',
+			employeeId: EMPLOYEE,
+			organizationId: ORGANIZATION,
+			startedAt: new Date('2026-10-01T08:30:00.000Z'),
+			stoppedAt: new Date('2026-10-01T09:00:00.000Z'),
+			isRunning: true
+		};
+		logs.push(runningTimer);
+
+		const result = await controller.bulk({
+			items: [
+				interval('2026-10-01T07:00:00.000Z', '2026-10-01T08:00:00.000Z'),
+				interval('2026-10-01T08:45:00.000Z', '2026-10-01T09:30:00.000Z')
+			] as never
+		});
+
+		expect(result).toMatchObject({ total: 2, succeededCount: 1, failedCount: 1 });
+		expect(result.failed).toEqual([
+			expect.objectContaining({
+				index: 1,
+				code: ApiErrorCode.CONCURRENT_MODIFICATION,
+				message: 'A timer is running over this time range. Stop it first, or choose a range outside it.'
+			})
+		]);
+		expect(trimmed).toEqual([]);
+		expect(logs.map((log) => [log.id, log.startedAt.toISOString(), log.stoppedAt.toISOString()])).toEqual([
+			['running', '2026-10-01T08:30:00.000Z', '2026-10-01T09:00:00.000Z'],
+			['log-2', '2026-10-01T07:00:00.000Z', '2026-10-01T08:00:00.000Z']
+		]);
 	});
 
 	it('records an item for the caller’s own employee when the caller may not choose one, as the route’s pipe does', async () => {
