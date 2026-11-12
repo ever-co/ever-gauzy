@@ -345,6 +345,15 @@ export class ChatUiService {
 	 * the chat, kept out of the knowledge base and of the AI classification. The members of the conversation reach it
 	 * through the conversation's files (membership-checked), never through the document's own visibility.
 	 */
+	/**
+	 * The bytes of a stored file, read through the Docs plugin as the signed-in person (the way the Documents page
+	 * shows a file): for a picture whose own address the browser cannot load. Answers 404 for a file the person may
+	 * not read there.
+	 */
+	fileBytes(documentId: ID): Observable<Blob> {
+		return this.http.get(`${API_PREFIX}/plugins/docs/documents/${path(documentId)}/raw`, { responseType: 'blob' });
+	}
+
 	uploadFile(file: File): Observable<ChatUploadAnswer> {
 		const form = new FormData();
 		form.append('files', file, file.name);
