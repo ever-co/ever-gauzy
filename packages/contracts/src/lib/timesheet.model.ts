@@ -174,6 +174,8 @@ export interface ITimeLog
 	projectId?: ID;
 	organizationContact?: IOrganizationContact;
 	organizationContactId?: ID;
+	/** The invoice line that bills this time; the time is invoiced only while that line's invoice is live and not void. */
+	invoiceItemId?: ID;
 	source?: TimeLogSourceEnum;
 	startedAt?: Date;
 	stoppedAt?: Date;

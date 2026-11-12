@@ -14,11 +14,13 @@ import {
 	IOrganizationContact,
 	ITimeSlot,
 	IOrganizationTeam,
+	IInvoiceItem,
 	ID
 } from '@gauzy/contracts';
 import { isBetterSqlite3, isMySQL } from '@gauzy/config';
 import {
 	Employee,
+	InvoiceItem,
 	OrganizationContact,
 	OrganizationProject,
 	OrganizationTeam,
@@ -259,6 +261,26 @@ export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog {
 	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	organizationTeamId?: ID;
+
+	/**
+	 * The invoice line that bills this time. The link alone does not make the time invoiced: it is only while the
+	 * line and its invoice are live and the invoice is not void, so a void or deleted invoice frees the time and
+	 * the link stays as a record until another line bills it. Deleting the line clears the link.
+	 */
+	@MultiORMManyToOne(() => InvoiceItem, {
+		nullable: true,
+		onDelete: 'SET NULL'
+	})
+	@JoinColumn()
+	invoiceItem?: IInvoiceItem;
+
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsUUID()
+	@RelationId((it: TimeLog) => it.invoiceItem)
+	@ColumnIndex()
+	@MultiORMColumn({ nullable: true, relationId: true })
+	invoiceItemId?: ID;
 
 	/*
 	|--------------------------------------------------------------------------
