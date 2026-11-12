@@ -68,6 +68,7 @@ import { IPartialEntity } from './../core/crud/icrud.service';
 import { sanitizeRichHtml } from './../core/html-sanitizer';
 import {
 	mikroOrmContains,
+	mikroOrmILike,
 	MultiORMEnum,
 	parseFindOptionsRelations,
 	parseFindOptionsSelect,
@@ -821,12 +822,14 @@ export class TaskService extends TenantAwareCrudService<Task> {
 		if (number) {
 			alternatives.push({ ...base, number: Number(number[1]) } as FindOptionsWhere<Task>);
 		}
-		// The key the lists show (`API-42`): that number with that prefix, whatever its case.
+		// The key the lists show (`API-42`): that number with that prefix, whatever its case. The prefix is stored as
+		// the project's name begins (`Api`) and shown in capitals, so both ORMs compare it without case: an `_` in it
+		// matches any one character under MikroORM's LIKE, which at worst widens a search.
 		const key = /^([\p{L}][\p{L}\p{N}_]*)-(\d{1,9})$/u.exec(text);
 		if (key) {
 			const prefix =
 				this.ormType === MultiORMEnum.MikroORM
-					? key[1].toUpperCase()
+					? mikroOrmILike(key[1])
 					: Raw((alias) => `UPPER(${alias}) = :trashPrefix`, { trashPrefix: key[1].toUpperCase() });
 			alternatives.push({ ...base, prefix, number: Number(key[2]) } as FindOptionsWhere<Task>);
 		}

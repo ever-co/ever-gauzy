@@ -932,15 +932,6 @@ function withWhere<O extends { where?: unknown }>(filter: O | undefined, where: 
 }
 
 /**
- * `input` with the comment it replies to stated by `parentId` alone.
- *
- * The thread checks read `parentId`, so a `parent` relation written beside it would skip them. The REST whitelist and
- * the GraphQL input already leave `parent` out; a service-level caller's `parent` is kept as the same reply, stated by
- * its id, so what is stored does not change.
- *
- * @throws {BadRequestException} When `parent` names no comment by id, or another comment than `parentId` names.
- */
-/**
  * The edit stamp an update writes: the current time when it changes the comment's text, nothing otherwise (a
  * resolve, a reopen or a mention change leaves `editedAt` as stored). A body's `editedAt` never reaches here: the
  * marker readers see says the text changed, so only the server states it.
@@ -953,6 +944,15 @@ function editStampOf(changes: { comment?: unknown }, stored: Pick<Comment, 'comm
 	return { editedAt: new Date() };
 }
 
+/**
+ * `input` with the comment it replies to stated by `parentId` alone.
+ *
+ * The thread checks read `parentId`, so a `parent` relation written beside it would skip them. The REST whitelist and
+ * the GraphQL input already leave `parent` out; a service-level caller's `parent` is kept as the same reply, stated by
+ * its id, so what is stored does not change.
+ *
+ * @throws {BadRequestException} When `parent` names no comment by id, or another comment than `parentId` names.
+ */
 function parentStatedById<I extends { parent?: { id?: ID } | null; parentId?: ID | null }>(input: I): I {
 	if (input?.parent === undefined) {
 		return input;

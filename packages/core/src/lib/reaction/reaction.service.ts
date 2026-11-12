@@ -22,13 +22,6 @@ import { summarizeReactions } from './reaction-summary';
 import { TypeOrmReactionRepository } from './repository/type-orm-reaction.repository';
 import { MikroOrmReactionRepository } from './repository/mikro-orm-reaction.repository';
 
-/**
- * The generic reaction surface (`/reaction` and the `reaction*` GraphQL fields): every kind of reaction but a chat
- * message's. A chat message's reactions are read and written through the chat API only, which checks the caller's
- * membership of the conversation (its service reads the `reaction` rows itself, never through this one). Here they
- * are left out of every list and count, read by id as reactions that do not exist (so withdrawing or restoring one
- * answers 404), refused to `create` and `update` (400), and not deleted by `delete`.
- */
 /** At most this many comments per reaction read: an `IN` list stays well under every dialect's parameter limit. */
 const SUMMARY_ID_CHUNK = 500;
 
@@ -37,6 +30,13 @@ function isCommentReaction(reaction: { entity?: unknown } | null | undefined): b
 	return String(reaction?.entity) === String(ReactionEntityEnum.Comment);
 }
 
+/**
+ * The generic reaction surface (`/reaction` and the `reaction*` GraphQL fields): every kind of reaction but a chat
+ * message's. A chat message's reactions are read and written through the chat API only, which checks the caller's
+ * membership of the conversation (its service reads the `reaction` rows itself, never through this one). Here they
+ * are left out of every list and count, read by id as reactions that do not exist (so withdrawing or restoring one
+ * answers 404), refused to `create` and `update` (400), and not deleted by `delete`.
+ */
 @Injectable()
 export class ReactionService extends TenantAwareCrudService<Reaction> {
 	constructor(
