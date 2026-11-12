@@ -469,7 +469,8 @@ const NOTIFICATION_TYPE_ICONS: Readonly<Record<string, string>> = {
 	[EmployeeNotificationTypeEnum.MESSAGE]: 'message-square-outline',
 	[EmployeeNotificationTypeEnum.BROADCAST]: 'volume-up-outline',
 	[EmployeeNotificationTypeEnum.RATE_CHANGE_REQUEST]: 'trending-up-outline',
-	[EmployeeNotificationTypeEnum.TASK_UPDATE]: 'edit-2-outline'
+	[EmployeeNotificationTypeEnum.TASK_UPDATE]: 'edit-2-outline',
+	[EmployeeNotificationTypeEnum.TIMER_REMINDER]: 'clock-outline'
 };
 
 /** The icon of a notification's type (a bell for a type the plugin does not know). */

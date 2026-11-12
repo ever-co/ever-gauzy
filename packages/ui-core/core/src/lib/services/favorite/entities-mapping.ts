@@ -27,6 +27,7 @@ export const ENTITY_ICONS: Record<BaseEntityEnum, string> = {
 	[BaseEntityEnum.ResourceLink]: 'fas fa-link',
 	[BaseEntityEnum.ScreeningTask]: 'fas fa-clipboard-check',
 	[BaseEntityEnum.TaskLinkedIssue]: 'fas fa-link',
+	[BaseEntityEnum.TimeLog]: 'fas fa-stopwatch',
 	[BaseEntityEnum.User]: 'fas fa-user',
 	[BaseEntityEnum.Tenant]: 'fas fa-building',
 	[BaseEntityEnum.OrganizationContact]: 'fas fa-address-card',
@@ -134,6 +135,8 @@ export const ENTITY_LINKS: Record<BaseEntityEnum, FavoriteLinkBuilder> = {
 	[BaseEntityEnum.ResourceLink]: () => `/pages/dashboard`,
 	[BaseEntityEnum.ScreeningTask]: () => `/pages/tasks/dashboard`,
 	[BaseEntityEnum.TaskLinkedIssue]: () => `/pages/tasks/dashboard`,
+	// A time log is read in the timesheets.
+	[BaseEntityEnum.TimeLog]: () => `/pages/employees/timesheets/daily`,
 	[BaseEntityEnum.User]: (id) => `/pages/users/edit/${id}`,
 	[BaseEntityEnum.Tenant]: () => `/pages/settings/general`,
 	[BaseEntityEnum.OrganizationContact]: (id) => `/pages/contacts/view/${id}`,
