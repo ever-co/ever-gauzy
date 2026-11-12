@@ -9,6 +9,7 @@ import {
 	sanitizeChanges,
 	statusChanges,
 	summarizeOutcome,
+	restoredInPart,
 	undoLosses,
 	undoRequest
 } from './bulk-undo';
@@ -101,16 +102,33 @@ describe('bulk request and undo', () => {
 			});
 		});
 
-		it('counts the tasks an undo puts back only in part (an old name the platform does not take)', () => {
-			expect(undoLosses(outcome)).toBe(1);
+		it('names the tasks an undo puts back only in part (an old name the platform does not take)', () => {
+			expect(undoLosses(outcome)).toEqual(['b']);
 			expect(
 				undoLosses({
 					applied: 1,
 					refused: 0,
 					results: [{ taskId: 'a' as ID, ok: true, previous: { status: null } }]
 				})
-			).toBe(0);
-			expect(undoLosses(null)).toBe(0);
+			).toEqual([]);
+			expect(undoLosses(null)).toEqual([]);
+		});
+
+		it('counts only those the undo did put back: a refused one is not partly restored', () => {
+			const lossy = ['b', 'd'] as ID[];
+			expect(
+				restoredInPart(lossy, {
+					applied: 2,
+					refused: 1,
+					results: [
+						{ taskId: 'a' as ID, ok: true },
+						{ taskId: 'b' as ID, ok: false, error: 'Forbidden' },
+						{ taskId: 'd' as ID, ok: true }
+					]
+				})
+			).toBe(1);
+			expect(restoredInPart(lossy, null)).toBe(0);
+			expect(restoredInPart([], { applied: 1, refused: 0, results: [{ taskId: 'a' as ID, ok: true }] })).toBe(0);
 		});
 
 		it('has nothing to undo when nothing changed', () => {

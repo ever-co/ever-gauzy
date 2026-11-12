@@ -69,6 +69,24 @@ describe('BulkToolbarComponent', () => {
 		]);
 	});
 
+	it('leaves Enter and Escape to text an input method is composing in the search', () => {
+		click('[data-picker="status"]');
+		const search = () =>
+			host().querySelector('[data-test="bulk-panel"] input[type="search"]') as HTMLInputElement | null;
+		const composing = (key: string) =>
+			new KeyboardEvent('keydown', { key, isComposing: true, bubbles: true, cancelable: true });
+		search()?.dispatchEvent(composing('Enter'));
+		search()?.dispatchEvent(composing('Escape'));
+		fixture.detectChanges();
+		expect(applied).toEqual([]);
+		expect(fixture.componentInstance.isPickerOpen).toBe(true);
+		// Safari marks the Enter that ends a composition by its key code alone.
+		const legacy = new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true });
+		Object.defineProperty(legacy, 'keyCode', { value: 229 });
+		search()?.dispatchEvent(legacy);
+		expect(applied).toEqual([]);
+	});
+
 	it('adds or removes a label', () => {
 		fixture.componentInstance.openPicker('labels');
 		fixture.detectChanges();

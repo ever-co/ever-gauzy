@@ -14,14 +14,14 @@ import { FormsModule } from '@angular/forms';
 import { NbButtonModule, NbIconModule, NbInputModule } from '@nebular/theme';
 import { TranslatePipe } from '@ngx-translate/core';
 import { firstValueFrom } from 'rxjs';
-import { ToastrService } from '@gauzy/ui-core/core';
 import { TaskViewsAvailabilityService } from '../../services/task-views-availability.service';
 import { GoToResult, TaskReferenceNavigatorService } from '../../services/task-reference-navigator.service';
 
 /**
  * "Go to task": a field taking a reference (`API-42`), a task id or a task link; Enter looks it up and opens the
  * task. A reference that names nothing the reader may see, or names tasks of several projects, is said under the
- * field; a task found by a former reference opens with a note of its reference today.
+ * field; a task found by a former reference opens with a note of its reference today (the navigator says it, as the
+ * box may be gone with the page it was on).
  */
 @Component({
 	selector: 'ngx-task-views-go-to-box',
@@ -85,7 +85,6 @@ import { GoToResult, TaskReferenceNavigatorService } from '../../services/task-r
 export class GoToTaskBoxComponent {
 	private readonly navigator = inject(TaskReferenceNavigatorService);
 	private readonly availability = inject(TaskViewsAvailabilityService);
-	private readonly toastr = inject(ToastrService);
 
 	@Input() size: 'tiny' | 'small' | 'medium' = 'small';
 	/** Emits once the task opened (the dialog closes then). */
@@ -93,15 +92,15 @@ export class GoToTaskBoxComponent {
 
 	@ViewChild('field') private field?: ElementRef<HTMLInputElement>;
 
-	/** The box went away (its dialog closed): a lookup still under way opens nothing. */
-	private destroyed = false;
+	/** Aborts when the box goes away (its dialog closed): a lookup or a navigation still under way stops. */
+	private readonly gone = new AbortController();
 
 	protected readonly text = signal('');
 	protected readonly busy = signal(false);
 	protected readonly message = signal<{ key: string; params?: Record<string, unknown> } | null>(null);
 
 	constructor() {
-		inject(DestroyRef).onDestroy(() => (this.destroyed = true));
+		inject(DestroyRef).onDestroy(() => this.gone.abort());
 	}
 
 	focus(): void {
@@ -116,20 +115,15 @@ export class GoToTaskBoxComponent {
 		let result: GoToResult;
 		try {
 			const scope = await firstValueFrom(this.availability.scope$);
-			result = await this.navigator.goTo(text, scope, () => this.destroyed);
+			result = await this.navigator.goTo(text, scope, this.gone.signal);
 		} finally {
 			this.busy.set(false);
 		}
-		if (this.destroyed) return;
+		if (this.gone.signal.aborted) return;
 		if (result.opened === false) {
 			const refused = result as Extract<GoToResult, { opened: false }>;
 			this.message.set({ key: refused.messageKey, params: refused.params });
 			return;
-		}
-		if (result.outcome?.kind === 'moved') {
-			this.toastr.info('TASK_VIEWS.GOTO.MOVED', 'TASK_VIEWS.GOTO.TITLE', {
-				translationParams: { reference: result.outcome.reference, current: result.outcome.current }
-			});
 		}
 		this.text.set('');
 		this.opened.emit();

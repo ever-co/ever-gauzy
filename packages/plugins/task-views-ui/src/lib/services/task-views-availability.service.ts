@@ -9,6 +9,13 @@ import { TaskViewsApiService, TaskViewsScope } from './task-views-api.service';
 /** Attempts after a temporary failure, and the first delay (doubled each time: 5 s … 80 s). */
 export const TASK_VIEWS_AVAILABILITY_RETRIES = 5;
 export const TASK_VIEWS_AVAILABILITY_RETRY_MS = 5_000;
+/**
+ * Once those attempts ran out on a temporary failure, the API is asked again later, every 5 minutes, at most 6
+ * times (about three quarters of an hour in all): an API that recovers meanwhile shows the views without a reload,
+ * and one that stays down is not asked for ever.
+ */
+export const TASK_VIEWS_AVAILABILITY_REPROBES = 6;
+export const TASK_VIEWS_AVAILABILITY_REPROBE_MS = 5 * 60_000;
 
 /** A refusal that retrying does not change: 404 (the extensions are off), 401 and 403 (not for this user). */
 export function isFinalRefusal(error: HttpErrorResponse | null | undefined): boolean {
@@ -55,8 +62,9 @@ export class TaskViewsAvailabilityService {
 
 	/**
 	 * `true` once the API answered for the scope. A final refusal is `false` at once; a temporary failure (5xx,
-	 * network) is retried with a growing delay, so an API that recovers after the app started still shows the views.
-	 * A new scope cancels a request in flight, so a late answer never applies to the next user.
+	 * network) is retried with a growing delay, then asked again every few minutes for a while, so an API that
+	 * recovers after the app started still shows the views. A new scope cancels a request in flight, so a late answer
+	 * never applies to the next user.
 	 */
 	readonly available$: Observable<boolean> = this.scope$.pipe(
 		switchMap((scope) =>
@@ -72,6 +80,14 @@ export class TaskViewsAvailabilityService {
 									isFinalRefusal(error)
 										? throwError(() => error)
 										: timer(TASK_VIEWS_AVAILABILITY_RETRY_MS * 2 ** (attempt - 1))
+							}),
+							// The attempts ran out on a temporary failure: another round later, a bounded number of times.
+							retry({
+								count: TASK_VIEWS_AVAILABILITY_REPROBES,
+								delay: (error: HttpErrorResponse) =>
+									isFinalRefusal(error)
+										? throwError(() => error)
+										: timer(TASK_VIEWS_AVAILABILITY_REPROBE_MS)
 							}),
 							map(() => true),
 							catchError(() => of(false))

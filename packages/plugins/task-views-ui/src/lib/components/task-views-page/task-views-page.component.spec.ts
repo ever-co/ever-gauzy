@@ -199,6 +199,42 @@ describe('TaskViewsPageComponent', () => {
 		expect(component.undo()).toBeNull();
 	});
 
+	it('says an undo put an old name back in part only for the tasks the undo changed', async () => {
+		await create();
+		component.onToggle({ id: 't1', shift: false });
+		component.onToggle({ id: 't2', shift: false });
+		api.bulkUpdate.mockReturnValueOnce(
+			of({
+				applied: 2,
+				refused: 0,
+				results: [
+					{ taskId: 't1', ok: true, previous: { status: 'legacy-name', taskStatusId: 's0' } },
+					{ taskId: 't2', ok: true, previous: { status: 'older-name', taskStatusId: 's9' } }
+				]
+			})
+		);
+		jest.useFakeTimers();
+		await component.applyBulk({ action: 'status', changes: { taskStatusId: 's1', status: TaskStatusEnum.DONE } });
+		// The undo of t1 is refused: t1 got nothing back, so only t2 was put back in part.
+		api.bulkUpdate.mockReturnValueOnce(
+			of({
+				applied: 1,
+				refused: 1,
+				results: [
+					{ taskId: 't1', ok: false, error: 'Forbidden' },
+					{ taskId: 't2', ok: true }
+				]
+			})
+		);
+		await component.undoLast();
+		expect(api.bulkUpdate.mock.calls[1][0].items).toEqual([
+			{ taskId: 't1', changes: { taskStatusId: 's0' } },
+			{ taskId: 't2', changes: { taskStatusId: 's9' } }
+		]);
+		expect(toastr.warning).toHaveBeenCalledWith('TASK_VIEWS.BULK.UNDO_PARTIAL', { applied: 1, refused: 1 });
+		expect(toastr.warning).toHaveBeenCalledWith('TASK_VIEWS.BULK.UNDO_LOSSY', { count: 1 });
+	});
+
 	it('shows a stale save as a conflict, and Overwrite saves the edit on the latest version keeping its other keys', async () => {
 		await create();
 		component.setGroupBy('status');
@@ -273,11 +309,39 @@ describe('TaskViewsPageComponent', () => {
 		const dialogs = TestBed.inject(NbDialogService) as unknown as { open: jest.Mock };
 		dialogs.open.mockReturnValue({ onClose: of(true) });
 		api.deleteTask.mockImplementation((id: string) =>
-			id === 'far' ? throwError(() => new HttpErrorResponse({ status: 403 })) : of({})
+			id === 'far'
+				? throwError(
+						() =>
+							new HttpErrorResponse({
+								status: 403,
+								error: { message: 'You can only delete a task of a team you manage.' }
+							})
+					)
+				: of({})
 		);
 		await component.deleteSelected();
 		expect(component.selection().ids).toEqual(['far']);
-		expect(toastr.warning).toHaveBeenCalledWith('TASK_VIEWS.BULK.DELETE_PARTIAL', { applied: 1, refused: 1 });
+		expect(toastr.warning).toHaveBeenCalledWith('TASK_VIEWS.BULK.DELETE_PARTIAL', {
+			applied: 1,
+			refused: 1,
+			errors: 'far: You can only delete a task of a team you manage.'
+		});
+	});
+
+	it('drops a selected task the view no longer has once Load more read its last page', async () => {
+		await create(savedView(), page(rows, { nextCursor: 'next' }));
+		component.selection.set({ ids: ['t1', 'far'], anchor: 'far' });
+		await component.reload();
+		expect(component.selection().ids).toEqual(['t1', 'far']);
+		api.viewTasks.mockReturnValueOnce(of(page([{ id: 't4', title: 't4' } as ITask], { nextCursor: 'more' })));
+		await component.loadMore();
+		// A page before the last says nothing about the rows after it.
+		expect(component.selection().ids).toEqual(['t1', 'far']);
+		api.viewTasks.mockReturnValueOnce(of(page([{ id: 't5', title: 't5' } as ITask])));
+		await component.loadMore();
+		expect(api.viewTasks).toHaveBeenLastCalledWith('v1', expect.anything(), expect.objectContaining({ cursor: 'more' }));
+		expect(component.items().map((row: ITask) => row.id)).toEqual(['t1', 't2', 't3', 't4', 't5']);
+		expect(component.selection()).toEqual({ ids: ['t1'], anchor: null });
 	});
 
 	it('Reload takes the latest view and drops the edit', async () => {

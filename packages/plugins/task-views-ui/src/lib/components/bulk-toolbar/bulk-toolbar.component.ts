@@ -181,6 +181,9 @@ export class BulkToolbarComponent {
 	}
 
 	protected onPanelKeydown(event: KeyboardEvent): void {
+		// A key that confirms or cancels text an input method is composing (Enter, Escape) belongs to that text.
+		// Safari marks the Enter that ends a composition by its key code (229) alone, not by `isComposing`.
+		if (event.isComposing || event.keyCode === 229) return;
 		if (event.key === 'Escape') {
 			event.stopPropagation();
 			this.closePicker(true);

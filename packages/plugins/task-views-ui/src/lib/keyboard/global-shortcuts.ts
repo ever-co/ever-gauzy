@@ -21,25 +21,45 @@ export const GO_TO_LINKS: Readonly<Record<string, string>> = {
 	settingsOpen: '/pages/settings'
 };
 
+/** The dialogs the global commands open, each loaded on first use. */
+export type GlobalDialog = 'help' | 'goTo';
+export type GlobalDialogLoaders = Readonly<Record<GlobalDialog, () => Promise<Type<unknown>>>>;
+
+export const GLOBAL_DIALOG_LOADERS: GlobalDialogLoaders = {
+	help: () => import('./shortcut-help-dialog.component').then((m) => m.ShortcutHelpDialogComponent),
+	goTo: () =>
+		import('../components/go-to-task/go-to-task-dialog.component').then((m) => m.GoToTaskDialogComponent)
+};
+
 /**
  * Registers the commands that run anywhere: the "go to" links, the `?` help (a toggle) and `G R` (go to a task by
- * reference). The dialogs load on first use. Answers the function that removes them again.
+ * reference). The dialogs load on first use. Answers the function that removes them again: it also closes a dialog
+ * they opened, and one whose code is still loading then opens no more (the views went away meanwhile).
  */
-export function registerGlobalShortcuts(injector: Injector): () => void {
+export function registerGlobalShortcuts(
+	injector: Injector,
+	loaders: GlobalDialogLoaders = GLOBAL_DIALOG_LOADERS
+): () => void {
 	const registry = injector.get(ShortcutRegistryService);
 	const router = injector.get(Router);
 	const dialogs = injector.get(NbDialogService);
+	let active = true;
 	// A dialog, or the import of one under way (a second press meanwhile opens nothing more).
-	const open: Record<'help' | 'goTo', NbDialogRef<unknown> | 'opening' | null> = { help: null, goTo: null };
-	const show = (which: 'help' | 'goTo', load: () => Promise<Type<unknown>>) => {
+	const open: Record<GlobalDialog, NbDialogRef<unknown> | 'opening' | null> = { help: null, goTo: null };
+	const show = (which: GlobalDialog) => {
 		open[which] = 'opening';
-		load().then(
+		loaders[which]().then(
 			(component) => {
+				if (!active) return;
 				const ref = dialogs.open(component, { closeOnEsc: true }) as NbDialogRef<unknown>;
 				open[which] = ref;
-				ref.onClose.subscribe(() => (open[which] = null));
+				ref.onClose.subscribe(() => {
+					if (open[which] === ref) open[which] = null;
+				});
 			},
-			() => (open[which] = null)
+			() => {
+				if (active) open[which] = null;
+			}
 		);
 	};
 
@@ -47,7 +67,7 @@ export function registerGlobalShortcuts(injector: Injector): () => void {
 		Object.entries(GO_TO_LINKS).map(([commandId, link]) => [commandId, () => void router.navigateByUrl(link)])
 	);
 
-	return registry.registerAll({
+	const remove = registry.registerAll({
 		...links,
 		helpOpen: () => {
 			const help = open.help;
@@ -56,13 +76,21 @@ export function registerGlobalShortcuts(injector: Injector): () => void {
 				help.close();
 				return;
 			}
-			show('help', () => import('./shortcut-help-dialog.component').then((m) => m.ShortcutHelpDialogComponent));
+			show('help');
 		},
 		taskGoTo: () => {
 			if (open.goTo) return;
-			show('goTo', () =>
-				import('../components/go-to-task/go-to-task-dialog.component').then((m) => m.GoToTaskDialogComponent)
-			);
+			show('goTo');
 		}
 	});
+
+	return () => {
+		active = false;
+		remove();
+		for (const which of Object.keys(open) as GlobalDialog[]) {
+			const ref = open[which];
+			open[which] = null;
+			if (ref && ref !== 'opening') ref.close();
+		}
+	};
 }

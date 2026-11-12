@@ -140,8 +140,8 @@ The Angular app had none of the client side; Ever Teams has it (`tasks-keyboard-
 registered in `apps/gauzy/src/plugin-ui.config.ts` like `inbox-ui` and `chat-ui`, brings it to the Angular app. It
 shows nothing where the API does not serve the extensions: the UI asks `GET /tasks/built-in/mine` (one task) once per
 user and organization; 404 (`GAUZY_TASK_VIEWS_ENABLED` not `true`), 401 and 403 are final, a temporary failure is
-retried with a growing delay. Until it answers there is no nav entry, no keyboard listener and no reference chip;
-the route exists and says the views are off.
+retried with a growing delay, then asked again every 5 minutes, at most 6 times. Until it answers there is no nav
+entry, no keyboard listener and no reference chip; the route exists and says the views are off.
 
 ### 8.1 Reuse
 

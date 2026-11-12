@@ -29,7 +29,8 @@ The UI has no switch of its own. It follows the API:
   `GAUZY_TASK_VIEWS_ENABLED=true`. Where it does not (the default), the app
   looks exactly as before: no Tasks → Views entry, no Settings → Keyboard
   shortcuts entry, no key listener, no reference chip. A temporary failure
-  (5xx, network) is retried with a growing delay; 404, 401 and 403 are final.
+  (5xx, network) is retried with a growing delay, then asked again every 5
+  minutes, at most 6 times; 404, 401 and 403 are final.
 - The routes `/pages/task-views` and `/pages/settings/keyboard-shortcuts`
   always exist. Opened on an installation without the extensions, they say
   so.

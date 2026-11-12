@@ -212,7 +212,7 @@
 		"UNDO_FAILED": "The undo could not be applied.",
 		"DELETE_CONFIRM": "Delete {{count}} tasks? This cannot be undone.",
 		"DELETED": "{{count}} tasks deleted.",
-		"DELETE_PARTIAL": "{{applied}} tasks deleted, {{refused}} could not be deleted.",
+		"DELETE_PARTIAL": "{{applied}} tasks deleted, {{refused}} could not be deleted: {{errors}}",
 		"UNDO_LOSSY": "{{count}} tasks got their old status, priority or size back by its record only: their old name is not one the platform takes."
 	},
 	"GOTO": {

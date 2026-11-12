@@ -63,6 +63,7 @@ import {
 	BulkSummary,
 	changedTaskIds,
 	deleteOutcome,
+	restoredInPart,
 	summarizeOutcome,
 	undoLosses,
 	undoRequest
@@ -99,7 +100,7 @@ import {
 } from '../../models/view-definition';
 import { ShortcutRegistryService } from '../../keyboard/shortcut-registry.service';
 import { browserTimeZone, TaskViewsApiService, TaskViewsScope } from '../../services/task-views-api.service';
-import { TaskViewsAvailabilityService } from '../../services/task-views-availability.service';
+import { TaskViewsAvailabilityService, TaskViewsUserScope } from '../../services/task-views-availability.service';
 import {
 	EMPTY_OPTIONS,
 	humanize,
@@ -138,7 +139,7 @@ interface PendingUndo {
 	params: Record<string, unknown>;
 	request: ITaskBulkUpdateInput | null;
 	/** Tasks the undo puts back only in part (an old status, priority or size name the platform does not take). */
-	lossy: number;
+	lossy: readonly ID[];
 }
 
 /** How long an edit of the filter waits before the tasks are read again. */
@@ -324,8 +325,11 @@ export class TaskViewsPageComponent implements OnInit {
 
 		const scope$ = combineLatest([this.availability.available$, this.availability.scope$]).pipe(
 			filter(([available, scope]) => available && !!scope),
-			map(([, scope]) => scope as TaskViewsScope),
-			distinctUntilChanged((a, b) => a.organizationId === b.organizationId && a.tenantId === b.tenantId),
+			map(([, scope]) => scope as TaskViewsUserScope),
+			// Another user (signed in without a reload) is another scope too: the option lists are read for them.
+			distinctUntilChanged(
+				(a, b) => a.userId === b.userId && a.organizationId === b.organizationId && a.tenantId === b.tenantId
+			),
 			takeUntilDestroyed(this.destroyRef)
 		);
 		scope$.subscribe((scope) => {
@@ -497,19 +501,20 @@ export class TaskViewsPageComponent implements OnInit {
 		this.items.set(items);
 		this.total.set(page.total);
 		this.nextCursor.set(page.nextCursor);
+		// Only a read of every row can say a selected task is gone: a first page alone (or one read again) says
+		// nothing about the rows after it, while the last page appended completes the read.
+		if (!this.isMoreAfter(page, items.length)) {
+			this.selection.update((selection) =>
+				retainSelection(
+					selection,
+					items.map((row) => row.id as ID)
+				)
+			);
+		}
 		if (replace) {
 			this.counts.set(page.groups ?? null);
 			this.countedBy.set(page.groupBy ?? 'none');
 			this.invalid.set(invalidByPath(page.invalid ?? [], this.lastSent));
-			// Only a read of every row can say a selected task is gone; a first page says nothing about the others.
-			if (!this.isMoreAfter(page, items.length)) {
-				this.selection.update((selection) =>
-					retainSelection(
-						selection,
-						items.map((row) => row.id as ID)
-					)
-				);
-			}
 			const focused = this.focusedId();
 			if (focused && !items.some((row) => row.id === focused)) this.focusedId.set(null);
 		}
@@ -874,7 +879,9 @@ export class TaskViewsPageComponent implements OnInit {
 					refused: summary.refused
 				});
 			else this.toastr.success('TASK_VIEWS.BULK.UNDONE');
-			if (pending.lossy) this.toastr.warning('TASK_VIEWS.BULK.UNDO_LOSSY', { count: pending.lossy });
+			// Only the tasks the undo did change: a refused one was not put back at all (the warning above says so).
+			const lossy = restoredInPart(pending.lossy, outcome);
+			if (lossy) this.toastr.warning('TASK_VIEWS.BULK.UNDO_LOSSY', { count: lossy });
 			this.api.notify('tasks');
 			await this.reload();
 		} catch (error) {
@@ -917,10 +924,13 @@ export class TaskViewsPageComponent implements OnInit {
 					selection.ids.filter((id) => !deleted.has(id))
 				)
 			);
+			// The platform decides per task (without a delete permission, only a manager of one of the task's teams
+			// may delete it): the refused tasks are named with its reason.
 			if (summary.refused)
 				this.toastr.warning('TASK_VIEWS.BULK.DELETE_PARTIAL', {
 					applied: summary.applied,
-					refused: summary.refused
+					refused: summary.refused,
+					errors: this.refusalText(summary)
 				});
 			else this.toastr.success('TASK_VIEWS.BULK.DELETED', { count: summary.applied });
 			this.api.notify('tasks');
@@ -934,7 +944,7 @@ export class TaskViewsPageComponent implements OnInit {
 		messageKey: string,
 		params: Record<string, unknown>,
 		request: ITaskBulkUpdateInput | null,
-		lossy = 0
+		lossy: readonly ID[] = []
 	): void {
 		this.clearUndo();
 		this.undo.set({ messageKey, params, request, lossy });
