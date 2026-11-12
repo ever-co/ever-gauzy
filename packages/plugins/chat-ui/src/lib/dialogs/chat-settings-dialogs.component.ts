@@ -148,8 +148,8 @@ const CHANNEL_SETTINGS_STYLES = `
 			width: 2rem;
 			height: 2rem;
 			flex: 0 0 auto;
-			border-radius: 0.5rem;
-			background: rgba(127, 127, 127, 0.12);
+			border-radius: var(--border-radius);
+			background: var(--gauzy-sidebar-background-3);
 		}
 		.head-icon nb-icon {
 			font-size: 1.125rem;
@@ -185,7 +185,7 @@ const CHANNEL_SETTINGS_STYLES = `
 			flex: 0 0 auto;
 			padding: 0;
 			border: 0;
-			border-radius: 0.5rem;
+			border-radius: var(--border-radius);
 			background: transparent;
 			color: inherit;
 			opacity: 0.7;
@@ -193,7 +193,7 @@ const CHANNEL_SETTINGS_STYLES = `
 		}
 		.head-close:hover,
 		.head-close:focus-visible {
-			background: rgba(127, 127, 127, 0.14);
+			background: var(--gauzy-hover-tint);
 			opacity: 1;
 		}
 		.head-close nb-icon {
@@ -283,8 +283,8 @@ const CHANNEL_SETTINGS_STYLES = `
 			align-items: center;
 			gap: 0.75rem;
 			padding: 0.75rem 0.875rem;
-			border: 1px solid rgba(127, 127, 127, 0.25);
-			border-radius: 0.5rem;
+			border: 1px solid var(--gauzy-border-default-color);
+			border-radius: var(--border-radius);
 		}
 		.option.disabled {
 			opacity: 0.75;
@@ -314,8 +314,8 @@ const CHANNEL_SETTINGS_STYLES = `
 			gap: 0.5rem;
 			margin: 0;
 			padding: 0.625rem 0.75rem;
-			border-radius: 0.5rem;
-			background: rgba(127, 127, 127, 0.1);
+			border-radius: var(--border-radius);
+			background: var(--gauzy-sidebar-background-3);
 			font-size: 0.8125rem;
 			line-height: 1.4;
 		}
@@ -353,10 +353,10 @@ const CHANNEL_SETTINGS_STYLES = `
 			align-items: center;
 			gap: 0.625rem;
 			padding: 0.3125rem 0.5rem;
-			border-radius: 0.375rem;
+			border-radius: calc(var(--border-radius) * 0.75);
 		}
 		.member:hover {
-			background: rgba(127, 127, 127, 0.08);
+			background: var(--gauzy-hover-tint);
 		}
 		.member-text {
 			display: flex;
@@ -392,7 +392,7 @@ const CHANNEL_SETTINGS_STYLES = `
 			flex: 0 0 auto;
 			padding: 0;
 			border: 0;
-			border-radius: 0.375rem;
+			border-radius: calc(var(--border-radius) * 0.75);
 			background: transparent;
 			color: inherit;
 			opacity: 0;
@@ -403,7 +403,7 @@ const CHANNEL_SETTINGS_STYLES = `
 			opacity: 0.7;
 		}
 		.remove:hover:not(:disabled) {
-			background: rgba(127, 127, 127, 0.16);
+			background: var(--gauzy-sidebar-background-3);
 			color: var(--color-danger-default);
 			opacity: 1;
 		}

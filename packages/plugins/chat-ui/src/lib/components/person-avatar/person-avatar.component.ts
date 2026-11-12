@@ -59,7 +59,7 @@ export type PersonAvatarSize = 'tiny' | 'small' | 'medium' | 'normal' | 'large';
 			.avatar.medium {
 				width: 1.875rem;
 				height: 1.875rem;
-				border-radius: 0.4375rem;
+				border-radius: calc(var(--border-radius) * 0.875);
 				font-size: 0.6875rem;
 			}
 			.avatar.large {
