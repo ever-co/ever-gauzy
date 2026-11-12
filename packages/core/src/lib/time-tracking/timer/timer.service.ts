@@ -620,6 +620,11 @@ export class TimerService {
 
 		this.debug(() => `partial time log: ${JSON.stringify(partialTimeLog)}`);
 
+		// The logs this run overlaps as the stop begins, up to the end written below. The overlap cleanup after the stop
+		// cuts those only: a log another client writes meanwhile keeps its time, whether it still runs or not.
+		const endToWrite = partialTimeLog.stoppedAt ?? lastLog.stoppedAt;
+		const overlappingAtStop = await this.findOverlappingLogIds(lastLog, endToWrite, tenantId, organizationId);
+
 		// A run still going beside this one started before it, so it ends no later than this one's start (below)
 		const stoppedRunStartedAt = lastLog.startedAt;
 
@@ -631,9 +636,9 @@ export class TimerService {
 		// Stop the runs left going beside this one, and only those
 		await this.stopPreviousRunningTimers(employeeId, organizationId, tenantId, stoppedRunStartedAt, runningLogIds);
 
-		// Handle conflicting time logs, leaving alone a run started since this stop began
+		// Handle conflicting time logs: the ones this run overlapped as the stop began
 		const forceDelete = false;
-		await this.handleConflictingTimeLogs(lastLog, tenantId, organizationId, forceDelete, runningLogIds);
+		await this.handleConflictingTimeLogs(lastLog, tenantId, organizationId, forceDelete, overlappingAtStop);
 
 		// The employee no longer tracks time, unless a run is still going: one another client started meanwhile
 		await this.markNotTrackingAfterStop(employeeId, organizationId, tenantId);
@@ -649,16 +654,22 @@ export class TimerService {
 	 * @param tenantId The tenant ID.
 	 * @param organizationId The organization ID.
 	 * @param forceDelete Flag indicating whether to force delete the conflicts.
-	 * @param runningAtStop The runs going when the stop began. A run going now that is not among them was started
-	 * since, from another client, and is left alone: its time slots are its own.
+	 * @param overlappingAtStop The logs the run overlapped as the stop began (`findOverlappingLogIds`), the only ones
+	 * cut. A log not among them was written since, by another client (a run it started, or started and stopped), and
+	 * keeps its time slots. Every log found when not given.
 	 */
 	private async handleConflictingTimeLogs(
 		lastLog: ITimeLog,
 		tenantId: ID,
 		organizationId: ID,
 		forceDelete: boolean = false,
-		runningAtStop?: ID[]
+		overlappingAtStop?: ID[]
 	): Promise<void> {
+		// Nothing overlapped the run as the stop began, so no log is the cleanup's to cut
+		const hadNoOverlap = overlappingAtStop?.length === 0;
+		if (hadNoOverlap) {
+			return;
+		}
 		try {
 			// Validate the date range and check if the timer is running
 			validateDateRange(lastLog.startedAt, lastLog.stoppedAt);
@@ -697,10 +708,10 @@ export class TimerService {
 
 				// Loop through each conflicting time log
 				for await (const timeLog of conflicts) {
-					// A run another client started since the stop began is left alone: its time slots are its own
-					const isStartedSinceStop =
-						timeLog.isRunning && runningAtStop !== undefined && !runningAtStop.includes(timeLog.id);
-					if (isStartedSinceStop) {
+					// A log another client wrote since the stop began is left alone, still running or not
+					const isWrittenSinceStop =
+						overlappingAtStop !== undefined && !overlappingAtStop.includes(timeLog.id);
+					if (isWrittenSinceStop) {
 						continue;
 					}
 					const { timeSlots = [] } = timeLog;
@@ -714,6 +725,45 @@ export class TimerService {
 			}
 		} catch (error) {
 			this.logger.warn(`Error while handling conflicts in time logs: ${error?.message}`);
+		}
+	}
+
+	/**
+	 * The ids of the employee's other logs the run overlaps up to `stoppedAt`, read as the overlap cleanup reads them
+	 * after the stop (`IGetConflictTimeLogCommand`, same range and scope). Read before the stop's update, they are the
+	 * logs that cleanup may cut. When they cannot be read, none: the cleanup is skipped rather than cut a log it cannot
+	 * tell from one written meanwhile.
+	 *
+	 * @param run The running log the stop ends, as read when the stop began.
+	 * @param stoppedAt Where the stop ends it.
+	 * @param tenantId The employee's tenant.
+	 * @param organizationId The employee's organization.
+	 * @returns The ids of the logs it overlaps.
+	 */
+	private async findOverlappingLogIds(
+		run: ITimeLog,
+		stoppedAt: Date,
+		tenantId: ID,
+		organizationId: ID
+	): Promise<ID[]> {
+		try {
+			validateDateRange(run.startedAt, stoppedAt);
+			const overlapping: ITimeLog[] = await this._commandBus.execute(
+				new IGetConflictTimeLogCommand({
+					ignoreId: run.id,
+					startDate: run.startedAt,
+					endDate: stoppedAt,
+					employeeId: run.employeeId,
+					organizationId: organizationId || run.organizationId,
+					tenantId
+				})
+			);
+			return (overlapping ?? []).map((log) => log.id);
+		} catch (error) {
+			this.logger.warn(
+				`The overlap cleanup of time log ${run.id} is skipped, the logs it overlaps could not be read: ${error?.message}`
+			);
+			return [];
 		}
 	}
 

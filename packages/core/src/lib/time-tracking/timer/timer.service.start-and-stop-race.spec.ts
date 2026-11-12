@@ -350,6 +350,76 @@ describe.each([MultiORMEnum.TypeORM, MultiORMEnum.MikroORM])(
 			expect(started).toMatchObject({ isRunning: true, stoppedAt: NOW });
 		});
 
+		describe('with logs the stopped run overlaps', () => {
+			const syncedStart = new Date('2026-10-24T01:40:00.000Z');
+			const syncedEnd = new Date('2026-10-24T01:50:00.000Z');
+			const olderStart = new Date('2026-10-24T01:20:00.000Z');
+
+			/** Ten minutes from the desktop, started and stopped while the stop's update ran, with its time slot. */
+			const syncedLog = () =>
+				run('synced', TimeLogSourceEnum.DESKTOP, syncedStart, {
+					isRunning: false,
+					stoppedAt: syncedEnd,
+					timeSlots: [{ startedAt: syncedStart, duration: 600 }]
+				});
+
+			/** A finished web timer log from before the stop, inside the run it ends, with its time slot. */
+			const olderLog = () =>
+				run('older', TimeLogSourceEnum.WEB_TIMER, olderStart, {
+					isRunning: false,
+					stoppedAt: new Date('2026-10-24T01:30:00.000Z'),
+					timeSlots: [{ startedAt: olderStart, duration: 600 }]
+				});
+
+			/** While the stop's update runs, another client writes `log`. */
+			const writtenDuringUpdate = (rows: TimeLogRow[], log: TimeLogRow): Hooks => ({
+				onUpdate: (command) => {
+					const isStopsUpdate = command.id === 'stopped' && !rows.includes(log);
+					if (isStopsUpdate) {
+						rows.push(log);
+					}
+				}
+			});
+
+			it('leaves alone a desktop log started and stopped while its update ran', async () => {
+				const rows = [run('stopped', TimeLogSourceEnum.TEAMS, ONE_HOUR_AGO)];
+				const synced = syncedLog();
+				const { service, timeSpanDeletes } = setup(rows, writtenDuringUpdate(rows, synced));
+
+				await stop(service);
+
+				// The stopped run ends at 02:00, over the synced log's ten minutes: they stay the synced log's
+				expect(timeSpanDeletes).toEqual([]);
+				expect(synced).toEqual(syncedLog());
+			});
+
+			it('still cuts an older finished log, as before', async () => {
+				const older = olderLog();
+				const rows = [older, run('stopped', TimeLogSourceEnum.TEAMS, ONE_HOUR_AGO)];
+				const { service, timeSpanDeletes } = setup(rows);
+
+				await stop(service);
+
+				expect(timeSpanDeletes).toEqual([
+					expect.objectContaining({
+						newTime: { start: ONE_HOUR_AGO, end: NOW },
+						timeLog: expect.objectContaining({ id: 'older' }),
+						timeSlot: older.timeSlots[0]
+					})
+				]);
+			});
+
+			it('cuts only the older one when a desktop log is synced over the same run during its update', async () => {
+				const older = olderLog();
+				const rows = [older, run('stopped', TimeLogSourceEnum.TEAMS, ONE_HOUR_AGO)];
+				const { service, timeSpanDeletes } = setup(rows, writtenDuringUpdate(rows, syncedLog()));
+
+				await stop(service);
+
+				expect(timeSpanDeletes.map((command) => command.timeLog.id)).toEqual(['older']);
+			});
+		});
+
 		it('marks the employee as not tracking when nothing else runs, as before', async () => {
 			const rows = [run('stopped', TimeLogSourceEnum.TEAMS, ONE_HOUR_AGO)];
 			const { service, employee } = setup(rows);
