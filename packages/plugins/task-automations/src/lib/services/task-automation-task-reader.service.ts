@@ -129,12 +129,14 @@ export class TaskAutomationTaskReader {
 
 	/**
 	 * Open tasks whose due date passed in a window (the due-date sweep), of the rule's organization and scope, oldest
-	 * due first. "Open" is decided by the engine on each task; this only leaves out what is certainly closed.
+	 * due first (then by id), one page at a time: `after` is the last task of the previous page. "Open" is decided by
+	 * the engine on each task; this only leaves out what is certainly closed.
 	 */
 	async dueTasks(
 		scope: { tenantId: ID; organizationId: ID; projectId?: ID | null; organizationTeamId?: ID | null },
 		window: { after: Date; until: Date },
-		limit: number
+		limit: number,
+		after: { id: ID; dueDate: Date } | null = null
 	): Promise<Array<{ id: ID; dueDate: Date }>> {
 		const query = this.dataSource
 			.getRepository(Task)
@@ -149,7 +151,14 @@ export class TaskAutomationTaskReader {
 				closed: ['done', 'completed', 'closed', 'cancelled', 'canceled']
 			})
 			.orderBy('task.dueDate', 'ASC')
+			.addOrderBy('task.id', 'ASC')
 			.take(limit);
+		if (after) {
+			query.andWhere('(task.dueDate > :cursorDue OR (task.dueDate = :cursorDue AND task.id > :cursorId))', {
+				cursorDue: after.dueDate,
+				cursorId: after.id
+			});
+		}
 		if (scope.projectId) query.andWhere('task.projectId = :projectId', { projectId: scope.projectId });
 		if (scope.organizationTeamId) {
 			query.innerJoin('task.teams', 'team', 'team.id = :teamId', { teamId: scope.organizationTeamId });

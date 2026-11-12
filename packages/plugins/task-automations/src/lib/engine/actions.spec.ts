@@ -114,7 +114,22 @@ describe('actions', () => {
 				task({ memberIds: ['e-1'] }),
 				CATALOG
 			);
-			expect(plan.notices).toEqual([{ employeeIds: ['e-1', 'e-2'], message: 'Overdue' }]);
+			expect(plan.notices).toEqual([{ employeeIds: ['e-1', 'e-2'], message: 'Overdue', actionIndex: 1 }]);
+		});
+
+		it('keeps each notice action apart (its place in the rule)', () => {
+			const plan = planActions(
+				[
+					{ type: TaskAutomationActionEnum.NOTIFY_ASSIGNEES, message: 'First' },
+					{ type: TaskAutomationActionEnum.NOTIFY_ASSIGNEES, message: 'Second' }
+				],
+				task({ memberIds: ['e-1'] }),
+				CATALOG
+			);
+			expect(plan.notices.map((notice) => [notice.message, notice.actionIndex])).toEqual([
+				['First', 0],
+				['Second', 1]
+			]);
 		});
 
 		it('sends nothing to a task without assignees', () => {

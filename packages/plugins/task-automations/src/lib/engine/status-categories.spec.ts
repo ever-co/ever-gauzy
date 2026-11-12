@@ -73,4 +73,14 @@ describe('status categories', () => {
 		expect(resolveNamedPriority('urgent', null, CATALOG.priorities)).toEqual({ value: 'urgent', id: null });
 		expect(resolveNamedPriority('whenever', null, CATALOG.priorities)).toBeNull();
 	});
+
+	it('resolves a status by its display name, as saving a rule accepts it', () => {
+		const review = [
+			...STATUSES,
+			{ id: 'st-review', value: 'ready-for-review', name: 'Ready for review', projectId: null, order: 3, isTodo: false, isInProgress: true, isDone: false },
+			{ id: 'st-review-p', value: 'review-p', name: 'Ready for review', projectId: 'p-1', order: 3, isTodo: false, isInProgress: true, isDone: false }
+		];
+		expect(resolveNamedStatus('ready for REVIEW', null, review)).toEqual({ value: 'ready-for-review', id: 'st-review' });
+		expect(resolveNamedStatus('Ready for review', 'p-1', review)).toEqual({ value: 'review-p', id: 'st-review-p' });
+	});
 });

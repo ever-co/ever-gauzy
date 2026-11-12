@@ -23,6 +23,8 @@ export interface ITaskAutomationTaskUpdate {
 export interface ITaskAutomationNotice {
 	employeeIds: ID[];
 	message: string | null;
+	/** The action's place in the rule: a rule with two notices files two, each under an identity of its own. */
+	actionIndex: number;
 }
 
 /** What a rule's actions would do to a task: one update, the notices, and a line per action. */
@@ -60,7 +62,7 @@ export function planActions(
 		unknown: set ? ids.filter((id) => !set.has(id)) : []
 	});
 
-	for (const action of actions ?? []) {
+	for (const [actionIndex, action] of (actions ?? []).entries()) {
 		switch (action?.type) {
 			case TaskAutomationActionEnum.SET_STATUS: {
 				let target: { value: string; id: string | null } | null = null;
@@ -157,7 +159,7 @@ export function planActions(
 					changes.push({ action: action.type, field: 'notice', note: 'The task has no assignee.' });
 					break;
 				}
-				notices.push({ employeeIds: [...working.memberIds], message });
+				notices.push({ employeeIds: [...working.memberIds], message, actionIndex });
 				changes.push({ action: action.type, field: 'notice', to: working.memberIds.length });
 				break;
 			}

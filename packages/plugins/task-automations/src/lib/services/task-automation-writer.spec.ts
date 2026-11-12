@@ -71,7 +71,7 @@ describe('TaskAutomationWriter', () => {
 		const inbox = { upsertExternal: jest.fn(async () => ({ recipientUserIds: ['u-1'] })), create: jest.fn() };
 		const reader = { userIdsOfEmployees: jest.fn(async () => new Map([['e-1', 'u-1']])) };
 		const writer = new TaskAutomationWriter({} as never, { publish: jest.fn() } as never, reader as never, inbox as never);
-		const sent = await writer.notify(task({ reference: 'API-7' }), { employeeIds: ['e-1', 'e-2'], message: null }, marker, 'due:task-1:x');
+		const sent = await writer.notify(task({ reference: 'API-7' }), { employeeIds: ['e-1', 'e-2'], message: null, actionIndex: 0 }, marker, 'due:task-1:x');
 		expect(sent).toEqual({ channel: 'inbox', recipients: 1 });
 		expect(inbox.upsertExternal).toHaveBeenCalledWith(
 			expect.objectContaining({
@@ -79,7 +79,7 @@ describe('TaskAutomationWriter', () => {
 				entity: BaseEntityEnum.Task,
 				taskId: 'task-1',
 				externalSource: 'task-automation',
-				externalId: 'rule-a:due:task-1:x',
+				externalId: 'rule-a:0:due:task-1:x',
 				title: 'API-7 Ship the release notes — Close parents',
 				recipients: [{ userId: 'u-1' }]
 			})
@@ -90,7 +90,7 @@ describe('TaskAutomationWriter', () => {
 	it('without the Inbox, sends a platform notification to each assignee', async () => {
 		const eventBus = { publish: jest.fn() };
 		const writer = new TaskAutomationWriter({} as never, eventBus as never, {} as never);
-		const sent = await writer.notify(task(), { employeeIds: ['e-1', 'e-2'], message: 'Overdue' }, marker, 'k');
+		const sent = await writer.notify(task(), { employeeIds: ['e-1', 'e-2'], message: 'Overdue', actionIndex: 2 }, marker, 'k');
 		expect(sent).toEqual({ channel: 'notification', recipients: 2 });
 		expect(eventBus.publish).toHaveBeenCalledTimes(2);
 		expect((eventBus.publish.mock.calls[0] as unknown as [{ input: Record<string, unknown> }])[0].input).toMatchObject({

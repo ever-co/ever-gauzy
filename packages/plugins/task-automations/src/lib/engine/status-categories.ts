@@ -126,7 +126,11 @@ export function firstStatusOfCategory(
 	return statusRowOf({ status: fallback, taskStatusId: null }, statuses, projectId) ?? null;
 }
 
-/** The status a `SET_STATUS` names (`done` or a `TaskStatus` id) on a task of that project. */
+/**
+ * The status a `SET_STATUS` names on a task of that project: a `TaskStatus` id, a value (`done`) or a name
+ * (`Ready for review`), without regard to case — what saving a rule accepts. A value is preferred to a name, and the
+ * project's own status to the organization's.
+ */
 export function resolveNamedStatus(
 	status: string,
 	projectId: string | null,
@@ -134,10 +138,23 @@ export function resolveNamedStatus(
 ): { value: string; id: string | null } | null {
 	const byId = statuses.find((row) => row.id === status);
 	if (byId) return { value: byId.value ?? status, id: byId.id };
-	const row = statusRowOf({ status, taskStatusId: null }, statuses, projectId);
+	const row =
+		statusRowOf({ status, taskStatusId: null }, statuses, projectId) ?? statusRowByName(status, statuses, projectId);
 	if (row) return { value: row.value ?? status, id: row.id };
 	const value = lower(status);
 	return (Object.values(TaskStatusEnum) as string[]).includes(value) ? { value, id: null } : null;
+}
+
+/** The `task_status` row a status's display name names: the project's own first, then the organization's. */
+function statusRowByName(
+	name: string,
+	statuses: readonly ITaskAutomationStatusRow[],
+	projectId: string | null
+): ITaskAutomationStatusRow | undefined {
+	const wanted = lower(name);
+	if (!wanted) return undefined;
+	const matching = statuses.filter((row) => lower(row.name) === wanted);
+	return matching.find((row) => row.projectId === projectId) ?? matching.find((row) => !row.projectId) ?? matching[0];
 }
 
 /** The priority a `SET_PRIORITY` names (`high` or a `TaskPriority` id) on a task of that project. */

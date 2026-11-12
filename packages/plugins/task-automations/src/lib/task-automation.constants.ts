@@ -23,14 +23,32 @@ export const TASK_AUTOMATION_DUE_SWEEP_RETRY_DELAY_MS = 30_000;
 export const TASK_AUTOMATION_DUE_SWEEP_INTERVAL_MS = 15 * 60_000;
 /** How far back a sweep looks for due dates that passed (it catches up on a downtime of up to this). */
 export const TASK_AUTOMATION_DUE_LOOKBACK_MS = 24 * 60 * 60_000;
-/** The most tasks one sweep reports for one rule (the rest wait for the next sweep). */
+/** How many due tasks a sweep reads at a time for one rule, and the most it runs the rule for in one sweep. */
 export const TASK_AUTOMATION_DUE_BATCH = 200;
+/**
+ * The most due tasks one sweep reads for one rule, the ones it already reported included: it pages past those, so a
+ * task due later is not held back by earlier ones that stay open (the rest wait for the next sweep).
+ */
+export const TASK_AUTOMATION_DUE_SCAN_LIMIT = 5_000;
 
 /** How long the capture trusts what it knows of an organization's rules before it reads them again. */
 export const TASK_AUTOMATION_RULE_CACHE_MS = 30_000;
 
-/** A run left `RUNNING` (a process that stopped mid-run) is taken over by a redelivery after this long. */
+/**
+ * A run left `RUNNING` (a process that stopped mid-run, or whose outcome could not be recorded) is taken over by a
+ * redelivery after this long. Until then a redelivery is refused as "still running", so the outbox tries it again
+ * later (its backoff reaches past this lease within the consumer's attempts) instead of counting it as done.
+ */
 export const TASK_AUTOMATION_RUN_LEASE_MS = 5 * 60_000;
+
+/**
+ * Runs younger than this are kept whatever the history bound: their keys are what stop a change delivered again, or a
+ * due date the sweep sees again (it looks back a day), from running a rule twice. Older keys can no longer recur.
+ */
+export const TASK_AUTOMATION_RUN_DEDUPE_MS = TASK_AUTOMATION_DUE_LOOKBACK_MS + 60 * 60_000;
+
+/** How long a run waits for another run of the same task to finish before it is put back for later. */
+export const TASK_AUTOMATION_TASK_LOCK_WAIT_MS = 2_000;
 
 /** The source and external identity of the Inbox notices the rules file (`upsertExternal` makes them idempotent). */
 export const TASK_AUTOMATION_INBOX_SOURCE = 'TASK_AUTOMATION';

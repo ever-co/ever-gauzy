@@ -18,6 +18,11 @@ import { TASK_AUTOMATION_INBOX_EXTERNAL_SOURCE, TASK_AUTOMATION_INBOX_SOURCE } f
 import { automationUser, runAsAutomation } from './task-automation-context';
 import { TaskAutomationTaskReader } from './task-automation-task-reader.service';
 
+/** The Inbox identity of one notice action of one run: rule, the action's place in the rule, the change (and task). */
+export function noticeExternalId(ruleId: string, actionIndex: number, eventKey: string): string {
+	return `${ruleId}:${actionIndex}:${eventKey}`.slice(0, 250);
+}
+
 /** How many people a notice reached, and through what. */
 export interface ITaskAutomationNoticeResult {
 	channel: 'inbox' | 'notification';
@@ -60,8 +65,9 @@ export class TaskAutomationWriter {
 	}
 
 	/**
-	 * Sends a notice to the task's assignees. In the Inbox it is a NOTICE whose identity is the rule, the change and
-	 * the task, so a redelivered change updates the notice instead of sending a second one.
+	 * Sends a notice to the task's assignees. In the Inbox it is a NOTICE whose identity is the rule, the action's place
+	 * in it, the change and the task, so a redelivered change updates the notice instead of sending a second one, and a
+	 * rule with two notice actions files two.
 	 */
 	async notify(
 		task: ITaskAutomationTaskSnapshot,
@@ -89,7 +95,7 @@ export class TaskAutomationWriter {
 				taskId: task.id,
 				projectId: task.projectId,
 				externalSource: TASK_AUTOMATION_INBOX_EXTERNAL_SOURCE,
-				externalId: `${marker.ruleId}:${eventKey}`.slice(0, 250),
+				externalId: noticeExternalId(marker.ruleId, notice.actionIndex, eventKey),
 				metadata: { ruleId: marker.ruleId, runId: marker.runId },
 				recipients
 			});

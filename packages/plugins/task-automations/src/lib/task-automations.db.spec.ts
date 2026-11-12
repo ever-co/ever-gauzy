@@ -76,6 +76,7 @@ import { TaskAutomationEngine } from './services/task-automation-engine.service'
 import { ITaskAutomationScope, TaskAutomationRuleService } from './services/task-automation-rule.service';
 import { TaskAutomationRunStore } from './services/task-automation-run.store';
 import { TaskAutomationRunner } from './services/task-automation-runner.service';
+import { TaskAutomationRetryLaterError, TaskAutomationTaskLock } from './services/task-automation-task-lock';
 import { TaskAutomationTaskReader } from './services/task-automation-task-reader.service';
 import { TaskAutomationWriter } from './services/task-automation-writer.service';
 
@@ -366,7 +367,7 @@ describe('Task automations on SQLite', () => {
 		runs = new TaskAutomationRunStore(dataSource);
 		reader = new TaskAutomationTaskReader(dataSource);
 		writer = new RowWriter(dataSource);
-		runner = new TaskAutomationRunner(rules, runs, reader, writer as unknown as TaskAutomationWriter);
+		runner = new TaskAutomationRunner(rules, runs, reader, writer as unknown as TaskAutomationWriter, new TaskAutomationTaskLock(dataSource));
 		engine = new TaskAutomationEngine(rules, runner, reader, writer as unknown as TaskAutomationWriter);
 		asManager();
 		scope = await rules.callerScope();
@@ -505,10 +506,11 @@ describe('Task automations on SQLite', () => {
 			depth: 0
 		});
 
-		it('claims a run once per change, and takes over one left running past its lease', async () => {
+		it('claims a run once per change, puts back one still running, and takes over one left running past its lease', async () => {
 			const run = await runs.claim(claim());
 			expect(run?.outcome).toBe(TaskAutomationRunOutcomeEnum.RUNNING);
-			expect(await runs.claim(claim())).toBeNull();
+			// Still running inside its lease: not "done", so the delivery is tried again later.
+			await expect(runs.claim(claim())).rejects.toBeInstanceOf(TaskAutomationRetryLaterError);
 			const later = new Date(Date.now() + 10 * 60_000);
 			const taken = await runs.claim(claim(), later);
 			expect(taken?.id).toBe(run?.id);
@@ -525,7 +527,11 @@ describe('Task automations on SQLite', () => {
 			}
 			expect(await runs.changesSince('task-1', new Date(Date.now() - 60_000))).toBe(3);
 			expect([...(await runs.finishedKeys(ruleId, ['event-5:task-1', 'nope']))]).toEqual(['event-5:task-1']);
-			expect(await runs.prune(ruleId, 4)).toBe(2);
+			// Every run is younger than a day: its key still guards against a second run, so none goes.
+			expect(await runs.prune(ruleId, 4)).toBe(0);
+			expect(await runs.history(ruleId)).toHaveLength(6);
+			// A day later only the newest four are kept.
+			expect(await runs.prune(ruleId, 4, new Date(Date.now() + 26 * 60 * 60_000))).toBe(2);
 			expect(await runs.history(ruleId)).toHaveLength(4);
 		});
 	});
@@ -633,6 +639,32 @@ describe('Task automations on SQLite', () => {
 			expect(await sweeps.sweep(now)).toEqual({ rules: 1, runs: 0 });
 			expect(writer.notices).toHaveLength(1);
 			expect((await runs.history(rule.id as string))[0].outcome).toBe(TaskAutomationRunOutcomeEnum.APPLIED);
+		});
+
+		it('reads due tasks a page at a time, by due date then id, past the last task of the page before', async () => {
+			const due = new Date(Date.now() - 10 * 60_000);
+			const ids = [await createTask({ dueDate: due }), await createTask({ dueDate: due }), await createTask({ dueDate: new Date(Date.now() - 5 * 60_000) })];
+			const ordered = [...ids.slice(0, 2).sort(), ids[2]];
+			const window = { after: new Date(Date.now() - 60 * 60_000), until: new Date() };
+			const first = await reader.dueTasks({ tenantId: TENANT, organizationId: ORG }, window, 2);
+			expect(first.map((task) => task.id)).toEqual(ordered.slice(0, 2));
+			const second = await reader.dueTasks({ tenantId: TENANT, organizationId: ORG }, window, 2, first[1]);
+			expect(second.map((task) => task.id)).toEqual([ordered[2]]);
+		});
+	});
+
+	describe('task lock', () => {
+		it('runs one rule of a task at a time: a second run waits, or is put back for later', async () => {
+			const lock = new TaskAutomationTaskLock(dataSource);
+			let release!: () => void;
+			const holding = lock.run('task-1', () => new Promise<void>((resolve) => (release = resolve)));
+			await expect(lock.run('task-1', async () => 'x', 0)).rejects.toBeInstanceOf(TaskAutomationRetryLaterError);
+			// Another task is not held up.
+			await expect(lock.run('task-2', async () => 'y', 0)).resolves.toBe('y');
+			const waiting = lock.run('task-1', async () => 'z', 5_000);
+			release();
+			await holding;
+			await expect(waiting).resolves.toBe('z');
 		});
 	});
 });

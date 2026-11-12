@@ -16,6 +16,7 @@ import { ITaskAutomationTaskSnapshot } from '../engine/task-snapshot';
 import { allChildrenClosed } from '../engine/triggers';
 import { TaskAutomationRuleService } from './task-automation-rule.service';
 import { TaskAutomationRunStore } from './task-automation-run.store';
+import { TaskAutomationTaskLock } from './task-automation-task-lock';
 import { TaskAutomationTaskReader } from './task-automation-task-reader.service';
 import { TaskAutomationWriter } from './task-automation-writer.service';
 
@@ -64,7 +65,11 @@ function failUpdateChanges(changes: ITaskAutomationChange[], reason: string): vo
  * once per change, holds to the loop guard, the conditions and the rate limit, applies the actions through the
  * platform's task update as the rule's system actor, sends its notices, and records the outcome. A failure of the
  * task update or a notice is the run's outcome, never an exception: the change that set the rule off is not
- * delivered again for it. A failure to claim or record is thrown, so the delivery is tried again.
+ * delivered again for it. A failure to claim or record is thrown, so the delivery is tried again, and so is
+ * `TaskAutomationRetryLaterError` (the task is busy with another run, or this run is still marked running).
+ *
+ * The whole run holds the task's lock (`TaskAutomationTaskLock`): the due sweep and the parent triggers reach a task
+ * from outside its own outbox partition, and two runs must not read the same labels and write two full lists.
  */
 @Injectable()
 export class TaskAutomationRunner {
@@ -74,10 +79,15 @@ export class TaskAutomationRunner {
 		private readonly rules: TaskAutomationRuleService,
 		private readonly runs: TaskAutomationRunStore,
 		private readonly reader: TaskAutomationTaskReader,
-		private readonly writer: TaskAutomationWriter
+		private readonly writer: TaskAutomationWriter,
+		private readonly taskLock: TaskAutomationTaskLock
 	) {}
 
 	async run(rule: ITaskAutomationRule, subjectTaskId: ID, options: ITaskAutomationRunOptions): Promise<ITaskAutomationRunResult> {
+		return this.taskLock.run(subjectTaskId, () => this.runLocked(rule, subjectTaskId, options));
+	}
+
+	private async runLocked(rule: ITaskAutomationRule, subjectTaskId: ID, options: ITaskAutomationRunOptions): Promise<ITaskAutomationRunResult> {
 		const now = options.now ?? new Date();
 		const tenantId = rule.tenantId as ID;
 		const organizationId = rule.organizationId as ID;

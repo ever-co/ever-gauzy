@@ -2,23 +2,28 @@ import { createHash } from 'node:crypto';
 import { DataSource } from 'typeorm';
 
 /**
- * A lock one sweep holds across the processes, taken without waiting: a second sweep that finds it held does nothing
- * (the first is doing the work). PostgreSQL: a transaction-scoped advisory lock on a connection of its own; MySQL:
- * `GET_LOCK(…, 0)`; SQLite (one process): a flag in this process.
+ * The names held in this process, shared by every lock object: a job provider the scheduler builds in an injector of
+ * its own holds a lock object of its own, and must still see the names the API's services hold.
+ */
+const HELD_IN_PROCESS = new Set<string>();
+
+/**
+ * A named lock held across the processes, taken without waiting: a second holder that finds it held does nothing (the
+ * first is doing the work). PostgreSQL: a transaction-scoped advisory lock on a connection of its own; MySQL:
+ * `GET_LOCK(…, 0)`; SQLite (one process): a flag in this process. The due sweep holds one; each task's runs hold
+ * another (`TaskAutomationTaskLock`).
  */
 export class TaskAutomationSweepLock {
-	private readonly held = new Set<string>();
-
 	constructor(private readonly dataSource: DataSource) {}
 
 	/** Runs `work` when the lock is free and answers its result, or `null` when another holder has it. */
 	async tryRun<T>(name: string, work: () => Promise<T>): Promise<T | null> {
-		if (this.held.has(name)) return null;
-		this.held.add(name);
+		if (HELD_IN_PROCESS.has(name)) return null;
+		HELD_IN_PROCESS.add(name);
 		try {
 			return await this.acrossProcesses(name, work);
 		} finally {
-			this.held.delete(name);
+			HELD_IN_PROCESS.delete(name);
 		}
 	}
 
