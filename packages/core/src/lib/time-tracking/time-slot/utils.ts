@@ -1,4 +1,31 @@
 import * as moment from 'moment';
+import { ITimeSlot } from '@gauzy/contracts';
+
+/** A time slot covers the ten minutes from its start, as `TimeSlotSubscriber` sets its `stoppedAt`. */
+const TIME_SLOT_MINUTES = 10;
+
+/**
+ * The end of the ten minutes a time slot covers.
+ *
+ * @param timeSlot - The time slot.
+ */
+export function timeSlotEnd(timeSlot: ITimeSlot): Date {
+	const slotEnd = moment(timeSlot.startedAt).add(TIME_SLOT_MINUTES, 'minutes');
+	return slotEnd.toDate();
+}
+
+/**
+ * Whether time from `from` to `to` reaches into the ten minutes of a time slot.
+ *
+ * @param timeSlot - The time slot.
+ * @param from - The start of the time.
+ * @param to - The end of the time.
+ */
+export function reachesTimeSlot(timeSlot: ITimeSlot, from: Date, to: Date): boolean {
+	const startsBeforeSlotEnds = moment(from).isBefore(timeSlotEnd(timeSlot));
+	const endsAfterSlotStarts = moment(to).isAfter(timeSlot.startedAt);
+	return startsBeforeSlotEnds && endsAfterSlotStarts;
+}
 
 /**
  * Generates time slots in 10-minute intervals between a start and end time.

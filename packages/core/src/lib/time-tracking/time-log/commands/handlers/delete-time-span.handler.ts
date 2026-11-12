@@ -11,11 +11,9 @@ import { TimeLogUpdateCommand } from '../time-log-update.command';
 import { TimeLogDeleteCommand } from '../time-log-delete.command';
 import { TimeSlotBulkDeleteCommand } from './../../../time-slot/commands';
 import { TimeSlot } from '../../../time-slot/time-slot.entity';
+import { reachesTimeSlot, timeSlotEnd } from '../../../time-slot/utils';
 import { TypeOrmTimeLogRepository } from '../../repository/type-orm-time-log.repository';
 import { TypeOrmTimeSlotRepository } from '../../../time-slot/repository/type-orm-time-slot.repository';
-
-/** A time slot covers the ten minutes from its start, as `TimeSlotSubscriber` sets its `stoppedAt`. */
-const TIME_SLOT_MINUTES = 10;
 
 /**
  * The time slots a span takes from a log. Deleting a time slot names it: it goes whatever other log holds it, and
@@ -25,29 +23,6 @@ const TIME_SLOT_MINUTES = 10;
 interface SpanTimeSlots {
 	ids: ID[];
 	named: boolean;
-}
-
-/**
- * The end of the ten minutes a time slot covers.
- *
- * @param timeSlot - The time slot.
- */
-function timeSlotEnd(timeSlot: ITimeSlot): Date {
-	const slotEnd = moment(timeSlot.startedAt).add(TIME_SLOT_MINUTES, 'minutes');
-	return slotEnd.toDate();
-}
-
-/**
- * Whether time from `from` to `to` reaches into the ten minutes of a time slot.
- *
- * @param timeSlot - The time slot.
- * @param from - The start of the time.
- * @param to - The end of the time.
- */
-function reachesTimeSlot(timeSlot: ITimeSlot, from: Date, to: Date): boolean {
-	const startsBeforeSlotEnds = moment(from).isBefore(timeSlotEnd(timeSlot));
-	const endsAfterSlotStarts = moment(to).isAfter(timeSlot.startedAt);
-	return startsBeforeSlotEnds && endsAfterSlotStarts;
 }
 
 /**
