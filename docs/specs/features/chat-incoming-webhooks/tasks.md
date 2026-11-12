@@ -3,7 +3,7 @@
 **Feature ID**: `chat-incoming-webhooks`
 **Plan**: `./plan.md`
 **Status**: `In progress` (server: ever-gauzy #11799)
-**Last updated**: 2026-11-11
+**Last updated**: 2026-11-12
 
 ---
 
@@ -34,6 +34,11 @@
 - [x] **T14**. Angular `chat-ui`: Integrations tab (create, URL + secret once with copy, list, rename, icon, interaction URL, broadcast, rotate, revoke), hidden on 404; app messages (badge, name, icon, blocks, buttons with pending / failed); strings in every locale; specs ([#11808](https://github.com/ever-co/ever-gauzy/pull/11808), `1bffa230b6`)
 - [x] **T15**. Ever Teams `apps/web` chat: app messages (badge, blocks, buttons → interaction route) behind `NEXT_PUBLIC_CHAT_WEBHOOKS_ENABLED`; strings in all 13 locales; tests ([ever-teams#5071](https://github.com/ever-co/ever-teams/pull/5071), `c16f21b33e`)
 - [ ] **T16**. Ever Teams management UI (create / list / revoke webhooks) — follow-up unless time permits
+
+## Phase 4b — Idempotent clicks
+
+- [x] **T18**. A click's `Idempotency-Key` header (≤ 64 printable characters, the receive route's rule): `chat_webhook_interaction.idempotencyKey` + unique (`tenantId`, `messageId`, `actorUserId`, `idempotencyKey`) in migration `1791000008300` (tri-dialect, guarded, idempotent, reversible); a repeat answers the first click as it is now and calls the app no second time, a concurrent duplicate loses on the index (TypeORM and MikroORM error shapes), the same key for another button is `409 IDEMPOTENCY_KEY_REUSED`, no key keeps the old behaviour; specs. Clients: Angular `chat-ui` and Ever Teams send a UUID per click and reuse it on the retry of that click
+- [ ] **T19**. Ever Teams: forward the key through the proxy-mode interaction route and send it from the app-message buttons (ever-teams, after the server merges)
 
 ## Phase 5 — Verification
 

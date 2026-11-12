@@ -53,7 +53,7 @@ member messages already use (Principle VII).
 | Idempotency | payload `nonce` or the `Idempotency-Key` header (≤ 64 chars) becomes the message nonce; unique (`webhookId`, `nonce`); a repeat answers `200 ok` and posts nothing | NFR reliability |
 | Broadcast | `<!channel>` / `<!here>` count only when the webhook has `canBroadcast` (off by default; a manager sets it); otherwise they stay as plain `@channel` text | FR-3 |
 | Author | `authorEmployeeId`/`authorUserId` null, `kind: app`, `webhookId`, `appName` + `appIconUrl` copied from the webhook at post time; `username` / `icon_url` / `channel` in a payload are ignored | FR-3; a payload cannot pose as someone else or another channel |
-| Interactions | one `chat_webhook_interaction` row per click (its id is the `interactionId`); first attempt inline, then 3 retries (2 s, 10 s, 30 s), each re-signed with a fresh timestamp, same `interactionId` and `Idempotency-Key`; a reply that cannot be read is retried; a 2xx JSON reply with `text`/`blocks`/`attachments` replaces the message once per interaction (`replyAppliedAt` claimed in the same transaction as the message write) unless `replace_original: false`; an actions block without a `block_id` gets `_block-<index>`, so (block id, action id) names one button | FR-4, NFR reliability |
+| Interactions | one `chat_webhook_interaction` row per click (its id is the `interactionId`); first attempt inline, then 3 retries (2 s, 10 s, 30 s), each re-signed with a fresh timestamp, same `interactionId` and `Idempotency-Key`; a reply that cannot be read is retried; a 2xx JSON reply with `text`/`blocks`/`attachments` replaces the message once per interaction (`replyAppliedAt` claimed in the same transaction as the message write) unless `replace_original: false`; an actions block without a `block_id` gets `_block-<index>`, so (block id, action id) names one button. A click carries the client's `Idempotency-Key` header (a UUID per click, the same on its retries; ≤ 64 printable characters, the receive route's rule), stored as `idempotencyKey`, unique per (tenant, message, clicker, key): a repeat — double click, retry after a lost answer, a concurrent duplicate refused by the index — answers the first click as it is now (`replayed: true`) and posts nothing; the same key for another button is `409 IDEMPOTENCY_KEY_REUSED`; no key, one interaction per request | FR-4, NFR reliability |
 | Who manages | channel managers, the channel's creator and `CHAT_MANAGE` holders (`ChatAccessService.requireManager`); `CHAT_SEND` on the write routes | spec §8 open question, answered with the proposal |
 | Activity log | `ActivityLogService.logActivity` on `BaseEntityEnum.ChatWebhook`: Created, Updated (rename, icon, interaction URL, broadcast), Deleted (revoke) | FR-7 |
 | Counters | `acceptedCount`, `rejectedCount`, `rateLimitedCount`, `callbackFailureCount`, `lastUsedAt` on the webhook row (atomic increments), shown in the list | NFR observability, FR-1 "last used" |
@@ -63,7 +63,7 @@ member messages already use (Principle VII).
 | Table | Columns (beyond the tenant/organization base) |
 | ----- | --------------------------------------------- |
 | `chat_webhook` | `conversationId` (FK cascade), `name` (80), `iconUrl` (2048), `interactionUrl` (2048), `tokenHash` (64, unique), `tokenHint` (8), `signingSecret` (text, sealed), `canBroadcast`, `createdByEmployeeId`, `revokedAt`, `revokedByEmployeeId`, `lastUsedAt`, `acceptedCount`, `rejectedCount`, `rateLimitedCount`, `callbackFailureCount`; index (`conversationId`) |
-| `chat_webhook_interaction` | `webhookId` (FK cascade), `messageId` (FK cascade), `conversationId`, `actorEmployeeId`, `actorUserId`, `actionId` (255), `blockId` (255), `value` (2000), `status` (pending / delivered / retrying / failed), `attempts`, `lastStatusCode`, `lastError` (255), `deliveredAt`, `replyAppliedAt`; indexes (`messageId`), (`webhookId`) |
+| `chat_webhook_interaction` | `webhookId` (FK cascade), `messageId` (FK cascade), `conversationId`, `actorEmployeeId`, `actorUserId`, `actionId` (255), `blockId` (255), `value` (2000), `status` (pending / delivered / retrying / failed), `attempts`, `lastStatusCode`, `lastError` (255), `deliveredAt`, `replyAppliedAt`, `idempotencyKey` (64, migration `1791000008300`); indexes (`messageId`), (`webhookId`), unique (`tenantId`, `messageId`, `actorUserId`, `idempotencyKey`) where a key is set |
 | `chat_message` (+) | `webhookId` (index; unique (`webhookId`, `nonce`) where `nonce` is set), `appIconUrl` (2048), `blocks` (text: the normalised block JSON) |
 
 Contracts (`packages/contracts/src/lib/chat.model.ts`): `ChatAppBlockTypeEnum`, `IChatAppBlock` union and
@@ -81,7 +81,7 @@ signing secret shown once), `IChatInteractionInput` / `Result` / `State`, `ChatI
 | `PATCH` | `/api/chat/webhooks/:id` | CHAT_SEND + manager | rename, icon, interaction URL (`null` clears; a new one is judged by the egress guard, resolution included), broadcast |
 | `POST` | `/api/chat/webhooks/:id/secret` | CHAT_SEND + manager | a new signing secret, shown once |
 | `DELETE` | `/api/chat/webhooks/:id` | CHAT_SEND + manager | revoke (the row stays for history; the URL answers 404 from then on) |
-| `POST` | `/api/chat/messages/:id/interactions` | CHAT_SEND + member | `{ actionId, blockId? }` → `{ interaction, message?, events }`; the value comes from the stored button, never from the client; a non-member gets 404 |
+| `POST` | `/api/chat/messages/:id/interactions` | CHAT_SEND + member | `{ actionId, blockId? }` (+ optional `Idempotency-Key` header) → `{ interaction, message?, events, replayed? }`; the value comes from the stored button, never from the client; a non-member gets 404; a repeated key answers the first click, the same key for another button 409 |
 | `GET` | `/api/chat/interactions/:id` | CHAT_VIEW, the actor only | the state of a click (for a client waiting on retries) |
 
 The public route runs outside the tenant guard: the webhook row names the tenant, the organization and the
@@ -147,6 +147,7 @@ revoke and refusals · X spec unchanged · XI no third-party product named.
 | An interaction URL that points inside the network | the egress guard at save and at each attempt, pinned connection, no redirects |
 | A slow receiver holds a request | 5 s deadline on the inline attempt; retries run after the answer |
 | Retries lost on a restart | the row keeps `retrying`; a click on the same button starts a new interaction; receivers deduplicate on `interactionId` |
+| A double click, or a client retry after a lost answer, calls the app twice | the click's `Idempotency-Key`, unique per (tenant, message, clicker, key): the repeat answers the first interaction, and a concurrent duplicate loses on the unique index and answers the winner's row |
 | `ENCRYPTION_KEY` unset | the signing secret falls back to a key derived from a non-default `JWT_SECRET`; with neither, no interaction URL can be saved (clear 400) |
 
 ## 12. Known limitations / follow-ups
