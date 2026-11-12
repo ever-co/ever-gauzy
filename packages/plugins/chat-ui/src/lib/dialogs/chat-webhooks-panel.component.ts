@@ -312,6 +312,8 @@ export class ChatWebhooksPanelComponent implements OnInit {
 	readonly secretsShown = output<void>();
 	/** The manager dismissed the URL or signing secret on screen ("I have copied them"). */
 	readonly secretsDismissed = output<void>();
+	/** A write failed: its error shows here, so the dialog stays open on this tab. */
+	readonly writeFailed = output<void>();
 
 	protected readonly maxWebhooks = CHAT_WEBHOOK_MAX_PER_CONVERSATION;
 	protected readonly nameMax = CHAT_WEBHOOK_NAME_MAX_LENGTH;
@@ -473,6 +475,8 @@ export class ChatWebhooksPanelComponent implements OnInit {
 			},
 			error: (error) => {
 				this.fail(error);
+				// Before the write counts as ended: a close asked for meanwhile is dropped, so the error is read.
+				this.writeFailed.emit();
 				this.setBusy(false);
 			}
 		});

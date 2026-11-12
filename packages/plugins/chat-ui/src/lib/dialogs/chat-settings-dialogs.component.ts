@@ -214,6 +214,7 @@ let channelSettingsDialogs = 0;
 						(busyChange)="webhookWriting($event)"
 						(secretsShown)="showWebhookSecrets()"
 						(secretsDismissed)="secretOnScreen = false"
+						(writeFailed)="showWebhookFailure()"
 					></ngx-chat-webhooks-panel>
 				} @else if (webhooksFailed()) {
 					<!-- The list could not be read (not a 404, which means webhooks are off): the tab says so and offers a retry. -->
@@ -532,6 +533,12 @@ export class ChannelSettingsDialogComponent implements OnInit, AfterViewInit {
 	protected webhookWriting(busy: boolean): void {
 		this.webhookBusy = busy;
 		if (!busy) this.closeIfRequested();
+	}
+
+	/** A webhook write failed: its tab comes forward with the error, and a close asked for meanwhile is dropped. */
+	protected showWebhookFailure(): void {
+		this.tab.set('integrations');
+		this.closeRequested.set(false);
 	}
 
 	/** A webhook write made a secret: its tab comes forward, and a close asked for meanwhile is dropped so it is read. */

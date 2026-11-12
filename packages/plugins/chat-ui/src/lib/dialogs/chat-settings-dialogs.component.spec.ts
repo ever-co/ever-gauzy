@@ -226,6 +226,23 @@ describe('ChannelSettingsDialogComponent', () => {
 		expect(close).toHaveBeenCalledWith(expect.objectContaining({ topic: 'Pixels and fonts' }));
 	});
 
+	it('stays open on a webhook write that failed while Close waited for it', async () => {
+		await open({}, 'on');
+		const write = new Subject<IChatWebhookWriteResult>();
+		webhooksApi.update.mockReturnValueOnce(write);
+		tabTo('integrations');
+		panel().startEdit(webhook('w-1', 'CI'));
+		panel().patch({ name: 'CI builds' });
+		panel().saveEdit(webhook('w-1', 'CI'));
+		tabTo('settings');
+		dialog().close();
+		write.error({ error: { message: 'The interaction URL must name a public host.' } });
+		fixture.detectChanges();
+		expect(close).not.toHaveBeenCalled();
+		expect(dialog().tab()).toBe('integrations');
+		expect(fixture.nativeElement.querySelector('[data-test="webhooks-error"]')?.textContent).toContain('public host');
+	});
+
 	it('closes once a webhook write that made no secret ended', async () => {
 		await open({}, 'on');
 		const write = new Subject<IChatWebhookWriteResult>();
