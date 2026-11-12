@@ -375,6 +375,15 @@ jobs:
           # The modes pull the same Docker Hub images in parallel from shared runner addresses, which
           # Docker Hub rate-limits; every image of the audit is pinned by digest, so the mirror serves
           # the same bytes.
+          # Only where the Docker daemon is a local systemd service (a GitHub-hosted VM). A runner that
+          # reaches its daemon elsewhere, as the in-cluster CI does (a dind sidecar over DOCKER_HOST,
+          # with a pull-through mirror of its own), has no /etc/docker and no daemon to restart here:
+          # its daemon's mirrors stay as they are.
+          if [ ! -d /etc/docker ] || ! command -v systemctl > /dev/null || ! systemctl cat docker.service > /dev/null 2>&1; then
+            echo "The Docker daemon is not a local systemd service here (DOCKER_HOST=${DOCKER_HOST:-unset}): it keeps its own registry mirrors."
+            docker info --format '{{json .RegistryConfig.Mirrors}}'
+            exit 0
+          fi
           cfg=/etc/docker/daemon.json
           if [ -s "$cfg" ]; then current=$(cat "$cfg"); else current='{}'; fi
           echo "$current" | jq '. + {"registry-mirrors": ["https://mirror.gcr.io"]}' | sudo tee "$cfg" > /dev/null

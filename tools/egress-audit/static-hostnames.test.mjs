@@ -11,6 +11,7 @@ import {
 	bundleGrowth,
 	codeGrowth,
 	main,
+	moduleHosts,
 	occurrences,
 	readBaseline,
 	REPO_ROOT,
@@ -48,6 +49,41 @@ test('one more occurrence of a recorded host in a recorded file fails; one less 
 test('a host new to the built web app fails', () => {
 	assert.deepEqual(bundleGrowth(['gauzy.co', 'api.ever.co'], ['gauzy.co']), ['api.ever.co']);
 	assert.deepEqual(bundleGrowth(['gauzy.co'], ['gauzy.co', 'docs.gauzy.co']), []);
+});
+
+test("in the built web app, a host a module's web part names passes; one only its tests, a server module or core code name does not", () => {
+	const dir = mkdtempSync(join(tmpdir(), 'static-hostnames-modules-'));
+	const write = (file, text) => {
+		mkdirSync(join(dir, file, '..'), { recursive: true });
+		writeFileSync(join(dir, file), text);
+	};
+	try {
+		execFileSync('git', ['init', '-q'], { cwd: dir });
+		write('packages/plugins/ever-connect-ui/src/lib/catalog.ts', "const url = 'https://everdemand.co';\n");
+		write('packages/plugins/ever-stats-ui/src/lib/page.html', '<a href="https://app.ever.works">Works</a>\n');
+		write('packages/plugins/ever-connect-ui/src/lib/catalog.spec.ts', "expect('https://rec.so');\n");
+		write('packages/plugins/ever-connect-ui/README.md', 'See https://traduora.co.\n');
+		write('packages/plugins/ever-connect/src/lib/sdk.ts', "const api = 'https://app-dev.ever.co';\n");
+		write('packages/core/src/lib/core.ts', "const app = 'https://app.ever.team';\n");
+		assert.deepEqual(moduleHosts(dir), ['app.ever.works', 'everdemand.co']);
+
+		const bundle = join(dir, 'srv');
+		mkdirSync(bundle);
+		const scan = (text) => {
+			writeFileSync(join(bundle, 'main.js'), text);
+			const { lines, io } = quiet();
+			return { code: main(['--root', dir, '--bundle', bundle], io), out: lines.join('\n') };
+		};
+		assert.equal(scan("['https://everdemand.co', 'https://app.ever.works']").code, 0);
+		for (const host of ['rec.so', 'traduora.co', 'app-dev.ever.co', 'app.ever.team']) {
+			const { code, out } = scan(`['https://everdemand.co', 'https://${host}']`);
+			assert.equal(code, 1, host);
+			assert.match(out, new RegExp(`^  ${host.replace(/\./g, '\\.')}$`, 'm'));
+			assert.doesNotMatch(out, /everdemand\.co/);
+		}
+	} finally {
+		rmSync(dir, { recursive: true, force: true });
+	}
 });
 
 test('every Ever-owned name counts, names under it included; other hosts do not', () => {

@@ -17,7 +17,8 @@
  *   node tools/egress-audit/static-hostnames.mjs --bundle <dir>
  *       every text file of a built web app (the `/srv/gauzy` of the web app image), against the
  *       `bundle` part: never a host that is not recorded (file names and counts change with every
- *       build; a new host does not)
+ *       build; a new host does not), unless the shipped sources of a module's web part name it (the
+ *       module's own host: module and core code share the bundle's chunks; see moduleHosts)
  *   node tools/egress-audit/static-hostnames.mjs --check-shrink <file>
  *       the baseline only lost entries (or occurrences) since the base of the change, <file>
  *       being the baseline at the base (git show <base>:tools/egress-audit/static-hostnames.baseline.json)
@@ -39,6 +40,18 @@ const HERE = dirname(fileURLToPath(import.meta.url));
 export const REPO_ROOT = resolve(HERE, '..', '..');
 export const BASELINE_FILE = join(HERE, 'static-hostnames.baseline.json');
 
+/** The Ever Platform modules: they may name Ever hosts. */
+export const MODULES = [
+	'packages/plugins/ever-connect/',
+	'packages/plugins/ever-connect-ui/',
+	'packages/plugins/ever-stats/',
+	'packages/plugins/ever-stats-ui/',
+	'packages/plugins/ever-instance/'
+];
+
+/** Prose and tests: they never ship. */
+const NOT_SHIPPED = ['**/*.md', '**/*.spec.ts', '**/*.e2e-spec.ts', '**/*.test.*'];
+
 /**
  * Where an Ever host may be named: the modules themselves, their docs, the audit and its checks,
  * prose (Markdown) and tests, and the external uptime monitor. Everything else is core code.
@@ -50,17 +63,10 @@ export const BASELINE_FILE = join(HERE, 'static-hostnames.baseline.json');
  * can end up inside one.
  */
 export const ALLOWED = [
-	'packages/plugins/ever-connect/',
-	'packages/plugins/ever-connect-ui/',
-	'packages/plugins/ever-stats/',
-	'packages/plugins/ever-stats-ui/',
-	'packages/plugins/ever-instance/',
+	...MODULES,
 	'tools/egress-audit/',
 	'tools/ever-platform/',
-	'**/*.md',
-	'**/*.spec.ts',
-	'**/*.e2e-spec.ts',
-	'**/*.test.*',
+	...NOT_SHIPPED,
 	'apps/gauzy-e2e/',
 	'.github/workflows/external-uptime-monitor.yml',
 	// The legal documents vendored from the `@ever-co/legal` Markdown corpus by
@@ -191,6 +197,32 @@ export function scanBundle(dir) {
 	return [...hosts].sort(byCodeUnit);
 }
 
+/** The modules the web app ships: their web parts (a web part never imports a server module). */
+export const UI_MODULES = MODULES.filter((p) => p.endsWith('-ui/'));
+
+/**
+ * The sorted Ever hosts and variables that the shipped sources of the modules' web parts name (not their tests
+ * or prose). The built web app holds module code and core code in the same chunks, so the bundle scan cannot
+ * tell them apart by file: a host these sources name is the module's own and passes there. The source scan,
+ * which can tell them apart, holds core code to the baseline. What the bundle scan adds is a host from neither:
+ * one the build puts in (configuration, environment, a dependency).
+ */
+export function moduleHosts(root, { files = sourceFiles(root) } = {}) {
+	const lists = loadEverHosts();
+	const hosts = new Set();
+	for (const file of files) {
+		if (!TEXT.test(file) || SKIP.test(file) || !allowed(file, UI_MODULES) || allowed(file, NOT_SHIPPED)) continue;
+		let text;
+		try {
+			text = readFileSync(join(root, file), 'utf8');
+		} catch {
+			continue; // a file deleted in the working copy
+		}
+		for (const key of Object.keys(occurrences(text, lists))) hosts.add(key);
+	}
+	return [...hosts].sort(byCodeUnit);
+}
+
 /** What `found` has beyond `baseline` (both `{file: {host: count}}`): `file host now (recorded n)`. */
 export function codeGrowth(found, baseline = {}) {
 	const out = [];
@@ -293,7 +325,9 @@ export function main(
 		const next = { code: baseline.code, bundle: baseline.bundle };
 		let grown;
 		if (bundleDir) {
-			next.bundle = { hosts: scanBundle(resolve(bundleDir)), ...(arg('image') ? { image: arg('image') } : {}) };
+			// The modules' own hosts pass by themselves (moduleHosts): the baseline records only the others.
+			const hosts = bundleGrowth(scanBundle(resolve(bundleDir)), moduleHosts(root));
+			next.bundle = { hosts, ...(arg('image') ? { image: arg('image') } : {}) };
 			grown = bundleGrowth(next.bundle.hosts, baseline.bundle.hosts);
 		} else {
 			next.code = scanCode(root);
@@ -310,14 +344,18 @@ export function main(
 
 	if (bundleDir) {
 		const found = scanBundle(resolve(bundleDir));
-		const grown = bundleGrowth(found, baseline.bundle.hosts);
+		const own = moduleHosts(root);
+		const grown = bundleGrowth(found, [...baseline.bundle.hosts, ...own]);
 		if (grown.length) {
 			err(
-				`static-hostnames: the built web app names Ever hosts the baseline does not have (core code must not call or link Ever hosts; the modules' own hosts come from the modules):\n  ${grown.join('\n  ')}`
+				`static-hostnames: the built web app names Ever hosts the baseline does not have and no module's web part names (core code must not call or link Ever hosts; the modules' own hosts come from the modules):\n  ${grown.join('\n  ')}`
 			);
 			return 1;
 		}
-		log(`static-hostnames: ok (bundle: ${found.length} Ever host(s), all recorded)`);
+		const recorded = found.filter((host) => baseline.bundle.hosts.includes(host)).length;
+		log(
+			`static-hostnames: ok (bundle: ${found.length} Ever host(s): ${recorded} recorded, ${found.length - recorded} named by the modules' web parts)`
+		);
 		return 0;
 	}
 
