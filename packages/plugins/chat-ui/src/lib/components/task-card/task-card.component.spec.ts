@@ -21,15 +21,14 @@ describe('TaskCardComponent', () => {
 	let fixture: ComponentFixture<TaskCardComponent>;
 	let granted: Set<string>;
 	let updateTask: jest.Mock;
-	let tasks: { statusChoices: jest.Mock; remember: jest.Mock; refresh: jest.Mock };
+	let tasks: { statusChoices: jest.Mock; reload: jest.Mock };
 
 	beforeEach(async () => {
 		granted = new Set<string>([PermissionsEnum.ORG_TASK_EDIT]);
 		updateTask = jest.fn(() => of({ task: { id: 't1' }, events: [] } as unknown as IChatTaskUpdateResult));
 		tasks = {
 			statusChoices: jest.fn(() => of([{ name: 'Open', id: 's1' }, { name: 'Done', id: 's2' }])),
-			remember: jest.fn(),
-			refresh: jest.fn()
+			reload: jest.fn(() => of(TASK))
 		};
 		await TestBed.configureTestingModule({
 			imports: [TaskCardComponent],
@@ -72,11 +71,29 @@ describe('TaskCardComponent', () => {
 		expect([...(select('task-assignee')?.options ?? [])].map((option) => option.textContent?.trim())).toEqual(['CHAT.TASKS.ASSIGNED', '✓ Anna', 'Ben']);
 	});
 
-	it('changes the status with its record, then reads the task again', () => {
+	it('changes the status with its record, then reads the whole task again (the answer may lack its assignees)', () => {
 		pick('task-status', 'Done');
 		expect(updateTask).toHaveBeenCalledWith('m1', 't1', { status: 'Done', taskStatusId: 's2' });
-		expect(tasks.remember).toHaveBeenCalledWith({ id: 't1' });
-		expect(tasks.refresh).toHaveBeenCalledWith(['t1']);
+		expect(tasks.reload).toHaveBeenCalledWith('t1');
+	});
+
+	it('takes no other change until the task was read again, so an assignee pick sends the stored list', () => {
+		const read = new Subject<ChatTaskSummary>();
+		tasks.reload.mockReturnValueOnce(read);
+		pick('task-status', 'Done');
+		expect(select('task-assignee')?.disabled).toBe(true);
+		read.next(TASK);
+		read.complete();
+		fixture.detectChanges();
+		expect(select('task-assignee')?.disabled).toBe(false);
+		// A read that fails lets go of the controls too, the summary shown as it was.
+		const failing = new Subject<ChatTaskSummary>();
+		tasks.reload.mockReturnValueOnce(failing);
+		pick('task-priority', 'low');
+		expect(select('task-assignee')?.disabled).toBe(true);
+		failing.error(new Error('offline'));
+		fixture.detectChanges();
+		expect(select('task-assignee')?.disabled).toBe(false);
 	});
 
 	it('clears the priority, and adds or takes off one assignee at a time', () => {
@@ -94,7 +111,7 @@ describe('TaskCardComponent', () => {
 		updateTask.mockReturnValueOnce(throwError(() => ({ status: 403, error: { message: 'Changing a task needs ORG_TASK_EDIT.' } })));
 		pick('task-status', 'Done');
 		expect(element().querySelector('[data-test="task-error"]')?.textContent).toContain('Changing a task needs ORG_TASK_EDIT.');
-		expect(tasks.refresh).toHaveBeenCalledWith(['t1']);
+		expect(tasks.reload).toHaveBeenCalledWith('t1');
 	});
 
 	it('keeps the controls still while a change is saved', () => {

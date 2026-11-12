@@ -215,6 +215,47 @@ describe('MessageComposerComponent', () => {
 			expect(discardAttachment.mock.calls).toEqual([['doc-1'], ['doc-2']]);
 		});
 
+		it('keeps the files of a send under way, and lets a refused send discard them', () => {
+			fixture.componentInstance.addFiles([pdf()]);
+			uploads[0].next({ results: [{ document: { id: 'doc-1' } }], rejected: [] });
+			fixture.detectChanges();
+			sendButton().click();
+			// The place sends (busy): taking the file off now discards nothing, the message may carry it.
+			fixture.componentRef.setInput('disabled', true);
+			fixture.detectChanges();
+			(fixture.nativeElement.querySelector('.attachment-remove') as HTMLButtonElement | null)?.click();
+			expect(discardAttachment).not.toHaveBeenCalled();
+		});
+
+		it('discards the files of a refused send once they are taken off', () => {
+			fixture.componentInstance.addFiles([pdf()]);
+			uploads[0].next({ results: [{ document: { id: 'doc-1' } }], rejected: [] });
+			fixture.detectChanges();
+			sendButton().click();
+			fixture.componentRef.setInput('disabled', true);
+			fixture.detectChanges();
+			// The send ends and the composer is not cleared: the place refused it.
+			fixture.componentRef.setInput('disabled', false);
+			fixture.detectChanges();
+			(fixture.nativeElement.querySelector('.attachment-remove') as HTMLButtonElement).click();
+			fixture.detectChanges();
+			expect(discardAttachment.mock.calls).toEqual([['doc-1']]);
+		});
+
+		it('discards nothing of a send that went out, nor of one the person moved on from', () => {
+			fixture.componentInstance.addFiles([pdf()]);
+			uploads[0].next({ results: [{ document: { id: 'doc-1' } }], rejected: [] });
+			fixture.detectChanges();
+			sendButton().click();
+			fixture.componentRef.setInput('disabled', true);
+			fixture.detectChanges();
+			// Another place while the send is under way: that send may still land.
+			fixture.componentRef.setInput('draftKey', 'conversation:c2');
+			fixture.componentRef.setInput('disabled', false);
+			fixture.detectChanges();
+			expect(discardAttachment).not.toHaveBeenCalled();
+		});
+
 		it('leaves a file still uploading to the platform, and a failed discard unnoticed', () => {
 			discardAttachment.mockReturnValueOnce(throwError(() => ({ status: 404 })));
 			fixture.componentInstance.addFiles([pdf(), pdf()]);

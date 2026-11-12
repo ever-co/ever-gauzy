@@ -874,6 +874,11 @@ export class MessageComposerComponent {
 	private nextKey = 0;
 	/** The documents of the last send: a message carries them (or will), so they are never discarded as drafts. */
 	private submittedDocumentIds = new Set<string>();
+	/**
+	 * The documents of the send under way, and the place it was made in: protected until the place answers it (cleared on
+	 * success, freed on a refusal). A person who moves on meanwhile leaves them protected: that send may still land.
+	 */
+	private inFlightDocumentIds: { ids: string[]; key: string | null } | null = null;
 	/** When the last typing signal was asked for. */
 	private lastTyping = 0;
 	/**
@@ -966,6 +971,19 @@ export class MessageComposerComponent {
 				this.clear();
 			});
 		});
+		// The place is busy while it sends (`disabled`). A send that ends without clearing the composer was refused: the
+		// files it took are drafts again (taken off, or left behind, they are discarded); a send under way keeps them.
+		effect(() => {
+			const busy = this.disabled();
+			untracked(() => {
+				const inFlight = this.inFlightDocumentIds;
+				if (busy || !inFlight) return;
+				this.inFlightDocumentIds = null;
+				// Another place now: the place stopped waiting for that send, it did not refuse it.
+				if (inFlight.key !== this.draftKey()) return;
+				for (const id of inFlight.ids) this.submittedDocumentIds.delete(id);
+			});
+		});
 	}
 
 	focus(): void {
@@ -1008,6 +1026,7 @@ export class MessageComposerComponent {
 		// The files went with the message that was sent: nothing to discard.
 		this.dropAttachments(false);
 		this.submittedDocumentIds = new Set();
+		this.inFlightDocumentIds = null;
 		this.afterRender(() => this.autosize());
 	}
 
@@ -1328,6 +1347,7 @@ export class MessageComposerComponent {
 		const body = text;
 		const mentionEmployeeIds = [...new Set([...this.picked.values()].filter((id) => body.includes(`<@${id}>`)))];
 		for (const id of attachmentIds) this.submittedDocumentIds.add(id);
+		this.inFlightDocumentIds = attachmentIds.length ? { ids: attachmentIds, key: this.draftKey() } : null;
 		// Sent: the next keystroke tells the members again at once.
 		this.lastTyping = 0;
 		this.submitted.emit({ body, mentionEmployeeIds, attachmentIds });

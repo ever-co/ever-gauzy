@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, DestroyRef, effect, inject, input, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { finalize } from 'rxjs/operators';
 import { RouterLink } from '@angular/router';
 import { NbIconModule } from '@nebular/theme';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
@@ -287,17 +288,25 @@ export class TaskCardComponent {
 			.updateTask(this.messageId(), this.taskId(), input)
 			.pipe(takeUntilDestroyed(this.destroyRef))
 			.subscribe({
-				next: (result) => {
-					this.saving.set(false);
-					// The answer's task may come without its relations: read the summary again to show it as stored.
-					if (result?.task) this.tasks.remember(result.task);
-					this.tasks.refresh([this.taskId()]);
-				},
+				// The answer's task may come without its relations (no members after a status change): the card keeps its
+				// full summary, reads the task again, and takes no other change before that read ends (an assignee pick
+				// sends the whole list, which must be the stored one).
+				next: () => this.readAgain(),
 				error: (error) => {
-					this.saving.set(false);
 					this.error.set(apiErrorMessage(error) ?? this.translate.instant('CHAT.TASKS.CHANGE_FAILED'));
-					this.tasks.refresh([this.taskId()]);
+					this.readAgain();
 				}
 			});
+	}
+
+	/** Reads the task again, the controls held still until the read ends (whatever its outcome). */
+	private readAgain(): void {
+		this.tasks
+			.reload(this.taskId())
+			.pipe(
+				finalize(() => this.saving.set(false)),
+				takeUntilDestroyed(this.destroyRef)
+			)
+			.subscribe({ error: () => undefined });
 	}
 }

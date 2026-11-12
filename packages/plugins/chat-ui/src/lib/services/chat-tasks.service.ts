@@ -2,7 +2,7 @@ import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { DestroyRef, inject, Injectable, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { from, Observable, of } from 'rxjs';
-import { catchError, map, mergeMap, shareReplay } from 'rxjs/operators';
+import { catchError, map, mergeMap, shareReplay, tap } from 'rxjs/operators';
 import { ID, IChatMessageWithRelations, IOrganizationProject, IPagination, ITask, ITaskStatus } from '@gauzy/contracts';
 import { API_PREFIX, toParams } from '@gauzy/ui-core/common';
 import { ChatTaskStatusChoice, ChatTaskSummary, statusChoicesOf, taskSummaryOf } from '../chat-tasks';
@@ -82,6 +82,24 @@ export class ChatTasksService {
 		const ids = [...new Set(taskIds.map(String))].filter((id) => this.asked.has(id));
 		for (const id of ids) this.asked.delete(id);
 		if (ids.length) this.ensure(ids);
+	}
+
+	/**
+	 * Reads one task's summary again now and puts it among the summaries (a card that just changed the task waits for
+	 * it). A failed read leaves the summary shown as it was.
+	 */
+	reload(taskId: string): Observable<ChatTaskSummary | null | undefined> {
+		const id = String(taskId);
+		const scope = this.scope;
+		this.asked.add(id);
+		return this.summary(id).pipe(
+			tap((summary) => {
+				if (scope !== this.scope || summary === undefined) return;
+				const next = new Map(this.known());
+				next.set(id, summary);
+				this.known.set(next);
+			})
+		);
 	}
 
 	/**
