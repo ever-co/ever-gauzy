@@ -2073,19 +2073,14 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 				})
 			);
 
-			// Resolve conflicts by deleting conflicting time slots
+			// Resolve conflicts: each conflicting time log loses the new entry's time and keeps the rest
 			if (conflicts?.length) {
 				const times: IDateRange = {
 					start: new Date(startedAt),
 					end: new Date(stoppedAt)
 				};
-				// Loop through each conflicting time log
-				for await (const timeLog of conflicts) {
-					const { timeSlots = [] } = timeLog;
-					// Delete conflicting time slots
-					for await (const timeSlot of timeSlots) {
-						await this.commandBus.execute(new DeleteTimeSpanCommand(times, timeLog, timeSlot));
-					}
+				for (const timeLog of conflicts) {
+					await this.commandBus.execute(new DeleteTimeSpanCommand(times, timeLog));
 				}
 			}
 
@@ -2181,17 +2176,12 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 				})
 			);
 
-			// Resolve conflicts by deleting conflicting time slots
+			// Resolve conflicts: each conflicting time log loses the edited entry's time and keeps the rest
 			if (conflicts?.length) {
 				const times: IDateRange = { start: new Date(startedAt), end: new Date(stoppedAt) };
 
-				// Loop through each conflicting time log
-				for await (const conflict of conflicts) {
-					const { timeSlots = [] } = conflict;
-					// Delete conflicting time slots
-					for await (const timeSlot of timeSlots) {
-						await this.commandBus.execute(new DeleteTimeSpanCommand(times, conflict, timeSlot));
-					}
+				for (const conflict of conflicts) {
+					await this.commandBus.execute(new DeleteTimeSpanCommand(times, conflict));
 				}
 			}
 

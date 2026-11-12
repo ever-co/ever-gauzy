@@ -1,7 +1,7 @@
 import { Logger } from '@nestjs/common';
 import { ICommandHandler, CommandBus, CommandHandler } from '@nestjs/cqrs';
 import { omit } from 'underscore';
-import { ID, ITimeLog, ITimeSlot } from '@gauzy/contracts';
+import { ID, IDateRange, ITimeLog, ITimeSlot } from '@gauzy/contracts';
 import { isEmpty } from '@gauzy/utils';
 import { moment } from '../../../../core/moment-extend';
 import { TimesheetRecalculateCommand } from './../../../timesheet/commands';
@@ -18,6 +18,26 @@ import { TypeOrmTimeSlotRepository } from '../../../time-slot/repository/type-or
 const TIME_SLOT_MINUTES = 10;
 
 /**
+ * The time slots a span takes from a log. Deleting a time slot names it: it goes whatever other log holds it, and
+ * the log goes once it holds no slot. Time saved over a log names none: the slots whose time on the log lies inside
+ * the span go, each only where no other log holds it, and the log keeps the time it has left.
+ */
+interface SpanTimeSlots {
+	ids: ID[];
+	named: boolean;
+}
+
+/**
+ * The end of the ten minutes a time slot covers.
+ *
+ * @param timeSlot - The time slot.
+ */
+function timeSlotEnd(timeSlot: ITimeSlot): Date {
+	const slotEnd = moment(timeSlot.startedAt).add(TIME_SLOT_MINUTES, 'minutes');
+	return slotEnd.toDate();
+}
+
+/**
  * Whether time from `from` to `to` reaches into the ten minutes of a time slot.
  *
  * @param timeSlot - The time slot.
@@ -25,11 +45,42 @@ const TIME_SLOT_MINUTES = 10;
  * @param to - The end of the time.
  */
 function reachesTimeSlot(timeSlot: ITimeSlot, from: Date, to: Date): boolean {
-	const slotStart = moment(timeSlot.startedAt);
-	const slotEnd = slotStart.clone().add(TIME_SLOT_MINUTES, 'minutes');
-	const startsBeforeSlotEnds = moment(from).isBefore(slotEnd);
-	const endsAfterSlotStarts = moment(to).isAfter(slotStart);
+	const startsBeforeSlotEnds = moment(from).isBefore(timeSlotEnd(timeSlot));
+	const endsAfterSlotStarts = moment(to).isAfter(timeSlot.startedAt);
 	return startsBeforeSlotEnds && endsAfterSlotStarts;
+}
+
+/**
+ * Whether all the time the log has in a time slot lies inside the span, so the slot keeps nothing of the log once the
+ * span is taken out. A slot the log's time does not reach is not the span's to take.
+ *
+ * @param timeSlot - One of the log's time slots.
+ * @param log - The log, as stored before the span is taken out.
+ * @param span - The span taken out of the log.
+ */
+function isLogTimeInSpan(timeSlot: ITimeSlot, log: ITimeLog, span: IDateRange): boolean {
+	const logTimeStart = moment.max(moment(timeSlot.startedAt), moment(log.startedAt));
+	const logTimeEnd = moment.min(moment(timeSlotEnd(timeSlot)), moment(log.stoppedAt));
+	const logReachesSlot = logTimeStart.isBefore(logTimeEnd);
+	const startsInSpan = logTimeStart.isSameOrAfter(span.start);
+	const endsInSpan = logTimeEnd.isSameOrBefore(span.end);
+	return logReachesSlot && startsInSpan && endsInSpan;
+}
+
+/**
+ * The time slots the span takes from the log: the one the caller names, or those whose time on the log lies inside
+ * the span.
+ *
+ * @param log - The log, as stored before the span is taken out, with its time slots.
+ * @param span - The span taken out of the log.
+ * @param timeSlot - The time slot the caller deletes, if any.
+ */
+function spanTimeSlotsOf(log: ITimeLog, span: IDateRange, timeSlot?: ITimeSlot): SpanTimeSlots {
+	if (timeSlot) {
+		return { ids: [timeSlot.id], named: true };
+	}
+	const timeSlotsInSpan = (log.timeSlots ?? []).filter((slot) => isLogTimeInSpan(slot, log, span));
+	return { ids: timeSlotsInSpan.map((slot) => slot.id), named: false };
 }
 
 @CommandHandler(DeleteTimeSpanCommand)
@@ -59,13 +110,22 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 			relations: { timeSlots: true }
 		});
 
-		// Callers send one command per slot of a conflicting log. When the new range covers that log, the
-		// command for its first slot deletes the whole log, so the next ones find nothing left to trim.
+		// Deleting several time slots sends one command per slot and log: once one of them has deleted the log (its
+		// last slot, or a span covering it), the next ones find nothing left to trim.
 		if (!log) {
 			return false;
 		}
 
+		// The TypeORM conflict lookup lists only logs holding time slots: time saved over a log holding none, which
+		// the MikroORM lookup lists too, leaves it as it is.
+		const savesTimeOverLog = !timeSlot;
+		const holdsNoTimeSlot = isEmpty(log.timeSlots);
+		if (savesTimeOverLog && holdsNoTimeSlot) {
+			return false;
+		}
+
 		const { startedAt, stoppedAt, employeeId, organizationId } = log;
+		const spanTimeSlots = spanTimeSlotsOf(log, newTime, timeSlot);
 
 		const newTimeRange = moment.range(start, end); // Calculate the new time rang
 		const dbTimeRange = moment.range(startedAt, stoppedAt); // Calculate the database time range
@@ -77,7 +137,7 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 			this.debug(() => `Not Overlapping ${JSON.stringify({ newTimeRange, dbTimeRange })}`);
 
 			// Handle non-overlapping time ranges
-			await this.handleNonOverlappingTimeRange(log, timeSlot, employeeId, organizationId, forceDelete);
+			await this.handleNonOverlappingTimeRange(log, spanTimeSlots, employeeId, organizationId, forceDelete);
 			return true;
 		}
 
@@ -105,7 +165,7 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 				this.debug(() => 'Partial overlap: update started time or delete');
 				await this.updateStartTimeOrDelete(
 					log,
-					timeSlot,
+					spanTimeSlots,
 					organizationId,
 					employeeId,
 					end,
@@ -125,7 +185,7 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 				this.debug(() => 'Partial overlap: update stopped time or delete');
 				await this.updateStopTimeOrDelete(
 					log,
-					timeSlot,
+					spanTimeSlots,
 					organizationId,
 					employeeId,
 					start,
@@ -142,7 +202,7 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 				 *  		|--------------------------------------------------|
 				 */
 				this.debug(() => 'Split database time in two entries.');
-				await this.handleTimeLogSplitting(log, timeSlot, start, end, forceDelete);
+				await this.handleTimeLogSplitting(log, spanTimeSlots, start, end, forceDelete);
 			}
 		}
 
@@ -154,19 +214,19 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 	 * and recalculating the timesheet.
 	 *
 	 * @param timeLog - The time log associated with the non-overlapping time range.
-	 * @param timeSlot - The time slot to be deleted.
+	 * @param spanTimeSlots - The time slots the span takes.
 	 * @param employeeId - The ID of the employee associated with the time log.
 	 * @param organizationId - The ID of the organization.
 	 * @param forceDelete - A flag indicating whether to perform a hard delete.
 	 */
 	private async handleNonOverlappingTimeRange(
 		timeLog: ITimeLog,
-		timeSlot: ITimeSlot,
+		spanTimeSlots: SpanTimeSlots,
 		employeeId: ID,
 		organizationId: ID,
 		forceDelete: boolean = false
 	): Promise<void> {
-		await this.deleteSpanTimeSlots(timeLog, [timeSlot.id], organizationId, employeeId, forceDelete);
+		await this.deleteSpanTimeSlots(timeLog, spanTimeSlots, organizationId, employeeId, forceDelete);
 
 		// Recalculate the timesheet
 		await this._commandBus.execute(new TimesheetRecalculateCommand(timeLog.timesheetId));
@@ -176,7 +236,7 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 	 * Updates the start time or deletes the time log if remaining duration is 0.
 	 *
 	 * @param log - The time log to update or delete.
-	 * @param slot - The related time slot.
+	 * @param spanTimeSlots - The time slots the span takes.
 	 * @param organizationId - The organization ID.
 	 * @param employeeId - The employee ID.
 	 * @param end - The new end time.
@@ -184,7 +244,7 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 	 */
 	private async updateStartTimeOrDelete(
 		log: ITimeLog,
-		slot: ITimeSlot,
+		spanTimeSlots: SpanTimeSlots,
 		organizationId: ID,
 		employeeId: ID,
 		end: Date,
@@ -205,8 +265,8 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 					new TimeLogUpdateCommand({ startedAt: end }, log, true, forceDelete)
 				);
 
-				await this.deleteSpanTimeSlots(timeLog, [slot.id], organizationId, employeeId, forceDelete);
-				await this.deleteTimeLogWithoutTimeSlots(timeLog, forceDelete);
+				await this.deleteSpanTimeSlots(timeLog, spanTimeSlots, organizationId, employeeId, forceDelete);
+				await this.deleteTimeLogWithoutTimeSlots(timeLog, spanTimeSlots, forceDelete);
 			} catch (error) {
 				this.logger.warn(`Error while updating startedAt time: ${error?.message ?? error}`, { stack: error?.stack });
 			}
@@ -221,7 +281,7 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 	 * Updates the stoppedAt time for a given time log, or deletes it if the remaining duration is 0.
 	 *
 	 * @param log - The time log to update or delete.
-	 * @param slot - The related time slot.
+	 * @param spanTimeSlots - The time slots the span takes.
 	 * @param organizationId - The organization ID.
 	 * @param employeeId - The employee ID.
 	 * @param start - The new start time.
@@ -230,7 +290,7 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 	 */
 	private async updateStopTimeOrDelete(
 		log: ITimeLog,
-		slot: ITimeSlot,
+		spanTimeSlots: SpanTimeSlots,
 		organizationId: ID,
 		employeeId: ID,
 		start: Date,
@@ -253,8 +313,8 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 					new TimeLogUpdateCommand({ stoppedAt: start }, log, true, forceDelete)
 				);
 
-				await this.deleteSpanTimeSlots(timeLog, [slot.id], organizationId, employeeId, forceDelete);
-				await this.deleteTimeLogWithoutTimeSlots(timeLog, forceDelete);
+				await this.deleteSpanTimeSlots(timeLog, spanTimeSlots, organizationId, employeeId, forceDelete);
+				await this.deleteTimeLogWithoutTimeSlots(timeLog, spanTimeSlots, forceDelete);
 			} catch (error) {
 				this.logger.warn(`Error while updating stoppedAt time: ${error?.message ?? error}`, { stack: error?.stack });
 			}
@@ -270,14 +330,14 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 	 * twice.
 	 *
 	 * @param log - The log the span lies inside, with its time slots.
-	 * @param timeSlot - The time slot deleted with the span.
+	 * @param spanTimeSlots - The time slots the span takes.
 	 * @param start - The start of the span, where the log now stops.
 	 * @param end - The end of the span, where the copy starts.
 	 * @param forceDelete - Hard delete (`true`) or soft delete (`false`).
 	 */
 	private async handleTimeLogSplitting(
 		log: TimeLog,
-		timeSlot: ITimeSlot,
+		spanTimeSlots: SpanTimeSlots,
 		start: Date,
 		end: Date,
 		forceDelete = false
@@ -300,7 +360,7 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 				new TimeLogUpdateCommand({ startedAt, stoppedAt: start }, log, true, forceDelete)
 			);
 
-			await this.deleteSpanTimeSlots(log, [timeSlot.id], organizationId, employeeId, forceDelete);
+			await this.deleteSpanTimeSlots(log, spanTimeSlots, organizationId, employeeId, forceDelete);
 		} catch (error) {
 			this.logger.error(`Error while splitting time log ${log.id}: ${error?.message ?? error}`, error?.stack);
 		}
@@ -344,33 +404,49 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 	}
 
 	/**
-	 * Deletes the time slots the span takes from the log, whatever other log holds them.
+	 * Deletes the time slots the span takes from the log (see `SpanTimeSlots`).
 	 *
 	 * @param timeLog - The log the span is taken from.
-	 * @param timeSlotsIds - The time slots to delete.
+	 * @param spanTimeSlots - The time slots the span takes.
 	 * @param organizationId - The log's organization.
 	 * @param employeeId - The log's employee.
 	 * @param forceDelete - Hard delete (`true`) or soft delete (`false`).
 	 */
 	private async deleteSpanTimeSlots(
 		timeLog: ITimeLog,
-		timeSlotsIds: ID[],
+		spanTimeSlots: SpanTimeSlots,
 		organizationId: ID,
 		employeeId: ID,
 		forceDelete: boolean
 	): Promise<void> {
+		const { ids: timeSlotsIds, named } = spanTimeSlots;
+
+		// Given no ids, the bulk delete would select every time slot of the employee.
+		if (isEmpty(timeSlotsIds)) {
+			return;
+		}
+
 		await this._commandBus.execute(
-			new TimeSlotBulkDeleteCommand({ organizationId, employeeId, timeLog, timeSlotsIds }, forceDelete, true)
+			new TimeSlotBulkDeleteCommand({ organizationId, employeeId, timeLog, timeSlotsIds }, forceDelete, named)
 		);
 	}
 
 	/**
-	 * Deletes the log once it holds no time slot.
+	 * Deletes the log once the slot named for deletion was its last (see `SpanTimeSlots`).
 	 *
 	 * @param timeLog - The log the span was taken from.
+	 * @param spanTimeSlots - The time slots the span took.
 	 * @param forceDelete - Hard delete (`true`) or soft delete (`false`).
 	 */
-	private async deleteTimeLogWithoutTimeSlots(timeLog: ITimeLog, forceDelete: boolean): Promise<void> {
+	private async deleteTimeLogWithoutTimeSlots(
+		timeLog: ITimeLog,
+		spanTimeSlots: SpanTimeSlots,
+		forceDelete: boolean
+	): Promise<void> {
+		if (!spanTimeSlots.named) {
+			return;
+		}
+
 		const stored = await this.typeOrmTimeLogRepository.findOne({
 			where: { id: timeLog.id },
 			relations: { timeSlots: true }

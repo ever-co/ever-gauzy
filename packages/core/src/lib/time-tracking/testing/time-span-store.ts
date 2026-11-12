@@ -1,7 +1,9 @@
-import { ITimeSlot, TimeLogSourceEnum, TimeLogType } from '@gauzy/contracts';
+import { IGetTimeLogConflictInput, ITimeSlot, TimeLogSourceEnum, TimeLogType } from '@gauzy/contracts';
 import { MultiORMEnum } from '../../core/utils';
 import {
 	DeleteTimeSpanCommand,
+	IGetConflictTimeLogCommand,
+	TimeLogCreateCommand,
 	TimeLogDeleteCommand,
 	TimeLogUpdateCommand,
 	UpdateEmployeeTotalWorkedHoursCommand
@@ -66,8 +68,9 @@ function asDependency<T>(double: unknown): T {
 /**
  * The time logs and time slots of one employee, and the links between them, behind the repositories and the command
  * bus of the handlers that take a span of time out of a log: DeleteTimeSpanHandler, and the TimeLogUpdateHandler,
- * TimeLogDeleteHandler and TimeSlotBulkDeleteHandler it runs, all real; the timesheet and worked-hours commands are
- * scripted. Reads leave out what is deleted, as TypeORM's soft delete does, joined time logs included.
+ * TimeLogDeleteHandler and TimeSlotBulkDeleteHandler it runs, all real. The conflict lookup, the creation of a manual
+ * log and the timesheet and worked-hours commands are scripted. Reads leave out what is deleted, as TypeORM's soft
+ * delete does, joined time logs included.
  */
 export class TimeSpanStore {
 	readonly timeLogs: TimeLog[] = [];
@@ -109,6 +112,12 @@ export class TimeSpanStore {
 		this.routes.set(TimeLogUpdateCommand, (command) => updateTimeLog.execute(command));
 		this.routes.set(TimeLogDeleteCommand, (command) => deleteTimeLog.execute(command));
 		this.routes.set(TimeSlotBulkDeleteCommand, (command) => deleteTimeSlots.execute(command));
+		this.routes.set(IGetConflictTimeLogCommand, (command: IGetConflictTimeLogCommand) =>
+			this.conflictsWith(command.input)
+		);
+		this.routes.set(TimeLogCreateCommand, (command: TimeLogCreateCommand) =>
+			this.createManualTimeLog(command.input)
+		);
 		this.routes.set(TimesheetFirstOrCreateCommand, () => ({ id: SPAN_TIMESHEET_ID }));
 		this.routes.set(TimesheetRecalculateCommand, () => undefined);
 		this.routes.set(UpdateEmployeeTotalWorkedHoursCommand, () => undefined);
@@ -147,12 +156,12 @@ export class TimeSpanStore {
 	 * @param id - The log's id.
 	 */
 	read(id: string): TimeLog | null {
-		const stored = this.liveTimeLog(id);
-		if (!stored) {
+		const copy = this.copyOfTimeLog(id);
+		if (!copy) {
 			return null;
 		}
 		const timeSlots = this.liveTimeSlotsOf(id).map((slot) => this.loadedTimeSlot(slot));
-		return Object.assign(new TimeLog(), stored, { timeSlots });
+		return Object.assign(copy, { timeSlots });
 	}
 
 	/** Every log not deleted, by start. */
@@ -179,6 +188,15 @@ export class TimeSpanStore {
 
 	private liveTimeLog(id: string): TimeLog | undefined {
 		return this.timeLogs.find((log) => log.id === id && !log.deletedAt);
+	}
+
+	/** The stored log as a read answers it: a copy, which reaches the store again only through a write. */
+	private copyOfTimeLog(id: string): TimeLog | null {
+		const stored = this.liveTimeLog(id);
+		if (!stored) {
+			return null;
+		}
+		return Object.assign(new TimeLog(), stored);
 	}
 
 	private liveTimeSlotsOf(timeLogId: string): StoredTimeSlot[] {
@@ -332,7 +350,7 @@ export class TimeSpanStore {
 	private timeLogRepository() {
 		return {
 			findOne: ({ where }: { where: { id: string } }) => Promise.resolve(this.read(where.id)),
-			findOneBy: ({ id }: { id: string }) => Promise.resolve(this.liveTimeLog(id) ?? null),
+			findOneBy: ({ id }: { id: string }) => Promise.resolve(this.copyOfTimeLog(id)),
 			update: ({ id }: { id: string }, changes: Partial<TimeLog>) => {
 				Object.assign(this.liveTimeLog(id), changes);
 				return Promise.resolve({ affected: 1 });
@@ -351,9 +369,52 @@ export class TimeSpanStore {
 		};
 	}
 
+	/** As TimeSlotService, whose bulk create gives back the employee's slot at a start instead of adding another. */
 	private timeSlotService() {
 		return {
-			generateTimeSlots: (start: Date, end: Date) => generateTimeSlots(start, end)
+			generateTimeSlots: (start: Date, end: Date) => generateTimeSlots(start, end),
+			bulkCreate: (slots: Array<{ startedAt: Date; timeLogId?: string }>) =>
+				Promise.resolve(this.timeSlotsAt(slots))
 		};
+	}
+
+	/**
+	 * As GetConflictTimeLogHandler under TypeORM: the employee's logs whose time overlaps the range, other than the
+	 * ignored ones, each with its time slots; a log holding none is not listed (the slots are inner-joined).
+	 */
+	private conflictsWith(input: IGetTimeLogConflictInput): TimeLog[] {
+		const ignored = new Set([input.ignoreId].flat());
+		const start = new Date(input.startDate).getTime();
+		const end = new Date(input.endDate).getTime();
+		const conflicts = (log: TimeLog) => {
+			const isLive = !log.deletedAt;
+			const isTheEmployees = log.employeeId === input.employeeId && log.organizationId === input.organizationId;
+			const isIgnored = ignored.has(log.id);
+			const startsBeforeEnd = new Date(log.startedAt).getTime() < end;
+			const stopsAfterStart = new Date(log.stoppedAt).getTime() > start;
+			const holdsTimeSlots = this.liveTimeSlotsOf(log.id).length > 0;
+			return isLive && isTheEmployees && !isIgnored && startsBeforeEnd && stopsAfterStart && holdsTimeSlots;
+		};
+		return this.timeLogs.filter(conflicts).map((log) => this.read(log.id));
+	}
+
+	/** As TimeLogCreateHandler: the manual log, linked to the employee's slot at each start its time reaches. */
+	private createManualTimeLog(input: Partial<TimeLog>): TimeLog {
+		this.createdTimeLogs += 1;
+		const log = Object.assign(new TimeLog(), {
+			id: `manual-${this.createdTimeLogs}`,
+			tenantId: SPAN_TENANT_ID,
+			organizationId: input.organizationId,
+			employeeId: input.employeeId,
+			timesheetId: SPAN_TIMESHEET_ID,
+			startedAt: new Date(input.startedAt),
+			stoppedAt: new Date(input.stoppedAt),
+			logType: TimeLogType.MANUAL,
+			source: TimeLogSourceEnum.WEB_TIMER,
+			isRunning: false
+		});
+		this.timeLogs.push(log);
+		this.linkToItsTime(log);
+		return log;
 	}
 }
