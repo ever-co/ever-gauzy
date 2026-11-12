@@ -562,9 +562,12 @@ export class TimerService {
 		// Retrieve the employee ID and organization ID
 		const { id: employeeId, organizationId } = employee;
 
-		// Retrieve the last running log
+		// The runs going as this stop begins, latest first: the latest is the one it stops, any other was left going
+		// beside it. The cleanup after the stop handles those only, never a run another client starts meanwhile.
 		const includeTimeSlots = true;
-		let lastLog = await this.getLastRunningLog(includeTimeSlots);
+		const runningLogs = await this.getLastRunningLogs(includeTimeSlots);
+		const runningLogIds = runningLogs.map((log) => log.id);
+		let lastLog = runningLogs[0];
 
 		// If no running log is found, throw a NotAcceptableException
 		if (!lastLog) {
@@ -599,17 +602,15 @@ export class TimerService {
 			new TimeLogUpdateCommand(partialTimeLog, lastLog.id, request.manualTimeSlot)
 		);
 
-		// Update the employee's tracking status to reflect they are now tracking time
-		await this._employeeService.update(employeeId, {
-			isOnline: false, // Employee status (Online/Offline)
-			isTrackingTime: false // Employee time tracking status
-		});
+		// Stop the runs left going beside this one, and only those
+		await this.stopPreviousRunningTimers(employeeId, organizationId, tenantId, stoppedRunStartedAt, runningLogIds);
 
-		// Stop previous running timers
-		await this.stopPreviousRunningTimers(employeeId, organizationId, tenantId, stoppedRunStartedAt);
+		// Handle conflicting time logs, leaving alone a run started since this stop began
+		const forceDelete = false;
+		await this.handleConflictingTimeLogs(lastLog, tenantId, organizationId, forceDelete, runningLogIds);
 
-		// Handle conflicting time logs
-		await this.handleConflictingTimeLogs(lastLog, tenantId, organizationId);
+		// The employee no longer tracks time, unless a run is still going: one another client started meanwhile
+		await this.markNotTrackingAfterStop(employeeId, organizationId, tenantId);
 
 		// Return the last log
 		return lastLog;
@@ -622,12 +623,15 @@ export class TimerService {
 	 * @param tenantId The tenant ID.
 	 * @param organizationId The organization ID.
 	 * @param forceDelete Flag indicating whether to force delete the conflicts.
+	 * @param runningAtStop The runs going when the stop began. A run going now that is not among them was started
+	 * since, from another client, and is left alone: its time slots are its own.
 	 */
 	private async handleConflictingTimeLogs(
 		lastLog: ITimeLog,
 		tenantId: ID,
 		organizationId: ID,
-		forceDelete: boolean = false
+		forceDelete: boolean = false,
+		runningAtStop?: ID[]
 	): Promise<void> {
 		try {
 			// Validate the date range and check if the timer is running
@@ -667,6 +671,12 @@ export class TimerService {
 
 				// Loop through each conflicting time log
 				for await (const timeLog of conflicts) {
+					// A run another client started since the stop began is left alone: its time slots are its own
+					const isStartedSinceStop =
+						timeLog.isRunning && runningAtStop !== undefined && !runningAtStop.includes(timeLog.id);
+					if (isStartedSinceStop) {
+						continue;
+					}
 					const { timeSlots = [] } = timeLog;
 					// Delete conflicting time slots
 					for await (const timeSlot of timeSlots) {
@@ -849,22 +859,28 @@ export class TimerService {
 	 * end its time slots give it (`ScheduleTimeLogEntriesCommand`), as does a run stored without a `stoppedAt`, which
 	 * has no heartbeat to go by; that command also stops a run whose stop here failed, as before.
 	 *
+	 * After a stop, only the runs that were going when the stop began are stopped (`onlyAmong`): a run another client
+	 * started while the stop ran is its replacement, not a run left going, and keeps going.
+	 *
 	 * @param employeeId - The ID of the employee whose timers need to be stopped
 	 * @param organizationId - The ID of the organization to which the employee belongs
 	 * @param tenantId - The ID of the tenant context
 	 * @param replacedAt - When the run replacing them started; now by default
+	 * @param onlyAmong - When given, only the runs among these ids are stopped; all of them by default
 	 */
 	async stopPreviousRunningTimers(
 		employeeId: ID,
 		organizationId: ID,
 		tenantId: ID,
-		replacedAt: Date = moment.utc().toDate()
+		replacedAt: Date = moment.utc().toDate(),
+		onlyAmong?: ID[]
 	): Promise<void> {
 		try {
 			this.debug(() => 'Start previous running timers...');
 			// Retrieve any existing running logs for the employee, latest first, with their time slots
 			const includeTimeSlots = true;
-			const logs = await this.getLastRunningLogs(includeTimeSlots);
+			const runningLogs = await this.getLastRunningLogs(includeTimeSlots);
+			const logs = onlyAmong ? runningLogs.filter((log) => onlyAmong.includes(log.id)) : runningLogs;
 			this.debug(() => `Last Running Logs Count: ${logs.length}`);
 
 			// The replacing run is the run after the latest, the latest the run after the one before it, and so on
@@ -879,8 +895,11 @@ export class TimerService {
 
 			// If there are existing running logs, stop them before starting a new one
 			if (logs.length > 0) {
-				// Execute the ScheduleTimeLogEntriesCommand to stop all previous running timers
-				await this._commandBus.execute(new ScheduleTimeLogEntriesCommand(employeeId, organizationId, tenantId));
+				// Execute the ScheduleTimeLogEntriesCommand to stop all previous running timers, or after a stop the ones
+				// that were going when it began
+				await this._commandBus.execute(
+					new ScheduleTimeLogEntriesCommand(employeeId, organizationId, tenantId, onlyAmong)
+				);
 			}
 			this.debug(() => 'Stop previous running timers...');
 		} catch (error) {
@@ -1312,6 +1331,29 @@ export class TimerService {
 		} catch (error) {
 			this.logger.warn(`Failed to read the running timers of employee ${employeeId}: ${error?.message}`);
 		}
+	}
+
+	/**
+	 * Marks the employee as not tracking after their stop, as a stop always did, unless a run of theirs is still
+	 * going: one another client started while the stop ran, which the stop leaves going. When the running timers
+	 * cannot be read, the employee is marked as before.
+	 */
+	private async markNotTrackingAfterStop(employeeId: ID, organizationId: ID, tenantId: ID): Promise<void> {
+		try {
+			const stillRunning = await this.findTimeLogsWhere({
+				employeeId,
+				organizationId,
+				tenantId,
+				isRunning: true
+			});
+			const isStillTracking = stillRunning.length > 0;
+			if (isStillTracking) {
+				return;
+			}
+		} catch (error) {
+			this.logger.warn(`Failed to read the running timers of employee ${employeeId}: ${error?.message}`);
+		}
+		await this._employeeService.update(employeeId, { isOnline: false, isTrackingTime: false });
 	}
 
 	private async findTimeLogsWhere(where: FindOptionsWhere<TimeLog>): Promise<ITimeLog[]> {

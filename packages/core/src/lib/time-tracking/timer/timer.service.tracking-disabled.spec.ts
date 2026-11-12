@@ -46,7 +46,7 @@ describe('TimerService with the employee tracking turned off', () => {
 		updateEmployee = jest.fn(async () => undefined);
 		const employeeService = { findOneByUserId: jest.fn(async () => employee), update: updateEmployee };
 		service = new TimerService(
-			undefined as never,
+			{ find: jest.fn(async () => []) } as never,
 			undefined as never,
 			undefined as never,
 			undefined as never,
@@ -55,7 +55,7 @@ describe('TimerService with the employee tracking turned off', () => {
 			undefined as never
 		);
 		Object.assign(service, {
-			getLastRunningLog: jest.fn(async () => lastRunningLog),
+			getLastRunningLogs: jest.fn(async () => (lastRunningLog ? [lastRunningLog] : [])),
 			calculateStoppedAt: jest.fn(async () => stoppedAt),
 			stopPreviousRunningTimers: jest.fn(async () => undefined),
 			handleConflictingTimeLogs: jest.fn(async () => undefined)

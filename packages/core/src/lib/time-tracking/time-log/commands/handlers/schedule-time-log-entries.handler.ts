@@ -29,15 +29,18 @@ export class ScheduleTimeLogEntriesHandler implements ICommandHandler<ScheduleTi
 	 * updating durations, and correcting the 'stoppedAt' timestamps based on the employee's activities.
 	 *
 	 * @param command The command containing the details needed to identify the pending TimeLog entries,
-	 *                including `tenantId`, `organizationId`, and optionally `employeeId`.
+	 *                including `tenantId`, `organizationId`, and optionally `employeeId` and `timeLogIds`.
 	 *
 	 * @returns A Promise that resolves when all pending TimeLog entries have been processed and updated.
 	 */
 	public async execute(command: ScheduleTimeLogEntriesCommand): Promise<void> {
-		const { tenantId, organizationId, employeeId } = command;
+		const { tenantId, organizationId, employeeId, timeLogIds } = command;
 
 		// Retrieve all pending TimeLog entries based on the provided tenantId, organizationId, and employeeId (if available)
-		const logs = await this.getPendingTimeLogs(tenantId, organizationId, employeeId);
+		const pendingLogs = await this.getPendingTimeLogs(tenantId, organizationId, employeeId);
+
+		// Only the logs the command names, when it names some: after a stop, a run started meanwhile is not among them
+		const logs = timeLogIds ? pendingLogs.filter((log) => timeLogIds.includes(log.id)) : pendingLogs;
 
 		// Iterate through each pending time log entry to process and update them as necessary
 		for await (const log of logs) {
