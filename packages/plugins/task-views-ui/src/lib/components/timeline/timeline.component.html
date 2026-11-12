@@ -1,0 +1,149 @@
+<div class="timeline" data-test="timeline">
+	<div class="toolbar">
+		<div class="zoom" role="group" [attr.aria-label]="'TASK_VIEWS.TIMELINE.ZOOM' | translate">
+			<button
+				nbButton
+				size="tiny"
+				type="button"
+				data-test="timeline-zoom-week"
+				[status]="zoom() === 'week' ? 'primary' : 'basic'"
+				[attr.aria-pressed]="zoom() === 'week'"
+				(click)="setZoom('week')"
+			>
+				{{ 'TASK_VIEWS.TIMELINE.WEEKS' | translate }}
+			</button>
+			<button
+				nbButton
+				size="tiny"
+				type="button"
+				data-test="timeline-zoom-month"
+				[status]="zoom() === 'month' ? 'primary' : 'basic'"
+				[attr.aria-pressed]="zoom() === 'month'"
+				(click)="setZoom('month')"
+			>
+				{{ 'TASK_VIEWS.TIMELINE.MONTHS' | translate }}
+			</button>
+		</div>
+	</div>
+
+	@if (isEmpty()) {
+		<p class="empty" data-test="timeline-empty">{{ 'TASK_VIEWS.TIMELINE.EMPTY' | translate }}</p>
+	} @else {
+		@if (rows().length) {
+			<div class="scroller" #scroller data-test="timeline-calendar">
+				<div class="canvas" [style.width.px]="titleWidth + trackWidth()">
+					<div class="line head">
+						<div class="title-cell" [style.width.px]="titleWidth">
+							{{ 'TASK_VIEWS.LIST.COLUMNS.TITLE' | translate }}
+						</div>
+						<div class="track" [style.width.px]="trackWidth()" aria-hidden="true">
+							@for (tick of majorTicks(); track tick.left) {
+								<span class="major" [style.left.px]="tick.left">{{ tick.label }}</span>
+							}
+							@for (tick of dayTicks(); track tick.left) {
+								<span
+									class="day"
+									[class.weekend]="tick.isWeekend"
+									[style.left.px]="tick.left"
+									[style.width.px]="dayWidth()"
+									>{{ tick.label }}</span
+								>
+							}
+						</div>
+					</div>
+
+					<div class="body">
+						<div
+							class="grid"
+							aria-hidden="true"
+							[style.left.px]="titleWidth"
+							[style.width.px]="trackWidth()"
+						>
+							@for (tick of majorTicks(); track tick.left) {
+								<span class="grid-line" [style.left.px]="tick.left"></span>
+							}
+							@if (todayLeft() !== null) {
+								<span
+									class="today"
+									data-test="timeline-today"
+									[style.left.px]="todayLeft()! + dayWidth() / 2"
+								></span>
+							}
+						</div>
+
+						@for (row of rows(); track trackRow(row)) {
+							<div class="line" [attr.data-task-id]="row.task.id">
+								<div class="title-cell" [style.width.px]="titleWidth">
+									<button
+										type="button"
+										class="title"
+										[attr.data-test]="'timeline-title-' + row.task.id"
+										[attr.aria-label]="row.task.title + ' — ' + row.dates"
+										[title]="row.dates"
+										(click)="open(row.task)"
+									>
+										@if (row.bar.outside === 'before') {
+											<span class="outside-mark" aria-hidden="true">‹</span>
+										}
+										@if (row.reference) {
+											<span class="reference">{{ row.reference }}</span>
+										}
+										<span class="text">{{ row.task.title }}</span>
+										@if (row.bar.outside === 'after') {
+											<span class="outside-mark" aria-hidden="true">›</span>
+										}
+									</button>
+								</div>
+								<div class="track" [style.width.px]="trackWidth()">
+									@if (row.bar.outside) {
+										<span
+											class="edge"
+											aria-hidden="true"
+											[class.before]="row.bar.outside === 'before'"
+											[class.after]="row.bar.outside === 'after'"
+											[attr.data-test]="'timeline-outside-' + row.task.id"
+										></span>
+									} @else {
+										<button
+											type="button"
+											class="bar"
+											[class.overdue]="row.bar.isOverdue"
+											[class.single]="
+												row.bar.isDueOnly || row.bar.isStartOnly || row.bar.hasInvalidRange
+											"
+											[class.clipped-start]="row.bar.isClippedStart"
+											[class.clipped-end]="row.bar.isClippedEnd"
+											[style.left.px]="row.left"
+											[style.width.px]="row.width"
+											[attr.data-test]="'timeline-bar-' + row.task.id"
+											[attr.aria-label]="row.task.title + ' — ' + row.dates"
+											[title]="row.task.title + '\n' + row.dates"
+											(click)="open(row.task)"
+										>
+											@if (showsTitleInBar(row)) {
+												<span class="text">{{ row.task.title }}</span>
+											}
+										</button>
+									}
+								</div>
+							</div>
+						}
+					</div>
+				</div>
+			</div>
+		}
+
+		@if (unscheduled().length) {
+			<section class="unscheduled" data-test="timeline-unscheduled">
+				<h6>{{ 'TASK_VIEWS.TIMELINE.UNSCHEDULED' | translate: { count: unscheduled().length } }}</h6>
+				<ul>
+					@for (task of unscheduled(); track task.id) {
+						<li>
+							<button type="button" class="title" (click)="open(task)">{{ task.title }}</button>
+						</li>
+					}
+				</ul>
+			</section>
+		}
+	}
+</div>
