@@ -9,7 +9,6 @@ import { TaskAutomationTaskReader } from '../services/task-automation-task-reade
 import {
 	TASK_AUTOMATION_DUE_BATCH,
 	TASK_AUTOMATION_DUE_LOOKBACK_MS,
-	TASK_AUTOMATION_DUE_SCAN_LIMIT,
 	TASK_AUTOMATION_DUE_SWEEP_LOCK
 } from '../task-automation.constants';
 import { TaskAutomationSweepLock } from './task-automation-sweep-lock';
@@ -28,9 +27,10 @@ export function dueWindow(rule: Pick<ITaskAutomationRule, 'createdAt'>, now: Dat
  * The due-date trigger (spec FR-9, FR-10): for every rule that is on with `DUE_DATE_PASSED`, the open tasks of its
  * scope whose due date passed since the last day (and since the rule exists — a new rule does not report the
  * backlog), oldest first; each runs the rule once per due date (the run's key), however often the sweep comes by.
- * One sweep at a time across the processes. The sweep pages past the due dates it already reported, so tasks that
- * stay open do not hold back one due later; it runs a rule for at most `TASK_AUTOMATION_DUE_BATCH` tasks a sweep and
- * reads at most `TASK_AUTOMATION_DUE_SCAN_LIMIT` (the rest wait for the next sweep).
+ * One sweep at a time across the processes. The sweep pages through the whole window (a day at most), so tasks that
+ * stay open after their notice never hold back one due later: the read already leaves out the tasks the rule reported
+ * and has not seen change since, and each page's keys are checked exactly. It runs a rule for at most
+ * `TASK_AUTOMATION_DUE_BATCH` tasks a sweep; the rest wait for the next sweep, which starts from the oldest again.
  */
 @Injectable()
 export class TaskAutomationDueSweepService {
@@ -75,12 +75,10 @@ export class TaskAutomationDueSweepService {
 			ruleId: rule.id as ID
 		};
 		let runs = 0;
-		let scanned = 0;
 		let cursor: { id: ID; dueDate: Date } | null = null;
-		while (runs < TASK_AUTOMATION_DUE_BATCH && scanned < TASK_AUTOMATION_DUE_SCAN_LIMIT) {
+		while (runs < TASK_AUTOMATION_DUE_BATCH) {
 			const page = await this.reader.dueTasks(scope, window, TASK_AUTOMATION_DUE_BATCH, cursor);
 			if (!page.length) break;
-			scanned += page.length;
 			cursor = page[page.length - 1];
 			// The due dates this rule already reported are left out before anything is read of them.
 			const done = await this.runs.finishedKeys(

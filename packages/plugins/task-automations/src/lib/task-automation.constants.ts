@@ -25,11 +25,6 @@ export const TASK_AUTOMATION_DUE_SWEEP_INTERVAL_MS = 15 * 60_000;
 export const TASK_AUTOMATION_DUE_LOOKBACK_MS = 24 * 60 * 60_000;
 /** How many due tasks a sweep reads at a time for one rule, and the most it runs the rule for in one sweep. */
 export const TASK_AUTOMATION_DUE_BATCH = 200;
-/**
- * The most due tasks one sweep reads for one rule, the ones it already reported included: it pages past those, so a
- * task due later is not held back by earlier ones that stay open (the rest wait for the next sweep).
- */
-export const TASK_AUTOMATION_DUE_SCAN_LIMIT = 5_000;
 
 /** How long the capture trusts what it knows of an organization's rules before it reads them again. */
 export const TASK_AUTOMATION_RULE_CACHE_MS = 30_000;
