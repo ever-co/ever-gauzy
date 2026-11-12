@@ -9816,6 +9816,10 @@ type Mutation {
   """
   Starts the timer when none is running and stops it when one is, and answers the log it touched.
   
+  A toggle that names a time log (`timeLogId`) only ever stops that log: while nothing runs it is
+  refused with 406 and starts nothing, and while another log runs it is refused with 409 and that
+  log goes on.
+  
   Nullable, because a toggle that stops the timer ends where the stop write ends — a re-read that
   answers nothing when the row it wrote cannot be found — which is the possibility the route's own
   `log or null` declares.
