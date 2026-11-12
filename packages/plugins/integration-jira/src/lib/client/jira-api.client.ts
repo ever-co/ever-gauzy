@@ -472,7 +472,8 @@ export class JiraApiClient {
 		const data = await this.request<{ expirationDate?: string | number | null }>('PUT', '/webhook/refresh', { webhookIds: webhookIds.map(Number) });
 		const expiry = data?.expirationDate;
 		if (expiry === undefined || expiry === null) return null;
-		const at = typeof expiry === 'number' ? new Date(expiry) : new Date(expiry);
+		// Jira answers an ISO date or epoch milliseconds: `Date` reads both.
+		const at = new Date(expiry);
 		return Number.isNaN(at.getTime()) ? null : at.toISOString();
 	}
 
