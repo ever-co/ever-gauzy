@@ -179,22 +179,19 @@ test('a rate-limited ask is repeated with growing pauses, honouring Retry-After,
 	assert.deepEqual(backoff, [1, 2, 4, 8, 16]);
 	assert.equal(last.at(-1), `ever-co/x: GitHub answered 429 to the last of ${ATTEMPTS} asks`);
 
-	// Retry-After as delay-seconds and as an HTTP-date, each capped at MAX_WAIT_MS.
+	// Retry-After as delay-seconds and as an HTTP-date (measured from a fixed clock), each capped at MAX_WAIT_MS.
 	const headers = (value) => ({ get: (name) => (name === 'retry-after' ? value : null) });
-	const inNinety = new Date(Date.now() + 90_000).toUTCString();
-	const inTen = new Date(Date.now() + 10_000).toUTCString();
+	const now = Date.parse('Thu, 12 Nov 2026 20:00:00 GMT');
 	const replies = [
 		{ status: 429, headers: headers('3') },
 		{ status: 429, headers: headers('3600') },
-		{ status: 429, headers: headers(inNinety) },
-		{ status: 429, headers: headers(inTen) },
+		{ status: 429, headers: headers('Thu, 12 Nov 2026 20:01:30 GMT') },
+		{ status: 429, headers: headers('Thu, 12 Nov 2026 20:00:10 GMT') },
 		{ status: 404 }
 	];
-	const { result, waits } = await withWaits(() => isPublicOnGitHub('x', async () => replies.shift(), 1));
+	const { result, waits } = await withWaits(() => isPublicOnGitHub('x', async () => replies.shift(), 1), now);
 	assert.equal(result, false);
-	assert.deepEqual(waits.slice(0, 3), [3000, MAX_WAIT_MS, MAX_WAIT_MS]);
-	// An HTTP-date is measured from now, to the second it names.
-	assert.ok(waits[3] > 8_000 && waits[3] <= 10_000, `${waits[3]}`);
+	assert.deepEqual(waits, [3000, MAX_WAIT_MS, MAX_WAIT_MS, 10_000]);
 });
 
 test('Retry-After is read as delay-seconds or an HTTP-date; anything else names no pause', () => {
@@ -209,18 +206,24 @@ test('Retry-After is read as delay-seconds or an HTTP-date; anything else names 
 	assert.equal(retryAfterMs('-5', now), null);
 });
 
-/** Runs `fn` with setTimeout recording each pause and firing at once: {result, waits}. */
-async function withWaits(fn) {
+/**
+ * Runs `fn` with setTimeout recording each pause and firing at once, and with Date.now fixed at `now`
+ * when one is given: {result, waits}. Both are restored afterwards.
+ */
+async function withWaits(fn, now) {
 	const waits = [];
 	const realSetTimeout = globalThis.setTimeout;
+	const realNow = Date.now;
 	globalThis.setTimeout = (callback, ms) => {
 		waits.push(ms);
 		return realSetTimeout(callback, 0);
 	};
+	if (now !== undefined) Date.now = () => now;
 	try {
 		return { result: await fn(), waits };
 	} finally {
 		globalThis.setTimeout = realSetTimeout;
+		Date.now = realNow;
 	}
 }
 
