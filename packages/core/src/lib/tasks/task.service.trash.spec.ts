@@ -5,6 +5,7 @@ import { IUser, PermissionsEnum } from '@gauzy/contracts';
 import { RequestContext } from '../core/context';
 import { CrudService } from '../core/crud/crud.service';
 import { TenantAwareCrudService } from '../core/crud';
+import { MultiORMEnum } from '../core/utils';
 import { asTenantUser, createTenantFixture } from '../core/testing/tenant-isolation/tenant-isolation.fixtures';
 import { BaseEntityEventTypeEnum } from '../event-bus/base-entity-event';
 import { TaskEvent } from '../event-bus/events';
@@ -54,7 +55,7 @@ describe('TaskService — the trash', () => {
 		service = Object.create(TaskService.prototype);
 		Object.assign(service, {
 			_domainEventBus: { publish },
-			_managedEmployeeService: { isManagerOfTeamsOrProjects: isManager }
+			_managedEmployeeService: { managesAnyTeam: isManager }
 		});
 		jest.spyOn(TenantAwareCrudService.prototype, 'findOneByIdString').mockResolvedValue(trashed as never);
 		baseFindAll = jest
@@ -118,6 +119,16 @@ describe('TaskService — the trash', () => {
 			expect(baseFindAll).not.toHaveBeenCalled();
 		});
 
+		it('refuses a read that names no organization, so it never spans a tenant', async () => {
+			signIn([PermissionsEnum.ALL_ORG_EDIT]);
+
+			await expect(service.findTrash({ organizationId: undefined } as never)).rejects.toThrow('state organizationId');
+			await service.findTrash({ organization: { id: fixture.organizationId } } as never);
+
+			expect(baseFindAll).toHaveBeenCalledTimes(1);
+			expect(read().where.organizationId).toBe(fixture.organizationId);
+		});
+
 		it('searches the title, and the number when the text is one', async () => {
 			signIn([PermissionsEnum.ORG_TASK_DELETE]);
 
@@ -131,6 +142,29 @@ describe('TaskService — the trash', () => {
 			expect(Array.isArray(where)).toBe(true);
 			expect(where).toHaveLength(2);
 			expect(where[1]).toMatchObject({ number: 42, organizationId: fixture.organizationId });
+
+			baseFindAll.mockClear();
+			await service.findTrash({ organizationId: fixture.organizationId, search: 'api-42' });
+			const byKey = read().where as Record<string, any>[];
+			expect(byKey).toHaveLength(2);
+			expect(byKey[1]).toMatchObject({ number: 42 });
+			expect(byKey[1].prefix).toBeInstanceOf(FindOperator);
+			// The prefix is compared in capitals, as the lists show it, whatever case the project's name began with.
+			expect(byKey[1].prefix.getSql('prefix')).toBe('UPPER(prefix) = :trashPrefix');
+			expect(byKey[1].prefix.objectLiteralParameters).toEqual({ trashPrefix: 'API' });
+		});
+
+		it('searches the key without case under MikroORM too', async () => {
+			signIn([PermissionsEnum.ORG_TASK_DELETE]);
+			jest.spyOn(TaskService.prototype, 'ormType', 'get').mockReturnValue(MultiORMEnum.MikroORM);
+
+			await service.findTrash({ organizationId: fixture.organizationId, search: 'api-42' });
+
+			const byKey = read().where as Record<string, any>[];
+			expect(byKey).toHaveLength(2);
+			expect(byKey[1]).toMatchObject({ number: 42, organizationId: fixture.organizationId });
+			// `$ilike` on PostgreSQL, `$like` (already without case) on MySQL and SQLite; no wildcard added.
+			expect(Object.values(byKey[1].prefix)).toEqual(['api']);
 		});
 
 		it('keeps the page inside 1..100 and the offset at zero or more', async () => {
