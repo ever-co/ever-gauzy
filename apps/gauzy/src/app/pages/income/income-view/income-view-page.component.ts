@@ -314,6 +314,8 @@ export class IncomeViewPageComponent extends TranslationBaseComponent implements
 		);
 		if (!copy) return;
 		this.setBusy(true);
+		// The page the copy is made from: once it turns (another income or organization) or is left, no navigation.
+		const sequence = this.loadSequence;
 		try {
 			// The form's employee control may be the "All employees" sentinel, which the API rejects:
 			// only the resolved id is sent, as the list's add does.
@@ -330,7 +332,7 @@ export class IncomeViewPageComponent extends TranslationBaseComponent implements
 				...this.scope()
 			});
 			this.toastrService.success('NOTES.INCOME.ADD_INCOME', { name: this.employeeName(employee) });
-			if (created?.id) {
+			if (created?.id && sequence === this.loadSequence) {
 				await this.router.navigate([INCOME_LIST_LINK, 'view', created.id]);
 			}
 		} catch (error) {
@@ -350,10 +352,12 @@ export class IncomeViewPageComponent extends TranslationBaseComponent implements
 		const confirmed = await this.ask<boolean>(dialog, income);
 		if (!confirmed) return;
 		this.setBusy(true);
+		const sequence = this.loadSequence;
 		try {
 			await this.incomeService.delete(income.id, { employeeId: income.employeeId, ...this.scope() });
 			this.toastrService.success('NOTES.INCOME.DELETE_INCOME', { name: this.employeeName(income.employee) });
-			await this.router.navigateByUrl(INCOME_LIST_LINK);
+			// Not when the page turned or was left while the delete was saving.
+			if (sequence === this.loadSequence) await this.router.navigateByUrl(INCOME_LIST_LINK);
 		} catch (error) {
 			this.errorHandler.handleError(error);
 		} finally {
@@ -422,12 +426,16 @@ export class IncomeViewPageComponent extends TranslationBaseComponent implements
 	/** Reads the income again after a change made here, keeping the page on screen while it does. */
 	private async refresh(id: string): Promise<void> {
 		const scope = this.scope();
+		// A save that answers after the page turned to another income must not supersede that income's load.
+		if (!scope || this.incomeId !== id) return;
 		const sequence = ++this.loadSequence;
 		try {
 			const income = await loadIncome(this.incomeService, id, scope);
 			if (sequence !== this.loadSequence || this.incomeId !== id) return;
 			if (income) {
 				this.show(income);
+				// It may have superseded a reload of the same income that had set 'loading'.
+				this.state = 'ready';
 			} else {
 				this.state = 'not-found';
 			}
@@ -468,7 +476,7 @@ export class IncomeViewPageComponent extends TranslationBaseComponent implements
 				clientId
 					? this.readAll({ ...where, clientId, valueDate: categoryReadRange(income) }, sequence)
 					: Promise.resolve([]),
-				clientId ? this.readClientPayments(income, { ...where, clientId }) : Promise.resolve([]),
+				clientId ? this.readClientPayments(income, { ...where, clientId }, sequence) : Promise.resolve([]),
 				this.readAll(
 					{
 						...where,
@@ -522,15 +530,20 @@ export class IncomeViewPageComponent extends TranslationBaseComponent implements
 	 * ones up to the income — or, when fewer than that come before it, the client's first payments, which run on
 	 * past it.
 	 */
-	private async readClientPayments(income: IIncome, where: Record<string, unknown>): Promise<IIncome[]> {
+	private async readClientPayments(
+		income: IIncome,
+		where: Record<string, unknown>,
+		sequence: number
+	): Promise<IIncome[]> {
 		const take = VENDOR_CHART_READ_PAYMENTS;
 		const before = await this.incomeService.pagination({
 			where: { ...where, valueDate: vendorReadRange(income) },
 			order: { valueDate: 'DESC' },
 			take
 		});
-		if ((before.items ?? []).length >= take) {
-			return before.items;
+		// Nor the fallback once a newer read owns the charts, or the page is gone (ngOnDestroy bumps the sequence).
+		if ((before.items ?? []).length >= take || sequence !== this.chartsSequence) {
+			return before.items ?? [];
 		}
 		const { items = [] } = await this.incomeService.pagination({ where, order: { valueDate: 'ASC' }, take });
 		return items;
