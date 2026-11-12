@@ -219,10 +219,11 @@ function wireCleanup(
 
 /**
  * Wires the real start and stop over `rows`: the cleanup as `wireCleanup` wires it, and stand-ins for the other
- * commands they send. `TimeLogUpdateCommand`, the update an explicit stop makes, writes its input on the row; the rest
- * of it (the web timer's time slots, the timesheet and worked hours) is `TimeLogUpdateHandler`'s and does not run
- * here. `TimeLogCreateCommand` adds the new run; the stop's conflict lookup finds none. The running logs carry their
- * `timeSlots` only when the query asks for them, as each ORM loads a relation.
+ * commands they send. `TimeLogUpdateCommand`, the update an explicit stop makes, writes its input on the row, so these
+ * specs check the command the service sends and its input. The rest of it (the web timer's time slots, the timesheet
+ * and worked hours) is `TimeLogUpdateHandler`'s and does not run here; time-log-update.handler.spec.ts pins the parts
+ * a replaced run relies on. `TimeLogCreateCommand` adds the new run; the stop's conflict lookup finds none. The
+ * running logs carry their `timeSlots` only when the query asks for them, as each ORM loads a relation.
  *
  * @returns The service's logger and the `TimeLogUpdateCommand`s sent.
  */

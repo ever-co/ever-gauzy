@@ -3,6 +3,7 @@ import '../../../../core/entities/internal';
 
 import { NotFoundException } from '@nestjs/common';
 import { RequestContext } from '../../../../core/context';
+import { TimesheetFirstOrCreateCommand } from '../../../timesheet/commands';
 import { TimeLogUpdateCommand } from '../time-log-update.command';
 import { omitScopeFields, TimeLogUpdateHandler } from './time-log-update.handler';
 
@@ -114,5 +115,59 @@ describe('TimeLogUpdateHandler (GHSA-6qvm-3wg4-26w4)', () => {
 			isRunning: false,
 			stoppedAt: 'x'
 		});
+	});
+});
+
+/**
+ * The timer stops a replaced run through this update (`TimerService.stopPreviousRunningTimers`) and relies on two things
+ * it does: the start the update names picks the log's timesheet (naming none picks the week of now), and the stop is
+ * written before the later steps (time slots, timesheet, worked hours), so a failure in them leaves the log stopped.
+ */
+describe('TimeLogUpdateHandler stopping a run', () => {
+	const startedAt = new Date('2026-10-17T09:00:00.000Z');
+	const stoppedAt = new Date('2026-10-24T02:00:00.000Z');
+	const stop = () => new TimeLogUpdateCommand({ isRunning: false, startedAt, stoppedAt }, 'log-own');
+
+	let handler: TimeLogUpdateHandler;
+	let timeLogRepository: { update: jest.Mock };
+	let execute: jest.Mock;
+
+	beforeEach(() => {
+		jest.spyOn(console, 'log').mockImplementation(() => undefined);
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT_A);
+		({ handler, timeLogRepository } = createHandler());
+		execute = (handler as any).commandBus.execute;
+		execute.mockResolvedValue({ id: 'timesheet-of-its-week' });
+		jest.spyOn(handler as any, 'planRelease').mockResolvedValue({ remove: [], unlink: [] });
+		jest.spyOn(handler as any, 'applyRelease').mockResolvedValue(undefined);
+		jest.spyOn(handler as any, 'recalculateTimesheetAndEmployeeHours').mockResolvedValue(undefined);
+	});
+	afterEach(() => jest.restoreAllMocks());
+
+	it('files the log under the timesheet of the start the update names', async () => {
+		jest.spyOn(handler as any, 'saveUpdatedTimeLog').mockResolvedValue(undefined);
+
+		await handler.execute(stop());
+
+		const commands = execute.mock.calls.map(([command]) => command);
+		const lookup = commands.find((command) => command instanceof TimesheetFirstOrCreateCommand);
+		expect(lookup.date).toEqual(startedAt);
+		expect(timeLogRepository.update).toHaveBeenCalledWith(
+			{ id: 'log-own', tenantId: TENANT_A },
+			expect.objectContaining({ timesheetId: 'timesheet-of-its-week' })
+		);
+	});
+
+	it('writes the stop before its later steps, so a failure in them leaves the log stopped', async () => {
+		jest.spyOn(handler as any, 'saveUpdatedTimeLog').mockRejectedValue(
+			new Error('the time slots could not be saved')
+		);
+
+		await expect(handler.execute(stop())).rejects.toThrow('the time slots could not be saved');
+
+		expect(timeLogRepository.update).toHaveBeenCalledWith(
+			{ id: 'log-own', tenantId: TENANT_A },
+			expect.objectContaining({ isRunning: false, stoppedAt })
+		);
 	});
 });
