@@ -69,6 +69,16 @@ export class TimerController {
 		status: HttpStatus.BAD_REQUEST,
 		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
+	@ApiResponse({
+		status: HttpStatus.NOT_ACCEPTABLE,
+		description:
+			'The toggle names a time log (timeLogId) while no timer runs, or stops the running timer at a time (stoppedAt) before it started. Nothing is changed.'
+	})
+	@ApiResponse({
+		status: HttpStatus.CONFLICT,
+		description:
+			'The toggle names a time log (timeLogId) that is not the running one. Nothing is changed: the running timer goes on.'
+	})
 	@Post('/toggle')
 	@UseValidationPipe()
 	async toggleTimer(@Body() entity: ToggleTimerDTO): Promise<ITimeLog | null> {
@@ -115,6 +125,16 @@ export class TimerController {
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
 		description: 'Invalid input, The response body may contain clues as to what went wrong'
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_ACCEPTABLE,
+		description:
+			'No timer is running, or the stop asks for a time (stoppedAt) before the running timer started. Nothing is changed.'
+	})
+	@ApiResponse({
+		status: HttpStatus.CONFLICT,
+		description:
+			'The stop names a time log (timeLogId) that is not the running one. Nothing is changed: the running timer goes on.'
 	})
 	@Post('/stop')
 	@UseValidationPipe()
