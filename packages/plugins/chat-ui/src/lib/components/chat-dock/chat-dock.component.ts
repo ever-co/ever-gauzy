@@ -2,7 +2,7 @@ import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, computed, effect, inject, signal, untracked, viewChild } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
-import { NbIconModule } from '@nebular/theme';
+import { NbButtonModule, NbIconModule, NbInputModule } from '@nebular/theme';
 import { TranslatePipe } from '@ngx-translate/core';
 import { EMPTY, Observable, Subscription, timer } from 'rxjs';
 import { catchError, distinctUntilChanged, exhaustMap, map } from 'rxjs/operators';
@@ -50,20 +50,21 @@ interface DockRun {
 /**
  * The docked message card (`ChatDockService`): a small card at the bottom right of the screen to write one person
  * directly. A box to write and a way to the full conversation, as a quick-message card; above them, who it is and,
- * once there is something to read, the latest messages of our conversation, grouped by author as the chat shows them. The conversation is found
- * (or created) when the card opens, read again every few seconds, and marked read as its messages show.
+ * once there is something to read, the latest messages of our conversation, grouped by author as the chat shows them. The
+ * conversation is found (or created) when the card opens; its newest page is read again every few seconds (so a
+ * message written, edited or deleted elsewhere shows), and it is marked read up to the last message on screen.
  */
 @Component({
 	selector: 'ngx-chat-dock',
 	changeDetection: ChangeDetectionStrategy.OnPush,
-	imports: [DatePipe, NbIconModule, TranslatePipe, PersonAvatarComponent],
+	imports: [DatePipe, NbButtonModule, NbIconModule, NbInputModule, TranslatePipe, PersonAvatarComponent],
 	template: `
 		@if (person(); as who) {
 			<section class="panel" role="dialog" [attr.aria-label]="who.name" data-test="chat-dock" (keydown.escape)="close()">
 				<header class="head">
 					<ngx-chat-person-avatar [person]="who" [round]="true"></ngx-chat-person-avatar>
 					<span class="name" [attr.title]="who.name">{{ who.name }}</span>
-					<button type="button" class="icon" data-test="chat-dock-close" [attr.aria-label]="'CHAT.VIEW.CLOSE' | translate" (click)="close()">
+					<button nbButton ghost size="small" status="basic" type="button" data-test="chat-dock-close" [attr.aria-label]="'CHAT.VIEW.CLOSE' | translate" (click)="close()">
 						<nb-icon icon="close-outline"></nb-icon>
 					</button>
 				</header>
@@ -97,6 +98,9 @@ interface DockRun {
 				<form class="write" (submit)="send($event)">
 					<input
 						#box
+						nbInput
+						fullWidth
+						fieldSize="small"
 						type="text"
 						class="box"
 						data-test="chat-dock-box"
@@ -108,8 +112,11 @@ interface DockRun {
 						(input)="draft.set(box.value)"
 					/>
 					<button
+						nbButton
+						ghost
+						size="small"
+						status="basic"
 						type="submit"
-						class="icon"
 						data-test="chat-dock-send"
 						[disabled]="sending() || !conversation() || !draft().trim()"
 						[attr.aria-label]="'CHAT.COMPOSER.SEND' | translate"
@@ -118,7 +125,18 @@ interface DockRun {
 					</button>
 				</form>
 
-				<button type="button" class="open" data-test="chat-dock-open" [disabled]="!conversation()" (click)="openInChat()">
+				<button
+					nbButton
+					ghost
+					fullWidth
+					size="small"
+					status="basic"
+					type="button"
+					class="open"
+					data-test="chat-dock-open"
+					[disabled]="!conversation()"
+					(click)="openInChat()"
+				>
 					{{ 'CHAT.DIALOG.OPEN_DIRECT' | translate }}
 					<nb-icon icon="arrow-forward-outline" aria-hidden="true"></nb-icon>
 				</button>
@@ -139,7 +157,7 @@ interface DockRun {
 				padding: 0.75rem;
 				border: 1px solid var(--gauzy-border-default-color, rgba(127, 127, 127, 0.25));
 				border-radius: 0.75rem;
-				background: var(--gauzy-card-1, #fff);
+				background: var(--gauzy-card-1);
 				box-shadow: 0 0.5rem 2rem rgba(0, 0, 0, 0.28);
 				color: var(--gauzy-text-color-1, inherit);
 			}
@@ -159,55 +177,13 @@ interface DockRun {
 				white-space: nowrap;
 				text-overflow: ellipsis;
 			}
-			.icon,
-			.open {
-				border: 0;
-				background: transparent;
-				color: var(--gauzy-text-color-1, inherit);
-				font: inherit;
-				cursor: pointer;
-				transition: background-color 0.12s ease;
-			}
-			.icon {
-				flex: 0 0 auto;
-				display: inline-flex;
-				align-items: center;
-				justify-content: center;
-				width: 2.25rem;
-				height: 2.25rem;
-				border-radius: 0.5rem;
-			}
-			.head .icon {
-				width: 1.75rem;
-				height: 1.75rem;
-				color: var(--gauzy-text-color-2, inherit);
-			}
-			.open {
-				display: flex;
-				align-items: center;
+			/* "Open conversation" is a Nebular button laid out as a row: its words at the start, the arrow at the end. */
+			.panel .open {
 				justify-content: space-between;
-				gap: 0.5rem;
-				padding: 0.4375rem 0.5rem;
-				border-radius: 0.5rem;
-				font-size: 0.8125rem;
-				text-align: start;
+				font-weight: 400;
+				text-transform: none;
 			}
-			.icon:hover:not(:disabled),
-			.icon:focus-visible,
-			.open:hover:not(:disabled),
-			.open:focus-visible {
-				background: var(--gauzy-hover-tint, rgba(127, 127, 127, 0.12));
-			}
-			.icon:disabled,
-			.open:disabled {
-				opacity: 0.45;
-				cursor: default;
-			}
-			.icon nb-icon,
-			.open nb-icon {
-				font-size: 1rem;
-			}
-			.open nb-icon {
+			.panel .open nb-icon {
 				color: var(--gauzy-text-color-2, inherit);
 			}
 			/*
@@ -291,28 +267,9 @@ interface DockRun {
 				gap: 0.375rem;
 				margin: 0;
 			}
-			/* Global form styles reach a bare input: every property it shows is set here. */
 			.box {
-				box-sizing: border-box;
 				flex: 1 1 auto;
 				min-width: 0;
-				height: 2.25rem !important;
-				margin: 0 !important;
-				padding: 0 0.75rem !important;
-				border: 1px solid var(--gauzy-border-default-color, rgba(127, 127, 127, 0.25)) !important;
-				border-radius: 0.5rem !important;
-				outline: 0;
-				background: transparent !important;
-				box-shadow: none !important;
-				color: var(--gauzy-text-color-1, inherit) !important;
-				font: inherit;
-				font-size: 0.8125rem !important;
-			}
-			.box:focus {
-				border-color: var(--gauzy-text-color-2, rgba(127, 127, 127, 0.6)) !important;
-			}
-			.box::placeholder {
-				color: var(--gauzy-text-color-2, rgba(127, 127, 127, 0.9));
 			}
 		`
 	]
@@ -388,6 +345,15 @@ export class ChatDockComponent {
 		return runs;
 	});
 
+	/** The newest message on screen. */
+	private readonly newestId = computed(() => {
+		const messages = this.messages();
+		return messages.length ? String(messages[messages.length - 1].id) : null;
+	});
+
+	/** The newest message of the other person the conversation was already marked read for. */
+	private readThrough: string | null = null;
+
 	/** The request of the person the card shows; a change of person drops it. */
 	private request: Subscription | null = null;
 	private polling: Subscription | null = null;
@@ -399,9 +365,9 @@ export class ChatDockComponent {
 			untracked(() => this.load(employeeId));
 			setTimeout(() => this.box()?.nativeElement.focus());
 		});
-		// New lines keep the newest in sight.
+		// A new newest message is brought in sight; a refresh that changes nothing leaves the reader where they are.
 		effect(() => {
-			this.runs();
+			this.newestId();
 			setTimeout(() => {
 				const element = this.scroller()?.nativeElement;
 				if (element) element.scrollTop = element.scrollHeight;
@@ -421,6 +387,7 @@ export class ChatDockComponent {
 		this.messages.set([]);
 		this.draft.set('');
 		this.failed.set(false);
+		this.readThrough = null;
 		if (!employeeId) return;
 		this.request = this.api.direct([employeeId]).subscribe({
 			next: ({ conversation }) => {
@@ -437,34 +404,49 @@ export class ChatDockComponent {
 		});
 	}
 
-	/** Asks for the messages after the last one every few seconds while the tab is seen. */
+	/**
+	 * Reads the newest page again every few seconds while the tab is seen. The whole page, not only what follows the
+	 * last message on screen: a message of mine added by `send()` may be newer than one of theirs not fetched yet, and
+	 * a message already shown may have been edited or deleted since.
+	 */
 	private poll(conversation: IChatConversationWithState): void {
 		this.polling = timer(CHAT_MESSAGES_POLL_MS, CHAT_MESSAGES_POLL_MS)
 			.pipe(
 				exhaustMap(() => {
 					if (typeof document !== 'undefined' && document.hidden) return EMPTY;
-					const messages = this.messages();
-					const last = messages[messages.length - 1];
-					return this.api.messages(conversation.id, last ? { after: last.id } : {}).pipe(catchError(() => EMPTY));
+					return this.api.messages(conversation.id).pipe(catchError(() => EMPTY));
 				})
 			)
 			.subscribe((page) => this.accept(page.messages));
 	}
 
-	/** Adds messages to the card; what someone else wrote is marked read, since it is on screen. */
+	/**
+	 * Puts a page into the card (a message already shown takes its new state), then marks the conversation read up
+	 * to the last message on screen when the other person wrote something new: never further, so what arrives
+	 * meanwhile stays unread, and not while the tab is hidden, when nothing was seen.
+	 */
 	private accept(incoming: readonly IChatMessageWithRelations[]): void {
 		if (incoming.length === 0) return;
-		this.messages.set(mergeMessages(this.messages(), incoming));
+		const messages = mergeMessages(this.messages(), incoming);
+		this.messages.set(messages);
 		const conversation = this.conversation();
 		const me = this.me()?.userId ?? null;
-		if (!conversation || !incoming.some((message) => String(message.authorUserId ?? '') !== me)) return;
+		const last = messages[messages.length - 1];
+		const theirs = [...messages].reverse().find((message) => String(message.authorUserId ?? '') !== me);
+		if (!conversation || !last || !theirs || String(theirs.id) === this.readThrough) return;
+		if (typeof document !== 'undefined' && document.hidden) return;
+		const through = String(theirs.id);
+		this.readThrough = through;
 		this.api
-			.read(conversation.id)
-			.pipe(
-				catchError(() => EMPTY),
-				takeUntilDestroyed(this.destroyRef)
-			)
-			.subscribe(() => this.api.notifyChanged());
+			.read(conversation.id, last.id)
+			.pipe(takeUntilDestroyed(this.destroyRef))
+			.subscribe({
+				next: () => this.api.notifyChanged(),
+				// Not marked: the next page tries again.
+				error: () => {
+					if (this.readThrough === through) this.readThrough = null;
+				}
+			});
 	}
 
 	protected close(): void {

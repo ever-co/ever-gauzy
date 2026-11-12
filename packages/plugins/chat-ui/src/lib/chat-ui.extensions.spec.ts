@@ -33,12 +33,12 @@ describe('ChatUiPlugin extensions', () => {
 		expect(ChatUiPlugin.extensions).toEqual([CHAT_SEND_TASK_EXTENSION, CHAT_MESSAGE_EMPLOYEE_EXTENSION]);
 	});
 
-	it('puts "Message" in the actions of an employee page, for chat users where the chat is on', async () => {
+	it('puts "Message" in the actions of an employee page, for senders where the chat is on', async () => {
 		expect(CHAT_EMPLOYEE_ACTIONS_SLOT).toBe(PAGE_EXTENSION_SLOTS.EMPLOYEE_VIEW_ACTIONS);
 		expect(CHAT_MESSAGE_EMPLOYEE_EXTENSION).toMatchObject({
 			id: CHAT_MESSAGE_EMPLOYEE_EXTENSION_ID,
 			slotId: PAGE_EXTENSION_SLOTS.EMPLOYEE_VIEW_ACTIONS,
-			permissions: [PermissionsEnum.CHAT_VIEW],
+			permissions: [PermissionsEnum.CHAT_SEND],
 			featureKey: FeatureEnum.FEATURE_CHAT
 		});
 		await expect(CHAT_MESSAGE_EMPLOYEE_EXTENSION.loadComponent?.()).resolves.toBe(MessageEmployeeButtonComponent);

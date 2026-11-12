@@ -5,7 +5,7 @@ import { NbButtonModule, NbIconModule, NbTooltipModule } from '@nebular/theme';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { Observable, of } from 'rxjs';
 import { distinctUntilChanged, map, switchMap } from 'rxjs/operators';
-import { IOrganization, IUser } from '@gauzy/contracts';
+import { IEmployee, IOrganization, IUser } from '@gauzy/contracts';
 import { Store } from '@gauzy/ui-core/core';
 import { ChatAvailabilityService } from '../../services/chat-availability.service';
 import { ChatDockService } from '../../services/chat-dock.service';
@@ -18,14 +18,16 @@ export const EMPLOYEE_VIEW_ID_PARAM = 'id';
  * "Message" on an employee's page (the `employee-view-actions` extension slot), an icon button beside Edit as the
  * ones of a task's page: opens my direct conversation with them in the docked chat window at the bottom right of
  * the screen (`ChatDockService`), so the page stays. Shown only where the API serves the chat to the signed-in user,
- * and not on my own page; the employee is the one of the page's route.
+ * and not on my own page; the employee is the one of the page's route. Chat is asked in the selected organization
+ * (the app sends it with every request), so the button is left out for an employee of another one, whom the chat
+ * would not find there.
  */
 @Component({
 	selector: 'ngx-chat-message-employee-button',
 	changeDetection: ChangeDetectionStrategy.OnPush,
 	imports: [NbButtonModule, NbIconModule, NbTooltipModule, TranslatePipe],
 	template: `
-		@if (available() && employeeId() && !isMe()) {
+		@if (available() && employeeId() && !isMe() && !otherOrganization()) {
 			<button
 				nbButton
 				ghost
@@ -45,13 +47,14 @@ export const EMPLOYEE_VIEW_ID_PARAM = 'id';
 })
 export class MessageEmployeeButtonComponent {
 	private readonly store = inject(Store);
+	private readonly route = inject(ActivatedRoute);
 	private readonly dock = inject(ChatDockService);
 	private readonly peopleService = inject(ChatPeopleService);
 	private readonly translate = inject(TranslateService);
 
 	protected readonly available = toSignal(inject(ChatAvailabilityService).available$, { initialValue: false });
 	protected readonly employeeId = toSignal(
-		inject(ActivatedRoute).paramMap.pipe(
+		this.route.paramMap.pipe(
 			map((params) => params.get(EMPLOYEE_VIEW_ID_PARAM)),
 			distinctUntilChanged()
 		),
@@ -67,9 +70,38 @@ export class MessageEmployeeButtonComponent {
 	);
 	protected readonly isMe = computed(() => !!this.myEmployeeId() && this.myEmployeeId() === this.employeeId());
 
+	private readonly organization$ = this.store.selectedOrganization$ as Observable<IOrganization | null | undefined>;
+	private readonly selectedOrganizationId = toSignal(
+		this.organization$.pipe(
+			map((organization) => (organization?.id ? String(organization.id) : null)),
+			distinctUntilChanged()
+		),
+		{ initialValue: null }
+	);
+	/** The organization of the employee the page shows (the page's route resolves them), when it is known. */
+	private readonly employeeOrganizationId = toSignal(
+		this.route.data.pipe(
+			map((data) => {
+				const employee = data?.['employee'] as IEmployee | undefined;
+				return employee?.organizationId ? String(employee.organizationId) : null;
+			}),
+			distinctUntilChanged()
+		),
+		{ initialValue: null }
+	);
+	/**
+	 * Whether the page's employee is of another organization than the selected one. With no organization selected
+	 * the chat looks through the whole tenant, and with theirs unknown nothing is assumed: the button stays.
+	 */
+	protected readonly otherOrganization = computed(() => {
+		const selected = this.selectedOrganizationId();
+		const theirs = this.employeeOrganizationId();
+		return !!selected && !!theirs && selected !== theirs;
+	});
+
 	/** The organization's people as the chat knows them, for the name and picture the window shows. */
 	private readonly people = toSignal(
-		(this.store.selectedOrganization$ as Observable<IOrganization | null | undefined>).pipe(
+		this.organization$.pipe(
 			switchMap((organization) =>
 				organization?.id && organization.tenantId ? this.peopleService.people(organization.id, organization.tenantId) : of(EMPTY_PEOPLE)
 			)
