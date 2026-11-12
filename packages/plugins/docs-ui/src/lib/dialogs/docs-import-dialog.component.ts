@@ -242,16 +242,14 @@ export class DocsImportDialogComponent extends TranslationBaseComponent implemen
 	public notImported: IDocumentImportReportItem[] = [];
 
 	private readonly destroyRef = inject(DestroyRef);
+	private readonly dialogRef = inject<NbDialogRef<DocsImportDialogComponent>>(NbDialogRef);
+	private readonly importService = inject(DocsImportService);
+	private readonly documentsService = inject(DocumentsService);
+	private readonly cdr = inject(ChangeDetectorRef);
 	private poll?: Subscription;
 
-	constructor(
-		public readonly translateService: TranslateService,
-		private readonly dialogRef: NbDialogRef<DocsImportDialogComponent>,
-		private readonly importService: DocsImportService,
-		private readonly documentsService: DocumentsService,
-		private readonly cdr: ChangeDetectorRef
-	) {
-		super(translateService);
+	constructor() {
+		super(inject(TranslateService));
 	}
 
 	ngOnInit(): void {

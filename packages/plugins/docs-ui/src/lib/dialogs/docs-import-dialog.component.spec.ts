@@ -15,7 +15,9 @@ jest.mock('@gauzy/ui-core/core', () => ({ Store: class Store {} }));
 jest.mock('@gauzy/ui-core/common', () => ({ API_PREFIX: '/api', toParams: (value: unknown) => value }));
 
 import { HttpErrorResponse, HttpEventType, HttpResponse } from '@angular/common/http';
-import { Injector, runInInjectionContext, DestroyRef } from '@angular/core';
+import { ChangeDetectorRef, Injector, runInInjectionContext, DestroyRef } from '@angular/core';
+import { NbDialogRef } from '@nebular/theme';
+import { TranslateService } from '@ngx-translate/core';
 import { of, Subject, throwError } from 'rxjs';
 import {
 	DocumentImportItemStatusEnum,
@@ -26,6 +28,8 @@ import {
 	DocumentVisibilityEnum,
 	IDocumentImport
 } from '@gauzy/contracts';
+import { DocsImportService } from '../services/docs-import.service';
+import { DocumentsService } from '../services/documents.service';
 import { DocsImportDialogComponent } from './docs-import-dialog.component';
 
 const running = (processed: number): IDocumentImport =>
@@ -34,15 +38,21 @@ const running = (processed: number): IDocumentImport =>
 function build(spaces$ = of([{ kind: DocumentSpaceKindEnum.ORGANIZATION }, { kind: DocumentSpaceKindEnum.TEAM, organizationTeamId: 'team-1', name: 'API' }] as never)) {
 	const destroy = new Subject<void>();
 	const destroyRef = { onDestroy: (callback: () => void) => destroy.subscribe(callback) } as unknown as DestroyRef;
-	const injector = Injector.create({ providers: [{ provide: DestroyRef, useValue: destroyRef }] });
 	const dialogRef = { close: jest.fn() };
 	const importService = { start: jest.fn(), get: jest.fn(), refreshImportProbe: jest.fn() };
 	const documentsService = { getSpaces: jest.fn(() => spaces$) };
 	const cdr = { markForCheck: jest.fn() };
-	const component = runInInjectionContext(
-		injector,
-		() => new DocsImportDialogComponent({} as never, dialogRef as never, importService as never, documentsService as never, cdr as never)
-	);
+	const injector = Injector.create({
+		providers: [
+			{ provide: DestroyRef, useValue: destroyRef },
+			{ provide: TranslateService, useValue: {} },
+			{ provide: NbDialogRef, useValue: dialogRef },
+			{ provide: DocsImportService, useValue: importService },
+			{ provide: DocumentsService, useValue: documentsService },
+			{ provide: ChangeDetectorRef, useValue: cdr }
+		]
+	});
+	const component = runInInjectionContext(injector, () => new DocsImportDialogComponent());
 	return { component, dialogRef, importService, destroy };
 }
 

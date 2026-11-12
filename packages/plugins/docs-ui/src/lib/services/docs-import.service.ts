@@ -1,5 +1,5 @@
 import { HttpClient, HttpErrorResponse, HttpEvent, HttpResponse } from '@angular/common/http';
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { catchError, firstValueFrom, Observable, of, shareReplay } from 'rxjs';
 import {
 	DocumentVisibilityEnum,
@@ -39,7 +39,8 @@ export class DocsImportService {
 	private importProbe?: { organizationId: string; result$: Observable<IDocumentImportList | null> };
 	private pdfProbe?: { organizationId: string; result$: Observable<IDocumentPdfExportCapabilities | null> };
 
-	constructor(private readonly http: HttpClient, private readonly store: Store) {}
+	private readonly http = inject(HttpClient);
+	private readonly store = inject(Store);
 
 	/** The caller's last imports and the zip limit, or `null` when import is off (or the read failed). */
 	probeImport(): Observable<IDocumentImportList | null> {

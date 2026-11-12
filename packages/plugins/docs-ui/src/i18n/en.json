@@ -361,7 +361,7 @@
 		"PRINT_HINT": "Opens the print dialog — choose \"Save as PDF\" there",
 		"NOTHING_TO_EXPORT": "There is nothing to export yet",
 		"PDF": "Export as PDF",
-		"PDF_WITH_SUBPAGES": "Export as PDF with sub-pages",
+		"PDF_WITH_SUB_PAGES": "Export as PDF with sub-pages",
 		"PDF_FAILED": "The PDF could not be created",
 		"PDF_TOO_MANY_PAGES": "This page has too many sub-pages for one PDF"
 	},

@@ -4,7 +4,8 @@
  */
 jest.mock('@gauzy/ui-core/core', () => ({ Store: class Store {} }));
 
-import { HttpErrorResponse, HttpHeaders, HttpParams, HttpResponse } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse, HttpHeaders, HttpParams, HttpResponse } from '@angular/common/http';
+import { Injector, runInInjectionContext } from '@angular/core';
 import { firstValueFrom, Observable, of, throwError } from 'rxjs';
 import { DocumentVisibilityEnum, ID } from '@gauzy/contracts';
 import { Store } from '@gauzy/ui-core/core';
@@ -33,7 +34,13 @@ class HttpStub {
 function build() {
 	const http = new HttpStub();
 	const store = { selectedOrganization: { id: ORGANIZATION_ID } } as unknown as Store;
-	return { http, store, service: new DocsImportService(http as never, store) };
+	const injector = Injector.create({
+		providers: [
+			{ provide: HttpClient, useValue: http },
+			{ provide: Store, useValue: store }
+		]
+	});
+	return { http, store, service: runInInjectionContext(injector, () => new DocsImportService()) };
 }
 
 const param = (request: { options?: { params?: HttpParams } }, name: string) => request.options?.params?.get(name);
