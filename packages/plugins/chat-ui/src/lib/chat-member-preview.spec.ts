@@ -100,6 +100,60 @@ describe('ChatMemberPreview', () => {
 		expect(read).toHaveBeenCalledTimes(1);
 	});
 
+	it('shows no faces once the conversation has nobody in it, and forgets the ones it had', () => {
+		const read = jest.fn(() => of([member('a')]));
+		const preview = new ChatMemberPreview(read);
+		let open = channel('c1', 1);
+		preview.follow(open, true, () => open);
+		expect(ids(preview.members(open))).toEqual(['a']);
+		open = channel('c1', 0, []);
+		preview.follow(open, true, () => open);
+		expect(preview.members(open)).toEqual([]);
+		// The same channel at a count again shows nothing stale before its members are read.
+		expect(preview.members(channel('c1', 1))).toEqual([]);
+	});
+
+	it('drops a read under way once newer members came with the conversation at the same count', () => {
+		const pending = new Subject<IChatMemberSummary[]>();
+		const read = jest.fn(() => pending);
+		const preview = new ChatMemberPreview(read);
+		let open = channel('c1', 2);
+		preview.follow(open, true, () => open);
+		// The settings dialog swapped a member and handed back the conversation with its members (same count).
+		open = channel('c1', 2, [member('a'), member('new')]);
+		preview.follow(open, true, () => open);
+		// The older read answers last, with the members as they were.
+		pending.next([member('a'), member('old')]);
+		pending.complete();
+		// A list refresh without members keeps the newer ones.
+		open = channel('c1', 2);
+		preview.follow(open, true, () => open);
+		expect(ids(preview.members(open))).toEqual(['a', 'new']);
+		expect(read).toHaveBeenCalledTimes(1);
+	});
+
+	it('keeps the latest read when two reads of the same conversation and count finish out of order', () => {
+		const first = new Subject<IChatMemberSummary[]>();
+		const second = new Subject<IChatMemberSummary[]>();
+		const read = jest.fn().mockReturnValueOnce(first).mockReturnValueOnce(of([member('b')])).mockReturnValueOnce(second);
+		const preview = new ChatMemberPreview(read);
+		const a = channel('c1', 1);
+		const b = channel('c2', 1);
+		let open = a;
+		preview.follow(a, true, () => open);
+		open = b;
+		preview.follow(b, true, () => open);
+		open = a;
+		preview.follow(a, true, () => open);
+		expect(read).toHaveBeenCalledTimes(3);
+		second.next([member('newer')]);
+		second.complete();
+		// The first read of c1 answers last: it is outdated.
+		first.next([member('older')]);
+		first.complete();
+		expect(ids(preview.members(a))).toEqual(['newer']);
+	});
+
 	it('reads nothing for someone who is not a member, or for an empty conversation', () => {
 		const read = jest.fn(() => of([member('a')]));
 		const preview = new ChatMemberPreview(read);
