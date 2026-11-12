@@ -5,10 +5,12 @@ import { omit } from 'underscore';
 import { ID, ITimeLog, ITimeSlot } from '@gauzy/contracts';
 import { isEmpty } from '@gauzy/utils';
 import { moment } from '../../../../core/moment-extend';
+import { TimesheetRecalculateCommand } from '../../../timesheet/commands';
 import { TimeLog } from './../../time-log.entity';
 import { DeleteTimeSpanCommand } from '../delete-time-span.command';
 import { TimeLogUpdateCommand } from '../time-log-update.command';
 import { TimeLogDeleteCommand } from '../time-log-delete.command';
+import { UpdateEmployeeTotalWorkedHoursCommand } from '../update-employee-total-worked-hours.command';
 import { generateTimeSlots } from './../../../time-slot/utils';
 import { TimeSlot } from '../../../time-slot/time-slot.entity';
 import { TypeOrmTimeLogRepository } from '../../repository/type-orm-time-log.repository';
@@ -372,7 +374,8 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 	 * slots other logs hold too (see `TimeLogUpdateHandler.applyRelease`). So a log already ending at `start` with one
 	 * of its slots gone has had that delete, which cannot be taken back safely (it may be a hard one, and a soft one
 	 * took the slots' screenshots and activity with them): the split is finished instead, by taking the log off the
-	 * slots it still holds from `start` on with another log, the second part among them. Otherwise nothing of the log
+	 * slots it still holds from `start` on with another log, the second part among them, and by recalculating the
+	 * totals the cut did not get to (see `finishRelease`). Otherwise nothing of the log
 	 * was deleted, and the split is undone: every slot the log held and lost goes back to it, the log gets its range and
 	 * timesheet back, and the second part is deleted with its join rows. In that order, so that a failure on the way
 	 * leaves the time counted twice rather than lost.
@@ -396,17 +399,7 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 		const cut = moment(stored?.stoppedAt).isSame(start);
 
 		if (cut && slots.length < ids.length) {
-			const shared = slots
-				.filter((slot) => !moment(slot.startedAt).isBefore(start))
-				.filter((slot) => heldBy(slot).includes(log.id) && heldBy(slot).some((id) => id !== log.id))
-				.map((slot) => slot.id);
-			if (shared.length > 0) {
-				await this.typeOrmTimeSlotRepository
-					.createQueryBuilder()
-					.relation(TimeSlot, 'timeLogs')
-					.of(shared)
-					.remove(log.id);
-			}
+			await this.finishRelease(log, slots, (slot) => !moment(slot.startedAt).isBefore(start));
 			return;
 		}
 
@@ -425,6 +418,42 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 			{ startedAt, stoppedAt, timesheetId }
 		);
 		await this.typeOrmTimeLogRepository.delete({ id: secondPart.id });
+	}
+
+	/**
+	 * Finishes the release of a cut that wrote the log's new range, deleted the slots the log alone held there, and then
+	 * failed: the log is taken off the slots it still holds outside that range with another log (the unlinks the cut
+	 * did not get to), and the totals the cut recalculates last are recalculated.
+	 *
+	 * @param log - The time log as it was read before the cut.
+	 * @param slots - The slots the log held before the cut, as they now stand, with their logs.
+	 * @param outside - Whether a slot lies outside the log's new range.
+	 */
+	private async finishRelease(
+		log: TimeLog,
+		slots: ITimeSlot[],
+		outside: (slot: ITimeSlot) => boolean
+	): Promise<void> {
+		const heldBy = (slot: ITimeSlot) => (slot.timeLogs ?? []).map((held) => held.id);
+		const shared = slots
+			.filter(outside)
+			.filter((slot) => heldBy(slot).includes(log.id) && heldBy(slot).some((id) => id !== log.id))
+			.map((slot) => slot.id);
+		if (shared.length > 0) {
+			await this.typeOrmTimeSlotRepository
+				.createQueryBuilder()
+				.relation(TimeSlot, 'timeLogs')
+				.of(shared)
+				.remove(log.id);
+		}
+
+		// The second part of a split shares the log's timesheet
+		if (log.timesheetId) {
+			await this._commandBus.execute(new TimesheetRecalculateCommand(log.timesheetId));
+		}
+		if (log.employeeId) {
+			await this._commandBus.execute(new UpdateEmployeeTotalWorkedHoursCommand(log.employeeId));
+		}
 	}
 
 	/**

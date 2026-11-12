@@ -190,6 +190,8 @@ function createStore() {
 	const logs: IStoredLog[] = [];
 	const slots: IStoredSlot[] = [];
 	const executed: unknown[] = [];
+	/** The timesheets and the employees whose totals were recalculated, in turn (a recalculation that failed is not). */
+	const recalculated = { timesheets: [] as string[], employees: [] as string[] };
 	let created = 0;
 
 	const liveLog = (id: string) => logs.find((log) => log.id === id && !log.deletedAt);
@@ -406,8 +408,13 @@ function createStore() {
 		if (command instanceof TimeLogDeleteCommand) return logDeleteHandler.execute(command);
 		if (command instanceof TimeSlotBulkDeleteCommand) return slotDeleteHandler.execute(command);
 		if (command instanceof TimesheetFirstOrCreateCommand) return { id: timesheetOf(command.date) };
-		if (command instanceof TimesheetRecalculateCommand) return failIfDue('recalculation');
-		if (command instanceof UpdateEmployeeTotalWorkedHoursCommand) return undefined;
+		if (command instanceof TimesheetRecalculateCommand) {
+			failIfDue('recalculation');
+			return void recalculated.timesheets.push(String(command.id));
+		}
+		if (command instanceof UpdateEmployeeTotalWorkedHoursCommand) {
+			return void recalculated.employees.push(String(command.employeeId));
+		}
 		throw new Error(`Unexpected command ${(command as object)?.constructor?.name}`);
 	});
 	const handler = new DeleteTimeSpanHandler(timeLogRepository as any, timeSlotRepository as any, commandBus as any);
@@ -476,6 +483,8 @@ function createStore() {
 
 	return {
 		executed,
+		/** The totals recalculated so far. */
+		recalculated: () => ({ timesheets: [...recalculated.timesheets], employees: [...recalculated.employees] }),
 		/** Makes a write fail `times` times in a row, after `succeeding` calls of it have gone through. */
 		fail(write: StoreWrite, succeeding = 0, times = 1) {
 			failing[write] = { succeeding, times };
@@ -866,6 +875,8 @@ describe('DeleteTimeSpanHandler when a split fails (#11823)', () => {
 			{ range: '10:00-11:00', isRunning: false, slots: slotStarts('10:00', '11:00') }
 		]);
 		expect(store.slotCount()).toBe(12);
+		// The cut stopped before its totals: the recovery recalculates them.
+		expect(store.recalculated()).toEqual({ timesheets: [timesheetOf(at('08:00'))], employees: [EMPLOYEE_ID] });
 		expect(outcome).toBe('The unlink failed');
 	});
 
@@ -882,6 +893,8 @@ describe('DeleteTimeSpanHandler when a split fails (#11823)', () => {
 			{ range: '10:00-11:00', isRunning: false, slots: slotStarts('10:00', '11:00') }
 		]);
 		expect(store.slotCount()).toBe(12);
+		// The recovery recalculates the totals the cut could not.
+		expect(store.recalculated()).toEqual({ timesheets: [timesheetOf(at('08:00'))], employees: [EMPLOYEE_ID] });
 		expect(outcome).toBe('The recalculation failed');
 	});
 
