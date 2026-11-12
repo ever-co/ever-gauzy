@@ -1,7 +1,8 @@
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { DataSource, EntityManager } from 'typeorm';
 import { ID, IIntegrationTenant, IntegrationEntity } from '@gauzy/contracts';
-import { IntegrationMap, IntegrationSetting, Organization, OrganizationProjectService, Task, TenantAwareCrudService } from '@gauzy/core';
+import { createHash } from 'node:crypto';
+import { IntegrationMap, IntegrationSetting, OrganizationProjectService, Task, TenantAwareCrudService } from '@gauzy/core';
 import {
 	JiraSyncDirection,
 	JiraProjectMapping,
@@ -11,6 +12,7 @@ import {
 import { JiraSyncRun } from './entities/jira-sync-run.entity';
 import {
 	JIRA_MAPPING_EXISTS,
+	JIRA_MAPPINGS_BUSY,
 	JIRA_MAPPING_PROJECT_FIXED,
 	JIRA_PROJECT_NOT_FOUND,
 	JIRA_PROJECT_OUTBOUND_TAKEN,
@@ -31,6 +33,9 @@ export interface JiraMappingInput {
 	issueTypeIds?: string[] | null;
 	syncEnabled?: boolean;
 }
+
+/** How long a MySQL / MariaDB change of an organization's mappings waits for another one before it is refused (409). */
+const MYSQL_MAPPINGS_LOCK_WAIT_SECONDS = 30;
 
 /** Whether a write failed on a unique index: Postgres 23505, MySQL / MariaDB ER_DUP_ENTRY (1062), SQLite's constraint code. */
 export function isUniqueViolation(error: unknown): boolean {
@@ -83,8 +88,7 @@ export class JiraMappingService extends TenantAwareCrudService<JiraProjectMappin
 		const direction = input.direction ?? JiraSyncDirection.INBOUND;
 		const where = { integrationId: tenant.id as ID, jiraProjectId: input.jiraProjectId, tenantId: scope.tenantId };
 		try {
-			return await this.dataSource.transaction(async (manager) => {
-				await this.lockMappingsOf(manager, tenant);
+			return await this.withMappingsLock(tenant, async (manager) => {
 				// The Jira project id was chosen on the site the request read; a site changed meanwhile (under this lock, see
 				// `whileMappingsLocked`) could give it another project: refused, the person reads the new site's projects.
 				if (expectedCloudId !== undefined) {
@@ -125,17 +129,35 @@ export class JiraMappingService extends TenantAwareCrudService<JiraProjectMappin
 	}
 
 	/**
-	 * One writer of an organization's mappings at a time within the transaction (see `createMapping`): an advisory
-	 * lock by organization on Postgres (two connections of one organization serialize too), the organization's own
-	 * row on MySQL / MariaDB — a row that always exists, unlike the mappings (a first mapping has none to lock).
+	 * Runs work in a transaction while it is the one writer of an organization's mappings (see `createMapping`): an
+	 * advisory lock by organization on Postgres, held to the end of the transaction; a named lock (`GET_LOCK`) on MySQL /
+	 * MariaDB, released when the work ends. Never a row lock: work under the lock may write on other connections (a
+	 * reconnect writes the connection and its settings, which reference the organization), and their foreign-key checks
+	 * would wait on a locked organization row for good. SQLite serializes writers by itself.
 	 */
-	private async lockMappingsOf(manager: EntityManager, tenant: IIntegrationTenant): Promise<void> {
-		const dialect = manager.connection.options.type;
-		if (dialect === 'postgres') {
-			await manager.query('SELECT pg_advisory_xact_lock(hashtext($1))', [`integration-jira:mappings:${tenant.tenantId}:${tenant.organizationId}`]);
-		} else if (dialect === 'mysql' || dialect === 'mariadb') {
-			await manager.findOne(Organization, { where: { id: tenant.organizationId as ID } as never, lock: { mode: 'pessimistic_write' } });
-		}
+	private async withMappingsLock<T>(scope: { tenantId?: ID | null; organizationId?: ID | null }, work: (manager: EntityManager) => Promise<T>): Promise<T> {
+		const key = `integration-jira:mappings:${scope.tenantId}:${scope.organizationId}`;
+		return this.dataSource.transaction(async (manager) => {
+			const dialect = manager.connection.options.type;
+			if (dialect === 'postgres') {
+				await manager.query('SELECT pg_advisory_xact_lock(hashtext($1))', [key]);
+				return work(manager);
+			}
+			if (dialect === 'mysql' || dialect === 'mariadb') {
+				// A lock name holds 64 characters at most.
+				const name = `ijm:${createHash('sha1').update(key).digest('hex')}`;
+				const [row] = (await manager.query('SELECT GET_LOCK(?, ?) AS acquired', [name, MYSQL_MAPPINGS_LOCK_WAIT_SECONDS])) as Array<{ acquired?: unknown }>;
+				if (Number(row?.acquired) !== 1) {
+					throw new ConflictException({ message: 'Another change of these mappings is running; try again', code: JIRA_MAPPINGS_BUSY });
+				}
+				try {
+					return await work(manager);
+				} finally {
+					await manager.query('SELECT RELEASE_LOCK(?)', [name]).catch(() => undefined);
+				}
+			}
+			return work(manager);
+		});
 	}
 
 	/**
@@ -143,10 +165,7 @@ export class JiraMappingService extends TenantAwareCrudService<JiraProjectMappin
 	 * checks the site its mappings pin and writes the connection under it.
 	 */
 	async whileOrganizationMappingsLocked<T>(scope: { tenantId: ID; organizationId: ID }, work: () => Promise<T>): Promise<T> {
-		return this.dataSource.transaction(async (manager) => {
-			await this.lockMappingsOf(manager, scope as IIntegrationTenant);
-			return work();
-		});
+		return this.withMappingsLock(scope, () => work());
 	}
 
 	/**
@@ -155,8 +174,7 @@ export class JiraMappingService extends TenantAwareCrudService<JiraProjectMappin
 	 * meanwhile for the former site can never stay behind on the new one.
 	 */
 	async whileMappingsLocked<T>(tenant: IIntegrationTenant, work: (mappings: number) => Promise<T>): Promise<T> {
-		return this.dataSource.transaction(async (manager) => {
-			await this.lockMappingsOf(manager, tenant);
+		return this.withMappingsLock(tenant, async (manager) => {
 			const mappings = await manager.count(JiraProjectMapping, { where: { integrationId: tenant.id as ID, tenantId: tenant.tenantId as ID } as never });
 			return work(mappings);
 		});
@@ -173,8 +191,7 @@ export class JiraMappingService extends TenantAwareCrudService<JiraProjectMappin
 		assertStatusMap(input.statusMap);
 		await this.requireOne(tenant, mappingId);
 		if (input.projectId) await this.requireProject(tenant, input.projectId);
-		await this.dataSource.transaction(async (manager) => {
-			await this.lockMappingsOf(manager, tenant);
+		await this.withMappingsLock(tenant, async (manager) => {
 			const mapping = await manager.findOne(JiraProjectMapping, { where: { id: mappingId, integrationId: tenant.id as ID, tenantId: tenant.tenantId as ID } as never });
 			if (!mapping) throw new NotFoundException({ message: 'The mapping was not found' });
 			const patch: Partial<JiraProjectMapping> = {};
