@@ -386,7 +386,12 @@ export class ChannelSettingsDialogComponent implements OnInit, AfterViewInit {
 
 	protected save(): void {
 		if (!this.canSave() || this.closeRequested()) return;
-		this.run(this.api.updateConversation(this.context.conversation.id, this.changes()), (answer) => this.ref.close(answer.conversation));
+		// Saved: the dialog closes with the conversation as saved, through the same wait as Close (a webhook write under
+		// way on the Integrations tab finishes first, and one that made a secret keeps the dialog open on it).
+		this.run(this.api.updateConversation(this.context.conversation.id, this.changes()), (answer) => {
+			this.changed = answer.conversation;
+			this.closeRequested.set(true);
+		});
 	}
 
 	protected add(): void {

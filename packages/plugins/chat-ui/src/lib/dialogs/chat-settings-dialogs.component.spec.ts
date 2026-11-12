@@ -148,6 +148,29 @@ describe('ChannelSettingsDialogComponent', () => {
 		expect(close).toHaveBeenCalled();
 	});
 
+	it('saves the settings while a webhook write runs, and stays open on the secret it made', async () => {
+		await open({}, 'on');
+		const write = new Subject<IChatWebhookWriteResult>();
+		webhooksApi.create.mockReturnValueOnce(write);
+		tabTo('integrations');
+		panel().patch({ name: 'CI' });
+		panel().create();
+		tabTo('settings');
+		dialog().topic.set('Pixels and fonts');
+		dialog().save();
+		expect(api.updateConversation).toHaveBeenCalled();
+		// Saved, but the webhook write is still under way: the dialog waits for it.
+		expect(close).not.toHaveBeenCalled();
+		write.next({ webhook: webhook('w-1', 'CI'), url: 'https://api.example.com/api/chat/hooks/s', signingSecret: 'k' });
+		write.complete();
+		fixture.detectChanges();
+		expect(close).not.toHaveBeenCalled();
+		expect(fixture.nativeElement.querySelector('[data-test="webhook-secrets"]')).not.toBeNull();
+		// Closed after reading the secret: with the conversation as saved.
+		dialog().close();
+		expect(close).toHaveBeenCalledWith(expect.objectContaining({ id: 'c1', topic: 'Pixels and fonts' }));
+	});
+
 	it('closes once a webhook write that made no secret ended', async () => {
 		await open({}, 'on');
 		const write = new Subject<IChatWebhookWriteResult>();
