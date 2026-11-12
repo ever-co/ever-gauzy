@@ -57,3 +57,17 @@ export function typingLine(names: readonly string[]): { key: string; params: Rec
 	if (names.length === 2) return { key: 'CHAT.TYPING.TWO', params: { first: names[0], second: names[1] } };
 	return { key: 'CHAT.TYPING.MANY', params: { count: String(names.length) } };
 }
+
+/**
+ * What a refused typing signal means for the composer: `route` when the platform has no such route (a 404 of the
+ * framework, "Cannot POST …"), `place` when this conversation or thread refuses it (not a member, archived, not found),
+ * null when it may work next time (throttled, offline, a server error).
+ */
+export function typingRefusalOf(error: unknown): 'route' | 'place' | null {
+	const failure = error as { status?: unknown; error?: { message?: unknown } | null } | null;
+	const status = typeof failure?.status === 'number' ? failure.status : 0;
+	const message = typeof failure?.error?.message === 'string' ? failure.error.message : '';
+	if (status === 404 && /^Cannot (POST|GET|PUT|PATCH|DELETE) /.test(message)) return 'route';
+	if (status === 400 || status === 403 || status === 404) return 'place';
+	return null;
+}

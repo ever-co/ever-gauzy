@@ -834,6 +834,8 @@ export class MessageComposerComponent {
 	readonly resetToken = input(0);
 	/** Whether the person may attach files (`DOCS_CREATE`: they are stored as documents). */
 	readonly canAttach = input(false);
+	/** In edit mode: the message keeps files, so its text may be emptied (the platform takes a message of files only). */
+	readonly keepsFiles = input(false);
 
 	readonly submitted = output<ComposerSubmission>();
 	/**
@@ -930,7 +932,8 @@ export class MessageComposerComponent {
 		const hasFiles = !editing && readyAttachmentIds(this.attachments()).length > 0;
 		// A file that was not stored is taken off (or picked again) first: the message never goes out without it.
 		const refused = !editing && this.attachments().some((item) => item.status === 'failed');
-		return (this.length() > 0 || hasFiles) && !this.isTooLong() && !this.disabled() && (editing || (!this.uploading() && !refused));
+		const keepsFiles = editing && this.keepsFiles();
+		return (this.length() > 0 || hasFiles || keepsFiles) && !this.isTooLong() && !this.disabled() && (editing || (!this.uploading() && !refused));
 	});
 
 	constructor() {

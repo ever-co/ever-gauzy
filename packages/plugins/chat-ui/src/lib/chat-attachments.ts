@@ -39,8 +39,11 @@ export function readyAttachmentIds(attachments: readonly PendingAttachment[]): s
 }
 
 /**
- * The body a message with files is sent with. The platform needs a body for every message, so a message of files
- * alone carries their names (`📎 report.pdf, chart.png`), kept within the length a message holds.
+ * The body a message with files was sent with while the platform needed a body for every message: a message of files
+ * alone carried their names (`📎 report.pdf, chart.png`), kept within the length a message holds.
+ *
+ * @deprecated The composer sends a message of files only with an empty body now (the platform records the files'
+ * names itself, `attachmentNames`); kept for callers outside the composer.
  */
 export function bodyWithAttachments(text: string, attachments: readonly PendingAttachment[]): string {
 	if (text.trim()) return text;
@@ -87,4 +90,20 @@ export function messageAttachments(documentIds: readonly string[] | null | undef
 		else result.files.push(file);
 	}
 	return result;
+}
+
+/** The most room a picture of a message takes (CSS pixels): the box of its thumbnail. */
+export const CHAT_IMAGE_MAX_BOX = { width: 320, height: 240 } as const;
+
+/**
+ * The size a picture is shown at, from the width and height the platform read at its upload, fitted into
+ * {@link CHAT_IMAGE_MAX_BOX} (never enlarged): the space it reserves before it loads, so the conversation does not
+ * jump. Null when the size is not known (the picture then takes its space as it loads, as before).
+ */
+export function imageBox(file: Pick<IChatFile, 'width' | 'height'>, max: { width: number; height: number } = CHAT_IMAGE_MAX_BOX): { width: number; height: number } | null {
+	const width = Number(file.width);
+	const height = Number(file.height);
+	if (!Number.isFinite(width) || !Number.isFinite(height) || width <= 0 || height <= 0) return null;
+	const scale = Math.min(1, max.width / width, max.height / height);
+	return { width: Math.max(1, Math.round(width * scale)), height: Math.max(1, Math.round(height * scale)) };
 }

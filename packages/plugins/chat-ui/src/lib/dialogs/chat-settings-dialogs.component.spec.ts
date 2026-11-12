@@ -477,6 +477,13 @@ describe('CategoriesDialogComponent', () => {
 		api = {
 			createCategory: jest.fn((input) => of({ id: 'new', ...input })),
 			updateCategory: jest.fn((id, input) => of({ ...categories.find((item) => item.id === id), ...input })),
+			reorderCategories: jest.fn((input: { categoryIds: string[] }) =>
+				of({
+					categories: input.categoryIds.map((id, position) => ({ ...categories.find((item) => item.id === id), position })),
+					conversations: [],
+					events: []
+				})
+			),
 			deleteCategory: jest.fn(() => of(undefined)),
 			notifyChanged: jest.fn()
 		};
@@ -498,11 +505,11 @@ describe('CategoriesDialogComponent', () => {
 	const dialog = () => fixture.componentInstance as unknown as Record<string, any>;
 	const order = () => dialog().ordered().map((item: IChatCategory) => item.name);
 
-	it('moves a category by writing the positions that changed', () => {
+	it('moves a category with one reorder call, the whole order saved at once', () => {
 		dialog().move('c', -1);
-		expect(api.updateCategory).toHaveBeenCalledTimes(2);
-		expect(api.updateCategory).toHaveBeenCalledWith('c', { position: 1 });
-		expect(api.updateCategory).toHaveBeenCalledWith('b', { position: 2 });
+		expect(api.reorderCategories).toHaveBeenCalledTimes(1);
+		expect(api.reorderCategories).toHaveBeenCalledWith({ categoryIds: ['a', 'c', 'b'] });
+		expect(api.updateCategory).not.toHaveBeenCalled();
 		expect(order()).toEqual(['Teams', 'Projects', 'Clients']);
 	});
 
@@ -533,8 +540,8 @@ describe('CategoriesDialogComponent', () => {
 		expect(close).toHaveBeenCalledWith(true);
 	});
 
-	it('reads the categories again after a move failed part way, and blocks moves until a read succeeds', () => {
-		api['updateCategory'].mockReturnValueOnce(of({ ...categories[2], position: 1 })).mockReturnValueOnce(throwError(() => ({ error: { message: 'busy' } })));
+	it('reads the categories again after a move failed, and blocks moves until a read succeeds', () => {
+		api['reorderCategories'].mockReturnValueOnce(throwError(() => ({ error: { message: 'busy' } })));
 		const read = new Subject<IChatCategory[]>();
 		api['categories'] = jest.fn(() => read);
 		dialog().move('c', -1);
@@ -544,7 +551,7 @@ describe('CategoriesDialogComponent', () => {
 		expect(dialog().busy()).toBe(false);
 		expect(dialog().stale()).toBe(true);
 		dialog().move('b', -1);
-		expect(api['updateCategory']).toHaveBeenCalledTimes(2);
+		expect(api['reorderCategories']).toHaveBeenCalledTimes(1);
 
 		api['categories'] = jest.fn(() => of([{ id: 'a', name: 'Teams', position: 0 }, { id: 'c', name: 'Projects', position: 1 }, { id: 'b', name: 'Clients', position: 1 }] as IChatCategory[]));
 		dialog().reload();

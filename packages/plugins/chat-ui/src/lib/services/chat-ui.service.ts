@@ -40,6 +40,7 @@ import {
 	ID
 } from '@gauzy/contracts';
 import { API_PREFIX, toParams } from '@gauzy/ui-core/common';
+import { typingRefusalOf } from '../chat-typing';
 import { CHAT_PAGE_SIZE } from '../chat-ui.constants';
 
 const CHAT = `${API_PREFIX}/chat`;
@@ -131,6 +132,10 @@ export function memberStateFromEvents(
 @Injectable({ providedIn: 'root' })
 export class ChatUiService {
 	private readonly http = inject(HttpClient);
+	/** The platform has no typing route: the composer stops asking (for the page). */
+	private typingOff = false;
+	/** The places (`conversation:thread`) that refused a typing signal. */
+	private readonly typingRefused = new Set<string>();
 	private readonly changes = new Subject<void>();
 
 	/** Emits when the page changed my state (read, sent, joined), so the badge counts again at once. */
@@ -279,6 +284,22 @@ export class ChatUiService {
 	/** Tells the other members that I am typing here (or in a thread); nothing is stored. */
 	typing(conversationId: ID, input: IChatTypingInput = {}): Observable<IChatTypingResult> {
 		return this.http.post<IChatTypingResult>(`${CHAT}/conversations/${path(conversationId)}/typing`, input);
+	}
+
+	/**
+	 * The composer's "I am typing" (best effort; nothing waits on it). A place that refuses it (not a member, archived)
+	 * is not asked again; a platform without the route is not asked again for the page.
+	 */
+	signalTyping(conversationId: ID, threadRootId: ID | null = null): void {
+		const place = `${conversationId}:${threadRootId ?? ''}`;
+		if (this.typingOff || this.typingRefused.has(place)) return;
+		this.typing(conversationId, threadRootId ? { threadRootId } : {}).subscribe({
+			error: (error: unknown) => {
+				const refusal = typingRefusalOf(error);
+				if (refusal === 'route') this.typingOff = true;
+				else if (refusal === 'place') this.typingRefused.add(place);
+			}
+		});
 	}
 
 	/** Discards a file I uploaded for a message and will not send (its document and stored bytes go). */

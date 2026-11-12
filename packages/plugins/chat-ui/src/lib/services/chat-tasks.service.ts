@@ -3,7 +3,7 @@ import { DestroyRef, inject, Injectable, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { from, Observable, of } from 'rxjs';
 import { catchError, map, mergeMap, shareReplay } from 'rxjs/operators';
-import { ID, IOrganizationProject, IPagination, ITask, ITaskStatus } from '@gauzy/contracts';
+import { ID, IChatMessageWithRelations, IOrganizationProject, IPagination, ITask, ITaskStatus } from '@gauzy/contracts';
 import { API_PREFIX, toParams } from '@gauzy/ui-core/common';
 import { ChatTaskStatusChoice, ChatTaskSummary, statusChoicesOf, taskSummaryOf } from '../chat-tasks';
 import { ChatAvailabilityService } from './chat-availability.service';
@@ -82,6 +82,16 @@ export class ChatTasksService {
 		const ids = [...new Set(taskIds.map(String))].filter((id) => this.asked.has(id));
 		for (const id of ids) this.asked.delete(id);
 		if (ids.length) this.ensure(ids);
+	}
+
+	/**
+	 * Reads again the tasks a message shows (one of the messages given), when that message was told it changed: a card
+	 * changed elsewhere tells every message that shows its task.
+	 */
+	refreshShownBy(messages: ReadonlyArray<Pick<IChatMessageWithRelations, 'id' | 'taskReferences'> | null | undefined>, messageId: string): void {
+		const message = messages.find((item) => !!item && String(item.id) === String(messageId));
+		const taskIds = (message?.taskReferences ?? []).map((reference) => String(reference.taskId));
+		if (taskIds.length) this.refresh(taskIds);
 	}
 
 	/**
