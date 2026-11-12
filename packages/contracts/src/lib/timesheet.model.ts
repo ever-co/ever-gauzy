@@ -428,6 +428,8 @@ export interface IGetTimeLogReportInput extends IGetTimeLogInput {
 	isEdited?: boolean;
 	billableOnly?: boolean;
 	includeTimeWithoutTeam?: boolean;
+	/** Leave out the time a live invoice bills: a line that is not removed, of an invoice neither removed nor void. */
+	notInvoiced?: boolean;
 }
 
 export interface IGetTimeLogConflictInput extends IBasePerTenantAndOrganizationEntityModel, IBaseRelationsEntityModel {

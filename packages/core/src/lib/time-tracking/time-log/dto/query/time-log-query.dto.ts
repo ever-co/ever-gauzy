@@ -48,15 +48,26 @@ export class TimeLogQueryDTO
 	@IsOptional()
 	@Transform(({ value }: TransformFnParams) => parseToBoolean(value))
 	readonly includeTimeWithoutTeam: boolean;
+
+	@ApiPropertyOptional({
+		type: () => Boolean,
+		description:
+			'Leave out the time a live invoice bills: a time log whose invoice line is not removed and belongs to an ' +
+			'invoice that is neither removed nor void. Without it, every log is counted, invoiced or not.'
+	})
+	@IsOptional()
+	@Transform(({ value }: TransformFnParams) => parseToBoolean(value))
+	readonly notInvoiced: boolean;
 }
 
 /**
- * The budget limit routes count every log against the budget through their own queries: `billableOnly` and
- * `includeTimeWithoutTeam` are not offered there, and the whitelist drops them if sent.
+ * The budget limit routes count every log against the budget through their own queries: `billableOnly`,
+ * `includeTimeWithoutTeam` and `notInvoiced` are not offered there, and the whitelist drops them if sent.
  */
 export class TimeLogBudgetQueryDTO extends OmitType(TimeLogQueryDTO, [
 	'billableOnly',
-	'includeTimeWithoutTeam'
+	'includeTimeWithoutTeam',
+	'notInvoiced'
 ] as const) {}
 
 /**

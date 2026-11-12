@@ -45,6 +45,14 @@ export function notOnLiveInvoice(invoiceItemColumn: string): string {
 	);
 }
 
+/**
+ * {@link notOnLiveInvoice} as a key of a MikroORM read's `where`, on the alias the read gives the time log. A raw key
+ * is consumed by the statement that reads it: each read gets its own.
+ */
+export function mikroOrmNotOnLiveInvoiceKey(): string {
+	return raw((alias: string) => notOnLiveInvoice(`${alias}."invoiceItemId"`), NOT_ON_LIVE_INVOICE_PARAMETERS);
+}
+
 /** A line of a save that bills time: where it stands among the lines saved, its organization, and its time logs. */
 export interface IBillingLine {
 	index: number;
