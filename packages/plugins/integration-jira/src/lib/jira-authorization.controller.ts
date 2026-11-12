@@ -146,7 +146,8 @@ export class JiraAuthorizationController {
 		if (!existing || !cloudId) return null;
 		if ((await this.mappings.list(existing)).length) return cloudId;
 		// Issues it synced, or a run still writing some (its mapping may be gone already), name ids of that site too.
-		return (await this.mappings.hasIssueMaps(existing)) || (await this.mappings.hasLiveRuns(existing)) ? cloudId : null;
+		// Live runs first: a run no longer running has committed its id maps, which the read after it then sees.
+		return (await this.mappings.hasLiveRuns(existing)) || (await this.mappings.hasIssueMaps(existing)) ? cloudId : null;
 	}
 
 	/** Sends the person to the app's Jira page (or answers JSON when no page is configured). */
