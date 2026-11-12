@@ -37,7 +37,7 @@
 
 ## Phase 4b — Idempotent clicks
 
-- [x] **T18**. A click's `Idempotency-Key` header (≤ 64 printable characters, the receive route's rule): `chat_webhook_interaction.idempotencyKey` + unique (`tenantId`, `messageId`, `actorUserId`, `idempotencyKey`) in migration `1791000008300` (tri-dialect, guarded, idempotent, reversible); a repeat answers the first click as it is now and calls the app no second time, a concurrent duplicate loses on the index (TypeORM and MikroORM error shapes), the same key for another button is `409 IDEMPOTENCY_KEY_REUSED`, no key keeps the old behaviour; specs. Clients: Angular `chat-ui` and Ever Teams send a UUID per click and reuse it on the retry of that click
+- [x] **T18**. A click's `Idempotency-Key` header (≤ 64 printable characters, the receive route's rule): `chat_webhook_interaction.idempotencyKey` + unique (`tenantId`, `messageId`, `actorUserId`, `idempotencyKey`) in migration `1791000008300` (tri-dialect, guarded, idempotent, reversible); a repeat answers the first click as it is now and calls the app no second time, a concurrent duplicate loses on the index (TypeORM and MikroORM error shapes), the same key for another button is `409 IDEMPOTENCY_KEY_REUSED`, no key keeps the old behaviour; specs. Angular `chat-ui`: a UUID per click (`newNonce`: `crypto.randomUUID()` where the browser has it), sent again on the click's own retries (a request with no settling answer: twice, after 1 s and 3 s) and on the next click of a button whose click got no answer; specs
 - [ ] **T19**. Ever Teams: forward the key through the proxy-mode interaction route and send it from the app-message buttons (ever-teams, after the server merges)
 
 ## Phase 5 — Verification

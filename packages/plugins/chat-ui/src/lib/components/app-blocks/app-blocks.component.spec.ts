@@ -1,7 +1,7 @@
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
-import { of, Subject, throwError } from 'rxjs';
+import { defer, Observable, of, Subject, throwError } from 'rxjs';
 import { ChatAppBlockTypeEnum, ChatInteractionStatusEnum, ChatMessageKindEnum, IChatInteraction, IChatInteractionResult, IChatMessageWithRelations } from '@gauzy/contracts';
-import { APP_INTERACTION_POLL_MAX, APP_INTERACTION_POLL_MS } from '../../chat-app-blocks';
+import { APP_INTERACTION_POLL_MAX, APP_INTERACTION_POLL_MS, APP_INTERACTION_RETRY_DELAYS_MS } from '../../chat-app-blocks';
 import { ChatWebhooksService } from '../../services/chat-webhooks.service';
 import { AppBlocksComponent } from './app-blocks.component';
 
@@ -34,6 +34,9 @@ function appMessage(extra: Partial<IChatMessageWithRelations> = {}): IChatMessag
 		...extra
 	} as IChatMessageWithRelations;
 }
+
+/** A version-4 UUID: the idempotency key a click carries. */
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
 
 const interaction = (status: ChatInteractionStatusEnum, extra: Partial<IChatInteraction> = {}): IChatInteraction => ({
 	interactionId: 'i-1',
@@ -84,7 +87,7 @@ describe('AppBlocksComponent', () => {
 		fixture.componentInstance.replaced.subscribe((message) => emitted.push(message));
 		button('ack').click();
 		fixture.detectChanges();
-		expect(api.interact).toHaveBeenCalledWith('m1', 'ack', 'alert-7');
+		expect(api.interact).toHaveBeenCalledWith('m1', 'ack', 'alert-7', expect.stringMatching(UUID));
 		expect(emitted).toEqual([replaced]);
 		expect(button('ack').querySelector('nb-icon')?.getAttribute('icon')).toBe('checkmark-outline');
 	});
@@ -243,5 +246,101 @@ describe('AppBlocksComponent', () => {
 		expect(button('ack').disabled).toBe(true);
 		button('ack').click();
 		expect(api.interact).not.toHaveBeenCalled();
+	});
+
+	describe('idempotency key', () => {
+		const delivered = (): IChatInteractionResult => ({ interaction: interaction(ChatInteractionStatusEnum.DELIVERED), events: [] });
+
+		/**
+		 * The platform as a request sees it: each subscription is one request (a retry subscribes again), answered in turn
+		 * by `answers` (an error status, or the result). The key every request carried is recorded.
+		 */
+		function serve(answers: Array<number | IChatInteractionResult>): string[] {
+			const keys: string[] = [];
+			api.interact.mockImplementation((_messageId: string, _actionId: string, _blockId: string | null, key: string): Observable<IChatInteractionResult> =>
+				defer(() => {
+					keys.push(key);
+					const next = answers.shift() ?? 0;
+					return typeof next === 'number' ? throwError(() => ({ status: next })) : of(next);
+				})
+			);
+			return keys;
+		}
+
+		it('gives each click a key of its own: a UUID, a new one for the next click', async () => {
+			await render();
+			const keys = serve([delivered(), delivered()]);
+			button('ack').click();
+			fixture.detectChanges();
+			button('ack').click();
+			expect(keys).toHaveLength(2);
+			expect(keys[0]).toMatch(UUID);
+			expect(keys[1]).toMatch(UUID);
+			expect(keys[0]).not.toBe(keys[1]);
+		});
+
+		it('sends a click that got no answer again with the same key, and settles on the answer', async () => {
+			await render();
+			const keys = serve([0, 504, delivered()]);
+			fakeAsync(() => {
+				button('ack').click();
+				fixture.detectChanges();
+				expect(button('ack').disabled).toBe(true);
+				tick(APP_INTERACTION_RETRY_DELAYS_MS[0]);
+				tick(APP_INTERACTION_RETRY_DELAYS_MS[1]);
+				fixture.detectChanges();
+				expect(keys).toHaveLength(3);
+				expect(new Set(keys).size).toBe(1);
+				expect(button('ack').querySelector('nb-icon')?.getAttribute('icon')).toBe('checkmark-outline');
+				expect(element().querySelector('[data-test="app-failure"]')).toBeNull();
+			})();
+		});
+
+		it('says a click that never got an answer failed, and sends its key again on the next click of the button', async () => {
+			await render();
+			const keys = serve([0, 0, 0, delivered(), delivered()]);
+			fakeAsync(() => {
+				button('ack').click();
+				tick(APP_INTERACTION_RETRY_DELAYS_MS.reduce((total, delay) => total + delay, 0));
+				fixture.detectChanges();
+				expect(keys).toHaveLength(1 + APP_INTERACTION_RETRY_DELAYS_MS.length);
+				expect(element().querySelector('[data-test="app-failure"]')?.textContent).toContain('CHAT.APP.CLICK_FAILED');
+				// The API may have taken it: the next click is the same click.
+				button('ack').click();
+				fixture.detectChanges();
+				expect(new Set(keys).size).toBe(1);
+				expect(button('ack').querySelector('nb-icon')?.getAttribute('icon')).toBe('checkmark-outline');
+				// Answered: the click after it is a new one.
+				button('ack').click();
+				expect(keys[keys.length - 1]).not.toBe(keys[0]);
+			})();
+		});
+
+		it('does not send an answered refusal again, and gives the next click a new key', async () => {
+			await render();
+			const keys = serve([404, delivered()]);
+			fakeAsync(() => {
+				button('ack').click();
+				tick(APP_INTERACTION_RETRY_DELAYS_MS.reduce((total, delay) => total + delay, 0));
+				fixture.detectChanges();
+				expect(keys).toHaveLength(1);
+				expect(element().querySelector('[data-test="app-failure"]')?.textContent).toContain('CHAT.APP.GONE');
+				button('ack').click();
+				expect(keys).toHaveLength(2);
+				expect(keys[1]).not.toBe(keys[0]);
+			})();
+		});
+
+		it('keeps the keys of two buttons apart', async () => {
+			await render(appMessage({ blocks: [{ type: ChatAppBlockTypeEnum.ACTIONS, blockId: 'b', elements: [{ actionId: 'ack', text: 'Acknowledge' }, { actionId: 'snooze', text: 'Snooze' }] }] }));
+			const keys = serve([0, 0, 0, delivered()]);
+			fakeAsync(() => {
+				button('ack').click();
+				tick(APP_INTERACTION_RETRY_DELAYS_MS.reduce((total, delay) => total + delay, 0));
+				fixture.detectChanges();
+				button('snooze').click();
+				expect(keys[keys.length - 1]).not.toBe(keys[0]);
+			})();
+		});
 	});
 });
