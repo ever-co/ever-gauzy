@@ -7,6 +7,9 @@ import { API_PREFIX, toParams } from '@gauzy/ui-core/common';
 /** A page of the trash: the platform serves at most 100. */
 export const TASK_TRASH_PAGE_SIZE = 50;
 
+/** The longest search the platform takes (`TaskTrashQueryDTO.search`): a longer one is a 400. */
+export const TASK_TRASH_SEARCH_MAX_LENGTH = 200;
+
 /** A trashed task as the trash answers it: the task, with when and by whom it was deleted. */
 export type ITrashedTask = ITask & {
 	/** The key the lists show (`API-42`), where the platform states it. */
@@ -31,8 +34,10 @@ export class TaskTrashService {
 	constructor(private readonly _http: HttpClient) {}
 
 	/**
-	 * Whether the platform keeps a trash for this organization's tasks: the list answers (any status but 404). A
-	 * failed probe is not remembered, so the next call asks again.
+	 * Whether the platform keeps a trash for this organization's tasks: the list answers (a 403 too: the reader may
+	 * not list it, but it is kept). 404 says the trash is off, and a platform without the route answers 400 (its
+	 * `/tasks/:id` read): both are remembered as no trash. Any other failure is not remembered, so the next call asks
+	 * again.
 	 */
 	isEnabled(organizationId: ID | null | undefined, tenantId?: ID | null): Promise<boolean> {
 		if (!organizationId) return Promise.resolve(false);
@@ -45,7 +50,7 @@ export class TaskTrashService {
 			)
 				.then(() => true)
 				.catch((error: HttpErrorResponse) => {
-					if (error?.status === 404) return false;
+					if (error?.status === 404 || error?.status === 400) return false;
 					// Forbidden is still a trash (the reader may not list it); anything else is asked again later.
 					if (error?.status === 403) return true;
 					this._enabled.delete(organizationId);
@@ -66,7 +71,8 @@ export class TaskTrashService {
 					...(tenantId ? { tenantId } : {}),
 					...(projectId ? { projectId } : {}),
 					...(organizationTeamId ? { organizationTeamId } : {}),
-					...(search?.trim() ? { search: search.trim() } : {}),
+					// A title, a number (`42`, `#42`) or a key (`API-42`), within the platform's 200 characters.
+					...(search?.trim() ? { search: search.trim().slice(0, TASK_TRASH_SEARCH_MAX_LENGTH) } : {}),
 					skip,
 					take
 				})
