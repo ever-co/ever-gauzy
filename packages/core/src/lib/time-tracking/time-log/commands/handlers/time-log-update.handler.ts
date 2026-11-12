@@ -291,6 +291,9 @@ export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateComman
 	 * (`relation(TimeSlot, 'timeLogs').of(slot).remove(log)`): a desktop-source edit or a timer stop never
 	 * re-assigns the log's slots, so its save cannot be relied on to drop it.
 	 *
+	 * The links go first and the slots last, in one delete: a failure before that delete has removed nothing, so the
+	 * caller can still put every slot back on the log (the overlap cleanup's split does, see `DeleteTimeSpanHandler`).
+	 *
 	 * @param timeLog - The log whose slots are released.
 	 * @param tenantId - The log's tenant.
 	 * @param organizationId - The log's organization.
@@ -316,6 +319,15 @@ export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateComman
 				`time slots released by time log ${timeLog.id} (${forceDelete ? 'hard' : 'soft'}): ${release.remove.length} removed, ${release.unlink.length} kept`
 		);
 
+		// A slot another log still holds stays, without this log.
+		for (const slotId of release.unlink) {
+			await this.typeOrmTimeSlotRepository
+				.createQueryBuilder()
+				.relation(TimeSlot, 'timeLogs')
+				.of(slotId)
+				.remove(timeLog.id);
+		}
+
 		// The slots only this log held go.
 		if (!isEmpty(release.remove)) {
 			await this.commandBus.execute(
@@ -325,15 +337,6 @@ export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateComman
 					true
 				)
 			);
-		}
-
-		// A slot another log still holds stays, without this log.
-		for (const slotId of release.unlink) {
-			await this.typeOrmTimeSlotRepository
-				.createQueryBuilder()
-				.relation(TimeSlot, 'timeLogs')
-				.of(slotId)
-				.remove(timeLog.id);
 		}
 	}
 

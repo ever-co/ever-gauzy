@@ -1,7 +1,8 @@
 import { Logger } from '@nestjs/common';
 import { ICommandHandler, CommandBus, CommandHandler } from '@nestjs/cqrs';
+import { In } from 'typeorm';
 import { omit } from 'underscore';
-import { ID, ITimeLog } from '@gauzy/contracts';
+import { ID, ITimeLog, ITimeSlot } from '@gauzy/contracts';
 import { isEmpty } from '@gauzy/utils';
 import { moment } from '../../../../core/moment-extend';
 import { TimeLog } from './../../time-log.entity';
@@ -266,9 +267,9 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 	 * the second part built from the cut log, so that part ended before it started and was never created.)
 	 *
 	 * The two writes cannot share a transaction: the cut goes through `TimeLogUpdateCommand`, whose handler writes
-	 * through its own repositories. So a failure of either one leaves the log as it was and is raised, which stops the
-	 * caller before it records the new range over the log: a second part that cannot be saved has written nothing, and
-	 * one saved before a failed cut is undone (see `undoSecondPart`).
+	 * through its own repositories. So a failure of either one is raised, which stops the caller before it records the
+	 * new range over the log, and leaves no state in between: a second part that cannot be saved has written nothing,
+	 * and a failed cut leaves the log as it was or the split finished (see `recoverFailedSplit`).
 	 *
 	 * @param log - The time log as stored, with its slots.
 	 * @param start - The start of the new range, the end of the first part.
@@ -287,11 +288,11 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 		} catch (error) {
 			this.logger.error(`Error while cutting back time log ${log.id}: ${error?.message ?? error}`, error?.stack);
 			try {
-				await this.undoSecondPart(log, secondPart);
-			} catch (undoError) {
+				await this.recoverFailedSplit(log, start, secondPart);
+			} catch (recoveryError) {
 				this.logger.error(
-					`Error while undoing the second part ${secondPart.id} of time log ${log.id}: ${undoError?.message ?? undoError}`,
-					undoError?.stack
+					`Error while recovering the split of time log ${log.id} (second part ${secondPart.id}): ${recoveryError?.message ?? recoveryError}`,
+					recoveryError?.stack
 				);
 			}
 			throw error;
@@ -325,26 +326,45 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 	}
 
 	/**
-	 * Undoes the second part of a split whose cut failed, leaving the log as it was before the split: the slots the
-	 * second part holds go back to the log (the cut may have taken some off it before failing), the log gets its range
-	 * and timesheet back, and the second part is deleted with its join rows. In that order, so that a failure on the way
-	 * leaves the time counted twice rather than lost. Slots of the range the cut had already released stay released.
+	 * Leaves a split whose cut failed in one of its two whole states: the log as it was, or the split finished.
+	 *
+	 * The cut writes the log's new end, then takes the log off the slots other logs hold, then deletes in one go the
+	 * slots it alone held (see `TimeLogUpdateHandler.applyRelease`): that delete is its last write before the totals.
+	 * So a log already ending at `start` with one of its slots gone has had every write, and the split is kept as it is
+	 * (the restore the alternative would need cannot be done safely: the delete may be a hard one, and a soft one took
+	 * the slots' screenshots and activity with them). Otherwise nothing of the log was deleted, and the split is undone:
+	 * every slot the log held and lost goes back to it, the log gets its range and timesheet back, and the second part
+	 * is deleted with its join rows. In that order, so that a failure on the way leaves the time counted twice rather
+	 * than lost.
 	 *
 	 * @param log - The time log as it was read before the split, with its slots.
-	 * @param secondPart - The second part, with the slots it holds.
+	 * @param start - The start of the new range, the end the cut gives the log.
+	 * @param secondPart - The second part.
 	 */
-	private async undoSecondPart(log: TimeLog, secondPart: TimeLog): Promise<void> {
-		const stored = await this.typeOrmTimeLogRepository.findOne({
-			where: { id: log.id },
-			relations: { timeSlots: true }
-		});
-		const held = new Set((stored?.timeSlots ?? []).map((slot) => slot.id));
-		const taken = (secondPart.timeSlots ?? []).map((slot) => slot.id).filter((id) => !held.has(id));
-		if (taken.length > 0) {
+	private async recoverFailedSplit(log: TimeLog, start: Date, secondPart: TimeLog): Promise<void> {
+		// The slots the log held before the split, as they now stand (a deleted one is not read)
+		const ids = (log.timeSlots ?? []).map((slot) => slot.id);
+		let slots: ITimeSlot[] = [];
+		if (ids.length > 0) {
+			slots = await this.typeOrmTimeSlotRepository.find({
+				where: { id: In(ids) },
+				relations: { timeLogs: true }
+			});
+		}
+		const stored = await this.typeOrmTimeLogRepository.findOne({ where: { id: log.id } });
+		const cut = moment(stored?.stoppedAt).isSame(start);
+		if (cut && slots.length < ids.length) {
+			return;
+		}
+
+		const lost = slots
+			.filter((slot) => !(slot.timeLogs ?? []).some((held) => held.id === log.id))
+			.map((slot) => slot.id);
+		if (lost.length > 0) {
 			await this.typeOrmTimeSlotRepository
 				.createQueryBuilder()
 				.relation(TimeSlot, 'timeLogs')
-				.of(taken)
+				.of(lost)
 				.add(log.id);
 		}
 

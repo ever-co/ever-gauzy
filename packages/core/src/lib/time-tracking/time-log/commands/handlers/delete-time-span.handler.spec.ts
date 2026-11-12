@@ -170,9 +170,9 @@ interface IStoredLog {
 
 /**
  * The writes of the store a spec can make fail: a log created, a log's columns updated, a slot unlinked from a log,
- * slots removed.
+ * slots removed, a timesheet's totals recalculated.
  */
-type StoreWrite = 'insert' | 'update' | 'unlink' | 'slotRemoval';
+type StoreWrite = 'insert' | 'update' | 'unlink' | 'slotRemoval' | 'recalculation';
 
 interface IStoredSlot {
 	id: string;
@@ -357,6 +357,12 @@ function createStore() {
 			};
 			return builder;
 		},
+		// Slots by id, with their logs when they are joined; a removed slot is not read.
+		find: jest.fn(async ({ where, relations }: { where: { id: unknown }; relations?: { timeLogs?: boolean } }) =>
+			liveSlots()
+				.filter((slot) => idsOf(where.id).includes(slot.id))
+				.map((slot) => slotEntity(slot, Boolean(relations?.timeLogs)))
+		),
 		softRemove: jest.fn(async (removed: ITimeSlot[]) => {
 			failIfDue('slotRemoval');
 			for (const slot of slots.filter(({ id }) => removed.some((entity) => entity.id === id))) {
@@ -385,7 +391,7 @@ function createStore() {
 		if (command instanceof TimeLogDeleteCommand) return logDeleteHandler.execute(command);
 		if (command instanceof TimeSlotBulkDeleteCommand) return slotDeleteHandler.execute(command);
 		if (command instanceof TimesheetFirstOrCreateCommand) return { id: timesheetOf(command.date) };
-		if (command instanceof TimesheetRecalculateCommand) return undefined;
+		if (command instanceof TimesheetRecalculateCommand) return failIfDue('recalculation');
 		if (command instanceof UpdateEmployeeTotalWorkedHoursCommand) return undefined;
 		throw new Error(`Unexpected command ${(command as object)?.constructor?.name}`);
 	});
@@ -802,24 +808,33 @@ describe('DeleteTimeSpanHandler when a split fails (#11823)', () => {
 		expect(outcome).toBe('The update failed');
 	});
 
-	it('gives the log back its range and later slots when the cut fails after releasing some of them', async () => {
+	it('puts the log back with every slot when the cut fails while taking its later slots off it', async () => {
 		const store = createStore();
 		store.addLog('tracked', '08:00', '11:00');
-		// The cut releases the range's own slots, then takes the later ones off the log: the third of those fails.
+		// The cut takes the later slots, which the second part holds, off the log: the third of those fails.
 		store.fail('unlink', 2);
 
 		const outcome = await store.cleanUp('09:00', '10:00').then(raised, raised);
 
-		// The range's own slots, released before the failure, stay released.
-		expect(store.timeline()).toEqual([
-			{
-				range: '08:00-11:00',
-				isRunning: false,
-				slots: [...slotStarts('08:00', '09:00'), ...slotStarts('10:00', '11:00')]
-			}
-		]);
-		expect(store.rows().map((row) => row.id)).toEqual(['tracked']);
+		expect(store.timeline()).toEqual(AS_IT_WAS);
+		expect(store.slotCount()).toBe(18);
 		expect(outcome).toBe('The unlink failed');
+	});
+
+	it('keeps the finished split and raises the error when the cut fails after releasing the range', async () => {
+		const store = createStore();
+		store.addLog('tracked', '08:00', '11:00');
+		// Every write of the cut went through; only the timesheet's totals, its last step, fail.
+		store.fail('recalculation');
+
+		const outcome = await store.cleanUp('09:00', '10:00').then(raised, raised);
+
+		expect(store.timeline()).toEqual([
+			{ range: '08:00-09:00', isRunning: false, slots: slotStarts('08:00', '09:00') },
+			{ range: '10:00-11:00', isRunning: false, slots: slotStarts('10:00', '11:00') }
+		]);
+		expect(store.slotCount()).toBe(12);
+		expect(outcome).toBe('The recalculation failed');
 	});
 });
 
