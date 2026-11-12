@@ -1021,7 +1021,7 @@ describe('DeleteTimeSpanHandler when a cut at one end or a delete fails (#11823)
 		expect(refusal).toBeInstanceOf(BadRequestException);
 	});
 
-	it('deletes the slots only the log held outside its new end even when it cannot let go of a shared one', async () => {
+	it('leaves no slot beyond a new end, and raises the error, when the cut fails to let go of a shared one', async () => {
 		const store = createStore();
 		store.addLog('tracked', '08:00', '09:55');
 		// The next log starts at 09:55, inside the 09:50 slot, which both logs hold.
@@ -1032,10 +1032,29 @@ describe('DeleteTimeSpanHandler when a cut at one end or a delete fails (#11823)
 
 		const outcome = await store.cleanUp('09:00', '09:55').then(raised, raised);
 
-		// No slot only `tracked` held is left beyond its new end; it keeps a link to the shared slot it could not drop.
+		// The slots only `tracked` held there are deleted, and it no longer holds the shared one, which stays `next`'s.
 		expect(store.timeline()).toEqual([
-			{ range: '08:00-09:00', isRunning: false, slots: [...slotStarts('08:00', '09:00'), '09:50'] },
+			{ range: '08:00-09:00', isRunning: false, slots: slotStarts('08:00', '09:00') },
 			{ range: '09:55-10:30', isRunning: false, slots: slotStarts('09:55', '10:30') }
+		]);
+		expect(store.recalculated()).toEqual({ timesheets: [timesheetOf(at('08:00'))], employees: [EMPLOYEE_ID] });
+		expect(outcome).toBe('The unlink failed');
+	});
+
+	it('leaves no slot before a new start, and raises the error, when the cut fails to let go of a shared one', async () => {
+		const store = createStore();
+		// The previous log ends at 08:05, inside the 08:00 slot, which both logs hold.
+		store.addLog('previous', '07:30', '08:05');
+		store.addLog('tracked', '08:05', '10:00');
+		store.share('tracked@08:00', 'previous');
+		// The cut to a new start at 09:00 releases 08:00 to 08:50: taking the log off the shared 08:00 slot fails.
+		store.fail('unlink');
+
+		const outcome = await store.cleanUp('08:05', '09:00').then(raised, raised);
+
+		expect(store.timeline()).toEqual([
+			{ range: '07:30-08:05', isRunning: false, slots: slotStarts('07:30', '08:05') },
+			{ range: '09:00-10:00', isRunning: false, slots: slotStarts('09:00', '10:00') }
 		]);
 		expect(outcome).toBe('The unlink failed');
 	});

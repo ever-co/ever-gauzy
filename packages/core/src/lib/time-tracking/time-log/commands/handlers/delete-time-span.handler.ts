@@ -164,7 +164,8 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 	 * only this log holds goes, one another log shares stays with that log. The slots after the new range stay (the
 	 * command's own slot used to be deleted here as well, whatever its time).
 	 *
-	 * A failure is logged and raised, so that the caller does not record the new range over a log it could not cut.
+	 * A failure is logged and raised, so that the caller does not record the new range over a log it could not cut. When
+	 * the update had already written the new start, the release is finished first (see `finishFailedCut`).
 	 *
 	 * @param log - The time log to update or delete.
 	 * @param end - The end of the new range, the log's new start.
@@ -205,6 +206,12 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 				}
 			} catch (error) {
 				this.logger.warn(`Error while updating startedAt time: ${error?.message ?? error}`, { stack: error?.stack });
+				const firstKept = this.firstSlotStart(end, stoppedAt);
+				await this.finishFailedCut(
+					log,
+					(stored) => moment(stored.startedAt).isSame(end),
+					(slot) => moment(slot.startedAt).isBefore(firstKept)
+				);
 				throw error;
 			}
 		} else {
@@ -218,7 +225,7 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 	 * Updates the stoppedAt time for a given time log, or deletes it if the remaining duration is 0.
 	 *
 	 * As for a new start (see `updateStartTimeOrDelete`), the update releases the slots inside the new range and keeps
-	 * the ones before it, and a failure is logged and raised.
+	 * the ones before it, and a failure is logged and raised, the release finished first if the new end was written.
 	 *
 	 * @param log - The time log to update or delete.
 	 * @param start - The start of the new range, the log's new end.
@@ -259,6 +266,11 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 				}
 			} catch (error) {
 				this.logger.warn(`Error while updating stoppedAt time: ${error?.message ?? error}`, { stack: error?.stack });
+				await this.finishFailedCut(
+					log,
+					(stored) => moment(stored.stoppedAt).isSame(start),
+					(slot) => !moment(slot.startedAt).isBefore(start)
+				);
 				throw error;
 			}
 		} else {
@@ -351,10 +363,7 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 	 * @returns The second part, with the slots it holds.
 	 */
 	private async createSecondPart(log: TimeLog, end: Date, stoppedAt: Date): Promise<TimeLog> {
-		// The slots of the second part, as the update computes a log's slots: the first one is the slot holding `end`,
-		// taken at its whole minute (the helper keeps the milliseconds of `end`, and a stored slot's start has none)
-		const [firstSlot] = generateTimeSlots(end, stoppedAt);
-		const from = moment(firstSlot?.startedAt ?? end).startOf('minute');
+		const from = this.firstSlotStart(end, stoppedAt);
 		const timeSlots = (log.timeSlots ?? []).filter((slot) => !moment(slot.startedAt).isBefore(from));
 
 		return await this.typeOrmTimeLogRepository.save(
@@ -375,30 +384,22 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 	 * of its slots gone has had that delete, which cannot be taken back safely (it may be a hard one, and a soft one
 	 * took the slots' screenshots and activity with them): the split is finished instead, by taking the log off the
 	 * slots it still holds from `start` on with another log, the second part among them, and by recalculating the
-	 * totals the cut did not get to (see `finishRelease`). Otherwise nothing of the log
-	 * was deleted, and the split is undone: every slot the log held and lost goes back to it, the log gets its range and
-	 * timesheet back, and the second part is deleted with its join rows. In that order, so that a failure on the way
-	 * leaves the time counted twice rather than lost.
+	 * totals the cut did not get to (see `finishRelease`). Otherwise nothing of the log was deleted, and the split is
+	 * undone: every slot the log held and lost goes back to it, the log gets its range and timesheet back, and the second
+	 * part is deleted with its join rows. In that order, so that a failure on the way leaves the time counted twice
+	 * rather than lost.
 	 *
 	 * @param log - The time log as it was read before the split, with its slots.
 	 * @param start - The start of the new range, the end the cut gives the log.
 	 * @param secondPart - The second part.
 	 */
 	private async recoverFailedSplit(log: TimeLog, start: Date, secondPart: TimeLog): Promise<void> {
-		// The slots the log held before the split, as they now stand (a deleted one is not read)
-		const ids = (log.timeSlots ?? []).map((slot) => slot.id);
-		let slots: ITimeSlot[] = [];
-		if (ids.length > 0) {
-			slots = await this.typeOrmTimeSlotRepository.find({
-				where: { id: In(ids) },
-				relations: { timeLogs: true }
-			});
-		}
+		const slots = await this.slotsAsTheyStand(log);
 		const heldBy = (slot: ITimeSlot) => (slot.timeLogs ?? []).map((held) => held.id);
 		const stored = await this.typeOrmTimeLogRepository.findOne({ where: { id: log.id } });
 		const cut = moment(stored?.stoppedAt).isSame(start);
 
-		if (cut && slots.length < ids.length) {
+		if (cut && slots.length < (log.timeSlots ?? []).length) {
 			await this.finishRelease(log, slots, (slot) => !moment(slot.startedAt).isBefore(start));
 			return;
 		}
@@ -421,6 +422,62 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 	}
 
 	/**
+	 * After a cut at one end failed: when it had written the log's new start or end, the release is finished as far as
+	 * it can be (see `finishRelease`), for the log's own slots there may already be deleted; when it had not, nothing
+	 * was written. A failure here is logged, and the cut's own error stays the one raised.
+	 *
+	 * @param log - The time log as it was read before the cut, with its slots.
+	 * @param isCut - Whether the log as stored has its new start or end.
+	 * @param outside - Whether a slot lies outside the log's new range.
+	 */
+	private async finishFailedCut(
+		log: ITimeLog,
+		isCut: (stored: ITimeLog) => boolean,
+		outside: (slot: ITimeSlot) => boolean
+	): Promise<void> {
+		try {
+			const stored = await this.typeOrmTimeLogRepository.findOne({ where: { id: log.id } });
+			if (stored && isCut(stored)) {
+				await this.finishRelease(log, await this.slotsAsTheyStand(log), outside);
+			}
+		} catch (finishError) {
+			this.logger.error(
+				`Error while finishing the failed cut of time log ${log.id}: ${finishError?.message ?? finishError}`,
+				finishError?.stack
+			);
+		}
+	}
+
+	/**
+	 * The slots a log held when it was read, as they now stand, with their logs (a deleted one is not read).
+	 *
+	 * @param log - The time log as it was read, with its slots.
+	 */
+	private async slotsAsTheyStand(log: ITimeLog): Promise<ITimeSlot[]> {
+		const ids = (log.timeSlots ?? []).map((slot) => slot.id);
+		if (ids.length === 0) {
+			return [];
+		}
+		return await this.typeOrmTimeSlotRepository.find({
+			where: { id: In(ids) },
+			relations: { timeLogs: true }
+		});
+	}
+
+	/**
+	 * The start of the first slot of a range from `start` to `stoppedAt`, as the update computes a log's slots: the slot
+	 * holding `start`, taken at its whole minute (the helper keeps the milliseconds of `start`, and a stored slot's start
+	 * has none).
+	 *
+	 * @param start - The start of the range.
+	 * @param stoppedAt - The end of the range.
+	 */
+	private firstSlotStart(start: Date, stoppedAt: Date) {
+		const [firstSlot] = generateTimeSlots(start, stoppedAt);
+		return moment(firstSlot?.startedAt ?? start).startOf('minute');
+	}
+
+	/**
 	 * Finishes the release of a cut that wrote the log's new range, deleted the slots the log alone held there, and then
 	 * failed: the log is taken off the slots it still holds outside that range with another log (the unlinks the cut
 	 * did not get to), and the totals the cut recalculates last are recalculated.
@@ -430,7 +487,7 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 	 * @param outside - Whether a slot lies outside the log's new range.
 	 */
 	private async finishRelease(
-		log: TimeLog,
+		log: ITimeLog,
 		slots: ITimeSlot[],
 		outside: (slot: ITimeSlot) => boolean
 	): Promise<void> {
