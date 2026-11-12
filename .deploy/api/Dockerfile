@@ -120,6 +120,7 @@ COPY --chown=node:node packages/plugins/integration-linear/package.json ./packag
 COPY --chown=node:node packages/plugins/integration-asana/package.json ./packages/plugins/integration-asana/
 COPY --chown=node:node packages/plugins/integration-trello/package.json ./packages/plugins/integration-trello/
 COPY --chown=node:node packages/plugins/realtime/package.json ./packages/plugins/realtime/
+COPY --chown=node:node packages/plugins/task-automations/package.json ./packages/plugins/task-automations/
 COPY --chown=node:node packages/plugins/changelog/package.json ./packages/plugins/changelog/
 COPY --chown=node:node packages/plugins/chat/package.json ./packages/plugins/chat/
 COPY --chown=node:node packages/plugins/job-search/package.json ./packages/plugins/job-search/
@@ -288,6 +289,7 @@ COPY --chown=node:node packages/plugins/integration-linear/package.json ./packag
 COPY --chown=node:node packages/plugins/integration-asana/package.json ./packages/plugins/integration-asana/
 COPY --chown=node:node packages/plugins/integration-trello/package.json ./packages/plugins/integration-trello/
 COPY --chown=node:node packages/plugins/realtime/package.json ./packages/plugins/realtime/
+COPY --chown=node:node packages/plugins/task-automations/package.json ./packages/plugins/task-automations/
 COPY --chown=node:node packages/plugins/changelog/package.json ./packages/plugins/changelog/
 COPY --chown=node:node packages/plugins/chat/package.json ./packages/plugins/chat/
 COPY --chown=node:node packages/plugins/job-search/package.json ./packages/plugins/job-search/
@@ -505,6 +507,7 @@ RUN --mount=type=bind,from=prod-dependencies,source=/srv/gauzy/node_modules,targ
     cp -r /mnt/packages/scheduler/node_modules ./node_modules/@gauzy/scheduler/ && \
     cp -r /mnt/packages/plugins/changelog/node_modules ./node_modules/@gauzy/plugin-changelog/ && \
     if [ -d /mnt/packages/plugins/chat/node_modules ]; then cp -r /mnt/packages/plugins/chat/node_modules ./node_modules/@gauzy/plugin-chat/; fi && \
+    if [ -d /mnt/packages/plugins/task-automations/node_modules ]; then cp -r /mnt/packages/plugins/task-automations/node_modules ./node_modules/@gauzy/plugin-task-automations/; fi && \
     cp -r /mnt/packages/plugins/integration-activepieces/node_modules ./node_modules/@gauzy/plugin-integration-activepieces/ && \
     cp -r /mnt/packages/plugins/integration-ai/node_modules ./node_modules/@gauzy/plugin-integration-ai/ && \
     cp -r /mnt/packages/plugins/integration-github/node_modules ./node_modules/@gauzy/plugin-integration-github/ && \
