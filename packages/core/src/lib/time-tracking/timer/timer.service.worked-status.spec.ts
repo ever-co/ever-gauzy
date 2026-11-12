@@ -1,3 +1,14 @@
+/**
+ * The worked status picks each employee's last log with `DISTINCT ON`, which only Postgres has, and the cases below
+ * run that query as Postgres would. The dialect is read from DB_TYPE when the process starts, so it is pinned to
+ * Postgres here: under DB_TYPE=mysql, `prepareSQLQuery` quoted the query's columns with backticks.
+ */
+jest.mock('@gauzy/config', () => ({
+	...jest.requireActual('@gauzy/config'),
+	isPostgres: () => true,
+	isMySQL: () => false
+}));
+
 // Must stay first: see timer.service.spec.ts.
 import '../../core/entities/internal';
 
