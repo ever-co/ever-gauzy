@@ -17,9 +17,15 @@ export const TASK_VIEWS_AVAILABILITY_RETRY_MS = 5_000;
 export const TASK_VIEWS_AVAILABILITY_REPROBES = 6;
 export const TASK_VIEWS_AVAILABILITY_REPROBE_MS = 5 * 60_000;
 
-/** A refusal that retrying does not change: 404 (the extensions are off), 401 and 403 (not for this user). */
-export function isFinalRefusal(error: HttpErrorResponse | null | undefined): boolean {
-	return error?.status === 404 || error?.status === 401 || error?.status === 403;
+/**
+ * A failure that asking again can change: no answer at all (the network, status 0), a server error (5xx), a timeout
+ * (408) or too many requests (429). Every other refusal is final: 404 (the extensions are off), 401 and 403 (not for
+ * this user), any other 4xx (the same request would be refused again), and an error that is no HTTP answer.
+ */
+export function isTemporaryFailure(error: unknown): boolean {
+	const status = (error as { status?: unknown } | null | undefined)?.status;
+	if (typeof status !== 'number') return false;
+	return status === 0 || status === 408 || status === 429 || status >= 500;
 }
 
 /** The signed-in user in the selected organization: what the views are asked for. */
@@ -61,8 +67,8 @@ export class TaskViewsAvailabilityService {
 	);
 
 	/**
-	 * `true` once the API answered for the scope. A final refusal is `false` at once; a temporary failure (5xx,
-	 * network) is retried with a growing delay, then asked again every few minutes for a while, so an API that
+	 * `true` once the API answered for the scope. A final refusal is `false` at once; a temporary failure (network,
+	 * 5xx, 408, 429) is retried with a growing delay, then asked again every few minutes for a while, so an API that
 	 * recovers after the app started still shows the views. A new scope cancels a request in flight, so a late answer
 	 * never applies to the next user.
 	 */
@@ -77,17 +83,17 @@ export class TaskViewsAvailabilityService {
 							retry({
 								count: TASK_VIEWS_AVAILABILITY_RETRIES,
 								delay: (error: HttpErrorResponse, attempt: number) =>
-									isFinalRefusal(error)
-										? throwError(() => error)
-										: timer(TASK_VIEWS_AVAILABILITY_RETRY_MS * 2 ** (attempt - 1))
+									isTemporaryFailure(error)
+										? timer(TASK_VIEWS_AVAILABILITY_RETRY_MS * 2 ** (attempt - 1))
+										: throwError(() => error)
 							}),
 							// The attempts ran out on a temporary failure: another round later, a bounded number of times.
 							retry({
 								count: TASK_VIEWS_AVAILABILITY_REPROBES,
 								delay: (error: HttpErrorResponse) =>
-									isFinalRefusal(error)
-										? throwError(() => error)
-										: timer(TASK_VIEWS_AVAILABILITY_REPROBE_MS)
+									isTemporaryFailure(error)
+										? timer(TASK_VIEWS_AVAILABILITY_REPROBE_MS)
+										: throwError(() => error)
 							}),
 							map(() => true),
 							catchError(() => of(false))

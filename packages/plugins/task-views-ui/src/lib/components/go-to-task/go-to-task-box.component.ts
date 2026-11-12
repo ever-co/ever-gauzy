@@ -3,10 +3,9 @@ import {
 	Component,
 	DestroyRef,
 	ElementRef,
-	EventEmitter,
 	inject,
-	Input,
-	Output,
+	input,
+	output,
 	signal,
 	ViewChild
 } from '@angular/core';
@@ -32,7 +31,7 @@ import { GoToResult, TaskReferenceNavigatorService } from '../../services/task-r
 			<input
 				#field
 				nbInput
-				[fieldSize]="size"
+				[fieldSize]="size()"
 				class="go-to-field"
 				name="reference"
 				autocomplete="off"
@@ -46,7 +45,7 @@ import { GoToResult, TaskReferenceNavigatorService } from '../../services/task-r
 			<button
 				nbButton
 				ghost
-				[size]="size"
+				[size]="size()"
 				type="submit"
 				[disabled]="busy() || !text().trim()"
 				[attr.aria-label]="'TASK_VIEWS.GOTO.OPEN' | translate"
@@ -86,9 +85,9 @@ export class GoToTaskBoxComponent {
 	private readonly navigator = inject(TaskReferenceNavigatorService);
 	private readonly availability = inject(TaskViewsAvailabilityService);
 
-	@Input() size: 'tiny' | 'small' | 'medium' = 'small';
+	readonly size = input<'tiny' | 'small' | 'medium'>('small');
 	/** Emits once the task opened (the dialog closes then). */
-	@Output() readonly opened = new EventEmitter<void>();
+	readonly opened = output<void>();
 
 	@ViewChild('field') private field?: ElementRef<HTMLInputElement>;
 

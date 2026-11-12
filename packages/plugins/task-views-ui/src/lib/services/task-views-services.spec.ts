@@ -17,6 +17,7 @@ import {
 	TASK_VIEWS_AVAILABILITY_REPROBE_MS,
 	TASK_VIEWS_AVAILABILITY_REPROBES,
 	TASK_VIEWS_AVAILABILITY_RETRIES,
+	isTemporaryFailure,
 	TaskViewsAvailabilityService
 } from './task-views-availability.service';
 import { TaskViewsOptionsService } from './task-views-options.service';
@@ -98,6 +99,40 @@ describe('task views services', () => {
 				expect(builtIn).toHaveBeenCalledTimes(rounds * (TASK_VIEWS_AVAILABILITY_RETRIES + 1));
 				expect(seen).toEqual([false]);
 			});
+		});
+
+		it('asks again only after a failure that asking again can change', () => {
+			for (const status of [0, 408, 429, 500, 502, 503]) {
+				expect(isTemporaryFailure(new HttpErrorResponse({ status }))).toBe(true);
+			}
+			for (const status of [400, 401, 403, 404, 422]) {
+				expect(isTemporaryFailure(new HttpErrorResponse({ status }))).toBe(false);
+			}
+			expect(isTemporaryFailure(new Error('not an HTTP answer'))).toBe(false);
+			expect(isTemporaryFailure(null)).toBe(false);
+		});
+
+		it('asks once on a request the API refuses as such (400)', () => {
+			jest.useFakeTimers();
+			try {
+				const builtIn = jest.fn(() => throwError(() => new HttpErrorResponse({ status: 400 })));
+				TestBed.configureTestingModule({
+					providers: [
+						{
+							provide: Store,
+							useValue: { user$: of({ id: 'u1' }), selectedOrganization$: of({ id: 'org' }) }
+						},
+						{ provide: TaskViewsApiService, useValue: { builtIn } }
+					]
+				});
+				const seen: boolean[] = [];
+				TestBed.inject(TaskViewsAvailabilityService).available$.subscribe((available) => seen.push(available));
+				jest.advanceTimersByTime(60 * 60_000);
+				expect(builtIn).toHaveBeenCalledTimes(1);
+				expect(seen).toEqual([false]);
+			} finally {
+				jest.useRealTimers();
+			}
 		});
 
 		it('stays off on a final refusal (404: the switch is off)', () => {

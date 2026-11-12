@@ -306,6 +306,8 @@ export class TaskViewsPageComponent implements OnInit {
 	private generation = 0;
 	/** Bumped each time a view is opened: a write answers for the opening it was sent from, not a later one. */
 	private opening = 0;
+	/** Bumped at each read of the switcher's list: only the latest read is shown. */
+	private viewsRead = 0;
 	private lastSent: ApplicableTree | null = null;
 	private filterTimer: ReturnType<typeof setTimeout> | null = null;
 	private undoTimer: ReturnType<typeof setTimeout> | null = null;
@@ -338,6 +340,9 @@ export class TaskViewsPageComponent implements OnInit {
 				...(scope.tenantId ? { tenantId: scope.tenantId } : {})
 			});
 			this.options.set(EMPTY_OPTIONS);
+			// Nothing of the previous scope stays: its views in the switcher, an undo of its tasks.
+			this.views.set([]);
+			this.clearUndo();
 			void this.loadViews();
 			void this.open(this.current());
 		});
@@ -391,6 +396,10 @@ export class TaskViewsPageComponent implements OnInit {
 			return;
 		}
 		const generation = ++this.generation;
+		this.loadingMore.set(false);
+		// The view left is not the page's any more while the next one loads: nothing saves it (or its draft) meanwhile.
+		this.savedView.set(null);
+		this.draft.set({ ...DEFAULT_DEFINITION, properties: {} });
 		this.loading.set(true);
 		try {
 			const view = await firstValueFrom(this.api.getView(ref.id, scope));
@@ -414,6 +423,8 @@ export class TaskViewsPageComponent implements OnInit {
 		const scope = this.scope();
 		if (!scope) return;
 		const generation = ++this.generation;
+		// A Load more of the rows read before is superseded: its answer is dropped, and the button is free again.
+		this.loadingMore.set(false);
 		this.loading.set(true);
 		this.error.set(false);
 		try {
@@ -441,7 +452,8 @@ export class TaskViewsPageComponent implements OnInit {
 		} catch {
 			if (generation === this.generation) this.toastr.danger('TASK_VIEWS.ERROR');
 		} finally {
-			this.loadingMore.set(false);
+			// A superseded request leaves the flag to the rows read since (and to a Load more of theirs).
+			if (generation === this.generation) this.loadingMore.set(false);
 		}
 	}
 
@@ -547,17 +559,20 @@ export class TaskViewsPageComponent implements OnInit {
 	private async loadViews(): Promise<void> {
 		const scope = this.scope();
 		if (!scope) return;
+		const read = ++this.viewsRead;
 		const views: ITaskView[] = [];
 		try {
 			for (let skip = 0; skip < SAVED_VIEWS_MAX;) {
 				const page = await firstValueFrom(this.api.listViews(scope, skip, SAVED_VIEWS_PAGE_SIZE));
+				// A later read (another scope, or the list changed again) answers for the switcher instead.
+				if (read !== this.viewsRead || scope !== this.scope()) return;
 				views.push(...(page.items ?? []));
 				skip += page.items?.length ?? 0;
 				if (!page.items?.length || skip >= (page.total ?? 0)) break;
 			}
 			this.views.set(views);
 		} catch {
-			// The switcher keeps what it listed; the open view is unaffected.
+			// The switcher keeps what it listed for this scope (a new scope starts empty); the open view is unaffected.
 		}
 	}
 
@@ -659,7 +674,9 @@ export class TaskViewsPageComponent implements OnInit {
 		// that a later save could write over another client's change. The draft keeps the edit.
 		this.savedView.set(conflict.latest);
 		if (conflict.kind === 'order') {
-			await this.sendOrder(view.id as ID, input as ITaskViewOrderInput);
+			// The rows shown are the latest order (read again on the conflict): once the attempted one is saved, they
+			// are read in it, so a next drag starts from what was saved.
+			if (await this.sendOrder(view.id as ID, input as ITaskViewOrderInput)) void this.reload();
 		} else {
 			// The latest view's own keys of `filterOptions` (another client's) are kept: the save is rebuilt on it.
 			const scope = this.scope();
@@ -781,20 +798,23 @@ export class TaskViewsPageComponent implements OnInit {
 		await this.sendOrder(view.id as ID, { ...scope, taskIds, expectedVersion: view.version ?? 1 });
 	}
 
-	private async sendOrder(id: ID, input: ITaskViewOrderInput): Promise<void> {
+	/** Saves a manual order; `true` when it was saved for the view still open. */
+	private async sendOrder(id: ID, input: ITaskViewOrderInput): Promise<boolean> {
 		const opening = this.opening;
 		this.saving.set(true);
 		try {
 			const saved = await firstValueFrom(this.api.setOrder(id, input));
-			if (!this.isOpen(id, opening)) return;
+			if (!this.isOpen(id, opening)) return false;
 			this.conflict.set(null);
 			this.savedView.set(saved);
+			return true;
 		} catch (error) {
 			const conflict = conflictOf(error, input, 'order');
 			if (!conflict) this.toastr.danger(this.errorMessage(error, 'TASK_VIEWS.ORDER.FAILED'));
-			if (!this.isOpen(id, opening)) return;
+			if (!this.isOpen(id, opening)) return false;
 			if (conflict) this.conflict.set(conflict);
 			void this.reload();
+			return false;
 		} finally {
 			this.saving.set(false);
 		}
@@ -845,12 +865,14 @@ export class TaskViewsPageComponent implements OnInit {
 		try {
 			const outcome = await firstValueFrom(this.api.bulkUpdate(built.request));
 			const summary = summarizeOutcome(outcome);
-			this.offerUndo(
-				this.summaryMessage(summary),
-				{ ...this.summaryParams(summary), action: apply.action },
-				undoRequest(outcome, scope),
-				undoLosses(outcome)
-			);
+			// Another organization opened meanwhile: its page offers no undo of this one's tasks.
+			if (this.scope() === scope)
+				this.offerUndo(
+					this.summaryMessage(summary),
+					{ ...this.summaryParams(summary), action: apply.action },
+					undoRequest(outcome, scope),
+					undoLosses(outcome)
+				);
 			if (summary.refused)
 				this.toastr.warning('TASK_VIEWS.BULK.REFUSED', {
 					count: summary.refused,
@@ -865,13 +887,18 @@ export class TaskViewsPageComponent implements OnInit {
 		}
 	}
 
+	/**
+	 * Sends the undo. The bar stays until the undo answered (its button waits meanwhile): a failed undo can be tried
+	 * again while its time lasts, over rows read again first. The undo sets each task's previous values, so a second
+	 * try after a part of the first went through changes nothing more.
+	 */
 	protected async undoLast(): Promise<void> {
 		const pending = this.undo();
 		if (!pending?.request || this.busy()) return;
-		this.clearUndo();
 		this.busy.set(true);
 		try {
 			const outcome = await firstValueFrom(this.api.bulkUpdate(pending.request));
+			if (this.undo() === pending) this.clearUndo();
 			const summary = summarizeOutcome(outcome);
 			if (summary.refused)
 				this.toastr.warning('TASK_VIEWS.BULK.UNDO_PARTIAL', {
@@ -886,6 +913,7 @@ export class TaskViewsPageComponent implements OnInit {
 			await this.reload();
 		} catch (error) {
 			this.toastr.danger(this.errorMessage(error, 'TASK_VIEWS.BULK.UNDO_FAILED'));
+			await this.reload();
 		} finally {
 			this.busy.set(false);
 		}
@@ -894,12 +922,14 @@ export class TaskViewsPageComponent implements OnInit {
 	protected async deleteSelected(): Promise<void> {
 		const ids = [...this.selection().ids];
 		if (!ids.length || this.busy()) return;
+		const opening = this.opening;
 		const confirmed = await this.confirm(
 			'TASK_VIEWS.BULK.DELETE_CONFIRM',
 			{ count: ids.length },
 			'TASK_VIEWS.BULK.DELETE'
 		);
-		if (!confirmed) return;
+		// Another view (or organization) opened while the question was shown: its selection is not the one counted.
+		if (!confirmed || opening !== this.opening) return;
 		this.busy.set(true);
 		const results: Array<{ taskId: ID; ok: boolean; error?: string }> = [];
 		try {

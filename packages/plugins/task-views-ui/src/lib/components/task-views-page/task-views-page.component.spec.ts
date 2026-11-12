@@ -390,6 +390,129 @@ describe('TaskViewsPageComponent', () => {
 		expect(component.conflict()).toMatchObject({ kind: 'order' });
 	});
 
+	it('reads the rows again once Overwrite saved the order a conflict refused', async () => {
+		await create();
+		api.setOrder.mockReturnValueOnce(
+			throwError(
+				() =>
+					new HttpErrorResponse({
+						status: 409,
+						error: { code: TASK_VIEW_VERSION_CONFLICT, view: savedView({ version: 8 }) }
+					})
+			)
+		);
+		await component.drop({ from: 0, to: 2 });
+		await flush();
+		const reads = api.viewTasks.mock.calls.length;
+		api.setOrder.mockReturnValueOnce(of(savedView({ version: 9, manualOrder: ['t2', 't3', 't1'] as ID[] })));
+		await component.overwrite();
+		expect(api.setOrder).toHaveBeenLastCalledWith('v1', expect.objectContaining({ expectedVersion: 8 }));
+		expect(component.conflict()).toBeNull();
+		expect(api.viewTasks.mock.calls.length).toBe(reads + 1);
+	});
+
+	it('lists only the views of the scope open, and drops a list read for the previous one', async () => {
+		await create();
+		const availability = TestBed.inject(TaskViewsAvailabilityService) as unknown as {
+			scope$: BehaviorSubject<unknown>;
+		};
+		const late = new Subject<unknown>();
+		api.listViews.mockReturnValueOnce(late);
+		const reading = component.loadViews();
+		const other = savedView({ id: 'vB' as ID, name: 'Organization B view', organizationId: 'orgB' as ID });
+		api.listViews.mockReturnValueOnce(of({ items: [other], total: 1 }));
+		availability.scope$.next({ ...scope, organizationId: 'orgB' });
+		await flush();
+		late.next({ items: [savedView()], total: 1 });
+		late.complete();
+		await reading;
+		expect(component.views().map((view: ITaskView) => view.id)).toEqual(['vB']);
+	});
+
+	it('offers no undo of an organization left while its bulk change ran, and forgets an undo on leaving', async () => {
+		await create();
+		const availability = TestBed.inject(TaskViewsAvailabilityService) as unknown as {
+			scope$: BehaviorSubject<unknown>;
+		};
+		component.onToggle({ id: 't1', shift: false });
+		const answer = new Subject<unknown>();
+		api.bulkUpdate.mockReturnValueOnce(answer);
+		jest.useFakeTimers();
+		const applying = component.applyBulk({ action: 'archive', changes: { isArchived: true } });
+		availability.scope$.next({ ...scope, organizationId: 'orgB' });
+		answer.next({ applied: 1, refused: 0, results: [{ taskId: 't1', ok: true, previous: { isArchived: false } }] });
+		answer.complete();
+		await applying;
+		expect(component.undo()).toBeNull();
+
+		component.onToggle({ id: 't2', shift: false });
+		api.bulkUpdate.mockReturnValueOnce(
+			of({ applied: 1, refused: 0, results: [{ taskId: 't2', ok: true, previous: { isArchived: false } }] })
+		);
+		await component.applyBulk({ action: 'archive', changes: { isArchived: true } });
+		expect(component.undo()).not.toBeNull();
+		availability.scope$.next({ ...scope, organizationId: 'orgC' });
+		expect(component.undo()).toBeNull();
+	});
+
+	it('keeps the undo when it failed, over rows read again, so it can be tried again', async () => {
+		await create();
+		component.onToggle({ id: 't1', shift: false });
+		api.bulkUpdate.mockReturnValueOnce(
+			of({ applied: 1, refused: 0, results: [{ taskId: 't1', ok: true, previous: { isArchived: false } }] })
+		);
+		jest.useFakeTimers();
+		await component.applyBulk({ action: 'archive', changes: { isArchived: true } });
+		const pending = component.undo();
+		const reads = api.viewTasks.mock.calls.length;
+		api.bulkUpdate.mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 503 })));
+		await component.undoLast();
+		expect(toastr.danger).toHaveBeenCalledWith('TASK_VIEWS.BULK.UNDO_FAILED');
+		expect(component.undo()).toBe(pending);
+		expect(api.viewTasks.mock.calls.length).toBe(reads + 1);
+		api.bulkUpdate.mockReturnValueOnce(of({ applied: 1, refused: 0, results: [{ taskId: 't1', ok: true }] }));
+		await component.undoLast();
+		expect(component.undo()).toBeNull();
+		expect(toastr.success).toHaveBeenCalledWith('TASK_VIEWS.BULK.UNDONE');
+	});
+
+	it('deletes nothing when another view opened while the delete was being confirmed', async () => {
+		await create();
+		component.onToggle({ id: 't1', shift: false });
+		const answer = new Subject<boolean>();
+		(TestBed.inject(NbDialogService) as unknown as { open: jest.Mock }).open.mockReturnValue({ onClose: answer });
+		const deleting = component.deleteSelected();
+		await component.open({ kind: 'saved', id: 'v2' });
+		answer.next(true);
+		answer.complete();
+		await deleting;
+		expect(api.deleteTask).not.toHaveBeenCalled();
+	});
+
+	it('holds nothing of the view left while the next one loads, and frees Load more of the rows read before', async () => {
+		await create(savedView(), page(rows, { nextCursor: 'next' }));
+		component.setGroupBy('status');
+		expect(component.dirty()).toBe(true);
+		const more = new Subject<ITaskViewTasksPage>();
+		api.viewTasks.mockReturnValueOnce(more);
+		const loading = component.loadMore();
+		expect(component.loadingMore()).toBe(true);
+		const next = new Subject<ITaskView>();
+		api.getView.mockReturnValueOnce(next);
+		const opening = component.open({ kind: 'saved', id: 'v2' });
+		expect(component.savedView()).toBeNull();
+		expect(component.dirty()).toBe(false);
+		expect(component.loadingMore()).toBe(false);
+		more.next(page([{ id: 't9', title: 't9' } as ITask]));
+		more.complete();
+		await loading;
+		expect(component.items().map((row: ITask) => row.id)).not.toContain('t9');
+		next.next(savedView({ id: 'v2' as ID, name: 'Other' }));
+		next.complete();
+		await opening;
+		expect(component.savedView().id).toBe('v2');
+	});
+
 	it('does not drag a view grouped or ordered otherwise', async () => {
 		await create(savedView({ filterOptions: { orderBy: { field: 'createdAt' } } }));
 		expect(component.draggable()).toBe(false);
