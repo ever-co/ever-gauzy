@@ -6,7 +6,7 @@ import { TranslatePipe } from '@ngx-translate/core';
 import { ChatConversationKindEnum, ChatNotifyLevelEnum, ChatVisibilityEnum, IChatCategory, IChatConversationWithState } from '@gauzy/contracts';
 import { sortCategories } from '../../chat-categories';
 import { CHAT_COLLAPSED_SECTIONS_KEY, CHAT_LINK, CHAT_THREADS_PATH, CHAT_UNREADS_PATH } from '../../chat-ui.constants';
-import { ChatPerson, conversationPerson, conversationTitle, groupShortTitle, isUnread, otherMemberCount } from '../../chat-ui.helpers';
+import { ChatPerson, conversationPerson, conversationTitle, groupShortTitle, hasMessages, isUnread, otherMemberCount } from '../../chat-ui.helpers';
 import { ChatPeople } from '../../services/chat-people.service';
 import { PersonAvatarComponent } from '../person-avatar/person-avatar.component';
 
@@ -645,9 +645,12 @@ export class ConversationListComponent {
 	);
 	/**
 	 * Every direct and group conversation, favourites included: Favourites is a shortcut list on top, so a person
-	 * added to it stays in Direct messages too. (A favourite channel moves to Favourites.)
+	 * added to it stays in Direct messages too. (A favourite channel moves to Favourites.) One nobody has written in
+	 * yet is left out: opening a conversation with someone does not list them until a message is sent.
 	 */
-	protected readonly direct = computed(() => this.conversations().filter((conversation) => conversation.kind !== ChatConversationKindEnum.CHANNEL));
+	protected readonly direct = computed(() =>
+		this.conversations().filter((conversation) => conversation.kind !== ChatConversationKindEnum.CHANNEL && hasMessages(conversation))
+	);
 
 	/** The channels under their category (in category order), the uncategorized ones first. */
 	protected readonly channelGroups = computed(() => {

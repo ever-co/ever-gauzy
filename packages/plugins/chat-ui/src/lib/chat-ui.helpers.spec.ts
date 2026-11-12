@@ -9,6 +9,7 @@ import {
 	conversationPerson,
 	conversationTitle,
 	groupShortTitle,
+	hasMessages,
 	initialsOf,
 	isSameDay,
 	isUnread,
@@ -46,6 +47,24 @@ const people = new Map<string, ChatPerson>([
 	[BOB, { employeeId: BOB, userId: 'u2', name: 'Bob Stone', imageUrl: null }]
 ]);
 const conversations = new Map<string, string>([[GENERAL, 'general']]);
+
+describe('hasMessages', () => {
+	it('is false for a conversation nobody has written in', () => {
+		expect(hasMessages({ messageCount: 0, lastMessageAt: null, state: null })).toBe(false);
+	});
+
+	it('is true once it holds a message, or once my read marker moved (my own first message)', () => {
+		expect(hasMessages({ messageCount: 1, lastMessageAt: null, state: null })).toBe(true);
+		expect(hasMessages({ messageCount: 0, lastMessageAt: new Date('2026-11-07T10:00:00Z'), state: null })).toBe(true);
+		expect(
+			hasMessages({
+				messageCount: 0,
+				lastMessageAt: null,
+				state: { lastReadMessageId: 'm1' } as IChatConversationWithState['state']
+			})
+		).toBe(true);
+	});
+});
 
 function message(id: string, overrides: Partial<IChatMessage> = {}): IChatMessage {
 	return {
