@@ -46,6 +46,8 @@ import { MikroOrmCommentRepository } from './repository/mikro-orm-comment.reposi
 		MikroOrmCommentRepository,
 		...CommandHandlers
 	],
-	exports: [CqrsModule]
+	// `CommentService` for the reactions on comments (`ReactionModule` reads a comment as the caller before a reaction
+	// is written, and announces a reaction change as a change of its comment).
+	exports: [CqrsModule, CommentService]
 })
 export class CommentModule {}

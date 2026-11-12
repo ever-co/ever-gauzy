@@ -14,14 +14,14 @@ import {
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { CommandBus } from '@nestjs/cqrs';
 import { DeleteResult, UpdateResult } from 'typeorm';
-import { IReaction, ID, IPagination } from '@gauzy/contracts';
+import { IReaction, IReactionSummary, ID, IPagination } from '@gauzy/contracts';
 import { UUIDValidationPipe, UseValidationPipe } from './../shared/pipes';
 import { PermissionGuard, TenantPermissionGuard } from '../shared/guards';
 import { CrudController, FindOptionsQueryDTO, BaseQueryDTO } from './../core/crud';
 import { Reaction } from './reaction.entity';
 import { ReactionService } from './reaction.service';
 import { ReactionCreateCommand, ReactionUpdateCommand } from './commands';
-import { CreateReactionDTO, UpdateReactionDTO } from './dto';
+import { CommentReactionsQueryDTO, CreateReactionDTO, UpdateReactionDTO } from './dto';
 
 @ApiTags('Reactions')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
@@ -51,6 +51,22 @@ export class ReactionController extends CrudController<Reaction> {
 	@UseValidationPipe()
 	async findAll(@Query() params: BaseQueryDTO<Reaction>): Promise<IPagination<IReaction>> {
 		return await this.reactionService.findAll(params);
+	}
+
+	/**
+	 * The reactions on the comments of one record, grouped by comment and emoji: how many, who (in the order they
+	 * reacted) and whether the caller did. The comments are the ones the caller can list (`GET /comment` with the same
+	 * record), the reactions on them are everyone's. Declared before `/:id`, which would otherwise take the path.
+	 *
+	 * @param query - The record (`entity`, `entityId`) and the caller's organization.
+	 */
+	@ApiOperation({ summary: 'Summarize the reactions on the comments of a record.' })
+	@ApiResponse({ status: HttpStatus.OK, description: 'One entry per comment and emoji.' })
+	@ApiResponse({ status: HttpStatus.FORBIDDEN, description: 'The record is governed and its comments are not readable.' })
+	@Get('/comments')
+	@UseValidationPipe({ transform: true, whitelist: true })
+	async findCommentReactions(@Query() query: CommentReactionsQueryDTO): Promise<IReactionSummary[]> {
+		return await this.reactionService.summarizeCommentReactions(query);
 	}
 
 	/**
