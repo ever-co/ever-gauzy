@@ -699,6 +699,10 @@ export class ThreadPaneComponent {
 						this.replace({ id: message.id, taskReferences: withTaskReference(current, reference).taskReferences });
 					});
 				return;
+			case 'replaced':
+				// An app's reply to a click on one of its buttons: the message as the reply left it.
+				if (this.isCurrent(id)) this.replace(action.message);
+				return;
 			case 'pin':
 				this.api
 					.setPinned(message.id, action.pinned)
