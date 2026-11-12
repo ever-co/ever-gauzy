@@ -677,6 +677,15 @@ describe('Task automations on SQLite', () => {
 			expect(ids.sort()).toEqual([going, fresh].sort());
 			// Without the rule, every open due task is read.
 			expect((await reader.dueTasks({ tenantId: TENANT, organizationId: ORG }, window, 10)).length).toBe(3);
+			// A due date corrected after the notice (a change of the task) brings the task back: its new key decides.
+			// (Its change time is stated: SQLite keeps whole seconds, and the correction comes a moment after the notice.)
+			const corrected = new Date(due.getTime() - 5 * 60_000);
+			await dataSource
+				.getRepository(Task as never)
+				.update({ id: reported } as never, { dueDate: corrected, updatedAt: new Date(Date.now() + 2_000) } as never);
+			const again = (await reader.dueTasks({ tenantId: TENANT, organizationId: ORG, ruleId: rule.id as string }, window, 10)).map((task) => task.id);
+			expect(again.sort()).toEqual([reported, going, fresh].sort());
+			expect([...(await runs.finishedKeys(rule.id as string, [dueEventKey(reported, corrected)]))]).toEqual([]);
 		});
 	});
 

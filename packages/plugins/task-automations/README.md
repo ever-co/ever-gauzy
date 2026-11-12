@@ -17,7 +17,8 @@ no route, no GraphQL field, no table, no outbox row, no schedule, no role grant.
   assignee; every sub-task of a task is done (acts on the parent); a done sub-task is reopened (acts on the parent);
   the due date of an open task passes (checked every 15 minutes, for due dates of the last 24 hours that passed after the
   rule was created: after a longer downtime, due dates older than a day are not reported); a linked pull request or
-  issue closes (`task_link.closed`, appended by an integration).
+  issue closes (`task_link.closed`, appended by an integration — no integration publishes it yet, so a rule with this
+  trigger fires once one does).
 - **Conditions** (all must hold): status is / is not / of category; open / done; priority; labels; assigned /
   unassigned / assignee; sub-task or not; title contains.
 - **Actions** (in order): set the status (a status, or the first to-do / in-progress / done status of the task's

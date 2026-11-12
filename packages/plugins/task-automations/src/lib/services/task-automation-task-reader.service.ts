@@ -137,8 +137,10 @@ export class TaskAutomationTaskReader {
 	 * Open tasks whose due date passed in a window (the due-date sweep), of the rule's organization and scope, oldest
 	 * due first (then by id), one page at a time: `after` is the last task of the previous page. "Open" is decided by
 	 * the engine on each task; this only leaves out what is certainly closed, and — with `ruleId` — the tasks that rule
-	 * already reported since their due date (a finished run of the rule for the task, made at or after the due date),
-	 * so tasks that stay open after their notice never fill the pages.
+	 * already reported for their current due date, so tasks that stay open after their notice never fill the pages. A
+	 * task counts as reported when a finished run of the rule for it was made at or after its due date and finished at
+	 * or after the task's last change: a due date corrected after the notice (a change of the task) brings the task
+	 * back, and the run's exact key (`finishedKeys`) decides. This only narrows the read; the key is always checked.
 	 */
 	async dueTasks(
 		scope: { tenantId: ID; organizationId: ID; projectId?: ID | null; organizationTeamId?: ID | null; ruleId?: ID | null },
@@ -175,6 +177,7 @@ export class TaskAutomationTaskReader {
 				.where('run.ruleId = :ruleId')
 				.andWhere('run.taskId = task.id')
 				.andWhere('run.createdAt >= task.dueDate')
+				.andWhere('run.updatedAt >= task.updatedAt')
 				.andWhere('run.outcome <> :runningOutcome')
 				.getQuery();
 			query.andWhere(`NOT EXISTS ${reported}`, { ruleId: scope.ruleId, runningOutcome: 'RUNNING' });
