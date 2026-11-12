@@ -628,13 +628,18 @@ export class DocumentPageComponent implements OnInit, OnDestroy {
 
 	/**
 	 * Downloads the page (or the page with the sub-pages the caller may read) as a PDF rendered by the server, with the
-	 * title and date in its header and a table of contents for a subtree.
+	 * title and date in its header and a table of contents for a subtree. The server renders the page as saved: its
+	 * pending edits are saved first (a save in flight, or the live session's waiting edits), or nothing is exported.
 	 */
 	async exportPdf(subtree = false): Promise<void> {
 		this.menuOpen = false;
 		if (!this.document?.id || !this.isPage || this.pdfBusy) return;
 		this.pdfBusy = true;
 		try {
+			if (this.editorComponent && !(await this.editorComponent.settleSaves())) {
+				this.toastrService.warning(this.translate.instant('DOCS.EXPORT.PDF_UNSAVED'));
+				return;
+			}
 			const result = await this.importService.downloadPdf(this.document.id as ID, { subtree });
 			if (!result.ok) {
 				const tooMany = result.error?.status === 413;

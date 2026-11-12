@@ -28,7 +28,7 @@ import {
 	DocumentVisibilityEnum,
 	IDocumentImport
 } from '@gauzy/contracts';
-import { DocsImportService } from '../services/docs-import.service';
+import { DocsImportRun } from '../models/docs-import-run';
 import { DocumentsService } from '../services/documents.service';
 import { DocsImportDialogComponent } from './docs-import-dialog.component';
 
@@ -47,13 +47,15 @@ function build(spaces$ = of([{ kind: DocumentSpaceKindEnum.ORGANIZATION }, { kin
 			{ provide: DestroyRef, useValue: destroyRef },
 			{ provide: TranslateService, useValue: {} },
 			{ provide: NbDialogRef, useValue: dialogRef },
-			{ provide: DocsImportService, useValue: importService },
 			{ provide: DocumentsService, useValue: documentsService },
 			{ provide: ChangeDetectorRef, useValue: cdr }
 		]
 	});
 	const component = runInInjectionContext(injector, () => new DocsImportDialogComponent());
-	return { component, dialogRef, importService, destroy };
+	// The run is the opener's (the browse page): the dialog only shows it.
+	const onFinished = jest.fn();
+	component.run = new DocsImportRun(importService as never, onFinished);
+	return { component, dialogRef, importService, destroy, onFinished };
 }
 
 const zip = (name = 'vault.zip', size = 10) => {
@@ -94,7 +96,7 @@ describe('DocsImportDialogComponent', () => {
 	});
 
 	it('uploads into the chosen team space, then polls until the import is done and shows the report', () => {
-		const { component, importService } = build();
+		const { component, importService, onFinished } = build();
 		component.ngOnInit();
 		component.targetKey = component.key(component.spaces[1]);
 		component.onFile(zip());
@@ -120,6 +122,35 @@ describe('DocsImportDialogComponent', () => {
 		expect(component.notImported.map((item) => item.reason)).toEqual(['UNSUPPORTED_TYPE']);
 		jest.advanceTimersByTime(6000);
 		expect(importService.get).toHaveBeenCalledTimes(2);
+		expect(onFinished).toHaveBeenCalledTimes(1);
+	});
+
+	it('shows a run that is still going when it opens again', () => {
+		const first = build();
+		first.component.ngOnInit();
+		first.component.onFile(zip());
+		first.importService.start.mockReturnValue(of(new HttpResponse({ body: running(3) })));
+		first.importService.get.mockReturnValue(of(running(5)));
+		first.component.startImport();
+		first.component.close();
+
+		const again = build();
+		again.component.run = first.component.run;
+		again.component.ngOnInit();
+		expect(again.component.step).toBe('running');
+		jest.advanceTimersByTime(1500);
+		expect(again.component.progress).toBe(50);
+	});
+
+	it('counts the items not imported past the rows it lists', () => {
+		const { component, importService } = build();
+		const items = Array.from({ length: 103 }, (_, index) => ({ path: `V/file-${index}.exe`, kind: DocumentKindEnum.FILE, status: DocumentImportItemStatusEnum.SKIPPED, reason: 'UNSUPPORTED_TYPE' }));
+		importService.start.mockReturnValue(of(new HttpResponse({ body: { ...running(10), status: DocumentImportStatusEnum.COMPLETED, report: { items } } })));
+		component.ngOnInit();
+		component.onFile(zip());
+		component.startImport();
+		expect(component.notImported).toHaveLength(103);
+		expect(component.notImportedRows).toBe(100);
 	});
 
 	it('goes back to the picker with the reason when the server refuses the zip', () => {
@@ -129,12 +160,15 @@ describe('DocsImportDialogComponent', () => {
 		importService.start.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 400, error: { code: 'DOCS_IMPORT_SYMLINK' } })));
 		component.startImport();
 		expect(component.step).toBe('pick');
-		expect(component.fileError).toBe('DOCS.IMPORT.ERROR.SYMLINK');
+		// The server's refusal is the run's, apart from the check of the file: Start can be pressed again.
+		expect(component.run.requestError).toBe('DOCS.IMPORT.ERROR.SYMLINK');
+		expect(component.fileError).toBeNull();
+		expect(component.file).not.toBeNull();
 	});
 
 	it('closes with the page picked in the report', () => {
 		const { component, dialogRef } = build();
-		component.current = running(1);
+		component.run.current = running(1);
 		component.openPage({ preventDefault: jest.fn() } as unknown as Event, { path: 'V/Home.md', documentId: 'page-1' } as never);
 		expect(dialogRef.close).toHaveBeenCalledWith({ import: component.current, openPageId: 'page-1' });
 	});

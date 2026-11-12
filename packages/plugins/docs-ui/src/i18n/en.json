@@ -363,6 +363,7 @@
 		"PDF": "Export as PDF",
 		"PDF_WITH_SUB_PAGES": "Export as PDF with sub-pages",
 		"PDF_FAILED": "The PDF could not be created",
+		"PDF_UNSAVED": "The page has edits that are not saved yet, so nothing was exported. Try again once they are saved.",
 		"PDF_TOO_MANY_PAGES": "This page has too many sub-pages for one PDF"
 	},
 	"PREVIEW": {
@@ -775,6 +776,8 @@
 		"MORE": "and {{count}} more",
 		"NOT_IMPORTED": "Not imported",
 		"TRUNCATED": "The report lists the first items only; the counts above are complete.",
+		"TRACKING_ERROR": "The import's progress could not be read. The import goes on, and its pages appear once it is done.",
+		"RETRY": "Retry",
 		"LAYOUT": {
 			"MARKDOWN_VAULT": "Read as a Markdown vault",
 			"HTML_EXPORT": "Read as an HTML export zip"

@@ -1,9 +1,7 @@
-import { HttpErrorResponse, HttpEventType } from '@angular/common/http';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, Input, OnInit, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
-import { Subscription, switchMap, takeWhile, timer } from 'rxjs';
 import {
 	DocumentImportLayoutEnum,
 	DocumentImportStatusEnum,
@@ -15,18 +13,8 @@ import {
 	IDocumentSpace
 } from '@gauzy/contracts';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
-import {
-	DOCS_IMPORT_POLL_MS,
-	errorKeyOf,
-	formatLimit,
-	importProgressPercent,
-	importReportGroups,
-	isImportFinished,
-	isZipFile,
-	phaseKeyOf,
-	reasonKeyOf
-} from '../models/docs-import.model';
-import { DocsImportService } from '../services/docs-import.service';
+import { errorKeyOf, formatLimit, importProgressPercent, importReportGroups, isZipFile, phaseKeyOf, reasonKeyOf } from '../models/docs-import.model';
+import { DocsImportRun, DocsImportStep } from '../models/docs-import-run';
 import { DocumentsService } from '../services/documents.service';
 import { spaceKeyOf, visibilityOfSpace } from './move-space.util';
 
@@ -36,8 +24,8 @@ export interface IDocsImportDialogResult {
 	openPageId?: ID;
 }
 
-/** The step the dialog is at. */
-type ImportStep = 'pick' | 'uploading' | 'running' | 'done';
+/** The items not imported that the report lists; the others are counted under it. */
+const NOT_IMPORTED_ROWS = 100;
 
 /** The key of the target "under the current page or folder". */
 const PARENT_TARGET = 'parent';
@@ -48,6 +36,8 @@ const PARENT_TARGET = 'parent';
  * report — the imported pages to open, and what was skipped or failed, with the reason.
  *
  * Shown only where the import probe answered (`DocsImportService.probeImport`); the server checks everything again.
+ * The run (`DocsImportRun`) is the opener's: a dialog closed while an import runs shows its progress, or its report,
+ * when it opens again.
  */
 @Component({
 	selector: 'gz-docs-import-dialog',
@@ -65,8 +55,8 @@ const PARENT_TARGET = 'parent';
 							</button>
 							<span class="file-name">{{ file?.name || ('DOCS.IMPORT.NO_FILE' | translate) }}</span>
 						</div>
-						@if (fileError) {
-							<div class="error" role="alert">{{ fileError | translate: { limit: limitLabel } }}</div>
+						@if (fileError || run.requestError) {
+							<div class="error" role="alert">{{ fileError || run.requestError | translate: { limit: limitLabel } }}</div>
 						}
 						<div class="target-label">{{ 'DOCS.IMPORT.TARGET' | translate }}</div>
 						<nb-radio-group [(value)]="targetKey" name="gz-docs-import-target">
@@ -88,6 +78,12 @@ const PARENT_TARGET = 'parent';
 						<div class="hint">
 							{{ 'DOCS.IMPORT.PROGRESS' | translate: { done: current?.processedItems ?? 0, total: current?.totalItems ?? 0 } }}
 						</div>
+						@if (run.trackingError) {
+							<div class="error tracking" role="alert">
+								<span>{{ 'DOCS.IMPORT.TRACKING_ERROR' | translate }}</span>
+								<button nbButton size="tiny" appearance="outline" (click)="run.retryRead()">{{ 'DOCS.IMPORT.RETRY' | translate }}</button>
+							</div>
+						}
 						<div class="hint">{{ 'DOCS.IMPORT.BACKGROUND_HINT' | translate }}</div>
 					}
 					@case ('done') {
@@ -122,13 +118,16 @@ const PARENT_TARGET = 'parent';
 							@if (groups.skipped.length || groups.failed.length) {
 								<div class="section-title">{{ 'DOCS.IMPORT.NOT_IMPORTED' | translate }}</div>
 								<ul class="items">
-									@for (item of notImported.slice(0, 100); track item.path) {
+									@for (item of notImported.slice(0, notImportedRows); track item.path) {
 										<li>
 											<span class="path">{{ item.path }}</span>
 											<span class="reason">{{ reasonKey(item.reason) | translate }}</span>
 										</li>
 									}
 								</ul>
+								@if (notImported.length > notImportedRows) {
+									<div class="hint">{{ 'DOCS.IMPORT.MORE' | translate: { count: notImported.length - notImportedRows } }}</div>
+								}
 							}
 							@if (current?.report?.truncated) {
 								<div class="hint">{{ 'DOCS.IMPORT.TRUNCATED' | translate }}</div>
@@ -191,6 +190,12 @@ const PARENT_TARGET = 'parent';
 				color: var(--text-danger-color);
 				margin: 0.25rem 0;
 			}
+			.error.tracking {
+				display: flex;
+				align-items: center;
+				justify-content: space-between;
+				gap: 0.75rem;
+			}
 			.items {
 				max-height: 14rem;
 				overflow: auto;
@@ -228,25 +233,24 @@ export class DocsImportDialogComponent extends TranslationBaseComponent implemen
 	@Input() parentName?: string | null;
 	/** The largest zip the server takes (from the probe). */
 	@Input() maxZipBytes = 0;
+	/** The import run, which the opener owns: it outlives the dialog. */
+	@Input() run!: DocsImportRun;
 
 	public readonly parentTarget = PARENT_TARGET;
 	public readonly statuses = DocumentImportStatusEnum;
-	public step: ImportStep = 'pick';
+	public readonly notImportedRows = NOT_IMPORTED_ROWS;
 	public file: File | null = null;
+	/** The dialog's own check of the chosen file (type, size); a refusal of the server is the run's `requestError`. */
 	public fileError: string | null = null;
 	public spaces: IDocumentSpace[] = [];
 	public targetKey = '';
-	public uploadPercent = 0;
-	public current: IDocumentImport | null = null;
 	public groups = importReportGroups(null);
 	public notImported: IDocumentImportReportItem[] = [];
 
 	private readonly destroyRef = inject(DestroyRef);
 	private readonly dialogRef = inject<NbDialogRef<DocsImportDialogComponent>>(NbDialogRef);
-	private readonly importService = inject(DocsImportService);
 	private readonly documentsService = inject(DocumentsService);
 	private readonly cdr = inject(ChangeDetectorRef);
-	private poll?: Subscription;
 
 	constructor() {
 		super(inject(TranslateService));
@@ -254,6 +258,8 @@ export class DocsImportDialogComponent extends TranslationBaseComponent implemen
 
 	ngOnInit(): void {
 		this.targetKey = this.parentId ? PARENT_TARGET : '';
+		this.refresh();
+		this.run.changes$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => this.refresh());
 		this.documentsService
 			.getSpaces()
 			.pipe(takeUntilDestroyed(this.destroyRef))
@@ -266,6 +272,18 @@ export class DocsImportDialogComponent extends TranslationBaseComponent implemen
 						{ kind: DocumentSpaceKindEnum.PRIVATE } as IDocumentSpace
 					])
 			});
+	}
+
+	get step(): DocsImportStep {
+		return this.run.step;
+	}
+
+	get uploadPercent(): number {
+		return this.run.uploadPercent;
+	}
+
+	get current(): IDocumentImport | null {
+		return this.run.current;
 	}
 
 	get limitLabel(): string {
@@ -333,62 +351,22 @@ export class DocsImportDialogComponent extends TranslationBaseComponent implemen
 						visibility: space ? visibilityOfSpace(space.kind) : DocumentVisibilityEnum.ORGANIZATION,
 						organizationTeamId: space?.kind === DocumentSpaceKindEnum.TEAM ? (space.organizationTeamId ?? null) : null
 					};
-		this.step = 'uploading';
-		this.uploadPercent = 0;
-		this.cdr.markForCheck();
-		this.importService
-			.start(this.file, target)
-			.pipe(takeUntilDestroyed(this.destroyRef))
-			.subscribe({
-				next: (event) => {
-					if (event.type === HttpEventType.UploadProgress) {
-						this.uploadPercent = event.total ? Math.round((event.loaded / event.total) * 100) : 0;
-						this.cdr.markForCheck();
-					} else if (event.type === HttpEventType.Response && event.body) {
-						this.importService.refreshImportProbe();
-						this.follow(event.body);
-					}
-				},
-				error: (error: HttpErrorResponse) => {
-					this.step = 'pick';
-					this.fileError = errorKeyOf(error?.error?.code ?? (error?.status === 413 ? 'DOCS_IMPORT_TOO_LARGE' : null));
-					this.cdr.markForCheck();
-				}
-			});
+		// The run uploads and follows the import, the dialog open or not.
+		this.run.start(this.file, target);
 	}
 
 	openPage(event: Event, item: IDocumentImportReportItem): void {
 		event.preventDefault();
-		this.poll?.unsubscribe();
 		this.dialogRef.close({ import: this.current, openPageId: item.documentId } as IDocsImportDialogResult);
 	}
 
 	close(): void {
-		this.poll?.unsubscribe();
 		this.dialogRef.close({ import: this.current } as IDocsImportDialogResult);
 	}
 
-	/** Shows the import and reads it again until it is over. */
-	private follow(started: IDocumentImport): void {
-		this.show(started);
-		if (isImportFinished(started)) return;
-		this.poll = timer(DOCS_IMPORT_POLL_MS, DOCS_IMPORT_POLL_MS)
-			.pipe(
-				switchMap(() => this.importService.get(started.id as ID)),
-				takeWhile((value) => !isImportFinished(value), true),
-				takeUntilDestroyed(this.destroyRef)
-			)
-			.subscribe({
-				next: (value) => this.show(value),
-				// A read that fails leaves the last state up; the import goes on on the server.
-				error: () => this.cdr.markForCheck()
-			});
-	}
-
-	private show(value: IDocumentImport): void {
-		this.current = value;
-		this.step = isImportFinished(value) ? 'done' : 'running';
-		this.groups = importReportGroups(value);
+	/** The report of the run's import, for the view. */
+	private refresh(): void {
+		this.groups = importReportGroups(this.run.current);
 		this.notImported = [...this.groups.failed, ...this.groups.skipped];
 		this.cdr.markForCheck();
 	}
