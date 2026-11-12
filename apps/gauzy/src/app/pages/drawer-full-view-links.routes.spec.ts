@@ -23,6 +23,7 @@ import { NotFoundComponent, RecordViewRoutePageComponent } from '@gauzy/ui-core/
 import { JOBS_PAGE_ROUTE } from '../../../../../packages/plugins/jobs-ui/src/lib/job.routes';
 import { JOB_PROPOSAL_TEMPLATE_PAGE_ROUTE } from '../../../../../packages/plugins/job-proposal-ui/src/lib/proposal-template/job-proposal-template.routes';
 import { ExpenseViewPageComponent } from './expenses/expense-view/expense-view-page.component';
+import { IncomeViewPageComponent } from './income/income-view/income-view-page.component';
 import { getPagesRoutes } from './pages.routes';
 import { resolvePagesLink } from './testing/route-matcher';
 
@@ -36,9 +37,9 @@ const ID = 'aaaaaaaa-1111-4111-8111-111111111111';
 const DRAWER_LINKS: Array<[string, string, boolean]> = [
 	// [drawer, the link it builds, whether the destination is a generic record page]
 	['tasks', `/pages/tasks/view/${ID}`, false],
-	// A page of its own, with charts: checked below.
+	// Pages of their own, with charts: checked below.
 	['expenses', `/pages/accounting/expenses/view/${ID}`, false],
-	['income', `/pages/accounting/income/view/${ID}`, true],
+	['income', `/pages/accounting/income/view/${ID}`, false],
 	['approval requests', `/pages/employees/approvals/view/${ID}`, true],
 	['organization recurring expenses', `/pages/accounting/expense-recurring/view/${ID}`, true],
 	['employee recurring expenses', `/pages/employees/recurring-expenses/view/${ID}`, true],
@@ -80,6 +81,17 @@ describe('drawer "expand to full width" links resolve to real pages', () => {
 			const chain = await resolvePagesLink(routes, `/pages/accounting/expenses/view/${ID}`, registry);
 			const page = chain[chain.length - 1];
 			expect(page.component).toBe(ExpenseViewPageComponent);
+			expect(page.data?.['recordView']).toBeUndefined();
+		},
+		120_000
+	);
+
+	it(
+		'income opens its own page, not the generic record page',
+		async () => {
+			const chain = await resolvePagesLink(routes, `/pages/accounting/income/view/${ID}`, registry);
+			const page = chain[chain.length - 1];
+			expect(page.component).toBe(IncomeViewPageComponent);
 			expect(page.data?.['recordView']).toBeUndefined();
 		},
 		120_000

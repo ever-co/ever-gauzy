@@ -94,6 +94,12 @@ export interface IRecordViewField {
 	tone?: 'success' | 'danger' | 'warning' | 'info' | 'primary';
 	/** Render the value alone, without its label (the section title already says it). */
 	hideLabel?: boolean;
+	/**
+	 * `tags` rows: `tinted` draws the chips as the tag picker shows chosen tags — a light wash of the tag's
+	 * colour, a hairline ring in it, and the name in that colour mixed toward the text. Off by default, so the
+	 * tags read as in the grid row.
+	 */
+	tagStyle?: 'tinted';
 }
 
 /**
@@ -126,6 +132,8 @@ export interface IRecordViewRow {
 	isEmpty: boolean;
 	/** Stable host object for `ga-only-tags`, which reads `rowData.tags`. */
 	tagsHost?: { tags: any[] };
+	/** The tags as `tinted` chips draw them: each name with its colour, read as CSS. */
+	tagChips?: { name: string; color: string }[];
 	/** Normalized single person for the `person` renderer. */
 	person?: IRecordViewPerson;
 	/** Normalized list for the `people` renderer. */
