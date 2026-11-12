@@ -47,6 +47,7 @@ import { FilesPanelComponent } from '../files-panel/files-panel.component';
 import { clearDraft, ComposerSubmission, MessageComposerComponent } from '../message-composer/message-composer.component';
 import { MessageAction, MessageItemComponent } from '../message-item/message-item.component';
 import { PersonAvatarComponent } from '../person-avatar/person-avatar.component';
+import { TypingIndicatorComponent } from '../typing-indicator/typing-indicator.component';
 
 /** How close to the bottom (px) counts as "reading the latest", for auto-scroll and read-on-view. */
 const NEAR_BOTTOM_PX = 80;
@@ -118,7 +119,8 @@ export function unreadMarkerId(messages: readonly IChatMessageWithRelations[], s
 		FilesPanelComponent,
 		MessageComposerComponent,
 		MessageItemComponent,
-		PersonAvatarComponent
+		PersonAvatarComponent,
+		TypingIndicatorComponent
 	],
 	template: `
 		<section class="view" data-test="conversation-view">
@@ -380,6 +382,7 @@ export function unreadMarkerId(messages: readonly IChatMessageWithRelations[], s
 				@if (conversation().archivedAt) {
 					<p class="bar notice"><nb-icon icon="archive-outline"></nb-icon> {{ 'CHAT.VIEW.ARCHIVED' | translate }}</p>
 				} @else if (isMember()) {
+					<ngx-chat-typing-indicator [conversationId]="conversation().id" [people]="people()" [meUserId]="meUserId()"></ngx-chat-typing-indicator>
 					<ngx-chat-message-composer
 						[people]="people()"
 						[conversationNames]="conversationNames()"
@@ -393,7 +396,9 @@ export function unreadMarkerId(messages: readonly IChatMessageWithRelations[], s
 						[draftKey]="draftKey()"
 						[resetToken]="resetToken()"
 						[canAttach]="canAttach()"
+						[keepsFiles]="!!editing()?.attachmentIds?.length"
 						(submitted)="onSubmit($event)"
+						(typing)="onTyping()"
 						(editCancelled)="editing.set(null)"
 					></ngx-chat-message-composer>
 				} @else {
@@ -1136,7 +1141,11 @@ export class ConversationViewComponent {
 					filter(() => isTabVisible()),
 					takeUntilDestroyed(this.destroyRef)
 				)
-				.subscribe((hint) => this.refreshMessage(id, String(hint.messageId)))
+				.subscribe((hint) => {
+					this.refreshMessage(id, String(hint.messageId));
+					// A task changed from a card is told to the messages that show it: their cards read the task again.
+					if (hint.name === CHAT_EVENT_NAMES.MESSAGE_UPDATED) this.taskStore.refreshShownBy([...this.messages(), ...this.pins()], String(hint.messageId));
+				})
 		);
 		poll.add(this.live.catchUp$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => this.catchUp(id)));
 		this.poll = poll;
@@ -1199,6 +1208,8 @@ export class ConversationViewComponent {
 					const wasNearBottom = this.isNearBottom();
 					const result = applyCatchUp(this.messages(), before, this.touched, (loaded) => reconcileWithNewest(loaded, page));
 					this.messages.set(result.messages);
+					// A task changed while no hint reached this tab (hidden, offline): its cards read it again.
+					this.taskStore.refreshAll([...result.messages, ...this.pins()]);
 					if (result.replaced) this.hasBefore.set(page.hasBefore);
 					if (!result.added.length) return;
 					if (wasNearBottom) {
@@ -1421,6 +1432,11 @@ export class ConversationViewComponent {
 
 	// ---------------------------------------------------------------- messages
 
+	/** The person types in this conversation: the other members are told (best effort). */
+	protected onTyping(): void {
+		this.api.signalTyping(String(this.conversation().id));
+	}
+
 	protected onSubmit(submission: ComposerSubmission): void {
 		const id = String(this.conversation().id);
 		const visit = this.visit;
@@ -1501,6 +1517,10 @@ export class ConversationViewComponent {
 						},
 						error: (error) => this.fail(error)
 					});
+				return;
+			case 'replaced':
+				// An app's reply to a click on one of its buttons: the message as the reply left it.
+				if (this.isCurrent(id)) this.replace(action.message);
 				return;
 			case 'pin':
 				this.api
@@ -1593,8 +1613,10 @@ export class ConversationViewComponent {
 			canManage: this.canManage(),
 			section
 		};
+		// The backdrop and Escape close through the dialog itself, which waits for a write under way (and keeps a new
+		// webhook's secret on screen) before it closes.
 		this.dialog
-			.open(ChannelSettingsDialogComponent, { context: { context } })
+			.open(ChannelSettingsDialogComponent, { context: { context }, closeOnBackdropClick: false, closeOnEsc: false })
 			.onClose.pipe(takeUntilDestroyed(this.destroyRef))
 			.subscribe((conversation: IChatConversationWithState | null | undefined) => {
 				if (conversation && this.isCurrent(id)) this.conversationChanged.emit(conversation);

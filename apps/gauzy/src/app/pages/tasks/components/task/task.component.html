@@ -19,6 +19,24 @@
 					</button>
 				}
 			</ng-template>
+			<!-- The deleted tasks, where the platform keeps a trash, for those who may delete tasks. -->
+			<ng-template [ngxPermissionsOnly]="['ALL_ORG_EDIT', 'ORG_TASK_DELETE']">
+				@if (hasTrash) {
+					<a
+						size="small"
+						nbButton
+						ghost
+						status="basic"
+						class="tasks-trash-link"
+						[routerLink]="['/pages/tasks/trash']"
+						[nbTooltip]="'TASKS_PAGE.TRASH.TITLE' | translate"
+						[attr.aria-label]="'TASKS_PAGE.TRASH.TITLE' | translate"
+					>
+						<nb-icon icon="trash-2-outline" aria-hidden="true"></nb-icon>
+						{{ 'TASKS_PAGE.TRASH.TITLE' | translate }}
+					</a>
+				}
+			</ng-template>
 		</div>
 		<div class="tasks-component__settings">
 			<div class="gauzy-button-container">

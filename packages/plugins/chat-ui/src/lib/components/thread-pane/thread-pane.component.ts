@@ -20,6 +20,7 @@ import { ChatPeople } from '../../services/chat-people.service';
 import { ChatMessagePatch, ChatThreadPage, ChatUiService, threadFieldsOf } from '../../services/chat-ui.service';
 import { clearDraft, ComposerSubmission, MessageComposerComponent } from '../message-composer/message-composer.component';
 import { MessageAction, MessageItemComponent } from '../message-item/message-item.component';
+import { TypingIndicatorComponent } from '../typing-indicator/typing-indicator.component';
 
 /**
  * A thread: its root message, the replies (the first page, more on request, newer ones as the chat events announce
@@ -31,7 +32,7 @@ import { MessageAction, MessageItemComponent } from '../message-item/message-ite
 @Component({
 	selector: 'ngx-chat-thread-pane',
 	changeDetection: ChangeDetectionStrategy.OnPush,
-	imports: [FormsModule, NbCheckboxModule, NbIconModule, NbSpinnerModule, NbTooltipModule, TranslatePipe, MessageComposerComponent, MessageItemComponent],
+	imports: [FormsModule, NbCheckboxModule, NbIconModule, NbSpinnerModule, NbTooltipModule, TranslatePipe, MessageComposerComponent, MessageItemComponent, TypingIndicatorComponent],
 	template: `
 		<aside class="thread" data-test="thread-pane">
 			<header class="header">
@@ -116,6 +117,12 @@ import { MessageAction, MessageItemComponent } from '../message-item/message-ite
 			</div>
 			@if (!readOnly()) {
 				<footer class="footer">
+					<ngx-chat-typing-indicator
+						[conversationId]="conversationId()"
+						[threadRootId]="rootMessageId()"
+						[people]="people()"
+						[meUserId]="meUserId()"
+					></ngx-chat-typing-indicator>
 					<ngx-chat-message-composer
 						[people]="people()"
 						[conversationNames]="conversationNames()"
@@ -129,7 +136,9 @@ import { MessageAction, MessageItemComponent } from '../message-item/message-ite
 						[draftKey]="draftKey()"
 						[resetToken]="resetToken()"
 						[canAttach]="canAttach()"
+						[keepsFiles]="!!editing()?.attachmentIds?.length"
 						(submitted)="onSubmit($event)"
+						(typing)="onTyping()"
 						(editCancelled)="editing.set(null)"
 					></ngx-chat-message-composer>
 					<nb-checkbox class="also" data-test="also-send" [(ngModel)]="alsoInConversation">
@@ -474,7 +483,11 @@ export class ThreadPaneComponent {
 					filter(() => isTabVisible()),
 					takeUntilDestroyed(this.destroyRef)
 				)
-				.subscribe((hint) => this.refreshMessage(id, hint))
+				.subscribe((hint) => {
+					this.refreshMessage(id, hint);
+					// A task changed from a card is told to the messages that show it: their cards read the task again.
+					if (hint.name === CHAT_EVENT_NAMES.MESSAGE_UPDATED) this.taskStore.refreshShownBy([this.root(), ...this.replies()], String(hint.messageId));
+				})
 		);
 		poll.add(this.live.catchUp$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => this.catchUp(id)));
 		this.poll = poll;
@@ -505,6 +518,9 @@ export class ThreadPaneComponent {
 					const replies = { hasAfter: page.hasAfter, messages: page.messages.filter((message) => message.id !== page.root.id) };
 					const result = applyCatchUp(this.replies(), before, this.touched, (loaded) => reconcileWithOldest(loaded, replies));
 					this.replies.set(result.messages);
+					// A task changed while no hint reached this tab (hidden, offline): its cards read it again (the replies new
+					// to the pane have their tasks read by the pane's own effect).
+					this.taskStore.refreshAll([this.root(), ...result.messages]);
 					// Every reply was loaded: the poll reads from the last one. Otherwise the first page says what follows.
 					if (!wasComplete && !result.beyond) this.hasAfter.set(page.hasAfter);
 					// The thread is marked read once the newer replies are in too (the poll's answer), never before.
@@ -616,6 +632,11 @@ export class ThreadPaneComponent {
 			});
 	}
 
+	/** The person types a reply: the conversation's other members are told, for this thread (best effort). */
+	protected onTyping(): void {
+		this.api.signalTyping(this.conversationId(), this.rootMessageId());
+	}
+
 	protected onSubmit(submission: ComposerSubmission): void {
 		const root = this.root();
 		if (!root) return;
@@ -698,6 +719,10 @@ export class ThreadPaneComponent {
 						const current = (root && root.id === message.id ? root : this.replies().find((item) => item.id === message.id)) ?? message;
 						this.replace({ id: message.id, taskReferences: withTaskReference(current, reference).taskReferences });
 					});
+				return;
+			case 'replaced':
+				// An app's reply to a click on one of its buttons: the message as the reply left it.
+				if (this.isCurrent(id)) this.replace(action.message);
 				return;
 			case 'pin':
 				this.api

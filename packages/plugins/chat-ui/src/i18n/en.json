@@ -86,6 +86,11 @@
 		"VIEW": "View thread",
 		"LAST_REPLY": "Last reply {{time}}"
 	},
+	"TYPING": {
+		"ONE": "{{name}} is typing…",
+		"TWO": "{{first}} and {{second}} are typing…",
+		"MANY": "Several people are typing…"
+	},
 	"MESSAGE": {
 		"EDITED": "edited",
 		"DELETED": "This message was deleted.",
@@ -163,7 +168,15 @@
 		"NO_CONVERSATIONS": "No conversation matches.",
 		"NOTE": "Message (optional)",
 		"SEND": "Send",
-		"SENT": "Task sent to {{name}}."
+		"SENT": "Task sent to {{name}}.",
+		"STATUS": "Status",
+		"NO_STATUS": "No status",
+		"PRIORITY": "Priority",
+		"NO_PRIORITY": "No priority",
+		"ASSIGN": "Assignees",
+		"ASSIGNED": "{{count}} assigned",
+		"CHANGE_FAILED": "The task could not be changed.",
+		"READ_FAILED": "The task could not be read again."
 	},
 	"SETTINGS": {
 		"TITLE": "Conversation settings",
@@ -180,7 +193,9 @@
 		"ADD": "Add",
 		"GROUP_FULL": "A group holds at most {{max}} people.",
 		"DEFAULT_NOTE": "Every employee is in this channel.",
-		"SAVE": "Save"
+		"SAVE": "Save",
+		"TAB_SETTINGS": "Settings",
+		"TAB_INTEGRATIONS": "Integrations"
 	},
 	"CATEGORIES": {
 		"TITLE": "Channel categories",
@@ -240,5 +255,49 @@
 		"MESSAGE": "Message",
 		"VIEW_PROFILE": "View profile",
 		"SENT": "Sent to {{name}}"
+	},
+	"APP": {
+		"PENDING": "Sending to the app…",
+		"DONE": "Sent to the app",
+		"FAILED": "The app could not be reached",
+		"CALLBACK_FAILED": "The app did not answer. Try again in a moment.",
+		"CLICK_FAILED": "The click could not be sent.",
+		"NO_INTERACTIONS": "This app no longer takes clicks.",
+		"GONE": "This button is no longer available.",
+		"NO_ANSWER_YET": "The app has not answered yet. You can click again."
+	},
+	"WEBHOOKS": {
+		"INTRO": "Incoming webhooks let automation post into this channel. Each one has its own URL; its posts show its name with an App badge.",
+		"NEW": "New webhook",
+		"CREATE": "Create webhook",
+		"EMPTY": "No webhooks yet.",
+		"FULL": "A channel has at most {{max}} webhooks; revoke one to add another.",
+		"NAME": "Name",
+		"ICON_URL": "Icon URL (optional, https)",
+		"INTERACTION_URL": "Interaction URL (optional, https)",
+		"INTERACTION_HINT": "Button clicks are posted here, signed with the signing secret. Public addresses only.",
+		"BROADCAST": "Its @channel and @here notify everyone in the channel",
+		"SHOWN_ONCE": "Copy these now for \"{{name}}\": they are shown only this once.",
+		"URL": "Webhook URL",
+		"SIGNING_SECRET": "Signing secret",
+		"COPY": "Copy",
+		"COPIED": "Copied",
+		"COPY_FAILED": "Copying did not work; select the text and copy it by hand.",
+		"LOAD_FAILED": "The webhooks of this channel could not be loaded.",
+		"RETRY": "Try again",
+		"DONE": "I have copied them",
+		"CREATED_BY": "By {{name}} on {{date}}",
+		"LAST_USED": "last used {{date}}",
+		"NEVER_USED": "never used",
+		"COUNTS": "{{accepted}} posted · {{rejected}} rejected · {{limited}} rate-limited · {{failures}} failed callbacks",
+		"REVOKED": "Revoked",
+		"EDIT": "Edit",
+		"EDIT_NAMED": "Edit {{name}}",
+		"ROTATE": "New signing secret",
+		"ROTATE_NAMED": "New signing secret for {{name}}",
+		"ROTATE_CONFIRM": "Make a new signing secret for \"{{name}}\"? The app must use the new one from now on.",
+		"REVOKE": "Revoke",
+		"REVOKE_NAMED": "Revoke {{name}}",
+		"REVOKE_CONFIRM": "Revoke \"{{name}}\"? Its URL stops working at once, and this cannot be undone."
 	}
 }

@@ -23,6 +23,7 @@ const STUBBED = Array.from(PLUGINS_SOURCE.matchAll(/from '((?:@gauzy\/plugin-|\.
 		name !== '@gauzy/plugin-inbox' &&
 		name !== '@gauzy/plugin-realtime' &&
 		name !== '@gauzy/plugin-chat' &&
+		name !== '@gauzy/plugin-task-automations' &&
 		name !== '@gauzy/plugin-email-provider-resend' &&
 		name !== '@gauzy/plugin-email-provider-postmark' &&
 		name !== '@gauzy/plugin-email-provider-mailgun' &&
@@ -44,6 +45,7 @@ class IntegrationTrelloPlugin {}
 class InboxPlugin {}
 class RealtimePlugin {}
 class ChatPlugin {}
+class TaskAutomationsPlugin {}
 class EmailProviderSesPlugin {}
 class EmailProviderSendGridPlugin {}
 class EmailProviderMailgunPlugin {}
@@ -133,6 +135,17 @@ function loadPlugins(env: Record<string, string | undefined>, before?: () => voi
 			jest.doMock('@gauzy/plugin-chat', () => ({
 				ChatPlugin,
 				isChatEnabled: jest.requireActual('../../../packages/plugins/chat/src/lib/chat-enabled').isChatEnabled
+			}));
+			jest.doMock('@gauzy/plugin-task-automations', () => ({
+				TaskAutomationsPlugin,
+				isTaskAutomationsEnabled: jest.requireActual('../../../packages/plugins/task-automations/src/lib/task-automations-enabled')
+					.isTaskAutomationsEnabled
+			}));
+			// The Docs package also exports the switch of its live sessions, called while the list is built.
+			jest.doMock('@gauzy/plugin-docs', () => ({
+				DocsPlugin: stubPluginClass(),
+				DocsLivePlugin: stubPluginClass(),
+				isDocsLiveEnabled: jest.requireActual('../../../packages/plugins/docs/src/lib/live/docs-live.config').isDocsLiveEnabled
 			}));
 			jest.doMock('@gauzy/plugin-email-provider-resend', () => ({
 				EmailProviderResendPlugin,
@@ -418,6 +431,26 @@ describe('API plugin list: Trello integration', () => {
 			const plugins = loadPlugins({ TRELLO_ENABLED: value });
 			expect(plugins.includes(IntegrationTrelloPlugin)).toBe(loaded);
 			expect(warn.mock.calls.filter(([message]) => String(message).includes('TRELLO_ENABLED'))).toHaveLength(lines);
+		} finally {
+			warn.mockRestore();
+		}
+	});
+});
+
+describe('API plugin list: task automations', () => {
+	it.each([
+		['unset (the default)', undefined, false, 0],
+		['empty', '', false, 0],
+		['false', 'false', false, 0],
+		['true', 'true', true, 0],
+		['TRUE', 'TRUE', false, 1],
+		['1', '1', false, 1]
+	])('GAUZY_TASK_AUTOMATIONS_ENABLED %s: loaded %s, %i log line(s)', (_name, value, loaded, lines) => {
+		const warn = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+		try {
+			const plugins = loadPlugins({ GAUZY_TASK_AUTOMATIONS_ENABLED: value });
+			expect(plugins.includes(TaskAutomationsPlugin)).toBe(loaded);
+			expect(warn.mock.calls.filter(([message]) => String(message).includes('GAUZY_TASK_AUTOMATIONS_ENABLED'))).toHaveLength(lines);
 		} finally {
 			warn.mockRestore();
 		}

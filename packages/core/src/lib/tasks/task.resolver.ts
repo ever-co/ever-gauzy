@@ -722,25 +722,23 @@ export class TaskResolver {
 	}
 
 	/**
-	 * Retires a task without removing it, through the service method `DELETE /api/tasks/:id/soft` calls.
-	 *
-	 * The controller inherits that route from the CRUD base without overriding it, so the route runs under
-	 * the class-level permission alone — `ALL_ORG_EDIT` — and this field states exactly that, neither wider
-	 * nor narrower than REST. The service resolves the row through the tenant-scoped read before it touches
-	 * it, so a task of another tenant is a miss, never a write.
+	 * Moves a task to the trash without removing it, through the service method `DELETE /api/tasks/:id/soft` calls,
+	 * under the same grants as that route and as a delete: with `ORG_TASK_EDIT` alone, only a manager of one of the
+	 * task's teams may (the service checks it). The service resolves the row through the tenant-scoped read before it
+	 * touches it, so a task of another tenant is a miss, never a write.
 	 */
 	@Mutation('softDeleteTask')
-	@Permissions(PermissionsEnum.ALL_ORG_EDIT)
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TASK_DELETE, PermissionsEnum.ORG_TASK_EDIT)
 	async softDeleteTask(@Args('id', { type: () => ID }) id: Id): Promise<Task> {
 		return await this.taskService.softRemove(id);
 	}
 
 	/**
-	 * Restores a retired task through the service method `PUT /api/tasks/:id/recover` calls, under the
-	 * permission that inherited route runs under — the class-level `ALL_ORG_EDIT`, as above.
+	 * Restores a task from the trash through the service method `PUT /api/tasks/:id/recover` calls, under the grants
+	 * of that route, as above.
 	 */
 	@Mutation('recoverTask')
-	@Permissions(PermissionsEnum.ALL_ORG_EDIT)
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TASK_DELETE, PermissionsEnum.ORG_TASK_EDIT)
 	async recoverTask(@Args('id', { type: () => ID }) id: Id): Promise<Task> {
 		return await this.taskService.softRecover(id);
 	}

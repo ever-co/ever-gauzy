@@ -7,14 +7,16 @@ import { ChatMessageKindEnum, ISearchIndexRegistration, PermissionsEnum, SearchF
  * declaration is private (`privateScope`), so the generic search, suggestion and facet routes leave it out and
  * only `SearchService.searchWithin`, which that route calls with the caller's conversations as a filter, reaches it. Only a
  * member's message is indexed (a system line, or an integration's post, is not what a person searches for), and a
- * deleted message keeps its row with an empty body, so it matches nothing.
+ * deleted message keeps its row with an empty body, so it matches nothing. A message's files are searched by the
+ * names they had when it was sent (`attachmentNames`, one per line): a message of files only has no body, and is
+ * found, and titled, by them.
  */
 export const CHAT_MESSAGE_INDEX: ISearchIndexRegistration = {
 	entity: 'chat_message',
 	label: 'Chat messages',
 	permission: PermissionsEnum.CHAT_VIEW,
-	titleTemplate: '{{body}}',
-	bodyTemplate: '{{body}}',
+	titleTemplate: '{{body}} {{attachmentNames}}',
+	bodyTemplate: '{{body}} {{attachmentNames}}',
 	keywordFields: ['conversationId', 'authorEmployeeId', 'kind'],
 	visibleWhen: { field: 'kind', values: [ChatMessageKindEnum.MESSAGE] },
 	privateScope: true,
@@ -27,6 +29,14 @@ export const CHAT_MESSAGE_INDEX: ISearchIndexRegistration = {
 			name: 'body',
 			kind: SearchFieldKind.TEXT,
 			weight: 3,
+			searchable: true,
+			filterable: false,
+			facetable: false
+		},
+		{
+			name: 'attachmentNames',
+			kind: SearchFieldKind.TEXT,
+			weight: 2,
 			searchable: true,
 			filterable: false,
 			facetable: false

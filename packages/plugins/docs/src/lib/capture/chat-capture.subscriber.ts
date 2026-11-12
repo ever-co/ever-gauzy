@@ -15,6 +15,7 @@ import {
 import { EventBus, FileStorage, readStorageFileAsBuffer } from '@gauzy/core';
 import { Document } from '../entities/document.entity';
 import { TypeOrmDocumentRepository } from '../repositories/type-orm-document.repository';
+import { ImportTenantStorage } from '../import/import-tenant-storage';
 import { DocumentProcessingService } from '../services/document-processing.service';
 import { canonicalExtension, sniffFile } from '../services/file-sniffer';
 
@@ -78,7 +79,8 @@ export class ChatCaptureSubscriber implements OnModuleInit, OnModuleDestroy {
 	constructor(
 		private readonly eventBus: EventBus,
 		private readonly typeOrmDocumentRepository: TypeOrmDocumentRepository,
-		private readonly processingService: DocumentProcessingService
+		private readonly processingService: DocumentProcessingService,
+		private readonly tenantStorage: ImportTenantStorage
 	) {}
 
 	/** Whether a live subscription was established (as opposed to the no-op fallback). */
@@ -132,10 +134,15 @@ export class ChatCaptureSubscriber implements OnModuleInit, OnModuleDestroy {
 		const fileName = String(payload.file.originalname ?? payload.file.filename ?? 'attachment').slice(0, 255);
 
 		try {
-			const provider = new FileStorage().getProvider();
-			// As bytes whatever the provider answers (the S3 family returns the SDK's body stream). A file that cannot
-			// be read throws here, into the catch below, so nothing is deleted on a failed read.
-			const buffer = await readStorageFileAsBuffer(provider, payload.file.key);
+			// The storage work runs with the tenant's own storage settings (an event off the request path carries none):
+			// the attachment is read from, and a rejected one removed from, the bucket the chat stored it in.
+			const fileKey = payload.file.key;
+			const { provider, buffer } = await this.tenantStorage.run(payload.tenantId, async () => {
+				const provider = new FileStorage().getProvider();
+				// As bytes whatever the provider answers (the S3 family returns the SDK's body stream). A file that
+				// cannot be read throws here, into the catch below, so nothing is deleted on a failed read.
+				return { provider, buffer: await readStorageFileAsBuffer(provider, fileKey) };
+			});
 
 			// The same magic-byte gauntlet as the upload endpoint — a chat attachment is
 			// user-supplied content and gets no discount.
@@ -149,7 +156,9 @@ export class ChatCaptureSubscriber implements OnModuleInit, OnModuleDestroy {
 				// zero-length Buffer is a successful read of an empty file (which sniffFile rejects) — that
 				// one IS ours to clean up.
 				try {
-					await provider.deleteFile(payload.file.key);
+					await this.tenantStorage.run(payload.tenantId, async () => {
+						await new FileStorage().getProvider().deleteFile(fileKey);
+					});
 				} catch (error) {
 					this.logger.warn(
 						`Could not remove rejected chat attachment '${payload.file.key}': ${error?.message ?? error}`

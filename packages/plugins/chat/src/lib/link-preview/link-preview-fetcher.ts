@@ -53,6 +53,12 @@ export type LinkPreviewFetchOutcome =
 			status?: number;
 	  };
 
+/**
+ * The failed half of {@link LinkPreviewFetchOutcome}. The API and worker builds compile this plugin with
+ * `strictNullChecks` off, where `if (!outcome.ok)` does not narrow the union, so a failure is read through this type.
+ */
+export type LinkPreviewFetchFailed = Extract<LinkPreviewFetchOutcome, { ok: false }>;
+
 /** Resolves a host name to its addresses. A seam: specs answer without a network. */
 export type LinkPreviewResolver = EgressResolver;
 
@@ -176,6 +182,7 @@ export function charsetOf(contentType: string | null | undefined): string | null
  */
 export function isTransientFailure(outcome: LinkPreviewFetchOutcome): boolean {
 	if (outcome.ok) return false;
-	if (outcome.reason === 'timeout' || outcome.reason === 'error') return true;
-	return outcome.reason === 'status' && !!outcome.status && (outcome.status >= 500 || outcome.status === 429);
+	const { reason, status } = outcome as LinkPreviewFetchFailed;
+	if (reason === 'timeout' || reason === 'error') return true;
+	return reason === 'status' && !!status && (status >= 500 || status === 429);
 }

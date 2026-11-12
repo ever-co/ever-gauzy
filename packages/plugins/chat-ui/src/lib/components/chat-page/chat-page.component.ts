@@ -1,6 +1,6 @@
 import { DatePipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { ChangeDetectionStrategy, Component, computed, DestroyRef, ElementRef, inject, NgZone, OnInit, Signal, signal, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, DestroyRef, ElementRef, inject, NgZone, OnInit, type Signal, signal, viewChild } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, NavigationEnd, Router, RouterLink } from '@angular/router';
 import { NbCardModule, NbDialogService, NbIconModule, NbSpinnerModule } from '@nebular/theme';
@@ -18,9 +18,9 @@ import {
 	isUnread,
 	memberEmployeeIds,
 	membershipOf,
+	messagePreview,
 	newNonce,
 	personTriggerOf,
-	plainBody,
 	sortConversations
 } from '../../chat-ui.helpers';
 import { ChatAvailabilityService, isFinalRefusal } from '../../services/chat-availability.service';
@@ -1373,7 +1373,7 @@ export class ChatPageComponent implements OnInit {
 	}
 
 	protected preview(thread: ChatFollowedThread): string {
-		return plainBody(thread.body ?? '', this.people().byEmployee, this.conversationNames());
+		return messagePreview(thread, this.people().byEmployee, this.conversationNames());
 	}
 
 	protected link(conversationId: string): string {

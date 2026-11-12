@@ -9,12 +9,15 @@ import {
 	DocumentVisibilityEnum,
 	IChatCategory,
 	IChatCategoryInput,
+	IChatCategoryReorderInput,
+	IChatCategoryReorderResult,
 	IChatConversationCreateInput,
 	IChatConversationList,
 	IChatConversationUpdateInput,
 	IChatConversationWithState,
 	IChatCreateTaskInput,
 	IChatCreateTaskResult,
+	IChatDraftDiscardResult,
 	IChatEvent,
 	IChatFilesQuery,
 	IChatFilesResult,
@@ -30,9 +33,14 @@ import {
 	IChatReadAllResult,
 	IChatSendResult,
 	IChatStates,
+	IChatTaskUpdateInput,
+	IChatTaskUpdateResult,
+	IChatTypingInput,
+	IChatTypingResult,
 	ID
 } from '@gauzy/contracts';
 import { API_PREFIX, toParams } from '@gauzy/ui-core/common';
+import { typingRefusalOf } from '../chat-typing';
 import { CHAT_PAGE_SIZE } from '../chat-ui.constants';
 
 const CHAT = `${API_PREFIX}/chat`;
@@ -124,6 +132,10 @@ export function memberStateFromEvents(
 @Injectable({ providedIn: 'root' })
 export class ChatUiService {
 	private readonly http = inject(HttpClient);
+	/** The platform has no typing route: the composer stops asking (for the page). */
+	private typingOff = false;
+	/** The places (`conversation:thread`) that refused a typing signal. */
+	private readonly typingRefused = new Set<string>();
 	private readonly changes = new Subject<void>();
 
 	/** Emits when the page changed my state (read, sent, joined), so the badge counts again at once. */
@@ -213,6 +225,11 @@ export class ChatUiService {
 		return this.http.patch<IChatCategory>(`${CHAT}/categories/${path(id)}`, input);
 	}
 
+	/** Saves the order of the categories (and of the channels within them) in one call (`CHAT_MANAGE`). */
+	reorderCategories(input: IChatCategoryReorderInput): Observable<IChatCategoryReorderResult> {
+		return this.http.post<IChatCategoryReorderResult>(`${CHAT}/categories/reorder`, input);
+	}
+
 	/** Deletes a category; its channels stay, uncategorized (`CHAT_MANAGE`). */
 	deleteCategory(id: ID): Observable<void> {
 		return this.http.delete<void>(`${CHAT}/categories/${path(id)}`);
@@ -254,6 +271,40 @@ export class ChatUiService {
 	/** Creates a task from a message (`ORG_TASK_ADD` too); the message keeps a reference to it. */
 	createTask(messageId: ID, input: IChatCreateTaskInput): Observable<IChatCreateTaskResult> {
 		return this.http.post<IChatCreateTaskResult>(`${CHAT}/messages/${path(messageId)}/create-task`, input);
+	}
+
+	/**
+	 * Changes a task from its card in a message (status, priority, assignees): the platform's task update, with the
+	 * task page's permission (`ORG_TASK_EDIT`) and activity log.
+	 */
+	updateTask(messageId: ID, taskId: ID, input: IChatTaskUpdateInput): Observable<IChatTaskUpdateResult> {
+		return this.http.patch<IChatTaskUpdateResult>(`${CHAT}/messages/${path(messageId)}/tasks/${path(taskId)}`, input);
+	}
+
+	/** Tells the other members that I am typing here (or in a thread); nothing is stored. */
+	typing(conversationId: ID, input: IChatTypingInput = {}): Observable<IChatTypingResult> {
+		return this.http.post<IChatTypingResult>(`${CHAT}/conversations/${path(conversationId)}/typing`, input);
+	}
+
+	/**
+	 * The composer's "I am typing" (best effort; nothing waits on it). A place that refuses it (not a member, archived)
+	 * is not asked again; a platform without the route is not asked again for the page.
+	 */
+	signalTyping(conversationId: ID, threadRootId: ID | null = null): void {
+		const place = `${conversationId}:${threadRootId ?? ''}`;
+		if (this.typingOff || this.typingRefused.has(place)) return;
+		this.typing(conversationId, threadRootId ? { threadRootId } : {}).subscribe({
+			error: (error: unknown) => {
+				const refusal = typingRefusalOf(error);
+				if (refusal === 'route') this.typingOff = true;
+				else if (refusal === 'place') this.typingRefused.add(place);
+			}
+		});
+	}
+
+	/** Discards a file I uploaded for a message and will not send (its document and stored bytes go). */
+	discardAttachment(documentId: ID): Observable<IChatDraftDiscardResult> {
+		return this.http.delete<IChatDraftDiscardResult>(`${CHAT}/attachments/${path(documentId)}`);
 	}
 
 	react(messageId: ID, emoji: string, on: boolean): Observable<IChatSendResult> {

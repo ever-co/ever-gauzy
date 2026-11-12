@@ -1,17 +1,20 @@
+// cspell:ignore referrerpolicy
 import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, input, output, signal } from '@angular/core';
 import { DomSanitizer } from '@angular/platform-browser';
-import { RouterLink } from '@angular/router';
 import { NbIconModule, NbTooltipModule } from '@nebular/theme';
 import { TranslatePipe } from '@ngx-translate/core';
 import { ChatMessageKindEnum, IChatFile, IChatMessageWithRelations } from '@gauzy/contracts';
+import { appBlocksOf, bodyRepeatsBlocks, safeIconUrl } from '../../chat-app-blocks';
 import { ChatTaskSummary } from '../../chat-tasks';
-import { CHAT_QUICK_REACTIONS, CHAT_TASK_LINK, CHAT_TOOLBAR_REACTIONS } from '../../chat-ui.constants';
+import { CHAT_QUICK_REACTIONS, CHAT_TOOLBAR_REACTIONS } from '../../chat-ui.constants';
 import { mentionsMe, renderBodyHtml } from '../../chat-ui.helpers';
 import { ChatPeople } from '../../services/chat-people.service';
+import { AppBlocksComponent } from '../app-blocks/app-blocks.component';
 import { LinkCardsComponent } from '../link-cards/link-cards.component';
 import { MessageAttachmentsComponent } from '../message-attachments/message-attachments.component';
 import { PersonAvatarComponent } from '../person-avatar/person-avatar.component';
+import { TaskCardComponent } from '../task-card/task-card.component';
 
 /** What a message's toolbar asks of the conversation. */
 export type MessageAction =
@@ -22,7 +25,9 @@ export type MessageAction =
 	| { kind: 'react'; emoji: string; on: boolean }
 	| { kind: 'unread' }
 	| { kind: 'follow'; following: boolean }
-	| { kind: 'createTask' };
+	| { kind: 'createTask' }
+	/** An app's reply to a click replaced the message (an incoming webhook's post). */
+	| { kind: 'replaced'; message: IChatMessageWithRelations };
 
 /**
  * One message, laid out as chat apps do: the avatar in a gutter (the time there instead when it continues the
@@ -35,7 +40,7 @@ export type MessageAction =
 @Component({
 	selector: 'ngx-chat-message-item',
 	changeDetection: ChangeDetectionStrategy.OnPush,
-	imports: [DatePipe, RouterLink, NbIconModule, NbTooltipModule, TranslatePipe, LinkCardsComponent, MessageAttachmentsComponent, PersonAvatarComponent],
+	imports: [DatePipe, NbIconModule, NbTooltipModule, TranslatePipe, AppBlocksComponent, LinkCardsComponent, MessageAttachmentsComponent, PersonAvatarComponent, TaskCardComponent],
 	template: `
 		<article
 			class="message"
@@ -58,6 +63,9 @@ export type MessageAction =
 				@if (!continued()) {
 					@if (message().kind === 'system') {
 						<span class="system-icon"><nb-icon icon="info-outline"></nb-icon></span>
+					} @else if (appIcon(); as icon) {
+						<!-- An app (an incoming webhook): its https icon in place of an avatar. -->
+						<img class="app-icon" [src]="icon" alt="" referrerpolicy="no-referrer" loading="lazy" data-test="app-icon" (error)="iconFailed.set(icon)" />
 					} @else {
 						<!-- A person: hover, focus, Enter or Space opens their profile card (the chat page shows it). -->
 						<ngx-chat-person-avatar
@@ -87,8 +95,8 @@ export type MessageAction =
 							[attr.aria-haspopup]="personId() ? 'dialog' : null"
 							>{{ authorName() }}</span
 						>
-						@if (message().kind === 'app' && message().appName) {
-							<span class="tag">{{ 'CHAT.MESSAGE.APP' | translate }}</span>
+						@if (message().kind === 'app') {
+							<span class="tag app" data-test="app-badge">{{ 'CHAT.MESSAGE.APP' | translate }}</span>
 						}
 						<time class="time" [attr.datetime]="message().createdAt" [attr.title]="message().createdAt | date: 'medium'">{{ message().createdAt | date: 'shortTime' }}</time>
 					</header>
@@ -98,39 +106,30 @@ export type MessageAction =
 					<p class="deleted"><nb-icon icon="trash-2-outline"></nb-icon> {{ 'CHAT.MESSAGE.DELETED' | translate }}</p>
 				} @else {
 					<div class="body" data-test="message-body">
-						<div class="markdown" [innerHTML]="html()"></div>
+						@if (!bodyHidden()) {
+							<div class="markdown" [innerHTML]="html()"></div>
+						}
 						@if (message().editedAt) {
 							<span class="edited" [attr.title]="message().editedAt | date: 'medium'">({{ 'CHAT.MESSAGE.EDITED' | translate }})</span>
 						}
 					</div>
-					<ngx-chat-link-cards [body]="message().body ?? ''"></ngx-chat-link-cards>
+					@if (appBlocks().length) {
+						<ngx-chat-app-blocks [message]="message()" [readOnly]="readOnly()" (replaced)="act({ kind: 'replaced', message: $event })"></ngx-chat-app-blocks>
+					}
+					<!-- A body that only repeats the app blocks is not shown, nor are cards for its links. -->
+					<ngx-chat-link-cards [body]="bodyHidden() ? '' : (message().body ?? '')"></ngx-chat-link-cards>
 				}
 
 				@if (message().taskReferences?.length) {
 					<div class="cards">
 						@for (reference of message().taskReferences ?? []; track reference.taskId) {
-							<a class="task-card" [routerLink]="taskLink(reference.taskId)" data-test="task-card" [attr.title]="'CHAT.MESSAGE.OPEN_TASK' | translate">
-								<span class="task-icon"><nb-icon icon="checkmark-square-2-outline"></nb-icon></span>
-								<span class="task-text">
-									@if (tasks().get(reference.taskId); as task) {
-										<strong class="task-title">{{ task.title }}</strong>
-										@if (task.key || task.status) {
-											<span class="task-meta">
-												@if (task.key) {
-													<span class="task-id">{{ task.key }}</span>
-												}
-												@if (task.status) {
-													<span class="task-status">{{ task.status }}</span>
-												}
-											</span>
-										}
-									} @else {
-										<strong>{{ 'CHAT.MESSAGE.TASK' | translate }}</strong>
-										<span class="task-id">{{ reference.taskId }}</span>
-									}
-								</span>
-								<nb-icon class="task-go" icon="arrow-ios-forward-outline"></nb-icon>
-							</a>
+							<ngx-chat-task-card
+								[messageId]="message().id"
+								[taskId]="reference.taskId"
+								[summary]="tasks().get(reference.taskId)"
+								[people]="people()"
+								[editable]="!readOnly() && !message().deletedAt"
+							></ngx-chat-task-card>
 						}
 					</div>
 				}
@@ -290,6 +289,12 @@ export type MessageAction =
 				display: flex;
 				justify-content: center;
 				padding-top: 0.125rem;
+			}
+			.app-icon {
+				width: 2.25rem;
+				height: 2.25rem;
+				border-radius: var(--border-radius);
+				object-fit: cover;
 			}
 			.system-icon {
 				display: inline-flex;
@@ -463,72 +468,6 @@ export type MessageAction =
 				flex-wrap: wrap;
 				gap: 0.375rem;
 				margin-top: 0.375rem;
-			}
-			.task-card {
-				display: inline-flex;
-				align-items: center;
-				gap: 0.625rem;
-				min-width: 14rem;
-				max-width: 100%;
-				padding: 0.5rem 0.625rem;
-				border: 1px solid var(--chat-border, rgba(127, 127, 127, 0.3));
-				border-left: 4px solid var(--chat-accent, #3366ff);
-				border-radius: 0.375rem;
-				background: var(--chat-bg, transparent);
-				color: inherit;
-				text-decoration: none;
-				transition: border-color 0.12s ease, background-color 0.12s ease;
-			}
-			.task-card:hover {
-				background: var(--chat-hover, rgba(127, 127, 127, 0.08));
-				text-decoration: none;
-			}
-			.task-icon {
-				display: inline-flex;
-				align-items: center;
-				justify-content: center;
-				width: 2rem;
-				height: 2rem;
-				border-radius: 0.375rem;
-				background: var(--chat-accent-soft, rgba(51, 102, 255, 0.12));
-				color: var(--chat-accent, #3366ff);
-			}
-			.task-text {
-				display: flex;
-				flex-direction: column;
-				flex: 1 1 auto;
-				min-width: 0;
-				font-size: 0.75rem;
-			}
-			.task-id {
-				overflow: hidden;
-				text-overflow: ellipsis;
-				white-space: nowrap;
-				color: var(--chat-muted, inherit);
-				font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-				font-size: 0.6875rem;
-			}
-			.task-go {
-				color: var(--chat-muted, inherit);
-			}
-			.task-title {
-				max-width: 24rem;
-				overflow: hidden;
-				text-overflow: ellipsis;
-				white-space: nowrap;
-			}
-			.task-meta {
-				display: flex;
-				align-items: center;
-				gap: 0.375rem;
-				min-width: 0;
-			}
-			.task-status {
-				padding: 0 0.375rem;
-				border-radius: 999px;
-				background: var(--chat-hover, var(--background-basic-color-3));
-				color: var(--chat-muted, inherit);
-				font-size: 0.6875rem;
 			}
 			.reactions {
 				display: flex;
@@ -803,6 +742,17 @@ export class MessageItemComponent {
 		const meUser = this.meUserId();
 		return (!!me && String(message.authorEmployeeId) === me) || (!!meUser && String(message.authorUserId) === meUser);
 	});
+	/** The blocks of an app message (none for a member's message). */
+	protected readonly appBlocks = computed(() => appBlocksOf(this.message()));
+	/** An app message whose body only repeats its blocks shows the blocks alone. */
+	protected readonly bodyHidden = computed(() => bodyRepeatsBlocks(this.message().body, this.appBlocks()));
+	/** The icon of the app that posted the message (https only), shown in place of an avatar. */
+	/** An app icon that did not load: the initials avatar shows instead (as for a person whose picture failed). */
+	protected readonly iconFailed = signal<string | null>(null);
+	protected readonly appIcon = computed(() => {
+		const icon = this.message().kind === ChatMessageKindEnum.APP ? safeIconUrl(this.message().appIconUrl) : null;
+		return icon && icon !== this.iconFailed() ? icon : null;
+	});
 	/** Someone else's message that names me (or everyone): tinted, as chat apps do. */
 	protected readonly mentioned = computed(() => {
 		const message = this.message();
@@ -811,10 +761,6 @@ export class MessageItemComponent {
 	protected readonly html = computed(() =>
 		renderBodyHtml(this.message().body ?? '', this.people().byEmployee, this.conversationNames(), this.meEmployeeId(), this.sanitizer)
 	);
-
-	protected taskLink(taskId: string): string {
-		return `${CHAT_TASK_LINK}/${encodeURIComponent(taskId)}`;
-	}
 
 	protected hasMine(emoji: string): boolean {
 		return this.message().reactions?.some((reaction) => reaction.emoji === emoji && reaction.mine) ?? false;

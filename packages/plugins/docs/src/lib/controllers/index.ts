@@ -1,4 +1,6 @@
 import { DocumentController } from './document.controller';
+import { DocumentImportController } from './document-import.controller';
+import { DocumentPdfController } from './document-pdf.controller';
 import { DocumentCategoryController } from './document-category.controller';
 import { DocumentKnowledgeController } from './document-knowledge.controller';
 import { DocumentLinkController } from './document-link.controller';
@@ -13,6 +15,8 @@ import { DocumentUploadController } from './document-upload.controller';
 import { DocumentVersionController } from './document-version.controller';
 
 export * from './document.controller';
+export * from './document-import.controller';
+export * from './document-pdf.controller';
 export * from './document-category.controller';
 export * from './document-knowledge.controller';
 export * from './document-link.controller';
@@ -41,6 +45,10 @@ export * from './document-version.controller';
 export const Controllers = [
 	// Before DocumentController: its static `/documents/spaces` must beat `/documents/:id`.
 	DocumentCollaborationController,
+	// Before DocumentController: `/documents/:id/export.pdf` beside the generic `/documents/:id` routes; `/imports` is
+	// its own prefix.
+	DocumentImportController,
+	DocumentPdfController,
 	DocumentUploadController,
 	DocumentKnowledgeController,
 	DocumentReviewController,
