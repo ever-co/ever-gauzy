@@ -1,0 +1,97 @@
+jest.mock('@gauzy/core', () => {
+	const decorator = () => () => undefined;
+	class Guard {
+		canActivate() {
+			return true;
+		}
+	}
+	return {
+		TenantOrganizationBaseDTO: class TenantOrganizationBaseDTO {},
+		PermissionGuard: Guard,
+		TenantPermissionGuard: Guard,
+		Permissions: decorator,
+		UseValidationPipe: decorator,
+		UUIDValidationPipe: class UUIDValidationPipe {},
+		RequestContext: { currentTenantId: () => null, currentUserId: () => null }
+	};
+});
+jest.mock('./entities/jira-project-mapping.entity', () => ({ JiraSyncDirection: { INBOUND: 'inbound', OUTBOUND: 'outbound', BOTH: 'both' } }));
+jest.mock('./entities/jira-sync-conflict.entity', () => ({ JiraSyncConflictStatus: { OPEN: 'open', RESOLVED: 'resolved' } }));
+jest.mock('./entities/jira-sync-run.entity', () => ({}));
+jest.mock('./jira-tenant.service', () => ({ JiraTenantService: class JiraTenantService {} }));
+jest.mock('./jira-mapping.service', () => ({ JiraMappingService: class JiraMappingService {} }));
+jest.mock('./jira-sync-run.service', () => ({ JiraSyncRunService: class JiraSyncRunService {}, parseRunReport: () => null }));
+jest.mock('./jira-sync-conflict.service', () => ({ JiraSyncConflictService: class JiraSyncConflictService {} }));
+jest.mock('./jira-oauth-state.service', () => ({ JiraOAuthStateService: class JiraOAuthStateService {} }));
+jest.mock('./sync/jira-sync.service', () => ({ JiraSyncService: class JiraSyncService {} }));
+jest.mock('./sync/jira-webhook.service', () => ({ JiraWebhookService: class JiraWebhookService {} }));
+jest.mock('./sync/jira-issue.mapper', () => ({ DEFAULT_STATUS_MAP: {}, parseIssueTypeIds: () => [], parseStatusMap: () => ({}) }));
+jest.mock('./client/jira-api.client', () => ({ accessibleJiraSites: jest.fn() }));
+
+import { ConflictException, NotFoundException } from '@nestjs/common';
+import { accessibleJiraSites } from './client/jira-api.client';
+import { JiraCloudController } from './jira-cloud.controller';
+import { JiraCloudConfig } from './jira-config';
+import { JIRA_SITE_HAS_MAPPINGS, JIRA_SITE_NOT_FOUND } from './jira.constants';
+
+const SITE_A = { id: 'cloud-a', name: 'Site A', url: 'https://a.atlassian.net', scopes: ['read:jira-work'] };
+const SITE_B = { id: 'cloud-b', name: 'Site B', url: 'https://b.atlassian.net', scopes: ['read:jira-work'] };
+
+function setup(options: { current: string | null; mappings: number }) {
+	const tenant = { id: 'integration-1', tenantId: 'tenant-1', organizationId: 'org-1' };
+	const tenants = {
+		requireById: jest.fn(async () => tenant),
+		accessTokenReady: jest.fn(async () => 'access-token'),
+		summaryOf: jest.fn(() => ({ id: tenant.id, cloudId: options.current })),
+		clientForSite: jest.fn(() => ({ myself: jest.fn(async () => ({ accountId: 'me' })) })),
+		selectSite: jest.fn(async () => tenant)
+	};
+	const mappings = { list: jest.fn(async () => Array.from({ length: options.mappings }, (_, index) => ({ id: `mapping-${index}` }))) };
+	const webhooks = { remove: jest.fn(async () => undefined), ensure: jest.fn(async () => 'registered') };
+	const config = { apiUrl: 'https://api.example.test' } as JiraCloudConfig;
+	const controller = new JiraCloudController(config, tenants as never, mappings as never, {} as never, {} as never, webhooks as never, {} as never, {} as never);
+	// The webhook of the new site is registered behind the answer; not this spec's subject.
+	(controller as unknown as { ensureWebhookLater: (tenant: unknown) => void }).ensureWebhookLater = () => undefined;
+	(accessibleJiraSites as jest.Mock).mockResolvedValue([SITE_A, SITE_B]);
+	return { controller, tenants, mappings, webhooks };
+}
+
+describe('PUT /integration/jira/:integrationId/site', () => {
+	it('chooses the first site of a connection that has none, without reading its mappings', async () => {
+		const { controller, tenants, mappings, webhooks } = setup({ current: null, mappings: 0 });
+		await controller.selectSite('integration-1' as never, { cloudId: SITE_B.id } as never);
+		expect(mappings.list).not.toHaveBeenCalled();
+		expect(webhooks.remove).not.toHaveBeenCalled();
+		expect(tenants.selectSite).toHaveBeenCalledWith(expect.anything(), SITE_B, { accountId: 'me' });
+	});
+
+	it('moves a connection without mappings to another site, and removes the former site webhook', async () => {
+		const { controller, tenants, webhooks } = setup({ current: SITE_A.id, mappings: 0 });
+		await controller.selectSite('integration-1' as never, { cloudId: SITE_B.id } as never);
+		expect(webhooks.remove).toHaveBeenCalledTimes(1);
+		expect(tenants.selectSite).toHaveBeenCalledWith(expect.anything(), SITE_B, { accountId: 'me' });
+	});
+
+	it('refuses (409) to move a connection that has mappings: their project ids are only unique on the former site', async () => {
+		const { controller, tenants, webhooks } = setup({ current: SITE_A.id, mappings: 2 });
+		const answer = controller.selectSite('integration-1' as never, { cloudId: SITE_B.id } as never);
+		await expect(answer).rejects.toBeInstanceOf(ConflictException);
+		await expect(answer).rejects.toMatchObject({ response: { code: JIRA_SITE_HAS_MAPPINGS } });
+		expect(webhooks.remove).not.toHaveBeenCalled();
+		expect(tenants.selectSite).not.toHaveBeenCalled();
+	});
+
+	it('lets a connection with mappings choose its own site again', async () => {
+		const { controller, tenants, webhooks } = setup({ current: SITE_A.id, mappings: 2 });
+		await controller.selectSite('integration-1' as never, { cloudId: SITE_A.id } as never);
+		expect(webhooks.remove).not.toHaveBeenCalled();
+		expect(tenants.selectSite).toHaveBeenCalledWith(expect.anything(), SITE_A, { accountId: 'me' });
+	});
+
+	it('answers 404 for a site the token does not reach', async () => {
+		const { controller } = setup({ current: null, mappings: 0 });
+		const answer = controller.selectSite('integration-1' as never, { cloudId: 'cloud-z' } as never);
+		await expect(answer).rejects.toBeInstanceOf(NotFoundException);
+		await expect(answer).rejects.toMatchObject({ response: { code: JIRA_SITE_NOT_FOUND } });
+	});
+});

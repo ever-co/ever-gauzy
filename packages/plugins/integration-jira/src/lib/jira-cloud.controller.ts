@@ -1,4 +1,4 @@
-import { BadRequestException, Body, Controller, Delete, Get, HttpCode, HttpStatus, Inject, Logger, NotFoundException, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
+import { BadRequestException, Body, ConflictException, Controller, Delete, Get, HttpCode, HttpStatus, Inject, Logger, NotFoundException, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ID, IIntegrationTenant, PermissionsEnum } from '@gauzy/contracts';
 import { PermissionGuard, Permissions, RequestContext, TenantPermissionGuard, UUIDValidationPipe, UseValidationPipe } from '@gauzy/core';
@@ -30,6 +30,7 @@ import {
 	JIRA_OAUTH_AUDIENCE,
 	JIRA_OAUTH_SCOPES,
 	JIRA_ROUTE_PREFIX,
+	JIRA_SITE_HAS_MAPPINGS,
 	JIRA_SITE_NOT_FOUND
 } from './jira.constants';
 import { JiraSyncService } from './sync/jira-sync.service';
@@ -141,7 +142,9 @@ export class JiraCloudController {
 
 	/**
 	 * Chooses the connection's site: one of the sites its token reaches. Moving to another site removes the webhook of
-	 * the former one; the webhook of the new one is registered behind the answer.
+	 * the former one; the webhook of the new one is registered behind the answer. A connection that has mappings keeps
+	 * its site (409 `JIRA_SITE_HAS_MAPPINGS`): a mapping names its Jira project by an id that is unique only on its site,
+	 * so on another site it could name another project. Its mappings are removed first.
 	 */
 	@ApiOperation({ summary: 'Choose the Jira site of a connection' })
 	@Put('/:integrationId/site')
@@ -152,7 +155,11 @@ export class JiraCloudController {
 		const site = sites.find((candidate) => candidate.id === body.cloudId);
 		if (!site) throw new NotFoundException({ message: 'The connection cannot reach that Jira site', code: JIRA_SITE_NOT_FOUND });
 		const current = this.tenants.summaryOf(tenant).cloudId;
-		if (current && current !== site.id) await this.webhooks.remove(tenant);
+		const moving = !!current && current !== site.id;
+		if (moving && (await this.mappings.list(tenant)).length > 0) {
+			throw new ConflictException({ message: 'A connection with mappings keeps its Jira site; remove its mappings first', code: JIRA_SITE_HAS_MAPPINGS });
+		}
+		if (moving) await this.webhooks.remove(tenant);
 		const myself = await this.tenants.clientForSite(tenant, site.id).myself();
 		await this.tenants.selectSite(tenant, site, myself);
 		this.ensureWebhookLater(tenant);

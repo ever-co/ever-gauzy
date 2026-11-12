@@ -35,7 +35,8 @@ whose routes share the `/integration/jira` prefix and must be registered first.
   renewal at a time per connection, and the refresh token rotates on every renewal.
 - **Site.** The callback reads the sites the token reaches (`accessible-resources`). With one site the connection uses
   it at once; with several it waits until someone picks one: `GET …/:integrationId/sites`, `PUT …/:integrationId/site`.
-  Nothing syncs until a site is chosen.
+  Nothing syncs until a site is chosen. A connection that has mappings keeps its site (`409`
+  `JIRA_SITE_HAS_MAPPINGS`): a mapping names its Jira project by an id that is unique only on its site.
 - **Map.** `GET …/projects` lists the site's projects and `GET …/projects/:projectId` adds a project's issue types and
   statuses. `POST …/mappings` maps a Jira project to a platform project with a `direction` (`inbound`, `outbound`,
   `both`), a status map (the task status for each status category `new`, `indeterminate` and `done`, plus
