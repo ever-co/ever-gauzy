@@ -39,6 +39,25 @@ describe('status categories', () => {
 		expect(statusRowOf({ status: 'nothing', taskStatusId: null }, STATUSES)).toBeUndefined();
 	});
 
+	it('never takes another project’s row for a value, a name or a category', () => {
+		// `shipped` is project-web's own status: a task of no project, or of another project, has no row of it.
+		expect(statusRowOf({ status: 'shipped', taskStatusId: null }, STATUSES)).toBeUndefined();
+		expect(statusRowOf({ status: 'shipped', taskStatusId: null, projectId: 'project-other' }, STATUSES)).toBeUndefined();
+		expect(statusRowOf({ status: 'shipped', taskStatusId: null, projectId: 'project-web' }, STATUSES)?.id).toBe('st-shipped');
+		// Classified by the task's own project: a `shipped` task of project-web is done, of another project unknown.
+		expect(isDoneStatus({ status: 'shipped', taskStatusId: null, projectId: 'project-web' }, STATUSES)).toBe(true);
+		expect(classifyStatus({ status: 'shipped', taskStatusId: null, projectId: 'project-other' }, STATUSES)).toBeNull();
+		// An id of another project's status stands for its value here; no such value here, no status.
+		expect(resolveNamedStatus('st-shipped', 'project-other', STATUSES)).toBeNull();
+		expect(resolveNamedStatus('st-shipped', 'project-web', STATUSES)).toEqual({ value: 'shipped', id: 'st-shipped' });
+		// The category's fallback value of another project only: the value without a row.
+		const otherOnly = [{ id: 'b-done', value: 'done', name: 'Done', projectId: 'project-b', order: 1 }];
+		expect(firstStatusOfCategory(TaskAutomationStatusCategoryEnum.DONE, 'project-a', otherOnly)).toBeNull();
+		const priorities = [{ id: 'b-high', value: 'high', name: 'High', projectId: 'project-b' }];
+		expect(resolveNamedPriority('high', 'project-a', priorities)).toEqual({ value: 'high', id: null });
+		expect(resolveNamedPriority('b-high', 'project-a', priorities)).toEqual({ value: 'high', id: null });
+	});
+
 	it('matches a status against ids, values and names without regard to case', () => {
 		const ref = { status: 'in-progress', taskStatusId: 'st-progress' };
 		expect(statusMatches(ref, ['st-progress'], STATUSES)).toBe(true);
