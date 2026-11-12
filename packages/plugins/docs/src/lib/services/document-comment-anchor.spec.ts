@@ -1,3 +1,4 @@
+// cspell:ignore brastve
 import * as Y from 'yjs';
 import { DocumentCommentAnchorMethodEnum, DocumentCommentAnchorStatusEnum, IDocumentCommentAnchorInput } from '@gauzy/contracts';
 import { LIVE_FRAGMENT, seedLiveDocument } from '../live/document-live.yjs';
@@ -6,6 +7,7 @@ import {
 	anchorContextOf,
 	approximateMatch,
 	blockTextOf,
+	closestRunFrom,
 	liveAnchorResolverOf,
 	occurrencesOf,
 	resolveCommentAnchor
@@ -125,7 +127,56 @@ describe('document comment anchors', () => {
 
 		it('refuses a match that differs too much, and quotes too short to tell', () => {
 			expect(approximateMatch('alpha beta gamma', 'zzzzzzzzzz')).toBeNull();
-			expect(approximateMatch('alpha beta', 'bxta')).toBeNull();
+			expect(approximateMatch('alpha beta', 'bets')).toBeNull();
+		});
+
+		it('checks the whole of a quote longer than the compared part, not only its beginning', () => {
+			const quote = 'the river runs past the old mill and the green field '.repeat(8);
+			const edited = `Intro. ${quote.slice(0, 300)}${quote.slice(300).replace('mill', 'mall')}`;
+			expect(approximateMatch(edited, quote)).toMatchObject({ start: 7, end: 7 + quote.length, distance: 1 });
+			// The beginning kept, the rest replaced: not the quote any more.
+			const replaced = `Intro. ${quote.slice(0, 256)}${'x'.repeat(quote.length - 256)}`;
+			expect(approximateMatch(replaced, quote)).toBeNull();
+		});
+	});
+
+	describe('the work budget of a read', () => {
+		it('stops looking for approximate quotes once the budget is spent: the anchor falls back to its block', () => {
+			const anchor = { blockId: 'b1', start: 0, end: 10, quote: 'betta gama' };
+			const blocks = [{ blockId: 'b1', text: 'alpha beta gamma delta' }];
+			const budget = { cells: 10 * blocks[0].text.length };
+			expect(resolveCommentAnchor(anchor, blocks, null, budget)).toMatchObject({ status: DocumentCommentAnchorStatusEnum.MOVED, method: DocumentCommentAnchorMethodEnum.FUZZY });
+			expect(budget.cells).toBe(0);
+			expect(resolveCommentAnchor(anchor, blocks, null, budget)).toMatchObject({ status: DocumentCommentAnchorStatusEnum.BLOCK });
+			// Without a budget nothing is counted.
+			expect(resolveCommentAnchor(anchor, blocks)).toMatchObject({ method: DocumentCommentAnchorMethodEnum.FUZZY });
+		});
+	});
+
+	describe('long quotes', () => {
+		it('lets text inserted in the tail move the end of the run', () => {
+			const quote = `${'a'.repeat(256)}${'b'.repeat(72)}${'c'.repeat(72)}`;
+			const text = `${'a'.repeat(256)}${'x'.repeat(100)}${'b'.repeat(72)}${'c'.repeat(72)}`;
+			expect(approximateMatch(text, quote)).toEqual({ start: 0, end: 500, distance: 100 });
+		});
+
+		it('tries the next place the beginning starts when the first one is not the quote', () => {
+			const quote = `${'a'.repeat(256)}${'b'.repeat(144)}`;
+			const first = `${'a'.repeat(256)}${'x'.repeat(144)}`;
+			const text = `${first} ${'a'.repeat(256)}${'b'.repeat(143)}c`;
+			expect(approximateMatch(text, quote)).toEqual({ start: first.length + 1, end: text.length, distance: 1 });
+		});
+
+		it("admits a start whose beginning holds more than a quarter of it in edits, within the whole quote's limit", () => {
+			const quote = `${'a'.repeat(256)}${'b'.repeat(744)}`;
+			const text = `${'x'.repeat(65)}${'a'.repeat(191)}${'b'.repeat(744)}`;
+			expect(approximateMatch(text, quote)).toMatchObject({ start: 0, end: 1000, distance: 65 });
+		});
+
+		it('finds the closest run from a start, its end free within the limit', () => {
+			expect(closestRunFrom('xx kitten', 3, 'sitting', 3)).toEqual({ length: 6, distance: 3 });
+			expect(closestRunFrom('xx kitten', 3, 'sitting', 2)).toBeNull();
+			expect(closestRunFrom('same text', 0, 'same', 0)).toEqual({ length: 4, distance: 0 });
 		});
 	});
 

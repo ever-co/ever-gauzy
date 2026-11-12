@@ -49,6 +49,7 @@ import {
 import { isRealtimeEnabled, RealtimePlugin } from '@gauzy/plugin-realtime';
 
 import { ChatPlugin, isChatEnabled } from '@gauzy/plugin-chat';
+import { isTaskAutomationsEnabled, TaskAutomationsPlugin } from '@gauzy/plugin-task-automations';
 import { EmailProviderPostmarkPlugin, isPostmarkEnabled } from '@gauzy/plugin-email-provider-postmark';
 import { EmailProviderResendPlugin, isResendEnabled } from '@gauzy/plugin-email-provider-resend';
 import { EmailProviderMailgunPlugin, isMailgunEnabled } from '@gauzy/plugin-email-provider-mailgun';
@@ -155,6 +156,13 @@ export const plugins = [
 	// unless GAUZY_CHAT_ENABLED=true; when off it is not loaded at all (no route, no table, no role grant). Routes
 	// answer only for tenants whose FEATURE_CHAT toggle is on. Any other value keeps it off and is logged once.
 	...(isChatEnabled(process.env, (message) => console.warn(message)) ? [ChatPlugin] : []),
+
+	// Task automations (rules of an organization: a trigger, conditions and actions, run in the background after a
+	// task change or on a schedule, with a dry run and a run history). Off unless GAUZY_TASK_AUTOMATIONS_ENABLED=true;
+	// when off it is not loaded at all (no route, no GraphQL field, no table, no outbox row, no role grant). The API
+	// runs the rules (it hosts the task services they write through); the worker only fires the due-date schedule.
+	// Any other value keeps it off and is logged once.
+	...(isTaskAutomationsEnabled(process.env, (message) => console.warn(message)) ? [TaskAutomationsPlugin] : []),
 
 	// Inbox email (mailboxes, the inbound pipeline, email provider accounts and the transport seam's provider
 	// transports; plan 04 §5). Only on top of the Inbox, and off unless GAUZY_INBOX_EMAIL_ENABLED=true as well; when

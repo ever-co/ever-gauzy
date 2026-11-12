@@ -1,5 +1,5 @@
 import { DocumentSearchSnippetSourceEnum } from '@gauzy/contracts';
-import { DOCS_SEARCH_SNIPPET_LENGTH, matchRangesOf, plainTextOfHtml, plainTextOfJson, searchSnippetOf } from './document-search-snippet';
+import { DOCS_SEARCH_SNIPPET_LENGTH, DOCS_SEARCH_SNIPPET_MAX_TEXT, firstMatchOf, matchRangesOf, plainTextOfHtml, plainTextOfJson, searchSnippetOf } from './document-search-snippet';
 
 const page = (...paragraphs: string[]) => ({
 	type: 'doc',
@@ -44,7 +44,7 @@ describe('document search snippets', () => {
 	});
 
 	describe('searchSnippetOf', () => {
-		const long = `${'Lorem ipsum dolor sit amet. '.repeat(10)}The roadmap for the next quarter is here. ${'Consectetur adipiscing elit. '.repeat(10)}`;
+		const long = `${'Words fill the page before. '.repeat(10)}The roadmap for the next quarter is here. ${'More words follow it after. '.repeat(10)}`;
 
 		it('cuts about 160 characters around the first match, at word boundaries, with its offsets', () => {
 			const snippet = searchSnippetOf('roadmap', { name: 'Planning', contentJson: page(long) });
@@ -82,7 +82,7 @@ describe('document search snippets', () => {
 			const snippet = searchSnippetOf('roadmap', { name: 'Roadmap 2027', contentJson: page(long.replace('roadmap', 'plan')) });
 			expect(snippet.source).toBe(DocumentSearchSnippetSourceEnum.LEADING);
 			expect(snippet.matches).toEqual([]);
-			expect(snippet.text.startsWith('Lorem ipsum')).toBe(true);
+			expect(snippet.text.startsWith('Words fill the page before.')).toBe(true);
 			expect(snippet.truncatedStart).toBe(false);
 			expect(snippet.truncatedEnd).toBe(true);
 			expect(snippet.nameMatches).toEqual([{ start: 0, end: 7 }]);
@@ -95,6 +95,29 @@ describe('document search snippets', () => {
 			expect(matched(snippet)).toEqual(['finale']);
 			expect(snippet.truncatedEnd).toBe(false);
 			expect(snippet.text.endsWith('finale')).toBe(true);
+		});
+
+		it('reads at most the limit of one very long text node', () => {
+			const text = plainTextOfJson(page('a'.repeat(DOCS_SEARCH_SNIPPET_MAX_TEXT + 5000)));
+			expect(text.length).toBeLessThanOrEqual(DOCS_SEARCH_SNIPPET_MAX_TEXT);
+		});
+
+		it("takes the HTML cache's text when only it holds the term (the content search matches the HTML)", () => {
+			const snippet = searchSnippetOf('published', { contentJson: page('A draft text'), contentHtml: '<p>The published text</p>' });
+			expect(snippet.source).toBe(DocumentSearchSnippetSourceEnum.CONTENT);
+			expect(matched(snippet)).toEqual(['published']);
+			// The JSON's text wins when it holds the term.
+			expect(searchSnippetOf('draft', { contentJson: page('A draft text'), contentHtml: '<p>Other</p>' }).text).toBe('A draft text');
+		});
+
+		it('marks the matches of the window only, however many the text holds', () => {
+			const snippet = searchSnippetOf('abc', { contentJson: page('abc '.repeat(20_000)) });
+			expect(snippet.text.length).toBeLessThanOrEqual(DOCS_SEARCH_SNIPPET_LENGTH);
+			expect(snippet.matches.length).toBeGreaterThan(0);
+			expect(snippet.matches.length).toBeLessThanOrEqual(Math.ceil(DOCS_SEARCH_SNIPPET_LENGTH / 4));
+			expect(matched(snippet).every((text) => text.toLowerCase() === 'abc')).toBe(true);
+			expect(firstMatchOf('xx ABC', 'abc')).toEqual({ start: 3, end: 6 });
+			expect(firstMatchOf('nothing', 'abc')).toBeNull();
 		});
 	});
 });

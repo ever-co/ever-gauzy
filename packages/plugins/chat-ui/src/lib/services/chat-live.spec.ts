@@ -8,12 +8,16 @@ import {
 	ChatLiveMode,
 	ChatLiveTiming,
 	ChatSocketStatus,
+	ChatTypingSignal,
+	CHAT_TYPING_MAX_TTL_MS,
 	chatHintOf,
+	chatTypingOf,
 	coalesceReads,
 	coversChatEvents,
 	deliversPromptly,
 	pollTicks,
-	servesChatEvents
+	servesChatEvents,
+	servesTyping
 } from './chat-live';
 
 const CONVERSATION = '11111111-1111-4111-8111-111111111111';
@@ -58,16 +62,48 @@ function platform(status: () => Observable<IRealtimeStatus | null> = () => of(ST
 	return { channel, scope$, socketStatus$, streams, subscribe, statusCalls, modes, resumed, watching };
 }
 
+describe('chatTypingOf', () => {
+	it('reads a typing signal: its place and person, held for what it asks from its arrival', () => {
+		const signal = chatTypingOf(envelope('typing.signalled', { conversationId: CONVERSATION, threadRootId: ROOT, userId: 'u-anna', employeeId: 'e-anna', expiresInMs: 6000 }), 1_000);
+		expect(signal).toEqual({ conversationId: CONVERSATION, threadRootId: ROOT, userId: 'u-anna', employeeId: 'e-anna', expiresAt: 7_000 });
+	});
+
+	it('bounds what a signal asks, and takes the chat default when it asks nothing usable', () => {
+		const long = chatTypingOf(envelope('typing.signalled', { conversationId: CONVERSATION, userId: 'u-anna', expiresInMs: 600_000 }), 0);
+		expect(long?.expiresAt).toBe(CHAT_TYPING_MAX_TTL_MS);
+		const none = chatTypingOf(envelope('typing.signalled', { conversationId: CONVERSATION, userId: 'u-anna', expiresInMs: -5 }), 0);
+		expect(none?.expiresAt).toBeGreaterThan(0);
+		expect(none?.expiresAt).toBeLessThanOrEqual(CHAT_TYPING_MAX_TTL_MS);
+	});
+
+	it('reads nothing from another event or a signal without its place or person', () => {
+		expect(chatTypingOf(envelope('chat_message.created', { conversationId: CONVERSATION, userId: 'u-anna' }))).toBeNull();
+		expect(chatTypingOf(envelope('typing.signalled', { userId: 'u-anna' }))).toBeNull();
+		expect(chatTypingOf(envelope('typing.signalled', { conversationId: CONVERSATION }))).toBeNull();
+		expect(chatTypingOf(null)).toBeNull();
+	});
+
+	it('knows whether the platform offers the signal', () => {
+		expect(servesTyping(STATUS)).toBe(true);
+		expect(servesTyping({ ...STATUS, signals: [] })).toBe(false);
+		expect(servesTyping(null)).toBe(false);
+	});
+});
+
 describe('chatHintOf', () => {
-	it('reads a message event: its conversation, message and thread', () => {
-		expect(chatHintOf(envelope('chat_message.created', { conversationId: CONVERSATION, messageId: MESSAGE, threadRootId: ROOT, kind: 'message' }))).toEqual({
+	it('reads a message event: its conversation, message, thread and author', () => {
+		expect(
+			chatHintOf(envelope('chat_message.created', { conversationId: CONVERSATION, messageId: MESSAGE, threadRootId: ROOT, kind: 'message', authorUserId: 'u-anna' }))
+		).toEqual({
 			eventId: 'e-chat_message.created',
 			name: 'chat_message.created',
 			conversationId: CONVERSATION,
 			messageId: MESSAGE,
 			threadRootId: ROOT,
-			change: null
+			change: null,
+			authorUserId: 'u-anna'
 		});
+		expect(chatHintOf(envelope('chat_message.created', { conversationId: CONVERSATION, messageId: MESSAGE }))?.authorUserId).toBeNull();
 	});
 
 	it('reads a thread change as a change of its root message', () => {
@@ -129,11 +165,33 @@ describe('ChatLiveChannel', () => {
 		watching.add(channel.hints$.subscribe((hint) => second.push(hint)));
 
 		expect(subscribe).toHaveBeenCalledTimes(1);
-		expect(subscribe).toHaveBeenCalledWith(CHAT_EVENTS_SUBSCRIPTION, { names: [...CHAT_LIVE_SELECTION] });
+		// The platform offers the typing signal: it rides on the same subscription.
+		expect(subscribe).toHaveBeenCalledWith(CHAT_EVENTS_SUBSCRIPTION, { names: [...CHAT_LIVE_SELECTION, 'typing.signalled'] });
 		streams[0].next({ collaborationEvents: envelope('chat_message.updated', { conversationId: CONVERSATION, messageId: MESSAGE }) });
 		streams[0].next({ collaborationEvents: envelope('presence.changed', { employeeId: 'x' }) });
 		expect(first.map((hint) => hint.name)).toEqual(['chat_message.updated']);
 		expect(second).toEqual(first);
+		watching.unsubscribe();
+	});
+
+	it('streams the typing signals beside the hints, on the one subscription', () => {
+		const { channel, subscribe, streams, watching } = platform();
+		const hints: ChatHint[] = [];
+		const typing: ChatTypingSignal[] = [];
+		watching.add(channel.hints$.subscribe((hint) => hints.push(hint)));
+		watching.add(channel.typing$.subscribe((signal) => typing.push(signal)));
+		expect(subscribe).toHaveBeenCalledTimes(1);
+		streams[0].next({ collaborationEvents: envelope('typing.signalled', { conversationId: CONVERSATION, userId: 'u-anna', employeeId: 'e-anna', expiresInMs: 6000 }) });
+		streams[0].next({ collaborationEvents: envelope('chat_message.created', { conversationId: CONVERSATION, messageId: MESSAGE }) });
+		expect(typing.map((signal) => signal.userId)).toEqual(['u-anna']);
+		expect(hints.map((hint) => hint.name)).toEqual(['chat_message.created']);
+		watching.unsubscribe();
+	});
+
+	it('does not ask for the typing signal where the platform does not offer it', () => {
+		const { channel, subscribe, watching } = platform(() => of({ ...STATUS, signals: [] }));
+		watching.add(channel.hints$.subscribe());
+		expect(subscribe).toHaveBeenCalledWith(CHAT_EVENTS_SUBSCRIPTION, { names: [...CHAT_LIVE_SELECTION] });
 		watching.unsubscribe();
 	});
 

@@ -20,7 +20,7 @@ export const DOCUMENT_COMMENT_ANCHOR_INDEXES: ReadonlyArray<{ name: string; colu
 	{ name: 'IDX_8634cdaaa986ae3962d87663e9', columns: ['tenantId'] },
 	{ name: 'IDX_9b5badf9207589bda643dfb86b', columns: ['organizationId'] },
 	{ name: 'IDX_document_comment_anchor_comment', columns: ['commentId'], unique: true },
-	{ name: 'IDX_document_comment_anchor_tenant_org_doc', columns: ['tenantId', 'organizationId', 'documentId'] }
+	{ name: 'IDX_document_comment_anchor_tenant_doc', columns: ['tenantId', 'documentId'] }
 ];
 
 /** The foreign keys, under the names TypeORM gives them. An anchor goes with its comment and with its page. */

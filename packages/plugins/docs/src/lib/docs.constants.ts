@@ -101,6 +101,8 @@ export const DOCS_IMPORT_ZIP_BOMB = 'DOCS_IMPORT_ZIP_BOMB';
 export const DOCS_IMPORT_NO_PAGES = 'DOCS_IMPORT_NO_PAGES';
 /** 404: PDF export is off on this installation (`GAUZY_DOCS_PDF_EXPORT_ENABLED`). */
 export const DOCS_PDF_EXPORT_DISABLED = 'DOCS_PDF_EXPORT_DISABLED';
+/** 413: a subtree's Markdown zip would hold more pages and files than the export takes (it is refused, never cut). */
+export const DOCS_MARKDOWN_TOO_MANY_PAGES = 'DOCS_MARKDOWN_TOO_MANY_PAGES';
 /** 413: a subtree PDF would hold more pages than `GAUZY_DOCS_PDF_MAX_PAGES`. */
 export const DOCS_PDF_TOO_MANY_PAGES = 'DOCS_PDF_TOO_MANY_PAGES';
 /** The submitted `contentBinary` exceeds `GAUZY_DOCS_MAX_BINARY_BYTES` (`10` §7.1 P6). */

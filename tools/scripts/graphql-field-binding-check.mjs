@@ -83,6 +83,12 @@ const GATED_PLUGIN_SCHEMAS = [
 		exportName: 'chatSchemaExtensions'
 	},
 	{
+		plugin: 'TaskAutomationsPlugin',
+		flag: 'GAUZY_TASK_AUTOMATIONS_ENABLED',
+		file: 'packages/plugins/task-automations/src/lib/graphql/task-automation.schema.ts',
+		exportName: 'taskAutomationSchemaExtensions'
+	},
+	{
 		plugin: 'DocsLivePlugin',
 		flag: 'GAUZY_DOCS_LIVE_ENABLED',
 		file: 'packages/plugins/docs/src/lib/live/graphql/docs-live.schema.ts',

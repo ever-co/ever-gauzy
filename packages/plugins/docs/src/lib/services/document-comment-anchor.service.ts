@@ -2,13 +2,14 @@ import { BadRequestException, ForbiddenException, Injectable, NotFoundException 
 import { In } from 'typeorm';
 import {
 	BaseEntityEnum,
+	FeatureEnum,
 	ID,
 	IDocumentCommentAnchor,
 	IDocumentCommentAnchorInput,
 	IDocumentCommentAnchorList,
 	IDocumentCommentAnchorResolved
 } from '@gauzy/contracts';
-import { assertCurrentUserBelongsToOrganization, Comment, RequestContext } from '@gauzy/core';
+import { assertCurrentUserBelongsToOrganization, Comment, FeatureService, RequestContext } from '@gauzy/core';
 import { getDocsConfig } from '../docs.config';
 import {
 	DOCS_COLLAB_DISABLED,
@@ -24,6 +25,7 @@ import { TypeOrmDocumentCommentAnchorRepository } from '../repositories/type-orm
 import {
 	anchorBlocksOf,
 	DOCS_ANCHOR_CONTEXT_MAX_LENGTH,
+	DOCS_ANCHOR_FUZZY_BUDGET,
 	DOCS_ANCHOR_QUOTE_MAX_LENGTH,
 	DOCS_ANCHOR_RELATIVE_MAX_LENGTH,
 	IAnchorBlock,
@@ -44,6 +46,8 @@ export interface IAnchorContent {
 	blocks: IAnchorBlock[];
 	live: LiveAnchorResolver | null;
 	revision: number;
+	/** The approximate-match work left for the anchors found again in it (one read: a list, or one GraphQL request). */
+	budget: { cells: number };
 }
 
 /**
@@ -67,7 +71,8 @@ export class DocumentCommentAnchorService {
 	constructor(
 		private readonly documents: DocumentService,
 		private readonly repository: TypeOrmDocumentCommentAnchorRepository,
-		private readonly commentAccess: DocumentCommentAccessPolicy
+		private readonly commentAccess: DocumentCommentAccessPolicy,
+		private readonly features: FeatureService
 	) {}
 
 	/** The anchors of the page's comments that are still there, each found again in the page as it is now. */
@@ -106,11 +111,17 @@ export class DocumentCommentAnchorService {
 		}
 		const key = String(row.documentId);
 		if (!pages.has(key)) {
-			// The page in its own organization, which the caller must reach (the comment policy's boundary).
+			// The page in its own organization, which the caller must reach (the comment policy's boundary), and where Docs is
+			// on: a field resolver runs no guard, so FEATURE_DOCUMENTS is resolved here as the routes' FeatureFlagGuard
+			// resolves it (FeatureService, the request's scope; its fallback is the configured toggle, never a blanket yes).
 			pages.set(
 				key,
 				this.assertOrganization(row.organizationId as ID)
-					.then(() => this.documents.findOneScoped(row.documentId, [], row.organizationId as ID))
+					.then(() => this.features.isFeatureEnabled(FeatureEnum.FEATURE_DOCUMENTS))
+					.then((enabled) => {
+						if (!enabled) throw new NotFoundException();
+						return this.documents.findOneScoped(row.documentId, [], row.organizationId as ID);
+					})
 					.then((document) => this.contentOf(document))
 					.catch(() => null)
 			);
@@ -216,15 +227,15 @@ export class DocumentCommentAnchorService {
 		const state = document.contentBinary ? decodeLiveState(document.contentBinary) : null;
 		// A live state of an earlier revision is behind the JSON a save wrote since: the JSON is the page then.
 		if (state && state.meta.revision === revision) {
-			return { blocks: anchorBlocksOf(liveDocumentJson(state.doc)), live: liveAnchorResolverOf(state.doc), revision };
+			return { blocks: anchorBlocksOf(liveDocumentJson(state.doc)), live: liveAnchorResolverOf(state.doc), revision, budget: { cells: DOCS_ANCHOR_FUZZY_BUDGET } };
 		}
 		state?.doc.destroy();
-		return { blocks: anchorBlocksOf(document.contentJson), live: null, revision };
+		return { blocks: anchorBlocksOf(document.contentJson), live: null, revision, budget: { cells: DOCS_ANCHOR_FUZZY_BUDGET } };
 	}
 
 	private resolved(row: DocumentCommentAnchor, content: IAnchorContent): IDocumentCommentAnchorResolved {
 		const anchor = anchorOfRow(row);
-		return { ...anchor, position: resolveCommentAnchor(anchor, content.blocks, content.live) };
+		return { ...anchor, position: resolveCommentAnchor(anchor, content.blocks, content.live, content.budget) };
 	}
 }
 
@@ -300,16 +311,23 @@ export function normaliseAnchorInput(input: IDocumentCommentAnchorInput | null |
 	};
 }
 
+/** The caller's user and employee, or null outside a request. */
+function callerIdentity(): { userId: ID | null; employeeId: ID | null } | null {
+	try {
+		return {
+			userId: (RequestContext.currentUserId() as ID) ?? null,
+			employeeId: (RequestContext.currentUser()?.employeeId as ID) ?? null
+		};
+	} catch {
+		return null;
+	}
+}
+
 /** Whether the caller wrote the comment: their employee is its author, or their user posted it. */
 function isCallerAuthor(comment: Pick<Comment, 'employeeId' | 'createdByUserId'>): boolean {
-	let userId: ID | null = null;
-	let employeeId: ID | null = null;
-	try {
-		userId = (RequestContext.currentUserId() as ID) ?? null;
-		employeeId = (RequestContext.currentUser()?.employeeId as ID) ?? null;
-	} catch {
-		return false;
-	}
+	const caller = callerIdentity();
+	if (!caller) return false;
+	const { userId, employeeId } = caller;
 	if (employeeId && comment.employeeId && String(comment.employeeId) === String(employeeId)) return true;
 	return !!userId && !!comment.createdByUserId && String(comment.createdByUserId) === String(userId);
 }

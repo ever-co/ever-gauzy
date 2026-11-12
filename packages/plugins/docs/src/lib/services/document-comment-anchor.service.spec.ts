@@ -3,6 +3,7 @@ const requestContext = { userId: 'user-1' as string | null, employeeId: 'employe
 const reachable = new Set<string>(['org-1']);
 jest.mock('@gauzy/core', () => ({
 	Comment: class Comment {},
+	FeatureService: class FeatureService {},
 	assertCurrentUserBelongsToOrganization: jest.fn(async (_manager: unknown, organizationId: string) => {
 		if (!reachable.has(organizationId)) {
 			const { ForbiddenException } = jest.requireActual('@nestjs/common');
@@ -28,7 +29,7 @@ jest.mock('../entities/document.entity', () => ({ Document: class Document {} })
 
 import { BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
 import * as Y from 'yjs';
-import { BaseEntityEnum, DocumentCommentAnchorMethodEnum, DocumentCommentAnchorStatusEnum } from '@gauzy/contracts';
+import { BaseEntityEnum, DocumentCommentAnchorMethodEnum, DocumentCommentAnchorStatusEnum, FeatureEnum } from '@gauzy/contracts';
 import {
 	DOCS_COLLAB_DISABLED,
 	DOCS_COMMENT_ANCHOR_FORBIDDEN,
@@ -65,7 +66,18 @@ interface IRow {
 
 /** The service over one page, a table of anchors and a table of comments. */
 function buildService(
-	options: { contentJson?: unknown; contentBinary?: Buffer | null; revision?: number; comments?: Array<Record<string, unknown>>; rows?: IRow[]; takesComments?: boolean } = {}
+	options: {
+		contentJson?: unknown;
+		contentBinary?: Buffer | null;
+		revision?: number;
+		comments?: Array<Record<string, unknown>>;
+		rows?: IRow[];
+		takesComments?: boolean;
+		/** The page exists but the caller may not read it (the page route's 404). */
+		readable?: boolean;
+		/** FEATURE_DOCUMENTS for the page's organization (on unless a test turns it off). */
+		docsEnabled?: boolean;
+	} = {}
 ) {
 	const page = {
 		id: PAGE_ID,
@@ -108,7 +120,7 @@ function buildService(
 	};
 	const documents = {
 		findOneScoped: jest.fn(async (id: string) => {
-			if (id !== PAGE_ID) throw new NotFoundException();
+			if (id !== PAGE_ID || options.readable === false) throw new NotFoundException();
 			return page;
 		})
 	};
@@ -116,8 +128,10 @@ function buildService(
 	const commentAccess = {
 		findWritableParent: jest.fn(async (id: string) => (options.takesComments === false || id !== PAGE_ID ? null : { id, organizationId: 'org-1' }))
 	};
-	const service = new DocumentCommentAnchorService(documents as never, repository as never, commentAccess as never);
-	return { service, documents, repository, rows, page, commentAccess };
+	// FEATURE_DOCUMENTS as the routes' guard resolves it.
+	const features = { isFeatureEnabled: jest.fn(async () => options.docsEnabled !== false) };
+	const service = new DocumentCommentAnchorService(documents as never, repository as never, commentAccess as never, features as never);
+	return { service, documents, repository, rows, page, commentAccess, features };
 }
 
 /** The response body of the exception a promise rejects with. */
@@ -228,6 +242,21 @@ describe('DocumentCommentAnchorService', () => {
 		await expect(service.list('00000000-0000-4000-8000-000000000000')).rejects.toBeInstanceOf(NotFoundException);
 	});
 
+	it('answers an existing page the caller may not read as missing, writing and showing nothing', async () => {
+		const rows: IRow[] = [
+			{ id: 'a1', tenantId: 'tenant-1', organizationId: 'org-1', commentId: COMMENT_ID, documentId: PAGE_ID, blockId: 'b1', startOffset: 10, endOffset: 19, quote: 'brown fox' }
+		];
+		const { service, repository, commentAccess } = buildService({ rows, readable: false });
+		await expect(service.list(PAGE_ID)).rejects.toBeInstanceOf(NotFoundException);
+		await expect(service.set(PAGE_ID, COMMENT_ID, anchorInput)).rejects.toBeInstanceOf(NotFoundException);
+		await expect(service.remove(PAGE_ID, COMMENT_ID)).rejects.toBeInstanceOf(NotFoundException);
+		expect(await service.ofComment({ id: COMMENT_ID, entity: BaseEntityEnum.Document, entityId: PAGE_ID, tenantId: 'tenant-1' })).toBeNull();
+		expect(repository.save).not.toHaveBeenCalled();
+		expect(repository.delete).not.toHaveBeenCalled();
+		expect(commentAccess.findWritableParent).not.toHaveBeenCalled();
+		expect(rows).toHaveLength(1);
+	});
+
 	it('lists the anchors of comments that are still there, found again in the edited page', async () => {
 		const rows: IRow[] = [
 			{ id: 'a1', tenantId: 'tenant-1', organizationId: 'org-1', commentId: COMMENT_ID, documentId: PAGE_ID, blockId: 'b1', startOffset: 10, endOffset: 19, quote: 'brown fox', prefix: 'The quick ', suffix: ' jumps' },
@@ -288,6 +317,16 @@ describe('DocumentCommentAnchorService', () => {
 		const { service, documents } = buildService({ rows });
 		reachable.clear();
 		expect(await service.ofComment({ id: COMMENT_ID, entity: BaseEntityEnum.Document, entityId: PAGE_ID, tenantId: 'tenant-1' })).toBeNull();
+		expect(documents.findOneScoped).not.toHaveBeenCalled();
+	});
+
+	it("answers no anchor for the GraphQL field where Docs is off for the page's organization (no guard runs on a field)", async () => {
+		const rows: IRow[] = [
+			{ id: 'a1', tenantId: 'tenant-1', organizationId: 'org-1', commentId: COMMENT_ID, documentId: PAGE_ID, blockId: 'b1', startOffset: 10, endOffset: 19, quote: 'brown fox' }
+		];
+		const { service, documents, features } = buildService({ rows, docsEnabled: false });
+		expect(await service.ofComment({ id: COMMENT_ID, entity: BaseEntityEnum.Document, entityId: PAGE_ID, tenantId: 'tenant-1' })).toBeNull();
+		expect(features.isFeatureEnabled).toHaveBeenCalledWith(FeatureEnum.FEATURE_DOCUMENTS);
 		expect(documents.findOneScoped).not.toHaveBeenCalled();
 	});
 

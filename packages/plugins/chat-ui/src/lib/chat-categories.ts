@@ -28,6 +28,20 @@ export function moveCategory(categories: readonly IChatCategory[], id: string, d
 		.map(({ id: categoryId, position }) => ({ id: categoryId, position }));
 }
 
+/**
+ * The order of the categories after moving one a place up or down: their ids, first to last, for the one reorder call
+ * (`POST /chat/categories/reorder`, saved in one transaction). Null when the category is already at that end, or unknown.
+ */
+export function movedCategoryOrder(categories: readonly IChatCategory[], id: string, direction: -1 | 1): string[] | null {
+	const ordered = sortCategories(categories);
+	const index = ordered.findIndex((category) => String(category.id) === String(id));
+	const target = index + direction;
+	if (index < 0 || target < 0 || target >= ordered.length) return null;
+	const moved = [...ordered];
+	[moved[index], moved[target]] = [moved[target], moved[index]];
+	return moved.map((category) => String(category.id));
+}
+
 /** The position a new category takes: after the last one. */
 export function nextCategoryPosition(categories: readonly IChatCategory[]): number {
 	return categories.reduce((max, category) => Math.max(max, (category.position ?? 0) + 1), 0);

@@ -57,9 +57,15 @@ const PAGES_OF_REQUEST = Symbol('docsCommentAnchorPages');
 /**
  * `Comment.documentAnchor`: the range of a comment of a Docs page, beside the platform's own comment fields. The
  * comment was read under the comment API's rules; its page is read again under the page's (no range for a page the
- * caller may not read).
+ * caller may not read). The class carries the anchor queries' feature codes for the feature-gate check, but Nest runs no
+ * guard on a `@ResolveField` (the GraphQL module sets no `fieldResolverEnhancers`), so `ofComment` resolves
+ * `FEATURE_DOCUMENTS` itself as the guard does (null where Docs is off); the comment it is on was read behind
+ * `FEATURE_GRAPHQL` already.
  */
 @Resolver('Comment')
+@UseGuards(TenantPermissionGuard, PermissionGuard, FeatureFlagGuard)
+@FeatureFlag(FEATURE_GRAPHQL)
+@FeatureFlag(FeatureEnum.FEATURE_DOCUMENTS)
 export class DocsCommentAnchorFieldResolver {
 	constructor(private readonly anchors: DocumentCommentAnchorService) {}
 
