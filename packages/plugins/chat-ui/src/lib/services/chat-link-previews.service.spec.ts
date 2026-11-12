@@ -32,7 +32,7 @@ describe('ChatLinkPreviewsService', () => {
 	beforeEach(() => {
 		answer = (url) => of(ready(url));
 		// The platform's pictures are off unless a spec says otherwise.
-		picture = () => throwError(() => new HttpErrorResponse({ status: 404 }));
+		picture = (url) => throwError(() => new HttpErrorResponse({ status: 404, url }));
 		linkPreview = jest.fn((url: string) => answer(url));
 		linkPreviewImage = jest.fn((url: string) => picture(url));
 		(URL as unknown as { createObjectURL: (blob: Blob) => string }).createObjectURL = jest.fn(() => 'blob:picture');
