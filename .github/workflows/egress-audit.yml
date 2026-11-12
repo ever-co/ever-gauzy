@@ -1,5 +1,5 @@
 name: Egress audit
-# cspell:words corepack println DOTENV readdir nomock pcaps toomanyrequests
+# cspell:words corepack dind println DOTENV readdir nomock pcaps toomanyrequests
 
 # Proves at runtime, with the published API and web app images, what the Ever Platform modules
 # (anonymous usage statistics, connection) may send: nothing at all when they are switched off or
