@@ -645,11 +645,16 @@ export class ConversationListComponent {
 	);
 	/**
 	 * Every direct and group conversation, favourites included: Favourites is a shortcut list on top, so a person
-	 * added to it stays in Direct messages too. (A favourite channel moves to Favourites.) One nobody has written in
-	 * yet is left out: opening a conversation with someone does not list them until a message is sent.
+	 * added to it stays in Direct messages too. (A favourite channel moves to Favourites.) A direct conversation nobody
+	 * has written in yet is left out: opening a conversation with someone does not list them until a message is sent.
+	 * A group is listed as soon as it exists, as before (someone added me to it, or I made it in "New message").
 	 */
 	protected readonly direct = computed(() =>
-		this.conversations().filter((conversation) => conversation.kind !== ChatConversationKindEnum.CHANNEL && hasMessages(conversation))
+		this.conversations().filter(
+			(conversation) =>
+				conversation.kind !== ChatConversationKindEnum.CHANNEL &&
+				(conversation.kind !== ChatConversationKindEnum.DIRECT || hasMessages(conversation))
+		)
 	);
 
 	/** The channels under their category (in category order), the uncategorized ones first. */

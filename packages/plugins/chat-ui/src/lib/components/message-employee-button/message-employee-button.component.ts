@@ -3,7 +3,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute } from '@angular/router';
 import { NbButtonModule, NbIconModule, NbTooltipModule } from '@nebular/theme';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
-import { Observable, of } from 'rxjs';
+import { combineLatest, Observable, of } from 'rxjs';
 import { distinctUntilChanged, map, switchMap } from 'rxjs/operators';
 import { IEmployee, IOrganization, IUser } from '@gauzy/contracts';
 import { Store } from '@gauzy/ui-core/core';
@@ -52,7 +52,8 @@ export class MessageEmployeeButtonComponent {
 	private readonly peopleService = inject(ChatPeopleService);
 	private readonly translate = inject(TranslateService);
 
-	protected readonly available = toSignal(inject(ChatAvailabilityService).available$, { initialValue: false });
+	private readonly availability = inject(ChatAvailabilityService);
+	protected readonly available = toSignal(this.availability.available$, { initialValue: false });
 	protected readonly employeeId = toSignal(
 		this.route.paramMap.pipe(
 			map((params) => params.get(EMPLOYEE_VIEW_ID_PARAM)),
@@ -101,9 +102,12 @@ export class MessageEmployeeButtonComponent {
 
 	/** The organization's people as the chat knows them, for the name and picture the window shows. */
 	private readonly people = toSignal(
-		this.organization$.pipe(
-			switchMap((organization) =>
-				organization?.id && organization.tenantId ? this.peopleService.people(organization.id, organization.tenantId) : of(EMPTY_PEOPLE)
+		// Only once the API serves the chat: with chat switched off there, nobody is asked for (no 404 per page visit).
+		combineLatest([this.availability.available$, this.organization$]).pipe(
+			switchMap(([available, organization]) =>
+				available && organization?.id && organization.tenantId
+					? this.peopleService.people(organization.id, organization.tenantId)
+					: of(EMPTY_PEOPLE)
 			)
 		),
 		{ initialValue: EMPTY_PEOPLE }
@@ -113,11 +117,13 @@ export class MessageEmployeeButtonComponent {
 	protected open(): void {
 		const employeeId = this.employeeId();
 		if (!employeeId) return;
+		// While the people are still loading, the employee the page's route resolved names the window.
+		const employee = this.route.snapshot.data?.['employee'] as IEmployee | undefined;
 		const person = this.people().byEmployee.get(employeeId) ?? {
 			employeeId,
-			userId: null,
-			name: this.translate.instant('CHAT.UNNAMED'),
-			imageUrl: null
+			userId: employee?.userId ? String(employee.userId) : null,
+			name: employee?.fullName?.trim() || this.translate.instant('CHAT.UNNAMED'),
+			imageUrl: employee?.user?.imageUrl ?? null
 		};
 		void this.dock.open(person);
 	}

@@ -475,7 +475,8 @@ export class ChatDockComponent {
 					this.sending.set(false);
 					// Only when the card still shows the conversation the message went to.
 					if (String(this.conversation()?.id) !== String(conversation.id)) return;
-					this.draft.set('');
+					// Text typed while the send was in flight stays in the box.
+					if (this.draft().trim() === body) this.draft.set('');
 					this.messages.set(mergeMessages(this.messages(), [result.message]));
 					this.api.notifyChanged();
 				},
