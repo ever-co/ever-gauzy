@@ -915,8 +915,12 @@ export class TimerService {
 	}
 
 	/**
-	 * Stops a run replaced by another at the given time, as an explicit stop at that time would. A failure is logged
-	 * and leaves the run to `ScheduleTimeLogEntriesCommand`.
+	 * Stops a run replaced by another at the given time, as an explicit stop at that time would.
+	 *
+	 * When the update fails, the log is read back. The update writes the stop before its later steps (time slots,
+	 * timesheet and worked hours), so a log that no longer runs was stopped where it was asked to: it keeps that stop,
+	 * as `ScheduleTimeLogEntriesCommand` only stops logs still running, and the failure is reported as a stop whose
+	 * later steps may be missing. A log still running is left to that command, which stops it as before.
 	 *
 	 * @param log - The running log.
 	 * @param stoppedAt - Where it ends.
@@ -928,7 +932,14 @@ export class TimerService {
 		try {
 			await this._commandBus.execute(new TimeLogUpdateCommand(partialTimeLog, log.id));
 		} catch (error) {
-			this.logger.warn(`Failed to stop the replaced time log ${log.id}: ${error?.message}`);
+			const storedLog = await this.storedStoppedLog(log.id, log.tenantId);
+			if (storedLog) {
+				this.logger.warn(
+					`Stopped the replaced time log ${log.id}, but its time slots or totals may be incomplete: ${error?.message}`
+				);
+				return;
+			}
+			this.logger.warn(`Failed to stop the replaced time log ${log.id}, left to the cleanup: ${error?.message}`);
 		}
 	}
 

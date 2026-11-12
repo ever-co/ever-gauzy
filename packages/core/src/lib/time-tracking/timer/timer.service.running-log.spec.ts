@@ -755,6 +755,51 @@ describe.each([MultiORMEnum.TypeORM, MultiORMEnum.MikroORM])(
 			expect(rows[0]).toMatchObject({ isRunning: false, stoppedAt: lastHeartbeat });
 		});
 
+		describe('when the update of a replaced run fails', () => {
+			/** Makes the update of `id` fail, after writing its input when `afterWrite`, as a later step of it would. */
+			const failUpdateOf = (service: TimerService, id: string, afterWrite: boolean) => {
+				const bus = (service as unknown as { _commandBus: { execute: (command: unknown) => Promise<unknown> } })
+					._commandBus;
+				const execute = bus.execute;
+				bus.execute = async (command: unknown) => {
+					if (command instanceof TimeLogUpdateCommand && command.id === id) {
+						if (afterWrite) {
+							await execute(command);
+						}
+						throw new Error('the time slots could not be created');
+					}
+					return execute(command);
+				};
+			};
+
+			it('keeps the stop the update wrote before a later step failed, and says what may be missing', async () => {
+				const rows = [run('replaced', TimeLogSourceEnum.WEB_TIMER, TWO_HOURS_AGO)];
+				const { service, logger } = setup(rows);
+				failUpdateOf(service, 'replaced', true);
+
+				await startOnDesktop(service);
+
+				// Not ended again by the cleanup, at 00:00:10
+				expect(rows[0]).toMatchObject({ isRunning: false, stoppedAt: NOW });
+				expect(logger.warn).toHaveBeenCalledWith(
+					expect.stringContaining('Stopped the replaced time log replaced, but its time slots or totals')
+				);
+			});
+
+			it('leaves a run the update did not stop to the cleanup, which stops it as before', async () => {
+				const rows = [run('replaced', TimeLogSourceEnum.WEB_TIMER, TWO_HOURS_AGO)];
+				const { service, logger } = setup(rows);
+				failUpdateOf(service, 'replaced', false);
+
+				await startOnDesktop(service);
+
+				expect(rows[0]).toMatchObject({ isRunning: false, stoppedAt: new Date('2026-10-24T00:00:10.000Z') });
+				expect(logger.warn).toHaveBeenCalledWith(
+					expect.stringContaining('Failed to stop the replaced time log replaced, left to the cleanup')
+				);
+			});
+		});
+
 		describe('a desktop run, as before', () => {
 			it('keeps the ten-second end of one started two hours ago with no time slot', async () => {
 				const rows = [run('replaced', TimeLogSourceEnum.DESKTOP, TWO_HOURS_AGO)];
