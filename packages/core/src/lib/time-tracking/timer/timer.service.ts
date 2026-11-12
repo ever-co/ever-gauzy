@@ -685,10 +685,13 @@ export class TimerService {
 	 * Calculates the stoppedAt time for the current time log based on the request and the last running time log.
 	 * It adjusts the stoppedAt time based on various conditions, such as the time log source (e.g., DESKTOP) and time slots.
 	 *
-	 * - If the source is DESKTOP and the last time slot was created more than 10 minutes ago,
-	 *   the stoppedAt time is adjusted based on the last time slot's duration.
+	 * - If the source is DESKTOP, the last log is a tracker's (`isTrackerSource`) and the last time slot was created
+	 *   more than 10 minutes ago, the stoppedAt time is adjusted based on the last time slot's duration.
 	 * - If no time slots exist and the last log's startedAt time exceeds 10 minutes from the current time,
 	 *   the stoppedAt time is adjusted by 10 seconds from the startedAt time.
+	 *
+	 * The desktop also stops, with its own source, the runs it shows from other clients. Those send no time slots of
+	 * a tracker to go by, so such a run ends at the time the stop asks for, as with any other client's stop.
 	 *
 	 * @param {ITimerToggleInput} request - The input data for stopping the timer, including stoppedAt and source.
 	 * @param {ITimeLog} lastLog - The last running time log, which may include time slots for more detailed tracking.
@@ -698,8 +701,10 @@ export class TimerService {
 		// Retrieve stoppedAt date or default to the current date if not provided
 		let stoppedAt = moment.utc(request.stoppedAt ?? moment.utc()).toDate();
 
-		// Handle the DESKTOP source case
-		if (request.source === TimeLogSourceEnum.DESKTOP) {
+		// Handle the DESKTOP source case, for a tracker's run only: not a run the desktop shows from another client
+		const isDesktopStopOfTrackerRun =
+			request.source === TimeLogSourceEnum.DESKTOP && isTrackerSource(lastLog.source);
+		if (isDesktopStopOfTrackerRun) {
 			// Retrieve the most recent time slot from the last log
 			const lastTimeSlot: ITimeSlot | undefined = lastLog.timeSlots?.sort((a: ITimeSlot, b: ITimeSlot) =>
 				moment(b.startedAt).diff(a.startedAt)
