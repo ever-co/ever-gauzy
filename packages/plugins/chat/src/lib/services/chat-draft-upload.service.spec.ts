@@ -4,7 +4,9 @@
  * `@gauzy/core` is doubled at the module boundary (its barrel boots the whole application); its `FileStorage` hands
  * out the provider double each test inspects.
  */
-const provider = { deleteFile: jest.fn(async () => undefined) };
+/** Whether the code runs inside `runWithTenantStorageSettings`, and with which settings. */
+const storage = { inside: false, settings: [] as unknown[] };
+const provider = { deleteFile: jest.fn(async (_key: string) => ({ inside: storage.inside })) };
 jest.mock('@gauzy/core', () => {
 	const decorator = () => () => undefined;
 	const explicit: Record<string, unknown> = {
@@ -16,6 +18,15 @@ jest.mock('@gauzy/core', () => {
 		FileStorage: class {
 			getProvider() {
 				return provider;
+			}
+		},
+		runWithTenantStorageSettings: async (settings: unknown, work: () => Promise<unknown>) => {
+			storage.settings.push(settings);
+			storage.inside = true;
+			try {
+				return await work();
+			} finally {
+				storage.inside = false;
 			}
 		}
 	};
@@ -77,6 +88,8 @@ function over(
 		claimed?: number;
 		deleteFails?: boolean;
 		databaseType?: string;
+		/** What the tenant's settings read answers (a rejection: they cannot be read). */
+		tenantSettings?: () => Promise<Record<string, unknown>>;
 	} = {}
 ) {
 	const draft = { id: 'dr1', tenantId: 'ten', documentId: 'd1', userId: 'u1', createdAt: new Date('2026-11-01T00:00:00Z') };
@@ -133,11 +146,25 @@ function over(
 		createQueryBuilder: () => insertQuery,
 		transaction: jest.fn(async (work: (m: typeof manager) => Promise<unknown>) => work(manager))
 	} as unknown as DataSource;
-	return { service: new ChatDraftUploadService(dataSource), repositories, inserted, subscribers, messageQuery, insertQuery, calls, dataSource };
+	const tenantSettings = { getSettings: jest.fn(options.tenantSettings ?? (async () => ({ fileStorageProvider: 'S3', aws_bucket: 'tenant-bucket' }))) };
+	return {
+		service: new ChatDraftUploadService(dataSource, tenantSettings as never),
+		repositories,
+		inserted,
+		subscribers,
+		messageQuery,
+		insertQuery,
+		calls,
+		dataSource,
+		tenantSettings
+	};
 }
 
 describe('ChatDraftUploadService', () => {
-	beforeEach(() => provider.deleteFile.mockClear());
+	beforeEach(() => {
+		provider.deleteFile.mockClear();
+		storage.settings = [];
+	});
 
 	it("records a chat composer upload in the document's own transaction, and nothing else", async () => {
 		const { service, inserted, subscribers } = over();
@@ -173,6 +200,31 @@ describe('ChatDraftUploadService', () => {
 		expect(repositories['ChatAttachmentDraft']['delete']).toHaveBeenCalledWith({ id: 'dr1', tenantId: 'ten' });
 		expect(repositories['Document']['delete']).toHaveBeenCalledWith({ id: 'd1', tenantId: 'ten' });
 		expect(provider.deleteFile.mock.calls).toEqual([['docs/d1.png'], ['docs/d1.thumb.webp']]);
+	});
+
+	it("frees the stored bytes in the tenant's own storage: the sweep has no request to carry its settings", async () => {
+		const { service, tenantSettings } = over();
+		await expect(service.sweep(new Date('2026-11-03T00:00:00Z'))).resolves.toEqual({ purged: 1, kept: 0, gone: 0 });
+		expect(tenantSettings.getSettings).toHaveBeenCalledWith({ where: { tenantId: 'ten' } });
+		// A tenant with its own bucket kept the bytes: they were deleted from the deployment's bucket instead.
+		expect(storage.settings).toEqual([
+			{ fileStorageProvider: 'S3', aws_bucket: 'tenant-bucket' },
+			{ fileStorageProvider: 'S3', aws_bucket: 'tenant-bucket' }
+		]);
+		await expect(Promise.all(provider.deleteFile.mock.results.map((result) => result.value))).resolves.toEqual([{ inside: true }, { inside: true }]);
+	});
+
+	it("deletes nothing from the deployment's storage when the tenant's settings cannot be read (the row still goes)", async () => {
+		const { service, repositories } = over({
+			tenantSettings: async () => {
+				throw new Error('database went away');
+			}
+		});
+		const warn = jest.spyOn((service as unknown as { logger: { warn: (message: string) => void } }).logger, 'warn').mockImplementation(() => undefined);
+		await expect(service.sweep(new Date('2026-11-03T00:00:00Z'))).resolves.toEqual({ purged: 1, kept: 0, gone: 0 });
+		expect(repositories['Document']['delete']).toHaveBeenCalledWith({ id: 'd1', tenantId: 'ten' });
+		expect(provider.deleteFile).not.toHaveBeenCalled();
+		expect(warn).toHaveBeenCalledWith(expect.stringContaining('could not be read'));
 	});
 
 	it('keeps the stored bytes another document row still names (a version, a trashed twin), and only those', async () => {
