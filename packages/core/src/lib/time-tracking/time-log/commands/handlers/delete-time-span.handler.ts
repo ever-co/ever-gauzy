@@ -62,6 +62,7 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 
 			// Handle non-overlapping time ranges
 			await this.handleNonOverlappingTimeRange(log, timeSlot, employeeId, organizationId, forceDelete);
+			return true;
 		}
 
 		if (moment(startedAt).isBetween(moment(start), moment(end), null, '[]')) {

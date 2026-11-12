@@ -2,6 +2,7 @@
 import '../../../../core/entities/internal';
 
 import { ITimeSlot } from '@gauzy/contracts';
+import { TimeSlotBulkDeleteCommand } from '../../../time-slot/commands';
 import { TimeLog } from '../../time-log.entity';
 import { DeleteTimeSpanCommand } from '../delete-time-span.command';
 import { TimeLogDeleteCommand } from '../time-log-delete.command';
@@ -44,13 +45,14 @@ const COVERING_RANGE = {
  * The handler over a store holding the tracked log until a `TimeLogDeleteCommand` removes it, which is what
  * the default (soft-deleting) delete leaves a later `findOne` to see.
  */
-function createHandler() {
-	let stored: TimeLog | null = TRACKED_LOG;
+function createHandler(storedLog: TimeLog = TRACKED_LOG) {
+	let stored: TimeLog | null = storedLog;
 
 	const timeLogRepository = {
 		findOne: jest.fn(async ({ where }: { where: { id: string } }) =>
 			stored && stored.id === where.id ? { ...stored, timeSlots: [...stored.timeSlots] } : null
-		)
+		),
+		save: jest.fn(async (log: TimeLog) => log)
 	};
 	const execute = jest.fn(async (command: unknown) => {
 		if (command instanceof TimeLogDeleteCommand) {
@@ -106,5 +108,39 @@ describe('DeleteTimeSpanHandler', () => {
 			handler.execute(new DeleteTimeSpanCommand(COVERING_RANGE, TRACKED_LOG, TRACKED_LOG.timeSlots[1], true))
 		).resolves.toBe(false);
 		expect(execute).not.toHaveBeenCalled();
+	});
+
+	/**
+	 * Deleting a time slot sends the slot's ten minutes as the span, once per log holding the slot. A log whose time
+	 * does not reach the slot fell through to the overlap shapes after the slot was deleted: the split one moved the
+	 * stop of a log that ends before the slot up to the slot, and deleted a log that starts after it to save a copy
+	 * starting at the slot's end.
+	 */
+	describe('deleting a time slot its log does not reach', () => {
+		const SLOT_OUTSIDE = { id: '10734000-0000-4000-8000-000000000021' } as ITimeSlot;
+		const SLOT_RANGE = {
+			start: new Date('2026-10-12T11:00:00.000Z'),
+			end: new Date('2026-10-12T11:10:00.000Z')
+		};
+		const LOG_AFTER_SLOT = {
+			...TRACKED_LOG,
+			startedAt: new Date('2026-10-12T12:00:00.000Z'),
+			stoppedAt: new Date('2026-10-12T12:30:00.000Z')
+		} as TimeLog;
+
+		it.each([
+			['that stops before it', TRACKED_LOG],
+			['that starts after it', LOG_AFTER_SLOT]
+		])('deletes the slot alone and leaves a log %s as it is', async (_shape, log) => {
+			const { handler, execute, timeLogRepository } = createHandler(log);
+
+			await handler.execute(new DeleteTimeSpanCommand(SLOT_RANGE, log, SLOT_OUTSIDE));
+
+			const commands = execute.mock.calls.map(([command]) => command);
+			expect(timeLogRepository.save).not.toHaveBeenCalled();
+			expect(commands.some((command) => command instanceof TimeLogDeleteCommand)).toBe(false);
+			const slotDeletions = commands.filter((command) => command instanceof TimeSlotBulkDeleteCommand);
+			expect(slotDeletions.map((command) => command.input.timeSlotsIds)).toEqual([[SLOT_OUTSIDE.id]]);
+		});
 	});
 });
