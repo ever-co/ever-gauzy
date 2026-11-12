@@ -71,7 +71,14 @@ export type ConflictSide = 'platform' | 'external';
 		</h5>
 		<p class="intro">{{ 'JIRA.CONFLICTS.INTRO' | translate }}</p>
 		<div class="filters">
-			<nb-select size="small" [selected]="status" [disabled]="loading" data-test="conflict-status" (selectedChange)="changeStatus($event)">
+			<nb-select
+				size="small"
+				[selected]="status"
+				[disabled]="loading"
+				data-test="conflict-status"
+				[attr.aria-label]="'JIRA.CONFLICTS.STATUS_LABEL' | translate"
+				(selectedChange)="changeStatus($event)"
+			>
 				@for (item of statuses; track item) {
 					<nb-option [value]="item">{{ 'JIRA.CONFLICTS.STATUSES.' + item | translate }}</nb-option>
 				}
@@ -306,6 +313,11 @@ export class JiraConflictsComponent implements OnChanges {
 			});
 	}
 
+	/** Shows the open conflicts (a run's count in the sync log opens them, whatever the list showed before). */
+	showOpen(): void {
+		this.changeStatus('open');
+	}
+
 	changeStatus(status: JiraConflictStatus): void {
 		if (status === this.status) return;
 		this.status = status;
@@ -358,6 +370,12 @@ export class JiraConflictsComponent implements OnChanges {
 				next: () => {
 					this.resolving = null;
 					this.rows = this.rows.filter((item) => item.conflict.id !== id);
+					// A title written back changes what the task's link shows: it is read again (keeping Jira's value writes
+					// nothing: the task holds it already).
+					if (keep === 'platform' && row.conflict.field === 'title') {
+						this.titles.delete(row.conflict.taskId);
+						this.titlesAsked.delete(row.conflict.taskId);
+					}
 					this.notice = this.translate.instant(keep === 'platform' ? 'JIRA.CONFLICTS.KEPT_PLATFORM' : 'JIRA.CONFLICTS.KEPT_EXTERNAL');
 					this.load(true);
 				},

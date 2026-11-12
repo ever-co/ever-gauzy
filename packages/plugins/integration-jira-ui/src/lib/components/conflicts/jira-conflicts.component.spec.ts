@@ -164,6 +164,18 @@ describe('JiraConflictsComponent', () => {
 		expect(api.taskTitles).toHaveBeenCalledTimes(1);
 	});
 
+	it("reads a task's title again once its title conflict wrote the task's value back", () => {
+		api.conflicts.mockReturnValue(of([conflict()]));
+		api.resolveConflict.mockReturnValue(of(conflict({ status: 'resolved', resolution: 'kept_platform' })));
+		const { fixture, find } = render();
+		expect(api.taskTitles).toHaveBeenCalledTimes(1);
+
+		find('keep-platform-c-1')?.click();
+		fixture.detectChanges();
+
+		expect(api.taskTitles).toHaveBeenCalledTimes(2);
+	});
+
 	it("restores the task's value; while it runs, nothing else can be resolved or read again", () => {
 		api.conflicts.mockReturnValue(of([conflict(), conflict({ id: 'c-2' })]));
 		const pending = new Subject<JiraConflict>();

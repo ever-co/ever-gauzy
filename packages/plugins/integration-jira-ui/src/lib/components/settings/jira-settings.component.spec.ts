@@ -175,9 +175,9 @@ describe('JiraSettingsComponent (sync log and conflicts)', () => {
 		expect(finishedRuns([run({ status: 'running' })], [run({ status: 'failed' })])).toBe(true);
 		expect(finishedRuns([run({ status: 'running' })], [])).toBe(true);
 		expect(finishedRuns([run({ status: 'done' })], [run({ status: 'done' }), run({ id: 'run-9', status: 'running' })])).toBe(false);
-		// Started and ended between two reads: finished, when it found conflicts.
+		// Started and ended between two reads: finished, conflicts or not (its mapping's position moved).
 		expect(finishedRuns([run({ status: 'done' })], [run({ status: 'done' }), run({ id: 'run-9', status: 'done', conflictCount: 2 })])).toBe(true);
-		expect(finishedRuns([run({ status: 'done' })], [run({ status: 'done' }), run({ id: 'run-9', status: 'done', conflictCount: 0 })])).toBe(false);
+		expect(finishedRuns([run({ status: 'done' })], [run({ status: 'done' }), run({ id: 'run-9', status: 'done', conflictCount: 0 })])).toBe(true);
 	});
 
 	it('a runs read answered after the page moved to another connection is dropped', async () => {
@@ -378,6 +378,27 @@ describe('JiraSettingsComponent (site, webhook, mappings, reports)', () => {
 
 		expect(navigate).toHaveBeenCalledWith(['/pages/integrations/jira']);
 		expect(api.summary).toHaveBeenCalledTimes(1);
+	});
+
+	it("a connection of another organization than the selected one sends the page back to the overview, showing none of it", async () => {
+		api.summary.mockReturnValue(of(connection({ organizationId: 'org-other' })));
+		const { fixture, component } = render();
+		const navigate = TestBed.inject(Router).navigate as jest.Mock;
+		await settle(fixture);
+		expect(navigate).toHaveBeenCalledWith(['/pages/integrations/jira']);
+		expect(component.connection).toBeNull();
+		expect(component.mappings).toEqual([]);
+	});
+
+	it('a run count opens the open conflicts of that run, whatever the list showed before', async () => {
+		api.runs.mockReturnValue(of([run({ id: 'run-5', conflictCount: 2 })]));
+		const { fixture, component } = render();
+		await settle(fixture);
+		const list = (component as unknown as { conflictList: { showOpen: () => void } }).conflictList;
+		const showOpen = jest.spyOn(list, 'showOpen');
+		component.showRunConflicts(component.runs[0]);
+		expect(component.conflictRunId).toBe('run-5');
+		expect(showOpen).toHaveBeenCalled();
 	});
 
 	it('a project detail answered after the form moved to another Jira project is dropped', async () => {

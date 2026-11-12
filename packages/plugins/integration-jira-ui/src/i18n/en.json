@@ -142,6 +142,7 @@
 	"CONFLICTS": {
 		"TITLE": "Sync conflicts",
 		"INTRO": "A field changed both in Jira and on the platform since they last agreed. Jira's value was applied to the task, and the task's value is kept here: keep Jira's value, or restore the task's (a mapping that sends changes out sends it to the issue too).",
+		"STATUS_LABEL": "Conflicts to show",
 		"STATUSES": {
 			"open": "Open",
 			"resolved": "Resolved"

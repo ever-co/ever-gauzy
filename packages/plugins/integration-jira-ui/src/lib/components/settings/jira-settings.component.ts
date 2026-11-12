@@ -32,14 +32,14 @@ const REPORT_FAILURES_SHOWN = 5;
 
 /**
  * Whether the newer runs read holds a run that finished since the older one: one that was running and is not any
- * more (done, failed, or gone from the list), or one first seen already finished with conflicts (it started and ended
- * between two reads).
+ * more (done, failed, or gone from the list), or one first seen already finished (it started and ended between two
+ * reads; its mapping's position moved, and it may have found conflicts).
  */
 export function finishedRuns(before: readonly JiraRun[], after: readonly JiraRun[]): boolean {
 	const earlier = new Set(before.map((run) => run.id));
 	const now = new Map(after.map((run) => [run.id, run.status]));
 	if (before.some((run) => run.status === 'running' && now.get(run.id) !== 'running')) return true;
-	return after.some((run) => !earlier.has(run.id) && run.status !== 'running' && (run.conflictCount ?? 0) > 0);
+	return after.some((run) => !earlier.has(run.id) && run.status !== 'running');
 }
 
 /** The add-mapping form. */
@@ -411,15 +411,17 @@ interface MappingDraft {
 															<small class="note" data-test="report-partial">{{ 'JIRA.RUNS.REPORT_PARTIAL' | translate }}</small>
 														}
 														@if (report.failures.length) {
-															<small class="note failures" [attr.data-test]="'report-failures-' + run.id">
-																{{ 'JIRA.RUNS.REPORT_FAILURES' | translate }}
-																@for (failure of shownFailures(run); track failure.key) {
-																	<span class="failure" [attr.title]="failure.error">{{ failure.key }}</span>
-																}
+															<details class="note failures" [attr.data-test]="'report-failures-' + run.id">
+																<summary>{{ 'JIRA.RUNS.REPORT_FAILURES' | translate }} {{ failureKeys(run) }}</summary>
+																<ul>
+																	@for (failure of shownFailures(run); track failure.key) {
+																		<li class="failure"><strong>{{ failure.key }}</strong>: {{ failure.error }}</li>
+																	}
+																</ul>
 																@if (hiddenFailures(run); as more) {
 																	{{ 'JIRA.RUNS.REPORT_MORE' | translate: { count: more } }}
 																}
-															</small>
+															</details>
 														}
 													} @else {
 														—
@@ -474,8 +476,8 @@ interface MappingDraft {
 			}
 			.status-map,
 			.issue-types {
-				border: 1px solid rgba(143, 155, 179, 0.3);
-				border-radius: 0.5rem;
+				border: 1px solid var(--border-basic-color-3);
+				border-radius: var(--border-radius);
 				padding: 0.5rem 1rem 1rem;
 				margin: 1rem 0;
 			}
@@ -491,8 +493,11 @@ interface MappingDraft {
 			.submit {
 				margin-top: 1rem;
 			}
-			.failure {
-				margin-left: 0.25rem;
+			.failures ul {
+				margin: 0.25rem 0 0;
+				padding-left: 1rem;
+			}
+			.failure strong {
 				font-family: monospace;
 			}
 			.error-cell {
@@ -567,7 +572,11 @@ export class JiraSettingsComponent implements OnInit {
 					this.loading = true;
 					this.error = null;
 					this.cdr.markForCheck();
-					if (!integrationId || !organizationId) return of(null);
+					if (!integrationId || !organizationId) {
+						// No organization selected (any more): nothing of the former one stays on the page.
+						this.clearConnection();
+						return of(null);
+					}
 					return this.load(integrationId, organizationId);
 				}),
 				takeUntilDestroyed(this.destroyRef)
@@ -610,6 +619,15 @@ export class JiraSettingsComponent implements OnInit {
 				return site$.pipe(map((rest) => ({ connection, sites, ...rest })));
 			}),
 			map((result) => {
+				// The page moved to another connection or organization meanwhile: this read is not its.
+				if (integrationId !== this.integrationId || organizationId !== this.organizationId) return null;
+				// A connection of another organization than the selected one: back to the Jira overview, which reads the
+				// selected organization's.
+				if (result.connection.organizationId && result.connection.organizationId !== organizationId) {
+					this.clearConnection();
+					void this.router.navigate([JIRA_LINK]);
+					return null;
+				}
 				this.connection = result.connection;
 				this.sites = result.sites;
 				this.siteDraft = result.connection.cloudId ?? result.sites.find((site) => site.selected)?.id ?? '';
@@ -661,9 +679,10 @@ export class JiraSettingsComponent implements OnInit {
 		});
 	}
 
-	/** The sync log's count of a run: the conflict list shows what that run found. */
+	/** The sync log's count of a run: the conflict list shows the open conflicts that run found. */
 	showRunConflicts(run: JiraRun): void {
 		this.conflictRunId = run.id;
+		this.conflictList?.showOpen();
 		this.cdr.markForCheck();
 		this.conflictHost?.nativeElement.scrollIntoView?.({ behavior: 'smooth', block: 'start' });
 	}
@@ -681,10 +700,12 @@ export class JiraSettingsComponent implements OnInit {
 		this.request(this.api.selectSite(integrationId, this.siteDraft), () => {
 			this.notice = this.translateKey('JIRA.SITES.CHOSEN');
 			this.loading = true;
-			this.load(integrationId, organizationId).subscribe(() => {
-				this.loading = false;
-				this.cdr.markForCheck();
-			});
+			this.load(integrationId, organizationId)
+				.pipe(takeUntilDestroyed(this.destroyRef))
+				.subscribe(() => {
+					this.loading = false;
+					this.cdr.markForCheck();
+				});
 		});
 	}
 
@@ -750,7 +771,14 @@ export class JiraSettingsComponent implements OnInit {
 		this.cdr.markForCheck();
 	}
 
-	/** The failed issues a run's report line names, by key (the error is each one's tooltip). */
+	/** The keys of the failed issues a run's report line names. */
+	failureKeys(run: JiraRun): string {
+		return this.shownFailures(run)
+			.map((failure) => failure.key)
+			.join(', ');
+	}
+
+	/** The failed issues a run's report line names, by key, each with its error. */
 	shownFailures(run: JiraRun): JiraRunFailure[] {
 		return (run.report?.failures ?? []).slice(0, REPORT_FAILURES_SHOWN);
 	}
@@ -828,7 +856,8 @@ export class JiraSettingsComponent implements OnInit {
 		this.error = null;
 		this.notice = null;
 		this.cdr.markForCheck();
-		request.subscribe({
+		// Bound to the page's life: a disconnect answered after the person left never navigates their new page.
+		request.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
 			next: (value) => {
 				this.busy = false;
 				apply(value);
@@ -858,6 +887,17 @@ export class JiraSettingsComponent implements OnInit {
 	private failed<T>(error: unknown, fallback: T): T {
 		this.error = this.error ?? errorText(error);
 		return fallback;
+	}
+
+	/** Nothing of a connection on the page: no organization is selected, or the connection is another organization's. */
+	private clearConnection(): void {
+		this.connection = null;
+		this.sites = [];
+		this.jiraProjects = [];
+		this.projects = [];
+		this.mappings = [];
+		this.runs = [];
+		this.resetDraft();
 	}
 
 	/** An empty add form, and no project detail. */

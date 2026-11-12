@@ -172,20 +172,30 @@ export class JiraPageComponent implements OnInit {
 
 	/** Starts the connect flow: the API's single-use state, then Jira's authorize page in this tab. */
 	connect(): void {
-		if (!this.organizationId || this.connecting) return;
+		const organizationId = this.organizationId;
+		if (!organizationId || this.connecting) return;
 		this.connecting = true;
 		this.connectError = null;
 		this.cdr.markForCheck();
-		this.api.installState(this.organizationId).subscribe({
-			next: ({ authorizeUrl }) => {
-				this.leaveTo(authorizeUrl);
-			},
-			error: (error) => {
-				this.connecting = false;
-				this.connectError = errorText(error);
-				this.cdr.markForCheck();
-			}
-		});
+		this.api
+			.installState(organizationId)
+			.pipe(takeUntilDestroyed(this.destroyRef))
+			.subscribe({
+				next: ({ authorizeUrl }) => {
+					// Another organization was selected meanwhile: this state is the former one's, so nobody is sent anywhere.
+					if (organizationId !== this.organizationId) {
+						this.connecting = false;
+						this.cdr.markForCheck();
+						return;
+					}
+					this.leaveTo(authorizeUrl);
+				},
+				error: (error) => {
+					this.connecting = false;
+					this.connectError = errorText(error);
+					this.cdr.markForCheck();
+				}
+			});
 	}
 
 	openSettings(): void {
