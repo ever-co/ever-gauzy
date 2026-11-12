@@ -3,47 +3,36 @@ import * as moment from 'moment';
 /**
  * Generates time slots in 10-minute intervals between a start and end time.
  *
- * - If the start time is aligned with a 10-minute boundary (e.g., 10:20), a full 10-minute slot is created.
- * - If not, it adjusts the current slot to end at the next 10-minute boundary.
- * - The function handles partial slots if the end time falls within a slot.
+ * - Every slot starts and ends on a 10-minute boundary (e.g., 10:20:00.000 to 10:30:00.000), whatever seconds or
+ *   milliseconds the range starts at. Slots are matched by their exact start (input slots are merged into the
+ *   generated ones, and existing slots are looked up by it), so a start that kept the range's milliseconds
+ *   never matched the slot a client sent for the same ten minutes.
+ * - `duration` is the part of the range inside the slot, in whole seconds, so the first and last slots can be partial.
  *
  * @param start The start time of the range
  * @param end The end time of the range
  * @returns An array of time slots with { startedAt, stoppedAt, duration }
  */
 export function generateTimeSlots(start: Date, end: Date) {
-	let mStart = moment(start);
 	const mEnd = moment(end);
+	let cursor = moment(start);
 
 	const slots = [];
-	while (mStart.isBefore(mEnd)) {
-		let tempEnd: moment.Moment;
-		let duration = 0;
+	while (cursor.isBefore(mEnd)) {
+		// The 10-minute boundary at or before the cursor
+		const slotStart = cursor.clone().startOf('minute');
+		slotStart.set('minute', slotStart.get('minute') - (slotStart.get('minute') % 10));
+		const slotEnd = slotStart.clone().add(10, 'minute');
 
-		// Check if start time is aligned to a 10-minute boundary (e.g., 10:20)
-		if (mStart.get('minute') % 10 === 0) {
-			tempEnd = mStart.clone().add(10, 'minute');
-			duration = tempEnd.isBefore(mEnd) ? tempEnd.diff(mStart, 'seconds') : mEnd.diff(mStart, 'seconds');
-		} else {
-			// Align to previous 10-minute boundary
-			const tempStart = mStart.clone().set('minute', mStart.get('minute') - (mStart.minutes() % 10));
-			tempEnd = tempStart.clone().add(10, 'minute');
-
-			duration = mEnd.isBefore(tempEnd) ? mEnd.diff(mStart, 'seconds') : tempEnd.diff(mStart, 'seconds');
-
-			mStart = tempStart;
-		}
-
-		mStart.set('second', 0);
-		mEnd.set('millisecond', 0);
+		const countedTo = mEnd.isBefore(slotEnd) ? mEnd : slotEnd;
 
 		slots.push({
-			startedAt: mStart.toDate(),
-			stoppedAt: tempEnd.toDate(),
-			duration: Math.abs(duration)
+			startedAt: slotStart.toDate(),
+			stoppedAt: slotEnd.toDate(),
+			duration: countedTo.diff(cursor, 'seconds')
 		});
 
-		mStart = tempEnd.clone();
+		cursor = slotEnd;
 	}
 	return slots;
 }
