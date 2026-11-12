@@ -654,22 +654,15 @@ export class TimerService {
 					})}`
 			);
 
-			// Resolve conflicts by deleting conflicting time slots
+			// Resolve conflicts: each conflicting time log loses the stopped log's time and keeps the rest
 			if (conflicts?.length) {
 				const times: IDateRange = {
 					start: new Date(lastLog.startedAt),
 					end: new Date(lastLog.stoppedAt)
 				};
 
-				// Loop through each conflicting time log
-				for await (const timeLog of conflicts) {
-					const { timeSlots = [] } = timeLog;
-					// Delete conflicting time slots
-					for await (const timeSlot of timeSlots) {
-						await this._commandBus.execute(
-							new DeleteTimeSpanCommand(times, timeLog, timeSlot, forceDelete)
-						);
-					}
+				for (const timeLog of conflicts) {
+					await this._commandBus.execute(new DeleteTimeSpanCommand(times, timeLog, undefined, forceDelete));
 				}
 			}
 		} catch (error) {
