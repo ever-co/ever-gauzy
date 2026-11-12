@@ -61,8 +61,17 @@ export const CHAT_APP_TEXT_LIMITS = {
 
 /** The most elements a context block shows. */
 export const CHAT_APP_MAX_CONTEXT_ELEMENTS = 10;
-/** The longest idempotency key (the message's `nonce` column). */
+/** The longest idempotency key (the message's `nonce` column, and a click's `idempotencyKey`). */
 export const CHAT_WEBHOOK_MAX_NONCE_LENGTH = 64;
+
+/**
+ * Whether a trimmed idempotency key can be stored: at most 64 printable characters (a UUID is 36). One rule for a
+ * post's `nonce` / `Idempotency-Key` and for a click's `Idempotency-Key`.
+ */
+export function isUsableIdempotencyKey(value: string): boolean {
+	// eslint-disable-next-line no-control-regex -- a key of printable characters only
+	return value.length <= CHAT_WEBHOOK_MAX_NONCE_LENGTH && !/[\u0000-\u001F\u007F]/.test(value);
+}
 
 const UUID = '[0-9a-fA-F-]{36}';
 // Control characters (and the bidi overrides) are exactly what this pattern exists to find.
@@ -543,8 +552,7 @@ export function blocksOf(json: string | null | undefined): IChatAppBlock[] {
 function nonceOf(raw: unknown, header: string | null | undefined): string | null {
 	const value = typeof raw === 'string' && raw.trim() ? raw.trim() : typeof header === 'string' && header.trim() ? header.trim() : null;
 	if (value === null) return null;
-	// eslint-disable-next-line no-control-regex -- a nonce of printable characters only
-	if (value.length > CHAT_WEBHOOK_MAX_NONCE_LENGTH || /[\u0000-\u001F\u007F]/.test(value)) {
+	if (!isUsableIdempotencyKey(value)) {
 		throw new ChatWebhookPayloadError('invalid_payload', `A nonce holds at most ${CHAT_WEBHOOK_MAX_NONCE_LENGTH} printable characters.`);
 	}
 	return value;
