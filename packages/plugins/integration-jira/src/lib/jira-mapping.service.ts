@@ -187,7 +187,8 @@ export class JiraMappingService extends TenantAwareCrudService<JiraProjectMappin
 	async whileMappingsLocked<T>(tenant: IIntegrationTenant, work: (mappings: number, synced: boolean) => Promise<T>): Promise<T> {
 		return this.withMappingsLock(tenant, async (manager) => {
 			const mappings = await manager.count(JiraProjectMapping, { where: { integrationId: tenant.id as ID, tenantId: tenant.tenantId as ID } as never });
-			return work(mappings, (await this.hasIssueMaps(tenant, manager)) || (await this.hasLiveRuns(tenant, manager)));
+			// Live runs first: a run no longer running has committed its id maps, which the read after it then sees.
+			return work(mappings, (await this.hasLiveRuns(tenant, manager)) || (await this.hasIssueMaps(tenant, manager)));
 		});
 	}
 
