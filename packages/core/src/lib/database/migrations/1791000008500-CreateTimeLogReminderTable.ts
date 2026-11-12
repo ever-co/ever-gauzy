@@ -8,7 +8,7 @@ type Dialect = 'postgres' | 'sqlite' | 'mysql';
 const TABLE = 'time_log_reminder';
 
 /** The key that lets one reminder of a log and level through, whatever the processes that send it. */
-export const TIME_LOG_REMINDER_UNIQUE_INDEX = {
+const TIME_LOG_REMINDER_UNIQUE_INDEX = {
 	name: 'IDX_time_log_reminder_time_log_level',
 	columns: ['timeLogId', 'level']
 };
@@ -17,7 +17,7 @@ export const TIME_LOG_REMINDER_UNIQUE_INDEX = {
  * The indexes the entity declares, under the names TypeORM gives them (`migration:generate` then sees nothing to add):
  * the base entity's columns. The log is indexed by the unique key, whose first column it is.
  */
-export const TIME_LOG_REMINDER_INDEXES: ReadonlyArray<{ name: string; columns: string[] }> = [
+const TIME_LOG_REMINDER_INDEXES: ReadonlyArray<{ name: string; columns: string[] }> = [
 	{ name: 'IDX_78c3cdb11959415be06bf031c2', columns: ['createdByUserId'] },
 	{ name: 'IDX_2c483ba315a455001e3e638d66', columns: ['updatedByUserId'] },
 	{ name: 'IDX_c9d045ec02091d925ff60d60fb', columns: ['deletedByUserId'] },
@@ -28,7 +28,7 @@ export const TIME_LOG_REMINDER_INDEXES: ReadonlyArray<{ name: string; columns: s
 ];
 
 /** The foreign keys, under the names TypeORM gives them. A reminder goes with its log. */
-export const TIME_LOG_REMINDER_FOREIGN_KEYS: ReadonlyArray<{
+const TIME_LOG_REMINDER_FOREIGN_KEYS: ReadonlyArray<{
 	name: string;
 	column: string;
 	references: string;
@@ -155,11 +155,11 @@ const COLUMNS: Record<Dialect, string> = {
  *
  * `down` drops the table (its indexes and foreign keys go with it).
  */
-export class CreateTimeLogReminderTable1791000007100 implements MigrationInterface {
-	name = 'CreateTimeLogReminderTable1791000007100';
+export class CreateTimeLogReminderTable1791000008500 implements MigrationInterface {
+	name = 'CreateTimeLogReminderTable1791000008500';
 
 	/** Advisory lock key that serialises concurrent runs of this migration on Postgres. */
-	private readonly advisoryLockKey = 1791000007100;
+	private readonly advisoryLockKey = 1791000008500;
 
 	/** The MySQL named lock of this migration. MySQL refuses lock names over 64 characters. */
 	readonly mysqlLockName = `gauzy:migration:${this.advisoryLockKey}`;

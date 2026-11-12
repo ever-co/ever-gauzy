@@ -17,7 +17,7 @@ import {
 import { TYPEORM_INVALID_WHERE_VALUES_BEHAVIOR } from '@gauzy/config';
 import { coreEntities } from '../../core/entities';
 import { RequestContext } from '../../core/context/request-context';
-import { CreateTimeLogReminderTable1791000007100 } from '../../database/migrations/1791000007100-CreateTimeLogReminderTable';
+import { CreateTimeLogReminderTable1791000008500 } from '../../database/migrations/1791000008500-CreateTimeLogReminderTable';
 import {
 	TIMER_REMINDER_MAX_RUN_AGE_MS,
 	TIMER_REMINDER_STALE_CLAIM_MS,
@@ -97,7 +97,7 @@ describe('TimerReminderService on SQLite', () => {
 			`CREATE TABLE "employee_notification" ("id" varchar PRIMARY KEY NOT NULL, "tenantId" varchar, "entityId" varchar, "title" varchar, "deletedAt" datetime)`
 		);
 		const runner = dataSource.createQueryRunner();
-		await new CreateTimeLogReminderTable1791000007100().up(runner);
+		await new CreateTimeLogReminderTable1791000008500().up(runner);
 		await runner.release();
 		for (const id of [TENANT, OTHER_TENANT]) await dataSource.query(`INSERT INTO "tenant" ("id") VALUES (?)`, [id]);
 		for (const id of [ORGANIZATION, OTHER_ORGANIZATION])

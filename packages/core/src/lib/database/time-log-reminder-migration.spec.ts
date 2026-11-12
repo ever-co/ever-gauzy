@@ -6,10 +6,10 @@ import { isPostgres } from '@gauzy/config';
 import { coreEntities } from '../core/entities';
 import { Employee, Organization, Tenant, TimeLog, TimeLogReminder, User } from '../core/entities/internal';
 import { isUniqueViolation } from '../core/errors/unique-violation';
-import { CreateTimeLogReminderTable1791000007100 } from './migrations/1791000007100-CreateTimeLogReminderTable';
+import { CreateTimeLogReminderTable1791000008500 } from './migrations/1791000008500-CreateTimeLogReminderTable';
 
 /**
- * `1791000007100-CreateTimeLogReminderTable` run on a real database: the schema every other entity gives is built
+ * `1791000008500-CreateTimeLogReminderTable` run on a real database: the schema every other entity gives is built
  * first (TypeORM's synchronize), the table is dropped, and the migration creates it again. The table it creates must
  * be the one the entity declares (TypeORM's schema diff finds nothing to change), `up` twice must be harmless, the
  * unique key must refuse a second reminder of one log and level, a reminder must go with its log, and `down` must
@@ -100,7 +100,7 @@ function exercise(options: () => DataSourceOptions) {
 		await dataSource?.destroy();
 	});
 
-	const migration = new CreateTimeLogReminderTable1791000007100();
+	const migration = new CreateTimeLogReminderTable1791000008500();
 
 	const up = async (inTransaction: boolean) => {
 		const queryRunner = dataSource.createQueryRunner();
@@ -202,15 +202,15 @@ function exercise(options: () => DataSourceOptions) {
 
 const postgresUrl = process.env.GAUZY_MIGRATION_TEST_POSTGRES_URL;
 
-(isPostgres() ? describe.skip : describe)('CreateTimeLogReminderTable1791000007100 on SQLite', () => {
+(isPostgres() ? describe.skip : describe)('CreateTimeLogReminderTable1791000008500 on SQLite', () => {
 	exercise(() => ({ type: 'better-sqlite3', database: ':memory:' }));
 });
 
-(isPostgres() && postgresUrl ? describe : describe.skip)('CreateTimeLogReminderTable1791000007100 on Postgres', () => {
+(isPostgres() && postgresUrl ? describe : describe.skip)('CreateTimeLogReminderTable1791000008500 on Postgres', () => {
 	exercise(() => ({ type: 'postgres', url: postgresUrl }));
 });
 
-describe('CreateTimeLogReminderTable1791000007100 statements', () => {
+describe('CreateTimeLogReminderTable1791000008500 statements', () => {
 	beforeEach(() => jest.spyOn(console, 'log').mockImplementation(() => undefined));
 	afterEach(() => jest.restoreAllMocks());
 
@@ -228,9 +228,9 @@ describe('CreateTimeLogReminderTable1791000007100 statements', () => {
 			})
 		};
 
-		await new CreateTimeLogReminderTable1791000007100().up(queryRunner as never);
+		await new CreateTimeLogReminderTable1791000008500().up(queryRunner as never);
 
-		expect(statements[0]).toEqual({ sql: 'SELECT pg_advisory_xact_lock($1)', params: [1791000007100] });
+		expect(statements[0]).toEqual({ sql: 'SELECT pg_advisory_xact_lock($1)', params: [1791000008500] });
 		expect(statements[1].sql).toMatch(/^CREATE TABLE IF NOT EXISTS "time_log_reminder"/);
 		expect(statements.map(({ sql }) => sql)).toContain(
 			'CREATE UNIQUE INDEX IF NOT EXISTS "IDX_time_log_reminder_time_log_level" ON "time_log_reminder" ("timeLogId", "level")'
@@ -253,7 +253,7 @@ describe('CreateTimeLogReminderTable1791000007100 statements', () => {
 			})
 		};
 
-		await new CreateTimeLogReminderTable1791000007100().up(queryRunner as never);
+		await new CreateTimeLogReminderTable1791000008500().up(queryRunner as never);
 
 		expect(statements[0]).toBe('SELECT GET_LOCK(?, 30) AS acquired');
 		expect(statements[1]).toMatch(/^CREATE TABLE IF NOT EXISTS `time_log_reminder`/);
@@ -265,7 +265,7 @@ describe('CreateTimeLogReminderTable1791000007100 statements', () => {
 	it('refuses a database it does not know before any statement', async () => {
 		const queryRunner = { connection: { options: { type: 'oracle' } }, query: jest.fn() };
 
-		await expect(new CreateTimeLogReminderTable1791000007100().up(queryRunner as never)).rejects.toThrow(
+		await expect(new CreateTimeLogReminderTable1791000008500().up(queryRunner as never)).rejects.toThrow(
 			'Unsupported database'
 		);
 		expect(queryRunner.query).not.toHaveBeenCalled();
