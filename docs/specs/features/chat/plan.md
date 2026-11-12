@@ -93,7 +93,7 @@ Contracts: `packages/contracts/src/lib/chat.model.ts` (enums, interfaces, inputs
 | `POST` / `DELETE` | `/chat/messages/:id/reactions/:emoji` | VIEW | core reactions with membership check (the generic `/reaction` routes leave chat reactions out, §14.2) |
 | `GET` | `/chat/messages/:id/thread` · `POST /:id/thread/read` · `POST /:id/follow` · `/:id/unfollow` | VIEW | thread replies (same anchor paging), mark the thread read (clears its reply notifications), follow state |
 | `POST` | `/chat/messages/:id/create-task` | SEND + task create | `{ projectId, title?, assigneeIds? }` → task + reference |
-| `PATCH` | `/chat/messages/:id/tasks/:taskId` | SEND + `ORG_TASK_EDIT` | `{ status?, taskStatusId?, priority?, taskPriorityId?, assigneeEmployeeIds? }` → the task (through `TaskUpdateCommand`, FR-14) + `chat_message.updated` to every conversation showing it |
+| `PATCH` | `/chat/messages/:id/tasks/:taskId` | SEND + `ORG_TASK_EDIT` (or `ALL_ORG_EDIT`) + `ORG_TASK_VIEW` (or `ALL_ORG_VIEW`); a member of the conversation | `{ status?, taskStatusId?, priority?, taskPriorityId?, assigneeEmployeeIds? }` → the task (through `TaskUpdateCommand`, FR-14) + `chat_message.updated` to every conversation showing it (the answer lists the caller's own conversations' events only) |
 | `GET` | `/chat/states` · `POST /chat/read-all` · `POST /chat/read-restore` | VIEW | all member states; mark all read (returns a snapshot id); undo within 60 s |
 | `GET` | `/chat/threads` | VIEW | followed threads with unread reply counts |
 | `GET` | `/chat/search?q=&conversationId=&authorId=&hasFile=&cursor=` | VIEW | search plugin, membership-filtered |

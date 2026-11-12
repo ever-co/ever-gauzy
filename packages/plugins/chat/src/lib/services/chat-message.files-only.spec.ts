@@ -14,11 +14,15 @@ jest.mock('@gauzy/core', () => {
 		MikroOrmBaseEntityRepository: class {},
 		RequestContext: { currentTenantId: () => null, currentUserId: () => null, hasPermission: () => false }
 	};
-	return new Proxy(explicit, { get: (target, name) => (name in target ? target[name as string] : function Anything() {}) });
+	// Any other export: a stand-in nothing here calls.
+	const anything = function Anything() {
+		return undefined;
+	};
+	return new Proxy(explicit, { get: (target, name) => (name in target ? target[name as string] : anything) });
 });
 
 import { BadRequestException } from '@nestjs/common';
-import { CHAT_MESSAGE_MAX_LENGTH } from '@gauzy/contracts';
+import { CHAT_MESSAGE_MAX_ATTACHMENTS, CHAT_MESSAGE_MAX_LENGTH } from '@gauzy/contracts';
 import { attachmentNamesOf, CHAT_ATTACHMENT_NAMES_MAX, ChatMessageService } from './chat-message.service';
 
 const NEWLINE = String.fromCharCode(10);
@@ -34,12 +38,20 @@ describe('attachmentNamesOf', () => {
 		expect(attachmentNamesOf([], documents)).toBeNull();
 	});
 
-	it('keeps each name on one line and the list within the column', () => {
+	it('keeps each name on one line, and every name of the most files a message carries, whole', () => {
 		expect(attachmentNamesOf(['d1'], [{ id: 'd1', name: `two${NEWLINE}lines` }])).toBe('two lines');
-		const long = Array.from({ length: 10 }, (_, index) => ({ id: `d${index}`, name: 'n'.repeat(300) }));
-		const names = attachmentNamesOf(long.map((document) => document.id), long) as string;
-		expect(names.length).toBe(CHAT_ATTACHMENT_NAMES_MAX);
-		expect(names.split(NEWLINE)[0]).toHaveLength(255);
+		const long = Array.from({ length: CHAT_MESSAGE_MAX_ATTACHMENTS }, (_, index) => ({ id: `d${index}`, name: `${index}`.repeat(300) }));
+		const names = (attachmentNamesOf(long.map((document) => document.id), long) as string).split(NEWLINE);
+		expect(names).toHaveLength(CHAT_MESSAGE_MAX_ATTACHMENTS);
+		expect(names.every((name, index) => name.length === 255 && name.startsWith(`${index}`) && name.endsWith('…'))).toBe(true);
+		expect(names.join(NEWLINE).length).toBeLessThanOrEqual(CHAT_ATTACHMENT_NAMES_MAX);
+	});
+
+	it('cuts a longer list (past the attachment check) at a whole name, never through one', () => {
+		const many = Array.from({ length: CHAT_MESSAGE_MAX_ATTACHMENTS + 3 }, (_, index) => ({ id: `d${index}`, name: 'n'.repeat(255) }));
+		const names = (attachmentNamesOf(many.map((document) => document.id), many) as string).split(NEWLINE);
+		expect(names.length).toBeGreaterThanOrEqual(CHAT_MESSAGE_MAX_ATTACHMENTS);
+		expect(names.every((name) => name.length === 255)).toBe(true);
 	});
 });
 

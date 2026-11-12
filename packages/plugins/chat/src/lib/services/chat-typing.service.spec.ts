@@ -12,7 +12,11 @@ jest.mock('@gauzy/core', () => {
 		TenantOrganizationBaseEntity: class {},
 		MikroOrmBaseEntityRepository: class {}
 	};
-	return new Proxy(explicit, { get: (target, name) => (name in target ? target[name as string] : function Anything() {}) });
+	// Any other export: a stand-in nothing here calls.
+	const anything = function Anything() {
+		return undefined;
+	};
+	return new Proxy(explicit, { get: (target, name) => (name in target ? target[name as string] : anything) });
 });
 
 import { BadRequestException, NotFoundException } from '@nestjs/common';
