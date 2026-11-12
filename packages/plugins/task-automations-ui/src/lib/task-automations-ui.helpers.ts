@@ -277,6 +277,9 @@ export function draftErrors(draft: ITaskAutomationDraft): string[] {
 			break;
 		}
 	}
+	if (draft.conditions.some((condition) => condition.text.trim().length > TASK_AUTOMATION_LIMITS.textLength)) {
+		errors.push('TASK_AUTOMATIONS.ERRORS.TEXT_TOO_LONG');
+	}
 	for (const action of draft.actions) {
 		const input = actionInput(action.type);
 		const missing =
@@ -303,6 +306,23 @@ export function movedOrder(ids: readonly ID[], index: number, delta: number): ID
 }
 
 /** The ids in a new order: the rule dragged from `from` dropped at `to`. */
+/**
+ * What an edit changed: the fields of `after` that differ from `before` (both as the API takes them), so an update
+ * writes only those. Creating a rule sends the whole input instead.
+ */
+export function changedRuleInput(
+	before: ITaskAutomationRuleCreateInput,
+	after: ITaskAutomationRuleCreateInput
+): Partial<ITaskAutomationRuleCreateInput> {
+	const changed: Partial<ITaskAutomationRuleCreateInput> = {};
+	for (const key of Object.keys(after) as Array<keyof ITaskAutomationRuleCreateInput>) {
+		if (JSON.stringify(after[key] ?? null) !== JSON.stringify(before[key] ?? null)) {
+			(changed as Record<string, unknown>)[key] = after[key];
+		}
+	}
+	return changed;
+}
+
 /**
  * The rules in an order: the ids named first, in their order, then the others as they were; each rule as it is now, its
  * position its place. A rule no longer in the list is not brought back, a new one is kept.

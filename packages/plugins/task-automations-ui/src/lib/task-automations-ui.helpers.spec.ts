@@ -21,6 +21,7 @@ import {
 	newAction,
 	newCondition,
 	outcomeStatus,
+	changedRuleInput,
 	ruleInputOfDraft,
 	rulesInOrder,
 	viewOfLoadError
@@ -141,6 +142,18 @@ describe('task automations UI helpers', () => {
 		expect(droppedOrder(['a', 'b', 'c'], 0, 2)).toEqual(['b', 'c', 'a']);
 		expect(droppedOrder(['a', 'b', 'c'], 2, 0)).toEqual(['c', 'a', 'b']);
 		expect(droppedOrder(['a', 'b', 'c'], 1, 1)).toEqual(['a', 'b', 'c']);
+	});
+
+	it('sends only what an edit changed', () => {
+		const before = ruleInputOfDraft(draftOfRule(rule));
+		expect(changedRuleInput(before, { ...before, name: 'Other' })).toEqual({ name: 'Other' });
+		expect(changedRuleInput(before, before)).toEqual({});
+		expect(Object.keys(changedRuleInput(before, { ...before, actions: [] }))).toEqual(['actions']);
+	});
+
+	it('holds a title text to the platform’s 200 characters', () => {
+		const draft = { ...draftOfRule(rule), conditions: [{ ...newCondition(), type: TaskAutomationConditionEnum.TITLE_CONTAINS, text: 'x'.repeat(201) }] };
+		expect(draftErrors(draft as never)).toContain('TASK_AUTOMATIONS.ERRORS.TEXT_TOO_LONG');
 	});
 
 	it('applies an order to the rules as they are now, keeping what other writes made of them', () => {

@@ -209,8 +209,63 @@ describe('TaskAutomationsPageComponent', () => {
 
 		api.update.mockReturnValue(of(rule('a', { name: 'Renamed' })));
 		component.save(draft);
-		expect(api.update).toHaveBeenLastCalledWith('a', expect.objectContaining({ name: 'Renamed' }), 'org-1');
+		// Only what changed is sent: the switch another manager may have changed meanwhile is not written back.
+		expect(api.update).toHaveBeenLastCalledWith('a', { name: 'Renamed' }, 'org-1');
 		expect(component.rules()[0].name).toBe('Renamed');
+	});
+
+	it('closes only the editor that saved; a new draft opened meanwhile stays', () => {
+		const { component } = render();
+		const save$ = new Subject<ITaskAutomationRule>();
+		api.update.mockReturnValue(save$);
+		component.edit(component.rules()[0]);
+		component.save({ ...(component.editing() as ITaskAutomationDraft), name: 'Renamed' });
+		component.startBlank();
+		const fresh = component.editing();
+		save$.next(rule('a', { name: 'Renamed' }));
+		expect(component.editing()).toBe(fresh);
+	});
+
+	it('takes only the switch from a toggle answer, and keeps one order at a time', () => {
+		const { component } = render();
+		const toggle$ = new Subject<ITaskAutomationRule>();
+		api.update.mockReturnValueOnce(toggle$).mockReturnValueOnce(of(rule('a', { name: 'Renamed' })));
+		component.toggle(component.rules()[0], false);
+		component.edit(component.rules()[0]);
+		component.save({ ...(component.editing() as ITaskAutomationDraft), name: 'Renamed' });
+		toggle$.next(rule('a', { isEnabled: false }));
+		expect(component.rules()[0]).toMatchObject({ name: 'Renamed', isEnabled: false });
+
+		api.reorder.mockReturnValue(new Subject());
+		component.move(0, 1);
+		api.reorder.mockClear();
+		component.dragFrom.set(0);
+		component.drop(1);
+		expect(api.reorder).not.toHaveBeenCalled();
+	});
+
+	it('shows a dry run failure only for the rule still open', () => {
+		const failure$ = new Subject<never>();
+		api.test.mockReturnValue(failure$);
+		api.runs.mockReturnValue(of([]));
+		const { component } = render();
+		component.open(component.rules()[0]);
+		component.testTaskId.set('task-1');
+		component.runTest(component.rules()[0]);
+		component.open(component.rules()[1]);
+		failure$.error({ status: 500 });
+		expect(component.actionError()).toBeNull();
+	});
+
+	it('offers nothing of the organization before when it reloads', () => {
+		const { component } = render();
+		component.testTaskId.set('task-1');
+		directory.tasks.mockReturnValue(new Subject());
+		directory.employees.mockReturnValue(new Subject());
+		component.reload();
+		expect(component.tasks()).toEqual([]);
+		expect(component.testTaskId()).toBeNull();
+		expect(component.directory().employees).toEqual([]);
 	});
 
 	it('deletes a rule after a confirmation', () => {

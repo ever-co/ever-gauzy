@@ -12,6 +12,7 @@ import { BehaviorSubject, of, throwError } from 'rxjs';
 import { Store } from '@gauzy/ui-core/core';
 import {
 	isFinalRefusal,
+	TASK_AUTOMATIONS_AVAILABILITY_RECHECK_MS,
 	TASK_AUTOMATIONS_AVAILABILITY_RETRIES,
 	TASK_AUTOMATIONS_AVAILABILITY_RETRY_MS,
 	TaskAutomationsAvailabilityService
@@ -74,13 +75,18 @@ describe('TaskAutomationsAvailabilityService', () => {
 		expect(api.templates).toHaveBeenCalledTimes(2);
 	}));
 
-	it('gives up after the last retry', fakeAsync(() => {
+	it('is false after the last retry, and asks again later, so an API that recovers shows the entry', fakeAsync(() => {
 		api.templates.mockReturnValue(throwError(() => ({ status: 503 })));
 		const values: boolean[] = [];
-		service().available$.subscribe((value) => values.push(value));
-		tick(TASK_AUTOMATIONS_AVAILABILITY_RETRY_MS * 2 ** (TASK_AUTOMATIONS_AVAILABILITY_RETRIES + 1));
+		const subscription = service().available$.subscribe((value) => values.push(value));
+		// 5 + 10 + 20 + 40 + 80 seconds of retries.
+		tick(TASK_AUTOMATIONS_AVAILABILITY_RETRY_MS * (2 ** TASK_AUTOMATIONS_AVAILABILITY_RETRIES - 1));
 		expect(values).toEqual([false]);
 		expect(api.templates).toHaveBeenCalledTimes(TASK_AUTOMATIONS_AVAILABILITY_RETRIES + 1);
+		api.templates.mockReturnValue(of([]));
+		tick(TASK_AUTOMATIONS_AVAILABILITY_RECHECK_MS);
+		expect(values).toEqual([false, true]);
+		subscription.unsubscribe();
 	}));
 
 	it('signing out is false at once and cancels a request in flight; another user is asked again', fakeAsync(() => {

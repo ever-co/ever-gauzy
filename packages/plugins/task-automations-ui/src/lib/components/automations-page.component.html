@@ -1,0 +1,335 @@
+<nb-card class="page" data-test="automations-page">
+	<nb-card-header>
+		<h4>{{ 'TASK_AUTOMATIONS.TITLE' | translate }}</h4>
+		<p class="subtitle">{{ 'TASK_AUTOMATIONS.SUBTITLE' | translate }}</p>
+	</nb-card-header>
+	<nb-card-body>
+		@switch (view()) {
+			@case ('loading') {
+				<div class="loading" data-test="loading" [nbSpinner]="true"></div>
+			}
+			@case ('unavailable') {
+				<p data-test="unavailable">{{ 'TASK_AUTOMATIONS.UNAVAILABLE' | translate }}</p>
+			}
+			@case ('forbidden') {
+				<p data-test="forbidden">{{ 'TASK_AUTOMATIONS.FORBIDDEN' | translate }}</p>
+			}
+			@case ('error') {
+				<nb-alert status="danger" role="alert" data-test="error">{{ 'TASK_AUTOMATIONS.ERRORS.LOAD' | translate }}</nb-alert>
+				<button nbButton size="small" type="button" data-test="retry" (click)="reload()">
+					{{ 'TASK_AUTOMATIONS.RETRY' | translate }}
+				</button>
+			}
+			@default {
+				@if (actionError(); as message) {
+					<nb-alert status="danger" role="alert" closable data-test="action-error" (close)="actionError.set(null)">{{
+						message | translate
+					}}</nb-alert>
+				}
+
+				<div class="toolbar">
+					<button nbButton size="small" status="primary" type="button" data-test="new-blank" (click)="startBlank()">
+						<nb-icon icon="plus-outline"></nb-icon>{{ 'TASK_AUTOMATIONS.NEW_BLANK' | translate }}
+					</button>
+					<button
+						nbButton
+						size="small"
+						type="button"
+						data-test="show-templates"
+						[attr.aria-expanded]="templatesOpen()"
+						(click)="templatesOpen.set(!templatesOpen())"
+					>
+						<nb-icon icon="layers-outline"></nb-icon>{{ 'TASK_AUTOMATIONS.FROM_TEMPLATE' | translate }}
+					</button>
+				</div>
+
+				@if (templatesOpen()) {
+					<section class="templates" data-test="templates">
+						@for (template of templates(); track template.key) {
+							<div class="template" [attr.data-test]="'template-' + template.key">
+								<div class="template-text">
+									<div class="template-name">{{ translated(templateNameKey(template), template.name) }}</div>
+									<p class="hint">{{ translated(templateDescriptionKey(template), template.description) }}</p>
+									@if (template.requiresIntegration) {
+										<p class="hint warn">{{ 'TASK_AUTOMATIONS.REQUIRES_INTEGRATION' | translate }}</p>
+									}
+								</div>
+								<button
+									nbButton
+									size="small"
+									type="button"
+									[attr.data-test]="'use-' + template.key"
+									(click)="startFromTemplate(template)"
+								>
+									{{ 'TASK_AUTOMATIONS.USE_TEMPLATE' | translate }}
+								</button>
+							</div>
+						}
+					</section>
+				}
+
+				@if (editing(); as draft) {
+					<section class="panel" data-test="editing">
+						<h5>{{ (draft.id ? 'TASK_AUTOMATIONS.EDIT_TITLE' : 'TASK_AUTOMATIONS.NEW_TITLE') | translate }}</h5>
+						<ngx-task-automation-editor
+							[value]="draft"
+							[directory]="directory()"
+							[saving]="saving()"
+							(save)="save($event)"
+							(cancel)="closeEditor()"
+							(scopeChange)="loadScopedChoices($event)"
+						></ngx-task-automation-editor>
+					</section>
+				}
+
+				@if (!rules().length) {
+					<p class="empty" data-test="empty">{{ 'TASK_AUTOMATIONS.EMPTY' | translate }}</p>
+				} @else {
+					<ol class="rules" data-test="rules" [attr.aria-label]="'TASK_AUTOMATIONS.LIST' | translate">
+						@for (rule of rules(); track rule.id; let index = $index, first = $first, last = $last) {
+							<li
+								class="rule"
+								draggable="true"
+								[class.selected]="rule.id === selectedId()"
+								[class.dragging]="dragFrom() === index"
+								[attr.data-test]="'rule-' + rule.id"
+								(dragstart)="dragFrom.set(index)"
+								(dragend)="dragFrom.set(null)"
+								(dragover)="$event.preventDefault()"
+								(drop)="$event.preventDefault(); drop(index)"
+							>
+								<div class="rule-main">
+									<nb-toggle
+										[attr.data-test]="'toggle-' + rule.id"
+										[attr.aria-label]="'TASK_AUTOMATIONS.ENABLED' | translate"
+										[checked]="rule.isEnabled"
+										[disabled]="busy().has(rule.id)"
+										(checkedChange)="toggle(rule, $event)"
+									></nb-toggle>
+									<div class="rule-text">
+										<div class="rule-name">{{ rule.name }}</div>
+										<div class="hint">
+											{{ 'TASK_AUTOMATIONS.TRIGGERS.' + rule.trigger.type | translate }}
+											@if (rule.projectId) {
+												· {{ nameOf('projects', rule.projectId) }}
+											}
+											@if (rule.organizationTeamId) {
+												· {{ nameOf('teams', rule.organizationTeamId) }}
+											}
+											@if (rule.lastRunAt) {
+												· {{ 'TASK_AUTOMATIONS.LAST_RUN' | translate }} {{ rule.lastRunAt | date: 'short' }}
+											}
+										</div>
+									</div>
+								</div>
+								<div class="rule-actions">
+									<button
+										nbButton
+										ghost
+										size="tiny"
+										type="button"
+										[attr.aria-label]="'TASK_AUTOMATIONS.MOVE_UP' | translate"
+										[attr.data-test]="'up-' + rule.id"
+										[disabled]="first || reordering()"
+										(click)="move(index, -1)"
+									>
+										<nb-icon icon="arrow-upward-outline"></nb-icon>
+									</button>
+									<button
+										nbButton
+										ghost
+										size="tiny"
+										type="button"
+										[attr.aria-label]="'TASK_AUTOMATIONS.MOVE_DOWN' | translate"
+										[attr.data-test]="'down-' + rule.id"
+										[disabled]="last || reordering()"
+										(click)="move(index, 1)"
+									>
+										<nb-icon icon="arrow-downward-outline"></nb-icon>
+									</button>
+									<button nbButton ghost size="tiny" type="button" [attr.data-test]="'edit-' + rule.id" (click)="edit(rule)">
+										{{ 'TASK_AUTOMATIONS.EDIT' | translate }}
+									</button>
+									<button nbButton ghost size="tiny" type="button" [attr.data-test]="'open-' + rule.id" (click)="open(rule)">
+										{{ 'TASK_AUTOMATIONS.TEST_AND_HISTORY' | translate }}
+									</button>
+									@if (confirmDelete() === rule.id) {
+										<button
+											nbButton
+											size="tiny"
+											status="danger"
+											type="button"
+											[attr.data-test]="'confirm-delete-' + rule.id"
+											(click)="remove(rule)"
+										>
+											{{ 'TASK_AUTOMATIONS.CONFIRM_DELETE' | translate }}
+										</button>
+										<button nbButton ghost size="tiny" type="button" (click)="confirmDelete.set(null)">
+											{{ 'TASK_AUTOMATIONS.FORM.CANCEL' | translate }}
+										</button>
+									} @else {
+										<button
+											nbButton
+											ghost
+											size="tiny"
+											status="danger"
+											type="button"
+											[attr.data-test]="'delete-' + rule.id"
+											(click)="confirmDelete.set(rule.id)"
+										>
+											{{ 'TASK_AUTOMATIONS.DELETE' | translate }}
+										</button>
+									}
+								</div>
+							</li>
+						}
+					</ol>
+				}
+
+				@if (selectedRule(); as rule) {
+					<section class="panel" data-test="details">
+						<h5>{{ rule.name }}</h5>
+						<h6>{{ 'TASK_AUTOMATIONS.TEST.TITLE' | translate }}</h6>
+						<p class="hint">{{ 'TASK_AUTOMATIONS.TEST.HINT' | translate }}</p>
+						<div class="line">
+							<input
+								nbInput
+								fieldSize="small"
+								data-test="task-filter"
+								[attr.aria-label]="'TASK_AUTOMATIONS.TEST.FILTER' | translate"
+								[placeholder]="'TASK_AUTOMATIONS.TEST.FILTER' | translate"
+								[ngModel]="taskFilter()"
+								[ngModelOptions]="standalone"
+								(ngModelChange)="taskFilter.set($event)"
+							/>
+							<nb-select
+								size="small"
+								class="task"
+								data-test="test-task"
+								[placeholder]="'TASK_AUTOMATIONS.TEST.CHOOSE_TASK' | translate"
+								[selected]="testTaskId()"
+								(selectedChange)="testTaskId.set($event)"
+							>
+								@for (task of filteredTasks(); track task.value) {
+									<nb-option [value]="task.value"
+										>@if (task.detail) {
+											<span class="detail">{{ task.detail }}</span>
+										}
+										{{ task.label }}</nb-option
+									>
+								}
+							</nb-select>
+							<button
+								nbButton
+								size="small"
+								status="primary"
+								type="button"
+								data-test="run-test"
+								[disabled]="!testTaskId() || testing()"
+								(click)="runTest(rule)"
+							>
+								{{ 'TASK_AUTOMATIONS.TEST.RUN' | translate }}
+							</button>
+						</div>
+						@if (testResult(); as result) {
+							<div class="result" data-test="test-result">
+								<p>
+									<strong>{{ 'TASK_AUTOMATIONS.TEST.TRIGGER' | translate }}</strong>
+									<nb-badge
+										[status]="result.triggerMatches === false ? 'warning' : result.triggerMatches ? 'success' : 'basic'"
+										[text]="
+											(result.triggerMatches === null
+												? 'TASK_AUTOMATIONS.TEST.ON_EVENT'
+												: result.triggerMatches
+													? 'TASK_AUTOMATIONS.TEST.APPLIES'
+													: 'TASK_AUTOMATIONS.TEST.DOES_NOT_APPLY'
+											) | translate
+										"
+										position="center right"
+									></nb-badge>
+								</p>
+								@if (result.triggerNote) {
+									<p class="hint">{{ result.triggerNote }}</p>
+								}
+								@if (result.conditions.length) {
+									<p><strong>{{ 'TASK_AUTOMATIONS.TEST.CONDITIONS' | translate }}</strong></p>
+									<ul data-test="test-conditions">
+										@for (condition of result.conditions; track $index) {
+											<li [class.failed]="!condition.passed">
+												{{ (condition.passed ? '✓ ' : '✗ ') }}{{ 'TASK_AUTOMATIONS.CONDITIONS.' + condition.type | translate }}
+												@if (condition.detail) {
+													<span class="hint">({{ condition.detail }})</span>
+												}
+											</li>
+										}
+									</ul>
+								}
+								<p><strong>{{ 'TASK_AUTOMATIONS.TEST.CHANGES' | translate }}</strong></p>
+								<ul data-test="test-changes">
+									@for (change of result.changes; track $index) {
+										<li [class.failed]="change.failed">
+											{{ 'TASK_AUTOMATIONS.ACTIONS.' + change.action | translate }}:
+											{{ valueText(change.from) }} → {{ valueText(change.to) }}
+											@if (change.note) {
+												<span class="hint">({{ change.note }})</span>
+											}
+										</li>
+									}
+								</ul>
+								<p>
+									<strong>{{ 'TASK_AUTOMATIONS.TEST.OUTCOME' | translate }}</strong>
+									<span [class]="'outcome ' + outcomeStatus(result.outcome)" data-test="test-outcome">{{
+										'TASK_AUTOMATIONS.OUTCOMES.' + result.outcome | translate
+									}}</span>
+								</p>
+							</div>
+						}
+
+						<h6>{{ 'TASK_AUTOMATIONS.HISTORY.TITLE' | translate }}</h6>
+						@switch (runsState()) {
+							@case ('loading') {
+								<div class="loading small" [nbSpinner]="true"></div>
+							}
+							@case ('error') {
+								<p class="hint warn" data-test="runs-error">{{ 'TASK_AUTOMATIONS.HISTORY.ERROR' | translate }}</p>
+							}
+							@default {
+								@if (!runs().length) {
+									<p class="hint" data-test="no-runs">{{ 'TASK_AUTOMATIONS.HISTORY.EMPTY' | translate }}</p>
+								} @else {
+									<table class="runs" data-test="runs">
+										<thead>
+											<tr>
+												<th>{{ 'TASK_AUTOMATIONS.HISTORY.WHEN' | translate }}</th>
+												<th>{{ 'TASK_AUTOMATIONS.HISTORY.TASK' | translate }}</th>
+												<th>{{ 'TASK_AUTOMATIONS.HISTORY.OUTCOME' | translate }}</th>
+												<th>{{ 'TASK_AUTOMATIONS.HISTORY.DETAILS' | translate }}</th>
+											</tr>
+										</thead>
+										<tbody>
+											@for (run of runs(); track run.id) {
+												<tr [attr.data-test]="'run-' + run.id">
+													<td>{{ run.createdAt | date: 'short' }}</td>
+													<td>{{ taskName(run.taskId) }}</td>
+													<td>
+														<span [class]="'outcome ' + outcomeStatus(run.outcome)">{{
+															'TASK_AUTOMATIONS.OUTCOMES.' + run.outcome | translate
+														}}</span>
+													</td>
+													<td>{{ runDetails(run) }}</td>
+												</tr>
+											}
+										</tbody>
+									</table>
+								}
+							}
+						}
+						<button nbButton ghost size="small" type="button" data-test="close-details" (click)="selectedId.set(null)">
+							{{ 'TASK_AUTOMATIONS.CLOSE' | translate }}
+						</button>
+					</section>
+				}
+			}
+		}
+	</nb-card-body>
+</nb-card>
