@@ -1,6 +1,7 @@
+// cspell:ignore gzcwh
 import * as express from 'express';
 import * as request from 'supertest';
-import { GRAPHQL_MAX_BODY_BYTES_DEFAULT, graphqlEndpointPath, installBodyParsers, resolveGraphqlBodyLimit } from './body-parsers';
+import { GRAPHQL_MAX_BODY_BYTES_DEFAULT, graphqlEndpointPath, installBodyParsers, resolveGraphqlBodyLimit, SMALL_BODY_ROUTES } from './body-parsers';
 
 /**
  * The GraphQL endpoint's body ceiling (SEC-C-03).
@@ -14,7 +15,7 @@ describe('installBodyParsers', () => {
 	const app = (env: Record<string, string | undefined> = {}) => {
 		const server = express();
 		installBodyParsers(server, { graphqlPath: '/graphql', env });
-		server.post(['/graphql', '/api/import'], (req, res) => res.json({ bytes: JSON.stringify(req.body).length }));
+		server.post(['/graphql', '/api/import', '/api/chat/hooks/:token'], (req, res) => res.json({ bytes: JSON.stringify(req.body).length }));
 		return server;
 	};
 
@@ -31,6 +32,15 @@ describe('installBodyParsers', () => {
 
 		await request(app()).post('/graphql').type('form').send(form).expect(413);
 		await request(app()).post('/api/import').type('form').send(form).expect(200);
+	});
+
+	it('refuses a body over the small ceiling of a public webhook route before reading it, and takes one under it', async () => {
+		const [hooks] = SMALL_BODY_ROUTES;
+		expect(hooks.path).toBe('/api/chat/hooks');
+		await request(app()).post('/api/chat/hooks/gzcwh_token').send({ text: 'x'.repeat(hooks.limit + 1024) }).expect(413);
+		await request(app()).post('/api/chat/hooks/gzcwh_token').type('form').send(`payload=${'x'.repeat(hooks.limit + 1024)}`).expect(413);
+		await request(app()).post('/api/chat/hooks/gzcwh_token').send({ text: 'x'.repeat(100 * 1024) }).expect(200);
+		await request(app()).post('/api/import').send({ text: 'x'.repeat(hooks.limit + 1024) }).expect(200);
 	});
 
 	it('accepts a GraphQL body under its ceiling', async () => {

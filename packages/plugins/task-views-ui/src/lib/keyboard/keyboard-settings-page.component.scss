@@ -1,0 +1,75 @@
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.header h4 {
+  margin: 0;
+}
+.intro,
+.note,
+.hint,
+.fixed {
+  color: var(--text-hint-color);
+  font-size: 0.8125rem;
+}
+.intro {
+  margin: 0.25rem 0 0;
+}
+.section {
+  margin-bottom: 1.5rem;
+}
+h5 {
+  margin: 0 0 0.5rem;
+  font-size: 0.8125rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-hint-color);
+}
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.table th,
+.table td {
+  padding: 0.5rem 0.5rem 0.5rem 0;
+  border-bottom: 1px solid var(--border-basic-color-3);
+  vertical-align: middle;
+  text-align: left;
+  font-weight: normal;
+}
+.table th {
+  width: 40%;
+}
+.binding {
+  white-space: nowrap;
+}
+.actions {
+  text-align: right;
+  white-space: nowrap;
+}
+.actions button + button {
+  margin-left: 0.25rem;
+}
+tr.recording {
+  background: var(--background-basic-color-2);
+}
+.badge {
+  margin-left: 0.5rem;
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+  color: var(--color-primary-default);
+}
+.problem {
+  margin-right: 0.5rem;
+  font-size: 0.8125rem;
+  color: var(--color-danger-default);
+  white-space: normal;
+}
+.hint {
+  margin-right: 0.5rem;
+}
+.unavailable {
+  margin: 0;
+}

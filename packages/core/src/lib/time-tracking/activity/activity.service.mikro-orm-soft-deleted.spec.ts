@@ -37,6 +37,8 @@ describe('ActivityService daily aggregations (MikroORM) leave soft-deleted rows 
 			table.string('date');
 			table.string('title');
 			table.integer('duration');
+			table.string('type').nullable();
+			table.text('metaData').nullable();
 			table.datetime('deletedAt').nullable();
 		});
 		await db('employee').insert([

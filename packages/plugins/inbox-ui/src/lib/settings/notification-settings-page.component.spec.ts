@@ -1,5 +1,9 @@
+// The barrel pulls the whole app shell (cookies, Sentry); the page needs only these two tokens.
+jest.mock('@gauzy/ui-core/core', () => ({ Store: class Store {}, ToastrService: class ToastrService {} }));
+
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import { NbThemeModule } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { of, Subject, throwError } from 'rxjs';
 import { Store, ToastrService } from '@gauzy/ui-core/core';
@@ -9,7 +13,7 @@ import { InboxNotificationSettingsPageComponent } from './notification-settings-
 
 /** Settings -> Notifications: the switches, the email modes, the quiet hours and the digest hour. */
 describe('InboxNotificationSettingsPageComponent', () => {
-	const api = { forEmployee: jest.fn(), create: jest.fn(), update: jest.fn() };
+	const api = { forEmployee: jest.fn(), create: jest.fn(), update: jest.fn(), deliveryStatus: jest.fn() };
 	const toastr = { danger: jest.fn(), success: jest.fn() };
 	let employee: { id: string } | null = { id: 'e1' };
 
@@ -17,7 +21,8 @@ describe('InboxNotificationSettingsPageComponent', () => {
 		// A suite renders more than once: the module of the render before is reset first.
 		TestBed.resetTestingModule();
 		TestBed.configureTestingModule({
-			imports: [InboxNotificationSettingsPageComponent],
+			// The reset above drops the root defaults (jest.angular-defaults.ts), the theme among them.
+			imports: [InboxNotificationSettingsPageComponent, NbThemeModule.forRoot()],
 			providers: [
 				{ provide: InboxNotificationSettingsService, useValue: api },
 				// The browser notifications section has its own spec: here the platform has web push off.
@@ -42,6 +47,46 @@ describe('InboxNotificationSettingsPageComponent', () => {
 	beforeEach(() => {
 		jest.resetAllMocks();
 		employee = { id: 'e1' };
+		// The server says nothing about delivery unless a test says otherwise.
+		api.deliveryStatus.mockReturnValue(of(null));
+	});
+
+	it('says in the email section when the server sends no notification emails, or none can go out for the organization', () => {
+		api.forEmployee.mockReturnValue(of({ id: 's1', preferences: {} }));
+		const status = (enabled: boolean, available: boolean) => ({
+			email: { enabled, available },
+			push: { enabled: false, available: false },
+			checkedAt: '2026-11-11T12:00:00.000Z'
+		});
+
+		api.deliveryStatus.mockReturnValue(of(status(false, false)));
+		let rendered = render();
+		rendered.fixture.detectChanges();
+		expect(rendered.component.emailNotice()).toBe('OFF');
+		expect(rendered.fixture.nativeElement.querySelector('[data-test="email-notice-OFF"]')).not.toBeNull();
+
+		api.deliveryStatus.mockReturnValue(of(status(true, false)));
+		rendered = render();
+		rendered.fixture.detectChanges();
+		expect(rendered.component.emailNotice()).toBe('UNAVAILABLE');
+		expect(rendered.fixture.nativeElement.querySelector('[data-test="email-notice-UNAVAILABLE"]')).not.toBeNull();
+
+		api.deliveryStatus.mockReturnValue(of(status(true, true)));
+		rendered = render();
+		rendered.fixture.detectChanges();
+		expect(rendered.component.emailNotice()).toBeNull();
+		expect(rendered.fixture.nativeElement.querySelector('[data-test^="email-notice"]')).toBeNull();
+	});
+
+	it('shows no notice when the server does not say, and ignores an answer for an organization that is no longer the page\'s', () => {
+		api.forEmployee.mockReturnValue(of({ id: 's1', preferences: {} }));
+		const late = new Subject<unknown>();
+		api.deliveryStatus.mockReturnValue(late);
+		const { component } = render();
+		expect(component.emailNotice()).toBeNull();
+		(component as unknown as { scope: { employeeId: string } | null }).scope = { employeeId: 'other' } as never;
+		late.next({ email: { enabled: false, available: false }, push: { enabled: false, available: false }, checkedAt: '' });
+		expect(component.emailNotice()).toBeNull();
 	});
 
 	it("loads the employee's row for the selected organization", () => {
@@ -130,6 +175,7 @@ describe('InboxNotificationSettingsPageComponent', () => {
 		expect(toastr.danger).toHaveBeenCalledWith('No.');
 
 		// No row yet and the create refused: the stored state is read again, so the controls show it.
+		api.forEmployee.mockClear();
 		api.forEmployee.mockReturnValue(of(null));
 		api.create.mockReturnValue(throwError(() => ({ status: 500 })));
 		const fresh = render().component;

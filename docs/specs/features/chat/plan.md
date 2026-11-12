@@ -47,7 +47,7 @@ entries, files, tasks, search, the outbox and the subscription surface, presence
 | Search | `packages/plugins/search` definition for chat messages (title = conversation, text = body), membership filter in the read | reuse |
 | Permissions | `CHAT_VIEW`, `CHAT_SEND`, `CHAT_MANAGE` (contracts + default roles + plugin seed migration) | spec FR-23 |
 | Idempotent send | `nonce` unique per author per 24 h (unique index author+nonce) | spec FR-8 |
-| Link previews | server-side fetch with public-host-only guard, cached in `chat_link_preview` (phase 2) | spec FR-20 |
+| Link previews | server-side fetch with public-host-only guard, cached in `chat_link_preview`, off unless `GAUZY_CHAT_LINK_PREVIEWS_ENABLED=true`; the fetch on the `chat-link-preview` queue where a queue root exists, else inline (`link-preview/`, §15) | spec FR-20 |
 
 ## 3. Data Model
 
@@ -59,7 +59,7 @@ entries, files, tasks, search, the outbox and the subscription surface, presence
 | `chat_message` | `conversationId`, `authorEmployeeId`, `authorUserId`, `kind` (message/system/app), `body` (text), `mentionEmployeeIds` (json), `mentionsChannel`, `mentionsHere`, `replyToId`, `threadRootId`, `alsoInConversation`, `replyCount` (int), `lastReplyAt`, `pinnedAt`, `pinnedByEmployeeId`, `editedAt`, `attachmentIds` (json), `nonce`; indexes (conversationId, createdAt), (threadRootId), unique (authorUserId, nonce) |
 | `chat_thread_follow` | `rootMessageId`, `employeeId`, `userId`, `unreadReplies` (int), `lastReadReplyAt`; unique (rootMessageId, employeeId) |
 | `chat_task_reference` | `messageId`, `taskId`, `kind` (mention/sent/created); unique (messageId, taskId) |
-| `chat_link_preview` (phase 2) | `urlHash`, `url`, `data` (json), `fetchedAt`, `status` |
+| `chat_link_preview` | `urlHash` (SHA-256 of the normalized link), `url`, `data` (JSON text), `fetchedAt`, `status` (pending/ready/unavailable); unique (`tenantId`, `urlHash`), migration `1791000006710` |
 
 Contracts: `packages/contracts/src/lib/chat.model.ts` (enums, interfaces, inputs, page shapes, event names
 `CHAT_EVENT_NAMES`), `BaseEntityEnum.ChatConversation/ChatMessage`, `ReactionEntityEnum.ChatMessage`,
@@ -90,7 +90,7 @@ Contracts: `packages/contracts/src/lib/chat.model.ts` (enums, interfaces, inputs
 | `GET` | `/chat/states` · `POST /chat/read-all` · `POST /chat/read-restore` | VIEW | all member states; mark all read (returns a snapshot id); undo within 60 s |
 | `GET` | `/chat/threads` | VIEW | followed threads with unread reply counts |
 | `GET` | `/chat/search?q=&conversationId=&authorId=&hasFile=&cursor=` | VIEW | search plugin, membership-filtered |
-| `GET` | `/chat/link-preview?url=` (phase 2) | VIEW | cached, public hosts only |
+| `GET` | `/chat/link-preview?url=` | VIEW | cached per tenant, public hosts only; `IChatLinkPreview` (`ready` / `pending`: ask again / `unavailable`); 404 unless `GAUZY_CHAT_LINK_PREVIEWS_ENABLED=true`; 120/min per user |
 
 DTOs with class-validator; responses typed from contracts; Swagger decorators; `Cache-Control: no-store`.
 Non-members get 404.
@@ -125,7 +125,7 @@ with the conversation read (§14.3). Typing and presence: realtime plugin signal
 
 ## 8. Background Jobs
 
-- Link preview fetch (phase 2, worker queue). Counter repair job (nightly, worker): recompute `messageCount`/`readCount` drift.
+- Link preview fetch: a job on the `chat-link-preview` queue (`ChatLinkPreviewWorker`, in the API processes: the chat plugin is not hosted by `apps/worker`), one per tenant and link; inline without a queue root (§15). Counter repair job (nightly, worker): recompute `messageCount`/`readCount` drift.
 
 ## 9. Security & Permissions
 
@@ -190,3 +190,39 @@ were fixed together (branch `fix/chat-direct-org-thread-read-reactions`); what i
    read clears them. Still open: an `@mention` is filed against the conversation (`MentionService`, parent =
    conversation), not the reply, so the conversation read still clears a mention made in a thread-only reply,
    and the thread read does not.
+
+## 15. Link previews (spec FR-20)
+
+`packages/plugins/chat/src/lib/link-preview/`, behind `GAUZY_CHAT_ENABLED` and `GAUZY_CHAT_LINK_PREVIEWS_ENABLED`
+(default off; off, the route answers 404 and nothing is fetched).
+
+- **Route** `GET /chat/link-preview?url=`: the link is normalized (http(s), no credentials, no fragment, at most
+  2,048 characters, else 400) and keyed by its SHA-256 per tenant. A link whose host is internal by name or a
+  non-public address literal answers `unavailable` without a fetch or a row.
+- **Refresh policy**: `ready` is served for 24 h and then served while it is fetched again; `unavailable` is fetched
+  again after 1 h; `pending` is fetched again after 2 min (a fetch that never reported back). A refresh that fails for
+  a reason that may pass (timeout, connection error, 5xx, 429) keeps the `ready` preview and tries again after 1 h; a
+  4xx or a refusal takes it away. One person starts at most 60 fetches a minute (`CHAT_LINK_PREVIEW_FETCHES_PER_MINUTE`,
+  cache answers not counted; 429 beyond), enforced by the service whether or not `THROTTLE_ENABLED` is on.
+- **Fetch** (`fetchPreviewPage`, on the plugin's reusable egress guard `egress/egress-guard.ts`: `guardedRequest`, `resolveAllowedAddresses`, `pinnedLookup`, `readLimitedBody`, which the incoming webhooks' callbacks reuse): per hop, the URL is judged first (`http`/`https`, ports 80/443/8080/8443, no
+  internal host names), then every address the host resolves to must be public (`isPublicAddress`: IPv4
+  special-purpose ranges refused; for IPv6 only global unicast outside its special blocks, and the IPv4 that
+  mapped/NAT64/6to4 addresses carry is judged too). The connection's `lookup` answers exactly the judged addresses
+  (no second resolution, no pooled socket). Redirects are followed by hand (at most 3, each hop judged). There is
+  one 5 s deadline, at most 512 KiB read (raw and decompressed), the read stops at the end of `<head>`, and only an
+  HTML answer is read. No cookies, credentials or referrer are sent.
+- **Parse** (`parsePreviewHead`): `<head>` only, scripts/styles/comments dropped; Open Graph, then the Twitter card,
+  then `<title>` / description / icon link. Strings are decoded, stripped of markup, control and bidirectional characters and
+  cut to limits. Image and icon URLs must be `https:` and not internal. Only these fields are stored.
+- **Where it runs**: with a queue root (`isSchedulerQueueRootEnabled()`) the fetch is a `chat.link-preview.fetch` job
+  on `chat-link-preview` (job id per tenant and link), consumed by `ChatLinkPreviewWorker` in the API processes, and
+  the first ask answers `pending`. Without one (or when the queue refuses) it runs inline, at most 4 at a time per
+  process, and the route waits for it.
+- **Pictures** (chat T30, `GAUZY_CHAT_LINK_PREVIEW_IMAGES_ENABLED`, default off): `GET /chat/link-preview/image?url=`
+  takes the link, looks up the tenant's ready preview, and fetches the picture it names through the same guard
+  (`fetchPreviewImage`: raster types by their bytes, never SVG, at most 1 MiB). It serves the bytes with `nosniff`, a
+  `sandbox` CSP and `no-store` (204 when the link has no picture to serve, 404 only while the switch is off), keeps them in a per-process LRU (256 entries / 32 MiB, 24 h; failures 10 min),
+  and spends from the previews' per-person budget. Clients show it from a `blob:` URL of that answer.
+- **Egress**: this is the one chat feature that makes outbound requests, to the hosts of the links people post and
+  only on their ask. It is not an Ever Platform call (the egress audit's outbound-calls contract lists those only),
+  and with previews off, the default, the API makes none.

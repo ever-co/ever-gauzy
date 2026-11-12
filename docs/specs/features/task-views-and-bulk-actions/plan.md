@@ -133,3 +133,77 @@ says what changed.
    to another task; a task moving back takes it back and its row goes.
    `resolveReferences` falls back to the rows after the live numbers. Tasks
    moved before the migration have no row (nothing to backfill from).
+
+## 8. Angular UI (`@gauzy/plugin-task-views-ui`)
+
+The Angular app had none of the client side; Ever Teams has it (`tasks-keyboard-and-views`). A new lazy UI plugin,
+registered in `apps/gauzy/src/plugin-ui.config.ts` like `inbox-ui` and `chat-ui`, brings it to the Angular app. It
+shows nothing where the API does not serve the extensions: the UI asks `GET /tasks/built-in/mine` (one task) once per
+user and organization; 404 (`GAUZY_TASK_VIEWS_ENABLED` not `true`), 401 and 403 are final, a temporary failure is
+retried with a growing delay, then asked again every 5 minutes, at most 6 times. Until it answers there is no nav
+entry, no keyboard listener and no reference chip; the route exists and says the views are off.
+
+### 8.1 Reuse
+
+| Need | Existing piece | How it is used |
+| --- | --- | --- |
+| Plugin shell, routes, nav, translations | `defineDeclarativePlugin`, `NavMenuBuilderService`, `page-sections` / `settings-sections` | `/pages/task-views`, Settings → Keyboard shortcuts, the Tasks nav item, the `TASK_VIEWS` namespace (English, as `inbox-ui` and `chat-ui`) |
+| The task's own page | `PAGE_EXTENSION_SLOTS.TASK_VIEW_ACTIONS` (the chat's "Send to chat") | the `KEY-123` chip with copy |
+| Preferences | `UsersService.updateUiPreferences`, `Store.user` | `uiPreferences.keyboard.bindings`, shallow-merged per feature key |
+| Quick Actions keys (hotkeys-js in the header) | the header's shortcut map | a small `QuickActionShortcutBridge` in `ui-core/core` the header registers with, so a registry sequence that does not complete gives its first key back to the Quick Action it would have run |
+| Command ids and binding syntax | Ever Teams `core/lib/keyboard/shortcuts.ts` | the same ids (`goTasks`, `listDown`, …) and syntax (`mod+s`, `g t`), so one rebinding follows the person to both clients |
+| Drag and drop | `@angular/cdk/drag-drop` | the manual order |
+
+### 8.2 Modules (`packages/plugins/task-views-ui/src/lib`)
+
+| Module | Responsibility |
+| --- | --- |
+| `task-views-ui.plugin.ts`, `task-views-ui.constants.ts` | routes, nav item, extension, the keyboard mount, all after the availability check |
+| `services/task-views-api.service.ts` | `/task-views` CRUD, `GET /task-views/:id/tasks`, `PUT /task-views/:id/order`, `GET /tasks/built-in/:key`, `POST /tasks/bulk-update`, `POST /tasks/resolve-references`, `DELETE /tasks/:id` |
+| `services/task-views-availability.service.ts` | the probe |
+| `services/task-views-options.service.ts` | the organization's statuses, priorities, sizes, labels, people, projects, teams and sprints for the editor and the toolbar |
+| `models/view-definition.ts` | a view's filter, grouping and ordering read from `filterOptions`, written back merged into what other clients stored there (Ever Teams keeps its own keys beside them); the views grouped as built-in, personal, team, project, organization |
+| `models/filter-tree.ts` | the filter-tree editor's model: immutable add / change / remove / nest at a path, the operators a field takes, the API's invalid paths mapped onto the tree, a summary |
+| `models/view-conflict.ts` | a 409 `TASK_VIEW_VERSION_CONFLICT` read from the error, the latest view kept; reload or overwrite (the same changes with the latest version) |
+| `models/selection.ts` | selection over the page's rows: toggle, Shift range from the anchor, all on the page, the 100 limit |
+| `models/bulk-undo.ts` | the bulk request, the per-task outcome summed up, the undo request (`items` from `previous`) |
+| `models/manual-order.ts` | a drop as the new full order (rows not loaded keep their place after the loaded ones) |
+| `models/task-reference.ts` | a task's reference (`taskKey-number`, else `prefix-number`), what a typed reference is |
+| `keyboard/shortcut-registry.ts` | pure: commands, contexts, defaults, parse / format, key caps, overrides, refusals, conflicts, sequence walking |
+| `keyboard/shortcut-registry.service.ts` | the one key listener (capture phase; ignored in fields, editors and dialogs), handler registration per context, the overrides from `Store.user`, saving them |
+| `keyboard/*-dialog`, `keyboard/*-page` | the `?` help with the bindings in force, Settings → Keyboard shortcuts (record, reset, conflicts) |
+| `components/*` | the page (switcher, toolbar, filter editor, grouped list with counts and paging, conflict banner), the bulk toolbar, the save dialog, the go-to-task box, the reference chip |
+
+### 8.3 Rules
+
+- **Views** are listed per organization: the four built-in views, then mine (personal), team, project and
+  organization views, by name. Saving writes the filter tree, the grouping and the ordering into `filterOptions`
+  beside the keys other clients keep there, and the visible properties into `properties`; it states
+  `expectedVersion`. A 409 shows the conflict with **Reload** (take the latest view, drop the edit) and **Overwrite**
+  (send the edit again on the latest version). Save as makes a new view; rename, visibility (personal / shared) and
+  delete are in the view's menu.
+- **The page** reads `GET /task-views/:id/tasks` with the edited tree (an unsaved edit applies at once), the group-by
+  and a page of 50; **Load more** follows `nextCursor`. The group counts head the groups; the invalid filters the API
+  reports are shown on their conditions, each removable. Built-in views read `/tasks/built-in/:key` (offset pages).
+- **Manual order**: a view ordered `manual` takes drag and drop; the drop sends the whole order with the version
+  read, and a 409 is the same conflict as a save.
+- **Bulk**: the selection holds at most 100 tasks (the platform's limit); one request per action, its per-task
+  outcome reported (refused tasks named); an Undo toast for 10 s sends the previous values back as `items`. Delete
+  asks first, deletes one task at a time (the platform's own delete, no undo) and reports what failed.
+- **Keys** (mounted only where the extensions are served): `?` help; `G` then a letter goes somewhere (`G T` tasks,
+  `G V` views, `G M` my tasks, `G W` this week, `G O` overdue, `G I` inbox, `G C` chat, `G D` documents, `G H` home,
+  `G P` projects, `G R` go to a task by reference); on the views page `J` / `K` move, `X` selects (`Shift+X` a range),
+  `Enter` opens, `Esc` clears, `S` / `P` / `L` / `D` open the toolbar's status, priority, labels and due date for the
+  selection, `Mod+S` saves the view. Keys typed into fields, editors and open dialogs are left alone (`?` and `Esc`
+  aside). A registry key that is also a Quick Action key wins only where it can run; a `G` not followed by a
+  sequence key within 1.2 s runs the Quick Action bound to `G` (the bridge). Overrides are stored as
+  `uiPreferences.keyboard.bindings`; ids this client does not know are kept on save.
+- **References**: a row and the task's page show `KEY-123` (the project key, else the stored prefix); the go-to box
+  resolves what is typed through `POST /tasks/resolve-references` and opens the task, says when it is ambiguous, and
+  names the current reference when the task moved.
+
+### 8.4 Tests
+
+Jest specs beside the models (`filter-tree`, `selection`, `bulk-undo`, `view-conflict`, `view-definition`,
+`manual-order`, `task-reference`), the registry (`shortcut-registry`, `shortcut-registry.service`) and the plugin's
+entry points.

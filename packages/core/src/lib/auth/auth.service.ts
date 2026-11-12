@@ -42,9 +42,11 @@ import {
 } from '@gauzy/contracts';
 import { buildQueryString, deepMerge, generateAlphaNumericCode, isNotEmpty } from '@gauzy/utils';
 import { wrap } from '@mikro-orm/core';
+import type { EntityManager as MikroOrmEntityManager } from '@mikro-orm/core';
 import { HttpService } from '@nestjs/axios';
 import {
 	BadRequestException,
+	ConflictException,
 	ForbiddenException,
 	Inject,
 	Injectable,
@@ -59,7 +61,7 @@ import { Cache } from 'cache-manager';
 import { CommandBus } from '@nestjs/cqrs';
 import { JsonWebTokenError, JwtPayload } from 'jsonwebtoken';
 import * as moment from 'moment';
-import { DeepPartial, In, IsNull, MoreThanOrEqual, Not, SelectQueryBuilder } from 'typeorm';
+import { DataSource, DeepPartial, EntityManager, In, IsNull, MoreThanOrEqual, Not, SelectQueryBuilder } from 'typeorm';
 import { pick } from 'underscore';
 import { AccessTokenService } from '../access-token/access-token.service';
 import { accessTokenCarriesPermissions } from './access-token-claims';
@@ -113,15 +115,26 @@ import {
 	TokenPurposeEnum,
 	verifyPurposeToken
 } from './purpose-token';
-import { createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
+import { createHash, createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
 import { createClient } from 'redis';
 import { EVER_REDIS_CLIENT } from '../redis/redis.module';
 import { OAuthClientService } from './oauth-client/oauth-client.service';
 import { OAuthClient } from './oauth-client/oauth-client.entity';
+import { EntitlementResult, StripeSubscriptionService } from '../shared/billing/stripe-subscription.service';
+import { paywallCheckoutUrl } from '../shared/guards/subscription-required.guard';
 import { TermsAcceptanceService } from '../terms-acceptance/terms-acceptance.service';
 import { passwordResetConsumeWhere } from '../shared/single-use/claim-criteria';
 import { LoginAttemptScope, LoginAttemptService } from './login-attempt.service';
 import { assertFirstPartyRequest } from './oauth-app-first-party';
+import {
+	IWorkspaceOpening,
+	unfinishedAccountWhere,
+	WORKSPACE_ADDRESS_UNPROVEN_MESSAGE,
+	WORKSPACE_OPENING_IN_PROGRESS_MESSAGE,
+	WORKSPACE_SUBSCRIPTION_REQUIRED_MESSAGE,
+	WorkspaceAccounts,
+	workspaceAccountFieldsOf
+} from './open-workspace';
 import {
 	buildOAuthAppTokenGrant,
 	narrowPermissionsToOAuthAppScopes,
@@ -171,7 +184,9 @@ export class AuthService extends SocialAuthService {
 		private readonly mikroOrmPasswordResetRepository: MikroOrmPasswordResetRepository,
 		private readonly oauthClientService: OAuthClientService,
 		private readonly termsAcceptanceService: TermsAcceptanceService,
-		private readonly loginAttemptService: LoginAttemptService
+		private readonly loginAttemptService: LoginAttemptService,
+		// The signup paywall, which opening a workspace honours too (inert unless billing is configured)
+		@Optional() private readonly stripeSubscriptionService?: StripeSubscriptionService
 	) {
 		super();
 	}
@@ -3254,6 +3269,249 @@ export class AuthService extends SocialAuthService {
 			// For unexpected errors, return null to maintain backward compatibility
 			return null;
 		}
+	}
+
+	/**
+	 * Opens another workspace for the signed-in person (ever-co/ever-teams#5025), without signing them out of the one
+	 * they are in. Answers the account the workspace is created with, as a workspace sign-in token: the app exchanges it
+	 * at `/auth/signin.workspace`, then creates the tenant, the organization, the employee and the first team through
+	 * the routes a sign-up uses, and switches to it.
+	 *
+	 * The account is the caller's address in no tenant yet: active, its address proven like the caller's, and without
+	 * a password, so a password sign-in never lands on it before it has a workspace (it is reached by the workspace
+	 * switch, an e-mail code or a social sign-in). Only a caller whose address is proven may open one: only they reach
+	 * the other workspaces of that address (see sharesProvenAddress). An account an earlier attempt left without a
+	 * workspace is answered again rather than another one created, its address proven if it was not yet.
+	 *
+	 * The lookup, the insert and the proof run in one transaction holding the address's lock: two overlapping openings
+	 * (a retry sent before the first answer) never both create an account, and no account is kept without its proof.
+	 *
+	 * @throws ForbiddenException for a third-party application token or an API-token session, or an unproven address.
+	 * @throws UnauthorizedException without a signed-in user.
+	 * @throws ConflictException when another opening for the address keeps its lock (MySQL, after 10 seconds).
+	 * @throws ForbiddenException with `checkoutUrl` where the sign-up has a paywall and the address holds no entitlement.
+	 */
+	async openWorkspace(): Promise<IWorkspaceOpening> {
+		// The answer is a token that signs in as the new account
+		assertFirstPartyRequest('Opening a workspace');
+
+		const current = RequestContext.currentUser();
+		if (!current?.id) {
+			throw new UnauthorizedException();
+		}
+		// The caller's own record, for the address and its proof: the request's user may be a cached subset
+		const caller = await this.findActiveUser({
+			id: current.id,
+			tenantId: current.tenantId ?? RequestContext.currentTenantId()
+		});
+		if (!caller?.email) {
+			throw new UnauthorizedException();
+		}
+		if (!this.sharesProvenAddress(caller)) {
+			throw new ForbiddenException(WORKSPACE_ADDRESS_UNPROVEN_MESSAGE);
+		}
+		await this.assertWorkspaceEntitlement(caller.email);
+
+		const account = await this.withWorkspaceOpeningLock(caller.email, async (accounts) => {
+			const unfinished = await accounts.findUnfinished(caller.email);
+			if (!unfinished) {
+				return await accounts.create(caller);
+			}
+			// Left by an earlier attempt or another flow without its proof: the workspace set up on it would not reach
+			// the person's other workspaces (see sharesProvenAddress)
+			if (!unfinished.emailVerifiedAt) {
+				await accounts.proveAddress(unfinished, caller.emailVerifiedAt);
+			}
+			return unfinished;
+		});
+		return { email: account.email, token: this.generateToken(account, '') };
+	}
+
+	/** One active user matching `where`, the most recent first, read on the configured ORM. */
+	private async findActiveUser(where: Record<string, unknown>): Promise<User | null> {
+		const options = {
+			where: { ...where, isActive: true, isArchived: false },
+			order: { createdAt: 'DESC' as const }
+		};
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM: {
+				const parsed = parseTypeORMFindToMikroOrm<User>(options as never);
+				return ((await this.mikroOrmUserRepository.findOne(parsed.where, parsed.mikroOptions)) as User) ?? null;
+			}
+			case MultiORMEnum.TypeORM:
+				return (await this.typeOrmUserRepository.findOne(options as never)) ?? null;
+			default:
+				throw new Error(`Method not implemented for ORM type: ${this.ormType}`);
+		}
+	}
+
+	/**
+	 * Where the sign-up has a paywall (`isSignupPaywallEnabled`), refuses the opening to an address without an
+	 * entitlement to the product, with the sign-up's own answer (SubscriptionRequiredGuard): 403 and the checkout to buy
+	 * it. A new workspace is a new tenant, which is what the paywall is for. As for the sign-up, Stripe not answering
+	 * lets it through.
+	 *
+	 * @throws ForbiddenException with `checkoutUrl` when the address holds no entitlement.
+	 */
+	private async assertWorkspaceEntitlement(email: string): Promise<void> {
+		if (!this.stripeSubscriptionService?.isSignupPaywallEnabled()) {
+			return;
+		}
+		const entitlement = await this.stripeSubscriptionService.getEntitlement(email);
+		if (entitlement === EntitlementResult.NOT_ENTITLED) {
+			throw new ForbiddenException({
+				statusCode: 403,
+				message: WORKSPACE_SUBSCRIPTION_REQUIRED_MESSAGE,
+				checkoutUrl: paywallCheckoutUrl(email)
+			});
+		}
+	}
+
+	/** Openings of a workspace running in this process, by address: each waits for the one before it to settle. */
+	private static readonly workspaceOpenings = new Map<string, Promise<unknown>>();
+
+	/**
+	 * Runs `work` alone for the address, in one transaction, so that two overlapping openings never both create an
+	 * account and an account is never committed without its proven address:
+	 *
+	 * - in this process, the openings of one address run one after the other;
+	 * - Postgres: a transaction-scoped advisory lock on the address, which the other API pods wait for too;
+	 * - MySQL: a named lock (`GET_LOCK`) taken on the transaction's own connection before it starts, and released
+	 *   after it ends;
+	 * - SQLite and MikroORM: the process's own order (these setups run a single API process).
+	 *
+	 * The lock is named after a digest of the address, never the address itself.
+	 */
+	private async withWorkspaceOpeningLock<T>(
+		email: string,
+		work: (accounts: WorkspaceAccounts) => Promise<T>
+	): Promise<T> {
+		const key = email.trim().toLowerCase();
+		const previous = AuthService.workspaceOpenings.get(key) ?? Promise.resolve();
+		const run = previous.then(() => this.inWorkspaceOpeningTransaction(key, work));
+		const settled = run.catch(() => undefined);
+		AuthService.workspaceOpenings.set(key, settled);
+		try {
+			return await run;
+		} finally {
+			if (AuthService.workspaceOpenings.get(key) === settled) {
+				AuthService.workspaceOpenings.delete(key);
+			}
+		}
+	}
+
+	/** `work` in a transaction holding the address's database lock where the database has one. */
+	private async inWorkspaceOpeningTransaction<T>(
+		key: string,
+		work: (accounts: WorkspaceAccounts) => Promise<T>
+	): Promise<T> {
+		const lockName = `workspace-opening:${createHash('sha256').update(key).digest('hex').slice(0, 32)}`;
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM:
+				return await this.mikroOrmUserRepository
+					.getEntityManager()
+					.transactional(async (em) => await work(this.mikroOrmWorkspaceAccounts(em)));
+			case MultiORMEnum.TypeORM: {
+				const dataSource = this.typeOrmUserRepository.manager.dataSource;
+				const type = dataSource.options.type;
+				if (type === 'mysql') {
+					return await this.withMysqlNamedLock(dataSource, `gauzy:${lockName}`, (manager) =>
+						work(this.typeOrmWorkspaceAccounts(manager))
+					);
+				}
+				return await dataSource.transaction(async (manager) => {
+					if (type === 'postgres') {
+						await manager.query('SELECT pg_advisory_xact_lock(hashtextextended($1, 0))', [lockName]);
+					}
+					return await work(this.typeOrmWorkspaceAccounts(manager));
+				});
+			}
+			default:
+				throw new Error(`Method not implemented for ORM type: ${this.ormType}`);
+		}
+	}
+
+	/**
+	 * `work` in a transaction on a connection of its own holding the MySQL named lock `name`: taken before the
+	 * transaction starts, so that its snapshot sees what the previous holder committed, and released after it ends.
+	 *
+	 * @throws ConflictException when the lock is not free within 10 seconds.
+	 */
+	private async withMysqlNamedLock<T>(
+		dataSource: DataSource,
+		name: string,
+		work: (manager: EntityManager) => Promise<T>
+	): Promise<T> {
+		const runner = dataSource.createQueryRunner();
+		await runner.connect();
+		try {
+			const [row] = await runner.query('SELECT GET_LOCK(?, 10) AS `acquired`', [name]);
+			if (Number(row?.acquired) !== 1) {
+				throw new ConflictException(WORKSPACE_OPENING_IN_PROGRESS_MESSAGE);
+			}
+			try {
+				await runner.startTransaction();
+				try {
+					const result = await work(runner.manager);
+					await runner.commitTransaction();
+					return result;
+				} catch (error) {
+					await runner.rollbackTransaction();
+					throw error;
+				}
+			} finally {
+				await runner.query('SELECT RELEASE_LOCK(?)', [name]);
+			}
+		} finally {
+			await runner.release();
+		}
+	}
+
+	/** The address's accounts, on a TypeORM transaction's entity manager. */
+	private typeOrmWorkspaceAccounts(manager: EntityManager): WorkspaceAccounts {
+		const users = manager.getRepository<User>(this.typeOrmUserRepository.target);
+		const proveAddress = async (account: User, provenAt: Date) => {
+			await users.update({ id: account.id }, { emailVerifiedAt: provenAt });
+			account.emailVerifiedAt = provenAt;
+		};
+		return {
+			findUnfinished: async (email) =>
+				(await users.findOne({ where: unfinishedAccountWhere(email), order: { createdAt: 'DESC' } })) ?? null,
+			create: async (caller) => {
+				const account = await users.save(users.create(workspaceAccountFieldsOf(caller)));
+				await proveAddress(account, caller.emailVerifiedAt);
+				this.logger.log(`Workspace account opened for user ${caller.id}`);
+				return account;
+			},
+			proveAddress
+		};
+	}
+
+	/** The address's accounts, on a MikroORM transaction's entity manager. */
+	private mikroOrmWorkspaceAccounts(em: MikroOrmEntityManager): WorkspaceAccounts {
+		const proveAddress = async (account: User, provenAt: Date) => {
+			await em.nativeUpdate(User, { id: account.id } as never, { emailVerifiedAt: provenAt } as never);
+			account.emailVerifiedAt = provenAt;
+		};
+		return {
+			findUnfinished: async (email) => {
+				const { where, mikroOptions } = parseTypeORMFindToMikroOrm<User>({
+					where: unfinishedAccountWhere(email),
+					order: { createdAt: 'DESC' }
+				} as never);
+				const found = await em.findOne(User, where, mikroOptions as never);
+				return found ? (this.serialize(found) as User) : null;
+			},
+			create: async (caller) => {
+				const entity = em.create(User, workspaceAccountFieldsOf(caller) as never);
+				await em.persist(entity).flush();
+				const account = this.serialize(entity) as User;
+				await proveAddress(account, caller.emailVerifiedAt);
+				this.logger.log(`Workspace account opened for user ${caller.id}`);
+				return account;
+			},
+			proveAddress
+		};
 	}
 
 	/**
