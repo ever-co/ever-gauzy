@@ -62,6 +62,15 @@ export const CHAT_GROUP_MAX_MEMBERS = 50;
 export const CHAT_MESSAGE_MAX_ATTACHMENTS = 10;
 /** The name of the channel every employee is in (created when chat is enabled for an organization). */
 export const CHAT_DEFAULT_CHANNEL_NAME = 'general';
+/** How long a typing signal holds: a client that hears nothing more from the typist after this drops "is typing". */
+export const CHAT_TYPING_TTL_MS = 6000;
+/** How often one member's typing in one place is told at most (a client signals again within the TTL to keep it). */
+export const CHAT_TYPING_MIN_INTERVAL_MS = 2500;
+/** How long an uploaded attachment that no message carries is kept before it is swept (default; `GAUZY_CHAT_DRAFT_UPLOAD_TTL_HOURS`). */
+export const CHAT_DRAFT_UPLOAD_TTL_HOURS = 24;
+/** The most categories, and channels, one reorder may place. */
+export const CHAT_REORDER_MAX_CATEGORIES = 200;
+export const CHAT_REORDER_MAX_CHANNELS = 2000;
 
 /**
  * Mention tokens inside a message body: rename-safe references the clients render as chips.
@@ -176,7 +185,10 @@ export interface IChatMessage extends IBasePerTenantAndOrganizationEntityModel {
 	authorEmployeeId?: ID | null;
 	authorUserId?: ID | null;
 	kind: ChatMessageKindEnum;
-	/** Markdown subset with mention tokens; empty for a deleted message (`deletedAt` set). */
+	/**
+	 * Markdown subset with mention tokens; empty for a deleted message (`deletedAt` set) and for a message of files
+	 * only (`attachmentIds` not empty).
+	 */
 	body: string;
 	mentionEmployeeIds?: ID[] | null;
 	mentionsChannel: boolean;
@@ -194,6 +206,12 @@ export interface IChatMessage extends IBasePerTenantAndOrganizationEntityModel {
 	editedAt?: Date | null;
 	/** Document ids (files uploaded through the Docs plugin). */
 	attachmentIds?: ID[] | null;
+	/**
+	 * The names the attached files had when the message was sent or last edited, one per line: what a message of
+	 * files only reads as in a preview, a notification and the search. Null without attachments (and on messages
+	 * older than the column).
+	 */
+	attachmentNames?: string | null;
 	/** The sender's idempotency key. */
 	nonce?: string | null;
 	/** The name of the integration that posted an APP message. */
@@ -269,7 +287,8 @@ export interface IChatReadInput {
 }
 
 export interface IChatMessageCreateInput {
-	body: string;
+	/** The text; may be empty (or left out) when the message carries at least one attachment. */
+	body?: string;
 	/** Idempotency key chosen by the client (a UUID, unique for the sender): the same key answers the same message, however late. */
 	nonce?: string;
 	replyToId?: ID;
@@ -285,6 +304,7 @@ export interface IChatMessageCreateInput {
 }
 
 export interface IChatMessageUpdateInput {
+	/** The new text; may be empty when the message, after the edit, carries at least one attachment. */
 	body: string;
 	attachmentIds?: ID[];
 	mentionEmployeeIds?: ID[];
@@ -353,6 +373,9 @@ export interface IChatFile {
 	status?: string | null;
 	fileUrl?: string | null;
 	thumbUrl?: string | null;
+	/** A picture's size in pixels as shown (orientation applied), read when it was uploaded; null when unknown. */
+	width?: number | null;
+	height?: number | null;
 	authorEmployeeId?: ID | null;
 	authorUserId?: ID | null;
 	/** When the file was attached (the message's send). */
@@ -400,6 +423,83 @@ export interface IChatCreateTaskResult {
 	task: ITask;
 	reference: IChatTaskReference;
 	events: IChatEvent[];
+}
+
+// ------------------------------------------------------------------ task cards (FR-14)
+
+/**
+ * `PATCH /chat/messages/:id/tasks/:taskId`: change a task from its card in a message — its status, its priority, its
+ * assignees. Only what is named changes; the change goes through the platform's task update, with the permissions
+ * (`ORG_TASK_EDIT`) and the activity log of the task page.
+ */
+export interface IChatTaskUpdateInput {
+	/** The status's name (a board column), as the task page writes it; with `taskStatusId` when the status is a record. */
+	status?: string;
+	taskStatusId?: ID | null;
+	/** The priority's name; with `taskPriorityId` when the priority is a record; null clears it. */
+	priority?: string | null;
+	taskPriorityId?: ID | null;
+	/** The assignees, all of them (an empty list unassigns everyone): employees of the task's organization. */
+	assigneeEmployeeIds?: ID[];
+}
+
+/** What a change from a task card answers: the task as it is now, and the events the change caused. */
+export interface IChatTaskUpdateResult {
+	task: ITask;
+	events: IChatEvent[];
+}
+
+// ------------------------------------------------------------------ typing
+
+/** `POST /chat/conversations/:id/typing`: I am typing in the conversation (or in one of its threads). */
+export interface IChatTypingInput {
+	/** The thread I am typing in; left out for the conversation itself. */
+	threadRootId?: ID;
+}
+
+/**
+ * What a typing signal answers: whether it was told (a repeat within {@link CHAT_TYPING_MIN_INTERVAL_MS} is not), and
+ * how long the members show it ({@link CHAT_TYPING_TTL_MS}). The members hear it as the real-time channel's
+ * `typing.signalled` signal; nothing is stored.
+ */
+export interface IChatTypingResult {
+	sent: boolean;
+	expiresInMs: number;
+}
+
+// ------------------------------------------------------------------ categories
+
+/** The channels of one category in the order the sidebar shows them; `categoryId` null for the uncategorized. */
+export interface IChatCategoryChannelOrder {
+	categoryId: ID | null;
+	conversationIds: ID[];
+}
+
+/**
+ * `POST /chat/categories/reorder`: the order of the organization's categories (all of them, first to last), and
+ * optionally of the channels within them (a channel named under a category moves there). Saved in one transaction.
+ */
+export interface IChatCategoryReorderInput {
+	categoryIds: ID[];
+	channels?: IChatCategoryChannelOrder[];
+}
+
+export interface IChatCategoryReorderResult {
+	/** Every category of the organization, in the new order. */
+	categories: IChatCategory[];
+	/** The channels whose category or place changed. */
+	conversations: Array<{ id: ID; categoryId: ID | null; position: number }>;
+	events: IChatEvent[];
+}
+
+// ------------------------------------------------------------------ draft uploads
+
+/**
+ * `DELETE /chat/attachments/:documentId`: a file I uploaded for a message and will not send. Only a file that no
+ * message carries (a draft upload) is discarded — the document and its stored bytes go; a file already sent stays.
+ */
+export interface IChatDraftDiscardResult {
+	discarded: boolean;
 }
 
 // ------------------------------------------------------------------ incoming webhooks (`GAUZY_CHAT_WEBHOOKS_ENABLED`)

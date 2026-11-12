@@ -24,6 +24,7 @@ import { TaskService } from '@gauzy/core';
 import { ChatAccessService, IChatCaller } from './chat-access.service';
 import { ChatMessageService } from './chat-message.service';
 import { ChatNotifierService } from './chat-notifier.service';
+import { ChatDraftUploadService } from './chat-draft-upload.service';
 import { ChatRealtime } from '../realtime/chat-realtime';
 
 const author: IChatCaller = { tenantId: 'ten', organizationId: 'org', userId: 'u1', employeeId: 'e1', canManage: false };
@@ -59,7 +60,7 @@ function removeOver(affected: number) {
 		append: jest.fn(async (_manager: unknown, fact: { name: string }) => ({ name: fact.name, data: {} })),
 		publish: jest.fn(async (fact: { name: string }) => ({ name: fact.name, data: {} }))
 	};
-	const service = new ChatMessageService(dataSource, access, realtime as unknown as ChatRealtime, {} as ChatNotifierService, {} as TaskService, {} as CommandBus);
+	const service = new ChatMessageService(dataSource, access, realtime as unknown as ChatRealtime, {} as ChatNotifierService, {} as TaskService, {} as CommandBus, {} as ChatDraftUploadService);
 	// The lookups before the transaction: the message (not deleted when read) and its place in the timeline.
 	Object.assign(service as unknown as Record<string, unknown>, {
 		messageForWrite: jest.fn(async () => ({ message: { ...message }, conversation: { ...conversation } })),
@@ -154,7 +155,7 @@ function readOver(
 		publish: jest.fn(async (fact: { name: string }) => ({ name: fact.name, data: {} }))
 	} as unknown as ChatRealtime;
 	const notifier = { markConversationRead: jest.fn(async () => 0) };
-	const service = new ChatMessageService(dataSource, access, realtime, notifier as unknown as ChatNotifierService, {} as TaskService, {} as CommandBus);
+	const service = new ChatMessageService(dataSource, access, realtime, notifier as unknown as ChatNotifierService, {} as TaskService, {} as CommandBus, {} as ChatDraftUploadService);
 	Object.assign(service as unknown as Record<string, unknown>, { followIdsIn: jest.fn(async () => follows.map((follow) => follow.id)) });
 	const unreadOf = (id: string) => rows.get(id)?.unreadReplies;
 	return { service, repositories, notifier, counted, unreadOf };
@@ -244,7 +245,7 @@ describe('ChatMessageService follow (a follow that starts unread)', () => {
 		const save = jest.fn(async (row: unknown) => row);
 		const repository = { findOne: jest.fn(async () => null), create: jest.fn((row: unknown) => row), save, update: jest.fn() };
 		const manager = { getRepository: () => repository };
-		const service = new ChatMessageService({} as DataSource, {} as ChatAccessService, {} as ChatRealtime, {} as ChatNotifierService, {} as TaskService, {} as CommandBus);
+		const service = new ChatMessageService({} as DataSource, {} as ChatAccessService, {} as ChatRealtime, {} as ChatNotifierService, {} as TaskService, {} as CommandBus, {} as ChatDraftUploadService);
 		const follow = (root: Record<string, unknown>, read: boolean) =>
 			(service as unknown as { follow: (...args: unknown[]) => Promise<void> }).follow(manager, root, { tenantId: 'ten', organizationId: 'org', employeeId: 'e2', userId: 'u2' }, read);
 		return { follow, save };
@@ -270,7 +271,7 @@ describe('ChatMessageService.markThreadRead', () => {
 		const update = jest.fn(async () => ({ affected: 0 }));
 		const dataSource = { getRepository: () => ({ update }) } as unknown as DataSource;
 		const notifier = { markThreadRead: jest.fn(async () => 0) };
-		const service = new ChatMessageService(dataSource, {} as ChatAccessService, {} as ChatRealtime, notifier as unknown as ChatNotifierService, {} as TaskService, {} as CommandBus);
+		const service = new ChatMessageService(dataSource, {} as ChatAccessService, {} as ChatRealtime, notifier as unknown as ChatNotifierService, {} as TaskService, {} as CommandBus, {} as ChatDraftUploadService);
 		Object.assign(service as unknown as Record<string, unknown>, { messageForCaller: jest.fn(async () => ({ id: 'r1', threadRootId: null })) });
 
 		await expect(service.markThreadRead(author, 'r1')).resolves.toEqual({ updated: false });

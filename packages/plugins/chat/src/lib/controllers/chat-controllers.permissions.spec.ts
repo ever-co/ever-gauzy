@@ -49,6 +49,9 @@ import { ChatAccessService } from '../services/chat-access.service';
 import { ChatConversationService } from '../services/chat-conversation.service';
 import { ChatMessageService } from '../services/chat-message.service';
 import { ChatSearchService } from '../services/chat-search.service';
+import { ChatDraftUploadService } from '../services/chat-draft-upload.service';
+import { ChatTaskCardService } from '../services/chat-task-card.service';
+import { ChatTypingService } from '../services/chat-typing.service';
 import { ChatLinkPreviewImageService } from '../link-preview/chat-link-preview-image.service';
 import { ChatLinkPreviewService } from '../link-preview/chat-link-preview.service';
 import { ChatConversationController } from './chat-conversation.controller';
@@ -77,8 +80,14 @@ function controllers() {
 	return {
 		reached,
 		all: [
-			new ChatConversationController(access, serviceDouble<ChatConversationService>(reached), messages),
-			new ChatMessageController(access, messages, serviceDouble<ChatSearchService>(reached)),
+			new ChatConversationController(access, serviceDouble<ChatConversationService>(reached), messages, serviceDouble<ChatTypingService>(reached)),
+			new ChatMessageController(
+				access,
+				messages,
+				serviceDouble<ChatSearchService>(reached),
+				serviceDouble<ChatTaskCardService>(reached),
+				serviceDouble<ChatDraftUploadService>(reached)
+			),
 			new ChatLinkPreviewController(access, serviceDouble<ChatLinkPreviewService>(reached), {
 				// The picture route sends bytes: its double answers a picture.
 				image: () => {
@@ -109,7 +118,7 @@ describe('chat routes need CHAT_VIEW, writes included', () => {
 	it('covers the write routes (handlers that state a permission of their own)', () => {
 		const handlers = controllers().all.flatMap(handlersOf);
 		expect(handlers).toEqual(
-			expect.arrayContaining(['send', 'createChannel', 'direct', 'createCategory', 'updateCategory', 'deleteCategory', 'addMembers', 'edit', 'remove', 'react', 'pin', 'createTask', 'preview', 'image'])
+			expect.arrayContaining(['send', 'createChannel', 'direct', 'createCategory', 'updateCategory', 'deleteCategory', 'addMembers', 'edit', 'remove', 'react', 'pin', 'createTask', 'updateTask', 'discardAttachment', 'reorderCategories', 'typing', 'preview', 'image'])
 		);
 	});
 

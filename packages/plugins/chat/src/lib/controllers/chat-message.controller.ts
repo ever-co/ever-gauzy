@@ -4,10 +4,12 @@ import { FeatureFlag } from '@gauzy/common';
 import { FeatureEnum, ID, PermissionsEnum } from '@gauzy/contracts';
 import { FeatureFlagGuard, PermissionGuard, Permissions, TenantPermissionGuard, UseValidationPipe, UUIDValidationPipe } from '@gauzy/core';
 import { CHAT_ROUTE_PREFIX } from '../chat.constants';
-import { ChatCreateTaskDTO, ChatMessagesQueryDTO, ChatMessageUpdateDTO, ChatRestoreReadDTO, ChatSearchQueryDTO } from '../dto/chat.dto';
+import { ChatCreateTaskDTO, ChatMessagesQueryDTO, ChatMessageUpdateDTO, ChatRestoreReadDTO, ChatSearchQueryDTO, ChatTaskUpdateDTO } from '../dto/chat.dto';
 import { ChatAccessService } from '../services/chat-access.service';
+import { ChatDraftUploadService } from '../services/chat-draft-upload.service';
 import { ChatMessageService } from '../services/chat-message.service';
 import { ChatSearchService } from '../services/chat-search.service';
+import { ChatTaskCardService } from '../services/chat-task-card.service';
 
 /**
  * `/api/chat/messages*`, `/api/chat/threads`, `/api/chat/read-all`, `/api/chat/read-restore`: one message, its thread
@@ -26,7 +28,9 @@ export class ChatMessageController {
 	constructor(
 		private readonly access: ChatAccessService,
 		private readonly messages: ChatMessageService,
-		private readonly chatSearch: ChatSearchService
+		private readonly chatSearch: ChatSearchService,
+		private readonly taskCards: ChatTaskCardService,
+		private readonly drafts: ChatDraftUploadService
 	) {}
 
 	@Get('/search')
@@ -103,6 +107,27 @@ export class ChatMessageController {
 	@ApiOperation({ summary: 'Create a task from a message (its first line as the title unless one is given); the message keeps a reference to the task. Needs ORG_TASK_ADD too.' })
 	createTask(@Param('id', UUIDValidationPipe) id: ID, @Body() input: ChatCreateTaskDTO) {
 		return this.messages.createTask(this.access.caller(), id, input);
+	}
+
+	@Patch('/messages/:id/tasks/:taskId')
+	@Permissions(PermissionsEnum.CHAT_SEND)
+	@UseValidationPipe({ whitelist: true })
+	@Header('Cache-Control', 'no-store')
+	@ApiOperation({
+		summary:
+			"Change a task from its card in a message (status, priority, assignees) through the platform's task update: ORG_TASK_EDIT too, and the task page's activity log."
+	})
+	updateTask(@Param('id', UUIDValidationPipe) id: ID, @Param('taskId', UUIDValidationPipe) taskId: ID, @Body() body: ChatTaskUpdateDTO) {
+		return this.taskCards.update(this.access.caller(), id, taskId, body);
+	}
+
+	@Delete('/attachments/:documentId')
+	@Permissions(PermissionsEnum.CHAT_SEND)
+	@HttpCode(HttpStatus.OK)
+	@Header('Cache-Control', 'no-store')
+	@ApiOperation({ summary: 'Discard a file I uploaded for a message and will not send (a draft upload): the file and its stored bytes go; a sent file stays.' })
+	discardAttachment(@Param('documentId', UUIDValidationPipe) documentId: ID) {
+		return this.drafts.discard(this.access.caller(), documentId);
 	}
 
 	@Post('/messages/:id/pin')

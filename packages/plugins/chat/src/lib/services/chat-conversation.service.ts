@@ -7,8 +7,12 @@ import {
 	ChatMemberRoleEnum,
 	ChatNotifyLevelEnum,
 	ChatVisibilityEnum,
+	CHAT_REORDER_MAX_CATEGORIES,
+	CHAT_REORDER_MAX_CHANNELS,
 	IChatCategory,
 	IChatCategoryInput,
+	IChatCategoryReorderInput,
+	IChatCategoryReorderResult,
 	IChatConversationCreateInput,
 	IChatConversationList,
 	IChatConversationUpdateInput,
@@ -30,7 +34,7 @@ import { ChatMember } from '../entities/chat-member.entity';
 import { ChatMessage } from '../entities/chat-message.entity';
 import { ChatThreadFollow } from '../entities/chat-thread-follow.entity';
 import { ChatRealtime } from '../realtime/chat-realtime';
-import { inWriteTransaction } from '../realtime/chat-write-transaction';
+import { chatLocksRows, inWriteTransaction } from '../realtime/chat-write-transaction';
 import { ChatAccessService, IChatCaller } from './chat-access.service';
 
 /** The caller's state of a conversation, from their member row and the conversation's counter. */
@@ -102,6 +106,98 @@ export class ChatConversationService {
 		// own organization (see `createChannel` / `updateConversation`).
 		await this.dataSource.getRepository(ChatConversation).update({ categoryId: category.id as ID, tenantId: caller.tenantId }, { categoryId: null as never });
 		await repository.remove(category);
+	}
+
+	/**
+	 * Saves the order of the organization's categories, and of the channels within them, in one transaction
+	 * (`POST /chat/categories/reorder`, `CHAT_MANAGE`): the categories take the positions of the order given (one the
+	 * order leaves out — created meanwhile — keeps its place after them), and each channel named moves under its group's
+	 * category (null: uncategorized) at its place in the group. Only what changed is written; each channel moved is told
+	 * to its members (`chat_conversation.changed`, `updated`) in the same transaction. Categories, and channels, of
+	 * another organization read as not found; a channel goes only under a category of its own organization (a caller
+	 * managing the whole tenant included); a name given twice is refused.
+	 *
+	 * The positions compared are read in the transaction, under the rows' locks (Postgres, MySQL; the categories, then the
+	 * channels, each in id order): a second reorder of the same organization waits for the first and compares against
+	 * what it saved, so two reorders never leave two rows at one place.
+	 */
+	async reorderCategories(caller: IChatCaller, input: IChatCategoryReorderInput): Promise<IChatCategoryReorderResult> {
+		this.requireManage(caller);
+		const named = (input.categoryIds ?? []).map(String);
+		if (named.length > CHAT_REORDER_MAX_CATEGORIES) throw new BadRequestException(`A reorder places at most ${CHAT_REORDER_MAX_CATEGORIES} categories.`);
+		if (new Set(named).size !== named.length) throw new BadRequestException('A category is named twice.');
+		const groups = input.channels ?? [];
+		const channelIds = groups.flatMap((group) => (group.conversationIds ?? []).map(String));
+		if (channelIds.length > CHAT_REORDER_MAX_CHANNELS) throw new BadRequestException(`A reorder places at most ${CHAT_REORDER_MAX_CHANNELS} channels.`);
+		if (new Set(channelIds).size !== channelIds.length) throw new BadRequestException('A channel is named twice.');
+		if (new Set(groups.map((group) => String(group.categoryId ?? ''))).size !== groups.length) throw new BadRequestException('A category is given two channel lists.');
+		const lock = chatLocksRows(this.dataSource) ? { lock: { mode: 'pessimistic_write' as const } } : {};
+
+		const moved: Array<{ id: ID; categoryId: ID | null; position: number }> = [];
+		let ordered: IChatCategory[] = [];
+		const events = await inWriteTransaction(this.dataSource, async (manager) => {
+			// The categories {@link listCategories} shows, locked, and read under the lock.
+			const categories = (await manager.getRepository(ChatCategory).find({
+				where: { tenantId: caller.tenantId, ...(caller.organizationId ? { organizationId: caller.organizationId } : {}) },
+				order: { id: 'ASC' },
+				...lock
+			})) as IChatCategory[];
+			categories.sort((a, b) => (a.position ?? 0) - (b.position ?? 0) || String(a.name ?? '').localeCompare(String(b.name ?? '')));
+			const known = new Map(categories.map((category) => [String(category.id), category]));
+			if (named.some((id) => !known.has(id))) throw new NotFoundException('The requested record was not found');
+			if (groups.some((group) => group.categoryId && !known.has(String(group.categoryId)))) throw new NotFoundException('The requested record was not found');
+			const order = [...named, ...categories.map((category) => String(category.id)).filter((id) => !named.includes(id))];
+
+			const channels = channelIds.length
+				? await manager.getRepository(ChatConversation).find({
+						where: {
+							id: In(channelIds),
+							tenantId: caller.tenantId,
+							kind: ChatConversationKindEnum.CHANNEL,
+							...(caller.organizationId ? { organizationId: caller.organizationId } : {})
+						},
+						order: { id: 'ASC' },
+						...lock
+				  })
+				: [];
+			if (channels.length !== channelIds.length) throw new NotFoundException('The requested record was not found');
+			const byId = new Map(channels.map((channel) => [String(channel.id), channel]));
+			// A channel stays with its organization's categories, as `updateConversation` keeps it.
+			for (const group of groups) {
+				if (!group.categoryId) continue;
+				const category = known.get(String(group.categoryId)) as IChatCategory;
+				for (const id of (group.conversationIds ?? []).map(String)) {
+					if (String(byId.get(id)?.organizationId ?? '') !== String(category.organizationId ?? '')) {
+						throw new BadRequestException('A channel goes only under a category of its own organization.');
+					}
+				}
+			}
+
+			const facts: IChatEvent[] = [];
+			for (const [position, id] of order.entries()) {
+				const category = known.get(id) as IChatCategory;
+				if ((category.position ?? 0) === position) continue;
+				await manager.getRepository(ChatCategory).update({ id: id as ID, tenantId: caller.tenantId }, { position });
+				category.position = position;
+			}
+			for (const group of groups) {
+				const categoryId = (group.categoryId ?? null) as ID | null;
+				for (const [position, id] of (group.conversationIds ?? []).map(String).entries()) {
+					const channel = byId.get(id) as ChatConversation;
+					if (String(channel.categoryId ?? '') === String(categoryId ?? '') && (channel.position ?? 0) === position) continue;
+					// A cleared category is written as NULL (`save` would leave an undefined member untouched).
+					await manager.getRepository(ChatConversation).update({ id: id as ID, tenantId: caller.tenantId }, { categoryId: categoryId as never, position });
+					channel.categoryId = (categoryId ?? undefined) as ID | undefined;
+					channel.position = position;
+					moved.push({ id: id as ID, categoryId, position });
+					const members = await this.access.members(caller.tenantId, id as ID, manager);
+					facts.push(await this.realtime.append(manager, this.realtime.conversationFact(channel, 'updated', members.map((member) => member.userId))));
+				}
+			}
+			ordered = order.map((id) => known.get(id) as IChatCategory);
+			return facts;
+		});
+		return { categories: ordered, conversations: moved, events };
 	}
 
 	/**
