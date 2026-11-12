@@ -4499,6 +4499,7 @@
 			"DELETE_FOREVER": "Definitief verwijderen",
 			"DELETE_FOREVER_CONFIRM": "Definitief verwijderen? Dit kan niet ongedaan worden gemaakt.",
 			"DELETED_FOREVER": "‘{{ title }}’ is definitief verwijderd",
+			"NO_LONGER_IN_TRASH": "‘{{ title }}’ staat niet meer in de prullenbak: de taak is intussen teruggezet of verwijderd. De lijst is bijgewerkt.",
 			"DELETED_BY": "Verwijderd door {{ name }} · {{ date }}",
 			"DELETED_AT": "Verwijderd {{ date }}",
 			"LOAD_MORE": "Meer laden ({{ shown }} van {{ total }})",

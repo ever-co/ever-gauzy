@@ -4498,6 +4498,7 @@
 			"DELETE_FOREVER": "Usuń na zawsze",
 			"DELETE_FOREVER_CONFIRM": "Usunąć na zawsze? Tej operacji nie można cofnąć.",
 			"DELETED_FOREVER": "„{{ title }}” usunięto na zawsze",
+			"NO_LONGER_IN_TRASH": "„{{ title }}” nie ma już w koszu: w międzyczasie zostało przywrócone lub usunięte. Lista została odświeżona.",
 			"DELETED_BY": "Usunięte przez {{ name }} · {{ date }}",
 			"DELETED_AT": "Usunięte {{ date }}",
 			"LOAD_MORE": "Wczytaj więcej ({{ shown }} z {{ total }})",

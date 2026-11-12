@@ -7,13 +7,13 @@ import { TASK_TRASH_SEARCH_MAX_LENGTH, TaskTrashService } from './task-trash.ser
  * organization, and no answer stops the delete (the promise rejects) instead of deleting a task for good.
  */
 describe('TaskTrashService', () => {
-	let http: { get: jest.Mock };
+	let http: { get: jest.Mock; delete: jest.Mock };
 	let service: TaskTrashService;
 
 	const failure = (status: number) => throwError(() => new HttpErrorResponse({ status }));
 
 	beforeEach(() => {
-		http = { get: jest.fn(() => of({ items: [], total: 0 })) };
+		http = { get: jest.fn(() => of({ items: [], total: 0 })), delete: jest.fn(() => of({ affected: 1 })) };
 		service = new TaskTrashService(http as unknown as HttpClient);
 	});
 
@@ -59,5 +59,24 @@ describe('TaskTrashService', () => {
 
 		const params: HttpParams = http.get.mock.calls[0][1].params;
 		expect(params.get('search')).toHaveLength(TASK_TRASH_SEARCH_MAX_LENGTH);
+	});
+
+	it('deletes a task for good from the organization’s trash only, never through the plain delete', async () => {
+		await expect(service.deleteForever('task-1', 'org-1', 'tenant-1')).resolves.toEqual({ affected: 1 });
+
+		const [url, options] = http.delete.mock.calls[0];
+		expect(url).toMatch(/\/tasks\/task-1\/trashed$/);
+		const params: HttpParams = options.params;
+		expect(params.get('organizationId')).toBe('org-1');
+		expect(params.get('tenantId')).toBe('tenant-1');
+
+		await service.deleteForever('task-2', 'org-1');
+		expect(http.delete.mock.calls[1][1].params.has('tenantId')).toBe(false);
+	});
+
+	it('rejects with the platform’s 404 when the task is no longer in the trash', async () => {
+		http.delete.mockReturnValueOnce(failure(404));
+
+		await expect(service.deleteForever('task-1', 'org-1')).rejects.toMatchObject({ status: 404 });
 	});
 });

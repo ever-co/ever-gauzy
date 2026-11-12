@@ -4553,6 +4553,7 @@
 			"DELETE_FOREVER": "Изтриване завинаги",
 			"DELETE_FOREVER_CONFIRM": "Да се изтрие ли завинаги? Това не може да се отмени.",
 			"DELETED_FOREVER": "„{{ title }}“ беше изтрита окончателно",
+			"NO_LONGER_IN_TRASH": "„{{ title }}“ вече не е в кошчето: междувременно е възстановена или изтрита. Списъкът е обновен.",
 			"DELETED_BY": "Изтрита от {{ name }} · {{ date }}",
 			"DELETED_AT": "Изтрита {{ date }}",
 			"LOAD_MORE": "Още ({{ shown }} от {{ total }})",

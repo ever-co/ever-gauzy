@@ -4497,6 +4497,7 @@
 			"DELETE_FOREVER": "حذف نهائي",
 			"DELETE_FOREVER_CONFIRM": "حذف نهائي؟ لا يمكن التراجع عن ذلك.",
 			"DELETED_FOREVER": "حُذفت «{{ title }}» نهائيًا",
+			"NO_LONGER_IN_TRASH": "لم تعد «{{ title }}» في المهملات: استُعيدت أو حُذفت في هذه الأثناء. حُدّثت القائمة.",
 			"DELETED_BY": "حذفها {{ name }} · {{ date }}",
 			"DELETED_AT": "حُذفت {{ date }}",
 			"LOAD_MORE": "تحميل المزيد ({{ shown }} من {{ total }})",
