@@ -121,8 +121,17 @@ function setup(options: ISetup = {}) {
 	return { service, sent, writer, repositories, interactionUpdates };
 }
 
-/** Waits until the background retries have run (each is a 1 ms timer). */
-const retriesDone = () => new Promise((resolve) => setTimeout(resolve, 60));
+/**
+ * Waits until the background retries have run: each is a 1 ms timer whose attempt settles in microtasks (every double
+ * answers at once), so no timer left means no retry left. A fixed pause was too short on a loaded machine.
+ */
+async function retriesDone(service: ChatInteractionService): Promise<void> {
+	const timers = (service as unknown as { timers: Set<unknown> }).timers;
+	const deadline = Date.now() + 5_000;
+	do {
+		await new Promise((resolve) => setTimeout(resolve, 5));
+	} while (timers.size > 0 && Date.now() < deadline);
+}
 
 describe('ChatInteractionService', () => {
 	const env = { ...process.env };
@@ -192,7 +201,7 @@ describe('ChatInteractionService', () => {
 		const { service, sent, repositories, interactionUpdates } = setup({ attempts: [failing, failing, failing, failing] });
 		const result = await service.interact(member, 'm1', { actionId: 'ack' });
 		expect(result.interaction.status).toBe(ChatInteractionStatusEnum.RETRYING);
-		await retriesDone();
+		await retriesDone(service);
 		expect(sent).toHaveLength(4);
 		expect(new Set(sent.map((attempt) => attempt.headers['Idempotency-Key']))).toEqual(new Set(['i-1']));
 		expect(sent.map((attempt) => attempt.headers[WebhookHeader.ATTEMPT])).toEqual(['1', '2', '3', '4']);
@@ -205,7 +214,7 @@ describe('ChatInteractionService', () => {
 		const { service, sent } = setup({ attempts: [{ outcome: 'refused', status: 0, error: 'target_refused' }] });
 		const result = await service.interact(member, 'm1', { actionId: 'ack' });
 		expect(result.interaction).toEqual(expect.objectContaining({ status: ChatInteractionStatusEnum.FAILED, error: 'target_refused' }));
-		await retriesDone();
+		await retriesDone(service);
 		expect(sent).toHaveLength(1);
 	});
 
@@ -215,7 +224,7 @@ describe('ChatInteractionService', () => {
 		// One interaction whose earlier answer was lost: the retry is answered again, and the writer's claim decides.
 		const retried = setup({ attempts: [{ outcome: 'retry', status: 0, error: 'timeout' }, delivered] });
 		await retried.service.interact(member, 'm1', { actionId: 'ack' });
-		await retriesDone();
+		await retriesDone(retried.service);
 		expect(retried.writer.replaceOnce).toHaveBeenCalledTimes(1);
 		expect(retried.writer.replaceOnce.mock.calls[0][1]).toBe('i-1');
 		// Two clicks are two interactions, each with its own id, and each reply applies.
