@@ -156,6 +156,15 @@
 							<button type="button" role="menuitem" [disabled]="!isPage" (click)="exportMarkdown()">
 								<nb-icon icon="download-outline"></nb-icon>{{ 'DOCS.EXPORT.MARKDOWN' | translate }}
 							</button>
+							<!-- Server-rendered PDF (`docs-import-export`), shown when the PDF probe answered. -->
+							@if (pdfExportAvailable) {
+								<button type="button" role="menuitem" [disabled]="!isPage || pdfBusy" (click)="exportPdf(false)">
+									<nb-icon icon="file-text-outline"></nb-icon>{{ 'DOCS.EXPORT.PDF' | translate }}
+								</button>
+								<button type="button" role="menuitem" [disabled]="!isPage || pdfBusy" (click)="exportPdf(true)">
+									<nb-icon icon="layers-outline"></nb-icon>{{ 'DOCS.EXPORT.PDF_WITH_SUB_PAGES' | translate }}
+								</button>
+							}
 							<button type="button" role="menuitem" (click)="print()">
 								<nb-icon icon="printer-outline"></nb-icon>{{ 'DOCS.EXPORT.PRINT' | translate }}
 							</button>

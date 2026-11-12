@@ -1,13 +1,14 @@
-import { Component, ElementRef, HostListener, OnDestroy, OnInit, ViewChild, ChangeDetectionStrategy } from '@angular/core';
+import { Component, ElementRef, HostListener, OnDestroy, OnInit, ViewChild, ChangeDetectionStrategy, inject } from '@angular/core';
 import { ActivatedRoute, Params, Router } from '@angular/router';
 import { NbDialogService, NbMenuItem, NbMenuService, NbToastrService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Actions } from '@ngneat/effects-ng';
 import { TranslateService } from '@ngx-translate/core';
 import { firstValueFrom, Subject } from 'rxjs';
-import { debounceTime, distinctUntilChanged, filter, take, tap } from 'rxjs/operators';
+import { debounceTime, distinctUntilChanged, filter, map, skip, switchMap, take, tap } from 'rxjs/operators';
 import {
 	ComponentLayoutStyleEnum,
+	DocumentImportStatusEnum,
 	DocumentKindEnum,
 	DocumentReviewStatusEnum,
 	ID,
@@ -36,6 +37,10 @@ import {
 	IDocsUploadDialogResult
 } from '../../dialogs/classification-dialog.component';
 import { CreateDialogComponent } from '../../dialogs/create-dialog.component';
+import { DocsImportDialogComponent, IDocsImportDialogResult } from '../../dialogs/docs-import-dialog.component';
+import { DocsImportRun } from '../../models/docs-import-run';
+import { errorKeyOf } from '../../models/docs-import.model';
+import { DocsImportService } from '../../services/docs-import.service';
 import {
 	createInitialDocsFilterState,
 	DocsFilterState,
@@ -92,6 +97,29 @@ export class DocsBrowsePageComponent extends PaginationFilterBaseComponent imple
 	public canCreate = false;
 	/** Ancestor chain of the current tree location, rendered in the page header. */
 	public breadcrumb: IDocsCardsCrumb[] = [];
+	/** The largest zip the import takes, or `null` while import is unavailable (the probe answered 404) — hides the button. */
+	public importMaxZipBytes: number | null = null;
+	private readonly importService = inject(DocsImportService);
+	/** Whether the import dialog is open: an import that ends while it is closed says so in a toast. */
+	private importDialogOpen = false;
+	/**
+	 * The import run, the page's rather than the dialog's: closing the dialog while an import runs keeps it, and the
+	 * dialog opened again shows its progress or its report. When an import is over, the tree and the list are read again.
+	 */
+	private readonly importRun = new DocsImportRun(this.importService, (finished) => {
+		this.documentTreeStore.invalidateAll();
+		this.actions.dispatch(DocumentsActions.loadDocuments());
+		if (this.importDialogOpen) return;
+		if (finished.status === DocumentImportStatusEnum.FAILED) this.toastrService.danger(this.getTranslation(errorKeyOf(finished.errorCode)));
+		else
+			this.toastrService.success(
+				this.getTranslation('DOCS.IMPORT.SUMMARY', {
+					imported: finished.importedCount ?? 0,
+					skipped: finished.skippedCount ?? 0,
+					failed: finished.failedCount ?? 0
+				})
+			);
+	});
 	/** Live query params, handed to the saved-views control (UX spec §5). */
 	public urlParams: Params = {};
 	/** Nebular menu tag of the `New ▾` split menu. */
@@ -161,6 +189,29 @@ export class DocsBrowsePageComponent extends PaginationFilterBaseComponent imple
 				untilDestroyed(this)
 			)
 			.subscribe();
+
+		// 5a) An import run belongs to the organization it started in: a switch puts it away (the import goes on there).
+		this.store.selectedOrganization$
+			.pipe(
+				filter((organization) => !!organization),
+				map((organization) => String(organization.id)),
+				distinctUntilChanged(),
+				skip(1),
+				untilDestroyed(this)
+			)
+			.subscribe(() => this.importRun.reset());
+
+		// 5b) The Import action follows the import probe of the selected organization (hidden while it answers 404).
+		this.store.selectedOrganization$
+			.pipe(
+				filter((organization) => !!organization),
+				distinctUntilChange(),
+				switchMap(() => this.importService.probeImport()),
+				untilDestroyed(this)
+			)
+			.subscribe((probe) => {
+				this.importMaxZipBytes = probe ? Number(probe.maxZipBytes) || 0 : null;
+			});
 
 		// 6) Cards breadcrumb follows the tree location.
 		this.documentsQuery.folderId$
@@ -255,7 +306,8 @@ export class DocsBrowsePageComponent extends PaginationFilterBaseComponent imple
 	}
 
 	ngOnDestroy(): void {
-		// UntilDestroy handles subscriptions.
+		// UntilDestroy handles subscriptions; the import run's requests stop with the page (the import goes on).
+		this.importRun.dispose();
 	}
 
 	// ─── Keyboard shortcuts (`01-ux-spec.md` §16/§17) ────────────
@@ -712,6 +764,31 @@ export class DocsBrowsePageComponent extends PaginationFilterBaseComponent imple
 		if (!created) return;
 		this.documentTreeStore.invalidate(folderId);
 		this.actions.dispatch(DocumentsActions.loadDocuments());
+	}
+
+	/**
+	 * Import of an exported workspace (`docs-import-export` spec FR-17): the dialog defaults to the current folder or
+	 * page and shows the page's import run (`importRun`), whose end reads the tree and the list again; a page picked in
+	 * its report opens. Closing the dialog keeps an upload or an import that still runs; a finished one is put away.
+	 */
+	async openImportDialog(): Promise<void> {
+		if (this.importMaxZipBytes === null) return;
+		const folderId = this.documentsQuery.folderId;
+		const parentName = folderId ? (this.breadcrumb[this.breadcrumb.length - 1]?.name ?? null) : null;
+		this.importDialogOpen = true;
+		let result: IDocsImportDialogResult | undefined;
+		try {
+			result = await firstValueFrom(
+				this.dialogService.open(DocsImportDialogComponent, {
+					context: { parentId: folderId ?? null, parentName, maxZipBytes: this.importMaxZipBytes, run: this.importRun },
+					closeOnBackdropClick: false
+				}).onClose
+			);
+		} finally {
+			this.importDialogOpen = false;
+		}
+		if (!this.importRun.inProgress) this.importRun.reset();
+		if (result?.openPageId) this.router.navigate(['page', result.openPageId], { relativeTo: this.route });
 	}
 
 	goToReviewQueue(): void {
