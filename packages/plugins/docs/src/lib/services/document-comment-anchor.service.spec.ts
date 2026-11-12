@@ -3,6 +3,7 @@ const requestContext = { userId: 'user-1' as string | null, employeeId: 'employe
 const reachable = new Set<string>(['org-1']);
 jest.mock('@gauzy/core', () => ({
 	Comment: class Comment {},
+	FeatureService: class FeatureService {},
 	assertCurrentUserBelongsToOrganization: jest.fn(async (_manager: unknown, organizationId: string) => {
 		if (!reachable.has(organizationId)) {
 			const { ForbiddenException } = jest.requireActual('@nestjs/common');
@@ -19,7 +20,6 @@ jest.mock('./document.service', () => ({ DocumentService: class DocumentService 
 /** The plugin's configuration as the service reads it (Docs collaboration on unless a test turns it off). */
 const mockConfig = { collabEnabled: true };
 jest.mock('../docs.config', () => ({ getDocsConfig: () => mockConfig }));
-jest.mock('./docs-feature.service', () => ({ DocsFeatureService: class DocsFeatureService {} }));
 jest.mock('./document-comment-access.policy', () => ({ DocumentCommentAccessPolicy: class DocumentCommentAccessPolicy {} }));
 jest.mock('../repositories/type-orm-document-comment-anchor.repository', () => ({
 	TypeOrmDocumentCommentAnchorRepository: class TypeOrmDocumentCommentAnchorRepository {}
@@ -29,7 +29,7 @@ jest.mock('../entities/document.entity', () => ({ Document: class Document {} })
 
 import { BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
 import * as Y from 'yjs';
-import { BaseEntityEnum, DocumentCommentAnchorMethodEnum, DocumentCommentAnchorStatusEnum } from '@gauzy/contracts';
+import { BaseEntityEnum, DocumentCommentAnchorMethodEnum, DocumentCommentAnchorStatusEnum, FeatureEnum } from '@gauzy/contracts';
 import {
 	DOCS_COLLAB_DISABLED,
 	DOCS_COMMENT_ANCHOR_FORBIDDEN,
@@ -128,9 +128,10 @@ function buildService(
 	const commentAccess = {
 		findWritableParent: jest.fn(async (id: string) => (options.takesComments === false || id !== PAGE_ID ? null : { id, organizationId: 'org-1' }))
 	};
-	const docsFeature = { isEnabledFor: jest.fn(async () => options.docsEnabled !== false) };
-	const service = new DocumentCommentAnchorService(documents as never, repository as never, commentAccess as never, docsFeature as never);
-	return { service, documents, repository, rows, page, commentAccess, docsFeature };
+	// FEATURE_DOCUMENTS as the routes' guard resolves it.
+	const features = { isFeatureEnabled: jest.fn(async () => options.docsEnabled !== false) };
+	const service = new DocumentCommentAnchorService(documents as never, repository as never, commentAccess as never, features as never);
+	return { service, documents, repository, rows, page, commentAccess, features };
 }
 
 /** The response body of the exception a promise rejects with. */
@@ -323,9 +324,9 @@ describe('DocumentCommentAnchorService', () => {
 		const rows: IRow[] = [
 			{ id: 'a1', tenantId: 'tenant-1', organizationId: 'org-1', commentId: COMMENT_ID, documentId: PAGE_ID, blockId: 'b1', startOffset: 10, endOffset: 19, quote: 'brown fox' }
 		];
-		const { service, documents, docsFeature } = buildService({ rows, docsEnabled: false });
+		const { service, documents, features } = buildService({ rows, docsEnabled: false });
 		expect(await service.ofComment({ id: COMMENT_ID, entity: BaseEntityEnum.Document, entityId: PAGE_ID, tenantId: 'tenant-1' })).toBeNull();
-		expect(docsFeature.isEnabledFor).toHaveBeenCalledWith('tenant-1', 'org-1');
+		expect(features.isFeatureEnabled).toHaveBeenCalledWith(FeatureEnum.FEATURE_DOCUMENTS);
 		expect(documents.findOneScoped).not.toHaveBeenCalled();
 	});
 

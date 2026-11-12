@@ -2,13 +2,14 @@ import { BadRequestException, ForbiddenException, Injectable, NotFoundException 
 import { In } from 'typeorm';
 import {
 	BaseEntityEnum,
+	FeatureEnum,
 	ID,
 	IDocumentCommentAnchor,
 	IDocumentCommentAnchorInput,
 	IDocumentCommentAnchorList,
 	IDocumentCommentAnchorResolved
 } from '@gauzy/contracts';
-import { assertCurrentUserBelongsToOrganization, Comment, RequestContext } from '@gauzy/core';
+import { assertCurrentUserBelongsToOrganization, Comment, FeatureService, RequestContext } from '@gauzy/core';
 import { getDocsConfig } from '../docs.config';
 import {
 	DOCS_COLLAB_DISABLED,
@@ -32,7 +33,6 @@ import {
 	liveAnchorResolverOf,
 	resolveCommentAnchor
 } from './document-comment-anchor';
-import { DocsFeatureService } from './docs-feature.service';
 import { DocumentCommentAccessPolicy } from './document-comment-access.policy';
 import { DocumentService } from './document.service';
 
@@ -72,7 +72,7 @@ export class DocumentCommentAnchorService {
 		private readonly documents: DocumentService,
 		private readonly repository: TypeOrmDocumentCommentAnchorRepository,
 		private readonly commentAccess: DocumentCommentAccessPolicy,
-		private readonly docsFeature: DocsFeatureService
+		private readonly features: FeatureService
 	) {}
 
 	/** The anchors of the page's comments that are still there, each found again in the page as it is now. */
@@ -112,11 +112,12 @@ export class DocumentCommentAnchorService {
 		const key = String(row.documentId);
 		if (!pages.has(key)) {
 			// The page in its own organization, which the caller must reach (the comment policy's boundary), and where Docs is
-			// on: a field resolver runs no guard, so the feature code the REST routes and queries carry is checked here.
+			// on: a field resolver runs no guard, so FEATURE_DOCUMENTS is resolved here as the routes' FeatureFlagGuard
+			// resolves it (FeatureService, the request's scope; its fallback is the configured toggle, never a blanket yes).
 			pages.set(
 				key,
 				this.assertOrganization(row.organizationId as ID)
-					.then(() => this.docsFeature.isEnabledFor(tenantId, row.organizationId as ID))
+					.then(() => this.features.isFeatureEnabled(FeatureEnum.FEATURE_DOCUMENTS))
 					.then((enabled) => {
 						if (!enabled) throw new NotFoundException();
 						return this.documents.findOneScoped(row.documentId, [], row.organizationId as ID);
