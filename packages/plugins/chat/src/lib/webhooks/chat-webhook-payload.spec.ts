@@ -45,6 +45,25 @@ describe('chat webhook payloads', () => {
 			expect(bodyText('<!channel> deploy <!here> <!everyone>', true)).toBe('<!channel> deploy <!here> <!channel>');
 		});
 
+		it('never reads escaped angle brackets as a broadcast, in the body or in block text', () => {
+			expect(bodyText('&lt;!here&gt; deploy &lt;!channel&gt;', false)).toBe('@here deploy @channel');
+			// Escaped brackets are text even for a webhook allowed to broadcast: only its own `<!here>` counts.
+			expect(bodyText('<!here> deploy &lt;!channel&gt;', true)).toBe('<!here> deploy @channel');
+			expect(plainText('&lt;!here&gt; ping', 100)).toBe('@here ping');
+			const content = normalizeWebhookPayload({ blocks: [{ type: 'section', text: { type: 'mrkdwn', text: '&lt;!channel&gt; disk full' } }] }, { canBroadcast: false });
+			expect(content.body).toBe('@channel disk full');
+			expect(content.body).not.toMatch(/<!(channel|here)>/);
+		});
+
+		it('links a labelled target only when it is an https page of a public host, else keeps the label as text', () => {
+			expect(bodyText('<https://status.example.com/|status> ok', false)).toBe('[status](https://status.example.com/) ok');
+			expect(bodyText('<http://status.example.com/|status> ok', false)).toBe('status ok');
+			expect(bodyText('<https://127.0.0.1/admin|status> ok', false)).toBe('status ok');
+			expect(bodyText('<https://169.254.169.254/latest|meta> ok', false)).toBe('meta ok');
+			expect(plainText('See <https://10.0.0.5/x|the run>', 100)).toBe('See the run');
+			expect(plainText('See <https://x.example/a|the run>', 100)).toBe('See the run (https://x.example/a)');
+		});
+
 		it('reads the labels of foreign user and channel references', () => {
 			expect(bodyText('<@U123|alice> in <#C9|ops> <!date^1700000000^{date}|Nov 14>', false)).toBe('@alice in #ops Nov 14');
 		});
@@ -292,6 +311,17 @@ describe('chat webhook payloads', () => {
 			}
 		});
 
+		it('gives a button whose action id is only control characters a generated one, and drops such a block id', () => {
+			const { blocks } = normalizeWebhookPayload(
+				{ text: 'x', blocks: [{ type: 'actions', block_id: '\u0000\u0007', elements: [{ type: 'button', action_id: '\u0000\u0001', text: 'Go' }] }] },
+				{ canBroadcast: false }
+			);
+			const actions = blocks[0] as { blockId?: string; elements: Array<{ actionId: string }> };
+			expect(actions.elements[0].actionId).not.toBe('');
+			expect(actions.elements[0].actionId).toMatch(/^[\w-]+$/);
+			expect(actions.blockId).toBe('_block-0');
+		});
+
 		it('refuses a payload with no text at all, and wrong types', () => {
 			expect(codeOf(() => normalizeWebhookPayload({}, { canBroadcast: false }))).toBe('no_text');
 			expect(codeOf(() => normalizeWebhookPayload({ text: '   ', blocks: [{ type: 'divider' }] }, { canBroadcast: false }))).toBe('no_text');
@@ -304,6 +334,13 @@ describe('chat webhook payloads', () => {
 
 		it('reads the form flavour: one payload field holding the JSON', () => {
 			expect(payloadObjectOf({ payload: '{"text":"hi"}' })).toEqual({ text: 'hi' });
+		});
+
+		it('reads a form body whose payload field sits beside other fields, and never unwraps a post of its own', () => {
+			expect(payloadObjectOf({ payload: '{"text":"hi"}', source: 'ci' })).toEqual({ text: 'hi' });
+			// A JSON post that carries content keeps it, whatever string `payload` it also holds.
+			expect(payloadObjectOf({ text: 'keep', payload: '{"text":"other"}' })).toEqual({ text: 'keep', payload: '{"text":"other"}' });
+			expect(payloadObjectOf({ blocks: [], payload: 'x' })).toEqual({ blocks: [], payload: 'x' });
 		});
 	});
 

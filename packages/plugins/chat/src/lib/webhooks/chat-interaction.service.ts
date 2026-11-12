@@ -80,10 +80,9 @@ export class ChatInteractionService implements OnModuleInit, OnModuleDestroy {
 	 * schedule are marked failed (`process_restarted`); the recent ones may belong to another API process's retries.
 	 */
 	async onModuleInit(): Promise<void> {
-		const scheduleMs = 5_000 + this.retryDelaysMs.reduce((total, delay) => total + delay + 5_000, 0);
 		try {
 			await this.dataSource.getRepository(ChatWebhookInteraction).update(
-				{ status: In([ChatInteractionStatusEnum.PENDING, ChatInteractionStatusEnum.RETRYING]), updatedAt: LessThan(new Date(Date.now() - 2 * scheduleMs)) } as never,
+				{ status: In([ChatInteractionStatusEnum.PENDING, ChatInteractionStatusEnum.RETRYING]), updatedAt: LessThan(new Date(Date.now() - this.staleAfterMs())) } as never,
 				{ status: ChatInteractionStatusEnum.FAILED, lastError: 'process_restarted' } as never
 			);
 		} catch (error) {
@@ -95,6 +94,14 @@ export class ChatInteractionService implements OnModuleInit, OnModuleDestroy {
 	onModuleDestroy(): void {
 		for (const timer of this.timers) clearTimeout(timer);
 		this.timers.clear();
+	}
+
+	/**
+	 * How long an interaction may stay pending or retrying before it counts as abandoned: twice the whole retry schedule
+	 * (each attempt has a 5 s deadline). Every attempt touches the row, so a live retry, in any API process, is younger.
+	 */
+	private staleAfterMs(): number {
+		return 2 * (5_000 + this.retryDelaysMs.reduce((total, delay) => total + delay + 5_000, 0));
 	}
 
 	async interact(caller: IChatCaller & { employeeId: ID }, messageId: ID, input: IChatInteractionInput): Promise<IChatInteractionResult> {
@@ -158,13 +165,26 @@ export class ChatInteractionService implements OnModuleInit, OnModuleDestroy {
 		return { interaction: interactionView(context.interaction), ...(withRelations ? { message: withRelations } : {}), events };
 	}
 
-	/** The state of a click, for the person who clicked. */
+	/**
+	 * The state of a click, for the person who clicked. One still pending or retrying long after its whole retry
+	 * schedule lost its retries (its API process restarted after the start-up sweep's cut-off): it is marked failed
+	 * (`process_restarted`) here, so the clicker is not told it is under way for good.
+	 */
 	async state(caller: IChatCaller, interactionId: ID): Promise<IChatInteraction> {
 		if (!isChatWebhooksEnabled()) throw new NotFoundException('The requested record was not found');
-		const row = await this.dataSource
-			.getRepository(ChatWebhookInteraction)
-			.findOne({ where: { id: interactionId, tenantId: caller.tenantId, actorUserId: caller.userId } });
+		const repository = this.dataSource.getRepository(ChatWebhookInteraction);
+		const row = await repository.findOne({ where: { id: interactionId, tenantId: caller.tenantId, actorUserId: caller.userId } });
 		if (!row) throw new NotFoundException('The requested record was not found');
+		const underWay = row.status === ChatInteractionStatusEnum.PENDING || row.status === ChatInteractionStatusEnum.RETRYING;
+		const touchedAt = row.updatedAt ?? row.createdAt;
+		if (underWay && touchedAt && Date.now() - new Date(touchedAt).getTime() > this.staleAfterMs()) {
+			await repository.update(
+				{ id: row.id as ID, status: In([ChatInteractionStatusEnum.PENDING, ChatInteractionStatusEnum.RETRYING]) } as never,
+				{ status: ChatInteractionStatusEnum.FAILED, lastError: 'process_restarted' } as never
+			);
+			row.status = ChatInteractionStatusEnum.FAILED;
+			row.lastError = 'process_restarted';
+		}
 		return interactionView(row);
 	}
 

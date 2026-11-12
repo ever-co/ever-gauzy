@@ -70,17 +70,23 @@ const UUID = '[0-9a-fA-F-]{36}';
 const CONTROL = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F\u202A-\u202E\u2066-\u2069]/g;
 const HTML_TAG = /^\/?[a-zA-Z][\w:-]*(\s[^>]*)?\/?$/;
 
+/** The fields a post's content is read from: a body holding any of them is the post itself, never a form wrapper. */
+const CONTENT_FIELDS = ['text', 'blocks', 'attachments'] as const;
+
 /**
  * The object a request body holds: a JSON body as parsed, or a form body's `payload` field (the form flavour of the
- * same shape) parsed as JSON. Anything else is refused.
+ * same shape) parsed as JSON. Other form fields beside `payload` are ignored; a body that carries content of its own
+ * (`text`, `blocks`, `attachments`) is read as it is, whatever string `payload` it also holds. Anything else is
+ * refused.
  *
  * @throws ChatWebhookPayloadError (`invalid_payload`).
  */
 export function payloadObjectOf(body: unknown): Record<string, unknown> {
 	let value = body;
-	if (isRecord(value) && typeof value['payload'] === 'string' && Object.keys(value).length === 1) {
+	const record = isRecord(body) ? body : null;
+	if (record && typeof record['payload'] === 'string' && !CONTENT_FIELDS.some((key) => record[key] !== undefined)) {
 		try {
-			value = JSON.parse(value['payload'] as string);
+			value = JSON.parse(record['payload']);
 		} catch {
 			throw new ChatWebhookPayloadError('invalid_payload', 'The payload field is not JSON.');
 		}
@@ -146,7 +152,7 @@ export function normalizeWebhookPayload(payload: Record<string, unknown>, option
 		throw new ChatWebhookPayloadError('too_many_blocks', `A post carries at most ${CHAT_WEBHOOK_MAX_BLOCKS} blocks.`);
 	}
 	identifyActionBlocks(blocks);
-	uniquifyGeneratedActions(blocks);
+	dedupeGeneratedActions(blocks);
 	assertUniqueActions(blocks);
 
 	const text = typeof payload['text'] === 'string' ? bodyText(payload['text'], options.canBroadcast) : '';
@@ -195,9 +201,22 @@ function clean(value: string): string {
 }
 
 function finish(value: string): string {
-	const decoded = stripTags(stripTags(value).replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&'));
+	// The broadcast tokens left by `rewriteAngles` (a webhook allowed to broadcast) stay as they are; between them,
+	// escaped angle brackets are text: a broadcast token they spell once decoded is written as `@channel` / `@here`,
+	// so a webhook that may not broadcast cannot send `&lt;!here&gt;` and have it read as a mention of everyone.
+	const parts = stripTags(value).split(BROADCAST_TOKEN);
+	const decoded = parts
+		.map((part, index) => {
+			if (index % 2 === 1) return part;
+			const text = stripTags(part.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&'));
+			return text.replace(BROADCAST_TOKEN, (token: string) => `@${token.slice(2, -1)}`);
+		})
+		.join('');
 	return decoded.replace(/[ \t]+\n/g, '\n').replace(/\n{3,}/g, '\n\n').trim();
 }
+
+/** The chat's broadcast mention tokens, captured (so a `split` keeps them as their own parts). */
+const BROADCAST_TOKEN = /(<!channel>|<!here>)/g;
 
 /** Removes HTML comments, declarations and tags; leaves the chat's mention tokens and any other text. */
 function stripTags(value: string): string {
@@ -218,6 +237,8 @@ function rewriteAngles(value: string, mode: 'body' | 'plain', canBroadcast: bool
 		if (/^https?:\/\//i.test(target)) {
 			const url = target.trim();
 			if (!label) return url;
+			// A labelled link is a link only to an https page of a public host (as a button's): else its label, as text.
+			if (getUnsafeOutboundUrlReason(url) !== null) return label;
 			return mode === 'body' ? `[${label.replace(/[[\]]/g, '')}](${url.replace(/[()\s]/g, encodeURIComponent)})` : `${label} (${url})`;
 		}
 		if (/^mailto:/i.test(target)) return label || target.slice('mailto:'.length);
@@ -356,8 +377,10 @@ function buttonOf(element: Record<string, unknown>): { button: IChatAppButton; s
 	const text = plainText(textOf(element), CHAT_APP_TEXT_LIMITS.buttonText);
 	if (!text) return null;
 	const rawId = element['action_id'] ?? element['actionId'] ?? element['name'];
-	const supplied = typeof rawId === 'string' && !!rawId.trim();
-	const actionId = supplied ? cut((rawId as string).trim().replace(CONTROL, ''), CHAT_APP_TEXT_LIMITS.id) : '';
+	// Control characters go first: an id made of nothing else names no action, and the button is given one.
+	const cleanId = typeof rawId === 'string' ? rawId.replace(CONTROL, '').trim() : '';
+	const supplied = !!cleanId;
+	const actionId = supplied ? cut(cleanId, CHAT_APP_TEXT_LIMITS.id) : '';
 	const rawValue = element['value'];
 	const value = typeof rawValue === 'string' ? rawValue.replace(CONTROL, '').slice(0, CHAT_APP_TEXT_LIMITS.buttonValue) : null;
 	const url = typeof element['url'] === 'string' ? element['url'].trim() : null;
@@ -370,7 +393,8 @@ function buttonOf(element: Record<string, unknown>): { button: IChatAppButton; s
 
 function blockIdOf(block: Record<string, unknown>): string | null {
 	const raw = block['block_id'] ?? block['blockId'];
-	return typeof raw === 'string' && raw.trim() ? cut(raw.trim().replace(CONTROL, ''), CHAT_APP_TEXT_LIMITS.id) : null;
+	const clean = typeof raw === 'string' ? raw.replace(CONTROL, '').trim() : '';
+	return clean ? cut(clean, CHAT_APP_TEXT_LIMITS.id) : null;
 }
 
 /** The block id an actions block without one is given: its place in the message (stable, distinct per message). */
@@ -400,7 +424,7 @@ function identifyActionBlocks(blocks: IChatAppBlock[]): void {
  * payload named the same one twice), and their unnamed buttons must not collide. The ids the payload named are
  * reserved first; a generated one already in use gets a suffix.
  */
-function uniquifyGeneratedActions(blocks: readonly IChatAppBlock[]): void {
+function dedupeGeneratedActions(blocks: readonly IChatAppBlock[]): void {
 	const taken = new Map<string, Set<string>>();
 	const idsOf = (blockId: string) => {
 		let ids = taken.get(blockId);

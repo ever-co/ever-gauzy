@@ -268,4 +268,23 @@ describe('ChatInteractionService', () => {
 		expect(state.interactionId).toBe('i-1');
 		expect(repositories.ChatWebhookInteraction.findOne).toHaveBeenCalledWith({ where: { id: 'i-1', tenantId: 'ten', actorUserId: 'u1' } });
 	});
+
+	it('answers a click its process left under way after the start-up sweep as failed, and a live one as it is', async () => {
+		const { service, repositories } = setup();
+		const row = { id: 'i-9', messageId: 'm1', conversationId: 'c1', actionId: 'ack', status: ChatInteractionStatusEnum.RETRYING, attempts: 2 };
+		// Untouched for longer than twice the whole retry schedule: its retries are gone.
+		repositories.ChatWebhookInteraction.findOne.mockResolvedValueOnce({ ...row, updatedAt: new Date(Date.now() - 10 * 60_000) });
+		const stale = await service.state(member, 'i-9');
+		expect(stale).toEqual(expect.objectContaining({ status: ChatInteractionStatusEnum.FAILED, error: 'process_restarted' }));
+		const [where, patch] = repositories.ChatWebhookInteraction.update.mock.calls[0] as [Record<string, { _type?: string } | string>, Record<string, unknown>];
+		expect(where['id']).toBe('i-9');
+		// Only while it is still under way: a retry that settled meanwhile is not overwritten.
+		expect((where['status'] as { _type?: string })._type).toBe('in');
+		expect(patch).toEqual({ status: ChatInteractionStatusEnum.FAILED, lastError: 'process_restarted' });
+		// A retry under way (touched seconds ago) is left alone.
+		repositories.ChatWebhookInteraction.findOne.mockResolvedValueOnce({ ...row, updatedAt: new Date(Date.now() - 5_000) });
+		const live = await service.state(member, 'i-9');
+		expect(live.status).toBe(ChatInteractionStatusEnum.RETRYING);
+		expect(repositories.ChatWebhookInteraction.update).toHaveBeenCalledTimes(1);
+	});
 });
