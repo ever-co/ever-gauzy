@@ -28,7 +28,7 @@ import { coalesceReads } from '../../services/chat-live';
 import { ChatLiveService, isTabVisible } from '../../services/chat-live.service';
 import { ChatPeople, ChatPeopleService, EMPTY_PEOPLE } from '../../services/chat-people.service';
 import { ChatFollowedThread, ChatMessagePatch, ChatUiService } from '../../services/chat-ui.service';
-import { BrowseChannelsDialogComponent, NewChannelDialogComponent, NewDirectDialogComponent } from '../../dialogs/chat-dialogs.component';
+import { BrowseChannelsDialogComponent, NewChannelContext, NewChannelDialogComponent, NewDirectDialogComponent } from '../../dialogs/chat-dialogs.component';
 import { CategoriesDialogComponent } from '../../dialogs/chat-settings-dialogs.component';
 import { ChatListView, ConversationListComponent } from '../conversation-list/conversation-list.component';
 import { ConversationViewComponent } from '../conversation-view/conversation-view.component';
@@ -1110,8 +1110,15 @@ export class ChatPageComponent implements OnInit {
 	// ---------------------------------------------------------------- dialogs
 
 	protected openNewChannel(): void {
+		const context: NewChannelContext = {
+			organizationId: this.organizationId(),
+			tenantId: this.tenantId(),
+			channelNames: this.conversations()
+				.filter((conversation) => conversation.kind === ChatConversationKindEnum.CHANNEL)
+				.map((conversation) => conversation.name ?? '')
+		};
 		this.dialog
-			.open(NewChannelDialogComponent)
+			.open(NewChannelDialogComponent, { context })
 			.onClose.pipe(takeUntilDestroyed(this.destroyRef))
 			.subscribe((conversation: IChatConversationWithState | null) => this.open(conversation));
 	}
