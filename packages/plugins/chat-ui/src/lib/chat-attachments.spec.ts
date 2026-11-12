@@ -92,10 +92,10 @@ describe('chat attachments', () => {
 
 describe('imageBox', () => {
 	it('fits a picture of known size into the thumbnail box, never enlarging it', () => {
-		expect(imageBox({ width: 1600, height: 900 })).toEqual({ width: 320, height: 180 });
-		expect(imageBox({ width: 600, height: 1200 })).toEqual({ width: 120, height: 240 });
+		expect(imageBox({ width: 1600, height: 900 })).toEqual({ width: 550, height: 309 });
+		expect(imageBox({ width: 600, height: 1200 })).toEqual({ width: 175, height: 350 });
 		expect(imageBox({ width: 100, height: 50 })).toEqual({ width: 100, height: 50 });
-		expect(imageBox({ width: 3000, height: 2 })).toEqual({ width: 320, height: 1 });
+		expect(imageBox({ width: 3000, height: 2 })).toEqual({ width: 550, height: 1 });
 	});
 
 	it('reserves nothing when the size is not known', () => {

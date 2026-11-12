@@ -20,6 +20,8 @@ export interface PendingAttachment {
 
 /** What the preview popup needs of a file: a stored file of a message, or one still waiting in the composer. */
 export interface PreviewableFile {
+	/** The stored document, when it is one: its bytes can then be read through the API if its address does not load. */
+	documentId?: string | null;
 	name: string;
 	mimeType?: string | null;
 	fileSize?: number | null;
@@ -28,7 +30,7 @@ export interface PreviewableFile {
 }
 
 /** An address of the picked file for its preview popup (null where object URLs are not available). */
-export function objectUrlOf(file: File | null | undefined): string | null {
+export function objectUrlOf(file: Blob | null | undefined): string | null {
 	if (!file || typeof URL === 'undefined' || typeof URL.createObjectURL !== 'function') return null;
 	try {
 		return URL.createObjectURL(file);
@@ -162,7 +164,7 @@ export function messageAttachments(documentIds: readonly string[] | null | undef
 }
 
 /** The most room a picture of a message takes (CSS pixels): the box of its thumbnail. */
-export const CHAT_IMAGE_MAX_BOX = { width: 320, height: 240 } as const;
+export const CHAT_IMAGE_MAX_BOX = { width: 550, height: 350 } as const;
 
 /**
  * The size a picture is shown at, from the width and height the platform read at its upload, fitted into
