@@ -8,7 +8,7 @@ import {
 	IDocumentCommentAnchorList,
 	IDocumentCommentAnchorResolved
 } from '@gauzy/contracts';
-import { Comment, RequestContext } from '@gauzy/core';
+import { assertCurrentUserBelongsToOrganization, Comment, RequestContext } from '@gauzy/core';
 import {
 	DOCS_COMMENT_ANCHOR_FORBIDDEN,
 	DOCS_COMMENT_ANCHOR_INVALID,
@@ -29,6 +29,7 @@ import {
 	liveAnchorResolverOf,
 	resolveCommentAnchor
 } from './document-comment-anchor';
+import { DocumentCommentAccessPolicy } from './document-comment-access.policy';
 import { DocumentService } from './document.service';
 
 /** The block ids the editors write (`[[block:<blockId>]]` takes the same). */
@@ -51,14 +52,17 @@ export interface IAnchorContent {
  * the anchors again in the page as it is now (`document-comment-anchor.ts`): the live relative positions when the
  * page has a live state, else the offsets, the quote, an approximate quote, and the block.
  *
- * Access is the page's: a caller who may not read the page gets the page route's 404, and only the comment's author
- * sets or removes its anchor. A reply has none (it is on its thread's place).
+ * Access is the page's: a caller who may not read the page gets the page route's 404. Only the comment's author sets
+ * or removes its anchor, and only while the page takes their comments (the comment API's write rule for a page,
+ * `DocumentCommentAccessPolicy.findWritableParent`: a page reached through a `VIEW` share stays read-only). A reply has
+ * none (it is on its thread's place).
  */
 @Injectable()
 export class DocumentCommentAnchorService {
 	constructor(
 		private readonly documents: DocumentService,
-		private readonly repository: TypeOrmDocumentCommentAnchorRepository
+		private readonly repository: TypeOrmDocumentCommentAnchorRepository,
+		private readonly commentAccess: DocumentCommentAccessPolicy
 	) {}
 
 	/** The anchors of the page's comments that are still there, each found again in the page as it is now. */
@@ -96,10 +100,11 @@ export class DocumentCommentAnchorService {
 		}
 		const key = String(row.documentId);
 		if (!pages.has(key)) {
+			// The page in its own organization, which the caller must reach (the comment policy's boundary).
 			pages.set(
 				key,
-				this.documents
-					.findOneScoped(row.documentId, [], row.organizationId as ID)
+				this.assertOrganization(row.organizationId as ID)
+					.then(() => this.documents.findOneScoped(row.documentId, [], row.organizationId as ID))
 					.then((document) => this.contentOf(document))
 					.catch(() => null)
 			);
@@ -116,6 +121,7 @@ export class DocumentCommentAnchorService {
 		const anchor = normaliseAnchorInput(input);
 		const document = await this.documents.findOneScoped(documentId, [], organizationId);
 		await this.ownRootComment(document, commentId);
+		await this.assertTakesComments(document);
 		const existing = await this.repository.findOne({ where: { commentId, tenantId: document.tenantId as ID } });
 		const row = this.repository.create({
 			...(existing ?? {}),
@@ -140,8 +146,30 @@ export class DocumentCommentAnchorService {
 	async remove(documentId: ID, commentId: ID, organizationId?: ID): Promise<boolean> {
 		const document = await this.documents.findOneScoped(documentId, [], organizationId);
 		await this.ownRootComment(document, commentId);
+		await this.assertTakesComments(document);
 		const result = await this.repository.delete({ commentId, tenantId: document.tenantId as ID, documentId: document.id as ID });
 		return (result.affected ?? 0) > 0;
+	}
+
+	/**
+	 * An organization named by the caller (a GraphQL argument, which no DTO checks) must be one they reach: a tenant
+	 * admin any of the tenant's, anyone else the organization of their request (`assertCurrentUserBelongsToOrganization`).
+	 */
+	async assertOrganization(organizationId?: ID | null): Promise<void> {
+		if (organizationId) {
+			await assertCurrentUserBelongsToOrganization(this.repository.manager, organizationId);
+		}
+	}
+
+	/**
+	 * Refuses a change to an anchor on a page that does not take the caller's comments, by the rule the comment API
+	 * applies to posting and editing them (403 `DOCS_COMMENT_ANCHOR_FORBIDDEN`): a page reached only through a `VIEW`
+	 * share is read-only, also for the anchors of comments written before the share was lowered.
+	 */
+	private async assertTakesComments(document: Document): Promise<void> {
+		if (!(await this.commentAccess.findWritableParent(document.id as ID))) {
+			throw new ForbiddenException({ message: 'This page does not take your comments', code: DOCS_COMMENT_ANCHOR_FORBIDDEN });
+		}
 	}
 
 	/** The comment, when it is a root comment of the page written by the caller. */

@@ -7,7 +7,8 @@ import { DocumentCommentAnchorService, IAnchorContent } from '../services/docume
 
 /**
  * The comment anchors of Docs pages over GraphQL: the same service, the same rules and the same permission as the
- * REST routes of `DocumentCommentAnchorController` (`DOCS_READ`, the page's own access, the comment's author).
+ * REST routes of `DocumentCommentAnchorController` (`DOCS_READ`, the page's own access, the comment's author). An
+ * `organizationId` argument must name an organization the caller reaches, as the REST routes' DTO checks it.
  */
 @Resolver()
 @UseGuards(TenantPermissionGuard, PermissionGuard, FeatureFlagGuard)
@@ -18,31 +19,34 @@ export class DocsCommentAnchorResolver {
 
 	@Permissions(PermissionsEnum.DOCS_READ)
 	@Query('documentCommentAnchors')
-	documentCommentAnchors(
+	async documentCommentAnchors(
 		@Args('documentId', { type: () => ID }) documentId: Id,
 		@Args('organizationId', { type: () => ID, nullable: true }) organizationId?: Id
 	): Promise<IDocumentCommentAnchorList> {
+		await this.anchors.assertOrganization(organizationId);
 		return this.anchors.list(documentId, organizationId ?? undefined);
 	}
 
 	@Permissions(PermissionsEnum.DOCS_READ)
 	@Mutation('setDocumentCommentAnchor')
-	setDocumentCommentAnchor(
+	async setDocumentCommentAnchor(
 		@Args('documentId', { type: () => ID }) documentId: Id,
 		@Args('commentId', { type: () => ID }) commentId: Id,
 		@Args('input') input: IDocumentCommentAnchorInput,
 		@Args('organizationId', { type: () => ID, nullable: true }) organizationId?: Id
 	): Promise<IDocumentCommentAnchorResolved> {
+		await this.anchors.assertOrganization(organizationId);
 		return this.anchors.set(documentId, commentId, input, organizationId ?? undefined);
 	}
 
 	@Permissions(PermissionsEnum.DOCS_READ)
 	@Mutation('removeDocumentCommentAnchor')
-	removeDocumentCommentAnchor(
+	async removeDocumentCommentAnchor(
 		@Args('documentId', { type: () => ID }) documentId: Id,
 		@Args('commentId', { type: () => ID }) commentId: Id,
 		@Args('organizationId', { type: () => ID, nullable: true }) organizationId?: Id
 	): Promise<boolean> {
+		await this.anchors.assertOrganization(organizationId);
 		return this.anchors.remove(documentId, commentId, organizationId ?? undefined);
 	}
 }

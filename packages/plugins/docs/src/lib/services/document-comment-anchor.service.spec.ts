@@ -1,6 +1,14 @@
 const requestContext = { userId: 'user-1' as string | null, employeeId: 'employee-1' as string | null, tenantId: 'tenant-1' };
+/** The organizations the caller reaches (`assertCurrentUserBelongsToOrganization`). */
+const reachable = new Set<string>(['org-1']);
 jest.mock('@gauzy/core', () => ({
 	Comment: class Comment {},
+	assertCurrentUserBelongsToOrganization: jest.fn(async (_manager: unknown, organizationId: string) => {
+		if (!reachable.has(organizationId)) {
+			const { ForbiddenException } = jest.requireActual('@nestjs/common');
+			throw new ForbiddenException('You are not a member of this organization');
+		}
+	}),
 	RequestContext: {
 		currentUserId: () => requestContext.userId,
 		currentUser: () => (requestContext.userId ? { id: requestContext.userId, employeeId: requestContext.employeeId } : null),
@@ -8,6 +16,7 @@ jest.mock('@gauzy/core', () => ({
 	}
 }));
 jest.mock('./document.service', () => ({ DocumentService: class DocumentService {} }));
+jest.mock('./document-comment-access.policy', () => ({ DocumentCommentAccessPolicy: class DocumentCommentAccessPolicy {} }));
 jest.mock('../repositories/type-orm-document-comment-anchor.repository', () => ({
 	TypeOrmDocumentCommentAnchorRepository: class TypeOrmDocumentCommentAnchorRepository {}
 }));
@@ -46,7 +55,9 @@ interface IRow {
 }
 
 /** The service over one page, a table of anchors and a table of comments. */
-function buildService(options: { contentJson?: unknown; contentBinary?: Buffer | null; revision?: number; comments?: Array<Record<string, unknown>>; rows?: IRow[] } = {}) {
+function buildService(
+	options: { contentJson?: unknown; contentBinary?: Buffer | null; revision?: number; comments?: Array<Record<string, unknown>>; rows?: IRow[]; takesComments?: boolean } = {}
+) {
 	const page = {
 		id: PAGE_ID,
 		tenantId: 'tenant-1',
@@ -92,8 +103,12 @@ function buildService(options: { contentJson?: unknown; contentBinary?: Buffer |
 			return page;
 		})
 	};
-	const service = new DocumentCommentAnchorService(documents as never, repository as never);
-	return { service, documents, repository, rows, page };
+	// The comment API's write rule for the page (a VIEW share answers null).
+	const commentAccess = {
+		findWritableParent: jest.fn(async (id: string) => (options.takesComments === false || id !== PAGE_ID ? null : { id, organizationId: 'org-1' }))
+	};
+	const service = new DocumentCommentAnchorService(documents as never, repository as never, commentAccess as never);
+	return { service, documents, repository, rows, page, commentAccess };
 }
 
 /** The response body of the exception a promise rejects with. */
@@ -112,6 +127,8 @@ describe('DocumentCommentAnchorService', () => {
 	beforeEach(() => {
 		requestContext.userId = 'user-1';
 		requestContext.employeeId = 'employee-1';
+		reachable.clear();
+		reachable.add('org-1');
 	});
 
 	it('stores the anchor of its author, and answers it found in the page', async () => {
@@ -138,6 +155,22 @@ describe('DocumentCommentAnchorService', () => {
 		expect(error).toBeInstanceOf(ForbiddenException);
 		expect(body.code).toBe(DOCS_COMMENT_ANCHOR_FORBIDDEN);
 		expect(rows).toHaveLength(0);
+	});
+
+	it('refuses the author a change on a page that no longer takes their comments (a VIEW share), nothing written', async () => {
+		const rows: IRow[] = [
+			{ id: 'a1', tenantId: 'tenant-1', organizationId: 'org-1', commentId: COMMENT_ID, documentId: PAGE_ID, blockId: 'b1', startOffset: 10, endOffset: 19, quote: 'brown fox' }
+		];
+		const { service, commentAccess } = buildService({ rows, takesComments: false });
+		const set = await rejectionOf(service.set(PAGE_ID, COMMENT_ID, { blockId: 'b1', start: 0, end: 3, quote: 'The' }));
+		expect(set.error).toBeInstanceOf(ForbiddenException);
+		expect(set.body.code).toBe(DOCS_COMMENT_ANCHOR_FORBIDDEN);
+		const removed = await rejectionOf(service.remove(PAGE_ID, COMMENT_ID));
+		expect(removed.error).toBeInstanceOf(ForbiddenException);
+		expect(commentAccess.findWritableParent).toHaveBeenCalledWith(PAGE_ID);
+		expect(rows).toEqual([expect.objectContaining({ startOffset: 10, quote: 'brown fox' })]);
+		// Reading them stays the page's read rule.
+		expect((await service.list(PAGE_ID)).items).toHaveLength(1);
 	});
 
 	it('takes the author by their user when they have no employee', async () => {
@@ -220,6 +253,23 @@ describe('DocumentCommentAnchorService', () => {
 		expect(documents.findOneScoped).toHaveBeenCalledTimes(1);
 		expect(await service.ofComment({ id: COMMENT_ID, entity: BaseEntityEnum.Task, entityId: PAGE_ID })).toBeNull();
 		expect(await service.ofComment({ id: OTHER_COMMENT_ID, entity: BaseEntityEnum.Document, entityId: PAGE_ID })).toBeNull();
+	});
+
+	it("answers no anchor for the GraphQL field when the caller does not reach the page's organization", async () => {
+		const rows: IRow[] = [
+			{ id: 'a1', tenantId: 'tenant-1', organizationId: 'org-1', commentId: COMMENT_ID, documentId: PAGE_ID, blockId: 'b1', startOffset: 10, endOffset: 19, quote: 'brown fox' }
+		];
+		const { service, documents } = buildService({ rows });
+		reachable.clear();
+		expect(await service.ofComment({ id: COMMENT_ID, entity: BaseEntityEnum.Document, entityId: PAGE_ID, tenantId: 'tenant-1' })).toBeNull();
+		expect(documents.findOneScoped).not.toHaveBeenCalled();
+	});
+
+	it('refuses an organization argument the caller does not reach', async () => {
+		const { service } = buildService();
+		await expect(service.assertOrganization('org-2')).rejects.toBeInstanceOf(ForbiddenException);
+		await expect(service.assertOrganization('org-1')).resolves.toBeUndefined();
+		await expect(service.assertOrganization(undefined)).resolves.toBeUndefined();
 	});
 
 	it('removes the anchor of its author', async () => {
