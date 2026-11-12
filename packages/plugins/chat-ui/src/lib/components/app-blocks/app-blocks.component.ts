@@ -316,9 +316,14 @@ export class AppBlocksComponent {
 		timer(APP_INTERACTION_POLL_MS, APP_INTERACTION_POLL_MS)
 			.pipe(
 				take(APP_INTERACTION_POLL_MAX),
-				// A failed ask is asked again at the next tick (the click may still be delivered); a 404 (the click or the
-				// webhooks are gone) ends the asking.
-				exhaustMap(() => this.api.interaction(interactionId).pipe(catchError((error: { status?: number }) => (error?.status === 404 ? throwError(() => error) : EMPTY)))),
+				// A failed ask is asked again at the next tick (the click may still be delivered), and so is one still open
+				// after the deadline; a 404 (the click or the webhooks are gone) ends the asking.
+				exhaustMap(() =>
+					this.api.interaction(interactionId).pipe(
+						timeout(APP_INTERACTION_TIMEOUT_MS),
+						catchError((error: { status?: number }) => (error?.status === 404 ? throwError(() => error) : EMPTY))
+					)
+				),
 				takeWhile((interaction) => {
 					const state = buttonStateOf(interaction.status);
 					if (state === 'pending') return true;

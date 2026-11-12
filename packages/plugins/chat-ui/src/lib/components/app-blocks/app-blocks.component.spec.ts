@@ -382,6 +382,23 @@ describe('AppBlocksComponent', () => {
 			})();
 		});
 
+		it('gives up on an ask still open after the deadline, and asks again', async () => {
+			await render();
+			serve([{ interaction: interaction(ChatInteractionStatusEnum.RETRYING), events: [] }]);
+			api.interaction.mockReturnValueOnce(NEVER).mockReturnValue(of(interaction(ChatInteractionStatusEnum.DELIVERED, { replyApplied: true })));
+			api.message.mockReturnValue(of(appMessage()));
+			fakeAsync(() => {
+				button('ack').click();
+				// The first ask hangs: no second one while it is open.
+				tick(APP_INTERACTION_POLL_MS + APP_INTERACTION_TIMEOUT_MS - 1);
+				expect(api.interaction).toHaveBeenCalledTimes(1);
+				tick(APP_INTERACTION_POLL_MS + 1);
+				fixture.detectChanges();
+				expect(api.interaction).toHaveBeenCalledTimes(2);
+				expect(button('ack').querySelector('nb-icon')?.getAttribute('icon')).toBe('checkmark-outline');
+			})();
+		});
+
 		it('does not ask again about a first answer delivered without a reply (the app sent none)', async () => {
 			await render();
 			serve([delivered()]);
