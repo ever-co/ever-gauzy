@@ -12,8 +12,9 @@ import { DeleteTimeSpanHandler } from '../time-log/commands/handlers/delete-time
 import { TimeLogDeleteHandler } from '../time-log/commands/handlers/time-log-delete.handler';
 import { TimeLogUpdateHandler } from '../time-log/commands/handlers/time-log-update.handler';
 import { TimeLog } from '../time-log/time-log.entity';
-import { TimeSlotBulkDeleteCommand } from '../time-slot/commands';
+import { TimeSlotBulkDeleteCommand, TimeSlotDurationRecalculateCommand } from '../time-slot/commands';
 import { TimeSlotBulkDeleteHandler } from '../time-slot/commands/handlers/time-slot-bulk-delete.handler';
+import { TimeSlotDurationRecalculateHandler } from '../time-slot/commands/handlers/time-slot-duration-recalculate.handler';
 import { generateTimeSlots } from '../time-slot/utils';
 import { TimesheetFirstOrCreateCommand, TimesheetRecalculateCommand } from '../timesheet/commands';
 
@@ -42,17 +43,28 @@ function wholeMinute(date: Date): Date {
 	return minute;
 }
 
+/** The most a time slot counts, as the merge of the slots caps it. */
+const TIME_SLOT_SECONDS = 600;
+
 export interface StoredTimeSlot {
 	id: string;
 	employeeId: string;
 	organizationId: string;
 	tenantId: string;
 	startedAt: Date;
-	timeLogs: Array<{ id: string }>;
+	duration: number;
+	timeLogs: Array<Pick<TimeLog, 'id'>>;
 	screenshots: unknown[];
 	activities: unknown[];
 	timeSlotMinutes: unknown[];
 	deletedAt?: Date;
+}
+
+/** A slot a log's time gives one of its ten minutes, as `generateTimeSlots` and the slot writers pass it. */
+interface IncomingTimeSlot {
+	startedAt: Date;
+	duration?: number;
+	timeLogId?: string;
 }
 
 /** A log as the specs read it back: its start, its stop and the start of each time slot it holds (`HH:mm`). */
@@ -68,9 +80,9 @@ function asDependency<T>(double: unknown): T {
 /**
  * The time logs and time slots of one employee, and the links between them, behind the repositories and the command
  * bus of the handlers that take a span of time out of a log: DeleteTimeSpanHandler, and the TimeLogUpdateHandler,
- * TimeLogDeleteHandler and TimeSlotBulkDeleteHandler it runs, all real. The conflict lookup, the creation of a manual
- * log and the timesheet and worked-hours commands are scripted. Reads leave out what is deleted, as TypeORM's soft
- * delete does, joined time logs included.
+ * TimeLogDeleteHandler and TimeSlotBulkDeleteHandler it runs, all real, as is TimeSlotDurationRecalculateHandler. The
+ * conflict lookup, the creation of a manual log and the timesheet and worked-hours commands are scripted. Reads leave
+ * out what is deleted, as TypeORM's soft delete does, joined time logs included.
  */
 export class TimeSpanStore {
 	readonly timeLogs: TimeLog[] = [];
@@ -105,6 +117,10 @@ export class TimeSpanStore {
 			asDependency(commandBus)
 		);
 		const deleteTimeSlots = new TimeSlotBulkDeleteHandler(asDependency(timeSlotRepository), asDependency({}));
+		const recalculateDurations = new TimeSlotDurationRecalculateHandler(
+			asDependency(timeSlotRepository),
+			asDependency(commandBus)
+		);
 		Object.defineProperty(updateTimeLog, 'ormType', { value: MultiORMEnum.TypeORM });
 		Object.defineProperty(deleteTimeSlots, 'ormType', { value: MultiORMEnum.TypeORM });
 
@@ -112,6 +128,7 @@ export class TimeSpanStore {
 		this.routes.set(TimeLogUpdateCommand, (command) => updateTimeLog.execute(command));
 		this.routes.set(TimeLogDeleteCommand, (command) => deleteTimeLog.execute(command));
 		this.routes.set(TimeSlotBulkDeleteCommand, (command) => deleteTimeSlots.execute(command));
+		this.routes.set(TimeSlotDurationRecalculateCommand, (command) => recalculateDurations.execute(command));
 		this.routes.set(IGetConflictTimeLogCommand, (command: IGetConflictTimeLogCommand) =>
 			this.conflictsWith(command.input)
 		);
@@ -125,7 +142,8 @@ export class TimeSpanStore {
 
 	/**
 	 * Stores a log of the employee, with a time slot for each ten minutes its time reaches; a slot already stored at
-	 * one of those starts (a neighbour's) is shared, not added again.
+	 * one of those starts (a neighbour's) is shared, not added again, and counts the log's time on top of its own, as
+	 * the merge of the slots sums two slots of the same ten minutes.
 	 *
 	 * @param id - The log's id.
 	 * @param from - Its start, `HH:mm`.
@@ -147,7 +165,9 @@ export class TimeSpanStore {
 			...columns
 		});
 		this.timeLogs.push(log);
-		this.linkToItsTime(log);
+		const generated: IncomingTimeSlot[] = generateTimeSlots(log.startedAt, log.stoppedAt);
+		const timeSlots = generated.map((slot) => this.timeSlotCounting(slot));
+		this.linkExactly(log.id, timeSlots);
 	}
 
 	/**
@@ -169,6 +189,13 @@ export class TimeSpanStore {
 		const live = this.timeLogs.filter((log) => !log.deletedAt);
 		const byStart = [...live].sort((a, b) => new Date(a.startedAt).getTime() - new Date(b.startedAt).getTime());
 		return byStart.map((log) => this.shapeOf(log));
+	}
+
+	/** Every slot not deleted, by start: its start (`HH:mm`) and its duration in seconds. */
+	timeSlotDurations(): Array<[string, number]> {
+		const live = this.timeSlots.filter((slot) => !slot.deletedAt);
+		const byStart = [...live].sort((a, b) => a.startedAt.getTime() - b.startedAt.getTime());
+		return byStart.map((slot) => [clock(slot.startedAt), slot.duration]);
 	}
 
 	private shapeOf(log: TimeLog): TimeLogShape {
@@ -206,23 +233,42 @@ export class TimeSpanStore {
 
 	/** The slot's columns, without its links, as a log's `timeSlots` relation loads it. */
 	private loadedTimeSlot(slot: StoredTimeSlot): ITimeSlot {
-		const { id, employeeId, organizationId, tenantId, startedAt } = slot;
-		return { id, employeeId, organizationId, tenantId, startedAt } as ITimeSlot;
+		const { id, employeeId, organizationId, tenantId, startedAt, duration } = slot;
+		return { id, employeeId, organizationId, tenantId, startedAt, duration } as ITimeSlot;
 	}
 
-	/** The slot with the logs that still hold it, as the slot queries join them. */
+	/** The slot with the logs that still hold it, each with its columns, as the slot queries join them. */
 	private joinedTimeSlot(slot: StoredTimeSlot): StoredTimeSlot {
-		const timeLogs = slot.timeLogs.filter((link) => this.liveTimeLog(link.id));
+		const linkedTimeLogs = slot.timeLogs.map((link) => this.copyOfTimeLog(link.id));
+		const timeLogs = linkedTimeLogs.filter(Boolean);
 		return { ...slot, timeLogs };
 	}
 
 	/**
-	 * The employee's slot stored at each start, a new one linked to the given log for a start without any.
+	 * The employee's slot stored at each start, kept as it is, as TimeSlotBulkCreateHandler keeps it; a start without
+	 * one gets a new slot counting the incoming duration, linked to the given log.
 	 *
-	 * @param starts - The slots' starts, with the log a new slot is linked to.
+	 * @param starts - The incoming slots.
 	 */
-	private timeSlotsAt(starts: Array<{ startedAt: Date; timeLogId?: string }>): StoredTimeSlot[] {
+	private timeSlotsAt(starts: IncomingTimeSlot[]): StoredTimeSlot[] {
 		return starts.map((start) => this.storedTimeSlotAt(start.startedAt) ?? this.insertTimeSlot(start));
+	}
+
+	/**
+	 * The employee's slot stored at the incoming slot's start, counting the incoming duration on top of its own (at
+	 * most 600 seconds), or a new slot counting it.
+	 *
+	 * @param incoming - The incoming slot.
+	 */
+	private timeSlotCounting(incoming: IncomingTimeSlot): StoredTimeSlot {
+		const stored = this.storedTimeSlotAt(incoming.startedAt);
+		if (!stored) {
+			return this.insertTimeSlot(incoming);
+		}
+		const incomingDuration = incoming.duration ?? 0;
+		const summed = stored.duration + incomingDuration;
+		stored.duration = Math.min(summed, TIME_SLOT_SECONDS);
+		return stored;
 	}
 
 	private storedTimeSlotAt(startedAt: Date): StoredTimeSlot | undefined {
@@ -230,7 +276,7 @@ export class TimeSpanStore {
 		return this.timeSlots.find((slot) => !slot.deletedAt && slot.startedAt.getTime() === time);
 	}
 
-	private insertTimeSlot(start: { startedAt: Date; timeLogId?: string }): StoredTimeSlot {
+	private insertTimeSlot(start: IncomingTimeSlot): StoredTimeSlot {
 		this.createdTimeSlots += 1;
 		const timeLogs = [start.timeLogId].filter(Boolean).map((id) => ({ id }));
 		const slot: StoredTimeSlot = {
@@ -239,6 +285,7 @@ export class TimeSpanStore {
 			organizationId: SPAN_ORGANIZATION_ID,
 			tenantId: SPAN_TENANT_ID,
 			startedAt: wholeMinute(start.startedAt),
+			duration: start.duration ?? 0,
 			timeLogs,
 			screenshots: [],
 			activities: [],
@@ -248,10 +295,11 @@ export class TimeSpanStore {
 		return slot;
 	}
 
-	/** Links the log to the employee's slot at each start its time reaches, adding the missing ones. */
+	/** Links the log to the employee's slot at each start its time reaches, adding the missing ones with its time. */
 	private linkToItsTime(log: TimeLog): void {
-		const starts = generateTimeSlots(log.startedAt, log.stoppedAt);
-		const slots = this.timeSlotsAt(starts.map((slot) => ({ startedAt: slot.startedAt, timeLogId: log.id })));
+		const generated: IncomingTimeSlot[] = generateTimeSlots(log.startedAt, log.stoppedAt);
+		const incoming = generated.map((slot) => ({ ...slot, timeLogId: log.id }));
+		const slots = this.timeSlotsAt(incoming);
 		this.linkExactly(log.id, slots);
 	}
 
@@ -364,6 +412,11 @@ export class TimeSpanStore {
 	private timeSlotRepository() {
 		return {
 			createQueryBuilder: () => this.timeSlotQuery(),
+			update: ({ id }: { id: string }, changes: Partial<StoredTimeSlot>) => {
+				const slot = this.timeSlots.find((stored) => stored.id === id);
+				Object.assign(slot, changes);
+				return Promise.resolve({ affected: 1 });
+			},
 			softRemove: (removed: StoredTimeSlot | StoredTimeSlot[]) => Promise.resolve(this.removeTimeSlots(removed)),
 			remove: (removed: StoredTimeSlot | StoredTimeSlot[]) => Promise.resolve(this.removeTimeSlots(removed))
 		};
@@ -373,8 +426,7 @@ export class TimeSpanStore {
 	private timeSlotService() {
 		return {
 			generateTimeSlots: (start: Date, end: Date) => generateTimeSlots(start, end),
-			bulkCreate: (slots: Array<{ startedAt: Date; timeLogId?: string }>) =>
-				Promise.resolve(this.timeSlotsAt(slots))
+			bulkCreate: (slots: IncomingTimeSlot[]) => Promise.resolve(this.timeSlotsAt(slots))
 		};
 	}
 
