@@ -5,13 +5,24 @@ import { ID, IDocumentPdfExportCapabilities } from '@gauzy/contracts';
 import { getDocsConfig } from '../docs.config';
 import { DOCS_PDF_TOO_MANY_PAGES } from '../docs.constants';
 import { Document } from '../entities/document.entity';
-import { DocumentMarkdownService } from '../services/document-markdown.service';
+import { DocumentMarkdownService, ISubtreeEntry } from '../services/document-markdown.service';
 import { DocumentUploadService } from '../services/document-upload.service';
 import { buildPdfDefinition, IPdfPage, pdfDateOf, pdfFileNameOf, preparePdfImage, renderPdf } from './pdf-render';
 import { collectImageIds, IPdfImage } from './tiptap-pdf';
 
 /** The most image bytes (after re-encoding) one PDF export holds; an image past the budget is its alternative text. */
 export const DOCS_PDF_IMAGES_MAX_BYTES = 64 * 1024 * 1024;
+
+/** The reader of a zip export went away before its end: the export stops. */
+export class PdfExportCancelledError extends Error {
+	constructor() {
+		super('The reader closed the PDF export before its end');
+		this.name = 'PdfExportCancelledError';
+	}
+}
+
+/** An answer stream as the zip writer uses it: Express's response, or any writable. */
+type ExportOutput = NodeJS.WritableStream & { headersSent?: boolean; destroy?: (error?: Error) => void };
 
 /** A rendered PDF, named for a download. */
 export interface IDocumentPdf {
@@ -60,50 +71,77 @@ export class DocumentPdfService {
 		return { fileName: pdfFileNameOf(root.name), buffer, pages: pages.length };
 	}
 
-	/** A page and the readable pages under it as a zip of PDFs, one per page, at the Markdown export's paths. */
-	async writeSubtreeZip(root: Document, organizationId: ID | undefined, output: NodeJS.WritableStream): Promise<{ fileName: string; pages: number }> {
-		const entries = await this.markdown.collectSubtree(root, organizationId);
-		this.assertPageCount(entries.length);
+	/**
+	 * A page and the readable pages under it as a zip of PDFs, one per page, at the Markdown export's paths. One PDF is
+	 * rendered at a time: the next once the zip has taken this one (and, through the pipe, the reader the bytes before
+	 * it), so a slow reader holds at most one rendered page. A reader that goes away stops the export; a page that fails
+	 * to render aborts the zip (an answer already under way is cut, not left unfinished).
+	 */
+	async writeSubtreeZip(root: Document, organizationId: ID | undefined, output: ExportOutput): Promise<{ fileName: string; pages: number }> {
+		const entries = await this.subtreeEntries(root, organizationId);
 		const archive = new ZipArchive({ zlib: { level: 6 } });
+		let finished = false;
+		let cancelled = false;
 		const done = new Promise<void>((resolve, reject) => {
 			archive.on('error', (error: Error) => reject(error));
-			output.on('finish', () => resolve());
-			output.on('close', () => resolve());
+			output.on('finish', () => {
+				finished = true;
+				resolve();
+			});
+			// A close before the end is the reader going away (a full answer finishes first).
+			output.on('close', () => {
+				if (finished) return resolve();
+				cancelled = true;
+				reject(new PdfExportCancelledError());
+			});
 			output.on('error', (error: Error) => reject(error));
 		});
+		// Observed here; the loop and the end await it again.
+		done.catch(() => undefined);
 		archive.pipe(output);
-		for (const entry of entries) {
-			const page: IPdfPage = { id: String(entry.document.id), title: entry.document.name, contentJson: entry.document.contentJson, depth: 0 };
-			const buffer = await this.render(entry.document.name, [page], organizationId, false);
-			archive.append(buffer, { name: pdfPathOf(entry.path) });
+		try {
+			for (const entry of entries) {
+				if (cancelled) throw new PdfExportCancelledError();
+				const page: IPdfPage = { id: String(entry.document.id), title: entry.document.name, contentJson: entry.document.contentJson, depth: 0 };
+				const buffer = await this.render(entry.document.name, [page], organizationId, false);
+				if (cancelled) throw new PdfExportCancelledError();
+				await Promise.race([appendEntry(archive, buffer, pdfPathOf(entry.path)), done]);
+			}
+			await Promise.resolve(archive.finalize());
+			await done;
+		} catch (error) {
+			archive.abort();
+			// Bytes of the zip went out (or the reader left): the answer cannot become an error any more, so it is cut.
+			if (output.headersSent || cancelled) output.destroy?.();
+			throw error;
 		}
-		await Promise.resolve(archive.finalize());
-		await done;
 		return { fileName: pdfFileNameOf(root.name, 'pages').replace(/\.pdf$/, '.zip'), pages: entries.length };
 	}
 
-	/** The readable pages of a subtree, breadth first, with their depth (413 past `GAUZY_DOCS_PDF_MAX_PAGES`). */
+	/**
+	 * The readable pages of a subtree in table-of-contents order (each page right after its parent, through folders),
+	 * with their depth, folders counted (413 past `GAUZY_DOCS_PDF_MAX_PAGES`).
+	 */
 	private async subtreePages(root: Document, organizationId?: ID): Promise<IPdfPage[]> {
-		const entries = await this.markdown.collectSubtree(root, organizationId);
+		const entries = await this.subtreeEntries(root, organizationId);
+		return entries.map((entry) => ({
+			id: String(entry.document.id),
+			title: entry.document.name,
+			contentJson: entry.document.contentJson,
+			depth: entry.depth ?? 0
+		}));
+	}
+
+	/**
+	 * The readable pages of a subtree, depth first; 413 past `GAUZY_DOCS_PDF_MAX_PAGES`, counted on one more page than
+	 * the limit (and on a collection that stopped at its own cap), so a larger subtree is refused, never cut.
+	 */
+	private async subtreeEntries(root: Document, organizationId?: ID): Promise<ISubtreeEntry[]> {
+		const max = getDocsConfig().pdfMaxPages;
+		const { entries, truncated } = await this.markdown.collectSubtreeWithin(root, organizationId, max + 1);
+		if (truncated) this.assertPageCount(Math.max(entries.length, max) + 1);
 		this.assertPageCount(entries.length);
-		// Breadth first gives parents before children; the table of contents wants each page right after its parent.
-		const children = new Map<string, typeof entries>();
-		for (const entry of entries.slice(1)) {
-			const parentId = String(entry.document.parentId ?? '');
-			children.set(parentId, [...(children.get(parentId) ?? []), entry]);
-		}
-		const ordered: IPdfPage[] = [];
-		const visit = (entry: (typeof entries)[number], depth: number) => {
-			ordered.push({ id: String(entry.document.id), title: entry.document.name, contentJson: entry.document.contentJson, depth });
-			for (const child of children.get(String(entry.document.id)) ?? []) visit(child, depth + 1);
-		};
-		visit(entries[0], 0);
-		// A page under a folder (whose folder is not in the list) still belongs in the PDF: after the rest, one level in.
-		const seen = new Set(ordered.map((page) => page.id));
-		for (const entry of entries) {
-			if (!seen.has(String(entry.document.id))) ordered.push({ id: String(entry.document.id), title: entry.document.name, contentJson: entry.document.contentJson, depth: 1 });
-		}
-		return ordered;
+		return [...entries].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
 	}
 
 	private assertPageCount(count: number): void {
@@ -146,6 +184,27 @@ export class DocumentPdfService {
 		}
 		return images;
 	}
+}
+
+/** Appends one entry to the zip and resolves once the zip has taken it (its `entry` event), or rejects on its error. */
+function appendEntry(archive: ZipArchive, buffer: Buffer, name: string): Promise<void> {
+	return new Promise<void>((resolve, reject) => {
+		const onEntry = () => {
+			cleanup();
+			resolve();
+		};
+		const onError = (error: Error) => {
+			cleanup();
+			reject(error);
+		};
+		const cleanup = () => {
+			archive.off('entry', onEntry);
+			archive.off('error', onError);
+		};
+		archive.on('entry', onEntry);
+		archive.on('error', onError);
+		archive.append(buffer, { name });
+	});
 }
 
 /** The path a page takes in the zip of PDFs (the Markdown export's, `.pdf`). */

@@ -77,7 +77,19 @@ describe('pdf-render', () => {
 		expect(text).toContain('[remote chart]');
 	});
 
-	it('refuses what is not an image', async () => {
+	it('refuses a URL resource at the renderer itself, and fetches nothing', async () => {
+		const fetchSpy = jest.spyOn(globalThis, 'fetch').mockRejectedValue(new Error('no network in this test'));
+		try {
+			// A definition naming a remote image straight to pdfmake: only renderPdf's deny-all policy stands in the way.
+			const definition = { content: [{ text: 'x' }, { image: 'remote' }], images: { remote: 'https://example.com/a.png' } };
+			await expect(renderPdf(definition)).rejects.toThrow(/denied by resource access policy/);
+			expect(fetchSpy).not.toHaveBeenCalled();
+		} finally {
+			fetchSpy.mockRestore();
+		}
+	});
+
+		it('refuses what is not an image', async () => {
 		expect(await preparePdfImage(Buffer.from('not an image'), 'x')).toBeNull();
 	});
 
