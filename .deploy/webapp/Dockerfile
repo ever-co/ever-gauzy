@@ -100,6 +100,7 @@ COPY --chown=node:node packages/plugins/integration-ever-works-ui/package.json .
 COPY --chown=node:node packages/plugins/integration-linear-ui/package.json ./packages/plugins/integration-linear-ui/
 COPY --chown=node:node packages/plugins/integration-asana-ui/package.json ./packages/plugins/integration-asana-ui/
 COPY --chown=node:node packages/plugins/integration-trello-ui/package.json ./packages/plugins/integration-trello-ui/
+COPY --chown=node:node packages/plugins/integration-jira-ui/package.json ./packages/plugins/integration-jira-ui/
 COPY --chown=node:node packages/plugins/auth-zitadel-ui/package.json ./packages/plugins/auth-zitadel-ui/
 COPY --chown=node:node packages/plugins/ever-stats-ui/package.json ./packages/plugins/ever-stats-ui/
 COPY --chown=node:node packages/plugins/ever-connect-ui/package.json ./packages/plugins/ever-connect-ui/

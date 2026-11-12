@@ -10,31 +10,71 @@ export const TASK_TITLES_MAX = 25;
 export interface JiraConnectionSummary {
 	id: string;
 	organizationId: string;
-	jiraOrganizationId: string | null;
-	jiraOrganizationName: string | null;
-	jiraOrganizationUrlKey: string | null;
+	/** The Jira Cloud site the connection works with; null until one is chosen (the token reaches several). */
+	cloudId: string | null;
+	siteUrl: string | null;
+	siteName: string | null;
+	/** The Atlassian account the token is. */
+	accountId: string | null;
+	accountName: string | null;
+	/** Whether a site must still be chosen before anything else works. */
+	siteRequired: boolean;
+	/** The connection's dynamic webhook: when it expires (the API refreshes it before), and why its last registration failed. */
+	webhookExpiresAt: string | null;
+	webhookError: string | null;
 	connectedByUserId: string | null;
 	attentionReason: string | null;
+	tokenExpiresAt: string | null;
 	lastSyncedAt: string | null;
 	createdAt: string | null;
 }
 
 export interface JiraStatus {
+	/** Whether the API holds the OAuth app (nobody can connect otherwise). */
 	configured: boolean;
-	defaultStateMap: Record<string, string>;
+	/** Whether the API has a public address Jira can deliver webhooks to. */
+	webhooks: boolean;
+	/** The task status each status category becomes unless a mapping says otherwise. */
+	defaultStatusMap: Record<string, string>;
 	connection: JiraConnectionSummary | null;
+}
+
+/** A Jira Cloud site the connection's token reaches; one of them is the connection's (`selected`). */
+export interface JiraSite {
+	/** The cloud id. */
+	id: string;
+	url: string;
+	name: string;
+	avatarUrl?: string | null;
+	selected: boolean;
 }
 
 export interface JiraProject {
 	id: string;
 	key: string;
 	name: string;
+	projectTypeKey?: string | null;
+	style?: string | null;
 }
 
+export interface JiraIssueType {
+	id: string;
+	name: string;
+	subtask: boolean;
+	hierarchyLevel?: number | null;
+}
+
+export interface JiraStatusDefinition {
+	id: string;
+	name: string;
+	statusCategory: { key: string; name?: string };
+}
+
+/** A Jira project with its issue types and the statuses its workflows use. */
 export interface JiraProjectDetail {
-	team: JiraProject;
-	states: Array<{ id: string; name: string; type: string; position: number }>;
-	labels: Array<{ id: string; name: string; color: string | null }>;
+	project: JiraProject;
+	issueTypes: JiraIssueType[];
+	statuses: JiraStatusDefinition[];
 }
 
 export type JiraDirection = 'inbound' | 'outbound' | 'both';
@@ -47,7 +87,13 @@ export interface JiraMapping {
 	jiraProjectName: string | null;
 	projectId: string;
 	direction: JiraDirection;
-	stateMap: Record<string, string>;
+	/**
+	 * Status category (`new`, `indeterminate`, `done`) or `status:<id>` → task status name. The API answers the
+	 * categories filled with its defaults; a `status:<id>` entry wins over its status's category.
+	 */
+	statusMap: Record<string, string>;
+	/** The issue types imported (ids); empty for every type. */
+	issueTypeIds: string[];
 	syncEnabled: boolean;
 	lastImportedAt: string | null;
 	lastCursor: string | null;
@@ -60,8 +106,32 @@ export interface JiraMappingInput {
 	jiraProjectName?: string | null;
 	projectId: string;
 	direction?: JiraDirection;
-	stateMap?: Record<string, string> | null;
+	statusMap?: Record<string, string>;
+	issueTypeIds?: string[];
 	syncEnabled?: boolean;
+}
+
+/** An issue a run could not apply, by its key, and why. */
+export interface JiraRunFailure {
+	key: string;
+	error: string;
+}
+
+/** What a run reports beside its counts (written as it goes). */
+export interface JiraRunReport {
+	startedFrom: string | null;
+	stoppedAt: string | null;
+	/** Whether every page was read (a run stopped early continues from `stoppedAt` next time). */
+	complete: boolean;
+	pages: number;
+	issuesRead: number;
+	comments: number;
+	links: number;
+	relations: number;
+	conflicts: number;
+	failures: JiraRunFailure[];
+	/** How many failed issues the report does not name. */
+	moreFailures: number;
 }
 
 export interface JiraRun {
@@ -77,9 +147,13 @@ export interface JiraRun {
 	skippedCount: number;
 	failedCount: number;
 	lastError: string | null;
+	report?: JiraRunReport | null;
 	/** How many conflicts the run found (the runs list says it; a run just started has none yet). */
 	conflictCount?: number;
 }
+
+/** What `POST …/:integrationId/webhook` did with the connection's webhook. */
+export type JiraWebhookOutcome = 'off' | 'unchanged' | 'registered' | 'refreshed' | 'removed' | 'failed';
 
 /** The task fields a conflict can name. */
 export type JiraConflictField = 'title' | 'description' | 'status' | 'priority' | 'dueDate';
@@ -148,12 +222,24 @@ export class JiraUiService {
 		return this.http.delete<void>(this.connection(integrationId));
 	}
 
-	teams(integrationId: string): Observable<JiraProject[]> {
-		return this.http.get<JiraProject[]>(`${this.connection(integrationId)}/teams`);
+	/** The Jira Cloud sites the connection's token reaches (one is the connection's). */
+	sites(integrationId: string): Observable<JiraSite[]> {
+		return this.http.get<JiraSite[]>(`${this.connection(integrationId)}/sites`);
 	}
 
-	team(integrationId: string, teamId: string): Observable<JiraProjectDetail> {
-		return this.http.get<JiraProjectDetail>(`${this.connection(integrationId)}/teams/${encodeURIComponent(teamId)}`);
+	/** Chooses the connection's site (409 `JIRA_SITE_HAS_MAPPINGS` while it has mappings on another site). */
+	selectSite(integrationId: string, cloudId: string): Observable<JiraConnectionSummary> {
+		return this.http.put<JiraConnectionSummary>(`${this.connection(integrationId)}/site`, { cloudId });
+	}
+
+	/** The Jira projects of the connection's site. */
+	projects(integrationId: string): Observable<JiraProject[]> {
+		return this.http.get<JiraProject[]>(`${this.connection(integrationId)}/projects`);
+	}
+
+	/** A Jira project with its issue types and statuses. */
+	project(integrationId: string, projectId: string): Observable<JiraProjectDetail> {
+		return this.http.get<JiraProjectDetail>(`${this.connection(integrationId)}/projects/${encodeURIComponent(projectId)}`);
 	}
 
 	mappings(integrationId: string): Observable<JiraMapping[]> {
@@ -177,7 +263,12 @@ export class JiraUiService {
 		return this.http.post<{ accepted: true; run: JiraRun }>(`${this.connection(integrationId)}/mappings/${encodeURIComponent(mappingId)}/import`, { full });
 	}
 
-	/** The latest runs, each with how many conflicts it found. */
+	/** Brings the connection's webhook in line with its mappings now (after a failed registration). */
+	registerWebhook(integrationId: string): Observable<{ outcome: JiraWebhookOutcome; connection: JiraConnectionSummary }> {
+		return this.http.post<{ outcome: JiraWebhookOutcome; connection: JiraConnectionSummary }>(`${this.connection(integrationId)}/webhook`, {});
+	}
+
+	/** The latest runs, each with its report and how many conflicts it found. */
 	runs(integrationId: string, take = 50): Observable<JiraRun[]> {
 		return this.http.get<JiraRun[]>(`${this.connection(integrationId)}/runs`, { params: new HttpParams().set('take', String(take)) });
 	}

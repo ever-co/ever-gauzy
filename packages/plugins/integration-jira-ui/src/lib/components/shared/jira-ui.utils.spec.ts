@@ -1,7 +1,23 @@
 import { DatePipe } from '@angular/common';
-import { conflictValueView, errorCode, errorText, isNotFound, plainText } from './jira-ui.utils';
+import { conflictValueView, errorCode, errorText, isNotFound, namedStatusesOf, plainText, statusKey, statusMapOf } from './jira-ui.utils';
 
 describe('jira-ui.utils', () => {
+	it('builds a status map: the three categories (a blank one takes the default), then the named statuses that have a task status', () => {
+		expect(statusMapOf({ new: 'todo', indeterminate: '  ', done: 'done' }, { '10001': 'review', '10002': '  ' })).toEqual({
+			new: 'todo',
+			indeterminate: 'in-progress',
+			done: 'done',
+			'status:10001': 'review'
+		});
+		expect(statusMapOf({}, {}, { new: 'backlog', indeterminate: 'doing', done: 'closed' })).toEqual({ new: 'backlog', indeterminate: 'doing', done: 'closed' });
+		expect(statusKey('42')).toBe('status:42');
+	});
+
+	it('reads the named statuses of a stored map, leaving the categories and blank entries out', () => {
+		expect(namedStatusesOf({ new: 'open', 'status:10001': ' review ', 'status:': 'x', 'status:10002': '' })).toEqual({ '10001': 'review' });
+		expect(namedStatusesOf(null)).toEqual({});
+	});
+
 	it('reads the API message and code of an error, in their shapes', () => {
 		expect(errorText({ error: { message: 'No.' } })).toBe('No.');
 		expect(errorText({ error: { message: ['one', 'two'] } })).toBe('one two');

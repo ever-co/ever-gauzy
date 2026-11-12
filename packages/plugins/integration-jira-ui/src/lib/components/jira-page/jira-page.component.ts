@@ -14,14 +14,14 @@ import { errorText, isNotFound } from '../shared/jira-ui.utils';
 export type JiraPageView = 'loading' | 'unavailable' | 'not-configured' | 'connect' | 'connected' | 'error';
 
 /** The errors the API's callback may send the person back with (`?error=`). */
-const CALLBACK_ERRORS = new Set(['not_configured', 'denied', 'invalid_state', 'exchange_failed', 'workspace_unreadable', 'not_saved']);
+const CALLBACK_ERRORS = new Set(['not_configured', 'denied', 'invalid_state', 'exchange_failed', 'site_unreadable', 'no_site', 'not_saved']);
 
 /**
- * Integrations → Jira: the status of the selected organization. Where the API's Jira plugin is not loaded
- * (404) it only says so; where the OAuth application is not configured it says that; otherwise it offers
- * Connect (the API mints a single-use state and names the Jira page to go to), or shows the connection with
- * a way to its settings. The API's callback sends the person back here with `?integrationId=` (then the
- * settings open) or `?error=`.
+ * Integrations → Jira: the status of the selected organization. Where the API's Jira sync is not loaded
+ * (404) it only says so; where the OAuth app is not configured it says that; otherwise it offers Connect
+ * (the API mints a single-use state and names the Atlassian page to go to), or shows the connection with a
+ * way to its settings. The API's callback sends the person back here with `?integrationId=` (then the
+ * settings open, where a connection whose token reaches several sites chooses one) or `?error=`.
  */
 @Component({
 	selector: 'ngx-jira-page',
@@ -65,9 +65,14 @@ const CALLBACK_ERRORS = new Set(['not_configured', 'denied', 'invalid_state', 'e
 								{{ 'JIRA.CONNECTED.ATTENTION' | translate: { reason: ('JIRA.CONNECTED.REASONS.' + connection.attentionReason | translate) } }}
 							</nb-alert>
 						}
+						@if (connection?.siteRequired) {
+							<nb-alert status="warning" role="alert" data-test="site-required">{{ 'JIRA.SITES.REQUIRED' | translate }}</nb-alert>
+						}
 						<dl class="facts">
-							<dt>{{ 'JIRA.CONNECTED.WORKSPACE' | translate }}</dt>
-							<dd data-test="workspace">{{ connection?.jiraOrganizationName || connection?.jiraOrganizationUrlKey || '—' }}</dd>
+							<dt>{{ 'JIRA.CONNECTED.SITE' | translate }}</dt>
+							<dd data-test="site">{{ connection?.siteName || connection?.siteUrl || ('JIRA.SITES.NONE' | translate) }}</dd>
+							<dt>{{ 'JIRA.CONNECTED.ACCOUNT' | translate }}</dt>
+							<dd data-test="account">{{ connection?.accountName || '—' }}</dd>
 							<dt>{{ 'JIRA.CONNECTED.CONNECTED_ON' | translate }}</dt>
 							<dd>{{ connection?.createdAt ? (connection.createdAt | date: 'medium') : '—' }}</dd>
 						</dl>

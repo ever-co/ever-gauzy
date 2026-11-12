@@ -29,9 +29,10 @@ export const JIRA_ROUTE: PluginRouteInput = {
 };
 
 /**
- * Integrations → Jira (`@gauzy/plugin-integration-jira-ui`): the connect page (OAuth through the API's
- * single-use state), and the connection's settings (team ↔ project mappings, imports, runs). Where the
- * API's Jira plugin is not loaded (`JIRA_ENABLED` off) the page only says so.
+ * Integrations → Jira (`@gauzy/plugin-integration-jira-ui`): the connect page (OAuth 2.0 through the API's
+ * single-use state), and the connection's settings (its Jira Cloud site, its webhook, Jira project ↔ project
+ * mappings with a status map and an issue-type filter, imports and their reports, conflicts). Where the API's
+ * Jira sync is not loaded (`JIRA_ENABLED` off) the page only says so.
  */
 export const IntegrationJiraUiPlugin: PluginUiDefinition = defineDeclarativePlugin('integration-jira', {
 	version: '0.1.0',

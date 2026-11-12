@@ -15,9 +15,42 @@ export function isNotFound(error: unknown): boolean {
 	return (error as Partial<HttpErrorResponse> | null | undefined)?.status === 404;
 }
 
-/** The kinds of Jira workflow state, in the order the state map lists them. */
-export const JIRA_STATE_KINDS = ['triage', 'backlog', 'unstarted', 'started', 'completed', 'canceled'] as const;
-export type JiraStateKind = (typeof JIRA_STATE_KINDS)[number];
+/** The three status categories every Jira status belongs to, in the order the status map lists them. */
+export const JIRA_STATUS_CATEGORIES = ['new', 'indeterminate', 'done'] as const;
+export type JiraStatusCategory = (typeof JIRA_STATUS_CATEGORIES)[number];
+
+/** The task status each category becomes unless a mapping says otherwise (the API's defaults, used until its status read answers). */
+export const DEFAULT_JIRA_STATUS_MAP: Readonly<Record<JiraStatusCategory, string>> = { new: 'open', indeterminate: 'in-progress', done: 'completed' };
+
+/** The status map key of one named Jira status: it wins over its status's category. */
+export function statusKey(statusId: string): string {
+	return `status:${statusId}`;
+}
+
+/**
+ * A status map as the API takes it: the three categories (a blank one falls back to the default), then the named
+ * statuses that have a task status (a blank entry is left out, so the status follows its category).
+ */
+export function statusMapOf(categories: Partial<Record<JiraStatusCategory, string>>, named: Record<string, string>, defaults: Partial<Record<JiraStatusCategory, string>> = DEFAULT_JIRA_STATUS_MAP): Record<string, string> {
+	const map: Record<string, string> = {};
+	for (const category of JIRA_STATUS_CATEGORIES) {
+		map[category] = (categories[category] ?? '').trim() || (defaults[category] ?? DEFAULT_JIRA_STATUS_MAP[category]);
+	}
+	for (const [statusId, value] of Object.entries(named)) {
+		const status = (value ?? '').trim();
+		if (statusId && status) map[statusKey(statusId)] = status;
+	}
+	return map;
+}
+
+/** The named-status entries of a stored status map, by status id. */
+export function namedStatusesOf(statusMap: Record<string, string> | null | undefined): Record<string, string> {
+	const named: Record<string, string> = {};
+	for (const [key, value] of Object.entries(statusMap ?? {})) {
+		if (key.startsWith('status:') && key.length > 'status:'.length && typeof value === 'string' && value.trim()) named[key.slice('status:'.length)] = value.trim();
+	}
+	return named;
+}
 
 /** The code of an API error (`JIRA_CONFLICT_STALE`, …) when the API gave one. */
 export function errorCode(error: unknown): string | null {

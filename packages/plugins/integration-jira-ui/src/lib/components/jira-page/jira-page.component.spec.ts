@@ -1,3 +1,6 @@
+// The store is the spec's own: the real `@gauzy/ui-core/core` loads the whole app shell (and needs packages a borrowed install may lack).
+jest.mock('@gauzy/ui-core/core', () => ({ Store: class Store {} }));
+
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap, Router } from '@angular/router';
 import { of, throwError } from 'rxjs';
@@ -8,7 +11,7 @@ import { JiraPageComponent } from './jira-page.component';
 const ORGANIZATION = { id: '11111111-2222-4333-8444-555555555555' };
 
 function status(overrides: Partial<JiraStatus> = {}): JiraStatus {
-	return { configured: true, defaultStateMap: {}, connection: null, ...overrides };
+	return { configured: true, webhooks: true, defaultStatusMap: {}, connection: null, ...overrides };
 }
 
 /** The Jira page: where the plugin is not loaded it only says so; otherwise Connect, or the connection. */
@@ -64,11 +67,12 @@ describe('JiraPageComponent', () => {
 		expect(leave).toHaveBeenCalledWith('https://jira.app/oauth/authorize?state=abc');
 	});
 
-	it('connected: shows the workspace and opens the settings; a callback id opens them at once', () => {
-		api.status.mockReturnValue(of(status({ connection: { id: 'int-1', organizationId: ORGANIZATION.id, jiraOrganizationName: 'Acme', attentionReason: null } as never })));
+	it('connected: shows the site and opens the settings; a callback id opens them at once', () => {
+		api.status.mockReturnValue(of(status({ connection: { id: 'int-1', organizationId: ORGANIZATION.id, siteName: 'Acme', siteRequired: false, attentionReason: null } as never })));
 		const { component, find } = render({ integrationId: 'int-1' });
 		expect(component.view).toBe('connected');
-		expect(find('workspace')?.textContent).toContain('Acme');
+		expect(find('site')?.textContent).toContain('Acme');
+		expect(find('site-required')).toBeNull();
 		expect(router.navigate).toHaveBeenCalledWith(['/pages/integrations/jira', 'int-1'], { replaceUrl: true });
 	});
 
@@ -77,5 +81,20 @@ describe('JiraPageComponent', () => {
 		const { component, find } = render({ error: 'denied' });
 		expect(component.callbackError).toBe('denied');
 		expect(find('callback-error')).not.toBeNull();
+	});
+
+	it.each([
+		['no_site', 'no_site'],
+		['site_unreadable', 'site_unreadable'],
+		['workspace_unreadable', null]
+	])("knows the callback's Jira errors: %s", (error, shown) => {
+		api.status.mockReturnValue(of(status()));
+		expect(render({ error }).component.callbackError).toBe(shown);
+	});
+
+	it('a connection still waiting for its site says so', () => {
+		api.status.mockReturnValue(of(status({ connection: { id: 'int-1', organizationId: ORGANIZATION.id, siteName: null, siteRequired: true, attentionReason: null } as never })));
+		const { find } = render();
+		expect(find('site-required')).not.toBeNull();
 	});
 });

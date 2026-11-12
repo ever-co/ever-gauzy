@@ -1071,6 +1071,18 @@
       "note": "registered at run time by a UI plugin of apps/gauzy/src/plugin-ui.config.ts or a page module (the generator lists the registry call as a note)"
     },
     {
+      "path": "/pages/integrations/jira",
+      "file": "packages/plugins/integration-jira-ui/src/lib/integration-jira-ui.plugin.ts",
+      "source": "manual",
+      "note": "registered at run time by a UI plugin of apps/gauzy/src/plugin-ui.config.ts or a page module (the generator lists the registry call as a note)"
+    },
+    {
+      "path": "/pages/integrations/jira/:integrationId",
+      "file": "packages/plugins/integration-jira-ui/src/lib/integration-jira-ui.plugin.ts",
+      "source": "manual",
+      "note": "registered at run time by a UI plugin of apps/gauzy/src/plugin-ui.config.ts or a page module (the generator lists the registry call as a note)"
+    },
+    {
       "path": "/pages/integrations/linear",
       "file": "packages/plugins/integration-linear-ui/src/lib/integration-linear-ui.plugin.ts",
       "source": "manual",

@@ -1,7 +1,7 @@
 {
 	"name": "@gauzy/plugin-integration-jira-ui",
 	"version": "0.1.0",
-	"description": "Ever Gauzy UI plugin: Integrations > Jira (connect a Jira workspace with OAuth, map teams to projects, import issues, runs)",
+	"description": "Ever Gauzy UI plugin: Integrations > Jira (connect a Jira Cloud site with OAuth 2.0, map Jira projects to projects with a status map, import issues, runs, conflicts)",
 	"author": {
 		"name": "Ever Co. LTD",
 		"url": "https://github.com/ever-co"

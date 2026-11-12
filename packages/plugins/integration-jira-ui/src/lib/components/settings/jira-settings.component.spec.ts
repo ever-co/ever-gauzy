@@ -2,10 +2,11 @@
 jest.mock('@gauzy/ui-core/core', () => ({ Store: class Store {}, OrganizationProjectsService: class OrganizationProjectsService {} }));
 
 import { TestBed } from '@angular/core/testing';
+import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute, convertToParamMap, Router } from '@angular/router';
 import { of, Subject } from 'rxjs';
 import { OrganizationProjectsService, Store } from '@gauzy/ui-core/core';
-import { JiraRun, JiraUiService } from '../../services/jira-ui.service';
+import { JiraConnectionSummary, JiraMapping, JiraRun, JiraSite, JiraUiService } from '../../services/jira-ui.service';
 import { finishedRuns, JiraSettingsComponent } from './jira-settings.component';
 
 const ORGANIZATION = { id: 'org-1', tenantId: 'tenant-1' };
@@ -15,6 +16,50 @@ async function settle(fixture: { detectChanges(): void }): Promise<void> {
 	fixture.detectChanges();
 	await new Promise((resolve) => setTimeout(resolve, 0));
 	fixture.detectChanges();
+}
+
+function connection(overrides: Partial<JiraConnectionSummary> = {}): JiraConnectionSummary {
+	return {
+		id: 'int-1',
+		organizationId: 'org-1',
+		cloudId: 'cloud-a',
+		siteUrl: 'https://acme.atlassian.net',
+		siteName: 'Acme',
+		accountId: 'acc-1',
+		accountName: 'Ada',
+		siteRequired: false,
+		webhookExpiresAt: null,
+		webhookError: null,
+		connectedByUserId: null,
+		attentionReason: null,
+		tokenExpiresAt: null,
+		lastSyncedAt: null,
+		createdAt: null,
+		...overrides
+	};
+}
+
+function site(overrides: Partial<JiraSite> = {}): JiraSite {
+	return { id: 'cloud-a', url: 'https://acme.atlassian.net', name: 'Acme', selected: true, ...overrides };
+}
+
+function mapping(overrides: Partial<JiraMapping> = {}): JiraMapping {
+	return {
+		id: 'map-1',
+		integrationId: 'int-1',
+		jiraProjectId: '10000',
+		jiraProjectKey: 'ACME',
+		jiraProjectName: 'Acme',
+		projectId: 'project-1',
+		direction: 'inbound',
+		statusMap: { new: 'open', indeterminate: 'in-progress', done: 'completed' },
+		issueTypeIds: [],
+		syncEnabled: true,
+		lastImportedAt: null,
+		lastCursor: null,
+		lastError: null,
+		...overrides
+	};
 }
 
 function run(overrides: Partial<JiraRun> = {}): JiraRun {
@@ -40,8 +85,13 @@ function run(overrides: Partial<JiraRun> = {}): JiraRun {
 describe('JiraSettingsComponent (sync log and conflicts)', () => {
 	const api = {
 		summary: jest.fn(),
-		teams: jest.fn(),
+		sites: jest.fn(),
+		selectSite: jest.fn(),
+		projects: jest.fn(),
+		project: jest.fn(),
 		mappings: jest.fn(),
+		createMapping: jest.fn(),
+		registerWebhook: jest.fn(),
 		runs: jest.fn(),
 		conflicts: jest.fn(),
 		resolveConflict: jest.fn(),
@@ -65,8 +115,9 @@ describe('JiraSettingsComponent (sync log and conflicts)', () => {
 
 	beforeEach(() => {
 		jest.resetAllMocks();
-		api.summary.mockReturnValue(of({ id: 'int-1', organizationId: 'org-1', jiraOrganizationName: 'Acme', attentionReason: null, createdAt: null }));
-		api.teams.mockReturnValue(of([]));
+		api.summary.mockReturnValue(of(connection()));
+		api.sites.mockReturnValue(of([site()]));
+		api.projects.mockReturnValue(of([]));
 		api.mappings.mockReturnValue(of([]));
 		api.runs.mockReturnValue(of([run(), run({ id: 'run-2', conflictCount: 3 })]));
 		api.conflicts.mockReturnValue(of([]));
@@ -140,5 +191,204 @@ describe('JiraSettingsComponent (sync log and conflicts)', () => {
 		late.next([run({ id: 'run-of-int-1' })]);
 
 		expect(fixture.componentInstance.runs.map((item) => item.id)).toEqual(['run-1', 'run-2']);
+	});
+});
+
+/** The site, the webhook, the add form (status map and issue types) and the run reports. */
+describe('JiraSettingsComponent (site, webhook, mappings, reports)', () => {
+	const api = {
+		summary: jest.fn(),
+		sites: jest.fn(),
+		selectSite: jest.fn(),
+		projects: jest.fn(),
+		project: jest.fn(),
+		mappings: jest.fn(),
+		createMapping: jest.fn(),
+		registerWebhook: jest.fn(),
+		runs: jest.fn(),
+		conflicts: jest.fn(),
+		resolveConflict: jest.fn(),
+		taskTitles: jest.fn()
+	};
+
+	function render() {
+		TestBed.configureTestingModule({
+			imports: [JiraSettingsComponent],
+			providers: [
+				{ provide: JiraUiService, useValue: api },
+				{ provide: Store, useValue: { selectedOrganization$: of(ORGANIZATION), selectedOrganization: ORGANIZATION } },
+				{ provide: OrganizationProjectsService, useValue: { getAll: jest.fn().mockResolvedValue({ items: [{ id: 'project-1', name: 'Website' }] }) } },
+				{ provide: Router, useValue: { navigate: jest.fn().mockResolvedValue(true) } },
+				{ provide: ActivatedRoute, useValue: { paramMap: of(convertToParamMap({ integrationId: 'int-1' })) } }
+			]
+		});
+		const fixture = TestBed.createComponent(JiraSettingsComponent);
+		// A notice is its key: the spec loads no translations.
+		jest.spyOn(TestBed.inject(TranslateService), 'instant').mockImplementation((key: string | string[]) => key as string);
+		const find = (test: string) => (fixture.nativeElement as HTMLElement).querySelector(`[data-test="${test}"]`);
+		return { fixture, component: fixture.componentInstance, find };
+	}
+
+	beforeEach(() => {
+		jest.resetAllMocks();
+		api.summary.mockReturnValue(of(connection()));
+		api.sites.mockReturnValue(of([site(), site({ id: 'cloud-b', name: 'Beta', url: 'https://beta.atlassian.net', selected: false })]));
+		api.projects.mockReturnValue(
+			of([
+				{ id: '10000', key: 'ACME', name: 'Acme' },
+				{ id: '10001', key: 'WEB', name: 'Web' }
+			])
+		);
+		api.mappings.mockReturnValue(of([]));
+		api.runs.mockReturnValue(of([]));
+		api.conflicts.mockReturnValue(of([]));
+		api.taskTitles.mockReturnValue(of({}));
+	});
+
+	it('a connection waiting for its site offers the sites and reads nothing of a site until one is chosen', async () => {
+		api.summary
+			.mockReturnValueOnce(of(connection({ cloudId: null, siteName: null, siteUrl: null, siteRequired: true })))
+			.mockReturnValue(of(connection({ cloudId: 'cloud-b' })));
+		api.sites.mockReturnValue(of([site({ selected: false }), site({ id: 'cloud-b', name: 'Beta', selected: false })]));
+		api.selectSite.mockReturnValue(of(connection({ cloudId: 'cloud-b' })));
+		const { fixture, component, find } = render();
+		await settle(fixture);
+
+		expect(find('site-required')).not.toBeNull();
+		expect(find('mappings')).toBeNull();
+		expect(find('add-form')).toBeNull();
+		expect(api.projects).not.toHaveBeenCalled();
+		expect(api.mappings).not.toHaveBeenCalled();
+		expect(api.runs).not.toHaveBeenCalled();
+
+		component.siteDraft = 'cloud-b';
+		component.chooseSite();
+		await settle(fixture);
+
+		expect(api.selectSite).toHaveBeenCalledWith('int-1', 'cloud-b');
+		expect(api.projects).toHaveBeenCalledWith('int-1');
+		expect(find('site-required')).toBeNull();
+		expect(find('add-form')).not.toBeNull();
+	});
+
+	it('a connection with mappings keeps its site: the site form is locked', async () => {
+		api.mappings.mockReturnValue(of([mapping()]));
+		const { fixture, component, find } = render();
+		await settle(fixture);
+
+		expect(component.siteLocked()).toBe(true);
+		expect(find('site-locked')).not.toBeNull();
+		expect(find('choose-site')).toBeNull();
+		component.siteDraft = 'cloud-b';
+		component.chooseSite();
+		expect(api.selectSite).not.toHaveBeenCalled();
+	});
+
+	it('registers the webhook again and says what happened', async () => {
+		api.summary.mockReturnValue(of(connection({ webhookError: 'Forbidden' })));
+		api.registerWebhook.mockReturnValue(of({ outcome: 'registered', connection: connection({ webhookExpiresAt: '2026-12-12T00:00:00.000Z' }) }));
+		const { fixture, component, find } = render();
+		await settle(fixture);
+		expect(find('webhook-error')).not.toBeNull();
+
+		(find('register-webhook') as HTMLButtonElement).click();
+		fixture.detectChanges();
+
+		expect(api.registerWebhook).toHaveBeenCalledWith('int-1');
+		expect(component.notice).toBe('JIRA.WEBHOOK.OUTCOMES.registered');
+		expect(find('webhook-error')).toBeNull();
+	});
+
+	it('maps a Jira project with its status map and issue types: named statuses of that project only, blanks left out', async () => {
+		api.project.mockReturnValue(
+			of({
+				project: { id: '10001', key: 'WEB', name: 'Web' },
+				issueTypes: [
+					{ id: '1', name: 'Bug', subtask: false },
+					{ id: '2', name: 'Story', subtask: false }
+				],
+				statuses: [
+					{ id: '3', name: 'In review', statusCategory: { key: 'indeterminate' } },
+					{ id: '4', name: 'Blocked', statusCategory: { key: 'indeterminate' } }
+				]
+			})
+		);
+		api.createMapping.mockReturnValue(of(mapping({ id: 'map-2', jiraProjectId: '10001' })));
+		const { fixture, component, find } = render();
+		await settle(fixture);
+
+		component.chooseJiraProject('10001');
+		fixture.detectChanges();
+		expect(api.project).toHaveBeenCalledWith('int-1', '10001');
+		expect(find('named-statuses')).not.toBeNull();
+		expect(find('issue-types')).not.toBeNull();
+
+		component.draft.projectId = 'project-1';
+		component.draft.categories.done = '  ';
+		component.draft.named['3'] = 'review';
+		component.draft.named['4'] = '';
+		component.draft.named['99'] = 'from another project';
+		component.toggleIssueType('2', true);
+		component.add();
+
+		expect(api.createMapping).toHaveBeenCalledWith('int-1', {
+			jiraProjectId: '10001',
+			jiraProjectKey: 'WEB',
+			jiraProjectName: 'Web',
+			projectId: 'project-1',
+			direction: 'inbound',
+			syncEnabled: true,
+			statusMap: { new: 'open', indeterminate: 'in-progress', done: 'completed', 'status:3': 'review' },
+			issueTypeIds: ['2']
+		});
+		// The form is empty again, and the mappings are read again.
+		expect(component.draft.jiraProjectId).toBe('');
+		expect(component.detail).toBeNull();
+		expect(api.mappings).toHaveBeenCalledTimes(2);
+	});
+
+	it('a project detail answered after the form moved to another Jira project is dropped', async () => {
+		const late = new Subject<never>();
+		api.project.mockReturnValueOnce(late).mockReturnValueOnce(of({ project: { id: '10000', key: 'ACME', name: 'Acme' }, issueTypes: [], statuses: [] }));
+		const { fixture, component } = render();
+		await settle(fixture);
+
+		component.chooseJiraProject('10001');
+		component.chooseJiraProject('10000');
+
+		expect(component.detail?.project.id).toBe('10000');
+		expect(late.observed).toBe(false);
+	});
+
+	it("shows a run's report: its counts, whether it stopped early, and the issues it could not apply", async () => {
+		api.runs.mockReturnValue(
+			of([
+				run({
+					id: 'run-7',
+					status: 'failed',
+					failedCount: 7,
+					report: {
+						startedFrom: null,
+						stoppedAt: '2026-11-11T08:00:00.000Z',
+						complete: false,
+						pages: 2,
+						issuesRead: 80,
+						comments: 12,
+						links: 3,
+						relations: 1,
+						conflicts: 0,
+						failures: Array.from({ length: 6 }, (_, index) => ({ key: `ACME-${index + 1}`, error: 'Refused' })),
+						moreFailures: 1
+					}
+				})
+			])
+		);
+		const { fixture, component, find } = render();
+		await settle(fixture);
+
+		expect(find('report-partial')).not.toBeNull();
+		const failures = find('report-failures-run-7') as HTMLElement;
+		expect(failures.querySelectorAll('.failure')).toHaveLength(5);
+		expect(component.hiddenFailures(component.runs[0])).toBe(2);
 	});
 });

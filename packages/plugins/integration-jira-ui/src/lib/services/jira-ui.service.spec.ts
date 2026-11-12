@@ -75,3 +75,46 @@ describe('JiraUiService (conflicts)', () => {
 		http.expectNone((item) => item.url.endsWith('/api/tasks'));
 	});
 });
+
+/** The routes of the site, the Jira projects and the webhook. */
+describe('JiraUiService (site, projects, webhook)', () => {
+	let api: JiraUiService;
+	let http: HttpTestingController;
+
+	beforeEach(() => {
+		api = TestBed.inject(JiraUiService);
+		http = TestBed.inject(HttpTestingController);
+	});
+
+	afterEach(() => http.verify());
+
+	it('lists the sites and chooses one by its cloud id', async () => {
+		const sites = firstValueFrom(api.sites(INTEGRATION));
+		const list = http.expectOne((request) => request.url.endsWith('/integration/jira/int-1/sites'));
+		expect(list.request.method).toBe('GET');
+		list.flush([{ id: 'cloud-a', url: 'https://acme.atlassian.net', name: 'Acme', selected: true }]);
+		await expect(sites).resolves.toHaveLength(1);
+
+		void firstValueFrom(api.selectSite(INTEGRATION, 'cloud-a'));
+		const choose = http.expectOne((request) => request.url.endsWith('/integration/jira/int-1/site'));
+		expect(choose.request.method).toBe('PUT');
+		expect(choose.request.body).toEqual({ cloudId: 'cloud-a' });
+		choose.flush({ id: INTEGRATION });
+	});
+
+	it('reads the Jira projects, and one project with its issue types and statuses', () => {
+		void firstValueFrom(api.projects(INTEGRATION));
+		http.expectOne((request) => request.method === 'GET' && request.url.endsWith('/integration/jira/int-1/projects')).flush([]);
+
+		void firstValueFrom(api.project(INTEGRATION, 'A/B'));
+		http.expectOne((request) => request.method === 'GET' && request.url.endsWith('/integration/jira/int-1/projects/A%2FB')).flush({ project: {}, issueTypes: [], statuses: [] });
+	});
+
+	it('registers the webhook again', async () => {
+		const answer = firstValueFrom(api.registerWebhook(INTEGRATION));
+		const request = http.expectOne((item) => item.url.endsWith('/integration/jira/int-1/webhook'));
+		expect(request.request.method).toBe('POST');
+		request.flush({ outcome: 'registered', connection: { id: INTEGRATION } });
+		await expect(answer).resolves.toMatchObject({ outcome: 'registered' });
+	});
+});

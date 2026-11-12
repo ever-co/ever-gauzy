@@ -69,6 +69,7 @@
 		"@gauzy/plugin-integration-linear-ui": "^0.1.0",
 		"@gauzy/plugin-integration-asana-ui": "^0.1.0",
 		"@gauzy/plugin-integration-trello-ui": "^0.1.0",
+		"@gauzy/plugin-integration-jira-ui": "^0.1.0",
 		"@gauzy/plugin-job-employee-ui": "^0.1.0",
 		"@gauzy/plugin-jobs-ui": "^0.1.0",
 		"@gauzy/plugin-job-proposal-ui": "^0.1.0",

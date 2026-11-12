@@ -1,7 +1,7 @@
 {
 	"TITLE": "Jira",
 	"UNAVAILABLE": "The Jira integration is not loaded on this server (JIRA_ENABLED is off).",
-	"NOT_CONFIGURED": "The Jira OAuth application is not configured on this server (JIRA_CLIENT_ID, JIRA_CLIENT_SECRET, the callback URL). Nobody can connect until it is.",
+	"NOT_CONFIGURED": "The Jira OAuth app is not configured on this server (JIRA_CLIENT_ID, JIRA_CLIENT_SECRET, the callback URL). Nobody can connect until it is.",
 	"ERROR": "Something went wrong.",
 	"RETRY": "Try again",
 	"LOADING": "Loading…",
@@ -16,49 +16,87 @@
 		"NEVER": "Never"
 	},
 	"CONNECT": {
-		"TITLE": "Connect your Jira workspace",
-		"TEXT": "You will authorize this platform in Jira and come back here. Then map Jira teams to projects, import their issues as tasks, and keep them in sync.",
+		"TITLE": "Connect your Jira Cloud site",
+		"TEXT": "You will authorize this platform with Atlassian and come back here. Then map Jira projects to projects, import their issues as tasks, and keep them in sync.",
 		"BUTTON": "Connect Jira",
-		"STARTING": "Opening Jira…"
+		"STARTING": "Opening Atlassian…"
 	},
 	"CALLBACK_ERRORS": {
-		"not_configured": "The Jira OAuth application is not configured on this server.",
-		"denied": "Jira did not authorize the connection.",
+		"not_configured": "The Jira OAuth app is not configured on this server.",
+		"denied": "Atlassian did not authorize the connection.",
 		"invalid_state": "The connect flow expired or was already used. Start it again.",
-		"exchange_failed": "Jira refused the authorization code. Start the flow again.",
-		"workspace_unreadable": "The workspace could not be read after authorizing.",
+		"exchange_failed": "Atlassian refused the authorization code. Start the flow again.",
+		"site_unreadable": "The Jira sites of your account could not be read after authorizing.",
+		"no_site": "Your Atlassian account reaches no Jira Cloud site this app may use.",
 		"not_saved": "The connection could not be saved."
 	},
 	"CONNECTED": {
 		"TITLE": "Jira is connected",
-		"WORKSPACE": "Workspace",
+		"SITE": "Site",
+		"ACCOUNT": "Atlassian account",
 		"CONNECTED_ON": "Connected on",
 		"OPEN_SETTINGS": "Open the settings",
 		"ATTENTION": "This connection needs attention: {{ reason }}",
 		"REASONS": {
-			"token_refused": "Jira refused the token. Connect again."
+			"token_refused": "Atlassian refused the token. Connect again."
 		}
 	},
 	"SETTINGS": {
 		"TITLE": "Jira settings",
 		"OVERVIEW": "Connection",
 		"DISCONNECT": "Disconnect",
-		"DISCONNECT_CONFIRM": "Disconnect Jira from this organization? The mappings go; the imported tasks stay.",
+		"DISCONNECT_CONFIRM": "Disconnect Jira from this organization? The mappings and the site's webhook go; the imported tasks stay.",
 		"DISCONNECTED": "Jira was disconnected."
 	},
+	"SITES": {
+		"TITLE": "Jira site",
+		"REQUIRED": "Your Atlassian account reaches several Jira sites. Choose the one this connection works with: nothing syncs until you do.",
+		"SITE": "Site",
+		"CHOOSE": "Use this site",
+		"CHOSEN": "The connection now works with this site.",
+		"NONE": "Not chosen yet",
+		"EMPTY": "The connection's token reaches no Jira site. Connect again.",
+		"LOCKED": "A connection with mappings keeps its site, since a mapping names its Jira project by an id that only this site knows. Remove the mappings to choose another site."
+	},
+	"WEBHOOK": {
+		"TITLE": "Webhook",
+		"INTRO": "Jira delivers the changes of the mapped projects to this server through one webhook per connection. Jira expires it after 30 days; the server renews it before then. Without it, the scheduled import picks the changes up.",
+		"ACTIVE": "Registered; Jira keeps it until {{ date }}.",
+		"NONE": "No webhook is registered.",
+		"FAILED": "The last registration failed: {{ error }}",
+		"REGISTER": "Register again",
+		"OUTCOMES": {
+			"off": "No webhook is used: webhooks are off on this server, or the connection has no site yet or waits for a reconnect. The scheduled import follows Jira instead.",
+			"unchanged": "The webhook was already in line with the mappings (none is needed while no mapping brings issues in).",
+			"registered": "The webhook was registered.",
+			"refreshed": "The webhook was renewed.",
+			"removed": "The webhook was removed: no mapping brings issues in.",
+			"failed": "The webhook could not be registered; see the error above."
+		}
+	},
 	"MAPPINGS": {
-		"TITLE": "Teams and projects",
-		"INTRO": "Each Jira team maps to one project. Inbound brings the team's issues in as tasks; outbound sends the project's tasks to the team (one outbound mapping per project).",
-		"EMPTY": "No team is mapped yet.",
-		"TEAM": "Jira team",
+		"TITLE": "Jira projects and projects",
+		"INTRO": "Each Jira project maps to one project. Inbound brings the Jira project's issues in as tasks; outbound sends the project's tasks to the Jira project (one outbound mapping per project).",
+		"EMPTY": "No Jira project is mapped yet.",
+		"JIRA_PROJECT": "Jira project",
 		"PROJECT": "Project",
 		"DIRECTION": "Direction",
-		"STATE_MAP": "Task status per Jira state",
-		"STATE_MAP_HINT": "The task status name an issue gets for each kind of Jira workflow state.",
+		"STATUS_MAP": "Task status per Jira status",
+		"STATUS_MAP_HINT": "The task status name an issue gets for each Jira status category. A blank one keeps the default.",
+		"NAMED_STATUSES_HINT": "A Jira status can also map on its own, which wins over its category. Leave it blank to follow its category.",
+		"CATEGORIES": {
+			"new": "To do",
+			"indeterminate": "In progress",
+			"done": "Done"
+		},
+		"ISSUE_TYPES": "Issue types",
+		"ISSUE_TYPES_HINT": "Bring in only these issue types. None checked brings every type in.",
+		"ISSUE_TYPES_ALL": "Every type",
+		"ISSUE_TYPES_SOME": "{{ count }} selected",
 		"SYNC": "Sync",
 		"ENABLED": "On",
 		"DISABLED": "Off",
-		"ADD": "Map a team",
+		"ADD": "Map a Jira project",
 		"ADDING": "Saving…",
 		"REMOVE_CONFIRM": "Remove this mapping? The imported tasks stay.",
 		"IMPORT": "Import changes",
@@ -71,15 +109,7 @@
 			"outbound": "Outbound (tasks → Jira)",
 			"both": "Both ways"
 		},
-		"STATE_KINDS": {
-			"triage": "Triage",
-			"backlog": "Backlog",
-			"unstarted": "Unstarted",
-			"started": "Started",
-			"completed": "Completed",
-			"canceled": "Canceled"
-		},
-		"NO_TEAMS": "The workspace has no team the connection can see."
+		"NO_JIRA_PROJECTS": "The site has no project the connection can see."
 	},
 	"RUNS": {
 		"TITLE": "Runs",
@@ -92,6 +122,11 @@
 		"COUNTS": "Created / updated / skipped / failed",
 		"CONFLICTS": "Conflicts",
 		"SHOW_CONFLICTS": "List the conflicts this run found",
+		"REPORT": "Report",
+		"REPORT_LINE": "{{ issues }} issues on {{ pages }} pages; {{ comments }} comments, {{ links }} links",
+		"REPORT_PARTIAL": "Stopped early: the next import continues from where it stopped.",
+		"REPORT_FAILURES": "Not applied:",
+		"REPORT_MORE": "and {{ count }} more",
 		"ERROR": "Error",
 		"KINDS": {
 			"import": "Import",
