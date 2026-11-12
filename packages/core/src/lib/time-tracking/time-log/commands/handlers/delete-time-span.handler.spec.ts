@@ -135,8 +135,13 @@ const TENANT_ID = '11823000-0000-4000-8000-0000000000aa';
 const ORGANIZATION_ID = '11823000-0000-4000-8000-0000000000bb';
 const EMPLOYEE_ID = '11823000-0000-4000-8000-0000000000cc';
 
-/** 2026-10-12 at `time` (`HH:mm`, or `HH:mm:ss.SSS`), UTC. */
-const at = (time: string) => new Date(`2026-10-12T${time.length === 5 ? `${time}:00.000` : time}Z`);
+/** 2026-10-12 at `time` (`HH:mm`, or `HH:mm:ss.SSS`), or another day's `YYYY-MM-DDTHH:mm`, UTC. */
+const at = (time: string) => {
+	if (time.includes('T')) {
+		return new Date(`${time}:00.000Z`);
+	}
+	return new Date(`2026-10-12T${time.length === 5 ? `${time}:00.000` : time}Z`);
+};
 
 /** The `HH:mm` of a date, UTC. */
 const hhmm = (date: Date) => date.toISOString().slice(11, 16);
@@ -898,6 +903,24 @@ describe('DeleteTimeSpanHandler when a split fails (#11823)', () => {
 		expect(outcome).toBe('The recalculation failed');
 	});
 
+	it('recalculates both timesheets when the failed cut had moved the log to its own week', async () => {
+		const store = createStore();
+		// Filed under the current week's timesheet, where a cut at its end leaves a log; the split's cut files it
+		// under the week it starts in, while its second part stays where it was.
+		const elsewhere = timesheetOf();
+		store.addLog('tracked', '08:00', '11:00', { timesheetId: elsewhere });
+		store.fail('unlink', 2);
+
+		const outcome = await store.cleanUp('09:00', '10:00').then(raised, raised);
+
+		expect(store.rows().map((row) => row.timesheetId)).toEqual([timesheetOf(at('08:00')), elsewhere]);
+		expect(store.recalculated()).toEqual({
+			timesheets: [elsewhere, timesheetOf(at('08:00'))],
+			employees: [EMPLOYEE_ID]
+		});
+		expect(outcome).toBe('The unlink failed');
+	});
+
 	it('raises instead of splitting again a log whose failed recovery left its second part', async () => {
 		const store = createStore();
 		store.addLog('tracked', '08:00', '11:00');
@@ -1037,7 +1060,12 @@ describe('DeleteTimeSpanHandler when a cut at one end or a delete fails (#11823)
 			{ range: '08:00-09:00', isRunning: false, slots: slotStarts('08:00', '09:00') },
 			{ range: '09:55-10:30', isRunning: false, slots: slotStarts('09:55', '10:30') }
 		]);
-		expect(store.recalculated()).toEqual({ timesheets: [timesheetOf(at('08:00'))], employees: [EMPLOYEE_ID] });
+		// A cut at the end names no start, so the update files the log under the current week's timesheet: both
+		// timesheets are recalculated.
+		expect(store.recalculated()).toEqual({
+			timesheets: [timesheetOf(at('08:00')), timesheetOf()],
+			employees: [EMPLOYEE_ID]
+		});
 		expect(outcome).toBe('The unlink failed');
 	});
 
@@ -1057,5 +1085,22 @@ describe('DeleteTimeSpanHandler when a cut at one end or a delete fails (#11823)
 			{ range: '09:00-10:00', isRunning: false, slots: slotStarts('09:00', '10:00') }
 		]);
 		expect(outcome).toBe('The unlink failed');
+	});
+
+	it('recalculates both timesheets when the failed cut had moved the log to the week of its new start', async () => {
+		const store = createStore();
+		// From Saturday 23:00 to Sunday 01:00: a new start at midnight files the log under the next week's timesheet.
+		store.addLog('tracked', '2026-10-10T23:00', '2026-10-11T01:00');
+		const before = timesheetOf(at('2026-10-10T23:00'));
+		const after = timesheetOf(at('2026-10-11T00:00'));
+		expect(after).not.toBe(before);
+		// The cut writes the new start and timesheet, then fails to delete the slots before it.
+		store.fail('slotRemoval');
+
+		const outcome = await store.cleanUp('2026-10-10T22:00', '2026-10-11T00:00').then(raised, raised);
+
+		expect(store.rows().map((row) => row.timesheetId)).toEqual([after]);
+		expect(store.recalculated()).toEqual({ timesheets: [before, after], employees: [EMPLOYEE_ID] });
+		expect(outcome).toBe('The slotRemoval failed');
 	});
 });

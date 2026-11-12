@@ -400,7 +400,7 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 		const cut = moment(stored?.stoppedAt).isSame(start);
 
 		if (cut && slots.length < (log.timeSlots ?? []).length) {
-			await this.finishRelease(log, slots, (slot) => !moment(slot.startedAt).isBefore(start));
+			await this.finishRelease(log, stored, slots, (slot) => !moment(slot.startedAt).isBefore(start));
 			return;
 		}
 
@@ -438,7 +438,7 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 		try {
 			const stored = await this.typeOrmTimeLogRepository.findOne({ where: { id: log.id } });
 			if (stored && isCut(stored)) {
-				await this.finishRelease(log, await this.slotsAsTheyStand(log), outside);
+				await this.finishRelease(log, stored, await this.slotsAsTheyStand(log), outside);
 			}
 		} catch (finishError) {
 			this.logger.error(
@@ -483,11 +483,13 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 	 * did not get to), and the totals the cut recalculates last are recalculated.
 	 *
 	 * @param log - The time log as it was read before the cut.
+	 * @param stored - The same log as stored after the cut, which may have filed it under another week's timesheet.
 	 * @param slots - The slots the log held before the cut, as they now stand, with their logs.
 	 * @param outside - Whether a slot lies outside the log's new range.
 	 */
 	private async finishRelease(
 		log: ITimeLog,
+		stored: ITimeLog,
 		slots: ITimeSlot[],
 		outside: (slot: ITimeSlot) => boolean
 	): Promise<void> {
@@ -504,9 +506,11 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 				.remove(log.id);
 		}
 
-		// The second part of a split shares the log's timesheet
-		if (log.timesheetId) {
-			await this._commandBus.execute(new TimesheetRecalculateCommand(log.timesheetId));
+		// The timesheet the log was on, which a split's second part keeps, and the one the cut filed it under when that
+		// is another week's (the update files the log under the week of the start it names, or of today when it names none)
+		const timesheetIds = new Set([log.timesheetId, stored.timesheetId].filter(Boolean));
+		for (const timesheetId of timesheetIds) {
+			await this._commandBus.execute(new TimesheetRecalculateCommand(timesheetId));
 		}
 		if (log.employeeId) {
 			await this._commandBus.execute(new UpdateEmployeeTotalWorkedHoursCommand(log.employeeId));
