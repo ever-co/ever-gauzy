@@ -146,7 +146,7 @@ revoke and refusals · X spec unchanged · XI no third-party product named.
 | A leaked URL lets anyone post | revoke answers 404 at once; rate limits; posts carry the App badge and the webhook's own name |
 | An interaction URL that points inside the network | the egress guard at save and at each attempt, pinned connection, no redirects |
 | A slow receiver holds a request | 5 s deadline on the inline attempt; retries run after the answer |
-| Retries lost on a restart | the row keeps `retrying`; a click on the same button starts a new interaction; receivers deduplicate on `interactionId` |
+| Retries lost on a restart | the start-up sweep (or the state read) marks the row failed (`process_restarted`); a new click on the same button, with a new key, starts a new interaction; a click sent again with the key it kept (its request got no answer, or a server error) answers the existing interaction and calls the app no second time; receivers deduplicate on `interactionId` |
 | A double click, or a client retry after a lost answer, calls the app twice | the click's `Idempotency-Key`, unique per (tenant, message, clicker, key): the repeat answers the first interaction, and a concurrent duplicate loses on the unique index and answers the winner's row |
 | `ENCRYPTION_KEY` unset | the signing secret falls back to a key derived from a non-default `JWT_SECRET`; with neither, no interaction URL can be saved (clear 400) |
 

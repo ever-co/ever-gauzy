@@ -373,17 +373,21 @@ describe('ChatInteractionService', () => {
 
 		it('answers a repeat with the click as it is now: retried meanwhile, then delivered with a reply', async () => {
 			const reply = Buffer.from(JSON.stringify({ text: 'Acknowledged by Ana' }));
-			const { service, sent, writer, messages } = setup({ attempts: [{ outcome: 'retry', status: 503, error: 'http_503' }, { outcome: 'delivered', status: 200, body: reply, contentType: 'application/json' }] });
+			const { service, sent, writer, messages, repositories } = setup({ attempts: [{ outcome: 'retry', status: 503, error: 'http_503' }, { outcome: 'delivered', status: 200, body: reply, contentType: 'application/json' }] });
 			const first = await service.interact(member, 'm1', { actionId: 'ack' }, 'click-1');
 			expect(first.interaction.status).toBe(ChatInteractionStatusEnum.RETRYING);
 			const underWay = await service.interact(member, 'm1', { actionId: 'ack' }, 'click-1');
 			expect(underWay.interaction).toEqual(expect.objectContaining({ interactionId: first.interaction.interactionId, status: ChatInteractionStatusEnum.RETRYING, replyApplied: false }));
 			expect(underWay.message).toBeUndefined();
 			await retriesDone(service);
+			// The request reads the message before the click; the reply lands in between (its copy still has the buttons).
+			const before = { id: 'm1', tenantId: 'ten', organizationId: 'org', conversationId: 'c1', kind: ChatMessageKindEnum.APP, webhookId: 'w1', body: 'CPU high', blocks: JSON.stringify(BLOCKS) };
+			repositories.ChatMessage.findOne.mockResolvedValueOnce(before as never).mockResolvedValueOnce({ ...before, body: 'Acknowledged by Ana', blocks: null } as never);
 			const settled = await service.interact(member, 'm1', { actionId: 'ack' }, 'click-1');
 			expect(settled.interaction).toEqual(expect.objectContaining({ interactionId: first.interaction.interactionId, status: ChatInteractionStatusEnum.DELIVERED, replyApplied: true, attempts: 2 }));
-			// The message as it is now (read at the repeat), and no events: the first answer and the stream carried them.
-			expect(settled.message).toEqual(expect.objectContaining({ id: 'm1' }));
+			// The message as the reply left it (read again once the reply is seen applied), and no events: the first answer
+			// and the stream carried them.
+			expect(settled.message).toEqual(expect.objectContaining({ id: 'm1', body: 'Acknowledged by Ana', blocks: null }));
 			expect(messages.withRelations).toHaveBeenCalledTimes(1);
 			expect(settled.events).toEqual([]);
 			// The app was called by the first click's own retry only, and its reply applied once.

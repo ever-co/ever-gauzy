@@ -160,7 +160,7 @@ describe('AddChatWebhookInteractionIdempotencyKey1791000008300 statements', () =
 		const mysql = runner('mysql');
 		await new AddChatWebhookInteractionIdempotencyKey1791000008300().up(mysql as never);
 		expect(ddl(mysql.statements)).toEqual([
-			'ALTER TABLE `chat_webhook_interaction` ADD COLUMN `idempotencyKey` varchar(64) NULL',
+			'ALTER TABLE `chat_webhook_interaction` ADD COLUMN `idempotencyKey` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NULL',
 			`CREATE UNIQUE INDEX \`${INDEX}\` ON \`chat_webhook_interaction\` (\`tenantId\`, \`messageId\`, \`actorUserId\`, \`idempotencyKey\`)`
 		]);
 		const sqlite = runner('better-sqlite3');

@@ -1,7 +1,7 @@
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
-import { defer, Observable, of, Subject, throwError } from 'rxjs';
+import { defer, NEVER, Observable, of, Subject, throwError } from 'rxjs';
 import { ChatAppBlockTypeEnum, ChatInteractionStatusEnum, ChatMessageKindEnum, IChatInteraction, IChatInteractionResult, IChatMessageWithRelations } from '@gauzy/contracts';
-import { APP_INTERACTION_POLL_MAX, APP_INTERACTION_POLL_MS, APP_INTERACTION_RETRY_DELAYS_MS } from '../../chat-app-blocks';
+import { APP_INTERACTION_POLL_MAX, APP_INTERACTION_POLL_MS, APP_INTERACTION_RETRY_DELAYS_MS, APP_INTERACTION_TIMEOUT_MS } from '../../chat-app-blocks';
 import { ChatWebhooksService } from '../../services/chat-webhooks.service';
 import { AppBlocksComponent } from './app-blocks.component';
 
@@ -253,14 +253,16 @@ describe('AppBlocksComponent', () => {
 
 		/**
 		 * The platform as a request sees it: each subscription is one request (a retry subscribes again), answered in turn
-		 * by `answers` (an error status, or the result). The key every request carried is recorded.
+		 * by `answers` (an error status, `'hang'` for a request that never answers, or the result). The key every request
+		 * carried is recorded.
 		 */
-		function serve(answers: Array<number | IChatInteractionResult>): string[] {
+		function serve(answers: Array<number | 'hang' | IChatInteractionResult>): string[] {
 			const keys: string[] = [];
 			api.interact.mockImplementation((_messageId: string, _actionId: string, _blockId: string | null, key: string): Observable<IChatInteractionResult> =>
 				defer(() => {
 					keys.push(key);
 					const next = answers.shift() ?? 0;
+					if (next === 'hang') return NEVER;
 					return typeof next === 'number' ? throwError(() => ({ status: next })) : of(next);
 				})
 			);
@@ -328,6 +330,65 @@ describe('AppBlocksComponent', () => {
 				button('ack').click();
 				expect(keys).toHaveLength(2);
 				expect(keys[1]).not.toBe(keys[0]);
+			})();
+		});
+
+		it('sends a click again, with its key, when its request hangs past the deadline', async () => {
+			await render();
+			const keys = serve(['hang', delivered()]);
+			fakeAsync(() => {
+				button('ack').click();
+				tick(APP_INTERACTION_TIMEOUT_MS - 1);
+				expect(keys).toHaveLength(1);
+				tick(1 + APP_INTERACTION_RETRY_DELAYS_MS[0]);
+				fixture.detectChanges();
+				expect(keys).toHaveLength(2);
+				expect(keys[1]).toBe(keys[0]);
+				expect(button('ack').querySelector('nb-icon')?.getAttribute('icon')).toBe('checkmark-outline');
+			})();
+		});
+
+		it('does not send a click again after a server error, but keeps its key for the next click (the app may have been called)', async () => {
+			await render();
+			const keys = serve([500, delivered()]);
+			fakeAsync(() => {
+				button('ack').click();
+				tick(APP_INTERACTION_RETRY_DELAYS_MS.reduce((total, delay) => total + delay, 0));
+				fixture.detectChanges();
+				expect(keys).toHaveLength(1);
+				expect(element().querySelector('[data-test="app-failure"]')?.textContent).toContain('CHAT.APP.CLICK_FAILED');
+				button('ack').click();
+				expect(keys).toEqual([keys[0], keys[0]]);
+			})();
+		});
+
+		it('keeps a repeat answered as delivered without its reply pending, and reads the reply the first request applied', async () => {
+			await render();
+			const replaced = appMessage({ body: 'Acknowledged by Ana', blocks: [] });
+			serve([{ interaction: interaction(ChatInteractionStatusEnum.DELIVERED), events: [], replayed: true }]);
+			api.interaction.mockReturnValue(of(interaction(ChatInteractionStatusEnum.DELIVERED, { replyApplied: true })));
+			api.message.mockReturnValue(of(replaced));
+			const emitted: IChatMessageWithRelations[] = [];
+			fixture.componentInstance.replaced.subscribe((message) => emitted.push(message));
+			fakeAsync(() => {
+				button('ack').click();
+				fixture.detectChanges();
+				expect(button('ack').disabled).toBe(true);
+				tick(APP_INTERACTION_POLL_MS);
+				fixture.detectChanges();
+				expect(api.message).toHaveBeenCalledWith('c1', 'm1');
+				expect(emitted).toEqual([replaced]);
+				expect(button('ack').querySelector('nb-icon')?.getAttribute('icon')).toBe('checkmark-outline');
+			})();
+		});
+
+		it('does not ask again about a first answer delivered without a reply (the app sent none)', async () => {
+			await render();
+			serve([delivered()]);
+			fakeAsync(() => {
+				button('ack').click();
+				tick(APP_INTERACTION_POLL_MS * 3);
+				expect(api.interaction).not.toHaveBeenCalled();
 			})();
 		});
 

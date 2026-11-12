@@ -3,17 +3,19 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NbIconModule } from '@nebular/theme';
 import { TranslatePipe } from '@ngx-translate/core';
 import { EMPTY, throwError, timer } from 'rxjs';
-import { catchError, exhaustMap, retry, take, takeWhile } from 'rxjs/operators';
+import { catchError, exhaustMap, retry, take, takeWhile, timeout } from 'rxjs/operators';
 import { ChatAppBlockTypeEnum, IChatAppBlock, IChatAppButton, IChatMessageWithRelations, ID } from '@gauzy/contracts';
 import {
 	APP_INTERACTION_POLL_MAX,
 	APP_INTERACTION_POLL_MS,
 	APP_INTERACTION_RETRY_DELAYS_MS,
+	APP_INTERACTION_TIMEOUT_MS,
 	appBlocksOf,
 	AppButtonState,
 	buttonKey,
 	buttonStateOf,
 	isUnansweredClick,
+	keepsClickKey,
 	safeButtonUrl
 } from '../../chat-app-blocks';
 import { newNonce } from '../../chat-ui.helpers';
@@ -265,7 +267,10 @@ export class AppBlocksComponent {
 		this.api
 			.interact(this.message().id as ID, button.actionId, blockId, idempotencyKey)
 			.pipe(
-				// A click that got no answer is sent again (the same request, so the same key); any answer settles it.
+				// A send still open after the deadline counts as unanswered (a timeout has no status). A click that got no
+				// answer is sent again (the same request, so the same key, each send with its own deadline); any answer
+				// settles it.
+				timeout(APP_INTERACTION_TIMEOUT_MS),
 				retry({
 					count: APP_INTERACTION_RETRY_DELAYS_MS.length,
 					delay: (error: { status?: number }, attempt: number) => (isUnansweredClick(error?.status) ? timer(APP_INTERACTION_RETRY_DELAYS_MS[attempt - 1]) : throwError(() => error))
@@ -277,13 +282,18 @@ export class AppBlocksComponent {
 					this.unanswered.delete(key);
 					if (result.message) this.replaced.emit(result.message);
 					const state = buttonStateOf(result.interaction.status);
-					this.setState(key, state);
+					// A repeat answered as delivered without its reply: the first request may be applying the reply right
+					// now (the API writes the delivery just before), so it is asked about once more, as a retry's is, and
+					// the button stays pending (so disabled) until that ask answers.
+					const replyMayFollow = !!result.replayed && state === 'done' && !result.interaction.replyApplied;
+					this.setState(key, replyMayFollow ? 'pending' : state);
 					if (state === 'failed') this.setFailure(blockId, 'CHAT.APP.CALLBACK_FAILED');
-					if (state === 'pending') this.follow(key, blockId, result.interaction.interactionId);
+					if (state === 'pending' || replyMayFollow) this.follow(key, blockId, result.interaction.interactionId);
 				},
 				error: (error: { status?: number }) => {
-					// An answer settles the click (the next one is a new click); without one the key is kept for it.
-					if (!isUnansweredClick(error?.status)) this.unanswered.delete(key);
+					// A refusal settles the click (the next one is a new click); a click with no answer, or a server error
+					// (the app may have been called), keeps its key for the button's next click.
+					if (!keepsClickKey(error?.status)) this.unanswered.delete(key);
 					this.setState(key, 'failed');
 					this.setFailure(blockId, error?.status === 409 ? 'CHAT.APP.NO_INTERACTIONS' : error?.status === 404 ? 'CHAT.APP.GONE' : 'CHAT.APP.CLICK_FAILED');
 				}

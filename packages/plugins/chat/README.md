@@ -253,7 +253,8 @@ the flag is exactly `true` (and chat is on): every route below answers 404.
   must be `https:` on a public host; it is resolved when saved and at every attempt through the plugin's egress
   guard (`src/lib/egress`), no redirect followed. `GET /api/chat/interactions/:id` answers the clicker the state.
 - **A click is one interaction**: a client sends an `Idempotency-Key` header with the click (a new UUID per click, the
-  same on each retry of it; at most 64 printable characters, the receive route's rule). A repeat of the key by the same
+  same on each retry of it; at most 64 printable characters, the receive route's rule; compared case-sensitively,
+  `utf8mb4_bin` on MySQL). A repeat of the key by the same
   person on the same message — a double click, a retry after a lost answer, two requests racing (the unique index
   decides, on every dialect and with either ORM) — answers that click as it is now (`replayed: true`, the message when
   the reply replaced it, no events) and calls the app no second time; the same key for another button is refused

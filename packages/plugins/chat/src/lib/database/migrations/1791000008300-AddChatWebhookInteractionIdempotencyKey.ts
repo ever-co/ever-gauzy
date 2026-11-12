@@ -29,7 +29,7 @@ export const CHAT_INTERACTION_KEY_INDEX: IndexSpec = {
  * interaction and one callback. Nullable, no default and no backfill: every existing click stays as it is, and a
  * client that sends no key keeps one interaction per request.
  *
- * Guarded and idempotent on every dialect (serialised on Postgres; the column and the index are made only when they
+ * Compared case-sensitively on every dialect (`utf8mb4_bin` on MySQL). Guarded and idempotent on every dialect (serialised on Postgres; the column and the index are made only when they
  * are missing, a concurrent MySQL or SQLite run taken as done) and reversible: the index goes before the column (SQLite
  * cannot drop an indexed column).
  */
@@ -40,7 +40,9 @@ export class AddChatWebhookInteractionIdempotencyKey1791000008300 implements Mig
 		await lockMigrations(queryRunner);
 		await addColumnIfMissing(queryRunner, TABLE, COLUMN, {
 			postgres: 'varchar(64) NULL',
-			mysql: 'varchar(64) NULL',
+			// A key is compared byte for byte, as on Postgres and SQLite: MySQL's default collations ignore letter case,
+			// and would take `click-A` for `click-a` (one click for two, or a 409 for the second button).
+			mysql: 'varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NULL',
 			sqlite: 'varchar(64) NULL'
 		});
 		await createIndexIfMissing(queryRunner, TABLE, CHAT_INTERACTION_KEY_INDEX);

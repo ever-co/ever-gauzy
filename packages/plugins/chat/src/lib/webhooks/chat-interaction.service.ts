@@ -259,9 +259,12 @@ export class ChatInteractionService implements OnModuleInit, OnModuleDestroy {
 
 	/**
 	 * The answer to a repeated key: the click it names, as it is now (`current`), with the message when the app's reply
-	 * replaced it (read at this request, so as it is now too), and no events (the first answer carried them, and the
-	 * realtime stream told everyone). Nothing is sent to the app. A key names one click: the same key for another button
-	 * is refused (409 `IDEMPOTENCY_KEY_REUSED`, as the platform's own idempotency answers a reused key), never merged.
+	 * replaced it, and no events (the first answer carried them, and the realtime stream told everyone). Nothing is sent
+	 * to the app. A key names one click: the same key for another button is refused (409 `IDEMPOTENCY_KEY_REUSED`, as
+	 * the platform's own idempotency answers a reused key), never merged.
+	 *
+	 * The message is read again once the reply is seen applied: the request read it before it read the click, and the
+	 * first request may have applied the reply in between, so that copy can still hold the buttons the reply replaced.
 	 */
 	private async repeat(caller: IChatCaller, row: ChatWebhookInteraction, message: ChatMessage, input: IChatInteractionInput): Promise<IChatInteractionResult> {
 		if (!isSameButton(row, input)) {
@@ -270,7 +273,8 @@ export class ChatInteractionService implements OnModuleInit, OnModuleDestroy {
 			});
 		}
 		const now = await this.current(row);
-		const [withRelations] = now.replyAppliedAt ? await this.messages.withRelations(caller, [message]) : [];
+		const replied = now.replyAppliedAt ? await this.dataSource.getRepository(ChatMessage).findOne({ where: { id: message.id as ID, tenantId: caller.tenantId } }) : null;
+		const [withRelations] = replied ? await this.messages.withRelations(caller, [replied]) : [];
 		return { interaction: interactionView(now), ...(withRelations ? { message: withRelations } : {}), events: [], replayed: true };
 	}
 
