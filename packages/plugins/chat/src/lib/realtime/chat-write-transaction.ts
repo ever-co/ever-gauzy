@@ -20,3 +20,14 @@ export function inWriteTransaction<T>(dataSource: DataSource, work: (manager: En
 	}
 	return dataSource.transaction(work);
 }
+
+/**
+ * Whether the database takes row locks (`SELECT … FOR UPDATE` / `FOR SHARE`): Postgres and MySQL. SQLite has one
+ * writer at a time and refuses TypeORM's lock modes, so a read there takes none.
+ *
+ * @param dataSource The platform's data source.
+ */
+export function chatLocksRows(dataSource: DataSource): boolean {
+	const type = String((dataSource as { options?: { type?: unknown } }).options?.type ?? '');
+	return type === 'postgres' || type === 'mysql' || type === 'mariadb';
+}

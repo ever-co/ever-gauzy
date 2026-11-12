@@ -1,11 +1,13 @@
 import { Body, Controller, Delete, Get, Header, HttpCode, HttpStatus, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import { FeatureFlag } from '@gauzy/common';
 import { FeatureEnum, ID, PermissionsEnum } from '@gauzy/contracts';
 import { FeatureFlagGuard, PermissionGuard, Permissions, TenantPermissionGuard, UseValidationPipe, UUIDValidationPipe } from '@gauzy/core';
 import { CHAT_ROUTE_PREFIX } from '../chat.constants';
 import {
 	ChatCategoryDTO,
+	ChatCategoryReorderDTO,
 	ChatCategoryUpdateDTO,
 	ChatConversationCreateDTO,
 	ChatConversationUpdateDTO,
@@ -15,11 +17,13 @@ import {
 	ChatFilesQueryDTO,
 	ChatMessageCreateDTO,
 	ChatMessagesQueryDTO,
-	ChatReadDTO
+	ChatReadDTO,
+	ChatTypingDTO
 } from '../dto/chat.dto';
 import { ChatAccessService } from '../services/chat-access.service';
 import { ChatConversationService } from '../services/chat-conversation.service';
 import { ChatMessageService } from '../services/chat-message.service';
+import { ChatTypingService } from '../services/chat-typing.service';
 
 /**
  * `/api/chat/categories*`, `/api/chat/conversations*`, `/api/chat/direct`: the conversations of the caller. Every
@@ -42,7 +46,8 @@ export class ChatConversationController {
 	constructor(
 		private readonly access: ChatAccessService,
 		private readonly conversations: ChatConversationService,
-		private readonly messages: ChatMessageService
+		private readonly messages: ChatMessageService,
+		private readonly typingSignals: ChatTypingService
 	) {}
 
 	// ---------------------------------------------------------------- categories
@@ -68,6 +73,16 @@ export class ChatConversationController {
 	@ApiOperation({ summary: 'Create a category (CHAT_MANAGE).' })
 	createCategory(@Body() body: ChatCategoryDTO) {
 		return this.conversations.createCategory(this.access.caller(), body);
+	}
+
+	@Post('/categories/reorder')
+	@Permissions(PermissionsEnum.CHAT_MANAGE)
+	@HttpCode(HttpStatus.OK)
+	@UseValidationPipe({ whitelist: true, transform: true })
+	@Header('Cache-Control', 'no-store')
+	@ApiOperation({ summary: 'Save the order of the categories, and of the channels within them, in one transaction (CHAT_MANAGE).' })
+	reorderCategories(@Body() body: ChatCategoryReorderDTO) {
+		return this.conversations.reorderCategories(this.access.caller(), body);
 	}
 
 	@Patch('/categories/:id')
@@ -180,6 +195,17 @@ export class ChatConversationController {
 	@ApiOperation({ summary: 'Leave a channel or a group (not the default channel, not a direct conversation).' })
 	leave(@Param('id', UUIDValidationPipe) id: ID) {
 		return this.conversations.leave(this.access.employeeCaller(), id);
+	}
+
+	@Post('/conversations/:id/typing')
+	@Permissions(PermissionsEnum.CHAT_SEND)
+	@HttpCode(HttpStatus.ACCEPTED)
+	@Throttle({ default: { limit: 120, ttl: 60_000 } })
+	@UseValidationPipe({ whitelist: true })
+	@Header('Cache-Control', 'no-store')
+	@ApiOperation({ summary: 'Tell the other members that I am typing here (or in a thread): ephemeral, nothing stored, shown for a few seconds.' })
+	typing(@Param('id', UUIDValidationPipe) id: ID, @Body() body: ChatTypingDTO) {
+		return this.typingSignals.typing(this.access.employeeCaller(), id, body ?? {});
 	}
 
 	@Get('/conversations/:id/members')

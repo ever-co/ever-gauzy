@@ -1,4 +1,5 @@
 import { ID, IChatFile } from '@gauzy/contracts';
+import { metadataOf } from './chat-draft-uploads';
 
 /** The dialects the files query tells apart (the one predicate the query builder cannot write portably). */
 export type ChatSqlDialect = 'mysql' | 'sqlite' | 'postgres';
@@ -45,6 +46,24 @@ export interface IChatFileDocument {
 	status?: string | null;
 	fileUrl?: string | null;
 	thumbUrl?: string | null;
+	/** The document's metadata (an object, or its JSON on SQLite): the upload records a picture's size there. */
+	metadata?: unknown;
+}
+
+/** The largest side a picture's recorded size may state (anything larger, or not a whole positive number, is unknown). */
+export const CHAT_IMAGE_MAX_SIDE = 100_000;
+
+/**
+ * A picture's size as the Docs upload recorded it (`metadata.upload.image`: width and height as shown, orientation
+ * applied), or nulls when it recorded none — a file that is not a picture, or one uploaded before sizes were read.
+ */
+export function imageSizeOf(metadata: unknown): { width: number | null; height: number | null } {
+	const upload = metadataOf(metadataOf(metadata)['upload']);
+	const image = metadataOf(upload['image']);
+	const side = (value: unknown) => (typeof value === 'number' && Number.isInteger(value) && value > 0 && value <= CHAT_IMAGE_MAX_SIDE ? value : null);
+	const width = side(image['width']);
+	const height = side(image['height']);
+	return width && height ? { width, height } : { width: null, height: null };
 }
 
 /** One file of the pane: the link's place and author, the document's name and kind; null when the document is gone. */
@@ -62,6 +81,7 @@ export function chatFileOf(link: IChatFileLink, document: IChatFileDocument | nu
 		status: document.status ?? null,
 		fileUrl: document.fileUrl ?? null,
 		thumbUrl: document.thumbUrl ?? null,
+		...imageSizeOf(document.metadata),
 		authorEmployeeId: link.authorEmployeeId ?? null,
 		authorUserId: link.authorUserId ?? null,
 		attachedAt: link.attachedAt instanceof Date ? link.attachedAt : new Date(link.attachedAt)

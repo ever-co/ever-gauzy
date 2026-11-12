@@ -1,8 +1,20 @@
 import { Injectable, Logger, OnModuleInit, Type } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
+import { randomUUID } from 'node:crypto';
 import { DataSource, EntityManager } from 'typeorm';
-import { CHAT_EVENT_NAMES, CHAT_STREAMED_EVENTS, ChatEventName, IChatEvent, ID, IOutboxWriteInput, JsonData } from '@gauzy/contracts';
-import { declareStreamedEvents, EventOutboxService, GraphqlSubscriptionConsumer, SubscriptionCatalogue } from '@gauzy/core';
+import {
+	CHAT_EVENT_NAMES,
+	CHAT_STREAMED_EVENTS,
+	ChatEventName,
+	IChatEvent,
+	ID,
+	IOutboxWriteInput,
+	IRealtimeTypingSignal,
+	JsonData,
+	REALTIME_EVENT_NAMES
+} from '@gauzy/contracts';
+import { declareStreamedEvents, EventOutboxService, GraphqlPubSub, GraphqlSubscriptionConsumer, SubscriptionCatalogue } from '@gauzy/core';
+import type { SubscriptionEnvelope } from '@gauzy/core';
 import { CHAT_AGGREGATES } from '../chat.constants';
 import { appendInTransaction } from './chat-outbox-append';
 import { ChatMembershipAudience } from './chat-realtime-audience';
@@ -188,6 +200,39 @@ export class ChatRealtime implements OnModuleInit {
 			recipientUserIds,
 			data: { rootMessageId: root.id as ID, conversationId: root.conversationId, replyCount: root.replyCount }
 		};
+	}
+
+	/**
+	 * Tells the members that someone is typing: the real-time channel's `typing.signalled` signal, published straight to
+	 * the subscription pub/sub as the realtime plugin publishes its own (same envelope, same aggregate), addressed to
+	 * the members named. Ephemeral: no outbox row, nothing replays it, a member not connected never learns of it.
+	 * Never throws.
+	 *
+	 * @returns Whether a pub/sub took it (false where this process serves none, or nobody is to be told).
+	 */
+	async signalTyping(signal: IRealtimeTypingSignal, scope: { tenantId: ID; organizationId: ID | null }, recipientUserIds: readonly ID[]): Promise<boolean> {
+		const pubSub = this.find(GraphqlPubSub);
+		const recipients = [...new Set(recipientUserIds.map(String))];
+		if (!pubSub || !scope.tenantId || !recipients.length) return false;
+		const name = REALTIME_EVENT_NAMES.TYPING_SIGNALLED;
+		const envelope: SubscriptionEnvelope = {
+			eventId: randomUUID(),
+			name,
+			tenantId: String(scope.tenantId),
+			...(scope.organizationId ? { organizationId: String(scope.organizationId) } : {}),
+			occurredAt: new Date(),
+			// The realtime channel's own aggregate for a typing signal (`REALTIME_AGGREGATES.CONVERSATION`).
+			aggregate: { type: 'conversation', id: String(signal.conversationId) },
+			data: signal,
+			recipientUserIds: recipients
+		};
+		try {
+			await pubSub.publish(name, String(scope.tenantId), envelope);
+			return true;
+		} catch (error) {
+			this.logger.warn(`${name} was not published: ${(error as Error)?.message}`);
+			return false;
+		}
 	}
 
 	private find<T>(token: Type<T> | undefined): T | undefined {

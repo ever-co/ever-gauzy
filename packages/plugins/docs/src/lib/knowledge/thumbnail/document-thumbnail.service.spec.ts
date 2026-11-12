@@ -72,17 +72,35 @@ const JOB = { documentId: 'doc-1', tenantId: 'tenant-1', organizationId: 'org-1'
  *
  * @param overrides `renderPages` — what the PDF rasterizer answers.
  */
+/** The tenant's storage settings: records each run's tenant and whether storage work happens inside one. */
+const tenantStorageStub = () => {
+	const stub = {
+		inside: false,
+		run: jest.fn(async (_tenantId: unknown, work: () => Promise<unknown>) => {
+			stub.inside = true;
+			try {
+				return await work();
+			} finally {
+				stub.inside = false;
+			}
+		})
+	};
+	return stub;
+};
+
 const buildService = (overrides: { renderPages?: jest.Mock; update?: jest.Mock } = {}) => {
 	const update = overrides.update ?? jest.fn(async () => ({ affected: 1 }));
 	const repository: any = { update };
 	const renderPages = overrides.renderPages ?? jest.fn(async () => null);
 	const rasterizer: any = { renderPages, isAvailable: jest.fn(async () => true) };
 
-	const service = new DocumentThumbnailService(repository, rasterizer);
+	const tenantStorage = tenantStorageStub();
+
+	const service = new DocumentThumbnailService(repository, rasterizer, tenantStorage as any);
 	jest.spyOn((service as any).logger, 'warn').mockImplementation(() => undefined);
 	jest.spyOn((service as any).logger, 'log').mockImplementation(() => undefined);
 
-	return { service, update, renderPages };
+	return { service, update, renderPages, tenantStorage };
 };
 
 beforeEach(() => {
@@ -117,6 +135,37 @@ describe('isThumbnailableMime / thumbnailKeyFor', () => {
 });
 
 describe('DocumentThumbnailService — happy path', () => {
+	it("reads the source and stores the thumbnail inside the tenant's own storage settings", async () => {
+		const png = await realPng();
+		const { service, tenantStorage } = buildService();
+		const inside: boolean[] = [];
+		providerStub.getFile.mockImplementationOnce(async () => {
+			inside.push(tenantStorage.inside);
+			return png;
+		});
+		providerStub.putFile.mockImplementationOnce(async () => {
+			inside.push(tenantStorage.inside);
+			return { key: undefined };
+		});
+
+		await expect(service.generate(documentRow(), JOB)).resolves.toBe('generated');
+
+		// A queue thread has no request to carry them: a tenant with its own bucket was read from, and written to, the
+		// deployment's.
+		expect(tenantStorage.run.mock.calls.map(([tenantId]) => tenantId)).toEqual(['tenant-1', 'tenant-1']);
+		expect(inside).toEqual([true, true]);
+	});
+
+	it('reads and stores nothing when the tenant storage settings cannot be read (cosmetic: failed, never thrown)', async () => {
+		const { service, tenantStorage, update } = buildService();
+		tenantStorage.run.mockRejectedValueOnce(new Error('settings unavailable'));
+
+		await expect(service.generate(documentRow(), JOB)).resolves.toBe('failed');
+		expect(providerStub.getFile).not.toHaveBeenCalled();
+		expect(providerStub.putFile).not.toHaveBeenCalled();
+		expect(update).not.toHaveBeenCalled();
+	});
+
 	it('writes a downsized WebP through the storage provider and records thumbKey', async () => {
 		providerStub.getFile.mockResolvedValue(await realPng());
 		const { service, update } = buildService();

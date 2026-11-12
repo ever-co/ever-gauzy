@@ -43,7 +43,26 @@ toggle.
   uploaded, and each one is linked to the message (`DocumentLink { entity:
   ChatMessage }`), so the documents' side shows where a file was shared and the
   conversation's files pane (`GET /conversations/:id/files`) lists what its
-  messages carry, newest first. A deleted message's links go with it.
+  messages carry, newest first, with a picture's `width` / `height` (read from its
+  header by the Docs upload, `metadata.upload.image`; null when unknown). A deleted
+  message's links go with it. A message of files only has an empty body; the names
+  of its files (`attachmentNames`, one per line) are what notifications and the
+  search index read.
+- **Draft uploads** (`chat_attachment_draft`): a chat composer's Docs upload
+  (`Document { kind: FILE, source: CHAT }`, stored by the upload route) is recorded
+  as a draft of its uploader the moment it is stored (an insert listener on the
+  data source, so every client is covered). A send or an edit that attaches it
+  consumes the draft. `DELETE /attachments/:documentId` discards one; drafts older
+  than `GAUZY_CHAT_DRAFT_UPLOAD_TTL_HOURS` (24) are swept every 30 minutes in the
+  API processes (`GAUZY_CHAT_DRAFT_SWEEP_ENABLED=false` turns the sweep off). A
+  draft is purged — the document row, and its stored file and thumbnail once no
+  other document row names them — only while it is still the untouched upload
+  (private, outside the documents tree, its uploader's) and nothing carries it (no
+  document link, no message naming it); otherwise it stays an ordinary upload.
+- **Typing**: `POST /conversations/:id/typing { threadRootId? }` tells the other
+  members through the real-time channel's `typing.signalled` signal (same envelope
+  as the realtime plugin's, `expiresInMs` 6000); nothing is stored, one signal per
+  member and place every 2.5 s at most.
 
 ## Tables
 
@@ -61,12 +80,16 @@ per-tenant one). The link preview cache, `chat_link_preview` (migration
 Incoming webhooks (`1791000006730`): `chat_webhook`,
 `chat_webhook_interaction`, and `chat_message.webhookId` / `appIconUrl` /
 `blocks` with a unique (`webhookId`, `nonce`).
+per-tenant one). `chat_attachment_draft` (migration `1791000007310`) holds the
+draft uploads; `chat_message.attachmentNames` (`1791000007320`) the names of a
+message's files.
 
 ## Routes (`/api/chat`, `CHAT_VIEW`; writes `CHAT_SEND`; 404 for a conversation the caller is not in)
 
 | Route | What |
 | --- | --- |
 | `GET /categories` · `POST` · `PATCH /:id` · `DELETE /:id` | sidebar categories (`CHAT_MANAGE`) |
+| `POST /categories/reorder { categoryIds, channels?: [{ categoryId, conversationIds }] }` | the order of the categories and of the channels within them, in one transaction (`CHAT_MANAGE`); moved channels are told to their members |
 | `GET /people` | the active employees of my organization with name and picture (what chat shows and suggests) |
 | `GET /conversations` | mine, with my state and the categories (creates the organization's `#general` on first use) |
 | `GET /conversations/browse` | public channels I am not in |
@@ -81,10 +104,13 @@ Incoming webhooks (`1791000006730`): `chat_webhook`,
 | `GET /conversations/:id/messages?before=&after=&around=&limit=` | messages, newest by default |
 | `GET /conversations/:id/pins` | pinned messages |
 | `GET /conversations/:id/files?limit=&skip=` | the files the conversation's messages carry (a document the message itself names, still there), newest first, with the message and its author |
-| `POST /conversations/:id/messages` | send: `{ body, nonce?, replyToId?, threadRootId?, alsoInConversation?, attachmentIds?, mentionEmployeeIds?, taskId? }` |
+| `POST /conversations/:id/messages` | send: `{ body?, nonce?, replyToId?, threadRootId?, alsoInConversation?, attachmentIds?, mentionEmployeeIds?, taskId? }` (the body may be empty with an attachment) |
+| `POST /conversations/:id/typing { threadRootId? }` | I am typing (members only; ephemeral, rate-limited) |
+| `DELETE /attachments/:documentId` | discard a file I uploaded and will not send (a draft upload) |
 | `GET /messages/:id/thread` · `POST /:id/follow` · `/:id/unfollow` · `POST /:id/thread/read` | threads (read marks a followed thread's replies read) |
 | `PATCH /messages/:id` · `DELETE` · `POST /:id/pin` · `/:id/unpin` · `/:id/unread` | one message |
 | `POST /messages/:id/create-task { projectId?, organizationTeamId?, title?, assigneeEmployeeIds? }` | a task from a message (`ORG_TASK_ADD` too), in the team named (a team of the conversation's organization, so its lists show the task): its first line as the title unless given, the text as the description (HTML); the message keeps a `created` reference — a 500 that names the task id means the task exists but could not be linked |
+| `PATCH /messages/:id/tasks/:taskId { status?, taskStatusId?, priority?, taskPriorityId?, assigneeEmployeeIds? }` | change a task from its card: the task page's update (`TaskUpdateCommand`, `ORG_TASK_EDIT` and task view, the same activity log), by a member of the conversation, for a task the message shows; a status or priority of the task's organization (or a shared one), active employees as assignees; every conversation showing it hears `chat_message.updated` |
 | `POST` / `DELETE /messages/:id/reactions/:emoji` | reactions |
 | `GET /threads` · `POST /read-all` · `POST /read-restore { snapshotId }` | followed threads; mark all read with a one-minute undo |
 | `GET /link-preview?url=` | the preview of a link (below); 404 unless `GAUZY_CHAT_LINK_PREVIEWS_ENABLED=true` |
