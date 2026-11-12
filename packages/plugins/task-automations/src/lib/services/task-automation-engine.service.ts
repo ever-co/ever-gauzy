@@ -63,7 +63,8 @@ export class TaskAutomationEngine {
 				triggerType: rule.trigger.type,
 				depth: change.depth,
 				chain: change.chain,
-				requiresAllChildrenDone: match.requiresAllChildrenDone
+				requiresAllChildrenDone: match.requiresAllChildrenDone,
+				requiresOpenChildId: match.requiresOpenChildId
 			});
 			if (result.outcome) ran += 1;
 		}
@@ -123,7 +124,19 @@ export class TaskAutomationEngine {
 				break;
 			case TaskAutomationTriggerEnum.ALL_SUBTASKS_DONE:
 			case TaskAutomationTriggerEnum.SUBTASK_REOPENED: {
-				subject = task.children?.length ? task : task.parentId ? await this.reader.snapshot(tenantId, task.parentId, { children: true }) : null;
+				// The rule acts on a parent: a reopened sub-task's own parent first (the task picked is the sub-task), for
+				// "every sub-task done" the task picked when it has sub-tasks. A parent of another organization is none.
+				const parentOf = async (): Promise<ITaskAutomationTaskSnapshot | null> => {
+					if (!task.parentId) return null;
+					const parent = await this.reader.snapshot(tenantId, task.parentId, { children: true });
+					return parent && parent.organizationId === organizationId ? parent : null;
+				};
+				subject =
+					rule.trigger.type === TaskAutomationTriggerEnum.SUBTASK_REOPENED
+						? ((await parentOf()) ?? (task.children?.length ? task : null))
+						: task.children?.length
+							? task
+							: await parentOf();
 				if (!subject) {
 					triggerMatches = false;
 					triggerNote = 'The task has no sub-tasks and no parent.';

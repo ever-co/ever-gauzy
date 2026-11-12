@@ -39,6 +39,18 @@ describe('actions', () => {
 			expect(unknown.update).toEqual({});
 			expect(unknown.changes[0].failed).toBe(true);
 		});
+
+		it('sets the status again when the value moved without its row', () => {
+			// A value-only update left the done row behind: the task is open, so "done" is a change.
+			const stale = planActions([{ type: TaskAutomationActionEnum.SET_STATUS, status: 'done' }], task({ status: 'open', taskStatusId: 'st-done' }), CATALOG);
+			expect(stale.update).toEqual({ status: 'done', taskStatusId: 'st-done' });
+			const priority = planActions(
+				[{ type: TaskAutomationActionEnum.SET_PRIORITY, priority: 'high' }],
+				task({ priority: 'low', taskPriorityId: 'pr-high' }),
+				CATALOG
+			);
+			expect(priority.update).toEqual({ priority: 'high', taskPriorityId: 'pr-high' });
+		});
 	});
 
 	describe('SET_PRIORITY', () => {
@@ -82,6 +94,17 @@ describe('actions', () => {
 			// Replacing with nobody but strangers is refused: it would unassign everyone.
 			const refused = planActions([{ type: TaskAutomationActionEnum.SET_ASSIGNEES, employeeIds: ['stranger'] }], task({ memberIds: ['e-1'] }), catalog);
 			expect(refused.update).toEqual({});
+			// So is a replacement where one of the people is a stranger: the assignees stay, the other actions run.
+			const partial = planActions(
+				[
+					{ type: TaskAutomationActionEnum.SET_ASSIGNEES, employeeIds: ['e-1', 'stranger'] },
+					{ type: TaskAutomationActionEnum.SET_PRIORITY, priority: 'high' }
+				],
+				task({ memberIds: ['e-3'] }),
+				catalog
+			);
+			expect(partial.update).toEqual({ priority: 'high', taskPriorityId: 'pr-high' });
+			expect(partial.changes[0]).toMatchObject({ field: 'members', failed: true });
 		});
 	});
 

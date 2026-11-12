@@ -163,6 +163,8 @@ export class TaskAutomationRunStore {
 			where: {
 				ruleId,
 				createdAt: LessThan(horizon),
+				// A claim still running is never history to prune.
+				outcome: Not(TaskAutomationRunOutcomeEnum.RUNNING),
 				...(newest.length ? { id: Not(In(newest.map((row) => row.id))) } : {})
 			} as never,
 			order: { createdAt: 'ASC', id: 'ASC' } as never,

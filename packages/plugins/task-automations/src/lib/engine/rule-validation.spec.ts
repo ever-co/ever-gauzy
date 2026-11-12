@@ -85,6 +85,9 @@ describe('rule validation', () => {
 		expect(() => normalizeActions([{ type: TaskAutomationActionEnum.SET_STATUS, category: 'later' }])).toThrow(/category/);
 		expect(() => normalizeActions([{ type: TaskAutomationActionEnum.SET_PRIORITY }])).toThrow(/priority/);
 		expect(() => normalizeActions([{ type: TaskAutomationActionEnum.ADD_ASSIGNEES, employeeIds: [] }])).toThrow(/person/);
+		// Replacing the assignees needs the list: a missing one is not "unassign everyone" (an empty one is).
+		expect(() => normalizeActions([{ type: TaskAutomationActionEnum.SET_ASSIGNEES }])).toThrow(/people to assign/);
+		expect(() => normalizeActions([{ type: TaskAutomationActionEnum.SET_ASSIGNEES, employeeIds: null as never }])).toThrow(/people to assign/);
 		expect(() => normalizeActions([{ type: TaskAutomationActionEnum.ADD_LABELS }])).toThrow(/label/);
 		expect(() =>
 			normalizeActions([{ type: TaskAutomationActionEnum.NOTIFY_ASSIGNEES, message: 'x'.repeat(TASK_AUTOMATION_LIMITS.messageLength + 1) }])

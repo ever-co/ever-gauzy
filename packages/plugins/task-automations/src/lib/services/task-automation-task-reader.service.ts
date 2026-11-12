@@ -54,9 +54,14 @@ export class TaskAutomationTaskReader {
 	async children(tenantId: ID, parentId: ID): Promise<ITaskAutomationChildSnapshot[]> {
 		const rows = await this.dataSource.getRepository(Task).find({
 			where: { parentId, tenantId } as never,
-			select: { id: true, status: true, taskStatusId: true } as never
+			select: { id: true, status: true, taskStatusId: true, projectId: true } as never
 		});
-		return rows.map((row) => ({ id: row.id as ID, status: (row.status as string) ?? null, taskStatusId: (row.taskStatusId as ID) ?? null }));
+		return rows.map((row) => ({
+			id: row.id as ID,
+			status: (row.status as string) ?? null,
+			taskStatusId: (row.taskStatusId as ID) ?? null,
+			projectId: (row.projectId as ID) ?? null
+		}));
 	}
 
 	/**

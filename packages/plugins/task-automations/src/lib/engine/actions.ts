@@ -80,10 +80,10 @@ export function planActions(
 					changes.push({ action: action.type, field: 'status', failed: true, note: 'The status is not one of the organization.' });
 					break;
 				}
-				// The same row, or the same value where one side names no row (a status without a `TaskStatus`).
+				// Already set only when the stored value is the target's, and so is the row where both sides name one: a task
+				// whose value moved without its row (a value-only update left the old row) is set again.
 				const same =
-					(!!target.id && working.taskStatusId === target.id) ||
-					(working.status === target.value && (!target.id || !working.taskStatusId));
+					working.status === target.value && (!target.id || !working.taskStatusId || working.taskStatusId === target.id);
 				if (same) {
 					changes.push({ action: action.type, field: 'status', from: working.status, to: target.value, note: 'Already set.' });
 					break;
@@ -99,7 +99,9 @@ export function planActions(
 					changes.push({ action: action.type, field: 'priority', failed: true, note: 'The priority is not one of the organization.' });
 					break;
 				}
-				const same = target.id ? working.taskPriorityId === target.id : working.priority === target.value;
+				const same =
+					working.priority === target.value &&
+					(!target.id || !working.taskPriorityId || working.taskPriorityId === target.id);
 				if (same) {
 					changes.push({ action: action.type, field: 'priority', from: working.priority, to: target.value, note: 'Already set.' });
 					break;
@@ -122,8 +124,9 @@ export function planActions(
 						note: `${unknown.length} assignee(s) are not employees of the organization.`
 					});
 				}
-				if (action.type === TaskAutomationActionEnum.SET_ASSIGNEES && unknown.length && !ok.length && named.length) {
-					// Every person named is unknown: replacing the assignees with nobody is not what the rule says.
+				if (action.type === TaskAutomationActionEnum.SET_ASSIGNEES && unknown.length) {
+					// A person named is not the organization's any more: the replacement the rule states cannot be made,
+					// so the assignees stay as they are (the rule's other actions still run).
 					break;
 				}
 				if (sameSet(next, working.memberIds)) {

@@ -36,6 +36,14 @@ export { TASK_AUTOMATION_MIGRATIONS };
 export class TaskAutomationsPlugin implements IOnPluginBootstrap, IOnPluginDestroy {
 	onPluginBootstrap(): void {
 		console.log('TaskAutomationsPlugin is being bootstrapped...');
+		if (isSchedulerQueueRootEnabled()) {
+			// The API cannot read the worker's switches: say where the due-date sweep comes from, so a deployment whose
+			// worker scheduler is off sees why due-date rules never fire.
+			console.log(
+				'TaskAutomationsPlugin: the due-date sweep is asked for by the worker's schedule (queue root on): keep the ' +
+					'worker running with GAUZY_TASK_AUTOMATIONS_ENABLED=true and its scheduler on (WORKER_SCHEDULER_ENABLED not false).'
+			);
+		}
 	}
 
 	onPluginDestroy(): void {

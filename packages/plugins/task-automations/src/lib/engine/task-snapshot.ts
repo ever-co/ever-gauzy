@@ -34,6 +34,11 @@ export interface ITaskAutomationCatalog {
 export interface ITaskAutomationStatusRef {
 	status: string | null;
 	taskStatusId: ID | null;
+	/**
+	 * The task's project: a status named by its value is the project's own row first, then the organization's, and
+	 * never another project's.
+	 */
+	projectId?: ID | null;
 }
 
 /** A sub-task, as far as the parent triggers need it. */

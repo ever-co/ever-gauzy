@@ -117,18 +117,53 @@ export function changeFromActivity(
 	return { ...base, action: 'updated', changes };
 }
 
+/** The field changes a change event may carry, each `{ from, to }` of text or null. */
+const FIELD_CHANGES = ['status', 'taskStatusId', 'parentId', 'priority', 'taskPriorityId', 'dueDate'] as const;
+/** The member lists a change event may carry, each a list of ids. */
+const MEMBER_LISTS = ['membersAdded', 'membersRemoved'] as const;
+
+const isTextOrNull = (value: unknown): boolean => value === null || value === undefined || typeof value === 'string';
+
+/**
+ * A change event's `changes` back, field by field, or `null` when one is malformed (a string where a list of ids is
+ * due, a field change that is not `{ from, to }` of text): a rule must never fire on what the capture did not write.
+ */
+function parseChanges(raw: unknown): ITaskAutomationChangeEvent['changes'] | null {
+	if (raw === undefined || raw === null) return {};
+	if (typeof raw !== 'object' || Array.isArray(raw)) return null;
+	const value = raw as Record<string, unknown>;
+	const changes: ITaskAutomationChangeEvent['changes'] = {};
+	for (const key of FIELD_CHANGES) {
+		const field = value[key];
+		if (field === undefined) continue;
+		if (!field || typeof field !== 'object' || Array.isArray(field)) return null;
+		const { from, to } = field as Record<string, unknown>;
+		if (!isTextOrNull(from) || !isTextOrNull(to)) return null;
+		changes[key] = { from: (from as string | null | undefined) ?? null, to: (to as string | null | undefined) ?? null };
+	}
+	for (const key of MEMBER_LISTS) {
+		const list = value[key];
+		if (list === undefined) continue;
+		if (!Array.isArray(list) || list.some((id) => typeof id !== 'string' || !id)) return null;
+		changes[key] = [...list] as ID[];
+	}
+	return changes;
+}
+
 /** Reads a change event's payload back, or `null` when it is not one (a consumer never trusts the row's shape). */
 export function parseChangeEvent(data: unknown): ITaskAutomationChangeEvent | null {
 	if (!data || typeof data !== 'object') return null;
 	const value = data as Partial<ITaskAutomationChangeEvent>;
 	if (!value.taskId || !value.tenantId || !value.organizationId) return null;
 	if (value.action !== 'created' && value.action !== 'updated') return null;
+	const changes = parseChanges(value.changes);
+	if (!changes) return null;
 	return {
 		taskId: String(value.taskId),
 		tenantId: String(value.tenantId),
 		organizationId: String(value.organizationId),
 		action: value.action,
-		changes: value.changes && typeof value.changes === 'object' ? value.changes : {},
+		changes,
 		actorUserId: value.actorUserId ?? null,
 		depth: Number.isFinite(Number(value.depth)) ? Number(value.depth) : 0,
 		chain: Array.isArray(value.chain) ? value.chain.map(String) : []

@@ -13,17 +13,18 @@ import { parseChangeEvent } from '../engine/change-capture';
 import { TaskAutomationEngine } from '../services/task-automation-engine.service';
 import { TASK_AUTOMATION_CONSUMER_KEY } from '../task-automation.constants';
 
-/** A closed link's payload back, or `null` when it is not one. */
+/** A closed link's payload back, or `null` when it is not one (its kind must be one the contract names). */
 export function parseLinkClosedEvent(data: unknown): ITaskLinkClosedEvent | null {
 	if (!data || typeof data !== 'object') return null;
 	const value = data as Partial<ITaskLinkClosedEvent>;
 	if (!value.taskId || !value.tenantId || !value.organizationId) return null;
+	if (value.kind !== 'issue' && value.kind !== 'pull_request') return null;
 	return {
 		taskId: String(value.taskId),
 		tenantId: String(value.tenantId),
 		organizationId: String(value.organizationId),
 		provider: String(value.provider ?? ''),
-		kind: value.kind === 'issue' ? 'issue' : 'pull_request',
+		kind: value.kind,
 		url: value.url ?? null,
 		externalId: value.externalId ?? null
 	};
@@ -56,12 +57,19 @@ export class TaskAutomationEventConsumer implements IEventConsumer, OnApplicatio
 		private readonly engine: TaskAutomationEngine
 	) {}
 
+	/**
+	 * Registers the consumer; a failure fails the boot, so no instance runs without it. The one exception is a second
+	 * instance of this same consumer (the scheduler builds the due-date queue's module in an injector of its own): the
+	 * first instance serves the key, and the second has nothing to add.
+	 */
 	onApplicationBootstrap(): void {
-		try {
-			this.registry.register(this);
-		} catch (error) {
-			this.logger.error(`The task automation consumer could not be registered: ${(error as Error)?.message}`);
+		const key = EventConsumerRegistry.consumerKeyOf(this);
+		const registered = this.registry.list().find((consumer) => EventConsumerRegistry.consumerKeyOf(consumer) === key);
+		if (registered && registered !== this && registered instanceof TaskAutomationEventConsumer) {
+			this.logger.debug(`The task automation consumer "${key}" is served by another instance.`);
+			return;
 		}
+		this.registry.register(this);
 	}
 
 	async handle(event: IEventEnvelope, context?: IEventConsumerContext): Promise<void> {

@@ -35,12 +35,15 @@ no route, no GraphQL field, no table, no outbox row, no schedule, no role grant.
    matching rules in their order. Each run is claimed by `(ruleId, eventKey)`, so a redelivered change runs nothing.
 3. Actions go through `TaskUpdateCommand` inside a request context of a system actor of the rule's organization (no
    user, no employee, no permission), so notifications, subscriptions, integrations and real-time hints follow, and the
-   activity row says "by automation <name>" with the system as actor.
+   activity row says "by automation `<name>`" with the system as actor.
 4. Loop guard: a rule's change may set off other rules once; their changes set off nothing; a rule never runs on its own
    change. Rate limit: at most 20 automated changes per task in 10 minutes.
+5. One run of a task at a time, across the processes (a lock per task over the read, the checks, the write and the
+   recorded outcome); a run that finds its task busy is put back and tried again.
 
 The worker hosts `TaskAutomationsSchedulePlugin` (the due-date schedule only); the API hosts `TaskAutomationsPlugin`
-(everything else, including the consumer of the schedule's queue). Without a queue root the API sweeps on its own timer.
+(everything else, including the consumer of the schedule's queue). Without a queue root the API sweeps on its own timer;
+with one (`REDIS_ENABLED=true`) the sweep comes from the worker's schedule, so keep the worker's scheduler on.
 
 ## API
 

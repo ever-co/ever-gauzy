@@ -31,6 +31,8 @@ export interface ITaskAutomationRunOptions {
 	chain: ID[];
 	/** `ALL_SUBTASKS_DONE`: run only when every sub-task of the task is done. */
 	requiresAllChildrenDone?: boolean;
+	/** `SUBTASK_REOPENED`: run only while this sub-task of the task is still open. */
+	requiresOpenChildId?: ID;
 	/** `DUE_DATE_PASSED`: run only when the task is still open and still due at this instant (ISO). */
 	requiresOpenAndDue?: string;
 	now?: Date;
@@ -103,6 +105,13 @@ export class TaskAutomationRunner {
 			const stillDue = !!subject.dueDate && subject.dueDate.toISOString() === options.requiresOpenAndDue;
 			if (!stillDue || isClosedStatus(subject, catalog.statuses)) return { outcome: null, reason: 'not-matched' };
 		}
+		if (options.requiresOpenChildId) {
+			// The sub-task may have been closed again (or moved) since its reopening was recorded.
+			const child = await this.reader.snapshot(tenantId, options.requiresOpenChildId);
+			if (!child || child.parentId !== subject.id || isClosedStatus(child, catalog.statuses)) {
+				return { outcome: null, reason: 'not-matched' };
+			}
+		}
 
 		const run = await this.runs.claim(
 			{ tenantId, organizationId, ruleId: rule.id as ID, taskId: subject.id, eventKey: options.eventKey, triggerType: options.triggerType, depth: options.depth },
@@ -149,17 +158,29 @@ export class TaskAutomationRunner {
 
 			const marker = nextMarker({ id: rule.id as ID, name: rule.name }, run.id as ID, options.depth, options.chain);
 			let applied = false;
+			let updateFailed = false;
 			if (hasUpdate) {
 				try {
 					await this.writer.applyUpdate(subject, plan.update, marker);
 					applied = true;
 				} catch (error) {
+					updateFailed = true;
 					failUpdateChanges(plan.changes, this.writer.describe(error));
 				}
 			}
 			const notices = plan.changes.filter((change) => change.field === 'notice' && change.to !== undefined);
-			for (const [index, notice] of plan.notices.entries()) {
+			for (const [index, planned] of plan.notices.entries()) {
 				const line = notices[index];
+				// The update did not happen: the notice goes to the task's assignees as they are, never to people the
+				// failed update was to add.
+				const notice = updateFailed ? { ...planned, employeeIds: [...subject.memberIds] } : planned;
+				if (!notice.employeeIds.length) {
+					if (line) {
+						line.to = 0;
+						line.note = 'The task has no assignee.';
+					}
+					continue;
+				}
 				try {
 					const sent = await this.writer.notify(subject, notice, marker, options.eventKey);
 					if (line) {

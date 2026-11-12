@@ -21,7 +21,7 @@ hints behave exactly as for a person's change. The Gauzy app gets a lazy `@gauzy
 | Durable, async, once per consumer | the event outbox (`EventOutboxService.append`, `EventConsumerRegistry`, the dispatch pass and its delivery records) | event `task_automation.task_changed`, partition `task-automation:<taskId>`; consumer `subscriber:task-automations` |
 | Writes with the platform's side effects | `TaskUpdateCommand` → `TaskService.update` | every task action |
 | A system actor in the background | `RequestContext.runWithRequest` with a synthetic user (the pattern of `linear-process.ts`, `inbox-delivery-context.ts`) | user with the rule's tenant and organization, no employee, no permission, and the automation marker (rule, run, depth) |
-| Attribution | `ActivityLog` entity subscriber hook (`BaseEntityEventSubscriber.beforeEntityCreate`) | an activity row written inside an automation context gets `actorType = System` and "by automation <name>" |
+| Attribution | `ActivityLog` entity subscriber hook (`BaseEntityEventSubscriber.beforeEntityCreate`) | an activity row written inside an automation context gets `actorType = System` and "by automation `<name>`" |
 | Notices | `INBOX_ITEM_WRITER` (`upsertExternal`, NOTICE); `EmployeeNotificationService.publishNotificationEvent` (`TASK_UPDATE`) | Inbox when loaded, platform notification otherwise |
 | Schedules | `@ScheduledJob` + `@QueueWorker` (`@gauzy/scheduler`), `isSchedulerQueueRootEnabled` (the Inbox sweep's layout) | queue `task-automation-maintenance`, job `task-automation.due-sweep`, every 15 min; a Postgres advisory lock keeps one sweep at a time |
 | Tri-dialect migrations | the Inbox plugin's `migration-helpers.ts` | copied (the plugin owns its helpers, as each plugin does) |
@@ -53,7 +53,7 @@ Migrations: `1791000007810-CreateTaskAutomationTables`, `1791000007820-SeedTaskA
 
 ## 4. Event flow
 
-```
+```text
 person saves a task (API request)
   └─ TaskService.update → logActivity → ActivityLogEvent (CQRS, in the request's context)
        └─ TaskAutomationChangeCapture: entity Task? relevant fields changed? any enabled rule of that trigger
@@ -94,8 +94,19 @@ lock.
 - **Rate limit**: `APPLIED` runs of the task in the last 10 minutes ≥ 20 → `RATE_LIMITED`.
 - **Outcomes**: `APPLIED`, `NO_CHANGE`, `CONDITIONS_NOT_MET`, `LOOP_GUARD`, `RATE_LIMITED`, `FAILED`, `PARTIAL`
   (some actions failed). `TRIGGER_NOT_MATCHED` is never stored (it would record every change × every rule).
-- **History**: the last 200 runs per rule are kept; older ones are deleted when a run is recorded (one bounded
-  delete per run).
+- **History**: the last 200 runs per rule are kept once they are a day old; older ones are deleted when a run is
+  recorded (one bounded delete per run). A run younger than a day (`TASK_AUTOMATION_RUN_DEDUPE_MS`, the due sweep's
+  lookback and an hour) is kept whatever the count, and a run still `RUNNING` is never deleted: their keys are the
+  once-per-change guard.
+- **One run of a task at a time**: the outbox hands one task's changes over in order, but the due sweep and the parent
+  triggers (from each sub-task's partition) reach a task from elsewhere, so each run holds a lock on its task across
+  the processes (the sweep's lock kind: Postgres advisory, MySQL `GET_LOCK`, in-process on SQLite) over its read,
+  checks, write and outcome. A run that finds the task busy for 2 s, or its own claim still `RUNNING` inside its
+  5-minute lease, is put back (`TaskAutomationRetryLaterError`): the outbox retries it with its backoff, the sweep on
+  its next pass. Lock connections are bounded by the pool (half of it, at most 4); a pool that cannot spare two keeps
+  to the in-process guard.
+- **Capture cache**: each API instance trusts what it read of an organization's enabled triggers for 30 s, so a rule
+  switched on on one instance fires for changes made on another from at most 30 s later.
 
 ## 6. Modules (`packages/plugins/task-automations/src/lib`)
 

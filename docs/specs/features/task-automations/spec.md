@@ -22,7 +22,7 @@ and the task is still open, tell the assignees". An **automation rule** belongs 
 may be narrowed to one project or one team. It is a **trigger** (what happened), **conditions** (what
 must be true of the task) and **actions** (what to change), and it can be switched on and off, ordered,
 tried on a task without changing it, and audited: each rule keeps the history of its recent runs, and
-every change it makes appears in the task's activity as made "by automation <name>".
+every change it makes appears in the task's activity as made "by automation `<name>`".
 
 Rules run in the background, after the change that set them off, never inside the request of the
 person who made it: saving a task is not slower because an organization has automations, and a rule
@@ -47,7 +47,7 @@ that fails never fails the save.
   an assignee of a to-do task, **then** the task moves to the first in-progress status; a task that is
   already in progress or done is left alone (the template's condition "status is to-do").
 - **Given** the template "When the due date passes, notify the assignees", **when** the due date of an
-  open task passes, **then** each assignee receives one Inbox notice "<task> is overdue" linking to the
+  open task passes, **then** each assignee receives one Inbox notice "`<task>` is overdue" linking to the
   task (or, with the Inbox off, a platform notification) — once per task and due date, however often the
   check runs; a done task is not reported.
 - **Given** a rule scoped to the project "Website", **when** a task of another project changes, **then**
@@ -125,7 +125,7 @@ that fails never fails the save.
   Inbox is on, otherwise a platform notification), with an optional message.
 - **FR-8** Changes MUST be applied through the platform's own task update (so notifications,
   subscriptions, integrations and real-time hints behave as for a person's change) and MUST be recorded
-  in the task's activity with the system as actor and "by automation <name>" in the description.
+  in the task's activity with the system as actor and "by automation `<name>`" in the description.
 
 ### Running
 
@@ -136,13 +136,16 @@ that fails never fails the save.
   date trigger MUST run at most once per rule, task and due date.
 - **FR-11** Rules MUST run in their position order; each MUST see the task as the earlier rules left it.
   Only rules that are on, of the task's organization, and whose scope contains the task (its project,
-  or one of its teams) run.
+  or one of its teams) run. Runs on one task MUST NOT overlap (a due-date run and a change's run, or two
+  sub-tasks' runs on their parent): each reads, decides and writes the task alone.
 - **FR-12** Loop guard: a change made by an automation MAY set off other rules once; a change made by
   those MUST set off nothing; a rule MUST never run on a change it caused itself.
 - **FR-13** Rate limit: automations MUST change one task at most 20 times in any 10 minutes; runs beyond
   are skipped and recorded as rate limited.
 - **FR-14** Each rule MUST keep its runs — when, task, trigger, outcome, what changed or why not — and
-  answer its last 50 newest first; at most 200 runs per rule are kept.
+  answer its last 50 newest first; at most 200 runs per rule are kept once they are a day old (a younger
+  run is kept whatever the count: it is what stops the same change or due date from running the rule
+  twice).
 - **FR-15** A dry run (`POST /task-automations/:id/test` with a task id) MUST answer whether the trigger
   applies, each condition's result and each action's planned change, and MUST write nothing (no task
   change, no run, no notification).
@@ -153,7 +156,10 @@ that fails never fails the save.
 
 - **FR-17** With the flag off nothing of the feature is loaded: no route, no GraphQL field, no table, no
   outbox row, no schedule, no role grant. Turning it on adds tables and grants `TASK_AUTOMATION_MANAGE`
-  to the existing super-admin, admin and manager roles; turning it off again leaves the data inert.
+  to the existing super-admin, admin and manager roles; turning it off again leaves the data inert. The
+  default roles of a tenant created later list the permission whatever the flag (as they list the Chat
+  ones), so a tenant created while the feature is off has it once the feature is turned on; while off it
+  opens nothing.
 
 ## 4. Non-Functional Requirements
 

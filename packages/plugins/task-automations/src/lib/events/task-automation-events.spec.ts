@@ -14,7 +14,13 @@ jest.mock('@gauzy/core', () => {
 		ActivityLog: class ActivityLog {},
 		BaseEntityEventSubscriber,
 		EventOutboxService: class EventOutboxService {},
-		EventConsumerRegistry: class EventConsumerRegistry {},
+		EventConsumerRegistry: class EventConsumerRegistry {
+			static consumerKeyOf(consumer: { kind?: string; key: string }) {
+				return `${consumer.kind}:${consumer.key}`;
+			}
+		},
+		MultiORMEnum: { TypeORM: 'typeorm', MikroORM: 'mikro-orm' },
+		getORMType: () => 'typeorm',
 		RequestContext: {
 			currentUser: () => mockUser.current,
 			currentUserId: () => (mockUser.current?.['id'] as string) ?? null
@@ -47,8 +53,10 @@ describe('TaskAutomationChangeCapture', () => {
 	const setup = (triggers: string[]) => {
 		const rules = { enabledTriggers: jest.fn(async () => new Set(triggers)) };
 		const outbox = { append: jest.fn(async () => ({})) };
+		// The append runs in a transaction of its own; `manager` is that transaction's.
 		const manager = {};
-		const capture = new TaskAutomationChangeCapture(rules as never, outbox as never, { manager } as never);
+		const dataSource = { manager: { transaction: jest.fn(async (work: (manager: unknown) => Promise<unknown>) => work(manager)) } };
+		const capture = new TaskAutomationChangeCapture(rules as never, outbox as never, dataSource as never);
 		return { capture, rules, outbox, manager };
 	};
 
@@ -115,7 +123,7 @@ describe('TaskAutomationChangeCapture', () => {
 
 describe('TaskAutomationEventConsumer', () => {
 	const setup = () => {
-		const registry = { register: jest.fn() };
+		const registry = { register: jest.fn(), list: jest.fn((): unknown[] => []) };
 		const engine = { processChange: jest.fn(async () => 1), processLinkClosed: jest.fn(async () => 1) };
 		const consumer = new TaskAutomationEventConsumer(registry as never, engine as never);
 		return { consumer, registry, engine };
@@ -128,6 +136,18 @@ describe('TaskAutomationEventConsumer', () => {
 		expect(registry.register).toHaveBeenCalledWith(consumer);
 		expect(consumer.events).toEqual([TASK_AUTOMATION_EVENT_NAMES.TASK_CHANGED, TASK_AUTOMATION_EVENT_NAMES.LINK_CLOSED]);
 		expect(consumer.key).toBe('task-automations');
+	});
+
+	it('fails the boot when it cannot register, unless another instance of itself serves the key', () => {
+		const { consumer, registry } = setup();
+		registry.register.mockImplementationOnce(() => {
+			throw new Error('The event consumer "subscriber:task-automations" is already registered.');
+		});
+		expect(() => consumer.onApplicationBootstrap()).toThrow(/already registered/);
+		const twin = setup();
+		twin.registry.list.mockReturnValue([consumer]);
+		twin.consumer.onApplicationBootstrap();
+		expect(twin.registry.register).not.toHaveBeenCalled();
 	});
 
 	it('hands a change to the engine with the event’s id', async () => {
@@ -151,6 +171,9 @@ describe('TaskAutomationEventConsumer', () => {
 		expect(engine.processLinkClosed).toHaveBeenCalledWith('event-2', expect.objectContaining({ taskId: 'task-1', provider: 'github' }));
 		expect(parseLinkClosedEvent({ taskId: 'x' })).toBeNull();
 		expect(parseLinkClosedEvent({ ...closed, kind: 'issue' })?.kind).toBe('issue');
+		// A kind the contract does not name is no closed link.
+		expect(parseLinkClosedEvent({ ...closed, kind: 'unknown' })).toBeNull();
+		expect(parseLinkClosedEvent({ ...closed, kind: undefined })).toBeNull();
 	});
 
 	it('lets an engine failure through, so the delivery is tried again', async () => {

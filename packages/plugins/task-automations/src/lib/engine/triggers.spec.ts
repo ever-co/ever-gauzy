@@ -107,7 +107,10 @@ describe('triggers', () => {
 	describe('SUBTASK_REOPENED', () => {
 		const trigger = { type: TaskAutomationTriggerEnum.SUBTASK_REOPENED };
 		it('fires on the parent when a closed sub-task opens again', () => {
-			expect(matchChangeTrigger(trigger, moved('done', 'in-progress'), { parentId: 'parent-1' }, STATUSES)).toEqual({ subjectTaskId: 'parent-1' });
+			expect(matchChangeTrigger(trigger, moved('done', 'in-progress'), { parentId: 'parent-1' }, STATUSES)).toEqual({
+				subjectTaskId: 'parent-1',
+				requiresOpenChildId: 'task-1'
+			});
 			expect(matchChangeTrigger(trigger, moved('open', 'in-progress'), { parentId: 'parent-1' }, STATUSES)).toBeNull();
 			expect(matchChangeTrigger(trigger, moved('done', 'open'), { parentId: null }, STATUSES)).toBeNull();
 		});

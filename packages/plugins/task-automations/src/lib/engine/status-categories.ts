@@ -25,11 +25,19 @@ export const DEFAULT_STATUS_OF_CATEGORY: Readonly<Record<TaskAutomationStatusCat
 
 const lower = (value: string | null | undefined): string => String(value ?? '').trim().toLowerCase();
 
-/** The `task_status` row a status reference names: by id, else by value. */
+/** Rows a task of `projectId` may use: the project's own, then the organization's (never another project's). */
+function inScope<T extends { projectId: string | null }>(rows: readonly T[], projectId: string | null): T | undefined {
+	return rows.find((row) => !!projectId && row.projectId === projectId) ?? rows.find((row) => !row.projectId);
+}
+
+/**
+ * The `task_status` row a status reference names: by id, else by value — the project's own row first (the ref's
+ * project unless one is given), then the organization's, never another project's.
+ */
 export function statusRowOf(
 	ref: ITaskAutomationStatusRef,
 	statuses: readonly ITaskAutomationStatusRow[],
-	projectId: string | null = null
+	projectId: string | null = ref.projectId ?? null
 ): ITaskAutomationStatusRow | undefined {
 	if (ref.taskStatusId) {
 		const byId = statuses.find((row) => row.id === ref.taskStatusId);
@@ -37,8 +45,10 @@ export function statusRowOf(
 	}
 	const value = lower(ref.status);
 	if (!value) return undefined;
-	const matching = statuses.filter((row) => lower(row.value) === value);
-	return matching.find((row) => row.projectId === projectId) ?? matching.find((row) => !row.projectId) ?? matching[0];
+	return inScope(
+		statuses.filter((row) => lower(row.value) === value),
+		projectId
+	);
 }
 
 /**
@@ -137,11 +147,14 @@ export function resolveNamedStatus(
 	statuses: readonly ITaskAutomationStatusRow[]
 ): { value: string; id: string | null } | null {
 	const byId = statuses.find((row) => row.id === status);
-	if (byId) return { value: byId.value ?? status, id: byId.id };
+	if (byId && (!byId.projectId || byId.projectId === projectId)) return { value: byId.value ?? status, id: byId.id };
+	// Another project's own status stands for its value here: this project's (or the organization's) row of it.
+	const named = byId ? (byId.value ?? '') : status;
 	const row =
-		statusRowOf({ status, taskStatusId: null }, statuses, projectId) ?? statusRowByName(status, statuses, projectId);
-	if (row) return { value: row.value ?? status, id: row.id };
-	const value = lower(status);
+		statusRowOf({ status: named, taskStatusId: null }, statuses, projectId) ??
+		(byId ? undefined : statusRowByName(named, statuses, projectId));
+	if (row) return { value: row.value ?? named, id: row.id };
+	const value = lower(named);
 	return (Object.values(TaskStatusEnum) as string[]).includes(value) ? { value, id: null } : null;
 }
 
@@ -153,8 +166,10 @@ function statusRowByName(
 ): ITaskAutomationStatusRow | undefined {
 	const wanted = lower(name);
 	if (!wanted) return undefined;
-	const matching = statuses.filter((row) => lower(row.name) === wanted);
-	return matching.find((row) => row.projectId === projectId) ?? matching.find((row) => !row.projectId) ?? matching[0];
+	return inScope(
+		statuses.filter((row) => lower(row.name) === wanted),
+		projectId
+	);
 }
 
 /** The priority a `SET_PRIORITY` names (`high` or a `TaskPriority` id) on a task of that project. */
@@ -164,10 +179,11 @@ export function resolveNamedPriority(
 	priorities: readonly ITaskAutomationPriorityRow[]
 ): { value: string; id: string | null } | null {
 	const byId = priorities.find((row) => row.id === priority);
-	if (byId) return { value: byId.value ?? priority, id: byId.id };
-	const value = lower(priority);
-	const matching = priorities.filter((row) => lower(row.value) === value || lower(row.name) === value);
-	const row = matching.find((candidate) => candidate.projectId === projectId) ?? matching.find((candidate) => !candidate.projectId) ?? matching[0];
+	if (byId && (!byId.projectId || byId.projectId === projectId)) return { value: byId.value ?? priority, id: byId.id };
+	// Another project's own priority stands for its value here (this project's or the organization's row of it).
+	const value = lower(byId ? byId.value : priority);
+	const matching = priorities.filter((row) => lower(row.value) === value || (!byId && lower(row.name) === value));
+	const row = inScope(matching, projectId);
 	if (row) return { value: row.value ?? value, id: row.id };
 	return (Object.values(TaskPriorityEnum) as string[]).includes(value) ? { value, id: null } : null;
 }

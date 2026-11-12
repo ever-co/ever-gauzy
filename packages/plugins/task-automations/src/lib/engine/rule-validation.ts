@@ -140,7 +140,10 @@ export function normalizeActions(actions: unknown): ITaskAutomationAction[] {
 				return { type: action.type, employeeIds };
 			}
 			case TaskAutomationActionEnum.SET_ASSIGNEES:
-				// An empty list is allowed: it unassigns everyone.
+				// An empty list is allowed: it unassigns everyone. A missing list is not read as one.
+				if (!Array.isArray(action.employeeIds)) {
+					throw new TaskAutomationValidationError(`${label} needs the people to assign (an empty list unassigns everyone).`);
+				}
 				return { type: action.type, employeeIds: cleanList(action.employeeIds, label) };
 			case TaskAutomationActionEnum.ADD_LABELS:
 			case TaskAutomationActionEnum.REMOVE_LABELS: {
