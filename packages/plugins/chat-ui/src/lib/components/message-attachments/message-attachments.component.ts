@@ -36,7 +36,10 @@ import { FilePreviewComponent } from '../file-preview/file-preview.component';
 							loading="lazy"
 							[attr.width]="box(file)?.width ?? null"
 							[attr.height]="box(file)?.height ?? null"
+							[style.width.px]="box(file)?.width ?? null"
+							[style.aspect-ratio]="ratio(file)"
 							[class.sized]="!!box(file)"
+							(load)="onImageLoad(file, $event)"
 							(error)="onImageError(file)"
 						/>
 					</a>
@@ -87,7 +90,6 @@ import { FilePreviewComponent } from '../file-preview/file-preview.component';
 				max-width: 100%;
 				border-radius: 0.5rem;
 				overflow: hidden;
-				background: var(--chat-hover, var(--background-basic-color-3, rgba(127, 127, 127, 0.12)));
 				line-height: 0;
 				cursor: zoom-in;
 			}
@@ -95,11 +97,18 @@ import { FilePreviewComponent } from '../file-preview/file-preview.component';
 				outline: 2px solid var(--chat-accent, var(--color-primary-default, #3366ff));
 				outline-offset: 2px;
 			}
+			/* Before its size is known a picture is held inside the box; once known, it takes exactly its fitted size. */
 			.image img {
 				display: block;
-				max-width: min(34.375rem, 100%);
-				max-height: 21.875rem;
+				max-width: min(550px, 100%);
+				max-height: 350px;
+				border-radius: 0.5rem;
 				object-fit: contain;
+			}
+			.image img.sized {
+				max-width: 100%;
+				max-height: none;
+				background: var(--chat-hover, var(--background-basic-color-3, rgba(127, 127, 127, 0.12)));
 			}
 			/* A picture of known size keeps its box while it loads, and its proportions in a narrow column. */
 			.image img.sized {
@@ -247,8 +256,29 @@ export class MessageAttachmentsComponent {
 		return fileSizeLabel(file.fileSize);
 	}
 
-	/** The space a picture reserves before it loads (null when its size is not known). */
+	/** The sizes read from the pictures themselves as they loaded (the platform recorded none for them). */
+	private readonly loadedSizes = signal<ReadonlyMap<string, { width: number; height: number }>>(new Map());
+
+	/**
+	 * The size a picture is shown at: fitted from the size the platform recorded (the space it reserves before it
+	 * loads), or from the picture's own once it loaded; null until one is known.
+	 */
 	protected box(file: IChatFile): { width: number; height: number } | null {
-		return imageBox(file);
+		return imageBox(file) ?? imageBox(this.loadedSizes().get(String(file.documentId)) ?? {});
+	}
+
+	/** The picture's proportions, so its container is exactly the picture in a narrow column too. */
+	protected ratio(file: IChatFile): string | null {
+		const box = this.box(file);
+		return box ? `${box.width} / ${box.height}` : null;
+	}
+
+	/** A picture the platform recorded no size for tells its own as it loads. */
+	protected onImageLoad(file: IChatFile, event: Event): void {
+		if (imageBox(file)) return;
+		const image = event.target as HTMLImageElement | null;
+		const id = String(file.documentId);
+		if (!image?.naturalWidth || !image.naturalHeight || this.loadedSizes().has(id)) return;
+		this.loadedSizes.update((map) => new Map(map).set(id, { width: image.naturalWidth, height: image.naturalHeight }));
 	}
 }
