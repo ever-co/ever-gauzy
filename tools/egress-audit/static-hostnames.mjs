@@ -201,6 +201,15 @@ export function scanBundle(dir) {
 export const UI_MODULES = MODULES.filter((p) => p.endsWith('-ui/'));
 
 /**
+ * Whether the web app build compiles `file` of a module's web part: under its `src/`, not its tests, prose or
+ * test setup. The package's own files (package.json, jest and lint configs, tsconfigs, .env.test) never ship.
+ */
+export const shippedByWebPart = (file) =>
+	UI_MODULES.some((module) => file.startsWith(`${module}src/`)) &&
+	!/(^|\/)test-setup\.[cm]?[jt]s$/.test(file) &&
+	!allowed(file, NOT_SHIPPED);
+
+/**
  * The sorted Ever hosts and variables that the shipped sources of the modules' web parts name (not their tests
  * or prose). The built web app holds module code and core code in the same chunks, so the bundle scan cannot
  * tell them apart by file: a host these sources name is the module's own and passes there. The source scan,
@@ -211,7 +220,7 @@ export function moduleHosts(root, { files = sourceFiles(root) } = {}) {
 	const lists = loadEverHosts();
 	const hosts = new Set();
 	for (const file of files) {
-		if (!TEXT.test(file) || SKIP.test(file) || !allowed(file, UI_MODULES) || allowed(file, NOT_SHIPPED)) continue;
+		if (!TEXT.test(file) || SKIP.test(file) || !shippedByWebPart(file)) continue;
 		let text;
 		try {
 			text = readFileSync(join(root, file), 'utf8');
@@ -236,6 +245,13 @@ export function codeGrowth(found, baseline = {}) {
 
 /** The hosts of `found` that `recorded` does not have. */
 export const bundleGrowth = (found, recorded = []) => found.filter((host) => !recorded.includes(host));
+
+/**
+ * The bundle hosts `--write --bundle` records: every recorded host the bundle still names (core code may name it
+ * too, even when a module's web part also does), and of the others only those no module's web part names.
+ */
+export const bundleHostsToRecord = (found, recorded = [], own = []) =>
+	found.filter((host) => recorded.includes(host) || !own.includes(host));
 
 export function readBaseline(file = BASELINE_FILE) {
 	if (!existsSync(file)) return { code: {}, bundle: { hosts: [] } };
@@ -325,8 +341,9 @@ export function main(
 		const next = { code: baseline.code, bundle: baseline.bundle };
 		let grown;
 		if (bundleDir) {
-			// The modules' own hosts pass by themselves (moduleHosts): the baseline records only the others.
-			const hosts = bundleGrowth(scanBundle(resolve(bundleDir)), moduleHosts(root));
+			// A new host a module's web part names passes by itself (moduleHosts) and is not recorded; a recorded
+			// host stays while the bundle names it, since core code may name it as well.
+			const hosts = bundleHostsToRecord(scanBundle(resolve(bundleDir)), baseline.bundle.hosts, moduleHosts(root));
 			next.bundle = { hosts, ...(arg('image') ? { image: arg('image') } : {}) };
 			grown = bundleGrowth(next.bundle.hosts, baseline.bundle.hosts);
 		} else {

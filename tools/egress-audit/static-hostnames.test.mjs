@@ -9,6 +9,7 @@ import { test } from 'node:test';
 import {
 	allowed,
 	bundleGrowth,
+	bundleHostsToRecord,
 	codeGrowth,
 	main,
 	moduleHosts,
@@ -63,6 +64,10 @@ test("in the built web app, a host a module's web part names passes; one only it
 		write('packages/plugins/ever-stats-ui/src/lib/page.html', '<a href="https://app.ever.works">Works</a>\n');
 		write('packages/plugins/ever-connect-ui/src/lib/catalog.spec.ts', "expect('https://rec.so');\n");
 		write('packages/plugins/ever-connect-ui/README.md', 'See https://traduora.co.\n');
+		// The package's own files never reach the web app: its manifest, jest config and test setup.
+		write('packages/plugins/ever-connect-ui/package.json', '{"homepage": "https://pkg.ever.works"}\n');
+		write('packages/plugins/ever-connect-ui/jest.config.ts', "const url = 'https://jest.ever.works';\n");
+		write('packages/plugins/ever-stats-ui/src/test-setup.ts', "const url = 'https://setup.ever.works';\n");
 		write('packages/plugins/ever-connect/src/lib/sdk.ts', "const api = 'https://app-dev.ever.co';\n");
 		write('packages/core/src/lib/core.ts', "const app = 'https://app.ever.team';\n");
 		assert.deepEqual(moduleHosts(dir), ['app.ever.works', 'everdemand.co']);
@@ -75,7 +80,15 @@ test("in the built web app, a host a module's web part names passes; one only it
 			return { code: main(['--root', dir, '--bundle', bundle], io), out: lines.join('\n') };
 		};
 		assert.equal(scan("['https://everdemand.co', 'https://app.ever.works']").code, 0);
-		for (const host of ['rec.so', 'traduora.co', 'app-dev.ever.co', 'app.ever.team']) {
+		for (const host of [
+			'rec.so',
+			'traduora.co',
+			'pkg.ever.works',
+			'jest.ever.works',
+			'setup.ever.works',
+			'app-dev.ever.co',
+			'app.ever.team'
+		]) {
 			const { code, out } = scan(`['https://everdemand.co', 'https://${host}']`);
 			assert.equal(code, 1, host);
 			assert.match(out, new RegExp(`^  ${host.replace(/\./g, '\\.')}$`, 'm'));
@@ -84,6 +97,17 @@ test("in the built web app, a host a module's web part names passes; one only it
 	} finally {
 		rmSync(dir, { recursive: true, force: true });
 	}
+});
+
+test('rewriting the bundle list keeps a recorded host a module also names, and records only the new hosts of no module', () => {
+	const recorded = ['app.gauzy.co', 'gauzy.co', 'old.gauzy.co'];
+	const own = ['app.gauzy.co', 'app.ever.works'];
+	// app.gauzy.co stays (core code names it too), old.gauzy.co goes (the bundle no longer names it),
+	// app.ever.works is the module's own, and api.ever.co is new and no module's: recorded, so --write refuses it.
+	assert.deepEqual(
+		bundleHostsToRecord(['api.ever.co', 'app.ever.works', 'app.gauzy.co', 'gauzy.co'], recorded, own),
+		['api.ever.co', 'app.gauzy.co', 'gauzy.co']
+	);
 });
 
 test('every Ever-owned name counts, names under it included; other hosts do not', () => {
