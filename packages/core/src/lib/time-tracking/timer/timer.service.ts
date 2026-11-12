@@ -1048,7 +1048,9 @@ export class TimerService {
 	 * the update plans the release of the slots past an end it moves back from the range it is given, and the stored
 	 * range is already the new one. If the second try fails too, the log keeps its stop, as
 	 * `ScheduleTimeLogEntriesCommand` only stops logs still running, and the warning says what may be missing. A log
-	 * still running is left to that command, which stops it as before. The new run starts either way.
+	 * still running had nothing written, so it gets the same update once more: left running, that command would end a
+	 * run without time slots ten seconds after its start. If the second try fails too, the log is left to that command,
+	 * which stops it as before. The new run starts either way.
 	 *
 	 * @param log - The running log.
 	 * @param stoppedAt - Where it ends.
@@ -1062,9 +1064,15 @@ export class TimerService {
 		} catch (error) {
 			const storedLog = await this.storedStoppedLog(log.id, log.tenantId);
 			if (!storedLog) {
-				this.logger.warn(
-					`Failed to stop the replaced time log ${log.id}, left to the cleanup: ${error?.message}`
-				);
+				// Nothing was written: the same update once more, so the run ends where it should
+				try {
+					await this._commandBus.execute(new TimeLogUpdateCommand(partialTimeLog, log.id));
+					this.logger.warn(`Stopped the replaced time log ${log.id} on a second try: ${error?.message}`);
+				} catch (retryError) {
+					this.logger.warn(
+						`Failed to stop the replaced time log ${log.id} on a second try, left to the cleanup if it still runs: ${retryError?.message}`
+					);
+				}
 				return;
 			}
 			try {
