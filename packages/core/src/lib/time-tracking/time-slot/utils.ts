@@ -28,6 +28,20 @@ export function reachesTimeSlot(timeSlot: ITimeSlot, from: Date, to: Date): bool
 }
 
 /**
+ * The milliseconds of the time from `from` to `to` that lie inside the ten minutes of a time slot.
+ *
+ * @param timeSlot - The time slot.
+ * @param from - The start of the time.
+ * @param to - The end of the time.
+ */
+export function timeInTimeSlot(timeSlot: ITimeSlot, from: Date, to: Date): number {
+	const timeStart = moment.max(moment(timeSlot.startedAt), moment(from));
+	const timeEnd = moment.min(moment(timeSlotEnd(timeSlot)), moment(to));
+	const milliseconds = timeEnd.diff(timeStart);
+	return Math.max(milliseconds, 0);
+}
+
+/**
  * Generates time slots in 10-minute intervals between a start and end time.
  *
  * - If the start time is aligned with a 10-minute boundary (e.g., 10:20), a full 10-minute slot is created.
