@@ -240,7 +240,9 @@ export class ChatWebhookService {
 			return { status: 410, body: 'channel_is_archived' };
 		}
 		const decision = await this.limiter.take(webhook.id as ID, String(webhook.organizationId ?? webhook.tenantId));
-		if (!decision.allowed) {
+		// `=== false`, not `!`: the worker and API builds compile this plugin without strictNullChecks, where a truthiness
+		// check does not narrow the decision to its refused member.
+		if (decision.allowed === false) {
 			this.count(webhook, 'rateLimitedCount');
 			return { status: 429, body: 'rate_limited', retryAfterSeconds: decision.retryAfterSeconds };
 		}
