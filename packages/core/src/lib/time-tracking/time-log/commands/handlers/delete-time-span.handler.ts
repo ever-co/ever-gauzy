@@ -49,6 +49,14 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 			return false;
 		}
 
+		// A running log is never cut, split or deleted: its timer still records into it, and the range would take its
+		// slots (screenshots, activity) with it. Manual time, offline uploads and the timer stop's own conflict cleanup
+		// all come through here, so each of them leaves it whole, as the time-slot delete already does.
+		if (log.isRunning) {
+			this.debug(() => `Time log ${log.id} is running: left whole`);
+			return false;
+		}
+
 		const { startedAt, stoppedAt, employeeId, organizationId } = log;
 
 		const newTimeRange = moment.range(start, end); // Calculate the new time rang
