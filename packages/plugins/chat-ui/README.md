@@ -82,7 +82,8 @@ The UI has no switch of its own. It follows the API:
   (`DELETE /api/chat/attachments/:documentId`, best effort; the platform's 24 h
   sweep takes the rest, and a file a send took is never discarded). A picture
   whose size the platform read at the upload reserves its box (fitted into
-  320 × 240) before it loads. Messages show pictures inline and other files as links, read through the
+  320 × 240) before it loads. Messages show pictures inline and other files
+  as links, read through the
   conversation's files (`GET /api/chat/conversations/:id/files`, members
   only), which the header's Files pane lists too.
 - **Create task from message**: title (the message's first line to start
@@ -149,7 +150,8 @@ and asks again.
 
 ## Not yet in this plugin
 
-The icon of a link preview (the platform serves pictures only), search (`GET /chat/search` exists), presence.
+The icon of a link preview (the platform serves pictures only), search
+(`GET /chat/search` exists), presence.
 
 ## Tests
 
