@@ -137,6 +137,10 @@ const at = (time: string) => new Date(`2026-10-12T${time}:00.000Z`);
 /** The `HH:mm` of a date, UTC. */
 const hhmm = (date: Date) => date.toISOString().slice(11, 16);
 
+/** The start of each ten-minute slot of `start`–`stop`. */
+const slotStarts = (start: string, stop: string) =>
+	generateTimeSlots(at(start), at(stop)).map((slot) => hhmm(new Date(slot.startedAt)));
+
 /** The timesheet of a date's week, as `TimesheetFirstOrCreateCommand` finds it (no date: the current week's). */
 const timesheetOf = (date?: Date) => `timesheet-${moment.utc(date).startOf('week').format('YYYY-MM-DD')}`;
 
@@ -379,8 +383,9 @@ function createStore() {
 		/**
 		 * The cleanup for a new `start`–`stop` range, as its callers run it: the logs the conflict lookup reads (those the
 		 * range overlaps, with their slots: the TypeORM lookup joins them), then one command per slot of each, in turn.
+		 * The lookup names no order for the slots, so they can be sent latest first too.
 		 */
-		async cleanUp(start: string, stop: string): Promise<boolean[]> {
+		async cleanUp(start: string, stop: string, order: 'earliest first' | 'latest first' = 'earliest first') {
 			const range = { start: at(start), end: at(stop) };
 			const conflicts = logs
 				.filter((log) => !log.deletedAt && log.startedAt < range.end && log.stoppedAt > range.start)
@@ -388,7 +393,8 @@ function createStore() {
 				.filter((log) => log.timeSlots.length > 0);
 			const results: boolean[] = [];
 			for (const timeLog of conflicts) {
-				for (const timeSlot of timeLog.timeSlots) {
+				const timeSlots = order === 'latest first' ? [...timeLog.timeSlots].reverse() : timeLog.timeSlots;
+				for (const timeSlot of timeSlots) {
 					results.push(await handler.execute(new DeleteTimeSpanCommand(range, timeLog, timeSlot)));
 				}
 			}
@@ -493,5 +499,40 @@ describe('DeleteTimeSpanHandler acts on the log as it now stands (#11823)', () =
 		);
 
 		expect(store.timeline()).toEqual([{ range: '08:00-09:00', isRunning: false, slots: BEFORE_NINE }]);
+	});
+});
+
+describe('DeleteTimeSpanHandler and a stopped log the new range takes one end of (#11823)', () => {
+	beforeEach(() => {
+		jest.spyOn(console, 'log').mockImplementation(() => undefined);
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT_ID);
+	});
+
+	afterEach(() => jest.restoreAllMocks());
+
+	describe.each(['earliest first', 'latest first'] as const)('its slots sent %s', (order) => {
+		it('keeps the slots before the new range when that range takes the end of the log', async () => {
+			const store = createStore();
+			store.addLog('tracked', '08:00', '10:00');
+
+			await store.cleanUp('09:00', '11:00', order);
+
+			expect(store.timeline()).toEqual([
+				{ range: '08:00-09:00', isRunning: false, slots: slotStarts('08:00', '09:00') }
+			]);
+			expect(store.slotCount()).toBe(6);
+		});
+
+		it('keeps the slots after the new range when that range takes the start of the log', async () => {
+			const store = createStore();
+			store.addLog('tracked', '09:00', '11:00');
+
+			await store.cleanUp('08:00', '10:00', order);
+
+			expect(store.timeline()).toEqual([
+				{ range: '10:00-11:00', isRunning: false, slots: slotStarts('10:00', '11:00') }
+			]);
+			expect(store.slotCount()).toBe(6);
+		});
 	});
 });

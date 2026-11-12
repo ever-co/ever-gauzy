@@ -91,15 +91,7 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 				 */
 				// Partial overlap: update start time or delete
 				this.debug(() => 'Partial overlap: update started time or delete');
-				await this.updateStartTimeOrDelete(
-					log,
-					timeSlot,
-					organizationId,
-					employeeId,
-					end,
-					stoppedAt,
-					forceDelete
-				);
+				await this.updateStartTimeOrDelete(log, end, stoppedAt, forceDelete);
 			}
 		} else {
 			if (moment(stoppedAt).isBetween(moment(start), moment(end), null, '[]')) {
@@ -111,16 +103,7 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 				 * 		|--------------------------------------|
 				 */
 				this.debug(() => 'Partial overlap: update stopped time or delete');
-				await this.updateStopTimeOrDelete(
-					log,
-					timeSlot,
-					organizationId,
-					employeeId,
-					start,
-					startedAt,
-					end,
-					forceDelete
-				);
+				await this.updateStopTimeOrDelete(log, start, startedAt, forceDelete);
 			} else {
 				/*
 				 * Split database time in two entries.
@@ -149,18 +132,17 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 	/**
 	 * Updates the start time or deletes the time log if remaining duration is 0.
 	 *
+	 * The update releases the slots of the part it drops, which is the part inside the new range, and only those: a slot
+	 * only this log holds goes, one another log shares stays with that log. The slots after the new range stay (the
+	 * command's own slot used to be deleted here as well, whatever its time).
+	 *
 	 * @param log - The time log to update or delete.
-	 * @param slot - The related time slot.
-	 * @param organizationId - The organization ID.
-	 * @param employeeId - The employee ID.
-	 * @param end - The new end time.
+	 * @param end - The end of the new range, the log's new start.
 	 * @param stoppedAt - The current stopped time of the log.
+	 * @param forceDelete - Whether to hard delete what goes (default: false).
 	 */
 	private async updateStartTimeOrDelete(
 		log: ITimeLog,
-		slot: ITimeSlot,
-		organizationId: ID,
-		employeeId: ID,
 		end: Date,
 		stoppedAt: Date,
 		forceDelete: boolean = false
@@ -174,26 +156,9 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 			// Update the start time if there is remaining duration
 			try {
 				this.debug(() => `update startedAt time to ${end}`);
-				// Update the started at time
+				// Update the started at time, releasing the slots before it
 				let timeLog: ITimeLog = await this._commandBus.execute(
 					new TimeLogUpdateCommand({ startedAt: end }, log, true, forceDelete)
-				);
-
-				// Delete the associated time slots
-				const timeSlotsIds = [slot.id];
-
-				// Bulk delete the time slots
-				await this._commandBus.execute(
-					new TimeSlotBulkDeleteCommand(
-						{
-							organizationId,
-							employeeId,
-							timeLog,
-							timeSlotsIds
-						},
-						forceDelete,
-						true
-					)
 				);
 
 				// Check if there are any remaining time slots
@@ -220,27 +185,23 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 	/**
 	 * Updates the stoppedAt time for a given time log, or deletes it if the remaining duration is 0.
 	 *
+	 * As for a new start (see `updateStartTimeOrDelete`), the update releases the slots inside the new range and keeps
+	 * the ones before it.
+	 *
 	 * @param log - The time log to update or delete.
-	 * @param slot - The related time slot.
-	 * @param organizationId - The organization ID.
-	 * @param employeeId - The employee ID.
-	 * @param start - The new start time.
+	 * @param start - The start of the new range, the log's new end.
 	 * @param startedAt - The original start time of the time log.
-	 * @param end - The new end time for the time log.
+	 * @param forceDelete - Whether to hard delete what goes (default: false).
 	 */
 	private async updateStopTimeOrDelete(
 		log: ITimeLog,
-		slot: ITimeSlot,
-		organizationId: ID,
-		employeeId: ID,
 		start: Date,
 		startedAt: Date,
-		end: Date,
 		forceDelete: boolean = false
 	): Promise<void> {
 		const startedAtMoment = moment(startedAt); // Get the started at moment
-		const endMoment = moment(end); // Get the end moment
-		const remainingDuration = endMoment.diff(startedAtMoment, 'seconds'); // Calculate the remaining duration
+		const startMoment = moment(start); // Get the start moment
+		const remainingDuration = startMoment.diff(startedAtMoment, 'seconds'); // Calculate the remaining duration
 
 		// If there is remaining duration
 		if (remainingDuration > 0) {
@@ -248,26 +209,9 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 			try {
 				this.debug(() => `update stoppedAt time to ${start}`);
 
-				// Update the stoppedAt time
+				// Update the stoppedAt time, releasing the slots after it
 				let timeLog: ITimeLog = await this._commandBus.execute(
 					new TimeLogUpdateCommand({ stoppedAt: start }, log, true, forceDelete)
-				);
-
-				// Delete the associated time slots
-				const timeSlotsIds = [slot.id];
-
-				// Bulk delete the time slots
-				await this._commandBus.execute(
-					new TimeSlotBulkDeleteCommand(
-						{
-							organizationId,
-							employeeId,
-							timeLog,
-							timeSlotsIds
-						},
-						forceDelete,
-						true
-					)
 				);
 
 				// Check if there are any remaining time slots
