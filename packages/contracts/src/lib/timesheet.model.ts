@@ -399,6 +399,11 @@ export interface ITimerToggleInput
 	startedAt?: Date;
 	stoppedAt?: Date;
 	planDay?: string;
+	/**
+	 * The running time log a stop or a toggle is for, as the client last saw it. A stop naming another log than the
+	 * running one is refused, and the running one goes on. A start ignores it.
+	 */
+	timeLogId?: ID;
 }
 
 export interface IManualTimeInput extends IBasePerTenantAndOrganizationEntityModel {

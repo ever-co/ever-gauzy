@@ -6,7 +6,7 @@ import { PermissionGuard, TenantPermissionGuard } from './../../shared/guards';
 import { Permissions } from './../../shared/decorators';
 import { UseValidationPipe } from '../../shared/pipes';
 import { TimerService } from './timer.service';
-import { StartTimerDTO, StopTimerDTO, TimerStatusQueryDTO } from './dto';
+import { StartTimerDTO, StopTimerDTO, TimerStatusQueryDTO, ToggleTimerDTO } from './dto';
 import { GetTimerStatusQuery } from './queries/get-timer-status.query';
 import { StartTimerCommand, StopTimerCommand } from './commands';
 
@@ -56,7 +56,7 @@ export class TimerController {
 	 *
 	 * Toggles the timer state (On/Off) based on the provided data.
 	 *
-	 * @param entity - A StartTimerDTO object containing the necessary data to toggle the timer.
+	 * @param entity - A ToggleTimerDTO object containing the necessary data to toggle the timer.
 	 * @returns A promise that resolves to an ITimeLog object representing the timer log after toggling,
 	 *          or null if no log is created.
 	 */
@@ -71,7 +71,7 @@ export class TimerController {
 	})
 	@Post('/toggle')
 	@UseValidationPipe()
-	async toggleTimer(@Body() entity: StartTimerDTO): Promise<ITimeLog | null> {
+	async toggleTimer(@Body() entity: ToggleTimerDTO): Promise<ITimeLog | null> {
 		return await this.timerService.toggleTimeLog(entity);
 	}
 

@@ -416,7 +416,8 @@ describe('TimerResolver — the SDL declares the capabilities the REST routes se
 			'startedAt: DateTime',
 			'stoppedAt: DateTime',
 			'manualTimeSlot: Boolean',
-			'planDay: String'
+			'planDay: String',
+			'timeLogId: ID'
 		]) {
 			expect(body).toMatch(new RegExp(member.replace(' ', '\\s*')));
 		}
