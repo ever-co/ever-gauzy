@@ -1,5 +1,5 @@
 import { HttpErrorResponse, HttpEvent, HttpEventType } from '@angular/common/http';
-import { Observable, Subject, Subscription, catchError, exhaustMap, map, of, timer } from 'rxjs';
+import { Observable, Subject, Subscription, catchError, exhaustMap, map, of, timeout, timer } from 'rxjs';
 import { DocumentVisibilityEnum, ID, IDocumentImport } from '@gauzy/contracts';
 import { DOCS_IMPORT_POLL_MS, errorKeyOf, isImportFinished } from './docs-import.model';
 
@@ -22,6 +22,9 @@ export interface IDocsImportRunClient {
 
 /** Failed reads in a row after which the dialog says the progress cannot be read (polling goes on). */
 export const DOCS_IMPORT_TRACKING_FAILURES = 3;
+
+/** How long one read of the import may take: a read that never answers counts as a failed one. */
+export const DOCS_IMPORT_READ_TIMEOUT_MS = 20_000;
 
 /** A read refused for good: the import is gone, or not the reader's any more. Polling stops. */
 const isPermanentRefusal = (error: unknown): boolean => [401, 403, 404].includes((error as HttpErrorResponse | null)?.status ?? 0);
@@ -81,7 +84,14 @@ export class DocsImportRun {
 				if (event.type === HttpEventType.UploadProgress) {
 					this.uploadPercent = event.total ? Math.round((event.loaded / event.total) * 100) : 0;
 					this.emit();
-				} else if (event.type === HttpEventType.Response && event.body) {
+				} else if (event.type === HttpEventType.Response) {
+					if (!event.body) {
+						// An answer without the import (a proxy in between, say): nothing to follow, Start can be pressed again.
+						this.step = 'pick';
+						this.requestError = errorKeyOf(null);
+						this.emit();
+						return;
+					}
 					this.client.refreshImportProbe();
 					this.follow(event.body);
 				}
@@ -92,6 +102,13 @@ export class DocsImportRun {
 				this.emit();
 			}
 		});
+	}
+
+	/** Forgets the refusal of an earlier upload (another file was chosen). */
+	clearRequestError(): void {
+		if (!this.requestError) return;
+		this.requestError = null;
+		this.emit();
 	}
 
 	/** Reads the running import again, at once and then on the usual interval (the zip is not sent again). */
@@ -135,6 +152,7 @@ export class DocsImportRun {
 			.pipe(
 				exhaustMap(() =>
 					this.client.get(started.id as ID).pipe(
+						timeout(DOCS_IMPORT_READ_TIMEOUT_MS),
 						map((value) => ({ value, error: null as unknown })),
 						catchError((error: unknown) => of({ value: null as IDocumentImport | null, error }))
 					)

@@ -634,13 +634,16 @@ export class DocumentPageComponent implements OnInit, OnDestroy {
 	async exportPdf(subtree = false): Promise<void> {
 		this.menuOpen = false;
 		if (!this.document?.id || !this.isPage || this.pdfBusy) return;
+		// The page asked for: the component is reused when the route moves to another page while the saves settle.
+		const pageId = this.document.id as ID;
 		this.pdfBusy = true;
 		try {
 			if (this.editorComponent && !(await this.editorComponent.settleSaves())) {
 				this.toastrService.warning(this.translate.instant('DOCS.EXPORT.PDF_UNSAVED'));
 				return;
 			}
-			const result = await this.importService.downloadPdf(this.document.id as ID, { subtree });
+			if (this.document?.id !== pageId) return;
+			const result = await this.importService.downloadPdf(pageId, { subtree });
 			if (!result.ok) {
 				const tooMany = result.error?.status === 413;
 				this.toastrService.danger(this.translate.instant(tooMany ? 'DOCS.EXPORT.PDF_TOO_MANY_PAGES' : 'DOCS.EXPORT.PDF_FAILED'));

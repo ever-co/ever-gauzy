@@ -4,9 +4,9 @@
  * end told once, and a refused upload kept apart from the dialog's check of the file.
  */
 import { HttpErrorResponse, HttpEventType, HttpResponse } from '@angular/common/http';
-import { Observable, of, Subject, throwError, timer, map } from 'rxjs';
+import { NEVER, Observable, of, Subject, throwError, timer, map } from 'rxjs';
 import { DocumentImportPhaseEnum, DocumentImportStatusEnum, DocumentVisibilityEnum, IDocumentImport } from '@gauzy/contracts';
-import { DOCS_IMPORT_TRACKING_FAILURES, DocsImportRun } from './docs-import-run';
+import { DOCS_IMPORT_READ_TIMEOUT_MS, DOCS_IMPORT_TRACKING_FAILURES, DocsImportRun } from './docs-import-run';
 
 const running = (processed: number): IDocumentImport =>
 	({ id: 'import-1', status: DocumentImportStatusEnum.RUNNING, phase: DocumentImportPhaseEnum.TREE, processedItems: processed, totalItems: 10 }) as IDocumentImport;
@@ -105,6 +105,25 @@ describe('DocsImportRun', () => {
 		expect(run.step).toBe('done');
 		expect(client.start).toHaveBeenCalledTimes(1);
 		expect(onFinished).toHaveBeenCalledTimes(1);
+	});
+
+	it('counts a read that never answers as a failed one', () => {
+		const { run, client } = build();
+		client.get.mockReturnValue(NEVER);
+		started(run, client, running(1));
+
+		jest.advanceTimersByTime(1500 + DOCS_IMPORT_TRACKING_FAILURES * (DOCS_IMPORT_READ_TIMEOUT_MS + 1500));
+		expect(run.trackingError).toBe(true);
+		expect(client.get.mock.calls.length).toBeGreaterThanOrEqual(DOCS_IMPORT_TRACKING_FAILURES);
+	});
+
+	it('goes back to the picker when the upload answers without the import', () => {
+		const { run, client } = build();
+		client.start.mockReturnValue(of(new HttpResponse<IDocumentImport>({ body: null })));
+		run.start(zip(), TARGET);
+		expect(run).toMatchObject({ step: 'pick', requestError: 'DOCS.IMPORT.ERROR.FAILED', inProgress: false });
+		run.clearRequestError();
+		expect(run.requestError).toBeNull();
 	});
 
 	it('keeps a refused upload apart, so Start can be pressed again', () => {

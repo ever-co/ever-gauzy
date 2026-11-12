@@ -336,6 +336,8 @@ export class DocsImportDialogComponent extends TranslationBaseComponent implemen
 		const input = event.target as HTMLInputElement;
 		this.file = input.files?.[0] ?? null;
 		this.fileError = null;
+		// The server's refusal was of the previous file.
+		this.run.clearRequestError();
 		if (this.file && !isZipFile(this.file)) this.fileError = 'DOCS.IMPORT.ERROR.NOT_A_ZIP';
 		else if (this.file && this.maxZipBytes && this.file.size > this.maxZipBytes) this.fileError = 'DOCS.IMPORT.ERROR.TOO_LARGE';
 		this.cdr.markForCheck();
