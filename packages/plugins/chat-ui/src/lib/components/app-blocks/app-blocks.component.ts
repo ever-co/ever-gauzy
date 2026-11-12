@@ -288,7 +288,7 @@ export class AppBlocksComponent {
 					const replyMayFollow = !!result.replayed && state === 'done' && !result.interaction.replyApplied;
 					this.setState(key, replyMayFollow ? 'pending' : state);
 					if (state === 'failed') this.setFailure(blockId, 'CHAT.APP.CALLBACK_FAILED');
-					if (state === 'pending' || replyMayFollow) this.follow(key, blockId, result.interaction.interactionId);
+					if (state === 'pending' || replyMayFollow) this.follow(key, blockId, result.interaction.interactionId, replyMayFollow);
 				},
 				error: (error: { status?: number }) => {
 					// A refusal settles the click (the next one is a new click); a click with no answer, or a server error
@@ -306,13 +306,14 @@ export class AppBlocksComponent {
 	 * page shows the reply without waiting for realtime. The API writes a retry's delivery just before it applies the
 	 * reply, so a delivery without its reply is asked about once more. A slow answer is waited for (the next ask is
 	 * skipped, not the answer). When the asking stops first, the button clicks again and says the app has not answered
-	 * yet.
+	 * yet. `delivered`: the click's own answer already said it was delivered (a repeat answered before its reply landed):
+	 * only the one more ask is left, and the button ends done whatever it answers.
 	 */
-	private follow(key: string, blockId: string | null, interactionId: ID): void {
+	private follow(key: string, blockId: string | null, interactionId: ID, delivered = false): void {
 		let settled = false;
-		let lookedAgain = false;
+		let lookedAgain = delivered;
 		/** A delivery without its reply was seen, and the one more ask is under way. */
-		let deliveredSeen = false;
+		let deliveredSeen = delivered;
 		timer(APP_INTERACTION_POLL_MS, APP_INTERACTION_POLL_MS)
 			.pipe(
 				take(APP_INTERACTION_POLL_MAX),
