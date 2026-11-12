@@ -50,7 +50,7 @@
 - [x] **T32**. Draft uploads: `chat_attachment_draft` (migration `1791000007310`), recorded on a chat composer's Docs upload, consumed by the send / edit, `DELETE /chat/attachments/:documentId`, 24 h sweep that purges untouched, unattached drafts and frees their stored bytes (#11800)
 - [x] **T33**. `POST /chat/categories/reorder`: categories and the channels within them in one transaction (#11800)
 - [x] **T34**. Picture `width` / `height` read at the Docs upload (`metadata.upload.image`) and served by `GET /chat/conversations/:id/files` (#11800)
-- [ ] **T35**. Angular `chat-ui`: editable task cards, typing line, files-only send (the file-names body dropped), draft discard, one reorder call, reserved picture space
+- [x] **T35**. Angular `chat-ui`: editable task cards, typing line, files-only send (the file-names body dropped), draft discard, one reorder call, reserved picture space (`feat/chat-fr-gaps-ui`)
 
 ## Phase 4 — Verification and docs
 
