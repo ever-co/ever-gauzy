@@ -1,5 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { TranslateService } from '@ngx-translate/core';
 import { ID, ITask } from '@gauzy/contracts';
+import en from '../../../i18n/en.json';
 import { TimelineComponent } from './timeline.component';
 
 const task = (id: string, fields: Partial<ITask> = {}): ITask =>
@@ -13,6 +15,9 @@ describe('TimelineComponent', () => {
 
 	beforeEach(async () => {
 		await TestBed.configureTestingModule({ imports: [TimelineComponent] }).compileComponents();
+		const translate = TestBed.inject(TranslateService);
+		translate.setTranslation('en', { TASK_VIEWS: en });
+		translate.use('en');
 		jest.useFakeTimers();
 		jest.setSystemTime(new Date(2026, 10, 12, 10, 0));
 		fixture = TestBed.createComponent(TimelineComponent);
@@ -60,12 +65,12 @@ describe('TimelineComponent', () => {
 
 		expect(bar('late')?.classList).toContain('overdue');
 		expect(bar('late')?.classList).toContain('single');
-		expect(bar('late')?.getAttribute('aria-label')).toContain('Task late');
-		expect(bar('late')?.getAttribute('aria-label')).toContain('TASK_VIEWS.TIMELINE.DUE_ONLY');
-		expect(bar('late')?.getAttribute('aria-label')).toContain('TASK_VIEWS.TIMELINE.OVERDUE');
+		// The words the reader sees, in the app's language.
+		expect(bar('late')?.getAttribute('aria-label')).toBe('Task late — Nov 1, due date only, overdue');
 		expect(bar('done')?.classList).not.toContain('overdue');
+		expect(bar('done')?.getAttribute('aria-label')).toBe('Task done — Nov 1, due date only');
 		expect(bar('range')?.classList).not.toContain('single');
-		expect(bar('range')?.getAttribute('aria-label')).toContain('TASK_VIEWS.TIMELINE.RANGE');
+		expect(bar('range')?.getAttribute('aria-label')).toBe('Task range — Nov 10 – Nov 14');
 	});
 
 	it('marks today, and zooms out to months', () => {
@@ -77,6 +82,15 @@ describe('TimelineComponent', () => {
 		// Months: 10 px a day.
 		expect(bar('a')?.style.width).toBe(`${5 * 10}px`);
 		expect(host().querySelector('[data-test="timeline-zoom-month"]')?.getAttribute('aria-pressed')).toBe('true');
+	});
+
+	it('says which month a month calendar within one month shows', () => {
+		show([task('a', { startDate: '2026-11-10' as never, dueDate: '2026-11-14' as never })]);
+		(host().querySelector('[data-test="timeline-zoom-month"]') as HTMLButtonElement).click();
+		fixture.detectChanges();
+		// Nov 3 to Nov 21: no first of a month, so the first day is labelled.
+		const labels = Array.from(host().querySelectorAll('.head .major')).map((label) => label.textContent?.trim());
+		expect(labels).toEqual(['Nov 2026']);
 	});
 
 	it('says so when the view has no task', () => {

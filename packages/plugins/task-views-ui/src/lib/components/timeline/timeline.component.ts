@@ -34,6 +34,9 @@ export const TIMELINE_TITLE_WIDTH = 240;
 /** The narrowest bar that shows its task's title inside it. */
 const TITLE_IN_BAR_WIDTH = 64;
 
+/** Room a header label takes: the first day is labelled when the first labelled day is further than this. */
+const HEADER_LABEL_WIDTH = 72;
+
 /** One row of the timeline: the task, its bar, and what its bar is named by. */
 export interface TimelineRow {
 	task: ITask;
@@ -123,17 +126,23 @@ export class TimelineComponent {
 		return this.tasks().filter((task) => ids.has(String(task.id)));
 	});
 
-	/** The labelled days: Mondays by weeks (`Nov 9`), the first of each month by months (`Nov 2026`). */
+	/**
+	 * The labelled days: Mondays by weeks (`Nov 9`), the first of each month by months (`Nov 2026`); and the first day
+	 * drawn when the first of those is further on (a month calendar within one month still says which month it is).
+	 */
 	protected readonly majorTicks = computed<TimelineHeaderTick[]>(() => {
 		this.language();
 		const zoom = this.zoom();
 		const width = this.dayWidth();
-		return ticksOf(this.timeline(), zoom)
+		const format = zoom === 'week' ? 'MMM d' : 'MMM y';
+		const ticks = ticksOf(this.timeline(), zoom);
+		const labelled = ticks
 			.filter((tick) => tick.isMajor)
-			.map((tick) => ({
-				left: tick.day * width,
-				label: formatDate(tick.date, zoom === 'week' ? 'MMM d' : 'MMM y', this.locale)
-			}));
+			.map((tick) => ({ left: tick.day * width, label: this.format(tick.date, format) }));
+		if (ticks.length && (!labelled.length || labelled[0].left >= HEADER_LABEL_WIDTH)) {
+			labelled.unshift({ left: 0, label: this.format(ticks[0].date, format) });
+		}
+		return labelled;
 	});
 
 	/** By weeks, every day's number under the labels, weekends marked. */
@@ -200,11 +209,27 @@ export class TimelineComponent {
 		return row.bar.taskId;
 	}
 
+	/**
+	 * A date in the language chosen in the app, when Angular has that language's locale data; else in the app's locale
+	 * (`LOCALE_ID`), as the list's dates are.
+	 */
+	private format(date: Date, format: string): string {
+		const language = this.language();
+		if (language && language !== this.locale) {
+			try {
+				return formatDate(date, format, language);
+			} catch {
+				// No locale data registered for the language: the app's locale below.
+			}
+		}
+		return formatDate(date, format, this.locale);
+	}
+
 	/** A task's dates in words: the range (or its one date), then what is special about it. */
 	private datesOf(bar: TaskTimelineBar, thisYear: number): string {
 		const day = (value: number) => {
 			const date = dateOfDayNumber(value);
-			return formatDate(date, date.getFullYear() === thisYear ? 'MMM d' : 'mediumDate', this.locale);
+			return this.format(date, date.getFullYear() === thisYear ? 'MMM d' : 'mediumDate');
 		};
 		const words: string[] = [];
 		if (bar.taskStartDay !== null && bar.taskDueDay !== null && !bar.hasInvalidRange) {
