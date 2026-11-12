@@ -34,7 +34,7 @@ const TREE: INode[] = [
 	{ id: 'f0000000-0000-4000-8000-000000000003', kind: DocumentKindEnum.FOLDER, name: 'Policies', parentId: 'f0000000-0000-4000-8000-000000000001', index: 1 },
 	{ id: 'p0000000-0000-4000-8000-000000000004', kind: DocumentKindEnum.PAGE, name: 'Travel', parentId: 'f0000000-0000-4000-8000-000000000003', index: 0, contentJson: { type: 'doc', content: [text('Book early')] } },
 	{ id: 'a0000000-0000-4000-8000-000000000005', kind: DocumentKindEnum.FILE, name: 'Policy', originalFilename: 'policy.pdf', parentId: 'f0000000-0000-4000-8000-000000000003', index: 1, bytes: '%PDF-policy' },
-	{ id: 'a0000000-0000-4000-8000-000000000006', kind: DocumentKindEnum.FILE, name: 'Logo', originalFilename: 'logo:final?.png', parentId: 'f0000000-0000-4000-8000-000000000001', index: 2, bytes: 'PNGDATA' },
+	{ id: 'a0000000-0000-4000-8000-000000000006', kind: DocumentKindEnum.FILE, name: 'Logo', originalFilename: 'logo:final?.png', parentId: 'f0000000-0000-4000-8000-000000000001', index: 2, bytes: 'png-bytes' },
 	{ id: 'p0000000-0000-4000-8000-000000000007', kind: DocumentKindEnum.PAGE, name: 'Secret', parentId: 'f0000000-0000-4000-8000-000000000001', index: 3, readable: false, contentJson: { type: 'doc', content: [text('hidden')] } }
 ];
 

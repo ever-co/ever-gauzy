@@ -1,3 +1,4 @@
+// cspell:ignore brastve
 import * as Y from 'yjs';
 import { DocumentCommentAnchorMethodEnum, DocumentCommentAnchorStatusEnum, IDocumentCommentAnchorInput } from '@gauzy/contracts';
 import { LIVE_FRAGMENT, seedLiveDocument } from '../live/document-live.yjs';
@@ -125,7 +126,7 @@ describe('document comment anchors', () => {
 
 		it('refuses a match that differs too much, and quotes too short to tell', () => {
 			expect(approximateMatch('alpha beta gamma', 'zzzzzzzzzz')).toBeNull();
-			expect(approximateMatch('alpha beta', 'bxta')).toBeNull();
+			expect(approximateMatch('alpha beta', 'bets')).toBeNull();
 		});
 	});
 

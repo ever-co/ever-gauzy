@@ -44,7 +44,7 @@ describe('document search snippets', () => {
 	});
 
 	describe('searchSnippetOf', () => {
-		const long = `${'Lorem ipsum dolor sit amet. '.repeat(10)}The roadmap for the next quarter is here. ${'Consectetur adipiscing elit. '.repeat(10)}`;
+		const long = `${'Words fill the page before. '.repeat(10)}The roadmap for the next quarter is here. ${'More words follow it after. '.repeat(10)}`;
 
 		it('cuts about 160 characters around the first match, at word boundaries, with its offsets', () => {
 			const snippet = searchSnippetOf('roadmap', { name: 'Planning', contentJson: page(long) });
