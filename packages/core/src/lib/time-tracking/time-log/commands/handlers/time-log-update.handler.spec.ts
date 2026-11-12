@@ -6,6 +6,7 @@ import { TimeLogSourceEnum } from '@gauzy/contracts';
 import { RequestContext } from '../../../../core/context';
 import { TimesheetFirstOrCreateCommand } from '../../../timesheet/commands';
 import { generateTimeSlots } from '../../../time-slot/utils';
+import { TimeLog } from '../../time-log.entity';
 import { TimeLogUpdateCommand } from '../time-log-update.command';
 import { omitScopeFields, TimeLogUpdateHandler } from './time-log-update.handler';
 
@@ -214,5 +215,58 @@ describe('TimeLogUpdateHandler stopping a run', () => {
 		expect(save).toHaveBeenCalledTimes(2);
 		expect(recalculate).toHaveBeenCalledWith('timesheet-of-its-week', 'employee-a');
 		expect(stored).toMatchObject({ isRunning: false, startedAt: runStart, stoppedAt: runEnd });
+	});
+
+	it('releases on a second run, given the log as it was, the slots past an end the first run moved back', async () => {
+		// An Ever Teams run with heartbeats until 01:58, cut back to 01:45: its slot at 01:50, which only it holds, goes
+		const runStart = new Date('2026-10-24T00:00:00.000Z');
+		const oldEnd = new Date('2026-10-24T01:58:00.000Z');
+		const newEnd = new Date('2026-10-24T01:45:00.000Z');
+		const stored = {
+			id: 'log-own',
+			tenantId: TENANT_A,
+			organizationId: 'org-a',
+			employeeId: 'employee-a',
+			source: TimeLogSourceEnum.TEAMS,
+			isRunning: true,
+			startedAt: runStart,
+			stoppedAt: oldEnd
+		};
+		const logAsItWas = new TimeLog({ ...stored });
+		timeLogRepository.findOneBy.mockImplementation(async () => stored);
+		timeLogRepository.update.mockImplementation(async (_where: unknown, changes: object) =>
+			Object.assign(stored, changes)
+		);
+		(handler as any).timeSlotService.generateTimeSlots.mockImplementation(generateTimeSlots);
+		const pastEnd = { id: 'slot-past-end', startedAt: new Date('2026-10-24T01:50:00.000Z'), timeLogs: [stored] };
+		jest.spyOn(handler as any, 'findTimeSlots').mockImplementation(async (...args: unknown[]) => {
+			const startTimes = args[3] as Date[];
+			return startTimes.some((time) => time.getTime() === pastEnd.startedAt.getTime()) ? [pastEnd] : [];
+		});
+		// The release is planned for real, over the slot above; the failure comes after the write, before the release
+		(handler as any).planRelease.mockRestore();
+		const release = (handler as any).applyRelease as jest.Mock;
+		jest.spyOn(handler as any, 'saveUpdatedTimeLog')
+			.mockRejectedValueOnce(new Error('the time slots could not be saved'))
+			.mockResolvedValue(undefined);
+		const cut = { isRunning: false, startedAt: runStart, stoppedAt: newEnd };
+
+		await expect(handler.execute(new TimeLogUpdateCommand(cut, 'log-own'))).rejects.toThrow(
+			'the time slots could not be saved'
+		);
+		expect(stored).toMatchObject({ isRunning: false, stoppedAt: newEnd });
+		expect(release).not.toHaveBeenCalled();
+
+		await handler.execute(new TimeLogUpdateCommand(cut, logAsItWas));
+
+		expect(release).toHaveBeenCalledTimes(1);
+		expect(release).toHaveBeenCalledWith(
+			expect.objectContaining({ id: 'log-own' }),
+			TENANT_A,
+			'org-a',
+			'employee-a',
+			{ remove: ['slot-past-end'], unlink: [] },
+			false
+		);
 	});
 });

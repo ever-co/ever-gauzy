@@ -4,6 +4,7 @@ import '../../core/entities/internal';
 import { DatabaseTypeEnum, defineConfig } from '@gauzy/config';
 import { ITimeLog, ITimerStatus, ITimerStatusInput, ITimerToggleInput, TimeLogSourceEnum } from '@gauzy/contracts';
 import { FindOperator } from 'typeorm';
+import { TimeLog } from '../../core/entities/internal';
 import { MultiORMEnum } from '../../core/utils';
 import { asTenantUser, createTenantFixture } from '../../core/testing/tenant-isolation/tenant-isolation.fixtures';
 import { IGetConflictTimeLogCommand, TimeLogCreateCommand, TimeLogUpdateCommand } from '../time-log/commands';
@@ -158,6 +159,10 @@ interface TimeSlotRow {
 	duration: number;
 }
 
+/** The time log an update is for: it names it by id, or hands the log itself (`TimeLogUpdateHandler` takes both). */
+const logIdOf = (command: TimeLogUpdateCommand): string =>
+	(typeof command.id === 'string' ? command.id : command.id.id) as string;
+
 /**
  * Wires the previous-timers cleanup as it runs: `stopPreviousRunningTimers` dispatches `ScheduleTimeLogEntriesCommand`
  * to the real `ScheduleTimeLogEntriesHandler`, whose writes (either ORM) land on `rows`. Only its pending-log query
@@ -265,9 +270,9 @@ function wireTimer(
 	const execute = async (command: unknown) => {
 		if (command instanceof TimeLogUpdateCommand) {
 			updates.push(command);
-			const row = rows.find((candidate) => candidate.id === command.id);
+			const row = rows.find((candidate) => candidate.id === logIdOf(command));
 			if (!row) {
-				throw new Error(`No time log "${command.id}"`);
+				throw new Error(`No time log "${logIdOf(command)}"`);
 			}
 			return Object.assign(row, command.input);
 		}
@@ -776,7 +781,7 @@ describe.each([MultiORMEnum.TypeORM, MultiORMEnum.MikroORM])(
 				const execute = bus.execute;
 				const tried: TimeLogUpdateCommand[] = [];
 				bus.execute = async (command: unknown) => {
-					const isUpdateOfRun = command instanceof TimeLogUpdateCommand && command.id === id;
+					const isUpdateOfRun = command instanceof TimeLogUpdateCommand && logIdOf(command) === id;
 					if (!isUpdateOfRun) {
 						return execute(command);
 					}
@@ -803,7 +808,7 @@ describe.each([MultiORMEnum.TypeORM, MultiORMEnum.MikroORM])(
 				const stop = { isRunning: false, startedAt: TWO_HOURS_AGO, stoppedAt: NOW };
 				expect(tried.map((command) => command.input)).toEqual([stop, stop]);
 				// The second try ran whole: its time slots, timesheet and worked hours are done
-				expect(updates).toEqual([expect.objectContaining({ id: 'replaced', input: stop })]);
+				expect(updates.map((command) => [logIdOf(command), command.input])).toEqual([['replaced', stop]]);
 				expect(rows[0]).toMatchObject({ isRunning: false, stoppedAt: NOW });
 				expect(logger.warn).toHaveBeenCalledWith(
 					expect.stringContaining('Completed the stop of the replaced time log replaced on a second try')
@@ -824,6 +829,30 @@ describe.each([MultiORMEnum.TypeORM, MultiORMEnum.MikroORM])(
 				expect(logger.warn).toHaveBeenCalledWith(
 					expect.stringContaining('Stopped the replaced time log replaced, but its time slots or totals')
 				);
+			});
+
+			it('gives the second try the run as it was, so a run cut back still has its slots past the new end released', async () => {
+				const lastHeartbeat = new Date('2026-10-24T01:58:00.000Z');
+				const rows = [run('replaced', TimeLogSourceEnum.TEAMS, TWO_HOURS_AGO, lastHeartbeat)];
+				const { service } = setup(rows);
+				const tried = failUpdatesOf(service, rows, 'replaced', { failures: 1, afterWrite: true });
+				const namedStart = new Date('2026-10-24T01:45:00.000Z');
+
+				await startOnDesktop(service, namedStart);
+
+				// Both tries cut the run back from 01:58 to 01:45, where the new run starts
+				const cut = { isRunning: false, startedAt: TWO_HOURS_AGO, stoppedAt: namedStart };
+				expect(tried.map((command) => command.input)).toEqual([cut, cut]);
+				// The first names the run, read with its range of then. The second comes after that range was written, so it
+				// hands over the run as it was: the update plans from it the release of the slots past 01:45
+				// (time-log-update.handler.spec.ts), which a read of the stored, cut range no longer gives.
+				expect(tried[0].id).toBe('replaced');
+				expect(tried[1].id).toBeInstanceOf(TimeLog);
+				expect(tried[1].id).toMatchObject({
+					id: 'replaced',
+					startedAt: TWO_HOURS_AGO,
+					stoppedAt: lastHeartbeat
+				});
 			});
 
 			it('leaves a run the update did not stop to the cleanup, which stops it as before', async () => {

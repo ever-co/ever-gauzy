@@ -920,9 +920,9 @@ export class TimerService {
 	 * When the update fails, the log is read back. The update writes the stop before its later steps, so a log that no
 	 * longer runs was stopped and a later step failed. Those steps run again safely from what was written: the web
 	 * timer's time slots are created only where missing and linked to the stopped range, the timesheet and worked hours
-	 * are recomputed. So the update is sent once more to complete them. Only the release of slots past an end the stop
-	 * moved back is not redone (it is planned from the range before the write), which matters only for a run whose
-	 * heartbeats went on past the replacing run's start. If the second try fails too, the log keeps its stop, as
+	 * are recomputed. So the update is sent once more to complete them, given the log as it was before the first try:
+	 * the update plans the release of the slots past an end it moves back from the range it is given, and the stored
+	 * range is already the new one. If the second try fails too, the log keeps its stop, as
 	 * `ScheduleTimeLogEntriesCommand` only stops logs still running, and the warning says what may be missing. A log
 	 * still running is left to that command, which stops it as before. The new run starts either way.
 	 *
@@ -944,7 +944,9 @@ export class TimerService {
 				return;
 			}
 			try {
-				await this._commandBus.execute(new TimeLogUpdateCommand(partialTimeLog, log.id));
+				// The log as read before the first try, with the range the update releases slots from
+				const logBeforeStop = new TimeLog({ ...log, timeSlots: undefined });
+				await this._commandBus.execute(new TimeLogUpdateCommand(partialTimeLog, logBeforeStop));
 				this.logger.warn(
 					`Completed the stop of the replaced time log ${log.id} on a second try: ${error?.message}`
 				);
