@@ -757,29 +757,68 @@ describe.each([MultiORMEnum.TypeORM, MultiORMEnum.MikroORM])(
 		});
 
 		describe('when the update of a replaced run fails', () => {
-			/** Makes the update of `id` fail, after writing its input when `afterWrite`, as a later step of it would. */
-			const failUpdateOf = (service: TimerService, id: string, afterWrite: boolean) => {
+			/**
+			 * Makes the first `failures` updates of the run `id` fail. With `afterWrite`, each writes the stop first and
+			 * then fails, as a later step of the update (time slots, timesheet, worked hours) would; without, it fails
+			 * before writing anything. Any other update runs whole, so the updates the harness records are the ones that
+			 * completed, derived records included.
+			 *
+			 * @returns The updates of the run that were tried.
+			 */
+			const failUpdatesOf = (
+				service: TimerService,
+				rows: TimeLogRow[],
+				id: string,
+				{ failures, afterWrite }: { failures: number; afterWrite: boolean }
+			) => {
 				const bus = (service as unknown as { _commandBus: { execute: (command: unknown) => Promise<unknown> } })
 					._commandBus;
 				const execute = bus.execute;
+				const tried: TimeLogUpdateCommand[] = [];
 				bus.execute = async (command: unknown) => {
-					if (command instanceof TimeLogUpdateCommand && command.id === id) {
-						if (afterWrite) {
-							await execute(command);
-						}
-						throw new Error('the time slots could not be created');
+					const isUpdateOfRun = command instanceof TimeLogUpdateCommand && command.id === id;
+					if (!isUpdateOfRun) {
+						return execute(command);
 					}
-					return execute(command);
+					tried.push(command);
+					if (tried.length > failures) {
+						return execute(command);
+					}
+					const row = rows.find((candidate) => candidate.id === id);
+					if (afterWrite && row) {
+						Object.assign(row, command.input);
+					}
+					throw new Error('the time slots could not be created');
 				};
+				return tried;
 			};
 
-			it('keeps the stop the update wrote before a later step failed, and says what may be missing', async () => {
+			it('completes the update with a second try when a later step failed after the stop was written', async () => {
 				const rows = [run('replaced', TimeLogSourceEnum.WEB_TIMER, TWO_HOURS_AGO)];
-				const { service, logger } = setup(rows);
-				failUpdateOf(service, 'replaced', true);
+				const { service, logger, updates } = setup(rows);
+				const tried = failUpdatesOf(service, rows, 'replaced', { failures: 1, afterWrite: true });
 
 				await startOnDesktop(service);
 
+				const stop = { isRunning: false, startedAt: TWO_HOURS_AGO, stoppedAt: NOW };
+				expect(tried.map((command) => command.input)).toEqual([stop, stop]);
+				// The second try ran whole: its time slots, timesheet and worked hours are done
+				expect(updates).toEqual([expect.objectContaining({ id: 'replaced', input: stop })]);
+				expect(rows[0]).toMatchObject({ isRunning: false, stoppedAt: NOW });
+				expect(logger.warn).toHaveBeenCalledWith(
+					expect.stringContaining('Completed the stop of the replaced time log replaced on a second try')
+				);
+			});
+
+			it('keeps the stop when the second try fails too, and says what may be missing', async () => {
+				const rows = [run('replaced', TimeLogSourceEnum.WEB_TIMER, TWO_HOURS_AGO)];
+				const { service, logger, updates } = setup(rows);
+				const tried = failUpdatesOf(service, rows, 'replaced', { failures: 2, afterWrite: true });
+
+				await startOnDesktop(service);
+
+				expect(tried).toHaveLength(2);
+				expect(updates).toEqual([]);
 				// Not ended again by the cleanup, at 00:00:10
 				expect(rows[0]).toMatchObject({ isRunning: false, stoppedAt: NOW });
 				expect(logger.warn).toHaveBeenCalledWith(
@@ -790,10 +829,11 @@ describe.each([MultiORMEnum.TypeORM, MultiORMEnum.MikroORM])(
 			it('leaves a run the update did not stop to the cleanup, which stops it as before', async () => {
 				const rows = [run('replaced', TimeLogSourceEnum.WEB_TIMER, TWO_HOURS_AGO)];
 				const { service, logger } = setup(rows);
-				failUpdateOf(service, 'replaced', false);
+				const tried = failUpdatesOf(service, rows, 'replaced', { failures: 1, afterWrite: false });
 
 				await startOnDesktop(service);
 
+				expect(tried).toHaveLength(1);
 				expect(rows[0]).toMatchObject({ isRunning: false, stoppedAt: new Date('2026-10-24T00:00:10.000Z') });
 				expect(logger.warn).toHaveBeenCalledWith(
 					expect.stringContaining('Failed to stop the replaced time log replaced, left to the cleanup')

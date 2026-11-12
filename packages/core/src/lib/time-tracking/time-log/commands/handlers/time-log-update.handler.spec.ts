@@ -2,8 +2,10 @@
 import '../../../../core/entities/internal';
 
 import { NotFoundException } from '@nestjs/common';
+import { TimeLogSourceEnum } from '@gauzy/contracts';
 import { RequestContext } from '../../../../core/context';
 import { TimesheetFirstOrCreateCommand } from '../../../timesheet/commands';
+import { generateTimeSlots } from '../../../time-slot/utils';
 import { TimeLogUpdateCommand } from '../time-log-update.command';
 import { omitScopeFields, TimeLogUpdateHandler } from './time-log-update.handler';
 
@@ -119,9 +121,10 @@ describe('TimeLogUpdateHandler (GHSA-6qvm-3wg4-26w4)', () => {
 });
 
 /**
- * The timer stops a replaced run through this update (`TimerService.stopPreviousRunningTimers`) and relies on two things
- * it does: the start the update names picks the log's timesheet (naming none picks the week of now), and the stop is
- * written before the later steps (time slots, timesheet, worked hours), so a failure in them leaves the log stopped.
+ * The timer stops a replaced run through this update (`TimerService.stopPreviousRunningTimers`) and relies on what it
+ * does: the start the update names picks the log's timesheet (naming none picks the week of now); the stop is written
+ * before the later steps (time slots, timesheet, worked hours), so a failure in them leaves the log stopped; and the
+ * same update sent again completes those steps from what was written, which is how the timer recovers such a failure.
  */
 describe('TimeLogUpdateHandler stopping a run', () => {
 	const startedAt = new Date('2026-10-17T09:00:00.000Z');
@@ -129,7 +132,7 @@ describe('TimeLogUpdateHandler stopping a run', () => {
 	const stop = () => new TimeLogUpdateCommand({ isRunning: false, startedAt, stoppedAt }, 'log-own');
 
 	let handler: TimeLogUpdateHandler;
-	let timeLogRepository: { update: jest.Mock };
+	let timeLogRepository: { findOneBy: jest.Mock; update: jest.Mock };
 	let execute: jest.Mock;
 
 	beforeEach(() => {
@@ -169,5 +172,47 @@ describe('TimeLogUpdateHandler stopping a run', () => {
 			{ id: 'log-own', tenantId: TENANT_A },
 			expect.objectContaining({ isRunning: false, stoppedAt })
 		);
+	});
+
+	it('completes on a second run, from what the first one wrote, the steps a failure after the stop left undone', async () => {
+		// A web timer run as stored, which the update writes and reads back
+		const runStart = new Date('2026-10-24T00:00:00.000Z');
+		const runEnd = new Date('2026-10-24T02:00:00.000Z');
+		const stored = {
+			id: 'log-own',
+			tenantId: TENANT_A,
+			organizationId: 'org-a',
+			employeeId: 'employee-a',
+			source: TimeLogSourceEnum.WEB_TIMER,
+			isRunning: true,
+			startedAt: runStart,
+			stoppedAt: runStart
+		};
+		timeLogRepository.findOneBy.mockImplementation(async () => stored);
+		timeLogRepository.update.mockImplementation(async (_where: unknown, changes: object) =>
+			Object.assign(stored, changes)
+		);
+		(handler as any).timeSlotService.generateTimeSlots.mockImplementation(generateTimeSlots);
+		const createSlots = jest.spyOn(handler as any, 'bulkCreateTimeSlots').mockResolvedValue([]);
+		const save = jest
+			.spyOn(handler as any, 'saveUpdatedTimeLog')
+			.mockRejectedValueOnce(new Error('the time slots could not be saved'))
+			.mockResolvedValue(undefined);
+		const recalculate = (handler as any).recalculateTimesheetAndEmployeeHours as jest.Mock;
+		const stopRun = () =>
+			new TimeLogUpdateCommand({ isRunning: false, startedAt: runStart, stoppedAt: runEnd }, 'log-own');
+
+		await expect(handler.execute(stopRun())).rejects.toThrow('the time slots could not be saved');
+		expect(stored).toMatchObject({ isRunning: false, stoppedAt: runEnd, timesheetId: 'timesheet-of-its-week' });
+		expect(recalculate).not.toHaveBeenCalled();
+
+		await handler.execute(stopRun());
+
+		// Its twelve ten-minute slots are created (only where missing) and linked, and its totals recalculated
+		expect(createSlots).toHaveBeenCalledTimes(2);
+		expect(createSlots.mock.calls[1][0]).toHaveLength(12);
+		expect(save).toHaveBeenCalledTimes(2);
+		expect(recalculate).toHaveBeenCalledWith('timesheet-of-its-week', 'employee-a');
+		expect(stored).toMatchObject({ isRunning: false, startedAt: runStart, stoppedAt: runEnd });
 	});
 });

@@ -917,10 +917,14 @@ export class TimerService {
 	/**
 	 * Stops a run replaced by another at the given time, as an explicit stop at that time would.
 	 *
-	 * When the update fails, the log is read back. The update writes the stop before its later steps (time slots,
-	 * timesheet and worked hours), so a log that no longer runs was stopped where it was asked to: it keeps that stop,
-	 * as `ScheduleTimeLogEntriesCommand` only stops logs still running, and the failure is reported as a stop whose
-	 * later steps may be missing. A log still running is left to that command, which stops it as before.
+	 * When the update fails, the log is read back. The update writes the stop before its later steps, so a log that no
+	 * longer runs was stopped and a later step failed. Those steps run again safely from what was written: the web
+	 * timer's time slots are created only where missing and linked to the stopped range, the timesheet and worked hours
+	 * are recomputed. So the update is sent once more to complete them. Only the release of slots past an end the stop
+	 * moved back is not redone (it is planned from the range before the write), which matters only for a run whose
+	 * heartbeats went on past the replacing run's start. If the second try fails too, the log keeps its stop, as
+	 * `ScheduleTimeLogEntriesCommand` only stops logs still running, and the warning says what may be missing. A log
+	 * still running is left to that command, which stops it as before. The new run starts either way.
 	 *
 	 * @param log - The running log.
 	 * @param stoppedAt - Where it ends.
@@ -933,13 +937,22 @@ export class TimerService {
 			await this._commandBus.execute(new TimeLogUpdateCommand(partialTimeLog, log.id));
 		} catch (error) {
 			const storedLog = await this.storedStoppedLog(log.id, log.tenantId);
-			if (storedLog) {
+			if (!storedLog) {
 				this.logger.warn(
-					`Stopped the replaced time log ${log.id}, but its time slots or totals may be incomplete: ${error?.message}`
+					`Failed to stop the replaced time log ${log.id}, left to the cleanup: ${error?.message}`
 				);
 				return;
 			}
-			this.logger.warn(`Failed to stop the replaced time log ${log.id}, left to the cleanup: ${error?.message}`);
+			try {
+				await this._commandBus.execute(new TimeLogUpdateCommand(partialTimeLog, log.id));
+				this.logger.warn(
+					`Completed the stop of the replaced time log ${log.id} on a second try: ${error?.message}`
+				);
+			} catch (retryError) {
+				this.logger.warn(
+					`Stopped the replaced time log ${log.id}, but its time slots or totals may be incomplete: ${retryError?.message}`
+				);
+			}
 		}
 	}
 
