@@ -108,28 +108,44 @@ export class JiraAuthorizationController {
 				return this.back(response, { error: 'site_unreadable' });
 			}
 		}
+		let tenant: { id?: unknown };
 		try {
-			const tenant = await runInJiraContext(user, () => this.tenants.connect(scope, token, chosen));
-			return this.back(response, {
-				integrationId: String(tenant.id),
-				organizationId: String(scope.organizationId),
-				...(chosen ? {} : { siteRequired: 'true' as const })
-			});
+			// Written under the mappings lock, the pinned site read again there: a mapping created meanwhile for the
+			// former site (its project id means nothing on another) refuses a reconnect to another site.
+			const saved = await runInJiraContext(user, () =>
+				this.mappings.whileOrganizationMappingsLocked(scope, async () => {
+					const pinnedNow = await this.pinnedSiteOf(scope);
+					if (pinnedNow && chosen?.site.id !== pinnedNow) return null;
+					return this.tenants.connect(scope, token, chosen);
+				})
+			);
+			if (!saved) {
+				this.logger.warn(`A reconnect of the organization ${scope.organizationId} raced a mapping of its former Jira site; not saved.`);
+				return this.back(response, { error: 'site_mismatch' });
+			}
+			tenant = saved;
 		} catch (error) {
 			this.logger.error(`The Jira connection could not be saved: ${error instanceof Error ? error.message : String(error)}`);
 			return this.back(response, { error: 'not_saved' });
 		}
+		return this.back(response, {
+			integrationId: String(tenant.id),
+			organizationId: String(scope.organizationId),
+			...(chosen ? {} : { siteRequired: 'true' as const })
+		});
 	}
 
 	/**
 	 * The site the organization's connection must keep through a reconnect: its site when it has mappings (they name
-	 * Jira projects by ids only that site knows), else null (a reconnect may then move to another site).
+	 * Jira projects by ids only that site knows) or issues it synced (their id maps name Jira issue ids of that site),
+	 * else null (a reconnect may then move to another site).
 	 */
 	private async pinnedSiteOf(scope: { tenantId: ID; organizationId: ID }): Promise<string | null> {
 		const existing = await this.tenants.forOrganization(scope.organizationId, scope.tenantId);
 		const cloudId = existing ? this.tenants.summaryOf(existing).cloudId : null;
 		if (!existing || !cloudId) return null;
-		return (await this.mappings.list(existing)).length ? cloudId : null;
+		if ((await this.mappings.list(existing)).length) return cloudId;
+		return (await this.mappings.hasIssueMaps(existing)) ? cloudId : null;
 	}
 
 	/** Sends the person to the app's Jira page (or answers JSON when no page is configured). */

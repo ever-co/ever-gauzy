@@ -220,7 +220,10 @@ export class JiraTenantService {
 			const latest = await this.findAnyById(tenant.id as ID);
 			if (latest && this.settingsOf(latest)[JiraSettingName.REFRESH_TOKEN] !== refreshToken) {
 				tenant.settings = latest.settings;
-				return this.clientOrNull(tenant);
+				// The stored pair may be half written yet (its refresh token goes first): this call goes on with the access
+				// token its own exchange minted, which Atlassian issued and which is valid, and stores nothing.
+				const cloudId = this.settingsOf(tenant)[JiraSettingName.JIRA_CLOUD_ID];
+				return cloudId ? new JiraApiClient(token.accessToken, cloudId, { apiUrl: this.config.apiUrl, tokenType: token.tokenType || 'Bearer' }) : null;
 			}
 			await this.writeToken(tenant, token);
 			return this.clientOrNull(tenant);
@@ -524,7 +527,6 @@ export class JiraTenantService {
 		await this.integrationTenantService.delete(tenant.id as ID);
 	}
 
-	/** Stores a renewed token pair (the refresh token rotated when Jira sent a new one) and clears the attention. */
 	/**
 	 * Stores a renewed pair. The rotated refresh token is written first: a stop between the two writes then leaves the
 	 * new refresh token with the former access token (renewed again on its next use), never the spent refresh token with

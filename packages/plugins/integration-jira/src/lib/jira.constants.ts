@@ -123,6 +123,8 @@ export const JIRA_SITE_CHANGED = 'JIRA_SITE_CHANGED';
 export const JIRA_TOKEN_REFUSED = 'JIRA_TOKEN_REFUSED';
 export const JIRA_STATE_INVALID = 'JIRA_STATE_INVALID';
 export const JIRA_MAPPING_EXISTS = 'JIRA_MAPPING_EXISTS';
+/** Another change of the organization's mappings held the lock too long (MySQL / MariaDB). */
+export const JIRA_MAPPINGS_BUSY = 'JIRA_MAPPINGS_BUSY';
 export const JIRA_PROJECT_OUTBOUND_TAKEN = 'JIRA_PROJECT_OUTBOUND_TAKEN';
 export const JIRA_PROJECT_NOT_FOUND = 'JIRA_PROJECT_NOT_FOUND';
 export const JIRA_RUN_IN_PROGRESS = 'JIRA_RUN_IN_PROGRESS';
