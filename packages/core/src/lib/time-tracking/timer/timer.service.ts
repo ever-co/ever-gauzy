@@ -972,7 +972,7 @@ export class TimerService {
 	}
 
 	/**
-	 * Get timer worked status
+	 * Get timer worked status: each employee's running log, or their latest log when none runs.
 	 *
 	 * @param request The input parameters for the query.
 	 * @returns The timer status for the employee.
@@ -1034,9 +1034,12 @@ export class TimerService {
 					sqlQuery = sqlQuery.andWhere({ organizationTeamId });
 				}
 
-				// Adds ordering to the SQL query.
+				// Adds ordering to the SQL query. The running log comes first: it is the employee's last log even beside
+				// a log that starts later (manual time, a desktop offline upload). A row without the flag counts as not
+				// running, where a bare `"isRunning" DESC` would put its NULL first. Then the latest started.
 				sqlQuery = sqlQuery.orderBy([
 					{ column: 'employeeId', order: 'ASC' },
+					{ column: knex.raw('COALESCE("time_log"."isRunning", false)'), order: 'DESC' },
 					{ column: 'startedAt', order: 'DESC' },
 					{ column: 'createdAt', order: 'DESC' }
 				]);
@@ -1076,6 +1079,8 @@ export class TimerService {
 					...(isNotEmpty(organizationTeamId) ? { organizationTeamId } : {})
 				});
 				query.orderBy(p(`"${query.alias}"."employeeId"`), 'ASC'); // Adjust ORDER BY to match the SELECT list
+				// The running log first, a row without the flag counting as not running (see the MikroORM branch)
+				query.addOrderBy(p(`COALESCE("${query.alias}"."isRunning", false)`), 'DESC');
 				query.addOrderBy(p(`"${query.alias}"."startedAt"`), 'DESC');
 				query.addOrderBy(p(`"${query.alias}"."createdAt"`), 'DESC');
 
