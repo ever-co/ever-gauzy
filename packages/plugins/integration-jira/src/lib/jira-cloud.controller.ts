@@ -165,8 +165,9 @@ export class JiraCloudController {
 			if (moving && mappings > 0) {
 				throw new ConflictException({ message: 'A connection with mappings keeps its Jira site; remove its mappings first', code: JIRA_SITE_HAS_MAPPINGS });
 			}
-			// Issues it synced name Jira issue ids of the former site (their id maps stay when the mappings go): another
-			// site's issue with the same id would update the wrong task. Moved by a disconnect and a new connection.
+			// Issues it synced name Jira issue ids of the former site (their id maps stay when the mappings go), and so does a
+			// run still writing them: another site's issue with the same id would update the wrong task. Moved by a
+			// disconnect and a new connection, once no run is live.
 			if (moving && current && synced) {
 				throw new ConflictException({
 					message: 'This connection has synced issues of its Jira site; disconnect it and connect again to work with another site',

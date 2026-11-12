@@ -44,6 +44,7 @@ function setup(options: { sites: (typeof SITE_A)[]; existingSite: string | null;
 	const mappings = {
 		list: jest.fn(async () => Array.from({ length: options.mappings }, (_, index) => ({ id: `m-${index}` }))),
 		hasIssueMaps: jest.fn(async () => !!options.synced),
+		hasLiveRuns: jest.fn(async () => false),
 		// The reconnect is written under the organization's mappings lock.
 		whileOrganizationMappingsLocked: jest.fn(async (_scope: unknown, work: () => Promise<unknown>) => work())
 	};
@@ -119,6 +120,14 @@ describe('GET /integration/jira/callback: the site of the connection', () => {
 
 	it('a reconnect of a connection whose mappings are gone but whose synced issues name its site keeps that site', async () => {
 		const { tenants, callback, sentTo } = setup({ sites: [SITE_A], existingSite: SITE_B.id, mappings: 0, synced: true });
+		await callback();
+		expect(tenants.connect).not.toHaveBeenCalled();
+		expect(sentTo().searchParams.get('error')).toBe('site_mismatch');
+	});
+
+	it('a reconnect keeps the site while a run of the former site is still live, though its mapping is gone', async () => {
+		const { tenants, mappings, callback, sentTo } = setup({ sites: [SITE_A], existingSite: SITE_B.id, mappings: 0 });
+		mappings.hasLiveRuns.mockResolvedValue(true);
 		await callback();
 		expect(tenants.connect).not.toHaveBeenCalled();
 		expect(sentTo().searchParams.get('error')).toBe('site_mismatch');

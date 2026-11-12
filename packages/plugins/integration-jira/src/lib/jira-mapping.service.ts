@@ -1,5 +1,5 @@
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
-import { DataSource, EntityManager } from 'typeorm';
+import { DataSource, EntityManager, MoreThanOrEqual } from 'typeorm';
 import { ID, IIntegrationTenant, IntegrationEntity } from '@gauzy/contracts';
 import { createHash } from 'node:crypto';
 import { IntegrationMap, IntegrationSetting, OrganizationProjectService, Task, TenantAwareCrudService } from '@gauzy/core';
@@ -9,7 +9,8 @@ import {
 	MikroOrmJiraProjectMappingRepository,
 	TypeOrmJiraProjectMappingRepository
 } from './entities/jira-project-mapping.entity';
-import { JiraSyncRun } from './entities/jira-sync-run.entity';
+import { JiraSyncRun, JiraSyncRunStatus } from './entities/jira-sync-run.entity';
+import { JIRA_IMPORT_STALE_MS } from './jira-sync-run.service';
 import {
 	JIRA_MAPPING_EXISTS,
 	JIRA_MAPPINGS_BUSY,
@@ -186,8 +187,24 @@ export class JiraMappingService extends TenantAwareCrudService<JiraProjectMappin
 	async whileMappingsLocked<T>(tenant: IIntegrationTenant, work: (mappings: number, synced: boolean) => Promise<T>): Promise<T> {
 		return this.withMappingsLock(tenant, async (manager) => {
 			const mappings = await manager.count(JiraProjectMapping, { where: { integrationId: tenant.id as ID, tenantId: tenant.tenantId as ID } as never });
-			return work(mappings, await this.hasIssueMaps(tenant, manager));
+			return work(mappings, (await this.hasIssueMaps(tenant, manager)) || (await this.hasLiveRuns(tenant, manager)));
 		});
+	}
+
+	/**
+	 * Whether a run of the connection is live (running, with progress within the stale window): an import waiting for
+	 * its first page holds no id map yet, but will write some for its site, whose mapping may be removed meanwhile.
+	 */
+	async hasLiveRuns(tenant: IIntegrationTenant, manager: EntityManager = this.dataSource.manager): Promise<boolean> {
+		const runs = await manager.count(JiraSyncRun, {
+			where: {
+				integrationId: tenant.id as ID,
+				tenantId: tenant.tenantId as ID,
+				status: JiraSyncRunStatus.RUNNING,
+				updatedAt: MoreThanOrEqual(new Date(Date.now() - JIRA_IMPORT_STALE_MS))
+			} as never
+		});
+		return runs > 0;
 	}
 
 	/**
