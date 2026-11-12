@@ -289,7 +289,7 @@ describe('ChannelSettingsDialogComponent', () => {
 		tabs.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
 		fixture.detectChanges();
 		expect(dialog().tab()).toBe('integrations');
-		expect(document.activeElement === integrationsTab || integrationsTab.getAttribute('tabindex') === '0').toBe(true);
+		expect(document.activeElement).toBe(integrationsTab);
 		const integrationsPanel = fixture.nativeElement.querySelector(`#${integrationsTab.getAttribute('aria-controls')}`) as HTMLElement;
 		expect(integrationsPanel.getAttribute('aria-labelledby')).toBe(integrationsTab.id);
 		tabs.dispatchEvent(new KeyboardEvent('keydown', { key: 'Home', bubbles: true }));

@@ -179,6 +179,22 @@ describe('AppBlocksComponent', () => {
 		})();
 	});
 
+	it('asks again after a failed ask instead of calling the click failed', async () => {
+		await render();
+		api.interact.mockReturnValue(of<IChatInteractionResult>({ interaction: interaction(ChatInteractionStatusEnum.RETRYING), events: [] }));
+		api.interaction.mockReturnValueOnce(throwError(() => ({ status: 503 }))).mockReturnValueOnce(of(interaction(ChatInteractionStatusEnum.DELIVERED, { replyApplied: false }))).mockReturnValue(of(interaction(ChatInteractionStatusEnum.DELIVERED)));
+		fakeAsync(() => {
+			button('ack').click();
+			tick(APP_INTERACTION_POLL_MS);
+			fixture.detectChanges();
+			expect(button('ack').disabled).toBe(true);
+			expect(element().querySelector('[data-test="app-failure"]')).toBeNull();
+			tick(APP_INTERACTION_POLL_MS * 2);
+			fixture.detectChanges();
+			expect(button('ack').querySelector('nb-icon')?.getAttribute('icon')).toBe('checkmark-outline');
+		})();
+	});
+
 	it('waits for a slow answer instead of asking again over it', async () => {
 		await render();
 		const slow = new Subject<IChatInteraction>();

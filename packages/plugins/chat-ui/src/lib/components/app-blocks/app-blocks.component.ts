@@ -2,8 +2,8 @@ import { ChangeDetectionStrategy, Component, computed, DestroyRef, inject, input
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NbIconModule } from '@nebular/theme';
 import { TranslatePipe } from '@ngx-translate/core';
-import { timer } from 'rxjs';
-import { exhaustMap, take, takeWhile } from 'rxjs/operators';
+import { EMPTY, throwError, timer } from 'rxjs';
+import { catchError, exhaustMap, take, takeWhile } from 'rxjs/operators';
 import { ChatAppBlockTypeEnum, IChatAppBlock, IChatAppButton, IChatMessageWithRelations, ID } from '@gauzy/contracts';
 import { APP_INTERACTION_POLL_MAX, APP_INTERACTION_POLL_MS, appBlocksOf, AppButtonState, buttonKey, buttonStateOf, safeButtonUrl } from '../../chat-app-blocks';
 import { ChatWebhooksService } from '../../services/chat-webhooks.service';
@@ -95,9 +95,9 @@ import { ChatWebhooksService } from '../../services/chat-webhooks.service';
 			.app-blocks {
 				display: flex;
 				flex-direction: column;
-				gap: 0.375rem;
+				gap: 0.5rem;
 				margin: 0.25rem 0;
-				padding-left: 0.625rem;
+				padding-left: 0.5rem;
 				border-left: 3px solid var(--chat-border-strong);
 			}
 			.app-header {
@@ -135,14 +135,14 @@ import { ChatWebhooksService } from '../../services/chat-webhooks.service';
 			.app-actions {
 				display: flex;
 				flex-wrap: wrap;
-				gap: 0.375rem;
+				gap: 0.5rem;
 			}
 			.app-button {
 				display: inline-flex;
 				align-items: center;
 				gap: 0.25rem;
 				min-height: 2rem;
-				padding: 0.25rem 0.75rem;
+				padding: 0.25rem 1rem;
 				border: 1px solid var(--chat-border-strong);
 				border-radius: var(--border-radius);
 				background: transparent;
@@ -278,7 +278,9 @@ export class AppBlocksComponent {
 		timer(APP_INTERACTION_POLL_MS, APP_INTERACTION_POLL_MS)
 			.pipe(
 				take(APP_INTERACTION_POLL_MAX),
-				exhaustMap(() => this.api.interaction(interactionId)),
+				// A failed ask is asked again at the next tick (the click may still be delivered); a 404 (the click or the
+				// webhooks are gone) ends the asking.
+				exhaustMap(() => this.api.interaction(interactionId).pipe(catchError((error: { status?: number }) => (error?.status === 404 ? throwError(() => error) : EMPTY)))),
 				takeWhile((interaction) => {
 					const state = buttonStateOf(interaction.status);
 					if (state === 'pending') return true;

@@ -126,6 +126,12 @@ function loadPlugins(env: Record<string, string | undefined>, before?: () => voi
 				ChatPlugin,
 				isChatEnabled: jest.requireActual('../../../packages/plugins/chat/src/lib/chat-enabled').isChatEnabled
 			}));
+			// The Docs package also exports the switch of its live sessions, called while the list is built.
+			jest.doMock('@gauzy/plugin-docs', () => ({
+				DocsPlugin: stubPluginClass(),
+				DocsLivePlugin: stubPluginClass(),
+				isDocsLiveEnabled: jest.requireActual('../../../packages/plugins/docs/src/lib/live/docs-live.config').isDocsLiveEnabled
+			}));
 			jest.doMock('@gauzy/plugin-email-provider-resend', () => ({
 				EmailProviderResendPlugin,
 				isResendEnabled: jest.requireActual('../../../packages/plugins/email-provider-resend/src/lib/resend-enabled').isResendEnabled
