@@ -86,6 +86,7 @@ describe('JiraPageComponent', () => {
 	it.each([
 		['no_site', 'no_site'],
 		['site_unreadable', 'site_unreadable'],
+		['site_mismatch', 'site_mismatch'],
 		['workspace_unreadable', null]
 	])("knows the callback's Jira errors: %s", (error, shown) => {
 		api.status.mockReturnValue(of(status()));

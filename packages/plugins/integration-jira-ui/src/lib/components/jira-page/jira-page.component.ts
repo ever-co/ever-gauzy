@@ -14,7 +14,7 @@ import { errorText, isNotFound } from '../shared/jira-ui.utils';
 export type JiraPageView = 'loading' | 'unavailable' | 'not-configured' | 'connect' | 'connected' | 'error';
 
 /** The errors the API's callback may send the person back with (`?error=`). */
-const CALLBACK_ERRORS = new Set(['not_configured', 'denied', 'invalid_state', 'exchange_failed', 'site_unreadable', 'no_site', 'not_saved']);
+const CALLBACK_ERRORS = new Set(['not_configured', 'denied', 'invalid_state', 'exchange_failed', 'site_unreadable', 'no_site', 'site_mismatch', 'not_saved']);
 
 /**
  * Integrations → Jira: the status of the selected organization. Where the API's Jira sync is not loaded

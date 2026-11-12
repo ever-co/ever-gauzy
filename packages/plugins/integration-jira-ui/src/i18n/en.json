@@ -28,6 +28,7 @@
 		"exchange_failed": "Atlassian refused the authorization code. Start the flow again.",
 		"site_unreadable": "The Jira sites of your account could not be read after authorizing.",
 		"no_site": "Your Atlassian account reaches no Jira Cloud site this app may use.",
+		"site_mismatch": "This connection has mappings on a Jira site your Atlassian account no longer reaches, so it was kept as it was. Connect with an account that reaches that site, or remove the mappings first.",
 		"not_saved": "The connection could not be saved."
 	},
 	"CONNECTED": {
