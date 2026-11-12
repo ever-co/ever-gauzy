@@ -105,6 +105,14 @@ describe('TaskViewsPageComponent', () => {
 
 	afterEach(() => jest.useRealTimers());
 
+	/** Opens a saved view as the route does: the page's view becomes it, then it is read. */
+	const openRoute = (id: string) => {
+		component.current.set({ kind: 'saved', id });
+		return component.open({ kind: 'saved', id });
+	};
+	/** The view ids the rows were read for, from the read at `from` on. */
+	const readsOf = (from = 0) => api.viewTasks.mock.calls.slice(from).map((call: unknown[]) => call[0]);
+
 	it('opens the saved view of the route and reads its tasks with its filter tree in the caller time zone', async () => {
 		await create();
 		expect(api.getView).toHaveBeenCalledWith('v1', { organizationId: 'org', tenantId: 'ten' });
@@ -482,7 +490,7 @@ describe('TaskViewsPageComponent', () => {
 		const answer = new Subject<boolean>();
 		(TestBed.inject(NbDialogService) as unknown as { open: jest.Mock }).open.mockReturnValue({ onClose: answer });
 		const deleting = component.deleteSelected();
-		await component.open({ kind: 'saved', id: 'v2' });
+		await openRoute('v2');
 		answer.next(true);
 		answer.complete();
 		await deleting;
@@ -501,7 +509,8 @@ describe('TaskViewsPageComponent', () => {
 		expect(component.loadingMore()).toBe(true);
 		const next = new Subject<ITaskView>();
 		api.getView.mockReturnValueOnce(next);
-		const opening = component.open({ kind: 'saved', id: 'v2' });
+		const reads = api.viewTasks.mock.calls.length;
+		const opening = openRoute('v2');
 		expect(component.savedView()).toBeNull();
 		expect(component.dirty()).toBe(false);
 		expect(component.loadingMore()).toBe(false);
@@ -513,6 +522,7 @@ describe('TaskViewsPageComponent', () => {
 		next.complete();
 		await opening;
 		expect(component.savedView().id).toBe('v2');
+		expect(readsOf(reads)).toEqual(['v2']);
 	});
 
 	it('reads the rows again after an undo that failed while another view opened, once that view is open', async () => {
@@ -528,7 +538,7 @@ describe('TaskViewsPageComponent', () => {
 		const undoing = component.undoLast();
 		const view = new Subject<ITaskView>();
 		api.getView.mockReturnValueOnce(view);
-		const opening = component.open({ kind: 'saved', id: 'v2' });
+		const opening = openRoute('v2');
 		const reads = api.viewTasks.mock.calls.length;
 		undoAnswer.error(new HttpErrorResponse({ status: 503 }));
 		// Fake timers hold setTimeout: let the promises settle instead.
@@ -541,8 +551,8 @@ describe('TaskViewsPageComponent', () => {
 		await opening;
 		await undoing;
 		expect(component.savedView()?.id).toBe('v2');
-		// The opening's read, then the one after the undo.
-		expect(api.viewTasks.mock.calls.length).toBe(reads + 2);
+		// The opening's read, then the one after the undo: both of the view now open.
+		expect(readsOf(reads)).toEqual(['v2', 'v2']);
 	});
 
 	it('reads the rows of a view opened during a bulk change again once the change answered', async () => {
@@ -553,12 +563,32 @@ describe('TaskViewsPageComponent', () => {
 		jest.useFakeTimers();
 		const applying = component.applyBulk({ action: 'archive', changes: { isArchived: true } });
 		api.getView.mockReturnValueOnce(of(savedView({ id: 'v2' as ID, name: 'Other' })));
-		await component.open({ kind: 'saved', id: 'v2' });
+		await openRoute('v2');
 		const reads = api.viewTasks.mock.calls.length;
 		answer.next({ applied: 1, refused: 0, results: [{ taskId: 't1', ok: true, previous: { isArchived: false } }] });
 		answer.complete();
 		await applying;
-		expect(api.viewTasks.mock.calls.length).toBe(reads + 1);
+		expect(readsOf(reads)).toEqual(['v2']);
+	});
+
+	it('keeps a saved view that could not be read in its error after a bulk change answered', async () => {
+		await create();
+		component.onToggle({ id: 't1', shift: false });
+		const answer = new Subject<unknown>();
+		api.bulkUpdate.mockReturnValueOnce(answer);
+		jest.useFakeTimers();
+		const applying = component.applyBulk({ action: 'archive', changes: { isArchived: true } });
+		api.getView.mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 503 })));
+		await openRoute('v2');
+		expect(component.error()).toBe(true);
+		const reads = api.viewTasks.mock.calls.length;
+		answer.next({ applied: 1, refused: 0, results: [{ taskId: 't1', ok: true, previous: { isArchived: false } }] });
+		answer.complete();
+		await applying;
+		// No rows read without the view's definition: the error (and its Try again) stays.
+		expect(api.viewTasks.mock.calls.length).toBe(reads);
+		expect(component.error()).toBe(true);
+		expect(component.savedView()).toBeNull();
 	});
 
 	it('drops an edit of the filter still to be read when another view opens', async () => {
@@ -567,7 +597,7 @@ describe('TaskViewsPageComponent', () => {
 		component.setFilter({ op: 'and', conditions: [{ field: 'labels', operator: 'in', values: [LABEL] }] });
 		const view = new Subject<ITaskView>();
 		api.getView.mockReturnValueOnce(view);
-		const opening = component.open({ kind: 'saved', id: 'v2' });
+		const opening = openRoute('v2');
 		const reads = api.viewTasks.mock.calls.length;
 		jest.advanceTimersByTime(1_000);
 		expect(api.viewTasks.mock.calls.length).toBe(reads);
@@ -575,7 +605,7 @@ describe('TaskViewsPageComponent', () => {
 		view.complete();
 		await opening;
 		expect(component.savedView()?.id).toBe('v2');
-		expect(api.viewTasks.mock.calls.length).toBe(reads + 1);
+		expect(readsOf(reads)).toEqual(['v2']);
 	});
 
 	it('reads no next page while the rows are being read anew', async () => {

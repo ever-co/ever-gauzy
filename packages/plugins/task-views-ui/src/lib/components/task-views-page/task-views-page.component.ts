@@ -445,6 +445,9 @@ export class TaskViewsPageComponent implements OnInit {
 	protected async reload(): Promise<void> {
 		const scope = this.scope();
 		if (!scope) return;
+		// A saved view that is not open (still being read, or its read failed) has no definition to read its rows
+		// by: its opening reads them, and Try again opens it again (its error stays until then).
+		if (this.isSaved() && !this.savedView()) return;
 		const generation = ++this.generation;
 		// A Load more of the rows read before is superseded: its answer is dropped, and the button is free again.
 		this.loadingMore.set(false);
