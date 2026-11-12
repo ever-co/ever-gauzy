@@ -42,6 +42,19 @@ describe('TaskAutomationEditorComponent', () => {
 		expect(component.draft().name).toBe('Changed');
 	});
 
+	it('locks the form while the page saves; Cancel stays', () => {
+		const { fixture, find } = render();
+		fixture.componentRef.setInput('saving', true);
+		fixture.detectChanges();
+		const lock = (fixture.nativeElement as HTMLElement).querySelector('fieldset.form-lock') as HTMLFieldSetElement;
+		expect(lock.disabled).toBe(true);
+		expect(lock.contains(find('name'))).toBe(true);
+		expect(lock.contains(find('cancel'))).toBe(false);
+		fixture.componentRef.setInput('saving', false);
+		fixture.detectChanges();
+		expect(lock.disabled).toBe(false);
+	});
+
 	it('shows the status lists only for a status change', () => {
 		const { component, find, fixture } = render();
 		expect(find('to-statuses')).not.toBeNull();

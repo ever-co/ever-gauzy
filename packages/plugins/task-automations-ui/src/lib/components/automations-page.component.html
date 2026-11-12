@@ -101,7 +101,7 @@
 								<div class="rule-main">
 									<nb-toggle
 										[attr.data-test]="'toggle-' + rule.id"
-										[attr.aria-label]="'TASK_AUTOMATIONS.ENABLED' | translate"
+										[attr.aria-label]="('TASK_AUTOMATIONS.ENABLED' | translate) + ': ' + rule.name"
 										[checked]="rule.isEnabled"
 										[disabled]="busy().has(rule.id)"
 										(checkedChange)="toggle(rule, $event)"

@@ -1,331 +1,334 @@
 <form class="editor" data-test="editor" (submit)="$event.preventDefault(); submit()">
-	<div class="field">
-		<label class="label" for="task-automation-name"
-			>{{ 'TASK_AUTOMATIONS.FORM.NAME' | translate }} <span class="required" aria-hidden="true">*</span></label
-		>
-		<input
-			nbInput
-			fullWidth
-			fieldSize="small"
-			id="task-automation-name"
-			data-test="name"
-			aria-required="true"
-			[attr.maxlength]="limits.nameLength"
-			[ngModel]="draft().name"
-			[ngModelOptions]="standalone"
-			(ngModelChange)="patch({ name: $event })"
-		/>
-	</div>
-	<div class="field">
-		<label class="label" for="task-automation-description">{{ 'TASK_AUTOMATIONS.FORM.DESCRIPTION' | translate }}</label>
-		<textarea
-			nbInput
-			fullWidth
-			rows="2"
-			id="task-automation-description"
-			data-test="description"
-			[attr.maxlength]="limits.descriptionLength"
-			[ngModel]="draft().description"
-			[ngModelOptions]="standalone"
-			(ngModelChange)="patch({ description: $event })"
-		></textarea>
-	</div>
-	<div class="row">
+	<!-- Locked while saving: an edit made after Save would be lost when the editor closes. -->
+	<fieldset class="form-lock" [disabled]="saving()">
 		<div class="field">
-			<label class="label" for="task-automation-project">{{ 'TASK_AUTOMATIONS.FORM.PROJECT' | translate }}</label>
-			<nb-select
-				fullWidth
-				size="small"
-				id="task-automation-project"
-				data-test="project"
-				[selected]="draft().projectId"
-				(selectedChange)="patchScope({ projectId: $event })"
+			<label class="label" for="task-automation-name"
+				>{{ 'TASK_AUTOMATIONS.FORM.NAME' | translate }} <span class="required" aria-hidden="true">*</span></label
 			>
-				<nb-option [value]="null">{{ 'TASK_AUTOMATIONS.FORM.ANY_PROJECT' | translate }}</nb-option>
-				@for (choice of projects(); track choice.value) {
-					<nb-option [value]="choice.value">{{ choice.label }}</nb-option>
-				}
-			</nb-select>
+			<input
+				nbInput
+				fullWidth
+				fieldSize="small"
+				id="task-automation-name"
+				data-test="name"
+				aria-required="true"
+				[attr.maxlength]="limits.nameLength"
+				[ngModel]="draft().name"
+				[ngModelOptions]="standalone"
+				(ngModelChange)="patch({ name: $event })"
+			/>
 		</div>
 		<div class="field">
-			<label class="label" for="task-automation-team">{{ 'TASK_AUTOMATIONS.FORM.TEAM' | translate }}</label>
-			<nb-select
+			<label class="label" for="task-automation-description">{{ 'TASK_AUTOMATIONS.FORM.DESCRIPTION' | translate }}</label>
+			<textarea
+				nbInput
 				fullWidth
-				size="small"
-				id="task-automation-team"
-				data-test="team"
-				[selected]="draft().organizationTeamId"
-				(selectedChange)="patchScope({ organizationTeamId: $event })"
-			>
-				<nb-option [value]="null">{{ 'TASK_AUTOMATIONS.FORM.ANY_TEAM' | translate }}</nb-option>
-				@for (choice of teams(); track choice.value) {
-					<nb-option [value]="choice.value">{{ choice.label }}</nb-option>
-				}
-			</nb-select>
+				rows="2"
+				id="task-automation-description"
+				data-test="description"
+				[attr.maxlength]="limits.descriptionLength"
+				[ngModel]="draft().description"
+				[ngModelOptions]="standalone"
+				(ngModelChange)="patch({ description: $event })"
+			></textarea>
 		</div>
-	</div>
-	<div class="field">
-		<nb-toggle data-test="enabled" [checked]="draft().isEnabled" (checkedChange)="patch({ isEnabled: $event })">
-			{{ 'TASK_AUTOMATIONS.FORM.ENABLED' | translate }}
-		</nb-toggle>
-	</div>
-
-	<h6 class="section">{{ 'TASK_AUTOMATIONS.FORM.WHEN' | translate }}</h6>
-	<div class="field">
-		<label class="label" for="task-automation-trigger">{{ 'TASK_AUTOMATIONS.FORM.TRIGGER' | translate }}</label>
-		<nb-select
-			fullWidth
-			size="small"
-			id="task-automation-trigger"
-			data-test="trigger"
-			[selected]="draft().trigger.type"
-			(selectedChange)="setTrigger($event)"
-		>
-			@for (type of triggerTypes; track type) {
-				<nb-option [value]="type">{{ 'TASK_AUTOMATIONS.TRIGGERS.' + type | translate }}</nb-option>
-			}
-		</nb-select>
-		<p class="hint">{{ 'TASK_AUTOMATIONS.TRIGGER_HINTS.' + draft().trigger.type | translate }}</p>
-	</div>
-	@if (draft().trigger.type === triggers.STATUS_CHANGED) {
 		<div class="row">
 			<div class="field">
-				<label class="label" for="task-automation-to">{{ 'TASK_AUTOMATIONS.FORM.TO_STATUSES' | translate }}</label>
+				<label class="label" for="task-automation-project">{{ 'TASK_AUTOMATIONS.FORM.PROJECT' | translate }}</label>
 				<nb-select
 					fullWidth
-					multiple
 					size="small"
-					id="task-automation-to"
-					data-test="to-statuses"
-					[placeholder]="'TASK_AUTOMATIONS.FORM.ANY_STATUS' | translate"
-					[selected]="draft().trigger.toStatuses"
-					(selectedChange)="patchTrigger({ toStatuses: $event })"
+					id="task-automation-project"
+					data-test="project"
+					[selected]="draft().projectId"
+					(selectedChange)="patchScope({ projectId: $event })"
 				>
-					@for (choice of statusesWith(draft().trigger.toStatuses); track choice.value) {
+					<nb-option [value]="null">{{ 'TASK_AUTOMATIONS.FORM.ANY_PROJECT' | translate }}</nb-option>
+					@for (choice of projects(); track choice.value) {
 						<nb-option [value]="choice.value">{{ choice.label }}</nb-option>
 					}
 				</nb-select>
 			</div>
 			<div class="field">
-				<label class="label" for="task-automation-from">{{ 'TASK_AUTOMATIONS.FORM.FROM_STATUSES' | translate }}</label>
+				<label class="label" for="task-automation-team">{{ 'TASK_AUTOMATIONS.FORM.TEAM' | translate }}</label>
 				<nb-select
 					fullWidth
-					multiple
 					size="small"
-					id="task-automation-from"
-					data-test="from-statuses"
-					[placeholder]="'TASK_AUTOMATIONS.FORM.ANY_STATUS' | translate"
-					[selected]="draft().trigger.fromStatuses"
-					(selectedChange)="patchTrigger({ fromStatuses: $event })"
+					id="task-automation-team"
+					data-test="team"
+					[selected]="draft().organizationTeamId"
+					(selectedChange)="patchScope({ organizationTeamId: $event })"
 				>
-					@for (choice of statusesWith(draft().trigger.fromStatuses); track choice.value) {
+					<nb-option [value]="null">{{ 'TASK_AUTOMATIONS.FORM.ANY_TEAM' | translate }}</nb-option>
+					@for (choice of teams(); track choice.value) {
 						<nb-option [value]="choice.value">{{ choice.label }}</nb-option>
 					}
 				</nb-select>
 			</div>
 		</div>
-	}
+		<div class="field">
+			<nb-toggle data-test="enabled" [checked]="draft().isEnabled" (checkedChange)="patch({ isEnabled: $event })">
+				{{ 'TASK_AUTOMATIONS.FORM.ENABLED' | translate }}
+			</nb-toggle>
+		</div>
 
-	<h6 class="section">{{ 'TASK_AUTOMATIONS.FORM.IF' | translate }}</h6>
-	@if (!draft().conditions.length) {
-		<p class="hint" data-test="no-conditions">{{ 'TASK_AUTOMATIONS.FORM.NO_CONDITIONS' | translate }}</p>
-	}
-	@for (condition of draft().conditions; track $index; let index = $index) {
-		<div class="line" [attr.data-test]="'condition-' + index">
+		<h6 class="section">{{ 'TASK_AUTOMATIONS.FORM.WHEN' | translate }}</h6>
+		<div class="field">
+			<label class="label" for="task-automation-trigger">{{ 'TASK_AUTOMATIONS.FORM.TRIGGER' | translate }}</label>
 			<nb-select
+				fullWidth
 				size="small"
-				class="type"
-				[attr.aria-label]="'TASK_AUTOMATIONS.FORM.CONDITION' | translate"
-				[selected]="condition.type"
-				(selectedChange)="setConditionType(index, $event)"
+				id="task-automation-trigger"
+				data-test="trigger"
+				[selected]="draft().trigger.type"
+				(selectedChange)="setTrigger($event)"
 			>
-				@for (type of conditionTypes; track type) {
-					<nb-option [value]="type">{{ 'TASK_AUTOMATIONS.CONDITIONS.' + type | translate }}</nb-option>
+				@for (type of triggerTypes; track type) {
+					<nb-option [value]="type">{{ 'TASK_AUTOMATIONS.TRIGGERS.' + type | translate }}</nb-option>
 				}
 			</nb-select>
-			@switch (conditionInputOf(condition.type)) {
-				@case ('text') {
-					<input
-						nbInput
-						fieldSize="small"
-						class="value"
-						[attr.aria-label]="'TASK_AUTOMATIONS.FORM.TEXT' | translate"
-						[attr.maxlength]="limits.textLength"
-						[attr.data-test]="'condition-text-' + index"
-						[ngModel]="condition.text"
-						[ngModelOptions]="standalone"
-						(ngModelChange)="patchCondition(index, { text: $event })"
-					/>
-				}
-				@case (null) {}
-				@default {
+			<p class="hint">{{ 'TASK_AUTOMATIONS.TRIGGER_HINTS.' + draft().trigger.type | translate }}</p>
+		</div>
+		@if (draft().trigger.type === triggers.STATUS_CHANGED) {
+			<div class="row">
+				<div class="field">
+					<label class="label" for="task-automation-to">{{ 'TASK_AUTOMATIONS.FORM.TO_STATUSES' | translate }}</label>
 					<nb-select
+						fullWidth
 						multiple
 						size="small"
-						class="value"
-						[attr.aria-label]="'TASK_AUTOMATIONS.FORM.VALUES' | translate"
-						[attr.data-test]="'condition-values-' + index"
-						[placeholder]="'TASK_AUTOMATIONS.FORM.CHOOSE' | translate"
-						[selected]="condition.values"
-						(selectedChange)="patchCondition(index, { values: $event })"
+						id="task-automation-to"
+						data-test="to-statuses"
+						[placeholder]="'TASK_AUTOMATIONS.FORM.ANY_STATUS' | translate"
+						[selected]="draft().trigger.toStatuses"
+						(selectedChange)="patchTrigger({ toStatuses: $event })"
 					>
-						@for (choice of conditionChoices(condition); track choice.value) {
-							<nb-option [value]="choice.value"
-								>{{ choice.translate ? (choice.label | translate) : choice.label
-								}}@if (choice.detail) {
-									<span class="detail"> · {{ choice.detail }}</span>
-								}</nb-option
-							>
-						}
-					</nb-select>
-				}
-			}
-			<button
-				nbButton
-				ghost
-				size="small"
-				type="button"
-				[attr.aria-label]="'TASK_AUTOMATIONS.FORM.REMOVE' | translate"
-				[attr.data-test]="'remove-condition-' + index"
-				(click)="removeCondition(index)"
-			>
-				<nb-icon icon="trash-2-outline"></nb-icon>
-			</button>
-		</div>
-	}
-	@if (draft().conditions.length < limits.conditionsPerRule) {
-		<button nbButton ghost size="small" type="button" data-test="add-condition" (click)="addCondition()">
-			<nb-icon icon="plus-outline"></nb-icon>{{ 'TASK_AUTOMATIONS.FORM.ADD_CONDITION' | translate }}
-		</button>
-	}
-
-	<h6 class="section">{{ 'TASK_AUTOMATIONS.FORM.THEN' | translate }}</h6>
-	@for (action of draft().actions; track $index; let index = $index) {
-		<div class="line" [attr.data-test]="'action-' + index">
-			<nb-select
-				size="small"
-				class="type"
-				[attr.aria-label]="'TASK_AUTOMATIONS.FORM.ACTION' | translate"
-				[selected]="action.type"
-				(selectedChange)="setActionType(index, $event)"
-			>
-				@for (type of actionTypes; track type) {
-					<nb-option [value]="type">{{ 'TASK_AUTOMATIONS.ACTIONS.' + type | translate }}</nb-option>
-				}
-			</nb-select>
-			@switch (actionInputOf(action.type)) {
-				@case ('status') {
-					<nb-select
-						size="small"
-						class="value"
-						[attr.aria-label]="'TASK_AUTOMATIONS.FORM.STATUS' | translate"
-						[attr.data-test]="'action-status-' + index"
-						[selected]="statusChoiceOf(action)"
-						(selectedChange)="setActionStatus(index, $event)"
-					>
-						@for (category of categories; track category) {
-							<nb-option [value]="'category:' + category">{{
-								'TASK_AUTOMATIONS.CATEGORIES.' + category | translate
-							}}</nb-option>
-						}
-						@for (choice of statusesWith(action.status ? [action.status] : []); track choice.value) {
-							<nb-option [value]="'status:' + choice.value">{{ choice.label }}</nb-option>
-						}
-					</nb-select>
-				}
-				@case ('priority') {
-					<nb-select
-						size="small"
-						class="value"
-						[attr.aria-label]="'TASK_AUTOMATIONS.FORM.PRIORITY' | translate"
-						[attr.data-test]="'action-priority-' + index"
-						[placeholder]="'TASK_AUTOMATIONS.FORM.CHOOSE' | translate"
-						[selected]="action.priority"
-						(selectedChange)="patchAction(index, { priority: $event })"
-					>
-						@for (choice of prioritiesWith(action.priority ? [action.priority] : []); track choice.value) {
+						@for (choice of statusesWith(draft().trigger.toStatuses); track choice.value) {
 							<nb-option [value]="choice.value">{{ choice.label }}</nb-option>
 						}
 					</nb-select>
-				}
-				@case ('employees') {
+				</div>
+				<div class="field">
+					<label class="label" for="task-automation-from">{{ 'TASK_AUTOMATIONS.FORM.FROM_STATUSES' | translate }}</label>
 					<nb-select
+						fullWidth
 						multiple
 						size="small"
-						class="value"
-						[attr.aria-label]="'TASK_AUTOMATIONS.FORM.PEOPLE' | translate"
-						[attr.data-test]="'action-employees-' + index"
-						[placeholder]="'TASK_AUTOMATIONS.FORM.CHOOSE' | translate"
-						[selected]="action.employeeIds"
-						(selectedChange)="patchAction(index, { employeeIds: $event })"
+						id="task-automation-from"
+						data-test="from-statuses"
+						[placeholder]="'TASK_AUTOMATIONS.FORM.ANY_STATUS' | translate"
+						[selected]="draft().trigger.fromStatuses"
+						(selectedChange)="patchTrigger({ fromStatuses: $event })"
 					>
-						@for (choice of employeesWith(action.employeeIds); track choice.value) {
-							<nb-option [value]="choice.value"
-								>{{ choice.label }}@if (choice.detail) {
-									<span class="detail"> · {{ choice.detail }}</span>
-								}</nb-option
-							>
-						}
-					</nb-select>
-				}
-				@case ('tags') {
-					<nb-select
-						multiple
-						size="small"
-						class="value"
-						[attr.aria-label]="'TASK_AUTOMATIONS.FORM.LABELS' | translate"
-						[attr.data-test]="'action-tags-' + index"
-						[placeholder]="'TASK_AUTOMATIONS.FORM.CHOOSE' | translate"
-						[selected]="action.tagIds"
-						(selectedChange)="patchAction(index, { tagIds: $event })"
-					>
-						@for (choice of tagsWith(action.tagIds); track choice.value) {
+						@for (choice of statusesWith(draft().trigger.fromStatuses); track choice.value) {
 							<nb-option [value]="choice.value">{{ choice.label }}</nb-option>
 						}
 					</nb-select>
-				}
-				@default {
-					<input
-						nbInput
-						fieldSize="small"
-						class="value"
-						[attr.aria-label]="'TASK_AUTOMATIONS.FORM.MESSAGE' | translate"
-						[attr.data-test]="'action-message-' + index"
-						[attr.maxlength]="limits.messageLength"
-						[placeholder]="'TASK_AUTOMATIONS.FORM.MESSAGE_PLACEHOLDER' | translate"
-						[ngModel]="action.message"
-						[ngModelOptions]="standalone"
-						(ngModelChange)="patchAction(index, { message: $event })"
-					/>
-				}
-			}
-			<button
-				nbButton
-				ghost
-				size="small"
-				type="button"
-				[attr.aria-label]="'TASK_AUTOMATIONS.FORM.REMOVE' | translate"
-				[attr.data-test]="'remove-action-' + index"
-				[disabled]="draft().actions.length === 1"
-				(click)="removeAction(index)"
-			>
-				<nb-icon icon="trash-2-outline"></nb-icon>
-			</button>
-		</div>
-	}
-	@if (draft().actions.length < limits.actionsPerRule) {
-		<button nbButton ghost size="small" type="button" data-test="add-action" (click)="addAction()">
-			<nb-icon icon="plus-outline"></nb-icon>{{ 'TASK_AUTOMATIONS.FORM.ADD_ACTION' | translate }}
-		</button>
-	}
+				</div>
+			</div>
+		}
 
-	@if (shownErrors().length) {
-		<ul class="errors" role="alert" data-test="form-errors">
-			@for (error of shownErrors(); track error) {
-				<li>{{ error | translate }}</li>
-			}
-		</ul>
-	}
+		<h6 class="section">{{ 'TASK_AUTOMATIONS.FORM.IF' | translate }}</h6>
+		@if (!draft().conditions.length) {
+			<p class="hint" data-test="no-conditions">{{ 'TASK_AUTOMATIONS.FORM.NO_CONDITIONS' | translate }}</p>
+		}
+		@for (condition of draft().conditions; track $index; let index = $index) {
+			<div class="line" [attr.data-test]="'condition-' + index">
+				<nb-select
+					size="small"
+					class="type"
+					[attr.aria-label]="'TASK_AUTOMATIONS.FORM.CONDITION' | translate"
+					[selected]="condition.type"
+					(selectedChange)="setConditionType(index, $event)"
+				>
+					@for (type of conditionTypes; track type) {
+						<nb-option [value]="type">{{ 'TASK_AUTOMATIONS.CONDITIONS.' + type | translate }}</nb-option>
+					}
+				</nb-select>
+				@switch (conditionInputOf(condition.type)) {
+					@case ('text') {
+						<input
+							nbInput
+							fieldSize="small"
+							class="value"
+							[attr.aria-label]="'TASK_AUTOMATIONS.FORM.TEXT' | translate"
+							[attr.maxlength]="limits.textLength"
+							[attr.data-test]="'condition-text-' + index"
+							[ngModel]="condition.text"
+							[ngModelOptions]="standalone"
+							(ngModelChange)="patchCondition(index, { text: $event })"
+						/>
+					}
+					@case (null) {}
+					@default {
+						<nb-select
+							multiple
+							size="small"
+							class="value"
+							[attr.aria-label]="'TASK_AUTOMATIONS.FORM.VALUES' | translate"
+							[attr.data-test]="'condition-values-' + index"
+							[placeholder]="'TASK_AUTOMATIONS.FORM.CHOOSE' | translate"
+							[selected]="condition.values"
+							(selectedChange)="patchCondition(index, { values: $event })"
+						>
+							@for (choice of conditionChoices(condition); track choice.value) {
+								<nb-option [value]="choice.value"
+									>{{ choice.translate ? (choice.label | translate) : choice.label
+									}}@if (choice.detail) {
+										<span class="detail"> · {{ choice.detail }}</span>
+									}</nb-option
+								>
+							}
+						</nb-select>
+					}
+				}
+				<button
+					nbButton
+					ghost
+					size="small"
+					type="button"
+					[attr.aria-label]="'TASK_AUTOMATIONS.FORM.REMOVE' | translate"
+					[attr.data-test]="'remove-condition-' + index"
+					(click)="removeCondition(index)"
+				>
+					<nb-icon icon="trash-2-outline"></nb-icon>
+				</button>
+			</div>
+		}
+		@if (draft().conditions.length < limits.conditionsPerRule) {
+			<button nbButton ghost size="small" type="button" data-test="add-condition" (click)="addCondition()">
+				<nb-icon icon="plus-outline"></nb-icon>{{ 'TASK_AUTOMATIONS.FORM.ADD_CONDITION' | translate }}
+			</button>
+		}
+
+		<h6 class="section">{{ 'TASK_AUTOMATIONS.FORM.THEN' | translate }}</h6>
+		@for (action of draft().actions; track $index; let index = $index) {
+			<div class="line" [attr.data-test]="'action-' + index">
+				<nb-select
+					size="small"
+					class="type"
+					[attr.aria-label]="'TASK_AUTOMATIONS.FORM.ACTION' | translate"
+					[selected]="action.type"
+					(selectedChange)="setActionType(index, $event)"
+				>
+					@for (type of actionTypes; track type) {
+						<nb-option [value]="type">{{ 'TASK_AUTOMATIONS.ACTIONS.' + type | translate }}</nb-option>
+					}
+				</nb-select>
+				@switch (actionInputOf(action.type)) {
+					@case ('status') {
+						<nb-select
+							size="small"
+							class="value"
+							[attr.aria-label]="'TASK_AUTOMATIONS.FORM.STATUS' | translate"
+							[attr.data-test]="'action-status-' + index"
+							[selected]="statusChoiceOf(action)"
+							(selectedChange)="setActionStatus(index, $event)"
+						>
+							@for (category of categories; track category) {
+								<nb-option [value]="'category:' + category">{{
+									'TASK_AUTOMATIONS.CATEGORIES.' + category | translate
+								}}</nb-option>
+							}
+							@for (choice of statusesWith(action.status ? [action.status] : []); track choice.value) {
+								<nb-option [value]="'status:' + choice.value">{{ choice.label }}</nb-option>
+							}
+						</nb-select>
+					}
+					@case ('priority') {
+						<nb-select
+							size="small"
+							class="value"
+							[attr.aria-label]="'TASK_AUTOMATIONS.FORM.PRIORITY' | translate"
+							[attr.data-test]="'action-priority-' + index"
+							[placeholder]="'TASK_AUTOMATIONS.FORM.CHOOSE' | translate"
+							[selected]="action.priority"
+							(selectedChange)="patchAction(index, { priority: $event })"
+						>
+							@for (choice of prioritiesWith(action.priority ? [action.priority] : []); track choice.value) {
+								<nb-option [value]="choice.value">{{ choice.label }}</nb-option>
+							}
+						</nb-select>
+					}
+					@case ('employees') {
+						<nb-select
+							multiple
+							size="small"
+							class="value"
+							[attr.aria-label]="'TASK_AUTOMATIONS.FORM.PEOPLE' | translate"
+							[attr.data-test]="'action-employees-' + index"
+							[placeholder]="'TASK_AUTOMATIONS.FORM.CHOOSE' | translate"
+							[selected]="action.employeeIds"
+							(selectedChange)="patchAction(index, { employeeIds: $event })"
+						>
+							@for (choice of employeesWith(action.employeeIds); track choice.value) {
+								<nb-option [value]="choice.value"
+									>{{ choice.label }}@if (choice.detail) {
+										<span class="detail"> · {{ choice.detail }}</span>
+									}</nb-option
+								>
+							}
+						</nb-select>
+					}
+					@case ('tags') {
+						<nb-select
+							multiple
+							size="small"
+							class="value"
+							[attr.aria-label]="'TASK_AUTOMATIONS.FORM.LABELS' | translate"
+							[attr.data-test]="'action-tags-' + index"
+							[placeholder]="'TASK_AUTOMATIONS.FORM.CHOOSE' | translate"
+							[selected]="action.tagIds"
+							(selectedChange)="patchAction(index, { tagIds: $event })"
+						>
+							@for (choice of tagsWith(action.tagIds); track choice.value) {
+								<nb-option [value]="choice.value">{{ choice.label }}</nb-option>
+							}
+						</nb-select>
+					}
+					@default {
+						<input
+							nbInput
+							fieldSize="small"
+							class="value"
+							[attr.aria-label]="'TASK_AUTOMATIONS.FORM.MESSAGE' | translate"
+							[attr.data-test]="'action-message-' + index"
+							[attr.maxlength]="limits.messageLength"
+							[placeholder]="'TASK_AUTOMATIONS.FORM.MESSAGE_PLACEHOLDER' | translate"
+							[ngModel]="action.message"
+							[ngModelOptions]="standalone"
+							(ngModelChange)="patchAction(index, { message: $event })"
+						/>
+					}
+				}
+				<button
+					nbButton
+					ghost
+					size="small"
+					type="button"
+					[attr.aria-label]="'TASK_AUTOMATIONS.FORM.REMOVE' | translate"
+					[attr.data-test]="'remove-action-' + index"
+					[disabled]="draft().actions.length === 1"
+					(click)="removeAction(index)"
+				>
+					<nb-icon icon="trash-2-outline"></nb-icon>
+				</button>
+			</div>
+		}
+		@if (draft().actions.length < limits.actionsPerRule) {
+			<button nbButton ghost size="small" type="button" data-test="add-action" (click)="addAction()">
+				<nb-icon icon="plus-outline"></nb-icon>{{ 'TASK_AUTOMATIONS.FORM.ADD_ACTION' | translate }}
+			</button>
+		}
+
+		@if (shownErrors().length) {
+			<ul class="errors" role="alert" data-test="form-errors">
+				@for (error of shownErrors(); track error) {
+					<li>{{ error | translate }}</li>
+				}
+			</ul>
+		}
+	</fieldset>
 	<div class="buttons">
 		<button nbButton size="small" status="primary" type="submit" data-test="save" [disabled]="saving()">
 			{{ 'TASK_AUTOMATIONS.FORM.SAVE' | translate }}

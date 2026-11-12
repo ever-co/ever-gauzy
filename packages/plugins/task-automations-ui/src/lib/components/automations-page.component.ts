@@ -319,8 +319,9 @@ export class TaskAutomationsPageComponent implements OnInit {
 		// changed meanwhile (the switch, say) is not written back; and only this editor closes when the save lands.
 		const opened = this.editing();
 		const input = ruleInputOfDraft(draft);
+		const sent = draft.id && opened?.id === draft.id ? changedRuleInput(ruleInputOfDraft(opened), input) : input;
 		const request$ = draft.id
-			? this.api.update(draft.id, opened?.id === draft.id ? changedRuleInput(ruleInputOfDraft(opened), input) : input, organizationId)
+			? this.api.update(draft.id, sent, organizationId)
 			: this.api.create({ ...input, ...(draft.templateKey ? { templateKey: draft.templateKey } : {}) }, organizationId);
 		this.saving.set(true);
 		this.actionError.set(null);
@@ -328,8 +329,16 @@ export class TaskAutomationsPageComponent implements OnInit {
 			next: (saved) => {
 				this.saving.set(false);
 				if (!this.stillIn(organizationId)) return;
+				// The saved rule, but its switch and its place as the list has them unless this save set them: a toggle or a
+				// reorder that landed meanwhile keeps its result.
 				this.rules.update((rules) =>
-					rules.some((rule) => rule.id === saved.id) ? rules.map((rule) => (rule.id === saved.id ? saved : rule)) : [...rules, saved]
+					rules.some((rule) => rule.id === saved.id)
+						? rules.map((rule) =>
+								rule.id === saved.id
+									? { ...saved, isEnabled: 'isEnabled' in sent ? saved.isEnabled : rule.isEnabled, position: rule.position }
+									: rule
+							)
+						: [...rules, saved]
 				);
 				if (this.editing() === opened) this.editing.set(null);
 				this.toastr.success('TASK_AUTOMATIONS.SAVED', { name: saved.name });

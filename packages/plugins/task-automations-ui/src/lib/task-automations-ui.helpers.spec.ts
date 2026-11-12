@@ -159,7 +159,12 @@ describe('task automations UI helpers', () => {
 	it('holds every list to the platform’s 50 values', () => {
 		const many = Array.from({ length: 51 }, (_, index) => `v-${index}`);
 		const base = draftOfRule(rule);
-		expect(draftErrors({ ...base, trigger: { ...base.trigger, toStatuses: many } })).toContain('TASK_AUTOMATIONS.ERRORS.TOO_MANY_VALUES');
+		const statusChange = { ...base.trigger, type: TaskAutomationTriggerEnum.STATUS_CHANGED, toStatuses: many };
+		expect(draftErrors({ ...base, trigger: statusChange })).toContain('TASK_AUTOMATIONS.ERRORS.TOO_MANY_VALUES');
+		// Another trigger neither shows nor sends the status lists: they do not block Save.
+		expect(draftErrors({ ...base, trigger: { ...statusChange, type: TaskAutomationTriggerEnum.TASK_CREATED } })).not.toContain(
+			'TASK_AUTOMATIONS.ERRORS.TOO_MANY_VALUES'
+		);
 		expect(
 			draftErrors({ ...base, conditions: [{ ...newCondition(TaskAutomationConditionEnum.HAS_LABEL), values: many }] })
 		).toContain('TASK_AUTOMATIONS.ERRORS.TOO_MANY_VALUES');

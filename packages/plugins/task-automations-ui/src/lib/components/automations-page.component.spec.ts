@@ -214,6 +214,18 @@ describe('TaskAutomationsPageComponent', () => {
 		expect(component.rules()[0].name).toBe('Renamed');
 	});
 
+	it('keeps a switch that landed while a name-only save was under way', () => {
+		const { component } = render();
+		const save$ = new Subject<ITaskAutomationRule>();
+		api.update.mockReturnValueOnce(save$).mockReturnValueOnce(of(rule('a', { isEnabled: false })));
+		component.edit(component.rules()[0]);
+		component.save({ ...(component.editing() as ITaskAutomationDraft), name: 'Renamed' });
+		component.toggle(component.rules()[0], false);
+		// The save answers last, with the switch as it was when the save was read.
+		save$.next(rule('a', { name: 'Renamed', isEnabled: true }));
+		expect(component.rules()[0]).toMatchObject({ name: 'Renamed', isEnabled: false });
+	});
+
 	it('closes only the editor that saved; a new draft opened meanwhile stays', () => {
 		const { component } = render();
 		const save$ = new Subject<ITaskAutomationRule>();

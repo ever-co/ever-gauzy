@@ -281,9 +281,10 @@ export function draftErrors(draft: ITaskAutomationDraft): string[] {
 		errors.push('TASK_AUTOMATIONS.ERRORS.TEXT_TOO_LONG');
 	}
 	const tooMany = (values: readonly string[] | null | undefined) => strings(values ?? []).length > TASK_AUTOMATION_LIMITS.valuesPerList;
+	// The status lists count only for a status change: another trigger neither shows nor sends them.
+	const statusTrigger = draft.trigger.type === TaskAutomationTriggerEnum.STATUS_CHANGED;
 	if (
-		tooMany(draft.trigger.toStatuses) ||
-		tooMany(draft.trigger.fromStatuses) ||
+		(statusTrigger && (tooMany(draft.trigger.toStatuses) || tooMany(draft.trigger.fromStatuses))) ||
 		draft.conditions.some((condition) => tooMany(condition.values)) ||
 		draft.actions.some((action) => tooMany(action.employeeIds) || tooMany(action.tagIds))
 	) {
