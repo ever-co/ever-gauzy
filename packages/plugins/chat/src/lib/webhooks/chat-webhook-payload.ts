@@ -195,9 +195,22 @@ function clean(value: string): string {
 }
 
 function finish(value: string): string {
-	const decoded = stripTags(stripTags(value).replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&'));
+	// The broadcast tokens left by `rewriteAngles` (a webhook allowed to broadcast) stay as they are; between them,
+	// escaped angle brackets are text: a broadcast token they spell once decoded is written as `@channel` / `@here`,
+	// so a webhook that may not broadcast cannot send `&lt;!here&gt;` and have it read as a mention of everyone.
+	const parts = stripTags(value).split(BROADCAST_TOKEN);
+	const decoded = parts
+		.map((part, index) => {
+			if (index % 2 === 1) return part;
+			const text = stripTags(part.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&'));
+			return text.replace(BROADCAST_TOKEN, (token: string) => `@${token.slice(2, -1)}`);
+		})
+		.join('');
 	return decoded.replace(/[ \t]+\n/g, '\n').replace(/\n{3,}/g, '\n\n').trim();
 }
+
+/** The chat's broadcast mention tokens, captured (so a `split` keeps them as their own parts). */
+const BROADCAST_TOKEN = /(<!channel>|<!here>)/g;
 
 /** Removes HTML comments, declarations and tags; leaves the chat's mention tokens and any other text. */
 function stripTags(value: string): string {

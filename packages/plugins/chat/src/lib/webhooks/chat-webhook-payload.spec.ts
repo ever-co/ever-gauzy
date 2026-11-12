@@ -45,6 +45,16 @@ describe('chat webhook payloads', () => {
 			expect(bodyText('<!channel> deploy <!here> <!everyone>', true)).toBe('<!channel> deploy <!here> <!channel>');
 		});
 
+		it('never reads escaped angle brackets as a broadcast, in the body or in block text', () => {
+			expect(bodyText('&lt;!here&gt; deploy &lt;!channel&gt;', false)).toBe('@here deploy @channel');
+			// Escaped brackets are text even for a webhook allowed to broadcast: only its own `<!here>` counts.
+			expect(bodyText('<!here> deploy &lt;!channel&gt;', true)).toBe('<!here> deploy @channel');
+			expect(plainText('&lt;!here&gt; ping', 100)).toBe('@here ping');
+			const content = normalizeWebhookPayload({ blocks: [{ type: 'section', text: { type: 'mrkdwn', text: '&lt;!channel&gt; disk full' } }] }, { canBroadcast: false });
+			expect(content.body).toBe('@channel disk full');
+			expect(content.body).not.toMatch(/<!(channel|here)>/);
+		});
+
 		it('reads the labels of foreign user and channel references', () => {
 			expect(bodyText('<@U123|alice> in <#C9|ops> <!date^1700000000^{date}|Nov 14>', false)).toBe('@alice in #ops Nov 14');
 		});
