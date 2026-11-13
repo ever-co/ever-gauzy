@@ -29,6 +29,7 @@ import {
 	ToastrService
 } from '@gauzy/ui-core/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
+import { PAGE_EXTENSION_SLOTS } from '@gauzy/plugin-ui';
 import {
 	AddTaskDialogComponent,
 	HashNumberPipe,
@@ -154,6 +155,8 @@ export class TaskViewPageComponent extends TranslationBaseComponent implements O
 	@HostBinding('class.is-page') readonly isPage = true;
 
 	readonly favoriteEntity = BaseEntityEnum.Task;
+	/** The slot plugins put their actions on a task's page in (`ActivatedRoute` param `id` is the task). */
+	readonly taskActionsSlot = PAGE_EXTENSION_SLOTS.TASK_VIEW_ACTIONS;
 	readonly hoursDays = HOURS_DAYS;
 	readonly entriesDays = ENTRIES_DAYS;
 	readonly tabs: { id: TaskViewTab; label: string; icon: string }[] = [

@@ -35,6 +35,7 @@ export {
 	thumbnailFileName,
 	videoUploadFileFilter,
 	RENDERABLE_KEY_EXTENSIONS,
+	runWithTenantStorageSettings,
 	toSafeStorageExtension
 } from './lib/core/file-storage';
 export type { ReadStorageFileOptions, StorageFileReadFailure, StoredFileContent } from './lib/core/file-storage';
@@ -105,6 +106,9 @@ export { CreateMentionEvent } from './lib/mention/events';
 // `apps/worker`, which runs the plugin pipelines without core's HTTP `AppModule` — has to import
 // them itself or it fails DI at boot on the first plugin that injects either service.
 export { ActivityLogModule } from './lib/activity-log/activity-log.module';
+// The task change fact (field values before and after) the task automations plugin fires its rules on
+// (`@gauzy/plugin-task-automations`): `@nestjs/cqrs` dispatches on the class, so a plugin handler needs this one.
+export { ActivityLogEvent } from './lib/activity-log/events/activity-log.event';
 export { MentionModule } from './lib/mention/mention.module';
 // The notification facts other packages act on: the Inbox files created notifications as items and mirrors
 // their read state; the real-time channel turns them into addressed hints.

@@ -6,7 +6,8 @@ import {
 	HttpStatus,
 	Injectable,
 	Logger,
-	NotFoundException
+	NotFoundException,
+	Optional
 } from '@nestjs/common';
 import { CommandBus, EventBus as CqrsEventBus } from '@nestjs/cqrs';
 import { Brackets, FindOneOptions, In, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
@@ -72,6 +73,8 @@ import { DocumentEvent, IDocumentEventContext } from '../events/document.event';
 import { MikroOrmDocumentRepository } from '../repositories/mikro-orm-document.repository';
 import { TypeOrmDocumentRepository } from '../repositories/type-orm-document.repository';
 import { TypeOrmDocumentLinkRepository } from '../repositories/type-orm-document-link.repository';
+// Deep import: the pure Yjs helpers of the live sessions, not the live module (which imports this one).
+import { isLiveStateFor } from '../live/document-live.yjs';
 import {
 	collectDocumentMentionIds,
 	generateDocumentHtml,
@@ -80,6 +83,9 @@ import {
 } from '../validation';
 import { assertContentSearchQueryLength } from './content-search.guard';
 import { DocumentAccessService } from './document-access.service';
+import { DocumentLiveBridge } from './document-live.bridge';
+import { collectEmployeeMentionIds } from './document-markdown';
+import { DOCS_SEARCH_SNIPPET_MAX_ITEMS, searchSnippetOf } from './document-search-snippet';
 import { DocumentSettingsService } from './document-settings.service';
 import { DocumentVersionService } from './document-version.service';
 
@@ -195,7 +201,9 @@ export class DocumentService extends TenantAwareCrudService<Document> {
 		// above — the two are different buses and `DocumentEvent` travels on the other.
 		private readonly _cqrsEventBus: CqrsEventBus,
 		private readonly _commandBus: CommandBus,
-		private readonly _mentionService: MentionService
+		private readonly _mentionService: MentionService,
+		// Live editing sessions (`GAUZY_DOCS_LIVE_ENABLED=true`); optional so a hand-built service in a spec needs none.
+		@Optional() private readonly liveBridge?: DocumentLiveBridge
 	) {
 		super(typeOrmDocumentRepository, mikroOrmDocumentRepository);
 	}
@@ -508,7 +516,7 @@ export class DocumentService extends TenantAwareCrudService<Document> {
 		// the field was whitelisted, parsed and silently dropped.
 		await this.syncMentions(document.id, input.mentionEmployeeIds, document.organizationId ?? organizationId);
 		await this.syncDocumentLinks(document, contentJson);
-		this.subscribeRequesterToDocument(document, EntitySubscriptionTypeEnum.CREATED_ENTITY);
+		void this.subscribeRequesterToDocument(document, EntitySubscriptionTypeEnum.CREATED_ENTITY);
 
 		this.emitDocumentEvent(document, 'created', { phase: 'crud' }, input);
 		return document;
@@ -550,8 +558,18 @@ export class DocumentService extends TenantAwareCrudService<Document> {
 	 * @param document The document to subscribe to.
 	 * @param type Why the subscription is created.
 	 */
-	public subscribeRequesterToDocument(document: Document, type: EntitySubscriptionTypeEnum): void {
-		const employeeId = RequestContext.currentEmployeeId();
+	public async subscribeRequesterToDocument(document: Document, type: EntitySubscriptionTypeEnum): Promise<void> {
+		// The requester's employee in the page's organization: the one that organization's fan-out and Inbox read
+		// (a user employed in several organizations carries their last organization's employee in the token).
+		// When that read fails the subscription is skipped: one saved under another organization's employee would
+		// outlive the failure.
+		let employeeId: ID | null;
+		try {
+			employeeId = await this.documentAccessService.currentEmployeeIdIn(document.organizationId, document.tenantId);
+		} catch (error) {
+			this.logger.warn(`Document ${document.id}: the requester was not subscribed: ${(error as Error)?.message}`);
+			return;
+		}
 		if (!employeeId) {
 			return; // no employee identity on this request — there is nobody to subscribe
 		}
@@ -680,7 +698,9 @@ export class DocumentService extends TenantAwareCrudService<Document> {
 			// leaves the render cache describing the PREVIOUS revision, which is what read-only
 			// views render and what `searchIn=content` matches on.
 			contentHtml: this.resolveContentHtml(input.contentHtml, contentJson, document.contentHtml ?? null),
-			...(input.contentBinary !== undefined
+			// While the page has a live state, that state is the page's CRDT and the live sessions write it (they apply
+			// this save to it below); the seed an editor sends with an autosave would replace it with another lineage.
+			...(input.contentBinary !== undefined && !this.holdsLiveState(document)
 				? { contentBinary: this.decodeContentBinary(input.contentBinary) }
 				: {}),
 			metadata: this.mergeContentMetadata(document, input)
@@ -693,8 +713,57 @@ export class DocumentService extends TenantAwareCrudService<Document> {
 		await this.syncMentions(document.id, input.mentionEmployeeIds, document.organizationId);
 		// The `+` cross-link half of the same idea (`05-editor-spec.md` §7.2).
 		await this.syncDocumentLinks(updated, contentJson);
+		// Open editors see a save that did not come through their session (an API or MCP client, a Markdown update).
+		await this.liveBridge?.contentWritten(document, updated);
 
 		this.emitDocumentEvent(updated, 'updated', { phase: 'crud' }, input as any);
+		return updated;
+	}
+
+	/**
+	 * Whether the page's stored `contentBinary` is the state of its live document (written by the live sessions for
+	 * the revision the page is at), with live sessions served by this process.
+	 *
+	 * @param document The page.
+	 */
+	public holdsLiveState(document: Pick<Document, 'contentBinary' | 'contentRevision'>): boolean {
+		return this.liveBridge?.enabled === true && isLiveStateFor(document.contentBinary as Buffer | null, document.contentRevision);
+	}
+
+	/**
+	 * Persists the merged state of a live document (`DocumentLiveService`): the content columns, the claimed
+	 * revision, the version snapshot, the mention and cross-link sync and the `updated` event, as a content save
+	 * does. The caller has claimed `contentRevision` in the guarded write the save path uses, so two writers of the
+	 * same page cannot both land.
+	 *
+	 * Runs in the request context of the session whose edits are saved, which is who the version, the mentions and
+	 * the activity entry are attributed to.
+	 *
+	 * @param document The page as loaded for this write.
+	 * @param input The live document's content, its stored state (`null` when the state is over the size limit: the
+	 * content is still saved, and the page has no live state to reload) and the claimed revision.
+	 * @returns The saved page.
+	 */
+	async saveLiveContent(document: Document, input: { contentJson: unknown; contentBinary: Buffer | null; contentRevision: number }): Promise<Document> {
+		const contentJson = this.validateContentJson(input.contentJson);
+		const maxBinaryBytes = getDocsConfig().maxBinaryBytes;
+		if (input.contentBinary && input.contentBinary.length > maxBinaryBytes) {
+			throw new BadRequestException({ message: `The collaboration state exceeds the ${maxBinaryBytes} byte limit`, code: DOCS_CONTENT_BINARY_TOO_LARGE });
+		}
+		await this.documentVersionService.captureSnapshotIfNeeded(document, { force: false });
+		const { updatedAt: loadedToken, ...current } = document;
+		const updated = await this.save({
+			...current,
+			id: document.id,
+			updatedAt: nextContentToken(loadedToken),
+			contentRevision: input.contentRevision,
+			contentJson,
+			contentHtml: this.resolveContentHtml(undefined, contentJson, document.contentHtml ?? null),
+			contentBinary: input.contentBinary
+		});
+		await this.syncMentions(document.id, collectEmployeeMentionIds(contentJson) as ID[], document.organizationId);
+		await this.syncDocumentLinks(updated, contentJson);
+		this.emitDocumentEvent(updated, 'updated', { phase: 'crud' });
 		return updated;
 	}
 
@@ -976,7 +1045,43 @@ export class DocumentService extends TenantAwareCrudService<Document> {
 			return entity;
 		});
 
+		if (params.q) {
+			await this.attachSearchSnippets(items, params);
+		}
+
 		return { items, total };
+	}
+
+	/**
+	 * The search snippet of each result of a search (`searchSnippet`: about 160 characters of plain text around the
+	 * first match, the matches as offsets). A content search reads the text of the page's results (at most
+	 * {@link DOCS_SEARCH_SNIPPET_MAX_ITEMS} of them, the content of a document that is not `searchable` left out, as
+	 * the search leaves it out); a name search has the description and the name's matches. Best effort: a result
+	 * whose text cannot be read keeps no snippet.
+	 */
+	private async attachSearchSnippets(items: Document[], params: GetDocumentsQueryDTO): Promise<void> {
+		const shown = items.slice(0, DOCS_SEARCH_SNIPPET_MAX_ITEMS);
+		const texts = new Map<string, { contentJson?: unknown; contentHtml?: string | null; extractedText?: string | null }>();
+		if (params.searchIn === 'content' && shown.length) {
+			try {
+				const rows = await this.typeOrmRepository
+					.createQueryBuilder('document')
+					.select(['document.id', 'document.contentJson', 'document.contentHtml', 'document.extractedText', 'document.searchable'])
+					.where(p(`"document"."id" IN (:...snippetIds)`), { snippetIds: shown.map((item) => item.id) })
+					.andWhere(p(`"document"."tenantId" = :snippetTenantId`), { snippetTenantId: RequestContext.currentTenantId() })
+					.getMany();
+				for (const row of rows) {
+					if (row.searchable !== false) {
+						texts.set(String(row.id), { contentJson: row.contentJson, contentHtml: row.contentHtml, extractedText: row.extractedText });
+					}
+				}
+			} catch (error) {
+				this.logger.warn(`Search snippets were not read: ${(error as Error).message}`);
+			}
+		}
+		for (const item of shown) {
+			(item as any).searchSnippet = searchSnippetOf(params.q, { name: item.name, description: item.description, ...(texts.get(String(item.id)) ?? {}) });
+		}
 	}
 
 	/**

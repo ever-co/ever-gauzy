@@ -3,7 +3,6 @@ import { Repository as TypeOrmBaseEntityRepository, SelectQueryBuilder, IsNull, 
 import { Knex as KnexConnection } from 'knex';
 import { isNotEmpty } from '@gauzy/utils';
 import {
-	FileStorageProviderEnum,
 	IIssueTypeFindInput,
 	IPagination,
 	ITaskPriorityFindInput,
@@ -12,7 +11,7 @@ import {
 	ITaskVersionFindInput
 } from '@gauzy/contracts';
 import { MikroOrmBaseEntityRepository } from '../core/repository/mikro-orm-base-entity.repository';
-import { FileStorage } from '../core/file-storage';
+import { localFileUrl } from '../core/file-storage';
 import { RequestContext } from '../core/context';
 import { TenantAwareCrudService } from '../core/crud';
 import { MultiORMEnum, parseTypeORMFindToMikroOrm } from '../core/utils';
@@ -71,19 +70,15 @@ export class TaskMetadataService<BaseEntity extends TenantBaseEntity> extends Te
 
 			const items = await this.getManyAndCountByKnex(input);
 
-			// Resolve full icon URLs for items with an icon
-			if (items.length > 0) {
-				const store = new FileStorage().setProvider(FileStorageProviderEnum.LOCAL);
-				const provider = store.getProviderInstance();
-
-				await Promise.all(
-					items.map(async (item: any) => {
-						if (item.icon) {
-							item.fullIconUrl = await provider.url(item.icon);
-						}
-					})
-				);
-			}
+			// Raw Knex rows skip the entity load hooks: resolve the full icon URL with the same rules
+			// (a library icon such as `hugeicons:done` is no file and gets no URL)
+			await Promise.all(
+				items.map(async (item: any) => {
+					if (item.icon) {
+						item.fullIconUrl = await localFileUrl(item.icon);
+					}
+				})
+			);
 
 			return { items, total: items.length };
 		} catch (error) {

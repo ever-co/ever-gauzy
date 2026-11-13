@@ -5,12 +5,23 @@ import {
 	CHAT_EVENT_NAMES,
 	ChatMemberRoleEnum,
 	ChatNotifyLevelEnum,
+	DocumentSourceEnum,
+	DocumentVisibilityEnum,
 	IChatCategory,
+	IChatCategoryInput,
+	IChatCategoryReorderInput,
+	IChatCategoryReorderResult,
 	IChatConversationCreateInput,
 	IChatConversationList,
 	IChatConversationUpdateInput,
 	IChatConversationWithState,
+	IChatCreateTaskInput,
+	IChatCreateTaskResult,
+	IChatDraftDiscardResult,
 	IChatEvent,
+	IChatFilesQuery,
+	IChatFilesResult,
+	IChatLinkPreview,
 	IChatMemberState,
 	IChatMemberStateInput,
 	IChatMemberSummary,
@@ -22,9 +33,14 @@ import {
 	IChatReadAllResult,
 	IChatSendResult,
 	IChatStates,
+	IChatTaskUpdateInput,
+	IChatTaskUpdateResult,
+	IChatTypingInput,
+	IChatTypingResult,
 	ID
 } from '@gauzy/contracts';
 import { API_PREFIX, toParams } from '@gauzy/ui-core/common';
+import { typingRefusalOf } from '../chat-typing';
 import { CHAT_PAGE_SIZE } from '../chat-ui.constants';
 
 const CHAT = `${API_PREFIX}/chat`;
@@ -58,6 +74,18 @@ export interface ChatPersonRecord {
 	name: string;
 	imageUrl: string | null;
 }
+
+/**
+ * What the Docs plugin answers an upload (`POST /api/plugins/docs/documents/upload`): the documents it stored, and
+ * the files it refused with why. Only the members chat reads are named here.
+ */
+export interface ChatUploadAnswer {
+	results: Array<{ document: { id: ID; name?: string | null; mimeType?: string | null; fileSize?: number | null } }>;
+	rejected: Array<{ fileName: string; code: string; message: string }>;
+}
+
+/** Where the Docs plugin takes uploads: every attachment is a FILE document of its uploader. */
+export const CHAT_UPLOAD_URL = `${API_PREFIX}/plugins/docs/documents/upload`;
 
 /** What `chat_member.state_changed` carries. */
 interface MemberStateChangedData {
@@ -104,6 +132,10 @@ export function memberStateFromEvents(
 @Injectable({ providedIn: 'root' })
 export class ChatUiService {
 	private readonly http = inject(HttpClient);
+	/** The platform has no typing route: the composer stops asking (for the page). */
+	private typingOff = false;
+	/** The places (`conversation:thread`) that refused a typing signal. */
+	private readonly typingRefused = new Set<string>();
 	private readonly changes = new Subject<void>();
 
 	/** Emits when the page changed my state (read, sent, joined), so the badge counts again at once. */
@@ -183,6 +215,26 @@ export class ChatUiService {
 		return this.http.get<IChatCategory[]>(`${CHAT}/categories`);
 	}
 
+	/** A sidebar category (`CHAT_MANAGE`). */
+	createCategory(input: IChatCategoryInput): Observable<IChatCategory> {
+		return this.http.post<IChatCategory>(`${CHAT}/categories`, input);
+	}
+
+	/** Renames or moves a category (`CHAT_MANAGE`). */
+	updateCategory(id: ID, input: Partial<IChatCategoryInput>): Observable<IChatCategory> {
+		return this.http.patch<IChatCategory>(`${CHAT}/categories/${path(id)}`, input);
+	}
+
+	/** Saves the order of the categories (and of the channels within them) in one call (`CHAT_MANAGE`). */
+	reorderCategories(input: IChatCategoryReorderInput): Observable<IChatCategoryReorderResult> {
+		return this.http.post<IChatCategoryReorderResult>(`${CHAT}/categories/reorder`, input);
+	}
+
+	/** Deletes a category; its channels stay, uncategorized (`CHAT_MANAGE`). */
+	deleteCategory(id: ID): Observable<void> {
+		return this.http.delete<void>(`${CHAT}/categories/${path(id)}`);
+	}
+
 	// ---------------------------------------------------------------- messages
 
 	messages(conversationId: ID, query: IChatMessagesQuery = {}): Observable<IChatMessagePage> {
@@ -216,9 +268,88 @@ export class ChatUiService {
 		return this.http.post<ChatEvents>(`${CHAT}/messages/${path(messageId)}/unread`, {});
 	}
 
+	/** Creates a task from a message (`ORG_TASK_ADD` too); the message keeps a reference to it. */
+	createTask(messageId: ID, input: IChatCreateTaskInput): Observable<IChatCreateTaskResult> {
+		return this.http.post<IChatCreateTaskResult>(`${CHAT}/messages/${path(messageId)}/create-task`, input);
+	}
+
+	/**
+	 * Changes a task from its card in a message (status, priority, assignees): the platform's task update, with the
+	 * task page's permission (`ORG_TASK_EDIT`) and activity log.
+	 */
+	updateTask(messageId: ID, taskId: ID, input: IChatTaskUpdateInput): Observable<IChatTaskUpdateResult> {
+		return this.http.patch<IChatTaskUpdateResult>(`${CHAT}/messages/${path(messageId)}/tasks/${path(taskId)}`, input);
+	}
+
+	/** Tells the other members that I am typing here (or in a thread); nothing is stored. */
+	typing(conversationId: ID, input: IChatTypingInput = {}): Observable<IChatTypingResult> {
+		return this.http.post<IChatTypingResult>(`${CHAT}/conversations/${path(conversationId)}/typing`, input);
+	}
+
+	/**
+	 * The composer's "I am typing" (best effort; nothing waits on it). A place that refuses it (not a member, archived)
+	 * is not asked again; a platform without the route is not asked again for the page.
+	 */
+	signalTyping(conversationId: ID, threadRootId: ID | null = null): void {
+		const place = `${conversationId}:${threadRootId ?? ''}`;
+		if (this.typingOff || this.typingRefused.has(place)) return;
+		this.typing(conversationId, threadRootId ? { threadRootId } : {}).subscribe({
+			error: (error: unknown) => {
+				const refusal = typingRefusalOf(error);
+				if (refusal === 'route') this.typingOff = true;
+				else if (refusal === 'place') this.typingRefused.add(place);
+			}
+		});
+	}
+
+	/** Discards a file I uploaded for a message and will not send (its document and stored bytes go). */
+	discardAttachment(documentId: ID): Observable<IChatDraftDiscardResult> {
+		return this.http.delete<IChatDraftDiscardResult>(`${CHAT}/attachments/${path(documentId)}`);
+	}
+
 	react(messageId: ID, emoji: string, on: boolean): Observable<IChatSendResult> {
 		const url = `${CHAT}/messages/${path(messageId)}/reactions/${encodeURIComponent(emoji)}`;
 		return on ? this.http.post<IChatSendResult>(url, {}) : this.http.delete<IChatSendResult>(url);
+	}
+
+	// ---------------------------------------------------------------- link previews
+
+	/**
+	 * The preview of a link, which the platform fetches and caches (`ready`, `pending`: ask again in a moment, or
+	 * `unavailable`). Answers 404 while the platform's link previews are off.
+	 */
+	linkPreview(url: string): Observable<IChatLinkPreview> {
+		return this.http.get<IChatLinkPreview>(`${CHAT}/link-preview`, { params: toParams({ url }) });
+	}
+
+	/**
+	 * The picture of a link's preview, served by the platform from its own fetch (so the browser never loads it from the
+	 * linked site). Answers 404 while the platform serves no pictures, and for a link with no ready preview or picture.
+	 */
+	linkPreviewImage(url: string): Observable<Blob> {
+		return this.http.get(`${CHAT}/link-preview/image`, { params: toParams({ url }), responseType: 'blob' });
+	}
+
+	// ---------------------------------------------------------------- files
+
+	/** The files of a conversation (what its messages carry), newest first. */
+	files(conversationId: ID, query: IChatFilesQuery = {}): Observable<IChatFilesResult> {
+		return this.http.get<IChatFilesResult>(`${CHAT}/conversations/${path(conversationId)}/files`, { params: toParams({ ...query }) });
+	}
+
+	/**
+	 * Stores one file to attach through the Docs plugin: a private FILE document of the sender, marked as coming from
+	 * the chat, kept out of the knowledge base and of the AI classification. The members of the conversation reach it
+	 * through the conversation's files (membership-checked), never through the document's own visibility.
+	 */
+	uploadFile(file: File): Observable<ChatUploadAnswer> {
+		const form = new FormData();
+		form.append('files', file, file.name);
+		form.append('visibility', DocumentVisibilityEnum.PRIVATE);
+		form.append('source', DocumentSourceEnum.CHAT);
+		form.append('importToKnowledge', 'false');
+		form.append('classifyWithAi', 'false');
+		return this.http.post<ChatUploadAnswer>(CHAT_UPLOAD_URL, form);
 	}
 
 	// ---------------------------------------------------------------- threads and read state

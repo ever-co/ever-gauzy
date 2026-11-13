@@ -3254,6 +3254,7 @@
 				"ORG_TEAM_JOIN_REQUEST_VIEW": "Ver las solicitudes que las personas han enviado para unirse a equipos.",
 				"ORG_TEAM_JOIN_REQUEST_EDIT": "Aceptar, rechazar y eliminar solicitudes para unirse a equipos.",
 				"ORG_TASK_SETTING": "Modificar la configuración de tareas, como los estados, prioridades, tamaños y etiquetas que pueden usar las tareas.",
+				"TASK_AUTOMATION_MANAGE": "Crear, editar, probar y eliminar las reglas de automatización de tareas de la organización.",
 				"ORG_CONTRACT_EDIT": "Crear y editar contratos.",
 				"EVENT_TYPES_VIEW": "Ver los tipos de evento que se ofrecen para reservar citas.",
 				"EVENT_TYPES_EDIT": "Crear, editar y eliminar los tipos de evento que se ofrecen para reservar citas.",
@@ -3709,6 +3710,7 @@
 			"ORG_TASK_EDIT": "Editar tareas",
 			"ORG_TASK_DELETE": "Eliminar tareas",
 			"ORG_TASK_SETTING": "Configuración de tarea",
+			"TASK_AUTOMATION_MANAGE": "Gestionar automatizaciones de tareas",
 			"ORG_MEMBER_LAST_LOG_VIEW": "Ver último registro",
 			"API_CALL_LOG_READ": "Leer registro de llamadas de API",
 			"API_CALL_LOG_DELETE": "Eliminar registro de llamadas de API",
@@ -4449,6 +4451,7 @@
 		"TASK_ADDED": "Se agregó la tarea",
 		"TASK_UPDATED": "La tarea fue cambiada.",
 		"TASK_DELETED": "La tarea fue eliminada.",
+		"TASK_MOVED_TO_TRASH": "Tarea movida a la papelera",
 		"TASKS_PROJECT": "Proyecto",
 		"TASKS_CREATOR": "Creado por",
 		"TASK_MEMBERS": "Empleados",
@@ -4487,7 +4490,31 @@
 		"ARE_YOU_SURE": "¿Estás seguro de que quieres eliminar sprint?",
 		"SETTINGS": "Ajustes",
 		"MODULE": "Módulo",
-		"SELECT_MODULE": "Módulo(s)"
+		"SELECT_MODULE": "Módulo(s)",
+		"TRASH": {
+			"TITLE": "Papelera",
+			"BACK": "Volver a las tareas",
+			"SEARCH": "Buscar por título o número",
+			"HINT": "Las tareas eliminadas se quedan aquí hasta que se restauran o se eliminan para siempre.",
+			"RESTORE": "Restaurar",
+			"RESTORED": "«{{ title }}» ha vuelto",
+			"DELETE_FOREVER": "Eliminar para siempre",
+			"DELETE_FOREVER_CONFIRM": "¿Eliminar para siempre? No se puede deshacer.",
+			"DELETED_FOREVER": "«{{ title }}» se eliminó para siempre",
+			"NO_LONGER_IN_TRASH": "«{{ title }}» ya no está en la papelera: se restauró o se eliminó mientras tanto. La lista se ha actualizado.",
+			"DELETED_BY": "Eliminada por {{ name }} · {{ date }}",
+			"DELETED_AT": "Eliminada {{ date }}",
+			"LOAD_MORE": "Cargar más ({{ shown }} de {{ total }})",
+			"LOAD_FAILED": "No se pudo cargar la papelera.",
+			"EMPTY_TITLE": "La papelera está vacía",
+			"EMPTY_TEXT": "Las tareas eliminadas aparecen aquí.",
+			"NO_MATCH_TITLE": "Ninguna tarea eliminada coincide",
+			"NO_MATCH_TEXT": "Prueba con otro título o número.",
+			"UNAVAILABLE_TITLE": "La papelera no está disponible",
+			"UNAVAILABLE_TEXT": "Este servidor todavía no guarda las tareas eliminadas. Pide a un administrador que active la papelera de tareas.",
+			"FORBIDDEN_TITLE": "No puedes ver esta papelera",
+			"FORBIDDEN_TEXT": "Pide a alguien que pueda eliminar tareas que restaure la tarea."
+		}
 	},
 	"JOBS": {
 		"EMPLOYEE": "Empleado",
@@ -7985,5 +8012,13 @@
 		"NO_TIME_ENTRIES": "Sin registros de tiempo recientes",
 		"RUNNING": "En curso",
 		"ACTIVITY_LEVEL": "Actividad: uso del teclado y del ratón durante el seguimiento"
+	},
+	"COMMENT_REACTIONS": {
+		"ADD": "Añadir reacción",
+		"REACT_WITH": "Reaccionar con {{ emoji }}",
+		"REACTED_WITH": "Reacción {{ emoji }}: {{ people }}",
+		"YOU": "Tú",
+		"OTHERS": "{{ count }} más",
+		"FAILED": "No se guardó la reacción."
 	}
 }

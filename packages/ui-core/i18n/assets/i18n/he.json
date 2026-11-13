@@ -3278,6 +3278,7 @@
 				"ORG_TEAM_JOIN_REQUEST_VIEW": "צפייה בבקשות שאנשים שלחו להצטרפות לצוותים.",
 				"ORG_TEAM_JOIN_REQUEST_EDIT": "אישור, דחייה ומחיקה של בקשות הצטרפות לצוותים.",
 				"ORG_TASK_SETTING": "שינוי הגדרות המשימות, כגון הסטטוסים, העדיפויות, הגדלים והתוויות שמשימות יכולות להשתמש בהם.",
+				"TASK_AUTOMATION_MANAGE": "יצירה, עריכה, בדיקה ומחיקה של כללי האוטומציה של המשימות בארגון.",
 				"ORG_CONTRACT_EDIT": "יצירה ועריכה של חוזים.",
 				"EVENT_TYPES_VIEW": "צפייה בסוגי האירועים המוצעים לקביעת פגישות.",
 				"EVENT_TYPES_EDIT": "יצירה, עריכה ומחיקה של סוגי האירועים המוצעים לקביעת פגישות.",
@@ -3730,6 +3731,7 @@
 			"ALLOW_MANUAL_TIME": "Allow Manual Time",
 			"DELETE_SCREENSHOTS": "Allow Delete Screenshot",
 			"ORG_TASK_SETTING": "Task Settings",
+			"TASK_AUTOMATION_MANAGE": "ניהול אוטומציות של משימות",
 			"ORG_MEMBER_LAST_LOG_VIEW": "צפה ביומן האחרון",
 			"API_CALL_LOG_READ": "קרא יומן קריאות API",
 			"API_CALL_LOG_DELETE": "מחק יומן קריאות API",
@@ -4473,6 +4475,7 @@
 		"TASK_ADDED": "Task was added",
 		"TASK_UPDATED": "Task was changed",
 		"TASK_DELETED": "Task was removed",
+		"TASK_MOVED_TO_TRASH": "המשימה הועברה לסל המחזור",
 		"TASKS_PROJECT": "פרויקטים",
 		"TASKS_CREATOR": "Created By",
 		"TASK_MEMBERS": "עובדים",
@@ -4507,7 +4510,31 @@
 		"ARE_YOU_SURE": "Are you sure you want delete sprint",
 		"SETTINGS": "הגדרות",
 		"MODULE": "מודול",
-		"SELECT_MODULE": "מודולים"
+		"SELECT_MODULE": "מודולים",
+		"TRASH": {
+			"TITLE": "סל המחזור",
+			"BACK": "חזרה למשימות",
+			"SEARCH": "חיפוש לפי כותרת או מספר",
+			"HINT": "משימות שנמחקו נשארות כאן עד שישוחזרו או יימחקו לצמיתות.",
+			"RESTORE": "שחזור",
+			"RESTORED": "\"{{ title }}\" חזרה",
+			"DELETE_FOREVER": "מחיקה לצמיתות",
+			"DELETE_FOREVER_CONFIRM": "למחוק לצמיתות? אי אפשר לבטל זאת.",
+			"DELETED_FOREVER": "\"{{ title }}\" נמחקה לצמיתות",
+			"NO_LONGER_IN_TRASH": "\"{{ title }}\" כבר לא בסל המחזור: היא שוחזרה או נמחקה בינתיים. הרשימה עודכנה.",
+			"DELETED_BY": "נמחקה על ידי {{ name }} · {{ date }}",
+			"DELETED_AT": "נמחקה {{ date }}",
+			"LOAD_MORE": "טעינת עוד ({{ shown }} מתוך {{ total }})",
+			"LOAD_FAILED": "לא ניתן היה לטעון את סל המחזור.",
+			"EMPTY_TITLE": "סל המחזור ריק",
+			"EMPTY_TEXT": "משימות שנמחקו מופיעות כאן.",
+			"NO_MATCH_TITLE": "אין משימה מחוקה תואמת",
+			"NO_MATCH_TEXT": "נסו כותרת או מספר אחרים.",
+			"UNAVAILABLE_TITLE": "סל המחזור אינו זמין",
+			"UNAVAILABLE_TEXT": "השרת הזה עדיין לא שומר משימות שנמחקו. בקשו ממנהל המערכת להפעיל את סל המחזור של המשימות.",
+			"FORBIDDEN_TITLE": "אין לך גישה לסל המחזור הזה",
+			"FORBIDDEN_TEXT": "בקשו ממי שיכול למחוק משימות לשחזר את המשימה."
+		}
 	},
 	"JOBS": {
 		"EMPLOYEE": "עובד",
@@ -7991,5 +8018,13 @@
 		"NO_TIME_ENTRIES": "אין רשומות זמן לאחרונה",
 		"RUNNING": "פועל",
 		"ACTIVITY_LEVEL": "פעילות: שימוש במקלדת ובעכבר בזמן המעקב"
+	},
+	"COMMENT_REACTIONS": {
+		"ADD": "הוספת תגובת אמוג׳י",
+		"REACT_WITH": "תגובה ב-{{ emoji }}",
+		"REACTED_WITH": "תגובה {{ emoji }}: {{ people }}",
+		"YOU": "את/ה",
+		"OTHERS": "עוד {{ count }}",
+		"FAILED": "התגובה לא נשמרה."
 	}
 }

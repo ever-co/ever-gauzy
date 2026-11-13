@@ -1,0 +1,184 @@
+{
+	"MENU": "Automations",
+	"TITLE": "Automations",
+	"SUBTITLE": "Rules that move tasks for you: when something happens to a task and the conditions hold, the actions run.",
+	"UNAVAILABLE": "Task automations are not switched on for this installation.",
+	"FORBIDDEN": "You do not have permission to manage automations.",
+	"RETRY": "Try again",
+	"NEW_BLANK": "New rule",
+	"FROM_TEMPLATE": "From a template",
+	"REQUIRES_INTEGRATION": "Fires only when a connected integration reports closed pull requests or issues.",
+	"USE_TEMPLATE": "Use",
+	"EDIT_TITLE": "Edit rule",
+	"NEW_TITLE": "New rule",
+	"EMPTY": "No automation rules yet. Start from a template or create a rule.",
+	"LIST": "Automation rules, in the order they run",
+	"ENABLED": "On",
+	"LAST_RUN": "last run",
+	"MOVE_UP": "Move up",
+	"MOVE_DOWN": "Move down",
+	"EDIT": "Edit",
+	"TEST_AND_HISTORY": "Test and history",
+	"DELETE": "Delete",
+	"CONFIRM_DELETE": "Delete the rule and its history",
+	"CLOSE": "Close",
+	"SAVED": "Saved \"{{ name }}\".",
+	"DELETED": "Deleted \"{{ name }}\".",
+	"ERRORS": {
+		"LOAD": "The automations could not be loaded.",
+		"SAVE": "The rule could not be saved.",
+		"REORDER": "The new order could not be saved.",
+		"DELETE": "The rule could not be deleted.",
+		"TEST": "The test could not be run.",
+		"NAME_REQUIRED": "Give the rule a name.",
+		"NAME_TOO_LONG": "The name is at most 120 characters.",
+		"DESCRIPTION_TOO_LONG": "The description is at most 2,000 characters.",
+		"TOO_MANY_CONDITIONS": "A rule has at most 10 conditions.",
+		"ACTION_REQUIRED": "Add at least one action.",
+		"TOO_MANY_ACTIONS": "A rule has at most 10 actions.",
+		"CONDITION_VALUE": "Each condition needs its value.",
+		"TEXT_TOO_LONG": "A title text is at most 200 characters.",
+		"TOO_MANY_VALUES": "A list holds at most 50 values.",
+		"ACTION_VALUE": "Each action needs what it sets."
+	},
+	"FORM": {
+		"NAME": "Name",
+		"DESCRIPTION": "Description",
+		"PROJECT": "Project",
+		"ANY_PROJECT": "Every project",
+		"TEAM": "Team",
+		"ANY_TEAM": "Every team",
+		"ENABLED": "Switched on",
+		"WHEN": "When",
+		"TRIGGER": "Trigger",
+		"TO_STATUSES": "Moved to",
+		"FROM_STATUSES": "Moved from",
+		"ANY_STATUS": "Any status",
+		"IF": "If",
+		"NO_CONDITIONS": "No conditions: the actions run every time the trigger fires.",
+		"CONDITION": "Condition",
+		"TEXT": "Text",
+		"VALUES": "Values",
+		"CHOOSE": "Choose",
+		"REMOVE": "Remove",
+		"ADD_CONDITION": "Add a condition",
+		"THEN": "Then",
+		"ACTION": "Action",
+		"STATUS": "Status",
+		"PRIORITY": "Priority",
+		"PEOPLE": "People",
+		"LABELS": "Labels",
+		"MESSAGE": "Message",
+		"MESSAGE_PLACEHOLDER": "Optional: the notice's text",
+		"ADD_ACTION": "Add an action",
+		"SAVE": "Save",
+		"CANCEL": "Cancel"
+	},
+	"TRIGGERS": {
+		"TASK_CREATED": "A task is created",
+		"STATUS_CHANGED": "The status changes",
+		"TASK_ASSIGNED": "Someone is assigned",
+		"ALL_SUBTASKS_DONE": "Every sub-task is done",
+		"SUBTASK_REOPENED": "A sub-task is reopened",
+		"DUE_DATE_PASSED": "The due date passes",
+		"LINK_CLOSED": "A linked pull request or issue closes"
+	},
+	"TRIGGER_HINTS": {
+		"TASK_CREATED": "Runs on each new task.",
+		"STATUS_CHANGED": "Runs when a task moves to another status; choose statuses to narrow it.",
+		"TASK_ASSIGNED": "Runs when someone is added as an assignee of an existing task.",
+		"ALL_SUBTASKS_DONE": "Runs on the parent when its last open sub-task is done.",
+		"SUBTASK_REOPENED": "Runs on the parent when one of its done sub-tasks is reopened.",
+		"DUE_DATE_PASSED": "Checked every 15 minutes; runs once per task and due date.",
+		"LINK_CLOSED": "Runs when an integration reports that a pull request or issue linked to the task closed."
+	},
+	"CONDITIONS": {
+		"STATUS_IS": "Status is",
+		"STATUS_IS_NOT": "Status is not",
+		"STATUS_CATEGORY_IS": "Status category is",
+		"IS_OPEN": "Task is open",
+		"IS_DONE": "Task is done",
+		"PRIORITY_IS": "Priority is",
+		"HAS_LABEL": "Has a label",
+		"NOT_HAS_LABEL": "Has none of the labels",
+		"IS_ASSIGNED": "Task is assigned",
+		"IS_UNASSIGNED": "Task is unassigned",
+		"ASSIGNEE_IS": "Assignee is",
+		"IS_SUBTASK": "Task is a sub-task",
+		"IS_NOT_SUBTASK": "Task is not a sub-task",
+		"TITLE_CONTAINS": "Title contains"
+	},
+	"ACTIONS": {
+		"SET_STATUS": "Set the status",
+		"SET_PRIORITY": "Set the priority",
+		"ADD_ASSIGNEES": "Add assignees",
+		"SET_ASSIGNEES": "Replace the assignees",
+		"ADD_LABELS": "Add labels",
+		"REMOVE_LABELS": "Remove labels",
+		"NOTIFY_ASSIGNEES": "Notify the assignees"
+	},
+	"CATEGORIES": {
+		"todo": "First to-do status",
+		"in_progress": "First in-progress status",
+		"done": "First done status"
+	},
+	"OUTCOMES": {
+		"RUNNING": "Running",
+		"APPLIED": "Applied",
+		"PARTIAL": "Partly applied",
+		"NO_CHANGE": "Nothing to change",
+		"CONDITIONS_NOT_MET": "Conditions not met",
+		"LOOP_GUARD": "Skipped by the loop guard",
+		"RATE_LIMITED": "Rate limited",
+		"FAILED": "Failed"
+	},
+	"TEST": {
+		"TITLE": "Test on a task",
+		"HINT": "See what the rule would do to a task. Nothing is changed.",
+		"FILTER": "Filter tasks",
+		"CHOOSE_TASK": "Choose a task",
+		"RUN": "Test",
+		"TRIGGER": "Trigger",
+		"ON_EVENT": "Decided when it happens",
+		"APPLIES": "Applies",
+		"DOES_NOT_APPLY": "Does not apply",
+		"CONDITIONS": "Conditions",
+		"CHANGES": "Changes",
+		"OUTCOME": "A run would record"
+	},
+	"HISTORY": {
+		"TITLE": "Recent runs",
+		"ERROR": "The runs could not be loaded.",
+		"EMPTY": "The rule has not run yet.",
+		"WHEN": "When",
+		"TASK": "Task",
+		"OUTCOME": "Outcome",
+		"DETAILS": "Details"
+	},
+	"TEMPLATES": {
+		"close-parent-when-subtasks-done": {
+			"NAME": "Close the parent when all sub-tasks are done",
+			"DESCRIPTION": "When the last open sub-task of a task is done, the task moves to the first done status of its project."
+		},
+		"reopen-parent-when-subtask-reopens": {
+			"NAME": "Reopen the parent when a sub-task reopens",
+			"DESCRIPTION": "When a done sub-task of a done task is reopened, the task moves to the first in-progress status of its project."
+		},
+		"status-sets-fields": {
+			"NAME": "When the status changes, set the assignee, label or priority",
+			"DESCRIPTION": "When a task moves to the statuses you choose, set its priority, add labels or assign people."
+		},
+		"assigned-moves-in-progress": {
+			"NAME": "When a task is assigned, move it to In progress",
+			"DESCRIPTION": "When someone is added as an assignee of a to-do task, the task moves to the first in-progress status of its project."
+		},
+		"due-date-notify-assignees": {
+			"NAME": "When the due date passes, notify the assignees",
+			"DESCRIPTION": "When the due date of an open task passes, each assignee gets one notice in the Inbox."
+		},
+		"link-closed-sets-status": {
+			"NAME": "When a linked pull request or issue closes, set the status",
+			"DESCRIPTION": "When an integration reports that a pull request or issue linked to an open task closed, the task moves to the first done status of its project."
+		}
+	}
+}

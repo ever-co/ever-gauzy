@@ -23,3 +23,4 @@ export * from './update-document.dto';
 export * from './update-document-content.dto';
 export * from './update-extracted-text.dto';
 export * from './upload-documents.dto';
+export * from './document-import.dto';

@@ -3253,6 +3253,7 @@
 				"ORG_TEAM_JOIN_REQUEST_VIEW": "Voir les demandes envoyées par des personnes pour rejoindre des équipes.",
 				"ORG_TEAM_JOIN_REQUEST_EDIT": "Accepter, refuser et supprimer les demandes pour rejoindre des équipes.",
 				"ORG_TASK_SETTING": "Modifier les paramètres des tâches, comme les statuts, priorités, tailles et libellés que les tâches peuvent utiliser.",
+				"TASK_AUTOMATION_MANAGE": "Créer, modifier, tester et supprimer les règles d'automatisation des tâches de l'organisation.",
 				"ORG_CONTRACT_EDIT": "Créer et modifier des contrats.",
 				"EVENT_TYPES_VIEW": "Voir les types d'événements proposés pour la prise de rendez-vous.",
 				"EVENT_TYPES_EDIT": "Créer, modifier et supprimer les types d'événements proposés pour la prise de rendez-vous.",
@@ -3704,6 +3705,7 @@
 			"ORG_TASK_EDIT": "Modifier les tâches",
 			"ORG_TASK_DELETE": "Supprimer les tâches",
 			"ORG_TASK_SETTING": "Paramètres de tâche",
+			"TASK_AUTOMATION_MANAGE": "Gérer les automatisations de tâches",
 			"ORG_MEMBER_LAST_LOG_VIEW": "Voir le dernier journal",
 			"TENANT_API_KEY_CREATE": "Créer une clé API",
 			"TENANT_API_KEY_VIEW": "Afficher la clé API",
@@ -4448,6 +4450,7 @@
 		"TASK_ADDED": "La tâche a été ajoutée",
 		"TASK_UPDATED": "La tâche a été modifiée.",
 		"TASK_DELETED": "La tâche a été supprimée.",
+		"TASK_MOVED_TO_TRASH": "Tâche déplacée dans la corbeille",
 		"TASKS_PROJECT": "Projet",
 		"TASKS_CREATOR": "Créé par",
 		"TASK_MEMBERS": "Employés",
@@ -4486,7 +4489,31 @@
 		"ARE_YOU_SURE": "Êtes-vous sûr/e de vouloir supprimer Sprint ?",
 		"SETTINGS": "Paramètres",
 		"MODULE": "Module",
-		"SELECT_MODULE": "Module(s)"
+		"SELECT_MODULE": "Module(s)",
+		"TRASH": {
+			"TITLE": "Corbeille",
+			"BACK": "Retour aux tâches",
+			"SEARCH": "Rechercher par titre ou numéro",
+			"HINT": "Les tâches supprimées restent ici jusqu’à leur restauration ou leur suppression définitive.",
+			"RESTORE": "Restaurer",
+			"RESTORED": "« {{ title }} » est de retour",
+			"DELETE_FOREVER": "Supprimer définitivement",
+			"DELETE_FOREVER_CONFIRM": "Supprimer définitivement ? Cette action est irréversible.",
+			"DELETED_FOREVER": "« {{ title }} » a été supprimée définitivement",
+			"NO_LONGER_IN_TRASH": "« {{ title }} » n’est plus dans la corbeille : elle a été restaurée ou supprimée entre-temps. La liste a été actualisée.",
+			"DELETED_BY": "Supprimée par {{ name }} · {{ date }}",
+			"DELETED_AT": "Supprimée {{ date }}",
+			"LOAD_MORE": "Charger plus ({{ shown }} sur {{ total }})",
+			"LOAD_FAILED": "La corbeille n’a pas pu être chargée.",
+			"EMPTY_TITLE": "La corbeille est vide",
+			"EMPTY_TEXT": "Les tâches supprimées apparaissent ici.",
+			"NO_MATCH_TITLE": "Aucune tâche supprimée ne correspond",
+			"NO_MATCH_TEXT": "Essayez un autre titre ou numéro.",
+			"UNAVAILABLE_TITLE": "La corbeille n’est pas disponible",
+			"UNAVAILABLE_TEXT": "Ce serveur ne conserve pas encore les tâches supprimées. Demandez à un administrateur d’activer la corbeille des tâches.",
+			"FORBIDDEN_TITLE": "Vous ne pouvez pas voir cette corbeille",
+			"FORBIDDEN_TEXT": "Demandez à quelqu’un qui peut supprimer des tâches de restaurer la tâche."
+		}
 	},
 	"JOBS": {
 		"EMPLOYEE": "Employé",
@@ -7980,5 +8007,13 @@
 		"NO_TIME_ENTRIES": "Aucune entrée de temps récente",
 		"RUNNING": "En cours",
 		"ACTIVITY_LEVEL": "Activité : utilisation du clavier et de la souris pendant le suivi"
+	},
+	"COMMENT_REACTIONS": {
+		"ADD": "Ajouter une réaction",
+		"REACT_WITH": "Réagir avec {{ emoji }}",
+		"REACTED_WITH": "Réaction {{ emoji }} : {{ people }}",
+		"YOU": "Vous",
+		"OTHERS": "{{ count }} de plus",
+		"FAILED": "La réaction n’a pas été enregistrée."
 	}
 }

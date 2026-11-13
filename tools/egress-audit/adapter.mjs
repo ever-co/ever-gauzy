@@ -171,6 +171,31 @@ async function until(what, probe, seconds = 180) {
 	throw new Error(`${what} did not happen within ${seconds} s (last: ${JSON.stringify(last)})`);
 }
 
+/**
+ * How long the browser leg's own page loads may take. The harness gives its visits ui_page_timeout_s (90 s).
+ * The signed-out pages and the sign-in page are the first loads of a cold browser, and Playwright's default
+ * of 30 s is too short for them on the in-cluster runners.
+ */
+const UI_PAGE_TIMEOUT_MS = 120_000;
+
+/**
+ * Waits until the web app serves its page. The harness waits only for the API's health, and the web app
+ * image rewrites its bundles with sed before nginx starts (about 2 minutes on a fast machine, 5 on the
+ * in-cluster runners), so the browser leg can start while the port still refuses connections.
+ */
+async function webAppServing(page, origin, ctx, seconds = 600) {
+	const started = Date.now();
+	await until(
+		'the web app serving its page',
+		async () => {
+			const response = await page.request.get(`${origin}/`, { timeout: 10_000, failOnStatusCode: false });
+			return response.ok() ? true : { error: `HTTP ${response.status()}` };
+		},
+		seconds
+	);
+	ctx.log(`adapter: the web app serves its page (after ${Math.round((Date.now() - started) / 1000)} s)`);
+}
+
 /** Signs in and waits until the installation is connected (EVER_CONNECT_CODE at boot); answers the context. */
 async function connected(ctx) {
 	const { headers, token, user } = await apiLogin(ctx);
@@ -701,13 +726,14 @@ export default {
 	 */
 	async uiLogin(page, ctx) {
 		const origin = new URL(ctx.baseUrl).origin;
+		await webAppServing(page, origin, ctx);
 		for (const [index, route] of SIGNED_OUT_ROUTES.entries()) {
-			await page.goto(`${origin}/?signed-out=${index}#${route}`, { waitUntil: 'load' });
+			await page.goto(`${origin}/?signed-out=${index}#${route}`, { waitUntil: 'load', timeout: UI_PAGE_TIMEOUT_MS });
 			await page.waitForLoadState('networkidle', { timeout: 15_000 }).catch(() => {});
 			await page.waitForTimeout(500);
 		}
 		ctx.log(`adapter: opened ${SIGNED_OUT_ROUTES.length} signed-out pages`);
-		await page.goto(`${ctx.baseUrl}/auth/login`);
+		await page.goto(`${ctx.baseUrl}/auth/login`, { timeout: UI_PAGE_TIMEOUT_MS });
 		try {
 			await page.fill('#input-email', SEED_EMAIL, { timeout: 120_000 });
 			await page.fill('#input-password', seedPassword(ctx));
@@ -741,6 +767,8 @@ export default {
 			pipelineId: UNKNOWN_ID,
 			dealId: UNKNOWN_ID,
 			integrationTenantId: UNKNOWN_ID,
+			// The Asana, Linear and Trello pages of one connection (/pages/integrations/<name>/:integrationId).
+			integrationId: UNKNOWN_ID,
 			organizationId: f.organizationId ?? UNKNOWN_ID,
 			'/pages/users/edit/:id': { id: f.userId ?? UNKNOWN_ID },
 			'/pages/users/edit/:id/location': { id: f.userId ?? UNKNOWN_ID },

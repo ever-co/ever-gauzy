@@ -137,7 +137,12 @@ Run on every pull request that touches code, with nothing installed but the harn
   demo accounts, downloads); it may only shrink (`--check-shrink <the file at the base>`), and
   `--write` refuses to grow it. With `--bundle <dir>` the same scan reads a built web app (the
   `/srv/gauzy` of the web app image) against the baseline's `bundle` hosts; the `static-bundle` job
-  does it on the image under test.
+  does it on the image under test. A host that the shipped sources of a module's web part
+  (`src/` of `ever-connect-ui` and `ever-stats-ui`; not their tests, prose, test setup or package
+  files) name passes there too: the module's
+  code and core code share the bundle's chunks, so the bundle scan cannot tell them apart, and the
+  source scan already holds core code to the baseline. The bundle scan still catches a host from
+  neither, one the build puts in (configuration, environment, a dependency).
 
   The uptime monitor (`.github/workflows/external-uptime-monitor.yml`) is exempt by its exact path,
   for the reason tests are: it never ships. It is a scheduled job on a GitHub-hosted runner that

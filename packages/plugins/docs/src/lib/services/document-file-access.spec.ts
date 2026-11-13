@@ -91,7 +91,8 @@ describe('DocumentUploadService — download URL', () => {
 		const { service, documentService } = buildService(fileRow(), { notFound: true });
 
 		await expect(service.getDownloadUrl('doc-1')).rejects.toBeInstanceOf(NotFoundException);
-		expect(documentService.findOneScoped).toHaveBeenCalledWith('doc-1');
+		// Read in the selected organization when the caller names one (the detail routes' scope), else the request's.
+		expect(documentService.findOneScoped).toHaveBeenCalledWith('doc-1', [], undefined);
 		expect(providerStub.url).not.toHaveBeenCalled();
 	});
 

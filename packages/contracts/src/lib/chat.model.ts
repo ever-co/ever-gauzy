@@ -62,6 +62,15 @@ export const CHAT_GROUP_MAX_MEMBERS = 50;
 export const CHAT_MESSAGE_MAX_ATTACHMENTS = 10;
 /** The name of the channel every employee is in (created when chat is enabled for an organization). */
 export const CHAT_DEFAULT_CHANNEL_NAME = 'general';
+/** How long a typing signal holds: a client that hears nothing more from the typist after this drops "is typing". */
+export const CHAT_TYPING_TTL_MS = 6000;
+/** How often one member's typing in one place is told at most (a client signals again within the TTL to keep it). */
+export const CHAT_TYPING_MIN_INTERVAL_MS = 2500;
+/** How long an uploaded attachment that no message carries is kept before it is swept (default; `GAUZY_CHAT_DRAFT_UPLOAD_TTL_HOURS`). */
+export const CHAT_DRAFT_UPLOAD_TTL_HOURS = 24;
+/** The most categories, and channels, one reorder may place. */
+export const CHAT_REORDER_MAX_CATEGORIES = 200;
+export const CHAT_REORDER_MAX_CHANNELS = 2000;
 
 /**
  * Mention tokens inside a message body: rename-safe references the clients render as chips.
@@ -176,7 +185,10 @@ export interface IChatMessage extends IBasePerTenantAndOrganizationEntityModel {
 	authorEmployeeId?: ID | null;
 	authorUserId?: ID | null;
 	kind: ChatMessageKindEnum;
-	/** Markdown subset with mention tokens; empty for a deleted message (`deletedAt` set). */
+	/**
+	 * Markdown subset with mention tokens; empty for a deleted message (`deletedAt` set) and for a message of files
+	 * only (`attachmentIds` not empty).
+	 */
 	body: string;
 	mentionEmployeeIds?: ID[] | null;
 	mentionsChannel: boolean;
@@ -194,10 +206,22 @@ export interface IChatMessage extends IBasePerTenantAndOrganizationEntityModel {
 	editedAt?: Date | null;
 	/** Document ids (files uploaded through the Docs plugin). */
 	attachmentIds?: ID[] | null;
+	/**
+	 * The names the attached files had when the message was sent or last edited, one per line: what a message of
+	 * files only reads as in a preview, a notification and the search. Null without attachments (and on messages
+	 * older than the column).
+	 */
+	attachmentNames?: string | null;
 	/** The sender's idempotency key. */
 	nonce?: string | null;
 	/** The name of the integration that posted an APP message. */
 	appName?: string | null;
+	/** The incoming webhook that posted an APP message. */
+	webhookId?: ID | null;
+	/** The icon of the integration that posted an APP message (https). */
+	appIconUrl?: string | null;
+	/** The structured layout of an APP message (plain text throughout); `body` is its text fallback. */
+	blocks?: IChatAppBlock[] | null;
 	/** The assistant a person wrote this message with (an AI client posting in their name), shown beside it. */
 	assistedBy?: string | null;
 	deletedAt?: Date;
@@ -263,7 +287,8 @@ export interface IChatReadInput {
 }
 
 export interface IChatMessageCreateInput {
-	body: string;
+	/** The text; may be empty (or left out) when the message carries at least one attachment. */
+	body?: string;
 	/** Idempotency key chosen by the client (a UUID, unique for the sender): the same key answers the same message, however late. */
 	nonce?: string;
 	replyToId?: ID;
@@ -279,6 +304,7 @@ export interface IChatMessageCreateInput {
 }
 
 export interface IChatMessageUpdateInput {
+	/** The new text; may be empty when the message, after the edit, carries at least one attachment. */
 	body: string;
 	attachmentIds?: ID[];
 	mentionEmployeeIds?: ID[];
@@ -347,6 +373,9 @@ export interface IChatFile {
 	status?: string | null;
 	fileUrl?: string | null;
 	thumbUrl?: string | null;
+	/** A picture's size in pixels as shown (orientation applied), read when it was uploaded; null when unknown. */
+	width?: number | null;
+	height?: number | null;
 	authorEmployeeId?: ID | null;
 	authorUserId?: ID | null;
 	/** When the file was attached (the message's send). */
@@ -394,4 +423,288 @@ export interface IChatCreateTaskResult {
 	task: ITask;
 	reference: IChatTaskReference;
 	events: IChatEvent[];
+}
+
+// ------------------------------------------------------------------ task cards (FR-14)
+
+/**
+ * `PATCH /chat/messages/:id/tasks/:taskId`: change a task from its card in a message — its status, its priority, its
+ * assignees. Only what is named changes; the change goes through the platform's task update, with the permissions
+ * (`ORG_TASK_EDIT`) and the activity log of the task page.
+ */
+export interface IChatTaskUpdateInput {
+	/** The status's name (a board column), as the task page writes it; with `taskStatusId` when the status is a record. */
+	status?: string;
+	taskStatusId?: ID | null;
+	/** The priority's name; with `taskPriorityId` when the priority is a record; null clears it. */
+	priority?: string | null;
+	taskPriorityId?: ID | null;
+	/** The assignees, all of them (an empty list unassigns everyone): employees of the task's organization. */
+	assigneeEmployeeIds?: ID[];
+}
+
+/** What a change from a task card answers: the task as it is now, and the events the change caused. */
+export interface IChatTaskUpdateResult {
+	task: ITask;
+	events: IChatEvent[];
+}
+
+// ------------------------------------------------------------------ typing
+
+/** `POST /chat/conversations/:id/typing`: I am typing in the conversation (or in one of its threads). */
+export interface IChatTypingInput {
+	/** The thread I am typing in; left out for the conversation itself. */
+	threadRootId?: ID;
+}
+
+/**
+ * What a typing signal answers: whether it was told (a repeat within {@link CHAT_TYPING_MIN_INTERVAL_MS} is not), and
+ * how long the members show it ({@link CHAT_TYPING_TTL_MS}). The members hear it as the real-time channel's
+ * `typing.signalled` signal; nothing is stored.
+ */
+export interface IChatTypingResult {
+	sent: boolean;
+	expiresInMs: number;
+}
+
+// ------------------------------------------------------------------ categories
+
+/** The channels of one category in the order the sidebar shows them; `categoryId` null for the uncategorized. */
+export interface IChatCategoryChannelOrder {
+	categoryId: ID | null;
+	conversationIds: ID[];
+}
+
+/**
+ * `POST /chat/categories/reorder`: the order of the organization's categories (all of them, first to last), and
+ * optionally of the channels within them (a channel named under a category moves there). Saved in one transaction.
+ */
+export interface IChatCategoryReorderInput {
+	categoryIds: ID[];
+	channels?: IChatCategoryChannelOrder[];
+}
+
+export interface IChatCategoryReorderResult {
+	/** Every category of the organization, in the new order. */
+	categories: IChatCategory[];
+	/** The channels whose category or place changed. */
+	conversations: Array<{ id: ID; categoryId: ID | null; position: number }>;
+	events: IChatEvent[];
+}
+
+// ------------------------------------------------------------------ draft uploads
+
+/**
+ * `DELETE /chat/attachments/:documentId`: a file I uploaded for a message and will not send. Only a file that no
+ * message carries (a draft upload) is discarded — the document and its stored bytes go; a file already sent stays.
+ */
+export interface IChatDraftDiscardResult {
+	discarded: boolean;
+}
+
+// ------------------------------------------------------------------ incoming webhooks (`GAUZY_CHAT_WEBHOOKS_ENABLED`)
+
+/** The most active webhooks one channel may have. */
+export const CHAT_WEBHOOK_MAX_PER_CONVERSATION = 10;
+/** The most bytes a webhook post may weigh (the raw body). */
+export const CHAT_WEBHOOK_MAX_PAYLOAD_BYTES = 64 * 1024;
+/** The most blocks one app message may carry (legacy attachments count by the blocks they become). */
+export const CHAT_WEBHOOK_MAX_BLOCKS = 50;
+/** The most fields one section block shows side by side. */
+export const CHAT_WEBHOOK_MAX_FIELDS = 10;
+/** The most buttons one actions block carries. */
+export const CHAT_WEBHOOK_MAX_BUTTONS = 10;
+/** The longest webhook name. */
+export const CHAT_WEBHOOK_NAME_MAX_LENGTH = 80;
+
+/**
+ * The blocks an app message renders. Every text is plain text (no HTML, no markup): clients render it as text.
+ * A block type outside this set arrives as a `text` block holding whatever text it had.
+ */
+export enum ChatAppBlockTypeEnum {
+	/** A title line. */
+	HEADER = 'header',
+	/** A paragraph, and/or short fields shown side by side. */
+	SECTION = 'section',
+	/** A horizontal rule. */
+	DIVIDER = 'divider',
+	/** Small, muted text (a footer, a source, a time). */
+	CONTEXT = 'context',
+	/** A row of buttons. */
+	ACTIONS = 'actions',
+	/** Plain text: what an unknown block type is rendered as. */
+	TEXT = 'text'
+}
+
+export type ChatAppButtonStyle = 'primary' | 'danger';
+
+/**
+ * A button of an actions block. With `url` it opens that page (https, public host) and calls nobody back; without it,
+ * a click is an interaction posted to the webhook's interaction URL.
+ */
+export interface IChatAppButton {
+	/** Unique within the message: the interaction names it. */
+	actionId: string;
+	text: string;
+	/** Sent back with the interaction (the stored value, never the client's). */
+	value?: string | null;
+	url?: string | null;
+	style?: ChatAppButtonStyle | null;
+}
+
+export type IChatAppBlock =
+	| { type: ChatAppBlockTypeEnum.HEADER; text: string }
+	| { type: ChatAppBlockTypeEnum.SECTION; text?: string | null; fields?: string[] | null }
+	| { type: ChatAppBlockTypeEnum.DIVIDER }
+	| { type: ChatAppBlockTypeEnum.CONTEXT; elements: string[] }
+	| { type: ChatAppBlockTypeEnum.ACTIONS; blockId?: string | null; elements: IChatAppButton[] }
+	| { type: ChatAppBlockTypeEnum.TEXT; text: string };
+
+/** One incoming webhook of a channel, as the management routes answer it (never its secrets). */
+export interface IChatWebhook extends IBasePerTenantAndOrganizationEntityModel {
+	conversationId: ID;
+	name: string;
+	iconUrl?: string | null;
+	/** Where button clicks are posted (signed). None: the webhook's buttons call nobody back. */
+	interactionUrl?: string | null;
+	/** The last characters of the URL secret, so two webhooks can be told apart. */
+	tokenHint: string;
+	/** Whether a signing secret exists (interactions need one). */
+	hasSigningSecret: boolean;
+	/** Whether `@channel` / `@here` in its posts notify the channel. */
+	canBroadcast: boolean;
+	createdByEmployeeId?: ID | null;
+	revokedAt?: Date | null;
+	revokedByEmployeeId?: ID | null;
+	lastUsedAt?: Date | null;
+	acceptedCount: number;
+	rejectedCount: number;
+	rateLimitedCount: number;
+	callbackFailureCount: number;
+}
+
+export interface IChatWebhookCreateInput {
+	name: string;
+	iconUrl?: string | null;
+	interactionUrl?: string | null;
+	canBroadcast?: boolean;
+}
+
+export interface IChatWebhookUpdateInput {
+	name?: string;
+	/** `null` clears it. */
+	iconUrl?: string | null;
+	/** `null` clears it. */
+	interactionUrl?: string | null;
+	canBroadcast?: boolean;
+}
+
+/** A webhook write's answer: the webhook, and the secrets made by this write (shown this once, never again). */
+export interface IChatWebhookWriteResult {
+	webhook: IChatWebhook;
+	/** The URL senders post to (holds the URL secret): only in the answer of the create. */
+	url?: string;
+	/** The key interaction callbacks are signed with: only in the answer of the write that made it. */
+	signingSecret?: string;
+}
+
+export enum ChatInteractionStatusEnum {
+	/** Being posted (the first attempt). */
+	PENDING = 'pending',
+	/** The interaction URL answered 2xx. */
+	DELIVERED = 'delivered',
+	/** An attempt failed; more follow. */
+	RETRYING = 'retrying',
+	/** Every attempt failed, or the target was refused. */
+	FAILED = 'failed'
+}
+
+/**
+ * `POST /chat/messages/:id/interactions`: the button clicked. A client sends an `Idempotency-Key` header with it (a
+ * new UUID per click, the same on each retry of that click, at most 64 printable characters): a repeat of the key
+ * answers the first click as it is now and calls the app no second time. Without the header every request is a click.
+ */
+export interface IChatInteractionInput {
+	actionId: string;
+	/** The actions block of the button, when two blocks reuse an action id. */
+	blockId?: string;
+}
+
+/** The state of one click. */
+export interface IChatInteraction {
+	/** Created once per click, the same on every retry of its callback (also sent as `Idempotency-Key`). */
+	interactionId: ID;
+	messageId: ID;
+	conversationId: ID;
+	actionId: string;
+	status: ChatInteractionStatusEnum;
+	attempts: number;
+	/** Whether the sender's reply replaced the message. */
+	replyApplied: boolean;
+	/** Why the callback failed (no host, no address). */
+	error?: string | null;
+	createdAt?: Date;
+}
+
+export interface IChatInteractionResult {
+	interaction: IChatInteraction;
+	/** The message as the sender's reply left it (when it replied). */
+	message?: IChatMessageWithRelations;
+	events: IChatEvent[];
+	/** The `Idempotency-Key` named an earlier click: this is that click as it is now, and nothing was sent again. */
+	replayed?: boolean;
+}
+
+/** The body an interaction callback POSTs to the interaction URL (signed with `X-Signature`). */
+export interface IChatInteractionCallback {
+	type: 'block_actions';
+	interactionId: ID;
+	/** ISO time of the click. */
+	actionAt: string;
+	webhook: { id: ID; name: string };
+	conversation: { id: ID; name: string | null };
+	message: { id: ID; createdAt: string | null };
+	/** Who clicked: the employee id and the display name only. */
+	actor: { employeeId: ID; name: string };
+	action: { actionId: string; blockId: string | null; value: string | null; text: string };
+}
+
+// ------------------------------------------------------------------ link previews
+
+/** Where a link preview stands (`GET /chat/link-preview?url=`). */
+export enum ChatLinkPreviewStatusEnum {
+	/** Being fetched in the background: ask again in a couple of seconds. */
+	PENDING = 'pending',
+	/** Fetched: the fields are what the page says about itself in its `<head>`. */
+	READY = 'ready',
+	/** No preview: the page is not on a public address, could not be fetched, or says nothing usable. Show the link. */
+	UNAVAILABLE = 'unavailable'
+}
+
+/** The longest link a preview is asked for. */
+export const CHAT_LINK_PREVIEW_URL_MAX_LENGTH = 2048;
+
+/**
+ * A link preview, fetched by the server (never by the browser) from a public address and cached. Every string is
+ * plain text the server sanitized: render it as text, never as HTML. `image` and `icon` are absolute `https:` URLs.
+ */
+export interface IChatLinkPreview {
+	/** The link the preview is of, normalized (no fragment). */
+	url: string;
+	status: ChatLinkPreviewStatusEnum;
+	title?: string | null;
+	description?: string | null;
+	siteName?: string | null;
+	image?: string | null;
+	imageAlt?: string | null;
+	imageWidth?: number | null;
+	imageHeight?: number | null;
+	icon?: string | null;
+	/** When the page was last fetched. */
+	fetchedAt?: Date | null;
+}
+
+/** `GET /chat/link-preview?url=`. */
+export interface IChatLinkPreviewQuery {
+	url: string;
 }

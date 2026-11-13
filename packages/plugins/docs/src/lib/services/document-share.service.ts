@@ -1,4 +1,4 @@
-import { BadRequestException, ConflictException, ForbiddenException, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, ForbiddenException, Injectable, Logger, NotFoundException, Optional } from '@nestjs/common';
 import { IsNull } from 'typeorm';
 import { DocumentVisibilityEnum, ID, IPagination } from '@gauzy/contracts';
 import { RequestContext, TenantAwareCrudService } from '@gauzy/core';
@@ -8,6 +8,7 @@ import { DocumentShare } from '../entities/document-share.entity';
 import { MikroOrmDocumentShareRepository } from '../repositories/mikro-orm-document-share.repository';
 import { TypeOrmDocumentShareRepository } from '../repositories/type-orm-document-share.repository';
 import { DocumentAccessService } from './document-access.service';
+import { DocumentLiveBridge } from './document-live.bridge';
 import { DocumentNotifierService } from './document-notifier.service';
 import { DocumentService } from './document.service';
 
@@ -35,7 +36,9 @@ export class DocumentShareService extends TenantAwareCrudService<DocumentShare> 
 		public readonly mikroOrmDocumentShareRepository: MikroOrmDocumentShareRepository,
 		private readonly documentService: DocumentService,
 		private readonly documentAccessService: DocumentAccessService,
-		private readonly documentNotifier: DocumentNotifierService
+		private readonly documentNotifier: DocumentNotifierService,
+		// A share change is an access change for the page's live editing sessions (`GAUZY_DOCS_LIVE_ENABLED=true`).
+		@Optional() private readonly liveBridge?: DocumentLiveBridge
 	) {
 		super(typeOrmDocumentShareRepository, mikroOrmDocumentShareRepository);
 	}
@@ -113,6 +116,8 @@ export class DocumentShareService extends TenantAwareCrudService<DocumentShare> 
 		this.logger.debug(`Document ${documentId} shared (${input.access}) with ${hasEmployee ? 'employee' : 'team'}.`);
 		// The people the page was shared with hear of it in their Inbox (best effort).
 		void this.documentNotifier.notifyShared(document, { employeeId: share.employeeId ?? null, teamId: share.teamId ?? null }, input.access);
+		// A grant can turn a read-only live session into an editing one.
+		this.liveBridge?.accessChanged(documentId);
 		return share;
 	}
 
@@ -132,6 +137,7 @@ export class DocumentShareService extends TenantAwareCrudService<DocumentShare> 
 			{ id: share.id, tenantId: RequestContext.currentTenantId() },
 			{ access: input.access }
 		);
+		this.liveBridge?.accessChanged(documentId);
 		return this.findShareOrFail(documentId, shareId);
 	}
 
@@ -151,6 +157,7 @@ export class DocumentShareService extends TenantAwareCrudService<DocumentShare> 
 			id: share.id,
 			tenantId: RequestContext.currentTenantId()
 		});
+		this.liveBridge?.accessChanged(documentId);
 		return share;
 	}
 

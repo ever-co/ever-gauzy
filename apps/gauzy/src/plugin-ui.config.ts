@@ -7,6 +7,8 @@ import { JobsPlugin } from '@gauzy/plugin-jobs-ui';
 import { DocsUiPlugin } from '@gauzy/plugin-docs-ui';
 import { InboxUiPlugin } from '@gauzy/plugin-inbox-ui';
 import { ChatUiPlugin } from '@gauzy/plugin-chat-ui';
+import { TaskAutomationsUiPlugin } from '@gauzy/plugin-task-automations-ui';
+import { TaskViewsUiPlugin } from '@gauzy/plugin-task-views-ui';
 import { IntegrationUpworkPlugin } from '@gauzy/plugin-integration-upwork-ui';
 import { IntegrationPlanePlugin } from '@gauzy/plugin-integration-plane-ui';
 import { IntegrationEverAsyncPlugin } from '@gauzy/plugin-integration-ever-async-ui';
@@ -14,6 +16,7 @@ import { IntegrationEverWorksUiPlugin } from '@gauzy/plugin-integration-ever-wor
 import { IntegrationLinearUiPlugin } from '@gauzy/plugin-integration-linear-ui';
 import { IntegrationAsanaUiPlugin } from '@gauzy/plugin-integration-asana-ui';
 import { IntegrationTrelloUiPlugin } from '@gauzy/plugin-integration-trello-ui';
+import { IntegrationJiraUiPlugin } from '@gauzy/plugin-integration-jira-ui';
 import { EverConnectUiPlugin } from '@gauzy/plugin-ever-connect-ui';
 import { DashboardTimeTrackReactUiPlugin } from '@gauzy/plugin-dashboard-time-track-react-ui';
 import { AiChatReactUiPlugin } from '@gauzy/plugin-ai-chat-react-ui';
@@ -92,6 +95,16 @@ export const uiPluginConfig: PluginUiConfig = {
 		// chat (@gauzy/plugin-chat loaded and FEATURE_CHAT on); elsewhere the route only says it is off.
 		ChatUiPlugin,
 
+		// Settings → Automations (task automation rules). The Settings entry appears only where the API loads task
+		// automations (GAUZY_TASK_AUTOMATIONS_ENABLED=true) for a user with TASK_AUTOMATION_MANAGE; elsewhere (the
+		// default) the route only says it is off.
+		TaskAutomationsUiPlugin,
+
+		// Task views (/pages/task-views, Settings > Keyboard shortcuts, the KEY-123 chip on a task's page, the keyboard
+		// shortcuts). The nav entries, the shortcuts and the chip appear only where the API serves the task views
+		// extensions (GAUZY_TASK_VIEWS_ENABLED=true); elsewhere (the default) the routes only say they are off.
+		TaskViewsUiPlugin,
+
 		// Integration Plugins
 		IntegrationUpworkPlugin,
 		IntegrationPlanePlugin,
@@ -106,6 +119,8 @@ export const uiPluginConfig: PluginUiConfig = {
 		IntegrationAsanaUiPlugin,
 		// Integrations > Trello, the same way (TRELLO_ENABLED).
 		IntegrationTrelloUiPlugin,
+		// Integrations > Jira, the same way (JIRA_ENABLED).
+		IntegrationJiraUiPlugin,
 		// Integrations > Ever Platform. Where the API's Ever Platform module is not loaded (the
 		// default) the page only says so.
 		EverConnectUiPlugin,

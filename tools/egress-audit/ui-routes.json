@@ -30,7 +30,7 @@
     },
     {
       "path": "/auth/accept-client-invite",
-      "file": "packages/ui-auth/src/lib/auth.routes.ts:69",
+      "file": "packages/ui-auth/src/lib/auth.routes.ts:70",
       "guards": [
         "NoAuthGuard"
       ],
@@ -38,7 +38,7 @@
     },
     {
       "path": "/auth/accept-invite",
-      "file": "packages/ui-auth/src/lib/auth.routes.ts:64",
+      "file": "packages/ui-auth/src/lib/auth.routes.ts:65",
       "guards": [
         "NoAuthGuard"
       ],
@@ -46,22 +46,22 @@
     },
     {
       "path": "/auth/confirm-email",
-      "file": "packages/ui-auth/src/lib/auth.routes.ts:55",
+      "file": "packages/ui-auth/src/lib/auth.routes.ts:56",
       "source": "router"
     },
     {
       "path": "/auth/delete-account",
-      "file": "packages/ui-auth/src/lib/auth.routes.ts:86",
+      "file": "packages/ui-auth/src/lib/auth.routes.ts:87",
       "source": "router"
     },
     {
       "path": "/auth/delete-account/confirm",
-      "file": "packages/ui-auth/src/lib/auth.routes.ts:90",
+      "file": "packages/ui-auth/src/lib/auth.routes.ts:91",
       "source": "router"
     },
     {
       "path": "/auth/estimate",
-      "file": "packages/ui-auth/src/lib/auth.routes.ts:74",
+      "file": "packages/ui-auth/src/lib/auth.routes.ts:75",
       "guards": [
         "NoAuthGuard"
       ],
@@ -107,7 +107,7 @@
     },
     {
       "path": "/auth/logout",
-      "file": "packages/ui-auth/src/lib/auth.routes.ts:94",
+      "file": "packages/ui-auth/src/lib/auth.routes.ts:95",
       "source": "router"
     },
     {
@@ -118,20 +118,21 @@
     },
     {
       "path": "/auth/oauth-authorize",
-      "file": "packages/ui-auth/src/lib/auth.routes.ts:80",
+      "file": "packages/ui-auth/src/lib/auth.routes.ts:81",
       "source": "router"
     },
     {
       "path": "/auth/register",
       "file": "packages/ui-auth/src/lib/auth.routes.ts:40",
       "guards": [
-        "NoAuthGuard"
+        "NoAuthGuard",
+        "registrationEnabledGuard"
       ],
       "source": "router"
     },
     {
       "path": "/auth/request-password",
-      "file": "packages/ui-auth/src/lib/auth.routes.ts:45",
+      "file": "packages/ui-auth/src/lib/auth.routes.ts:46",
       "guards": [
         "NoAuthGuard"
       ],
@@ -139,7 +140,7 @@
     },
     {
       "path": "/auth/reset-password",
-      "file": "packages/ui-auth/src/lib/auth.routes.ts:50",
+      "file": "packages/ui-auth/src/lib/auth.routes.ts:51",
       "guards": [
         "NoAuthGuard"
       ],
@@ -215,7 +216,7 @@
     },
     {
       "path": "/pages/accounting/expenses",
-      "file": "apps/gauzy/src/app/pages/expenses/expenses-routing.module.ts:15",
+      "file": "apps/gauzy/src/app/pages/expenses/expenses-routing.module.ts:14",
       "guards": [
         "PermissionsGuard"
       ],
@@ -223,12 +224,12 @@
     },
     {
       "path": "/pages/accounting/expenses/categories",
-      "file": "apps/gauzy/src/app/pages/expenses/expenses-routing.module.ts:26",
+      "file": "apps/gauzy/src/app/pages/expenses/expenses-routing.module.ts:25",
       "source": "router"
     },
     {
       "path": "/pages/accounting/expenses/view/:id",
-      "file": "apps/gauzy/src/app/pages/expenses/expenses-routing.module.ts:37",
+      "file": "apps/gauzy/src/app/pages/expenses/expenses-routing.module.ts:36",
       "guards": [
         "PermissionsGuard"
       ],
@@ -1010,6 +1011,18 @@
       "note": "registered at run time by a UI plugin of apps/gauzy/src/plugin-ui.config.ts or a page module (the generator lists the registry call as a note)"
     },
     {
+      "path": "/pages/integrations/asana",
+      "file": "packages/plugins/integration-asana-ui/src/lib/integration-asana-ui.plugin.ts",
+      "source": "manual",
+      "note": "registered at run time by a UI plugin of apps/gauzy/src/plugin-ui.config.ts or a page module (the generator lists the registry call as a note)"
+    },
+    {
+      "path": "/pages/integrations/asana/:integrationId",
+      "file": "packages/plugins/integration-asana-ui/src/lib/integration-asana-ui.plugin.ts",
+      "source": "manual",
+      "note": "registered at run time by a UI plugin of apps/gauzy/src/plugin-ui.config.ts or a page module (the generator lists the registry call as a note)"
+    },
+    {
       "path": "/pages/integrations/ever-async",
       "file": "packages/plugins/integration-ever-async-ui/src/lib/integration-ever-async.routes.ts",
       "source": "manual",
@@ -1040,42 +1053,6 @@
       "note": "registered at run time by a UI plugin of apps/gauzy/src/plugin-ui.config.ts or a page module (the generator lists the registry call as a note)"
     },
     {
-      "path": "/pages/integrations/linear",
-      "file": "packages/plugins/integration-linear-ui/src/lib/integration-linear-ui.plugin.ts",
-      "source": "manual",
-      "note": "registered at run time by a UI plugin of apps/gauzy/src/plugin-ui.config.ts or a page module (the generator lists the registry call as a note)"
-    },
-    {
-      "path": "/pages/integrations/linear/:integrationId",
-      "file": "packages/plugins/integration-linear-ui/src/lib/integration-linear-ui.plugin.ts",
-      "source": "manual",
-      "note": "registered at run time by a UI plugin of apps/gauzy/src/plugin-ui.config.ts or a page module (the generator lists the registry call as a note)"
-    },
-    {
-      "path": "/pages/integrations/asana",
-      "file": "packages/plugins/integration-asana-ui/src/lib/integration-asana-ui.plugin.ts",
-      "source": "manual",
-      "note": "registered at run time by a UI plugin of apps/gauzy/src/plugin-ui.config.ts or a page module (the generator lists the registry call as a note)"
-    },
-    {
-      "path": "/pages/integrations/asana/:integrationId",
-      "file": "packages/plugins/integration-asana-ui/src/lib/integration-asana-ui.plugin.ts",
-      "source": "manual",
-      "note": "registered at run time by a UI plugin of apps/gauzy/src/plugin-ui.config.ts or a page module (the generator lists the registry call as a note)"
-    },
-    {
-      "path": "/pages/integrations/trello",
-      "file": "packages/plugins/integration-trello-ui/src/lib/integration-trello-ui.plugin.ts",
-      "source": "manual",
-      "note": "registered at run time by a UI plugin of apps/gauzy/src/plugin-ui.config.ts or a page module (the generator lists the registry call as a note)"
-    },
-    {
-      "path": "/pages/integrations/trello/:integrationId",
-      "file": "packages/plugins/integration-trello-ui/src/lib/integration-trello-ui.plugin.ts",
-      "source": "manual",
-      "note": "registered at run time by a UI plugin of apps/gauzy/src/plugin-ui.config.ts or a page module (the generator lists the registry call as a note)"
-    },
-    {
       "path": "/pages/integrations/gauzy-ai",
       "file": "apps/gauzy/src/app/pages/integrations/integrations.module.ts",
       "source": "manual",
@@ -1090,6 +1067,30 @@
     {
       "path": "/pages/integrations/hubstaff",
       "file": "apps/gauzy/src/app/pages/integrations/integrations.module.ts",
+      "source": "manual",
+      "note": "registered at run time by a UI plugin of apps/gauzy/src/plugin-ui.config.ts or a page module (the generator lists the registry call as a note)"
+    },
+    {
+      "path": "/pages/integrations/jira",
+      "file": "packages/plugins/integration-jira-ui/src/lib/integration-jira-ui.plugin.ts",
+      "source": "manual",
+      "note": "registered at run time by a UI plugin of apps/gauzy/src/plugin-ui.config.ts or a page module (the generator lists the registry call as a note)"
+    },
+    {
+      "path": "/pages/integrations/jira/:integrationId",
+      "file": "packages/plugins/integration-jira-ui/src/lib/integration-jira-ui.plugin.ts",
+      "source": "manual",
+      "note": "registered at run time by a UI plugin of apps/gauzy/src/plugin-ui.config.ts or a page module (the generator lists the registry call as a note)"
+    },
+    {
+      "path": "/pages/integrations/linear",
+      "file": "packages/plugins/integration-linear-ui/src/lib/integration-linear-ui.plugin.ts",
+      "source": "manual",
+      "note": "registered at run time by a UI plugin of apps/gauzy/src/plugin-ui.config.ts or a page module (the generator lists the registry call as a note)"
+    },
+    {
+      "path": "/pages/integrations/linear/:integrationId",
+      "file": "packages/plugins/integration-linear-ui/src/lib/integration-linear-ui.plugin.ts",
       "source": "manual",
       "note": "registered at run time by a UI plugin of apps/gauzy/src/plugin-ui.config.ts or a page module (the generator lists the registry call as a note)"
     },
@@ -1119,6 +1120,18 @@
     {
       "path": "/pages/integrations/sim",
       "file": "apps/gauzy/src/app/pages/integrations/integrations.module.ts",
+      "source": "manual",
+      "note": "registered at run time by a UI plugin of apps/gauzy/src/plugin-ui.config.ts or a page module (the generator lists the registry call as a note)"
+    },
+    {
+      "path": "/pages/integrations/trello",
+      "file": "packages/plugins/integration-trello-ui/src/lib/integration-trello-ui.plugin.ts",
+      "source": "manual",
+      "note": "registered at run time by a UI plugin of apps/gauzy/src/plugin-ui.config.ts or a page module (the generator lists the registry call as a note)"
+    },
+    {
+      "path": "/pages/integrations/trello/:integrationId",
+      "file": "packages/plugins/integration-trello-ui/src/lib/integration-trello-ui.plugin.ts",
       "source": "manual",
       "note": "registered at run time by a UI plugin of apps/gauzy/src/plugin-ui.config.ts or a page module (the generator lists the registry call as a note)"
     },
@@ -1642,13 +1655,13 @@
     },
     {
       "path": "/pages/settings",
-      "file": "apps/gauzy/src/app/pages/settings/settings.routes.ts:27",
+      "file": "apps/gauzy/src/app/pages/settings/settings.routes.ts:28",
       "redirect_to": "general",
       "source": "router"
     },
     {
       "path": "/pages/settings/accounting-templates",
-      "file": "apps/gauzy/src/app/pages/settings/settings.routes.ts:72",
+      "file": "apps/gauzy/src/app/pages/settings/settings.routes.ts:73",
       "source": "router"
     },
     {
@@ -1664,6 +1677,12 @@
         "userApiTokensEnabledGuard"
       ],
       "source": "router"
+    },
+    {
+      "path": "/pages/settings/automations",
+      "file": "packages/plugins/task-automations-ui/src/lib/task-automations-ui.plugin.ts",
+      "source": "manual",
+      "note": "registered at run time by a UI plugin of apps/gauzy/src/plugin-ui.config.ts or a page module (the generator lists the registry call as a note)"
     },
     {
       "path": "/pages/settings/billing",
@@ -1697,7 +1716,7 @@
     },
     {
       "path": "/pages/settings/danger-zone",
-      "file": "apps/gauzy/src/app/pages/settings/settings.routes.ts:143",
+      "file": "apps/gauzy/src/app/pages/settings/settings.routes.ts:148",
       "guards": [
         "PermissionsGuard"
       ],
@@ -1717,7 +1736,7 @@
     },
     {
       "path": "/pages/settings/email-history",
-      "file": "apps/gauzy/src/app/pages/settings/settings.routes.ts:50",
+      "file": "apps/gauzy/src/app/pages/settings/settings.routes.ts:51",
       "guards": [
         "PermissionsGuard"
       ],
@@ -1725,7 +1744,7 @@
     },
     {
       "path": "/pages/settings/email-templates",
-      "file": "apps/gauzy/src/app/pages/settings/settings.routes.ts:67",
+      "file": "apps/gauzy/src/app/pages/settings/settings.routes.ts:68",
       "source": "router"
     },
     {
@@ -1824,7 +1843,7 @@
     },
     {
       "path": "/pages/settings/sms-gateway",
-      "file": "apps/gauzy/src/app/pages/settings/settings.routes.ts:97",
+      "file": "apps/gauzy/src/app/pages/settings/settings.routes.ts:98",
       "guards": [
         "PermissionsGuard"
       ],
@@ -1838,7 +1857,7 @@
     },
     {
       "path": "/pages/settings/whats-new",
-      "file": "apps/gauzy/src/app/pages/settings/settings.routes.ts:161",
+      "file": "apps/gauzy/src/app/pages/settings/settings.routes.ts:165",
       "guards": [
         "changelogManagerGuard"
       ],
@@ -1846,23 +1865,23 @@
     },
     {
       "path": "/pages/tasks",
-      "file": "apps/gauzy/src/app/pages/tasks/tasks-routing.module.ts:13",
+      "file": "apps/gauzy/src/app/pages/tasks/tasks-routing.module.ts:14",
       "redirect_to": "dashboard",
       "source": "router"
     },
     {
       "path": "/pages/tasks/dashboard",
-      "file": "apps/gauzy/src/app/pages/tasks/tasks-routing.module.ts:18",
+      "file": "apps/gauzy/src/app/pages/tasks/tasks-routing.module.ts:19",
       "source": "router"
     },
     {
       "path": "/pages/tasks/me",
-      "file": "apps/gauzy/src/app/pages/tasks/tasks-routing.module.ts:26",
+      "file": "apps/gauzy/src/app/pages/tasks/tasks-routing.module.ts:27",
       "source": "router"
     },
     {
       "path": "/pages/tasks/settings/:id",
-      "file": "apps/gauzy/src/app/pages/tasks/tasks-routing.module.ts:44",
+      "file": "apps/gauzy/src/app/pages/tasks/tasks-routing.module.ts:59",
       "guards": [
         "PermissionsGuard"
       ],
@@ -1870,12 +1889,20 @@
     },
     {
       "path": "/pages/tasks/team",
-      "file": "apps/gauzy/src/app/pages/tasks/tasks-routing.module.ts:22",
+      "file": "apps/gauzy/src/app/pages/tasks/tasks-routing.module.ts:23",
+      "source": "router"
+    },
+    {
+      "path": "/pages/tasks/trash",
+      "file": "apps/gauzy/src/app/pages/tasks/tasks-routing.module.ts:45",
+      "guards": [
+        "PermissionsGuard"
+      ],
       "source": "router"
     },
     {
       "path": "/pages/tasks/view/:id",
-      "file": "apps/gauzy/src/app/pages/tasks/tasks-routing.module.ts:30",
+      "file": "apps/gauzy/src/app/pages/tasks/tasks-routing.module.ts:31",
       "guards": [
         "PermissionsGuard"
       ],
@@ -1929,7 +1956,7 @@
     },
     {
       "path": "/share/:type/:id/:token",
-      "file": "packages/plugins/public-layout-ui/src/lib/public-layout.routes.ts:123",
+      "file": "packages/plugins/public-layout-ui/src/lib/public-layout.routes.ts:125",
       "source": "router"
     },
     {
@@ -2019,8 +2046,8 @@
     "apps/gauzy/src/app/pages/pages.routes.ts:49: routes built at run time (_pageRouteRegistryService.getPageLocationRoutes('page-sections')): add the routes it adds as manual entries",
     "apps/gauzy/src/app/pages/pages.routes.ts:589: routes built at run time (_pageRouteRegistryService.getPageLocationRoutes('reports-sections')): add the routes it adds as manual entries",
     "apps/gauzy/src/app/pages/pages.routes.ts:590: the wildcard route under /pages/reports is not walked",
-    "apps/gauzy/src/app/pages/settings/settings.routes.ts:162: routes built at run time (_pageRouteRegistryService.getPageLocationRoutes('settings-sections')): add the routes it adds as manual entries",
-    "packages/plugins/public-layout-ui/src/lib/public-layout.routes.ts:128: the wildcard route under /share is not walked",
-    "packages/ui-auth/src/lib/auth.routes.ts:98: routes built at run time (_pageRouteRegistryService.getPageLocationRoutes('auth-sections')): add the routes it adds as manual entries"
+    "apps/gauzy/src/app/pages/settings/settings.routes.ts:183: routes built at run time (_pageRouteRegistryService.getPageLocationRoutes('settings-sections')): add the routes it adds as manual entries",
+    "packages/plugins/public-layout-ui/src/lib/public-layout.routes.ts:130: the wildcard route under /share is not walked",
+    "packages/ui-auth/src/lib/auth.routes.ts:99: routes built at run time (_pageRouteRegistryService.getPageLocationRoutes('auth-sections')): add the routes it adds as manual entries"
   ]
 }
