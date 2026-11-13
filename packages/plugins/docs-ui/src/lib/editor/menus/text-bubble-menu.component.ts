@@ -162,6 +162,7 @@ type TurnInto =
 					class="gz-comment-action"
 					[disabled]="!canComment"
 					[nbTooltip]="'DOCS.EDITOR.COMMENT.ADD' | translate"
+					[attr.aria-label]="'DOCS.EDITOR.COMMENT.ADD' | translate"
 					(click)="comment()"
 				>
 					<nb-icon icon="message-square-outline"></nb-icon>
@@ -329,9 +330,10 @@ export class TextBubbleMenuComponent implements AfterViewInit, OnChanges, OnDest
 	@Input({ required: true }) editor!: Editor;
 
 	/**
-	 * The user asked to comment on the current selection's block (spec 05 §8). The menu
-	 * only resolves the anchor — the thread itself lives in the page's Comments rail, which
-	 * owns the `/api/comment` calls.
+	 * The user asked to comment on the current selection (spec 05 §8). The menu only resolves
+	 * the block — the editor reads the selected text as the thread's range (`docs-collaboration`
+	 * FR-16), and the thread itself lives in the page's Comments rail, which owns the
+	 * `/api/comment` calls.
 	 */
 	@Output() commentRequested = new EventEmitter<string>();
 

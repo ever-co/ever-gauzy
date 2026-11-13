@@ -43,6 +43,8 @@ import typescript from 'highlight.js/lib/languages/typescript';
 import xml from 'highlight.js/lib/languages/xml';
 import yaml from 'highlight.js/lib/languages/yaml';
 import { TranslateService } from '@ngx-translate/core';
+import type { IDocumentCommentAnchorPosition } from '@gauzy/contracts';
+import type { LiveAnchorResolver } from '../comments/comment-anchor.model';
 import { AngularNodeViewRenderer } from '../node-view/angular-node-view-renderer';
 import { CalloutNodeViewComponent } from '../node-views/callout-node-view.component';
 import { EmbedCardNodeViewComponent } from '../node-views/embed-card-node-view.component';
@@ -101,8 +103,17 @@ export interface IDocumentEditorExtensionDeps {
 	slashCommandDeps: ISlashCommandDeps;
 	/** ToC anchors sink (feeds the page's ToC side panel). */
 	onTocUpdate(anchors: unknown[]): void;
-	/** A block's comment gutter marker was activated — opens that thread in the rail (spec 05 §8). */
-	onOpenCommentThread?(blockId: string): void;
+	/**
+	 * A block's comment gutter marker or a highlighted comment range was activated — opens that thread in the rail
+	 * (spec 05 §8; a range also names its thread, `docs-collaboration` FR-16).
+	 */
+	onOpenCommentThread?(blockId: string, threadId?: string): void;
+	/** Comment on the selection (Mod-Alt-M), as the bubble menu's comment action. */
+	onCommentSelection?(): void;
+	/** The live relative positions of the page's shared document, while it is edited live (comment ranges follow them). */
+	commentLiveResolver?(): LiveAnchorResolver | null;
+	/** Where each comment range is now, each time the ranges are found again in the document. */
+	onCommentRangesResolved?(places: ReadonlyMap<string, IDocumentCommentAnchorPosition>): void;
 	/** Realtime co-editing flag — MUST disable StarterKit undoRedo when true (spec 05 §11). */
 	collab?: boolean;
 }
@@ -277,11 +288,15 @@ export function createDocumentEditorExtensions(deps: IDocumentEditorExtensionDep
 		InvisibleCharacters.configure({ visible: false }),
 		Markdown.configure({ html: false } as never),
 		Base64Guard,
-		// Gutter markers for blocks with an open comment thread (spec 05 §8). The anchor set
-		// is pushed in by the page's Comments rail via `setCommentedBlocks()`.
+		// Gutter markers for blocks with an open comment thread (spec 05 §8), and the highlighted
+		// text of the threads made on a range (`docs-collaboration` FR-16). Both are pushed in by the
+		// page's Comments rail via `setCommentedBlocks()` / `setCommentRanges()`.
 		BlockComments.configure({
-			onOpenThread: (blockId: string) => deps.onOpenCommentThread?.(blockId),
-			markerLabel: translate.instant('DOCS.EDITOR.COMMENT.MARKER_ARIA')
+			onOpenThread: (blockId: string, threadId?: string) => deps.onOpenCommentThread?.(blockId, threadId),
+			markerLabel: translate.instant('DOCS.EDITOR.COMMENT.MARKER_ARIA'),
+			onComment: deps.onCommentSelection ? () => deps.onCommentSelection?.() : undefined,
+			liveResolver: () => deps.commentLiveResolver?.() ?? null,
+			onRangesResolved: (places) => deps.onCommentRangesResolved?.(places)
 		}),
 		createSlashCommandExtension({
 			host: deps.suggestionHost,

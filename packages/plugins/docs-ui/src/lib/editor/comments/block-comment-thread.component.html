@@ -66,6 +66,27 @@
 	<!-- Composer — a comment always belongs to a specific block, so it needs one in focus. -->
 	@if (blockId && canComment) {
 		<div class="gz-block-composer">
+			<!-- The selected text the new thread is made on (docs-collaboration FR-16) -->
+			@if (composerRange; as selection) {
+				<div class="gz-block-composer-range">
+					<span class="gz-block-composer-range-label">{{
+						'DOCS.COMMENTS.RANGE_COMMENTING_ON' | translate
+					}}</span>
+					<q class="gz-block-range-text">{{ selection.quote }}</q>
+					<button
+						nbButton
+						ghost
+						size="tiny"
+						type="button"
+						class="gz-block-composer-range-clear"
+						[attr.aria-label]="'DOCS.COMMENTS.RANGE_CLEAR' | translate"
+						[attr.title]="'DOCS.COMMENTS.RANGE_CLEAR' | translate"
+						(click)="clearRange()"
+					>
+						<nb-icon icon="close-outline"></nb-icon>
+					</button>
+				</div>
+			}
 			<textarea
 				#composerInput
 				nbInput
@@ -121,7 +142,12 @@
 
 <!-- One comment: author, date, body, resolve toggle. -->
 <ng-template #commentBlock let-comment>
-	<article class="gz-block-comment" [class.resolved]="comment.resolved">
+	<article
+		class="gz-block-comment"
+		[class.resolved]="comment.resolved"
+		[class.active]="isActiveThread(comment)"
+		[attr.data-thread-id]="comment.id"
+	>
 		<header class="gz-block-comment-head">
 			<span class="gz-block-comment-author">{{ authorLabel(comment) }}</span>
 			<span class="gz-block-comment-date">{{ comment.createdAt | date: 'short' }}</span>
@@ -129,6 +155,26 @@
 				<nb-badge status="success" [text]="'DOCS.COMMENTS.RESOLVED' | translate"></nb-badge>
 			}
 		</header>
+		<!-- A thread made on a range of text: the text it is on now (a click shows it in the page) -->
+		@if (rangeViews.get(comment.id); as range) {
+			<div class="gz-block-range" [class.gone]="range.kind !== 'range'">
+				<button
+					type="button"
+					class="gz-block-range-quote"
+					[disabled]="range.kind !== 'range'"
+					[attr.title]="'DOCS.COMMENTS.RANGE_GO_TO' | translate"
+					(click)="focusRange(comment)"
+				>
+					<q class="gz-block-range-text">{{ range.text }}</q>
+				</button>
+				@if (range.kind === 'block') {
+					<span class="gz-block-detached">{{ 'DOCS.COMMENTS.RANGE_ON_BLOCK' | translate }}</span>
+				}
+				@if (range.kind === 'orphaned') {
+					<span class="gz-block-detached">{{ 'DOCS.COMMENTS.RANGE_GONE' | translate }}</span>
+				}
+			</div>
+		}
 		<p class="gz-block-comment-body">{{ body(comment) }}</p>
 		@if (canResolve(comment)) {
 			<div class="gz-block-comment-actions">
