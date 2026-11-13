@@ -53,7 +53,7 @@ jest.mock('./task-automation-task-reader.service', () => ({ TaskAutomationTaskRe
 import 'reflect-metadata';
 import { BaseEntityEnum, EmployeeNotificationTypeEnum, InboxItemKindEnum } from '@gauzy/contracts';
 import { automationUser } from './task-automation-context';
-import { applyListEdit, listEdit, TaskAutomationWriter } from './task-automation-writer.service';
+import { applyListEdit, listEdit, TaskAutomationTaskGoneError, TaskAutomationWriter } from './task-automation-writer.service';
 import { task } from '../engine/testing/fixtures';
 
 const marker = { ruleId: 'rule-a', ruleName: 'Close parents', runId: 'run-1', depth: 1, chain: ['rule-a'] };
@@ -147,7 +147,7 @@ describe('TaskAutomationWriter', () => {
 
 		it('writes nothing to a task that is gone', async () => {
 			const { written, commandBus } = await writeWith({ memberIds: ['A'] }, { memberIds: ['A', 'C'] }, null);
-			await expect(written).rejects.toThrow('The task no longer exists.');
+			await expect(written).rejects.toThrow(TaskAutomationTaskGoneError);
 			expect(commandBus.execute).not.toHaveBeenCalled();
 		});
 

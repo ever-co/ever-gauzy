@@ -50,6 +50,14 @@ export function applyListEdit(current: readonly ID[], edit: ITaskAutomationListE
 	return [...kept, ...edit.add.filter((id) => !kept.includes(id))];
 }
 
+/** The task was deleted after the run read it: nothing is written to it, and no notice is sent about it. */
+export class TaskAutomationTaskGoneError extends Error {
+	constructor() {
+		super('The task no longer exists.');
+		this.name = 'TaskAutomationTaskGoneError';
+	}
+}
+
 /** What a write did. */
 export interface ITaskAutomationWriteResult {
 	/** Whether an update was sent: not when an edit made meanwhile already left the task as the rule wanted. */
@@ -120,7 +128,7 @@ export class TaskAutomationWriter {
 		const tags = update.tagIds ? listEdit(task.tagIds, update.tagIds) : null;
 		if (members || tags) {
 			const current = await this.reader.lists(task.tenantId, task.id);
-			if (!current) throw new Error('The task no longer exists.');
+			if (!current) throw new TaskAutomationTaskGoneError();
 			result.lists = current;
 			const memberIds = members ? applyListEdit(current.memberIds, members) : null;
 			if (memberIds && !sameSet(memberIds, current.memberIds)) {

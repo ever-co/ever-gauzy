@@ -18,7 +18,7 @@ import { TaskAutomationRuleService } from './task-automation-rule.service';
 import { TaskAutomationRunStore } from './task-automation-run.store';
 import { TaskAutomationTaskLock } from './task-automation-task-lock';
 import { TaskAutomationTaskReader } from './task-automation-task-reader.service';
-import { applyListEdit, listEdit, TaskAutomationWriter } from './task-automation-writer.service';
+import { applyListEdit, listEdit, TaskAutomationTaskGoneError, TaskAutomationWriter } from './task-automation-writer.service';
 
 /** One run of one rule for one task: what led to it, and what it must check before it claims anything. */
 export interface ITaskAutomationRunOptions {
@@ -169,6 +169,8 @@ export class TaskAutomationRunner {
 			let updateFailed = false;
 			// The task's assignees as stored just before the write: the base the notices are addressed from.
 			let currentMembers: ID[] | null = null;
+			// The task was deleted after the run read it: no notice goes out about it.
+			let taskGone = false;
 			if (hasUpdate) {
 				try {
 					const written = await this.writer.applyUpdate(subject, plan.update, marker);
@@ -179,11 +181,18 @@ export class TaskAutomationRunner {
 					markAlreadySet(plan.changes, written.unchanged);
 				} catch (error) {
 					updateFailed = true;
+					taskGone = error instanceof TaskAutomationTaskGoneError;
 					failUpdateChanges(plan.changes, this.writer.describe(error));
 				}
 			}
-			if (plan.notices.length && !currentMembers) {
-				currentMembers = (await this.writer.currentLists(subject).catch((): null => null))?.memberIds ?? null;
+			if (plan.notices.length && !currentMembers && !taskGone) {
+				try {
+					const lists = await this.writer.currentLists(subject);
+					if (lists) currentMembers = lists.memberIds;
+					else taskGone = true;
+				} catch {
+					// The lists could not be read: the notices go by the task as the run read it.
+				}
 			}
 			const baseMembers = currentMembers ?? subject.memberIds;
 			const notices = plan.changes.filter((change) => change.field === 'notice' && change.to !== undefined);
@@ -196,6 +205,13 @@ export class TaskAutomationRunner {
 					? [...baseMembers]
 					: applyListEdit(baseMembers, listEdit(subject.memberIds, planned.employeeIds));
 				const notice = { ...planned, employeeIds };
+				if (taskGone) {
+					if (line) {
+						line.to = 0;
+						line.note = 'The task no longer exists.';
+					}
+					continue;
+				}
 				if (!notice.employeeIds.length) {
 					if (line) {
 						line.to = 0;

@@ -795,6 +795,27 @@ describe('Task automations on SQLite', () => {
 			expect(notified).toEqual([[ADA, BOB].sort()]);
 		});
 
+		it('sends no notice about a task deleted while the rule runs', async () => {
+			const rule = await rules.create(scope, {
+				name: 'Everyone hears',
+				trigger: { type: TaskAutomationTriggerEnum.STATUS_CHANGED },
+				actions: [{ type: TaskAutomationActionEnum.NOTIFY_ASSIGNEES, message: 'Started' }]
+			});
+			const id = await createTask();
+			await dataSource.query(`INSERT INTO "task_employee" ("taskId", "employeeId") VALUES (?, ?)`, [id, ADA]);
+			const notify = jest.spyOn(realWriter, 'notify');
+			editWhileRunning(() => dataSource.getRepository(Task as never).softDelete({ id } as never));
+
+			const result = await realRunner.run(rule, id as never, { eventKey: `e-7:${id}`, triggerType: TaskAutomationTriggerEnum.STATUS_CHANGED, depth: 0, chain: [] });
+
+			expect(notify).not.toHaveBeenCalled();
+			expect(result.outcome).toBe(TaskAutomationRunOutcomeEnum.NO_CHANGE);
+			const [run] = await runs.history(rule.id as string);
+			expect((run.details as { changes: Array<{ field: string; note?: string }> }).changes).toEqual([
+				expect.objectContaining({ field: 'notice', to: 0, note: 'The task no longer exists.' })
+			]);
+		});
+
 		it('writes the plan as it is when nothing changed meanwhile', async () => {
 			const rule = await rules.create(scope, {
 				name: 'Bob replaces Ada',
