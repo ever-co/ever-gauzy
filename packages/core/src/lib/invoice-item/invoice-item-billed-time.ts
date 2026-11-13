@@ -202,7 +202,7 @@ export async function inLinesTransaction<S extends { ormType: MultiORM }, E exte
  *
  * @param service The service that saves the lines.
  * @param repositories The service's own repositories.
- * @param save The save, run on the service it is given.
+ * @param save The save, run on the service and the transaction it is given.
  * @param savedLines The lines the save wrote, in the order of the request's lines.
  * @param billing The lines that bill time, as {@link splitBilledTime} found them.
  * @returns What the save answered.
@@ -210,13 +210,13 @@ export async function inLinesTransaction<S extends { ormType: MultiORM }, E exte
 export async function saveBillingTime<S extends { ormType: MultiORM }, E extends ObjectLiteral, R>(
 	service: S,
 	repositories: ILinesRepositories<E>,
-	save: (service: S) => Promise<R>,
+	save: (service: S, transaction: ILinesTransaction) => Promise<R>,
 	savedLines: (saved: R) => Array<{ id?: ID }>,
 	billing: IBillingLine[]
 ): Promise<R> {
 	const scope = billingScope();
 	return await inLinesTransaction(service, repositories, async (inTransaction, transaction) => {
-		const saved = await save(inTransaction);
+		const saved = await save(inTransaction, transaction);
 		const lines = savedLines(saved);
 		const billed = billedLinesOf(lines, billing);
 		await billTimeLogs(transaction, billed, scope);
@@ -368,7 +368,7 @@ function billedLineOf(saved: Array<{ id?: ID }>, line: IBillingLine): IBilledLin
  * The id of the line saved at a position. A save answers its lines in the order of the request; a line it did not
  * answer is not billed against a guess, and the transaction rolls back.
  */
-function savedLineId(saved: Array<{ id?: ID }>, index: number): ID {
+export function savedLineId(saved: Array<{ id?: ID }>, index: number): ID {
 	const id = saved?.[index]?.id;
 	if (!id) {
 		throw new InternalServerErrorException('INVOICE_LINE_NOT_SAVED: a line that bills time was not saved.');

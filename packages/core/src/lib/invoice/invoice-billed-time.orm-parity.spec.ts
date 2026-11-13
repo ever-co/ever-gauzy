@@ -161,6 +161,16 @@ describe('Invoices record the time their lines bill, on TypeORM and on MikroORM'
 		return { invoiceId, lineId, timeLogId };
 	};
 
+	/** The line of {@link earlierInvoice} as an edit re-posts it, unchanged and naming no time. */
+	const earlierLineAgain = (invoiceId: string): Row => ({
+		description: 'earlier',
+		price: 1,
+		quantity: 1,
+		totalValue: 1,
+		...scope,
+		invoiceId
+	});
+
 	/** A line as the web sends it, billing the time logs given. */
 	const lineBilling = (description: string, timeLogIds: string[]): Row => ({
 		...lineNamingNoTime(description),
@@ -519,6 +529,48 @@ describe('Invoices record the time their lines bill, on TypeORM and on MikroORM'
 			expect(await lineOf(invoiceId, 'replacement')).toBeUndefined();
 			expect(await linkOf(kept)).toBe(lineId);
 			expect(await linkOf(outsiders)).toBeNull();
+		});
+
+		it('keeps the time of a line a replacement re-posts unchanged, as the invoice edit screen does', async () => {
+			const { invoiceId, lineId } = await earlierInvoice('DRAFT');
+			const design = await timeLog({ invoiceItemId: lineId });
+			const review = await timeLog({ invoiceItemId: lineId });
+			const newFee = { ...lineNamingNoTime('new fee'), invoiceId };
+
+			await handlers(ormType).replaceLines(invoiceId, [earlierLineAgain(invoiceId), newFee]);
+
+			const replacement = await lineOf(invoiceId, 'earlier');
+			expect(replacement).toBeDefined();
+			expect(replacement).not.toBe(lineId);
+			expect(await linkOf(design)).toBe(replacement);
+			expect(await linkOf(review)).toBe(replacement);
+		});
+
+		it('releases the time of a line the replacement changes, or re-posts naming an empty list', async () => {
+			const changed = await earlierInvoice('DRAFT');
+			const changedLog = await timeLog({ invoiceItemId: changed.lineId });
+			const emptied = await earlierInvoice('DRAFT');
+			const emptiedLog = await timeLog({ invoiceItemId: emptied.lineId });
+			const changedLine = { ...earlierLineAgain(changed.invoiceId), quantity: 2, totalValue: 2 };
+			const emptiedLine = { ...earlierLineAgain(emptied.invoiceId), timeLogIds: [] };
+
+			await handlers(ormType).replaceLines(changed.invoiceId, [changedLine]);
+			await handlers(ormType).replaceLines(emptied.invoiceId, [emptiedLine]);
+
+			expect(await linkOf(changedLog)).toBeNull();
+			expect(await linkOf(emptiedLog)).toBeNull();
+		});
+
+		it('keeps the time of an unchanged line beside a line that names its own, which takes what it names', async () => {
+			const { invoiceId, lineId } = await earlierInvoice('DRAFT');
+			const named = await timeLog({ invoiceItemId: lineId });
+			const kept = await timeLog({ invoiceItemId: lineId });
+			const naming = { ...lineBilling('named again', [named]), invoiceId };
+
+			await handlers(ormType).replaceLines(invoiceId, [earlierLineAgain(invoiceId), naming]);
+
+			expect(await linkOf(named)).toBe(await lineOf(invoiceId, 'named again'));
+			expect(await linkOf(kept)).toBe(await lineOf(invoiceId, 'earlier'));
 		});
 
 		it('keeps the old lines, and their time, when a replacement that bills no time fails half way', async () => {

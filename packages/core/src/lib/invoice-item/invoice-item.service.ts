@@ -1,5 +1,4 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { FindOptionsWhere } from 'typeorm';
 import { ID, IInvoiceItem, IInvoiceItemCreateInput } from '@gauzy/contracts';
 import { RequestContext } from '../core/context';
 import { TenantAwareCrudService } from './../core/crud';
@@ -14,6 +13,7 @@ import {
 	saveBillingTime,
 	splitBilledTime
 } from './invoice-item-billed-time';
+import { replaceLinesKeepingTime } from './invoice-item-kept-time';
 import { MikroOrmInvoiceItemRepository } from './repository/mikro-orm-invoice-item.repository';
 import { TypeOrmInvoiceItemRepository } from './repository/type-orm-invoice-item.repository';
 
@@ -40,19 +40,19 @@ export class InvoiceItemService extends TenantAwareCrudService<InvoiceItem> {
 	 * to ensure that only the new items are stored. It then performs a bulk insert operation
 	 * to save the provided invoice items in the database, in the same transaction: a save that
 	 * fails keeps the old items. Items that name the time logs they bill are replaced with that
-	 * time (`replaceLinesBillingTime`).
+	 * time (`replaceLinesBillingTime`); an item that names none and says what an old item said
+	 * keeps the time the old one billed (`replaceLinesKeepingTime`).
 	 */
 	async createBulk(invoiceId: ID, input: IInvoiceItemCreateInput[]): Promise<IInvoiceItem[]> {
 		const { lines, billing } = splitBilledTime(input);
 		if (billing.length > 0) {
-			return await this.replaceLinesBillingTime(invoiceId, lines, billing);
+			return await this.replaceLinesBillingTime(invoiceId, input, lines, billing);
 		}
 
 		try {
-			return await inLinesTransaction(this, this.ownRepositories(), async (service) => {
-				await service.delete({ invoiceId } as FindOptionsWhere<InvoiceItem>);
-				return await service.saveMany(lines);
-			});
+			return await inLinesTransaction(this, this.ownRepositories(), (service, transaction) =>
+				replaceLinesKeepingTime(service, transaction, invoiceId, input, lines, [])
+			);
 		} catch (error) {
 			throw new HttpException(
 				`Failed to create bulk invoice items: ${error.message}`,
@@ -68,6 +68,7 @@ export class InvoiceItemService extends TenantAwareCrudService<InvoiceItem> {
 	 * organization: the CRUD write holds each line to the caller's boundary only.
 	 *
 	 * @param invoiceId The invoice whose lines are replaced.
+	 * @param requested The new lines, as the request states them.
 	 * @param lines The new lines, as they are written.
 	 * @param billing The new lines that bill time.
 	 * @returns The new lines.
@@ -75,19 +76,18 @@ export class InvoiceItemService extends TenantAwareCrudService<InvoiceItem> {
 	 */
 	private async replaceLinesBillingTime(
 		invoiceId: ID,
+		requested: IInvoiceItemCreateInput[],
 		lines: IInvoiceItemCreateInput[],
 		billing: IBillingLine[]
 	): Promise<IInvoiceItem[]> {
 		assertBillingOnInvoice(billing, invoiceId);
 		const invoice = await this.invoiceInCallerTenant(invoiceId);
 		assertBillingInOrganization(billing, invoice?.organizationId);
+		const named = billing.flatMap((line) => line.timeLogIds);
 		return await saveBillingTime(
 			this,
 			this.ownRepositories(),
-			async (service) => {
-				await service.delete({ invoiceId } as FindOptionsWhere<InvoiceItem>);
-				return await service.saveMany(lines);
-			},
+			(service, transaction) => replaceLinesKeepingTime(service, transaction, invoiceId, requested, lines, named),
 			(saved) => saved,
 			billing
 		);
