@@ -53,7 +53,7 @@ jest.mock('./task-automation-task-reader.service', () => ({ TaskAutomationTaskRe
 import 'reflect-metadata';
 import { BaseEntityEnum, EmployeeNotificationTypeEnum, InboxItemKindEnum } from '@gauzy/contracts';
 import { automationUser } from './task-automation-context';
-import { TaskAutomationWriter } from './task-automation-writer.service';
+import { applyListEdit, listEdit, TaskAutomationTaskGoneError, TaskAutomationWriter } from './task-automation-writer.service';
 import { task } from '../engine/testing/fixtures';
 
 const marker = { ruleId: 'rule-a', ruleName: 'Close parents', runId: 'run-1', depth: 1, chain: ['rule-a'] };
@@ -74,7 +74,8 @@ describe('TaskAutomationWriter', () => {
 				return {};
 			})
 		};
-		const writer = new TaskAutomationWriter(commandBus as never, { publish: jest.fn() } as never, {} as never);
+		const reader = { lists: jest.fn(async () => ({ memberIds: [], tagIds: [] })) };
+		const writer = new TaskAutomationWriter(commandBus as never, { publish: jest.fn() } as never, reader as never);
 		await writer.applyUpdate(task(), { status: 'done', taskStatusId: 'st-done', memberIds: ['e-1'], tagIds: ['t-1'] }, marker);
 		const [command] = commandBus.execute.mock.calls[0] as unknown as [{ id: string; input: Record<string, unknown> }];
 		expect(command.id).toBe('task-1');
@@ -89,6 +90,78 @@ describe('TaskAutomationWriter', () => {
 		expect(mockContext.users.at(-1)).toEqual(automationUser({ tenantId: 'tenant-1', organizationId: 'org-1' }, marker));
 		expect(mockContext.users.at(-1)).toMatchObject({ id: undefined, employeeId: undefined, permissions: [], name: 'Automation: Close parents' });
 		expect(actors).toEqual([automationUser({ tenantId: 'tenant-1', organizationId: 'org-1' }, marker)]);
+	});
+
+	describe('a person’s edit made after the run read the task', () => {
+		/** The task as the run read it, and the lists as a person left them before the write. */
+		const writeWith = async (
+			snapshot: { memberIds?: string[]; tagIds?: string[] },
+			update: { memberIds?: string[]; tagIds?: string[]; status?: string; taskStatusId?: string },
+			now: { memberIds: string[]; tagIds: string[] } | null
+		) => {
+			const commandBus = { execute: jest.fn(async () => ({})) };
+			const reader = { lists: jest.fn(async () => now) };
+			const writer = new TaskAutomationWriter(commandBus as never, { publish: jest.fn() } as never, reader as never);
+			const written = writer.applyUpdate(task(snapshot), update, marker);
+			return { written, commandBus, reader };
+		};
+		const inputOf = (commandBus: { execute: jest.Mock }) =>
+			(commandBus.execute.mock.calls[0] as unknown as [{ input: Record<string, unknown> }])[0].input;
+
+		it('does not put back an assignee removed since: an added assignee joins the list as it is now', async () => {
+			// The run read A and B; a person removed A; the rule adds C.
+			const { written, commandBus, reader } = await writeWith({ memberIds: ['A', 'B'] }, { memberIds: ['A', 'B', 'C'] }, { memberIds: ['B'], tagIds: [] });
+			await expect(written).resolves.toEqual({ written: true, lists: { memberIds: ['B'], tagIds: [] }, unchanged: [] });
+			expect(reader.lists).toHaveBeenCalledWith('tenant-1', 'task-1');
+			expect(inputOf(commandBus)['members']).toEqual([{ id: 'B' }, { id: 'C' }]);
+			expect(inputOf(commandBus)).not.toHaveProperty('tags');
+		});
+
+		it('keeps an assignee added since when the rule replaces the assignees', async () => {
+			// SET_ASSIGNEES to C, planned on [A]; a person added D meanwhile.
+			const { written, commandBus } = await writeWith({ memberIds: ['A'] }, { memberIds: ['C'] }, { memberIds: ['A', 'D'], tagIds: [] });
+			await written;
+			expect(inputOf(commandBus)['members']).toEqual([{ id: 'D' }, { id: 'C' }]);
+		});
+
+		it('keeps a label added since, and removes only the label the rule removes', async () => {
+			const { written, commandBus } = await writeWith({ tagIds: ['L1', 'L2'] }, { tagIds: ['L2'] }, { memberIds: [], tagIds: ['L1', 'L2', 'L3'] });
+			await written;
+			expect(inputOf(commandBus)['tags']).toEqual([{ id: 'L2' }, { id: 'L3' }]);
+			expect(inputOf(commandBus)).not.toHaveProperty('members');
+		});
+
+		it('writes no list the edit already left as the rule wanted, and nothing when nothing else changes', async () => {
+			const { written, commandBus } = await writeWith({ memberIds: ['A'] }, { memberIds: ['A', 'C'] }, { memberIds: ['C', 'A'], tagIds: [] });
+			await expect(written).resolves.toEqual({ written: false, lists: { memberIds: ['C', 'A'], tagIds: [] }, unchanged: ['members'] });
+			expect(commandBus.execute).not.toHaveBeenCalled();
+
+			const withStatus = await writeWith(
+				{ memberIds: ['A'] },
+				{ memberIds: ['A', 'C'], status: 'done', taskStatusId: 'st-done' },
+				{ memberIds: ['A', 'C'], tagIds: [] }
+			);
+			await withStatus.written;
+			expect(inputOf(withStatus.commandBus)).toEqual({ organizationId: 'org-1', status: 'done', taskStatusId: 'st-done' });
+		});
+
+		it('writes nothing to a task that is gone', async () => {
+			const { written, commandBus } = await writeWith({ memberIds: ['A'] }, { memberIds: ['A', 'C'] }, null);
+			await expect(written).rejects.toThrow(TaskAutomationTaskGoneError);
+			expect(commandBus.execute).not.toHaveBeenCalled();
+		});
+
+		it('reads nothing more for an update without lists', async () => {
+			const { written, commandBus, reader } = await writeWith({}, { status: 'done', taskStatusId: 'st-done' }, null);
+			await expect(written).resolves.toEqual({ written: true, lists: null, unchanged: [] });
+			expect(reader.lists).not.toHaveBeenCalled();
+			expect(inputOf(commandBus)).toEqual({ organizationId: 'org-1', status: 'done', taskStatusId: 'st-done' });
+		});
+
+		it('turns a plan into additions and removals, and applies them to any list', () => {
+			expect(listEdit(['A', 'B'], ['B', 'C', 'C'])).toEqual({ add: ['C'], remove: ['A'] });
+			expect(applyListEdit(['B', 'D', 'D'], { add: ['C', 'D'], remove: ['A'] })).toEqual(['B', 'D', 'C']);
+		});
 	});
 
 	it('files one Inbox notice per rule and change, addressed to the assignees’ users', async () => {

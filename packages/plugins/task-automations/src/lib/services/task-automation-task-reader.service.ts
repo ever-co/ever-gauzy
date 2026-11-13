@@ -51,6 +51,20 @@ export class TaskAutomationTaskReader {
 		return snapshot;
 	}
 
+	/**
+	 * A task's assignees and labels as stored now, or `null` when the task is gone: what the writer applies a rule's
+	 * additions and removals to, read just before it writes.
+	 */
+	async lists(tenantId: ID, taskId: ID): Promise<{ memberIds: ID[]; tagIds: ID[] } | null> {
+		const task = await this.dataSource.getRepository(Task).findOne({
+			where: { id: taskId, tenantId } as never,
+			relations: { members: true, tags: true } as never,
+			select: { id: true, members: { id: true }, tags: { id: true } } as never
+		});
+		if (!task) return null;
+		return { memberIds: ids(task.members as Array<{ id?: string }>), tagIds: ids(task.tags as Array<{ id?: string }>) };
+	}
+
 	/** The sub-tasks of a task (not deleted). */
 	async children(tenantId: ID, parentId: ID): Promise<ITaskAutomationChildSnapshot[]> {
 		const rows = await this.dataSource.getRepository(Task).find({
