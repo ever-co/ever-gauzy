@@ -88,6 +88,9 @@ export const chatSchemaExtensions = gql`
 		name: String!
 		imageUrl: String
 		position: String
+		"active, idle or offline, by the server clock when the list was read."
+		presence: String
+		lastSeenAt: DateTime
 	}
 	type ChatReactionSummary {
 		emoji: String!

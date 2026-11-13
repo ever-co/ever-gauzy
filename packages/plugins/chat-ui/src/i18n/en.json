@@ -238,7 +238,6 @@
 		"SEARCH_PEOPLE": "Search people",
 		"NO_PEOPLE": "Nobody matches.",
 		"NO_PEOPLE_FOR": "Nobody matches “{{query}}”.",
-		"TO": "To:",
 		"TO_PLACEHOLDER": "Type a name",
 		"TO_MORE": "Add someone else",
 		"PEOPLE": "People",
@@ -248,9 +247,6 @@
 		"GROUP_FULL": "A group holds up to {{max}} people besides you.",
 		"OPEN_DIRECT": "Open conversation",
 		"START_GROUP": "Start group",
-		"KEY_MOVE": "to move",
-		"KEY_ADD": "to add",
-		"KEY_START": "to start",
 		"START": "Start",
 		"CANCEL": "Cancel",
 		"BROWSE": "Browse channels",
@@ -272,6 +268,15 @@
 		"MESSAGE": "Message",
 		"VIEW_PROFILE": "View profile",
 		"SENT": "Sent to {{name}}"
+	},
+	"PRESENCE": {
+		"ONLINE": "Online",
+		"AWAY": "Away",
+		"OFFLINE": "Offline",
+		"LAST_SEEN_JUST_NOW": "Last seen just now",
+		"LAST_SEEN_MINUTES": "Last seen {{count}} min ago",
+		"LAST_SEEN_TODAY": "Last seen today at {{time}}",
+		"LAST_SEEN_DATE": "Last seen {{date}}"
 	},
 	"APP": {
 		"PENDING": "Sending to the app…",

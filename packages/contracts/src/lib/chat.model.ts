@@ -160,6 +160,22 @@ export interface IChatPerson {
 	imageUrl: string | null;
 	/** Their position in the organization (e.g. "Frontend Developer"), when one is set. */
 	position?: string | null;
+	/**
+	 * Whether they are here, by the server clock when the list was read: `active` (an app tab reported input lately),
+	 * `idle` (a tab is open, but no input for a while, or they set themselves as away) or `offline` (no tab reported
+	 * within the presence window). The
+	 * realtime channel's `presence.changed` keeps it current after that.
+	 */
+	presence?: ChatPresenceStatus;
+	/** When one of their tabs last reported, or null when none ever did. */
+	lastSeenAt?: Date | null;
+}
+
+/** A person's presence as the chat shows it (the realtime channel's `away` reads as `idle`). */
+export enum ChatPresenceStatus {
+	ACTIVE = 'active',
+	IDLE = 'idle',
+	OFFLINE = 'offline'
 }
 
 export interface IChatMemberSummary {
