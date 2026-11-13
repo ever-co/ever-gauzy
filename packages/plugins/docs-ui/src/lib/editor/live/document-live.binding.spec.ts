@@ -245,4 +245,35 @@ describe('createLiveBinding', () => {
 		expect(postUpdate.mock.calls.length).toBeGreaterThanOrEqual(3);
 		binding.destroy();
 	});
+
+	it('counts edits the server refused as not taken, until a writable session sends them', async () => {
+		const server = serverPage('Hello');
+		const binding = bind();
+		streams[0].next(server.sync());
+		await runTimers();
+		expect(binding.hasUnconfirmed()).toBe(false);
+		const text = (binding.doc.getXmlFragment('default').get(0) as Y.XmlElement).get(0) as Y.XmlText;
+
+		// The page was locked while the edit went: refused, and not sent again by this session.
+		postUpdate.mockRejectedValueOnce({ status: 403 });
+		text.insert(5, '!');
+		await runTimers();
+		expect(binding.hasPending()).toBe(false);
+		expect(binding.hasUnconfirmed()).toBe(true);
+
+		// Still read-only when the session comes back: the edit is still not the server's.
+		binding.start();
+		streams[1].next(server.sync({ readOnly: true, reason: 'locked' }));
+		await runTimers();
+		expect(binding.hasUnconfirmed()).toBe(true);
+
+		// Writable again: the sync sends what the server lacks, the refused edit included.
+		binding.start();
+		streams[2].next(server.sync());
+		await runTimers();
+		expect(binding.hasUnconfirmed()).toBe(false);
+		Y.applyUpdate(server.doc, Buffer.from(posted[posted.length - 1], 'base64'));
+		expect(textOf(server.doc)).toBe('Hello!');
+		binding.destroy();
+	});
 });

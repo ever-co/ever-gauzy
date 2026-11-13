@@ -232,6 +232,34 @@ describe('DocumentEditorComponent: a live session that ends keeps the edits it n
 		expect(saved()[0]['expectedUpdatedAt']).toBe(LIVE_START);
 	});
 
+	it('keeps edits the server refused (the page turned read-only), and leaves them to autosave', async () => {
+		postUpdate.mockImplementation(() => Promise.reject({ status: 403 }));
+		type(' refused');
+		await until(() => postUpdate.mock.calls.length > 0 && component.hasUnsavedChanges === false, 'the refusal');
+		frames.next({ kind: 'closed', documentId: 'doc-1', reason: 'locked' });
+
+		await until(() => updateContent.mock.calls.length > 0, 'the autosave save');
+		expect(component.editor?.getText()).toBe('Server text refused');
+		expect(saved()[0]['expectedUpdatedAt']).toBe(LIVE_START);
+	});
+
+	it('saves unsent edits when the page cannot be read, even when they match the copy loaded before', async () => {
+		getById.mockImplementation(() => throwError(() => new HttpErrorResponse({ status: 0 })));
+		// The copy the editor holds as its input happens to read as the text the unsent edit makes; the server holds
+		// the session's text before that edit.
+		component.document = {
+			...page('', LIVE_START),
+			contentJson: paragraphJson('Server text again'),
+			contentHtml: '<p>Server text again</p>'
+		} as unknown as IDocument;
+		type(' again');
+		frames.next({ kind: 'closed', documentId: 'doc-1', reason: 'shutdown' });
+
+		await until(() => updateContent.mock.calls.length > 0, 'the autosave save');
+		expect(component.editor?.getText()).toBe('Server text again');
+		expect(saved()[0]['expectedUpdatedAt']).toBe(LIVE_START);
+	});
+
 	it('shows the session text, unsaved, when the page cannot be read and nothing was left unsent', async () => {
 		getById.mockImplementation(() => throwError(() => new HttpErrorResponse({ status: 0 })));
 		// The page took a newer row meanwhile (a move): the editor never showed what it holds.

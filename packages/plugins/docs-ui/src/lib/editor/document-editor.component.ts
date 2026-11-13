@@ -435,7 +435,7 @@ export class DocumentEditorComponent implements OnChanges, OnDestroy {
 		this.liveStateChanged.emit(state);
 		this.editor?.setEditable(this.editable && state.phase === 'live' && !state.readOnly);
 		if (state.phase === 'ended') {
-			if (state.reason === 'lineage' && this.liveBinding.hasPending() === false) {
+			if (state.reason === 'lineage' && this.liveBinding.hasUnconfirmed() === false) {
 				// The page was rebuilt on the server: join it again with an empty document.
 				this.rebuildEditor();
 				return;
@@ -457,21 +457,22 @@ export class DocumentEditorComponent implements OnChanges, OnDestroy {
 	private fallBackToAutosave(documentId: ID): void {
 		this.liveEndedFor = documentId;
 		const local = this.editor ? { json: this.getJSON(), html: this.editor.getHTML() } : null;
-		const unsent = this.liveBinding?.hasPending() === true;
+		// Refused edits count too (the page turned read-only, the size limit): the server never took them.
+		const unsent = this.liveBinding?.hasUnconfirmed() === true;
 		const base = this.liveBaseUpdatedAt;
 		this.documents.getById(documentId).subscribe({
 			next: (document) => {
 				if (this.currentDocumentId !== documentId) return;
 				this.document = document;
 				this.rebuildEditor();
-				if (local && unsent) this.keepLiveContent(local, base, true);
+				if (local && unsent) this.keepLiveContent(local, base, true, true);
 			},
 			error: () => {
 				if (this.currentDocumentId !== documentId) return;
 				this.rebuildEditor();
 				// The page could not be read: what the live editor showed is the newest copy here, not the one loaded
 				// before the session began.
-				if (local) this.keepLiveContent(local, base, unsent);
+				if (local) this.keepLiveContent(local, base, unsent, false);
 			}
 		});
 	}
@@ -482,16 +483,20 @@ export class DocumentEditorComponent implements OnChanges, OnDestroy {
 	 * @param local The live editor's content when its session ended.
 	 * @param base The version the session began on: the token the content is saved against.
 	 * @param unsaved Whether it holds edits the server never took: they are saved now.
+	 * @param read Whether the editor was rebuilt from the page read just now. Otherwise it holds the copy loaded before,
+	 *   which equal content does not prove saved: the server may hold a later state the unsent edits undid.
 	 */
 	private keepLiveContent(
 		local: { json: JsonData; html: string },
 		base: string | Date | null,
-		unsaved: boolean
+		unsaved: boolean,
+		read: boolean
 	): void {
 		const editor = this.editor;
-		// Nothing to keep when the copy just loaded already holds all of it.
-		if (!editor || JSON.stringify(this.getJSON()) === JSON.stringify(local.json)) return;
-		editor.commands.setContent(local.json as never, { emitUpdate: false } as never);
+		if (!editor) return;
+		// Nothing to keep when the page just read already holds all of it.
+		if (read && JSON.stringify(this.getJSON()) === JSON.stringify(local.json)) return;
+		editor.commands.setContent(local.json, { emitUpdate: false });
 		if (unsaved) {
 			void this.autosave.saveAdopted(base);
 		} else {
