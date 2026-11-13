@@ -151,6 +151,12 @@ export interface IGetTasksByViewFilters extends IBasePerTenantAndOrganizationEnt
 	sizes?: TaskSizeEnum[];
 	types?: TaskTypeEnum[];
 	startDates?: Date[];
+	/**
+	 * Due between the earliest and the latest of these instants, both included. A view that stores the calendar days
+	 * (`YYYY-MM-DD`) of those two ends in `dueDateFromDay` / `dueDateToDay` (the start of the first day, the last
+	 * instant of the last, in the reader's zone) has a due date stored as a date only compared with those days, as
+	 * `dueDateFrom` / `dueDateTo` are; without them, every due date compares with the instants.
+	 */
 	dueDates?: Date[];
 }
 
@@ -162,8 +168,18 @@ export interface ITaskDateFilterInput
 		IBaseRelationsEntityModel {
 	startDateFrom?: Date;
 	startDateTo?: Date;
+	/** Due on or after this instant. */
 	dueDateFrom?: Date;
+	/** Due on or before this instant. */
 	dueDateTo?: Date;
+	/**
+	 * The calendar days (`YYYY-MM-DD`) `dueDateFrom` starts and `dueDateTo` ends, in the reader's zone, sent with those
+	 * instants (the start of the first day, the last instant of the last). A due date stored as a date only (midnight
+	 * UTC of its day) is compared with these days rather than the instants, so it counts on its own day west of UTC
+	 * too. Without them, every due date compares with the instants.
+	 */
+	dueDateFromDay?: string;
+	dueDateToDay?: string;
 }
 
 export interface ITaskAdvancedFilter extends IBaseRelationsEntityModel {
