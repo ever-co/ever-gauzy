@@ -387,7 +387,9 @@ describe.each(TARGETS)('the remaining due-date filters on $name', (target) => {
 					beforeEach(async () => seedStarts(at));
 
 					it('finds today’s date-only start date in "starts today" and not tomorrow’s, and yesterday’s before today', async () => {
-						expect(await byDate(asStart(at.today), orms)).toEqual(sorted('only18', 'earlyOn18', 'lateOn18'));
+						expect(await byDate(asStart(at.today), orms)).toEqual(
+							sorted('only18', 'earlyOn18', 'lateOn18')
+						);
 						expect(await byDate(asStart(at.overdue), orms)).toEqual(sorted('only17', 'lateOn17'));
 						expect(await byDate(asStart(at.fromTomorrow), orms)).toEqual(
 							sorted('only19', 'only21', 'only22', 'earlyOn19', 'lateOn21', 'earlyOn22')
@@ -404,7 +406,9 @@ describe.each(TARGETS)('the remaining due-date filters on $name', (target) => {
 						const today = await byDate(asStart(instantsOnly(at.today)), orms);
 						// West of UTC a date only lands a day early by the instants, as it always did for such a caller.
 						expect(today).toEqual(
-							offset < 0 ? sorted('only19', 'earlyOn18', 'lateOn18') : sorted('only18', 'earlyOn18', 'lateOn18')
+							offset < 0
+								? sorted('only19', 'earlyOn18', 'lateOn18')
+								: sorted('only18', 'earlyOn18', 'lateOn18')
 						);
 					});
 

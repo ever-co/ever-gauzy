@@ -2757,7 +2757,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 							to: maxStartDate,
 							fromDay: viewFilters.startDateFromDay,
 							toDay: viewFilters.startDateToDay
-					  })
+						})
 					: {}),
 				// The earliest and the latest due date, with the view's days of those ends: a date-only due date is
 				// compared with the days, as the advanced filters compare it (`dueDateCondition`).
@@ -2823,7 +2823,11 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			// A start-date or due-date range sent with the days of its ends compares a date-only value with those days;
 			// one sent without them compares the instants. An inverted range is refused under either ORM (the REST DTO
 			// refuses it first; GraphQL reaches this check).
-			const rangeOf = (from: Date | string | undefined, to: Date | string | undefined, days: { fromDay?: unknown; toDay?: unknown }) => {
+			const rangeOf = (
+				from: Date | string | undefined,
+				to: Date | string | undefined,
+				days: { fromDay?: unknown; toDay?: unknown }
+			) => {
 				const start = validDate(from);
 				const end = validDate(to);
 				if (start && end && start > end) {
@@ -3014,7 +3018,12 @@ export class TaskService extends TenantAwareCrudService<Task> {
 		if (withoutDueDate === true) {
 			return { dueDate: IsNull() };
 		}
-		return dateRangeCondition('dueDate', { from: dueDateFrom, to: dueDateTo, fromDay: dueDateFromDay, toDay: dueDateToDay });
+		return dateRangeCondition('dueDate', {
+			from: dueDateFrom,
+			to: dueDateTo,
+			fromDay: dueDateFromDay,
+			toDay: dueDateToDay
+		});
 	}
 
 	/**
@@ -3423,7 +3432,11 @@ function validDate(value: Date | string | undefined | null): Date | null {
  * when its instant is that day's edge (`boundDayOf`: the start of the first day, the last instant of the last); `null`
  * when neither end keeps one, so the range compares the instants as before.
  */
-function dayRangeOf(from: Date | null, to: Date | null, days: { fromDay?: unknown; toDay?: unknown }): IDayRange | null {
+function dayRangeOf(
+	from: Date | null,
+	to: Date | null,
+	days: { fromDay?: unknown; toDay?: unknown }
+): IDayRange | null {
 	const fromDay = from ? boundDayOf(days.fromDay, from, 'start') : undefined;
 	const toDay = to ? boundDayOf(days.toDay, to, 'end') : undefined;
 	if (!fromDay && !toDay) return null;
