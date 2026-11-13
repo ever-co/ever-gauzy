@@ -9,8 +9,29 @@ import { TypeOrmInvoiceRepository } from '../../../../invoice/repository/type-or
 import { PublicInvoiceUpdateCommand } from '../public-invoice-update.command';
 import { PublicInvoiceService } from './../../public-invoice.service';
 
-/** The answers a client gives from the estimate email, which the team hears of. */
-const ANSWERS: ReadonlyArray<string> = [EstimateStatusTypesEnum.ACCEPTED, EstimateStatusTypesEnum.REJECTED];
+/** A client's answer the team hears of: an acceptance or a decline, and whether it made the estimate an invoice. */
+interface IAnswerGiven {
+	isAccepted: boolean;
+	isConverted: boolean;
+}
+
+/**
+ * What a client's update from the estimate email answers, or null when it is no answer the team hears of. ACCEPTED is
+ * an acceptance, and so is DRAFT with `isEstimate: false`, which the public page sends where the organization converts
+ * accepted estimates (the estimate becomes a draft invoice). REJECTED is a decline.
+ */
+function answerGivenBy(entity: IInvoiceUpdateInput): IAnswerGiven | null {
+	const status = entity?.status;
+	const isConverted = entity?.isEstimate === false;
+	const acceptsByConverting = isConverted && status === EstimateStatusTypesEnum.DRAFT;
+	if (status === EstimateStatusTypesEnum.ACCEPTED || acceptsByConverting) {
+		return { isAccepted: true, isConverted };
+	}
+	if (status === EstimateStatusTypesEnum.REJECTED) {
+		return { isAccepted: false, isConverted };
+	}
+	return null;
+}
 
 /** An estimate as it was before the client's answer. */
 type IEstimateBefore = Pick<IInvoice, 'id' | 'status' | 'isEstimate' | 'tenantId'>;
@@ -35,10 +56,10 @@ export class PublicInvoiceUpdateHandler implements ICommandHandler<PublicInvoice
 	) {}
 
 	/**
-	 * Saves the client's answer (`PublicInvoiceService.updateInvoice`, which checks the link and writes only a change of
-	 * status), then, when this answer changed the estimate to accepted or declined, tells the team
-	 * (`EstimateAnsweredEvent`). The same answer given twice, even at the same moment, is told once, and a refused
-	 * answer not at all.
+	 * Saves the client's answer (`PublicInvoiceService.updateInvoice`, which checks the link and writes only an answer
+	 * that changes the estimate), then, when this answer changed it to accepted or declined, or turned it into a draft
+	 * invoice where the organization converts accepted estimates, tells the team (`EstimateAnsweredEvent`). The same
+	 * answer given twice, even at the same moment, is told once, and a refused answer not at all.
 	 */
 	public async execute(command: PublicInvoiceUpdateCommand): Promise<IInvoice | UpdateResult> {
 		const { params, entity } = command;
@@ -61,8 +82,9 @@ export class PublicInvoiceUpdateHandler implements ICommandHandler<PublicInvoice
 	}
 
 	/**
-	 * Publishes the answer when it changed an estimate to accepted or declined: the update changed a row. Where the
-	 * database does not report that count, the status read before the update decides. Never fails the saved answer.
+	 * Publishes the answer when it changed an estimate to accepted or declined, or converted it: the update changed a
+	 * row. Where the database does not report that count, what was read before the update decides: the status, or, for
+	 * a conversion, that the document was still an estimate. Never fails the saved answer.
 	 */
 	private async publishAnswer(
 		params: IInvoice,
@@ -70,11 +92,11 @@ export class PublicInvoiceUpdateHandler implements ICommandHandler<PublicInvoice
 		before: IEstimateBefore | null,
 		changedRows: number | undefined
 	) {
-		const status = entity?.status;
-		const isAnswer = ANSWERS.includes(status);
-		const hasChanged = changedRows === undefined ? before?.status !== status : changedRows > 0;
+		const given = answerGivenBy(entity);
+		const wasChanged = given?.isConverted || before?.status !== entity?.status;
+		const hasChanged = changedRows === undefined ? wasChanged : changedRows > 0;
 		const isNewAnswer = Boolean(before?.isEstimate) && hasChanged;
-		if (!isAnswer || !isNewAnswer) {
+		if (!given || !isNewAnswer) {
 			return;
 		}
 		const answeredFrom = await this.answeringAddressOf(params, before);
@@ -83,7 +105,8 @@ export class PublicInvoiceUpdateHandler implements ICommandHandler<PublicInvoice
 				new EstimateAnsweredEvent({
 					invoiceId: before.id,
 					tenantId: before.tenantId,
-					isAccepted: status === EstimateStatusTypesEnum.ACCEPTED,
+					isAccepted: given.isAccepted,
+					isConverted: given.isConverted,
 					answeredFrom
 				})
 			);

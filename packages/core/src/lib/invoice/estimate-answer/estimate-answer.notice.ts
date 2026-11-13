@@ -32,13 +32,23 @@ export function formattedAmountOf(totalValue: number | string | null | undefined
 	}
 }
 
+/** What the team can do next: the acceptance may have made the estimate a draft invoice already. */
+function nextStepOf({ isAccepted, isConverted }: Pick<IEstimateAnswer, 'isAccepted' | 'isConverted'>): string {
+	if (!isAccepted) {
+		return 'You can follow up with the client or send a revised estimate.';
+	}
+	return isConverted
+		? 'It is now a draft invoice, ready for you to review and send.'
+		: 'You can now turn it into an invoice.';
+}
+
 /**
  * The in-app notice of a client's answer: who answered which estimate, its total, the address that answered and what
  * comes next. In English, like the platform's other notices.
  */
 export function estimateAnswerNotice(
 	estimate: IAnsweredEstimate,
-	answer: Pick<IEstimateAnswer, 'isAccepted' | 'answeredFrom'>
+	answer: Pick<IEstimateAnswer, 'isAccepted' | 'isConverted' | 'answeredFrom'>
 ): { title: string; message: string } {
 	const client = clientNameOf(estimate) ?? 'Your client';
 	const answered = answer.isAccepted ? 'accepted' : 'declined';
@@ -53,10 +63,7 @@ export function estimateAnswerNotice(
 	if (answer.answeredFrom) {
 		sentences.push(`Answered from ${answer.answeredFrom}.`);
 	}
-	const nextStep = answer.isAccepted
-		? 'You can now turn it into an invoice.'
-		: 'You can follow up with the client or send a revised estimate.';
-	sentences.push(nextStep);
+	sentences.push(nextStepOf(answer));
 
 	return { title, message: sentences.join(' ') };
 }

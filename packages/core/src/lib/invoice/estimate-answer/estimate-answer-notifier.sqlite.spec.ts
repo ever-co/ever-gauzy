@@ -55,6 +55,10 @@ interface IReads {
 	estimateInOtherTenant: any;
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	notAnEstimate: any;
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	convertedInvoice: any;
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	convertedButStillAnEstimate: any;
 }
 
 async function read(): Promise<IReads> {
@@ -199,6 +203,17 @@ async function read(): Promise<IReads> {
 				tenantId: OTHER_TENANT
 			});
 			reads.notAnEstimate = await notifier['findEstimate']({ invoiceId: INVOICE, tenantId: TENANT });
+			// An acceptance where the organization converts accepted estimates: the document is a draft invoice by then
+			reads.convertedInvoice = await notifier['findEstimate']({
+				invoiceId: INVOICE,
+				tenantId: TENANT,
+				isConverted: true
+			});
+			reads.convertedButStillAnEstimate = await notifier['findEstimate']({
+				invoiceId: ESTIMATE,
+				tenantId: TENANT,
+				isConverted: true
+			});
 		});
 	} finally {
 		if (dataSource?.isInitialized) {
@@ -253,6 +268,11 @@ describe('EstimateAnswerNotifier, who handles invoices in an organization (SQLit
 		for (const secret of ['hash', 'refreshToken', 'emailToken', 'code', 'codeExpireAt']) {
 			expect(reads.estimate.createdByUser[secret]).toBeUndefined();
 		}
+	});
+
+	it('reads the draft invoice an acceptance turned the estimate into, and only once it is one', () => {
+		expect(reads.convertedInvoice).toMatchObject({ id: INVOICE, invoiceNumber: 13, isEstimate: false });
+		expect(reads.convertedButStillAnEstimate).toBeNull();
 	});
 
 	it('reads no estimate of another tenant, and no invoice', () => {

@@ -81,10 +81,13 @@ export class EstimateAnswerNotifier {
 		}
 	}
 
-	/** The estimate in its tenant, with the parts the notice and the email read, and nothing of its creator but these. */
-	private async findEstimate({ invoiceId, tenantId }: IEstimateAnswer): Promise<IInvoice | null> {
+	/**
+	 * The estimate in its tenant (or the draft invoice the acceptance turned it into), with the parts the notice and the
+	 * email read, and nothing of its creator but these.
+	 */
+	private async findEstimate({ invoiceId, tenantId, isConverted }: IEstimateAnswer): Promise<IInvoice | null> {
 		return await this.typeOrmInvoiceRepository.findOne({
-			where: { id: invoiceId, tenantId, isEstimate: true },
+			where: { id: invoiceId, tenantId, isEstimate: !isConverted },
 			relations: { toContact: true, organization: true, createdByUser: true },
 			select: {
 				id: true,
@@ -130,6 +133,7 @@ export class EstimateAnswerNotifier {
 			invoiceId: estimate.id,
 			invoiceNumber: estimate.invoiceNumber,
 			isAccepted: answer.isAccepted,
+			isConverted: Boolean(answer.isConverted),
 			contactName: clientNameOf(estimate),
 			contactEmail: answer.answeredFrom,
 			amount: formattedAmountOf(estimate.totalValue, languageCode),

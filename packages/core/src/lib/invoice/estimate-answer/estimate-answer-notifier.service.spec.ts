@@ -176,12 +176,38 @@ describe('EstimateAnswerNotifier', () => {
 			invoiceId: 'estimate-1',
 			invoiceNumber: 12,
 			isAccepted: true,
+			isConverted: false,
 			contactName: 'Acme Corp',
 			contactEmail: 'billing@acme.test',
 			// Bulgarian writes a decimal comma, and groups digits from the fifth one on
 			amount: '1250,00',
 			currency: 'EUR'
 		});
+	});
+
+	it('reads the draft invoice an acceptance turned the estimate into, and tells it as one', async () => {
+		const converted = { ...accepted, isConverted: true };
+		const { notifier, repository, eventBus, emailService } = setup(estimate({ isEstimate: false }), [
+			{ id: 'employee-1', userId: 'user-accountant' }
+		]);
+
+		await notifier.notify(converted);
+
+		expect(repository.findOne).toHaveBeenCalledWith(
+			expect.objectContaining({ where: { id: 'estimate-1', tenantId: TENANT, isEstimate: false } })
+		);
+		expect(published(eventBus)).toEqual([
+			expect.objectContaining({
+				title: 'Acme Corp accepted estimate #12',
+				message:
+					'Total: 1,250.00 EUR. Answered from billing@acme.test. It is now a draft invoice, ready for you to review and send.',
+				entity: BaseEntityEnum.Invoice,
+				entityId: 'estimate-1'
+			})
+		]);
+		expect(emailService.sendEstimateAnswered).toHaveBeenCalledWith(
+			expect.objectContaining({ isAccepted: true, isConverted: true })
+		);
 	});
 
 	it('emails a declined estimate in English to a creator who chose no language', async () => {

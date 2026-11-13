@@ -73,6 +73,7 @@ describe('PublicInvoiceUpdateHandler', () => {
 				invoiceId: 'estimate-1',
 				tenantId: TENANT,
 				isAccepted: true,
+				isConverted: false,
 				answeredFrom: 'billing@acme.test'
 			})
 		);
@@ -86,6 +87,63 @@ describe('PublicInvoiceUpdateHandler', () => {
 		expect(eventBus.publish).toHaveBeenCalledWith(
 			expect.objectContaining({ answer: expect.objectContaining({ isAccepted: false }) })
 		);
+	});
+
+	describe('where the organization converts accepted estimates', () => {
+		/** The acceptance the public page sends then: the estimate becomes a draft invoice. */
+		const acceptAndConvert = () =>
+			new PublicInvoiceUpdateCommand(params, { status: EstimateStatusTypesEnum.DRAFT, isEstimate: false });
+
+		it('tells the team of the acceptance, which turned the estimate into a draft invoice', async () => {
+			const { handler, eventBus } = setup(sentEstimate);
+
+			await handler.execute(acceptAndConvert());
+
+			expect(eventBus.publish).toHaveBeenCalledWith(
+				new EstimateAnsweredEvent({
+					invoiceId: 'estimate-1',
+					tenantId: TENANT,
+					isAccepted: true,
+					isConverted: true,
+					answeredFrom: 'billing@acme.test'
+				})
+			);
+		});
+
+		it('tells it of an estimate still in DRAFT, which the acceptance converted', async () => {
+			const { handler, eventBus } = setup({ ...sentEstimate, status: EstimateStatusTypesEnum.DRAFT });
+
+			await handler.execute(acceptAndConvert());
+
+			expect(eventBus.publish).toHaveBeenCalledTimes(1);
+		});
+
+		it('tells nobody of a conversion that changes no row: the document is an invoice already', async () => {
+			const { handler, eventBus } = setup(sentEstimate, { affected: [0] });
+
+			await handler.execute(acceptAndConvert());
+
+			expect(eventBus.publish).not.toHaveBeenCalled();
+		});
+
+		it('decides on the document read before when the database does not report the rows it changed', async () => {
+			const draft = { ...sentEstimate, status: EstimateStatusTypesEnum.DRAFT };
+			const estimate = setup(draft, { affected: [undefined] });
+			await estimate.handler.execute(acceptAndConvert());
+			expect(estimate.eventBus.publish).toHaveBeenCalledTimes(1);
+
+			const invoice = setup({ ...draft, isEstimate: false }, { affected: [undefined] });
+			await invoice.handler.execute(acceptAndConvert());
+			expect(invoice.eventBus.publish).not.toHaveBeenCalled();
+		});
+
+		it('tells nobody of a DRAFT that converts nothing, which is no answer', async () => {
+			const { handler, eventBus } = setup(sentEstimate);
+
+			await handler.execute(answer(EstimateStatusTypesEnum.DRAFT));
+
+			expect(eventBus.publish).not.toHaveBeenCalled();
+		});
 	});
 
 	it('tells nobody of the same answer given again, which changes no row', async () => {
@@ -162,6 +220,7 @@ describe('PublicInvoiceUpdateHandler', () => {
 				invoiceId: 'estimate-1',
 				tenantId: TENANT,
 				isAccepted: true,
+				isConverted: false,
 				answeredFrom: null
 			})
 		);

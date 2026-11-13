@@ -26,6 +26,15 @@ describe('the notice of a client answer to an estimate', () => {
 		});
 	});
 
+	it('says an acceptance that turned the estimate into a draft invoice made it one', () => {
+		const notice = estimateAnswerNotice(estimate(), { isAccepted: true, isConverted: true, answeredFrom: null });
+
+		expect(notice).toEqual({
+			title: 'Acme Corp accepted estimate #12',
+			message: 'Total: 1,250.00 USD. It is now a draft invoice, ready for you to review and send.'
+		});
+	});
+
 	it('says a declined estimate can be followed up, and names no client the estimate has no name for', () => {
 		const notice = estimateAnswerNotice(estimate({ toContact: { name: '  ' } as IOrganizationContact }), {
 			isAccepted: false
