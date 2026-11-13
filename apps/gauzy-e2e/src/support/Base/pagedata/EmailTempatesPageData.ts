@@ -78,7 +78,7 @@ export const EmailTemplatesPageData = {
 	inviteUserSubjectHebrew: 'הוזמנת להצטרף אל Organization',
 	inviteUserSubjectRussian: 'Вас пригласили в Organization',
 	emailInvoiceSubjectEnglish: 'You have received a new invoice',
-	emailEstimateSubjectEnglish: 'New estimate received user@domain.com',
+	emailEstimateSubjectEnglish: 'You have received a new estimate',
 	//Template Names
 	appointmentConfirmationTemplateOption: 'Appointment Confirmation',
 	appointmentCancellationTemplateOption: 'Appointment Cancellation',
