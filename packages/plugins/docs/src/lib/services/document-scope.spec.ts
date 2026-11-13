@@ -123,6 +123,9 @@ const buildService = (rows: any[] = [], access: { canRead?: boolean; canWrite?: 
 	const queryBuilder = recordingQueryBuilder();
 	const repository: any = {
 		findOne,
+		// The content save claims the next revision in one guarded `UPDATE` (`claimNextContentRevision`) before it
+		// saves; it lands here, as it does on a row nobody else moved.
+		update: jest.fn(async () => ({ affected: 1 })),
 		createQueryBuilder: jest.fn(() => queryBuilder)
 	};
 	const accessService: any = {
@@ -601,5 +604,27 @@ describe('DocumentService — the owner keeps visibility, lock and organization'
 			createdByUserId: 'owner-1',
 			visibility: DocumentVisibilityEnum.PRIVATE
 		});
+	});
+});
+
+describe('DocumentService — readable ids, trashed pages on request', () => {
+	it('reaches the trash only when asked, under the same read scope', async () => {
+		const { service, queryBuilder } = buildService();
+		queryBuilder.withDeleted = jest.fn(() => queryBuilder);
+		queryBuilder.getRawMany = jest.fn(async () => [{ id: 'doc-1' }]);
+
+		expect(await service.filterReadableDocumentIds(['doc-1'] as any, 'org-1' as any)).toEqual(['doc-1']);
+		expect(queryBuilder.withDeleted).not.toHaveBeenCalled();
+
+		// The real-time channel asks with `withDeleted`: a `deleted` fact names a page that is now in the trash.
+		queryBuilder.clauses.length = 0;
+		expect(
+			await service.filterReadableDocumentIds(['doc-1'] as any, 'org-1' as any, { withDeleted: true })
+		).toEqual(['doc-1']);
+		expect(queryBuilder.withDeleted).toHaveBeenCalledTimes(1);
+		// Tenant, organization, the ids and the visibility bracket, exactly as without it.
+		expect(queryBuilder.clauses).toHaveLength(4);
+		expect(queryBuilder.clauses[0].params).toEqual({ tenantId: 'tenant-1' });
+		expect(queryBuilder.clauses[1].params).toEqual({ organizationId: 'org-1' });
 	});
 });

@@ -75,7 +75,12 @@ export class AccountingComponent extends TranslationBaseComponent implements Aft
 
 	public sortKey: SortKey = 'expense';
 	public sortDirection: 'asc' | 'desc' = 'desc';
-	public sortedEmployees: IEmployeeStatisticSum[] = [];
+	/** The breakdown table's filter, as typed; matched against each employee's name and email. */
+	public searchTerm = '';
+	/** The breakdown table's rows: the employees matching `searchTerm`, in sort order. */
+	public visibleEmployees: IEmployeeStatisticSum[] = [];
+	/** Totals of `visibleEmployees`, for the table's Total row while a filter is on. */
+	public visibleTotals: Record<StatisticKey, number> = { income: 0, expense: 0, profit: 0, bonus: 0 };
 
 	/**
 	 * Series colours, kept from this page's original cash-flow chart. One source for the
@@ -258,7 +263,7 @@ export class AccountingComponent extends TranslationBaseComponent implements Aft
 				});
 
 			this.generateCharts();
-			this.sortEmployees();
+			this.refreshRows();
 		} catch (error) {
 			// Handle errors
 			console.log('Error while retrieving employee aggregate statistics', error);
@@ -459,7 +464,7 @@ export class AccountingComponent extends TranslationBaseComponent implements Aft
 			// Names read naturally A→Z, amounts are most useful largest-first
 			this.sortDirection = key === 'name' ? 'asc' : 'desc';
 		}
-		this.sortEmployees();
+		this.refreshRows();
 	}
 
 	/** The "sort by" select: picks the column, keeping its natural direction; re-picking it changes nothing. */
@@ -470,7 +475,22 @@ export class AccountingComponent extends TranslationBaseComponent implements Aft
 
 	protected toggleSortDirection(): void {
 		this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
-		this.sortEmployees();
+		this.refreshRows();
+	}
+
+	/** The filter box: narrows the table as the user types. */
+	protected setSearchTerm(value: string): void {
+		this.searchTerm = value ?? '';
+		this.refreshRows();
+	}
+
+	protected clearSearch(): void {
+		this.setSearchTerm('');
+	}
+
+	/** True while the filter box holds anything besides whitespace. */
+	protected get isFiltered(): boolean {
+		return !!this.normalize(this.searchTerm);
 	}
 
 	protected ariaSort(key: SortKey): 'ascending' | 'descending' | 'none' {
@@ -507,8 +527,48 @@ export class AccountingComponent extends TranslationBaseComponent implements Aft
 		return Math.max(0, Math.min(100, share));
 	}
 
-	private sortEmployees(): void {
-		const rows = [...(this.aggregatedEmployeeStatistics?.employees || [])];
+	/** Re-derives the table rows (filter, then sort) and the totals of what is shown. */
+	private refreshRows(): void {
+		const term = this.normalize(this.searchTerm);
+		const employees = this.aggregatedEmployeeStatistics?.employees || [];
+		const rows = term ? employees.filter((row) => this.matches(row, term)) : [...employees];
+		this.sortEmployees(rows);
+		this.visibleEmployees = rows;
+		this.visibleTotals = term ? this.sumRows(rows) : this.totals;
+	}
+
+	/** Whether every word of the filter appears in the employee's name or email, in any order. */
+	private matches(row: IEmployeeStatisticSum, term: string): boolean {
+		const user = row.employee?.user;
+		const haystack = this.normalize(
+			[user?.name, user?.firstName, user?.lastName, user?.email].filter(Boolean).join(' ')
+		);
+		return term.split(/\s+/).every((word) => haystack.includes(word));
+	}
+
+	/** Lower-cased, trimmed, accents removed: "José" matches "jose" and the other way round. */
+	private normalize(value: string): string {
+		return (value || '')
+			.normalize('NFD')
+			.replace(/[̀-ͯ]/g, '')
+			.toLowerCase()
+			.trim();
+	}
+
+	private sumRows(rows: IEmployeeStatisticSum[]): Record<StatisticKey, number> {
+		return rows.reduce(
+			(sum, row) => ({
+				income: sum.income + (Number(row.income) || 0),
+				expense: sum.expense + (Number(row.expense) || 0),
+				profit: sum.profit + (Number(row.profit) || 0),
+				bonus: sum.bonus + (Number(row.bonus) || 0)
+			}),
+			{ income: 0, expense: 0, profit: 0, bonus: 0 }
+		);
+	}
+
+	/** Sorts `rows` in place by the active column and direction. */
+	private sortEmployees(rows: IEmployeeStatisticSum[]): void {
 		const direction = this.sortDirection === 'asc' ? 1 : -1;
 		const key = this.sortKey;
 
@@ -520,7 +580,6 @@ export class AccountingComponent extends TranslationBaseComponent implements Aft
 			}
 			return ((Number(a[key]) || 0) - (Number(b[key]) || 0)) * direction;
 		});
-		this.sortedEmployees = rows;
 	}
 
 	/** Currency plus the organization's symbol position, matching the template's `currency | position`. */

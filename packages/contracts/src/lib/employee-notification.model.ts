@@ -16,6 +16,11 @@ export interface IEmployeeNotification extends IBasePerEntityType {
 	sentByEmployee?: IEmployee;
 	receiverEmployeeId?: ID;
 	receiverEmployee?: IEmployee;
+	/**
+	 * The comment the notification is about, when it is about one (a comment on a record the receiver follows): the
+	 * record itself stays in `entity` / `entityId`, so a client that knows no comments still opens the record.
+	 */
+	commentId?: ID;
 }
 
 /**
@@ -29,7 +34,16 @@ export enum EmployeeNotificationTypeEnum {
 	MENTION = 'Mention', // Stored as 3 in DB
 	COMMENT = 'Comment', // Stored as 4 in DB
 	MESSAGE = 'Message', // Stored as 5 in DB
-	BROADCAST = 'Broadcast' // Stored as 6 in DB
+	BROADCAST = 'Broadcast', // Stored as 6 in DB
+	RATE_CHANGE_REQUEST = 'RateChangeRequest', // Stored as 7 in DB
+	/** A record the employee follows changed (a task's status, for example). Stored as 8 in DB. */
+	TASK_UPDATE = 'TaskUpdate',
+	/**
+	 * The employee's timer has been running past their reminder threshold (`timerReminderHours` of the notification
+	 * preferences), or past twice it. Raised by the platform's timer reminder sweep, once per run and level. Stored as
+	 * 9 in DB.
+	 */
+	TIMER_REMINDER = 'TimerReminder'
 }
 
 /**
@@ -43,7 +57,9 @@ export enum NotificationActionTypeEnum {
 	Mentioned = 'Mentioned',
 	Commented = 'Commented',
 	Messaged = 'Messaged',
-	Broadcasted = 'Broadcasted'
+	Broadcasted = 'Broadcasted',
+	/** A followed record was changed (status, assignment, dates). */
+	Updated = 'Updated'
 }
 
 /**

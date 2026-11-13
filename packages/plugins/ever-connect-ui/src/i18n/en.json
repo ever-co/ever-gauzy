@@ -67,6 +67,44 @@
 		"WAITING_OPERATOR": "Waiting for the instance operator",
 		"OPERATOR_ONLY": "This integration acts for the whole installation: only its operator manages it."
 	},
+	"LOOKUP": {
+		"BUTTON": "Check on Ever Platform",
+		"TITLE": "Check this contact on Ever Platform",
+		"WHAT_IS_SENT": "Only salted hashes of what you enter leave this installation: the values themselves never do, and Ever Platform keeps none of them. Only organizations that chose to be discoverable can be found. Nothing is written back to the contact.",
+		"EMAIL": "E-mail",
+		"VAT": "VAT number",
+		"VAT_SUGGESTED": "Suggested from the contact's fiscal information. Check it before you send it.",
+		"REGISTRATION": "Registration number",
+		"COUNTRY": "Country (two letters)",
+		"CHECK": "Check",
+		"KIND": {
+			"vat": "VAT number",
+			"registration": "Registration number",
+			"email": "E-mail"
+		},
+		"NONE": "No discoverable organization found",
+		"OFFERS": "Offers:",
+		"FEATURE": {
+			"pay": "payments",
+			"invoice_exchange": "invoice exchange",
+			"listings": "listings"
+		},
+		"CANNOT_BE_CHECKED": {
+			"empty": "Cannot be checked: nothing to check.",
+			"no_country": "Cannot be checked: add the country (two letters) or the country prefix of the number.",
+			"no_at_sign": "Cannot be checked: this is not an e-mail address.",
+			"bad_domain": "Cannot be checked: the domain of this e-mail address is not valid."
+		},
+		"ERRORS": {
+			"rate_limited": "Too many checks. Try again in {{ seconds }} seconds.",
+			"integration_disabled": "Checking contacts on Ever Platform is not enabled for this organization.",
+			"entitlement_required": "Checking contacts is not included for this organization on Ever Platform.",
+			"generic": "The check failed. Please try again later."
+		},
+		"AUTO_CHECK": "Check a contact automatically when it is opened",
+		"AUTO_CHECK_HINT": "Off by default. When on, the e-mail of a contact is checked each time the contact is opened (the answer is kept for up to a day). It is part of what was enabled in app.ever.co.",
+		"AUTO_CHECK_FAILED": "The setting could not be saved. Please try again."
+	},
 	"STATE": {
 		"available": "Available",
 		"enabled": "Enabled",
@@ -139,5 +177,48 @@
 		"rate_limited": "Too many requests. Please try again later.",
 		"generic": "The request failed ({{ code }}).",
 		"entitlement_invalid": "The entitlement document was refused: it does not name this installation, it is older than the current one, or it does not verify."
+	},
+	"PROVISION": {
+		"TITLE": "Create your Ever Gauzy workspace",
+		"LOADING": "Loading…",
+		"LEAD": "Create your Ever Gauzy workspace {{ name }}, linked to ever.co/{{ handle }}.",
+		"ALREADY_CREATED": "This workspace was already created. Confirm to open it.",
+		"WILL_CREATE": "This includes:",
+		"ITEMS": {
+			"WORKSPACE": "the workspace {{ name }}",
+			"ORGANIZATION": "the organization {{ name }}",
+			"ADMIN_ACCOUNT": "your administrator account, signed in with your Ever ID",
+			"EMPLOYEE": "your employee record",
+			"TEAM": "a team for Ever Teams"
+		},
+		"EMAIL": "E-mail (from your Ever ID)",
+		"FIRST_NAME": "First name",
+		"LAST_NAME": "Last name",
+		"TERMS": "I accept",
+		"TERMS_LINK": "Terms of Service",
+		"CREATE": "Create",
+		"CANCEL": "Back to Ever",
+		"RETRY": "Try again",
+		"CREATED": "Your workspace {{ name }} was created.",
+		"EXISTS": "Your workspace {{ name }} is ready.",
+		"SIGNING_IN": "Signing you in…",
+		"OPEN": "Open Ever Gauzy",
+		"BACK_TO_EVER": "Back to Ever",
+		"ERRORS": {
+			"identity_mismatch": "Signed in as a different Ever ID than the one that started this. Sign out and try again.",
+			"intent_expired": "This request has expired. Start again from Ever.",
+			"intent_invalid": "This link is not valid. Start again from Ever.",
+			"sign_in_required": "Your sign-in has expired. Start again from Ever.",
+			"intent_replayed": "This request was already used. Start again from Ever.",
+			"organization_already_linked": "Your Ever organization already has an Ever Gauzy workspace.",
+			"validation_failed": "Your Ever plan does not include this yet. Go back to Ever to choose a plan.",
+			"provisioning_in_progress": "Your workspace is being created. Try again in a moment.",
+			"rate_limited": "Too many attempts. Wait a minute, then try again.",
+			"not_found": "Creating a workspace from Ever is not available on this installation.",
+			"provisioning_failed": "The workspace could not be created. Try again.",
+			"generic": "Something went wrong. Try again.",
+			"terms_required": "Accept the documents below to create the workspace."
+		},
+		"SIGN_IN_ELSEWHERE": "Your workspace is ready. Sign in with Ever ID to open it."
 	}
 }

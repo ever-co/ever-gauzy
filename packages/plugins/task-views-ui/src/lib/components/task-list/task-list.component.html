@@ -1,0 +1,177 @@
+<div class="task-list" role="grid" [attr.aria-multiselectable]="selectable()" data-test="task-list">
+	<div class="row head" role="row">
+		@if (selectable()) {
+			<span class="cell check" role="columnheader">
+				<input
+					type="checkbox"
+					data-test="select-page"
+					[checked]="pageState() === 'all'"
+					[indeterminate]="pageState() === 'some'"
+					[attr.aria-label]="'TASK_VIEWS.LIST.SELECT_ALL' | translate"
+					(click)="togglePage($event)"
+				/>
+			</span>
+		}
+		@if (draggable()) {
+			<span class="cell handle" role="columnheader" aria-hidden="true"></span>
+		}
+		@if (show('reference')) {
+			<span class="cell reference" role="columnheader">{{
+				'TASK_VIEWS.LIST.COLUMNS.REFERENCE' | translate
+			}}</span>
+		}
+		<span class="cell title" role="columnheader">{{ 'TASK_VIEWS.LIST.COLUMNS.TITLE' | translate }}</span>
+		@if (show('status')) {
+			<span class="cell status" role="columnheader">{{ 'TASK_VIEWS.LIST.COLUMNS.STATUS' | translate }}</span>
+		}
+		@if (show('priority')) {
+			<span class="cell priority" role="columnheader">{{ 'TASK_VIEWS.LIST.COLUMNS.PRIORITY' | translate }}</span>
+		}
+		@if (show('size')) {
+			<span class="cell size" role="columnheader">{{ 'TASK_VIEWS.LIST.COLUMNS.SIZE' | translate }}</span>
+		}
+		@if (show('assignees')) {
+			<span class="cell assignees" role="columnheader">{{
+				'TASK_VIEWS.LIST.COLUMNS.ASSIGNEES' | translate
+			}}</span>
+		}
+		@if (show('labels')) {
+			<span class="cell labels" role="columnheader">{{ 'TASK_VIEWS.LIST.COLUMNS.LABELS' | translate }}</span>
+		}
+		@if (show('project')) {
+			<span class="cell project" role="columnheader">{{ 'TASK_VIEWS.LIST.COLUMNS.PROJECT' | translate }}</span>
+		}
+		@if (show('dueDate')) {
+			<span class="cell due" role="columnheader">{{ 'TASK_VIEWS.LIST.COLUMNS.DUE_DATE' | translate }}</span>
+		}
+	</div>
+
+	@for (group of groups(); track group.key) {
+		@if (grouped()) {
+			<div class="group-head" role="row" [attr.data-group]="group.key" data-test="group-head">
+				<span class="group-label">{{ group.label || ('TASK_VIEWS.GROUP.NO_VALUE' | translate) }}</span>
+				@if (group.count !== null) {
+					<span
+						class="group-count"
+						[attr.aria-label]="'TASK_VIEWS.GROUP.COUNT' | translate: { count: group.count }"
+						>{{ group.count }}</span
+					>
+				}
+				@if (group.count !== null && group.rows.length < group.count) {
+					<span class="group-more">{{
+						'TASK_VIEWS.GROUP.LOADED' | translate: { shown: group.rows.length, total: group.count }
+					}}</span>
+				}
+			</div>
+		}
+		<div
+			class="rows"
+			cdkDropList
+			[cdkDropListDisabled]="!draggable()"
+			(cdkDropListDropped)="drop($event)"
+			role="rowgroup"
+		>
+			@for (row of group.rows; track trackRow(row)) {
+				<div
+					class="row"
+					role="row"
+					cdkDrag
+					[cdkDragDisabled]="!draggable()"
+					[attr.data-task-id]="row.id"
+					[attr.aria-selected]="selected(row.id)"
+					[class.selected]="selected(row.id)"
+					[class.focused]="focusedId() === row.id"
+					(click)="onRowClick($event, row.id)"
+					(dblclick)="open($event, row.id)"
+				>
+					@if (selectable()) {
+						<span class="cell check" role="gridcell">
+							<input
+								type="checkbox"
+								data-test="select-row"
+								[checked]="selected(row.id)"
+								[attr.aria-label]="'TASK_VIEWS.LIST.SELECT' | translate: { title: row.title }"
+								(click)="onCheck($event, row.id)"
+							/>
+						</span>
+					}
+					@if (draggable()) {
+						<span
+							class="cell handle"
+							role="gridcell"
+							cdkDragHandle
+							[attr.aria-label]="'TASK_VIEWS.ORDER.DRAG' | translate"
+						>
+							<nb-icon icon="menu-outline"></nb-icon>
+						</span>
+					}
+					@if (show('reference')) {
+						<span class="cell reference" role="gridcell" data-test="row-reference">{{
+							reference(row)
+						}}</span>
+					}
+					<span class="cell title" role="gridcell">
+						<a href="" class="title-link" (click)="open($event, row.id)">{{ row.title }}</a>
+					</span>
+					@if (show('status')) {
+						<span class="cell status" role="gridcell">
+							@if (row.taskStatus?.name || row.status) {
+								<span class="chip" [style.--chip-color]="row.taskStatus?.color || null">{{
+									humanize(row.taskStatus?.name || row.status)
+								}}</span>
+							}
+						</span>
+					}
+					@if (show('priority')) {
+						<span class="cell priority" role="gridcell">{{
+							humanize(row.taskPriority?.name || row.priority)
+						}}</span>
+					}
+					@if (show('size')) {
+						<span class="cell size" role="gridcell">{{ humanize(row.taskSize?.name || row.size) }}</span>
+					}
+					@if (show('assignees')) {
+						<span class="cell assignees" role="gridcell">
+							@for (member of row.members ?? []; track member.id; let index = $index) {
+								@if (index < 3) {
+									@if (member.user?.imageUrl) {
+										<img
+											class="avatar"
+											[src]="member.user?.imageUrl"
+											[alt]="personName($any(member))"
+											[title]="personName($any(member))"
+										/>
+									} @else {
+										<span class="avatar initials" [title]="personName($any(member))">{{
+											initialsOf(personName($any(member)) || '?')
+										}}</span>
+									}
+								}
+							}
+							@if ((row.members?.length ?? 0) > 3) {
+								<span class="more">+{{ (row.members?.length ?? 0) - 3 }}</span>
+							}
+						</span>
+					}
+					@if (show('labels')) {
+						<span class="cell labels" role="gridcell">
+							@for (tag of row.tags ?? []; track tag.id) {
+								<span class="label" [style.--chip-color]="tag.color || null">{{ tag.name }}</span>
+							}
+						</span>
+					}
+					@if (show('project')) {
+						<span class="cell project" role="gridcell">{{ row.project?.name }}</span>
+					}
+					@if (show('dueDate')) {
+						<span class="cell due" role="gridcell" [class.overdue]="isOverdue(row)">
+							@if (row.dueDate) {
+								{{ dueDateShown(row.dueDate) | date: 'mediumDate' }}
+							}
+						</span>
+					}
+				</div>
+			}
+		</div>
+	}
+</div>

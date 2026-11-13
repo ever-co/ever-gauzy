@@ -43,6 +43,7 @@ import {
 	DocumentReviewStatusEnum,
 	DocumentStatusEnum
 } from '@gauzy/contracts';
+import { TenantStorageSettingsError } from '../import/import-tenant-storage';
 import { DocsPermanentError, DocsTransientError } from '../knowledge/errors';
 import {
 	createCorruptPdf,
@@ -88,7 +89,24 @@ const documentRow = (overrides: Record<string, any> = {}): any => ({
  * Builds the service with the real extraction registry and a recording repository.
  * `getFile` returns whichever fixture bytes the test supplies.
  */
+/** The tenant's storage settings: records each run's tenant and whether storage work happens inside one. */
+const tenantStorageStub = () => {
+	const stub = {
+		inside: false,
+		run: jest.fn(async (_tenantId: unknown, work: () => Promise<unknown>) => {
+			stub.inside = true;
+			try {
+				return await work();
+			} finally {
+				stub.inside = false;
+			}
+		})
+	};
+	return stub;
+};
+
 const buildService = (fileBytes: unknown, ocrService?: any) => {
+	const tenantStorage = tenantStorageStub();
 	const updates: any[] = [];
 	const repository: any = {
 		update: jest.fn(async (_criteria: any, patch: any) => {
@@ -110,14 +128,21 @@ const buildService = (fileBytes: unknown, ocrService?: any) => {
 		{} as any,
 		{ enqueue: jest.fn(async () => true) } as any,
 		registry,
-		{ publish: jest.fn() } as any
+		{ publish: jest.fn() } as any,
+		tenantStorage as any
 	);
 
-	// The storage seam: the pipeline reads the blob through the recorded provider.
+	// The storage seam: the pipeline reads the blob through the recorded provider, inside the tenant's settings.
+	const readsInside: boolean[] = [];
 	const { FileStorage } = jest.requireMock('@gauzy/core') as any;
-	FileStorage.prototype.getProvider = () => ({ getFile: async () => fileBytes });
+	FileStorage.prototype.getProvider = () => ({
+		getFile: async () => {
+			readsInside.push(tenantStorage.inside);
+			return fileBytes;
+		}
+	});
 
-	return { service, repository, updates };
+	return { service, repository, updates, tenantStorage, readsInside };
 };
 
 describe('DocumentProcessingService — extraction status/review transitions', () => {
@@ -163,6 +188,28 @@ describe('DocumentProcessingService — extraction status/review transitions', (
 			await expect(run).rejects.toBeInstanceOf(DocsTransientError);
 			await expect(run).rejects.toThrow(/stored file 'docs\/org-1\/fixture\.pdf' could not be read/);
 			expect(updates.some((patch) => patch.status === DocumentStatusEnum.READY)).toBe(false);
+		});
+
+		it("reads the blob inside the tenant's own storage settings, the job's tenant", async () => {
+			const { service, tenantStorage, readsInside } = buildService(createTextLayerPdf(TEXT_LAYER_PDF_PAGES));
+
+			await service.runExtraction(documentRow(), { documentId: 'doc-1', tenantId: 'tenant-1' } as any);
+
+			// A queue thread has no request to carry them: a tenant with its own bucket was read from the deployment's.
+			expect(tenantStorage.run).toHaveBeenCalledWith('tenant-1', expect.any(Function));
+			expect(readsInside).toEqual([true]);
+		});
+
+		it('fails as a retryable hiccup, reading nothing, when the tenant storage settings cannot be read', async () => {
+			const { service, tenantStorage, readsInside } = buildService(createTextLayerPdf(TEXT_LAYER_PDF_PAGES));
+			tenantStorage.run.mockRejectedValueOnce(
+				new TenantStorageSettingsError('tenant-1', new Error('database went away'))
+			);
+
+			await expect(service.runExtraction(documentRow(), { documentId: 'doc-1' } as any)).rejects.toBeInstanceOf(
+				DocsTransientError
+			);
+			expect(readsInside).toEqual([]);
 		});
 
 		it('records the extraction metadata under metadata.extraction', async () => {

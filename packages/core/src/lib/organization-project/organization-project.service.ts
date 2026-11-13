@@ -1,6 +1,7 @@
 import { EventBus } from '@nestjs/cqrs';
-import { BadRequestException, HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { Brackets, FindOptionsWhere, ILike, In, IsNull, SelectQueryBuilder } from 'typeorm';
+import { holderOfProjectKey, takenProjectKeys, uniqueProjectKey } from '../tasks/task-reference';
+import { BadRequestException, HttpException, HttpStatus, Injectable, ConflictException } from '@nestjs/common';
+import { Brackets, FindOptionsWhere, ILike, In, IsNull, Not, SelectQueryBuilder } from 'typeorm';
 import { EntityProperty, FilterQuery, raw } from '@mikro-orm/core';
 import {
 	ActionTypeEnum,
@@ -56,6 +57,9 @@ function memberEmployeeId(member: IMembership): ID | undefined {
 	return member?.employeeId ?? (typeof employee === 'string' ? employee : employee?.id);
 }
 
+/** How many times a create chooses its automatic task key again after a concurrent create took it. */
+const AUTOMATIC_KEY_ATTEMPTS = 5;
+
 @FavoriteService(BaseEntityEnum.OrganizationProject)
 @Injectable()
 export class OrganizationProjectService extends TenantAwareCrudService<OrganizationProject> {
@@ -89,7 +93,22 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 		const currentRoleId = RequestContext.currentRoleId();
 
 		// Destructure the input data
-		const { tags = [], memberIds = [], managerIds = [], organizationId, ...entity } = input;
+		// The client rate is written through the project rate route only, which checks who may set it
+		const { tags = [], memberIds = [], managerIds = [], organizationId, billRateValue: _rate, ...entity } = input;
+		// A project created without a key gets the first letters of its name, unique in the organization (editable
+		// later); an explicit `taskKey: null` keeps it without one.
+		let automaticKey = false;
+		if (!('taskKey' in entity) || entity.taskKey === undefined) {
+			const proposed = await this.proposeTaskKey(entity.name, { tenantId, organizationId });
+			if (proposed) {
+				entity.taskKey = proposed;
+				automaticKey = true;
+			}
+		}
+		// The organization the project is created in, in either form the input may state it
+		const keyScope = organizationId ?? (input as { organization?: { id?: ID } }).organization?.id;
+		await this.prepareTaskKey(entity, { tenantId, organizationId: keyScope });
+		void _rate;
 
 		try {
 			// If the employee creates the project, default add as a manager
@@ -147,14 +166,27 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 				});
 			});
 
-			// Create the organization project with the prepared members
-			const project = await super.create({
-				...entity,
-				members,
-				tags,
-				organizationId,
-				tenantId
-			});
+			// Create the organization project with the prepared members. A key this create chose itself that a concurrent
+			// create took first is chosen again (a few times); a key the caller chose is refused as taken.
+			let project!: IOrganizationProject;
+			for (let attempt = 1; ; attempt += 1) {
+				try {
+					project = await super.create({
+						...entity,
+						members,
+						tags,
+						organizationId,
+						tenantId
+					});
+					break;
+				} catch (error) {
+					if (!automaticKey || attempt >= AUTOMATIC_KEY_ATTEMPTS || !isProjectKeyConflict(error)) throw error;
+					const lost = entity.taskKey;
+					const next = await this.proposeTaskKey(entity.name, { tenantId, organizationId }, [lost]);
+					entity.taskKey = next ?? null;
+					if (!next) automaticKey = false;
+				}
+			}
 
 			// Subscribe creator and assignees to the project
 			try {
@@ -195,6 +227,12 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 			return project;
 		} catch (error) {
 			// Handle errors and return an appropriate error response
+			if (error instanceof ConflictException) {
+				throw error;
+			}
+			if (isProjectKeyConflict(error)) {
+				throw new ConflictException('PROJECT_KEY_TAKEN: another project of the organization holds that key.');
+			}
 			throw new HttpException(`Failed to create organization project: ${error.message}`, HttpStatus.BAD_REQUEST);
 		}
 	}
@@ -215,13 +253,18 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 		// `members` is never saved from the input: the relation cascades, so a membership row stated in the body
 		// (`{ id, isManager: true }`) was written as given and raised the flag `updateOrganizationProjectMembers`
 		// gates. The members change through `memberIds` / `managerIds` alone.
-		const { memberIds, managerIds, organizationId, members: _members, ...entity } = input;
+		const { memberIds, managerIds, organizationId, members: _members, billRateValue: _rate, ...entity } = input;
 		void _members;
+		void _rate;
+		// A rate in the body is never saved here, so the activity log does not record it as changed either
+		const { billRateValue: _discardedRate, ...loggedInput } = input;
+		void _discardedRate;
 
 		const organizationProject = await super.findOneByIdString(id, {
 			where: { organizationId, tenantId },
 			relations: { image: true, members: true, organizationContact: true, tags: true, teams: true }
 		});
+		await this.prepareTaskKey(entity, { tenantId, organizationId, existing: organizationProject });
 
 		try {
 			// Retrieve members and managers IDs
@@ -274,12 +317,18 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 				organizationId,
 				tenantId,
 				organizationProject,
-				input
+				loggedInput
 			);
 
 			return updatedProject;
 		} catch (error) {
 			// Handle errors and return an appropriate error response
+			if (error instanceof ConflictException) {
+				throw error;
+			}
+			if (isProjectKeyConflict(error)) {
+				throw new ConflictException('PROJECT_KEY_TAKEN: another project of the organization holds that key.');
+			}
 			throw new HttpException(`Failed to update organization project: ${error.message}`, HttpStatus.BAD_REQUEST);
 		}
 	}
@@ -1038,4 +1087,120 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 			}
 		}
 	}
+
+	/** The key a new project of the organization is given: its name's first letters, unique among every key held there. */
+	private async proposeTaskKey(
+		name: string | null | undefined,
+		scope: { tenantId?: ID | null; organizationId?: ID | null },
+		alsoTaken: ReadonlyArray<string | null | undefined> = []
+	): Promise<string | null> {
+		if (!scope.tenantId || !scope.organizationId) return null;
+		try {
+			const projects = await this.typeOrmRepository.find({
+				where: { tenantId: scope.tenantId, organizationId: scope.organizationId },
+				select: { id: true, name: true, taskKey: true, taskKeyHistory: true },
+				withDeleted: true
+			});
+			// Nothing will key a project left without one here, so its alias is reserved too (it still answers to it).
+			const taken = takenProjectKeys(projects, { reserveKeylessAliases: true });
+			for (const key of alsoTaken) if (key) taken.add(String(key).toUpperCase());
+			return uniqueProjectKey(name, taken);
+		} catch {
+			// A key is optional: the project is created without one (a manager can set it) rather than not at all.
+			return null;
+		}
+	}
+
+	/**
+	 * Normalizes a task key on its way in and keeps the organization's keys unique: the key is upper-cased and
+	 * trimmed (`null` clears it), refused with 409 (`PROJECT_KEY_TAKEN`) when another project of the organization
+	 * answers to it (see {@link assertTaskKeyFree}), and a replaced key is kept in `taskKeyHistory` so old references
+	 * keep resolving. A body without a `taskKey` leaves both untouched; the history is never written from a body.
+	 */
+	private async prepareTaskKey(
+		entity: { taskKey?: string | null; taskKeyHistory?: string[] | null },
+		scope: {
+			tenantId: ID;
+			organizationId: ID;
+			existing?: { id?: ID; organizationId?: ID; taskKey?: string | null; taskKeyHistory?: string[] | null } | null;
+		}
+	): Promise<void> {
+		delete entity.taskKeyHistory;
+		if (!('taskKey' in entity)) {
+			return;
+		}
+		const key = entity.taskKey === null || entity.taskKey === undefined ? null : String(entity.taskKey).trim().toUpperCase();
+		entity.taskKey = key || null;
+		const previous = scope.existing?.taskKey ? String(scope.existing.taskKey).toUpperCase() : null;
+		// A body that sends the project's own key back (a client saving the whole project) changes nothing to check: the
+		// unique index keeps current keys apart, and a key the project held before this rule stays its own.
+		if (entity.taskKey && entity.taskKey !== previous) {
+			await this.assertTaskKeyFree(entity.taskKey, scope);
+		}
+		if (previous && previous !== entity.taskKey) {
+			const history = Array.isArray(scope.existing?.taskKeyHistory) ? scope.existing.taskKeyHistory : [];
+			entity.taskKeyHistory = [...new Set([...history.map((item) => String(item).toUpperCase()), previous])].filter(
+				(item) => item !== entity.taskKey
+			);
+		}
+	}
+
+	/**
+	 * Refuses with 409 (`PROJECT_KEY_TAKEN`) a key another project of the organization answers to: its key, a key it
+	 * held before (old references such as `API-42` keep resolving to it), or the key derived from its name (its tasks
+	 * keep answering to it). Giving such a key to a second project would make those references name two projects, and
+	 * `resolveReferences` would open whichever of them holds the number. Deleted projects count too: their keys stay
+	 * in the unique index, and a restored project answers to them again. The project being saved is left out, so it
+	 * may take back a key it held before.
+	 */
+	private async assertTaskKeyFree(
+		key: string,
+		scope: { tenantId: ID; organizationId: ID; existing?: { id?: ID; organizationId?: ID } | null }
+	): Promise<void> {
+		// The project's own organization (a stored project's, else the one the create names): a read without one would
+		// span every organization of the tenant and name another organization's project in the refusal.
+		const organizationId = scope.existing?.organizationId ?? scope.organizationId;
+		if (!scope.tenantId || !organizationId) {
+			throw new BadRequestException('PROJECT_KEY_SCOPE_REQUIRED: a project key is checked within the organization of the project; state it.');
+		}
+		const others = await this.typeOrmRepository.find({
+			where: {
+				tenantId: scope.tenantId,
+				organizationId,
+				...(scope.existing?.id ? { id: Not(scope.existing.id) } : {})
+			},
+			select: { id: true, name: true, taskKey: true, taskKeyHistory: true },
+			withDeleted: true
+		});
+		const holder = holderOfProjectKey(others, key);
+		if (!holder) {
+			return;
+		}
+		const name = holder.project.name;
+		switch (holder.hold) {
+			case 'current':
+				throw new ConflictException(`PROJECT_KEY_TAKEN: the key ${key} belongs to the project "${name}".`);
+			case 'former':
+				throw new ConflictException(
+					`PROJECT_KEY_TAKEN: the key ${key} was a key of the project "${name}", and its old references still resolve to it.`
+				);
+			default:
+				throw new ConflictException(
+					`PROJECT_KEY_TAKEN: the tasks of the project "${name}" answer to ${key}, the key derived from its name.`
+				);
+		}
+	}
+}
+
+/**
+ * Whether a save was refused by the unique index on the project key (two concurrent saves that both found the key
+ * free): Postgres `23505`, MySQL `ER_DUP_ENTRY`, SQLite's constraint error, each naming the index or the column.
+ */
+export function isProjectKeyConflict(error: unknown): boolean {
+	const candidate = error as { code?: string | number; message?: string; driverError?: { code?: string | number; message?: string } } | null;
+	const codes = [candidate?.code, candidate?.driverError?.code].map((code) => String(code ?? ''));
+	const message = `${candidate?.message ?? ''} ${candidate?.driverError?.message ?? ''}`;
+	const isUniqueViolation =
+		codes.includes('23505') || codes.includes('ER_DUP_ENTRY') || codes.includes('1062') || codes.some((code) => code.startsWith('SQLITE_CONSTRAINT'));
+	return isUniqueViolation && /UQ_organization_project_organization_task_key|taskKey/i.test(message);
 }

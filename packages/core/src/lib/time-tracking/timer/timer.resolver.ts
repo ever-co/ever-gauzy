@@ -191,6 +191,10 @@ export class TimerResolver {
 	 * drifts. The answer is the service's own, unprojected: the route answers the log the write touched,
 	 * and so does this field.
 	 *
+	 * **A toggle that names a time log only ever stops that log.** With `timeLogId` in the input, the
+	 * service takes the toggle as a stop of that log: while nothing runs it is refused with 406 and starts
+	 * nothing, and while another log runs it is refused with 409 and that log goes on.
+	 *
 	 * **The answer is nullable, and the evidence for that is the stop side's own last statement.** A
 	 * toggle that stops the timer ends where the stop write ends — a `findOneBy` re-read of the row it
 	 * just wrote, which answers nothing at all when it cannot find it — and the route states the same

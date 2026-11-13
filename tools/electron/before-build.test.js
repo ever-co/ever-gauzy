@@ -103,3 +103,59 @@ test('an app directory that already has its node_modules installs nothing', asyn
 
 	assert.equal(calls.length, 0);
 });
+
+/** A CPU this machine is not: a build for it is a cross build wherever the test runs. */
+const OTHER = process.arch === 'arm64' ? 'x64' : 'arm64';
+/** What electron-builder hands the hook for this OS: a Platform object, whose `nodeName` is Node's name (`toString()` is its own). */
+const PLATFORM = { name: 'this-os', nodeName: process.platform, toString: () => 'this-os' };
+
+/** Writes one package into the app's node_modules (`dir` may be nested), as an install would. */
+function writePackage(dir, fields = {}) {
+	const full = path.join(appDir, 'node_modules', dir);
+	fs.mkdirSync(full, { recursive: true });
+	const name = dir.split('node_modules/').pop();
+	fs.writeFileSync(path.join(full, 'package.json'), JSON.stringify({ name, version: '1.0.0', ...fields }));
+}
+const installed = (dir) => fs.existsSync(path.join(appDir, 'node_modules', dir, 'package.json'));
+
+test('a build for another CPU installs every platform variant, then keeps only the target ones', async () => {
+	const platform = process.platform;
+	answer = () => {
+		writePackage('sharp');
+		writePackage(`@img/sharp-${platform}-${OTHER}`, { os: [platform], cpu: [OTHER] });
+		writePackage(`@img/sharp-${platform}-${process.arch}`, { os: [platform], cpu: [process.arch] });
+		writePackage('fsevents', { os: ['aix'] });
+		writePackage('not-on-aix', { os: ['!aix'] });
+		writePackage(`libsql/node_modules/@libsql/${platform}-${OTHER}`, { os: [platform], cpu: [OTHER] });
+		writePackage(`libsql/node_modules/@libsql/${platform}-${process.arch}`, { os: [platform], cpu: [process.arch] });
+		writePackage(`@img/sharp-musl-${OTHER}`, { os: [platform], cpu: [OTHER], libc: ['musl'] });
+		return { status: 0 };
+	};
+
+	assert.equal(await beforeBuild({ appDir, ...BUILD, platform: PLATFORM, arch: OTHER }), true);
+
+	assert.equal(calls.length, 1);
+	assert.ok(calls[0].args.includes('--ignore-platform'));
+	assert.equal(calls[0].options.env.npm_config_arch, OTHER);
+	for (const kept of ['sharp', `@img/sharp-${platform}-${OTHER}`, 'not-on-aix', `libsql/node_modules/@libsql/${platform}-${OTHER}`]) {
+		assert.ok(installed(kept), `${kept} is kept`);
+	}
+	for (const gone of [`@img/sharp-${platform}-${process.arch}`, 'fsevents', `libsql/node_modules/@libsql/${platform}-${process.arch}`]) {
+		assert.equal(installed(gone), false, `${gone} is removed`);
+	}
+	// Electron on Linux runs on glibc: a musl variant goes there, and stays elsewhere (no libc to match)
+	assert.equal(installed(`@img/sharp-musl-${OTHER}`), platform !== 'linux');
+	assert.ok(logged.some((line) => line.includes('removed')));
+});
+
+test('a build for this machine CPU installs as before and removes nothing', async () => {
+	answer = () => {
+		writePackage(`@img/sharp-${process.platform}-${OTHER}`, { os: [process.platform], cpu: [OTHER] });
+		return { status: 0 };
+	};
+
+	assert.equal(await beforeBuild({ appDir, ...BUILD, platform: PLATFORM, arch: process.arch }), true);
+
+	assert.equal(calls[0].args.includes('--ignore-platform'), false);
+	assert.ok(installed(`@img/sharp-${process.platform}-${OTHER}`));
+});

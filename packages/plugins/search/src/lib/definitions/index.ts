@@ -10,6 +10,7 @@ import { TASK_INDEX } from './task.definition';
 import { EMPLOYEE_INDEX } from './employee.definition';
 import { DOCUMENT_INDEX } from './document.definition';
 import { ORDER_INDEX } from './order.definition';
+import { CHAT_MESSAGE_INDEX } from './chat-message.definition';
 
 export { PRODUCT_INDEX } from './product.definition';
 export { PRODUCT_VARIANT_INDEX } from './product-variant.definition';
@@ -22,6 +23,7 @@ export { TASK_INDEX } from './task.definition';
 export { EMPLOYEE_INDEX } from './employee.definition';
 export { DOCUMENT_INDEX } from './document.definition';
 export { ORDER_INDEX } from './order.definition';
+export { CHAT_MESSAGE_INDEX } from './chat-message.definition';
 
 /**
  * Every entity this package makes searchable.
@@ -46,5 +48,7 @@ export const SEARCH_INDEX_DEFINITIONS: ISearchIndexRegistration[] = [
 	TASK_INDEX,
 	EMPLOYEE_INDEX,
 	DOCUMENT_INDEX,
-	ORDER_INDEX
+	ORDER_INDEX,
+	// Registered only where the chat plugin is loaded (the registry skips a table nothing maps).
+	CHAT_MESSAGE_INDEX
 ];

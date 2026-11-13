@@ -46,11 +46,18 @@ const SKIP_PACKAGES = new Set([
 	'integration-activepieces-ui',
 	'plugin-integration-ever-async-ui',
 	'plugin-integration-ever-works-ui',
+	'plugin-integration-linear-ui',
+	'plugin-integration-asana-ui',
+	'plugin-integration-trello-ui',
+	'plugin-integration-jira-ui',
 	'plugin-auth-zitadel-ui',
 	'plugin-ever-stats-ui',
 	'plugin-ever-connect-ui',
 	'docs-ui',
 	'plugin-inbox-ui',
+	'plugin-chat-ui',
+	'plugin-task-automations-ui',
+	'plugin-task-views-ui',
 	'dashboard-time-track-angular-ui',
 	'dashboard-time-track-react-ui'
 ]);

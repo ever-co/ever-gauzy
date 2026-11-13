@@ -8,7 +8,7 @@ import {
 import { prepareSQLQuery as p } from '@gauzy/core';
 import { DocumentChunk } from '../../entities/document-chunk.entity';
 import { Document } from '../../entities/document.entity';
-import { buildShareGrantExistsSql } from '../../services/document-access.sql';
+import { buildShareGrantExistsSql, buildTeamSpaceSql } from '../../services/document-access.sql';
 import { IVectorStoreQuery } from '../vector-store/vector-store.interface';
 
 /**
@@ -71,9 +71,9 @@ export function applyRetrievalFilters(
 	// Content searchable.
 	qb.andWhere(p(`"doc"."searchable" = :searchableFlag`), { searchableFlag: true });
 
-	// Visibility + share composition (08 §3.4): ORGANIZATION docs, own docs, share grantees,
-	// or DOCS_MANAGE sees all. The share leg is evaluated in the SAME SQL predicate as
-	// visibility so retrieval can never diverge from the list/tree paths.
+	// Visibility + share composition (08 §3.4): ORGANIZATION docs, own docs, the pages of the teams the
+	// employee belongs to, share grantees, or DOCS_MANAGE sees all. The team and share legs are evaluated in
+	// the SAME SQL predicate as visibility so retrieval can never diverge from the list/tree paths.
 	if (!filters.hasManagePermission) {
 		const legs: string[] = [p(`"doc"."visibility" = :orgVisibility`)];
 		const parameters: Record<string, any> = { orgVisibility: DocumentVisibilityEnum.ORGANIZATION };
@@ -82,6 +82,9 @@ export function applyRetrievalFilters(
 			parameters['visibilityUserId'] = filters.userId;
 		}
 		if (filters.employeeId) {
+			legs.push(buildTeamSpaceSql('doc'));
+			parameters['teamEmployeeId'] = filters.employeeId;
+			parameters['teamVisibility'] = DocumentVisibilityEnum.TEAM;
 			legs.push(buildShareGrantExistsSql('doc'));
 			parameters['shareEmployeeId'] = filters.employeeId;
 			parameters['shareTenantId'] = query.tenantId;

@@ -10,6 +10,6 @@ export class InvoiceCreateHandler
 
 	public async execute(command: InvoiceCreateCommand): Promise<IInvoice> {
 		const { input } = command;
-		return await this.invoiceService.create(input);
+		return await this.invoiceService.createWithBilledTime(input);
 	}
 }

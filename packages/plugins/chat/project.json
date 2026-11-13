@@ -1,0 +1,44 @@
+{
+	"name": "plugin-chat",
+	"$schema": "../../../node_modules/nx/schemas/project-schema.json",
+	"sourceRoot": "packages/plugins/chat/src",
+	"projectType": "library",
+	"release": {
+		"version": {
+			"manifestRootsToUpdate": ["dist/{projectRoot}"],
+			"currentVersionResolver": "git-tag",
+			"fallbackCurrentVersionResolver": "disk"
+		}
+	},
+	"tags": ["type:plugin"],
+	"implicitDependencies": ["common", "config", "contracts", "core", "plugin", "scheduler", "utils"],
+	"targets": {
+		"build": {
+			"executor": "@nx/js:tsc",
+			"outputs": ["{options.outputPath}"],
+			"options": {
+				"outputPath": "dist/packages/plugins/chat",
+				"tsConfig": "packages/plugins/chat/tsconfig.lib.json",
+				"packageJson": "packages/plugins/chat/package.json",
+				"main": "packages/plugins/chat/src/index.ts",
+				"assets": ["packages/plugins/chat/*.md"]
+			},
+			"dependsOn": ["^build"]
+		},
+		"nx-release-publish": {
+			"options": {
+				"packageRoot": "dist/{projectRoot}"
+			}
+		},
+		"lint": {
+			"executor": "@nx/eslint:lint"
+		},
+		"test": {
+			"executor": "@nx/jest:jest",
+			"outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+			"options": {
+				"jestConfig": "packages/plugins/chat/jest.config.ts"
+			}
+		}
+	}
+}

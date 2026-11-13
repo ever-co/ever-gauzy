@@ -27,6 +27,7 @@ export const ENTITY_ICONS: Record<BaseEntityEnum, string> = {
 	[BaseEntityEnum.ResourceLink]: 'fas fa-link',
 	[BaseEntityEnum.ScreeningTask]: 'fas fa-clipboard-check',
 	[BaseEntityEnum.TaskLinkedIssue]: 'fas fa-link',
+	[BaseEntityEnum.TimeLog]: 'fas fa-stopwatch',
 	[BaseEntityEnum.User]: 'fas fa-user',
 	[BaseEntityEnum.Tenant]: 'fas fa-building',
 	[BaseEntityEnum.OrganizationContact]: 'fas fa-address-card',
@@ -43,7 +44,10 @@ export const ENTITY_ICONS: Record<BaseEntityEnum, string> = {
 	[BaseEntityEnum.Goal]: 'fas fa-flag-checkered',
 	[BaseEntityEnum.KeyResult]: 'fas fa-chart-line',
 	[BaseEntityEnum.InboxItem]: 'fas fa-inbox',
-	[BaseEntityEnum.InboxEmail]: 'fas fa-envelope'
+	[BaseEntityEnum.InboxEmail]: 'fas fa-envelope',
+	[BaseEntityEnum.ChatConversation]: 'fas fa-comments',
+	[BaseEntityEnum.ChatMessage]: 'fas fa-comment',
+	[BaseEntityEnum.ChatWebhook]: 'fas fa-plug'
 };
 
 /** Record-specific icons, where one type holds two kinds of record (an estimate is an invoice row). */
@@ -131,6 +135,8 @@ export const ENTITY_LINKS: Record<BaseEntityEnum, FavoriteLinkBuilder> = {
 	[BaseEntityEnum.ResourceLink]: () => `/pages/dashboard`,
 	[BaseEntityEnum.ScreeningTask]: () => `/pages/tasks/dashboard`,
 	[BaseEntityEnum.TaskLinkedIssue]: () => `/pages/tasks/dashboard`,
+	// A time log is read in the timesheets.
+	[BaseEntityEnum.TimeLog]: () => `/pages/employees/timesheets/daily`,
 	[BaseEntityEnum.User]: (id) => `/pages/users/edit/${id}`,
 	[BaseEntityEnum.Tenant]: () => `/pages/settings/general`,
 	[BaseEntityEnum.OrganizationContact]: (id) => `/pages/contacts/view/${id}`,
@@ -148,7 +154,11 @@ export const ENTITY_LINKS: Record<BaseEntityEnum, FavoriteLinkBuilder> = {
 	[BaseEntityEnum.Goal]: () => `/pages/goals`,
 	[BaseEntityEnum.KeyResult]: () => `/pages/goals`,
 	[BaseEntityEnum.InboxItem]: () => `/pages/dashboard`,
-	[BaseEntityEnum.InboxEmail]: () => `/pages/dashboard`
+	[BaseEntityEnum.InboxEmail]: () => `/pages/dashboard`,
+	// The chat pages arrive with the chat UI; until then a favourite leads home.
+	[BaseEntityEnum.ChatConversation]: () => `/pages/dashboard`,
+	[BaseEntityEnum.ChatMessage]: () => `/pages/dashboard`,
+	[BaseEntityEnum.ChatWebhook]: () => `/pages/dashboard`
 };
 
 /** `120 USD` — an amount with its currency, as a record's name when it has no other. */

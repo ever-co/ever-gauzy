@@ -14,6 +14,8 @@ import { ApproveReviewDTO, RejectReviewDTO, RequestReviewDTO } from '../dto';
 import { Document } from '../entities/document.entity';
 import { DocumentIndexService } from '../knowledge/indexing/document-index.service';
 import { TypeOrmDocumentRepository } from '../repositories/type-orm-document.repository';
+import { DocumentAccessService } from './document-access.service';
+import { DocumentNotifierService } from './document-notifier.service';
 import { DocumentService } from './document.service';
 
 /**
@@ -31,7 +33,9 @@ export class DocumentReviewService {
 	constructor(
 		private readonly documentService: DocumentService,
 		private readonly documentIndexService: DocumentIndexService,
-		private readonly typeOrmDocumentRepository: TypeOrmDocumentRepository
+		private readonly typeOrmDocumentRepository: TypeOrmDocumentRepository,
+		private readonly documentNotifier: DocumentNotifierService,
+		private readonly documentAccessService: DocumentAccessService
 	) {}
 
 	/**
@@ -46,6 +50,26 @@ export class DocumentReviewService {
 			return document;
 		}
 
+		// The reviewers named: active employees of the organization whose role may read documents and who may read
+		// the page (a PRIVATE or TEAM page names only its creator, its team's members and its share grantees); the
+		// others are left out of the metadata and of the Inbox alike, so a request never tells someone of a page they
+		// cannot open. Resolved before the state changes: a lookup failure leaves the document as it was, so the
+		// requester can ask again. The list is stored even when empty: the previous request's reviewers are not this
+		// one's.
+		const reviewerEmployeeIds = input.reviewerEmployeeIds?.length
+			? await this.documentAccessService.readersAmong(
+					{
+						id: document.id as ID,
+						tenantId: document.tenantId,
+						organizationId: document.organizationId,
+						createdByUserId: document.createdByUserId,
+						visibility: document.visibility,
+						organizationTeamId: document.organizationTeamId
+					},
+					input.reviewerEmployeeIds
+				)
+			: [];
+
 		const previous = document.reviewStatus;
 		await this.updateReview(document, {
 			reviewStatus: DocumentReviewStatusEnum.PENDING,
@@ -53,13 +77,16 @@ export class DocumentReviewService {
 			reviewedById: null,
 			reviewedAt: null
 		});
-		if (input.reason) {
-			await this.mergeReviewMetadata(document, { requestReason: input.reason.slice(0, 1000) });
-		}
+		await this.mergeReviewMetadata(document, {
+			...(input.reason ? { requestReason: input.reason.slice(0, 1000) } : {}),
+			requestedReviewerIds: reviewerEmployeeIds
+		});
 		// §8/§9.4 — whoever asked for the review is the person who needs to hear about its
 		// outcome, so the request itself subscribes them to the document.
-		this.documentService.subscribeRequesterToDocument(document, EntitySubscriptionTypeEnum.MANUAL);
+		void this.documentService.subscribeRequesterToDocument(document, EntitySubscriptionTypeEnum.MANUAL);
 		this.emit(document, previous, DocumentReviewStatusEnum.PENDING);
+		// The reviewers named hear of the request in their Inbox (best effort).
+		void this.documentNotifier.notifyReviewRequested(document, reviewerEmployeeIds, input.reason ?? null);
 		return document;
 	}
 
@@ -80,6 +107,7 @@ export class DocumentReviewService {
 			await this.mergeReviewMetadata(document, { approveNote: input.note.slice(0, 1000) });
 		}
 		this.emit(document, DocumentReviewStatusEnum.PENDING, DocumentReviewStatusEnum.APPROVED);
+		void this.documentNotifier.notifyReviewDecided(document, DocumentReviewStatusEnum.APPROVED, input.note ?? null);
 		return document;
 	}
 
@@ -120,6 +148,7 @@ export class DocumentReviewService {
 		}
 
 		this.emit(document, DocumentReviewStatusEnum.PENDING, DocumentReviewStatusEnum.REJECTED);
+		void this.documentNotifier.notifyReviewDecided(document, DocumentReviewStatusEnum.REJECTED, input.reason ?? null);
 		return document;
 	}
 

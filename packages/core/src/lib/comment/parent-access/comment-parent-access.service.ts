@@ -1,3 +1,4 @@
+// cspell:ignore organizationcontact
 import {
 	BadRequestException,
 	ForbiddenException,
@@ -13,6 +14,11 @@ import { RequestContext } from '../../core/context';
 import { COMMENT_PARENT_ACCESS_POLICY } from './comment-parent-access-policy.decorator';
 import { CommentParentAccess, ICommentParent, ICommentParentAccessPolicy } from './comment-parent-access.types';
 import { isSpellingOfRecordType } from './record-type-spelling';
+
+/** The most records one batch read of a policy names (`readableParentIds`), far from any bound-parameter limit. */
+export const COMMENT_PARENT_BATCH = 500;
+/** The records read at a time when a policy has no batch read. */
+export const COMMENT_PARENT_READ_CONCURRENCY = 8;
 
 /**
  * The registry of comment-parent policies, and the check every governed comment read or write goes through.
@@ -112,13 +118,74 @@ export class CommentParentAccessService implements OnModuleInit {
 			);
 		}
 
-		const parent =
-			typeof entityId === 'string' && isUUID(entityId) ? await policy.findAccessibleParent(entityId as ID) : null;
+		// A write follows the policy's write rule where it has one (some readers may only read), else its read rule.
+		const find =
+			access === 'write' && policy.findWritableParent
+				? policy.findWritableParent.bind(policy)
+				: policy.findAccessibleParent.bind(policy);
+		const parent = typeof entityId === 'string' && isUUID(entityId) ? await find(entityId as ID) : null;
 		if (!parent) {
 			throw new NotFoundException(`${policy.entity} not found.`);
 		}
 
 		return parent;
+	}
+
+	/**
+	 * The records among `entityIds`, of one record type, whose comments the caller may read: what
+	 * `assertMay('read', entity, id)` admits, for many records at once — through the policy's batch read when it has
+	 * one (one read per {@link COMMENT_PARENT_BATCH} records), else {@link COMMENT_PARENT_READ_CONCURRENCY} reads at a
+	 * time. A record type without a policy, a caller without its read permissions, or an id that is not a UUID answers
+	 * none. A read that fails throws (the caller refuses rather than guesses).
+	 */
+	async readableParentIds(entity: unknown, entityIds: readonly unknown[]): Promise<Set<string>> {
+		const readable = new Set<string>();
+		const policy = this.policyFor(entity);
+		if (!policy || !this.holdsPermission('read', entity)) {
+			return readable;
+		}
+		const ids = [...new Set(entityIds.filter((id): id is string => typeof id === 'string' && isUUID(id)))];
+		const asked = new Set(ids);
+		const batchRead = policy.findAccessibleParents?.bind(policy);
+		const size = batchRead ? COMMENT_PARENT_BATCH : COMMENT_PARENT_READ_CONCURRENCY;
+		for (let start = 0; start < ids.length; start += size) {
+			const slice = ids.slice(start, start + size) as ID[];
+			const parents = batchRead
+				? await batchRead(slice)
+				: await Promise.all(slice.map((id) => policy.findAccessibleParent(id)));
+			for (const parent of parents) {
+				if (parent && asked.has(String(parent.id))) readable.add(String(parent.id));
+			}
+		}
+		return readable;
+	}
+
+	/**
+	 * Whether the caller may write the comments of one record: the policy's write permission, and its write rule for
+	 * that record where it has one (a reader the record admits only to read is refused). A record type without a
+	 * policy, or a record the caller may not reach, answers `false`; a read that fails throws.
+	 */
+	async mayWrite(entity: unknown, entityId: unknown): Promise<boolean> {
+		const policy = this.policyFor(entity);
+		if (!policy || !this.holdsPermission('write', entity)) {
+			return false;
+		}
+		if (typeof entityId !== 'string' || !isUUID(entityId)) {
+			return false;
+		}
+		// As `assertMay('write', …)` decides it: the write rule where the policy has one, else the read rule.
+		const parent = policy.findWritableParent
+			? await policy.findWritableParent(entityId as ID)
+			: await policy.findAccessibleParent(entityId as ID);
+		return parent !== null;
+	}
+
+	/**
+	 * Whether the policy of `entity` has a write rule of its own for each record (a page shared to view only takes no
+	 * comments), beyond the permission it asks. A record type without a policy answers `false`.
+	 */
+	hasWriteRule(entity: unknown): boolean {
+		return typeof this.policyFor(entity)?.findWritableParent === 'function';
 	}
 
 	/**

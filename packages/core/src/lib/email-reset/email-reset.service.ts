@@ -16,6 +16,7 @@ import { VerifyEmailResetRequestDTO } from './dto/verify-email-reset-request.dto
 import { EmailService } from './../email-send/email.service';
 import { EmployeeService } from './../employee/employee.service';
 import { AuthService } from './../auth/auth.service';
+import { assertFirstPartyRequest } from './../auth/oauth-app-first-party';
 import { prepareSQLQuery as p } from './../database/database.helper';
 import { TypeOrmEmailResetRepository } from './repository/type-orm-email-reset.repository';
 import { MikroOrmEmailResetRepository } from './repository/mikro-orm-email-reset.repository';
@@ -112,6 +113,10 @@ export class EmailResetService extends TenantAwareCrudService<EmailReset> {
 	}
 
 	async requestChangeEmail(request: UserEmailDTO, languageCode: LanguagesEnum) {
+		// Before the `try`, whose `finally` answers "OK" whatever happens: an address is how an account is kept for good,
+		// so a session that came from an API token does not move it (see `user-api-token-session.ts`).
+		assertFirstPartyRequest('Changing the address of an account');
+
 		try {
 			let user = RequestContext.currentUser();
 
@@ -180,6 +185,8 @@ export class EmailResetService extends TenantAwareCrudService<EmailReset> {
 	}
 
 	async verifyCode(request: VerifyEmailResetRequestDTO) {
+		assertFirstPartyRequest('Changing the address of an account');
+
 		try {
 			const { code } = request;
 			const user = RequestContext.currentUser();
@@ -259,6 +266,8 @@ export class EmailResetService extends TenantAwareCrudService<EmailReset> {
 						]);
 					});
 					query.orderBy(p(`"${query.alias}"."createdAt"`), 'DESC');
+					// The newest row only: `getOne` reads every match and keeps the first without a limit.
+					query.limit(1);
 
 					return await query.getOneOrFail();
 				}

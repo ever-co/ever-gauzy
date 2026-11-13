@@ -27,6 +27,7 @@ import { TenantAwareCrudService } from './../core/crud';
 import { IFindOneOptions } from '../core/crud/icrud.service';
 import { LegacyFindManyOptions, LegacyFindOneOptions, normalizeRelationsToPaths } from '../core/utils';
 import { RequestContext } from '../core/context';
+import { CommentEvent, CommentEventType, ICommentEventComment } from './events';
 import { CreateEntitySubscriptionEvent } from '../entity-subscription/events';
 import { EmployeeService } from '../employee/employee.service';
 import { MentionService } from '../mention/mention.service';
@@ -98,12 +99,13 @@ export class CommentService extends TenantAwareCrudService<Comment> {
 			// mention notifications included.
 			const employeeId = this.callerEmployeeId();
 			// Who resolved a comment is not the body's to state either, and a new comment has no resolver. The
-			// comment it replies to is stated by `parentId` alone, the member the thread check reads.
+			// comment it replies to is stated by `parentId` alone, the member the thread check reads. A new comment
+			// was never edited: `editedAt` is the server's (see editStampOf), so a body's is dropped here too.
 			const {
 				mentionEmployeeIds = [],
 				organizationId,
 				...data
-			} = parentStatedById(this.withoutAuthorship(input));
+			} = omit(parentStatedById(this.withoutAuthorship(input)), ['editedAt']);
 
 			// A record governed by a comment-access policy (a contact's notes, for one) is written only by those
 			// its policy allows, under the record type as its policy spells it, and a comment on it is stored in
@@ -159,6 +161,9 @@ export class CommentService extends TenantAwareCrudService<Comment> {
 				})
 			);
 
+			// Tell the in-process listeners (the real-time channel) that the record's comments changed.
+			this.publishCommentEvent('created', comment);
+
 			// Return the newly created comment.
 			return comment;
 		} catch (error) {
@@ -192,7 +197,8 @@ export class CommentService extends TenantAwareCrudService<Comment> {
 			const canChangeSelectedEmployee = RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE);
 			const { mentionEmployeeIds } = input;
 			// The comment an edit makes this one reply to is stated by `parentId` alone, which the thread check reads.
-			const changes = parentStatedById(input);
+			// When it was last edited is the server's to say (see editStampOf), never the body's.
+			const changes = omit(parentStatedById(input), ['editedAt']);
 
 			// Find the comment for the current employee with the given id. Callers holding
 			// CHANGE_SELECTED_EMPLOYEE may edit any comment of the tenant; everyone else must be the
@@ -226,6 +232,7 @@ export class CommentService extends TenantAwareCrudService<Comment> {
 			const updatedComment = await super.create({
 				...this.keptInPlace(withoutAuthorChange(changes, AUTHORSHIP_COLUMNS), comment, !!parent),
 				...this.resolverStatedBy(input),
+				...editStampOf(changes, comment),
 				id
 			});
 
@@ -243,6 +250,15 @@ export class CommentService extends TenantAwareCrudService<Comment> {
 					updatedComment.organizationId ?? comment.organizationId
 				);
 			}
+
+			this.publishCommentEvent('updated', {
+				...(updatedComment as Partial<ICommentEventComment>),
+				id,
+				entity: comment.entity,
+				entityId: comment.entityId,
+				tenantId: comment.tenantId,
+				organizationId: (updatedComment as Partial<ICommentEventComment>)?.organizationId ?? comment.organizationId
+			});
 
 			return updatedComment;
 		} catch (error) {
@@ -312,7 +328,7 @@ export class CommentService extends TenantAwareCrudService<Comment> {
 		}
 
 		await this._parentAccess.assertMay('read', stored.entity, stored.entityId);
-		if (parseToBoolean(options?.withDeleted) && !this.mayReadWithdrawnOf([stored.entity])) {
+		if (parseToBoolean(options?.withDeleted) && !(await this.mayReadWithdrawnOf([{ entity: stored.entity, entityId: stored.entityId }]))) {
 			// A withdrawn note is its author's, as a withdrawn comment is everywhere else (see mayReadWithdrawnOf),
 			// and what the read would join beside it includes other authors' withdrawn comments.
 			assertReadsCommentsOnly(pinned?.where, pinned);
@@ -340,7 +356,10 @@ export class CommentService extends TenantAwareCrudService<Comment> {
 	public async softRemove(id: ID, options?: IFindOneOptions<Comment>, saveOptions?: SaveOptions): Promise<Comment> {
 		await this.assertMayManage(id, false);
 
-		return super.softRemove(id, options, saveOptions);
+		const removed = await super.softRemove(id, options, saveOptions);
+		// A withdrawn comment leaves the list the way a deleted one does.
+		this.publishCommentEvent('deleted', removed);
+		return removed;
 	}
 
 	/**
@@ -354,7 +373,10 @@ export class CommentService extends TenantAwareCrudService<Comment> {
 	public async softRecover(id: ID, options?: IFindOneOptions<Comment>, saveOptions?: SaveOptions): Promise<Comment> {
 		await this.assertMayManage(id, true);
 
-		return super.softRecover(id, options, saveOptions);
+		const recovered = await super.softRecover(id, options, saveOptions);
+		// A restored comment comes back the way an edited one changes.
+		this.publishCommentEvent('updated', recovered);
+		return recovered;
 	}
 
 	/**
@@ -373,7 +395,83 @@ export class CommentService extends TenantAwareCrudService<Comment> {
 			await this.assertMayManage(criteria, true);
 		}
 
-		return super.delete(criteria, options);
+		// Read before the row goes, so the in-process listeners learn which record lost a comment.
+		const deleting = typeof criteria === 'string' ? await this.commentForEvent(criteria) : null;
+		const result = await super.delete(criteria, options);
+		if (deleting) {
+			this.publishCommentEvent('deleted', deleting);
+		}
+
+		return result;
+	}
+
+	/**
+	 * Tells the in-process listeners (the real-time channel) that a comment's reactions changed, as a change of the
+	 * comment: `comment.updated` is the hint its record's readers already refetch on, comments and reactions alike.
+	 *
+	 * The comment is read across authors, as it is for the event of a removal: the reaction route checked the
+	 * caller's read of it before it wrote, and the event carries no content, only which record's comments changed
+	 * (the channel addresses it to that record's readers). Never fails the reaction: a comment that cannot be read
+	 * any more, or a listener that throws, costs an instant update only.
+	 *
+	 * @param commentId - The comment whose reactions changed.
+	 */
+	public async announceReactionChange(commentId: ID): Promise<void> {
+		if (!isUUID(commentId)) {
+			return;
+		}
+		const comment = await this.readAcrossAuthors(() => this.commentForEvent(commentId));
+		this.publishCommentEvent('updated', comment);
+	}
+
+	/**
+	 * Publishes a {@link CommentEvent} on the CQRS bus. Never fails the write: a listener that is absent or
+	 * throws costs an instant update, not the comment.
+	 */
+	private publishCommentEvent(type: CommentEventType, comment: Partial<ICommentEventComment> | null | undefined): void {
+		if (!comment?.id) {
+			return;
+		}
+		try {
+			this._eventBus.publish(
+				new CommentEvent(
+					type,
+					{
+						id: comment.id,
+						entity: comment.entity,
+						entityId: comment.entityId,
+						parentId: comment.parentId ?? null,
+						tenantId: comment.tenantId,
+						organizationId: comment.organizationId ?? null
+					},
+					RequestContext.currentUserId()
+				)
+			);
+		} catch (error) {
+			console.warn(`Comment ${type} event was not published for ${comment.id}: ${(error as Error)?.message}`);
+		}
+	}
+
+	/**
+	 * The members of a comment an event needs, or `null` when the row cannot be read (it is then deleted
+	 * silently, as before).
+	 */
+	private async commentForEvent(id: ID): Promise<ICommentEventComment | null> {
+		try {
+			const comment = await super.findOneByIdString(id);
+			return comment?.id
+				? {
+						id: comment.id as ID,
+						entity: comment.entity,
+						entityId: comment.entityId,
+						parentId: comment.parentId ?? null,
+						tenantId: comment.tenantId,
+						organizationId: comment.organizationId ?? null
+				  }
+				: null;
+		} catch {
+			return null;
+		}
 	}
 
 	/**
@@ -541,7 +639,7 @@ export class CommentService extends TenantAwareCrudService<Comment> {
 		const keptToAuthor =
 			scope.parents.length > 0 &&
 			parseToBoolean(options?.withDeleted) &&
-			!this.mayReadWithdrawnOf(scope.parents.map(({ entity }) => entity));
+			!(await this.mayReadWithdrawnOf(scope.parents));
 		if (keptToAuthor && !scope.onlyGovernedParents) {
 			throw new BadRequestException(
 				'A read that includes withdrawn comments of a governed record reads that record alone, unless you may edit its comments.'
@@ -669,7 +767,11 @@ export class CommentService extends TenantAwareCrudService<Comment> {
 			if (!(await mayReadRecord(type, stored.entityId))) {
 				return false;
 			}
-			return !stored.deletedAt || this.mayReadWithdrawnOf([type]) || this.isCallerAuthorOf(stored);
+			return (
+				!stored.deletedAt ||
+				this.isCallerAuthorOf(stored) ||
+				(await this.mayReadWithdrawnOf([{ entity: type, entityId: stored.entityId }]))
+			);
 		};
 	}
 
@@ -686,16 +788,24 @@ export class CommentService extends TenantAwareCrudService<Comment> {
 	}
 
 	/**
-	 * Whether the caller may read every author's withdrawn comments of these governed record types: a holder of
-	 * CHANGE_SELECTED_EMPLOYEE, who may act on any comment, or of the permission each type's policy asks to write its
-	 * comments, which withdraws and restores them. Anyone else reads only their own withdrawn comments, as they do on
-	 * every other record.
+	 * Whether the caller may read every author's withdrawn comments of these governed records: someone who may write
+	 * each record's comments (the permission its policy asks, and its write rule for that record where it has one: a
+	 * page shared to view only does not count), which withdraws and restores them. A holder of CHANGE_SELECTED_EMPLOYEE,
+	 * who may act on any comment, skips that check only for records whose comments the permission alone governs: a
+	 * record with a write rule of its own is decided by that rule, as the record refuses that holder's comment writes
+	 * too. Anyone else reads only their own withdrawn comments, as they do on every other record.
 	 */
-	private mayReadWithdrawnOf(entities: ReadonlyArray<string>): boolean {
-		return (
-			RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE) ||
-			entities.every((entity) => this._parentAccess.holdsPermission('write', entity))
-		);
+	private async mayReadWithdrawnOf(parents: ReadonlyArray<{ entity: unknown; entityId: unknown }>): Promise<boolean> {
+		const actsOnAnyComment = RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE);
+		for (const { entity, entityId } of parents) {
+			if (actsOnAnyComment && !this._parentAccess.hasWriteRule(entity)) {
+				continue;
+			}
+			if (!(await this._parentAccess.mayWrite(entity, entityId))) {
+				return false;
+			}
+		}
+		return true;
 	}
 
 	/**
@@ -819,6 +929,19 @@ export class CommentService extends TenantAwareCrudService<Comment> {
 /** `filter` with `where` as its criteria, or `filter` itself when the criteria did not change. */
 function withWhere<O extends { where?: unknown }>(filter: O | undefined, where: unknown): O | undefined {
 	return where === filter?.where ? filter : ({ ...(filter ?? {}), where } as O);
+}
+
+/**
+ * The edit stamp an update writes: the current time when it changes the comment's text, nothing otherwise (a
+ * resolve, a reopen or a mention change leaves `editedAt` as stored). A body's `editedAt` never reaches here: the
+ * marker readers see says the text changed, so only the server states it.
+ */
+function editStampOf(changes: { comment?: unknown }, stored: Pick<Comment, 'comment'>): Pick<IComment, 'editedAt'> {
+	const text = changes?.comment;
+	if (typeof text !== 'string' || text === stored?.comment) {
+		return {};
+	}
+	return { editedAt: new Date() };
 }
 
 /**

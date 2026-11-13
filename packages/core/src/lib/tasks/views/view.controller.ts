@@ -15,13 +15,15 @@ import {
 } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { DeleteResult } from 'typeorm';
-import { ID, IPagination, ITaskView, PermissionsEnum } from '@gauzy/contracts';
+import { ID, IPagination, ITaskView, ITaskViewTasksPage, PermissionsEnum } from '@gauzy/contracts';
 import { UUIDValidationPipe, UseValidationPipe, AbstractValidationPipe } from '../../shared/pipes';
 import { PermissionGuard, TenantPermissionGuard } from '../../shared/guards';
 import { CrudController, FindOptionsQueryDTO, BaseQueryDTO } from '../../core/crud';
 import { TaskView } from './view.entity';
 import { TaskViewService } from './view.service';
-import { CreateViewDTO, UpdateViewDTO } from './dto';
+import { CreateViewDTO, TaskViewOrderDTO, TaskViewTasksQueryDTO, UpdateViewDTO } from './dto';
+import { TaskViewTasksService } from './view-tasks.service';
+import { TaskViewsEnabledGuard } from '../task-views-enabled';
 import { TaskViewCreateCommand, TaskViewUpdateCommand } from './commands';
 import { Permissions } from '../../shared/decorators';
 import { TenantOrganizationBaseDTO } from '../../core/dto';
@@ -30,8 +32,30 @@ import { TenantOrganizationBaseDTO } from '../../core/dto';
 @UseGuards(TenantPermissionGuard, PermissionGuard)
 @Controller('/task-views')
 export class TaskViewController extends CrudController<TaskView> {
-	constructor(private readonly taskViewService: TaskViewService, private readonly commandBus: CommandBus) {
+	constructor(
+		private readonly taskViewService: TaskViewService,
+		private readonly commandBus: CommandBus,
+		private readonly viewTasks: TaskViewTasksService
+	) {
 		super(taskViewService);
+	}
+
+	/**
+	 * The tasks of a view (FR-3): the view's filter tree (or the query's, an unsaved edit of it) with cursor pagination,
+	 * the counts per group, relative dates in the caller's time zone, and the conditions that could not be applied
+	 * reported (`invalidFilters`) rather than failing the request. Behind `GAUZY_TASK_VIEWS_ENABLED` (404 otherwise).
+	 * Declared before `GET :id` so the static segment is never swallowed by it.
+	 */
+	@ApiOperation({ summary: 'The tasks of a view: cursor page, group counts, invalid filters.' })
+	@ApiResponse({ status: HttpStatus.OK, description: 'A page of the view\'s tasks.' })
+	@ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'View not found, or the extensions are off.' })
+	@ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'A relation outside the allowlist (RELATION_NOT_ALLOWED).' })
+	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_TASK_VIEW)
+	@UseGuards(TaskViewsEnabledGuard)
+	@Get(':id/tasks')
+	@UseValidationPipe({ transform: true, whitelist: true })
+	async tasksOf(@Param('id', UUIDValidationPipe) id: ID, @Query() query: TaskViewTasksQueryDTO): Promise<ITaskViewTasksPage> {
+		return this.viewTasks.tasksOf(id, query);
 	}
 
 	@ApiOperation({
@@ -105,6 +129,23 @@ export class TaskViewController extends CrudController<TaskView> {
 	@UseValidationPipe()
 	async update(@Param('id', UUIDValidationPipe) id: ID, @Body() entity: UpdateViewDTO): Promise<ITaskView> {
 		return await this.commandBus.execute(new TaskViewUpdateCommand(id, entity));
+	}
+
+	/**
+	 * PUT the manual order of a view: the task ids in the order the view shows them. Behind
+	 * `GAUZY_TASK_VIEWS_ENABLED` (404 otherwise); a stated `expectedVersion` is refused with 409 when stale.
+	 */
+	@ApiOperation({ summary: "Set a view's manual task order." })
+	@ApiResponse({ status: HttpStatus.OK, description: 'The view with its new order and version' })
+	@ApiResponse({ status: HttpStatus.CONFLICT, description: 'TASK_VIEW_VERSION_CONFLICT' })
+	@ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Record not found, or the extensions are off' })
+	@HttpCode(HttpStatus.OK)
+	@Permissions(PermissionsEnum.ORG_TASK_EDIT)
+	@UseGuards(TaskViewsEnabledGuard)
+	@Put('/:id/order')
+	@UseValidationPipe({ whitelist: true })
+	async setOrder(@Param('id', UUIDValidationPipe) id: ID, @Body() input: TaskViewOrderDTO): Promise<ITaskView> {
+		return await this.taskViewService.setOrder(id, input);
 	}
 
 	@ApiOperation({ summary: 'Delete view' })

@@ -1,0 +1,41 @@
+{
+	"description": "The report endpoints behind Ever Teams' Apps & URLs page (dashboard/app-url), Time and Activity report and the Gauzy timesheet reports, with the query the Teams web app sends (activity 0..100, TRACKED logs, grouped by date, the user's time zone). The daily report and the activity report are the two the owner reported slow on the Teams demo site (SQLite).",
+	"endpoints": [
+		{
+			"name": "report-daily-week",
+			"path": "/timesheet/time-log/report/daily?tenantId={tenantId}&organizationId={organizationId}&startDate={weekStart}&endDate={todayEnd}&timeZone={timeZone}&groupBy=date&activityLevel[start]=0&activityLevel[end]=100&logType[0]=TRACKED"
+		},
+		{
+			"name": "report-daily-month",
+			"path": "/timesheet/time-log/report/daily?tenantId={tenantId}&organizationId={organizationId}&startDate={monthStart}&endDate={todayEnd}&timeZone={timeZone}&groupBy=date&activityLevel[start]=0&activityLevel[end]=100&logType[0]=TRACKED"
+		},
+		{
+			"name": "report-daily-month-employee",
+			"path": "/timesheet/time-log/report/daily?tenantId={tenantId}&organizationId={organizationId}&startDate={monthStart}&endDate={todayEnd}&timeZone={timeZone}&groupBy=employee&activityLevel[start]=0&activityLevel[end]=100&logType[0]=TRACKED"
+		},
+		{
+			"name": "report-daily-chart-month",
+			"path": "/timesheet/time-log/report/daily-chart?tenantId={tenantId}&organizationId={organizationId}&startDate={monthStart}&endDate={todayEnd}&timeZone={timeZone}&activityLevel[start]=0&activityLevel[end]=100&logType[0]=TRACKED"
+		},
+		{
+			"name": "report-weekly",
+			"path": "/timesheet/time-log/report/weekly?tenantId={tenantId}&organizationId={organizationId}&startDate={weekStart}&endDate={todayEnd}&timeZone={timeZone}&activityLevel[start]=0&activityLevel[end]=100&logType[0]=TRACKED"
+		},
+		{
+			"name": "report-owed-month",
+			"path": "/timesheet/time-log/report/owed-report?tenantId={tenantId}&organizationId={organizationId}&startDate={monthStart}&endDate={todayEnd}&timeZone={timeZone}&activityLevel[start]=0&activityLevel[end]=100"
+		},
+		{
+			"name": "activity-report-week",
+			"path": "/timesheet/activity/report?tenantId={tenantId}&organizationId={organizationId}&startDate={weekStart}&endDate={todayEnd}&timeZone={timeZone}&groupBy=date&activityLevel[start]=0&activityLevel[end]=100&logType[0]=TRACKED"
+		},
+		{
+			"name": "activity-daily-apps-week",
+			"path": "/timesheet/activity/daily?tenantId={tenantId}&organizationId={organizationId}&startDate={weekStart}&endDate={todayEnd}&timeZone={timeZone}&activityLevel[start]=0&activityLevel[end]=100&types[0]=APP"
+		},
+		{
+			"name": "statistics-counts-week",
+			"path": "/timesheet/statistics/counts?tenantId={tenantId}&organizationId={organizationId}&startDate={weekStart}&endDate={todayEnd}&timeZone={timeZone}&activityLevel[start]=0&activityLevel[end]=100&logType[0]=TRACKED"
+		}
+	]
+}

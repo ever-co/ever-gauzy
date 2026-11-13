@@ -7689,6 +7689,42 @@
 			"reason": "link to the Gauzy website (logo and footer of every page)"
 		},
 		{
+			"route": "/pages/settings/api-tokens",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/ai-agent-chat",
+			"reason": "link to the Gauzy documentation"
+		},
+		{
+			"route": "/pages/settings/api-tokens",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/dashboard-widgets",
+			"reason": "link to the Gauzy documentation"
+		},
+		{
+			"route": "/pages/settings/api-tokens",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/documents/overview",
+			"reason": "link to the Gauzy documentation"
+		},
+		{
+			"route": "/pages/settings/api-tokens",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/reference/faq",
+			"reason": "link to the Gauzy documentation"
+		},
+		{
+			"route": "/pages/settings/api-tokens",
+			"attribute": "href",
+			"url": "https://ever.co/",
+			"reason": "link to the company website (footer of every page)"
+		},
+		{
+			"route": "/pages/settings/api-tokens",
+			"attribute": "href",
+			"url": "https://gauzy.co/",
+			"reason": "link to the Gauzy website (logo and footer of every page)"
+		},
+		{
 			"route": "/pages/settings/billing",
 			"attribute": "href",
 			"url": "https://docs.gauzy.co/features/ai-agent-chat",
@@ -11779,6 +11815,366 @@
 			"attribute": "href",
 			"url": "https://gauzy.co/",
 			"reason": "link to the Gauzy website (logo and footer of every page)"
+		},
+		{
+			"route": "/pages/integrations/asana",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/ai-agent-chat",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the Asana integration (c3187dc24e, Integrations → Asana) added it to the route list"
+		},
+		{
+			"route": "/pages/integrations/asana",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/dashboard-widgets",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the Asana integration (c3187dc24e, Integrations → Asana) added it to the route list"
+		},
+		{
+			"route": "/pages/integrations/asana",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/documents/overview",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the Asana integration (c3187dc24e, Integrations → Asana) added it to the route list"
+		},
+		{
+			"route": "/pages/integrations/asana",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/reference/faq",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the Asana integration (c3187dc24e, Integrations → Asana) added it to the route list"
+		},
+		{
+			"route": "/pages/integrations/asana",
+			"attribute": "href",
+			"url": "https://ever.co/",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the Asana integration (c3187dc24e, Integrations → Asana) added it to the route list"
+		},
+		{
+			"route": "/pages/integrations/asana",
+			"attribute": "href",
+			"url": "https://gauzy.co/",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the Asana integration (c3187dc24e, Integrations → Asana) added it to the route list"
+		},
+		{
+			"route": "/pages/integrations/asana/:integrationId",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/ai-agent-chat",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the Asana integration (c3187dc24e, the page of one connection) added it to the route list"
+		},
+		{
+			"route": "/pages/integrations/asana/:integrationId",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/dashboard-widgets",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the Asana integration (c3187dc24e, the page of one connection) added it to the route list"
+		},
+		{
+			"route": "/pages/integrations/asana/:integrationId",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/documents/overview",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the Asana integration (c3187dc24e, the page of one connection) added it to the route list"
+		},
+		{
+			"route": "/pages/integrations/asana/:integrationId",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/reference/faq",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the Asana integration (c3187dc24e, the page of one connection) added it to the route list"
+		},
+		{
+			"route": "/pages/integrations/asana/:integrationId",
+			"attribute": "href",
+			"url": "https://ever.co/",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the Asana integration (c3187dc24e, the page of one connection) added it to the route list"
+		},
+		{
+			"route": "/pages/integrations/asana/:integrationId",
+			"attribute": "href",
+			"url": "https://gauzy.co/",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the Asana integration (c3187dc24e, the page of one connection) added it to the route list"
+		},
+		{
+			"route": "/pages/integrations/linear",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/ai-agent-chat",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the Linear integration (1ab85d975c, Integrations → Linear) added it to the route list"
+		},
+		{
+			"route": "/pages/integrations/linear",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/dashboard-widgets",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the Linear integration (1ab85d975c, Integrations → Linear) added it to the route list"
+		},
+		{
+			"route": "/pages/integrations/linear",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/documents/overview",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the Linear integration (1ab85d975c, Integrations → Linear) added it to the route list"
+		},
+		{
+			"route": "/pages/integrations/linear",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/reference/faq",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the Linear integration (1ab85d975c, Integrations → Linear) added it to the route list"
+		},
+		{
+			"route": "/pages/integrations/linear",
+			"attribute": "href",
+			"url": "https://ever.co/",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the Linear integration (1ab85d975c, Integrations → Linear) added it to the route list"
+		},
+		{
+			"route": "/pages/integrations/linear",
+			"attribute": "href",
+			"url": "https://gauzy.co/",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the Linear integration (1ab85d975c, Integrations → Linear) added it to the route list"
+		},
+		{
+			"route": "/pages/integrations/linear/:integrationId",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/ai-agent-chat",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the Linear integration (1ab85d975c, the page of one connection) added it to the route list"
+		},
+		{
+			"route": "/pages/integrations/linear/:integrationId",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/dashboard-widgets",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the Linear integration (1ab85d975c, the page of one connection) added it to the route list"
+		},
+		{
+			"route": "/pages/integrations/linear/:integrationId",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/documents/overview",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the Linear integration (1ab85d975c, the page of one connection) added it to the route list"
+		},
+		{
+			"route": "/pages/integrations/linear/:integrationId",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/reference/faq",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the Linear integration (1ab85d975c, the page of one connection) added it to the route list"
+		},
+		{
+			"route": "/pages/integrations/linear/:integrationId",
+			"attribute": "href",
+			"url": "https://ever.co/",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the Linear integration (1ab85d975c, the page of one connection) added it to the route list"
+		},
+		{
+			"route": "/pages/integrations/linear/:integrationId",
+			"attribute": "href",
+			"url": "https://gauzy.co/",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the Linear integration (1ab85d975c, the page of one connection) added it to the route list"
+		},
+		{
+			"route": "/pages/integrations/trello",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/ai-agent-chat",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the Trello integration UI (570f32ffe9, Integrations → Trello) added it to the route list"
+		},
+		{
+			"route": "/pages/integrations/trello",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/dashboard-widgets",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the Trello integration UI (570f32ffe9, Integrations → Trello) added it to the route list"
+		},
+		{
+			"route": "/pages/integrations/trello",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/documents/overview",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the Trello integration UI (570f32ffe9, Integrations → Trello) added it to the route list"
+		},
+		{
+			"route": "/pages/integrations/trello",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/reference/faq",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the Trello integration UI (570f32ffe9, Integrations → Trello) added it to the route list"
+		},
+		{
+			"route": "/pages/integrations/trello",
+			"attribute": "href",
+			"url": "https://ever.co/",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the Trello integration UI (570f32ffe9, Integrations → Trello) added it to the route list"
+		},
+		{
+			"route": "/pages/integrations/trello",
+			"attribute": "href",
+			"url": "https://gauzy.co/",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the Trello integration UI (570f32ffe9, Integrations → Trello) added it to the route list"
+		},
+		{
+			"route": "/pages/integrations/trello/:integrationId",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/ai-agent-chat",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the Trello integration UI (570f32ffe9, the page of one connection) added it to the route list"
+		},
+		{
+			"route": "/pages/integrations/trello/:integrationId",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/dashboard-widgets",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the Trello integration UI (570f32ffe9, the page of one connection) added it to the route list"
+		},
+		{
+			"route": "/pages/integrations/trello/:integrationId",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/documents/overview",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the Trello integration UI (570f32ffe9, the page of one connection) added it to the route list"
+		},
+		{
+			"route": "/pages/integrations/trello/:integrationId",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/reference/faq",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the Trello integration UI (570f32ffe9, the page of one connection) added it to the route list"
+		},
+		{
+			"route": "/pages/integrations/trello/:integrationId",
+			"attribute": "href",
+			"url": "https://ever.co/",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the Trello integration UI (570f32ffe9, the page of one connection) added it to the route list"
+		},
+		{
+			"route": "/pages/integrations/trello/:integrationId",
+			"attribute": "href",
+			"url": "https://gauzy.co/",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the Trello integration UI (570f32ffe9, the page of one connection) added it to the route list"
+		},
+		{
+			"route": "/pages/tasks/trash",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/ai-agent-chat",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the task trash (1182c05665, Tasks → Trash) added it to the route list"
+		},
+		{
+			"route": "/pages/tasks/trash",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/dashboard-widgets",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the task trash (1182c05665, Tasks → Trash) added it to the route list"
+		},
+		{
+			"route": "/pages/tasks/trash",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/documents/overview",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the task trash (1182c05665, Tasks → Trash) added it to the route list"
+		},
+		{
+			"route": "/pages/tasks/trash",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/reference/faq",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the task trash (1182c05665, Tasks → Trash) added it to the route list"
+		},
+		{
+			"route": "/pages/tasks/trash",
+			"attribute": "href",
+			"url": "https://ever.co/",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the task trash (1182c05665, Tasks → Trash) added it to the route list"
+		},
+		{
+			"route": "/pages/tasks/trash",
+			"attribute": "href",
+			"url": "https://gauzy.co/",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the task trash (1182c05665, Tasks → Trash) added it to the route list"
+		},
+		{
+			"route": "/pages/settings/automations",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/ai-agent-chat",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the task automations UI (eaffba35cb, Settings → Automations) added it to the route list"
+		},
+		{
+			"route": "/pages/settings/automations",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/dashboard-widgets",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the task automations UI (eaffba35cb, Settings → Automations) added it to the route list"
+		},
+		{
+			"route": "/pages/settings/automations",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/documents/overview",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the task automations UI (eaffba35cb, Settings → Automations) added it to the route list"
+		},
+		{
+			"route": "/pages/settings/automations",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/reference/faq",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the task automations UI (eaffba35cb, Settings → Automations) added it to the route list"
+		},
+		{
+			"route": "/pages/settings/automations",
+			"attribute": "href",
+			"url": "https://ever.co/",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the task automations UI (eaffba35cb, Settings → Automations) added it to the route list"
+		},
+		{
+			"route": "/pages/settings/automations",
+			"attribute": "href",
+			"url": "https://gauzy.co/",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the task automations UI (eaffba35cb, Settings → Automations) added it to the route list"
+		},
+		{
+			"route": "/pages/integrations/jira",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/ai-agent-chat",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the Jira integration UI (#11865, dc3ae1bdad, Integrations → Jira) added it to the route list"
+		},
+		{
+			"route": "/pages/integrations/jira",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/dashboard-widgets",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the Jira integration UI (#11865, dc3ae1bdad, Integrations → Jira) added it to the route list"
+		},
+		{
+			"route": "/pages/integrations/jira",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/documents/overview",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the Jira integration UI (#11865, dc3ae1bdad, Integrations → Jira) added it to the route list"
+		},
+		{
+			"route": "/pages/integrations/jira",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/reference/faq",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the Jira integration UI (#11865, dc3ae1bdad, Integrations → Jira) added it to the route list"
+		},
+		{
+			"route": "/pages/integrations/jira",
+			"attribute": "href",
+			"url": "https://ever.co/",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the Jira integration UI (#11865, dc3ae1bdad, Integrations → Jira) added it to the route list"
+		},
+		{
+			"route": "/pages/integrations/jira",
+			"attribute": "href",
+			"url": "https://gauzy.co/",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the Jira integration UI (#11865, dc3ae1bdad, Integrations → Jira) added it to the route list"
+		},
+		{
+			"route": "/pages/integrations/jira/:integrationId",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/ai-agent-chat",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the Jira integration UI (#11865, dc3ae1bdad, the page of one connection) added it to the route list"
+		},
+		{
+			"route": "/pages/integrations/jira/:integrationId",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/dashboard-widgets",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the Jira integration UI (#11865, dc3ae1bdad, the page of one connection) added it to the route list"
+		},
+		{
+			"route": "/pages/integrations/jira/:integrationId",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/documents/overview",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the Jira integration UI (#11865, dc3ae1bdad, the page of one connection) added it to the route list"
+		},
+		{
+			"route": "/pages/integrations/jira/:integrationId",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/reference/faq",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the Jira integration UI (#11865, dc3ae1bdad, the page of one connection) added it to the route list"
+		},
+		{
+			"route": "/pages/integrations/jira/:integrationId",
+			"attribute": "href",
+			"url": "https://ever.co/",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the Jira integration UI (#11865, dc3ae1bdad, the page of one connection) added it to the route list"
+		},
+		{
+			"route": "/pages/integrations/jira/:integrationId",
+			"attribute": "href",
+			"url": "https://gauzy.co/",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the Jira integration UI (#11865, dc3ae1bdad, the page of one connection) added it to the route list"
 		}
 	]
 }

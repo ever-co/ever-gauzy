@@ -394,16 +394,65 @@ export class InMemoryCache {
 	}
 }
 
+/** A session record of {@link InMemorySessions}. */
+export interface InMemorySessionRow {
+	sid: string;
+	userId: string;
+	isActive?: boolean;
+	createdAt?: Date;
+	everRefreshTokenEncrypted?: string | null;
+}
+
+/** Whether a record matches a `where` of the refresh-token service (plain values, `Not(IsNull())`). */
+function sessionMatches(row: InMemorySessionRow, where: Record<string, unknown>): boolean {
+	return Object.entries(where).every(([key, expected]) => {
+		const actual = (row as unknown as Record<string, unknown>)[key];
+		const operator = expected as { type?: string; child?: { type?: string }; value?: { type?: string } } | null;
+		if (operator && typeof operator === 'object' && operator.type === 'not') {
+			const inner = operator.child ?? operator.value;
+			if (inner?.type === 'isNull') {
+				return actual !== null && actual !== undefined;
+			}
+			throw new Error('Operator not supported by the in-memory sessions');
+		}
+		return actual === expected;
+	});
+}
+
 /** The session service API, in memory. */
 export class InMemorySessions {
-	readonly recorded: Array<{ sid: string; userId: string }> = [];
+	readonly recorded: InMemorySessionRow[] = [];
 	readonly seenJtis = new Set<string>();
 	readonly ended: string[] = [];
 
-	async record(sid: string | undefined, users: Array<{ id: string }>): Promise<void> {
+	async record(sid: string | undefined, users: Array<{ id: string }>, everRefreshTokenEncrypted?: string | null): Promise<void> {
 		for (const user of users) {
-			this.recorded.push({ sid: sid ?? '', userId: user.id });
+			this.recorded.push({
+				sid: sid ?? '',
+				userId: user.id,
+				isActive: true,
+				createdAt: new Date(),
+				everRefreshTokenEncrypted: sid && everRefreshTokenEncrypted ? everRefreshTokenEncrypted : null
+			});
 		}
+	}
+
+	/** The slice of the `zitadel_session` repository the refresh-token service uses, over the same records. */
+	repository() {
+		return {
+			findOne: async (options: { where: Record<string, unknown> }) => {
+				const found = this.recorded.filter((row) => sessionMatches(row, options.where));
+				found.sort((a, b) => (b.createdAt?.getTime() ?? 0) - (a.createdAt?.getTime() ?? 0));
+				return found[0] ? { id: `${found[0].sid}:${found[0].userId}`, ...found[0] } : null;
+			},
+			update: async (where: Record<string, unknown>, patch: Partial<InMemorySessionRow>) => {
+				const found = this.recorded.filter((row) => sessionMatches(row, where));
+				for (const row of found) {
+					Object.assign(row, patch);
+				}
+				return { affected: found.length };
+			}
+		};
 	}
 
 	async rememberLogoutJti(jti: string): Promise<boolean> {

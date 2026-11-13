@@ -19,7 +19,25 @@ jest.mock('@gauzy/plugin-integration-ever-works', () => ({
 // The Inbox, likewise: its real switch, a stub class.
 jest.mock('@gauzy/plugin-inbox', () => ({
 	InboxPlugin: class InboxPlugin {},
-	isInboxEnabled: jest.requireActual('../../../packages/plugins/inbox/src/lib/inbox-enabled').isInboxEnabled
+	InboxDeliveryPlugin: class InboxDeliveryPlugin {},
+	InboxEmailPlugin: class InboxEmailPlugin {},
+	isInboxEnabled: jest.requireActual('../../../packages/plugins/inbox/src/lib/inbox-enabled').isInboxEnabled,
+	isInboxNotificationEmailEnabled: jest.requireActual('../../../packages/plugins/inbox/src/lib/inbox-enabled')
+		.isInboxNotificationEmailEnabled,
+	isInboxWebPushEnabled: jest.requireActual('../../../packages/plugins/inbox/src/lib/inbox-enabled').isInboxWebPushEnabled,
+	isInboxEmailEnabled: () => false
+}));
+// The email providers the delivery sends through: stubs with their switches off (the list reads them only with the delivery on).
+jest.mock('@gauzy/plugin-email-provider-resend', () => ({ EmailProviderResendPlugin: class EmailProviderResendPlugin {}, isResendEnabled: () => false }));
+jest.mock('@gauzy/plugin-email-provider-postmark', () => ({ EmailProviderPostmarkPlugin: class EmailProviderPostmarkPlugin {}, isPostmarkEnabled: () => false }));
+jest.mock('@gauzy/plugin-email-provider-mailgun', () => ({ EmailProviderMailgunPlugin: class EmailProviderMailgunPlugin {}, isMailgunEnabled: () => false }));
+jest.mock('@gauzy/plugin-email-provider-sendgrid', () => ({ EmailProviderSendGridPlugin: class EmailProviderSendGridPlugin {}, isSendGridEnabled: () => false }));
+jest.mock('@gauzy/plugin-email-provider-ses', () => ({ EmailProviderSesPlugin: class EmailProviderSesPlugin {}, isSesEnabled: () => false }));
+// Task automations: their real switch, a stub class (the worker hosts the schedule half only).
+jest.mock('@gauzy/plugin-task-automations', () => ({
+	TaskAutomationsSchedulePlugin: class TaskAutomationsSchedulePlugin {},
+	isTaskAutomationsEnabled: jest.requireActual('../../../packages/plugins/task-automations/src/lib/task-automations-enabled')
+		.isTaskAutomationsEnabled
 }));
 jest.mock('@gauzy/plugin-catalog', () => ({ CatalogPlugin: class CatalogPlugin {} }));
 jest.mock('@gauzy/plugin-pricing', () => ({ PricingPlugin: class PricingPlugin {} }));
@@ -168,7 +186,8 @@ describe('worker plugins', () => {
 			expect(list.length).toBe(listWith(undefined).length + 1);
 		});
 	});
-	describe('the Inbox, hosted only with the Ever Works integration', () => {
+	// Hosted whenever it is on, for its own schedule (the recovery sweep of the notification filing), whatever else is.
+	describe('the Inbox, hosted whenever GAUZY_INBOX_ENABLED is exactly true', () => {
 		/** The list with both switches as stated (the module is evaluated afresh). */
 		function listWith(everWorks: string | undefined, inbox: string | undefined): unknown[] {
 			const saved = { EVER_WORKS_ENABLED: process.env['EVER_WORKS_ENABLED'], GAUZY_INBOX_ENABLED: process.env['GAUZY_INBOX_ENABLED'] };
@@ -195,12 +214,45 @@ describe('worker plugins', () => {
 
 		it.each([
 			['both off (the default)', undefined, undefined, false],
-			['the Inbox only', undefined, 'true', false],
+			['the Inbox only', undefined, 'true', true],
 			['Ever Works only', 'true', undefined, false],
 			['both on', 'true', 'true', true],
 			['Ever Works on, the Inbox TRUE', 'true', 'TRUE', false]
 		])('%s: hosted %s', (_name, everWorks, inbox, hosted) => {
 			expect(hasInbox(listWith(everWorks, inbox))).toBe(hosted);
+		});
+	});
+
+	describe('the task automations’ schedule, hosted only when GAUZY_TASK_AUTOMATIONS_ENABLED is exactly true', () => {
+		function listWith(value: string | undefined): unknown[] {
+			const saved = process.env['GAUZY_TASK_AUTOMATIONS_ENABLED'];
+			if (value === undefined) delete process.env['GAUZY_TASK_AUTOMATIONS_ENABLED'];
+			else process.env['GAUZY_TASK_AUTOMATIONS_ENABLED'] = value;
+			const warn = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+			try {
+				let list: unknown[] = [];
+				jest.isolateModules(() => {
+					// eslint-disable-next-line @typescript-eslint/no-var-requires
+					list = require('./plugins').plugins;
+				});
+				return list;
+			} finally {
+				warn.mockRestore();
+				if (saved === undefined) delete process.env['GAUZY_TASK_AUTOMATIONS_ENABLED'];
+				else process.env['GAUZY_TASK_AUTOMATIONS_ENABLED'] = saved;
+			}
+		}
+
+		const hasSchedule = (list: unknown[]) =>
+			list.some((plugin) => (plugin as { name?: string })?.name === 'TaskAutomationsSchedulePlugin');
+
+		it.each([
+			['unset (the default)', undefined, false],
+			['false', 'false', false],
+			['true', 'true', true],
+			['TRUE', 'TRUE', false]
+		])('%s: hosted %s', (_name, value, hosted) => {
+			expect(hasSchedule(listWith(value))).toBe(hosted);
 		});
 	});
 });

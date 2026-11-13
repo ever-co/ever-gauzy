@@ -25,6 +25,8 @@ import { TranslatePipe } from '@ngx-translate/core';
 import { DocumentLinksPanelComponent } from '@gauzy/plugin-docs-ui';
 // The Notes tab: the shared comments of a record, as the project page's Comments. Standalone.
 import { EntityCommentsComponent } from '../../shared/entity-comments/entity-comments.component';
+// Actions UI plugins add to the header of a contact (slot `contact-view-actions`). Standalone.
+import { PageExtensionSlotComponent } from '@gauzy/plugin-ui';
 import { ContactViewComponent } from './contact-view.component';
 import { ContactViewRoutingModule } from './contact-view-routing.module';
 
@@ -52,7 +54,8 @@ import { ContactViewRoutingModule } from './contact-view-routing.module';
 		FavoriteToggleModule,
 		TableComponentsModule,
 		DocumentLinksPanelComponent,
-		EntityCommentsComponent
+		EntityCommentsComponent,
+		PageExtensionSlotComponent
 	],
 	declarations: [ContactViewComponent]
 })

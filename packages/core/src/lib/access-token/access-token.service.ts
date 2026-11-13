@@ -9,10 +9,17 @@ export class AccessTokenService {
 		private readonly tokenService: ScopedTokenService
 	) {}
 
-	public async generate(userId: string, metadata?: IAccessTokenMetadata): Promise<string> {
+	/**
+	 * @param userId The user the token is for.
+	 * @param metadata The claims.
+	 * @param expiresAt When it expires, for a token that must not live as long as this type's configured expiry.
+	 * @returns The signed token.
+	 */
+	public async generate(userId: string, metadata?: IAccessTokenMetadata, expiresAt?: Date): Promise<string> {
 		const created = await this.tokenService.createToken({
 			metadata,
-			userId
+			userId,
+			...(expiresAt && { expiresAt })
 		});
 		return created.token;
 	}

@@ -6,9 +6,90 @@
 	"ITEM_LINK_ERROR": "The linked item could not be opened. Reload the page to try again.",
 	"ACTION_FAILED": "That did not work. Try again.",
 	"RETRY": "Try again",
+	"SUBTITLE": "Messages, decisions and notifications addressed to you.",
+	"UNREAD_SUMMARY": "{{ count }} unread",
 	"EMPTY": "Nothing here.",
+	"EMPTY_HINT": "You're all caught up. New items addressed to you will appear here.",
+	"EMPTY_TAB": {
+		"all": { "TITLE": "Your inbox is empty", "HINT": "You're all caught up. New items addressed to you will appear here." },
+		"decisions": { "TITLE": "No decisions waiting", "HINT": "Questions, approvals and escalations that need your answer appear here." },
+		"email": { "TITLE": "No email", "HINT": "Email from your mailboxes appears here." },
+		"snoozed": { "TITLE": "Nothing snoozed", "HINT": "Snooze an item to hide it until later; it comes back when its time is up." },
+		"done": { "TITLE": "Nothing done yet", "HINT": "Items you mark done move here." },
+		"archived": { "TITLE": "Nothing archived", "HINT": "Items you archive move here." }
+	},
+	"EMPTY_FILTERED": {
+		"TITLE": "Nothing matches these filters",
+		"HINT": "Try another search, or clear the filters."
+	},
 	"SELECT": "Select an item to see it here.",
+	"SELECT_HINT": "Open a message to read it, reply, or act on it.",
+	"BACK": "Back to the list",
 	"LOAD_MORE": "Load more",
+	"NEW_ITEMS": "{{ count }} new",
+	"SHOW_NEW": "Show",
+	"RESIZE": "Drag to resize the list",
+	"GROUP": {
+		"TODAY": "Today",
+		"YESTERDAY": "Yesterday",
+		"THIS_WEEK": "Earlier this week",
+		"OLDER": "Older"
+	},
+	"DUE_STATE": {
+		"OVERDUE": "Overdue",
+		"TODAY": "Due today",
+		"UPCOMING": "Due {{ date }}"
+	},
+	"BULK": {
+		"SELECT": "Select",
+		"SELECT_ALL": "Select all",
+		"SELECTED": "{{ count }} selected",
+		"CLEAR": "Clear selection",
+		"FAILED": "Some items could not be changed. Try again."
+	},
+	"UNDO": {
+		"ACTION": "Undo",
+		"ARCHIVED": "{{ count }} archived",
+		"UNARCHIVED": "{{ count }} moved back to the inbox",
+		"DONE": "{{ count }} marked done",
+		"NOT_DONE": "{{ count }} moved back to the inbox",
+		"SNOOZED": "{{ count }} snoozed",
+		"UNSNOOZED": "{{ count }} woken up",
+		"FAILED": "That could not be undone. Try again."
+	},
+	"SHORTCUTS": {
+		"TITLE": "Keyboard shortcuts",
+		"OPEN": "Keyboard shortcuts (?)",
+		"CLOSE_SHEET": "Close",
+		"NEXT": "Next item",
+		"PREVIOUS": "Previous item",
+		"SELECT": "Select the open item",
+		"ARCHIVE": "Archive or unarchive",
+		"DONE": "Mark done or not done",
+		"READ": "Mark read or unread",
+		"REPLY": "Reply",
+		"SEARCH": "Search",
+		"CLOSE": "Close the item, clear the selection",
+		"HELP": "Show these shortcuts"
+	},
+	"ACTIVITY": {
+		"TITLE": "Activity",
+		"RECEIVED": "Received",
+		"READ": "Read",
+		"ANSWERED": "Answered",
+		"SNOOZED": "Snoozed until",
+		"DONE": "Marked done",
+		"ARCHIVED": "Archived"
+	},
+	"EMAIL": {
+		"UNKNOWN_SENDER": "Unknown sender",
+		"TO": "to {{ to }}",
+		"ATTACHMENTS": "Attachments: {{ count }}",
+		"SPAM": {
+			"suspect": "This message looks suspicious. Be careful with its links and attachments.",
+			"spam": "This message was marked as spam."
+		}
+	},
 	"BADGE_LABEL": "Inbox: {{ count }} unread",
 	"DUE": "Due {{ date }}",
 	"ANSWERED": "Answered {{ date }}",
@@ -21,6 +102,7 @@
 		"email": "Email",
 		"notifications": "Notifications",
 		"snoozed": "Snoozed",
+		"done": "Done",
 		"archived": "Archived"
 	},
 	"FILTERS": {
@@ -29,13 +111,15 @@
 		"SOURCE": "Source",
 		"ALL_SOURCES": "All sources",
 		"UNREAD": "Unread only",
-		"SEARCH": "Search"
+		"SEARCH": "Search",
+		"CLEAR": "Clear filters"
 	},
 	"KIND": {
 		"QUESTION": "Question",
 		"APPROVAL": "Approval",
 		"ESCALATION": "Escalation",
 		"NOTICE": "Notice",
+		"NOTIFICATION": "Notification",
 		"EMAIL": "Email"
 	},
 	"SOURCE": {
@@ -57,9 +141,9 @@
 		"urgent": "Urgent"
 	},
 	"ESCALATION": {
-		"DECISION": "Decision needed:",
-		"ATTEMPTED": "What was tried:",
-		"CONFIDENCE": "Confidence:"
+		"DECISION": "Decision needed",
+		"ATTEMPTED": "Already tried",
+		"CONFIDENCE": "Confidence"
 	},
 	"REPLY": {
 		"OPTIONS": "Choices",
@@ -69,6 +153,7 @@
 		"NOTE": "Note",
 		"RESOLVE_NOTE": "Resolve note",
 		"REASON_REQUIRED": "This item asks for a reason with the reply.",
+		"PLACEHOLDER": "Write a reply…",
 		"SEND": "Send"
 	},
 	"APPROVAL": {
@@ -80,23 +165,41 @@
 		"MARK_UNREAD": "Mark unread",
 		"ARCHIVE": "Archive",
 		"UNARCHIVE": "Unarchive",
+		"MARK_DONE": "Mark done",
+		"MARK_NOT_DONE": "Not done",
 		"UNSNOOZE": "Snoozed until {{ date }}: wake now",
 		"MARK_ALL_READ": "Mark all read"
 	},
 	"SNOOZE": {
+		"MENU": "Snooze",
 		"hour": "Snooze 1 hour",
 		"tomorrow": "Snooze until tomorrow",
 		"next-week": "Snooze until next week"
 	},
 	"OPEN": {
 		"task": "Open task",
+		"comment": "Open comment",
 		"project": "Open project",
 		"agent": "Open agent"
 	},
 	"NOTIFICATIONS": {
 		"NO_EMPLOYEE": "Notifications are addressed to employees; this account has no employee profile.",
 		"ERROR": "The notifications could not be loaded.",
-		"EMPTY": "No notifications."
+		"EMPTY": "No notifications.",
+		"ALL_READ": "All caught up",
+		"FROM": "From {{ name }}",
+		"TYPE": {
+			"Payment": "Payment",
+			"Assignment": "Assignment",
+			"Invitation": "Invitation",
+			"Mention": "Mention",
+			"Comment": "Comment",
+			"Message": "Message",
+			"Broadcast": "Announcement",
+			"RateChangeRequest": "Rate change request",
+			"TaskUpdate": "Task update",
+			"TimerReminder": "Timer reminder"
+		}
 	},
 	"SETTINGS": {
 		"MENU_PROVIDERS": "Inbox providers",
@@ -330,5 +433,58 @@
 		"MESSAGES": "{{ count }} message(s)",
 		"EMPTY": "You have no mailbox yet. An administrator can create one in Settings → Inbox mailboxes.",
 		"MANAGE": "Manage mailboxes"
+	},
+	"NOTIFICATION_SETTINGS": {
+		"MENU": "Notifications",
+		"TITLE": "Notifications",
+		"SUBTITLE": "What reaches you, and how: in your inbox always, by email at once or in a daily digest.",
+		"NO_EMPLOYEE": "Notifications belong to your employee profile in an organization, and this account has none here.",
+		"FORBIDDEN": "These settings are not yours to read.",
+		"LOAD_ERROR": "Your notification settings could not load.",
+		"SAVE_FAILED": "That setting was not saved. Try again.",
+		"KINDS_TITLE": "Kinds",
+		"KINDS_HINT": "Turning a kind off stops its emails and browser notifications; its notifications still reach your bell and your Inbox. The select beside a kind is how its email goes out.",
+		"KINDS": {
+			"ASSIGNMENT": { "TITLE": "Assignments", "TEXT": "Someone assigns a task to you." },
+			"MENTION": { "TITLE": "Mentions", "TEXT": "Someone writes @ and your name in a comment." },
+			"COMMENT": { "TITLE": "Comments", "TEXT": "Someone comments on a task you follow." },
+			"INVITATION": { "TITLE": "Invitations", "TEXT": "Someone invites you to a team." },
+			"MESSAGE": { "TITLE": "Messages", "TEXT": "Someone sends you a direct message." },
+			"PAYMENT": { "TITLE": "Payments", "TEXT": "A payment is recorded for you." }
+		},
+		"MODE_LABEL": "Email",
+		"MODE": {
+			"default": "As every kind ({{mode}})",
+			"immediate": "At once",
+			"digest": "In the daily digest",
+			"off": "Never"
+		},
+		"EMAIL_TITLE": "Email",
+		"EMAIL_HINT": "How a kind reaches you by email unless its own select says otherwise.",
+		"EMAIL_NOTICE": {
+			"OFF": "This server sends no notification emails. Your choices are kept and apply once it does.",
+			"UNAVAILABLE": "No mail server answers for this organization right now, so notification emails cannot go out. Your choices are kept."
+		},
+		"DEFAULT_LABEL": "Every kind",
+		"DEFAULT_TEXT": "At once, in the daily digest, or never.",
+		"QUIET_TITLE": "Quiet hours and digest",
+		"QUIET_LABEL": "Quiet hours",
+		"QUIET_TEXT": "No email between these times ({{timeZone}}); it waits until the window ends.",
+		"QUIET_FROM": "From",
+		"QUIET_TO": "Until",
+		"DIGEST_LABEL": "Daily digest",
+		"DIGEST_TEXT": "One email a day, at this hour, with the entries set to the digest.",
+		"PUSH_TITLE": "Browser notifications",
+		"PUSH_HINT": "A notification on this device when something new reaches your inbox, even when the app is not open.",
+		"PUSH_LABEL": "Notifications on this device",
+		"PUSH_FAILED": "Browser notifications could not be changed. Try again.",
+		"PUSH_RETRY_FAILED": "This browser's notifications still could not be confirmed. Try again later, or switch notifications off.",
+		"PUSH_STATE": {
+			"on": "This browser shows your new inbox entries.",
+			"off": "Off for this browser.",
+			"sync-failed": "This browser's notifications could not be confirmed for your account: your new entries may not arrive here, or an earlier sign-in's still could. Try again, or switch notifications off.",
+			"blocked": "Notifications are blocked for this site: allow them in your browser settings, then switch this on.",
+			"unsupported": "This browser cannot show notifications."
+		}
 	}
 }

@@ -104,6 +104,10 @@ export const TOOLS_REGISTRY: ToolRegistry = {
 		'invite_organization_contact'
 	],
 	timer: ['timer_status', 'start_timer', 'stop_timer'],
+	// The collaboration groups: registered only where enabled (GAUZY_MCP_TOOLS_CHAT / _DOCS / _INBOX) and scoped per session.
+	chat: ['list_chat_conversations', 'list_chat_messages', 'get_chat_thread', 'search_chat_messages', 'post_chat_message', 'mark_chat_conversation_read'],
+	docs: ['list_pages', 'get_page', 'search_pages', 'create_page', 'update_page_markdown'],
+	inbox: ['list_inbox_items', 'get_inbox_counts', 'set_inbox_item_state'],
 	test: ['test_api_connection', 'get_server_info', 'test_mcp_capabilities']
 };
 

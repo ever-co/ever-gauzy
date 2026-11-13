@@ -70,6 +70,8 @@ export enum PermissionsEnum {
 	ORG_EMPLOYEES_VIEW = 'ORG_EMPLOYEES_VIEW',
 	ORG_EMPLOYEES_EDIT = 'ORG_EMPLOYEES_EDIT',
 	ORG_EMPLOYEES_DELETE = 'ORG_EMPLOYEES_DELETE',
+	/** Change one's own rates on one's own employee record. Someone else's rates need ORG_EMPLOYEES_EDIT. */
+	CHANGE_OWN_RATES = 'CHANGE_OWN_RATES',
 	// Member View Permissions
 	ORG_MEMBERS_VIEW = 'ORG_MEMBERS_VIEW',
 	ORG_CANDIDATES_VIEW = 'ORG_CANDIDATES_VIEW',
@@ -269,6 +271,8 @@ export enum PermissionsEnum {
 	INBOX_MAILBOX_MANAGE = 'INBOX_MAILBOX_MANAGE',
 	/** Read the items of every shared mailbox of the organization (shared-mailbox administrators). */
 	INBOX_MAILBOX_READ_ALL = 'INBOX_MAILBOX_READ_ALL',
+	/** Open the real-time channel (`@gauzy/plugin-realtime`): the collaboration event stream, presence and typing. */
+	REALTIME_SUBSCRIBE = 'REALTIME_SUBSCRIBE',
 	/** Inbox Permissions End */
 	/** AI Chat Permissions Start */
 	AI_CHAT_ACCESS = 'AI_CHAT_ACCESS',
@@ -282,6 +286,14 @@ export enum PermissionsEnum {
 	DOCS_MANAGE = 'DOCS_MANAGE',
 	DOCS_REVIEW = 'DOCS_REVIEW',
 	DOCS_AI_IMPORT = 'DOCS_AI_IMPORT',
+	/** Chat (`@gauzy/plugin-chat`): read the conversations one is a member of. */
+	CHAT_VIEW = 'CHAT_VIEW',
+	/** Chat: post messages, create channels, start direct and group messages. */
+	CHAT_SEND = 'CHAT_SEND',
+	/** Chat: manage categories, any channel, and delete others' messages. */
+	CHAT_MANAGE = 'CHAT_MANAGE',
+	/** Task automations (`@gauzy/plugin-task-automations`): see, create, edit, test and delete the organization's automation rules. */
+	TASK_AUTOMATION_MANAGE = 'TASK_AUTOMATION_MANAGE',
 	/** Documents Permissions End */
 	/**
 	 * Plugin Permissions
@@ -645,6 +657,7 @@ export const PermissionGroups = {
 		PermissionsEnum.ORG_TEAM_JOIN_REQUEST_EDIT,
 		/** Organization Team Permissions End */
 		PermissionsEnum.ORG_TASK_SETTING,
+		PermissionsEnum.TASK_AUTOMATION_MANAGE,
 		PermissionsEnum.ORG_CONTRACT_EDIT,
 		PermissionsEnum.EVENT_TYPES_VIEW,
 		PermissionsEnum.EVENT_TYPES_EDIT,
@@ -883,6 +896,7 @@ export const PermissionGroups = {
 	//Readonly permissions, are only enabled for Super Admin/Admin role
 	ADMINISTRATION: [
 		PermissionsEnum.ORG_EMPLOYEES_EDIT,
+		PermissionsEnum.CHANGE_OWN_RATES,
 		PermissionsEnum.ORG_CANDIDATES_VIEW,
 		PermissionsEnum.ORG_CANDIDATES_EDIT,
 		PermissionsEnum.ORG_USERS_VIEW,

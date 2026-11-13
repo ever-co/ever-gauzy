@@ -39,6 +39,7 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.ORG_EMPLOYEES_ADD,
 			PermissionsEnum.ORG_EMPLOYEES_VIEW,
 			PermissionsEnum.ORG_EMPLOYEES_EDIT,
+			PermissionsEnum.CHANGE_OWN_RATES,
 			PermissionsEnum.ORG_EMPLOYEES_DELETE,
 			/** Employee CRUD Permissions End */
 			/** Member View Permissions Start */
@@ -171,6 +172,13 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.DOCS_REVIEW,
 			PermissionsEnum.DOCS_AI_IMPORT,
 			/** Documents Permissions End */
+			/** Chat Permissions Start */
+			PermissionsEnum.CHAT_VIEW,
+			PermissionsEnum.CHAT_SEND,
+			PermissionsEnum.CHAT_MANAGE,
+			/** Chat Permissions End */
+			/** Task automations (`@gauzy/plugin-task-automations`) */
+			PermissionsEnum.TASK_AUTOMATION_MANAGE,
 			PermissionsEnum.IMPORT_ADD,
 			PermissionsEnum.EXPORT_ADD,
 			PermissionsEnum.FILE_STORAGE_VIEW,
@@ -245,6 +253,7 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			/** Organization Strategic Initiative Permissions End */
 			/** Inbox Permissions Start */
 			PermissionsEnum.INBOX_VIEW,
+			PermissionsEnum.REALTIME_SUBSCRIBE,
 			PermissionsEnum.INBOX_MAILBOX_MANAGE,
 			PermissionsEnum.INBOX_MAILBOX_READ_ALL,
 			/** Inbox Permissions End */
@@ -499,6 +508,7 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.ORG_EMPLOYEES_ADD,
 			PermissionsEnum.ORG_EMPLOYEES_VIEW,
 			PermissionsEnum.ORG_EMPLOYEES_EDIT,
+			PermissionsEnum.CHANGE_OWN_RATES,
 			PermissionsEnum.ORG_EMPLOYEES_DELETE,
 			/** Employee CRUD Permissions End */
 			/** Member View Permissions Start */
@@ -638,6 +648,13 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.DOCS_REVIEW,
 			PermissionsEnum.DOCS_AI_IMPORT,
 			/** Documents Permissions End */
+			/** Chat Permissions Start */
+			PermissionsEnum.CHAT_VIEW,
+			PermissionsEnum.CHAT_SEND,
+			PermissionsEnum.CHAT_MANAGE,
+			/** Chat Permissions End */
+			/** Task automations (`@gauzy/plugin-task-automations`) */
+			PermissionsEnum.TASK_AUTOMATION_MANAGE,
 
 			PermissionsEnum.IMPORT_ADD,
 			PermissionsEnum.EXPORT_ADD,
@@ -712,6 +729,7 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			/** Organization Strategic Initiative Permissions End */
 			/** Inbox Permissions Start */
 			PermissionsEnum.INBOX_VIEW,
+			PermissionsEnum.REALTIME_SUBSCRIBE,
 			PermissionsEnum.INBOX_MAILBOX_MANAGE,
 			PermissionsEnum.INBOX_MAILBOX_READ_ALL,
 			/** Inbox Permissions End */
@@ -938,6 +956,10 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.DOCS_CREATE,
 			PermissionsEnum.DOCS_UPDATE,
 			/** Documents Permissions End */
+			/** Chat Permissions Start */
+			PermissionsEnum.CHAT_VIEW,
+			PermissionsEnum.CHAT_SEND,
+			/** Chat Permissions End */
 			PermissionsEnum.ORG_STRATEGIC_INITIATIVE_READ,
 			PermissionsEnum.PLUGIN_VIEW,
 			PermissionsEnum.PLUGIN_DISCOVER,
@@ -965,6 +987,10 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.DOCS_CREATE,
 			PermissionsEnum.DOCS_UPDATE,
 			/** Documents Permissions End */
+			/** Chat Permissions Start */
+			PermissionsEnum.CHAT_VIEW,
+			PermissionsEnum.CHAT_SEND,
+			/** Chat Permissions End */
 			/** Time Off Permissions Start */
 			PermissionsEnum.TIME_OFF_VIEW,
 			/** Time Off Permissions End */
@@ -1067,6 +1093,7 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			/** Organization Strategic Initiative Permissions End */
 			/** Inbox Permissions Start */
 			PermissionsEnum.INBOX_VIEW,
+			PermissionsEnum.REALTIME_SUBSCRIBE,
 			/** Inbox Permissions End */
 			// Plugin permissions
 			PermissionsEnum.PLUGIN_VIEW,
@@ -1125,6 +1152,7 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.CHANGE_SELECTED_ORGANIZATION,
 			/** Inbox Permissions Start */
 			PermissionsEnum.INBOX_VIEW,
+			PermissionsEnum.REALTIME_SUBSCRIBE,
 			/** Inbox Permissions End */
 			/** Documents Permissions Start */
 			PermissionsEnum.DOCS_READ,
@@ -1134,6 +1162,13 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.DOCS_REVIEW,
 			PermissionsEnum.DOCS_AI_IMPORT,
 			/** Documents Permissions End */
+			/** Chat Permissions Start */
+			PermissionsEnum.CHAT_VIEW,
+			PermissionsEnum.CHAT_SEND,
+			PermissionsEnum.CHAT_MANAGE,
+			/** Chat Permissions End */
+			/** Task automations (`@gauzy/plugin-task-automations`) */
+			PermissionsEnum.TASK_AUTOMATION_MANAGE,
 			// Plugin permissions
 			PermissionsEnum.PLUGIN_VIEW,
 			PermissionsEnum.PLUGIN_DISCOVER,

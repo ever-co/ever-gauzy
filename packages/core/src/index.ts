@@ -35,6 +35,7 @@ export {
 	thumbnailFileName,
 	videoUploadFileFilter,
 	RENDERABLE_KEY_EXTENSIONS,
+	runWithTenantStorageSettings,
 	toSafeStorageExtension
 } from './lib/core/file-storage';
 export type { ReadStorageFileOptions, StorageFileReadFailure, StoredFileContent } from './lib/core/file-storage';
@@ -69,6 +70,9 @@ export {
 	toPositionalStatement
 } from './lib/database/database.helper';
 export type { IPositionalStatement } from './lib/database/database.helper';
+// The learn-more links of the What's New entries seeded for the other Ever products: deployment settings, not code.
+export { WHATS_NEW_LINK_SETTINGS, whatsNewLinkUrl } from './lib/database/whats-new-links';
+export type { WhatsNewLink } from './lib/database/whats-new-links';
 // The probes a migration needs to add a `CHECK` safely: a rule about a populated table is added on its
 // own tick, long after the file that created the table, and every package that adds one needs the same
 // four probes — the table, the columns the rule reads, the constraint's own absence, and the embedded
@@ -95,12 +99,26 @@ export { PasswordHashModule, PasswordHashService } from './lib/password-hash';
 // platform mechanisms instead of re-implementing them.
 export { ActivityLogService } from './lib/activity-log/activity-log.service';
 export { MentionService } from './lib/mention/mention.service';
+// The in-process facts the real-time channel turns into change hints (`@gauzy/plugin-realtime`).
+export { CreateMentionEvent } from './lib/mention/events';
 // 🛑 `@Global()` means "available everywhere ONCE IMPORTED", not "always present". The API gets
 // both modules through core's own `AppModule`; a host that builds its own module graph —
 // `apps/worker`, which runs the plugin pipelines without core's HTTP `AppModule` — has to import
 // them itself or it fails DI at boot on the first plugin that injects either service.
 export { ActivityLogModule } from './lib/activity-log/activity-log.module';
+// The task change fact (field values before and after) the task automations plugin fires its rules on
+// (`@gauzy/plugin-task-automations`): `@nestjs/cqrs` dispatches on the class, so a plugin handler needs this one.
+export { ActivityLogEvent } from './lib/activity-log/events/activity-log.event';
 export { MentionModule } from './lib/mention/mention.module';
+// The notification facts other packages act on: the Inbox files created notifications as items and mirrors
+// their read state; the real-time channel turns them into addressed hints.
+export {
+	EmployeeCreateNotificationEvent,
+	EmployeeNotificationCreatedEvent,
+	EmployeeNotificationUpdatedEvent
+} from './lib/employee-notification/events';
+export type { IEmployeeNotificationStateChange } from './lib/employee-notification/events';
+export { FollowerFanOutService, isNotificationFanOutEnabled } from './lib/entity-subscription/fan-out';
 // Same rationale as `MentionService` above, for the entity-subscription fan-out: the handler is
 // registered by core, but a plugin that wants an author subscribed to the entity they just created
 // (the pattern `CommentService` uses) needs the event CLASS to publish — `@nestjs/cqrs` dispatches
@@ -143,6 +161,11 @@ export { UserModule, UserService } from './lib/user';
 // The command that invites people through the platform's own invite flow (its e-mail, its role rules, its accept
 // path), for a package that invites someone it found elsewhere: the Ever Works integration's "invite to Gauzy".
 export { InviteBulkCreateCommand } from './lib/invite/commands/invite.bulk.create.command';
+// The commands that create an organization and a team through the platform's own paths (their seeding, their
+// admin memberships), for a package that creates a workspace a person confirmed elsewhere: the Ever ID sign-in
+// plugin's workspace provisioning. `@nestjs/cqrs` dispatches on the constructor, so a copy would reach no handler.
+export { OrganizationCreateCommand } from './lib/organization/commands/organization.create.command';
+export { OrganizationTeamCreateCommand } from './lib/organization-team/commands/organization-team.create.command';
 // The membership check a REST DTO makes through `@IsOrganizationBelongsToUser()`, for a package that resolves the
 // organization from a stored record rather than from the request (an integration ID, for instance).
 export { assertCurrentUserBelongsToOrganization } from './lib/user-organization/assert-organization-membership';
@@ -155,8 +178,15 @@ export {
 } from './lib/organization-contact';
 // The comment-access policy contract, for a package whose records carry comments that must follow the record's own
 // access rules: it declares a provider with `@CommentParentAccessPolicy()` implementing the interface, and the
-// comment API applies it (see `OrganizationContactCommentAccessPolicy`, which governs a contact's notes).
-export { CommentParentAccessPolicy } from './lib/comment/parent-access';
+// comment API applies it (see `OrganizationContactCommentAccessPolicy`, which governs a contact's notes). The registry
+// is exported for a package that hands comment facts to subscribers (the real-time channel) and must apply the same
+// read rule at delivery.
+export * from './lib/comment/events';
+export {
+	CommentParentAccessPolicy,
+	CommentParentAccessService,
+	isSpellingOfRecordType
+} from './lib/comment/parent-access';
 export type { ICommentParent, ICommentParentAccessPolicy } from './lib/comment/parent-access';
 export {
 	OrganizationProjectCreateCommand,
@@ -178,6 +208,7 @@ export {
 	pickAgentProfileInput
 } from './lib/employee-agent-profile';
 export { AutomationTaskSyncCommand, TaskCreateCommand, TaskModule, TaskService, TaskUpdateCommand } from './lib/tasks';
+export { normalizeTaskKey, parseTaskReference, parseTaskReferences, TASK_REFERENCES_MAX } from './lib/tasks/task-reference';
 
 export { IntegrationModule, IntegrationService } from './lib/integration';
 export {
@@ -211,9 +242,28 @@ export {
 	IntegrationSettingModule,
 	IntegrationSettingService
 } from './lib/integration-setting';
-export type { IIntegrationSyncCompletion } from './lib/integration-tenant';
+export type {
+	IIntegrationSyncCompletion,
+	IntegrationManagers,
+	SyncedFieldConflict,
+	SyncedFieldsMerge,
+	SyncedTaskField,
+	SyncedTaskFieldsInput,
+	SyncedTaskValues
+} from './lib/integration-tenant';
 export {
+	findIntegrationManagers,
+	INTEGRATION_MANAGER_PERMISSIONS,
+	INTEGRATION_MANAGERS_LIMIT,
 	INTEGRATION_TENANT_SYNCED,
+	mergeSyncedFields,
+	parseSyncedValues,
+	sameSyncedValue,
+	SYNCED_TASK_COLUMNS,
+	SYNCED_TASK_FIELDS,
+	syncedValuesOf,
+	taskPatchOf,
+	withoutKeptFields,
 	IntegrationTenantGetCommand,
 	IntegrationTenantModule,
 	IntegrationTenantService,
@@ -244,6 +294,15 @@ export { CommandHandlers } from './lib/time-tracking/timer/commands/handlers';
 export { QueryHandlers } from './lib/time-tracking/timer/queries/handlers';
 export { TimerModule } from './lib/time-tracking/timer/timer.module';
 export { TimerService } from './lib/time-tracking/timer/timer.service';
+// The reminders of a timer left running. The worker application fires their schedule, so it imports the schedule's
+// module by name (the API consumes it), behind the switch both processes read.
+export {
+	isTimerRemindersEnabled,
+	TimerReminderMaintenanceModule,
+	TimerReminderModule,
+	TimerReminderScheduleModule,
+	TimerReminderService
+} from './lib/time-tracking/timer-reminder';
 
 export * from './lib/database/database.module';
 // Export-archive opt-out for plugin entities holding DERIVED data (extracted text, embeddings,
@@ -375,6 +434,7 @@ export * from './lib/event-outbox';
  */
 export {
 	currentSubscriberScope,
+	currentSubscriberUserId,
 	declareStreamedEvents,
 	deliverPayloadAsIs,
 	observableToAsyncIterable,
@@ -386,7 +446,14 @@ export { GraphqlSubscriptionModule } from './lib/graphql/subscriptions/graphql-s
 export { GraphqlPubSub } from './lib/graphql/subscriptions/graphql-pubsub.service';
 export {
 	NON_SUBSCRIBABLE_EVENT_NAMES,
-	SubscriptionCatalogue
+	SubscriptionCatalogue,
+	isEventNameShaped,
+	matchesEventSelection
+} from './lib/graphql/subscriptions/subscription-catalogue';
+export type {
+	SubscriptionAudienceCheck,
+	SubscriptionAudienceEvent,
+	SubscriptionAudienceSubscriber
 } from './lib/graphql/subscriptions/subscription-catalogue';
 export { GraphqlSubscriptionConsumer } from './lib/graphql/subscriptions/subscription-consumer';
 export { GraphqlSubscriptionBusBridge } from './lib/graphql/subscriptions/subscription-bus-bridge';
@@ -408,6 +475,8 @@ export {
 // plugin's sign-up requires exactly the documents the register form requires.
 export { AuthModule } from './lib/auth/auth.module';
 export { AuthService } from './lib/auth/auth.service';
+// For a plugin's route that lets a holder keep access once a token is gone (linking a sign-in identity, for one).
+export { assertFirstPartyRequest } from './lib/auth/oauth-app-first-party';
 // The operator's registration switches as the API applies them (APP_USER_REGISTRATION,
 // ALLOW_TENANTS_REGISTRATION, ADMIN_PASSWORD_RESET), for a plugin that creates accounts or tenants of its own:
 // it asks the same policy, so it can never stay open on a server whose operator closed registration.

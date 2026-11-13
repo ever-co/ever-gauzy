@@ -20,12 +20,12 @@ import { AiProviderLocalAiPlugin } from '@gauzy/plugin-ai-provider-localai';
 import { AiProviderWhisperCppPlugin } from '@gauzy/plugin-ai-provider-whisper-cpp';
 import { AiProviderOpenAiCompatiblePlugin } from '@gauzy/plugin-ai-provider-openai-compatible';
 import { ChangelogPlugin } from '@gauzy/plugin-changelog';
-import { DocsPlugin } from '@gauzy/plugin-docs';
+import { DocsLivePlugin, DocsPlugin, isDocsLiveEnabled } from '@gauzy/plugin-docs';
 import { EverConnectPlugin, isEverConnectEnabled } from '@gauzy/plugin-ever-connect';
 import { EverStatsPlugin, isEverStatsEnabled } from '@gauzy/plugin-ever-stats';
 import { IntegrationAIPlugin } from '@gauzy/plugin-integration-ai';
 import { IntegrationGithubPlugin } from '@gauzy/plugin-integration-github';
-import { IntegrationJiraPlugin } from '@gauzy/plugin-integration-jira';
+import { IntegrationJiraCloudPlugin, IntegrationJiraPlugin, isJiraEnabled } from '@gauzy/plugin-integration-jira';
 import { IntegrationHubstaffPlugin } from '@gauzy/plugin-integration-hubstaff';
 import { IntegrationMakeComPlugin } from '@gauzy/plugin-integration-make-com';
 import { IntegrationZapierPlugin } from '@gauzy/plugin-integration-zapier';
@@ -34,7 +34,22 @@ import { IntegrationSimPlugin } from '@gauzy/plugin-integration-sim';
 import { IntegrationPlanePlugin } from '@gauzy/plugin-integration-plane';
 import { IntegrationEverAsyncPlugin } from '@gauzy/plugin-integration-ever-async';
 import { IntegrationEverWorksPlugin, isEverWorksEnabled } from '@gauzy/plugin-integration-ever-works';
-import { InboxEmailPlugin, InboxPlugin, isInboxEmailEnabled, isInboxEnabled } from '@gauzy/plugin-inbox';
+import { IntegrationLinearPlugin, isLinearEnabled } from '@gauzy/plugin-integration-linear';
+import { IntegrationAsanaPlugin, isAsanaEnabled } from '@gauzy/plugin-integration-asana';
+import { IntegrationTrelloPlugin, isTrelloEnabled } from '@gauzy/plugin-integration-trello';
+import {
+	InboxDeliveryPlugin,
+	InboxEmailPlugin,
+	InboxPlugin,
+	isInboxEmailEnabled,
+	isInboxEnabled,
+	isInboxNotificationEmailEnabled,
+	isInboxWebPushEnabled
+} from '@gauzy/plugin-inbox';
+import { isRealtimeEnabled, RealtimePlugin } from '@gauzy/plugin-realtime';
+
+import { ChatPlugin, isChatEnabled } from '@gauzy/plugin-chat';
+import { isTaskAutomationsEnabled, TaskAutomationsPlugin } from '@gauzy/plugin-task-automations';
 import { EmailProviderPostmarkPlugin, isPostmarkEnabled } from '@gauzy/plugin-email-provider-postmark';
 import { EmailProviderResendPlugin, isResendEnabled } from '@gauzy/plugin-email-provider-resend';
 import { EmailProviderMailgunPlugin, isMailgunEnabled } from '@gauzy/plugin-email-provider-mailgun';
@@ -113,17 +128,57 @@ export const plugins = [
 	// logged once.
 	...(isEverWorksEnabled(process.env, (message) => console.warn(message)) ? [IntegrationEverWorksPlugin] : []),
 
+	// Linear integration (OAuth connect, team ↔ project mappings, issue import, two-way status sync,
+	// webhooks). Off unless LINEAR_ENABLED=true; when off it is not loaded at all (no route, no table,
+	// no outbound request). Any other value keeps it off and is logged once.
+	...(isLinearEnabled(process.env, (message) => console.warn(message)) ? [IntegrationLinearPlugin] : []),
+
+	// Asana integration (OAuth connect, project ↔ project mappings, task import, two-way sync with sections
+	// as statuses, webhooks). Off unless ASANA_ENABLED=true; when off it is not loaded at all.
+	...(isAsanaEnabled(process.env, (message) => console.warn(message)) ? [IntegrationAsanaPlugin] : []),
+
+	// Trello integration (key + token connect, board ↔ project mappings, card import, two-way sync with lists as
+	// statuses, webhooks). Off unless TRELLO_ENABLED=true; when off it is not loaded at all.
+	...(isTrelloEnabled(process.env, (message) => console.warn(message)) ? [IntegrationTrelloPlugin] : []),
+
 	// Inbox (questions, approvals, escalations and notices addressed to a user, each with its own state; the
 	// Ever Works integration feeds it through a source-handler registry). Off unless GAUZY_INBOX_ENABLED=true;
 	// when off it is not loaded at all (no route, no table, no role grant). Any other value keeps it off and is
 	// logged once.
 	...(isInboxEnabled(process.env, (message) => console.warn(message)) ? [InboxPlugin] : []),
 
+	// Real-time channel (collaboration change hints on the event outbox, presence and typing signals, the
+	// `collaborationEvents` subscription). Off unless GAUZY_REALTIME_ENABLED=true; when off it is not loaded at
+	// all (no route, no GraphQL field, no outbox row, no role grant). Any other value keeps it off and is logged once.
+	...(isRealtimeEnabled(process.env, (message) => console.warn(message)) ? [RealtimePlugin] : []),
+
+	// Chat between employees (channels, direct and group messages, threads, reactions, mentions, task cards). Off
+	// unless GAUZY_CHAT_ENABLED=true; when off it is not loaded at all (no route, no table, no role grant). Routes
+	// answer only for tenants whose FEATURE_CHAT toggle is on. Any other value keeps it off and is logged once.
+	...(isChatEnabled(process.env, (message) => console.warn(message)) ? [ChatPlugin] : []),
+
+	// Task automations (rules of an organization: a trigger, conditions and actions, run in the background after a
+	// task change or on a schedule, with a dry run and a run history). Off unless GAUZY_TASK_AUTOMATIONS_ENABLED=true;
+	// when off it is not loaded at all (no route, no GraphQL field, no table, no outbox row, no role grant). The API
+	// runs the rules (it hosts the task services they write through); the worker only fires the due-date schedule.
+	// Any other value keeps it off and is logged once.
+	...(isTaskAutomationsEnabled(process.env, (message) => console.warn(message)) ? [TaskAutomationsPlugin] : []),
+
 	// Inbox email (mailboxes, the inbound pipeline, email provider accounts and the transport seam's provider
 	// transports; plan 04 §5). Only on top of the Inbox, and off unless GAUZY_INBOX_EMAIL_ENABLED=true as well; when
 	// off it is not loaded at all (no route, no table, no transport: mail goes out over SMTP as before).
 	...(isInboxEnabled(process.env) && isInboxEmailEnabled(process.env, (message) => console.warn(message))
 		? [InboxEmailPlugin]
+		: []),
+
+	// Delivery of the Inbox's notifications beyond the app (the Inbox spec FR-10–FR-13): emails (immediate or digest
+	// per kind) under GAUZY_INBOX_NOTIFICATION_EMAIL_ENABLED, web push to the person's devices (their subscriptions
+	// and routes) under GAUZY_INBOX_WEB_PUSH_ENABLED. Only on top of the Inbox, and off unless one of the two is
+	// exactly true; the API owns the tables and the push routes, the worker runs the sweep.
+	...(isInboxEnabled(process.env) &&
+	(isInboxNotificationEmailEnabled(process.env, (message) => console.warn(message)) ||
+		isInboxWebPushEnabled(process.env, (message) => console.warn(message)))
+		? [InboxDeliveryPlugin]
 		: []),
 
 	// Email provider: Resend (plan 04 §5.2). Off unless EMAIL_PROVIDER_RESEND_ENABLED=true; when off it is not
@@ -185,6 +240,10 @@ export const plugins = [
 	AiProviderElevenLabsPlugin,
 	// Documents hub plugin — registered after the AI chat/provider plugins so the provider registry is populated first.
 	DocsPlugin,
+	// Live co-editing of Docs pages (per-page Yjs sessions over the GraphQL subscription channel, the edits saved back
+	// to the page's content). Off unless GAUZY_DOCS_LIVE_ENABLED=true; when off it is not loaded at all (no route, no
+	// GraphQL field) and the editor keeps its single-writer autosave. Listed after DocsPlugin, whose services it uses.
+	...(isDocsLiveEnabled(process.env) ? [DocsLivePlugin] : []),
 	// Indicates the inclusion or intention to use the ChangelogPlugin in the codebase.
 	ChangelogPlugin,
 	// Indicates the inclusion or intention to use the IntegrationActivepiecesPlugin in the codebase.
@@ -199,6 +258,11 @@ export const plugins = [
 	IntegrationMakeComPlugin,
 	// Indicates the inclusion or intention to use the IntegrationJiraPlugin in the codebase.
 	IntegrationJiraPlugin,
+	// Jira Cloud sync (OAuth 2.0 connect with site choice, project ↔ project mappings, streamed issue import, two-way
+	// sync with status transitions, dynamic webhooks). Off unless JIRA_ENABLED=true; when off it is not loaded at all
+	// (no route, no table, no outbound request). Listed right after IntegrationJiraPlugin: the Connect descriptor
+	// routes share the `/integration/jira` prefix and must be registered before the sync's `/:integrationId` routes.
+	...(isJiraEnabled(process.env, (message) => console.warn(message)) ? [IntegrationJiraCloudPlugin] : []),
 	// Indicates the inclusion or intention to use the IntegrationUpworkPlugin in the codebase.
 	IntegrationUpworkPlugin,
 	// Indicates the inclusion or intention to use the IntegrationPlanePlugin in the codebase.

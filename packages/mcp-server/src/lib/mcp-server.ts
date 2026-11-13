@@ -1,10 +1,13 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import type { Transport } from '@modelcontextprotocol/sdk/shared/transport.js';
 import { Logger } from '@nestjs/common';
 import { version } from './common/version';
 import { sanitizeErrorMessage } from './common/error-utils';
 import { TransportFactory, TransportResult } from './transports';
 import { sessionManager } from './session/session-manager';
 import { registerAllMcpTools } from './tools/register-all-tools';
+import { collaborationScopesOf, isCollaborationTool } from './tools/collaboration/scopes';
+import { restrictCollaborationTools } from './tools/collaboration';
 
 const logger = new Logger('McpServer');
 
@@ -29,6 +32,16 @@ export interface ToolDescriptor {
  * Extended MCP Server with public tool access methods
  */
 export class ExtendedMcpServer extends McpServer {
+	/**
+	 * An SDK transport (stdio) lists and calls the tools itself, without the per-request scope checks of the HTTP and
+	 * WebSocket transports: the collaboration tools the deployment's fallback scopes (`GAUZY_MCP_TOOLS_SCOPES`, else
+	 * every scope of the enabled groups) do not allow are removed first, so its client sees no such tool.
+	 */
+	override async connect(transport: Transport): Promise<void> {
+		restrictCollaborationTools(this, collaborationScopesOf(undefined));
+		return super.connect(transport);
+	}
+
 	/**
 	 * Helper to detect Zod schemas more robustly
 	 */
@@ -167,7 +180,12 @@ export class ExtendedMcpServer extends McpServer {
 				const SENSITIVE = /pass|secret|token|key|auth|credential/i;
 				return Object.fromEntries(Object.entries(obj).map(([k, v]) => [k, SENSITIVE.test(k) ? '***' : v]));
 			};
-			logger.debug(`Invoking tool: ${name} with args:`, mask(args as Record<string, unknown>));
+			// A collaboration tool carries people's messages and pages: its arguments and answer are never logged, only their names.
+			const privateContent = isCollaborationTool(name);
+			logger.debug(
+				`Invoking tool: ${name} with args:`,
+				privateContent ? { keys: Object.keys(args || {}) } : mask(args as Record<string, unknown>)
+			);
 
 			// Access the MCP server's internal tool execution
 			const serverInternal = this as any;
@@ -217,7 +235,10 @@ export class ExtendedMcpServer extends McpServer {
 			} else {
 				result = await fn(extra);
 			}
-			logger.debug(`Tool ${name} executed successfully. Result:`, mask(result as Record<string, unknown>));
+			logger.debug(
+				`Tool ${name} executed successfully. Result:`,
+				privateContent ? '(not logged: collaboration content)' : mask(result as Record<string, unknown>)
+			);
 
 			return result;
 		} catch (error) {

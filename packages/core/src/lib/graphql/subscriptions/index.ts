@@ -1,4 +1,5 @@
 export * from './graphql-pubsub.service';
+export * from './redis-pubsub.engine';
 export * from './graphql-subscription.module';
 export * from './plugin-subscription';
 export * from './subscription-bus-bridge';

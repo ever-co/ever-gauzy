@@ -37,7 +37,13 @@ import {
 } from './../../shared/guards';
 import { UUIDValidationPipe, UseValidationPipe } from './../../shared/pipes';
 import { CreateManualTimeLogDTO, DeleteTimeLogDTO, UpdateManualTimeLogDTO } from './dto';
-import { GetTimeLogConflictQueryDTO, TimeLogLimitQueryDTO, TimeLogListQueryDTO, TimeLogQueryDTO } from './dto/query';
+import {
+	GetTimeLogConflictQueryDTO,
+	TimeLogBudgetQueryDTO,
+	TimeLogLimitQueryDTO,
+	TimeLogListQueryDTO,
+	TimeLogQueryDTO
+} from './dto/query';
 import { TimeLogBodyTransformPipe } from './pipes';
 import { TimeLogConflictAccessGuard } from './guards/time-log-conflict-access.guard';
 
@@ -220,7 +226,7 @@ export class TimeLogController {
 	@UseGuards(EmployeeTrackedDataGuard)
 	@Get('project-budget-limit')
 	@UseValidationPipe({ whitelist: true, transform: true })
-	async getProjectBudgetLimit(@Query() options: TimeLogQueryDTO) {
+	async getProjectBudgetLimit(@Query() options: TimeLogBudgetQueryDTO) {
 		return await this._timeLogService.getProjectBudgetLimit(options);
 	}
 
@@ -241,7 +247,7 @@ export class TimeLogController {
 	@UseGuards(EmployeeTrackedDataGuard)
 	@Get('client-budget-limit')
 	@UseValidationPipe({ whitelist: true, transform: true })
-	async clientBudgetLimit(@Query() options: TimeLogQueryDTO) {
+	async clientBudgetLimit(@Query() options: TimeLogBudgetQueryDTO) {
 		return await this._timeLogService.getClientBudgetLimit(options);
 	}
 
@@ -292,6 +298,10 @@ export class TimeLogController {
 		status: HttpStatus.BAD_REQUEST,
 		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
+	@ApiResponse({
+		status: HttpStatus.CONFLICT,
+		description: 'RUNNING_TIMER_OVERLAP: a timer is running over the range'
+	})
 	@Post()
 	@UseGuards(OrganizationPermissionGuard)
 	@Permissions(PermissionsEnum.ALLOW_MANUAL_TIME)
@@ -319,7 +329,7 @@ export class TimeLogController {
 	 *    source for itself;
 	 * 3. the route's handler, `addManualTime`: the employee resolved in the caller's tenant, the refusal
 	 *    for an employee the caller may not record time for, the organization's future-date rule, and the
-	 *    removal of the time the interval overlaps.
+	 *    removal of the time the interval overlaps (an interval over a timer still running is refused, 409).
 	 *
 	 * The items are applied one after another, so an item's overlap is resolved against the intervals the
 	 * items before it recorded — exactly what the same intervals recorded one by one would leave.
@@ -393,6 +403,10 @@ export class TimeLogController {
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
 		description: 'Invalid input, The response body may contain clues as to what went wrong'
+	})
+	@ApiResponse({
+		status: HttpStatus.CONFLICT,
+		description: 'RUNNING_TIMER_OVERLAP: a timer is running over the range'
 	})
 	@Put(':id')
 	@UseGuards(OrganizationPermissionGuard)

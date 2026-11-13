@@ -16,9 +16,10 @@ import { CursorCodec } from '../api/cursor';
 import { RequestContext } from '../core/context';
 import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../shared/guards';
 import { TaskController } from './task.controller';
-import { TaskResolver } from './task.resolver';
+import { bulkChangesProblem, TaskResolver } from './task.resolver';
 import { TaskService } from './task.service';
 import { TaskCreateCommand, TaskUpdateCommand } from './commands';
+import { TaskViewsEnabledGuard } from './task-views-enabled';
 
 /**
  * The unit of work over GraphQL.
@@ -102,7 +103,16 @@ function surfaces() {
 		softRemove: jest.fn().mockResolvedValue({ ...ROWS[0], deletedAt: new Date('2026-03-02T10:00:00.000Z') }),
 		softRecover: jest.fn().mockResolvedValue(ROWS[0]),
 		findByNumber: jest.fn().mockResolvedValue(ROWS[0]),
-		unassignEmployeeFromTeamTasks: jest.fn().mockResolvedValue(undefined)
+		findBuiltInView: jest.fn().mockResolvedValue(page),
+		resolveReferences: jest.fn().mockResolvedValue([{ reference: 'FUL-12', key: 'FUL', number: 12, resolved: true, taskId: PICKING }]),
+		// The route's method: applies the change to each task through the callback, and answers the outcome.
+		bulkUpdate: jest.fn(async (_input: unknown, apply: (id: string, update: unknown) => Promise<unknown>) => {
+			await apply(PICKING, { status: 'Done' });
+			return { applied: 1, refused: 0, results: [{ taskId: PICKING, ok: true, previous: { status: 'In Progress' } }] };
+		}),
+		unassignEmployeeFromTeamTasks: jest.fn().mockResolvedValue(undefined),
+		addMember: jest.fn().mockResolvedValue(undefined),
+		removeMember: jest.fn().mockResolvedValue(undefined)
 	};
 	const commandBus = { execute: jest.fn().mockResolvedValue(ROWS[0]) };
 
@@ -210,14 +220,19 @@ const ROUTE_OF_FIELD: ReadonlyArray<readonly [string, string]> = [
 	['taskCount', 'getCount'],
 	['taskMaxNumber', 'getMaxTaskNumberByProject'],
 	['taskByNumber', 'findByNumber'],
+	['builtInViewTasks', 'findBuiltInView'],
+	['resolveTaskReferences', 'resolveReferences'],
 	['createTask', 'create'],
 	['bulkCreateTasks', 'bulk'],
+	['bulkUpdateTasks', 'bulkUpdate'],
 	['updateTask', 'update'],
 	['deleteTask', 'delete'],
 	// The pair the controller inherits from the CRUD base without overriding it.
 	['softDeleteTask', 'softRemove'],
 	['recoverTask', 'softRecover'],
-	['unassignEmployeeFromTeamTasks', 'deleteEmployeeFromTasks']
+	['unassignEmployeeFromTeamTasks', 'deleteEmployeeFromTasks'],
+	['addTaskMember', 'addMember'],
+	['removeTaskMember', 'removeMember']
 ];
 
 describe('TaskResolver — the SDL declares the capabilities the REST routes serve', () => {
@@ -234,7 +249,9 @@ describe('TaskResolver — the SDL declares the capabilities the REST routes ser
 				'task',
 				'taskCount',
 				'taskMaxNumber',
-				'taskByNumber'
+				'taskByNumber',
+				'builtInViewTasks',
+				'resolveTaskReferences'
 			])
 		);
 	});
@@ -247,7 +264,10 @@ describe('TaskResolver — the SDL declares the capabilities the REST routes ser
 				'deleteTask',
 				'softDeleteTask',
 				'recoverTask',
-				'unassignEmployeeFromTeamTasks'
+				'unassignEmployeeFromTeamTasks',
+				'addTaskMember',
+				'removeTaskMember',
+				'bulkUpdateTasks'
 			])
 		);
 	});
@@ -396,6 +416,92 @@ describe('TaskResolver — the connection contract', () => {
 	});
 });
 
+describe('TaskResolver — the task views extensions, two protocols, the same operations', () => {
+	it('reads a built-in view through the reader the route calls, by the enum\'s key, in the caller\'s zone', async () => {
+		const { resolver, taskService } = surfaces();
+		const organization = jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORGANIZATION);
+
+		try {
+			const page = await resolver.builtInViewTasks('thisWeek', undefined, 'Europe/Sofia');
+
+			expect(page.nodes.map((node) => node.id)).toEqual([PICKING, EXCEPTION]);
+			expect(taskService.findBuiltInView).toHaveBeenCalledWith(
+				'this-week',
+				expect.objectContaining({ organizationId: ORGANIZATION, timeZone: 'Europe/Sofia', take: 200 })
+			);
+			await expect(resolver.builtInViewTasks('yesterday')).rejects.toBeInstanceOf(NotFoundException);
+
+			// Soonest due first when the caller states no order, as the route answers: not the list's newest first.
+			taskService.findBuiltInView.mockResolvedValueOnce({
+				items: [
+					{ ...ROWS[0], dueDate: new Date('2026-03-20T10:00:00.000Z') },
+					{ ...ROWS[1], dueDate: new Date('2026-03-05T10:00:00.000Z') }
+				],
+				total: 2
+			});
+			const dueFirst = await resolver.builtInViewTasks('dueSoon');
+			expect(dueFirst.nodes.map((node) => node.id)).toEqual([EXCEPTION, PICKING]);
+		} finally {
+			organization.mockRestore();
+		}
+	});
+
+	it('resolves references through the method the route calls, within the stated organization, and refuses past the cap', async () => {
+		const { resolver, taskService } = surfaces();
+
+		const resolved = await resolver.resolveTaskReferences(['FUL-12'], ORGANIZATION);
+
+		expect(resolved[0]).toEqual(expect.objectContaining({ reference: 'FUL-12', resolved: true, taskId: PICKING }));
+		expect(taskService.resolveReferences).toHaveBeenCalledWith(
+			expect.objectContaining({ organizationId: ORGANIZATION, references: ['FUL-12'] })
+		);
+		await expect(resolver.resolveTaskReferences(Array.from({ length: 51 }, () => 'FUL-1'))).rejects.toBeInstanceOf(
+			BadRequestException
+		);
+	});
+
+	it('changes many tasks through the method the route calls, each by the same command the edit route dispatches', async () => {
+		const { resolver, taskService, commandBus } = surfaces();
+
+		const outcome = await resolver.bulkUpdateTasks({ organizationId: ORGANIZATION, taskIds: [PICKING], changes: { status: 'Done' } } as never);
+
+		expect(outcome).toEqual({ applied: 1, refused: 0, results: [{ taskId: PICKING, ok: true, previous: { status: 'In Progress' } }] });
+		expect(taskService.bulkUpdate).toHaveBeenCalledWith(
+			expect.objectContaining({ organizationId: ORGANIZATION, taskIds: [PICKING], changes: { status: 'Done' } }),
+			expect.any(Function)
+		);
+		const command = commandBus.execute.mock.calls[0][0];
+		expect(command).toBeInstanceOf(TaskUpdateCommand);
+		expect(command.id).toBe(PICKING);
+		expect(command.input).toEqual({ status: 'Done' });
+	});
+
+	it('refuses a change the route\'s DTO would refuse before any task is touched, naming the member', async () => {
+		const { resolver, taskService } = surfaces();
+
+		await expect(resolver.bulkUpdateTasks({ taskIds: [PICKING], changes: { status: 'Nope' } } as never)).rejects.toMatchObject({
+			message: expect.stringContaining('TASK_BULK_CHANGES_INVALID: changes.status')
+		});
+		await expect(
+			resolver.bulkUpdateTasks({ items: [{ taskId: PICKING, changes: { status: 'Done' } }, { taskId: EXCEPTION, changes: { setTagIds: ['x'] } }] } as never)
+		).rejects.toMatchObject({ message: expect.stringContaining('items.1.changes.setTagIds') });
+		expect(taskService.bulkUpdate).not.toHaveBeenCalled();
+
+		expect(bulkChangesProblem({ status: null, taskStatusId: null, dueDate: null, addTagIds: [] }, 'changes')).toBeNull();
+		expect(bulkChangesProblem({ priority: 'urgent', size: 'large', taskSizeId: PICKING, dueDate: '2026-03-01' } as never, 'changes')).toBeNull();
+		expect(bulkChangesProblem({ dueDate: 'soon' } as never, 'changes')).toBe('changes.dueDate');
+		expect(bulkChangesProblem({ projectId: 'p1' }, 'changes')).toBe('changes.projectId');
+		expect(bulkChangesProblem({ isArchived: 'yes' as never }, 'changes')).toBe('changes.isArchived');
+		expect(bulkChangesProblem(null, 'changes')).toBeNull();
+	});
+
+	it('serves the three behind the task views switch, as their routes are', () => {
+		for (const field of ['builtInViewTasks', 'resolveTaskReferences', 'bulkUpdateTasks']) {
+			expect(guardsOfField(field)).toContain(TaskViewsEnabledGuard);
+		}
+	});
+});
+
 describe('TaskResolver — one concept, two protocols, the same operations', () => {
 	it('reads one task through the same service method the REST route calls', async () => {
 		const { resolver, taskService } = surfaces();
@@ -466,7 +572,21 @@ describe('TaskResolver — one concept, two protocols, the same operations', () 
 		expect(taskService.unassignEmployeeFromTeamTasks).toHaveBeenCalledWith(EMPLOYEE, TEAM);
 	});
 
-	it('retires and restores a task through the service methods the inherited routes call', async () => {
+	it('assigns and unassigns one member of one task through the service methods the routes call, in the caller’s organization', async () => {
+		const { resolver, taskService } = surfaces();
+		const organization = jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORGANIZATION);
+
+		try {
+			expect(await resolver.addTaskMember(PICKING, EMPLOYEE)).toBe(true);
+			expect(taskService.addMember).toHaveBeenCalledWith(PICKING, EMPLOYEE, ORGANIZATION);
+			expect(await resolver.removeTaskMember(PICKING, EMPLOYEE)).toBe(true);
+			expect(taskService.removeMember).toHaveBeenCalledWith(PICKING, EMPLOYEE, ORGANIZATION);
+		} finally {
+			organization.mockRestore();
+		}
+	});
+
+	it('retires and restores a task through the service methods the trash routes call', async () => {
 		const { resolver, taskService } = surfaces();
 
 		const retired = await resolver.softDeleteTask(PICKING);
@@ -603,11 +723,25 @@ describe('TaskResolver — the guard stack and the permission are the controller
 			PermissionsEnum.ALL_ORG_EDIT,
 			PermissionsEnum.ORG_TASK_EDIT
 		]);
-		// The inherited soft-delete pair runs under the class-level grant, because the controller does not
-		// override either route to state a narrower one.
-		expect(permissionOfField('softDeleteTask')).toEqual([PermissionsEnum.ALL_ORG_EDIT]);
-		expect(permissionOfField('recoverTask')).toEqual([PermissionsEnum.ALL_ORG_EDIT]);
-		for (const field of ['tasks', 'myTasks', 'task', 'taskCount', 'taskMaxNumber', 'taskByNumber', 'tasksByView']) {
+		expect(permissionOfField('addTaskMember')).toEqual([
+			PermissionsEnum.ALL_ORG_EDIT,
+			PermissionsEnum.ORG_TASK_EDIT
+		]);
+		expect(permissionOfField('removeTaskMember')).toEqual([
+			PermissionsEnum.ALL_ORG_EDIT,
+			PermissionsEnum.ORG_TASK_EDIT
+		]);
+		// The trash pair takes what a delete takes (the controller overrides both routes to state it); with
+		// ORG_TASK_EDIT alone the service lets a manager of one of the task's teams through.
+		for (const field of ['softDeleteTask', 'recoverTask']) {
+			expect(permissionOfField(field)).toEqual([
+				PermissionsEnum.ALL_ORG_EDIT,
+				PermissionsEnum.ORG_TASK_DELETE,
+				PermissionsEnum.ORG_TASK_EDIT
+			]);
+		}
+		expect(permissionOfField('bulkUpdateTasks')).toEqual([PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TASK_EDIT]);
+		for (const field of ['tasks', 'myTasks', 'task', 'taskCount', 'taskMaxNumber', 'taskByNumber', 'tasksByView', 'builtInViewTasks', 'resolveTaskReferences']) {
 			expect(permissionOfField(field)).toEqual([
 				PermissionsEnum.ALL_ORG_VIEW,
 				PermissionsEnum.ORG_TASK_VIEW

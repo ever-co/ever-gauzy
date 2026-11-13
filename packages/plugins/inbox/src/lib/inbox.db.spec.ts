@@ -230,12 +230,12 @@ describe('Inbox on SQLite', () => {
 				)
 			).map((row: { name: string }) => row.name);
 
-		it('create both tables, and a second run adds nothing', async () => {
-			expect(await tables()).toEqual(['inbox_item', 'inbox_item_recipient']);
+		it('create the tables (the items, their recipients, the sweep checkpoints), and a second run adds nothing', async () => {
+			expect(await tables()).toEqual(['inbox_item', 'inbox_item_recipient', 'inbox_sweep_checkpoint']);
 			for (const Migration of INBOX_MIGRATIONS) {
 				await new Migration().up(dataSource.createQueryRunner());
 			}
-			expect(await tables()).toEqual(['inbox_item', 'inbox_item_recipient']);
+			expect(await tables()).toEqual(['inbox_item', 'inbox_item_recipient', 'inbox_sweep_checkpoint']);
 		});
 
 		it('keep one recipient row per item and user, and cascade with the item', async () => {
@@ -525,6 +525,7 @@ describe('Inbox on SQLite', () => {
 			await expect(service.counts()).resolves.toEqual({
 				unread: 4,
 				decisionsOpen: 1,
+				emailUnread: 3,
 				byMailbox: [
 					{ mailboxId: first, unread: 2 },
 					{ mailboxId: second, unread: 1 }
@@ -534,6 +535,7 @@ describe('Inbox on SQLite', () => {
 			await expect(service.counts()).resolves.toEqual({
 				unread: 1,
 				decisionsOpen: 0,
+				emailUnread: 1,
 				byMailbox: [{ mailboxId: second, unread: 1 }]
 			});
 		});
@@ -549,7 +551,7 @@ describe('Inbox on SQLite', () => {
 				title: 'FYI',
 				recipients: [{ userId: ADA }]
 			});
-			await expect(service.counts()).resolves.toEqual({ unread: 2, decisionsOpen: 1, byMailbox: [] });
+			await expect(service.counts()).resolves.toEqual({ unread: 2, decisionsOpen: 1, emailUnread: 0, byMailbox: [] });
 		});
 	});
 

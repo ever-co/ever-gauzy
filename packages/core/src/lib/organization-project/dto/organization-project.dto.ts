@@ -7,6 +7,6 @@ import { UpdateTaskModeDTO } from './update-task-mode.dto';
  * Organization Project DTO request validation
  */
 export class OrganizationProjectDTO extends IntersectionType(
-	PickType(OrganizationProject, ['imageId', 'name', 'billing', 'budgetType'] as const),
+	PickType(OrganizationProject, ['imageId', 'name', 'billing', 'budgetType', 'taskKey'] as const),
 	IntersectionType(PartialType(UpdateTaskModeDTO), MemberEntityBasedDTO)
 ) {}

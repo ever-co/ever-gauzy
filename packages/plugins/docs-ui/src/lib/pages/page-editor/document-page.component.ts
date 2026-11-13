@@ -30,7 +30,9 @@ import {
 	BaseEntityEnum,
 	DocumentKindEnum,
 	DocumentReviewStatusEnum,
+	ID,
 	IDocument,
+	IDocumentFollowState,
 	PermissionsEnum
 } from '@gauzy/contracts';
 import { Store, ToastrService } from '@gauzy/ui-core/core';
@@ -43,9 +45,11 @@ import { DocsSaveState } from '../../editor/services/document-autosave.service';
 import { DocumentStaticViewComponent } from '../../editor/read-only/document-static-view.component';
 import { VersionHistoryPanelComponent } from '../../editor/version-history/version-history-panel.component';
 import { MoveDialogComponent } from '../../dialogs/move-dialog.component';
+import { MoveSpaceDialogComponent } from '../../dialogs/move-space-dialog.component';
 import { RequestReviewDialogComponent } from '../../dialogs/request-review-dialog.component';
 import { DocumentShareDialogComponent } from '../../dialogs/share-dialog.component';
 import { DocsExportService } from '../../services/docs-export.service';
+import { DocsImportService } from '../../services/docs-import.service';
 import { DocumentPermissionService } from '../../services/document-permission.service';
 import { DocumentTreeStore, IDocsTreeNode } from '../../services/document-tree.store';
 import { DocumentsService } from '../../services/documents.service';
@@ -98,6 +102,7 @@ export class DocumentPageComponent implements OnInit, OnDestroy {
 	private readonly router = inject(Router);
 	private readonly documentsService = inject(DocumentsService);
 	private readonly exportService = inject(DocsExportService);
+	private readonly importService = inject(DocsImportService);
 	private readonly treeStore = inject(DocumentTreeStore);
 	private readonly documentPermission = inject(DocumentPermissionService);
 	private readonly dialogService = inject(NbDialogService);
@@ -122,8 +127,16 @@ export class DocumentPageComponent implements OnInit, OnDestroy {
 
 	public railTab: RailTab = 'toc';
 	public railOpen = true;
+	/** Whether the caller follows / muted the page; `null` hides the buttons (collaboration off, or unknown). */
+	public followState: IDocumentFollowState | null = null;
+	public followBusy = false;
+	/** Bumps on every follow read and action; an answer to an older one is dropped. */
+	private followRequest = 0;
 	public versionsOpen = false;
 	public menuOpen = false;
+	/** Whether the server exports PDFs (its probe answered); the PDF entries are hidden otherwise. */
+	public pdfExportAvailable = false;
+	public pdfBusy = false;
 	public iconPickerOpen = false;
 	public fullWidth = false;
 
@@ -206,6 +219,15 @@ export class DocumentPageComponent implements OnInit, OnDestroy {
 			)
 			.subscribe((id) => void this.load(id));
 
+		// The PDF export entries follow the server's probe (hidden while it answers 404, `docs-import-export` FR-17).
+		this.importService
+			.probePdf()
+			.pipe(takeUntilDestroyed(this.destroyRef))
+			.subscribe((capabilities) => {
+				this.pdfExportAvailable = !!capabilities;
+				this.cdr.markForCheck();
+			});
+
 		// `?view=full`: a sidebar favorite opens the page as wide as the shell allows, right rail closed
 		// (handover §4.P). Only that entry point carries it; the viewer can still toggle both afterwards.
 		// Normal navigation away from it (breadcrumb, tree) restores the defaults, as the component is reused.
@@ -258,7 +280,8 @@ export class DocumentPageComponent implements OnInit, OnDestroy {
 
 	/** True while the editor holds edits the server has not acknowledged. */
 	get hasUnsavedChanges(): boolean {
-		return !!this.editorComponent?.autosave.isDirty;
+		// Autosave content not saved yet, or (on a live page) edits not sent yet.
+		return !!this.editorComponent?.hasUnsavedChanges;
 	}
 
 	/**
@@ -274,7 +297,7 @@ export class DocumentPageComponent implements OnInit, OnDestroy {
 	/** Flush while dirty on tab close (spec 05 §9.2 beforeunload guard). */
 	@HostListener('window:beforeunload', ['$event'])
 	onBeforeUnload(event: BeforeUnloadEvent): void {
-		if (this.editorComponent?.autosave.isDirty) {
+		if (this.editorComponent?.hasUnsavedChanges) {
 			void this.editorComponent.flush();
 			event.preventDefault();
 		}
@@ -316,6 +339,7 @@ export class DocumentPageComponent implements OnInit, OnDestroy {
 			this.document = loaded;
 			this.titleDraft = this.document?.name ?? '';
 			this.iconDraft = this.document?.icon ?? '';
+			this.loadFollowState(loaded.id);
 			await this.loadBreadcrumbs();
 		} catch (error) {
 			// Every failure mode lands on the same banner — an org-scope 400, a 403, a genuine
@@ -336,6 +360,56 @@ export class DocumentPageComponent implements OnInit, OnDestroy {
 			this.loading = false;
 			this.cdr.markForCheck();
 			this.applyPendingBlockAnchor();
+		}
+	}
+
+	// ─── Follow / mute (`GAUZY_DOCS_COLLAB_ENABLED`) ──────────────
+
+	/**
+	 * Whether the caller follows the page and whether they muted it; `null` — and the buttons hidden — when
+	 * collaboration is off on the platform (the route answers 404) or the state cannot be read.
+	 */
+	loadFollowState(id: ID): void {
+		this.followState = null;
+		// Only the latest read or action decides the state: an older read (an earlier visit to the same page) that
+		// answers late does not overwrite what a later one confirmed.
+		const request = ++this.followRequest;
+		this.documentsService.getFollowState(id).subscribe({
+			next: (state) => {
+				if (request !== this.followRequest || String(this.document?.id) !== String(id)) return;
+				this.followState = state;
+				this.cdr.markForCheck();
+			},
+			error: () => undefined
+		});
+	}
+
+	/** Follows or unfollows the page (comments, mentions and changes reach the Inbox while following). */
+	async toggleFollow(): Promise<void> {
+		await this.setFollow(this.followState?.following ? 'unfollow' : 'follow');
+	}
+
+	/** Mutes the page, or lifts the mute (a muted page sends nothing to the Inbox; a direct mention still does). */
+	async toggleMute(): Promise<void> {
+		await this.setFollow(this.followState?.muted ? 'unmute' : 'mute');
+	}
+
+	private async setFollow(action: 'follow' | 'unfollow' | 'mute' | 'unmute'): Promise<void> {
+		const id = this.document?.id;
+		if (!id || this.followBusy) return;
+		this.followBusy = true;
+		const request = ++this.followRequest;
+		try {
+			const state = await firstValueFrom(this.documentsService.setFollow(id, action));
+			if (request === this.followRequest && String(this.document?.id) === String(id)) this.followState = state;
+		} catch {
+			this.toastrService.danger(this.translate.instant('DOCS.FOLLOW.FAILED'));
+		} finally {
+			this.followBusy = false;
+			// A read started meanwhile (a reload of the page) may have answered with the state before this action:
+			// the state is read again now that the action is done.
+			if (request !== this.followRequest && String(this.document?.id) === String(id)) this.loadFollowState(id);
+			this.cdr.markForCheck();
 		}
 	}
 
@@ -552,6 +626,34 @@ export class DocumentPageComponent implements OnInit, OnDestroy {
 		if (!written) this.toastrService.warning(this.translate.instant('DOCS.EXPORT.NOTHING_TO_EXPORT'));
 	}
 
+	/**
+	 * Downloads the page (or the page with the sub-pages the caller may read) as a PDF rendered by the server, with the
+	 * title and date in its header and a table of contents for a subtree. The server renders the page as saved: its
+	 * pending edits are saved first (a save in flight, or the live session's waiting edits), or nothing is exported.
+	 */
+	async exportPdf(subtree = false): Promise<void> {
+		this.menuOpen = false;
+		if (!this.document?.id || !this.isPage || this.pdfBusy) return;
+		// The page asked for: the component is reused when the route moves to another page while the saves settle.
+		const pageId = this.document.id as ID;
+		this.pdfBusy = true;
+		try {
+			if (this.editorComponent && !(await this.editorComponent.settleSaves())) {
+				this.toastrService.warning(this.translate.instant('DOCS.EXPORT.PDF_UNSAVED'));
+				return;
+			}
+			if (this.document?.id !== pageId) return;
+			const result = await this.importService.downloadPdf(pageId, { subtree });
+			if (!result.ok) {
+				const tooMany = result.error?.status === 413;
+				this.toastrService.danger(this.translate.instant(tooMany ? 'DOCS.EXPORT.PDF_TOO_MANY_PAGES' : 'DOCS.EXPORT.PDF_FAILED'));
+			}
+		} finally {
+			this.pdfBusy = false;
+			this.cdr.markForCheck();
+		}
+	}
+
 	/** Print-CSS PDF path (spec 05 §9.1 tier 3 — the browser's "Save as PDF"). */
 	async print(): Promise<void> {
 		this.menuOpen = false;
@@ -601,6 +703,32 @@ export class DocumentPageComponent implements OnInit, OnDestroy {
 		} catch {
 			this.toastrService.danger(this.translate.instant('DOCS.ERRORS.GENERIC_RETRY'));
 		}
+	}
+
+	/** Moves the page (and, by default, the pages under it) to another space (`GAUZY_DOCS_COLLAB_ENABLED`). */
+	async openMoveSpaceDialog(): Promise<void> {
+		if (!this.document) return;
+		this.menuOpen = false;
+		// Every edit is saved first (a save in flight included), under the token it was made against: the move
+		// writes the row too.
+		if (this.editorComponent && !(await this.editorComponent.settleSaves())) {
+			this.toastrService.warning(this.translate.instant('DOCS.SPACE.SAVE_FIRST'));
+			return;
+		}
+		this.dialogService
+			.open(MoveSpaceDialogComponent, {
+				context: { document: this.document },
+				// The dialog closes itself (it waits for the move): no backdrop or Esc close while it runs.
+				closeOnBackdropClick: false,
+				closeOnEsc: false
+			})
+			.onClose.subscribe((moved: IDocument | null) => {
+				if (!moved) return;
+				// The move stamped the row: the autosave continues from the moved row's token, or its next save
+				// would be a 409 although nobody else changed the content.
+				this.editorComponent?.rebaseSaveToken(moved);
+				void this.load();
+			});
 	}
 
 	openMoveDialog(): void {

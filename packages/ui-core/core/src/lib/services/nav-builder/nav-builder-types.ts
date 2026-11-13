@@ -30,6 +30,7 @@ export interface NavMenuItemData {
 	featureKey?: FeatureEnum; // Feature key required to display the item (optional)
 	hide?: () => boolean | boolean; // Function to determine if the item should be hidden (optional)
 	add?: string;
+	activePaths?: string[]; // Extra paths the item is highlighted on besides its link, each matched with everything below it (optional)
 }
 
 /**

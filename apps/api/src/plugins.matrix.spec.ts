@@ -16,7 +16,14 @@ const STUBBED = Array.from(PLUGINS_SOURCE.matchAll(/from '((?:@gauzy\/plugin-|\.
 		name !== '@gauzy/plugin-ever-stats' &&
 		name !== '@gauzy/plugin-ever-connect' &&
 		name !== '@gauzy/plugin-integration-ever-works' &&
+		name !== '@gauzy/plugin-integration-linear' &&
+		name !== '@gauzy/plugin-integration-jira' &&
+		name !== '@gauzy/plugin-integration-asana' &&
+		name !== '@gauzy/plugin-integration-trello' &&
 		name !== '@gauzy/plugin-inbox' &&
+		name !== '@gauzy/plugin-realtime' &&
+		name !== '@gauzy/plugin-chat' &&
+		name !== '@gauzy/plugin-task-automations' &&
 		name !== '@gauzy/plugin-email-provider-resend' &&
 		name !== '@gauzy/plugin-email-provider-postmark' &&
 		name !== '@gauzy/plugin-email-provider-mailgun' &&
@@ -30,12 +37,21 @@ class AuthOidcPlugin {}
 class EverStatsPlugin {}
 class EverConnectPlugin {}
 class IntegrationEverWorksPlugin {}
+class IntegrationLinearPlugin {}
+class IntegrationJiraPlugin {}
+class IntegrationJiraCloudPlugin {}
+class IntegrationAsanaPlugin {}
+class IntegrationTrelloPlugin {}
 class InboxPlugin {}
+class RealtimePlugin {}
+class ChatPlugin {}
+class TaskAutomationsPlugin {}
 class EmailProviderSesPlugin {}
 class EmailProviderSendGridPlugin {}
 class EmailProviderMailgunPlugin {}
 class EmailProviderPostmarkPlugin {}
 class InboxEmailPlugin {}
+class InboxDeliveryPlugin {}
 class EmailProviderResendPlugin {}
 
 /** A stand-in plugin class; `init()` mimics the configurable plugins. */
@@ -86,11 +102,50 @@ function loadPlugins(env: Record<string, string | undefined>, before?: () => voi
 				IntegrationEverWorksPlugin,
 				isEverWorksEnabled: jest.requireActual('../../../packages/plugins/integration-ever-works/src/lib/ever-works-enabled').isEverWorksEnabled
 			}));
+			jest.doMock('@gauzy/plugin-integration-linear', () => ({
+				IntegrationLinearPlugin,
+				isLinearEnabled: jest.requireActual('../../../packages/plugins/integration-linear/src/lib/linear-enabled').isLinearEnabled
+			}));
+			jest.doMock('@gauzy/plugin-integration-jira', () => ({
+				IntegrationJiraPlugin,
+				IntegrationJiraCloudPlugin,
+				isJiraEnabled: jest.requireActual('../../../packages/plugins/integration-jira/src/lib/jira-enabled').isJiraEnabled
+			}));
+			jest.doMock('@gauzy/plugin-integration-asana', () => ({
+				IntegrationAsanaPlugin,
+				isAsanaEnabled: jest.requireActual('../../../packages/plugins/integration-asana/src/lib/asana-enabled').isAsanaEnabled
+			}));
+			jest.doMock('@gauzy/plugin-integration-trello', () => ({
+				IntegrationTrelloPlugin,
+				isTrelloEnabled: jest.requireActual('../../../packages/plugins/integration-trello/src/lib/trello-enabled').isTrelloEnabled
+			}));
 			jest.doMock('@gauzy/plugin-inbox', () => ({
 				InboxPlugin,
 				InboxEmailPlugin,
+				InboxDeliveryPlugin,
 				isInboxEnabled: jest.requireActual('../../../packages/plugins/inbox/src/lib/inbox-enabled').isInboxEnabled,
+				isInboxNotificationEmailEnabled: jest.requireActual('../../../packages/plugins/inbox/src/lib/inbox-enabled').isInboxNotificationEmailEnabled,
+				isInboxWebPushEnabled: jest.requireActual('../../../packages/plugins/inbox/src/lib/inbox-enabled').isInboxWebPushEnabled,
 				isInboxEmailEnabled: jest.requireActual('../../../packages/plugins/inbox/src/lib/email/inbox-email-enabled').isInboxEmailEnabled
+			}));
+			jest.doMock('@gauzy/plugin-realtime', () => ({
+				RealtimePlugin,
+				isRealtimeEnabled: jest.requireActual('../../../packages/plugins/realtime/src/lib/realtime-enabled').isRealtimeEnabled
+			}));
+			jest.doMock('@gauzy/plugin-chat', () => ({
+				ChatPlugin,
+				isChatEnabled: jest.requireActual('../../../packages/plugins/chat/src/lib/chat-enabled').isChatEnabled
+			}));
+			jest.doMock('@gauzy/plugin-task-automations', () => ({
+				TaskAutomationsPlugin,
+				isTaskAutomationsEnabled: jest.requireActual('../../../packages/plugins/task-automations/src/lib/task-automations-enabled')
+					.isTaskAutomationsEnabled
+			}));
+			// The Docs package also exports the switch of its live sessions, called while the list is built.
+			jest.doMock('@gauzy/plugin-docs', () => ({
+				DocsPlugin: stubPluginClass(),
+				DocsLivePlugin: stubPluginClass(),
+				isDocsLiveEnabled: jest.requireActual('../../../packages/plugins/docs/src/lib/live/docs-live.config').isDocsLiveEnabled
 			}));
 			jest.doMock('@gauzy/plugin-email-provider-resend', () => ({
 				EmailProviderResendPlugin,
@@ -289,6 +344,113 @@ describe('API plugin list: Ever Works integration', () => {
 				EVER_CONNECT_ENABLED: connect ? 'true' : undefined
 			});
 			expect([plugins.includes(IntegrationEverWorksPlugin), plugins.includes(EverConnectPlugin)]).toEqual([works, connect]);
+		} finally {
+			warn.mockRestore();
+		}
+	});
+});
+
+describe('API plugin list: Linear integration', () => {
+	it.each([
+		['unset (the default)', undefined, false, 0],
+		['empty', '', false, 0],
+		['false', 'false', false, 0],
+		['true', 'true', true, 0],
+		['TRUE', 'TRUE', false, 1],
+		['1', '1', false, 1]
+	])('LINEAR_ENABLED %s: loaded %s, %i log line(s)', (_name, value, loaded, lines) => {
+		const warn = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+		try {
+			const plugins = loadPlugins({ LINEAR_ENABLED: value });
+			expect(plugins.includes(IntegrationLinearPlugin)).toBe(loaded);
+			expect(warn.mock.calls.filter(([message]) => String(message).includes('LINEAR_ENABLED'))).toHaveLength(lines);
+		} finally {
+			warn.mockRestore();
+		}
+	});
+});
+
+describe('API plugin list: Jira integration', () => {
+	it.each([
+		['unset (the default)', undefined, false, 0],
+		['empty', '', false, 0],
+		['false', 'false', false, 0],
+		['true', 'true', true, 0],
+		['TRUE', 'TRUE', false, 1],
+		['1', '1', false, 1]
+	])('JIRA_ENABLED %s: sync loaded %s, %i log line(s); the Connect descriptor routes always', (_name, value, loaded, lines) => {
+		const warn = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+		try {
+			const plugins = loadPlugins({ JIRA_ENABLED: value });
+			expect(plugins.includes(IntegrationJiraPlugin)).toBe(true);
+			expect(plugins.includes(IntegrationJiraCloudPlugin)).toBe(loaded);
+			expect(warn.mock.calls.filter(([message]) => String(message).includes('JIRA_ENABLED'))).toHaveLength(lines);
+		} finally {
+			warn.mockRestore();
+		}
+	});
+
+	it('lists the sync right after the Connect plugin, whose routes under the same prefix must be registered first', () => {
+		const warn = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+		try {
+			const plugins = loadPlugins({ JIRA_ENABLED: 'true' });
+			expect(plugins.indexOf(IntegrationJiraCloudPlugin)).toBe(plugins.indexOf(IntegrationJiraPlugin) + 1);
+		} finally {
+			warn.mockRestore();
+		}
+	});
+});
+
+describe('API plugin list: Asana integration', () => {
+	it.each([
+		['unset (the default)', undefined, false, 0],
+		['false', 'false', false, 0],
+		['true', 'true', true, 0],
+		['yes', 'yes', false, 1]
+	])('ASANA_ENABLED %s: loaded %s, %i log line(s)', (_name, value, loaded, lines) => {
+		const warn = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+		try {
+			const plugins = loadPlugins({ ASANA_ENABLED: value });
+			expect(plugins.includes(IntegrationAsanaPlugin)).toBe(loaded);
+			expect(warn.mock.calls.filter(([message]) => String(message).includes('ASANA_ENABLED'))).toHaveLength(lines);
+		} finally {
+			warn.mockRestore();
+		}
+	});
+});
+
+describe('API plugin list: Trello integration', () => {
+	it.each([
+		['unset (the default)', undefined, false, 0],
+		['false', 'false', false, 0],
+		['true', 'true', true, 0],
+		['yes', 'yes', false, 1]
+	])('TRELLO_ENABLED %s: loaded %s, %i log line(s)', (_name, value, loaded, lines) => {
+		const warn = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+		try {
+			const plugins = loadPlugins({ TRELLO_ENABLED: value });
+			expect(plugins.includes(IntegrationTrelloPlugin)).toBe(loaded);
+			expect(warn.mock.calls.filter(([message]) => String(message).includes('TRELLO_ENABLED'))).toHaveLength(lines);
+		} finally {
+			warn.mockRestore();
+		}
+	});
+});
+
+describe('API plugin list: task automations', () => {
+	it.each([
+		['unset (the default)', undefined, false, 0],
+		['empty', '', false, 0],
+		['false', 'false', false, 0],
+		['true', 'true', true, 0],
+		['TRUE', 'TRUE', false, 1],
+		['1', '1', false, 1]
+	])('GAUZY_TASK_AUTOMATIONS_ENABLED %s: loaded %s, %i log line(s)', (_name, value, loaded, lines) => {
+		const warn = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+		try {
+			const plugins = loadPlugins({ GAUZY_TASK_AUTOMATIONS_ENABLED: value });
+			expect(plugins.includes(TaskAutomationsPlugin)).toBe(loaded);
+			expect(warn.mock.calls.filter(([message]) => String(message).includes('GAUZY_TASK_AUTOMATIONS_ENABLED'))).toHaveLength(lines);
 		} finally {
 			warn.mockRestore();
 		}

@@ -12,6 +12,20 @@ export const GRAPHQL_MAX_BODY_BYTES_DEFAULT = 1024 * 1024;
 export const DEFAULT_MAX_BODY = '50mb';
 
 /**
+ * Public routes that only ever take a small body, with a ceiling of their own: an unauthenticated caller must not make
+ * the API read and parse 50 MB before the route can refuse it.
+ *
+ * - `POST /api/chat/hooks/:token` (the chat plugin's incoming webhooks): a post holds at most 64 KiB, which the route
+ *   answers with `422 payload_too_large`; a body over twice that is refused here (413) before it is read.
+ * - `POST /api/integration/jira/webhook/:integrationId` (the Jira sync's dynamic webhooks): a delivery the route takes
+ *   weighs at most 2 MiB (`JIRA_WEBHOOK_MAX_BYTES`); a body over that is refused here (413) before it is read.
+ */
+export const SMALL_BODY_ROUTES: ReadonlyArray<{ path: string; limit: number }> = [
+	{ path: '/api/chat/hooks', limit: 128 * 1024 },
+	{ path: '/api/integration/jira/webhook', limit: 2 * 1024 * 1024 }
+];
+
+/**
  * The path the GraphQL endpoint is served on, as the driver is configured with it (`graphqlConfigOptions.path`,
  * which `CoreModule` hands to Apollo), so what is mounted for the endpoint lands where the endpoint is.
  *
@@ -85,6 +99,10 @@ export function installBodyParsers(
 	// Both parsers the application mounts below, so the endpoint's ceiling holds whatever the content type: a parser
 	// only reads the type it is for, and a form body sent to the endpoint used to reach the 50 MB form parser
 	// (CodeRabbit on #10651).
+	for (const route of SMALL_BODY_ROUTES) {
+		app.use(route.path, json({ limit: route.limit, verify }));
+		app.use(route.path, urlencoded({ extended: true, limit: route.limit, verify }));
+	}
 	app.use(options.graphqlPath, json({ limit: graphqlLimit, verify }));
 	app.use(options.graphqlPath, urlencoded({ extended: true, limit: graphqlLimit, verify }));
 	app.use(json({ limit: DEFAULT_MAX_BODY, verify }));

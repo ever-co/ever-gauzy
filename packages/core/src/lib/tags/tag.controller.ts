@@ -90,6 +90,8 @@ export class TagController extends CrudController<Tag> {
 	@Post('/')
 	@UseValidationPipe({ whitelist: true })
 	async create(@Body() entity: CreateTagDTO): Promise<ITag> {
+		// A name the tag's team has already is refused with 409, here and for each bulk item (tags of no team: unchecked)
+		await this.tagService.assertNameIsFree(entity);
 		return await this.tagService.create(entity);
 	}
 
@@ -170,6 +172,9 @@ export class TagController extends CrudController<Tag> {
 		@Param('id', UUIDValidationPipe) id: ITag['id'],
 		@Body() entity: UpdateTagDTO
 	): Promise<ITag | UpdateResult> {
+		// A rename (or a move to another team) may not take a name the tag's scope has already
+		const existing = await this.tagService.findOneByIdString(id);
+		await this.tagService.assertChangeIsFree(existing, entity, id);
 		return await this.tagService.update(id, entity);
 	}
 
@@ -241,6 +246,8 @@ export class TagController extends CrudController<Tag> {
 	@Put(':id/recover')
 	@UsePipes(new AbstractValidationPipe({ whitelist: true }, { query: TenantOrganizationBaseDTO }))
 	async softRecover(@Param('id', UUIDValidationPipe) id: ID, ...options: any[]): Promise<Tag> {
+		// Its name may have gone to another tag of the scope since it was deleted
+		await this.tagService.assertRecoveryIsFree(id);
 		return super.softRecover(id, ...options);
 	}
 }

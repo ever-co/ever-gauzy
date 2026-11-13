@@ -22,6 +22,10 @@ import {
 import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToOne } from '../../core/decorators/entity';
 import { MikroOrmActivityRepository } from './repository/mikro-orm-activity.repository';
 
+// The activity reports (Apps & URLs, the Apps and Visited Sites tabs) read an organization's rows of a date range:
+// with the tenant, the organization and the recorded instant in one index that read is a range scan of the rows it
+// answers, instead of every row of the organization (or of the date range across all tenants) filtered afterwards.
+@ColumnIndex('IDX_activity_tenant_org_recorded', ['tenantId', 'organizationId', 'recordedAt'])
 @MultiORMEntity('activity', { mikroOrmRepository: () => MikroOrmActivityRepository })
 export class Activity extends TenantOrganizationBaseEntity implements IActivity {
 

@@ -45,6 +45,7 @@ import { MikroOrmOrganizationProjectModuleRepository } from './repository/mikro-
 import { TypeOrmOrganizationProjectModuleEmployeeRepository } from './repository/type-orm-organization-project-module-employee.repository';
 import { MikroOrmOrganizationProjectModuleEmployeeRepository } from './repository/mikro-orm-organization-project-module-employee.repository';
 import { FavoriteService } from '../core/decorators';
+import { assertCallerColumnsAllowed } from '../core/util/caller-restricted-columns.helper';
 
 @FavoriteService(BaseEntityEnum.OrganizationProjectModule)
 @Injectable()
@@ -238,6 +239,7 @@ export class OrganizationProjectModuleService extends TenantAwareCrudService<Org
 		// Builds its own query, so the check in the CRUD read methods never runs: assert the
 		// sensitive-relation table on the client-supplied relations before anything is loaded.
 		this.assertRelationsPermitted(options);
+		assertCallerColumnsAllowed(this.typeOrmRepository?.metadata, options);
 
 		try {
 			const { where } = options;
@@ -364,6 +366,7 @@ export class OrganizationProjectModuleService extends TenantAwareCrudService<Org
 		// Builds its own query, so the check in the CRUD read methods never runs: assert the
 		// sensitive-relation table on the client-supplied relations before anything is loaded.
 		this.assertRelationsPermitted(options);
+		assertCallerColumnsAllowed(this.typeOrmRepository?.metadata, options);
 
 		try {
 			const { where } = options;

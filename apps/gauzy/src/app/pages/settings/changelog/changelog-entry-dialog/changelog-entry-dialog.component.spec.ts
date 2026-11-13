@@ -81,6 +81,7 @@ describe('ChangelogEntryDialogComponent', () => {
 
 	it('does not save an icon the app cannot draw, and previews the default icon meanwhile', async () => {
 		open(existing);
+		// A name no icon pack holds, misspelled on purpose. cspell:disable-next-line
 		component.form.patchValue({ icon: 'moon-outlin' });
 
 		await component.save();
@@ -232,5 +233,31 @@ describe('ChangelogEntryDialogComponent', () => {
 
 		expect(component.preview.title).toBe('Darker mode');
 		expect(component.preview.learnMoreUrl).toBe('');
+	});
+
+	it("files a new entry under the product the page shows, named in the form's header", async () => {
+		open({ isFeature: false, platform: 'ever-teams' });
+		expect(component.platformName).toBe('Ever Teams');
+		expect(component.canBeFeature).toBe(false);
+		component.form.patchValue({ title: 'Team chat', content: 'Talk next to your tasks.', isFeature: true });
+
+		await component.save();
+
+		expect(changelogService.create).toHaveBeenCalledWith(
+			expect.objectContaining({ title: 'Team chat', platform: 'ever-teams', isFeature: false })
+		);
+	});
+
+	it("keeps a Gauzy entry Gauzy's, and lets it be a sign-up page card", async () => {
+		open({ ...existing, isFeature: true });
+		expect(component.platform).toBe('gauzy');
+		expect(component.canBeFeature).toBe(true);
+
+		await component.save();
+
+		expect(changelogService.update).toHaveBeenCalledWith(
+			'news-1',
+			expect.objectContaining({ platform: 'gauzy', isFeature: true })
+		);
 	});
 });

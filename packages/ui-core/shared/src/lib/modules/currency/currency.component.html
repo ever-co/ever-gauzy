@@ -6,6 +6,7 @@
       </label>
     }
     <ng-select
+      [ariaLabel]="accessibleLabel() || (placeholder || 'FORM.LABELS.CURRENCY' | translate)"
       class="currency-selector"
       #select
       [items]="currencies$ | async"

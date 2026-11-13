@@ -46,11 +46,16 @@ import {
 // Record-side Documents panel (spec 00 §6.14 R-LNK-02). Standalone, so it is
 // imported directly — the Documents hub module is never pulled in here.
 import { DocumentLinksPanelComponent } from '@gauzy/plugin-docs-ui';
+// The extension slot plugins add their actions to the task page through ("Send to chat"). Standalone.
+import { PageExtensionSlotComponent } from '@gauzy/plugin-ui';
 // The employee page's hours chart, which the task page draws for the task. Standalone.
 import { EmployeeHoursChartComponent } from '../employees/view-employee/employee-hours-chart/employee-hours-chart.component';
 // The project page's board and activity feed, which the task page draws for the task and its subtasks. Standalone.
 import { ProjectBoardComponent } from '../projects/components/project-view/project-board/project-board.component';
 import { ProjectActivityComponent } from '../projects/components/project-view/project-activity/project-activity.component';
+import { SelectOptionsAtStartDirective } from '../projects/components/project-view/project-board/select-options-at-start.directive';
+// The project page's comments, which the task page's Comments tab draws for the task. Standalone.
+import { EntityCommentsComponent } from '../shared/entity-comments/entity-comments.component';
 import { TaskComponent } from './components/task/task.component';
 import { TaskViewHeaderComponent } from './components/task-view/task-view-header.component';
 import { TaskViewPageComponent } from './components/task-view/task-view-page.component';
@@ -117,9 +122,12 @@ import { SprintTaskComponent } from './components/task/tasks-layouts/tasks-sprin
 		TaskStatusSelectModule,
 		TaskNumberFieldModule,
 		DocumentLinksPanelComponent,
+		PageExtensionSlotComponent,
 		EmployeeHoursChartComponent,
 		ProjectBoardComponent,
-		ProjectActivityComponent
+		ProjectActivityComponent,
+		SelectOptionsAtStartDirective,
+		EntityCommentsComponent
 	]
 })
 export class TasksModule {}

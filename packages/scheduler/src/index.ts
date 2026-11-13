@@ -11,5 +11,6 @@ export * from './lib/interfaces/scheduler-queue-job.interface';
 export * from './lib/interfaces/scheduler-run-recorder.interface';
 export * from './lib/hosts/queue-worker.host';
 export * from './lib/utils/is-queue-root-enabled';
+export * from './lib/utils/resolve-bull-connection';
 export * from './lib/services/scheduler-queue.service';
 export * from './lib/services/scheduler.service';

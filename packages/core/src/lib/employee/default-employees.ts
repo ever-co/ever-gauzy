@@ -17,21 +17,21 @@ export const DEFAULT_EMPLOYEES: any = [
 
 export const DEFAULT_EVER_EMPLOYEES: any = [
 	{
-		email: 'ruslan@example-ever.co',
+		email: 'ronan@example-ever.co',
 		password: '12345678',
-		firstName: 'Ruslan',
-		lastName: 'K.',
-		imageUrl: 'assets/images/avatars/ruslan.jpg',
+		firstName: 'Ronan',
+		lastName: 'B.',
+		imageUrl: 'assets/images/avatars/ronan.png',
 		employeeLevel: 'A',
 		preferredLanguage: LanguagesEnum.ENGLISH,
 		preferredComponentLayout: ComponentLayoutStyleEnum.TABLE
 	},
 	{
-		email: 'alish@example-ever.co',
+		email: 'aiden@example-ever.co',
 		password: '12345678',
-		firstName: 'Alish',
+		firstName: 'Aiden',
 		lastName: 'M.',
-		imageUrl: 'assets/images/avatars/alish.jpg',
+		imageUrl: 'assets/images/avatars/aiden.png',
 		startedWorkOn: '2018-03-20',
 		endWork: null,
 		employeeLevel: 'D',
@@ -147,7 +147,7 @@ export const DEFAULT_EVER_EMPLOYEES: any = [
 		preferredComponentLayout: ComponentLayoutStyleEnum.TABLE
 	},
 	{
-		email: 'mustero@smooper.xyz',
+		email: 'mustero@example-ever.co',
 		password: '12345678',
 		firstName: 'Mustero',
 		lastName: 'M.',
@@ -159,7 +159,7 @@ export const DEFAULT_EVER_EMPLOYEES: any = [
 		preferredComponentLayout: ComponentLayoutStyleEnum.TABLE
 	},
 	{
-		email: 'desterrro@hotmail.com',
+		email: 'desterrro@example-ever.co',
 		password: '12345678',
 		firstName: 'Desterrro',
 		lastName: 'D.',
@@ -171,11 +171,11 @@ export const DEFAULT_EVER_EMPLOYEES: any = [
 		preferredComponentLayout: ComponentLayoutStyleEnum.TABLE
 	},
 	{
-		email: 'ckhandla94@gmail.com',
+		email: 'carter@example-ever.co',
 		password: '12345678',
-		firstName: 'Chetan',
-		lastName: 'K.',
-		imageUrl: 'assets/images/avatars/chetan.png',
+		firstName: 'Carter',
+		lastName: 'N.',
+		imageUrl: 'assets/images/avatars/carter.png',
 		startedWorkOn: '2020-03-07',
 		endWork: null,
 		employeeLevel: null,
@@ -183,11 +183,11 @@ export const DEFAULT_EVER_EMPLOYEES: any = [
 		preferredComponentLayout: ComponentLayoutStyleEnum.TABLE
 	},
 	{
-		email: 'rahulrathore576@gmail.com',
+		email: 'rafael@example-ever.co',
 		password: '12345678',
-		firstName: 'Rahul',
-		lastName: 'R.',
-		imageUrl: 'assets/images/avatars/rahul.png',
+		firstName: 'Rafael',
+		lastName: 'T.',
+		imageUrl: 'assets/images/avatars/rafael.png',
 		startedWorkOn: '2020-09-10',
 		endWork: null,
 		employeeLevel: null,
@@ -195,11 +195,11 @@ export const DEFAULT_EVER_EMPLOYEES: any = [
 		preferredComponentLayout: ComponentLayoutStyleEnum.TABLE
 	},
 	{
-		email: 'julia@example-ever.co',
+		email: 'jasmine@example-ever.co',
 		password: '12345678',
-		firstName: 'Julia',
-		lastName: 'K.',
-		imageUrl: 'assets/images/avatars/julia.png',
+		firstName: 'Jasmine',
+		lastName: 'L.',
+		imageUrl: 'assets/images/avatars/jasmine.png',
 		startedWorkOn: '2018-08-01',
 		endWork: null,
 		employeeLevel: 'C',

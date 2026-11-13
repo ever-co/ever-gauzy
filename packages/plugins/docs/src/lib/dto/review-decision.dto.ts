@@ -1,5 +1,6 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsOptional, IsString, MaxLength } from 'class-validator';
+import { ArrayMaxSize, IsArray, IsOptional, IsString, IsUUID, MaxLength } from 'class-validator';
+import { ID } from '@gauzy/contracts';
 
 /**
  * Body of `POST /api/plugins/docs/documents/:id/review/request` (§4.9).
@@ -10,6 +11,14 @@ export class RequestReviewDTO {
 	@IsString()
 	@MaxLength(1000)
 	readonly reason?: string;
+
+	/** The employees asked to review: each gets an Inbox entry (holders of `DOCS_REVIEW` decide either way). */
+	@ApiPropertyOptional({ type: () => Array })
+	@IsOptional()
+	@IsArray()
+	@ArrayMaxSize(50)
+	@IsUUID('all', { each: true })
+	readonly reviewerEmployeeIds?: ID[];
 }
 
 /**

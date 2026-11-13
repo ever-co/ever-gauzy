@@ -24,17 +24,36 @@ describe('InboxEmailViewerComponent', () => {
 		expect(EMAIL_DOCUMENT_CSP).not.toContain('script-src');
 	});
 
-	it('renders the frame with an empty sandbox and the document', () => {
+	it('renders an HTML message in the frame, with an empty sandbox and the document', () => {
 		TestBed.configureTestingModule({ imports: [InboxEmailViewerComponent] });
 		const fixture = TestBed.createComponent(InboxEmailViewerComponent);
-		fixture.componentRef.setInput('text', 'Hi Ada');
+		fixture.componentRef.setInput('html', '<p>Hi Ada</p>');
 		fixture.detectChanges();
 		const frame: HTMLIFrameElement = fixture.nativeElement.querySelector('[data-test="email-frame"]');
 		expect(frame.getAttribute('sandbox')).toBe('');
-		expect(frame.srcdoc).toContain('<pre>Hi Ada</pre>');
+		expect(frame.srcdoc).toContain('<p>Hi Ada</p>');
 
-		fixture.componentRef.setInput('text', 'Hi Bob');
+		fixture.componentRef.setInput('html', '<p>Hi Bob</p>');
 		fixture.detectChanges();
-		expect(frame.srcdoc).toContain('<pre>Hi Bob</pre>');
+		expect(frame.srcdoc).toContain('<p>Hi Bob</p>');
+	});
+
+	it('shows a plain-text message as text in the pane (no frame), its quotes and signature apart, never as markup', () => {
+		TestBed.configureTestingModule({ imports: [InboxEmailViewerComponent] });
+		const fixture = TestBed.createComponent(InboxEmailViewerComponent);
+		fixture.componentRef.setInput('text', 'Hi <b>Ada</b>\n\n> earlier\n-- \nBob');
+		fixture.detectChanges();
+		const el: HTMLElement = fixture.nativeElement;
+		expect(el.querySelector('[data-test="email-frame"]')).toBeNull();
+		const blocks = Array.from(el.querySelectorAll('.block')).map((block) => [
+			block.getAttribute('data-kind'),
+			block.textContent
+		]);
+		expect(blocks).toEqual([
+			['text', 'Hi <b>Ada</b>'],
+			['quote', 'earlier'],
+			['signature', 'Bob']
+		]);
+		expect(el.querySelector('b')).toBeNull();
 	});
 });

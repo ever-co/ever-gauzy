@@ -38,4 +38,13 @@ export class ZitadelSession extends TenantBaseEntity {
 	@IsOptional()
 	@MultiORMColumn({ nullable: true })
 	refreshTokenId?: ID;
+
+	/**
+	 * The Ever ID refresh token of this session, encrypted (AES-256-GCM, by the Ever Platform connection plugin, as it
+	 * stores the installation's keys), together with the issuer it came from. Kept only while the App Launcher is on
+	 * (`EVER_APP_LAUNCHER_ENABLED=true`), and NULL otherwise. Never selected unless asked for, never serialized, never
+	 * returned by a route and never logged; it goes with the session record.
+	 */
+	@MultiORMColumn({ type: 'text', nullable: true, select: false, hidden: true })
+	everRefreshTokenEncrypted?: string | null;
 }

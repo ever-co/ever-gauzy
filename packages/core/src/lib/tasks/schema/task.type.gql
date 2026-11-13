@@ -1290,6 +1290,13 @@ type TaskView {
 	properties: JSON
 	"Whether the view is protected from edits. The delivered create never sets it and the column is not updateable."
 	isLocked: Boolean
+	"""
+	Bumped by every save. `updateTaskView` and `setTaskViewOrder` refuse a stated `expectedVersion` that is not this
+	one (`TASK_VIEW_VERSION_CONFLICT`), so a client reads it before a save and gets the bumped one back.
+	"""
+	version: Int
+	"The task ids in the order the view shows them (a manual ordering), as `setTaskViewOrder` wrote them."
+	manualOrder: [ID!]
 	projectId: ID
 	organizationTeamId: ID
 	projectModuleId: ID
@@ -1380,6 +1387,8 @@ What a caller states when it changes a saved view. Every member but the identifi
 """
 input UpdateTaskViewInput {
 	id: ID!
+	"The version the client read; the save is refused when the view moved on (`TASK_VIEW_VERSION_CONFLICT`)."
+	expectedVersion: Int
 	organizationId: ID
 	name: String
 	description: String
@@ -1392,6 +1401,193 @@ input UpdateTaskViewInput {
 	organizationTeamId: ID
 	projectModuleId: ID
 	organizationSprintId: ID
+}
+
+"""
+The views the platform computes without saving, as `builtInViewTasks` names them.
+"""
+enum TaskBuiltInView {
+	"The caller's open tasks."
+	mine
+	"The caller's open tasks due this week."
+	thisWeek
+	"The caller's open tasks whose due date has passed."
+	overdue
+	"The caller's open tasks due in the next seven days."
+	dueSoon
+}
+
+"""
+One `KEY-number` reference as `resolveTaskReferences` answers it.
+"""
+type TaskReferenceResolution {
+	"The reference as it was sent."
+	reference: String!
+	key: String!
+	number: Int!
+	resolved: Boolean!
+	"More than one project answers to the key with that number: refused rather than guessed."
+	ambiguous: Boolean
+	taskId: ID
+	projectId: ID
+	title: String
+	status: String
+	"The key the task is addressed by today (the project's current key)."
+	currentKey: String
+	"The number the task holds today (differs from `number` when it was resolved by a former reference)."
+	currentNumber: Int
+	"Resolved by a reference the task held before it moved to another project."
+	formerReference: Boolean
+}
+
+"""
+What a bulk update changes on a task. A member sent as null is cleared; a list named `set…` replaces the
+task's, `add…` and `remove…` adjust it.
+"""
+input TaskBulkChangesInput {
+	status: String
+	taskStatusId: ID
+	priority: String
+	taskPriorityId: ID
+	size: String
+	taskSizeId: ID
+	addTagIds: [ID!]
+	removeTagIds: [ID!]
+	setTagIds: [ID!]
+	addMemberIds: [ID!]
+	removeMemberIds: [ID!]
+	setMemberIds: [ID!]
+	projectId: ID
+	organizationSprintId: ID
+	dueDate: DateTime
+	isArchived: Boolean
+}
+
+"""
+One task and the change it takes — how an undo sends the previous values back.
+"""
+input TaskBulkUpdateItemInput {
+	taskId: ID!
+	changes: TaskBulkChangesInput!
+}
+
+"""
+What `bulkUpdateTasks` takes: one change for many tasks (`taskIds` + `changes`), or a change per task
+(`items`); never both.
+"""
+input TaskBulkUpdateInput {
+	"The organization the tasks belong to; the credential's when omitted."
+	organizationId: ID
+	taskIds: [ID!]
+	changes: TaskBulkChangesInput
+	items: [TaskBulkUpdateItemInput!]
+}
+
+"""
+The values a task held before a bulk update changed them, as the changes that put them back.
+"""
+type TaskBulkChanges {
+	status: String
+	taskStatusId: ID
+	priority: String
+	taskPriorityId: ID
+	size: String
+	taskSizeId: ID
+	addTagIds: [ID!]
+	removeTagIds: [ID!]
+	setTagIds: [ID!]
+	addMemberIds: [ID!]
+	removeMemberIds: [ID!]
+	setMemberIds: [ID!]
+	projectId: ID
+	organizationSprintId: ID
+	dueDate: DateTime
+	isArchived: Boolean
+}
+
+"""
+One task's outcome in a bulk update.
+"""
+type TaskBulkUpdateResult {
+	taskId: ID!
+	ok: Boolean!
+	"Why the task was not changed (not found, not this organization's, refused by the update)."
+	error: String
+	"The values before the change, as the changes that put them back."
+	previous: TaskBulkChanges
+}
+
+"""
+What a bulk update adds up to: `applied + refused` is how many entries `results` holds.
+"""
+type TaskBulkUpdatePayload {
+	applied: Int!
+	refused: Int!
+	"One entry per task, in request order."
+	results: [TaskBulkUpdateResult!]!
+}
+
+"""
+The order a view shows its tasks in, as `setTaskViewOrder` takes it.
+"""
+input TaskViewOrderInput {
+	"The organization the view belongs to; the credential's when omitted."
+	organizationId: ID
+	"Task ids in display order, at most 5000."
+	taskIds: [ID!]!
+	"The version the client read; refused when stale."
+	expectedVersion: Int
+}
+
+"""
+How a view's tasks are grouped for the counts `taskViewTasks` answers.
+"""
+enum TaskViewGroupBy {
+	none
+	status
+	priority
+	size
+	project
+	sprint
+	assignee
+	team
+	label
+}
+
+"""
+One group of a view's tasks: the key (an id, or null for the tasks without one), its name when known, and
+how many.
+"""
+type TaskViewGroupCount {
+	key: ID
+	label: String
+	count: Int!
+}
+
+"""
+A condition the platform could not apply: where it is in the tree (`filter.conditions.0.conditions.2`),
+and why — `unknown-field`, `unknown-operator`, `malformed`, or `deleted-reference` with the ids that no
+longer exist (the condition was applied without them).
+"""
+type TaskViewInvalidFilter {
+	path: String!
+	field: String
+	reason: String!
+	values: [ID!]
+}
+
+"""
+One page of a view's tasks, as `taskViewTasks` answers it: the tasks, the cursor of the next page (null on
+the last one), how many tasks the filter selects, the counts per group when a grouping was asked for (the
+view's, or the query's), and the conditions that could not be applied.
+"""
+type TaskViewTasksPage {
+	items: [Task!]!
+	nextCursor: String
+	total: Int!
+	groups: [TaskViewGroupCount!]
+	groupBy: TaskViewGroupBy!
+	invalidFilters: [TaskViewInvalidFilter!]!
 }
 
 """

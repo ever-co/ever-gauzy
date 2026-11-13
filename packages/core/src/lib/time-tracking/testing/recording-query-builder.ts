@@ -26,15 +26,33 @@ export class RecordingQueryBuilder {
 	 * execute.
 	 */
 	rows: unknown[] = [];
+	/** The joins added so far, by alias, as `SelectQueryBuilder.expressionMap.joinAttributes` lists them. */
+	readonly expressionMap: { joinAttributes: Array<{ alias: { name: string } }> } = { joinAttributes: [] };
 	private clauses: RecordedClause[] = [];
+	/** Parameters a sub-query bound while a condition callback ran; attached to that condition's clause. */
+	private subQueryParameters: Record<string, unknown> = {};
 
 	constructor(readonly alias: string) {}
 
-	innerJoin(): this {
+	innerJoin(_target?: unknown, alias?: string): this {
+		if (alias) {
+			this.expressionMap.joinAttributes.push({ alias: { name: alias } });
+		}
 		return this;
 	}
 
 	setFindOptions(): this {
+		return this;
+	}
+
+	/** A sub-query whose SQL a condition callback embeds (`EXISTS (...)`, `IN (...)`), like typeorm's `subQuery()`. */
+	subQuery(): RecordingSubQuery {
+		return new RecordingSubQuery(this);
+	}
+
+	/** Called by a sub-query for each parameter it binds; typeorm binds them on the parent query the same way. */
+	setParameter(key: string, value: unknown): this {
+		this.subQueryParameters[key] = value;
 		return this;
 	}
 
@@ -49,6 +67,13 @@ export class RecordingQueryBuilder {
 	}
 
 	andWhere(condition: unknown, parameters?: Record<string, unknown>): this {
+		if (typeof condition === 'function') {
+			// typeorm runs a condition callback at once and uses the SQL it returns (`getWhereCondition`).
+			this.subQueryParameters = {};
+			const sql = condition(this);
+			this.clauses.push(this.record(sql, { ...this.subQueryParameters, ...(parameters ?? {}) }));
+			return this;
+		}
 		this.clauses.push(this.record(condition, parameters));
 		return this;
 	}
@@ -71,6 +96,72 @@ export class RecordingQueryBuilder {
 			return { condition, nested: nested.clauses };
 		}
 		return { condition, parameters };
+	}
+}
+
+/**
+ * The sub-query double: renders the SELECT it is given as one line of SQL (`getQuery()` answers it in
+ * parentheses, as typeorm does for a sub-query) and binds its parameters on the parent builder.
+ */
+/**
+ * The entity manager's query builder as `TimeLogService.loadTimeSlotFigures` uses it: every chained call returns the
+ * stub, and `getRawMany` answers the slot figures of the given logs (one row per slot of each log's `timeSlots`, as
+ * the junction query would). Hand it to a mocked repository as `manager.createQueryBuilder`.
+ */
+export function slotFiguresQueryBuilder(logs: () => unknown[]) {
+	const stub: Record<string, unknown> = {};
+	for (const method of ['select', 'addSelect', 'from', 'innerJoin', 'where', 'andWhere', 'orderBy', 'addOrderBy']) {
+		stub[method] = () => stub;
+	}
+	stub.getRawMany = async () =>
+		(logs() as Array<{ id: string; timeSlots?: Array<{ id: string; overall: number; duration: number }> }>).flatMap(
+			(log) => (log.timeSlots ?? []).map((slot) => ({ timeLogId: log.id, id: slot.id, overall: slot.overall, duration: slot.duration }))
+		);
+	return stub;
+}
+
+export class RecordingSubQuery {
+	private selection = '';
+	private source = '';
+	private readonly joins: string[] = [];
+	private readonly conditions: string[] = [];
+
+	constructor(private readonly parent: RecordingQueryBuilder) {}
+
+	select(selection: string): this {
+		this.selection = selection;
+		return this;
+	}
+
+	from(table: string, alias: string): this {
+		this.source = `${table} ${alias}`;
+		return this;
+	}
+
+	innerJoin(table: string, alias: string, condition: string): this {
+		this.joins.push(`INNER JOIN ${table} ${alias} ON ${condition}`);
+		return this;
+	}
+
+	where(condition: string, parameters?: Record<string, unknown>): this {
+		return this.andWhere(condition, parameters);
+	}
+
+	andWhere(condition: string, parameters?: Record<string, unknown>): this {
+		this.conditions.push(condition);
+		for (const [key, value] of Object.entries(parameters ?? {})) {
+			this.parent.setParameter(key, value);
+		}
+		return this;
+	}
+
+	distinct(): this {
+		return this;
+	}
+
+	getQuery(): string {
+		const where = this.conditions.length ? ` WHERE ${this.conditions.join(' AND ')}` : '';
+		return `(SELECT ${this.selection} FROM ${this.source}${this.joins.map((join) => ` ${join}`).join('')}${where})`;
 	}
 }
 

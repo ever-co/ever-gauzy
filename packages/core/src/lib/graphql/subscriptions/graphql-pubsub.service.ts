@@ -44,6 +44,16 @@ export interface GraphqlPubSubEngine {
 	 * Ends every open stream, for a shutdown.
 	 */
 	close?(): void;
+
+	/**
+	 * True when a publish reaches the subscribers of every process, not only this one's.
+	 */
+	readonly shared?: boolean;
+
+	/**
+	 * How many streams this process has open, when the engine keeps its own.
+	 */
+	readonly openStreams?: number;
 }
 
 /**
@@ -274,7 +284,18 @@ export class GraphqlPubSub implements OnModuleDestroy {
 	 * How many streams are open. Zero when a remote engine is in use, which is the engine's business.
 	 */
 	get openStreams(): number {
+		if (this.engine !== this.broker && typeof this.engine.openStreams === 'number') {
+			return this.engine.openStreams;
+		}
 		return this.broker.topics().reduce((total, topic) => total + this.broker.subscriberCount(topic), 0);
+	}
+
+	/**
+	 * Whether a publish here reaches the subscribers of every API process (a shared engine such as
+	 * Redis), or only this process's own.
+	 */
+	get sharedAcrossProcesses(): boolean {
+		return this.engine !== this.broker && this.engine.shared === true;
 	}
 
 	/**

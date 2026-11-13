@@ -45,7 +45,8 @@ describe('readEverConnectConfig', () => {
 			signIn: {
 				redirectUri: 'http://localhost:3000/api/auth/zitadel/callback',
 				logoutUri: 'http://localhost:3000/api/auth/zitadel/backchannel-logout'
-			}
+			},
+			provision: { enabled: false, appUrl: 'http://localhost:4200', apiUrl: 'http://localhost:3000' }
 		});
 	});
 
@@ -74,6 +75,24 @@ describe('readEverConnectConfig', () => {
 		expect(
 			readEverConnectConfig({ ZITADEL_CALLBACK_URL: 'https://gauzy.example.com/api/auth/zitadel/callback?x=1' }).signIn
 		).toBeNull();
+	});
+
+	it('API_BASE_URL loses every trailing slash, and a long run of slashes is read in linear time (CodeQL js/polynomial-redos)', () => {
+		expect(readEverConnectConfig({ API_BASE_URL: ' https://gauzy.example.com/// ' }).signIn).toEqual({
+			redirectUri: 'https://gauzy.example.com/api/auth/zitadel/callback',
+			logoutUri: 'https://gauzy.example.com/api/auth/zitadel/backchannel-logout'
+		});
+		// The workspace provisioning reads the same value, also without its trailing slashes.
+		expect(readEverConnectConfig({ API_BASE_URL: 'https://gauzy.example.com/api///' }).provision.apiUrl).toBe(
+			'https://gauzy.example.com/api'
+		);
+		// `/\/+$/` took about 7.4 s on this value (quadratic: each slash restarts the run); one pass from the end takes
+		// well under a millisecond. The bound is loose on purpose, so a busy runner cannot fail it, and still far below 7 s.
+		const started = Date.now();
+		const config = readEverConnectConfig({ API_BASE_URL: `https://gauzy.example.com/${'/'.repeat(100_000)}x` });
+		expect(config.signIn).toBeNull();
+		expect(config.provision.apiUrl).toBe(`https://gauzy.example.com/${'/'.repeat(100_000)}x`);
+		expect(Date.now() - started).toBeLessThan(1_000);
 	});
 
 	it('cloud only from EVER_INSTALL_SOURCE=cloud, never from other signals', () => {

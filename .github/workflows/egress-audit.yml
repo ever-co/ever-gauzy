@@ -1,5 +1,5 @@
 name: Egress audit
-# cspell:words corepack println DOTENV readdir nomock pcaps toomanyrequests
+# cspell:words corepack dind println DOTENV readdir nomock pcaps toomanyrequests
 
 # Proves at runtime, with the published API and web app images, what the Ever Platform modules
 # (anonymous usage statistics, connection) may send: nothing at all when they are switched off or
@@ -28,6 +28,11 @@ name: Egress audit
 #   entitlement_ladder  entitlement documents in grace, paused, issued in the future (refused) and
 #                   slightly ahead (accepted): the ladder follows, Gauzy's own routes answer the
 #                   same at every step, only the connection's documented calls are made
+#   positive_lookup the counterparty check and discoverability enabled against the mock platform:
+#                   a contact checked, the tax id saved, discoverability switched off; the only
+#                   calls beyond the connection's are the salt, the query and the identifier upload
+#                   and removal (hashes only), none before the consent
+#   control_lookup  positive_lookup without the mock platform must FAIL
 #   static-bundle   the built web app of the image names no Ever host the baseline does not have
 #
 # The static checks run on every pull request that touches code (no install but the harness):
@@ -349,6 +354,16 @@ jobs:
             run: entitlement_ladder
             dotenv: api-empty.env
             expect: 0
+          - mode: positive_lookup
+            run: positive_lookup
+            dotenv: api-empty.env
+            expect: 0
+          # positive_lookup without the mock platform must report a violation (exit 1).
+          - mode: control_lookup
+            run: positive_lookup
+            args: --no-mock
+            dotenv: api-empty.env
+            expect: 1
     steps:
       - name: Free disk space for the images
         run: |
@@ -360,6 +375,15 @@ jobs:
           # The modes pull the same Docker Hub images in parallel from shared runner addresses, which
           # Docker Hub rate-limits; every image of the audit is pinned by digest, so the mirror serves
           # the same bytes.
+          # Only where the Docker daemon is a local systemd service (a GitHub-hosted VM). A runner that
+          # reaches its daemon elsewhere, as the in-cluster CI does (a dind sidecar over DOCKER_HOST,
+          # with a pull-through mirror of its own), has no /etc/docker and no daemon to restart here:
+          # its daemon's mirrors stay as they are.
+          if [ ! -d /etc/docker ] || ! command -v systemctl > /dev/null || ! systemctl cat docker.service > /dev/null 2>&1; then
+            echo "The Docker daemon is not a local systemd service here (DOCKER_HOST=${DOCKER_HOST:-unset}): it keeps its own registry mirrors."
+            docker info --format '{{json .RegistryConfig.Mirrors}}'
+            exit 0
+          fi
           cfg=/etc/docker/daemon.json
           if [ -s "$cfg" ]; then current=$(cat "$cfg"); else current='{}'; fi
           echo "$current" | jq '. + {"registry-mirrors": ["https://mirror.gcr.io"]}' | sudo tee "$cfg" > /dev/null
@@ -419,15 +443,20 @@ jobs:
       - name: The web app image serves its page (outside the audit, so a broken image is named here)
         run: |
           docker run -d --name webapp-smoke -e API_BASE_URL=http://api:3000 -e CLIENT_BASE_URL=http://webapp:4200 -p 127.0.0.1:4299:4200 "$GAUZY_WEBAPP_IMAGE" > /dev/null
+          # The image's entrypoint rewrites every bundle with sed before nginx starts: about 2 minutes on
+          # a fast machine, and more than 3 on the in-cluster runners' older CPUs (the port resets the
+          # connection until then). 10 minutes is a hang, not a slow start: the deadline is elapsed time,
+          # and each request is bounded, so a port that accepts and never answers cannot outlast it.
           ok=false
-          for i in $(seq 1 60); do
-            if curl -fsS -o /dev/null http://127.0.0.1:4299/; then ok=true; break; fi
+          start=$SECONDS
+          while [ $((SECONDS - start)) -lt 600 ]; do
+            if curl -fsS --connect-timeout 5 --max-time 10 -o /dev/null http://127.0.0.1:4299/ 2> /dev/null; then ok=true; break; fi
             sleep 3
           done
           docker logs webapp-smoke 2>&1 | grep -v '^+ ' | tail -20 || true
           docker rm -f webapp-smoke > /dev/null
-          if [ "$ok" != true ]; then echo "::error::the web app image did not serve its page within 3 minutes (port 4200 of the container, published as 127.0.0.1:4299)"; exit 1; fi
-          echo "The web app image serves its page."
+          if [ "$ok" != true ]; then echo "::error::the web app image did not serve its page within 10 minutes (port 4200 of the container, published as 127.0.0.1:4299)"; exit 1; fi
+          echo "The web app image serves its page (after $((SECONDS - start)) s)."
 
       - name: Write the API .env.local files of the modes, and a secret for this run
         run: |

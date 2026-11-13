@@ -14,13 +14,17 @@ export const AUDIT_ACTIONS = Object.freeze([
 	'link.purge',
 	'integration.enable',
 	'integration.disable',
+	'integration.configure',
+	'identifiers.push',
+	'identifiers.delete',
 	'consent.grant',
 	'consent.revoke',
 	'entitlement.refresh',
 	'policy.change',
 	'sign_in_client.change',
 	'person_link.report',
-	'person_request.answer'
+	'person_request.answer',
+	'provision.accept'
 ] as const);
 export type AuditAction = (typeof AUDIT_ACTIONS)[number];
 
@@ -49,7 +53,10 @@ export const AUDIT_DETAIL_KEYS = Object.freeze([
 	'result',
 	'op',
 	'count',
-	'attempts'
+	'attempts',
+	'step_seq',
+	'product_tenant_id',
+	'product_org_id'
 ] as const);
 
 /** Who acted, without personal data. */

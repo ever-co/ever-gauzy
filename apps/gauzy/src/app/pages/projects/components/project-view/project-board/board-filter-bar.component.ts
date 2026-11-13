@@ -11,6 +11,7 @@ import {
 	NO_BOARD_FILTER,
 	NO_BOARD_FILTER_OPTIONS
 } from './board-filter';
+import { SelectOptionsAtStartDirective } from './select-options-at-start.directive';
 
 /**
  * The filters over a board, as Jira's: a search, the assignees as avatars to toggle, then a menu each for the
@@ -20,7 +21,7 @@ import {
 @Component({
 	selector: 'ga-board-filter-bar',
 	standalone: true,
-	imports: [NbButtonModule, NbIconModule, NbSelectModule, NbTooltipModule, TranslatePipe],
+	imports: [NbButtonModule, NbIconModule, NbSelectModule, NbTooltipModule, SelectOptionsAtStartDirective, TranslatePipe],
 	templateUrl: './board-filter-bar.component.html',
 	styleUrls: ['./board-filter-bar.component.scss'],
 	changeDetection: ChangeDetectionStrategy.OnPush

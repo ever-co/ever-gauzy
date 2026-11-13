@@ -1,4 +1,5 @@
-import { Body, Controller, Get, HttpStatus, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, HttpStatus, Param, Post, Put, Query, Res, UseGuards } from '@nestjs/common';
+import type { Response } from 'express';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
@@ -17,6 +18,9 @@ import { BulkDocumentActionCommand } from '../commands/bulk-document-action.comm
 import { CreateDocumentCommand } from '../commands/create-document.command';
 import { UpdateDocumentCommand } from '../commands/update-document.command';
 import { UpdateDocumentContentCommand } from '../commands/update-document-content.command';
+import { UpdateDocumentMarkdownDTO } from '../dto/update-document-markdown.dto';
+import { DocumentMarkdownService, IDocumentMarkdownUpdateResult } from '../services/document-markdown.service';
+import { markdownFileNameOf } from '../services/document-markdown';
 import {
 	BulkDocumentActionDTO,
 	CreateDocumentDTO,
@@ -85,7 +89,11 @@ export function toRelationList(relations?: string | string[]): string[] {
 @FeatureFlag(FeatureEnum.FEATURE_DOCUMENTS)
 @Controller('/plugins/docs/documents')
 export class DocumentController {
-	constructor(private readonly commandBus: CommandBus, private readonly queryBus: QueryBus) {}
+	constructor(
+		private readonly commandBus: CommandBus,
+		private readonly queryBus: QueryBus,
+		private readonly markdown: DocumentMarkdownService
+	) {}
 
 	/**
 	 * Retrieves a paginated, filtered document list. List projections never include content
@@ -180,6 +188,77 @@ export class DocumentController {
 		@Body() input: UpdateDocumentContentDTO
 	): Promise<IDocument> {
 		return this.commandBus.execute(new UpdateDocumentContentCommand(id, input));
+	}
+
+	/**
+	 * A page as Markdown (the stored subset), or with `subtree=true` the page and the pages under it the caller may
+	 * read as a zip (`index.md` for the root, one file per page, relative links, the files they show under
+	 * `assets/`). A folder exports with `subtree=true` too: its pages, folders and files (copied as they are, beside
+	 * the pages of their folder) and an `index.md` listing them. Declared before `GET /:id` so the static segment is
+	 * never swallowed by it.
+	 */
+	@ApiOperation({ summary: 'Export a page as Markdown, or a page or folder subtree as a zip of Markdown files (and files).' })
+	@ApiResponse({ status: HttpStatus.OK, description: 'The Markdown (text/markdown) or the zip (application/zip).' })
+	@ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Document not found.' })
+	@ApiResponse({ status: HttpStatus.CONFLICT, description: 'Not a page (a folder exports with subtree=true only).' })
+	@ApiResponse({ status: HttpStatus.PAYLOAD_TOO_LARGE, description: 'A subtree holding more pages and files than the export takes (refused, never cut).' })
+	@Permissions(PermissionsEnum.DOCS_READ)
+	@UseValidationPipe({ whitelist: true, transform: true })
+	// A subtree export reads up to 500 pages and the files they show in one request, as the bulk route fans out.
+	@Throttle(docsRateLimit(getDocsConfig().adminOpsRateLimit))
+	@Get('/:id/export/markdown')
+	public async exportMarkdown(
+		@Param('id', UUIDValidationPipe) id: ID,
+		@Res() res: Response,
+		@Query('subtree') subtree?: string,
+		@Query() query?: DocumentScopeQueryDTO
+	): Promise<void> {
+		res.setHeader('X-Content-Type-Options', 'nosniff');
+		res.setHeader('Cache-Control', 'private, no-store');
+		if (subtree === 'true' || subtree === '1') {
+			// The root is read (and refused) before any byte of the zip goes out — a 404 or a 409 is still an answer — and
+			// handed to the writer, so the zip is of the page that was checked rather than of a second read of it.
+			// A page or a folder (its pages, folders and files); a file is 409 `DOCS_NOT_A_PAGE`.
+			const root = await this.markdown.requireExportRoot(id, query?.organizationId);
+			const fileName = markdownFileNameOf(root.name).replace(/\.md$/, '.zip');
+			res.setHeader('Content-Type', 'application/zip');
+			res.setHeader('Content-Disposition', `attachment; filename="${fileName}"; filename*=UTF-8''${encodeURIComponent(fileName)}`);
+			try {
+				await this.markdown.writeSubtreeZip(root, query?.organizationId, res);
+			} catch (error) {
+				// Nothing of the zip went out: the error answer must not travel under the zip's headers.
+				if (!res.headersSent) {
+					res.removeHeader('Content-Type');
+					res.removeHeader('Content-Disposition');
+				}
+				throw error;
+			}
+			return;
+		}
+		const page = await this.markdown.exportPage(id, query?.organizationId);
+		res.setHeader('Content-Type', 'text/markdown; charset=utf-8');
+		res.setHeader('Content-Disposition', `attachment; filename="${page.fileName}"; filename*=UTF-8''${encodeURIComponent(page.fileName)}`);
+		res.end(page.markdown);
+	}
+
+	/**
+	 * Applies a Markdown text to a page, changing only the blocks whose Markdown changed (a moved block is kept); the
+	 * content route's rules apply (a stale `expectedRevision` → 409 `DOCS_CONTENT_CONFLICT`, a locked page → 423, the
+	 * schema, the snapshot, the HTML cache, the mention and link sync). A text that leaves a commented block's place
+	 * among identical blocks to a guess → 409 `DOCS_MARKDOWN_AMBIGUOUS`. Nothing is written when the text changes
+	 * nothing.
+	 */
+	@ApiOperation({ summary: 'Update a page from Markdown (block diff, revision check).' })
+	@ApiResponse({ status: HttpStatus.OK, description: 'The document as saved, and what the Markdown changed.' })
+	@ApiResponse({ status: HttpStatus.CONFLICT, description: 'Stale revision, not a page, or a commented block the Markdown cannot place among identical ones.' })
+	@Permissions(PermissionsEnum.DOCS_UPDATE)
+	@UseValidationPipe({ whitelist: true, transform: true, forbidNonWhitelisted: true })
+	@Put('/:id/content/markdown')
+	public async updateContentFromMarkdown(
+		@Param('id', UUIDValidationPipe) id: ID,
+		@Body() input: UpdateDocumentMarkdownDTO
+	): Promise<IDocumentMarkdownUpdateResult> {
+		return this.markdown.updateFromMarkdown(id, input);
 	}
 
 	/**

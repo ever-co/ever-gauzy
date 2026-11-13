@@ -36,11 +36,12 @@ import { isKnownDefaultSecret } from '@gauzy/contracts';
 export type KeyMaterialSource = 'k' | 'j' | 'n';
 
 /**
- * What a stored secret is for: the statistics key, the Ever Platform connect key, or a document the
- * Ever Platform connection keeps (an entitlement document, an integration's configuration). The
+ * What a stored secret is for: the statistics key, the Ever Platform connect key, a document the
+ * Ever Platform connection keeps (an entitlement document, an integration's configuration), or the
+ * Ever ID refresh token a session keeps for the App Launcher (`@gauzy/plugin-auth-zitadel`). The
  * purpose is bound into the ciphertext, so one cannot be read as another.
  */
-export type KeyPurpose = 'stats' | 'connect' | 'entitlement' | 'integration_config';
+export type KeyPurpose = 'stats' | 'connect' | 'entitlement' | 'integration_config' | 'ever_id_refresh_token';
 
 /** Shown on the settings page while the stored keys are not protected by `ENCRYPTION_KEY`. */
 export type KeyWarning = 'encryption_key_unset' | 'jwt_secret_default' | 'no_secret';

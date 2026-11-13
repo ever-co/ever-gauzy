@@ -1,5 +1,6 @@
 import { BaseEntityEnum, IBasePerTenantAndOrganizationEntityModel, ID, JsonData } from './base-entity.model';
 import { IEmployee } from './employee.model';
+import { IDocumentSearchSnippet } from './document-comment-anchor.model';
 import { FileStorageProviderEnum } from './file-provider';
 import { IOrganizationTeam } from './organization-team.model';
 import { ITag } from './tag.model';
@@ -93,7 +94,42 @@ export enum DocumentReviewReasonEnum {
  */
 export enum DocumentVisibilityEnum {
 	ORGANIZATION = 'ORGANIZATION',
-	PRIVATE = 'PRIVATE'
+	PRIVATE = 'PRIVATE',
+	/** The page belongs to a team space (`organizationTeamId`): its members and `DOCS_MANAGE` holders reach it. */
+	TEAM = 'TEAM'
+}
+
+/**
+ * The spaces a page tree is listed in: the organization's, one per team (its members' pages), and each person's
+ * private one. A document's space follows from its `visibility` and `organizationTeamId`.
+ */
+export enum DocumentSpaceKindEnum {
+	ORGANIZATION = 'organization',
+	TEAM = 'team',
+	PRIVATE = 'private'
+}
+
+/** One space as the caller sees it, with how many documents of theirs it lists. */
+export interface IDocumentSpace {
+	kind: DocumentSpaceKindEnum;
+	/** The team of a team space. */
+	organizationTeamId?: ID;
+	name: string;
+	documentCount: number;
+}
+
+/** Moves a page (and, when asked, its subtree) to a space: the organization's, a team's, or the caller's private one. */
+export interface IDocumentSpaceMoveInput extends IBasePerTenantAndOrganizationEntityModel {
+	visibility: DocumentVisibilityEnum;
+	organizationTeamId?: ID | null;
+	/** Also move every descendant the caller may write (default true). */
+	applyToSubtree?: boolean;
+}
+
+/** Whether the caller follows a page (gets told of comments and changes) or muted it. */
+export interface IDocumentFollowState {
+	following: boolean;
+	muted: boolean;
 }
 
 /**
@@ -153,6 +189,10 @@ export interface IDocument extends IBasePerTenantAndOrganizationEntityModel {
 	reviewedBy?: IEmployee;
 	reviewedAt?: Date;
 	visibility: DocumentVisibilityEnum;
+	organizationTeamId?: ID; // TEAM visibility: the team whose space the document is in
+	organizationTeam?: IOrganizationTeam;
+	/** Moves on every content change (content save, Markdown update, version restore): the compare-and-set token of API writers. */
+	contentRevision?: number;
 	externalSource?: string; // Importer/integration namespace
 	externalId?: string; // Id inside `externalSource`; together they make importers idempotent
 	metadata?: JsonData; // Catch-all provenance/extension dict
@@ -161,6 +201,8 @@ export interface IDocument extends IBasePerTenantAndOrganizationEntityModel {
 	versions?: IDocumentVersion[];
 	shares?: IDocumentShare[];
 	links?: IDocumentLink[];
+	/** Virtual. A search's plain-text snippet with its match offsets (`GET /documents?q=…` only). */
+	readonly searchSnippet?: IDocumentSearchSnippet;
 }
 
 /**
@@ -283,6 +325,7 @@ export interface IDocumentCreateInput extends IBasePerTenantAndOrganizationEntit
 	contentHtml?: string; // PAGE only
 	contentBinary?: Uint8Array; // PAGE only
 	visibility?: DocumentVisibilityEnum;
+	organizationTeamId?: ID | null; // With TEAM visibility: the team's space
 	tags?: ITag[];
 	categoryIds?: ID[];
 	importToKnowledge?: boolean;
@@ -424,4 +467,111 @@ export interface IDocumentInboundDomainVerification {
 	lastCheckedAt?: Date | null;
 	/** Populated when a verification attempt fails, so the UI can say why. */
 	message?: string;
+}
+
+// ---------------------------------------------------------------- import from exported workspaces
+
+/** Where an import run is (`docs-import-export` spec FR-5). */
+export enum DocumentImportStatusEnum {
+	QUEUED = 'QUEUED',
+	RUNNING = 'RUNNING',
+	COMPLETED = 'COMPLETED',
+	FAILED = 'FAILED'
+}
+
+/** What a running import is doing: reading the archive, creating the tree, writing the pages. */
+export enum DocumentImportPhaseEnum {
+	PLANNING = 'PLANNING',
+	TREE = 'TREE',
+	CONTENT = 'CONTENT',
+	DONE = 'DONE'
+}
+
+/** The shape of the uploaded zip, as detected (`docs-import-export` spec FR-3). */
+export enum DocumentImportLayoutEnum {
+	/** Folders of `.md` pages with their attachments; `[[wiki links]]` and `![[embeds]]`. */
+	MARKDOWN_VAULT = 'MARKDOWN_VAULT',
+	/** Nested folders whose page files (`.md` or `.html`) carry a trailing 32-hex id in their name. */
+	HTML_EXPORT = 'HTML_EXPORT'
+}
+
+/** What became of one entry of the zip. */
+export enum DocumentImportItemStatusEnum {
+	IMPORTED = 'IMPORTED',
+	SKIPPED = 'SKIPPED',
+	FAILED = 'FAILED'
+}
+
+/** One entry of the zip in the report. */
+export interface IDocumentImportReportItem {
+	/** The entry's path inside the zip. */
+	path: string;
+	/** What the entry became (or would have become). */
+	kind: DocumentKindEnum;
+	status: DocumentImportItemStatusEnum;
+	/** The document created for it. */
+	documentId?: ID;
+	/** Its name in Docs. */
+	name?: string;
+	/** Why it was skipped or failed: a stable code (`UNSUPPORTED_TYPE`, `TOO_LARGE`, `QUOTA_EXCEEDED`, …). */
+	reason?: string;
+	/** Links of the page that point at nothing the zip holds. */
+	unresolvedLinks?: number;
+}
+
+/** The outcome of an import, item by item (at most 5,000 items; the counts are always complete). */
+export interface IDocumentImportReport {
+	items: IDocumentImportReportItem[];
+	/** True when more items were processed than the report keeps. */
+	truncated?: boolean;
+}
+
+/** One import run (`document_import`). */
+export interface IDocumentImport extends IBasePerTenantAndOrganizationEntityModel {
+	status: DocumentImportStatusEnum;
+	phase?: DocumentImportPhaseEnum | null;
+	layout?: DocumentImportLayoutEnum | null;
+	/** The uploaded file's name. */
+	fileName: string;
+	fileSize?: number | null;
+	/** The page or folder the tree lands under; none = the top of the space. */
+	parentId?: ID | null;
+	visibility?: DocumentVisibilityEnum | null;
+	organizationTeamId?: ID | null;
+	totalItems: number;
+	processedItems: number;
+	importedCount: number;
+	skippedCount: number;
+	failedCount: number;
+	attempts?: number;
+	/** Why a FAILED import failed: a stable code and a message. */
+	errorCode?: string | null;
+	errorMessage?: string | null;
+	report?: IDocumentImportReport | null;
+	startedAt?: Date | null;
+	finishedAt?: Date | null;
+	lastProgressAt?: Date | null;
+}
+
+/** The target of a new import (multipart fields beside the `file`). */
+export interface IDocumentImportCreateInput extends IBasePerTenantAndOrganizationEntityModel {
+	/** A page or folder the caller may write. */
+	parentId?: ID | null;
+	/** The space of the imported pages (ignored when a parent is given: the pages take the parent's space). */
+	visibility?: DocumentVisibilityEnum;
+	/** The team of a `TEAM` space. */
+	organizationTeamId?: ID | null;
+}
+
+/** The answer of the PDF capability probe (`GET /plugins/docs/exports/pdf`). */
+export interface IDocumentPdfExportCapabilities {
+	/** The most pages one subtree export takes. */
+	maxPages: number;
+}
+
+/** The answer of the import capability probe and history (`GET /plugins/docs/imports`). */
+export interface IDocumentImportList {
+	items: IDocumentImport[];
+	/** The largest zip the import accepts, in bytes. */
+	maxZipBytes: number;
 }

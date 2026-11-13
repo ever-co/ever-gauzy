@@ -161,7 +161,15 @@ import { GraphqlOrganizationMembershipInterceptor } from '../graphql/graphql-org
 import { ReadableCommentsInterceptor } from '../comment/readable-comments.interceptor';
 import { EventOutboxModule } from '../event-outbox/event-outbox.module';
 import { EventOutboxMaintenanceModule } from '../event-outbox/event-outbox-maintenance.module';
+import {
+	EventOutboxInlineDispatchModule,
+	isEventOutboxInlineDispatchEnabled
+} from '../event-outbox/event-outbox-inline-dispatch';
+import { WebhookInlineRetryModule } from '../webhook/webhook-inline-retry';
 import { WebhookMaintenanceModule } from '../webhook/webhook-maintenance.module';
+import { TimerReminderMaintenanceModule } from '../time-tracking/timer-reminder/timer-reminder-maintenance.module';
+import { TimerReminderInlineModule } from '../time-tracking/timer-reminder/timer-reminder-inline';
+import { isTimerRemindersEnabled } from '../time-tracking/timer-reminder/timer-reminder-enabled';
 import { OperationModule } from '../operation/operation.module';
 import { WebhookModule } from '../webhook/webhook.module';
 import { MeasurementModule } from '../measurement/measurement.module';
@@ -191,6 +199,7 @@ import { TaskVersionModule } from '../tasks/versions/version.module';
 import { TaskViewModule } from '../tasks/views/view.module';
 import { TaxLineModule } from '../tax-line/tax-line.module';
 import { OAuthClientModule } from '../auth/oauth-client/oauth-client.module';
+import { UserApiTokenModule } from '../auth/user-api-token/user-api-token.module';
 import { TenantApiKeyModule } from '../tenant-api-key/tenant-api-key.module';
 import { TenantSettingModule } from '../tenant/tenant-setting/tenant-setting.module';
 import { TenantModule } from '../tenant/tenant.module';
@@ -628,6 +637,7 @@ if (environment.EVER_TEAMS_CLIENT_IP_SECRET?.trim() && !clientIpSecretOf(environ
 		EmployeeNotificationSettingModule,
 		TenantApiKeyModule,
 		OAuthClientModule,
+		UserApiTokenModule,
 		EmployeeRecentVisitModule,
 		SharedEntityModule,
 		BroadcastModule,
@@ -676,8 +686,8 @@ if (environment.EVER_TEAMS_CLIENT_IP_SECRET?.trim() && !clientIpSecretOf(environ
 					// same as the sweep's: without a queue root nothing hands appended events to their
 					// consumers, so GraphQL subscriptions, the search index and every outbound webhook go
 					// quiet while `event_outbox` grows. Appending still works and no writer sees an error —
-					// which is exactly why this is called out here rather than left to be discovered. A
-					// deployment that wants events delivered needs `REDIS_ENABLED` and a worker process.
+					// which is exactly why this is called out here rather than left to be discovered. The tick
+					// comes from the worker process; a commit that appended wakes this process's worker at once.
 					EventOutboxMaintenanceModule,
 					// The per-minute pass that re-attempts a delivery the ladder says is due. It is the
 					// second half of the outbound surface: the fan-out above makes the first attempt, and
@@ -687,6 +697,20 @@ if (environment.EVER_TEAMS_CLIENT_IP_SECRET?.trim() && !clientIpSecretOf(environ
 					// that event again.
 					WebhookMaintenanceModule
 			  ]
+			: // No queue: the API runs the dispatch worker itself, woken by each commit and on a short sweep, so a
+			  // single-container or dev setup delivers subscriptions, search updates and webhooks instead of
+			  // appending events nobody hands on. `EVENT_OUTBOX_INLINE_DISPATCH=false` turns it off.
+			  isEventOutboxInlineDispatchEnabled()
+			  ? // The outbox dispatch, and the retries of the webhook deliveries it makes (the queue's per-minute
+			    // `WebhookMaintenanceModule` job, asked by an in-process sweep instead).
+			    [EventOutboxInlineDispatchModule, WebhookInlineRetryModule]
+			  : []),
+		// The reminders of a timer left running (off unless GAUZY_TIMER_REMINDERS_ENABLED=true). With a queue, this
+		// process consumes the sweep the worker application schedules every minute: a reminder is a notification, and the
+		// listeners that file it in the Inbox and announce it to the receiver's clients live here. Without a queue, this
+		// process sweeps on its own, every minute.
+		...(isTimerRemindersEnabled(process.env, (message) => console.warn(message))
+			? [isSchedulerQueueRootEnabled() ? TimerReminderMaintenanceModule : TimerReminderInlineModule]
 			: []),
 		//Token cleanup scheduler is disabled by default; enable when ready
 		TokenModule.forRoot({ enableScheduler: false }),

@@ -98,6 +98,9 @@ export enum ActorTypeEnum {
 export enum BaseEntityEnum {
 	Broadcast = 'Broadcast',
 	Candidate = 'Candidate',
+	ChatConversation = 'ChatConversation',
+	ChatMessage = 'ChatMessage',
+	ChatWebhook = 'ChatWebhook',
 	Comment = 'Comment',
 	Contact = 'Contact',
 	Currency = 'Currency',
@@ -133,6 +136,7 @@ export enum BaseEntityEnum {
 	Task = 'Task',
 	TaskLinkedIssue = 'TaskLinkedIssue',
 	TaskView = 'TaskView',
+	TimeLog = 'TimeLog',
 	User = 'User',
 	Tenant = 'Tenant'
 }

@@ -69,6 +69,30 @@ const GATED_PLUGIN_SCHEMAS = [
 		flag: 'GAUZY_INBOX_EMAIL_ENABLED',
 		file: 'packages/plugins/inbox/src/lib/email/graphql/inbox-email.schema.ts',
 		exportName: 'inboxEmailSchemaExtensions'
+	},
+	{
+		plugin: 'RealtimePlugin',
+		flag: 'GAUZY_REALTIME_ENABLED',
+		file: 'packages/plugins/realtime/src/lib/graphql/realtime.schema.ts',
+		exportName: 'realtimeSchemaExtensions'
+	},
+	{
+		plugin: 'ChatPlugin',
+		flag: 'GAUZY_CHAT_ENABLED',
+		file: 'packages/plugins/chat/src/lib/graphql/chat.schema.ts',
+		exportName: 'chatSchemaExtensions'
+	},
+	{
+		plugin: 'TaskAutomationsPlugin',
+		flag: 'GAUZY_TASK_AUTOMATIONS_ENABLED',
+		file: 'packages/plugins/task-automations/src/lib/graphql/task-automation.schema.ts',
+		exportName: 'taskAutomationSchemaExtensions'
+	},
+	{
+		plugin: 'DocsLivePlugin',
+		flag: 'GAUZY_DOCS_LIVE_ENABLED',
+		file: 'packages/plugins/docs/src/lib/live/graphql/docs-live.schema.ts',
+		exportName: 'docsLiveSchemaExtensions'
 	}
 ];
 

@@ -53,7 +53,7 @@ describe('StatisticService.manualTimes on MikroORM', () => {
 			{
 				id: 'L1',
 				startedAt: '2026-09-29T10:00:00.000Z',
-				duration: 3600,
+				stoppedAt: '2026-09-29T11:00:00.000Z',
 				employeeId: 'E1',
 				user_firstName: 'Ever',
 				user_lastName: 'Agent',
@@ -80,6 +80,9 @@ describe('StatisticService.manualTimes on MikroORM', () => {
 
 		expect(queries).toHaveLength(1);
 		expect(queries[0]).toContain('"employee"."kind" as "employee_kind"');
+		// `time_log` has no duration column: the read selects the two instants and works it out
+		expect(queries[0]).not.toContain('"time_log"."duration"');
+		expect(log.duration).toBe(3600);
 		expect(log.employee).toEqual({ id: 'E1', kind: 'agent' });
 		expect(log.user).toEqual({ name: 'Ever Agent', imageUrl: 'agent.png' });
 	});
@@ -89,7 +92,7 @@ describe('StatisticService.manualTimes on MikroORM', () => {
 			{
 				id: 'L2',
 				startedAt: '2026-09-29T10:00:00.000Z',
-				duration: 600,
+				stoppedAt: '2026-09-29T10:10:00.000Z',
 				user_firstName: 'Ada',
 				user_lastName: 'L',
 				user_imageUrl: 'https://dummyimage.com/330x300/8b72ff/ffffff.jpg&text=A',

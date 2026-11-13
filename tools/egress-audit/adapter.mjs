@@ -171,6 +171,31 @@ async function until(what, probe, seconds = 180) {
 	throw new Error(`${what} did not happen within ${seconds} s (last: ${JSON.stringify(last)})`);
 }
 
+/**
+ * How long the browser leg's own page loads may take. The harness gives its visits ui_page_timeout_s (90 s).
+ * The signed-out pages and the sign-in page are the first loads of a cold browser, and Playwright's default
+ * of 30 s is too short for them on the in-cluster runners.
+ */
+const UI_PAGE_TIMEOUT_MS = 120_000;
+
+/**
+ * Waits until the web app serves its page. The harness waits only for the API's health, and the web app
+ * image rewrites its bundles with sed before nginx starts (about 2 minutes on a fast machine, 5 on the
+ * in-cluster runners), so the browser leg can start while the port still refuses connections.
+ */
+async function webAppServing(page, origin, ctx, seconds = 600) {
+	const started = Date.now();
+	await until(
+		'the web app serving its page',
+		async () => {
+			const response = await page.request.get(`${origin}/`, { timeout: 10_000, failOnStatusCode: false });
+			return response.ok() ? true : { error: `HTTP ${response.status()}` };
+		},
+		seconds
+	);
+	ctx.log(`adapter: the web app serves its page (after ${Math.round((Date.now() - started) / 1000)} s)`);
+}
+
 /** Signs in and waits until the installation is connected (EVER_CONNECT_CODE at boot); answers the context. */
 async function connected(ctx) {
 	const { headers, token, user } = await apiLogin(ctx);
@@ -289,7 +314,8 @@ export default {
 		every_trigger: { ...EVER_ID_CLIENT, ...RUN_SEED },
 		positive_managed: RUN_SEED,
 		connect_off_sign_in_on: { ...LOADED_BY_MISTAKE_WOULD_SHOW, ...SIGN_IN_ON, ...RUN_SEED },
-		entitlement_ladder: { ...LADDER, ...RUN_SEED }
+		entitlement_ladder: { ...LADDER, ...RUN_SEED },
+		positive_lookup: { ...LADDER, ...RUN_SEED }
 	},
 
 	/**
@@ -534,6 +560,111 @@ export default {
 		ctx.log("adapter: the ladder followed every document and Gauzy's own routes answered the same at every step");
 	},
 
+	/**
+	 * positive_lookup: the counterparty check and discoverability against the mock platform. The
+	 * operator's organization links to an Ever organization (row 5); its owner enables both
+	 * integrations in app.ever.co (the mock's consent; the states are read, row 9); the operator
+	 * checks a contact (row 13: the salt, then the query, with hashes only), saves the organization's
+	 * tax id (row 12: the upload, hashes only) and switches discoverability off (row 12: the removal,
+	 * then row 10). The values typed are never in a call: the mock records rows, and the audit fails
+	 * on any call outside the allowed rows.
+	 */
+	async lookupAndDiscoverable(ctx) {
+		const session = await connected(ctx);
+		const org = session.organizationId;
+		const expect = (what, answer, statuses) => {
+			if (!statuses.includes(answer.status))
+				throw new Error(`${what} answered ${answer.status} ${JSON.stringify(answer.body)}`);
+			ctx.log(`adapter: ${what}: ${answer.status}`);
+			return answer.body;
+		};
+		const callsOf = async (row, method) =>
+			(await mock(session, 'requests')).filter(
+				(entry) => entry.row === row && (!method || entry.method === method)
+			);
+
+		// Row 5: the operator's organization links to an Ever organization with a link code.
+		expect(
+			'link',
+			await api(session, 'POST', `/api/ever-connect/links?organizationId=${org}`, { link_code: MOCK_LINK_CODE }),
+			[200, 201]
+		);
+
+		// Before any consent the check is refused and nothing is sent for it.
+		expect(
+			'check before the consent',
+			await api(session, 'POST', `/api/ever-connect/lookup?organizationId=${org}`, {
+				items: [{ kind: 'vat', value: 'BG 123 456 789' }]
+			}),
+			[403]
+		);
+		if ((await callsOf(13)).length) throw new Error('row 13 was called before the counterparty check was enabled');
+
+		// Row 9: the organization's owner enables both in app.ever.co; the page re-reads the states.
+		for (const integration of ['counterparty_lookup', 'counterparty_discoverable']) {
+			await mock(session, 'consent', { instance_id: session.instanceId, integration });
+		}
+		await until('both integrations enabled here', async () => {
+			const rows =
+				(await api(session, 'POST', `/api/ever-connect/integrations/refresh?organizationId=${org}`)).body ?? [];
+			const on = (key) => rows.some((row) => row.key === key && row.state === 'enabled');
+			return (on('counterparty_lookup') && on('counterparty_discoverable')) || null;
+		});
+
+		// Row 13: a contact is checked (the mock's discoverable organization has this VAT number).
+		const check = expect(
+			'check a contact',
+			await api(session, 'POST', `/api/ever-connect/lookup?organizationId=${org}`, {
+				items: [
+					{ kind: 'vat', value: 'BG 123 456 789' },
+					{ kind: 'email', value: 'billing@client.example' },
+					{ kind: 'vat', value: '123' }
+				]
+			}),
+			[200]
+		);
+		const statuses = (check?.items ?? []).map((item) => item.status);
+		if (
+			JSON.stringify(statuses) !== JSON.stringify(['match', 'none', 'cannot_be_checked']) ||
+			check.items[0].handle !== 'acme'
+		)
+			throw new Error(`the check answered ${JSON.stringify(check)}`);
+		if ((await callsOf(13, 'POST')).length !== 1)
+			throw new Error('the check did not query Ever Platform exactly once');
+
+		// Row 12: the organization's tax id is saved after the opt-in: its salted hash is uploaded.
+		expect(
+			'save the tax id',
+			await api(session, 'PUT', `/api/organization/${org}`, { taxId: 'DE 123 456 789' }),
+			[200]
+		);
+		await until(
+			'the identifiers uploaded (row 12, PUT)',
+			async () => (await callsOf(12, 'PUT')).length > 0 || null,
+			120
+		);
+
+		// Rows 12 and 10: discoverability switched off here: the upload removed, Ever Platform told.
+		expect(
+			'switch discoverability off',
+			await api(
+				session,
+				'PUT',
+				`/api/ever-connect/integrations/counterparty_discoverable?organizationId=${org}`,
+				{
+					enabled: false
+				}
+			),
+			[200]
+		);
+		await until(
+			'the identifiers removed (row 12, DELETE)',
+			async () => (await callsOf(12, 'DELETE')).length > 0 || null,
+			120
+		);
+		ctx.log(`adapter: rows so far: ${[...new Set(await recordedRows(session))].sort((a, b) => a - b).join(', ')}`);
+	},
+
 	/** Ids for the browser's routes (the user, the organization, the employee): never a token. */
 	async createFixtures(ctx) {
 		const { user, token } = await apiLogin(ctx);
@@ -595,13 +726,14 @@ export default {
 	 */
 	async uiLogin(page, ctx) {
 		const origin = new URL(ctx.baseUrl).origin;
+		await webAppServing(page, origin, ctx);
 		for (const [index, route] of SIGNED_OUT_ROUTES.entries()) {
-			await page.goto(`${origin}/?signed-out=${index}#${route}`, { waitUntil: 'load' });
+			await page.goto(`${origin}/?signed-out=${index}#${route}`, { waitUntil: 'load', timeout: UI_PAGE_TIMEOUT_MS });
 			await page.waitForLoadState('networkidle', { timeout: 15_000 }).catch(() => {});
 			await page.waitForTimeout(500);
 		}
 		ctx.log(`adapter: opened ${SIGNED_OUT_ROUTES.length} signed-out pages`);
-		await page.goto(`${ctx.baseUrl}/auth/login`);
+		await page.goto(`${ctx.baseUrl}/auth/login`, { timeout: UI_PAGE_TIMEOUT_MS });
 		try {
 			await page.fill('#input-email', SEED_EMAIL, { timeout: 120_000 });
 			await page.fill('#input-password', seedPassword(ctx));
@@ -635,6 +767,8 @@ export default {
 			pipelineId: UNKNOWN_ID,
 			dealId: UNKNOWN_ID,
 			integrationTenantId: UNKNOWN_ID,
+			// The Asana, Linear and Trello pages of one connection (/pages/integrations/<name>/:integrationId).
+			integrationId: UNKNOWN_ID,
 			organizationId: f.organizationId ?? UNKNOWN_ID,
 			'/pages/users/edit/:id': { id: f.userId ?? UNKNOWN_ID },
 			'/pages/users/edit/:id/location': { id: f.userId ?? UNKNOWN_ID },

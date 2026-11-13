@@ -13,6 +13,7 @@ import { NavMenuSectionItem } from '../../services/nav-builder/nav-builder-types
 import { SidebarMenuService } from '../../services/nav-builder/sidebar-menu.service';
 import { EmployeeTrackedDataAccessService } from '../../services/timesheet/employee-tracked-data-access.service';
 import { Store } from '../../services/store/store.service';
+import { UserApiTokenService } from '../../services/user-api-token/user-api-token.service';
 import { mayOpenContactAddForm } from '../../utils/contact-permissions.util';
 
 @UntilDestroy()
@@ -27,9 +28,11 @@ export class BaseNavMenuComponent extends TranslationBaseComponent implements On
 	protected readonly _favoriteStoreService = inject(FavoriteStoreService);
 	protected readonly _dashboardStoreService = inject(DashboardStoreService);
 	protected readonly _employeeTrackedDataAccessService = inject(EmployeeTrackedDataAccessService);
+	protected readonly _userApiTokenService = inject(UserApiTokenService);
 
 	private _favoriteItems: NavMenuSectionItem[] = [];
 	private _customDashboards: IDashboard[] = [];
+	private _userApiTokensEnabled = false;
 
 	constructor(protected readonly _translateService: TranslateService) {
 		super(_translateService);
@@ -51,13 +54,16 @@ export class BaseNavMenuComponent extends TranslationBaseComponent implements On
 			this._store.featureOrganizations$,
 			this._store.featureTenant$,
 			this._store.userRolePermissions$,
-			this._employeeTrackedDataAccessService.access$
+			this._employeeTrackedDataAccessService.access$,
+			// Starts as off, so that the menu never waits for this one answer.
+			this._userApiTokenService.enabled$.pipe(startWith(false))
 		])
 			.pipe(
 				debounceTime(50),
-				tap(([favorites, dashboards]) => {
+				tap(([favorites, dashboards, , , , , , , userApiTokensEnabled]) => {
 					this._favoriteItems = favorites;
 					this._customDashboards = dashboards;
+					this._userApiTokensEnabled = userApiTokensEnabled;
 					this.defineBaseNavMenus();
 				}),
 				catchError((error) => {
@@ -171,7 +177,10 @@ export class BaseNavMenuComponent extends TranslationBaseComponent implements On
 				icon: 'fas fa-columns',
 				link: '/pages/dashboard/time-tracking',
 				data: {
-					translationKey: 'DASHBOARD_PAGE.CUSTOM.STANDARD'
+					translationKey: 'DASHBOARD_PAGE.CUSTOM.STANDARD',
+					// Every standard tab (accounting, hr, teams, plugin tabs...) belongs to this row, not just
+					// the one it opens. Custom dashboards still win: their links are longer, so more specific.
+					activePaths: ['/pages/dashboard']
 				}
 			},
 			...this._customDashboards.map((dashboard: IDashboard) => ({
@@ -1213,6 +1222,18 @@ export class BaseNavMenuComponent extends TranslationBaseComponent implements On
 						data: {
 							translationKey: 'MENU.OAUTH_CLIENTS',
 							permissionKeys: [PermissionsEnum.OAUTH_CLIENT_VIEW]
+						}
+					},
+					{
+						id: 'settings-api-tokens',
+						title: 'API Tokens',
+						icon: 'fas fa-key',
+						link: '/pages/settings/api-tokens',
+						// Absent unless this server has API tokens on. Open to anyone who can sign in otherwise: a token
+						// carries only its user's own permissions.
+						hidden: !this._userApiTokensEnabled,
+						data: {
+							translationKey: 'MENU.API_TOKENS'
 						}
 					},
 					{

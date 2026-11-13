@@ -121,6 +121,10 @@ export function createSettingsRoutes(_pageRouteRegistryService: PageRouteRegistr
 					loadChildren: () => import('./oauth-clients/oauth-clients.module').then((m) => m.OAuthClientsModule)
 				},
 				{
+					path: 'api-tokens',
+					loadChildren: () => import('./api-tokens/api-tokens.module').then((m) => m.ApiTokensModule)
+				},
+				{
 					path: 'file-storage',
 					loadChildren: () => import('./file-storage/file-storage.module').then((m) => m.FileStorageModule)
 				},

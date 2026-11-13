@@ -79,6 +79,8 @@ interface IOutboxHarness {
 	requestContext: typeof RequestContext;
 	/** Runs work in a transaction of this ORM, handing it the transaction's own manager. */
 	inTransaction<T>(work: (manager: any) => Promise<T>): Promise<T>;
+	/** Runs work with a manager of this ORM that is in no transaction, so each statement commits on its own. */
+	withoutTransaction<T>(work: (manager: any) => Promise<T>): Promise<T>;
 	/** Writes the caller's own state change through a manager, as a service writes its aggregate. */
 	writeState(manager: any, id: string): Promise<void>;
 	/** Reads the store raw, as the database holds it. */
@@ -138,6 +140,7 @@ async function typeOrmHarness(): Promise<IOutboxHarness> {
 		worker: new EventOutboxDispatchWorker(service, registry),
 		requestContext: RequestContext,
 		inTransaction: (work) => dataSource.manager.transaction((manager) => work(manager)),
+		withoutTransaction: (work) => work(dataSource.manager),
 		writeState: async (manager, id) => {
 			await manager.query(`INSERT INTO "outbox_probe_state" ("id") VALUES (?)`, [id]);
 		},
@@ -274,6 +277,7 @@ async function mikroOrmHarness(options: { jsonMembersUnmapped?: boolean } = {}):
 		worker: new loaded.EventOutboxDispatchWorker(service, registry),
 		requestContext: loaded.RequestContext,
 		inTransaction: (work) => orm.em.fork().transactional((manager: any) => work(manager)),
+		withoutTransaction: (work) => work(orm.em.fork()),
 		writeState: async (manager, id) => {
 			await manager.execute(`INSERT INTO "outbox_probe_state" ("id") VALUES (?)`, [id], 'run');
 		},
@@ -979,6 +983,109 @@ describe.each([
 			}
 		});
 
+		it('refuses to replay a record whose event is no longer in the outbox, and leaves the record as it was', async () => {
+			harness.quiet();
+			const ran: string[] = [];
+
+			harness.registry.register(probe('orm-parity.replayed', ran));
+
+			try {
+				await appendCommitted(placed());
+				await dispatch();
+
+				const record = await recordOf('orm-parity.replayed');
+
+				// An outbox retention removed the published row; its consumer's record outlives it.
+				await harness.query(`DELETE FROM "event_outbox"`);
+
+				// By name: each half constructs the exception from its own module registry.
+				await expect(replayAsOperator(record.id)).rejects.toMatchObject({ name: NotFoundException.name });
+				expect((await recordOf('orm-parity.replayed')).status).toBe(EventOutboxStatus.PUBLISHED);
+				expect(await harness.query(`SELECT * FROM "event_outbox"`)).toEqual([]);
+			} finally {
+				harness.registry.unregister('orm-parity.replayed');
+			}
+		});
+
+		it('refuses to replay a record whose event id is only in the outbox of another tenant, and touches neither row', async () => {
+			harness.quiet();
+			const ran: string[] = [];
+
+			harness.registry.register(probe('orm-parity.replayed', ran));
+
+			try {
+				await appendCommitted(placed());
+				await dispatch();
+
+				const record = await recordOf('orm-parity.replayed');
+				const delivery = `SELECT "eventId", "status", "attemptCount", "lastError", "deliveredAt", "tenantId" FROM "event_delivery" WHERE "id" = ?`;
+				const outbox = `SELECT "eventId", "status", "attemptCount", "lastError", "publishedAt", "tenantId" FROM "event_outbox"`;
+
+				// The caller's row is gone, and the only row with that event id belongs to another tenant.
+				await harness.query(`UPDATE "event_outbox" SET "tenantId" = ?`, [OTHER_TENANT]);
+
+				const [recordBefore] = await harness.query(delivery, [record.id]);
+				const outboxBefore = await harness.query(outbox);
+
+				// By name: each half constructs the exception from its own module registry.
+				await expect(replayAsOperator(record.id)).rejects.toMatchObject({ name: NotFoundException.name });
+				expect(await harness.query(delivery, [record.id])).toEqual([recordBefore]);
+				expect(await harness.query(outbox)).toEqual(outboxBefore);
+				expect(recordBefore).toMatchObject({ status: EventOutboxStatus.PUBLISHED, tenantId: TENANT });
+				expect(outboxBefore).toEqual([
+					expect.objectContaining({ eventId: recordBefore.eventId, status: EventOutboxStatus.PUBLISHED, tenantId: OTHER_TENANT })
+				]);
+			} finally {
+				harness.registry.unregister('orm-parity.replayed');
+			}
+		});
+
+		it('writes nothing when the replay stops after resetting the record and before re-queueing the row', async () => {
+			harness.quiet();
+			const ran: string[] = [];
+
+			harness.registry.register(probe('orm-parity.replayed', ran));
+
+			try {
+				await appendCommitted(placed());
+				await dispatch();
+
+				const record = await recordOf('orm-parity.replayed');
+				const delivery = `SELECT "status", "attemptCount", "lastError", "deliveredAt" FROM "event_delivery" WHERE "id" = ?`;
+				const outbox = `SELECT "status", "attemptCount", "availableAt", "publishedAt" FROM "event_outbox"`;
+				const [recordBefore] = await harness.query(delivery, [record.id]);
+				const outboxBefore = await harness.query(outbox);
+
+				// The move is cut off between its two writes: the record's reset has run, the row's re-queue fails.
+				// Were the reset committed on its own, a retention could then remove the published row and leave a
+				// pending record that nothing delivers.
+				await harness.query(
+					`CREATE TRIGGER "orm_parity_replay_cut" BEFORE UPDATE ON "event_outbox" BEGIN SELECT RAISE(ABORT, 'replay cut off'); END`
+				);
+
+				try {
+					await expect(replayAsOperator(record.id)).rejects.toMatchObject({
+						message: expect.stringContaining('replay cut off')
+					});
+				} finally {
+					await harness.query(`DROP TRIGGER "orm_parity_replay_cut"`);
+				}
+
+				expect(recordBefore.status).toBe(EventOutboxStatus.PUBLISHED);
+				expect(await harness.query(delivery, [record.id])).toEqual([recordBefore]);
+				expect(await harness.query(outbox)).toEqual(outboxBefore);
+
+				// Nothing was left half-done: the same move, run again, goes through.
+				await replayAsOperator(record.id);
+				expect((await recordOf('orm-parity.replayed')).status).toBe(EventOutboxStatus.PENDING);
+				expect(await harness.query(`SELECT "status" FROM "event_outbox"`)).toEqual([
+					{ status: EventOutboxStatus.PENDING }
+				]);
+			} finally {
+				harness.registry.unregister('orm-parity.replayed');
+			}
+		});
+
 		it('leaves a row that is still waiting as it is when one of its records is replayed', async () => {
 			harness.quiet();
 			const ran: string[] = [];
@@ -1003,6 +1110,217 @@ describe.each([
 				).toEqual([before]);
 			} finally {
 				harness.registry.unregister('orm-parity.replayed');
+			}
+		});
+	});
+
+	describe('the signal after the commit of an append (T28)', () => {
+		/** Runs nested work in a savepoint of the caller's transaction, through that ORM's own call. */
+		const nested = <T>(manager: any, work: (inner: any) => Promise<T>): Promise<T> =>
+			typeof manager.transactional === 'function' ? manager.transactional(work) : manager.transaction(work);
+
+		/** Counts the signals the service raises. */
+		const counting = () => {
+			const raised: string[] = [];
+			const stop = harness.service.commitSignal.listen(() => raised.push('committed'));
+
+			return { raised, stop };
+		};
+
+		it('raises it after the commit of the transaction that appended, not at the append', async () => {
+			const { raised, stop } = counting();
+
+			try {
+				await harness.inTransaction(async (manager) => {
+					await harness.writeState(manager, 'state-1');
+					await harness.service.append(manager, placed());
+
+					// The event is not visible to a pass yet, so a pass asked for now would claim nothing.
+					expect(raised).toEqual([]);
+				});
+
+				expect(raised).toEqual(['committed']);
+				expect(await storedEvents(harness)).toHaveLength(1);
+			} finally {
+				stop();
+			}
+		});
+
+		it('raises nothing when the transaction rolls back', async () => {
+			const { raised, stop } = counting();
+
+			try {
+				await expect(
+					harness.inTransaction(async (manager) => {
+						await harness.service.append(manager, placed());
+
+						throw new Error('the state change was refused');
+					})
+				).rejects.toThrow('the state change was refused');
+
+				expect(raised).toEqual([]);
+				expect(await storedEvents(harness)).toEqual([]);
+			} finally {
+				stop();
+			}
+		});
+
+		it('waits for the outer commit when the append is made in a nested transaction', async () => {
+			const { raised, stop } = counting();
+
+			try {
+				await harness.inTransaction(async (manager) => {
+					await nested(manager, async (inner) => {
+						await harness.service.append(inner, placed());
+					});
+
+					// The savepoint is released, but the outer transaction holds the event until it commits.
+					expect(raised).toEqual([]);
+				});
+
+				expect(raised).toEqual(['committed']);
+			} finally {
+				stop();
+			}
+		});
+
+		it('raises it once the append returns when there is no transaction to wait for', async () => {
+			const { raised, stop } = counting();
+
+			try {
+				await harness.withoutTransaction(async (manager) => {
+					await harness.service.append(manager, placed());
+
+					expect(raised).toEqual(['committed']);
+				});
+			} finally {
+				stop();
+			}
+		});
+
+		it('lets the worker hand a committed event to its consumer without the scheduled pass', async () => {
+			harness.quiet();
+			const ran: string[] = [];
+
+			harness.registry.register({
+				key: 'orm-parity.live',
+				events: ['order.placed'],
+				handle: async () => {
+					ran.push('orm-parity.live');
+				}
+			});
+			// A process that consumes the dispatch queue, as the API does.
+			jest.spyOn(harness.worker as any, 'consumesQueue').mockReturnValue(true);
+			harness.worker.onModuleInit();
+
+			try {
+				await appendCommitted(placed());
+
+				for (let turn = 0; turn < 200 && ran.length === 0; turn += 1) {
+					await new Promise((resolve) => setTimeout(resolve, 5));
+				}
+
+				expect(ran).toEqual(['orm-parity.live']);
+
+				for (let turn = 0; turn < 200; turn += 1) {
+					const [row] = await harness.query(`SELECT "status" FROM "event_outbox"`);
+
+					if (row?.status === EventOutboxStatus.PUBLISHED) {
+						break;
+					}
+
+					await new Promise((resolve) => setTimeout(resolve, 5));
+				}
+
+				expect(await harness.query(`SELECT "status" FROM "event_outbox"`)).toEqual([
+					{ status: EventOutboxStatus.PUBLISHED }
+				]);
+			} finally {
+				await harness.worker.onModuleDestroy();
+				harness.registry.unregister('orm-parity.live');
+			}
+		});
+
+		it('hands over every event one transaction appended to one aggregate in the same wake', async () => {
+			harness.quiet();
+			const ran: string[] = [];
+
+			harness.registry.register({
+				key: 'orm-parity.live',
+				events: ['order.placed'],
+				handle: async (event: { sequence?: number }) => {
+					ran.push(String(event.sequence));
+				}
+			});
+			jest.spyOn(harness.worker as any, 'consumesQueue').mockReturnValue(true);
+			harness.worker.onModuleInit();
+
+			try {
+				// One partition: a claim takes only its head, so each event waits for the one before it.
+				await appendCommitted(placed(), placed(), placed());
+
+				for (let turn = 0; turn < 400 && ran.length < 3; turn += 1) {
+					await new Promise((resolve) => setTimeout(resolve, 5));
+				}
+
+				expect(ran).toEqual(['1', '2', '3']);
+			} finally {
+				await harness.worker.onModuleDestroy();
+				harness.registry.unregister('orm-parity.live');
+			}
+		});
+
+		it('goes on to an aggregate’s next event in the same wake when its head is dead-lettered', async () => {
+			harness.quiet();
+			const ran: string[] = [];
+
+			harness.registry.register({
+				key: 'orm-parity.live',
+				events: ['order.placed'],
+				handle: async (event: { sequence?: number }) => {
+					ran.push(String(event.sequence));
+
+					if (event.sequence === 1) {
+						throw new Error('the head is refused');
+					}
+				}
+			});
+
+			// Appended before the worker listens, so the wake below is the only pass.
+			await appendCommitted(placed(), placed());
+			// The head has one attempt left: this claim spends it, and the failure dead-letters the row.
+			await harness.query(`UPDATE "event_outbox" SET "attemptCount" = ? WHERE "sequence" = 1`, [
+				EventOutboxService.DEFAULT_MAX_ATTEMPTS - 1
+			]);
+			jest.spyOn(harness.worker as any, 'consumesQueue').mockReturnValue(true);
+			harness.worker.onModuleInit();
+
+			try {
+				harness.service.commitSignal.committed();
+
+				for (let turn = 0; turn < 400 && ran.length < 2; turn += 1) {
+					await new Promise((resolve) => setTimeout(resolve, 5));
+				}
+
+				expect(ran).toEqual(['1', '2']);
+
+				for (let turn = 0; turn < 200; turn += 1) {
+					const rows = await harness.query(`SELECT "status" FROM "event_outbox" ORDER BY "sequence" ASC`);
+
+					if (rows[1]?.status === EventOutboxStatus.PUBLISHED) {
+						break;
+					}
+
+					await new Promise((resolve) => setTimeout(resolve, 5));
+				}
+
+				expect(await harness.query(`SELECT "sequence", "status" FROM "event_outbox" ORDER BY "sequence" ASC`)).toEqual([
+					{ sequence: 1, status: EventOutboxStatus.DEAD },
+					{ sequence: 2, status: EventOutboxStatus.PUBLISHED }
+				]);
+			} finally {
+				await harness.worker.onModuleDestroy();
+				harness.registry.unregister('orm-parity.live');
 			}
 		});
 	});

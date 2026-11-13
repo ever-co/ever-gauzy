@@ -24,7 +24,12 @@
 			@let entry = thread.entry;
 			@let open = openThreadId === entry.comment.id;
 			@let latest = thread.replies[thread.replies.length - 1];
-			<li class="comment" [class.has-thread]="open || thread.replies.length">
+			<li
+				class="comment"
+				[class.has-thread]="open || thread.replies.length"
+				[class.highlighted]="entry.comment.id === highlightCommentId"
+				[attr.data-comment-id]="entry.comment.id"
+			>
 				<!-- The avatar, with the thread's stem running down from it to the elbow into the card. -->
 				<div class="comment-gutter">
 					<ng-container *ngTemplateOutlet="authorAvatar; context: { $implicit: entry }"></ng-container>
@@ -75,7 +80,7 @@
 						@if (thread.replies.length) {
 						<ol class="replies">
 							@for (reply of thread.replies; track reply.comment.id) {
-							<li class="reply">
+							<li class="reply" [class.highlighted]="reply.comment.id === highlightCommentId" [attr.data-comment-id]="reply.comment.id">
 								<ng-container *ngTemplateOutlet="authorAvatar; context: { $implicit: reply, small: true }"></ng-container>
 								<div class="comment-main">
 									<ng-container *ngTemplateOutlet="message; context: { $implicit: reply }"></ng-container>
@@ -213,6 +218,66 @@
 		</button>
 		}
 	</div>
+	}
+	<ng-container *ngTemplateOutlet="reactionBar; context: { $implicit: entry }"></ng-container>
+</ng-template>
+
+<!-- A comment's reactions (the task page): a chip per emoji with its count, the reader's own marked, who reacted in
+     the tooltip; clicking a chip adds or takes back the reader's reaction, and the smiley opens a palette. -->
+<ng-template #reactionBar let-entry>
+	@if (reactionsShown) {
+	@let chips = reactionChips.get(entry.comment.id) ?? [];
+	@if (chips.length || canReact) {
+	<div class="comment-reactions">
+		@for (chip of chips; track chip.emoji) {
+		<button
+			type="button"
+			class="reaction-chip"
+			[class.is-mine]="chip.mine"
+			[attr.aria-pressed]="chip.mine"
+			[attr.aria-label]="chip.label"
+			[nbTooltip]="chip.label"
+			nbTooltipPlacement="top"
+			[attr.aria-disabled]="canReact ? null : true"
+			(click)="toggleReaction(entry.comment.id, chip.emoji)"
+		>
+			<span class="reaction-emoji">{{ chip.emoji }}</span>
+			<span class="reaction-count">{{ chip.count }}</span>
+		</button>
+		}
+		@if (canReact) {
+		<span class="reaction-add-wrap">
+			<button
+				#reactionOpener
+				type="button"
+				class="reaction-chip reaction-add"
+				[attr.aria-expanded]="pickerFor === entry.comment.id"
+				[attr.aria-label]="'COMMENT_REACTIONS.ADD' | translate"
+				[nbTooltip]="'COMMENT_REACTIONS.ADD' | translate"
+				nbTooltipPlacement="top"
+				(click)="togglePicker(entry.comment.id)"
+			>
+				<nb-icon icon="smiling-face-outline" aria-hidden="true"></nb-icon>
+				<span aria-hidden="true">+</span>
+			</button>
+			@if (pickerFor === entry.comment.id) {
+			<span class="reaction-palette" role="group" [attr.aria-label]="'COMMENT_REACTIONS.ADD' | translate" (keydown.escape)="closePicker(reactionOpener)">
+				@for (emoji of quickReactions; track emoji) {
+				<button
+					type="button"
+					class="reaction-pick"
+					[attr.aria-label]="'COMMENT_REACTIONS.REACT_WITH' | translate: { emoji: emoji }"
+					(click)="pickReaction(entry.comment.id, emoji, reactionOpener)"
+				>
+					{{ emoji }}
+				</button>
+				}
+			</span>
+			}
+		</span>
+		}
+	</div>
+	}
 	}
 </ng-template>
 

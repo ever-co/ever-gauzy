@@ -13,6 +13,7 @@ import { prepareSQLQuery as p } from './../database/database.helper';
 import { compileMjml } from './compile-mjml';
 import { MikroOrmEmailTemplateRepository } from './repository/mikro-orm-email-template.repository';
 import { TypeOrmEmailTemplateRepository } from './repository/type-orm-email-template.repository';
+import { assertCallerColumnsAllowed } from '../core/util/caller-restricted-columns.helper';
 
 @Injectable()
 export class EmailTemplateService extends CrudService<EmailTemplate> {
@@ -95,6 +96,7 @@ export class EmailTemplateService extends CrudService<EmailTemplate> {
 		// Builds its own query, so the check in the CRUD read methods never runs: assert the
 		// sensitive-relation table on the client-supplied relations before anything is loaded.
 		this.assertRelationsPermitted(params);
+		assertCallerColumnsAllowed(this.typeOrmRepository?.metadata, params);
 
 		// The GraphQL field hands a boolean; the REST list route's pipe does not transform, so its query
 		// string arrives as 'true' / 'false', and a truthiness test would read 'false' as true.

@@ -2,9 +2,27 @@ import { resolvePluginLoadOrder } from '@gauzy/plugin';
 import { CartPlugin } from '@gauzy/plugin-cart';
 import { CatalogPlugin } from '@gauzy/plugin-catalog';
 import { DocsPlugin } from '@gauzy/plugin-docs';
-import { InboxPlugin, isInboxEnabled } from '@gauzy/plugin-inbox';
+import {
+	InboxDeliveryPlugin,
+	InboxEmailPlugin,
+	InboxPlugin,
+	isInboxEmailEnabled,
+	isInboxEnabled,
+	isInboxNotificationEmailEnabled,
+	isInboxWebPushEnabled
+} from '@gauzy/plugin-inbox';
+import { EmailProviderMailgunPlugin, isMailgunEnabled } from '@gauzy/plugin-email-provider-mailgun';
+import { EmailProviderPostmarkPlugin, isPostmarkEnabled } from '@gauzy/plugin-email-provider-postmark';
+import { EmailProviderResendPlugin, isResendEnabled } from '@gauzy/plugin-email-provider-resend';
+import { EmailProviderSendGridPlugin, isSendGridEnabled } from '@gauzy/plugin-email-provider-sendgrid';
+import { EmailProviderSesPlugin, isSesEnabled } from '@gauzy/plugin-email-provider-ses';
 import { IntegrationEverWorksPlugin, isEverWorksEnabled } from '@gauzy/plugin-integration-ever-works';
+import { IntegrationAsanaPlugin, isAsanaEnabled } from '@gauzy/plugin-integration-asana';
+import { IntegrationJiraCloudPlugin, isJiraEnabled } from '@gauzy/plugin-integration-jira';
+import { IntegrationLinearPlugin, isLinearEnabled } from '@gauzy/plugin-integration-linear';
+import { IntegrationTrelloPlugin, isTrelloEnabled } from '@gauzy/plugin-integration-trello';
 import { InventoryPlugin } from '@gauzy/plugin-inventory';
+import { isTaskAutomationsEnabled, TaskAutomationsSchedulePlugin } from '@gauzy/plugin-task-automations';
 import { OrderPlugin } from '@gauzy/plugin-order';
 import { PricingPlugin } from '@gauzy/plugin-pricing';
 import { TaxPlugin } from '@gauzy/plugin-tax';
@@ -42,6 +60,11 @@ import { TaxPlugin } from '@gauzy/plugin-tax';
  */
 /** Read once: each switch warns once about a value that is neither `true` nor `false`. */
 const everWorksEnabled = isEverWorksEnabled(process.env, (message) => console.warn(message));
+/** The Inbox's notification delivery (emails, web push): its sweep, and the transports it sends through, are hosted here. */
+const inboxDeliveryEnabled =
+	isInboxEnabled(process.env) &&
+	(isInboxNotificationEmailEnabled(process.env, (message) => console.warn(message)) ||
+		isInboxWebPushEnabled(process.env, (message) => console.warn(message)));
 
 export const plugins = resolvePluginLoadOrder([
 	/**
@@ -120,12 +143,83 @@ export const plugins = resolvePluginLoadOrder([
 	 */
 	...(everWorksEnabled ? [IntegrationEverWorksPlugin] : []),
 	/**
-	 * The Inbox — hosted only with the Ever Works integration, and only when both are switched on. This
-	 * process runs the integration's sync as often as the API does (whoever holds the connection's lease),
-	 * and the sync writes Ever Works inbox items into the Inbox through its writer; without the Inbox here
-	 * those items would wait for the API. It owns no queue or schedule of its own.
+	 * The Asana integration — hosted here, behind its switch, for the scheduled import it owns: a `@ScheduledJob`
+	 * fires only in this process, so a plugin that is not hosted here never imports on its own (its webhooks and
+	 * "import now" are the API's). The sweep is registered by the plugin only where a queue root exists and
+	 * `ASANA_IMPORT_INTERVAL_MINUTES` is not `0`, so a worker without Redis is unchanged.
 	 *
-	 * 🛑 Off unless `GAUZY_INBOX_ENABLED` is exactly `true` as well, so a worker is unchanged by default.
+	 * 🛑 Off unless `ASANA_ENABLED` is exactly `true` — the same switch as the API's list.
 	 */
-	...(everWorksEnabled && isInboxEnabled(process.env, (message) => console.warn(message)) ? [InboxPlugin] : [])
+	...(isAsanaEnabled(process.env, (message) => console.warn(message)) ? [IntegrationAsanaPlugin] : []),
+	/**
+	 * The Linear integration — hosted here, behind its switch, for the scheduled import it owns: a `@ScheduledJob`
+	 * fires only in this process, so a plugin that is not hosted here never imports on its own (its webhooks and
+	 * "import now" are the API's). The sweep is registered by the plugin only where a queue root exists and
+	 * `LINEAR_IMPORT_INTERVAL_MINUTES` is not `0`, so a worker without Redis is unchanged.
+	 *
+	 * 🛑 Off unless `LINEAR_ENABLED` is exactly `true` — the same switch as the API's list.
+	 */
+	...(isLinearEnabled(process.env, (message) => console.warn(message)) ? [IntegrationLinearPlugin] : []),
+	/**
+	 * The Trello integration — hosted here, behind its switch, for the scheduled import it owns: a `@ScheduledJob`
+	 * fires only in this process, so a plugin that is not hosted here never imports on its own (its webhooks and
+	 * "import now" are the API's). The sweep is registered by the plugin only where a queue root exists and
+	 * `TRELLO_IMPORT_INTERVAL_MINUTES` is not `0`, so a worker without Redis is unchanged.
+	 *
+	 * 🛑 Off unless `TRELLO_ENABLED` is exactly `true` — the same switch as the API's list.
+	 */
+	...(isTrelloEnabled(process.env, (message) => console.warn(message)) ? [IntegrationTrelloPlugin] : []),
+	/**
+	 * The Jira Cloud sync — hosted here, behind its switch, for the sweep it owns: the scheduled import, the refresh of
+	 * each connection's dynamic webhook before Jira's 30-day expiry, and the refused-token notices. A `@ScheduledJob`
+	 * fires only in this process (its webhooks and "import now" are the API's). The sweep is registered by the plugin
+	 * only where a queue root exists, so a worker without Redis is unchanged. The Connect descriptor plugin
+	 * (`IntegrationJiraPlugin`) is the API's alone: it owns no queue and no schedule.
+	 *
+	 * 🛑 Off unless `JIRA_ENABLED` is exactly `true` — the same switch as the API's list.
+	 */
+	...(isJiraEnabled(process.env, (message) => console.warn(message)) ? [IntegrationJiraCloudPlugin] : []),
+	/**
+	 * The Inbox — hosted whenever it is switched on, for its own schedule: the recovery sweep that files the
+	 * notifications the API's live filing missed (a process that stopped between a notification's commit and its
+	 * filing; the Inbox spec's "no lost entries"). A `@ScheduledJob` fires only here, so without the Inbox in this
+	 * process the sweep would never run. It also serves what writes into it here: the Ever Works sync (this process
+	 * runs it as often as the API does, whoever holds the connection's lease, and it writes Ever Works inbox items
+	 * through the Inbox's writer), the notification delivery (its sweep reads the entries), and a task integration
+	 * whose scheduled import met a refused token (the notice to the person who connected is filed through the same
+	 * writer). With no queue root the plugin does not import its schedule at all.
+	 *
+	 * 🛑 Off unless `GAUZY_INBOX_ENABLED` is exactly `true`, so a worker is unchanged by default.
+	 */
+	...(isInboxEnabled(process.env, (message) => console.warn(message)) ? [InboxPlugin] : []),
+	/**
+	 * Task automations — hosted here, behind their switch, for the one schedule they own: the 15-minute due-date
+	 * sweep. A `@ScheduledJob` fires only in this process. Only the schedule is hosted (`TaskAutomationsSchedulePlugin`:
+	 * the queue and the job that enqueues onto it, no consumer, no entity): the rules write through core's task
+	 * services, which this module graph does not host, so the sweep runs in the API that consumes the queue — the
+	 * outbox's own split. With no queue root the plugin registers nothing here.
+	 *
+	 * 🛑 Off unless `GAUZY_TASK_AUTOMATIONS_ENABLED` is exactly `true` — the same switch as the API's list.
+	 */
+	...(isTaskAutomationsEnabled(process.env, (message) => console.warn(message)) ? [TaskAutomationsSchedulePlugin] : []),
+	/**
+	 * Email delivery of the Inbox's notifications (immediate or digest per kind, the Inbox spec FR-10–FR-12): the
+	 * sweep that decides and sends runs here, on the worker's queue root, every minute.
+	 *
+	 * 🛑 Off unless `GAUZY_INBOX_NOTIFICATION_EMAIL_ENABLED` or `GAUZY_INBOX_WEB_PUSH_ENABLED` is exactly `true` as well — the
+	 * same switches as the API's list; each channel is served under its own.
+	 */
+	...(inboxDeliveryEnabled ? [InboxDeliveryPlugin] : []),
+	/**
+	 * The Inbox email features and the email providers, for the delivery's emails: a provider's transport registers
+	 * with the registry of the process that hosts it, so without them here the worker would send over SMTP alone
+	 * (and fail where an installation has no SMTP). Hosted only with the delivery, each under its own switch, as the
+	 * API's list has them.
+	 */
+	...(inboxDeliveryEnabled && isInboxEmailEnabled(process.env, (message) => console.warn(message)) ? [InboxEmailPlugin] : []),
+	...(inboxDeliveryEnabled && isResendEnabled(process.env, (message) => console.warn(message)) ? [EmailProviderResendPlugin] : []),
+	...(inboxDeliveryEnabled && isPostmarkEnabled(process.env, (message) => console.warn(message)) ? [EmailProviderPostmarkPlugin] : []),
+	...(inboxDeliveryEnabled && isMailgunEnabled(process.env, (message) => console.warn(message)) ? [EmailProviderMailgunPlugin] : []),
+	...(inboxDeliveryEnabled && isSendGridEnabled(process.env, (message) => console.warn(message)) ? [EmailProviderSendGridPlugin] : []),
+	...(inboxDeliveryEnabled && isSesEnabled(process.env, (message) => console.warn(message)) ? [EmailProviderSesPlugin] : [])
 ]);

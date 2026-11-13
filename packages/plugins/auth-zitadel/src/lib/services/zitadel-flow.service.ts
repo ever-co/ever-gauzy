@@ -1,16 +1,20 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException, Optional } from '@nestjs/common';
 import {
 	OidcClientService,
 	OidcCookieRequest,
 	OidcCookieResponse,
 	OidcTransactionCookieOptions,
 	OidcTransactionService,
+	OidcValidatedIdToken,
 	isOidcError
 } from '@gauzy/auth';
 import { ID } from '@gauzy/contracts';
+import { signinScopes } from '../auth-zitadel.config';
 import { ZITADEL_TRANSACTION_COOKIE } from '../auth-zitadel.tokens';
 import { ZitadelConfigService } from './zitadel-config.service';
+import { isProvisionKey, ZitadelHandoffService } from './zitadel-handoff.service';
 import { ZitadelLinkService } from './zitadel-link.service';
+import { ZitadelRefreshTokenService } from './zitadel-refresh-token.service';
 import { ZitadelSigninOutcome, ZitadelSigninService } from './zitadel-signin.service';
 
 /** Longest accepted `redirect` path. */
@@ -57,6 +61,11 @@ export function safeRedirect(redirect: unknown, clientBaseUrl: string): string |
  * The authorize request carries PKCE, `state` and `nonce` (kept in a signed cookie) and never a
  * `login_hint`, so no e-mail address or other personal data ends up in a URL. Every redirect back to
  * the web app carries only an opaque one-time key or an error code.
+ *
+ * While the App Launcher keeps refresh tokens (`EVER_APP_LAUNCHER_ENABLED=true`, see
+ * {@link ZitadelRefreshTokenService}), a sign-in (not a link, not a workspace confirmation) also asks for
+ * `offline_access`, and a linked sign-in keeps the refresh token, encrypted, with its session records. Otherwise the
+ * request and the callback are exactly as without it.
  */
 @Injectable()
 export class ZitadelFlowService {
@@ -67,24 +76,34 @@ export class ZitadelFlowService {
 		private readonly transactions: OidcTransactionService,
 		private readonly client: OidcClientService,
 		private readonly signin: ZitadelSigninService,
-		private readonly links: ZitadelLinkService
+		private readonly links: ZitadelLinkService,
+		private readonly handoffs: ZitadelHandoffService,
+		@Optional() private readonly refreshTokens?: ZitadelRefreshTokenService
 	) {}
 
 	/**
-	 * Starts a sign-in.
+	 * Starts a sign-in. With `provision` (the opaque key of a workspace Ever Platform asked this
+	 * installation to create, shape-checked here), the key rides in the signed transaction cookie only
+	 * and the callback leads to that workspace's confirmation instead of a sign-in.
 	 *
 	 * @returns The authorize URL to redirect to.
 	 */
-	async startSignin(response: OidcCookieResponse, redirect?: string): Promise<string> {
+	async startSignin(response: OidcCookieResponse, redirect?: string, provision?: string): Promise<string> {
+		// A malformed provisioning key is refused before anything else, the issuer included.
+		if (provision !== undefined && !isProvisionKey(provision)) {
+			return this.errorUrl('signin', 'sign_in_failed');
+		}
 		try {
 			const issuer = await this.config.primary();
-			const path = safeRedirect(redirect, this.config.settings.clientBaseUrl);
+			const path = provision ? undefined : safeRedirect(redirect, this.config.settings.clientBaseUrl);
 			const transaction = await this.transactions.begin(response, this.cookie(), {
 				issuer: issuer.issuer,
 				mode: 'signin',
-				payload: path ? { redirect: path } : undefined
+				payload: provision ? { provision } : path ? { redirect: path } : undefined
 			});
-			return await this.client.buildAuthorizeUrl(issuer, transaction);
+			// A workspace confirmation keeps no refresh token, so it never asks for one.
+			const keep = !provision && !!this.refreshTokens?.keeping;
+			return await this.client.buildAuthorizeUrl({ ...issuer, scopes: signinScopes(issuer.scopes, keep) }, transaction);
 		} catch (error) {
 			if (error instanceof NotFoundException) {
 				throw error;
@@ -140,12 +159,18 @@ export class ZitadelFlowService {
 			if (query.error || !query.code) {
 				return this.errorUrl(mode, query.error === 'access_denied' ? 'cancelled' : 'sign_in_failed');
 			}
-			const { idToken } = await this.client.exchangeCode(issuer, query.code, transaction);
+			const { idToken, refreshToken } = await this.client.exchangeCode(issuer, query.code, transaction);
 			if (mode === 'link') {
 				return this.links.callback(transaction.payload?.['userId'] as ID, idToken);
 			}
+			const provision = transaction.payload?.['provision'];
+			if (provision !== undefined) {
+				return this.provisionUrl(idToken, provision);
+			}
 			const redirect = transaction.payload?.['redirect'];
-			const outcome = await this.signin.decide(idToken, 'browser', { redirect });
+			// Encrypted at once; the plain refresh token goes no further than this line.
+			const everRefreshTokenEncrypted = this.refreshTokens?.seal(issuer.issuer, idToken.sid, refreshToken) ?? null;
+			const outcome = await this.signin.decide(idToken, 'browser', { redirect, everRefreshTokenEncrypted });
 			return this.outcomeUrl(outcome, redirect);
 		} catch (error) {
 			this.logger.warn(`Ever ID callback failed: ${isOidcError(error) ? error.code : 'unexpected error'}`);
@@ -169,6 +194,21 @@ export class ZitadelFlowService {
 			default:
 				return `${base}/ever-id?error=sign_in_failed`;
 		}
+	}
+
+	/**
+	 * A sign-in started to confirm a workspace: nothing is linked and nobody is signed in; the verified
+	 * identity is kept under a one-time key for the confirmation page, which gets both opaque keys.
+	 */
+	private async provisionUrl(idToken: OidcValidatedIdToken, provision: unknown): Promise<string> {
+		if (!idToken.emailVerified || !idToken.email) {
+			return `${this.config.settings.clientBaseUrl}/#/auth/ever-id?error=email_unverified`;
+		}
+		const key = isProvisionKey(provision) ? await this.handoffs.create(idToken, provision) : null;
+		if (!key) {
+			return this.errorUrl('signin', 'sign_in_failed');
+		}
+		return `${this.config.settings.clientBaseUrl}/#/auth/ever-connect/provision?provision=${provision}&handoff=${key}`;
 	}
 
 	private errorUrl(mode: string, error: string): string {

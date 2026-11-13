@@ -1,0 +1,370 @@
+<!-- An income's own page, laid out as the expense page: the record in the wide column, the facts in the side one. -->
+<ngx-record-view-page heading="INCOME_PAGE.INCOME" [backLink]="backLink" [state]="state" (retry)="load()">
+	@if (income) {
+		<!-- The page's actions, on one line with its back button, as the expense page's. -->
+		<div recordPageActions class="income-page-actions">
+			<ng-template [ngxPermissionsOnly]="[PermissionsEnum.ORG_INCOMES_EDIT]">
+				<button
+					nbButton
+					size="tiny"
+					status="primary"
+					type="button"
+					[disabled]="busy"
+					[attr.aria-label]="'BUTTONS.EDIT' | translate"
+					(click)="edit()"
+				>
+					<nb-icon icon="edit-outline"></nb-icon>
+					<span class="income-page-action-label">{{ 'BUTTONS.EDIT' | translate }}</span>
+				</button>
+				<button
+					nbButton
+					ghost
+					size="tiny"
+					status="basic"
+					type="button"
+					[disabled]="busy"
+					[nbTooltip]="'BUTTONS.DUPLICATE' | translate"
+					nbTooltipPlacement="top"
+					[attr.aria-label]="'BUTTONS.DUPLICATE' | translate"
+					(click)="duplicate()"
+				>
+					<nb-icon icon="copy-outline"></nb-icon>
+				</button>
+			</ng-template>
+			<button
+				nbButton
+				ghost
+				size="tiny"
+				status="basic"
+				type="button"
+				[nbTooltip]="'BUTTONS.COPY_LINK' | translate"
+				nbTooltipPlacement="top"
+				[attr.aria-label]="'BUTTONS.COPY_LINK' | translate"
+				(click)="copyLink()"
+			>
+				<nb-icon icon="link-2-outline"></nb-icon>
+			</button>
+			<ngx-favorite-toggle
+				[entityType]="favoriteEntity"
+				[entityId]="income.id"
+				[entityName]="headline?.title"
+				size="tiny"
+				status="basic"
+				appearance="ghost"
+				spacing="list"
+			></ngx-favorite-toggle>
+			<ng-template [ngxPermissionsOnly]="[PermissionsEnum.ORG_INCOMES_EDIT]">
+				<button
+					nbButton
+					ghost
+					size="tiny"
+					status="danger"
+					type="button"
+					[disabled]="busy"
+					[nbTooltip]="'BUTTONS.DELETE' | translate"
+					nbTooltipPlacement="top"
+					[attr.aria-label]="'BUTTONS.DELETE' | translate"
+					(click)="delete()"
+				>
+					<nb-icon icon="trash-2-outline"></nb-icon>
+				</button>
+			</ng-template>
+		</div>
+	}
+
+	@if (income && headline) {
+		<div class="project-view-top">
+			<!-- Who paid and how it was booked, then the four figures a reader looks for first. -->
+			<div class="project-view-headline">
+				<div class="project-view-header">
+					<span class="project-logo income-logo" aria-hidden="true">
+						<nb-icon icon="trending-up-outline"></nb-icon>
+					</span>
+					<div class="project-view-title">
+						<h5 class="project-view-name income-title" [nbTooltip]="headline.title" nbTooltipPlacement="top">
+							{{ headline.title }}
+						</h5>
+						<p class="project-view-meta">
+							@if (income.isBonus) {
+								<span class="project-status tone-info" [nbTooltip]="'INCOME_PAGE.BONUS_HELP' | translate" nbTooltipPlacement="top">
+									{{ 'INCOME_VIEW.BONUS' | translate }}
+								</span>
+							} @else {
+								<span class="project-status tone-success">{{ 'INCOME_VIEW.REGULAR' | translate }}</span>
+							}
+							@if (headline.employee) {
+								<ng-template [ngxPermissionsOnly]="[PermissionsEnum.CHANGE_SELECTED_EMPLOYEE]">
+									<span
+										class="project-meta-item"
+										[nbTooltip]="('SM_TABLE.EMPLOYEE' | translate) + ': ' + headline.employee"
+										nbTooltipPlacement="top"
+									>
+										<nb-icon icon="person-outline" aria-hidden="true"></nb-icon>
+										{{ headline.employee }}
+									</span>
+								</ng-template>
+							}
+							@if (income.tags?.length) {
+								<span class="project-meta-item">
+									<nb-icon icon="pricetags-outline" aria-hidden="true"></nb-icon>
+									{{ 'INCOME_VIEW.TAG_COUNT' | translate : { count: income.tags.length } }}
+								</span>
+							}
+						</p>
+					</div>
+				</div>
+
+				<dl class="project-facts">
+					<div class="project-fact income-fact-amount">
+						<dt>{{ 'INCOME_VIEW.AMOUNT' | translate }}</dt>
+						<dd>
+							<ga-income-amount class="income-amount" [value]="$any(income.amount)" [rowData]="income"></ga-income-amount>
+							<span class="project-fact-hint">{{ 'INCOME_VIEW.CURRENCY_HINT' | translate : { currency: income.currency } }}</span>
+						</dd>
+					</div>
+					<div class="project-fact">
+						<dt>{{ 'INCOME_VIEW.TYPE' | translate }}</dt>
+						<dd>
+							{{ (income.isBonus ? 'INCOME_VIEW.BONUS' : 'INCOME_VIEW.REGULAR') | translate }}
+							<span class="project-fact-hint">
+								{{ (income.isBonus ? 'INCOME_VIEW.BONUS_HINT' : 'INCOME_VIEW.REGULAR_HINT') | translate }}
+							</span>
+						</dd>
+					</div>
+					<div class="project-fact">
+						<dt>{{ 'INCOME_VIEW.INCOME_DATE' | translate }}</dt>
+						<dd>
+							@if (income.valueDate) {
+								{{ income.valueDate | dateFormat }}
+								<span class="project-fact-hint">{{ headline.since }}</span>
+							} @else {
+								<span class="project-fact-muted">—</span>
+							}
+						</dd>
+					</div>
+					<div class="project-fact">
+						<dt>{{ 'INCOME_VIEW.CLIENT_TOTAL' | translate }}</dt>
+						<dd>
+							@if (charts.clientTotal !== null) {
+								{{ formatAmount(charts.clientTotal) }}
+								<span class="project-fact-hint">{{ 'INCOME_VIEW.CLIENT_TOTAL_HINT' | translate : { count: clientTotalMonths } }}</span>
+							} @else if (charts.loading) {
+								<span class="project-fact-muted">…</span>
+							} @else {
+								<span class="project-fact-muted">—</span>
+							}
+						</dd>
+					</div>
+				</dl>
+			</div>
+
+			<!-- The record: the notes and tags, then how the income compares with the client's others. -->
+			<div class="project-view-col project-view-col--main">
+				@if (income.notes || income.tags?.length) {
+					<ngx-record-view [record]="income" [sections]="mainSections" [placeholder]="'SM_TABLE.NONE' | translate"></ngx-record-view>
+				} @else {
+					<section class="panel project-view-panel">
+						<header class="panel-header">
+							<h5 class="panel-title panel-title--icon">
+								<nb-icon icon="file-text-outline" aria-hidden="true"></nb-icon>
+								{{ 'INCOME_VIEW.DESCRIPTION' | translate }}
+							</h5>
+						</header>
+						<div class="panel-body panel-body--flush">
+							<div class="state state--compact">
+								<nb-icon icon="file-text-outline" aria-hidden="true"></nb-icon>
+								<p>{{ 'INCOME_VIEW.NO_DESCRIPTION' | translate }}</p>
+								<ng-template [ngxPermissionsOnly]="[PermissionsEnum.ORG_INCOMES_EDIT]">
+									<button nbButton outline size="tiny" status="basic" type="button" [disabled]="busy" (click)="edit()">
+										<nb-icon icon="edit-outline" aria-hidden="true"></nb-icon>
+										{{ 'INCOME_VIEW.ADD_NOTES' | translate }}
+									</button>
+								</ng-template>
+							</div>
+						</div>
+					</section>
+				}
+
+				<!-- The client's income by month, this income's month highlighted. The months end with the income's own,
+					 so an undated income has none to show. -->
+				@if (income.client && income.valueDate) {
+					<section class="panel project-view-panel" [nbSpinner]="charts.loading" nbSpinnerSize="small" nbSpinnerStatus="basic">
+						<header class="panel-header">
+							<div class="panel-heading">
+								<h5 class="panel-title panel-title--icon">
+									<nb-icon icon="bar-chart-outline" aria-hidden="true"></nb-icon>
+									{{ 'INCOME_VIEW.CLIENT_INCOME' | translate }}
+								</h5>
+								<span class="panel-caption">
+									{{
+										'INCOME_VIEW.CLIENT_INCOME_CAPTION'
+											| translate : { client: income.client.name, count: clientMonths, currency: income.currency }
+									}}
+								</span>
+							</div>
+							@if (!charts.failed) {
+								<div class="income-chart-controls">
+									<ng-container *ngTemplateOutlet="chartKindSwitch; context: { $implicit: 'client' }"></ng-container>
+									<nb-select
+										class="income-chart-range"
+										size="small"
+										status="basic"
+										[selected]="clientMonths"
+										(selectedChange)="setClientMonths($event)"
+										[attr.aria-label]="'EXPENSE_VIEW.CHART_RANGE' | translate"
+									>
+										@for (months of clientMonthOptions; track months) {
+											<nb-option [value]="months">{{ 'EXPENSE_VIEW.LAST_MONTHS' | translate : { count: months } }}</nb-option>
+										}
+									</nb-select>
+								</div>
+							}
+						</header>
+						<div class="panel-body project-chart-body">
+							@if (charts.failed) {
+								<ng-container *ngTemplateOutlet="chartFailed"></ng-container>
+							} @else if (charts.clientBars.length) {
+								<ga-expense-bar-chart
+									accent="revenue"
+									[formatValue]="formatAmount"
+									[highlightLabel]="'INCOME_VIEW.THIS_MONTH' | translate"
+									[otherLabel]="'EXPENSE_VIEW.OTHER_MONTHS' | translate"
+									[kind]="chartKinds.client"
+									[bars]="charts.clientBars"
+								></ga-expense-bar-chart>
+							}
+						</div>
+					</section>
+
+					<!-- The payments from the same client in date order, this one highlighted: how regular and how steady. -->
+					<section class="panel project-view-panel" [nbSpinner]="charts.loading" nbSpinnerSize="small" nbSpinnerStatus="basic">
+						<header class="panel-header">
+							<div class="panel-heading">
+								<h5 class="panel-title panel-title--icon">
+									<nb-icon icon="trending-up-outline" aria-hidden="true"></nb-icon>
+									{{ 'INCOME_VIEW.CLIENT_PAYMENTS' | translate }}
+								</h5>
+								@if (charts.paymentBars.length > 1) {
+									<span class="panel-caption">
+										{{
+											'INCOME_VIEW.CLIENT_PAYMENTS_CAPTION'
+												| translate : { client: income.client.name, count: charts.paymentBars.length, currency: income.currency }
+										}}
+									</span>
+								}
+							</div>
+							@if (!charts.failed) {
+								<div class="income-chart-controls">
+									<ng-container *ngTemplateOutlet="chartKindSwitch; context: { $implicit: 'payments' }"></ng-container>
+									<nb-select
+										class="income-chart-range"
+										size="small"
+										status="basic"
+										[selected]="clientPayments"
+										(selectedChange)="setClientPayments($event)"
+										[attr.aria-label]="'EXPENSE_VIEW.CHART_RANGE' | translate"
+									>
+										@for (payments of clientPaymentOptions; track payments) {
+											<nb-option [value]="payments">{{ 'EXPENSE_VIEW.LAST_PAYMENTS' | translate : { count: payments } }}</nb-option>
+										}
+									</nb-select>
+								</div>
+							}
+						</header>
+						<div class="panel-body project-chart-body">
+							@if (charts.failed) {
+								<ng-container *ngTemplateOutlet="chartFailed"></ng-container>
+							} @else if (!charts.loading && charts.paymentBars.length <= 1) {
+								<div class="state state--compact">
+									<nb-icon icon="trending-up-outline" aria-hidden="true"></nb-icon>
+									<p>{{ 'INCOME_VIEW.NO_OTHER_PAYMENTS' | translate }}</p>
+								</div>
+							} @else if (charts.paymentBars.length) {
+								<ga-expense-bar-chart
+									accent="revenue"
+									[formatValue]="formatAmount"
+									[highlightLabel]="'INCOME_VIEW.THIS_INCOME' | translate"
+									[otherLabel]="'EXPENSE_VIEW.OTHER_PAYMENTS' | translate"
+									[kind]="chartKinds.payments"
+									[bars]="charts.paymentBars"
+								></ga-expense-bar-chart>
+							}
+						</div>
+					</section>
+				}
+			</div>
+
+			<!-- The facts: every field of the income, its share of its month, then its stamps. -->
+			<div class="project-view-col project-view-col--side">
+				<ngx-record-view
+					class="income-details"
+					[record]="income"
+					[sections]="detailsSections"
+					[placeholder]="'SM_TABLE.NONE' | translate"
+				></ngx-record-view>
+
+				<!-- This income against all the organization's income in the same month. -->
+				@if (income.valueDate && (charts.loading || charts.failed || charts.share)) {
+					<section class="panel project-view-panel" [nbSpinner]="charts.loading" nbSpinnerSize="small" nbSpinnerStatus="basic">
+						<header class="panel-header">
+							<div class="panel-heading">
+								<h5 class="panel-title panel-title--icon">
+									<nb-icon icon="pie-chart-outline" aria-hidden="true"></nb-icon>
+									{{ 'INCOME_VIEW.MONTH_SHARE' | translate }}
+								</h5>
+								@if (charts.shareMonth) {
+									<span class="panel-caption">
+										{{ 'INCOME_VIEW.MONTH_SHARE_CAPTION' | translate : { month: charts.shareMonth } }}
+									</span>
+								}
+							</div>
+						</header>
+						<div class="panel-body">
+							@if (charts.failed) {
+								<ng-container *ngTemplateOutlet="chartFailed"></ng-container>
+							} @else if (charts.share) {
+								<ga-expense-share-chart
+									accent="revenue"
+									[formatValue]="formatAmount"
+									[amountLabel]="'INCOME_VIEW.THIS_INCOME' | translate"
+									[restLabel]="'EXPENSE_VIEW.REST_OF_MONTH' | translate"
+									[totalLabel]="'EXPENSE_VIEW.MONTH_TOTAL' | translate"
+									[share]="charts.share"
+								></ga-expense-share-chart>
+							}
+						</div>
+					</section>
+				}
+
+				<ngx-record-view [record]="income" [sections]="metaSections" [placeholder]="'SM_TABLE.NONE' | translate"></ngx-record-view>
+			</div>
+		</div>
+	}
+</ngx-record-view-page>
+
+<ng-template #chartFailed>
+	<div class="state state--compact">
+		<nb-icon icon="alert-circle-outline" aria-hidden="true"></nb-icon>
+		<p>{{ 'EXPENSE_VIEW.CHART_FAILED' | translate }}</p>
+	</div>
+</ng-template>
+
+<!-- A chart panel's bars / line switch, as the project page's activity views: one icon button per way of drawing. -->
+<ng-template #chartKindSwitch let-panel>
+	<div class="segmented project-activity-views" role="group" [attr.aria-label]="'INCOME_VIEW.CHART_TYPE' | translate">
+		@for (option of chartKindOptions; track option.kind) {
+			<button
+				type="button"
+				class="segment"
+				[class.is-active]="chartKinds[panel] === option.kind"
+				[attr.aria-pressed]="chartKinds[panel] === option.kind"
+				[nbTooltip]="option.label | translate"
+				nbTooltipPlacement="top"
+				[attr.aria-label]="option.label | translate"
+				(click)="setChartKind(panel, option.kind)"
+			>
+				<nb-icon [icon]="option.icon" aria-hidden="true"></nb-icon>
+			</button>
+		}
+	</div>
+</ng-template>

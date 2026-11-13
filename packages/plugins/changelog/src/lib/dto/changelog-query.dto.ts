@@ -1,7 +1,13 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsBoolean, IsOptional } from 'class-validator';
+import { IsBoolean, IsOptional, IsString, Matches, MaxLength } from 'class-validator';
 import { Transform, TransformFnParams } from 'class-transformer';
-import { IChangelogFindInput } from '@gauzy/contracts';
+import {
+	CHANGELOG_PLATFORM_MAX_LENGTH,
+	CHANGELOG_PLATFORM_PATTERN,
+	DEFAULT_CHANGELOG_PLATFORM,
+	IChangelogFindInput
+} from '@gauzy/contracts';
+import { toChangelogPlatformKey } from '../changelog-platform';
 
 /**
  * Get changelog request DTO validation.
@@ -30,4 +36,24 @@ export class ChangelogQueryDTO implements IChangelogFindInput {
 	})
 	@IsBoolean()
 	readonly isFeature?: boolean;
+
+	/**
+	 * The product whose entries to list, such as `ever-teams`. Left out, the service lists Gauzy's, which is
+	 * what every reader written before products existed (the Gauzy web app, the desktop apps) expects.
+	 */
+	@ApiPropertyOptional({
+		type: () => String,
+		default: DEFAULT_CHANGELOG_PLATFORM,
+		description: 'The product whose entries to list: gauzy (default), ever-teams, ever-works, ever-platform, ...'
+	})
+	@IsOptional()
+	// A blank `platform=` reads as left out rather than failing the pattern.
+	@Transform(({ value }: TransformFnParams) => {
+		const key = toChangelogPlatformKey(value);
+		return key === '' ? undefined : key;
+	})
+	@IsString()
+	@MaxLength(CHANGELOG_PLATFORM_MAX_LENGTH)
+	@Matches(CHANGELOG_PLATFORM_PATTERN)
+	readonly platform?: string;
 }

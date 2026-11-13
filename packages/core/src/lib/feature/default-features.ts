@@ -647,5 +647,15 @@ export const DEFAULT_FEATURES: IFeatureCreateInput[] = [
 		icon: 'book-open-outline',
 		status: 'info'
 	},
+	{
+		name: 'Chat',
+		code: FeatureEnum.FEATURE_CHAT,
+		description: 'Chat between employees: channels, direct and group messages, threads, mentions and task cards',
+		image: 'chat.png',
+		link: 'pages/chat',
+		isEnabled: features.FEATURE_CHAT,
+		icon: 'message-circle-outline',
+		status: 'info'
+	},
 	...commerceFeatures
 ];

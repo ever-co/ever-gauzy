@@ -1,0 +1,169 @@
+<nb-card class="page" data-test="notification-settings-page">
+	<nb-card-header>
+		<h4>{{ 'INBOX.NOTIFICATION_SETTINGS.TITLE' | translate }}</h4>
+		<p class="subtitle">{{ 'INBOX.NOTIFICATION_SETTINGS.SUBTITLE' | translate }}</p>
+	</nb-card-header>
+	<nb-card-body>
+		@switch (view()) {
+			@case ('loading') {
+				<div class="loading" data-test="loading" [nbSpinner]="true"></div>
+			}
+			@case ('no-employee') {
+				<p data-test="no-employee">{{ 'INBOX.NOTIFICATION_SETTINGS.NO_EMPLOYEE' | translate }}</p>
+			}
+			@case ('forbidden') {
+				<p data-test="forbidden">{{ 'INBOX.NOTIFICATION_SETTINGS.FORBIDDEN' | translate }}</p>
+			}
+			@case ('error') {
+				<nb-alert status="danger" role="alert" data-test="error">{{
+					'INBOX.NOTIFICATION_SETTINGS.LOAD_ERROR' | translate
+				}}</nb-alert>
+				<button nbButton size="small" type="button" data-test="retry" (click)="load()">
+					{{ 'INBOX.RETRY' | translate }}
+				</button>
+			}
+			@default {
+				<section class="group" data-test="kinds">
+					<h5>{{ 'INBOX.NOTIFICATION_SETTINGS.KINDS_TITLE' | translate }}</h5>
+					<p class="hint">{{ 'INBOX.NOTIFICATION_SETTINGS.KINDS_HINT' | translate }}</p>
+					@for (row of kinds; track row.key) {
+						<div class="row" [attr.data-test]="'kind-' + row.key">
+							<div class="text">
+								<span class="label">{{
+									'INBOX.NOTIFICATION_SETTINGS.KINDS.' + row.labelKey + '.TITLE' | translate
+								}}</span>
+								<span class="hint">{{
+									'INBOX.NOTIFICATION_SETTINGS.KINDS.' + row.labelKey + '.TEXT' | translate
+								}}</span>
+							</div>
+							<div class="controls">
+								@if (isOn(row.key)) {
+									<nb-select
+										size="small"
+										[attr.data-test]="'mode-' + row.key"
+										[attr.aria-label]="'INBOX.NOTIFICATION_SETTINGS.MODE_LABEL' | translate"
+										[selected]="ownModeOf(row.type)"
+										[disabled]="saving()"
+										(selectedChange)="setKindMode(row.type, $event)"
+									>
+										<nb-option [value]="'default'">{{
+											'INBOX.NOTIFICATION_SETTINGS.MODE.default'
+												| translate: { mode: 'INBOX.NOTIFICATION_SETTINGS.MODE.' + defaultMode() | translate }
+										}}</nb-option>
+										@for (mode of modes; track mode) {
+											<nb-option [value]="mode">{{
+												'INBOX.NOTIFICATION_SETTINGS.MODE.' + mode | translate
+											}}</nb-option>
+										}
+									</nb-select>
+								}
+								<nb-toggle
+									[attr.data-test]="'switch-' + row.key"
+									[checked]="isOn(row.key)"
+									[disabled]="saving()"
+									(checkedChange)="setKind(row.key, $event)"
+								></nb-toggle>
+							</div>
+						</div>
+					}
+				</section>
+				<section class="group" data-test="email">
+					<h5>{{ 'INBOX.NOTIFICATION_SETTINGS.EMAIL_TITLE' | translate }}</h5>
+					<p class="hint">{{ 'INBOX.NOTIFICATION_SETTINGS.EMAIL_HINT' | translate }}</p>
+					@if (emailNotice(); as notice) {
+						<nb-alert status="warning" class="notice" role="status" [attr.data-test]="'email-notice-' + notice">
+							{{ 'INBOX.NOTIFICATION_SETTINGS.EMAIL_NOTICE.' + notice | translate }}
+						</nb-alert>
+					}
+					<div class="row" data-test="email-default">
+						<div class="text">
+							<span class="label">{{ 'INBOX.NOTIFICATION_SETTINGS.DEFAULT_LABEL' | translate }}</span>
+							<span class="hint">{{ 'INBOX.NOTIFICATION_SETTINGS.DEFAULT_TEXT' | translate }}</span>
+						</div>
+						<div class="controls">
+							<nb-select
+								size="small"
+								data-test="mode-default"
+								[selected]="defaultMode()"
+								[disabled]="saving()"
+								(selectedChange)="setDefaultMode($event)"
+							>
+								@for (mode of modes; track mode) {
+									<nb-option [value]="mode">{{ 'INBOX.NOTIFICATION_SETTINGS.MODE.' + mode | translate }}</nb-option>
+								}
+							</nb-select>
+						</div>
+					</div>
+				</section>
+				<section class="group" data-test="quiet">
+					<h5>{{ 'INBOX.NOTIFICATION_SETTINGS.QUIET_TITLE' | translate }}</h5>
+					<div class="row" data-test="quiet-hours">
+						<div class="text">
+							<span class="label">{{ 'INBOX.NOTIFICATION_SETTINGS.QUIET_LABEL' | translate }}</span>
+							<span class="hint">{{
+								'INBOX.NOTIFICATION_SETTINGS.QUIET_TEXT' | translate: { timeZone: timeZone() }
+							}}</span>
+						</div>
+						<div class="controls">
+							@if (quietHours(); as window) {
+								<label class="time">
+									<span>{{ 'INBOX.NOTIFICATION_SETTINGS.QUIET_FROM' | translate }}</span>
+									<input
+										nbInput
+										fieldSize="small"
+										type="time"
+										data-test="quiet-start"
+										[value]="window.start"
+										[disabled]="saving()"
+										(change)="setQuietHour('start', $event)"
+									/>
+								</label>
+								<label class="time">
+									<span>{{ 'INBOX.NOTIFICATION_SETTINGS.QUIET_TO' | translate }}</span>
+									<input
+										nbInput
+										fieldSize="small"
+										type="time"
+										data-test="quiet-end"
+										[value]="window.end"
+										[disabled]="saving()"
+										(change)="setQuietHour('end', $event)"
+									/>
+								</label>
+							}
+							<nb-toggle
+								data-test="quiet-switch"
+								[checked]="!!quietHours()"
+								[disabled]="saving()"
+								(checkedChange)="toggleQuietHours($event)"
+							></nb-toggle>
+						</div>
+					</div>
+					<div class="row" data-test="digest-hour">
+						<div class="text">
+							<span class="label">{{ 'INBOX.NOTIFICATION_SETTINGS.DIGEST_LABEL' | translate }}</span>
+							<span class="hint">{{ 'INBOX.NOTIFICATION_SETTINGS.DIGEST_TEXT' | translate }}</span>
+						</div>
+						<div class="controls">
+							<nb-select
+								size="small"
+								data-test="digest-select"
+								[selected]="digestHour()"
+								[disabled]="saving()"
+								(selectedChange)="setDigestHour($event)"
+							>
+								@for (hour of hours; track hour) {
+									<nb-option [value]="hour">{{ hourLabel(hour) }}</nb-option>
+								}
+							</nb-select>
+						</div>
+					</div>
+				</section>
+			}
+		}
+		<!-- A browser's notifications are the signed-in user's, employee or not (the push routes need INBOX_VIEW only). -->
+		@if (view() !== 'loading') {
+			<ngx-inbox-browser-push />
+		}
+	</nb-card-body>
+</nb-card>

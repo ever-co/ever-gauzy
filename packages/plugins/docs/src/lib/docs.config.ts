@@ -6,12 +6,16 @@ import {
 	DEFAULT_DOCS_EMBED_BATCH_SIZE,
 	DEFAULT_DOCS_EMBEDDING_DIMS,
 	DEFAULT_DOCS_EMBEDDING_MODEL,
+	DEFAULT_DOCS_IMPORT_MAX_ENTRIES,
+	DEFAULT_DOCS_IMPORT_MAX_UNCOMPRESSED_BYTES,
+	DEFAULT_DOCS_IMPORT_MAX_ZIP_BYTES,
 	DEFAULT_DOCS_INBOUND_MAX_MESSAGE_BYTES,
 	DEFAULT_DOCS_MAX_BINARY_BYTES,
 	DEFAULT_DOCS_MAX_EXTRACTED_CHARS,
 	DEFAULT_DOCS_MAX_FILE_SIZE,
 	DEFAULT_DOCS_OCR_MAX_PAGES,
 	DEFAULT_DOCS_ORG_QUOTA_BYTES,
+	DEFAULT_DOCS_PDF_MAX_PAGES,
 	DEFAULT_DOCS_QUEUE_CONCURRENCY,
 	DEFAULT_DOCS_RETRIEVAL_TOPK_MAX,
 	DEFAULT_DOCS_SEARCH_RATE_LIMIT,
@@ -26,9 +30,14 @@ import {
 	ENV_GAUZY_DOCS_CHUNK_TOKENS,
 	ENV_GAUZY_DOCS_CLASSIFY_MODEL,
 	ENV_GAUZY_DOCS_CLASSIFY_SAMPLE_CHARS,
+	ENV_GAUZY_DOCS_COLLAB_ENABLED,
 	ENV_GAUZY_DOCS_EMBED_BATCH_SIZE,
 	ENV_GAUZY_DOCS_EMBEDDING_DIMS,
 	ENV_GAUZY_DOCS_EMBEDDING_MODEL,
+	ENV_GAUZY_DOCS_IMPORT_ENABLED,
+	ENV_GAUZY_DOCS_IMPORT_MAX_ENTRIES,
+	ENV_GAUZY_DOCS_IMPORT_MAX_UNCOMPRESSED_BYTES,
+	ENV_GAUZY_DOCS_IMPORT_MAX_ZIP_BYTES,
 	ENV_GAUZY_DOCS_INBOUND_DOMAIN,
 	ENV_GAUZY_DOCS_INBOUND_EMAIL_ENABLED,
 	ENV_GAUZY_DOCS_INBOUND_MAX_MESSAGE_BYTES,
@@ -39,6 +48,8 @@ import {
 	ENV_GAUZY_DOCS_OCR_ENABLED,
 	ENV_GAUZY_DOCS_OCR_MAX_PAGES,
 	ENV_GAUZY_DOCS_ORG_QUOTA_BYTES,
+	ENV_GAUZY_DOCS_PDF_EXPORT_ENABLED,
+	ENV_GAUZY_DOCS_PDF_MAX_PAGES,
 	ENV_GAUZY_DOCS_QUEUE_CONCURRENCY,
 	ENV_GAUZY_DOCS_QUEUE_ENABLED,
 	ENV_GAUZY_DOCS_QUEUE_WORKER_ENABLED,
@@ -62,6 +73,8 @@ export interface IDocsConfig {
 	maxBinaryBytes: number;
 	/** Master switch for the AI pipeline (classification, embedding, retrieval). */
 	aiEnabled: boolean;
+	/** The collaboration feature: team spaces, follow / mute, Markdown export and update. Off by default. */
+	collabEnabled: boolean;
 	/** Embedding model id used by the knowledge pipeline. */
 	embeddingModel: string;
 	/** Classification model id; undefined falls back to the chat default model. */
@@ -119,6 +132,18 @@ export interface IDocsConfig {
 	searchRateLimit: number;
 	/** Requests per minute allowed on the bulk / re-index admin routes (§9). */
 	adminOpsRateLimit: number;
+	/** Import of exported workspaces (a Markdown vault or an HTML export zip). Off by default. */
+	importEnabled: boolean;
+	/** The largest zip an import accepts, in bytes. */
+	importMaxZipBytes: number;
+	/** The most entries one import zip may hold. */
+	importMaxEntries: number;
+	/** The most bytes one import zip may unpack to. */
+	importMaxUncompressedBytes: number;
+	/** PDF export of a page or a subtree. Off by default. */
+	pdfExportEnabled: boolean;
+	/** The most pages one subtree PDF export takes. */
+	pdfMaxPages: number;
 }
 
 /**
@@ -177,6 +202,7 @@ export const getDocsConfig = (): IDocsConfig => ({
 	// skips the classify/embed stages and extraction + search keep working. Set to `false` to keep the
 	// AI stages off even where a provider IS configured.
 	aiEnabled: parseBoolEnv(ENV_GAUZY_DOCS_AI_ENABLED, true),
+	collabEnabled: parseBoolEnv(ENV_GAUZY_DOCS_COLLAB_ENABLED, false),
 	embeddingModel: process.env[ENV_GAUZY_DOCS_EMBEDDING_MODEL] || DEFAULT_DOCS_EMBEDDING_MODEL,
 	classifyModel: process.env[ENV_GAUZY_DOCS_CLASSIFY_MODEL] || undefined,
 	versionDebounceMinutes: parseIntEnv(ENV_GAUZY_DOCS_VERSION_DEBOUNCE_MINUTES, DEFAULT_DOCS_VERSION_DEBOUNCE_MINUTES),
@@ -214,7 +240,16 @@ export const getDocsConfig = (): IDocsConfig => ({
 	ocrMaxPages: parseIntEnv(ENV_GAUZY_DOCS_OCR_MAX_PAGES, DEFAULT_DOCS_OCR_MAX_PAGES),
 	uploadRateLimit: parseIntEnv(ENV_GAUZY_DOCS_UPLOAD_RATE_LIMIT, DEFAULT_DOCS_UPLOAD_RATE_LIMIT),
 	searchRateLimit: parseIntEnv(ENV_GAUZY_DOCS_SEARCH_RATE_LIMIT, DEFAULT_DOCS_SEARCH_RATE_LIMIT),
-	adminOpsRateLimit: parseIntEnv(ENV_GAUZY_DOCS_ADMIN_OPS_RATE_LIMIT, DEFAULT_DOCS_ADMIN_OPS_RATE_LIMIT)
+	adminOpsRateLimit: parseIntEnv(ENV_GAUZY_DOCS_ADMIN_OPS_RATE_LIMIT, DEFAULT_DOCS_ADMIN_OPS_RATE_LIMIT),
+	importEnabled: parseBoolEnv(ENV_GAUZY_DOCS_IMPORT_ENABLED, false),
+	importMaxZipBytes: parseIntEnv(ENV_GAUZY_DOCS_IMPORT_MAX_ZIP_BYTES, DEFAULT_DOCS_IMPORT_MAX_ZIP_BYTES),
+	importMaxEntries: parseIntEnv(ENV_GAUZY_DOCS_IMPORT_MAX_ENTRIES, DEFAULT_DOCS_IMPORT_MAX_ENTRIES),
+	importMaxUncompressedBytes: parseIntEnv(
+		ENV_GAUZY_DOCS_IMPORT_MAX_UNCOMPRESSED_BYTES,
+		DEFAULT_DOCS_IMPORT_MAX_UNCOMPRESSED_BYTES
+	),
+	pdfExportEnabled: parseBoolEnv(ENV_GAUZY_DOCS_PDF_EXPORT_ENABLED, false),
+	pdfMaxPages: parseIntEnv(ENV_GAUZY_DOCS_PDF_MAX_PAGES, DEFAULT_DOCS_PDF_MAX_PAGES)
 });
 
 /**

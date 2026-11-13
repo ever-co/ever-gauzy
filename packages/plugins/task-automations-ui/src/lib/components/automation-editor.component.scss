@@ -1,0 +1,58 @@
+.field {
+	margin-bottom: 0.75rem;
+	flex: 1;
+}
+.label {
+	display: block;
+	font-size: 0.8rem;
+	margin-bottom: 0.25rem;
+}
+.required {
+	color: var(--color-danger-default);
+}
+.row {
+	display: flex;
+	gap: 0.75rem;
+	flex-wrap: wrap;
+}
+.section {
+	margin: 1rem 0 0.5rem;
+}
+.line {
+	display: flex;
+	gap: 0.5rem;
+	align-items: center;
+	margin-bottom: 0.5rem;
+	flex-wrap: wrap;
+}
+.type {
+	min-width: 14rem;
+}
+.value {
+	flex: 1;
+	min-width: 12rem;
+}
+.hint {
+	font-size: 0.8rem;
+	opacity: 0.75;
+	margin: 0.25rem 0 0;
+}
+.errors {
+	color: var(--color-danger-default);
+	font-size: 0.85rem;
+	padding-left: 1rem;
+}
+.buttons {
+	display: flex;
+	gap: 0.5rem;
+	margin-top: 1rem;
+}
+.detail {
+	opacity: 0.7;
+}
+.form-lock {
+	border: 0;
+	padding: 0;
+	margin: 0;
+	min-width: 0;
+}

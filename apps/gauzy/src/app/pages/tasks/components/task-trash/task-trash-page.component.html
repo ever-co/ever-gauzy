@@ -1,0 +1,108 @@
+<nb-card class="task-trash">
+	<nb-card-header class="task-trash__header">
+		<div class="task-trash__title">
+			<a class="task-trash__back" [routerLink]="['/pages/tasks/dashboard']" [attr.aria-label]="'TASKS_PAGE.TRASH.BACK' | translate" [nbTooltip]="'TASKS_PAGE.TRASH.BACK' | translate">
+				<nb-icon icon="arrow-back-outline" aria-hidden="true"></nb-icon>
+			</a>
+			<h4>{{ 'TASKS_PAGE.TRASH.TITLE' | translate }}</h4>
+		</div>
+		<nb-form-field class="task-trash__search">
+			<nb-icon nbPrefix icon="search-outline" aria-hidden="true"></nb-icon>
+			<input
+				nbInput
+				fullWidth
+				fieldSize="small"
+				type="search"
+				[formControl]="searchControl"
+				maxlength="200"
+				[placeholder]="'TASKS_PAGE.TRASH.SEARCH' | translate"
+				[attr.aria-label]="'TASKS_PAGE.TRASH.SEARCH' | translate"
+			/>
+		</nb-form-field>
+	</nb-card-header>
+	<nb-card-body [nbSpinner]="state === 'loading'" nbSpinnerSize="medium" nbSpinnerStatus="basic">
+		<p class="task-trash__hint">{{ 'TASKS_PAGE.TRASH.HINT' | translate }}</p>
+		@switch (state) {
+			@case ('unavailable') {
+				<div class="task-trash__empty" role="status">
+					<b>{{ 'TASKS_PAGE.TRASH.UNAVAILABLE_TITLE' | translate }}</b>
+					<span>{{ 'TASKS_PAGE.TRASH.UNAVAILABLE_TEXT' | translate }}</span>
+				</div>
+			}
+			@case ('forbidden') {
+				<div class="task-trash__empty" role="status">
+					<b>{{ 'TASKS_PAGE.TRASH.FORBIDDEN_TITLE' | translate }}</b>
+					<span>{{ 'TASKS_PAGE.TRASH.FORBIDDEN_TEXT' | translate }}</span>
+				</div>
+			}
+			@case ('error') {
+				<div class="task-trash__empty" role="alert">
+					<b>{{ 'TASKS_PAGE.TRASH.LOAD_FAILED' | translate }}</b>
+					<button type="button" nbButton size="small" status="basic" (click)="load(true)">{{ 'BUTTONS.RETRY' | translate }}</button>
+				</div>
+			}
+			@case ('ready') {
+				@if (!rows.length) {
+					<div class="task-trash__empty" role="status">
+						@if (searchControl.value.trim()) {
+							<b>{{ 'TASKS_PAGE.TRASH.NO_MATCH_TITLE' | translate }}</b>
+							<span>{{ 'TASKS_PAGE.TRASH.NO_MATCH_TEXT' | translate }}</span>
+						} @else {
+							<b>{{ 'TASKS_PAGE.TRASH.EMPTY_TITLE' | translate }}</b>
+							<span>{{ 'TASKS_PAGE.TRASH.EMPTY_TEXT' | translate }}</span>
+						}
+					</div>
+				} @else {
+					<nb-list class="task-trash__list">
+						@for (row of rows; track row.task.id) {
+							<nb-list-item class="task-trash__row" [attr.data-task-id]="row.task.id">
+								<span class="task-trash__key">{{ row.key }}</span>
+								<div class="task-trash__main">
+									<span class="task-trash__name">{{ row.task.title }}</span>
+									<span class="task-trash__meta">
+										@if (row.deletedBy) {
+											{{ 'TASKS_PAGE.TRASH.DELETED_BY' | translate: { name: row.deletedBy, date: row.deletedAt } }}
+										} @else {
+											{{ 'TASKS_PAGE.TRASH.DELETED_AT' | translate: { date: row.deletedAt } }}
+										}
+										@if (row.project) {
+											· {{ row.project }}
+										}
+									</span>
+								</div>
+								<div class="task-trash__actions">
+									@if (confirmingId === row.task.id) {
+										<span class="task-trash__confirm" role="group">
+											<span>{{ 'TASKS_PAGE.TRASH.DELETE_FOREVER_CONFIRM' | translate }}</span>
+											<button type="button" nbButton size="tiny" status="basic" [disabled]="busyId === row.task.id" (click)="confirmingId = null">
+												{{ 'BUTTONS.CANCEL' | translate }}
+											</button>
+											<button type="button" class="task-trash__confirm-delete" nbButton size="tiny" status="danger" [disabled]="busyId === row.task.id" (click)="deleteForever(row)">
+												{{ 'TASKS_PAGE.TRASH.DELETE_FOREVER' | translate }}
+											</button>
+										</span>
+									} @else {
+										<button type="button" nbButton size="small" status="basic" [disabled]="busyId === row.task.id" (click)="restore(row)">
+											<nb-icon icon="undo-outline" aria-hidden="true"></nb-icon>
+											{{ 'TASKS_PAGE.TRASH.RESTORE' | translate }}
+										</button>
+										<button type="button" class="task-trash__ask-delete" nbButton size="small" ghost status="danger" [disabled]="busyId === row.task.id" (click)="confirmingId = row.task.id">
+											{{ 'TASKS_PAGE.TRASH.DELETE_FOREVER' | translate }}
+										</button>
+									}
+								</div>
+							</nb-list-item>
+						}
+					</nb-list>
+					@if (hasMore) {
+						<div class="task-trash__more">
+							<button type="button" nbButton size="small" status="basic" [disabled]="loadingMore" (click)="load(false)">
+								{{ 'TASKS_PAGE.TRASH.LOAD_MORE' | translate: { shown: rows.length, total: total } }}
+							</button>
+						</div>
+					}
+				}
+			}
+		}
+	</nb-card-body>
+</nb-card>

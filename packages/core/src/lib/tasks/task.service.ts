@@ -2,6 +2,7 @@ import { EventBus } from '@nestjs/cqrs';
 import {
 	Injectable,
 	BadRequestException,
+	ConflictException,
 	ForbiddenException,
 	HttpStatus,
 	HttpException,
@@ -22,7 +23,9 @@ import {
 	LessThanOrEqual,
 	MoreThanOrEqual,
 	Raw,
-	SaveOptions
+	SaveOptions,
+	Not,
+	EntityManager
 } from 'typeorm';
 import { isBoolean, isUUID } from 'class-validator';
 import { SOFT_DELETABLE_FILTER } from 'mikro-orm-soft-delete';
@@ -38,21 +41,35 @@ import {
 	ITask,
 	ITaskUpdateInput,
 	PermissionsEnum,
+	RolesEnum,
 	ActionTypeEnum,
 	ITaskDateFilterInput,
 	EntitySubscriptionTypeEnum,
 	ITaskAdvancedFilter,
 	IAdvancedTaskFiltering,
 	EmployeeNotificationTypeEnum,
-	NotificationActionTypeEnum
+	NotificationActionTypeEnum,
+	ITimeLog,
+	TaskSyncScopeEnum,
+	TimesheetStatus,
+	ITaskBuiltInViewQuery,
+	ITaskBulkUpdateInput,
+	ITaskBulkUpdateOutcome,
+	ITaskBulkUpdateResult,
+	ITaskReferenceResolution,
+	ITaskReferenceResolveInput,
+	ITaskTrashFindInput,
+	TaskBuiltInViewEnum,
+	TaskStatusEnum
 } from '@gauzy/contracts';
 import { isEmpty, isNotEmpty } from '@gauzy/utils';
-import { isPostgres, isSqlite } from '@gauzy/config';
-import { TenantAwareCrudService, BaseQueryDTO } from './../core/crud';
+import { isMySQL, isPostgres, isSqlite } from '@gauzy/config';
+import { TenantAwareCrudService, BaseQueryDTO, isWithinOrganizationBoundary } from './../core/crud';
 import { IPartialEntity } from './../core/crud/icrud.service';
 import { sanitizeRichHtml } from './../core/html-sanitizer';
 import {
 	mikroOrmContains,
+	mikroOrmILike,
 	MultiORMEnum,
 	parseFindOptionsRelations,
 	parseFindOptionsSelect,
@@ -68,18 +85,107 @@ import { EmployeeNotificationService } from '../employee-notification/employee-n
 import { EmployeeRecentVisitService } from '../employee-recent-visit/employee-recent-visit.service';
 import { ManagedEmployeeService } from '../employee/managed-employee.service';
 import { CreateEntitySubscriptionEvent } from '../entity-subscription/events';
-import { OrganizationProject } from '../core/entities/internal';
+import {
+	Employee,
+	Organization,
+	OrganizationProject,
+	OrganizationSprintTaskHistory,
+	TaskFormerReference,
+	TimeLog,
+	Timesheet
+} from '../core/entities/internal';
 import { EventBus as DomainEventBus } from '../event-bus/event-bus';
 import { TaskEvent } from '../event-bus/events/task.event';
 import { BaseEntityEventTypeEnum } from '../event-bus/base-entity-event';
 import { IFindOneOptions } from '../core/crud/icrud.service';
 import { Task } from './task.entity';
+import { BulkUpdateRequestError, changesToUpdate, normalizeBulkUpdate } from './bulk-update';
+import { derivedProjectKey, keysOfProject, normalizeTaskKey, parseTaskReference } from './task-reference';
+import { BUILT_IN_VIEW_DEFAULT_RELATIONS, BUILT_IN_VIEW_RELATIONS, builtInViewWindow, relationsTreeOf } from './built-in-views';
 import { TypeOrmOrganizationSprintTaskHistoryRepository } from './../organization-sprint/repository/type-orm-organization-sprint-task-history.repository';
 import { GetTaskByIdDTO } from './dto';
 import { prepareSQLQuery as p } from './../database/database.helper';
 import { TypeOrmTaskRepository } from './repository/type-orm-task.repository';
 import { MikroOrmTaskRepository } from './repository/mikro-orm-task.repository';
 import { FavoriteService } from '../core/decorators';
+import { assertCallerColumnsAllowed } from '../core/util/caller-restricted-columns.helper';
+
+function isLockedTimeLog(timeLog: ITimeLog): boolean {
+	const isApproved = timeLog.timesheet?.status === TimesheetStatus.APPROVED;
+	const isBilled = timeLog.timesheet?.isBilled === true;
+	return isApproved || isBilled;
+}
+
+function isMovableToProject(timeLog: ITimeLog, projectId: ID | null): boolean {
+	const isUnderAnotherProject = (timeLog.projectId ?? null) !== projectId;
+	return isUnderAnotherProject && !isLockedTimeLog(timeLog);
+}
+
+function timesheetIdsOf(timeLogs: ITimeLog[]): ID[] {
+	const ids = timeLogs.map((timeLog) => timeLog.timesheet?.id);
+	const presentIds = ids.filter((id): id is ID => Boolean(id));
+	return [...new Set(presentIds)];
+}
+
+/**
+ * The task's teams that belong to the task's own organization. Task writes only check that a linked team is in the
+ * same tenant, so a task can reference a team of another organization: only teams of the task's organization count
+ * towards managing it, and a task without an organization has none.
+ */
+function teamIdsOfTaskOrganization(task: Pick<Task, 'organizationId' | 'teams'>): ID[] {
+	if (!isNotEmpty(task.organizationId)) {
+		return [];
+	}
+	const ownTeams = (task.teams ?? []).filter((team) => team.organizationId === task.organizationId);
+	return ownTeams.map((team) => team.id);
+}
+
+/** At most this many trashed tasks per page (`TaskTrashQueryDTO` caps `take` at the same). */
+const TRASH_PAGE_SIZE = 100;
+
+/** The 404 of a delete from the trash that found no such task there: it was restored, or is already deleted. */
+const TASK_NOT_IN_TRASH = 'TASK_NOT_IN_TRASH: no task with that id is in the trash (it was restored or deleted).';
+
+/** The 409 of a delete from the trash that the database refused because other rows still point at the task. */
+const TASK_STILL_REFERENCED =
+	'TASK_STILL_REFERENCED: the task is still linked from other records (a linked issue or a key result), so it stays ' +
+	'in the trash; remove those links first.';
+
+/** The driver codes of a statement refused because another row still references the row it deletes. */
+const REFERENCED_ROW_CODES = new Set([
+	'23503',
+	'ER_ROW_IS_REFERENCED',
+	'ER_ROW_IS_REFERENCED_2',
+	'SQLITE_CONSTRAINT_FOREIGNKEY'
+]);
+
+/** The drivers' own wording of the same refusal, for a driver that states no code. */
+const REFERENCED_ROW_MESSAGE =
+	/FOREIGN KEY constraint failed|violates foreign key constraint|cannot delete or update a parent row/i;
+
+/**
+ * Whether a failed delete was refused because another row still references the row it deletes: a column whose
+ * foreign key has no delete rule of its own (`task_linked_issues.taskFromId`/`taskToId`, `key_result.taskId`). Read on
+ * TypeORM's `QueryFailedError` (the driver's code is copied onto it, and kept on `driverError`), MikroORM's
+ * `ForeignKeyConstraintViolationException`, and the driver's own error.
+ *
+ * @param error - What the statement threw
+ * @returns True for a refused delete of a referenced row
+ */
+function isReferencedRowViolation(error: unknown): boolean {
+	const nested = error as { driverError?: unknown; cause?: unknown } | null;
+	return [error, nested?.driverError, nested?.cause].some((candidate) => {
+		const failure = candidate as { name?: unknown; code?: unknown; message?: unknown } | null | undefined;
+		if (!failure) {
+			return false;
+		}
+		return (
+			failure.name === 'ForeignKeyConstraintViolationException' ||
+			REFERENCED_ROW_CODES.has(String(failure.code)) ||
+			REFERENCED_ROW_MESSAGE.test(String(failure.message ?? ''))
+		);
+	});
+}
 
 @FavoriteService(BaseEntityEnum.Task)
 @Injectable()
@@ -137,7 +243,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			const userId = RequestContext.currentUserId();
 
 			const user = RequestContext.currentUser();
-			const { mentionEmployeeIds, ...data } = input;
+			const { mentionEmployeeIds, moveTimeLogs, ...data } = input;
 
 			// Find task relations
 			const relations: FindOptionsRelations<Task> = {
@@ -176,66 +282,143 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			// the new one, or leave the task numbered as if it had never moved. The prefix follows the project
 			// too, by the rule the create path uses (the first three characters of the project's name). The move
 			// is written by the one save below, together with the rest of the update: a save that fails leaves
-			// the task where it was.
-			let moved: Partial<Task> | null = null;
-			if (data.projectId && data.projectId !== task.projectId) {
-				// The task's organization after the update: the destination must be a project of it, and the next
-				// number is counted in it (counting in another organization could hand out a taken number).
-				const organizationId = data.organizationId ?? task.organizationId;
-				const projectId = data.projectId;
+			// the task where it was. Where the task goes, and its number there, are decided in the update's transaction
+			// (below), from the task as it is once its row is locked.
+			// Set in the update's transaction (a closure): typed by assertion so that the read after it is not narrowed to null.
+			let moved = null as Partial<Task> | null;
+			let reclaimedNumber = null as number | null;
+			// The task's organization after the update: the destination must be a project of it, and the next number is
+			// counted in it (counting in another organization could hand out a taken number).
+			const organizationIdAfter = data.organizationId ?? task.organizationId;
 
-				// Fails closed: a project that is not one of the organization's, or one that cannot be checked, is
-				// refused before anything is written (the tenant guard of the save checks the tenant only).
-				const destination = await this.findDestinationProject(projectId, tenantId, organizationId);
-				if (!destination.exists) {
-					throw new BadRequestException(
-						"The task cannot move to a project that is not one of the task's organization."
-					);
+			// A body that removes the project can still carry the old `project` relation, which would keep the task in it
+			const removesProject = data.projectId === null && 'project' in data;
+
+			const namesProject = data.projectId !== undefined;
+			const changesProject = (data.projectId ?? null) !== (task.projectId ?? null);
+			const { organizationSprintId } = data;
+			const movesSprint = !!organizationSprintId && organizationSprintId !== task.organizationSprintId;
+
+			// The save, the reference the task leaves behind, the sprint move history and the read-back of the sync scope
+			// are one transaction: when a step fails the save is undone, so an update reported as failed (a bulk update's
+			// `ok: false`) changed nothing. The steps after it (mentions, time logs, subscriptions, activity) are best
+			// effort and run once it committed.
+			const updatedTask = await this.inUpdateTransaction(async ({ service, manager, inTransaction }) => {
+				// A task that leaves its project keeps the reference it held there (`API-42`), so the reference keeps
+				// resolving to it and the number is not handed to another task of that project (see TaskFormerReference).
+				// The reference is the one the task holds when this transaction writes, read with the row locked: a move
+				// that committed since the task was read above (`API-42` → `SYS-1`) leaves `SYS-1`, not `API-42` again.
+				const current = namesProject ? await this.lockedReferenceOf(manager, id, task, inTransaction) : task;
+				const leavesProject =
+					namesProject &&
+					!!current.projectId &&
+					current.number !== null &&
+					current.number !== undefined &&
+					(data.projectId ?? null) !== current.projectId;
+
+				// Whether the task moves, decided from the task as it is now (an overlapping update may have moved it since
+				// it was read above), and its number in the project it moves to. Fails closed: a project that is not one of
+				// the organization's, or one that cannot be checked, is refused before anything is written (the tenant
+				// guard of the save checks the tenant only). A task moving back to a project it left takes back the number
+				// it held there (an undo restores `API-42`, not `API-43`), and its former reference there is removed with
+				// the save. Otherwise the next number of the project, soft-deleted tasks and former numbers included (they
+				// keep their number, as for a new task). Every read here goes through the transaction's connection.
+				const movesTo = data.projectId && data.projectId !== current.projectId ? data.projectId : null;
+				if (movesTo) {
+					const found = await this.findDestinationProject(movesTo, tenantId, organizationIdAfter, manager);
+					if (!found.exists) {
+						throw new BadRequestException(
+							"The task cannot move to a project that is not one of the task's organization."
+						);
+					}
+					reclaimedNumber = await this.reclaimableNumberOf(manager, id, movesTo, tenantId, organizationIdAfter);
+					const number =
+						reclaimedNumber ??
+						(await service.getMaxTaskNumberByProject(
+							{ tenantId, organizationId: organizationIdAfter, projectId: movesTo },
+							{ withDeleted: true }
+						)) + 1;
+					moved = {
+						projectId: movesTo,
+						number,
+						// The destination's prefix, never the input's.
+						prefix: found.prefix ?? null,
+						// A relation object in the input would otherwise point the save back at another project.
+						...('project' in data ? { project: { id: movesTo } as Task['project'] } : {})
+					};
+				} else if (data.projectId && current.projectId !== task.projectId) {
+					// An overlapping update already put the task where this one names: it keeps the number and prefix it
+					// holds there, whatever this body (read before that move) carries, its `project` relation included.
+					moved = {
+						projectId: current.projectId,
+						number: current.number,
+						prefix: current.prefix,
+						...('project' in data ? { project: { id: current.projectId } as Task['project'] } : {})
+					};
 				}
 
-				// Get the maximum task number for the project the task moves to, soft-deleted tasks included: they
-				// keep their number in the `taskNumber` unique index, as for a new task
-				const maxNumber = await this.getMaxTaskNumberByProject(
-					{
-						tenantId,
-						organizationId,
-						projectId
-					},
-					{ withDeleted: true }
-				);
+				// Update the task with the provided data. When the task moved, the project, number and prefix computed
+				// above win over any the input carries: a client that sends the whole task back sends the old number.
+				const saved: Partial<Task> = { ...(moved ?? {}) };
+				if (removesProject) {
+					saved.project = null;
+				}
 
-				moved = {
-					projectId,
-					number: maxNumber + 1,
-					// The destination's prefix, never the input's.
-					prefix: destination.prefix,
-					// A relation object in the input would otherwise point the save back at another project.
-					...('project' in data ? { project: { id: projectId } as Task['project'] } : {})
-				};
-			}
+				// The reference is written before the save. In the transaction the order does not matter. Without one
+				// (MikroORM), a save that fails after it leaves a reference to the number the task still holds, which
+				// the live number answers first: harmless. A reference written after a save that succeeded could
+				// instead fail and lose `API-42` for good.
+				if (leavesProject) {
+					await manager.getRepository(TaskFormerReference).save({
+						taskId: id,
+						projectId: current.projectId,
+						number: current.number,
+						prefix: current.prefix ?? null,
+						// The organization the reference was valid in: the one the task was in before the update
+						organizationId: current.organizationId ?? task.organizationId,
+						tenantId
+					});
+				}
 
-			// Update the task with the provided data. When the task moved, the project, number and prefix computed
-			// above win over any the input carries: a client that sends the whole task back sends the old number.
-			const updatedTask = await super.create({
-				...data,
-				id,
-				...(moved ?? {})
-			});
-
-			// Register Task Sprint moving history
-			const { organizationSprintId } = data;
-			if (organizationSprintId && organizationSprintId !== task.organizationSprintId) {
-				await this.typeOrmOrganizationSprintTaskHistoryRepository.save({
-					fromSprintId: task.organizationSprintId || organizationSprintId, // Use incoming sprint ID if the task's organizationSprintId was previously null or undefined
-					toSprintId: organizationSprintId,
-					taskId: updatedTask.id,
-					movedById: userId,
-					reason: data.taskSprintMoveReason,
-					// A partial update may not carry the organization: fall back to the stored one
-					organizationId: data.organizationId ?? task.organizationId,
-					tenantId
+				const updated = await service.saveTaskRow({
+					...data,
+					id,
+					...saved
 				});
-			}
+
+				if (reclaimedNumber !== null && moved) {
+					// The reference the task held in the project it is back in is its live number again
+					await manager.getRepository(TaskFormerReference).delete({
+						taskId: id,
+						projectId: moved.projectId,
+						number: reclaimedNumber
+					});
+				}
+
+				// Register Task Sprint moving history
+				if (movesSprint) {
+					await manager.getRepository(OrganizationSprintTaskHistory).save({
+						fromSprintId: task.organizationSprintId || organizationSprintId, // Use incoming sprint ID if the task's organizationSprintId was previously null or undefined
+						toSprintId: organizationSprintId,
+						taskId: updated.id,
+						movedById: userId,
+						reason: data.taskSprintMoveReason,
+						// A partial update may not carry the organization: fall back to the stored one
+						organizationId: data.organizationId ?? task.organizationId,
+						tenantId
+					});
+				}
+
+				// Same for the sync scope: the integrations read it from the updated-task event, so a partial update of a
+				// private task must not look like an `all` task to them. The scope is read back from the row after the save
+				// (not from the copy read before it), so a concurrent edit of the scope is not overwritten in the event. A
+				// failed read-back fails the update (no UPDATED event) rather than publish a possibly stale scope.
+				if (updated.syncScope === undefined) {
+					const row = await service.findOneByIdString(id, { select: { id: true, syncScope: true } });
+					updated.syncScope = row.syncScope ?? null;
+				}
+				return updated;
+			});
 
 			// Synchronize mentions (only if mentionEmployeeIds is provided)
 			if (data.description && mentionEmployeeIds) {
@@ -247,13 +430,10 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			// or title, so fall back to the stored task for the subscriptions and the activity log.
 			const organizationId = updatedTask.organizationId ?? task.organizationId;
 
-			// Same for the sync scope: the integrations read it from the updated-task event, so a partial update of a
-			// private task must not look like an `all` task to them. The scope is read back from the row after the save
-			// (not from the copy read before it), so a concurrent edit of the scope is not overwritten in the event. A
-			// failed read-back fails the update (no UPDATED event) rather than publish a possibly stale scope.
-			if (updatedTask.syncScope === undefined) {
-				const saved = await this.findOneByIdString(id, { select: { id: true, syncScope: true } });
-				updatedTask.syncScope = saved.syncScope ?? null;
+			const timeLogsFollowProject = moveTimeLogs === true && namesProject && changesProject;
+			if (timeLogsFollowProject) {
+				const taskProjectId = moved?.projectId ?? data.projectId ?? null;
+				await this.moveTimeLogsToProject(id, taskProjectId, organizationId, tenantId);
 			}
 
 			// Unsubscribe members who were unassigned from task
@@ -282,6 +462,88 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			console.error(`Error while updating task: ${error.message}`, error.message);
 			throw new HttpException({ message: error?.message, error }, HttpStatus.BAD_REQUEST);
 		}
+	}
+
+	/**
+	 * Runs the writes of one task update in one TypeORM transaction. `work` gets the manager of the transaction and a
+	 * view of this service whose TypeORM repository is bound to it, so the tenant-aware save (its scope and foreign-row
+	 * checks included) and every read and write made through either take part in the transaction: when one fails,
+	 * nothing of the update is stored. On MikroORM the work runs as it always did, on the service and the data source's
+	 * manager, without a transaction around it.
+	 *
+	 * Nothing that opens a transaction of its own on another connection may run inside `work` (on Postgres it would wait
+	 * for the task row this transaction holds): the time-log move, which locks that row, runs after the commit.
+	 */
+	private async inUpdateTransaction<R>(
+		work: (scope: { service: TaskService; manager: EntityManager; inTransaction: boolean }) => Promise<R>
+	): Promise<R> {
+		if (this.ormType !== MultiORMEnum.TypeORM) {
+			return work({ service: this, manager: this.typeOrmRepository.manager, inTransaction: false });
+		}
+		return this.typeOrmRepository.manager.transaction(async (manager: EntityManager) => {
+			// A view, not a copy: every other member is this service's own, read through the prototype.
+			const service: TaskService = Object.create(this, {
+				typeOrmRepository: { value: manager.getRepository(Task), configurable: true }
+			});
+			return work({ service, manager, inTransaction: true });
+		});
+	}
+
+	/**
+	 * The number a task held in a project before it moved out of it (its latest former reference there), when no task of
+	 * the project holds it now: the number the task takes back when it moves back. Read by the update's transaction,
+	 * once the task row is locked. Null when there is none. A failed read fails the update (on Postgres it aborts the
+	 * transaction, so nothing after it could run anyway), before anything is written.
+	 */
+	private async reclaimableNumberOf(
+		manager: EntityManager,
+		taskId: ID,
+		projectId: ID,
+		tenantId: ID,
+		organizationId: ID
+	): Promise<number | null> {
+		const former = await manager.findOne(TaskFormerReference, {
+			where: { taskId, projectId, tenantId, organizationId },
+			select: { id: true, number: true },
+			order: { number: 'DESC' }
+		});
+		if (!former || former.number === null || former.number === undefined) {
+			return null;
+		}
+		const number = Number(former.number);
+		const holders = await manager.count(Task, {
+			where: { projectId, number, tenantId, organizationId },
+			withDeleted: true
+		});
+		return holders === 0 ? number : null;
+	}
+
+	/** The tenant-aware save of an update, on the repository `this` carries (a transaction's, see inUpdateTransaction). */
+	private saveTaskRow(entity: IPartialEntity<Task>): Promise<Task> {
+		return super.create(entity);
+	}
+
+	/**
+	 * The task's project, number, prefix and organization as stored now, read by the update's transaction. On Postgres
+	 * and MySQL the row stays locked until the transaction ends (`FOR UPDATE`), so a concurrent update of the same task
+	 * waits for this one and then reads what it stored; the embedded dialect runs one transaction at a time. Outside a
+	 * transaction (MikroORM) it is a plain read. What the read does not answer is taken from the task read before.
+	 */
+	private async lockedReferenceOf(
+		manager: EntityManager,
+		id: ID,
+		task: Task,
+		inTransaction: boolean
+	): Promise<Pick<Task, 'projectId' | 'number' | 'prefix' | 'organizationId'>> {
+		const query = manager
+			.createQueryBuilder(Task, 'task')
+			.select(['task.id', 'task.projectId', 'task.number', 'task.prefix', 'task.organizationId'])
+			.where({ id });
+		if (inTransaction && (isPostgres() || isMySQL())) {
+			query.setLock('pessimistic_write');
+		}
+		const row = await query.getOne();
+		return row ? { ...task, ...row } : task;
 	}
 
 	/**
@@ -474,31 +736,16 @@ export class TaskService extends TenantAwareCrudService<Task> {
 	 * @throws ForbiddenException when the caller may not delete that task
 	 */
 	async deleteTask(id: ID): Promise<DeleteResult> {
-		if (!RequestContext.hasAnyPermission([PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TASK_DELETE])) {
-			const employeeId = RequestContext.currentEmployeeId();
-			const { organizationId, teams = [] } = await this.findOneByIdString(id, { relations: { teams: true } });
-
-			// Task writes only check that a linked team is in the same tenant, so a task can reference a team
-			// of another organization. Only teams of the task's own organization count, and a task without
-			// an organization grants nothing.
-			const teamIds = isNotEmpty(organizationId)
-				? teams.filter((team) => team.organizationId === organizationId).map((team) => team.id)
-				: [];
-			const isTeamManager =
-				isNotEmpty(employeeId) &&
-				(await this._managedEmployeeService.isManagerOfTeamsOrProjects(employeeId, teamIds));
-
-			if (!isTeamManager) {
-				throw new ForbiddenException('You can only delete a task of a team you manage.');
-			}
-		}
+		// A task in the trash is deleted for good on the same terms as a live one, by a team manager too.
+		await this.assertMayRemoveTask(id, true);
 
 		// A hard delete leaves nothing to read afterwards, so the row the event carries is read first. A task that
 		// does not exist is a delete that removes nothing, as before; a read that FAILS stops the delete, so a task
-		// is never removed without its DELETED event.
+		// is never removed without its DELETED event. A task already in the trash published DELETED when it went
+		// there, and is not announced twice.
 		let task: Task | null = null;
 		try {
-			task = await this.findOneByIdString(id);
+			task = await this.findOneByIdString(id, { withDeleted: true });
 		} catch (error) {
 			if (!(error instanceof NotFoundException)) {
 				throw error;
@@ -507,11 +754,446 @@ export class TaskService extends TenantAwareCrudService<Task> {
 
 		const result = await this.delete(id);
 
-		if (task && result?.affected) {
-			this.publishTaskDeleted(task);
+		if (task && !task.deletedAt && result?.affected) {
+			this.publishTaskEvent(task, BaseEntityEventTypeEnum.DELETED);
 		}
 
 		return result;
+	}
+
+	/**
+	 * Refuses to remove, trash or restore a task unless the caller may: `ALL_ORG_EDIT` or `ORG_TASK_DELETE` for any task
+	 * of the organization; otherwise (the routes admit `ORG_TASK_EDIT` so a team manager reaches this) only a manager
+	 * of one of the task's teams of the task's organization.
+	 *
+	 * @param id - The task
+	 * @param withDeleted - Whether the task may be in the trash (a restore, or a delete for good)
+	 * @throws ForbiddenException when the caller may not act on that task
+	 * @throws NotFoundException when the task is not one of the caller's tenant (for a team manager's check)
+	 */
+	private async assertMayRemoveTask(id: ID, withDeleted: boolean): Promise<void> {
+		if (RequestContext.hasAnyPermission([PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TASK_DELETE])) {
+			return;
+		}
+		// `currentEmployeeId()` answers null for a CHANGE_SELECTED_EMPLOYEE holder: their own employee is read off the
+		// user, as the trash list reads it, so a manager who may act for others is still recognised as one.
+		const employeeId = RequestContext.currentEmployeeId() ?? RequestContext.currentUser()?.employeeId;
+		const taskWithTeams = await this.findOneByIdString(id, {
+			relations: { teams: true },
+			...(withDeleted ? { withDeleted: true } : {})
+		});
+		const teamIds = teamIdsOfTaskOrganization(taskWithTeams);
+		// A manager by the membership's flag or by its MANAGER role (a team created with `managerIds` sets the role
+		// only), on a membership still in effect: as Ever Teams and `assertMayChangeMember` read a team manager.
+		const isTeamManager =
+			isNotEmpty(employeeId) && (await this._managedEmployeeService.managesAnyTeam(employeeId, teamIds));
+
+		if (!isTeamManager) {
+			throw new ForbiddenException('You can only delete a task of a team you manage.');
+		}
+	}
+
+	/**
+	 * Deletes a task for good only while it is in the trash (`DELETE /tasks/:id/trashed`, the Delete forever of the
+	 * trash pages), under the grants of a delete (see {@link assertMayRemoveTask}).
+	 *
+	 * The DELETE statement itself decides whether the task is in the trash: its WHERE names the task, the caller's
+	 * tenant, the stated organization and `deletedAt IS NOT NULL`. A task someone restored after the trash was read
+	 * (`PUT /tasks/:id/recover`) is live, so the statement matches no row and the caller is told so (404), where
+	 * `DELETE /tasks/:id` deletes the live task. Reading the task first and deleting it afterwards would only narrow
+	 * that window, so nothing is read to decide it: a team manager's check reads the task's teams, which says who may
+	 * delete the task, not whether it is still in the trash.
+	 *
+	 * No `DELETED` event is published: the task published it when it went to the trash (as {@link deleteTask} does
+	 * for a trashed task).
+	 *
+	 * A task that other rows still point at through a foreign key without a delete rule of its own (a linked issue, a
+	 * key result) is refused by the database: the statement deletes nothing, the task stays in the trash, and the
+	 * caller is told so (409) rather than answered with a server error.
+	 *
+	 * @param id - The task
+	 * @param organizationId - The organization whose trash holds the task
+	 * @returns The deletion, of one row
+	 * @throws BadRequestException when no organization is stated
+	 * @throws NotFoundException when no task with that id is in the trash of the caller's tenant and that organization
+	 * @throws ForbiddenException when the caller may not delete that task
+	 * @throws ConflictException when other records still reference the task
+	 */
+	async deleteTrashedTask(id: ID, organizationId: ID | null | undefined): Promise<DeleteResult> {
+		if (!organizationId) {
+			throw new BadRequestException(
+				'A task is deleted from the trash of one organization: state organizationId.'
+			);
+		}
+		const tenantId = RequestContext.currentTenantId();
+		// The statement is kept to the caller's tenant and organization boundary: outside them the caller has no trash.
+		if (!tenantId || !isWithinOrganizationBoundary(organizationId)) {
+			throw new NotFoundException(TASK_NOT_IN_TRASH);
+		}
+
+		await this.assertMayRemoveTask(id, true);
+
+		let affected: number;
+		try {
+			affected = await this.deleteInTrash(id, tenantId, organizationId);
+		} catch (error) {
+			if (isReferencedRowViolation(error)) {
+				throw new ConflictException(TASK_STILL_REFERENCED);
+			}
+			throw error;
+		}
+		if (!affected) {
+			throw new NotFoundException(TASK_NOT_IN_TRASH);
+		}
+		return { raw: [], affected };
+	}
+
+	/**
+	 * The one statement of {@link deleteTrashedTask}:
+	 * `DELETE FROM task WHERE id = ? AND tenantId = ? AND organizationId = ? AND deletedAt IS NOT NULL`.
+	 *
+	 * MikroORM applies its soft-delete filter (`deletedAt IS NULL`) to a native delete as it does to a read, which
+	 * would match no trashed task at all, so the filter is lifted for this statement.
+	 *
+	 * @returns How many rows it deleted: one, or none when the task is not in that trash
+	 */
+	private async deleteInTrash(id: ID, tenantId: ID, organizationId: ID): Promise<number> {
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM:
+				return await this.mikroOrmRepository.nativeDelete(
+					{ id, tenantId, organizationId, deletedAt: { $ne: null } } as never,
+					{ filters: { [SOFT_DELETABLE_FILTER]: false } }
+				);
+			case MultiORMEnum.TypeORM: {
+				const result = await this.typeOrmRepository.delete({
+					id,
+					tenantId,
+					organizationId,
+					deletedAt: Not(IsNull())
+				} as FindOptionsWhere<Task>);
+				return result?.affected ?? 0;
+			}
+			default:
+				throw new Error(`Not implemented for ${this.ormType}`);
+		}
+	}
+
+	/**
+	 * The trash (`GET /tasks/trash`): the soft-deleted tasks of the caller's organization, most recently deleted first,
+	 * with their project, teams, members and who deleted them.
+	 *
+	 * - `ALL_ORG_EDIT` or `ORG_TASK_DELETE`: the whole organization's trash, kept to `organizationTeamId` and
+	 *   `projectId` when stated.
+	 * - Anyone else (the route admits `ORG_TASK_EDIT`): the trash of a team they manage, which they name with
+	 *   `organizationTeamId`; without one, or with a team they do not manage, the read is refused. The tasks are the
+	 *   team's, as {@link deleteTask} lets a team manager delete a task of their team.
+	 *
+	 * @param input - The organization, the team or project, the search and the page
+	 * @throws ForbiddenException when a caller without the delete grants names no team they manage
+	 */
+	async findTrash(input: ITaskTrashFindInput): Promise<IPagination<ITask>> {
+		const { organizationTeamId, projectId } = input;
+		// The query names its organization by id or by object (`TenantOrganizationBaseDTO`); without one the read would
+		// span every organization a tenant administrator reaches, so it is refused.
+		const organizationId = input.organizationId ?? input.organization?.id;
+		if (!isNotEmpty(organizationId)) {
+			throw new BadRequestException('The trash is listed for one organization: state organizationId.');
+		}
+		const mayDeleteAny = RequestContext.hasAnyPermission([
+			PermissionsEnum.ALL_ORG_EDIT,
+			PermissionsEnum.ORG_TASK_DELETE
+		]);
+		if (!mayDeleteAny) {
+			const employeeId = RequestContext.currentEmployeeId() ?? RequestContext.currentUser()?.employeeId;
+			const managesTeam =
+				isNotEmpty(employeeId) &&
+				isNotEmpty(organizationTeamId) &&
+				(await this._managedEmployeeService.managesAnyTeam(employeeId, [organizationTeamId]));
+			if (!managesTeam) {
+				throw new ForbiddenException('The trash of a team is listed for a manager of that team.');
+			}
+		}
+
+		const base: FindOptionsWhere<Task> = {
+			organizationId,
+			deletedAt: Not(IsNull()),
+			...(isNotEmpty(projectId) ? { projectId } : {}),
+			...(isNotEmpty(organizationTeamId) ? { teams: { id: organizationTeamId } } : {})
+		} as FindOptionsWhere<Task>;
+
+		const take = Math.min(Math.max(Number(input.take) || TRASH_PAGE_SIZE, 1), TRASH_PAGE_SIZE);
+		const skip = Math.max(Number(input.skip) || 0, 0);
+
+		return await super.findAll({
+			where: this.trashSearchWhere(base, input.search),
+			relations: { project: true, teams: true, members: { user: true }, deletedByUser: true },
+			order: { deletedAt: 'DESC', id: 'ASC' },
+			withDeleted: true,
+			skip,
+			take
+		} as never);
+	}
+
+	/**
+	 * The trash's condition with a search: the title contains the text, or the text is the task's number (`42`, `#42`)
+	 * or its key (`API-42`).
+	 */
+	private trashSearchWhere(base: FindOptionsWhere<Task>, search?: string): FindOptionsWhere<Task> | FindOptionsWhere<Task>[] {
+		const text = typeof search === 'string' ? search.trim() : '';
+		if (!text) {
+			return base;
+		}
+		const title =
+			this.ormType === MultiORMEnum.MikroORM
+				? mikroOrmContains(text)
+				: Raw((alias) => `${alias} ${LIKE_OPERATOR} :trashSearch`, { trashSearch: `%${text}%` });
+		const alternatives: FindOptionsWhere<Task>[] = [{ ...base, title } as FindOptionsWhere<Task>];
+		const number = /^#?(\d{1,9})$/.exec(text);
+		if (number) {
+			alternatives.push({ ...base, number: Number(number[1]) } as FindOptionsWhere<Task>);
+		}
+		// The key the lists show (`API-42`): that number with that prefix, whatever its case. The prefix is stored as
+		// the project's name begins (`Api`) and shown in capitals, so both ORMs compare it without case: an `_` in it
+		// matches any one character under MikroORM's LIKE, which at worst widens a search.
+		const key = /^([\p{L}][\p{L}\p{N}_]*)-(\d{1,9})$/u.exec(text);
+		if (key) {
+			const prefix =
+				this.ormType === MultiORMEnum.MikroORM
+					? mikroOrmILike(key[1])
+					: Raw((alias) => `UPPER(${alias}) = :trashPrefix`, { trashPrefix: key[1].toUpperCase() });
+			alternatives.push({ ...base, prefix, number: Number(key[2]) } as FindOptionsWhere<Task>);
+		}
+		return alternatives.length === 1 ? alternatives[0] : alternatives;
+	}
+
+	/**
+	 * Assigns one employee to a task and writes nothing else on the task: the full update writes the whole member list,
+	 * so a client that sends it back to add one member undoes any assignment made since it read the task.
+	 *
+	 * An employee may assign themselves. Assigning someone else needs an organization admin, a caller who acts for
+	 * every employee, or a manager of one of the task's teams. The employee must be one of the task's organization, and
+	 * an employee already on the task is a no-op.
+	 *
+	 * @param id - The task
+	 * @param employeeId - The employee to assign
+	 * @param organizationId - The caller's organization, which must be the task's
+	 * @throws NotFoundException when the task is not one of the caller's tenant and organization
+	 * @throws ForbiddenException when the caller may not assign that employee
+	 * @throws BadRequestException when the employee is not one of the task's organization
+	 */
+	async addMember(id: ID, employeeId: ID, organizationId: ID): Promise<void> {
+		const task = await this.findTaskForMemberChange(id, organizationId);
+		await this.assertMayChangeMember(task, employeeId);
+
+		const members = task.members ?? [];
+		const isAlreadyMember = members.some((member) => member.id === employeeId);
+		if (isAlreadyMember) {
+			return;
+		}
+
+		const isEmployeeOfTaskOrganization = await this.isEmployeeOfOrganization(
+			employeeId,
+			task.tenantId,
+			task.organizationId
+		);
+		if (!isEmployeeOfTaskOrganization) {
+			throw new BadRequestException("The employee is not one of the task's organization.");
+		}
+
+		await this.insertMemberLink(id, employeeId);
+
+		const addedMember = { id: employeeId } as IEmployee;
+		const user = RequestContext.currentUser();
+		await this.subscribeNewMembers([addedMember], task, id, task.organizationId, task.tenantId, user);
+		await this.recordMemberChange(task, [...members, addedMember]);
+	}
+
+	/**
+	 * Takes one employee off a task and writes nothing else on the task, for the same reason as {@link addMember}.
+	 *
+	 * An employee may take themselves off. Taking off someone else needs what assigning them needs. An employee who is
+	 * not on the task is a no-op.
+	 *
+	 * @param id - The task
+	 * @param employeeId - The employee to take off the task
+	 * @param organizationId - The caller's organization, which must be the task's
+	 * @throws NotFoundException when the task is not one of the caller's tenant and organization
+	 * @throws ForbiddenException when the caller may not take that employee off the task
+	 */
+	async removeMember(id: ID, employeeId: ID, organizationId: ID): Promise<void> {
+		const task = await this.findTaskForMemberChange(id, organizationId);
+		await this.assertMayChangeMember(task, employeeId);
+
+		const members = task.members ?? [];
+		const removedMember = members.find((member) => member.id === employeeId);
+		if (!removedMember) {
+			return;
+		}
+
+		await this.deleteMemberLink(id, employeeId);
+
+		await this.unsubscribeRemovedMembers([removedMember], id, task.organizationId, task.tenantId);
+		const remainingMembers = members.filter((member) => member.id !== employeeId);
+		await this.recordMemberChange(task, remainingMembers);
+	}
+
+	/**
+	 * The task whose members change, with its members and teams, read in the caller's tenant.
+	 *
+	 * @param id - The task
+	 * @param organizationId - The caller's organization, which must be the task's
+	 * @throws NotFoundException when the task is not one of the caller's tenant and organization
+	 */
+	private async findTaskForMemberChange(id: ID, organizationId: ID): Promise<Task> {
+		const task = await this.findOneByIdString(id, { relations: { members: true, teams: true } });
+		const isTaskOfOrganization = isNotEmpty(organizationId) && task.organizationId === organizationId;
+		if (!isTaskOfOrganization) {
+			throw new NotFoundException('The requested record was not found');
+		}
+		return task;
+	}
+
+	/**
+	 * Refuses to assign or unassign a member unless the caller changes their own assignment, is an organization admin
+	 * or acts for every employee, or manages one of the task's teams (by the team's MANAGER role or the manager flag).
+	 *
+	 * @param task - The task, with its teams
+	 * @param employeeId - The employee whose assignment changes
+	 * @throws ForbiddenException when none of these holds
+	 */
+	private async assertMayChangeMember(task: Task, employeeId: ID): Promise<void> {
+		// `currentEmployeeId()` answers null for a CHANGE_SELECTED_EMPLOYEE holder, so the caller's own employee is
+		// read off the user.
+		const callerEmployeeId = RequestContext.currentUser()?.employeeId;
+		const changesOwnAssignment = isNotEmpty(callerEmployeeId) && callerEmployeeId === employeeId;
+		if (changesOwnAssignment) {
+			return;
+		}
+
+		const isOrganizationAdmin = RequestContext.hasRoles([RolesEnum.SUPER_ADMIN, RolesEnum.ADMIN]);
+		const actsForEveryEmployee = RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE);
+		if (isOrganizationAdmin || actsForEveryEmployee) {
+			return;
+		}
+
+		const teamIds = teamIdsOfTaskOrganization(task);
+		const managesTaskTeam = await this._managedEmployeeService.managesAnyTeam(callerEmployeeId, teamIds);
+		if (!managesTaskTeam) {
+			throw new ForbiddenException("Only a manager of the task's team can change another member's assignment.");
+		}
+	}
+
+	/**
+	 * Whether the employee is one of the organization, in the tenant.
+	 *
+	 * @param employeeId - The employee
+	 * @param tenantId - The task's tenant
+	 * @param organizationId - The task's organization
+	 */
+	private async isEmployeeOfOrganization(employeeId: ID, tenantId: ID, organizationId: ID): Promise<boolean> {
+		const employee = await this.typeOrmRepository.manager.findOne(Employee, {
+			where: { id: employeeId, tenantId, organizationId },
+			select: { id: true }
+		});
+		return Boolean(employee);
+	}
+
+	/**
+	 * Writes the activity log and the updated-task event of a member change, as the full update does.
+	 *
+	 * The integrations read the sync scope from the event, so it is read back from the row after the write, as the
+	 * full update reads it: a scope turned off while this request waited must not reach them as the old one.
+	 *
+	 * @param task - The task as read before the change
+	 * @param members - The task's members after the change
+	 */
+	private async recordMemberChange(task: Task, members: IEmployee[]): Promise<void> {
+		const syncScope = await this.savedSyncScopeOrNone(task.id);
+		const updatedTask = { ...task, members, syncScope } as Task;
+		this._activityLogService.logActivity<Task>(
+			BaseEntityEnum.Task,
+			ActionTypeEnum.Updated,
+			ActorTypeEnum.User,
+			task.id,
+			task.title,
+			updatedTask,
+			task.organizationId,
+			task.tenantId,
+			{ members: task.members ?? [] },
+			{ members }
+		);
+		// The event states the members, so a listener that watches the followed fields sees the change.
+		this.publishTaskEvent(updatedTask, BaseEntityEventTypeEnum.UPDATED, {
+			members: members.map((member) => member.id).filter(Boolean)
+		} as unknown as Partial<ITaskUpdateInput>);
+	}
+
+	/**
+	 * The task's sync scope as saved, read back after a member write. The write is already done when this runs, so a
+	 * read that fails does not fail the request and lose the activity and the event: it answers `none`, the scope no
+	 * integration syncs.
+	 *
+	 * @param id - The task
+	 * @returns The saved scope, or `none` when it cannot be read
+	 */
+	private async savedSyncScopeOrNone(id: ID): Promise<TaskSyncScopeEnum | null> {
+		try {
+			const saved = await this.findOneByIdString(id, { select: { id: true, syncScope: true } });
+			return saved.syncScope ?? null;
+		} catch (error) {
+			console.error(`Failed to read back the sync scope of task ${id}:`, (error as Error)?.message);
+			return TaskSyncScopeEnum.NONE;
+		}
+	}
+
+	/**
+	 * Inserts the one `task_employee` row that links the employee to the task, and does nothing when it exists.
+	 *
+	 * @param taskId - The task
+	 * @param employeeId - The employee to link
+	 */
+	private async insertMemberLink(taskId: ID, employeeId: ID): Promise<void> {
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM:
+				await this.mikroOrmRepository
+					.getKnex()('task_employee')
+					.insert({ taskId, employeeId })
+					.onConflict(['taskId', 'employeeId'])
+					.ignore();
+				break;
+			case MultiORMEnum.TypeORM:
+			default:
+				await this.typeOrmRepository
+					.createQueryBuilder()
+					.insert()
+					.into('task_employee')
+					.values({ taskId, employeeId })
+					.orIgnore()
+					.execute();
+				break;
+		}
+	}
+
+	/**
+	 * Deletes the one `task_employee` row that links the employee to the task.
+	 *
+	 * @param taskId - The task
+	 * @param employeeId - The employee to unlink
+	 */
+	private async deleteMemberLink(taskId: ID, employeeId: ID): Promise<void> {
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM:
+				await this.mikroOrmRepository.getKnex()('task_employee').where({ taskId, employeeId }).del();
+				break;
+			case MultiORMEnum.TypeORM:
+			default:
+				await this.typeOrmRepository
+					.createQueryBuilder()
+					.relation(Task, 'members')
+					.of(taskId)
+					.remove(employeeId);
+				break;
+		}
 	}
 
 	/**
@@ -524,42 +1206,69 @@ export class TaskService extends TenantAwareCrudService<Task> {
 	 * @returns The soft-deleted task
 	 */
 	public async softRemove(id: ID, options?: IFindOneOptions<Task>, saveOptions?: SaveOptions): Promise<Task> {
+		// Moving a task to the trash takes what deleting it takes (see assertMayRemoveTask).
+		await this.assertMayRemoveTask(id, false);
+
 		const task = await super.softRemove(id, options, saveOptions);
 
 		if (task) {
-			this.publishTaskDeleted(task);
+			this.publishTaskEvent(task, BaseEntityEventTypeEnum.DELETED);
 		}
 
 		return task;
 	}
 
 	/**
-	 * Publishes `TaskEvent` `DELETED` for a task that was removed (hard or soft), so that integrations
-	 * that mirror tasks elsewhere (Ever Works, GitHub, SIM workflows) learn about the removal the way they
-	 * learn about a create or an update.
+	 * Restores a task from the trash (`PUT /tasks/:id/recover`, GraphQL `recoverTask`) on the terms a delete takes, and
+	 * publishes `TaskEvent` `UPDATED` for it: the real-time channel and the integrations that mirror tasks learn the
+	 * task is back the way they learn of a change (the trash published `DELETED`).
+	 *
+	 * @param id - The task to restore
+	 * @param options - Find options for the lookup
+	 * @param saveOptions - Save options for the write
+	 * @returns The restored task
+	 */
+	public async softRecover(id: ID, options?: IFindOneOptions<Task>, saveOptions?: SaveOptions): Promise<Task> {
+		await this.assertMayRemoveTask(id, true);
+
+		const task = await super.softRecover(id, options, saveOptions);
+
+		if (task) {
+			this.publishTaskEvent(task, BaseEntityEventTypeEnum.UPDATED);
+		}
+
+		return task;
+	}
+
+	/**
+	 * Publishes a `TaskEvent` for a task written outside the create and update handlers (a hard or soft removal,
+	 * a member taken off), so that integrations that mirror tasks elsewhere (Ever Works, GitHub, SIM workflows)
+	 * learn about it the way they learn about a create or an update.
 	 *
 	 * The event's `input` carries the task's scope (`tenantId`, `organizationId`, `projectId`): existing
 	 * `TaskEvent` subscribers read it before they switch on the event type. Publishing never fails the
-	 * delete: the row is already gone when this runs.
+	 * write: it is already done when this runs.
 	 *
-	 * @param task - The removed task
+	 * @param task - The task as written
+	 * @param type - What happened to it
 	 */
-	private publishTaskDeleted(task: Task): void {
+	private publishTaskEvent(task: Task, type: BaseEntityEventTypeEnum, input: Partial<ITaskUpdateInput> = {}): void {
 		if (!this._domainEventBus) {
 			return;
 		}
 		const logFailure = (error: unknown) =>
-			console.error(`Failed to publish the deleted event of task ${task?.id}:`, (error as Error)?.message);
+			console.error(`Failed to publish the ${type} event of task ${task?.id}:`, (error as Error)?.message);
 		try {
 			const ctx = RequestContext.currentRequestContext();
 			const { tenantId, organizationId, projectId } = task;
-			// `publish` is async: a rejection is caught here as well, never left unhandled after the delete.
+			// `publish` is async: a rejection is caught here as well, never left unhandled after the write.
 			Promise.resolve(
 				this._domainEventBus.publish(
-					new TaskEvent(ctx, task, BaseEntityEventTypeEnum.DELETED, {
+					new TaskEvent(ctx, task, type, {
 						tenantId,
 						organizationId,
-						projectId
+						projectId,
+						...input
 					} as ITaskUpdateInput)
 				)
 			).catch(logFailure);
@@ -850,6 +1559,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 		// Builds its own query, so the check in the CRUD read methods never runs: assert the
 		// sensitive-relation table on the client-supplied relations before anything is loaded.
 		this.assertRelationsPermitted(options);
+		assertCallerColumnsAllowed(this.typeOrmRepository?.metadata, options);
 
 		try {
 			switch (this.ormType) {
@@ -960,6 +1670,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 		// Builds its own query, so the check in the CRUD read methods never runs: assert the
 		// sensitive-relation table on the client-supplied relations before anything is loaded.
 		this.assertRelationsPermitted(options);
+		assertCallerColumnsAllowed(this.typeOrmRepository?.metadata, options);
 
 		try {
 			switch (this.ormType) {
@@ -1258,23 +1969,170 @@ export class TaskService extends TenantAwareCrudService<Task> {
 	 * @param projectId The project the task moves to.
 	 * @param tenantId The caller's tenant.
 	 * @param organizationId The task's organization (after the update).
+	 * @param manager The manager to read with: the update's transaction's, so the read takes no other connection.
 	 */
 	private async findDestinationProject(
 		projectId: ID,
 		tenantId: ID,
-		organizationId: ID
-	): Promise<{ exists: boolean; prefix?: string | null }> {
+		organizationId: ID,
+		manager: EntityManager = this.typeOrmRepository.manager
+	): Promise<{ exists: boolean; prefix?: string | null; billable?: boolean | null }> {
 		if (!tenantId || !organizationId) {
 			return { exists: false };
 		}
-		const project = await this.typeOrmRepository.manager.findOne(OrganizationProject, {
+		const project = await manager.findOne(OrganizationProject, {
 			where: { id: projectId, tenantId, organizationId },
-			select: { id: true, name: true }
+			select: { id: true, name: true, billable: true }
 		});
 		if (!project) {
 			return { exists: false };
 		}
-		return { exists: true, prefix: project.name?.slice(0, 3) || null };
+		return { exists: true, prefix: project.name?.slice(0, 3) || null, billable: project.billable };
+	}
+
+	/**
+	 * Moves the task's time logs to the task's project, so the time tracked on a task is counted where the task is.
+	 * Moving a log changes recorded time, so it follows the rules of `PUT /timesheet/time-log/:id`: the caller holds
+	 * ALLOW_MODIFY_TIME, the organization allows modifying time, and only the logs of employees the caller may act for
+	 * move. A log of an approved or billed timesheet stays where it is: its hours were already signed off or invoiced
+	 * under its project, and the write itself re-checks that so an approval read after the logs cannot be overridden.
+	 * A moved log takes the billable setting of a project that has one.
+	 *
+	 * Best-effort, like the other steps after the save: a failure is logged and leaves the logs where they were,
+	 * it never fails an update that already succeeded.
+	 *
+	 * @param taskId The task whose time logs move.
+	 * @param projectId The task's project after the update, or `null` when the update removed it.
+	 * @param organizationId The task's organization.
+	 * @param tenantId The caller's tenant.
+	 */
+	private async moveTimeLogsToProject(
+		taskId: ID,
+		projectId: ID | null,
+		organizationId: ID,
+		tenantId: ID
+	): Promise<void> {
+		try {
+			const mayModifyTime = await this.mayModifyTimeIn(organizationId, tenantId);
+			if (!mayModifyTime) {
+				return;
+			}
+
+			const changes: Partial<TimeLog> = { projectId };
+			if (projectId) {
+				const destination = await this.findDestinationProject(projectId, tenantId, organizationId);
+				if (isBoolean(destination.billable)) {
+					changes.isBillable = destination.billable;
+				}
+			}
+
+			const timeLogs = await this.typeOrmRepository.manager.find(TimeLog, {
+				where: { taskId, tenantId, organizationId },
+				relations: { timesheet: true },
+				select: {
+					id: true,
+					employeeId: true,
+					projectId: true,
+					timesheet: { id: true, status: true, isBilled: true }
+				}
+			});
+			const movableLogs = timeLogs.filter((timeLog) => isMovableToProject(timeLog, projectId));
+			const writableLogs = await this.logsTheCallerMayModify(movableLogs, organizationId);
+			const writableIds = writableLogs.map((timeLog) => timeLog.id);
+			if (writableIds.length === 0) {
+				return;
+			}
+
+			// A concurrent move of the same task can save another project after this one: the write only lands while
+			// the task is still in the project these logs move to, so the last move saved decides where they are. The
+			// task row and the logs' timesheets stay locked until the write commits, so a project saved or a timesheet
+			// approved meanwhile waits for it instead of landing between the checks and the write
+			const timesheetIds = timesheetIdsOf(writableLogs);
+			let taskStillThere = p(`"taskId" IN (SELECT "id" FROM "task" WHERE "projectId" IS NULL)`);
+			if (projectId) {
+				taskStillThere = p(`"taskId" IN (SELECT "id" FROM "task" WHERE "projectId" = :destinationProjectId)`);
+			}
+
+			await this.typeOrmRepository.manager.transaction(async (manager) => {
+				// `pessimistic_write` maps to FOR UPDATE on both dialects; the embedded one serializes writers
+				const locksRows = isPostgres() || isMySQL();
+				if (locksRows) {
+					const taskRow = manager.createQueryBuilder(Task, 'task').select('task.id').where({ id: taskId });
+					await taskRow.setLock('pessimistic_write').getOne();
+				}
+				const locksTimesheets = locksRows && timesheetIds.length > 0;
+				if (locksTimesheets) {
+					const timesheetRows = manager
+						.createQueryBuilder(Timesheet, 'timesheet')
+						.select('timesheet.id')
+						.where({ id: In(timesheetIds) });
+					await timesheetRows.setLock('pessimistic_write').getMany();
+				}
+
+				await manager
+					.createQueryBuilder()
+					.update(TimeLog)
+					.set(changes)
+					.where({ id: In(writableIds), tenantId, organizationId, taskId })
+					.andWhere(
+						new Brackets((qb: WhereExpressionBuilder) => {
+							qb.where(p(`"timesheetId" IS NULL`));
+							qb.orWhere(
+								p(
+									`"timesheetId" IN (SELECT "id" FROM "timesheet" WHERE "status" <> :approved AND "isBilled" = :billed)`
+								),
+								{ approved: TimesheetStatus.APPROVED, billed: false }
+							);
+						})
+					)
+					.andWhere(taskStillThere, { destinationProjectId: projectId })
+					.execute();
+			});
+		} catch (error) {
+			console.error('Error moving the task time logs to its project:', error);
+		}
+	}
+
+	/**
+	 * Whether the caller may modify recorded time in the organization: the ALLOW_MODIFY_TIME permission and the
+	 * organization's `allowModifyTime` policy, as `OrganizationPermissionGuard` requires for a time log edit.
+	 *
+	 * @param organizationId The organization of the task.
+	 * @param tenantId The caller's tenant.
+	 */
+	private async mayModifyTimeIn(organizationId: ID, tenantId: ID): Promise<boolean> {
+		const hasPermission = RequestContext.hasPermission(PermissionsEnum.ALLOW_MODIFY_TIME);
+		if (!hasPermission) {
+			return false;
+		}
+		const organization = await this.typeOrmRepository.manager.findOne(Organization, {
+			where: { id: organizationId, tenantId },
+			select: { id: true, allowModifyTime: true }
+		});
+		return organization?.allowModifyTime === true;
+	}
+
+	/**
+	 * The logs whose employee the caller may act for: their own, the members of a team they manage, or anyone with
+	 * CHANGE_SELECTED_EMPLOYEE, as for a time log edit.
+	 *
+	 * @param timeLogs The logs that would move.
+	 * @param organizationId The organization of the task.
+	 */
+	private async logsTheCallerMayModify(timeLogs: ITimeLog[], organizationId: ID): Promise<ITimeLog[]> {
+		const employeeIds = [...new Set(timeLogs.map((timeLog) => timeLog.employeeId))];
+		const allowed = new Set<ID>();
+		for (const employeeId of employeeIds) {
+			const mayActFor = await this._managedEmployeeService.canManageEmployee(
+				employeeId,
+				undefined,
+				organizationId
+			);
+			if (mayActFor) {
+				allowed.add(employeeId);
+			}
+		}
+		return timeLogs.filter((timeLog) => allowed.has(timeLog.employeeId));
 	}
 
 	/**
@@ -1286,6 +2144,53 @@ export class TaskService extends TenantAwareCrudService<Task> {
 	 * @returns A Promise that resolves to the maximum task number for the given project.
 	 */
 	public async getMaxTaskNumberByProject(
+		options: IGetTaskOptions,
+		{ withDeleted = false }: { withDeleted?: boolean } = {}
+	): Promise<number> {
+		const maxTaskNumber = await this.getMaxNumberOfProjectTasks(options, { withDeleted });
+		if (!withDeleted) {
+			return maxTaskNumber;
+		}
+		// A caller that stores `max + 1` also skips the numbers tasks held before they moved out of the project: those
+		// references keep resolving to the moved tasks, so they are never handed to another task.
+		const maxFormerNumber = await this.getMaxFormerReferenceNumber(options);
+		return Math.max(maxTaskNumber, maxFormerNumber);
+	}
+
+	/**
+	 * The highest number a task held in the project before it moved out (`task_former_reference`), 0 for none. Outside a
+	 * transaction (a task being created) it is best effort: a failed read is logged and counts as none, so it never
+	 * stops a task from being created; the number it hands out may then reach a moved task's old reference, which keeps
+	 * resolving to the live task instead. Inside one (a move, read through the update's transaction) a failed read fails
+	 * the update: on Postgres it has aborted the transaction, so the next statement would fail anyway.
+	 */
+	private async getMaxFormerReferenceNumber(options: IGetTaskOptions): Promise<number> {
+		const { organizationId, projectId } = options;
+		if (!isNotEmpty(projectId)) {
+			return 0;
+		}
+		try {
+			const tenantId = RequestContext.currentTenantId() || options.tenantId;
+			const query = this.typeOrmRepository.manager
+				.createQueryBuilder(TaskFormerReference, 'former')
+				.select(p(`COALESCE(MAX("former"."number"), 0)`), 'maxNumber')
+				.where(p(`"former"."tenantId" = :tenantId`), { tenantId })
+				.andWhere(p(`"former"."organizationId" = :organizationId`), { organizationId })
+				.andWhere(p(`"former"."projectId" = :projectId`), { projectId })
+				.withDeleted();
+			const result = await query.getRawOne();
+			return Number(result?.maxNumber) || 0;
+		} catch (error) {
+			if (this.typeOrmRepository?.manager?.queryRunner?.isTransactionActive) {
+				throw error;
+			}
+			console.error('Error reading the former task numbers of the project:', error?.message);
+			return 0;
+		}
+	}
+
+	/** The highest number of the project's tasks (see getMaxTaskNumberByProject). */
+	private async getMaxNumberOfProjectTasks(
 		options: IGetTaskOptions,
 		{ withDeleted = false }: { withDeleted?: boolean } = {}
 	): Promise<number> {
@@ -1556,6 +2461,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 		// Builds its own query, so the check in the CRUD read methods never runs: assert the
 		// sensitive-relation table on the client-supplied relations before anything is loaded.
 		this.assertRelationsPermitted(options);
+		assertCallerColumnsAllowed(this.typeOrmRepository?.metadata, options);
 
 		try {
 			switch (this.ormType) {
@@ -2058,4 +2964,255 @@ export class TaskService extends TenantAwareCrudService<Task> {
 		const date = new Date(value);
 		return Number.isNaN(date.getTime()) ? null : date;
 	}
+
+	// ------------------------------------------------------------------ task views extensions
+
+	/**
+	 * Changes many tasks in one request. Each task is read in the caller's tenant and the request's organization,
+	 * its changes are turned into the update the single route runs (tag and member lists computed from the task as
+	 * it is), `apply` runs that update (the controller passes the update command, so activity, notifications and
+	 * sync events happen per task exactly as for one update), and the previous values are answered so the caller
+	 * can undo. A task that is missing, another organization's, or refused by its update is reported; the others
+	 * are applied. Tasks are applied one after another.
+	 */
+	async bulkUpdate(
+		input: ITaskBulkUpdateInput,
+		apply: (id: ID, update: Partial<ITaskUpdateInput>) => Promise<ITask>
+	): Promise<ITaskBulkUpdateOutcome> {
+		let items: ReturnType<typeof normalizeBulkUpdate>;
+		try {
+			items = normalizeBulkUpdate(input);
+		} catch (error) {
+			if (error instanceof BulkUpdateRequestError) {
+				throw new BadRequestException(`${error.code}: ${error.message}`);
+			}
+			throw error;
+		}
+		const tenantId = tenantIdOf(input);
+		const organizationId = organizationIdOf(input);
+		const results: ITaskBulkUpdateResult[] = [];
+		for (const item of items) {
+			const taskId = String(item.taskId);
+			let task: Task | null = null;
+			try {
+				task = await this.typeOrmRepository.findOne({
+					where: { id: taskId, tenantId, organizationId },
+					relations: { tags: true, members: true }
+				});
+			} catch (error) {
+				results.push({ taskId, ok: false, error: `TASK_READ_FAILED: ${(error as Error)?.message ?? 'unknown'}` });
+				continue;
+			}
+			if (!task) {
+				results.push({ taskId, ok: false, error: 'TASK_NOT_FOUND: no such task in this organization.' });
+				continue;
+			}
+			const { update, previous } = changesToUpdate(task, item.changes);
+			try {
+				await apply(task.id, update);
+				results.push({ taskId, ok: true, previous });
+			} catch (error) {
+				const message = (error as { message?: unknown })?.message;
+				const text = typeof message === 'string' ? message : (message as { message?: string })?.message ?? 'The update was refused.';
+				results.push({ taskId, ok: false, error: text, previous });
+			}
+		}
+		const applied = results.filter((result) => result.ok).length;
+		return { applied, refused: results.length - applied, results };
+	}
+
+	/**
+	 * Resolves `KEY-number` references to tasks of the organization: by the project's key, its former keys, or
+	 * the key derived from its name (the prefix the create path writes). When no task of those projects holds the
+	 * number, a task that held it before it moved to another project answers (`formerReference`, with the key and the
+	 * number it holds today). A reference nobody answers to, or a number no task of that project holds or held,
+	 * resolves to nothing; a task that cannot be read answers the same.
+	 */
+	async resolveReferences(input: ITaskReferenceResolveInput): Promise<ITaskReferenceResolution[]> {
+		const tenantId = tenantIdOf(input);
+		const organizationId = organizationIdOf(input);
+		const projects = await this.typeOrmRepository.manager.find(OrganizationProject, {
+			where: { tenantId, organizationId },
+			select: { id: true, name: true, taskKey: true, taskKeyHistory: true }
+		});
+		const projectsById = new Map(projects.map((project) => [String(project.id), project]));
+		const byKey = new Map<string, OrganizationProject[]>();
+		for (const project of projects) {
+			for (const key of keysOfProject(project)) {
+				const list = byKey.get(key) ?? [];
+				list.push(project);
+				byKey.set(key, list);
+			}
+		}
+		const resolutions: ITaskReferenceResolution[] = [];
+		for (const reference of input.references ?? []) {
+			const parts = parseTaskReference(reference);
+			if (!parts) {
+				resolutions.push({ reference, key: '', number: 0, resolved: false });
+				continue;
+			}
+			const candidates = byKey.get(parts.key) ?? [];
+			// Every project answering to the key is read: a derived key two projects share (`Gauzy`, `Gauzy Teams`),
+			// or a former key that is now another project's, must not open whichever task the store listed first.
+			const candidateIds = candidates.map((project) => project.id);
+			let matches =
+				candidates.length === 0
+					? []
+					: await this.typeOrmRepository.find({
+							where: { tenantId, organizationId, projectId: In(candidateIds), number: parts.number },
+							select: { id: true, title: true, status: true, projectId: true, number: true }
+						});
+			// The live numbers first: a former reference answers only when no task of those projects holds the number.
+			const formerReference = matches.length === 0 && candidates.length > 0;
+			if (formerReference) {
+				matches = await this.findTasksByFormerReference(tenantId, organizationId, candidateIds, parts.number);
+			}
+			if (matches.length > 1) {
+				resolutions.push({ reference, key: parts.key, number: parts.number, resolved: false, ambiguous: true });
+				continue;
+			}
+			const found = matches[0] ?? null;
+			if (!found) {
+				resolutions.push({ reference, key: parts.key, number: parts.number, resolved: false });
+				continue;
+			}
+			// The task's project today: one of the candidates for a live number, any project for a former reference (none
+			// when the task left its project without moving to another one, and then no key addresses it today).
+			const project = found.projectId ? projectsById.get(String(found.projectId)) : undefined;
+			let currentKey: string | undefined = formerReference ? undefined : parts.key;
+			if (project) {
+				currentKey = normalizeTaskKey(project.taskKey) ?? derivedProjectKey(project.name) ?? currentKey;
+			}
+			const currentNumber = found.number === null || found.number === undefined ? undefined : Number(found.number);
+			resolutions.push({
+				reference,
+				key: parts.key,
+				number: parts.number,
+				resolved: true,
+				taskId: found.id,
+				projectId: found.projectId,
+				title: found.title,
+				status: found.status as TaskStatusEnum,
+				currentKey,
+				currentNumber,
+				...(formerReference ? { formerReference: true } : {})
+			});
+		}
+		return resolutions;
+	}
+
+	/**
+	 * The live tasks of the organization that held `number` in one of the projects before they moved out of it, each
+	 * once (a task that moved out, back and out again holds two references there, both its own).
+	 */
+	private async findTasksByFormerReference(tenantId: ID, organizationId: ID, projectIds: ID[], number: number): Promise<Task[]> {
+		const references = await this.typeOrmRepository.manager.find(TaskFormerReference, {
+			where: { tenantId, organizationId, projectId: In(projectIds), number },
+			select: { id: true, taskId: true }
+		});
+		const taskIds = [...new Set(references.map((former) => String(former.taskId)))];
+		if (taskIds.length === 0) {
+			return [];
+		}
+		return this.typeOrmRepository.find({
+			where: { id: In(taskIds), tenantId, organizationId },
+			select: { id: true, title: true, status: true, projectId: true, number: true }
+		});
+	}
+
+	/**
+	 * The caller's tasks of a built-in view (`mine`, `this-week`, `overdue`, `due-soon`), the day and week bounds
+	 * computed in the caller's time zone. The caller is the signed-in employee; a user without an employee has no
+	 * tasks of their own.
+	 */
+	async findBuiltInView(key: TaskBuiltInViewEnum, query: ITaskBuiltInViewQuery): Promise<IPagination<ITask>> {
+		// The caller's own employee record: `currentEmployeeId()` answers null for a `CHANGE_SELECTED_EMPLOYEE` holder.
+		const employeeId = RequestContext.currentUser()?.employeeId ?? RequestContext.currentEmployeeId();
+		if (!employeeId) {
+			return { items: [], total: 0 };
+		}
+		const tenantId = tenantIdOf(query);
+		const organizationId = organizationIdOf(query);
+		const window = builtInViewWindow(key, new Date(), query.timeZone);
+		const where: FindOptionsWhere<Task> = {
+			tenantId,
+			organizationId,
+			isScreeningTask: false
+		};
+		if (window.dueDateFrom && window.dueDateTo) {
+			where.dueDate = Between(window.dueDateFrom, window.dueDateTo);
+		} else if (window.dueDateFrom) {
+			where.dueDate = MoreThanOrEqual(window.dueDateFrom);
+		} else if (window.dueDateTo) {
+			where.dueDate = LessThanOrEqual(window.dueDateTo);
+		}
+		// A task whose status is unset is still open: `NOT IN` alone would drop it (SQL `NOT IN` never matches NULL).
+		const closed = [TaskStatusEnum.DONE, TaskStatusEnum.COMPLETED, TaskStatusEnum.CANCELLED];
+		const wheres: FindOptionsWhere<Task>[] = window.openOnly
+			? [
+					{ ...where, status: Not(In(closed)) },
+					{ ...where, status: IsNull() }
+				]
+			: [where];
+		const take = Math.min(Math.max(Number(query.take) || 50, 1), 200);
+		const skip = Math.max(Number(query.skip) || 0, 0);
+		const requested = Array.isArray(query.relations) && query.relations.length > 0 ? query.relations : [...BUILT_IN_VIEW_DEFAULT_RELATIONS];
+		const refused = requested.filter((name) => !BUILT_IN_VIEW_RELATIONS.has(String(name)));
+		if (refused.length > 0) {
+			throw new BadRequestException(`RELATION_NOT_ALLOWED: a built-in view does not load ${refused.join(', ')}.`);
+		}
+		const relations = relationsTreeOf(requested) as FindOptionsRelations<Task>;
+		// The platform's sensitive-relation table applies here as on every other read (tracked time, for one).
+		this.assertRelationsPermitted({ relations });
+		// Membership is a subquery, never a join shared with the loaded `members` relation: a join used for both
+		// would list the caller as a task's only assignee. The page of ids first, then the rows with every relation.
+		const idsQuery = this.typeOrmRepository
+			.createQueryBuilder('task')
+			.select(['task.id'])
+			.where(wheres)
+			.andWhere((qb) => {
+				const membership = qb
+					.subQuery()
+					.select('"task_employee"."taskId"')
+					.from('task_employee', 'task_employee')
+					.where('"task_employee"."employeeId" = :employeeId')
+					.getQuery();
+				return `"task"."id" IN ${membership}`;
+			})
+			.setParameter('employeeId', employeeId)
+			.orderBy('task.dueDate', 'ASC')
+			.addOrderBy('task.createdAt', 'DESC')
+			.skip(skip)
+			.take(take);
+		const [page, total] = await idsQuery.getManyAndCount();
+		if (page.length === 0) {
+			return { items: [], total };
+		}
+		const ids = page.map((task) => task.id);
+		const rows = await this.typeOrmRepository.find({ where: { id: In(ids), tenantId, organizationId }, relations });
+		const byId = new Map(rows.map((task) => [String(task.id), task]));
+		return { items: ids.map((id) => byId.get(String(id))).filter((task): task is Task => !!task), total };
+	}
+}
+
+/**
+ * The organization a request names, in either form the base DTO accepts (`organizationId`, or `organization.id`,
+ * both checked against the caller's memberships by the DTO). Required: without one, a read scoped by the tenant
+ * alone would reach every organization of the tenant.
+ */
+function organizationIdOf(input: { organizationId?: ID; organization?: { id?: ID } | null }): ID {
+	const organizationId = input.organizationId ?? input.organization?.id;
+	if (!organizationId) {
+		throw new BadRequestException('TASK_SCOPE_REQUIRED: state the organization of the request.');
+	}
+	return organizationId;
+}
+
+/** The caller's tenant, which every one of these reads is scoped by; a request without one is refused. */
+function tenantIdOf(input: { tenantId?: ID }): ID {
+	const tenantId = RequestContext.currentTenantId() ?? input.tenantId;
+	if (!tenantId) {
+		throw new BadRequestException('TASK_SCOPE_REQUIRED: the tenant of the request is unknown.');
+	}
+	return tenantId;
 }

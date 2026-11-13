@@ -174,6 +174,8 @@ export interface ITimeLog
 	projectId?: ID;
 	organizationContact?: IOrganizationContact;
 	organizationContactId?: ID;
+	/** The invoice line that bills this time; the time is invoiced only while that line's invoice is live and not void. */
+	invoiceItemId?: ID;
 	source?: TimeLogSourceEnum;
 	startedAt?: Date;
 	stoppedAt?: Date;
@@ -185,6 +187,22 @@ export interface ITimeLog
 	isBillable?: boolean;
 	isRunning?: boolean;
 	isEdited?: boolean;
+}
+
+/**
+ * A reminder the platform sent about a running time log (`TimerReminder`): level 1 once the timer ran for the
+ * employee's threshold, level 2 at twice it. One row per log and level, so each is sent once whatever the processes.
+ */
+export interface ITimeLogReminder extends IBasePerTenantAndOrganizationEntityModel {
+	timeLog?: ITimeLog;
+	timeLogId: ID;
+	level: number;
+	/** The id its notification is filed under, chosen with the claim. */
+	employeeNotificationId: ID;
+	/** When the claim was taken, or taken over from a process that stopped before it filed the notification. */
+	claimedAt: Date;
+	/** When its notification was filed; unset while it is not. */
+	filedAt?: Date;
 }
 
 export interface ITimeLogCreateInput extends IBasePerTenantAndOrganizationEntityModel {
@@ -398,6 +416,12 @@ export interface ITimerToggleInput
 	version?: string;
 	startedAt?: Date;
 	stoppedAt?: Date;
+	planDay?: string;
+	/**
+	 * The running time log a stop or a toggle is for, as the client last saw it. A stop naming another log than the
+	 * running one is refused, and the running one goes on. A start ignores it.
+	 */
+	timeLogId?: ID;
 }
 
 export interface IManualTimeInput extends IBasePerTenantAndOrganizationEntityModel {
@@ -423,6 +447,10 @@ export interface IGetTimeLogInput extends ITimeLogFilters, IBaseRelationsEntityM
 export interface IGetTimeLogReportInput extends IGetTimeLogInput {
 	groupBy?: ReportGroupByFilter;
 	isEdited?: boolean;
+	billableOnly?: boolean;
+	includeTimeWithoutTeam?: boolean;
+	/** Leave out the time a live invoice bills: a line that is not removed, of an invoice neither removed nor void. */
+	notInvoiced?: boolean;
 }
 
 export interface IGetTimeLogConflictInput extends IBasePerTenantAndOrganizationEntityModel, IBaseRelationsEntityModel {
@@ -448,12 +476,24 @@ export interface IBulkActivitiesInput extends IBasePerTenantAndOrganizationEntit
 	activities: IActivity[];
 }
 
+/**
+ * One time log as a row of the daily report. `organizationTeamId` is stated only when the report includes the time
+ * logged without a team (`includeTimeWithoutTeam`), and is null for that time.
+ */
+export interface IReportDayTaskRow {
+	task?: ITask | null;
+	description?: string | null;
+	duration?: number;
+	client?: (Pick<IOrganizationContact, 'id' | 'name'> & { imageUrl?: string | null }) | null;
+	organizationTeamId?: ID | null;
+}
+
 export interface IReportDayGroupByDate {
 	date: string;
 	logs: {
-		project: IOrganizationProject;
+		project: IOrganizationProject | null;
 		employeeLogs: {
-			tasks: ITask[];
+			tasks: IReportDayTaskRow[];
 			employee: IEmployee;
 			sum: number;
 			activity: number;
@@ -461,21 +501,27 @@ export interface IReportDayGroupByDate {
 	}[];
 }
 
+/** Which of the employee's rates priced what they are owed: the pay rate, or the billing rate while no pay rate is set. */
+export type OwedRateSource = 'pay' | 'billing';
+
 export interface IAmountOwedReport {
 	date: string;
 	employees: {
 		employee: IEmployee;
 		duration: number;
 		amount: number;
+		rateSource?: OwedRateSource;
+		/** The currency `amount` is in. */
+		currency?: string | null;
 	}[];
 }
 
 export interface IReportDayGroupByDate {
 	date: string;
 	logs: {
-		project: IOrganizationProject;
+		project: IOrganizationProject | null;
 		employeeLogs: {
-			tasks: ITask[];
+			tasks: IReportDayTaskRow[];
 			employee: IEmployee;
 			sum: number;
 			activity: number;
@@ -487,21 +533,21 @@ export interface IReportDayGroupByEmployee {
 	employee: IEmployee;
 	logs: {
 		date: string;
-		employeeLogs: {
+		projectLogs: {
 			sum: number;
 			activity: number;
-			project: IOrganizationProject;
-			tasks: ITask[];
+			project: IOrganizationProject | null;
+			tasks: IReportDayTaskRow[];
 		}[];
 	}[];
 }
 
 export interface IReportDayGroupByProject {
-	project: IOrganizationProject;
+	project: IOrganizationProject | null;
 	logs: {
 		date: string;
 		employeeLogs: {
-			tasks: ITask[];
+			tasks: IReportDayTaskRow[];
 			employee: IEmployee;
 			sum: number;
 			activity: number;
@@ -512,17 +558,17 @@ export interface IReportDayGroupByProject {
 export interface IReportDayGroupByClient {
 	client: IOrganizationContact;
 	logs: {
-		project: IOrganizationProject;
+		project: IOrganizationProject | null;
 		logs: {
 			date: string;
-			employeeLogs: {
-				tasks: ITask[];
+			projectLogs: {
+				tasks: IReportDayTaskRow[];
 				employee: IEmployee;
 				sum: number;
 				activity: number;
 			}[];
 		}[];
-	};
+	}[];
 }
 
 export type IReportDayData =

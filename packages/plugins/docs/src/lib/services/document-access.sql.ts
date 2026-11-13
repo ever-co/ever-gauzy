@@ -10,6 +10,33 @@ import { prepareSQLQuery as p } from '@gauzy/core';
  * removing someone from a team revokes their access on the next request.
  */
 
+/** Named bind parameters the team-space fragment expects on the query builder. */
+export interface ITeamScopeParameters {
+	/** The requesting subject's employee id. */
+	teamEmployeeId: string;
+	/** `DocumentVisibilityEnum.TEAM`. */
+	teamVisibility: string;
+}
+
+/**
+ * Builds the fragment that is true when the aliased document is in the space of a team the requesting subject
+ * currently belongs to (`visibility = TEAM` and a live `organization_team_employee` row). Membership resolves at
+ * query time, like the share grants: leaving a team hides its pages on the next request.
+ *
+ * Bind `teamEmployeeId` + `teamVisibility` alongside it — see `ITeamScopeParameters`.
+ *
+ * @param documentAlias The document alias in the surrounding query.
+ * @returns The SQL fragment, dialect-prepared.
+ */
+export function buildTeamSpaceSql(documentAlias: string): string {
+	return p(
+		`("${documentAlias}"."visibility" = :teamVisibility ` +
+			`AND "${documentAlias}"."organizationTeamId" IN (` +
+			`SELECT "spaceTeam"."organizationTeamId" FROM "organization_team_employee" "spaceTeam" ` +
+			`WHERE "spaceTeam"."employeeId" = :teamEmployeeId AND "spaceTeam"."deletedAt" IS NULL))`
+	);
+}
+
 /** Named bind parameters the fragment expects on the query builder. */
 export interface IShareScopeParameters {
 	/** The requesting subject's employee id. */

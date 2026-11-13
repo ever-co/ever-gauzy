@@ -7,6 +7,8 @@ import { EverConnectLookupCache } from './ever-connect-lookup-cache.entity';
 import { EverConnectPersonLinkReport } from './ever-connect-person-link-report.entity';
 import { EverConnectPersonRequest } from './ever-connect-person-request.entity';
 import { EverConnectPolicy } from './ever-connect-policy.entity';
+import { EverConnectProvisionIntent } from './ever-connect-provision-intent.entity';
+import { EverConnectProvisionResult } from './ever-connect-provision-result.entity';
 
 export * from './ever-connect-audit.entity';
 export * from './ever-connect-connection.entity';
@@ -16,6 +18,8 @@ export * from './ever-connect-lookup-cache.entity';
 export * from './ever-connect-person-link-report.entity';
 export * from './ever-connect-person-request.entity';
 export * from './ever-connect-policy.entity';
+export * from './ever-connect-provision-intent.entity';
+export * from './ever-connect-provision-result.entity';
 
 /** Every entity the plugin registers. Their tables are created by core migrations. */
 export const EVER_CONNECT_ENTITIES = [
@@ -27,5 +31,7 @@ export const EVER_CONNECT_ENTITIES = [
 	EverConnectAudit,
 	EverConnectLookupCache,
 	EverConnectPersonLinkReport,
-	EverConnectPersonRequest
+	EverConnectPersonRequest,
+	EverConnectProvisionIntent,
+	EverConnectProvisionResult
 ];

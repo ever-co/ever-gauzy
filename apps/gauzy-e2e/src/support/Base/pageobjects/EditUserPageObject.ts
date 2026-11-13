@@ -8,17 +8,18 @@ export const EditUserPage = {
 	nameFilterInputCss: 'th.angular2-smart-th.fullName input',
 	editButtonCss: 'button:has(nb-icon[icon="edit-outline"])',
 	orgTabButtonCss: 'ul.route-tabset > li > a.tab-link',
-	addOrgButtonCss: 'nb-card-header > button[status="success"]',
-	removeOrgButtonCss: 'nb-action[icon="close"]',
+	// Organizations tab (edit-user-organizations): the header's "Add to organization" opens the inline add form;
+	// each organization row has its own remove button.
+	addOrgButtonCss: 'button.orgs__add-toggle',
+	removeOrgButtonCss: 'button.orgs__remove',
 	confirmRemoveOrgButtonCss: 'nb-card-footer > button[status="danger"]',
-	// Org picker is an nb-select[multiple] inside ga-user-organizations-multi-select; the old exact
-	// class="select-button placeholder" no longer matches (nb-select adds appearance/status classes).
-	selectOrgMultiSelectCss: 'ga-user-organizations-multi-select nb-select',
-	selectOrgDropdownOptionCss: '.option-list nb-option',
-	saveSelectedOrgButton: 'div.form-group > button[status="success"]',
-	// Cancel button in the add-organization form (edit-user-organizations-mutation): outline/basic
-	// button in the actions bar. Used to close the add form when the org picker is empty.
-	cancelAddOrgButtonCss: '.add-organization-action button[status="basic"]',
+	// "Add to organization" opens the add dialog (in the overlay): a search (#addOrganizationsSearch) over a
+	// checklist of `button.assign-option` rows, with Cancel and Add in its footer. Cancel closes the dialog when
+	// there is nothing to add.
+	selectOrgMultiSelectCss: '#addOrganizationsSearch',
+	selectOrgDropdownOptionCss: '.assign-dialog button.assign-option',
+	saveSelectedOrgButton: '.assign-dialog button.assign-dialog__submit',
+	cancelAddOrgButtonCss: '.assign-dialog__actions > button[status="basic"]',
 	firstNameInputCss: '#firstName',
 	lastNameInputCss: '#lastName',
 	// Password fields are ngx-password-form-field; the rendered input carries the translated
@@ -44,9 +45,8 @@ export const EditUserPage = {
 	// the control is appendTo="body".
 	preferredLanguageCss: 'ngx-language-selector ng-select',
 	preferredLanguageOptionCss: 'ng-dropdown-panel div.ng-option',
-	// Scope the submit button to the profile form's actions bar so it can't match the org-tab
-	// success buttons (Add / Save org) that share status="success".
-	saveButtonCss: 'div.actions > button[status="success"]',
+	// Scope the submit button to the profile form's footer so it can't match the org tab's buttons.
+	saveButtonCss: 'footer.profile__actions > button[status="success"]',
 	verifyUserCss: 'div.names-wrapper',
 	toastrMessageCss: 'nb-toast.ng-trigger'
 };

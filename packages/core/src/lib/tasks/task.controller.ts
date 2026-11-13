@@ -10,12 +10,23 @@ import {
 	UseGuards,
 	Post,
 	Delete,
-	NotFoundException
+	NotFoundException,
+	UsePipes
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CommandBus } from '@nestjs/cqrs';
 import { DeleteResult } from 'typeorm';
-import { PermissionsEnum, ITask, IPagination, ID, ITaskCreateInput, ITaskUpdateInput } from '@gauzy/contracts';
+import {
+	PermissionsEnum,
+	ITask,
+	IPagination,
+	ID,
+	ITaskBulkUpdateOutcome,
+	ITaskCreateInput,
+	ITaskReferenceResolution,
+	ITaskUpdateInput,
+	TaskBuiltInViewEnum
+} from '@gauzy/contracts';
 import {
 	BulkExecutor,
 	BulkOperation,
@@ -29,9 +40,10 @@ import {
 import { Idempotent } from './../idempotency/idempotent.decorator';
 import { Permissions } from './../shared/decorators';
 import { CountQueryDTO } from './../shared/dto';
-import { UUIDValidationPipe, UseValidationPipe } from './../shared/pipes';
+import { AbstractValidationPipe, UUIDValidationPipe, UseValidationPipe } from './../shared/pipes';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { CrudController, BaseQueryDTO } from './../core/crud';
+import { TenantOrganizationBaseDTO } from './../core/dto';
 import { Task } from './task.entity';
 import { TaskService } from './task.service';
 import { TaskCreateCommand, TaskUpdateCommand } from './commands';
@@ -41,11 +53,19 @@ import {
 	TaskDateFilterInputDTO,
 	TaskByNumberParamsDTO,
 	TaskByNumberQueryDTO,
+	TaskBuiltInViewQueryDTO,
+	TaskBulkUpdateDTO,
 	TaskMaxNumberQueryDTO,
+	TaskMemberDTO,
 	TaskQueryDTO,
+	TaskTrashQueryDTO,
+	TaskReferenceResolveDTO,
 	UpdateTaskDTO,
 	UpdateTaskStatusDTO
 } from './dto';
+import { TaskViewsEnabledGuard } from './task-views-enabled';
+import { TaskTrashEnabledGuard } from './task-trash-enabled';
+import { isBuiltInView } from './built-in-views';
 
 @ApiTags('Tasks')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
@@ -106,6 +126,26 @@ export class TaskController extends CrudController<Task> {
 	@UseValidationPipe()
 	async getMaxTaskNumberByProject(@Query() options: TaskMaxNumberQueryDTO): Promise<number> {
 		return this.taskService.getMaxTaskNumberByProject(options);
+	}
+
+	/**
+	 * GET the trash: soft-deleted tasks of the caller's organization, most recently deleted first, optionally of one
+	 * team or project. With the delete grants (`ALL_ORG_EDIT`, `ORG_TASK_DELETE`) the whole organization's; with
+	 * `ORG_TASK_EDIT` alone, the trash of a team the caller manages, named by `organizationTeamId`. Behind
+	 * `GAUZY_TASK_TRASH_ENABLED` (404 otherwise, the probe a client reads). Declared before `/:id`.
+	 *
+	 * @param query The organization, the team or project, the search and the page.
+	 */
+	@ApiOperation({ summary: 'List the soft-deleted tasks (the trash).' })
+	@ApiResponse({ status: HttpStatus.OK, description: 'The trashed tasks, most recently deleted first.' })
+	@ApiResponse({ status: HttpStatus.FORBIDDEN, description: 'Without the delete grants, name a team you manage.' })
+	@ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'The trash is not enabled on this server.' })
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TASK_DELETE, PermissionsEnum.ORG_TASK_EDIT)
+	@UseGuards(TaskTrashEnabledGuard)
+	@Get('/trash')
+	@UseValidationPipe({ transform: true, whitelist: true })
+	async findTrash(@Query() query: TaskTrashQueryDTO): Promise<IPagination<ITask>> {
+		return this.taskService.findTrash(query);
 	}
 
 	/**
@@ -202,6 +242,67 @@ export class TaskController extends CrudController<Task> {
 	@UseValidationPipe({ transform: true })
 	async findTasksByViewQuery(@Param('id', UUIDValidationPipe) viewId: ID): Promise<IPagination<ITask>> {
 		return this.taskService.findTasksByViewQuery(viewId);
+	}
+
+	/**
+	 * GET a built-in view: `mine`, `this-week`, `overdue` or `due-soon`, computed by the platform for the caller
+	 * in the caller's time zone. Behind `GAUZY_TASK_VIEWS_ENABLED` (404 otherwise).
+	 *
+	 * @param key The view.
+	 * @param query The organization, the time zone and the page.
+	 * @returns The caller's tasks of that view.
+	 */
+	@ApiOperation({ summary: 'Get the tasks of a built-in view (mine, this-week, overdue, due-soon).' })
+	@ApiResponse({ status: HttpStatus.OK, description: 'Tasks retrieved successfully.' })
+	@ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'No such view, or the extensions are off.' })
+	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_TASK_VIEW)
+	@UseGuards(TaskViewsEnabledGuard)
+	@Get('/built-in/:key')
+	@UseValidationPipe({ transform: true, whitelist: true })
+	async findBuiltInView(@Param('key') key: string, @Query() query: TaskBuiltInViewQueryDTO): Promise<IPagination<ITask>> {
+		if (!isBuiltInView(key)) {
+			throw new NotFoundException(`No built-in view "${key}".`);
+		}
+		return this.taskService.findBuiltInView(key as TaskBuiltInViewEnum, query);
+	}
+
+	/**
+	 * POST a bulk update: one change for up to 100 tasks (`taskIds` + `changes`), or a change per task (`items`,
+	 * which is how an undo sends the previous values back). Every task is updated by the same command as
+	 * `PUT /tasks/:id` (activity, notifications and sync events per task); the answer holds one result per task
+	 * with the previous values. Behind `GAUZY_TASK_VIEWS_ENABLED` (404 otherwise).
+	 *
+	 * @param input The tasks and the changes.
+	 * @returns One result per task, with the previous values.
+	 */
+	@ApiOperation({ summary: 'Change many tasks in one request, with per-task results and undo data.' })
+	@ApiResponse({ status: HttpStatus.OK, description: 'Applied, with one result per task.' })
+	@ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'Nothing to change, both forms sent, or over the limit (BULK_LIMIT_EXCEEDED).' })
+	@HttpCode(HttpStatus.OK)
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TASK_EDIT)
+	@UseGuards(TaskViewsEnabledGuard)
+	@Post('/bulk-update')
+	@UseValidationPipe({ whitelist: true, transform: true })
+	async bulkUpdate(@Body() input: TaskBulkUpdateDTO): Promise<ITaskBulkUpdateOutcome> {
+		return this.taskService.bulkUpdate(input, (id, update) => this.commandBus.execute(new TaskUpdateCommand(id, update as ITaskUpdateInput)));
+	}
+
+	/**
+	 * POST references to resolve: `KEY-number` identifiers (`API-42`) to the tasks they name, by the project's
+	 * key, its former keys, or the key derived from its name. Behind `GAUZY_TASK_VIEWS_ENABLED` (404 otherwise).
+	 *
+	 * @param input The organization and the references.
+	 * @returns One resolution per reference.
+	 */
+	@ApiOperation({ summary: 'Resolve KEY-number references to tasks.' })
+	@ApiResponse({ status: HttpStatus.OK, description: 'One resolution per reference.' })
+	@HttpCode(HttpStatus.OK)
+	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_TASK_VIEW)
+	@UseGuards(TaskViewsEnabledGuard)
+	@Post('/resolve-references')
+	@UseValidationPipe({ whitelist: true })
+	async resolveReferences(@Body() input: TaskReferenceResolveDTO): Promise<ITaskReferenceResolution[]> {
+		return this.taskService.resolveReferences(input);
 	}
 
 	/**
@@ -445,6 +546,134 @@ export class TaskController extends CrudController<Task> {
 	})
 	async delete(@Param('id', UUIDValidationPipe) id: ID): Promise<DeleteResult> {
 		return this.taskService.deleteTask(id);
+	}
+
+	/**
+	 * DELETE a task to the trash (soft delete), under the grants a delete takes: the inherited route ran under the
+	 * class-level `ALL_ORG_EDIT` alone, so those who may delete a task could not trash it. Without `ALL_ORG_EDIT` or
+	 * `ORG_TASK_DELETE`, only a manager of one of the task's teams may (the service checks it).
+	 *
+	 * @param id The task.
+	 */
+	@ApiOperation({ summary: 'Move a task to the trash (soft delete).' })
+	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'The task is in the trash.' })
+	@ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Task not found.' })
+	@ApiResponse({ status: HttpStatus.FORBIDDEN, description: 'Only a manager of one of the task teams may.' })
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TASK_DELETE, PermissionsEnum.ORG_TASK_EDIT)
+	@Delete('/:id/soft')
+	@HttpCode(HttpStatus.ACCEPTED)
+	@UsePipes(new AbstractValidationPipe({ whitelist: true }, { query: TenantOrganizationBaseDTO }))
+	async softRemove(@Param('id', UUIDValidationPipe) id: ID): Promise<Task> {
+		return this.taskService.softRemove(id);
+	}
+
+	/**
+	 * PUT a task back from the trash, under the same grants as moving it there.
+	 *
+	 * @param id The task.
+	 */
+	@ApiOperation({ summary: 'Restore a task from the trash.' })
+	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'The task is restored.' })
+	@ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Task not found.' })
+	@ApiResponse({ status: HttpStatus.FORBIDDEN, description: 'Only a manager of one of the task teams may.' })
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TASK_DELETE, PermissionsEnum.ORG_TASK_EDIT)
+	@Put('/:id/recover')
+	@HttpCode(HttpStatus.ACCEPTED)
+	@UsePipes(new AbstractValidationPipe({ whitelist: true }, { query: TenantOrganizationBaseDTO }))
+	async softRecover(@Param('id', UUIDValidationPipe) id: ID): Promise<Task> {
+		return this.taskService.softRecover(id);
+	}
+
+	/**
+	 * DELETE a task for good, only while it is in the trash: the trash pages' Delete forever. The delete statement
+	 * itself requires the task to be in the trash, so a task someone restored after the trash was read stays (404),
+	 * where `DELETE /tasks/:id` would delete the live task. Under the grants of the trash and restore routes, behind
+	 * `GAUZY_TASK_TRASH_ENABLED` as the trash list is.
+	 *
+	 * @param id The task.
+	 * @param query The organization whose trash holds the task.
+	 */
+	@ApiOperation({ summary: 'Delete a task for good, only while it is in the trash.' })
+	@ApiResponse({ status: HttpStatus.OK, description: 'The task is deleted for good.' })
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'No task with that id is in the trash of the organization, or the trash is not enabled.'
+	})
+	@ApiResponse({ status: HttpStatus.FORBIDDEN, description: 'Only a manager of one of the task teams may.' })
+	@ApiResponse({
+		status: HttpStatus.CONFLICT,
+		description: 'Other records (a linked issue, a key result) still point at the task; it stays in the trash.'
+	})
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TASK_DELETE, PermissionsEnum.ORG_TASK_EDIT)
+	@UseGuards(TaskTrashEnabledGuard)
+	@Delete('/:id/trashed')
+	@UsePipes(new AbstractValidationPipe({ whitelist: true }, { query: TenantOrganizationBaseDTO }))
+	async deleteTrashed(
+		@Param('id', UUIDValidationPipe) id: ID,
+		@Query() query: TenantOrganizationBaseDTO
+	): Promise<DeleteResult> {
+		return this.taskService.deleteTrashedTask(id, query?.organizationId ?? query?.organization?.id);
+	}
+
+	/**
+	 * PUT one member on a task, changing nothing else
+	 *
+	 * The full update writes the whole member list, so a client that adds one member sends back a list it read
+	 * earlier and undoes an assignment made since.
+	 *
+	 * @param id The ID of the task.
+	 * @param employeeId The ID of the employee to assign.
+	 * @param query The caller's organization, which must be the task's.
+	 */
+	@ApiOperation({ summary: 'Assign one member to a task.' })
+	@ApiResponse({ status: HttpStatus.OK, description: 'The employee is a member of the task.' })
+	@ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Task not found.' })
+	@ApiResponse({ status: HttpStatus.BAD_REQUEST, description: "The employee is not one of the task's organization." })
+	@ApiResponse({
+		status: HttpStatus.FORBIDDEN,
+		description:
+			'Only the employee themselves, an organization admin or a manager of the task team may assign them.'
+	})
+	@HttpCode(HttpStatus.OK)
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TASK_EDIT)
+	@Put('/:id/members/:employeeId')
+	@UseValidationPipe({ whitelist: true })
+	async addMember(
+		@Param('id', UUIDValidationPipe) id: ID,
+		@Param('employeeId', UUIDValidationPipe) employeeId: ID,
+		@Query() query: TaskMemberDTO
+	): Promise<void> {
+		return this.taskService.addMember(id, employeeId, query.organizationId);
+	}
+
+	/**
+	 * DELETE one member from a task, changing nothing else
+	 *
+	 * The full update writes the whole member list, so a client that drops one member sends back a list it read
+	 * earlier and undoes an assignment made since.
+	 *
+	 * @param id The ID of the task.
+	 * @param employeeId The ID of the employee to take off the task.
+	 * @param query The caller's organization, which must be the task's.
+	 */
+	@ApiOperation({ summary: 'Remove one member from a task.' })
+	@ApiResponse({ status: HttpStatus.OK, description: 'The employee is no longer a member of the task.' })
+	@ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Task not found.' })
+	@ApiResponse({
+		status: HttpStatus.FORBIDDEN,
+		description:
+			'Only the employee themselves, an organization admin or a manager of the task team may remove them.'
+	})
+	@HttpCode(HttpStatus.OK)
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TASK_EDIT)
+	@Delete('/:id/members/:employeeId')
+	@UseValidationPipe({ whitelist: true })
+	async removeMember(
+		@Param('id', UUIDValidationPipe) id: ID,
+		@Param('employeeId', UUIDValidationPipe) employeeId: ID,
+		@Query() query: TaskMemberDTO
+	): Promise<void> {
+		return this.taskService.removeMember(id, employeeId, query.organizationId);
 	}
 
 	/**

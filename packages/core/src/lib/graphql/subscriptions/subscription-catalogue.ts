@@ -96,10 +96,46 @@ export class SubscriptionCatalogueError extends Error {
 }
 
 /**
+ * One event as an audience check reads it: a stored outbox row (a catch-up) or a published envelope (a live
+ * delivery), reduced to what both carry.
+ */
+export interface SubscriptionAudienceEvent {
+	/** `<aggregate>.<action>`. */
+	readonly name: string;
+	readonly aggregateType: string;
+	readonly aggregateId: string;
+	/** The payload the producer appended (ids only for the collaboration families). */
+	readonly data: Readonly<Record<string, unknown>>;
+}
+
+/** The subscriber an audience check decides for. */
+export interface SubscriptionAudienceSubscriber {
+	readonly tenantId: string;
+	readonly organizationId?: string | null;
+	/** `null` for a credential without a user (an API key). */
+	readonly userId: string | null;
+}
+
+/**
+ * Decides, when events are handed to a subscriber, which of them that subscriber may still receive.
+ *
+ * The recipients an addressed event names are fixed when it is written; a check is how the package that owns the
+ * event narrows delivery to the subscriber's access **at delivery time** (a removed chat member, a page made
+ * private). It is called with a batch — one catch-up page, or one live event — and answers one verdict per event,
+ * in order: `true` delivers. It runs in the subscriber's request context, so it may read the subscriber's
+ * permissions through `RequestContext`. A throw, or an answer of the wrong length, refuses the whole batch.
+ */
+export type SubscriptionAudienceCheck = (
+	events: readonly SubscriptionAudienceEvent[],
+	subscriber: SubscriptionAudienceSubscriber
+) => readonly boolean[] | Promise<readonly boolean[]>;
+
+/**
  * The events this installation streams.
  */
 export class SubscriptionCatalogue {
 	private readonly events = new Set<string>();
+	private readonly audiences = new Map<string, SubscriptionAudienceCheck[]>();
 
 	/**
 	 * Declares the events a package publishes.
@@ -125,6 +161,45 @@ export class SubscriptionCatalogue {
 
 			this.events.add(name);
 		}
+	}
+
+	/**
+	 * Narrows who may receive some events at delivery time (see {@link SubscriptionAudienceCheck}). A name may carry
+	 * several checks, registered by different packages: an event is delivered only when every one of them admits it.
+	 * Registering the same check again is a no-op. Nothing is narrowed by default, and a stream that does not ask for
+	 * the checks ({@link audienceOf}) is not affected.
+	 *
+	 * @param check The check.
+	 * @param names The event names it applies to.
+	 * @throws SubscriptionCatalogueError when a name is malformed or the check is not a function.
+	 */
+	restrictAudience(check: SubscriptionAudienceCheck, ...names: readonly string[]): void {
+		if (typeof check !== 'function') {
+			throw new SubscriptionCatalogueError('An audience check is a function of the events and the subscriber.');
+		}
+		for (const name of names) {
+			if (!isEventNameShaped(name)) {
+				throw new SubscriptionCatalogueError(
+					`"${name}" is not a valid event name, so no audience check can apply to it.`
+				);
+			}
+		}
+		for (const name of names) {
+			const checks = this.audiences.get(name) ?? [];
+			if (!checks.includes(check)) {
+				checks.push(check);
+			}
+			this.audiences.set(name, checks);
+		}
+	}
+
+	/**
+	 * The audience checks registered for an event name, in registration order; empty when none narrows it.
+	 *
+	 * @param name The event name.
+	 */
+	audienceOf(name: string): readonly SubscriptionAudienceCheck[] {
+		return [...(this.audiences.get(name) ?? [])];
 	}
 
 	/**

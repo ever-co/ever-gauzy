@@ -2,7 +2,8 @@ import { Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
 import { EventBusModule } from '../../event-bus/event-bus.module';
 import { EventOutboxModule } from '../../event-outbox/event-outbox.module';
-import { GraphqlPubSub } from './graphql-pubsub.service';
+import { GRAPHQL_PUBSUB_ENGINE, GraphqlPubSub } from './graphql-pubsub.service';
+import { createGraphqlPubSubEngineFromEnv } from './redis-pubsub.engine';
 import { GraphqlSubscriptionBusBridge } from './subscription-bus-bridge';
 import { GraphqlSubscriptionConsumer } from './subscription-consumer';
 import { GraphqlSubscriptionHub } from './subscription-hub.service';
@@ -30,6 +31,9 @@ import { SubscriptionCatalogue } from './subscription-catalogue';
 		EventOutboxModule
 	],
 	providers: [
+		// Redis when it is on, so the dispatch pass in one process reaches the sockets of every other;
+		// null otherwise, and the service keeps its in-process broker.
+		{ provide: GRAPHQL_PUBSUB_ENGINE, useFactory: createGraphqlPubSubEngineFromEnv },
 		GraphqlPubSub,
 		SubscriptionCatalogue,
 		SubscriptionAuthorizer,

@@ -27,7 +27,8 @@ import { OrganizationTeamService } from './organization-team.service';
  * `PUT /organization-team/:id/recover` / `recoverOrganizationTeam` ran the CRUD base's `softRemove` and
  * `softRecover`, which check the tenant only: any employee holding ORG_TEAM_EDIT retired or restored a team
  * they do not manage. Both now apply the rule `deleteTeam` applies: without CHANGE_SELECTED_EMPLOYEE, the
- * caller must be an employee with a MANAGER membership of the team, in the team's tenant and organization.
+ * caller must be an employee who manages the team (the MANAGER role or the manager flag on their membership), in
+ * the team's tenant and organization.
  *
  * Each case runs the service's real `softRemove` / `softRecover` — the override and the CRUD base under it —
  * against a real in-memory SQLite database under each ORM, with the soft-delete mechanism each ORM uses in
@@ -61,7 +62,9 @@ const EMPLOYEE = {
 	/** A MANAGER of LIVE_TEAM and RETIRED_TEAM by membership rows that name another organization. */
 	foreignOrganizationManager: '70000000-0000-4000-8000-0000000000e4',
 	/** A MANAGER of LIVE_TEAM and RETIRED_TEAM by membership rows that name another tenant. */
-	foreignTenantManager: '70000000-0000-4000-8000-0000000000e5'
+	foreignTenantManager: '70000000-0000-4000-8000-0000000000e5',
+	/** A member of LIVE_TEAM and RETIRED_TEAM flagged as their manager, without the MANAGER role. */
+	flaggedManager: '70000000-0000-4000-8000-0000000000e6'
 };
 
 const ROLES = [{ id: MANAGER_ROLE, name: RolesEnum.MANAGER }];
@@ -134,8 +137,22 @@ const MEMBERS = [
 		employeeId: EMPLOYEE.foreignTenantManager,
 		roleId: MANAGER_ROLE,
 		tenantId: OTHER_TENANT
+	},
+	{
+		id: '70000000-0000-4000-8000-0000000000cb',
+		teamId: LIVE_TEAM,
+		employeeId: EMPLOYEE.flaggedManager,
+		roleId: null,
+		isManager: true
+	},
+	{
+		id: '70000000-0000-4000-8000-0000000000cc',
+		teamId: RETIRED_TEAM,
+		employeeId: EMPLOYEE.flaggedManager,
+		roleId: null,
+		isManager: true
 	}
-].map((member) => ({ tenantId: TENANT, organizationId: ORGANIZATION, ...member }));
+].map((member) => ({ tenantId: TENANT, organizationId: ORGANIZATION, isManager: false, ...member }));
 
 /*
 |--------------------------------------------------------------------------
@@ -178,7 +195,8 @@ const OrganizationTeamEmployeeSchema = new EntitySchema<any>({
 		employeeId: { type: 'varchar' },
 		roleId: { type: 'varchar', nullable: true },
 		tenantId: { type: 'varchar', nullable: true },
-		organizationId: { type: 'varchar', nullable: true }
+		organizationId: { type: 'varchar', nullable: true },
+		isManager: { type: 'boolean', nullable: true }
 	},
 	relations: {
 		organizationTeam: {
@@ -247,11 +265,34 @@ class OrganizationTeamEmployeeRow {
 
 	@Property({ type: 'string', nullable: true })
 	organizationId?: string | null;
+
+	@Property({ type: 'boolean', nullable: true })
+	isManager?: boolean | null;
+}
+
+type TeamScope = { tenantId?: string; organizationId?: string; organizationTeamId?: string };
+
+function isManagingRow(member: (typeof MEMBERS)[number], employeeId: string | undefined, team: TeamScope): boolean {
+	const isCaller = member.employeeId === employeeId;
+	const isTeamRow = member.teamId === team.organizationTeamId;
+	const isSameTenant = member.tenantId === team.tenantId;
+	const isSameOrganization = member.organizationId === team.organizationId;
+	const managesIt = member.roleId === MANAGER_ROLE || member.isManager === true;
+	return isCaller && isTeamRow && isSameTenant && isSameOrganization && managesIt;
 }
 
 /**
- * The service over one ORM's repository. The collaborators it names are never reached by `softRemove` or
- * `softRecover`, so they are empty objects: a call that did reach one would fail loudly.
+ * Answers as `OrganizationTeamEmployeeService.isTeamManager` does, from the seeded rows. That query reads the membership
+ * table through TypeORM whatever the ORM, and has its own spec; here it stands for the membership side of the rule.
+ */
+const membershipFromRows = {
+	isTeamManager: async (employeeId: string | undefined, team: TeamScope) =>
+		MEMBERS.some((member) => isManagingRow(member, employeeId, team))
+};
+
+/**
+ * The service over one ORM's repository. Apart from the membership check, the collaborators it names are never
+ * reached by `softRemove` or `softRecover`, so they are empty objects: a call that did reach one would fail loudly.
  */
 function serviceOver(typeOrmRepository: unknown, mikroOrmRepository: unknown): OrganizationTeamService {
 	return new OrganizationTeamService(
@@ -263,7 +304,7 @@ function serviceOver(typeOrmRepository: unknown, mikroOrmRepository: unknown): O
 		{} as any,
 		{} as any,
 		{} as any,
-		{} as any,
+		membershipFromRows as any,
 		{} as any,
 		{} as any,
 		{} as any
@@ -420,8 +461,21 @@ describe.each([
 			expect(await harness.deletedAt(LIVE_TEAM)).toBeNull();
 		});
 
-		it('lets a manager of the team retire it', async () => {
+		it('lets a manager of the team retire it, checking the live memberships only', async () => {
 			signInAs(EMPLOYEE.manager);
+			const check = jest.spyOn(membershipFromRows, 'isTeamManager');
+
+			await expect(harness.service().softRemove(LIVE_TEAM)).resolves.toMatchObject({ id: LIVE_TEAM });
+			expect(await harness.deletedAt(LIVE_TEAM)).not.toBeNull();
+			expect(check).toHaveBeenCalledWith(
+				EMPLOYEE.manager,
+				{ tenantId: TENANT, organizationId: ORGANIZATION, organizationTeamId: LIVE_TEAM },
+				false
+			);
+		});
+
+		it("lets a member flagged as the team's manager, without the MANAGER role, retire it", async () => {
+			signInAs(EMPLOYEE.flaggedManager);
 
 			await expect(harness.service().softRemove(LIVE_TEAM)).resolves.toMatchObject({ id: LIVE_TEAM });
 			expect(await harness.deletedAt(LIVE_TEAM)).not.toBeNull();
@@ -486,6 +540,19 @@ describe.each([
 
 		it('lets a manager of the retired team restore it (the check reads retired teams)', async () => {
 			signInAs(EMPLOYEE.manager);
+			const check = jest.spyOn(membershipFromRows, 'isTeamManager');
+
+			await expect(harness.service().softRecover(RETIRED_TEAM)).resolves.toMatchObject({ id: RETIRED_TEAM });
+			expect(await harness.deletedAt(RETIRED_TEAM)).toBeNull();
+			expect(check).toHaveBeenCalledWith(
+				EMPLOYEE.manager,
+				{ tenantId: TENANT, organizationId: ORGANIZATION, organizationTeamId: RETIRED_TEAM },
+				true
+			);
+		});
+
+		it("lets a member flagged as the retired team's manager, without the MANAGER role, restore it", async () => {
+			signInAs(EMPLOYEE.flaggedManager);
 
 			await expect(harness.service().softRecover(RETIRED_TEAM)).resolves.toMatchObject({ id: RETIRED_TEAM });
 			expect(await harness.deletedAt(RETIRED_TEAM)).toBeNull();

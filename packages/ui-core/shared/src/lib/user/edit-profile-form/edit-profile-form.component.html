@@ -1,198 +1,271 @@
-<nb-card class="card-scroll">
-	<nb-card-body>
-		<div class="content">
-			<div class="employee-container">
-				<div class="employee-photo">
-					<ng-container [ngTemplateOutlet]="imageUploaderTemplate"></ng-container>
-				</div>
-				@if (role) {
-					<gauzy-role class="badge" [value]="role"></gauzy-role>
+<div class="profile">
+	<!-- ── Identity: photo (click to change), name, role and sign-in facts ── -->
+	<section class="profile__panel profile__panel--identity">
+		<header class="profile__head">
+			<div
+				class="profile__avatar"
+				[class.profile__avatar--hover]="hoverState"
+				[nbTooltip]="'USERS_PAGE.EDIT_USER.CHANGE_PHOTO' | translate"
+				nbTooltipPlacement="bottom"
+			>
+				<ngx-image-uploader
+					[ariaLabel]="'USERS_PAGE.EDIT_USER.CHANGE_PHOTO' | translate"
+					[disabled]="saving"
+					(uploadStarted)="onPhotoUploadStarted()"
+					(changeHoverState)="hoverState = $event"
+					(uploadedImageAsset)="updateImageAsset($event)"
+					(uploadImageAssetError)="handleImageUploadError($event)"
+				></ngx-image-uploader>
+
+				@if (form.get('imageUrl')?.value && !avatarFailed) {
+					<img
+						class="profile__avatar-image"
+						[src]="form.get('imageUrl').value"
+						alt=""
+						(error)="avatarFailed = true"
+					/>
+				} @else {
+					<div class="profile__avatar-image profile__avatar-image--empty">
+						<nb-icon icon="person-outline"></nb-icon>
+					</div>
 				}
+
+				<span class="profile__avatar-scrim" aria-hidden="true"></span>
+				<span class="profile__avatar-badge" aria-hidden="true">
+					<nb-icon icon="camera-outline"></nb-icon>
+				</span>
 			</div>
-			<div class="employee-form">
-				<form [formGroup]="form" autocomplete-off>
-					<div class="row">
-						<div class="col">
-							<div class="form-group">
-								<label
-									class="label"
-									for="firstName"
-									[innerText]="'PROFILE_PAGE.FIRST_NAME' | translate"
-								></label>
-								<input fullWidth id="firstName" type="text" nbInput formControlName="firstName" />
-							</div>
-						</div>
-						<div class="col">
-							<div class="form-group">
-								<label
-									for="lastName"
-									class="label"
-									[innerText]="'PROFILE_PAGE.LAST_NAME' | translate"
-								></label>
-								<input fullWidth id="lastName" type="text" nbInput formControlName="lastName" />
-							</div>
-						</div>
+
+			<div class="profile__identity">
+				<span class="profile__name">{{ displayName }}</span>
+				@if (profile?.username; as username) {
+					<span class="profile__sub">{{ '@' + username }}</span>
+				}
+				<div class="profile__chips">
+					@if (roleLabel; as label) {
+						<span class="profile__chip profile__chip--primary">
+							{{ label.key ? (label.key | translate) : label.text }}
+						</span>
+					}
+					@if (profile) {
+						<!-- `isEmailVerified`, not `emailVerifiedAt`: the server keeps the date out of its answers. -->
+						@if (profile.isEmailVerified) {
+							<span class="profile__chip profile__chip--success">
+								{{ 'USERS_PAGE.EDIT_USER.EMAIL_VERIFIED' | translate }}
+							</span>
+						} @else {
+							<span class="profile__chip profile__chip--warning">
+								{{ 'USERS_PAGE.EDIT_USER.EMAIL_NOT_VERIFIED' | translate }}
+							</span>
+						}
+					}
+				</div>
+			</div>
+		</header>
+
+		@if (profile) {
+			<!-- Account: status and the record's dates -->
+			<section class="profile__group">
+				<h6 class="profile__group-title">{{ 'USERS_PAGE.EDIT_USER.GROUP_ACCOUNT' | translate }}</h6>
+				<dl class="profile__facts">
+					<div class="profile__fact">
+						<dt>{{ 'USERS_PAGE.EDIT_USER.STATUS' | translate }}</dt>
+						<dd>
+							<span class="profile__status" [class.profile__status--inactive]="!isActiveAccount">
+								{{
+									(isActiveAccount ? 'USERS_PAGE.EDIT_USER.ACTIVE_STATUS' : 'USERS_PAGE.EDIT_USER.INACTIVE_STATUS')
+										| translate
+								}}
+							</span>
+						</dd>
 					</div>
-					<div class="row">
-						<div class="col">
-							<ngx-password-form-field
-								id="'password'"
-								[placeholder]="'PROFILE_PAGE.PASSWORD' | translate"
-								[label]="'PROFILE_PAGE.PASSWORD' | translate"
-								[ctrl]="form.get('password')"
-								formControlName="password"
-								[autocomplete]="'new-password'"
-							></ngx-password-form-field>
+					@if (profile.createdAt) {
+						<div class="profile__fact">
+							<dt>{{ 'USERS_PAGE.EDIT_USER.MEMBER_SINCE' | translate }}</dt>
+							<dd>{{ profile.createdAt | date: 'mediumDate' }}</dd>
 						</div>
-						<div class="col">
-							<ngx-password-form-field
-								[id]="'reset-password'"
-								[placeholder]="'PROFILE_PAGE.REPEAT_PASSWORD' | translate"
-								[label]="'PROFILE_PAGE.REPEAT_PASSWORD' | translate"
-								[ctrl]="form.get('repeatPassword')"
-								formControlName="repeatPassword"
-								[autocomplete]="'new-password'"
-							>
-								@if (FormHelpers.isInvalidControl(form, 'repeatPassword')) {
-									<div class="invalid-feedback d-block">
-										@if (form.get('repeatPassword').errors.mustMatch) {
-											<div>
-												{{ 'PROFILE_PAGE.VALIDATION.PASSWORDS_DO_NOT_MATCH' | translate }}
-											</div>
-										}
-									</div>
+					}
+					@if (profile.updatedAt) {
+						<div class="profile__fact">
+							<dt>{{ 'USERS_PAGE.EDIT_USER.LAST_UPDATED' | translate }}</dt>
+							<dd>{{ profile.updatedAt | date: 'mediumDate' }}</dd>
+						</div>
+					}
+					<div class="profile__fact">
+						<dt>{{ 'USERS_PAGE.EDIT_USER.LAST_SIGN_IN' | translate }}</dt>
+						<dd>
+							{{
+								profile.lastLoginAt
+									? (profile.lastLoginAt | date: 'medium')
+									: ('USERS_PAGE.EDIT_USER.NEVER_SIGNED_IN' | translate)
+							}}
+						</dd>
+					</div>
+				</dl>
+			</section>
+
+			<!-- Language & time: how the app speaks and tells time to this user -->
+			<section class="profile__group">
+				<h6 class="profile__group-title">{{ 'USERS_PAGE.EDIT_USER.GROUP_LOCALE' | translate }}</h6>
+				<dl class="profile__facts">
+					<div class="profile__fact">
+						<dt>{{ 'USERS_PAGE.EDIT_USER.LANGUAGE' | translate }}</dt>
+						<dd [class.profile__unset]="!languageName">
+							{{ languageName || ('USERS_PAGE.EDIT_USER.NOT_SET' | translate) }}
+						</dd>
+					</div>
+					<div class="profile__fact">
+						<dt>{{ 'USERS_PAGE.EDIT_USER.TIME_ZONE' | translate }}</dt>
+						<dd [class.profile__unset]="!profile.timeZone">
+							{{ profile.timeZone || ('USERS_PAGE.EDIT_USER.NOT_SET' | translate) }}
+						</dd>
+					</div>
+					@if (localTime; as time) {
+						<div class="profile__fact">
+							<dt>{{ 'USERS_PAGE.EDIT_USER.LOCAL_TIME' | translate }}</dt>
+							<dd>{{ time }}</dd>
+						</div>
+					}
+					<div class="profile__fact">
+						<dt>{{ 'USERS_PAGE.EDIT_USER.TIME_FORMAT' | translate }}</dt>
+						<dd [class.profile__unset]="!timeFormatKey">
+							{{ (timeFormatKey || 'USERS_PAGE.EDIT_USER.NOT_SET') | translate }}
+						</dd>
+					</div>
+				</dl>
+			</section>
+		}
+	</section>
+
+	<!-- ── Form: details, access, password and preferences, saved from the footer ── -->
+	<section class="profile__panel profile__panel--form">
+		<form class="profile__form" [formGroup]="form" autocomplete="off">
+			<div class="profile__fields">
+				<h6 class="profile__legend">{{ 'USERS_PAGE.EDIT_USER.PERSONAL_DETAILS' | translate }}</h6>
+				<div class="form-group">
+					<label class="label" for="firstName">{{ 'PROFILE_PAGE.FIRST_NAME' | translate }}</label>
+					<input fullWidth id="firstName" type="text" nbInput formControlName="firstName" />
+				</div>
+				<div class="form-group">
+					<label class="label" for="lastName">{{ 'PROFILE_PAGE.LAST_NAME' | translate }}</label>
+					<input fullWidth id="lastName" type="text" nbInput formControlName="lastName" />
+				</div>
+				<div class="form-group">
+					<label class="label" for="email">{{ 'PROFILE_PAGE.EMAIL' | translate }}</label>
+					<input
+						fullWidth
+						id="email"
+						type="email"
+						nbInput
+						formControlName="email"
+						[status]="FormHelpers.isInvalidControl(form, 'email') ? 'danger' : 'basic'"
+					/>
+					@if (FormHelpers.isInvalidControl(form, 'email')) {
+						<div class="invalid-feedback d-block">
+							@if (form.get('email').errors?.required) {
+								<div>{{ 'PROFILE_PAGE.VALIDATION.EMAIL_REQUIRED' | translate }}</div>
+							}
+						</div>
+					}
+				</div>
+				<div class="form-group">
+					<ngx-phone-form-input formControlName="phoneNumber"></ngx-phone-form-input>
+				</div>
+
+				<h6 class="profile__legend">{{ 'USERS_PAGE.EDIT_USER.ACCESS' | translate }}</h6>
+				@if (allowRoleChange) {
+					<div class="form-group">
+						<ngx-role-form-field
+							[id]="'role'"
+							[placeholder]="'FORM.PLACEHOLDERS.ROLE' | translate"
+							[label]="'FORM.LABELS.ROLE' | translate"
+							formControlName="role"
+							(selectedChange)="onSelectionChange($event)"
+							[excludes]="excludes"
+						></ngx-role-form-field>
+					</div>
+				}
+				<div class="form-group" [class.profile__wide]="!allowRoleChange">
+					<ga-tags-color-input
+						[selectedTags]="form.get('tags').value"
+						(selectedTagsEvent)="selectedTagsHandler($event)"
+						[isTenantLevel]="true"
+					></ga-tags-color-input>
+				</div>
+
+				<h6 class="profile__legend">{{ 'USERS_PAGE.EDIT_USER.PASSWORD' | translate }}</h6>
+				<p class="profile__hint">{{ 'USERS_PAGE.EDIT_USER.PASSWORD_HINT' | translate }}</p>
+				<div class="form-group">
+					<ngx-password-form-field
+						[id]="'password'"
+						[placeholder]="'PROFILE_PAGE.PASSWORD' | translate"
+						[label]="'PROFILE_PAGE.PASSWORD' | translate"
+						[ctrl]="form.get('password')"
+						formControlName="password"
+						[autocomplete]="'new-password'"
+					></ngx-password-form-field>
+				</div>
+				<div class="form-group">
+					<ngx-password-form-field
+						[id]="'reset-password'"
+						[placeholder]="'PROFILE_PAGE.REPEAT_PASSWORD' | translate"
+						[label]="'PROFILE_PAGE.REPEAT_PASSWORD' | translate"
+						[ctrl]="form.get('repeatPassword')"
+						formControlName="repeatPassword"
+						[autocomplete]="'new-password'"
+					>
+						@if (FormHelpers.isInvalidControl(form, 'repeatPassword')) {
+							<div class="invalid-feedback d-block">
+								@if (form.get('repeatPassword').errors?.mustMatch) {
+									<div>{{ 'PROFILE_PAGE.VALIDATION.PASSWORDS_DO_NOT_MATCH' | translate }}</div>
 								}
-							</ngx-password-form-field>
-						</div>
-					</div>
-					<div class="row">
-						<div class="col-6">
-							<div class="form-group">
-								<label class="label" for="email" [innerText]="'PROFILE_PAGE.EMAIL' | translate"></label>
-								<input
-									fullWidth
-									id="email"
-									type="email"
-									nbInput
-									formControlName="email"
-									[status]="FormHelpers.isInvalidControl(form, 'email') ? 'danger' : 'basic'"
-								/>
-								@if (FormHelpers.isInvalidControl(form, 'email')) {
-									<div class="invalid-feedback d-block">
-										@if (form.get('email').errors.required) {
-											<div>
-												{{ 'PROFILE_PAGE.VALIDATION.EMAIL_REQUIRED' | translate }}
-											</div>
-										}
-									</div>
-								}
-							</div>
-						</div>
-						<div class="col-6">
-							<div class="form-group">
-								<ga-tags-color-input
-									[selectedTags]="form.get('tags').value"
-									(selectedTagsEvent)="selectedTagsHandler($event)"
-									[isTenantLevel]="true"
-								></ga-tags-color-input>
-							</div>
-						</div>
-					</div>
-					<div class="row">
-						@if (allowRoleChange) {
-							<div class="col-sm-6">
-								<ngx-role-form-field
-									[id]="'role'"
-									[placeholder]="'FORM.PLACEHOLDERS.ROLE' | translate"
-									[label]="'FORM.LABELS.ROLE' | translate"
-									formControlName="role"
-									(selectedChange)="onSelectionChange($event)"
-									[excludes]="excludes"
-								></ngx-role-form-field>
 							</div>
 						}
-						<div class="col-sm-6">
-							<div class="form-group">
-								<label
-									for="preferredLanguage"
-									class="label"
-									[innerText]="'FORM.LABELS.PREFERRED_LANGUAGE' | translate"
-								></label>
-								<ngx-language-selector
-									[placeholder]="'FORM.PLACEHOLDERS.PREFERRED_LANGUAGE' | translate"
-									class="d-block"
-									[template]="'ng-select'"
-									formControlName="preferredLanguage"
-								></ngx-language-selector>
-							</div>
-						</div>
-						<div class="col-sm-6">
-							<ga-timezone-selector formControlName="timeZone"></ga-timezone-selector>
-						</div>
-						<div class="col-sm-6">
-							<ngx-phone-form-input formControlName="phoneNumber"></ngx-phone-form-input>
-						</div>
-						<div class="col-6">
-							<div class="form-group">
-								<label class="label" for="timeZone">
-									{{ 'FORM.LABELS.TIME_FORMAT' | translate }}
-								</label>
-								<ng-select
-									id="timeFormat"
-									appendTo="body"
-									[(items)]="listOfTimeFormats"
-									[placeholder]="'FORM.PLACEHOLDERS.TIME_FORMAT' | translate"
-									[searchable]="false"
-									[clearable]="false"
-									formControlName="timeFormat"
-								></ng-select>
-							</div>
-						</div>
-					</div>
-					<div class="actions">
-						<button [disabled]="form.invalid" (click)="submitForm()" nbButton status="success">
-							{{ 'PROFILE_PAGE.SAVE' | translate }}
-						</button>
-					</div>
-				</form>
-			</div>
-		</div>
-	</nb-card-body>
-</nb-card>
+					</ngx-password-form-field>
+				</div>
 
-<ng-template #imageUploaderTemplate>
-	<ngx-image-uploader
-		(changeHoverState)="hoverState = $event"
-		(uploadedImageAsset)="updateImageAsset($event)"
-		(uploadImageAssetError)="handleImageUploadError($event)"
-	></ngx-image-uploader>
-	<svg
-		xmlns="http://www.w3.org/2000/svg"
-		xmlns:xlink="http://www.w3.org/1999/xlink"
-		width="68"
-		height="68"
-		viewBox="0 0 68 68"
-		[style.opacity]="hoverState ? '1' : '0.3'"
-	>
-		<defs>
-			<path
-				id="a"
-				d="M28.667 31.333a2 2 0 1 0-.002-4.001 2 2 0 0 0 .002 4.001m13.333 12H26.748l9.34-7.793c.328-.279.923-.277 1.244-.001l6.001 5.12V42c0 .736-.597 1.333-1.333 1.333M26 24.667h16c.736 0 1.333.597 1.333 1.333v11.152l-4.27-3.643c-1.32-1.122-3.386-1.122-4.694-.008l-9.702 8.096V26c0-.736.597-1.333 1.333-1.333M42 22H26c-2.205 0-4 1.795-4 4v16c0 2.205 1.795 4 4 4h16c2.205 0 4-1.795 4-4V26c0-2.205-1.795-4-4-4"
-			/>
-		</defs>
-		<g fill="none" fill-rule="evenodd">
-			<circle cx="34" cy="34" r="34" fill="#0091FF" opacity=".3" />
-			<circle cx="34" cy="34" r="26" fill="#0091FF" opacity=".9" />
-			<use fill="#FFF" fill-rule="nonzero" xlink:href="#a" />
-		</g>
-	</svg>
-	<div class="image-overlay" [style.opacity]="hoverState ? '0.2' : '0'"></div>
-	@if (!!form) {
-		<img
-			[src]="form.get('imageUrl').value"
-			alt="Profile Photo"
-			(mouseenter)="hoverState = true"
-			(mouseleave)="hoverState = false"
-		/>
-	}
-</ng-template>
+				<h6 class="profile__legend">{{ 'USERS_PAGE.EDIT_USER.PREFERENCES' | translate }}</h6>
+				<div class="form-group">
+					<label for="preferredLanguage" class="label">
+						{{ 'FORM.LABELS.PREFERRED_LANGUAGE' | translate }}
+					</label>
+					<ngx-language-selector
+						[placeholder]="'FORM.PLACEHOLDERS.PREFERRED_LANGUAGE' | translate"
+						class="d-block"
+						[template]="'ng-select'"
+						formControlName="preferredLanguage"
+					></ngx-language-selector>
+				</div>
+				<div class="form-group">
+					<label class="label" for="timeFormat">{{ 'FORM.LABELS.TIME_FORMAT' | translate }}</label>
+					<ng-select
+						id="timeFormat"
+						appendTo="body"
+						[(items)]="listOfTimeFormats"
+						[placeholder]="'FORM.PLACEHOLDERS.TIME_FORMAT' | translate"
+						[searchable]="false"
+						[clearable]="false"
+						formControlName="timeFormat"
+					></ng-select>
+				</div>
+				<div class="form-group profile__wide">
+					<ga-timezone-selector formControlName="timeZone"></ga-timezone-selector>
+				</div>
+			</div>
+
+			<footer class="profile__actions">
+				<button
+					type="button"
+					nbButton
+					status="success"
+					[disabled]="form.invalid || saving"
+					[nbSpinner]="saving"
+					nbSpinnerSize="tiny"
+					(click)="submitForm()"
+				>
+					{{ 'PROFILE_PAGE.SAVE' | translate }}
+				</button>
+			</footer>
+		</form>
+	</section>
+</div>

@@ -2,6 +2,7 @@ import { BadRequestException, ForbiddenException, HttpStatus, HttpException, Inj
 import { createHash, timingSafeEqual } from 'crypto';
 import { ID, IGenerateApiKey, IGenerateApiKeyResponse } from '@gauzy/contracts';
 import { generatePassword, generateSha256Hash } from '@gauzy/utils';
+import { assertFirstPartyRequest } from '../auth/oauth-app-first-party';
 import { RequestContext } from '../core/context';
 import { TenantAwareCrudService } from '../core/crud';
 import { TenantApiKey } from './tenant-api-key.entity';
@@ -50,6 +51,10 @@ export class TenantApiKeyService extends TenantAwareCrudService<TenantApiKey> {
 	 * }
 	 */
 	async generateApiKey(input: IGenerateApiKey): Promise<IGenerateApiKeyResponse> {
+		// Before the `try`, which rewrites what it catches. The key pair outlives whatever created it, so a session that
+		// came from an API token does not get to mint one.
+		assertFirstPartyRequest('Creating a tenant API key');
+
 		try {
 			// Get the tenant ID
 			const tenantId = input.tenantId ?? RequestContext.currentTenantId();

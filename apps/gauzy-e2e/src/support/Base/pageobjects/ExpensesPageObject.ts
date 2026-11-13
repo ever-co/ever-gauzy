@@ -18,7 +18,8 @@ export const ExpensesPage = {
 	addTagsDropdownCss: '#addTags',
 	tagsDropdownOption: 'div.ng-option',
 	purposeInputCss: 'ga-expenses-mutation textarea[formcontrolname="purpose"]',
-	saveExpenseButtonCss: 'ga-expenses-mutation nb-card-footer > button[status="success"]',
+	// The dialog's primary action, since its redesign: no longer a success-coloured button.
+	saveExpenseButtonCss: 'ga-expenses-mutation nb-card-footer > button[status="primary"]',
 	selectTableRowCss: 'table > tbody > tr.angular2-smart-row',
 	editExpenseButtonCss: 'div.actions-container button.action.primary:has-text("Edit")',
 	deleteExpenseButtonCss: 'div.actions-container button.action:has(nb-icon[icon="trash-2-outline"])',

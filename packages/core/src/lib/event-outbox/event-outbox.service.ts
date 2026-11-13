@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException, Optional } from '@nestjs/common';
-import { EntityManager, FindOptionsWhere, IsNull } from 'typeorm';
+import { EntityManager, FindOptionsWhere, In, IsNull, MoreThanOrEqual } from 'typeorm';
 import { EntityManager as MikroOrmEntityManager, QueryOrder } from '@mikro-orm/core';
 import { randomUUID } from 'node:crypto';
 import { isMySQL, isPostgres } from '@gauzy/config';
@@ -23,7 +23,8 @@ import {
 	EventDeliveryAction,
 	EventDeliveryEventPublisher
 } from './event-delivery.publisher';
-import { EventOutboxMikroOrmStore, isMikroOrmEntityManager } from './event-outbox-mikro-orm.store';
+import { EventOutboxMikroOrmStore, IDeliveryReplayMove, isMikroOrmEntityManager } from './event-outbox-mikro-orm.store';
+import { EventOutboxCommitSignal } from './event-outbox-commit.signal';
 import { TypeOrmEventDeliveryRepository } from './repository/type-orm-event-delivery.repository';
 import { TypeOrmEventOutboxRepository } from './repository/type-orm-event-outbox.repository';
 import { MikroOrmEventDeliveryRepository } from './repository/mikro-orm-event-delivery.repository';
@@ -166,6 +167,13 @@ export class EventOutboxService extends CrudService<EventOutbox> {
 	/** The MikroORM half of every operation, over the same two repositories the CRUD base holds. */
 	private readonly mikroOrmStore: EventOutboxMikroOrmStore;
 
+	/**
+	 * Raised after the commit of each transaction that appended an event, so the dispatch worker can
+	 * hand the event over at once rather than on the next scheduled pass (T28). One per service, which
+	 * `EventOutboxModule` makes one per process.
+	 */
+	readonly commitSignal = new EventOutboxCommitSignal();
+
 	constructor(
 		readonly typeOrmEventOutboxRepository: TypeOrmEventOutboxRepository,
 		readonly mikroOrmEventOutboxRepository: MikroOrmEventOutboxRepository,
@@ -193,6 +201,15 @@ export class EventOutboxService extends CrudService<EventOutbox> {
 		super(typeOrmEventOutboxRepository, mikroOrmEventOutboxRepository);
 
 		this.mikroOrmStore = new EventOutboxMikroOrmStore(mikroOrmEventOutboxRepository, mikroOrmEventDeliveryRepository);
+
+		// `em.transactional` copies the root manager's subscribers into each transaction's fork when the
+		// transaction starts, so the commit hook goes on the root manager before any transaction exists.
+		// A process that runs on TypeORM alone has no MikroORM manager to watch.
+		try {
+			this.commitSignal.watchMikroOrm(mikroOrmEventOutboxRepository?.getEntityManager?.()?.getEventManager?.());
+		} catch {
+			// Nothing to watch: an append under MikroORM registers the hook on its own manager instead.
+		}
 	}
 
 	/**
@@ -209,15 +226,39 @@ export class EventOutboxService extends CrudService<EventOutbox> {
 	 * repository's manager while the transaction is open, and otherwise the request's fork. Either way
 	 * the row joins the caller's unit of work and leaves with it on a rollback.
 	 *
+	 * **The append is watched until its transaction commits.** {@link commitSignal} fires after that
+	 * commit, not here, so the dispatch worker can hand the event over at once (T28) and a rollback
+	 * raises nothing. Watching adds no statement and no I/O to the caller's transaction.
+	 *
 	 * @param manager The caller's transaction manager, of either ORM.
 	 * @param input What changed.
 	 * @returns The stored row, including the `eventId` and `sequence` consumers will see.
 	 */
 	async append(manager: EntityManager | MikroOrmEntityManager, input: IOutboxWriteInput): Promise<EventOutbox> {
 		if (isMikroOrmEntityManager(manager)) {
-			return this.mikroOrmStore.append(manager, input);
+			const appended = await this.mikroOrmStore.append(manager, input);
+
+			// The store inserted through the manager's own context, so that context is the one to watch.
+			this.commitSignal.appendedWithMikroOrm(manager.getContext(false));
+
+			return appended;
 		}
 
+		const saved = await this.appendWithTypeOrm(manager, input);
+
+		this.commitSignal.appendedWithTypeOrm(manager);
+
+		return saved;
+	}
+
+	/**
+	 * The TypeORM half of {@link append}.
+	 *
+	 * @param manager The caller's TypeORM manager.
+	 * @param input What changed.
+	 * @returns The stored row.
+	 */
+	private async appendWithTypeOrm(manager: EntityManager, input: IOutboxWriteInput): Promise<EventOutbox> {
 		// The ordering key defaults to the aggregate, because per-aggregate ordering is the only
 		// ordering the platform promises.
 		const partitionKey = input.partitionKey ?? `${input.aggregateType}:${input.aggregateId}`;
@@ -652,6 +693,61 @@ export class EventOutboxService extends CrudService<EventOutbox> {
 	}
 
 	/**
+	 * The caller's rows of some event names since a time, oldest first, bounded — the read a client's catch-up
+	 * after a reconnect makes (the real-time channel), scoped exactly as {@link listOutboxRows} scopes.
+	 *
+	 * Ordered by `createdAt` then `eventId`, which is the order a catch-up cursor walks: `createdAt` is written
+	 * once at append and never moves, unlike `availableAt`, which the dispatcher pushes for leases and retries.
+	 *
+	 * Both ORMs push the names, the time and the bound into the query. Under MikroORM the store reads one bounded
+	 * listing per name (a row among the first `limit` overall is among the first `limit` of its name), and the
+	 * listings are merged, ordered and cut here; the answer is the same set.
+	 *
+	 * @param query The event names (all when omitted), the earliest `createdAt` to answer (a stated value that is
+	 * no time answers nothing), and the most rows.
+	 * @returns The rows, oldest first.
+	 */
+	async listOutboxRowsSince(query: { eventNames?: readonly string[]; since?: Date; limit: number }): Promise<EventOutbox[]> {
+		const limit = Math.min(Math.max(Math.trunc(Number(query.limit)) || 1, 1), 5000);
+		const names = query.eventNames?.length ? [...new Set(query.eventNames)] : undefined;
+		if (query.since !== undefined && !(query.since instanceof Date && Number.isFinite(query.since.getTime()))) {
+			// A stated lower bound that is no time matches no row; only an omitted one means "from the start".
+			return [];
+		}
+		const since = query.since instanceof Date ? new Date(query.since.getTime()) : null;
+		// The cursor order: time, then event id — the same key the catch-up walks, so a bounded read never cuts
+		// a same-millisecond group differently from the cursor.
+		const byCursor = (a: EventOutbox, b: EventOutbox): number =>
+			new Date(a.createdAt as Date).getTime() - new Date(b.createdAt as Date).getTime() ||
+			String(a.eventId).localeCompare(String(b.eventId));
+
+		if (this.usesMikroOrm) {
+			// One bounded query per name (a row in the first `limit` overall is in the first `limit` of its name),
+			// then merged, ordered and cut.
+			const listings = await Promise.all(
+				(names ?? [undefined]).map((eventName) =>
+					this.mikroOrmStore.find<EventOutbox>(
+						EventOutbox,
+						this.rowsOfTheCallerOnMikroOrm(eventName ? { eventName } : {}),
+						[{ createdAt: QueryOrder.ASC }, { eventId: QueryOrder.ASC }],
+						{ ...(since ? { since } : {}), limit }
+					)
+				)
+			);
+			return listings.flat().sort(byCursor).slice(0, limit);
+		}
+
+		return this.typeOrmEventOutboxRepository.find({
+			where: this.rowsOfTheCaller<EventOutbox>({
+				...(names ? { eventName: In(names) } : {}),
+				...(since ? { createdAt: MoreThanOrEqual(since) } : {})
+			} as FindOptionsWhere<EventOutbox>),
+			order: { createdAt: 'ASC', eventId: 'ASC' },
+			take: limit
+		} as never);
+	}
+
+	/**
 	 * Reads one outbox row of the caller's own scope.
 	 *
 	 * The dispatcher's own reads deliberately do not scope — they run in a system context, where there
@@ -736,36 +832,74 @@ export class EventOutboxService extends CrudService<EventOutbox> {
 	 * consumers that already settled. A row that is still waiting is left alone: its next claim
 	 * reaches the record.
 	 *
+	 * A record outlives its outbox row (an outbox retention may remove the row, `event_delivery` has no
+	 * foreign key to it). With the row gone the scan has nothing to claim, so the move is refused: a
+	 * record reset to `PENDING` that nothing will ever deliver would read as a replay that worked.
+	 *
+	 * **The move is one transaction that holds the row.** The row is read under `FOR UPDATE` where the
+	 * dialect has row locks (Postgres and MySQL; SQLite serializes writers, so there the transaction is
+	 * the lock), and the record's reset and the row's re-queue are written before it commits. A
+	 * retention's delete that is in flight therefore lands first, and the read then finds no row and
+	 * nothing is written; or the delete waits for the move, and then finds a row that is no longer
+	 * `PUBLISHED` and keeps it. A move that stops part-way writes nothing, so it can never leave a
+	 * `PENDING` record behind a row a retention went on to remove.
+	 *
 	 * @param id The record id.
 	 * @returns The record as it stands after the move.
-	 * @throws NotFoundException when the record does not exist inside the caller's own scope.
+	 * @throws NotFoundException when the record does not exist inside the caller's own scope, or its
+	 * event is no longer in the outbox.
 	 */
 	async replayDelivery(id: ID): Promise<EventDelivery> {
 		const delivery = await this.deliveryOfTheCaller(id);
-
-		await this.updateDeliveryRow(id, {
-			status: EventOutboxStatus.PENDING,
-			attemptCount: 0,
-			lastError: null,
-			// A record that is waiting to be re-driven has not been acknowledged, whatever it recorded
-			// before: leaving the instant on it would answer a `PENDING` row that claims a delivery.
-			deliveredAt: null
-		});
-
-		// After the record is reset, so a pass that claims the row at once already finds it pending.
-		const where = { eventId: delivery.eventId, tenantId: delivery.tenantId };
-		const event = this.usesMikroOrm
-			? await this.mikroOrmStore.findOne<EventOutbox>(EventOutbox, where)
-			: await this.typeOrmEventOutboxRepository.findOne({ where });
-
-		if (event?.status === EventOutboxStatus.PUBLISHED || event?.status === EventOutboxStatus.DEAD) {
-			await this.updateOutboxRow(event.id as ID, {
+		const move: IDeliveryReplayMove = {
+			id,
+			event: { eventId: delivery.eventId, tenantId: delivery.tenantId },
+			reset: {
+				status: EventOutboxStatus.PENDING,
+				attemptCount: 0,
+				lastError: null,
+				// A record that is waiting to be re-driven has not been acknowledged, whatever it recorded
+				// before: leaving the instant on it would answer a `PENDING` row that claims a delivery.
+				deliveredAt: null
+			},
+			requeueFrom: [EventOutboxStatus.PUBLISHED, EventOutboxStatus.DEAD],
+			requeue: {
 				status: EventOutboxStatus.PENDING,
 				attemptCount: 0,
 				availableAt: new Date(),
 				lastError: null,
 				publishedAt: null
-			});
+			}
+		};
+
+		const replayed = this.usesMikroOrm
+			? await this.mikroOrmStore.replayDelivery(move)
+			: await this.typeOrmEventOutboxRepository.manager.transaction(async (manager) => {
+					const event = await manager.findOne(EventOutbox, {
+						where: move.event as FindOptionsWhere<EventOutbox>,
+						// Both dialects map this to FOR UPDATE, which a retention's delete of the row waits on.
+						...(isPostgres() || isMySQL() ? { lock: { mode: 'pessimistic_write' as const } } : {})
+					});
+
+					if (!event) {
+						return false;
+					}
+
+					await manager.update(EventDelivery, { id } as any, move.reset as any);
+
+					if (move.requeueFrom.includes(event.status as EventOutboxStatus)) {
+						await manager.update(EventOutbox, { id: event.id } as any, move.requeue as any);
+					}
+
+					return true;
+			  });
+
+		if (!replayed) {
+			throw new NotFoundException(
+				`${ApiErrorCode.RESOURCE_NOT_FOUND}: delivery '${String(id)}' cannot be replayed: its event '${String(
+					delivery.eventId
+				)}' is no longer in the outbox.`
+			);
 		}
 
 		return this.announce(id, EVENT_DELIVERY_ACTIONS.REPLAYED);

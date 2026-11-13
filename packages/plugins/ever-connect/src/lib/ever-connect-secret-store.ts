@@ -2,8 +2,8 @@ import { connectKeyMaterialProblem, EverInstanceKeyError, KeyPurpose, unwrapKey,
 
 type Env = Record<string, string | undefined>;
 
-/** What a stored value is: an entitlement document, or an integration's configuration. */
-export type SecretPurpose = Extract<KeyPurpose, 'entitlement' | 'integration_config'>;
+/** What a stored value is: an entitlement document, an integration's configuration, or the Ever ID refresh token an App Launcher session keeps. */
+export type SecretPurpose = Extract<KeyPurpose, 'entitlement' | 'integration_config' | 'ever_id_refresh_token'>;
 
 /**
  * Stores what the Ever Platform connection keeps on this installation (entitlement documents, the

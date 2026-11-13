@@ -1,4 +1,13 @@
-import { Component, Input, Output, EventEmitter, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
+import {
+	Component,
+	Input,
+	Output,
+	EventEmitter,
+	OnInit,
+	OnDestroy,
+	ChangeDetectionStrategy,
+	ChangeDetectorRef
+} from '@angular/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { BaseEntityEnum, IFavorite, IOrganization } from '@gauzy/contracts';
@@ -36,7 +45,8 @@ export class FavoriteToggleComponent extends TranslationBaseComponent implements
 		public readonly translateService: TranslateService,
 		private readonly _genericFavoriteService: GenericFavoriteService,
 		private readonly _store: Store,
-		private readonly _toastrService: ToastrService
+		private readonly _toastrService: ToastrService,
+		private readonly _cdr: ChangeDetectorRef
 	) {
 		super(translateService);
 	}
@@ -72,6 +82,10 @@ export class FavoriteToggleComponent extends TranslationBaseComponent implements
 		} catch (error) {
 			console.error('Error loading favorites:', error);
 			this.favorites = [];
+		} finally {
+			// The favorites answer after the star was drawn: on an OnPush page (the expense and income pages)
+			// nothing else redraws it, so the star would keep its old state.
+			this._cdr.markForCheck();
 		}
 	}
 
@@ -182,6 +196,8 @@ export class FavoriteToggleComponent extends TranslationBaseComponent implements
 			this._toastrService.danger('TOASTR.MESSAGE.FAVORITE_ERROR');
 		} finally {
 			this.loading = false;
+			// Without this, an OnPush page keeps the star spinning after the save has answered.
+			this._cdr.markForCheck();
 		}
 	}
 

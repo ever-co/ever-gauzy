@@ -1,0 +1,26 @@
+<!-- Task quick look: the same drawer as the Tasks pages, with an expand icon to the task's own page. -->
+<ngx-record-view-drawer
+	[open]="!!viewedTask()"
+	[heading]="'TASKS_PAGE.HEADER'"
+	[wide]="true"
+	[fullViewLink]="viewedTask() ? '/pages/tasks/view/' + viewedTask().id : null"
+	(closed)="closeTask()"
+>
+	@if (viewedTask(); as task) {
+	<ngx-record-view [record]="task" [sections]="viewSections()" [placeholder]="'SM_TABLE.NONE' | translate">
+		<ga-task-view-header recordViewHeader [task]="task" [status]="viewStatus()"></ga-task-view-header>
+	</ngx-record-view>
+	}
+</ngx-record-view-drawer>
+
+<!-- Project quick look: the same drawer as the employee page, over the dashboard's date range. -->
+<ngx-project-quick-look
+	[project]="viewedProject()"
+	[organizationId]="organizationId()"
+	[tenantId]="tenantId()"
+	[rangeStart]="rangeStart()"
+	[rangeEnd]="rangeEnd()"
+	[scopeEmployeeIds]="scopeEmployeeIds()"
+	[highlightEmployeeId]="selectedEmployeeId()"
+	(closed)="closeProject()"
+></ngx-project-quick-look>

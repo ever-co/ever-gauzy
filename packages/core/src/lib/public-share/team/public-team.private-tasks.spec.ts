@@ -32,7 +32,10 @@ function setUp() {
 		members: [{ id: 'member-1', employeeId: 'employee-1' }]
 	};
 	const find = jest.fn(async (_entity: unknown, { where }: { where: Record<string, unknown>[] }) =>
-		[PRIVATE, DRAFT].filter((task) =>
+		// The team's tasks are read from their own side (`where: { teams: { id } }`); the hidden-task check sends a list.
+		!Array.isArray(where)
+			? structuredClone(team.tasks)
+			: [PRIVATE, DRAFT].filter((task) =>
 			where.some((condition) =>
 				Object.entries(condition).every(([key, value]) =>
 					key === 'id' || key === 'tenantId' ? true : (task as Record<string, unknown>)[key] === value

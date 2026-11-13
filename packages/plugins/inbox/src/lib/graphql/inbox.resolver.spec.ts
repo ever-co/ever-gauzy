@@ -14,10 +14,17 @@ jest.mock('@gauzy/core', () => {
 		ExportRedacted: decorator,
 		MultiORMColumn: decorator,
 		MultiORMEntity: decorator,
+		// The sweep checkpoint entity opts out of the account export with it.
+		SkipExport: decorator,
 		UseValidationPipe: decorator,
 		TenantOrganizationBaseEntity: class {},
 		MikroOrmBaseEntityRepository: class {},
 		RolePermissionModule: class RolePermissionModule {},
+		// The notification bridge the module declares handles these events and reads these entities.
+		Employee: class Employee {},
+		EmployeeNotification: class EmployeeNotification {},
+		EmployeeNotificationCreatedEvent: class EmployeeNotificationCreatedEvent {},
+		EmployeeNotificationUpdatedEvent: class EmployeeNotificationUpdatedEvent {},
 		RequestContext: { currentTenantId: () => null, currentUserId: () => null, hasPermission: () => false },
 		FEATURE_GRAPHQL: 'FEATURE_GRAPHQL',
 		FeatureFlagGuard: class FeatureFlagGuard {},
@@ -63,7 +70,7 @@ function setup() {
 	const answer = { id: ITEM_ID, recipient: { isRead: true } };
 	const inbox = {
 		list: jest.fn(async () => ({ items: [answer], nextCursor: null })),
-		counts: jest.fn(async () => ({ unread: 2, decisionsOpen: 1, byMailbox: [] })),
+		counts: jest.fn(async () => ({ unread: 2, decisionsOpen: 1, emailUnread: 0, byMailbox: [] })),
 		get: jest.fn(async () => answer),
 		setState: jest.fn(async () => answer),
 		reply: jest.fn(async () => answer),
@@ -152,7 +159,7 @@ describe('Inbox GraphQL mirror', () => {
 		);
 		await resolver.inboxItems(null, null, null);
 		expect(inbox.list).toHaveBeenLastCalledWith(expect.not.objectContaining({ cursor: expect.anything() }));
-		expect(await resolver.inboxItemCounts()).toEqual({ unread: 2, decisionsOpen: 1, byMailbox: [] });
+		expect(await resolver.inboxItemCounts()).toEqual({ unread: 2, decisionsOpen: 1, emailUnread: 0, byMailbox: [] });
 		expect(await resolver.inboxItem(ITEM_ID)).toMatchObject({ id: ITEM_ID });
 		expect(inbox.get).toHaveBeenCalledWith(ITEM_ID);
 	});

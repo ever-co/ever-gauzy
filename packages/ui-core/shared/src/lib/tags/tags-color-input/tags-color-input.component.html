@@ -6,6 +6,7 @@
   }
   <!-- `tags-select` is copied onto the body-appended panel; _overrides.scss sizes its rows -->
   <ng-select
+    [ariaLabel]="accessibleLabel() || ('MENU.TAGS' | translate)"
     id="addTags"
     class="tags-select"
     [items]="tags"

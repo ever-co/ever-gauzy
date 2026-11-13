@@ -26,6 +26,7 @@ import {
 	LanguagesEnum,
 	IPagination,
 	IEmployee,
+	IEmployeePayRate,
 	IEmployeePresence,
 	ID
 } from '@gauzy/contracts';
@@ -56,6 +57,8 @@ import {
 	EmployeePresenceDTO,
 	EmployeeListQueryDTO
 } from './dto';
+import { withoutOwnPayRateWrite, withoutPayRateCriteria, withoutPayRateKeys } from './pay-rate';
+import { RespondsWithPayRate } from '../core/interceptors/employee-pay-rate-scrub';
 import { SensitiveRelations } from '../core/decorators/sensitive-relations.decorator';
 import { SensitiveRelationsInterceptor } from '../core/interceptors/sensitive-relations.interceptor';
 import { ORGANIZATION_SENSITIVE_RELATIONS } from '../core/util/organization-sensitive-relations.config';
@@ -199,8 +202,10 @@ export class EmployeeController extends CrudController<Employee> {
 	@Get('/count')
 	@UseValidationPipe()
 	async getCount(@Query() options: CountQueryDTO<Employee>): Promise<number> {
+		// The count's query keys are its filter: a count by pay rate would tell the rate
+		const criteria = withoutPayRateKeys(options) as CountQueryDTO<Employee>;
 		// The headcount is people: agent employees (`kind = 'agent'`) are not counted.
-		return await this._employeeService.countBy({ ...options, kind: EmployeeKindEnum.HUMAN });
+		return await this._employeeService.countBy({ ...criteria, kind: EmployeeKindEnum.HUMAN });
 	}
 
 	/**
@@ -229,7 +234,7 @@ export class EmployeeController extends CrudController<Employee> {
 	@Get('/pagination')
 	@UseValidationPipe({ transform: true })
 	async pagination(@Query() params: BaseQueryDTO<Employee>): Promise<IPagination<IEmployee>> {
-		return await this._employeeService.pagination(params);
+		return await this._employeeService.pagination(withoutPayRateCriteria(params));
 	}
 
 	/**
@@ -340,7 +345,8 @@ export class EmployeeController extends CrudController<Employee> {
 	async findAll(@Query() options: EmployeeListQueryDTO): Promise<IPagination<IEmployee>> {
 		// `kind` narrows the list to people or to agents (`GET /employee?kind=agent`); absent, the list is
 		// unchanged. It is a column condition, not a find option, so it is taken out of the options.
-		const { kind, ...findOptions } = options;
+		const { kind, ...requestedOptions } = options;
+		const findOptions = withoutPayRateCriteria(requestedOptions);
 
 		// Enforce that only active, non-archived users are retrieved
 		const where = {
@@ -456,7 +462,27 @@ export class EmployeeController extends CrudController<Employee> {
 	@Put('/:id')
 	@UseValidationPipe({ whitelist: true })
 	async update(@Param('id', UUIDValidationPipe) id: ID, @Body() entity: UpdateEmployeeDTO): Promise<IEmployee> {
-		return await this._commandBus.execute(new EmployeeUpdateCommand(id, entity));
+		await this._employeeService.assertOwnPayRateUnchanged(id, entity);
+		const changes = withoutOwnPayRateWrite(id, entity);
+		return await this._commandBus.execute(new EmployeeUpdateCommand(id, changes));
+	}
+
+	/**
+	 * An employee's pay rate, for the employee themself or a holder of ORG_EMPLOYEES_EDIT. Generic employee reads
+	 * never return it.
+	 */
+	@ApiOperation({ summary: "An employee's pay rate, for the employee or a rate editor" })
+	@ApiResponse({ status: HttpStatus.OK, description: 'The pay rate and the currency it is in' })
+	@ApiResponse({ status: HttpStatus.FORBIDDEN, description: 'Neither the employee nor a rate editor' })
+	@Permissions()
+	@RespondsWithPayRate()
+	@Get('/:id/pay-rate')
+	@UseValidationPipe({ whitelist: true })
+	async findPayRate(
+		@Param('id', UUIDValidationPipe) id: ID,
+		@Query() options: TenantOrganizationBaseDTO
+	): Promise<IEmployeePayRate> {
+		return await this._employeeService.findPayRate(id, options.organizationId);
 	}
 
 	/**

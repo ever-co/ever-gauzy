@@ -5,6 +5,8 @@ import { ActivatedRoute, convertToParamMap, ParamMap, Router } from '@angular/ro
 import { NbDialogService } from '@nebular/theme';
 import { BehaviorSubject, NEVER, of, Subject, throwError } from 'rxjs';
 import {
+	BaseEntityEnum,
+	FeatureEnum,
 	ITask,
 	PermissionsEnum,
 	TaskPriorityEnum,
@@ -12,6 +14,7 @@ import {
 	TaskStatusEnum
 } from '@gauzy/contracts';
 import {
+	CommentService,
 	Store,
 	TasksService,
 	TimesheetService,
@@ -51,6 +54,7 @@ describe('TaskViewPageComponent', () => {
 	let tasksService: { getById: jest.Mock; editTask: jest.Mock; createTask: jest.Mock };
 	let statisticsService: { getTasksStatistics: jest.Mock; getTaskEmployees: jest.Mock };
 	let timesheetService: { getDailyReportChart: jest.Mock; getTimeLogs: jest.Mock };
+	let commentService: { count: jest.Mock };
 	let http: { get: jest.Mock; put: jest.Mock };
 	let toastr: { success: jest.Mock; danger: jest.Mock };
 	let dialogService: { open: jest.Mock };
@@ -58,6 +62,9 @@ describe('TaskViewPageComponent', () => {
 	let permissions: PermissionsEnum[];
 	/** Emits when the test loads permissions, as the store does once they arrive. */
 	let permissions$: BehaviorSubject<PermissionsEnum[]>;
+	/** Whether the organization has the Documents feature; emits as the store does when the flags land. */
+	let documentsEnabled: boolean;
+	let features$: BehaviorSubject<unknown[]>;
 
 	/** The HTTP reads the page makes itself: task statuses and linked issues. */
 	let statuses: any[];
@@ -81,6 +88,7 @@ describe('TaskViewPageComponent', () => {
 			getDailyReportChart: jest.fn(async () => []),
 			getTimeLogs: jest.fn(async () => [])
 		};
+		commentService = { count: jest.fn(async () => 0) };
 		statuses = [];
 		outgoingLinks = of({ items: [] });
 		incomingLinks = of({ items: [] });
@@ -107,6 +115,8 @@ describe('TaskViewPageComponent', () => {
 		};
 		permissions = [];
 		permissions$ = new BehaviorSubject<PermissionsEnum[]>([]);
+		documentsEnabled = true;
+		features$ = new BehaviorSubject<unknown[]>([]);
 		await TestBed.configureTestingModule({
 			declarations: [TaskViewPageComponent],
 			providers: [
@@ -122,12 +132,18 @@ describe('TaskViewPageComponent', () => {
 				{ provide: TimesheetStatisticsService, useValue: statisticsService },
 				{ provide: TimeZoneService, useValue: { currentTimeZone: 'UTC' } },
 				{ provide: ToastrService, useValue: toastr },
+				{ provide: CommentService, useValue: commentService },
 				{
 					provide: Store,
 					useValue: {
 						selectedOrganization$: organization$.asObservable(),
 						userRolePermissions$: permissions$.asObservable(),
-						hasAnyPermission: (...wanted: PermissionsEnum[]) => wanted.some((p) => permissions.includes(p))
+						featureOrganizations$: features$.asObservable(),
+						featureTenant$: features$.asObservable(),
+						featureToggles$: features$.asObservable(),
+						hasAnyPermission: (...wanted: PermissionsEnum[]) => wanted.some((p) => permissions.includes(p)),
+						hasPermission: (wanted: PermissionsEnum) => permissions.includes(wanted),
+						hasFeatureEnabled: (feature: FeatureEnum) => feature === FeatureEnum.FEATURE_DOCUMENTS && documentsEnabled
 					}
 				}
 			],
@@ -900,6 +916,38 @@ describe('TaskViewPageComponent', () => {
 				expect(selectedTask.taskStatus.id).toBe('other-open');
 			});
 
+			it("gives no subtask the old project's status while a refresh that moved the task reads the new one's", async () => {
+				const OTHER_PROJECT = { id: 'ffffffff-7777-4777-8777-777777777777', name: 'Other' };
+				const OTHER_OPEN = { ...OPEN, id: 'other-open', projectId: OTHER_PROJECT.id };
+				statuses = [OPEN];
+				tasksService.getById.mockImplementation(async (id: string) => task({ id, projectId: PROJECT_ID }));
+				const page = await ready();
+				expect(page.statuses.map(({ id }) => id)).toEqual(['open']);
+				// The other project's statuses: held until the test answers them.
+				const other$ = new Subject<{ items: unknown[] }>();
+				http.get.mockImplementation((url: string, options: any) => {
+					if (!url.endsWith('/task-statuses')) return of({ items: [] });
+					const where = options?.params?.toString() || '';
+					return where.includes(OTHER_PROJECT.id) ? other$ : of({ items: [OPEN] });
+				});
+
+				// An edit moved the task to the other project; its statuses are still being read.
+				tasksService.getById.mockImplementation(async (id: string) =>
+					task({ id, projectId: OTHER_PROJECT.id, project: OTHER_PROJECT as any })
+				);
+				await page.onBoardTaskMoved();
+				// The old project's statuses are not offered for the task in the new one.
+				expect(page.statuses).toEqual([]);
+				const opening = page.addSubtask();
+				other$.next({ items: [OTHER_OPEN] });
+				other$.complete();
+				await opening;
+
+				const { selectedTask } = context();
+				expect(selectedTask.project).toEqual(OTHER_PROJECT);
+				expect(selectedTask.taskStatus.id).toBe('other-open');
+			});
+
 			it('opens one dialog however many times the button is pressed while they are read', async () => {
 				const page = await ready();
 				const read$ = holdStatuses();
@@ -1295,6 +1343,434 @@ describe('TaskViewPageComponent', () => {
 		await page.copyLink();
 
 		expect(writeText).toHaveBeenCalledWith(expect.stringContaining(`#/pages/tasks/view/${TASK_ID}?tab=board`));
+	});
+
+	describe('comments', () => {
+		const pane = (): HTMLElement => fixture.nativeElement.querySelector('#task-view-pane-comments');
+		const tabCount = (): string =>
+			fixture.nativeElement.querySelector('#task-view-tab-comments .tab-count')?.textContent.trim() ?? null;
+
+		it("offers a Comments tab, and loads the task's comments only once it is opened", async () => {
+			const page = create();
+			await settle();
+
+			expect(fixture.nativeElement.querySelector('#task-view-tab-comments')).not.toBeNull();
+			expect(pane()).toBeNull();
+
+			page.selectTab('comments');
+			fixture.detectChanges();
+
+			expect(page.commentsOpened).toBe(true);
+			expect(pane()).not.toBeNull();
+			expect(pane().hidden).toBe(false);
+			expect(page.commentEntity).toBe(BaseEntityEnum.Task);
+			expect(router.navigate).toHaveBeenLastCalledWith(
+				[],
+				expect.objectContaining({ queryParams: { tab: 'comments', comment: null }, replaceUrl: true })
+			);
+		});
+
+		it('opens on the Comments tab the URL names', async () => {
+			queryParams$.next(convertToParamMap({ tab: 'comments' }));
+			const page = create();
+			await settle();
+
+			expect(page.tab).toBe('comments');
+			expect(pane()).not.toBeNull();
+		});
+
+		it('opens on the Comments tab, at the comment, when the URL names a comment (an Inbox link)', async () => {
+			queryParams$.next(convertToParamMap({ comment: ' c-9 ' }));
+			const page = create();
+			await settle();
+
+			expect(page.tab).toBe('comments');
+			expect(page.highlightCommentId).toBe('c-9');
+			expect(pane()).not.toBeNull();
+
+			// Another link, without the comment: the comment is no longer pointed at.
+			queryParams$.next(convertToParamMap({ tab: 'comments' }));
+			expect(page.highlightCommentId).toBeNull();
+
+			// A tab the user chooses clears the comment from the address, so the Comments tab can be left.
+			queryParams$.next(convertToParamMap({ comment: 'c-9' }));
+			page.selectTab('overview');
+			expect(router.navigate).toHaveBeenLastCalledWith([], expect.objectContaining({ queryParams: { tab: null, comment: null } }));
+		});
+
+		it('keeps the comments behind another tab, so a draft survives', async () => {
+			const page = create();
+			await settle();
+			page.selectTab('comments');
+			fixture.detectChanges();
+
+			page.selectTab('overview');
+			fixture.detectChanges();
+
+			expect(pane()).not.toBeNull();
+			expect(pane().hidden).toBe(true);
+		});
+
+		it("counts the task's comments on the tab before it is opened", async () => {
+			commentService.count.mockResolvedValueOnce(4);
+			create();
+			await settle();
+			await flush();
+			fixture.detectChanges();
+
+			expect(commentService.count).toHaveBeenCalledWith(BaseEntityEnum.Task, TASK_ID, {
+				organizationId: ORGANIZATION,
+				tenantId: undefined
+			});
+			expect(tabCount()).toBe('4');
+		});
+
+		it('shows no count for a task without comments', async () => {
+			commentService.count.mockResolvedValueOnce(0);
+			create();
+			await settle();
+			await flush();
+			fixture.detectChanges();
+
+			expect(commentService.count).toHaveBeenCalled();
+			expect(tabCount()).toBeNull();
+		});
+
+		it('shows no count when the count cannot be read', async () => {
+			commentService.count.mockRejectedValueOnce(new HttpErrorResponse({ status: 403 }));
+			create();
+			await settle();
+			await flush();
+			fixture.detectChanges();
+
+			expect(tabCount()).toBeNull();
+		});
+
+		it("does not load the next task's comments behind another tab", async () => {
+			const page = create();
+			await settle();
+			page.selectTab('comments');
+			fixture.detectChanges();
+			page.selectTab('overview');
+			fixture.detectChanges();
+
+			params$.next(convertToParamMap({ id: OTHER_ID }));
+			await settle();
+
+			expect(page.task.id).toBe(OTHER_ID);
+			expect(page.commentsOpened).toBe(false);
+			expect(pane()).toBeNull();
+		});
+
+		it("loads the next task's comments when the Comments tab is the open one", async () => {
+			const page = create();
+			await settle();
+			page.selectTab('comments');
+			fixture.detectChanges();
+
+			params$.next(convertToParamMap({ id: OTHER_ID }));
+			await settle();
+
+			expect(page.commentsOpened).toBe(true);
+			expect(pane()).not.toBeNull();
+		});
+
+		it('drops a count from an earlier visit of the same task, after a return to it', async () => {
+			let answerFirst: (count: number) => void;
+			commentService.count.mockImplementationOnce(() => new Promise<number>((resolve) => (answerFirst = resolve)));
+			const page = create();
+			await settle();
+
+			params$.next(convertToParamMap({ id: OTHER_ID }));
+			await settle();
+			commentService.count.mockResolvedValueOnce(6);
+			params$.next(convertToParamMap({ id: TASK_ID }));
+			await settle();
+			await flush();
+			answerFirst(1); // the first visit's read answers last
+			await flush();
+
+			expect(page.task.id).toBe(TASK_ID);
+			expect(page.commentCount).toBe(6);
+		});
+
+		it("follows the tab's own count, and drops a first read that answers after it", async () => {
+			let answer: (count: number) => void;
+			commentService.count.mockImplementationOnce(() => new Promise<number>((resolve) => (answer = resolve)));
+			const page = create();
+			await settle();
+
+			page.onCommentCount(7);
+			answer(2);
+			await flush();
+
+			expect(page.commentCount).toBe(7);
+		});
+
+		it('keeps the count through a refresh of the task, as after a status move', async () => {
+			let answer: (count: number) => void;
+			commentService.count.mockImplementationOnce(() => new Promise<number>((resolve) => (answer = resolve)));
+			const page = create();
+			await settle();
+
+			await page.onBoardTaskMoved();
+			answer(3);
+			await flush();
+
+			expect(page.commentCount).toBe(3);
+		});
+
+		it("drops the previous task's count when the page moves to another", async () => {
+			let answer: (count: number) => void;
+			commentService.count.mockImplementationOnce(() => new Promise<number>((resolve) => (answer = resolve)));
+			const page = create();
+			await settle();
+
+			params$.next(convertToParamMap({ id: OTHER_ID }));
+			await settle();
+			answer(5);
+			await flush();
+
+			expect(page.task.id).toBe(OTHER_ID);
+			expect(page.commentCount).toBe(0);
+		});
+	});
+
+	describe('opened on another tab', () => {
+		const overviewPane = (): HTMLElement => fixture.nativeElement.querySelector('#task-view-pane-overview');
+		const linkReads = () => http.get.mock.calls.filter(([url]) => String(url).endsWith('/task-linked-issue')).length;
+		const overviewReads = () =>
+			statisticsService.getTasksStatistics.mock.calls.length +
+			statisticsService.getTaskEmployees.mock.calls.length +
+			timesheetService.getDailyReportChart.mock.calls.length +
+			timesheetService.getTimeLogs.mock.calls.length +
+			linkReads();
+
+		it('neither mounts the Overview nor reads its panels on the Board', async () => {
+			permissions = [PermissionsEnum.ORG_TASK_EDIT];
+			queryParams$.next(convertToParamMap({ tab: 'board' }));
+			const page = create();
+			await settle();
+			await flush();
+
+			expect(page.overviewOpened).toBe(false);
+			expect(overviewPane()).toBeNull();
+			expect(overviewReads()).toBe(0);
+			// The Board's toolbar carries the status menu: its statuses are read on every tab.
+			expect(http.get).toHaveBeenCalledWith(expect.stringMatching(/\/task-statuses$/), expect.anything());
+		});
+
+		it('reads the Overview once it is first opened, and not again on coming back to it', async () => {
+			queryParams$.next(convertToParamMap({ tab: 'board' }));
+			const page = create();
+			await settle();
+			await flush();
+
+			page.selectTab('overview');
+			await settle();
+			await flush();
+
+			expect(overviewPane()).not.toBeNull();
+			expect(statisticsService.getTasksStatistics).toHaveBeenCalledTimes(1);
+			expect(timesheetService.getDailyReportChart).toHaveBeenCalledTimes(1);
+			expect(timesheetService.getTimeLogs).toHaveBeenCalledTimes(1);
+			expect(linkReads()).toBe(2);
+			expect(page.entries.loading).toBe(false);
+
+			const reads = overviewReads();
+			page.selectTab('board');
+			page.selectTab('overview');
+			await flush();
+			expect(overviewReads()).toBe(reads);
+		});
+
+		it('reads no Overview panel after a board move while the Overview is unopened', async () => {
+			queryParams$.next(convertToParamMap({ tab: 'board' }));
+			const page = create();
+			await settle();
+			await flush();
+
+			await page.onBoardTaskMoved();
+			await flush();
+
+			expect(tasksService.getById).toHaveBeenCalledTimes(2);
+			expect(overviewReads()).toBe(0);
+		});
+
+		it('reads the Overview again after a board move once it is open', async () => {
+			const page = create();
+			await settle();
+			await flush();
+			const statistics = statisticsService.getTasksStatistics.mock.calls.length;
+			const reads = overviewReads();
+
+			await page.onBoardTaskMoved();
+			await flush();
+
+			expect(statisticsService.getTasksStatistics.mock.calls.length).toBe(statistics + 1);
+			expect(overviewReads()).toBeGreaterThan(reads);
+		});
+
+		it('shows the refreshed estimate when the Overview opens while a refresh reads the task', async () => {
+			tasksService.getById.mockResolvedValueOnce(task({ estimate: 4 * 3600 }));
+			queryParams$.next(convertToParamMap({ tab: 'board' }));
+			const page = create();
+			await settle();
+			await flush();
+
+			// The refresh after a board move waits on the server; the estimate changed meanwhile.
+			let answerRefresh: (value: ITask) => void;
+			tasksService.getById.mockImplementationOnce(() => new Promise<ITask>((resolve) => (answerRefresh = resolve)));
+			// Each statistics read waits, so they can answer in any order.
+			const answers: ((rows: any[]) => void)[] = [];
+			statisticsService.getTasksStatistics.mockImplementation(
+				() => new Promise<any[]>((resolve) => answers.push(resolve))
+			);
+			const moved = page.onBoardTaskMoved();
+
+			page.selectTab('overview');
+			await flush();
+			answerRefresh(task({ estimate: 2 * 3600 }));
+			await moved;
+			await flush();
+
+			// The oldest answer lands last: none may bring back the estimate the task had before.
+			[...answers].reverse().forEach((answer) => answer([{ id: TASK_ID, duration: 3600 }]));
+			await flush();
+
+			expect(statisticsService.getTasksStatistics).toHaveBeenCalledTimes(1);
+			expect(page.tracking.value).toEqual(expect.objectContaining({ estimate: '2h 00m', remaining: '1h 00m' }));
+		});
+
+		it("keeps another task's Overview unopened when the page moves to it on the Board", async () => {
+			const page = create();
+			await settle();
+			await flush();
+			expect(page.overviewOpened).toBe(true);
+
+			page.selectTab('board');
+			params$.next(convertToParamMap({ id: OTHER_ID }));
+			await settle();
+			await flush();
+
+			expect(page.task.id).toBe(OTHER_ID);
+			expect(page.overviewOpened).toBe(false);
+			expect(overviewPane()).toBeNull();
+		});
+	});
+
+	describe('documents', () => {
+		const tabButton = (): HTMLElement => fixture.nativeElement.querySelector('#task-view-tab-documents');
+		const pane = (): HTMLElement => fixture.nativeElement.querySelector('#task-view-pane-documents');
+		const tabCount = (): string =>
+			fixture.nativeElement.querySelector('#task-view-tab-documents .tab-count')?.textContent.trim() ?? null;
+
+		beforeEach(() => {
+			permissions = [PermissionsEnum.DOCS_READ];
+		});
+
+		it("offers a Documents tab, and loads the task's documents only once it is opened", async () => {
+			const page = create();
+			await settle();
+
+			expect(tabButton()).not.toBeNull();
+			expect(pane()).toBeNull();
+
+			page.selectTab('documents');
+			fixture.detectChanges();
+
+			expect(page.documentsOpened).toBe(true);
+			expect(pane()).not.toBeNull();
+			expect(pane().hidden).toBe(false);
+			expect(page.documentEntity).toBe(BaseEntityEnum.Task);
+			expect(router.navigate).toHaveBeenLastCalledWith(
+				[],
+				expect.objectContaining({ queryParams: { tab: 'documents', comment: null }, replaceUrl: true })
+			);
+		});
+
+		it('hides the tab without DOCS_READ', async () => {
+			permissions = [];
+			create();
+			await settle();
+
+			expect(tabButton()).toBeNull();
+		});
+
+		it('hides the tab when the Documents feature is off', async () => {
+			documentsEnabled = false;
+			create();
+			await settle();
+
+			expect(tabButton()).toBeNull();
+		});
+
+		it('opens on the Documents tab the URL names', async () => {
+			queryParams$.next(convertToParamMap({ tab: 'documents' }));
+			const page = create();
+			await settle();
+
+			expect(page.tab).toBe('documents');
+			expect(pane()).not.toBeNull();
+		});
+
+		it('falls back to the Overview when the URL names the Documents tab without access', async () => {
+			permissions = [];
+			queryParams$.next(convertToParamMap({ tab: 'documents' }));
+			const page = create();
+			await settle();
+
+			expect(page.tab).toBe('overview');
+			expect(pane()).toBeNull();
+		});
+
+		it('opens the Documents tab the URL names once the permissions land', async () => {
+			permissions = [];
+			queryParams$.next(convertToParamMap({ tab: 'documents' }));
+			const page = create();
+			await settle();
+			expect(page.tab).toBe('overview');
+
+			permissions = [PermissionsEnum.DOCS_READ];
+			permissions$.next(permissions);
+			fixture.detectChanges();
+
+			expect(page.tab).toBe('documents');
+			expect(pane()).not.toBeNull();
+		});
+
+		it('keeps the documents behind another tab, so an upload in flight finishes', async () => {
+			const page = create();
+			await settle();
+			page.selectTab('documents');
+			fixture.detectChanges();
+
+			page.selectTab('overview');
+			fixture.detectChanges();
+
+			expect(pane()).not.toBeNull();
+			expect(pane().hidden).toBe(true);
+		});
+
+		it("shows the count the tab reports, and drops it when the page moves to another task", async () => {
+			const page = create();
+			await settle();
+			page.selectTab('documents');
+			fixture.detectChanges();
+
+			page.onDocumentCount(3);
+			fixture.detectChanges();
+			expect(tabCount()).toBe('3');
+
+			page.selectTab('overview');
+			params$.next(convertToParamMap({ id: OTHER_ID }));
+			await settle();
+
+			expect(page.task.id).toBe(OTHER_ID);
+			expect(page.documentCount).toBe(0);
+			expect(page.documentsOpened).toBe(false);
+			expect(tabCount()).toBeNull();
+		});
 	});
 
 	describe('reloading the Board and the Activity', () => {

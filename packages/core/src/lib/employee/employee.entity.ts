@@ -11,7 +11,8 @@ import {
 	IsString,
 	IsUrl,
 	Max,
-	MaxLength
+	MaxLength,
+	Min
 } from 'class-validator';
 import { Transform, TransformFnParams } from 'class-transformer';
 import {
@@ -105,7 +106,13 @@ import {
 	TypeOrmEmployeeEntityCustomFields
 } from '../core/entities/custom-entity-fields/employee';
 import { Trimmed } from '../shared/decorators';
-import { BILLING_RATE_MAX, billingRateColumn, ColumnNumericTransformerPipe, toBillingRate } from '../shared/pipes';
+import {
+	BILLING_RATE_MAX,
+	billingRateColumn,
+	ColumnNumericTransformerPipe,
+	toBillingRate,
+	toNullableBillingRate
+} from '../shared/pipes';
 import { Taggable } from '../tags/tag.types';
 import { MikroOrmEmployeeRepository } from './repository/mikro-orm-employee.repository';
 import { OrganizationProjectModuleEmployee } from '../organization-project-module/organization-project-module-employee.entity';
@@ -169,6 +176,32 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee,
 	@IsEnum(CurrenciesEnum)
 	@MultiORMColumn({ nullable: true })
 	billRateCurrency?: CurrenciesEnum;
+
+	/**
+	 * What the employee is paid per hour, apart from what a client is billed for their time (`billRateValue`). It prices
+	 * what they are owed; while it is empty, the billing rate does, as before pay rates existed. Salary data: no
+	 * generic read selects or serializes it, and it is read through the pay rate route by the employee and by holders
+	 * of ORG_EMPLOYEES_EDIT.
+	 */
+	@ApiPropertyOptional({
+		type: () => Number,
+		nullable: true,
+		description: 'What the employee is paid per hour, in payRateCurrency; null clears it'
+	})
+	@IsOptional()
+	@IsNumber({ allowNaN: false, allowInfinity: false })
+	@Min(0)
+	@Max(BILLING_RATE_MAX)
+	@Transform(toNullableBillingRate)
+	@MultiORMColumn({ ...billingRateColumn(), select: false, hidden: true })
+	payRateValue?: number | null;
+
+	/** The pay rate's currency. Empty, the pay rate is in the organization's currency. */
+	@ApiPropertyOptional({ type: () => String, enum: CurrenciesEnum, nullable: true })
+	@IsOptional()
+	@IsEnum(CurrenciesEnum)
+	@MultiORMColumn({ nullable: true, select: false, hidden: true })
+	payRateCurrency?: CurrenciesEnum | null;
 
 	@ApiPropertyOptional({ type: () => Number })
 	@IsOptional()
@@ -819,13 +852,14 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee,
 	timeOffRequests?: ITimeOffRequest[];
 
 	/**
-	 * Task
+	 * Task — the inverse side of `Task.members`, which owns the relation through `task_employee`. No `@JoinTable()`
+	 * here: with one, TypeORM treated this side as a second owner with its own (always empty) junction table and the
+	 * query load strategy answered the tasks of an employee empty.
 	 */
 	@MultiORMManyToMany(() => Task, (task) => task.members, {
 		onUpdate: 'CASCADE',
 		onDelete: 'CASCADE'
 	})
-	@JoinTable()
 	tasks?: ITask[];
 
 	/**
