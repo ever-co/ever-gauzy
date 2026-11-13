@@ -7,8 +7,8 @@ import * as path from 'path';
  * - who hears of a client's answer: the active employees of the estimate's organization, in its tenant, whose active
  *   user holds a role that grants INVOICES_EDIT (an enabled permission row), through the same nested relation filter as
  *   rate change requests (employee, user, role, role permissions);
- * - the estimate, in the answer's tenant only, with its client, its organization and the few fields of its creator the
- *   email needs.
+ * - the answered document, in the answer's tenant only and whatever it has become since, with its client, its
+ *   organization and the few fields of its creator the email needs.
  */
 
 const TIMEOUT = 10 * 60 * 1000;
@@ -54,11 +54,7 @@ interface IReads {
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	estimateInOtherTenant: any;
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	notAnEstimate: any;
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	convertedInvoice: any;
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	convertedButStillAnEstimate: any;
 }
 
 async function read(): Promise<IReads> {
@@ -202,18 +198,8 @@ async function read(): Promise<IReads> {
 				invoiceId: ESTIMATE,
 				tenantId: OTHER_TENANT
 			});
-			reads.notAnEstimate = await notifier['findEstimate']({ invoiceId: INVOICE, tenantId: TENANT });
-			// An acceptance where the organization converts accepted estimates: the document is a draft invoice by then
-			reads.convertedInvoice = await notifier['findEstimate']({
-				invoiceId: INVOICE,
-				tenantId: TENANT,
-				isConverted: true
-			});
-			reads.convertedButStillAnEstimate = await notifier['findEstimate']({
-				invoiceId: ESTIMATE,
-				tenantId: TENANT,
-				isConverted: true
-			});
+			// An answer whose estimate is an invoice by the time the team is told: converted by that answer, or since
+			reads.convertedInvoice = await notifier['findEstimate']({ invoiceId: INVOICE, tenantId: TENANT });
 		});
 	} finally {
 		if (dataSource?.isInitialized) {
@@ -270,13 +256,11 @@ describe('EstimateAnswerNotifier, who handles invoices in an organization (SQLit
 		}
 	});
 
-	it('reads the draft invoice an acceptance turned the estimate into, and only once it is one', () => {
+	it('reads the answered document as it is when the team is told, an invoice by then too', () => {
 		expect(reads.convertedInvoice).toMatchObject({ id: INVOICE, invoiceNumber: 13, isEstimate: false });
-		expect(reads.convertedButStillAnEstimate).toBeNull();
 	});
 
-	it('reads no estimate of another tenant, and no invoice', () => {
+	it('reads no document of another tenant', () => {
 		expect(reads.estimateInOtherTenant).toBeNull();
-		expect(reads.notAnEstimate).toBeNull();
 	});
 });

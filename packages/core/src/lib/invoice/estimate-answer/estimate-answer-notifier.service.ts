@@ -82,12 +82,14 @@ export class EstimateAnswerNotifier {
 	}
 
 	/**
-	 * The estimate in its tenant (or the draft invoice the acceptance turned it into), with the parts the notice and the
-	 * email read, and nothing of its creator but these.
+	 * The document the client answered, in its tenant, with the parts the notice and the email read, and nothing of its
+	 * creator but these. Read as it is when the team is told, whatever it has become since the answer (a later answer
+	 * or a teammate may have turned it into an invoice already): the handler that published the answer checked it was
+	 * no invoice then, and the answer says whether it converted it.
 	 */
-	private async findEstimate({ invoiceId, tenantId, isConverted }: IEstimateAnswer): Promise<IInvoice | null> {
+	private async findEstimate({ invoiceId, tenantId }: IEstimateAnswer): Promise<IInvoice | null> {
 		return await this.typeOrmInvoiceRepository.findOne({
-			where: { id: invoiceId, tenantId, isEstimate: !isConverted },
+			where: { id: invoiceId, tenantId },
 			relations: { toContact: true, organization: true, createdByUser: true },
 			select: {
 				id: true,

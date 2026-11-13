@@ -51,7 +51,11 @@ describe('EstimateAnswerNotifier', () => {
 
 	function setup(stored: IInvoice | null, handlers: { id: string; userId: string }[]) {
 		const repository = {
-			findOne: jest.fn(async () => stored),
+			// Answers the stored document only where every condition of the read holds for it, as the database would
+			findOne: jest.fn(async ({ where }: { where: Record<string, unknown> }) => {
+				const row = stored as unknown as Record<string, unknown> | null;
+				return row && Object.entries(where).every(([key, value]) => row[key] === value) ? stored : null;
+			}),
 			manager: { find: jest.fn(async () => handlers) }
 		};
 		const emailService = { sendEstimateAnswered: jest.fn(async () => undefined) };
@@ -153,13 +157,13 @@ describe('EstimateAnswerNotifier', () => {
 		});
 	});
 
-	it('reads the estimate in the tenant of the answer, as an estimate', async () => {
+	it('reads the answered document in the tenant of the answer, whatever it has become since', async () => {
 		const { notifier, repository } = setup(estimate(), []);
 
 		await notifier.notify(accepted);
 
 		expect(repository.findOne).toHaveBeenCalledWith(
-			expect.objectContaining({ where: { id: 'estimate-1', tenantId: TENANT, isEstimate: true } })
+			expect.objectContaining({ where: { id: 'estimate-1', tenantId: TENANT } })
 		);
 	});
 
@@ -194,7 +198,7 @@ describe('EstimateAnswerNotifier', () => {
 		await notifier.notify(converted);
 
 		expect(repository.findOne).toHaveBeenCalledWith(
-			expect.objectContaining({ where: { id: 'estimate-1', tenantId: TENANT, isEstimate: false } })
+			expect.objectContaining({ where: { id: 'estimate-1', tenantId: TENANT } })
 		);
 		expect(published(eventBus)).toEqual([
 			expect.objectContaining({
@@ -207,6 +211,25 @@ describe('EstimateAnswerNotifier', () => {
 		]);
 		expect(emailService.sendEstimateAnswered).toHaveBeenCalledWith(
 			expect.objectContaining({ isAccepted: true, isConverted: true })
+		);
+	});
+
+	it('still tells a decline when another answer converted the estimate before it was read', async () => {
+		const { notifier, eventBus, emailService } = setup(estimate({ isEstimate: false }), [
+			{ id: 'employee-1', userId: 'user-accountant' }
+		]);
+
+		await notifier.notify({ ...accepted, isAccepted: false });
+
+		expect(published(eventBus)).toEqual([
+			expect.objectContaining({
+				title: 'Acme Corp declined estimate #12',
+				message:
+					'Total: 1,250.00 EUR. Answered from billing@acme.test. You can follow up with the client or send a revised estimate.'
+			})
+		]);
+		expect(emailService.sendEstimateAnswered).toHaveBeenCalledWith(
+			expect.objectContaining({ isAccepted: false, isConverted: false })
 		);
 	});
 
