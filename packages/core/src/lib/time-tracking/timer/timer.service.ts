@@ -67,7 +67,7 @@ import {
 	projectIdForEntry,
 	teamIdForEntry
 } from '../time-log/organization-tracking-requirements';
-import { isTrackerSource } from '../time-log/tracker-source';
+import { isTrackerSource, postsHeartbeatSlots } from '../time-log/tracker-source';
 import { TypeOrmTimeLogRepository } from '../time-log/repository/type-orm-time-log.repository';
 import { MikroOrmTimeLogRepository } from '../time-log/repository/mikro-orm-time-log.repository';
 import { TypeOrmEmployeeRepository } from '../../employee/repository/type-orm-employee.repository';
@@ -405,8 +405,9 @@ export class TimerService {
 			assertRequiredContext(requirements, { taskId, organizationTeamId: teamIdToLog, projectId: projectIdToLog });
 		}
 
-		// Stop any previous running timers
-		await this.stopPreviousRunningTimers(employeeId, organizationId, tenantId);
+		// Stop any previous running timers: one from another client ends at its last heartbeat, or where this one
+		// starts when it never had one
+		await this.stopPreviousRunningTimers(employeeId, organizationId, tenantId, startedAt);
 
 		// Create a new time log entry using the command bus
 		const timeLog = await this._commandBus.execute(
@@ -603,6 +604,9 @@ export class TimerService {
 
 		this.debug(() => `partial time log: ${JSON.stringify(partialTimeLog)}`);
 
+		// A run still going beside this one started before it, so it ends no later than this one's start (below)
+		const stoppedRunStartedAt = lastLog.startedAt;
+
 		// Execute the command to update the time log entry
 		lastLog = await this._commandBus.execute(
 			new TimeLogUpdateCommand(partialTimeLog, lastLog.id, request.manualTimeSlot)
@@ -615,7 +619,7 @@ export class TimerService {
 		});
 
 		// Stop previous running timers
-		await this.stopPreviousRunningTimers(employeeId, organizationId, tenantId);
+		await this.stopPreviousRunningTimers(employeeId, organizationId, tenantId, stoppedRunStartedAt);
 
 		// Handle conflicting time logs
 		await this.handleConflictingTimeLogs(lastLog, tenantId, organizationId);
@@ -740,10 +744,13 @@ export class TimerService {
 	 * Calculates the stoppedAt time for the current time log based on the request and the last running time log.
 	 * It adjusts the stoppedAt time based on various conditions, such as the time log source (e.g., DESKTOP) and time slots.
 	 *
-	 * - If the source is DESKTOP and the last time slot was created more than 10 minutes ago,
-	 *   the stoppedAt time is adjusted based on the last time slot's duration.
+	 * - If the source is DESKTOP, the last log is a tracker's (`isTrackerSource`) and the last time slot was created
+	 *   more than 10 minutes ago, the stoppedAt time is adjusted based on the last time slot's duration.
 	 * - If no time slots exist and the last log's startedAt time exceeds 10 minutes from the current time,
 	 *   the stoppedAt time is adjusted by 10 seconds from the startedAt time.
+	 *
+	 * The desktop also stops, with its own source, the runs it shows from other clients. Those send no time slots of
+	 * a tracker to go by, so such a run ends at the time the stop asks for, as with any other client's stop.
 	 *
 	 * @param {ITimerToggleInput} request - The input data for stopping the timer, including stoppedAt and source.
 	 * @param {ITimeLog} lastLog - The last running time log, which may include time slots for more detailed tracking.
@@ -753,8 +760,10 @@ export class TimerService {
 		// Retrieve stoppedAt date or default to the current date if not provided
 		let stoppedAt = moment.utc(request.stoppedAt ?? moment.utc()).toDate();
 
-		// Handle the DESKTOP source case
-		if (request.source === TimeLogSourceEnum.DESKTOP) {
+		// Handle the DESKTOP source case, for a tracker's run only: not a run the desktop shows from another client
+		const isDesktopStopOfTrackerRun =
+			request.source === TimeLogSourceEnum.DESKTOP && isTrackerSource(lastLog.source);
+		if (isDesktopStopOfTrackerRun) {
 			// Retrieve the most recent time slot from the last log
 			const lastTimeSlot: ITimeSlot | undefined = lastLog.timeSlots?.sort((a: ITimeSlot, b: ITimeSlot) =>
 				moment(b.startedAt).diff(a.startedAt)
@@ -894,18 +903,43 @@ export class TimerService {
 	}
 
 	/**
-	 * Stops all previous running timers for the specified employee.
+	 * Stops all previous running timers for the specified employee: the runs still going when another run replaces
+	 * them (a timer that starts, or the run a stop just ended).
+	 *
+	 * A run from a client that is not a tracker ends through the update an explicit stop makes, so it gets its time
+	 * slots and counts in the worked time, where `replacedRunEnd` says: at its last heartbeat (an Ever Teams or mobile
+	 * run's start counting as its first), or, for a client that sends none, where the run after it started. A
+	 * tracker's run (`isTrackerSource`: the desktop timer and the agent) keeps the end its time slots give it
+	 * (`ScheduleTimeLogEntriesCommand`), as does a run stored without a `stoppedAt`, which has no heartbeat to go by;
+	 * that command also stops a run whose stop here failed, as before.
 	 *
 	 * @param employeeId - The ID of the employee whose timers need to be stopped
 	 * @param organizationId - The ID of the organization to which the employee belongs
 	 * @param tenantId - The ID of the tenant context
+	 * @param replacedAt - When the run replacing them started; now by default
 	 */
-	async stopPreviousRunningTimers(employeeId: ID, organizationId: ID, tenantId: ID): Promise<void> {
+	async stopPreviousRunningTimers(
+		employeeId: ID,
+		organizationId: ID,
+		tenantId: ID,
+		replacedAt: Date = moment.utc().toDate()
+	): Promise<void> {
 		try {
 			this.debug(() => 'Start previous running timers...');
-			// Retrieve any existing running logs for the employee
-			const logs = await this.getLastRunningLogs();
+			// Retrieve any existing running logs for the employee, latest first, with their time slots
+			const includeTimeSlots = true;
+			const logs = await this.getLastRunningLogs(includeTimeSlots);
 			this.debug(() => `Last Running Logs Count: ${logs.length}`);
+
+			// The replacing run is the run after the latest, the latest the run after the one before it, and so on
+			let nextRunStartedAt = moment.utc(replacedAt);
+			for (const log of logs) {
+				const isStoppedHere = !isTrackerSource(log.source) && Boolean(log.stoppedAt);
+				if (isStoppedHere) {
+					await this.stopReplacedRun(log, this.replacedRunEnd(log, nextRunStartedAt));
+				}
+				nextRunStartedAt = moment.min(moment.utc(log.startedAt), nextRunStartedAt);
+			}
 
 			// If there are existing running logs, stop them before starting a new one
 			if (logs.length > 0) {
@@ -916,6 +950,87 @@ export class TimerService {
 		} catch (error) {
 			// Log the error or handle it appropriately
 			this.logger.warn(`Failed to stop previous running timers: ${error?.message}`);
+		}
+	}
+
+	/**
+	 * Where a run from a client that is not a tracker ends when the run after it started at `nextRunStartedAt`.
+	 *
+	 * One that has had heartbeats (its `stoppedAt` moved past its start, as the time slots its client posts move it,
+	 * or time slots of its own) ends at its last heartbeat: the later of its `stoppedAt` and the end of its last time
+	 * slot, so it never gets less than its time slots hold. So does a run of a client that posts a time slot on each
+	 * heartbeat (`postsHeartbeatSlots`: Ever Teams, mobile), its start counting as the first: one without any died in
+	 * its first minute, and ends at its start, as Ever Teams' own stale-timer guard ends it. A run left in a tab closed
+	 * without a stop is not credited with every hour up to the next start. A run of a client that sends no heartbeat
+	 * (the web timer, the API clients) ends at `nextRunStartedAt`, as an explicit stop then would. Never after
+	 * `nextRunStartedAt`, so no time counts twice, and never before its own start.
+	 *
+	 * @param log - The running log, with its time slots.
+	 * @param nextRunStartedAt - When the run after it started.
+	 * @returns Where it ends.
+	 */
+	private replacedRunEnd(log: ITimeLog, nextRunStartedAt: moment.Moment): Date {
+		const startedAt = moment.utc(log.startedAt);
+		const timeSlotEnds = (log.timeSlots ?? []).map((slot) =>
+			moment.utc(slot.startedAt).add(slot.duration, 'seconds')
+		);
+		const lastHeartbeat = moment.max(moment.utc(log.stoppedAt), ...timeSlotEnds);
+		const hasHadHeartbeat = lastHeartbeat.isAfter(startedAt) || timeSlotEnds.length > 0;
+		// A client that posts heartbeats counts the start as the first one: a run of theirs without any ends there
+		const endsAtLastHeartbeat = hasHadHeartbeat || postsHeartbeatSlots(log.source);
+		const end = endsAtLastHeartbeat ? moment.min(lastHeartbeat, nextRunStartedAt) : nextRunStartedAt;
+		return moment.max(startedAt, end).toDate();
+	}
+
+	/**
+	 * Stops a run replaced by another at the given time, as an explicit stop at that time would.
+	 *
+	 * When the update fails, the log is read back. The update writes the stop before its later steps, so a log that no
+	 * longer runs was stopped and a later step failed. Those steps run again safely from what was written: the web
+	 * timer's time slots are created only where missing and linked to the stopped range, the timesheet and worked hours
+	 * are recomputed. So the update is sent once more to complete them, given the log as it was before the first try:
+	 * the update plans the release of the slots past an end it moves back from the range it is given, and the stored
+	 * range is already the new one. If the second try fails too, the log keeps its stop, as
+	 * `ScheduleTimeLogEntriesCommand` only stops logs still running, and the warning says what may be missing. A log
+	 * still running had nothing written, so it gets the same update once more: left running, that command would end a
+	 * run without time slots ten seconds after its start. If the second try fails too, the log is left to that command,
+	 * which stops it as before. The new run starts either way.
+	 *
+	 * @param log - The running log.
+	 * @param stoppedAt - Where it ends.
+	 */
+	private async stopReplacedRun(log: ITimeLog, stoppedAt: Date): Promise<void> {
+		// With its own start too: an update naming none files the log under the current week's timesheet
+		const startedAt = moment.utc(log.startedAt).toDate();
+		const partialTimeLog: Partial<ITimeLog> = { isRunning: false, startedAt, stoppedAt };
+		try {
+			await this._commandBus.execute(new TimeLogUpdateCommand(partialTimeLog, log.id));
+		} catch (error) {
+			const storedLog = await this.storedStoppedLog(log.id, log.tenantId);
+			if (!storedLog) {
+				// Nothing was written: the same update once more, so the run ends where it should
+				try {
+					await this._commandBus.execute(new TimeLogUpdateCommand(partialTimeLog, log.id));
+					this.logger.warn(`Stopped the replaced time log ${log.id} on a second try: ${error?.message}`);
+				} catch (retryError) {
+					this.logger.warn(
+						`Failed to stop the replaced time log ${log.id} on a second try, left to the cleanup if it still runs: ${retryError?.message}`
+					);
+				}
+				return;
+			}
+			try {
+				// The log as read before the first try, with the range the update releases slots from
+				const logBeforeStop = new TimeLog({ ...log, timeSlots: undefined });
+				await this._commandBus.execute(new TimeLogUpdateCommand(partialTimeLog, logBeforeStop));
+				this.logger.warn(
+					`Completed the stop of the replaced time log ${log.id} on a second try: ${error?.message}`
+				);
+			} catch (retryError) {
+				this.logger.warn(
+					`Stopped the replaced time log ${log.id}, but its time slots or totals may be incomplete: ${retryError?.message}`
+				);
+			}
 		}
 	}
 
@@ -977,11 +1092,15 @@ export class TimerService {
 				const findOptions = parseTypeORMFindToMikroOrm<TimeLog>({
 					where: whereClause,
 					order: { startedAt: 'DESC', createdAt: 'DESC' } as any,
-					...(includeTimeSlots && !fetchAll ? { relations: { timeSlots: true } } : {})
+					...(includeTimeSlots ? { relations: { timeSlots: true } } : {})
 				});
 
 				if (fetchAll) {
-					const items = await this.mikroOrmTimeLogRepository.findAll(findOptions);
+					// `findAll` reads its options flat: the order and the time slots go beside `where`
+					const items = await this.mikroOrmTimeLogRepository.findAll({
+						where: findOptions.where,
+						...findOptions.mikroOptions
+					});
 					return items.map((entity: TimeLog) => wrapSerialize(entity)) as TimeLog[];
 				} else {
 					const item = await this.mikroOrmTimeLogRepository.findOne(
@@ -997,7 +1116,8 @@ export class TimerService {
 				return fetchAll
 					? await this.typeOrmTimeLogRepository.find({
 							where: whereClause,
-							order: { startedAt: 'DESC', createdAt: 'DESC' }
+							order: { startedAt: 'DESC', createdAt: 'DESC' },
+							...(includeTimeSlots && { relations: { timeSlots: true } })
 						})
 					: await this.typeOrmTimeLogRepository.findOne({
 							where: whereClause,
@@ -1024,11 +1144,12 @@ export class TimerService {
 	/**
 	 * Get all pending running logs for the current employee
 	 *
+	 * @param includeTimeSlots - Set to `true` to include the associated time slots in the result
 	 * @returns An array of pending time logs
 	 */
-	private async getLastRunningLogs(): Promise<ITimeLog[]> {
+	private async getLastRunningLogs(includeTimeSlots: boolean = false): Promise<ITimeLog[]> {
 		// Retrieve the last running log by using the `getRunningLogs` method with `fetchAll` set to false
-		const logs = await this.getRunningLogs(true);
+		const logs = await this.getRunningLogs(true, includeTimeSlots);
 
 		// Ensure that the returned logs are of type ITimeLog[]
 		return logs as ITimeLog[];
