@@ -5,17 +5,18 @@ const TABLE = 'chat_message';
 const COLUMN = 'nonce';
 
 /**
- * The case-sensitive collations the nonce can take. The one taken never makes two stored keys equal that the column's
- * collation took apart, so no unique index refuses a row when the column moves:
+ * The case-sensitive collations the nonce can take:
  * - `utf8mb4_0900_bin` (MySQL 8.0.17+) and `utf8mb4_nopad_bin` (MariaDB 10.2+), whichever the server has: byte for byte
  *   and NO PAD, so a trailing space counts, as it does under MySQL 8's default `utf8mb4_0900_ai_ci`. Byte equality is the
- *   finest comparison there is, so either is taken from any collation.
- * - Without them (MySQL 8.0.1 to 8.0.16, MySQL 5.7, MariaDB before 10.2) it depends on the column's collation:
- *   - from a `utf8mb4_0900_*` one (NO PAD, MySQL 8.0's default), `utf8mb4_0900_as_cs`: NO PAD too, case- and
- *     accent-sensitive, and finer than every other `utf8mb4_0900_*` collation (the characters they all ignore, such as
- *     a zero-width space, it ignores alike);
+ *   finest comparison there is, so moving to either from any collation never makes two stored keys equal.
+ * - Without them (MySQL 8.0.1 to 8.0.16, MySQL 5.7, MariaDB before 10.2, all past their end of life), the nearest one:
+ *   - from a NO PAD collation (a `*_0900_*` one, MySQL 8.0's default among them), `utf8mb4_0900_as_cs`: NO PAD too, and
+ *     case- and accent-sensitive;
  *   - from any other (PAD SPACE: trailing spaces ignored already), `utf8mb4_bin`: byte for byte, trailing spaces ignored
- *     as before. `utf8mb4_0900_as_cs` is not taken there, since it ignores characters such a collation tells apart.
+ *     as before.
+ *   Neither is finer than every collation a column can have (`utf8mb4_0900_as_cs` ignores what some tell apart, such as
+ *   a zero-width space or a decomposed accent), so on that path the stored keys are checked first, and a move that would
+ *   take two of them for one is refused (see {@link ChatMessageNonceBinaryCollation1791000008700}).
  */
 export const CHAT_NONCE_COLLATIONS = [
 	'utf8mb4_0900_bin',
@@ -38,6 +39,10 @@ export const CHAT_NONCE_COLLATIONS = [
  * column's collation is read first: a column already at the chosen collation, or missing, is left as it is; two
  * processes that both read it as not there yet write the same definition twice, which changes nothing).
  *
+ * On a server without a byte-for-byte NO PAD collation, two stored keys of one author or one webhook that the chosen
+ * collation would take for one are looked for first; if there are any, the migration stops with an error that says so
+ * and leaves the column as it is (upgrading the server, or clearing one of the two nonces, lets it run).
+ *
  * Reversible: `down` gives the column back the table's collation, which it had before. That refuses (and changes
  * nothing: the `ALTER` is atomic) while two keys of one author or one webhook differ only in letter case, since the
  * case-insensitive collation takes them for one key; the error says so, and clearing the later row's `nonce` is the
@@ -52,6 +57,14 @@ export class ChatMessageNonceBinaryCollation1791000008700 implements MigrationIn
 		if (collation === null) return;
 		const binary = await caseSensitiveCollation(queryRunner, collation);
 		if (collation === binary) return;
+		if (!BYTE_EXACT_NO_PAD.has(binary) && (await mergesStoredKeys(queryRunner, binary))) {
+			throw new Error(
+				`${ChatMessageNonceBinaryCollation1791000008700.name} cannot run on this server: under ${binary}, the nearest ` +
+					'case-sensitive collation it has, two stored nonces of one author or one webhook would be one key. Upgrade ' +
+					'to MySQL 8.0.17+ or MariaDB 10.2+ (whose byte-for-byte collation takes every key apart), or set one of ' +
+					'the two nonces to NULL, then run it again. The column is unchanged.'
+			);
+		}
 		// Constant identifiers and type; the collation is one of the constant names above. No value of anyone's goes in.
 		await queryRunner.query(
 			`ALTER TABLE \`${TABLE}\` MODIFY COLUMN \`${COLUMN}\` varchar(64) CHARACTER SET utf8mb4 COLLATE ${binary} NULL`
@@ -88,6 +101,33 @@ async function nonceCollation(queryRunner: QueryRunner): Promise<string | null> 
 	return rows[0]?.columnCollation ?? null;
 }
 
+/** The byte-for-byte NO PAD collations: moving to one never makes two stored keys equal. */
+const BYTE_EXACT_NO_PAD: ReadonlySet<string> = new Set(['utf8mb4_0900_bin', 'utf8mb4_nopad_bin']);
+
+/** The unique keys the nonce is part of, by the column beside it. */
+const NONCE_KEY_COLUMNS = ['authorUserId', 'webhookId'] as const;
+
+/**
+ * Whether two stored nonces of one author, or of one webhook, would be one key under `collation` (one of
+ * {@link CHAT_NONCE_COLLATIONS}). A row without the author (or webhook) is in no such key.
+ */
+async function mergesStoredKeys(queryRunner: QueryRunner, collation: string): Promise<boolean> {
+	for (const column of NONCE_KEY_COLUMNS) {
+		// Constant identifiers; the collation is one of the constant names above.
+		const rows = (await queryRunner.query(
+			`SELECT 1 AS merged FROM \`${TABLE}\` WHERE \`${COLUMN}\` IS NOT NULL AND \`${column}\` IS NOT NULL ` +
+				`GROUP BY \`${column}\`, CONVERT(\`${COLUMN}\` USING utf8mb4) COLLATE ${collation} HAVING COUNT(*) > 1 LIMIT 1`
+		)) as unknown[];
+		if (rows.length) return true;
+	}
+	return false;
+}
+
+/** Whether a MySQL or MariaDB collation is NO PAD: MySQL's UCA 9.0.0 (`*_0900_*`) ones, and MariaDB's `*_nopad_*` ones. */
+function isNoPad(collation: string): boolean {
+	return collation.includes('_0900_') || collation.includes('_nopad_');
+}
+
 /**
  * The collation of {@link CHAT_NONCE_COLLATIONS} the column moves to from `source`, among those the server has
  * (`utf8mb4_bin` is on every server).
@@ -104,9 +144,7 @@ async function caseSensitiveCollation(
 	const available = new Set(rows.map((row) => row.collationName));
 	const exact = (['utf8mb4_0900_bin', 'utf8mb4_nopad_bin'] as const).find((name) => available.has(name));
 	if (exact) return exact;
-	return available.has('utf8mb4_0900_as_cs') && source.startsWith('utf8mb4_0900_')
-		? 'utf8mb4_0900_as_cs'
-		: 'utf8mb4_bin';
+	return available.has('utf8mb4_0900_as_cs') && isNoPad(source) ? 'utf8mb4_0900_as_cs' : 'utf8mb4_bin';
 }
 
 /** Whether MySQL refused a statement for a duplicate key (`ER_DUP_ENTRY`, 1062), on the error or on its driver error. */

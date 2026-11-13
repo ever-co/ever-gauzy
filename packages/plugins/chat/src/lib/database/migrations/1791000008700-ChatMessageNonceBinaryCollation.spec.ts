@@ -7,6 +7,7 @@ import {
 
 const COLUMN_PROBE = /^SELECT COLLATION_NAME AS columnCollation FROM information_schema\.COLUMNS /;
 const COLLATIONS_PROBE = /^SELECT COLLATION_NAME AS collationName FROM information_schema\.COLLATIONS /;
+const MERGE_PROBE = /^SELECT 1 AS merged FROM `chat_message` /;
 
 /** The collations each kind of server has, of those the migration asks for. */
 const SERVERS = {
@@ -25,7 +26,9 @@ const SERVERS = {
 function runner(
 	type: 'postgres' | 'mysql' | 'mariadb' | 'better-sqlite3',
 	collation?: string | null,
-	server: string[] = SERVERS.mysql8
+	server: string[] = SERVERS.mysql8,
+	/** The key column (`authorUserId`, `webhookId`) under which the stored nonces would merge, if any. */
+	mergesUnder?: string
 ) {
 	const statements: string[] = [];
 	const params: unknown[][] = [];
@@ -38,6 +41,8 @@ function runner(
 			statements.push(sql);
 			params.push(parameters ?? []);
 			if (COLUMN_PROBE.test(sql)) return collation === undefined ? [] : [{ columnCollation: collation }];
+			if (MERGE_PROBE.test(sql))
+				return mergesUnder && sql.includes(`GROUP BY \`${mergesUnder}\``) ? [{ merged: 1 }] : [];
 			if (COLLATIONS_PROBE.test(sql)) {
 				return server
 					.filter((name) => (parameters ?? []).includes(name))
@@ -49,6 +54,7 @@ function runner(
 }
 
 const ddl = (statements: string[]) => statements.filter((sql) => !sql.startsWith('SELECT'));
+const mergeProbes = (statements: string[]) => statements.filter((sql) => MERGE_PROBE.test(sql));
 const migration = () => new ChatMessageNonceBinaryCollation1791000008700();
 const modifyTo = (collation: string) =>
 	`ALTER TABLE \`chat_message\` MODIFY COLUMN \`nonce\` varchar(64) CHARACTER SET utf8mb4 COLLATE ${collation} NULL`;
@@ -63,6 +69,8 @@ describe('ChatMessageNonceBinaryCollation1791000008700', () => {
 			expect(mysql.statements[0]).toMatch(COLUMN_PROBE);
 			expect(mysql.params[0]).toEqual(['chat_message', 'nonce']);
 			expect(mysql.statements[1]).toMatch(COLLATIONS_PROBE);
+			// Byte for byte and NO PAD: nothing can merge, so no stored key is looked at.
+			expect(mergeProbes(mysql.statements)).toEqual([]);
 			expect(mysql.params[1]).toEqual(['utf8mb4_0900_bin', 'utf8mb4_nopad_bin', 'utf8mb4_0900_as_cs']);
 		}
 	});
@@ -174,6 +182,29 @@ describe('ChatMessageNonceBinaryCollation1791000008700', () => {
 			return COLUMN_PROBE.test(sql) ? [{ columnCollation: 'utf8mb4_0900_ai_ci' }] : [];
 		});
 		await expect(migration().up(failing as never)).rejects.toThrow('lock wait timeout');
+	});
+
+	it('looks for keys the nearest collation would merge on an older server, and refuses the move if there are any', async () => {
+		// A tailored NO PAD source (`utf8mb4_ja_0900_as_cs`) is NO PAD like the default: it takes utf8mb4_0900_as_cs.
+		const early = runner('mysql', 'utf8mb4_ja_0900_as_cs', SERVERS.mysql80early);
+		await migration().up(early as never);
+		expect(ddl(early.statements)).toEqual([modifyTo('utf8mb4_0900_as_cs')]);
+		expect(mergeProbes(early.statements)).toEqual([
+			'SELECT 1 AS merged FROM `chat_message` WHERE `nonce` IS NOT NULL AND `authorUserId` IS NOT NULL GROUP BY `authorUserId`, CONVERT(`nonce` USING utf8mb4) COLLATE utf8mb4_0900_as_cs HAVING COUNT(*) > 1 LIMIT 1',
+			'SELECT 1 AS merged FROM `chat_message` WHERE `nonce` IS NOT NULL AND `webhookId` IS NOT NULL GROUP BY `webhookId`, CONVERT(`nonce` USING utf8mb4) COLLATE utf8mb4_0900_as_cs HAVING COUNT(*) > 1 LIMIT 1'
+		]);
+		for (const [source, server, under] of [
+			['utf8mb4_0900_ai_ci', SERVERS.mysql80early, 'authorUserId'],
+			['utf8mb4_general_ci', SERVERS.old, 'webhookId']
+		] as const) {
+			const merging = runner('mysql', source, [...server], under);
+			const refusal = (await migration()
+				.up(merging as never)
+				.catch((error: unknown) => error)) as Error;
+			expect(refusal.message).toContain('would be one key');
+			expect(refusal.message).toContain('MySQL 8.0.17+');
+			expect(ddl(merging.statements)).toEqual([]);
+		}
 	});
 
 	it('is registered with the chat plugin after every other chat migration', () => {
