@@ -942,15 +942,20 @@ export class ChannelSettingsDialogComponent implements OnInit, AfterViewInit {
 
 	/** Reads the channel's webhooks: a 404 means they are off here (no tab); any other failure shows on the tab, with a retry. */
 	protected loadWebhooks(): void {
-		this.webhooksFailed.set(false);
+		// A retry keeps the failure (and the tab) on screen until it answers: cleared first, the tab would vanish meanwhile.
 		this.webhooksApi
 			.list(this.context.conversation.id)
 			.pipe(takeUntilDestroyed(this.destroyRef))
 			.subscribe({
-				next: (webhooks) => this.webhooks.set(webhooks),
+				next: (webhooks) => {
+					this.webhooksFailed.set(false);
+					this.webhooks.set(webhooks);
+				},
 				error: (error: { status?: number } | null) => {
 					this.webhooks.set(null);
 					this.webhooksFailed.set(error?.status !== 404);
+					// Webhooks are off here after all: the Integrations tab goes, and the selection moves to Settings.
+					if (!this.hasIntegrations() && this.tab() === 'integrations') this.tab.set('settings');
 				}
 			});
 	}

@@ -319,6 +319,27 @@ describe('ChannelSettingsDialogComponent', () => {
 		expect(fixture.nativeElement.querySelector('[data-test="webhooks-panel"]')).not.toBeNull();
 	});
 
+	it('keeps the Integrations tab through a retry, and moves to Settings when the retry finds webhooks off', async () => {
+		await open({}, 'on');
+		webhooksApi.list.mockReturnValueOnce(throwError(() => ({ status: 503 })));
+		dialog().loadWebhooks();
+		fixture.detectChanges();
+		tabTo('integrations');
+		const retry = new Subject<IChatWebhook[]>();
+		webhooksApi.list.mockReturnValueOnce(retry);
+		(fixture.nativeElement.querySelector('[data-test="webhooks-retry"]') as HTMLButtonElement).click();
+		fixture.detectChanges();
+		// While the retry is under way, the tab and its failure stay on screen.
+		expect(fixture.nativeElement.querySelector('[data-test="tab-integrations"]')).not.toBeNull();
+		expect(fixture.nativeElement.querySelector('[data-test="webhooks-load-failed"]')).not.toBeNull();
+		// It answers 404: webhooks are off here, so the tab goes and Settings shows.
+		retry.error({ status: 404 });
+		fixture.detectChanges();
+		expect(fixture.nativeElement.querySelector('[data-test="tab-integrations"]')).toBeNull();
+		expect(dialog().tab()).toBe('settings');
+		expect(fixture.nativeElement.querySelector('[data-test="settings-name"]')).not.toBeNull();
+	});
+
 	it('wires the tabs to their panels and moves between them with the arrow keys, Home and End', async () => {
 		await open({}, 'on');
 		const tabs = fixture.nativeElement.querySelector('[data-test="settings-tabs"]') as HTMLElement;
