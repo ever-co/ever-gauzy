@@ -109,9 +109,13 @@ $primary: var(--color-primary-default, #3366ff);
   box-shadow: $ring;
 }
 
+// Each panel carries a soft glow of the theme's primary colour from its bottom edge — from the
+// start corner on the Desktop card, the middle on Mobile, the end corner on Browser extension —
+// so the page picks up the app's own accent in light and dark themes alike.
 .panel {
   --pad-x: 2.25rem;
   --pad-y: 2rem;
+  --glow-at: 0% 100%;
   position: relative;
   display: flex;
   flex: 1 1 auto;
@@ -120,8 +124,23 @@ $primary: var(--color-primary-default, #3366ff);
   overflow: hidden;
   padding: var(--pad-y) var(--pad-x);
   border-radius: 1.375rem;
-  background: $surface;
+  background:
+    radial-gradient(
+      90% 65% at var(--glow-at),
+      color-mix(in srgb, #{$primary} 22%, transparent),
+      color-mix(in srgb, #{$primary} 6%, transparent) 55%,
+      transparent 80%
+    ),
+    $surface;
   box-shadow: $ring;
+
+  &.glow-center {
+    --glow-at: 50% 100%;
+  }
+
+  &.glow-end {
+    --glow-at: 100% 100%;
+  }
 
   @media (max-width: 575.98px) {
     --pad-x: 1.25rem;
