@@ -201,4 +201,28 @@ describe('TaskViewTasksService', () => {
 		const inner = runBracket(calls('andWhere').find((call) => typeof call[0] === 'object')?.[0]);
 		expect(inner.where).toHaveBeenCalledWith('task.dueDate >= :f0a AND task.dueDate < :f0b', { f0a: new Date('2026-11-06T22:00:00.000Z'), f0b: new Date('2026-11-07T22:00:00.000Z') });
 	});
+
+	it('compares a due date that is a date only by the day picked, and leaves the other date fields and old views on their instants', async () => {
+		const { service, calls } = fixture({ rows: [] });
+		// "Due on or after 14 Nov" and "created on or after 14 Nov", each picked in UTC−4, then the same due date saved without its day.
+		const picked = { operator: 'after', from: '2026-11-14T04:00:00.000Z', fromDay: '2026-11-14' } as const;
+		await service.tasksOf('v1', { filter: { op: 'or', conditions: [{ field: 'dueDate', ...picked }, { field: 'createdAt', ...picked }, { field: 'dueDate', operator: 'after', from: picked.from }] } });
+		const inner = runBracket(calls('andWhere').find((call) => typeof call[0] === 'object')?.[0]);
+		expect(inner.where).toHaveBeenCalledWith('(task.dueDate > :f0 OR task.dueDate = :f0d0)', { f0: new Date(picked.from), f0d0: new Date('2026-11-14T00:00:00.000Z') });
+		expect(inner.orWhere).toHaveBeenCalledWith('task.createdAt > :f1', { f1: new Date(picked.from) });
+		expect(inner.orWhere).toHaveBeenCalledWith('task.dueDate > :f2', { f2: new Date(picked.from) });
+	});
+
+	it('takes "due today" in UTC−4 to hold today\'s date-only due date and not tomorrow\'s', async () => {
+		const { service, calls } = fixture({ rows: [] });
+		// 14 Nov, 15:00 in Caracas: today runs from 04:00 UTC to 04:00 UTC the next day.
+		await service.tasksOf('v1', { filter: { op: 'and', conditions: [{ field: 'dueDate', operator: 'relative', relative: { unit: 'day', direction: 'current' } }] }, timeZone: 'America/Caracas' }, new Date('2026-11-14T19:00:00.000Z'));
+		const inner = runBracket(calls('andWhere').find((call) => typeof call[0] === 'object')?.[0]);
+		expect(inner.where).toHaveBeenCalledWith('(task.dueDate >= :f0a OR task.dueDate = :f0ad0) AND (task.dueDate < :f0b AND task.dueDate <> :f0bx0)', {
+			f0a: new Date('2026-11-14T04:00:00.000Z'),
+			f0ad0: new Date('2026-11-14T00:00:00.000Z'),
+			f0b: new Date('2026-11-15T04:00:00.000Z'),
+			f0bx0: new Date('2026-11-15T00:00:00.000Z')
+		});
+	});
 });
