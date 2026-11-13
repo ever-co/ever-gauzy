@@ -3,7 +3,7 @@ import '../entities/internal';
 import { NotFoundException } from '@nestjs/common';
 import { SOFT_DELETABLE_FILTER } from 'mikro-orm-soft-delete';
 import { RequestContext } from '../context/request-context';
-import { safeErrorMessage } from '../errors/database-error';
+import { redactDatabaseError, safeErrorMessage } from '../errors/database-error';
 import { MultiORMEnum } from '../utils';
 import { CrudService } from './crud.service';
 import { TenantAwareCrudService } from './tenant-aware-crud.service';
@@ -20,21 +20,29 @@ import { TenantAwareCrudService } from './tenant-aware-crud.service';
  * `task.service.delete.dual-orm.spec.ts` runs both on a database through both ORMs.
  */
 
-class RowService extends CrudService<any> {
+class RowService extends CrudService<never> {
 	constructor(typeOrmRepository: unknown, mikroOrmRepository: unknown) {
-		super(typeOrmRepository as any, mikroOrmRepository as any);
+		super(typeOrmRepository as never, mikroOrmRepository as never);
 	}
 }
 
-class TenantRowService extends TenantAwareCrudService<any> {
+class TenantRowService extends TenantAwareCrudService<never> {
 	constructor() {
-		super({ metadata: { hasColumnWithPropertyPath: (column: string) => column === 'tenantId' } } as any, {} as any);
+		super(
+			{ metadata: { hasColumnWithPropertyPath: (column: string) => column === 'tenantId' } } as never,
+			{} as never
+		);
 	}
 }
 
-/** A refusal as TypeORM raises it on Postgres for a row another row still references. */
+/** A refusal as TypeORM raises it on Postgres for a row another row still references, with its bound values. */
 const referencedRow = () =>
-	Object.assign(new Error('update or delete on table "task" violates foreign key constraint'), { code: '23503' });
+	Object.assign(new Error('update or delete on table "task" violates foreign key constraint'), {
+		name: 'QueryFailedError',
+		code: '23503',
+		query: 'DELETE FROM "task" WHERE "id" = $1 AND "createdBy" = $2',
+		parameters: ['row-1', 'alice@example.com']
+	});
 
 describe('CrudService.delete', () => {
 	afterEach(() => jest.restoreAllMocks());
@@ -60,7 +68,7 @@ describe('CrudService.delete', () => {
 		const { service, nativeDelete } = mikroOrm();
 
 		await service.delete('row-1');
-		await service.delete({ id: 'row-1' } as any, { withDeleted: false });
+		await service.delete({ id: 'row-1' } as never, { withDeleted: false });
 
 		for (const [, options] of nativeDelete.mock.calls as unknown as Array<[unknown, { filters?: unknown }]>) {
 			expect(options.filters).toBeUndefined();
@@ -100,7 +108,7 @@ describe('CrudService.delete', () => {
 describe('TenantAwareCrudService.delete', () => {
 	beforeEach(() => {
 		jest.spyOn(CrudService.prototype, 'ormType', 'get').mockReturnValue(MultiORMEnum.TypeORM);
-		jest.spyOn(RequestContext, 'currentUser').mockReturnValue({ id: 'user-1', tenantId: 'tenant-1' } as any);
+		jest.spyOn(RequestContext, 'currentUser').mockReturnValue({ id: 'user-1', tenantId: 'tenant-1' } as never);
 		jest.spyOn(RequestContext, 'hasRoles').mockReturnValue(true);
 	});
 
@@ -138,6 +146,8 @@ describe('TenantAwareCrudService.delete', () => {
 			error: 'Not Found'
 		});
 		expect((error as NotFoundException).cause).toBe(failure);
-		expect(logged).toHaveBeenCalled();
+		// The log gets the driver error without its bound values, never the raw error with them.
+		expect(logged).toHaveBeenCalledWith('Error during delete operation:', redactDatabaseError(failure));
+		expect(JSON.stringify(logged.mock.calls)).not.toContain('alice@example.com');
 	});
 });

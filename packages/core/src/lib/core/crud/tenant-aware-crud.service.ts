@@ -34,6 +34,7 @@ import {
 	isWithinOrganizationBoundary
 } from './organization-boundary';
 import { ITryRequest } from './try-request';
+import { redactDatabaseError } from '../errors/database-error';
 
 /** The columns this service scopes a statement by. */
 type ScopeColumn = 'tenantId' | 'employeeId' | 'organizationId';
@@ -1442,11 +1443,11 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 			if (err instanceof BadRequestException) {
 				throw err;
 			}
-			console.error('Error during delete operation:', err);
+			const cause = err instanceof HttpException && err.cause !== undefined ? err.cause : err;
+			// Logged without the bound values a driver error carries (a log is shipped and kept).
+			console.error('Error during delete operation:', redactDatabaseError(cause));
 			// The same answer as ever (no description); the driver's error stays reachable as `cause`.
-			throw new NotFoundException(`The record was not found`, {
-				cause: err instanceof HttpException && err.cause !== undefined ? err.cause : err
-			});
+			throw new NotFoundException(`The record was not found`, { cause });
 		}
 	}
 
