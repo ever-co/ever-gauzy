@@ -527,7 +527,7 @@ export class TaskController extends CrudController<Task> {
 	}
 
 	/**
-	 * DELETE task by ID
+	 * DELETE task by ID, for good: a live task or one in the trash. A task other records still point at stays (409).
 	 *
 	 * @param id The ID of the task to delete.
 	 * @returns The result of the deletion.
@@ -543,6 +543,10 @@ export class TaskController extends CrudController<Task> {
 	@ApiResponse({
 		status: HttpStatus.FORBIDDEN,
 		description: 'Without a task-delete permission, only a manager of one of the task teams may delete it.'
+	})
+	@ApiResponse({
+		status: HttpStatus.CONFLICT,
+		description: 'Other records (a linked issue, a key result) still point at the task (`TASK_STILL_REFERENCED`); it stays.'
 	})
 	async delete(@Param('id', UUIDValidationPipe) id: ID): Promise<DeleteResult> {
 		return this.taskService.deleteTask(id);
