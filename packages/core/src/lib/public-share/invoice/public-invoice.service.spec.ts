@@ -5,7 +5,7 @@ import { environment, TYPEORM_INVALID_WHERE_VALUES_BEHAVIOR } from '@gauzy/confi
 import { sign, verify } from 'jsonwebtoken';
 import { DataSource, EntitySchema, Repository } from 'typeorm';
 import { signPurposeToken, TokenPurposeEnum } from '../../auth/purpose-token';
-import { INVOICE_VOID_IS_FINAL } from '../../invoice/invoice-void';
+import { INVOICE_VOID_IS_FINAL } from '../../invoice/invoice-final-status';
 import { PublicInvoiceService } from './public-invoice.service';
 
 /**

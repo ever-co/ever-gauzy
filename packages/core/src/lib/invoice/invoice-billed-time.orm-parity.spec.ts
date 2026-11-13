@@ -264,7 +264,7 @@ describe('Invoices record the time their lines bill, on TypeORM and on MikroORM'
 					InvoiceCreateCommand: require('./commands/invoice.create.command').InvoiceCreateCommand,
 					InvoiceUpdateHandler: require('./commands/handlers/invoice.update.handler').InvoiceUpdateHandler,
 					InvoiceUpdateCommand: require('./commands/invoice.update.command').InvoiceUpdateCommand,
-					INVOICE_VOID_IS_FINAL: require('./invoice-void').INVOICE_VOID_IS_FINAL,
+					INVOICE_VOID_IS_FINAL: require('./invoice-final-status').INVOICE_VOID_IS_FINAL,
 					InvoiceItemService: require('../invoice-item/invoice-item.service').InvoiceItemService,
 					TypeOrmInvoiceItemRepository: require('../invoice-item/repository/type-orm-invoice-item.repository')
 						.TypeOrmInvoiceItemRepository,

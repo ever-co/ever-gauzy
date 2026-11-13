@@ -25,7 +25,7 @@ export function statesStatusOtherThanVoid(status: string | null | undefined): bo
  * @param statedStatus The status the change states.
  * @throws BadRequestException when the invoice is void and the change states another status.
  */
-export function assertVoidStaysVoid(storedStatus: string | undefined, statedStatus: string | null | undefined): void {
+export function assertFinalStatusKept(storedStatus: string | undefined, statedStatus: string | null | undefined): void {
 	const isVoid = storedStatus === InvoiceStatusTypesEnum.VOID;
 	const reopensVoid = isVoid && statesStatusOtherThanVoid(statedStatus);
 	if (reopensVoid) {
