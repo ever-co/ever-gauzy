@@ -70,6 +70,7 @@ export * from './lib/employee-job.model';
 export * from './lib/employee-notification-setting.model';
 export * from './lib/employee-notification.model';
 export * from './lib/employee-phone.model';
+export * from './lib/employee-placeholder.model';
 export * from './lib/employee-proposal-template.model';
 export * from './lib/employee-recent-visit.model';
 export * from './lib/employee-recurring-expense.model';
