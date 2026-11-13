@@ -101,12 +101,22 @@ $primary: var(--color-primary-default, #3366ff);
 }
 
 // ── Cards ───────────────────────────────────────────────────────────────
+// Cards rise in one after another when the page opens.
 .shell {
   display: flex;
   min-width: 0;
   padding: 0.5rem;
   border-radius: 1.75rem;
   box-shadow: $ring;
+  animation: gz-dl-rise 0.6s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+.app-grid .shell:nth-child(1) {
+  animation-delay: 0.08s;
+}
+
+.app-grid .shell:nth-child(2) {
+  animation-delay: 0.16s;
 }
 
 // Each panel carries a soft glow of the theme's primary colour from its bottom edge — from the
@@ -835,12 +845,16 @@ $danger: var(--color-danger-default, #ff3d71);
   gap: 0.375rem;
   margin-top: 0.75rem;
 
+  // Bars grow from the baseline one after another when the page opens (`--i` is the day).
   span {
     flex: 1 1 0;
     min-height: 0.25rem;
     border-radius: 0.25rem 0.25rem 0 0;
     background: $primary;
     opacity: 0.85;
+    transform-origin: bottom;
+    animation: gz-dl-grow 0.9s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+    animation-delay: calc(0.35s + var(--i, 0) * 0.07s);
   }
 }
 
@@ -895,5 +909,34 @@ $danger: var(--color-danger-default, #ff3d71);
 
   nb-icon {
     font-size: 0.875rem;
+  }
+}
+
+// ── Animation: page entrance ────────────────────────────────────────────
+@keyframes gz-dl-rise {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes gz-dl-grow {
+  from {
+    transform: scaleY(0);
+  }
+  to {
+    transform: scaleY(1);
+  }
+}
+
+// Viewers who ask for less motion get the page without its entrance.
+@media (prefers-reduced-motion: reduce) {
+  .shell,
+  .bars span {
+    animation: none !important;
   }
 }
