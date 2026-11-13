@@ -304,6 +304,29 @@ describe('withAllowedEmailLinks', () => {
 		expect(onRejected).toHaveBeenCalledWith('appMagicSignUrl', 'https://attacker.example');
 	});
 
+	it('takes the configured link written another way for the configured one, and reports nothing', () => {
+		// Ever Teams sends the links it parsed: "https://ever.co/" for a company site configured as "https://ever.co".
+		const onRejected = jest.fn();
+
+		expect(withAllowedEmailLinks({ companyLink: 'https://ever.co/' }, onRejected, {})).toEqual({
+			companyLink: defaults.companyLink
+		});
+		expect(withAllowedEmailLinks({ companyLink: ' HTTPS://EVER.CO ' }, onRejected, {})).toEqual({
+			companyLink: defaults.companyLink
+		});
+		expect(onRejected).not.toHaveBeenCalled();
+	});
+
+	it('still replaces and reports another page of the company site, which is not on the list', () => {
+		const onRejected = jest.fn();
+
+		expect(withAllowedEmailLinks({ companyLink: 'https://ever.co/other' }, onRejected, {})).toEqual({
+			companyLink: defaults.companyLink
+		});
+		expect(onRejected).toHaveBeenCalledTimes(1);
+		expect(onRejected).toHaveBeenCalledWith('companyLink', 'https://ever.co');
+	});
+
 	it('trusts the configured values even where they are not on the list (company site, unset base URL)', () => {
 		const onRejected = jest.fn();
 		mockEnvironment.appIntegrationConfig.appMagicSignUrl = 'undefined/#/auth/magic-sign-in';
