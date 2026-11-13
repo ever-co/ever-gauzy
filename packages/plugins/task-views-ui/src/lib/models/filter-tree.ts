@@ -7,6 +7,7 @@ import {
 	TaskViewFilterField,
 	TaskViewFilterOperator
 } from '@gauzy/contracts';
+import { type BoundKind, boundOfDay } from './date-input';
 
 /**
  * The model of the filter-tree editor: pure, immutable operations on a view's filter tree (the platform's contract,
@@ -101,20 +102,39 @@ export function withOperator(
 			next.values = [...(condition.values ?? [])];
 			break;
 		case 'before':
-			if (condition.to) next.to = condition.to;
+			keepTo(condition, next, 'before');
 			break;
 		case 'after':
-			if (condition.from) next.from = condition.from;
+			keepFrom(condition, next);
 			break;
 		case 'between':
-			if (condition.from) next.from = condition.from;
-			if (condition.to) next.to = condition.to;
+			keepFrom(condition, next);
+			keepTo(condition, next, 'until');
 			break;
 		case 'relative':
 			next.relative = condition.relative ? { ...condition.relative } : { unit: 'week', direction: 'current' };
 			break;
 	}
 	return next;
+}
+
+function keepFrom(condition: ITaskViewFilterCondition, next: ITaskViewFilterCondition): void {
+	if (!condition.from) return;
+	next.from = condition.from;
+	if (condition.fromDay) next.fromDay = condition.fromDay;
+}
+
+/**
+ * The upper bound under a new operator. "Before" reads the start of its day and "between" the last instant of its
+ * last day, so a bound picked as a day takes the instant the new operator reads of that day; one saved without its
+ * day keeps its instant. The instant is the one of the reader's zone, as when they pick a day: a view saved in
+ * another zone keeps its day, and its instant becomes the reader's.
+ */
+function keepTo(condition: ITaskViewFilterCondition, next: ITaskViewFilterCondition, kind: BoundKind): void {
+	if (!condition.to) return;
+	const rebound = condition.toDay ? boundOfDay(condition.toDay, kind) : null;
+	next.to = rebound ? rebound.instant : condition.to;
+	if (rebound) next.toDay = rebound.day;
 }
 
 /** The condition with other values: ids for a record field, each once. */
@@ -137,16 +157,45 @@ export function withRelative(
 	};
 }
 
-/** The condition with a bound changed: an ISO instant, or nothing. */
+/**
+ * The condition with a bound changed: an ISO instant and the calendar day it was picked as (`2026-11-14`), or
+ * nothing. An instant without a day drops the day the bound had, which named another instant.
+ */
 export function withBound(
 	condition: ITaskViewFilterCondition,
 	bound: 'from' | 'to',
-	instant: string | null
+	instant: string | null,
+	day: string | null = null
 ): ITaskViewFilterCondition {
 	const next = { ...condition };
+	const dayKey = bound === 'from' ? 'fromDay' : 'toDay';
 	if (instant) next[bound] = instant;
 	else delete next[bound];
+	if (instant && day) next[dayKey] = day;
+	else delete next[dayKey];
 	return next;
+}
+
+/**
+ * The condition with a day picked in one bound's date field (an empty or malformed field clears the bound and leaves
+ * the other alone). The instant is the one of the picker's zone, and so becomes the other bound's when it was picked
+ * as a day too: kept as another reader's instant, a "between 14 and 14 Nov" saved in UTC−10 and edited in UTC+14
+ * would end before it starts while both fields show the 14th. A bound saved without its day keeps its instant, which
+ * the field already shows as the reader's day.
+ */
+export function withPickedDay(
+	condition: ITaskViewFilterCondition,
+	bound: 'from' | 'to',
+	value: string | null | undefined,
+	kind: BoundKind
+): ITaskViewFilterCondition {
+	const picked = boundOfDay(value, kind);
+	const next = withBound(condition, bound, picked?.instant ?? null, picked?.day ?? null);
+	const other = bound === 'from' ? 'to' : 'from';
+	const otherDay = other === 'from' ? next.fromDay : next.toDay;
+	const otherKind: BoundKind = other === 'from' ? 'from' : next.operator === 'before' ? 'before' : 'until';
+	const rebound = picked && next[other] && otherDay ? boundOfDay(otherDay, otherKind) : null;
+	return rebound ? withBound(next, other, rebound.instant, rebound.day) : next;
 }
 
 /** The node at a path, or null when there is none. */

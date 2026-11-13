@@ -129,6 +129,12 @@ function validateCondition(entry: unknown, path: string, invalid: ITaskViewInval
 		}
 		if (from) condition.from = from;
 		if (to) condition.to = to;
+		// A day that is not a calendar day, or not the day its instant is an edge of, is left out: the bound compares as its
+		// instant. "Before" stops at the start of its day; "between" runs to the last instant of its last day.
+		const fromDay = from ? boundDayOf(raw?.fromDay, from, 'start') : undefined;
+		const toDay = to ? boundDayOf(raw?.toDay, to, operator === 'before' ? 'start' : 'end') : undefined;
+		if (fromDay) condition.fromDay = fromDay;
+		if (toDay) condition.toDay = toDay;
 	} else if (operator === 'relative') {
 		const relative = raw?.relative;
 		const unit = relative?.unit;
@@ -149,6 +155,110 @@ function instantOf(value: unknown): string | undefined {
 	return Number.isFinite(time) ? new Date(time).toISOString() : undefined;
 }
 
+// ---------------------------------------------------------------- date-only values, compared by their calendar day
+
+/**
+ * The fields that may hold a date only: a calendar day with no time of day, kept as midnight UTC of that day
+ * (`2026-11-14T00:00:00.000Z`) — what the integrations and the bulk toolbar write for a due date. `createdAt` and
+ * `updatedAt` are always moments, so their midnights stay moments.
+ */
+export const TASK_VIEW_DATE_ONLY_FIELDS: readonly TaskViewFilterField[] = ['dueDate'];
+
+const DAY_MS = 86_400_000;
+const CALENDAR_DAY = /^(\d{4})-(\d{2})-(\d{2})$/;
+
+/** Midnight UTC of a calendar day (`2026-11-14`) in milliseconds, or null for anything else (`2026-02-30` included). */
+export function midnightOfDay(value: unknown): number | null {
+	const match = typeof value === 'string' ? CALENDAR_DAY.exec(value) : null;
+	if (!match) return null;
+	const [year, month, day] = [Number(match[1]), Number(match[2]) - 1, Number(match[3])];
+	const date = new Date(Date.UTC(year, month, day));
+	return date.getUTCFullYear() === year && date.getUTCMonth() === month && date.getUTCDate() === day ? date.getTime() : null;
+}
+
+/** How far a day's start in a real zone lies from its UTC midnight: 14 hours before (UTC+14), 12 after (UTC−12). */
+const EAST_MOST_MS = 14 * 3_600_000;
+const WEST_MOST_MS = 12 * 3_600_000;
+
+/**
+ * The day a bound was picked as, when it is a calendar day and its instant is that day's edge in some real zone: its
+ * start (`edge: 'start'`, for `after`, `before` and the lower bound of `between`) between 14 hours before the day's UTC
+ * midnight and 12 hours after it, or its last instant (`'end'`, the upper bound of `between`) within a minute before
+ * the next day starts there. A day the instant is not an edge of — another week, or the day before the one a bound
+ * was moved to — is left out, so the bound compares as its instant.
+ */
+export function boundDayOf(day: unknown, instant: string | Date, edge: 'start' | 'end'): string | undefined {
+	const midnight = midnightOfDay(day);
+	const at = new Date(instant).getTime();
+	if (midnight === null || !Number.isFinite(at)) return undefined;
+	const start = edge === 'start' ? midnight : midnight + DAY_MS;
+	const earliest = start - EAST_MOST_MS - (edge === 'start' ? 0 : 60_000);
+	const latest = start + WEST_MOST_MS;
+	const near = edge === 'start' ? at >= earliest && at <= latest : at >= earliest && at < latest;
+	return near ? (day as string) : undefined;
+}
+
+/** The calendar day an instant falls on in a time zone (`2026-11-14`). */
+export function dayIn(at: Date, timeZone: string): string {
+	return new Date(at.getTime() + zoneOffsetMinutes(at, timeZone) * 60_000).toISOString().slice(0, 10);
+}
+
+export type DateComparison = '<' | '<=' | '>' | '>=';
+
+function holds(value: number, comparison: DateComparison, bound: number): boolean {
+	switch (comparison) {
+		case '<':
+			return value < bound;
+		case '<=':
+			return value <= bound;
+		case '>':
+			return value > bound;
+		default:
+			return value >= bound;
+	}
+}
+
+/**
+ * One bound of a date condition as SQL. The instant is compared as before (`column > :key`). When the bound carries the
+ * calendar day it stands for, a value that is a date only (exactly midnight UTC) is compared with that day instead: a
+ * lower bound (`>`, `>=`) takes the day's own midnight and later ones, `<` the midnights before the day, `<=` the
+ * day's own midnight and earlier ones. The two readings differ only on the midnights between the instant and the
+ * day's own midnight, at most one for a real zone: it is added (`OR column = …`) or taken out (`AND column <> …`).
+ * Plain comparisons with bound dates only, so the clause reads the same on Postgres, MySQL and SQLite.
+ *
+ * West of UTC, "on or after 14 Nov" picked in UTC−4 is `> 2026-11-14T04:00Z`, which misses a due date of 14 Nov
+ * (`2026-11-14T00:00Z`): the clause adds that midnight. East of UTC the instant already sorts the midnights right.
+ */
+export function dateBoundClause(column: string, comparison: DateComparison, instant: Date, day: string | undefined, key: string): { sql: string; params: Record<string, Date> } {
+	const sql = `${column} ${comparison} :${key}`;
+	const params: Record<string, Date> = { [key]: instant };
+	const midnight = day === undefined ? null : midnightOfDay(day);
+	const at = instant.getTime();
+	if (midnight === null || !Number.isFinite(at) || at < midnight - DAY_MS || at >= midnight + 2 * DAY_MS) return { sql, params };
+	// "After" a picked day means on or after it ("is on or after"), so a date only of that very day is in.
+	const byDay: DateComparison = comparison === '>' ? '>=' : comparison;
+	const added: number[] = [];
+	const removed: number[] = [];
+	for (let candidate = midnight - 2 * DAY_MS; candidate <= midnight + 3 * DAY_MS; candidate += DAY_MS) {
+		const asInstant = holds(candidate, comparison, at);
+		const asDay = holds(candidate, byDay, midnight);
+		if (asDay && !asInstant) added.push(candidate);
+		if (asInstant && !asDay) removed.push(candidate);
+	}
+	if (!added.length && !removed.length) return { sql, params };
+	const kept = [sql];
+	removed.forEach((time, index) => {
+		params[`${key}x${index}`] = new Date(time);
+		kept.push(`${column} <> :${key}x${index}`);
+	});
+	const taken = added.map((time, index) => {
+		params[`${key}d${index}`] = new Date(time);
+		return `${column} = :${key}d${index}`;
+	});
+	const instantPart = kept.length > 1 && taken.length ? `(${kept.join(' AND ')})` : kept.join(' AND ');
+	return { sql: `(${[instantPart, ...taken].join(' OR ')})`, params };
+}
+
 // ---------------------------------------------------------------- relative windows in the caller's time zone
 
 /** The start of the calendar month holding `at` in the time zone, as an instant. */
@@ -163,6 +273,20 @@ export function addMonths(at: Date, months: number, timeZone: string): Date {
 	const offset = zoneOffsetMinutes(at, timeZone);
 	const local = new Date(at.getTime() + offset * 60_000);
 	return startOfDayIn(new Date(Date.UTC(local.getUTCFullYear(), local.getUTCMonth() + months, 1, 12) - offset * 60_000), timeZone);
+}
+
+/**
+ * The calendar days the bounds of a relative window start, in the zone the window was resolved in. A bound at the
+ * start of a day has one; a bound at `now` (the end of "the past …", the start of "the next …") has none and stays a
+ * moment for every value.
+ */
+export function relativeWindowDays(relative: ITaskViewRelativeDate | undefined, window: { from: Date; to: Date }, timeZone?: string | null): { fromDay?: string; toDay?: string } {
+	if (!relative) return {};
+	const zone = isKnownTimeZone(timeZone) ? (timeZone as string) : 'UTC';
+	return {
+		...(relative.direction === 'future' ? {} : { fromDay: dayIn(window.from, zone) }),
+		...(relative.direction === 'past' ? {} : { toDay: dayIn(window.to, zone) })
+	};
 }
 
 /** The instants a relative date names at `now`: `[from, to)`. */
