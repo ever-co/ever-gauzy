@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, Inject } from '@angular/core';
 import { Location } from '@angular/common';
 import { Router } from '@angular/router';
+import { TranslateService } from '@ngx-translate/core';
 import { Environment, GAUZY_ENV } from '@gauzy/ui-config';
 
 type DesktopPlatform = 'windows' | 'macos' | 'linux';
@@ -39,18 +40,14 @@ export class DownloadsComponent {
 	/** Bar heights (%) for the Mobile card's illustration — a made-up week, Monday first. */
 	readonly weekBars = [62, 84, 48, 92, 70, 18, 6];
 
-	/** The expanded timer's form fields, drawn in the Browser extension card (the real timer's keys). */
-	readonly timerFields = [
-		{ label: 'TIMER_TRACKER.SELECT_CLIENT', placeholder: 'TIMER_TRACKER.PLACEHOLDERS.SELECT_CLIENT' },
-		{ label: 'TIMER_TRACKER.SELECT_PROJECT', placeholder: 'TIMER_TRACKER.PLACEHOLDERS.SELECT_PROJECT' },
-		{ label: 'TIMER_TRACKER.SELECT_TEAM', placeholder: 'TIMER_TRACKER.PLACEHOLDERS.SELECT_TEAM' },
-		{ label: 'TIMER_TRACKER.SELECT_TASK', placeholder: 'TIMER_TRACKER.PLACEHOLDERS.SELECT_TASK' }
-	];
+	/** Cache for {@link lastCaptureAgo}, keyed by language. */
+	private captureAgo = { lang: '', text: '' };
 
 	constructor(
 		@Inject(GAUZY_ENV) environment: Environment,
 		private readonly location: Location,
-		private readonly router: Router
+		private readonly router: Router,
+		private readonly translateService: TranslateService
 	) {
 		const desktops: IDesktopDownload[] = [
 			{
@@ -79,6 +76,27 @@ export class DownloadsComponent {
 		this.mobileUrl = environment.MOBILE_APP_DOWNLOAD_LINK || '';
 		this.extensionUrl = environment.EXTENSION_DOWNLOAD_LINK || '';
 		this.allDownloadsUrl = environment.PLATFORM_WEBSITE_DOWNLOAD_URL || '';
+	}
+
+	/**
+	 * "5 hours ago" for the drawn desktop window's last-capture line, in the app's language
+	 * ("il y a 5 heures", "vor 5 Stunden"…). `Intl.RelativeTimeFormat` does the wording, so no
+	 * translation key is needed; a language it does not know falls back to the browser's own.
+	 * Read on each check (the translate pipes beside it refresh on a language switch), so the
+	 * result is cached per language.
+	 */
+	get lastCaptureAgo(): string {
+		const lang = this.translateService.getCurrentLang() || 'en';
+		if (this.captureAgo.lang !== lang) {
+			let text: string;
+			try {
+				text = new Intl.RelativeTimeFormat(lang, { numeric: 'always' }).format(-5, 'hour');
+			} catch {
+				text = '5 hours ago';
+			}
+			this.captureAgo = { lang, text };
+		}
+		return this.captureAgo.text;
 	}
 
 	/**

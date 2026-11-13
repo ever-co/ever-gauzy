@@ -331,9 +331,10 @@ $primary: var(--color-primary-default, #3366ff);
 }
 
 // ── Illustrations ───────────────────────────────────────────────────────
-// Decorative drawings in theme colours. The two timers copy the app's own timer (billable `$`,
-// session and today readings, the round play button, the stopwatch / manual switch), so the
-// page shows what the user will actually get.
+// Decorative drawings in theme colours, copying the real apps so the page shows what the user
+// will actually get: the desktop app's timer window in the Desktop card, and the web timer
+// (billable `$`, session and today readings, round play button, stopwatch / manual switch) in
+// the Browser extension card.
 $success: var(--color-success-default, #00d68f);
 $on-primary: var(--text-control-color, #ffffff);
 
@@ -345,13 +346,11 @@ $on-primary: var(--text-control-color, #ffffff);
   user-select: none;
 }
 
-// Desktop: the expanded timer on a dotted backdrop that bleeds to the panel's edges. The timer
-// is positioned rather than laid out, so its height never stretches the card — whatever runs
-// past the card's bottom edge is simply cut off by the panel.
+// Desktop: the desktop app's window on a dotted backdrop that bleeds to the panel's edges.
 .art-desktop {
   position: relative;
   align-self: stretch;
-  min-height: 24rem;
+  min-height: 28rem;
   margin-block: calc(var(--pad-y) * -1);
   margin-inline-end: calc(var(--pad-x) * -1);
   background-image: radial-gradient(rgba(126, 126, 143, 0.3) 1px, transparent 1px);
@@ -492,16 +491,6 @@ $on-primary: var(--text-control-color, #ffffff);
   }
 }
 
-// Expanded (Desktop card): full size, open at the bottom where the card cuts it off.
-.expanded {
-  position: absolute;
-  top: 2.5rem;
-  inset-inline: 0;
-  width: min(calc(100% - 2.5rem), 19rem);
-  margin-inline: auto;
-  border-radius: 0.875rem 0.875rem 0 0;
-}
-
 // Compact (Browser extension card): scaled down to sit under the toolbar of the drawn tab.
 .compact {
   width: min(calc(100% - 1.5rem), 20rem);
@@ -548,52 +537,240 @@ $on-primary: var(--text-control-color, #ffffff);
   }
 }
 
-.expanded-header {
+// ── Desktop: the desktop app's timer window ─────────────────────────────
+// Title bar, organization picker, the running clock with its pause button, the day / week totals,
+// then the form. Positioned rather than laid out, so it never stretches the card; whatever runs
+// past the card's bottom edge is cut off by the panel.
+$danger: var(--color-danger-default, #ff3d71);
+
+.desktop-window {
+  position: absolute;
+  top: 2.25rem;
+  inset-inline: 0;
+  display: flex;
+  flex-direction: column;
+  width: min(calc(100% - 2.5rem), 20rem);
+  margin-inline: auto;
+  overflow: hidden;
+  border-radius: 0.75rem 0.75rem 0 0;
+  background: $surface-2;
+  box-shadow:
+    $ring,
+    0 16px 40px rgba(0, 0, 0, 0.16);
+  color: $text;
+}
+
+.titlebar {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  height: 2.25rem;
+  padding: 0 0.75rem;
+  border-bottom: 1px solid $border;
+  font-size: 0.75rem;
+  white-space: nowrap;
+}
+
+.titlebar-logo {
+  width: 1rem;
+  height: 1rem;
+  border-radius: 0.25rem;
+}
+
+.titlebar-menu {
+  color: $text;
+}
+
+.titlebar-controls {
+  display: flex;
+  gap: 0.875rem;
+  margin-inline-start: auto;
+  color: $muted;
+
+  nb-icon {
+    font-size: 1rem;
+  }
+}
+
+.window-content {
+  display: flex;
+  flex-direction: column;
+  padding: 0.875rem 0.875rem 1rem;
+}
+
+.dw-select {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  height: 2.25rem;
+  padding: 0 0.75rem;
+  border-radius: 0.5rem;
+  background: $surface;
+  box-shadow: $ring;
+  font-size: 0.8125rem;
+
+  nb-icon {
+    flex: 0 0 auto;
+    margin-inline-start: auto;
+    font-size: 1rem;
+    color: $muted;
+  }
+}
+
+.org-select {
+  height: 2.5rem;
+}
+
+.org-logo {
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 0.25rem;
+  object-fit: cover;
+}
+
+.dw-value {
+  overflow: hidden;
+  font-weight: 600;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.dw-placeholder {
+  overflow: hidden;
+  color: $muted;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.project-badge {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 0.25rem;
+  background: var(--color-info-default, #0095ff);
+  color: #ffffff;
+  font-size: 0.5625rem;
+  font-weight: 600;
+}
+
+.dw-timer {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 0.75rem;
-  margin: 0.25rem 0 0.75rem;
+  margin-top: 0.75rem;
 }
 
-.expanded-title {
-  font-size: 1rem;
+.dw-clock {
+  font-size: 2.5rem;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+// The running state: a solid pink-red circle with the pause bars, as in the desktop app.
+.dw-pause {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+  background: $danger;
+  color: #ffffff;
+
+  i {
+    font-size: 0.9375rem;
+  }
+}
+
+.dw-totals {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.25rem 1rem;
+  margin-top: 0.5rem;
+  font-size: 0.75rem;
   font-weight: 600;
-  line-height: 1.5rem;
-  color: $primary;
+  font-variant-numeric: tabular-nums;
+
+  .muted {
+    margin-inline-end: 0.25rem;
+    font-weight: 600;
+  }
 }
 
-.field-label {
+.dw-limit {
+  margin-inline-start: 0.25rem;
+  font-weight: 400;
+}
+
+.dw-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   margin: 0.875rem 0 0.375rem;
   font-size: 0.75rem;
   font-weight: 600;
   line-height: 1rem;
   color: $muted;
-}
-
-.field-select {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.5rem;
-  height: 2.25rem;
-  padding: 0 0.75rem;
-  border-radius: 0.5rem;
-  background: $surface-2;
-  box-shadow: $ring;
-  font-size: 0.8125rem;
-  color: $muted;
-
-  span {
-    overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-  }
 
   nb-icon {
-    flex: 0 0 auto;
     font-size: 1rem;
+    color: $text;
   }
+}
+
+.dw-textarea {
+  display: block;
+  height: 3.5rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.5rem;
+  background: $surface;
+  box-shadow: $ring;
+  font-size: 0.8125rem;
+}
+
+.dw-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.875rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: $muted;
+}
+
+.dw-switch {
+  position: relative;
+  flex: 0 0 auto;
+  width: 1.75rem;
+  height: 1rem;
+  border-radius: 999px;
+  background: $tint-strong;
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0.125rem;
+    inset-inline-start: 0.125rem;
+    width: 0.75rem;
+    height: 0.75rem;
+    border-radius: 50%;
+    background: $surface;
+  }
+}
+
+.dw-capture {
+  margin-top: 0.625rem;
+  font-size: 0.75rem;
+  font-weight: 600;
 }
 
 // ── Mobile: a phone frame showing the week's hours ──────────────────────

@@ -55,29 +55,96 @@
 						</div>
 
 						<!--
-					Decorative: the timer in its expanded form (title, reading, then the form),
-					cut off by the bottom of the card.
-				-->
+							Decorative: the desktop app's timer window, mid-session, cut off by the
+							bottom of the card. Labels are the desktop timer's own TIMER_TRACKER keys.
+						-->
 						<div class="art art-desktop" aria-hidden="true">
-							<div class="timer-card expanded">
-								<span class="timer-controls">
-									<nb-icon icon="minus-outline"></nb-icon>
-									<nb-icon icon="close-outline"></nb-icon>
+							<div class="desktop-window">
+								<span class="titlebar">
+									<img
+										class="titlebar-logo"
+										src="assets/images/logos/logo_Gauzy_512x512.png"
+										alt=""
+									/>
+									<span class="titlebar-menu">Gauzy</span>
+									<span class="titlebar-menu">{{ 'TIMER_TRACKER.MENU.WINDOW' | translate }}</span>
+									<span class="titlebar-menu">…</span>
+									<span class="titlebar-controls">
+										<nb-icon icon="minus-outline"></nb-icon>
+										<nb-icon icon="close-outline"></nb-icon>
+									</span>
 								</span>
-								<span class="expanded-header">
-									<span class="expanded-title">{{ 'TIMER_TRACKER.TIMER' | translate }}</span>
-									<ng-container *ngTemplateOutlet="modeSwitch"></ng-container>
-								</span>
-								<span class="timer-main">
-									<ng-container *ngTemplateOutlet="timerReading"></ng-container>
-								</span>
-								@for (field of timerFields; track field.label) {
-									<span class="field-label">{{ field.label | translate }}</span>
-									<span class="field-select">
-										<span>{{ field.placeholder | translate }}</span>
+
+								<span class="window-content">
+									<span class="dw-select org-select">
+										<img class="org-logo" src="assets/images/logos/ever.jpg" alt="" />
+										<span class="dw-value">Ever Tech</span>
 										<nb-icon icon="chevron-down-outline"></nb-icon>
 									</span>
-								}
+
+									<span class="dw-timer">
+										<span class="dw-clock">00:00:05</span>
+										<span class="dw-pause"><i class="fas fa-pause"></i></span>
+									</span>
+									<span class="dw-totals">
+										<span>
+											<span class="muted">{{ 'TIMER_TRACKER.TODAY' | translate }}</span>
+											00h 00m
+										</span>
+										<span>
+											<span class="muted">{{ 'TIMESHEET.WEEK' | translate }}</span>
+											31h 59m
+											<span class="dw-limit">{{ 'TIMER_TRACKER.NO_LIMIT' | translate }}</span>
+										</span>
+									</span>
+
+									<span class="dw-label">
+										{{ 'TIMER_TRACKER.SELECT_CLIENT' | translate }}
+										<nb-icon icon="edit-outline"></nb-icon>
+									</span>
+									<span class="dw-select">
+										<span class="dw-placeholder">{{
+											'TIMER_TRACKER.PLACEHOLDERS.SELECT_CLIENT' | translate
+										}}</span>
+										<nb-icon icon="chevron-down-outline"></nb-icon>
+									</span>
+
+									<span class="dw-label">{{ 'TIMER_TRACKER.SELECT_PROJECT' | translate }}</span>
+									<span class="dw-select">
+										<span class="project-badge">EG</span>
+										<span class="dw-value">Ever Gauzy</span>
+										<nb-icon icon="chevron-down-outline"></nb-icon>
+									</span>
+
+									<span class="dw-label">{{ 'TIMER_TRACKER.SELECT_TEAM' | translate }}</span>
+									<span class="dw-select">
+										<span class="dw-placeholder">{{
+											'TIMER_TRACKER.PLACEHOLDERS.SELECT_TEAM' | translate
+										}}</span>
+										<nb-icon icon="chevron-down-outline"></nb-icon>
+									</span>
+
+									<span class="dw-label">{{ 'TIMER_TRACKER.SELECT_TASK' | translate }}</span>
+									<span class="dw-select">
+										<span class="dw-placeholder">{{
+											'TIMER_TRACKER.PLACEHOLDERS.SELECT_TASK' | translate
+										}}</span>
+										<nb-icon icon="chevron-down-outline"></nb-icon>
+									</span>
+
+									<span class="dw-label">{{ 'TIMER_TRACKER.DESCRIPTION' | translate }}</span>
+									<span class="dw-textarea dw-placeholder">
+										{{ 'TIMER_TRACKER.PLACEHOLDERS.DESCRIPTION' | translate }}
+									</span>
+
+									<span class="dw-toggle">
+										<span class="dw-switch"></span>
+										{{ 'TIMER_TRACKER.ACTIVITY_WATCH_INTEGRATION' | translate }}
+									</span>
+									<span class="dw-capture">
+										{{ 'TIMER_TRACKER.LAST_CAPTURE_TAKEN' | translate }} {{ lastCaptureAgo }}
+									</span>
+								</span>
 							</div>
 						</div>
 					</div>
