@@ -24,7 +24,7 @@
 
 ## Angular (`integration-jira-ui`)
 
-- [x] **T13**. Connect page, site choice, mappings with the status-map editor and issue types, Import now, runs with their reports, conflicts (a date-only due date shown in UTC), disconnect; hidden when the routes answer 404 ([#11865](https://github.com/ever-co/ever-gauzy/pull/11865), [#11868](https://github.com/ever-co/ever-gauzy/pull/11868))
+- [x] **T13**. Connect page, site choice, mappings with the status-map editor and issue types, Import now, runs with their reports, conflicts (a date-only due date shown in UTC), disconnect; an "unavailable" notice (`JIRA.UNAVAILABLE`) instead of the page when the routes answer 404 ([#11865](https://github.com/ever-co/ever-gauzy/pull/11865), [#11868](https://github.com/ever-co/ever-gauzy/pull/11868))
 
 ## Ever Teams (`integrations-settings`)
 

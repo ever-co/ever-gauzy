@@ -29,7 +29,7 @@
 
 ## Phase 3 — Angular docs-ui (ever-gauzy PR 2)
 
-- [x] **T15**. `DocsImportService` (probe, upload with progress, poll) and the PDF download in `DocsExportService` (+spec) ([#11810](https://github.com/ever-co/ever-gauzy/pull/11810))
+- [x] **T15**. `DocsImportService` (probe, upload with progress, poll, and the PDF download `downloadPdf`) (+spec; `DocsExportService` keeps the browser print) ([#11810](https://github.com/ever-co/ever-gauzy/pull/11810))
 - [x] **T16**. Import dialog: zip, target page or space, start, progress, report with links, skipped and failed lists (+spec) ([#11810](https://github.com/ever-co/ever-gauzy/pull/11810))
 - [x] **T17**. "Import" in the browse header, "Export as PDF" (page / with sub-pages) in the page menu; hidden on 404; i18n ([#11810](https://github.com/ever-co/ever-gauzy/pull/11810))
 
