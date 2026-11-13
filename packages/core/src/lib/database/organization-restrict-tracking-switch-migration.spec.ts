@@ -2,7 +2,7 @@ import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 import { DataSource, QueryRunner } from 'typeorm';
-import { AddOrganizationRestrictTrackingSwitch1791000008600 } from './migrations/1791000008600-AddOrganizationRestrictTrackingSwitch';
+import { AddOrganizationRestrictTrackingSwitch1791000008800 } from './migrations/1791000008800-AddOrganizationRestrictTrackingSwitch';
 
 /**
  * `organization.restrictTrackingSwitchToHigherRoles`, run for real on SQLite against a minimal fixture of the table: it
@@ -47,7 +47,7 @@ describe('organization.restrictTrackingSwitchToHigherRoles migration on SQLite',
 	const run = async (direction: 'up' | 'down') => {
 		const queryRunner = dataSource.createQueryRunner();
 		try {
-			await new AddOrganizationRestrictTrackingSwitch1791000008600()[direction](queryRunner);
+			await new AddOrganizationRestrictTrackingSwitch1791000008800()[direction](queryRunner);
 		} finally {
 			await queryRunner.release();
 		}
@@ -89,7 +89,7 @@ describe('organization.restrictTrackingSwitchToHigherRoles migration on MySQL', 
 				return [];
 			}
 		} as unknown as QueryRunner;
-		const migration = new AddOrganizationRestrictTrackingSwitch1791000008600();
+		const migration = new AddOrganizationRestrictTrackingSwitch1791000008800();
 
 		await migration.up(queryRunner);
 
@@ -115,7 +115,7 @@ describe('organization.restrictTrackingSwitchToHigherRoles migration on Postgres
 			}
 		} as unknown as QueryRunner;
 
-		await new AddOrganizationRestrictTrackingSwitch1791000008600().up(queryRunner);
+		await new AddOrganizationRestrictTrackingSwitch1791000008800().up(queryRunner);
 
 		expect(queries).toEqual([
 			'SELECT pg_advisory_xact_lock($1)',
