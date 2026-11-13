@@ -9,7 +9,8 @@ export class ScheduleTimeLogEntriesCommand implements ICommand {
 	 *                   it, or without the organization or tenant id, rather than close every employee's pending logs.
 	 * @param organizationId The employee's organization. Required.
 	 * @param tenantId The employee's tenant. Required.
-	 * @param timeLogIds Only the pending logs among these, when given: after a stop, the runs going when it began.
+	 * @param timeLogIds Only the running pending logs among these, when given: the runs the start or stop read. A log
+	 *                   stored stopped without an end is still given one.
 	 */
 	constructor(
 		public readonly employeeId?: ID,

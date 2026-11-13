@@ -50,8 +50,10 @@ export class ScheduleTimeLogEntriesHandler implements ICommandHandler<ScheduleTi
 		// Retrieve all pending TimeLog entries of the employee, in their tenant and organization
 		const pendingLogs = await this.getPendingTimeLogs(tenantId, organizationId, employeeId);
 
-		// Only the logs the command names, when it names some: after a stop, a run started meanwhile is not among them
-		const logs = timeLogIds ? pendingLogs.filter((log) => timeLogIds.includes(log.id)) : pendingLogs;
+		// Only the running logs the command names, when it names some: after a stop, a run started meanwhile is not
+		// among them. A log stored stopped without an end is never a run another client started, and still gets one
+		const isNamedOrNotRunning = (log: ITimeLog) => !log.isRunning || timeLogIds.includes(log.id);
+		const logs = timeLogIds ? pendingLogs.filter(isNamedOrNotRunning) : pendingLogs;
 
 		// Iterate through each pending time log entry to process and update them as necessary
 		for await (const log of logs) {
