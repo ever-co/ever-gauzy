@@ -12,7 +12,7 @@ import {
 	TaskSizeEnum,
 	TaskStatusEnum
 } from '@gauzy/contracts';
-import { dateOnlyOf } from './due-date';
+import { dateOnlyOf } from '@gauzy/ui-core/common';
 
 /** What the bulk toolbar changes. */
 export type BulkAction = 'status' | 'priority' | 'size' | 'assignees' | 'labels' | 'project' | 'dueDate' | 'archive';

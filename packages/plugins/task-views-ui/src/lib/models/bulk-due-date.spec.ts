@@ -1,9 +1,9 @@
 import { formatDate } from '@angular/common';
 import { runInThisContext } from 'node:vm';
 import { ITaskBulkUpdateInput, TaskStatusEnum } from '@gauzy/contracts';
+import { dueDateShown } from '@gauzy/ui-core/common';
 import { isOverdue } from '../components/task-list/task-list.component';
 import { bulkRequest, dueDateChanges } from './bulk-undo';
-import { dayOfDateOnly, dueDateShown, dueDeadline } from './due-date';
 import { dayNumberOf, dayOfStoredDate } from './timeline';
 
 /** UTC−4 all year (no daylight saving), and UTC+2 all year. */
@@ -37,7 +37,7 @@ function pickedAndSent(day: string): string {
 }
 
 /** The day the task list shows for a stored due date. */
-const listShows = (stored: string) => formatDate(dueDateShown(stored) as string, 'mediumDate', 'en-US');
+const listShows = (stored: string) => formatDate(dueDateShown(stored) as Date | string, 'mediumDate', 'en-US');
 
 describe('due dates picked in one zone and read in another', () => {
 	it('switches the clock’s zone for real (the cases below would hold in one zone)', () => {
@@ -75,28 +75,5 @@ describe('due dates picked in one zone and read in another', () => {
 			expect(isOverdue(open, new Date(2026, 10, 14, 12, 0).getTime())).toBe(false);
 			expect(isOverdue(open, new Date(2026, 10, 15, 0, 1).getTime())).toBe(true);
 		});
-	});
-});
-
-describe('date-only values', () => {
-	it('reads a bare day and midnight UTC as a day, and any other moment as a moment', () => {
-		expect(dayOfDateOnly('2026-11-14')).toEqual([2026, 10, 14]);
-		expect(dayOfDateOnly('2026-11-14T00:00:00.000Z')).toEqual([2026, 10, 14]);
-		expect(dayOfDateOnly(new Date('2026-11-14T00:00:00+00:00'))).toEqual([2026, 10, 14]);
-		expect(dayOfDateOnly('2026-11-15T03:59:59.000Z')).toBeNull();
-		expect(dayOfDateOnly('not a date')).toBeNull();
-		expect(dayOfDateOnly(null)).toBeNull();
-		expect(dayOfDateOnly('')).toBeNull();
-	});
-
-	it('shows a moment (a due date written before this change) in the reader’s zone, as before', () => {
-		// The end of 14 Nov in UTC−4: a reader in UTC+2 reads it as the 15th, which is what it is as a moment.
-		const moment = '2026-11-15T03:59:59.000Z';
-		expect(dueDateShown(moment)).toBe(moment);
-		inZone(READER_ZONE, () => expect(listShows(moment)).toBe('Nov 15, 2026'));
-		expect(dueDeadline(moment)).toBe(Date.parse(moment));
-		expect(dueDateShown(null)).toBeNull();
-		expect(dueDeadline(undefined)).toBeNull();
-		expect(dueDeadline('not a date')).toBeNull();
 	});
 });

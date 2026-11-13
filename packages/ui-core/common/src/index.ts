@@ -6,6 +6,7 @@ export * from './lib/constants';
 export * from './lib/http-params';
 export * from './lib/interfaces';
 export * from './lib/utils/csv';
+export * from './lib/utils/date-only';
 export * from './lib/utils/download-file';
 export * from './lib/utils/latest-request';
 export * from './lib/utils/placeholder-image';

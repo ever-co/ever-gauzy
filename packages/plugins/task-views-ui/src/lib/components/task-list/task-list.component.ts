@@ -13,8 +13,8 @@ import {
 import { NbIconModule, NbTooltipModule } from '@nebular/theme';
 import { TranslatePipe } from '@ngx-translate/core';
 import { ID, ITask } from '@gauzy/contracts';
+import { dueDateShown, dueDeadline } from '@gauzy/ui-core/common';
 import { isSelected, pageSelectionState, TaskSelection, EMPTY_SELECTION } from '../../models/selection';
-import { dueDateShown, dueDeadline } from '../../models/due-date';
 import { taskReferenceOf } from '../../models/task-reference';
 import { humanize, personName } from '../../services/task-views-options.service';
 
