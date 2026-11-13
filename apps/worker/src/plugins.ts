@@ -18,9 +18,11 @@ import { EmailProviderSendGridPlugin, isSendGridEnabled } from '@gauzy/plugin-em
 import { EmailProviderSesPlugin, isSesEnabled } from '@gauzy/plugin-email-provider-ses';
 import { IntegrationEverWorksPlugin, isEverWorksEnabled } from '@gauzy/plugin-integration-ever-works';
 import { IntegrationAsanaPlugin, isAsanaEnabled } from '@gauzy/plugin-integration-asana';
+import { IntegrationJiraCloudPlugin, isJiraEnabled } from '@gauzy/plugin-integration-jira';
 import { IntegrationLinearPlugin, isLinearEnabled } from '@gauzy/plugin-integration-linear';
 import { IntegrationTrelloPlugin, isTrelloEnabled } from '@gauzy/plugin-integration-trello';
 import { InventoryPlugin } from '@gauzy/plugin-inventory';
+import { isTaskAutomationsEnabled, TaskAutomationsSchedulePlugin } from '@gauzy/plugin-task-automations';
 import { OrderPlugin } from '@gauzy/plugin-order';
 import { PricingPlugin } from '@gauzy/plugin-pricing';
 import { TaxPlugin } from '@gauzy/plugin-tax';
@@ -168,6 +170,16 @@ export const plugins = resolvePluginLoadOrder([
 	 */
 	...(isTrelloEnabled(process.env, (message) => console.warn(message)) ? [IntegrationTrelloPlugin] : []),
 	/**
+	 * The Jira Cloud sync — hosted here, behind its switch, for the sweep it owns: the scheduled import, the refresh of
+	 * each connection's dynamic webhook before Jira's 30-day expiry, and the refused-token notices. A `@ScheduledJob`
+	 * fires only in this process (its webhooks and "import now" are the API's). The sweep is registered by the plugin
+	 * only where a queue root exists, so a worker without Redis is unchanged. The Connect descriptor plugin
+	 * (`IntegrationJiraPlugin`) is the API's alone: it owns no queue and no schedule.
+	 *
+	 * 🛑 Off unless `JIRA_ENABLED` is exactly `true` — the same switch as the API's list.
+	 */
+	...(isJiraEnabled(process.env, (message) => console.warn(message)) ? [IntegrationJiraCloudPlugin] : []),
+	/**
 	 * The Inbox — hosted whenever it is switched on, for its own schedule: the recovery sweep that files the
 	 * notifications the API's live filing missed (a process that stopped between a notification's commit and its
 	 * filing; the Inbox spec's "no lost entries"). A `@ScheduledJob` fires only here, so without the Inbox in this
@@ -180,6 +192,16 @@ export const plugins = resolvePluginLoadOrder([
 	 * 🛑 Off unless `GAUZY_INBOX_ENABLED` is exactly `true`, so a worker is unchanged by default.
 	 */
 	...(isInboxEnabled(process.env, (message) => console.warn(message)) ? [InboxPlugin] : []),
+	/**
+	 * Task automations — hosted here, behind their switch, for the one schedule they own: the 15-minute due-date
+	 * sweep. A `@ScheduledJob` fires only in this process. Only the schedule is hosted (`TaskAutomationsSchedulePlugin`:
+	 * the queue and the job that enqueues onto it, no consumer, no entity): the rules write through core's task
+	 * services, which this module graph does not host, so the sweep runs in the API that consumes the queue — the
+	 * outbox's own split. With no queue root the plugin registers nothing here.
+	 *
+	 * 🛑 Off unless `GAUZY_TASK_AUTOMATIONS_ENABLED` is exactly `true` — the same switch as the API's list.
+	 */
+	...(isTaskAutomationsEnabled(process.env, (message) => console.warn(message)) ? [TaskAutomationsSchedulePlugin] : []),
 	/**
 	 * Email delivery of the Inbox's notifications (immediate or digest per kind, the Inbox spec FR-10–FR-12): the
 	 * sweep that decides and sends runs here, on the worker's queue root, every minute.

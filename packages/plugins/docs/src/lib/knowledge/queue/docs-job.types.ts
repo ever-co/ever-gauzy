@@ -98,3 +98,9 @@ export interface IDocsReconcileJob {
 	/** ISO timestamp of the enqueue, for log correlation. */
 	requestedAt: string;
 }
+
+/**
+ * Payload of `docs.import`: the base snapshot, whose `documentId` is the `document_import` id (`reason: 'import'`,
+ * so the queue serves it below interactive work).
+ */
+export type IDocsImportJob = IDocsJobBase;

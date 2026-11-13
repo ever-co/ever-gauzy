@@ -50,9 +50,17 @@ export class ChatWebhooksService {
 		return this.http.delete<IChatWebhookWriteResult>(`${CHAT}/webhooks/${path(webhookId)}`);
 	}
 
-	/** Clicks a button of an app message; the app's reply, if any, comes back as the message. */
-	interact(messageId: ID, actionId: string, blockId?: string | null): Observable<IChatInteractionResult> {
-		return this.http.post<IChatInteractionResult>(`${CHAT}/messages/${path(messageId)}/interactions`, blockId ? { actionId, blockId } : { actionId });
+	/**
+	 * Clicks a button of an app message; the app's reply, if any, comes back as the message. `idempotencyKey` (a UUID per
+	 * click, the same on each retry of it) goes in the `Idempotency-Key` header: the API answers a repeat of it with the
+	 * first click and calls the app no second time.
+	 */
+	interact(messageId: ID, actionId: string, blockId?: string | null, idempotencyKey?: string): Observable<IChatInteractionResult> {
+		return this.http.post<IChatInteractionResult>(
+			`${CHAT}/messages/${path(messageId)}/interactions`,
+			blockId ? { actionId, blockId } : { actionId },
+			idempotencyKey ? { headers: { 'Idempotency-Key': idempotencyKey } } : {}
+		);
 	}
 
 	/** The state of one of my clicks (while its callback is retried). */

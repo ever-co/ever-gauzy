@@ -1,0 +1,133 @@
+:host {
+	display: block;
+}
+
+.task-trash__header {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.75rem;
+}
+
+.task-trash__title {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+
+	h4 {
+		margin: 0;
+	}
+}
+
+.task-trash__back {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 2rem;
+	height: 2rem;
+	border-radius: var(--border-radius);
+	color: var(--text-hint-color);
+
+	&:hover,
+	&:focus-visible {
+		background: var(--background-basic-color-2);
+		color: var(--text-basic-color);
+	}
+}
+
+.task-trash__search {
+	width: 100%;
+	max-width: 18rem;
+}
+
+.task-trash__hint {
+	margin: 0 0 0.75rem;
+	color: var(--text-hint-color);
+	font-size: 0.75rem;
+}
+
+.task-trash__empty {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 0.5rem;
+	padding: 3rem 1rem;
+	text-align: center;
+	color: var(--text-hint-color);
+
+	b {
+		color: var(--text-basic-color);
+	}
+}
+
+.task-trash__list {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+	border: 1px solid var(--border-basic-color-3);
+	border-radius: calc(var(--border-radius) * 1.5);
+	overflow: hidden;
+}
+
+.task-trash__row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.5rem 0.75rem;
+	padding: 0.625rem 0.75rem;
+
+	&:last-child {
+		border-bottom: 0;
+	}
+}
+
+.task-trash__key {
+	flex-shrink: 0;
+	color: var(--text-hint-color);
+	font-size: 0.75rem;
+	font-variant-numeric: tabular-nums;
+}
+
+.task-trash__main {
+	display: flex;
+	flex: 1 1 12rem;
+	flex-direction: column;
+	min-width: 0;
+}
+
+.task-trash__name,
+.task-trash__meta {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.task-trash__name {
+	font-size: 0.8125rem;
+	font-weight: 600;
+}
+
+.task-trash__meta {
+	color: var(--text-hint-color);
+	font-size: 0.75rem;
+}
+
+.task-trash__actions,
+.task-trash__confirm {
+	display: flex;
+	flex-shrink: 0;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.375rem;
+}
+
+.task-trash__confirm span {
+	font-size: 0.75rem;
+}
+
+.task-trash__more {
+	display: flex;
+	justify-content: center;
+	padding-top: 0.75rem;
+}

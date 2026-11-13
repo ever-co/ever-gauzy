@@ -3,7 +3,7 @@
 **Feature ID**: `docs-collaboration`
 **Plan**: `./plan.md`
 **Status**: `In review`
-**Last updated**: 2026-11-11 (T15–T17)
+**Last updated**: 2026-11-12 (T19–T23)
 
 ---
 
@@ -65,3 +65,28 @@
   against a platform with `GAUZY_DOCS_LIVE_ENABLED=true` is still to do)
 
 **Status 2026-11-07:** phase 1 in ever-gauzy `feat/docs-collaboration` (PR opened with the lane; bot threads next).
+
+## Phase 4 — Platform gaps found by the Ever Teams Docs lane (ever-gauzy #11813)
+
+- [x] **T19**. Text-range comment anchors (FR-16): contracts, table
+      `document_comment_anchor` (migration `1791000007530`, both ORMs), REST
+      (`GET …/comment-anchors`, `PUT|DELETE …/comments/:commentId/anchor`) and
+      GraphQL (`Comment.documentAnchor`, `documentCommentAnchors`, set /
+      remove), behind `GAUZY_DOCS_COLLAB_ENABLED`; the comment API's write rule
+      for a page
+- [x] **T20**. Follower notifications name the comment (FR-17):
+      `employee_notification.commentId` (migration `1791000007540`), the
+      fan-out, the Inbox entry about the comment
+- [x] **T21**. Search snippets (FR-18): `searchSnippet` on `GET /documents?q=…`
+- [x] **T22**. Folder zip export (FR-19): `…/export/markdown?subtree=true` on a
+      folder
+- [x] **T23**. Ever Teams: range comments (highlight, panel, live relative
+      positions), the anchor proxies, the folder zip export (ever-teams
+      `feat/docs-platform-gaps`)
+- [ ] **T24**. The Angular Docs UI: snippets in the search results and the zip
+      export of a folder or a page with sub-pages (`feat/docs-ui-platform-gaps`,
+      done); range comments in the Angular editor (open: its block comments
+      keep working, a range thread made in Ever Teams shows on its block)
+- [ ] **T25**. Manual check on dev with `GAUZY_DOCS_COLLAB_ENABLED=true` (a
+      range found again after edits, live and saved; a follower's Inbox entry
+      opens the thread; a folder's zip opened)

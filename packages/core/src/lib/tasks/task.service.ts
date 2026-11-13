@@ -2,6 +2,7 @@ import { EventBus } from '@nestjs/cqrs';
 import {
 	Injectable,
 	BadRequestException,
+	ConflictException,
 	ForbiddenException,
 	HttpStatus,
 	HttpException,
@@ -57,16 +58,18 @@ import {
 	ITaskBulkUpdateResult,
 	ITaskReferenceResolution,
 	ITaskReferenceResolveInput,
+	ITaskTrashFindInput,
 	TaskBuiltInViewEnum,
 	TaskStatusEnum
 } from '@gauzy/contracts';
 import { isEmpty, isNotEmpty } from '@gauzy/utils';
 import { isMySQL, isPostgres, isSqlite } from '@gauzy/config';
-import { TenantAwareCrudService, BaseQueryDTO } from './../core/crud';
+import { TenantAwareCrudService, BaseQueryDTO, isWithinOrganizationBoundary } from './../core/crud';
 import { IPartialEntity } from './../core/crud/icrud.service';
 import { sanitizeRichHtml } from './../core/html-sanitizer';
 import {
 	mikroOrmContains,
+	mikroOrmILike,
 	MultiORMEnum,
 	parseFindOptionsRelations,
 	parseFindOptionsSelect,
@@ -135,6 +138,53 @@ function teamIdsOfTaskOrganization(task: Pick<Task, 'organizationId' | 'teams'>)
 	}
 	const ownTeams = (task.teams ?? []).filter((team) => team.organizationId === task.organizationId);
 	return ownTeams.map((team) => team.id);
+}
+
+/** At most this many trashed tasks per page (`TaskTrashQueryDTO` caps `take` at the same). */
+const TRASH_PAGE_SIZE = 100;
+
+/** The 404 of a delete from the trash that found no such task there: it was restored, or is already deleted. */
+const TASK_NOT_IN_TRASH = 'TASK_NOT_IN_TRASH: no task with that id is in the trash (it was restored or deleted).';
+
+/** The 409 of a delete from the trash that the database refused because other rows still point at the task. */
+const TASK_STILL_REFERENCED =
+	'TASK_STILL_REFERENCED: the task is still linked from other records (a linked issue or a key result), so it stays ' +
+	'in the trash; remove those links first.';
+
+/** The driver codes of a statement refused because another row still references the row it deletes. */
+const REFERENCED_ROW_CODES = new Set([
+	'23503',
+	'ER_ROW_IS_REFERENCED',
+	'ER_ROW_IS_REFERENCED_2',
+	'SQLITE_CONSTRAINT_FOREIGNKEY'
+]);
+
+/** The drivers' own wording of the same refusal, for a driver that states no code. */
+const REFERENCED_ROW_MESSAGE =
+	/FOREIGN KEY constraint failed|violates foreign key constraint|cannot delete or update a parent row/i;
+
+/**
+ * Whether a failed delete was refused because another row still references the row it deletes: a column whose
+ * foreign key has no delete rule of its own (`task_linked_issues.taskFromId`/`taskToId`, `key_result.taskId`). Read on
+ * TypeORM's `QueryFailedError` (the driver's code is copied onto it, and kept on `driverError`), MikroORM's
+ * `ForeignKeyConstraintViolationException`, and the driver's own error.
+ *
+ * @param error - What the statement threw
+ * @returns True for a refused delete of a referenced row
+ */
+function isReferencedRowViolation(error: unknown): boolean {
+	const nested = error as { driverError?: unknown; cause?: unknown } | null;
+	return [error, nested?.driverError, nested?.cause].some((candidate) => {
+		const failure = candidate as { name?: unknown; code?: unknown; message?: unknown } | null | undefined;
+		if (!failure) {
+			return false;
+		}
+		return (
+			failure.name === 'ForeignKeyConstraintViolationException' ||
+			REFERENCED_ROW_CODES.has(String(failure.code)) ||
+			REFERENCED_ROW_MESSAGE.test(String(failure.message ?? ''))
+		);
+	});
 }
 
 @FavoriteService(BaseEntityEnum.Task)
@@ -686,25 +736,16 @@ export class TaskService extends TenantAwareCrudService<Task> {
 	 * @throws ForbiddenException when the caller may not delete that task
 	 */
 	async deleteTask(id: ID): Promise<DeleteResult> {
-		if (!RequestContext.hasAnyPermission([PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TASK_DELETE])) {
-			const employeeId = RequestContext.currentEmployeeId();
-			const taskWithTeams = await this.findOneByIdString(id, { relations: { teams: true } });
-			const teamIds = teamIdsOfTaskOrganization(taskWithTeams);
-			const isTeamManager =
-				isNotEmpty(employeeId) &&
-				(await this._managedEmployeeService.isManagerOfTeamsOrProjects(employeeId, teamIds));
-
-			if (!isTeamManager) {
-				throw new ForbiddenException('You can only delete a task of a team you manage.');
-			}
-		}
+		// A task in the trash is deleted for good on the same terms as a live one, by a team manager too.
+		await this.assertMayRemoveTask(id, true);
 
 		// A hard delete leaves nothing to read afterwards, so the row the event carries is read first. A task that
 		// does not exist is a delete that removes nothing, as before; a read that FAILS stops the delete, so a task
-		// is never removed without its DELETED event.
+		// is never removed without its DELETED event. A task already in the trash published DELETED when it went
+		// there, and is not announced twice.
 		let task: Task | null = null;
 		try {
-			task = await this.findOneByIdString(id);
+			task = await this.findOneByIdString(id, { withDeleted: true });
 		} catch (error) {
 			if (!(error instanceof NotFoundException)) {
 				throw error;
@@ -713,11 +754,216 @@ export class TaskService extends TenantAwareCrudService<Task> {
 
 		const result = await this.delete(id);
 
-		if (task && result?.affected) {
+		if (task && !task.deletedAt && result?.affected) {
 			this.publishTaskEvent(task, BaseEntityEventTypeEnum.DELETED);
 		}
 
 		return result;
+	}
+
+	/**
+	 * Refuses to remove, trash or restore a task unless the caller may: `ALL_ORG_EDIT` or `ORG_TASK_DELETE` for any task
+	 * of the organization; otherwise (the routes admit `ORG_TASK_EDIT` so a team manager reaches this) only a manager
+	 * of one of the task's teams of the task's organization.
+	 *
+	 * @param id - The task
+	 * @param withDeleted - Whether the task may be in the trash (a restore, or a delete for good)
+	 * @throws ForbiddenException when the caller may not act on that task
+	 * @throws NotFoundException when the task is not one of the caller's tenant (for a team manager's check)
+	 */
+	private async assertMayRemoveTask(id: ID, withDeleted: boolean): Promise<void> {
+		if (RequestContext.hasAnyPermission([PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TASK_DELETE])) {
+			return;
+		}
+		// `currentEmployeeId()` answers null for a CHANGE_SELECTED_EMPLOYEE holder: their own employee is read off the
+		// user, as the trash list reads it, so a manager who may act for others is still recognised as one.
+		const employeeId = RequestContext.currentEmployeeId() ?? RequestContext.currentUser()?.employeeId;
+		const taskWithTeams = await this.findOneByIdString(id, {
+			relations: { teams: true },
+			...(withDeleted ? { withDeleted: true } : {})
+		});
+		const teamIds = teamIdsOfTaskOrganization(taskWithTeams);
+		// A manager by the membership's flag or by its MANAGER role (a team created with `managerIds` sets the role
+		// only), on a membership still in effect: as Ever Teams and `assertMayChangeMember` read a team manager.
+		const isTeamManager =
+			isNotEmpty(employeeId) && (await this._managedEmployeeService.managesAnyTeam(employeeId, teamIds));
+
+		if (!isTeamManager) {
+			throw new ForbiddenException('You can only delete a task of a team you manage.');
+		}
+	}
+
+	/**
+	 * Deletes a task for good only while it is in the trash (`DELETE /tasks/:id/trashed`, the Delete forever of the
+	 * trash pages), under the grants of a delete (see {@link assertMayRemoveTask}).
+	 *
+	 * The DELETE statement itself decides whether the task is in the trash: its WHERE names the task, the caller's
+	 * tenant, the stated organization and `deletedAt IS NOT NULL`. A task someone restored after the trash was read
+	 * (`PUT /tasks/:id/recover`) is live, so the statement matches no row and the caller is told so (404), where
+	 * `DELETE /tasks/:id` deletes the live task. Reading the task first and deleting it afterwards would only narrow
+	 * that window, so nothing is read to decide it: a team manager's check reads the task's teams, which says who may
+	 * delete the task, not whether it is still in the trash.
+	 *
+	 * No `DELETED` event is published: the task published it when it went to the trash (as {@link deleteTask} does
+	 * for a trashed task).
+	 *
+	 * A task that other rows still point at through a foreign key without a delete rule of its own (a linked issue, a
+	 * key result) is refused by the database: the statement deletes nothing, the task stays in the trash, and the
+	 * caller is told so (409) rather than answered with a server error.
+	 *
+	 * @param id - The task
+	 * @param organizationId - The organization whose trash holds the task
+	 * @returns The deletion, of one row
+	 * @throws BadRequestException when no organization is stated
+	 * @throws NotFoundException when no task with that id is in the trash of the caller's tenant and that organization
+	 * @throws ForbiddenException when the caller may not delete that task
+	 * @throws ConflictException when other records still reference the task
+	 */
+	async deleteTrashedTask(id: ID, organizationId: ID | null | undefined): Promise<DeleteResult> {
+		if (!organizationId) {
+			throw new BadRequestException(
+				'A task is deleted from the trash of one organization: state organizationId.'
+			);
+		}
+		const tenantId = RequestContext.currentTenantId();
+		// The statement is kept to the caller's tenant and organization boundary: outside them the caller has no trash.
+		if (!tenantId || !isWithinOrganizationBoundary(organizationId)) {
+			throw new NotFoundException(TASK_NOT_IN_TRASH);
+		}
+
+		await this.assertMayRemoveTask(id, true);
+
+		let affected: number;
+		try {
+			affected = await this.deleteInTrash(id, tenantId, organizationId);
+		} catch (error) {
+			if (isReferencedRowViolation(error)) {
+				throw new ConflictException(TASK_STILL_REFERENCED);
+			}
+			throw error;
+		}
+		if (!affected) {
+			throw new NotFoundException(TASK_NOT_IN_TRASH);
+		}
+		return { raw: [], affected };
+	}
+
+	/**
+	 * The one statement of {@link deleteTrashedTask}:
+	 * `DELETE FROM task WHERE id = ? AND tenantId = ? AND organizationId = ? AND deletedAt IS NOT NULL`.
+	 *
+	 * MikroORM applies its soft-delete filter (`deletedAt IS NULL`) to a native delete as it does to a read, which
+	 * would match no trashed task at all, so the filter is lifted for this statement.
+	 *
+	 * @returns How many rows it deleted: one, or none when the task is not in that trash
+	 */
+	private async deleteInTrash(id: ID, tenantId: ID, organizationId: ID): Promise<number> {
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM:
+				return await this.mikroOrmRepository.nativeDelete(
+					{ id, tenantId, organizationId, deletedAt: { $ne: null } } as never,
+					{ filters: { [SOFT_DELETABLE_FILTER]: false } }
+				);
+			case MultiORMEnum.TypeORM: {
+				const result = await this.typeOrmRepository.delete({
+					id,
+					tenantId,
+					organizationId,
+					deletedAt: Not(IsNull())
+				} as FindOptionsWhere<Task>);
+				return result?.affected ?? 0;
+			}
+			default:
+				throw new Error(`Not implemented for ${this.ormType}`);
+		}
+	}
+
+	/**
+	 * The trash (`GET /tasks/trash`): the soft-deleted tasks of the caller's organization, most recently deleted first,
+	 * with their project, teams, members and who deleted them.
+	 *
+	 * - `ALL_ORG_EDIT` or `ORG_TASK_DELETE`: the whole organization's trash, kept to `organizationTeamId` and
+	 *   `projectId` when stated.
+	 * - Anyone else (the route admits `ORG_TASK_EDIT`): the trash of a team they manage, which they name with
+	 *   `organizationTeamId`; without one, or with a team they do not manage, the read is refused. The tasks are the
+	 *   team's, as {@link deleteTask} lets a team manager delete a task of their team.
+	 *
+	 * @param input - The organization, the team or project, the search and the page
+	 * @throws ForbiddenException when a caller without the delete grants names no team they manage
+	 */
+	async findTrash(input: ITaskTrashFindInput): Promise<IPagination<ITask>> {
+		const { organizationTeamId, projectId } = input;
+		// The query names its organization by id or by object (`TenantOrganizationBaseDTO`); without one the read would
+		// span every organization a tenant administrator reaches, so it is refused.
+		const organizationId = input.organizationId ?? input.organization?.id;
+		if (!isNotEmpty(organizationId)) {
+			throw new BadRequestException('The trash is listed for one organization: state organizationId.');
+		}
+		const mayDeleteAny = RequestContext.hasAnyPermission([
+			PermissionsEnum.ALL_ORG_EDIT,
+			PermissionsEnum.ORG_TASK_DELETE
+		]);
+		if (!mayDeleteAny) {
+			const employeeId = RequestContext.currentEmployeeId() ?? RequestContext.currentUser()?.employeeId;
+			const managesTeam =
+				isNotEmpty(employeeId) &&
+				isNotEmpty(organizationTeamId) &&
+				(await this._managedEmployeeService.managesAnyTeam(employeeId, [organizationTeamId]));
+			if (!managesTeam) {
+				throw new ForbiddenException('The trash of a team is listed for a manager of that team.');
+			}
+		}
+
+		const base: FindOptionsWhere<Task> = {
+			organizationId,
+			deletedAt: Not(IsNull()),
+			...(isNotEmpty(projectId) ? { projectId } : {}),
+			...(isNotEmpty(organizationTeamId) ? { teams: { id: organizationTeamId } } : {})
+		} as FindOptionsWhere<Task>;
+
+		const take = Math.min(Math.max(Number(input.take) || TRASH_PAGE_SIZE, 1), TRASH_PAGE_SIZE);
+		const skip = Math.max(Number(input.skip) || 0, 0);
+
+		return await super.findAll({
+			where: this.trashSearchWhere(base, input.search),
+			relations: { project: true, teams: true, members: { user: true }, deletedByUser: true },
+			order: { deletedAt: 'DESC', id: 'ASC' },
+			withDeleted: true,
+			skip,
+			take
+		} as never);
+	}
+
+	/**
+	 * The trash's condition with a search: the title contains the text, or the text is the task's number (`42`, `#42`)
+	 * or its key (`API-42`).
+	 */
+	private trashSearchWhere(base: FindOptionsWhere<Task>, search?: string): FindOptionsWhere<Task> | FindOptionsWhere<Task>[] {
+		const text = typeof search === 'string' ? search.trim() : '';
+		if (!text) {
+			return base;
+		}
+		const title =
+			this.ormType === MultiORMEnum.MikroORM
+				? mikroOrmContains(text)
+				: Raw((alias) => `${alias} ${LIKE_OPERATOR} :trashSearch`, { trashSearch: `%${text}%` });
+		const alternatives: FindOptionsWhere<Task>[] = [{ ...base, title } as FindOptionsWhere<Task>];
+		const number = /^#?(\d{1,9})$/.exec(text);
+		if (number) {
+			alternatives.push({ ...base, number: Number(number[1]) } as FindOptionsWhere<Task>);
+		}
+		// The key the lists show (`API-42`): that number with that prefix, whatever its case. The prefix is stored as
+		// the project's name begins (`Api`) and shown in capitals, so both ORMs compare it without case: an `_` in it
+		// matches any one character under MikroORM's LIKE, which at worst widens a search.
+		const key = /^([\p{L}][\p{L}\p{N}_]*)-(\d{1,9})$/u.exec(text);
+		if (key) {
+			const prefix =
+				this.ormType === MultiORMEnum.MikroORM
+					? mikroOrmILike(key[1])
+					: Raw((alias) => `UPPER(${alias}) = :trashPrefix`, { trashPrefix: key[1].toUpperCase() });
+			alternatives.push({ ...base, prefix, number: Number(key[2]) } as FindOptionsWhere<Task>);
+		}
+		return alternatives.length === 1 ? alternatives[0] : alternatives;
 	}
 
 	/**
@@ -960,10 +1206,35 @@ export class TaskService extends TenantAwareCrudService<Task> {
 	 * @returns The soft-deleted task
 	 */
 	public async softRemove(id: ID, options?: IFindOneOptions<Task>, saveOptions?: SaveOptions): Promise<Task> {
+		// Moving a task to the trash takes what deleting it takes (see assertMayRemoveTask).
+		await this.assertMayRemoveTask(id, false);
+
 		const task = await super.softRemove(id, options, saveOptions);
 
 		if (task) {
 			this.publishTaskEvent(task, BaseEntityEventTypeEnum.DELETED);
+		}
+
+		return task;
+	}
+
+	/**
+	 * Restores a task from the trash (`PUT /tasks/:id/recover`, GraphQL `recoverTask`) on the terms a delete takes, and
+	 * publishes `TaskEvent` `UPDATED` for it: the real-time channel and the integrations that mirror tasks learn the
+	 * task is back the way they learn of a change (the trash published `DELETED`).
+	 *
+	 * @param id - The task to restore
+	 * @param options - Find options for the lookup
+	 * @param saveOptions - Save options for the write
+	 * @returns The restored task
+	 */
+	public async softRecover(id: ID, options?: IFindOneOptions<Task>, saveOptions?: SaveOptions): Promise<Task> {
+		await this.assertMayRemoveTask(id, true);
+
+		const task = await super.softRecover(id, options, saveOptions);
+
+		if (task) {
+			this.publishTaskEvent(task, BaseEntityEventTypeEnum.UPDATED);
 		}
 
 		return task;

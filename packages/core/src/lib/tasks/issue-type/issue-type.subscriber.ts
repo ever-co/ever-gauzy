@@ -1,7 +1,7 @@
 import { EventSubscriber } from 'typeorm';
 import { faker } from '@faker-js/faker';
 import { sluggable } from '@gauzy/utils';
-import { localFileUrl } from './../../core/file-storage/file-storage';
+import { iconFileUrl } from '../../image-asset/image-asset-icon';
 import { BaseEntityEventSubscriber } from '../../core/entities/subscribers/base-entity-event.subscriber';
 import { IssueType } from './issue-type.entity';
 import { imageAssetUrlsReady } from '../../image-asset/image-asset-urls';
@@ -24,12 +24,13 @@ export class IssueTypeSubscriber extends BaseEntityEventSubscriber<IssueType> {
 	 */
 	async afterEntityLoad(entity: IssueType): Promise<void> {
 		try {
-			// Update the fullIconUrl if an icon is present
+			// Use the fullUrl from the image property if available
 			if (Object.prototype.hasOwnProperty.call(entity, 'image')) {
-				// Use the fullUrl from the image property if available
 				await this.setImageUrl(entity);
-			} else if (Object.prototype.hasOwnProperty.call(entity, 'icon')) {
-				// Otherwise, generate the full URL for the icon
+			}
+			// Otherwise, generate the full URL for the icon. The image is an eager relation, so it is an own property
+			// (null) of nearly every loaded issue type: an issue type without one still shows its icon
+			if (!entity.fullIconUrl && Object.prototype.hasOwnProperty.call(entity, 'icon')) {
 				await this.setFullIconUrl(entity);
 			}
 		} catch (error) {
@@ -59,14 +60,15 @@ export class IssueTypeSubscriber extends BaseEntityEventSubscriber<IssueType> {
 	}
 
 	/**
-	 * Sets the full icon URL, as served by the LOCAL file storage provider.
+	 * Sets the full icon URL: an uploaded icon from the provider that holds it, any other icon as the LOCAL provider
+	 * serves it (`iconFileUrl`).
 	 *
 	 * @param entity
 	 * @returns
 	 */
 	private async setFullIconUrl(entity: IssueType): Promise<void> {
 		try {
-			entity.fullIconUrl = await localFileUrl(entity.icon);
+			entity.fullIconUrl = await iconFileUrl(entity.icon, entity.tenantId);
 		} catch (error) {
 			console.error('IssueTypeSubscriber: Error during the setFullIconUrl process:', error);
 			throw error;

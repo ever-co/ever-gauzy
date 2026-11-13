@@ -378,6 +378,12 @@ jobs:
         # when switched on, without ever stopping the API.
         run: node --experimental-vm-modules node_modules/jest/bin/jest.js -c packages/plugins/integration-ever-works/jest.config.ts --runInBand
 
+      - name: Test the task automations plugin
+        # The switch (only GAUZY_TASK_AUTOMATIONS_ENABLED=true loads it), every trigger, condition and action, the loop
+        # guard and the rate limit, the change capture, the runner's once-per-event claim, the dry run (no write), the
+        # due-date sweep, and on a real SQLite database the migrations (up, up again, down) and the role grants.
+        run: node --experimental-vm-modules node_modules/jest/bin/jest.js -c packages/plugins/task-automations/jest.config.ts --runInBand
+
       - name: Test the Inbox plugin
         # The switch (only GAUZY_INBOX_ENABLED=true loads it), the source-handler registry, and on a real
         # SQLite database the migrations (up, up again, down), the role grants, the recipient-scoped reads,

@@ -37,12 +37,44 @@ import { InboxRealtime } from '../realtime/inbox-realtime';
 /**
  * The inbox item a platform notification becomes: kind NOTIFICATION, source GAUZY, identified by the notification
  * (`externalSource` / `externalId`), addressed to the receiver's user, with the notification's read state.
+ *
+ * A notification that names a comment (`commentId`: a comment on a record the receiver follows) becomes an entry about
+ * the comment, the shape a comment notification already has: entity `Comment` and the comment's id, the record in
+ * the metadata (`parentEntity`, `parentEntityId`, and `commentId`) and, for a task, in `taskId` — so a client opens the
+ * thread (the task at the comment, the page at its thread). A mention keeps its record (its twins are found by it).
  */
 export function notificationItemInput(notification: IEmployeeNotification, userId: ID): IInboxItemUpsertInput | null {
 	if (!notification?.id || !notification.tenantId || !userId) {
 		return null;
 	}
 	const title = (notification.title ?? '').trim() || String(notification.type ?? 'Notification');
+	const comment = notification.commentId && notification.entity && notification.entityId && !isDedupedNotification(notification) ? notification.commentId : null;
+	if (comment) {
+		return {
+			tenantId: notification.tenantId,
+			organizationId: notification.organizationId ?? null,
+			kind: InboxItemKindEnum.NOTIFICATION,
+			source: InboxItemSourceEnum.GAUZY,
+			externalSource: INBOX_NOTIFICATION_EXTERNAL_SOURCE,
+			externalId: String(notification.id),
+			title,
+			body: notification.message ?? null,
+			bodyFormat: InboxItemBodyFormatEnum.PLAIN,
+			entity: BaseEntityEnum.Comment,
+			entityId: comment,
+			taskId: notification.entity === BaseEntityEnum.Task ? (notification.entityId ?? null) : null,
+			metadata: {
+				notificationId: notification.id,
+				notificationType: notification.type ?? null,
+				sentByEmployeeId: notification.sentByEmployeeId ?? null,
+				receiverEmployeeId: notification.receiverEmployeeId ?? null,
+				commentId: comment,
+				parentEntity: notification.entity,
+				parentEntityId: notification.entityId
+			},
+			recipients: [{ userId, isRead: !!notification.isRead, ...(notification.isArchived ? { isArchived: true } : {}) }]
+		};
+	}
 	return {
 		tenantId: notification.tenantId,
 		organizationId: notification.organizationId ?? null,
@@ -636,6 +668,10 @@ export class InboxNotificationBridge implements OnModuleInit, IInboxSourceHandle
 	 */
 	private async withCommentParent(input: IInboxItemUpsertInput): Promise<void> {
 		if (input.entity !== BaseEntityEnum.Comment || !input.entityId || input.taskId) {
+			return;
+		}
+		// The notification named the record itself (a comment on a followed record): nothing to read.
+		if (input.metadata?.['parentEntity'] && input.metadata?.['parentEntityId']) {
 			return;
 		}
 		try {

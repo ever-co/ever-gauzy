@@ -23,6 +23,15 @@ export const INBOX_DELIVERY_RETRY_CAP_MS = 6 * 60 * 60 * 1000;
 export const INBOX_DELIVERY_DEFAULT_DIGEST_HOUR = 8;
 /** A digest lists this many entries at most; the rest are a count and the link. */
 export const INBOX_DELIVERY_DIGEST_MAX_ITEMS = 50;
+/**
+ * How long the email and the push of a timer reminder wait before they go. An Ever Teams tab open at the time shows the
+ * reminder itself and marks the platform's copy read as soon as it finds it (the timer may be the desktop app's, which
+ * the platform cannot tell from a tab); one read by then is not sent. A few sweeps long, so a reminder no tab showed
+ * still goes within minutes. Ever Teams keeps its own copy of this wait (`TIMER_REMINDER_DELIVERY_GRACE_MS`).
+ */
+export const INBOX_DELIVERY_TIMER_REMINDER_GRACE_MS = 3 * 60 * 1000;
+/** Why a timer reminder's email or push was closed unsent. */
+export const INBOX_DELIVERY_SKIPPED_READ = 'Not sent: the person read the reminder in the app before it was due.';
 /** The Inbox page, under the client's base URL. */
 export const INBOX_DELIVERY_INBOX_PATH = '#/pages/inbox';
 export const INBOX_DELIVERY_SETTINGS_PATH = '#/pages/settings/notifications';
@@ -37,7 +46,8 @@ export const INBOX_DELIVERY_KIND_LABELS: Record<string, string> = {
 	[EmployeeNotificationTypeEnum.MESSAGE]: 'Message',
 	[EmployeeNotificationTypeEnum.BROADCAST]: 'Announcement',
 	[EmployeeNotificationTypeEnum.RATE_CHANGE_REQUEST]: 'Rate change request',
-	[EmployeeNotificationTypeEnum.TASK_UPDATE]: 'Task update'
+	[EmployeeNotificationTypeEnum.TASK_UPDATE]: 'Task update',
+	[EmployeeNotificationTypeEnum.TIMER_REMINDER]: 'Timer reminder'
 };
 
 /** How many entries one sweep takes in and sends, from the environment. */

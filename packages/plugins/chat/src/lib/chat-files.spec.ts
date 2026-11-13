@@ -1,4 +1,4 @@
-import { chatFileOf, chatSqlDialectOf, jsonListHasColumn, linkMetadataOf } from './chat-files';
+import { chatFileOf, chatSqlDialectOf, imageSizeOf, jsonListHasColumn, linkMetadataOf } from './chat-files';
 
 describe('the files query helpers', () => {
 	it('names the dialect of a connection', () => {
@@ -37,6 +37,8 @@ describe('chatFileOf', () => {
 			status: 'READY',
 			fileUrl: 'https://f/spec.pdf',
 			thumbUrl: null,
+			width: null,
+			height: null,
 			authorEmployeeId: 'e1',
 			authorUserId: 'u1',
 			attachedAt: new Date('2026-11-07T10:00:00.000Z')
@@ -48,5 +50,23 @@ describe('chatFileOf', () => {
 		expect(chatFileOf(link, { id: 'd1' })?.name).toBe('file');
 		expect(chatFileOf(link, { id: 'd1', fileSize: 'x' })?.fileSize).toBeNull();
 		expect(chatFileOf(link, null)).toBeNull();
+	});
+});
+
+describe('imageSizeOf', () => {
+	it("answers a picture's size as the upload recorded it, from an object or SQLite's JSON text", () => {
+		expect(imageSizeOf({ upload: { image: { width: 1920, height: 1080 } } })).toEqual({ width: 1920, height: 1080 });
+		expect(imageSizeOf(JSON.stringify({ upload: { image: { width: 3, height: 4 } } }))).toEqual({ width: 3, height: 4 });
+		const link = { documentId: 'd1', messageId: 'm1', conversationId: 'c1', attachedAt: new Date() };
+		expect(chatFileOf(link, { id: 'd1', metadata: { upload: { image: { width: 640, height: 480 } } } })).toEqual(expect.objectContaining({ width: 640, height: 480 }));
+	});
+
+	it('answers nulls when no size, or no sensible one, was recorded', () => {
+		expect(imageSizeOf(null)).toEqual({ width: null, height: null });
+		expect(imageSizeOf({ upload: { declaredMimeType: 'application/pdf' } })).toEqual({ width: null, height: null });
+		expect(imageSizeOf({ upload: { image: { width: 0, height: 10 } } })).toEqual({ width: null, height: null });
+		expect(imageSizeOf({ upload: { image: { width: 1.5, height: 10 } } })).toEqual({ width: null, height: null });
+		expect(imageSizeOf({ upload: { image: { width: '10', height: 10 } } })).toEqual({ width: null, height: null });
+		expect(imageSizeOf({ upload: { image: { width: 10 } } })).toEqual({ width: null, height: null });
 	});
 });

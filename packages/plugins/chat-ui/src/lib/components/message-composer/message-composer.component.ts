@@ -7,11 +7,15 @@ import { Subscription } from 'rxjs';
 import { CHAT_MESSAGE_MAX_ATTACHMENTS, CHAT_MESSAGE_MAX_LENGTH } from '@gauzy/contracts';
 import {
 	attachmentRoom,
-	bodyWithAttachments,
 	fileSizeLabel,
 	filesOfTransfer,
 	PendingAttachment,
+	objectUrlOf,
+	PreviewableFile,
+	previewUrlOf,
 	readyAttachmentIds,
+	releaseObjectUrl,
+	releasePreviews,
 	uploadOutcome
 } from '../../chat-attachments';
 import { ChatEmoji, emojiQueryAt, replaceShortcodeBefore, suggestEmoji } from '../../chat-emoji';
@@ -30,6 +34,7 @@ import {
 } from '../../chat-ui.helpers';
 import { ChatPeople } from '../../services/chat-people.service';
 import { ChatUiService } from '../../services/chat-ui.service';
+import { FilePreviewComponent } from '../file-preview/file-preview.component';
 import { PersonAvatarComponent } from '../person-avatar/person-avatar.component';
 
 /** What the composer hands over: the body with mention tokens, the employees it mentions, and the files it carries. */
@@ -39,6 +44,9 @@ export interface ComposerSubmission {
 	/** The stored documents to attach (empty in edit mode: the files of a message stay as they are). */
 	attachmentIds: string[];
 }
+
+/** How often a composer asks to tell the members that the person is typing (a little over the platform's own interval). */
+export const CHAT_COMPOSER_TYPING_EVERY_MS = 3000;
 
 /** The unsent text of each conversation and thread, kept while the page lives (a switch and back finds it again). */
 const DRAFTS = new Map<string, string>();
@@ -88,7 +96,7 @@ let nextComposerId = 0;
 	host: {
 		'(document:mousedown)': 'onDocumentPress($event)'
 	},
-	imports: [FormsModule, NbIconModule, NbTooltipModule, TranslatePipe, PersonAvatarComponent],
+	imports: [FormsModule, NbIconModule, NbTooltipModule, TranslatePipe, PersonAvatarComponent, FilePreviewComponent],
 	template: `
 		<div
 			class="composer"
@@ -97,7 +105,7 @@ let nextComposerId = 0;
 			[class.dragging]="dragging()"
 			(keydown.escape)="onComposerEscape($event)"
 			(dragover)="onDragOver($event)"
-			(dragleave)="dragging.set(false)"
+			(dragleave)="onDragLeave($event)"
 			(drop)="onDrop($event)"
 		>
 			@if (emojiSuggestions().length > 0 && suggestions().length === 0) {
@@ -249,15 +257,44 @@ let nextComposerId = 0;
 				@if (attachments().length > 0 && !editing()) {
 					<ul class="attachments" data-test="composer-attachments">
 						@for (item of attachments(); track item.key) {
-							<li class="attachment" [class.failed]="item.status === 'failed'" [attr.data-status]="item.status">
-								<nb-icon [icon]="item.status === 'failed' ? 'alert-circle-outline' : item.status === 'uploading' ? 'cloud-upload-outline' : 'attach-outline'"></nb-icon>
-								<span class="attachment-name" [title]="item.name">{{ item.name }}</span>
-								@if (item.status === 'uploading') {
-									<span class="attachment-meta">{{ 'CHAT.COMPOSER.UPLOADING' | translate }}</span>
-								} @else if (item.status === 'failed') {
-									<span class="attachment-meta">{{ item.error ?? 'CHAT.COMPOSER.UPLOAD_FAILED' | translate }}</span>
+							<!-- A picture that is stored (or on its way) shows as itself; any other file, and a refused one, as a card. -->
+							@let tile = !!item.previewUrl && item.status !== 'failed';
+							<li
+								class="attachment"
+								[class.tile]="tile"
+								[class.failed]="item.status === 'failed'"
+								[attr.data-status]="item.status"
+								[attr.title]="item.name"
+							>
+								<!-- The whole file is a button: a press shows it in the preview popup. -->
+								<button
+									type="button"
+									class="attachment-open"
+									data-test="composer-attachment-open"
+									[attr.aria-label]="'CHAT.COMPOSER.PREVIEW_FILE' | translate: { name: item.name }"
+									(click)="openPreview(item)"
+								></button>
+								@if (item.previewUrl) {
+									<img class="attachment-thumb" [src]="item.previewUrl" [alt]="item.name" />
 								} @else {
-									<span class="attachment-meta">{{ size(item.size) }}</span>
+									<span class="attachment-icon" aria-hidden="true">
+										<nb-icon [icon]="item.status === 'failed' ? 'alert-circle-outline' : 'file-text-outline'"></nb-icon>
+									</span>
+								}
+								@if (!tile) {
+									<span class="attachment-text">
+										<span class="attachment-name">{{ item.name }}</span>
+										@if (item.status === 'uploading') {
+											<span class="attachment-meta">{{ 'CHAT.COMPOSER.UPLOADING' | translate }}</span>
+										} @else if (item.status === 'failed') {
+											<span class="attachment-meta">{{ item.error ?? 'CHAT.COMPOSER.UPLOAD_FAILED' | translate }}</span>
+										} @else {
+											<span class="attachment-meta">{{ size(item.size) }}</span>
+										}
+									</span>
+								}
+								@if (item.status === 'uploading') {
+									<span class="attachment-busy" role="status" [attr.aria-label]="'CHAT.COMPOSER.UPLOADING' | translate"></span>
 								}
 								<button type="button" class="attachment-remove" [attr.aria-label]="'CHAT.COMPOSER.REMOVE_FILE' | translate: { name: item.name }" (click)="removeAttachment(item.key)">
 									<nb-icon icon="close-outline"></nb-icon>
@@ -265,6 +302,9 @@ let nextComposerId = 0;
 							</li>
 						}
 					</ul>
+				}
+				@if (preview(); as shown) {
+					<ngx-chat-file-preview [file]="shown" (closed)="closePreview()"></ngx-chat-file-preview>
 				}
 				<div class="bottom-bar">
 					@if (canAttach() && !editing()) {
@@ -721,49 +761,142 @@ let nextComposerId = 0;
 				text-align: center;
 				font-size: 1.125rem;
 			}
+			/* The files of the next message: a picture as itself, any other file as a card; each with a way to take it off. */
 			.attachments {
 				display: flex;
 				flex-wrap: wrap;
-				gap: 0.25rem;
+				gap: 0.625rem;
 				margin: 0;
-				padding: 0 0.75rem 0.375rem;
+				padding: 0.5rem 0.75rem 0.5rem;
 				list-style: none;
 			}
 			.attachment {
+				position: relative;
 				display: inline-flex;
 				align-items: center;
-				gap: 0.375rem;
-				max-width: 100%;
-				padding: 0.125rem 0.25rem 0.125rem 0.5rem;
+				gap: 0.5rem;
+				box-sizing: border-box;
+				height: 3.5rem;
+				max-width: min(16rem, 100%);
+				padding: 0.375rem 0.75rem 0.375rem 0.375rem;
 				border: 1px solid var(--chat-border, var(--border-basic-color-3, rgba(127, 127, 127, 0.3)));
-				border-radius: 0.375rem;
+				border-radius: 0.5rem;
 				background: var(--chat-composer-bar, var(--background-basic-color-1, transparent));
 				color: var(--chat-text, inherit);
 				font-size: 0.75rem;
 			}
+			/* Covers the file (under its remove button): the press that opens its preview. */
+			.attachment-open {
+				position: absolute;
+				inset: 0;
+				padding: 0;
+				border: 0;
+				border-radius: inherit;
+				background: transparent;
+				cursor: pointer;
+			}
+			.attachment-open:hover,
+			.attachment-open:focus-visible {
+				background: var(--chat-hover, rgba(127, 127, 127, 0.12));
+			}
+			.attachment.tile {
+				width: 3.5rem;
+				padding: 0;
+			}
 			.attachment.failed {
 				border-color: var(--chat-danger, var(--color-danger-default, #e4493f));
 			}
+			.attachment-thumb,
+			.attachment-icon {
+				flex: 0 0 auto;
+				width: 2.625rem;
+				height: 2.625rem;
+				border-radius: 0.375rem;
+			}
+			.attachment-thumb {
+				object-fit: cover;
+			}
+			.attachment.tile .attachment-thumb {
+				width: 100%;
+				height: 100%;
+				border-radius: calc(0.5rem - 1px);
+			}
+			.attachment[data-status='uploading'] .attachment-thumb {
+				opacity: 0.45;
+			}
+			.attachment-icon {
+				display: inline-flex;
+				align-items: center;
+				justify-content: center;
+				background: var(--chat-hover, var(--background-basic-color-3, rgba(127, 127, 127, 0.15)));
+				color: var(--chat-text-soft, inherit);
+				font-size: 1.25rem;
+			}
+			.attachment.failed .attachment-icon {
+				color: var(--chat-danger, var(--color-danger-default, #e4493f));
+			}
+			.attachment-text {
+				display: flex;
+				flex-direction: column;
+				min-width: 0;
+				line-height: 1.125rem;
+			}
 			.attachment-name {
-				max-width: 12rem;
 				overflow: hidden;
+				font-weight: 600;
 				text-overflow: ellipsis;
 				white-space: nowrap;
 			}
 			.attachment-meta {
+				overflow: hidden;
 				color: var(--chat-muted, var(--text-hint-color, inherit));
+				text-overflow: ellipsis;
+				white-space: nowrap;
+			}
+			.attachment.failed .attachment-meta {
+				color: var(--chat-danger, var(--color-danger-default, #e4493f));
+			}
+			/* A file on its way: a small turning ring, over the picture or at the end of the card. */
+			.attachment-busy {
+				flex: 0 0 auto;
+				box-sizing: border-box;
+				width: 1rem;
+				height: 1rem;
+				border: 2px solid var(--chat-border, rgba(127, 127, 127, 0.35));
+				border-top-color: var(--chat-text, currentColor);
+				border-radius: 50%;
+				animation: attachment-turn 0.8s linear infinite;
+			}
+			.attachment.tile .attachment-busy {
+				position: absolute;
+				top: calc(50% - 0.5rem);
+				left: calc(50% - 0.5rem);
+			}
+			@keyframes attachment-turn {
+				to {
+					transform: rotate(360deg);
+				}
+			}
+			@media (prefers-reduced-motion: reduce) {
+				.attachment-busy {
+					animation-duration: 2.4s;
+				}
 			}
 			.attachment-remove {
+				position: absolute;
+				top: -0.4375rem;
+				right: -0.4375rem;
 				display: inline-flex;
 				align-items: center;
 				justify-content: center;
 				width: 1.25rem;
 				height: 1.25rem;
 				padding: 0;
-				border: 0;
-				border-radius: 0.25rem;
-				background: transparent;
-				color: inherit;
+				border: 1px solid var(--chat-border, var(--border-basic-color-3, rgba(127, 127, 127, 0.3)));
+				border-radius: 50%;
+				background: var(--chat-raised, var(--background-basic-color-1, Canvas));
+				color: var(--chat-text, inherit);
+				font-size: 0.75rem;
 				cursor: pointer;
 			}
 			.attachment-remove:hover,
@@ -832,8 +965,15 @@ export class MessageComposerComponent {
 	readonly resetToken = input(0);
 	/** Whether the person may attach files (`DOCS_CREATE`: they are stored as documents). */
 	readonly canAttach = input(false);
+	/** In edit mode: the message keeps files, so its text may be emptied (the platform takes a message of files only). */
+	readonly keepsFiles = input(false);
 
 	readonly submitted = output<ComposerSubmission>();
+	/**
+	 * The person is typing (text changed by them, the box not empty): at most once per
+	 * {@link CHAT_COMPOSER_TYPING_EVERY_MS}, so the place tells the other members while it lasts. Never in edit mode.
+	 */
+	readonly typing = output<void>();
 	/** The person left edit mode without saving. */
 	readonly editCancelled = output<void>();
 
@@ -857,12 +997,23 @@ export class MessageComposerComponent {
 	/** The `:` query under the caret (only when no `@` query is open). */
 	protected readonly emojiQuery = signal<{ query: string; start: number } | null>(null);
 	protected readonly attachments = signal<PendingAttachment[]>([]);
+	/** The waiting file shown in the preview popup. */
+	protected readonly preview = signal<PreviewableFile | null>(null);
 	/** How many files of the last pick, drop or paste did not fit the message (it holds {@link maxFiles}). */
 	protected readonly skippedFiles = signal(0);
 	protected readonly maxFiles = CHAT_MESSAGE_MAX_ATTACHMENTS;
 	protected readonly dragging = signal(false);
 	private readonly uploads = new Map<number, Subscription>();
 	private nextKey = 0;
+	/** The documents of the last send: a message carries them (or will), so they are never discarded as drafts. */
+	private submittedDocumentIds = new Set<string>();
+	/**
+	 * The documents of the send under way, and the place it was made in: protected until the place answers it (cleared on
+	 * success, freed on a refusal). A person who moves on meanwhile leaves them protected: that send may still land.
+	 */
+	private inFlightDocumentIds: { ids: string[]; key: string | null } | null = null;
+	/** When the last typing signal was asked for. */
+	private lastTyping = 0;
 	/**
 	 * Where Escape closed the suggestions: they stay closed while the text and the caret are as they were then (the
 	 * Escape's own keyup, a click on the same spot), and open again once either changes.
@@ -919,7 +1070,8 @@ export class MessageComposerComponent {
 		const hasFiles = !editing && readyAttachmentIds(this.attachments()).length > 0;
 		// A file that was not stored is taken off (or picked again) first: the message never goes out without it.
 		const refused = !editing && this.attachments().some((item) => item.status === 'failed');
-		return (this.length() > 0 || hasFiles) && !this.isTooLong() && !this.disabled() && (editing || (!this.uploading() && !refused));
+		const keepsFiles = editing && this.keepsFiles();
+		return (this.length() > 0 || hasFiles || keepsFiles) && !this.isTooLong() && !this.disabled() && (editing || (!this.uploading() && !refused));
 	});
 
 	constructor() {
@@ -928,13 +1080,13 @@ export class MessageComposerComponent {
 			const initial = this.initialBody();
 			const key = this.draftKey();
 			untracked(() => {
-				// The files picked belong to the place they were picked in.
-				if (key !== this.filledKey) this.dropAttachments();
+				// The files picked belong to the place they were picked in: left there unsent, they are discarded.
+				if (key !== this.filledKey) this.dropAttachments(true);
 				this.filledKey = key;
 				this.fill(initial, key);
 			});
 		});
-		this.destroyRef.onDestroy(() => this.dropAttachments());
+		this.destroyRef.onDestroy(() => this.dropAttachments(true));
 		// Names that arrive after the box was filled replace the `…` labels, as long as nothing was typed since.
 		effect(() => {
 			this.people();
@@ -950,6 +1102,19 @@ export class MessageComposerComponent {
 				if (token === this.lastReset) return;
 				this.lastReset = token;
 				this.clear();
+			});
+		});
+		// The place is busy while it sends (`disabled`). A send that ends without clearing the composer was refused: the
+		// files it took are drafts again (taken off, or left behind, they are discarded); a send under way keeps them.
+		effect(() => {
+			const busy = this.disabled();
+			untracked(() => {
+				const inFlight = this.inFlightDocumentIds;
+				if (busy || !inFlight) return;
+				this.inFlightDocumentIds = null;
+				// Another place now: the place stopped waiting for that send, it did not refuse it.
+				if (inFlight.key !== this.draftKey()) return;
+				for (const id of inFlight.ids) this.submittedDocumentIds.delete(id);
 			});
 		});
 	}
@@ -991,7 +1156,10 @@ export class MessageComposerComponent {
 		this.query.set(null);
 		this.emojiQuery.set(null);
 		this.emojiOpen.set(false);
-		this.dropAttachments();
+		// The files went with the message that was sent: nothing to discard.
+		this.dropAttachments(false);
+		this.submittedDocumentIds = new Set();
+		this.inFlightDocumentIds = null;
 		this.afterRender(() => this.autosize());
 	}
 
@@ -1134,6 +1302,15 @@ export class MessageComposerComponent {
 		this.keepDraft();
 		this.autosize();
 		this.onCaretMove();
+		this.signalTyping();
+	}
+
+	/** Asks the place to tell the members that the person is typing, at most once per interval. */
+	private signalTyping(now = Date.now()): void {
+		if (this.editing() || this.disabled() || !this.text.trim()) return;
+		if (now - this.lastTyping < CHAT_COMPOSER_TYPING_EVERY_MS) return;
+		this.lastTyping = now;
+		this.typing.emit();
 	}
 
 	/** A complete `:name:` just typed becomes its emoji, the caret right after it. */
@@ -1299,8 +1476,13 @@ export class MessageComposerComponent {
 		const editing = this.editing();
 		const text = this.tokenized();
 		const attachmentIds = editing ? [] : readyAttachmentIds(this.attachments());
-		const body = editing ? text : bodyWithAttachments(text, this.attachments());
+		// A message of files only goes with an empty body: the platform takes it, and shows the files.
+		const body = text;
 		const mentionEmployeeIds = [...new Set([...this.picked.values()].filter((id) => body.includes(`<@${id}>`)))];
+		for (const id of attachmentIds) this.submittedDocumentIds.add(id);
+		this.inFlightDocumentIds = attachmentIds.length ? { ids: attachmentIds, key: this.draftKey() } : null;
+		// Sent: the next keystroke tells the members again at once.
+		this.lastTyping = 0;
 		this.submitted.emit({ body, mentionEmployeeIds, attachmentIds });
 	}
 
@@ -1321,6 +1503,13 @@ export class MessageComposerComponent {
 		if (!this.canAttach() || this.editing() || !Array.from(event.dataTransfer?.types ?? []).includes('Files')) return;
 		event.preventDefault();
 		this.dragging.set(true);
+	}
+
+	/** The drag left the composer itself: passing from one of its parts to another is not leaving it. */
+	protected onDragLeave(event: DragEvent): void {
+		const to = event.relatedTarget as Node | null;
+		if (to && (event.currentTarget as Node | null)?.contains(to)) return;
+		this.dragging.set(false);
 	}
 
 	protected onDrop(event: DragEvent): void {
@@ -1349,7 +1538,7 @@ export class MessageComposerComponent {
 			const key = this.nextKey;
 			this.attachments.update((list) => [
 				...list,
-				{ key, name: file.name || 'file', size: file.size, mimeType: file.type, status: 'uploading', documentId: null, error: null }
+				{ key, name: file.name || 'file', size: file.size, mimeType: file.type, status: 'uploading', documentId: null, error: null, previewUrl: previewUrlOf(file), file }
 			]);
 			const upload = this.api.uploadFile(file).subscribe({
 				next: (answer) => {
@@ -1369,11 +1558,40 @@ export class MessageComposerComponent {
 		}
 	}
 
+	/** Shows a waiting file in the preview popup, from the picked file itself. */
+	protected openPreview(item: PendingAttachment): void {
+		this.closePreview();
+		const fileUrl = objectUrlOf(item.file);
+		this.preview.set({ name: item.name, mimeType: item.mimeType, fileSize: item.size, fileUrl });
+	}
+
+	protected closePreview(): void {
+		releaseObjectUrl(this.preview()?.fileUrl);
+		this.preview.set(null);
+	}
+
 	protected removeAttachment(key: number): void {
 		this.skippedFiles.set(0);
 		this.uploads.get(key)?.unsubscribe();
 		this.uploads.delete(key);
+		const removed = this.attachments().find((item) => item.key === key);
 		this.attachments.update((list) => list.filter((item) => item.key !== key));
+		if (removed) {
+			releasePreviews([removed]);
+			this.discard([removed]);
+		}
+	}
+
+	/**
+	 * Tells the platform that stored files will not be sent (a draft upload): their documents and bytes go. A file a
+	 * send took is never discarded; one still uploading is left to the platform's sweep of unsent uploads.
+	 */
+	private discard(items: readonly PendingAttachment[]): void {
+		for (const item of items) {
+			if (item.status !== 'ready' || !item.documentId || this.submittedDocumentIds.has(item.documentId)) continue;
+			// Best effort: an older platform without the route answers 404, and the file stays as it did.
+			this.api.discardAttachment(item.documentId).subscribe({ error: () => undefined });
+		}
 	}
 
 	private patchAttachment(key: number, patch: Partial<PendingAttachment>): void {
@@ -1381,10 +1599,14 @@ export class MessageComposerComponent {
 		this.attachments.update((list) => list.map((item) => (item.key === key ? { ...item, ...patch } : item)));
 	}
 
-	private dropAttachments(): void {
+	/** Lets go of the files picked; `discard` when they are left unsent (another place, the composer gone). */
+	private dropAttachments(discard: boolean): void {
 		this.skippedFiles.set(0);
 		for (const upload of this.uploads.values()) upload.unsubscribe();
 		this.uploads.clear();
+		if (discard) this.discard(this.attachments());
+		this.closePreview();
+		releasePreviews(this.attachments());
 		if (this.attachments().length) this.attachments.set([]);
 	}
 }

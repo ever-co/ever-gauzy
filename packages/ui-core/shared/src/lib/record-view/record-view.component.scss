@@ -308,6 +308,35 @@ $hairline: var(--gauzy-overlay-border-color, rgba(126, 126, 143, 0.18));
   }
 }
 
+// ── Tinted tags (`tagStyle: 'tinted'`) ───────────────────────────────────────
+// The tag picker's chosen-tag chip (`.tag-label` in `tags-color-input`): a light wash of the tag's colour, a
+// hairline ring in it, and the name in that colour mixed toward the text — readable for any tag colour, on
+// either theme. `--tag-color` is set per chip.
+.record-tags-tinted {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+
+.record-tag-tinted {
+  position: unset;
+  display: inline-block;
+  max-width: 100%;
+  margin: 0;
+  padding: 0.125rem 0.5rem;
+  font-size: var(--text-caption-font-size, 0.75rem);
+  font-weight: 500;
+  line-height: 1rem;
+  letter-spacing: 0em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  vertical-align: middle;
+  color: color-mix(in srgb, var(--tag-color) 55%, var(--gauzy-text-color-1)) !important;
+  background-color: color-mix(in srgb, var(--tag-color) 14%, transparent) !important;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--tag-color) 40%, transparent);
+}
+
 // ── Teams ────────────────────────────────────────────────────────────────────
 .record-wrap {
   display: flex;

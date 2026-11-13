@@ -10,6 +10,7 @@
  * bootstraps the entity graph before the service layer.
  */
 import '../../core/entities/internal';
+import { HttpStatus } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { TimerController } from './timer.controller';
 describe('Timer Controller', () => {
@@ -30,5 +31,24 @@ describe('Timer Controller', () => {
 	});
 	it('should be defined', () => {
 		expect(controller).toBeDefined();
+	});
+});
+
+/**
+ * A stop or a toggle is refused when it is not for the running timer: 406 when it asks for a time before that timer
+ * started (or names a log while none runs), 409 when it names another time log. The OpenAPI document says so.
+ */
+describe('Timer Controller OpenAPI responses', () => {
+	/** `@nestjs/swagger`'s key for the responses a route declares (`DECORATORS.API_RESPONSE`, in its ESM constants). */
+	const API_RESPONSE = 'swagger/apiResponse';
+
+	const declaredResponses = (route: 'stopTimer' | 'toggleTimer'): Record<string, { description?: string }> =>
+		Reflect.getMetadata(API_RESPONSE, TimerController.prototype[route]) ?? {};
+
+	it.each(['stopTimer', 'toggleTimer'] as const)('%s declares its 406 and 409 answers', (route) => {
+		const responses = declaredResponses(route);
+
+		expect(responses[HttpStatus.NOT_ACCEPTABLE]?.description).toMatch(/stoppedAt/);
+		expect(responses[HttpStatus.CONFLICT]?.description).toMatch(/timeLogId/);
 	});
 });

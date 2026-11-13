@@ -86,6 +86,17 @@ export type IKeyboardUiPreferences = {
 	bindings?: Record<string, string>;
 };
 
+/**
+ * The person's newsletter subscription, stored server-side under `IUserUiPreferences.newsletter` by a client's sign-up
+ * flow (Ever Teams' `/api/subscribe`) once the mailing list took the address, so the opt-in is not offered to them again
+ * on any device (ever-co/ever-teams#5097): when, and the list status, `pending` while the list waits for the owner of
+ * an address other than the person's verified one to confirm it.
+ */
+export type INewsletterUiPreferences = {
+	subscribedAt?: string;
+	status?: 'subscribed' | 'pending';
+};
+
 /** A feature's state: a plain JSON object (the API rejects arrays and primitives at the top level). */
 export type UiPreferenceFeature = { [key: string]: unknown };
 
@@ -100,6 +111,7 @@ export interface IUserUiPreferences {
 	aiChat?: IAiChatUiPreferences;
 	quickActions?: IQuickActionsUiPreferences;
 	keyboard?: IKeyboardUiPreferences;
+	newsletter?: INewsletterUiPreferences;
 	/** Any other feature: ONE plain (non-array) object per feature key. */
 	[feature: string]: UiPreferenceFeature | undefined;
 }
@@ -112,6 +124,7 @@ export interface IUserUiPreferencesUpdateInput {
 	aiChat?: IAiChatUiPreferences | null;
 	quickActions?: IQuickActionsUiPreferences | null;
 	keyboard?: IKeyboardUiPreferences | null;
+	newsletter?: INewsletterUiPreferences | null;
 	[feature: string]: UiPreferenceFeature | null | undefined;
 }
 

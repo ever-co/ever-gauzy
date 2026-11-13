@@ -2,7 +2,15 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { test } from 'node:test';
-import { check, findRefs, isPublicOnGitHub, repoOfSpec } from './check-private-deps.mjs';
+import {
+	ATTEMPTS,
+	check,
+	findRefs,
+	isPublicOnGitHub,
+	MAX_WAIT_MS,
+	repoOfSpec,
+	retryAfterMs
+} from './check-private-deps.mjs';
 
 const fixture = (name) => readFileSync(new URL(`./fixtures/private-deps/${name}`, import.meta.url), 'utf8');
 
@@ -51,7 +59,14 @@ test('every dependency form is recognized', () => {
 		'https://github.com/ever-co/eleven/archive/main.tar.gz': 'eleven'
 	};
 	for (const [spec, repo] of Object.entries(forms)) assert.equal(repoOfSpec(spec), repo, spec);
-	for (const spec of ['1.2.3', '^1.0.0', 'npm:@ever-co/x@1', 'github:other-org/x', 'file:../x', 'https://github.com/ever-co/x'])
+	for (const spec of [
+		'1.2.3',
+		'^1.0.0',
+		'npm:@ever-co/x@1',
+		'github:other-org/x',
+		'file:../x',
+		'https://github.com/ever-co/x'
+	])
 		assert.equal(repoOfSpec(spec), null, spec);
 });
 
@@ -59,7 +74,10 @@ test('a manifest that installs only a GitHub tarball of a private repository fai
 	const text = JSON.stringify({ dependencies: { x: 'https://codeload.github.com/ever-co/platform/tar.gz/main' } });
 	const result = await check(findRefs(text, 'package.json'), isPublic);
 	assert.equal(result.exit, 1);
-	assert.deepEqual(result.privateRefs.map((r) => r.repo), ['platform']);
+	assert.deepEqual(
+		result.privateRefs.map((r) => r.repo),
+		['platform']
+	);
 });
 
 test('only dependency fields are read: repository and bugs links are not dependencies', () => {
@@ -97,10 +115,7 @@ test('yarn.lock entries and workflow uses are found; other workflow text is not'
 	].join('\n');
 	// The SSH form, and the shorthand as a selector's spec (a package name before the @); never the
 	// npm scope of a dependency line.
-	assert.deepEqual(
-		[...new Set(findRefs(moreLock, 'yarn.lock').map((r) => r.repo))].sort(),
-		['short', 'ssh-repo']
-	);
+	assert.deepEqual([...new Set(findRefs(moreLock, 'yarn.lock').map((r) => r.repo))].sort(), ['short', 'ssh-repo']);
 	assert.deepEqual(findRefs('    "@ever-co/connect-contracts" "1.0.0-rc.3"', 'yarn.lock'), []);
 	// The shorthand after a quote or a space counts too.
 	assert.deepEqual(
@@ -126,6 +141,91 @@ test('an answer other than 200 or 404 is inconclusive (exit 2), never a pass', a
 	assert.equal(await isPublicOnGitHub('x', async () => ({ status: 404 }), 1), false);
 	assert.equal(await isPublicOnGitHub('x', async () => ({ status: 200 }), 1), true);
 });
+
+test('a rate-limited ask is repeated with growing pauses, honouring Retry-After, and the answers are reported', async () => {
+	// Two 429s, then the page: public, after the backoff.
+	const answers = [429, 429, 200];
+	const lines = [];
+	assert.equal(
+		await isPublicOnGitHub(
+			'x',
+			async () => ({ status: answers.shift() }),
+			1,
+			(line) => lines.push(line)
+		),
+		true
+	);
+	assert.deepEqual(lines, [
+		`ever-co/x: GitHub answered 429; asking again in 1 s (2 of ${ATTEMPTS})`,
+		`ever-co/x: GitHub answered 429; asking again in 1 s (3 of ${ATTEMPTS})`
+	]);
+
+	// Never anything but 429: ATTEMPTS asks with doubling pauses, then inconclusive, the last answer named.
+	let asks = 0;
+	const last = [];
+	const { result: exhausted, waits: backoff } = await withWaits(() =>
+		isPublicOnGitHub(
+			'x',
+			async () => {
+				asks += 1;
+				return { status: 429 };
+			},
+			1,
+			(line) => last.push(line)
+		)
+	);
+	assert.equal(exhausted, null);
+	assert.equal(asks, ATTEMPTS);
+	assert.deepEqual(backoff, [1, 2, 4, 8, 16]);
+	assert.equal(last.at(-1), `ever-co/x: GitHub answered 429 to the last of ${ATTEMPTS} asks`);
+
+	// Retry-After as delay-seconds and as an HTTP-date (measured from a fixed clock), each capped at MAX_WAIT_MS.
+	const headers = (value) => ({ get: (name) => (name === 'retry-after' ? value : null) });
+	const now = Date.parse('Thu, 12 Nov 2026 20:00:00 GMT');
+	const replies = [
+		{ status: 429, headers: headers('3') },
+		{ status: 429, headers: headers('3600') },
+		{ status: 429, headers: headers('Thu, 12 Nov 2026 20:01:30 GMT') },
+		{ status: 429, headers: headers('Thu, 12 Nov 2026 20:00:10 GMT') },
+		{ status: 404 }
+	];
+	const { result, waits } = await withWaits(() => isPublicOnGitHub('x', async () => replies.shift(), 1), now);
+	assert.equal(result, false);
+	assert.deepEqual(waits, [3000, MAX_WAIT_MS, MAX_WAIT_MS, 10_000]);
+});
+
+test('Retry-After is read as delay-seconds or an HTTP-date; anything else names no pause', () => {
+	const now = Date.parse('Thu, 12 Nov 2026 20:00:00 GMT');
+	assert.equal(retryAfterMs('120', now), 120_000);
+	assert.equal(retryAfterMs(' 7 ', now), 7_000);
+	assert.equal(retryAfterMs('Thu, 12 Nov 2026 20:01:30 GMT', now), 90_000);
+	assert.equal(retryAfterMs('Thu, 12 Nov 2026 19:59:00 GMT', now), 0); // already past
+	assert.equal(retryAfterMs(null, now), null);
+	assert.equal(retryAfterMs('', now), null);
+	assert.equal(retryAfterMs('soon', now), null);
+	assert.equal(retryAfterMs('-5', now), null);
+});
+
+/**
+ * Runs `fn` with setTimeout recording each pause and firing at once, and with Date.now fixed at `now`
+ * when one is given: {result, waits}. Both are restored afterwards.
+ */
+async function withWaits(fn, now) {
+	const waits = [];
+	const realSetTimeout = globalThis.setTimeout;
+	const realNow = Date.now;
+	globalThis.setTimeout = (callback, ms) => {
+		waits.push(ms);
+		return realSetTimeout(callback, 0);
+	};
+	if (now !== undefined) Date.now = () => now;
+	try {
+		return { result: await fn(), waits };
+	} finally {
+		globalThis.setTimeout = realSetTimeout;
+		Date.now = realNow;
+	}
+}
 
 test('the request carries no credentials', async () => {
 	let seen;

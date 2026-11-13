@@ -7,11 +7,12 @@
 		"version": {
 			"currentVersionResolver": "git-tag",
 			"preserveLocalDependencyProtocols": false,
-			"manifestRootsToUpdate": ["dist/{projectRoot}"]
+			"manifestRootsToUpdate": ["dist/{projectRoot}"],
+			"fallbackCurrentVersionResolver": "disk"
 		}
 	},
 	"tags": ["type:plugin"],
-	"implicitDependencies": ["common", "config", "plugin", "utils"],
+	"implicitDependencies": ["common", "config", "contracts", "core", "plugin", "scheduler", "utils"],
 	"targets": {
 		"build": {
 			"executor": "@nx/js:tsc",

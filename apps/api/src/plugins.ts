@@ -25,7 +25,7 @@ import { EverConnectPlugin, isEverConnectEnabled } from '@gauzy/plugin-ever-conn
 import { EverStatsPlugin, isEverStatsEnabled } from '@gauzy/plugin-ever-stats';
 import { IntegrationAIPlugin } from '@gauzy/plugin-integration-ai';
 import { IntegrationGithubPlugin } from '@gauzy/plugin-integration-github';
-import { IntegrationJiraPlugin } from '@gauzy/plugin-integration-jira';
+import { IntegrationJiraCloudPlugin, IntegrationJiraPlugin, isJiraEnabled } from '@gauzy/plugin-integration-jira';
 import { IntegrationHubstaffPlugin } from '@gauzy/plugin-integration-hubstaff';
 import { IntegrationMakeComPlugin } from '@gauzy/plugin-integration-make-com';
 import { IntegrationZapierPlugin } from '@gauzy/plugin-integration-zapier';
@@ -49,6 +49,7 @@ import {
 import { isRealtimeEnabled, RealtimePlugin } from '@gauzy/plugin-realtime';
 
 import { ChatPlugin, isChatEnabled } from '@gauzy/plugin-chat';
+import { isTaskAutomationsEnabled, TaskAutomationsPlugin } from '@gauzy/plugin-task-automations';
 import { EmailProviderPostmarkPlugin, isPostmarkEnabled } from '@gauzy/plugin-email-provider-postmark';
 import { EmailProviderResendPlugin, isResendEnabled } from '@gauzy/plugin-email-provider-resend';
 import { EmailProviderMailgunPlugin, isMailgunEnabled } from '@gauzy/plugin-email-provider-mailgun';
@@ -156,6 +157,13 @@ export const plugins = [
 	// answer only for tenants whose FEATURE_CHAT toggle is on. Any other value keeps it off and is logged once.
 	...(isChatEnabled(process.env, (message) => console.warn(message)) ? [ChatPlugin] : []),
 
+	// Task automations (rules of an organization: a trigger, conditions and actions, run in the background after a
+	// task change or on a schedule, with a dry run and a run history). Off unless GAUZY_TASK_AUTOMATIONS_ENABLED=true;
+	// when off it is not loaded at all (no route, no GraphQL field, no table, no outbox row, no role grant). The API
+	// runs the rules (it hosts the task services they write through); the worker only fires the due-date schedule.
+	// Any other value keeps it off and is logged once.
+	...(isTaskAutomationsEnabled(process.env, (message) => console.warn(message)) ? [TaskAutomationsPlugin] : []),
+
 	// Inbox email (mailboxes, the inbound pipeline, email provider accounts and the transport seam's provider
 	// transports; plan 04 §5). Only on top of the Inbox, and off unless GAUZY_INBOX_EMAIL_ENABLED=true as well; when
 	// off it is not loaded at all (no route, no table, no transport: mail goes out over SMTP as before).
@@ -250,6 +258,11 @@ export const plugins = [
 	IntegrationMakeComPlugin,
 	// Indicates the inclusion or intention to use the IntegrationJiraPlugin in the codebase.
 	IntegrationJiraPlugin,
+	// Jira Cloud sync (OAuth 2.0 connect with site choice, project ↔ project mappings, streamed issue import, two-way
+	// sync with status transitions, dynamic webhooks). Off unless JIRA_ENABLED=true; when off it is not loaded at all
+	// (no route, no table, no outbound request). Listed right after IntegrationJiraPlugin: the Connect descriptor
+	// routes share the `/integration/jira` prefix and must be registered before the sync's `/:integrationId` routes.
+	...(isJiraEnabled(process.env, (message) => console.warn(message)) ? [IntegrationJiraCloudPlugin] : []),
 	// Indicates the inclusion or intention to use the IntegrationUpworkPlugin in the codebase.
 	IntegrationUpworkPlugin,
 	// Indicates the inclusion or intention to use the IntegrationPlanePlugin in the codebase.

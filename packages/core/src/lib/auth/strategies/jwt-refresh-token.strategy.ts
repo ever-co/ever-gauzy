@@ -1,12 +1,13 @@
 import { environment } from '@gauzy/config';
-import { IUser } from '@gauzy/contracts';
 import { Injectable, Logger, ServiceUnavailableException, UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { Request } from 'express';
 import { JwtPayload } from 'jsonwebtoken';
 import { ExtractJwt, Strategy } from 'passport-jwt';
+import { IAuthenticatedUser } from '../../core/context/types';
 import { DATABASE_UNAVAILABLE_MESSAGE, isDatabaseUnavailableError } from '../../core/errors/database-unavailable';
 import { RefreshTokenService } from '../../refresh-token/refresh-token.service';
+import { IRefreshTokenMetadata } from '../../refresh-token/type.token';
 import { UserService } from './../../user/user.service';
 import { JWT_ALGORITHMS } from '../purpose-token';
 
@@ -33,12 +34,12 @@ export class JwtRefreshTokenStrategy extends PassportStrategy(Strategy, 'jwt-ref
 	 *
 	 * @param request - The incoming request, expected to contain the refresh token in its body.
 	 * @param payload - The JWT payload to validate.
-	 * @returns The user the refresh token belongs to.
+	 * @returns The user the refresh token belongs to, with the organization the token names.
 	 * @throws {UnauthorizedException} When the refresh token does not authenticate a user.
 	 * @throws {ServiceUnavailableException} When the database could not be reached to judge the token.
 	 */
-	async validate(request: Request, payload: JwtPayload): Promise<IUser> {
-		let outcome: IUser | UnauthorizedException;
+	async validate(request: Request, payload: JwtPayload): Promise<IAuthenticatedUser> {
+		let outcome: IAuthenticatedUser | UnauthorizedException;
 		try {
 			outcome = await this.resolveUser(request, payload);
 		} catch (err) {
@@ -69,7 +70,10 @@ export class JwtRefreshTokenStrategy extends PassportStrategy(Strategy, 'jwt-ref
 	 * @returns The user, or the `UnauthorizedException` that refuses the token. A refusal is RETURNED
 	 * rather than thrown, so that `validate` can tell it apart from a lookup that threw.
 	 */
-	private async resolveUser(request: Request, payload: JwtPayload): Promise<IUser | UnauthorizedException> {
+	private async resolveUser(
+		request: Request,
+		payload: JwtPayload
+	): Promise<IAuthenticatedUser | UnauthorizedException> {
 		const { refresh_token } = request.body; // Extract the refresh token
 
 		const { isValid, token, reason } = await this.refreshTokenService.verify(refresh_token); // Validate the refresh token against the service
@@ -91,7 +95,8 @@ export class JwtRefreshTokenStrategy extends PassportStrategy(Strategy, 'jwt-ref
 			return new UnauthorizedException('Unauthorized');
 		}
 
-		const user = await this.userService.findOneByIdString(verifiedUserId); // Fetch the user based on the payload ID
+		// Fetch the user based on the payload ID
+		const user: IAuthenticatedUser = await this.userService.findOneByIdString(verifiedUserId);
 
 		// A deactivated or archived account must not be able to mint anything, and must not be
 		// attached to the request context either. `getAccessTokenFromRefreshToken` happens to filter
@@ -101,6 +106,12 @@ export class JwtRefreshTokenStrategy extends PassportStrategy(Strategy, 'jwt-ref
 		if (!user || user.isActive !== true || user.isArchived !== false) {
 			return new UnauthorizedException('Unauthorized'); // Return unauthorized if validation fails
 		}
+
+		// The organization this refresh token was minted for: the refresh keeps the client in it (see
+		// `AuthService.rotateTokens`). Read from the token the token service has just verified (its signature and its
+		// stored, unrevoked record), never from the request body, which the client writes.
+		const { organizationId } = token as typeof token & IRefreshTokenMetadata;
+		user.refreshTokenOrganizationId = typeof organizationId === 'string' && organizationId ? organizationId : null;
 
 		return user; // Return user if validation is successful
 	}

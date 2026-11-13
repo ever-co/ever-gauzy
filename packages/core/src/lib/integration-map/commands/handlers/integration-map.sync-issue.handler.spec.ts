@@ -96,6 +96,21 @@ describe('IntegrationMapSyncIssueHandler', () => {
 		const [[create]] = execute.mock.calls;
 		expect(create).toBeInstanceOf(TaskCreateCommand);
 		expect(create.input).toEqual({ ...entity, id: 'task-1' });
+		expect(create.triggeredEvent).toBe(true);
 		expect(entity).not.toHaveProperty('id');
+	});
+
+	it("re-creates a missing mapped task with the caller's triggeredEvent: an inbound sync write fires no event", async () => {
+		const integrationMap = { id: 'map-1', gauzyId: 'task-1' };
+		const integrationMapService = { findOneByWhereOptions: jest.fn().mockResolvedValue(integrationMap) };
+		const taskService = { findOneByIdString: jest.fn().mockRejectedValue(new NotFoundException('The requested record was not found')) };
+		const { execute, handler } = setup(integrationMapService, taskService);
+		execute.mockResolvedValue({ id: 'task-1' });
+
+		await handler.execute(new IntegrationMapSyncIssueCommand(command().request, false));
+
+		const [[create]] = execute.mock.calls;
+		expect(create).toBeInstanceOf(TaskCreateCommand);
+		expect(create.triggeredEvent).toBe(false);
 	});
 });

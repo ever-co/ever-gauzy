@@ -292,6 +292,8 @@ export enum PermissionsEnum {
 	CHAT_SEND = 'CHAT_SEND',
 	/** Chat: manage categories, any channel, and delete others' messages. */
 	CHAT_MANAGE = 'CHAT_MANAGE',
+	/** Task automations (`@gauzy/plugin-task-automations`): see, create, edit, test and delete the organization's automation rules. */
+	TASK_AUTOMATION_MANAGE = 'TASK_AUTOMATION_MANAGE',
 	/** Documents Permissions End */
 	/**
 	 * Plugin Permissions
@@ -655,6 +657,7 @@ export const PermissionGroups = {
 		PermissionsEnum.ORG_TEAM_JOIN_REQUEST_EDIT,
 		/** Organization Team Permissions End */
 		PermissionsEnum.ORG_TASK_SETTING,
+		PermissionsEnum.TASK_AUTOMATION_MANAGE,
 		PermissionsEnum.ORG_CONTRACT_EDIT,
 		PermissionsEnum.EVENT_TYPES_VIEW,
 		PermissionsEnum.EVENT_TYPES_EDIT,

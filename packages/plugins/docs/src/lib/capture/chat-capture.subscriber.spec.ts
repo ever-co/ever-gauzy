@@ -31,11 +31,32 @@ import { Readable } from 'stream';
 import { DocumentSourceEnum, DocumentVisibilityEnum } from '@gauzy/contracts';
 import { ChatCaptureSubscriber } from './chat-capture.subscriber';
 
+/** The tenant's storage settings: records each run's tenant and whether storage work happens inside one. */
+const tenantStorageStub = () => {
+	const stub = {
+		inside: false,
+		run: jest.fn(async (_tenantId: unknown, work: () => Promise<unknown>) => {
+			stub.inside = true;
+			try {
+				return await work();
+			} finally {
+				stub.inside = false;
+			}
+		})
+	};
+	return stub;
+};
+
 describe('ChatCaptureSubscriber.captureAttachment', () => {
 	it('captures the attachment as its user’s private document', async () => {
 		const repository = { create: (row: any) => row, save: jest.fn(async (row: any) => ({ id: 'doc-1', ...row })) };
 		const processing = { enqueueExtract: jest.fn() };
-		const subscriber = new ChatCaptureSubscriber({} as any, repository as any, processing as any);
+		const subscriber = new ChatCaptureSubscriber(
+			{} as any,
+			repository as any,
+			processing as any,
+			tenantStorageStub() as any
+		);
 
 		const document = await subscriber.captureAttachment({
 			tenantId: 'tenant-1',
@@ -62,7 +83,8 @@ describe('ChatCaptureSubscriber.captureAttachment', () => {
 		const subscriber = new ChatCaptureSubscriber(
 			{} as any,
 			repository as any,
-			{ enqueueExtract: jest.fn() } as any
+			{ enqueueExtract: jest.fn() } as any,
+			tenantStorageStub() as any
 		);
 
 		const document = await subscriber.captureAttachment({
@@ -78,6 +100,34 @@ describe('ChatCaptureSubscriber.captureAttachment', () => {
 		});
 	});
 
+	it("reads the attachment inside its tenant's own storage settings", async () => {
+		const tenantStorage = tenantStorageStub();
+		const inside: boolean[] = [];
+		mockProvider.getFile.mockImplementationOnce(async () => {
+			inside.push(tenantStorage.inside);
+			return Buffer.from('%PDF-1.4 attachment');
+		});
+		const repository = { create: (row: any) => row, save: jest.fn(async (row: any) => ({ id: 'doc-3', ...row })) };
+		const subscriber = new ChatCaptureSubscriber(
+			{} as any,
+			repository as any,
+			{ enqueueExtract: jest.fn() } as any,
+			tenantStorage as any
+		);
+
+		const document = await subscriber.captureAttachment({
+			tenantId: 'tenant-1',
+			organizationId: 'organization-1',
+			userId: 'user-1',
+			file: { key: 'chat/d.pdf', originalname: 'd.pdf', mimetype: 'application/pdf', size: 19 }
+		} as any);
+
+		// An event off the request path carries no settings: a tenant with its own bucket was read from the deployment's.
+		expect(document).toMatchObject({ storageKey: 'chat/d.pdf' });
+		expect(tenantStorage.run).toHaveBeenCalledWith('tenant-1', expect.any(Function));
+		expect(inside).toEqual([true]);
+	});
+
 	it('captures nothing and deletes nothing when the attachment cannot be read back', async () => {
 		mockProvider.getFile.mockResolvedValueOnce(undefined as any);
 		mockProvider.deleteFile.mockClear();
@@ -85,7 +135,8 @@ describe('ChatCaptureSubscriber.captureAttachment', () => {
 		const subscriber = new ChatCaptureSubscriber(
 			{} as any,
 			repository as any,
-			{ enqueueExtract: jest.fn() } as any
+			{ enqueueExtract: jest.fn() } as any,
+			tenantStorageStub() as any
 		);
 		jest.spyOn((subscriber as any).logger, 'error').mockImplementation(() => undefined);
 

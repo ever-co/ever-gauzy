@@ -10,7 +10,7 @@ import {
 	ID
 } from '@gauzy/contracts';
 import { EmployeeCreateNotificationEvent, EmployeeNotification, MentionService, RequestContext } from '@gauzy/core';
-import { plainExcerpt } from '../chat-mentions';
+import { messageExcerpt } from '../chat-mentions';
 import { ChatConversation } from '../entities/chat-conversation.entity';
 import { ChatMember } from '../entities/chat-member.entity';
 import { ChatMessage } from '../entities/chat-message.entity';
@@ -26,9 +26,10 @@ export function authorDisplayName(user: { firstName?: string; lastName?: string;
 export function messageNotificationTitle(
 	authorName: string,
 	conversation: Pick<ChatConversation, 'kind' | 'name'>,
-	message: Pick<ChatMessage, 'body' | 'threadRootId'>
+	message: Pick<ChatMessage, 'body' | 'threadRootId'> & Partial<Pick<ChatMessage, 'attachmentNames'>>
 ): string {
-	const excerpt = plainExcerpt(message.body, 80);
+	// A message of files only reads as its files' names.
+	const excerpt = messageExcerpt(message, 80);
 	if (message.threadRootId) {
 		return `${authorName} replied in a thread you follow${conversation.name ? ` in #${conversation.name}` : ''}: ${excerpt}`;
 	}

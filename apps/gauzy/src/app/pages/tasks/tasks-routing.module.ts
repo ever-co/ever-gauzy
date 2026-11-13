@@ -5,6 +5,7 @@ import { PermissionsEnum } from '@gauzy/contracts';
 import { TaskComponent } from './components/task/task.component';
 import { TaskSettingsComponent } from './components/task/task-settings/task-settings.component';
 import { TaskViewPageComponent } from './components/task-view/task-view-page.component';
+import { TaskTrashPageComponent } from './components/task-trash/task-trash-page.component';
 
 const routes: Routes = [
 	{
@@ -39,6 +40,20 @@ const routes: Routes = [
 						redirectTo: '/pages/tasks/dashboard'
 					},
 					selectors: { project: false, team: false, employee: false, date: false }
+				}
+			},
+			{
+				// The deleted tasks (GAUZY_TASK_TRASH_ENABLED on the platform; the page says so when it is off), for
+				// those who may delete any task of the organization. Team managers use Ever Teams' team trash.
+				path: 'trash',
+				component: TaskTrashPageComponent,
+				canActivate: [PermissionsGuard],
+				data: {
+					permissions: {
+						only: [PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TASK_DELETE],
+						redirectTo: '/pages/tasks/dashboard'
+					},
+					selectors: { project: true, team: false, employee: false, date: false }
 				}
 			},
 			{

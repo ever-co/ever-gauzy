@@ -49,6 +49,7 @@ function createService(overrides: Record<string, unknown> = {}) {
 	const favoriteStore = { favoriteItems$: of([]) };
 	const genericFavoriteService = { loadFavorites: jest.fn(async () => []), toggleFavorite: jest.fn(async () => undefined) };
 	const store = { selectedOrganization: { id: 'org', tenantId: 'tenant' }, user: { employee: { id: 'emp' } } };
+	const importExportService = { downloadMarkdownZip: jest.fn(async () => ({ ok: true })) };
 
 	const deps = {
 		documentsService,
@@ -61,6 +62,7 @@ function createService(overrides: Record<string, unknown> = {}) {
 		favoriteStore,
 		genericFavoriteService,
 		store,
+		importExportService,
 		...overrides
 	};
 
@@ -75,7 +77,8 @@ function createService(overrides: Record<string, unknown> = {}) {
 		deps.router as never,
 		deps.favoriteStore as never,
 		deps.genericFavoriteService as never,
-		deps.store as never
+		deps.store as never,
+		deps.importExportService as never
 	);
 	return { service, ...deps };
 }
@@ -116,6 +119,20 @@ describe('DocsRowActionsService — download', () => {
 		await service.execute('download', target());
 
 		expect(open).not.toHaveBeenCalled();
+	});
+});
+
+describe('DocsRowActionsService — zip of Markdown files', () => {
+	it("downloads the server's zip of a folder, and says so when it could not be made", async () => {
+		const { service, importExportService, toastrService } = createService();
+
+		await expect(service.execute('export-zip', target({ kind: DocumentKindEnum.FOLDER, name: 'Handbook' }))).resolves.toBe(false);
+		expect(importExportService.downloadMarkdownZip).toHaveBeenCalledWith(DOCUMENT_ID);
+		expect(toastrService.danger).not.toHaveBeenCalled();
+
+		importExportService.downloadMarkdownZip.mockResolvedValueOnce({ ok: false } as never);
+		await service.execute('export-zip', target({ kind: DocumentKindEnum.FOLDER }));
+		expect(toastrService.danger).toHaveBeenCalledWith('DOCS.EXPORT.ZIP_FAILED');
 	});
 });
 

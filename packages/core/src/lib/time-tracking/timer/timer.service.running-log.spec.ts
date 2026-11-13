@@ -599,21 +599,39 @@ describe.each([MultiORMEnum.TypeORM, MultiORMEnum.MikroORM])(
 			jest.restoreAllMocks();
 		});
 
-		it.each([TimeLogSourceEnum.WEB_TIMER, TimeLogSourceEnum.TEAMS])(
-			'ends a %s run started two hours ago that never had a heartbeat where the new run starts, as a stop would',
+		it('ends a web timer run started two hours ago, which sends no heartbeat, where the new run starts, as a stop would', async () => {
+			const rows = [run('replaced', TimeLogSourceEnum.WEB_TIMER, TWO_HOURS_AGO)];
+			const { service, logger, updates } = setup(rows);
+
+			const started = await startOnDesktop(service);
+
+			// 02:00, where the new run starts, not 00:00:10
+			expect(started.startedAt).toEqual(NOW);
+			expect(rows[0]).toMatchObject({ isRunning: false, stoppedAt: NOW });
+			expect(updates).toEqual([
+				expect.objectContaining({
+					id: 'replaced',
+					input: { isRunning: false, startedAt: TWO_HOURS_AGO, stoppedAt: NOW }
+				})
+			]);
+			expect(logger.warn).not.toHaveBeenCalled();
+		});
+
+		it.each([TimeLogSourceEnum.TEAMS, TimeLogSourceEnum.MOBILE])(
+			'ends a %s run that never had a heartbeat at its own start: its client died before the first one',
 			async (source) => {
 				const rows = [run('replaced', source, TWO_HOURS_AGO)];
 				const { service, logger, updates } = setup(rows);
 
 				const started = await startOnDesktop(service);
 
-				// 02:00, where the new run starts, not 00:00:10
+				// 00:00, not 02:00: a tab that died in its first minute is not credited the two hours up to the new start
 				expect(started.startedAt).toEqual(NOW);
-				expect(rows[0]).toMatchObject({ isRunning: false, stoppedAt: NOW });
+				expect(rows[0]).toMatchObject({ isRunning: false, stoppedAt: TWO_HOURS_AGO });
 				expect(updates).toEqual([
 					expect.objectContaining({
 						id: 'replaced',
-						input: { isRunning: false, startedAt: TWO_HOURS_AGO, stoppedAt: NOW }
+						input: { isRunning: false, startedAt: TWO_HOURS_AGO, stoppedAt: TWO_HOURS_AGO }
 					})
 				]);
 				expect(logger.warn).not.toHaveBeenCalled();

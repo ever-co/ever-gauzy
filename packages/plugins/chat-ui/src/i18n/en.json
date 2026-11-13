@@ -86,6 +86,11 @@
 		"VIEW": "View thread",
 		"LAST_REPLY": "Last reply {{time}}"
 	},
+	"TYPING": {
+		"ONE": "{{name}} is typing…",
+		"TWO": "{{first}} and {{second}} are typing…",
+		"MANY": "Several people are typing…"
+	},
 	"MESSAGE": {
 		"EDITED": "edited",
 		"DELETED": "This message was deleted.",
@@ -138,6 +143,7 @@
 		"UPLOAD_FAILED": "Not uploaded",
 		"ATTACH_UNAVAILABLE": "Attachments are not available here",
 		"REMOVE_FILE": "Remove {{name}}",
+		"PREVIEW_FILE": "Preview {{name}}",
 		"TOO_MANY_FILES": "A message holds at most {{max}} files: {{count}} not added.",
 		"MENTION_SUGGESTIONS": "People to mention",
 		"EMOJI_SUGGESTIONS": "Emoji"
@@ -145,7 +151,10 @@
 	"FILES": {
 		"TITLE": "Files",
 		"EMPTY": "No files in this conversation yet.",
-		"MORE": "Show more files"
+		"MORE": "Show more files",
+		"OPEN_IN_TAB": "Open in new tab",
+		"CLOSE_PREVIEW": "Close preview",
+		"NO_PREVIEW": "This file has no preview. Open it in a new tab to see it."
 	},
 	"TASKS": {
 		"CREATE_TITLE": "Create task from message",
@@ -163,7 +172,15 @@
 		"NO_CONVERSATIONS": "No conversation matches.",
 		"NOTE": "Message (optional)",
 		"SEND": "Send",
-		"SENT": "Task sent to {{name}}."
+		"SENT": "Task sent to {{name}}.",
+		"STATUS": "Status",
+		"NO_STATUS": "No status",
+		"PRIORITY": "Priority",
+		"NO_PRIORITY": "No priority",
+		"ASSIGN": "Assignees",
+		"ASSIGNED": "{{count}} assigned",
+		"CHANGE_FAILED": "The task could not be changed.",
+		"READ_FAILED": "The task could not be read again."
 	},
 	"SETTINGS": {
 		"TITLE": "Conversation settings",
@@ -173,6 +190,7 @@
 		"NO_CATEGORY": "No category",
 		"MEMBERS": "Members ({{count}})",
 		"MANAGER": "Manager",
+		"MEMBER": "Member",
 		"REMOVE": "Remove from the conversation",
 		"REMOVE_NAMED": "Remove {{name}} from the conversation",
 		"REMOVE_CONFIRM": "Remove {{name}} from this conversation?",
@@ -181,8 +199,17 @@
 		"GROUP_FULL": "A group holds at most {{max}} people.",
 		"DEFAULT_NOTE": "Every employee is in this channel.",
 		"SAVE": "Save",
-		"TAB_SETTINGS": "Settings",
-		"TAB_INTEGRATIONS": "Integrations"
+		"TAB_SETTINGS": "About",
+		"TAB_MEMBERS": "Members",
+		"TAB_INTEGRATIONS": "Integrations",
+		"READ_ONLY": "Only the managers of this conversation can change these settings.",
+		"NAME_REQUIRED": "A channel needs a name.",
+		"TOPIC_PLACEHOLDER": "Add a topic",
+		"TOPIC_HINT": "Shown under the name in the conversation header.",
+		"PRIVATE_ON": "Only the people added to it can see and join it.",
+		"PRIVATE_OFF": "Anyone in the organization can find and join it.",
+		"FIND_MEMBERS": "Find members",
+		"YOU": "you"
 	},
 	"CATEGORIES": {
 		"TITLE": "Channel categories",

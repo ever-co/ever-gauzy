@@ -156,7 +156,7 @@ jobs:
 
           # The migration files of each side; TypeORM records a migration by its `name` (the class name).
           git fetch --no-tags --depth=1 origin "$before_commit"
-          files() { git ls-tree -r --name-only "$1" -- packages apps | grep -E '/migrations/[0-9]{13}-[^/]+\.ts$' | sort; }
+          files() { git ls-tree -r --name-only "$1" -- packages apps | grep -E '/migrations/[0-9]{13}-[^/]+\.ts$' | grep -vE '\.(spec|test)\.ts$' | sort; }
           files "$before_commit" >"$RUNNER_TEMP/before-files"
           files HEAD >"$RUNNER_TEMP/after-files"
           : >"$NEW_MIGRATIONS"

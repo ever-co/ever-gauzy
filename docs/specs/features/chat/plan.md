@@ -60,6 +60,10 @@ entries, files, tasks, search, the outbox and the subscription surface, presence
 | `chat_thread_follow` | `rootMessageId`, `employeeId`, `userId`, `unreadReplies` (int), `lastReadReplyAt`; unique (rootMessageId, employeeId) |
 | `chat_task_reference` | `messageId`, `taskId`, `kind` (mention/sent/created); unique (messageId, taskId) |
 | `chat_link_preview` | `urlHash` (SHA-256 of the normalized link), `url`, `data` (JSON text), `fetchedAt`, `status` (pending/ready/unavailable); unique (`tenantId`, `urlHash`), migration `1791000006710` |
+| `chat_attachment_draft` | `documentId` (unique), `userId` (the uploader): a chat composer's Docs upload no message carries yet; consumed by the send / edit that attaches it, discarded by its uploader or swept after `GAUZY_CHAT_DRAFT_UPLOAD_TTL_HOURS` (24) |
+
+`chat_message.attachmentNames` (text, migration `1791000007320`): the names of a message's files at its send or last edit,
+one per line — what a message of files only (empty body) reads as in notifications, the inbox and the search index.
 
 Contracts: `packages/contracts/src/lib/chat.model.ts` (enums, interfaces, inputs, page shapes, event names
 `CHAT_EVENT_NAMES`), `BaseEntityEnum.ChatConversation/ChatMessage`, `ReactionEntityEnum.ChatMessage`,
@@ -80,13 +84,16 @@ Contracts: `packages/contracts/src/lib/chat.model.ts` (enums, interfaces, inputs
 | `PATCH` | `/chat/conversations/:id/state` | VIEW | `notifyLevel`, `isFavorite` |
 | `POST` | `/chat/conversations/:id/read` | VIEW | mark read up to `messageId` (default newest) |
 | `GET` | `/chat/conversations/:id/messages?before=&after=&around=&limit=` | VIEW | anchor paging: `before` / `after` / `around` name a message id; the anchor row is read and the page is compared and ordered on (`createdAt`, `id`) of that row (`olderThan` / `newerThan` in `chat-message.service.ts`), so ids need no time order (`BaseEntity` ids are random UUIDs) |
-| `GET` | `/chat/conversations/:id/pins` · `/:id/files` | VIEW | pins; attachments through document links |
-| `POST` | `/chat/conversations/:id/messages` | SEND | `{ body, nonce, replyToId?, threadRootId?, alsoInConversation?, attachmentIds?, mentionEmployeeIds?, taskId? }` → message + the events it caused |
+| `GET` | `/chat/conversations/:id/pins` · `/:id/files` | VIEW | pins; attachments through document links, with a picture's `width` / `height` (read at the Docs upload, `metadata.upload.image`) |
+| `POST` | `/chat/conversations/:id/messages` | SEND | `{ body?, nonce, replyToId?, threadRootId?, alsoInConversation?, attachmentIds?, mentionEmployeeIds?, taskId? }` → message + the events it caused; the body may be empty when the message carries an attachment |
+| `POST` | `/chat/conversations/:id/typing` | SEND (member) | `{ threadRootId? }` → `{ sent, expiresInMs }`; `typing.signalled` to the other members, nothing stored |
+| `DELETE` | `/chat/attachments/:documentId` | SEND | discard my draft upload (the document and its stored bytes go; a sent file stays) |
 | `PATCH` | `/chat/messages/:id` · `DELETE` | author / MANAGE | edit (editedAt), delete (tombstone when replies exist) |
 | `POST` | `/chat/messages/:id/pin` · `/unpin` · `/unread` | VIEW | pin; mark unread from here |
 | `POST` / `DELETE` | `/chat/messages/:id/reactions/:emoji` | VIEW | core reactions with membership check (the generic `/reaction` routes leave chat reactions out, §14.2) |
 | `GET` | `/chat/messages/:id/thread` · `POST /:id/thread/read` · `POST /:id/follow` · `/:id/unfollow` | VIEW | thread replies (same anchor paging), mark the thread read (clears its reply notifications), follow state |
 | `POST` | `/chat/messages/:id/create-task` | SEND + task create | `{ projectId, title?, assigneeIds? }` → task + reference |
+| `PATCH` | `/chat/messages/:id/tasks/:taskId` | SEND + `ORG_TASK_EDIT` (or `ALL_ORG_EDIT`) + `ORG_TASK_VIEW` (or `ALL_ORG_VIEW`); a member of the conversation | `{ status?, taskStatusId?, priority?, taskPriorityId?, assigneeEmployeeIds? }` → the task (through `TaskUpdateCommand`, FR-14) + `chat_message.updated` to every conversation showing it (the answer lists the caller's own conversations' events only) |
 | `GET` | `/chat/states` · `POST /chat/read-all` · `POST /chat/read-restore` | VIEW | all member states; mark all read (returns a snapshot id); undo within 60 s |
 | `GET` | `/chat/threads` | VIEW | followed threads with unread reply counts |
 | `GET` | `/chat/search?q=&conversationId=&authorId=&hasFile=&cursor=` | VIEW | search plugin, membership-filtered |

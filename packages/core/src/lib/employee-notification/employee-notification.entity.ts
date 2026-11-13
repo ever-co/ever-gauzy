@@ -72,6 +72,16 @@ export class EmployeeNotification extends BasePerEntityType implements IEmployee
 	@MultiORMColumn({ nullable: true })
 	onHoldUntil?: Date;
 
+	/**
+	 * The comment the notification is about, when it is about one (a comment on a record the receiver follows). The
+	 * record stays in `entity` / `entityId`; no foreign key, as for `entityId`: a removed comment leaves the record.
+	 */
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsUUID()
+	@MultiORMColumn({ type: 'uuid', nullable: true })
+	commentId?: ID;
+
 	/*
     |--------------------------------------------------------------------------
     | @ManyToOne

@@ -4,10 +4,11 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NbButtonModule, NbIconModule, NbSpinnerModule } from '@nebular/theme';
 import { TranslatePipe } from '@ngx-translate/core';
 import { IChatFile } from '@gauzy/contracts';
-import { fileSizeLabel, isImageFile } from '../../chat-attachments';
+import { fileSizeLabel, isImageFile, isPlainClick } from '../../chat-attachments';
 import { ChatFilesStore } from '../../services/chat-files.store';
 import { ChatPeople } from '../../services/chat-people.service';
 import { ChatUiService } from '../../services/chat-ui.service';
+import { FilePreviewComponent } from '../file-preview/file-preview.component';
 
 /** The files one page of the pane lists. */
 export const CHAT_FILES_PAGE = 30;
@@ -19,7 +20,7 @@ export const CHAT_FILES_PAGE = 30;
 @Component({
 	selector: 'ngx-chat-files-panel',
 	changeDetection: ChangeDetectionStrategy.OnPush,
-	imports: [DatePipe, NbButtonModule, NbIconModule, NbSpinnerModule, TranslatePipe],
+	imports: [DatePipe, NbButtonModule, NbIconModule, NbSpinnerModule, TranslatePipe, FilePreviewComponent],
 	template: `
 		<aside class="panel" data-test="files-panel">
 			<h6>{{ 'CHAT.FILES.TITLE' | translate }}</h6>
@@ -27,7 +28,7 @@ export const CHAT_FILES_PAGE = 30;
 				<div class="row">
 					<nb-icon [icon]="isImage(file) ? 'image-outline' : 'file-text-outline'"></nb-icon>
 					@if (file.fileUrl) {
-						<a class="name" [href]="file.fileUrl" target="_blank" rel="noopener noreferrer">{{ file.name }}</a>
+						<a class="name" [href]="file.fileUrl" target="_blank" rel="noopener noreferrer" (click)="open(file, $event)">{{ file.name }}</a>
 					} @else {
 						<span class="name">{{ file.name }}</span>
 					}
@@ -51,6 +52,9 @@ export const CHAT_FILES_PAGE = 30;
 				<button nbButton ghost size="tiny" type="button" data-test="files-more" (click)="more()">{{ 'CHAT.FILES.MORE' | translate }}</button>
 			}
 		</aside>
+		@if (preview(); as file) {
+			<ngx-chat-file-preview [file]="file" (closed)="preview.set(null)"></ngx-chat-file-preview>
+		}
 	`,
 	styles: [
 		`
@@ -127,6 +131,16 @@ export class FilesPanelComponent {
 				this.load(id, 0);
 			});
 		});
+	}
+
+	/** The file shown in the popup. */
+	protected readonly preview = signal<IChatFile | null>(null);
+
+	/** A plain click shows the file in the popup; with a modifier key the link opens as links do. */
+	protected open(file: IChatFile, event: MouseEvent): void {
+		if (!isPlainClick(event)) return;
+		event.preventDefault();
+		this.preview.set(file);
 	}
 
 	protected more(): void {
