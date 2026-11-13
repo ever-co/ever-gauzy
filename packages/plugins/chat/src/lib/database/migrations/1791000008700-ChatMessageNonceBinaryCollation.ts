@@ -6,9 +6,10 @@ const COLUMN = 'nonce';
 
 /**
  * The case-sensitive collations the nonce can take:
- * - `utf8mb4_0900_bin` (MySQL 8.0.17+) and `utf8mb4_nopad_bin` (MariaDB 10.2+), whichever the server has: byte for byte
- *   and NO PAD, so a trailing space counts, as it does under MySQL 8's default `utf8mb4_0900_ai_ci`. Byte equality is the
- *   finest comparison there is, so moving to either from any collation never makes two stored keys equal.
+ * - `utf8mb4_nopad_bin` (MariaDB 10.2+) or `utf8mb4_0900_bin` (MySQL 8.0.17+), in that order: byte for byte and NO PAD,
+ *   so a trailing space counts, as it does under MySQL 8's default `utf8mb4_0900_ai_ci`. Byte equality is the finest
+ *   comparison there is, so moving to either from any collation never makes two stored keys equal. MariaDB's own name
+ *   comes first: MariaDB 11.4.5 also answers to `utf8mb4_0900_bin`, as an alias of the padding `utf8mb4_bin` (MDEV-36361).
  * - Without them (MySQL 8.0.1 to 8.0.16, MySQL 5.7, MariaDB before 10.2, all past their end of life), the nearest one:
  *   - from a NO PAD collation (a `*_0900_*` one, MySQL 8.0's default among them), `utf8mb4_0900_as_cs`: NO PAD too, and
  *     case- and accent-sensitive;
@@ -19,8 +20,8 @@ const COLUMN = 'nonce';
  *   take two of them for one is refused (see {@link ChatMessageNonceBinaryCollation1791000008700}).
  */
 export const CHAT_NONCE_COLLATIONS = [
-	'utf8mb4_0900_bin',
 	'utf8mb4_nopad_bin',
+	'utf8mb4_0900_bin',
 	'utf8mb4_0900_as_cs',
 	'utf8mb4_bin'
 ] as const;
@@ -102,7 +103,7 @@ async function nonceCollation(queryRunner: QueryRunner): Promise<string | null> 
 }
 
 /** The byte-for-byte NO PAD collations: moving to one never makes two stored keys equal. */
-const BYTE_EXACT_NO_PAD: ReadonlySet<string> = new Set(['utf8mb4_0900_bin', 'utf8mb4_nopad_bin']);
+const BYTE_EXACT_NO_PAD: ReadonlySet<string> = new Set(['utf8mb4_nopad_bin', 'utf8mb4_0900_bin']);
 
 /** The unique keys the nonce is part of, by the column beside it. */
 const NONCE_KEY_COLUMNS = ['authorUserId', 'webhookId'] as const;
@@ -142,7 +143,8 @@ async function caseSensitiveCollation(
 		[...probed]
 	)) as Array<{ collationName?: string }>;
 	const available = new Set(rows.map((row) => row.collationName));
-	const exact = (['utf8mb4_0900_bin', 'utf8mb4_nopad_bin'] as const).find((name) => available.has(name));
+	// MariaDB's name first: where a MariaDB answers to `utf8mb4_0900_bin` too, that is the padding `utf8mb4_bin`.
+	const exact = (['utf8mb4_nopad_bin', 'utf8mb4_0900_bin'] as const).find((name) => available.has(name));
 	if (exact) return exact;
 	return available.has('utf8mb4_0900_as_cs') && isNoPad(source) ? 'utf8mb4_0900_as_cs' : 'utf8mb4_bin';
 }

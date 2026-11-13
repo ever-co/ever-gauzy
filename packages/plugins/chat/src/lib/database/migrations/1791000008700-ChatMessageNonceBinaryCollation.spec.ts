@@ -13,6 +13,8 @@ const MERGE_PROBE = /^SELECT 1 AS merged FROM `chat_message` /;
 const SERVERS = {
 	mysql8: ['utf8mb4_0900_bin'],
 	mariadb: ['utf8mb4_nopad_bin'],
+	/** MariaDB 11.4.5, which also answers to `utf8mb4_0900_bin`, as an alias of the padding `utf8mb4_bin` (MDEV-36361). */
+	mariadb1145: ['utf8mb4_nopad_bin', 'utf8mb4_0900_bin'],
 	/** MySQL 8.0.1 to 8.0.16: the NO PAD `utf8mb4_0900_*` collations, but no `utf8mb4_0900_bin`. */
 	mysql80early: ['utf8mb4_0900_as_cs'],
 	/** MySQL 5.7, MariaDB before 10.2: neither NO PAD binary collation. */
@@ -71,7 +73,7 @@ describe('ChatMessageNonceBinaryCollation1791000008700', () => {
 			expect(mysql.statements[1]).toMatch(COLLATIONS_PROBE);
 			// Byte for byte and NO PAD: nothing can merge, so no stored key is looked at.
 			expect(mergeProbes(mysql.statements)).toEqual([]);
-			expect(mysql.params[1]).toEqual(['utf8mb4_0900_bin', 'utf8mb4_nopad_bin', 'utf8mb4_0900_as_cs']);
+			expect(mysql.params[1]).toEqual(['utf8mb4_nopad_bin', 'utf8mb4_0900_bin', 'utf8mb4_0900_as_cs']);
 		}
 	});
 
@@ -79,12 +81,16 @@ describe('ChatMessageNonceBinaryCollation1791000008700', () => {
 		const mariadb = runner('mariadb', 'utf8mb4_general_ci', SERVERS.mariadb);
 		await migration().up(mariadb as never);
 		expect(ddl(mariadb.statements)).toEqual([modifyTo('utf8mb4_nopad_bin')]);
+		// Where a MariaDB also answers to `utf8mb4_0900_bin` (a padding alias there), its own NO PAD name is taken.
+		const aliased = runner('mariadb', 'utf8mb4_uca1400_ai_ci', SERVERS.mariadb1145);
+		await migration().up(aliased as never);
+		expect(ddl(aliased.statements)).toEqual([modifyTo('utf8mb4_nopad_bin')]);
 		const old = runner('mysql', 'utf8mb4_general_ci', SERVERS.old);
 		await migration().up(old as never);
 		expect(ddl(old.statements)).toEqual([modifyTo('utf8mb4_bin')]);
 		expect(CHAT_NONCE_COLLATIONS).toEqual([
-			'utf8mb4_0900_bin',
 			'utf8mb4_nopad_bin',
+			'utf8mb4_0900_bin',
 			'utf8mb4_0900_as_cs',
 			'utf8mb4_bin'
 		]);
