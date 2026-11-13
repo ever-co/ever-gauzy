@@ -392,7 +392,8 @@ export class DocumentEditorComponent implements OnChanges, OnDestroy {
 				element = null;
 			}
 		}
-		if (typeof element?.scrollIntoView === 'function') element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+		if (typeof element?.scrollIntoView === 'function')
+			element.scrollIntoView({ behavior: 'smooth', block: 'center' });
 		return true;
 	}
 
@@ -711,7 +712,8 @@ export class DocumentEditorComponent implements OnChanges, OnDestroy {
 	private selectionCommentRange(): IDocumentCommentAnchorInput | null {
 		const state = this.editor?.state;
 		if (!state) return null;
-		const live = this.liveBinding && this.liveState?.phase === 'live' ? this.liveBinding.relativeRange(state) : null;
+		const live =
+			this.liveBinding && this.liveState?.phase === 'live' ? this.liveBinding.relativeRange(state) : null;
 		return selectionCommentAnchor(state, live);
 	}
 

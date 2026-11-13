@@ -23,7 +23,9 @@ jest.mock('./extensions/document-extensions', () => {
 		addGlobalAttributes: () => [{ types: ['paragraph'], attributes: { blockId: { default: null } } }]
 	});
 	return {
-		createDocumentEditorExtensions: (deps: Record<string, (...args: unknown[]) => unknown> & { collab: boolean }) => [
+		createDocumentEditorExtensions: (
+			deps: Record<string, (...args: unknown[]) => unknown> & { collab: boolean }
+		) => [
 			deps.collab ? StarterKit.configure({ undoRedo: false }) : StarterKit,
 			BlockIds,
 			BlockComments.configure({
@@ -43,11 +45,7 @@ import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { Subject, of } from 'rxjs';
 import * as Y from 'yjs';
-import {
-	DocumentCommentAnchorMethodEnum,
-	type IDocument,
-	type IDocumentCommentAnchorPosition
-} from '@gauzy/contracts';
+import { DocumentCommentAnchorMethodEnum, type IDocument, type IDocumentCommentAnchorPosition } from '@gauzy/contracts';
 import { Store } from '@gauzy/ui-core/core';
 import { DocsLiveService } from '../services/docs-live.service';
 import { DocumentsService } from '../services/documents.service';
@@ -109,7 +107,10 @@ const page = (text: string): IDocument =>
 		id: 'doc-1',
 		name: 'Page',
 		updatedAt: '2026-11-01T10:00:00.000Z',
-		contentJson: { type: 'doc', content: [{ type: 'paragraph', attrs: { blockId: 'b1' }, content: [{ type: 'text', text }] }] },
+		contentJson: {
+			type: 'doc',
+			content: [{ type: 'paragraph', attrs: { blockId: 'b1' }, content: [{ type: 'text', text }] }]
+		},
 		contentHtml: `<p>${text}</p>`
 	}) as unknown as IDocument;
 
@@ -182,9 +183,9 @@ describe('DocumentEditorComponent: comment ranges', () => {
 	});
 
 	const highlights = () =>
-		Array.from(
-			(fixture.nativeElement as HTMLElement).querySelectorAll<HTMLElement>('.gz-comment-range')
-		).map((element) => element.textContent);
+		Array.from((fixture.nativeElement as HTMLElement).querySelectorAll<HTMLElement>('.gz-comment-range')).map(
+			(element) => element.textContent
+		);
 
 	/** Selects `quote` in the editor. */
 	const select = (quote: string) => {
@@ -223,21 +224,21 @@ describe('DocumentEditorComponent: comment ranges', () => {
 		frames.next(
 			server.edit(() => {
 				server.runs().insert(0, 'Well, ');
-				server.runs().insert(6 + 12, 'X'); // "brown" -> "brXown"
+				server.runs().insert(6 + 15, 'ish'); // "brown fox" -> "brownish fox"
 			})
 		);
 		await until(() => component.editor?.getText().startsWith('Well, ') === true, 'the co-editor edit');
-		await until(() => highlights()[0] === 'brXown fox', 'the range found again');
+		await until(() => highlights()[0] === 'brownish fox', 'the range found again');
 		await until(() => places.length > 0 && places[places.length - 1].get('t1')?.start === 16, 'the places');
 		expect(places[places.length - 1].get('t1')).toMatchObject({
 			method: DocumentCommentAnchorMethodEnum.RELATIVE,
-			text: 'brXown fox'
+			text: 'brownish fox'
 		});
 
 		// The platform reads the same range in its live copy of the page.
 		const platform = resolveCommentAnchor(
 			range,
-			[{ blockId: 'b1', text: (server.runs().toString() as string) }],
+			[{ blockId: 'b1', text: server.runs().toString() as string }],
 			liveAnchorResolverOf(server.doc)
 		);
 		expect(platform).toEqual(places[places.length - 1].get('t1'));
@@ -256,7 +257,10 @@ describe('DocumentEditorComponent: comment ranges', () => {
 		const before = component.editor;
 
 		frames.next({ kind: 'closed', documentId: 'doc-1', reason: 'shutdown' });
-		await until(() => !!component.editor && component.editor !== before && !component.isLive, 'the autosave editor');
+		await until(
+			() => !!component.editor && component.editor !== before && !component.isLive,
+			'the autosave editor'
+		);
 
 		await until(() => highlights()[0] === 'lazy dog', 'the range drawn again');
 	});
@@ -269,7 +273,14 @@ describe('DocumentEditorComponent: comment ranges', () => {
 		component.editor!.commands.keyboardShortcut('Mod-Alt-m');
 		expect(requests[0]).toEqual({
 			blockId: 'b1',
-			range: { blockId: 'b1', start: 4, end: 9, quote: 'quick', prefix: 'The ', suffix: ' brown fox jumps over the lazy d' }
+			range: {
+				blockId: 'b1',
+				start: 4,
+				end: 9,
+				quote: 'quick',
+				prefix: 'The ',
+				suffix: ' brown fox jumps over the lazy d'
+			}
 		});
 
 		component.editor!.commands.setTextSelection(3);
@@ -289,9 +300,9 @@ describe('DocumentEditorComponent: comment ranges', () => {
 		await until(() => places.some((resolved) => resolved.get('t1')?.start === 16), 'the range found again');
 
 		expect(component.focusCommentRange('t1')).toBe(true);
-		expect(
-			(fixture.nativeElement as HTMLElement).querySelector('.gz-comment-range--active')?.textContent
-		).toBe('brown fox');
+		expect((fixture.nativeElement as HTMLElement).querySelector('.gz-comment-range--active')?.textContent).toBe(
+			'brown fox'
+		);
 		expect(component.focusCommentRange('missing')).toBe(false);
 	});
 });

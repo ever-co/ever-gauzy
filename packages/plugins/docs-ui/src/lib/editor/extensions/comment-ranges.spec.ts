@@ -13,7 +13,9 @@ import {
 const TestBlockIds = Extension.create({
 	name: 'testBlockIds',
 	addGlobalAttributes() {
-		return [{ types: ['paragraph', 'heading', 'bulletList', 'listItem'], attributes: { blockId: { default: null } } }];
+		return [
+			{ types: ['paragraph', 'heading', 'bulletList', 'listItem'], attributes: { blockId: { default: null } } }
+		];
 	}
 });
 
@@ -40,7 +42,7 @@ function editorWith(...content: JSONContent[]): Editor {
 function rangeOf(editor: Editor, quote: string): { from: number; to: number } {
 	let found: { from: number; to: number } | null = null;
 	editor.state.doc.descendants((node, pos) => {
-		if (found || !node.isTextblock) return !found;
+		if (found || !node.inlineContent) return !found;
 		const blockText = editorBlockTextOf(node);
 		const at = blockText.indexOf(quote);
 		if (at < 0) return true;
@@ -88,7 +90,12 @@ describe('comment ranges in the editor document', () => {
 			paragraph('b1', text('Hello '), { type: 'hardBreak' }, text('bold', [{ type: 'bold' }]), text(' world'))
 		);
 		editor.commands.setTextSelection(rangeOf(editor, 'bold wor'));
-		expect(selectionCommentAnchor(editor.state)).toMatchObject({ blockId: 'b1', start: 6, end: 14, quote: 'bold wor' });
+		expect(selectionCommentAnchor(editor.state)).toMatchObject({
+			blockId: 'b1',
+			start: 6,
+			end: 14,
+			quote: 'bold wor'
+		});
 	});
 
 	it('takes the innermost block with an id, and cuts a selection that runs on into the next block', () => {
@@ -104,7 +111,12 @@ describe('comment ranges in the editor document', () => {
 		const to = rangeOf(editor, 'After').to;
 		editor.commands.setTextSelection({ from, to });
 		expect(blockAround(editor.state, from)?.blockId).toBe('item');
-		expect(selectionCommentAnchor(editor.state)).toMatchObject({ blockId: 'item', start: 6, end: 10, quote: 'item' });
+		expect(selectionCommentAnchor(editor.state)).toMatchObject({
+			blockId: 'item',
+			start: 6,
+			end: 10,
+			quote: 'item'
+		});
 	});
 
 	it('makes no anchor without selected text, or outside every block with an id', () => {

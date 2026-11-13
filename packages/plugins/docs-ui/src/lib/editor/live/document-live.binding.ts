@@ -4,7 +4,6 @@ import { yCursorPlugin } from '@tiptap/y-tiptap';
 import type { Observable, Subscription } from 'rxjs';
 import { Awareness, applyAwarenessUpdate, encodeAwarenessUpdate, removeAwarenessStates } from 'y-protocols/awareness';
 import * as Y from 'yjs';
-import type { EditorState } from '@tiptap/pm/state';
 import type { LiveAnchorResolver, LiveRelativeRange } from '../comments/comment-anchor.model';
 import { LIVE_FIELD, base64, liveAnchorResolverOf, liveRelativeRangeOf } from './document-live.anchors';
 
@@ -85,7 +84,7 @@ export interface ILiveBinding {
 	 * The live relative positions of ranges of an editor bound to this document, as its state is now; null while the
 	 * editor is not bound to it.
 	 */
-	relativeRange(state: EditorState): LiveRelativeRange | null;
+	relativeRange(state: Parameters<typeof liveRelativeRangeOf>[0]): LiveRelativeRange | null;
 	start(): void;
 	/** Whether local edits are waiting to be sent (or being sent). */
 	hasPending(): boolean;
@@ -359,7 +358,7 @@ export function createLiveBinding(options: ILiveBindingOptions): ILiveBinding {
 		awareness,
 		extensions: [Collaboration.configure({ document: doc, field: LIVE_FIELD }) as unknown as Extension, cursor],
 		anchorResolver: liveAnchorResolverOf(doc, LIVE_FIELD),
-		relativeRange: (state: EditorState) => liveRelativeRangeOf(state, doc),
+		relativeRange: (state) => liveRelativeRangeOf(state, doc),
 		start: () => open(),
 		hasPending: () => pending.length > 0 || sending,
 		hasUnconfirmed: () => pending.length > 0 || sending || notTaken,

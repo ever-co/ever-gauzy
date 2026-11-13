@@ -32,7 +32,13 @@ const page = (...content: object[]) => ({ type: 'doc', content });
 
 const anchorOn = (blockText: string, quote: string, blockId = 'b1', occurrence = 0): IDocumentCommentAnchorInput => {
 	const start = occurrencesOf(blockText, quote)[occurrence];
-	return { blockId, start, end: start + quote.length, quote, ...anchorContextOf(blockText, start, start + quote.length) };
+	return {
+		blockId,
+		start,
+		end: start + quote.length,
+		quote,
+		...anchorContextOf(blockText, start, start + quote.length)
+	};
 };
 
 describe('comment anchors (the platform rules, in the Angular editor)', () => {
@@ -66,7 +72,9 @@ describe('comment anchors (the platform rules, in the Angular editor)', () => {
 		});
 
 		it('reads the JSON stored as text, and nothing from what is no document', () => {
-			expect(anchorBlocksOf(JSON.stringify(page(paragraph('a', text('x')))))).toEqual([{ blockId: 'a', text: 'x' }]);
+			expect(anchorBlocksOf(JSON.stringify(page(paragraph('a', text('x')))))).toEqual([
+				{ blockId: 'a', text: 'x' }
+			]);
 			expect(anchorBlocksOf('not json')).toEqual([]);
 			expect(anchorBlocksOf(null)).toEqual([]);
 		});
@@ -144,7 +152,9 @@ describe('comment anchors (the platform rules, in the Angular editor)', () => {
 		});
 
 		it('is on the block for an anchor without a quote', () => {
-			const found = resolveCommentAnchor({ blockId: 'b1', start: 0, end: 0, quote: '' }, [{ blockId: 'b1', text: 'x' }]);
+			const found = resolveCommentAnchor({ blockId: 'b1', start: 0, end: 0, quote: '' }, [
+				{ blockId: 'b1', text: 'x' }
+			]);
 			expect(found.status).toBe(DocumentCommentAnchorStatusEnum.BLOCK);
 		});
 
@@ -158,7 +168,11 @@ describe('comment anchors (the platform rules, in the Angular editor)', () => {
 				relativeEnd: 'END'
 			};
 			const live = (relative: string) =>
-				relative === 'START' ? { blockId: 'b1', offset: 10 } : relative === 'END' ? { blockId: 'b1', offset: 17 } : null;
+				relative === 'START'
+					? { blockId: 'b1', offset: 10 }
+					: relative === 'END'
+						? { blockId: 'b1', offset: 17 }
+						: null;
 			const found = resolveCommentAnchor(anchor, [{ blockId: 'b1', text: 'Oh, Hello brastve new world' }], live);
 			expect(found).toEqual({
 				status: DocumentCommentAnchorStatusEnum.MOVED,
@@ -295,7 +309,10 @@ describe('comment anchors (the platform rules, in the Angular editor)', () => {
 		};
 
 		it('is indexed by its comment and keeps only the stored fields', () => {
-			const byComment = anchorsByComment([stored, { ...stored, commentId: '' } as IDocumentCommentAnchorResolved]);
+			const byComment = anchorsByComment([
+				stored,
+				{ ...stored, commentId: '' } as IDocumentCommentAnchorResolved
+			]);
 			expect([...byComment.keys()]).toEqual(['comment-1']);
 			expect(storedAnchorOf(byComment.get('comment-1')!)).toEqual({
 				blockId: 'b1',
@@ -312,15 +329,26 @@ describe('comment anchors (the platform rules, in the Angular editor)', () => {
 		it('is found in this editor where that client and the platform find it, after edits here', () => {
 			const json = page(
 				paragraph('b0', text('A new first line.')),
-				paragraph('b1', text('So: the very quick '), text('brown', [{ type: 'bold' }]), text(' fox jumps over the lazy dog.'))
+				paragraph(
+					'b1',
+					text('So: the very quick '),
+					text('brown', [{ type: 'bold' }]),
+					text(' fox jumps over the lazy dog.')
+				)
 			);
 			const found = resolveCommentAnchor(storedAnchorOf(stored), anchorBlocksOf(json));
-			expect(found).toMatchObject({ status: DocumentCommentAnchorStatusEnum.MOVED, blockId: 'b1', text: 'brown fox' });
+			expect(found).toMatchObject({
+				status: DocumentCommentAnchorStatusEnum.MOVED,
+				blockId: 'b1',
+				text: 'brown fox'
+			});
 			expect(rangePlaceKindOf(found)).toBe('range');
 		});
 
 		it('reads as on its block, or gone, once its text is', () => {
-			expect(rangePlaceKindOf(resolveCommentAnchor(stored, [{ blockId: 'b1', text: 'rewritten' }]))).toBe('block');
+			expect(rangePlaceKindOf(resolveCommentAnchor(stored, [{ blockId: 'b1', text: 'rewritten' }]))).toBe(
+				'block'
+			);
 			expect(rangePlaceKindOf(resolveCommentAnchor(stored, []))).toBe('orphaned');
 			expect(rangePlaceKindOf(null)).toBe('orphaned');
 		});

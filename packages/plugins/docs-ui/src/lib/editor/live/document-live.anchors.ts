@@ -85,18 +85,22 @@ export function liveAnchorResolverOf(doc: Y.Doc, field = LIVE_FIELD): LiveAnchor
 
 function resolverOf(doc: Y.Doc, fragment: Y.XmlFragment): LiveAnchorResolver {
 	return (relative: string): ILiveAnchorPoint | null => {
-		const bytes = fromBase64(relative);
-		if (!bytes?.length) return null;
-		let absolute: Y.AbsolutePosition | null = null;
-		try {
-			absolute = Y.createAbsolutePositionFromRelativePosition(Y.decodeRelativePosition(bytes), doc);
-		} catch {
-			return null;
-		}
+		const absolute = absolutePositionOf(doc, relative);
 		const type: unknown = absolute?.type;
 		if (!absolute || !isLiveNode(type) || !isInside(type, fragment)) return null;
 		return pointOf(type, absolute.index);
 	};
+}
+
+/** Where a relative position (base64) is in `doc` now; null for text that is no relative position. */
+function absolutePositionOf(doc: Y.Doc, relative: string): Y.AbsolutePosition | null {
+	const bytes = fromBase64(relative);
+	if (!bytes?.length) return null;
+	try {
+		return Y.createAbsolutePositionFromRelativePosition(Y.decodeRelativePosition(bytes), doc);
+	} catch {
+		return null;
+	}
 }
 
 /** The sync plugin's state, as far as the anchors read it. */

@@ -283,7 +283,9 @@ function buildDecorations(
 		decorations.push(
 			Decoration.widget(pos, () => createMarker(markerBlockId, options, threadId), {
 				side: -1,
-				key: threadId ? `gz-block-comment-${blockId}-${markerBlockId}-${threadId}` : `gz-block-comment-${blockId}`
+				key: threadId
+					? `gz-block-comment-${blockId}-${markerBlockId}-${threadId}`
+					: `gz-block-comment-${blockId}`
 			})
 		);
 		return true;
@@ -344,14 +346,13 @@ export const BlockComments = Extension.create<IBlockCommentsOptions>({
 					apply: (transaction, value, _previous, state) => {
 						const open = transaction.getMeta(blockCommentsPluginKey) as string[] | undefined;
 						const asked = transaction.getMeta(COMMENT_RANGES_META) as
-							| Partial<Pick<IBlockCommentsState, 'ranges' | 'activeThread'>>
-							| undefined;
+							Partial<Pick<IBlockCommentsState, 'ranges' | 'activeThread'>> | undefined;
 						if (Array.isArray(open) || asked || transaction.getMeta(REFRESH_RANGES_META)) {
 							return build(
 								state.doc,
 								Array.isArray(open) ? open.map(String) : value.open,
 								asked?.ranges ?? value.ranges,
-								asked && 'activeThread' in asked ? asked.activeThread ?? null : value.activeThread
+								asked && 'activeThread' in asked ? (asked.activeThread ?? null) : value.activeThread
 							);
 						}
 						if (!transaction.docChanged) return value;
@@ -373,7 +374,8 @@ export const BlockComments = Extension.create<IBlockCommentsOptions>({
 						update: (view, previous) => {
 							const current = blockCommentsPluginKey.getState(view.state);
 							const before = blockCommentsPluginKey.getState(previous);
-							if (current && current.places !== before?.places) options.onRangesResolved?.(current.places);
+							if (current && current.places !== before?.places)
+								options.onRangesResolved?.(current.places);
 							if (!current?.stale) return;
 							// Only an edit moves the moment on; the caret moving meanwhile does not.
 							if (timer && view.state.doc === previous.doc) return;
@@ -381,7 +383,9 @@ export const BlockComments = Extension.create<IBlockCommentsOptions>({
 							timer = setTimeout(() => {
 								timer = null;
 								if ((view as { isDestroyed?: boolean }).isDestroyed) return;
-								view.dispatch(view.state.tr.setMeta(REFRESH_RANGES_META, true).setMeta('addToHistory', false));
+								view.dispatch(
+									view.state.tr.setMeta(REFRESH_RANGES_META, true).setMeta('addToHistory', false)
+								);
 							}, COMMENT_RANGES_REFRESH_MS);
 						},
 						destroy: () => {

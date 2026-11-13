@@ -249,7 +249,10 @@ export function approximateMatch(text: string, quote: string): { start: number; 
 	let found: { start: number; end: number; distance: number } | null = null;
 	for (const [start] of candidates) {
 		const run = closestRunFrom(text, start, quote, fullLimit);
-		if (run && (!found || run.distance < found.distance || (run.distance === found.distance && start < found.start))) {
+		if (
+			run &&
+			(!found || run.distance < found.distance || (run.distance === found.distance && start < found.start))
+		) {
 			found = { start, end: start + run.length, distance: run.distance };
 		}
 	}
@@ -354,8 +357,16 @@ export function resolveCommentAnchor(
 			to.offset <= block.text.length
 		) {
 			const text = block.text.slice(from.offset, to.offset);
-			const status = text === quote ? DocumentCommentAnchorStatusEnum.EXACT : DocumentCommentAnchorStatusEnum.MOVED;
-			return position(status, DocumentCommentAnchorMethodEnum.RELATIVE, block.blockId, from.offset, to.offset, text);
+			const status =
+				text === quote ? DocumentCommentAnchorStatusEnum.EXACT : DocumentCommentAnchorStatusEnum.MOVED;
+			return position(
+				status,
+				DocumentCommentAnchorMethodEnum.RELATIVE,
+				block.blockId,
+				from.offset,
+				to.offset,
+				text
+			);
 		}
 	}
 

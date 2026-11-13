@@ -109,11 +109,18 @@ export class DocumentCommentsService {
 	 * Stores the range a thread was made on (its first comment, by its author, right after posting it): the block, the
 	 * offsets into the block's text, the quote, a little context and, live, the ends as relative positions.
 	 */
-	setAnchor(documentId: ID, commentId: ID, input: IDocumentCommentAnchorInput): Observable<IDocumentCommentAnchorResolved> {
-		return this.http.put<IDocumentCommentAnchorResolved>(`${this.DOCS_URL}/${documentId}/comments/${commentId}/anchor`, {
-			...this.definedOrgContext(),
-			...input
-		});
+	setAnchor(
+		documentId: ID,
+		commentId: ID,
+		input: IDocumentCommentAnchorInput
+	): Observable<IDocumentCommentAnchorResolved> {
+		return this.http.put<IDocumentCommentAnchorResolved>(
+			`${this.DOCS_URL}/${documentId}/comments/${commentId}/anchor`,
+			{
+				...this.definedOrgContext(),
+				...input
+			}
+		);
 	}
 
 	/** The scope without absent values: `toParams()` would send `undefined` as the text "undefined". */

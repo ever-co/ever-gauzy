@@ -128,16 +128,24 @@ export function selectionCommentAnchor(
 	const endOffset = textOffsetInBlock(block.node, block.pos, end);
 	if (endOffset <= startOffset) return null;
 	// The positions named are where the text starts and ends: what lies around it (an atom, the block's edge) is not.
-	let relative: { relativeStart: string; relativeEnd: string } | null = null;
-	try {
-		relative =
-			liveRange?.(
-				positionOfTextOffset(block.node, block.pos, startOffset, 'start'),
-				positionOfTextOffset(block.node, block.pos, endOffset, 'end')
-			) ?? null;
-	} catch {
-		// A binding not caught up yet: the range is kept by its offsets and its quote.
-		relative = null;
-	}
+	const relative = liveEndsOf(
+		liveRange,
+		positionOfTextOffset(block.node, block.pos, startOffset, 'start'),
+		positionOfTextOffset(block.node, block.pos, endOffset, 'end')
+	);
 	return commentAnchorInputOf(block.blockId, editorBlockTextOf(block.node), startOffset, endOffset, relative);
+}
+
+/** The live ends of a range; none when the editor is not live or its binding is not caught up yet. */
+function liveEndsOf(
+	liveRange: LiveRelativeRange | null | undefined,
+	from: number,
+	to: number
+): { relativeStart: string; relativeEnd: string } | null {
+	try {
+		return liveRange?.(from, to) ?? null;
+	} catch {
+		// The range is kept by its offsets and its quote.
+		return null;
+	}
 }

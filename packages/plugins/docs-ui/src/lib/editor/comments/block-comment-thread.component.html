@@ -69,7 +69,9 @@
 			<!-- The selected text the new thread is made on (docs-collaboration FR-16) -->
 			@if (composerRange; as selection) {
 				<div class="gz-block-composer-range">
-					<span class="gz-block-composer-range-label">{{ 'DOCS.COMMENTS.RANGE_COMMENTING_ON' | translate }}</span>
+					<span class="gz-block-composer-range-label">{{
+						'DOCS.COMMENTS.RANGE_COMMENTING_ON' | translate
+					}}</span>
 					<q class="gz-block-range-text">{{ selection.quote }}</q>
 					<button
 						nbButton

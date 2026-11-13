@@ -36,7 +36,7 @@ const selection = (chain: IFakeNode[]) => ({
 	}
 });
 
-const editorWith = (chain: IFakeNode[]): Editor => ({ state: { selection: selection(chain) } } as unknown as Editor);
+const editorWith = (chain: IFakeNode[]): Editor => ({ state: { selection: selection(chain) } }) as unknown as Editor;
 
 const block = (blockId?: string): IFakeNode => ({ attrs: blockId ? { blockId } : {} });
 
@@ -72,7 +72,7 @@ describe('collectBlockIds', () => {
 					descendants: (visit: (node: IFakeNode) => boolean) => nodes.forEach((node) => visit(node))
 				}
 			}
-		} as unknown as Editor);
+		}) as unknown as Editor;
 
 	it('lists every stamped block in document order', () => {
 		expect(collectBlockIds(docWith([block('a'), block(), block('b')]))).toEqual(['a', 'b']);
@@ -167,7 +167,9 @@ describe('comment ranges', () => {
 			active: element.classList.contains('gz-comment-range--active')
 		}));
 	const tinted = () =>
-		Array.from(editor.view.dom.querySelectorAll('.gz-block-commented')).map((element) => element.getAttribute('blockid'));
+		Array.from(editor.view.dom.querySelectorAll('.gz-block-commented')).map((element) =>
+			element.getAttribute('blockId')
+		);
 	const markers = () =>
 		Array.from(editor.view.dom.querySelectorAll<HTMLElement>('.gz-block-comment-marker')).map((element) =>
 			element.getAttribute('data-block-id')
@@ -177,7 +179,7 @@ describe('comment ranges', () => {
 	const typeBefore = (anchorText: string, inserted: string) => {
 		let at = -1;
 		editor.state.doc.descendants((node, pos) => {
-			if (at < 0 && node.isTextblock && node.textContent.includes(anchorText)) at = pos + 1;
+			if (at < 0 && node.inlineContent && node.textContent.includes(anchorText)) at = pos + 1;
 			return at < 0;
 		});
 		editor.view.dispatch(editor.state.tr.insertText(inserted, at));
@@ -227,7 +229,10 @@ describe('comment ranges', () => {
 		editorWith(paragraph('b1', FOX));
 		setCommentRanges(editor, [rangeOn('t1', FOX, 'lazy dog')]);
 
-		editor.commands.setContent({ type: 'doc', content: [paragraph('b1', 'Now: over the lazy dog, the fox jumped.')] });
+		editor.commands.setContent({
+			type: 'doc',
+			content: [paragraph('b1', 'Now: over the lazy dog, the fox jumped.')]
+		});
 		jest.advanceTimersByTime(COMMENT_RANGES_REFRESH_MS);
 
 		expect(highlights()).toEqual([{ text: 'lazy dog', thread: 't1', active: false }]);
@@ -237,13 +242,18 @@ describe('comment ranges', () => {
 		editorWith(paragraph('b1', FOX), paragraph('b2', 'Second block'));
 		setCommentRanges(editor, [rangeOn('t1', FOX, 'brown fox')]);
 
-		editor.commands.setContent({ type: 'doc', content: [paragraph('b1', 'Rewritten'), paragraph('b2', 'Second block')] });
+		editor.commands.setContent({
+			type: 'doc',
+			content: [paragraph('b1', 'Rewritten'), paragraph('b2', 'Second block')]
+		});
 		jest.advanceTimersByTime(COMMENT_RANGES_REFRESH_MS);
 
 		expect(highlights()).toEqual([]);
 		expect(tinted()).toEqual(['b1']);
 		expect(markers()).toEqual(['b1']);
-		expect(blockCommentsStateOf(editor.state)?.places.get('t1')?.status).toBe(DocumentCommentAnchorStatusEnum.BLOCK);
+		expect(blockCommentsStateOf(editor.state)?.places.get('t1')?.status).toBe(
+			DocumentCommentAnchorStatusEnum.BLOCK
+		);
 	});
 
 	it("opens a range's thread from its highlight and from its block's marker", () => {
@@ -310,7 +320,9 @@ describe('comment ranges', () => {
 		editorWith(paragraph('b1', FOX));
 		setCommentRanges(editor, [rangeOn('t1', FOX, 'brown fox')]);
 		expect(onRangesResolved).toHaveBeenCalledTimes(1);
-		expect(onRangesResolved.mock.calls[0][0].get('t1')).toMatchObject({ status: DocumentCommentAnchorStatusEnum.EXACT });
+		expect(onRangesResolved.mock.calls[0][0].get('t1')).toMatchObject({
+			status: DocumentCommentAnchorStatusEnum.EXACT
+		});
 
 		typeBefore('quick', 'Hey. ');
 		// Typing only moves the highlights: nothing is told until they are found again.
@@ -323,18 +335,25 @@ describe('comment ranges', () => {
 	it('reads the live relative positions first when the page is edited live', () => {
 		const element = document.createElement('div');
 		document.body.append(element);
-		const liveResolver = jest.fn(() => (relative: string) =>
-			relative === 'S' ? { blockId: 'b1', offset: 4 } : relative === 'E' ? { blockId: 'b1', offset: 9 } : null
+		const liveResolver = jest.fn(
+			() => (relative: string) =>
+				relative === 'S' ? { blockId: 'b1', offset: 4 } : relative === 'E' ? { blockId: 'b1', offset: 9 } : null
 		);
 		editor = new Editor({
 			element,
 			content: { type: 'doc', content: [paragraph('b1', FOX)] },
-			extensions: [StarterKit, TestBlockIds, BlockComments.configure({ onOpenThread: jest.fn(), markerLabel: '', liveResolver })]
+			extensions: [
+				StarterKit,
+				TestBlockIds,
+				BlockComments.configure({ onOpenThread: jest.fn(), markerLabel: '', liveResolver })
+			]
 		});
 		const range = rangeOn('t1', FOX, 'brown fox');
 		setCommentRanges(editor, [{ ...range, anchor: { ...range.anchor, relativeStart: 'S', relativeEnd: 'E' } }]);
 
 		expect(highlights()).toEqual([{ text: 'quick', thread: 't1', active: false }]);
-		expect(blockCommentsStateOf(editor.state)?.places.get('t1')?.method).toBe(DocumentCommentAnchorMethodEnum.RELATIVE);
+		expect(blockCommentsStateOf(editor.state)?.places.get('t1')?.method).toBe(
+			DocumentCommentAnchorMethodEnum.RELATIVE
+		);
 	});
 });

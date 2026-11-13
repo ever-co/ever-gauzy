@@ -181,7 +181,7 @@ describe('BlockCommentThreadComponent: threads made on a range of text', () => {
 		TestBed.resetTestingModule();
 	});
 
-	it('shows a range thread made in another client on its text, and leaves its block untinted', async () => {
+	it('shows a range thread made in another client on its text, and does not tint its block', async () => {
 		await render();
 
 		expect(comments.anchors).toHaveBeenCalledWith(DOCUMENT_ID);
@@ -213,13 +213,18 @@ describe('BlockCommentThreadComponent: threads made on a range of text', () => {
 			...overrides
 		});
 
-		fixture.componentRef.setInput('rangePlaces', new Map([['c1', place({ status: DocumentCommentAnchorStatusEnum.MOVED, text: 'brown  fox' })]]));
+		fixture.componentRef.setInput(
+			'rangePlaces',
+			new Map([['c1', place({ status: DocumentCommentAnchorStatusEnum.MOVED, text: 'brown  fox' })]])
+		);
 		fixture.detectChanges();
 		expect(quotes()).toEqual([{ text: 'brown  fox', disabled: false }]);
 
 		fixture.componentRef.setInput(
 			'rangePlaces',
-			new Map([['c1', place({ status: DocumentCommentAnchorStatusEnum.BLOCK, start: null, end: null, text: null })]])
+			new Map([
+				['c1', place({ status: DocumentCommentAnchorStatusEnum.BLOCK, start: null, end: null, text: null })]
+			])
 		);
 		fixture.detectChanges();
 		expect(quotes()).toEqual([{ text: 'brown fox', disabled: true }]);
@@ -227,7 +232,18 @@ describe('BlockCommentThreadComponent: threads made on a range of text', () => {
 
 		fixture.componentRef.setInput(
 			'rangePlaces',
-			new Map([['c1', place({ status: DocumentCommentAnchorStatusEnum.ORPHANED, blockId: null, start: null, end: null, text: null })]])
+			new Map([
+				[
+					'c1',
+					place({
+						status: DocumentCommentAnchorStatusEnum.ORPHANED,
+						blockId: null,
+						start: null,
+						end: null,
+						text: null
+					})
+				]
+			])
 		);
 		fixture.detectChanges();
 		expect(element().textContent).toContain('DOCS.COMMENTS.RANGE_GONE');
@@ -244,7 +260,9 @@ describe('BlockCommentThreadComponent: threads made on a range of text', () => {
 		// The block's first line stays, for clients that know no ranges.
 		expect(comments.created[0]['comment']).toBe('[[block:b1]]\nShould this be "red"?');
 		expect(comments.setAnchor).toHaveBeenCalledWith(DOCUMENT_ID, 'new-1', SELECTION);
-		expect(ranges[ranges.length - 1]).toEqual(expect.arrayContaining([expect.objectContaining({ threadId: 'new-1', blockId: 'b1' })]));
+		expect(ranges[ranges.length - 1]).toEqual(
+			expect.arrayContaining([expect.objectContaining({ threadId: 'new-1', blockId: 'b1' })])
+		);
 		// The composer is back to commenting on the block.
 		expect(element().querySelector('.gz-block-composer-range')).toBeNull();
 	});
@@ -291,13 +309,18 @@ describe('BlockCommentThreadComponent: threads made on a range of text', () => {
 	});
 
 	it('lights the thread asked for, even resolved, and shows its text in the page from its quote', async () => {
-		comments.items = [comment('c1', '[[block:b1]]\nDone', { resolved: true }), comment('c3', '[[block:b2]]\nOn the block')];
+		comments.items = [
+			comment('c1', '[[block:b1]]\nDone', { resolved: true }),
+			comment('c3', '[[block:b2]]\nOn the block')
+		];
 		await render();
 		expect(ranges[ranges.length - 1]).toEqual([]);
 
 		fixture.componentRef.setInput('activeThreadId', 'c1');
 		fixture.detectChanges();
-		expect((ranges[ranges.length - 1] as Array<{ threadId: string }>).map((range) => range.threadId)).toEqual(['c1']);
+		expect((ranges[ranges.length - 1] as Array<{ threadId: string }>).map((range) => range.threadId)).toEqual([
+			'c1'
+		]);
 		expect(element().querySelector('.gz-block-comment.active')?.getAttribute('data-thread-id')).toBe('c1');
 
 		const focused: string[] = [];

@@ -512,7 +512,7 @@ export class BlockCommentThreadComponent implements OnChanges {
 							end: range.end,
 							text: range.quote
 						}
-				  };
+					};
 			if (String(this.documentId) === String(documentId)) {
 				this.anchors = new Map(this.anchors).set(String(commentId), anchor);
 			}
@@ -540,7 +540,11 @@ export class BlockCommentThreadComponent implements OnChanges {
 			// A reply has no range of its own: it is on its thread's.
 			if (!anchor || this.threadIdOf(comment, present) !== id) continue;
 			if (comment.resolved && id !== String(this.activeThreadId ?? '')) continue;
-			ranges.push({ threadId: id, blockId: commentBlockId(comment) ?? anchor.blockId, anchor: storedAnchorOf(anchor) });
+			ranges.push({
+				threadId: id,
+				blockId: commentBlockId(comment) ?? anchor.blockId,
+				anchor: storedAnchorOf(anchor)
+			});
 		}
 		this.rangesChanged.emit(ranges);
 	}

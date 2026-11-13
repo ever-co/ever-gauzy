@@ -5,7 +5,12 @@ import StarterKit from '@tiptap/starter-kit';
 import * as Y from 'yjs';
 import { DocumentCommentAnchorMethodEnum, DocumentCommentAnchorStatusEnum } from '@gauzy/contracts';
 import { resolveCommentAnchor } from '../comments/comment-anchor.model';
-import { editorBlockTextOf, editorBlocksOf, positionOfTextOffset, selectionCommentAnchor } from '../extensions/comment-ranges';
+import {
+	editorBlockTextOf,
+	editorBlocksOf,
+	positionOfTextOffset,
+	selectionCommentAnchor
+} from '../extensions/comment-ranges';
 import { LIVE_FIELD, liveAnchorResolverOf, liveRelativeRangeOf } from './document-live.anchors';
 
 const TestBlockIds = Extension.create({
@@ -137,7 +142,14 @@ describe('comment anchors in the shared document', () => {
 			const relative = Y.createRelativePositionFromTypeIndex(block.get(0) as Y.XmlText, index);
 			return Buffer.from(Y.encodeRelativePosition(relative)).toString('base64');
 		};
-		const anchor = { blockId: 'b2', start: 0, end: 6, quote: 'Second', relativeStart: encode(0), relativeEnd: encode(6) };
+		const anchor = {
+			blockId: 'b2',
+			start: 0,
+			end: 6,
+			quote: 'Second',
+			relativeStart: encode(0),
+			relativeEnd: encode(6)
+		};
 		editor.commands.insertContentAt(rangeOf(editor, 'Second').from, 'The ');
 
 		const found = resolveCommentAnchor(anchor, editorBlocksOf(editor.state.doc), liveAnchorResolverOf(doc));
@@ -154,9 +166,9 @@ describe('comment anchors in the shared document', () => {
 		const stranger = new Y.Doc();
 		const element = new Y.XmlElement('paragraph');
 		stranger.getXmlFragment(LIVE_FIELD).insert(0, [element]);
-		const foreign = Buffer.from(Y.encodeRelativePosition(Y.createRelativePositionFromTypeIndex(element, 0))).toString(
-			'base64'
-		);
+		const foreign = Buffer.from(
+			Y.encodeRelativePosition(Y.createRelativePositionFromTypeIndex(element, 0))
+		).toString('base64');
 		const resolve = liveAnchorResolverOf(doc);
 		expect(resolve(foreign)).toBeNull();
 		expect(resolve('not base64 at all!')).toBeNull();
