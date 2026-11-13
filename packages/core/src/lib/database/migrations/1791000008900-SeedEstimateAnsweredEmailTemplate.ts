@@ -9,8 +9,8 @@ import { EmailTemplateUtils } from '../../email-template/utils';
  * existing one gets it here. Idempotent (`migrateEmailTemplates` creates or updates), and a failure is logged rather
  * than raised: without the template the answer still reaches the team in-app, and the send reports the missing one.
  */
-export class SeedEstimateAnsweredEmailTemplate1791000008700 implements MigrationInterface {
-	name = 'SeedEstimateAnsweredEmailTemplate1791000008700';
+export class SeedEstimateAnsweredEmailTemplate1791000008900 implements MigrationInterface {
+	name = 'SeedEstimateAnsweredEmailTemplate1791000008900';
 
 	public async up(queryRunner: QueryRunner): Promise<void> {
 		console.log(chalk.yellow(this.name + ' start running!'));
