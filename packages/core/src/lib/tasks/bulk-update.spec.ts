@@ -1,5 +1,16 @@
 import { ITaskBulkUpdateInput, TASK_BULK_UPDATE_MAX, TaskPriorityEnum, TaskStatusEnum } from '@gauzy/contracts';
-import { BulkUpdateRequestError, changesToUpdate, hasChanges, normalizeBulkUpdate } from './bulk-update';
+import {
+	BulkChangeRecords,
+	BulkUpdateRequestError,
+	changesToUpdate,
+	hasChanges,
+	IBulkChangeRecord,
+	normalizeBulkUpdate,
+	previousWithoutRecordNames,
+	recordIdsOf,
+	recordRefusalOf,
+	withRecordNames
+} from './bulk-update';
 import { relationsTreeOf } from './built-in-views';
 
 describe('normalizeBulkUpdate', () => {
@@ -90,9 +101,104 @@ describe('changesToUpdate', () => {
 
 	it('undoes with the previous values as the next changes', () => {
 		const first = changesToUpdate(task, { addTagIds: ['tag-c'], status: TaskStatusEnum.COMPLETED });
-		const after = { ...task, status: TaskStatusEnum.COMPLETED, tags: first.update.tags } as never;
+		const after = { ...(task as Record<string, unknown>), status: TaskStatusEnum.COMPLETED, tags: first.update.tags } as never;
 		const undo = changesToUpdate(after, first.previous);
 		expect(undo.update).toEqual({ status: TaskStatusEnum.OPEN, tags: [{ id: 'tag-a' }, { id: 'tag-b' }] });
+	});
+});
+
+describe('the records a change names', () => {
+	const TENANT = '00000000-0000-4000-8000-00000000000a';
+	const ORGANIZATION = '00000000-0000-4000-8000-0000000000a1';
+	const OTHER = '00000000-0000-4000-8000-0000000000a2';
+	const record = (id: string, extra: Partial<IBulkChangeRecord> = {}): [string, IBulkChangeRecord] => [id.toLowerCase(), { id, ...extra }];
+	const records: BulkChangeRecords = {
+		taskStatusId: new Map([record('s-own', { name: 'QA', value: 'qa', tenantId: TENANT, organizationId: ORGANIZATION })]),
+		taskPriorityId: new Map([
+			record('p-own', { name: 'P0', value: 'p0', tenantId: TENANT, organizationId: ORGANIZATION }),
+			record('p-shared', { name: 'Shared', value: '', tenantId: TENANT, organizationId: null }),
+			record('p-default', { name: 'Urgent', value: 'urgent', tenantId: null, organizationId: null }),
+			record('p-other-organization', { name: 'Theirs', value: 'theirs', tenantId: TENANT, organizationId: OTHER }),
+			record('p-other-tenant', { name: 'Foreign', value: 'foreign', tenantId: 'another-tenant', organizationId: OTHER })
+		]),
+		taskSizeId: new Map([record('z-own', { name: 'Huge', value: 'huge', tenantId: TENANT, organizationId: ORGANIZATION })])
+	};
+	const scope = { tenantId: TENANT, organizationId: ORGANIZATION };
+
+	it('lists each record id once, whatever its case, and leaves out a cleared one', () => {
+		const ids = recordIdsOf([
+			{ taskId: 'a', changes: { taskPriorityId: 'P-OWN', taskSizeId: null } },
+			{ taskId: 'b', changes: { taskPriorityId: 'p-own', taskStatusId: 's-own' } }
+		]);
+		expect(ids).toEqual({ taskStatusId: ['s-own'], taskPriorityId: ['p-own'], taskSizeId: [] });
+	});
+
+	it('takes the organization’s own record, the tenant’s shared one and a platform default', () => {
+		for (const id of ['p-own', 'P-OWN', 'p-shared', 'p-default']) {
+			expect(recordRefusalOf({ taskPriorityId: id }, records, scope)).toBeNull();
+		}
+		expect(recordRefusalOf({ taskStatusId: 's-own', taskSizeId: 'z-own', taskPriorityId: null }, records, scope)).toBeNull();
+		expect(recordRefusalOf({ priority: TaskPriorityEnum.HIGH }, records, scope)).toBeNull();
+	});
+
+	it('refuses another organization’s or tenant’s record, or one that does not exist, as not found', () => {
+		expect(recordRefusalOf({ taskPriorityId: 'p-other-organization' }, records, scope)).toBe(
+			'TASK_PRIORITY_NOT_FOUND: taskPriorityId names no priority of this organization.'
+		);
+		expect(recordRefusalOf({ taskPriorityId: 'p-other-tenant' }, records, scope)).toMatch(/^TASK_PRIORITY_NOT_FOUND/);
+		expect(recordRefusalOf({ taskSizeId: 'nowhere' }, records, scope)).toMatch(/^TASK_SIZE_NOT_FOUND/);
+		expect(recordRefusalOf({ taskStatusId: 's-own' }, records, { tenantId: TENANT, organizationId: OTHER })).toMatch(/^TASK_STATUS_NOT_FOUND/);
+		expect(recordRefusalOf({ taskStatusId: 's-own' }, records, { tenantId: 'another-tenant', organizationId: ORGANIZATION })).toMatch(
+			/^TASK_STATUS_NOT_FOUND/
+		);
+	});
+
+	it('gives a priority or size named by its record alone the record’s value, else its name', () => {
+		expect(withRecordNames({ taskPriorityId: 'p-own', taskSizeId: 'z-own' }, records)).toEqual({
+			taskPriorityId: 'p-own',
+			priority: 'p0',
+			taskSizeId: 'z-own',
+			size: 'huge'
+		});
+		expect(withRecordNames({ taskPriorityId: 'p-shared' }, records)).toEqual({ taskPriorityId: 'p-shared', priority: 'Shared' });
+	});
+
+	it('keeps a name sent beside the record, leaves a cleared record’s name, and never names a status', () => {
+		const sent = { taskPriorityId: 'p-own', priority: TaskPriorityEnum.LOW };
+		expect(withRecordNames(sent, records)).toBe(sent);
+		const cleared = { taskPriorityId: null };
+		expect(withRecordNames(cleared, records)).toBe(cleared);
+		const status = { taskStatusId: 's-own' };
+		expect(withRecordNames(status, records)).toBe(status);
+		const unknown = { taskSizeId: 'nowhere' };
+		expect(withRecordNames(unknown, records)).toBe(unknown);
+	});
+
+	it('leaves out of the previous values a priority’s or size’s name that the record beside it gives back', () => {
+		expect(previousWithoutRecordNames({ priority: 'p0' as never, taskPriorityId: 'p-own', size: 'huge' as never, taskSizeId: 'z-own' }, records)).toEqual({
+			taskPriorityId: 'p-own',
+			taskSizeId: 'z-own'
+		});
+		// The shared record has no value: its name is what it gives back.
+		expect(previousWithoutRecordNames({ priority: 'Shared' as never, taskPriorityId: 'p-shared' }, records)).toEqual({ taskPriorityId: 'p-shared' });
+	});
+
+	it('keeps a name its record does not give back, one with no record, and a status', () => {
+		const renamed = { priority: 'p-zero' as never, taskPriorityId: 'p-own' };
+		expect(previousWithoutRecordNames(renamed, records)).toBe(renamed);
+		const none = { priority: TaskPriorityEnum.LOW, taskPriorityId: null };
+		expect(previousWithoutRecordNames(none, records)).toBe(none);
+		const unknown = { size: 'huge' as never, taskSizeId: 'nowhere' };
+		expect(previousWithoutRecordNames(unknown, records)).toBe(unknown);
+		const status = { status: 'qa' as never, taskStatusId: 's-own' };
+		expect(previousWithoutRecordNames(status, records)).toBe(status);
+	});
+
+	it('records the name a priority had, so the undo puts it back', () => {
+		const task = { id: 't1', priority: TaskPriorityEnum.LOW, taskPriorityId: null } as never;
+		const { update, previous } = changesToUpdate(task, withRecordNames({ taskPriorityId: 'p-own' }, records));
+		expect(update).toEqual({ priority: 'p0', taskPriorityId: 'p-own' });
+		expect(previous).toEqual({ priority: TaskPriorityEnum.LOW, taskPriorityId: null });
 	});
 });
 
