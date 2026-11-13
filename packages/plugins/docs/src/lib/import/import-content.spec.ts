@@ -178,6 +178,8 @@ describe('convertImportedPage', () => {
 	it('shows an embedded image as the stored file, and a PDF embed alone in its paragraph as a card', () => {
 		const result = convert('![[diagram.png]]\n\n![[spec.pdf]]\n\nInline ![[spec.pdf]] here');
 		expect(all(result.contentJson, 'image')[0].attrs).toEqual({ src: rawFileUrlOf('file-diagram'), documentId: 'file-diagram', alt: 'diagram.png' });
+		// On a line of its own, a block, as the editor holds an image; and so is the card.
+		expect(result.contentJson.content?.slice(0, 2).map((node) => node.type)).toEqual(['image', 'fileAttachment']);
 		expect(all(result.contentJson, 'fileAttachment')[0].attrs).toEqual({ documentId: 'file-spec', name: 'spec.pdf', size: 1234, mimeType: 'application/pdf' });
 		const inline = result.contentJson.content?.[2];
 		expect(inline?.type).toBe('paragraph');
