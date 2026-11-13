@@ -154,13 +154,51 @@ export function assertBillingOnInvoice(billing: IBillingLine[], invoiceId: ID): 
 	}
 }
 
+/** The transaction a save of lines runs in: the entity manager of the ORM the installation runs. */
+export interface ILinesTransaction {
+	typeOrm?: EntityManager;
+	mikroOrm?: MikroOrmEntityManager;
+}
+
+/** A service's own repositories, one per ORM. */
+export interface ILinesRepositories<E extends ObjectLiteral> {
+	typeOrm: Repository<E>;
+	mikroOrm: MikroOrmBaseEntityRepository<E>;
+}
+
 /**
- * Saves lines and writes, on each time log they bill, the line that bills it, in one transaction on the ORM the
- * installation runs: a time log that cannot be billed rolls the whole save back.
+ * Runs a save of lines, and what it writes besides them, in one transaction on the ORM the installation runs.
  *
- * On TypeORM, `save` is given a view of the service whose repository is the transaction's, so the tenant-aware writes
+ * On TypeORM, `work` is given a view of the service whose repository is the transaction's, so the tenant-aware writes
  * of the CRUD base, and their checks, run in the transaction (see `TaskService.inUpdateTransaction`). On MikroORM the
  * service's repositories follow the transaction on their own.
+ *
+ * @param service The service that saves the lines.
+ * @param repositories The service's own repositories.
+ * @param work The writes, run on the service and the transaction it is given.
+ * @returns What the writes answered.
+ */
+export async function inLinesTransaction<S extends { ormType: MultiORM }, E extends ObjectLiteral, R>(
+	service: S,
+	repositories: ILinesRepositories<E>,
+	work: (service: S, transaction: ILinesTransaction) => Promise<R>
+): Promise<R> {
+	if (service.ormType === MultiORMEnum.MikroORM) {
+		const entityManager = repositories.mikroOrm.getEntityManager();
+		return await entityManager.transactional(async (em) => await work(service, { mikroOrm: em }));
+	}
+	return await repositories.typeOrm.manager.transaction(async (manager) => {
+		const repository = manager.getRepository(repositories.typeOrm.target);
+		const inTransaction: S = Object.create(service, {
+			typeOrmRepository: { value: repository, configurable: true }
+		});
+		return await work(inTransaction, { typeOrm: manager });
+	});
+}
+
+/**
+ * Saves lines and writes, on each time log they bill, the line that bills it, in one transaction (see
+ * {@link inLinesTransaction}): a time log that cannot be billed rolls the whole save back.
  *
  * @param service The service that saves the lines.
  * @param repositories The service's own repositories.
@@ -171,33 +209,28 @@ export function assertBillingOnInvoice(billing: IBillingLine[], invoiceId: ID): 
  */
 export async function saveBillingTime<S extends { ormType: MultiORM }, E extends ObjectLiteral, R>(
 	service: S,
-	repositories: { typeOrm: Repository<E>; mikroOrm: MikroOrmBaseEntityRepository<E> },
+	repositories: ILinesRepositories<E>,
 	save: (service: S) => Promise<R>,
 	savedLines: (saved: R) => Array<{ id?: ID }>,
 	billing: IBillingLine[]
 ): Promise<R> {
 	const scope = billingScope();
-	if (service.ormType === MultiORMEnum.MikroORM) {
-		const entityManager = repositories.mikroOrm.getEntityManager();
-		return await entityManager.transactional(async (em) => {
-			const saved = await save(service);
-			const lines = savedLines(saved);
-			const billed = billedLinesOf(lines, billing);
-			await mikroOrmBillTimeLogs(em, billed, scope);
-			return saved;
-		});
-	}
-	return await repositories.typeOrm.manager.transaction(async (manager) => {
-		const repository = manager.getRepository(repositories.typeOrm.target);
-		const inTransaction: S = Object.create(service, {
-			typeOrmRepository: { value: repository, configurable: true }
-		});
+	return await inLinesTransaction(service, repositories, async (inTransaction, transaction) => {
 		const saved = await save(inTransaction);
 		const lines = savedLines(saved);
 		const billed = billedLinesOf(lines, billing);
-		await typeOrmBillTimeLogs(manager, billed, scope);
+		await billTimeLogs(transaction, billed, scope);
 		return saved;
 	});
+}
+
+/** Writes each line on the time logs it bills, on the ORM of the transaction. */
+async function billTimeLogs(transaction: ILinesTransaction, lines: IBilledLine[], scope: IBillingScope): Promise<void> {
+	if (transaction.mikroOrm) {
+		await mikroOrmBillTimeLogs(transaction.mikroOrm, lines, scope);
+		return;
+	}
+	await typeOrmBillTimeLogs(transaction.typeOrm, lines, scope);
 }
 
 /**
