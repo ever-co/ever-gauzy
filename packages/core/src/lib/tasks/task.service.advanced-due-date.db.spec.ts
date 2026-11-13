@@ -91,7 +91,7 @@ function instantsOnly(filters: ITaskAdvancedFilter): ITaskAdvancedFilter {
 	return older;
 }
 
-function rowsFor(at: ReturnType<typeof reader>): Array<Pick<IRow, 'id' | 'dueDate'>> {
+function rowsFor(at: ReturnType<typeof reader>): Array<Pick<IRow, 'id' | 'dueDate'> & { tenantId?: string }> {
 	return [
 		{ id: 'only17', dueDate: dateOnly('2026-11-17') },
 		{ id: 'only18', dueDate: dateOnly('2026-11-18') },
@@ -104,7 +104,10 @@ function rowsFor(at: ReturnType<typeof reader>): Array<Pick<IRow, 'id' | 'dueDat
 		{ id: 'earlyOn19', dueDate: at.local('2026-11-19', 0, 1) },
 		{ id: 'lateOn21', dueDate: at.local('2026-11-21', 23, 59) },
 		{ id: 'earlyOn22', dueDate: at.local('2026-11-22', 0, 1) },
-		{ id: 'undated', dueDate: null }
+		{ id: 'undated', dueDate: null },
+		// Another tenant's task, due on every day asked for: the date conditions must never widen the tenant scope.
+		{ id: 'theirs18', dueDate: dateOnly('2026-11-18'), tenantId: 'other' },
+		{ id: 'theirs17', dueDate: dateOnly('2026-11-17'), tenantId: 'other' }
 	];
 }
 
@@ -160,7 +163,7 @@ describe.each(TARGETS)('advanced due-date filters on $name', (target) => {
 	async function seed(at: ReturnType<typeof reader>): Promise<void> {
 		const repository = dataSource.getRepository(TypeOrmRow);
 		await repository.clear();
-		await repository.insert(rowsFor(at).map((row) => ({ ...row, tenantId: 'ten' })));
+		await repository.insert(rowsFor(at).map((row) => ({ ...row, tenantId: row.tenantId ?? 'ten' })));
 	}
 
 	/** The ids each read path finds for the filters; all must agree. */
