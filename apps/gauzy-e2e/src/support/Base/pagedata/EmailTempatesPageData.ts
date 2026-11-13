@@ -1,3 +1,4 @@
+// cspell:disable -- the subjects below are in English, Bulgarian, Hebrew and Russian
 export const EmailTemplatesPageData = {
 	english: 'English',
 	bulgarian: 'Bulgarian',
