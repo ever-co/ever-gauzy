@@ -87,11 +87,12 @@ beforeAll(async () => {
 	invoices = dataSource.getRepository('PublicInvoiceSpecInvoice');
 	estimateEmails = dataSource.getRepository('PublicInvoiceSpecEstimateEmail');
 
-	// The service passes `select` / `relations` the spec table does not have; forward the where only.
+	// The read passes `select` / `relations` the spec table does not have; forward the where only. The answer runs in a
+	// transaction on the spec table.
 	const invoiceRepository = {
 		findOneOrFail: ({ where }) => invoices.findOneOrFail({ where }),
-		findOneByOrFail: (where) => invoices.findOneByOrFail(where),
-		update: (id, entity) => invoices.update(id, entity)
+		manager: dataSource.manager,
+		target: invoices.target
 	};
 	service = new PublicInvoiceService(invoiceRepository as any, estimateEmails as any);
 });

@@ -9,8 +9,9 @@ import { randomUUID } from 'node:crypto';
  * that update's check reads other tables, which a row re-check does not read again. A third connection holds the time
  * log first, so both saves are seen waiting on it before it is released.
  *
- * A status change while another request voids the invoice: the change waits for the void and is refused, instead of
- * writing over it. A third connection voids the invoice and commits once the change is seen waiting.
+ * A status change, or an answer to an estimate through its public link, while another request voids the invoice: the
+ * change waits for the void and is refused, instead of writing over it. A third connection voids the invoice and
+ * commits once the change is seen waiting.
  *
  * Each ORM runs the invoice handlers as the routes dispatch them.
  *
@@ -42,9 +43,11 @@ const EMPLOYEE = randomUUID();
 const scope = { tenantId: TENANT, organizationId: ORG };
 
 /** The tables the spec writes, in the order their rows are removed. */
-const TABLES = ['time_log', 'invoice_item', 'invoice', 'employee', 'user', 'organization'];
+const TABLES = ['time_log', 'invoice_item', 'estimate_email', 'invoice', 'employee', 'user', 'organization'];
 
-(POSTGRES_URL ? describe : describe.skip)('Two saves billing the same time at once, on PostgreSQL', () => {
+const DAY = 24 * 60 * 60 * 1000;
+
+(POSTGRES_URL ? describe : describe.skip)('Writes that race on billed time, on PostgreSQL', () => {
 	let loaded: Row = {};
 	let dataSource: any;
 	let orm: any;
@@ -136,8 +139,8 @@ const TABLES = ['time_log', 'invoice_item', 'invoice', 'employee', 'user', 'orga
 		return row?.id;
 	};
 
-	/** An invoice saved earlier, in the status given, with no line. */
-	const storedInvoice = async (status: string): Promise<string> => {
+	/** An invoice saved earlier, in the status given, with no line; `row` makes it an estimate, for one. */
+	const storedInvoice = async (status: string, row: Row = {}): Promise<string> => {
 		const id = randomUUID();
 		invoiceNumber += 1;
 		await insert('invoice', {
@@ -148,7 +151,8 @@ const TABLES = ['time_log', 'invoice_item', 'invoice', 'employee', 'user', 'orga
 			currency: 'EUR',
 			discountValue: 0,
 			terms: 'Billable time',
-			status
+			status,
+			...row
 		});
 		return id;
 	};
@@ -260,7 +264,12 @@ const TABLES = ['time_log', 'invoice_item', 'invoice', 'employee', 'user', 'orga
 					InvoiceCreateCommand: require('./commands/invoice.create.command').InvoiceCreateCommand,
 					InvoiceUpdateHandler: require('./commands/handlers/invoice.update.handler').InvoiceUpdateHandler,
 					InvoiceUpdateCommand: require('./commands/invoice.update.command').InvoiceUpdateCommand,
-					INVOICE_VOID_IS_FINAL: require('./invoice-final-status').INVOICE_VOID_IS_FINAL
+					INVOICE_VOID_IS_FINAL: require('./invoice-final-status').INVOICE_VOID_IS_FINAL,
+					EstimateEmail: entities.EstimateEmail,
+					PublicInvoiceService: require('../public-share/invoice/public-invoice.service')
+						.PublicInvoiceService,
+					signPurposeToken: require('../auth/purpose-token').signPurposeToken,
+					TokenPurposeEnum: require('../auth/purpose-token').TokenPurposeEnum
 				};
 
 				// The schema is the migrations': nothing is synchronized.
@@ -400,6 +409,33 @@ const TABLES = ['time_log', 'invoice_item', 'invoice', 'employee', 'user', 'orga
 			TIMEOUT
 		);
 	});
+
+	it(
+		"refuses an answer to an estimate that a void overtakes, and keeps the estimate void, on the link's TypeORM",
+		async () => {
+			const invoiceId = await storedInvoice('SENT', { isEstimate: true });
+			const email = 'customer@example.com';
+			const claims = { invoiceId, organizationId: ORG, tenantId: TENANT, email };
+			const token = loaded.signPurposeToken(loaded.TokenPurposeEnum.ESTIMATE, claims, { expiresIn: '7d' });
+			const expireDate = new Date(Date.now() + 7 * DAY);
+			await insert('estimate_email', { id: randomUUID(), ...scope, token, email, expireDate });
+			const answers = new loaded.PublicInvoiceService(
+				dataSource.getRepository(loaded.Invoice),
+				dataSource.getRepository(loaded.EstimateEmail)
+			);
+
+			const accepting = await whileVoiding(invoiceId, () =>
+				answers.updateInvoice({ id: invoiceId, token }, { status: 'ACCEPTED' })
+			);
+
+			expect(accepting).toMatchObject({
+				status: 'rejected',
+				reason: { status: 400, message: loaded.INVOICE_VOID_IS_FINAL }
+			});
+			expect(await statusOf(invoiceId)).toBe('VOID');
+		},
+		TIMEOUT
+	);
 });
 
 /** A value for a NOT NULL column the spec does not name, by the column's data type. */
