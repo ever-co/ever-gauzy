@@ -1072,8 +1072,8 @@ export class TimerService {
 	 * (a database that never answers) does not hold the employee's timer in this process for good. The next one may then
 	 * go on, and once it does, the one that hung writes no time log any more (`EmployeeTurn`, checked before each of its
 	 * writes): it creates no second run and ends none of the next one's. A run it was already creating is closed again
-	 * (`closeRunCreatedLate`); any other write it had already sent can still land, which only a lock in the database
-	 * would stop.
+	 * (`closeRunCreatedLate`), and its cleanup ends only the runs it read (`stopPreviousRunningTimers`). Another write
+	 * it had already sent can still land, which only a lock in the database would stop.
 	 *
 	 * @param employeeId - The employee whose timer starts or stops.
 	 * @param work - The start or the stop, given the turn it holds.
@@ -1181,7 +1181,8 @@ export class TimerService {
 	 * that command also stops a run whose stop here failed, as before.
 	 *
 	 * After a stop, only the runs that were going when the stop began are stopped (`onlyAmong`): a run another client
-	 * started while the stop ran is its replacement, not a run left going, and keeps going.
+	 * started while the stop ran is its replacement, not a run left going, and keeps going. The command is given the
+	 * runs read here, after a start too, so a run written after that read is never its to end.
 	 *
 	 * @param employeeId - The ID of the employee whose timers need to be stopped
 	 * @param organizationId - The ID of the organization to which the employee belongs
@@ -1221,10 +1222,11 @@ export class TimerService {
 			if (logs.length > 0) {
 				// Once the turn has passed, the command would also end the run the next start created
 				turn?.assertHeld();
-				// Execute the ScheduleTimeLogEntriesCommand to stop all previous running timers, or after a stop the ones
-				// that were going when it began
+				// The command stops the runs read here, and only those: a run written since, by another client or by the
+				// next start once this one has outlived the failsafe time, is never its to end, however late it reads
+				const readRunIds = logs.map((log) => log.id);
 				await this._commandBus.execute(
-					new ScheduleTimeLogEntriesCommand(employeeId, organizationId, tenantId, onlyAmong)
+					new ScheduleTimeLogEntriesCommand(employeeId, organizationId, tenantId, readRunIds)
 				);
 			}
 			this.debug(() => 'Stop previous running timers...');

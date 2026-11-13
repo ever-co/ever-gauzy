@@ -49,6 +49,8 @@ interface Hooks {
 	onCreate?: (command: TimeLogCreateCommand) => Promise<void> | void;
 	/** Runs when an `IGetConflictTimeLogCommand` arrives, before the overlapping logs are read. */
 	onConflictLookup?: () => Promise<void> | void;
+	/** Runs when the cleanup (`ScheduleTimeLogEntriesCommand`) reads the pending logs, before they are read. */
+	onPendingRead?: () => Promise<void> | void;
 }
 
 const time = (value: Date | string | null): number => new Date(value).getTime();
@@ -127,8 +129,9 @@ function createService(
 					}
 				})
 			},
-			getPendingTimeLogs: async (tenantId: string, organizationId: string, employeeId: string) =>
-				rows
+			getPendingTimeLogs: async (tenantId: string, organizationId: string, employeeId: string) => {
+				await hooks.onPendingRead?.();
+				return rows
 					.filter(
 						(row) =>
 							row.tenantId === tenantId &&
@@ -136,7 +139,8 @@ function createService(
 							row.employeeId === employeeId &&
 							((row.stoppedAt !== null && row.isRunning) || row.stoppedAt === null)
 					)
-					.map((row) => ({ ...row, timeSlots: row.timeSlots ?? [] }))
+					.map((row) => ({ ...row, timeSlots: row.timeSlots ?? [] }));
+			}
 		}
 	);
 
@@ -723,6 +727,45 @@ describe.each([MultiORMEnum.TypeORM, MultiORMEnum.MikroORM])(
 				// Only the second start marked the employee as tracking
 				expect(employeeUpdates).toHaveBeenCalledTimes(1);
 				expect(employee).toEqual({ isOnline: true, isTrackingTime: true });
+			} finally {
+				jest.useRealTimers();
+			}
+		});
+
+		it("leaves the next start's run going when the cleanup of the start before reads the pending logs after it", async () => {
+			jest.useFakeTimers({ doNotFake: ['Date', 'nextTick', 'setImmediate', 'queueMicrotask'] });
+			try {
+				// A desktop run, which the cleanup ends
+				const rows = [{ ...runningForAnHour(), id: 'desktop', source: TimeLogSourceEnum.DESKTOP }];
+				let pendingReads = 0;
+				let finishFirstRead: () => void = () => undefined;
+				const { service } = setup(rows, {
+					onPendingRead: () => {
+						pendingReads += 1;
+						// The first start's cleanup is sent, and reads the pending logs only when the spec lets it
+						return pendingReads === 1
+							? new Promise<void>((resolve) => (finishFirstRead = resolve))
+							: undefined;
+					}
+				});
+
+				const first = start(service, TimeLogSourceEnum.WEB_TIMER).then(
+					() => 'started',
+					(error: Error) => error
+				);
+				const second = start(service, TimeLogSourceEnum.WEB_TIMER);
+
+				// The second goes on after the failsafe time, ends the desktop run and starts its own
+				await jest.advanceTimersByTimeAsync(EMPLOYEE_TURN_FAILSAFE_MS);
+				await expect(second).resolves.toMatchObject({ id: 'run-1', isRunning: true });
+
+				// The first cleanup reads the pending logs now: it ends none of the runs it did not read
+				finishFirstRead();
+				await expect(first).resolves.toBeInstanceOf(RequestTimeoutException);
+
+				expect(rows.find((row) => row.id === 'run-1')).toMatchObject({ isRunning: true });
+				expect(rows.find((row) => row.id === 'desktop')).toMatchObject({ isRunning: false });
+				expect(rows).toHaveLength(2);
 			} finally {
 				jest.useRealTimers();
 			}
