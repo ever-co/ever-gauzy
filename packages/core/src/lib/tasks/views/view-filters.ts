@@ -229,31 +229,42 @@ function holds(value: number, comparison: DateComparison, bound: number): boolea
 export function dateBoundClause(column: string, comparison: DateComparison, instant: Date, day: string | undefined, key: string): { sql: string; params: Record<string, Date> } {
 	const sql = `${column} ${comparison} :${key}`;
 	const params: Record<string, Date> = { [key]: instant };
-	const midnight = day === undefined ? null : midnightOfDay(day);
-	const at = instant.getTime();
-	if (midnight === null || !Number.isFinite(at) || at < midnight - DAY_MS || at >= midnight + 2 * DAY_MS) return { sql, params };
-	// "After" a picked day means on or after it ("is on or after"), so a date only of that very day is in.
-	const byDay: DateComparison = comparison === '>' ? '>=' : comparison;
-	const added: number[] = [];
-	const removed: number[] = [];
-	for (let candidate = midnight - 2 * DAY_MS; candidate <= midnight + 3 * DAY_MS; candidate += DAY_MS) {
-		const asInstant = holds(candidate, comparison, at);
-		const asDay = holds(candidate, byDay, midnight);
-		if (asDay && !asInstant) added.push(candidate);
-		if (asInstant && !asDay) removed.push(candidate);
-	}
+	const { added, removed } = dateBoundAdjustments(comparison, instant, day);
 	if (!added.length && !removed.length) return { sql, params };
 	const kept = [sql];
-	removed.forEach((time, index) => {
-		params[`${key}x${index}`] = new Date(time);
+	removed.forEach((at, index) => {
+		params[`${key}x${index}`] = at;
 		kept.push(`${column} <> :${key}x${index}`);
 	});
-	const taken = added.map((time, index) => {
-		params[`${key}d${index}`] = new Date(time);
+	const taken = added.map((at, index) => {
+		params[`${key}d${index}`] = at;
 		return `${column} = :${key}d${index}`;
 	});
 	const instantPart = kept.length > 1 && taken.length ? `(${kept.join(' AND ')})` : kept.join(' AND ');
 	return { sql: `(${[instantPart, ...taken].join(' OR ')})`, params };
+}
+
+/**
+ * The date-only values (midnights UTC) where comparing a bound's instant and comparing its calendar day disagree:
+ * the ones the day takes and the instant does not (`added`), and the reverse (`removed`). Empty without a day, or
+ * with one more than a day from the instant. `dateBoundClause` writes them as SQL; a caller building another query
+ * syntax (MikroORM's) reads them here.
+ */
+export function dateBoundAdjustments(comparison: DateComparison, instant: Date, day: string | undefined): { added: Date[]; removed: Date[] } {
+	const added: Date[] = [];
+	const removed: Date[] = [];
+	const midnight = day === undefined ? null : midnightOfDay(day);
+	const at = instant.getTime();
+	if (midnight === null || !Number.isFinite(at) || at < midnight - DAY_MS || at >= midnight + 2 * DAY_MS) return { added, removed };
+	// "After" a picked day means on or after it ("is on or after"), so a date only of that very day is in.
+	const byDay: DateComparison = comparison === '>' ? '>=' : comparison;
+	for (let candidate = midnight - 2 * DAY_MS; candidate <= midnight + 3 * DAY_MS; candidate += DAY_MS) {
+		const asInstant = holds(candidate, comparison, at);
+		const asDay = holds(candidate, byDay, midnight);
+		if (asDay && !asInstant) added.push(new Date(candidate));
+		if (asInstant && !asDay) removed.push(new Date(candidate));
+	}
+	return { added, removed };
 }
 
 // ---------------------------------------------------------------- relative windows in the caller's time zone

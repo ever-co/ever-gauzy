@@ -188,6 +188,14 @@ export interface ITaskAdvancedFilter extends IBaseRelationsEntityModel {
 	dueDateFrom?: Date;
 	/** Due on or before this instant. */
 	dueDateTo?: Date;
+	/**
+	 * The calendar days (`YYYY-MM-DD`) `dueDateFrom` starts and `dueDateTo` ends, in the reader's zone, sent with those
+	 * instants (the start of the first day, the last instant of the last). A due date stored as a date only (midnight
+	 * UTC of its day) is compared with these days rather than the instants, so it counts on its own day west of UTC
+	 * too. Without them (older callers), every due date compares with the instants.
+	 */
+	dueDateFromDay?: string;
+	dueDateToDay?: string;
 	/** Only tasks without a due date; takes precedence over `dueDateFrom` / `dueDateTo`. */
 	withoutDueDate?: boolean;
 }
