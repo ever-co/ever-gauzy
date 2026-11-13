@@ -13,7 +13,7 @@ import {
 	TimeLogUpdateCommand
 } from '../time-log/commands';
 import { ScheduleTimeLogEntriesHandler } from '../time-log/commands/handlers/schedule-time-log-entries.handler';
-import { TimerService } from './timer.service';
+import { EMPLOYEE_TURN_FAILSAFE_MS, TimerService } from './timer.service';
 
 const EMPLOYEE_ID = 'employee-1';
 const NOW = new Date('2026-10-24T02:00:00.000Z');
@@ -593,6 +593,34 @@ describe.each([MultiORMEnum.TypeORM, MultiORMEnum.MikroORM])(
 			});
 			expect(started).toMatchObject({ status: 'fulfilled', value: { id: 'run-1', isRunning: true } });
 			expect(rows).toEqual([expect.objectContaining({ id: 'run-1', isRunning: true })]);
+		});
+
+		it('lets the next start go on once the one before it has hung for the failsafe time, and not before', async () => {
+			// Only the timers: the clock stays mocked, and a round trip still turns the event loop
+			jest.useFakeTimers({ doNotFake: ['Date', 'nextTick', 'setImmediate', 'queueMicrotask'] });
+			try {
+				const rows: TimeLogRow[] = [];
+				let creates = 0;
+				const { service } = setup(rows, {
+					onCreate: () => {
+						creates += 1;
+						// The first start's write never answers
+						return creates === 1 ? new Promise<void>(() => undefined) : undefined;
+					}
+				});
+
+				void start(service, TimeLogSourceEnum.WEB_TIMER);
+				const second = start(service, TimeLogSourceEnum.DESKTOP);
+
+				await jest.advanceTimersByTimeAsync(EMPLOYEE_TURN_FAILSAFE_MS - 1);
+				expect(creates).toBe(1);
+
+				await jest.advanceTimersByTimeAsync(1);
+				await expect(second).resolves.toMatchObject({ id: 'run-1', isRunning: true });
+				expect(rows).toEqual([expect.objectContaining({ id: 'run-1', isRunning: true })]);
+			} finally {
+				jest.useRealTimers();
+			}
 		});
 
 		it("does not hold up another employee's start while this one's stop runs", async () => {

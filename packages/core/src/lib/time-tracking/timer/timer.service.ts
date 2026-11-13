@@ -106,6 +106,12 @@ const PROJECT_FROM_TASK_SOURCES: ReadonlyArray<string> = [TimeLogSourceEnum.TEAM
 const TEAM_TRACKING_SWITCH_SOURCES: ReadonlyArray<string> = [TimeLogSourceEnum.TEAMS, TimeLogSourceEnum.MOBILE];
 
 /**
+ * How long a start or a stop waits for the one of the same employee before it, in this process, before it goes on
+ * anyway: one that hangs holds the employee's timer this long at most, as the desktop timer's own lock does.
+ */
+export const EMPLOYEE_TURN_FAILSAFE_MS = 120_000;
+
+/**
  * Whether a stop or a toggle names the time log it is for. Only a missing id (`undefined` or `null`) names none. An
  * empty one, which the GraphQL `ID` input lets through where the REST body refuses it, still names a log, which is not
  * the running one: the stop is refused instead of ending whatever runs.
@@ -1011,13 +1017,16 @@ export class TimerService {
 	 * The API processes do not share this order: a start and a stop reaching two of them at once still interleave,
 	 * and the stop's cleanup then leaves the started run going (`stopRunningLog`).
 	 *
+	 * The wait lasts `EMPLOYEE_TURN_FAILSAFE_MS` at most: a start or a stop that never settles (a database that never
+	 * answers) does not hold the employee's timer in this process for good.
+	 *
 	 * @param employeeId - The employee whose timer starts or stops.
 	 * @param work - The start or the stop.
 	 * @returns What `work` returns.
 	 */
 	private async inEmployeeTurn<T>(employeeId: ID, work: () => Promise<T>): Promise<T> {
 		const previous = TimerService.employeeTurns.get(employeeId) ?? Promise.resolve();
-		const run = previous.then(() => work());
+		const run = TimerService.settledOrFailsafe(previous).then(() => work());
 		const settled = run.catch(() => undefined);
 		TimerService.employeeTurns.set(employeeId, settled);
 		try {
@@ -1027,6 +1036,21 @@ export class TimerService {
 				TimerService.employeeTurns.delete(employeeId);
 			}
 		}
+	}
+
+	/**
+	 * Settles when `previous` does, or once `EMPLOYEE_TURN_FAILSAFE_MS` have passed, whichever comes first.
+	 *
+	 * @param previous - The start or stop before this one, which never rejects (`inEmployeeTurn` keeps it settled).
+	 */
+	private static settledOrFailsafe(previous: Promise<unknown>): Promise<unknown> {
+		let failsafe: ReturnType<typeof setTimeout> | undefined;
+		const timedOut = new Promise<void>((resolve) => {
+			failsafe = setTimeout(resolve, EMPLOYEE_TURN_FAILSAFE_MS);
+			// The wait alone never keeps the process alive
+			failsafe.unref?.();
+		});
+		return Promise.race([previous, timedOut]).finally(() => clearTimeout(failsafe));
 	}
 
 	/**
