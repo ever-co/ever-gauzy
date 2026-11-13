@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, Inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, DestroyRef, Inject, NgZone, signal } from '@angular/core';
 import { Location } from '@angular/common';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
@@ -13,6 +13,55 @@ interface IDesktopDownload {
 	icon: string;
 	url: string;
 }
+
+/** Where a drawn "You" cursor is, for one second of the loop, and whether it clicks there. */
+interface ICursorStep<T extends string> {
+	at: T;
+	press?: boolean;
+}
+
+/** Length of the drawings' animation loop, in seconds (one step per second). */
+const LOOP_SECONDS = 12;
+
+/**
+ * Desktop window: the cursor picks a project, hovers the pause button, then opens Client, while
+ * the clock keeps running.
+ */
+const DESKTOP_SCRIPT: ICursorStep<'team' | 'project' | 'pause' | 'client'>[] = [
+	{ at: 'team' },
+	{ at: 'project' },
+	{ at: 'project', press: true },
+	{ at: 'project' },
+	{ at: 'pause' },
+	{ at: 'pause' },
+	{ at: 'pause' },
+	{ at: 'client' },
+	{ at: 'client', press: true },
+	{ at: 'client' },
+	{ at: 'team' },
+	{ at: 'team' }
+];
+
+/**
+ * Browser extension: the cursor starts the timer (second 3), lets it run, then stops it
+ * (second 10). Indexes here line up with {@link EXTENSION_START} and {@link EXTENSION_STOP}.
+ */
+const EXTENSION_SCRIPT: ICursorStep<'rest' | 'play'>[] = [
+	{ at: 'rest' },
+	{ at: 'rest' },
+	{ at: 'play' },
+	{ at: 'play', press: true },
+	{ at: 'rest' },
+	{ at: 'rest' },
+	{ at: 'rest' },
+	{ at: 'rest' },
+	{ at: 'rest' },
+	{ at: 'play' },
+	{ at: 'play', press: true },
+	{ at: 'rest' }
+];
+const EXTENSION_START = 3;
+const EXTENSION_STOP = 10;
 
 /**
  * The apps a user can install next to the web app: the desktop timer, the mobile app and the
@@ -43,12 +92,33 @@ export class DownloadsComponent {
 	/** Cache for {@link lastCaptureAgo}, keyed by language. */
 	private captureAgo = { lang: '', text: '' };
 
+	/**
+	 * Seconds since the page opened: the one clock every animated drawing reads, so a cursor's
+	 * click and the timer it starts or stops always land on the same frame. It stays at 0 (a still
+	 * picture) for viewers who ask for reduced motion.
+	 */
+	private readonly tick = signal(0);
+	private readonly step = computed(() => this.tick() % LOOP_SECONDS);
+
+	/** Desktop window: a clock that keeps running from 00:00:05, and the cursor's step. */
+	readonly desktopClock = computed(() => formatClock(5 + this.tick()));
+	readonly desktopCursor = computed(() => DESKTOP_SCRIPT[this.step()]);
+
+	/** Browser extension: whether the drawn timer is running, its reading, and the cursor's step. */
+	readonly extensionRunning = computed(() => this.step() >= EXTENSION_START && this.step() < EXTENSION_STOP);
+	readonly extensionClock = computed(() => formatClock(this.extensionRunning() ? this.step() - EXTENSION_START : 0));
+	readonly extensionCursor = computed(() => EXTENSION_SCRIPT[this.step()]);
+
 	constructor(
 		@Inject(GAUZY_ENV) environment: Environment,
 		private readonly location: Location,
 		private readonly router: Router,
-		private readonly translateService: TranslateService
+		private readonly translateService: TranslateService,
+		ngZone: NgZone,
+		destroyRef: DestroyRef
 	) {
+		this.startAnimationClock(ngZone, destroyRef);
+
 		const desktops: IDesktopDownload[] = [
 			{
 				platform: 'windows',
@@ -100,6 +170,19 @@ export class DownloadsComponent {
 	}
 
 	/**
+	 * Advances {@link tick} once a second. The interval runs outside Angular's zone so it does not
+	 * run change detection for the whole app every second; the signal write refreshes only this
+	 * view. Not started at all when the viewer prefers reduced motion.
+	 */
+	private startAnimationClock(ngZone: NgZone, destroyRef: DestroyRef): void {
+		if (typeof window === 'undefined' || window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) {
+			return;
+		}
+		const timer = ngZone.runOutsideAngular(() => setInterval(() => this.tick.update((t) => t + 1), 1000));
+		destroyRef.onDestroy(() => clearInterval(timer));
+	}
+
+	/**
 	 * The top bar's back arrow: returns to the page the user came from. Angular numbers its
 	 * navigations in `history.state.navigationId`, starting at 1 for the first page of the session —
 	 * so when this page was opened directly (a bookmark, a new tab), there is nothing in the app to
@@ -113,6 +196,14 @@ export class DownloadsComponent {
 			this.router.navigateByUrl('/pages/dashboard');
 		}
 	}
+}
+
+/** Seconds as `HH:MM:SS`, the way both timers show a reading. */
+function formatClock(totalSeconds: number): string {
+	const hours = Math.floor(totalSeconds / 3600);
+	const minutes = Math.floor((totalSeconds % 3600) / 60);
+	const seconds = totalSeconds % 60;
+	return [hours, minutes, seconds].map((n) => String(n).padStart(2, '0')).join(':');
 }
 
 /**
