@@ -2,10 +2,10 @@ import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { combineLatest, EMPTY, fromEvent, merge, Observable, of, Subscription, timer } from 'rxjs';
 import { catchError, distinctUntilChanged, filter, map, switchMap, throttleTime } from 'rxjs/operators';
-import { IEmployeePresence, IRealtimePresence, IUser, RealtimePresenceStatus } from '@gauzy/contracts';
+import { IEmployeePresence, IRealtimePresence, IUser, REALTIME_PRESENCE_TTL_SECONDS, RealtimePresenceStatus } from '@gauzy/contracts';
 import { API_PREFIX } from '@gauzy/ui-core/common';
 import { Store } from '@gauzy/ui-core/core';
-import { CHAT_PRESENCE_REPORT_MS, presenceOfStatus, tabStatus } from '../chat-presence';
+import { CHAT_PRESENCE_REPORT_MS, mostPresent, presenceOfStatus, tabStatus } from '../chat-presence';
 import { ChatAvailabilityService } from './chat-availability.service';
 import { ChatPresenceService } from './chat-presence.service';
 
@@ -23,6 +23,19 @@ export const CHAT_PRESENCE_AWAY_CHANNEL = 'gauzy-chat-presence-away';
 interface AwayMessage {
 	employeeId: string;
 	isAway: boolean;
+}
+
+/**
+ * The tabs of one browser tell each other what each reports, so the employee's own heartbeat (which keeps one value
+ * per person, not one per tab) is sent the most present of them.
+ */
+export const CHAT_PRESENCE_TABS_CHANNEL = 'gauzy-chat-presence-tabs';
+
+/** What a tab tells the others on {@link CHAT_PRESENCE_TABS_CHANNEL}. */
+interface TabMessage {
+	connectionId: string;
+	employeeId: string;
+	status: RealtimePresenceStatus;
 }
 
 /** Where this tab's reports go: the realtime channel, the employee's own heartbeat where it has none, or nowhere. */
@@ -55,10 +68,11 @@ function employeeIdOf(user: IUser | null | undefined): string | null {
  * from every tab, whatever they do, until they set themselves back: the platform shows the most present of their tabs,
  * so one tab still saying `active` would undo it. The tab where they changed it tells the others of this browser.
  *
- * The reports go to the realtime channel (`POST /api/realtime/presence`), which tells the organization. Where the API
- * has no channel (`GAUZY_REALTIME_ENABLED` off), they go to the employee's own heartbeat (`PUT
- * /api/employee/me/presence`), which the people list reads; where neither takes them (a user without an employee
- * record), the tab stops reporting.
+ * The reports go to the realtime channel (`POST /api/realtime/presence`), which tells the organization and merges the
+ * tabs itself. Where the API has no channel (`GAUZY_REALTIME_ENABLED` off), they go to the employee's own heartbeat
+ * (`PUT /api/employee/me/presence`), which the people list reads; it keeps one value for the person, so each tab sends
+ * the most present status of this browser's tabs (a hidden tab must not undo the one being typed in; another device
+ * still can). Where neither route takes the reports (a user without an employee record), the tab stops reporting.
  */
 @Injectable({ providedIn: 'root' })
 export class ChatPresenceReporterService {
@@ -71,6 +85,9 @@ export class ChatPresenceReporterService {
 	private route: ReportRoute = 'realtime';
 	private lastInputAt = Date.now();
 	private running: Subscription | null = null;
+	/** What the other tabs of this browser last said they report, by connection id. */
+	private readonly tabs = new Map<string, { employeeId: string; status: RealtimePresenceStatus; at: number }>();
+	private tabsChannel: BroadcastChannel | null = null;
 
 	/** Starts reporting (once for the app; a second call returns the same subscription). */
 	start(): Subscription {
@@ -84,10 +101,11 @@ export class ChatPresenceReporterService {
 				switchMap((employeeId) => {
 					// Someone else, or the same person again: try the realtime channel first.
 					this.route = 'realtime';
-					return employeeId ? merge(this.reports(employeeId), this.closing()) : EMPTY;
+					return employeeId ? merge(this.reports(employeeId), this.closing(employeeId)) : EMPTY;
 				})
 			),
-			this.awaySync()
+			this.awaySync(),
+			this.tabSync()
 		).subscribe();
 		return this.running;
 	}
@@ -109,14 +127,17 @@ export class ChatPresenceReporterService {
 		if (typeof BroadcastChannel === 'undefined') return EMPTY;
 		return new Observable<never>(() => {
 			const channel = new BroadcastChannel(CHAT_PRESENCE_AWAY_CHANNEL);
+			let last: AwayMessage | null = null;
 			channel.onmessage = (event: MessageEvent<AwayMessage>) => {
 				const { employeeId, isAway } = event.data ?? ({} as AwayMessage);
 				const user = this.store.user;
 				if (typeof isAway !== 'boolean' || !user?.employee || employeeIdOf(user) !== employeeId) return;
 				if (!!user.employee.isAway === isAway) return;
+				// Known before it is written: the store's change below is not a change of this tab, so it is not told back
+				// (two quick changes crossing on the way would otherwise bounce between the tabs for ever).
+				last = { employeeId, isAway };
 				this.store.user = { ...user, employee: { ...user.employee, isAway } };
 			};
-			let last: AwayMessage | null = null;
 			const changes = (this.store.user$ as Observable<IUser | null | undefined>).subscribe((user) => {
 				const employeeId = employeeIdOf(user);
 				const current = employeeId ? { employeeId, isAway: !!user?.employee?.isAway } : null;
@@ -129,6 +150,43 @@ export class ChatPresenceReporterService {
 				channel.close();
 			};
 		});
+	}
+
+	/** Listens to what the other tabs of this browser report (see {@link CHAT_PRESENCE_TABS_CHANNEL}). */
+	private tabSync(): Observable<never> {
+		if (typeof BroadcastChannel === 'undefined') return EMPTY;
+		return new Observable<never>(() => {
+			const channel = new BroadcastChannel(CHAT_PRESENCE_TABS_CHANNEL);
+			channel.onmessage = (event: MessageEvent<TabMessage>) => {
+				const { connectionId, employeeId, status } = event.data ?? ({} as TabMessage);
+				if (typeof connectionId !== 'string' || typeof employeeId !== 'string' || connectionId === this.connectionId) return;
+				if (status === RealtimePresenceStatus.OFFLINE) this.tabs.delete(connectionId);
+				else this.tabs.set(connectionId, { employeeId, status, at: Date.now() });
+			};
+			this.tabsChannel = channel;
+			return () => {
+				this.tabsChannel = null;
+				this.tabs.clear();
+				channel.close();
+			};
+		});
+	}
+
+	/** Tells the other tabs what this one reports. */
+	private announce(employeeId: string, status: RealtimePresenceStatus): void {
+		const message: TabMessage = { connectionId: this.connectionId, employeeId, status };
+		this.tabsChannel?.postMessage(message);
+	}
+
+	/** The most present of this tab and the other tabs of this browser that reported lately, for the same person. */
+	private browserStatus(employeeId: string, status: RealtimePresenceStatus): RealtimePresenceStatus {
+		const fresh = Date.now() - REALTIME_PRESENCE_TTL_SECONDS * 1000;
+		const others: RealtimePresenceStatus[] = [];
+		for (const [connectionId, tab] of this.tabs) {
+			if (tab.at < fresh) this.tabs.delete(connectionId);
+			else if (tab.employeeId === employeeId) others.push(tab.status);
+		}
+		return mostPresent([status, ...others]);
 	}
 
 	/** The status as it changes, sent at once and then every minute until it changes again. */
@@ -157,15 +215,19 @@ export class ChatPresenceReporterService {
 	}
 
 	/** The tab closing says so (best effort: the platform forgets a tab that stopped reporting anyway). */
-	private closing(): Observable<unknown> {
+	private closing(employeeId: string): Observable<unknown> {
 		if (typeof window === 'undefined') return EMPTY;
 		return fromEvent(window, 'pagehide').pipe(
-			switchMap(() => (this.route === 'realtime' ? this.post(RealtimePresenceStatus.OFFLINE).pipe(catchError(() => EMPTY)) : EMPTY))
+			switchMap(() => {
+				this.announce(employeeId, RealtimePresenceStatus.OFFLINE);
+				return this.route === 'realtime' ? this.post(RealtimePresenceStatus.OFFLINE).pipe(catchError(() => EMPTY)) : EMPTY;
+			})
 		);
 	}
 
 	/** Sends one report the way that works here, and shows my own presence at once. */
 	private send(employeeId: string, status: RealtimePresenceStatus): Observable<unknown> {
+		this.announce(employeeId, status);
 		if (this.route === 'realtime') {
 			return this.post(status).pipe(
 				map((merged) => {
@@ -186,8 +248,10 @@ export class ChatPresenceReporterService {
 			);
 		}
 		if (this.route === 'employee') {
-			return this.http.put<IEmployeePresence>(`${API_PREFIX}/employee/me/presence`, { isIdle: status !== RealtimePresenceStatus.ACTIVE }).pipe(
-				map(() => this.presence.apply({ employeeId, presence: presenceOfStatus(status), lastSeenAt: Date.now(), revision: null })),
+			// One value for the person: the most present of this browser's tabs, not this tab's alone.
+			const merged = this.browserStatus(employeeId, status);
+			return this.http.put<IEmployeePresence>(`${API_PREFIX}/employee/me/presence`, { isIdle: merged !== RealtimePresenceStatus.ACTIVE }).pipe(
+				map(() => this.presence.apply({ employeeId, presence: presenceOfStatus(merged), lastSeenAt: Date.now(), revision: null })),
 				catchError((error) => {
 					if (isFinal(error)) this.route = 'none';
 					return EMPTY;
