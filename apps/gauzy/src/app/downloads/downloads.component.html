@@ -1,0 +1,207 @@
+<!--
+	Full-screen page: routed outside /pages, so there is no nav sidebar, header or footer. nb-layout
+	still wraps it for the theme's background, typography and scrolling.
+-->
+<nb-layout>
+	<nb-layout-column class="downloads-column">
+		<header class="topbar">
+			<button type="button" class="back-button" (click)="goBack()" [attr.aria-label]="'BUTTONS.BACK' | translate">
+				<nb-icon icon="arrow-back-outline" aria-hidden="true"></nb-icon>
+			</button>
+			<span class="topbar-title">{{ 'DOWNLOADS_PAGE.TITLE' | translate }}</span>
+		</header>
+
+		<main class="downloads-page">
+			<h1 class="headline">{{ 'DOWNLOADS_PAGE.HEADLINE' | translate }}</h1>
+
+			<!-- Desktop: copy and the installer for this OS on the start side, the timer drawing on the end side. -->
+			@if (primaryDesktop) {
+				<section class="shell" aria-labelledby="downloads-desktop-title">
+					<div class="panel hero">
+						<div class="panel-copy">
+							<h2 class="panel-title" id="downloads-desktop-title">
+								{{ 'DOWNLOADS_PAGE.DESKTOP.TITLE' | translate }}
+							</h2>
+							<p class="panel-description">{{ 'DOWNLOADS_PAGE.DESKTOP.DESCRIPTION' | translate }}</p>
+							<div class="hero-actions">
+								<a class="btn btn-solid" [href]="primaryDesktop.url" target="_blank" rel="noopener">
+									<i [class]="primaryDesktop.icon" aria-hidden="true"></i>
+									{{
+										'DOWNLOADS_PAGE.DESKTOP.DOWNLOAD_FOR'
+											| translate: { platform: primaryDesktop.name }
+									}}
+								</a>
+								@if (otherDesktops.length) {
+									<p class="other-platforms">
+										<span>{{ 'DOWNLOADS_PAGE.DESKTOP.ALSO_FOR' | translate }}</span>
+										@for (desktop of otherDesktops; track desktop.platform) {
+											<a
+												class="platform-link"
+												[href]="desktop.url"
+												target="_blank"
+												rel="noopener"
+												[attr.aria-label]="
+													'DOWNLOADS_PAGE.DESKTOP.DOWNLOAD_FOR'
+														| translate: { platform: desktop.name }
+												"
+											>
+												<i [class]="desktop.icon" aria-hidden="true"></i>
+												{{ desktop.name }}
+											</a>
+										}
+									</p>
+								}
+							</div>
+						</div>
+
+						<!--
+					Decorative: the timer in its expanded form (title, reading, then the form),
+					cut off by the bottom of the card.
+				-->
+						<div class="art art-desktop" aria-hidden="true">
+							<div class="timer-card expanded">
+								<span class="timer-controls">
+									<nb-icon icon="minus-outline"></nb-icon>
+									<nb-icon icon="close-outline"></nb-icon>
+								</span>
+								<span class="expanded-header">
+									<span class="expanded-title">{{ 'TIMER_TRACKER.TIMER' | translate }}</span>
+									<ng-container *ngTemplateOutlet="modeSwitch"></ng-container>
+								</span>
+								<span class="timer-main">
+									<ng-container *ngTemplateOutlet="timerReading"></ng-container>
+								</span>
+								@for (field of timerFields; track field.label) {
+									<span class="field-label">{{ field.label | translate }}</span>
+									<span class="field-select">
+										<span>{{ field.placeholder | translate }}</span>
+										<nb-icon icon="chevron-down-outline"></nb-icon>
+									</span>
+								}
+							</div>
+						</div>
+					</div>
+				</section>
+			}
+
+			@if (mobileUrl || extensionUrl) {
+				<div class="app-grid">
+					@if (mobileUrl) {
+						<section class="shell" aria-labelledby="downloads-mobile-title">
+							<div class="panel">
+								<h2 class="panel-title" id="downloads-mobile-title">
+									{{ 'DOWNLOADS_PAGE.MOBILE.TITLE' | translate }}
+								</h2>
+								<p class="panel-description">{{ 'DOWNLOADS_PAGE.MOBILE.DESCRIPTION' | translate }}</p>
+								<ul class="rows">
+									<li>
+										<span class="row-icon" aria-hidden="true"
+											><i class="fas fa-mobile-alt"></i
+										></span>
+										<span class="row-label">{{
+											'DOWNLOADS_PAGE.MOBILE.PLATFORMS' | translate
+										}}</span>
+										<a class="btn btn-soft" [href]="mobileUrl" target="_blank" rel="noopener">
+											{{ 'DOWNLOADS_PAGE.MOBILE.DOWNLOAD' | translate }}
+										</a>
+									</li>
+								</ul>
+
+								<!-- Decorative: a week of tracked hours on a phone. -->
+								<div class="art art-mobile" aria-hidden="true">
+									<div class="phone">
+										<span class="phone-notch"></span>
+										<span class="phone-label">{{
+											'DOWNLOADS_PAGE.ILLUSTRATION.THIS_WEEK' | translate
+										}}</span>
+										<span class="phone-total">31:08</span>
+										<span class="bars">
+											@for (height of weekBars; track $index) {
+												<span [style.height.%]="height"></span>
+											}
+										</span>
+									</div>
+								</div>
+							</div>
+						</section>
+					}
+
+					@if (extensionUrl) {
+						<section class="shell" aria-labelledby="downloads-extension-title">
+							<div class="panel">
+								<h2 class="panel-title" id="downloads-extension-title">
+									{{ 'DOWNLOADS_PAGE.EXTENSION.TITLE' | translate }}
+								</h2>
+								<p class="panel-description">
+									{{ 'DOWNLOADS_PAGE.EXTENSION.DESCRIPTION' | translate }}
+								</p>
+								<ul class="rows">
+									<li>
+										<span class="row-icon" aria-hidden="true"><i class="fab fa-chrome"></i></span>
+										<span class="row-label">Chrome</span>
+										<a class="btn btn-soft" [href]="extensionUrl" target="_blank" rel="noopener">
+											{{ 'DOWNLOADS_PAGE.EXTENSION.INSTALL' | translate }}
+											<nb-icon
+												icon="diagonal-arrow-right-up-outline"
+												aria-hidden="true"
+											></nb-icon>
+										</a>
+									</li>
+								</ul>
+
+								<!-- Decorative: the extension's popup over a browser tab. -->
+								<div class="art art-extension" aria-hidden="true">
+									<div class="browser">
+										<div class="browser-bar">
+											<span class="dots"><span></span><span></span><span></span></span>
+											<span class="address"></span>
+											<span class="ext-badge"><nb-icon icon="clock-outline"></nb-icon></span>
+										</div>
+										<!-- The timer in its compact form, opened from the toolbar. -->
+										<div class="timer-card compact">
+											<span class="timer-controls">
+												<nb-icon icon="expand-outline"></nb-icon>
+												<nb-icon icon="close-outline"></nb-icon>
+											</span>
+											<span class="timer-main">
+												<ng-container *ngTemplateOutlet="timerReading"></ng-container>
+												<ng-container *ngTemplateOutlet="modeSwitch"></ng-container>
+											</span>
+										</div>
+									</div>
+								</div>
+							</div>
+						</section>
+					}
+				</div>
+			}
+
+			@if (allDownloadsUrl) {
+				<a class="all-downloads" [href]="allDownloadsUrl" target="_blank" rel="noopener">
+					{{ 'DOWNLOADS_PAGE.ALL_DOWNLOADS' | translate }}
+					<nb-icon icon="arrow-forward-outline" aria-hidden="true"></nb-icon>
+				</a>
+			}
+		</main>
+	</nb-layout-column>
+</nb-layout>
+
+<!--
+	Pieces of the drawn timer, shared by the Desktop and Browser extension drawings. Labels use
+	the real timer's own TIMER_TRACKER keys, so the drawing reads exactly like the app.
+-->
+<ng-template #timerReading>
+	<span class="billable">$</span>
+	<span class="reading">
+		<span class="session">00:00:00</span>
+		<span class="today">{{ 'TIMER_TRACKER.TODAY' | translate }} 00:00:00</span>
+	</span>
+	<span class="play"><i class="fas fa-play"></i></span>
+</ng-template>
+
+<ng-template #modeSwitch>
+	<span class="mode-switch">
+		<span class="is-on"><i class="fas fa-stopwatch"></i></span>
+		<span><nb-icon icon="menu-outline"></nb-icon></span>
+	</span>
+</ng-template>
