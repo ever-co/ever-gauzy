@@ -16,6 +16,15 @@ const CHAT_PRESENCE_INPUT_THROTTLE_MS = 2_000;
 /** The input that counts as the person being here. */
 const INPUT_EVENTS = ['pointerdown', 'pointermove', 'keydown', 'wheel', 'touchstart'] as const;
 
+/** The tabs of one browser tell each other when the person sets themselves away or back. */
+export const CHAT_PRESENCE_AWAY_CHANNEL = 'gauzy-chat-presence-away';
+
+/** What a tab tells the others on {@link CHAT_PRESENCE_AWAY_CHANNEL}. */
+interface AwayMessage {
+	employeeId: string;
+	isAway: boolean;
+}
+
 /** Where this tab's reports go: the realtime channel, the employee's own heartbeat where it has none, or nowhere. */
 type ReportRoute = 'realtime' | 'employee' | 'none';
 
@@ -42,6 +51,10 @@ function employeeIdOf(user: IUser | null | undefined): string | null {
  * at once on a change and every minute regardless (the platform forgets a tab after 150 s without a report), and
  * `offline` when the tab closes. Each tab reports under its own connection id; the platform merges them.
  *
+ * Someone who set themselves as away (the user menu's "Set yourself as away", `Employee.isAway`) is reported `away`
+ * from every tab, whatever they do, until they set themselves back: the platform shows the most present of their tabs,
+ * so one tab still saying `active` would undo it. The tab where they changed it tells the others of this browser.
+ *
  * The reports go to the realtime channel (`POST /api/realtime/presence`), which tells the organization. Where the API
  * has no channel (`GAUZY_REALTIME_ENABLED` off), they go to the employee's own heartbeat (`PUT
  * /api/employee/me/presence`), which the people list reads; where neither takes them (a user without an employee
@@ -66,16 +79,56 @@ export class ChatPresenceReporterService {
 			map(([user, available]) => (available ? employeeIdOf(user) : null)),
 			distinctUntilChanged()
 		);
-		this.running = employee$
-			.pipe(
+		this.running = merge(
+			employee$.pipe(
 				switchMap((employeeId) => {
 					// Someone else, or the same person again: try the realtime channel first.
 					this.route = 'realtime';
 					return employeeId ? merge(this.reports(employeeId), this.closing()) : EMPTY;
 				})
-			)
-			.subscribe();
+			),
+			this.awaySync()
+		).subscribe();
 		return this.running;
+	}
+
+	/** Whether the person set themselves as away, as the signed-in user in the store says. */
+	private awayOf(employeeId: string): Observable<boolean> {
+		return (this.store.user$ as Observable<IUser | null | undefined>).pipe(
+			map((user) => employeeIdOf(user) === employeeId && !!user?.employee?.isAway),
+			distinctUntilChanged()
+		);
+	}
+
+	/**
+	 * Keeps the away flag the same in every tab of this browser: a change in the store here is told to the others, and
+	 * one told by another tab is written to the store here (the header's avatar follows it too). Writing back what was
+	 * told changes nothing more, so the tabs do not echo each other.
+	 */
+	private awaySync(): Observable<never> {
+		if (typeof BroadcastChannel === 'undefined') return EMPTY;
+		return new Observable<never>(() => {
+			const channel = new BroadcastChannel(CHAT_PRESENCE_AWAY_CHANNEL);
+			channel.onmessage = (event: MessageEvent<AwayMessage>) => {
+				const { employeeId, isAway } = event.data ?? ({} as AwayMessage);
+				const user = this.store.user;
+				if (typeof isAway !== 'boolean' || !user?.employee || employeeIdOf(user) !== employeeId) return;
+				if (!!user.employee.isAway === isAway) return;
+				this.store.user = { ...user, employee: { ...user.employee, isAway } };
+			};
+			let last: AwayMessage | null = null;
+			const changes = (this.store.user$ as Observable<IUser | null | undefined>).subscribe((user) => {
+				const employeeId = employeeIdOf(user);
+				const current = employeeId ? { employeeId, isAway: !!user?.employee?.isAway } : null;
+				// A change of the same person's flag (not the first look at them, nor another person signing in).
+				if (current && last && last.employeeId === current.employeeId && last.isAway !== current.isAway) channel.postMessage(current);
+				last = current;
+			});
+			return () => {
+				changes.unsubscribe();
+				channel.close();
+			};
+		});
 	}
 
 	/** The status as it changes, sent at once and then every minute until it changes again. */
@@ -86,8 +139,12 @@ export class ChatPresenceReporterService {
 			throttleTime(CHAT_PRESENCE_INPUT_THROTTLE_MS),
 			map(() => (this.lastInputAt = Date.now()))
 		);
-		const status$ = merge(of(null), input$, fromEvent(document, 'visibilitychange'), timer(CHAT_PRESENCE_CHECK_MS, CHAT_PRESENCE_CHECK_MS)).pipe(
-			map(() => tabStatus(!document.hidden, this.lastInputAt)),
+		const tab$ = merge(of(null), input$, fromEvent(document, 'visibilitychange'), timer(CHAT_PRESENCE_CHECK_MS, CHAT_PRESENCE_CHECK_MS)).pipe(
+			map(() => tabStatus(!document.hidden, this.lastInputAt))
+		);
+		// Away by choice wins over whatever the tab sees.
+		const status$ = combineLatest([this.awayOf(employeeId), tab$]).pipe(
+			map(([away, status]) => (away ? RealtimePresenceStatus.AWAY : status)),
 			distinctUntilChanged()
 		);
 		const reports$ = status$.pipe(
