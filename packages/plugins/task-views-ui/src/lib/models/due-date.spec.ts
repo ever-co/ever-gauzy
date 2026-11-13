@@ -1,4 +1,5 @@
 import { formatDate } from '@angular/common';
+import { runInThisContext } from 'node:vm';
 import { ITaskBulkUpdateInput, TaskStatusEnum } from '@gauzy/contracts';
 import { isOverdue } from '../components/task-list/task-list.component';
 import { bulkRequest, dueDateChanges } from './bulk-undo';
@@ -9,15 +10,21 @@ import { dayNumberOf, dayOfStoredDate } from './timeline';
 const PICKER_ZONE = 'America/Caracas';
 const READER_ZONE = 'Africa/Johannesburg';
 
-/** Runs `body` with the process in `zone`, as a browser there would be. */
+/**
+ * Runs `body` with the clock in `zone`, as a browser there would be. Jest hands each test file a copy of
+ * `process.env`, so setting `TZ` on it changes nothing: Node reads the host process's `env.TZ`.
+ */
 function inZone<T>(zone: string, body: () => T): T {
-	const previous = process.env['TZ'];
-	process.env['TZ'] = zone;
+	const host = runInThisContext('process') as NodeJS.Process;
+	const previous = host.env['TZ'];
+	const current = Intl.DateTimeFormat().resolvedOptions().timeZone;
+	host.env['TZ'] = zone;
 	try {
 		return body();
 	} finally {
-		if (previous === undefined) delete process.env['TZ'];
-		else process.env['TZ'] = previous;
+		// Deleting `TZ` does not reset the clock's zone: set the one before first.
+		host.env['TZ'] = previous ?? current;
+		if (previous === undefined) delete host.env['TZ'];
 	}
 }
 
@@ -33,6 +40,11 @@ function pickedAndSent(day: string): string {
 const listShows = (stored: string) => formatDate(dueDateShown(stored) as string, 'mediumDate', 'en-US');
 
 describe('due dates picked in one zone and read in another', () => {
+	it('switches the clock’s zone for real (the cases below would hold in one zone)', () => {
+		expect(inZone(PICKER_ZONE, () => new Date(2026, 10, 14).getTimezoneOffset())).toBe(240);
+		expect(inZone(READER_ZONE, () => new Date(2026, 10, 14).getTimezoneOffset())).toBe(-120);
+	});
+
 	it('keeps 14 Nov picked in UTC−4 on 14 Nov for a reader in UTC+2: the list, the timeline and lateness', () => {
 		const stored = inZone(PICKER_ZONE, () => pickedAndSent('2026-11-14'));
 		expect(stored).toBe('2026-11-14T00:00:00.000Z');
