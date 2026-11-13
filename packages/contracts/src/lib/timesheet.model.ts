@@ -187,6 +187,33 @@ export interface ITimeLog
 	isBillable?: boolean;
 	isRunning?: boolean;
 	isEdited?: boolean;
+	/**
+	 * The member's billing rate when the log was recorded, and its currency (empty: the organization's). It prices
+	 * the log's time when `ratesStored` is true; a rate change moves it only from the date its editor names.
+	 */
+	billRateValue?: number | null;
+	billRateCurrency?: string | null;
+	/**
+	 * Whether the log stores the rates that price it. A log recorded outside the API (a restored archive) stores
+	 * none and is priced at the current rates.
+	 */
+	ratesStored?: boolean | null;
+}
+
+/**
+ * The rates a time log stores beside its billing rate. Generic reads never answer them: the pay rate is salary data
+ * and the client rates are read by rate editors only, as on the employee and the project.
+ */
+export interface ITimeLogStoredRates {
+	/** The member's pay rate when the log was recorded, and its currency (empty: the organization's). */
+	payRateValue?: number | null;
+	payRateCurrency?: string | null;
+	/** The project's client rate when the log was recorded. */
+	projectBillRateValue?: number | null;
+	/** The member's client rate on the project when the log was recorded, over the project's. */
+	projectMemberBillRateValue?: number | null;
+	/** The currency of both client rates: the project's (empty: the organization's). */
+	projectBillRateCurrency?: string | null;
 }
 
 /**
@@ -486,6 +513,12 @@ export interface IReportDayTaskRow {
 	duration?: number;
 	client?: (Pick<IOrganizationContact, 'id' | 'name'> & { imageUrl?: string | null }) | null;
 	organizationTeamId?: ID | null;
+	/**
+	 * The billing rate that prices this entry, and its currency (empty: the organization's): the rate the log stores,
+	 * or the member's current rate for a log that stores none.
+	 */
+	billRateValue?: number | null;
+	billRateCurrency?: string | null;
 }
 
 export interface IReportDayGroupByDate {
@@ -506,6 +539,10 @@ export type OwedRateSource = 'pay' | 'billing';
 
 export interface IAmountOwedReport {
 	date: string;
+	/**
+	 * One line per employee, or one per currency when the rates their time logs store that day are in several:
+	 * amounts in different currencies are never added.
+	 */
 	employees: {
 		employee: IEmployee;
 		duration: number;

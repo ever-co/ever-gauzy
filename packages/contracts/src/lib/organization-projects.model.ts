@@ -138,6 +138,16 @@ export interface IOrganizationProjectEmployee
  */
 export interface IOrganizationProjectRateUpdateInput extends IBasePerTenantAndOrganizationEntityModel {
 	billRateValue: number | null;
+	/**
+	 * The day the new rate prices tracked time from: the time logs started on or after it take the new rate, except time
+	 * a live invoice bills. Without it only the time logs recorded from now on take it, and past time keeps its price.
+	 */
+	applyFrom?: Date | string;
+}
+
+/** How many time logs a rate change gave the new rate, when it named a day to apply it from. */
+export interface IRepricedTimeLogs {
+	repricedTimeLogs?: number;
 }
 
 export interface IOrganizationProjectMemberRate {
