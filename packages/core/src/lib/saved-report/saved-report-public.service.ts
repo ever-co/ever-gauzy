@@ -181,7 +181,7 @@ export class SavedReportPublicService {
 	 */
 	private async authorAsTheyAreNow(report: SavedReport): Promise<IAuthenticatedUser | null> {
 		const user: IAuthenticatedUser = await this.userService.getIfExists(report.authorId);
-		const isActiveAccount = !!user && user.isActive === true && user.isArchived !== true;
+		const isActiveAccount = !!user && user.isActive === true && user.isArchived === false;
 		const isSameTenant = !!user && user.tenantId === report.tenantId;
 		if (!isActiveAccount || !isSameTenant) {
 			return null;

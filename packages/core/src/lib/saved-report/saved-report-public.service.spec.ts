@@ -397,6 +397,11 @@ describe('SavedReportPublicService', () => {
 				stateWith(token, { user: { id: MARIE_USER, tenantId: TENANT, isActive: false, isArchived: false } })
 			));
 
+		it('an author whose account is not stated as kept, as a sign-in refuses it', async () =>
+			refused(
+				stateWith(token, { user: { id: MARIE_USER, tenantId: TENANT, isActive: true, isArchived: null } })
+			));
+
 		it('an author who left the organization', async () => refused(stateWith(token, { memberships: [] })));
 
 		it('an author whose employee record was ended', async () => {
