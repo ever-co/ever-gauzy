@@ -3,7 +3,7 @@
 **Feature ID**: `integration-jira`
 **Plan**: `./plan.md`
 **Status**: `Platform in review` (ever-gauzy #11812)
-**Last updated**: 2026-11-11
+**Last updated**: 2026-11-13
 
 ---
 
@@ -24,8 +24,8 @@
 
 ## Angular (`integration-jira-ui`)
 
-- [ ] **T13**. Connect page, site choice, mappings with the status-map editor and issue types, Import now, runs with their reports, conflicts (a date-only due date shown in UTC), disconnect; hidden when the routes answer 404
+- [x] **T13**. Connect page, site choice, mappings with the status-map editor and issue types, Import now, runs with their reports, conflicts (a date-only due date shown in UTC), disconnect; hidden when the routes answer 404 ([#11865](https://github.com/ever-co/ever-gauzy/pull/11865), [#11868](https://github.com/ever-co/ever-gauzy/pull/11868))
 
 ## Ever Teams (`integrations-settings`)
 
-- [ ] **T14**. Settings → Integrations → Jira behind `NEXT_PUBLIC_INTEGRATION_JIRA_ENABLED`: hook, services, proxy routes (both transports), section (connect, site, mappings, status map, runs, conflicts, disconnect), 13 locales, the route-surface counts
+- [x] **T14**. Settings → Integrations → Jira behind `NEXT_PUBLIC_INTEGRATION_JIRA_ENABLED`: hook, services, proxy routes (both transports), section (connect, site, mappings, status map, runs, conflicts, disconnect), 13 locales, the route-surface counts ([ever-teams#5146](https://github.com/ever-co/ever-teams/pull/5146))
