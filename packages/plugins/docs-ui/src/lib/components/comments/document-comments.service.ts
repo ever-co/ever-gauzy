@@ -108,6 +108,11 @@ export class DocumentCommentsService {
 	/**
 	 * Stores the range a thread was made on (its first comment, by its author, right after posting it): the block, the
 	 * offsets into the block's text, the quote, a little context and, live, the ends as relative positions.
+	 *
+	 * 🛑 The caller reads the refusals: 404 without a code (an older platform) or `DOCS_COLLAB_DISABLED` means the
+	 * platform keeps no ranges; 404 `DOCS_COMMENT_NOT_FOUND` names a comment that is not the page's; 403 a page that
+	 * takes no comments from the caller (a view share) or a comment of someone else. None of them undoes the comment,
+	 * which stays on its block.
 	 */
 	setAnchor(
 		documentId: ID,
@@ -116,9 +121,10 @@ export class DocumentCommentsService {
 	): Observable<IDocumentCommentAnchorResolved> {
 		return this.http.put<IDocumentCommentAnchorResolved>(
 			`${this.DOCS_URL}/${documentId}/comments/${commentId}/anchor`,
+			// The scope last: the selected organization, never a value the anchor carries.
 			{
-				...this.definedOrgContext(),
-				...input
+				...input,
+				...this.definedOrgContext()
 			}
 		);
 	}

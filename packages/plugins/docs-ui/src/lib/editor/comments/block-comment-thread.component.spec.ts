@@ -308,6 +308,37 @@ describe('BlockCommentThreadComponent: threads made on a range of text', () => {
 		expect([...openBlocks[openBlocks.length - 1]].sort()).toEqual(['b1', 'b2']);
 	});
 
+	it('tells the page once the selection is posted or dismissed, so a rail drawn again does not offer it', async () => {
+		await render({ blockId: 'b1', range: SELECTION });
+		let done = 0;
+		component.rangeDone.subscribe(() => (done += 1));
+
+		component.draft = 'First';
+		await component.post();
+		expect(done).toBe(1);
+
+		fixture.componentRef.setInput('range', { ...SELECTION });
+		fixture.detectChanges();
+		(element().querySelector('.gz-block-composer-range-clear') as HTMLButtonElement).click();
+		expect(done).toBe(2);
+
+		// A post on the block alone has no selection to let go of.
+		component.draft = 'Second';
+		await component.post();
+		expect(done).toBe(2);
+	});
+
+	it('keeps a range thread lit while a reply in it is open, its first comment resolved', async () => {
+		comments.items = [
+			comment('c1', '[[block:b1]]\nDone', { resolved: true }),
+			comment('c2', '[[block:b1]]\nNot quite', { parentId: 'c1' } as Partial<IComment>)
+		];
+		await render();
+
+		expect((ranges[ranges.length - 1] as Array<{ threadId: string }>).map((range) => range.threadId)).toEqual(['c1']);
+		expect(openBlocks[openBlocks.length - 1]).toEqual([]);
+	});
+
 	it('lights the thread asked for, even resolved, and shows its text in the page from its quote', async () => {
 		comments.items = [
 			comment('c1', '[[block:b1]]\nDone', { resolved: true }),

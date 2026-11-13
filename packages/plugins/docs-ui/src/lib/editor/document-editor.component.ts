@@ -224,6 +224,12 @@ export class DocumentEditorComponent implements OnChanges, OnDestroy {
 	/** The comment range places last told to the page, so an unchanged answer is not sent again. */
 	private lastRangePlaces = '';
 
+	/**
+	 * A thread asked for before its range was handed in (a resolved thread is lit only once the rail knows it is the
+	 * one asked for): it is scrolled to when its range arrives.
+	 */
+	private pendingRangeFocus: string | null = null;
+
 	constructor() {
 		// A real DOM is required — construct only in the browser (spec 05 §3.8).
 		afterNextRender(() => {
@@ -360,10 +366,13 @@ export class DocumentEditorComponent implements OnChanges, OnDestroy {
 	setCommentRanges(ranges: readonly ICommentRange[]): void {
 		this.rememberCommentMarks({ ranges: [...ranges] });
 		setCommentRanges(this.editor, ranges);
+		const pending = this.pendingRangeFocus;
+		if (pending && ranges.some((range) => range.threadId === pending)) this.focusCommentRange(pending);
 	}
 
 	/** Lights one thread's range (or none). */
 	setActiveCommentThread(threadId: string | null): void {
+		if (threadId !== this.pendingRangeFocus) this.pendingRangeFocus = null;
 		this.rememberCommentMarks({ activeThread: threadId });
 		setActiveCommentThread(this.editor, threadId);
 	}
@@ -372,13 +381,15 @@ export class DocumentEditorComponent implements OnChanges, OnDestroy {
 	 * Lights a thread's range and scrolls it into view.
 	 *
 	 * @param threadId The thread (its first comment).
-	 * @returns False when the thread's text is not on the page (the caller shows its block instead).
+	 * @returns False when the thread's text is not lit (yet): the editor scrolls to it once its range is handed in, and
+	 *   the caller shows its block meanwhile when it knows one.
 	 */
 	focusCommentRange(threadId: string): boolean {
 		const editor = this.editor;
 		if (!editor || editor.isDestroyed || !threadId) return false;
 		this.setActiveCommentThread(threadId);
 		const bounds = commentRangeBounds(editor.state, threadId);
+		this.pendingRangeFocus = bounds ? null : threadId;
 		if (!bounds) return false;
 		const escaped = typeof CSS !== 'undefined' && CSS.escape ? CSS.escape(threadId) : threadId;
 		let element = this.editorHostRef?.nativeElement?.querySelector<HTMLElement>(

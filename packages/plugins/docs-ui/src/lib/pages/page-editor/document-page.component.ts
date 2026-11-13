@@ -538,6 +538,11 @@ export class DocumentPageComponent implements OnInit, OnDestroy {
 		this.cdr.markForCheck();
 	}
 
+	/** The rail is done with the selection it was offering (posted, or dismissed): it is not offered again. */
+	onCommentRangeDone(): void {
+		this.commentRange = null;
+	}
+
 	/** The editor found the ranges again after edits: the rail shows the text each thread is on now. */
 	onCommentRangesResolved(places: ReadonlyMap<string, IDocumentCommentAnchorPosition>): void {
 		this.commentRangePlaces = places;

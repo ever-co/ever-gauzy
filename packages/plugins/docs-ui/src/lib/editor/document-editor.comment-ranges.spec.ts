@@ -288,6 +288,33 @@ describe('DocumentEditorComponent: comment ranges', () => {
 		expect(requests[1]).toEqual({ blockId: 'b1', range: null });
 	});
 
+	it('scrolls to a thread asked for before its range was handed in (a resolved one)', async () => {
+		await open(false, page(FOX));
+		await until(() => component.editor?.getText() === FOX, 'the page');
+		const scrolled = jest.fn();
+		Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', { value: scrolled, configurable: true });
+		try {
+			expect(component.focusCommentRange('t9')).toBe(false);
+			component.setCommentRanges([
+				{ threadId: 't9', blockId: 'b1', anchor: { blockId: 'b1', start: 35, end: 43, quote: 'lazy dog' } }
+			]);
+			expect(scrolled).toHaveBeenCalledTimes(1);
+			expect(
+				(fixture.nativeElement as HTMLElement).querySelector('.gz-comment-range--active')?.textContent
+			).toBe('lazy dog');
+
+			// Another thread asked for meanwhile: the first one is not scrolled to any more.
+			expect(component.focusCommentRange('t10')).toBe(false);
+			component.setActiveCommentThread('t1');
+			component.setCommentRanges([
+				{ threadId: 't10', blockId: 'b1', anchor: { blockId: 'b1', start: 4, end: 9, quote: 'quick' } }
+			]);
+			expect(scrolled).toHaveBeenCalledTimes(1);
+		} finally {
+			delete (HTMLElement.prototype as { scrollIntoView?: unknown }).scrollIntoView;
+		}
+	});
+
 	it('moves a saved page’s range with the text typed before it, and lights the thread asked for', async () => {
 		await open(false, page(FOX));
 		await until(() => component.editor?.getText() === FOX, 'the page');

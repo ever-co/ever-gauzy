@@ -5,11 +5,13 @@ import {
 	Component,
 	ElementRef,
 	EventEmitter,
+	Injector,
 	Input,
 	OnChanges,
 	Output,
 	type SimpleChanges,
 	ViewChild,
+	afterNextRender,
 	inject
 } from '@angular/core';
 import { NbBadgeModule, NbButtonModule, NbIconModule, NbInputModule, NbSpinnerModule } from '@nebular/theme';
@@ -72,7 +74,14 @@ export interface IThreadRangeView {
 /** The platform's answer for a comment that is not one of the page's (the route exists). */
 const DOCS_COMMENT_NOT_FOUND = 'DOCS_COMMENT_NOT_FOUND';
 
-/** A 404: the platform has no ranges (an older one, or Docs collaboration off), unless it names the comment. */
+/**
+ * A 404: the platform has no ranges, unless it names the comment.
+ *
+ * `GET …/comment-anchors` and `PUT …/comments/:commentId/anchor` answer 404 `DOCS_COLLAB_DISABLED` while Docs
+ * collaboration is off, and an older platform has no such route (a 404 without a code); only the PUT answers
+ * `DOCS_COMMENT_NOT_FOUND`, for a comment that is not one of the page's. A page the caller cannot read fails its
+ * comments too: what is switched off is this page's ranges only (`rangesOff` is reset for every page).
+ */
 function isRangesUnavailable(error: unknown): boolean {
 	const failure = error as { status?: number; error?: { code?: unknown } | null } | null;
 	return failure?.status === 404 && failure?.error?.code !== DOCS_COMMENT_NOT_FOUND;
@@ -139,6 +148,11 @@ export class BlockCommentThreadComponent implements OnChanges {
 	@Output() blockFocused = new EventEmitter<string>();
 	/** The user asked to see a thread's text in the page (its quote clicked). */
 	@Output() rangeFocused = new EventEmitter<string>();
+	/**
+	 * The selection handed in as `range` is done with (its thread was posted, or the person chose the whole block): the
+	 * page lets go of it, so a rail drawn again does not offer it once more.
+	 */
+	@Output() rangeDone = new EventEmitter<void>();
 
 	@ViewChild('composerInput') private composerRef?: ElementRef<HTMLTextAreaElement>;
 
@@ -149,6 +163,7 @@ export class BlockCommentThreadComponent implements OnChanges {
 	private readonly store = inject(Store);
 	private readonly changeDetectorRef = inject(ChangeDetectorRef);
 	private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
+	private readonly injector = inject(Injector);
 
 	public threads: IBlockThread[] = [];
 	public loading = false;
@@ -293,7 +308,7 @@ export class BlockCommentThreadComponent implements OnChanges {
 
 	/** The person would rather comment on the whole block. */
 	clearRange(): void {
-		this.pendingRange = null;
+		this.releaseRange();
 		this.changeDetectorRef.markForCheck();
 	}
 
@@ -472,8 +487,15 @@ export class BlockCommentThreadComponent implements OnChanges {
 	private resetComposer(): void {
 		this.draft = '';
 		this.mentioned = [];
-		this.pendingRange = null;
+		this.releaseRange();
 		this.closeMentions();
+	}
+
+	/** Lets go of the selection the composer was offering, and tells the page. */
+	private releaseRange(): void {
+		if (!this.pendingRange) return;
+		this.pendingRange = null;
+		this.rangeDone.emit();
 	}
 
 	// ─── Ranges (`docs-collaboration` FR-16) ─────────────────────
@@ -530,16 +552,23 @@ export class BlockCommentThreadComponent implements OnChanges {
 	/**
 	 * The open threads made on a range of text, oldest first, to the editor (the one asked for even when resolved, so
 	 * its text is lit).
+	 *
+	 * The rail still shows the text of every range thread, resolved ones included (`refreshRangeViews`): a thread whose
+	 * comments are all resolved stays readable where it was, but is lit in the page only while it is the one asked for.
 	 */
 	private publishRanges(): void {
 		const present = new Set(this.all.map((comment) => String(comment.id)));
+		// A thread is open while any of its comments is (a reply can stay open on a resolved first comment).
+		const open = new Set(
+			this.all.filter((comment) => !comment.resolved).map((comment) => this.threadIdOf(comment, present))
+		);
 		const ranges: ICommentRange[] = [];
 		for (const comment of this.all) {
 			const id = String(comment?.id);
 			const anchor = this.anchors.get(id);
 			// A reply has no range of its own: it is on its thread's.
 			if (!anchor || this.threadIdOf(comment, present) !== id) continue;
-			if (comment.resolved && id !== String(this.activeThreadId ?? '')) continue;
+			if (!open.has(id) && id !== String(this.activeThreadId ?? '')) continue;
 			ranges.push({
 				threadId: id,
 				blockId: commentBlockId(comment) ?? anchor.blockId,
@@ -562,13 +591,20 @@ export class BlockCommentThreadComponent implements OnChanges {
 
 	/** Brings the thread asked for into sight in the rail, once it is drawn. */
 	private scrollToThread(threadId: string): void {
-		setTimeout(() => {
-			const escaped = typeof CSS !== 'undefined' && CSS.escape ? CSS.escape(threadId) : threadId;
-			const element = this.host.nativeElement?.querySelector?.<HTMLElement>(`[data-thread-id="${escaped}"]`);
-			if (typeof element?.scrollIntoView === 'function') {
-				element.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-			}
-		});
+		afterNextRender(
+			{
+				read: () => {
+					const escaped = typeof CSS !== 'undefined' && CSS.escape ? CSS.escape(threadId) : threadId;
+					const element = this.host.nativeElement?.querySelector?.<HTMLElement>(
+						`[data-thread-id="${escaped}"]`
+					);
+					if (typeof element?.scrollIntoView === 'function') {
+						element.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+					}
+				}
+			},
+			{ injector: this.injector }
+		);
 	}
 
 	private markBusy(comment: IComment, busy: boolean): void {
