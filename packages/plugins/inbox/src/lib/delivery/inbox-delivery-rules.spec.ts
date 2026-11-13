@@ -4,8 +4,10 @@ import {
 	decidePushDelivery,
 	emailModeOf,
 	excerptOf,
+	IDeliverySettingLike,
 	inboxItemLinkOf,
 	instantOfLocal,
+	isSentOnlyWhileUnread,
 	nextLocalDate,
 	isWithinWindow,
 	kindSwitchOf,
@@ -17,9 +19,12 @@ import {
 	windowEndAfter,
 	withoutTrailingSlashes
 } from './inbox-delivery-rules';
+import { INBOX_DELIVERY_TIMER_REMINDER_GRACE_MS } from './inbox-delivery.constants';
 
 /** A Saturday at 12:30 UTC: 14:30 in Sofia (UTC+2 in November), 04:30 in Los Angeles (UTC−8). */
 const NOW = new Date('2026-11-07T12:30:00.000Z');
+/** When a timer reminder decided at NOW goes, unless it is read by then: 14:33 in Sofia. */
+const AFTER_WAIT = new Date(NOW.getTime() + INBOX_DELIVERY_TIMER_REMINDER_GRACE_MS);
 
 describe('the delivery clock', () => {
 	it("reads the person's clock in their time zone, and UTC for none or an unknown one", () => {
@@ -121,6 +126,14 @@ describe('the preferences', () => {
 		expect(kindSwitchOf(null, {}, 'Whatever')).toBe(true);
 	});
 
+	it('takes a timer reminder unless the employee turned the reminders off', () => {
+		const timer = EmployeeNotificationTypeEnum.TIMER_REMINDER;
+		expect(kindSwitchOf({}, {}, timer)).toBe(true);
+		expect(kindSwitchOf({}, { timerReminderHours: 4 }, timer)).toBe(true);
+		expect(kindSwitchOf({}, { timerReminderHours: null }, timer)).toBe(false);
+		expect(kindSwitchOf({}, { timerReminderHours: 0 }, timer)).toBe(false);
+	});
+
 	it("reads the kind's email mode, else the one for every kind, else immediate", () => {
 		expect(emailModeOf({}, EmployeeNotificationTypeEnum.MENTION)).toBe('immediate');
 		expect(emailModeOf({ email: false }, EmployeeNotificationTypeEnum.MENTION)).toBe('off');
@@ -136,6 +149,79 @@ describe('decideEmailDelivery', () => {
 		expect(decideEmailDelivery({ now: NOW, type: EmployeeNotificationTypeEnum.MENTION, setting: null })).toEqual({ mode: InboxDeliveryModeEnum.IMMEDIATE, dueAt: NOW, digestKey: null });
 		expect(decideEmailDelivery({ now: NOW, type: EmployeeNotificationTypeEnum.MENTION, setting: { mention: false } })).toEqual({ mode: InboxDeliveryModeEnum.NONE, dueAt: null, digestKey: null });
 		expect(decideEmailDelivery({ now: NOW, type: EmployeeNotificationTypeEnum.MENTION, setting: { preferences: { emailByType: { Mention: 'off' } } } })).toEqual({ mode: InboxDeliveryModeEnum.NONE, dueAt: null, digestKey: null });
+	});
+
+	it('sends nothing for a timer reminder already read, and holds an unread one for the wait an open tab marks it read in', () => {
+		const decide = (setting: IDeliverySettingLike | null, alreadyRead?: boolean, userTimeZone?: string) =>
+			decideEmailDelivery({
+				now: NOW,
+				type: EmployeeNotificationTypeEnum.TIMER_REMINDER,
+				setting,
+				alreadyRead,
+				userTimeZone
+			});
+		expect(decide(null, true)).toEqual({ mode: InboxDeliveryModeEnum.NONE, dueAt: null, digestKey: null });
+		expect(decide(null, false)).toEqual({
+			mode: InboxDeliveryModeEnum.IMMEDIATE,
+			dueAt: AFTER_WAIT,
+			digestKey: null
+		});
+		expect(decide(null)).toEqual({ mode: InboxDeliveryModeEnum.IMMEDIATE, dueAt: AFTER_WAIT, digestKey: null });
+		// Its switch and its email mode, as for any kind
+		expect(decide({ preferences: { timerReminderHours: null } }).mode).toBe(InboxDeliveryModeEnum.NONE);
+		expect(decide({ preferences: { emailByType: { TimerReminder: 'digest' } } }).mode).toBe(
+			InboxDeliveryModeEnum.DIGEST
+		);
+		// The quiet hours are those at the end of the wait (14:33 in Sofia): a window it reaches holds the email to its end
+		expect(decide({ preferences: { dnd: { start: '14:31', end: '16:00' } } }, false, 'Europe/Sofia').dueAt).toEqual(
+			new Date('2026-11-07T14:00:00.000Z')
+		);
+		expect(decide({ preferences: { dnd: { start: '12:00', end: '14:32' } } }, false, 'Europe/Sofia').dueAt).toEqual(
+			AFTER_WAIT
+		);
+	});
+
+	it('decides every other kind as it always did, whether the person read the entry or not', () => {
+		for (const alreadyRead of [true, false, undefined]) {
+			expect(
+				decideEmailDelivery({
+					now: NOW,
+					type: EmployeeNotificationTypeEnum.MENTION,
+					setting: null,
+					alreadyRead
+				})
+			).toEqual({ mode: InboxDeliveryModeEnum.IMMEDIATE, dueAt: NOW, digestKey: null });
+			expect(
+				decideEmailDelivery({
+					now: NOW,
+					type: EmployeeNotificationTypeEnum.COMMENT,
+					setting: { preferences: { email: 'digest', digestHour: 8 } },
+					userTimeZone: 'Europe/Sofia',
+					alreadyRead
+				})
+			).toEqual({
+				mode: InboxDeliveryModeEnum.DIGEST,
+				dueAt: new Date('2026-11-08T06:00:00.000Z'),
+				digestKey: '2026-11-08'
+			});
+			expect(
+				decideEmailDelivery({
+					now: NOW,
+					type: EmployeeNotificationTypeEnum.ASSIGNMENT,
+					setting: { preferences: { dnd: { start: '12:00', end: '16:00' } } },
+					userTimeZone: 'Europe/Sofia',
+					alreadyRead
+				}).dueAt
+			).toEqual(new Date('2026-11-07T14:00:00.000Z'));
+			expect(
+				decideEmailDelivery({
+					now: NOW,
+					type: EmployeeNotificationTypeEnum.MENTION,
+					setting: { mention: false },
+					alreadyRead
+				}).mode
+			).toBe(InboxDeliveryModeEnum.NONE);
+		}
 	});
 
 	it("places a digest kind at the person's next digest hour, keyed by that day", () => {
@@ -166,9 +252,43 @@ describe('decidePushDelivery', () => {
 		expect(decidePushDelivery({ now: NOW, type: mention, setting: { preferences: { push: false, pushByType: { Mention: true } } }, hasSubscription: true }).mode).toBe(InboxDeliveryModeEnum.IMMEDIATE);
 	});
 
+	it('pushes a timer reminder only while unread, once the wait is over, and any other kind as it always did', () => {
+		const timer = (input: Partial<Parameters<typeof decidePushDelivery>[0]>) =>
+			decidePushDelivery({
+				now: NOW,
+				type: EmployeeNotificationTypeEnum.TIMER_REMINDER,
+				setting: null,
+				hasSubscription: true,
+				...input
+			});
+		expect(timer({ alreadyRead: true }).mode).toBe(InboxDeliveryModeEnum.NONE);
+		expect(timer({})).toEqual({ mode: InboxDeliveryModeEnum.IMMEDIATE, dueAt: AFTER_WAIT, digestKey: null });
+		expect(timer({ setting: { preferences: { pushByType: { TimerReminder: false } } } }).mode).toBe(
+			InboxDeliveryModeEnum.NONE
+		);
+		expect(timer({ setting: { preferences: { timerReminderHours: 0 } } }).mode).toBe(InboxDeliveryModeEnum.NONE);
+		expect(timer({ hasSubscription: false }).mode).toBe(InboxDeliveryModeEnum.NONE);
+		// A mention read in the app is pushed as before: whether the person looks at the app is decided when it is due
+		for (const alreadyRead of [true, false]) {
+			expect(
+				decidePushDelivery({ now: NOW, type: mention, setting: null, hasSubscription: true, alreadyRead })
+			).toEqual({ mode: InboxDeliveryModeEnum.IMMEDIATE, dueAt: NOW, digestKey: null });
+		}
+	});
+
 	it("holds a push until the do-not-disturb window ends, in the window's own time zone", () => {
 		const held = decidePushDelivery({ now: NOW, type: mention, setting: { preferences: { dnd: { start: '12:00', end: '16:00' } } }, userTimeZone: 'Europe/Sofia', hasSubscription: true });
 		expect(held).toEqual({ mode: InboxDeliveryModeEnum.IMMEDIATE, dueAt: new Date('2026-11-07T14:00:00.000Z'), digestKey: null });
+	});
+});
+
+describe('isSentOnlyWhileUnread', () => {
+	it('is a timer reminder alone: every other kind is sent read or not', () => {
+		for (const type of Object.values(EmployeeNotificationTypeEnum)) {
+			expect(isSentOnlyWhileUnread(type)).toBe(type === EmployeeNotificationTypeEnum.TIMER_REMINDER);
+		}
+		expect(isSentOnlyWhileUnread(null)).toBe(false);
+		expect(isSentOnlyWhileUnread('Whatever')).toBe(false);
 	});
 });
 

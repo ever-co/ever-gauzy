@@ -35,16 +35,16 @@ export class ChatWebhook extends TenantOrganizationBaseEntity {
 	canBroadcast!: boolean;
 
 	@MultiORMColumn({ nullable: true })
-	createdByEmployeeId?: ID | null;
+	createdByEmployeeId?: ID;
 
 	@MultiORMColumn({ nullable: true })
-	revokedAt?: Date | null;
+	revokedAt?: Date;
 
 	@MultiORMColumn({ nullable: true })
-	revokedByEmployeeId?: ID | null;
+	revokedByEmployeeId?: ID;
 
 	@MultiORMColumn({ nullable: true })
-	lastUsedAt?: Date | null;
+	lastUsedAt?: Date;
 
 	@MultiORMColumn({ type: 'int', default: 0 })
 	acceptedCount!: number;

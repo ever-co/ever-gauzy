@@ -10,7 +10,12 @@ import {
 	fileSizeLabel,
 	filesOfTransfer,
 	PendingAttachment,
+	objectUrlOf,
+	PreviewableFile,
+	previewUrlOf,
 	readyAttachmentIds,
+	releaseObjectUrl,
+	releasePreviews,
 	uploadOutcome
 } from '../../chat-attachments';
 import { ChatEmoji, emojiQueryAt, replaceShortcodeBefore, suggestEmoji } from '../../chat-emoji';
@@ -29,6 +34,7 @@ import {
 } from '../../chat-ui.helpers';
 import { ChatPeople } from '../../services/chat-people.service';
 import { ChatUiService } from '../../services/chat-ui.service';
+import { FilePreviewComponent } from '../file-preview/file-preview.component';
 import { PersonAvatarComponent } from '../person-avatar/person-avatar.component';
 
 /** What the composer hands over: the body with mention tokens, the employees it mentions, and the files it carries. */
@@ -90,7 +96,7 @@ let nextComposerId = 0;
 	host: {
 		'(document:mousedown)': 'onDocumentPress($event)'
 	},
-	imports: [FormsModule, NbIconModule, NbTooltipModule, TranslatePipe, PersonAvatarComponent],
+	imports: [FormsModule, NbIconModule, NbTooltipModule, TranslatePipe, PersonAvatarComponent, FilePreviewComponent],
 	template: `
 		<div
 			class="composer"
@@ -99,7 +105,7 @@ let nextComposerId = 0;
 			[class.dragging]="dragging()"
 			(keydown.escape)="onComposerEscape($event)"
 			(dragover)="onDragOver($event)"
-			(dragleave)="dragging.set(false)"
+			(dragleave)="onDragLeave($event)"
 			(drop)="onDrop($event)"
 		>
 			@if (emojiSuggestions().length > 0 && suggestions().length === 0) {
@@ -251,15 +257,44 @@ let nextComposerId = 0;
 				@if (attachments().length > 0 && !editing()) {
 					<ul class="attachments" data-test="composer-attachments">
 						@for (item of attachments(); track item.key) {
-							<li class="attachment" [class.failed]="item.status === 'failed'" [attr.data-status]="item.status">
-								<nb-icon [icon]="item.status === 'failed' ? 'alert-circle-outline' : item.status === 'uploading' ? 'cloud-upload-outline' : 'attach-outline'"></nb-icon>
-								<span class="attachment-name" [title]="item.name">{{ item.name }}</span>
-								@if (item.status === 'uploading') {
-									<span class="attachment-meta">{{ 'CHAT.COMPOSER.UPLOADING' | translate }}</span>
-								} @else if (item.status === 'failed') {
-									<span class="attachment-meta">{{ item.error ?? 'CHAT.COMPOSER.UPLOAD_FAILED' | translate }}</span>
+							<!-- A picture that is stored (or on its way) shows as itself; any other file, and a refused one, as a card. -->
+							@let tile = !!item.previewUrl && item.status !== 'failed';
+							<li
+								class="attachment"
+								[class.tile]="tile"
+								[class.failed]="item.status === 'failed'"
+								[attr.data-status]="item.status"
+								[attr.title]="item.name"
+							>
+								<!-- The whole file is a button: a press shows it in the preview popup. -->
+								<button
+									type="button"
+									class="attachment-open"
+									data-test="composer-attachment-open"
+									[attr.aria-label]="'CHAT.COMPOSER.PREVIEW_FILE' | translate: { name: item.name }"
+									(click)="openPreview(item)"
+								></button>
+								@if (item.previewUrl) {
+									<img class="attachment-thumb" [src]="item.previewUrl" [alt]="item.name" />
 								} @else {
-									<span class="attachment-meta">{{ size(item.size) }}</span>
+									<span class="attachment-icon" aria-hidden="true">
+										<nb-icon [icon]="item.status === 'failed' ? 'alert-circle-outline' : 'file-text-outline'"></nb-icon>
+									</span>
+								}
+								@if (!tile) {
+									<span class="attachment-text">
+										<span class="attachment-name">{{ item.name }}</span>
+										@if (item.status === 'uploading') {
+											<span class="attachment-meta">{{ 'CHAT.COMPOSER.UPLOADING' | translate }}</span>
+										} @else if (item.status === 'failed') {
+											<span class="attachment-meta">{{ item.error ?? 'CHAT.COMPOSER.UPLOAD_FAILED' | translate }}</span>
+										} @else {
+											<span class="attachment-meta">{{ size(item.size) }}</span>
+										}
+									</span>
+								}
+								@if (item.status === 'uploading') {
+									<span class="attachment-busy" role="status" [attr.aria-label]="'CHAT.COMPOSER.UPLOADING' | translate"></span>
 								}
 								<button type="button" class="attachment-remove" [attr.aria-label]="'CHAT.COMPOSER.REMOVE_FILE' | translate: { name: item.name }" (click)="removeAttachment(item.key)">
 									<nb-icon icon="close-outline"></nb-icon>
@@ -267,6 +302,9 @@ let nextComposerId = 0;
 							</li>
 						}
 					</ul>
+				}
+				@if (preview(); as shown) {
+					<ngx-chat-file-preview [file]="shown" (closed)="closePreview()"></ngx-chat-file-preview>
 				}
 				<div class="bottom-bar">
 					@if (canAttach() && !editing()) {
@@ -723,49 +761,142 @@ let nextComposerId = 0;
 				text-align: center;
 				font-size: 1.125rem;
 			}
+			/* The files of the next message: a picture as itself, any other file as a card; each with a way to take it off. */
 			.attachments {
 				display: flex;
 				flex-wrap: wrap;
-				gap: 0.25rem;
+				gap: 0.625rem;
 				margin: 0;
-				padding: 0 0.75rem 0.375rem;
+				padding: 0.5rem 0.75rem 0.5rem;
 				list-style: none;
 			}
 			.attachment {
+				position: relative;
 				display: inline-flex;
 				align-items: center;
-				gap: 0.375rem;
-				max-width: 100%;
-				padding: 0.125rem 0.25rem 0.125rem 0.5rem;
+				gap: 0.5rem;
+				box-sizing: border-box;
+				height: 3.5rem;
+				max-width: min(16rem, 100%);
+				padding: 0.375rem 0.75rem 0.375rem 0.375rem;
 				border: 1px solid var(--chat-border, var(--border-basic-color-3, rgba(127, 127, 127, 0.3)));
-				border-radius: 0.375rem;
+				border-radius: 0.5rem;
 				background: var(--chat-composer-bar, var(--background-basic-color-1, transparent));
 				color: var(--chat-text, inherit);
 				font-size: 0.75rem;
 			}
+			/* Covers the file (under its remove button): the press that opens its preview. */
+			.attachment-open {
+				position: absolute;
+				inset: 0;
+				padding: 0;
+				border: 0;
+				border-radius: inherit;
+				background: transparent;
+				cursor: pointer;
+			}
+			.attachment-open:hover,
+			.attachment-open:focus-visible {
+				background: var(--chat-hover, rgba(127, 127, 127, 0.12));
+			}
+			.attachment.tile {
+				width: 3.5rem;
+				padding: 0;
+			}
 			.attachment.failed {
 				border-color: var(--chat-danger, var(--color-danger-default, #e4493f));
 			}
+			.attachment-thumb,
+			.attachment-icon {
+				flex: 0 0 auto;
+				width: 2.625rem;
+				height: 2.625rem;
+				border-radius: 0.375rem;
+			}
+			.attachment-thumb {
+				object-fit: cover;
+			}
+			.attachment.tile .attachment-thumb {
+				width: 100%;
+				height: 100%;
+				border-radius: calc(0.5rem - 1px);
+			}
+			.attachment[data-status='uploading'] .attachment-thumb {
+				opacity: 0.45;
+			}
+			.attachment-icon {
+				display: inline-flex;
+				align-items: center;
+				justify-content: center;
+				background: var(--chat-hover, var(--background-basic-color-3, rgba(127, 127, 127, 0.15)));
+				color: var(--chat-text-soft, inherit);
+				font-size: 1.25rem;
+			}
+			.attachment.failed .attachment-icon {
+				color: var(--chat-danger, var(--color-danger-default, #e4493f));
+			}
+			.attachment-text {
+				display: flex;
+				flex-direction: column;
+				min-width: 0;
+				line-height: 1.125rem;
+			}
 			.attachment-name {
-				max-width: 12rem;
 				overflow: hidden;
+				font-weight: 600;
 				text-overflow: ellipsis;
 				white-space: nowrap;
 			}
 			.attachment-meta {
+				overflow: hidden;
 				color: var(--chat-muted, var(--text-hint-color, inherit));
+				text-overflow: ellipsis;
+				white-space: nowrap;
+			}
+			.attachment.failed .attachment-meta {
+				color: var(--chat-danger, var(--color-danger-default, #e4493f));
+			}
+			/* A file on its way: a small turning ring, over the picture or at the end of the card. */
+			.attachment-busy {
+				flex: 0 0 auto;
+				box-sizing: border-box;
+				width: 1rem;
+				height: 1rem;
+				border: 2px solid var(--chat-border, rgba(127, 127, 127, 0.35));
+				border-top-color: var(--chat-text, currentColor);
+				border-radius: 50%;
+				animation: attachment-turn 0.8s linear infinite;
+			}
+			.attachment.tile .attachment-busy {
+				position: absolute;
+				top: calc(50% - 0.5rem);
+				left: calc(50% - 0.5rem);
+			}
+			@keyframes attachment-turn {
+				to {
+					transform: rotate(360deg);
+				}
+			}
+			@media (prefers-reduced-motion: reduce) {
+				.attachment-busy {
+					animation-duration: 2.4s;
+				}
 			}
 			.attachment-remove {
+				position: absolute;
+				top: -0.4375rem;
+				right: -0.4375rem;
 				display: inline-flex;
 				align-items: center;
 				justify-content: center;
 				width: 1.25rem;
 				height: 1.25rem;
 				padding: 0;
-				border: 0;
-				border-radius: 0.25rem;
-				background: transparent;
-				color: inherit;
+				border: 1px solid var(--chat-border, var(--border-basic-color-3, rgba(127, 127, 127, 0.3)));
+				border-radius: 50%;
+				background: var(--chat-raised, var(--background-basic-color-1, Canvas));
+				color: var(--chat-text, inherit);
+				font-size: 0.75rem;
 				cursor: pointer;
 			}
 			.attachment-remove:hover,
@@ -866,6 +997,8 @@ export class MessageComposerComponent {
 	/** The `:` query under the caret (only when no `@` query is open). */
 	protected readonly emojiQuery = signal<{ query: string; start: number } | null>(null);
 	protected readonly attachments = signal<PendingAttachment[]>([]);
+	/** The waiting file shown in the preview popup. */
+	protected readonly preview = signal<PreviewableFile | null>(null);
 	/** How many files of the last pick, drop or paste did not fit the message (it holds {@link maxFiles}). */
 	protected readonly skippedFiles = signal(0);
 	protected readonly maxFiles = CHAT_MESSAGE_MAX_ATTACHMENTS;
@@ -1372,6 +1505,13 @@ export class MessageComposerComponent {
 		this.dragging.set(true);
 	}
 
+	/** The drag left the composer itself: passing from one of its parts to another is not leaving it. */
+	protected onDragLeave(event: DragEvent): void {
+		const to = event.relatedTarget as Node | null;
+		if (to && (event.currentTarget as Node | null)?.contains(to)) return;
+		this.dragging.set(false);
+	}
+
 	protected onDrop(event: DragEvent): void {
 		this.dragging.set(false);
 		const files = filesOfTransfer(event.dataTransfer);
@@ -1398,7 +1538,7 @@ export class MessageComposerComponent {
 			const key = this.nextKey;
 			this.attachments.update((list) => [
 				...list,
-				{ key, name: file.name || 'file', size: file.size, mimeType: file.type, status: 'uploading', documentId: null, error: null }
+				{ key, name: file.name || 'file', size: file.size, mimeType: file.type, status: 'uploading', documentId: null, error: null, previewUrl: previewUrlOf(file), file }
 			]);
 			const upload = this.api.uploadFile(file).subscribe({
 				next: (answer) => {
@@ -1418,13 +1558,28 @@ export class MessageComposerComponent {
 		}
 	}
 
+	/** Shows a waiting file in the preview popup, from the picked file itself. */
+	protected openPreview(item: PendingAttachment): void {
+		this.closePreview();
+		const fileUrl = objectUrlOf(item.file);
+		this.preview.set({ name: item.name, mimeType: item.mimeType, fileSize: item.size, fileUrl });
+	}
+
+	protected closePreview(): void {
+		releaseObjectUrl(this.preview()?.fileUrl);
+		this.preview.set(null);
+	}
+
 	protected removeAttachment(key: number): void {
 		this.skippedFiles.set(0);
 		this.uploads.get(key)?.unsubscribe();
 		this.uploads.delete(key);
 		const removed = this.attachments().find((item) => item.key === key);
 		this.attachments.update((list) => list.filter((item) => item.key !== key));
-		if (removed) this.discard([removed]);
+		if (removed) {
+			releasePreviews([removed]);
+			this.discard([removed]);
+		}
 	}
 
 	/**
@@ -1450,6 +1605,8 @@ export class MessageComposerComponent {
 		for (const upload of this.uploads.values()) upload.unsubscribe();
 		this.uploads.clear();
 		if (discard) this.discard(this.attachments());
+		this.closePreview();
+		releasePreviews(this.attachments());
 		if (this.attachments().length) this.attachments.set([]);
 	}
 }

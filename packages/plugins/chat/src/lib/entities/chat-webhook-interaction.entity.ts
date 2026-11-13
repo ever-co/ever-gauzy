@@ -46,10 +46,10 @@ export class ChatWebhookInteraction extends TenantOrganizationBaseEntity {
 	lastError?: string | null;
 
 	@MultiORMColumn({ nullable: true })
-	deliveredAt?: Date | null;
+	deliveredAt?: Date;
 
 	@MultiORMColumn({ nullable: true })
-	replyAppliedAt?: Date | null;
+	replyAppliedAt?: Date;
 
 	/**
 	 * The clicker's `Idempotency-Key`, when the client sent one: a double click or a retry after a lost answer names

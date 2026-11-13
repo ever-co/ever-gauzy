@@ -294,6 +294,15 @@ export { CommandHandlers } from './lib/time-tracking/timer/commands/handlers';
 export { QueryHandlers } from './lib/time-tracking/timer/queries/handlers';
 export { TimerModule } from './lib/time-tracking/timer/timer.module';
 export { TimerService } from './lib/time-tracking/timer/timer.service';
+// The reminders of a timer left running. The worker application fires their schedule, so it imports the schedule's
+// module by name (the API consumes it), behind the switch both processes read.
+export {
+	isTimerRemindersEnabled,
+	TimerReminderMaintenanceModule,
+	TimerReminderModule,
+	TimerReminderScheduleModule,
+	TimerReminderService
+} from './lib/time-tracking/timer-reminder';
 
 export * from './lib/database/database.module';
 // Export-archive opt-out for plugin entities holding DERIVED data (extracted text, embeddings,

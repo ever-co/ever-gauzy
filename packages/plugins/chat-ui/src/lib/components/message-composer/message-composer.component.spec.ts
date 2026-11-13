@@ -286,7 +286,7 @@ describe('MessageComposerComponent', () => {
 			press('Enter');
 			expect(sent).toEqual([]);
 
-			failed.querySelector('button').click();
+			failed.querySelector('.attachment-remove').click();
 			fixture.detectChanges();
 			expect(fixture.nativeElement.querySelector('[data-test="composer-attachments"]')).toBeNull();
 			expect(sendButton().disabled).toBe(false);

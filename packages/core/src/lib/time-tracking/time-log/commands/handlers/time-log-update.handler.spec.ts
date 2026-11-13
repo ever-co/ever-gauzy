@@ -3,6 +3,7 @@ import '../../../../core/entities/internal';
 
 import { NotFoundException } from '@nestjs/common';
 import { RequestContext } from '../../../../core/context';
+import { generateTimeSlots } from '../../../time-slot/utils';
 import { TimeLogUpdateCommand } from '../time-log-update.command';
 import { omitScopeFields, TimeLogUpdateHandler } from './time-log-update.handler';
 
@@ -107,6 +108,17 @@ describe('TimeLogUpdateHandler (GHSA-6qvm-3wg4-26w4)', () => {
 			'employee-a',
 			[dropped]
 		);
+	});
+
+	it('releases only the slots of the part a new start between seconds drops', () => {
+		const { handler } = createHandler();
+		const at = (time: string) => new Date(`2026-01-05T${time}Z`);
+		// The slots the log had, as stored (a slot's start never has milliseconds)...
+		const previous = ['09:40', '09:50', '10:00'].map((time) => ({ startedAt: at(`${time}:00.000`) }));
+		// ...and those of its range from a new start at 09:55:00.500, as generateTimeSlots computes them.
+		const kept = generateTimeSlots(at('09:55:00.500'), at('10:10:00.000'));
+
+		expect((handler as any).getConflictingStartTimes(previous, kept)).toEqual([at('09:40:00.000')]);
 	});
 
 	it('keeps the fields internal callers rely on (the timer stop sends isRunning / stoppedAt)', () => {

@@ -6,7 +6,7 @@ import { PermissionGuard, TenantPermissionGuard } from './../../shared/guards';
 import { Permissions } from './../../shared/decorators';
 import { UseValidationPipe } from '../../shared/pipes';
 import { TimerService } from './timer.service';
-import { StartTimerDTO, StopTimerDTO, TimerStatusQueryDTO } from './dto';
+import { StartTimerDTO, StopTimerDTO, TimerStatusQueryDTO, ToggleTimerDTO } from './dto';
 import { GetTimerStatusQuery } from './queries/get-timer-status.query';
 import { StartTimerCommand, StopTimerCommand } from './commands';
 
@@ -56,7 +56,7 @@ export class TimerController {
 	 *
 	 * Toggles the timer state (On/Off) based on the provided data.
 	 *
-	 * @param entity - A StartTimerDTO object containing the necessary data to toggle the timer.
+	 * @param entity - A ToggleTimerDTO object containing the necessary data to toggle the timer.
 	 * @returns A promise that resolves to an ITimeLog object representing the timer log after toggling,
 	 *          or null if no log is created.
 	 */
@@ -69,9 +69,19 @@ export class TimerController {
 		status: HttpStatus.BAD_REQUEST,
 		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
+	@ApiResponse({
+		status: HttpStatus.NOT_ACCEPTABLE,
+		description:
+			'The toggle names a time log (timeLogId) while no timer runs, or stops the running timer at a time (stoppedAt) before it started. Nothing is changed.'
+	})
+	@ApiResponse({
+		status: HttpStatus.CONFLICT,
+		description:
+			'The toggle names a time log (timeLogId) that is not the running one. Nothing is changed: the running timer goes on.'
+	})
 	@Post('/toggle')
 	@UseValidationPipe()
-	async toggleTimer(@Body() entity: StartTimerDTO): Promise<ITimeLog | null> {
+	async toggleTimer(@Body() entity: ToggleTimerDTO): Promise<ITimeLog | null> {
 		return await this.timerService.toggleTimeLog(entity);
 	}
 
@@ -115,6 +125,16 @@ export class TimerController {
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
 		description: 'Invalid input, The response body may contain clues as to what went wrong'
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_ACCEPTABLE,
+		description:
+			'No timer is running, or the stop asks for a time (stoppedAt) before the running timer started. Nothing is changed.'
+	})
+	@ApiResponse({
+		status: HttpStatus.CONFLICT,
+		description:
+			'The stop names a time log (timeLogId) that is not the running one. Nothing is changed: the running timer goes on.'
 	})
 	@Post('/stop')
 	@UseValidationPipe()

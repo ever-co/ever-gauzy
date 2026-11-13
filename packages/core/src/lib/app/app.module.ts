@@ -167,6 +167,9 @@ import {
 } from '../event-outbox/event-outbox-inline-dispatch';
 import { WebhookInlineRetryModule } from '../webhook/webhook-inline-retry';
 import { WebhookMaintenanceModule } from '../webhook/webhook-maintenance.module';
+import { TimerReminderMaintenanceModule } from '../time-tracking/timer-reminder/timer-reminder-maintenance.module';
+import { TimerReminderInlineModule } from '../time-tracking/timer-reminder/timer-reminder-inline';
+import { isTimerRemindersEnabled } from '../time-tracking/timer-reminder/timer-reminder-enabled';
 import { OperationModule } from '../operation/operation.module';
 import { WebhookModule } from '../webhook/webhook.module';
 import { MeasurementModule } from '../measurement/measurement.module';
@@ -702,6 +705,13 @@ if (environment.EVER_TEAMS_CLIENT_IP_SECRET?.trim() && !clientIpSecretOf(environ
 			    // `WebhookMaintenanceModule` job, asked by an in-process sweep instead).
 			    [EventOutboxInlineDispatchModule, WebhookInlineRetryModule]
 			  : []),
+		// The reminders of a timer left running (off unless GAUZY_TIMER_REMINDERS_ENABLED=true). With a queue, this
+		// process consumes the sweep the worker application schedules every minute: a reminder is a notification, and the
+		// listeners that file it in the Inbox and announce it to the receiver's clients live here. Without a queue, this
+		// process sweeps on its own, every minute.
+		...(isTimerRemindersEnabled(process.env, (message) => console.warn(message))
+			? [isSchedulerQueueRootEnabled() ? TimerReminderMaintenanceModule : TimerReminderInlineModule]
+			: []),
 		//Token cleanup scheduler is disabled by default; enable when ready
 		TokenModule.forRoot({ enableScheduler: false }),
 		AccessTokenModule,

@@ -12103,6 +12103,78 @@
 			"attribute": "href",
 			"url": "https://gauzy.co/",
 			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the task automations UI (eaffba35cb, Settings → Automations) added it to the route list"
+		},
+		{
+			"route": "/pages/integrations/jira",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/ai-agent-chat",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the Jira integration UI (#11865, dc3ae1bdad, Integrations → Jira) added it to the route list"
+		},
+		{
+			"route": "/pages/integrations/jira",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/dashboard-widgets",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the Jira integration UI (#11865, dc3ae1bdad, Integrations → Jira) added it to the route list"
+		},
+		{
+			"route": "/pages/integrations/jira",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/documents/overview",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the Jira integration UI (#11865, dc3ae1bdad, Integrations → Jira) added it to the route list"
+		},
+		{
+			"route": "/pages/integrations/jira",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/reference/faq",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the Jira integration UI (#11865, dc3ae1bdad, Integrations → Jira) added it to the route list"
+		},
+		{
+			"route": "/pages/integrations/jira",
+			"attribute": "href",
+			"url": "https://ever.co/",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the Jira integration UI (#11865, dc3ae1bdad, Integrations → Jira) added it to the route list"
+		},
+		{
+			"route": "/pages/integrations/jira",
+			"attribute": "href",
+			"url": "https://gauzy.co/",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the Jira integration UI (#11865, dc3ae1bdad, Integrations → Jira) added it to the route list"
+		},
+		{
+			"route": "/pages/integrations/jira/:integrationId",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/ai-agent-chat",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the Jira integration UI (#11865, dc3ae1bdad, the page of one connection) added it to the route list"
+		},
+		{
+			"route": "/pages/integrations/jira/:integrationId",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/dashboard-widgets",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the Jira integration UI (#11865, dc3ae1bdad, the page of one connection) added it to the route list"
+		},
+		{
+			"route": "/pages/integrations/jira/:integrationId",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/documents/overview",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the Jira integration UI (#11865, dc3ae1bdad, the page of one connection) added it to the route list"
+		},
+		{
+			"route": "/pages/integrations/jira/:integrationId",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/reference/faq",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the Jira integration UI (#11865, dc3ae1bdad, the page of one connection) added it to the route list"
+		},
+		{
+			"route": "/pages/integrations/jira/:integrationId",
+			"attribute": "href",
+			"url": "https://ever.co/",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the Jira integration UI (#11865, dc3ae1bdad, the page of one connection) added it to the route list"
+		},
+		{
+			"route": "/pages/integrations/jira/:integrationId",
+			"attribute": "href",
+			"url": "https://gauzy.co/",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the Jira integration UI (#11865, dc3ae1bdad, the page of one connection) added it to the route list"
 		}
 	]
 }

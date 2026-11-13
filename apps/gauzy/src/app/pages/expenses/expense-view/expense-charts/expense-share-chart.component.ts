@@ -27,7 +27,7 @@ import { IExpenseMonthShare } from '../expense-view-charts';
 		</div>
 		<ul class="legend">
 			<li>
-				<span class="swatch" [style.background-color]="palette().expenses"></span>
+				<span class="swatch" [style.background-color]="palette()[accent()]"></span>
 				<span class="legend-name">{{ amountLabel() }}</span>
 				<strong>{{ formatValue()(share()?.amount ?? 0) }}</strong>
 			</li>
@@ -124,6 +124,9 @@ export class ExpenseShareChartComponent implements OnInit {
 	/** Formats an amount, in the expense's currency. */
 	readonly formatValue = input<(value: number) => string>((value) => String(value));
 
+	/** The colour of the record's own arc: the expenses colour, or the revenue one on the income page. */
+	readonly accent = input<'expenses' | 'revenue'>('expenses');
+
 	/** The theme's colours, and the options built from them: both set again on every theme change. */
 	readonly palette = signal<IEmployeeChartPalette>(resolveEmployeeChartPalette({} as NbJSThemeOptions));
 	readonly options = signal<ChartConfiguration<'doughnut'>['options']>(undefined);
@@ -137,7 +140,7 @@ export class ExpenseShareChartComponent implements OnInit {
 	readonly data = computed<ChartConfiguration<'doughnut'>['data']>(() => {
 		const share = this.share();
 		const palette = this.palette();
-		const colours = [palette.expenses, palette.axisLineColor];
+		const colours = [palette[this.accent()], palette.axisLineColor];
 		return {
 			labels: [this.amountLabel(), this.restLabel()],
 			datasets: [

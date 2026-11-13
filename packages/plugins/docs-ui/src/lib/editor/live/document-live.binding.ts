@@ -80,6 +80,12 @@ export interface ILiveBinding {
 	/** Whether local edits are waiting to be sent (or being sent). */
 	hasPending(): boolean;
 	/**
+	 * Whether the document holds local edits the server has not taken: waiting or being sent, refused (the page turned
+	 * read-only, the size limit), or sent to a session the server no longer held and not sent again yet. A session that
+	 * ends with such edits must not drop them, and leaving the page must not either.
+	 */
+	hasUnconfirmed(): boolean;
+	/**
 	 * Sends the waiting edits now and resolves once the server took them: `false` when some are still waiting at the
 	 * deadline (the network, a session that ended), so a leave guard can ask before they are dropped.
 	 */
@@ -115,6 +121,11 @@ export function createLiveBinding(options: ILiveBindingOptions): ILiveBinding {
 	let retryTimer: unknown = null;
 	let awarenessTimer: unknown = null;
 	let sending = false;
+	/**
+	 * A batch the server has not taken and that waits for no send: refused (403, 413), or dropped with the session it
+	 * went to (404) until the session opened again sends what the server lacks.
+	 */
+	let notTaken = false;
 	let destroyed = false;
 
 	const publish = (next: Partial<ILiveState>) => {
@@ -172,8 +183,11 @@ export function createLiveBinding(options: ILiveBindingOptions): ILiveBinding {
 				const missing = frame.stateVector
 					? Y.encodeStateAsUpdate(doc, fromBase64(frame.stateVector))
 					: Y.encodeStateAsUpdate(doc);
-				// It covers every edit still waiting, too.
+				// It covers every edit still waiting, too, and the ones not taken before when it is sent.
 				pending = [];
+				if (frame.readOnly !== true) {
+					notTaken = false;
+				}
 				if (missing.length > EMPTY_UPDATE_BYTES && frame.readOnly !== true) {
 					pending.push(missing);
 					scheduleFlush(0);
@@ -233,9 +247,12 @@ export function createLiveBinding(options: ILiveBindingOptions): ILiveBinding {
 		} catch (error) {
 			const status = (error as IHttpFailure)?.status;
 			if (status === 404) {
-				// The server no longer holds this session: open it again; its `sync` asks for what it lacks.
+				// The server no longer holds this session: open it again; its `sync` asks for what it lacks. Until a
+				// writable one does, the batch is the server's in no way (the stream may end first).
+				notTaken = true;
 				open();
 			} else if (status === 403 || status === 413) {
+				notTaken = true;
 				publish({ readOnly: true, reason: status === 413 ? 'size_limit' : (state.reason ?? 'read_only') });
 			} else if (status === 400) {
 				// An edit the page cannot take: the server applied nothing of it. Resync, so the editor shows the page as it is.
@@ -259,7 +276,10 @@ export function createLiveBinding(options: ILiveBindingOptions): ILiveBinding {
 		}
 	};
 
-	/** Sends what is waiting now, and resolves once nothing is (or the time is up): `false` when edits are left. */
+	/**
+	 * Sends what is waiting now, and resolves once nothing is (or the time is up): `false` when edits are left, a
+	 * batch not taken included.
+	 */
 	const flushNow = async (timeoutMs: number): Promise<boolean> => {
 		const deadline = Date.now() + timeoutMs;
 		while ((pending.length || sending) && Date.now() < deadline && !destroyed && state.phase === 'live') {
@@ -281,7 +301,7 @@ export function createLiveBinding(options: ILiveBindingOptions): ILiveBinding {
 				}
 			}
 		}
-		return !pending.length && !sending;
+		return !pending.length && !sending && !notTaken;
 	};
 
 	const sendAwareness = () => {
@@ -330,6 +350,7 @@ export function createLiveBinding(options: ILiveBindingOptions): ILiveBinding {
 		extensions: [Collaboration.configure({ document: doc, field: 'default' }) as unknown as Extension, cursor],
 		start: () => open(),
 		hasPending: () => pending.length > 0 || sending,
+		hasUnconfirmed: () => pending.length > 0 || sending || notTaken,
 		flush: (timeoutMs = 4000) => flushNow(timeoutMs),
 		destroy: () => {
 			destroyed = true;
