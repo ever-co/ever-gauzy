@@ -9,7 +9,7 @@ import { catchError, distinctUntilChanged, exhaustMap, map } from 'rxjs/operator
 import { CHAT_MESSAGE_MAX_LENGTH, IChatConversationWithState, IChatMessageWithRelations, IUser } from '@gauzy/contracts';
 import { Store, ToastrService } from '@gauzy/ui-core/core';
 import { CHAT_LINK, CHAT_MESSAGES_POLL_MS } from '../../chat-ui.constants';
-import { ChatPerson, continuesGroup, isSameDay, mergeMessages, newNonce, plainBody, userName } from '../../chat-ui.helpers';
+import { ChatPerson, continuesGroup, isSameDay, mergeMessages, messagePreview, newNonce, userName } from '../../chat-ui.helpers';
 import { ChatDockService } from '../../services/chat-dock.service';
 import { ChatUiService } from '../../services/chat-ui.service';
 import { PersonAvatarComponent } from '../person-avatar/person-avatar.component';
@@ -322,7 +322,8 @@ export class ChatDockComponent {
 		for (const message of this.messages()) {
 			const line: DockLine = {
 				id: String(message.id),
-				text: plainBody(message.body ?? '', people, new Map()),
+				// A message sent without text shows the names of its files, as the conversation list does
+				text: messagePreview(message, people, new Map()),
 				deleted: !!message.deletedAt,
 				at: message.createdAt
 			};

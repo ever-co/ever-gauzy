@@ -61,4 +61,13 @@ describe('ChatDockComponent', () => {
 		expect(element().querySelector('.note')).toBeNull();
 		expect(element().querySelector('[data-test="chat-dock-messages"]')?.textContent).toContain('Hello');
 	});
+
+	it('names the files of a message sent without text, instead of an empty line', () => {
+		const filesOnly = { ...message('m2', ''), attachmentNames: 'plan.pdf\nphoto.png' } as IChatMessageWithRelations;
+		api['messages'].mockReturnValue(of({ messages: [filesOnly] }));
+		jest.advanceTimersByTime(CHAT_MESSAGES_POLL_MS);
+		fixture.detectChanges();
+
+		expect(element().querySelector('[data-test="chat-dock-messages"]')?.textContent).toContain('plan.pdf, photo.png');
+	});
 });
