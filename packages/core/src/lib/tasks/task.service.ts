@@ -313,7 +313,9 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			// The status, priority and size records the update moves the task to, judged and named as a bulk update's
 			// are: refused before anything is written when the task's organization may not take one. A bulk update has
 			// judged and named its own already.
-			const data = RECORDS_JUDGED.has(input) ? sent : await this.withTaskRecords(sent, task, tenantId ?? task.tenantId);
+			const data = RECORDS_JUDGED.has(input)
+				? sent
+				: await this.withTaskRecords(sent, task, tenantId ?? task.tenantId);
 
 			const taskMembers = task.members;
 
@@ -3168,7 +3170,11 @@ export class TaskService extends TenantAwareCrudService<Task> {
 	 * one it is sent with); without one, only a platform default is taken.
 	 * @returns The write to save: as sent, or with the records' names (and a record named twice named once).
 	 */
-	private async withTaskRecords<T extends Partial<ITaskUpdateInput>>(sent: T, task: Task | null, tenantId: ID | undefined): Promise<T> {
+	private async withTaskRecords<T extends Partial<ITaskUpdateInput>>(
+		sent: T,
+		task: Task | null,
+		tenantId: ID | undefined
+	): Promise<T> {
 		// The organization the task is saved in: the one the write names (by its relation, which the save takes over the
 		// id, or by its id; the DTO accepts either), else its own.
 		const namedOrganizationId = sent.organization?.id ?? sent.organizationId;
