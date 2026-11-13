@@ -1778,7 +1778,8 @@
 		"Ivanova",
 		"multiselectable",
 		"previewable",
-		"unsnoozed"
+		"unsnoozed",
+		"unbillable"
 	],
 	"useGitignore": true,
 	"ignorePaths": [

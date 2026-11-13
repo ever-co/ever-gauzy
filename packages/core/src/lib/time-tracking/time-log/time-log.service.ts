@@ -80,6 +80,11 @@ import { findStoredPayRates, isPayRateSet, mayReadPayRateOf, StoredPayRate } fro
 import { TimeLog } from './time-log.entity';
 import { owedRateOf, payRateNeedsOrganizationCurrency } from './owed-rate';
 import {
+	mikroOrmNotOnLiveInvoiceKey,
+	NOT_ON_LIVE_INVOICE_PARAMETERS,
+	notOnLiveInvoice
+} from '../../invoice-item/invoice-item-billed-time';
+import {
 	IManualTimeEntry,
 	assertRequiredContext,
 	projectIdForEntry,
@@ -1572,6 +1577,11 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			query.andWhere(p(`"${query.alias}"."isBillable" = :isBillable`), { isBillable: true });
 		}
 
+		// Opt-in, as above: a read that does not ask keeps counting every log, invoiced or not.
+		if (request.notInvoiced === true) {
+			query.andWhere(notOnLiveInvoice(`"${query.alias}"."invoiceItemId"`), NOT_ON_LIVE_INVOICE_PARAMETERS);
+		}
+
 		query.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
 		query.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId });
 		if (joinsTimeSlots) {
@@ -1811,6 +1821,10 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 
 		if (request.billableOnly === true) {
 			where.isBillable = true;
+		}
+
+		if (request.notInvoiced === true) {
+			where[mikroOrmNotOnLiveInvoiceKey()] = [];
 		}
 
 		if (isNotEmpty(request.activityLevel)) {

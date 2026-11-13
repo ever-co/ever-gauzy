@@ -1,5 +1,5 @@
 import { ApiProperty, IntersectionType, PickType } from '@nestjs/swagger';
-import { ArrayNotEmpty } from 'class-validator';
+import { ArrayNotEmpty, IsUUID } from 'class-validator';
 import { ID, IUpdateTimesheetStatusInput } from '@gauzy/contracts';
 import { TenantOrganizationBaseDTO } from './../../../../core/dto';
 import { Timesheet } from '../../timesheet.entity';
@@ -13,5 +13,6 @@ export class UpdateTimesheetStatusDTO
 {
 	@ApiProperty({ type: () => Array })
 	@ArrayNotEmpty()
+	@IsUUID('all', { each: true })
 	ids: ID[];
 }

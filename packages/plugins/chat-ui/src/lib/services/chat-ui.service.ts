@@ -1,6 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable, Injector } from '@angular/core';
 import { Observable, Subject } from 'rxjs';
+import { map } from 'rxjs/operators';
 import {
 	CHAT_EVENT_NAMES,
 	ChatMemberRoleEnum,
@@ -41,6 +42,7 @@ import {
 } from '@gauzy/contracts';
 import { API_PREFIX, toParams } from '@gauzy/ui-core/common';
 import { Store } from '@gauzy/ui-core/core';
+import { ChatTeam } from '../chat-team-suggestions';
 import { typingRefusalOf } from '../chat-typing';
 import { CHAT_PAGE_SIZE } from '../chat-ui.constants';
 
@@ -155,6 +157,22 @@ export class ChatUiService {
 	/** The active employees of my organization with name and picture (what chat shows and suggests). */
 	people(): Observable<ChatPersonRecord[]> {
 		return this.http.get<ChatPersonRecord[]>(`${CHAT}/people`);
+	}
+
+	/**
+	 * The organization's teams (`GET /organization-team`, which needs `ORG_TEAM_VIEW`; archived teams are left out),
+	 * as their ids and names: the new-channel dialog suggests them as channel names.
+	 */
+	teams(organizationId: ID, tenantId: ID): Observable<ChatTeam[]> {
+		return this.http
+			.get<{ items?: Array<{ id?: ID; name?: string | null }> }>(`${API_PREFIX}/organization-team`, {
+				params: toParams({ where: { organizationId, tenantId } })
+			})
+			.pipe(
+				map((page) =>
+					(page?.items ?? []).filter((team) => !!team?.id && !!team?.name?.trim()).map((team) => ({ id: String(team.id), name: String(team.name).trim() }))
+				)
+			);
 	}
 
 	listMine(): Observable<IChatConversationList> {

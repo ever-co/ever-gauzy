@@ -41,6 +41,11 @@ export const TRACKED_DATA_SENSITIVE_RELATIONS: Readonly<Record<string, Sensitive
 	OrganizationTeam: {
 		timeLogs: PermissionsEnum.CHANGE_SELECTED_EMPLOYEE,
 		activities: PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
+	},
+	// The other way round: the invoice line that bills a time log states what the client pays for it, so it is read
+	// under the grant `/invoice-item` itself states, whoever may read the log.
+	TimeLog: {
+		invoiceItem: PermissionsEnum.INVOICES_VIEW
 	}
 };
 

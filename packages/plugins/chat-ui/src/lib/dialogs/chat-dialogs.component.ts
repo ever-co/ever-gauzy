@@ -1,9 +1,12 @@
 import { AfterViewInit, ChangeDetectionStrategy, Component, computed, DestroyRef, ElementRef, inject, OnInit, signal, viewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
-import { NbButtonModule, NbCardModule, NbCheckboxModule, NbDialogRef, NbIconModule, NbInputModule, NbSpinnerModule } from '@nebular/theme';
+import { NbAutocompleteModule, NbButtonModule, NbCardModule, NbCheckboxModule, NbDialogRef, NbIconModule, NbInputModule, NbSpinnerModule } from '@nebular/theme';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
+import { of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 import { CHAT_GROUP_MAX_MEMBERS, ChatVisibilityEnum, IChatConversationWithState } from '@gauzy/contracts';
+import { ChatTeam, teamSuggestions } from '../chat-team-suggestions';
 import { apiErrorMessage, ChatPerson, rankMentions } from '../chat-ui.helpers';
 import { ChatPeople, EMPTY_PEOPLE } from '../services/chat-people.service';
 import { ChatUiService } from '../services/chat-ui.service';
@@ -76,17 +79,58 @@ const DIALOG_STYLES = `
 		.loading {
 			min-height: 5rem;
 		}
+		.hint {
+			font-size: 0.75rem;
+			line-height: 1.4;
+			color: var(--gauzy-text-color-2);
+		}
+		.team {
+			display: flex;
+			align-items: center;
+			gap: 0.5rem;
+			width: 100%;
+			min-width: 0;
+		}
+		.team nb-icon {
+			flex: 0 0 auto;
+			font-size: 1rem;
+			color: var(--gauzy-text-color-2);
+		}
+		.team-name {
+			flex: 1 1 auto;
+			min-width: 0;
+			overflow: hidden;
+			text-overflow: ellipsis;
+			white-space: nowrap;
+		}
+		.team-taken {
+			flex: 0 0 auto;
+			font-size: 0.75rem;
+			color: var(--gauzy-text-color-2);
+		}
 	`;
 
 
 /** The new-message dialog lists this many people at most (typing narrows it). */
 const DIRECT_CANDIDATES = 50;
 
-/** A new channel: name, topic, private or public. Closes with the conversation. */
+/** What the page passes to the new-channel dialog: where the teams are read, and the channels already listed. */
+export interface NewChannelContext {
+	organizationId: string | null;
+	tenantId: string | null;
+	/** The names of the channels the page lists: a team name one of them has is marked as taken. */
+	channelNames: readonly string[];
+}
+
+/**
+ * A new channel: name, topic, private or public. The name field suggests the organization's team names (where the
+ * person may read the teams), narrowed as they type; a name a listed channel already has is shown but cannot be
+ * picked. Closes with the conversation.
+ */
 @Component({
 	selector: 'ngx-chat-new-channel-dialog',
 	changeDetection: ChangeDetectionStrategy.OnPush,
-	imports: [FormsModule, NbButtonModule, NbCardModule, NbCheckboxModule, NbInputModule, TranslatePipe],
+	imports: [FormsModule, NbAutocompleteModule, NbButtonModule, NbCardModule, NbCheckboxModule, NbIconModule, NbInputModule, TranslatePipe],
 	template: `
 		<nb-card class="dialog" data-test="new-channel-dialog">
 			<nb-card-header>{{ 'CHAT.DIALOG.NEW_CHANNEL' | translate }}</nb-card-header>
@@ -94,7 +138,36 @@ const DIRECT_CANDIDATES = 50;
 				<p class="text">{{ 'CHAT.DIALOG.NEW_CHANNEL_TEXT' | translate }}</p>
 				<label class="field">
 					<span>{{ 'CHAT.DIALOG.CHANNEL_NAME' | translate }}</span>
-					<input nbInput fullWidth data-test="channel-name" [ngModel]="name()" (ngModelChange)="name.set($event)" maxlength="80" autofocus />
+					<input
+						nbInput
+						fullWidth
+						data-test="channel-name"
+						[nbAutocomplete]="teamList"
+						[ngModel]="name()"
+						(ngModelChange)="name.set($event ?? '')"
+						maxlength="80"
+						autofocus
+					/>
+					<nb-autocomplete #teamList data-test="channel-team-suggestions">
+						@if (suggestions().length) {
+							<nb-option-group [title]="'CHAT.DIALOG.TEAMS' | translate">
+								@for (team of suggestions(); track team.id) {
+									<nb-option [value]="team.name" [disabled]="team.taken" [attr.data-test]="'channel-team-' + team.id">
+										<span class="team">
+											<nb-icon icon="people-outline"></nb-icon>
+											<span class="team-name">{{ team.name }}</span>
+											@if (team.taken) {
+												<small class="team-taken">{{ 'CHAT.DIALOG.TEAM_TAKEN' | translate }}</small>
+											}
+										</span>
+									</nb-option>
+								}
+							</nb-option-group>
+						}
+					</nb-autocomplete>
+					@if (teams().length) {
+						<span class="hint">{{ 'CHAT.DIALOG.TEAM_HINT' | translate }}</span>
+					}
 				</label>
 				<label class="field">
 					<span>{{ 'CHAT.DIALOG.CHANNEL_TOPIC' | translate }}</span>
@@ -115,18 +188,38 @@ const DIRECT_CANDIDATES = 50;
 	`,
 	styles: [DIALOG_STYLES]
 })
-export class NewChannelDialogComponent {
+export class NewChannelDialogComponent implements OnInit, NewChannelContext {
 	protected readonly ref = inject<NbDialogRef<NewChannelDialogComponent>>(NbDialogRef);
 	private readonly api = inject(ChatUiService);
 	private readonly translate = inject(TranslateService);
 	private readonly destroyRef = inject(DestroyRef);
 
+	/** Set by `NbDialogService.open(…, { context })`. */
+	organizationId: string | null = null;
+	tenantId: string | null = null;
+	channelNames: readonly string[] = [];
+
+	/** The organization's teams, or none where they cannot be read (no `ORG_TEAM_VIEW`, or the read failed). */
+	protected readonly teams = signal<ChatTeam[]>([]);
 	protected readonly name = signal('');
+	/** The team names to offer for what is typed. */
+	protected readonly suggestions = computed(() => teamSuggestions(this.teams(), this.name(), this.channelNames));
 	protected readonly topic = signal('');
 	protected readonly isPrivate = signal(false);
 	protected readonly busy = signal(false);
 	protected readonly error = signal<string | null>(null);
 	protected readonly canCreate = computed(() => !!this.name().trim().replace(/^#/, '') && !this.busy());
+
+	ngOnInit(): void {
+		if (!this.organizationId || !this.tenantId) return;
+		this.api
+			.teams(this.organizationId, this.tenantId)
+			.pipe(
+				catchError(() => of([] as ChatTeam[])),
+				takeUntilDestroyed(this.destroyRef)
+			)
+			.subscribe((teams) => this.teams.set(teams));
+	}
 
 	protected create(): void {
 		const name = this.name().trim().replace(/^#/, '');
