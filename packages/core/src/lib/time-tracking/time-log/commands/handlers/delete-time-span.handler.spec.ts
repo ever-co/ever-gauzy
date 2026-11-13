@@ -1042,6 +1042,7 @@ describe('DeleteTimeSpanHandler when a cut at one end or a delete fails (#11823)
 
 		expect(store.timeline()).toEqual(AS_IT_WAS);
 		expect(refusal).toBeInstanceOf(BadRequestException);
+		expect(refusal.message).toContain('The update failed');
 	});
 
 	it('leaves no slot beyond a new end, and raises the error, when the cut fails to let go of a shared one', async () => {
