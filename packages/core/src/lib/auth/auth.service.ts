@@ -96,7 +96,14 @@ import { MikroOrmPasswordResetRepository } from './../password-reset/repository/
 import { RoleService } from './../role/role.service';
 import { isDeactivatedEmployee } from './deactivated-employee';
 import { EmailConfirmationService } from './email-confirmation.service';
-import { allowedEmailLink, emailLinkOrigin, warnRejectedEmailLink, withAllowedEmailLinks } from './email-link-origin';
+import {
+	allowedEmailLink,
+	allowedEmailLinkOrigins,
+	emailLinkOrigin,
+	isAllowedEmailLink,
+	warnRejectedEmailLink,
+	withAllowedEmailLinks
+} from './email-link-origin';
 import { signupRequiresEmailVerification } from './signup-email-verification';
 import { canResetPasswordByEmail } from './auth-switches/admin-password-reset';
 import {
@@ -1428,7 +1435,10 @@ export class AuthService extends SocialAuthService {
 			return ownPage;
 		}
 
-		const page = allowedEmailLink(requested);
+		// The link carries a token that sets the account's password: only an origin the deployment lists, even where
+		// EMAIL_LINK_ALLOWED_ORIGINS=* switches the check off for the other emailed links.
+		const isListed = isAllowedEmailLink(requested, allowedEmailLinkOrigins());
+		const page = isListed ? allowedEmailLink(requested) : null;
 		if (!page) {
 			warnRejectedEmailLink(this.logger, 'the password reset email')(
 				'appResetPasswordUrl',
@@ -1460,8 +1470,15 @@ export class AuthService extends SocialAuthService {
 		// Convert query params object to a string
 		const queryString = buildQueryString(params);
 
-		// Combine base URL with query params (a client app's page may already carry a query of its own)
-		return `${baseURL}${baseURL.includes('?') ? '&' : '?'}${queryString}`;
+		// A hash-routed page (`/#/auth/reset-password`, the Gauzy app's) reads its parameters from the route after
+		// `#`; any other page from its own query, which comes before a fragment it may carry.
+		const hashAt = baseURL.indexOf('#');
+		const fragment = hashAt === -1 ? '' : baseURL.slice(hashAt);
+		if (fragment.startsWith('#/') || fragment.startsWith('#!/')) {
+			return `${baseURL}${fragment.includes('?') ? '&' : '?'}${queryString}`;
+		}
+		const page = hashAt === -1 ? baseURL : baseURL.slice(0, hashAt);
+		return `${page}${page.includes('?') ? '&' : '?'}${queryString}${fragment}`;
 	}
 
 	/**

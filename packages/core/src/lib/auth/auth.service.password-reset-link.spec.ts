@@ -105,6 +105,37 @@ describe('AuthService.requestResetPassword - the page of the reset link', () => 
 		expect(url.searchParams.get('email')).toBe(EMAIL);
 	});
 
+	it('adds its parameters before the fragment of a page whose query comes first', async () => {
+		const { link } = await linkFor(`${TEAMS_PAGE}?from=mail#form`);
+
+		const url = new URL(link);
+		expect(url.searchParams.get('from')).toBe('mail');
+		expect(url.searchParams.get('token')).toBeTruthy();
+		expect(url.hash).toBe('#form');
+	});
+
+	it('adds its parameters to the route of a hash-routed page that has a query of its own', async () => {
+		const { link } = await linkFor(`${TEAMS}/?lang=en#/auth/reset-password`);
+
+		const url = new URL(link);
+		expect(url.searchParams.get('lang')).toBe('en');
+		expect(url.hash.startsWith('#/auth/reset-password?token=')).toBe(true);
+	});
+
+	it('sends a reset token only to a listed origin, even where EMAIL_LINK_ALLOWED_ORIGINS=* opens the other links', async () => {
+		const previous = process.env['EMAIL_LINK_ALLOWED_ORIGINS'];
+		process.env['EMAIL_LINK_ALLOWED_ORIGINS'] = '*';
+		try {
+			const { link } = await linkFor('https://attacker.example/reset');
+
+			expect(link.startsWith(`${OWN_PAGE}?token=`)).toBe(true);
+			expect(link).not.toContain('attacker.example');
+		} finally {
+			if (previous === undefined) delete process.env['EMAIL_LINK_ALLOWED_ORIGINS'];
+			else process.env['EMAIL_LINK_ALLOWED_ORIGINS'] = previous;
+		}
+	});
+
 	it("keeps the Gauzy app's page for a page on a foreign origin, without telling the caller", async () => {
 		const { link, warn } = await linkFor('https://attacker.example/reset');
 
