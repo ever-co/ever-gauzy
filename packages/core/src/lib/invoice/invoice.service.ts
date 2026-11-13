@@ -29,7 +29,7 @@ import { OrganizationService } from './../organization';
 import { TypeOrmInvoiceRepository } from './repository/type-orm-invoice.repository';
 import { MikroOrmInvoiceRepository } from './repository/mikro-orm-invoice.repository';
 import { FavoriteService } from '../core/decorators';
-import { saveBillingTime, splitBilledTime } from '../invoice-item/invoice-item-billed-time';
+import { saveBillingTime, splitBilledTime, TIME_LOG_NOT_BILLABLE } from '../invoice-item/invoice-item-billed-time';
 
 /**
  * What sending a document by e-mail did.
@@ -97,6 +97,13 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 		const invoice = { ...input, invoiceItems: lines };
 		if (billing.length === 0) {
 			return await this.create(invoice);
+		}
+		// `create` holds the invoice's organization to the caller's boundary, not the one each nested line states: a line
+		// may only bill time of its invoice's organization (else a member of two organizations could bill one's time on
+		// the other's invoice).
+		const invoiceOrganizationId = input.organizationId ?? input.organization?.id;
+		if (!invoiceOrganizationId || billing.some((line) => String(line.organizationId) !== String(invoiceOrganizationId))) {
+			throw new BadRequestException(TIME_LOG_NOT_BILLABLE);
 		}
 		return await saveBillingTime(
 			this,
