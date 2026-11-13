@@ -148,6 +148,13 @@ export class DocumentEditorComponent implements OnChanges, OnDestroy {
 	/** The page whose live session ended: it is edited with autosave until it is opened again. */
 	private liveEndedFor: ID | null = null;
 
+	/**
+	 * `updatedAt` of the page when its live session began. Edits the session never took are saved against it once the
+	 * session ends (`fallBackToAutosave`): any write since, the session's own saves included, meets them as a conflict
+	 * the person resolves, so neither copy silently replaces the other.
+	 */
+	private liveBaseUpdatedAt: string | Date | null = null;
+
 	/** Bumps on every build, so a build that awaited something does not finish after a newer one started. */
 	private buildGeneration = 0;
 
@@ -428,29 +435,71 @@ export class DocumentEditorComponent implements OnChanges, OnDestroy {
 		this.liveStateChanged.emit(state);
 		this.editor?.setEditable(this.editable && state.phase === 'live' && !state.readOnly);
 		if (state.phase === 'ended') {
-			if (state.reason === 'lineage') {
+			if (state.reason === 'lineage' && this.liveBinding.hasPending() === false) {
 				// The page was rebuilt on the server: join it again with an empty document.
 				this.rebuildEditor();
 				return;
 			}
+			// Edits not sent yet do not merge into a rebuilt page either: they are kept, and saved with autosave.
 			this.fallBackToAutosave(documentId);
 		}
 		this.cdr.markForCheck();
 	}
 
-	/** The live session ended: the page is read again and edited with autosave, as without live editing. */
+	/**
+	 * The live session ended: the page is read again and edited with autosave, as without live editing.
+	 *
+	 * Edits the session never took (a batch not sent yet, a send that failed or is still out) exist only in this
+	 * editor. They are read before the binding goes, stay on the page, and autosave saves them against the version the
+	 * session began on, so a newer write meets them as a conflict the person resolves. The server's copy never replaces
+	 * them unasked.
+	 */
 	private fallBackToAutosave(documentId: ID): void {
 		this.liveEndedFor = documentId;
+		const local = this.editor ? { json: this.getJSON(), html: this.editor.getHTML() } : null;
+		const unsent = this.liveBinding?.hasPending() === true;
+		const base = this.liveBaseUpdatedAt;
 		this.documents.getById(documentId).subscribe({
 			next: (document) => {
 				if (this.currentDocumentId !== documentId) return;
 				this.document = document;
 				this.rebuildEditor();
+				if (local && unsent) this.keepLiveContent(local, base, true);
 			},
 			error: () => {
-				if (this.currentDocumentId === documentId) this.rebuildEditor();
+				if (this.currentDocumentId !== documentId) return;
+				this.rebuildEditor();
+				// The page could not be read: what the live editor showed is the newest copy here, not the one loaded
+				// before the session began.
+				if (local) this.keepLiveContent(local, base, unsent);
 			}
 		});
+	}
+
+	/**
+	 * Puts what the live editor showed into the autosave editor that replaced it.
+	 *
+	 * @param local The live editor's content when its session ended.
+	 * @param base The version the session began on: the token the content is saved against.
+	 * @param unsaved Whether it holds edits the server never took: they are saved now.
+	 */
+	private keepLiveContent(
+		local: { json: JsonData; html: string },
+		base: string | Date | null,
+		unsaved: boolean
+	): void {
+		const editor = this.editor;
+		// Nothing to keep when the copy just loaded already holds all of it.
+		if (!editor || JSON.stringify(this.getJSON()) === JSON.stringify(local.json)) return;
+		editor.commands.setContent(local.json as never, { emitUpdate: false } as never);
+		if (unsaved) {
+			void this.autosave.saveAdopted(base);
+		} else {
+			this.autosave.rebase(base ?? undefined);
+		}
+		this.contentChanged.emit({ json: this.getJSON(), html: editor.getHTML() });
+		this.emitStats();
+		this.cdr.markForCheck();
 	}
 
 	private buildEditor(binding: ILiveBinding | null): void {
@@ -532,6 +581,7 @@ export class DocumentEditorComponent implements OnChanges, OnDestroy {
 		// exist for (constructed via `afterNextRender` before the input is bound) threw
 		// here instead. Skip the autosave session rather than start one with no id.
 		if (binding) {
+			this.liveBaseUpdatedAt = (this.document?.updatedAt as string | Date | undefined) ?? null;
 			binding.start();
 		} else if (this.document) {
 			this.autosave.init(this.document.id, this.document.updatedAt as never, () => this.buildPayload());
