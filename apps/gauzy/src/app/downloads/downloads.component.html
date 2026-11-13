@@ -83,8 +83,10 @@
 									</span>
 
 									<span class="dw-timer">
-										<span class="dw-clock">00:00:05</span>
-										<span class="dw-pause"><i class="fas fa-pause"></i></span>
+										<span class="dw-clock">{{ desktopClock() }}</span>
+										<span class="dw-pause" [class.is-hovered]="desktopCursor().at === 'pause'">
+											<i class="fas fa-pause"></i>
+										</span>
 									</span>
 									<span class="dw-totals">
 										<span>
@@ -102,7 +104,10 @@
 										{{ 'TIMER_TRACKER.SELECT_CLIENT' | translate }}
 										<nb-icon icon="edit-outline"></nb-icon>
 									</span>
-									<span class="dw-select">
+									<span
+										class="dw-select"
+										[class.is-pressed]="desktopCursor().at === 'client' && desktopCursor().press"
+									>
 										<span class="dw-placeholder">{{
 											'TIMER_TRACKER.PLACEHOLDERS.SELECT_CLIENT' | translate
 										}}</span>
@@ -110,7 +115,10 @@
 									</span>
 
 									<span class="dw-label">{{ 'TIMER_TRACKER.SELECT_PROJECT' | translate }}</span>
-									<span class="dw-select">
+									<span
+										class="dw-select"
+										[class.is-pressed]="desktopCursor().at === 'project' && desktopCursor().press"
+									>
 										<span class="project-badge">EG</span>
 										<span class="dw-value">Ever Gauzy</span>
 										<nb-icon icon="chevron-down-outline"></nb-icon>
@@ -145,6 +153,20 @@
 										{{ 'TIMER_TRACKER.LAST_CAPTURE_TAKEN' | translate }} {{ lastCaptureAgo }}
 									</span>
 								</span>
+
+								<!-- The "You" cursor; its step comes from the component's loop. -->
+								<span
+									class="cursor"
+									[attr.data-at]="desktopCursor().at"
+									[class.is-pressing]="desktopCursor().press"
+								>
+									<svg class="cursor-arrow" viewBox="0 0 20 20">
+										<path d="M3 2.5 16.5 9l-5.75 1.75L8 16.5Z" />
+									</svg>
+									<span class="cursor-label">{{
+										'DOWNLOADS_PAGE.ILLUSTRATION.YOU' | translate
+									}}</span>
+								</span>
 							</div>
 						</div>
 					</div>
@@ -155,7 +177,7 @@
 				<div class="app-grid">
 					@if (mobileUrl) {
 						<section class="shell" aria-labelledby="downloads-mobile-title">
-							<div class="panel">
+							<div class="panel glow-center">
 								<h2 class="panel-title" id="downloads-mobile-title">
 									{{ 'DOWNLOADS_PAGE.MOBILE.TITLE' | translate }}
 								</h2>
@@ -184,7 +206,7 @@
 										<span class="phone-total">31:08</span>
 										<span class="bars">
 											@for (height of weekBars; track $index) {
-												<span [style.height.%]="height"></span>
+												<span [style.height.%]="height" [style.--i]="$index"></span>
 											}
 										</span>
 									</div>
@@ -195,7 +217,7 @@
 
 					@if (extensionUrl) {
 						<section class="shell" aria-labelledby="downloads-extension-title">
-							<div class="panel">
+							<div class="panel glow-end">
 								<h2 class="panel-title" id="downloads-extension-title">
 									{{ 'DOWNLOADS_PAGE.EXTENSION.TITLE' | translate }}
 								</h2>
@@ -231,8 +253,40 @@
 												<nb-icon icon="close-outline"></nb-icon>
 											</span>
 											<span class="timer-main">
-												<ng-container *ngTemplateOutlet="timerReading"></ng-container>
-												<ng-container *ngTemplateOutlet="modeSwitch"></ng-container>
+												<span class="billable">$</span>
+												<span class="reading">
+													<span class="session">{{ extensionClock() }}</span>
+													<span class="today">
+														{{ 'TIMER_TRACKER.TODAY' | translate }} {{ extensionClock() }}
+													</span>
+												</span>
+												<span
+													class="play"
+													[class.is-running]="extensionRunning()"
+													[class.is-pressed]="extensionCursor().press"
+												>
+													<i
+														[class]="extensionRunning() ? 'fas fa-pause' : 'fas fa-play'"
+													></i>
+												</span>
+												<span class="mode-switch">
+													<span class="is-on"><i class="fas fa-stopwatch"></i></span>
+													<span><nb-icon icon="menu-outline"></nb-icon></span>
+												</span>
+											</span>
+
+											<!-- The "You" cursor: starts the timer, lets it run, stops it. -->
+											<span
+												class="cursor"
+												[attr.data-at]="extensionCursor().at"
+												[class.is-pressing]="extensionCursor().press"
+											>
+												<svg class="cursor-arrow" viewBox="0 0 20 20">
+													<path d="M3 2.5 16.5 9l-5.75 1.75L8 16.5Z" />
+												</svg>
+												<span class="cursor-label">{{
+													'DOWNLOADS_PAGE.ILLUSTRATION.YOU' | translate
+												}}</span>
 											</span>
 										</div>
 									</div>
@@ -252,23 +306,3 @@
 		</main>
 	</nb-layout-column>
 </nb-layout>
-
-<!--
-	Pieces of the drawn timer, shared by the Desktop and Browser extension drawings. Labels use
-	the real timer's own TIMER_TRACKER keys, so the drawing reads exactly like the app.
--->
-<ng-template #timerReading>
-	<span class="billable">$</span>
-	<span class="reading">
-		<span class="session">00:00:00</span>
-		<span class="today">{{ 'TIMER_TRACKER.TODAY' | translate }} 00:00:00</span>
-	</span>
-	<span class="play"><i class="fas fa-play"></i></span>
-</ng-template>
-
-<ng-template #modeSwitch>
-	<span class="mode-switch">
-		<span class="is-on"><i class="fas fa-stopwatch"></i></span>
-		<span><nb-icon icon="menu-outline"></nb-icon></span>
-	</span>
-</ng-template>
