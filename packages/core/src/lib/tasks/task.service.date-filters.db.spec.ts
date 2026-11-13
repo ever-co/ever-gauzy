@@ -1,7 +1,7 @@
 /**
- * The due-date filters that remained instant-only on a real database: `GET /tasks/filter-by-date` and the GraphQL
- * `tasksByDate` (both `TaskService.getTasksByDateFilters`), and a saved view's `queryParams.dueDates`
- * (`TaskService.findTasksByViewQuery`). SQLite always; Postgres and MySQL when `TASK_VIEWS_TEST_POSTGRES_URL` /
+ * The due-date and start-date filters that remained instant-only on a real database: `GET /tasks/filter-by-date` and
+ * the GraphQL `tasksByDate` (both `TaskService.getTasksByDateFilters`), and a saved view's `queryParams.dueDates` and
+ * `queryParams.startDates` (`TaskService.findTasksByViewQuery`). SQLite always; Postgres and MySQL when `TASK_VIEWS_TEST_POSTGRES_URL` /
  * `TASK_VIEWS_TEST_MYSQL_URL` point at a disposable database. The service builds and runs each query itself, under
  * TypeORM and under MikroORM (`DB_ORM=mikro-orm`); only the task table is a stand-in (the columns the reads use), and
  * the rows are written by TypeORM, as the platform writes a `Date` column.
@@ -9,7 +9,8 @@
  * A due date that is a date only is midnight UTC of its day. A caller that picks calendar days sends each end of the
  * range as the instant of the reader's day and as the day itself (`dueDateFromDay` / `dueDateToDay`, the contract of
  * the advanced filters): a date only must count on its own day for a reader in UTC−4 and in UTC+2, whatever zone the
- * server runs in, and a caller that sends the instants alone keeps comparing instants.
+ * server runs in, and a caller that sends the instants alone keeps comparing instants. A start date that is a date only
+ * (as Ever Teams writes a picked start day) is filtered the same way, with `startDateFromDay` / `startDateToDay`.
  *
  * The server zone: the TypeORM reads run with the process in UTC (as the API container runs) and in UTC−4. MikroORM's
  * reads run in UTC, and in UTC−4 on SQLite only: on Postgres and MySQL MikroORM binds a date as UTC text while TypeORM
@@ -144,6 +145,16 @@ function rowsFor(at: ReturnType<typeof reader>): Array<Pick<IRow, 'id' | 'dueDat
 	];
 }
 
+/** The same range of days as a start-date range: what a caller filtering by start date sends. */
+function asStart(range: Range): Partial<ITaskDateFilterInput> {
+	return {
+		...(range.dueDateFrom ? { startDateFrom: range.dueDateFrom } : {}),
+		...(range.dueDateFromDay ? { startDateFromDay: range.dueDateFromDay } : {}),
+		...(range.dueDateTo ? { startDateTo: range.dueDateTo } : {}),
+		...(range.dueDateToDay ? { startDateToDay: range.dueDateToDay } : {})
+	};
+}
+
 const sorted = (...ids: string[]) => [...ids].sort();
 
 // Jest hands each file a copy of `process.env`: the zone is the host process's.
@@ -237,6 +248,22 @@ describe.each(TARGETS)('the remaining due-date filters on $name', (target) => {
 		);
 	}
 
+	/** The same rows with those dates as their start dates, and one due date for all (none by default). */
+	async function seedStarts(at: ReturnType<typeof reader>, dueDate: Date | null = null): Promise<void> {
+		const repository = dataSource.getRepository(TypeOrmRow);
+		await repository.clear();
+		await repository.insert(
+			rowsFor(at).map(({ dueDate: date, ...row }) => ({
+				tenantId: 'ten',
+				organizationId: 'org',
+				isScreeningTask: false,
+				...row,
+				startDate: date,
+				dueDate
+			}))
+		);
+	}
+
 	/** The ids `filter-by-date` / `tasksByDate` answer, under each ORM asked for; all must agree. */
 	async function byDate(input: Partial<ITaskDateFilterInput>, orms: MultiORMEnum[]): Promise<string[]> {
 		const answers = await Promise.all(
@@ -272,6 +299,14 @@ describe.each(TARGETS)('the remaining due-date filters on $name', (target) => {
 			.filter((end): end is Date => !!end)
 			.map((end) => end.toISOString()) as unknown as Date[],
 		...(withDays ? { dueDateFromDay: range.dueDateFromDay, dueDateToDay: range.dueDateToDay } : {})
+	});
+
+	/** A view's `startDates` as a client writes a range of days into it: the two ends, and their days when it sends them. */
+	const startViewOf = (range: Range, withDays = true): IGetTasksByViewFilters => ({
+		startDates: [range.dueDateFrom, range.dueDateTo]
+			.filter((end): end is Date => !!end)
+			.map((end) => end.toISOString()) as unknown as Date[],
+		...(withDays ? { startDateFromDay: range.dueDateFromDay, startDateToDay: range.dueDateToDay } : {})
 	});
 
 	// The zone, and how many minutes it runs behind UTC (`getTimezoneOffset`).
@@ -346,6 +381,56 @@ describe.each(TARGETS)('the remaining due-date filters on $name', (target) => {
 						);
 					});
 				});
+
+				describe(`by start date, for a reader in ${label}`, () => {
+					const at = reader(offset);
+					beforeEach(async () => seedStarts(at));
+
+					it('finds today’s date-only start date in "starts today" and not tomorrow’s, and yesterday’s before today', async () => {
+						expect(await byDate(asStart(at.today), orms)).toEqual(sorted('only18', 'earlyOn18', 'lateOn18'));
+						expect(await byDate(asStart(at.overdue), orms)).toEqual(sorted('only17', 'lateOn17'));
+						expect(await byDate(asStart(at.fromTomorrow), orms)).toEqual(
+							sorted('only19', 'only21', 'only22', 'earlyOn19', 'lateOn21', 'earlyOn22')
+						);
+					});
+
+					it('holds both edges of a range of start days, today to Saturday', async () => {
+						expect(await byDate(asStart(at.week), orms)).toEqual(
+							sorted('only18', 'only19', 'only21', 'earlyOn18', 'lateOn18', 'earlyOn19', 'lateOn21')
+						);
+					});
+
+					it('compares the start instants for a caller that sends them alone', async () => {
+						const today = await byDate(asStart(instantsOnly(at.today)), orms);
+						// West of UTC a date only lands a day early by the instants, as it always did for such a caller.
+						expect(today).toEqual(
+							offset < 0 ? sorted('only19', 'earlyOn18', 'lateOn18') : sorted('only18', 'earlyOn18', 'lateOn18')
+						);
+					});
+
+					it('lists a view’s start dates on their own days when it stores the days of its ends, and by the instants when not', async () => {
+						expect(await byView(startViewOf(at.today), orms)).toEqual(
+							sorted('only18', 'earlyOn18', 'lateOn18', 'screening18')
+						);
+						expect(await byView(startViewOf(at.week), orms)).toEqual(
+							sorted(
+								'only18',
+								'only19',
+								'only21',
+								'earlyOn18',
+								'lateOn18',
+								'earlyOn19',
+								'lateOn21',
+								'screening18'
+							)
+						);
+						expect(await byView(startViewOf(at.today, false), orms)).toEqual(
+							offset < 0
+								? sorted('only19', 'earlyOn18', 'lateOn18')
+								: sorted('only18', 'earlyOn18', 'lateOn18', 'screening18')
+						);
+					});
+				});
 			}
 
 			it('refuses a due-date range that ends before it starts, under either ORM', async () => {
@@ -360,6 +445,32 @@ describe.each(TARGETS)('the remaining due-date filters on $name', (target) => {
 						} as ITaskDateFilterInput)
 					).rejects.toBeInstanceOf(BadRequestException);
 				}
+			});
+
+			it('refuses a start-date range that ends before it starts, under either ORM', async () => {
+				const west = reader(-240);
+				await seedStarts(west);
+				for (const ormType of orms) {
+					await expect(
+						serviceOn(ormType).getTasksByDateFilters({
+							organizationId: 'org',
+							startDateFrom: west.today.dueDateTo,
+							startDateTo: west.today.dueDateFrom
+						} as ITaskDateFilterInput)
+					).rejects.toBeInstanceOf(BadRequestException);
+				}
+			});
+
+			it('compares a range of start days and a range of due days each with its own column', async () => {
+				const west = reader(-240);
+				await seedStarts(west, dateOnly('2026-11-18'));
+				expect(await byDate({ ...asStart(west.today), ...west.today }, orms)).toEqual(
+					sorted('only18', 'earlyOn18', 'lateOn18')
+				);
+				expect(await byDate({ ...asStart(west.today), ...west.fromTomorrow }, orms)).toEqual([]);
+				expect(await byDate({ ...asStart(west.fromTomorrow), ...west.today }, orms)).toEqual(
+					sorted('only19', 'only21', 'only22', 'earlyOn19', 'lateOn21', 'earlyOn22')
+				);
 			});
 
 			it('keeps a start-date window of its own next to a due-date window', async () => {
