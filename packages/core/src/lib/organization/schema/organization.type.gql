@@ -154,6 +154,16 @@ type Organization {
 	restrictTrackingSwitchToHigherRoles: Boolean!
 	"Whether the organization renders times on a 12- or a 24-hour clock."
 	timeFormat: Int!
+	"""
+	The interval, in minutes, reports and exports round each duration to: 1, 5, 6, 10, 15, 30 or 60. Null, the default,
+	rounds nothing. Stored time never changes: the rule applies to what is shown.
+	"""
+	durationRoundingInterval: Int
+	"""
+	Which way a duration goes to that interval: `UP`, `DOWN` or `NEAREST`. Null, the default, rounds nothing. Carried
+	as its own value: the vocabulary is the platform's `DurationRoundingDirectionEnum`.
+	"""
+	durationRoundingDirection: String
 	"Whether a document's tax and its discount are stated as separate lines."
 	separateInvoiceItemTaxAndDiscount: Boolean
 	"The organization's public website."

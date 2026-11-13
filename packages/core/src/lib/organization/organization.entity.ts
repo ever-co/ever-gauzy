@@ -30,6 +30,7 @@ import {
 	ID,
 	BonusTypeEnum,
 	CurrenciesEnum,
+	DurationRoundingDirectionEnum,
 	IUser
 } from '@gauzy/contracts';
 import {
@@ -389,6 +390,17 @@ export class Organization extends TenantBaseEntity implements IOrganization {
 
 	@MultiORMColumn({ default: 12 })
 	timeFormat?: 12 | 24;
+
+	/**
+	 * The interval, in minutes, reports and exports round each duration to: one of `DURATION_ROUNDING_INTERVALS`.
+	 * Null, the default, rounds nothing. Stored time never changes: the rule applies to what is shown.
+	 */
+	@MultiORMColumn({ nullable: true })
+	durationRoundingInterval?: number | null;
+
+	/** Which way a duration goes to that interval: up, down or to the nearest. Null, the default, rounds nothing. */
+	@MultiORMColumn({ nullable: true })
+	durationRoundingDirection?: DurationRoundingDirectionEnum | null;
 
 	@MultiORMColumn({ nullable: true })
 	separateInvoiceItemTaxAndDiscount?: boolean;
