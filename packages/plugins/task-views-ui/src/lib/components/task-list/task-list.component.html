@@ -166,7 +166,7 @@
 					@if (show('dueDate')) {
 						<span class="cell due" role="gridcell" [class.overdue]="isOverdue(row)">
 							@if (row.dueDate) {
-								{{ row.dueDate | date: 'mediumDate' }}
+								{{ dueDateShown(row.dueDate) | date: 'mediumDate' }}
 							}
 						</span>
 					}

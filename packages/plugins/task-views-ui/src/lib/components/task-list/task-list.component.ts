@@ -13,6 +13,7 @@ import {
 import { NbIconModule, NbTooltipModule } from '@nebular/theme';
 import { TranslatePipe } from '@ngx-translate/core';
 import { ID, ITask } from '@gauzy/contracts';
+import { dueDateShown, dueDeadline } from '@gauzy/ui-core/common';
 import { isSelected, pageSelectionState, TaskSelection, EMPTY_SELECTION } from '../../models/selection';
 import { taskReferenceOf } from '../../models/task-reference';
 import { humanize, personName } from '../../services/task-views-options.service';
@@ -37,11 +38,10 @@ export interface RowDrop {
 	to: number;
 }
 
-/** Whether a task's due date has passed (and it is not done). */
+/** Whether a task's due date has passed (and it is not done). A date-only due date passes once its day has ended. */
 export function isOverdue(task: Pick<ITask, 'dueDate' | 'status'>, now = Date.now()): boolean {
-	if (!task.dueDate) return false;
-	const due = new Date(task.dueDate).getTime();
-	return Number.isFinite(due) && due < now && !['done', 'completed', 'cancelled'].includes(String(task.status ?? ''));
+	const due = dueDeadline(task.dueDate);
+	return due !== null && due < now && !['done', 'completed', 'cancelled'].includes(String(task.status ?? ''));
 }
 
 /** Two letters for a person without a picture. */
@@ -85,6 +85,7 @@ export class TaskListComponent {
 	protected readonly personName = personName;
 	protected readonly initialsOf = initialsOf;
 	protected readonly isOverdue = isOverdue;
+	protected readonly dueDateShown = dueDateShown;
 
 	/** Every row once, in the order shown: what the page checkbox and the drop indexes read. */
 	protected readonly order = computed(() => {

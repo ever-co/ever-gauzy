@@ -12,6 +12,7 @@ import {
 	TaskSizeEnum,
 	TaskStatusEnum
 } from '@gauzy/contracts';
+import { dateOnlyOf } from '@gauzy/ui-core/common';
 
 /** What the bulk toolbar changes. */
 export type BulkAction = 'status' | 'priority' | 'size' | 'assignees' | 'labels' | 'project' | 'dueDate' | 'archive';
@@ -89,11 +90,14 @@ export function sizeChanges(size: Pick<ITaskSize, 'id' | 'value' | 'name'>): ITa
 	return sanitizeChanges({ taskSizeId: size.id as ID, size: (size.value ?? size.name) as TaskSizeEnum });
 }
 
-/** The changes that set (or clear, with null) a due date, from the date picker's day: the end of that local day. */
+/**
+ * The changes that set (or clear, with null) a due date, from the date picker's day: that calendar day in the
+ * platform's date-only form (midnight UTC of it), so a reader in any zone sees the day that was picked. The end of
+ * the picker's local day was a moment, which a reader east of the picker read as the next day.
+ */
 export function dueDateChanges(day: Date | null): ITaskBulkChanges {
 	if (!day) return { dueDate: null };
-	const end = new Date(day.getFullYear(), day.getMonth(), day.getDate(), 23, 59, 59, 0);
-	return { dueDate: end };
+	return { dueDate: dateOnlyOf(day.getFullYear(), day.getMonth(), day.getDate()) };
 }
 
 /**
