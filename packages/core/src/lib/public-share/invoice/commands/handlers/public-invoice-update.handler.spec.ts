@@ -118,6 +118,16 @@ describe('PublicInvoiceUpdateHandler', () => {
 			expect(eventBus.publish).toHaveBeenCalledTimes(1);
 		});
 
+		it('tells it of a document stored with no estimate flag, which the conversion turns into an invoice too', async () => {
+			const { handler, eventBus } = setup({ ...sentEstimate, isEstimate: null });
+
+			await handler.execute(acceptAndConvert());
+
+			expect(eventBus.publish).toHaveBeenCalledWith(
+				expect.objectContaining({ answer: expect.objectContaining({ isAccepted: true, isConverted: true }) })
+			);
+		});
+
 		it('tells nobody of a conversion that changes no row: the document is an invoice already', async () => {
 			const { handler, eventBus } = setup(sentEstimate, { affected: [0] });
 
@@ -176,6 +186,14 @@ describe('PublicInvoiceUpdateHandler', () => {
 		const same = setup({ ...sentEstimate, status: EstimateStatusTypesEnum.ACCEPTED }, { affected: [undefined] });
 		await same.handler.execute(answer(EstimateStatusTypesEnum.ACCEPTED));
 		expect(same.eventBus.publish).not.toHaveBeenCalled();
+	});
+
+	it('tells the team of an answer to a document stored with no estimate flag, which its link answers as an estimate', async () => {
+		const { handler, eventBus } = setup({ ...sentEstimate, isEstimate: null });
+
+		await handler.execute(answer(EstimateStatusTypesEnum.ACCEPTED));
+
+		expect(eventBus.publish).toHaveBeenCalledTimes(1);
 	});
 
 	it('tells nobody of a status that is no answer, or of a document that is no estimate', async () => {

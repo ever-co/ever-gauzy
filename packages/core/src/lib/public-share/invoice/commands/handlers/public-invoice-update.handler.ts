@@ -84,7 +84,9 @@ export class PublicInvoiceUpdateHandler implements ICommandHandler<PublicInvoice
 	/**
 	 * Publishes the answer when it changed an estimate to accepted or declined, or converted it: the update changed a
 	 * row. Where the database does not report that count, what was read before the update decides: the status, or, for
-	 * a conversion, that the document was still an estimate. Never fails the saved answer.
+	 * a conversion, that the document was still an estimate. A document stored with no estimate flag was answered as an
+	 * estimate too (its link is an estimate's, and a conversion writes it), unlike one flagged as an invoice. Never fails
+	 * the saved answer.
 	 */
 	private async publishAnswer(
 		params: IInvoice,
@@ -95,7 +97,8 @@ export class PublicInvoiceUpdateHandler implements ICommandHandler<PublicInvoice
 		const given = answerGivenBy(entity);
 		const wasChanged = given?.isConverted || before?.status !== entity?.status;
 		const hasChanged = changedRows === undefined ? wasChanged : changedRows > 0;
-		const isNewAnswer = Boolean(before?.isEstimate) && hasChanged;
+		const wasEstimate = Boolean(before) && before.isEstimate !== false;
+		const isNewAnswer = wasEstimate && hasChanged;
 		if (!given || !isNewAnswer) {
 			return;
 		}
