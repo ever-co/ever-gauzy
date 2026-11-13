@@ -229,7 +229,8 @@ export class EmailService {
 
 	/**
 	 * Tells the team member who created an estimate that the client accepted or declined it from the estimate email
-	 * (`estimate-answered`), with a link to the estimate.
+	 * (`estimate-answered`), with a link to the estimate, or to the draft invoice an acceptance turned it into where the
+	 * organization converts accepted estimates.
 	 *
 	 * The answer comes over a public link, so nothing is read from the request context: the tenant is the
 	 * organization's. A failure is logged and filed in the email history, never raised: the client's answer is saved
@@ -245,6 +246,8 @@ export class EmailService {
 		invoiceId: ID;
 		invoiceNumber: number;
 		isAccepted: boolean;
+		/** Whether the acceptance turned the estimate into a draft invoice (the organization converts accepted estimates). */
+		isConverted?: boolean;
 		contactName?: string | null;
 		contactEmail?: string | null;
 		amount?: string | null;
@@ -269,11 +272,13 @@ export class EmailService {
 				organizationName,
 				invoiceNumber,
 				isAccepted,
+				isConverted: Boolean(input.isConverted),
 				contactName: input.contactName ?? '',
 				contactEmail: input.contactEmail ?? '',
 				amount: input.amount ?? '',
 				currency: input.currency ?? '',
-				estimateUrl: `${host}#/pages/accounting/invoices/estimates/view/${invoiceId}`
+				estimateUrl: `${host}#/pages/accounting/invoices/estimates/view/${invoiceId}`,
+				invoiceUrl: `${host}#/pages/accounting/invoices/view/${invoiceId}`
 			}
 		};
 

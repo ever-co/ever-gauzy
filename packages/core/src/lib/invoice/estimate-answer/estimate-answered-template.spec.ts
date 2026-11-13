@@ -87,12 +87,14 @@ describe('the estimate-answered email template', () => {
 		expect(read).toEqual(
 			expect.arrayContaining([
 				'isAccepted',
+				'isConverted',
 				'invoiceNumber',
 				'contactName',
 				'contactEmail',
 				'amount',
 				'currency',
 				'estimateUrl',
+				'invoiceUrl',
 				'organizationName'
 			])
 		);

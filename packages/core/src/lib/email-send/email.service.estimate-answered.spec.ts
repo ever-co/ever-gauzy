@@ -67,13 +67,27 @@ describe('EmailService.sendEstimateAnswered', () => {
 				organizationName: 'Ever Org',
 				invoiceNumber: 12,
 				isAccepted: true,
+				isConverted: false,
 				contactName: 'Acme Corp',
 				contactEmail: 'billing@acme.test',
 				amount: '1,250.00',
 				currency: 'USD',
-				estimateUrl: `${env.clientBaseUrl}#/pages/accounting/invoices/estimates/view/estimate-1`
+				estimateUrl: `${env.clientBaseUrl}#/pages/accounting/invoices/estimates/view/estimate-1`,
+				invoiceUrl: `${env.clientBaseUrl}#/pages/accounting/invoices/view/estimate-1`
 			}
 		});
+	});
+
+	it('tells an acceptance that turned the estimate into a draft invoice, which the template links instead', async () => {
+		await service.sendEstimateAnswered({ ...answer, isConverted: true });
+
+		expect(send.mock.calls[0][0].locals).toEqual(
+			expect.objectContaining({
+				isAccepted: true,
+				isConverted: true,
+				invoiceUrl: `${env.clientBaseUrl}#/pages/accounting/invoices/view/estimate-1`
+			})
+		);
 	});
 
 	it('files the email in the history of the organization and its tenant, for the creator', async () => {

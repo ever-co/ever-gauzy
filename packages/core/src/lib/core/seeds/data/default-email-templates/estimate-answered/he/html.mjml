@@ -88,14 +88,18 @@
 				</mj-text>
 				<mj-raw>{{#if isAccepted}}</mj-raw>
 				<mj-text>
-					עכשיו אפשר להפוך אותה לחשבונית.
+					{{#if isConverted}}היא הפכה לטיוטת חשבונית, מוכנה לבדיקה ולשליחה.{{else}}עכשיו אפשר להפוך אותה לחשבונית.{{/if}}
 				</mj-text>
 				<mj-raw>{{else}}</mj-raw>
 				<mj-text>
 					אפשר ליצור קשר עם הלקוח או לשלוח הצעת מחיר מעודכנת.
 				</mj-text>
 				<mj-raw>{{/if}}</mj-raw>
+				<mj-raw>{{#if isConverted}}</mj-raw>
+				<mj-button href="{{invoiceUrl}}" target="_blank">פתיחת החשבונית</mj-button>
+				<mj-raw>{{else}}</mj-raw>
 				<mj-button href="{{estimateUrl}}" target="_blank">פתיחת הצעת המחיר</mj-button>
+				<mj-raw>{{/if}}</mj-raw>
 			</mj-column>
 		</mj-section>
 		<mj-section padding="20px 16px 40px">

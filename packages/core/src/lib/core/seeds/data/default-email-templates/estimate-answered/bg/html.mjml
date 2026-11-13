@@ -86,14 +86,18 @@
 				</mj-text>
 				<mj-raw>{{#if isAccepted}}</mj-raw>
 				<mj-text>
-					Вече можете да я превърнете във фактура.
+					{{#if isConverted}}Вече е чернова на фактура, готова за преглед и изпращане.{{else}}Вече можете да я превърнете във фактура.{{/if}}
 				</mj-text>
 				<mj-raw>{{else}}</mj-raw>
 				<mj-text>
 					Можете да се свържете с клиента или да изпратите преработена оферта.
 				</mj-text>
 				<mj-raw>{{/if}}</mj-raw>
+				<mj-raw>{{#if isConverted}}</mj-raw>
+				<mj-button href="{{invoiceUrl}}" target="_blank">Отваряне на фактурата</mj-button>
+				<mj-raw>{{else}}</mj-raw>
 				<mj-button href="{{estimateUrl}}" target="_blank">Отваряне на офертата</mj-button>
+				<mj-raw>{{/if}}</mj-raw>
 			</mj-column>
 		</mj-section>
 		<mj-section padding="20px 16px 40px">

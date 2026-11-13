@@ -86,14 +86,18 @@
 				</mj-text>
 				<mj-raw>{{#if isAccepted}}</mj-raw>
 				<mj-text>
-					Теперь её можно превратить в счёт.
+					{{#if isConverted}}Теперь это черновик счёта: проверьте его и отправьте.{{else}}Теперь её можно превратить в счёт.{{/if}}
 				</mj-text>
 				<mj-raw>{{else}}</mj-raw>
 				<mj-text>
 					Вы можете связаться с клиентом или отправить исправленную смету.
 				</mj-text>
 				<mj-raw>{{/if}}</mj-raw>
+				<mj-raw>{{#if isConverted}}</mj-raw>
+				<mj-button href="{{invoiceUrl}}" target="_blank">Открыть счёт</mj-button>
+				<mj-raw>{{else}}</mj-raw>
 				<mj-button href="{{estimateUrl}}" target="_blank">Открыть смету</mj-button>
+				<mj-raw>{{/if}}</mj-raw>
 			</mj-column>
 		</mj-section>
 		<mj-section padding="20px 16px 40px">

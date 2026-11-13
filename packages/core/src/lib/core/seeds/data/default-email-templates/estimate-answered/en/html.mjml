@@ -86,14 +86,18 @@
 				</mj-text>
 				<mj-raw>{{#if isAccepted}}</mj-raw>
 				<mj-text>
-					You can now turn it into an invoice.
+					{{#if isConverted}}It is now a draft invoice, ready for you to review and send.{{else}}You can now turn it into an invoice.{{/if}}
 				</mj-text>
 				<mj-raw>{{else}}</mj-raw>
 				<mj-text>
 					You can follow up with the client, or send a revised estimate.
 				</mj-text>
 				<mj-raw>{{/if}}</mj-raw>
+				<mj-raw>{{#if isConverted}}</mj-raw>
+				<mj-button href="{{invoiceUrl}}" target="_blank">Open the invoice</mj-button>
+				<mj-raw>{{else}}</mj-raw>
 				<mj-button href="{{estimateUrl}}" target="_blank">Open the estimate</mj-button>
+				<mj-raw>{{/if}}</mj-raw>
 			</mj-column>
 		</mj-section>
 		<mj-section padding="20px 16px 40px">
