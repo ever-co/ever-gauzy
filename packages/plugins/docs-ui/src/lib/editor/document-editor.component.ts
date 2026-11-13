@@ -29,7 +29,7 @@ import { DocsLiveService } from '../services/docs-live.service';
 import { DocumentsService } from '../services/documents.service';
 import type { ILiveBinding, ILiveState } from './live/document-live.binding';
 import { stripDataUrlImages } from './extensions/base64-guard.plugin';
-import type { ICommentRange } from './comments/comment-anchor.model';
+import { type ICommentRange, rangePlaceKindOf } from './comments/comment-anchor.model';
 import {
 	collectBlockIds,
 	commentRangeBounds,
@@ -378,19 +378,20 @@ export class DocumentEditorComponent implements OnChanges, OnDestroy {
 	}
 
 	/**
-	 * Lights a thread's range and scrolls it into view.
+	 * Lights a thread's range and scrolls it into view, opening the collapsed toggles it is in.
 	 *
 	 * @param threadId The thread (its first comment).
-	 * @returns False when the thread's text is not lit (yet): the editor scrolls to it once its range is handed in, and
-	 *   the caller shows its block meanwhile when it knows one.
+	 * @returns False when the thread's text is not lit (yet): the editor scrolls to it once it is (its range handed in,
+	 *   the editor built, a live page synced), and the caller shows its block meanwhile when it knows one.
 	 */
 	focusCommentRange(threadId: string): boolean {
-		const editor = this.editor;
-		if (!editor || editor.isDestroyed || !threadId) return false;
+		if (!threadId) return false;
 		this.setActiveCommentThread(threadId);
-		const bounds = commentRangeBounds(editor.state, threadId);
+		const editor = this.editor && !this.editor.isDestroyed ? this.editor : null;
+		const bounds = editor ? commentRangeBounds(editor.state, threadId) : null;
 		this.pendingRangeFocus = bounds ? null : threadId;
-		if (!bounds) return false;
+		if (!editor || !bounds) return false;
+		this.revealCollapsedDetails(editor, bounds.from);
 		const escaped = typeof CSS !== 'undefined' && CSS.escape ? CSS.escape(threadId) : threadId;
 		let element = this.editorHostRef?.nativeElement?.querySelector<HTMLElement>(
 			`.gz-comment-range[data-thread-id="${escaped}"]`
@@ -406,6 +407,20 @@ export class DocumentEditorComponent implements OnChanges, OnDestroy {
 		if (typeof element?.scrollIntoView === 'function')
 			element.scrollIntoView({ behavior: 'smooth', block: 'center' });
 		return true;
+	}
+
+	/**
+	 * Opens the collapsed toggles (`details`) around a position, outermost first, as a click on each toggle would: a
+	 * range inside one is in the page but not in sight.
+	 */
+	private revealCollapsedDetails(editor: Editor, pos: number): void {
+		const $pos = editor.state.doc.resolve(pos);
+		for (let depth = 1; depth <= $pos.depth; depth += 1) {
+			if ($pos.node(depth).type.name !== 'details') continue;
+			const dom = editor.view.nodeDOM($pos.before(depth));
+			if (!(dom instanceof HTMLElement) || dom.classList.contains('is-open')) continue;
+			dom.querySelector<HTMLButtonElement>(':scope > button')?.click();
+		}
 	}
 
 	/** Every `blockId` in the document — lets the rail flag threads whose block was deleted. */
@@ -627,7 +642,10 @@ export class DocumentEditorComponent implements OnChanges, OnDestroy {
 				this.zone.run(() => this.commentRequested.emit({ blockId, threadId: threadId ?? null })),
 			onCommentSelection: () => this.zone.run(() => this.commentOnSelection()),
 			commentLiveResolver: () => this.liveBinding?.anchorResolver ?? null,
-			onCommentRangesResolved: (places) => this.publishRangePlaces(places),
+			onCommentRangesResolved: (places) => {
+				this.publishRangePlaces(places);
+				this.retryRangeFocus(places);
+			},
 			collab: !!binding
 		});
 
@@ -737,6 +755,18 @@ export class DocumentEditorComponent implements OnChanges, OnDestroy {
 		if (key === this.lastRangePlaces) return;
 		this.lastRangePlaces = key;
 		void Promise.resolve().then(() => this.zone.run(() => this.commentRangesResolved.emit(places)));
+	}
+
+	/**
+	 * A thread asked for before its text was lit (no editor yet, a live page before its sync) is scrolled to once the
+	 * ranges are found with it on the page. Later than the editor's own update, which is still dispatching.
+	 */
+	private retryRangeFocus(places: ReadonlyMap<string, IDocumentCommentAnchorPosition>): void {
+		const pending = this.pendingRangeFocus;
+		if (!pending || rangePlaceKindOf(places.get(pending)) !== 'range') return;
+		void Promise.resolve().then(() => {
+			if (this.pendingRangeFocus === pending) this.zone.run(() => this.focusCommentRange(pending));
+		});
 	}
 
 	/** Keeps what the rail pushed in, for this page. */

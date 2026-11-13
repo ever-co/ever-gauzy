@@ -12,7 +12,7 @@ import { CommonModule } from '@angular/common';
 import { NO_ERRORS_SCHEMA, Pipe, type PipeTransform } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
-import { of, throwError } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
 import {
 	DocumentCommentAnchorMethodEnum,
 	DocumentCommentAnchorStatusEnum,
@@ -372,5 +372,72 @@ describe('BlockCommentThreadComponent: threads made on a range of text', () => {
 		fixture.detectChanges();
 		await fixture.whenStable();
 		expect(comments.anchors).toHaveBeenCalledTimes(2);
+	});
+
+	const OTHER_PAGE = 'cccccccc-2222-4222-8222-222222222222';
+
+	const switchPage = async (documentId: string) => {
+		fixture.componentRef.setInput('documentId', documentId);
+		fixture.detectChanges();
+		await fixture.whenStable();
+		fixture.detectChanges();
+	};
+
+	it('stores the range on the page the thread was posted on, and leaves the page opened meanwhile alone', async () => {
+		await render({ blockId: 'b1', range: SELECTION });
+		const answer = new Subject<IComment>();
+		comments.create.mockImplementationOnce((input: Record<string, unknown>) => {
+			comments.created.push(input);
+			return answer.asObservable();
+		});
+		let done = 0;
+		component.rangeDone.subscribe(() => (done += 1));
+
+		component.draft = 'On the first page';
+		const posting = component.post();
+		await switchPage(OTHER_PAGE);
+		component.draft = 'A draft on the second page';
+		answer.next(comment('new-1', '[[block:b1]]\nOn the first page'));
+		answer.complete();
+		await posting;
+
+		expect(comments.created[0]['entityId']).toBe(DOCUMENT_ID);
+		expect(comments.setAnchor).toHaveBeenCalledWith(DOCUMENT_ID, 'new-1', SELECTION);
+		expect(component.draft).toBe('A draft on the second page');
+		expect(done).toBe(0);
+		const lastRanges = ranges[ranges.length - 1] as Array<{ threadId: string }>;
+		expect(lastRanges.map((range) => range.threadId)).not.toContain('new-1');
+	});
+
+	it("keeps a late 404 of the page left behind from switching off the next page's ranges", async () => {
+		await render();
+		const late = new Subject<never>();
+		comments.anchors.mockImplementationOnce(() => late.asObservable());
+		// This reload is still waiting on its ranges when another page opens.
+		const reloading = component.reload();
+		await switchPage(OTHER_PAGE);
+		late.error({ status: 404, error: { code: 'DOCS_COLLAB_DISABLED' } });
+		await reloading;
+
+		fixture.componentRef.setInput('blockId', 'b1');
+		fixture.componentRef.setInput('range', SELECTION);
+		fixture.detectChanges();
+		expect(element().querySelector('.gz-block-composer-range')).not.toBeNull();
+	});
+
+	it('brings the thread asked for into sight once the page it came in with is loaded', async () => {
+		const scrolled = jest.fn();
+		Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', { value: scrolled, configurable: true });
+		try {
+			await render({ activeThreadId: 'c1' });
+			fixture.detectChanges();
+			await fixture.whenStable();
+			expect(scrolled).toHaveBeenCalled();
+			expect((scrolled.mock.contexts[scrolled.mock.contexts.length - 1] as HTMLElement).dataset['threadId']).toBe(
+				'c1'
+			);
+		} finally {
+			delete (HTMLElement.prototype as { scrollIntoView?: unknown }).scrollIntoView;
+		}
 	});
 });

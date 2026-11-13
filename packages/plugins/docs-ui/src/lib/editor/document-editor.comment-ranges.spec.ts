@@ -12,12 +12,14 @@ jest.mock('../services/documents.service', () => ({ DocumentsService: class Docu
 jest.mock('./suggestion/suggestion-host.service', () => ({ SuggestionHostService: class SuggestionHostService {} }));
 /**
  * The full extension set (node views, uploads, menus) buys nothing here: paragraphs with a `blockId`, and the comment
- * layer wired to the editor's callbacks as `createDocumentEditorExtensions` wires it.
+ * layer wired to the editor's callbacks as `createDocumentEditorExtensions` wires it (the real factory's wiring has its
+ * own contract test, `document-extensions.comments.spec.ts`), and collapsible toggles.
  */
 jest.mock('./extensions/document-extensions', () => {
 	const { default: StarterKit } = jest.requireActual('@tiptap/starter-kit');
 	const { Extension } = jest.requireActual('@tiptap/core');
 	const { BlockComments } = jest.requireActual('./extensions/block-comments.plugin');
+	const { Details, DetailsContent, DetailsSummary } = jest.requireActual('@tiptap/extension-details');
 	const BlockIds = Extension.create({
 		name: 'testBlockIds',
 		addGlobalAttributes: () => [{ types: ['paragraph'], attributes: { blockId: { default: null } } }]
@@ -28,6 +30,9 @@ jest.mock('./extensions/document-extensions', () => {
 		) => [
 			deps.collab ? StarterKit.configure({ undoRedo: false }) : StarterKit,
 			BlockIds,
+			Details.configure({ persist: true }),
+			DetailsSummary,
+			DetailsContent,
 			BlockComments.configure({
 				onOpenThread: (blockId: string, threadId?: string) => deps['onOpenCommentThread']?.(blockId, threadId),
 				markerLabel: 'Open the comments',
@@ -126,7 +131,7 @@ describe('DocumentEditorComponent: comment ranges', () => {
 	let requests: IDocsCommentRequest[];
 	let places: Array<ReadonlyMap<string, IDocumentCommentAnchorPosition>>;
 
-	async function open(live: boolean, document: IDocument): Promise<void> {
+	async function open(live: boolean, document: IDocument, beforeBuild?: () => void): Promise<void> {
 		frames = new Subject<IDocumentLiveFrame>();
 		TestBed.configureTestingModule({
 			imports: [DocumentEditorComponent],
@@ -173,6 +178,7 @@ describe('DocumentEditorComponent: comment ranges', () => {
 		component.commentRequested.subscribe((request) => requests.push(request));
 		component.commentRangesResolved.subscribe((resolved) => places.push(resolved));
 		component.document = document;
+		beforeBuild?.();
 		fixture.detectChanges();
 		await until(() => !!component.editor, 'the editor');
 	}
@@ -332,4 +338,78 @@ describe('DocumentEditorComponent: comment ranges', () => {
 		);
 		expect(component.focusCommentRange('missing')).toBe(false);
 	});
+
+	/** Records `scrollIntoView` calls (jsdom has none) for the length of `run`. */
+	async function withScroll(run: (scrolled: jest.Mock) => Promise<void>): Promise<void> {
+		const scrolled = jest.fn();
+		Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', { value: scrolled, configurable: true });
+		try {
+			await run(scrolled);
+		} finally {
+			delete (HTMLElement.prototype as { scrollIntoView?: unknown }).scrollIntoView;
+		}
+	}
+
+	const LAZY_DOG = { threadId: 't1', blockId: 'b1', anchor: { blockId: 'b1', start: 35, end: 43, quote: 'lazy dog' } };
+
+	it('keeps a thread asked for before the editor was built, and scrolls to it once its text is drawn', () =>
+		withScroll(async (scrolled) => {
+			await open(false, page(FOX), () => {
+				component.setCommentRanges([LAZY_DOG]);
+				expect(component.focusCommentRange('t1')).toBe(false);
+			});
+			await until(() => scrolled.mock.calls.length > 0, 'the scroll');
+			expect(
+				(fixture.nativeElement as HTMLElement).querySelector('.gz-comment-range--active')?.textContent
+			).toBe('lazy dog');
+		}));
+
+	it('scrolls to a thread asked for before the live page synced, once its text arrives', () =>
+		withScroll(async (scrolled) => {
+			const server = serverPage(FOX);
+			await open(true, page(FOX));
+			await until(() => !!(component as unknown as { liveBinding: unknown }).liveBinding, 'the live binding');
+			component.setCommentRanges([LAZY_DOG]);
+			expect(component.focusCommentRange('t1')).toBe(false);
+
+			frames.next(server.sync());
+			await until(() => scrolled.mock.calls.length > 0, 'the scroll after the sync');
+			expect(highlights()).toEqual(['lazy dog']);
+		}));
+
+	it('opens the collapsed toggle a range is in before scrolling to it', () =>
+		withScroll(async (scrolled) => {
+			const inToggle = {
+				...page(FOX),
+				contentJson: {
+					type: 'doc',
+					content: [
+						{
+							type: 'details',
+							attrs: { open: false },
+							content: [
+								{ type: 'detailsSummary', content: [{ type: 'text', text: 'More' }] },
+								{
+									type: 'detailsContent',
+									content: [
+										{ type: 'paragraph', attrs: { blockId: 'b2' }, content: [{ type: 'text', text: 'Hidden text' }] }
+									]
+								}
+							]
+						}
+					]
+				}
+			} as unknown as IDocument;
+			await open(false, inToggle);
+			await until(() => component.editor?.getText().includes('Hidden text') === true, 'the page');
+			const toggle = () => (fixture.nativeElement as HTMLElement).querySelector('[data-type="details"]');
+			expect(toggle()?.classList.contains('is-open')).toBe(false);
+			component.setCommentRanges([
+				{ threadId: 't2', blockId: 'b2', anchor: { blockId: 'b2', start: 0, end: 6, quote: 'Hidden' } }
+			]);
+
+			expect(component.focusCommentRange('t2')).toBe(true);
+			expect(toggle()?.classList.contains('is-open')).toBe(true);
+			expect(scrolled).toHaveBeenCalledTimes(1);
+		}));
 });

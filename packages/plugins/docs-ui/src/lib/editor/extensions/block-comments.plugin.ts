@@ -226,7 +226,8 @@ function buildDecorations(
 ): { decorations: DecorationSet; places: ReadonlyMap<string, IDocumentCommentAnchorPosition> } {
 	if (!open.length && !ranges.length) return { decorations: DecorationSet.empty, places: NO_PLACES };
 	const decorations: Decoration[] = [];
-	const tinted = new Set(open.map(String));
+	const openBlocks = new Set(open.map(String));
+	const tinted = new Set(openBlocks);
 	/** The blocks lit by a range: the thread their marker opens (the newest one there). */
 	const rangeMarkers = new Map<string, IRangeSpec>();
 	const places = new Map<string, IDocumentCommentAnchorPosition>();
@@ -269,7 +270,7 @@ function buildDecorations(
 	doc.descendants((node: ProseMirrorNode, pos: number) => {
 		const blockId = node.attrs?.[BLOCK_ID_ATTRIBUTE];
 		if (typeof blockId !== 'string' || !blockId) return true;
-		const isOpen = open.includes(blockId);
+		const isOpen = openBlocks.has(blockId);
 		const range = rangeMarkers.get(blockId);
 		if (!tinted.has(blockId) && !range) return true;
 		if (tinted.has(blockId)) {

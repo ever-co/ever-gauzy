@@ -64,10 +64,17 @@ function pointOf(type: LiveNode, index: number): ILiveAnchorPoint | null {
 		}
 		const parent = parentOf(node);
 		if (!parent || parent instanceof Y.XmlText) return null;
+		// Only up from a live child: a text merged away (a hard break removed between two runs) is still in the store,
+		// but no longer among its parent's children, and an offset counted past it would be wrong.
+		let isChild = false;
 		for (const sibling of parent.toArray()) {
-			if (sibling === node) break;
+			if (sibling === node) {
+				isChild = true;
+				break;
+			}
 			offset += liveTextLength(sibling);
 		}
+		if (!isChild) return null;
 		node = parent;
 	}
 }
@@ -97,7 +104,9 @@ function absolutePositionOf(doc: Y.Doc, relative: string): Y.AbsolutePosition | 
 	const bytes = fromBase64(relative);
 	if (!bytes?.length) return null;
 	try {
-		return Y.createAbsolutePositionFromRelativePosition(Y.decodeRelativePosition(bytes), doc);
+		// Not following deletions this client undid: every copy of the page (the platform's, the other editors') reads a
+		// shared position alike.
+		return Y.createAbsolutePositionFromRelativePosition(Y.decodeRelativePosition(bytes), doc, false);
 	} catch {
 		return null;
 	}

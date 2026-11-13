@@ -227,6 +227,8 @@ export class BlockCommentThreadComponent implements OnChanges {
 			this.all = page?.items ?? [];
 			this.anchors = anchors;
 			this.regroup();
+			// The thread asked for may have come in with the page, or while it loaded: it exists only now.
+			if (this.activeThreadId) this.scrollToThread(this.activeThreadId);
 		} catch {
 			this.loadError = true;
 			this.all = [];
@@ -322,25 +324,29 @@ export class BlockCommentThreadComponent implements OnChanges {
 		if (!this.canSubmit || !this.canComment) return;
 		const text = this.draft.trim();
 		const range = this.composerRange;
+		// The page the thread is posted on: another one may be open by the time the requests answer.
+		const documentId = this.documentId;
 		this.posting = true;
 		this.changeDetectorRef.markForCheck();
 		try {
 			const created = await firstValueFrom(
 				this.commentsService.create({
 					entity: BaseEntityEnum.Document,
-					entityId: this.documentId,
+					entityId: documentId,
 					entityName: this.documentName,
 					// The anchor is the first line of the body — see `withBlockAnchor`.
 					comment: withBlockAnchor(this.blockId, text),
 					mentionEmployeeIds: collectMentionEmployeeIds(text, this.mentioned)
 				})
 			);
-			this.all = [...this.all, created];
 			// The block's line stays: a client that knows no ranges keeps the thread on its block.
-			if (range && created?.id) await this.placeRange(created.id as ID, range);
+			if (range && created?.id) await this.placeRange(documentId, created.id as ID, range);
+			this.toastrService.success(this.translate.instant('DOCS.COMMENTS.TOAST_POSTED'));
+			// Another page opened meanwhile: its draft and its selection are its own.
+			if (!this.isCurrent(documentId)) return;
+			this.all = [...this.all, created];
 			this.resetComposer();
 			this.regroup();
-			this.toastrService.success(this.translate.instant('DOCS.COMMENTS.TOAST_POSTED'));
 		} catch (error) {
 			this.toastrService.danger(error);
 		} finally {
@@ -507,17 +513,21 @@ export class BlockCommentThreadComponent implements OnChanges {
 			const list = await firstValueFrom(this.commentsService.anchors(documentId));
 			return anchorsByComment(list?.items);
 		} catch (error) {
-			if (isRangesUnavailable(error)) this.rangesOff = true;
+			if (isRangesUnavailable(error) && this.isCurrent(documentId)) this.rangesOff = true;
 			return new Map();
 		}
+	}
+
+	/** Whether `documentId` is still the page the rail shows. */
+	private isCurrent(documentId: ID): boolean {
+		return String(this.documentId) === String(documentId);
 	}
 
 	/**
 	 * Stores the range of a thread just posted. Never in the way of the comment: a platform without ranges (404) is not
 	 * asked again, and any other refusal (a page shared for viewing only) leaves the thread on its block.
 	 */
-	private async placeRange(commentId: ID, range: IDocumentCommentAnchorInput): Promise<void> {
-		const documentId = this.documentId;
+	private async placeRange(documentId: ID, commentId: ID, range: IDocumentCommentAnchorInput): Promise<void> {
 		try {
 			const stored = await firstValueFrom(this.commentsService.setAnchor(documentId, commentId, range));
 			const anchor: IDocumentCommentAnchorResolved = stored?.position
@@ -535,11 +545,9 @@ export class BlockCommentThreadComponent implements OnChanges {
 							text: range.quote
 						}
 					};
-			if (String(this.documentId) === String(documentId)) {
-				this.anchors = new Map(this.anchors).set(String(commentId), anchor);
-			}
+			if (this.isCurrent(documentId)) this.anchors = new Map(this.anchors).set(String(commentId), anchor);
 		} catch (error) {
-			if (isRangesUnavailable(error)) this.rangesOff = true;
+			if (isRangesUnavailable(error) && this.isCurrent(documentId)) this.rangesOff = true;
 		}
 	}
 

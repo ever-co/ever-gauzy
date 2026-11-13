@@ -162,6 +162,28 @@ describe('comment anchors in the shared document', () => {
 		});
 	});
 
+	it('reads nothing from a text merged away (a hard break removed between two runs), not the end of its block', () => {
+		const page = new Y.Doc();
+		const block = new Y.XmlElement('paragraph');
+		block.setAttribute('blockId', 'b1');
+		const first = new Y.XmlText('ab');
+		const second = new Y.XmlText('cd tail');
+		block.insert(0, [first, new Y.XmlElement('hardBreak'), second]);
+		page.getXmlFragment(LIVE_FIELD).insert(0, [block]);
+		const inSecond = Buffer.from(Y.encodeRelativePosition(Y.createRelativePositionFromTypeIndex(second, 1))).toString(
+			'base64'
+		);
+		expect(liveAnchorResolverOf(page)(inSecond)).toEqual({ blockId: 'b1', offset: 3 });
+
+		// The editor's sync merges the two runs once the break is gone: the second text leaves the block.
+		page.transact(() => {
+			block.delete(1, 2);
+			first.insert(2, 'cd tail');
+		});
+		expect(liveAnchorResolverOf(page)(inSecond)).toBeNull();
+		page.destroy();
+	});
+
 	it('reads nothing from a position the document does not hold, or from text that is no relative position', () => {
 		const stranger = new Y.Doc();
 		const element = new Y.XmlElement('paragraph');
