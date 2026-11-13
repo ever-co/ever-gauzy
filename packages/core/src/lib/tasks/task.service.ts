@@ -3094,14 +3094,20 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			}
 		}
 		// The previous values leave out a priority's or size's name that the record the task held gives back, so a client
-		// that cannot send that name (a team's own) can tell a full undo from a partial one. Those records are read once.
-		const held = await this.bulkChangeRecordsOf(
-			results.map((result) => ({ taskId: result.taskId, changes: result.previous ?? {} })),
-			records,
-			['taskPriorityId', 'taskSizeId']
-		);
-		for (const result of results) {
-			if (result.previous) result.previous = previousWithoutRecordNames(result.previous, held);
+		// that cannot send that name (a team's own) can tell a full undo from a partial one. Those records are read once,
+		// after the tasks changed: a read that fails keeps the previous values whole (a client then reports a name it
+		// leaves out as not put back) rather than fail an update that was applied.
+		try {
+			const held = await this.bulkChangeRecordsOf(
+				results.map((result) => ({ taskId: result.taskId, changes: result.previous ?? {} })),
+				records,
+				['taskPriorityId', 'taskSizeId']
+			);
+			for (const result of results) {
+				if (result.previous) result.previous = previousWithoutRecordNames(result.previous, held);
+			}
+		} catch (error) {
+			console.warn('[Task] Bulk update: the previous priority and size records could not be read:', (error as Error)?.message);
 		}
 		const applied = results.filter((result) => result.ok).length;
 		return { applied, refused: results.length - applied, results };

@@ -271,6 +271,32 @@ function exercise(dialect: Dialect) {
 	);
 
 	it(
+		'answers the applied tasks with their previous values whole when the records they held cannot be read',
+		async () => {
+			await bulkUpdate({ taskPriorityId: PRIORITY_OWN });
+			// The second read of priorities (the records the tasks held, after the changes) fails.
+			const find = dataSource.manager.find.bind(dataSource.manager);
+			let priorityReads = 0;
+			jest.spyOn(dataSource.manager, 'find').mockImplementation((async (entity: unknown, options: unknown) => {
+				if (entity === TaskPriority && ++priorityReads === 2) throw new Error('connection lost');
+				return find(entity as never, options as never);
+			}) as never);
+			jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+
+			const outcome = await bulkUpdate({ taskPriorityId: PRIORITY_SHARED });
+
+			expect(priorityReads).toBe(2);
+			expect(outcome).toMatchObject({ applied: 2, refused: 0 });
+			expect(outcome.results.map((result) => result.previous)).toEqual([
+				{ priority: 'p0', taskPriorityId: PRIORITY_OWN },
+				{ priority: 'p0', taskPriorityId: PRIORITY_OWN }
+			]);
+			expect(await taskRow(TASK_ONE)).toMatchObject({ priority: 'shared-priority', taskPriorityId: PRIORITY_SHARED });
+		},
+		TIMEOUT
+	);
+
+	it(
 		'keeps a platform value sent beside its record as it was sent',
 		async () => {
 			await bulkUpdate({ taskPriorityId: PRIORITY_DEFAULT, priority: TaskPriorityEnum.URGENT });
