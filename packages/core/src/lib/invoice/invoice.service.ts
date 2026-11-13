@@ -86,15 +86,20 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 	/**
 	 * Creates an invoice and writes, on each time log a line names in `timeLogIds`, the line that bills it, in the
 	 * transaction that saves the invoice and its lines (see `saveBillingTime`). An invoice whose lines bill no time is
-	 * created as `create()` creates it.
+	 * created as `create()` creates it. A create that names an invoice saved earlier updates it, so it keeps a final
+	 * status as an update does (see `assertNotReopeningFinal`).
 	 *
 	 * @param input The invoice and its lines, as the create route and the GraphQL mutation state them.
 	 * @returns The invoice created, with its lines.
-	 * @throws BadRequestException when a line names a time log it may not bill; nothing is saved.
+	 * @throws BadRequestException when a line names a time log it may not bill, or the create would take an invoice
+	 * saved earlier out of a final status; nothing is saved.
 	 */
 	async createWithBilledTime(
 		input: IInvoiceCreateInput & { invoiceItems?: IInvoiceItemCreateInput[] }
 	): Promise<IInvoice> {
+		if (input.id) {
+			await this.assertNotReopeningFinal(input.id, input.status);
+		}
 		if (!input.invoiceItems) {
 			return await this.create(input);
 		}

@@ -186,8 +186,7 @@ describe('Invoices record the time their lines bill, on TypeORM and on MikroORM'
 	});
 
 	/** An invoice as the web creates it: its id made by the client, each line carrying it. */
-	const invoiceWith = (lines: Row[]): Row => {
-		const id = randomUUID();
+	const invoiceWith = (lines: Row[], id: string = randomUUID()): Row => {
 		return {
 			id,
 			...scope,
@@ -620,6 +619,25 @@ describe('Invoices record the time their lines bill, on TypeORM and on MikroORM'
 
 			expect(await statusOf(invoiceId)).toBe('VOID');
 		});
+
+		it.each<[string, () => Promise<Row[]>]>([
+			['without time', async () => [lineNamingNoTime('reopened')]],
+			['billing time', async () => [lineBilling('reopened', [await timeLog()])]]
+		])(
+			'refuses to reopen a void invoice through a create that names it (%s), and keeps it void',
+			async (_label, linesToPost) => {
+				const { invoiceId } = await earlierInvoice('VOID');
+				const reopening = invoiceWith(await linesToPost(), invoiceId);
+
+				await expect(handlers(ormType).create(reopening)).rejects.toMatchObject({
+					status: 400,
+					message: loaded.INVOICE_VOID_IS_FINAL
+				});
+
+				expect(await statusOf(invoiceId)).toBe('VOID');
+				expect(await lineOf(invoiceId, 'reopened')).toBeUndefined();
+			}
+		);
 
 		it.each<[string, Row, string]>([
 			['a void invoice', { status: 'VOID' }, 'INVOICE_VOID_IS_FINAL'],
