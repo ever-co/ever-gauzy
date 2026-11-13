@@ -5,6 +5,7 @@ import {
 	CHAT_PRESENCE_IDLE_AFTER_MS,
 	chatPresenceOf,
 	ChatPresenceEntry,
+	mostPresent,
 	presenceOfRecord,
 	presenceOfStatus,
 	tabStatus
@@ -41,9 +42,13 @@ describe('chatPresenceOf', () => {
 		expect(chatPresenceOf(null, NOW)).toBeNull();
 	});
 
-	it('takes someone gone as last seen when the change was told', () => {
-		const at = '2026-11-13T11:50:00.000Z';
-		expect(chatPresenceOf(envelope('presence.changed', { employeeId: 'e1', status: 'offline', at }), NOW)?.lastSeenAt).toBe(Date.parse(at));
+	it('does not take the time an offline change was told as the last seen time', () => {
+		const at = '2026-11-13T11:52:30.000Z';
+		expect(chatPresenceOf(envelope('presence.changed', { employeeId: 'e1', status: 'offline', at }), NOW)?.lastSeenAt).toBeNull();
+		// Applied, it keeps the last seen time already known.
+		const book: ReadonlyMap<string, ChatPresenceEntry> = new Map([['e1', { presence: 'online', lastSeenAt: NOW - 150_000, revision: 1, learntAt: NOW - 150_000 }]]);
+		const update = chatPresenceOf(envelope('presence.changed', { employeeId: 'e1', status: 'offline', at, revision: 2 }), NOW);
+		expect(applyPresenceEvent(book, update!, NOW).get('e1')).toEqual({ presence: 'offline', lastSeenAt: NOW - 150_000, revision: 2, learntAt: NOW });
 	});
 });
 
@@ -102,6 +107,15 @@ describe('applyPresenceList', () => {
 	it('keeps the same book when nothing changed', () => {
 		const book: ReadonlyMap<string, ChatPresenceEntry> = new Map([['e1', { presence: 'online', lastSeenAt: NOW, revision: null, learntAt: NOW - 5000 }]]);
 		expect(applyPresenceList(book, [{ employeeId: 'e1', presence: 'online', lastSeenAt: NOW }], NOW, NOW + 1)).toBe(book);
+	});
+});
+
+describe('mostPresent', () => {
+	it('is the most present status of the tabs, offline when there is none', () => {
+		expect(mostPresent([RealtimePresenceStatus.AWAY, RealtimePresenceStatus.ACTIVE, RealtimePresenceStatus.IDLE])).toBe(RealtimePresenceStatus.ACTIVE);
+		expect(mostPresent([RealtimePresenceStatus.AWAY, RealtimePresenceStatus.IDLE])).toBe(RealtimePresenceStatus.IDLE);
+		expect(mostPresent([RealtimePresenceStatus.AWAY])).toBe(RealtimePresenceStatus.AWAY);
+		expect(mostPresent([])).toBe(RealtimePresenceStatus.OFFLINE);
 	});
 });
 

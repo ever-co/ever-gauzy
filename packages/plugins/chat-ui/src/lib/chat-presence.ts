@@ -57,8 +57,9 @@ export function chatPresenceOf(envelope: Partial<IRealtimeEventEnvelope> | null 
 	if (!employeeId) return null;
 	const presence = presenceOfStatus(data['status']);
 	const revision = typeof data['revision'] === 'number' && Number.isFinite(data['revision']) ? (data['revision'] as number) : null;
-	// Someone here is seen now; someone gone was last seen when the change was told.
-	const lastSeenAt = presence === 'offline' ? (timeOf(data['at']) ?? now) : now;
+	// Someone here is seen now. Someone gone keeps the last seen time already known: the event's `at` is when the change
+	// was merged or told (up to the presence window after their last report), not when they were last here.
+	const lastSeenAt = presence === 'offline' ? null : now;
 	return { employeeId, presence, lastSeenAt, revision };
 }
 
@@ -114,6 +115,20 @@ export function applyPresenceList(
 		});
 	}
 	return next ?? book;
+}
+
+/** How present each status is: the most present of a person's tabs is what they are. */
+const PRESENCE_RANK: Record<string, number> = {
+	[RealtimePresenceStatus.ACTIVE]: 3,
+	[RealtimePresenceStatus.IDLE]: 2,
+	[RealtimePresenceStatus.AWAY]: 1
+};
+
+/** The most present of some statuses (`offline` when there are none), as the realtime channel merges a person's tabs. */
+export function mostPresent(statuses: readonly RealtimePresenceStatus[]): RealtimePresenceStatus {
+	let best: RealtimePresenceStatus = RealtimePresenceStatus.OFFLINE;
+	for (const status of statuses) if ((PRESENCE_RANK[status] ?? 0) > (PRESENCE_RANK[best] ?? 0)) best = status;
+	return best;
 }
 
 /**
