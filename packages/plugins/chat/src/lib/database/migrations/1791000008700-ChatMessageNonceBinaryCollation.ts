@@ -3,8 +3,16 @@ import { dialectOf } from '../migration-helpers';
 
 const TABLE = 'chat_message';
 const COLUMN = 'nonce';
-/** The collation that compares a key byte for byte, as `1791000008300` gives a click's `idempotencyKey`. */
-export const CHAT_NONCE_BINARY_COLLATION = 'utf8mb4_bin';
+
+/**
+ * The collations that compare a key byte for byte, the first one the server has taken:
+ * - `utf8mb4_0900_bin` (MySQL 8.0.17+) and `utf8mb4_nopad_bin` (MariaDB 10.2+) are NO PAD: a trailing space counts, as
+ *   it does under MySQL 8's default `utf8mb4_0900_ai_ci`. Byte equality is the finest comparison there is, so moving a
+ *   column to one of them never makes two stored keys equal that were not, and no unique index refuses a row.
+ * - `utf8mb4_bin` (every server) ignores trailing spaces: it is taken only on a server with neither of the above
+ *   (MySQL 5.7, MariaDB before 10.2), whose collations all ignore trailing spaces already.
+ */
+export const CHAT_NONCE_BINARY_COLLATIONS = ['utf8mb4_0900_bin', 'utf8mb4_nopad_bin', 'utf8mb4_bin'] as const;
 
 /**
  * `chat_message.nonce` compared byte for byte on MySQL, as it is on Postgres and SQLite.
@@ -16,10 +24,13 @@ export const CHAT_NONCE_BINARY_COLLATION = 'utf8mb4_bin';
  * found as the first one's retry and answered with it, and never written.
  *
  * MySQL only: Postgres and SQLite compare text byte for byte already, and get no statement. Guarded and idempotent (the
- * column's collation is read first: a column that is already binary, or missing, is left as it is; two processes that
- * both read it as not binary write the same definition twice, which changes nothing) and reversible
- * (`down` gives the column back the table's collation, which it had before). A binary collation never makes two
- * stored keys equal that were not, so the unique indexes refuse no existing row.
+ * column's collation is read first: a column already at the binary collation, or missing, is left as it is; two
+ * processes that both read it as not binary write the same definition twice, which changes nothing).
+ *
+ * Reversible: `down` gives the column back the table's collation, which it had before. That refuses (and changes
+ * nothing: the `ALTER` is atomic) while two keys of one author or one webhook differ only in letter case, since the
+ * case-insensitive collation takes them for one key; the error says so, and clearing the later row's `nonce` is the
+ * cleanup that lets the rollback run.
  */
 export class ChatMessageNonceBinaryCollation1791000008700 implements MigrationInterface {
 	name = 'ChatMessageNonceBinaryCollation1791000008700';
@@ -27,27 +38,64 @@ export class ChatMessageNonceBinaryCollation1791000008700 implements MigrationIn
 	public async up(queryRunner: QueryRunner): Promise<void> {
 		if (dialectOf(queryRunner) !== 'mysql') return;
 		const collation = await nonceCollation(queryRunner);
-		if (collation === null || collation === CHAT_NONCE_BINARY_COLLATION) return;
-		// Constant identifiers and types: no value of anyone's goes into the statement.
+		if (collation === null) return;
+		const binary = await binaryCollation(queryRunner);
+		if (collation === binary) return;
+		// Constant identifiers and type; the collation is one of the constant names above. No value of anyone's goes in.
 		await queryRunner.query(
-			`ALTER TABLE \`${TABLE}\` MODIFY COLUMN \`${COLUMN}\` varchar(64) CHARACTER SET utf8mb4 COLLATE ${CHAT_NONCE_BINARY_COLLATION} NULL`
+			`ALTER TABLE \`${TABLE}\` MODIFY COLUMN \`${COLUMN}\` varchar(64) CHARACTER SET utf8mb4 COLLATE ${binary} NULL`
 		);
 	}
 
 	public async down(queryRunner: QueryRunner): Promise<void> {
 		if (dialectOf(queryRunner) !== 'mysql') return;
-		if ((await nonceCollation(queryRunner)) !== CHAT_NONCE_BINARY_COLLATION) return;
-		// Without a character set or a collation, the column takes the table's again, as `1791000006100` made it.
-		await queryRunner.query(`ALTER TABLE \`${TABLE}\` MODIFY COLUMN \`${COLUMN}\` varchar(64) NULL`);
+		const collation = await nonceCollation(queryRunner);
+		if (!(CHAT_NONCE_BINARY_COLLATIONS as readonly string[]).includes(collation ?? '')) return;
+		try {
+			// Without a character set or a collation, the column takes the table's again, as `1791000006100` made it.
+			await queryRunner.query(`ALTER TABLE \`${TABLE}\` MODIFY COLUMN \`${COLUMN}\` varchar(64) NULL`);
+		} catch (error) {
+			if (!isDuplicateKey(error)) throw error;
+			throw Object.assign(
+				new Error(
+					`${ChatMessageNonceBinaryCollation1791000008700.name} cannot be reverted: two messages of one author or one ` +
+						'webhook have nonces that differ only in letter case (or trailing spaces), which the table collation ' +
+						'takes for one key. Set the later message’s nonce to NULL, then revert again. The column is unchanged.'
+				),
+				{ cause: error }
+			);
+		}
 	}
 }
 
-/** The MySQL collation of `chat_message.nonce`, or null when the column is not there. */
+/** The MySQL collation of `chat_message.nonce`, or null when the column is not there (or holds no text). */
 async function nonceCollation(queryRunner: QueryRunner): Promise<string | null> {
 	const rows = (await queryRunner.query(
 		'SELECT COLLATION_NAME AS columnCollation FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ? LIMIT 1',
 		[TABLE, COLUMN]
 	)) as Array<{ columnCollation?: string | null }>;
-	if (!rows.length) return null;
-	return rows[0].columnCollation ?? '';
+	return rows[0]?.columnCollation ?? null;
+}
+
+/** The first of {@link CHAT_NONCE_BINARY_COLLATIONS} the server has (`utf8mb4_bin` is on every server). */
+async function binaryCollation(queryRunner: QueryRunner): Promise<(typeof CHAT_NONCE_BINARY_COLLATIONS)[number]> {
+	const noPad = CHAT_NONCE_BINARY_COLLATIONS.slice(0, 2);
+	const rows = (await queryRunner.query(
+		'SELECT COLLATION_NAME AS collationName FROM information_schema.COLLATIONS WHERE COLLATION_NAME IN (?, ?)',
+		[...noPad]
+	)) as Array<{ collationName?: string }>;
+	const available = new Set(rows.map((row) => row.collationName));
+	return noPad.find((name) => available.has(name)) ?? 'utf8mb4_bin';
+}
+
+/** Whether MySQL refused a statement for a duplicate key (`ER_DUP_ENTRY`, 1062), on the error or on its driver error. */
+function isDuplicateKey(error: unknown): boolean {
+	const failure = error as {
+		errno?: unknown;
+		code?: unknown;
+		driverError?: { errno?: unknown; code?: unknown };
+	} | null;
+	return [failure?.errno, failure?.code, failure?.driverError?.errno, failure?.driverError?.code]
+		.map((code) => String(code ?? ''))
+		.some((code) => code === '1062' || code === 'ER_DUP_ENTRY');
 }

@@ -72,7 +72,8 @@ export class ChatMessage extends TenantOrganizationBaseEntity {
 
 	/**
 	 * The idempotency key of a send (unique per author) or of an app post (the webhook's `nonce` / `Idempotency-Key`,
-	 * unique per webhook). Compared case-sensitively on every dialect (`utf8mb4_bin` on MySQL, migration `1791000008700`).
+	 * unique per webhook). Compared byte for byte on every dialect (on MySQL a binary collation, `utf8mb4_0900_bin` or
+	 * MariaDB's `utf8mb4_nopad_bin`, migration `1791000008700`).
 	 */
 	@MultiORMColumn({ type: 'varchar', length: 64, nullable: true })
 	nonce?: string | null;

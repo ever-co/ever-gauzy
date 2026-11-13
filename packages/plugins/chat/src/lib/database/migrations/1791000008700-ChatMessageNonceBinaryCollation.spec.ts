@@ -1,17 +1,30 @@
 import { CHAT_MIGRATIONS } from '../chat-migrations';
 import { CHAT_MESSAGE_WEBHOOK_INDEXES } from './1791000006730-CreateChatWebhooks';
 import {
-	CHAT_NONCE_BINARY_COLLATION,
+	CHAT_NONCE_BINARY_COLLATIONS,
 	ChatMessageNonceBinaryCollation1791000008700
 } from './1791000008700-ChatMessageNonceBinaryCollation';
 
-const PROBE = /^SELECT COLLATION_NAME AS columnCollation FROM information_schema\.COLUMNS/;
+const COLUMN_PROBE = /^SELECT COLLATION_NAME AS columnCollation FROM information_schema\.COLUMNS /;
+const COLLATIONS_PROBE = /^SELECT COLLATION_NAME AS collationName FROM information_schema\.COLLATIONS /;
+
+/** The collations each kind of server has, of those the migration asks for. */
+const SERVERS = {
+	mysql8: ['utf8mb4_0900_bin'],
+	mariadb: ['utf8mb4_nopad_bin'],
+	/** MySQL 5.7, MariaDB before 10.2: neither NO PAD binary collation. */
+	old: [] as string[]
+};
 
 /**
- * A query runner of one dialect that records its statements. `collation` is what MySQL's
- * `information_schema.COLUMNS` answers for `chat_message.nonce`: a collation, or `undefined` for no such column.
+ * A query runner of one dialect that records its statements. `collation` is what MySQL's `information_schema.COLUMNS`
+ * answers for `chat_message.nonce` (`undefined` for no such column); `server` names the collations it has.
  */
-function runner(type: 'postgres' | 'mysql' | 'mariadb' | 'better-sqlite3', collation?: string) {
+function runner(
+	type: 'postgres' | 'mysql' | 'mariadb' | 'better-sqlite3',
+	collation?: string | null,
+	server: string[] = SERVERS.mysql8
+) {
 	const statements: string[] = [];
 	const params: unknown[][] = [];
 	return {
@@ -22,45 +35,69 @@ function runner(type: 'postgres' | 'mysql' | 'mariadb' | 'better-sqlite3', colla
 		query: jest.fn(async (sql: string, parameters?: unknown[]) => {
 			statements.push(sql);
 			params.push(parameters ?? []);
-			return PROBE.test(sql) && collation !== undefined ? [{ columnCollation: collation }] : [];
+			if (COLUMN_PROBE.test(sql)) return collation === undefined ? [] : [{ columnCollation: collation }];
+			if (COLLATIONS_PROBE.test(sql)) {
+				return server
+					.filter((name) => (parameters ?? []).includes(name))
+					.map((name) => ({ collationName: name }));
+			}
+			return [];
 		})
 	};
 }
 
 const ddl = (statements: string[]) => statements.filter((sql) => !sql.startsWith('SELECT'));
 const migration = () => new ChatMessageNonceBinaryCollation1791000008700();
+const modifyTo = (collation: string) =>
+	`ALTER TABLE \`chat_message\` MODIFY COLUMN \`nonce\` varchar(64) CHARACTER SET utf8mb4 COLLATE ${collation} NULL`;
 
 describe('ChatMessageNonceBinaryCollation1791000008700', () => {
-	it('makes a case-insensitive MySQL nonce column binary, with its type and nullability unchanged', async () => {
-		for (const defaultCollation of ['utf8mb4_0900_ai_ci', 'utf8mb4_unicode_ci', 'utf8mb4_general_ci']) {
-			const mysql = runner('mysql', defaultCollation);
+	it('makes the MySQL 8 nonce column binary and NO PAD, so trailing spaces still count, type and nullability unchanged', async () => {
+		for (const tableCollation of ['utf8mb4_0900_ai_ci', 'utf8mb4_unicode_ci', 'utf8mb4_general_ci']) {
+			const mysql = runner('mysql', tableCollation);
 			await migration().up(mysql as never);
-			expect(ddl(mysql.statements)).toEqual([
-				'ALTER TABLE `chat_message` MODIFY COLUMN `nonce` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NULL'
-			]);
-			// The probe names the table and the column as bound values.
-			expect(mysql.statements[0]).toMatch(PROBE);
+			expect(ddl(mysql.statements)).toEqual([modifyTo('utf8mb4_0900_bin')]);
+			// The probes bind the table, the column and the collation names.
+			expect(mysql.statements[0]).toMatch(COLUMN_PROBE);
 			expect(mysql.params[0]).toEqual(['chat_message', 'nonce']);
+			expect(mysql.statements[1]).toMatch(COLLATIONS_PROBE);
+			expect(mysql.params[1]).toEqual(['utf8mb4_0900_bin', 'utf8mb4_nopad_bin']);
 		}
-		expect(CHAT_NONCE_BINARY_COLLATION).toBe('utf8mb4_bin');
 	});
 
-	it('does the same on MariaDB, which runs as MySQL', async () => {
-		const mariadb = runner('mariadb', 'utf8mb4_general_ci');
+	it('takes MariaDB’s NO PAD binary collation there, and utf8mb4_bin only on a server with neither', async () => {
+		const mariadb = runner('mariadb', 'utf8mb4_general_ci', SERVERS.mariadb);
 		await migration().up(mariadb as never);
-		expect(ddl(mariadb.statements)).toHaveLength(1);
-		expect(ddl(mariadb.statements)[0]).toContain('COLLATE utf8mb4_bin');
+		expect(ddl(mariadb.statements)).toEqual([modifyTo('utf8mb4_nopad_bin')]);
+		const old = runner('mysql', 'utf8mb4_general_ci', SERVERS.old);
+		await migration().up(old as never);
+		expect(ddl(old.statements)).toEqual([modifyTo('utf8mb4_bin')]);
+		expect(CHAT_NONCE_BINARY_COLLATIONS).toEqual(['utf8mb4_0900_bin', 'utf8mb4_nopad_bin', 'utf8mb4_bin']);
 	});
 
-	it('changes nothing on MySQL when the column is already binary, or is not there', async () => {
-		const binary = runner('mysql', 'utf8mb4_bin');
-		await migration().up(binary as never);
-		await migration().up(binary as never);
-		expect(ddl(binary.statements)).toEqual([]);
-		const missing = runner('mysql');
-		await migration().up(missing as never);
-		await migration().down(missing as never);
-		expect(ddl(missing.statements)).toEqual([]);
+	it('changes nothing when the column is already at the binary collation, or is not there, or holds no text', async () => {
+		for (const [collation, server] of [
+			['utf8mb4_0900_bin', SERVERS.mysql8],
+			['utf8mb4_nopad_bin', SERVERS.mariadb],
+			['utf8mb4_bin', SERVERS.old]
+		] as const) {
+			const binary = runner('mysql', collation, [...server]);
+			await migration().up(binary as never);
+			await migration().up(binary as never);
+			expect(ddl(binary.statements)).toEqual([]);
+		}
+		for (const collation of [undefined, null]) {
+			const absent = runner('mysql', collation);
+			await migration().up(absent as never);
+			await migration().down(absent as never);
+			expect(ddl(absent.statements)).toEqual([]);
+		}
+	});
+
+	it('moves a column left at utf8mb4_bin to the NO PAD one where the server has it', async () => {
+		const padded = runner('mysql', 'utf8mb4_bin');
+		await migration().up(padded as never);
+		expect(ddl(padded.statements)).toEqual([modifyTo('utf8mb4_0900_bin')]);
 	});
 
 	it('sends no statement at all on Postgres and SQLite, which compare text byte for byte already', async () => {
@@ -72,20 +109,43 @@ describe('ChatMessageNonceBinaryCollation1791000008700', () => {
 		}
 	});
 
-	it('goes down to the table collation only from the binary one, and once', async () => {
-		const binary = runner('mysql', 'utf8mb4_bin');
-		await migration().down(binary as never);
-		expect(ddl(binary.statements)).toEqual(['ALTER TABLE `chat_message` MODIFY COLUMN `nonce` varchar(64) NULL']);
+	it('goes down to the table collation only from a binary one it sets', async () => {
+		for (const collation of CHAT_NONCE_BINARY_COLLATIONS) {
+			const binary = runner('mysql', collation);
+			await migration().down(binary as never);
+			expect(ddl(binary.statements)).toEqual([
+				'ALTER TABLE `chat_message` MODIFY COLUMN `nonce` varchar(64) NULL'
+			]);
+		}
 		const already = runner('mysql', 'utf8mb4_0900_ai_ci');
 		await migration().down(already as never);
 		expect(ddl(already.statements)).toEqual([]);
 	});
 
-	it('raises a failed statement as it is', async () => {
+	it('says why a rollback is refused when two keys differ only in case, and raises anything else as it is', async () => {
+		const colliding = runner('mysql', 'utf8mb4_0900_bin');
+		const duplicate = Object.assign(
+			new Error("Duplicate entry 'u1-key-a' for key 'UQ_chat_message_author_nonce'"),
+			{
+				code: 'ER_DUP_ENTRY',
+				errno: 1062
+			}
+		);
+		colliding.query.mockImplementation(async (sql: string) => {
+			if (sql.startsWith('ALTER TABLE')) throw duplicate;
+			return COLUMN_PROBE.test(sql) ? [{ columnCollation: 'utf8mb4_0900_bin' }] : [];
+		});
+		const refusal = (await migration()
+			.down(colliding as never)
+			.catch((error: unknown) => error)) as Error & { cause?: unknown };
+		expect(refusal.message).toContain('differ only in letter case');
+		expect(refusal.message).toContain('nonce to NULL');
+		expect(refusal.cause).toBe(duplicate);
+
 		const failing = runner('mysql', 'utf8mb4_0900_ai_ci');
 		failing.query.mockImplementation(async (sql: string) => {
 			if (sql.startsWith('ALTER TABLE')) throw new Error('lock wait timeout');
-			return [{ columnCollation: 'utf8mb4_0900_ai_ci' }];
+			return COLUMN_PROBE.test(sql) ? [{ columnCollation: 'utf8mb4_0900_ai_ci' }] : [];
 		});
 		await expect(migration().up(failing as never)).rejects.toThrow('lock wait timeout');
 	});
