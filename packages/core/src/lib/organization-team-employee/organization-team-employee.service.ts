@@ -579,11 +579,13 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 	}
 
 	/**
-	 * The update as the caller may make it. The member's time tracking switch is the caller's to write only when their
-	 * rank in the team is above the member's: an admin acts on anyone, admins included; a team manager on the team's
-	 * members only, never on themselves or another manager; a member on no one. A rank in a team is the tenant role's
-	 * (SUPER_ADMIN and ADMIN, then MANAGER, then any other role), raised to MANAGER for a manager of the team: the
-	 * MANAGER role or the manager flag on the membership.
+	 * The update as the caller may make it. Where the team's organization restricts the switch to higher roles
+	 * (`restrictTrackingSwitchToHigherRoles`), the member's time tracking switch is the caller's to write only when
+	 * their rank in the team is above the member's: an admin acts on anyone, admins included; a team manager on the
+	 * team's members only, never on themselves or another manager; a member on no one. A rank in a team is the tenant
+	 * role's (SUPER_ADMIN and ADMIN, then MANAGER, then any other role), raised to MANAGER for a manager of the team:
+	 * the MANAGER role or the manager flag on the membership. Elsewhere, the default, whoever may update the membership
+	 * writes it, as before.
 	 *
 	 * Anyone else is refused a change of the switch. When they send it back as stored, it is left out of the write: it
 	 * was read before, and an admin may have changed it since, which that copy would overwrite.
@@ -607,9 +609,12 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 		const { organizationId, organizationTeamId } = entity;
 		const membership = await this.typeOrmOrganizationTeamEmployeeRepository.findOne({
 			where: { id: memberId, tenantId, organizationId, organizationTeamId },
-			relations: { role: true, employee: { user: { role: true } } }
+			relations: { role: true, employee: { user: { role: true } }, organization: true }
 		});
 		if (!membership) {
+			return entity;
+		}
+		if (membership.organization?.restrictTrackingSwitchToHigherRoles !== true) {
 			return entity;
 		}
 

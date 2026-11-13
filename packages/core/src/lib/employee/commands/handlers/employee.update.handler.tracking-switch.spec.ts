@@ -10,8 +10,9 @@ import { EmployeeUpdateCommand } from './../employee.update.command';
 import { EmployeeUpdateHandler } from './employee.update.handler';
 
 /**
- * ever-co/ever-teams#5015: only someone of a higher role may turn an employee's own time tracking switch on or off,
- * and an admin also for another admin. The switch counts in every team, so the tenant roles rank here.
+ * ever-co/ever-teams#5015: where the organization turns `restrictTrackingSwitchToHigherRoles` on, only someone of a
+ * higher role may turn an employee's own time tracking switch on or off, and an admin also for another admin. The switch
+ * counts in every team, so the tenant roles rank here. Off, the default, the switch is saved as before.
  * `PUT /employee/:id` and the GraphQL `updateEmployee` both run this handler; both need ORG_EMPLOYEES_EDIT, which only
  * the admins hold by default, so the rule matters where a tenant gave it to another role.
  */
@@ -35,12 +36,15 @@ describe('EmployeeUpdateHandler — who may switch an employee’s tracking', ()
 		} as never);
 	};
 
-	/** The employee to save, with the tenant role of their user. */
-	const storeEmployee = (id: string, role: RolesEnum, isTrackingEnabled = true) => {
+	/**
+	 * The employee to save, with the tenant role of their user, in an organization that restricts the switch to higher
+	 * roles unless `restricted` says otherwise.
+	 */
+	const storeEmployee = (id: string, role: RolesEnum, isTrackingEnabled = true, restricted = true) => {
 		stored = {
 			id,
 			tenantId: 'tenant-1',
-			organization: { id: 'organization-1' },
+			organization: { id: 'organization-1', restrictTrackingSwitchToHigherRoles: restricted },
 			isTrackingEnabled,
 			user: { id: `user-of-${id}`, role: { name: role } }
 		};
@@ -220,5 +224,37 @@ describe('EmployeeUpdateHandler — who may switch an employee’s tracking', ()
 
 		expect(create).toHaveBeenCalledTimes(1);
 		expect(create.mock.calls[0][0]).not.toHaveProperty('isTrackingEnabled');
+	});
+
+	/** The default: the organization leaves the switch to whoever may edit the employee, as before the setting. */
+	describe('where the organization does not restrict the switch', () => {
+		it('saves a manager turning their own tracking off, as before', async () => {
+			asCaller(RolesEnum.MANAGER);
+			storeEmployee(SELF, RolesEnum.MANAGER, true, false);
+
+			await save(SELF, { isTrackingEnabled: false } as IEmployeeUpdateInput);
+
+			expect(create).toHaveBeenCalledWith(expect.objectContaining({ id: SELF, isTrackingEnabled: false }));
+		});
+
+		it('saves the switch of an admin changed by a role the tenant gave ORG_EMPLOYEES_EDIT, as before', async () => {
+			asCaller(RolesEnum.EMPLOYEE);
+			storeEmployee(OTHER, RolesEnum.ADMIN, true, false);
+
+			await save(OTHER, { isTrackingEnabled: false } as IEmployeeUpdateInput);
+
+			expect(create).toHaveBeenCalledWith(expect.objectContaining({ id: OTHER, isTrackingEnabled: false }));
+			expect(publish).toHaveBeenCalledTimes(1);
+		});
+
+		it('reads an organization that never set the switch as not restricting it', async () => {
+			asCaller(RolesEnum.MANAGER);
+			storeEmployee(SELF, RolesEnum.MANAGER, true);
+			stored.organization = { id: 'organization-1' };
+
+			await save(SELF, { isTrackingEnabled: false } as IEmployeeUpdateInput);
+
+			expect(create).toHaveBeenCalledWith(expect.objectContaining({ id: SELF, isTrackingEnabled: false }));
+		});
 	});
 });

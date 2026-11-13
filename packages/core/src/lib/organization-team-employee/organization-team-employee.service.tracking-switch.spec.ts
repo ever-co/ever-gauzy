@@ -11,10 +11,11 @@ import { TRACKING_SWITCH_REFUSED } from '../time-tracking/timer/tracking-switch-
 import { OrganizationTeamEmployeeService } from './organization-team-employee.service';
 
 /**
- * ever-co/ever-teams#5015: only someone of a higher role may turn a member's time tracking on or off in a team, and an
- * admin also for another admin. A team manager acted on any membership of the team, their own and the other managers'
- * included. `PUT /organization-team-employee/:id` and the GraphQL `updateOrganizationTeamEmployee` both reach
- * `updateMember`, so the matrix runs through it.
+ * ever-co/ever-teams#5015: where the organization turns `restrictTrackingSwitchToHigherRoles` on, only someone of a
+ * higher role may turn a member's time tracking on or off in a team, and an admin also for another admin. A team manager
+ * acted on any membership of the team, their own and the other managers' included, which stays so where the
+ * organization leaves it off, the default. `PUT /organization-team-employee/:id` and the GraphQL
+ * `updateOrganizationTeamEmployee` both reach `updateMember`, so the matrix runs through it.
  */
 describe('OrganizationTeamEmployeeService.updateMember — who may switch a member’s tracking', () => {
 	const tenant = createTenantFixture();
@@ -69,6 +70,8 @@ describe('OrganizationTeamEmployeeService.updateMember — who may switch a memb
 	let restore: () => void = () => undefined;
 	/** Runs once, right after the membership is first read with its roles: lets a test change the row before the write. */
 	let afterMembershipRead: (row: ReturnType<typeof membership>) => void;
+	/** Whether the team's organization restricts the switch to higher roles: on, unless a test turns it off. */
+	let restrictsSwitch: boolean;
 
 	/** Stands in for nestjs-cls, where the employee-filter bypass is stored per request. */
 	const requestStorage = new AsyncLocalStorage<Map<string, unknown>>();
@@ -110,6 +113,7 @@ describe('OrganizationTeamEmployeeService.updateMember — who may switch a memb
 		updated = [];
 		publish = jest.fn();
 		afterMembershipRead = () => undefined;
+		restrictsSwitch = true;
 
 		jest.spyOn(CrudService.prototype, 'findOneByWhereOptions').mockImplementation(async (where) => {
 			const row = rows.find((candidate) => matches(candidate, where));
@@ -132,12 +136,16 @@ describe('OrganizationTeamEmployeeService.updateMember — who may switch a memb
 				// eslint-disable-next-line @typescript-eslint/no-explicit-any
 				exists: async ({ where }: { where: any[] }) =>
 					where.some((condition) => rows.some((row) => matches(row, condition))),
-				// The membership read with its roles: the row as it is now
+				// The membership read with its roles and its organization: the row as it is now
 				// eslint-disable-next-line @typescript-eslint/no-explicit-any
 				findOne: async ({ where }: { where: any }) => {
 					const row = rows.find((candidate) => matches(candidate, where));
 					if (!row) return null;
-					const read = { ...row };
+					const organization = {
+						id: tenant.organizationId,
+						restrictTrackingSwitchToHigherRoles: restrictsSwitch
+					};
+					const read = { ...row, organization };
 					const changeAfterRead = afterMembershipRead;
 					afterMembershipRead = () => undefined;
 					changeAfterRead(row);
@@ -317,6 +325,40 @@ describe('OrganizationTeamEmployeeService.updateMember — who may switch a memb
 			).resolves.toBeDefined();
 
 			expect(rowOf('row-manager')).toMatchObject({ isTrackingEnabled: false, order: 2 });
+		});
+	});
+
+	/** The default: the organization leaves the switch to whoever may update the membership, as before the setting. */
+	describe('where the organization does not restrict the switch', () => {
+		beforeEach(() => {
+			restrictsSwitch = false;
+		});
+
+		it.each<{ who: string; whom: string; caller: Caller; memberId: string }>([
+			{ who: 'a manager', whom: 'themselves', caller: 'manager', memberId: 'row-manager' },
+			{ who: 'a manager', whom: 'another manager', caller: 'manager', memberId: 'row-flagged-manager' },
+			{ who: 'a manager', whom: 'an admin', caller: 'manager', memberId: 'row-admin' }
+		])('lets $who switch $whom, as before', async ({ caller, memberId }) => {
+			await expect(updateAs(caller, memberId, { isTrackingEnabled: false })).resolves.toBeDefined();
+
+			expect(updated).toHaveLength(1);
+			expect(updated[0].changes).toEqual({ ...scope, isTrackingEnabled: false });
+		});
+
+		it("lets a third-party OAuth app token of the team's manager switch a member, as before", async () => {
+			jest.spyOn(RequestContext, 'currentOAuthAppScopes').mockReturnValue(['zap:write']);
+
+			await expect(updateAs('manager', 'row-member', { isTrackingEnabled: false })).resolves.toBeDefined();
+
+			expect(updated[0].changes).toEqual({ ...scope, isTrackingEnabled: false });
+		});
+
+		it('still refuses a member changing another membership, as before', async () => {
+			await expect(updateAs('member', 'row-other-member', { isTrackingEnabled: false })).rejects.toThrow(
+				ForbiddenException
+			);
+
+			expect(updated).toEqual([]);
 		});
 	});
 });
