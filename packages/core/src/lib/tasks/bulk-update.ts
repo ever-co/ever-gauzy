@@ -121,7 +121,7 @@ export function recordIdsOf(items: readonly ITaskBulkUpdateItem[]): Record<BulkR
 export function recordRefusalOf(
 	changes: ITaskBulkChanges,
 	records: BulkChangeRecords,
-	scope: { tenantId: ID; organizationId: ID | null | undefined }
+	scope: { tenantId: ID | null | undefined; organizationId: ID | null | undefined }
 ): string | null {
 	const same = (first: ID | null | undefined, second: ID | null | undefined) => !!first && !!second && recordKey(first) === recordKey(second);
 	for (const { idField, code, label } of BULK_RECORD_FIELDS) {
@@ -178,6 +178,81 @@ export function previousWithoutRecordNames(previous: ITaskBulkChanges, records: 
 		delete trimmed[nameField];
 	}
 	return (trimmed as ITaskBulkChanges | null) ?? previous;
+}
+
+/** The relation each record id is stored through: a single task update can name a record by either. */
+const RECORD_RELATIONS: Readonly<Record<BulkRecordField, 'taskStatus' | 'taskPriority' | 'taskSize'>> = {
+	taskStatusId: 'taskStatus',
+	taskPriorityId: 'taskPriority',
+	taskSizeId: 'taskSize'
+};
+
+/** The record a relation names: its id, null when the relation is cleared, undefined when it names none. */
+function relationRecordOf(value: unknown): ID | null | undefined {
+	if (value === null) return null;
+	const id = value && typeof value === 'object' ? (value as { id?: unknown }).id : undefined;
+	return typeof id === 'string' && id ? id : undefined;
+}
+
+/** What `recordChangesOfUpdate` answers. */
+export interface IUpdateRecordChanges<T> {
+	/** The update as it is saved: a record named both by its id and by its relation names one record in both. */
+	update: T;
+	/** The records the update moves the task to, each with the name sent beside it, in the bulk changes shape. */
+	changes: ITaskBulkChanges;
+	/** The record each field the update names is saved with (null: cleared); a field it does not name keeps the task's. */
+	named: Partial<Record<BulkRecordField, ID | null>>;
+}
+
+/** Whether two record ids name the same record, none being one too (no record, or a cleared one). */
+function sameRecord(first: ID | null | undefined, second: ID | null | undefined): boolean {
+	if (!first || !second) return !first && !second;
+	return recordKey(first) === recordKey(second);
+}
+
+/**
+ * The status, priority and size records a single task update (`PUT /tasks/:id`) moves the task to, in the changes
+ * shape the bulk update judges (`recordRefusalOf`) and names (`withRecordNames`), each with the name sent beside it.
+ * A record is named by its id (`taskPriorityId`) or by its relation (`taskPriority: { id }`). The record the task
+ * already holds is no change (a client sends the whole task back), and neither is a record cleared (`null`).
+ *
+ * A body can name a record both ways, and differently: a client that sends the whole task back with a new id beside
+ * the relation it read (or a `null` relation, the task holding none), or a new relation beside the id it read. The
+ * save takes the one that changes the task's record, except that it keeps an object relation over a new id, which was
+ * lost. So the update is answered naming in both places the one that changes the task's record, and the relation's
+ * when both do, as the save takes it.
+ *
+ * @param update The update as it was sent.
+ * @param held The records the task holds.
+ */
+export function recordChangesOfUpdate<T extends object>(update: T, held: Partial<Record<BulkRecordField, ID | null>>): IUpdateRecordChanges<T> {
+	const body = update as Record<string, unknown>;
+	let saved: Record<string, unknown> | null = null;
+	const changes: Record<string, unknown> = {};
+	const named: Partial<Record<BulkRecordField, ID | null>> = {};
+	for (const { idField, nameField } of BULK_RECORD_FIELDS) {
+		const relation = RECORD_RELATIONS[idField];
+		const byId = body[idField] as ID | null | undefined;
+		const byRelation = relationRecordOf(body[relation]);
+		let record = byRelation === undefined ? byId : byRelation;
+		if (byRelation !== undefined && byId !== undefined && !sameRecord(byId, byRelation)) {
+			// A copy whose fields are replaced, never changed in place: the caller's update (and its relations) stays as sent.
+			saved = saved ?? { ...body };
+			if (sameRecord(byRelation, held[idField])) {
+				// The relation as the task holds it, sent back with the task: the id beside it is the change.
+				record = byId;
+				saved[relation] = byId === null ? null : { id: byId };
+			} else {
+				saved[idField] = byRelation;
+			}
+		}
+		if (record === undefined) continue;
+		named[idField] = record;
+		if (record === null || sameRecord(record, held[idField])) continue;
+		changes[idField] = record;
+		if (body[nameField] !== undefined) changes[nameField] = body[nameField];
+	}
+	return { update: (saved ?? update) as T, changes: changes as ITaskBulkChanges, named };
 }
 
 /** What `changesToUpdate` answers: the update to run, and the previous values that undo it. */
