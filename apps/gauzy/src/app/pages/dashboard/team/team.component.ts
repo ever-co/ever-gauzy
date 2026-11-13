@@ -658,8 +658,20 @@ export class TeamComponent extends BaseSelectorFilterComponent implements OnInit
 			timeZone: user?.timeZone || null,
 			day: this._dayOf(member, activity),
 			canViewDetails: this._canViewDetailsOf(member.employeeId),
-			canViewProfile: this._canViewEveryone()
+			canViewProfile: this._canViewEveryone(),
+			canMessage: this._canMessage(member.employeeId)
 		};
+	}
+
+	/** Someone else, and the chat is mine to read and write in (the chat's own "Message" button asks the same). */
+	private _canMessage(employeeId: string): boolean {
+		const ownEmployeeId = this.store.user?.employee?.id ?? this.store.user?.employeeId;
+		return (
+			!!employeeId &&
+			employeeId !== ownEmployeeId &&
+			this.store.hasPermission(PermissionsEnum.CHAT_VIEW) &&
+			this.store.hasPermission(PermissionsEnum.CHAT_SEND)
+		);
 	}
 
 	/**
