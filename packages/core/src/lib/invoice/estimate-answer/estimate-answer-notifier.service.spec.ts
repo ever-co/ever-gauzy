@@ -1,0 +1,200 @@
+// Must stay first: the entities barrel resolves the circular entity imports.
+import '../../core/entities/internal';
+
+import {
+	BaseEntityEnum,
+	EmployeeNotificationTypeEnum,
+	IInvoice,
+	LanguagesEnum,
+	PermissionsEnum
+} from '@gauzy/contracts';
+import { Employee } from '../../core/entities/internal';
+import { EmployeeCreateNotificationEvent } from '../../employee-notification/events/employee-notification.event';
+import { EstimateAnswerNotifier } from './estimate-answer-notifier.service';
+import { IEstimateAnswer } from './estimate-answered.event';
+
+const TENANT = 'tenant-1';
+const ORGANIZATION = 'organization-1';
+
+/** The estimate as the notifier reads it. */
+const estimate = (overrides: Partial<IInvoice> = {}): IInvoice =>
+	({
+		id: 'estimate-1',
+		invoiceNumber: 12,
+		totalValue: 1250,
+		currency: 'EUR',
+		isEstimate: true,
+		organizationId: ORGANIZATION,
+		tenantId: TENANT,
+		toContact: { id: 'contact-1', name: 'Acme Corp' },
+		organization: { id: ORGANIZATION, name: 'Ever Org' },
+		createdByUser: { id: 'user-creator', email: 'creator@org.test', isActive: true, preferredLanguage: 'bg' },
+		...overrides
+	}) as IInvoice;
+
+const accepted: IEstimateAnswer = {
+	invoiceId: 'estimate-1',
+	tenantId: TENANT,
+	isAccepted: true,
+	answeredFrom: 'billing@acme.test'
+};
+
+describe('EstimateAnswerNotifier', () => {
+	const savedEnv = { ...process.env };
+
+	function setup(stored: IInvoice | null, handlers: { id: string; userId: string }[]) {
+		const repository = {
+			findOne: jest.fn(async () => stored),
+			manager: { find: jest.fn(async () => handlers) }
+		};
+		const emailService = { sendEstimateAnswered: jest.fn(async () => undefined) };
+		const eventBus = { publish: jest.fn() };
+		const notifier = new EstimateAnswerNotifier(repository as never, emailService as never, eventBus as never);
+		return { notifier, repository, emailService, eventBus };
+	}
+
+	const published = (eventBus: { publish: jest.Mock }) =>
+		eventBus.publish.mock.calls.map(([event]) => (event as EmployeeCreateNotificationEvent).input);
+
+	beforeEach(() => {
+		delete process.env.GAUZY_INBOX_ENABLED;
+		delete process.env.GAUZY_INBOX_NOTIFICATION_EMAIL_ENABLED;
+	});
+
+	afterAll(() => {
+		process.env = savedEnv;
+	});
+
+	it('gives every invoice handler of the organization an Invoice notification about the estimate', async () => {
+		const handlers = [
+			{ id: 'employee-1', userId: 'user-creator' },
+			{ id: 'employee-2', userId: 'user-accountant' }
+		];
+		const { notifier, eventBus } = setup(estimate(), handlers);
+
+		await notifier.notify(accepted);
+
+		expect(eventBus.publish).toHaveBeenCalledWith(expect.any(EmployeeCreateNotificationEvent));
+		expect(published(eventBus)).toEqual(
+			['employee-1', 'employee-2'].map((receiverEmployeeId) => ({
+				title: 'Acme Corp accepted estimate #12',
+				message: 'Total: 1,250.00 EUR. Answered from billing@acme.test. You can now turn it into an invoice.',
+				type: EmployeeNotificationTypeEnum.INVOICE,
+				entity: BaseEntityEnum.Invoice,
+				entityId: 'estimate-1',
+				receiverEmployeeId,
+				organizationId: ORGANIZATION,
+				tenantId: TENANT
+			}))
+		);
+	});
+
+	it('asks for the active employees of its organization whose role grants INVOICES_EDIT', async () => {
+		const { notifier, repository } = setup(estimate(), []);
+
+		await notifier.notify(accepted);
+
+		expect(repository.manager.find).toHaveBeenCalledWith(Employee, {
+			where: {
+				organizationId: ORGANIZATION,
+				tenantId: TENANT,
+				isActive: true,
+				isArchived: false,
+				user: {
+					isActive: true,
+					role: { rolePermissions: { permission: PermissionsEnum.INVOICES_EDIT, enabled: true } }
+				}
+			},
+			select: { id: true, userId: true }
+		});
+	});
+
+	it('reads the estimate in the tenant of the answer, as an estimate', async () => {
+		const { notifier, repository } = setup(estimate(), []);
+
+		await notifier.notify(accepted);
+
+		expect(repository.findOne).toHaveBeenCalledWith(
+			expect.objectContaining({ where: { id: 'estimate-1', tenantId: TENANT, isEstimate: true } })
+		);
+	});
+
+	it('emails the creator the answer in their language, with the amount written that way', async () => {
+		const { notifier, emailService } = setup(estimate(), [{ id: 'employee-1', userId: 'user-creator' }]);
+
+		await notifier.notify(accepted);
+
+		expect(emailService.sendEstimateAnswered).toHaveBeenCalledWith({
+			languageCode: LanguagesEnum.BULGARIAN,
+			email: 'creator@org.test',
+			user: expect.objectContaining({ id: 'user-creator' }),
+			organization: { id: ORGANIZATION, name: 'Ever Org', tenantId: TENANT },
+			invoiceId: 'estimate-1',
+			invoiceNumber: 12,
+			isAccepted: true,
+			contactName: 'Acme Corp',
+			contactEmail: 'billing@acme.test',
+			// Bulgarian writes a decimal comma, and groups digits from the fifth one on
+			amount: '1250,00',
+			currency: 'EUR'
+		});
+	});
+
+	it('emails a declined estimate in English to a creator who chose no language', async () => {
+		const creator = { id: 'user-creator', email: 'creator@org.test', isActive: true };
+		const { notifier, emailService } = setup(estimate({ createdByUser: creator as never }), []);
+
+		await notifier.notify({ ...accepted, isAccepted: false, answeredFrom: null });
+
+		expect(emailService.sendEstimateAnswered).toHaveBeenCalledWith(
+			expect.objectContaining({
+				languageCode: LanguagesEnum.ENGLISH,
+				isAccepted: false,
+				contactEmail: null,
+				amount: '1,250.00'
+			})
+		);
+	});
+
+	it('leaves the creator to the Inbox where it emails the notification they get', async () => {
+		process.env.GAUZY_INBOX_ENABLED = 'true';
+		process.env.GAUZY_INBOX_NOTIFICATION_EMAIL_ENABLED = 'true';
+		const { notifier, emailService, eventBus } = setup(estimate(), [{ id: 'employee-1', userId: 'user-creator' }]);
+
+		await notifier.notify(accepted);
+
+		expect(eventBus.publish).toHaveBeenCalledTimes(1);
+		expect(emailService.sendEstimateAnswered).not.toHaveBeenCalled();
+	});
+
+	it('still emails a creator the Inbox does not notify, an admin with no employee profile', async () => {
+		process.env.GAUZY_INBOX_ENABLED = 'true';
+		process.env.GAUZY_INBOX_NOTIFICATION_EMAIL_ENABLED = 'true';
+		const { notifier, emailService } = setup(estimate(), [{ id: 'employee-2', userId: 'user-accountant' }]);
+
+		await notifier.notify(accepted);
+
+		expect(emailService.sendEstimateAnswered).toHaveBeenCalledTimes(1);
+	});
+
+	it('notifies in-app only when the estimate has no known creator', async () => {
+		const { notifier, emailService, eventBus } = setup(estimate({ createdByUser: null }), [
+			{ id: 'employee-1', userId: 'user-1' }
+		]);
+
+		await notifier.notify(accepted);
+
+		expect(eventBus.publish).toHaveBeenCalledTimes(1);
+		expect(emailService.sendEstimateAnswered).not.toHaveBeenCalled();
+	});
+
+	it('tells nobody of an estimate it cannot find in the tenant', async () => {
+		const { notifier, emailService, eventBus, repository } = setup(null, [{ id: 'employee-1', userId: 'user-1' }]);
+
+		await notifier.notify(accepted);
+
+		expect(repository.manager.find).not.toHaveBeenCalled();
+		expect(eventBus.publish).not.toHaveBeenCalled();
+		expect(emailService.sendEstimateAnswered).not.toHaveBeenCalled();
+	});
+});

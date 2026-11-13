@@ -1,18 +1,84 @@
-import { IInvoice } from '@gauzy/contracts';
-import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { UpdateResult } from 'typeorm';
+import { EstimateStatusTypesEnum, IInvoice, IInvoiceUpdateInput } from '@gauzy/contracts';
+import { Logger } from '@nestjs/common';
+import { CommandHandler, EventBus, ICommandHandler } from '@nestjs/cqrs';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository, UpdateResult } from 'typeorm';
+import { EstimateEmail, Invoice } from '../../../../core/entities/internal';
+import { EstimateAnsweredEvent } from '../../../../invoice/estimate-answer/estimate-answered.event';
+import { TypeOrmInvoiceRepository } from '../../../../invoice/repository/type-orm-invoice.repository';
 import { PublicInvoiceUpdateCommand } from '../public-invoice-update.command';
 import { PublicInvoiceService } from './../../public-invoice.service';
 
+/** The answers a client gives from the estimate email, which the team hears of. */
+const ANSWERS: ReadonlyArray<string> = [EstimateStatusTypesEnum.ACCEPTED, EstimateStatusTypesEnum.REJECTED];
+
+/** An estimate as it was before the client's answer. */
+type IEstimateBefore = Pick<IInvoice, 'id' | 'status' | 'isEstimate' | 'tenantId'>;
+
 @CommandHandler(PublicInvoiceUpdateCommand)
 export class PublicInvoiceUpdateHandler implements ICommandHandler<PublicInvoiceUpdateCommand> {
+	private readonly logger = new Logger(PublicInvoiceUpdateHandler.name);
 
 	constructor(
-		private readonly publicInvoiceService: PublicInvoiceService
+		private readonly publicInvoiceService: PublicInvoiceService,
+		@InjectRepository(Invoice)
+		private readonly typeOrmInvoiceRepository: TypeOrmInvoiceRepository,
+		@InjectRepository(EstimateEmail)
+		private readonly typeOrmEstimateEmailRepository: Repository<EstimateEmail>,
+		private readonly eventBus: EventBus
 	) {}
 
+	/**
+	 * Saves the client's answer (`PublicInvoiceService.updateInvoice`, which checks the link), then, when it changed the
+	 * estimate to accepted or declined, tells the team (`EstimateAnsweredEvent`). The same answer given twice is told
+	 * once, and a refused answer not at all.
+	 */
 	public async execute(command: PublicInvoiceUpdateCommand): Promise<IInvoice | UpdateResult> {
 		const { params, entity } = command;
-		return await this.publicInvoiceService.updateInvoice(params, entity);
+		const before = await this.estimateBefore(params.id);
+		const result = await this.publicInvoiceService.updateInvoice(params, entity);
+		await this.publishAnswer(params, entity, before);
+		return result;
+	}
+
+	/** The estimate's status before the answer, or null when it cannot be read (the update then decides). */
+	private async estimateBefore(id: IInvoice['id']): Promise<IEstimateBefore | null> {
+		try {
+			return await this.typeOrmInvoiceRepository.findOne({
+				where: { id },
+				select: { id: true, status: true, isEstimate: true, tenantId: true }
+			});
+		} catch {
+			return null;
+		}
+	}
+
+	/** Publishes the answer when it changed an estimate to accepted or declined. Never fails the saved answer. */
+	private async publishAnswer(params: IInvoice, entity: IInvoiceUpdateInput, before: IEstimateBefore | null) {
+		const status = entity?.status;
+		const isAnswer = ANSWERS.includes(status);
+		const isNewAnswer = Boolean(before?.isEstimate) && before.status !== status;
+		if (!isAnswer || !isNewAnswer) {
+			return;
+		}
+		try {
+			// The address the link was sent to: the update found this token's live estimate email
+			const estimateEmail = await this.typeOrmEstimateEmailRepository.findOne({
+				where: { token: params.token, tenantId: before.tenantId },
+				select: { id: true, email: true }
+			});
+			this.eventBus.publish(
+				new EstimateAnsweredEvent({
+					invoiceId: before.id,
+					tenantId: before.tenantId,
+					isAccepted: status === EstimateStatusTypesEnum.ACCEPTED,
+					answeredFrom: estimateEmail?.email ?? null
+				})
+			);
+		} catch (error) {
+			this.logger.warn(
+				`The answer to estimate ${before.id} was saved, but the team could not be told: ${error?.message}`
+			);
+		}
 	}
 }
