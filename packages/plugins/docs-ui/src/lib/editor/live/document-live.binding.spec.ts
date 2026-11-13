@@ -260,6 +260,8 @@ describe('createLiveBinding', () => {
 		await runTimers();
 		expect(binding.hasPending()).toBe(false);
 		expect(binding.hasUnconfirmed()).toBe(true);
+		// Nothing to send, and still not saved: a leave guard asks.
+		await expect(binding.flush(10)).resolves.toBe(false);
 
 		// Still read-only when the session comes back: the edit is still not the server's.
 		binding.start();
@@ -274,6 +276,46 @@ describe('createLiveBinding', () => {
 		expect(binding.hasUnconfirmed()).toBe(false);
 		Y.applyUpdate(server.doc, Buffer.from(posted[posted.length - 1], 'base64'));
 		expect(textOf(server.doc)).toBe('Hello!');
+		binding.destroy();
+	});
+
+	it('counts a batch sent to a session the server no longer held as not taken, until the reopened session sends it', async () => {
+		const server = serverPage('Hello');
+		const binding = bind();
+		streams[0].next(server.sync());
+		await runTimers();
+		const text = (binding.doc.getXmlFragment('default').get(0) as Y.XmlElement).get(0) as Y.XmlText;
+
+		postUpdate.mockRejectedValueOnce({ status: 404 });
+		text.insert(5, '!');
+		await runTimers();
+		expect(streams).toHaveLength(2);
+		expect(binding.hasPending()).toBe(false);
+		expect(binding.hasUnconfirmed()).toBe(true);
+
+		// The reopened session syncs: what the server lacks goes, the dropped batch included.
+		streams[1].next(server.sync());
+		await runTimers();
+		expect(binding.hasUnconfirmed()).toBe(false);
+		Y.applyUpdate(server.doc, Buffer.from(posted[posted.length - 1], 'base64'));
+		expect(textOf(server.doc)).toBe('Hello!');
+		binding.destroy();
+	});
+
+	it('still counts it when the reopened stream ends before its sync', async () => {
+		const server = serverPage('Hello');
+		const binding = bind();
+		streams[0].next(server.sync());
+		await runTimers();
+		const text = (binding.doc.getXmlFragment('default').get(0) as Y.XmlElement).get(0) as Y.XmlText;
+
+		postUpdate.mockRejectedValueOnce({ status: 404 });
+		text.insert(5, '!');
+		await runTimers();
+		streams[1].error(new Error('gone'));
+
+		expect(states[states.length - 1]).toMatchObject({ phase: 'ended', reason: 'unavailable' });
+		expect(binding.hasUnconfirmed()).toBe(true);
 		binding.destroy();
 	});
 });

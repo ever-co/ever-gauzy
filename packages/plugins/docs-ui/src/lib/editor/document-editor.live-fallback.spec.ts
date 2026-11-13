@@ -235,7 +235,10 @@ describe('DocumentEditorComponent: a live session that ends keeps the edits it n
 	it('keeps edits the server refused (the page turned read-only), and leaves them to autosave', async () => {
 		postUpdate.mockImplementation(() => Promise.reject({ status: 403 }));
 		type(' refused');
-		await until(() => postUpdate.mock.calls.length > 0 && component.hasUnsavedChanges === false, 'the refusal');
+		await until(() => postUpdate.mock.calls.length > 0 && component.liveState?.readOnly === true, 'the refusal');
+		// Leaving now would drop the refused text: the page counts it as unsaved, and a flush cannot save it.
+		expect(component.hasUnsavedChanges).toBe(true);
+		await expect(component.flush()).resolves.toBe(false);
 		frames.next({ kind: 'closed', documentId: 'doc-1', reason: 'locked' });
 
 		await until(() => updateContent.mock.calls.length > 0, 'the autosave save');

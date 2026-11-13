@@ -243,7 +243,8 @@ export class DocumentEditorComponent implements OnChanges, OnDestroy {
 
 	/** Whether the editor holds edits the server has not taken: unsaved autosave content, or live edits not sent yet. */
 	get hasUnsavedChanges(): boolean {
-		return this.liveBinding ? this.liveBinding.hasPending() : this.autosave.isDirty;
+		// Live, a batch the server refused or never took counts too: leaving would drop it.
+		return this.liveBinding ? this.liveBinding.hasUnconfirmed() : this.autosave.isDirty;
 	}
 
 	/**
