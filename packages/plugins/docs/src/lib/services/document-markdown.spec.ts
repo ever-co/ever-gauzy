@@ -138,6 +138,20 @@ describe('markdownToDocument', () => {
 		expect(parsed.content?.[5]).toMatchObject({ type: 'codeBlock', attrs: { language: 'ts' }, content: [{ type: 'text', text: 'const a = 1;\nconst b = 2;' }] });
 	});
 
+	it('reads an image on a line of its own as an image block, and leaves one among text, or opening a list item, in its paragraph', () => {
+		const image = (src: string) => ({ type: 'image', attrs: { src, alt: 'pic', title: null } });
+		const parsed = markdownToDocument('![pic](a.png)\n\n> ![pic](b.png)\n\nSee ![pic](c.png) here.\n\n- ![pic](d.png)\n');
+		expect(parsed.content).toEqual([
+			image('a.png'),
+			{ type: 'blockquote', content: [image('b.png')] },
+			paragraph(text('See '), image('c.png') as IDocNode, text(' here.')),
+			{ type: 'bulletList', content: [{ type: 'listItem', content: [paragraph(image('d.png') as IDocNode)] }] }
+		]);
+		// No blank line of indentation between the blocks of a list item.
+		const nested = documentToMarkdown({ type: 'doc', content: [{ type: 'bulletList', content: [{ type: 'listItem', content: [paragraph(text('a')), paragraph(text('b'))] }] }] });
+		expect(nested).toBe('- a\n\n  b\n');
+	});
+
 	it('reads marks, links, escapes and an empty text', () => {
 		const parsed = markdownToDocument('A **bold** [link](https://x.test "T") and \\*stars\\*  \nnext');
 		expect(parsed.content?.[0]).toEqual(
