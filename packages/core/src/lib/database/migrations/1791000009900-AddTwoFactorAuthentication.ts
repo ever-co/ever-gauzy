@@ -41,14 +41,21 @@ const REFERENCES: Record<keyof typeof NAMES.foreignKeys, string> = {
 
 const FOREIGN_KEYS = Object.keys(REFERENCES) as ReadonlyArray<keyof typeof NAMES.foreignKeys>;
 
+/** The organization rule this migration adds: whether members are asked to turn two-factor authentication on. */
+const RULE = { table: 'organization', column: 'requireTwoFactor' } as const;
+
 /**
  * Two-factor authentication with an authenticator app (ever-co/ever-gauzy#11916). Creates `user_two_factor`: one row
  * per user who started an enrolment, with the encrypted secret, the date it was turned on, the SHA-256 of the unused
- * recovery codes, the last accepted step (replay) and the last administrator reset.
+ * recovery codes, the last accepted step (replay) and the last administrator reset. Adds
+ * `organization.requireTwoFactor` (`boolean NOT NULL DEFAULT false`): whether the organization asks its members to turn
+ * it on.
  *
- * Purely additive: a new table with its keys and indexes; nothing reads it for a user who never turns two-factor
- * authentication on, so every sign-in answers as before. Every statement is guarded by `hasTable`, so a re-run adds
- * nothing; `down` drops the table.
+ * Purely additive: a new table with its keys and indexes, and a column whose default leaves every organization as it is
+ * (off). Nothing reads the table for a user who never turns two-factor authentication on, so every sign-in answers as
+ * before. Every statement is guarded (`hasTable`, `IF NOT EXISTS` or a column check), so a re-run adds nothing. `down`
+ * drops the table, and the column on Postgres and MySQL; SQLite keeps the column, as every additive column of this
+ * platform is kept on the embedded dialect.
  */
 export class AddTwoFactorAuthentication1791000009900 implements MigrationInterface {
 	name = 'AddTwoFactorAuthentication1791000009900';
@@ -91,10 +98,16 @@ export class AddTwoFactorAuthentication1791000009900 implements MigrationInterfa
 		switch (queryRunner.connection.options.type as DatabaseTypeEnum) {
 			case DatabaseTypeEnum.sqlite:
 			case DatabaseTypeEnum.betterSqlite3:
+				await queryRunner.query(`DROP TABLE IF EXISTS "${TABLE}"`);
+				break;
 			case DatabaseTypeEnum.postgres:
+				await queryRunner.query(`ALTER TABLE "${RULE.table}" DROP COLUMN IF EXISTS "${RULE.column}"`);
 				await queryRunner.query(`DROP TABLE IF EXISTS "${TABLE}"`);
 				break;
 			case DatabaseTypeEnum.mysql:
+				if (await queryRunner.hasColumn(RULE.table, RULE.column)) {
+					await queryRunner.query(`ALTER TABLE \`${RULE.table}\` DROP COLUMN \`${RULE.column}\``);
+				}
 				await queryRunner.query(`DROP TABLE IF EXISTS \`${TABLE}\``);
 				break;
 			default:
@@ -111,6 +124,9 @@ export class AddTwoFactorAuthentication1791000009900 implements MigrationInterfa
 		if (queryRunner.isTransactionActive) {
 			await queryRunner.query(`SELECT pg_advisory_xact_lock($1)`, [this.advisoryLockKey]);
 		}
+		await queryRunner.query(
+			`ALTER TABLE "${RULE.table}" ADD COLUMN IF NOT EXISTS "${RULE.column}" boolean NOT NULL DEFAULT false`
+		);
 		if (await queryRunner.hasTable(TABLE)) return;
 
 		await queryRunner.query(
@@ -135,6 +151,11 @@ export class AddTwoFactorAuthentication1791000009900 implements MigrationInterfa
 	 * @param queryRunner
 	 */
 	public async sqliteUpQueryRunner(queryRunner: QueryRunner): Promise<void> {
+		if (!(await queryRunner.hasColumn(RULE.table, RULE.column))) {
+			await queryRunner.query(
+				`ALTER TABLE "${RULE.table}" ADD COLUMN "${RULE.column}" boolean NOT NULL DEFAULT (0)`
+			);
+		}
 		if (await queryRunner.hasTable(TABLE)) return;
 
 		const foreignKeys = FOREIGN_KEYS.map(
@@ -165,6 +186,11 @@ export class AddTwoFactorAuthentication1791000009900 implements MigrationInterfa
 			throw new Error(`${this.name}: could not acquire the MySQL migration lock ${lockName}.`);
 		}
 		try {
+			if (!(await queryRunner.hasColumn(RULE.table, RULE.column))) {
+				await queryRunner.query(
+					`ALTER TABLE \`${RULE.table}\` ADD COLUMN \`${RULE.column}\` tinyint NOT NULL DEFAULT 0`
+				);
+			}
 			await this.mysqlCreateTable(queryRunner);
 		} finally {
 			await queryRunner.query(`SELECT RELEASE_LOCK(?)`, [lockName]);

@@ -1,11 +1,12 @@
 import '../core/entities/internal';
 
-import { DataSource, DataSourceOptions, EntityTarget, ObjectLiteral } from 'typeorm';
+import { DataSource, DataSourceOptions } from 'typeorm';
 import { isMySQL, isPostgres } from '@gauzy/config';
 import { coreEntities } from '../core/entities';
-import { Tenant, User, UserTwoFactor } from '../core/entities/internal';
+import { Organization, Tenant, User, UserTwoFactor } from '../core/entities/internal';
 import { isUniqueViolation } from '../core/errors/unique-violation';
 import { AddTwoFactorAuthentication1791000009900 } from './migrations/1791000009900-AddTwoFactorAuthentication';
+import { insertRow } from './testing/insert-row';
 
 /**
  * `1791000009900-AddTwoFactorAuthentication` run on a real database: the schema every other entity gives is built
@@ -27,40 +28,7 @@ const TABLE = 'user_two_factor';
 
 const TENANT = '99000000-0000-4000-8000-00000000000a';
 const USER = '99000000-0000-4000-8000-0000000000b1';
-
-/** A value for a NOT NULL column without a default that a row leaves out. */
-function placeholder(type: unknown): unknown {
-	const name = typeof type === 'function' ? type.name.toLowerCase() : String(type).toLowerCase();
-	if (/uuid/.test(name)) return '99000000-0000-4000-8000-0000000000ff';
-	if (/int|number|numeric|decimal|real|float|double/.test(name)) return 0;
-	if (/bool/.test(name)) return false;
-	if (/date|time/.test(name)) return new Date('2026-01-01T00:00:00Z');
-	if (/json/.test(name)) return {};
-	return 'x';
-}
-
-/** Inserts a row with the columns given and a placeholder in every other NOT NULL column without a default. */
-async function insertRow(
-	dataSource: DataSource,
-	entity: EntityTarget<ObjectLiteral>,
-	row: Record<string, unknown>
-): Promise<void> {
-	const metadata = dataSource.getMetadata(entity);
-	const values: Record<string, unknown> = { ...row };
-	for (const column of metadata.columns) {
-		const needsNoValue =
-			column.isNullable ||
-			column.default !== undefined ||
-			column.isGenerated ||
-			column.isCreateDate ||
-			column.isUpdateDate ||
-			column.isVirtual ||
-			!!column.relationMetadata;
-		if (column.propertyName in values || needsNoValue) continue;
-		values[column.propertyName] = placeholder(column.type);
-	}
-	await dataSource.createQueryBuilder().insert().into(entity).values(values).execute();
-}
+const ORGANIZATION = '99000000-0000-4000-8000-0000000000a1';
 
 /** Whether the table exists, read on a query runner of its own that is released again. */
 async function hasTable(dataSource: DataSource): Promise<boolean> {
@@ -76,6 +44,17 @@ async function hasTable(dataSource: DataSource): Promise<boolean> {
 async function driftOf(dataSource: DataSource): Promise<string[]> {
 	const log = await dataSource.driver.createSchemaBuilder().log();
 	return log.upQueries.map((query) => query.query).filter((query) => query.includes(TABLE));
+}
+
+/** An identifier quoted for the database of the data source. */
+function quote(dataSource: DataSource, identifier: string): string {
+	return dataSource.driver.escape(identifier);
+}
+
+/** The statements TypeORM would still run on the organization table: none, when the migration added its column. */
+async function organizationDriftOf(dataSource: DataSource): Promise<string[]> {
+	const log = await dataSource.driver.createSchemaBuilder().log();
+	return log.upQueries.map((query) => query.query).filter((query) => query.includes('requireTwoFactor'));
 }
 
 function exercise(options: () => DataSourceOptions) {
@@ -164,18 +143,49 @@ function exercise(options: () => DataSourceOptions) {
 	);
 
 	it(
+		'adds the organization rule, off for every organization, with nothing left for TypeORM to change',
+		async () => {
+			// An organization of before the migration: it exists, then the column it does not have yet is taken away.
+			await insertRow(dataSource, Organization, { id: ORGANIZATION, tenantId: TENANT, name: 'Organization' });
+			const queryRunner = dataSource.createQueryRunner();
+			try {
+				await queryRunner.dropColumn('organization', 'requireTwoFactor');
+			} finally {
+				await queryRunner.release();
+			}
+
+			await up(true);
+
+			const [row] = await dataSource.query(
+				`SELECT ${quote(dataSource, 'requireTwoFactor')} AS ${quote(dataSource, 'required')} FROM ${quote(
+					dataSource,
+					'organization'
+				)} WHERE ${quote(dataSource, 'id')} = '${ORGANIZATION}'`
+			);
+			expect(Boolean(Number(row.required))).toBe(false);
+			expect(await organizationDriftOf(dataSource)).toEqual([]);
+		},
+		TIMEOUT
+	);
+
+	it(
 		'drops the table on down, and builds the same one on up again',
 		async () => {
 			const queryRunner = dataSource.createQueryRunner();
+			// SQLite keeps an additive column on down, as every migration of the platform does on the embedded dialect.
+			const columnStaysOnDown = dataSource.options.type === 'better-sqlite3';
 			try {
 				await migration.down(queryRunner);
 				expect(await queryRunner.hasTable(TABLE)).toBe(false);
+				expect(await queryRunner.hasColumn('organization', 'requireTwoFactor')).toBe(columnStaysOnDown);
 				await migration.up(queryRunner);
 				expect(await queryRunner.hasTable(TABLE)).toBe(true);
+				expect(await queryRunner.hasColumn('organization', 'requireTwoFactor')).toBe(true);
 			} finally {
 				await queryRunner.release();
 			}
 			expect(await driftOf(dataSource)).toEqual([]);
+			expect(await organizationDriftOf(dataSource)).toEqual([]);
 		},
 		TIMEOUT
 	);
