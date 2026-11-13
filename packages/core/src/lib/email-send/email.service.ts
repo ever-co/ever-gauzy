@@ -228,6 +228,82 @@ export class EmailService {
 	}
 
 	/**
+	 * Tells the team member who created an estimate that the client accepted or declined it from the estimate email
+	 * (`estimate-answered`), with a link to the estimate.
+	 *
+	 * The answer comes over a public link, so nothing is read from the request context: the tenant is the
+	 * organization's. A failure is logged and filed in the email history, never raised: the client's answer is saved
+	 * whether or not the email goes.
+	 *
+	 * @param input - The recipient, the organization and what the email says.
+	 */
+	async sendEstimateAnswered(input: {
+		languageCode: LanguagesEnum;
+		email: string;
+		user?: IUser;
+		organization: IOrganization;
+		invoiceId: ID;
+		invoiceNumber: number;
+		isAccepted: boolean;
+		contactName?: string | null;
+		contactEmail?: string | null;
+		amount?: string | null;
+		currency?: string | null;
+	}): Promise<void> {
+		const { languageCode, email, user, organization, invoiceId, invoiceNumber, isAccepted } = input;
+		const { id: organizationId, tenantId, name: organizationName } = organization;
+		const host = this.emailBaseUrl();
+
+		const sendOptions = {
+			template: EmailTemplateEnum.ESTIMATE_ANSWERED,
+			message: {
+				to: email
+			},
+			locals: {
+				// The deployment's name, logo and links, which the layout's header and footer show
+				...env.appIntegrationConfig,
+				locale: languageCode,
+				host,
+				organizationId,
+				tenantId,
+				organizationName,
+				invoiceNumber,
+				isAccepted,
+				contactName: input.contactName ?? '',
+				contactEmail: input.contactEmail ?? '',
+				amount: input.amount ?? '',
+				currency: input.currency ?? '',
+				estimateUrl: `${host}#/pages/accounting/invoices/estimates/view/${invoiceId}`
+			}
+		};
+
+		const body = {
+			templateName: sendOptions.template,
+			email,
+			languageCode,
+			organization,
+			user,
+			message: ''
+		};
+
+		const isEmailBlocked = !!DISALLOW_EMAIL_SERVER_DOMAIN.find((server) => email.includes(server));
+		if (isEmailBlocked) {
+			return;
+		}
+		try {
+			const instance = await this.emailSendService.getEmailInstance({ organizationId, tenantId });
+			const sendResult = await instance.send(sendOptions);
+			body.message = sendResult.originalMessage;
+		} catch (error) {
+			this.logger.error(
+				`The answer to estimate ${invoiceNumber} could not be emailed: ${describeEmailSendError(error)}`
+			);
+		} finally {
+			await this.createEmailRecord(body);
+		}
+	}
+
+	/**
 	 * Sends an invitation email to an organization contact.
 	 *
 	 * @param organizationContact - The contact to invite.
