@@ -3,6 +3,7 @@ import '../../core/entities/internal';
 
 import { TimeLogSourceEnum, TimeLogType } from '@gauzy/contracts';
 import { RequestContext } from '../../core/context';
+import { TimeLogUpdateCommand } from '../time-log/commands';
 import { SPAN_ORGANIZATION_ID, SPAN_TENANT_ID, TimeSpanStore } from '../testing/time-span-store';
 import { TimerService } from './timer.service';
 
@@ -92,5 +93,26 @@ describe('TimerService: the logs a stopped timer overlaps', () => {
 		await service['handleConflictingTimeLogs'](store.read('stopped'), SPAN_TENANT_ID, SPAN_ORGANIZATION_ID);
 
 		expect(store.timeSlotDurations()).toEqual(example.durations);
+	});
+
+	/**
+	 * A cut that fails ends the stop's overlap handling, which logs it and still answers the stopped log. The slots it
+	 * shares with the logs cut before that one kept counting the time those logs no longer have.
+	 */
+	it('the slots a log cut before a failing cut shares with the stopped one count the time their logs keep', async () => {
+		const store = new TimeSpanStore();
+		store.addTimeLog('covered', '19:33', '19:34', MANUAL_ENTRY);
+		store.addTimeLog('after', '19:35', '19:38', MANUAL_ENTRY);
+		store.addTimeLog('stopped', '19:32', '19:36', WEB_TIMER);
+		store.failOn(TimeLogUpdateCommand);
+		const service = timerServiceOver(store);
+
+		await service['handleConflictingTimeLogs'](store.read('stopped'), SPAN_TENANT_ID, SPAN_ORGANIZATION_ID);
+
+		expect(store.shapes()).toEqual([
+			['19:32', '19:36', ['19:30']],
+			['19:35', '19:38', ['19:30']]
+		]);
+		expect(store.timeSlotDurations()).toEqual([['19:30', 420]]);
 	});
 });

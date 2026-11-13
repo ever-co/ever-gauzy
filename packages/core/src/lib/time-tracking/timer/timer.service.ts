@@ -725,19 +725,24 @@ export class TimerService {
 				};
 				const sharedTimeSlotsIds = timeSlotIdsReachedBy(times, conflicts);
 
-				for (const timeLog of conflicts) {
-					await this._commandBus.execute(new DeleteTimeSpanCommand(times, timeLog, undefined, forceDelete));
+				try {
+					for (const timeLog of conflicts) {
+						await this._commandBus.execute(
+							new DeleteTimeSpanCommand(times, timeLog, undefined, forceDelete)
+						);
+					}
+				} finally {
+					// Saving the stopped log summed its time with theirs in the slots they share, overlap included. Counted
+					// again after a failing cut too, for the logs cut before it (the recount logs its own failure)
+					await this._commandBus.execute(
+						new TimeSlotDurationRecalculateCommand({
+							organizationId: logOrganizationId,
+							employeeId: lastLog.employeeId,
+							tenantId,
+							timeSlotsIds: sharedTimeSlotsIds
+						})
+					);
 				}
-
-				// Saving the stopped log summed its time with theirs in the slots they share, overlap included
-				await this._commandBus.execute(
-					new TimeSlotDurationRecalculateCommand({
-						organizationId: logOrganizationId,
-						employeeId: lastLog.employeeId,
-						tenantId,
-						timeSlotsIds: sharedTimeSlotsIds
-					})
-				);
 			}
 		} catch (error) {
 			this.logger.warn(`Error while handling conflicts in time logs: ${error?.message}`);
