@@ -7,6 +7,9 @@ import {
 	ICommentCreateInput,
 	ICommentUpdateInput,
 	ID,
+	IDocumentCommentAnchorInput,
+	IDocumentCommentAnchorList,
+	IDocumentCommentAnchorResolved,
 	IPagination
 } from '@gauzy/contracts';
 import { API_PREFIX, toParams } from '@gauzy/ui-core/common';
@@ -34,6 +37,7 @@ export const COMMENTS_PAGE_SIZE = 100;
 @Injectable()
 export class DocumentCommentsService {
 	private readonly API_URL = `${API_PREFIX}/comment`;
+	private readonly DOCS_URL = `${API_PREFIX}/plugins/docs/documents`;
 
 	constructor(private readonly http: HttpClient, private readonly store: Store) {}
 
@@ -85,6 +89,37 @@ export class DocumentCommentsService {
 
 	delete(id: ID): Observable<unknown> {
 		return this.http.delete(`${this.API_URL}/${id}`);
+	}
+
+	// ─── Ranges (`docs-collaboration` FR-16; 404 `DOCS_COLLAB_DISABLED` while it is off) ─
+
+	/**
+	 * The text ranges of the page's comments, each found again by the platform in the page as it is saved (or live).
+	 *
+	 * 🛑 A platform without ranges (an older one, or `GAUZY_DOCS_COLLAB_ENABLED` off) answers 404: every caller keeps
+	 * the threads on their blocks (their `[[block:…]]` first line) then.
+	 */
+	anchors(documentId: ID): Observable<IDocumentCommentAnchorList> {
+		return this.http.get<IDocumentCommentAnchorList>(`${this.DOCS_URL}/${documentId}/comment-anchors`, {
+			params: toParams(this.definedOrgContext())
+		});
+	}
+
+	/**
+	 * Stores the range a thread was made on (its first comment, by its author, right after posting it): the block, the
+	 * offsets into the block's text, the quote, a little context and, live, the ends as relative positions.
+	 */
+	setAnchor(documentId: ID, commentId: ID, input: IDocumentCommentAnchorInput): Observable<IDocumentCommentAnchorResolved> {
+		return this.http.put<IDocumentCommentAnchorResolved>(`${this.DOCS_URL}/${documentId}/comments/${commentId}/anchor`, {
+			...this.definedOrgContext(),
+			...input
+		});
+	}
+
+	/** The scope without absent values: `toParams()` would send `undefined` as the text "undefined". */
+	private definedOrgContext(): { organizationId?: ID; tenantId?: ID } {
+		const { organizationId, tenantId } = this.orgContext();
+		return { ...(organizationId ? { organizationId } : {}), ...(tenantId ? { tenantId } : {}) };
 	}
 
 	/** Tenant/organization scope from the selected organization, as every Documents call does. */

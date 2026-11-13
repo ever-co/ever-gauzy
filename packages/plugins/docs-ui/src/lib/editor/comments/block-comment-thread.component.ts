@@ -15,12 +15,23 @@ import {
 import { NbBadgeModule, NbButtonModule, NbIconModule, NbInputModule, NbSpinnerModule } from '@nebular/theme';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { firstValueFrom } from 'rxjs';
-import { BaseEntityEnum, IComment, ID, PermissionsEnum } from '@gauzy/contracts';
+import {
+	BaseEntityEnum,
+	DocumentCommentAnchorMethodEnum,
+	DocumentCommentAnchorStatusEnum,
+	IComment,
+	ID,
+	PermissionsEnum,
+	type IDocumentCommentAnchorInput,
+	type IDocumentCommentAnchorPosition,
+	type IDocumentCommentAnchorResolved
+} from '@gauzy/contracts';
 import { EmployeesService, Store, ToastrService } from '@gauzy/ui-core/core';
 import {
 	applyMentionPick,
 	buildCommentThread,
 	collectMentionEmployeeIds,
+	commentBlockId,
 	commentBody,
 	detectMentionToken,
 	employeeMentionLabel,
@@ -33,6 +44,13 @@ import {
 } from '../../components/comments/document-comments.model';
 import { DocumentCommentsService } from '../../components/comments/document-comments.service';
 import { MentionDirectoryService } from '../../components/comments/mention-directory.service';
+import {
+	anchorsByComment,
+	type CommentRangePlaceKind,
+	type ICommentRange,
+	rangePlaceKindOf,
+	storedAnchorOf
+} from './comment-anchor.model';
 
 /** One block's thread, plus whether the block still exists in the document. */
 export interface IBlockThread {
@@ -42,6 +60,22 @@ export interface IBlockThread {
 	openCount: number;
 	/** The anchored block was deleted from the document; the thread survives (spec 05 §8). */
 	detached: boolean;
+}
+
+/** How a thread made on a range of text reads in the rail. */
+export interface IThreadRangeView {
+	kind: CommentRangePlaceKind;
+	/** The text the range covers now; the text it was made on once that is gone. */
+	text: string;
+}
+
+/** The platform's answer for a comment that is not one of the page's (the route exists). */
+const DOCS_COMMENT_NOT_FOUND = 'DOCS_COMMENT_NOT_FOUND';
+
+/** A 404: the platform has no ranges (an older one, or Docs collaboration off), unless it names the comment. */
+function isRangesUnavailable(error: unknown): boolean {
+	const failure = error as { status?: number; error?: { code?: unknown } | null } | null;
+	return failure?.status === 404 && failure?.error?.code !== DOCS_COMMENT_NOT_FOUND;
 }
 
 /**
@@ -84,11 +118,27 @@ export class BlockCommentThreadComponent implements OnChanges {
 	@Input() blockId: string | null = null;
 	/** `blockId`s currently present in the document — anything else is a detached thread. */
 	@Input() knownBlockIds: readonly string[] | null = null;
+	/**
+	 * The selected text a new thread is made on (`docs-collaboration` FR-16): posted on the block it is in, with the
+	 * range stored beside the comment. `null` comments on the block.
+	 */
+	@Input() range: IDocumentCommentAnchorInput | null = null;
+	/** The thread (its first comment) asked for: from its highlight in the editor. */
+	@Input() activeThreadId: string | null = null;
+	/** Where each range thread is in the editor's document now, by thread (the editor finds them again as it is edited). */
+	@Input() rangePlaces: ReadonlyMap<string, IDocumentCommentAnchorPosition> | null = null;
 
-	/** Anchors with at least one unresolved comment — feeds the editor's gutter decorations. */
+	/**
+	 * Anchors with at least one unresolved comment, on a thread without a range — feeds the editor's gutter decorations.
+	 * The threads with a range are in `rangesChanged`.
+	 */
 	@Output() openBlocksChanged = new EventEmitter<string[]>();
+	/** The open threads made on a range of text, oldest first: the editor highlights their text. */
+	@Output() rangesChanged = new EventEmitter<ICommentRange[]>();
 	/** The user asked to jump to a block (thread header click). */
 	@Output() blockFocused = new EventEmitter<string>();
+	/** The user asked to see a thread's text in the page (its quote clicked). */
+	@Output() rangeFocused = new EventEmitter<string>();
 
 	@ViewChild('composerInput') private composerRef?: ElementRef<HTMLTextAreaElement>;
 
@@ -98,6 +148,7 @@ export class BlockCommentThreadComponent implements OnChanges {
 	private readonly translate = inject(TranslateService);
 	private readonly store = inject(Store);
 	private readonly changeDetectorRef = inject(ChangeDetectorRef);
+	private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
 
 	public threads: IBlockThread[] = [];
 	public loading = false;
@@ -117,26 +168,49 @@ export class BlockCommentThreadComponent implements OnChanges {
 	/** Every comment on the document, block-anchored or not — the grouping source. */
 	private all: IComment[] = [];
 
+	/** The ranges of the page's threads, by their first comment (none on a platform without ranges). */
+	private anchors = new Map<string, IDocumentCommentAnchorResolved>();
+	/** The platform answered that it keeps no ranges: it is not asked again for this page. */
+	private rangesOff = false;
+	/** The selection the composer's next thread is made on (cleared once posted, or by the person). */
+	private pendingRange: IDocumentCommentAnchorInput | null = null;
+	/** How each range thread reads, by its first comment. */
+	public rangeViews = new Map<string, IThreadRangeView>();
+
 	ngOnChanges(changes: SimpleChanges): void {
+		if (changes['range']) this.pendingRange = this.range ?? null;
 		if (changes['documentId'] && this.documentId) {
+			this.anchors = new Map();
+			this.rangesOff = false;
 			void this.reload();
 			return;
 		}
 		// A block came into (or left) focus, or the document's block set changed after an
 		// edit — regroup from what is already loaded rather than re-fetching.
 		if (changes['blockId'] || changes['knownBlockIds']) this.regroup();
+		else if (changes['activeThreadId']) this.publishRanges();
+		if (changes['rangePlaces']) this.refreshRangeViews();
+		if (changes['activeThreadId'] && this.activeThreadId) this.scrollToThread(this.activeThreadId);
+		this.changeDetectorRef.markForCheck();
 	}
 
 	// ─── Loading ─────────────────────────────────────────────────
 
 	async reload(): Promise<void> {
 		if (!this.documentId) return;
+		const documentId = this.documentId;
 		this.loading = true;
 		this.loadError = false;
 		this.changeDetectorRef.markForCheck();
 		try {
-			const page = await firstValueFrom(this.commentsService.getAll(this.documentId));
+			// The ranges are read beside the comments; ranges that cannot be read leave the threads on their blocks.
+			const [page, anchors] = await Promise.all([
+				firstValueFrom(this.commentsService.getAll(documentId)),
+				this.loadAnchors(documentId)
+			]);
+			if (String(this.documentId) !== String(documentId)) return;
 			this.all = page?.items ?? [];
+			this.anchors = anchors;
 			this.regroup();
 		} catch {
 			this.loadError = true;
@@ -200,6 +274,29 @@ export class BlockCommentThreadComponent implements OnChanges {
 		if (!thread.detached) this.blockFocused.emit(thread.blockId);
 	}
 
+	/** Shows a thread's text in the page, while it is there. */
+	focusRange(comment: IComment): void {
+		const id = String(comment?.id ?? '');
+		if (this.rangeViews.get(id)?.kind === 'range') this.rangeFocused.emit(id);
+	}
+
+	isActiveThread(comment: IComment): boolean {
+		return !!this.activeThreadId && String(comment?.id) === String(this.activeThreadId);
+	}
+
+	/** The selection the next thread is made on, when the platform keeps ranges and it is in the block in focus. */
+	get composerRange(): IDocumentCommentAnchorInput | null {
+		const range = this.pendingRange;
+		if (!range || this.rangesOff || !this.blockId || range.blockId !== this.blockId) return null;
+		return range;
+	}
+
+	/** The person would rather comment on the whole block. */
+	clearRange(): void {
+		this.pendingRange = null;
+		this.changeDetectorRef.markForCheck();
+	}
+
 	// ─── Posting ─────────────────────────────────────────────────
 
 	get canSubmit(): boolean {
@@ -209,6 +306,7 @@ export class BlockCommentThreadComponent implements OnChanges {
 	async post(): Promise<void> {
 		if (!this.canSubmit || !this.canComment) return;
 		const text = this.draft.trim();
+		const range = this.composerRange;
 		this.posting = true;
 		this.changeDetectorRef.markForCheck();
 		try {
@@ -223,6 +321,8 @@ export class BlockCommentThreadComponent implements OnChanges {
 				})
 			);
 			this.all = [...this.all, created];
+			// The block's line stays: a client that knows no ranges keeps the thread on its block.
+			if (range && created?.id) await this.placeRange(created.id as ID, range);
 			this.resetComposer();
 			this.regroup();
 			this.toastrService.success(this.translate.instant('DOCS.COMMENTS.TOAST_POSTED'));
@@ -360,14 +460,111 @@ export class BlockCommentThreadComponent implements OnChanges {
 				detached: !!known && !known.has(blockId)
 			}));
 
-		this.openBlocksChanged.emit(openBlockAnchors(this.all));
+		// Threads made on a range are lit on their text (`rangesChanged`), not as a tinted block.
+		const present = new Set(this.all.map((comment) => String(comment.id)));
+		const onBlocks = this.all.filter((comment) => !this.anchors.has(this.threadIdOf(comment, present)));
+		this.openBlocksChanged.emit(openBlockAnchors(onBlocks));
+		this.publishRanges();
+		this.refreshRangeViews();
 		this.changeDetectorRef.markForCheck();
 	}
 
 	private resetComposer(): void {
 		this.draft = '';
 		this.mentioned = [];
+		this.pendingRange = null;
 		this.closeMentions();
+	}
+
+	// ─── Ranges (`docs-collaboration` FR-16) ─────────────────────
+
+	/** The page's ranges; none when the platform keeps none (404, not asked again) or they cannot be read. */
+	private async loadAnchors(documentId: ID): Promise<Map<string, IDocumentCommentAnchorResolved>> {
+		if (this.rangesOff) return new Map();
+		try {
+			const list = await firstValueFrom(this.commentsService.anchors(documentId));
+			return anchorsByComment(list?.items);
+		} catch (error) {
+			if (isRangesUnavailable(error)) this.rangesOff = true;
+			return new Map();
+		}
+	}
+
+	/**
+	 * Stores the range of a thread just posted. Never in the way of the comment: a platform without ranges (404) is not
+	 * asked again, and any other refusal (a page shared for viewing only) leaves the thread on its block.
+	 */
+	private async placeRange(commentId: ID, range: IDocumentCommentAnchorInput): Promise<void> {
+		const documentId = this.documentId;
+		try {
+			const stored = await firstValueFrom(this.commentsService.setAnchor(documentId, commentId, range));
+			const anchor: IDocumentCommentAnchorResolved = stored?.position
+				? stored
+				: {
+						...storedAnchorOf(range),
+						commentId,
+						documentId,
+						position: {
+							status: DocumentCommentAnchorStatusEnum.EXACT,
+							method: DocumentCommentAnchorMethodEnum.OFFSETS,
+							blockId: range.blockId,
+							start: range.start,
+							end: range.end,
+							text: range.quote
+						}
+				  };
+			if (String(this.documentId) === String(documentId)) {
+				this.anchors = new Map(this.anchors).set(String(commentId), anchor);
+			}
+		} catch (error) {
+			if (isRangesUnavailable(error)) this.rangesOff = true;
+		}
+	}
+
+	/** The id of the thread a comment is in: its parent's when that is on the page, else its own. */
+	private threadIdOf(comment: IComment, present: ReadonlySet<string>): string {
+		const parentId = comment?.parentId ? String(comment.parentId) : null;
+		return parentId && present.has(parentId) ? parentId : String(comment?.id);
+	}
+
+	/**
+	 * The open threads made on a range of text, oldest first, to the editor (the one asked for even when resolved, so
+	 * its text is lit).
+	 */
+	private publishRanges(): void {
+		const present = new Set(this.all.map((comment) => String(comment.id)));
+		const ranges: ICommentRange[] = [];
+		for (const comment of this.all) {
+			const id = String(comment?.id);
+			const anchor = this.anchors.get(id);
+			// A reply has no range of its own: it is on its thread's.
+			if (!anchor || this.threadIdOf(comment, present) !== id) continue;
+			if (comment.resolved && id !== String(this.activeThreadId ?? '')) continue;
+			ranges.push({ threadId: id, blockId: commentBlockId(comment) ?? anchor.blockId, anchor: storedAnchorOf(anchor) });
+		}
+		this.rangesChanged.emit(ranges);
+	}
+
+	/** How each range thread reads: where the editor finds it now, else where the platform found it. */
+	private refreshRangeViews(): void {
+		const views = new Map<string, IThreadRangeView>();
+		for (const [id, anchor] of this.anchors) {
+			const place = this.rangePlaces?.get(id) ?? anchor.position ?? null;
+			const kind = rangePlaceKindOf(place);
+			views.set(id, { kind, text: (kind === 'range' ? place?.text : null) || anchor.quote });
+		}
+		this.rangeViews = views;
+	}
+
+	/** Brings the thread asked for into sight in the rail, once it is drawn. */
+	private scrollToThread(threadId: string): void {
+		setTimeout(() => {
+			const escaped = typeof CSS !== 'undefined' && CSS.escape ? CSS.escape(threadId) : threadId;
+			const element = this.host.nativeElement?.querySelector?.<HTMLElement>(`[data-thread-id="${escaped}"]`);
+			if (typeof element?.scrollIntoView === 'function') {
+				element.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+			}
+		});
 	}
 
 	private markBusy(comment: IComment, busy: boolean): void {
