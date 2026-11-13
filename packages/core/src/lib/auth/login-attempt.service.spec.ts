@@ -335,6 +335,50 @@ describe('LoginAttemptService', () => {
 			}
 		});
 
+		describe('a rule of its own (two-factor codes)', () => {
+			// Reaching a code check already proves the first factor, so one source failing is enough to block, and
+			// the count does not depend on the operator's setting for passwords.
+			const RULE = { maxFailures: 5, blockOnSingleSource: true };
+			const USER_ID = 'user-with-two-factor';
+
+			const failCode = async () => {
+				from('198.51.100.1');
+				try {
+					const attempt = await service.begin(LoginAttemptScope.TWO_FACTOR_CODE, USER_ID, undefined, RULE);
+					await attempt.fail();
+					return null;
+				} catch (error) {
+					return error instanceof HttpException ? error.getStatus() : -1;
+				}
+			};
+
+			it('blocks the sixth try in a row, even from one source', async () => {
+				for (let i = 0; i < 5; i++) {
+					expect(await failCode()).toBeNull();
+				}
+
+				expect(await failCode()).toBe(HttpStatus.TOO_MANY_REQUESTS);
+			});
+
+			it('keeps counting when AUTH_MAX_FAILED_ATTEMPTS switches the password counter off', async () => {
+				environment.AUTH_MAX_FAILED_ATTEMPTS = 0;
+
+				for (let i = 0; i < 5; i++) {
+					expect(await failCode()).toBeNull();
+				}
+
+				expect(await failCode()).toBe(HttpStatus.TOO_MANY_REQUESTS);
+			});
+
+			it('leaves the password counter of the same identifier alone', async () => {
+				for (let i = 0; i < 5; i++) {
+					await failCode();
+				}
+
+				expect(typeof (await begin(service, USER_ID))).toBe('object');
+			});
+		});
+
 		it('ignores a second settlement of the same attempt', async () => {
 			from('198.51.100.1');
 			const attempt = (await begin(service)) as LoginAttempt;
