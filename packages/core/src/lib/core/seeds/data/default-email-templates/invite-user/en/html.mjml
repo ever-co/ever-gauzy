@@ -43,7 +43,7 @@
 				</mj-text>
 				<mj-button href="{{generatedUrl}}" target="_blank">Accept invitation</mj-button>
 				<mj-text mj-class="note">
-					If you were not expecting this invitation, you can ignore this email.
+					If you have any questions, you can reply to this email. If you were not expecting this invitation, you can ignore this email.
 				</mj-text>
 				<mj-divider />
 				<mj-text mj-class="note" padding="0 10px 12px">

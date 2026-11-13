@@ -45,7 +45,7 @@
 				</mj-text>
 				<mj-button href="{{generatedUrl}}" target="_blank">אישור ההזמנה</mj-button>
 				<mj-text mj-class="note">
-					אם לא ציפית להזמנה הזו, אפשר להתעלם מהודעה זו.
+					אם יש לך שאלות, אפשר להשיב להודעה זו. אם לא ציפית להזמנה הזו, אפשר להתעלם מהודעה זו.
 				</mj-text>
 				<mj-divider />
 				<mj-text mj-class="note" padding="0 10px 12px">
