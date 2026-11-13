@@ -162,7 +162,8 @@ export interface IChatPerson {
 	position?: string | null;
 	/**
 	 * Whether they are here, by the server clock when the list was read: `active` (an app tab reported input lately),
-	 * `idle` (a tab is open, no input for a while) or `offline` (no tab reported within the presence window). The
+	 * `idle` (a tab is open, but no input for a while, or they set themselves as away) or `offline` (no tab reported
+	 * within the presence window). The
 	 * realtime channel's `presence.changed` keeps it current after that.
 	 */
 	presence?: ChatPresenceStatus;
