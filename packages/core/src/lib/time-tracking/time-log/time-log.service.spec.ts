@@ -990,7 +990,7 @@ describe('TimeLogService', () => {
 		 * #11886 — the overlap lookup matches the stored range, which ends at a running log's last heartbeat (its start,
 		 * for a web timer), and on TypeORM needs time slots: it missed a running web timer, an Ever Teams run before its
 		 * first heartbeat and one whose last heartbeat is before the range. The employee's timers still running that
-		 * started before the range ends are refused too, except a tracker's, which keeps the end its slots give it.
+		 * started before the range ends are refused too, a tracker's included, except for a tracker's own upload.
 		 */
 		describe('manual time over a running timer the overlap lookup misses (#11886)', () => {
 			const EIGHT = new Date('2026-01-05T08:00:00.000Z');
@@ -1027,6 +1027,10 @@ describe('TimeLogService', () => {
 					[
 						'an Ever Teams run whose last heartbeat was at 08:30',
 						runningSince8(TimeLogSourceEnum.TEAMS, new Date('2026-01-05T08:30:00.000Z'))
+					],
+					[
+						'a desktop run whose last time slot ended at 08:30',
+						runningSince8(TimeLogSourceEnum.DESKTOP, new Date('2026-01-05T08:30:00.000Z'))
 					]
 				])('is refused with a 409 over %s, trimming and writing nothing', async (_label, running) => {
 					find.mockResolvedValue([running]);
@@ -1039,16 +1043,16 @@ describe('TimeLogService', () => {
 					expect(commandsOfType(TimeLogCreateCommand)).toEqual([]);
 					expect(commandsOfType(TimeLogUpdateCommand)).toEqual([]);
 				});
+			});
 
-				it("CONTROL: goes on over a tracker's running log, which the overlap lookup sees by its time slots", async () => {
-					find.mockResolvedValue([runningSince8(TimeLogSourceEnum.DESKTOP)]);
+			it("CONTROL: lets a tracker's upload through over a tracker's run, left open on the server while it was offline", async () => {
+				find.mockResolvedValue([
+					runningSince8(TimeLogSourceEnum.DESKTOP, new Date('2026-01-05T08:30:00.000Z'))
+				]);
 
-					await write();
+				await manualService.addManualTime({ ...request, uploadedByTracker: true });
 
-					expect(
-						commandsOfType(TimeLogCreateCommand).length + commandsOfType(TimeLogUpdateCommand).length
-					).toBe(1);
-				});
+				expect(commandsOfType(TimeLogCreateCommand)).toHaveLength(1);
 			});
 
 			it('asks for the running logs of the employee, in their organization and tenant, started before the range ends', async () => {

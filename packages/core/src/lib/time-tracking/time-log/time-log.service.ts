@@ -2012,28 +2012,31 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 	}
 
 	/**
-	 * The employee's timers still running that started before `end`, from a client that is not a tracker (#11886).
+	 * The employee's timers still running that started before `end` (#11886).
 	 *
 	 * Such a run keeps going until it is stopped, so a manual range ending after its start falls over it, wherever its
 	 * stored range ends. The overlap lookup (`IGetConflictTimeLogCommand`) misses those: it matches the stored range,
 	 * whose `stoppedAt` is a running log's last heartbeat (its start, for a client that sends none: the web timer, the
-	 * API clients), and on TypeORM it only returns logs with time slots. A tracker's run (the desktop timer and the
-	 * agent) is left to that lookup, as before: when it is closed it keeps the end its time slots give it, so its
-	 * stored range is the time it holds, and a tracker left running offline does not hold back the upload of the time
-	 * it tracked offline.
+	 * API clients), and on TypeORM it only returns logs with time slots.
+	 *
+	 * A tracker's upload of the time it tracked offline leaves out a tracker's run (the desktop timer and the agent),
+	 * as before: that run may have been left open on the server while the tracker was offline, and it keeps the end its
+	 * time slots give it, which the overlap lookup reads. Manual time a person adds or edits counts every running timer.
 	 *
 	 * @param end Where the manual range ends.
 	 * @param employeeId The employee the time is for.
 	 * @param organizationId Their organization.
 	 * @param tenantId Their tenant.
 	 * @param ignoreId The log being edited, which never counts.
+	 * @param isTrackerUpload Whether a tracker uploads the range (`uploadedByTracker`).
 	 */
 	private async findRunningTimersStartedBefore(
 		end: Date | string,
 		employeeId: ID,
 		organizationId: ID,
 		tenantId: ID,
-		ignoreId?: ID
+		ignoreId?: ID,
+		isTrackerUpload = false
 	): Promise<ITimeLog[]> {
 		const before = moment.utc(end).toDate();
 		let running: ITimeLog[];
@@ -2063,7 +2066,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 					}
 				});
 		}
-		return running.filter((log) => !isTrackerSource(log.source));
+		return isTrackerUpload ? running.filter((log) => !isTrackerSource(log.source)) : running;
 	}
 
 	/**
@@ -2163,10 +2166,19 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			);
 
 			// A running timer in the range is refused, never cut, including one the range falls over after its last
-			// heartbeat or before its first time slot, which the lookup above misses (#11886)
+			// heartbeat or before its first time slot, which the lookup above misses (#11886). Only a tracker's upload
+			// passes over a tracker's run, left open on the server while it was offline
 			this.assertNoRunningTimerIn(conflicts);
+			const isTrackerUpload = request.uploadedByTracker === true;
 			this.assertNoRunningTimerIn(
-				await this.findRunningTimersStartedBefore(stoppedAt, employeeId, organizationId, tenantId, request.id)
+				await this.findRunningTimersStartedBefore(
+					stoppedAt,
+					employeeId,
+					organizationId,
+					tenantId,
+					request.id,
+					isTrackerUpload
+				)
 			);
 
 			// Resolve conflicts by deleting conflicting time slots

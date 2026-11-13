@@ -310,8 +310,9 @@ describe('POST /timesheet/time-log over a timer that is still running', () => {
 	/**
 	 * #11886: the overlap lookup matches the stored range, which ends at a running log's last heartbeat (its start, for
 	 * a web timer). A timer running since before the upload that it does not reach is refused as well, unless it is a
-	 * tracker's: a desktop run left open on the server when the desktop went offline ends where its time slots end, so
-	 * it holds back none of the time the desktop tracked offline.
+	 * tracker's and a tracker uploads: a desktop run left open on the server when the desktop went offline ends where
+	 * its time slots end, so it holds back none of the time the desktop tracked offline. Time entered by hand is refused
+	 * over it, as over any running timer.
 	 */
 	describe('with a running timer the overlap lookup does not reach', () => {
 		const since0800 = (id: string, source: TimeLogSourceEnum, lastHeartbeat: string) => ({
@@ -343,6 +344,20 @@ describe('POST /timesheet/time-log over a timer that is still running', () => {
 			await post(desktopUpload);
 
 			expect(created).toHaveLength(1);
+		});
+
+		it("refuses the same interval entered by hand while the desktop's run still runs", async () => {
+			const desktopRun = since0800('desktop', TimeLogSourceEnum.DESKTOP, '2026-10-01T09:00:00.000Z');
+			// One team and the task's project, so the organization's required fields are filled
+			const oneTeam = { teamIds: ['team-only'], taskProjectId: 'project-of-task', teamDefaultProjectId: null };
+			const { created, trimmed, post } = surfaces(oneTeam, [], [desktopRun]);
+
+			const refusal = await post(byHand).catch((caught) => caught);
+
+			expect(refusal).toBeInstanceOf(ConflictException);
+			expect(refusal.getResponse()).toMatchObject({ code: RUNNING_TIMER_OVERLAP });
+			expect(trimmed).toEqual([]);
+			expect(created).toHaveLength(0);
 		});
 	});
 });

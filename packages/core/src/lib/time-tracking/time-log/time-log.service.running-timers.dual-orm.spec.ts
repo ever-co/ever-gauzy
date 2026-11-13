@@ -7,7 +7,8 @@ import * as path from 'path';
  * range ends, not only over the running logs the overlap lookup returns. That lookup matches the stored range, which ends
  * at a running log's last heartbeat (its start, for a web timer), and on TypeORM needs time slots. The running timers are
  * read here on a real SQLite database, with each ORM: the employee's own, in their organization and tenant, still running,
- * started before the range ends, without the edited log, and without a tracker's, which keeps the end its slots give it.
+ * started before the range ends, and without the edited log. For a tracker's upload a tracker's run is left out too: it
+ * keeps the end its slots give it.
  */
 
 const TIMEOUT = 10 * 60 * 1000;
@@ -41,7 +42,7 @@ const LOG = {
 /** Where the manual range ends. */
 const RANGE_END = new Date('2026-01-05T10:00:00.000Z');
 
-type Reads = { found: string[]; foundWhileEditing: string[] };
+type Reads = { found: string[]; foundWhileEditing: string[]; foundForTrackerUpload: string[] };
 
 async function measure(): Promise<{ mikroOrm: Reads; typeOrm: Reads }> {
 	const previous = { DB_ORM: process.env.DB_ORM, DB_TYPE: process.env.DB_TYPE };
@@ -159,6 +160,16 @@ async function measure(): Promise<{ mikroOrm: Reads; typeOrm: Reads }> {
 							TENANT,
 							LOG.edited
 						)
+					),
+					foundForTrackerUpload: idsOf(
+						await service.findRunningTimersStartedBefore(
+							RANGE_END,
+							EMPLOYEE,
+							ORGANIZATION,
+							TENANT,
+							undefined,
+							true
+						)
 					)
 				};
 			};
@@ -208,16 +219,26 @@ describe('TimeLogService, the running timers a manual range falls over (#11886)'
 		['MikroORM', 'mikroOrm'],
 		['TypeORM', 'typeOrm']
 	])('%s', (_name, orm) => {
-		it("finds the employee's web timer and the Ever Teams run last heard before the range, and the edited log", () => {
-			expect(measured[orm].found).toEqual([LOG.webTimer, LOG.teamsLastHeardAt0830, LOG.edited].sort());
+		it("finds the employee's web timer, the Ever Teams run last heard before the range, the desktop run and the edited log", () => {
+			expect(measured[orm].found).toEqual(
+				[LOG.webTimer, LOG.teamsLastHeardAt0830, LOG.desktop, LOG.edited].sort()
+			);
 		});
 
 		it('leaves out the edited log while it is edited', () => {
-			expect(measured[orm].foundWhileEditing).toEqual([LOG.webTimer, LOG.teamsLastHeardAt0830].sort());
+			expect(measured[orm].foundWhileEditing).toEqual(
+				[LOG.webTimer, LOG.teamsLastHeardAt0830, LOG.desktop].sort()
+			);
 		});
 
-		it("leaves out a tracker's run, a run started after the range, a stopped log, and other employees' and tenants'", () => {
-			for (const left of [LOG.desktop, LOG.startedAfter, LOG.stopped, LOG.otherEmployee, LOG.otherTenant]) {
+		it("leaves out the desktop run for a tracker's upload", () => {
+			expect(measured[orm].foundForTrackerUpload).toEqual(
+				[LOG.webTimer, LOG.teamsLastHeardAt0830, LOG.edited].sort()
+			);
+		});
+
+		it("leaves out a run started after the range, a stopped log, and other employees' and tenants'", () => {
+			for (const left of [LOG.startedAfter, LOG.stopped, LOG.otherEmployee, LOG.otherTenant]) {
 				expect(measured[orm].found).not.toContain(left);
 			}
 		});
