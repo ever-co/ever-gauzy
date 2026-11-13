@@ -1,11 +1,24 @@
 import { JoinColumn, JoinTable, RelationId } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform, TransformFnParams } from 'class-transformer';
-import { IsBoolean, IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString, IsUUID, Max, Min } from 'class-validator';
+import {
+	IsBoolean,
+	IsEnum,
+	IsIn,
+	IsNotEmpty,
+	IsNumber,
+	IsOptional,
+	IsString,
+	IsUUID,
+	Max,
+	Min,
+	ValidateIf
+} from 'class-validator';
 import {
 	DEFAULT_INVITE_EXPIRY_PERIOD,
 	DEFAULT_PROFIT_BASED_BONUS,
-	DEFAULT_STANDARD_WORK_HOURS_PER_DAY
+	DEFAULT_STANDARD_WORK_HOURS_PER_DAY,
+	DURATION_ROUNDING_INTERVALS
 } from '@gauzy/constants';
 import {
 	DefaultValueDateTypeEnum,
@@ -61,6 +74,7 @@ import {
 	MultiORMOneToMany
 } from './../core/decorators/entity';
 import { MikroOrmOrganizationRepository } from './repository/mikro-orm-organization.repository';
+import { setsDurationRoundingRule } from './duration-rounding-rule';
 
 @MultiORMEntity('organization', { mikroOrmRepository: () => MikroOrmOrganizationRepository })
 export class Organization extends TenantBaseEntity implements IOrganization {
@@ -395,10 +409,26 @@ export class Organization extends TenantBaseEntity implements IOrganization {
 	 * The interval, in minutes, reports and exports round each duration to: one of `DURATION_ROUNDING_INTERVALS`.
 	 * Null, the default, rounds nothing. Stored time never changes: the rule applies to what is shown.
 	 */
+	@ApiPropertyOptional({
+		type: () => Number,
+		enum: [...DURATION_ROUNDING_INTERVALS],
+		nullable: true,
+		description:
+			'Minutes each duration is rounded to in reports and exports, set with a direction; null rounds nothing'
+	})
+	@ValidateIf(setsDurationRoundingRule)
+	@IsIn(DURATION_ROUNDING_INTERVALS)
 	@MultiORMColumn({ nullable: true })
 	durationRoundingInterval?: number | null;
 
 	/** Which way a duration goes to that interval: up, down or to the nearest. Null, the default, rounds nothing. */
+	@ApiPropertyOptional({
+		enum: DurationRoundingDirectionEnum,
+		nullable: true,
+		description: 'Which way a duration is rounded to the interval, set with it; null rounds nothing'
+	})
+	@ValidateIf(setsDurationRoundingRule)
+	@IsEnum(DurationRoundingDirectionEnum)
 	@MultiORMColumn({ nullable: true })
 	durationRoundingDirection?: DurationRoundingDirectionEnum | null;
 
