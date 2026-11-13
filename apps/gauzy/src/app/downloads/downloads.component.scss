@@ -1084,3 +1084,234 @@ $danger: var(--color-danger-default, #ff3d71);
     display: none;
   }
 }
+
+// ── On a phone: the Mobile card alone, full width, above the rest ───────
+.app-grid.is-single {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+// ── After a desktop download: the setup steps ───────────────────────────
+.setup {
+  margin-top: 1.5rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid $border;
+  font-size: 0.8125rem;
+  line-height: 1.25rem;
+  color: $text;
+  animation: gz-dl-rise 0.4s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+
+  a {
+    font-weight: 500;
+  }
+}
+
+.setup-opened {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin: 0;
+  font-size: 0.8125rem;
+  line-height: 1.25rem;
+
+  nb-icon {
+    flex: 0 0 auto;
+    font-size: 1.125rem;
+    color: $success;
+  }
+
+  .muted {
+    margin-inline-start: 0.25rem;
+  }
+}
+
+.setup-title {
+  margin: 1rem 0 0.5rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  line-height: 1.25rem;
+  color: $text;
+}
+
+// Numbered steps: the number in a small tinted circle, the text beside it.
+.setup-steps {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: setup-step;
+
+  > li {
+    position: relative;
+    padding-inline-start: 2rem;
+    counter-increment: setup-step;
+
+    &::before {
+      content: counter(setup-step);
+      position: absolute;
+      top: 0;
+      inset-inline-start: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 1.25rem;
+      height: 1.25rem;
+      border-radius: 50%;
+      background: $tint;
+      font-size: 0.6875rem;
+      font-weight: 600;
+      color: $text;
+    }
+  }
+
+  > li + li {
+    margin-top: 0.625rem;
+  }
+}
+
+.address-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.address {
+  max-width: 100%;
+  overflow: hidden;
+  padding: 0.3125rem 0.625rem;
+  border-radius: 0.375rem;
+  background: $tint;
+  font-family: var(--font-family-monospace, ui-monospace, SFMono-Regular, Menlo, Consolas, monospace);
+  font-size: 0.75rem;
+  color: $text;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+// `.btn` on a <button> (the copy button), and its small size.
+button.btn {
+  border: 0;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.btn-small {
+  height: 1.75rem;
+  padding: 0 0.625rem;
+  font-size: 0.75rem;
+
+  nb-icon {
+    font-size: 0.875rem;
+  }
+}
+
+// ── Hands-on drawings ───────────────────────────────────────────────────
+// Pointer over a drawing hands it to the visitor: the cursor fades out, a "Try it" hint fades
+// in, and the drawn timer buttons respond to clicks.
+.art-desktop,
+.art-extension {
+  pointer-events: auto;
+}
+
+.art-extension {
+  position: relative;
+}
+
+.cursor {
+  transition:
+    inset-inline-start 0.9s cubic-bezier(0.65, 0, 0.35, 1),
+    top 0.9s cubic-bezier(0.65, 0, 0.35, 1),
+    opacity 0.25s ease;
+
+  &.is-hidden {
+    opacity: 0;
+  }
+}
+
+.try-it {
+  position: absolute;
+  z-index: 3;
+  top: 0.5rem;
+  inset-inline-start: 50%;
+  padding: 0.1875rem 0.625rem;
+  border-radius: 999px;
+  background: $primary;
+  color: $on-primary;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  line-height: 1rem;
+  white-space: nowrap;
+  opacity: 0;
+  transform: translate(-50%, -0.25rem);
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease;
+  pointer-events: none;
+
+  :host-context([dir='rtl']) & {
+    transform: translate(50%, -0.25rem);
+  }
+
+  .is-hands-on > & {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+
+  :host-context([dir='rtl']) .is-hands-on > & {
+    transform: translate(50%, 0);
+  }
+}
+
+// The extension hint sits in the gap above the drawn browser.
+.art-extension .try-it {
+  top: -1.625rem;
+}
+
+// The drawn timer buttons are real buttons now: drop the browser's button look.
+.dw-pause,
+.play {
+  padding: 0;
+  font: inherit;
+  line-height: 1;
+}
+
+.dw-pause {
+  border: 0;
+  cursor: default;
+
+  // Paused by the visitor: the green start state, as in the desktop app.
+  &.is-paused {
+    background: $success;
+  }
+}
+
+.play {
+  background: transparent;
+  cursor: default;
+}
+
+.is-hands-on {
+  .dw-pause,
+  .play {
+    cursor: pointer;
+  }
+
+  .dw-pause:hover {
+    transform: scale(1.08);
+  }
+
+  .play:hover {
+    background: color-mix(in srgb, currentColor 10%, transparent);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .setup {
+    animation: none !important;
+  }
+
+  .try-it,
+  .cursor {
+    transition: none;
+  }
+}
