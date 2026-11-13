@@ -55,3 +55,9 @@ export const DEFAULT_ACTIVITY_PROOF_DURATIONS: number[] = [1, 3, 5, 10];
  * - Common values: 1, 3, 5, 10 minutes.
  */
 export const DEFAULT_SCREENSHOT_FREQUENCY_OPTIONS: number[] = [1, 3, 5, 10];
+
+/**
+ * The intervals, in minutes, an organization may round durations to in reports and exports.
+ * - A 6-minute step is a tenth of an hour.
+ */
+export const DURATION_ROUNDING_INTERVALS = [1, 5, 6, 10, 15, 30, 60] as const;
