@@ -127,7 +127,8 @@ function keepFrom(condition: ITaskViewFilterCondition, next: ITaskViewFilterCond
 /**
  * The upper bound under a new operator. "Before" reads the start of its day and "between" the last instant of its
  * last day, so a bound picked as a day takes the instant the new operator reads of that day; one saved without its
- * day keeps its instant.
+ * day keeps its instant. The instant is the one of the reader's zone, as when they pick a day: a view saved in
+ * another zone keeps its day, and its instant becomes the reader's.
  */
 function keepTo(condition: ITaskViewFilterCondition, next: ITaskViewFilterCondition, kind: BoundKind): void {
 	if (!condition.to) return;
@@ -173,6 +174,28 @@ export function withBound(
 	if (instant && day) next[dayKey] = day;
 	else delete next[dayKey];
 	return next;
+}
+
+/**
+ * The condition with a day picked in one bound's date field (an empty or malformed field clears the bound and leaves
+ * the other alone). The instant is the one of the picker's zone, and so becomes the other bound's when it was picked
+ * as a day too: kept as another reader's instant, a "between 14 and 14 Nov" saved in UTC−10 and edited in UTC+14
+ * would end before it starts while both fields show the 14th. A bound saved without its day keeps its instant, which
+ * the field already shows as the reader's day.
+ */
+export function withPickedDay(
+	condition: ITaskViewFilterCondition,
+	bound: 'from' | 'to',
+	value: string | null | undefined,
+	kind: BoundKind
+): ITaskViewFilterCondition {
+	const picked = boundOfDay(value, kind);
+	const next = withBound(condition, bound, picked?.instant ?? null, picked?.day ?? null);
+	const other = bound === 'from' ? 'to' : 'from';
+	const otherDay = other === 'from' ? next.fromDay : next.toDay;
+	const otherKind: BoundKind = other === 'from' ? 'from' : next.operator === 'before' ? 'before' : 'until';
+	const rebound = picked && next[other] && otherDay ? boundOfDay(otherDay, otherKind) : null;
+	return rebound ? withBound(next, other, rebound.instant, rebound.day) : next;
 }
 
 /** The node at a path, or null when there is none. */

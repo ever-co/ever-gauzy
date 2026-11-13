@@ -129,9 +129,10 @@ function validateCondition(entry: unknown, path: string, invalid: ITaskViewInval
 		}
 		if (from) condition.from = from;
 		if (to) condition.to = to;
-		// A day that is not a calendar day, or not near its instant, is left out: the bound compares as its instant.
-		const fromDay = from ? boundDayOf(raw?.fromDay, from) : undefined;
-		const toDay = to ? boundDayOf(raw?.toDay, to) : undefined;
+		// A day that is not a calendar day, or not the day its instant is an edge of, is left out: the bound compares as its
+		// instant. "Before" stops at the start of its day; "between" runs to the last instant of its last day.
+		const fromDay = from ? boundDayOf(raw?.fromDay, from, 'start') : undefined;
+		const toDay = to ? boundDayOf(raw?.toDay, to, operator === 'before' ? 'start' : 'end') : undefined;
 		if (fromDay) condition.fromDay = fromDay;
 		if (toDay) condition.toDay = toDay;
 	} else if (operator === 'relative') {
@@ -175,15 +176,26 @@ export function midnightOfDay(value: unknown): number | null {
 	return date.getUTCFullYear() === year && date.getUTCMonth() === month && date.getUTCDate() === day ? date.getTime() : null;
 }
 
+/** How far a day's start in a real zone lies from its UTC midnight: 14 hours before (UTC+14), 12 after (UTC−12). */
+const EAST_MOST_MS = 14 * 3_600_000;
+const WEST_MOST_MS = 12 * 3_600_000;
+
 /**
- * The day a bound was picked as, when it is a calendar day and its instant lies within a day of it: the start of the
- * day in any zone (UTC−12 to UTC+14) and its last instant are; a day that names another week is not.
+ * The day a bound was picked as, when it is a calendar day and its instant is that day's edge in some real zone: its
+ * start (`edge: 'start'`, for `after`, `before` and the lower bound of `between`) between 14 hours before the day's UTC
+ * midnight and 12 hours after it, or its last instant (`'end'`, the upper bound of `between`) within a minute before
+ * the next day starts there. A day the instant is not an edge of — another week, or the day before the one a bound
+ * was moved to — is left out, so the bound compares as its instant.
  */
-export function boundDayOf(day: unknown, instant: string | Date): string | undefined {
+export function boundDayOf(day: unknown, instant: string | Date, edge: 'start' | 'end'): string | undefined {
 	const midnight = midnightOfDay(day);
 	const at = new Date(instant).getTime();
 	if (midnight === null || !Number.isFinite(at)) return undefined;
-	return at >= midnight - DAY_MS && at < midnight + 2 * DAY_MS ? (day as string) : undefined;
+	const start = edge === 'start' ? midnight : midnight + DAY_MS;
+	const earliest = start - EAST_MOST_MS - (edge === 'start' ? 0 : 60_000);
+	const latest = start + WEST_MOST_MS;
+	const near = edge === 'start' ? at >= earliest && at <= latest : at >= earliest && at < latest;
+	return near ? (day as string) : undefined;
 }
 
 /** The calendar day an instant falls on in a time zone (`2026-11-14`). */

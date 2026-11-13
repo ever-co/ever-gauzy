@@ -27,14 +27,14 @@ import {
 	removeNode,
 	setGroupOp,
 	updateNode,
-	withBound,
 	withField,
 	withOperator,
+	withPickedDay,
 	withRelative,
 	withValues,
 	withoutInvalid
 } from '../../models/filter-tree';
-import { boundOfDay, dayOfBound } from '../../models/date-input';
+import { dayOfBound } from '../../models/date-input';
 import {
 	EMPTY_OPTIONS,
 	optionsOfField,
@@ -435,8 +435,7 @@ export class FilterEditorComponent {
 
 	/** A day picked in a date field: the instant of it in the reader's zone, and the day itself for date-only due dates. */
 	protected setBound(path: FilterPath, bound: 'from' | 'to', day: string, kind: 'from' | 'before' | 'until'): void {
-		const picked = boundOfDay(day, kind);
-		this.change(path, (condition) => withBound(condition, bound, picked?.instant ?? null, picked?.day ?? null));
+		this.change(path, (condition) => withPickedDay(condition, bound, day, kind));
 	}
 
 	protected setRelative(

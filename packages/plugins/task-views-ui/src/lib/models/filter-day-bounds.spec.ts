@@ -1,7 +1,8 @@
+// cspell:ignore Kiritimati
 import { runInThisContext } from 'node:vm';
 import { ITaskViewFilterCondition } from '@gauzy/contracts';
 import { boundOfDay, dayOfBound } from './date-input';
-import { withBound, withOperator } from './filter-tree';
+import { withBound, withOperator, withPickedDay } from './filter-tree';
 
 /** UTC−4 all year (no daylight saving), and UTC+2 all year. */
 const WEST = 'America/Caracas';
@@ -121,6 +122,62 @@ describe('the bounds a picked day makes', () => {
 				from: '2026-11-14T04:00:00.000Z',
 				fromDay: '2026-11-14'
 			});
+		});
+	});
+
+	it('keeps both bounds in the picker’s zone when one is picked again, so a range never ends before it starts', () => {
+		// "Between 14 and 14 Nov" saved in UTC−10, then the end picked again (14 Nov) by a reader in UTC+14.
+		const saved = inZone('Pacific/Honolulu', () =>
+			withPickedDay(
+				withPickedDay({ field: 'dueDate', operator: 'between' }, 'from', '2026-11-14', 'from'),
+				'to',
+				'2026-11-14',
+				'until'
+			)
+		);
+		expect(saved).toEqual({
+			field: 'dueDate',
+			operator: 'between',
+			from: '2026-11-14T10:00:00.000Z',
+			fromDay: '2026-11-14',
+			to: '2026-11-15T09:59:59.999Z',
+			toDay: '2026-11-14'
+		});
+		const edited = inZone('Pacific/Kiritimati', () => withPickedDay(saved, 'to', '2026-11-14', 'until'));
+		// The end is the 14th's last instant in UTC+14, and the start, picked as the 14th, moves to its start there.
+		expect(edited).toEqual({
+			field: 'dueDate',
+			operator: 'between',
+			from: '2026-11-13T10:00:00.000Z',
+			fromDay: '2026-11-14',
+			to: '2026-11-14T09:59:59.999Z',
+			toDay: '2026-11-14'
+		});
+		expect(Date.parse(edited.from as string)).toBeLessThan(Date.parse(edited.to as string));
+		// "Before" reads the start of its day; a bound saved without its day keeps its instant; a cleared field clears.
+		expect(
+			inZone(WEST, () => withPickedDay({ field: 'dueDate', operator: 'before' }, 'to', '2026-11-14', 'before'))
+		).toEqual({
+			field: 'dueDate',
+			operator: 'before',
+			to: '2026-11-14T04:00:00.000Z',
+			toDay: '2026-11-14'
+		});
+		const older: ITaskViewFilterCondition = {
+			field: 'dueDate',
+			operator: 'between',
+			from: '2026-11-13T22:00:00.000Z'
+		};
+		expect(inZone(WEST, () => withPickedDay(older, 'to', '2026-11-20', 'until'))).toEqual({
+			...older,
+			to: '2026-11-21T03:59:59.999Z',
+			toDay: '2026-11-20'
+		});
+		expect(withPickedDay(saved, 'to', '', 'until')).toEqual({
+			field: 'dueDate',
+			operator: 'between',
+			from: saved.from,
+			fromDay: '2026-11-14'
 		});
 	});
 });

@@ -113,7 +113,7 @@ describe('date-only due dates, compared by their calendar day', () => {
 	const UTC_MINUS_4 = -240;
 	const UTC_PLUS_2 = 120;
 
-	it('keeps the day a bound was picked as when it is a calendar day near its instant, and leaves out any other', () => {
+	it('keeps the day a bound was picked as when its instant is an edge of that day, and leaves out any other', () => {
 		const { tree } = validateFilterTree({
 			op: 'and',
 			conditions: [
@@ -121,22 +121,35 @@ describe('date-only due dates, compared by their calendar day', () => {
 				// Not a calendar day (and a day for a bound "after" has not got), a day that does not exist, a day a week off.
 				{ field: 'dueDate', operator: 'after', from: '2026-11-14T04:00:00.000Z', fromDay: '14/11/2026', toDay: '2026-11-14' },
 				{ field: 'dueDate', operator: 'before', to: '2026-03-02T04:00:00.000Z', toDay: '2026-02-30' },
-				{ field: 'dueDate', operator: 'before', to: '2026-11-14T04:00:00.000Z', toDay: '2026-11-21' }
+				{ field: 'dueDate', operator: 'before', to: '2026-11-14T04:00:00.000Z', toDay: '2026-11-21' },
+				// A bound moved to the 15th by a client that left the 14th's day behind, and the start of a day as "between"'s end.
+				{ field: 'dueDate', operator: 'after', from: startOf('2026-11-15', UTC_MINUS_4).toISOString(), fromDay: '2026-11-14' },
+				{ field: 'dueDate', operator: 'between', from: startOf('2026-11-14', UTC_MINUS_4).toISOString(), to: startOf('2026-11-20', UTC_MINUS_4).toISOString(), toDay: '2026-11-20' }
 			]
 		});
 		expect(tree?.conditions).toEqual([
 			{ field: 'dueDate', operator: 'between', from: '2026-11-14T04:00:00.000Z', fromDay: '2026-11-14', to: '2026-11-21T03:59:59.999Z', toDay: '2026-11-20' },
 			{ field: 'dueDate', operator: 'after', from: '2026-11-14T04:00:00.000Z' },
 			{ field: 'dueDate', operator: 'before', to: '2026-03-02T04:00:00.000Z' },
-			{ field: 'dueDate', operator: 'before', to: '2026-11-14T04:00:00.000Z' }
+			{ field: 'dueDate', operator: 'before', to: '2026-11-14T04:00:00.000Z' },
+			{ field: 'dueDate', operator: 'after', from: '2026-11-15T04:00:00.000Z' },
+			{ field: 'dueDate', operator: 'between', from: '2026-11-14T04:00:00.000Z', to: '2026-11-20T04:00:00.000Z' }
 		]);
 		expect(midnightOfDay('2026-11-14')).toBe(Date.parse('2026-11-14T00:00:00.000Z'));
 		expect(midnightOfDay('2026-02-29')).toBeNull();
 		expect(midnightOfDay(20261114)).toBeNull();
-		// The start of the day in UTC+14 and the last instant of the day in UTC−12 are both near enough.
-		expect(boundDayOf('2026-11-14', startOf('2026-11-14', 14 * 60))).toBe('2026-11-14');
-		expect(boundDayOf('2026-11-14', lastOf('2026-11-14', -12 * 60))).toBe('2026-11-14');
-		expect(boundDayOf('2026-11-14', 'never')).toBeUndefined();
+		// The start of the day and its last instant in the zones furthest east (UTC+14) and west (UTC−12) are edges of it.
+		for (const offset of [14 * 60, UTC_PLUS_2, 0, UTC_MINUS_4, -12 * 60]) {
+			expect(boundDayOf('2026-11-14', startOf('2026-11-14', offset), 'start')).toBe('2026-11-14');
+			expect(boundDayOf('2026-11-14', lastOf('2026-11-14', offset), 'end')).toBe('2026-11-14');
+		}
+		// The next day's start and the day before's end are not, except where zones 24 hours apart meet (UTC+14 and
+		// UTC−10: the 15th starts in one when the 14th starts in the other).
+		for (const offset of [UTC_PLUS_2, 0, UTC_MINUS_4]) {
+			expect(boundDayOf('2026-11-14', startOf('2026-11-15', offset), 'start')).toBeUndefined();
+			expect(boundDayOf('2026-11-14', lastOf('2026-11-13', offset), 'end')).toBeUndefined();
+		}
+		expect(boundDayOf('2026-11-14', 'never', 'start')).toBeUndefined();
 	});
 
 	it('west of UTC, takes a date only of the day picked into "on or after" and keeps it out of "before"', () => {
