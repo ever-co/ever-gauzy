@@ -494,6 +494,37 @@ describe('Invoices record the time their lines bill, on TypeORM and on MikroORM'
 			expect(await linkOf(kept)).toBe(lineId);
 			expect(await linkOf(outsiders)).toBeNull();
 		});
+
+		it("refuses a replacement whose line bills another organization's time, even to a tenant admin", async () => {
+			// A tenant admin reaches every organization of the tenant, so the CRUD write lets the line through.
+			jest.spyOn(loaded.RequestContext, 'hasRoles').mockReturnValue(true);
+			const { invoiceId, lineId } = await earlierInvoice('DRAFT');
+			const kept = await timeLog({ invoiceItemId: lineId });
+			const outsiders = await timeLog({ organizationId: OTHER_ORG, employeeId: OUTSIDER });
+			const line = { ...lineBilling('outsider', [outsiders]), organizationId: OTHER_ORG, invoiceId };
+
+			await expect(handlers(ormType).replaceLines(invoiceId, [line])).rejects.toMatchObject({ status: 400 });
+
+			expect(await count('invoice_item', 'id', lineId)).toBe(1);
+			expect(await lineOf(invoiceId, 'outsider')).toBeUndefined();
+			expect(await linkOf(kept)).toBe(lineId);
+			expect(await linkOf(outsiders)).toBeNull();
+		});
+
+		it('refuses a replacement whose line bills time on another invoice than the one replaced', async () => {
+			const { invoiceId, lineId } = await earlierInvoice('DRAFT');
+			const { invoiceId: otherInvoiceId } = await earlierInvoice('DRAFT');
+			const kept = await timeLog({ invoiceItemId: lineId });
+			const free = await timeLog();
+			const line = { ...lineBilling('elsewhere', [free]), invoiceId: otherInvoiceId };
+
+			await expect(handlers(ormType).replaceLines(invoiceId, [line])).rejects.toMatchObject({ status: 400 });
+
+			expect(await count('invoice_item', 'id', lineId)).toBe(1);
+			expect(await lineOf(otherInvoiceId, 'elsewhere')).toBeUndefined();
+			expect(await linkOf(kept)).toBe(lineId);
+			expect(await linkOf(free)).toBeNull();
+		});
 	});
 });
 

@@ -1,9 +1,17 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { FindOptionsWhere } from 'typeorm';
 import { ID, IInvoiceItem, IInvoiceItemCreateInput } from '@gauzy/contracts';
+import { RequestContext } from '../core/context';
 import { TenantAwareCrudService } from './../core/crud';
+import { Invoice } from '../core/entities/internal';
 import { InvoiceItem } from './invoice-item.entity';
-import { IBillingLine, saveBillingTime, splitBilledTime } from './invoice-item-billed-time';
+import {
+	assertBillingInOrganization,
+	assertBillingOnInvoice,
+	IBillingLine,
+	saveBillingTime,
+	splitBilledTime
+} from './invoice-item-billed-time';
 import { MikroOrmInvoiceItemRepository } from './repository/mikro-orm-invoice-item.repository';
 import { TypeOrmInvoiceItemRepository } from './repository/type-orm-invoice-item.repository';
 
@@ -54,18 +62,23 @@ export class InvoiceItemService extends TenantAwareCrudService<InvoiceItem> {
 	/**
 	 * Replaces the invoice's lines with the ones given and writes, on each time log they bill, the line that bills it,
 	 * in one transaction. Removing the old lines releases the time they billed; a time log the new lines may not bill
-	 * keeps the old lines, and their time, in place.
+	 * keeps the old lines, and their time, in place. A line that bills time must be a line of this invoice, of its
+	 * organization: the CRUD write holds each line to the caller's boundary only.
 	 *
 	 * @param invoiceId The invoice whose lines are replaced.
 	 * @param lines The new lines, as they are written.
 	 * @param billing The new lines that bill time.
 	 * @returns The new lines.
+	 * @throws BadRequestException when a line bills time on another invoice or of another organization; nothing is saved.
 	 */
 	private async replaceLinesBillingTime(
 		invoiceId: ID,
 		lines: IInvoiceItemCreateInput[],
 		billing: IBillingLine[]
 	): Promise<IInvoiceItem[]> {
+		assertBillingOnInvoice(billing, invoiceId);
+		const invoice = await this.invoiceInCallerTenant(invoiceId);
+		assertBillingInOrganization(billing, invoice?.organizationId);
 		return await saveBillingTime(
 			this,
 			{ typeOrm: this.typeOrmRepository, mikroOrm: this.mikroOrmRepository },
@@ -76,5 +89,20 @@ export class InvoiceItemService extends TenantAwareCrudService<InvoiceItem> {
 			(saved) => saved,
 			billing
 		);
+	}
+
+	/**
+	 * The invoice of that id in the caller's tenant, or `null` when the caller has no tenant or the tenant no such
+	 * invoice. Read through TypeORM on either ORM, as the CRUD base reads the rows it checks a write against.
+	 */
+	private async invoiceInCallerTenant(invoiceId: ID): Promise<Invoice | null> {
+		const tenantId = RequestContext.currentTenantId();
+		if (!tenantId) {
+			return null;
+		}
+		return await this.typeOrmRepository.manager.findOne(Invoice, {
+			where: { id: invoiceId, tenantId },
+			select: { id: true, organizationId: true }
+		});
 	}
 }

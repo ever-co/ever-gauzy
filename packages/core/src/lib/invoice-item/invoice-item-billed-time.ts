@@ -53,10 +53,14 @@ export function mikroOrmNotOnLiveInvoiceKey(): string {
 	return raw((alias: string) => notOnLiveInvoice(`${alias}."invoiceItemId"`), NOT_ON_LIVE_INVOICE_PARAMETERS);
 }
 
-/** A line of a save that bills time: where it stands among the lines saved, its organization, and its time logs. */
+/**
+ * A line of a save that bills time: where it stands among the lines saved, its organization, the invoice it states
+ * (none when it is nested in the invoice it is saved with), and its time logs.
+ */
 export interface IBillingLine {
 	index: number;
 	organizationId: ID;
+	invoiceId?: ID;
 	timeLogIds: ID[];
 }
 
@@ -96,7 +100,7 @@ export function splitBilledTime<L extends IInvoiceItemCreateInput>(lines: L[]): 
 		const timeLogIds = distinctTimeLogIdsOf(line);
 		if (timeLogIds.length > 0) {
 			const organizationId = organizationOf(line);
-			billing.push({ index, organizationId, timeLogIds });
+			billing.push({ index, organizationId, invoiceId: line.invoiceId, timeLogIds });
 		}
 	}
 	return { lines: written, billing };
@@ -116,6 +120,21 @@ export function assertBillingInOrganization(billing: IBillingLine[], invoiceOrga
 		(line) => String(line.organizationId) !== String(invoiceOrganizationId)
 	);
 	if (!invoiceOrganizationId || billsAnotherOrganization) {
+		throw new BadRequestException(TIME_LOG_NOT_BILLABLE);
+	}
+}
+
+/**
+ * Refuses lines that bill time but would be saved on another invoice than the one whose lines are replaced: their
+ * organization is checked against that invoice alone.
+ *
+ * @param billing The lines that bill time.
+ * @param invoiceId The invoice whose lines are replaced.
+ * @throws BadRequestException when a line states another invoice, or none.
+ */
+export function assertBillingOnInvoice(billing: IBillingLine[], invoiceId: ID): void {
+	const billsAnotherInvoice = billing.some((line) => String(line.invoiceId) !== String(invoiceId));
+	if (billsAnotherInvoice) {
 		throw new BadRequestException(TIME_LOG_NOT_BILLABLE);
 	}
 }
