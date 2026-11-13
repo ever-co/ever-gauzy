@@ -24,7 +24,8 @@ const EMPTY_BOOK: ReadonlyMap<string, ChatPresenceEntry> = new Map();
  * Who is here: each person's presence (online, away, offline) and when they were last seen, by employee id, for every
  * avatar and every name the chat shows. Seeded by the people list (`GET /chat/people` answers each person's presence),
  * kept current by the realtime channel's `presence.changed` where the platform streams it, and read again every
- * minute while the tab is shown (the only source where it does not).
+ * minute while the tab is shown (the only source where it does not), and whenever the socket reconnects or the tab is
+ * shown again (a change missed meanwhile).
  *
  * The feed runs while something on screen shows a person ({@link watch}), and for a moment after.
  */
@@ -50,7 +51,8 @@ export class ChatPresenceService {
 			// Back on a person after a while: what is known may be old, so read at once. The first time, the people
 			// list the page loads anyway says it (`ChatPeopleService`), so there is no read of its own.
 			const ticks$ = this.book().size ? this.live.ticks(CHAT_PRESENCE_POLL_MS).pipe(startWith(undefined)) : this.live.ticks(CHAT_PRESENCE_POLL_MS);
-			return merge(events$, ticks$.pipe(coalesceReads(() => this.read())));
+			// A change missed while the socket was down or the tab hidden: read again once it is back.
+			return merge(events$, merge(ticks$, this.live.catchUp$).pipe(coalesceReads(() => this.read())));
 		}),
 		ignoreElements(),
 		share({ resetOnRefCountZero: () => timer(CHAT_PRESENCE_LINGER_MS) })
