@@ -299,6 +299,10 @@ export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateComman
 	 * start never has milliseconds: compared exactly, no slot matched, and every one the log held was released, the ones
 	 * it keeps included.
 	 *
+	 * The start times returned are whole minutes too. The existing slots are regenerated from the log's own start, so a
+	 * log started at 12:53:27.123, as a timer's is, gave 12:50:00.123, 13:00:00.123 and so on: no stored slot was found
+	 * at those times, and the log kept every slot of the time it dropped.
+	 *
 	 * @param slots - The existing time slots.
 	 * @param newSlots - The newly generated time slots.
 	 * @returns An array of conflicting start times that need to be removed.
@@ -308,7 +312,7 @@ export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateComman
 		const kept = new Set(newSlots.map(minuteOf));
 		return slots
 			.filter((existingSlot) => !kept.has(minuteOf(existingSlot)))
-			.map((slot) => new Date(slot.startedAt));
+			.map((slot) => new Date(minuteOf(slot)));
 	}
 
 	/**
