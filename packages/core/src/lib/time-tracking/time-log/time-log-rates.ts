@@ -1,9 +1,13 @@
 import { EntityManager, In } from 'typeorm';
+import { chunk } from 'underscore';
 import { ID, ITimeLog, ITimeLogStoredRates } from '@gauzy/contracts';
 import { Employee, OrganizationProject, OrganizationProjectEmployee, TimeLog } from '../../core/entities/internal';
 import { CURRENT_MEMBERSHIP } from '../../organization-project/organization-project-rate.service';
 
 type Rate = number | string | null | undefined;
+
+/** How many time logs one read of their stored rates names. */
+const STORED_RATES_BATCH = 500;
 
 /**
  * The rates a time log is recorded with: the member's billing and pay rates, the project's client rate and the
@@ -102,24 +106,26 @@ export async function findStoredRatesOf(
 		ID,
 		ITimeLogStoredRates & Pick<ITimeLog, 'billRateValue' | 'billRateCurrency' | 'ratesStored'>
 	>();
-	if (timeLogIds.length === 0) {
-		return stored;
+	const rows: TimeLog[] = [];
+	// A month of a team's time is thousands of logs: read them in batches, under every driver's parameter limit
+	for (const batch of chunk(timeLogIds, STORED_RATES_BATCH)) {
+		const batchRows = await manager.find(TimeLog, {
+			where: { id: In(batch), tenantId },
+			select: {
+				id: true,
+				billRateValue: true,
+				billRateCurrency: true,
+				payRateValue: true,
+				payRateCurrency: true,
+				projectBillRateValue: true,
+				projectMemberBillRateValue: true,
+				projectBillRateCurrency: true,
+				ratesStored: true
+			},
+			withDeleted: true
+		});
+		rows.push(...batchRows);
 	}
-	const rows = await manager.find(TimeLog, {
-		where: { id: In(timeLogIds), tenantId },
-		select: {
-			id: true,
-			billRateValue: true,
-			billRateCurrency: true,
-			payRateValue: true,
-			payRateCurrency: true,
-			projectBillRateValue: true,
-			projectMemberBillRateValue: true,
-			projectBillRateCurrency: true,
-			ratesStored: true
-		},
-		withDeleted: true
-	});
 	for (const row of rows) {
 		stored.set(row.id, {
 			billRateValue: rateOf(row.billRateValue),

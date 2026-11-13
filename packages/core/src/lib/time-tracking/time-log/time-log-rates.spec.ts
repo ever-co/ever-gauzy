@@ -119,6 +119,15 @@ describe('time log rates', () => {
 			expect(options.where.tenantId).toBe('tenant-1');
 		});
 
+		it('reads a long list of logs in batches, under every driver parameter limit', async () => {
+			const manager = { find: jest.fn(async () => []) };
+			const timeLogIds = Array.from({ length: 1200 }, (_, index) => `log-${index}`);
+
+			await findStoredRatesOf(manager as any, timeLogIds, 'tenant-1');
+
+			expect(manager.find).toHaveBeenCalledTimes(3);
+		});
+
 		it('reads nothing for no log', async () => {
 			const manager = { find: jest.fn() };
 
