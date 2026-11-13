@@ -5,6 +5,7 @@ import { EntityRepositoryType } from '@mikro-orm/core';
 import {
 	IsBoolean,
 	IsDateString,
+	IsEmail,
 	IsEnum,
 	IsNumber,
 	IsOptional,
@@ -444,6 +445,29 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee,
 	@ColumnIndex()
 	@MultiORMColumn({ type: 'varchar', length: 16, default: EmployeeKindEnum.HUMAN })
 	kind?: EmployeeKindEnum;
+
+	/**
+	 * Whether this member has no account: a placeholder kept for time and reports only, created by the people who may
+	 * add members (`EmployeePlaceholderService`). Its user has no email and no password, so no sign-in path finds it,
+	 * no access token is issued for it (`AuthService.getJwtAccessToken`) and the timer refuses it. Deliberately absent
+	 * from every create and update DTO: only the placeholder routes set it, and a claim or a merge removes the row.
+	 */
+	@ApiPropertyOptional({ type: () => Boolean, default: false })
+	@IsOptional()
+	@IsBoolean()
+	@MultiORMColumn({ default: false })
+	isPlaceholder?: boolean;
+
+	/**
+	 * The email given when the member without an account was created, if any: shown in member lists and used to invite
+	 * the person to claim their time. Kept here and not on the user, so that no lookup of an account by email (sign-in,
+	 * password reset, invitation, adding a member) ever finds the placeholder.
+	 */
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsEmail()
+	@MultiORMColumn({ nullable: true })
+	placeholderEmail?: string;
 
 	/**
 	 * Enabled/Disabled Screen Capture Feature
