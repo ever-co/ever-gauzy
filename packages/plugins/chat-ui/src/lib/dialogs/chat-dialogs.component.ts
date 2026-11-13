@@ -617,7 +617,7 @@ export class NewChannelDialogComponent implements OnInit, NewChannelContext {
 			.person-row.chosen .check {
 				border-color: var(--color-primary-default);
 				background: var(--color-primary-default);
-				color: #fff;
+				color: var(--text-control-color);
 			}
 			.check nb-icon {
 				font-size: 0.875rem;

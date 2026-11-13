@@ -49,14 +49,14 @@ export type PersonAvatarSize = 'tiny' | 'small' | 'medium' | 'normal' | 'large';
 				height: 0.6875rem;
 				border-radius: 50%;
 				box-sizing: border-box;
-				border: 2px solid var(--chat-raised, var(--gauzy-card-1, #fff));
-				background: #9ca3af;
+				border: 2px solid var(--chat-raised, var(--gauzy-card-1, var(--card-background-color)));
+				background: var(--text-hint-color);
 			}
 			.presence.online {
-				background: #22c55e;
+				background: var(--color-success-default);
 			}
 			.presence.away {
-				background: #f59e0b;
+				background: var(--color-warning-default);
 			}
 			.presence.tiny {
 				width: 0.5rem;

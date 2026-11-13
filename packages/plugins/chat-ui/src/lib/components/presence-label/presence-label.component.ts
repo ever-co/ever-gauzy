@@ -64,7 +64,7 @@ const PRESENCE_LABEL_TICK_MS = 30_000;
 				gap: 0.375rem;
 				font-size: 0.75rem;
 				line-height: 1.2;
-				color: var(--chat-muted, var(--gauzy-text-hint-color, #8f9bb3));
+				color: var(--chat-muted, var(--text-hint-color));
 				white-space: nowrap;
 				overflow: hidden;
 				text-overflow: ellipsis;
@@ -74,13 +74,13 @@ const PRESENCE_LABEL_TICK_MS = 30_000;
 				width: 0.5rem;
 				height: 0.5rem;
 				border-radius: 50%;
-				background: #9ca3af;
+				background: var(--text-hint-color);
 			}
 			.online .dot {
-				background: #22c55e;
+				background: var(--color-success-default);
 			}
 			.away .dot {
-				background: #f59e0b;
+				background: var(--color-warning-default);
 			}
 		`
 	]
