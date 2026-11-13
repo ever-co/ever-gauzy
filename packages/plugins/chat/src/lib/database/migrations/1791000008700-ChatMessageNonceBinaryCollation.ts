@@ -5,14 +5,17 @@ const TABLE = 'chat_message';
 const COLUMN = 'nonce';
 
 /**
- * The case-sensitive collations the nonce can take, the first one the server has taken. None of them makes two stored
- * keys equal that the server's own collations took apart, so no unique index refuses a row when the column moves:
- * - `utf8mb4_0900_bin` (MySQL 8.0.17+) and `utf8mb4_nopad_bin` (MariaDB 10.2+): byte for byte and NO PAD, so a trailing
- *   space counts, as it does under MySQL 8's default `utf8mb4_0900_ai_ci`. Byte equality is the finest comparison there is.
- * - `utf8mb4_0900_as_cs` (MySQL 8.0.1 to 8.0.16, which have the NO PAD `utf8mb4_0900_ai_ci` but no `utf8mb4_0900_bin`):
- *   NO PAD, case- and accent-sensitive, and finer than every other `utf8mb4_0900_*` collation, the default included.
- * - `utf8mb4_bin` (every server): byte for byte, but trailing spaces ignored. Taken only on a server with none of the
- *   above (MySQL 5.7, MariaDB before 10.2), whose collations all ignore trailing spaces already.
+ * The case-sensitive collations the nonce can take. The one taken never makes two stored keys equal that the column's
+ * collation took apart, so no unique index refuses a row when the column moves:
+ * - `utf8mb4_0900_bin` (MySQL 8.0.17+) and `utf8mb4_nopad_bin` (MariaDB 10.2+), whichever the server has: byte for byte
+ *   and NO PAD, so a trailing space counts, as it does under MySQL 8's default `utf8mb4_0900_ai_ci`. Byte equality is the
+ *   finest comparison there is, so either is taken from any collation.
+ * - Without them (MySQL 8.0.1 to 8.0.16, MySQL 5.7, MariaDB before 10.2) it depends on the column's collation:
+ *   - from a `utf8mb4_0900_*` one (NO PAD, MySQL 8.0's default), `utf8mb4_0900_as_cs`: NO PAD too, case- and
+ *     accent-sensitive, and finer than every other `utf8mb4_0900_*` collation (the characters they all ignore, such as
+ *     a zero-width space, it ignores alike);
+ *   - from any other (PAD SPACE: trailing spaces ignored already), `utf8mb4_bin`: byte for byte, trailing spaces ignored
+ *     as before. `utf8mb4_0900_as_cs` is not taken there, since it ignores characters such a collation tells apart.
  */
 export const CHAT_NONCE_COLLATIONS = [
 	'utf8mb4_0900_bin',
@@ -47,7 +50,7 @@ export class ChatMessageNonceBinaryCollation1791000008700 implements MigrationIn
 		if (dialectOf(queryRunner) !== 'mysql') return;
 		const collation = await nonceCollation(queryRunner);
 		if (collation === null) return;
-		const binary = await caseSensitiveCollation(queryRunner);
+		const binary = await caseSensitiveCollation(queryRunner, collation);
 		if (collation === binary) return;
 		// Constant identifiers and type; the collation is one of the constant names above. No value of anyone's goes in.
 		await queryRunner.query(
@@ -85,15 +88,25 @@ async function nonceCollation(queryRunner: QueryRunner): Promise<string | null> 
 	return rows[0]?.columnCollation ?? null;
 }
 
-/** The first of {@link CHAT_NONCE_COLLATIONS} the server has (`utf8mb4_bin` is on every server). */
-async function caseSensitiveCollation(queryRunner: QueryRunner): Promise<(typeof CHAT_NONCE_COLLATIONS)[number]> {
-	const noPad = CHAT_NONCE_COLLATIONS.slice(0, 3);
+/**
+ * The collation of {@link CHAT_NONCE_COLLATIONS} the column moves to from `source`, among those the server has
+ * (`utf8mb4_bin` is on every server).
+ */
+async function caseSensitiveCollation(
+	queryRunner: QueryRunner,
+	source: string
+): Promise<(typeof CHAT_NONCE_COLLATIONS)[number]> {
+	const probed = CHAT_NONCE_COLLATIONS.slice(0, 3);
 	const rows = (await queryRunner.query(
 		'SELECT COLLATION_NAME AS collationName FROM information_schema.COLLATIONS WHERE COLLATION_NAME IN (?, ?, ?)',
-		[...noPad]
+		[...probed]
 	)) as Array<{ collationName?: string }>;
 	const available = new Set(rows.map((row) => row.collationName));
-	return noPad.find((name) => available.has(name)) ?? 'utf8mb4_bin';
+	const exact = (['utf8mb4_0900_bin', 'utf8mb4_nopad_bin'] as const).find((name) => available.has(name));
+	if (exact) return exact;
+	return available.has('utf8mb4_0900_as_cs') && source.startsWith('utf8mb4_0900_')
+		? 'utf8mb4_0900_as_cs'
+		: 'utf8mb4_bin';
 }
 
 /** Whether MySQL refused a statement for a duplicate key (`ER_DUP_ENTRY`, 1062), on the error or on its driver error. */

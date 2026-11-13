@@ -89,6 +89,13 @@ describe('ChatMessageNonceBinaryCollation1791000008700', () => {
 		const done = runner('mysql', 'utf8mb4_0900_as_cs', SERVERS.mysql80early);
 		await migration().up(done as never);
 		expect(ddl(done.statements)).toEqual([]);
+		// From a collation that pads (the table's `utf8mb4_general_ci`, say), `utf8mb4_bin` adds no merge, where
+		// `utf8mb4_0900_as_cs` would take `key` and `key` + U+200B for one key.
+		for (const source of ['utf8mb4_general_ci', 'utf8mb4_unicode_ci']) {
+			const padded = runner('mysql', source, SERVERS.mysql80early);
+			await migration().up(padded as never);
+			expect(ddl(padded.statements)).toEqual([modifyTo('utf8mb4_bin')]);
+		}
 	});
 
 	it('changes nothing when the column is already at the binary collation, or is not there, or holds no text', async () => {
@@ -111,10 +118,12 @@ describe('ChatMessageNonceBinaryCollation1791000008700', () => {
 		}
 	});
 
-	it('moves a column left at utf8mb4_bin to the NO PAD one where the server has it', async () => {
-		const padded = runner('mysql', 'utf8mb4_bin');
-		await migration().up(padded as never);
-		expect(ddl(padded.statements)).toEqual([modifyTo('utf8mb4_0900_bin')]);
+	it('moves a column at any other collation, a binary one included, to the NO PAD one where the server has it', async () => {
+		for (const source of ['utf8mb4_bin', 'utf8mb3_bin', 'latin1_bin', 'utf8mb4_0900_as_cs']) {
+			const other = runner('mysql', source);
+			await migration().up(other as never);
+			expect(ddl(other.statements)).toEqual([modifyTo('utf8mb4_0900_bin')]);
+		}
 	});
 
 	it('sends no statement at all on Postgres and SQLite, which compare text byte for byte already', async () => {
