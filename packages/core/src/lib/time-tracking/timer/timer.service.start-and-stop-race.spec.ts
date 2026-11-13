@@ -1,6 +1,7 @@
 // Must stay first: see timer.service.spec.ts.
 import '../../core/entities/internal';
 
+import { RequestTimeoutException } from '@nestjs/common';
 import { DatabaseTypeEnum, defineConfig } from '@gauzy/config';
 import { ITimeSlot, ITimerToggleInput, TimeLogSourceEnum } from '@gauzy/contracts';
 import { MultiORMEnum } from '../../core/utils';
@@ -618,6 +619,109 @@ describe.each([MultiORMEnum.TypeORM, MultiORMEnum.MikroORM])(
 				await jest.advanceTimersByTimeAsync(1);
 				await expect(second).resolves.toMatchObject({ id: 'run-1', isRunning: true });
 				expect(rows).toEqual([expect.objectContaining({ id: 'run-1', isRunning: true })]);
+			} finally {
+				jest.useRealTimers();
+			}
+		});
+
+		it('lets the starts after one that hung go one at a time, and the one that hung creates no run when it comes back', async () => {
+			jest.useFakeTimers({ doNotFake: ['Date', 'nextTick', 'setImmediate', 'queueMicrotask'] });
+			try {
+				const rows = [runningForAnHour()];
+				const events: string[] = [];
+				let updates = 0;
+				let creates = 0;
+				let finishFirstUpdate: () => void = () => undefined;
+				let finishFirstCreate: () => void = () => undefined;
+				const { service, logger } = setup(rows, {
+					onUpdate: (command) => {
+						updates += 1;
+						events.push(`update ${command.id}`);
+						// The first start's update of the run going hangs until the spec lets it finish
+						return updates === 1
+							? new Promise<void>((resolve) => (finishFirstUpdate = resolve))
+							: undefined;
+					},
+					onCreate: () => {
+						creates += 1;
+						events.push(`create ${creates}`);
+						// The first run written, the second start's, takes a while
+						return creates === 1
+							? new Promise<void>((resolve) => (finishFirstCreate = resolve))
+							: undefined;
+					}
+				});
+
+				const first = start(service, TimeLogSourceEnum.WEB_TIMER).then(
+					() => 'started',
+					(error: Error) => error
+				);
+				const second = start(service, TimeLogSourceEnum.DESKTOP);
+				await jest.advanceTimersByTimeAsync(60_000);
+				const third = start(service, TimeLogSourceEnum.WEB_TIMER);
+
+				// The first has run for the failsafe time: the second goes on, ends the run going and writes its own
+				await jest.advanceTimersByTimeAsync(EMPLOYEE_TURN_FAILSAFE_MS - 60_000);
+				expect(events).toEqual(['update stopped', 'update stopped', 'create 1']);
+
+				// The first comes back once the second has begun: the update it had sent lands, and it creates no run
+				finishFirstUpdate();
+				await expect(first).resolves.toBeInstanceOf(RequestTimeoutException);
+
+				// The third arrived a minute after the others, and its two minutes have passed: it still waits for the
+				// second, which has not hung for the failsafe time
+				await jest.advanceTimersByTimeAsync(EMPLOYEE_TURN_FAILSAFE_MS - 1);
+				expect(events).toEqual(['update stopped', 'update stopped', 'create 1']);
+
+				finishFirstCreate();
+				await expect(second).resolves.toMatchObject({ id: 'run-1' });
+				await expect(third).resolves.toMatchObject({ id: 'run-2', isRunning: true });
+
+				// The third closed the second's run, as a start after it would: one run goes on
+				expect(rows.filter((row) => row.isRunning)).toEqual([expect.objectContaining({ id: 'run-2' })]);
+				expect(rows).toHaveLength(3);
+				expect(logger.warn).toHaveBeenCalledWith(
+					expect.stringContaining(`has run for ${EMPLOYEE_TURN_FAILSAFE_MS} ms`)
+				);
+			} finally {
+				jest.useRealTimers();
+			}
+		});
+
+		it('leaves the run to the start that went on when a stop that hung comes back', async () => {
+			jest.useFakeTimers({ doNotFake: ['Date', 'nextTick', 'setImmediate', 'queueMicrotask'] });
+			try {
+				const rows = [runningForAnHour()];
+				let lookups = 0;
+				let finishStopsLookup: () => void = () => undefined;
+				const { service, employee } = setup(rows, {
+					onConflictLookup: () => {
+						lookups += 1;
+						// The stop's read of the logs its run overlaps hangs until the spec lets it finish
+						return lookups === 1
+							? new Promise<void>((resolve) => (finishStopsLookup = resolve))
+							: undefined;
+					}
+				});
+
+				const stopping = service.stopTimer({ stoppedAt: NOW } as ITimerToggleInput).then(
+					() => 'stopped',
+					(error: Error) => error
+				);
+				const starting = start(service, TimeLogSourceEnum.DESKTOP);
+
+				await jest.advanceTimersByTimeAsync(EMPLOYEE_TURN_FAILSAFE_MS);
+				await expect(starting).resolves.toMatchObject({ id: 'run-1', isRunning: true });
+				// The start ended the Ever Teams run, which never had a heartbeat, at its own start
+				expect(rows[0]).toMatchObject({ id: 'stopped', isRunning: false, stoppedAt: ONE_HOUR_AGO });
+
+				finishStopsLookup();
+				await expect(stopping).resolves.toBeInstanceOf(RequestTimeoutException);
+
+				// The stop wrote nothing: the run keeps the start's end, and the new run goes on
+				expect(rows[0]).toMatchObject({ id: 'stopped', isRunning: false, stoppedAt: ONE_HOUR_AGO });
+				expect(rows[1]).toMatchObject({ id: 'run-1', isRunning: true });
+				expect(employee).toEqual({ isOnline: true, isTrackingTime: true });
 			} finally {
 				jest.useRealTimers();
 			}
