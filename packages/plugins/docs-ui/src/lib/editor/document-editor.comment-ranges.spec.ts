@@ -305,9 +305,9 @@ describe('DocumentEditorComponent: comment ranges', () => {
 				{ threadId: 't9', blockId: 'b1', anchor: { blockId: 'b1', start: 35, end: 43, quote: 'lazy dog' } }
 			]);
 			expect(scrolled).toHaveBeenCalledTimes(1);
-			expect(
-				(fixture.nativeElement as HTMLElement).querySelector('.gz-comment-range--active')?.textContent
-			).toBe('lazy dog');
+			expect((fixture.nativeElement as HTMLElement).querySelector('.gz-comment-range--active')?.textContent).toBe(
+				'lazy dog'
+			);
 
 			// Another thread asked for meanwhile: the first one is not scrolled to any more.
 			expect(component.focusCommentRange('t10')).toBe(false);
@@ -350,7 +350,11 @@ describe('DocumentEditorComponent: comment ranges', () => {
 		}
 	}
 
-	const LAZY_DOG = { threadId: 't1', blockId: 'b1', anchor: { blockId: 'b1', start: 35, end: 43, quote: 'lazy dog' } };
+	const LAZY_DOG = {
+		threadId: 't1',
+		blockId: 'b1',
+		anchor: { blockId: 'b1', start: 35, end: 43, quote: 'lazy dog' }
+	};
 
 	it('keeps a thread asked for before the editor was built, and scrolls to it once its text is drawn', () =>
 		withScroll(async (scrolled) => {
@@ -359,9 +363,9 @@ describe('DocumentEditorComponent: comment ranges', () => {
 				expect(component.focusCommentRange('t1')).toBe(false);
 			});
 			await until(() => scrolled.mock.calls.length > 0, 'the scroll');
-			expect(
-				(fixture.nativeElement as HTMLElement).querySelector('.gz-comment-range--active')?.textContent
-			).toBe('lazy dog');
+			expect((fixture.nativeElement as HTMLElement).querySelector('.gz-comment-range--active')?.textContent).toBe(
+				'lazy dog'
+			);
 		}));
 
 	it('scrolls to a thread asked for before the live page synced, once its text arrives', () =>
@@ -392,7 +396,11 @@ describe('DocumentEditorComponent: comment ranges', () => {
 								{
 									type: 'detailsContent',
 									content: [
-										{ type: 'paragraph', attrs: { blockId: 'b2' }, content: [{ type: 'text', text: 'Hidden text' }] }
+										{
+											type: 'paragraph',
+											attrs: { blockId: 'b2' },
+											content: [{ type: 'text', text: 'Hidden text' }]
+										}
 									]
 								}
 							]

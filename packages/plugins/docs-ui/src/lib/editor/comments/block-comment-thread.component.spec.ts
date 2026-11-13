@@ -334,7 +334,9 @@ describe('BlockCommentThreadComponent: threads made on a range of text', () => {
 		];
 		await render();
 
-		expect((ranges[ranges.length - 1] as Array<{ threadId: string }>).map((range) => range.threadId)).toEqual(['c1']);
+		expect((ranges[ranges.length - 1] as Array<{ threadId: string }>).map((range) => range.threadId)).toEqual([
+			'c1'
+		]);
 		expect(openBlocks[openBlocks.length - 1]).toEqual([]);
 	});
 
