@@ -32,6 +32,7 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { runInThisContext } from 'node:vm';
+import { BadRequestException } from '@nestjs/common';
 import { DataSource, EntitySchema } from 'typeorm';
 import { EntitySchema as MikroEntitySchema, MikroORM } from '@mikro-orm/core';
 import { MySqlDriver } from '@mikro-orm/mysql';
@@ -346,6 +347,20 @@ describe.each(TARGETS)('the remaining due-date filters on $name', (target) => {
 					});
 				});
 			}
+
+			it('refuses a due-date range that ends before it starts, under either ORM', async () => {
+				const west = reader(-240);
+				await seed(west);
+				for (const ormType of orms) {
+					await expect(
+						serviceOn(ormType).getTasksByDateFilters({
+							organizationId: 'org',
+							dueDateFrom: west.today.dueDateTo,
+							dueDateTo: west.today.dueDateFrom
+						} as ITaskDateFilterInput)
+					).rejects.toBeInstanceOf(BadRequestException);
+				}
+			});
 
 			it('keeps a start-date window of its own next to a due-date window', async () => {
 				const west = reader(-240);

@@ -2794,9 +2794,13 @@ export class TaskService extends TenantAwareCrudService<Task> {
 				organizationSprintId,
 				relations
 			} = params;
-			// A due-date range sent with the days of its ends compares a date-only due date with those days.
+			// A due-date range sent with the days of its ends compares a date-only due date with those days. An inverted
+			// range is refused under either ORM (the REST DTO refuses it first; GraphQL reaches this check).
 			const dueFrom = this.validDate(dueDateFrom);
 			const dueTo = this.validDate(dueDateTo);
+			if (dueFrom && dueTo && dueFrom > dueTo) {
+				throw new BadRequestException('"From" date must not be after "to" date');
+			}
 			const dueWindow = this.dueDateWindowOf(params, dueFrom, dueTo);
 
 			switch (this.ormType) {
@@ -2848,9 +2852,6 @@ export class TaskService extends TenantAwareCrudService<Task> {
 					// own, as the driver writes the column (an ISO text compares as text on SQLite, and `:from` / `:to` are
 					// the start date's), with a date-only due date compared with the days when the range carries them.
 					query = addBetween<Task>(query, 'startDate', startDateFrom, startDateTo, p);
-					if (dueFrom && dueTo && dueFrom > dueTo) {
-						throw new BadRequestException('"From" date must not be after "to" date');
-					}
 					const dueDate = dueDateClauseOf(
 						p(`"${query.alias}"."dueDate"`),
 						dueWindow ?? { dueDateFrom: dueFrom ?? undefined, dueDateTo: dueTo ?? undefined },
