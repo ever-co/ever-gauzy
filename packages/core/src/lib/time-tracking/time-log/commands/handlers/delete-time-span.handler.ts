@@ -540,11 +540,7 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 	 * @param forceDelete - Whether to hard delete it (default: false).
 	 * @throws The error of the delete or of the recalculation.
 	 */
-	private async deleteTimeSlotOutsideLog(
-		log: ITimeLog,
-		timeSlot: ITimeSlot,
-		forceDelete: boolean = false
-	): Promise<void> {
+	private async deleteTimeSlotOutsideLog(log: ITimeLog, timeSlot: ITimeSlot, forceDelete = false): Promise<void> {
 		const { organizationId, employeeId } = log;
 		const timeSlotsIds = [timeSlot.id];
 		await this._commandBus.execute(
