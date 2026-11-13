@@ -1,6 +1,7 @@
 import {
 	Injectable,
 	Logger,
+	BadRequestException,
 	NotFoundException,
 	ForbiddenException,
 	ConflictException,
@@ -26,6 +27,7 @@ import {
 	TimeLogType,
 	ITimerStatus,
 	ITimerToggleInput,
+	ITimerDiscardInput,
 	IDateRange,
 	TimeLogSourceEnum,
 	ITimerStatusInput,
@@ -60,6 +62,7 @@ import {
 	IGetConflictTimeLogCommand,
 	ScheduleTimeLogEntriesCommand,
 	TimeLogCreateCommand,
+	TimeLogDeleteCommand,
 	TimeLogUpdateCommand
 } from '../time-log/commands';
 import {
@@ -81,6 +84,7 @@ import {
 	exclusiveWindowEnd,
 	secondsWithinWindow
 } from './timer.helper';
+import { discardDisabledRefusal, discardTooLateRefusal } from './timer-discard-rule';
 import {
 	DAILY_PLAN_REQUIRED,
 	PLAN_RULE_SOURCES,
@@ -869,6 +873,75 @@ export class TimerService {
 		this.debug(() => `Final last calculated stoppedAt: ${stoppedAt}`);
 		// Example log output: "Last calculated stoppedAt: 2024-09-24 20:00:00"
 		return stoppedAt;
+	}
+
+	/**
+	 * Discards the caller's running timer: the run is removed with its time slots, screenshots and activity, through
+	 * the time log delete, as if it never started. The time was never kept, so no permission to delete time is asked.
+	 * The organization may turn discarding off (`allowDiscardTimer`) or allow it only for recent runs
+	 * (`discardTimerWithinMinutes`). Only the caller's running log is removed, never a stopped entry.
+	 *
+	 * @param request The discard, with the running time log it is for when the client names one.
+	 * @throws ForbiddenException with the code TIMER_DISCARD_DISABLED or TIMER_DISCARD_TOO_LATE.
+	 * @throws BadRequestException when no timer runs.
+	 * @throws ConflictException when the discard names another time log than the running one: nothing is removed.
+	 */
+	async discardTimer(request: ITimerDiscardInput): Promise<void> {
+		const employee = await this.findEmployee({ organization: true });
+
+		const disabledRefusal = discardDisabledRefusal(employee.organization);
+		if (disabledRefusal) {
+			throw new ForbiddenException(disabledRefusal);
+		}
+
+		const includeTimeSlots = true;
+		const runningLog = await this.getLastRunningLog(includeTimeSlots);
+		if (!runningLog) {
+			throw new BadRequestException('No timer is running: there is nothing to discard.');
+		}
+
+		this.assertDiscardIsForRunningLog(request, runningLog);
+
+		const tooLateRefusal = discardTooLateRefusal(
+			employee.organization,
+			runningLog.startedAt,
+			moment.utc().toDate()
+		);
+		if (tooLateRefusal) {
+			throw new ForbiddenException(tooLateRefusal);
+		}
+
+		const forceDelete = true;
+		await this._commandBus.execute(new TimeLogDeleteCommand(runningLog as TimeLog, forceDelete));
+
+		const tenantId = RequestContext.currentTenantId() ?? request.tenantId;
+		const { id: employeeId, organizationId } = employee;
+		await this._employeeService.update(employeeId, {
+			isOnline: false,
+			isTrackingTime: false
+		});
+		await this.stopPreviousRunningTimers(employeeId, organizationId, tenantId);
+	}
+
+	/**
+	 * Refuses a discard naming another time log than the running one, as a stop naming one is: it comes from a view
+	 * still showing an earlier run, and would otherwise remove the newer run a start on another device or tab began.
+	 *
+	 * @throws ConflictException when the discard names another time log than the running one.
+	 */
+	private assertDiscardIsForRunningLog(request: ITimerDiscardInput, runningLog: ITimeLog): void {
+		if (!isTimeLogNamed(request)) {
+			return;
+		}
+		// Time log ids are UUIDs, whose letters compare in either case
+		const namesRunningLog = String(request.timeLogId).toLowerCase() === String(runningLog.id).toLowerCase();
+		if (namesRunningLog) {
+			return;
+		}
+		this.logger.warn(`Discard refused: it names another time log than the running one, ${runningLog.id}.`);
+		throw new ConflictException(
+			'This discard names a time log that is not the running one. Nothing was discarded: the running timer goes on.'
+		);
 	}
 
 	/**
