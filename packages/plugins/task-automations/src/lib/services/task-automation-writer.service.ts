@@ -3,6 +3,7 @@ import { CommandBus, EventBus } from '@nestjs/cqrs';
 import {
 	BaseEntityEnum,
 	EmployeeNotificationTypeEnum,
+	ID,
 	IInboxItemWriter,
 	INBOX_ITEM_WRITER,
 	InboxItemBodyFormatEnum,
@@ -21,6 +22,32 @@ import { TaskAutomationTaskReader } from './task-automation-task-reader.service'
 /** The Inbox identity of one notice action of one run: rule, the action's place in the rule, the change (and task). */
 export function noticeExternalId(ruleId: string, actionIndex: number, eventKey: string): string {
 	return `${ruleId}:${actionIndex}:${eventKey}`.slice(0, 250);
+}
+
+/** What a plan does to a list: the ids it adds and the ids it removes, against the list it was planned on. */
+export interface ITaskAutomationListEdit {
+	add: ID[];
+	remove: ID[];
+}
+
+const sameSet = (a: readonly string[], b: readonly string[]): boolean =>
+	a.length === b.length && a.every((id) => b.includes(id));
+
+/** The additions and removals that turn the list a plan was made on into the list it planned. */
+export function listEdit(planned: readonly ID[], next: readonly ID[]): ITaskAutomationListEdit {
+	return {
+		add: [...new Set(next.filter((id) => !planned.includes(id)))],
+		remove: [...new Set(planned.filter((id) => !next.includes(id)))]
+	};
+}
+
+/**
+ * A plan's additions and removals applied to a list as it is now: what was added or removed since the plan was made
+ * stays so, and the list keeps its order, the additions last.
+ */
+export function applyListEdit(current: readonly ID[], edit: ITaskAutomationListEdit): ID[] {
+	const kept = [...new Set(current)].filter((id) => !edit.remove.includes(id));
+	return [...kept, ...edit.add.filter((id) => !kept.includes(id))];
 }
 
 /** How many people a notice reached, and through what. */
@@ -47,7 +74,15 @@ export class TaskAutomationWriter {
 		@Optional() @Inject(INBOX_ITEM_WRITER) private readonly inbox?: IInboxItemWriter
 	) {}
 
-	/** Writes the update; throws what the task update threw. */
+	/**
+	 * Writes the update; throws what the task update threw.
+	 *
+	 * The plan's assignee and label lists were computed from `task`, read when the run began. The run's lock keeps
+	 * other automations out, not a person's edit, and the task update replaces whole lists: written as planned, a list
+	 * would put back an assignee removed since, or drop a label added since. So the lists are not written as planned:
+	 * the rule's additions and removals are applied to the lists as stored just before the write, and a list they
+	 * leave as it is is not written at all.
+	 */
 	async applyUpdate(task: ITaskAutomationTaskSnapshot, update: ITaskAutomationTaskUpdate, marker: ITaskAutomationActorMarker): Promise<void> {
 		const input: Record<string, unknown> = { organizationId: task.organizationId };
 		if ('status' in update) {
@@ -58,8 +93,18 @@ export class TaskAutomationWriter {
 			input['priority'] = update.priority;
 			input['taskPriorityId'] = update.taskPriorityId ?? null;
 		}
-		if (update.memberIds) input['members'] = update.memberIds.map((id) => ({ id }));
-		if (update.tagIds) input['tags'] = update.tagIds.map((id) => ({ id }));
+		const members = update.memberIds ? listEdit(task.memberIds, update.memberIds) : null;
+		const tags = update.tagIds ? listEdit(task.tagIds, update.tagIds) : null;
+		if (members || tags) {
+			const current = await this.reader.lists(task.tenantId, task.id);
+			if (!current) throw new Error('The task no longer exists.');
+			const memberIds = members ? applyListEdit(current.memberIds, members) : null;
+			if (memberIds && !sameSet(memberIds, current.memberIds)) input['members'] = memberIds.map((id) => ({ id }));
+			const tagIds = tags ? applyListEdit(current.tagIds, tags) : null;
+			if (tagIds && !sameSet(tagIds, current.tagIds)) input['tags'] = tagIds.map((id) => ({ id }));
+		}
+		// What the rule was to change is already so (an edit since made it): nothing to write.
+		if (Object.keys(input).length === 1) return;
 		const user = automationUser({ tenantId: task.tenantId, organizationId: task.organizationId }, marker);
 		await runAsAutomation(user, () => this.commandBus.execute(new TaskUpdateCommand(task.id, input as unknown as ITaskUpdateInput)));
 	}
