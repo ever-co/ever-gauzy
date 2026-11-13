@@ -16,7 +16,7 @@ import {
 	SPAN_TIMESHEET_ID,
 	TimeSpanStore
 } from '../testing/time-span-store';
-import { TimeLogUpdateCommand } from './commands';
+import { TimeLogCreateCommand, TimeLogUpdateCommand } from './commands';
 import { TypeOrmTimeLogRepository } from './repository/type-orm-time-log.repository';
 import { TimeLogService } from './time-log.service';
 
@@ -239,6 +239,48 @@ describe('TimeLogService: manual time over another entry of the same member', ()
 			['13:36', '13:38', ['13:30']]
 		]);
 		expect(store.timeSlotDurations()).toEqual([['13:30', 480]]);
+	});
+
+	/**
+	 * The recount ran only once every cut and the save had succeeded. When the save failed after a cut, the slot the cut
+	 * entry still holds kept the time of the whole entry (360 seconds for the 120 it has left).
+	 */
+	it('a slot the cut entry holds counts what is left of it when the manual entry then fails to save', async () => {
+		store.addTimeLog('manual', '13:32', '13:38', MANUAL_ENTRY);
+		store.failOn(TimeLogCreateCommand);
+
+		await expect(addManualTime('13:30', '13:36')).rejects.toThrow('The database connection was lost');
+
+		expect(store.shapes()).toEqual([['13:36', '13:38', ['13:30']]]);
+		expect(store.timeSlotDurations()).toEqual([['13:30', 120]]);
+	});
+
+	it('a slot the cut entry holds counts what is left of it when the moved entry then fails to save', async () => {
+		store.addTimeLog('moved', '09:00', '10:00', MANUAL_ENTRY);
+		store.addTimeLog('tracked', '10:32', '10:38');
+		const dispatch = store.execute.getMockImplementation();
+		store.execute.mockImplementation((command: unknown) => {
+			const updatesTheMovedEntry =
+				command instanceof TimeLogUpdateCommand && (command.id as { id?: string })?.id === 'moved';
+			if (updatesTheMovedEntry) {
+				return Promise.reject(new Error('The database connection was lost'));
+			}
+			return dispatch(command);
+		});
+
+		await expect(service.updateManualTime('moved', entry(at('10:00'), at('10:36')))).rejects.toThrow(
+			'The database connection was lost'
+		);
+
+		expect(store.timeSlotDurations()).toEqual([
+			['09:00', 600],
+			['09:10', 600],
+			['09:20', 600],
+			['09:30', 600],
+			['09:40', 600],
+			['09:50', 600],
+			['10:30', 120]
+		]);
 	});
 
 	it('a slot an entry moved over another shares with what is left of it counts the time of both', async () => {

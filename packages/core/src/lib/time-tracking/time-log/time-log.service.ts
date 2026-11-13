@@ -4,6 +4,7 @@ import {
 	ConflictException,
 	ForbiddenException,
 	HttpException,
+	Logger,
 	NotAcceptableException,
 	NotFoundException
 } from '@nestjs/common';
@@ -98,6 +99,8 @@ export const RUNNING_TIMER_OVERLAP = 'RUNNING_TIMER_OVERLAP';
 
 @Injectable()
 export class TimeLogService extends TenantAwareCrudService<TimeLog> {
+	private readonly logger = new Logger(TimeLogService.name);
+
 	constructor(
 		readonly typeOrmTimeLogRepository: TypeOrmTimeLogRepository,
 		readonly mikroOrmTimeLogRepository: MikroOrmTimeLogRepository,
@@ -2059,15 +2062,23 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 
 	/**
 	 * Gives the slots manual time shares with the entries it overlapped the time those entries spend in them, once the
-	 * manual entry is saved. Manual time that overlapped no slot sends nothing.
+	 * manual entry is saved, or once its save failed after the overlapped entries were cut. Manual time that overlapped
+	 * no slot, or failed before any cut, sends nothing. It never throws: its failure is logged, so the error of a failed
+	 * save stays the one reported.
 	 *
 	 * @param input The employee and the slots the overlapped entries held within the manual time.
 	 */
-	private async recalculateSharedTimeSlots(input: ITimeSlotDurationRecalculateInput): Promise<void> {
-		if (isEmpty(input.timeSlotsIds)) {
+	private async recalculateSharedTimeSlots(input: ITimeSlotDurationRecalculateInput | undefined): Promise<void> {
+		if (isEmpty(input?.timeSlotsIds)) {
 			return;
 		}
-		await this.commandBus.execute(new TimeSlotDurationRecalculateCommand(input));
+		try {
+			await this.commandBus.execute(new TimeSlotDurationRecalculateCommand(input));
+		} catch (error) {
+			this.logger.warn(`Error while recalculating the slots manual time shares: ${error?.message ?? error}`, {
+				stack: error?.stack
+			});
+		}
 	}
 
 	/**
@@ -2077,6 +2088,8 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 	 * @returns The created time log entry.
 	 */
 	async addManualTime(request: IManualTimeEntry): Promise<ITimeLog> {
+		// The slots the overlapped entries share with the new one, known once the overlap is read
+		let sharedTimeSlots: ITimeSlotDurationRecalculateInput | undefined;
 		try {
 			const tenantId = RequestContext.currentTenantId();
 			const { employeeId, startedAt, stoppedAt } = request;
@@ -2134,6 +2147,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 				end: new Date(stoppedAt)
 			};
 			const timeSlotsIds = timeSlotIdsReachedBy(times, conflicts);
+			sharedTimeSlots = { organizationId, employeeId, tenantId, timeSlotsIds };
 
 			// Resolve conflicts: each conflicting time log loses the new entry's time and keeps the rest
 			if (conflicts?.length) {
@@ -2144,20 +2158,19 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 
 			// Create the new time log entry. The handler reads it back through this service, whose employee
 			// filter would not find a log written for a member the caller manages.
-			const createdTimeLog = await this.withoutEmployeeFilter(() =>
+			return await this.withoutEmployeeFilter(() =>
 				this.commandBus.execute(new TimeLogCreateCommand({ ...entry, organizationId }))
 			);
-
-			// Those slots still count the overlapped time, and the new entry joined them without adding its own
-			await this.recalculateSharedTimeSlots({ organizationId, employeeId, tenantId, timeSlotsIds });
-
-			return createdTimeLog;
 		} catch (error) {
 			// Never swallow the reason: a blanket message here hid a real database failure indefinitely.
 			if (error instanceof HttpException) {
 				throw error;
 			}
 			throw new BadRequestException(`Failed to add manual time log: ${error?.message ?? error}`);
+		} finally {
+			// Those slots still count the overlapped time, and the new entry joined them without adding its own. Counted
+			// again after a failure too: the entries cut before it no longer hold that time.
+			await this.recalculateSharedTimeSlots(sharedTimeSlots);
 		}
 	}
 
@@ -2169,6 +2182,8 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 	 * @returns The updated time log entry.
 	 */
 	async updateManualTime(id: ID, request: IManualTimeInput): Promise<ITimeLog> {
+		// The slots the overlapped entries share with the edited one, known once the overlap is read
+		let sharedTimeSlots: ITimeSlotDurationRecalculateInput | undefined;
 		try {
 			const tenantId = RequestContext.currentTenantId();
 			const { startedAt, stoppedAt, employeeId } = request;
@@ -2244,6 +2259,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 
 			const times: IDateRange = { start: new Date(startedAt), end: new Date(stoppedAt) };
 			const timeSlotsIds = timeSlotIdsReachedBy(times, conflicts);
+			sharedTimeSlots = { organizationId: timeLog.organizationId, employeeId, tenantId, timeSlotsIds };
 
 			// Resolve conflicts: each conflicting time log loses the edited entry's time and keeps the rest
 			if (conflicts?.length) {
@@ -2258,14 +2274,6 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			// Execute the command to update the time log
 			await this.commandBus.execute(new TimeLogUpdateCommand(request, timeLog));
 
-			// Those slots still count the overlapped time, and the edited entry joined them without adding its own
-			await this.recalculateSharedTimeSlots({
-				organizationId: timeLog.organizationId,
-				employeeId,
-				tenantId,
-				timeSlotsIds
-			});
-
 			// Retrieve the updated time log entry (a member's log, for a manager: same scope as the read above)
 			return await this.withoutEmployeeFilter(() => this.findOneByIdString(id));
 		} catch (error) {
@@ -2274,6 +2282,10 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 				throw error;
 			}
 			throw new BadRequestException(`Failed to update manual time log: ${error?.message ?? error}`);
+		} finally {
+			// Those slots still count the overlapped time, and the edited entry joined them without adding its own.
+			// Counted again after a failure too: the entries cut before it no longer hold that time.
+			await this.recalculateSharedTimeSlots(sharedTimeSlots);
 		}
 	}
 
