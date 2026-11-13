@@ -208,6 +208,14 @@ describe('GithubTaskLinkService', () => {
 			});
 		});
 
+		it('reports a pull request an imported Linear, Asana or Trello attachment points at (kept as a link of the task)', async () => {
+			const task = await createTask();
+			// What the attachment imports write: a link of the task, with the attachment's address.
+			await link(task, 'https://github.com/acme/site/pull/7#partial-pull-merging');
+			expect(await service.pullRequestClosed('delivery-1', pullRequest())).toBe(1);
+			expect(published).toEqual([expect.objectContaining({ taskId: task, kind: 'pull_request' })]);
+		});
+
 		it('reports a pull request closed without merging, saying so', async () => {
 			const task = await createTask();
 			await link(task, 'https://github.com/acme/site/pull/7');

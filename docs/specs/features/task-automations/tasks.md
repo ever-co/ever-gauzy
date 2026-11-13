@@ -3,7 +3,7 @@
 **Feature ID**: `task-automations`
 **Plan**: `./plan.md`
 **Status**: `Phase 1 and 2 merged; Phase 3 (Ever Teams) in review`
-**Last updated**: 2026-11-12
+**Last updated**: 2026-11-13
 
 ---
 
@@ -36,4 +36,7 @@
 ## Follow-ups
 
 - [ ] **T16**. An integration that reports `task_link.closed` (GitHub pull requests, Linear / Asana / Trello attachments) so the link-closed template fires
+  (in review: GitHub pull requests and issues report it — a task link to the item, the task's reference in the pull
+  request's title or branch, the mirrored issue — once per task and link; Linear, Asana and Trello attachments carry no
+  state to report (spec FR-20), and one that points at GitHub is reported by the GitHub integration)
 - [ ] **T17**. Read-only view of the rules for members (open question in the spec)
