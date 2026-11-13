@@ -1,4 +1,17 @@
-import { ChangeDetectionStrategy, Component, computed, DestroyRef, Inject, NgZone, signal } from '@angular/core';
+import {
+	afterNextRender,
+	ChangeDetectionStrategy,
+	Component,
+	computed,
+	DestroyRef,
+	ElementRef,
+	HostListener,
+	Inject,
+	inject,
+	Injector,
+	NgZone,
+	signal
+} from '@angular/core';
 import { Location } from '@angular/common';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
@@ -92,32 +105,75 @@ export class DownloadsComponent {
 	/** Cache for {@link lastCaptureAgo}, keyed by language. */
 	private captureAgo = { lang: '', text: '' };
 
+	private readonly injector = inject(Injector);
+
+	/** Viewer asked for less motion: the scripted loop stays on its first frame. */
+	private readonly reducedMotion =
+		typeof window !== 'undefined' && !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+
 	/**
-	 * Seconds since the page opened: the one clock every animated drawing reads, so a cursor's
-	 * click and the timer it starts or stops always land on the same frame. It stays at 0 (a still
-	 * picture) for viewers who ask for reduced motion.
+	 * Seconds of scripted loop played: the one clock both cursors read, so a cursor's click and the
+	 * timer it starts or stops always land on the same frame. Advances only while a drawing is on
+	 * screen and the tab is visible (see {@link startAnimationClock}).
 	 */
 	private readonly tick = signal(0);
 	private readonly step = computed(() => this.tick() % LOOP_SECONDS);
 
-	/** Desktop window: a clock that keeps running from 00:00:05, and the cursor's step. */
-	readonly desktopClock = computed(() => formatClock(5 + this.tick()));
+	/**
+	 * Hands-on mode: while the pointer is over a drawing, its cursor steps aside and the drawn
+	 * timer answers the visitor's own clicks instead of the script.
+	 */
+	readonly desktopTakeover = signal(false);
+	readonly extensionTakeover = signal(false);
+
+	/** Desktop window: a clock running from 00:00:05 (the visitor can pause it), and the cursor's step. */
+	readonly desktopRunning = signal(true);
+	private readonly desktopSeconds = signal(5);
+	readonly desktopClock = computed(() => formatClock(this.desktopSeconds()));
 	readonly desktopCursor = computed(() => DESKTOP_SCRIPT[this.step()]);
 
+	/** Browser extension: the visitor's own session, used in hands-on mode. */
+	private readonly manualRunning = signal(false);
+	private readonly manualSeconds = signal(0);
+
 	/** Browser extension: whether the drawn timer is running, its reading, and the cursor's step. */
-	readonly extensionRunning = computed(() => this.step() >= EXTENSION_START && this.step() < EXTENSION_STOP);
-	readonly extensionClock = computed(() => formatClock(this.extensionRunning() ? this.step() - EXTENSION_START : 0));
+	readonly extensionRunning = computed(() =>
+		this.extensionTakeover() ? this.manualRunning() : this.step() >= EXTENSION_START && this.step() < EXTENSION_STOP
+	);
+	readonly extensionClock = computed(() => {
+		if (this.extensionTakeover()) {
+			return formatClock(this.manualSeconds());
+		}
+		return formatClock(this.extensionRunning() ? this.step() - EXTENSION_START : 0);
+	});
 	readonly extensionCursor = computed(() => EXTENSION_SCRIPT[this.step()]);
+
+	/**
+	 * Set once the visitor clicks a desktop download: opens the setup steps under the button for
+	 * that platform. Desktop links open in a new tab, so this page stays put to show them.
+	 */
+	readonly startedDownload = signal<IDesktopDownload | null>(null);
+	/** Where the desktop app should connect: this installation's API, as the About page shows it. */
+	readonly apiHost: string;
+	/** The API is Gauzy's own cloud, so the desktop app's "Live" option is the one to pick. */
+	readonly isLiveServer: boolean;
+	readonly apiHostCopied = signal(false);
+	private copiedTimer: ReturnType<typeof setTimeout> | null = null;
+
+	/** Opened on a phone: the Mobile card leads the page. */
+	readonly isPhone = detectPhone();
 
 	constructor(
 		@Inject(GAUZY_ENV) environment: Environment,
 		private readonly location: Location,
 		private readonly router: Router,
 		private readonly translateService: TranslateService,
+		private readonly host: ElementRef<HTMLElement>,
 		ngZone: NgZone,
 		destroyRef: DestroyRef
 	) {
 		this.startAnimationClock(ngZone, destroyRef);
+		destroyRef.onDestroy(() => this.copiedTimer && clearTimeout(this.copiedTimer));
 
 		const desktops: IDesktopDownload[] = [
 			{
@@ -146,6 +202,74 @@ export class DownloadsComponent {
 		this.mobileUrl = environment.MOBILE_APP_DOWNLOAD_LINK || '';
 		this.extensionUrl = environment.EXTENSION_DOWNLOAD_LINK || '';
 		this.allDownloadsUrl = environment.PLATFORM_WEBSITE_DOWNLOAD_URL || '';
+
+		this.apiHost = environment.API_BASE_URL || (typeof window !== 'undefined' ? window.location.origin : '');
+		this.isLiveServer = isGauzyCloud(this.apiHost);
+	}
+
+	/** A desktop download link was clicked: show the setup steps for that platform. */
+	onDesktopDownload(download: IDesktopDownload): void {
+		this.startedDownload.set(download);
+	}
+
+	/**
+	 * Copies the API host for the desktop app's setup; the button reads "Copied!" for 1.5s.
+	 * `navigator.clipboard` exists only in secure contexts, so a self-hosted install opened over
+	 * plain HTTP falls back to a selected textarea + `execCommand('copy')` (as on the About page).
+	 */
+	copyApiHost(): void {
+		const done = () => {
+			this.apiHostCopied.set(true);
+			if (this.copiedTimer) {
+				clearTimeout(this.copiedTimer);
+			}
+			this.copiedTimer = setTimeout(() => this.apiHostCopied.set(false), 1500);
+		};
+		if (navigator?.clipboard?.writeText) {
+			navigator.clipboard
+				.writeText(this.apiHost)
+				.then(done)
+				.catch(() => copyWithSelection(this.apiHost) && done());
+			return;
+		}
+		if (copyWithSelection(this.apiHost)) {
+			done();
+		}
+	}
+
+	/** Hands-on desktop window: pointer in → the visitor drives; pointer out → back to the script. */
+	setDesktopTakeover(active: boolean): void {
+		this.desktopTakeover.set(active);
+		if (!active) {
+			this.desktopRunning.set(true);
+		}
+	}
+
+	/** The drawn desktop pause / play button. */
+	toggleDesktopTimer(): void {
+		this.desktopRunning.update((running) => !running);
+	}
+
+	/** Hands-on extension timer: each visit starts from a stopped 00:00:00. */
+	setExtensionTakeover(active: boolean): void {
+		this.extensionTakeover.set(active);
+		this.manualRunning.set(false);
+		this.manualSeconds.set(0);
+	}
+
+	/** The drawn extension play / pause button; stopping resets the session, as the web timer does. */
+	toggleExtensionTimer(): void {
+		const running = !this.manualRunning();
+		this.manualRunning.set(running);
+		if (!running) {
+			this.manualSeconds.set(0);
+		}
+	}
+
+	/** Esc leaves the page, like the top bar's back arrow. */
+	@HostListener('document:keydown.escape')
+	onEscape(): void {
+		this.goBack();
 	}
 
 	/**
@@ -170,16 +294,64 @@ export class DownloadsComponent {
 	}
 
 	/**
-	 * Advances {@link tick} once a second. The interval runs outside Angular's zone so it does not
-	 * run change detection for the whole app every second; the signal write refreshes only this
-	 * view. Not started at all when the viewer prefers reduced motion.
+	 * The drawings' one-second clock. Each second it advances the scripted loop, the desktop clock
+	 * and the visitor's own extension session — but only while an animated drawing is on screen and
+	 * the tab is visible, so a background tab or a scrolled-away page costs nothing. The interval
+	 * runs outside Angular's zone so it does not run change detection for the whole app; the signal
+	 * writes refresh only this view. For reduced motion the script and the self-running clock stay
+	 * still, while a visitor's own clicks on the drawn timers still count.
 	 */
 	private startAnimationClock(ngZone: NgZone, destroyRef: DestroyRef): void {
-		if (typeof window === 'undefined' || window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) {
+		if (typeof window === 'undefined') {
 			return;
 		}
-		const timer = ngZone.runOutsideAngular(() => setInterval(() => this.tick.update((t) => t + 1), 1000));
-		destroyRef.onDestroy(() => clearInterval(timer));
+		const onScreen = new Set<Element>();
+		let observer: IntersectionObserver | null = null;
+
+		// The drawings exist only after the first render; until the observer reports, assume visible.
+		afterNextRender(
+			() => {
+				if (typeof IntersectionObserver === 'undefined') {
+					return;
+				}
+				const io = new IntersectionObserver((entries) => {
+					for (const entry of entries) {
+						if (entry.isIntersecting) {
+							onScreen.add(entry.target);
+						} else {
+							onScreen.delete(entry.target);
+						}
+					}
+				});
+				this.host.nativeElement.querySelectorAll('.art-desktop, .art-extension').forEach((target) => {
+					onScreen.add(target);
+					io.observe(target);
+				});
+				observer = io;
+			},
+			{ injector: this.injector }
+		);
+
+		const timer = ngZone.runOutsideAngular(() =>
+			setInterval(() => {
+				if (document.hidden || (observer && onScreen.size === 0)) {
+					return;
+				}
+				if (!this.reducedMotion) {
+					this.tick.update((t) => t + 1);
+				}
+				if (this.desktopRunning() && (!this.reducedMotion || this.desktopTakeover())) {
+					this.desktopSeconds.update((s) => s + 1);
+				}
+				if (this.extensionTakeover() && this.manualRunning()) {
+					this.manualSeconds.update((s) => s + 1);
+				}
+			}, 1000)
+		);
+		destroyRef.onDestroy(() => {
+			clearInterval(timer);
+			observer?.disconnect();
+		});
 	}
 
 	/**
@@ -196,6 +368,46 @@ export class DownloadsComponent {
 			this.router.navigateByUrl('/pages/dashboard');
 		}
 	}
+}
+
+/** A phone (not a tablet or desktop), where the mobile app is the one to offer first. */
+function detectPhone(): boolean {
+	if (typeof navigator === 'undefined') {
+		return false;
+	}
+	const hints = (navigator as Navigator & { userAgentData?: { mobile?: boolean } }).userAgentData;
+	if (typeof hints?.mobile === 'boolean') {
+		return hints.mobile;
+	}
+	return /iphone|ipod|android.*mobile|windows phone/i.test(navigator.userAgent ?? '');
+}
+
+/** Gauzy's own cloud API (api.gauzy.co and its subdomains), which the desktop app reaches as "Live". */
+function isGauzyCloud(apiHost: string): boolean {
+	try {
+		return /(^|\.)gauzy\.co$/i.test(new URL(apiHost).hostname);
+	} catch {
+		return false;
+	}
+}
+
+/** Legacy copy path for non-secure contexts. Returns whether the browser reported success. */
+function copyWithSelection(value: string): boolean {
+	const field = document.createElement('textarea');
+	field.value = value;
+	field.setAttribute('readonly', '');
+	field.style.position = 'fixed';
+	field.style.opacity = '0';
+	document.body.appendChild(field);
+	field.select();
+	let copied = false;
+	try {
+		copied = document.execCommand('copy');
+	} catch {
+		copied = false;
+	}
+	document.body.removeChild(field);
+	return copied;
 }
 
 /** Seconds as `HH:MM:SS`, the way both timers show a reading. */
