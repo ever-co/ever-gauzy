@@ -473,4 +473,24 @@ describe('BlockCommentThreadComponent: threads made on a range of text', () => {
 		await switchPage(OTHER_PAGE);
 		expect(element().querySelector('.gz-block-composer-range')).toBeNull();
 	});
+
+	it('keeps offering ranges after a 404 that names the comment, and stops after one that says there are none', async () => {
+		await render({ blockId: 'b1', range: SELECTION });
+		const offered = () => !!element().querySelector('.gz-block-composer-range');
+
+		comments.setAnchorError = { status: 404, error: { code: 'DOCS_COMMENT_NOT_FOUND' } };
+		component.draft = 'First';
+		await component.post();
+		fixture.componentRef.setInput('range', { ...SELECTION });
+		fixture.detectChanges();
+		expect(offered()).toBe(true);
+
+		comments.setAnchorError = { status: 404, error: { code: 'DOCS_COLLAB_DISABLED' } };
+		component.draft = 'Second';
+		await component.post();
+		fixture.componentRef.setInput('range', { ...SELECTION });
+		fixture.detectChanges();
+		expect(offered()).toBe(false);
+		expect(comments.created).toHaveLength(2);
+	});
 });
