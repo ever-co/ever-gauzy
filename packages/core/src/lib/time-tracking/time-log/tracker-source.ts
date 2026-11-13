@@ -16,3 +16,18 @@ const TRACKER_SOURCES: ReadonlyArray<string> = [TimeLogSourceEnum.DESKTOP];
 export function isTrackerSource(source: string | null | undefined): boolean {
 	return TRACKER_SOURCES.includes(source);
 }
+
+/**
+ * The clients that post a time slot on each heartbeat of a run: Ever Teams (every minute) and its mobile app. The time
+ * slots of their runs say how long they went, and a run of theirs without one died before its first heartbeat.
+ */
+const HEARTBEAT_SLOT_SOURCES: ReadonlyArray<string> = [TimeLogSourceEnum.TEAMS, TimeLogSourceEnum.MOBILE];
+
+/**
+ * Whether a run comes from a client that posts a time slot on each heartbeat (Ever Teams, mobile).
+ *
+ * @param source The run's source.
+ */
+export function postsHeartbeatSlots(source: string | null | undefined): boolean {
+	return HEARTBEAT_SLOT_SOURCES.includes(source);
+}
