@@ -663,7 +663,7 @@ export class TimerService {
 		}
 
 		// A stop meant for another run is refused before anything is written, and the running log goes on
-		this.assertStopIsForRunningLog(request, lastLog);
+		this.assertStopIsForRunningLog(request, lastLog, receivedAt);
 
 		// Calculate stoppedAt date or use current date if not provided
 		const stoppedAt = await this.calculateStoppedAt(request, lastLog, receivedAt);
@@ -735,17 +735,22 @@ export class TimerService {
 	 * - one naming another time log than the running one (`timeLogId`) is refused with 409;
 	 * - one asking to stop the running log before it started, as a stop carrying the earlier run's dates does, is
 	 *   refused with 406, as a stop with nothing running is, so a client takes it as "already stopped". It used to
-	 *   close the newer run at zero duration.
+	 *   close the newer run at zero duration;
+	 * - one naming no time that arrived before the running log started is refused with 406 too: a start that got the
+	 *   employee's turn first (`inEmployeeTurn`) stopped the run this stop was for and began a newer one, which the
+	 *   stop, ending at the time it arrived, would otherwise close (CodeRabbit on #11931).
 	 *
-	 * Only the time the client asks for is checked: the end a desktop stop gets from its time slots
-	 * (`calculateStoppedAt`) may fall before the start, and that stop still closes the log, as before.
+	 * Only the time the client asks for, or the time the stop arrived, is checked: the end a desktop stop gets from its
+	 * time slots (`calculateStoppedAt`) may fall before the start, and that stop still closes the log, as before.
 	 *
 	 * @param request - The stop, as the client sent it.
 	 * @param runningLog - The employee's running log, the one the stop would end.
+	 * @param receivedAt - When the stop arrived, before it waited for its turn; the stop's end when it names none.
 	 * @throws ConflictException when the stop names another time log than the running one.
-	 * @throws NotAcceptableException when the requested `stoppedAt` is before the running log's `startedAt`.
+	 * @throws NotAcceptableException when the stop's end (the requested `stoppedAt`, else the time it arrived) is
+	 *   before the running log's `startedAt`.
 	 */
-	private assertStopIsForRunningLog(request: ITimerToggleInput, runningLog: ITimeLog): void {
+	private assertStopIsForRunningLog(request: ITimerToggleInput, runningLog: ITimeLog, receivedAt?: Date): void {
 		// Time log ids are UUIDs, whose letters compare in either case
 		const namesAnotherLog =
 			isTimeLogNamed(request) && String(request.timeLogId).toLowerCase() !== String(runningLog.id).toLowerCase();
@@ -756,17 +761,20 @@ export class TimerService {
 			);
 		}
 
+		// The stop's end: the time it asks for, else the time it arrived (`calculateStoppedAt`)
 		const asksForStopTime = isNotEmpty(request.stoppedAt);
-		if (!asksForStopTime) {
+		const stopTime = asksForStopTime ? request.stoppedAt : receivedAt;
+		if (!isNotEmpty(stopTime)) {
 			return;
 		}
 
-		const requestedStoppedAt = moment.utc(request.stoppedAt);
+		const requestedStoppedAt = moment.utc(stopTime);
 		const runningSince = moment.utc(runningLog.startedAt);
 		const stopsBeforeStart = requestedStoppedAt.isBefore(runningSince);
 		if (stopsBeforeStart) {
+			const what = asksForStopTime ? 'Stop at' : 'Stop (naming no time) received at';
 			this.logger.warn(
-				`Stop at ${requestedStoppedAt.toISOString()} refused: the running log ${runningLog.id} started after it, at ${runningSince.toISOString()}.`
+				`${what} ${requestedStoppedAt.toISOString()} refused: the running log ${runningLog.id} started after it, at ${runningSince.toISOString()}.`
 			);
 			throw new NotAcceptableException(
 				'No running log found for this stop: the running timer started after the requested stop time.'

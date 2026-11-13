@@ -189,6 +189,56 @@ describe.each([MultiORMEnum.TypeORM, MultiORMEnum.MikroORM])(
 			expect(update.input).toEqual({ isRunning: false, stoppedAt: NOW });
 		});
 
+		it('answers 406 to a stop naming no time when a start took the turn after it arrived, and the newer run goes on', async () => {
+			const rows = [runningSince1030()];
+			const { service, execute, employeeService, stopPreviousRunningTimers, handleConflictingTimeLogs } =
+				setup(rows);
+			// The stop arrives at 11:30 (NOW). While it looks up the employee, before it takes the employee's turn, a
+			// start from another device gets the turn first: it stops the 10:30 run and begins one at 11:30:05.
+			const newerRun: TimeLogRow = {
+				...runningSince1030(),
+				id: 'log-newer',
+				source: TimeLogSourceEnum.WEB_TIMER,
+				startedAt: new Date('2026-11-12T11:30:05.000Z'),
+				stoppedAt: new Date('2026-11-12T11:30:05.000Z'),
+				createdAt: new Date('2026-11-12T11:30:05.000Z')
+			};
+			employeeService.findOneByUserId.mockImplementationOnce(async () => {
+				Object.assign(rows[0], { isRunning: false, stoppedAt: new Date('2026-11-12T11:30:05.000Z') });
+				rows.push(newerRun);
+				jest.spyOn(Date, 'now').mockReturnValue(new Date('2026-11-12T11:30:06.000Z').getTime());
+				return employee;
+			});
+
+			const stop = service.stopTimer(stopBody({ source: TimeLogSourceEnum.TEAMS }));
+
+			await expect(stop).rejects.toBeInstanceOf(NotAcceptableException);
+			expect(execute).not.toHaveBeenCalled();
+			expect(employeeService.update).not.toHaveBeenCalled();
+			expect(stopPreviousRunningTimers).not.toHaveBeenCalled();
+			expect(handleConflictingTimeLogs).not.toHaveBeenCalled();
+			expect(rows.find((row) => row.id === 'log-newer')).toMatchObject({
+				isRunning: true,
+				stoppedAt: new Date('2026-11-12T11:30:05.000Z')
+			});
+		});
+
+		it('stops a run that started before a stop naming no time arrived, at the time it arrived', async () => {
+			const rows = [runningSince1030()];
+			const { service, execute, employeeService } = setup(rows);
+			// The stop waits for its turn: by then it is 11:30:20, but it arrived at 11:30 (NOW)
+			employeeService.findOneByUserId.mockImplementationOnce(async () => {
+				jest.spyOn(Date, 'now').mockReturnValue(new Date('2026-11-12T11:30:20.000Z').getTime());
+				return employee;
+			});
+
+			await service.stopTimer(stopBody({ source: TimeLogSourceEnum.TEAMS }));
+
+			const update = sentUpdate(execute);
+			expect(update.id).toBe('log-running');
+			expect(update.input).toEqual({ isRunning: false, stoppedAt: NOW });
+		});
+
 		it('still closes a desktop log whose time slots end before its start, keeping its stoppedAt', async () => {
 			// Ten-minute slots: the log started at 10:03 sits in the 10:00 slot, which holds one minute of it.
 			const desktopLog: TimeLogRow = {
