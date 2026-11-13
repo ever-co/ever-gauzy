@@ -10,7 +10,9 @@ import {
 	TaskViewFilterOperator,
 	TaskViewGroupBy
 } from '@gauzy/contracts';
-import { addDays, isKnownTimeZone, startOfDayIn, startOfWeekIn, zoneOffsetMinutes } from '../built-in-views';
+import { addDays, dayIn, isKnownTimeZone, startOfDayIn, startOfWeekIn, zoneOffsetMinutes } from '../built-in-views';
+
+export { dayIn };
 
 export const TASK_VIEW_FILTER_FIELDS: readonly TaskViewFilterField[] = ['status', 'priority', 'size', 'labels', 'assignees', 'project', 'team', 'sprint', 'dueDate', 'createdAt', 'updatedAt'];
 export const TASK_VIEW_DATE_FIELDS: readonly TaskViewFilterField[] = ['dueDate', 'createdAt', 'updatedAt'];
@@ -196,11 +198,6 @@ export function boundDayOf(day: unknown, instant: string | Date, edge: 'start' |
 	const latest = start + WEST_MOST_MS;
 	const near = edge === 'start' ? at >= earliest && at <= latest : at >= earliest && at < latest;
 	return near ? (day as string) : undefined;
-}
-
-/** The calendar day an instant falls on in a time zone (`2026-11-14`). */
-export function dayIn(at: Date, timeZone: string): string {
-	return new Date(at.getTime() + zoneOffsetMinutes(at, timeZone) * 60_000).toISOString().slice(0, 10);
 }
 
 export type DateComparison = '<' | '<=' | '>' | '>=';
