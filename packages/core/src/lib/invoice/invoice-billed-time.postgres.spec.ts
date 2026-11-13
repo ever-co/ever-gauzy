@@ -229,11 +229,22 @@ const DAY = 24 * 60 * 60 * 1000;
 	 * Runs a write while a third connection voids the invoice and has not committed yet, and commits the void once the
 	 * write waits on the invoice.
 	 */
-	const whileVoiding = async <T>(invoiceId: string, write: () => Promise<T>): Promise<PromiseSettledResult<T>> => {
+	/**
+	 * Runs `write` while a third connection voids the invoice and, unless told otherwise, records that another invoice
+	 * bills the time it released (what billing that time writes), committing once `write` is seen waiting.
+	 */
+	const whileVoiding = async <T>(
+		invoiceId: string,
+		write: () => Promise<T>,
+		{ billedAgain }: { billedAgain: boolean } = { billedAgain: true }
+	): Promise<PromiseSettledResult<T>> => {
 		const voiding = dataSource.createQueryRunner();
 		await voiding.connect();
 		await voiding.startTransaction();
 		await voiding.query(`UPDATE "invoice" SET "status" = 'VOID' WHERE "id" = $1`, [invoiceId]);
+		if (billedAgain) {
+			await voiding.query(`UPDATE "invoice" SET "releasedTimeBilledAt" = now() WHERE "id" = $1`, [invoiceId]);
+		}
 
 		const outcomes = Promise.allSettled([write()]);
 		try {
@@ -443,7 +454,7 @@ const DAY = 24 * 60 * 60 * 1000;
 		);
 
 		it(
-			'refuses a status change that a void overtakes, and keeps the invoice void',
+			'refuses a status change that a void and a billing of its released time overtake, and keeps it void',
 			async () => {
 				const invoiceId = await storedInvoice('DRAFT');
 
@@ -456,6 +467,23 @@ const DAY = 24 * 60 * 60 * 1000;
 					reason: { status: 400, message: loaded.INVOICE_VOID_IS_FINAL }
 				});
 				expect(await statusOf(invoiceId)).toBe('VOID');
+			},
+			TIMEOUT
+		);
+
+		it(
+			'lets a status change go through after a void whose released time nobody billed again',
+			async () => {
+				const invoiceId = await storedInvoice('DRAFT');
+
+				const sending = await whileVoiding(
+					invoiceId,
+					() => handlers(ormType).update({ id: invoiceId, status: 'SENT' }),
+					{ billedAgain: false }
+				);
+
+				expect(sending.status).toBe('fulfilled');
+				expect(await statusOf(invoiceId)).toBe('SENT');
 			},
 			TIMEOUT
 		);
@@ -492,7 +520,7 @@ const DAY = 24 * 60 * 60 * 1000;
 	});
 
 	it(
-		"refuses an answer to an estimate that a void overtakes, and keeps the estimate void, on the link's TypeORM",
+		"refuses an answer to an estimate that a void and a billing of its time overtake, on the link's TypeORM",
 		async () => {
 			const invoiceId = await storedInvoice('SENT', { isEstimate: true });
 			const email = 'customer@example.com';

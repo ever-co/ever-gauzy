@@ -31,7 +31,8 @@ const InvoiceSchema = new EntitySchema({
 		organizationId: { type: 'varchar', nullable: true },
 		status: { type: 'varchar', nullable: true },
 		isEstimate: { type: 'boolean', nullable: true },
-		internalNote: { type: 'text', nullable: true }
+		internalNote: { type: 'text', nullable: true },
+		releasedTimeBilledAt: { type: 'datetime', nullable: true }
 	}
 });
 
@@ -287,8 +288,8 @@ describe('PublicInvoiceService.updateInvoice (PUT estimate accept/reject, GHSA-2
 		['accepted', { status: 'ACCEPTED' }],
 		['rejected', { status: 'REJECTED' }],
 		['accepted and turned into a draft invoice', { status: 'DRAFT', isEstimate: false }]
-	])('refuses to answer a void estimate (%s), and keeps it void', async (_label, answer) => {
-		await invoices.update(VICTIM.id, { status: 'VOID' });
+	])('refuses to answer a void estimate whose released time another invoice bills (%s)', async (_label, answer) => {
+		await invoices.update(VICTIM.id, { status: 'VOID', releasedTimeBilledAt: new Date('2026-11-02T10:00:00Z') });
 		const token = estimateToken();
 		await storeEstimateEmail(token);
 
@@ -302,16 +303,33 @@ describe('PublicInvoiceService.updateInvoice (PUT estimate accept/reject, GHSA-2
 	it.each([
 		['accepted', { status: 'ACCEPTED', isEstimate: true }],
 		['accepted and turned into a draft invoice', { status: 'DRAFT', isEstimate: false }]
-	])('refuses to answer a rejected estimate again (%s), and keeps it rejected', async (_label, answer) => {
+	])(
+		'refuses to answer again a rejected estimate whose released time another invoice bills (%s)',
+		async (_label, answer) => {
+			await invoices.update(VICTIM.id, {
+				status: 'REJECTED',
+				isEstimate: true,
+				releasedTimeBilledAt: new Date('2026-11-02T10:00:00Z')
+			});
+			const token = estimateToken();
+			await storeEstimateEmail(token);
+
+			await expect(service.updateInvoice({ id: VICTIM.id, token } as any, answer as any)).rejects.toMatchObject({
+				status: 400,
+				message: INVOICE_REJECTED_IS_FINAL
+			});
+			expect(await invoices.findOneBy({ id: VICTIM.id })).toMatchObject({ status: 'REJECTED', isEstimate: true });
+		}
+	);
+
+	it('takes an acceptance of a rejected estimate whose released time no other invoice bills, as before', async () => {
 		await invoices.update(VICTIM.id, { status: 'REJECTED', isEstimate: true });
 		const token = estimateToken();
 		await storeEstimateEmail(token);
 
-		await expect(service.updateInvoice({ id: VICTIM.id, token } as any, answer as any)).rejects.toMatchObject({
-			status: 400,
-			message: INVOICE_REJECTED_IS_FINAL
-		});
-		expect(await invoices.findOneBy({ id: VICTIM.id })).toMatchObject({ status: 'REJECTED', isEstimate: true });
+		await service.updateInvoice({ id: VICTIM.id, token } as any, { status: 'ACCEPTED', isEstimate: true } as any);
+
+		expect((await invoices.findOneBy({ id: VICTIM.id })).status).toBe('ACCEPTED');
 	});
 
 	it('still takes a second rejection of a rejected estimate', async () => {

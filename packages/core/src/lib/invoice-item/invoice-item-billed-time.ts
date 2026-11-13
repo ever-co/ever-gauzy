@@ -38,6 +38,91 @@ export const NOT_ON_LIVE_INVOICE_PARAMETERS = {
 	billedTimeRejectedStatus: EstimateStatusTypesEnum.REJECTED
 };
 
+/** The statuses of a document that releases the time its lines bill: a void invoice or estimate, a rejected estimate. */
+const RELEASING_STATUSES = [InvoiceStatusTypesEnum.VOID, EstimateStatusTypesEnum.REJECTED];
+
+/**
+ * The condition, on an invoice an update names by its table, that one of its lines holds one of the time logs given,
+ * and that it is not the document of one of the lines given. Each value has its own named parameter, which both ORMs
+ * bind the same way.
+ *
+ * @param timeLogIds The time logs billed now.
+ * @param lineIds The lines that bill them now.
+ * @returns The condition, quoted for the database in use, and its parameters.
+ */
+function releasedBy(timeLogIds: ID[], lineIds: ID[]): { condition: string; parameters: Record<string, ID> } {
+	const parameters: Record<string, ID> = {};
+	const timeLogNames = timeLogIds.map((id, index) => namedParameter(parameters, `releasedTimeLog${index}`, id));
+	const lineNames = lineIds.map((id, index) => namedParameter(parameters, `billingLine${index}`, id));
+	const condition = p(
+		`"invoice"."id" IN (SELECT "released_line"."invoiceId" FROM "invoice_item" "released_line" ` +
+			`INNER JOIN "time_log" "released_log" ON "released_log"."invoiceItemId" = "released_line"."id" ` +
+			`WHERE "released_log"."id" IN (${timeLogNames.join(', ')}) AND "released_line"."invoiceId" IS NOT NULL) ` +
+			`AND "invoice"."id" NOT IN (SELECT "billing_line"."invoiceId" FROM "invoice_item" "billing_line" ` +
+			`WHERE "billing_line"."id" IN (${lineNames.join(', ')}) AND "billing_line"."invoiceId" IS NOT NULL)`
+	);
+	return { condition, parameters };
+}
+
+/** Adds a named parameter, and answers its placeholder. */
+function namedParameter(parameters: Record<string, ID>, name: string, value: ID): string {
+	parameters[name] = value;
+	return `:${name}`;
+}
+
+/**
+ * Records on each void invoice or rejected estimate whose line still names a time log billed now that another
+ * document bills the time it released (`releasedTimeBilledAt`, see `assertFinalStatusKept`). It runs before the time
+ * logs are written, so that the documents it marks are locked until the billing ends: a status change that reads one
+ * of them waits, and then sees the mark.
+ */
+async function typeOrmMarkReleasedTimeBilled(
+	manager: EntityManager,
+	lines: IBilledLine[],
+	scope: IBillingScope
+): Promise<void> {
+	const timeLogIds = timeLogIdsOf(lines);
+	if (timeLogIds.length === 0) {
+		return;
+	}
+	const { condition, parameters } = releasedBy(timeLogIds, lineIdsOf(lines));
+	await manager
+		.createQueryBuilder()
+		.update(Invoice)
+		.set({ releasedTimeBilledAt: new Date() })
+		.where(p(`"tenantId" = :tenantId`), { tenantId: scope.tenantId })
+		.andWhere(p(`"releasedTimeBilledAt" IS NULL`))
+		.andWhere(p(`"status" IN (:...releasingStatuses)`), { releasingStatuses: RELEASING_STATUSES })
+		.andWhere(condition, parameters)
+		.execute();
+}
+
+/** The MikroORM form of {@link typeOrmMarkReleasedTimeBilled}, on the transaction's entity manager. */
+async function mikroOrmMarkReleasedTimeBilled(
+	em: MikroOrmEntityManager,
+	lines: IBilledLine[],
+	scope: IBillingScope
+): Promise<void> {
+	const timeLogIds = timeLogIdsOf(lines);
+	if (timeLogIds.length === 0) {
+		return;
+	}
+	const { condition, parameters } = releasedBy(timeLogIds, lineIdsOf(lines));
+	const releasedByKey = raw(condition, parameters);
+	const where = {
+		tenantId: scope.tenantId,
+		releasedTimeBilledAt: null,
+		status: { $in: RELEASING_STATUSES },
+		[releasedByKey]: []
+	} as FilterQuery<Invoice>;
+	await em.nativeUpdate(Invoice, where, { releasedTimeBilledAt: new Date() } as EntityData<Invoice>);
+}
+
+/** The ids of the lines given, each once. */
+function lineIdsOf(lines: IBilledLine[]): ID[] {
+	return [...new Set(lines.map((line) => line.lineId))];
+}
+
 /** A time log's `invoiceItemId` as an update names it: by the table, which an update does not alias. */
 const UPDATED_TIME_LOG_INVOICE_ITEM = '"time_log"."invoiceItemId"';
 
@@ -241,6 +326,7 @@ async function billTimeLogs(transaction: ILinesTransaction, lines: IBilledLine[]
 async function typeOrmBillTimeLogs(manager: EntityManager, lines: IBilledLine[], scope: IBillingScope): Promise<void> {
 	const timeLogIds = timeLogIdsOf(lines);
 	await typeOrmLockTimeLogs(manager, timeLogIds, scope.tenantId);
+	await typeOrmMarkReleasedTimeBilled(manager, lines, scope);
 	const billedNowhereElse = notOnLiveInvoice(UPDATED_TIME_LOG_INVOICE_ITEM);
 	// One line after the other: a line's statement must see what the lines before it billed (a time log named twice).
 	for (const line of lines) {
@@ -269,6 +355,7 @@ async function mikroOrmBillTimeLogs(
 ): Promise<void> {
 	const timeLogIds = timeLogIdsOf(lines);
 	await mikroOrmLockTimeLogs(em, timeLogIds, scope.tenantId);
+	await mikroOrmMarkReleasedTimeBilled(em, lines, scope);
 	const billedNowhereElse = notOnLiveInvoice(UPDATED_TIME_LOG_INVOICE_ITEM);
 	const employeeCondition = mikroOrmEmployeeCondition(scope);
 	for (const line of lines) {
@@ -333,9 +420,10 @@ export function typeOrmRowLock(): Pick<FindOneOptions, 'lock'> {
 	return { lock: { mode: 'pessimistic_write' } };
 }
 
-/** An invoice's status, as a locking read answers it. */
+/** An invoice's status, and when its released time was billed again, as a locking read answers it. */
 export interface ILockedInvoice {
 	status?: string;
+	releasedTimeBilledAt?: Date | null;
 }
 
 /**
@@ -356,7 +444,7 @@ export async function lockInvoice(
 	if (transaction.mikroOrm) {
 		// Read apart from the identity map: the write that follows loads the whole invoice.
 		return await transaction.mikroOrm.findOne(Invoice, where as FilterQuery<Invoice>, {
-			fields: ['id', 'status'] as never,
+			fields: ['id', 'status', 'releasedTimeBilledAt'] as never,
 			filters: false,
 			disableIdentityMap: true,
 			lockMode: mikroOrmRowLock()
@@ -364,7 +452,7 @@ export async function lockInvoice(
 	}
 	return await transaction.typeOrm.findOne(Invoice, {
 		where,
-		select: { id: true, status: true },
+		select: { id: true, status: true, releasedTimeBilledAt: true },
 		withDeleted: true,
 		loadEagerRelations: false,
 		...typeOrmRowLock()

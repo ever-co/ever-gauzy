@@ -3,13 +3,24 @@ import { EstimateStatusTypesEnum, ID, InvoiceStatusTypesEnum } from '@gauzy/cont
 import { RequestContext } from '../core/context';
 import { ILinesTransaction, lockInvoice } from '../invoice-item/invoice-item-billed-time';
 
-/** The refusal of a change that would take a void invoice or estimate out of VOID. */
+/** The refusal of a change that would take out of VOID a document whose released time another one bills since. */
 export const INVOICE_VOID_IS_FINAL =
-	'INVOICE_VOID_IS_FINAL: a void invoice or estimate keeps its status. Create a new invoice instead.';
+	'INVOICE_VOID_IS_FINAL: another invoice bills the time this void invoice or estimate released, so it keeps its ' +
+	'status. Create a new invoice instead.';
 
-/** The refusal of a change that would take a rejected estimate to a status other than REJECTED or VOID. */
+/**
+ * The refusal of a change that would take to a status other than REJECTED or VOID a rejected estimate whose released
+ * time another document bills since.
+ */
 export const INVOICE_REJECTED_IS_FINAL =
-	'INVOICE_REJECTED_IS_FINAL: a rejected estimate keeps its status. Create a new estimate instead.';
+	'INVOICE_REJECTED_IS_FINAL: another invoice bills the time this rejected estimate released, so it keeps its ' +
+	'status. Create a new estimate instead.';
+
+/** A stored document, as far as its final status goes: its status, and whether its released time was billed since. */
+export interface IFinalStatusState {
+	status?: string;
+	releasedTimeBilledAt?: Date | null;
+}
 
 /**
  * Whether a change states a status other than VOID: the only change a final status refuses, since a void document
@@ -23,20 +34,31 @@ export function statesStatusOtherThanVoid(status: string | null | undefined): bo
 }
 
 /**
- * Refuses a change that takes a document out of a final status. Voiding an invoice or estimate, or rejecting an
- * estimate, releases the time its lines billed, which another invoice may then bill while nothing records that the
- * time moved: the document made live again could charge that time twice. A void document keeps VOID; a rejected
- * estimate keeps REJECTED or is voided. Its correction is a new invoice or estimate.
+ * Refuses a change that takes a document out of a final status once another document bills the time it released.
+ * Voiding an invoice or estimate, or rejecting an estimate, releases the time its lines billed; when another document's
+ * line bills that time, the billing records it on the released document (`releasedTimeBilledAt`), and the document
+ * made live again would charge that time twice. Such a void document keeps VOID; such a rejected estimate keeps
+ * REJECTED or is voided. Its correction is a new invoice or estimate. A document whose released time no other line
+ * bills changes status as it always could.
  *
- * @param storedStatus The status the document has.
+ * @param stored The document as stored: its status and whether its released time was billed since.
  * @param statedStatus The status the change states.
- * @throws BadRequestException when the document is void and the change states another status, or is a rejected
- * estimate and the change states a status other than REJECTED or VOID.
+ * @throws BadRequestException when the released time of the document is billed since, and the document is void and
+ * the change states another status, or is a rejected estimate and the change states a status other than REJECTED or
+ * VOID.
  */
-export function assertFinalStatusKept(storedStatus: string | undefined, statedStatus: string | null | undefined): void {
+export function assertFinalStatusKept(
+	stored: IFinalStatusState | null | undefined,
+	statedStatus: string | null | undefined
+): void {
 	if (!statesStatusOtherThanVoid(statedStatus)) {
 		return;
 	}
+	const isReleasedTimeBilled = Boolean(stored?.releasedTimeBilledAt);
+	if (!isReleasedTimeBilled) {
+		return;
+	}
+	const storedStatus = stored.status;
 	if (storedStatus === InvoiceStatusTypesEnum.VOID) {
 		throw new BadRequestException(INVOICE_VOID_IS_FINAL);
 	}
@@ -66,5 +88,5 @@ export interface IInvoiceStatusChange {
 export async function holdFinalStatus(transaction: ILinesTransaction, change: IInvoiceStatusChange): Promise<void> {
 	const tenantId = RequestContext.currentTenantId();
 	const stored = await lockInvoice(transaction, change.id, tenantId);
-	assertFinalStatusKept(stored?.status, change.status);
+	assertFinalStatusKept(stored, change.status);
 }

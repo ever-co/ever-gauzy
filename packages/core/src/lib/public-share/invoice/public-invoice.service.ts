@@ -195,7 +195,7 @@ export class PublicInvoiceService {
 					},
 					...typeOrmRowLock()
 				});
-				assertFinalStatusKept(invoice.status, entity.status);
+				assertFinalStatusKept(invoice, entity.status);
 				return await invoices.update(invoice.id, entity);
 			});
 		} catch (error) {

@@ -228,6 +228,21 @@ describe('Invoices record the time their lines bill, on TypeORM and on MikroORM'
 		return row;
 	};
 
+	/** Records on a document that another one bills the time it released, as the billing of that time does. */
+	const markReleasedTimeBilled = async (invoiceId: string): Promise<void> => {
+		await dataSource.query(`UPDATE "invoice" SET "releasedTimeBilledAt" = ? WHERE "id" = ?`, [
+			'2026-11-02 10:00:00.000',
+			invoiceId
+		]);
+	};
+
+	const releasedTimeBilledAtOf = async (invoiceId: string): Promise<string | null> => {
+		const [row] = await dataSource.query(`SELECT "releasedTimeBilledAt" FROM "invoice" WHERE "id" = ?`, [
+			invoiceId
+		]);
+		return row.releasedTimeBilledAt;
+	};
+
 	const count = async (table: string, column: string, value: string): Promise<number> => {
 		const [row] = await dataSource.query(`SELECT COUNT(*) AS "n" FROM "${table}" WHERE "${column}" = ?`, [value]);
 		return Number(row.n);
@@ -596,6 +611,40 @@ describe('Invoices record the time their lines bill, on TypeORM and on MikroORM'
 			expect(await linkOf(kept)).toBe(lineId);
 		});
 
+		it.each([
+			['a void invoice', 'VOID', {}],
+			['a rejected estimate', 'REJECTED', { isEstimate: 1 }]
+		])('records on %s that another invoice bills the time it released', async (_label, status, row) => {
+			const { invoiceId: released, timeLogId } = await timeLogBilledBy(status, row);
+			const { invoiceId: untouched } = await timeLogBilledBy(status, row);
+
+			await handlers(ormType).create(invoiceWith([lineBilling('billed again', [timeLogId])]));
+
+			expect(await releasedTimeBilledAtOf(released)).not.toBeNull();
+			expect(await releasedTimeBilledAtOf(untouched)).toBeNull();
+		});
+
+		it('records nothing on a void invoice whose own new lines bill the time it released', async () => {
+			const { invoiceId, timeLogId } = await timeLogBilledBy('VOID');
+
+			await handlers(ormType).replaceLines(invoiceId, [
+				{ ...lineBilling('billed again', [timeLogId]), invoiceId }
+			]);
+
+			expect(await releasedTimeBilledAtOf(invoiceId)).toBeNull();
+		});
+
+		it('records nothing when the billing is refused', async () => {
+			const { invoiceId: released, timeLogId } = await timeLogBilledBy('VOID');
+			const { lineId: liveLine } = await earlierInvoice('SENT');
+			const heldElsewhere = await timeLog({ invoiceItemId: liveLine });
+			const refused = invoiceWith([lineBilling('billed again', [timeLogId, heldElsewhere])]);
+
+			await expect(handlers(ormType).create(refused)).rejects.toMatchObject({ status: 400 });
+
+			expect(await releasedTimeBilledAtOf(released)).toBeNull();
+		});
+
 		it('refuses to reopen a void invoice whose time another invoice bills since, and keeps it void', async () => {
 			const { invoiceId: voided, timeLogId } = await timeLogBilledBy('VOID');
 			const rebilling = invoiceWith([lineBilling('billed again', [timeLogId])]);
@@ -609,24 +658,40 @@ describe('Invoices record the time their lines bill, on TypeORM and on MikroORM'
 			expect(await linkOf(timeLogId)).toBe(rebillingLine);
 		});
 
-		it.each(['SENT', 'FULLY_PAID', 'REJECTED'])('refuses to move a void invoice to %s', async (status) => {
-			const { invoiceId } = await earlierInvoice('VOID');
+		it.each(['SENT', 'FULLY_PAID', 'REJECTED'])(
+			'moves a void invoice whose released time no other invoice bills to %s, as before',
+			async (status) => {
+				const { invoiceId } = await earlierInvoice('VOID');
 
-			await expect(handlers(ormType).update({ id: invoiceId, status })).rejects.toMatchObject({
-				status: 400,
-				message: loaded.INVOICE_VOID_IS_FINAL
-			});
+				await handlers(ormType).update({ id: invoiceId, status });
 
-			expect(await statusOf(invoiceId)).toBe('VOID');
-		});
+				expect(await statusOf(invoiceId)).toBe(status);
+			}
+		);
+
+		it.each(['SENT', 'FULLY_PAID', 'REJECTED'])(
+			'refuses to move a void invoice whose released time another invoice bills to %s',
+			async (status) => {
+				const { invoiceId } = await earlierInvoice('VOID');
+				await markReleasedTimeBilled(invoiceId);
+
+				await expect(handlers(ormType).update({ id: invoiceId, status })).rejects.toMatchObject({
+					status: 400,
+					message: loaded.INVOICE_VOID_IS_FINAL
+				});
+
+				expect(await statusOf(invoiceId)).toBe('VOID');
+			}
+		);
 
 		it.each<[string, () => Promise<Row[]>]>([
 			['without time', async () => [lineNamingNoTime('reopened')]],
 			['billing time', async () => [lineBilling('reopened', [await timeLog()])]]
 		])(
-			'refuses to reopen a void invoice through a create that names it (%s), and keeps it void',
+			'refuses to reopen a void invoice whose released time another invoice bills, through a create that names it (%s)',
 			async (_label, linesToPost) => {
 				const { invoiceId } = await earlierInvoice('VOID');
+				await markReleasedTimeBilled(invoiceId);
 				const reopening = invoiceWith(await linesToPost(), invoiceId);
 
 				await expect(handlers(ormType).create(reopening)).rejects.toMatchObject({
@@ -642,18 +707,22 @@ describe('Invoices record the time their lines bill, on TypeORM and on MikroORM'
 		it.each<[string, Row, string]>([
 			['a void invoice', { status: 'VOID' }, 'INVOICE_VOID_IS_FINAL'],
 			['a rejected estimate', { status: 'REJECTED', isEstimate: 1 }, 'INVOICE_REJECTED_IS_FINAL']
-		])('refuses to reopen %s that was removed, and keeps its status', async (_label, row, refusal) => {
-			const { invoiceId } = await earlierInvoice(row.status, row);
-			await dataSource.query(`UPDATE "invoice" SET "deletedAt" = ? WHERE "id" = ?`, [
-				'2026-11-01 00:00:00',
-				invoiceId
-			]);
+		])(
+			'refuses to reopen %s that was removed, once its released time is billed, and keeps its status',
+			async (_label, row, refusal) => {
+				const { invoiceId } = await earlierInvoice(row.status, row);
+				await markReleasedTimeBilled(invoiceId);
+				await dataSource.query(`UPDATE "invoice" SET "deletedAt" = ? WHERE "id" = ?`, [
+					'2026-11-01 00:00:00',
+					invoiceId
+				]);
 
-			const reopening = handlers(ormType).update({ id: invoiceId, status: 'DRAFT' });
+				const reopening = handlers(ormType).update({ id: invoiceId, status: 'DRAFT' });
 
-			await expect(reopening).rejects.toMatchObject({ status: 400, message: loaded[refusal] });
-			expect(await statusOf(invoiceId)).toBe(row.status);
-		});
+				await expect(reopening).rejects.toMatchObject({ status: 400, message: loaded[refusal] });
+				expect(await statusOf(invoiceId)).toBe(row.status);
+			}
+		);
 
 		it('still updates a void invoice that stays void, and moves a live one, to VOID included', async () => {
 			const { invoiceId: voided } = await earlierInvoice('VOID');
@@ -689,13 +758,29 @@ describe('Invoices record the time their lines bill, on TypeORM and on MikroORM'
 			['VIEWED', { status: 'VIEWED' }],
 			['ACCEPTED', { status: 'ACCEPTED' }],
 			['a draft invoice', { status: 'DRAFT', isEstimate: false }]
-		])('refuses to move a rejected estimate to %s, and changes nothing', async (_label, change) => {
+		])(
+			'refuses to move a rejected estimate whose released time another invoice bills to %s',
+			async (_label, change) => {
+				const { invoiceId } = await earlierInvoice('REJECTED', { isEstimate: 1 });
+				await markReleasedTimeBilled(invoiceId);
+
+				const moving = handlers(ormType).update({ id: invoiceId, ...change, internalNote: 'reopened' });
+
+				await expect(moving).rejects.toMatchObject({ status: 400, message: loaded.INVOICE_REJECTED_IS_FINAL });
+				expect(await estimateStateOf(invoiceId)).toEqual({
+					status: 'REJECTED',
+					isEstimate: 1,
+					internalNote: null
+				});
+			}
+		);
+
+		it('accepts a rejected estimate whose released time no other invoice bills, as before', async () => {
 			const { invoiceId } = await earlierInvoice('REJECTED', { isEstimate: 1 });
 
-			const moving = handlers(ormType).update({ id: invoiceId, ...change, internalNote: 'reopened' });
+			await handlers(ormType).update({ id: invoiceId, status: 'ACCEPTED' });
 
-			await expect(moving).rejects.toMatchObject({ status: 400, message: loaded.INVOICE_REJECTED_IS_FINAL });
-			expect(await estimateStateOf(invoiceId)).toEqual({ status: 'REJECTED', isEstimate: 1, internalNote: null });
+			expect(await statusOf(invoiceId)).toBe('ACCEPTED');
 		});
 
 		it('still updates a rejected estimate that stays rejected, and voids it', async () => {
