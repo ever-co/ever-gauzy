@@ -1,0 +1,349 @@
+import { randomUUID } from 'node:crypto';
+
+/**
+ * Two saves that bill the same time log at the same moment, on PostgreSQL (#11854): one bills it, the other is
+ * refused with a 400 and saves nothing. The billing locks the time logs it names (`SELECT ... FOR UPDATE`) before
+ * its conditional update, because that update's check reads other tables, which a row re-check does not read again.
+ * The SQLite specs cannot show it: SQLite runs one writer at a time.
+ *
+ * A third connection holds the time log first, so both saves are seen waiting on it before it is released. Each ORM
+ * runs the invoice create handler as the route dispatches it.
+ *
+ * Runs only when GAUZY_BILLED_TIME_SPEC_POSTGRES_URL names a PostgreSQL database that holds the migrated schema, such
+ * as a throwaway copy of the demo data. The spec writes a tenant of its own and removes it afterwards; it refuses
+ * `gauzy`, the database the API uses by default, so it never writes in a developer's own data.
+ *
+ *   GAUZY_BILLED_TIME_SPEC_POSTGRES_URL=postgres://user:password@host:port/database \
+ *     node --experimental-vm-modules node_modules/jest/bin/jest.js -c packages/core/jest.config.ts <this file>
+ */
+
+const POSTGRES_URL = process.env.GAUZY_BILLED_TIME_SPEC_POSTGRES_URL;
+
+const TIMEOUT = 15 * 60 * 1000;
+const WAIT_TIMEOUT = 30 * 1000;
+const WAIT_STEP = 50;
+
+type Row = Record<string, any>;
+type Orm = 'typeorm' | 'mikro-orm';
+
+const ORMS: Orm[] = ['typeorm', 'mikro-orm'];
+
+/** Rows of a tenant made for one run, removed with it. */
+const TENANT = randomUUID();
+const ORG = randomUUID();
+const USER = randomUUID();
+const EMPLOYEE = randomUUID();
+
+const scope = { tenantId: TENANT, organizationId: ORG };
+
+/** The tables the spec writes, in the order their rows are removed. */
+const TABLES = ['time_log', 'invoice_item', 'invoice', 'employee', 'user', 'organization'];
+
+(POSTGRES_URL ? describe : describe.skip)('Two saves billing the same time at once, on PostgreSQL', () => {
+	let loaded: Row = {};
+	let dataSource: any;
+	let orm: any;
+	let invoiceNumber = 0;
+
+	const handlers = (ormType: Orm) => {
+		const invoiceService = new loaded.InvoiceService(
+			new loaded.TypeOrmInvoiceRepository(dataSource.getRepository(loaded.Invoice)),
+			new loaded.MikroOrmInvoiceRepository(orm.em, loaded.Invoice),
+			{},
+			{},
+			{},
+			{},
+			{}
+		);
+		// The ORM is a module constant of the CRUD base, read when the registry loaded; each run states its own.
+		Object.defineProperty(invoiceService, 'ormType', { get: () => ormType });
+		return {
+			create: (input: Row) =>
+				new loaded.InvoiceCreateHandler(invoiceService).execute(new loaded.InvoiceCreateCommand(input))
+		};
+	};
+
+	/** A row with the columns given, and a placeholder in every other NOT NULL column without a default. */
+	const insert = async (table: string, row: Row): Promise<void> => {
+		const required: Row[] = await dataSource.query(
+			`SELECT "column_name", "data_type" FROM "information_schema"."columns" WHERE "table_schema" = current_schema() ` +
+				`AND "table_name" = $1 AND "is_nullable" = 'NO' AND "column_default" IS NULL`,
+			[table]
+		);
+		const values: Row = { ...row };
+		for (const column of required) {
+			const isGiven = column.column_name in values;
+			if (isGiven) {
+				continue;
+			}
+			values[column.column_name] = placeholderFor(String(column.data_type));
+		}
+		const keys = Object.keys(values);
+		const names = keys.map((key) => `"${key}"`).join(', ');
+		const marks = keys.map((_key, index) => `$${index + 1}`).join(', ');
+		await dataSource.query(
+			`INSERT INTO "${table}" (${names}) VALUES (${marks})`,
+			keys.map((key) => values[key])
+		);
+	};
+
+	const timeLog = async (): Promise<string> => {
+		const id = randomUUID();
+		await insert('time_log', {
+			id,
+			...scope,
+			employeeId: EMPLOYEE,
+			startedAt: '2026-10-01 09:00:00',
+			stoppedAt: '2026-10-01 10:00:00',
+			isBillable: true
+		});
+		return id;
+	};
+
+	/** An invoice as the web creates it, with one line billing the time logs given. */
+	const invoiceBilling = (description: string, timeLogIds: string[]): Row => {
+		const id = randomUUID();
+		invoiceNumber += 1;
+		return {
+			id,
+			...scope,
+			fromOrganizationId: ORG,
+			invoiceNumber,
+			invoiceDate: new Date('2026-11-01T00:00:00.000Z'),
+			dueDate: new Date('2026-11-30T00:00:00.000Z'),
+			currency: 'EUR',
+			discountValue: 0,
+			terms: 'Billable time',
+			status: 'DRAFT',
+			invoiceItems: [{ description, price: 50, quantity: 1, totalValue: 50, ...scope, invoiceId: id, timeLogIds }]
+		};
+	};
+
+	const linkOf = async (timeLogId: string): Promise<string | null> => {
+		const [row] = await dataSource.query(`SELECT "invoiceItemId" FROM "time_log" WHERE "id" = $1`, [timeLogId]);
+		return row.invoiceItemId;
+	};
+
+	const lineOf = async (invoiceId: string): Promise<string | undefined> => {
+		const [row] = await dataSource.query(`SELECT "id" FROM "invoice_item" WHERE "invoiceId" = $1`, [invoiceId]);
+		return row?.id;
+	};
+
+	const invoiceCount = async (invoiceId: string): Promise<number> => {
+		const [row] = await dataSource.query(`SELECT COUNT(*)::int AS "count" FROM "invoice" WHERE "id" = $1`, [
+			invoiceId
+		]);
+		return row.count;
+	};
+
+	/** How many connections wait for a lock while running a statement on the time logs. */
+	const waitingOnTimeLogLocks = async (): Promise<number> => {
+		const [row] = await dataSource.query(
+			`SELECT COUNT(*)::int AS "count" FROM "pg_stat_activity" WHERE "datname" = current_database() ` +
+				`AND "wait_event_type" = 'Lock' AND "query" ILIKE '%time_log%'`
+		);
+		return row.count;
+	};
+
+	const untilWaiting = async (expected: number): Promise<void> => {
+		const deadline = Date.now() + WAIT_TIMEOUT;
+		let waiting = await waitingOnTimeLogLocks();
+		while (waiting < expected) {
+			if (Date.now() > deadline) {
+				throw new Error(`${waiting} of ${expected} saves reached the time log lock`);
+			}
+			await new Promise((resolve) => setTimeout(resolve, WAIT_STEP));
+			waiting = await waitingOnTimeLogLocks();
+		}
+	};
+
+	const removeRunRows = async (): Promise<void> => {
+		for (const table of TABLES) {
+			await dataSource.query(`DELETE FROM "${table}" WHERE "tenantId" = $1`, [TENANT]);
+		}
+		await dataSource.query(`DELETE FROM "tenant" WHERE "id" = $1`, [TENANT]);
+	};
+
+	beforeAll(async () => {
+		const { parse } = require('pg-connection-string');
+		const connection = parse(POSTGRES_URL);
+		if (connection.database === 'gauzy') {
+			throw new Error('The spec writes rows: name a throwaway database, not `gauzy`.');
+		}
+		const statedPort = connection.port || '5432';
+		const port = Number(statedPort);
+
+		const previous = { DB_ORM: process.env.DB_ORM, DB_TYPE: process.env.DB_TYPE };
+		process.env.DB_ORM = 'mikro-orm';
+		process.env.DB_TYPE = 'postgres';
+
+		try {
+			await jest.isolateModulesAsync(async () => {
+				// MikroORM keeps decorator metadata in a process-wide store; this load's decorators write the
+				// mapping under test into an empty one.
+				require('@mikro-orm/core').MetadataStorage.clear();
+
+				// Must be first: loads the entity graph before a service pulls an entity.
+				const entities = require('../core/entities/internal');
+
+				const { coreEntities } = require('../core/entities');
+				const { DataSource } = require('typeorm');
+				const { MikroORM, EntityCaseNamingStrategy } = require('@mikro-orm/core');
+				const { PostgreSqlDriver } = require('@mikro-orm/postgresql');
+				const { SoftDeleteHandler } = require('mikro-orm-soft-delete');
+				const {
+					MIKRO_ORM_AUTO_JOIN_REFS_FOR_FILTERS,
+					TYPEORM_INVALID_WHERE_VALUES_BEHAVIOR
+				} = require('@gauzy/config');
+
+				loaded = {
+					Invoice: entities.Invoice,
+					PermissionsEnum: require('@gauzy/contracts').PermissionsEnum,
+					RequestContext: require('../core/context/request-context').RequestContext,
+					InvoiceService: require('./invoice.service').InvoiceService,
+					TypeOrmInvoiceRepository: require('./repository/type-orm-invoice.repository')
+						.TypeOrmInvoiceRepository,
+					MikroOrmInvoiceRepository: require('./repository/mikro-orm-invoice.repository')
+						.MikroOrmInvoiceRepository,
+					InvoiceCreateHandler: require('./commands/handlers/invoice.create.handler').InvoiceCreateHandler,
+					InvoiceCreateCommand: require('./commands/invoice.create.command').InvoiceCreateCommand
+				};
+
+				// The schema is the migrations': nothing is synchronized.
+				dataSource = new DataSource({
+					type: 'postgres',
+					host: connection.host,
+					port,
+					username: connection.user,
+					password: connection.password,
+					database: connection.database,
+					entities: coreEntities,
+					synchronize: false,
+					logging: false,
+					invalidWhereValuesBehavior: TYPEORM_INVALID_WHERE_VALUES_BEHAVIOR
+				});
+				await dataSource.initialize();
+
+				orm = await MikroORM.init({
+					driver: PostgreSqlDriver,
+					host: connection.host,
+					port,
+					user: connection.user,
+					password: connection.password,
+					dbName: connection.database,
+					entities: coreEntities,
+					namingStrategy: EntityCaseNamingStrategy,
+					extensions: [SoftDeleteHandler],
+					autoJoinRefsForFilters: MIKRO_ORM_AUTO_JOIN_REFS_FOR_FILTERS,
+					persistOnCreate: true,
+					allowGlobalContext: true,
+					discovery: { warnWhenNoEntities: false }
+				});
+			});
+		} finally {
+			for (const [key, value] of Object.entries(previous)) {
+				if (value === undefined) {
+					delete process.env[key];
+				} else {
+					process.env[key] = value;
+				}
+			}
+		}
+
+		await insert('tenant', { id: TENANT, name: 'Billed time concurrency spec' });
+		await insert('organization', {
+			id: ORG,
+			tenantId: TENANT,
+			name: 'Billed time concurrency spec',
+			currency: 'EUR'
+		});
+		await insert('user', { id: USER, tenantId: TENANT, firstName: 'Ada', lastName: 'Lovelace' });
+		await insert('employee', { id: EMPLOYEE, ...scope, userId: USER });
+	}, TIMEOUT);
+
+	afterAll(async () => {
+		if (dataSource?.isInitialized) {
+			await removeRunRows();
+		}
+		await orm?.close(true);
+		await dataSource?.destroy();
+	}, TIMEOUT);
+
+	beforeEach(() => {
+		const context = loaded.RequestContext;
+		jest.spyOn(context, 'currentUser').mockReturnValue({
+			id: USER,
+			tenantId: TENANT,
+			employeeId: EMPLOYEE,
+			lastOrganizationId: ORG
+		});
+		jest.spyOn(context, 'currentUserId').mockReturnValue(USER);
+		jest.spyOn(context, 'currentTenantId').mockReturnValue(TENANT);
+		jest.spyOn(context, 'currentOrganizationId').mockReturnValue(ORG);
+		jest.spyOn(context, 'currentEmployeeId').mockReturnValue(EMPLOYEE);
+		jest.spyOn(context, 'hasPermission').mockImplementation(
+			(permission: string) => permission === loaded.PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
+		);
+		jest.spyOn(context, 'hasRoles').mockReturnValue(false);
+		orm.em.clear();
+	});
+
+	afterEach(() => jest.restoreAllMocks());
+
+	describe.each(ORMS)('on %s', (ormType) => {
+		it(
+			'bills the time once: one save wins, the other is refused with a 400 and saves nothing',
+			async () => {
+				const contested = await timeLog();
+				const first = invoiceBilling('first', [contested]);
+				const second = invoiceBilling('second', [contested]);
+				const holder = dataSource.createQueryRunner();
+				await holder.connect();
+				await holder.startTransaction();
+				await holder.query(`SELECT "id" FROM "time_log" WHERE "id" = $1 FOR UPDATE`, [contested]);
+
+				const saves = Promise.allSettled([handlers(ormType).create(first), handlers(ormType).create(second)]);
+				try {
+					await untilWaiting(2);
+				} finally {
+					await holder.commitTransaction();
+					await holder.release();
+				}
+				const [firstOutcome, secondOutcome] = await saves;
+
+				const results = [
+					{ invoice: first, outcome: firstOutcome },
+					{ invoice: second, outcome: secondOutcome }
+				];
+				const won = results.filter((result) => result.outcome.status === 'fulfilled');
+				const lost = results.filter((result) => result.outcome.status === 'rejected');
+				expect(won).toHaveLength(1);
+				expect(lost).toHaveLength(1);
+				const [{ invoice: winner }] = won;
+				const [{ invoice: loser, outcome: refusal }] = lost;
+				expect((refusal as PromiseRejectedResult).reason).toMatchObject({ status: 400 });
+				expect(await linkOf(contested)).toBe(await lineOf(winner.id));
+				expect(await invoiceCount(loser.id)).toBe(0);
+			},
+			TIMEOUT
+		);
+	});
+});
+
+/** A value for a NOT NULL column the spec does not name, by the column's data type. */
+function placeholderFor(type: string): unknown {
+	const lowerCaseType = type.toLowerCase();
+	const isNumeric = /int|numeric|decimal|real|double/.test(lowerCaseType);
+	if (isNumeric) {
+		return 0;
+	}
+	const isBoolean = /bool/.test(lowerCaseType);
+	if (isBoolean) {
+		return false;
+	}
+	const isTemporal = /date|time/.test(lowerCaseType);
+	if (isTemporal) {
+		return '2026-01-01 00:00:00';
+	}
+	return 'x';
+}
