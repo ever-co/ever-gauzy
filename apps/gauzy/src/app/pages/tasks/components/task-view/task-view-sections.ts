@@ -1,4 +1,5 @@
 import { ITask, TaskPriorityEnum, TaskStatusEnum } from '@gauzy/contracts';
+import { dueDateShown, dueDeadline } from '@gauzy/ui-core/common';
 import { IRecordViewSection, IRecordViewStatus } from '@gauzy/ui-core/shared';
 
 /**
@@ -127,7 +128,10 @@ export function buildTaskViewSections(task: ITask, text: ITaskViewText): IRecord
 	// `taskNumber` is a server-side virtual column (prefix + number), absent
 	// from ITask — the same shape the grid's valuePrepareFunction reads.
 	const { parent } = task as any;
-	const isOverdue = !!task.dueDate && !isTaskFinished(task) && new Date(task.dueDate).getTime() < Date.now();
+	// A date-only due date (midnight UTC, as the bulk update and the integrations store a day) is that day for every
+	// reader, and is late only once that day has ended where the reader is.
+	const deadline = dueDeadline(task.dueDate);
+	const isOverdue = deadline !== null && !isTaskFinished(task) && deadline < Date.now();
 	const parentLabel = parent?.taskNumber
 		? [text.hash(parent.taskNumber), parent.title].filter(Boolean).join('  ')
 		: null;
@@ -167,6 +171,8 @@ export function buildTaskViewSections(task: ITask, text: ITaskViewText): IRecord
 				{
 					label: 'TASKS_PAGE.DUE_DATE',
 					key: 'dueDate',
+					// A date-only due date as its day in the reader's zone (`key` alone reads midnight UTC as a moment).
+					value: dueDateShown(task.dueDate),
 					type: 'date',
 					icon: 'calendar-outline',
 					tone: isOverdue ? 'danger' : undefined,

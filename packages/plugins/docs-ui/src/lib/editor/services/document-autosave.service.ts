@@ -234,6 +234,21 @@ export class DocumentAutosaveService implements OnDestroy {
 	}
 
 	/**
+	 * The editor took content that no save of this session wrote: the edits a live session never took, kept when it
+	 * ended. It is saved now, against `updatedAt`, the version it was written on, so a newer write meets it as a
+	 * conflict instead of being overwritten by it. Without a version the oldest one stands in, with the same effect.
+	 *
+	 * @param updatedAt The version the content was written on.
+	 * @returns What `flush` returns.
+	 */
+	saveAdopted(updatedAt: string | Date | null | undefined): Promise<boolean> {
+		if (!this.documentId || this.frozen) return Promise.resolve(false);
+		this.expectedUpdatedAt = new Date(updatedAt ?? 0).toISOString();
+		this.markDirty();
+		return this.flush();
+	}
+
+	/**
 	 * The lock was released (the page's own lock toggle, or a refetch that came
 	 * back unlocked). A 423 freeze has no self-clearing path, so without this the
 	 * editor stays read-only until a full reload (spec 05 §9.2 "lock respect").

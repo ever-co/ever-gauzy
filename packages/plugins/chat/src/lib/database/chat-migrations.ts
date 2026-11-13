@@ -7,6 +7,7 @@ import { CreateChatLinkPreviewTable1791000006710 } from './migrations/1791000006
 import { CreateChatWebhooks1791000006730 } from './migrations/1791000006730-CreateChatWebhooks';
 import { CreateChatAttachmentDraftTable1791000007310 } from './migrations/1791000007310-CreateChatAttachmentDraftTable';
 import { AddChatMessageAttachmentNames1791000007320 } from './migrations/1791000007320-AddChatMessageAttachmentNames';
+import { AddChatWebhookInteractionIdempotencyKey1791000008300 } from './migrations/1791000008300-AddChatWebhookInteractionIdempotencyKey';
 
 /** The plugin's migrations, oldest first (ordered with the platform's by their timestamps). */
 export const CHAT_MIGRATIONS = [
@@ -18,5 +19,6 @@ export const CHAT_MIGRATIONS = [
 	CreateChatLinkPreviewTable1791000006710,
 	CreateChatWebhooks1791000006730,
 	CreateChatAttachmentDraftTable1791000007310,
-	AddChatMessageAttachmentNames1791000007320
+	AddChatMessageAttachmentNames1791000007320,
+	AddChatWebhookInteractionIdempotencyKey1791000008300
 ];

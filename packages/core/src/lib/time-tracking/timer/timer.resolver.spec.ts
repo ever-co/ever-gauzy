@@ -416,7 +416,8 @@ describe('TimerResolver — the SDL declares the capabilities the REST routes se
 			'startedAt: DateTime',
 			'stoppedAt: DateTime',
 			'manualTimeSlot: Boolean',
-			'planDay: String'
+			'planDay: String',
+			'timeLogId: ID'
 		]) {
 			expect(body).toMatch(new RegExp(member.replace(' ', '\\s*')));
 		}
@@ -427,6 +428,17 @@ describe('TimerResolver — the SDL declares the capabilities the REST routes se
 		expect(body).not.toMatch(/\btenantId:/);
 		expect(body).not.toMatch(/\bsentTo:/);
 		expect(body).not.toMatch(/\borganization:/);
+	});
+
+	it('says that a toggle naming a time log only ever stops it', () => {
+		const mutation = schema.getType('Mutation') as unknown as {
+			getFields(): Record<string, { description?: string | null }>;
+		};
+		const description = mutation.getFields().toggleTimer.description ?? '';
+
+		expect(description).toMatch(/`timeLogId`/);
+		expect(description).toMatch(/while nothing runs it is\s+refused with 406 and starts nothing/);
+		expect(description).toMatch(/refused with 409 and that\s+log goes on/);
 	});
 });
 

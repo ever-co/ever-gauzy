@@ -235,4 +235,28 @@ describe('assertSensitiveRelationsAllowed', () => {
 			expect(() => assertSensitiveRelationsAllowed(TIMESHEET(), ['timeLogs'])).not.toThrow();
 		});
 	});
+
+	/**
+	 * A time log names the invoice line that bills it, and the line states the client's rate and amount: whoever may
+	 * read the log (TIME_TRACKER) reads that line only under the grant `/invoice-item` states.
+	 */
+	describe('the invoice line that bills a time log', () => {
+		const BILLED_TIME_LOG = () =>
+			entity('TimeLog', { invoiceItem: () => entity('InvoiceItem', { invoice: () => entity('Invoice') }) });
+
+		it.each([['invoiceItem'], ['invoiceItem.invoice']])(
+			'refuses %s to a caller who may not read invoices',
+			(path) => {
+				expect(() => assertSensitiveRelationsAllowed(BILLED_TIME_LOG(), [path])).toThrow(
+					new RegExp(PermissionsEnum.INVOICES_VIEW)
+				);
+			}
+		);
+
+		it('allows it under the invoice read grant', () => {
+			granted = [PermissionsEnum.INVOICES_VIEW];
+
+			expect(() => assertSensitiveRelationsAllowed(BILLED_TIME_LOG(), ['invoiceItem.invoice'])).not.toThrow();
+		});
+	});
 });

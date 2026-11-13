@@ -21,6 +21,7 @@ import {
 	TimeFormatEnum,
 	TimeLogType
 } from '@gauzy/contracts';
+import { PAGE_EXTENSION_SLOTS } from '@gauzy/plugin-ui';
 import { toUtcOffset } from '@gauzy/ui-core/common';
 import {
 	OrganizationProjectsService,
@@ -213,6 +214,8 @@ const PROJECT_STATS_GROUP = 5;
 })
 export class ViewEmployeeComponent extends TranslationBaseComponent implements OnInit {
 	public readonly PermissionsEnum = PermissionsEnum;
+	/** Where plugins put their actions on this person, beside Edit. */
+	public readonly employeeActionsSlot = PAGE_EXTENSION_SLOTS.EMPLOYEE_VIEW_ACTIONS;
 	public readonly periods: EmployeeViewPeriod[] = Object.values(EmployeeViewPeriod);
 
 	public employee: IEmployee;

@@ -25,7 +25,7 @@ import { EverConnectPlugin, isEverConnectEnabled } from '@gauzy/plugin-ever-conn
 import { EverStatsPlugin, isEverStatsEnabled } from '@gauzy/plugin-ever-stats';
 import { IntegrationAIPlugin } from '@gauzy/plugin-integration-ai';
 import { IntegrationGithubPlugin } from '@gauzy/plugin-integration-github';
-import { IntegrationJiraPlugin } from '@gauzy/plugin-integration-jira';
+import { IntegrationJiraCloudPlugin, IntegrationJiraPlugin, isJiraEnabled } from '@gauzy/plugin-integration-jira';
 import { IntegrationHubstaffPlugin } from '@gauzy/plugin-integration-hubstaff';
 import { IntegrationMakeComPlugin } from '@gauzy/plugin-integration-make-com';
 import { IntegrationZapierPlugin } from '@gauzy/plugin-integration-zapier';
@@ -258,6 +258,11 @@ export const plugins = [
 	IntegrationMakeComPlugin,
 	// Indicates the inclusion or intention to use the IntegrationJiraPlugin in the codebase.
 	IntegrationJiraPlugin,
+	// Jira Cloud sync (OAuth 2.0 connect with site choice, project ↔ project mappings, streamed issue import, two-way
+	// sync with status transitions, dynamic webhooks). Off unless JIRA_ENABLED=true; when off it is not loaded at all
+	// (no route, no table, no outbound request). Listed right after IntegrationJiraPlugin: the Connect descriptor
+	// routes share the `/integration/jira` prefix and must be registered before the sync's `/:integrationId` routes.
+	...(isJiraEnabled(process.env, (message) => console.warn(message)) ? [IntegrationJiraCloudPlugin] : []),
 	// Indicates the inclusion or intention to use the IntegrationUpworkPlugin in the codebase.
 	IntegrationUpworkPlugin,
 	// Indicates the inclusion or intention to use the IntegrationPlanePlugin in the codebase.

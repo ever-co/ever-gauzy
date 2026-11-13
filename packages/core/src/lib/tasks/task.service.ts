@@ -2,6 +2,7 @@ import { EventBus } from '@nestjs/cqrs';
 import {
 	Injectable,
 	BadRequestException,
+	ConflictException,
 	ForbiddenException,
 	HttpStatus,
 	HttpException,
@@ -63,7 +64,7 @@ import {
 } from '@gauzy/contracts';
 import { isEmpty, isNotEmpty } from '@gauzy/utils';
 import { isMySQL, isPostgres, isSqlite } from '@gauzy/config';
-import { TenantAwareCrudService, BaseQueryDTO } from './../core/crud';
+import { TenantAwareCrudService, BaseQueryDTO, isWithinOrganizationBoundary } from './../core/crud';
 import { IPartialEntity } from './../core/crud/icrud.service';
 import { sanitizeRichHtml } from './../core/html-sanitizer';
 import {
@@ -141,6 +142,50 @@ function teamIdsOfTaskOrganization(task: Pick<Task, 'organizationId' | 'teams'>)
 
 /** At most this many trashed tasks per page (`TaskTrashQueryDTO` caps `take` at the same). */
 const TRASH_PAGE_SIZE = 100;
+
+/** The 404 of a delete from the trash that found no such task there: it was restored, or is already deleted. */
+const TASK_NOT_IN_TRASH = 'TASK_NOT_IN_TRASH: no task with that id is in the trash (it was restored or deleted).';
+
+/** The 409 of a delete from the trash that the database refused because other rows still point at the task. */
+const TASK_STILL_REFERENCED =
+	'TASK_STILL_REFERENCED: the task is still linked from other records (a linked issue or a key result), so it stays ' +
+	'in the trash; remove those links first.';
+
+/** The driver codes of a statement refused because another row still references the row it deletes. */
+const REFERENCED_ROW_CODES = new Set([
+	'23503',
+	'ER_ROW_IS_REFERENCED',
+	'ER_ROW_IS_REFERENCED_2',
+	'SQLITE_CONSTRAINT_FOREIGNKEY'
+]);
+
+/** The drivers' own wording of the same refusal, for a driver that states no code. */
+const REFERENCED_ROW_MESSAGE =
+	/FOREIGN KEY constraint failed|violates foreign key constraint|cannot delete or update a parent row/i;
+
+/**
+ * Whether a failed delete was refused because another row still references the row it deletes: a column whose
+ * foreign key has no delete rule of its own (`task_linked_issues.taskFromId`/`taskToId`, `key_result.taskId`). Read on
+ * TypeORM's `QueryFailedError` (the driver's code is copied onto it, and kept on `driverError`), MikroORM's
+ * `ForeignKeyConstraintViolationException`, and the driver's own error.
+ *
+ * @param error - What the statement threw
+ * @returns True for a refused delete of a referenced row
+ */
+function isReferencedRowViolation(error: unknown): boolean {
+	const nested = error as { driverError?: unknown; cause?: unknown } | null;
+	return [error, nested?.driverError, nested?.cause].some((candidate) => {
+		const failure = candidate as { name?: unknown; code?: unknown; message?: unknown } | null | undefined;
+		if (!failure) {
+			return false;
+		}
+		return (
+			failure.name === 'ForeignKeyConstraintViolationException' ||
+			REFERENCED_ROW_CODES.has(String(failure.code)) ||
+			REFERENCED_ROW_MESSAGE.test(String(failure.message ?? ''))
+		);
+	});
+}
 
 @FavoriteService(BaseEntityEnum.Task)
 @Injectable()
@@ -745,6 +790,91 @@ export class TaskService extends TenantAwareCrudService<Task> {
 
 		if (!isTeamManager) {
 			throw new ForbiddenException('You can only delete a task of a team you manage.');
+		}
+	}
+
+	/**
+	 * Deletes a task for good only while it is in the trash (`DELETE /tasks/:id/trashed`, the Delete forever of the
+	 * trash pages), under the grants of a delete (see {@link assertMayRemoveTask}).
+	 *
+	 * The DELETE statement itself decides whether the task is in the trash: its WHERE names the task, the caller's
+	 * tenant, the stated organization and `deletedAt IS NOT NULL`. A task someone restored after the trash was read
+	 * (`PUT /tasks/:id/recover`) is live, so the statement matches no row and the caller is told so (404), where
+	 * `DELETE /tasks/:id` deletes the live task. Reading the task first and deleting it afterwards would only narrow
+	 * that window, so nothing is read to decide it: a team manager's check reads the task's teams, which says who may
+	 * delete the task, not whether it is still in the trash.
+	 *
+	 * No `DELETED` event is published: the task published it when it went to the trash (as {@link deleteTask} does
+	 * for a trashed task).
+	 *
+	 * A task that other rows still point at through a foreign key without a delete rule of its own (a linked issue, a
+	 * key result) is refused by the database: the statement deletes nothing, the task stays in the trash, and the
+	 * caller is told so (409) rather than answered with a server error.
+	 *
+	 * @param id - The task
+	 * @param organizationId - The organization whose trash holds the task
+	 * @returns The deletion, of one row
+	 * @throws BadRequestException when no organization is stated
+	 * @throws NotFoundException when no task with that id is in the trash of the caller's tenant and that organization
+	 * @throws ForbiddenException when the caller may not delete that task
+	 * @throws ConflictException when other records still reference the task
+	 */
+	async deleteTrashedTask(id: ID, organizationId: ID | null | undefined): Promise<DeleteResult> {
+		if (!organizationId) {
+			throw new BadRequestException(
+				'A task is deleted from the trash of one organization: state organizationId.'
+			);
+		}
+		const tenantId = RequestContext.currentTenantId();
+		// The statement is kept to the caller's tenant and organization boundary: outside them the caller has no trash.
+		if (!tenantId || !isWithinOrganizationBoundary(organizationId)) {
+			throw new NotFoundException(TASK_NOT_IN_TRASH);
+		}
+
+		await this.assertMayRemoveTask(id, true);
+
+		let affected: number;
+		try {
+			affected = await this.deleteInTrash(id, tenantId, organizationId);
+		} catch (error) {
+			if (isReferencedRowViolation(error)) {
+				throw new ConflictException(TASK_STILL_REFERENCED);
+			}
+			throw error;
+		}
+		if (!affected) {
+			throw new NotFoundException(TASK_NOT_IN_TRASH);
+		}
+		return { raw: [], affected };
+	}
+
+	/**
+	 * The one statement of {@link deleteTrashedTask}:
+	 * `DELETE FROM task WHERE id = ? AND tenantId = ? AND organizationId = ? AND deletedAt IS NOT NULL`.
+	 *
+	 * MikroORM applies its soft-delete filter (`deletedAt IS NULL`) to a native delete as it does to a read, which
+	 * would match no trashed task at all, so the filter is lifted for this statement.
+	 *
+	 * @returns How many rows it deleted: one, or none when the task is not in that trash
+	 */
+	private async deleteInTrash(id: ID, tenantId: ID, organizationId: ID): Promise<number> {
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM:
+				return await this.mikroOrmRepository.nativeDelete(
+					{ id, tenantId, organizationId, deletedAt: { $ne: null } } as never,
+					{ filters: { [SOFT_DELETABLE_FILTER]: false } }
+				);
+			case MultiORMEnum.TypeORM: {
+				const result = await this.typeOrmRepository.delete({
+					id,
+					tenantId,
+					organizationId,
+					deletedAt: Not(IsNull())
+				} as FindOptionsWhere<Task>);
+				return result?.affected ?? 0;
+			}
+			default:
+				throw new Error(`Not implemented for ${this.ormType}`);
 		}
 	}
 

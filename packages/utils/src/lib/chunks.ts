@@ -14,8 +14,12 @@
  * ```
  */
 export function chunks<T>(items: T[], size: number): T[][] {
-	if (size <= 0) {
-		throw new Error("Size must be a positive integer.");
+	// `size <= 0` alone lets `NaN` through (every comparison with it is false) and accepts fractions,
+	// where `slice` truncates its arguments: `chunks([1, 2, 3], 0.5)` produced empty and repeated
+	// chunks. `Infinity` is kept as "one chunk", the result it always had.
+	const isWholeNumber = Number.isInteger(size) || size === Infinity;
+	if (!isWholeNumber || size <= 0) {
+		throw new Error('Size must be a positive integer.');
 	}
 
 	const result: T[][] = [];

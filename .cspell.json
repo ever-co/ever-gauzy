@@ -1776,7 +1776,10 @@
 		"menuitemradio",
 		"popout",
 		"Ivanova",
-		"multiselectable"
+		"multiselectable",
+		"previewable",
+		"unsnoozed",
+		"unbillable"
 	],
 	"useGitignore": true,
 	"ignorePaths": [

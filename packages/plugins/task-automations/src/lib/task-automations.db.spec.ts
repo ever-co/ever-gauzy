@@ -26,6 +26,13 @@ jest.mock('@gauzy/core', () => {
 	class OrganizationProject {}
 	class OrganizationTeam {}
 	class UserOrganization {}
+	class TaskUpdateCommand {
+		constructor(
+			public readonly id: string,
+			public readonly input: Record<string, unknown>
+		) {}
+	}
+	class EmployeeCreateNotificationEvent {}
 	return {
 		MultiORMColumn: decorator,
 		MultiORMEntity: decorator,
@@ -39,10 +46,31 @@ jest.mock('@gauzy/core', () => {
 		OrganizationProject,
 		OrganizationTeam,
 		UserOrganization,
+		TaskUpdateCommand,
+		EmployeeCreateNotificationEvent,
 		RequestContext: {
 			currentTenantId: () => mockCaller.tenantId,
 			currentUserId: () => mockCaller.userId,
-			currentOrganizationId: () => mockCaller.organizationId
+			currentOrganizationId: () => mockCaller.organizationId,
+			currentUser: () => null,
+			setClsService: () => undefined,
+			// The writer's system actor: the work runs with the actor's tenant, then the caller's comes back.
+			runWithRequest: (request: { user?: { tenantId?: string } }, fn: () => unknown) => {
+				const previous = mockCaller.tenantId;
+				mockCaller.tenantId = request.user?.tenantId ?? null;
+				const restore = () => {
+					mockCaller.tenantId = previous;
+				};
+				try {
+					const result = fn();
+					if (result instanceof Promise) return result.finally(restore);
+					restore();
+					return result;
+				} catch (error) {
+					restore();
+					throw error;
+				}
+			}
 		}
 	};
 });
@@ -249,7 +277,7 @@ class RowWriter {
 
 	constructor(private readonly dataSource: DataSource) {}
 
-	async applyUpdate(task: ITaskAutomationTaskSnapshot, update: ITaskAutomationTaskUpdate, marker: ITaskAutomationActorMarker): Promise<void> {
+	async applyUpdate(task: ITaskAutomationTaskSnapshot, update: ITaskAutomationTaskUpdate, marker: ITaskAutomationActorMarker) {
 		this.updates.push({ taskId: task.id, update, marker });
 		const repository = this.dataSource.getRepository(Task as never);
 		const row = (await repository.findOne({ where: { id: task.id } as never, relations: { members: true, tags: true } as never })) as Record<string, unknown>;
@@ -258,6 +286,11 @@ class RowWriter {
 		if (update.memberIds) row['members'] = update.memberIds.map((id) => ({ id }));
 		if (update.tagIds) row['tags'] = update.tagIds.map((id) => ({ id }));
 		await repository.save(row as never);
+		return { written: true, lists: null, unchanged: [] as Array<'members' | 'tags'> };
+	}
+
+	currentLists(task: ITaskAutomationTaskSnapshot) {
+		return new TaskAutomationTaskReader(this.dataSource).lists(task.tenantId, task.id);
 	}
 
 	async notify(task: ITaskAutomationTaskSnapshot, notice: { employeeIds: string[] }, _marker: unknown, eventKey: string) {
@@ -617,6 +650,186 @@ describe('Task automations on SQLite', () => {
 			expect(await runs.history(rule.id as string)).toEqual([]);
 			expect(writer.updates).toEqual([]);
 			await expect(engine.dryRun(rule, randomUUID())).rejects.toBeInstanceOf(NotFoundException);
+		});
+	});
+
+	describe('the writer, against a person’s edit made while a rule runs', () => {
+		const TAG_URGENT = randomUUID();
+		let realWriter: TaskAutomationWriter;
+		let realRunner: TaskAutomationRunner;
+
+		/** The platform's task update, as far as the lists go: the lists it is given replace the task's. */
+		const commandBus = {
+			execute: async (command: { id: string; input: Record<string, unknown> }) => {
+				const repository = dataSource.getRepository(Task as never);
+				const row = (await repository.findOne({ where: { id: command.id } as never, relations: { members: true, tags: true } as never })) as Record<string, unknown>;
+				const fields = { ...command.input };
+				delete fields['organizationId'];
+				Object.assign(row, fields);
+				return repository.save(row as never);
+			}
+		};
+
+		/** Runs `edit` after the run read the task and before it writes (the rate-limit count sits between). */
+		const editWhileRunning = (edit: () => Promise<unknown>) => {
+			const count = runs.changesSince.bind(runs);
+			jest.spyOn(runs, 'changesSince').mockImplementationOnce(async (...args: Parameters<typeof runs.changesSince>) => {
+				await edit();
+				return count(...args);
+			});
+		};
+
+		const listsOf = async (id: string) => {
+			const row = await taskRow(id);
+			return {
+				members: (row['members'] as Array<{ id: string }>).map((member) => member.id).sort(),
+				tags: (row['tags'] as Array<{ id: string }>).map((tag) => tag.id).sort()
+			};
+		};
+
+		beforeEach(async () => {
+			await dataSource.getRepository(Tag as never).save({ id: TAG_URGENT, tenantId: TENANT, organizationId: ORG, name: 'Urgent' } as never);
+			realWriter = new TaskAutomationWriter(commandBus as never, { publish: jest.fn() } as never, reader);
+			realRunner = new TaskAutomationRunner(rules, runs, reader, realWriter, new TaskAutomationTaskLock(dataSource));
+		});
+
+		afterEach(() => {
+			jest.restoreAllMocks();
+		});
+
+		it('does not put back an assignee removed after the run read the task', async () => {
+			const rule = await rules.create(scope, {
+				name: 'Bob joins started tasks',
+				trigger: { type: TaskAutomationTriggerEnum.STATUS_CHANGED },
+				actions: [{ type: TaskAutomationActionEnum.ADD_ASSIGNEES, employeeIds: [BOB] }]
+			});
+			const id = await createTask();
+			await dataSource.query(`INSERT INTO "task_employee" ("taskId", "employeeId") VALUES (?, ?)`, [id, ADA]);
+			// A person unassigns Ada while the rule runs.
+			editWhileRunning(() => dataSource.query(`DELETE FROM "task_employee" WHERE "taskId" = ? AND "employeeId" = ?`, [id, ADA]));
+
+			const result = await realRunner.run(rule, id as never, { eventKey: `e-1:${id}`, triggerType: TaskAutomationTriggerEnum.STATUS_CHANGED, depth: 0, chain: [] });
+
+			expect(result.outcome).toBe(TaskAutomationRunOutcomeEnum.APPLIED);
+			expect((await listsOf(id)).members).toEqual([BOB]);
+		});
+
+		it('keeps a label added after the run read the task', async () => {
+			const rule = await rules.create(scope, {
+				name: 'Review started tasks',
+				trigger: { type: TaskAutomationTriggerEnum.STATUS_CHANGED },
+				actions: [{ type: TaskAutomationActionEnum.ADD_LABELS, tagIds: [TAG_REVIEW] }]
+			});
+			const id = await createTask();
+			editWhileRunning(() => dataSource.query(`INSERT INTO "tag_task" ("taskId", "tagId") VALUES (?, ?)`, [id, TAG_URGENT]));
+
+			await realRunner.run(rule, id as never, { eventKey: `e-2:${id}`, triggerType: TaskAutomationTriggerEnum.STATUS_CHANGED, depth: 0, chain: [] });
+
+			expect((await listsOf(id)).tags).toEqual([TAG_REVIEW, TAG_URGENT].sort());
+		});
+
+		it('records no change, and counts none toward the rate limit, when the edit made meanwhile already did it', async () => {
+			const rule = await rules.create(scope, {
+				name: 'Bob joins started tasks',
+				trigger: { type: TaskAutomationTriggerEnum.STATUS_CHANGED },
+				actions: [{ type: TaskAutomationActionEnum.ADD_ASSIGNEES, employeeIds: [BOB] }]
+			});
+			const id = await createTask();
+			// A person assigns Bob while the rule runs.
+			editWhileRunning(() => dataSource.query(`INSERT INTO "task_employee" ("taskId", "employeeId") VALUES (?, ?)`, [id, BOB]));
+
+			const result = await realRunner.run(rule, id as never, { eventKey: `e-4:${id}`, triggerType: TaskAutomationTriggerEnum.STATUS_CHANGED, depth: 0, chain: [] });
+
+			expect(result.outcome).toBe(TaskAutomationRunOutcomeEnum.NO_CHANGE);
+			expect(await runs.changesSince(id as never, new Date(Date.now() - 60_000))).toBe(0);
+			const [run] = await runs.history(rule.id as string);
+			expect((run.details as { changes: Array<{ field: string; note?: string }> }).changes).toEqual([
+				expect.objectContaining({ field: 'members', note: 'Already set.' })
+			]);
+			expect((await listsOf(id)).members).toEqual([BOB]);
+		});
+
+		it('sends a notice to the assignees as they are once the rule’s edit is applied to the task as it is now', async () => {
+			const rule = await rules.create(scope, {
+				name: 'Bob joins, then everyone hears',
+				trigger: { type: TaskAutomationTriggerEnum.STATUS_CHANGED },
+				actions: [
+					{ type: TaskAutomationActionEnum.ADD_ASSIGNEES, employeeIds: [BOB] },
+					{ type: TaskAutomationActionEnum.NOTIFY_ASSIGNEES, message: 'Started' }
+				]
+			});
+			const id = await createTask();
+			await dataSource.query(`INSERT INTO "task_employee" ("taskId", "employeeId") VALUES (?, ?)`, [id, ADA]);
+			const notified: string[][] = [];
+			jest.spyOn(realWriter, 'notify').mockImplementation(async (_task, notice) => {
+				notified.push([...notice.employeeIds].sort());
+				return { channel: 'inbox', recipients: notice.employeeIds.length };
+			});
+			// A person unassigns Ada while the rule runs: she is not told, Bob is.
+			editWhileRunning(() => dataSource.query(`DELETE FROM "task_employee" WHERE "taskId" = ? AND "employeeId" = ?`, [id, ADA]));
+
+			await realRunner.run(rule, id as never, { eventKey: `e-5:${id}`, triggerType: TaskAutomationTriggerEnum.STATUS_CHANGED, depth: 0, chain: [] });
+
+			expect((await listsOf(id)).members).toEqual([BOB]);
+			expect(notified).toEqual([[BOB]]);
+		});
+
+		it('sends a notice to the assignees as stored now when the rule changes no list', async () => {
+			const rule = await rules.create(scope, {
+				name: 'Everyone hears',
+				trigger: { type: TaskAutomationTriggerEnum.STATUS_CHANGED },
+				actions: [{ type: TaskAutomationActionEnum.NOTIFY_ASSIGNEES, message: 'Started' }]
+			});
+			const id = await createTask();
+			await dataSource.query(`INSERT INTO "task_employee" ("taskId", "employeeId") VALUES (?, ?)`, [id, ADA]);
+			const notified: string[][] = [];
+			jest.spyOn(realWriter, 'notify').mockImplementation(async (_task, notice) => {
+				notified.push([...notice.employeeIds].sort());
+				return { channel: 'inbox', recipients: notice.employeeIds.length };
+			});
+			// A person assigns Bob while the rule runs: he hears too.
+			editWhileRunning(() => dataSource.query(`INSERT INTO "task_employee" ("taskId", "employeeId") VALUES (?, ?)`, [id, BOB]));
+
+			await realRunner.run(rule, id as never, { eventKey: `e-6:${id}`, triggerType: TaskAutomationTriggerEnum.STATUS_CHANGED, depth: 0, chain: [] });
+
+			expect(notified).toEqual([[ADA, BOB].sort()]);
+		});
+
+		it('sends no notice about a task deleted while the rule runs', async () => {
+			const rule = await rules.create(scope, {
+				name: 'Everyone hears',
+				trigger: { type: TaskAutomationTriggerEnum.STATUS_CHANGED },
+				actions: [{ type: TaskAutomationActionEnum.NOTIFY_ASSIGNEES, message: 'Started' }]
+			});
+			const id = await createTask();
+			await dataSource.query(`INSERT INTO "task_employee" ("taskId", "employeeId") VALUES (?, ?)`, [id, ADA]);
+			const notify = jest.spyOn(realWriter, 'notify');
+			editWhileRunning(() => dataSource.getRepository(Task as never).softDelete({ id } as never));
+
+			const result = await realRunner.run(rule, id as never, { eventKey: `e-7:${id}`, triggerType: TaskAutomationTriggerEnum.STATUS_CHANGED, depth: 0, chain: [] });
+
+			expect(notify).not.toHaveBeenCalled();
+			expect(result.outcome).toBe(TaskAutomationRunOutcomeEnum.NO_CHANGE);
+			const [run] = await runs.history(rule.id as string);
+			expect((run.details as { changes: Array<{ field: string; note?: string }> }).changes).toEqual([
+				expect.objectContaining({ field: 'notice', to: 0, note: 'The task no longer exists.' })
+			]);
+		});
+
+		it('writes the plan as it is when nothing changed meanwhile', async () => {
+			const rule = await rules.create(scope, {
+				name: 'Bob replaces Ada',
+				trigger: { type: TaskAutomationTriggerEnum.STATUS_CHANGED },
+				actions: [{ type: TaskAutomationActionEnum.SET_ASSIGNEES, employeeIds: [BOB] }]
+			});
+			const id = await createTask();
+			await dataSource.query(`INSERT INTO "task_employee" ("taskId", "employeeId") VALUES (?, ?)`, [id, ADA]);
+
+			await realRunner.run(rule, id as never, { eventKey: `e-3:${id}`, triggerType: TaskAutomationTriggerEnum.STATUS_CHANGED, depth: 0, chain: [] });
+
+			expect((await listsOf(id)).members).toEqual([BOB]);
+			expect(await reader.lists(TENANT as never, id as never)).toEqual({ memberIds: [BOB], tagIds: [] });
+			expect(await reader.lists(OTHER_TENANT as never, id as never)).toBeNull();
 		});
 	});
 

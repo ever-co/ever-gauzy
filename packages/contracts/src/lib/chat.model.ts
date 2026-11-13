@@ -158,6 +158,8 @@ export interface IChatPerson {
 	userId: ID;
 	name: string;
 	imageUrl: string | null;
+	/** Their position in the organization (e.g. "Frontend Developer"), when one is set. */
+	position?: string | null;
 }
 
 export interface IChatMemberSummary {
@@ -619,7 +621,11 @@ export enum ChatInteractionStatusEnum {
 	FAILED = 'failed'
 }
 
-/** `POST /chat/messages/:id/interactions`: the button clicked. */
+/**
+ * `POST /chat/messages/:id/interactions`: the button clicked. A client sends an `Idempotency-Key` header with it (a
+ * new UUID per click, the same on each retry of that click, at most 64 printable characters): a repeat of the key
+ * answers the first click as it is now and calls the app no second time. Without the header every request is a click.
+ */
 export interface IChatInteractionInput {
 	actionId: string;
 	/** The actions block of the button, when two blocks reuse an action id. */
@@ -647,6 +653,8 @@ export interface IChatInteractionResult {
 	/** The message as the sender's reply left it (when it replied). */
 	message?: IChatMessageWithRelations;
 	events: IChatEvent[];
+	/** The `Idempotency-Key` named an earlier click: this is that click as it is now, and nothing was sent again. */
+	replayed?: boolean;
 }
 
 /** The body an interaction callback POSTs to the interaction URL (signed with `X-Signature`). */

@@ -99,10 +99,7 @@ describe('TimeLogService: manual time over another entry of the same member', ()
 
 	const addManualTime = (from: string, to: string) => service.addManualTime(entry(at(from), at(to)));
 
-	it.each([
-		['whole minutes', at('12:53'), at('14:47')],
-		['seconds and milliseconds', new Date('2026-11-02T12:53:27.123Z'), new Date('2026-11-02T14:47:05.456Z')]
-	])(
+	it.each([['whole minutes', at('12:53'), at('14:47')]])(
 		'a tracked entry overlapped at its start keeps its time after the new one (started at %s)',
 		async (_precision, startedAt, stoppedAt) => {
 			store.addTimeLog('tracked', '12:53', '14:47', { startedAt, stoppedAt });

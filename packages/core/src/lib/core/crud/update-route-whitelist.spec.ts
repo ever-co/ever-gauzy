@@ -126,13 +126,25 @@ describe('whitelisted update routes', () => {
 		const smuggled = { isRunning: true, timesheetId: 'foreign-timesheet', id: 'some-log', timeSlots: [{ id: 'slot' }] };
 
 		it.each([
-			['PUT', UpdateManualTimeLogDTO],
-			['POST', CreateManualTimeLogDTO]
-		])('%s keeps every field the edit modal sends and drops the rest', async (_method, dto) => {
+			// POST also carries `uploadedByTracker`, which the DTO derives from `source` itself (284d321a14): it is not a
+			// field the client chooses, so it is expected on top of what the modal sends.
+			['PUT', UpdateManualTimeLogDTO, []],
+			['POST', CreateManualTimeLogDTO, ['uploadedByTracker']]
+		])('%s keeps every field the edit modal sends and drops the rest', async (_method, dto, derived) => {
 			const result = await run({ transform: true, whitelist: true }, dto, { ...uiPayload(), ...smuggled });
 
-			expect(definedKeys(result)).toEqual(definedKeys(uiPayload()));
+			expect(definedKeys(result)).toEqual([...definedKeys(uiPayload()), ...derived].sort());
 			expect(result).toMatchObject({ description: 'work', reason: 'forgot the timer', isBillable: true });
+		});
+
+		it('derives uploadedByTracker from the source, whatever the client sends', async () => {
+			const result = await run({ transform: true, whitelist: true }, CreateManualTimeLogDTO, {
+				...uiPayload(),
+				uploadedByTracker: true
+			});
+
+			// A web-timer entry is never a tracker upload, even when the request claims it is
+			expect(result.uploadedByTracker).toBe(false);
 		});
 
 		it('keeps the timer config fields (tags, version) of the web timer', async () => {

@@ -25,6 +25,12 @@ import { MikroOrmTimeSlotRepository } from '../../../time-slot/repository/mikro-
 const TIME_LOG_SCOPE_FIELDS = ['id', 'tenantId', 'tenant', 'organizationId', 'organization', 'employee'] as const;
 
 /**
+ * Clients that post a time slot on each heartbeat of a run: Ever Teams and its mobile app. A run of theirs that never
+ * sent one has no slot when it stops (#11843).
+ */
+const HEARTBEAT_SLOT_SOURCES: ReadonlyArray<string> = [TimeLogSourceEnum.TEAMS, TimeLogSourceEnum.MOBILE];
+
+/**
  * Returns a copy of the input without the scope fields.
  *
  * @param input - The requested time log changes.
@@ -140,6 +146,15 @@ export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateComman
 			// (c) only then the previous employee's slots are released, below. If that fails, the log is fully
 			// moved, the previous employee may keep slots that no longer belong to it, and the error propagates.
 		} else {
+			// Whether the update gives the log the slots of its range (takesSlotsOfItsRange), read before anything is
+			// written, so a failed read leaves the log as it was, never stopped without slots. It is asked of the log
+			// as the update will store it: an edit may change its source in the same body. The update does not touch
+			// the log's slot links, which are read from the stored row.
+			const takesRangeSlots =
+				needToUpdateTimeSlots &&
+				!manualTimeSlot &&
+				(await this.takesSlotsOfItsRange({ ...timeLog, ...changes }));
+
 			// Update the time log in the repository
 			await this.typeOrmTimeLogRepository.update(
 				{ id: timeLog.id, tenantId },
@@ -153,11 +168,12 @@ export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateComman
 			timeLog = await this.typeOrmTimeLogRepository.findOneBy({ id: timeLog.id });
 
 			if (needToUpdateTimeSlots) {
-				// Create new time slots if needed for Web Timer. The answer is every slot of the employee at those
-				// starts — the ones created and the ones they already had there (another of their logs may share a
-				// ten-minute slot) — and, as TimeLogCreateHandler does, it becomes the log's slots, so the save links
-				// the log to each of them, an existing slot included.
-				if (!manualTimeSlot && timeLog.source === TimeLogSourceEnum.WEB_TIMER) {
+				// Create new time slots if needed for Web Timer, and for a heartbeat-posting run that has none
+				// (takesRangeSlots, above). The answer is every slot of the employee at those starts — the ones created
+				// and the ones they already had there (another of their logs may share a ten-minute slot) — and, as
+				// TimeLogCreateHandler does, it becomes the log's slots, so the save links the log to each of them, an
+				// existing slot included.
+				if (takesRangeSlots) {
 					timeLog.timeSlots = await this.bulkCreateTimeSlots(
 						updateTimeSlots,
 						timeLog,
@@ -203,6 +219,54 @@ export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateComman
 	}
 
 	/**
+	 * Whether an update gives the log the time slots of its range. The web timer posts none, so its runs always get
+	 * them. A run of a client that posts a slot on each heartbeat (HEARTBEAT_SLOT_SOURCES) gets them only when it has
+	 * none, one that never sent a heartbeat, which the day's worked time otherwise leaves out (#11843); one that has
+	 * slots keeps those it posted. Desktop and the other trackers post their own.
+	 *
+	 * @param timeLog - The log as the update will store it: the stored row with the update's changes on top.
+	 */
+	private async takesSlotsOfItsRange(timeLog: ITimeLog): Promise<boolean> {
+		if (timeLog.source === TimeLogSourceEnum.WEB_TIMER) {
+			return true;
+		}
+		if (!HEARTBEAT_SLOT_SOURCES.includes(timeLog.source)) {
+			return false;
+		}
+		const hasSlots = await this.hasTimeSlots(timeLog);
+		return !hasSlots;
+	}
+
+	/**
+	 * Whether any time slot of the log's tenant is linked to the log.
+	 *
+	 * @param timeLog - The log.
+	 */
+	private async hasTimeSlots(timeLog: ITimeLog): Promise<boolean> {
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM: {
+				const em = this.mikroOrmTimeSlotRepository.getEntityManager();
+				const count = await em.count('TimeSlot', {
+					tenantId: timeLog.tenantId,
+					timeLogs: { id: timeLog.id }
+				} as any);
+				return count > 0;
+			}
+			case MultiORMEnum.TypeORM:
+			default: {
+				const query = this.typeOrmTimeSlotRepository.createQueryBuilder('time_slot');
+				query
+					.innerJoin(`${query.alias}.timeLogs`, 'time_log', p(`"time_log"."id" = :timeLogId`), {
+						timeLogId: timeLog.id
+					})
+					.where(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId: timeLog.tenantId });
+				const count = await query.getCount();
+				return count > 0;
+			}
+		}
+	}
+
+	/**
 	 * Retrieves a time log by its ID or directly returns the instance if provided.
 	 *
 	 * If the `id` parameter is already a `TimeLog` instance, it is returned as is. Otherwise, it fetches
@@ -230,15 +294,20 @@ export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateComman
 	 * This method filters out time slots that have matching `startedAt` times in the new slots and returns
 	 * the start times of the slots that need to be removed.
 	 *
+	 * Two slots match by their whole minute. `generateTimeSlots` keeps the milliseconds of the start it is given on
+	 * every slot it computes, so a new start of 09:55:00.500 gave 09:50:00.500, 10:00:00.500 and so on, and a slot's
+	 * start never has milliseconds: compared exactly, no slot matched, and every one the log held was released, the ones
+	 * it keeps included.
+	 *
 	 * @param slots - The existing time slots.
 	 * @param newSlots - The newly generated time slots.
 	 * @returns An array of conflicting start times that need to be removed.
 	 */
 	private getConflictingStartTimes(slots: ITimeSlot[], newSlots: ITimeSlot[]): Date[] {
+		const minuteOf = (slot: ITimeSlot) => moment(slot.startedAt).startOf('minute').valueOf();
+		const kept = new Set(newSlots.map(minuteOf));
 		return slots
-			.filter(
-				(existingSlot) => !newSlots.some((newSlot) => moment(newSlot.startedAt).isSame(existingSlot.startedAt))
-			)
+			.filter((existingSlot) => !kept.has(minuteOf(existingSlot)))
 			.map((slot) => new Date(slot.startedAt));
 	}
 

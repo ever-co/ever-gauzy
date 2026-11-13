@@ -4,7 +4,8 @@ import { MikroOrmChatWebhookInteractionRepository } from './chat.repositories';
 
 /**
  * `chat_webhook_interaction`: one click on a button of an app message, and its callback. Its id is the
- * `interactionId` the callback carries on every attempt; `replyAppliedAt` makes the sender's reply apply once.
+ * `interactionId` the callback carries on every attempt; `replyAppliedAt` makes the sender's reply apply once;
+ * `idempotencyKey` (unique per tenant, message and clicker, migration `1791000008300`) makes a repeated click one.
  */
 @MultiORMEntity('chat_webhook_interaction', { mikroOrmRepository: () => MikroOrmChatWebhookInteractionRepository })
 export class ChatWebhookInteraction extends TenantOrganizationBaseEntity {
@@ -45,8 +46,15 @@ export class ChatWebhookInteraction extends TenantOrganizationBaseEntity {
 	lastError?: string | null;
 
 	@MultiORMColumn({ nullable: true })
-	deliveredAt?: Date | null;
+	deliveredAt?: Date;
 
 	@MultiORMColumn({ nullable: true })
-	replyAppliedAt?: Date | null;
+	replyAppliedAt?: Date;
+
+	/**
+	 * The clicker's `Idempotency-Key`, when the client sent one: a double click or a retry after a lost answer names
+	 * this row again instead of making a second one. Null for a client that sends none (every request is a click).
+	 */
+	@MultiORMColumn({ type: 'varchar', length: 64, nullable: true })
+	idempotencyKey?: string | null;
 }

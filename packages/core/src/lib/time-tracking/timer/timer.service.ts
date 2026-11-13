@@ -3,6 +3,7 @@ import {
 	Logger,
 	NotFoundException,
 	ForbiddenException,
+	ConflictException,
 	NotAcceptableException,
 	UnprocessableEntityException
 } from '@nestjs/common';
@@ -105,6 +106,15 @@ const PROJECT_FROM_TASK_SOURCES: ReadonlyArray<string> = [TimeLogSourceEnum.TEAM
  * are held to that switch; the other clients of this API never set it and keep their behavior.
  */
 const TEAM_TRACKING_SWITCH_SOURCES: ReadonlyArray<string> = [TimeLogSourceEnum.TEAMS, TimeLogSourceEnum.MOBILE];
+
+/**
+ * Whether a stop or a toggle names the time log it is for. Only a missing id (`undefined` or `null`) names none. An
+ * empty one, which the GraphQL `ID` input lets through where the REST body refuses it, still names a log, which is not
+ * the running one: the stop is refused instead of ending whatever runs.
+ */
+function isTimeLogNamed(input: ITimerToggleInput): boolean {
+	return input.timeLogId !== undefined && input.timeLogId !== null;
+}
 
 @Injectable()
 export class TimerService {
@@ -573,6 +583,9 @@ export class TimerService {
 			throw new NotAcceptableException(`No running log found. Can't stop timer because it was already stopped.`);
 		}
 
+		// A stop meant for another run is refused before anything is written, and the running log goes on
+		this.assertStopIsForRunningLog(request, lastLog);
+
 		// Calculate stoppedAt date or use current date if not provided
 		const stoppedAt = await this.calculateStoppedAt(request, lastLog);
 		this.debug(() => `last stopped at: ${stoppedAt}`);
@@ -611,6 +624,52 @@ export class TimerService {
 
 		// Return the last log
 		return lastLog;
+	}
+
+	/**
+	 * Refuses a stop that is not for the running log, and nothing is written. Such a stop comes from a view still
+	 * showing an earlier run, which a start on another device or tab has replaced since, and it used to end the newer
+	 * run instead:
+	 * - one naming another time log than the running one (`timeLogId`) is refused with 409;
+	 * - one asking to stop the running log before it started, as a stop carrying the earlier run's dates does, is
+	 *   refused with 406, as a stop with nothing running is, so a client takes it as "already stopped". It used to
+	 *   close the newer run at zero duration.
+	 *
+	 * Only the time the client asks for is checked: the end a desktop stop gets from its time slots
+	 * (`calculateStoppedAt`) may fall before the start, and that stop still closes the log, as before.
+	 *
+	 * @param request - The stop, as the client sent it.
+	 * @param runningLog - The employee's running log, the one the stop would end.
+	 * @throws ConflictException when the stop names another time log than the running one.
+	 * @throws NotAcceptableException when the requested `stoppedAt` is before the running log's `startedAt`.
+	 */
+	private assertStopIsForRunningLog(request: ITimerToggleInput, runningLog: ITimeLog): void {
+		// Time log ids are UUIDs, whose letters compare in either case
+		const namesAnotherLog =
+			isTimeLogNamed(request) && String(request.timeLogId).toLowerCase() !== String(runningLog.id).toLowerCase();
+		if (namesAnotherLog) {
+			this.logger.warn(`Stop refused: it names another time log than the running one, ${runningLog.id}.`);
+			throw new ConflictException(
+				'This stop names a time log that is not the running one. Nothing was stopped: the running timer goes on.'
+			);
+		}
+
+		const asksForStopTime = isNotEmpty(request.stoppedAt);
+		if (!asksForStopTime) {
+			return;
+		}
+
+		const requestedStoppedAt = moment.utc(request.stoppedAt);
+		const runningSince = moment.utc(runningLog.startedAt);
+		const stopsBeforeStart = requestedStoppedAt.isBefore(runningSince);
+		if (stopsBeforeStart) {
+			this.logger.warn(
+				`Stop at ${requestedStoppedAt.toISOString()} refused: the running log ${runningLog.id} started after it, at ${runningSince.toISOString()}.`
+			);
+			throw new NotAcceptableException(
+				'No running log found for this stop: the running timer started after the requested stop time.'
+			);
+		}
 	}
 
 	/**
@@ -830,8 +889,12 @@ export class TimerService {
 		// Retrieve the last running time log
 		const lastLog = await this.getLastRunningLog();
 
+		// A toggle naming a time log is a stop of that log: it never starts a timer in its place, and with nothing
+		// running it is refused as that stop is
+		const namesTimeLog = isTimeLogNamed(request);
+
 		// Start a new timer if no running log exists, otherwise stop the current timer
-		if (!lastLog) {
+		if (!lastLog && !namesTimeLog) {
 			return this.startTimer(request);
 		} else {
 			return this.stopTimer(request);
@@ -980,7 +1043,7 @@ export class TimerService {
 	}
 
 	/**
-	 * Get timer worked status
+	 * Get timer worked status: each employee's running log, or their latest log when none runs.
 	 *
 	 * @param request The input parameters for the query.
 	 * @returns The timer status for the employee.
@@ -1042,9 +1105,12 @@ export class TimerService {
 					sqlQuery = sqlQuery.andWhere({ organizationTeamId });
 				}
 
-				// Adds ordering to the SQL query.
+				// Adds ordering to the SQL query. The running log comes first: it is the employee's last log even beside
+				// a log that starts later (manual time, a desktop offline upload). A row without the flag counts as not
+				// running, where a bare `"isRunning" DESC` would put its NULL first. Then the latest started.
 				sqlQuery = sqlQuery.orderBy([
 					{ column: 'employeeId', order: 'ASC' },
+					{ column: knex.raw('COALESCE("time_log"."isRunning", false)'), order: 'DESC' },
 					{ column: 'startedAt', order: 'DESC' },
 					{ column: 'createdAt', order: 'DESC' }
 				]);
@@ -1084,6 +1150,8 @@ export class TimerService {
 					...(isNotEmpty(organizationTeamId) ? { organizationTeamId } : {})
 				});
 				query.orderBy(p(`"${query.alias}"."employeeId"`), 'ASC'); // Adjust ORDER BY to match the SELECT list
+				// The running log first, a row without the flag counting as not running (see the MikroORM branch)
+				query.addOrderBy(p(`COALESCE("${query.alias}"."isRunning", false)`), 'DESC');
 				query.addOrderBy(p(`"${query.alias}"."startedAt"`), 'DESC');
 				query.addOrderBy(p(`"${query.alias}"."createdAt"`), 'DESC');
 

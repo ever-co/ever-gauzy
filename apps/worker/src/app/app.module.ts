@@ -3,8 +3,10 @@ import {
 	DatabaseModule,
 	EventOutboxDispatchScheduleModule,
 	IdempotencyMaintenanceModule,
+	isTimerRemindersEnabled,
 	JobExecutionModule,
 	MentionModule,
+	TimerReminderScheduleModule,
 	TokenModule,
 	WebhookMaintenanceModule
 } from '@gauzy/core';
@@ -81,6 +83,14 @@ import { WORKER_DEFAULT_QUEUE, WORKER_QUEUE_ENABLED, WORKER_SCHEDULER_ENABLED } 
 		 */
 		...(WORKER_QUEUE_ENABLED
 			? [IdempotencyMaintenanceModule, EventOutboxDispatchScheduleModule, WebhookMaintenanceModule]
+			: []),
+		/**
+		 * The timer reminders' schedule (off unless `GAUZY_TIMER_REMINDERS_ENABLED=true`), and only the schedule, for
+		 * the outbox's reason: a reminder is a notification, and the listeners that file it in the Inbox and announce it
+		 * to the receiver's clients run in the API, which consumes the queue (`TimerReminderMaintenanceModule`).
+		 */
+		...(WORKER_QUEUE_ENABLED && isTimerRemindersEnabled(process.env, (message) => console.warn(message))
+			? [TimerReminderScheduleModule]
 			: []),
 		/**
 		 * The ledger a scheduled pass is recorded in.

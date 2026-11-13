@@ -30,6 +30,22 @@ export class IncomeService {
 		);
 	}
 
+	/**
+	 * A page of incomes, as the income grid reads them: `where` may carry a `valueDate` range of `startDate` and
+	 * `endDate`; `take` is the page size, at most 100, and `skip` the page, counted from 1.
+	 */
+	pagination(query: {
+		where: Record<string, unknown>;
+		order?: Record<string, 'ASC' | 'DESC'>;
+		relations?: string[];
+		skip?: number;
+		take?: number;
+	}): Promise<IPagination<IIncome>> {
+		return firstValueFrom(
+			this.http.get<IPagination<IIncome>>(`${API_PREFIX}/income/pagination`, { params: toParams(query) })
+		);
+	}
+
 	update(id: string, updateInput: IIncomeUpdateInput): Promise<IIncome> {
 		return firstValueFrom(this.http.put<IIncome>(`${API_PREFIX}/income/${id}`, updateInput));
 	}

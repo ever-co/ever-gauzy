@@ -1,0 +1,188 @@
+{
+	"TITLE": "Jira",
+	"UNAVAILABLE": "The Jira integration is not loaded on this server (JIRA_ENABLED is off).",
+	"NOT_CONFIGURED": "The Jira OAuth app is not configured on this server (JIRA_CLIENT_ID, JIRA_CLIENT_SECRET, the callback URL). Nobody can connect until it is.",
+	"ERROR": "Something went wrong.",
+	"RETRY": "Try again",
+	"LOADING": "Loading…",
+	"COMMON": {
+		"SAVE": "Save",
+		"CANCEL": "Cancel",
+		"REMOVE": "Remove",
+		"REFRESH": "Refresh",
+		"BACK": "Back",
+		"YES": "Yes",
+		"NO": "No",
+		"NEVER": "Never"
+	},
+	"CONNECT": {
+		"TITLE": "Connect your Jira Cloud site",
+		"TEXT": "You will authorize this platform with Atlassian and come back here. Then map Jira projects to projects, import their issues as tasks, and keep them in sync.",
+		"BUTTON": "Connect Jira",
+		"STARTING": "Opening Atlassian…"
+	},
+	"CALLBACK_ERRORS": {
+		"not_configured": "The Jira OAuth app is not configured on this server.",
+		"denied": "Atlassian did not authorize the connection.",
+		"invalid_state": "The connect flow expired or was already used. Start it again.",
+		"exchange_failed": "Atlassian refused the authorization code. Start the flow again.",
+		"site_unreadable": "The Jira sites of your account could not be read after authorizing.",
+		"no_site": "Your Atlassian account reaches no Jira Cloud site this app may use.",
+		"site_mismatch": "This connection has mappings on a Jira site your Atlassian account no longer reaches, so it was kept as it was. Connect with an account that reaches that site, or remove the mappings first.",
+		"not_saved": "The connection could not be saved."
+	},
+	"CONNECTED": {
+		"TITLE": "Jira is connected",
+		"SITE": "Site",
+		"ACCOUNT": "Atlassian account",
+		"CONNECTED_ON": "Connected on",
+		"OPEN_SETTINGS": "Open the settings",
+		"ATTENTION": "This connection needs attention: {{ reason }}",
+		"REASONS": {
+			"token_refused": "Atlassian refused the token. Connect again."
+		}
+	},
+	"SETTINGS": {
+		"TITLE": "Jira settings",
+		"OVERVIEW": "Connection",
+		"DISCONNECT": "Disconnect",
+		"DISCONNECT_CONFIRM": "Disconnect Jira from this organization? The mappings and the site's webhook go; the imported tasks stay.",
+		"DISCONNECTED": "Jira was disconnected."
+	},
+	"SITES": {
+		"TITLE": "Jira site",
+		"REQUIRED": "Your Atlassian account reaches several Jira sites. Choose the one this connection works with: nothing syncs until you do.",
+		"SITE": "Site",
+		"CHOOSE": "Use this site",
+		"CHOSEN": "The connection now works with this site.",
+		"NONE": "Not chosen yet",
+		"EMPTY": "The connection's token reaches no Jira site. Connect again.",
+		"LOCKED": "A connection with mappings keeps its site, since a mapping names its Jira project by an id that only this site knows. Remove the mappings to choose another site."
+	},
+	"WEBHOOK": {
+		"TITLE": "Webhook",
+		"INTRO": "Jira delivers the changes of the mapped projects to this server through one webhook per connection. Jira expires it after 30 days; the server renews it before then. Without it, the scheduled import picks the changes up.",
+		"ACTIVE": "Registered; Jira keeps it until {{ date }}.",
+		"NONE": "No webhook is registered.",
+		"FAILED": "The last registration failed: {{ error }}",
+		"REGISTER": "Register again",
+		"OUTCOMES": {
+			"off": "No webhook is used: webhooks are off on this server, or the connection has no site yet or waits for a reconnect. The scheduled import follows Jira instead.",
+			"unchanged": "The webhook was already in line with the mappings (none is needed while no mapping brings issues in).",
+			"registered": "The webhook was registered.",
+			"refreshed": "The webhook was renewed.",
+			"removed": "The webhook was removed: no mapping brings issues in.",
+			"failed": "The webhook could not be registered; see the error above."
+		}
+	},
+	"MAPPINGS": {
+		"TITLE": "Jira projects and projects",
+		"INTRO": "Each Jira project maps to one project. Inbound brings the Jira project's issues in as tasks; outbound sends the project's tasks to the Jira project (one outbound mapping per project).",
+		"EMPTY": "No Jira project is mapped yet.",
+		"JIRA_PROJECT": "Jira project",
+		"PROJECT": "Project",
+		"DIRECTION": "Direction",
+		"STATUS_MAP": "Task status per Jira status",
+		"STATUS_MAP_HINT": "The task status name an issue gets for each Jira status category. A blank one keeps the default.",
+		"NAMED_STATUSES_HINT": "A Jira status can also map on its own, which wins over its category. Leave it blank to follow its category.",
+		"CATEGORIES": {
+			"new": "To do",
+			"indeterminate": "In progress",
+			"done": "Done"
+		},
+		"ISSUE_TYPES": "Issue types",
+		"ISSUE_TYPES_HINT": "Bring in only these issue types. None checked brings every type in.",
+		"ISSUE_TYPES_ALL": "Every type",
+		"ISSUE_TYPES_SOME": "{{ count }} selected",
+		"SYNC": "Sync",
+		"ENABLED": "On",
+		"DISABLED": "Off",
+		"ADD": "Map a Jira project",
+		"ADDING": "Saving…",
+		"REMOVE_CONFIRM": "Remove this mapping? The imported tasks stay.",
+		"IMPORT": "Import changes",
+		"IMPORT_FULL": "Import everything",
+		"IMPORT_STARTED": "The import started; see the runs below.",
+		"LAST_IMPORT": "Last import",
+		"LAST_ERROR": "Last error",
+		"DIRECTIONS": {
+			"inbound": "Inbound (Jira → tasks)",
+			"outbound": "Outbound (tasks → Jira)",
+			"both": "Both ways"
+		},
+		"NO_JIRA_PROJECTS": "The site has no project the connection can see."
+	},
+	"RUNS": {
+		"TITLE": "Runs",
+		"EMPTY": "No run yet.",
+		"KIND": "Kind",
+		"FULL": "(full)",
+		"STATUS": "Status",
+		"STARTED": "Started",
+		"FINISHED": "Finished",
+		"COUNTS": "Created / updated / skipped / failed",
+		"CONFLICTS": "Conflicts",
+		"SHOW_CONFLICTS": "List the conflicts this run found",
+		"REPORT": "Report",
+		"REPORT_LINE": "{{ issues }} issues on {{ pages }} pages; {{ comments }} comments, {{ links }} links",
+		"REPORT_PARTIAL": "Stopped early: the next import continues from where it stopped.",
+		"REPORT_FAILURES": "Not applied:",
+		"REPORT_MORE": "and {{ count }} more",
+		"ERROR": "Error",
+		"KINDS": {
+			"import": "Import",
+			"webhook": "Webhook"
+		},
+		"STATUSES": {
+			"running": "Running",
+			"done": "Done",
+			"failed": "Failed"
+		}
+	},
+	"CONFLICTS": {
+		"TITLE": "Sync conflicts",
+		"INTRO": "A field changed both in Jira and on the platform since they last agreed. Jira's value was applied to the task, and the task's value is kept here: keep Jira's value, or restore the task's (a mapping that sends changes out sends it to the issue too).",
+		"STATUS_LABEL": "Conflicts to show",
+		"STATUSES": {
+			"open": "Open",
+			"resolved": "Resolved"
+		},
+		"RUN_FILTER": "Found by one run.",
+		"SHOW_ALL": "Show every run",
+		"EMPTY": "No open conflict.",
+		"EMPTY_RESOLVED": "No resolved conflict.",
+		"TASK": "Task",
+		"OPEN_TASK": "Open the task",
+		"ITEM": "Jira issue {{ id }}",
+		"FIELD": "Field",
+		"PLATFORM_VALUE": "Task's value",
+		"EXTERNAL_VALUE": "Jira's value (applied)",
+		"EMPTY_VALUE": "Empty",
+		"SHOW_FULL": "Show all",
+		"SHOW_LESS": "Show less",
+		"FOUND": "Found",
+		"RESOLVE": "Resolve",
+		"RESOLUTION": "Resolution",
+		"SHOW_MORE": "Show older conflicts",
+		"KEEP_EXTERNAL": "Keep Jira's value",
+		"KEEP_PLATFORM": "Restore the task's value",
+		"KEPT_EXTERNAL": "Resolved: the task keeps the value it has now.",
+		"KEPT_PLATFORM": "The task's value was written back.",
+		"FIELDS": {
+			"title": "Title",
+			"description": "Description",
+			"status": "Status",
+			"priority": "Priority",
+			"dueDate": "Due date"
+		},
+		"RESOLUTIONS": {
+			"kept_external": "Kept Jira's value",
+			"kept_platform": "Restored the task's value",
+			"superseded": "Replaced by a later conflict"
+		},
+		"ERRORS": {
+			"STALE": "The task changed since the conflict was found, so its value was not written back. Keep Jira's value, or edit the task.",
+			"NOT_FOUND": "This conflict was resolved already; the list was read again."
+		}
+	}
+}

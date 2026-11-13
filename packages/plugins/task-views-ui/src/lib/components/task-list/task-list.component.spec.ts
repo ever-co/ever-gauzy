@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { runInThisContext } from 'node:vm';
 import { ID, ITask } from '@gauzy/contracts';
 import { initialsOf, isOverdue, RowToggle, TaskListComponent, TaskRowGroup } from './task-list.component';
 
@@ -80,6 +81,36 @@ describe('TaskListComponent', () => {
 		});
 		(host().querySelector('[data-test="select-page"]') as HTMLElement).click();
 		expect(pages).toEqual([false]);
+	});
+
+	it('shows a date-only due date as its own day to a reader west of UTC, and a moment in the reader’s zone', () => {
+		// Jest hands each test file a copy of `process.env`: Node reads the host process's `env.TZ`.
+		const hostProcess = runInThisContext('process') as NodeJS.Process;
+		const previous = hostProcess.env['TZ'];
+		const current = Intl.DateTimeFormat().resolvedOptions().timeZone;
+		// UTC−4: midnight UTC is the evening before here.
+		hostProcess.env['TZ'] = 'America/Caracas';
+		try {
+			expect(new Date(2026, 10, 14).getTimezoneOffset()).toBe(240);
+			render([
+				{
+					key: '',
+					label: '',
+					count: null,
+					rows: [
+						row('a', { dueDate: '2026-11-14T00:00:00.000Z' as never }),
+						row('b', { dueDate: '2026-11-15T03:59:59.000Z' as never })
+					]
+				}
+			]);
+			const days = Array.from(host().querySelectorAll('.cell.due[role="gridcell"]')).map((cell) =>
+				cell.textContent?.trim()
+			);
+			expect(days).toEqual(['Nov 14, 2026', 'Nov 14, 2026']);
+		} finally {
+			hostProcess.env['TZ'] = previous ?? current;
+			if (previous === undefined) delete hostProcess.env['TZ'];
+		}
 	});
 
 	it('marks a passed due date of an open task, and draws initials', () => {

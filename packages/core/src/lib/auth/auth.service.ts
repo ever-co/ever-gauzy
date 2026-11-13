@@ -79,6 +79,7 @@ import { MikroOrmUserRepository } from '../user/repository/mikro-orm-user.reposi
 import { TypeOrmUserRepository } from '../user/repository/type-orm-user.repository';
 import { UserService } from '../user/user.service';
 import { RequestContext } from './../core/context';
+import { IAuthenticatedUser } from './../core/context/types';
 import { runOutsideOrganizationBoundary } from './../core/crud/organization-boundary';
 import { OrganizationTeam, Tenant, User } from './../core/entities/internal';
 import { Employee } from '../employee/employee.entity';
@@ -882,6 +883,50 @@ export class AuthService extends SocialAuthService {
 			this.logger.warn(`Could not replace the stale organization of user ${user.id}: ${error?.message}`);
 		}
 		return organizationId;
+	}
+
+	/**
+	 * The organization a token refresh scopes the new tokens to: the one the refresh token was minted for, so a refresh
+	 * keeps the client in the organization it works in.
+	 *
+	 * `POST /auth/switch-organization` stores the organization switched to on the user, for the whole account: it is
+	 * where the next sign-in starts. A refresh used to scope its tokens to that stored organization, so a switch made in
+	 * one client moved every other client of the account at its next refresh (ever-co/ever-gauzy#11827).
+	 *
+	 * The refresh token's organization counts only while the user is still an active, non-archived member of it (the
+	 * rule `switchOrganization` and `JwtStrategy` apply). A refresh token that names no organization (minted without
+	 * one, or before organizations were in its payload), or one the user is no longer a member of, falls back to the
+	 * stored organization, vetted as before (see `resolveStoredOrganizationId`). A membership lookup that fails keeps the
+	 * refresh token's organization, as it keeps a stored one: `JwtStrategy` judges the token on every request.
+	 *
+	 * @param user The user being refreshed, with the organization of the refresh token `JwtRefreshTokenStrategy`
+	 * verified (`refreshTokenOrganizationId`).
+	 * @returns The refresh token's organization while it is an active membership; otherwise what
+	 * `resolveStoredOrganizationId` returns.
+	 */
+	private async resolveRefreshOrganizationId(user: IAuthenticatedUser): Promise<ID | null> {
+		const organizationId = user.refreshTokenOrganizationId || null;
+
+		// A refresh token that names the stored organization, the common case, takes the path it always took: the stored
+		// organization is checked once, and replaced when stale.
+		if (!organizationId || organizationId === user.lastOrganizationId) {
+			return this.resolveStoredOrganizationId(user);
+		}
+
+		try {
+			if (await this.userService.hasActiveOrganizationMembership(user.id, organizationId, user.tenantId)) {
+				return organizationId;
+			}
+		} catch (error) {
+			this.logger.warn(`Could not check the refresh token organization of user ${user.id}: ${error?.message}`);
+			return organizationId;
+		}
+
+		this.logger.log(
+			`User ${user.id} is no longer a member of refresh token organization ${organizationId}; ` +
+				'using the stored organization instead'
+		);
+		return this.resolveStoredOrganizationId(user);
 	}
 
 	/**
@@ -2316,10 +2361,9 @@ export class AuthService extends SocialAuthService {
 			// If no user is found, return null
 			if (!user) return null;
 
-			// The organization the user works in (`RequestContext.currentOrganizationId()` reads the same stored
-			// value), so the new access token keeps the organization context. It counts only while the user is
-			// still a member of it; a stale one is replaced (see `resolveStoredOrganizationId`).
-			const organizationId = await this.resolveStoredOrganizationId(user);
+			// The organization the refresh token was minted for while the user is still a member of it, so the client
+			// keeps the organization it works in; otherwise the stored one (see `resolveRefreshOrganizationId`).
+			const organizationId = await this.resolveRefreshOrganizationId(user);
 
 			// Get and return the JWT access token for the user with organization context
 			const [access_token, refresh_token] = await Promise.all([
@@ -2347,7 +2391,8 @@ export class AuthService extends SocialAuthService {
 	}
 
 	/**
-	 * Rotates the JWT tokens for the current user.
+	 * Rotates the JWT tokens for the current user. The new tokens keep the organization of the refresh token (see
+	 * `resolveRefreshOrganizationId`).
 	 *
 	 * @param token - The current refresh token.
 	 * @param metadata - Optional metadata to include in the token payload.
@@ -2361,10 +2406,9 @@ export class AuthService extends SocialAuthService {
 			// If no user is found, return null
 			if (!user) return null;
 
-			// The organization the user works in (`RequestContext.currentOrganizationId()` reads the same stored
-			// value), so the new access token keeps the organization context. It counts only while the user is
-			// still a member of it; a stale one is replaced (see `resolveStoredOrganizationId`).
-			const organizationId = await this.resolveStoredOrganizationId(user);
+			// The organization the refresh token was minted for while the user is still a member of it, so the client
+			// keeps the organization it works in; otherwise the stored one (see `resolveRefreshOrganizationId`).
+			const organizationId = await this.resolveRefreshOrganizationId(user);
 
 			// Get and return the JWT access token for the user with organization context
 			// Generate the access token first (non-destructive). Only rotate the refresh token after

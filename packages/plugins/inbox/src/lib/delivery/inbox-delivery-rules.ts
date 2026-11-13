@@ -12,7 +12,8 @@ import {
 	INBOX_DELIVERY_MAX_ATTEMPTS,
 	INBOX_DELIVERY_RETRY_BASE_MS,
 	INBOX_DELIVERY_RETRY_CAP_MS,
-	INBOX_DELIVERY_SETTINGS_PATH
+	INBOX_DELIVERY_SETTINGS_PATH,
+	INBOX_DELIVERY_TIMER_REMINDER_GRACE_MS
 } from './inbox-delivery.constants';
 
 /** The columns of the employee's notification setting the decision reads (the per-type switches and `preferences`). */
@@ -186,6 +187,9 @@ export function kindSwitchOf(setting: IDeliverySettingLike | null | undefined, p
 			return setting?.message !== false;
 		case EmployeeNotificationTypeEnum.TASK_UPDATE:
 			return preferences.taskUpdate !== false;
+		// A timer left running: off when the employee turned the reminders off (`timerReminderHours` null or 0).
+		case EmployeeNotificationTypeEnum.TIMER_REMINDER:
+			return preferences.timerReminderHours !== null && preferences.timerReminderHours !== 0;
 		default:
 			return true;
 	}
@@ -207,16 +211,47 @@ export function timeZoneOf(preferences: IEmployeeNotificationPreferences, userTi
 }
 
 /**
+ * Whether a kind is emailed and pushed only while its entry is unread: a timer reminder, which an open Ever Teams tab
+ * shows itself and then marks read. Its email at once and its push wait {@link INBOX_DELIVERY_TIMER_REMINDER_GRACE_MS}
+ * for that mark, and one read by then is not sent. Every other kind is sent as decided, read or not.
+ */
+export function isSentOnlyWhileUnread(type: string | null | undefined): boolean {
+	return type === EmployeeNotificationTypeEnum.TIMER_REMINDER;
+}
+
+/**
+ * When an email at once or a push goes: now, or after a timer reminder's wait; then after the do-not-disturb window
+ * when that moment falls inside it.
+ */
+function immediateDueAt(
+	now: Date,
+	type: string | null | undefined,
+	preferences: IEmployeeNotificationPreferences,
+	timeZone: string
+): Date {
+	const from = isSentOnlyWhileUnread(type) ? new Date(now.getTime() + INBOX_DELIVERY_TIMER_REMINDER_GRACE_MS) : now;
+	const dnd = preferences.dnd;
+	return dnd && isWithinWindow(localClockOf(from, timeZone), dnd) ? windowEndAfter(from, dnd, timeZone) : from;
+}
+
+/**
  * What to do with one entry for one person, from the employee's setting: nothing when the kind is off or email is
  * off for it; an email at once (after the do-not-disturb window when the entry falls inside it); or a place in the
  * next digest at the person's hour.
+ *
+ * A timer reminder the person had already read when it is decided (an open Ever Teams tab showed it and marked it
+ * read) gets nothing, and its email at once waits for that mark ({@link isSentOnlyWhileUnread}).
+ * `alreadyRead` changes nothing for any other kind.
  */
 export function decideEmailDelivery(input: {
 	now: Date;
 	type: string | null | undefined;
 	setting: IDeliverySettingLike | null | undefined;
 	userTimeZone?: string | null;
+	alreadyRead?: boolean;
 }): IDeliveryDecision {
+	if (input.alreadyRead && isSentOnlyWhileUnread(input.type))
+		return { mode: InboxDeliveryModeEnum.NONE, dueAt: null, digestKey: null };
 	const preferences = preferencesOf(input.setting);
 	if (!kindSwitchOf(input.setting, preferences, input.type)) return { mode: InboxDeliveryModeEnum.NONE, dueAt: null, digestKey: null };
 	const mode = emailModeOf(preferences, input.type);
@@ -226,9 +261,11 @@ export function decideEmailDelivery(input: {
 		const dueAt = nextDigestAt(input.now, preferences.digestHour ?? INBOX_DELIVERY_DEFAULT_DIGEST_HOUR, timeZone);
 		return { mode: InboxDeliveryModeEnum.DIGEST, dueAt, digestKey: localClockOf(dueAt, timeZone).date };
 	}
-	const dnd = preferences.dnd;
-	const deferred = dnd && isWithinWindow(localClockOf(input.now, timeZone), dnd) ? windowEndAfter(input.now, dnd, timeZone) : input.now;
-	return { mode: InboxDeliveryModeEnum.IMMEDIATE, dueAt: deferred, digestKey: null };
+	return {
+		mode: InboxDeliveryModeEnum.IMMEDIATE,
+		dueAt: immediateDueAt(input.now, input.type, preferences, timeZone),
+		digestKey: null
+	};
 }
 
 /**
@@ -246,6 +283,8 @@ export function pushOnFor(preferences: IEmployeeNotificationPreferences, type: s
  * What to do with one entry for one person over web push (FR-13): nothing when no device is subscribed, the kind is
  * off, or push is off for it; else a push at once — after the do-not-disturb window when the entry falls inside it
  * (FR-11). Whether the person is looking at the app is decided when the push is due, not here.
+ *
+ * A timer reminder is pushed only while unread, after the same wait as its email (see {@link decideEmailDelivery}).
  */
 export function decidePushDelivery(input: {
 	now: Date;
@@ -253,16 +292,20 @@ export function decidePushDelivery(input: {
 	setting: IDeliverySettingLike | null | undefined;
 	userTimeZone?: string | null;
 	hasSubscription: boolean;
+	alreadyRead?: boolean;
 }): IDeliveryDecision {
 	const none: IDeliveryDecision = { mode: InboxDeliveryModeEnum.NONE, dueAt: null, digestKey: null };
 	if (!input.hasSubscription) return none;
+	if (input.alreadyRead && isSentOnlyWhileUnread(input.type)) return none;
 	const preferences = preferencesOf(input.setting);
 	if (!kindSwitchOf(input.setting, preferences, input.type)) return none;
 	if (!pushOnFor(preferences, input.type, input.hasSubscription)) return none;
 	const timeZone = timeZoneOf(preferences, input.userTimeZone);
-	const dnd = preferences.dnd;
-	const deferred = dnd && isWithinWindow(localClockOf(input.now, timeZone), dnd) ? windowEndAfter(input.now, dnd, timeZone) : input.now;
-	return { mode: InboxDeliveryModeEnum.IMMEDIATE, dueAt: deferred, digestKey: null };
+	return {
+		mode: InboxDeliveryModeEnum.IMMEDIATE,
+		dueAt: immediateDueAt(input.now, input.type, preferences, timeZone),
+		digestKey: null
+	};
 }
 
 /** How long to wait before the next attempt (doubling from the base, capped), or null when the attempts are spent. */

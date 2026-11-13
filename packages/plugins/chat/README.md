@@ -79,7 +79,9 @@ per-tenant one). The link preview cache, `chat_link_preview` (migration
 [Link previews](#link-previews-off-unless-gauzy_chat_link_previews_enabledtrue).
 Incoming webhooks (`1791000006730`): `chat_webhook`,
 `chat_webhook_interaction`, and `chat_message.webhookId` / `appIconUrl` /
-`blocks` with a unique (`webhookId`, `nonce`).
+`blocks` with a unique (`webhookId`, `nonce`);
+`chat_webhook_interaction.idempotencyKey` (`1791000008300`) with a unique
+(`tenantId`, `messageId`, `actorUserId`, `idempotencyKey`) where a key is set.
 per-tenant one). `chat_attachment_draft` (migration `1791000007310`) holds the
 draft uploads; `chat_message.attachmentNames` (`1791000007320`) the names of a
 message's files.
@@ -250,6 +252,16 @@ the flag is exactly `true` (and chat is on): every route below answers 404.
   `blocks` / `attachments` replaces the message once (`"replace_original": false` leaves it). The interaction URL
   must be `https:` on a public host; it is resolved when saved and at every attempt through the plugin's egress
   guard (`src/lib/egress`), no redirect followed. `GET /api/chat/interactions/:id` answers the clicker the state.
+- **A click is one interaction**: a client sends an `Idempotency-Key` header with the click (a new UUID per click, the
+  same on each retry of it; at most 64 printable characters, the receive route's rule; compared case-sensitively,
+  `utf8mb4_bin` on MySQL). A repeat of the key by the same
+  person on the same message — a double click, a retry after a lost answer, two requests racing (the unique index
+  decides, on every dialect and with either ORM) — answers that click as it is now (`replayed: true`, the message when
+  the reply replaced it, no events) and calls the app no second time; the same key for another button is refused
+  (`409 IDEMPOTENCY_KEY_REUSED`), a key that cannot be stored too (`400`). The key is a header, as on the receive
+  route and the platform's other retry-safe writes, so the body stays the click and a proxy forwards it verbatim; it is
+  kept on the interaction row (not in the platform's `@Idempotent()` response store) so a repeat reads the click as it
+  is now, not the first answer. Without a key every request is a click, as before.
 
 ## Not yet in this plugin (next slices)
 

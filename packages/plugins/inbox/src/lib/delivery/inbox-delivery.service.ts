@@ -1,6 +1,13 @@
 import { ConflictException, Injectable, Logger, Optional } from '@nestjs/common';
 import { DataSource, In, IsNull, LessThanOrEqual, ObjectLiteral } from 'typeorm';
-import { ID, InboxDeliveryChannelEnum, InboxDeliveryModeEnum, InboxItemKindEnum, InboxItemSourceEnum } from '@gauzy/contracts';
+import {
+	ID,
+	INBOX_NOTIFICATION_EXTERNAL_SOURCE,
+	InboxDeliveryChannelEnum,
+	InboxDeliveryModeEnum,
+	InboxItemKindEnum,
+	InboxItemSourceEnum
+} from '@gauzy/contracts';
 import { InboxItem } from '../entities/inbox-item.entity';
 import { InboxItemRecipient } from '../entities/inbox-item-recipient.entity';
 import { InboxNamedLocks } from '../email/database/named-locks';
@@ -11,10 +18,20 @@ import { deliveryUserOf, InboxDeliveryContextUnavailableError, runInDeliveryCont
 import {
 	INBOX_DELIVERY_DIGEST_MAX_ITEMS,
 	INBOX_DELIVERY_INTAKE_LOOKBACK_MS,
+	INBOX_DELIVERY_SKIPPED_READ,
 	INBOX_DELIVERY_SWEEP_LOCK,
 	readInboxDeliveryBatch
 } from './inbox-delivery.constants';
-import { decideEmailDelivery, decidePushDelivery, excerptOf, inboxItemLinkOf, kindLabelOf, metadataOf, retryDelayMs } from './inbox-delivery-rules';
+import {
+	decideEmailDelivery,
+	decidePushDelivery,
+	excerptOf,
+	inboxItemLinkOf,
+	isSentOnlyWhileUnread,
+	kindLabelOf,
+	metadataOf,
+	retryDelayMs
+} from './inbox-delivery-rules';
 import { InboxDeliveryPusher, InboxPushGoneError, InboxPushRefusedError } from './push/inbox-delivery-pusher';
 import { InboxPushSubscriptionService } from './push/inbox-push-subscription.service';
 import { INBOX_PUSH_FOCUSED_WINDOW_MS, INBOX_PUSH_NO_SUBSCRIPTION, INBOX_PUSH_SKIPPED_FOCUSED } from './push/inbox-push.constants';
@@ -28,6 +45,8 @@ export interface IInboxDeliverySweepReport {
 	pushesSent: number;
 	/** Pushes closed unsent because the person had an active, focused session (FR-13). */
 	pushesSkipped: number;
+	/** Emails and pushes of a timer reminder closed unsent: the person had read it in the app by the time it was due. */
+	readSkipped: number;
 	failed: number;
 }
 
@@ -39,6 +58,13 @@ interface IIntakeRow {
 	tenantId: ID;
 	organizationId: ID | null;
 	metadata: unknown;
+	/** The recipient's read state when the entry is decided (a boolean, or 0 / 1 as some drivers answer it). */
+	isRead: unknown;
+}
+
+/** A read flag as the drivers answer it: a boolean, or 0 / 1. */
+function isReadFlag(value: unknown): boolean {
+	return value === true || Number(value) === 1;
 }
 
 /** The person an email goes to. */
@@ -90,7 +116,7 @@ export class InboxDeliveryService {
 		} catch (error) {
 			if (error instanceof ConflictException) {
 				this.logger.log('Inbox delivery sweep: another worker holds the sweep; this one is skipped');
-				return { decided: 0, immediateSent: 0, digestsSent: 0, pushesSent: 0, pushesSkipped: 0, failed: 0 };
+				return { decided: 0, immediateSent: 0, digestsSent: 0, pushesSent: 0, pushesSkipped: 0, readSkipped: 0, failed: 0 };
 			}
 			throw error;
 		}
@@ -98,7 +124,7 @@ export class InboxDeliveryService {
 
 	private async runSweep(now: Date): Promise<IInboxDeliverySweepReport> {
 		const batch = readInboxDeliveryBatch();
-		const report: IInboxDeliverySweepReport = { decided: 0, immediateSent: 0, digestsSent: 0, pushesSent: 0, pushesSkipped: 0, failed: 0 };
+		const report: IInboxDeliverySweepReport = { decided: 0, immediateSent: 0, digestsSent: 0, pushesSent: 0, pushesSkipped: 0, readSkipped: 0, failed: 0 };
 		report.decided = await this.intake(now, batch);
 		const immediate = await this.sendImmediate(now, batch);
 		const digests = await this.sendDigests(now, batch);
@@ -107,10 +133,11 @@ export class InboxDeliveryService {
 		report.digestsSent = digests.sent;
 		report.pushesSent = pushes.sent;
 		report.pushesSkipped = pushes.skipped;
+		report.readSkipped = immediate.read + digests.read + pushes.read;
 		report.failed = immediate.failed + digests.failed + pushes.failed;
-		if (report.decided || report.immediateSent || report.digestsSent || report.pushesSent || report.pushesSkipped || report.failed) {
+		if (report.decided || report.immediateSent || report.digestsSent || report.pushesSent || report.pushesSkipped || report.readSkipped || report.failed) {
 			this.logger.log(
-				`Inbox delivery sweep: decided ${report.decided}, sent ${report.immediateSent} at once, ${report.digestsSent} digests and ${report.pushesSent} pushes (${report.pushesSkipped} skipped for a focused session), ${report.failed} failed`
+				`Inbox delivery sweep: decided ${report.decided}, sent ${report.immediateSent} at once, ${report.digestsSent} digests and ${report.pushesSent} pushes (${report.pushesSkipped} skipped for a focused session, ${report.readSkipped} timer reminders read in the app first), ${report.failed} failed`
 			);
 		}
 		return report;
@@ -148,6 +175,7 @@ export class InboxDeliveryService {
 			.addSelect('recipient.tenantId', 'tenantId')
 			.addSelect('item.organizationId', 'organizationId')
 			.addSelect('item.metadata', 'metadata')
+			.addSelect('recipient.isRead', 'isRead')
 			.where('recipient.createdAt >= :since', { since })
 			.andWhere('item.kind = :kind AND item.source = :source', { kind: InboxItemKindEnum.NOTIFICATION, source: InboxItemSourceEnum.GAUZY })
 			.andWhere((qb) => {
@@ -181,10 +209,20 @@ export class InboxDeliveryService {
 		const type = typeof metadata['notificationType'] === 'string' ? metadata['notificationType'] : null;
 		const setting = employeeId ? await this.settingOf(employeeId, row.tenantId) : null;
 		const user = await this.userOf(row.userId, row.tenantId);
+		// A timer reminder read already (an open tab showed it and marked it read) is decided as nothing, which also
+		// keeps it from being taken in again; the read state changes nothing for any other kind.
+		const alreadyRead = isReadFlag(row.isRead);
 		const decision =
 			channel === InboxDeliveryChannelEnum.PUSH
-				? decidePushDelivery({ now, type, setting, userTimeZone: user?.timeZone ?? null, hasSubscription: !!(await this.subscriptions?.hasAny(row.tenantId, row.userId)) })
-				: decideEmailDelivery({ now, type, setting, userTimeZone: user?.timeZone ?? null });
+				? decidePushDelivery({
+						now,
+						type,
+						setting,
+						userTimeZone: user?.timeZone ?? null,
+						hasSubscription: !!(await this.subscriptions?.hasAny(row.tenantId, row.userId)),
+						alreadyRead
+					})
+				: decideEmailDelivery({ now, type, setting, userTimeZone: user?.timeZone ?? null, alreadyRead });
 		const repository = this.dataSource.getRepository(InboxDelivery);
 		try {
 			await repository.insert({
@@ -251,17 +289,23 @@ export class InboxDeliveryService {
 		return rows.filter((row) => row.tenantId && row.userId);
 	}
 
-	async sendImmediate(now: Date, batch: number): Promise<{ sent: number; failed: number }> {
+	async sendImmediate(now: Date, batch: number): Promise<{ sent: number; failed: number; read: number }> {
 		let sent = 0;
 		let failed = 0;
+		let read = 0;
 		// A process on the push switch alone leaves the email rows to one on the email switch (a deferred or retried email is
 		// still an email): the rows wait, they are not sent by a channel the operator turned off.
-		if (!this.channels().includes(InboxDeliveryChannelEnum.EMAIL)) return { sent, failed };
+		if (!this.channels().includes(InboxDeliveryChannelEnum.EMAIL)) return { sent, failed, read };
 		const rows = await this.due(InboxDeliveryChannelEnum.EMAIL, InboxDeliveryModeEnum.IMMEDIATE, now, batch);
-		if (!rows.length) return { sent, failed };
+		if (!rows.length) return { sent, failed, read };
 		const items = await this.itemsOf(rows.map((row) => row.inboxItemId));
 		for (const row of rows) {
 			const item = items.get(String(row.inboxItemId));
+			if (item && (await this.isReadFirst(row, item))) {
+				await this.giveUp([row], INBOX_DELIVERY_SKIPPED_READ, now);
+				read += 1;
+				continue;
+			}
 			const recipient = await this.recipientOf(row);
 			if (!item || !recipient) {
 				await this.giveUp([row], !item ? 'The entry is gone.' : 'The user has no email address.', now);
@@ -279,16 +323,17 @@ export class InboxDeliveryService {
 				failed += 1;
 			}
 		}
-		return { sent, failed };
+		return { sent, failed, read };
 	}
 
-	async sendDigests(now: Date, batch: number): Promise<{ sent: number; failed: number }> {
+	async sendDigests(now: Date, batch: number): Promise<{ sent: number; failed: number; read: number }> {
 		let sent = 0;
 		let failed = 0;
-		if (!this.channels().includes(InboxDeliveryChannelEnum.EMAIL)) return { sent, failed };
+		let read = 0;
+		if (!this.channels().includes(InboxDeliveryChannelEnum.EMAIL)) return { sent, failed, read };
 		// The people first (a bounded set), then each person's whole due set: a digest is never a page of one.
 		const people = await this.duePeople(InboxDeliveryChannelEnum.EMAIL, InboxDeliveryModeEnum.DIGEST, now, batch);
-		if (!people.length) return { sent, failed };
+		if (!people.length) return { sent, failed, read };
 		const groups: InboxDelivery[][] = [];
 		for (const person of people) {
 			const group = await this.due(InboxDeliveryChannelEnum.EMAIL, InboxDeliveryModeEnum.DIGEST, now, null, person);
@@ -303,10 +348,21 @@ export class InboxDeliveryService {
 				failed += 1;
 				continue;
 			}
-			// Newest first; an entry that is gone is not in the digest, and its row is done with.
-			const present = group.filter((row) => items.has(String(row.inboxItemId)));
+			// Newest first; an entry that is gone is not in the digest, and its row is done with. So is a timer reminder
+			// the person read in the app meanwhile.
+			const listed = group.filter((row) => items.has(String(row.inboxItemId)));
 			const gone = group.filter((row) => !items.has(String(row.inboxItemId)));
 			if (gone.length) await this.giveUp(gone, 'The entry is gone.', now);
+			const present: InboxDelivery[] = [];
+			const readFirst: InboxDelivery[] = [];
+			for (const row of listed) {
+				if (await this.isReadFirst(row, items.get(String(row.inboxItemId)) as InboxItem)) readFirst.push(row);
+				else present.push(row);
+			}
+			if (readFirst.length) {
+				await this.giveUp(readFirst, INBOX_DELIVERY_SKIPPED_READ, now);
+				read += readFirst.length;
+			}
 			if (!present.length) continue;
 			const lines = present
 				.map((row) => items.get(String(row.inboxItemId)) as InboxItem)
@@ -323,7 +379,7 @@ export class InboxDeliveryService {
 				failed += 1;
 			}
 		}
-		return { sent, failed };
+		return { sent, failed, read };
 	}
 
 	/**
@@ -333,8 +389,8 @@ export class InboxDeliveryService {
 	 * supplied, not issued by a push service); one that failed again is counted, and removed at the limit. The row is
 	 * sent once one device took it; it is tried again when every device refused, and closed when the person has none.
 	 */
-	async sendPushes(now: Date, batch: number): Promise<{ sent: number; skipped: number; failed: number }> {
-		const outcome = { sent: 0, skipped: 0, failed: 0 };
+	async sendPushes(now: Date, batch: number): Promise<{ sent: number; skipped: number; failed: number; read: number }> {
+		const outcome = { sent: 0, skipped: 0, failed: 0, read: 0 };
 		if (!this.pusher || !this.subscriptions || !this.channels().includes(InboxDeliveryChannelEnum.PUSH)) return outcome;
 		const rows = await this.due(InboxDeliveryChannelEnum.PUSH, InboxDeliveryModeEnum.IMMEDIATE, now, batch);
 		if (!rows.length) return outcome;
@@ -345,6 +401,11 @@ export class InboxDeliveryService {
 			if (!item) {
 				await this.giveUp([row], 'The entry is gone.', now);
 				outcome.failed += 1;
+				continue;
+			}
+			if (await this.isReadFirst(row, item)) {
+				await this.giveUp([row], INBOX_DELIVERY_SKIPPED_READ, now);
+				outcome.read += 1;
 				continue;
 			}
 			if (await this.hasFocusedSession(row, now)) {
@@ -408,6 +469,28 @@ export class InboxDeliveryService {
 		if (!employee?.lastSeenAt || employee.isIdle) return false;
 		const seen = new Date(employee.lastSeenAt).getTime();
 		return Number.isFinite(seen) && now.getTime() - seen <= INBOX_PUSH_FOCUSED_WINDOW_MS;
+	}
+
+	/**
+	 * Whether a row is of a kind sent only while unread (a timer reminder) whose entry the person has read by now. The
+	 * Ever Teams tab that showed the reminder marks the notification read through the notification API, and the bridge
+	 * carries that to the entry, best effort: a mark made while the entry was being filed can miss it. So the
+	 * notification's own read state counts too, read in the row's tenant. Every other kind is sent read or not, and is
+	 * not looked up.
+	 */
+	private async isReadFirst(row: InboxDelivery, item: InboxItem): Promise<boolean> {
+		if (!isSentOnlyWhileUnread(row.notificationType)) return false;
+		const recipient = await this.dataSource.getRepository(InboxItemRecipient).findOne({
+			select: { id: true, isRead: true },
+			where: { inboxItemId: row.inboxItemId, userId: row.userId, tenantId: row.tenantId }
+		});
+		if (isReadFlag(recipient?.isRead)) return true;
+		if (item?.externalSource !== INBOX_NOTIFICATION_EXTERNAL_SOURCE || !item.externalId) return false;
+		const notification = (await this.dataSource.getRepository<ObjectLiteral>('EmployeeNotification').findOne({
+			select: { id: true, isRead: true },
+			where: { id: item.externalId, tenantId: row.tenantId }
+		} as never)) as { isRead?: unknown } | null;
+		return isReadFlag(notification?.isRead);
 	}
 
 	// ---------------------------------------------------------------- reads and marks

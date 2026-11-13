@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, input, signal } from '@an
 import { ChatPerson, initialsOf, nameHue, ownPicture } from '../../chat-ui.helpers';
 
 /** The sizes an avatar comes in: a list row, a message, a conversation intro. */
-export type PersonAvatarSize = 'tiny' | 'small' | 'normal' | 'large';
+export type PersonAvatarSize = 'tiny' | 'small' | 'medium' | 'normal' | 'large';
 
 /**
  * A person's picture, or their initials on a disc tinted from their name (the same name always gets the same
@@ -56,6 +56,12 @@ export type PersonAvatarSize = 'tiny' | 'small' | 'normal' | 'large';
 				border-radius: 0.375rem;
 				font-size: 0.625rem;
 			}
+			.avatar.medium {
+				width: 1.875rem;
+				height: 1.875rem;
+				border-radius: calc(var(--border-radius) * 0.875);
+				font-size: 0.6875rem;
+			}
 			.avatar.large {
 				width: 4.5rem;
 				height: 4.5rem;
@@ -64,6 +70,7 @@ export type PersonAvatarSize = 'tiny' | 'small' | 'normal' | 'large';
 			}
 			.avatar.round.tiny,
 			.avatar.round.small,
+			.avatar.round.medium,
 			.avatar.round.large {
 				border-radius: 50%;
 			}

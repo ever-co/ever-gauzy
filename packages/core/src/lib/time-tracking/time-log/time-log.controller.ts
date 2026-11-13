@@ -298,6 +298,10 @@ export class TimeLogController {
 		status: HttpStatus.BAD_REQUEST,
 		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
+	@ApiResponse({
+		status: HttpStatus.CONFLICT,
+		description: 'RUNNING_TIMER_OVERLAP: a timer is running over the range'
+	})
 	@Post()
 	@UseGuards(OrganizationPermissionGuard)
 	@Permissions(PermissionsEnum.ALLOW_MANUAL_TIME)
@@ -325,7 +329,7 @@ export class TimeLogController {
 	 *    source for itself;
 	 * 3. the route's handler, `addManualTime`: the employee resolved in the caller's tenant, the refusal
 	 *    for an employee the caller may not record time for, the organization's future-date rule, and the
-	 *    removal of the time the interval overlaps.
+	 *    removal of the time the interval overlaps (an interval over a timer still running is refused, 409).
 	 *
 	 * The items are applied one after another, so an item's overlap is resolved against the intervals the
 	 * items before it recorded — exactly what the same intervals recorded one by one would leave.
@@ -399,6 +403,10 @@ export class TimeLogController {
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
 		description: 'Invalid input, The response body may contain clues as to what went wrong'
+	})
+	@ApiResponse({
+		status: HttpStatus.CONFLICT,
+		description: 'RUNNING_TIMER_OVERLAP: a timer is running over the range'
 	})
 	@Put(':id')
 	@UseGuards(OrganizationPermissionGuard)

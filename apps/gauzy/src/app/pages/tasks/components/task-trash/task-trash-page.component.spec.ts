@@ -11,7 +11,13 @@ import { provideRouter } from '@angular/router';
 import { BehaviorSubject } from 'rxjs';
 import { IOrganization, IOrganizationProject } from '@gauzy/contracts';
 import { Store, TaskTrashService, ToastrService } from '@gauzy/ui-core/core';
-import { deletedByOf, taskKeyOf, TaskTrashPageComponent, trashStateOf } from './task-trash-page.component';
+import {
+	deletedByOf,
+	isNoLongerInTrash,
+	taskKeyOf,
+	TaskTrashPageComponent,
+	trashStateOf
+} from './task-trash-page.component';
 
 const ORGANIZATION = { id: 'org-1', tenantId: 'tenant-1' } as IOrganization;
 
@@ -34,7 +40,7 @@ describe('TaskTrashPageComponent', () => {
 	let organization$: BehaviorSubject<IOrganization | null>;
 	let project$: BehaviorSubject<IOrganizationProject | null>;
 	let trash: { list: jest.Mock; restore: jest.Mock; deleteForever: jest.Mock };
-	let toastr: { success: jest.Mock; danger: jest.Mock };
+	let toastr: { success: jest.Mock; warning: jest.Mock; danger: jest.Mock };
 
 	beforeEach(() => {
 		organization$ = new BehaviorSubject<IOrganization | null>(ORGANIZATION);
@@ -44,7 +50,7 @@ describe('TaskTrashPageComponent', () => {
 			restore: jest.fn(async () => undefined),
 			deleteForever: jest.fn(async () => undefined)
 		};
-		toastr = { success: jest.fn(), danger: jest.fn() };
+		toastr = { success: jest.fn(), warning: jest.fn(), danger: jest.fn() };
 		TestBed.configureTestingModule({
 			imports: [TaskTrashPageComponent],
 			providers: [
@@ -127,9 +133,72 @@ describe('TaskTrashPageComponent', () => {
 		fixture.detectChanges();
 
 		expect(trash.deleteForever).toHaveBeenCalledTimes(1);
-		expect(trash.deleteForever).toHaveBeenCalledWith('t2');
+		// From the organization's trash only: the platform deletes it only while it is still there.
+		expect(trash.deleteForever).toHaveBeenCalledWith('t2', 'org-1', 'tenant-1');
 		expect(rowIds(fixture)).toEqual(['t1']);
 		expect(state(fixture).confirmingId).toBeNull();
+		expect(toastr.success).toHaveBeenCalledWith('TASKS_PAGE.TRASH.DELETED_FOREVER');
+	});
+
+	it('says a task is no longer in the trash when someone restored or deleted it meanwhile, and reads the list again', async () => {
+		const fixture = await render();
+		trash.deleteForever.mockRejectedValue({ status: 404, error: { message: 'TASK_NOT_IN_TRASH' } });
+		// The list as it is now: the restored task is gone from it.
+		trash.list.mockResolvedValueOnce({ items: [trashed('t2')], total: 1 });
+		state(fixture).confirmingId = 't1';
+
+		await state(fixture).deleteForever(state(fixture).rows[0]);
+		await fixture.whenStable();
+		await new Promise((resolve) => setTimeout(resolve));
+		fixture.detectChanges();
+
+		expect(toastr.warning).toHaveBeenCalledWith('TASKS_PAGE.TRASH.NO_LONGER_IN_TRASH');
+		expect(toastr.danger).not.toHaveBeenCalled();
+		expect(toastr.success).not.toHaveBeenCalled();
+		expect(trash.list).toHaveBeenCalledTimes(2);
+		expect(trash.list.mock.calls[1][0]).toMatchObject({ organizationId: 'org-1', skip: 0 });
+		expect(rowIds(fixture)).toEqual(['t2']);
+		expect(state(fixture).total).toBe(1);
+		expect(state(fixture).busyId).toBeNull();
+		expect(state(fixture).confirmingId).toBeNull();
+	});
+
+	it('keeps a task and says why when a delete fails otherwise, without reading the list again', async () => {
+		const fixture = await render();
+		trash.deleteForever.mockRejectedValue({ status: 403, error: { message: 'Only a manager' } });
+
+		await state(fixture).deleteForever(state(fixture).rows[0]);
+		fixture.detectChanges();
+
+		expect(toastr.danger).toHaveBeenCalledWith('Only a manager', 'TOASTR.TITLE.ERROR');
+		expect(toastr.warning).not.toHaveBeenCalled();
+		expect(trash.list).toHaveBeenCalledTimes(1);
+		expect(rowIds(fixture)).toEqual(['t1', 't2']);
+	});
+
+	it('runs one restore or delete at a time, and disables the row’s buttons while it runs', async () => {
+		const fixture = await render();
+		let finish: () => void = () => undefined;
+		trash.deleteForever.mockImplementation(() => new Promise<void>((resolve) => (finish = resolve)));
+		state(fixture).confirmingId = 't1';
+		fixture.detectChanges();
+
+		const deleting = state(fixture).deleteForever(state(fixture).rows[0]);
+		fixture.detectChanges();
+		expect(state(fixture).busyId).toBe('t1');
+		const confirm = element(fixture).querySelector<HTMLButtonElement>(
+			'.task-trash__row[data-task-id="t1"] .task-trash__confirm-delete'
+		);
+		expect(confirm?.disabled).toBe(true);
+
+		await state(fixture).deleteForever(state(fixture).rows[1]);
+		await state(fixture).restore(state(fixture).rows[1]);
+		expect(trash.deleteForever).toHaveBeenCalledTimes(1);
+		expect(trash.restore).not.toHaveBeenCalled();
+
+		finish();
+		await deleting;
+		expect(state(fixture).busyId).toBeNull();
 	});
 
 	it('reads the list again when a restore ends while a read is under way, so the task cannot come back', async () => {
@@ -194,6 +263,13 @@ describe('task trash helpers', () => {
 		expect(trashStateOf({ status: 404 })).toBe('unavailable');
 		expect(trashStateOf({ status: 403 })).toBe('forbidden');
 		expect(trashStateOf({ status: 500 })).toBe('error');
+	});
+
+	it('reads a 404 to a Delete forever as a task that is no longer in the trash', () => {
+		expect(isNoLongerInTrash({ status: 404 })).toBe(true);
+		expect(isNoLongerInTrash({ status: 403 })).toBe(false);
+		expect(isNoLongerInTrash({ status: 500 })).toBe(false);
+		expect(isNoLongerInTrash(undefined)).toBe(false);
 	});
 
 	it('shows the task key and who deleted it', () => {

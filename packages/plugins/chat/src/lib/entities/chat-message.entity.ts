@@ -78,7 +78,7 @@ export class ChatMessage extends TenantOrganizationBaseEntity {
 
 	/** The incoming webhook that posted an app message (`kind: app`). */
 	@MultiORMColumn({ nullable: true })
-	webhookId?: ID | null;
+	webhookId?: ID;
 
 	/** The icon of the webhook at the time of the post (https). */
 	@MultiORMColumn({ type: 'varchar', length: 2048, nullable: true })

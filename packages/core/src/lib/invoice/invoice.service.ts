@@ -8,6 +8,8 @@ import {
 	DecimalString,
 	ID,
 	IInvoice,
+	IInvoiceCreateInput,
+	IInvoiceItemCreateInput,
 	IOrganization,
 	InvoiceStats,
 	LanguagesEnum
@@ -27,6 +29,7 @@ import { OrganizationService } from './../organization';
 import { TypeOrmInvoiceRepository } from './repository/type-orm-invoice.repository';
 import { MikroOrmInvoiceRepository } from './repository/mikro-orm-invoice.repository';
 import { FavoriteService } from '../core/decorators';
+import { saveBillingTime, splitBilledTime, TIME_LOG_NOT_BILLABLE } from '../invoice-item/invoice-item-billed-time';
 
 /**
  * What sending a document by e-mail did.
@@ -73,6 +76,42 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 		private readonly organizationService: OrganizationService
 	) {
 		super(typeOrmInvoiceRepository, mikroOrmInvoiceRepository);
+	}
+
+	/**
+	 * Creates an invoice and writes, on each time log a line names in `timeLogIds`, the line that bills it, in the
+	 * transaction that saves the invoice and its lines (see `saveBillingTime`). An invoice whose lines bill no time is
+	 * created as `create()` creates it.
+	 *
+	 * @param input The invoice and its lines, as the create route and the GraphQL mutation state them.
+	 * @returns The invoice created, with its lines.
+	 * @throws BadRequestException when a line names a time log it may not bill; nothing is saved.
+	 */
+	async createWithBilledTime(
+		input: IInvoiceCreateInput & { invoiceItems?: IInvoiceItemCreateInput[] }
+	): Promise<IInvoice> {
+		if (!input.invoiceItems) {
+			return await this.create(input);
+		}
+		const { lines, billing } = splitBilledTime(input.invoiceItems);
+		const invoice = { ...input, invoiceItems: lines };
+		if (billing.length === 0) {
+			return await this.create(invoice);
+		}
+		// `create` holds the invoice's organization to the caller's boundary, not the one each nested line states: a line
+		// may only bill time of its invoice's organization (else a member of two organizations could bill one's time on
+		// the other's invoice).
+		const invoiceOrganizationId = input.organizationId ?? input.organization?.id;
+		if (!invoiceOrganizationId || billing.some((line) => String(line.organizationId) !== String(invoiceOrganizationId))) {
+			throw new BadRequestException(TIME_LOG_NOT_BILLABLE);
+		}
+		return await saveBillingTime(
+			this,
+			{ typeOrm: this.typeOrmRepository, mikroOrm: this.mikroOrmRepository },
+			(service) => service.create(invoice),
+			(created) => created.invoiceItems,
+			billing
+		);
 	}
 
 	/**

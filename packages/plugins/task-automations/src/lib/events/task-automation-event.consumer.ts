@@ -77,7 +77,7 @@ export class TaskAutomationEventConsumer implements IEventConsumer, OnApplicatio
 		if (event?.name === TASK_AUTOMATION_EVENT_NAMES.TASK_CHANGED) {
 			const change = parseChangeEvent(event.data);
 			if (!change || !this.sameScope(event, change)) {
-				this.logger.debug(`Dropped the automation event ${event?.id}: no change, or a scope that is not its envelope's.`);
+				this.logger.debug(`Dropped the automation event ${event.id}: no change, or a scope that is not its envelope's.`);
 				return;
 			}
 			await this.engine.processChange(event.id, change);

@@ -585,6 +585,37 @@ export class TaskController extends CrudController<Task> {
 	}
 
 	/**
+	 * DELETE a task for good, only while it is in the trash: the trash pages' Delete forever. The delete statement
+	 * itself requires the task to be in the trash, so a task someone restored after the trash was read stays (404),
+	 * where `DELETE /tasks/:id` would delete the live task. Under the grants of the trash and restore routes, behind
+	 * `GAUZY_TASK_TRASH_ENABLED` as the trash list is.
+	 *
+	 * @param id The task.
+	 * @param query The organization whose trash holds the task.
+	 */
+	@ApiOperation({ summary: 'Delete a task for good, only while it is in the trash.' })
+	@ApiResponse({ status: HttpStatus.OK, description: 'The task is deleted for good.' })
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'No task with that id is in the trash of the organization, or the trash is not enabled.'
+	})
+	@ApiResponse({ status: HttpStatus.FORBIDDEN, description: 'Only a manager of one of the task teams may.' })
+	@ApiResponse({
+		status: HttpStatus.CONFLICT,
+		description: 'Other records (a linked issue, a key result) still point at the task; it stays in the trash.'
+	})
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TASK_DELETE, PermissionsEnum.ORG_TASK_EDIT)
+	@UseGuards(TaskTrashEnabledGuard)
+	@Delete('/:id/trashed')
+	@UsePipes(new AbstractValidationPipe({ whitelist: true }, { query: TenantOrganizationBaseDTO }))
+	async deleteTrashed(
+		@Param('id', UUIDValidationPipe) id: ID,
+		@Query() query: TenantOrganizationBaseDTO
+	): Promise<DeleteResult> {
+		return this.taskService.deleteTrashedTask(id, query?.organizationId ?? query?.organization?.id);
+	}
+
+	/**
 	 * PUT one member on a task, changing nothing else
 	 *
 	 * The full update writes the whole member list, so a client that adds one member sends back a list it read

@@ -174,6 +174,8 @@ export interface ITimeLog
 	projectId?: ID;
 	organizationContact?: IOrganizationContact;
 	organizationContactId?: ID;
+	/** The invoice line that bills this time; the time is invoiced only while that line's invoice is live and not void. */
+	invoiceItemId?: ID;
 	source?: TimeLogSourceEnum;
 	startedAt?: Date;
 	stoppedAt?: Date;
@@ -185,6 +187,22 @@ export interface ITimeLog
 	isBillable?: boolean;
 	isRunning?: boolean;
 	isEdited?: boolean;
+}
+
+/**
+ * A reminder the platform sent about a running time log (`TimerReminder`): level 1 once the timer ran for the
+ * employee's threshold, level 2 at twice it. One row per log and level, so each is sent once whatever the processes.
+ */
+export interface ITimeLogReminder extends IBasePerTenantAndOrganizationEntityModel {
+	timeLog?: ITimeLog;
+	timeLogId: ID;
+	level: number;
+	/** The id its notification is filed under, chosen with the claim. */
+	employeeNotificationId: ID;
+	/** When the claim was taken, or taken over from a process that stopped before it filed the notification. */
+	claimedAt: Date;
+	/** When its notification was filed; unset while it is not. */
+	filedAt?: Date;
 }
 
 export interface ITimeLogCreateInput extends IBasePerTenantAndOrganizationEntityModel {
@@ -399,6 +417,11 @@ export interface ITimerToggleInput
 	startedAt?: Date;
 	stoppedAt?: Date;
 	planDay?: string;
+	/**
+	 * The running time log a stop or a toggle is for, as the client last saw it. A stop naming another log than the
+	 * running one is refused, and the running one goes on. A start ignores it.
+	 */
+	timeLogId?: ID;
 }
 
 export interface IManualTimeInput extends IBasePerTenantAndOrganizationEntityModel {
@@ -426,6 +449,8 @@ export interface IGetTimeLogReportInput extends IGetTimeLogInput {
 	isEdited?: boolean;
 	billableOnly?: boolean;
 	includeTimeWithoutTeam?: boolean;
+	/** Leave out the time a live invoice bills: a line that is not removed, of an invoice neither removed nor void. */
+	notInvoiced?: boolean;
 }
 
 export interface IGetTimeLogConflictInput extends IBasePerTenantAndOrganizationEntityModel, IBaseRelationsEntityModel {
