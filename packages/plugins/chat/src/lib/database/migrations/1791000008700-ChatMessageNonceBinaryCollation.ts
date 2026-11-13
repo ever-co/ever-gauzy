@@ -5,17 +5,25 @@ const TABLE = 'chat_message';
 const COLUMN = 'nonce';
 
 /**
- * The collations that compare a key byte for byte, the first one the server has taken:
- * - `utf8mb4_0900_bin` (MySQL 8.0.17+) and `utf8mb4_nopad_bin` (MariaDB 10.2+) are NO PAD: a trailing space counts, as
- *   it does under MySQL 8's default `utf8mb4_0900_ai_ci`. Byte equality is the finest comparison there is, so moving a
- *   column to one of them never makes two stored keys equal that were not, and no unique index refuses a row.
- * - `utf8mb4_bin` (every server) ignores trailing spaces: it is taken only on a server with neither of the above
- *   (MySQL 5.7, MariaDB before 10.2), whose collations all ignore trailing spaces already.
+ * The case-sensitive collations the nonce can take, the first one the server has taken. None of them makes two stored
+ * keys equal that the server's own collations took apart, so no unique index refuses a row when the column moves:
+ * - `utf8mb4_0900_bin` (MySQL 8.0.17+) and `utf8mb4_nopad_bin` (MariaDB 10.2+): byte for byte and NO PAD, so a trailing
+ *   space counts, as it does under MySQL 8's default `utf8mb4_0900_ai_ci`. Byte equality is the finest comparison there is.
+ * - `utf8mb4_0900_as_cs` (MySQL 8.0.1 to 8.0.16, which have the NO PAD `utf8mb4_0900_ai_ci` but no `utf8mb4_0900_bin`):
+ *   NO PAD, case- and accent-sensitive, and finer than every other `utf8mb4_0900_*` collation, the default included.
+ * - `utf8mb4_bin` (every server): byte for byte, but trailing spaces ignored. Taken only on a server with none of the
+ *   above (MySQL 5.7, MariaDB before 10.2), whose collations all ignore trailing spaces already.
  */
-export const CHAT_NONCE_BINARY_COLLATIONS = ['utf8mb4_0900_bin', 'utf8mb4_nopad_bin', 'utf8mb4_bin'] as const;
+export const CHAT_NONCE_COLLATIONS = [
+	'utf8mb4_0900_bin',
+	'utf8mb4_nopad_bin',
+	'utf8mb4_0900_as_cs',
+	'utf8mb4_bin'
+] as const;
 
 /**
- * `chat_message.nonce` compared byte for byte on MySQL, as it is on Postgres and SQLite.
+ * `chat_message.nonce` compared case-sensitively on MySQL (byte for byte wherever the server allows), as it is on
+ * Postgres and SQLite.
  *
  * The column holds a member's send nonce (unique per author, `UQ_chat_message_author_nonce`) and an incoming webhook's
  * `nonce` / `Idempotency-Key` (unique per webhook, `UQ_chat_message_webhook_nonce`, migration `1791000006730`).
@@ -24,8 +32,8 @@ export const CHAT_NONCE_BINARY_COLLATIONS = ['utf8mb4_0900_bin', 'utf8mb4_nopad_
  * found as the first one's retry and answered with it, and never written.
  *
  * MySQL only: Postgres and SQLite compare text byte for byte already, and get no statement. Guarded and idempotent (the
- * column's collation is read first: a column already at the binary collation, or missing, is left as it is; two
- * processes that both read it as not binary write the same definition twice, which changes nothing).
+ * column's collation is read first: a column already at the chosen collation, or missing, is left as it is; two
+ * processes that both read it as not there yet write the same definition twice, which changes nothing).
  *
  * Reversible: `down` gives the column back the table's collation, which it had before. That refuses (and changes
  * nothing: the `ALTER` is atomic) while two keys of one author or one webhook differ only in letter case, since the
@@ -39,7 +47,7 @@ export class ChatMessageNonceBinaryCollation1791000008700 implements MigrationIn
 		if (dialectOf(queryRunner) !== 'mysql') return;
 		const collation = await nonceCollation(queryRunner);
 		if (collation === null) return;
-		const binary = await binaryCollation(queryRunner);
+		const binary = await caseSensitiveCollation(queryRunner);
 		if (collation === binary) return;
 		// Constant identifiers and type; the collation is one of the constant names above. No value of anyone's goes in.
 		await queryRunner.query(
@@ -50,7 +58,7 @@ export class ChatMessageNonceBinaryCollation1791000008700 implements MigrationIn
 	public async down(queryRunner: QueryRunner): Promise<void> {
 		if (dialectOf(queryRunner) !== 'mysql') return;
 		const collation = await nonceCollation(queryRunner);
-		if (!(CHAT_NONCE_BINARY_COLLATIONS as readonly string[]).includes(collation ?? '')) return;
+		if (!(CHAT_NONCE_COLLATIONS as readonly string[]).includes(collation ?? '')) return;
 		try {
 			// Without a character set or a collation, the column takes the table's again, as `1791000006100` made it.
 			await queryRunner.query(`ALTER TABLE \`${TABLE}\` MODIFY COLUMN \`${COLUMN}\` varchar(64) NULL`);
@@ -77,11 +85,11 @@ async function nonceCollation(queryRunner: QueryRunner): Promise<string | null> 
 	return rows[0]?.columnCollation ?? null;
 }
 
-/** The first of {@link CHAT_NONCE_BINARY_COLLATIONS} the server has (`utf8mb4_bin` is on every server). */
-async function binaryCollation(queryRunner: QueryRunner): Promise<(typeof CHAT_NONCE_BINARY_COLLATIONS)[number]> {
-	const noPad = CHAT_NONCE_BINARY_COLLATIONS.slice(0, 2);
+/** The first of {@link CHAT_NONCE_COLLATIONS} the server has (`utf8mb4_bin` is on every server). */
+async function caseSensitiveCollation(queryRunner: QueryRunner): Promise<(typeof CHAT_NONCE_COLLATIONS)[number]> {
+	const noPad = CHAT_NONCE_COLLATIONS.slice(0, 3);
 	const rows = (await queryRunner.query(
-		'SELECT COLLATION_NAME AS collationName FROM information_schema.COLLATIONS WHERE COLLATION_NAME IN (?, ?)',
+		'SELECT COLLATION_NAME AS collationName FROM information_schema.COLLATIONS WHERE COLLATION_NAME IN (?, ?, ?)',
 		[...noPad]
 	)) as Array<{ collationName?: string }>;
 	const available = new Set(rows.map((row) => row.collationName));

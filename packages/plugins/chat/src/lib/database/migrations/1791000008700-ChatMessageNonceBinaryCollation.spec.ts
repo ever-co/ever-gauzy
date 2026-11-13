@@ -1,7 +1,7 @@
 import { CHAT_MIGRATIONS } from '../chat-migrations';
 import { CHAT_MESSAGE_WEBHOOK_INDEXES } from './1791000006730-CreateChatWebhooks';
 import {
-	CHAT_NONCE_BINARY_COLLATIONS,
+	CHAT_NONCE_COLLATIONS,
 	ChatMessageNonceBinaryCollation1791000008700
 } from './1791000008700-ChatMessageNonceBinaryCollation';
 
@@ -12,6 +12,8 @@ const COLLATIONS_PROBE = /^SELECT COLLATION_NAME AS collationName FROM informati
 const SERVERS = {
 	mysql8: ['utf8mb4_0900_bin'],
 	mariadb: ['utf8mb4_nopad_bin'],
+	/** MySQL 8.0.1 to 8.0.16: the NO PAD `utf8mb4_0900_*` collations, but no `utf8mb4_0900_bin`. */
+	mysql80early: ['utf8mb4_0900_as_cs'],
 	/** MySQL 5.7, MariaDB before 10.2: neither NO PAD binary collation. */
 	old: [] as string[]
 };
@@ -61,7 +63,7 @@ describe('ChatMessageNonceBinaryCollation1791000008700', () => {
 			expect(mysql.statements[0]).toMatch(COLUMN_PROBE);
 			expect(mysql.params[0]).toEqual(['chat_message', 'nonce']);
 			expect(mysql.statements[1]).toMatch(COLLATIONS_PROBE);
-			expect(mysql.params[1]).toEqual(['utf8mb4_0900_bin', 'utf8mb4_nopad_bin']);
+			expect(mysql.params[1]).toEqual(['utf8mb4_0900_bin', 'utf8mb4_nopad_bin', 'utf8mb4_0900_as_cs']);
 		}
 	});
 
@@ -72,13 +74,28 @@ describe('ChatMessageNonceBinaryCollation1791000008700', () => {
 		const old = runner('mysql', 'utf8mb4_general_ci', SERVERS.old);
 		await migration().up(old as never);
 		expect(ddl(old.statements)).toEqual([modifyTo('utf8mb4_bin')]);
-		expect(CHAT_NONCE_BINARY_COLLATIONS).toEqual(['utf8mb4_0900_bin', 'utf8mb4_nopad_bin', 'utf8mb4_bin']);
+		expect(CHAT_NONCE_COLLATIONS).toEqual([
+			'utf8mb4_0900_bin',
+			'utf8mb4_nopad_bin',
+			'utf8mb4_0900_as_cs',
+			'utf8mb4_bin'
+		]);
+	});
+
+	it('keeps a NO PAD collation on MySQL 8.0 before 8.0.17, where utf8mb4_bin would merge keys that differ in trailing spaces', async () => {
+		const early = runner('mysql', 'utf8mb4_0900_ai_ci', SERVERS.mysql80early);
+		await migration().up(early as never);
+		expect(ddl(early.statements)).toEqual([modifyTo('utf8mb4_0900_as_cs')]);
+		const done = runner('mysql', 'utf8mb4_0900_as_cs', SERVERS.mysql80early);
+		await migration().up(done as never);
+		expect(ddl(done.statements)).toEqual([]);
 	});
 
 	it('changes nothing when the column is already at the binary collation, or is not there, or holds no text', async () => {
 		for (const [collation, server] of [
 			['utf8mb4_0900_bin', SERVERS.mysql8],
 			['utf8mb4_nopad_bin', SERVERS.mariadb],
+			['utf8mb4_0900_as_cs', SERVERS.mysql80early],
 			['utf8mb4_bin', SERVERS.old]
 		] as const) {
 			const binary = runner('mysql', collation, [...server]);
@@ -110,7 +127,7 @@ describe('ChatMessageNonceBinaryCollation1791000008700', () => {
 	});
 
 	it('goes down to the table collation only from a binary one it sets', async () => {
-		for (const collation of CHAT_NONCE_BINARY_COLLATIONS) {
+		for (const collation of CHAT_NONCE_COLLATIONS) {
 			const binary = runner('mysql', collation);
 			await migration().down(binary as never);
 			expect(ddl(binary.statements)).toEqual([
