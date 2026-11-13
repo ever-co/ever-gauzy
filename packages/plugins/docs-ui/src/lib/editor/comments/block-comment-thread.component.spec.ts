@@ -442,4 +442,35 @@ describe('BlockCommentThreadComponent: threads made on a range of text', () => {
 			delete (HTMLElement.prototype as { scrollIntoView?: unknown }).scrollIntoView;
 		}
 	});
+
+	it('logs a range that could not be stored for an unexpected reason, and keeps the thread on its block', async () => {
+		const warn = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+		try {
+			comments.setAnchorError = { status: 500, error: {} };
+			await render({ blockId: 'b1', range: SELECTION });
+			component.draft = 'Server trouble';
+			await component.post();
+			expect(warn).toHaveBeenCalledTimes(1);
+			expect(comments.created).toHaveLength(1);
+
+			// A refusal is an answer, not a failure: nothing is logged.
+			warn.mockClear();
+			comments.setAnchorError = { status: 403, error: { code: 'DOCS_COMMENT_ANCHOR_FORBIDDEN' } };
+			fixture.componentRef.setInput('range', { ...SELECTION });
+			fixture.detectChanges();
+			component.draft = 'Viewer';
+			await component.post();
+			expect(warn).not.toHaveBeenCalled();
+		} finally {
+			warn.mockRestore();
+		}
+	});
+
+	it('does not carry a selection over to the next page', async () => {
+		await render({ blockId: 'b1', range: SELECTION });
+		expect(element().querySelector('.gz-block-composer-range')).not.toBeNull();
+
+		await switchPage(OTHER_PAGE);
+		expect(element().querySelector('.gz-block-composer-range')).toBeNull();
+	});
 });

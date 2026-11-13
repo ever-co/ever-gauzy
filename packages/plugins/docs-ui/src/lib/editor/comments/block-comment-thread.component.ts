@@ -75,6 +75,15 @@ export interface IThreadRangeView {
 const DOCS_COMMENT_NOT_FOUND = 'DOCS_COMMENT_NOT_FOUND';
 
 /**
+ * Logs a range failure that is neither "no ranges here" (404) nor a refusal (403): the thread stays on its block either
+ * way, but a broken range store must not go unnoticed.
+ */
+function warnUnexpected(message: string, error: unknown): void {
+	const status = (error as { status?: number } | null)?.status;
+	if (status !== 404 && status !== 403) console.warn(message, error);
+}
+
+/**
  * A 404: the platform has no ranges, unless it names the comment.
  *
  * `GET …/comment-anchors` and `PUT …/comments/:commentId/anchor` answer 404 `DOCS_COLLAB_DISABLED` while Docs
@@ -191,10 +200,13 @@ export class BlockCommentThreadComponent implements OnChanges {
 	private pendingRange: IDocumentCommentAnchorInput | null = null;
 	/** How each range thread reads, by its first comment. */
 	public rangeViews = new Map<string, IThreadRangeView>();
+	/** The thread the rail scrolls to next (the latest asked for). */
+	private scrollTarget: string | null = null;
 
 	ngOnChanges(changes: SimpleChanges): void {
 		if (changes['range']) this.pendingRange = this.range ?? null;
 		if (changes['documentId'] && this.documentId) {
+			if (!changes['range'] && !changes['documentId'].firstChange) this.pendingRange = null;
 			this.anchors = new Map();
 			this.rangesOff = false;
 			void this.reload();
@@ -340,7 +352,7 @@ export class BlockCommentThreadComponent implements OnChanges {
 				})
 			);
 			// The block's line stays: a client that knows no ranges keeps the thread on its block.
-			if (range && created?.id) await this.placeRange(documentId, created.id as ID, range);
+			if (range && created?.id) await this.placeRange(documentId, created.id, range);
 			this.toastrService.success(this.translate.instant('DOCS.COMMENTS.TOAST_POSTED'));
 			// Another page opened meanwhile: its draft and its selection are its own.
 			if (!this.isCurrent(documentId)) return;
@@ -514,6 +526,7 @@ export class BlockCommentThreadComponent implements OnChanges {
 			return anchorsByComment(list?.items);
 		} catch (error) {
 			if (isRangesUnavailable(error) && this.isCurrent(documentId)) this.rangesOff = true;
+			else warnUnexpected('Comment ranges could not be read', error);
 			return new Map();
 		}
 	}
@@ -548,6 +561,7 @@ export class BlockCommentThreadComponent implements OnChanges {
 			if (this.isCurrent(documentId)) this.anchors = new Map(this.anchors).set(String(commentId), anchor);
 		} catch (error) {
 			if (isRangesUnavailable(error) && this.isCurrent(documentId)) this.rangesOff = true;
+			else warnUnexpected('A comment range could not be stored; the thread stays on its block', error);
 		}
 	}
 
@@ -599,9 +613,12 @@ export class BlockCommentThreadComponent implements OnChanges {
 
 	/** Brings the thread asked for into sight in the rail, once it is drawn. */
 	private scrollToThread(threadId: string): void {
+		this.scrollTarget = threadId;
 		afterNextRender(
 			{
 				read: () => {
+					// Asked for another thread meanwhile: that one's own scroll follows.
+					if (this.scrollTarget !== threadId) return;
 					const escaped = typeof CSS !== 'undefined' && CSS.escape ? CSS.escape(threadId) : threadId;
 					const element = this.host.nativeElement?.querySelector?.<HTMLElement>(
 						`[data-thread-id="${escaped}"]`
