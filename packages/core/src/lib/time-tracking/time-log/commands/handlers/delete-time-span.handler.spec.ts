@@ -10,6 +10,7 @@ import { TimesheetFirstOrCreateCommand, TimesheetRecalculateCommand } from '../.
 import { TimeSlotBulkDeleteCommand } from '../../../time-slot/commands';
 import { TimeSlotBulkDeleteHandler } from '../../../time-slot/commands/handlers/time-slot-bulk-delete.handler';
 import { generateTimeSlots } from '../../../time-slot/utils';
+import { addQueryParameters, slotStartRanges } from '../../../testing/recording-query-builder';
 import { TimeLog } from '../../time-log.entity';
 import { TimeLogService } from '../../time-log.service';
 import { DeleteTimeSpanCommand } from '../delete-time-span.command';
@@ -392,11 +393,15 @@ function createStore() {
 		// their logs joined, and the join-row writes of `relation(TimeSlot, 'timeLogs').of(slot)`.
 		createQueryBuilder: () => {
 			const params: Record<string, any> = {};
+			const addParameters = (condition: unknown, values?: Record<string, unknown>) => {
+				addQueryParameters(params, condition, values);
+				return builder;
+			};
 			const builder = {
 				alias: 'time_slot',
 				leftJoinAndSelect: () => builder,
-				where: (_sql: string, values?: Record<string, unknown>) => (Object.assign(params, values), builder),
-				andWhere: (_sql: string, values?: Record<string, unknown>) => (Object.assign(params, values), builder),
+				where: addParameters,
+				andWhere: addParameters,
 				getParameters: () => params,
 				relation: () => ({
 					of: (slotIds: string | string[]) => {
@@ -416,20 +421,21 @@ function createStore() {
 						};
 					}
 				}),
-				getMany: async () =>
-					liveSlots()
+				getMany: async () => {
+					const ranges = slotStartRanges(params);
+					const isAtStart = (start: Date) =>
+						!ranges || ranges.some(({ from, to }) => start.getTime() >= from && start.getTime() < to);
+					return liveSlots()
 						.filter(
 							(slot) =>
 								slot.tenantId === params.tenantId &&
 								slot.organizationId === params.organizationId &&
 								slot.employeeId === params.employeeId &&
-								(!params.startTimes ||
-									(params.startTimes as Date[]).some(
-										(time) => time.getTime() === slot.startedAt.getTime()
-									)) &&
+								isAtStart(slot.startedAt) &&
 								(!params.timeSlotsIds || (params.timeSlotsIds as string[]).includes(slot.id))
 						)
-						.map((slot) => slotEntity(slot, true))
+						.map((slot) => slotEntity(slot, true));
+				}
 			};
 			return builder;
 		},

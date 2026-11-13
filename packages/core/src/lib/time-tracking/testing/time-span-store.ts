@@ -18,6 +18,7 @@ import { TimeSlotBulkDeleteHandler } from '../time-slot/commands/handlers/time-s
 import { TimeSlotDurationRecalculateHandler } from '../time-slot/commands/handlers/time-slot-duration-recalculate.handler';
 import { generateTimeSlots } from '../time-slot/utils';
 import { TimesheetFirstOrCreateCommand, TimesheetRecalculateCommand } from '../timesheet/commands';
+import { addQueryParameters, slotStartRanges } from './recording-query-builder';
 
 export const SPAN_TENANT_ID = '6b2d3f1a-7e4c-4d9b-8f3a-2c8e5b7d9f01';
 export const SPAN_ORGANIZATION_ID = '1a0f9e8d-7c6b-4d4e-9f3a-2b1c0d9e8f72';
@@ -370,15 +371,15 @@ export class TimeSpanStore {
 		return removed;
 	}
 
-	/** The time slots the TypeORM slot queries of these handlers select: employee, tenant, start times and ids. */
+	/** The time slots the TypeORM slot queries of these handlers select: employee, tenant, start ranges and ids. */
 	private matchingTimeSlots(parameters: Record<string, unknown>): StoredTimeSlot[] {
-		const requestedStarts = parameters.startTimes as Date[] | undefined;
-		const startTimes = requestedStarts?.map((time) => new Date(time).getTime());
+		const ranges = slotStartRanges(parameters);
 		const ids = parameters.timeSlotsIds as string[] | undefined;
 		const matches = (slot: StoredTimeSlot) => {
+			const start = slot.startedAt.getTime();
 			const isLive = !slot.deletedAt;
 			const isInScope = slot.employeeId === parameters.employeeId && slot.tenantId === parameters.tenantId;
-			const isAtStart = !startTimes || startTimes.includes(slot.startedAt.getTime());
+			const isAtStart = !ranges || ranges.some(({ from, to }) => start >= from && start < to);
 			const isNamed = !ids || ids.includes(slot.id);
 			return isLive && isInScope && isAtStart && isNamed;
 		};
@@ -387,8 +388,8 @@ export class TimeSpanStore {
 
 	private timeSlotQuery() {
 		const parameters: Record<string, unknown> = {};
-		const addParameters = (_condition: string, values: Record<string, unknown>) => {
-			Object.assign(parameters, values);
+		const addParameters = (condition: unknown, values?: Record<string, unknown>) => {
+			addQueryParameters(parameters, condition, values);
 			return query;
 		};
 		const query = {
