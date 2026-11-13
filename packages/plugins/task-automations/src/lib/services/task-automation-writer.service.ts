@@ -50,6 +50,16 @@ export function applyListEdit(current: readonly ID[], edit: ITaskAutomationListE
 	return [...kept, ...edit.add.filter((id) => !kept.includes(id))];
 }
 
+/** What a write did. */
+export interface ITaskAutomationWriteResult {
+	/** Whether an update was sent: not when an edit made meanwhile already left the task as the rule wanted. */
+	written: boolean;
+	/** The task's assignees and labels as read just before the write, when the update changes a list. */
+	lists: { memberIds: ID[]; tagIds: ID[] } | null;
+	/** The lists the rule changes that were already as it wanted, so were not written. */
+	unchanged: Array<'members' | 'tags'>;
+}
+
 /** How many people a notice reached, and through what. */
 export interface ITaskAutomationNoticeResult {
 	channel: 'inbox' | 'notification';
@@ -82,31 +92,62 @@ export class TaskAutomationWriter {
 	 * would put back an assignee removed since, or drop a label added since. So the lists are not written as planned:
 	 * the rule's additions and removals are applied to the lists as stored just before the write, and a list they
 	 * leave as it is is not written at all.
+	 *
+	 * What is left is the gap every task update has: `TaskService.update` reads the task and then saves the lists it
+	 * is given, so an edit landing between this read and that save is still replaced, as it would be by a person's
+	 * edit. A row lock cannot close it from here: the update runs in a transaction of its own, on another connection,
+	 * which a lock held here would block.
 	 */
-	async applyUpdate(task: ITaskAutomationTaskSnapshot, update: ITaskAutomationTaskUpdate, marker: ITaskAutomationActorMarker): Promise<void> {
+	async applyUpdate(
+		task: ITaskAutomationTaskSnapshot,
+		update: ITaskAutomationTaskUpdate,
+		marker: ITaskAutomationActorMarker
+	): Promise<ITaskAutomationWriteResult> {
 		const input: Record<string, unknown> = { organizationId: task.organizationId };
+		let changes = false;
 		if ('status' in update) {
 			input['status'] = update.status;
 			input['taskStatusId'] = update.taskStatusId ?? null;
+			changes = true;
 		}
 		if ('priority' in update) {
 			input['priority'] = update.priority;
 			input['taskPriorityId'] = update.taskPriorityId ?? null;
+			changes = true;
 		}
+		const result: ITaskAutomationWriteResult = { written: false, lists: null, unchanged: [] };
 		const members = update.memberIds ? listEdit(task.memberIds, update.memberIds) : null;
 		const tags = update.tagIds ? listEdit(task.tagIds, update.tagIds) : null;
 		if (members || tags) {
 			const current = await this.reader.lists(task.tenantId, task.id);
 			if (!current) throw new Error('The task no longer exists.');
+			result.lists = current;
 			const memberIds = members ? applyListEdit(current.memberIds, members) : null;
-			if (memberIds && !sameSet(memberIds, current.memberIds)) input['members'] = memberIds.map((id) => ({ id }));
+			if (memberIds && !sameSet(memberIds, current.memberIds)) {
+				input['members'] = memberIds.map((id) => ({ id }));
+				changes = true;
+			} else if (memberIds) {
+				result.unchanged.push('members');
+			}
 			const tagIds = tags ? applyListEdit(current.tagIds, tags) : null;
-			if (tagIds && !sameSet(tagIds, current.tagIds)) input['tags'] = tagIds.map((id) => ({ id }));
+			if (tagIds && !sameSet(tagIds, current.tagIds)) {
+				input['tags'] = tagIds.map((id) => ({ id }));
+				changes = true;
+			} else if (tagIds) {
+				result.unchanged.push('tags');
+			}
 		}
 		// What the rule was to change is already so (an edit since made it): nothing to write.
-		if (Object.keys(input).length === 1) return;
+		if (!changes) return result;
 		const user = automationUser({ tenantId: task.tenantId, organizationId: task.organizationId }, marker);
 		await runAsAutomation(user, () => this.commandBus.execute(new TaskUpdateCommand(task.id, input as unknown as ITaskUpdateInput)));
+		result.written = true;
+		return result;
+	}
+
+	/** A task's assignees and labels as stored now, or `null` when the task is gone (see `applyUpdate`). */
+	currentLists(task: ITaskAutomationTaskSnapshot): Promise<{ memberIds: ID[]; tagIds: ID[] } | null> {
+		return this.reader.lists(task.tenantId, task.id);
 	}
 
 	/**

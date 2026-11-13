@@ -18,7 +18,7 @@ import { TaskAutomationRuleService } from './task-automation-rule.service';
 import { TaskAutomationRunStore } from './task-automation-run.store';
 import { TaskAutomationTaskLock } from './task-automation-task-lock';
 import { TaskAutomationTaskReader } from './task-automation-task-reader.service';
-import { TaskAutomationWriter } from './task-automation-writer.service';
+import { applyListEdit, listEdit, TaskAutomationWriter } from './task-automation-writer.service';
 
 /** One run of one rule for one task: what led to it, and what it must check before it claims anything. */
 export interface ITaskAutomationRunOptions {
@@ -51,6 +51,14 @@ export function inRuleScope(rule: Pick<ITaskAutomationRule, 'organizationId' | '
 	if (rule.projectId && task.projectId !== rule.projectId) return false;
 	if (rule.organizationTeamId && !task.teamIds.includes(rule.organizationTeamId)) return false;
 	return true;
+}
+
+/** Notes the list changes an edit made meanwhile had already made (the writer left those lists as they were). */
+function markAlreadySet(changes: ITaskAutomationChange[], fields: ReadonlyArray<'members' | 'tags'>): void {
+	for (const change of changes) {
+		if (change.failed || change.note === 'Already set.' || !fields.includes(change.field as 'members' | 'tags')) continue;
+		change.note = 'Already set.';
+	}
 }
 
 /** Marks the changes the failed update was to make as failed, with its reason. */
@@ -159,21 +167,35 @@ export class TaskAutomationRunner {
 			const marker = nextMarker({ id: rule.id as ID, name: rule.name }, run.id as ID, options.depth, options.chain);
 			let applied = false;
 			let updateFailed = false;
+			// The task's assignees as stored just before the write: the base the notices are addressed from.
+			let currentMembers: ID[] | null = null;
 			if (hasUpdate) {
 				try {
-					await this.writer.applyUpdate(subject, plan.update, marker);
-					applied = true;
+					const written = await this.writer.applyUpdate(subject, plan.update, marker);
+					// Nothing was sent when an edit made meanwhile already did what the rule was to do: no change of the
+					// rule's, so it does not count toward the task's rate limit either.
+					applied = written.written;
+					currentMembers = written.lists?.memberIds ?? null;
+					markAlreadySet(plan.changes, written.unchanged);
 				} catch (error) {
 					updateFailed = true;
 					failUpdateChanges(plan.changes, this.writer.describe(error));
 				}
 			}
+			if (plan.notices.length && !currentMembers) {
+				currentMembers = (await this.writer.currentLists(subject).catch((): null => null))?.memberIds ?? null;
+			}
+			const baseMembers = currentMembers ?? subject.memberIds;
 			const notices = plan.changes.filter((change) => change.field === 'notice' && change.to !== undefined);
 			for (const [index, planned] of plan.notices.entries()) {
 				const line = notices[index];
-				// The update did not happen: the notice goes to the task's assignees as they are, never to people the
-				// failed update was to add.
-				const notice = updateFailed ? { ...planned, employeeIds: [...subject.memberIds] } : planned;
+				// A notice goes to the assignees the task has at that point of the rule: what the actions before it added
+				// and removed, applied to the assignees as stored now (an edit made meanwhile counts). When the update
+				// failed, to the assignees as they are, never to people the failed update was to add.
+				const employeeIds = updateFailed
+					? [...baseMembers]
+					: applyListEdit(baseMembers, listEdit(subject.memberIds, planned.employeeIds));
+				const notice = { ...planned, employeeIds };
 				if (!notice.employeeIds.length) {
 					if (line) {
 						line.to = 0;

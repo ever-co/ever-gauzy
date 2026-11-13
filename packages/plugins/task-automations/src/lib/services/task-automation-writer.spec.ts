@@ -111,7 +111,7 @@ describe('TaskAutomationWriter', () => {
 		it('does not put back an assignee removed since: an added assignee joins the list as it is now', async () => {
 			// The run read A and B; a person removed A; the rule adds C.
 			const { written, commandBus, reader } = await writeWith({ memberIds: ['A', 'B'] }, { memberIds: ['A', 'B', 'C'] }, { memberIds: ['B'], tagIds: [] });
-			await written;
+			await expect(written).resolves.toEqual({ written: true, lists: { memberIds: ['B'], tagIds: [] }, unchanged: [] });
 			expect(reader.lists).toHaveBeenCalledWith('tenant-1', 'task-1');
 			expect(inputOf(commandBus)['members']).toEqual([{ id: 'B' }, { id: 'C' }]);
 			expect(inputOf(commandBus)).not.toHaveProperty('tags');
@@ -133,7 +133,7 @@ describe('TaskAutomationWriter', () => {
 
 		it('writes no list the edit already left as the rule wanted, and nothing when nothing else changes', async () => {
 			const { written, commandBus } = await writeWith({ memberIds: ['A'] }, { memberIds: ['A', 'C'] }, { memberIds: ['C', 'A'], tagIds: [] });
-			await written;
+			await expect(written).resolves.toEqual({ written: false, lists: { memberIds: ['C', 'A'], tagIds: [] }, unchanged: ['members'] });
 			expect(commandBus.execute).not.toHaveBeenCalled();
 
 			const withStatus = await writeWith(
@@ -153,7 +153,7 @@ describe('TaskAutomationWriter', () => {
 
 		it('reads nothing more for an update without lists', async () => {
 			const { written, commandBus, reader } = await writeWith({}, { status: 'done', taskStatusId: 'st-done' }, null);
-			await written;
+			await expect(written).resolves.toEqual({ written: true, lists: null, unchanged: [] });
 			expect(reader.lists).not.toHaveBeenCalled();
 			expect(inputOf(commandBus)).toEqual({ organizationId: 'org-1', status: 'done', taskStatusId: 'st-done' });
 		});
