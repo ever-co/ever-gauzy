@@ -3143,14 +3143,17 @@ export class TaskService extends TenantAwareCrudService<Task> {
 	 *
 	 * @param sent The update as it was sent.
 	 * @param task The task as it is stored, with the records it holds.
-	 * @param tenantId The caller's tenant; without one, only a platform default is taken.
+	 * @param tenantId The caller's tenant (the update passes the task's when the request carries none); without one,
+	 * only a platform default is taken.
 	 * @returns The update to save: as sent, or with the records' names (and a record named twice named once).
 	 */
 	private async withUpdateRecords<T extends Partial<ITaskUpdateInput>>(sent: T, task: Task, tenantId: ID | undefined): Promise<T> {
 		// The organization the task is saved in: the one the update names (by its relation, which the save takes over the
 		// id, or by its id; the DTO accepts either), else its own.
-		const organizationId = sent.organization?.id ?? sent.organizationId ?? task.organizationId;
-		const staysInOrganization = !!organizationId && !!task.organizationId && recordKey(organizationId) === recordKey(task.organizationId);
+		const namedOrganizationId = sent.organization?.id ?? sent.organizationId;
+		const organizationId = namedOrganizationId ?? task.organizationId;
+		const staysInOrganization =
+			!namedOrganizationId || (!!task.organizationId && recordKey(namedOrganizationId) === recordKey(task.organizationId));
 		const { update, changes, named } = recordChangesOfUpdate(sent, task);
 		// In its organization, the records the task holds are its own to keep. Moved to another one, every record it holds
 		// afterwards (named, or kept) must be one that organization may take; only those it moves to are named.

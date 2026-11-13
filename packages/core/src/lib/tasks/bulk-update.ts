@@ -236,6 +236,7 @@ export function recordChangesOfUpdate<T extends object>(update: T, held: Partial
 		const byRelation = relationRecordOf(body[relation]);
 		let record = byRelation === undefined ? byId : byRelation;
 		if (byRelation !== undefined && byId !== undefined && !sameRecord(byId, byRelation)) {
+			// A copy whose fields are replaced, never changed in place: the caller's update (and its relations) stays as sent.
 			saved = saved ?? { ...body };
 			if (sameRecord(byRelation, held[idField])) {
 				// The relation as the task holds it, sent back with the task: the id beside it is the change.

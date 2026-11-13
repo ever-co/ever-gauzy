@@ -447,6 +447,21 @@ function exercise(dialect: Dialect) {
 	);
 
 	it(
+		'judges no record a task keeps when the update names no organization, the task having none',
+		async () => {
+			// A task without an organization that holds a record (written before the check): it is not moving anywhere.
+			await dataSource
+				.getRepository(Task)
+				.update({ id: TASK }, { organizationId: null, taskPriorityId: PRIORITY_OWN, priority: 'p0' } as never);
+
+			await service.update(TASK, { title: 'Renamed' } as Partial<ITaskUpdateInput>);
+
+			expect(await taskRow()).toMatchObject({ title: 'Renamed', priority: 'p0', taskPriorityId: PRIORITY_OWN });
+		},
+		TIMEOUT
+	);
+
+	it(
 		'judges the records a task keeps against the organization it moves to',
 		async () => {
 			await update({ taskPriorityId: PRIORITY_OWN });
