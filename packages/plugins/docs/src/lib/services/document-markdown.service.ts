@@ -3,7 +3,7 @@ import { ZipArchive } from 'archiver';
 import { posix } from 'node:path';
 import { In, Like } from 'typeorm';
 import { BaseEntityEnum, DocumentKindEnum, ID, IDocument } from '@gauzy/contracts';
-import { Comment } from '@gauzy/core';
+import { Comment, FileContentTooLargeError } from '@gauzy/core';
 import { DOCS_CONTENT_CONFLICT, DOCS_LOCKED, DOCS_MARKDOWN_AMBIGUOUS, DOCS_MARKDOWN_TOO_MANY_PAGES, DOCS_NOT_A_PAGE } from '../docs.constants';
 import { UpdateDocumentContentDTO } from '../dto/update-document-content.dto';
 import { UpdateDocumentMarkdownDTO } from '../dto/update-document-markdown.dto';
@@ -80,6 +80,8 @@ const ZIP_FILE_NAME_MAX_LENGTH = 120;
 @Injectable()
 export class DocumentMarkdownService {
 	private readonly logger = new Logger(DocumentMarkdownService.name);
+	/** The most asset bytes one subtree export holds in memory (`DOCS_MARKDOWN_ASSETS_MAX_BYTES`; a spec makes it small). */
+	private readonly assetsMaxBytes: number = DOCS_MARKDOWN_ASSETS_MAX_BYTES;
 
 	constructor(
 		private readonly documents: DocumentService,
@@ -375,27 +377,37 @@ export class DocumentMarkdownService {
 	 * The bytes of a folder export's files, read with the selected organization, within the export's byte budget
 	 * (`DOCS_MARKDOWN_ASSETS_MAX_BYTES`, held in memory until the zip is written); one that cannot be read or does not
 	 * fit is left out (the zip's `index.md` lists it with its API link).
+	 *
+	 * A file's stored size is checked first, so a file known not to fit is never read. Every read is bounded by what is
+	 * left of the budget: a file whose size was never stored (or was stored too small) is abandoned at that bound while
+	 * it is read, instead of being read whole and only then found too large.
 	 */
 	private async readAttachments(files: ISubtreeEntry[], organizationId?: ID): Promise<Map<string, Buffer>> {
 		const read = new Map<string, Buffer>();
 		let totalBytes = 0;
 		for (const entry of files) {
 			const id = String(entry.document.id);
-			// The stored size first: a file known not to fit is never read into memory.
+			const remaining = this.assetsMaxBytes - totalBytes;
+			// The stored size first: a file known not to fit is never read into memory. With nothing left, nothing is
+			// read at all (a bound of 0 is no bound to the storage read).
 			const knownSize = Number(entry.document.fileSize);
-			if (Number.isFinite(knownSize) && knownSize > 0 && totalBytes + knownSize > DOCS_MARKDOWN_ASSETS_MAX_BYTES) {
-				this.logger.warn(`Markdown export: file ${id} was not added (the export's asset budget of ${DOCS_MARKDOWN_ASSETS_MAX_BYTES} bytes is reached)`);
+			if (remaining <= 0 || (Number.isFinite(knownSize) && knownSize > remaining)) {
+				this.warnPastBudget(id);
 				continue;
 			}
 			try {
-				const file = await this.uploads.getRawFile(id as ID, organizationId);
-				if (totalBytes + file.buffer.length > DOCS_MARKDOWN_ASSETS_MAX_BYTES) {
-					this.logger.warn(`Markdown export: file ${id} was not added (the export's asset budget of ${DOCS_MARKDOWN_ASSETS_MAX_BYTES} bytes is reached)`);
+				const file = await this.uploads.getRawFile(id as ID, organizationId, { maxBytes: remaining });
+				if (file.buffer.length > remaining) {
+					this.warnPastBudget(id);
 					continue;
 				}
 				totalBytes += file.buffer.length;
 				read.set(id, file.buffer);
 			} catch (error) {
+				if (error instanceof FileContentTooLargeError) {
+					this.warnPastBudget(id);
+					continue;
+				}
 				this.logger.warn(`Markdown export: file ${id} was not added (${(error as Error)?.message ?? error})`);
 			}
 		}
@@ -423,20 +435,35 @@ export class DocumentMarkdownService {
 		}
 		let totalBytes = usedBytes;
 		for (const id of ids) {
+			// Bounded by what is left of the budget, as a folder's files are (the page names only the file's id).
+			const remaining = this.assetsMaxBytes - totalBytes;
+			if (remaining <= 0) {
+				this.warnPastBudget(id);
+				continue;
+			}
 			try {
-				const file = await this.uploads.getRawFile(id as ID, organizationId);
-				if (totalBytes + file.buffer.length > DOCS_MARKDOWN_ASSETS_MAX_BYTES) {
-					this.logger.warn(`Markdown export: file ${id} was not added (the export's asset budget of ${DOCS_MARKDOWN_ASSETS_MAX_BYTES} bytes is reached)`);
+				const file = await this.uploads.getRawFile(id as ID, organizationId, { maxBytes: remaining });
+				if (file.buffer.length > remaining) {
+					this.warnPastBudget(id);
 					continue;
 				}
 				totalBytes += file.buffer.length;
 				const extension = posix.extname(String(file.fileName ?? '')).toLowerCase().replace(/[^a-z0-9.]/g, '');
 				assets.set(id, { name: `${id}${extension}`, buffer: file.buffer });
 			} catch (error) {
+				if (error instanceof FileContentTooLargeError) {
+					this.warnPastBudget(id);
+					continue;
+				}
 				this.logger.warn(`Markdown export: file ${id} was not added (${(error as Error)?.message ?? error})`);
 			}
 		}
 		return assets;
+	}
+
+	/** Logs a file left out of an export because it does not fit what is left of the byte budget. */
+	private warnPastBudget(id: string): void {
+		this.logger.warn(`Markdown export: file ${id} was not added (the export's asset budget of ${this.assetsMaxBytes} bytes is reached)`);
 	}
 }
 
