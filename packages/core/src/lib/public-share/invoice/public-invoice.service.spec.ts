@@ -5,6 +5,7 @@ import { environment, TYPEORM_INVALID_WHERE_VALUES_BEHAVIOR } from '@gauzy/confi
 import { sign, verify } from 'jsonwebtoken';
 import { DataSource, EntitySchema, Repository } from 'typeorm';
 import { signPurposeToken, TokenPurposeEnum } from '../../auth/purpose-token';
+import { INVOICE_VOID_IS_FINAL } from '../../invoice/invoice-void';
 import { PublicInvoiceService } from './public-invoice.service';
 
 /**
@@ -29,6 +30,7 @@ const InvoiceSchema = new EntitySchema({
 		tenantId: { type: 'varchar', nullable: true },
 		organizationId: { type: 'varchar', nullable: true },
 		status: { type: 'varchar', nullable: true },
+		isEstimate: { type: 'boolean', nullable: true },
 		internalNote: { type: 'text', nullable: true }
 	}
 });
@@ -278,6 +280,22 @@ describe('PublicInvoiceService.updateInvoice (PUT estimate accept/reject, GHSA-2
 			service.updateInvoice({ id: VICTIM.id, token } as any, { status: 'ACCEPTED' } as any)
 		).rejects.toBeInstanceOf(ForbiddenException);
 		expect((await invoices.findOneBy({ id: VICTIM.id })).status).toBe('SENT');
+	});
+
+	it.each([
+		['accepted', { status: 'ACCEPTED' }],
+		['rejected', { status: 'REJECTED' }],
+		['accepted and turned into a draft invoice', { status: 'DRAFT', isEstimate: false }]
+	])('refuses to answer a void estimate (%s), and keeps it void', async (_label, answer) => {
+		await invoices.update(VICTIM.id, { status: 'VOID' });
+		const token = estimateToken();
+		await storeEstimateEmail(token);
+
+		await expect(service.updateInvoice({ id: VICTIM.id, token } as any, answer as any)).rejects.toMatchObject({
+			status: 400,
+			message: INVOICE_VOID_IS_FINAL
+		});
+		expect((await invoices.findOneBy({ id: VICTIM.id })).status).toBe('VOID');
 	});
 
 	it('still reports a missing invoice as a bad request', async () => {

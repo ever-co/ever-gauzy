@@ -1,4 +1,4 @@
-import { BadRequestException, ForbiddenException, Injectable } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, HttpException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { FindOptionsWhere, IsNull, MoreThan, Repository, UpdateResult } from 'typeorm';
 import { IInvoice, IInvoiceUpdateInput } from '@gauzy/contracts';
@@ -6,6 +6,7 @@ import { EstimateEmail, Invoice } from './../../core/entities/internal';
 import { parseFindOptionsRelations } from '../../core/utils';
 import { TypeOrmInvoiceRepository } from '../../invoice/repository/type-orm-invoice.repository';
 import { isNonEmptyString, TokenPurposeEnum, verifyPurposeToken } from '../../auth/purpose-token';
+import { assertVoidStaysVoid } from '../../invoice/invoice-void';
 
 @Injectable()
 export class PublicInvoiceService {
@@ -186,9 +187,10 @@ export class PublicInvoiceService {
 				organizationId: decoded.organizationId ?? IsNull(),
 				tenantId: decoded.tenantId
 			});
+			assertVoidStaysVoid(invoice.status, entity.status);
 			return await this.typeOrmInvoiceRepository.update(invoice.id, entity);
 		} catch (error) {
-			if (error instanceof ForbiddenException) {
+			if (error instanceof HttpException) {
 				throw error;
 			}
 			throw new BadRequestException(error);

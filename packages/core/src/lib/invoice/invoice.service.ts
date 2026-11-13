@@ -29,6 +29,7 @@ import { OrganizationService } from './../organization';
 import { TypeOrmInvoiceRepository } from './repository/type-orm-invoice.repository';
 import { MikroOrmInvoiceRepository } from './repository/mikro-orm-invoice.repository';
 import { FavoriteService } from '../core/decorators';
+import { assertVoidStaysVoid, statesStatusOtherThanVoid } from './invoice-void';
 import {
 	assertBillingInOrganization,
 	saveBillingTime,
@@ -114,6 +115,24 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 			(created) => created.invoiceItems,
 			billing
 		);
+	}
+
+	/**
+	 * Refuses a change that takes the invoice, when it is void, to another status (see `assertVoidStaysVoid`). An
+	 * invoice the caller cannot read is left to the write, which answers it as it did.
+	 *
+	 * @param id The invoice the change is for.
+	 * @param status The status the change states, if any.
+	 * @throws BadRequestException when the invoice is void and the change states another status.
+	 */
+	async assertNotReopeningVoid(id: ID, status: string | undefined): Promise<void> {
+		if (!statesStatusOtherThanVoid(status)) {
+			return;
+		}
+		const stored = await this.findOneOrFailByIdString(id);
+		if (stored.success) {
+			assertVoidStaysVoid(stored.record.status, status);
+		}
 	}
 
 	/**

@@ -76,6 +76,8 @@ describe('Invoices record the time their lines bill, on TypeORM and on MikroORM'
 		return {
 			create: (input: Row) =>
 				new loaded.InvoiceCreateHandler(invoiceService).execute(new loaded.InvoiceCreateCommand(input)),
+			update: (input: Row) =>
+				new loaded.InvoiceUpdateHandler(invoiceService).execute(new loaded.InvoiceUpdateCommand(input)),
 			replaceLines: (invoiceId: string, lines: Row[]) =>
 				new loaded.InvoiceItemBulkCreateHandler(invoiceItemService).execute(
 					new loaded.InvoiceItemBulkCreateCommand(invoiceId, lines)
@@ -204,6 +206,11 @@ describe('Invoices record the time their lines bill, on TypeORM and on MikroORM'
 		return row?.id;
 	};
 
+	const statusOf = async (invoiceId: string): Promise<string> => {
+		const [row] = await dataSource.query(`SELECT "status" FROM "invoice" WHERE "id" = ?`, [invoiceId]);
+		return row.status;
+	};
+
 	const count = async (table: string, column: string, value: string): Promise<number> => {
 		const [row] = await dataSource.query(`SELECT COUNT(*) AS "n" FROM "${table}" WHERE "${column}" = ?`, [value]);
 		return Number(row.n);
@@ -245,6 +252,9 @@ describe('Invoices record the time their lines bill, on TypeORM and on MikroORM'
 						.MikroOrmInvoiceRepository,
 					InvoiceCreateHandler: require('./commands/handlers/invoice.create.handler').InvoiceCreateHandler,
 					InvoiceCreateCommand: require('./commands/invoice.create.command').InvoiceCreateCommand,
+					InvoiceUpdateHandler: require('./commands/handlers/invoice.update.handler').InvoiceUpdateHandler,
+					InvoiceUpdateCommand: require('./commands/invoice.update.command').InvoiceUpdateCommand,
+					INVOICE_VOID_IS_FINAL: require('./invoice-void').INVOICE_VOID_IS_FINAL,
 					InvoiceItemService: require('../invoice-item/invoice-item.service').InvoiceItemService,
 					TypeOrmInvoiceItemRepository: require('../invoice-item/repository/type-orm-invoice-item.repository')
 						.TypeOrmInvoiceItemRepository,
@@ -509,6 +519,45 @@ describe('Invoices record the time their lines bill, on TypeORM and on MikroORM'
 			expect(await lineOf(invoiceId, 'replacement')).toBeUndefined();
 			expect(await linkOf(kept)).toBe(lineId);
 			expect(await linkOf(outsiders)).toBeNull();
+		});
+
+		it('refuses to reopen a void invoice whose time another invoice bills since, and keeps it void', async () => {
+			const { invoiceId: voided, timeLogId } = await timeLogBilledBy('VOID');
+			const rebilling = invoiceWith([lineBilling('billed again', [timeLogId])]);
+			await handlers(ormType).create(rebilling);
+			const rebillingLine = await lineOf(rebilling.id, 'billed again');
+
+			const reopening = handlers(ormType).update({ id: voided, status: 'DRAFT' });
+
+			await expect(reopening).rejects.toMatchObject({ status: 400, message: loaded.INVOICE_VOID_IS_FINAL });
+			expect(await statusOf(voided)).toBe('VOID');
+			expect(await linkOf(timeLogId)).toBe(rebillingLine);
+		});
+
+		it.each(['SENT', 'FULLY_PAID', 'REJECTED'])('refuses to move a void invoice to %s', async (status) => {
+			const { invoiceId } = await earlierInvoice('VOID');
+
+			await expect(handlers(ormType).update({ id: invoiceId, status })).rejects.toMatchObject({
+				status: 400,
+				message: loaded.INVOICE_VOID_IS_FINAL
+			});
+
+			expect(await statusOf(invoiceId)).toBe('VOID');
+		});
+
+		it('still updates a void invoice that stays void, and moves a live one, to VOID included', async () => {
+			const { invoiceId: voided } = await earlierInvoice('VOID');
+			const { invoiceId: live } = await earlierInvoice('DRAFT');
+
+			await handlers(ormType).update({ id: voided, internalNote: 'kept void' });
+			await handlers(ormType).update({ id: voided, status: 'VOID', isArchived: true });
+			await handlers(ormType).update({ id: live, status: 'SENT' });
+			const sentStatus = await statusOf(live);
+			await handlers(ormType).update({ id: live, status: 'VOID' });
+
+			expect(await statusOf(voided)).toBe('VOID');
+			expect(sentStatus).toBe('SENT');
+			expect(await statusOf(live)).toBe('VOID');
 		});
 
 		it("refuses a replacement whose line bills another organization's time, even to a tenant admin", async () => {
