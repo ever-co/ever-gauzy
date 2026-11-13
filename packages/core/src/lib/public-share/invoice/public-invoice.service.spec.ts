@@ -5,7 +5,7 @@ import { environment, TYPEORM_INVALID_WHERE_VALUES_BEHAVIOR } from '@gauzy/confi
 import { sign, verify } from 'jsonwebtoken';
 import { DataSource, EntitySchema, Repository } from 'typeorm';
 import { signPurposeToken, TokenPurposeEnum } from '../../auth/purpose-token';
-import { INVOICE_VOID_IS_FINAL } from '../../invoice/invoice-final-status';
+import { INVOICE_REJECTED_IS_FINAL, INVOICE_VOID_IS_FINAL } from '../../invoice/invoice-final-status';
 import { PublicInvoiceService } from './public-invoice.service';
 
 /**
@@ -296,6 +296,31 @@ describe('PublicInvoiceService.updateInvoice (PUT estimate accept/reject, GHSA-2
 			message: INVOICE_VOID_IS_FINAL
 		});
 		expect((await invoices.findOneBy({ id: VICTIM.id })).status).toBe('VOID');
+	});
+
+	it.each([
+		['accepted', { status: 'ACCEPTED', isEstimate: true }],
+		['accepted and turned into a draft invoice', { status: 'DRAFT', isEstimate: false }]
+	])('refuses to answer a rejected estimate again (%s), and keeps it rejected', async (_label, answer) => {
+		await invoices.update(VICTIM.id, { status: 'REJECTED', isEstimate: true });
+		const token = estimateToken();
+		await storeEstimateEmail(token);
+
+		await expect(service.updateInvoice({ id: VICTIM.id, token } as any, answer as any)).rejects.toMatchObject({
+			status: 400,
+			message: INVOICE_REJECTED_IS_FINAL
+		});
+		expect(await invoices.findOneBy({ id: VICTIM.id })).toMatchObject({ status: 'REJECTED', isEstimate: true });
+	});
+
+	it('still takes a second rejection of a rejected estimate', async () => {
+		await invoices.update(VICTIM.id, { status: 'REJECTED', isEstimate: true });
+		const token = estimateToken();
+		await storeEstimateEmail(token);
+
+		await service.updateInvoice({ id: VICTIM.id, token } as any, { status: 'REJECTED', isEstimate: true } as any);
+
+		expect((await invoices.findOneBy({ id: VICTIM.id })).status).toBe('REJECTED');
 	});
 
 	it('still reports a missing invoice as a bad request', async () => {

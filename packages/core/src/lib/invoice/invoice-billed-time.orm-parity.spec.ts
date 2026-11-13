@@ -221,6 +221,14 @@ describe('Invoices record the time their lines bill, on TypeORM and on MikroORM'
 		return row.status;
 	};
 
+	const estimateStateOf = async (invoiceId: string): Promise<Row> => {
+		const [row] = await dataSource.query(
+			`SELECT "status", "isEstimate", "internalNote" FROM "invoice" WHERE "id" = ?`,
+			[invoiceId]
+		);
+		return row;
+	};
+
 	const count = async (table: string, column: string, value: string): Promise<number> => {
 		const [row] = await dataSource.query(`SELECT COUNT(*) AS "n" FROM "${table}" WHERE "${column}" = ?`, [value]);
 		return Number(row.n);
@@ -265,6 +273,7 @@ describe('Invoices record the time their lines bill, on TypeORM and on MikroORM'
 					InvoiceUpdateHandler: require('./commands/handlers/invoice.update.handler').InvoiceUpdateHandler,
 					InvoiceUpdateCommand: require('./commands/invoice.update.command').InvoiceUpdateCommand,
 					INVOICE_VOID_IS_FINAL: require('./invoice-final-status').INVOICE_VOID_IS_FINAL,
+					INVOICE_REJECTED_IS_FINAL: require('./invoice-final-status').INVOICE_REJECTED_IS_FINAL,
 					InvoiceItemService: require('../invoice-item/invoice-item.service').InvoiceItemService,
 					TypeOrmInvoiceItemRepository: require('../invoice-item/repository/type-orm-invoice-item.repository')
 						.TypeOrmInvoiceItemRepository,
@@ -625,6 +634,46 @@ describe('Invoices record the time their lines bill, on TypeORM and on MikroORM'
 			expect(await statusOf(voided)).toBe('VOID');
 			expect(sentStatus).toBe('SENT');
 			expect(await statusOf(live)).toBe('VOID');
+		});
+
+		it('refuses to accept a rejected estimate whose time another invoice bills since, and keeps it rejected', async () => {
+			const { invoiceId: rejected, timeLogId } = await timeLogBilledBy('REJECTED', { isEstimate: 1 });
+			const rebilling = invoiceWith([lineBilling('billed again', [timeLogId])]);
+			await handlers(ormType).create(rebilling);
+			const rebillingLine = await lineOf(rebilling.id, 'billed again');
+
+			const accepting = handlers(ormType).update({ id: rejected, status: 'ACCEPTED' });
+
+			await expect(accepting).rejects.toMatchObject({ status: 400, message: loaded.INVOICE_REJECTED_IS_FINAL });
+			expect(await statusOf(rejected)).toBe('REJECTED');
+			expect(await linkOf(timeLogId)).toBe(rebillingLine);
+		});
+
+		it.each<[string, Row]>([
+			['SENT', { status: 'SENT' }],
+			['DRAFT', { status: 'DRAFT' }],
+			['VIEWED', { status: 'VIEWED' }],
+			['ACCEPTED', { status: 'ACCEPTED' }],
+			['a draft invoice', { status: 'DRAFT', isEstimate: false }]
+		])('refuses to move a rejected estimate to %s, and changes nothing', async (_label, change) => {
+			const { invoiceId } = await earlierInvoice('REJECTED', { isEstimate: 1 });
+
+			const moving = handlers(ormType).update({ id: invoiceId, ...change, internalNote: 'reopened' });
+
+			await expect(moving).rejects.toMatchObject({ status: 400, message: loaded.INVOICE_REJECTED_IS_FINAL });
+			expect(await estimateStateOf(invoiceId)).toEqual({ status: 'REJECTED', isEstimate: 1, internalNote: null });
+		});
+
+		it('still updates a rejected estimate that stays rejected, and voids it', async () => {
+			const { invoiceId } = await earlierInvoice('REJECTED', { isEstimate: 1 });
+
+			await handlers(ormType).update({ id: invoiceId, internalNote: 'declined by phone' });
+			await handlers(ormType).update({ id: invoiceId, status: 'REJECTED', isArchived: true });
+			const keptState = await estimateStateOf(invoiceId);
+			await handlers(ormType).update({ id: invoiceId, status: 'VOID' });
+
+			expect(keptState).toEqual({ status: 'REJECTED', isEstimate: 1, internalNote: 'declined by phone' });
+			expect(await statusOf(invoiceId)).toBe('VOID');
 		});
 
 		it("refuses a replacement whose line bills another organization's time, even to a tenant admin", async () => {

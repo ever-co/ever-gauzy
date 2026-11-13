@@ -118,12 +118,13 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 	}
 
 	/**
-	 * Refuses a change that takes the invoice, when it is void, to another status (see `assertFinalStatusKept`). An
-	 * invoice the caller cannot read is left to the write, which answers it as it did.
+	 * Refuses a change that takes a void invoice or estimate, or a rejected estimate, out of its final status (see
+	 * `assertFinalStatusKept`). A change that states no status, or VOID, reads nothing. An invoice the caller cannot
+	 * read is left to the write, which answers it as it did.
 	 *
 	 * @param id The invoice the change is for.
 	 * @param status The status the change states, if any.
-	 * @throws BadRequestException when the invoice is void and the change states another status.
+	 * @throws BadRequestException when the change states a status the invoice's final status refuses.
 	 */
 	async assertNotReopeningFinal(id: ID, status: string | undefined): Promise<void> {
 		if (!statesStatusOtherThanVoid(status)) {
