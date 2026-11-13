@@ -653,6 +653,7 @@ export class ChatConversationService {
 				userId: true,
 				lastSeenAt: true,
 				isIdle: true,
+				isAway: true,
 				user: { id: true, firstName: true, lastName: true, imageUrl: true },
 				organizationPosition: { id: true, name: true }
 			} as never,
@@ -672,7 +673,7 @@ export class ChatConversationService {
 					name: full || user?.name || String(employee.id),
 					imageUrl: user?.imageUrl ?? null,
 					position: employee.organizationPosition?.name?.trim() || null,
-					presence: chatPresenceOf(employee.lastSeenAt, employee.isIdle, now),
+					presence: chatPresenceOf(employee, now),
 					lastSeenAt: employee.lastSeenAt ?? null
 				};
 			})
