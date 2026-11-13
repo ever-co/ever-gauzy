@@ -212,7 +212,7 @@ export class ChatWebhookService {
 			.getRepository(ChatWebhook)
 			.update({ id: webhook.id as ID, tenantId: caller.tenantId, revokedAt: IsNull() }, { revokedAt, revokedByEmployeeId: caller.employeeId ?? null } as never);
 		webhook.revokedAt = revokedAt;
-		webhook.revokedByEmployeeId = caller.employeeId ?? null;
+		webhook.revokedByEmployeeId = caller.employeeId ?? undefined;
 		this.log(ActionTypeEnum.Deleted, webhook, { conversationId: webhook.conversationId, name: webhook.name });
 		return { webhook: webhookView(webhook) };
 	}
