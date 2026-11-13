@@ -47,11 +47,11 @@ const COLUMN: Record<Dialect, string> = {
  * column, as every additive column of this platform is kept on the embedded dialect: a column that carries a foreign
  * key is dropped there only by rebuilding `time_log`.
  */
-export class AddTimeLogInvoiceItem1791000007600 implements MigrationInterface {
-	name = 'AddTimeLogInvoiceItem1791000007600';
+export class AddTimeLogInvoiceItem1791000008600 implements MigrationInterface {
+	name = 'AddTimeLogInvoiceItem1791000008600';
 
 	/** Advisory lock key that serialises concurrent runs of this migration on Postgres. */
-	private readonly advisoryLockKey = 1791000007600;
+	private readonly advisoryLockKey = 1791000008600;
 
 	/**
 	 * The MySQL named lock of this migration. MySQL refuses lock names over 64 characters, so the name carries the

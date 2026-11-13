@@ -3,10 +3,10 @@ import * as os from 'os';
 import * as path from 'path';
 import { DataSource, QueryRunner } from 'typeorm';
 import {
-	AddTimeLogInvoiceItem1791000007600,
+	AddTimeLogInvoiceItem1791000008600,
 	TIME_LOG_INVOICE_ITEM_FOREIGN_KEY,
 	TIME_LOG_INVOICE_ITEM_INDEX
-} from './migrations/1791000007600-AddTimeLogInvoiceItem';
+} from './migrations/1791000008600-AddTimeLogInvoiceItem';
 
 /**
  * `time_log.invoiceItemId`, run for real on SQLite against a minimal fixture of the two tables: a nullable column that
@@ -42,7 +42,7 @@ describe('time_log.invoiceItemId migration on SQLite', () => {
 	const run = async (direction: 'up' | 'down') => {
 		const queryRunner = dataSource.createQueryRunner();
 		try {
-			await new AddTimeLogInvoiceItem1791000007600()[direction](queryRunner);
+			await new AddTimeLogInvoiceItem1791000008600()[direction](queryRunner);
 		} finally {
 			await queryRunner.release();
 		}
@@ -129,7 +129,7 @@ describe('time_log.invoiceItemId migration on Postgres', () => {
 	it('serialises concurrent runs and adds the column, its index and its foreign key when they are missing', async () => {
 		const { queries, queryRunner } = scriptedRunner('postgres', { hasColumn: false, hasKeyAndIndex: false });
 
-		await new AddTimeLogInvoiceItem1791000007600().up(queryRunner);
+		await new AddTimeLogInvoiceItem1791000008600().up(queryRunner);
 
 		expect(queries).toEqual([
 			'SELECT pg_advisory_xact_lock($1)',
@@ -142,7 +142,7 @@ describe('time_log.invoiceItemId migration on Postgres', () => {
 	it('drops the foreign key, the index and the column on down', async () => {
 		const { queries, queryRunner } = scriptedRunner('postgres', { hasColumn: true, hasKeyAndIndex: true });
 
-		await new AddTimeLogInvoiceItem1791000007600().down(queryRunner);
+		await new AddTimeLogInvoiceItem1791000008600().down(queryRunner);
 
 		expect(queries).toEqual([
 			`ALTER TABLE "time_log" DROP CONSTRAINT IF EXISTS "${TIME_LOG_INVOICE_ITEM_FOREIGN_KEY}"`,
@@ -155,7 +155,7 @@ describe('time_log.invoiceItemId migration on Postgres', () => {
 describe('time_log.invoiceItemId migration on MySQL', () => {
 	it('takes a named lock MySQL accepts and adds the column, then its index, then its foreign key', async () => {
 		const { queries, queryRunner } = scriptedRunner('mysql', { hasColumn: false, hasKeyAndIndex: false });
-		const migration = new AddTimeLogInvoiceItem1791000007600();
+		const migration = new AddTimeLogInvoiceItem1791000008600();
 
 		await migration.up(queryRunner);
 
@@ -172,7 +172,7 @@ describe('time_log.invoiceItemId migration on MySQL', () => {
 	it('writes nothing when everything is already there', async () => {
 		const { queries, queryRunner } = scriptedRunner('mysql', { hasColumn: true, hasKeyAndIndex: true });
 
-		await new AddTimeLogInvoiceItem1791000007600().up(queryRunner);
+		await new AddTimeLogInvoiceItem1791000008600().up(queryRunner);
 
 		expect(queries).toEqual(['SELECT GET_LOCK(?, 120) AS `acquired`', 'SELECT RELEASE_LOCK(?)']);
 	});
@@ -180,7 +180,7 @@ describe('time_log.invoiceItemId migration on MySQL', () => {
 	it('drops the foreign key before the index it needs, then the column, on down', async () => {
 		const { queries, queryRunner } = scriptedRunner('mysql', { hasColumn: true, hasKeyAndIndex: true });
 
-		await new AddTimeLogInvoiceItem1791000007600().down(queryRunner);
+		await new AddTimeLogInvoiceItem1791000008600().down(queryRunner);
 
 		expect(queries).toEqual([
 			'SELECT GET_LOCK(?, 120) AS `acquired`',
