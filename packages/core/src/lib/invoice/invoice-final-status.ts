@@ -1,5 +1,7 @@
 import { BadRequestException } from '@nestjs/common';
-import { EstimateStatusTypesEnum, InvoiceStatusTypesEnum } from '@gauzy/contracts';
+import { EstimateStatusTypesEnum, ID, InvoiceStatusTypesEnum } from '@gauzy/contracts';
+import { RequestContext } from '../core/context';
+import { ILinesTransaction, lockInvoice } from '../invoice-item/invoice-item-billed-time';
 
 /** The refusal of a change that would take a void invoice or estimate out of VOID. */
 export const INVOICE_VOID_IS_FINAL =
@@ -44,4 +46,25 @@ export function assertFinalStatusKept(storedStatus: string | undefined, statedSt
 	if (leavesRejected) {
 		throw new BadRequestException(INVOICE_REJECTED_IS_FINAL);
 	}
+}
+
+/** A change to an invoice, as far as a final status goes: the invoice it names and the status it states. */
+export interface IInvoiceStatusChange {
+	id?: ID;
+	status?: string;
+}
+
+/**
+ * Refuses a change as {@link assertFinalStatusKept} does, against the status read with the invoice locked (see
+ * `lockInvoice`): a void or a rejection another request is writing is waited for and seen, so it cannot come between
+ * the check and the write the transaction runs next.
+ *
+ * @param transaction The transaction the write runs in.
+ * @param change The change.
+ * @throws BadRequestException when the change states a status the invoice's final status refuses.
+ */
+export async function holdFinalStatus(transaction: ILinesTransaction, change: IInvoiceStatusChange): Promise<void> {
+	const tenantId = RequestContext.currentTenantId();
+	const stored = await lockInvoice(transaction, change.id, tenantId);
+	assertFinalStatusKept(stored?.status, change.status);
 }

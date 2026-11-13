@@ -1,5 +1,5 @@
 import { BadRequestException, InternalServerErrorException } from '@nestjs/common';
-import { EntityManager, In, ObjectLiteral, Repository } from 'typeorm';
+import { EntityManager, FindOneOptions, In, ObjectLiteral, Repository } from 'typeorm';
 import {
 	EntityData,
 	EntityManager as MikroOrmEntityManager,
@@ -19,7 +19,7 @@ import { isMySQL, isPostgres } from '@gauzy/config';
 import { RequestContext } from '../core/context';
 import { MultiORM, MultiORMEnum } from '../core/utils';
 import { MikroOrmBaseEntityRepository } from '../core/repository/mikro-orm-base-entity.repository';
-import { TimeLog } from '../core/entities/internal';
+import { Invoice, TimeLog } from '../core/entities/internal';
 import { prepareSQLQuery as p } from '../database/database.helper';
 
 /** The refusal of a save that names a time log it may not bill. It does not say which one, nor whose it is. */
@@ -321,8 +321,69 @@ async function mikroOrmLockTimeLogs(em: MikroOrmEntityManager, timeLogIds: ID[],
 }
 
 /** Whether the database locks rows for a transaction: PostgreSQL and MySQL do, SQLite runs one writer at a time. */
-function locksRows(): boolean {
+export function locksRows(): boolean {
 	return isPostgres() || isMySQL();
+}
+
+/** The `lock` of a TypeORM read that locks the rows it reads, where the database locks rows (see {@link locksRows}). */
+export function typeOrmRowLock(): Pick<FindOneOptions, 'lock'> {
+	if (!locksRows()) {
+		return {};
+	}
+	return { lock: { mode: 'pessimistic_write' } };
+}
+
+/** An invoice's status, as a locking read answers it. */
+export interface ILockedInvoice {
+	status?: string;
+}
+
+/**
+ * Reads an invoice, removed or not, and locks its row until the transaction ends where the database locks rows: a
+ * write another request is making to it is waited for, and what that write stored is read.
+ *
+ * @param transaction The transaction.
+ * @param id The invoice.
+ * @param tenantId The caller's tenant, when there is one.
+ * @returns The invoice's status, or `null` when there is no such invoice.
+ */
+export async function lockInvoice(
+	transaction: ILinesTransaction,
+	id: ID,
+	tenantId: ID | undefined
+): Promise<ILockedInvoice | null> {
+	const where = invoiceOfTenant(id, tenantId);
+	if (transaction.mikroOrm) {
+		// Read apart from the identity map: the write that follows loads the whole invoice.
+		return await transaction.mikroOrm.findOne(Invoice, where as FilterQuery<Invoice>, {
+			fields: ['id', 'status'] as never,
+			filters: false,
+			disableIdentityMap: true,
+			lockMode: mikroOrmRowLock()
+		});
+	}
+	return await transaction.typeOrm.findOne(Invoice, {
+		where,
+		select: { id: true, status: true },
+		withDeleted: true,
+		loadEagerRelations: false,
+		...typeOrmRowLock()
+	});
+}
+
+function mikroOrmRowLock(): LockMode.PESSIMISTIC_WRITE | undefined {
+	if (!locksRows()) {
+		return undefined;
+	}
+	return LockMode.PESSIMISTIC_WRITE;
+}
+
+/** The invoice of that id, in the tenant given when there is one. */
+function invoiceOfTenant(id: ID, tenantId: ID | undefined): { id: ID; tenantId?: ID } {
+	if (!tenantId) {
+		return { id };
+	}
+	return { id, tenantId };
 }
 
 /**

@@ -11,10 +11,7 @@ export class InvoiceUpdateHandler
 	public async execute(command: InvoiceUpdateCommand): Promise<IInvoice> {
 		const { input } = command;
 		const { id } = input;
-		await this.invoiceService.assertNotReopeningFinal(id, input.status);
-		return await this.invoiceService.create({
-			...input,
-			id
-		});
+		const change = { ...input, id };
+		return await this.invoiceService.writeKeepingFinalStatus(change, (service) => service.create(change));
 	}
 }

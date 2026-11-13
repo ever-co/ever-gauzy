@@ -1,13 +1,18 @@
 import { randomUUID } from 'node:crypto';
 
 /**
- * Two saves that bill the same time log at the same moment, on PostgreSQL (#11854): one bills it, the other is
- * refused with a 400 and saves nothing. The billing locks the time logs it names (`SELECT ... FOR UPDATE`) before
- * its conditional update, because that update's check reads other tables, which a row re-check does not read again.
- * The SQLite specs cannot show it: SQLite runs one writer at a time.
+ * Writes that race on billed time, on PostgreSQL (#11854). The SQLite specs cannot show them: SQLite runs one writer at
+ * a time.
  *
- * A third connection holds the time log first, so both saves are seen waiting on it before it is released. Each ORM
- * runs the invoice create handler as the route dispatches it.
+ * Two saves that bill the same time log at the same moment: one bills it, the other is refused with a 400 and saves
+ * nothing. The billing locks the time logs it names (`SELECT ... FOR UPDATE`) before its conditional update, because
+ * that update's check reads other tables, which a row re-check does not read again. A third connection holds the time
+ * log first, so both saves are seen waiting on it before it is released.
+ *
+ * A status change while another request voids the invoice: the change waits for the void and is refused, instead of
+ * writing over it. A third connection voids the invoice and commits once the change is seen waiting.
+ *
+ * Each ORM runs the invoice handlers as the routes dispatch them.
  *
  * Runs only when GAUZY_BILLED_TIME_SPEC_POSTGRES_URL names a PostgreSQL database that holds the migrated schema, such
  * as a throwaway copy of the demo data. The spec writes a tenant of its own and removes it afterwards; it refuses
@@ -59,7 +64,9 @@ const TABLES = ['time_log', 'invoice_item', 'invoice', 'employee', 'user', 'orga
 		Object.defineProperty(invoiceService, 'ormType', { get: () => ormType });
 		return {
 			create: (input: Row) =>
-				new loaded.InvoiceCreateHandler(invoiceService).execute(new loaded.InvoiceCreateCommand(input))
+				new loaded.InvoiceCreateHandler(invoiceService).execute(new loaded.InvoiceCreateCommand(input)),
+			update: (input: Row) =>
+				new loaded.InvoiceUpdateHandler(invoiceService).execute(new loaded.InvoiceUpdateCommand(input))
 		};
 	};
 
@@ -129,6 +136,28 @@ const TABLES = ['time_log', 'invoice_item', 'invoice', 'employee', 'user', 'orga
 		return row?.id;
 	};
 
+	/** An invoice saved earlier, in the status given, with no line. */
+	const storedInvoice = async (status: string): Promise<string> => {
+		const id = randomUUID();
+		invoiceNumber += 1;
+		await insert('invoice', {
+			id,
+			...scope,
+			fromOrganizationId: ORG,
+			invoiceNumber,
+			currency: 'EUR',
+			discountValue: 0,
+			terms: 'Billable time',
+			status
+		});
+		return id;
+	};
+
+	const statusOf = async (invoiceId: string): Promise<string> => {
+		const [row] = await dataSource.query(`SELECT "status" FROM "invoice" WHERE "id" = $1`, [invoiceId]);
+		return row.status;
+	};
+
 	const invoiceCount = async (invoiceId: string): Promise<number> => {
 		const [row] = await dataSource.query(`SELECT COUNT(*)::int AS "count" FROM "invoice" WHERE "id" = $1`, [
 			invoiceId
@@ -136,25 +165,47 @@ const TABLES = ['time_log', 'invoice_item', 'invoice', 'employee', 'user', 'orga
 		return row.count;
 	};
 
-	/** How many connections wait for a lock while running a statement on the time logs. */
-	const waitingOnTimeLogLocks = async (): Promise<number> => {
+	/** How many connections wait for a lock while running a statement on the table named. */
+	const waitingOnLocks = async (table: string): Promise<number> => {
 		const [row] = await dataSource.query(
 			`SELECT COUNT(*)::int AS "count" FROM "pg_stat_activity" WHERE "datname" = current_database() ` +
-				`AND "wait_event_type" = 'Lock' AND "query" ILIKE '%time_log%'`
+				`AND "wait_event_type" = 'Lock' AND "query" ILIKE $1`,
+			[`%${table}%`]
 		);
 		return row.count;
 	};
 
-	const untilWaiting = async (expected: number): Promise<void> => {
+	const untilWaiting = async (expected: number, table: string): Promise<void> => {
 		const deadline = Date.now() + WAIT_TIMEOUT;
-		let waiting = await waitingOnTimeLogLocks();
+		let waiting = await waitingOnLocks(table);
 		while (waiting < expected) {
 			if (Date.now() > deadline) {
-				throw new Error(`${waiting} of ${expected} saves reached the time log lock`);
+				throw new Error(`${waiting} of ${expected} writes reached the lock on ${table}`);
 			}
 			await new Promise((resolve) => setTimeout(resolve, WAIT_STEP));
-			waiting = await waitingOnTimeLogLocks();
+			waiting = await waitingOnLocks(table);
 		}
+	};
+
+	/**
+	 * Runs a write while a third connection voids the invoice and has not committed yet, and commits the void once the
+	 * write waits on the invoice.
+	 */
+	const whileVoiding = async <T>(invoiceId: string, write: () => Promise<T>): Promise<PromiseSettledResult<T>> => {
+		const voiding = dataSource.createQueryRunner();
+		await voiding.connect();
+		await voiding.startTransaction();
+		await voiding.query(`UPDATE "invoice" SET "status" = 'VOID' WHERE "id" = $1`, [invoiceId]);
+
+		const outcomes = Promise.allSettled([write()]);
+		try {
+			await untilWaiting(1, 'invoice');
+		} finally {
+			await voiding.commitTransaction();
+			await voiding.release();
+		}
+		const [outcome] = await outcomes;
+		return outcome;
 	};
 
 	const removeRunRows = async (): Promise<void> => {
@@ -206,7 +257,10 @@ const TABLES = ['time_log', 'invoice_item', 'invoice', 'employee', 'user', 'orga
 					MikroOrmInvoiceRepository: require('./repository/mikro-orm-invoice.repository')
 						.MikroOrmInvoiceRepository,
 					InvoiceCreateHandler: require('./commands/handlers/invoice.create.handler').InvoiceCreateHandler,
-					InvoiceCreateCommand: require('./commands/invoice.create.command').InvoiceCreateCommand
+					InvoiceCreateCommand: require('./commands/invoice.create.command').InvoiceCreateCommand,
+					InvoiceUpdateHandler: require('./commands/handlers/invoice.update.handler').InvoiceUpdateHandler,
+					InvoiceUpdateCommand: require('./commands/invoice.update.command').InvoiceUpdateCommand,
+					INVOICE_VOID_IS_FINAL: require('./invoice-final-status').INVOICE_VOID_IS_FINAL
 				};
 
 				// The schema is the migrations': nothing is synchronized.
@@ -304,7 +358,7 @@ const TABLES = ['time_log', 'invoice_item', 'invoice', 'employee', 'user', 'orga
 
 				const saves = Promise.allSettled([handlers(ormType).create(first), handlers(ormType).create(second)]);
 				try {
-					await untilWaiting(2);
+					await untilWaiting(2, 'time_log');
 				} finally {
 					await holder.commitTransaction();
 					await holder.release();
@@ -324,6 +378,24 @@ const TABLES = ['time_log', 'invoice_item', 'invoice', 'employee', 'user', 'orga
 				expect((refusal as PromiseRejectedResult).reason).toMatchObject({ status: 400 });
 				expect(await linkOf(contested)).toBe(await lineOf(winner.id));
 				expect(await invoiceCount(loser.id)).toBe(0);
+			},
+			TIMEOUT
+		);
+
+		it(
+			'refuses a status change that a void overtakes, and keeps the invoice void',
+			async () => {
+				const invoiceId = await storedInvoice('DRAFT');
+
+				const sending = await whileVoiding(invoiceId, () =>
+					handlers(ormType).update({ id: invoiceId, status: 'SENT' })
+				);
+
+				expect(sending).toMatchObject({
+					status: 'rejected',
+					reason: { status: 400, message: loaded.INVOICE_VOID_IS_FINAL }
+				});
+				expect(await statusOf(invoiceId)).toBe('VOID');
 			},
 			TIMEOUT
 		);
