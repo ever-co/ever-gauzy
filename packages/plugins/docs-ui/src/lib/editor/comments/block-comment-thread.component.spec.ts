@@ -37,7 +37,6 @@ class KeyPipe implements PipeTransform {
 
 const DOCUMENT_ID = 'cccccccc-1111-4111-8111-111111111111';
 const ME = 'employee-me';
-const FOX = 'The quick brown fox jumps over the lazy dog.';
 
 const comment = (id: string, body: string, overrides: Partial<IComment> = {}): IComment =>
 	({
