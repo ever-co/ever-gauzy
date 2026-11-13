@@ -2,11 +2,11 @@ import { DatePipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, computed, DestroyRef, ElementRef, inject, NgZone, OnInit, type Signal, signal, viewChild } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
-import { ActivatedRoute, NavigationEnd, Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, NavigationEnd, NavigationStart, Router, RouterLink } from '@angular/router';
 import { NbCardModule, NbDialogService, NbIconModule, NbSpinnerModule } from '@nebular/theme';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { combineLatest, EMPTY, forkJoin, merge, Observable, of, Subscription, timer } from 'rxjs';
-import { auditTime, catchError, distinctUntilChanged, filter, map, startWith, switchMap } from 'rxjs/operators';
+import { auditTime, catchError, distinctUntilChanged, filter, map, startWith, switchMap, takeUntil } from 'rxjs/operators';
 import { ChatConversationKindEnum, IChatCategory, IChatConversationWithState, IChatMemberState, IChatMessageWithRelations, IChatStates, IOrganization, IUser, PermissionsEnum } from '@gauzy/contracts';
 import { Store, ToastrService } from '@gauzy/ui-core/core';
 import { CHAT_DIRECT_WITH_PARAM, CHAT_LINK, CHAT_LIST_POLL_MS, CHAT_LIVE_LIST_AUDIT_MS } from '../../chat-ui.constants';
@@ -1362,7 +1362,9 @@ export class ChatPageComponent implements OnInit {
 	/**
 	 * Arrived by `?with=<employeeId>` (the Teams dashboard's member card): opens my direct conversation with them,
 	 * created when there is none. The link is replaced in the history (by the conversation, or by the page without
-	 * the parameter), so Back does not ask again. Myself, or a failure, leaves the page as it is.
+	 * the parameter), so Back does not ask again. Myself, or a failure, leaves the page as it is. Any navigation meanwhile
+	 * (another conversation, Unreads) drops the request: the page stays mounted across those, so a late answer must not
+	 * take the person back.
 	 */
 	private openDirectFromLink(): void {
 		const employeeId = this.route.snapshot.queryParamMap.get(CHAT_DIRECT_WITH_PARAM);
@@ -1381,7 +1383,10 @@ export class ChatPageComponent implements OnInit {
 		const token = this.scopeToken;
 		this.api
 			.direct([employeeId])
-			.pipe(takeUntilDestroyed(this.destroyRef))
+			.pipe(
+				takeUntil(this.router.events.pipe(filter((event) => event instanceof NavigationStart))),
+				takeUntilDestroyed(this.destroyRef)
+			)
 			.subscribe({
 				next: (answer) => {
 					if (token !== this.scopeToken || !answer.conversation) return;
