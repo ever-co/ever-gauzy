@@ -119,8 +119,8 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 
 	/**
 	 * Refuses a change that takes a void invoice or estimate, or a rejected estimate, out of its final status (see
-	 * `assertFinalStatusKept`). A change that states no status, or VOID, reads nothing. An invoice the caller cannot
-	 * read is left to the write, which answers it as it did.
+	 * `assertFinalStatusKept`). A change that states no status, or VOID, reads nothing. A removed invoice is checked too,
+	 * since a write by id updates it. An invoice the caller cannot read is left to the write, which answers it as it did.
 	 *
 	 * @param id The invoice the change is for.
 	 * @param status The status the change states, if any.
@@ -130,9 +130,18 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 		if (!statesStatusOtherThanVoid(status)) {
 			return;
 		}
-		const stored = await this.findOneOrFailByIdString(id);
-		if (stored.success) {
-			assertFinalStatusKept(stored.record.status, status);
+		const stored = await this.invoiceTheCallerReads(id);
+		if (stored) {
+			assertFinalStatusKept(stored.status, status);
+		}
+	}
+
+	/** The invoice of that id as the caller reads it, removed or not; `null` when the caller cannot read it. */
+	private async invoiceTheCallerReads(id: ID): Promise<Invoice | null> {
+		try {
+			return await this.findOneByIdString(id, { withDeleted: true });
+		} catch {
+			return null;
 		}
 	}
 

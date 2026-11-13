@@ -621,6 +621,22 @@ describe('Invoices record the time their lines bill, on TypeORM and on MikroORM'
 			expect(await statusOf(invoiceId)).toBe('VOID');
 		});
 
+		it.each<[string, Row, string]>([
+			['a void invoice', { status: 'VOID' }, 'INVOICE_VOID_IS_FINAL'],
+			['a rejected estimate', { status: 'REJECTED', isEstimate: 1 }, 'INVOICE_REJECTED_IS_FINAL']
+		])('refuses to reopen %s that was removed, and keeps its status', async (_label, row, refusal) => {
+			const { invoiceId } = await earlierInvoice(row.status, row);
+			await dataSource.query(`UPDATE "invoice" SET "deletedAt" = ? WHERE "id" = ?`, [
+				'2026-11-01 00:00:00',
+				invoiceId
+			]);
+
+			const reopening = handlers(ormType).update({ id: invoiceId, status: 'DRAFT' });
+
+			await expect(reopening).rejects.toMatchObject({ status: 400, message: loaded[refusal] });
+			expect(await statusOf(invoiceId)).toBe(row.status);
+		});
+
 		it('still updates a void invoice that stays void, and moves a live one, to VOID included', async () => {
 			const { invoiceId: voided } = await earlierInvoice('VOID');
 			const { invoiceId: live } = await earlierInvoice('DRAFT');
