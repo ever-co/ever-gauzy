@@ -18,6 +18,7 @@ import {
 	In,
 	FindOptionsWhere,
 	FindManyOptions,
+	FindOperator,
 	Between,
 	FindOptionsRelations,
 	LessThanOrEqual,
@@ -101,7 +102,8 @@ import { IFindOneOptions } from '../core/crud/icrud.service';
 import { Task } from './task.entity';
 import { BulkUpdateRequestError, changesToUpdate, normalizeBulkUpdate } from './bulk-update';
 import { derivedProjectKey, keysOfProject, normalizeTaskKey, parseTaskReference } from './task-reference';
-import { BUILT_IN_VIEW_DEFAULT_RELATIONS, BUILT_IN_VIEW_RELATIONS, builtInViewWindow, relationsTreeOf } from './built-in-views';
+import { BUILT_IN_VIEW_DEFAULT_RELATIONS, BUILT_IN_VIEW_RELATIONS, builtInViewWindow, IBuiltInViewWindow, relationsTreeOf } from './built-in-views';
+import { dateBoundClause } from './views/view-filters';
 import { TypeOrmOrganizationSprintTaskHistoryRepository } from './../organization-sprint/repository/type-orm-organization-sprint-task-history.repository';
 import { GetTaskByIdDTO } from './dto';
 import { prepareSQLQuery as p } from './../database/database.helper';
@@ -3122,8 +3124,9 @@ export class TaskService extends TenantAwareCrudService<Task> {
 
 	/**
 	 * The caller's tasks of a built-in view (`mine`, `this-week`, `overdue`, `due-soon`), the day and week bounds
-	 * computed in the caller's time zone. The caller is the signed-in employee; a user without an employee has no
-	 * tasks of their own.
+	 * computed in the caller's time zone (the request's `timeZone`, UTC when it names none the runtime knows). The
+	 * caller is the signed-in employee; a user without an employee has no tasks of their own. A due date stored as a
+	 * date only counts on its own day: due today is never overdue, west of UTC included.
 	 */
 	async findBuiltInView(key: TaskBuiltInViewEnum, query: ITaskBuiltInViewQuery): Promise<IPagination<ITask>> {
 		// The caller's own employee record: `currentEmployeeId()` answers null for a `CHANGE_SELECTED_EMPLOYEE` holder.
@@ -3139,12 +3142,9 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			organizationId,
 			isScreeningTask: false
 		};
-		if (window.dueDateFrom && window.dueDateTo) {
-			where.dueDate = Between(window.dueDateFrom, window.dueDateTo);
-		} else if (window.dueDateFrom) {
-			where.dueDate = MoreThanOrEqual(window.dueDateFrom);
-		} else if (window.dueDateTo) {
-			where.dueDate = LessThanOrEqual(window.dueDateTo);
+		const dueDate = dueDateWithin(window);
+		if (dueDate) {
+			where.dueDate = dueDate;
 		}
 		// A task whose status is unset is still open: `NOT IN` alone would drop it (SQL `NOT IN` never matches NULL).
 		const closed = [TaskStatusEnum.DONE, TaskStatusEnum.COMPLETED, TaskStatusEnum.CANCELLED];
@@ -3171,13 +3171,15 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			.select(['task.id'])
 			.where(wheres)
 			.andWhere((qb) => {
+				// Quoted by the connection's own driver: hard-coded double quotes are a syntax error on MySQL.
+				const column = (table: string, name: string) => `${qb.escape(table)}.${qb.escape(name)}`;
 				const membership = qb
 					.subQuery()
-					.select('"task_employee"."taskId"')
+					.select(column('task_employee', 'taskId'))
 					.from('task_employee', 'task_employee')
-					.where('"task_employee"."employeeId" = :employeeId')
+					.where(`${column('task_employee', 'employeeId')} = :employeeId`)
 					.getQuery();
-				return `"task"."id" IN ${membership}`;
+				return `${column('task', 'id')} IN ${membership}`;
 			})
 			.setParameter('employeeId', employeeId)
 			.orderBy('task.dueDate', 'ASC')
@@ -3193,6 +3195,24 @@ export class TaskService extends TenantAwareCrudService<Task> {
 		const byId = new Map(rows.map((task) => [String(task.id), task]));
 		return { items: ids.map((id) => byId.get(String(id))).filter((task): task is Task => !!task), total };
 	}
+}
+
+/**
+ * The `dueDate` condition of a built-in view's window, both ends inclusive, or none for a window without dates. A due
+ * date with a time of day is compared with the window's instants, as before; one stored as a date only (midnight UTC of
+ * its day) is compared with the window's first and last days (`dateBoundClause`), so it counts on its own day in the
+ * caller's zone. West of UTC, a task due today was midnight UTC, the evening before there, and so listed as overdue.
+ */
+function dueDateWithin(window: IBuiltInViewWindow): FindOperator<Date> | undefined {
+	const clause = (column: string) => {
+		const bounds = [
+			...(window.dueDateFrom ? [dateBoundClause(column, '>=', window.dueDateFrom, window.dueDateFromDay, 'builtInDueFrom')] : []),
+			...(window.dueDateTo ? [dateBoundClause(column, '<=', window.dueDateTo, window.dueDateToDay, 'builtInDueTo')] : [])
+		];
+		return { sql: bounds.map((bound) => bound.sql).join(' AND '), params: Object.assign({}, ...bounds.map((bound) => bound.params)) as Record<string, Date> };
+	};
+	if (!window.dueDateFrom && !window.dueDateTo) return undefined;
+	return Raw((column) => clause(column).sql, clause('dueDate').params);
 }
 
 /**
