@@ -201,13 +201,49 @@ $chat-hairline: var(--gauzy-overlay-border-color, rgba(126, 126, 143, 0.18));
       min-width: 0;
     }
 
+    // The Downloads link at the end of the user row (a plain icon, like the rail toggle).
+    .footer-icon-button {
+      display: inline-flex;
+      flex: 0 0 auto;
+      align-items: center;
+      justify-content: center;
+      width: 2rem;
+      height: 2rem;
+      margin-inline-start: 0.25rem;
+      border-radius: 0.5rem;
+      color: nb-theme(text-hint-color);
+      text-decoration: none;
+      transition:
+        background-color 0.15s ease-in-out,
+        color 0.15s ease-in-out;
+
+      svg {
+        width: 1.125rem;
+        height: 1.125rem;
+      }
+
+      &:hover,
+      &:focus-visible {
+        color: nb-theme(text-basic-color);
+        background-color: nb-theme(background-basic-color-3);
+      }
+    }
+
     &.compacted {
       justify-content: center;
+      // Stacked when the rail is narrow: the icon goes ABOVE the avatar so the avatar keeps its
+      // place at the bottom, where the user menu (`bottom: 3.25rem`) expects it.
+      flex-direction: column-reverse;
+      gap: 0.25rem;
       padding-left: 0.25rem;
       padding-right: 0.25rem;
 
       gauzy-user {
         flex: 0 0 auto;
+      }
+
+      .footer-icon-button {
+        margin-inline-start: 0;
       }
     }
   }
