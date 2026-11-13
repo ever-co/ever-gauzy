@@ -5,13 +5,14 @@ export const EmailTemplatesPageData = {
 	hebrew: 'Hebrew',
 	russian: 'Russian',
 	//Subjects by Language
-	passwordResetSubjectEnglish: 'Welcome to Gauzy user@domain.com',
+	passwordResetSubjectEnglish: 'Welcome to Gauzy',
 	// The default-loaded template on this page is WELCOME_USER (see email-templates.component.ts),
-	// so the "Password Reset" step actually validates the welcome-user subject. appName seeds as
-	// 'Gauzy' (no ™); bg/he subjects were updated upstream — match the live seed (no ™, "ל Gauzy").
-	passwordResetSubjectBulgarian: 'Добре дошли в Gauzy user@domain.com',
-	passwordResetSubjectHebrew: 'ברוך הבא ל Gauzy user@domain.com',
-	passwordResetSubjectRussian: 'Добро пожаловать в Gauzy user@domain.com',
+	// so the "Password Reset" step actually validates the welcome-user subject. Every subject here is
+	// its `subject.hbs` rendered with the preview's sample values (appName 'Gauzy', organizationName
+	// 'Organization', the statuses 'APPROVE/REJECT').
+	passwordResetSubjectBulgarian: 'Добре дошли в Gauzy',
+	passwordResetSubjectHebrew: 'ברוכים הבאים אל Gauzy',
+	passwordResetSubjectRussian: 'Добро пожаловать в Gauzy',
 	appointmentConfirmationSubjectEnglish: 'Appointment Confirmed',
 	appointmentConfirmationSubjectBulgarian: 'Назначението е потвърдено',
 	appointmentConfirmationSubjectHebrew: 'אישור המינוי',
@@ -60,11 +61,10 @@ export const EmailTemplatesPageData = {
 	interviewerScheduleSubjectBulgarian: 'График за интервю',
 	interviewerScheduleSubjectHebrew: 'לוח הזמנים לראיון',
 	interviewerScheduleSubjectRussian: 'Расписание интервью',
-	welcomeUserSubjectEnglish: 'Welcome to Gauzy user@domain.com',
-	// welcome-user seed: bg "Добре дошли в {{appName}} {{email}}" (no ™), he "ברוך הבא ל {{appName}} {{email}}".
-	welcomeUserSubjectBulgarian: 'Добре дошли в Gauzy user@domain.com',
-	welcomeUserSubjectHebrew: 'ברוך הבא ל Gauzy user@domain.com',
-	welcomeUserSubjectRussian: 'Добро пожаловать в Gauzy user@domain.com!',
+	welcomeUserSubjectEnglish: 'Welcome to Gauzy',
+	welcomeUserSubjectBulgarian: 'Добре дошли в Gauzy',
+	welcomeUserSubjectHebrew: 'ברוכים הבאים אל Gauzy',
+	welcomeUserSubjectRussian: 'Добро пожаловать в Gauzy',
 	inviteOrganizationClientSubjectEnglish:
 		"John Doe, you've been invited to Gauzy!",
 	inviteOrganizationClientSubjectBulgarian:
