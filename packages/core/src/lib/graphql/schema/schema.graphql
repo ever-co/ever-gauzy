@@ -33830,6 +33830,13 @@ type Organization {
   """
   requireTeam: Boolean!
 
+  """
+  Whether only someone of a higher role may turn a person's time tracking on or off: an admin for anyone, another
+  admin and themselves included, a manager for the members of their teams, never for themselves or another manager.
+  Off by default: whoever may edit the employee or the membership may switch it.
+  """
+  restrictTrackingSwitchToHigherRoles: Boolean!
+
   """Whether the organization renders times on a 12- or a 24-hour clock."""
   timeFormat: Int!
 
