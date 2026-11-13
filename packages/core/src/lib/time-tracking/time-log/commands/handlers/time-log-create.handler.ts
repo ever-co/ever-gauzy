@@ -9,6 +9,7 @@ import { TimeLogService } from '../../time-log.service';
 import { TimeLog } from '../../time-log.entity';
 import { assertTimeLogReferencesOfTenant } from '../../time-log-references';
 import { TimeLogCreateCommand } from '../time-log-create.command';
+import { FindTimeLogRatesCommand } from '../find-time-log-rates.command';
 import { MikroOrmTimeLogRepository } from '../../repository/mikro-orm-time-log.repository';
 import { TypeOrmTimeLogRepository } from '../../repository/type-orm-time-log.repository';
 
@@ -72,8 +73,15 @@ export class TimeLogCreateHandler implements ICommandHandler<TimeLogCreateComman
 			new TimesheetFirstOrCreateCommand(startedAt, employeeId, organizationId)
 		);
 
+		// The rates of the moment price the log from now on: a later rate change leaves them unless it names an earlier
+		// day to apply from (see time-log-rates.ts). Never taken from the input: a client names no price for its time.
+		const rates = await this._commandBus.execute(
+			new FindTimeLogRatesCommand({ tenantId, employeeId, projectId: input.projectId ?? null })
+		);
+
 		// Create time log entity
 		const timeLog = this.createTimeLogEntity(input, tenantId, timesheet);
+		Object.assign(timeLog, rates ?? {});
 
 		// Generate blank time slots if stoppedAt is provided
 		let generatedTimeSlots: ITimeSlot[] = stoppedAt ? this.generateBlankTimeSlots(input, tenantId) : [];
