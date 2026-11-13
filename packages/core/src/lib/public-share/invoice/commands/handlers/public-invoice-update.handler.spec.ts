@@ -151,11 +151,28 @@ describe('PublicInvoiceUpdateHandler', () => {
 		expect(eventBus.publish).not.toHaveBeenCalled();
 	});
 
-	it('keeps the saved answer when the team cannot be told', async () => {
+	it('still tells the team, without the address, when the address that answered cannot be read', async () => {
 		const { handler, eventBus, updated } = setup(sentEstimate, { emailRead: 'fails' });
 
 		await expect(handler.execute(answer(EstimateStatusTypesEnum.ACCEPTED))).resolves.toBe(updated);
 
-		expect(eventBus.publish).not.toHaveBeenCalled();
+		// A second answer would change nothing, so this one is the only chance to tell it
+		expect(eventBus.publish).toHaveBeenCalledWith(
+			new EstimateAnsweredEvent({
+				invoiceId: 'estimate-1',
+				tenantId: TENANT,
+				isAccepted: true,
+				answeredFrom: null
+			})
+		);
+	});
+
+	it('keeps the saved answer when the team cannot be told', async () => {
+		const { handler, eventBus, updated } = setup(sentEstimate);
+		eventBus.publish.mockImplementationOnce(() => {
+			throw new Error('event bus closed');
+		});
+
+		await expect(handler.execute(answer(EstimateStatusTypesEnum.ACCEPTED))).resolves.toBe(updated);
 	});
 });

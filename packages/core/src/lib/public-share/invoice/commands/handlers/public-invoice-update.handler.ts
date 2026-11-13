@@ -77,24 +77,38 @@ export class PublicInvoiceUpdateHandler implements ICommandHandler<PublicInvoice
 		if (!isAnswer || !isNewAnswer) {
 			return;
 		}
+		const answeredFrom = await this.answeringAddressOf(params, before);
 		try {
-			// The address the link was sent to: the update found this token's live estimate email
-			const estimateEmail = await this.typeOrmEstimateEmailRepository.findOne({
-				where: { token: params.token, tenantId: before.tenantId },
-				select: { id: true, email: true }
-			});
 			this.eventBus.publish(
 				new EstimateAnsweredEvent({
 					invoiceId: before.id,
 					tenantId: before.tenantId,
 					isAccepted: status === EstimateStatusTypesEnum.ACCEPTED,
-					answeredFrom: estimateEmail?.email ?? null
+					answeredFrom
 				})
 			);
 		} catch (error) {
 			this.logger.warn(
 				`The answer to estimate ${before.id} was saved, but the team could not be told: ${error?.message}`
 			);
+		}
+	}
+
+	/**
+	 * The address the estimate link was sent to, which answered: the update found this token's live estimate email.
+	 * Null when it cannot be read, and the answer is told without it: a second answer, which changes nothing, would not
+	 * tell it any more.
+	 */
+	private async answeringAddressOf(params: IInvoice, before: IEstimateBefore): Promise<string | null> {
+		try {
+			const estimateEmail = await this.typeOrmEstimateEmailRepository.findOne({
+				where: { token: params.token, tenantId: before.tenantId },
+				select: { id: true, email: true }
+			});
+			return estimateEmail?.email ?? null;
+		} catch (error) {
+			this.logger.warn(`The address that answered estimate ${before.id} could not be read: ${error?.message}`);
+			return null;
 		}
 	}
 }
