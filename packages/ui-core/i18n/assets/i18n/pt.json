@@ -5666,6 +5666,19 @@
 			"DOWNLOAD_FOR": "Baixar para {{platform}}",
 			"ALSO_FOR": "Também disponível para"
 		},
+		"SETUP": {
+			"OPENED": "O download para {{platform}} foi aberto em uma nova aba.",
+			"NOT_OPENED": "Nada aconteceu?",
+			"TRY_AGAIN": "Tentar novamente",
+			"TITLE": "Próximos passos",
+			"INSTALL_WINDOWS": "Execute o instalador baixado e siga as etapas.",
+			"INSTALL_MACOS": "Abra o arquivo baixado e arraste o aplicativo para Aplicativos.",
+			"INSTALL_LINUX": "Instale o pacote baixado ou execute o AppImage.",
+			"CONNECT_CUSTOM": "Abra o aplicativo, escolha “{{option}}” e cole isto em “{{field}}”:",
+			"CONNECT_LIVE": "Abra o aplicativo e escolha “{{option}}”.",
+			"SIGN_IN": "Entre com o e-mail e a senha que você usa aqui.",
+			"COPY_FIELD": "Copiar {{field}}"
+		},
 		"MOBILE": {
 			"TITLE": "Celular",
 			"DESCRIPTION": "Inicie o temporizador, confira suas tarefas e veja suas horas onde estiver.",
@@ -5679,7 +5692,8 @@
 		},
 		"ILLUSTRATION": {
 			"THIS_WEEK": "Esta semana",
-			"YOU": "Você"
+			"YOU": "Você",
+			"TRY_IT": "Sua vez: clique no temporizador"
 		},
 		"ALL_DOWNLOADS": "Ver todos os downloads"
 	},

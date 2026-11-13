@@ -5666,6 +5666,19 @@
 			"DOWNLOAD_FOR": "Scarica per {{platform}}",
 			"ALSO_FOR": "Disponibile anche per"
 		},
+		"SETUP": {
+			"OPENED": "Il download per {{platform}} si è aperto in una nuova scheda.",
+			"NOT_OPENED": "Non è successo nulla?",
+			"TRY_AGAIN": "Riprova",
+			"TITLE": "Prossimi passi",
+			"INSTALL_WINDOWS": "Esegui il programma di installazione scaricato e segui i passaggi.",
+			"INSTALL_MACOS": "Apri il file scaricato e trascina l'app in Applicazioni.",
+			"INSTALL_LINUX": "Installa il pacchetto scaricato o avvia l'AppImage.",
+			"CONNECT_CUSTOM": "Apri l'app, scegli «{{option}}» e incolla questo in «{{field}}»:",
+			"CONNECT_LIVE": "Apri l'app e scegli «{{option}}».",
+			"SIGN_IN": "Accedi con l'email e la password che usi qui.",
+			"COPY_FIELD": "Copia {{field}}"
+		},
 		"MOBILE": {
 			"TITLE": "Mobile",
 			"DESCRIPTION": "Avvia il timer, controlla le tue attività e le tue ore ovunque tu sia.",
@@ -5679,7 +5692,8 @@
 		},
 		"ILLUSTRATION": {
 			"THIS_WEEK": "Questa settimana",
-			"YOU": "Tu"
+			"YOU": "Tu",
+			"TRY_IT": "Tocca a te: fai clic sul timer"
 		},
 		"ALL_DOWNLOADS": "Vedi tutti i download"
 	},

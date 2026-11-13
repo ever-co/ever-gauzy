@@ -5428,6 +5428,19 @@
 			"DOWNLOAD_FOR": "Gam pi {{platform}}",
 			"ALSO_FOR": "Tye bene pi"
 		},
+		"SETUP": {
+			"OPENED": "The {{platform}} download opened in a new tab.",
+			"NOT_OPENED": "Nothing happened?",
+			"TRY_AGAIN": "Try again",
+			"TITLE": "Next steps",
+			"INSTALL_WINDOWS": "Run the installer you downloaded and follow its steps.",
+			"INSTALL_MACOS": "Open the downloaded file and drag the app into Applications.",
+			"INSTALL_LINUX": "Install the downloaded package, or run the AppImage.",
+			"CONNECT_CUSTOM": "Open the app, choose “{{option}}” and paste this into “{{field}}”:",
+			"CONNECT_LIVE": "Open the app and choose “{{option}}”.",
+			"SIGN_IN": "Sign in with the email and password you use here.",
+			"COPY_FIELD": "Copy {{field}}"
+		},
 		"MOBILE": {
 			"TITLE": "Cim",
 			"DESCRIPTION": "Cak timer, nen tic ni ki cawa ni ka i tye ka wot.",
@@ -5441,7 +5454,8 @@
 		},
 		"ILLUSTRATION": {
 			"THIS_WEEK": "Cabit man",
-			"YOU": "You"
+			"YOU": "You",
+			"TRY_IT": "Your turn: click the timer"
 		},
 		"ALL_DOWNLOADS": "Nen gam weng"
 	},

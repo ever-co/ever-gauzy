@@ -5665,6 +5665,19 @@
 			"DOWNLOAD_FOR": "Pobierz dla {{platform}}",
 			"ALSO_FOR": "Dostępne także dla"
 		},
+		"SETUP": {
+			"OPENED": "Pobieranie dla {{platform}} otworzyło się w nowej karcie.",
+			"NOT_OPENED": "Nic się nie stało?",
+			"TRY_AGAIN": "Spróbuj ponownie",
+			"TITLE": "Następne kroki",
+			"INSTALL_WINDOWS": "Uruchom pobrany instalator i postępuj zgodnie z instrukcjami.",
+			"INSTALL_MACOS": "Otwórz pobrany plik i przeciągnij aplikację do folderu Aplikacje.",
+			"INSTALL_LINUX": "Zainstaluj pobrany pakiet lub uruchom plik AppImage.",
+			"CONNECT_CUSTOM": "Otwórz aplikację, wybierz „{{option}}” i wklej to w polu „{{field}}”:",
+			"CONNECT_LIVE": "Otwórz aplikację i wybierz „{{option}}”.",
+			"SIGN_IN": "Zaloguj się adresem e-mail i hasłem, których używasz tutaj.",
+			"COPY_FIELD": "Kopiuj: {{field}}"
+		},
 		"MOBILE": {
 			"TITLE": "Telefon",
 			"DESCRIPTION": "Uruchamiaj timer, sprawdzaj zadania i swoje godziny w drodze.",
@@ -5678,7 +5691,8 @@
 		},
 		"ILLUSTRATION": {
 			"THIS_WEEK": "Ten tydzień",
-			"YOU": "Ty"
+			"YOU": "Ty",
+			"TRY_IT": "Twoja kolej: kliknij timer"
 		},
 		"ALL_DOWNLOADS": "Zobacz wszystkie pliki do pobrania"
 	},

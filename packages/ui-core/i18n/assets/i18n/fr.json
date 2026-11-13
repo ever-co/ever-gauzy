@@ -5667,6 +5667,19 @@
 			"DOWNLOAD_FOR": "Télécharger pour {{platform}}",
 			"ALSO_FOR": "Aussi disponible pour"
 		},
+		"SETUP": {
+			"OPENED": "Le téléchargement pour {{platform}} s'est ouvert dans un nouvel onglet.",
+			"NOT_OPENED": "Rien ne s'est passé ?",
+			"TRY_AGAIN": "Réessayer",
+			"TITLE": "Étapes suivantes",
+			"INSTALL_WINDOWS": "Lancez le programme d'installation téléchargé et suivez les étapes.",
+			"INSTALL_MACOS": "Ouvrez le fichier téléchargé et faites glisser l'application dans Applications.",
+			"INSTALL_LINUX": "Installez le paquet téléchargé ou lancez l'AppImage.",
+			"CONNECT_CUSTOM": "Ouvrez l'application, choisissez « {{option}} » et collez ceci dans « {{field}} » :",
+			"CONNECT_LIVE": "Ouvrez l'application et choisissez « {{option}} ».",
+			"SIGN_IN": "Connectez-vous avec l'e-mail et le mot de passe que vous utilisez ici.",
+			"COPY_FIELD": "Copier {{field}}"
+		},
 		"MOBILE": {
 			"TITLE": "Mobile",
 			"DESCRIPTION": "Lancez le minuteur, consultez vos tâches et vos heures où que vous soyez.",
@@ -5680,7 +5693,8 @@
 		},
 		"ILLUSTRATION": {
 			"THIS_WEEK": "Cette semaine",
-			"YOU": "Vous"
+			"YOU": "Vous",
+			"TRY_IT": "À vous : cliquez sur le minuteur"
 		},
 		"ALL_DOWNLOADS": "Voir tous les téléchargements"
 	},
