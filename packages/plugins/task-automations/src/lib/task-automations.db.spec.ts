@@ -3,7 +3,8 @@
  * role grants; the rules (create blank or from a template, edit, reorder, delete, the organization checks); the run
  * store (once per change, the lease, the rate-limit count, the pruned history); the task reader; and the engine end to
  * end — a sub-task closed closes its parent, a duplicate delivery runs nothing, the loop guard holds, the dry run writes
- * nothing, the due-date sweep reports a due date once — with a writer that applies the update to the task row.
+ * nothing, the due-date sweep reports a due date once, a closed linked pull request moves its task through the capture,
+ * the outbox and the consumer once — with a writer that applies the update to the task row.
  *
  * `@gauzy/core` is doubled at the module boundary (its barrel boots the whole application), as the other plugin
  * database suites do: the entities are mapped below by fixture schemas over the tables the migrations create, and over
@@ -33,6 +34,9 @@ jest.mock('@gauzy/core', () => {
 		) {}
 	}
 	class EmployeeCreateNotificationEvent {}
+	class TaskLinkClosedEvent {
+		constructor(public readonly input: unknown) {}
+	}
 	return {
 		MultiORMColumn: decorator,
 		MultiORMEntity: decorator,
@@ -48,6 +52,15 @@ jest.mock('@gauzy/core', () => {
 		UserOrganization,
 		TaskUpdateCommand,
 		EmployeeCreateNotificationEvent,
+		TaskLinkClosedEvent,
+		EventOutboxService: class EventOutboxService {},
+		EventConsumerRegistry: class EventConsumerRegistry {
+			static consumerKeyOf(consumer: { kind?: string; key: string }) {
+				return `${consumer.kind}:${consumer.key}`;
+			}
+		},
+		MultiORMEnum: { TypeORM: 'typeorm', MikroORM: 'mikro-orm' },
+		getORMType: () => 'typeorm',
 		RequestContext: {
 			currentTenantId: () => mockCaller.tenantId,
 			currentUserId: () => mockCaller.userId,
@@ -83,7 +96,9 @@ import { join } from 'node:path';
 import { BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { DataSource, EntitySchema } from 'typeorm';
 import {
+	IOutboxWriteInput,
 	ITaskAutomationChangeEvent,
+	ITaskLinkClosedEvent,
 	PermissionsEnum,
 	RolesEnum,
 	TaskAutomationActionEnum,
@@ -92,15 +107,19 @@ import {
 	TaskAutomationStatusCategoryEnum,
 	TaskAutomationTriggerEnum
 } from '@gauzy/contracts';
-import { Employee, OrganizationProject, OrganizationTeam, Tag, Task, TaskPriority, TaskStatus, UserOrganization } from '@gauzy/core';
+import { Employee, OrganizationProject, OrganizationTeam, Tag, Task, TaskLinkClosedEvent, TaskPriority, TaskStatus, UserOrganization } from '@gauzy/core';
 import { TASK_AUTOMATION_MIGRATIONS } from './database/task-automation-migrations';
+import { TaskAutomationLinkClosure } from './entities/task-automation-link-closure.entity';
 import { TaskAutomationRule } from './entities/task-automation-rule.entity';
 import { TaskAutomationRun } from './entities/task-automation-run.entity';
 import { ITaskAutomationTaskUpdate } from './engine/actions';
 import { ITaskAutomationActorMarker } from './engine/loop-guard';
 import { ITaskAutomationTaskSnapshot } from './engine/task-snapshot';
+import { TaskAutomationEventConsumer } from './events/task-automation-event.consumer';
+import { TaskAutomationLinkClosedCapture } from './events/task-automation-link-closed.capture';
 import { dueEventKey, TaskAutomationDueSweepService } from './schedule/task-automation-due-sweep.service';
 import { TaskAutomationEngine } from './services/task-automation-engine.service';
+import { TaskAutomationLinkClosureStore } from './services/task-automation-link-closure.store';
 import { ITaskAutomationScope, TaskAutomationRuleService } from './services/task-automation-rule.service';
 import { TaskAutomationRunStore } from './services/task-automation-run.store';
 import { TaskAutomationRunner } from './services/task-automation-runner.service';
@@ -174,6 +193,19 @@ const runSchema = new EntitySchema({
 		details: { type: String, nullable: true },
 		error: { type: String, nullable: true },
 		durationMs: { type: Number, nullable: true }
+	}
+});
+
+const closureSchema = new EntitySchema({
+	name: 'TaskAutomationLinkClosure',
+	target: TaskAutomationLinkClosure,
+	tableName: 'task_automation_link_closure',
+	columns: {
+		...base,
+		taskId: { type: String },
+		provider: { type: String },
+		kind: { type: String },
+		externalId: { type: String }
 	}
 });
 
@@ -365,7 +397,7 @@ describe('Task automations on SQLite', () => {
 		dataSource = new DataSource({
 			type: 'better-sqlite3',
 			database: join(directory, `${randomUUID()}.sqlite3`),
-			entities: [ruleSchema, runSchema],
+			entities: [ruleSchema, runSchema, closureSchema],
 			migrations: TASK_AUTOMATION_MIGRATIONS,
 			synchronize: false,
 			logging: false
@@ -389,7 +421,19 @@ describe('Task automations on SQLite', () => {
 		dataSource = new DataSource({
 			type: 'better-sqlite3',
 			database: platform.options.database as string,
-			entities: [ruleSchema, runSchema, statusSchema, prioritySchema, employeeSchema, tagSchema, projectSchema, teamSchema, userOrganizationSchema, taskSchema],
+			entities: [
+				ruleSchema,
+				runSchema,
+				closureSchema,
+				statusSchema,
+				prioritySchema,
+				employeeSchema,
+				tagSchema,
+				projectSchema,
+				teamSchema,
+				userOrganizationSchema,
+				taskSchema
+			],
 			migrations: TASK_AUTOMATION_MIGRATIONS,
 			synchronize: false,
 			logging: false
@@ -416,12 +460,27 @@ describe('Task automations on SQLite', () => {
 				(row: { name: string }) => row.name
 			);
 
-		it('create the two tables, and a second run adds nothing', async () => {
-			expect(await tables()).toEqual(['task_automation_rule', 'task_automation_run']);
+		it('create the three tables, and a second run adds nothing', async () => {
+			const all = ['task_automation_link_closure', 'task_automation_rule', 'task_automation_run'];
+			expect(await tables()).toEqual(all);
 			for (const Migration of TASK_AUTOMATION_MIGRATIONS) {
 				await new Migration().up(dataSource.createQueryRunner());
 			}
-			expect(await tables()).toEqual(['task_automation_rule', 'task_automation_run']);
+			expect(await tables()).toEqual(all);
+		});
+
+		it('keep one closed link per task and link', async () => {
+			const insert = (taskId: string, externalId: string) =>
+				dataSource.query(
+					`INSERT INTO "task_automation_link_closure" ("id", "tenantId", "organizationId", "taskId", "provider", "kind", "externalId") VALUES (?, ?, ?, ?, 'github', 'pull_request', ?)`,
+					[randomUUID(), TENANT, ORG, taskId, externalId]
+				);
+			const task = randomUUID();
+			await insert(task, '1');
+			await expect(insert(task, '1')).rejects.toThrow(/UNIQUE/);
+			// Another item of the task, and the same item of another task, are other links.
+			await insert(task, '2');
+			await insert(randomUUID(), '1');
 		});
 
 		it('grant TASK_AUTOMATION_MANAGE to super admins, admins and managers, once', async () => {
@@ -650,6 +709,142 @@ describe('Task automations on SQLite', () => {
 			expect(await runs.history(rule.id as string)).toEqual([]);
 			expect(writer.updates).toEqual([]);
 			await expect(engine.dryRun(rule, randomUUID())).rejects.toBeInstanceOf(NotFoundException);
+		});
+	});
+
+	describe('a closed link, from the integration’s report to the task (spec T16)', () => {
+		const pullRequest: Omit<ITaskLinkClosedEvent, 'taskId' | 'tenantId' | 'organizationId'> = {
+			provider: 'github',
+			kind: 'pull_request',
+			url: 'https://github.com/acme/site/pull/7',
+			externalId: '9001',
+			merged: true
+		};
+
+		/**
+		 * The capture over the real closure table, an outbox that keeps what is appended, and the consumer over the real
+		 * engine: `dispatch` hands each appended event to the consumer as the dispatch pass does, once.
+		 */
+		const pipeline = () => {
+			const appended: Array<{ eventId: string; input: IOutboxWriteInput }> = [];
+			const outbox = {
+				append: jest.fn(async (_manager: unknown, input: IOutboxWriteInput) => {
+					const eventId = randomUUID();
+					appended.push({ eventId, input });
+					return { eventId };
+				})
+			};
+			const capture = new TaskAutomationLinkClosedCapture(rules, reader, new TaskAutomationLinkClosureStore(dataSource), outbox as never, dataSource);
+			const consumer = new TaskAutomationEventConsumer({ register: jest.fn(), list: () => [] } as never, engine);
+			const envelopeOf = ({ eventId, input }: { eventId: string; input: IOutboxWriteInput }) =>
+				({ id: eventId, name: input.name, tenantId: input.tenantId, organizationId: input.organizationId, data: input.data }) as never;
+			const dispatch = async () => {
+				const events = appended.splice(0);
+				for (const event of events) await consumer.handle(envelopeOf(event));
+				return events;
+			};
+			return { capture, consumer, outbox, dispatch, envelopeOf };
+		};
+
+		const report = (taskId: string, overrides: Partial<ITaskLinkClosedEvent> = {}) =>
+			new TaskLinkClosedEvent({ taskId, tenantId: TENANT, organizationId: ORG, ...pullRequest, ...overrides } as ITaskLinkClosedEvent);
+
+		it('moves the task to done through the link-closed template, once however often the close is reported', async () => {
+			const rule = await rules.create(scope, { templateKey: 'link-closed-sets-status' });
+			const task = await createTask({ title: 'Footer' });
+			const other = await createTask({ title: 'Header' });
+			const { capture, consumer, outbox, dispatch, envelopeOf } = pipeline();
+
+			await capture.handle(report(task) as never);
+			expect(outbox.append).toHaveBeenCalledTimes(1);
+			expect(outbox.append.mock.calls[0][1]).toMatchObject({
+				name: 'task_link.closed',
+				aggregateId: task,
+				partitionKey: `task-automation:${task}`,
+				tenantId: TENANT,
+				organizationId: ORG,
+				data: { taskId: task, provider: 'github', kind: 'pull_request', externalId: '9001', merged: true }
+			});
+			const [event] = await dispatch();
+
+			expect((await taskRow(task))['status']).toBe('done');
+			expect((await taskRow(other))['status']).toBe('open');
+			const [run] = await runs.history(rule.id as string);
+			expect(run).toMatchObject({
+				outcome: TaskAutomationRunOutcomeEnum.APPLIED,
+				taskId: task,
+				triggerType: TaskAutomationTriggerEnum.LINK_CLOSED,
+				eventKey: `${event.eventId}:${task}`
+			});
+			expect(writer.updates).toHaveLength(1);
+			expect(writer.updates[0].marker).toMatchObject({ ruleId: rule.id, depth: 1, chain: [rule.id] });
+
+			// The same close reported again — GitHub's redelivery, another instance, the pull request reopened and closed
+			// again — appends nothing; the event handed to the consumer again runs nothing.
+			await capture.handle(report(task) as never);
+			await capture.handle(report(task, { merged: false, url: 'https://github.com/Acme/Site/pull/7/files' }) as never);
+			expect(outbox.append).toHaveBeenCalledTimes(1);
+			await consumer.handle(envelopeOf(event));
+			expect(writer.updates).toHaveLength(1);
+			expect(await runs.history(rule.id as string)).toHaveLength(1);
+		});
+
+		it('reports each linked task, and another link of the task, on its own', async () => {
+			const rule = await rules.create(scope, { templateKey: 'link-closed-sets-status' });
+			const first = await createTask();
+			const second = await createTask();
+			const { capture, outbox, dispatch } = pipeline();
+			await capture.handle(report(first) as never);
+			await capture.handle(report(second) as never);
+			await dispatch();
+			expect((await taskRow(first))['status']).toBe('done');
+			expect((await taskRow(second))['status']).toBe('done');
+
+			// The issue the pull request closed is another link of the task: reported, and the rule finds the task done.
+			await capture.handle(report(first, { kind: 'issue', externalId: '77', url: 'https://github.com/acme/site/issues/6', merged: undefined }) as never);
+			expect(outbox.append).toHaveBeenCalledTimes(3);
+			await dispatch();
+			const outcomes = (await runs.history(rule.id as string)).map((run) => run.outcome).sort();
+			expect(outcomes).toEqual(
+				[TaskAutomationRunOutcomeEnum.APPLIED, TaskAutomationRunOutcomeEnum.APPLIED, TaskAutomationRunOutcomeEnum.CONDITIONS_NOT_MET].sort()
+			);
+		});
+
+		it('appends nothing for another tenant or organization, a missing task, or an organization without the rule', async () => {
+			const { capture, outbox } = pipeline();
+			const task = await createTask();
+
+			// No link rule switched on in the organization yet.
+			await capture.handle(report(task) as never);
+			expect(outbox.append).not.toHaveBeenCalled();
+
+			await rules.create(scope, { templateKey: 'link-closed-sets-status' });
+			// The task is not of the scope the report names.
+			await capture.handle(report(task, { tenantId: OTHER_TENANT }) as never);
+			await capture.handle(report(task, { organizationId: OTHER_ORG }) as never);
+			await capture.handle(report(randomUUID()) as never);
+			expect(outbox.append).not.toHaveBeenCalled();
+			expect(await dataSource.getRepository(TaskAutomationLinkClosure).count()).toBe(0);
+			expect((await taskRow(task))['status']).toBe('open');
+
+			// A report of the scope's own task goes through.
+			await capture.handle(report(task) as never);
+			expect(outbox.append).toHaveBeenCalledTimes(1);
+		});
+
+		it('drops at the consumer an event whose payload names another scope than its envelope', async () => {
+			await rules.create(scope, { templateKey: 'link-closed-sets-status' });
+			const task = await createTask();
+			const { consumer } = pipeline();
+			await consumer.handle({
+				id: randomUUID(),
+				name: 'task_link.closed',
+				tenantId: OTHER_TENANT,
+				organizationId: ORG,
+				data: { taskId: task, tenantId: TENANT, organizationId: ORG, ...pullRequest }
+			} as never);
+			expect(writer.updates).toEqual([]);
+			expect((await taskRow(task))['status']).toBe('open');
 		});
 	});
 
