@@ -37,7 +37,15 @@ export const CALLER_REFUSED_COLUMNS: Readonly<Record<string, readonly string[]>>
 export const RATE_EDITOR_COLUMNS: Readonly<Record<string, readonly string[]>> = {
 	Employee: ['payRateValue', 'payRateCurrency'],
 	OrganizationProject: ['billRateValue'],
-	OrganizationProjectEmployee: ['billRateValue']
+	OrganizationProjectEmployee: ['billRateValue'],
+	// The pay rate and the client rates a time log stores, as on the employee and the project
+	TimeLog: [
+		'payRateValue',
+		'payRateCurrency',
+		'projectBillRateValue',
+		'projectMemberBillRateValue',
+		'projectBillRateCurrency'
+	]
 };
 
 export const RATE_EDITOR_PERMISSION = PermissionsEnum.ORG_EMPLOYEES_EDIT;
