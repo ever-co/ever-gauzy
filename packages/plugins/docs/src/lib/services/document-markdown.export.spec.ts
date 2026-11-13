@@ -303,6 +303,24 @@ describe('DocumentMarkdownService subtree export of a folder', () => {
 			expect(budgetWarnings[0]).toContain(tooBig.id);
 		});
 
+		it('names the per-file limit, not the budget, when that lower bound refused the read', async () => {
+			const warned = warnings();
+			const big = file(1, '12345678');
+			const { service, uploads } = buildService([folder, big]);
+			withBudget(service, 100);
+			// The per-file limit (5 bytes here) is below what is left of the budget: the read is refused at it.
+			uploads.getRawFile.mockImplementationOnce(async () => {
+				throw new FileContentTooLargeError(5);
+			});
+			const { result, zip } = await zipOf(service, folder.id);
+
+			expect(result.files).toBe(0);
+			expect(zip.readText('index.md')).toContain(`(/api/plugins/docs/documents/${big.id}/raw) (not included)`);
+			const messages = warned.mock.calls.map(([message]) => String(message));
+			expect(messages.some((message) => message.includes('asset budget'))).toBe(false);
+			expect(messages).toContain(`Markdown export: file ${big.id} was not added (The file is larger than the 5 bytes that can be processed)`);
+		});
+
 		it('never reads a file whose stored size is past what is left', async () => {
 			warnings();
 			const first = file(1, '12345678', 8);

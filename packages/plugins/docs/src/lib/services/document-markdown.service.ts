@@ -397,6 +397,7 @@ export class DocumentMarkdownService {
 			}
 			try {
 				const file = await this.uploads.getRawFile(id as ID, organizationId, { maxBytes: remaining });
+				// Defence in depth: the bounded read already refuses a file past `remaining` (FileContentTooLargeError).
 				if (file.buffer.length > remaining) {
 					this.warnPastBudget(id);
 					continue;
@@ -404,11 +405,7 @@ export class DocumentMarkdownService {
 				totalBytes += file.buffer.length;
 				read.set(id, file.buffer);
 			} catch (error) {
-				if (error instanceof FileContentTooLargeError) {
-					this.warnPastBudget(id);
-					continue;
-				}
-				this.logger.warn(`Markdown export: file ${id} was not added (${(error as Error)?.message ?? error})`);
+				this.warnNotAdded(id, error, remaining);
 			}
 		}
 		return read;
@@ -443,6 +440,7 @@ export class DocumentMarkdownService {
 			}
 			try {
 				const file = await this.uploads.getRawFile(id as ID, organizationId, { maxBytes: remaining });
+				// Defence in depth: the bounded read already refuses a file past `remaining` (FileContentTooLargeError).
 				if (file.buffer.length > remaining) {
 					this.warnPastBudget(id);
 					continue;
@@ -451,11 +449,7 @@ export class DocumentMarkdownService {
 				const extension = posix.extname(String(file.fileName ?? '')).toLowerCase().replace(/[^a-z0-9.]/g, '');
 				assets.set(id, { name: `${id}${extension}`, buffer: file.buffer });
 			} catch (error) {
-				if (error instanceof FileContentTooLargeError) {
-					this.warnPastBudget(id);
-					continue;
-				}
-				this.logger.warn(`Markdown export: file ${id} was not added (${(error as Error)?.message ?? error})`);
+				this.warnNotAdded(id, error, remaining);
 			}
 		}
 		return assets;
@@ -464,6 +458,18 @@ export class DocumentMarkdownService {
 	/** Logs a file left out of an export because it does not fit what is left of the byte budget. */
 	private warnPastBudget(id: string): void {
 		this.logger.warn(`Markdown export: file ${id} was not added (the export's asset budget of ${this.assetsMaxBytes} bytes is reached)`);
+	}
+
+	/**
+	 * Logs a file whose read failed. A read refused at what was left of the budget is past the budget, as the stored-size
+	 * check says; one refused at a lower bound (the per-file limit) says so in its own words.
+	 */
+	private warnNotAdded(id: string, error: unknown, remaining: number): void {
+		if (error instanceof FileContentTooLargeError && error.maxBytes >= remaining) {
+			this.warnPastBudget(id);
+			return;
+		}
+		this.logger.warn(`Markdown export: file ${id} was not added (${(error as Error)?.message ?? error})`);
 	}
 }
 
