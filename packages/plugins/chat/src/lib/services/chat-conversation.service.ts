@@ -27,6 +27,7 @@ import {
 } from '@gauzy/contracts';
 import { Employee } from '@gauzy/core';
 import { directKeyOf } from '../chat-direct-key';
+import { chatPresenceOf } from '../chat-presence';
 import { CHAT_MAX_STATES, CHAT_PEOPLE_MAX } from '../chat.constants';
 import { ChatCategory } from '../entities/chat-category.entity';
 import { ChatConversation } from '../entities/chat-conversation.entity';
@@ -639,7 +640,9 @@ export class ChatConversationService {
 	/**
 	 * The people chat shows: the active employees of the caller's organization with the name, picture and position a
 	 * chat user may see (no email, no rate, no settings). Every holder of `CHAT_VIEW` may read it, which the employee
-	 * routes of the platform do not allow: they need `ORG_EMPLOYEES_VIEW`, which an ordinary employee lacks.
+	 * routes of the platform do not allow: they need `ORG_EMPLOYEES_VIEW`, which an ordinary employee lacks. Each
+	 * comes with their presence as of now ({@link chatPresenceOf}), so the page shows who is here before any
+	 * `presence.changed` arrives.
 	 */
 	async people(caller: IChatCaller): Promise<IChatPerson[]> {
 		if (!caller.organizationId) return [];
@@ -648,6 +651,8 @@ export class ChatConversationService {
 			select: {
 				id: true,
 				userId: true,
+				lastSeenAt: true,
+				isIdle: true,
 				user: { id: true, firstName: true, lastName: true, imageUrl: true },
 				organizationPosition: { id: true, name: true }
 			} as never,
@@ -655,6 +660,7 @@ export class ChatConversationService {
 			relations: { user: true, organizationPosition: true },
 			take: CHAT_PEOPLE_MAX
 		});
+		const now = new Date();
 		return employees
 			.filter((employee) => !!employee.userId)
 			.map((employee) => {
@@ -665,7 +671,9 @@ export class ChatConversationService {
 					userId: employee.userId as ID,
 					name: full || user?.name || String(employee.id),
 					imageUrl: user?.imageUrl ?? null,
-					position: employee.organizationPosition?.name?.trim() || null
+					position: employee.organizationPosition?.name?.trim() || null,
+					presence: chatPresenceOf(employee.lastSeenAt, employee.isIdle, now),
+					lastSeenAt: employee.lastSeenAt ?? null
 				};
 			})
 			.sort((a, b) => a.name.localeCompare(b.name));
